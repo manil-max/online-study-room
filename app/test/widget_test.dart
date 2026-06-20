@@ -38,6 +38,15 @@ void main() {
     expect(find.text('Profil'), findsWidgets);
   });
 
+  testWidgets('Sınıfı olmayan kullanıcı oluştur/katıl seçeneklerini görür',
+      (tester) async {
+    await tester.pumpWidget(_appWith(await _signedInRepo()));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Sınıf oluştur'), findsOneWidget);
+    expect(find.text('Koda katıl'), findsOneWidget);
+  });
+
   testWidgets('İstatistik sekmesine geçilebilir', (tester) async {
     await tester.pumpWidget(_appWith(await _signedInRepo()));
     await tester.pumpAndSettle();

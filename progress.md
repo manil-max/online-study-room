@@ -10,9 +10,9 @@
 
 ## Özet Durum
 
-- **Aktif Faz:** Faz 1 — auth (1.1) bellek-içi backend ile çalışıyor ✅ → sıradaki 1.2/1.3 (profil, sınıf)
+- **Aktif Faz:** Faz 1 — auth + sınıf (1.1/1.3) bellek-içi çalışıyor ✅ → sıradaki Faz 2 (canlı sayaç)
 - **Proje konumu:** `C:\Dev\online-study-room` (OneDrive/Türkçe yoldan taşındı — aşağıdaki nota bak)
-- **Sıradaki adım (otonom):** Profil düzenleme + sınıf oluştur/katıl (bellek-içi). Supabase kullanıcı döndüğünde.
+- **Sıradaki adım (otonom):** Faz 2 — çalışma sayacı (başlat/durdur) + oturum kaydı + canlı presence (bellek-içi). Supabase kullanıcı döndüğünde.
 
 ---
 
@@ -85,9 +85,10 @@
 - [ ] Profil düzenleme
 
 ### 1.3 Sınıf / Grup
-- [ ] Sınıf oluşturma + davet kodu üretimi
-- [ ] Davet koduyla sınıfa katılma
-- [ ] Sınıf üyelerini listeleme
+- [x] Sınıf oluşturma + davet kodu üretimi (6 haneli) — *bellek-içi*
+- [x] Davet koduyla sınıfa katılma
+- [x] Sınıf üyelerini listeleme (canlı)
+- [x] Sınıf ekranı: sınıf yoksa oluştur/katıl, varsa ad+kod+üyeler
 
 ### 1.4 Veritabanı & Güvenlik
 - [ ] Tablo şemaları (profiles, groups, group_members, study_sessions)
