@@ -11,7 +11,7 @@
 ## Özet Durum
 
 - **Aktif Faz:** Faz 0.3 — Supabase kodu/şeması hazır ✅; **kullanıcı hesabı açıp anahtar verince** uçtan uca bağlanır
-- **Proje konumu:** `C:\Dev\online-study-room` (OneDrive/Türkçe yoldan taşındı — aşağıdaki nota bak)
+- **Proje konumu:** `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room` (İngilizce ad — Türkçe/boşluklu yol Flutter'ı bozuyordu; aşağıdaki nota bak)
 - **Sıradaki adım:** (1) Kullanıcı Supabase hesabı açar → `env.json` doldurulur → uçtan uca test. (2) Sonra Faz 3 (istatistik) gerçek veriyle.
 - **Bekleyen (kullanıcı/admin):** Windows'ta eklenti derlemesi için **Geliştirici Modu** açılmalı (`ms-settings:developers`); web/Chrome çalıştırma için gerekmez.
 
@@ -45,20 +45,21 @@
 - [x] `flutter analyze` temiz (No issues found)
 - [x] Git deposu başlatma (.gitignore dâhil)
 - [x] GitHub uzak deposuna bağlanma (public: manil-max/online-study-room)
-- [x] **Proje temiz yola taşındı** → `C:\Dev\online-study-room`
+- [x] **Proje temiz (İngilizce adlı) yola taşındı** → `...\Desktop\Dev\online-study-room`
 
 > **Geliştirme ortamı yolları:**
-> - Proje: `C:\Dev\online-study-room` (Türkçe/boşluklu/OneDrive yol Flutter'ı bozduğu için taşındı)
+> - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
+>   (klasör adı İngilizce/boşluksuz olmalı — Türkçe karakter/boşluk Flutter'ı bozuyor; OneDrive sorun değil)
 > - Flutter: `C:\src\flutter` · Android SDK: `C:\Android\Sdk`
 > - JDK: Android Studio jbr (`C:\Program Files\Android\Android Studio\jbr`)
 > - JAVA_HOME ve PATH (User) ayarlandı. Android lisansları CI tarzı dosyaya yazılarak kabul edildi.
-> - ⚠️ Gelecek oturumları `C:\Dev\online-study-room` içinde aç. Proje yolunda Türkçe karakter/boşluk OLMAMALI.
+> - ⚠️ Gelecek oturumları bu klasörde aç. Proje yolunda Türkçe karakter/boşluk OLMAMALI.
 
 > **Geliştirme komutları (PowerShell):** Her komuttan önce ortamı ayarla:
 > ```
 > $env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"
 > $env:Path = "C:\src\flutter\bin;" + $env:Path
-> Set-Location "C:\Dev\online-study-room\app"
+> Set-Location "C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room\app"
 > ```
 > Sonra: `flutter analyze` · `flutter test` · `flutter run -d chrome` (tarayıcıda göster) ·
 > `flutter build apk --release` (telefona kurmak için APK).
