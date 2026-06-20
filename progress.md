@@ -10,9 +10,9 @@
 
 ## Özet Durum
 
-- **Aktif Faz:** Faz 1 — auth + sınıf (1.1/1.3) bellek-içi çalışıyor ✅ → sıradaki Faz 2 (canlı sayaç)
+- **Aktif Faz:** Faz 2.1 — çalışma sayacı çalışıyor ✅ → sıradaki Faz 3 (istatistik) bellek-içi veriyle
 - **Proje konumu:** `C:\Dev\online-study-room` (OneDrive/Türkçe yoldan taşındı — aşağıdaki nota bak)
-- **Sıradaki adım (otonom):** Faz 2 — çalışma sayacı (başlat/durdur) + oturum kaydı + canlı presence (bellek-içi). Supabase kullanıcı döndüğünde.
+- **Sıradaki adım (otonom):** İstatistik sekmesi (kişisel günlük/haftalık + grup sıralama) bellek-içi veriyle. Presence (çoklu kullanıcı) ve arka plan servisi Supabase/platform işine bağlı — kullanıcı döndüğünde.
 
 ---
 
@@ -100,10 +100,10 @@
 ## FAZ 2 — Canlı Çalışma
 
 ### 2.1 Süre Tutma
-- [ ] Çalışma başlat / durdur (timer)
-- [ ] Oturum kaydı (study_sessions'a yazma)
-- [ ] Arka planda / kapanmada davranış
-- [ ] Mola (break) mantığı
+- [x] Çalışma başlat / durdur (timer) — sayaç kartı, canlı süre, bugünkü toplam
+- [x] Oturum kaydı (study_sessions'a yazma) — *bellek-içi*
+- [ ] Arka planda / kapanmada davranış — mobil arka plan servisi sonra (platform işi)
+- [ ] Mola (break) mantığı — sonra
 
 ### 2.2 Canlı Sınıf Ekranı
 - [ ] Realtime presence altyapısı (kim online/çalışıyor)

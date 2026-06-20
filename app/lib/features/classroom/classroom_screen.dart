@@ -6,6 +6,7 @@ import '../../data/providers/auth_providers.dart';
 import '../../data/providers/group_providers.dart';
 import '../../data/models/study_group.dart';
 import '../../data/repositories/group_repository.dart';
+import 'widgets/study_timer_card.dart';
 
 /// Sınıf sekmesi: ana sayfa + canlı sınıf (birleşik). Bkz. project.md §3.0/§3.5.
 /// Sınıf yoksa oluştur/katıl ekranı; varsa sınıf + üyeler gösterilir.
@@ -86,6 +87,8 @@ class _GroupView extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        const StudyTimerCard(),
+        const SizedBox(height: 8),
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
