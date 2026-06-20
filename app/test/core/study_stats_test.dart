@@ -50,6 +50,22 @@ void main() {
     expect(series.map((d) => d.seconds).toList(), [600, 0, 1200]);
   });
 
+  test('dailyRange aralıktaki her günü verir, boş günler 0', () {
+    final sessions = [
+      _s('u1', DateTime(2026, 6, 18, 8), 600),
+      _s('u1', DateTime(2026, 6, 20, 8), 1200),
+    ];
+    final series = dailyRange(sessions, DateTime(2026, 6, 18), DateTime(2026, 6, 20));
+    expect(series.map((d) => d.day).toList(),
+        [DateTime(2026, 6, 18), DateTime(2026, 6, 19), DateTime(2026, 6, 20)]);
+    expect(series.map((d) => d.seconds).toList(), [600, 0, 1200]);
+  });
+
+  test('dailyRange ters aralıkta boş liste', () {
+    final series = dailyRange(const [], DateTime(2026, 6, 20), DateTime(2026, 6, 18));
+    expect(series, isEmpty);
+  });
+
   test('dailyAverageSeconds boş günleri paydaya katar', () {
     final sessions = [
       _s('u1', DateTime(2026, 6, 20, 8), 600),

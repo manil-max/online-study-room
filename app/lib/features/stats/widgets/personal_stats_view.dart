@@ -89,6 +89,10 @@ class PersonalStatsView extends StatelessWidget {
         const SizedBox(height: 16),
         _WeekComparisonCard(sessions: sessions, now: now),
         const SizedBox(height: 16),
+        Text('Seçili tarih aralığı', style: theme.textTheme.titleMedium),
+        const SizedBox(height: 8),
+        _RangeCard(sessions: sessions),
+        const SizedBox(height: 16),
         Text('Son 30 gün', style: theme.textTheme.titleMedium),
         const SizedBox(height: 8),
         _StatCard(
@@ -154,6 +158,109 @@ class _TrendCardState extends State<_TrendCard> {
             ),
             const SizedBox(height: 16),
             SizedBox(height: 180, child: DailyBarChart(days: series)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Serbest tarih aralığı: kullanıcı bir aralık seçer; toplam + günlük ortalama
+/// ve (aralık 45 günü aşmıyorsa) günlük grafik gösterilir (project.md §3.4).
+class _RangeCard extends StatefulWidget {
+  const _RangeCard({required this.sessions});
+
+  final List<StudySession> sessions;
+
+  @override
+  State<_RangeCard> createState() => _RangeCardState();
+}
+
+class _RangeCardState extends State<_RangeCard> {
+  late DateTimeRange _range;
+
+  @override
+  void initState() {
+    super.initState();
+    final now = DateTime.now();
+    _range = DateTimeRange(
+      start: dayOf(now).subtract(const Duration(days: 29)),
+      end: dayOf(now),
+    );
+  }
+
+  Future<void> _pickRange() async {
+    final now = DateTime.now();
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(now.year - 2),
+      lastDate: now,
+      initialDateRange: _range,
+    );
+    if (picked != null) {
+      setState(() => _range = DateTimeRange(
+            start: dayOf(picked.start),
+            end: dayOf(picked.end),
+          ));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final from = _range.start;
+    final to = _range.end;
+    final total = totalSeconds(inRange(widget.sessions, from, to));
+    final avg = dailyAverageSeconds(widget.sessions, from, to);
+    final dayCount = to.difference(from).inDays + 1;
+    final series = dailyRange(widget.sessions, from, to);
+
+    String d(DateTime x) => '${x.day}.${x.month}.${x.year}';
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '${d(from)} – ${d(to)}  ($dayCount gün)',
+                    style: theme.textTheme.titleSmall,
+                  ),
+                ),
+                TextButton.icon(
+                  onPressed: _pickRange,
+                  icon: const Icon(Icons.date_range, size: 18),
+                  label: const Text('Seç'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(child: _MiniMetric(label: 'Toplam', value: formatHuman(total))),
+                Expanded(
+                  child: _MiniMetric(
+                    label: 'Günlük ort.',
+                    value: formatHuman(avg.round()),
+                  ),
+                ),
+              ],
+            ),
+            if (series.length <= 45) ...[
+              const SizedBox(height: 16),
+              SizedBox(height: 160, child: DailyBarChart(days: series)),
+            ] else ...[
+              const SizedBox(height: 12),
+              Text(
+                'Grafik için 45 günden kısa bir aralık seçin.',
+                style: theme.textTheme.bodySmall
+                    ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              ),
+            ],
           ],
         ),
       ),

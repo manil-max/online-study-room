@@ -77,6 +77,24 @@ List<DayTotal> lastNDays(
   });
 }
 
+/// [fromDay, toDay] (iki uç dâhil) aralığındaki her takvim günü için seri
+/// (eski → yeni), verisi olmayan günler 0. Grafik/özet için.
+List<DayTotal> dailyRange(
+  Iterable<StudySession> sessions,
+  DateTime fromDay,
+  DateTime toDay,
+) {
+  final totals = dailyTotals(sessions);
+  final from = dayOf(fromDay);
+  final to = dayOf(toDay);
+  final days = to.difference(from).inDays;
+  if (days < 0) return const [];
+  return List.generate(days + 1, (i) {
+    final day = from.add(Duration(days: i));
+    return DayTotal(day, totals[day] ?? 0);
+  });
+}
+
 /// [fromDay, toDay] aralığındaki günlük ortalama (saniye).
 /// Payda, aralıktaki **takvim günü** sayısıdır (çalışılmayan günler de sayılır).
 double dailyAverageSeconds(

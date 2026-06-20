@@ -140,7 +140,7 @@
 - [x] Veri sorguları (günlük/haftalık/aylık/yıllık) — saf hesaplama katmanı `core/stats/study_stats.dart`
 - [x] Günlük ortalama hesaplama (son 30 gün, çalışılmayan günler paydada)
 - [x] Hafta içi / hafta sonu ayrımı
-- [~] Seçili tarih aralığı filtreleri — trend grafiğinde 7/14/30 gün seçici var; serbest tarih aralığı sonra
+- [x] Seçili tarih aralığı filtreleri — 7/14/30 gün hızlı seçici + serbest tarih aralığı kartı (toplam/günlük ort./grafik)
 - [x] Grafikler (fl_chart) — günlük çubuk grafiği + dönemler arası kıyas kartı
 - [x] Kıyaslamalı görünümler (kullanıcılar / dönemler arası) — dönemler arası (hafta) + sınıf leaderboard ✅
 
@@ -151,7 +151,8 @@
 > vs geçen hafta" kıyas kartı (artış/azalış göstergesi) kişisel görünüme eklendi.
 > 3c TAMAM: Sınıf sekmesi leaderboard'a dönüştü — dönem seçici (bugün/hafta/ay), sınıf
 > toplamı + kişi başı ortalama, madalyalı sıralama (oransal çubuk, "sen" vurgusu).
-> Kalan (sonra): serbest tarih aralığı filtresi.
+> 3d TAMAM: Serbest tarih aralığı kartı (showDateRangePicker) — seçili aralık için toplam +
+> günlük ortalama + günlük grafik (≤45 gün). `dailyRange` yardımcısı testli. FAZ 3 TAMAM ✅.
 
 ---
 
