@@ -10,9 +10,10 @@
 
 ## Özet Durum
 
-- **Aktif Faz:** Faz 2.1 — çalışma sayacı çalışıyor ✅ → sıradaki Faz 3 (istatistik) bellek-içi veriyle
+- **Aktif Faz:** Faz 0.3 — Supabase kodu/şeması hazır ✅; **kullanıcı hesabı açıp anahtar verince** uçtan uca bağlanır
 - **Proje konumu:** `C:\Dev\online-study-room` (OneDrive/Türkçe yoldan taşındı — aşağıdaki nota bak)
-- **Sıradaki adım (otonom):** İstatistik sekmesi (kişisel günlük/haftalık + grup sıralama) bellek-içi veriyle. Presence (çoklu kullanıcı) ve arka plan servisi Supabase/platform işine bağlı — kullanıcı döndüğünde.
+- **Sıradaki adım:** (1) Kullanıcı Supabase hesabı açar → `env.json` doldurulur → uçtan uca test. (2) Sonra Faz 3 (istatistik) gerçek veriyle.
+- **Bekleyen (kullanıcı/admin):** Windows'ta eklenti derlemesi için **Geliştirici Modu** açılmalı (`ms-settings:developers`); web/Chrome çalıştırma için gerekmez.
 
 ---
 
@@ -64,9 +65,12 @@
 > GitHub: `manil-max/online-study-room` (public, gh CLI kurulu, push yetkili).
 
 ### 0.3 Supabase Kurulumu
-- [ ] Ücretsiz Supabase hesabı + proje açma
-- [ ] Uygulamaya Supabase client bağlantısı
-- [ ] Ortam değişkenleri / anahtar yönetimi (.env)
+- [~] Ücretsiz Supabase hesabı + proje açma — **kullanıcıda** (bkz. `supabase/README.md`)
+- [x] Veritabanı şeması yazıldı (`supabase/migrations/0001_initial_schema.sql`) — tablolar + trigger + RLS
+- [x] Uygulamaya Supabase client bağlantısı (`main.dart` + `core/config/supabase_config.dart`)
+- [x] Supabase repository implementasyonları (auth/group/study) — provider'lar anahtar varsa otomatik geçiş
+- [x] Ortam değişkeni / anahtar yönetimi (`--dart-define-from-file=env.json`, `env.example.json` şablon, `env.json` gitignore)
+- [ ] Anahtarlar girilip uçtan uca test (kullanıcı hesabı açınca)
 
 ---
 
@@ -173,3 +177,10 @@
 - **2026-06-21 (otonom):** Veri modelleri (Profile/StudyGroup/StudySession/Presence) eklendi.
   Auth katmanı: AuthRepository + InMemoryAuthRepository + giriş/kayıt ekranı + AuthGate +
   profil ekranında çıkış. Uygulama artık giriş ekranıyla açılıyor. 8/8 test geçiyor.
+- **2026-06-21 (Supabase entegrasyonu):** `supabase_flutter` eklendi. Veritabanı şeması
+  (`supabase/migrations/0001_initial_schema.sql`): profiles/groups/group_members/subjects/
+  study_sessions/presence + otomatik profil trigger'ı + RLS (sınıf içi tam şeffaflık) + Realtime.
+  Supabase repository'leri (auth/group/study) yazıldı; provider'lar `SupabaseConfig.isConfigured`
+  ile anahtar varsa Supabase'e, yoksa bellek-içine geçiyor (UI değişmedi). Anahtarlar
+  `--dart-define-from-file=env.json` ile veriliyor. Analiz temiz, 18/18 test geçiyor.
+  Kullanıcı kurulum rehberi: `supabase/README.md`.

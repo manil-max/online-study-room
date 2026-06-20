@@ -1,14 +1,20 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../core/config/supabase_config.dart';
 import '../models/study_session.dart';
 import '../repositories/study_repository.dart';
 import '../repositories/in_memory/in_memory_study_repository.dart';
+import '../repositories/supabase/supabase_study_repository.dart';
 import 'auth_providers.dart';
 import 'group_providers.dart';
 
-/// Aktif StudyRepository. Şimdilik bellek-içi; Supabase'de değiştirilecek.
+/// Aktif StudyRepository. Anahtarlar verilmişse Supabase, yoksa bellek-içi.
 final studyRepositoryProvider = Provider<StudyRepository>((ref) {
+  if (SupabaseConfig.isConfigured) {
+    return SupabaseStudyRepository(Supabase.instance.client);
+  }
   final repo = InMemoryStudyRepository();
   ref.onDispose(repo.dispose);
   return repo;

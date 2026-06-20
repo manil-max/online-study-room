@@ -1,13 +1,19 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/config/supabase_config.dart';
 import '../models/profile.dart';
 import '../models/study_group.dart';
 import '../repositories/group_repository.dart';
 import '../repositories/in_memory/in_memory_group_repository.dart';
+import '../repositories/supabase/supabase_group_repository.dart';
 import 'auth_providers.dart';
 
-/// Aktif GroupRepository. Şimdilik bellek-içi; Supabase'de değiştirilecek.
+/// Aktif GroupRepository. Anahtarlar verilmişse Supabase, yoksa bellek-içi.
 final groupRepositoryProvider = Provider<GroupRepository>((ref) {
+  if (SupabaseConfig.isConfigured) {
+    return SupabaseGroupRepository(Supabase.instance.client);
+  }
   final repo = InMemoryGroupRepository();
   ref.onDispose(repo.dispose);
   return repo;
