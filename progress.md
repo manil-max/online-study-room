@@ -10,7 +10,7 @@
 
 ## Özet Durum
 
-- **Aktif Faz:** Faz 0.3 TAMAMLANDI ✅ — Supabase uçtan uca çalışıyor (kayıt/sınıf/oturum gerçek DB'ye yazılıyor). Sıradaki: Faz 2.2 canlı presence / Faz 3 istatistik / Faz 1.2 profil foto.
+- **Aktif Faz:** Faz 2.2 (canlı presence) ana kısmı TAMAMLANDI ✅ — sınıf ekranında kim çalışıyor canlı görünüyor (durum noktası + anlık süre + bugünkü toplam, Realtime). Sıradaki: Faz 3 istatistik / Faz 1.2 profil foto / 2.3 manuel giriş.
 - **Proje konumu:** `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room` (İngilizce ad — Türkçe/boşluklu yol Flutter'ı bozuyordu; aşağıdaki nota bak)
 - **Sıradaki adım:** (1) Kullanıcı Supabase hesabı açar → `env.json` doldurulur → uçtan uca test. (2) Sonra Faz 3 (istatistik) gerçek veriyle.
 - **Bekleyen (kullanıcı/admin):** Windows'ta eklenti derlemesi için **Geliştirici Modu** açılmalı (`ms-settings:developers`); web/Chrome çalıştırma için gerekmez.
@@ -122,9 +122,10 @@
 - [ ] Mola (break) mantığı — sonra
 
 ### 2.2 Canlı Sınıf Ekranı
-- [ ] Realtime presence altyapısı (kim online/çalışıyor)
-- [ ] Masa/lamba görselleştirmesi
-- [ ] Kimin ne kadar süredir çalıştığı gösterimi
+- [x] Realtime presence altyapısı (kim online/çalışıyor) — `PresenceRepository` (in-memory + Supabase), `presence` tablosu (şemada hazırdı), sayaç başlat/durdur presence yazıyor
+- [ ] Masa/lamba görselleştirmesi — tasarım aşamasına (en sona) ertelendi
+- [x] Kimin ne kadar süredir çalıştığı gösterimi — üye kartında durum noktası + anlık sayaç + bugünkü toplam, çalışanlar üstte sıralı
+- [ ] Çevrimdışı tespiti (uygulama kapanınca/heartbeat) — sonra (şu an yalnızca durdurunca offline)
 
 ### 2.3 Manuel Giriş
 - [ ] Gün sonu manuel süre ekleme
@@ -186,6 +187,14 @@
   ile anahtar varsa Supabase'e, yoksa bellek-içine geçiyor (UI değişmedi). Anahtarlar
   `--dart-define-from-file=env.json` ile veriliyor. Analiz temiz, 18/18 test geçiyor.
   Kullanıcı kurulum rehberi: `supabase/README.md`.
+- **2026-06-21 (Faz 2.2 canlı presence ✅):** Presence katmanı eklendi:
+  `PresenceRepository` (soyut) + bellek-içi + Supabase (`presence` tablosuna upsert,
+  Realtime stream). Sayaç başlat/durdur kendi presence'ını yazıyor (başla→çalışıyor,
+  durdur→çevrimdışı). Sınıf ekranı YPT tarzı canlı listeye dönüştü: her üyede durum
+  noktası (yeşil/turuncu/gri), çalışana anlık sayaç (her sn yenilenir) ve bugünkü toplam;
+  çalışanlar üstte. Bugünkü toplam `study_sessions`'tan türetiliyor (presence.today_seconds
+  yalnızca bilgi amaçlı). 21/21 test geçiyor, analiz temiz. Karar: heartbeat/yaşam-döngüsü
+  çevrimdışı tespiti ve mola butonu sonraya bırakıldı (şu an durum: çalışıyor/çevrimdışı).
 - **2026-06-21 (Supabase uçtan uca ✅):** Proje İngilizce yola taşındı
   (`...\Desktop\Dev\online-study-room`), `C:\Dev` silindi. Kullanıcı Supabase projesi açtı,
   şema kuruldu, e-posta doğrulaması kapatıldı, anahtarlar `env.json`'a girildi. Web'de passkeys

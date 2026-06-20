@@ -1,14 +1,16 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' hide Presence;
 import 'package:uuid/uuid.dart';
 
 import '../../core/config/supabase_config.dart';
+import '../models/presence.dart';
 import '../models/study_session.dart';
 import '../repositories/study_repository.dart';
 import '../repositories/in_memory/in_memory_study_repository.dart';
 import '../repositories/supabase/supabase_study_repository.dart';
 import 'auth_providers.dart';
 import 'group_providers.dart';
+import 'presence_providers.dart';
 
 /// Aktif StudyRepository. Anahtarlar verilmişse Supabase, yoksa bellek-içi.
 final studyRepositoryProvider = Provider<StudyRepository>((ref) {
@@ -47,6 +49,20 @@ final todayRecordedSecondsProvider = Provider<int>((ref) {
       .fold<int>(0, (sum, s) => sum + s.durationSeconds);
 });
 
+/// Sınıftaki her üyenin bugün KAYDEDİLMİŞ toplam süresi (userId -> saniye).
+/// Canlı sınıf ekranında "bugünkü toplam" buradan okunur; devam eden oturumun
+/// anlık kısmı UI'da presence üzerinden eklenir.
+final groupTodaySecondsProvider = Provider<Map<String, int>>((ref) {
+  final sessions = ref.watch(groupSessionsProvider).value ?? const [];
+  final now = DateTime.now();
+  final totals = <String, int>{};
+  for (final s in sessions) {
+    if (!_isSameDay(s.day, now)) continue;
+    totals[s.userId] = (totals[s.userId] ?? 0) + s.durationSeconds;
+  }
+  return totals;
+});
+
 /// Çalışma sayacının durumu.
 class StudyTimerState {
   const StudyTimerState({this.isRunning = false, this.startedAt});
@@ -64,7 +80,9 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
 
   void start() {
     if (state.isRunning) return;
-    state = StudyTimerState(isRunning: true, startedAt: DateTime.now());
+    final now = DateTime.now();
+    state = StudyTimerState(isRunning: true, startedAt: now);
+    _publishPresence(status: PresenceStatus.studying, startedAt: now);
   }
 
   Future<void> stop() async {
@@ -72,6 +90,9 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     if (!state.isRunning || startedAt == null) return;
     final end = DateTime.now();
     state = const StudyTimerState();
+
+    // Sayaç durunca canlı durumu çevrimdışına çek (sınıf ekranı anında günceller).
+    _publishPresence(status: PresenceStatus.offline, startedAt: null);
 
     final user = ref.read(authStateProvider).value;
     final group = ref.read(userGroupProvider).value;
@@ -91,6 +112,26 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
             source: StudySource.live,
           ),
         );
+  }
+
+  /// Kullanıcının canlı durumunu presence deposuna yazar (hata olursa sayacı bozmaz).
+  void _publishPresence({
+    required PresenceStatus status,
+    required DateTime? startedAt,
+  }) {
+    final user = ref.read(authStateProvider).value;
+    final group = ref.read(userGroupProvider).value;
+    if (user == null || group == null) return;
+
+    final presence = Presence(
+      userId: user.id,
+      groupId: group.id,
+      status: status,
+      startedAt: startedAt,
+      todaySeconds: ref.read(todayRecordedSecondsProvider),
+    );
+    // Yangına-at-unut: presence yazımı başarısız olsa bile çalışma akışı sürmeli.
+    ref.read(presenceRepositoryProvider).setPresence(presence).catchError((_) {});
   }
 }
 

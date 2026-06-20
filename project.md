@@ -229,3 +229,9 @@ kendi sunucumuzu (self-host) veya başka ücretsiz katmanı değerlendiririz.
 - **2026-06-20:** Proje başlatıldı. Stack: Flutter + Supabase (ücretsiz, APK sideload ile
   0 maliyet). Giriş: e-posta + şifre. İlk hedef platform: Android. iOS kapsam dışı.
   Öncelik: önce altyapı/ana hatlar. Ders sistemi sonraya bırakıldı.
+- **2026-06-21 (canlı presence):** Presence yazımı **sayaç başlat/durdur** anında yapılıyor
+  (başla → `studying`, durdur → `offline`). Çevrimdışı tespiti için heartbeat/yaşam-döngüsü
+  henüz yok → uygulama kapanırsa durum bir süre "çalışıyor" kalabilir; sonraki fazda
+  iyileştirilecek. Üyenin "bugünkü toplam"ı presence satırından değil `study_sessions`
+  agregasyonundan türetiliyor (tek doğru kaynak; presence.today_seconds yalnızca bilgi
+  amaçlı). Mola (break) durumu UI'da gösterime hazır ama buton yok (Açık Sorular §9'da).
