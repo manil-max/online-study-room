@@ -10,9 +10,9 @@
 
 ## Özet Durum
 
-- **Aktif Faz:** Faz 0.2 tamamlandı ✅ → sıradaki Faz 0.3 (Supabase) / Faz 1 (hesap+sınıf)
+- **Aktif Faz:** Faz 1 — uygulama kabuğu (1.0) bitti ✅ → sıradaki Faz 0.3 (Supabase) + 1.1 (auth)
 - **Proje konumu:** `C:\Dev\online-study-room` (OneDrive/Türkçe yoldan taşındı — aşağıdaki nota bak)
-- **Sıradaki adım:** Supabase projesi açma + uygulamaya bağlama; ardından Faz 1.
+- **Sıradaki adım:** Supabase projesi açma (kullanıcı hesabı gerek) + uygulamaya bağlama, sonra giriş/kayıt.
 
 ---
 
@@ -61,6 +61,13 @@
 ---
 
 ## FAZ 1 — Temel: Hesap + Sınıf
+
+### 1.0 Uygulama Kabuğu (iskelet)
+- [x] Klasör mimarisi (lib/core, lib/features)
+- [x] Riverpod kurulumu (ProviderScope)
+- [x] 3 sekmeli navigasyon (Sınıf / İstatistik / Profil) — NavigationBar + IndexedStack
+- [x] Geçici tema (Material 3, açık/koyu) — nihai tasarım en sonda
+- [x] Yer tutucu ekranlar + widget testleri (geçiyor)
 
 ### 1.1 Kimlik Doğrulama
 - [ ] Kayıt ol (e-posta + şifre)
@@ -145,3 +152,6 @@
 - **2026-06-20:** Proje başlatıldı. Dokümanlar oluşturuldu (project.md, progress.md,
   AGENTS.md). Tech stack, giriş yöntemi ve ilk platform kararlaştırıldı. Detaylı planlama
   aşamasına geçildi.
+- **2026-06-21:** Geliştirme ortamı kuruldu (Flutter 3.44.2 + Android SDK 36). İskelet
+  uygulama oluşturuldu, proje temiz yola (C:\Dev\online-study-room) taşındı. Uygulama kabuğu:
+  3 sekmeli navigasyon + Riverpod + geçici tema + yer tutucu ekranlar; testler geçiyor.
