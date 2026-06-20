@@ -10,9 +10,9 @@
 
 ## Özet Durum
 
-- **Aktif Faz:** Faz 1 — uygulama kabuğu (1.0) bitti ✅ → sıradaki Faz 0.3 (Supabase) + 1.1 (auth)
+- **Aktif Faz:** Faz 1 — auth (1.1) bellek-içi backend ile çalışıyor ✅ → sıradaki 1.2/1.3 (profil, sınıf)
 - **Proje konumu:** `C:\Dev\online-study-room` (OneDrive/Türkçe yoldan taşındı — aşağıdaki nota bak)
-- **Sıradaki adım:** Supabase projesi açma (kullanıcı hesabı gerek) + uygulamaya bağlama, sonra giriş/kayıt.
+- **Sıradaki adım (otonom):** Profil düzenleme + sınıf oluştur/katıl (bellek-içi). Supabase kullanıcı döndüğünde.
 
 ---
 
@@ -70,10 +70,14 @@
 - [x] Yer tutucu ekranlar + widget testleri (geçiyor)
 
 ### 1.1 Kimlik Doğrulama
-- [ ] Kayıt ol (e-posta + şifre)
-- [ ] Giriş yap / çıkış yap
-- [ ] Oturum kalıcılığı (cihazda açık kalma)
+- [x] Kayıt ol (e-posta + şifre) — *bellek-içi backend ile (Supabase'e kadar geçici)*
+- [x] Giriş yap / çıkış yap
+- [x] AuthGate (oturuma göre giriş ekranı ↔ ana uygulama)
+- [ ] Oturum kalıcılığı (cihazda açık kalma) — Supabase ile gelecek
 - [ ] Şifre sıfırlama (opsiyonel)
+
+> Mimari not: Repository deseni kullanıldı. `AuthRepository` (soyut) + `InMemoryAuthRepository`
+> (geçici). Supabase gelince sadece provider'daki implementasyon değişecek, UI aynı kalacak.
 
 ### 1.2 Profil
 - [ ] Profil ekranı (görünen ad)
@@ -155,3 +159,6 @@
 - **2026-06-21:** Geliştirme ortamı kuruldu (Flutter 3.44.2 + Android SDK 36). İskelet
   uygulama oluşturuldu, proje temiz yola (C:\Dev\online-study-room) taşındı. Uygulama kabuğu:
   3 sekmeli navigasyon + Riverpod + geçici tema + yer tutucu ekranlar; testler geçiyor.
+- **2026-06-21 (otonom):** Veri modelleri (Profile/StudyGroup/StudySession/Presence) eklendi.
+  Auth katmanı: AuthRepository + InMemoryAuthRepository + giriş/kayıt ekranı + AuthGate +
+  profil ekranında çıkış. Uygulama artık giriş ekranıyla açılıyor. 8/8 test geçiyor.
