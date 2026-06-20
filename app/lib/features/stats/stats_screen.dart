@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/stats/study_stats.dart';
-import '../../core/utils/duration_format.dart';
-import '../../data/models/study_session.dart';
+import '../../data/providers/auth_providers.dart';
+import '../../data/providers/group_providers.dart';
 import '../../data/providers/study_providers.dart';
+import 'widgets/class_stats_view.dart';
 import 'widgets/personal_stats_view.dart';
 
 /// İstatistik sekmesi: Kişisel + Sınıf (ortak) istatistikler. Bkz. project.md §3.4.
@@ -51,34 +51,37 @@ class _PersonalTab extends ConsumerWidget {
   }
 }
 
-/// Sınıf (ortak) istatistikleri — Faz 3c'de leaderboard ile dolacak.
+/// Sınıf (ortak) istatistikleri: dönem seçici + kıyaslamalı sıralama (leaderboard).
 class _ClassTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    // Şimdilik sınıf toplamını basitçe gösterelim (leaderboard sonra).
-    final sessions = ref.watch(groupSessionsProvider).value ?? const <StudySession>[];
-    final total = totalSeconds(sessions);
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.groups, size: 56, color: theme.colorScheme.primary),
-            const SizedBox(height: 12),
-            Text('Sınıf toplamı', style: theme.textTheme.titleMedium),
-            const SizedBox(height: 4),
-            Text(formatHuman(total), style: theme.textTheme.headlineSmall),
-            const SizedBox(height: 16),
-            Text(
-              'Kıyaslamalı sıralama (leaderboard) ve grafikler yakında.',
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodySmall
-                  ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-            ),
-          ],
+    final group = ref.watch(userGroupProvider).value;
+    if (group == null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Text(
+            'Sınıf istatistiklerini görmek için önce bir sınıfa katıl.',
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodyMedium
+                ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+          ),
         ),
+      );
+    }
+
+    final sessionsAsync = ref.watch(groupSessionsProvider);
+    final members = ref.watch(groupMembersProvider).value ?? const [];
+    final currentUserId = ref.watch(authStateProvider).value?.id ?? '';
+
+    return sessionsAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(child: Text('İstatistik yüklenemedi: $e')),
+      data: (sessions) => ClassStatsView(
+        sessions: sessions,
+        members: members,
+        currentUserId: currentUserId,
       ),
     );
   }

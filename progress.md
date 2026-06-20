@@ -10,7 +10,7 @@
 
 ## Özet Durum
 
-- **Aktif Faz:** Faz 2.2 (canlı presence) ana kısmı TAMAMLANDI ✅ — sınıf ekranında kim çalışıyor canlı görünüyor (durum noktası + anlık süre + bugünkü toplam, Realtime). Sıradaki: Faz 3 istatistik / Faz 1.2 profil foto / 2.3 manuel giriş.
+- **Aktif Faz:** Faz 3 (istatistikler) TAMAMLANDI ✅ — Kişisel (dönem toplamları, günlük grafik, hafta içi/sonu, hafta kıyası) + Sınıf leaderboard (dönem seçici, sıralama). Önce Faz 2.2 canlı presence de tamamdı. Sıradaki: Faz 1.2 profil foto / Faz 2.3 manuel giriş / serbest tarih filtresi.
 - **Proje konumu:** `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room` (İngilizce ad — Türkçe/boşluklu yol Flutter'ı bozuyordu; aşağıdaki nota bak)
 - **Sıradaki adım:** (1) Kullanıcı Supabase hesabı açar → `env.json` doldurulur → uçtan uca test. (2) Sonra Faz 3 (istatistik) gerçek veriyle.
 - **Bekleyen (kullanıcı/admin):** Windows'ta eklenti derlemesi için **Geliştirici Modu** açılmalı (`ms-settings:developers`); web/Chrome çalıştırma için gerekmez.
@@ -140,13 +140,16 @@
 - [x] Hafta içi / hafta sonu ayrımı
 - [~] Seçili tarih aralığı filtreleri — trend grafiğinde 7/14/30 gün seçici var; serbest tarih aralığı sonra
 - [x] Grafikler (fl_chart) — günlük çubuk grafiği + dönemler arası kıyas kartı
-- [ ] Kıyaslamalı görünümler (kullanıcılar / dönemler arası) — dönemler arası (hafta) ✅; sınıf leaderboard 3c
+- [x] Kıyaslamalı görünümler (kullanıcılar / dönemler arası) — dönemler arası (hafta) + sınıf leaderboard ✅
 
 > 3a TAMAM: İstatistik ekranı Kişisel/Sınıf sekmelerine ayrıldı. Kişisel: dönem toplamları
-> (bugün/hafta/ay/yıl) + günlük ortalama + hafta içi/sonu kartları. Sınıf sekmesi şimdilik
-> toplam gösteriyor (leaderboard 3c). Tüm hesaplama saf fonksiyonlarda, testli.
+> (bugün/hafta/ay/yıl) + günlük ortalama + hafta içi/sonu kartları. Tüm hesaplama saf
+> fonksiyonlarda, testli.
 > 3b TAMAM: fl_chart 1.2.0 eklendi. Günlük çubuk grafiği (7/14/30 gün seçici) + "bu hafta
 > vs geçen hafta" kıyas kartı (artış/azalış göstergesi) kişisel görünüme eklendi.
+> 3c TAMAM: Sınıf sekmesi leaderboard'a dönüştü — dönem seçici (bugün/hafta/ay), sınıf
+> toplamı + kişi başı ortalama, madalyalı sıralama (oransal çubuk, "sen" vurgusu).
+> Kalan (sonra): serbest tarih aralığı filtresi.
 
 ---
 
