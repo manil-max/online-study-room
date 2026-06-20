@@ -29,6 +29,21 @@ class InMemoryStudyRepository implements StudyRepository {
   }
 
   @override
+  Future<void> updateSession(StudySession session) async {
+    final i = _sessions.indexWhere((s) => s.id == session.id);
+    if (i != -1) {
+      _sessions[i] = session;
+      _changes.add(null);
+    }
+  }
+
+  @override
+  Future<void> deleteSession(String sessionId) async {
+    _sessions.removeWhere((s) => s.id == sessionId);
+    _changes.add(null);
+  }
+
+  @override
   Stream<List<StudySession>> watchUserSessions(String userId) async* {
     yield _userSessions(userId);
     await for (final _ in _changes.stream) {

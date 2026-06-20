@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/providers/auth_providers.dart';
+import 'session_history_screen.dart';
 
 /// Profil sekmesi: foto, görünen ad, ayarlar, davet kodu. Bkz. project.md §3.2.
 /// Şimdilik temel profil bilgisi + çıkış. Foto/düzenleme sonraki adımlarda.
@@ -42,6 +43,20 @@ class ProfileScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 32),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.history),
+              title: const Text('Çalışma kayıtlarım'),
+              subtitle: const Text('Manuel süre ekle, düzenle, sil'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const SessionHistoryScreen(),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
           FilledButton.tonalIcon(
             onPressed: () => ref.read(authRepositoryProvider).signOut(),
             icon: const Icon(Icons.logout),

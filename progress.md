@@ -10,7 +10,7 @@
 
 ## Özet Durum
 
-- **Aktif Faz:** Faz 3 (istatistikler) TAMAMLANDI ✅ — Kişisel (dönem toplamları, günlük grafik, hafta içi/sonu, hafta kıyası) + Sınıf leaderboard (dönem seçici, sıralama). Önce Faz 2.2 canlı presence de tamamdı. Sıradaki: Faz 1.2 profil foto / Faz 2.3 manuel giriş / serbest tarih filtresi.
+- **Aktif Faz:** Faz 2.3 (manuel giriş) TAMAMLANDI ✅ — Profil → Çalışma kayıtlarım: manuel ekle/düzenle/sil. Ayrıca Türkçe yerelleştirme eklendi. Önceki tamamlananlar: Faz 2.2 canlı presence, Faz 3 istatistikler. Sıradaki: Faz 1.2 profil foto (Supabase Storage bucket gerekir → kullanıcı kurulumu) / serbest tarih filtresi / Faz 4 widget.
 - **Proje konumu:** `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room` (İngilizce ad — Türkçe/boşluklu yol Flutter'ı bozuyordu; aşağıdaki nota bak)
 - **Sıradaki adım:** (1) Kullanıcı Supabase hesabı açar → `env.json` doldurulur → uçtan uca test. (2) Sonra Faz 3 (istatistik) gerçek veriyle.
 - **Bekleyen (kullanıcı/admin):** Windows'ta eklenti derlemesi için **Geliştirici Modu** açılmalı (`ms-settings:developers`); web/Chrome çalıştırma için gerekmez.
@@ -128,8 +128,10 @@
 - [ ] Çevrimdışı tespiti (uygulama kapanınca/heartbeat) — sonra (şu an yalnızca durdurunca offline)
 
 ### 2.3 Manuel Giriş
-- [ ] Gün sonu manuel süre ekleme
-- [ ] Manuel giriş kuralları (limit, düzenleme, silme)
+- [x] Gün sonu manuel süre ekleme — Profil → "Çalışma kayıtlarım" → Manuel ekle (tarih + saat/dk)
+- [x] Manuel giriş kuralları (düzenleme, silme) — her oturum düzenlenip silinebilir; gelecek tarih seçilemez
+- [x] StudyRepository'ye `updateSession` + `deleteSession` eklendi (in-memory + Supabase)
+- [x] Türkçe yerelleştirme (flutter_localizations) — tarih seçici vb. Türkçe
 
 ---
 

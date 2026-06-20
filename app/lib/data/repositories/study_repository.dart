@@ -1,9 +1,15 @@
 import '../models/study_session.dart';
 
-/// Çalışma oturumlarının deposu. Şimdilik bellek-içi; ileride Supabase ile değiştirilecek.
+/// Çalışma oturumlarının deposu. Anahtar varsa Supabase, yoksa bellek-içi.
 abstract class StudyRepository {
-  /// Tamamlanmış bir oturumu kaydeder.
+  /// Tamamlanmış bir oturumu kaydeder (canlı sayaç veya manuel giriş).
   Future<void> addSession(StudySession session);
+
+  /// Var olan bir oturumu günceller (manuel düzenleme — yalnızca kendi oturumu).
+  Future<void> updateSession(StudySession session);
+
+  /// Bir oturumu siler (yalnızca kendi oturumu).
+  Future<void> deleteSession(String sessionId);
 
   /// Bir kullanıcının oturumlarını (yeni → eski) canlı izler.
   Stream<List<StudySession>> watchUserSessions(String userId);

@@ -15,6 +15,19 @@ class SupabaseStudyRepository implements StudyRepository {
   }
 
   @override
+  Future<void> updateSession(StudySession session) async {
+    await _client
+        .from('study_sessions')
+        .update(session.toMap())
+        .eq('id', session.id);
+  }
+
+  @override
+  Future<void> deleteSession(String sessionId) async {
+    await _client.from('study_sessions').delete().eq('id', sessionId);
+  }
+
+  @override
   Stream<List<StudySession>> watchUserSessions(String userId) {
     return _client
         .from('study_sessions')

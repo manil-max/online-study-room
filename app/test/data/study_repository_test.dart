@@ -39,4 +39,23 @@ void main() {
     final all = await repo.watchGroupSessions('g1').first;
     expect(all, hasLength(2));
   });
+
+  test('updateSession süreyi günceller', () async {
+    final repo = InMemoryStudyRepository();
+    await repo.addSession(_session('1', 'u1', 'g1', DateTime(2026, 6, 21, 8), 600));
+    await repo.updateSession(_session('1', 'u1', 'g1', DateTime(2026, 6, 21, 8), 1800));
+
+    final mine = await repo.watchUserSessions('u1').first;
+    expect(mine.single.durationSeconds, 1800);
+  });
+
+  test('deleteSession oturumu kaldırır', () async {
+    final repo = InMemoryStudyRepository();
+    await repo.addSession(_session('1', 'u1', 'g1', DateTime(2026, 6, 21, 8), 600));
+    await repo.addSession(_session('2', 'u1', 'g1', DateTime(2026, 6, 21, 9), 900));
+    await repo.deleteSession('1');
+
+    final mine = await repo.watchUserSessions('u1').first;
+    expect(mine.map((e) => e.id).toList(), ['2']);
+  });
 }
