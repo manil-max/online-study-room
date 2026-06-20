@@ -229,6 +229,11 @@ kendi sunucumuzu (self-host) veya başka ücretsiz katmanı değerlendiririz.
 - **2026-06-20:** Proje başlatıldı. Stack: Flutter + Supabase (ücretsiz, APK sideload ile
   0 maliyet). Giriş: e-posta + şifre. İlk hedef platform: Android. iOS kapsam dışı.
   Öncelik: önce altyapı/ana hatlar. Ders sistemi sonraya bırakıldı.
+- **2026-06-21 (profil fotoğrafı):** Avatar'lar **public** bir Supabase Storage bucket'ında
+  (`avatars`) tutulur; dosya yolu `<uid>/avatar` (RLS: kullanıcı yalnızca kendi klasörüne yazar).
+  Public bucket seçildi çünkü `avatar_url`'i doğrudan göstermek basit; URL'e önbellek kırıcı
+  `?v=<ts>` eklenir. Yükleme yalnızca Supabase modunda çalışır (bellek-içi modda hata verir).
+  Kurulum: `migrations/0002_avatars_storage.sql`.
 - **2026-06-21 (canlı presence):** Presence yazımı **sayaç başlat/durdur** anında yapılıyor
   (başla → `studying`, durdur → `offline`). Çevrimdışı tespiti için heartbeat/yaşam-döngüsü
   henüz yok → uygulama kapanırsa durum bir süre "çalışıyor" kalabilir; sonraki fazda

@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/utils/duration_format.dart';
+import '../../core/widgets/user_avatar.dart';
 import '../../data/models/presence.dart';
 import '../../data/models/profile.dart';
 import '../../data/providers/auth_providers.dart';
@@ -251,10 +252,9 @@ class _MemberTile extends StatelessWidget {
       contentPadding: const EdgeInsets.symmetric(horizontal: 4),
       leading: Stack(
         children: [
-          CircleAvatar(
-            child: Text(member.displayName.isNotEmpty
-                ? member.displayName.substring(0, 1).toUpperCase()
-                : '?'),
+          UserAvatar(
+            displayName: member.displayName,
+            avatarUrl: member.avatarUrl,
           ),
           Positioned(
             right: 0,

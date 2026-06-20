@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:supabase_flutter/supabase_flutter.dart' as supa;
 
 import '../../models/profile.dart';
@@ -97,6 +99,34 @@ class SupabaseAuthRepository implements AuthRepository {
         .from('profiles')
         .update({'display_name': name}).eq('id', cur.id);
     _current = cur.copyWith(displayName: name);
+  }
+
+  @override
+  Future<void> updateAvatar({
+    required Uint8List bytes,
+    required String contentType,
+  }) async {
+    final cur = _current;
+    if (cur == null) return;
+    // Dosya yolu: <uid>/avatar — RLS politikası ilk klasörün uid olmasını şart koşar.
+    final path = '${cur.id}/avatar';
+    try {
+      await _client.storage.from('avatars').uploadBinary(
+            path,
+            bytes,
+            fileOptions: supa.FileOptions(
+              upsert: true,
+              contentType: contentType,
+            ),
+          );
+      final base = _client.storage.from('avatars').getPublicUrl(path);
+      // Önbellek kırıcı: ayni yola yüklenince CDN eskisini göstermesin.
+      final url = '$base?v=${DateTime.now().millisecondsSinceEpoch}';
+      await _client.from('profiles').update({'avatar_url': url}).eq('id', cur.id);
+      _current = cur.copyWith(avatarUrl: url);
+    } on supa.StorageException catch (e) {
+      throw AuthException('Fotoğraf yüklenemedi: ${e.message}');
+    }
   }
 
   @override

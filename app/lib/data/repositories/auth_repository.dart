@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import '../models/profile.dart';
 
 /// Kimlik doğrulama hatası (kullanıcıya gösterilebilir Türkçe mesaj taşır).
@@ -31,6 +33,12 @@ abstract class AuthRepository {
 
   /// Giriş yapan kullanıcının görünen adını günceller.
   Future<void> updateDisplayName(String displayName);
+
+  /// Profil fotoğrafını yükler ve `avatar_url`'ı günceller (Supabase Storage gerekir).
+  Future<void> updateAvatar({
+    required Uint8List bytes,
+    required String contentType,
+  });
 
   Future<void> signOut();
 }

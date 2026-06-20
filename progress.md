@@ -10,7 +10,7 @@
 
 ## Özet Durum
 
-- **Aktif Faz:** Faz 1.2 görünen ad düzenleme TAMAMLANDI ✅. Son oturumda tamamlananlar: Faz 2.2 canlı presence, Faz 3 istatistikler, Faz 2.3 manuel giriş, görünen ad düzenleme + Türkçe yerelleştirme. **Sıradaki kullanıcı kararı gereken:** Profil fotoğrafı (Faz 1.2) Supabase Storage bucket'ı ister. Koddan devam edilebilecekler: serbest tarih filtresi (Faz 3), Faz 4 widget.
+- **Aktif Faz:** Faz 1.2 TAMAMLANDI ✅ (profil ekranı + ad düzenleme + **profil fotoğrafı**). Son oturumda tamamlananlar: Faz 2.2 canlı presence, Faz 3 istatistikler (3a–3d), Faz 2.3 manuel giriş, Faz 1.2 profil. **Kullanıcı aksiyonu bekleyen:** `migrations/0002_avatars_storage.sql` Supabase'de çalıştırılmalı (foto yükleme için). Sıradaki: Faz 4 widget / mola mantığı / tasarım.
 - **Proje konumu:** `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room` (İngilizce ad — Türkçe/boşluklu yol Flutter'ı bozuyordu; aşağıdaki nota bak)
 - **Sıradaki adım:** (1) Kullanıcı Supabase hesabı açar → `env.json` doldurulur → uçtan uca test. (2) Sonra Faz 3 (istatistik) gerçek veriyle.
 - **Bekleyen (kullanıcı/admin):** Windows'ta eklenti derlemesi için **Geliştirici Modu** açılmalı (`ms-settings:developers`); web/Chrome çalıştırma için gerekmez.
@@ -96,8 +96,10 @@
 > (geçici). Supabase gelince sadece provider'daki implementasyon değişecek, UI aynı kalacak.
 
 ### 1.2 Profil
-- [x] Profil ekranı (görünen ad) — avatar (baş harf), ad, çıkış, "Çalışma kayıtlarım" girişi
-- [ ] Profil fotoğrafı yükleme (Supabase Storage) — **bekliyor:** kullanıcı Storage bucket'ı açmalı
+- [x] Profil ekranı (görünen ad) — avatar, ad, çıkış, "Çalışma kayıtlarım" girişi
+- [x] Profil fotoğrafı yükleme (Supabase Storage) — image_picker + `avatars` bucket'a upload;
+  avatar profil/canlı liste/leaderboard'da gösteriliyor (`UserAvatar`). **Kullanıcı aksiyonu:**
+  `migrations/0002_avatars_storage.sql` bir kez çalıştırılmalı (bkz. supabase/README.md §2.1)
 - [x] Profil düzenleme (görünen ad) — kalem ikonu → düzenle diyaloğu (`updateDisplayName`)
 
 ### 1.3 Sınıf / Grup

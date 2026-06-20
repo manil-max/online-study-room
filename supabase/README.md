@@ -13,6 +13,12 @@ Bu klasör veritabanı şemasını (migrations) içerir. Aşağıdaki adımlar b
 2. `migrations/0001_initial_schema.sql` dosyasının tamamını yapıştır → **Run**.
 3. "Success" görmelisin. (Tablolar, trigger ve RLS kurulur.)
 
+## 2.1 Profil fotoğrafı deposu (Storage)
+1. Yine **SQL Editor** → **New query**.
+2. `migrations/0002_avatars_storage.sql` dosyasının tamamını yapıştır → **Run**.
+3. Bu, herkese açık (public) bir **`avatars`** bucket'ı oluşturur ve kullanıcıların
+   yalnızca kendi klasörlerine yazmasına izin verir. (Profil fotoğrafı yükleme bunu kullanır.)
+
 ## 3. E-posta doğrulamasını kapat (küçük grup için pratiklik)
 - Sol menü → **Authentication** → **Sign In / Providers** → **Email** →
   **Confirm email** seçeneğini **kapat** → Save.

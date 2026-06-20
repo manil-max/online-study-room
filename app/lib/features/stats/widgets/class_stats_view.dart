@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/stats/study_stats.dart';
 import '../../../core/utils/duration_format.dart';
+import '../../../core/widgets/user_avatar.dart';
 import '../../../data/models/profile.dart';
 import '../../../data/models/study_session.dart';
 
@@ -100,6 +101,7 @@ class _ClassStatsViewState extends State<ClassStatsView> {
             _LeaderboardRow(
               rank: i + 1,
               name: rows[i].member.displayName,
+              avatarUrl: rows[i].member.avatarUrl,
               seconds: rows[i].seconds,
               maxSeconds: maxSeconds,
               isMe: rows[i].member.id == widget.currentUserId,
@@ -142,6 +144,7 @@ class _LeaderboardRow extends StatelessWidget {
   const _LeaderboardRow({
     required this.rank,
     required this.name,
+    required this.avatarUrl,
     required this.seconds,
     required this.maxSeconds,
     required this.isMe,
@@ -149,6 +152,7 @@ class _LeaderboardRow extends StatelessWidget {
 
   final int rank;
   final String name;
+  final String? avatarUrl;
   final int seconds;
   final int maxSeconds;
   final bool isMe;
@@ -172,6 +176,8 @@ class _LeaderboardRow extends StatelessWidget {
             width: 28,
             child: Text(medal, style: theme.textTheme.titleMedium),
           ),
+          const SizedBox(width: 8),
+          UserAvatar(displayName: name, avatarUrl: avatarUrl, radius: 16),
           const SizedBox(width: 8),
           Expanded(
             child: Column(

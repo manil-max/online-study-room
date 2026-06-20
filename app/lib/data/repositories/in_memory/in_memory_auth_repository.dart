@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:uuid/uuid.dart';
 
@@ -92,6 +93,16 @@ class InMemoryAuthRepository implements AuthRepository {
       if (acc.profile.id == cur.id) acc.profile = updated;
     }
     _controller.add(updated);
+  }
+
+  @override
+  Future<void> updateAvatar({
+    required Uint8List bytes,
+    required String contentType,
+  }) async {
+    // Bellek-içi modda gerçek depolama yok; yükleme Supabase gerektirir.
+    throw const AuthException(
+        'Profil fotoğrafı yüklemek için Supabase bağlantısı gerekli.');
   }
 
   @override

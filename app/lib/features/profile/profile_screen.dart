@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
+import '../../core/widgets/user_avatar.dart';
 import '../../data/providers/auth_providers.dart';
 import '../../data/repositories/auth_repository.dart';
 import 'session_history_screen.dart';
 
 /// Profil sekmesi: foto, görünen ad, ayarlar, davet kodu. Bkz. project.md §3.2.
-/// Şimdilik temel profil bilgisi + çıkış. Foto/düzenleme sonraki adımlarda.
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
@@ -15,25 +16,41 @@ class ProfileScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final profile = ref.watch(authStateProvider).value;
 
-    final initial = (profile?.displayName.isNotEmpty ?? false)
-        ? profile!.displayName.substring(0, 1).toUpperCase()
-        : '?';
-
     return Scaffold(
       appBar: AppBar(title: const Text('Profil')),
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
           Center(
-            child: CircleAvatar(
-              radius: 44,
-              backgroundColor: theme.colorScheme.primaryContainer,
-              child: Text(
-                initial,
-                style: theme.textTheme.headlineMedium?.copyWith(
-                  color: theme.colorScheme.onPrimaryContainer,
+            child: Stack(
+              children: [
+                UserAvatar(
+                  displayName: profile?.displayName ?? '',
+                  avatarUrl: profile?.avatarUrl,
+                  radius: 48,
                 ),
-              ),
+                if (profile != null)
+                  Positioned(
+                    right: 0,
+                    bottom: 0,
+                    child: Material(
+                      color: theme.colorScheme.primary,
+                      shape: const CircleBorder(),
+                      child: InkWell(
+                        customBorder: const CircleBorder(),
+                        onTap: () => _pickAvatar(context, ref),
+                        child: Padding(
+                          padding: const EdgeInsets.all(6),
+                          child: Icon(
+                            Icons.photo_camera,
+                            size: 18,
+                            color: theme.colorScheme.onPrimary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
           const SizedBox(height: 16),
@@ -114,6 +131,34 @@ class ProfileScreen extends ConsumerWidget {
     try {
       await ref.read(authRepositoryProvider).updateDisplayName(name);
       ref.invalidate(authStateProvider);
+    } on AuthException catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+    }
+  }
+
+  Future<void> _pickAvatar(BuildContext context, WidgetRef ref) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final picker = ImagePicker();
+    final file = await picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 512,
+      maxHeight: 512,
+      imageQuality: 85,
+    );
+    if (file == null) return;
+
+    final bytes = await file.readAsBytes();
+    final contentType = file.mimeType ??
+        (file.name.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg');
+    try {
+      await ref.read(authRepositoryProvider).updateAvatar(
+            bytes: bytes,
+            contentType: contentType,
+          );
+      ref.invalidate(authStateProvider);
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Profil fotoğrafı güncellendi')),
+      );
     } on AuthException catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(e.message)));
     }
