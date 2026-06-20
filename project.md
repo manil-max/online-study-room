@@ -40,6 +40,21 @@ giriş yapıldığında veriler eşitlenir.
 
 ## 3. Özellik Gereksinimleri
 
+### 3.0 Ekran Yapısı / Navigasyon ✅
+Alt menüde **3 sekme**:
+
+| Sekme | İçerik |
+|---|---|
+| 🏠👥 **Sınıf** | Ana sayfa + canlı sınıf **tek ekranda birleşik**. Üstte kendi çalışma kontrolün (Başla/Durdur, bugünkü süre), altta YPT tarzı canlı sınıf (masa/lamba — kim çalışıyor). |
+| 📊 **İstatistik** | İki tür: **(1) Kişisel** istatistik, **(2) Sınıf** (ortak) istatistik. Bkz. §3.4. |
+| 👤 **Profil** | Foto, görünen ad, ayarlar, davet kodu, sınıftan çıkış. |
+
+- Birleştirme gerekçesi: Tek sınıfa girileceği için ayrı "ana sayfa" ve "canlı sınıf" ekranı
+  gereksiz; tek ekranda toplamak daha sade.
+
+> **Not (genel ilke):** Görsel tasarım (renkler, görseller, yerleşim, tema) **en sona**
+> bırakılacaktır. Önce işlevsellik ve altyapı; tasarım en son iş.
+
 ### 3.1 Grup / Sınıf Sistemi ✅
 - Bir kullanıcı sınıf oluşturur, **davet kodu** üretilir.
 - Diğerleri kodla sınıfa katılır.
@@ -59,20 +74,39 @@ giriş yapıldığında veriler eşitlenir.
   senkron). 🟡
 
 ### 3.4 Detaylı İstatistikler ✅ (öncelikli özellik)
-İstenen metrikler:
+
+**İki ayrı istatistik türü olacak:**
+
+**(1) Kişisel İstatistik** — kullanıcının kendi verisi:
 - Günlük ortalama çalışma süresi
 - **Hafta içi / hafta sonu** ayrımı
 - Zaman aralıkları: son 1 ay, son 1 yıl, **seçili tarih aralığı**
-- **Kıyaslamalı grafikler** (kullanıcılar arası ve/veya dönemler arası)
-- ❓ Detaylar (hangi grafik tipleri, hangi metrikler) sonra netleşecek. Bkz. §9 Açık Sorular.
+- Dönemler arası kıyaslama (örn. bu hafta vs geçen hafta) grafikleri
+
+**(2) Sınıf (Ortak) İstatistik** — sınıfa özel toplu/kıyaslamalı veriler:
+- **Görünürlük: tam şeffaf** ✅ — herkes herkesin verisini görür (güven grubu, YPT mantığı).
+- Sınıf üyelerinin **kıyaslamalı** grafikleri/tabloları (kim ne kadar çalışmış)
+- Sınıf toplamı / sınıf ortalaması
+- **Sıralama (leaderboard): günlük + haftalık + aylık** ✅
+- ❓ Hangi grafik tipleri, ek metrikler sonra.
+
+- ❓ Detaylar (grafik tipleri, ek metrikler) netleşecek. Bkz. §9 Açık Sorular.
 
 ### 3.5 Canlı Çalışma Ekranı ✅
-- YPT tarzı: **masalar / lambalar** — kim aktif çalışıyor görsel olarak belli olur
-  (çalışırken "lamba yanar").
-- Kimin ne kadar süredir çalıştığı görünür.
-- 🟡 Mola (break) durumu gösterimi.
-- **Manuel süre girişi:** Başka bir uygulamada/yerde tutulan süre, gün sonu elle eklenebilir.
-- ❓ Manuel giriş kuralları (geriye dönük gün limiti, düzenleme/silme) sonra.
+- Sınıftaki kullanıcılar **kart/öğe** olarak gösterilir (klasik YPT "masa" konsepti YOK).
+  **Görsel temsil kullanıcı tarafından sağlanacak bir PNG/foto ile yapılacak** — bu nedenle
+  görselin nasıl yerleşeceği **tasarım aşamasında (en sona)** netleşecek.
+- Her kişide gösterilecek bilgiler ✅:
+  - Profil fotoğrafı + görünen ad
+  - **Anlık süre** (o an ne kadardır çalışıyor — canlı sayaç)
+  - **Bugünkü toplam süre**
+  - **Durum:** çalışıyor / mola / çevrimdışı
+- **Süre tutma davranışı:** Sayaç arka planda **kesintisiz çalışır** ✅ — telefon kilitlense
+  veya başka uygulamaya geçilse de durmaz (otomatik mola/durdurma yok).
+- **Manuel süre girişi:** Esnek ✅ — bugüne veya **geçmiş bir tarihe** süre eklenebilir,
+  düzenlenebilir, silinebilir. (Dürüstlük güvene dayalı.)
+- **Kaynak ayrımı yok** ✅ — manuel ve otomatik süre **aynı sayılır**, istatistikte ayrı
+  gösterilmez.
 
 ### 3.6 Widget'lar ✅
 - **Android ana ekran widget'ı:** Uygulamayı açmadan tek dokunuşla "çalışmaya başla",
@@ -140,7 +174,8 @@ kıyaslama) çok daha kolay ve veri taşınabilir. Karar 🟡 (henüz kesinleşm
 - **group_members** — `group_id`, `user_id`, `role` (admin/member), `joined_at`
 - **subjects** (ders — ❓ kullanılacak mı belirsiz) — `id`, `user_id`, `name`, `color`
 - **study_sessions** — `id`, `user_id`, `group_id`, `subject_id?`, `start_time`,
-  `end_time`, `duration_seconds`, `source` (`live` | `manual`), `date`
+  `end_time`, `duration_seconds`, `source` (`live`|`manual` — sadece kayıt amaçlı,
+  istatistikte/UI'da ayrım yapılmaz), `date`
 - **presence** (Realtime, kalıcı olmayabilir) — `user_id`, `status`
   (`studying`/`break`/`offline`), `current_subject_id?`, `started_at`
 
@@ -180,9 +215,8 @@ kendi sunucumuzu (self-host) veya başka ücretsiz katmanı değerlendiririz.
 
 - **Ders/kategori sistemi:** Kendi derslerini mi tanımlayacaklar (Matematik, Fizik...),
   yoksa tek "çalışma" sayacı mı?
-- **Manuel giriş kuralları:** Geriye dönük kaç gün eklenebilir? Düzenleme/silme serbest mi?
-- **Mola sayımı:** YPT'deki gibi mola süresi ayrı mı tutulsun?
-- **Süre tutma davranışı:** Uygulama/telefon kapanınca sayaç ne olur? Arka planda devam mı?
+- **Mola (break) mantığı:** Kullanıcı elle "mola" durumuna geçebilecek mi? Mola süresi ayrı
+  mı tutulsun yoksa sadece "durum" göstergesi mi olsun?
 - **İstatistik detayı:** Hangi grafik tipleri, hangi kıyaslamalar?
 - **Widget içeriği:** Hangi bilgiler, hangi boyut, hangi platform öncelikli?
 - **Tasarım dili:** Renkler, tema (açık/koyu), genel görünüm/his.
