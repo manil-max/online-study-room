@@ -53,6 +53,16 @@
 > - JAVA_HOME ve PATH (User) ayarlandı. Android lisansları CI tarzı dosyaya yazılarak kabul edildi.
 > - ⚠️ Gelecek oturumları `C:\Dev\online-study-room` içinde aç. Proje yolunda Türkçe karakter/boşluk OLMAMALI.
 
+> **Geliştirme komutları (PowerShell):** Her komuttan önce ortamı ayarla:
+> ```
+> $env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"
+> $env:Path = "C:\src\flutter\bin;" + $env:Path
+> Set-Location "C:\Dev\online-study-room\app"
+> ```
+> Sonra: `flutter analyze` · `flutter test` · `flutter run -d chrome` (tarayıcıda göster) ·
+> `flutter build apk --release` (telefona kurmak için APK).
+> GitHub: `manil-max/online-study-room` (public, gh CLI kurulu, push yetkili).
+
 ### 0.3 Supabase Kurulumu
 - [ ] Ücretsiz Supabase hesabı + proje açma
 - [ ] Uygulamaya Supabase client bağlantısı
