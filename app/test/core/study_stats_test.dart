@@ -1,0 +1,85 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:online_study_room/core/stats/study_stats.dart';
+import 'package:online_study_room/data/models/study_session.dart';
+
+StudySession _s(String user, DateTime start, int seconds) => StudySession(
+      id: '$user-${start.toIso8601String()}',
+      userId: user,
+      groupId: 'g1',
+      start: start,
+      end: start.add(Duration(seconds: seconds)),
+      durationSeconds: seconds,
+      source: StudySource.live,
+    );
+
+void main() {
+  test('startOfWeek Pazartesi 00:00 verir', () {
+    // 2026-06-21 bir Pazar.
+    final monday = startOfWeek(DateTime(2026, 6, 21, 15, 30));
+    expect(monday, DateTime(2026, 6, 15));
+  });
+
+  test('totalSeconds ve inRange', () {
+    final sessions = [
+      _s('u1', DateTime(2026, 6, 18, 9), 600),
+      _s('u1', DateTime(2026, 6, 20, 9), 1200),
+      _s('u1', DateTime(2026, 6, 25, 9), 300),
+    ];
+    expect(totalSeconds(sessions), 2100);
+    final ranged = inRange(sessions, DateTime(2026, 6, 18), DateTime(2026, 6, 20));
+    expect(totalSeconds(ranged), 1800);
+  });
+
+  test('secondsOnDay yalnızca o günü toplar', () {
+    final sessions = [
+      _s('u1', DateTime(2026, 6, 20, 8), 600),
+      _s('u1', DateTime(2026, 6, 20, 14), 900),
+      _s('u1', DateTime(2026, 6, 21, 8), 300),
+    ];
+    expect(secondsOnDay(sessions, DateTime(2026, 6, 20)), 1500);
+  });
+
+  test('lastNDays eski→yeni sıralı, boş günler 0', () {
+    final sessions = [
+      _s('u1', DateTime(2026, 6, 19, 8), 600),
+      _s('u1', DateTime(2026, 6, 21, 8), 1200),
+    ];
+    final series = lastNDays(sessions, 3, today: DateTime(2026, 6, 21, 23));
+    expect(series.map((d) => d.day).toList(),
+        [DateTime(2026, 6, 19), DateTime(2026, 6, 20), DateTime(2026, 6, 21)]);
+    expect(series.map((d) => d.seconds).toList(), [600, 0, 1200]);
+  });
+
+  test('dailyAverageSeconds boş günleri paydaya katar', () {
+    final sessions = [
+      _s('u1', DateTime(2026, 6, 20, 8), 600),
+      _s('u1', DateTime(2026, 6, 22, 8), 600),
+    ];
+    // 20–22 arası 3 gün, toplam 1200 → ortalama 400.
+    final avg = dailyAverageSeconds(sessions, DateTime(2026, 6, 20), DateTime(2026, 6, 22));
+    expect(avg, 400);
+  });
+
+  test('weekdayWeekendSplit hafta içi/sonu ayırır', () {
+    final sessions = [
+      _s('u1', DateTime(2026, 6, 19, 8), 600), // Cuma → hafta içi
+      _s('u1', DateTime(2026, 6, 20, 8), 900), // Cumartesi → hafta sonu
+      _s('u1', DateTime(2026, 6, 21, 8), 300), // Pazar → hafta sonu
+    ];
+    final split = weekdayWeekendSplit(sessions);
+    expect(split.weekday, 600);
+    expect(split.weekend, 1200);
+  });
+
+  test('leaderboard kullanıcı başına toplar ve büyükten küçüğe sıralar', () {
+    final sessions = [
+      _s('u1', DateTime(2026, 6, 20, 8), 600),
+      _s('u2', DateTime(2026, 6, 20, 8), 1500),
+      _s('u1', DateTime(2026, 6, 21, 8), 300),
+    ];
+    final board = leaderboard(sessions);
+    expect(board.map((e) => e.key).toList(), ['u2', 'u1']);
+    expect(board.first.value, 1500);
+    expect(board.last.value, 900);
+  });
+}
