@@ -138,13 +138,15 @@
 - [x] Veri sorguları (günlük/haftalık/aylık/yıllık) — saf hesaplama katmanı `core/stats/study_stats.dart`
 - [x] Günlük ortalama hesaplama (son 30 gün, çalışılmayan günler paydada)
 - [x] Hafta içi / hafta sonu ayrımı
-- [ ] Seçili tarih aralığı filtreleri — sonra
-- [ ] Grafikler (fl_chart) — 3b
-- [ ] Kıyaslamalı görünümler (kullanıcılar / dönemler arası) — sınıf leaderboard 3c
+- [~] Seçili tarih aralığı filtreleri — trend grafiğinde 7/14/30 gün seçici var; serbest tarih aralığı sonra
+- [x] Grafikler (fl_chart) — günlük çubuk grafiği + dönemler arası kıyas kartı
+- [ ] Kıyaslamalı görünümler (kullanıcılar / dönemler arası) — dönemler arası (hafta) ✅; sınıf leaderboard 3c
 
 > 3a TAMAM: İstatistik ekranı Kişisel/Sınıf sekmelerine ayrıldı. Kişisel: dönem toplamları
 > (bugün/hafta/ay/yıl) + günlük ortalama + hafta içi/sonu kartları. Sınıf sekmesi şimdilik
 > toplam gösteriyor (leaderboard 3c). Tüm hesaplama saf fonksiyonlarda, testli.
+> 3b TAMAM: fl_chart 1.2.0 eklendi. Günlük çubuk grafiği (7/14/30 gün seçici) + "bu hafta
+> vs geçen hafta" kıyas kartı (artış/azalış göstergesi) kişisel görünüme eklendi.
 
 ---
 

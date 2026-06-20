@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/stats/study_stats.dart';
 import '../../../core/utils/duration_format.dart';
 import '../../../data/models/study_session.dart';
+import 'daily_bar_chart.dart';
 
 /// Kişisel istatistik özeti: dönem toplamları, günlük ortalama ve
 /// hafta içi / hafta sonu ayrımı. Grafikler Faz 3b'de eklenecek.
@@ -82,6 +83,12 @@ class PersonalStatsView extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 16),
+        Text('Günlük dağılım', style: theme.textTheme.titleMedium),
+        const SizedBox(height: 8),
+        _TrendCard(sessions: sessions),
+        const SizedBox(height: 16),
+        _WeekComparisonCard(sessions: sessions, now: now),
+        const SizedBox(height: 16),
         Text('Son 30 gün', style: theme.textTheme.titleMedium),
         const SizedBox(height: 8),
         _StatCard(
@@ -109,6 +116,143 @@ class PersonalStatsView extends StatelessWidget {
             ),
           ],
         ),
+      ],
+    );
+  }
+}
+
+/// Günlük çubuk grafiği + gün aralığı seçici (7 / 14 / 30 gün).
+class _TrendCard extends StatefulWidget {
+  const _TrendCard({required this.sessions});
+
+  final List<StudySession> sessions;
+
+  @override
+  State<_TrendCard> createState() => _TrendCardState();
+}
+
+class _TrendCardState extends State<_TrendCard> {
+  int _days = 14;
+
+  @override
+  Widget build(BuildContext context) {
+    final series = lastNDays(widget.sessions, _days);
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+        child: Column(
+          children: [
+            SegmentedButton<int>(
+              segments: const [
+                ButtonSegment(value: 7, label: Text('7 gün')),
+                ButtonSegment(value: 14, label: Text('14 gün')),
+                ButtonSegment(value: 30, label: Text('30 gün')),
+              ],
+              selected: {_days},
+              onSelectionChanged: (s) => setState(() => _days = s.first),
+              showSelectedIcon: false,
+            ),
+            const SizedBox(height: 16),
+            SizedBox(height: 180, child: DailyBarChart(days: series)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Bu hafta ile geçen haftanın kıyaslaması (dönemler arası — project.md §3.4).
+class _WeekComparisonCard extends StatelessWidget {
+  const _WeekComparisonCard({required this.sessions, required this.now});
+
+  final List<StudySession> sessions;
+  final DateTime now;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final thisWeekStart = startOfWeek(now);
+    final lastWeekStart = thisWeekStart.subtract(const Duration(days: 7));
+    final lastWeekEnd = thisWeekStart.subtract(const Duration(days: 1));
+
+    final thisWeek = totalSeconds(inRange(sessions, thisWeekStart, now));
+    final lastWeek = totalSeconds(inRange(sessions, lastWeekStart, lastWeekEnd));
+    final diff = thisWeek - lastWeek;
+    final improved = diff >= 0;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Bu hafta vs geçen hafta',
+                style: theme.textTheme.titleMedium),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _MiniMetric(
+                    label: 'Bu hafta',
+                    value: formatHuman(thisWeek),
+                  ),
+                ),
+                Expanded(
+                  child: _MiniMetric(
+                    label: 'Geçen hafta',
+                    value: formatHuman(lastWeek),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Icon(
+                  improved ? Icons.arrow_upward : Icons.arrow_downward,
+                  size: 18,
+                  color: improved ? Colors.green : theme.colorScheme.error,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  '${improved ? '+' : '-'}${formatHuman(diff.abs())}',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: improved ? Colors.green : theme.colorScheme.error,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  improved ? 'geçen haftaya göre artış' : 'geçen haftaya göre azalış',
+                  style: theme.textTheme.bodySmall
+                      ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Küçük etiket + değer (kıyas kartı için).
+class _MiniMetric extends StatelessWidget {
+  const _MiniMetric({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label,
+            style: theme.textTheme.labelMedium
+                ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+        const SizedBox(height: 2),
+        Text(value, style: theme.textTheme.titleMedium),
       ],
     );
   }
