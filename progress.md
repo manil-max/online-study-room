@@ -10,8 +10,8 @@
 
 ## Özet Durum
 
-- **Aktif Faz:** Faz 0 — Planlama & Kurulum
-- **Sıradaki adım:** Planlamayı tamamlamak (kullanıcı planlamaya devam etmek istiyor).
+- **Aktif Faz:** Faz 0.2 — Geliştirme Ortamı Kurulumu (Android ortamı hazır ✅)
+- **Sıradaki adım:** İskelet Flutter uygulamasını oluşturmak (`flutter create app`).
 
 ---
 
@@ -34,13 +34,18 @@
   - [ ] Tasarım dili (renk, tema, his) + örnek mockup'lar
 
 ### 0.2 Geliştirme Ortamı Kurulumu (planlama bitince)
-- [ ] Android Studio kurulumu (Android SDK + JDK + emülatör)
-- [ ] Flutter SDK kurulumu (C:\src\flutter + PATH)
-- [ ] `flutter doctor` — eksiklerin giderilmesi, lisans kabulü
-- [ ] VS Code / Android Studio Flutter eklentisi
+- [x] Android Studio kurulumu (Android SDK 36 + JDK/jbr)
+- [x] Flutter SDK 3.44.2 stable kurulumu (C:\src\flutter + PATH)
+- [x] Android SDK bileşenleri (platform-tools, android-35/36, build-tools 35/36)
+- [x] `flutter doctor` — Android toolchain ✅, JDK ✅, tüm Android lisansları kabul
+- [ ] Visual Studio (C++ workload) — **Faz 4'e ertelendi** (sadece Windows masaüstü için)
 - [ ] İskelet uygulama (`flutter create app`)
 - [x] Git deposu başlatma (.gitignore dâhil)
 - [x] GitHub uzak deposuna bağlanma (public: manil-max/online-study-room)
+
+> Not: Flutter `C:\src\flutter`, Android SDK `C:\Android\Sdk`, JDK Android Studio jbr
+> (`C:\Program Files\Android\Android Studio\jbr`). JAVA_HOME ve PATH (User) ayarlandı.
+> Android lisanslarını CI tarzı dosyaya yazarak kabul ettik (interaktif prompt'tan kaçınmak için).
 
 ### 0.3 Supabase Kurulumu
 - [ ] Ücretsiz Supabase hesabı + proje açma
