@@ -39,7 +39,8 @@
 - [ ] `flutter doctor` — eksiklerin giderilmesi, lisans kabulü
 - [ ] VS Code / Android Studio Flutter eklentisi
 - [ ] İskelet uygulama (`flutter create app`)
-- [ ] Git deposu başlatma (.gitignore dâhil)
+- [x] Git deposu başlatma (.gitignore dâhil)
+- [x] GitHub uzak deposuna bağlanma (public: manil-max/online-study-room)
 
 ### 0.3 Supabase Kurulumu
 - [ ] Ücretsiz Supabase hesabı + proje açma
