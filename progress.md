@@ -10,7 +10,7 @@
 
 ## Özet Durum
 
-- **Aktif Faz:** Faz 0.3 — Supabase kodu/şeması hazır ✅; **kullanıcı hesabı açıp anahtar verince** uçtan uca bağlanır
+- **Aktif Faz:** Faz 0.3 TAMAMLANDI ✅ — Supabase uçtan uca çalışıyor (kayıt/sınıf/oturum gerçek DB'ye yazılıyor). Sıradaki: Faz 2.2 canlı presence / Faz 3 istatistik / Faz 1.2 profil foto.
 - **Proje konumu:** `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room` (İngilizce ad — Türkçe/boşluklu yol Flutter'ı bozuyordu; aşağıdaki nota bak)
 - **Sıradaki adım:** (1) Kullanıcı Supabase hesabı açar → `env.json` doldurulur → uçtan uca test. (2) Sonra Faz 3 (istatistik) gerçek veriyle.
 - **Bekleyen (kullanıcı/admin):** Windows'ta eklenti derlemesi için **Geliştirici Modu** açılmalı (`ms-settings:developers`); web/Chrome çalıştırma için gerekmez.
@@ -71,7 +71,8 @@
 - [x] Uygulamaya Supabase client bağlantısı (`main.dart` + `core/config/supabase_config.dart`)
 - [x] Supabase repository implementasyonları (auth/group/study) — provider'lar anahtar varsa otomatik geçiş
 - [x] Ortam değişkeni / anahtar yönetimi (`--dart-define-from-file=env.json`, `env.example.json` şablon, `env.json` gitignore)
-- [ ] Anahtarlar girilip uçtan uca test (kullanıcı hesabı açınca)
+- [x] Anahtarlar girilip uçtan uca test — kayıt/sınıf/oturum gerçek Supabase'e yazıldı ✅
+- [x] Web passkeys hatası giderildi (`web/passkeys_bundle.js` + index.html)
 
 ---
 
@@ -185,3 +186,8 @@
   ile anahtar varsa Supabase'e, yoksa bellek-içine geçiyor (UI değişmedi). Anahtarlar
   `--dart-define-from-file=env.json` ile veriliyor. Analiz temiz, 18/18 test geçiyor.
   Kullanıcı kurulum rehberi: `supabase/README.md`.
+- **2026-06-21 (Supabase uçtan uca ✅):** Proje İngilizce yola taşındı
+  (`...\Desktop\Dev\online-study-room`), `C:\Dev` silindi. Kullanıcı Supabase projesi açtı,
+  şema kuruldu, e-posta doğrulaması kapatıldı, anahtarlar `env.json`'a girildi. Web'de passkeys
+  hatası `web/passkeys_bundle.js` ile giderildi. Chrome'da kayıt → sınıf → çalışma kaydı
+  test edildi; veriler gerçek veritabanında (profiles/groups/study_sessions) doğrulandı.
