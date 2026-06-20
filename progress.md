@@ -10,8 +10,9 @@
 
 ## Özet Durum
 
-- **Aktif Faz:** Faz 0.2 — Geliştirme Ortamı Kurulumu (Android ortamı hazır ✅)
-- **Sıradaki adım:** İskelet Flutter uygulamasını oluşturmak (`flutter create app`).
+- **Aktif Faz:** Faz 0.2 tamamlandı ✅ → sıradaki Faz 0.3 (Supabase) / Faz 1 (hesap+sınıf)
+- **Proje konumu:** `C:\Dev\online-study-room` (OneDrive/Türkçe yoldan taşındı — aşağıdaki nota bak)
+- **Sıradaki adım:** Supabase projesi açma + uygulamaya bağlama; ardından Faz 1.
 
 ---
 
@@ -23,15 +24,15 @@
 - [x] Giriş yöntemi kararı (e-posta + şifre)
 - [x] İlk platform kararı (Android)
 - [x] Dokümanlar oluşturuldu (project.md, progress.md, AGENTS.md)
-- [~] Detaylı planlama (akış, ekranlar, özellik detayları) — *devam ediyor*
-  - [ ] Genel akış / ekran haritası (sekmeler, navigasyon)
-  - [ ] Sınıf mantığı detayı (tek/çok sınıf, davet kodu akışı)
-  - [ ] Canlı çalışma ekranı detayı (masa/lamba, gösterilecek bilgiler)
-  - [ ] Süre tutma mantığı (arka plan, kapanma, manuel giriş kuralları)
-  - [ ] İstatistik detayı (grafik tipleri, metrikler, kıyaslamalar)
-  - [ ] Widget detayı (içerik, boyut, platform önceliği)
-  - [ ] Ders/kategori sistemi kararı
-  - [ ] Tasarım dili (renk, tema, his) + örnek mockup'lar
+- [x] Detaylı planlama (altyapı için yeterli — kalanlar ilgili faza ertelendi)
+  - [x] Genel akış / ekran haritası (3 sekme: Sınıf birleşik / İstatistik / Profil)
+  - [x] Sınıf mantığı (tek sınıf, davet kodu; mimari çoklu sınıfa hazır)
+  - [x] Canlı ekran (masa konsepti yok; kişi başına foto+isim+anlık+bugünkü+durum)
+  - [x] Süre tutma (arka planda kesintisiz; manuel esnek; kaynak ayrımı yok)
+  - [ ] İstatistik grafik detayı → Faz 3'e ertelendi
+  - [ ] Widget detayı → Faz 4'e ertelendi
+  - [ ] Ders/kategori sistemi kararı → ilgili faza ertelendi (subject_id opsiyonel)
+  - [ ] Tasarım dili → en sona ertelendi (kullanıcı görselleri verecek)
 
 ### 0.2 Geliştirme Ortamı Kurulumu (planlama bitince)
 - [x] Android Studio kurulumu (Android SDK 36 + JDK/jbr)
@@ -39,13 +40,18 @@
 - [x] Android SDK bileşenleri (platform-tools, android-35/36, build-tools 35/36)
 - [x] `flutter doctor` — Android toolchain ✅, JDK ✅, tüm Android lisansları kabul
 - [ ] Visual Studio (C++ workload) — **Faz 4'e ertelendi** (sadece Windows masaüstü için)
-- [ ] İskelet uygulama (`flutter create app`)
+- [x] İskelet uygulama (`flutter create`) — `app/`, org com.manilmax, platformlar: android/windows/web
+- [x] `flutter analyze` temiz (No issues found)
 - [x] Git deposu başlatma (.gitignore dâhil)
 - [x] GitHub uzak deposuna bağlanma (public: manil-max/online-study-room)
+- [x] **Proje temiz yola taşındı** → `C:\Dev\online-study-room`
 
-> Not: Flutter `C:\src\flutter`, Android SDK `C:\Android\Sdk`, JDK Android Studio jbr
-> (`C:\Program Files\Android\Android Studio\jbr`). JAVA_HOME ve PATH (User) ayarlandı.
-> Android lisanslarını CI tarzı dosyaya yazarak kabul ettik (interaktif prompt'tan kaçınmak için).
+> **Geliştirme ortamı yolları:**
+> - Proje: `C:\Dev\online-study-room` (Türkçe/boşluklu/OneDrive yol Flutter'ı bozduğu için taşındı)
+> - Flutter: `C:\src\flutter` · Android SDK: `C:\Android\Sdk`
+> - JDK: Android Studio jbr (`C:\Program Files\Android\Android Studio\jbr`)
+> - JAVA_HOME ve PATH (User) ayarlandı. Android lisansları CI tarzı dosyaya yazılarak kabul edildi.
+> - ⚠️ Gelecek oturumları `C:\Dev\online-study-room` içinde aç. Proje yolunda Türkçe karakter/boşluk OLMAMALI.
 
 ### 0.3 Supabase Kurulumu
 - [ ] Ücretsiz Supabase hesabı + proje açma
