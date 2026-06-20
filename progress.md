@@ -10,7 +10,7 @@
 
 ## Özet Durum
 
-- **Aktif Faz:** Faz 2.3 (manuel giriş) TAMAMLANDI ✅ — Profil → Çalışma kayıtlarım: manuel ekle/düzenle/sil. Ayrıca Türkçe yerelleştirme eklendi. Önceki tamamlananlar: Faz 2.2 canlı presence, Faz 3 istatistikler. Sıradaki: Faz 1.2 profil foto (Supabase Storage bucket gerekir → kullanıcı kurulumu) / serbest tarih filtresi / Faz 4 widget.
+- **Aktif Faz:** Faz 1.2 görünen ad düzenleme TAMAMLANDI ✅. Son oturumda tamamlananlar: Faz 2.2 canlı presence, Faz 3 istatistikler, Faz 2.3 manuel giriş, görünen ad düzenleme + Türkçe yerelleştirme. **Sıradaki kullanıcı kararı gereken:** Profil fotoğrafı (Faz 1.2) Supabase Storage bucket'ı ister. Koddan devam edilebilecekler: serbest tarih filtresi (Faz 3), Faz 4 widget.
 - **Proje konumu:** `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room` (İngilizce ad — Türkçe/boşluklu yol Flutter'ı bozuyordu; aşağıdaki nota bak)
 - **Sıradaki adım:** (1) Kullanıcı Supabase hesabı açar → `env.json` doldurulur → uçtan uca test. (2) Sonra Faz 3 (istatistik) gerçek veriyle.
 - **Bekleyen (kullanıcı/admin):** Windows'ta eklenti derlemesi için **Geliştirici Modu** açılmalı (`ms-settings:developers`); web/Chrome çalıştırma için gerekmez.
@@ -96,9 +96,9 @@
 > (geçici). Supabase gelince sadece provider'daki implementasyon değişecek, UI aynı kalacak.
 
 ### 1.2 Profil
-- [ ] Profil ekranı (görünen ad)
-- [ ] Profil fotoğrafı yükleme (Supabase Storage)
-- [ ] Profil düzenleme
+- [x] Profil ekranı (görünen ad) — avatar (baş harf), ad, çıkış, "Çalışma kayıtlarım" girişi
+- [ ] Profil fotoğrafı yükleme (Supabase Storage) — **bekliyor:** kullanıcı Storage bucket'ı açmalı
+- [x] Profil düzenleme (görünen ad) — kalem ikonu → düzenle diyaloğu (`updateDisplayName`)
 
 ### 1.3 Sınıf / Grup
 - [x] Sınıf oluşturma + davet kodu üretimi (6 haneli) — *bellek-içi*

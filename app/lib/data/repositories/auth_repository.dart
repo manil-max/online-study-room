@@ -29,5 +29,8 @@ abstract class AuthRepository {
     required String password,
   });
 
+  /// Giriş yapan kullanıcının görünen adını günceller.
+  Future<void> updateDisplayName(String displayName);
+
   Future<void> signOut();
 }

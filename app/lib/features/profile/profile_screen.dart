@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/providers/auth_providers.dart';
+import '../../data/repositories/auth_repository.dart';
 import 'session_history_screen.dart';
 
 /// Profil sekmesi: foto, görünen ad, ayarlar, davet kodu. Bkz. project.md §3.2.
@@ -36,11 +37,25 @@ class ProfileScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 16),
-          Center(
-            child: Text(
-              profile?.displayName ?? 'Misafir',
-              style: theme.textTheme.titleLarge,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Flexible(
+                child: Text(
+                  profile?.displayName.isNotEmpty == true
+                      ? profile!.displayName
+                      : 'Misafir',
+                  style: theme.textTheme.titleLarge,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (profile != null)
+                IconButton(
+                  tooltip: 'Adı düzenle',
+                  icon: const Icon(Icons.edit, size: 18),
+                  onPressed: () => _editName(context, ref, profile.displayName),
+                ),
+            ],
           ),
           const SizedBox(height: 32),
           Card(
@@ -65,5 +80,42 @@ class ProfileScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _editName(
+      BuildContext context, WidgetRef ref, String current) async {
+    final controller = TextEditingController(text: current);
+    final name = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Görünen adı düzenle'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          textCapitalization: TextCapitalization.words,
+          decoration: const InputDecoration(labelText: 'Görünen ad'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Vazgeç'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, controller.text),
+            child: const Text('Kaydet'),
+          ),
+        ],
+      ),
+    );
+    if (name == null || name.trim().isEmpty || name.trim() == current) return;
+    if (!context.mounted) return;
+
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await ref.read(authRepositoryProvider).updateDisplayName(name);
+      ref.invalidate(authStateProvider);
+    } on AuthException catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+    }
   }
 }

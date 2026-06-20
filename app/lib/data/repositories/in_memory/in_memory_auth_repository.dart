@@ -79,6 +79,22 @@ class InMemoryAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<void> updateDisplayName(String displayName) async {
+    final cur = _current;
+    if (cur == null) return;
+    final name = displayName.trim();
+    if (name.isEmpty) {
+      throw const AuthException('Görünen ad boş olamaz.');
+    }
+    final updated = cur.copyWith(displayName: name);
+    _current = updated;
+    for (final acc in _accounts.values) {
+      if (acc.profile.id == cur.id) acc.profile = updated;
+    }
+    _controller.add(updated);
+  }
+
+  @override
   Future<void> signOut() async {
     _current = null;
     _controller.add(null);

@@ -86,6 +86,20 @@ class SupabaseAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<void> updateDisplayName(String displayName) async {
+    final cur = _current;
+    if (cur == null) return;
+    final name = displayName.trim();
+    if (name.isEmpty) {
+      throw const AuthException('Görünen ad boş olamaz.');
+    }
+    await _client
+        .from('profiles')
+        .update({'display_name': name}).eq('id', cur.id);
+    _current = cur.copyWith(displayName: name);
+  }
+
+  @override
   Future<void> signOut() async {
     await _client.auth.signOut();
     _current = null;
