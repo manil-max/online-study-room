@@ -215,7 +215,8 @@
       bellek-içi+Supabase). **Supabase RLS:** `migrations/0004_group_admin.sql` (kullanıcı çalıştırmalı).
       47/47 test.
 - [x] (İleride) sınıf sohbeti için yer ayrıldı — ClassDetailScreen'de "Sohbet (yakında)" tile.
-- [ ] Aktif sınıf kalıcılığı (uygulama yenilenince hatırlama) — küçük, sonra (shared_preferences)
+- [x] Aktif sınıf kalıcılığı — `activeGroupIdProvider` artık `shared_preferences`'ta saklıyor
+  (uygulama yenilenince son aktif sınıf hatırlanır). Saat stili de kalıcı oldu.
 
 ## FAZ 3.7 — Profesyonel & Özelleştirilebilir Sayaç (2026-06-21 kararı, §3.12)
 

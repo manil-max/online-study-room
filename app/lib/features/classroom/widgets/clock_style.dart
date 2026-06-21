@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/prefs/app_prefs.dart';
 import '../../../core/theme/subject_colors.dart';
 import '../../../core/utils/duration_format.dart';
 import '../../../core/widgets/anchored_menu.dart';
@@ -33,13 +34,24 @@ extension ClockStyleInfo on ClockStyle {
 }
 
 class ClockStyleNotifier extends Notifier<ClockStyle> {
-  @override
-  ClockStyle build() => ClockStyle.digits;
+  static const _key = 'clock_style';
 
-  void set(ClockStyle style) => state = style;
+  @override
+  ClockStyle build() {
+    final name = ref.watch(sharedPreferencesProvider).getString(_key);
+    return ClockStyle.values.firstWhere(
+      (e) => e.name == name,
+      orElse: () => ClockStyle.digits,
+    );
+  }
+
+  void set(ClockStyle style) {
+    state = style;
+    ref.read(sharedPreferencesProvider).setString(_key, style.name);
+  }
 }
 
-/// Seçili saat stili (kişiye özel, şimdilik bellek-içi).
+/// Seçili saat stili (kişiye özel, cihazda kalıcı).
 final clockStyleProvider =
     NotifierProvider<ClockStyleNotifier, ClockStyle>(ClockStyleNotifier.new);
 

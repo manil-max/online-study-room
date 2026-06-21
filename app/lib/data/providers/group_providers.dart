@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/config/supabase_config.dart';
+import '../../core/prefs/app_prefs.dart';
 import '../models/profile.dart';
 import '../models/study_group.dart';
 import '../repositories/group_repository.dart';
@@ -27,12 +28,22 @@ final userGroupsProvider = StreamProvider<List<StudyGroup>>((ref) {
 });
 
 /// Aktif (görüntülenen) sınıfın id'si. Sınıf değiştirici buradan değiştirir.
-/// Şimdilik bellek-içi; kalıcılık sonraki adımda eklenecek.
+/// Cihazda kalıcı (uygulama yeniden açılınca son aktif sınıf hatırlanır).
 class ActiveGroupNotifier extends Notifier<String?> {
-  @override
-  String? build() => null;
+  static const _key = 'active_group_id';
 
-  void select(String? groupId) => state = groupId;
+  @override
+  String? build() => ref.watch(sharedPreferencesProvider).getString(_key);
+
+  void select(String? groupId) {
+    state = groupId;
+    final prefs = ref.read(sharedPreferencesProvider);
+    if (groupId == null) {
+      prefs.remove(_key);
+    } else {
+      prefs.setString(_key, groupId);
+    }
+  }
 }
 
 final activeGroupIdProvider =
