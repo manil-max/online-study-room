@@ -255,8 +255,10 @@
 
 ## FAZ 3.10 — İstatistikleri Zenginleştirme (§3.4 + §3.11) 🟡
 
-- [ ] Kişisel: haftalık/aylık çubuk + **ders bazında pasta/donut** (kardeş tasarımı gibi)
-- [ ] Sınıf: ek metrikler (günlük trend, haftalık değişim, ders bazında sınıf kıyası) + görünüm
+- [x] Kişisel: ders bazında **donut grafik** + yüzdeli açıklama (kardeş tasarımı gibi);
+  eski oransal çubuklar yerine `SubjectDonut` (fl_chart PieChart, ortada toplam saat).
+- [x] Sınıf: **günlük trend** (son 7 gün sınıf toplamı çubuk grafiği) leaderboard üstüne.
+- [ ] (Sonra) Daha fazla sınıf metriği (haftalık değişim, ders bazında sınıf kıyası, en istikrarlı üye).
 
 ---
 
@@ -317,6 +319,11 @@
   `SupabaseAuthRepository._profileFor` artık profil satırı çekilemezse (çevrimdışı/geçici hata)
   kullanıcıyı dışarı atmıyor; oturum geçerliyse metadata'dan geçici profille içeride tutuyor
   (project.md §3.3 çevrimdışı dayanıklılık). 37/37 test geçti, analiz temiz.
+- **2026-06-22 (istatistik zenginleştirme — FAZ 3.10 kısmen ✅):** Kişisel istatistikte ders
+  bazında dağılım eski çubuklar yerine **donut grafik** + yüzdeli açıklama (`SubjectDonut`,
+  fl_chart PieChart, ortada toplam saat). Sınıf istatistiğine **son 7 gün sınıf günlük trendi**
+  çubuk grafiği eklendi (leaderboard üstü). 52/52 test, analiz temiz. Kalan: daha fazla sınıf
+  metriği (haftalık değişim, ders bazında sınıf kıyası vb.).
 - **2026-06-21 (Ana Sayfa esnek dashboard — FAZ 3.8 ✅):** Kullanıcı kararı: tam
   özelleştirilebilir + sayaç varsayılan Ana Sayfa'da, isteyen Sınıflar'a ekler. `shared_preferences`
   eklendi (`core/prefs/app_prefs.dart`, main'de override). 4. sekme **Ana Sayfa** en başa

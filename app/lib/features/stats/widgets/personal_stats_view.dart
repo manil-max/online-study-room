@@ -8,6 +8,7 @@ import '../../../data/models/study_session.dart';
 import '../../../data/models/subject.dart';
 import '../../../data/providers/subject_providers.dart';
 import 'daily_bar_chart.dart';
+import 'subject_donut.dart';
 
 /// Kişisel istatistik özeti: dönem toplamları, günlük ortalama ve
 /// hafta içi / hafta sonu ayrımı. Grafikler Faz 3b'de eklenecek.
@@ -456,56 +457,62 @@ class _SubjectBreakdownCard extends ConsumerWidget {
       return null;
     }
 
-    final maxSeconds = breakdown.first.value.clamp(1, 1 << 30);
+    final total = breakdown.fold<int>(0, (s, e) => s + e.value);
+    final slices = [
+      for (final entry in breakdown)
+        SubjectDonutSlice(
+          label: subjectFor(entry.key)?.name ?? 'Derssiz',
+          color: subjectFor(entry.key) != null
+              ? subjectColor(subjectFor(entry.key)!.color)
+              : theme.colorScheme.onSurfaceVariant,
+          seconds: entry.value,
+        ),
+    ];
 
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            for (final entry in breakdown) ...[
-              Builder(
-                builder: (_) {
-                  final subject = subjectFor(entry.key);
-                  final name = subject?.name ?? 'Derssiz';
-                  final color = subject != null
-                      ? subjectColor(subject.color)
-                      : theme.colorScheme.onSurfaceVariant;
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          CircleAvatar(radius: 5, backgroundColor: color),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(name,
-                                style: theme.textTheme.bodyMedium,
-                                overflow: TextOverflow.ellipsis),
-                          ),
-                          Text(
-                            formatHuman(entry.value),
-                            style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
-                        child: LinearProgressIndicator(
-                          value: entry.value / maxSeconds,
-                          minHeight: 8,
-                          backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                          valueColor: AlwaysStoppedAnimation(color),
+            SubjectDonut(slices: slices, size: 132),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (final s in slices) ...[
+                    Row(
+                      children: [
+                        CircleAvatar(radius: 5, backgroundColor: s.color),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(s.label,
+                              style: theme.textTheme.bodyMedium,
+                              overflow: TextOverflow.ellipsis),
+                        ),
+                        Text(
+                          '%${total == 0 ? 0 : (s.seconds * 100 / total).round()}',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant),
+                        ),
+                      ],
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 18, bottom: 8),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          formatHuman(s.seconds),
+                          style: theme.textTheme.labelSmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant),
                         ),
                       ),
-                      const SizedBox(height: 12),
-                    ],
-                  );
-                },
+                    ),
+                  ],
+                ],
               ),
-            ],
+            ),
           ],
         ),
       ),

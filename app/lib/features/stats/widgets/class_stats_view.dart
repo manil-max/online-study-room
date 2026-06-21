@@ -5,6 +5,7 @@ import '../../../core/utils/duration_format.dart';
 import '../../../core/widgets/user_avatar.dart';
 import '../../../data/models/profile.dart';
 import '../../../data/models/study_session.dart';
+import 'daily_bar_chart.dart';
 
 /// Seçilebilir dönem (sınıf leaderboard'u için).
 enum _Period { today, week, month }
@@ -81,6 +82,27 @@ class _ClassStatsViewState extends State<ClassStatsView> {
               child: _SummaryCard(label: 'Kişi başı ort.', seconds: classAvg),
             ),
           ],
+        ),
+        const SizedBox(height: 16),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Text('Sınıf günlük trendi (son 7 gün)',
+                      style: theme.textTheme.titleSmall),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  height: 150,
+                  child: DailyBarChart(days: lastNDays(widget.sessions, 7)),
+                ),
+              ],
+            ),
+          ),
         ),
         const SizedBox(height: 16),
         Text('Sıralama', style: theme.textTheme.titleMedium),
