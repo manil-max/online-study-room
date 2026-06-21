@@ -114,6 +114,27 @@ Alt menüde **3 sekme**:
 - **Windows widget'ı:** Masaüstünde her zaman görünür mini bilgi/kontrol.
 - ❓ İçerik, boyut, hangi platform öncelikli — sonra konuşulacak.
 
+### 3.7 Dersler, Günlük Hedef ve Seri ✅ (2026-06-21 kararı)
+
+Kardeşin tasarladığı arayüz referansından gelen 3 özellik kararlaştırıldı:
+
+**Dersler (kategoriler) ✅** — Kullanıcı **kendi derslerini** tanımlar:
+- Her ders: **ad** + **renk** (paletten). Kullanıcı ekler/düzenler/siler.
+- Sayaç başlatılırken (veya çalışırken) bir **aktif ders** seçilir; oturum o derse yazılır.
+- İstatistik **ders bazında** ayrışır (donut/çubuk dağılımı — bkz. §3.4).
+- Manuel girişte de ders seçilir.
+- Veri: `subjects` tablosu (şemada hazırdı, artık kullanılıyor) + `study_sessions.subject_id`.
+
+**Günlük hedef ✅** — Kullanıcı günlük bir çalışma hedefi koyar (örn. 6sa):
+- Ana ekranda ilerleme çubuğu + yüzde (bugünkü toplam / hedef).
+- Hedef düzenlenebilir. Kişiye özel (kullanıcı başına bir değer).
+- Veri: `profiles.daily_goal_minutes` (varsayılan bir değerle).
+
+**Seri (streak) ✅** — Günlük hedefe bağlı alışkanlık göstergesi:
+- **Kural:** Günlük hedefi tutturduğun (süreyi doldurduğun) **her gün seri +1** artar.
+  Hedefi dolduramadığın gün seri **sıfırlanır**. Üst üste hedef tutturulan gün sayısı = seri.
+- Hesaplama `study_sessions` + günlük hedeften **türetilir** (ayrı tabloda tutulmaz; §6 ilkesi).
+
 ---
 
 ## 4. Teknoloji Yığını (Tech Stack)
@@ -169,10 +190,11 @@ kıyaslama) çok daha kolay ve veri taşınabilir. Karar 🟡 (henüz kesinleşm
 
 > İlk taslak; geliştikçe netleşecek. Ders/kategori sistemi ❓ (sonra karar verilecek).
 
-- **profiles** — `id` (auth user), `display_name`, `avatar_url`, `created_at`
+- **profiles** — `id` (auth user), `display_name`, `avatar_url`, `daily_goal_minutes`
+  (günlük hedef, §3.7), `created_at`
 - **groups** (sınıf) — `id`, `name`, `invite_code`, `created_by`, `created_at`
 - **group_members** — `group_id`, `user_id`, `role` (admin/member), `joined_at`
-- **subjects** (ders — ❓ kullanılacak mı belirsiz) — `id`, `user_id`, `name`, `color`
+- **subjects** (ders ✅ kullanılıyor — §3.7) — `id`, `user_id`, `name`, `color`
 - **study_sessions** — `id`, `user_id`, `group_id`, `subject_id?`, `start_time`,
   `end_time`, `duration_seconds`, `source` (`live`|`manual` — sadece kayıt amaçlı,
   istatistikte/UI'da ayrım yapılmaz), `date`
@@ -213,8 +235,8 @@ kendi sunucumuzu (self-host) veya başka ücretsiz katmanı değerlendiririz.
 
 ## 9. Açık Sorular (sonra konuşulacak) ❓
 
-- **Ders/kategori sistemi:** Kendi derslerini mi tanımlayacaklar (Matematik, Fizik...),
-  yoksa tek "çalışma" sayacı mı?
+- ~~**Ders/kategori sistemi**~~ ✅ KARAR (2026-06-21): Kullanıcı **kendi derslerini** ekler
+  (ad + renk); sayaç bir derse bağlanır; istatistik ders bazında ayrışır. Bkz. §3.7.
 - ~~**Mola (break) mantığı**~~ ✅ KARAR (2026-06-21): Mola butonu KALDIRILDI. Kullanıcı sade
   bir Başlat/Durdur akışı istedi — mola süresi tutulmadığı için ayrı "mola" durumu gereksiz
   karmaşa yaratıyordu. Durum yalnızca: çalışıyor / çevrimdışı. (PresenceStatus.onBreak enum'u
@@ -242,6 +264,13 @@ kendi sunucumuzu (self-host) veya başka ücretsiz katmanı değerlendiririz.
   iyileştirilecek. Üyenin "bugünkü toplam"ı presence satırından değil `study_sessions`
   agregasyonundan türetiliyor (tek doğru kaynak; presence.today_seconds yalnızca bilgi
   amaçlı). Mola (break) durumu UI'da gösterime hazır ama buton yok (Açık Sorular §9'da).
+- **2026-06-21 (dersler + hedef + seri):** Kardeşin hazırladığı UI tasarımı referansı
+  (`project-continuation/`, Next.js — koddan değil tasarımdan yararlanılacak) incelendi.
+  3 yeni özellik kararlaştırıldı (§3.7): (1) Kullanıcı tanımlı **dersler** (ad+renk),
+  (2) **günlük hedef**, (3) günlük hedefe bağlı **seri** (hedef tutturulan her gün +1,
+  tutturulamazsa sıfır). Veri modeli: `subjects` aktifleşti, `study_sessions.subject_id`
+  kullanılacak, `profiles.daily_goal_minutes` eklenecek. Seri hesaplaması türetilecek.
+  Tasarım dili (koyu tema, renk paleti) de bu referanstan alınacak ama uygulama en sona.
 - **2026-06-21 (oturum kalıcılığı):** Ayrı bir oturum-saklama kodu yazılmadı; `supabase_flutter`
   oturumu varsayılan olarak yerel depolamada tutar ve açılışta otomatik geri yükler. Karar:
   profil çekimi başarısız olursa (çevrimdışı/geçici hata) kullanıcı **dışarı atılmaz** —

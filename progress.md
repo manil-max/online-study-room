@@ -12,7 +12,7 @@
 
 - **Aktif Faz:** Oturum kalıcılığı sağlamlaştırıldı (Faz 1.1) — SDK zaten oturumu kalıcı tutuyor; profil çekimi çevrimdışında kullanıcıyı dışarı atmıyor. Tamamlananlar: Faz 1 (auth+profil+sınıf), Faz 2 (presence+manuel giriş), Faz 3 istatistikler (3a–3d). Supabase uçtan uca test edildi ✅. Kalan: Faz 4 widget (Android cihaz ister — ertelendi), Şifre sıfırlama (opsiyonel), Çevrimdışı tespiti/heartbeat, tasarım (en son).
 - **Proje konumu:** `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room` (İngilizce ad — Türkçe/boşluklu yol Flutter'ı bozuyordu; aşağıdaki nota bak)
-- **Sıradaki adım:** Kullanıcıyla görüş — sırada: Çevrimdışı tespiti (heartbeat), Şifre sıfırlama (opsiyonel), ya da Faz 4 (widget, Android cihaz gerektirir) / tasarım.
+- **Sıradaki adım:** FAZ 3.5 — Dersler + Günlük Hedef + Seri (kararlar alındı, §3.7). İlk mini faz: 3.5.1 dersler (subjects repository). Tasarım dili (koyu tema) referansı `project-continuation/` (yerelde, .gitignore'da).
 - **Bekleyen (kullanıcı/admin):** Windows'ta eklenti derlemesi için **Geliştirici Modu** açılmalı (`ms-settings:developers`); web/Chrome çalıştırma için gerekmez.
 
 ---
@@ -158,6 +158,27 @@
 > toplamı + kişi başı ortalama, madalyalı sıralama (oransal çubuk, "sen" vurgusu).
 > 3d TAMAM: Serbest tarih aralığı kartı (showDateRangePicker) — seçili aralık için toplam +
 > günlük ortalama + günlük grafik (≤45 gün). `dailyRange` yardımcısı testli. FAZ 3 TAMAM ✅.
+
+---
+
+## FAZ 3.5 — Dersler + Günlük Hedef + Seri (2026-06-21 kararı, §3.7)
+
+> Kardeşin UI tasarımından gelen 3 özellik. İşlevsellik önce, görsel tasarım en sonda.
+
+### 3.5.1 Dersler (kategoriler)
+- [ ] `subjects` repository (soyut + bellek-içi + Supabase) — ekle/düzenle/sil/listele
+- [ ] Ders yönetim UI (ad + renk paleti)
+- [ ] Sayaç başlatırken aktif ders seçimi → oturuma `subject_id` yazma
+- [ ] Manuel girişe ders seçimi
+- [ ] İstatistikte ders bazında dağılım (donut/çubuk)
+
+### 3.5.2 Günlük hedef
+- [ ] `profiles.daily_goal_minutes` (migration) + repository desteği
+- [ ] Ana ekranda hedef kartı (ilerleme çubuğu + yüzde, düzenlenebilir)
+
+### 3.5.3 Seri (streak)
+- [ ] Saf hesaplama: günlük hedefe bağlı seri (`core/stats`) + testleri
+- [ ] Ana ekranda seri göstergesi
 
 ---
 

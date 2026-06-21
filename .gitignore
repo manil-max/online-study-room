@@ -48,3 +48,6 @@ desktop.ini
 # --- Loglar / geçici ---
 *.log
 *.tmp
+
+# --- Tasarım referansı (kardeşin Next.js mockup'ı — koda dahil değil, sadece yerel referans) ---
+project-continuation/
