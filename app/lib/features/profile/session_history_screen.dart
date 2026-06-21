@@ -65,7 +65,9 @@ class SessionHistoryScreen extends ConsumerWidget {
       addManualSessionFlow(context, ref);
 }
 
-/// Oturumları güne göre gruplayıp listeler.
+/// Oturumları güne göre gruplar. **Bugün** ayrı ayrı (saat aralığıyla); **geçmiş
+/// günler** tek katlanabilir özet kayıtta toplanır — dokununca oturumlar açılır
+/// (§3.10). Liste şişmez, eski günler tek satır.
 class _SessionList extends ConsumerWidget {
   const _SessionList({required this.sessions});
 
@@ -73,7 +75,7 @@ class _SessionList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
+    final today = dayOf(DateTime.now());
 
     // Güne göre grupla (sessions zaten yeni → eski sıralı).
     final byDay = <DateTime, List<StudySession>>{};
@@ -85,33 +87,105 @@ class _SessionList extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.only(bottom: 88),
       children: [
-        for (final day in days) ...[
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  '${day.day}.${day.month}.${day.year}',
-                  style: theme.textTheme.titleSmall,
-                ),
-                Text(
-                  formatHuman(secondsOnDay(byDay[day]!, day)),
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    color: theme.colorScheme.primary,
-                  ),
-                ),
-              ],
+        for (final day in days)
+          if (isSameDay(day, today))
+            _TodaySection(
+              total: secondsOnDay(byDay[day]!, day),
+              sessions: byDay[day]!,
+            )
+          else
+            _PastDayTile(
+              day: day,
+              total: secondsOnDay(byDay[day]!, day),
+              sessions: byDay[day]!,
             ),
-          ),
-          for (final s in byDay[day]!)
-            _SessionTile(session: s),
-          const Divider(height: 16),
-        ],
       ],
     );
   }
 }
+
+/// Bugünün bölümü: başlık + her oturum ayrı satır (canlı takip).
+class _TodaySection extends StatelessWidget {
+  const _TodaySection({required this.total, required this.sessions});
+
+  final int total;
+  final List<StudySession> sessions;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Bugün', style: theme.textTheme.titleSmall),
+              Text(
+                formatHuman(total),
+                style: theme.textTheme.titleSmall
+                    ?.copyWith(color: theme.colorScheme.primary),
+              ),
+            ],
+          ),
+        ),
+        for (final s in sessions) _SessionTile(session: s),
+        const Divider(height: 16),
+      ],
+    );
+  }
+}
+
+/// Geçmiş bir gün: katlanabilir tek özet kayıt (gün + toplam + oturum sayısı);
+/// açılınca o günün oturumları görünür (düzenleme/silme yine mümkün).
+class _PastDayTile extends StatelessWidget {
+  const _PastDayTile({
+    required this.day,
+    required this.total,
+    required this.sessions,
+  });
+
+  final DateTime day;
+  final int total;
+  final List<StudySession> sessions;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return ExpansionTile(
+      tilePadding: const EdgeInsets.symmetric(horizontal: 16),
+      shape: const Border(),
+      title: Row(
+        children: [
+          Expanded(
+            child: Text(
+              '${day.day}.${day.month}.${day.year}',
+              style: theme.textTheme.titleSmall,
+            ),
+          ),
+          Text(
+            formatHuman(total),
+            style: theme.textTheme.titleSmall
+                ?.copyWith(color: theme.colorScheme.primary),
+          ),
+        ],
+      ),
+      subtitle: Text(
+        '${sessions.length} oturum',
+        style: theme.textTheme.bodySmall
+            ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+      ),
+      childrenPadding: const EdgeInsets.only(bottom: 8),
+      children: [for (final s in sessions) _SessionTile(session: s)],
+    );
+  }
+}
+
+/// Saat:dakika (iki haneli) — oturum saat aralığı için.
+String _hm(DateTime t) =>
+    '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
 
 /// Tek bir oturum satırı: süre, kaynak rozeti, düzenle/sil menüsü.
 class _SessionTile extends ConsumerWidget {
@@ -130,7 +204,11 @@ class _SessionTile extends ConsumerWidget {
     for (final s in subjects) {
       if (s.id == session.subjectId) subject = s;
     }
-    final sourceLabel = isManual ? 'Manuel' : 'Sayaç';
+    // Sayaç oturumlarında gerçek saat aralığı; manuelde sadece "Manuel"
+    // (manuel kayıt sentetik 12:00'a yerleştirildiği için saat anlamlı değil).
+    final sourceLabel = isManual
+        ? 'Manuel'
+        : '${_hm(session.start)}–${_hm(session.end)}';
 
     return ListTile(
       leading: Icon(

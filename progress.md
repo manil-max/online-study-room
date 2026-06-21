@@ -244,9 +244,10 @@
 
 ## FAZ 3.9 — Çalışma Kayıtları İyileştirme (2026-06-21 kararı, §3.10)
 
-- [ ] Geçmiş günler tek özet kayıtta toplansın (bugün ayrı ayrı kalır)
-- [ ] Saat aralığı (ör. 14:05–14:50) + ders + süre gösterimi
-- [ ] (Ops.) güne dokununca alt kırılım (oturumlar / ders bazında)
+- [x] Geçmiş günler **tek katlanabilir özet kayıt** (gün + toplam + oturum sayısı); bugün
+  ayrı ayrı kalır (`_TodaySection` / `_PastDayTile` ExpansionTile).
+- [x] **Saat aralığı** (ör. 14:05–14:50) sayaç oturumlarında; manuelde "Manuel" + süre + ders.
+- [x] Güne dokununca alt kırılım — geçmiş gün açılınca o günün oturumları (düzenle/sil dâhil).
 
 ## FAZ 3.10 — İstatistikleri Zenginleştirme (§3.4 + §3.11) 🟡
 
