@@ -80,9 +80,9 @@ class DashboardEditScreen extends ConsumerWidget {
           const Divider(height: 24),
           _SectionTitle('Diğer'),
           SwitchListTile(
-            title: const Text('Sınıflar ekranında da sayaç göster'),
+            title: const Text('Gruplar ekranında da sayaç göster'),
             subtitle: const Text(
-                'Sayaç varsayılan olarak Ana Sayfa’dadır; burada Sınıflar’a da eklenir.'),
+                'Sayaç varsayılan olarak Ana Sayfa’dadır; burada Gruplar’a da eklenir.'),
             value: showTimerInClass,
             onChanged: ref.read(classroomShowTimerProvider.notifier).set,
           ),

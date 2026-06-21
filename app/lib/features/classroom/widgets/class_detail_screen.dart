@@ -26,7 +26,7 @@ class ClassDetailScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Sınıf'),
+        title: const Text('Grup'),
         actions: [
           if (isAdmin)
             IconButton(
@@ -137,7 +137,7 @@ class ClassDetailScreen extends ConsumerWidget {
             Card(
               child: ListTile(
                 leading: Icon(Icons.logout, color: theme.colorScheme.error),
-                title: Text('Sınıftan çık',
+                title: Text('Gruptan çık',
                     style: TextStyle(color: theme.colorScheme.error)),
                 onTap: userId == null
                     ? null
@@ -149,7 +149,7 @@ class ClassDetailScreen extends ConsumerWidget {
               child: ListTile(
                 leading: Icon(Icons.delete_outline,
                     color: theme.colorScheme.error),
-                title: Text('Sınıfı sil',
+                title: Text('Grubu sil',
                     style: TextStyle(color: theme.colorScheme.error)),
                 subtitle: const Text('Tüm üyeler için kalıcı olarak silinir'),
                 onTap: () => _deleteGroup(context, ref, repo),
@@ -165,12 +165,12 @@ class ClassDetailScreen extends ConsumerWidget {
     final name = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Sınıf adını değiştir'),
+        title: const Text('Grup adını değiştir'),
         content: TextField(
           controller: controller,
           autofocus: true,
           textCapitalization: TextCapitalization.words,
-          decoration: const InputDecoration(labelText: 'Sınıf adı'),
+          decoration: const InputDecoration(labelText: 'Grup adı'),
         ),
         actions: [
           TextButton(
@@ -217,8 +217,8 @@ class ClassDetailScreen extends ConsumerWidget {
   Future<void> _leave(BuildContext context, WidgetRef ref, GroupRepository repo,
       String userId) async {
     final ok = await _confirm(context,
-        title: 'Sınıftan çık',
-        message: '"${group.name}" sınıfından çıkmak istediğine emin misin?',
+        title: 'Gruptan çık',
+        message: '"${group.name}" grubundan çıkmak istediğine emin misin?',
         action: 'Çık');
     if (!ok || !context.mounted) return;
     final messenger = ScaffoldMessenger.of(context);
@@ -235,9 +235,9 @@ class ClassDetailScreen extends ConsumerWidget {
   Future<void> _deleteGroup(
       BuildContext context, WidgetRef ref, GroupRepository repo) async {
     final ok = await _confirm(context,
-        title: 'Sınıfı sil',
+        title: 'Grubu sil',
         message:
-            '"${group.name}" sınıfı tüm üyeler için kalıcı olarak silinecek. '
+            '"${group.name}" grubu tüm üyeler için kalıcı olarak silinecek. '
             'Bu işlem geri alınamaz. Devam?',
         action: 'Sil');
     if (!ok || !context.mounted) return;
@@ -315,7 +315,7 @@ class _MembersCard extends ConsumerWidget {
     final ok = await _confirm(context,
         title: 'Üyeyi çıkar',
         message:
-            '${member.displayName} sınıftan çıkarılsın mı?',
+            '${member.displayName} gruptan çıkarılsın mı?',
         action: 'Çıkar');
     if (!ok) return;
     if (!context.mounted) return;

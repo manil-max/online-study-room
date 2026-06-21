@@ -56,7 +56,7 @@ class PersonalStatsView extends StatelessWidget {
                   style: theme.textTheme.titleMedium),
               const SizedBox(height: 4),
               Text(
-                'Sınıf sekmesinden çalışmaya başlayınca istatistiklerin burada görünecek.',
+                'Ana Sayfa’daki sayaçtan çalışmaya başlayınca istatistiklerin burada görünecek.',
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodySmall
                     ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
@@ -461,7 +461,7 @@ class _SubjectBreakdownCard extends ConsumerWidget {
     final slices = [
       for (final entry in breakdown)
         SubjectDonutSlice(
-          label: subjectFor(entry.key)?.name ?? 'Derssiz',
+          label: subjectFor(entry.key)?.name ?? 'Genel',
           color: subjectFor(entry.key) != null
               ? subjectColor(subjectFor(entry.key)!.color)
               : theme.colorScheme.onSurfaceVariant,

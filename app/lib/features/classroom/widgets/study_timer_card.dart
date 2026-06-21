@@ -421,18 +421,30 @@ class _StreakChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(20),
+        color: subjectColor('chart-5').withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(24),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(Icons.local_fire_department,
-              size: 16, color: subjectColor('chart-5')),
-          const SizedBox(width: 4),
-          Text('$streak gün', style: theme.textTheme.labelMedium),
+              size: 22, color: subjectColor('chart-5')),
+          const SizedBox(width: 6),
+          Text(
+            '$streak',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: subjectColor('chart-5'),
+            ),
+          ),
+          const SizedBox(width: 3),
+          Text(
+            'günlük seri',
+            style: theme.textTheme.bodySmall
+                ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+          ),
         ],
       ),
     );

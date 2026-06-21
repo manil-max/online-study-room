@@ -14,14 +14,14 @@ extension DashboardCardInfo on DashboardCardType {
         DashboardCardType.timer => 'Sayaç',
         DashboardCardType.today => 'Bugün özeti',
         DashboardCardType.weekly => 'Haftalık grafik',
-        DashboardCardType.leaderboard => 'Sınıf sıralaması',
+        DashboardCardType.leaderboard => 'Grup sıralaması',
       };
 
   String get description => switch (this) {
         DashboardCardType.timer => 'Kronometre, günlük hedef ve seri',
         DashboardCardType.today => 'Bugünkü toplam ve ders dağılımı',
         DashboardCardType.weekly => 'Son 7 günün çubuk grafiği',
-        DashboardCardType.leaderboard => 'Aktif sınıfın bugünkü sıralaması',
+        DashboardCardType.leaderboard => 'Aktif grubun bugünkü sıralaması',
       };
 
   IconData get icon => switch (this) {

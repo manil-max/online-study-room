@@ -26,7 +26,7 @@ class SupabaseGroupRepository implements GroupRepository {
     required Profile creator,
   }) async {
     if (name.trim().isEmpty) {
-      throw const GroupException('Sınıf adı boş olamaz.');
+      throw const GroupException('Grup adı boş olamaz.');
     }
     // Benzersiz davet kodu bulana kadar dene (çakışma çok olası değil).
     for (var attempt = 0; attempt < 5; attempt++) {
@@ -50,10 +50,10 @@ class SupabaseGroupRepository implements GroupRepository {
       } on PostgrestException catch (e) {
         // 23505 = unique violation (davet kodu çakıştı) → tekrar dene.
         if (e.code == '23505' && attempt < 4) continue;
-        throw GroupException('Sınıf oluşturulamadı: ${e.message}');
+        throw GroupException('Grup oluşturulamadı: ${e.message}');
       }
     }
-    throw const GroupException('Sınıf oluşturulamadı, tekrar deneyin.');
+    throw const GroupException('Grup oluşturulamadı, tekrar deneyin.');
   }
 
   @override
@@ -68,7 +68,7 @@ class SupabaseGroupRepository implements GroupRepository {
         .eq('invite_code', code)
         .maybeSingle();
     if (row == null) {
-      throw const GroupException('Bu koda ait sınıf bulunamadı.');
+      throw const GroupException('Bu koda ait grup bulunamadı.');
     }
     final group = StudyGroup.fromMap(row);
     try {
@@ -80,7 +80,7 @@ class SupabaseGroupRepository implements GroupRepository {
     } on PostgrestException catch (e) {
       // Zaten üyeyse (unique violation) sorun değil; sınıfı döndür.
       if (e.code != '23505') {
-        throw GroupException('Sınıfa katılınamadı: ${e.message}');
+        throw GroupException('Gruba katılınamadı: ${e.message}');
       }
     }
     return group;
@@ -121,14 +121,14 @@ class SupabaseGroupRepository implements GroupRepository {
   @override
   Future<void> updateGroupName(String groupId, String name) async {
     if (name.trim().isEmpty) {
-      throw const GroupException('Sınıf adı boş olamaz.');
+      throw const GroupException('Grup adı boş olamaz.');
     }
     try {
       await _client
           .from('groups')
           .update({'name': name.trim()}).eq('id', groupId);
     } on PostgrestException catch (e) {
-      throw GroupException('Sınıf adı değiştirilemedi: ${e.message}');
+      throw GroupException('Grup adı değiştirilemedi: ${e.message}');
     }
   }
 
@@ -171,7 +171,7 @@ class SupabaseGroupRepository implements GroupRepository {
     try {
       await _client.from('groups').delete().eq('id', groupId);
     } on PostgrestException catch (e) {
-      throw GroupException('Sınıf silinemedi: ${e.message}');
+      throw GroupException('Grup silinemedi: ${e.message}');
     }
   }
 }

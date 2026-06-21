@@ -23,7 +23,7 @@ class StatsScreen extends ConsumerWidget {
           bottom: const TabBar(
             tabs: [
               Tab(text: 'Kişisel'),
-              Tab(text: 'Sınıf'),
+              Tab(text: 'Grup'),
             ],
           ),
         ),
@@ -62,7 +62,7 @@ class _ClassTab extends ConsumerWidget {
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Text(
-            'Sınıf istatistiklerini görmek için önce bir sınıfa katıl.',
+            'Grup istatistiklerini görmek için önce bir gruba katıl.',
             textAlign: TextAlign.center,
             style: theme.textTheme.bodyMedium
                 ?.copyWith(color: theme.colorScheme.onSurfaceVariant),

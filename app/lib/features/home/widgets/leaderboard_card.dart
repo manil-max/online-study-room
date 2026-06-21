@@ -23,7 +23,7 @@ class LeaderboardCard extends ConsumerWidget {
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Text(
-            'Bir sınıfa katılınca sıralama burada görünür.',
+            'Bir gruba katılınca sıralama burada görünür.',
             style: theme.textTheme.bodyMedium
                 ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
           ),
@@ -54,7 +54,7 @@ class LeaderboardCard extends ConsumerWidget {
           children: [
             Row(
               children: [
-                Text('Sınıf sıralaması', style: theme.textTheme.titleMedium),
+                Text('Grup sıralaması', style: theme.textTheme.titleMedium),
                 const Spacer(),
                 Flexible(
                   child: Text(

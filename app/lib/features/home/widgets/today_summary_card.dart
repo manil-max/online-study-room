@@ -61,7 +61,7 @@ class TodaySummaryCard extends ConsumerWidget {
                 Builder(
                   builder: (_) {
                     final subject = subjectFor(entry.key);
-                    final name = subject?.name ?? 'Derssiz';
+                    final name = subject?.name ?? 'Genel';
                     final color = subject != null
                         ? subjectColor(subject.color)
                         : theme.colorScheme.onSurfaceVariant;

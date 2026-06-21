@@ -25,7 +25,7 @@ Future<void> showClassSwitcher(BuildContext context, WidgetRef ref,
       enabled: false,
       height: 32,
       child: Text(
-        'Sınıflarım',
+        'Gruplarım',
         style: theme.textTheme.labelMedium
             ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
       ),
@@ -34,7 +34,7 @@ Future<void> showClassSwitcher(BuildContext context, WidgetRef ref,
       PopupMenuItem<void>(
         enabled: false,
         child: Text(
-          'Henüz sınıf yok',
+          'Henüz grup yok',
           style: theme.textTheme.bodyMedium
               ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
         ),
@@ -74,7 +74,7 @@ Future<void> showClassSwitcher(BuildContext context, WidgetRef ref,
         children: [
           Icon(Icons.add, size: 20),
           SizedBox(width: 12),
-          Text('Sınıf oluştur'),
+          Text('Grup oluştur'),
         ],
       ),
     ),
@@ -84,7 +84,7 @@ Future<void> showClassSwitcher(BuildContext context, WidgetRef ref,
         children: [
           Icon(Icons.login, size: 20),
           SizedBox(width: 12),
-          Text('Sınıfa katıl'),
+          Text('Gruba katıl'),
         ],
       ),
     ),
@@ -106,7 +106,7 @@ class _ClassDetailButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return IconButton(
-      tooltip: 'Sınıf bilgileri ve ayarları',
+      tooltip: 'Grup bilgileri ve ayarları',
       icon: const Icon(Icons.more_vert, size: 20),
       visualDensity: VisualDensity.compact,
       onPressed: () {
@@ -125,8 +125,8 @@ class _ClassDetailButton extends StatelessWidget {
 Future<bool> createGroupFlow(BuildContext context, WidgetRef ref) async {
   final name = await _promptText(
     context,
-    title: 'Sınıf oluştur',
-    label: 'Sınıf adı',
+    title: 'Grup oluştur',
+    label: 'Grup adı',
     action: 'Oluştur',
   );
   if (name == null || name.trim().isEmpty) return false;
@@ -152,7 +152,7 @@ Future<bool> createGroupFlow(BuildContext context, WidgetRef ref) async {
 Future<bool> joinGroupFlow(BuildContext context, WidgetRef ref) async {
   final code = await _promptText(
     context,
-    title: 'Sınıfa katıl',
+    title: 'Gruba katıl',
     label: 'Davet kodu',
     action: 'Katıl',
     uppercase: true,

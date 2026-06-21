@@ -55,7 +55,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Ana Sayfa'), findsWidgets);
-    expect(find.text('Sınıflar'), findsWidgets);
+    expect(find.text('Gruplar'), findsWidgets);
     expect(find.text('İstatistik'), findsWidgets);
     expect(find.text('Profil'), findsWidgets);
   });
@@ -65,11 +65,11 @@ void main() {
     await tester.pumpWidget(_appWith(await _signedInRepo()));
     await tester.pumpAndSettle();
 
-    // Sayaç artık Ana Sayfa'da; Sınıflar sekmesine geç.
-    await tester.tap(find.text('Sınıflar'));
+    // Sayaç artık Ana Sayfa'da; Gruplar sekmesine geç.
+    await tester.tap(find.text('Gruplar'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Sınıf oluştur'), findsOneWidget);
+    expect(find.text('Grup oluştur'), findsOneWidget);
     expect(find.text('Koda katıl'), findsOneWidget);
   });
 

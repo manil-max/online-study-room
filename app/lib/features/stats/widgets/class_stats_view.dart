@@ -75,7 +75,7 @@ class _ClassStatsViewState extends State<ClassStatsView> {
         Row(
           children: [
             Expanded(
-              child: _SummaryCard(label: 'Sınıf toplamı', seconds: classTotal),
+              child: _SummaryCard(label: 'Grup toplamı', seconds: classTotal),
             ),
             const SizedBox(width: 8),
             Expanded(
@@ -92,7 +92,7 @@ class _ClassStatsViewState extends State<ClassStatsView> {
               children: [
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: Text('Sınıf günlük trendi (son 7 gün)',
+                  child: Text('Grup günlük trendi (son 7 gün)',
                       style: theme.textTheme.titleSmall),
                 ),
                 const SizedBox(height: 12),

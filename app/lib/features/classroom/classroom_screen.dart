@@ -33,7 +33,7 @@ class ClassroomScreen extends ConsumerWidget {
         actions: [
           Builder(
             builder: (iconContext) => IconButton(
-              tooltip: 'Sınıf değiştir',
+              tooltip: 'Grup değiştir',
               icon: const Icon(Icons.swap_horiz),
               onPressed: () => showClassSwitcher(iconContext, ref),
             ),
@@ -65,11 +65,11 @@ class _NoGroupView extends ConsumerWidget {
           children: [
             Icon(Icons.groups, size: 72, color: theme.colorScheme.primary),
             const SizedBox(height: 16),
-            Text('Henüz bir sınıfta değilsin',
+            Text('Henüz bir grupta değilsin',
                 style: theme.textTheme.titleLarge),
             const SizedBox(height: 8),
             Text(
-              'Yeni bir sınıf oluştur ya da davet koduyla bir sınıfa katıl.',
+              'Yeni bir grup oluştur ya da davet koduyla bir gruba katıl.',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium
                   ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
@@ -78,7 +78,7 @@ class _NoGroupView extends ConsumerWidget {
             FilledButton.icon(
               onPressed: () => createGroupFlow(context, ref),
               icon: const Icon(Icons.add),
-              label: const Text('Sınıf oluştur'),
+              label: const Text('Grup oluştur'),
             ),
             const SizedBox(height: 8),
             OutlinedButton.icon(
@@ -155,7 +155,7 @@ class _GroupView extends ConsumerWidget {
         const SizedBox(height: 8),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 4),
-          child: Text('Sınıf', style: theme.textTheme.titleMedium),
+          child: Text('Grup', style: theme.textTheme.titleMedium),
         ),
         const SizedBox(height: 4),
         const _LiveMembers(),

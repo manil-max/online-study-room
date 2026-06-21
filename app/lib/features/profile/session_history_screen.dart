@@ -37,7 +37,7 @@ class SessionHistoryScreen extends ConsumerWidget {
         data: (sessions) {
           if (!hasGroup) {
             return _centerInfo(theme,
-                'Kayıt eklemek için önce bir sınıfa katıl veya sınıf oluştur.');
+                'Kayıt eklemek için önce bir gruba katıl veya grup oluştur.');
           }
           if (sessions.isEmpty) {
             return _centerInfo(
@@ -161,7 +161,7 @@ class _PastDayTile extends StatelessWidget {
         children: [
           Expanded(
             child: Text(
-              '${day.day}.${day.month}.${day.year}',
+              _longDate(day),
               style: theme.textTheme.titleSmall,
             ),
           ),
@@ -186,6 +186,18 @@ class _PastDayTile extends StatelessWidget {
 /// Saat:dakika (iki haneli) — oturum saat aralığı için.
 String _hm(DateTime t) =>
     '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+
+const _kMonths = [
+  '', 'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', //
+  'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
+];
+const _kWeekdays = [
+  '', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'
+];
+
+/// "21 Haziran 2026 Cumartesi" — okunaklı uzun tarih.
+String _longDate(DateTime d) =>
+    '${d.day} ${_kMonths[d.month]} ${d.year} ${_kWeekdays[d.weekday]}';
 
 /// Tek bir oturum satırı: süre, kaynak rozeti, düzenle/sil menüsü.
 class _SessionTile extends ConsumerWidget {

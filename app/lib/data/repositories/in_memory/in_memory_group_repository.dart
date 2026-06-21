@@ -46,7 +46,7 @@ class InMemoryGroupRepository implements GroupRepository {
     required Profile creator,
   }) async {
     if (name.trim().isEmpty) {
-      throw const GroupException('Sınıf adı boş olamaz.');
+      throw const GroupException('Grup adı boş olamaz.');
     }
     final group = StudyGroup(
       id: _uuid.v4(),
@@ -70,7 +70,7 @@ class InMemoryGroupRepository implements GroupRepository {
     final code = inviteCode.trim().toUpperCase();
     final group = _groups.values.firstWhere(
       (g) => g.inviteCode == code,
-      orElse: () => throw const GroupException('Bu koda ait sınıf bulunamadı.'),
+      orElse: () => throw const GroupException('Bu koda ait grup bulunamadı.'),
     );
 
     final members = _members.putIfAbsent(group.id, () => []);
@@ -104,7 +104,7 @@ class InMemoryGroupRepository implements GroupRepository {
     final g = _groups[groupId];
     if (g == null) return;
     if (name.trim().isEmpty) {
-      throw const GroupException('Sınıf adı boş olamaz.');
+      throw const GroupException('Grup adı boş olamaz.');
     }
     _groups[groupId] = g.copyWith(name: name.trim());
     _changes.add(null);
@@ -113,7 +113,7 @@ class InMemoryGroupRepository implements GroupRepository {
   @override
   Future<String> regenerateInviteCode(String groupId) async {
     final g = _groups[groupId];
-    if (g == null) throw const GroupException('Sınıf bulunamadı.');
+    if (g == null) throw const GroupException('Grup bulunamadı.');
     final code = _generateInviteCode();
     _groups[groupId] = g.copyWith(inviteCode: code);
     _changes.add(null);

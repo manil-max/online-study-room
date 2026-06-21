@@ -19,7 +19,7 @@ Future<void> addManualSessionFlow(BuildContext context, WidgetRef ref) async {
   final group = ref.read(userGroupProvider).value;
   if (user == null || group == null) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Önce bir sınıfa katıl ya da sınıf oluştur.')),
+      const SnackBar(content: Text('Önce bir gruba katıl ya da grup oluştur.')),
     );
     return;
   }

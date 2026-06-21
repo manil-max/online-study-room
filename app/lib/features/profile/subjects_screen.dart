@@ -39,7 +39,7 @@ class SubjectsScreen extends ConsumerWidget {
                 padding: const EdgeInsets.all(24),
                 child: Text(
                   'Henüz dersin yok. "Ders ekle" ile başla.\n'
-                  'Ders seçmek zorunlu değil — istersen derssiz de çalışabilirsin.',
+                  'Ders seçmek zorunlu değil — istersen "Genel" çalışabilirsin.',
                   textAlign: TextAlign.center,
                   style: theme.textTheme.bodyMedium
                       ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
@@ -123,7 +123,7 @@ class _SubjectTile extends ConsumerWidget {
         title: const Text('Dersi sil'),
         content: Text(
           '"${subject.name}" dersi silinsin mi?\n'
-          'Bu derse ait geçmiş kayıtların süresi korunur, sadece "derssiz" olur.',
+          'Bu derse ait geçmiş kayıtların süresi korunur, sadece "Genel" olur.',
         ),
         actions: [
           TextButton(

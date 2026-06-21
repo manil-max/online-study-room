@@ -63,7 +63,7 @@ class HomeShell extends ConsumerWidget {
             NavigationDestination(
               icon: Icon(Icons.groups_outlined),
               selectedIcon: Icon(Icons.groups),
-              label: 'Sınıflar',
+              label: 'Gruplar',
             ),
             NavigationDestination(
               icon: Icon(Icons.bar_chart_outlined),
