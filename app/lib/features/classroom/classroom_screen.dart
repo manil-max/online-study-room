@@ -28,11 +28,14 @@ class ClassroomScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         // Başlık şimdilik boş (kullanıcı isteği). Sağ üstte sınıf değiştirici kalır.
+        // Builder: menü tam bu ikonun konumunda açılsın (§3.12 — basılan yerde).
         actions: [
-          IconButton(
-            tooltip: 'Sınıf değiştir',
-            icon: const Icon(Icons.swap_horiz),
-            onPressed: () => showClassSwitcher(context, ref),
+          Builder(
+            builder: (iconContext) => IconButton(
+              tooltip: 'Sınıf değiştir',
+              icon: const Icon(Icons.swap_horiz),
+              onPressed: () => showClassSwitcher(iconContext, ref),
+            ),
           ),
         ],
       ),

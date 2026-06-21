@@ -1,113 +1,121 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/widgets/anchored_menu.dart';
 import '../../../data/models/study_group.dart';
 import '../../../data/providers/auth_providers.dart';
 import '../../../data/providers/group_providers.dart';
 import '../../../data/repositories/group_repository.dart';
 import 'class_detail_screen.dart';
 
-/// Sınıf değiştirici alt sayfası (Instagram hesap değiştirme mantığı, §3.8):
-/// katılınan sınıflar listelenir, dokununca aktif sınıf değişir; ayrıca
-/// "Sınıf oluştur" ve "Sınıfa katıl". "Sınıflar" sekmesine basılı tutunca veya
-/// üstteki sınıf adına dokununca açılır.
-Future<void> showClassSwitcher(BuildContext context, WidgetRef ref) {
-  return showModalBottomSheet<void>(
-    context: context,
-    showDragHandle: true,
-    builder: (_) => const _ClassSwitcherSheet(),
-  );
-}
+/// Sınıf değiştirici (Instagram hesap değiştirme mantığı, §3.8): katılınan
+/// sınıflar listelenir, dokununca aktif sınıf değişir; ayrıca "Sınıf oluştur" /
+/// "Sınıfa katıl". Alttan açılan pencere yerine **basılan yerde** açılır (§3.12).
+///
+/// Sağ üstteki ↔ ikonundan tetiklenirse [context] o ikonun context'idir (menü
+/// ona göre konumlanır); sekmeye basılı tutunca [at] basış konumudur.
+Future<void> showClassSwitcher(BuildContext context, WidgetRef ref,
+    {Offset? at}) {
+  final theme = Theme.of(context);
+  final groups = ref.read(userGroupsProvider).value ?? const <StudyGroup>[];
+  final activeId = ref.read(userGroupProvider).value?.id;
 
-class _ClassSwitcherSheet extends ConsumerWidget {
-  const _ClassSwitcherSheet();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final groups = ref.watch(userGroupsProvider).value ?? const <StudyGroup>[];
-    final activeId = ref.watch(userGroupProvider).value?.id;
-
-    return SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text('Sınıflarım', style: theme.textTheme.titleMedium),
-            ),
-          ),
-          if (groups.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+  final items = <PopupMenuEntry<void>>[
+    PopupMenuItem<void>(
+      enabled: false,
+      height: 32,
+      child: Text(
+        'Sınıflarım',
+        style: theme.textTheme.labelMedium
+            ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+      ),
+    ),
+    if (groups.isEmpty)
+      PopupMenuItem<void>(
+        enabled: false,
+        child: Text(
+          'Henüz sınıf yok',
+          style: theme.textTheme.bodyMedium
+              ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+        ),
+      ),
+    for (final g in groups)
+      PopupMenuItem<void>(
+        onTap: () => ref.read(activeGroupIdProvider.notifier).select(g.id),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 13,
+              backgroundColor: g.id == activeId
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.surfaceContainerHighest,
+              foregroundColor: g.id == activeId
+                  ? theme.colorScheme.onPrimary
+                  : theme.colorScheme.onSurfaceVariant,
               child: Text(
-                'Henüz bir sınıfta değilsin. Aşağıdan oluştur veya katıl.',
-                style: theme.textTheme.bodyMedium
-                    ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                g.name.isNotEmpty
+                    ? g.name.characters.first.toUpperCase()
+                    : '?',
+                style: theme.textTheme.labelMedium,
               ),
             ),
-          for (final g in groups)
-            ListTile(
-              selected: g.id == activeId,
-              leading: CircleAvatar(
-                backgroundColor: g.id == activeId
-                    ? theme.colorScheme.primary
-                    : theme.colorScheme.surfaceContainerHighest,
-                foregroundColor: g.id == activeId
-                    ? theme.colorScheme.onPrimary
-                    : theme.colorScheme.onSurfaceVariant,
-                child: Text(
-                  g.name.isNotEmpty ? g.name.characters.first.toUpperCase() : '?',
-                ),
-              ),
-              title: Text(g.name),
-              subtitle: Text('Kod: ${g.inviteCode}'),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (g.id == activeId)
-                    Icon(Icons.check_circle,
-                        color: theme.colorScheme.primary),
-                  IconButton(
-                    tooltip: 'Sınıf bilgileri ve ayarları',
-                    icon: const Icon(Icons.more_vert),
-                    onPressed: () {
-                      final nav = Navigator.of(context, rootNavigator: true);
-                      Navigator.pop(context); // değiştiriciyi kapat
-                      nav.push(MaterialPageRoute(
-                        builder: (_) => ClassDetailScreen(group: g),
-                      ));
-                    },
-                  ),
-                ],
-              ),
-              onTap: () {
-                ref.read(activeGroupIdProvider.notifier).select(g.id);
-                Navigator.pop(context);
-              },
-            ),
-          const Divider(height: 8),
-          ListTile(
-            leading: const Icon(Icons.add),
-            title: const Text('Sınıf oluştur'),
-            onTap: () async {
-              final ok = await createGroupFlow(context, ref);
-              if (ok && context.mounted) Navigator.pop(context);
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.login),
-            title: const Text('Sınıfa katıl'),
-            onTap: () async {
-              final ok = await joinGroupFlow(context, ref);
-              if (ok && context.mounted) Navigator.pop(context);
-            },
-          ),
-          const SizedBox(height: 8),
+            const SizedBox(width: 12),
+            Expanded(child: Text(g.name, overflow: TextOverflow.ellipsis)),
+            if (g.id == activeId)
+              Icon(Icons.check, size: 18, color: theme.colorScheme.primary),
+            _ClassDetailButton(group: g),
+          ],
+        ),
+      ),
+    const PopupMenuDivider(),
+    PopupMenuItem<void>(
+      onTap: () => createGroupFlow(context, ref),
+      child: const Row(
+        children: [
+          Icon(Icons.add, size: 20),
+          SizedBox(width: 12),
+          Text('Sınıf oluştur'),
         ],
       ),
+    ),
+    PopupMenuItem<void>(
+      onTap: () => joinGroupFlow(context, ref),
+      child: const Row(
+        children: [
+          Icon(Icons.login, size: 20),
+          SizedBox(width: 12),
+          Text('Sınıfa katıl'),
+        ],
+      ),
+    ),
+  ];
+
+  return at != null
+      ? showMenuAtPosition<void>(
+          context: context, globalPosition: at, items: items)
+      : showAnchoredMenu<void>(context: context, items: items);
+}
+
+/// Sınıf satırındaki ⋮ — menüyü kapatıp sınıf detay/ayar ekranını açar.
+/// Satırın "aktif yap" eylemini tetiklemez (iç buton dokunuşu kazanır).
+class _ClassDetailButton extends StatelessWidget {
+  const _ClassDetailButton({required this.group});
+
+  final StudyGroup group;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: 'Sınıf bilgileri ve ayarları',
+      icon: const Icon(Icons.more_vert, size: 20),
+      visualDensity: VisualDensity.compact,
+      onPressed: () {
+        final nav = Navigator.of(context, rootNavigator: true);
+        Navigator.of(context).pop(); // menüyü kapat
+        nav.push(MaterialPageRoute(
+          builder: (_) => ClassDetailScreen(group: group),
+        ));
+      },
     );
   }
 }

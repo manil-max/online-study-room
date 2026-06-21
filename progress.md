@@ -307,6 +307,15 @@
   `SupabaseAuthRepository._profileFor` artık profil satırı çekilemezse (çevrimdışı/geçici hata)
   kullanıcıyı dışarı atmıyor; oturum geçerliyse metadata'dan geçici profille içeride tutuyor
   (project.md §3.3 çevrimdışı dayanıklılık). 37/37 test geçti, analiz temiz.
+- **2026-06-21 (açılır menüler "basılan yerde" + manuel sayaç basılı-tut):** Geri bildirim:
+  "alttan açılan pencere güzel değil, Claude Code model seçici gibi tam basılan yerde açılsın;
+  bunu çoğu açılır seçim için yap." Eklenen `core/widgets/anchored_menu.dart`
+  (`showAnchoredMenu` = tetikleyiciye göre, `showMenuAtPosition` = basış konumunda). **Ders
+  seçici** ve **sınıf değiştirici** bottom-sheet'ten **anchored popup menü**ye geçti (sınıf
+  ↔ ikonu Builder ile sarıldı; sekme basılı-tutta basış konumu kullanılıyor). Sınıf satırında
+  ⋮ detay butonu menüyü kapatıp ayar ekranını açar. Manuel süre: **dakika adımı 1** oldu ve
+  +/- tuşları **basılı tutunca sabit hızda** artırıp azaltıyor (`_HoldRepeatButton`, Listener
+  tabanlı; 400ms gecikme → 80ms tekrar). 47/47 test, analiz temiz.
 - **2026-06-21 (sayaç yenileme başladı — FAZ 3.7, §3.12):** Kullanıcı geri bildirimi:
   "saat çok profesyonel olmalı, başka kronometre gerekmesin; ders seçimi Claude Code model
   seçici gibi dropdown olsun; odak için tam ekran tuşu olsun; sade ama özelleştirilebilir."

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/subject_colors.dart';
 import '../../../core/utils/duration_format.dart';
+import '../../../core/widgets/anchored_menu.dart';
 import '../../../data/models/subject.dart';
 import '../../../data/providers/study_providers.dart';
 import '../../../data/providers/subject_providers.dart';
@@ -215,68 +216,77 @@ class _SubjectSelector extends StatelessWidget {
     );
   }
 
-  void _openPicker(BuildContext context) {
-    showModalBottomSheet<void>(
+  Future<void> _openPicker(BuildContext context) async {
+    final theme = Theme.of(context);
+    final result = await showAnchoredMenu<_SubjectMenuResult>(
       context: context,
-      showDragHandle: true,
-      builder: (ctx) {
-        final theme = Theme.of(ctx);
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+      items: [
+        PopupMenuItem<_SubjectMenuResult>(
+          enabled: false,
+          height: 32,
+          child: Text(
+            'Ders',
+            style: theme.textTheme.labelMedium
+                ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+          ),
+        ),
+        PopupMenuItem<_SubjectMenuResult>(
+          value: const _SubjectMenuResult.pick(null),
+          child: _subjectMenuRow(theme, 'Genel (ders yok)',
+              theme.colorScheme.onSurfaceVariant, selectedId == null),
+        ),
+        for (final s in subjects)
+          PopupMenuItem<_SubjectMenuResult>(
+            value: _SubjectMenuResult.pick(s.id),
+            child: _subjectMenuRow(
+                theme, s.name, subjectColor(s.color), selectedId == s.id),
+          ),
+        const PopupMenuDivider(),
+        const PopupMenuItem<_SubjectMenuResult>(
+          value: _SubjectMenuResult.edit(),
+          child: Row(
             children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text('Ders seç', style: theme.textTheme.titleMedium),
-                ),
-              ),
-              ListTile(
-                leading: CircleAvatar(
-                  radius: 6,
-                  backgroundColor: theme.colorScheme.onSurfaceVariant,
-                ),
-                title: const Text('Genel (ders yok)'),
-                trailing: selectedId == null
-                    ? Icon(Icons.check, color: theme.colorScheme.primary)
-                    : null,
-                onTap: () {
-                  onSelect(null);
-                  Navigator.pop(ctx);
-                },
-              ),
-              for (final s in subjects)
-                ListTile(
-                  leading: CircleAvatar(
-                    radius: 6,
-                    backgroundColor: subjectColor(s.color),
-                  ),
-                  title: Text(s.name),
-                  trailing: selectedId == s.id
-                      ? Icon(Icons.check, color: theme.colorScheme.primary)
-                      : null,
-                  onTap: () {
-                    onSelect(s.id);
-                    Navigator.pop(ctx);
-                  },
-                ),
-              const Divider(height: 8),
-              ListTile(
-                leading: const Icon(Icons.tune),
-                title: const Text('Dersleri düzenle'),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const SubjectsScreen()),
-                  );
-                },
-              ),
-              const SizedBox(height: 8),
+              Icon(Icons.tune, size: 20),
+              SizedBox(width: 12),
+              Text('Dersleri düzenle'),
             ],
           ),
-        );
-      },
+        ),
+      ],
     );
+    if (result == null) return;
+    if (result.isEdit) {
+      if (context.mounted) {
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const SubjectsScreen()),
+        );
+      }
+      return;
+    }
+    onSelect(result.subjectId);
   }
+}
+
+/// Ders menüsü sonucu: bir ders seç (null = Genel) veya "Dersleri düzenle".
+class _SubjectMenuResult {
+  const _SubjectMenuResult.pick(this.subjectId) : isEdit = false;
+  const _SubjectMenuResult.edit()
+      : subjectId = null,
+        isEdit = true;
+
+  final String? subjectId;
+  final bool isEdit;
+}
+
+Widget _subjectMenuRow(
+    ThemeData theme, String label, Color dot, bool selected) {
+  return Row(
+    children: [
+      CircleAvatar(radius: 6, backgroundColor: dot),
+      const SizedBox(width: 12),
+      Expanded(child: Text(label, overflow: TextOverflow.ellipsis)),
+      if (selected)
+        Icon(Icons.check, size: 18, color: theme.colorScheme.primary),
+    ],
+  );
 }

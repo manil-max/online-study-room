@@ -45,7 +45,8 @@ class HomeShell extends ConsumerWidget {
               .floor();
           if (tab == classesTabIndex) {
             ref.read(navIndexProvider.notifier).setIndex(classesTabIndex);
-            showClassSwitcher(context, ref);
+            // Menü basılan konumda açılır (§3.12).
+            showClassSwitcher(context, ref, at: details.globalPosition);
           }
         },
         child: NavigationBar(
