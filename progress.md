@@ -270,7 +270,7 @@
 
 ---
 
-## FAZ 3.11 — Zengin & Etkileşimli UI (2026-06-22 geri bildirim) 🟡
+## FAZ 3.11 — Zengin & Etkileşimli UI (2026-06-22 geri bildirim) 🟢
 
 > Kullanıcı: "dashboard widget gibi sürüklenip boyutlandırılabilsin, dopdolu olsun ama hepsi
 > ayarlanabilir; istatistikler etkileşimli olsun." Araştırma: donut/çubuk/çizgi + **takvim ısı
@@ -293,8 +293,11 @@
   stepper ile ayarlar; Grup istatistiğinde "Bugünkü grup hedefi" ilerleme kartı + **grup serisi**
   (grubun günlük toplamı hedefe ulaşan üst üste günler). ⚠️ Kullanıcı `0006_group_goal.sql` çalıştırmalı.
 
-**Kalan:**
-- [ ] Çizgi grafik kart türü; ısı haritasının kişisel istatistik sekmesine de eklenmesi.
+- [x] **Çizgi grafik** kart türü (`DashboardCardType.line` + `DailyLineChart`, dokunma ipuçlu,
+  büyükte 30 gün); ısı haritası ortak `StudyHeatmap` widget'ına çıkarıldı ve **kişisel istatistik**
+  sekmesine de eklendi (son 6 ay).
+
+> ✅ FAZ 3.11 tamam. Migration: kullanıcı `0006_group_goal.sql` çalıştırmalı.
 
 ## FAZ 4 — Çoklu Platform & Widget
 

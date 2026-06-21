@@ -8,6 +8,7 @@ import '../../../data/models/study_session.dart';
 import '../../../data/models/subject.dart';
 import '../../../data/providers/subject_providers.dart';
 import 'daily_bar_chart.dart';
+import 'study_heatmap.dart';
 import 'subject_donut.dart';
 
 /// Kişisel istatistik özeti: dönem toplamları, günlük ortalama ve
@@ -93,6 +94,15 @@ class PersonalStatsView extends StatelessWidget {
         _TrendCard(sessions: sessions),
         const SizedBox(height: 16),
         _WeekComparisonCard(sessions: sessions, now: now),
+        const SizedBox(height: 16),
+        Text('Çalışma takvimi (son 6 ay)', style: theme.textTheme.titleMedium),
+        const SizedBox(height: 8),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: StudyHeatmap(sessions: sessions, weeks: 26),
+          ),
+        ),
         const SizedBox(height: 16),
         Text('Ders bazında dağılım (son 30 gün)',
             style: theme.textTheme.titleMedium),

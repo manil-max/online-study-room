@@ -4,6 +4,7 @@ import '../classroom/widgets/study_timer_card.dart';
 import 'widgets/goal_card.dart';
 import 'widgets/heatmap_card.dart';
 import 'widgets/leaderboard_card.dart';
+import 'widgets/line_chart_card.dart';
 import 'widgets/period_summary_card.dart';
 import 'widgets/today_summary_card.dart';
 import 'widgets/weekday_weekend_card.dart';
@@ -16,6 +17,7 @@ enum DashboardCardType {
   goal,
   today,
   weekly,
+  line,
   monthly,
   weekdayWeekend,
   heatmap,
@@ -28,6 +30,7 @@ extension DashboardCardInfo on DashboardCardType {
         DashboardCardType.goal => 'Günlük hedef',
         DashboardCardType.today => 'Bugün özeti',
         DashboardCardType.weekly => 'Haftalık grafik',
+        DashboardCardType.line => 'Eğilim grafiği',
         DashboardCardType.monthly => 'Dönem özeti',
         DashboardCardType.weekdayWeekend => 'Hafta içi / sonu',
         DashboardCardType.heatmap => 'Çalışma takvimi',
@@ -39,6 +42,7 @@ extension DashboardCardInfo on DashboardCardType {
         DashboardCardType.goal => 'Hedef ilerlemesi ve büyük seri göstergesi',
         DashboardCardType.today => 'Bugünkü toplam ve ders dağılımı',
         DashboardCardType.weekly => 'Son 7 (veya 14) günün çubuk grafiği',
+        DashboardCardType.line => 'Günlük çalışma eğilimi (çizgi grafik)',
         DashboardCardType.monthly => 'Bugün / hafta / ay / yıl toplam ve ortalama',
         DashboardCardType.weekdayWeekend => 'Hafta içi ile hafta sonu kıyası',
         DashboardCardType.heatmap => 'GitHub tarzı çalışma yoğunluğu ısı haritası',
@@ -50,6 +54,7 @@ extension DashboardCardInfo on DashboardCardType {
         DashboardCardType.goal => Icons.flag_outlined,
         DashboardCardType.today => Icons.today_outlined,
         DashboardCardType.weekly => Icons.bar_chart,
+        DashboardCardType.line => Icons.show_chart,
         DashboardCardType.monthly => Icons.calendar_month_outlined,
         DashboardCardType.weekdayWeekend => Icons.weekend_outlined,
         DashboardCardType.heatmap => Icons.grid_on_outlined,
@@ -144,6 +149,8 @@ Widget dashboardCardFor(DashboardCardType type, DashboardCardSize size) {
       return TodaySummaryCard(size: size);
     case DashboardCardType.weekly:
       return WeeklyChartCard(size: size);
+    case DashboardCardType.line:
+      return LineChartCard(size: size);
     case DashboardCardType.monthly:
       return PeriodSummaryCard(size: size);
     case DashboardCardType.weekdayWeekend:
