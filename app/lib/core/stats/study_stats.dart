@@ -166,6 +166,11 @@ int currentStreak(
   return streak;
 }
 
+/// Çalışma serisi: üst üste (en az 1 sn) çalışılan gün sayısı. Grup üyeleri için
+/// herkesin günlük hedefi bilinmediğinden "çalıştığın gün" temelli seri (§3.7).
+int studyStreak(Iterable<StudySession> sessions, {DateTime? today}) =>
+    currentStreak(sessions, 1, today: today);
+
 /// Bir sınıfın oturumlarından kullanıcı başına toplam (userId → saniye),
 /// büyükten küçüğe sıralı (leaderboard).
 List<MapEntry<String, int>> leaderboard(Iterable<StudySession> sessions) {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/stats/study_stats.dart';
+import '../../../core/theme/subject_colors.dart';
 import '../../../core/utils/duration_format.dart';
 import '../../../core/widgets/user_avatar.dart';
 import '../../../data/models/profile.dart';
@@ -59,6 +60,11 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
     final memberCount = widget.members.isEmpty ? 1 : widget.members.length;
     final classAvg = classTotal ~/ memberCount;
     final maxSeconds = rows.isEmpty ? 0 : rows.first.seconds;
+    // Üye başına çalışma serisi (tüm oturumlardan, dönemden bağımsız).
+    final streaks = <String, int>{
+      for (final m in widget.members)
+        m.id: studyStreak(widget.sessions.where((s) => s.userId == m.id)),
+    };
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -151,6 +157,7 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
               avatarUrl: rows[i].member.avatarUrl,
               seconds: rows[i].seconds,
               maxSeconds: maxSeconds,
+              streak: streaks[rows[i].member.id] ?? 0,
               isMe: rows[i].member.id == widget.currentUserId,
             ),
       ],
@@ -194,6 +201,7 @@ class _LeaderboardRow extends StatelessWidget {
     required this.avatarUrl,
     required this.seconds,
     required this.maxSeconds,
+    required this.streak,
     required this.isMe,
   });
 
@@ -202,6 +210,7 @@ class _LeaderboardRow extends StatelessWidget {
   final String? avatarUrl;
   final int seconds;
   final int maxSeconds;
+  final int streak;
   final bool isMe;
 
   @override
@@ -242,8 +251,22 @@ class _LeaderboardRow extends StatelessWidget {
                         ),
                       ),
                     ),
-                    Text(formatHuman(seconds),
-                        style: theme.textTheme.bodyMedium),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (streak > 0) ...[
+                          Icon(Icons.local_fire_department,
+                              size: 14, color: subjectColor('chart-5')),
+                          const SizedBox(width: 2),
+                          Text('$streak',
+                              style: theme.textTheme.labelSmall
+                                  ?.copyWith(color: subjectColor('chart-5'))),
+                          const SizedBox(width: 8),
+                        ],
+                        Text(formatHuman(seconds),
+                            style: theme.textTheme.bodyMedium),
+                      ],
+                    ),
                   ],
                 ),
                 const SizedBox(height: 4),

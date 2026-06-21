@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/stats/study_stats.dart';
+import '../../../core/theme/subject_colors.dart';
 import '../../../core/utils/duration_format.dart';
 import '../../../core/widgets/user_avatar.dart';
 import '../../../data/models/profile.dart';
@@ -38,6 +39,11 @@ class LeaderboardCard extends ConsumerWidget {
 
     final today = sessions.where((s) => isSameDay(s.day, now));
     final board = leaderboard(today).take(5).toList();
+    // Her üyenin çalışma serisi (üst üste çalıştığı gün), tüm grup oturumlarından.
+    final streaks = <String, int>{
+      for (final e in board)
+        e.key: studyStreak(sessions.where((s) => s.userId == e.key)),
+    };
 
     Profile? memberFor(String id) {
       for (final m in members) {
@@ -86,6 +92,7 @@ class LeaderboardCard extends ConsumerWidget {
                   rank: i + 1,
                   member: memberFor(board[i].key),
                   seconds: board[i].value,
+                  streak: streaks[board[i].key] ?? 0,
                   isMe: board[i].key == meId,
                 ),
           ],
@@ -100,12 +107,14 @@ class _Row extends StatelessWidget {
     required this.rank,
     required this.member,
     required this.seconds,
+    required this.streak,
     required this.isMe,
   });
 
   final int rank;
   final Profile? member;
   final int seconds;
+  final int streak;
   final bool isMe;
 
   @override
@@ -145,6 +154,15 @@ class _Row extends StatelessWidget {
               ),
             ),
           ),
+          if (streak > 0) ...[
+            Icon(Icons.local_fire_department,
+                size: 14, color: subjectColor('chart-5')),
+            const SizedBox(width: 2),
+            Text('$streak',
+                style: theme.textTheme.labelSmall
+                    ?.copyWith(color: subjectColor('chart-5'))),
+            const SizedBox(width: 8),
+          ],
           Text(
             formatHuman(seconds),
             style: theme.textTheme.bodySmall
@@ -186,6 +204,8 @@ class _Row extends StatelessWidget {
                 _InfoRow(label: 'Sıralama', value: '$rank.'),
                 _InfoRow(
                     label: 'Bugünkü çalışma', value: formatHuman(seconds)),
+                if (streak > 0)
+                  _InfoRow(label: 'Çalışma serisi', value: '$streak gün'),
               ],
             ),
           ),
