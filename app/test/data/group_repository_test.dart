@@ -46,4 +46,21 @@ void main() {
       throwsA(isA<GroupException>()),
     );
   });
+
+  test('watchUserGroups kullanıcının tüm sınıflarını verir (çoklu sınıf)', () async {
+    final repo = InMemoryGroupRepository();
+    final ali = _profile('u1', 'Ali');
+    final g1 = await repo.createGroup(name: 'Sınıf A', creator: ali);
+    final g2 = await repo.createGroup(name: 'Sınıf B', creator: ali);
+    // Başka birinin sınıfına da katıl.
+    final g3 = await repo.createGroup(name: 'Sınıf C', creator: _profile('u2', 'Veli'));
+    await repo.joinGroup(inviteCode: g3.inviteCode, member: ali);
+
+    final mine = await repo.watchUserGroups('u1').first;
+    expect(mine.map((g) => g.id).toSet(), {g1.id, g2.id, g3.id});
+
+    // u2 yalnızca kendi sınıfını görür.
+    final others = await repo.watchUserGroups('u2').first;
+    expect(others.map((g) => g.id).toList(), [g3.id]);
+  });
 }

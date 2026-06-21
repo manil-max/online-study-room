@@ -15,7 +15,8 @@ class InMemoryGroupRepository implements GroupRepository {
   final _random = Random();
 
   final Map<String, StudyGroup> _groups = {};
-  final Map<String, String> _userGroup = {}; // userId -> groupId
+  // Çoklu sınıf: bir kullanıcı birden çok sınıfa üye olabilir (katılım sırasıyla).
+  final Map<String, List<String>> _userGroups = {}; // userId -> [groupId...]
   final Map<String, List<Profile>> _members = {}; // groupId -> üyeler
   final StreamController<void> _changes = StreamController<void>.broadcast();
 
@@ -32,10 +33,11 @@ class InMemoryGroupRepository implements GroupRepository {
     return code;
   }
 
-  StudyGroup? _groupForUser(String userId) {
-    final groupId = _userGroup[userId];
-    if (groupId == null) return null;
-    return _groups[groupId];
+  List<StudyGroup> _groupsForUser(String userId) {
+    final ids = _userGroups[userId] ?? const [];
+    final list = ids.map((id) => _groups[id]).whereType<StudyGroup>().toList()
+      ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+    return List.unmodifiable(list);
   }
 
   @override
@@ -55,7 +57,7 @@ class InMemoryGroupRepository implements GroupRepository {
     );
     _groups[group.id] = group;
     _members[group.id] = [creator];
-    _userGroup[creator.id] = group.id;
+    _userGroups.putIfAbsent(creator.id, () => []).add(group.id);
     _changes.add(null);
     return group;
   }
@@ -75,16 +77,17 @@ class InMemoryGroupRepository implements GroupRepository {
     if (!members.any((m) => m.id == member.id)) {
       members.add(member);
     }
-    _userGroup[member.id] = group.id;
+    final mine = _userGroups.putIfAbsent(member.id, () => []);
+    if (!mine.contains(group.id)) mine.add(group.id);
     _changes.add(null);
     return group;
   }
 
   @override
-  Stream<StudyGroup?> watchUserGroup(String userId) async* {
-    yield _groupForUser(userId);
+  Stream<List<StudyGroup>> watchUserGroups(String userId) async* {
+    yield _groupsForUser(userId);
     await for (final _ in _changes.stream) {
-      yield _groupForUser(userId);
+      yield _groupsForUser(userId);
     }
   }
 

@@ -24,8 +24,9 @@ abstract class GroupRepository {
     required Profile member,
   });
 
-  /// Kullanıcının üyesi olduğu sınıfı (yoksa null) canlı izler.
-  Stream<StudyGroup?> watchUserGroup(String userId);
+  /// Kullanıcının üyesi olduğu TÜM sınıfları (eski → yeni) canlı izler.
+  /// Çoklu sınıf desteği (project.md §3.8); boşsa boş liste.
+  Stream<List<StudyGroup>> watchUserGroups(String userId);
 
   /// Bir sınıfın üyelerini canlı izler.
   Stream<List<Profile>> watchMembers(String groupId);

@@ -87,20 +87,19 @@ class SupabaseGroupRepository implements GroupRepository {
   }
 
   @override
-  Stream<StudyGroup?> watchUserGroup(String userId) {
+  Stream<List<StudyGroup>> watchUserGroups(String userId) {
     return _client
         .from('group_members')
         .stream(primaryKey: ['group_id', 'user_id'])
         .eq('user_id', userId)
         .asyncMap((rows) async {
-          if (rows.isEmpty) return null;
-          final groupId = rows.first['group_id'] as String;
-          final g = await _client
-              .from('groups')
-              .select()
-              .eq('id', groupId)
-              .maybeSingle();
-          return g == null ? null : StudyGroup.fromMap(g);
+          if (rows.isEmpty) return <StudyGroup>[];
+          final ids = rows.map((r) => r['group_id'] as String).toList();
+          final gs =
+              await _client.from('groups').select().inFilter('id', ids);
+          final list = gs.map<StudyGroup>(StudyGroup.fromMap).toList()
+            ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+          return list;
         });
   }
 

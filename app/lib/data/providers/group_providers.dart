@@ -19,14 +19,42 @@ final groupRepositoryProvider = Provider<GroupRepository>((ref) {
   return repo;
 });
 
-/// Giriş yapan kullanıcının sınıfı (yoksa null).
-final userGroupProvider = StreamProvider<StudyGroup?>((ref) {
+/// Giriş yapan kullanıcının üyesi olduğu TÜM sınıflar (çoklu sınıf — §3.8).
+final userGroupsProvider = StreamProvider<List<StudyGroup>>((ref) {
   final user = ref.watch(authStateProvider).value;
-  if (user == null) return Stream.value(null);
-  return ref.watch(groupRepositoryProvider).watchUserGroup(user.id);
+  if (user == null) return Stream.value(const []);
+  return ref.watch(groupRepositoryProvider).watchUserGroups(user.id);
 });
 
-/// Kullanıcının sınıfındaki üyeler.
+/// Aktif (görüntülenen) sınıfın id'si. Sınıf değiştirici buradan değiştirir.
+/// Şimdilik bellek-içi; kalıcılık sonraki adımda eklenecek.
+class ActiveGroupNotifier extends Notifier<String?> {
+  @override
+  String? build() => null;
+
+  void select(String? groupId) => state = groupId;
+}
+
+final activeGroupIdProvider =
+    NotifierProvider<ActiveGroupNotifier, String?>(ActiveGroupNotifier.new);
+
+/// Aktif sınıf: seçili id varsa o, yoksa ilk sınıf (yoksa null).
+/// `AsyncValue` döndürür ki mevcut `.value` / `.when` kullanan ekranlar değişmesin.
+final userGroupProvider = Provider<AsyncValue<StudyGroup?>>((ref) {
+  final groupsAsync = ref.watch(userGroupsProvider);
+  final activeId = ref.watch(activeGroupIdProvider);
+  return groupsAsync.whenData((groups) {
+    if (groups.isEmpty) return null;
+    if (activeId != null) {
+      for (final g in groups) {
+        if (g.id == activeId) return g;
+      }
+    }
+    return groups.first;
+  });
+});
+
+/// Aktif sınıftaki üyeler.
 final groupMembersProvider = StreamProvider<List<Profile>>((ref) {
   final group = ref.watch(userGroupProvider).value;
   if (group == null) return Stream.value(const []);

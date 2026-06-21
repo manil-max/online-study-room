@@ -197,8 +197,11 @@
 
 > Eski "Sınıf" sekmesi "Sınıflar" olur; çoklu üyelik + sınıf değiştirici + admin.
 
-- [ ] Veri: `userGroupsProvider` (tüm üyelikler) + `activeGroupProvider` (seçili, kalıcı)
-- [ ] `createGroup` oluşturanı `role='admin'` yapsın (şema hazır)
+- [x] Veri: `watchUserGroups` (çoğul, abstract+bellek-içi+Supabase) + `userGroupsProvider`
+  (tüm üyelikler) + `activeGroupIdProvider` (seçili, şimdilik bellek-içi) + `userGroupProvider`
+  artık aktif sınıfı türetiyor (AsyncValue — mevcut ekranlar değişmedi). 44/44 test.
+  (Kalıcılık + yeni sınıfa otomatik geçiş sonraki adımda.)
+- [x] `createGroup` oluşturanı `role='admin'` yapıyor (Supabase'de hazırdı ✅)
 - [ ] Sekme adı "Sınıflar"; ikona basılı tut → sınıf değiştirici penceresi
       (sınıf listesi + aktif seçim + "Sınıf oluştur" + "Sınıfa katıl")
 - [ ] Sınıf başına ⋮ menü: bilgi / ayarlar / admin hakları
