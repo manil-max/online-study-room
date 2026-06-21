@@ -99,5 +99,47 @@ class InMemoryGroupRepository implements GroupRepository {
     }
   }
 
+  @override
+  Future<void> updateGroupName(String groupId, String name) async {
+    final g = _groups[groupId];
+    if (g == null) return;
+    if (name.trim().isEmpty) {
+      throw const GroupException('Sınıf adı boş olamaz.');
+    }
+    _groups[groupId] = g.copyWith(name: name.trim());
+    _changes.add(null);
+  }
+
+  @override
+  Future<String> regenerateInviteCode(String groupId) async {
+    final g = _groups[groupId];
+    if (g == null) throw const GroupException('Sınıf bulunamadı.');
+    final code = _generateInviteCode();
+    _groups[groupId] = g.copyWith(inviteCode: code);
+    _changes.add(null);
+    return code;
+  }
+
+  @override
+  Future<void> removeMember(String groupId, String userId) async {
+    _members[groupId]?.removeWhere((m) => m.id == userId);
+    _userGroups[userId]?.remove(groupId);
+    _changes.add(null);
+  }
+
+  @override
+  Future<void> leaveGroup(String groupId, String userId) =>
+      removeMember(groupId, userId);
+
+  @override
+  Future<void> deleteGroup(String groupId) async {
+    _groups.remove(groupId);
+    _members.remove(groupId);
+    for (final ids in _userGroups.values) {
+      ids.remove(groupId);
+    }
+    _changes.add(null);
+  }
+
   void dispose() => _changes.close();
 }

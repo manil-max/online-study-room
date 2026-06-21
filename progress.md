@@ -13,7 +13,7 @@
 - **Aktif Faz:** Oturum kalıcılığı sağlamlaştırıldı (Faz 1.1) — SDK zaten oturumu kalıcı tutuyor; profil çekimi çevrimdışında kullanıcıyı dışarı atmıyor. Tamamlananlar: Faz 1 (auth+profil+sınıf), Faz 2 (presence+manuel giriş), Faz 3 istatistikler (3a–3d). Supabase uçtan uca test edildi ✅. Kalan: Faz 4 widget (Android cihaz ister — ertelendi), Şifre sıfırlama (opsiyonel), Çevrimdışı tespiti/heartbeat, tasarım (en son).
 - **Proje konumu:** `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room` (İngilizce ad — Türkçe/boşluklu yol Flutter'ı bozuyordu; aşağıdaki nota bak)
 - **Sıradaki adım:** Kullanıcı ilk denemesini yaptı; büyük yön kararları alındı (4 sekme, çoklu sınıf+admin, esnek Ana Sayfa, çalışma kayıtları toplama, sınıf ist. zenginleştirme — §3.8–3.11, FAZ 3.6–3.9). Ders-ekleme bug'ı çözüldü ✅. **Sıralama kullanıcıyla netleşecek** (öneri: önce FAZ 3.6 çoklu sınıf, çünkü Ana Sayfa ona dayanıyor). Bekleyen küçük işler: 3.5.2 günlük hedef + 3.5.3 seri.
-- **Bekleyen (kullanıcı/admin):** (1) `migrations/0003_subjects_realtime.sql` artık **opsiyonel** — ders deposu Realtime'a bağımlı olmaktan çıkarıldı (her eklemede otomatik yenileniyor). Sadece çoklu cihaz canlı senkronu isteniyorsa çalıştır.
+- **Bekleyen (kullanıcı/admin):** (1) **`migrations/0004_group_admin.sql`** Supabase'de çalıştırılmalı — sınıf ad değiştir / kod yenile / üye çıkar / sınıf sil (admin RLS) bunsuz çalışmaz. (2) `migrations/0003_subjects_realtime.sql` artık **opsiyonel** (ders deposu Realtime'a bağımlı değil; sadece çoklu cihaz canlı senkronu için).
 - **Çözüldü (2026-06-21):** Windows **Geliştirici Modu açıldı** ✅ — eklentiler (image_picker vb.) symlink gerektirdiği için **web/Chrome derlemesi de** bunu istiyormuş (önceki not yanlıştı). Kapalıyken `flutter run -d chrome` "Error when reading ../../../../../AppData/.../package: cannot find path" + binlerce takip hatası veriyordu. `flutter clean && flutter pub get` + Geliştirici Modu ile düzeldi; `flutter build web` temiz derleniyor.
 
 ---
@@ -206,9 +206,13 @@
       (`class_switcher.dart`: sınıf listesi + aktif seçim + "Sınıf oluştur" + "Sınıfa katıl").
       Ayrıca üstteki sınıf adına/▾ ve sağdaki ↔ ikonuna dokununca da açılır. Oluştur/katıl
       sonrası yeni sınıf otomatik aktif olur. 44/44 test.
-- [ ] Sınıf başına ⋮ menü: bilgi / ayarlar / admin hakları (sonraki mini faz)
-- [ ] Admin işlemleri: ad değiştir, üye çıkar, davet kodu yenile, sınıfı sil
-- [ ] (İleride) sınıf sohbeti için menü/ekran yeri ayır — §3.8
+- [x] Sınıf başına ⋮ → `ClassDetailScreen` (bilgi: davet kodu/kopyala, oluşturulma, üyeler;
+      ayarlar: sınıftan çık / admin: sınıfı sil). Admin = `group.createdBy`.
+- [x] Admin işlemleri: ad değiştir, üye çıkar, davet kodu yenile, sınıfı sil (repo: soyut+
+      bellek-içi+Supabase). **Supabase RLS:** `migrations/0004_group_admin.sql` (kullanıcı çalıştırmalı).
+      47/47 test.
+- [x] (İleride) sınıf sohbeti için yer ayrıldı — ClassDetailScreen'de "Sohbet (yakında)" tile.
+- [ ] Aktif sınıf kalıcılığı (uygulama yenilenince hatırlama) — küçük, sonra (shared_preferences)
 
 ## FAZ 3.7 — Ana Sayfa: Esnek Dashboard (2026-06-21 kararı, §3.9) 🟡
 

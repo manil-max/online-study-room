@@ -47,6 +47,41 @@ void main() {
     );
   });
 
+  test('updateGroupName / regenerateInviteCode adı ve kodu değiştirir', () async {
+    final repo = InMemoryGroupRepository();
+    final g = await repo.createGroup(name: 'Eski', creator: _profile('u1', 'Ali'));
+
+    await repo.updateGroupName(g.id, 'Yeni Ad');
+    final newCode = await repo.regenerateInviteCode(g.id);
+
+    final mine = await repo.watchUserGroups('u1').first;
+    expect(mine.single.name, 'Yeni Ad');
+    expect(mine.single.inviteCode, newCode);
+    expect(newCode, isNot(g.inviteCode));
+  });
+
+  test('removeMember üyeyi çıkarır, sınıfından düşer', () async {
+    final repo = InMemoryGroupRepository();
+    final g = await repo.createGroup(name: 'A', creator: _profile('u1', 'Ali'));
+    await repo.joinGroup(inviteCode: g.inviteCode, member: _profile('u2', 'Veli'));
+
+    await repo.removeMember(g.id, 'u2');
+
+    expect(await repo.watchMembers(g.id).first, hasLength(1));
+    expect(await repo.watchUserGroups('u2').first, isEmpty);
+  });
+
+  test('deleteGroup sınıfı herkesten kaldırır', () async {
+    final repo = InMemoryGroupRepository();
+    final g = await repo.createGroup(name: 'A', creator: _profile('u1', 'Ali'));
+    await repo.joinGroup(inviteCode: g.inviteCode, member: _profile('u2', 'Veli'));
+
+    await repo.deleteGroup(g.id);
+
+    expect(await repo.watchUserGroups('u1').first, isEmpty);
+    expect(await repo.watchUserGroups('u2').first, isEmpty);
+  });
+
   test('watchUserGroups kullanıcının tüm sınıflarını verir (çoklu sınıf)', () async {
     final repo = InMemoryGroupRepository();
     final ali = _profile('u1', 'Ali');

@@ -5,6 +5,7 @@ import '../../../data/models/study_group.dart';
 import '../../../data/providers/auth_providers.dart';
 import '../../../data/providers/group_providers.dart';
 import '../../../data/repositories/group_repository.dart';
+import 'class_detail_screen.dart';
 
 /// Sınıf değiştirici alt sayfası (Instagram hesap değiştirme mantığı, §3.8):
 /// katılınan sınıflar listelenir, dokununca aktif sınıf değişir; ayrıca
@@ -63,9 +64,25 @@ class _ClassSwitcherSheet extends ConsumerWidget {
               ),
               title: Text(g.name),
               subtitle: Text('Kod: ${g.inviteCode}'),
-              trailing: g.id == activeId
-                  ? Icon(Icons.check_circle, color: theme.colorScheme.primary)
-                  : null,
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (g.id == activeId)
+                    Icon(Icons.check_circle,
+                        color: theme.colorScheme.primary),
+                  IconButton(
+                    tooltip: 'Sınıf bilgileri ve ayarları',
+                    icon: const Icon(Icons.more_vert),
+                    onPressed: () {
+                      final nav = Navigator.of(context, rootNavigator: true);
+                      Navigator.pop(context); // değiştiriciyi kapat
+                      nav.push(MaterialPageRoute(
+                        builder: (_) => ClassDetailScreen(group: g),
+                      ));
+                    },
+                  ),
+                ],
+              ),
               onTap: () {
                 ref.read(activeGroupIdProvider.notifier).select(g.id);
                 Navigator.pop(context);

@@ -117,4 +117,61 @@ class SupabaseGroupRepository implements GroupRepository {
           return profs.map<Profile>(Profile.fromMap).toList();
         });
   }
+
+  @override
+  Future<void> updateGroupName(String groupId, String name) async {
+    if (name.trim().isEmpty) {
+      throw const GroupException('Sınıf adı boş olamaz.');
+    }
+    try {
+      await _client
+          .from('groups')
+          .update({'name': name.trim()}).eq('id', groupId);
+    } on PostgrestException catch (e) {
+      throw GroupException('Sınıf adı değiştirilemedi: ${e.message}');
+    }
+  }
+
+  @override
+  Future<String> regenerateInviteCode(String groupId) async {
+    for (var attempt = 0; attempt < 5; attempt++) {
+      final code = _newCode();
+      try {
+        await _client
+            .from('groups')
+            .update({'invite_code': code}).eq('id', groupId);
+        return code;
+      } on PostgrestException catch (e) {
+        if (e.code == '23505' && attempt < 4) continue; // kod çakıştı
+        throw GroupException('Kod yenilenemedi: ${e.message}');
+      }
+    }
+    throw const GroupException('Kod yenilenemedi, tekrar deneyin.');
+  }
+
+  @override
+  Future<void> removeMember(String groupId, String userId) async {
+    try {
+      await _client
+          .from('group_members')
+          .delete()
+          .eq('group_id', groupId)
+          .eq('user_id', userId);
+    } on PostgrestException catch (e) {
+      throw GroupException('Üye çıkarılamadı: ${e.message}');
+    }
+  }
+
+  @override
+  Future<void> leaveGroup(String groupId, String userId) =>
+      removeMember(groupId, userId);
+
+  @override
+  Future<void> deleteGroup(String groupId) async {
+    try {
+      await _client.from('groups').delete().eq('id', groupId);
+    } on PostgrestException catch (e) {
+      throw GroupException('Sınıf silinemedi: ${e.message}');
+    }
+  }
 }

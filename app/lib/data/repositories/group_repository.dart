@@ -30,4 +30,21 @@ abstract class GroupRepository {
 
   /// Bir sınıfın üyelerini canlı izler.
   Stream<List<Profile>> watchMembers(String groupId);
+
+  // --- Yönetim (admin = sınıfı oluşturan; yetki kontrolü çağıran tarafta + RLS) ---
+
+  /// Sınıf adını değiştirir (admin).
+  Future<void> updateGroupName(String groupId, String name);
+
+  /// Yeni davet kodu üretir ve döndürür (admin).
+  Future<String> regenerateInviteCode(String groupId);
+
+  /// Bir üyeyi sınıftan çıkarır (admin başkasını; kişi kendini → çık).
+  Future<void> removeMember(String groupId, String userId);
+
+  /// Kullanıcı sınıftan ayrılır (kendi üyeliğini siler).
+  Future<void> leaveGroup(String groupId, String userId);
+
+  /// Sınıfı tamamen siler (admin). İlişkili veriler DB'de cascade ile gider.
+  Future<void> deleteGroup(String groupId);
 }
