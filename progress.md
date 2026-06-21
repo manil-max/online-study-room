@@ -13,7 +13,7 @@
 - **Aktif Faz:** Oturum kalıcılığı sağlamlaştırıldı (Faz 1.1) — SDK zaten oturumu kalıcı tutuyor; profil çekimi çevrimdışında kullanıcıyı dışarı atmıyor. Tamamlananlar: Faz 1 (auth+profil+sınıf), Faz 2 (presence+manuel giriş), Faz 3 istatistikler (3a–3d). Supabase uçtan uca test edildi ✅. Kalan: Faz 4 widget (Android cihaz ister — ertelendi), Şifre sıfırlama (opsiyonel), Çevrimdışı tespiti/heartbeat, tasarım (en son).
 - **Proje konumu:** `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room` (İngilizce ad — Türkçe/boşluklu yol Flutter'ı bozuyordu; aşağıdaki nota bak)
 - **Sıradaki adım:** FAZ 3.5.2 — Günlük hedef (`profiles.daily_goal_minutes` migration + repository + ana ekran hedef kartı). 3.5.1 dersler TAMAM ✅. Tasarım dili (koyu tema) referansı `project-continuation/` (yerelde, .gitignore'da).
-- **Bekleyen (kullanıcı/admin):** (1) `migrations/0003_subjects_realtime.sql` Supabase'de bir kez çalıştırılmalı (dersler canlı listesi için).
+- **Bekleyen (kullanıcı/admin):** (1) `migrations/0003_subjects_realtime.sql` artık **opsiyonel** — ders deposu Realtime'a bağımlı olmaktan çıkarıldı (her eklemede otomatik yenileniyor). Sadece çoklu cihaz canlı senkronu isteniyorsa çalıştır.
 - **Çözüldü (2026-06-21):** Windows **Geliştirici Modu açıldı** ✅ — eklentiler (image_picker vb.) symlink gerektirdiği için **web/Chrome derlemesi de** bunu istiyormuş (önceki not yanlıştı). Kapalıyken `flutter run -d chrome` "Error when reading ../../../../../AppData/.../package: cannot find path" + binlerce takip hatası veriyordu. `flutter clean && flutter pub get` + Geliştirici Modu ile düzeldi; `flutter build web` temiz derleniyor.
 
 ---
