@@ -24,28 +24,10 @@ class ClassroomScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final groupAsync = ref.watch(userGroupProvider);
-    final group = groupAsync.value;
 
     return Scaffold(
       appBar: AppBar(
-        title: group == null
-            ? const Text('Sınıflar')
-            : InkWell(
-                borderRadius: BorderRadius.circular(8),
-                onTap: () => showClassSwitcher(context, ref),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Flexible(
-                        child: Text(group.name, overflow: TextOverflow.ellipsis),
-                      ),
-                      const Icon(Icons.arrow_drop_down),
-                    ],
-                  ),
-                ),
-              ),
+        title: const Text('Sınıflar'),
         actions: [
           IconButton(
             tooltip: 'Sınıf değiştir',

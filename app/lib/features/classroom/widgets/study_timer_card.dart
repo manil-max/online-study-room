@@ -8,6 +8,7 @@ import '../../../core/utils/duration_format.dart';
 import '../../../data/models/subject.dart';
 import '../../../data/providers/study_providers.dart';
 import '../../../data/providers/subject_providers.dart';
+import '../../profile/widgets/manual_session_dialog.dart';
 
 /// Çalışma sayacı kartı: bugünkü toplam + canlı süre + başlat/durdur.
 /// Her saniye yeniden çizmek için kendi periyodik zamanlayıcısı vardır.
@@ -117,6 +118,12 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
                       icon: const Icon(Icons.play_arrow),
                       label: const Text('Çalışmaya başla'),
                     ),
+            ),
+            const SizedBox(height: 4),
+            TextButton.icon(
+              onPressed: () => addManualSessionFlow(context, ref),
+              icon: const Icon(Icons.edit_calendar, size: 18),
+              label: const Text('Manuel süre ekle'),
             ),
           ],
         ),

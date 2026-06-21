@@ -1,7 +1,46 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../core/theme/subject_colors.dart';
+import '../../../data/models/study_session.dart';
 import '../../../data/models/subject.dart';
+import '../../../data/providers/auth_providers.dart';
+import '../../../data/providers/group_providers.dart';
+import '../../../data/providers/study_providers.dart';
+import '../../../data/providers/subject_providers.dart';
+
+/// Manuel süre ekleme akışı (her ekrandan çağrılabilir): aktif sınıf/kullanıcı
+/// kontrolü + ders seçimli diyalog + `study_sessions`'a yazma. Oturumu seçilen
+/// günün ortasına (12:00) yerleştirir. Sınıf yoksa kullanıcıyı uyarır.
+Future<void> addManualSessionFlow(BuildContext context, WidgetRef ref) async {
+  final user = ref.read(authStateProvider).value;
+  final group = ref.read(userGroupProvider).value;
+  if (user == null || group == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Önce bir sınıfa katıl ya da sınıf oluştur.')),
+    );
+    return;
+  }
+  final subjects = ref.read(userSubjectsProvider).value ?? const [];
+  final result = await showManualSessionDialog(context, subjects: subjects);
+  if (result == null) return;
+
+  final start =
+      DateTime(result.date.year, result.date.month, result.date.day, 12, 0);
+  await ref.read(studyRepositoryProvider).addSession(
+        StudySession(
+          id: const Uuid().v4(),
+          userId: user.id,
+          groupId: group.id,
+          subjectId: result.subjectId,
+          start: start,
+          end: start.add(Duration(seconds: result.seconds)),
+          durationSeconds: result.seconds,
+          source: StudySource.manual,
+        ),
+      );
+}
 
 /// Manuel süre girişi/düzenlemesi için diyalog. Tarih (gelecek olamaz) + saat/dakika
 /// (+ opsiyonel ders) alır; sonucu `(date, seconds, subjectId)` döndürür. İptal → null.

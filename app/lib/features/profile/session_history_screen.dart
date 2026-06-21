@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:uuid/uuid.dart';
 
 import '../../core/stats/study_stats.dart';
 import '../../core/theme/subject_colors.dart';
 import '../../core/utils/duration_format.dart';
 import '../../data/models/study_session.dart';
 import '../../data/models/subject.dart';
-import '../../data/providers/auth_providers.dart';
 import '../../data/providers/group_providers.dart';
 import '../../data/providers/study_providers.dart';
 import '../../data/providers/subject_providers.dart';
@@ -17,8 +15,6 @@ import 'widgets/manual_session_dialog.dart';
 /// Manuel süre ekleme, düzenleme ve silme (project.md §3.5 — esnek manuel giriş).
 class SessionHistoryScreen extends ConsumerWidget {
   const SessionHistoryScreen({super.key});
-
-  static const _uuid = Uuid();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -65,31 +61,8 @@ class SessionHistoryScreen extends ConsumerWidget {
         ),
       );
 
-  Future<void> _addManual(BuildContext context, WidgetRef ref) async {
-    final subjects = ref.read(userSubjectsProvider).value ?? const [];
-    final result = await showManualSessionDialog(context, subjects: subjects);
-    if (result == null) return;
-
-    final user = ref.read(authStateProvider).value;
-    final group = ref.read(userGroupProvider).value;
-    if (user == null || group == null) return;
-
-    // Manuel oturumu seçilen günün ortasına yerleştir (gün hesabı doğru olsun).
-    final start = DateTime(
-        result.date.year, result.date.month, result.date.day, 12, 0);
-    await ref.read(studyRepositoryProvider).addSession(
-          StudySession(
-            id: _uuid.v4(),
-            userId: user.id,
-            groupId: group.id,
-            subjectId: result.subjectId,
-            start: start,
-            end: start.add(Duration(seconds: result.seconds)),
-            durationSeconds: result.seconds,
-            source: StudySource.manual,
-          ),
-        );
-  }
+  Future<void> _addManual(BuildContext context, WidgetRef ref) =>
+      addManualSessionFlow(context, ref);
 }
 
 /// Oturumları güne göre gruplayıp listeler.
