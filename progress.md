@@ -12,7 +12,14 @@
 
 - **Aktif Faz:** Oturum kalıcılığı sağlamlaştırıldı (Faz 1.1) — SDK zaten oturumu kalıcı tutuyor; profil çekimi çevrimdışında kullanıcıyı dışarı atmıyor. Tamamlananlar: Faz 1 (auth+profil+sınıf), Faz 2 (presence+manuel giriş), Faz 3 istatistikler (3a–3d). Supabase uçtan uca test edildi ✅. Kalan: Faz 4 widget (Android cihaz ister — ertelendi), Şifre sıfırlama (opsiyonel), Çevrimdışı tespiti/heartbeat, tasarım (en son).
 - **Proje konumu:** `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room` (İngilizce ad — Türkçe/boşluklu yol Flutter'ı bozuyordu; aşağıdaki nota bak)
-- **Sıradaki adım:** Sayaç yenileme (FAZ 3.7) ✅, günlük hedef+seri (3.5.2/3) ✅, saat stilleri ✅, çalışma kayıtları (3.9) ✅ ve **Ana Sayfa esnek dashboard (3.8)** ✅ tamamlandı. **Kalan büyük iş: FAZ 3.10 — istatistikleri zenginleştirme** (kişisel ders pasta/donut + sınıf metrikleri). Ayrıca küçük: aktif sınıf kalıcılığı (artık shared_preferences var, kolay), saat stili kalıcılığı (clockStyle hâlâ bellek-içi — prefs'e taşınabilir).
+- **Sıradaki adım:** 2026-06-22 geri bildirim turu büyük ölçüde işlendi: Sınıf→Grup terminolojisi,
+  Derssiz→Genel, profilden Derslerim kaldırma, uzun tarih, büyük seri, İstatistik grup
+  değiştirici, seçilebilir metin, tıklanabilir sıralama + üye bilgi sayfası, grup üye serileri.
+  **Kalan büyük işler (FAZ 3.11 — aşağıda):** (1) **Grup hedefi** (admin-ayarlı, migration 0006)
+  ve grup serisinin gruba göre hesaplanması; (2) **Zengin & etkileşimli Ana Sayfa**: kartları
+  **yeniden boyutlandırma** (küçük/orta/büyük), 2 sütun grid, veri formatı seçimi, daha çok
+  kart türü; (3) **etkileşimli istatistik**: grafik dokunmatik ipuçları, takvim **ısı haritası**
+  (study streak heatmap), çizgi grafiği, tablo görünümü.
 - **Bekleyen (kullanıcı/admin):** (1) **`migrations/0004_group_admin.sql`** Supabase'de çalıştırılmalı — sınıf ad değiştir / kod yenile / üye çıkar / sınıf sil (admin RLS) bunsuz çalışmaz. (2) **`migrations/0005_daily_goal.sql`** çalıştırılmalı — günlük hedef (`profiles.daily_goal_minutes`); bunsuz hedef hep varsayılan (6sa) görünür ve düzenleme kalıcı olmaz. (3) `migrations/0003_subjects_realtime.sql` artık **opsiyonel** (ders deposu Realtime'a bağımlı değil; sadece çoklu cihaz canlı senkronu için).
 - **Çözüldü (2026-06-21):** Windows **Geliştirici Modu açıldı** ✅ — eklentiler (image_picker vb.) symlink gerektirdiği için **web/Chrome derlemesi de** bunu istiyormuş (önceki not yanlıştı). Kapalıyken `flutter run -d chrome` "Error when reading ../../../../../AppData/.../package: cannot find path" + binlerce takip hatası veriyordu. `flutter clean && flutter pub get` + Geliştirici Modu ile düzeldi; `flutter build web` temiz derleniyor.
 
@@ -262,6 +269,26 @@
 - [ ] (Sonra) Daha fazla sınıf metriği (haftalık değişim, ders bazında sınıf kıyası, en istikrarlı üye).
 
 ---
+
+## FAZ 3.11 — Zengin & Etkileşimli UI (2026-06-22 geri bildirim) 🟡
+
+> Kullanıcı: "dashboard widget gibi sürüklenip boyutlandırılabilsin, dopdolu olsun ama hepsi
+> ayarlanabilir; istatistikler etkileşimli olsun." Araştırma: donut/çubuk/çizgi + **takvim ısı
+> haritası**, dokunmatik ipuçları, tablo; kart yeniden boyutlandırma + grid yerleşim.
+
+**Yapıldı (bu tur):**
+- [x] Ders pasta/donut (kişisel), grup günlük trend, tıklanabilir+hover sıralama satırları,
+  üye bilgi alt sayfası, seçilebilir metin, grup üye serileri (🔥 isim yanında).
+
+**Kalan:**
+- [ ] **Grup hedefi**: `groups.daily_goal_minutes` (migration 0006) + admin ayarı
+  (ClassDetailScreen) + grup stats'ta hedef ilerleme; grup serisi gruba göre.
+- [ ] **Ana Sayfa kart boyutu**: her kart küçük/orta/büyük; 2 sütun grid; düzen edit'te ayarlı.
+- [ ] **Daha çok kart türü**: hedef/seri, dönem özetleri (bugün/hafta/ay/yıl), hafta içi/sonu,
+  takvim ısı haritası, çizgi grafik.
+- [ ] **Etkileşimli grafikler**: fl_chart dokunma ipuçları (donut/çizgi), seçilebilir dönem,
+  veri formatı seçimi (süre/yüzde).
+- [ ] **Takvim ısı haritası** (GitHub tarzı çalışma yoğunluğu) — kişisel istatistik + kart.
 
 ## FAZ 4 — Çoklu Platform & Widget
 
