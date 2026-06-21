@@ -60,6 +60,23 @@ void main() {
     expect(newCode, isNot(g.inviteCode));
   });
 
+  test('updateGroupGoal günlük hedefi değiştirir ve 1..1440 aralığına sıkıştırır',
+      () async {
+    final repo = InMemoryGroupRepository();
+    final g = await repo.createGroup(name: 'A', creator: _profile('u1', 'Ali'));
+    expect(g.dailyGoalMinutes, 360); // varsayılan
+
+    await repo.updateGroupGoal(g.id, 240);
+    expect((await repo.watchUserGroups('u1').first).single.dailyGoalMinutes, 240);
+
+    // Sınır dışı değerler sıkıştırılır.
+    await repo.updateGroupGoal(g.id, 0);
+    expect((await repo.watchUserGroups('u1').first).single.dailyGoalMinutes, 1);
+    await repo.updateGroupGoal(g.id, 5000);
+    expect(
+        (await repo.watchUserGroups('u1').first).single.dailyGoalMinutes, 1440);
+  });
+
   test('removeMember üyeyi çıkarır, sınıfından düşer', () async {
     final repo = InMemoryGroupRepository();
     final g = await repo.createGroup(name: 'A', creator: _profile('u1', 'Ali'));

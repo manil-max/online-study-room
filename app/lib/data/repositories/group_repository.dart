@@ -36,6 +36,10 @@ abstract class GroupRepository {
   /// Sınıf adını değiştirir (admin).
   Future<void> updateGroupName(String groupId, String name);
 
+  /// Grubun günlük hedefini (dakika) değiştirir (admin). 1..24*60 aralığına
+  /// sıkıştırılır.
+  Future<void> updateGroupGoal(String groupId, int minutes);
+
   /// Yeni davet kodu üretir ve döndürür (admin).
   Future<String> regenerateInviteCode(String groupId);
 

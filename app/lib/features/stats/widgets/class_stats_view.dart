@@ -22,12 +22,14 @@ class ClassStatsView extends ConsumerStatefulWidget {
     required this.members,
     required this.currentUserId,
     required this.groupName,
+    required this.groupGoalMinutes,
   });
 
   final List<StudySession> sessions;
   final List<Profile> members;
   final String currentUserId;
   final String groupName;
+  final int groupGoalMinutes;
 
   @override
   ConsumerState<ClassStatsView> createState() => _ClassStatsViewState();
@@ -66,6 +68,11 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
         m.id: studyStreak(widget.sessions.where((s) => s.userId == m.id)),
     };
 
+    // Grup günlük hedefi: bugünkü grup toplamı + gruba göre seri.
+    final goalSeconds = widget.groupGoalMinutes * 60;
+    final todayGroupTotal = secondsOnDay(widget.sessions, now);
+    final groupStreak = currentStreak(widget.sessions, goalSeconds);
+
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -101,6 +108,12 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
             onSelectionChanged: (s) => setState(() => _period = s.first),
             showSelectedIcon: false,
           ),
+        ),
+        const SizedBox(height: 16),
+        _GroupGoalCard(
+          todaySeconds: todayGroupTotal,
+          goalSeconds: goalSeconds,
+          streak: groupStreak,
         ),
         const SizedBox(height: 16),
         Row(
@@ -161,6 +174,84 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
               isMe: rows[i].member.id == widget.currentUserId,
             ),
       ],
+    );
+  }
+}
+
+/// Grup günlük hedefi kartı: bugünkü grup toplamının hedefe oranı + grup serisi.
+class _GroupGoalCard extends StatelessWidget {
+  const _GroupGoalCard({
+    required this.todaySeconds,
+    required this.goalSeconds,
+    required this.streak,
+  });
+
+  final int todaySeconds;
+  final int goalSeconds;
+  final int streak;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final pct =
+        goalSeconds <= 0 ? 0.0 : (todaySeconds / goalSeconds).clamp(0.0, 1.0);
+    final reached = goalSeconds > 0 && todaySeconds >= goalSeconds;
+    final fire = subjectColor('chart-5');
+    final barColor =
+        reached ? subjectColor('chart-2') : theme.colorScheme.primary;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.flag_outlined, size: 20, color: barColor),
+                const SizedBox(width: 6),
+                Text('Bugünkü grup hedefi',
+                    style: theme.textTheme.titleMedium),
+                const Spacer(),
+                if (streak > 0) ...[
+                  Icon(Icons.local_fire_department, size: 18, color: fire),
+                  const SizedBox(width: 2),
+                  Text('$streak gün',
+                      style: theme.textTheme.labelMedium
+                          ?.copyWith(color: fire, fontWeight: FontWeight.w700)),
+                ],
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('${formatHuman(todaySeconds)} / ${formatHuman(goalSeconds)}',
+                    style: theme.textTheme.bodyMedium),
+                Text('%${(pct * 100).round()}',
+                    style: theme.textTheme.bodyMedium
+                        ?.copyWith(color: barColor, fontWeight: FontWeight.w700)),
+              ],
+            ),
+            const SizedBox(height: 6),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: pct,
+                minHeight: 10,
+                backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                valueColor: AlwaysStoppedAnimation<Color>(barColor),
+              ),
+            ),
+            if (reached) ...[
+              const SizedBox(height: 8),
+              Text('Grup bugünkü hedefini tuttu! 🎉',
+                  style: theme.textTheme.bodySmall
+                      ?.copyWith(color: subjectColor('chart-2'))),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }

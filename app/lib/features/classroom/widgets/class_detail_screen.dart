@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/utils/duration_format.dart';
+import '../../../core/widgets/number_stepper.dart';
 import '../../../core/widgets/user_avatar.dart';
 import '../../../data/models/profile.dart';
 import '../../../data/models/study_group.dart';
@@ -102,6 +104,21 @@ class ClassDetailScreen extends ConsumerWidget {
                   ),
                 ),
                 ListTile(
+                  leading: const Icon(Icons.flag_outlined),
+                  title: const Text('Günlük grup hedefi'),
+                  subtitle: Text(
+                    '${formatHuman(group.dailyGoalMinutes * 60)} (grup toplamı)',
+                  ),
+                  trailing: isAdmin
+                      ? IconButton(
+                          tooltip: 'Hedefi değiştir',
+                          icon: const Icon(Icons.edit, size: 20),
+                          onPressed: () => _editGoalDialog(context, ref),
+                        )
+                      : null,
+                  onTap: isAdmin ? () => _editGoalDialog(context, ref) : null,
+                ),
+                ListTile(
                   leading: const Icon(Icons.event_outlined),
                   title: const Text('Oluşturulma'),
                   subtitle: Text(
@@ -189,6 +206,73 @@ class ClassDetailScreen extends ConsumerWidget {
     try {
       await ref.read(groupRepositoryProvider).updateGroupName(group.id, name);
       // Bu ekran eski adı tutuyor; en basiti kapatmak (liste güncel veriyle döner).
+      navigator.pop();
+    } on GroupException catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+    }
+  }
+
+  Future<void> _editGoalDialog(BuildContext context, WidgetRef ref) async {
+    var hours = group.dailyGoalMinutes ~/ 60;
+    var minutes = group.dailyGoalMinutes % 60;
+    final picked = await showDialog<int>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setState) => AlertDialog(
+          title: const Text('Günlük grup hedefi'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Grubun bir günde toplamda çalışmayı hedeflediği süre. '
+                'O günkü grup toplamı bu süreye ulaşırsa grup serisi büyür.',
+                style: Theme.of(ctx).textTheme.bodySmall,
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: NumberStepper(
+                      label: 'Saat',
+                      value: hours,
+                      min: 0,
+                      max: 24,
+                      onChanged: (v) => setState(() => hours = v),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: NumberStepper(
+                      label: 'Dakika',
+                      value: minutes,
+                      min: 0,
+                      max: 59,
+                      onChanged: (v) => setState(() => minutes = v),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Vazgeç')),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, (hours * 60 + minutes)),
+              child: const Text('Kaydet'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (picked == null || picked < 1 || picked == group.dailyGoalMinutes) return;
+    if (!context.mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    try {
+      await ref.read(groupRepositoryProvider).updateGroupGoal(group.id, picked);
+      // Bu ekran eski hedefi tutuyor; en basiti kapatmak (liste güncel veriyle döner).
       navigator.pop();
     } on GroupException catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(e.message)));

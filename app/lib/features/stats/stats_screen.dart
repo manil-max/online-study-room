@@ -83,6 +83,7 @@ class _ClassTab extends ConsumerWidget {
         members: members,
         currentUserId: currentUserId,
         groupName: group.name,
+        groupGoalMinutes: group.dailyGoalMinutes,
       ),
     );
   }

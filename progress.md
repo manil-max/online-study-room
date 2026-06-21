@@ -288,10 +288,12 @@
 
 - [x] **Etkileşimli donut**: dilime dokununca dilim büyür + merkez o dersin adı/süresi/
   yüzdesini gösterir; ders dağılımı kartında **veri formatı seçici** (yüzde / süre).
+- [x] **Grup hedefi** (migration 0006 `groups.daily_goal_minutes`): `StudyGroup.dailyGoalMinutes`
+  + `updateGroupGoal` (InMemory+Supabase, 1..1440 clamp); admin ClassDetailScreen'de saat/dakika
+  stepper ile ayarlar; Grup istatistiğinde "Bugünkü grup hedefi" ilerleme kartı + **grup serisi**
+  (grubun günlük toplamı hedefe ulaşan üst üste günler). ⚠️ Kullanıcı `0006_group_goal.sql` çalıştırmalı.
 
 **Kalan:**
-- [ ] **Grup hedefi**: `groups.daily_goal_minutes` (migration 0006) + admin ayarı
-  (ClassDetailScreen) + grup stats'ta hedef ilerleme; grup serisi gruba göre.
 - [ ] Çizgi grafik kart türü; ısı haritasının kişisel istatistik sekmesine de eklenmesi.
 
 ## FAZ 4 — Çoklu Platform & Widget

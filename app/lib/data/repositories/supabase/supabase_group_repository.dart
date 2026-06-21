@@ -133,6 +133,16 @@ class SupabaseGroupRepository implements GroupRepository {
   }
 
   @override
+  Future<void> updateGroupGoal(String groupId, int minutes) async {
+    try {
+      await _client.from('groups').update(
+          {'daily_goal_minutes': minutes.clamp(1, 24 * 60)}).eq('id', groupId);
+    } on PostgrestException catch (e) {
+      throw GroupException('Grup hedefi değiştirilemedi: ${e.message}');
+    }
+  }
+
+  @override
   Future<String> regenerateInviteCode(String groupId) async {
     for (var attempt = 0; attempt < 5; attempt++) {
       final code = _newCode();

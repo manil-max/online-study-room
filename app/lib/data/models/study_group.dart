@@ -1,5 +1,8 @@
 import 'package:flutter/foundation.dart';
 
+/// Grubun varsayılan günlük hedefi (dakika). DB sütunu yokken/boşken kullanılır.
+const int kDefaultGroupGoalMinutes = 360;
+
 /// Çalışma sınıfı (grup). Supabase `groups` tablosuna karşılık gelir (bkz. project.md §6).
 @immutable
 class StudyGroup {
@@ -9,6 +12,7 @@ class StudyGroup {
     required this.inviteCode,
     required this.createdBy,
     required this.createdAt,
+    this.dailyGoalMinutes = kDefaultGroupGoalMinutes,
   });
 
   final String id;
@@ -17,13 +21,22 @@ class StudyGroup {
   final String createdBy;
   final DateTime createdAt;
 
-  StudyGroup copyWith({String? name, String? inviteCode}) {
+  /// Grubun ortak günlük hedefi (dakika): grubun o günkü TOPLAM çalışması bu
+  /// değere ulaşırsa hedef tutulmuş sayılır. Admin değiştirir (§3.4/§3.7).
+  final int dailyGoalMinutes;
+
+  StudyGroup copyWith({
+    String? name,
+    String? inviteCode,
+    int? dailyGoalMinutes,
+  }) {
     return StudyGroup(
       id: id,
       name: name ?? this.name,
       inviteCode: inviteCode ?? this.inviteCode,
       createdBy: createdBy,
       createdAt: createdAt,
+      dailyGoalMinutes: dailyGoalMinutes ?? this.dailyGoalMinutes,
     );
   }
 
@@ -34,6 +47,8 @@ class StudyGroup {
       inviteCode: map['invite_code'] as String,
       createdBy: map['created_by'] as String,
       createdAt: DateTime.parse(map['created_at'] as String),
+      dailyGoalMinutes:
+          (map['daily_goal_minutes'] as int?) ?? kDefaultGroupGoalMinutes,
     );
   }
 
@@ -44,6 +59,7 @@ class StudyGroup {
       'invite_code': inviteCode,
       'created_by': createdBy,
       'created_at': createdAt.toIso8601String(),
+      'daily_goal_minutes': dailyGoalMinutes,
     };
   }
 
@@ -54,8 +70,10 @@ class StudyGroup {
       other.name == name &&
       other.inviteCode == inviteCode &&
       other.createdBy == createdBy &&
-      other.createdAt == createdAt;
+      other.createdAt == createdAt &&
+      other.dailyGoalMinutes == dailyGoalMinutes;
 
   @override
-  int get hashCode => Object.hash(id, name, inviteCode, createdBy, createdAt);
+  int get hashCode => Object.hash(
+      id, name, inviteCode, createdBy, createdAt, dailyGoalMinutes);
 }

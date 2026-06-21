@@ -111,6 +111,14 @@ class InMemoryGroupRepository implements GroupRepository {
   }
 
   @override
+  Future<void> updateGroupGoal(String groupId, int minutes) async {
+    final g = _groups[groupId];
+    if (g == null) return;
+    _groups[groupId] = g.copyWith(dailyGoalMinutes: minutes.clamp(1, 24 * 60));
+    _changes.add(null);
+  }
+
+  @override
   Future<String> regenerateInviteCode(String groupId) async {
     final g = _groups[groupId];
     if (g == null) throw const GroupException('Grup bulunamadı.');
