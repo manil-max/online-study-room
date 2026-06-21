@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../features/classroom/classroom_screen.dart';
 import '../../features/classroom/widgets/class_switcher.dart';
+import '../../features/home/home_screen.dart';
 import '../../features/profile/profile_screen.dart';
 import '../../features/stats/stats_screen.dart';
 
@@ -17,12 +18,13 @@ class NavIndexNotifier extends Notifier<int> {
 final navIndexProvider =
     NotifierProvider<NavIndexNotifier, int>(NavIndexNotifier.new);
 
-/// Uygulamanın ana kabuğu: alt menüde 3 sekme (Sınıf / İstatistik / Profil).
-/// Ekranlar IndexedStack ile tutulur, böylece sekme değişince durum korunur.
+/// Uygulamanın ana kabuğu: alt menüde 4 sekme (Ana Sayfa / Sınıflar / İstatistik
+/// / Profil). Ekranlar IndexedStack ile tutulur, böylece sekme değişince durum korunur.
 class HomeShell extends ConsumerWidget {
   const HomeShell({super.key});
 
   static const List<Widget> _screens = [
+    HomeScreen(),
     ClassroomScreen(),
     StatsScreen(),
     ProfileScreen(),
@@ -31,7 +33,7 @@ class HomeShell extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final index = ref.watch(navIndexProvider);
-    const classesTabIndex = 0; // "Sınıflar" sekmesinin indeksi
+    const classesTabIndex = 1; // "Sınıflar" sekmesinin indeksi
 
     return Scaffold(
       body: IndexedStack(index: index, children: _screens),
@@ -53,6 +55,11 @@ class HomeShell extends ConsumerWidget {
           selectedIndex: index,
           onDestinationSelected: ref.read(navIndexProvider.notifier).setIndex,
           destinations: const [
+            NavigationDestination(
+              icon: Icon(Icons.home_outlined),
+              selectedIcon: Icon(Icons.home),
+              label: 'Ana Sayfa',
+            ),
             NavigationDestination(
               icon: Icon(Icons.groups_outlined),
               selectedIcon: Icon(Icons.groups),

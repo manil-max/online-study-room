@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:online_study_room/core/prefs/app_prefs.dart';
 import 'package:online_study_room/data/providers/auth_providers.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_auth_repository.dart';
 import 'package:online_study_room/main.dart';
@@ -13,26 +15,46 @@ Future<InMemoryAuthRepository> _signedInRepo() async {
   return repo;
 }
 
+late SharedPreferences _prefs;
+
 Widget _appWith(InMemoryAuthRepository repo) {
   return ProviderScope(
-    overrides: [authRepositoryProvider.overrideWithValue(repo)],
+    overrides: [
+      authRepositoryProvider.overrideWithValue(repo),
+      sharedPreferencesProvider.overrideWithValue(_prefs),
+    ],
     child: const OnlineStudyRoomApp(),
   );
 }
 
 void main() {
+  setUp(() async {
+    // Ana Sayfa varsayılan kartlarından sayacı çıkar: sayaç kartının saniyelik
+    // periyodik zamanlayıcısı pumpAndSettle'ı bekletir. Testte sayaçsız düzen.
+    SharedPreferences.setMockInitialValues({
+      'dashboard_layout': ['today', 'leaderboard'],
+    });
+    _prefs = await SharedPreferences.getInstance();
+  });
+
   testWidgets('Giriş yapılmamışken giriş ekranı görünür', (tester) async {
-    await tester.pumpWidget(const ProviderScope(child: OnlineStudyRoomApp()));
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [sharedPreferencesProvider.overrideWithValue(_prefs)],
+        child: const OnlineStudyRoomApp(),
+      ),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('Giriş yap'), findsWidgets);
     expect(find.text('E-posta'), findsOneWidget);
   });
 
-  testWidgets('Giriş yapılınca 3 sekme görünür', (tester) async {
+  testWidgets('Giriş yapılınca 4 sekme görünür', (tester) async {
     await tester.pumpWidget(_appWith(await _signedInRepo()));
     await tester.pumpAndSettle();
 
+    expect(find.text('Ana Sayfa'), findsWidgets);
     expect(find.text('Sınıflar'), findsWidgets);
     expect(find.text('İstatistik'), findsWidgets);
     expect(find.text('Profil'), findsWidgets);
@@ -41,6 +63,10 @@ void main() {
   testWidgets('Sınıfı olmayan kullanıcı oluştur/katıl seçeneklerini görür',
       (tester) async {
     await tester.pumpWidget(_appWith(await _signedInRepo()));
+    await tester.pumpAndSettle();
+
+    // Sayaç artık Ana Sayfa'da; Sınıflar sekmesine geç.
+    await tester.tap(find.text('Sınıflar'));
     await tester.pumpAndSettle();
 
     expect(find.text('Sınıf oluştur'), findsOneWidget);
@@ -55,7 +81,7 @@ void main() {
     await tester.pumpAndSettle();
 
     final navBar = tester.widget<NavigationBar>(find.byType(NavigationBar));
-    expect(navBar.selectedIndex, 1);
+    expect(navBar.selectedIndex, 2);
   });
 
   testWidgets('Çıkış yapınca giriş ekranına dönülür', (tester) async {

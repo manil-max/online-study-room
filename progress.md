@@ -12,7 +12,7 @@
 
 - **Aktif Faz:** Oturum kalıcılığı sağlamlaştırıldı (Faz 1.1) — SDK zaten oturumu kalıcı tutuyor; profil çekimi çevrimdışında kullanıcıyı dışarı atmıyor. Tamamlananlar: Faz 1 (auth+profil+sınıf), Faz 2 (presence+manuel giriş), Faz 3 istatistikler (3a–3d). Supabase uçtan uca test edildi ✅. Kalan: Faz 4 widget (Android cihaz ister — ertelendi), Şifre sıfırlama (opsiyonel), Çevrimdışı tespiti/heartbeat, tasarım (en son).
 - **Proje konumu:** `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room` (İngilizce ad — Türkçe/boşluklu yol Flutter'ı bozuyordu; aşağıdaki nota bak)
-- **Sıradaki adım:** Sayaç yenileme başladı (FAZ 3.7, §3.12): ders seçici **dropdown** + **tam ekran odak modu** eklendi ✅. Sonraki mantıklı sıra: **3.5.2 günlük hedef** → **3.5.3 seri** (bunlar saat renk-geçişi stilini ve Ana Sayfa kartlarını besler) → **3.7 saat stilleri** (halka/renk) → **3.8 Ana Sayfa** → **3.9 çalışma kayıtları** → **3.10 istatistik**. Tasarım/UI iyileştirmeleri ayrı bir geçiş değil, her fazda kardeş tasarımının diline göre yapılır.
+- **Sıradaki adım:** Sayaç yenileme (FAZ 3.7) ✅, günlük hedef+seri (3.5.2/3) ✅, saat stilleri ✅, çalışma kayıtları (3.9) ✅ ve **Ana Sayfa esnek dashboard (3.8)** ✅ tamamlandı. **Kalan büyük iş: FAZ 3.10 — istatistikleri zenginleştirme** (kişisel ders pasta/donut + sınıf metrikleri). Ayrıca küçük: aktif sınıf kalıcılığı (artık shared_preferences var, kolay), saat stili kalıcılığı (clockStyle hâlâ bellek-içi — prefs'e taşınabilir).
 - **Bekleyen (kullanıcı/admin):** (1) **`migrations/0004_group_admin.sql`** Supabase'de çalıştırılmalı — sınıf ad değiştir / kod yenile / üye çıkar / sınıf sil (admin RLS) bunsuz çalışmaz. (2) **`migrations/0005_daily_goal.sql`** çalıştırılmalı — günlük hedef (`profiles.daily_goal_minutes`); bunsuz hedef hep varsayılan (6sa) görünür ve düzenleme kalıcı olmaz. (3) `migrations/0003_subjects_realtime.sql` artık **opsiyonel** (ders deposu Realtime'a bağımlı değil; sadece çoklu cihaz canlı senkronu için).
 - **Çözüldü (2026-06-21):** Windows **Geliştirici Modu açıldı** ✅ — eklentiler (image_picker vb.) symlink gerektirdiği için **web/Chrome derlemesi de** bunu istiyormuş (önceki not yanlıştı). Kapalıyken `flutter run -d chrome` "Error when reading ../../../../../AppData/.../package: cannot find path" + binlerce takip hatası veriyordu. `flutter clean && flutter pub get` + Geliştirici Modu ile düzeldi; `flutter build web` temiz derleniyor.
 
@@ -232,15 +232,19 @@
   (Seçim şimdilik bellek-içi; kalıcılık sonra.)
 - [ ] (Ops.) Pomodoro / aralıklı mod + bitiş bildirimi
 
-## FAZ 3.8 — Ana Sayfa: Esnek Dashboard (2026-06-21 kararı, §3.9) 🟡
+## FAZ 3.8 — Ana Sayfa: Esnek Dashboard ✅ (2026-06-21 kararı, §3.9)
 
-> Tasarım dili ile birlikte netleşecek; önce kart kataloğu + temel düzenleme. Sayaç (3.7),
-> hedef (3.5.2) ve seri (3.5.3) kartlarını gösterir → onlar önce gelmeli.
+> Kullanıcı kararı: **tam özelleştirilebilir** (sürükle-bırak); sayaç **varsayılan Ana
+> Sayfa'da**, isteyen Sınıflar'a da ekler.
 
-- [ ] 4. sekme olarak Ana Sayfa eklenir (en başa)
-- [ ] Kart kataloğu: sayaç, süreler, gün serisi, hedef, sınıflar, sıralama, istatistik kartları
-- [ ] Kullanıcı kart ekle/çıkar/sırala; yerleşim kişiye özel kalıcı
-- [ ] ❓ Düzenleme UX (sürükle-bırak vs liste), saklama (yerel vs profiles JSON)
+- [x] 4. sekme olarak **Ana Sayfa** en başa eklendi (Ana Sayfa / Sınıflar / İstatistik / Profil).
+- [x] Kart kataloğu (`dashboard_card.dart`): **sayaç**, **bugün özeti** (ders dağılımı),
+  **haftalık grafik** (son 7 gün), **sınıf sıralaması** (aktif sınıf, bugün).
+- [x] Kullanıcı kart **ekle/çıkar/sürükle-sırala** (`DashboardEditScreen`, ReorderableListView).
+  Yerleşim **cihazda kalıcı** (`shared_preferences`, `dashboardLayoutProvider`).
+- [x] Sayaç varsayılan Ana Sayfa'da; Sınıflar'a eklemek için düzenle ekranında anahtar
+  (`classroomShowTimerProvider`, kalıcı). Sınıflar artık varsayılan sayaçsız.
+- [ ] (Sonra) Daha fazla kart türü (hedef/seri standalone, hafta içi/sonu, dönem özetleri).
 
 ## FAZ 3.9 — Çalışma Kayıtları İyileştirme (2026-06-21 kararı, §3.10)
 
@@ -313,6 +317,15 @@
   `SupabaseAuthRepository._profileFor` artık profil satırı çekilemezse (çevrimdışı/geçici hata)
   kullanıcıyı dışarı atmıyor; oturum geçerliyse metadata'dan geçici profille içeride tutuyor
   (project.md §3.3 çevrimdışı dayanıklılık). 37/37 test geçti, analiz temiz.
+- **2026-06-21 (Ana Sayfa esnek dashboard — FAZ 3.8 ✅):** Kullanıcı kararı: tam
+  özelleştirilebilir + sayaç varsayılan Ana Sayfa'da, isteyen Sınıflar'a ekler. `shared_preferences`
+  eklendi (`core/prefs/app_prefs.dart`, main'de override). 4. sekme **Ana Sayfa** en başa
+  (nav 4 sekme; Sınıflar artık index 1). Kart kataloğu (`dashboard_card.dart`): sayaç / bugün
+  özeti / haftalık grafik / sınıf sıralaması. `DashboardEditScreen` ile sürükle-sırala
+  (ReorderableListView `onReorderItem`) + ekle/çıkar; düzen `dashboardLayoutProvider` ile
+  kalıcı. Sayaç Sınıflar'a eklenebilir (`classroomShowTimerProvider`, kalıcı); Sınıflar
+  varsayılan sayaçsız. widget_test 4 sekmeye güncellendi + sayaç kartının periyodik timer'ı
+  pumpAndSettle'ı bekletmesin diye test düzeni sayaçsız seed'lendi. 52/52 test, analiz temiz.
 - **2026-06-21 (özelleştirilebilir saat stilleri — FAZ 3.7 ✅):** `clock_style.dart`:
   3 stil — sade rakam (varsayılan), **hedef halkası** (günlük hedefe göre dolan halka +
   ortada süre), **renk geçişi** (hedefe yaklaştıkça rakam kırmızı→amber→yeşil; `goalColor`

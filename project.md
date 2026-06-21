@@ -320,18 +320,22 @@ Eski tek-sınıf "Sınıf" sekmesi **"Sınıflar"** olarak çoklu sınıfa açı
 yerelde kalıcı). Mevcut tek-`userGroupProvider` bunun üstüne taşınacak; canlı/istatistik
 sorguları aktif sınıfa bağlanacak.
 
-### 3.9 Ana Sayfa — Esnek Kontrol Paneli (Dashboard) 🟡 (2026-06-21 kararı, tasarım sonra)
+### 3.9 Ana Sayfa — Esnek Kontrol Paneli (Dashboard) ✅ (2026-06-21 kararı, uygulandı)
 
-Başa eklenen **Ana Sayfa** sekmesi **tamamen özelleştirilebilir** olacak: öğrenci hangi
-kartları göreceğini ve sıralamasını kendi belirler (ekle/çıkar/sırala).
+Başa eklenen **Ana Sayfa** sekmesi **tamamen özelleştirilebilir**: öğrenci hangi kartları
+göreceğini ve sıralamasını kendi belirler (ekle/çıkar/**sürükle-bırak sırala**).
 
-- **Olası kartlar (widget'lar):** sayaç (Başla/Durdur), bugünkü/hafta/ay/yıl süreleri,
-  **gün serisi**, günlük hedef ilerlemesi, katılınan **sınıflar**, **sınıf içi sıralama**,
-  seçili **istatistik** kartları (günlük grafik, ders dağılımı, hafta içi/sonu vb.).
-- **Esneklik:** Kullanıcı kart ekler/çıkarır/sıralar; yerleşim **kişiye özel kaydedilir**.
-- ❓ **Açık (tasarımda netleşecek):** kart kataloğu kesin listesi, düzenleme UX'i
-  (sürükle-bırak mı, ekle/çıkar listesi mi), yerleşimin nerede saklanacağı
-  (yerel mi `profiles`'ta JSON mu), grid vs liste. Görsel tasarımla birlikte ele alınacak.
+- **Kart kataloğu (ilk sürüm):** **sayaç** (kronometre + günlük hedef + seri), **bugün özeti**
+  (bugünkü toplam + ders dağılımı), **haftalık grafik** (son 7 gün), **sınıf sıralaması**
+  (aktif sınıf, bugün). İleride: hedef/seri standalone, hafta içi/sonu, dönem özetleri.
+- **Düzenleme UX (karar):** Ayrı bir "düzenle" ekranı (`DashboardEditScreen`):
+  görünen kartlar `ReorderableListView` ile sürüklenerek sıralanır + kaldırılır;
+  "eklenebilir kartlar" listesinden eklenir.
+- **Saklama (karar):** Yerleşim **cihazda yerel** (`shared_preferences`,
+  `dashboardLayoutProvider`) — `profiles`'ta JSON değil (kişisel cihaz tercihi olduğu için).
+- **Sayaç yeri (karar):** Sayaç **varsayılan Ana Sayfa'da**; isteyen düzenle ekranındaki
+  anahtarla **Sınıflar'a da ekler** (`classroomShowTimerProvider`, kalıcı). Sınıflar ekranı
+  artık varsayılan sayaçsız (yalnız canlı üyeler + sınıf bilgisi).
 
 ### 3.10 Çalışma Kayıtları — Gün Sonu Toplama + Okunaklı Gösterim ✅ (2026-06-21 kararı)
 

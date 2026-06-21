@@ -12,6 +12,7 @@ import '../../data/providers/group_providers.dart';
 import '../../data/providers/presence_providers.dart';
 import '../../data/providers/study_providers.dart';
 import '../../data/models/study_group.dart';
+import '../home/dashboard_providers.dart';
 import 'widgets/class_switcher.dart';
 import 'widgets/study_timer_card.dart';
 
@@ -101,12 +102,16 @@ class _GroupView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    // Sayaç varsayılan olarak Ana Sayfa'dadır; isteyen Sınıflar'a ekler (§3.9).
+    final showTimer = ref.watch(classroomShowTimerProvider);
 
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        const StudyTimerCard(),
-        const SizedBox(height: 8),
+        if (showTimer) ...[
+          const StudyTimerCard(),
+          const SizedBox(height: 8),
+        ],
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
