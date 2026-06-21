@@ -74,7 +74,7 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
             ),
             const SizedBox(height: 4),
             Text(
-              formatHuman(todayTotal),
+              formatHumanSeconds(todayTotal),
               style: theme.textTheme.headlineMedium,
             ),
             const SizedBox(height: 16),

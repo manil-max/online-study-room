@@ -17,3 +17,15 @@ String formatHuman(int totalSeconds) {
   if (m > 0) return '$m dk';
   return '$seconds sn';
 }
+
+/// Saniyeyi okunabilir Türkçe biçimde, saniyeyi de DAHİL ederek verir:
+/// "2 sa 15 dk 30 sn", "15 dk 05 sn", "40 sn". Günlük/anlık toplamlar için.
+String formatHumanSeconds(int totalSeconds) {
+  final seconds = totalSeconds < 0 ? 0 : totalSeconds;
+  final h = seconds ~/ 3600;
+  final m = (seconds % 3600) ~/ 60;
+  final s = seconds % 60;
+  if (h > 0) return '$h sa $m dk $s sn';
+  if (m > 0) return '$m dk $s sn';
+  return '$s sn';
+}

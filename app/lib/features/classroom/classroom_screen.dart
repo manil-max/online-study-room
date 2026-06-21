@@ -272,7 +272,7 @@ class _MemberTile extends StatelessWidget {
         ],
       ),
       title: Text(member.displayName),
-      subtitle: Text('$label · Bugün ${formatHuman(todayTotal)}'),
+      subtitle: Text('$label · Bugün ${formatHumanSeconds(todayTotal)}'),
       trailing: isStudying
           ? Text(
               formatHms(liveExtra),

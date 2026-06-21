@@ -20,4 +20,15 @@ void main() {
       expect(formatHuman(3700), '1 sa 1 dk');
     });
   });
+
+  group('formatHumanSeconds', () {
+    test('saniyeyi her zaman dahil eder', () {
+      expect(formatHumanSeconds(40), '40 sn');
+      expect(formatHumanSeconds(125), '2 dk 5 sn');
+      expect(formatHumanSeconds(3725), '1 sa 2 dk 5 sn');
+    });
+    test('negatif değer sıfıra sabitlenir', () {
+      expect(formatHumanSeconds(-5), '0 sn');
+    });
+  });
 }
