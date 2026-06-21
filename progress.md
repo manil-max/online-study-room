@@ -12,7 +12,7 @@
 
 - **Aktif Faz:** Oturum kalıcılığı sağlamlaştırıldı (Faz 1.1) — SDK zaten oturumu kalıcı tutuyor; profil çekimi çevrimdışında kullanıcıyı dışarı atmıyor. Tamamlananlar: Faz 1 (auth+profil+sınıf), Faz 2 (presence+manuel giriş), Faz 3 istatistikler (3a–3d). Supabase uçtan uca test edildi ✅. Kalan: Faz 4 widget (Android cihaz ister — ertelendi), Şifre sıfırlama (opsiyonel), Çevrimdışı tespiti/heartbeat, tasarım (en son).
 - **Proje konumu:** `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room` (İngilizce ad — Türkçe/boşluklu yol Flutter'ı bozuyordu; aşağıdaki nota bak)
-- **Sıradaki adım:** FAZ 3.5.2 — Günlük hedef (`profiles.daily_goal_minutes` migration + repository + ana ekran hedef kartı). 3.5.1 dersler TAMAM ✅. Tasarım dili (koyu tema) referansı `project-continuation/` (yerelde, .gitignore'da).
+- **Sıradaki adım:** Kullanıcı ilk denemesini yaptı; büyük yön kararları alındı (4 sekme, çoklu sınıf+admin, esnek Ana Sayfa, çalışma kayıtları toplama, sınıf ist. zenginleştirme — §3.8–3.11, FAZ 3.6–3.9). Ders-ekleme bug'ı çözüldü ✅. **Sıralama kullanıcıyla netleşecek** (öneri: önce FAZ 3.6 çoklu sınıf, çünkü Ana Sayfa ona dayanıyor). Bekleyen küçük işler: 3.5.2 günlük hedef + 3.5.3 seri.
 - **Bekleyen (kullanıcı/admin):** (1) `migrations/0003_subjects_realtime.sql` artık **opsiyonel** — ders deposu Realtime'a bağımlı olmaktan çıkarıldı (her eklemede otomatik yenileniyor). Sadece çoklu cihaz canlı senkronu isteniyorsa çalıştır.
 - **Çözüldü (2026-06-21):** Windows **Geliştirici Modu açıldı** ✅ — eklentiler (image_picker vb.) symlink gerektirdiği için **web/Chrome derlemesi de** bunu istiyormuş (önceki not yanlıştı). Kapalıyken `flutter run -d chrome` "Error when reading ../../../../../AppData/.../package: cannot find path" + binlerce takip hatası veriyordu. `flutter clean && flutter pub get` + Geliştirici Modu ile düzeldi; `flutter build web` temiz derleniyor.
 
@@ -190,6 +190,40 @@
 ### 3.5.3 Seri (streak)
 - [ ] Saf hesaplama: günlük hedefe bağlı seri (`core/stats`) + testleri
 - [ ] Ana ekranda seri göstergesi
+
+---
+
+## FAZ 3.6 — Sınıflar: Çoklu Sınıf + Admin (2026-06-21 kararı, §3.8)
+
+> Eski "Sınıf" sekmesi "Sınıflar" olur; çoklu üyelik + sınıf değiştirici + admin.
+
+- [ ] Veri: `userGroupsProvider` (tüm üyelikler) + `activeGroupProvider` (seçili, kalıcı)
+- [ ] `createGroup` oluşturanı `role='admin'` yapsın (şema hazır)
+- [ ] Sekme adı "Sınıflar"; ikona basılı tut → sınıf değiştirici penceresi
+      (sınıf listesi + aktif seçim + "Sınıf oluştur" + "Sınıfa katıl")
+- [ ] Sınıf başına ⋮ menü: bilgi / ayarlar / admin hakları
+- [ ] Admin işlemleri: ad değiştir, üye çıkar, davet kodu yenile, sınıfı sil
+- [ ] (İleride) sınıf sohbeti için menü/ekran yeri ayır — §3.8
+
+## FAZ 3.7 — Ana Sayfa: Esnek Dashboard (2026-06-21 kararı, §3.9) 🟡
+
+> Tasarım dili ile birlikte netleşecek; önce kart kataloğu + temel düzenleme.
+
+- [ ] 4. sekme olarak Ana Sayfa eklenir (en başa)
+- [ ] Kart kataloğu: sayaç, süreler, gün serisi, hedef, sınıflar, sıralama, istatistik kartları
+- [ ] Kullanıcı kart ekle/çıkar/sırala; yerleşim kişiye özel kalıcı
+- [ ] ❓ Düzenleme UX (sürükle-bırak vs liste), saklama (yerel vs profiles JSON)
+
+## FAZ 3.8 — Çalışma Kayıtları İyileştirme (2026-06-21 kararı, §3.10)
+
+- [ ] Geçmiş günler tek özet kayıtta toplansın (bugün ayrı ayrı kalır)
+- [ ] Saat aralığı (ör. 14:05–14:50) + ders + süre gösterimi
+- [ ] (Ops.) güne dokununca alt kırılım (oturumlar / ders bazında)
+
+## FAZ 3.9 — Sınıf İstatistiklerini Zenginleştirme (2026-06-21 kararı, §3.11) 🟡
+
+- [ ] Ek metrikler (sınıf günlük trendi, haftalık değişim, ders bazında sınıf kıyası vb.)
+- [ ] Daha iyi görünüm
 
 ---
 

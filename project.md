@@ -40,17 +40,19 @@ giriş yapıldığında veriler eşitlenir.
 
 ## 3. Özellik Gereksinimleri
 
-### 3.0 Ekran Yapısı / Navigasyon ✅
-Alt menüde **3 sekme**:
+### 3.0 Ekran Yapısı / Navigasyon ✅ (2026-06-21'de 4 sekmeye güncellendi)
+Alt menüde **4 sekme**:
 
 | Sekme | İçerik |
 |---|---|
-| 🏠👥 **Sınıf** | Ana sayfa + canlı sınıf **tek ekranda birleşik**. Üstte kendi çalışma kontrolün (Başla/Durdur, bugünkü süre), altta YPT tarzı canlı sınıf (masa/lamba — kim çalışıyor). |
+| 🏠 **Ana Sayfa** | **Esnek/özelleştirilebilir kontrol paneli** (dashboard). Öğrenci hangi kartları/widget'ları göreceğini ve sıralamasını kendi seçer: sayaç, bugünkü/dönem süreleri, gün serisi, sınıflar, sınıf içi sıralama, seçili istatistikler vb. Bkz. §3.9. |
+| 👥 **Sınıflar** | Canlı sınıf ekranı + **çoklu sınıf** desteği. Sekme ikonuna **basılı tutunca** katılınan sınıflar arası geçiş penceresi açılır (+ sınıf oluştur / sınıfa katıl). Sınıf başına 3-nokta menü: bilgi, ayarlar, admin hakları. Bkz. §3.8. |
 | 📊 **İstatistik** | İki tür: **(1) Kişisel** istatistik, **(2) Sınıf** (ortak) istatistik. Bkz. §3.4. |
-| 👤 **Profil** | Foto, görünen ad, ayarlar, davet kodu, sınıftan çıkış. |
+| 👤 **Profil** | Foto, görünen ad, ayarlar, davet kodu, çalışma kayıtları, dersler. |
 
-- Birleştirme gerekçesi: Tek sınıfa girileceği için ayrı "ana sayfa" ve "canlı sınıf" ekranı
-  gereksiz; tek ekranda toplamak daha sade.
+- **Değişiklik (2026-06-21):** Eski "Sınıf" sekmesi (ana sayfa + canlı birleşik) ayrıldı:
+  başa **esnek Ana Sayfa** eklendi, "Sınıf" → **"Sınıflar"** olup çoklu sınıfa açıldı.
+  Sayaç kontrolü hem Ana Sayfa'da (widget olarak) hem Sınıflar'da bulunabilir.
 
 > **Not (genel ilke):** Görsel tasarım (renkler, görseller, yerleşim, tema) **en sona**
 > bırakılacaktır. Önce işlevsellik ve altyapı; tasarım en son iş.
@@ -58,8 +60,10 @@ Alt menüde **3 sekme**:
 ### 3.1 Grup / Sınıf Sistemi ✅
 - Bir kullanıcı sınıf oluşturur, **davet kodu** üretilir.
 - Diğerleri kodla sınıfa katılır.
-- 🟡 İlk sürümde tek sınıf yeterli; mimari ileride çoklu sınıfa izin verecek şekilde kurulacak.
-- ❓ Davet kodunun süresi/yenilenmesi, üye çıkarma gibi detaylar sonra.
+- ✅ **Çoklu sınıf** (2026-06-21 kararı): Kullanıcı birden fazla sınıfa üye olabilir;
+  aralarında geçiş yapar. Ayrıntı §3.8.
+- ✅ **Roller:** Sınıfı **oluşturan = admin**; diğerleri üye (`group_members.role`).
+- ❓ Davet kodunun süresi/yenilenmesi, üye çıkarma gibi detaylar §3.8'de.
 
 ### 3.2 Profil ✅
 - E-posta + şifre ile hesap (✅ giriş yöntemi kararlaştırıldı).
@@ -271,6 +275,14 @@ kendi sunucumuzu (self-host) veya başka ücretsiz katmanı değerlendiririz.
   iyileştirilecek. Üyenin "bugünkü toplam"ı presence satırından değil `study_sessions`
   agregasyonundan türetiliyor (tek doğru kaynak; presence.today_seconds yalnızca bilgi
   amaçlı). Mola (break) durumu UI'da gösterime hazır ama buton yok (Açık Sorular §9'da).
+- **2026-06-21 (ilk kullanım geri bildirimi → büyük yön):** Kullanıcı uygulamayı Chrome'da
+  denedi. Kararlar: (1) Navigasyon **4 sekme**: Ana Sayfa / Sınıflar / İstatistik / Profil
+  (§3.0). (2) **Çoklu sınıf** + basılı-tut sınıf değiştirici + sınıf başına 3-nokta menü
+  (bilgi/ayarlar/admin); oluşturan **admin** (§3.8); sınıflara **chat** ileride planlı.
+  (3) **Esnek Ana Sayfa** dashboard'u — kullanıcı widget'ları kendi düzenler (§3.9, tasarımda
+  netleşecek). (4) **Çalışma kayıtları**: geçmiş günler tek kayıtta toplansın + saat aralığı
+  göster (§3.10). (5) **Sınıf istatistiklerini** zenginleştir (§3.11). Bug: ders eklenince
+  listede görünmüyordu → Realtime bağımlılığı kaldırılarak çözüldü.
 - **2026-06-21 (dersler + hedef + seri):** Kardeşin hazırladığı UI tasarımı referansı
   (`project-continuation/`, Next.js — koddan değil tasarımdan yararlanılacak) incelendi.
   3 yeni özellik kararlaştırıldı (§3.7): (1) Kullanıcı tanımlı **dersler** (ad+renk),
@@ -283,3 +295,57 @@ kendi sunucumuzu (self-host) veya başka ücretsiz katmanı değerlendiririz.
   profil çekimi başarısız olursa (çevrimdışı/geçici hata) kullanıcı **dışarı atılmaz** —
   geçerli oturum varsa metadata'dan geçici profille içeride kalır (§3.3 çevrimdışı dayanıklılık).
   Böylece internet olmadan da uygulama açılınca giriş korunur.
+
+### 3.8 Sınıflar — Çoklu Sınıf + Admin ✅ (2026-06-21 kararı)
+
+Eski tek-sınıf "Sınıf" sekmesi **"Sınıflar"** olarak çoklu sınıfa açıldı.
+
+- **Çoklu üyelik:** Kullanıcı birden fazla sınıfa katılabilir. Bir anda bir **aktif
+  sınıf** görüntülenir (canlı liste, sıralama vb. aktif sınıfa göre).
+- **Sınıf değiştirici (Instagram hesap değiştirme mantığı):** "Sınıflar" sekme ikonuna
+  **basılı tutunca** bir pencere/alt sayfa açılır:
+  - Katılınan tüm sınıflar listelenir → birine dokununca aktif sınıf değişir.
+  - **"Sınıf oluştur"** ve **"Sınıfa katıl"** seçenekleri.
+- **Sınıf başına 3-nokta (⋮) menüsü** (listede her sınıfın yanında):
+  - **Sınıf bilgileri:** ad, davet kodu, üye sayısı/listesi, oluşturulma.
+  - **Sınıf ayarları:** (herkes) sınıftan çık; (admin) sınıf adını değiştir, üye çıkar,
+    davet kodunu yenile, sınıfı sil.
+  - **Admin'e özel haklar:** yalnızca oluşturan/admin görür.
+- **Roller:** Oluşturan `role='admin'`. (Şema `group_members.role`'da hazır; `createGroup`
+  admin atayacak şekilde güncellenecek.)
+- **İleride (planlı):** Her sınıfa **sohbet (chat)** eklenecek — bu menü/ekran yapısı
+  ona uygun kurulacak (sınıf detayında bir "Sohbet" sekmesi yeri ayrılır). ❓ Detay sonra.
+
+**Veri/mimari:** `userGroupsProvider` (tüm üyelikler) + `activeGroupProvider` (seçili sınıf,
+yerelde kalıcı). Mevcut tek-`userGroupProvider` bunun üstüne taşınacak; canlı/istatistik
+sorguları aktif sınıfa bağlanacak.
+
+### 3.9 Ana Sayfa — Esnek Kontrol Paneli (Dashboard) 🟡 (2026-06-21 kararı, tasarım sonra)
+
+Başa eklenen **Ana Sayfa** sekmesi **tamamen özelleştirilebilir** olacak: öğrenci hangi
+kartları göreceğini ve sıralamasını kendi belirler (ekle/çıkar/sırala).
+
+- **Olası kartlar (widget'lar):** sayaç (Başla/Durdur), bugünkü/hafta/ay/yıl süreleri,
+  **gün serisi**, günlük hedef ilerlemesi, katılınan **sınıflar**, **sınıf içi sıralama**,
+  seçili **istatistik** kartları (günlük grafik, ders dağılımı, hafta içi/sonu vb.).
+- **Esneklik:** Kullanıcı kart ekler/çıkarır/sıralar; yerleşim **kişiye özel kaydedilir**.
+- ❓ **Açık (tasarımda netleşecek):** kart kataloğu kesin listesi, düzenleme UX'i
+  (sürükle-bırak mı, ekle/çıkar listesi mi), yerleşimin nerede saklanacağı
+  (yerel mi `profiles`'ta JSON mu), grid vs liste. Görsel tasarımla birlikte ele alınacak.
+
+### 3.10 Çalışma Kayıtları — Gün Sonu Toplama + Okunaklı Gösterim ✅ (2026-06-21 kararı)
+
+Profil → "Çalışma kayıtlarım"da en küçük oturum bile ayrı kaydedildiği için liste şişiyor.
+
+- **Gün-sonu toplama:** **Bugünün** oturumları ayrı ayrı görünür (canlı takip için); ama
+  **geçmiş günler** o güne ait tek bir özet kayıtta toplanır (gün + toplam süre).
+  Detay istenirse o güne dokununca alt kırılım açılabilir (ders bazında / oturumlar). ❓
+- **Okunaklı gösterim:** Tek satırda yalnız "1sn / Sayaç" yerine **saat aralığı** (örn.
+  "14:05–14:50") ve/veya süre + ders + kaynak gibi daha anlamlı bilgi gösterilecek.
+- **Not:** Toplama yalnızca **görünüm** içindir; `study_sessions` ham verisi korunur
+  (istatistikler ham veriden üretilmeye devam eder, §6).
+
+### 3.11 Sınıf İstatistiklerini Geliştirme 🟡 (2026-06-21 kararı)
+Mevcut sınıf sekmesi (leaderboard) zenginleştirilecek: daha fazla metrik ve daha iyi
+görünüm. ❓ Hangi metrikler (örn. sınıf günlük trendi, en istikrarlı üye, ders bazında
+sınıf kıyası, haftalık değişim) tasarım/uygulama sırasında netleşecek.
