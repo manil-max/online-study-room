@@ -3,8 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/theme/subject_colors.dart';
 import '../../../core/utils/duration_format.dart';
+import '../../../data/models/subject.dart';
 import '../../../data/providers/study_providers.dart';
+import '../../../data/providers/subject_providers.dart';
 
 /// Çalışma sayacı kartı: bugünkü toplam + canlı süre + başlat/durdur.
 /// Her saniye yeniden çizmek için kendi periyodik zamanlayıcısı vardır.
@@ -60,6 +63,7 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
     if (_frozenTotal != null && base >= _frozenTotal!) _frozenTotal = null;
     final todayTotal = _frozenTotal ?? base;
     final notifier = ref.read(studyTimerProvider.notifier);
+    final subjects = ref.watch(userSubjectsProvider).value ?? const <Subject>[];
 
     return Card(
       child: Padding(
@@ -88,6 +92,15 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
               ),
             ),
             const SizedBox(height: 16),
+            if (subjects.isNotEmpty) ...[
+              _SubjectSelector(
+                subjects: subjects,
+                selectedId: timer.subjectId,
+                running: timer.isRunning,
+                onSelect: notifier.selectSubject,
+              ),
+              const SizedBox(height: 16),
+            ],
             SizedBox(
               width: double.infinity,
               child: timer.isRunning
@@ -108,6 +121,74 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Sayaç için ders seçici. Dururken seçilebilir çipler; çalışırken seçili dersi
+/// (veya "Derssiz") küçük etiket olarak gösterir. Ders seçimi opsiyoneldir.
+class _SubjectSelector extends StatelessWidget {
+  const _SubjectSelector({
+    required this.subjects,
+    required this.selectedId,
+    required this.running,
+    required this.onSelect,
+  });
+
+  final List<Subject> subjects;
+  final String? selectedId;
+  final bool running;
+  final ValueChanged<String?> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    Subject? selected;
+    for (final s in subjects) {
+      if (s.id == selectedId) selected = s;
+    }
+
+    // Çalışırken: yalnızca aktif ders etiketi (değiştirilemez).
+    if (running) {
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          if (selected != null) ...[
+            CircleAvatar(radius: 5, backgroundColor: subjectColor(selected.color)),
+            const SizedBox(width: 6),
+            Text(selected.name, style: theme.textTheme.labelLarge),
+          ] else
+            Text(
+              'Derssiz',
+              style: theme.textTheme.labelLarge
+                  ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+            ),
+        ],
+      );
+    }
+
+    // Dururken: "Genel" (derssiz) + her ders için seçilebilir çip.
+    return Wrap(
+      alignment: WrapAlignment.center,
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        ChoiceChip(
+          label: const Text('Genel'),
+          selected: selectedId == null,
+          onSelected: (_) => onSelect(null),
+        ),
+        for (final s in subjects)
+          ChoiceChip(
+            avatar: CircleAvatar(
+              radius: 6,
+              backgroundColor: subjectColor(s.color),
+            ),
+            label: Text(s.name),
+            selected: selectedId == s.id,
+            onSelected: (_) => onSelect(s.id),
+          ),
+      ],
     );
   }
 }

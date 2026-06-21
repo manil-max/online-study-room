@@ -65,11 +65,14 @@ final groupTodaySecondsProvider = Provider<Map<String, int>>((ref) {
 
 /// Çalışma sayacının durumu.
 class StudyTimerState {
-  const StudyTimerState({this.isRunning = false, this.startedAt});
+  const StudyTimerState({this.isRunning = false, this.startedAt, this.subjectId});
   final bool isRunning;
 
   /// Çalışırken mevcut oturumun başlangıcı (anlık süre buradan hesaplanır).
   final DateTime? startedAt;
+
+  /// Seçili ders (opsiyonel — null ise "derssiz"). Bkz. project.md §3.7.
+  final String? subjectId;
 }
 
 /// Çalışma sayacını yönetir: başlat / durdur ve durunca oturumu kaydet.
@@ -80,25 +83,36 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   @override
   StudyTimerState build() => const StudyTimerState();
 
+  /// Aktif dersi seçer (yalnızca sayaç dururken; null → derssiz).
+  void selectSubject(String? subjectId) {
+    if (state.isRunning) return;
+    state = StudyTimerState(subjectId: subjectId);
+  }
+
   /// Çalışmaya başla.
   void start() {
     if (state.isRunning) return;
     final now = DateTime.now();
-    state = StudyTimerState(isRunning: true, startedAt: now);
+    state = StudyTimerState(
+        isRunning: true, startedAt: now, subjectId: state.subjectId);
     _publishPresence(status: PresenceStatus.studying, startedAt: now);
   }
 
-  /// Durdur: süreyi kaydet, durumu çevrimdışına çek.
+  /// Durdur: süreyi kaydet, durumu çevrimdışına çek. Ders seçimi korunur.
   Future<void> stop() async {
     if (!state.isRunning) return;
     final startedAt = state.startedAt;
-    state = const StudyTimerState();
+    final subjectId = state.subjectId;
+    state = StudyTimerState(subjectId: subjectId);
     _publishPresence(status: PresenceStatus.offline, startedAt: null);
-    if (startedAt != null) await _recordSession(startedAt, DateTime.now());
+    if (startedAt != null) {
+      await _recordSession(startedAt, DateTime.now(), subjectId);
+    }
   }
 
   /// Tamamlanan bir aralığı `study_sessions`'a yazar.
-  Future<void> _recordSession(DateTime start, DateTime end) async {
+  Future<void> _recordSession(
+      DateTime start, DateTime end, String? subjectId) async {
     final user = ref.read(authStateProvider).value;
     final group = ref.read(userGroupProvider).value;
     if (user == null || group == null) return;
@@ -111,6 +125,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
             id: _uuid.v4(),
             userId: user.id,
             groupId: group.id,
+            subjectId: subjectId,
             start: start,
             end: end,
             durationSeconds: duration,

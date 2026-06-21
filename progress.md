@@ -173,7 +173,9 @@
 - [x] Ders yönetim UI (ad + renk paleti) — Profil → "Derslerim" (`SubjectsScreen`):
   ekle/düzenle/sil diyaloğu (ad + 5 renk seçici), silmede "derssize düşer" uyarısı.
   Renk token→Color eşlemesi `core/theme/subject_colors.dart`.
-- [ ] Sayaç başlatırken aktif ders seçimi → oturuma `subject_id` yazma
+- [x] Sayaç başlatırken aktif ders seçimi → oturuma `subject_id` yazma — sayaç kartında
+  ders seçici çipler ("Genel" + dersler); çalışırken seçili ders etiketi (kilitli).
+  `StudyTimerState.subjectId` + `selectSubject()`; oturum o derse yazılıyor.
 - [ ] Manuel girişe ders seçimi
 - [ ] İstatistikte ders bazında dağılım (donut/çubuk)
 
