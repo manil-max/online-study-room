@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/stats/study_stats.dart';
 import '../../../core/utils/duration_format.dart';
 import '../../../core/widgets/user_avatar.dart';
 import '../../../data/models/profile.dart';
 import '../../../data/models/study_session.dart';
+import '../../classroom/widgets/class_switcher.dart';
 import 'daily_bar_chart.dart';
 
 /// Seçilebilir dönem (sınıf leaderboard'u için).
@@ -12,23 +14,25 @@ enum _Period { today, week, month }
 
 /// Sınıf (ortak) istatistikleri: dönem seçici + kıyaslamalı sıralama (leaderboard)
 /// + sınıf toplamı/ortalaması. Tam şeffaf (project.md §3.4): herkes herkesi görür.
-class ClassStatsView extends StatefulWidget {
+class ClassStatsView extends ConsumerStatefulWidget {
   const ClassStatsView({
     super.key,
     required this.sessions,
     required this.members,
     required this.currentUserId,
+    required this.groupName,
   });
 
   final List<StudySession> sessions;
   final List<Profile> members;
   final String currentUserId;
+  final String groupName;
 
   @override
-  State<ClassStatsView> createState() => _ClassStatsViewState();
+  ConsumerState<ClassStatsView> createState() => _ClassStatsViewState();
 }
 
-class _ClassStatsViewState extends State<ClassStatsView> {
+class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
   _Period _period = _Period.week;
 
   (DateTime, DateTime) _range(DateTime now) => switch (_period) {
@@ -59,6 +63,27 @@ class _ClassStatsViewState extends State<ClassStatsView> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        // Grup başlığı + grup değiştirici (yalnızca geçiş, basılan yerde açılır).
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                widget.groupName,
+                style: theme.textTheme.titleMedium,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Builder(
+              builder: (iconContext) => TextButton.icon(
+                onPressed: () =>
+                    showClassSwitcher(iconContext, ref, switchOnly: true),
+                icon: const Icon(Icons.swap_horiz, size: 18),
+                label: const Text('Değiştir'),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
         Center(
           child: SegmentedButton<_Period>(
             segments: const [

@@ -52,7 +52,9 @@ class OnlineStudyRoomApp extends StatelessWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      home: const AuthGate(),
+      // Metinler fare ile seçilebilsin (web). SelectionArea, Navigator'ın
+      // Overlay'inin altında olmalı; bu yüzden builder yerine home'u sarıyoruz.
+      home: const SelectionArea(child: AuthGate()),
     );
   }
 }

@@ -14,8 +14,10 @@ import 'class_detail_screen.dart';
 ///
 /// Sağ üstteki ↔ ikonundan tetiklenirse [context] o ikonun context'idir (menü
 /// ona göre konumlanır); sekmeye basılı tutunca [at] basış konumudur.
+/// [switchOnly] true ise yalnızca grup değiştirme (oluştur/katıl/⋮ gizli) —
+/// İstatistik gibi yerlerde sadece geçiş için.
 Future<void> showClassSwitcher(BuildContext context, WidgetRef ref,
-    {Offset? at}) {
+    {Offset? at, bool switchOnly = false}) {
   final theme = Theme.of(context);
   final groups = ref.read(userGroupsProvider).value ?? const <StudyGroup>[];
   final activeId = ref.read(userGroupProvider).value?.id;
@@ -63,31 +65,33 @@ Future<void> showClassSwitcher(BuildContext context, WidgetRef ref,
             Expanded(child: Text(g.name, overflow: TextOverflow.ellipsis)),
             if (g.id == activeId)
               Icon(Icons.check, size: 18, color: theme.colorScheme.primary),
-            _ClassDetailButton(group: g),
+            if (!switchOnly) _ClassDetailButton(group: g),
           ],
         ),
       ),
-    const PopupMenuDivider(),
-    PopupMenuItem<void>(
-      onTap: () => createGroupFlow(context, ref),
-      child: const Row(
-        children: [
-          Icon(Icons.add, size: 20),
-          SizedBox(width: 12),
-          Text('Grup oluştur'),
-        ],
+    if (!switchOnly) ...[
+      const PopupMenuDivider(),
+      PopupMenuItem<void>(
+        onTap: () => createGroupFlow(context, ref),
+        child: const Row(
+          children: [
+            Icon(Icons.add, size: 20),
+            SizedBox(width: 12),
+            Text('Grup oluştur'),
+          ],
+        ),
       ),
-    ),
-    PopupMenuItem<void>(
-      onTap: () => joinGroupFlow(context, ref),
-      child: const Row(
-        children: [
-          Icon(Icons.login, size: 20),
-          SizedBox(width: 12),
-          Text('Gruba katıl'),
-        ],
+      PopupMenuItem<void>(
+        onTap: () => joinGroupFlow(context, ref),
+        child: const Row(
+          children: [
+            Icon(Icons.login, size: 20),
+            SizedBox(width: 12),
+            Text('Gruba katıl'),
+          ],
+        ),
       ),
-    ),
+    ],
   ];
 
   return at != null

@@ -82,6 +82,7 @@ class _ClassTab extends ConsumerWidget {
         sessions: sessions,
         members: members,
         currentUserId: currentUserId,
+        groupName: group.name,
       ),
     );
   }

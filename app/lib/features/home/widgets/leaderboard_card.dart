@@ -114,8 +114,11 @@ class _Row extends StatelessWidget {
     final name = member?.displayName.isNotEmpty == true
         ? member!.displayName
         : 'İsimsiz';
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+    return InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: () => _showDetail(context, name),
+      child: Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
       child: Row(
         children: [
           SizedBox(
@@ -147,6 +150,69 @@ class _Row extends StatelessWidget {
             style: theme.textTheme.bodySmall
                 ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
           ),
+        ],
+      ),
+      ),
+    );
+  }
+
+  void _showDetail(BuildContext context, String name) {
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) {
+        final theme = Theme.of(ctx);
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    UserAvatar(
+                        displayName: name,
+                        avatarUrl: member?.avatarUrl,
+                        radius: 24),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(isMe ? '$name (sen)' : name,
+                          style: theme.textTheme.titleMedium),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                _InfoRow(label: 'Sıralama', value: '$rank.'),
+                _InfoRow(
+                    label: 'Bugünkü çalışma', value: formatHuman(seconds)),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _InfoRow extends StatelessWidget {
+  const _InfoRow({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label,
+              style: theme.textTheme.bodyMedium
+                  ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+          Text(value, style: theme.textTheme.titleSmall),
         ],
       ),
     );
