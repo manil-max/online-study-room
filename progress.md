@@ -10,9 +10,9 @@
 
 ## Özet Durum
 
-- **Aktif Faz:** Sayaç sade Başlat/Durdur (mola kaldırıldı). Ayrıca canlı sayaç TZ hatası + "Bugün" flicker düzeltildi. Tamamlananlar: Faz 2.2 presence, Faz 3 istatistikler (3a–3d), Faz 2.3 manuel giriş, Faz 1.2 profil (foto dahil). Avatars bucket SQL'i kullanıcı tarafından çalıştırıldı ✅. Kalan: Faz 4 widget (Android cihaz ister — ertelendi), tasarım (en son).
+- **Aktif Faz:** Oturum kalıcılığı sağlamlaştırıldı (Faz 1.1) — SDK zaten oturumu kalıcı tutuyor; profil çekimi çevrimdışında kullanıcıyı dışarı atmıyor. Tamamlananlar: Faz 1 (auth+profil+sınıf), Faz 2 (presence+manuel giriş), Faz 3 istatistikler (3a–3d). Supabase uçtan uca test edildi ✅. Kalan: Faz 4 widget (Android cihaz ister — ertelendi), Şifre sıfırlama (opsiyonel), Çevrimdışı tespiti/heartbeat, tasarım (en son).
 - **Proje konumu:** `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room` (İngilizce ad — Türkçe/boşluklu yol Flutter'ı bozuyordu; aşağıdaki nota bak)
-- **Sıradaki adım:** (1) Kullanıcı Supabase hesabı açar → `env.json` doldurulur → uçtan uca test. (2) Sonra Faz 3 (istatistik) gerçek veriyle.
+- **Sıradaki adım:** Kullanıcıyla görüş — sırada: Çevrimdışı tespiti (heartbeat), Şifre sıfırlama (opsiyonel), ya da Faz 4 (widget, Android cihaz gerektirir) / tasarım.
 - **Bekleyen (kullanıcı/admin):** Windows'ta eklenti derlemesi için **Geliştirici Modu** açılmalı (`ms-settings:developers`); web/Chrome çalıştırma için gerekmez.
 
 ---
@@ -89,7 +89,9 @@
 - [x] Kayıt ol (e-posta + şifre) — *bellek-içi backend ile (Supabase'e kadar geçici)*
 - [x] Giriş yap / çıkış yap
 - [x] AuthGate (oturuma göre giriş ekranı ↔ ana uygulama)
-- [ ] Oturum kalıcılığı (cihazda açık kalma) — Supabase ile gelecek
+- [x] Oturum kalıcılığı (cihazda açık kalma) — `supabase_flutter` oturumu varsayılan
+  olarak yerel depolamada tutar ve açılışta geri yükler; ek olarak profil çekimi
+  çevrimdışı/hata durumunda kullanıcıyı dışarı atmaz (metadata'dan geçici profille içeride kalır)
 - [ ] Şifre sıfırlama (opsiyonel)
 
 > Mimari not: Repository deseni kullanıldı. `AuthRepository` (soyut) + `InMemoryAuthRepository`
@@ -210,6 +212,12 @@
   çalışanlar üstte. Bugünkü toplam `study_sessions`'tan türetiliyor (presence.today_seconds
   yalnızca bilgi amaçlı). 21/21 test geçiyor, analiz temiz. Karar: heartbeat/yaşam-döngüsü
   çevrimdışı tespiti ve mola butonu sonraya bırakıldı (şu an durum: çalışıyor/çevrimdışı).
+- **2026-06-21 (oturum kalıcılığı ✅):** Faz 1.1 son maddesi tamamlandı. `supabase_flutter`
+  oturumu zaten varsayılan olarak yerel depolamada tutuyor ve `Supabase.initialize()` açılışta
+  geri yüklüyor → uygulama kapanıp açılınca giriş hatırlanıyor. Ek sağlamlaştırma:
+  `SupabaseAuthRepository._profileFor` artık profil satırı çekilemezse (çevrimdışı/geçici hata)
+  kullanıcıyı dışarı atmıyor; oturum geçerliyse metadata'dan geçici profille içeride tutuyor
+  (project.md §3.3 çevrimdışı dayanıklılık). 37/37 test geçti, analiz temiz.
 - **2026-06-21 (Supabase uçtan uca ✅):** Proje İngilizce yola taşındı
   (`...\Desktop\Dev\online-study-room`), `C:\Dev` silindi. Kullanıcı Supabase projesi açtı,
   şema kuruldu, e-posta doğrulaması kapatıldı, anahtarlar `env.json`'a girildi. Web'de passkeys

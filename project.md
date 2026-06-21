@@ -5,7 +5,7 @@
 > İlerleme takibi `progress.md`'de, AI ajan kuralları `AGENTS.md`'dedir.
 >
 > Durum etiketleri: ✅ Kararlaştırıldı · 🟡 Öneri (onay bekliyor) · ❓ Açık (sonra konuşulacak)
-> Son güncelleme: 2026-06-20
+> Son güncelleme: 2026-06-21
 
 ---
 
@@ -242,3 +242,8 @@ kendi sunucumuzu (self-host) veya başka ücretsiz katmanı değerlendiririz.
   iyileştirilecek. Üyenin "bugünkü toplam"ı presence satırından değil `study_sessions`
   agregasyonundan türetiliyor (tek doğru kaynak; presence.today_seconds yalnızca bilgi
   amaçlı). Mola (break) durumu UI'da gösterime hazır ama buton yok (Açık Sorular §9'da).
+- **2026-06-21 (oturum kalıcılığı):** Ayrı bir oturum-saklama kodu yazılmadı; `supabase_flutter`
+  oturumu varsayılan olarak yerel depolamada tutar ve açılışta otomatik geri yükler. Karar:
+  profil çekimi başarısız olursa (çevrimdışı/geçici hata) kullanıcı **dışarı atılmaz** —
+  geçerli oturum varsa metadata'dan geçici profille içeride kalır (§3.3 çevrimdışı dayanıklılık).
+  Böylece internet olmadan da uygulama açılınca giriş korunur.

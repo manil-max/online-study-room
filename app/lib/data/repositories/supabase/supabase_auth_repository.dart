@@ -31,10 +31,19 @@ class SupabaseAuthRepository implements AuthRepository {
   Future<Profile?> _profileFor(supa.Session? session) async {
     final user = session?.user;
     if (user == null) return null;
-    final row =
-        await _client.from('profiles').select().eq('id', user.id).maybeSingle();
-    if (row != null) return Profile.fromMap(row);
-    // Trigger henüz profili oluşturmadıysa metadata'dan geçici profil.
+    try {
+      final row = await _client
+          .from('profiles')
+          .select()
+          .eq('id', user.id)
+          .maybeSingle();
+      if (row != null) return Profile.fromMap(row);
+    } catch (_) {
+      // Çevrimdışı veya geçici sunucu hatası: oturum geçerli ama profil satırı
+      // çekilemedi. Kullanıcıyı dışarı atma (oturum kalıcılığı) — metadata'dan
+      // geçici profille içeride tut; profil bağlanınca tekrar yüklenir.
+    }
+    // Trigger henüz profili oluşturmadıysa veya çevrimdışıysak metadata'dan profil.
     return Profile(
       id: user.id,
       displayName: (user.userMetadata?['display_name'] as String?) ?? '',
