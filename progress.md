@@ -225,9 +225,11 @@
   ders listesi + "Dersleri düzenle" (Claude Code model seçici mantığı). Çalışırken kilitli.
 - [x] **Tam ekran odak modu** (`focus_timer_screen.dart`) — kartta tam ekran ikonu → büyük
   canlı sayaç + ders + büyük Başlat/Durdur + küçült; immersive sistem çubukları.
-- [ ] **Özelleştirilebilir saat stilleri** — sade rakam (varsayılan) / halka-dial / hedefe
-  yaklaştıkça renk geçişi (zıt→yeşil). Renk/halka **günlük hedefe** bağlı (3.5.2 gerekir).
-- [ ] "Sayaç görünümü" ayar yeri (stil seçimi, kişiye özel kalıcı)
+- [x] **Özelleştirilebilir saat stilleri** (`clock_style.dart`): sade rakam (varsayılan) /
+  **hedef halkası** (günlük hedefe göre dolan halka) / **renk geçişi** (hedefe yaklaştıkça
+  zıt→yeşil). `StudyClock` hem kartta hem tam ekranda kullanılır; `clockStyleProvider`.
+- [x] Stil seçici — kart ve tam ekrandaki **ayar (tune)** ikonundan anchored menü.
+  (Seçim şimdilik bellek-içi; kalıcılık sonra.)
 - [ ] (Ops.) Pomodoro / aralıklı mod + bitiş bildirimi
 
 ## FAZ 3.8 — Ana Sayfa: Esnek Dashboard (2026-06-21 kararı, §3.9) 🟡
@@ -310,6 +312,13 @@
   `SupabaseAuthRepository._profileFor` artık profil satırı çekilemezse (çevrimdışı/geçici hata)
   kullanıcıyı dışarı atmıyor; oturum geçerliyse metadata'dan geçici profille içeride tutuyor
   (project.md §3.3 çevrimdışı dayanıklılık). 37/37 test geçti, analiz temiz.
+- **2026-06-21 (özelleştirilebilir saat stilleri — FAZ 3.7 ✅):** `clock_style.dart`:
+  3 stil — sade rakam (varsayılan), **hedef halkası** (günlük hedefe göre dolan halka +
+  ortada süre), **renk geçişi** (hedefe yaklaştıkça rakam kırmızı→amber→yeşil; `goalColor`
+  lerp). Ortak `StudyClock` widget'ı hem sayaç kartında (40px / halka 160) hem tam ekran
+  odakta (56px / halka 280) kullanılıyor. Stil seçici `showClockStyleMenu` (anchored menü),
+  kart ve tam ekrandaki **tune** ikonundan. `clockStyleProvider` (bellek-içi; kalıcılık
+  sonra). 52/52 test, analiz temiz.
 - **2026-06-21 (günlük hedef + seri — FAZ 3.5.2/3.5.3 ✅):** `profiles.daily_goal_minutes`
   (`migrations/0005`, varsayılan 360) + `Profile.dailyGoalMinutes` + `updateDailyGoal`
   (auth repo soyut/bellek-içi/Supabase). Saf `currentStreak` hesabı (`core/stats`): hedef

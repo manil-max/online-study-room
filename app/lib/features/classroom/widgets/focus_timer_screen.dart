@@ -9,6 +9,7 @@ import '../../../core/utils/duration_format.dart';
 import '../../../data/models/subject.dart';
 import '../../../data/providers/study_providers.dart';
 import '../../../data/providers/subject_providers.dart';
+import 'clock_style.dart';
 
 /// Tam ekran odak modunu açar (§3.12). Sistem çubukları gizlenir; çıkışta
 /// (ekran kapanınca) geri yüklenir.
@@ -67,12 +68,25 @@ class _FocusTimerScreenState extends ConsumerState<FocusTimerScreen> {
         ? DateTime.now().difference(timer.startedAt!).inSeconds
         : 0;
     final todayTotal = recorded + (liveExtra > 0 ? liveExtra : 0);
+    final goalSeconds = ref.watch(dailyGoalMinutesProvider) * 60;
+    final pct = goalSeconds > 0 ? todayTotal / goalSeconds : 0.0;
+    final clockStyle = ref.watch(clockStyleProvider);
 
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
       body: SafeArea(
         child: Stack(
           children: [
+            Align(
+              alignment: Alignment.topLeft,
+              child: Builder(
+                builder: (iconContext) => IconButton(
+                  tooltip: 'Saat görünümü',
+                  icon: const Icon(Icons.tune),
+                  onPressed: () => showClockStyleMenu(iconContext, ref),
+                ),
+              ),
+            ),
             Align(
               alignment: Alignment.topRight,
               child: IconButton(
@@ -103,15 +117,13 @@ class _FocusTimerScreenState extends ConsumerState<FocusTimerScreen> {
                     ],
                   ),
                   const SizedBox(height: 24),
-                  Text(
-                    formatHms(liveExtra),
-                    style: theme.textTheme.displayLarge?.copyWith(
-                      fontFeatures: const [],
-                      fontWeight: FontWeight.w600,
-                      color: timer.isRunning
-                          ? theme.colorScheme.primary
-                          : theme.colorScheme.onSurface,
-                    ),
+                  StudyClock(
+                    seconds: liveExtra,
+                    pctToGoal: pct,
+                    running: timer.isRunning,
+                    style: clockStyle,
+                    fontSize: 56,
+                    diameter: 280,
                   ),
                   const SizedBox(height: 8),
                   Text(

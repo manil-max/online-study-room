@@ -14,6 +14,7 @@ import '../../../data/repositories/auth_repository.dart';
 import '../../profile/subjects_screen.dart';
 import '../../profile/widgets/goal_editor_dialog.dart';
 import '../../profile/widgets/manual_session_dialog.dart';
+import 'clock_style.dart';
 import 'focus_timer_screen.dart';
 
 /// Çalışma sayacı kartı: bugünkü toplam + canlı süre + başlat/durdur.
@@ -92,18 +93,30 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
     final pct =
         goalSeconds > 0 ? (todayTotal / goalSeconds).clamp(0.0, 1.0) : 0.0;
     final reached = goalSeconds > 0 && todayTotal >= goalSeconds;
+    final clockStyle = ref.watch(clockStyleProvider);
 
     return Card(
       child: Stack(
         children: [
-          // Tam ekran odak modu (§3.12).
+          // Saat görünümü + tam ekran odak modu (§3.12).
           Positioned(
             top: 4,
             right: 4,
-            child: IconButton(
-              tooltip: 'Tam ekran odak',
-              icon: const Icon(Icons.fullscreen),
-              onPressed: () => openFocusTimer(context),
+            child: Row(
+              children: [
+                Builder(
+                  builder: (iconContext) => IconButton(
+                    tooltip: 'Saat görünümü',
+                    icon: const Icon(Icons.tune),
+                    onPressed: () => showClockStyleMenu(iconContext, ref),
+                  ),
+                ),
+                IconButton(
+                  tooltip: 'Tam ekran odak',
+                  icon: const Icon(Icons.fullscreen),
+                  onPressed: () => openFocusTimer(context),
+                ),
+              ],
             ),
           ),
           // Seri (streak) — yalnız varsa (§3.7).
@@ -125,14 +138,13 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
                   style: theme.textTheme.headlineMedium,
                 ),
                 const SizedBox(height: 16),
-                Text(
-                  formatHms(liveExtra),
-                  style: theme.textTheme.displaySmall?.copyWith(
-                    fontFeatures: const [],
-                    color: timer.isRunning
-                        ? theme.colorScheme.primary
-                        : theme.colorScheme.onSurfaceVariant,
-                  ),
+                StudyClock(
+                  seconds: liveExtra,
+                  pctToGoal: pct,
+                  running: timer.isRunning,
+                  style: clockStyle,
+                  fontSize: 40,
+                  diameter: 160,
                 ),
                 const SizedBox(height: 16),
                 _GoalProgress(
