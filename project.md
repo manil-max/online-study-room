@@ -118,12 +118,19 @@ Alt menüde **3 sekme**:
 
 Kardeşin tasarladığı arayüz referansından gelen 3 özellik kararlaştırıldı:
 
-**Dersler (kategoriler) ✅** — Kullanıcı **kendi derslerini** tanımlar:
-- Her ders: **ad** + **renk** (paletten). Kullanıcı ekler/düzenler/siler.
-- Sayaç başlatılırken (veya çalışırken) bir **aktif ders** seçilir; oturum o derse yazılır.
-- İstatistik **ders bazında** ayrışır (donut/çubuk dağılımı — bkz. §3.4).
-- Manuel girişte de ders seçilir.
-- Veri: `subjects` tablosu (şemada hazırdı, artık kullanılıyor) + `study_sessions.subject_id`.
+**Dersler (kategoriler) ✅** — Kullanıcı **kendi derslerini** tanımlar (kişisel takip için):
+- Her ders: **ad** + **renk**. Renk paleti tasarım referansıyla aynı: `chart-1..chart-5`
+  (mavi/yeşil/sarı/mor/kırmızı). Kullanıcı ekler/düzenler/siler. **Ders sayısı sınırı yok.**
+- **Ders seçimi zorunlu DEĞİL** ✅ — sadece kronometre tutmak isteyen derssiz çalışabilir
+  (`subject_id` boş kalır). İsteyen sayacı bir derse bağlar.
+- İstatistik **ders bazında** ayrışır (donut/çubuk dağılımı — bkz. §3.4); derssiz süreler
+  "Genel/Derssiz" altında toplanır.
+- Manuel girişte de ders seçilebilir (zorunlu değil).
+- **Ders silinince** o derse ait geçmiş oturumlar **silinmez, derssize düşer**
+  (`subject_id` null olur) — çalışma süresi korunur, sadece etiket gider.
+- Dersler **kişiye özel** (her kullanıcı kendi derslerini görür); sınıf görünümünü etkilemez.
+- Veri: `subjects` tablosu (şemada hazırdı, artık kullanılıyor) + `study_sessions.subject_id`
+  (nullable, `ON DELETE SET NULL`).
 
 **Günlük hedef ✅** — Kullanıcı günlük bir çalışma hedefi koyar (örn. 6sa):
 - Ana ekranda ilerleme çubuğu + yüzde (bugünkü toplam / hedef).
