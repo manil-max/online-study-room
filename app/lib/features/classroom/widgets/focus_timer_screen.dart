@@ -117,13 +117,20 @@ class _FocusTimerScreenState extends ConsumerState<FocusTimerScreen> {
                     ],
                   ),
                   const SizedBox(height: 24),
-                  StudyClock(
-                    seconds: liveExtra,
-                    pctToGoal: pct,
-                    running: timer.isRunning,
-                    style: clockStyle,
-                    fontSize: 56,
-                    diameter: 280,
+                  // Dar ekranda büyük saat taşmasın diye ölçekle (FittedBox).
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: StudyClock(
+                        seconds: liveExtra,
+                        pctToGoal: pct,
+                        running: timer.isRunning,
+                        style: clockStyle,
+                        fontSize: 72,
+                        diameter: 300,
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Text(

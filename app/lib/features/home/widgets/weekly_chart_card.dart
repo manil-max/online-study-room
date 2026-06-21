@@ -7,20 +7,26 @@ import '../../../data/providers/study_providers.dart';
 import '../../stats/widgets/daily_bar_chart.dart';
 import '../dashboard_card.dart';
 
-/// Günlük çalışma süresi çubuk grafiği (§3.9 kart). Toplamı da gösterir.
-/// Büyük boyutta son 14 günü ve daha uzun bir grafik gösterir.
-class WeeklyChartCard extends ConsumerWidget {
+/// Günlük çalışma süresi çubuk grafiği (§3.9/§3.11 kart). Dönem filtresi (7/14/30
+/// gün) satır içinde seçilebilir; toplamı da gösterir.
+class WeeklyChartCard extends ConsumerStatefulWidget {
   const WeeklyChartCard({super.key, this.size = DashboardCardSize.medium});
 
   final DashboardCardSize size;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<WeeklyChartCard> createState() => _WeeklyChartCardState();
+}
+
+class _WeeklyChartCardState extends ConsumerState<WeeklyChartCard> {
+  late int _days = widget.size == DashboardCardSize.large ? 14 : 7;
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final sessions = ref.watch(userSessionsProvider).value ?? const [];
-    final isLarge = size == DashboardCardSize.large;
-    final dayCount = isLarge ? 14 : 7;
-    final series = lastNDays(sessions, dayCount);
+    final isLarge = widget.size == DashboardCardSize.large;
+    final series = lastNDays(sessions, _days);
     final total = series.fold<int>(0, (sum, d) => sum + d.seconds);
 
     return Card(
@@ -33,7 +39,7 @@ class WeeklyChartCard extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: 4),
               child: Row(
                 children: [
-                  Text('Son $dayCount gün', style: theme.textTheme.titleMedium),
+                  Text('Çalışma grafiği', style: theme.textTheme.titleMedium),
                   const Spacer(),
                   Text(
                     formatHuman(total),
@@ -43,12 +49,51 @@ class WeeklyChartCard extends ConsumerWidget {
                 ],
               ),
             ),
+            const SizedBox(height: 10),
+            _DayFilter(
+              value: _days,
+              options: const [7, 14, 30],
+              onChanged: (v) => setState(() => _days = v),
+            ),
             const SizedBox(height: 12),
             SizedBox(
               height: isLarge ? 220 : 160,
               child: DailyBarChart(days: series),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Gün-aralığı filtresi (kart içi küçük segment butonu).
+class _DayFilter extends StatelessWidget {
+  const _DayFilter({
+    required this.value,
+    required this.options,
+    required this.onChanged,
+  });
+
+  final int value;
+  final List<int> options;
+  final ValueChanged<int> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: SegmentedButton<int>(
+        segments: [
+          for (final o in options)
+            ButtonSegment(value: o, label: Text('$o gün')),
+        ],
+        selected: {value},
+        onSelectionChanged: (s) => onChanged(s.first),
+        showSelectedIcon: false,
+        style: const ButtonStyle(
+          visualDensity: VisualDensity.compact,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         ),
       ),
     );

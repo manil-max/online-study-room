@@ -11,6 +11,7 @@ import '../../../data/providers/auth_providers.dart';
 import '../../../data/providers/study_providers.dart';
 import '../../../data/providers/subject_providers.dart';
 import '../../../data/repositories/auth_repository.dart';
+import '../../profile/session_history_screen.dart';
 import '../../profile/subjects_screen.dart';
 import '../../profile/widgets/goal_editor_dialog.dart';
 import '../../profile/widgets/manual_session_dialog.dart';
@@ -104,6 +105,14 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
             right: 4,
             child: Row(
               children: [
+                IconButton(
+                  tooltip: 'Geçmiş oturumlar',
+                  icon: const Icon(Icons.history),
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                        builder: (_) => const SessionHistoryScreen()),
+                  ),
+                ),
                 Builder(
                   builder: (iconContext) => IconButton(
                     tooltip: 'Saat görünümü',

@@ -24,7 +24,13 @@ class DailyLineChart extends StatelessWidget {
         minY: 0,
         maxY: maxY,
         lineTouchData: LineTouchData(
+          // İmleç çizgiye yakın olduğunda da ipucu açılsın (nokta üstüne tam
+          // gelmek zor olmasın).
+          touchSpotThreshold: 30,
           touchTooltipData: LineTouchTooltipData(
+            fitInsideHorizontally: true,
+            fitInsideVertically: true,
+            getTooltipColor: (_) => theme.colorScheme.inverseSurface,
             getTooltipItems: (spots) => [
               for (final s in spots)
                 LineTooltipItem(

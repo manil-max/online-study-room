@@ -134,11 +134,14 @@ class StudyClock extends StatelessWidget {
   Widget _digits(String text, double size, Color color) {
     return Text(
       text,
+      maxLines: 1,
       style: TextStyle(
         fontSize: size,
-        fontWeight: FontWeight.w600,
+        fontWeight: FontWeight.w700,
         color: color,
-        fontFeatures: const [],
+        letterSpacing: 1,
+        // Sabit genişlikli rakamlar: süre değişirken sayılar zıplamasın/oynamasın.
+        fontFeatures: const [FontFeature.tabularFigures()],
       ),
     );
   }

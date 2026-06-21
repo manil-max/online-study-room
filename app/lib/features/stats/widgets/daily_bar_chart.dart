@@ -25,7 +25,14 @@ class DailyBarChart extends StatelessWidget {
         maxY: maxY,
         alignment: BarChartAlignment.spaceBetween,
         barTouchData: BarTouchData(
+          // Dokunma/imleç alanını genişlet: çubuğun üstünde/yanında da ipucu açılır
+          // (ince/kısa çubuklara nişan almak zor olmasın).
+          touchExtraThreshold:
+              const EdgeInsets.only(top: 120, bottom: 8, left: 12, right: 12),
           touchTooltipData: BarTouchTooltipData(
+            fitInsideHorizontally: true,
+            fitInsideVertically: true,
+            getTooltipColor: (_) => theme.colorScheme.inverseSurface,
             getTooltipItem: (group, _, rod, _) {
               final d = days[group.x];
               return BarTooltipItem(

@@ -7,20 +7,26 @@ import '../../../data/providers/study_providers.dart';
 import '../../stats/widgets/daily_line_chart.dart';
 import '../dashboard_card.dart';
 
-/// Günlük çalışma eğilimini çizgi grafikle gösterir (§3.11 kart). Büyük boyutta
-/// son 30 günü ve daha uzun bir grafik gösterir; aksi hâlde 14 gün.
-class LineChartCard extends ConsumerWidget {
+/// Günlük çalışma eğilimini çizgi grafikle gösterir (§3.11 kart). Dönem filtresi
+/// (14/30/90 gün) satır içinde seçilebilir.
+class LineChartCard extends ConsumerStatefulWidget {
   const LineChartCard({super.key, this.size = DashboardCardSize.medium});
 
   final DashboardCardSize size;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<LineChartCard> createState() => _LineChartCardState();
+}
+
+class _LineChartCardState extends ConsumerState<LineChartCard> {
+  late int _days = widget.size == DashboardCardSize.large ? 30 : 14;
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final sessions = ref.watch(userSessionsProvider).value ?? const [];
-    final isLarge = size == DashboardCardSize.large;
-    final dayCount = isLarge ? 30 : 14;
-    final series = lastNDays(sessions, dayCount);
+    final isLarge = widget.size == DashboardCardSize.large;
+    final series = lastNDays(sessions, _days);
     final total = series.fold<int>(0, (sum, d) => sum + d.seconds);
 
     return Card(
@@ -33,8 +39,7 @@ class LineChartCard extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: 4),
               child: Row(
                 children: [
-                  Text('Eğilim ($dayCount gün)',
-                      style: theme.textTheme.titleMedium),
+                  Text('Eğilim', style: theme.textTheme.titleMedium),
                   const Spacer(),
                   Text(
                     formatHuman(total),
@@ -42,6 +47,24 @@ class LineChartCard extends ConsumerWidget {
                         ?.copyWith(color: theme.colorScheme.primary),
                   ),
                 ],
+              ),
+            ),
+            const SizedBox(height: 10),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: SegmentedButton<int>(
+                segments: const [
+                  ButtonSegment(value: 14, label: Text('14 gün')),
+                  ButtonSegment(value: 30, label: Text('30 gün')),
+                  ButtonSegment(value: 90, label: Text('90 gün')),
+                ],
+                selected: {_days},
+                onSelectionChanged: (s) => setState(() => _days = s.first),
+                showSelectedIcon: false,
+                style: const ButtonStyle(
+                  visualDensity: VisualDensity.compact,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
               ),
             ),
             const SizedBox(height: 12),

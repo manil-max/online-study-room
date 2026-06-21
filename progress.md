@@ -299,6 +299,25 @@
 
 > ✅ FAZ 3.11 tamam. Migration: kullanıcı `0006_group_goal.sql` çalıştırmalı.
 
+## FAZ 3.12 — Tema/Renk paleti + grafik & saat rötuşları (2026-06-22 #2) 🟢
+
+> Kullanıcı: "renkler ne, renk yok — UI'ı kardeşiminkiyle değiştir; grafiklerde imlecle
+> üstüne gelmek zor (ipucu açılmıyor); saati büyütünce bozuk; eski oturumları görelim;
+> grafiklere filtre."
+
+- [x] **Renk paleti / tema**: kardeşin `globals.css` (oklch) → sRGB; koyu lacivert zemin,
+  mavi primary + yeşil accent + amber/mor/mercan grafik tonları. `AppTheme` baştan yazıldı
+  (özel koyu `ColorScheme` + kart/appbar/nav/segment/input temaları, 16px köşe, ince kenar);
+  varsayılan **koyu tema** (`ThemeMode.dark`). `subject_colors` chart-1..5 yeni palete güncellendi;
+  sabit `Colors.green/orange` → palet token'ları.
+- [x] **Kolay grafik ipuçları**: çubuk grafiğe geniş `touchExtraThreshold` (üstüne/yakınına
+  gelince açılır) + `fitInside`; çizgi grafiğe `touchSpotThreshold: 30`; ısı haritası ipucu
+  `waitDuration: 0` (anında).
+- [x] **Saat**: sabit genişlikli rakamlar (`FontFeature.tabularFigures` — süre değişirken
+  zıplamıyor); odak modunda `FittedBox` ile ölçekleniyor (büyük saat taşmıyor), 72px.
+- [x] **Eski oturumlar**: sayaç kartına "Geçmiş oturumlar" (history) butonu → `SessionHistoryScreen`.
+- [x] **Grafik filtreleri**: çubuk kartı 7/14/30 gün, çizgi kartı 14/30/90 gün satır içi filtre.
+
 ## FAZ 4 — Çoklu Platform & Widget
 
 ### 4.1 Windows

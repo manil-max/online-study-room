@@ -344,13 +344,15 @@ class _WeekComparisonCard extends StatelessWidget {
                 Icon(
                   improved ? Icons.arrow_upward : Icons.arrow_downward,
                   size: 18,
-                  color: improved ? Colors.green : theme.colorScheme.error,
+                  color:
+                      improved ? subjectColor('chart-2') : theme.colorScheme.error,
                 ),
                 const SizedBox(width: 4),
                 Text(
                   '${improved ? '+' : '-'}${formatHuman(diff.abs())}',
                   style: theme.textTheme.titleSmall?.copyWith(
-                    color: improved ? Colors.green : theme.colorScheme.error,
+                    color:
+                      improved ? subjectColor('chart-2') : theme.colorScheme.error,
                   ),
                 ),
                 const SizedBox(width: 6),

@@ -43,7 +43,8 @@ class OnlineStudyRoomApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
-      themeMode: ThemeMode.system,
+      // Tasarım referansı (kardeşin) koyu temalı; varsayılan koyu.
+      themeMode: ThemeMode.dark,
       // UI metinleri Türkçe; tarih seçici vb. yerleşik bileşenler de Türkçe görünür.
       locale: const Locale('tr'),
       supportedLocales: const [Locale('tr'), Locale('en')],

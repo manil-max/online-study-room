@@ -70,7 +70,7 @@ class StudyHeatmap extends StatelessWidget {
               : Tooltip(
                   message:
                       '${day.day} ${_kMonths[day.month - 1]} · ${formatHuman(seconds)}',
-                  waitDuration: const Duration(milliseconds: 300),
+                  waitDuration: Duration.zero,
                   child: Container(
                     width: cell,
                     height: cell,

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/theme/subject_colors.dart';
 import '../../core/utils/duration_format.dart';
 import '../../core/widgets/user_avatar.dart';
 import '../../data/models/presence.dart';
@@ -260,8 +261,8 @@ class _MemberTile extends StatelessWidget {
     final todayTotal = recordedToday + (liveExtra > 0 ? liveExtra : 0);
 
     final (Color dotColor, String label) = switch (status) {
-      PresenceStatus.studying => (Colors.green, 'Çalışıyor'),
-      PresenceStatus.onBreak => (Colors.orange, 'Mola'),
+      PresenceStatus.studying => (subjectColor('chart-2'), 'Çalışıyor'),
+      PresenceStatus.onBreak => (subjectColor('chart-3'), 'Mola'),
       PresenceStatus.offline => (theme.colorScheme.outline, 'Çevrimdışı'),
     };
 
@@ -294,7 +295,7 @@ class _MemberTile extends StatelessWidget {
           ? Text(
               formatHms(liveExtra),
               style: theme.textTheme.titleMedium?.copyWith(
-                color: Colors.green,
+                color: subjectColor('chart-2'),
                 fontFeatures: const [],
               ),
             )
