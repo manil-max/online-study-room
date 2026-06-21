@@ -202,9 +202,11 @@
   artık aktif sınıfı türetiyor (AsyncValue — mevcut ekranlar değişmedi). 44/44 test.
   (Kalıcılık + yeni sınıfa otomatik geçiş sonraki adımda.)
 - [x] `createGroup` oluşturanı `role='admin'` yapıyor (Supabase'de hazırdı ✅)
-- [ ] Sekme adı "Sınıflar"; ikona basılı tut → sınıf değiştirici penceresi
-      (sınıf listesi + aktif seçim + "Sınıf oluştur" + "Sınıfa katıl")
-- [ ] Sınıf başına ⋮ menü: bilgi / ayarlar / admin hakları
+- [x] Sekme adı "Sınıflar"; ikona **basılı tut** → sınıf değiştirici alt sayfası
+      (`class_switcher.dart`: sınıf listesi + aktif seçim + "Sınıf oluştur" + "Sınıfa katıl").
+      Ayrıca üstteki sınıf adına/▾ ve sağdaki ↔ ikonuna dokununca da açılır. Oluştur/katıl
+      sonrası yeni sınıf otomatik aktif olur. 44/44 test.
+- [ ] Sınıf başına ⋮ menü: bilgi / ayarlar / admin hakları (sonraki mini faz)
 - [ ] Admin işlemleri: ad değiştir, üye çıkar, davet kodu yenile, sınıfı sil
 - [ ] (İleride) sınıf sohbeti için menü/ekran yeri ayır — §3.8
 

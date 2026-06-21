@@ -33,7 +33,7 @@ void main() {
     await tester.pumpWidget(_appWith(await _signedInRepo()));
     await tester.pumpAndSettle();
 
-    expect(find.text('Sınıf'), findsWidgets);
+    expect(find.text('Sınıflar'), findsWidgets);
     expect(find.text('İstatistik'), findsWidgets);
     expect(find.text('Profil'), findsWidgets);
   });

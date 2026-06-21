@@ -8,25 +8,52 @@ import '../../core/utils/duration_format.dart';
 import '../../core/widgets/user_avatar.dart';
 import '../../data/models/presence.dart';
 import '../../data/models/profile.dart';
-import '../../data/providers/auth_providers.dart';
 import '../../data/providers/group_providers.dart';
 import '../../data/providers/presence_providers.dart';
 import '../../data/providers/study_providers.dart';
 import '../../data/models/study_group.dart';
-import '../../data/repositories/group_repository.dart';
+import 'widgets/class_switcher.dart';
 import 'widgets/study_timer_card.dart';
 
-/// Sınıf sekmesi: ana sayfa + canlı sınıf (birleşik). Bkz. project.md §3.0/§3.5.
-/// Sınıf yoksa oluştur/katıl ekranı; varsa kendi sayacın + canlı üye listesi.
+/// Sınıflar sekmesi: aktif sınıfın canlı ekranı + çoklu sınıf değiştirici.
+/// Bkz. project.md §3.0/§3.5/§3.8. Sınıf yoksa oluştur/katıl; varsa sayaç +
+/// canlı üye listesi. Başlığa (sınıf adına) dokununca sınıf değiştirici açılır.
 class ClassroomScreen extends ConsumerWidget {
   const ClassroomScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final groupAsync = ref.watch(userGroupProvider);
+    final group = groupAsync.value;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Sınıf')),
+      appBar: AppBar(
+        title: group == null
+            ? const Text('Sınıflar')
+            : InkWell(
+                borderRadius: BorderRadius.circular(8),
+                onTap: () => showClassSwitcher(context, ref),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Flexible(
+                        child: Text(group.name, overflow: TextOverflow.ellipsis),
+                      ),
+                      const Icon(Icons.arrow_drop_down),
+                    ],
+                  ),
+                ),
+              ),
+        actions: [
+          IconButton(
+            tooltip: 'Sınıf değiştir',
+            icon: const Icon(Icons.swap_horiz),
+            onPressed: () => showClassSwitcher(context, ref),
+          ),
+        ],
+      ),
       body: groupAsync.when(
         data: (group) =>
             group == null ? const _NoGroupView() : _GroupView(group: group),
@@ -63,13 +90,13 @@ class _NoGroupView extends ConsumerWidget {
             ),
             const SizedBox(height: 24),
             FilledButton.icon(
-              onPressed: () => _createGroupDialog(context, ref),
+              onPressed: () => createGroupFlow(context, ref),
               icon: const Icon(Icons.add),
               label: const Text('Sınıf oluştur'),
             ),
             const SizedBox(height: 8),
             OutlinedButton.icon(
-              onPressed: () => _joinGroupDialog(context, ref),
+              onPressed: () => joinGroupFlow(context, ref),
               icon: const Icon(Icons.login),
               label: const Text('Koda katıl'),
             ),
@@ -286,79 +313,3 @@ class _MemberTile extends StatelessWidget {
   }
 }
 
-Future<void> _createGroupDialog(BuildContext context, WidgetRef ref) async {
-  final controller = TextEditingController();
-  final name = await showDialog<String>(
-    context: context,
-    builder: (ctx) => AlertDialog(
-      title: const Text('Sınıf oluştur'),
-      content: TextField(
-        controller: controller,
-        autofocus: true,
-        decoration: const InputDecoration(labelText: 'Sınıf adı'),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(ctx),
-          child: const Text('Vazgeç'),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.pop(ctx, controller.text),
-          child: const Text('Oluştur'),
-        ),
-      ],
-    ),
-  );
-  if (name == null || name.trim().isEmpty) return;
-
-  final user = ref.read(authStateProvider).value;
-  if (user == null) return;
-  if (!context.mounted) return;
-  final messenger = ScaffoldMessenger.of(context);
-  try {
-    await ref
-        .read(groupRepositoryProvider)
-        .createGroup(name: name, creator: user);
-  } on GroupException catch (e) {
-    messenger.showSnackBar(SnackBar(content: Text(e.message)));
-  }
-}
-
-Future<void> _joinGroupDialog(BuildContext context, WidgetRef ref) async {
-  final controller = TextEditingController();
-  final code = await showDialog<String>(
-    context: context,
-    builder: (ctx) => AlertDialog(
-      title: const Text('Koda katıl'),
-      content: TextField(
-        controller: controller,
-        autofocus: true,
-        textCapitalization: TextCapitalization.characters,
-        decoration: const InputDecoration(labelText: 'Davet kodu'),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(ctx),
-          child: const Text('Vazgeç'),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.pop(ctx, controller.text),
-          child: const Text('Katıl'),
-        ),
-      ],
-    ),
-  );
-  if (code == null || code.trim().isEmpty) return;
-
-  final user = ref.read(authStateProvider).value;
-  if (user == null) return;
-  if (!context.mounted) return;
-  final messenger = ScaffoldMessenger.of(context);
-  try {
-    await ref
-        .read(groupRepositoryProvider)
-        .joinGroup(inviteCode: code, member: user);
-  } on GroupException catch (e) {
-    messenger.showSnackBar(SnackBar(content: Text(e.message)));
-  }
-}
