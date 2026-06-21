@@ -170,7 +170,9 @@
   `Subject` modeli + renk paleti (`kSubjectColorTokens`, chart-1..5) + provider'lar.
   Realtime için `migrations/0003_subjects_realtime.sql` (kullanıcı bir kez çalıştırmalı).
   5 yeni test (42/42 geçiyor).
-- [ ] Ders yönetim UI (ad + renk paleti)
+- [x] Ders yönetim UI (ad + renk paleti) — Profil → "Derslerim" (`SubjectsScreen`):
+  ekle/düzenle/sil diyaloğu (ad + 5 renk seçici), silmede "derssize düşer" uyarısı.
+  Renk token→Color eşlemesi `core/theme/subject_colors.dart`.
 - [ ] Sayaç başlatırken aktif ders seçimi → oturuma `subject_id` yazma
 - [ ] Manuel girişe ders seçimi
 - [ ] İstatistikte ders bazında dağılım (donut/çubuk)

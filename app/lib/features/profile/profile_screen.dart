@@ -6,6 +6,7 @@ import '../../core/widgets/user_avatar.dart';
 import '../../data/providers/auth_providers.dart';
 import '../../data/repositories/auth_repository.dart';
 import 'session_history_screen.dart';
+import 'subjects_screen.dart';
 
 /// Profil sekmesi: foto, görünen ad, ayarlar, davet kodu. Bkz. project.md §3.2.
 class ProfileScreen extends ConsumerWidget {
@@ -84,6 +85,20 @@ class ProfileScreen extends ConsumerWidget {
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (_) => const SessionHistoryScreen(),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.menu_book_outlined),
+              title: const Text('Derslerim'),
+              subtitle: const Text('Ders (kategori) ekle, düzenle, sil'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const SubjectsScreen(),
                 ),
               ),
             ),
