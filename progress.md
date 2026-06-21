@@ -176,7 +176,8 @@
 - [x] Sayaç başlatırken aktif ders seçimi → oturuma `subject_id` yazma — sayaç kartında
   ders seçici çipler ("Genel" + dersler); çalışırken seçili ders etiketi (kilitli).
   `StudyTimerState.subjectId` + `selectSubject()`; oturum o derse yazılıyor.
-- [ ] Manuel girişe ders seçimi
+- [x] Manuel girişe ders seçimi — manuel ekle/düzenle diyaloğunda "Ders (opsiyonel)"
+  çipleri; "Çalışma kayıtlarım" listesinde her oturumun dersi renk+ad ile gösteriliyor.
 - [ ] İstatistikte ders bazında dağılım (donut/çubuk)
 
 ### 3.5.2 Günlük hedef

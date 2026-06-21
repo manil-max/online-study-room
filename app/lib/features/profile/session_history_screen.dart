@@ -3,11 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../core/stats/study_stats.dart';
+import '../../core/theme/subject_colors.dart';
 import '../../core/utils/duration_format.dart';
 import '../../data/models/study_session.dart';
+import '../../data/models/subject.dart';
 import '../../data/providers/auth_providers.dart';
 import '../../data/providers/group_providers.dart';
 import '../../data/providers/study_providers.dart';
+import '../../data/providers/subject_providers.dart';
 import 'widgets/manual_session_dialog.dart';
 
 /// Çalışma kayıtları: kullanıcının oturumları (yeni → eski), güne göre gruplu.
@@ -63,7 +66,8 @@ class SessionHistoryScreen extends ConsumerWidget {
       );
 
   Future<void> _addManual(BuildContext context, WidgetRef ref) async {
-    final result = await showManualSessionDialog(context);
+    final subjects = ref.read(userSubjectsProvider).value ?? const [];
+    final result = await showManualSessionDialog(context, subjects: subjects);
     if (result == null) return;
 
     final user = ref.read(authStateProvider).value;
@@ -78,6 +82,7 @@ class SessionHistoryScreen extends ConsumerWidget {
             id: _uuid.v4(),
             userId: user.id,
             groupId: group.id,
+            subjectId: result.subjectId,
             start: start,
             end: start.add(Duration(seconds: result.seconds)),
             durationSeconds: result.seconds,
@@ -146,13 +151,35 @@ class _SessionTile extends ConsumerWidget {
     final theme = Theme.of(context);
     final isManual = session.source == StudySource.manual;
 
+    // Oturumun dersini bul (silinmiş/derssiz olabilir → null).
+    final subjects = ref.watch(userSubjectsProvider).value ?? const [];
+    Subject? subject;
+    for (final s in subjects) {
+      if (s.id == session.subjectId) subject = s;
+    }
+    final sourceLabel = isManual ? 'Manuel' : 'Sayaç';
+
     return ListTile(
       leading: Icon(
         isManual ? Icons.edit_calendar : Icons.timer_outlined,
         color: theme.colorScheme.onSurfaceVariant,
       ),
       title: Text(formatHuman(session.durationSeconds)),
-      subtitle: Text(isManual ? 'Manuel' : 'Sayaç'),
+      subtitle: subject == null
+          ? Text(sourceLabel)
+          : Row(
+              children: [
+                CircleAvatar(
+                    radius: 5, backgroundColor: subjectColor(subject.color)),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    '$sourceLabel · ${subject.name}',
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
       trailing: PopupMenuButton<String>(
         onSelected: (v) {
           if (v == 'edit') {
@@ -170,10 +197,13 @@ class _SessionTile extends ConsumerWidget {
   }
 
   Future<void> _edit(BuildContext context, WidgetRef ref) async {
+    final subjects = ref.read(userSubjectsProvider).value ?? const [];
     final result = await showManualSessionDialog(
       context,
       initialDate: session.start,
       initialSeconds: session.durationSeconds,
+      initialSubjectId: session.subjectId,
+      subjects: subjects,
     );
     if (result == null) return;
 
@@ -184,7 +214,7 @@ class _SessionTile extends ConsumerWidget {
             id: session.id,
             userId: session.userId,
             groupId: session.groupId,
-            subjectId: session.subjectId,
+            subjectId: result.subjectId,
             start: start,
             end: start.add(Duration(seconds: result.seconds)),
             durationSeconds: result.seconds,

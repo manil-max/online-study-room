@@ -1,27 +1,42 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/subject_colors.dart';
+import '../../../data/models/subject.dart';
+
 /// Manuel süre girişi/düzenlemesi için diyalog. Tarih (gelecek olamaz) + saat/dakika
-/// alır; sonucu `(date, seconds)` olarak döndürür. İptal edilirse null.
-/// Bkz. project.md §3.5 (manuel giriş esnek; geçmiş tarihe de eklenebilir).
-Future<({DateTime date, int seconds})?> showManualSessionDialog(
+/// (+ opsiyonel ders) alır; sonucu `(date, seconds, subjectId)` döndürür. İptal → null.
+/// Bkz. project.md §3.5 (manuel giriş esnek) ve §3.7 (ders opsiyonel).
+Future<({DateTime date, int seconds, String? subjectId})?>
+    showManualSessionDialog(
   BuildContext context, {
   DateTime? initialDate,
   int? initialSeconds,
+  String? initialSubjectId,
+  List<Subject> subjects = const [],
 }) {
-  return showDialog<({DateTime date, int seconds})>(
+  return showDialog<({DateTime date, int seconds, String? subjectId})>(
     context: context,
     builder: (_) => _ManualSessionDialog(
       initialDate: initialDate,
       initialSeconds: initialSeconds,
+      initialSubjectId: initialSubjectId,
+      subjects: subjects,
     ),
   );
 }
 
 class _ManualSessionDialog extends StatefulWidget {
-  const _ManualSessionDialog({this.initialDate, this.initialSeconds});
+  const _ManualSessionDialog({
+    this.initialDate,
+    this.initialSeconds,
+    this.initialSubjectId,
+    this.subjects = const [],
+  });
 
   final DateTime? initialDate;
   final int? initialSeconds;
+  final String? initialSubjectId;
+  final List<Subject> subjects;
 
   @override
   State<_ManualSessionDialog> createState() => _ManualSessionDialogState();
@@ -31,6 +46,7 @@ class _ManualSessionDialogState extends State<_ManualSessionDialog> {
   late DateTime _date;
   late int _hours;
   late int _minutes;
+  late String? _subjectId;
 
   @override
   void initState() {
@@ -39,6 +55,7 @@ class _ManualSessionDialogState extends State<_ManualSessionDialog> {
     final secs = widget.initialSeconds ?? 0;
     _hours = secs ~/ 3600;
     _minutes = (secs % 3600) ~/ 60;
+    _subjectId = widget.initialSubjectId;
   }
 
   bool get _isEdit => widget.initialSeconds != null;
@@ -104,6 +121,32 @@ class _ManualSessionDialogState extends State<_ManualSessionDialog> {
               ),
             ],
           ),
+          if (widget.subjects.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Text('Ders (opsiyonel)', style: theme.textTheme.labelLarge),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                ChoiceChip(
+                  label: const Text('Genel'),
+                  selected: _subjectId == null,
+                  onSelected: (_) => setState(() => _subjectId = null),
+                ),
+                for (final s in widget.subjects)
+                  ChoiceChip(
+                    avatar: CircleAvatar(
+                      radius: 6,
+                      backgroundColor: subjectColor(s.color),
+                    ),
+                    label: Text(s.name),
+                    selected: _subjectId == s.id,
+                    onSelected: (_) => setState(() => _subjectId = s.id),
+                  ),
+              ],
+            ),
+          ],
         ],
       ),
       actions: [
@@ -116,7 +159,7 @@ class _ManualSessionDialogState extends State<_ManualSessionDialog> {
               ? null
               : () => Navigator.pop(
                     context,
-                    (date: _date, seconds: _totalSeconds),
+                    (date: _date, seconds: _totalSeconds, subjectId: _subjectId),
                   ),
           child: const Text('Kaydet'),
         ),
