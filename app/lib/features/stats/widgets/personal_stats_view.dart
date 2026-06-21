@@ -424,18 +424,27 @@ class _StatCard extends StatelessWidget {
   }
 }
 
-/// Ders bazında dağılım: verilen oturumları derse göre toplar, oransal çubuklarla
-/// gösterir. Derssiz süreler "Derssiz" altında toplanır (project.md §3.7).
-class _SubjectBreakdownCard extends ConsumerWidget {
+/// Ders bazında dağılım: verilen oturumları derse göre toplar, etkileşimli donut
+/// + açıklama (legend) ile gösterir. Veri formatı (yüzde / süre) seçilebilir.
+/// Derssiz süreler "Genel" altında toplanır (project.md §3.7).
+class _SubjectBreakdownCard extends ConsumerStatefulWidget {
   const _SubjectBreakdownCard({required this.sessions});
 
   final List<StudySession> sessions;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_SubjectBreakdownCard> createState() =>
+      _SubjectBreakdownCardState();
+}
+
+class _SubjectBreakdownCardState extends ConsumerState<_SubjectBreakdownCard> {
+  bool _showPercent = true;
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final subjects = ref.watch(userSubjectsProvider).value ?? const <Subject>[];
-    final breakdown = subjectBreakdown(sessions);
+    final breakdown = subjectBreakdown(widget.sessions);
 
     if (breakdown.isEmpty) {
       return Card(
@@ -469,49 +478,68 @@ class _SubjectBreakdownCard extends ConsumerWidget {
         ),
     ];
 
+    String valueFor(int seconds) => _showPercent
+        ? '%${total == 0 ? 0 : (seconds * 100 / total).round()}'
+        : formatHuman(seconds);
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SubjectDonut(slices: slices, size: 132),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  for (final s in slices) ...[
-                    Row(
-                      children: [
-                        CircleAvatar(radius: 5, backgroundColor: s.color),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(s.label,
-                              style: theme.textTheme.bodyMedium,
-                              overflow: TextOverflow.ellipsis),
-                        ),
-                        Text(
-                          '%${total == 0 ? 0 : (s.seconds * 100 / total).round()}',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant),
-                        ),
-                      ],
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(left: 18, bottom: 8),
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          formatHuman(s.seconds),
-                          style: theme.textTheme.labelSmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant),
-                        ),
-                      ),
-                    ),
-                  ],
+            // Veri formatı seçici: yüzde / süre.
+            Align(
+              alignment: Alignment.centerRight,
+              child: SegmentedButton<bool>(
+                segments: const [
+                  ButtonSegment(value: true, label: Text('%')),
+                  ButtonSegment(value: false, label: Text('Süre')),
                 ],
+                selected: {_showPercent},
+                onSelectionChanged: (s) =>
+                    setState(() => _showPercent = s.first),
+                showSelectedIcon: false,
+                style: const ButtonStyle(
+                  visualDensity: VisualDensity.compact,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
               ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                SubjectDonut(slices: slices, size: 132),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      for (final s in slices)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Row(
+                            children: [
+                              CircleAvatar(radius: 5, backgroundColor: s.color),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(s.label,
+                                    style: theme.textTheme.bodyMedium,
+                                    overflow: TextOverflow.ellipsis),
+                              ),
+                              Text(
+                                valueFor(s.seconds),
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ],
         ),

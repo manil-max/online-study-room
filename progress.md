@@ -286,10 +286,12 @@
   seçici + toplam/ort./aktif gün), hafta içi/sonu kıyas, **takvim ısı haritası** (GitHub tarzı,
   hücre ipuçlu, boyuta göre 9/15/26 hafta). Haftalık grafik büyükte 14 gün.
 
+- [x] **Etkileşimli donut**: dilime dokununca dilim büyür + merkez o dersin adı/süresi/
+  yüzdesini gösterir; ders dağılımı kartında **veri formatı seçici** (yüzde / süre).
+
 **Kalan:**
 - [ ] **Grup hedefi**: `groups.daily_goal_minutes` (migration 0006) + admin ayarı
   (ClassDetailScreen) + grup stats'ta hedef ilerleme; grup serisi gruba göre.
-- [ ] **Etkileşimli grafikler**: donut dokunma ipuçları, veri formatı seçimi (süre/yüzde).
 - [ ] Çizgi grafik kart türü; ısı haritasının kişisel istatistik sekmesine de eklenmesi.
 
 ## FAZ 4 — Çoklu Platform & Widget
