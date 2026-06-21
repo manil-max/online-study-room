@@ -7,43 +7,63 @@ const _kLayoutKey = 'dashboard_layout';
 const _kClassroomTimerKey = 'classroom_show_timer';
 
 /// Varsayılan Ana Sayfa düzeni (ilk açılış): sayaç + bugün özeti + sıralama.
-const List<DashboardCardType> _kDefaultLayout = [
-  DashboardCardType.timer,
-  DashboardCardType.today,
-  DashboardCardType.leaderboard,
+const List<DashboardCardConfig> _kDefaultLayout = [
+  DashboardCardConfig(DashboardCardType.timer),
+  DashboardCardConfig(DashboardCardType.today),
+  DashboardCardConfig(DashboardCardType.leaderboard),
 ];
 
-/// Ana Sayfa kart düzeni (sıralı, görünen kartlar). Kişiye özel, cihazda kalıcı
-/// (§3.9). İlk açılışta varsayılan; kullanıcı ekler/çıkarır/sıralar.
-class DashboardLayoutNotifier extends Notifier<List<DashboardCardType>> {
+/// Ana Sayfa kart düzeni (sıralı kartlar; tür + boyut). Kişiye özel, cihazda
+/// kalıcı (§3.9/§3.11). İlk açılışta varsayılan; kullanıcı ekler/çıkarır/sıralar
+/// ve her kartın boyutunu (küçük/orta/büyük) ayarlar.
+class DashboardLayoutNotifier extends Notifier<List<DashboardCardConfig>> {
   @override
-  List<DashboardCardType> build() {
+  List<DashboardCardConfig> build() {
     final prefs = ref.watch(sharedPreferencesProvider);
     final stored = prefs.getStringList(_kLayoutKey);
     if (stored == null) return List.of(_kDefaultLayout);
-    // İsimleri enum'a çevir (bilinmeyen/eski isimleri yok say). Boş liste de
-    // geçerlidir (kullanıcı tüm kartları kaldırmış olabilir).
-    final byName = {for (final t in DashboardCardType.values) t.name: t};
+    // "tür:boyut" (veya eski sade "tür") çözümle; bilinmeyenleri yok say. Boş
+    // liste de geçerlidir (kullanıcı tüm kartları kaldırmış olabilir).
     return [
-      for (final name in stored)
-        if (byName[name] != null) byName[name]!,
+      for (final raw in stored) ?DashboardCardConfig.decode(raw),
     ];
   }
 
   void _save() {
     ref
         .read(sharedPreferencesProvider)
-        .setStringList(_kLayoutKey, state.map((t) => t.name).toList());
+        .setStringList(_kLayoutKey, state.map((c) => c.encode()).toList());
   }
 
-  /// Kartı ekle (yoksa sona) veya çıkar (varsa).
+  int _indexOf(DashboardCardType type) =>
+      state.indexWhere((c) => c.type == type);
+
+  /// Kartı ekle (yoksa sona, orta boyut) veya çıkar (varsa).
   void toggle(DashboardCardType type) {
-    if (state.contains(type)) {
-      state = [...state]..remove(type);
+    final i = _indexOf(type);
+    if (i >= 0) {
+      state = [...state]..removeAt(i);
     } else {
-      state = [...state, type];
+      state = [...state, DashboardCardConfig(type)];
     }
     _save();
+  }
+
+  /// Bir kartın boyutunu değiştir (küçük/orta/büyük).
+  void setSize(DashboardCardType type, DashboardCardSize size) {
+    final i = _indexOf(type);
+    if (i < 0) return;
+    final list = [...state];
+    list[i] = list[i].withSize(size);
+    state = list;
+    _save();
+  }
+
+  /// Bir kartın boyutunu döngüsel olarak ilerletir (küçük → orta → büyük → …).
+  void cycleSize(DashboardCardType type) {
+    final i = _indexOf(type);
+    if (i < 0) return;
+    setSize(type, state[i].size.next);
   }
 
   /// Sürükle-bırak ile yeniden sırala. `onReorderItem` zaten [newIndex]'i
@@ -58,7 +78,7 @@ class DashboardLayoutNotifier extends Notifier<List<DashboardCardType>> {
 }
 
 final dashboardLayoutProvider =
-    NotifierProvider<DashboardLayoutNotifier, List<DashboardCardType>>(
+    NotifierProvider<DashboardLayoutNotifier, List<DashboardCardConfig>>(
         DashboardLayoutNotifier.new);
 
 /// Sayaç kartı Sınıflar ekranında da gösterilsin mi? (Varsayılan kapalı — sayaç

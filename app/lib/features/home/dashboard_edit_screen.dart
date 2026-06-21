@@ -14,8 +14,9 @@ class DashboardEditScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final layout = ref.watch(dashboardLayoutProvider);
     final notifier = ref.read(dashboardLayoutProvider.notifier);
+    final usedTypes = layout.map((c) => c.type).toSet();
     final available = DashboardCardType.values
-        .where((t) => !layout.contains(t))
+        .where((t) => !usedTypes.contains(t))
         .toList();
     final showTimerInClass = ref.watch(classroomShowTimerProvider);
 
@@ -42,7 +43,8 @@ class DashboardEditScreen extends ConsumerWidget {
               itemCount: layout.length,
               onReorderItem: notifier.reorderItem,
               itemBuilder: (context, index) {
-                final type = layout[index];
+                final card = layout[index];
+                final type = card.type;
                 return ListTile(
                   key: ValueKey(type),
                   leading: ReorderableDragStartListener(
@@ -52,11 +54,22 @@ class DashboardEditScreen extends ConsumerWidget {
                   ),
                   title: Text(type.title),
                   subtitle: Text(type.description),
-                  trailing: IconButton(
-                    tooltip: 'Kaldır',
-                    icon: Icon(Icons.remove_circle_outline,
-                        color: theme.colorScheme.error),
-                    onPressed: () => notifier.toggle(type),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Boyut: küçük → orta → büyük (döngüsel).
+                      TextButton.icon(
+                        onPressed: () => notifier.cycleSize(type),
+                        icon: Icon(card.size.icon, size: 18),
+                        label: Text(card.size.label),
+                      ),
+                      IconButton(
+                        tooltip: 'Kaldır',
+                        icon: Icon(Icons.remove_circle_outline,
+                            color: theme.colorScheme.error),
+                        onPressed: () => notifier.toggle(type),
+                      ),
+                    ],
                   ),
                 );
               },

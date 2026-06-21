@@ -276,19 +276,21 @@
 > ayarlanabilir; istatistikler etkileşimli olsun." Araştırma: donut/çubuk/çizgi + **takvim ısı
 > haritası**, dokunmatik ipuçları, tablo; kart yeniden boyutlandırma + grid yerleşim.
 
-**Yapıldı (bu tur):**
+**Yapıldı:**
 - [x] Ders pasta/donut (kişisel), grup günlük trend, tıklanabilir+hover sıralama satırları,
   üye bilgi alt sayfası, seçilebilir metin, grup üye serileri (🔥 isim yanında).
+- [x] **Ana Sayfa kart boyutu**: her kart küçük/orta/büyük (`DashboardCardSize`), küçük=yarım
+  genişlik → 2 sütun grid (Wrap), orta/büyük=tam genişlik; düzenleme ekranında boyut döngü
+  butonu. Düzen `"tür:boyut"` olarak kalıcı (eski sade `"tür"` ile geriye uyumlu).
+- [x] **Daha çok kart türü**: günlük hedef (halka + büyük seri), dönem özeti (bugün/hafta/ay/yıl
+  seçici + toplam/ort./aktif gün), hafta içi/sonu kıyas, **takvim ısı haritası** (GitHub tarzı,
+  hücre ipuçlu, boyuta göre 9/15/26 hafta). Haftalık grafik büyükte 14 gün.
 
 **Kalan:**
 - [ ] **Grup hedefi**: `groups.daily_goal_minutes` (migration 0006) + admin ayarı
   (ClassDetailScreen) + grup stats'ta hedef ilerleme; grup serisi gruba göre.
-- [ ] **Ana Sayfa kart boyutu**: her kart küçük/orta/büyük; 2 sütun grid; düzen edit'te ayarlı.
-- [ ] **Daha çok kart türü**: hedef/seri, dönem özetleri (bugün/hafta/ay/yıl), hafta içi/sonu,
-  takvim ısı haritası, çizgi grafik.
-- [ ] **Etkileşimli grafikler**: fl_chart dokunma ipuçları (donut/çizgi), seçilebilir dönem,
-  veri formatı seçimi (süre/yüzde).
-- [ ] **Takvim ısı haritası** (GitHub tarzı çalışma yoğunluğu) — kişisel istatistik + kart.
+- [ ] **Etkileşimli grafikler**: donut dokunma ipuçları, veri formatı seçimi (süre/yüzde).
+- [ ] Çizgi grafik kart türü; ısı haritasının kişisel istatistik sekmesine de eklenmesi.
 
 ## FAZ 4 — Çoklu Platform & Widget
 

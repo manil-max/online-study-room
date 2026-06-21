@@ -5,17 +5,23 @@ import '../../../core/stats/study_stats.dart';
 import '../../../core/utils/duration_format.dart';
 import '../../../data/providers/study_providers.dart';
 import '../../stats/widgets/daily_bar_chart.dart';
+import '../dashboard_card.dart';
 
-/// Son 7 günün günlük çubuk grafiği (§3.9 kart). Toplamı da gösterir.
+/// Günlük çalışma süresi çubuk grafiği (§3.9 kart). Toplamı da gösterir.
+/// Büyük boyutta son 14 günü ve daha uzun bir grafik gösterir.
 class WeeklyChartCard extends ConsumerWidget {
-  const WeeklyChartCard({super.key});
+  const WeeklyChartCard({super.key, this.size = DashboardCardSize.medium});
+
+  final DashboardCardSize size;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final sessions = ref.watch(userSessionsProvider).value ?? const [];
-    final series = lastNDays(sessions, 7);
-    final weekTotal = series.fold<int>(0, (sum, d) => sum + d.seconds);
+    final isLarge = size == DashboardCardSize.large;
+    final dayCount = isLarge ? 14 : 7;
+    final series = lastNDays(sessions, dayCount);
+    final total = series.fold<int>(0, (sum, d) => sum + d.seconds);
 
     return Card(
       child: Padding(
@@ -27,10 +33,10 @@ class WeeklyChartCard extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: 4),
               child: Row(
                 children: [
-                  Text('Son 7 gün', style: theme.textTheme.titleMedium),
+                  Text('Son $dayCount gün', style: theme.textTheme.titleMedium),
                   const Spacer(),
                   Text(
-                    formatHuman(weekTotal),
+                    formatHuman(total),
                     style: theme.textTheme.titleMedium
                         ?.copyWith(color: theme.colorScheme.primary),
                   ),
@@ -38,7 +44,10 @@ class WeeklyChartCard extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 12),
-            SizedBox(height: 160, child: DailyBarChart(days: series)),
+            SizedBox(
+              height: isLarge ? 220 : 160,
+              child: DailyBarChart(days: series),
+            ),
           ],
         ),
       ),

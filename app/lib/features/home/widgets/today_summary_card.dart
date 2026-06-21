@@ -7,10 +7,14 @@ import '../../../core/utils/duration_format.dart';
 import '../../../data/models/subject.dart';
 import '../../../data/providers/study_providers.dart';
 import '../../../data/providers/subject_providers.dart';
+import '../dashboard_card.dart';
 
 /// Bugünün özeti: toplam süre + ders bazında oransal dağılım (§3.9 kart).
+/// Küçük boyutta yalnızca toplamı, orta/büyükte ders dağılımını gösterir.
 class TodaySummaryCard extends ConsumerWidget {
-  const TodaySummaryCard({super.key});
+  const TodaySummaryCard({super.key, this.size = DashboardCardSize.medium});
+
+  final DashboardCardSize size;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -27,6 +31,35 @@ class TodaySummaryCard extends ConsumerWidget {
         if (s.id == id) return s;
       }
       return null;
+    }
+
+    // Küçük kart: yalnızca büyük toplam + ders sayısı (kompakt).
+    if (size == DashboardCardSize.small) {
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Bugün', style: theme.textTheme.labelMedium),
+              const SizedBox(height: 8),
+              Text(
+                formatHuman(total),
+                style: theme.textTheme.headlineSmall
+                    ?.copyWith(color: theme.colorScheme.primary),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                breakdown.isEmpty
+                    ? 'Henüz kayıt yok'
+                    : '${breakdown.length} ders',
+                style: theme.textTheme.bodySmall
+                    ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              ),
+            ],
+          ),
+        ),
+      );
     }
 
     final maxSeconds =

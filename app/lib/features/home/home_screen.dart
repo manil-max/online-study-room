@@ -27,15 +27,26 @@ class HomeScreen extends ConsumerWidget {
       ),
       body: layout.isEmpty
           ? _EmptyDashboard(onEdit: () => _openEdit(context))
-          : ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                for (final type in layout)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: dashboardCardFor(type),
+          : LayoutBuilder(
+              builder: (context, constraints) {
+                const gap = 12.0;
+                final fullWidth = constraints.maxWidth - 32; // 16 yatay padding
+                final halfWidth = (fullWidth - gap) / 2;
+                return SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Wrap(
+                    spacing: gap,
+                    runSpacing: gap,
+                    children: [
+                      for (final card in layout)
+                        SizedBox(
+                          width: card.size.isHalfWidth ? halfWidth : fullWidth,
+                          child: dashboardCardFor(card.type, card.size),
+                        ),
+                    ],
                   ),
-              ],
+                );
+              },
             ),
     );
   }
