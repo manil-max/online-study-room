@@ -67,10 +67,12 @@ class Presence {
       'user_id': userId,
       'group_id': groupId,
       'status': status.name,
-      'started_at': startedAt?.toIso8601String(),
+      // UTC olarak yaz: Supabase timestamptz round-trip'inde saat dilimi kaymasın,
+      // böylece anlık süre (now - started_at) doğru hesaplanır.
+      'started_at': startedAt?.toUtc().toIso8601String(),
       'today_seconds': todaySeconds,
       'subject_id': subjectId,
-      'updated_at': DateTime.now().toIso8601String(),
+      'updated_at': DateTime.now().toUtc().toIso8601String(),
     };
   }
 

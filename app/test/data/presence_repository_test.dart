@@ -43,6 +43,7 @@ void main() {
     expect(round.userId, p.userId);
     expect(round.groupId, p.groupId);
     expect(round.status, p.status);
-    expect(round.startedAt, p.startedAt);
+    // started_at UTC olarak yazılıp okunur → aynı anı temsil etmeli (saat dilimi kaymasın).
+    expect(round.startedAt!.isAtSameMomentAs(p.startedAt!), isTrue);
   });
 }

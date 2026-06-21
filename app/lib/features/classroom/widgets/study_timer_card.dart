@@ -18,6 +18,10 @@ class StudyTimerCard extends ConsumerStatefulWidget {
 class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
   Timer? _ticker;
 
+  /// Durdur/Mola anında "Bugün" toplamını geçici dondurur: biten oturum
+  /// veritabanına yazılıp kayıtlı toplam güncellenene kadar değer düşmesin.
+  int? _frozenTotal;
+
   @override
   void initState() {
     super.initState();
@@ -38,10 +42,24 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
     final timer = ref.watch(studyTimerProvider);
     final recorded = ref.watch(todayRecordedSecondsProvider);
 
+    // Çalışma → (mola/durdur) geçişinde o anki toplamı dondur.
+    ref.listen<StudyTimerState>(studyTimerProvider, (prev, next) {
+      final wasRunning = prev?.phase == StudyPhase.running;
+      final stoppedNow = next.phase != StudyPhase.running;
+      if (wasRunning && stoppedNow && prev?.startedAt != null) {
+        final extra = DateTime.now().difference(prev!.startedAt!).inSeconds;
+        _frozenTotal =
+            ref.read(todayRecordedSecondsProvider) + (extra > 0 ? extra : 0);
+      }
+    });
+
     final liveExtra = (timer.isRunning && timer.startedAt != null)
         ? DateTime.now().difference(timer.startedAt!).inSeconds
         : 0;
-    final todayTotal = recorded + liveExtra;
+    final base = recorded + liveExtra;
+    // Kayıtlı toplam dondurulan değere yetiştiyse dondurmayı bırak.
+    if (_frozenTotal != null && base >= _frozenTotal!) _frozenTotal = null;
+    final todayTotal = _frozenTotal ?? base;
     final notifier = ref.read(studyTimerProvider.notifier);
 
     return Card(
