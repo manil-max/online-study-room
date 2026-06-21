@@ -126,6 +126,20 @@ double dailyAverageSeconds(
   return (weekday: weekday, weekend: weekend);
 }
 
+/// Oturumları derse göre toplar: `subjectId` (null → derssiz) → saniye,
+/// büyükten küçüğe sıralı (ders bazında dağılım — project.md §3.7).
+List<MapEntry<String?, int>> subjectBreakdown(
+  Iterable<StudySession> sessions,
+) {
+  final totals = <String?, int>{};
+  for (final s in sessions) {
+    totals[s.subjectId] = (totals[s.subjectId] ?? 0) + s.durationSeconds;
+  }
+  final entries = totals.entries.toList()
+    ..sort((a, b) => b.value.compareTo(a.value));
+  return entries;
+}
+
 /// Bir sınıfın oturumlarından kullanıcı başına toplam (userId → saniye),
 /// büyükten küçüğe sıralı (leaderboard).
 List<MapEntry<String, int>> leaderboard(Iterable<StudySession> sessions) {

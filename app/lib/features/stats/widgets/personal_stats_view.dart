@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/stats/study_stats.dart';
+import '../../../core/theme/subject_colors.dart';
 import '../../../core/utils/duration_format.dart';
 import '../../../data/models/study_session.dart';
+import '../../../data/models/subject.dart';
+import '../../../data/providers/subject_providers.dart';
 import 'daily_bar_chart.dart';
 
 /// Kişisel istatistik özeti: dönem toplamları, günlük ortalama ve
@@ -88,6 +92,17 @@ class PersonalStatsView extends StatelessWidget {
         _TrendCard(sessions: sessions),
         const SizedBox(height: 16),
         _WeekComparisonCard(sessions: sessions, now: now),
+        const SizedBox(height: 16),
+        Text('Ders bazında dağılım (son 30 gün)',
+            style: theme.textTheme.titleMedium),
+        const SizedBox(height: 8),
+        _SubjectBreakdownCard(
+          sessions: inRange(
+            sessions,
+            dayOf(now).subtract(const Duration(days: 29)),
+            now,
+          ).toList(),
+        ),
         const SizedBox(height: 16),
         Text('Seçili tarih aralığı', style: theme.textTheme.titleMedium),
         const SizedBox(height: 8),
@@ -401,6 +416,96 @@ class _StatCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(formatHuman(seconds), style: theme.textTheme.titleLarge),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Ders bazında dağılım: verilen oturumları derse göre toplar, oransal çubuklarla
+/// gösterir. Derssiz süreler "Derssiz" altında toplanır (project.md §3.7).
+class _SubjectBreakdownCard extends ConsumerWidget {
+  const _SubjectBreakdownCard({required this.sessions});
+
+  final List<StudySession> sessions;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final subjects = ref.watch(userSubjectsProvider).value ?? const <Subject>[];
+    final breakdown = subjectBreakdown(sessions);
+
+    if (breakdown.isEmpty) {
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text(
+            'Bu dönemde çalışma kaydın yok.',
+            style: theme.textTheme.bodyMedium
+                ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+          ),
+        ),
+      );
+    }
+
+    Subject? subjectFor(String? id) {
+      for (final s in subjects) {
+        if (s.id == id) return s;
+      }
+      return null;
+    }
+
+    final maxSeconds = breakdown.first.value.clamp(1, 1 << 30);
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            for (final entry in breakdown) ...[
+              Builder(
+                builder: (_) {
+                  final subject = subjectFor(entry.key);
+                  final name = subject?.name ?? 'Derssiz';
+                  final color = subject != null
+                      ? subjectColor(subject.color)
+                      : theme.colorScheme.onSurfaceVariant;
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          CircleAvatar(radius: 5, backgroundColor: color),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(name,
+                                style: theme.textTheme.bodyMedium,
+                                overflow: TextOverflow.ellipsis),
+                          ),
+                          Text(
+                            formatHuman(entry.value),
+                            style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: entry.value / maxSeconds,
+                          minHeight: 8,
+                          backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                          valueColor: AlwaysStoppedAnimation(color),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+                  );
+                },
+              ),
+            ],
           ],
         ),
       ),

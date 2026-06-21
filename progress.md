@@ -12,7 +12,7 @@
 
 - **Aktif Faz:** Oturum kalıcılığı sağlamlaştırıldı (Faz 1.1) — SDK zaten oturumu kalıcı tutuyor; profil çekimi çevrimdışında kullanıcıyı dışarı atmıyor. Tamamlananlar: Faz 1 (auth+profil+sınıf), Faz 2 (presence+manuel giriş), Faz 3 istatistikler (3a–3d). Supabase uçtan uca test edildi ✅. Kalan: Faz 4 widget (Android cihaz ister — ertelendi), Şifre sıfırlama (opsiyonel), Çevrimdışı tespiti/heartbeat, tasarım (en son).
 - **Proje konumu:** `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room` (İngilizce ad — Türkçe/boşluklu yol Flutter'ı bozuyordu; aşağıdaki nota bak)
-- **Sıradaki adım:** FAZ 3.5 — Dersler + Günlük Hedef + Seri (kararlar alındı, §3.7). İlk mini faz: 3.5.1 dersler (subjects repository). Tasarım dili (koyu tema) referansı `project-continuation/` (yerelde, .gitignore'da).
+- **Sıradaki adım:** FAZ 3.5.2 — Günlük hedef (`profiles.daily_goal_minutes` migration + repository + ana ekran hedef kartı). 3.5.1 dersler TAMAM ✅. Tasarım dili (koyu tema) referansı `project-continuation/` (yerelde, .gitignore'da).
 - **Bekleyen (kullanıcı/admin):** (1) `migrations/0003_subjects_realtime.sql` Supabase'de bir kez çalıştırılmalı (dersler canlı listesi için). (2) Windows'ta eklenti derlemesi için **Geliştirici Modu** açılmalı (`ms-settings:developers`); web/Chrome çalıştırma için gerekmez.
 
 ---
@@ -178,7 +178,9 @@
   `StudyTimerState.subjectId` + `selectSubject()`; oturum o derse yazılıyor.
 - [x] Manuel girişe ders seçimi — manuel ekle/düzenle diyaloğunda "Ders (opsiyonel)"
   çipleri; "Çalışma kayıtlarım" listesinde her oturumun dersi renk+ad ile gösteriliyor.
-- [ ] İstatistikte ders bazında dağılım (donut/çubuk)
+- [x] İstatistikte ders bazında dağılım — kişisel istatistikte "Ders bazında dağılım
+  (son 30 gün)" kartı (oransal çubuklar, derssiz "Derssiz" altında). Saf fonksiyon
+  `subjectBreakdown` + testi. **FAZ 3.5.1 TAMAM ✅**
 
 ### 3.5.2 Günlük hedef
 - [ ] `profiles.daily_goal_minutes` (migration) + repository desteği

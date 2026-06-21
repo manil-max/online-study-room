@@ -98,4 +98,28 @@ void main() {
     expect(board.first.value, 1500);
     expect(board.last.value, 900);
   });
+
+  test('subjectBreakdown derse göre toplar (null=derssiz) ve sıralar', () {
+    StudySession s(String? subjectId, int seconds) => StudySession(
+          id: '$subjectId-$seconds',
+          userId: 'u1',
+          groupId: 'g1',
+          subjectId: subjectId,
+          start: DateTime(2026, 6, 20, 8),
+          end: DateTime(2026, 6, 20, 8).add(Duration(seconds: seconds)),
+          durationSeconds: seconds,
+          source: StudySource.live,
+        );
+    final breakdown = subjectBreakdown([
+      s('mat', 600),
+      s('fiz', 1500),
+      s('mat', 300),
+      s(null, 200),
+    ]);
+    expect(breakdown.map((e) => e.key).toList(), ['fiz', 'mat', null]);
+    expect(breakdown.first.value, 1500);
+    expect(breakdown[1].value, 900); // mat: 600 + 300
+    expect(breakdown.last.key, isNull); // derssiz en sonda
+    expect(breakdown.last.value, 200);
+  });
 }
