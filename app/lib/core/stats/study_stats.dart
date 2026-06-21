@@ -140,6 +140,32 @@ List<MapEntry<String?, int>> subjectBreakdown(
   return entries;
 }
 
+/// Günlük hedefe bağlı güncel seri (üst üste hedefi tutturulan gün sayısı, §3.7).
+///
+/// Kural: hedefi (≥ [goalSeconds]) tutturduğun her gün +1; tutturamadığın gün
+/// sıfırlanır. **Bugün** henüz sürdüğü için, bugün hedefe ulaşılmadıysa seri
+/// kırılmaz — dünden geriye sayılır (bugün ulaşıldıysa bugünden geriye sayılır).
+/// [today] verilmezse `DateTime.now()` kullanılır (test için enjekte edilebilir).
+int currentStreak(
+  Iterable<StudySession> sessions,
+  int goalSeconds, {
+  DateTime? today,
+}) {
+  if (goalSeconds <= 0) return 0;
+  final totals = dailyTotals(sessions);
+  final start = dayOf(today ?? DateTime.now());
+  bool met(DateTime d) => (totals[d] ?? 0) >= goalSeconds;
+
+  // Bugün tutturulduysa bugünden, yoksa (gün sürüyor) dünden başla.
+  var cursor = met(start) ? start : start.subtract(const Duration(days: 1));
+  var streak = 0;
+  while (met(cursor)) {
+    streak++;
+    cursor = cursor.subtract(const Duration(days: 1));
+  }
+  return streak;
+}
+
 /// Bir sınıfın oturumlarından kullanıcı başına toplam (userId → saniye),
 /// büyükten küçüğe sıralı (leaderboard).
 List<MapEntry<String, int>> leaderboard(Iterable<StudySession> sessions) {

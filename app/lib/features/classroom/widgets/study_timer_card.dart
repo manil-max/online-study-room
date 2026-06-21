@@ -7,9 +7,12 @@ import '../../../core/theme/subject_colors.dart';
 import '../../../core/utils/duration_format.dart';
 import '../../../core/widgets/anchored_menu.dart';
 import '../../../data/models/subject.dart';
+import '../../../data/providers/auth_providers.dart';
 import '../../../data/providers/study_providers.dart';
 import '../../../data/providers/subject_providers.dart';
+import '../../../data/repositories/auth_repository.dart';
 import '../../profile/subjects_screen.dart';
+import '../../profile/widgets/goal_editor_dialog.dart';
 import '../../profile/widgets/manual_session_dialog.dart';
 import 'focus_timer_screen.dart';
 
@@ -43,6 +46,20 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
     super.dispose();
   }
 
+  Future<void> _editGoal(BuildContext context, int currentMinutes) async {
+    final result =
+        await showGoalEditorDialog(context, initialMinutes: currentMinutes);
+    if (result == null) return;
+    if (!context.mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await ref.read(authRepositoryProvider).updateDailyGoal(result);
+      ref.invalidate(authStateProvider);
+    } on AuthException catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -69,6 +86,13 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
     final notifier = ref.read(studyTimerProvider.notifier);
     final subjects = ref.watch(userSubjectsProvider).value ?? const <Subject>[];
 
+    final goalMinutes = ref.watch(dailyGoalMinutesProvider);
+    final goalSeconds = goalMinutes * 60;
+    final streak = ref.watch(currentStreakProvider);
+    final pct =
+        goalSeconds > 0 ? (todayTotal / goalSeconds).clamp(0.0, 1.0) : 0.0;
+    final reached = goalSeconds > 0 && todayTotal >= goalSeconds;
+
     return Card(
       child: Stack(
         children: [
@@ -82,6 +106,9 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
               onPressed: () => openFocusTimer(context),
             ),
           ),
+          // Seri (streak) — yalnız varsa (§3.7).
+          if (streak > 0)
+            Positioned(top: 14, left: 14, child: _StreakChip(streak: streak)),
           Padding(
             padding: const EdgeInsets.all(20),
             child: Column(
@@ -106,6 +133,14 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
                         ? theme.colorScheme.primary
                         : theme.colorScheme.onSurfaceVariant,
                   ),
+                ),
+                const SizedBox(height: 16),
+                _GoalProgress(
+                  todaySeconds: todayTotal,
+                  goalSeconds: goalSeconds,
+                  pct: pct,
+                  reached: reached,
+                  onEdit: () => _editGoal(context, goalMinutes),
                 ),
                 const SizedBox(height: 16),
                 _SubjectSelector(
@@ -289,4 +324,105 @@ Widget _subjectMenuRow(
         Icon(Icons.check, size: 18, color: theme.colorScheme.primary),
     ],
   );
+}
+
+/// Günlük hedef ilerleme çubuğu — bugünkü süre / hedef + yüzde; hedefe ulaşınca
+/// yeşile döner. Dokununca hedef düzenlenir (§3.7).
+class _GoalProgress extends StatelessWidget {
+  const _GoalProgress({
+    required this.todaySeconds,
+    required this.goalSeconds,
+    required this.pct,
+    required this.reached,
+    required this.onEdit,
+  });
+
+  final int todaySeconds;
+  final int goalSeconds;
+  final double pct;
+  final bool reached;
+  final VoidCallback onEdit;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
+    // Hedefe ulaşınca yeşil (chart-2), yoksa birincil renk.
+    final barColor = reached ? subjectColor('chart-2') : theme.colorScheme.primary;
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: onEdit,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.flag_outlined, size: 16, color: muted),
+                const SizedBox(width: 6),
+                Text('Günlük hedef',
+                    style: theme.textTheme.labelMedium?.copyWith(color: muted)),
+                const Spacer(),
+                Text('%${(pct * 100).round()}',
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: reached ? barColor : null,
+                      fontWeight: FontWeight.w600,
+                    )),
+                const SizedBox(width: 6),
+                Icon(Icons.edit, size: 14, color: muted),
+              ],
+            ),
+            const SizedBox(height: 6),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: LinearProgressIndicator(
+                value: pct,
+                minHeight: 8,
+                backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                valueColor: AlwaysStoppedAnimation<Color>(barColor),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                '${formatHumanSeconds(todaySeconds)} / ${formatHumanSeconds(goalSeconds)}',
+                style: theme.textTheme.bodySmall?.copyWith(color: muted),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Seri (streak) rozeti: ateş ikonu + üst üste hedef tutturulan gün sayısı.
+class _StreakChip extends StatelessWidget {
+  const _StreakChip({required this.streak});
+
+  final int streak;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.local_fire_department,
+              size: 16, color: subjectColor('chart-5')),
+          const SizedBox(width: 4),
+          Text('$streak gün', style: theme.textTheme.labelMedium),
+        ],
+      ),
+    );
+  }
 }

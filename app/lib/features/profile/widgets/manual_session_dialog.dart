@@ -1,10 +1,9 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/theme/subject_colors.dart';
+import '../../../core/widgets/number_stepper.dart';
 import '../../../data/models/study_session.dart';
 import '../../../data/models/subject.dart';
 import '../../../data/providers/auth_providers.dart';
@@ -141,7 +140,7 @@ class _ManualSessionDialogState extends State<_ManualSessionDialog> {
           Row(
             children: [
               Expanded(
-                child: _NumberStepper(
+                child: NumberStepper(
                   label: 'Saat',
                   value: _hours,
                   min: 0,
@@ -151,7 +150,7 @@ class _ManualSessionDialogState extends State<_ManualSessionDialog> {
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _NumberStepper(
+                child: NumberStepper(
                   label: 'Dakika',
                   value: _minutes,
                   min: 0,
@@ -208,114 +207,3 @@ class _ManualSessionDialogState extends State<_ManualSessionDialog> {
   }
 }
 
-/// Basit +/- sayaç (saat/dakika seçimi için). +/- tuşuna **basılı tutunca**
-/// sabit hızda artırıp azaltır (tek tek basmakla uğraşmamak için).
-class _NumberStepper extends StatelessWidget {
-  const _NumberStepper({
-    required this.label,
-    required this.value,
-    required this.min,
-    required this.max,
-    required this.onChanged,
-  });
-
-  final String label;
-  final int value;
-  final int min;
-  final int max;
-  final ValueChanged<int> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Column(
-      children: [
-        Text(label,
-            style: theme.textTheme.bodySmall
-                ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-        const SizedBox(height: 4),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            _HoldRepeatButton(
-              icon: Icons.remove,
-              enabled: value > min,
-              onStep: () => onChanged((value - 1).clamp(min, max)),
-            ),
-            Text('$value', style: theme.textTheme.titleLarge),
-            _HoldRepeatButton(
-              icon: Icons.add,
-              enabled: value < max,
-              onStep: () => onChanged((value + 1).clamp(min, max)),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-/// Dolgu-tonlu ikon buton: dokununca bir kez, **basılı tutunca** kısa bir
-/// gecikmeden sonra sabit hızda tekrar tekrar [onStep] çağırır.
-class _HoldRepeatButton extends StatefulWidget {
-  const _HoldRepeatButton({
-    required this.icon,
-    required this.enabled,
-    required this.onStep,
-  });
-
-  final IconData icon;
-  final bool enabled;
-  final VoidCallback onStep;
-
-  @override
-  State<_HoldRepeatButton> createState() => _HoldRepeatButtonState();
-}
-
-class _HoldRepeatButtonState extends State<_HoldRepeatButton> {
-  Timer? _delay;
-  Timer? _repeat;
-
-  void _start() {
-    if (!widget.enabled) return;
-    widget.onStep(); // ilk dokunuş hemen
-    // Basılı tutulursa kısa gecikmeden sonra sabit hızda tekrarla.
-    _delay = Timer(const Duration(milliseconds: 400), () {
-      _repeat = Timer.periodic(const Duration(milliseconds: 80), (_) {
-        if (widget.enabled) {
-          widget.onStep();
-        } else {
-          _stop();
-        }
-      });
-    });
-  }
-
-  void _stop() {
-    _delay?.cancel();
-    _repeat?.cancel();
-    _delay = null;
-    _repeat = null;
-  }
-
-  @override
-  void dispose() {
-    _stop();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // Listener (gesture arena dışı) basışı güvenilir yakalar; IconButton yalnız
-    // görsel/erişilebilirlik için (onPressed boş — gerçek artış Listener'da).
-    return Listener(
-      onPointerDown: widget.enabled ? (_) => _start() : null,
-      onPointerUp: (_) => _stop(),
-      onPointerCancel: (_) => _stop(),
-      child: IconButton.filledTonal(
-        onPressed: widget.enabled ? () {} : null,
-        icon: Icon(widget.icon),
-      ),
-    );
-  }
-}

@@ -99,6 +99,47 @@ void main() {
     expect(board.last.value, 900);
   });
 
+  group('currentStreak (günlük hedefe bağlı seri)', () {
+    // Hedef: 1 saat (3600 sn). today = 2026-06-21.
+    const goal = 3600;
+    final today = DateTime(2026, 6, 21, 20);
+
+    test('hiç oturum yoksa 0', () {
+      expect(currentStreak(const [], goal, today: today), 0);
+    });
+
+    test('bugün hedefi tutturduysa bugünden geriye sayar', () {
+      final sessions = [
+        _s('u1', DateTime(2026, 6, 21, 8), 3600), // bugün ✓
+        _s('u1', DateTime(2026, 6, 20, 8), 4000), // dün ✓
+        _s('u1', DateTime(2026, 6, 19, 8), 1000), // 2 gün önce ✗
+      ];
+      expect(currentStreak(sessions, goal, today: today), 2);
+    });
+
+    test('bugün henüz hedefte değilse seri kırılmaz (dünden sayar)', () {
+      final sessions = [
+        _s('u1', DateTime(2026, 6, 21, 8), 1000), // bugün ✗ (gün sürüyor)
+        _s('u1', DateTime(2026, 6, 20, 8), 3600), // dün ✓
+        _s('u1', DateTime(2026, 6, 19, 8), 3700), // 2 gün önce ✓
+      ];
+      expect(currentStreak(sessions, goal, today: today), 2);
+    });
+
+    test('bugün ve dün hedefte değilse 0', () {
+      final sessions = [
+        _s('u1', DateTime(2026, 6, 21, 8), 1000), // bugün ✗
+        _s('u1', DateTime(2026, 6, 20, 8), 1000), // dün ✗
+      ];
+      expect(currentStreak(sessions, goal, today: today), 0);
+    });
+
+    test('hedef 0/negatifse 0 döner (sonsuz döngü olmaz)', () {
+      final sessions = [_s('u1', DateTime(2026, 6, 21, 8), 3600)];
+      expect(currentStreak(sessions, 0, today: today), 0);
+    });
+  });
+
   test('subjectBreakdown derse göre toplar (null=derssiz) ve sıralar', () {
     StudySession s(String? subjectId, int seconds) => StudySession(
           id: '$subjectId-$seconds',

@@ -3,7 +3,9 @@ import 'package:supabase_flutter/supabase_flutter.dart' hide Presence;
 import 'package:uuid/uuid.dart';
 
 import '../../core/config/supabase_config.dart';
+import '../../core/stats/study_stats.dart';
 import '../models/presence.dart';
+import '../models/profile.dart';
 import '../models/study_session.dart';
 import '../repositories/study_repository.dart';
 import '../repositories/in_memory/in_memory_study_repository.dart';
@@ -47,6 +49,19 @@ final todayRecordedSecondsProvider = Provider<int>((ref) {
   return sessions
       .where((s) => _isSameDay(s.day, now))
       .fold<int>(0, (sum, s) => sum + s.durationSeconds);
+});
+
+/// Kullanıcının günlük hedefi (dakika). Profil yoksa varsayılan (§3.7).
+final dailyGoalMinutesProvider = Provider<int>((ref) {
+  return ref.watch(authStateProvider).value?.dailyGoalMinutes ??
+      kDefaultDailyGoalMinutes;
+});
+
+/// Günlük hedefe bağlı güncel seri (üst üste hedef tutturulan gün, §3.7).
+final currentStreakProvider = Provider<int>((ref) {
+  final sessions = ref.watch(userSessionsProvider).value ?? const [];
+  final goalSeconds = ref.watch(dailyGoalMinutesProvider) * 60;
+  return currentStreak(sessions, goalSeconds);
 });
 
 /// Sınıftaki her üyenin bugün KAYDEDİLMİŞ toplam süresi (userId -> saniye).

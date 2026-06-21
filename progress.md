@@ -13,7 +13,7 @@
 - **Aktif Faz:** Oturum kalıcılığı sağlamlaştırıldı (Faz 1.1) — SDK zaten oturumu kalıcı tutuyor; profil çekimi çevrimdışında kullanıcıyı dışarı atmıyor. Tamamlananlar: Faz 1 (auth+profil+sınıf), Faz 2 (presence+manuel giriş), Faz 3 istatistikler (3a–3d). Supabase uçtan uca test edildi ✅. Kalan: Faz 4 widget (Android cihaz ister — ertelendi), Şifre sıfırlama (opsiyonel), Çevrimdışı tespiti/heartbeat, tasarım (en son).
 - **Proje konumu:** `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room` (İngilizce ad — Türkçe/boşluklu yol Flutter'ı bozuyordu; aşağıdaki nota bak)
 - **Sıradaki adım:** Sayaç yenileme başladı (FAZ 3.7, §3.12): ders seçici **dropdown** + **tam ekran odak modu** eklendi ✅. Sonraki mantıklı sıra: **3.5.2 günlük hedef** → **3.5.3 seri** (bunlar saat renk-geçişi stilini ve Ana Sayfa kartlarını besler) → **3.7 saat stilleri** (halka/renk) → **3.8 Ana Sayfa** → **3.9 çalışma kayıtları** → **3.10 istatistik**. Tasarım/UI iyileştirmeleri ayrı bir geçiş değil, her fazda kardeş tasarımının diline göre yapılır.
-- **Bekleyen (kullanıcı/admin):** (1) **`migrations/0004_group_admin.sql`** Supabase'de çalıştırılmalı — sınıf ad değiştir / kod yenile / üye çıkar / sınıf sil (admin RLS) bunsuz çalışmaz. (2) `migrations/0003_subjects_realtime.sql` artık **opsiyonel** (ders deposu Realtime'a bağımlı değil; sadece çoklu cihaz canlı senkronu için).
+- **Bekleyen (kullanıcı/admin):** (1) **`migrations/0004_group_admin.sql`** Supabase'de çalıştırılmalı — sınıf ad değiştir / kod yenile / üye çıkar / sınıf sil (admin RLS) bunsuz çalışmaz. (2) **`migrations/0005_daily_goal.sql`** çalıştırılmalı — günlük hedef (`profiles.daily_goal_minutes`); bunsuz hedef hep varsayılan (6sa) görünür ve düzenleme kalıcı olmaz. (3) `migrations/0003_subjects_realtime.sql` artık **opsiyonel** (ders deposu Realtime'a bağımlı değil; sadece çoklu cihaz canlı senkronu için).
 - **Çözüldü (2026-06-21):** Windows **Geliştirici Modu açıldı** ✅ — eklentiler (image_picker vb.) symlink gerektirdiği için **web/Chrome derlemesi de** bunu istiyormuş (önceki not yanlıştı). Kapalıyken `flutter run -d chrome` "Error when reading ../../../../../AppData/.../package: cannot find path" + binlerce takip hatası veriyordu. `flutter clean && flutter pub get` + Geliştirici Modu ile düzeldi; `flutter build web` temiz derleniyor.
 
 ---
@@ -184,12 +184,15 @@
   `subjectBreakdown` + testi. **FAZ 3.5.1 TAMAM ✅**
 
 ### 3.5.2 Günlük hedef
-- [ ] `profiles.daily_goal_minutes` (migration) + repository desteği
-- [ ] Ana ekranda hedef kartı (ilerleme çubuğu + yüzde, düzenlenebilir)
+- [x] `profiles.daily_goal_minutes` (`migrations/0005_daily_goal.sql`) + repository
+  desteği (`updateDailyGoal`, Profile alanı, fromMap/toMap). **Kullanıcı çalıştırmalı.**
+- [x] Hedef kartı — sayaç kartına **gömüldü**: ilerleme çubuğu + yüzde, hedefe ulaşınca
+  yeşil; dokununca düzenle diyaloğu (saat/dakika sayaç, basılı-tut). `dailyGoalMinutesProvider`.
 
 ### 3.5.3 Seri (streak)
-- [ ] Saf hesaplama: günlük hedefe bağlı seri (`core/stats`) + testleri
-- [ ] Ana ekranda seri göstergesi
+- [x] Saf hesaplama `currentStreak` (`core/stats`): hedefi tutturulan her gün +1, bugün
+  sürdüğü için bugün eksikse kırılmaz (dünden sayar). 5 test.
+- [x] Seri göstergesi — sayaç kartında 🔥 rozeti (`currentStreakProvider`, yalnız >0 iken).
 
 ---
 
@@ -307,6 +310,15 @@
   `SupabaseAuthRepository._profileFor` artık profil satırı çekilemezse (çevrimdışı/geçici hata)
   kullanıcıyı dışarı atmıyor; oturum geçerliyse metadata'dan geçici profille içeride tutuyor
   (project.md §3.3 çevrimdışı dayanıklılık). 37/37 test geçti, analiz temiz.
+- **2026-06-21 (günlük hedef + seri — FAZ 3.5.2/3.5.3 ✅):** `profiles.daily_goal_minutes`
+  (`migrations/0005`, varsayılan 360) + `Profile.dailyGoalMinutes` + `updateDailyGoal`
+  (auth repo soyut/bellek-içi/Supabase). Saf `currentStreak` hesabı (`core/stats`): hedef
+  tutturulan her gün +1; bugün sürdüğü için bugün eksikse seri kırılmaz (dünden sayar).
+  Sayaç kartına **hedef ilerleme çubuğu** (yüzde, hedefe ulaşınca yeşil, dokun→düzenle) +
+  🔥 **seri rozeti** gömüldü. Sayaç kartı zaten saniyede yenilendiği için canlı. Saat
+  stilleri (halka/renk geçişi) artık hedefe bağlanabilir. Sayı sayaç widget'ı paylaşılan
+  `core/widgets/number_stepper.dart`'a taşındı (manuel giriş + hedef düzenleme ortak).
+  52/52 test, analiz temiz. **Kullanıcı: `migrations/0005_daily_goal.sql` çalıştırmalı.**
 - **2026-06-21 (açılır menüler "basılan yerde" + manuel sayaç basılı-tut):** Geri bildirim:
   "alttan açılan pencere güzel değil, Claude Code model seçici gibi tam basılan yerde açılsın;
   bunu çoğu açılır seçim için yap." Eklenen `core/widgets/anchored_menu.dart`

@@ -111,6 +111,17 @@ class SupabaseAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<void> updateDailyGoal(int minutes) async {
+    final cur = _current;
+    if (cur == null) return;
+    final safe = minutes.clamp(1, 24 * 60);
+    await _client
+        .from('profiles')
+        .update({'daily_goal_minutes': safe}).eq('id', cur.id);
+    _current = cur.copyWith(dailyGoalMinutes: safe);
+  }
+
+  @override
   Future<void> updateAvatar({
     required Uint8List bytes,
     required String contentType,

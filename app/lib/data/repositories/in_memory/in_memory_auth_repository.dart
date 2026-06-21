@@ -96,6 +96,19 @@ class InMemoryAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<void> updateDailyGoal(int minutes) async {
+    final cur = _current;
+    if (cur == null) return;
+    final safe = minutes.clamp(1, 24 * 60);
+    final updated = cur.copyWith(dailyGoalMinutes: safe);
+    _current = updated;
+    for (final acc in _accounts.values) {
+      if (acc.profile.id == cur.id) acc.profile = updated;
+    }
+    _controller.add(updated);
+  }
+
+  @override
   Future<void> updateAvatar({
     required Uint8List bytes,
     required String contentType,
