@@ -27,7 +27,7 @@ class ClassroomScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Sınıflar'),
+        // Başlık şimdilik boş (kullanıcı isteği). Sağ üstte sınıf değiştirici kalır.
         actions: [
           IconButton(
             tooltip: 'Sınıf değiştir',

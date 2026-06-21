@@ -12,7 +12,7 @@
 
 - **Aktif Faz:** Oturum kalıcılığı sağlamlaştırıldı (Faz 1.1) — SDK zaten oturumu kalıcı tutuyor; profil çekimi çevrimdışında kullanıcıyı dışarı atmıyor. Tamamlananlar: Faz 1 (auth+profil+sınıf), Faz 2 (presence+manuel giriş), Faz 3 istatistikler (3a–3d). Supabase uçtan uca test edildi ✅. Kalan: Faz 4 widget (Android cihaz ister — ertelendi), Şifre sıfırlama (opsiyonel), Çevrimdışı tespiti/heartbeat, tasarım (en son).
 - **Proje konumu:** `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room` (İngilizce ad — Türkçe/boşluklu yol Flutter'ı bozuyordu; aşağıdaki nota bak)
-- **Sıradaki adım:** Kullanıcı ilk denemesini yaptı; büyük yön kararları alındı (4 sekme, çoklu sınıf+admin, esnek Ana Sayfa, çalışma kayıtları toplama, sınıf ist. zenginleştirme — §3.8–3.11, FAZ 3.6–3.9). Ders-ekleme bug'ı çözüldü ✅. **Sıralama kullanıcıyla netleşecek** (öneri: önce FAZ 3.6 çoklu sınıf, çünkü Ana Sayfa ona dayanıyor). Bekleyen küçük işler: 3.5.2 günlük hedef + 3.5.3 seri.
+- **Sıradaki adım:** Sayaç yenileme başladı (FAZ 3.7, §3.12): ders seçici **dropdown** + **tam ekran odak modu** eklendi ✅. Sonraki mantıklı sıra: **3.5.2 günlük hedef** → **3.5.3 seri** (bunlar saat renk-geçişi stilini ve Ana Sayfa kartlarını besler) → **3.7 saat stilleri** (halka/renk) → **3.8 Ana Sayfa** → **3.9 çalışma kayıtları** → **3.10 istatistik**. Tasarım/UI iyileştirmeleri ayrı bir geçiş değil, her fazda kardeş tasarımının diline göre yapılır.
 - **Bekleyen (kullanıcı/admin):** (1) **`migrations/0004_group_admin.sql`** Supabase'de çalıştırılmalı — sınıf ad değiştir / kod yenile / üye çıkar / sınıf sil (admin RLS) bunsuz çalışmaz. (2) `migrations/0003_subjects_realtime.sql` artık **opsiyonel** (ders deposu Realtime'a bağımlı değil; sadece çoklu cihaz canlı senkronu için).
 - **Çözüldü (2026-06-21):** Windows **Geliştirici Modu açıldı** ✅ — eklentiler (image_picker vb.) symlink gerektirdiği için **web/Chrome derlemesi de** bunu istiyormuş (önceki not yanlıştı). Kapalıyken `flutter run -d chrome` "Error when reading ../../../../../AppData/.../package: cannot find path" + binlerce takip hatası veriyordu. `flutter clean && flutter pub get` + Geliştirici Modu ile düzeldi; `flutter build web` temiz derleniyor.
 
@@ -214,25 +214,39 @@
 - [x] (İleride) sınıf sohbeti için yer ayrıldı — ClassDetailScreen'de "Sohbet (yakında)" tile.
 - [ ] Aktif sınıf kalıcılığı (uygulama yenilenince hatırlama) — küçük, sonra (shared_preferences)
 
-## FAZ 3.7 — Ana Sayfa: Esnek Dashboard (2026-06-21 kararı, §3.9) 🟡
+## FAZ 3.7 — Profesyonel & Özelleştirilebilir Sayaç (2026-06-21 kararı, §3.12)
 
-> Tasarım dili ile birlikte netleşecek; önce kart kataloğu + temel düzenleme.
+> "Başka kronometre gerekmesin" hedefi. Varsayılan sade, isteyene özelleştirilebilir.
+
+- [x] Ders seçici **dropdown** — kapalıyken seçili ders/"Genel" + ▾; dokununca alt sayfada
+  ders listesi + "Dersleri düzenle" (Claude Code model seçici mantığı). Çalışırken kilitli.
+- [x] **Tam ekran odak modu** (`focus_timer_screen.dart`) — kartta tam ekran ikonu → büyük
+  canlı sayaç + ders + büyük Başlat/Durdur + küçült; immersive sistem çubukları.
+- [ ] **Özelleştirilebilir saat stilleri** — sade rakam (varsayılan) / halka-dial / hedefe
+  yaklaştıkça renk geçişi (zıt→yeşil). Renk/halka **günlük hedefe** bağlı (3.5.2 gerekir).
+- [ ] "Sayaç görünümü" ayar yeri (stil seçimi, kişiye özel kalıcı)
+- [ ] (Ops.) Pomodoro / aralıklı mod + bitiş bildirimi
+
+## FAZ 3.8 — Ana Sayfa: Esnek Dashboard (2026-06-21 kararı, §3.9) 🟡
+
+> Tasarım dili ile birlikte netleşecek; önce kart kataloğu + temel düzenleme. Sayaç (3.7),
+> hedef (3.5.2) ve seri (3.5.3) kartlarını gösterir → onlar önce gelmeli.
 
 - [ ] 4. sekme olarak Ana Sayfa eklenir (en başa)
 - [ ] Kart kataloğu: sayaç, süreler, gün serisi, hedef, sınıflar, sıralama, istatistik kartları
 - [ ] Kullanıcı kart ekle/çıkar/sırala; yerleşim kişiye özel kalıcı
 - [ ] ❓ Düzenleme UX (sürükle-bırak vs liste), saklama (yerel vs profiles JSON)
 
-## FAZ 3.8 — Çalışma Kayıtları İyileştirme (2026-06-21 kararı, §3.10)
+## FAZ 3.9 — Çalışma Kayıtları İyileştirme (2026-06-21 kararı, §3.10)
 
 - [ ] Geçmiş günler tek özet kayıtta toplansın (bugün ayrı ayrı kalır)
 - [ ] Saat aralığı (ör. 14:05–14:50) + ders + süre gösterimi
 - [ ] (Ops.) güne dokununca alt kırılım (oturumlar / ders bazında)
 
-## FAZ 3.9 — Sınıf İstatistiklerini Zenginleştirme (2026-06-21 kararı, §3.11) 🟡
+## FAZ 3.10 — İstatistikleri Zenginleştirme (§3.4 + §3.11) 🟡
 
-- [ ] Ek metrikler (sınıf günlük trendi, haftalık değişim, ders bazında sınıf kıyası vb.)
-- [ ] Daha iyi görünüm
+- [ ] Kişisel: haftalık/aylık çubuk + **ders bazında pasta/donut** (kardeş tasarımı gibi)
+- [ ] Sınıf: ek metrikler (günlük trend, haftalık değişim, ders bazında sınıf kıyası) + görünüm
 
 ---
 
@@ -293,6 +307,15 @@
   `SupabaseAuthRepository._profileFor` artık profil satırı çekilemezse (çevrimdışı/geçici hata)
   kullanıcıyı dışarı atmıyor; oturum geçerliyse metadata'dan geçici profille içeride tutuyor
   (project.md §3.3 çevrimdışı dayanıklılık). 37/37 test geçti, analiz temiz.
+- **2026-06-21 (sayaç yenileme başladı — FAZ 3.7, §3.12):** Kullanıcı geri bildirimi:
+  "saat çok profesyonel olmalı, başka kronometre gerekmesin; ders seçimi Claude Code model
+  seçici gibi dropdown olsun; odak için tam ekran tuşu olsun; sade ama özelleştirilebilir."
+  Sınıflar AppBar başlığı ("Sınıflar" yazısı) kaldırıldı (sağ üst ↔ değiştirici kaldı).
+  Ders seçici çip-satırı → **dropdown hap** (kapalı: seçili ders/"Genel" + ▾; açık: alt
+  sayfada liste + "Dersleri düzenle"). **Tam ekran odak modu** (`focus_timer_screen.dart`):
+  büyük canlı sayaç + ders + büyük Başlat/Durdur + küçült, immersive. Saat stilleri (halka/
+  renk geçişi) ve Ana Sayfa sonraki fazlara planlandı (progress FAZ 3.7–3.10 yeniden
+  numaralandı). 47/47 test, analiz temiz.
 - **2026-06-21 (Supabase uçtan uca ✅):** Proje İngilizce yola taşındı
   (`...\Desktop\Dev\online-study-room`), `C:\Dev` silindi. Kullanıcı Supabase projesi açtı,
   şema kuruldu, e-posta doğrulaması kapatıldı, anahtarlar `env.json`'a girildi. Web'de passkeys
