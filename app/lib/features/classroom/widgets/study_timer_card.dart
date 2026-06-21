@@ -42,6 +42,7 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
         ? DateTime.now().difference(timer.startedAt!).inSeconds
         : 0;
     final todayTotal = recorded + liveExtra;
+    final notifier = ref.read(studyTimerProvider.notifier);
 
     return Card(
       child: Padding(
@@ -49,9 +50,11 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
         child: Column(
           children: [
             Text(
-              'Bugün',
+              timer.isOnBreak ? 'Molada' : 'Bugün',
               style: theme.textTheme.labelLarge?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+                color: timer.isOnBreak
+                    ? Colors.orange
+                    : theme.colorScheme.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 4),
@@ -70,27 +73,72 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
               ),
             ),
             const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: timer.isRunning
-                  ? FilledButton.icon(
-                      style: FilledButton.styleFrom(
-                        backgroundColor: theme.colorScheme.error,
-                      ),
-                      onPressed: () =>
-                          ref.read(studyTimerProvider.notifier).stop(),
-                      icon: const Icon(Icons.stop),
-                      label: const Text('Durdur'),
-                    )
-                  : FilledButton.icon(
-                      onPressed: () =>
-                          ref.read(studyTimerProvider.notifier).start(),
-                      icon: const Icon(Icons.play_arrow),
-                      label: const Text('Çalışmaya başla'),
-                    ),
-            ),
+            _buildControls(context, theme, timer, notifier),
           ],
         ),
+      ),
+    );
+  }
+
+  /// Faza göre kontrol butonları: boşta → Başla; çalışıyor → Mola + Durdur;
+  /// molada → Devam + Durdur.
+  Widget _buildControls(
+    BuildContext context,
+    ThemeData theme,
+    StudyTimerState timer,
+    StudyTimerNotifier notifier,
+  ) {
+    if (timer.isRunning) {
+      return Row(
+        children: [
+          Expanded(
+            child: FilledButton.tonalIcon(
+              onPressed: notifier.pause,
+              icon: const Icon(Icons.coffee),
+              label: const Text('Mola'),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: FilledButton.icon(
+              style: FilledButton.styleFrom(
+                backgroundColor: theme.colorScheme.error,
+              ),
+              onPressed: notifier.stop,
+              icon: const Icon(Icons.stop),
+              label: const Text('Durdur'),
+            ),
+          ),
+        ],
+      );
+    }
+    if (timer.isOnBreak) {
+      return Row(
+        children: [
+          Expanded(
+            child: FilledButton.icon(
+              onPressed: notifier.start,
+              icon: const Icon(Icons.play_arrow),
+              label: const Text('Devam et'),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: OutlinedButton.icon(
+              onPressed: notifier.stop,
+              icon: const Icon(Icons.stop),
+              label: const Text('Bitir'),
+            ),
+          ),
+        ],
+      );
+    }
+    return SizedBox(
+      width: double.infinity,
+      child: FilledButton.icon(
+        onPressed: notifier.start,
+        icon: const Icon(Icons.play_arrow),
+        label: const Text('Çalışmaya başla'),
       ),
     );
   }

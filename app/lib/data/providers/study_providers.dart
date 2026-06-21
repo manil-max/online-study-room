@@ -63,42 +63,66 @@ final groupTodaySecondsProvider = Provider<Map<String, int>>((ref) {
   return totals;
 });
 
+/// Çalışma sayacının fazı: boşta / çalışıyor / molada.
+enum StudyPhase { idle, running, onBreak }
+
 /// Çalışma sayacının durumu.
 class StudyTimerState {
-  const StudyTimerState({this.isRunning = false, this.startedAt});
-  final bool isRunning;
+  const StudyTimerState({this.phase = StudyPhase.idle, this.startedAt});
+  final StudyPhase phase;
+
+  /// Çalışırken mevcut oturumun başlangıcı (anlık süre buradan hesaplanır).
   final DateTime? startedAt;
+
+  bool get isRunning => phase == StudyPhase.running;
+  bool get isOnBreak => phase == StudyPhase.onBreak;
 }
 
-/// Çalışma sayacını yönetir: başlat/durdur ve durunca oturumu kaydet.
-/// Not: süre arka planda kesintisiz sayılır (bkz. project.md §3.5).
+/// Çalışma sayacını yönetir: başlat / mola / durdur ve oturumu kaydet.
+/// Mola "sadece durum"dur — mola süresi tutulmaz (bkz. project.md §3.5/§9):
+/// molaya geçince o ana kadarki süre kaydedilir, çalışma sayma durur.
 class StudyTimerNotifier extends Notifier<StudyTimerState> {
   static const _uuid = Uuid();
 
   @override
   StudyTimerState build() => const StudyTimerState();
 
+  /// Çalışmaya başla (boştan veya moladan yeni oturum).
   void start() {
-    if (state.isRunning) return;
+    if (state.phase == StudyPhase.running) return;
     final now = DateTime.now();
-    state = StudyTimerState(isRunning: true, startedAt: now);
+    state = StudyTimerState(phase: StudyPhase.running, startedAt: now);
     _publishPresence(status: PresenceStatus.studying, startedAt: now);
   }
 
-  Future<void> stop() async {
+  /// Mola ver: o ana kadarki süreyi kaydet, sayacı durdur, durumu mola yap.
+  Future<void> pause() async {
+    if (state.phase != StudyPhase.running) return;
     final startedAt = state.startedAt;
-    if (!state.isRunning || startedAt == null) return;
-    final end = DateTime.now();
+    state = const StudyTimerState(phase: StudyPhase.onBreak);
+    _publishPresence(status: PresenceStatus.onBreak, startedAt: null);
+    if (startedAt != null) await _recordSession(startedAt, DateTime.now());
+  }
+
+  /// Tamamen bitir: çalışıyorsa süreyi kaydet, durumu çevrimdışına çek.
+  Future<void> stop() async {
+    final phase = state.phase;
+    final startedAt = state.startedAt;
+    if (phase == StudyPhase.idle) return;
     state = const StudyTimerState();
-
-    // Sayaç durunca canlı durumu çevrimdışına çek (sınıf ekranı anında günceller).
     _publishPresence(status: PresenceStatus.offline, startedAt: null);
+    if (phase == StudyPhase.running && startedAt != null) {
+      await _recordSession(startedAt, DateTime.now());
+    }
+  }
 
+  /// Tamamlanan bir aralığı `study_sessions`'a yazar.
+  Future<void> _recordSession(DateTime start, DateTime end) async {
     final user = ref.read(authStateProvider).value;
     final group = ref.read(userGroupProvider).value;
     if (user == null || group == null) return;
 
-    final duration = end.difference(startedAt).inSeconds;
+    final duration = end.difference(start).inSeconds;
     if (duration <= 0) return;
 
     await ref.read(studyRepositoryProvider).addSession(
@@ -106,7 +130,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
             id: _uuid.v4(),
             userId: user.id,
             groupId: group.id,
-            start: startedAt,
+            start: start,
             end: end,
             durationSeconds: duration,
             source: StudySource.live,

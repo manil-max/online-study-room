@@ -10,7 +10,7 @@
 
 ## Özet Durum
 
-- **Aktif Faz:** Faz 1.2 TAMAMLANDI ✅ (profil ekranı + ad düzenleme + **profil fotoğrafı**). Son oturumda tamamlananlar: Faz 2.2 canlı presence, Faz 3 istatistikler (3a–3d), Faz 2.3 manuel giriş, Faz 1.2 profil. **Kullanıcı aksiyonu bekleyen:** `migrations/0002_avatars_storage.sql` Supabase'de çalıştırılmalı (foto yükleme için). Sıradaki: Faz 4 widget / mola mantığı / tasarım.
+- **Aktif Faz:** Mola mantığı TAMAMLANDI ✅ (sayaç 3 fazlı: boşta/çalışıyor/molada). Son oturumda tamamlananlar: Faz 2.2 presence, Faz 3 istatistikler (3a–3d), Faz 2.3 manuel giriş, Faz 1.2 profil (foto dahil), mola. Avatars bucket SQL'i kullanıcı tarafından çalıştırıldı ✅. Kalan: Faz 4 widget (Android cihaz/emülatör ister — ertelendi), tasarım (en son).
 - **Proje konumu:** `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room` (İngilizce ad — Türkçe/boşluklu yol Flutter'ı bozuyordu; aşağıdaki nota bak)
 - **Sıradaki adım:** (1) Kullanıcı Supabase hesabı açar → `env.json` doldurulur → uçtan uca test. (2) Sonra Faz 3 (istatistik) gerçek veriyle.
 - **Bekleyen (kullanıcı/admin):** Windows'ta eklenti derlemesi için **Geliştirici Modu** açılmalı (`ms-settings:developers`); web/Chrome çalıştırma için gerekmez.
@@ -121,7 +121,8 @@
 - [x] Çalışma başlat / durdur (timer) — sayaç kartı, canlı süre, bugünkü toplam
 - [x] Oturum kaydı (study_sessions'a yazma) — *bellek-içi*
 - [ ] Arka planda / kapanmada davranış — mobil arka plan servisi sonra (platform işi)
-- [ ] Mola (break) mantığı — sonra
+- [x] Mola (break) mantığı — "sadece durum": molaya geçince süre kaydedilir, sayma durur,
+  durum turuncu; "Devam et" yeni oturum başlatır. Mola süresi tutulmaz. (3 faz: boşta/çalışıyor/molada)
 
 ### 2.2 Canlı Sınıf Ekranı
 - [x] Realtime presence altyapısı (kim online/çalışıyor) — `PresenceRepository` (in-memory + Supabase), `presence` tablosu (şemada hazırdı), sayaç başlat/durdur presence yazıyor

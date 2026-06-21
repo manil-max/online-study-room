@@ -215,8 +215,9 @@ kendi sunucumuzu (self-host) veya başka ücretsiz katmanı değerlendiririz.
 
 - **Ders/kategori sistemi:** Kendi derslerini mi tanımlayacaklar (Matematik, Fizik...),
   yoksa tek "çalışma" sayacı mı?
-- **Mola (break) mantığı:** Kullanıcı elle "mola" durumuna geçebilecek mi? Mola süresi ayrı
-  mı tutulsun yoksa sadece "durum" göstergesi mi olsun?
+- ~~**Mola (break) mantığı**~~ ✅ KARAR (2026-06-21): Mola "sadece durum" göstergesidir.
+  Molaya geçince o ana kadarki süre kaydedilir, çalışma sayma durur, durum turuncu olur;
+  "Devam et" yeni oturum başlatır. Mola süresi AYRI tutulmaz.
 - **İstatistik detayı:** Hangi grafik tipleri, hangi kıyaslamalar?
 - **Widget içeriği:** Hangi bilgiler, hangi boyut, hangi platform öncelikli?
 - **Tasarım dili:** Renkler, tema (açık/koyu), genel görünüm/his.
