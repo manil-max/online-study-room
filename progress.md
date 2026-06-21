@@ -10,7 +10,7 @@
 
 ## Özet Durum
 
-- **Aktif Faz:** Mola mantığı TAMAMLANDI ✅ (sayaç 3 fazlı: boşta/çalışıyor/molada). Son oturumda tamamlananlar: Faz 2.2 presence, Faz 3 istatistikler (3a–3d), Faz 2.3 manuel giriş, Faz 1.2 profil (foto dahil), mola. Avatars bucket SQL'i kullanıcı tarafından çalıştırıldı ✅. Kalan: Faz 4 widget (Android cihaz/emülatör ister — ertelendi), tasarım (en son).
+- **Aktif Faz:** Sayaç sade Başlat/Durdur (mola kaldırıldı). Ayrıca canlı sayaç TZ hatası + "Bugün" flicker düzeltildi. Tamamlananlar: Faz 2.2 presence, Faz 3 istatistikler (3a–3d), Faz 2.3 manuel giriş, Faz 1.2 profil (foto dahil). Avatars bucket SQL'i kullanıcı tarafından çalıştırıldı ✅. Kalan: Faz 4 widget (Android cihaz ister — ertelendi), tasarım (en son).
 - **Proje konumu:** `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room` (İngilizce ad — Türkçe/boşluklu yol Flutter'ı bozuyordu; aşağıdaki nota bak)
 - **Sıradaki adım:** (1) Kullanıcı Supabase hesabı açar → `env.json` doldurulur → uçtan uca test. (2) Sonra Faz 3 (istatistik) gerçek veriyle.
 - **Bekleyen (kullanıcı/admin):** Windows'ta eklenti derlemesi için **Geliştirici Modu** açılmalı (`ms-settings:developers`); web/Chrome çalıştırma için gerekmez.
@@ -121,8 +121,8 @@
 - [x] Çalışma başlat / durdur (timer) — sayaç kartı, canlı süre, bugünkü toplam
 - [x] Oturum kaydı (study_sessions'a yazma) — *bellek-içi*
 - [ ] Arka planda / kapanmada davranış — mobil arka plan servisi sonra (platform işi)
-- [x] Mola (break) mantığı — "sadece durum": molaya geçince süre kaydedilir, sayma durur,
-  durum turuncu; "Devam et" yeni oturum başlatır. Mola süresi tutulmaz. (3 faz: boşta/çalışıyor/molada)
+- [x] Mola (break) mantığı — değerlendirildi ve KALDIRILDI (kullanıcı sade Başlat/Durdur istedi;
+  mola süresi tutulmadığı için ayrı durum gereksizdi). Sayaç: çalışıyor / çevrimdışı.
 
 ### 2.2 Canlı Sınıf Ekranı
 - [x] Realtime presence altyapısı (kim online/çalışıyor) — `PresenceRepository` (in-memory + Supabase), `presence` tablosu (şemada hazırdı), sayaç başlat/durdur presence yazıyor

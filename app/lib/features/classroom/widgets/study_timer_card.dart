@@ -42,11 +42,10 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
     final timer = ref.watch(studyTimerProvider);
     final recorded = ref.watch(todayRecordedSecondsProvider);
 
-    // Çalışma → (mola/durdur) geçişinde o anki toplamı dondur.
+    // Durdurma anında o anki toplamı dondur (kayıtlı toplam yetişene kadar).
     ref.listen<StudyTimerState>(studyTimerProvider, (prev, next) {
-      final wasRunning = prev?.phase == StudyPhase.running;
-      final stoppedNow = next.phase != StudyPhase.running;
-      if (wasRunning && stoppedNow && prev?.startedAt != null) {
+      final wasRunning = prev?.isRunning ?? false;
+      if (wasRunning && !next.isRunning && prev?.startedAt != null) {
         final extra = DateTime.now().difference(prev!.startedAt!).inSeconds;
         _frozenTotal =
             ref.read(todayRecordedSecondsProvider) + (extra > 0 ? extra : 0);
@@ -68,11 +67,9 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
         child: Column(
           children: [
             Text(
-              timer.isOnBreak ? 'Molada' : 'Bugün',
+              'Bugün',
               style: theme.textTheme.labelLarge?.copyWith(
-                color: timer.isOnBreak
-                    ? Colors.orange
-                    : theme.colorScheme.onSurfaceVariant,
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 4),
@@ -91,72 +88,25 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
               ),
             ),
             const SizedBox(height: 16),
-            _buildControls(context, theme, timer, notifier),
+            SizedBox(
+              width: double.infinity,
+              child: timer.isRunning
+                  ? FilledButton.icon(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: theme.colorScheme.error,
+                      ),
+                      onPressed: notifier.stop,
+                      icon: const Icon(Icons.stop),
+                      label: const Text('Durdur'),
+                    )
+                  : FilledButton.icon(
+                      onPressed: notifier.start,
+                      icon: const Icon(Icons.play_arrow),
+                      label: const Text('Çalışmaya başla'),
+                    ),
+            ),
           ],
         ),
-      ),
-    );
-  }
-
-  /// Faza göre kontrol butonları: boşta → Başla; çalışıyor → Mola + Durdur;
-  /// molada → Devam + Durdur.
-  Widget _buildControls(
-    BuildContext context,
-    ThemeData theme,
-    StudyTimerState timer,
-    StudyTimerNotifier notifier,
-  ) {
-    if (timer.isRunning) {
-      return Row(
-        children: [
-          Expanded(
-            child: FilledButton.tonalIcon(
-              onPressed: notifier.pause,
-              icon: const Icon(Icons.coffee),
-              label: const Text('Mola'),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: FilledButton.icon(
-              style: FilledButton.styleFrom(
-                backgroundColor: theme.colorScheme.error,
-              ),
-              onPressed: notifier.stop,
-              icon: const Icon(Icons.stop),
-              label: const Text('Durdur'),
-            ),
-          ),
-        ],
-      );
-    }
-    if (timer.isOnBreak) {
-      return Row(
-        children: [
-          Expanded(
-            child: FilledButton.icon(
-              onPressed: notifier.start,
-              icon: const Icon(Icons.play_arrow),
-              label: const Text('Devam et'),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: OutlinedButton.icon(
-              onPressed: notifier.stop,
-              icon: const Icon(Icons.stop),
-              label: const Text('Bitir'),
-            ),
-          ),
-        ],
-      );
-    }
-    return SizedBox(
-      width: double.infinity,
-      child: FilledButton.icon(
-        onPressed: notifier.start,
-        icon: const Icon(Icons.play_arrow),
-        label: const Text('Çalışmaya başla'),
       ),
     );
   }
