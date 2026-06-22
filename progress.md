@@ -340,6 +340,14 @@
 - [x] **Çalışma saatleri** kartı + istatistik bölümü: `hourlyTotals` (saat 0–23 → saniye) +
   etkileşimli 24 saatlik sütun grafiği (renk yoğunluğu, en verimli saat vurgulu, anlık ipuçlu).
   Yeni kart türü `hours`; kişisel istatistikte de var. Birim test eklendi.
+- [x] **Haftalık ritim** ısı haritası: `weekdayHourTotals` (7 gün × 24 saat) + `WeekHourHeatmap`
+  (hücre ipuçlu, eksen etiketli). Kart türü `rhythm` + kişisel istatistik. Birim test.
+- [x] **Renk-kodlu karşılaştırma tablosu** (`StatHeatTable`): her sütun kendi içinde yeşil→amber→
+  kırmızı (yapayzeka.oguzergin.net tarzı). Grup istatistiğinde üye × [Bugün/Hafta/Ay].
+- [x] **Oturum dağılımı (scatter)**: `SessionScatterChart` (fl_chart) — her oturum bir nokta
+  (x=gün, y=süre, derse göre renkli, dokununca ipucu). Kart türü `scatter` + kişisel istatistik.
+- Toplam **15 Ana Sayfa kart türü**; istatistik sekmesi artık donut + çubuk + çizgi + 2 ısı
+  haritası + scatter + renk-kodlu tablo ile dopdolu ve etkileşimli.
 
 **Kalan (büyük):** serbest (free-form) ızgaraya bırakma + köşeden çekerek boyutlandırma; grafik/
 istatistik zenginleştirme (renk-kodlu tablo, scatter — bkz. memory `ui-design-reference`).

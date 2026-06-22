@@ -142,7 +142,7 @@ class _MasonryDashboard extends StatelessWidget {
           // Basılı tut → düzenleme modu (Android ana ekran kalıbı).
           child: GestureDetector(
             onLongPress: onLongPressCard,
-            child: dashboardCardFor(c.type, c.size),
+            child: _HoverLift(child: dashboardCardFor(c.type, c.size)),
           ),
         );
 
@@ -320,6 +320,49 @@ class _SizeSelector extends StatelessWidget {
       style: const ButtonStyle(
         visualDensity: VisualDensity.compact,
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      ),
+    );
+  }
+}
+
+/// Karta fare ile gelince hafif büyüme + parlama (dashboard "canlı" hissi).
+class _HoverLift extends StatefulWidget {
+  const _HoverLift({required this.child});
+
+  final Widget child;
+
+  @override
+  State<_HoverLift> createState() => _HoverLiftState();
+}
+
+class _HoverLiftState extends State<_HoverLift> {
+  bool _hover = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: AnimatedScale(
+        scale: _hover ? 1.012 : 1.0,
+        duration: const Duration(milliseconds: 130),
+        curve: Curves.easeOut,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 130),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: _hover
+                ? [
+                    BoxShadow(
+                      color: theme.colorScheme.primary.withValues(alpha: 0.22),
+                      blurRadius: 18,
+                    ),
+                  ]
+                : const [],
+          ),
+          child: widget.child,
+        ),
       ),
     );
   }
