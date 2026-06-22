@@ -6,6 +6,7 @@ import '../../../core/theme/subject_colors.dart';
 import '../../../core/utils/duration_format.dart';
 import '../../../data/models/study_session.dart';
 import '../../../data/models/subject.dart';
+import '../../../data/providers/study_providers.dart';
 import '../../../data/providers/subject_providers.dart';
 import 'daily_bar_chart.dart';
 import 'hour_activity_chart.dart';
@@ -192,21 +193,22 @@ class PersonalStatsView extends StatelessWidget {
 }
 
 /// Günlük çubuk grafiği + gün aralığı seçici (7 / 14 / 30 gün).
-class _TrendCard extends StatefulWidget {
+class _TrendCard extends ConsumerStatefulWidget {
   const _TrendCard({required this.sessions});
 
   final List<StudySession> sessions;
 
   @override
-  State<_TrendCard> createState() => _TrendCardState();
+  ConsumerState<_TrendCard> createState() => _TrendCardState();
 }
 
-class _TrendCardState extends State<_TrendCard> {
+class _TrendCardState extends ConsumerState<_TrendCard> {
   int _days = 14;
 
   @override
   Widget build(BuildContext context) {
     final series = lastNDays(widget.sessions, _days);
+    final goalSeconds = ref.watch(dailyGoalMinutesProvider) * 60;
     return Card(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
@@ -223,7 +225,9 @@ class _TrendCardState extends State<_TrendCard> {
               showSelectedIcon: false,
             ),
             const SizedBox(height: 16),
-            SizedBox(height: 180, child: DailyBarChart(days: series)),
+            SizedBox(
+                height: 180,
+                child: DailyBarChart(days: series, goalSeconds: goalSeconds)),
           ],
         ),
       ),

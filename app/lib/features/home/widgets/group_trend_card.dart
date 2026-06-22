@@ -50,7 +50,8 @@ class GroupTrendCard extends ConsumerWidget {
             const SizedBox(height: 12),
             SizedBox(
               height: isLarge ? 200 : 150,
-              child: DailyBarChart(days: series),
+              child: DailyBarChart(
+                  days: series, goalSeconds: group.dailyGoalMinutes * 60),
             ),
           ],
         ),

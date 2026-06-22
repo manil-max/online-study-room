@@ -18,30 +18,62 @@ String _short(int seconds) {
   return '${seconds}sn';
 }
 
-/// Günlük çalışma süresini çubuk grafikle gösterir (y ekseni: dakika). Her çubuğun
-/// üstünde süre **her zaman** yazar; alt eksende tarih ay adıyla ("21 Haz").
+/// Günlük çalışma süresi çubuk grafiği (y: dakika). Süre **her zaman** çubuğun
+/// üstünde; alt eksende tarih ay adıyla ("21 Haz"). [goalSeconds] verilirse günlük
+/// hedef **kesikli çizgiyle** gösterilir; hedefi tutturan günler renkli, tutmayanlar
+/// gri çizilir.
 class DailyBarChart extends StatelessWidget {
-  const DailyBarChart({super.key, required this.days});
+  const DailyBarChart({super.key, required this.days, this.goalSeconds});
 
   final List<DayTotal> days;
+  final int? goalSeconds;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final hasGoal = goalSeconds != null && goalSeconds! > 0;
+    final goalMin = hasGoal ? goalSeconds! / 60 : 0.0;
     final maxSeconds =
         days.fold<int>(0, (m, d) => d.seconds > m ? d.seconds : m);
     final maxMinutes = maxSeconds / 60;
-    // Üstteki süre etiketi sığsın diye biraz daha pay (%32).
-    final maxY = maxMinutes <= 0 ? 60.0 : maxMinutes * 1.32;
+    var maxY = maxMinutes <= 0 ? 60.0 : maxMinutes * 1.32;
+    if (hasGoal && goalMin * 1.12 > maxY) maxY = goalMin * 1.12;
     final dense = days.length > 10;
+
+    final reachedColor = theme.colorScheme.primary;
+    final missedColor = theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5);
+
+    Color barColor(int seconds) {
+      if (!hasGoal) return reachedColor;
+      return seconds >= goalSeconds! ? reachedColor : missedColor;
+    }
 
     return BarChart(
       BarChartData(
         maxY: maxY,
         alignment: BarChartAlignment.spaceBetween,
+        extraLinesData: ExtraLinesData(
+          horizontalLines: [
+            if (hasGoal)
+              HorizontalLine(
+                y: goalMin,
+                color: theme.colorScheme.secondary,
+                strokeWidth: 1.5,
+                dashArray: const [6, 4],
+                label: HorizontalLineLabel(
+                  show: true,
+                  alignment: Alignment.topRight,
+                  padding: const EdgeInsets.only(right: 2, bottom: 2),
+                  style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.secondary,
+                      fontWeight: FontWeight.w700),
+                  labelResolver: (_) => 'Hedef',
+                ),
+              ),
+          ],
+        ),
         barTouchData: BarTouchData(
           enabled: true,
-          // Süre etiketi çubuğun üstünde "her zaman" görünsün diye saydam kutu.
           touchTooltipData: BarTouchTooltipData(
             getTooltipColor: (_) => Colors.transparent,
             tooltipPadding: EdgeInsets.zero,
@@ -70,7 +102,7 @@ class DailyBarChart extends StatelessWidget {
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
-              reservedSize: 34,
+              reservedSize: 40,
               getTitlesWidget: (value, meta) {
                 final i = value.toInt();
                 if (i < 0 || i >= days.length) {
@@ -79,7 +111,7 @@ class DailyBarChart extends StatelessWidget {
                 if (dense && i % 3 != 0) return const SizedBox.shrink();
                 final d = days[i].day;
                 return Padding(
-                  padding: const EdgeInsets.only(top: 6),
+                  padding: const EdgeInsets.only(top: 5),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -87,11 +119,13 @@ class DailyBarChart extends StatelessWidget {
                           style: theme.textTheme.labelSmall?.copyWith(
                             color: theme.colorScheme.onSurface,
                             fontWeight: FontWeight.w600,
+                            height: 1.1,
                           )),
                       Text(_kMonths[d.month - 1],
                           style: theme.textTheme.labelSmall?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
                             fontSize: 9,
+                            height: 1.1,
                           )),
                     ],
                   ),
@@ -106,12 +140,12 @@ class DailyBarChart extends StatelessWidget {
           for (var i = 0; i < days.length; i++)
             BarChartGroupData(
               x: i,
-              // Süre etiketini her zaman göster (veri olan günlerde).
-              showingTooltipIndicators: days[i].seconds > 0 ? const [0] : const [],
+              showingTooltipIndicators:
+                  days[i].seconds > 0 ? const [0] : const [],
               barRods: [
                 BarChartRodData(
                   toY: days[i].seconds / 60,
-                  color: theme.colorScheme.primary,
+                  color: barColor(days[i].seconds),
                   width: dense ? 8 : 16,
                   borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(3),
