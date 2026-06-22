@@ -65,6 +65,15 @@ class SupabaseAuthRepository implements AuthRepository {
       );
       final user = res.user;
       if (user == null) throw const AuthException('Kayıt tamamlanamadı.');
+      // E-posta doğrulama açıksa kayıt bir oturum (session) döndürmez: kullanıcı
+      // doğrulamadan giriş yapamaz. Sessiz kalmak yerine net bilgi ver.
+      if (res.session == null) {
+        throw const AuthException(
+          'Hesabın oluşturuldu. Giriş yapabilmek için e-postana gönderilen '
+          'doğrulama bağlantısına tıkla. (Supabase’de e-posta doğrulamayı '
+          'kapatırsan doğrulama gerekmez.)',
+        );
+      }
       final profile = Profile(
         id: user.id,
         displayName: displayName,
