@@ -62,8 +62,9 @@ class DailyBarChart extends StatelessWidget {
                 dashArray: const [6, 4],
                 label: HorizontalLineLabel(
                   show: true,
-                  alignment: Alignment.topRight,
-                  padding: const EdgeInsets.only(right: 2, bottom: 2),
+                  // Sol üstte: sağdaki çubuk/etiketlerle çakışmasın.
+                  alignment: Alignment.topLeft,
+                  padding: const EdgeInsets.only(left: 2, bottom: 1),
                   style: theme.textTheme.labelSmall?.copyWith(
                       color: theme.colorScheme.secondary,
                       fontWeight: FontWeight.w700),

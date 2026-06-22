@@ -78,6 +78,9 @@ class SessionScatterChart extends ConsumerWidget {
     final maxY = maxMin <= 0 ? 60.0 : maxMin * 1.2;
 
     DateTime dateAt(double x) => startDay.add(Duration(days: x.round()));
+    // Alt eksende ~3-4 tarih etiketi (dar kartta da karışmasın).
+    final step =
+        (days / 3).ceilToDouble().clamp(1, days.toDouble()).toDouble();
 
     return SizedBox(
       height: height,
@@ -117,14 +120,22 @@ class SessionScatterChart extends ConsumerWidget {
               sideTitles: SideTitles(
                 showTitles: true,
                 reservedSize: 22,
-                interval: (days / 4).floorToDouble().clamp(1, days).toDouble(),
+                interval: step,
                 getTitlesWidget: (value, meta) {
-                  final d = dateAt(value);
+                  final i = value.round();
+                  if (i < 0 || i > days - 1) return const SizedBox.shrink();
+                  if (i % step.round() != 0) return const SizedBox.shrink();
+                  // Sağ kenara çok yakın etiketi atla (yığılmasın).
+                  if (i != 0 && (days - 1 - i) < step * 0.5) {
+                    return const SizedBox.shrink();
+                  }
+                  final d = dateAt(i.toDouble());
                   return Padding(
                     padding: const EdgeInsets.only(top: 4),
                     child: Text('${d.day} ${_kMonthsShort[d.month - 1]}',
                         style: theme.textTheme.labelSmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant)),
+                            color: theme.colorScheme.onSurfaceVariant,
+                            fontSize: 9)),
                   );
                 },
               ),
