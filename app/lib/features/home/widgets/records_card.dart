@@ -25,7 +25,9 @@ class RecordsCard extends ConsumerWidget {
           children: [
             Text('Rekorlar', style: theme.textTheme.titleMedium),
             const SizedBox(height: 12),
-            StudyRecords(sessions: sessions),
+            StudyRecords(
+                sessions: sessions,
+                columns: size == DashboardCardSize.large ? 3 : 2),
           ],
         ),
       ),

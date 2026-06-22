@@ -16,9 +16,10 @@ const _kMonths = [
 /// Kişisel rekorlar: toplam, rekor seri, en verimli gün, aktif gün, en çok ders.
 /// Renkli stat döşemeleri (§3.11). Card'sız içerik — çağıran sarmalar.
 class StudyRecords extends ConsumerWidget {
-  const StudyRecords({super.key, required this.sessions});
+  const StudyRecords({super.key, required this.sessions, this.columns = 2});
 
   final List<StudySession> sessions;
+  final int columns;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -92,7 +93,8 @@ class StudyRecords extends ConsumerWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         const gap = 8.0;
-        final w = (constraints.maxWidth - gap) / 2;
+        final cols = columns.clamp(1, 4);
+        final w = (constraints.maxWidth - gap * (cols - 1)) / cols;
         return Wrap(
           spacing: gap,
           runSpacing: gap,

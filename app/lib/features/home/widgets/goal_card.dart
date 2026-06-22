@@ -25,23 +25,27 @@ class GoalCard extends ConsumerWidget {
     final fire = subjectColor('chart-5');
     final ringColor =
         reached ? subjectColor('chart-2') : theme.colorScheme.primary;
+    final isLarge = size == DashboardCardSize.large;
+    final ringSize = isLarge ? 116.0 : 84.0;
 
     final ring = SizedBox(
-      width: 84,
-      height: 84,
+      width: ringSize,
+      height: ringSize,
       child: Stack(
         alignment: Alignment.center,
         children: [
           SizedBox.expand(
             child: CircularProgressIndicator(
               value: pct,
-              strokeWidth: 8,
+              strokeWidth: isLarge ? 11 : 8,
               backgroundColor: theme.colorScheme.surfaceContainerHighest,
               valueColor: AlwaysStoppedAnimation<Color>(ringColor),
             ),
           ),
           Text('%${(pct * 100).round()}',
-              style: theme.textTheme.titleMedium
+              style: (isLarge
+                      ? theme.textTheme.headlineSmall
+                      : theme.textTheme.titleMedium)
                   ?.copyWith(fontWeight: FontWeight.w700)),
         ],
       ),
