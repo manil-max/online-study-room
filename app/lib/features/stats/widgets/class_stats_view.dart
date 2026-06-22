@@ -9,6 +9,7 @@ import '../../../data/models/profile.dart';
 import '../../../data/models/study_session.dart';
 import '../../classroom/widgets/class_switcher.dart';
 import 'daily_bar_chart.dart';
+import 'stat_heat_table.dart';
 
 /// Seçilebilir dönem (sınıf leaderboard'u için).
 enum _Period { today, week, month }
@@ -67,6 +68,24 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
       for (final m in widget.members)
         m.id: studyStreak(widget.sessions.where((s) => s.userId == m.id)),
     };
+    // Renk-kodlu karşılaştırma tablosu: üye × [Bugün, Hafta, Ay] (her sütun
+    // kendi içinde yeşil→kırmızı). Ay toplamına göre sıralı.
+    final heatRows = [
+      for (final m in widget.members)
+        HeatRow(
+          label: m.displayName.isEmpty ? 'İsimsiz' : m.displayName,
+          avatarUrl: m.avatarUrl,
+          highlight: m.id == widget.currentUserId,
+          values: [
+            totalSeconds(inRange(
+                widget.sessions.where((s) => s.userId == m.id), dayOf(now), now)),
+            totalSeconds(inRange(widget.sessions.where((s) => s.userId == m.id),
+                startOfWeek(now), now)),
+            totalSeconds(inRange(widget.sessions.where((s) => s.userId == m.id),
+                startOfMonth(now), now)),
+          ],
+        ),
+    ]..sort((a, b) => b.values[2].compareTo(a.values[2]));
 
     // Grup günlük hedefi: bugünkü grup toplamı + gruba göre seri.
     final goalSeconds = widget.groupGoalMinutes * 60;
@@ -146,6 +165,22 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
                 ),
               ],
             ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Text('Karşılaştırma tablosu', style: theme.textTheme.titleMedium),
+        const SizedBox(height: 8),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: heatRows.isEmpty
+                ? Text('Üye yok.',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant))
+                : StatHeatTable(
+                    columns: const ['Bugün', 'Hafta', 'Ay'],
+                    rows: heatRows,
+                  ),
           ),
         ),
         const SizedBox(height: 16),
