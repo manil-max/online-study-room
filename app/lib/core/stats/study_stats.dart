@@ -126,6 +126,16 @@ double dailyAverageSeconds(
   return (weekday: weekday, weekend: weekend);
 }
 
+/// Günün saatine göre toplam (0–23 → saniye): her oturum **başlangıç saatine**
+/// yazılır. "Günün hangi saatlerinde çalışıyorsun?" görseli için (§3.11).
+List<int> hourlyTotals(Iterable<StudySession> sessions) {
+  final totals = List<int>.filled(24, 0);
+  for (final s in sessions) {
+    totals[s.start.hour] += s.durationSeconds;
+  }
+  return totals;
+}
+
 /// Oturumları derse göre toplar: `subjectId` (null → derssiz) → saniye,
 /// büyükten küçüğe sıralı (ders bazında dağılım — project.md §3.7).
 List<MapEntry<String?, int>> subjectBreakdown(

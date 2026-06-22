@@ -8,6 +8,7 @@ import '../../../data/models/study_session.dart';
 import '../../../data/models/subject.dart';
 import '../../../data/providers/subject_providers.dart';
 import 'daily_bar_chart.dart';
+import 'hour_activity_chart.dart';
 import 'study_heatmap.dart';
 import 'subject_donut.dart';
 
@@ -101,6 +102,15 @@ class PersonalStatsView extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: StudyHeatmap(sessions: sessions, weeks: 26),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Text('Çalışma saatleri', style: theme.textTheme.titleMedium),
+        const SizedBox(height: 8),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: HourActivityChart(hourly: hourlyTotals(sessions)),
           ),
         ),
         const SizedBox(height: 16),

@@ -163,4 +163,18 @@ void main() {
     expect(breakdown.last.key, isNull); // derssiz en sonda
     expect(breakdown.last.value, 200);
   });
+
+  test('hourlyTotals oturumu başlangıç saatine yazar (0–23)', () {
+    final totals = hourlyTotals([
+      _s('u1', DateTime(2026, 6, 20, 9, 30), 600), // 09:00
+      _s('u1', DateTime(2026, 6, 21, 9, 5), 300), // 09:00 (toplanır)
+      _s('u1', DateTime(2026, 6, 20, 14, 0), 1200), // 14:00
+      _s('u1', DateTime(2026, 6, 20, 0, 10), 100), // 00:00
+    ]);
+    expect(totals.length, 24);
+    expect(totals[9], 900); // 600 + 300
+    expect(totals[14], 1200);
+    expect(totals[0], 100);
+    expect(totals[10], 0); // boş saat
+  });
 }

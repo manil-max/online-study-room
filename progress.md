@@ -337,6 +337,10 @@
   canlı boyutlandırılır, **×** ile kaldırılır, AppBar **+** ile eklenir. Düzenlemede canlı kart
   önizlemesi gösterilir. Ayrı `DashboardEditScreen` kaldırıldı (işlevi içeri taşındı).
 
+- [x] **Çalışma saatleri** kartı + istatistik bölümü: `hourlyTotals` (saat 0–23 → saniye) +
+  etkileşimli 24 saatlik sütun grafiği (renk yoğunluğu, en verimli saat vurgulu, anlık ipuçlu).
+  Yeni kart türü `hours`; kişisel istatistikte de var. Birim test eklendi.
+
 **Kalan (büyük):** serbest (free-form) ızgaraya bırakma + köşeden çekerek boyutlandırma; grafik/
 istatistik zenginleştirme (renk-kodlu tablo, scatter — bkz. memory `ui-design-reference`).
 
