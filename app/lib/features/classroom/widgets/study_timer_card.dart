@@ -100,6 +100,7 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
     final reached = goalSeconds > 0 && todayTotal >= goalSeconds;
     final clockStyle = ref.watch(clockStyleProvider);
     final small = widget.size == DashboardCardSize.small;
+    final isLarge = widget.size == DashboardCardSize.large;
 
     return Card(
       child: Stack(
@@ -168,8 +169,8 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
                     pctToGoal: pct,
                     running: timer.isRunning,
                     style: clockStyle,
-                    fontSize: small ? 34 : 40,
-                    diameter: small ? 130 : 160,
+                    fontSize: small ? 34 : (isLarge ? 56 : 40),
+                    diameter: small ? 130 : (isLarge ? 220 : 160),
                   ),
                 ),
                 const SizedBox(height: 16),

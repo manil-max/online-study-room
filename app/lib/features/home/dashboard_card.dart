@@ -220,7 +220,7 @@ Widget dashboardCardFor(DashboardCardType type, DashboardCardSize size) {
     case DashboardCardType.heatmap:
       return HeatmapCard(size: size);
     case DashboardCardType.leaderboard:
-      return const LeaderboardCard();
+      return LeaderboardCard(size: size);
     case DashboardCardType.groupGoal:
       return GroupGoalCard(size: size);
     case DashboardCardType.groupTrend:

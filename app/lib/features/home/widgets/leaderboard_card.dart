@@ -10,10 +10,14 @@ import '../../../data/models/profile.dart';
 import '../../../data/providers/auth_providers.dart';
 import '../../../data/providers/group_providers.dart';
 import '../../../data/providers/study_providers.dart';
+import '../dashboard_card.dart';
 
-/// Aktif sınıfın bugünkü sıralaması (§3.9 kart). İlk 5 üye; "sen" vurgulu.
+/// Aktif grubun bugünkü sıralaması (§3.9 kart). "sen" vurgulu. Boyuta göre üye
+/// sayısı: küçük 3, orta 5, büyük 10.
 class LeaderboardCard extends ConsumerWidget {
-  const LeaderboardCard({super.key});
+  const LeaderboardCard({super.key, this.size = DashboardCardSize.medium});
+
+  final DashboardCardSize size;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -39,7 +43,12 @@ class LeaderboardCard extends ConsumerWidget {
     final now = DateTime.now();
 
     final today = sessions.where((s) => isSameDay(s.day, now));
-    final board = leaderboard(today).take(5).toList();
+    final count = size == DashboardCardSize.small
+        ? 3
+        : size == DashboardCardSize.large
+            ? 10
+            : 5;
+    final board = leaderboard(today).take(count).toList();
     // Grup günlük hedefi: grubun bugünkü TOPLAM çalışması / hedef + grup serisi.
     final goalSeconds = group.dailyGoalMinutes * 60;
     final groupTodayTotal =

@@ -223,8 +223,9 @@ class _EditableDashboard extends ConsumerWidget {
   }
 }
 
-/// Düzenleme kartını sürükle-bırak (uzun bas) ile sıralanabilir yapar: bir kartı
-/// başka kartın üstüne bırakınca o konuma taşınır.
+/// Düzenleme kartını sürükle-bırakla sıralanabilir yapar. Sürükleme **tutamaçtan**
+/// (⠿) başlar (web'de fareyle güvenilir); kartın gövdesi bırakma hedefidir — bir
+/// kartı başka kartın üstüne bırakınca o konuma taşınır.
 class _DraggableEditCard extends StatelessWidget {
   const _DraggableEditCard({
     required this.index,
@@ -243,25 +244,24 @@ class _DraggableEditCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final body = _EditCard(card: card, onSize: onSize, onRemove: onRemove);
     return DragTarget<int>(
       onWillAcceptWithDetails: (d) => d.data != index,
       onAcceptWithDetails: (d) => onReorder(d.data, index),
       builder: (context, candidate, rejected) {
         final hot = candidate.isNotEmpty;
-        return LongPressDraggable<int>(
-          data: index,
-          feedback: _DragChip(card: card),
-          childWhenDragging: Opacity(opacity: 0.25, child: body),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 120),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18),
-              border: hot
-                  ? Border.all(color: theme.colorScheme.secondary, width: 2)
-                  : null,
-            ),
-            child: body,
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 120),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            border: hot
+                ? Border.all(color: theme.colorScheme.secondary, width: 2.5)
+                : null,
+          ),
+          child: _EditCard(
+            index: index,
+            card: card,
+            onSize: onSize,
+            onRemove: onRemove,
           ),
         );
       },
@@ -310,11 +310,13 @@ class _DragChip extends StatelessWidget {
 /// altında **canlı önizleme**. Boyut değişince önizleme + ızgaradaki genişlik anında güncellenir.
 class _EditCard extends StatelessWidget {
   const _EditCard({
+    required this.index,
     required this.card,
     required this.onSize,
     required this.onRemove,
   });
 
+  final int index;
   final DashboardCardConfig card;
   final ValueChanged<DashboardCardSize> onSize;
   final VoidCallback onRemove;
@@ -322,6 +324,20 @@ class _EditCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // Tutamaç: buradan sürükle (fareyle de güvenilir). Draggable anlık başlar.
+    final handle = MouseRegion(
+      cursor: SystemMouseCursors.grab,
+      child: Draggable<int>(
+        data: index,
+        feedback: _DragChip(card: card),
+        child: Padding(
+          padding: const EdgeInsets.all(6),
+          child: Icon(Icons.drag_indicator,
+              size: 20, color: theme.colorScheme.onSurfaceVariant),
+        ),
+      ),
+    );
+
     return DecoratedBox(
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
@@ -332,11 +348,10 @@ class _EditCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(6, 4, 4, 4),
+            padding: const EdgeInsets.fromLTRB(2, 2, 4, 2),
             child: Row(
               children: [
-                Icon(Icons.drag_indicator,
-                    size: 18, color: theme.colorScheme.onSurfaceVariant),
+                handle,
                 const Spacer(),
                 _SizeSelector(size: card.size, onSize: onSize),
                 IconButton(
