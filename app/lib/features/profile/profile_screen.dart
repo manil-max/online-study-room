@@ -5,8 +5,8 @@ import 'package:image_picker/image_picker.dart';
 import '../../core/widgets/user_avatar.dart';
 import '../../data/providers/auth_providers.dart';
 import '../../data/repositories/auth_repository.dart';
-import 'appearance_screen.dart';
 import 'session_history_screen.dart';
+import 'settings_screen.dart';
 
 /// Profil sekmesi: foto, görünen ad, ayarlar, davet kodu. Bkz. project.md §3.2.
 class ProfileScreen extends ConsumerWidget {
@@ -92,13 +92,13 @@ class ProfileScreen extends ConsumerWidget {
                 ),
                 const Divider(height: 1),
                 ListTile(
-                  leading: const Icon(Icons.palette_outlined),
-                  title: const Text('Görünüm'),
-                  subtitle: const Text('Renk paleti ve tema (açık/koyu)'),
+                  leading: const Icon(Icons.settings_outlined),
+                  title: const Text('Ayarlar'),
+                  subtitle: const Text('Görünüm, Ana Sayfa ve sıfırlama'),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (_) => const AppearanceScreen(),
+                      builder: (_) => const SettingsScreen(),
                     ),
                   ),
                 ),

@@ -66,6 +66,12 @@ class DashboardLayoutNotifier extends Notifier<List<DashboardCardConfig>> {
     setSize(type, state[i].size.next);
   }
 
+  /// Ana Sayfa düzenini varsayılana döndür.
+  void reset() {
+    state = List.of(_kDefaultLayout);
+    _save();
+  }
+
   /// Sürükle-bırak ile yeniden sırala. `onReorderItem` zaten [newIndex]'i
   /// kaldırılan öğeye göre düzeltir, ek düzeltme gerekmez.
   void reorderItem(int oldIndex, int newIndex) {

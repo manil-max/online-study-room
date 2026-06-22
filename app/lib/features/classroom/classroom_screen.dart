@@ -14,6 +14,8 @@ import '../../data/providers/presence_providers.dart';
 import '../../data/providers/study_providers.dart';
 import '../../data/models/study_group.dart';
 import '../home/dashboard_providers.dart';
+import '../home/widgets/group_goal_card.dart';
+import '../home/widgets/group_trend_card.dart';
 import 'widgets/class_switcher.dart';
 import 'widgets/study_timer_card.dart';
 
@@ -154,9 +156,13 @@ class _GroupView extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 8),
+        const GroupGoalCard(),
+        const SizedBox(height: 8),
+        const GroupTrendCard(),
+        const SizedBox(height: 12),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 4),
-          child: Text('Grup', style: theme.textTheme.titleMedium),
+          child: Text('Üyeler', style: theme.textTheme.titleMedium),
         ),
         const SizedBox(height: 4),
         const _LiveMembers(),
