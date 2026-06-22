@@ -361,7 +361,15 @@
   uygulanır; **sürükle-bırak** (uzun bas → başka kartın üstüne bırak) ile sıralama.
 - [x] **Grup kartları** (özelleştirilebilir): `groupGoal` (grup hedefi halkası + grup serisi),
   `groupTrend` (grup günlük çubuk). Grup bilgisi artık Ana Sayfa'ya istenen boyutta eklenebilir.
-- **18 dashboard kart türü.**
+- **19 dashboard kart türü** (+ `activeMembers` "Şu an çalışanlar" — canlı aktif grup üyeleri).
+- [x] **Çubuk grafik hedef çizgisi**: günlük hedef **kesikli çizgi**; hedefi tutmayan günler gri,
+  tutanlar renkli; alt eksen tarih taşması düzeltildi (gün + ay görünür).
+- [x] **Sürükleme düzeltildi**: tutamaçtan (⠿) anlık `Draggable` (web'de güvenilir). **Orta/büyük
+  farkı belirgin**: sayaç büyükte saat 56/220, sıralama büyükte 10 üye (orta 5, küçük 3).
+- [x] **Ayarlar ekranı** (Profil → Ayarlar): görünüm/tema, Gruplar'da sayaç, **Ana Sayfa'yı sıfırla**.
+- [x] **Gruplar sekmesi** zenginleştirildi: grup hedefi + grup günlük trendi kartları.
+- [x] **Kalıcılık (kritik):** çalıştırmada **sabit `--web-port=5005`** — web localStorage origin'e
+  (host:port) bağlı; rastgele port her açılışta ayarları sıfırlıyordu. Bkz. memory `run-command-env-json`.
 
 > **Donma düzeltmeleri:** `WeekHourHeatmap` (AspectRatio→sabit boyut) ve `HourActivityChart`
 > (FractionallySizedBox→Align/açık yükseklik) "Cannot hit test a render box with no size" selini
