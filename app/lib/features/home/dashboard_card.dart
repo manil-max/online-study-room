@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../classroom/widgets/study_timer_card.dart';
+import 'widgets/active_members_card.dart';
 import 'widgets/goal_card.dart';
 import 'widgets/group_goal_card.dart';
 import 'widgets/group_trend_card.dart';
@@ -34,6 +35,7 @@ enum DashboardCardType {
   leaderboard,
   groupGoal,
   groupTrend,
+  activeMembers,
 }
 
 extension DashboardCardInfo on DashboardCardType {
@@ -53,6 +55,7 @@ extension DashboardCardInfo on DashboardCardType {
         DashboardCardType.leaderboard => 'Grup sıralaması',
         DashboardCardType.groupGoal => 'Grup hedefi',
         DashboardCardType.groupTrend => 'Grup günlük trendi',
+        DashboardCardType.activeMembers => 'Şu an çalışanlar',
       };
 
   String get description => switch (this) {
@@ -71,6 +74,7 @@ extension DashboardCardInfo on DashboardCardType {
         DashboardCardType.leaderboard => 'Aktif grubun bugünkü sıralaması',
         DashboardCardType.groupGoal => 'Grubun günlük hedef ilerlemesi + grup serisi',
         DashboardCardType.groupTrend => 'Grubun son günlerdeki toplam çalışma grafiği',
+        DashboardCardType.activeMembers => 'Grupta o an çalışan üyeler (canlı süreyle)',
       };
 
   /// Ekleme menüsünde gruplama başlığı.
@@ -93,7 +97,8 @@ extension DashboardCardInfo on DashboardCardType {
           'Isı haritaları',
         DashboardCardType.leaderboard ||
         DashboardCardType.groupGoal ||
-        DashboardCardType.groupTrend =>
+        DashboardCardType.groupTrend ||
+        DashboardCardType.activeMembers =>
           'Grup',
       };
 
@@ -113,6 +118,7 @@ extension DashboardCardInfo on DashboardCardType {
         DashboardCardType.leaderboard => Icons.leaderboard_outlined,
         DashboardCardType.groupGoal => Icons.flag_circle_outlined,
         DashboardCardType.groupTrend => Icons.insights_outlined,
+        DashboardCardType.activeMembers => Icons.groups_2_outlined,
       };
 }
 
@@ -225,5 +231,7 @@ Widget dashboardCardFor(DashboardCardType type, DashboardCardSize size) {
       return GroupGoalCard(size: size);
     case DashboardCardType.groupTrend:
       return GroupTrendCard(size: size);
+    case DashboardCardType.activeMembers:
+      return ActiveMembersCard(size: size);
   }
 }
