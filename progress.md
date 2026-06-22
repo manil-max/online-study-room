@@ -323,6 +323,17 @@
   ölçeklenir, seri rozeti kompakt (yazılar artık taşmıyor/karışmıyor).
 - [x] **Sıralama etkileşimi**: alttan açılan pencere kaldırıldı — üzerine gelince **basit tooltip**
   (sıra · bugün · seri), tıklayınca **tıklanan yerde** detay popup'ı (`showMenuAtPosition`).
+- [x] **Seçilebilir renk paleti + tema modu** (Profil → Görünüm): 5 palet (Lacivert/Mor/Zümrüt/
+  Gün Batımı/Okyanus) + Koyu/Açık/Sistem; `AppTheme` palet-parametreli, `themeSettingsProvider`
+  ile kalıcı (shared_preferences). `MaterialApp` artık `ConsumerWidget`.
+
+> **Persistence notu:** Ana Sayfa düzeni + tema `shared_preferences`'a yazılıyor, `signOut`
+> temizlemiyor — kod doğru. Web'de `flutter run -d chrome` her açılışta **yeni Chrome profili**
+> kullandığından localStorage uçar → kalıcı test için sabit profil: `flutter run -d chrome
+> --web-browser-flag="--user-data-dir=C:\Users\muhlis2\.osr-chrome"`. Gerçek kurulumda kalıcı.
+
+**Kalan (büyük):** Ana Sayfa'yı **Android ana ekran widget'ı gibi** sürükle-bırak yerleştir +
+canlı boyutlandır + daha çok etkileşim (bkz. memory `ui-design-reference`).
 
 ## FAZ 4 — Çoklu Platform & Widget
 

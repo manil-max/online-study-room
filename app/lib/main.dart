@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/config/supabase_config.dart';
 import 'core/prefs/app_prefs.dart';
 import 'core/theme/app_theme.dart';
+import 'core/theme/theme_settings.dart';
 import 'features/auth/auth_gate.dart';
 
 Future<void> main() async {
@@ -33,18 +34,19 @@ Future<void> main() async {
   );
 }
 
-class OnlineStudyRoomApp extends StatelessWidget {
+class OnlineStudyRoomApp extends ConsumerWidget {
   const OnlineStudyRoomApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Tema tercihleri (palet + mod) kişiye özel, cihazda kalıcı.
+    final settings = ref.watch(themeSettingsProvider);
     return MaterialApp(
       title: 'Online Çalışma Sınıfı',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.light,
-      darkTheme: AppTheme.dark,
-      // Tasarım referansı (kardeşin) koyu temalı; varsayılan koyu.
-      themeMode: ThemeMode.dark,
+      theme: AppTheme.light(settings.palette),
+      darkTheme: AppTheme.dark(settings.palette),
+      themeMode: settings.mode,
       // UI metinleri Türkçe; tarih seçici vb. yerleşik bileşenler de Türkçe görünür.
       locale: const Locale('tr'),
       supportedLocales: const [Locale('tr'), Locale('en')],
