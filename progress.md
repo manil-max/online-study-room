@@ -346,8 +346,15 @@
   kırmızı (yapayzeka.oguzergin.net tarzı). Grup istatistiğinde üye × [Bugün/Hafta/Ay].
 - [x] **Oturum dağılımı (scatter)**: `SessionScatterChart` (fl_chart) — her oturum bir nokta
   (x=gün, y=süre, derse göre renkli, dokununca ipucu). Kart türü `scatter` + kişisel istatistik.
-- Toplam **15 Ana Sayfa kart türü**; istatistik sekmesi artık donut + çubuk + çizgi + 2 ısı
-  haritası + scatter + renk-kodlu tablo ile dopdolu ve etkileşimli.
+- [x] **Rekorlar**: `longestStudyStreak` + `StudyRecords` (toplam, rekor seri, en verimli gün,
+  aktif gün, en çok ders) renkli döşemeler. Kart türü `records` + kişisel istatistik. Birim test.
+- [x] **Kartlara hover** (kalkma + parlama); ekleme menüsü **kategorili** (Sayaç/Özet/Grafik/Isı/Grup).
+- [x] **Grup hedefi Ana Sayfa'da**: sıralama kartına grup günlük hedefi ilerleme çubuğu + grup serisi.
+- Toplam **16 Ana Sayfa kart türü**; istatistik sekmesi donut + çubuk + çizgi + 2 ısı haritası +
+  scatter + renk-kodlu tablo + rekorlar ile dopdolu ve etkileşimli.
+
+> **Kalan (büyük, ayrı tur):** gerçek **serbest (free-form) ızgara** — kartı istenen hücreye bırakma
+> + köşeden çekerek boyutlandırma (şu an S/M/L + sürükle-sırala var). Bkz. memory `ui-design-reference`.
 
 **Kalan (büyük):** serbest (free-form) ızgaraya bırakma + köşeden çekerek boyutlandırma; grafik/
 istatistik zenginleştirme (renk-kodlu tablo, scatter — bkz. memory `ui-design-reference`).
