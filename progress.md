@@ -353,8 +353,22 @@
 - Toplam **16 Ana Sayfa kart türü**; istatistik sekmesi donut + çubuk + çizgi + 2 ısı haritası +
   scatter + renk-kodlu tablo + rekorlar ile dopdolu ve etkileşimli.
 
+- [x] **Çubuk grafik**: süre çubuğun üstünde **hep görünür** (`showingTooltipIndicators` + saydam
+  kutu); alt eksende tarih **ay adıyla** ("21 Haz" — gün + ay kısaltması iki satır).
+- [x] **Kart ekleme yenilendi**: `showCardPicker` — kategorili, ikon+başlık+açıklamalı görsel alt
+  sayfa galeri (çoklu ekleme, açık kalır). Eski anchored popup kaldırıldı.
+- [x] **Izgara düzenleme**: düzenleme modu artık gerçek masonry — küçükler yan yana, S/M/L **anında**
+  uygulanır; **sürükle-bırak** (uzun bas → başka kartın üstüne bırak) ile sıralama.
+- [x] **Grup kartları** (özelleştirilebilir): `groupGoal` (grup hedefi halkası + grup serisi),
+  `groupTrend` (grup günlük çubuk). Grup bilgisi artık Ana Sayfa'ya istenen boyutta eklenebilir.
+- **18 dashboard kart türü.**
+
+> **Donma düzeltmeleri:** `WeekHourHeatmap` (AspectRatio→sabit boyut) ve `HourActivityChart`
+> (FractionallySizedBox→Align/açık yükseklik) "Cannot hit test a render box with no size" selini
+> tetikleyip İstatistik'i donduruyordu — çözüldü.
+
 > **Kalan (büyük, ayrı tur):** gerçek **serbest (free-form) ızgara** — kartı istenen hücreye bırakma
-> + köşeden çekerek boyutlandırma (şu an S/M/L + sürükle-sırala var). Bkz. memory `ui-design-reference`.
+> + köşeden çekerek boyutlandırma. Bkz. memory `ui-design-reference`.
 
 **Kalan (büyük):** serbest (free-form) ızgaraya bırakma + köşeden çekerek boyutlandırma; grafik/
 istatistik zenginleştirme (renk-kodlu tablo, scatter — bkz. memory `ui-design-reference`).
