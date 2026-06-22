@@ -8,6 +8,7 @@ import 'widgets/leaderboard_card.dart';
 import 'widgets/line_chart_card.dart';
 import 'widgets/period_summary_card.dart';
 import 'widgets/rhythm_card.dart';
+import 'widgets/scatter_card.dart';
 import 'widgets/today_summary_card.dart';
 import 'widgets/weekday_weekend_card.dart';
 import 'widgets/weekly_chart_card.dart';
@@ -24,6 +25,7 @@ enum DashboardCardType {
   weekdayWeekend,
   hours,
   rhythm,
+  scatter,
   heatmap,
   leaderboard,
 }
@@ -39,6 +41,7 @@ extension DashboardCardInfo on DashboardCardType {
         DashboardCardType.weekdayWeekend => 'Hafta içi / sonu',
         DashboardCardType.hours => 'Çalışma saatleri',
         DashboardCardType.rhythm => 'Haftalık ritim',
+        DashboardCardType.scatter => 'Oturum dağılımı',
         DashboardCardType.heatmap => 'Çalışma takvimi',
         DashboardCardType.leaderboard => 'Grup sıralaması',
       };
@@ -53,6 +56,7 @@ extension DashboardCardInfo on DashboardCardType {
         DashboardCardType.weekdayWeekend => 'Hafta içi ile hafta sonu kıyası',
         DashboardCardType.hours => 'Günün hangi saatlerinde çalıştığın',
         DashboardCardType.rhythm => 'Haftanın gün × saat çalışma ısı haritası',
+        DashboardCardType.scatter => 'Her oturum bir nokta (süre × gün, derse göre renkli)',
         DashboardCardType.heatmap => 'GitHub tarzı çalışma yoğunluğu ısı haritası',
         DashboardCardType.leaderboard => 'Aktif grubun bugünkü sıralaması',
       };
@@ -67,6 +71,7 @@ extension DashboardCardInfo on DashboardCardType {
         DashboardCardType.weekdayWeekend => Icons.weekend_outlined,
         DashboardCardType.hours => Icons.schedule_outlined,
         DashboardCardType.rhythm => Icons.view_week_outlined,
+        DashboardCardType.scatter => Icons.scatter_plot_outlined,
         DashboardCardType.heatmap => Icons.grid_on_outlined,
         DashboardCardType.leaderboard => Icons.leaderboard_outlined,
       };
@@ -169,6 +174,8 @@ Widget dashboardCardFor(DashboardCardType type, DashboardCardSize size) {
       return HourActivityCard(size: size);
     case DashboardCardType.rhythm:
       return RhythmCard(size: size);
+    case DashboardCardType.scatter:
+      return ScatterCard(size: size);
     case DashboardCardType.heatmap:
       return HeatmapCard(size: size);
     case DashboardCardType.leaderboard:

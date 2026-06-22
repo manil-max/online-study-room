@@ -9,6 +9,7 @@ import '../../../data/models/subject.dart';
 import '../../../data/providers/subject_providers.dart';
 import 'daily_bar_chart.dart';
 import 'hour_activity_chart.dart';
+import 'session_scatter_chart.dart';
 import 'study_heatmap.dart';
 import 'subject_donut.dart';
 import 'week_hour_heatmap.dart';
@@ -112,6 +113,15 @@ class PersonalStatsView extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: HourActivityChart(hourly: hourlyTotals(sessions)),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Text('Oturum dağılımı', style: theme.textTheme.titleMedium),
+        const SizedBox(height: 8),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: SessionScatterChart(sessions: sessions),
           ),
         ),
         const SizedBox(height: 16),
