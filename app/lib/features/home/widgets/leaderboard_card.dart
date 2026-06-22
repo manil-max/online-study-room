@@ -40,6 +40,13 @@ class LeaderboardCard extends ConsumerWidget {
 
     final today = sessions.where((s) => isSameDay(s.day, now));
     final board = leaderboard(today).take(5).toList();
+    // Grup günlük hedefi: grubun bugünkü TOPLAM çalışması / hedef + grup serisi.
+    final goalSeconds = group.dailyGoalMinutes * 60;
+    final groupTodayTotal =
+        today.fold<int>(0, (a, s) => a + s.durationSeconds);
+    final groupGoalPct =
+        goalSeconds > 0 ? (groupTodayTotal / goalSeconds).clamp(0.0, 1.0) : 0.0;
+    final groupStreak = currentStreak(sessions, goalSeconds);
     // Her üyenin çalışma serisi (üst üste çalıştığı gün), tüm grup oturumlarından.
     final streaks = <String, int>{
       for (final e in board)
@@ -74,9 +81,52 @@ class LeaderboardCard extends ConsumerWidget {
                 ),
               ],
             ),
+            const SizedBox(height: 10),
+            // Grup günlük hedefi ilerlemesi + grup serisi.
+            Row(
+              children: [
+                Icon(Icons.flag_outlined,
+                    size: 15, color: theme.colorScheme.onSurfaceVariant),
+                const SizedBox(width: 4),
+                Text('Grup hedefi',
+                    style: theme.textTheme.labelMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant)),
+                const Spacer(),
+                if (groupStreak > 0) ...[
+                  Icon(Icons.local_fire_department,
+                      size: 14, color: subjectColor('chart-5')),
+                  const SizedBox(width: 2),
+                  Text('$groupStreak',
+                      style: theme.textTheme.labelSmall
+                          ?.copyWith(color: subjectColor('chart-5'))),
+                  const SizedBox(width: 8),
+                ],
+                Text('%${(groupGoalPct * 100).round()}',
+                    style: theme.textTheme.labelMedium
+                        ?.copyWith(fontWeight: FontWeight.w700)),
+              ],
+            ),
+            const SizedBox(height: 6),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: LinearProgressIndicator(
+                value: groupGoalPct,
+                minHeight: 7,
+                backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                color: groupGoalPct >= 1.0
+                    ? subjectColor('chart-2')
+                    : theme.colorScheme.primary,
+              ),
+            ),
             const SizedBox(height: 4),
             Text(
-              'Bugün',
+              '${formatHuman(groupTodayTotal)} / ${formatHuman(goalSeconds)}',
+              style: theme.textTheme.bodySmall
+                  ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+            ),
+            const Divider(height: 20),
+            Text(
+              'Bugünkü sıralama',
               style: theme.textTheme.labelSmall
                   ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
             ),
