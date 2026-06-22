@@ -7,6 +7,7 @@ import 'widgets/hour_activity_card.dart';
 import 'widgets/leaderboard_card.dart';
 import 'widgets/line_chart_card.dart';
 import 'widgets/period_summary_card.dart';
+import 'widgets/records_card.dart';
 import 'widgets/rhythm_card.dart';
 import 'widgets/scatter_card.dart';
 import 'widgets/today_summary_card.dart';
@@ -26,6 +27,7 @@ enum DashboardCardType {
   hours,
   rhythm,
   scatter,
+  records,
   heatmap,
   leaderboard,
 }
@@ -42,6 +44,7 @@ extension DashboardCardInfo on DashboardCardType {
         DashboardCardType.hours => 'Çalışma saatleri',
         DashboardCardType.rhythm => 'Haftalık ritim',
         DashboardCardType.scatter => 'Oturum dağılımı',
+        DashboardCardType.records => 'Rekorlar',
         DashboardCardType.heatmap => 'Çalışma takvimi',
         DashboardCardType.leaderboard => 'Grup sıralaması',
       };
@@ -57,6 +60,7 @@ extension DashboardCardInfo on DashboardCardType {
         DashboardCardType.hours => 'Günün hangi saatlerinde çalıştığın',
         DashboardCardType.rhythm => 'Haftanın gün × saat çalışma ısı haritası',
         DashboardCardType.scatter => 'Her oturum bir nokta (süre × gün, derse göre renkli)',
+        DashboardCardType.records => 'Toplam, rekor seri, en verimli gün, en çok ders',
         DashboardCardType.heatmap => 'GitHub tarzı çalışma yoğunluğu ısı haritası',
         DashboardCardType.leaderboard => 'Aktif grubun bugünkü sıralaması',
       };
@@ -68,7 +72,8 @@ extension DashboardCardInfo on DashboardCardType {
           'Sayaç & Hedef',
         DashboardCardType.today ||
         DashboardCardType.monthly ||
-        DashboardCardType.weekdayWeekend =>
+        DashboardCardType.weekdayWeekend ||
+        DashboardCardType.records =>
           'Özetler',
         DashboardCardType.weekly ||
         DashboardCardType.line ||
@@ -92,6 +97,7 @@ extension DashboardCardInfo on DashboardCardType {
         DashboardCardType.hours => Icons.schedule_outlined,
         DashboardCardType.rhythm => Icons.view_week_outlined,
         DashboardCardType.scatter => Icons.scatter_plot_outlined,
+        DashboardCardType.records => Icons.military_tech_outlined,
         DashboardCardType.heatmap => Icons.grid_on_outlined,
         DashboardCardType.leaderboard => Icons.leaderboard_outlined,
       };
@@ -196,6 +202,8 @@ Widget dashboardCardFor(DashboardCardType type, DashboardCardSize size) {
       return RhythmCard(size: size);
     case DashboardCardType.scatter:
       return ScatterCard(size: size);
+    case DashboardCardType.records:
+      return RecordsCard(size: size);
     case DashboardCardType.heatmap:
       return HeatmapCard(size: size);
     case DashboardCardType.leaderboard:

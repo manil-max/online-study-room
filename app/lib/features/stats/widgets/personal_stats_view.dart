@@ -11,6 +11,7 @@ import 'daily_bar_chart.dart';
 import 'hour_activity_chart.dart';
 import 'session_scatter_chart.dart';
 import 'study_heatmap.dart';
+import 'study_records.dart';
 import 'subject_donut.dart';
 import 'week_hour_heatmap.dart';
 
@@ -90,6 +91,15 @@ class PersonalStatsView extends StatelessWidget {
             const SizedBox(width: 8),
             Expanded(child: _StatCard(label: 'Bu yıl', seconds: thisYear)),
           ],
+        ),
+        const SizedBox(height: 16),
+        Text('Rekorlar', style: theme.textTheme.titleMedium),
+        const SizedBox(height: 8),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: StudyRecords(sessions: sessions),
+          ),
         ),
         const SizedBox(height: 16),
         Text('Günlük dağılım', style: theme.textTheme.titleMedium),

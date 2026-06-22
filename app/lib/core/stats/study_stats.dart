@@ -188,6 +188,23 @@ int currentStreak(
   return streak;
 }
 
+/// En uzun (üst üste en az 1 sn çalışılan) gün serisi — "rekor seri" (§3.11).
+int longestStudyStreak(Iterable<StudySession> sessions) {
+  final days = dailyTotals(sessions).keys.toList()..sort();
+  if (days.isEmpty) return 0;
+  var best = 1;
+  var cur = 1;
+  for (var i = 1; i < days.length; i++) {
+    if (days[i].difference(days[i - 1]).inDays == 1) {
+      cur++;
+      if (cur > best) best = cur;
+    } else {
+      cur = 1;
+    }
+  }
+  return best;
+}
+
 /// Çalışma serisi: üst üste (en az 1 sn) çalışılan gün sayısı. Grup üyeleri için
 /// herkesin günlük hedefi bilinmediğinden "çalıştığın gün" temelli seri (§3.7).
 int studyStreak(Iterable<StudySession> sessions, {DateTime? today}) =>

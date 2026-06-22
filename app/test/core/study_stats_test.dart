@@ -191,4 +191,17 @@ void main() {
     expect(grid[6][14], 900);
     expect(grid[3][12], 0);
   });
+
+  test('longestStudyStreak en uzun üst üste çalışılan gün serisi', () {
+    expect(longestStudyStreak(const []), 0);
+    // 18,19,20 (3 ardışık), boşluk, 23,24 (2 ardışık) → en uzun 3.
+    final s = [
+      _s('u1', DateTime(2026, 6, 18, 9), 600),
+      _s('u1', DateTime(2026, 6, 19, 9), 600),
+      _s('u1', DateTime(2026, 6, 20, 9), 600),
+      _s('u1', DateTime(2026, 6, 23, 9), 600),
+      _s('u1', DateTime(2026, 6, 24, 9), 600),
+    ];
+    expect(longestStudyStreak(s), 3);
+  });
 }
