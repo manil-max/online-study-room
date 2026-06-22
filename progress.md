@@ -332,8 +332,13 @@
 > kullandığından localStorage uçar → kalıcı test için sabit profil: `flutter run -d chrome
 > --web-browser-flag="--user-data-dir=C:\Users\muhlis2\.osr-chrome"`. Gerçek kurulumda kalıcı.
 
-**Kalan (büyük):** Ana Sayfa'yı **Android ana ekran widget'ı gibi** sürükle-bırak yerleştir +
-canlı boyutlandır + daha çok etkileşim (bkz. memory `ui-design-reference`).
+- [x] **Yerinde düzenleme modu (Android ana ekran kalıbı)**: kartı **basılı tutunca** düzenlemeye
+  girilir; kartlar tek sütunda **sürükle-bırakla** sıralanır, her kartın üstündeki **S/M/L** ile
+  canlı boyutlandırılır, **×** ile kaldırılır, AppBar **+** ile eklenir. Düzenlemede canlı kart
+  önizlemesi gösterilir. Ayrı `DashboardEditScreen` kaldırıldı (işlevi içeri taşındı).
+
+**Kalan (büyük):** serbest (free-form) ızgaraya bırakma + köşeden çekerek boyutlandırma; grafik/
+istatistik zenginleştirme (renk-kodlu tablo, scatter — bkz. memory `ui-design-reference`).
 
 ## FAZ 4 — Çoklu Platform & Widget
 
