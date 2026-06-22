@@ -11,6 +11,7 @@ import 'daily_bar_chart.dart';
 import 'hour_activity_chart.dart';
 import 'study_heatmap.dart';
 import 'subject_donut.dart';
+import 'week_hour_heatmap.dart';
 
 /// Kişisel istatistik özeti: dönem toplamları, günlük ortalama ve
 /// hafta içi / hafta sonu ayrımı. Grafikler Faz 3b'de eklenecek.
@@ -111,6 +112,15 @@ class PersonalStatsView extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: HourActivityChart(hourly: hourlyTotals(sessions)),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Text('Haftalık ritim', style: theme.textTheme.titleMedium),
+        const SizedBox(height: 8),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: WeekHourHeatmap(grid: weekdayHourTotals(sessions)),
           ),
         ),
         const SizedBox(height: 16),

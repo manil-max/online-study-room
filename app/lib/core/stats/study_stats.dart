@@ -136,6 +136,18 @@ List<int> hourlyTotals(Iterable<StudySession> sessions) {
   return totals;
 }
 
+/// Haftanın günü × saat toplamı: `[gün][saat]` → saniye. Gün satırları Pazartesi
+/// (0) → Pazar (6), saat sütunları 0–23. Oturum **başlangıç** gün/saatine yazılır.
+/// "Haftalık ritim" ısı haritası için (§3.11).
+List<List<int>> weekdayHourTotals(Iterable<StudySession> sessions) {
+  final grid = List.generate(7, (_) => List<int>.filled(24, 0));
+  for (final s in sessions) {
+    final row = s.start.weekday - 1; // Pzt(1)→0 … Paz(7)→6
+    grid[row][s.start.hour] += s.durationSeconds;
+  }
+  return grid;
+}
+
 /// Oturumları derse göre toplar: `subjectId` (null → derssiz) → saniye,
 /// büyükten küçüğe sıralı (ders bazında dağılım — project.md §3.7).
 List<MapEntry<String?, int>> subjectBreakdown(

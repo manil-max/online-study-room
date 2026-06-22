@@ -177,4 +177,18 @@ void main() {
     expect(totals[0], 100);
     expect(totals[10], 0); // boş saat
   });
+
+  test('weekdayHourTotals gün (Pzt=0..Paz=6) × saat ızgarası', () {
+    // 2026-06-22 Pazartesi, 2026-06-21 Pazar.
+    final grid = weekdayHourTotals([
+      _s('u1', DateTime(2026, 6, 22, 9, 0), 600), // Pzt(0) 09
+      _s('u1', DateTime(2026, 6, 22, 9, 30), 200), // Pzt(0) 09 (toplanır)
+      _s('u1', DateTime(2026, 6, 21, 14, 0), 900), // Paz(6) 14
+    ]);
+    expect(grid.length, 7);
+    expect(grid[0].length, 24);
+    expect(grid[0][9], 800); // 600 + 200
+    expect(grid[6][14], 900);
+    expect(grid[3][12], 0);
+  });
 }

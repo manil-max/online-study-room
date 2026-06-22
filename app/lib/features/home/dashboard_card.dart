@@ -7,6 +7,7 @@ import 'widgets/hour_activity_card.dart';
 import 'widgets/leaderboard_card.dart';
 import 'widgets/line_chart_card.dart';
 import 'widgets/period_summary_card.dart';
+import 'widgets/rhythm_card.dart';
 import 'widgets/today_summary_card.dart';
 import 'widgets/weekday_weekend_card.dart';
 import 'widgets/weekly_chart_card.dart';
@@ -22,6 +23,7 @@ enum DashboardCardType {
   monthly,
   weekdayWeekend,
   hours,
+  rhythm,
   heatmap,
   leaderboard,
 }
@@ -36,6 +38,7 @@ extension DashboardCardInfo on DashboardCardType {
         DashboardCardType.monthly => 'Dönem özeti',
         DashboardCardType.weekdayWeekend => 'Hafta içi / sonu',
         DashboardCardType.hours => 'Çalışma saatleri',
+        DashboardCardType.rhythm => 'Haftalık ritim',
         DashboardCardType.heatmap => 'Çalışma takvimi',
         DashboardCardType.leaderboard => 'Grup sıralaması',
       };
@@ -49,6 +52,7 @@ extension DashboardCardInfo on DashboardCardType {
         DashboardCardType.monthly => 'Bugün / hafta / ay / yıl toplam ve ortalama',
         DashboardCardType.weekdayWeekend => 'Hafta içi ile hafta sonu kıyası',
         DashboardCardType.hours => 'Günün hangi saatlerinde çalıştığın',
+        DashboardCardType.rhythm => 'Haftanın gün × saat çalışma ısı haritası',
         DashboardCardType.heatmap => 'GitHub tarzı çalışma yoğunluğu ısı haritası',
         DashboardCardType.leaderboard => 'Aktif grubun bugünkü sıralaması',
       };
@@ -62,6 +66,7 @@ extension DashboardCardInfo on DashboardCardType {
         DashboardCardType.monthly => Icons.calendar_month_outlined,
         DashboardCardType.weekdayWeekend => Icons.weekend_outlined,
         DashboardCardType.hours => Icons.schedule_outlined,
+        DashboardCardType.rhythm => Icons.view_week_outlined,
         DashboardCardType.heatmap => Icons.grid_on_outlined,
         DashboardCardType.leaderboard => Icons.leaderboard_outlined,
       };
@@ -162,6 +167,8 @@ Widget dashboardCardFor(DashboardCardType type, DashboardCardSize size) {
       return WeekdayWeekendCard(size: size);
     case DashboardCardType.hours:
       return HourActivityCard(size: size);
+    case DashboardCardType.rhythm:
+      return RhythmCard(size: size);
     case DashboardCardType.heatmap:
       return HeatmapCard(size: size);
     case DashboardCardType.leaderboard:
