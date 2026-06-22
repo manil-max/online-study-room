@@ -6,6 +6,9 @@ const _kDays = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
 
 /// Haftalık ritim ısı haritası: 7 gün (satır) × 24 saat (sütun). Renk koyuluğu o
 /// gün/saatteki toplam süreyle artar. Her hücre dokunulabilir (gün + saat + süre).
+///
+/// Hücreler **sabit boyutlu** (LayoutBuilder ile genişliğe göre hesaplanır) —
+/// böylece `Tooltip`'in fare bölgesi sıfır-boyutlu olup "no size" hatası vermez.
 class WeekHourHeatmap extends StatelessWidget {
   const WeekHourHeatmap({super.key, required this.grid});
 
@@ -39,78 +42,71 @@ class WeekHourHeatmap extends StatelessWidget {
     }
 
     const labelWidth = 30.0;
+    const gap = 2.0;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        for (var d = 0; d < 7; d++)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 3),
-            child: Row(
-              children: [
-                SizedBox(
-                  width: labelWidth,
-                  child: Text(_kDays[d],
-                      style: theme.textTheme.labelSmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant)),
-                ),
-                Expanded(
-                  child: Row(
-                    children: [
-                      for (var h = 0; h < 24; h++)
-                        Expanded(
-                          child: Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 0.5),
-                            child: Tooltip(
-                              message:
-                                  '${_kDays[d]} ${h.toString().padLeft(2, '0')}:00 · ${formatHuman(grid[d][h])}',
-                              waitDuration: Duration.zero,
-                              child: AspectRatio(
-                                aspectRatio: 1,
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: cellColor(grid[d][h]),
-                                    borderRadius: BorderRadius.circular(2),
-                                  ),
-                                ),
-                              ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final avail = constraints.maxWidth.isFinite
+            ? constraints.maxWidth
+            : 320.0;
+        // 24 sütun + aralık, etiket sütunu hariç. Min/max ile güvenli boyut.
+        final cell =
+            (((avail - labelWidth) / 24) - gap).clamp(6.0, 22.0).toDouble();
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (var d = 0; d < 7; d++)
+              Padding(
+                padding: const EdgeInsets.only(bottom: gap),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: labelWidth,
+                      child: Text(_kDays[d],
+                          style: theme.textTheme.labelSmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant)),
+                    ),
+                    for (var h = 0; h < 24; h++)
+                      Padding(
+                        padding: const EdgeInsets.only(right: gap),
+                        child: Tooltip(
+                          message:
+                              '${_kDays[d]} ${h.toString().padLeft(2, '0')}:00 · ${formatHuman(grid[d][h])}',
+                          waitDuration: const Duration(milliseconds: 200),
+                          child: Container(
+                            width: cell,
+                            height: cell,
+                            decoration: BoxDecoration(
+                              color: cellColor(grid[d][h]),
+                              borderRadius: BorderRadius.circular(2),
                             ),
                           ),
                         ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        const SizedBox(height: 4),
-        // Saat ekseni (00 / 06 / 12 / 18 / 23).
-        Row(
-          children: [
-            const SizedBox(width: labelWidth),
-            Expanded(
-              child: Row(
-                children: [
-                  for (final l in ['00', '06', '12', '18', '23'])
-                    Expanded(
-                      child: Align(
-                        alignment: l == '00'
-                            ? Alignment.centerLeft
-                            : l == '23'
-                                ? Alignment.centerRight
-                                : Alignment.center,
-                        child: Text(l,
-                            style: theme.textTheme.labelSmall?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant)),
                       ),
-                    ),
-                ],
+                  ],
+                ),
+              ),
+            const SizedBox(height: 4),
+            // Saat ekseni (00 / 06 / 12 / 18 / 23) — hücre genişliğine hizalı.
+            Padding(
+              padding: const EdgeInsets.only(left: labelWidth),
+              child: SizedBox(
+                width: 24 * (cell + gap),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    for (final l in ['00', '06', '12', '18', '23'])
+                      Text(l,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant)),
+                  ],
+                ),
               ),
             ),
           ],
-        ),
-      ],
+        );
+      },
     );
   }
 }
