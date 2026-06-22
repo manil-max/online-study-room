@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/widgets/anchored_menu.dart';
 import 'dashboard_card.dart';
 import 'dashboard_providers.dart';
+import 'widgets/card_picker.dart';
 
 /// Ana Sayfa: kişiye özel, **özelleştirilebilir** kontrol paneli (§3.9/§3.11).
 /// Normalde kartlar masonry düzeninde görünür. Bir kartı **basılı tutunca** (veya
@@ -21,53 +21,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   void _setEditing(bool value) => setState(() => _editing = value);
 
-  Future<void> _showAddMenu(BuildContext anchorContext) async {
-    final used = ref.read(dashboardLayoutProvider).map((c) => c.type).toSet();
-    final available =
-        DashboardCardType.values.where((t) => !used.contains(t)).toList();
-    if (available.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Tüm kartlar zaten ekli.')),
-      );
-      return;
-    }
-    final theme = Theme.of(anchorContext);
-    // Eklenebilir kartları kategoriye göre grupla (sabit sıra).
-    const order = ['Sayaç & Hedef', 'Özetler', 'Grafikler', 'Isı haritaları', 'Grup'];
-    final items = <PopupMenuEntry<DashboardCardType>>[];
-    for (final cat in order) {
-      final inCat = available.where((t) => t.category == cat).toList();
-      if (inCat.isEmpty) continue;
-      items.add(PopupMenuItem<DashboardCardType>(
-        enabled: false,
-        height: 30,
-        child: Text(cat,
-            style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.primary,
-                fontWeight: FontWeight.w700)),
-      ));
-      for (final t in inCat) {
-        items.add(PopupMenuItem<DashboardCardType>(
-          value: t,
-          child: Row(
-            children: [
-              Icon(t.icon, size: 20),
-              const SizedBox(width: 12),
-              Expanded(child: Text(t.title)),
-            ],
-          ),
-        ));
-      }
-    }
-    final picked = await showAnchoredMenu<DashboardCardType>(
-      context: anchorContext,
-      items: items,
-    );
-    if (picked != null) {
-      ref.read(dashboardLayoutProvider.notifier).toggle(picked);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final layout = ref.watch(dashboardLayoutProvider);
@@ -84,12 +37,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             : null,
         actions: [
           if (_editing)
-            Builder(
-              builder: (ctx) => IconButton(
-                tooltip: 'Kart ekle',
-                icon: const Icon(Icons.add),
-                onPressed: () => _showAddMenu(ctx),
-              ),
+            IconButton(
+              tooltip: 'Kart ekle',
+              icon: const Icon(Icons.add),
+              onPressed: () => showCardPicker(context),
             )
           else
             IconButton(
@@ -100,13 +51,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ],
       ),
       body: layout.isEmpty
-          ? _EmptyDashboard(
-              onEdit: () {
-                _setEditing(true);
-                WidgetsBinding.instance.addPostFrameCallback(
-                    (_) => _showAddMenuFromNowhere());
-              },
-            )
+          ? _EmptyDashboard(onEdit: () => showCardPicker(context))
           : _editing
               ? _EditableDashboard(layout: layout)
               : SingleChildScrollView(
@@ -119,15 +64,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  // Boş panoda "Kart ekle"ye basınca: düzenleme moduna geç; menüyü AppBar'daki +
-  // üzerinden açmak yerine basit bir geri bildirim verelim (kullanıcı + ile ekler).
-  void _showAddMenuFromNowhere() {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Sağ üstteki + ile kart ekle.')),
-      );
-    }
-  }
 }
 
 /// Ana Sayfa kartlarını **masonry** (taşlama) düzeninde yerleştirir: küçük (yarım
@@ -195,8 +131,9 @@ class _MasonryDashboard extends StatelessWidget {
   }
 }
 
-/// Düzenleme modu: kartlar tek sütunda **sürükle-bırakla** sıralanır; her kartın
-/// üstünde boyut (S/M/L) + kaldır kontrolleri vardır. Altta "Gruplar'da sayaç" anahtarı.
+/// Düzenleme modu: kartlar **gerçek ızgarada** (masonry — küçükler yan yana,
+/// orta/büyük tam satır) gösterilir; **uzun bas + sürükleyip** başka kartın üstüne
+/// bırakarak sıralanır. Her kartın üstünde S/M/L (boyut anında değişir) + ×.
 class _EditableDashboard extends ConsumerWidget {
   const _EditableDashboard({required this.layout});
 
@@ -204,55 +141,180 @@ class _EditableDashboard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
     final notifier = ref.read(dashboardLayoutProvider.notifier);
     final showTimerInClass = ref.watch(classroomShowTimerProvider);
+    const gap = 12.0;
 
-    return Column(
-      children: [
-        Expanded(
-          child: ReorderableListView.builder(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-            buildDefaultDragHandles: false,
-            itemCount: layout.length,
-            onReorderItem: notifier.reorderItem,
-            itemBuilder: (context, index) {
-              final card = layout[index];
-              return Padding(
-                key: ValueKey(card.type),
-                padding: const EdgeInsets.only(bottom: 12),
-                child: _EditableCard(
-                  index: index,
-                  card: card,
-                  onSize: (s) => notifier.setSize(card.type, s),
-                  onRemove: () => notifier.toggle(card.type),
-                ),
-              );
-            },
+    Widget cell(int index) => _DraggableEditCard(
+          index: index,
+          card: layout[index],
+          onReorder: notifier.reorderItem,
+          onSize: (s) => notifier.setSize(layout[index].type, s),
+          onRemove: () => notifier.toggle(layout[index].type),
+        );
+
+    final rows = <Widget>[];
+    final pending = <int>[];
+    void flush() {
+      if (pending.isEmpty) return;
+      final left = <Widget>[];
+      final right = <Widget>[];
+      for (var i = 0; i < pending.length; i++) {
+        (i.isEven ? left : right).add(Padding(
+          padding: const EdgeInsets.only(bottom: gap),
+          child: cell(pending[i]),
+        ));
+      }
+      rows.add(Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: left)),
+          const SizedBox(width: gap),
+          Expanded(
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: right)),
+        ],
+      ));
+      pending.clear();
+    }
+
+    for (var i = 0; i < layout.length; i++) {
+      if (layout[i].size.isHalfWidth) {
+        pending.add(i);
+      } else {
+        flush();
+        rows.add(Padding(
+            padding: const EdgeInsets.only(bottom: gap), child: cell(i)));
+      }
+    }
+    flush();
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Text(
+              'Kartı basılı tutup sürükle → başka kartın üstüne bırak. '
+              'Boyut: S/M/L · × kaldır · sağ üstten + ekle.',
+              style: theme.textTheme.bodySmall
+                  ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+            ),
           ),
-        ),
-        const Divider(height: 1),
-        SwitchListTile(
-          title: const Text('Gruplar ekranında da sayaç göster'),
-          subtitle: const Text('Sayaç varsayılan Ana Sayfa’dadır.'),
-          value: showTimerInClass,
-          onChanged: ref.read(classroomShowTimerProvider.notifier).set,
-        ),
-      ],
+          ...rows,
+          const Divider(height: 24),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Gruplar ekranında da sayaç göster'),
+            subtitle: const Text('Sayaç varsayılan Ana Sayfa’dadır.'),
+            value: showTimerInClass,
+            onChanged: ref.read(classroomShowTimerProvider.notifier).set,
+          ),
+        ],
+      ),
     );
   }
 }
 
-/// Düzenleme modunda tek bir kart: üstte kontrol çubuğu (sürükle tutamacı, başlık,
-/// S/M/L boyut, kaldır) + altında **canlı kartın önizlemesi**.
-class _EditableCard extends StatelessWidget {
-  const _EditableCard({
+/// Düzenleme kartını sürükle-bırak (uzun bas) ile sıralanabilir yapar: bir kartı
+/// başka kartın üstüne bırakınca o konuma taşınır.
+class _DraggableEditCard extends StatelessWidget {
+  const _DraggableEditCard({
     required this.index,
     required this.card,
+    required this.onReorder,
     required this.onSize,
     required this.onRemove,
   });
 
   final int index;
+  final DashboardCardConfig card;
+  final void Function(int oldIndex, int newIndex) onReorder;
+  final ValueChanged<DashboardCardSize> onSize;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final body = _EditCard(card: card, onSize: onSize, onRemove: onRemove);
+    return DragTarget<int>(
+      onWillAcceptWithDetails: (d) => d.data != index,
+      onAcceptWithDetails: (d) => onReorder(d.data, index),
+      builder: (context, candidate, rejected) {
+        final hot = candidate.isNotEmpty;
+        return LongPressDraggable<int>(
+          data: index,
+          feedback: _DragChip(card: card),
+          childWhenDragging: Opacity(opacity: 0.25, child: body),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 120),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(18),
+              border: hot
+                  ? Border.all(color: theme.colorScheme.secondary, width: 2)
+                  : null,
+            ),
+            child: body,
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Sürükleme sırasında parmağın altında süzülen küçük etiket.
+class _DragChip extends StatelessWidget {
+  const _DragChip({required this.card});
+
+  final DashboardCardConfig card;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Material(
+      color: Colors.transparent,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.primaryContainer,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+                color: Colors.black.withValues(alpha: 0.3), blurRadius: 12),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(card.type.icon,
+                size: 18, color: theme.colorScheme.onPrimaryContainer),
+            const SizedBox(width: 8),
+            Text(card.type.title,
+                style: theme.textTheme.labelLarge
+                    ?.copyWith(color: theme.colorScheme.onPrimaryContainer)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Düzenleme kartının görseli: üstte kontrol çubuğu (sürükle ikonu, S/M/L, ×) +
+/// altında **canlı önizleme**. Boyut değişince önizleme + ızgaradaki genişlik anında güncellenir.
+class _EditCard extends StatelessWidget {
+  const _EditCard({
+    required this.card,
+    required this.onSize,
+    required this.onRemove,
+  });
+
   final DashboardCardConfig card;
   final ValueChanged<DashboardCardSize> onSize;
   final VoidCallback onRemove;
@@ -262,32 +324,26 @@ class _EditableCard extends StatelessWidget {
     final theme = Theme.of(context);
     return DecoratedBox(
       decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
         border: Border.all(color: theme.colorScheme.primary, width: 1.5),
         borderRadius: BorderRadius.circular(18),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Kontrol çubuğu.
           Padding(
-            padding: const EdgeInsets.fromLTRB(8, 6, 8, 6),
+            padding: const EdgeInsets.fromLTRB(6, 4, 4, 4),
             child: Row(
               children: [
-                ReorderableDragStartListener(
-                  index: index,
-                  child: Icon(Icons.drag_indicator,
-                      color: theme.colorScheme.onSurfaceVariant),
-                ),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(card.type.title,
-                      style: theme.textTheme.labelLarge,
-                      overflow: TextOverflow.ellipsis),
-                ),
+                Icon(Icons.drag_indicator,
+                    size: 18, color: theme.colorScheme.onSurfaceVariant),
+                const Spacer(),
                 _SizeSelector(size: card.size, onSize: onSize),
                 IconButton(
                   tooltip: 'Kaldır',
                   visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                   icon: Icon(Icons.remove_circle_outline,
                       color: theme.colorScheme.error),
                   onPressed: onRemove,
@@ -295,9 +351,8 @@ class _EditableCard extends StatelessWidget {
               ],
             ),
           ),
-          // Canlı önizleme (etkileşim düzenlemeyi bozmasın diye yok sayılır).
           Padding(
-            padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+            padding: const EdgeInsets.fromLTRB(6, 0, 6, 6),
             child: IgnorePointer(
               child: dashboardCardFor(card.type, card.size),
             ),
