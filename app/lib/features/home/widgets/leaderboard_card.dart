@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/stats/study_stats.dart';
 import '../../../core/theme/subject_colors.dart';
 import '../../../core/utils/duration_format.dart';
+import '../../../core/widgets/anchored_menu.dart';
 import '../../../core/widgets/user_avatar.dart';
 import '../../../data/models/profile.dart';
 import '../../../data/providers/auth_providers.dart';
@@ -123,10 +124,17 @@ class _Row extends StatelessWidget {
     final name = member?.displayName.isNotEmpty == true
         ? member!.displayName
         : 'İsimsiz';
-    return InkWell(
-      borderRadius: BorderRadius.circular(8),
-      onTap: () => _showDetail(context, name),
-      child: Padding(
+    // Üzerine gelince basit özet (tooltip); tıklayınca tıklanan yerde detay.
+    final brief = StringBuffer('$rank. · Bugün ${formatHuman(seconds)}');
+    if (streak > 0) brief.write(' · 🔥$streak gün');
+    return Tooltip(
+      message: brief.toString(),
+      waitDuration: const Duration(milliseconds: 350),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTapDown: (d) => _showDetailAt(context, name, d.globalPosition),
+        onTap: () {},
+        child: Padding(
       padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
       child: Row(
         children: [
@@ -170,19 +178,22 @@ class _Row extends StatelessWidget {
           ),
         ],
       ),
+        ),
       ),
     );
   }
 
-  void _showDetail(BuildContext context, String name) {
-    showModalBottomSheet<void>(
+  /// Tıklanan noktada açılan detay paneli (alttan açılan pencere yerine §3.12).
+  void _showDetailAt(BuildContext context, String name, Offset position) {
+    final theme = Theme.of(context);
+    showMenuAtPosition<void>(
       context: context,
-      showDragHandle: true,
-      builder: (ctx) {
-        final theme = Theme.of(ctx);
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+      globalPosition: position,
+      items: [
+        PopupMenuItem<void>(
+          enabled: false,
+          child: SizedBox(
+            width: 220,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -192,15 +203,16 @@ class _Row extends StatelessWidget {
                     UserAvatar(
                         displayName: name,
                         avatarUrl: member?.avatarUrl,
-                        radius: 24),
+                        radius: 20),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(isMe ? '$name (sen)' : name,
-                          style: theme.textTheme.titleMedium),
+                          style: theme.textTheme.titleMedium,
+                          overflow: TextOverflow.ellipsis),
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
                 _InfoRow(label: 'Sıralama', value: '$rank.'),
                 _InfoRow(
                     label: 'Bugünkü çalışma', value: formatHuman(seconds)),
@@ -209,8 +221,8 @@ class _Row extends StatelessWidget {
               ],
             ),
           ),
-        );
-      },
+        ),
+      ],
     );
   }
 }

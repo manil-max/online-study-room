@@ -11,6 +11,7 @@ import '../../../data/providers/auth_providers.dart';
 import '../../../data/providers/study_providers.dart';
 import '../../../data/providers/subject_providers.dart';
 import '../../../data/repositories/auth_repository.dart';
+import '../../home/dashboard_card.dart';
 import '../../profile/session_history_screen.dart';
 import '../../profile/subjects_screen.dart';
 import '../../profile/widgets/goal_editor_dialog.dart';
@@ -20,8 +21,11 @@ import 'focus_timer_screen.dart';
 
 /// Çalışma sayacı kartı: bugünkü toplam + canlı süre + başlat/durdur.
 /// Her saniye yeniden çizmek için kendi periyodik zamanlayıcısı vardır.
+/// [size] dar alana (küçük kart) uyum için: küçükken saat/yazılar küçülür.
 class StudyTimerCard extends ConsumerStatefulWidget {
-  const StudyTimerCard({super.key});
+  const StudyTimerCard({super.key, this.size = DashboardCardSize.medium});
+
+  final DashboardCardSize size;
 
   @override
   ConsumerState<StudyTimerCard> createState() => _StudyTimerCardState();
@@ -95,6 +99,7 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
         goalSeconds > 0 ? (todayTotal / goalSeconds).clamp(0.0, 1.0) : 0.0;
     final reached = goalSeconds > 0 && todayTotal >= goalSeconds;
     final clockStyle = ref.watch(clockStyleProvider);
+    final small = widget.size == DashboardCardSize.small;
 
     return Card(
       child: Stack(
@@ -130,9 +135,13 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
           ),
           // Seri (streak) — yalnız varsa (§3.7).
           if (streak > 0)
-            Positioned(top: 14, left: 14, child: _StreakChip(streak: streak)),
+            Positioned(
+                top: 14,
+                left: 14,
+                child: _StreakChip(streak: streak, compact: small)),
           Padding(
-            padding: const EdgeInsets.all(20),
+            // Üstteki ikon/seri rozetiyle çakışmasın diye üst boşluk biraz fazla.
+            padding: const EdgeInsets.fromLTRB(16, 48, 16, 20),
             child: Column(
               children: [
                 Text(
@@ -142,18 +151,26 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  formatHumanSeconds(todayTotal),
-                  style: theme.textTheme.headlineMedium,
+                // Dar kartta taşmasın diye ölçekle.
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    formatHumanSeconds(todayTotal),
+                    maxLines: 1,
+                    style: theme.textTheme.headlineMedium,
+                  ),
                 ),
                 const SizedBox(height: 16),
-                StudyClock(
-                  seconds: liveExtra,
-                  pctToGoal: pct,
-                  running: timer.isRunning,
-                  style: clockStyle,
-                  fontSize: 40,
-                  diameter: 160,
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: StudyClock(
+                    seconds: liveExtra,
+                    pctToGoal: pct,
+                    running: timer.isRunning,
+                    style: clockStyle,
+                    fontSize: small ? 34 : 40,
+                    diameter: small ? 130 : 160,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 _GoalProgress(
@@ -421,16 +438,18 @@ class _GoalProgress extends StatelessWidget {
 }
 
 /// Seri (streak) rozeti: ateş ikonu + üst üste hedef tutturulan gün sayısı.
+/// [compact] (dar kart) modunda yalnız ikon + sayı gösterir.
 class _StreakChip extends StatelessWidget {
-  const _StreakChip({required this.streak});
+  const _StreakChip({required this.streak, this.compact = false});
 
   final int streak;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: EdgeInsets.symmetric(horizontal: compact ? 8 : 12, vertical: 6),
       decoration: BoxDecoration(
         color: subjectColor('chart-5').withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(24),
@@ -439,7 +458,7 @@ class _StreakChip extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(Icons.local_fire_department,
-              size: 22, color: subjectColor('chart-5')),
+              size: compact ? 18 : 22, color: subjectColor('chart-5')),
           const SizedBox(width: 6),
           Text(
             '$streak',
@@ -448,12 +467,14 @@ class _StreakChip extends StatelessWidget {
               color: subjectColor('chart-5'),
             ),
           ),
-          const SizedBox(width: 3),
-          Text(
-            'günlük seri',
-            style: theme.textTheme.bodySmall
-                ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-          ),
+          if (!compact) ...[
+            const SizedBox(width: 3),
+            Text(
+              'günlük seri',
+              style: theme.textTheme.bodySmall
+                  ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+            ),
+          ],
         ],
       ),
     );

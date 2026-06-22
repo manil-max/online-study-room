@@ -317,6 +317,12 @@
   zıplamıyor); odak modunda `FittedBox` ile ölçekleniyor (büyük saat taşmıyor), 72px.
 - [x] **Eski oturumlar**: sayaç kartına "Geçmiş oturumlar" (history) butonu → `SessionHistoryScreen`.
 - [x] **Grafik filtreleri**: çubuk kartı 7/14/30 gün, çizgi kartı 14/30/90 gün satır içi filtre.
+- [x] **Masonry yerleşim**: Ana Sayfa `Wrap` yerine 2 bağımsız sütun (kısa kartın altında boşluk
+  kalmıyor); küçük (yarım) kartlar sol/sağ sütuna paylaştırılır, orta/büyük tam satır.
+- [x] **Dar sayaç kartı**: `StudyTimerCard` boyut-duyarlı — küçükken saat/yazılar `FittedBox` ile
+  ölçeklenir, seri rozeti kompakt (yazılar artık taşmıyor/karışmıyor).
+- [x] **Sıralama etkileşimi**: alttan açılan pencere kaldırıldı — üzerine gelince **basit tooltip**
+  (sıra · bugün · seri), tıklayınca **tıklanan yerde** detay popup'ı (`showMenuAtPosition`).
 
 ## FAZ 4 — Çoklu Platform & Widget
 

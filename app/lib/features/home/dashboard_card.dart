@@ -142,7 +142,7 @@ class DashboardCardConfig {
 Widget dashboardCardFor(DashboardCardType type, DashboardCardSize size) {
   switch (type) {
     case DashboardCardType.timer:
-      return const StudyTimerCard();
+      return StudyTimerCard(size: size);
     case DashboardCardType.goal:
       return GoalCard(size: size);
     case DashboardCardType.today:

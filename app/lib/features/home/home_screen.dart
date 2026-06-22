@@ -27,26 +27,9 @@ class HomeScreen extends ConsumerWidget {
       ),
       body: layout.isEmpty
           ? _EmptyDashboard(onEdit: () => _openEdit(context))
-          : LayoutBuilder(
-              builder: (context, constraints) {
-                const gap = 12.0;
-                final fullWidth = constraints.maxWidth - 32; // 16 yatay padding
-                final halfWidth = (fullWidth - gap) / 2;
-                return SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: Wrap(
-                    spacing: gap,
-                    runSpacing: gap,
-                    children: [
-                      for (final card in layout)
-                        SizedBox(
-                          width: card.size.isHalfWidth ? halfWidth : fullWidth,
-                          child: dashboardCardFor(card.type, card.size),
-                        ),
-                    ],
-                  ),
-                );
-              },
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: _MasonryDashboard(layout: layout),
             ),
     );
   }
@@ -54,6 +37,67 @@ class HomeScreen extends ConsumerWidget {
   void _openEdit(BuildContext context) {
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => const DashboardEditScreen()),
+    );
+  }
+}
+
+/// Ana Sayfa kartlarını **masonry** (taşlama) düzeninde yerleştirir: küçük (yarım
+/// genişlik) kartlar iki bağımsız sütuna paylaştırılır — böylece kısa bir kartın
+/// altında uzun komşusu yüzünden boşluk kalmaz. Orta/büyük kartlar tam satır kaplar.
+class _MasonryDashboard extends StatelessWidget {
+  const _MasonryDashboard({required this.layout});
+
+  final List<DashboardCardConfig> layout;
+
+  @override
+  Widget build(BuildContext context) {
+    const gap = 12.0;
+    final rows = <Widget>[];
+    final pending = <DashboardCardConfig>[];
+
+    Widget cardOf(DashboardCardConfig c) => Padding(
+          padding: const EdgeInsets.only(bottom: gap),
+          child: dashboardCardFor(c.type, c.size),
+        );
+
+    void flushPending() {
+      if (pending.isEmpty) return;
+      // Yarım kartları sırayla sol/sağ sütunlara dağıt (her sütun kendi yığını).
+      final left = <Widget>[];
+      final right = <Widget>[];
+      for (var i = 0; i < pending.length; i++) {
+        (i.isEven ? left : right).add(cardOf(pending[i]));
+      }
+      rows.add(Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch, children: left),
+          ),
+          const SizedBox(width: gap),
+          Expanded(
+            child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch, children: right),
+          ),
+        ],
+      ));
+      pending.clear();
+    }
+
+    for (final card in layout) {
+      if (card.size.isHalfWidth) {
+        pending.add(card);
+      } else {
+        flushPending();
+        rows.add(cardOf(card));
+      }
+    }
+    flushPending();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: rows,
     );
   }
 }
