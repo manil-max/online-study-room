@@ -32,28 +32,36 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       return;
     }
     final theme = Theme.of(anchorContext);
+    // Eklenebilir kartları kategoriye göre grupla (sabit sıra).
+    const order = ['Sayaç & Hedef', 'Özetler', 'Grafikler', 'Isı haritaları', 'Grup'];
+    final items = <PopupMenuEntry<DashboardCardType>>[];
+    for (final cat in order) {
+      final inCat = available.where((t) => t.category == cat).toList();
+      if (inCat.isEmpty) continue;
+      items.add(PopupMenuItem<DashboardCardType>(
+        enabled: false,
+        height: 30,
+        child: Text(cat,
+            style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.primary,
+                fontWeight: FontWeight.w700)),
+      ));
+      for (final t in inCat) {
+        items.add(PopupMenuItem<DashboardCardType>(
+          value: t,
+          child: Row(
+            children: [
+              Icon(t.icon, size: 20),
+              const SizedBox(width: 12),
+              Expanded(child: Text(t.title)),
+            ],
+          ),
+        ));
+      }
+    }
     final picked = await showAnchoredMenu<DashboardCardType>(
       context: anchorContext,
-      items: [
-        PopupMenuItem<DashboardCardType>(
-          enabled: false,
-          height: 32,
-          child: Text('Kart ekle',
-              style: theme.textTheme.labelMedium
-                  ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-        ),
-        for (final t in available)
-          PopupMenuItem<DashboardCardType>(
-            value: t,
-            child: Row(
-              children: [
-                Icon(t.icon, size: 20),
-                const SizedBox(width: 12),
-                Expanded(child: Text(t.title)),
-              ],
-            ),
-          ),
-      ],
+      items: items,
     );
     if (picked != null) {
       ref.read(dashboardLayoutProvider.notifier).toggle(picked);

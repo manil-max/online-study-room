@@ -61,6 +61,26 @@ extension DashboardCardInfo on DashboardCardType {
         DashboardCardType.leaderboard => 'Aktif grubun bugünkü sıralaması',
       };
 
+  /// Ekleme menüsünde gruplama başlığı.
+  String get category => switch (this) {
+        DashboardCardType.timer ||
+        DashboardCardType.goal =>
+          'Sayaç & Hedef',
+        DashboardCardType.today ||
+        DashboardCardType.monthly ||
+        DashboardCardType.weekdayWeekend =>
+          'Özetler',
+        DashboardCardType.weekly ||
+        DashboardCardType.line ||
+        DashboardCardType.scatter =>
+          'Grafikler',
+        DashboardCardType.hours ||
+        DashboardCardType.rhythm ||
+        DashboardCardType.heatmap =>
+          'Isı haritaları',
+        DashboardCardType.leaderboard => 'Grup',
+      };
+
   IconData get icon => switch (this) {
         DashboardCardType.timer => Icons.timer_outlined,
         DashboardCardType.goal => Icons.flag_outlined,
