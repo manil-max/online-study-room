@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../classroom/widgets/study_timer_card.dart';
 import 'widgets/goal_card.dart';
+import 'widgets/group_goal_card.dart';
+import 'widgets/group_trend_card.dart';
 import 'widgets/heatmap_card.dart';
 import 'widgets/hour_activity_card.dart';
 import 'widgets/leaderboard_card.dart';
@@ -30,6 +32,8 @@ enum DashboardCardType {
   records,
   heatmap,
   leaderboard,
+  groupGoal,
+  groupTrend,
 }
 
 extension DashboardCardInfo on DashboardCardType {
@@ -47,6 +51,8 @@ extension DashboardCardInfo on DashboardCardType {
         DashboardCardType.records => 'Rekorlar',
         DashboardCardType.heatmap => 'Çalışma takvimi',
         DashboardCardType.leaderboard => 'Grup sıralaması',
+        DashboardCardType.groupGoal => 'Grup hedefi',
+        DashboardCardType.groupTrend => 'Grup günlük trendi',
       };
 
   String get description => switch (this) {
@@ -63,6 +69,8 @@ extension DashboardCardInfo on DashboardCardType {
         DashboardCardType.records => 'Toplam, rekor seri, en verimli gün, en çok ders',
         DashboardCardType.heatmap => 'GitHub tarzı çalışma yoğunluğu ısı haritası',
         DashboardCardType.leaderboard => 'Aktif grubun bugünkü sıralaması',
+        DashboardCardType.groupGoal => 'Grubun günlük hedef ilerlemesi + grup serisi',
+        DashboardCardType.groupTrend => 'Grubun son günlerdeki toplam çalışma grafiği',
       };
 
   /// Ekleme menüsünde gruplama başlığı.
@@ -83,7 +91,10 @@ extension DashboardCardInfo on DashboardCardType {
         DashboardCardType.rhythm ||
         DashboardCardType.heatmap =>
           'Isı haritaları',
-        DashboardCardType.leaderboard => 'Grup',
+        DashboardCardType.leaderboard ||
+        DashboardCardType.groupGoal ||
+        DashboardCardType.groupTrend =>
+          'Grup',
       };
 
   IconData get icon => switch (this) {
@@ -100,6 +111,8 @@ extension DashboardCardInfo on DashboardCardType {
         DashboardCardType.records => Icons.military_tech_outlined,
         DashboardCardType.heatmap => Icons.grid_on_outlined,
         DashboardCardType.leaderboard => Icons.leaderboard_outlined,
+        DashboardCardType.groupGoal => Icons.flag_circle_outlined,
+        DashboardCardType.groupTrend => Icons.insights_outlined,
       };
 }
 
@@ -208,5 +221,9 @@ Widget dashboardCardFor(DashboardCardType type, DashboardCardSize size) {
       return HeatmapCard(size: size);
     case DashboardCardType.leaderboard:
       return const LeaderboardCard();
+    case DashboardCardType.groupGoal:
+      return GroupGoalCard(size: size);
+    case DashboardCardType.groupTrend:
+      return GroupTrendCard(size: size);
   }
 }
