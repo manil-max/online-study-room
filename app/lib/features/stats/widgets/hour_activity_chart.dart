@@ -77,23 +77,20 @@ class HourActivityChart extends StatelessWidget {
                     waitDuration: Duration.zero,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 1.5),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          FractionallySizedBox(
-                            heightFactor:
-                                maxV <= 0 ? 0.0 : (hourly[h] / maxV),
-                            child: Container(
-                              constraints:
-                                  const BoxConstraints(minHeight: 2),
-                              decoration: BoxDecoration(
-                                color: barColor(h),
-                                borderRadius: const BorderRadius.vertical(
-                                    top: Radius.circular(3)),
-                              ),
-                            ),
+                      // Açık (bounded) yükseklikli çubuk — FractionallySizedBox
+                      // bir Column içinde sınırsız yükseklik alıp çökmesin diye.
+                      child: Align(
+                        alignment: Alignment.bottomCenter,
+                        child: Container(
+                          height: (hourly[h] <= 0 || maxV <= 0)
+                              ? 0
+                              : 2 + (height - 2) * (hourly[h] / maxV),
+                          decoration: BoxDecoration(
+                            color: barColor(h),
+                            borderRadius: const BorderRadius.vertical(
+                                top: Radius.circular(3)),
                           ),
-                        ],
+                        ),
                       ),
                     ),
                   ),
