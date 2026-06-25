@@ -71,15 +71,15 @@ class _ClassTab extends ConsumerWidget {
       );
     }
 
-    final sessionsAsync = ref.watch(groupSessionsProvider);
+    final statsAsync = ref.watch(groupDailyStatsProvider);
     final members = ref.watch(groupMembersProvider).value ?? const [];
     final currentUserId = ref.watch(authStateProvider).value?.id ?? '';
 
-    return sessionsAsync.when(
+    return statsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Center(child: Text('İstatistik yüklenemedi: $e')),
-      data: (sessions) => ClassStatsView(
-        sessions: sessions,
+      data: (stats) => ClassStatsView(
+        stats: stats,
         members: members,
         currentUserId: currentUserId,
         groupName: group.name,

@@ -1,3 +1,4 @@
+import '../models/daily_stat.dart';
 import '../models/study_session.dart';
 
 /// Çalışma oturumlarının deposu. Anahtar varsa Supabase, yoksa bellek-içi.
@@ -16,4 +17,9 @@ abstract class StudyRepository {
 
   /// Bir sınıfın tüm oturumlarını canlı izler (istatistik/sıralama için).
   Stream<List<StudySession>> watchGroupSessions(String groupId);
+
+  /// Bir sınıfın **per-user-per-gün** toplamlarını canlı izler. Ham oturumları
+  /// akıtmak yerine sunucuda toplanmış veriyi verir (sınırlı boyut — F1).
+  /// Grup geneli leaderboard/seri/trend bundan hesaplanır.
+  Stream<List<DailyStat>> watchGroupDailyStats(String groupId);
 }

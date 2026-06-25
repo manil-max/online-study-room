@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../core/config/supabase_config.dart';
 import '../../core/stats/study_stats.dart';
+import '../models/daily_stat.dart';
 import '../models/presence.dart';
 import '../models/profile.dart';
 import '../models/study_session.dart';
@@ -31,11 +32,13 @@ final userSessionsProvider = StreamProvider<List<StudySession>>((ref) {
   return ref.watch(studyRepositoryProvider).watchUserSessions(user.id);
 });
 
-/// Kullanıcının sınıfındaki tüm oturumlar (istatistik/sıralama için).
-final groupSessionsProvider = StreamProvider<List<StudySession>>((ref) {
+/// Kullanıcının sınıfının **per-user-per-gün** toplamları (grup geneli
+/// istatistik/sıralama/seri için). Ham oturumlar artık akıtılmaz; veri sunucuda
+/// toplanır (F1). Leaderboard, grup serisi ve trend bundan hesaplanır.
+final groupDailyStatsProvider = StreamProvider<List<DailyStat>>((ref) {
   final group = ref.watch(userGroupProvider).value;
   if (group == null) return Stream.value(const []);
-  return ref.watch(studyRepositoryProvider).watchGroupSessions(group.id);
+  return ref.watch(studyRepositoryProvider).watchGroupDailyStats(group.id);
 });
 
 /// Kullanıcının bugün KAYDEDİLMİŞ toplam süresi (saniye). Devam eden oturum hariç
@@ -65,14 +68,8 @@ final currentStreakProvider = Provider<int>((ref) {
 /// Canlı sınıf ekranında "bugünkü toplam" buradan okunur; devam eden oturumun
 /// anlık kısmı UI'da presence üzerinden eklenir.
 final groupTodaySecondsProvider = Provider<Map<String, int>>((ref) {
-  final sessions = ref.watch(groupSessionsProvider).value ?? const [];
-  final now = DateTime.now();
-  final totals = <String, int>{};
-  for (final s in sessions) {
-    if (!isSameDay(s.day, now)) continue;
-    totals[s.userId] = (totals[s.userId] ?? 0) + s.durationSeconds;
-  }
-  return totals;
+  final stats = ref.watch(groupDailyStatsProvider).value ?? const [];
+  return todaySecondsByUser(stats);
 });
 
 /// Çalışma sayacının durumu.

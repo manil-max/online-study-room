@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import '../../models/daily_stat.dart';
 import '../../models/study_session.dart';
 import '../study_repository.dart';
 
@@ -56,6 +57,33 @@ class InMemoryStudyRepository implements StudyRepository {
     yield _groupSessions(groupId);
     await for (final _ in _changes.stream) {
       yield _groupSessions(groupId);
+    }
+  }
+
+  /// Grup oturumlarını (userId, gün) bazında toplar — Supabase RPC'sinin
+  /// bellek-içi karşılığı.
+  List<DailyStat> _groupDailyStats(String groupId) {
+    final totals = <String, Map<DateTime, int>>{};
+    for (final s in _sessions) {
+      if (s.groupId != groupId) continue;
+      (totals[s.userId] ??= {}).update(
+        s.day,
+        (v) => v + s.durationSeconds,
+        ifAbsent: () => s.durationSeconds,
+      );
+    }
+    return [
+      for (final user in totals.entries)
+        for (final day in user.value.entries)
+          DailyStat(userId: user.key, day: day.key, seconds: day.value),
+    ];
+  }
+
+  @override
+  Stream<List<DailyStat>> watchGroupDailyStats(String groupId) async* {
+    yield _groupDailyStats(groupId);
+    await for (final _ in _changes.stream) {
+      yield _groupDailyStats(groupId);
     }
   }
 

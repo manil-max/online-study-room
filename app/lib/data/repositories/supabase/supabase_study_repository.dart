@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../models/daily_stat.dart';
 import '../../models/study_session.dart';
 import '../study_repository.dart';
 
@@ -45,5 +48,57 @@ class SupabaseStudyRepository implements StudyRepository {
         .eq('group_id', groupId)
         .order('start_time')
         .map((rows) => rows.map(StudySession.fromMap).toList());
+  }
+
+  /// Sunucuda toplanmış günlük veriyi `group_daily_totals` RPC'sinden çeker.
+  Future<List<DailyStat>> _fetchDailyStats(String groupId) async {
+    final rows = await _client.rpc(
+      'group_daily_totals',
+      params: {'p_group_id': groupId},
+    ) as List<dynamic>;
+    return rows
+        .map((r) => DailyStat.fromMap(Map<String, dynamic>.from(r as Map)))
+        .toList();
+  }
+
+  @override
+  Stream<List<DailyStat>> watchGroupDailyStats(String groupId) {
+    // Ham oturumları akıtmak yerine: RPC ile özet çek + study_sessions'taki
+    // değişiklikleri hafif bir realtime kanalıyla dinleyip özeti tazele.
+    // Böylece istemciye inen veri (üye × aktif gün) ile sınırlı kalır.
+    late final StreamController<List<DailyStat>> controller;
+    RealtimeChannel? channel;
+
+    Future<void> refresh() async {
+      try {
+        if (!controller.isClosed) controller.add(await _fetchDailyStats(groupId));
+      } catch (e, st) {
+        if (!controller.isClosed) controller.addError(e, st);
+      }
+    }
+
+    controller = StreamController<List<DailyStat>>(
+      onListen: () {
+        refresh();
+        channel = _client
+            .channel('group_daily_$groupId')
+            .onPostgresChanges(
+              event: PostgresChangeEvent.all,
+              schema: 'public',
+              table: 'study_sessions',
+              filter: PostgresChangeFilter(
+                type: PostgresChangeFilterType.eq,
+                column: 'group_id',
+                value: groupId,
+              ),
+              callback: (_) => refresh(),
+            )
+            .subscribe();
+      },
+      onCancel: () async {
+        if (channel != null) await _client.removeChannel(channel!);
+      },
+    );
+    return controller.stream;
   }
 }

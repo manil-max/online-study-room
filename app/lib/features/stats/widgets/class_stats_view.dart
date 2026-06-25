@@ -5,8 +5,8 @@ import '../../../core/stats/study_stats.dart';
 import '../../../core/theme/subject_colors.dart';
 import '../../../core/utils/duration_format.dart';
 import '../../../core/widgets/user_avatar.dart';
+import '../../../data/models/daily_stat.dart';
 import '../../../data/models/profile.dart';
-import '../../../data/models/study_session.dart';
 import '../../classroom/widgets/class_switcher.dart';
 import 'daily_bar_chart.dart';
 import 'stat_heat_table.dart';
@@ -19,14 +19,15 @@ enum _Period { today, week, month }
 class ClassStatsView extends ConsumerStatefulWidget {
   const ClassStatsView({
     super.key,
-    required this.sessions,
+    required this.stats,
     required this.members,
     required this.currentUserId,
     required this.groupName,
     required this.groupGoalMinutes,
   });
 
-  final List<StudySession> sessions;
+  /// Sınıfın per-user-per-gün toplamları (F1: ham oturum yerine sunucu agregası).
+  final List<DailyStat> stats;
   final List<Profile> members;
   final String currentUserId;
   final String groupName;
@@ -50,10 +51,9 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
     final theme = Theme.of(context);
     final now = DateTime.now();
     final (from, to) = _range(now);
-    final ranged = inRange(widget.sessions, from, to).toList();
 
-    // userId → saniye (verisi olmayan üyeler 0 ile tamamlanır).
-    final totals = {for (final e in leaderboard(ranged)) e.key: e.value};
+    // Seçili dönem leaderboard'u: userId → saniye (per-user-per-gün toplamdan).
+    final totals = userTotalsInRange(widget.stats, from, to);
     final rows = [
       for (final m in widget.members)
         (member: m, seconds: totals[m.id] ?? 0),
@@ -63,13 +63,16 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
     final memberCount = widget.members.isEmpty ? 1 : widget.members.length;
     final classAvg = classTotal ~/ memberCount;
     final maxSeconds = rows.isEmpty ? 0 : rows.first.seconds;
-    // Üye başına çalışma serisi (tüm oturumlardan, dönemden bağımsız).
+    // Üye başına çalışma serisi (tüm günlük toplamlardan, dönemden bağımsız).
     final streaks = <String, int>{
       for (final m in widget.members)
-        m.id: studyStreak(widget.sessions.where((s) => s.userId == m.id)),
+        m.id: studyStreak(const [], totals: userDayTotals(widget.stats, m.id)),
     };
-    // Renk-kodlu karşılaştırma tablosu: üye × [Bugün, Hafta, Ay] (her sütun
-    // kendi içinde yeşil→kırmızı). Ay toplamına göre sıralı.
+    // Renk-kodlu karşılaştırma tablosu: üye × [Bugün, Hafta, Ay]. Sütun toplamları
+    // dönem aralıklarındaki per-user toplamlardan; bir kez hesaplanır.
+    final todayTotals = userTotalsInRange(widget.stats, dayOf(now), now);
+    final weekTotals = userTotalsInRange(widget.stats, startOfWeek(now), now);
+    final monthTotals = userTotalsInRange(widget.stats, startOfMonth(now), now);
     final heatRows = [
       for (final m in widget.members)
         HeatRow(
@@ -77,20 +80,18 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
           avatarUrl: m.avatarUrl,
           highlight: m.id == widget.currentUserId,
           values: [
-            totalSeconds(inRange(
-                widget.sessions.where((s) => s.userId == m.id), dayOf(now), now)),
-            totalSeconds(inRange(widget.sessions.where((s) => s.userId == m.id),
-                startOfWeek(now), now)),
-            totalSeconds(inRange(widget.sessions.where((s) => s.userId == m.id),
-                startOfMonth(now), now)),
+            todayTotals[m.id] ?? 0,
+            weekTotals[m.id] ?? 0,
+            monthTotals[m.id] ?? 0,
           ],
         ),
     ]..sort((a, b) => b.values[2].compareTo(a.values[2]));
 
     // Grup günlük hedefi: bugünkü grup toplamı + gruba göre seri.
     final goalSeconds = widget.groupGoalMinutes * 60;
-    final todayGroupTotal = secondsOnDay(widget.sessions, now);
-    final groupStreak = currentStreak(widget.sessions, goalSeconds);
+    final groupDay = groupDayTotals(widget.stats);
+    final todayGroupTotal = groupDay[dayOf(now)] ?? 0;
+    final groupStreak = currentStreak(const [], goalSeconds, totals: groupDay);
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -161,7 +162,8 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
                 const SizedBox(height: 12),
                 SizedBox(
                   height: 150,
-                  child: DailyBarChart(days: lastNDays(widget.sessions, 7)),
+                  child: DailyBarChart(
+                      days: lastNDays(const [], 7, totals: groupDay)),
                 ),
               ],
             ),

@@ -22,16 +22,14 @@ class GroupGoalCard extends ConsumerWidget {
     final group = ref.watch(userGroupProvider).value;
     if (group == null) return const GroupCardShell(title: 'Grup hedefi');
 
-    final sessions = ref.watch(groupSessionsProvider).value ?? const [];
-    final now = DateTime.now();
+    final stats = ref.watch(groupDailyStatsProvider).value ?? const [];
+    final dayTotals = groupDayTotals(stats);
     final goalSeconds = group.dailyGoalMinutes * 60;
-    final todayTotal = sessions
-        .where((s) => isSameDay(s.day, now))
-        .fold<int>(0, (a, s) => a + s.durationSeconds);
+    final todayTotal = dayTotals[dayOf(DateTime.now())] ?? 0;
     final pct =
         goalSeconds <= 0 ? 0.0 : (todayTotal / goalSeconds).clamp(0.0, 1.0);
     final reached = goalSeconds > 0 && todayTotal >= goalSeconds;
-    final streak = currentStreak(sessions, goalSeconds);
+    final streak = currentStreak(const [], goalSeconds, totals: dayTotals);
     final fire = subjectColor('chart-5');
     final ringColor =
         reached ? subjectColor('chart-2') : theme.colorScheme.primary;

@@ -7,6 +7,15 @@
 
 ---
 
+## 0) Uygulanma Durumu (sonradan eklendi)
+
+| Bulgu | Durum |
+|---|---|
+| F2, F3, F5, F7 | ✅ Uygulandı (commit'ler: SecondTicker + map/dedup; dailyTotals memoize) |
+| F6a (indirme timeout/iptal) | ✅ Uygulandı |
+| **F1 (sunucu agregasyonu)** | ✅ Uygulandı — `group_daily_totals` RPC (migration `0007`) + realtime sinyalli `watchGroupDailyStats`; grup geneli tüm tüketiciler agregaya bağlandı. ⚠️ **Migration Supabase'e uygulanmalı ve canlı doğrulanmalı.** Gün sınırı `Europe/Istanbul`. Rollback: tüketicileri `groupSessionsProvider`'a geri al. |
+| F4 (profil join), F6b (split-APK) | ⏸️ Yapılmadı (kullanıcı kapsam dışı bıraktı) |
+
 ## 1) Optimization Summary
 
 **Mevcut durum:** Mimari temiz (saf stats fonksiyonları, repository soyutlaması). Ciddi

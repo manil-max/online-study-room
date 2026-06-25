@@ -22,10 +22,10 @@ class GroupTrendCard extends ConsumerWidget {
     final group = ref.watch(userGroupProvider).value;
     if (group == null) return const GroupCardShell(title: 'Grup günlük trendi');
 
-    final sessions = ref.watch(groupSessionsProvider).value ?? const [];
+    final stats = ref.watch(groupDailyStatsProvider).value ?? const [];
     final isLarge = size == DashboardCardSize.large;
     final days = isLarge ? 14 : 7;
-    final series = lastNDays(sessions, days);
+    final series = lastNDays(const [], days, totals: groupDayTotals(stats));
     final total = series.fold<int>(0, (s, d) => s + d.seconds);
 
     return Card(

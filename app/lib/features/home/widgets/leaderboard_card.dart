@@ -37,29 +37,32 @@ class LeaderboardCard extends ConsumerWidget {
       );
     }
 
-    final sessions = ref.watch(groupSessionsProvider).value ?? const [];
+    final stats = ref.watch(groupDailyStatsProvider).value ?? const [];
     final members = ref.watch(groupMembersProvider).value ?? const <Profile>[];
     final meId = ref.watch(authStateProvider).value?.id;
-    final now = DateTime.now();
 
-    final today = sessions.where((s) => isSameDay(s.day, now));
     final count = size == DashboardCardSize.small
         ? 3
         : size == DashboardCardSize.large
             ? 10
             : 5;
-    final board = leaderboard(today).take(count).toList();
+    // Bugünün sıralaması (userId → saniye), büyükten küçüğe.
+    final todayByUser = todaySecondsByUser(stats);
+    final board = (todayByUser.entries.toList()
+          ..sort((a, b) => b.value.compareTo(a.value)))
+        .take(count)
+        .toList();
     // Grup günlük hedefi: grubun bugünkü TOPLAM çalışması / hedef + grup serisi.
     final goalSeconds = group.dailyGoalMinutes * 60;
-    final groupTodayTotal =
-        today.fold<int>(0, (a, s) => a + s.durationSeconds);
+    final groupTodayTotal = todayByUser.values.fold<int>(0, (a, v) => a + v);
     final groupGoalPct =
         goalSeconds > 0 ? (groupTodayTotal / goalSeconds).clamp(0.0, 1.0) : 0.0;
-    final groupStreak = currentStreak(sessions, goalSeconds);
-    // Her üyenin çalışma serisi (üst üste çalıştığı gün), tüm grup oturumlarından.
+    final groupStreak =
+        currentStreak(const [], goalSeconds, totals: groupDayTotals(stats));
+    // Her üyenin çalışma serisi (üst üste çalıştığı gün), günlük toplamlardan.
     final streaks = <String, int>{
       for (final e in board)
-        e.key: studyStreak(sessions.where((s) => s.userId == e.key)),
+        e.key: studyStreak(const [], totals: userDayTotals(stats, e.key)),
     };
 
     Profile? memberFor(String id) {

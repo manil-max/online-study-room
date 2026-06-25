@@ -1,3 +1,4 @@
+import '../../data/models/daily_stat.dart';
 import '../../data/models/study_session.dart';
 
 /// Çalışma oturumlarından istatistik üreten saf (yan etkisiz) yardımcılar.
@@ -213,8 +214,62 @@ int longestStudyStreak(
 
 /// Çalışma serisi: üst üste (en az 1 sn) çalışılan gün sayısı. Grup üyeleri için
 /// herkesin günlük hedefi bilinmediğinden "çalıştığın gün" temelli seri (§3.7).
-int studyStreak(Iterable<StudySession> sessions, {DateTime? today}) =>
-    currentStreak(sessions, 1, today: today);
+int studyStreak(
+  Iterable<StudySession> sessions, {
+  DateTime? today,
+  Map<DateTime, int>? totals,
+}) =>
+    currentStreak(sessions, 1, today: today, totals: totals);
+
+// ── Grup geneli agregalar: per-user-per-gün toplamlardan (DailyStat) ─────────
+
+/// Tüm üyelerin günlük toplamlarını gün bazında birleştirir (gün → saniye).
+/// Grup serisi/trendi için (`currentStreak`/`lastNDays`'in `totals` paramına verilir).
+Map<DateTime, int> groupDayTotals(Iterable<DailyStat> stats) {
+  final totals = <DateTime, int>{};
+  for (final s in stats) {
+    totals[s.day] = (totals[s.day] ?? 0) + s.seconds;
+  }
+  return totals;
+}
+
+/// Tek bir kullanıcının gün → saniye haritası (kişi başı seri için).
+Map<DateTime, int> userDayTotals(Iterable<DailyStat> stats, String userId) {
+  final totals = <DateTime, int>{};
+  for (final s in stats) {
+    if (s.userId != userId) continue;
+    totals[s.day] = (totals[s.day] ?? 0) + s.seconds;
+  }
+  return totals;
+}
+
+/// Belirli gündeki (varsayılan: bugün) kullanıcı → saniye haritası.
+Map<String, int> todaySecondsByUser(Iterable<DailyStat> stats, {DateTime? today}) {
+  final d = dayOf(today ?? DateTime.now());
+  final totals = <String, int>{};
+  for (final s in stats) {
+    if (!isSameDay(s.day, d)) continue;
+    totals[s.userId] = (totals[s.userId] ?? 0) + s.seconds;
+  }
+  return totals;
+}
+
+/// [fromDay, toDay] (iki uç dâhil) aralığında kullanıcı → toplam saniye
+/// (leaderboard / sınıf istatistiği için).
+Map<String, int> userTotalsInRange(
+  Iterable<DailyStat> stats,
+  DateTime fromDay,
+  DateTime toDay,
+) {
+  final from = dayOf(fromDay);
+  final to = dayOf(toDay);
+  final totals = <String, int>{};
+  for (final s in stats) {
+    if (s.day.isBefore(from) || s.day.isAfter(to)) continue;
+    totals[s.userId] = (totals[s.userId] ?? 0) + s.seconds;
+  }
+  return totals;
+}
 
 /// Bir sınıfın oturumlarından kullanıcı başına toplam (userId → saniye),
 /// büyükten küçüğe sıralı (leaderboard).
