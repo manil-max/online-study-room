@@ -48,6 +48,7 @@ dependencies:
   dio: ^5.7.0                 # APK'yı ilerleme yüzdesiyle indirir.
   path_provider: ^2.1.5       # İndirilen APK'yı cache klasörüne yazar.
   open_filex: ^4.5.0          # APK'yı açıp Android kurulum ekranını tetikler.
+  crypto: ^3.0.6              # İndirilen APK'nın SHA-256 bütünlük doğrulaması.
 
 dev_dependencies:
   flutter_test:

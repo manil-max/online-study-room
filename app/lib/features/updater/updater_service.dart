@@ -48,7 +48,9 @@ class UpdaterService {
       final latestCode = _parseVersionCode(data['tag_name'] as String?);
       if (latestCode == null || latestCode <= currentCode) return null;
 
-      final apkUrl = _findApkUrl(data['assets']);
+      final assets = data['assets'];
+      // Yalnızca CI'nın ürettiği sabit isimli APK'yı kabul et (rastgele .apk değil).
+      final apkUrl = _findAssetUrl(assets, _apkName);
       if (apkUrl == null) return null;
 
       return UpdateInfo(
@@ -58,6 +60,8 @@ class UpdaterService {
             : (data['tag_name'] as String? ?? 'v$latestCode'),
         releaseNotes: (data['body'] as String?)?.trim() ?? '',
         downloadUrl: apkUrl,
+        // Varsa SHA-256 dosyası; indirme sonrası bütünlük doğrulamasında kullanılır.
+        sha256Url: _findAssetUrl(assets, '$_apkName.sha256'),
       );
     } catch (_) {
       // Güncelleme kontrolü "best effort"tur; hata olursa görmezden gelinir.
@@ -76,12 +80,14 @@ class UpdaterService {
     return int.tryParse(nums.last.group(0)!);
   }
 
-  /// Release asset'leri içinden `.apk` uzantılı ilk dosyanın indirme linki.
-  static String? _findApkUrl(dynamic assets) {
+  /// CI tarafından üretilen APK'nın sabit adı (release.yml ile aynı olmalı).
+  static const String _apkName = 'app-release.apk';
+
+  /// Release asset'leri içinden adı tam eşleşen dosyanın indirme linki.
+  static String? _findAssetUrl(dynamic assets, String name) {
     if (assets is! List) return null;
     for (final a in assets) {
-      if (a is Map &&
-          (a['name'] as String?)?.toLowerCase().endsWith('.apk') == true) {
+      if (a is Map && a['name'] == name) {
         return a['browser_download_url'] as String?;
       }
     }
@@ -96,10 +102,15 @@ class UpdateInfo {
     required this.versionName,
     required this.releaseNotes,
     required this.downloadUrl,
+    this.sha256Url,
   });
 
   final int versionCode;
   final String versionName;
   final String releaseNotes;
   final String downloadUrl;
+
+  /// APK'nın beklenen SHA-256 özetini içeren `.sha256` dosyasının linki.
+  /// `null` ise bütünlük doğrulaması atlanır (eski/manuel release'ler için).
+  final String? sha256Url;
 }

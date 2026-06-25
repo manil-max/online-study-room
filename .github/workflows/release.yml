@@ -55,8 +55,14 @@ jobs:
             --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
             --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
 
-      - name: GitHub Release'e APK yükle
+      - name: APK için SHA-256 üret (in-app bütünlük doğrulaması)
+        working-directory: app/build/app/outputs/flutter-apk
+        run: sha256sum app-release.apk > app-release.apk.sha256
+
+      - name: GitHub Release'e APK + checksum yükle
         uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
-          files: app/build/app/outputs/flutter-apk/app-release.apk
+          files: |
+            app/build/app/outputs/flutter-apk/app-release.apk
+            app/build/app/outputs/flutter-apk/app-release.apk.sha256

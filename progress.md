@@ -411,6 +411,7 @@ Supabase'e gerek yok. (Önceki Supabase tablolu plan iptal edildi — `0007` sil
 - [x] **Ana Ekrana Bağlama**: `auth_gate.dart` açılışta bir kez `maybeShowUpdateDialog`.
 - [x] **CI (GitHub Actions)**: `v*` etiketi push'unda APK derleyip Releases'e koyar (`.github/workflows/release.yml`). Etiket sayısı = `versionCode`.
 - [ ] **Kurulum (kullanıcı)**: GitHub Secrets (`KEYSTORE_BASE64`, `STORE_PASSWORD`, `KEY_PASSWORD`, `KEY_ALIAS`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`) eklenmeli; ilk `git tag v2` ile test.
+- [x] **Güvenlik sertleştirme**: İndirilen APK için **SHA-256 bütünlük doğrulaması** (CI `.sha256` üretir, uygulama kurulumdan önce karşılaştırır; uyuşmazsa siler/iptal) + asset adı `app-release.apk` ile sıkı eşleşme (rastgele `.apk` reddedilir).
 - **Direkt indirme linki:** `https://github.com/manil-max/online-study-room/releases/latest/download/app-release.apk`
 
 ### 5.2 Manuel Dağıtım (Eski Yöntem)

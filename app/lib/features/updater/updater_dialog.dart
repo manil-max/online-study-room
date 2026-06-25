@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:open_filex/open_filex.dart';
@@ -41,10 +44,12 @@ class _UpdaterDialogState extends State<UpdaterDialog> {
     });
 
     try {
+      final dio = Dio();
       final dir = await getTemporaryDirectory();
       final savePath = '${dir.path}/update_${widget.info.versionCode}.apk';
+      final apkFile = File(savePath);
 
-      await Dio().download(
+      await dio.download(
         widget.info.downloadUrl,
         savePath,
         onReceiveProgress: (received, total) {
@@ -53,6 +58,27 @@ class _UpdaterDialogState extends State<UpdaterDialog> {
           }
         },
       );
+
+      // Bütünlük doğrulaması: release SHA-256 yayınlamışsa indirilen APK ile karşılaştır.
+      // Eşleşmezse dosyayı sil ve kurulumu iptal et (kurcalanmış/eksik indirme koruması).
+      final sha256Url = widget.info.sha256Url;
+      if (sha256Url != null) {
+        final expected = _parseSha256(
+          (await dio.get<String>(sha256Url)).data,
+        );
+        final actual = sha256.convert(await apkFile.readAsBytes()).toString();
+        if (expected == null || expected != actual) {
+          if (await apkFile.exists()) await apkFile.delete();
+          if (mounted) {
+            setState(() {
+              _downloading = false;
+              _error = 'Güvenlik doğrulaması başarısız (dosya bütünlüğü). '
+                  'Kurulum iptal edildi.';
+            });
+          }
+          return;
+        }
+      }
 
       // APK'yı aç → Android kurulum ekranı tetiklenir.
       final result = await OpenFilex.open(savePath);
@@ -73,6 +99,13 @@ class _UpdaterDialogState extends State<UpdaterDialog> {
         });
       }
     }
+  }
+
+  /// `sha256sum` çıktısından (`hex  dosya.apk`) 64 karakterlik hex özeti çıkarır.
+  static String? _parseSha256(String? content) {
+    if (content == null) return null;
+    final m = RegExp(r'\b([a-fA-F0-9]{64})\b').firstMatch(content);
+    return m?.group(1)?.toLowerCase();
   }
 
   @override
