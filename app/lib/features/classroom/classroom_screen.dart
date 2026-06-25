@@ -1,11 +1,10 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/subject_colors.dart';
 import '../../core/utils/duration_format.dart';
+import '../../core/widgets/second_ticker.dart';
 import '../../core/widgets/user_avatar.dart';
 import '../../data/models/presence.dart';
 import '../../data/models/profile.dart';
@@ -172,34 +171,14 @@ class _GroupView extends ConsumerWidget {
 }
 
 /// Canlı sınıf listesi: her üyenin durumu (çalışıyor/mola/çevrimdışı), anlık
-/// süresi ve bugünkü toplamı. Çalışan üyeler üstte. Anlık süreleri her saniye
-/// yenilemek için kendi periyodik zamanlayıcısı vardır (bkz. project.md §3.5).
-class _LiveMembers extends ConsumerStatefulWidget {
+/// süresi ve bugünkü toplamı. Çalışan üyeler üstte. Anlık süre yalnızca çalışan
+/// üyelerin satırında kendi `SecondTicker`'ı ile yenilenir; liste sıralaması
+/// yalnızca presence/üye verisi değişince yapılır (bkz. project.md §3.5).
+class _LiveMembers extends ConsumerWidget {
   const _LiveMembers();
 
   @override
-  ConsumerState<_LiveMembers> createState() => _LiveMembersState();
-}
-
-class _LiveMembersState extends ConsumerState<_LiveMembers> {
-  Timer? _ticker;
-
-  @override
-  void initState() {
-    super.initState();
-    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) setState(() {});
-    });
-  }
-
-  @override
-  void dispose() {
-    _ticker?.cancel();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final membersAsync = ref.watch(groupMembersProvider);
     final presenceList = ref.watch(groupPresenceProvider).value ?? const [];
     final todayByUser = ref.watch(groupTodaySecondsProvider);
@@ -209,7 +188,6 @@ class _LiveMembersState extends ConsumerState<_LiveMembers> {
       error: (e, _) => Text('Üyeler yüklenemedi: $e'),
       data: (members) {
         final presenceByUser = {for (final p in presenceList) p.userId: p};
-        final now = DateTime.now();
 
         // Çalışanlar üstte; aynı grupta isme göre sırala.
         final sorted = [...members]..sort((a, b) {
@@ -230,7 +208,6 @@ class _LiveMembersState extends ConsumerState<_LiveMembers> {
                 member: m,
                 presence: presenceByUser[m.id],
                 recordedToday: todayByUser[m.id] ?? 0,
-                now: now,
               ),
           ],
         );
@@ -239,19 +216,28 @@ class _LiveMembersState extends ConsumerState<_LiveMembers> {
   }
 }
 
-/// Tek bir üyenin canlı kartı.
+/// Tek bir üyenin canlı kartı. Çalışırken anlık süre (alt yazı + sağdaki sayaç)
+/// kendi `SecondTicker`'ı ile saniyede bir yenilenir; üye çevrimdışıysa statiktir.
 class _MemberTile extends StatelessWidget {
   const _MemberTile({
     required this.member,
     required this.presence,
     required this.recordedToday,
-    required this.now,
   });
 
   final Profile member;
   final Presence? presence;
   final int recordedToday;
-  final DateTime now;
+
+  /// `now`'a göre çalışırken geçen ek süre (saniye); değilse 0.
+  int _liveExtra(DateTime now) {
+    final startedAt = presence?.startedAt;
+    if (presence?.status != PresenceStatus.studying || startedAt == null) {
+      return 0;
+    }
+    final diff = now.difference(startedAt).inSeconds;
+    return diff > 0 ? diff : 0;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -259,18 +245,32 @@ class _MemberTile extends StatelessWidget {
     final status = presence?.status ?? PresenceStatus.offline;
     final isStudying = status == PresenceStatus.studying;
 
-    // Anlık süre: yalnızca çalışırken, başlangıç anından bu yana.
-    final startedAt = presence?.startedAt;
-    final liveExtra = (isStudying && startedAt != null)
-        ? now.difference(startedAt).inSeconds
-        : 0;
-    final todayTotal = recordedToday + (liveExtra > 0 ? liveExtra : 0);
-
     final (Color dotColor, String label) = switch (status) {
       PresenceStatus.studying => (subjectColor('chart-2'), 'Çalışıyor'),
       PresenceStatus.onBreak => (subjectColor('chart-3'), 'Mola'),
       PresenceStatus.offline => (theme.colorScheme.outline, 'Çevrimdışı'),
     };
+
+    // Çalışmıyorsa anlık kısım sabit; gereksiz timer kurmamak için statik metin.
+    final Widget subtitle = isStudying
+        ? SecondTicker(
+            builder: (_, now) => Text(
+              '$label · Bugün ${formatHumanSeconds(recordedToday + _liveExtra(now))}',
+            ),
+          )
+        : Text('$label · Bugün ${formatHumanSeconds(recordedToday)}');
+
+    final Widget? trailing = isStudying
+        ? SecondTicker(
+            builder: (_, now) => Text(
+              formatHms(_liveExtra(now)),
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: subjectColor('chart-2'),
+                fontFeatures: const [],
+              ),
+            ),
+          )
+        : null;
 
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 4),
@@ -296,16 +296,8 @@ class _MemberTile extends StatelessWidget {
         ],
       ),
       title: Text(member.displayName),
-      subtitle: Text('$label · Bugün ${formatHumanSeconds(todayTotal)}'),
-      trailing: isStudying
-          ? Text(
-              formatHms(liveExtra),
-              style: theme.textTheme.titleMedium?.copyWith(
-                color: subjectColor('chart-2'),
-                fontFeatures: const [],
-              ),
-            )
-          : null,
+      subtitle: subtitle,
+      trailing: trailing,
     );
   }
 }

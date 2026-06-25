@@ -38,16 +38,13 @@ final groupSessionsProvider = StreamProvider<List<StudySession>>((ref) {
   return ref.watch(studyRepositoryProvider).watchGroupSessions(group.id);
 });
 
-bool _isSameDay(DateTime a, DateTime b) =>
-    a.year == b.year && a.month == b.month && a.day == b.day;
-
 /// Kullanıcının bugün KAYDEDİLMİŞ toplam süresi (saniye). Devam eden oturum hariç
 /// (canlı kısım UI'da anlık eklenir).
 final todayRecordedSecondsProvider = Provider<int>((ref) {
   final sessions = ref.watch(userSessionsProvider).value ?? const [];
   final now = DateTime.now();
   return sessions
-      .where((s) => _isSameDay(s.day, now))
+      .where((s) => isSameDay(s.day, now))
       .fold<int>(0, (sum, s) => sum + s.durationSeconds);
 });
 
@@ -72,7 +69,7 @@ final groupTodaySecondsProvider = Provider<Map<String, int>>((ref) {
   final now = DateTime.now();
   final totals = <String, int>{};
   for (final s in sessions) {
-    if (!_isSameDay(s.day, now)) continue;
+    if (!isSameDay(s.day, now)) continue;
     totals[s.userId] = (totals[s.userId] ?? 0) + s.durationSeconds;
   }
   return totals;

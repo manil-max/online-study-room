@@ -1,10 +1,9 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/subject_colors.dart';
 import '../../../core/utils/duration_format.dart';
+import '../../../core/widgets/second_ticker.dart';
 import '../../../core/widgets/user_avatar.dart';
 import '../../../data/models/presence.dart';
 import '../../../data/models/profile.dart';
@@ -14,57 +13,29 @@ import '../dashboard_card.dart';
 import 'group_card_shell.dart';
 
 /// "Şu an çalışanlar" kartı (§3.11): grupta o an **çalışıyor** durumundaki üyeler,
-/// canlı geçen süreyle. Her saniye güncellenir.
-class ActiveMembersCard extends ConsumerStatefulWidget {
+/// canlı geçen süreyle. Geçen süre her satırda kendi `SecondTicker`'ı ile
+/// güncellenir; kart yalnızca presence/üye verisi değişince yeniden çizilir.
+class ActiveMembersCard extends ConsumerWidget {
   const ActiveMembersCard({super.key, this.size = DashboardCardSize.medium});
 
   final DashboardCardSize size;
 
   @override
-  ConsumerState<ActiveMembersCard> createState() => _ActiveMembersCardState();
-}
-
-class _ActiveMembersCardState extends ConsumerState<ActiveMembersCard> {
-  Timer? _ticker;
-
-  @override
-  void initState() {
-    super.initState();
-    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) setState(() {});
-    });
-  }
-
-  @override
-  void dispose() {
-    _ticker?.cancel();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final group = ref.watch(userGroupProvider).value;
     if (group == null) return const GroupCardShell(title: 'Şu an çalışanlar');
 
     final presence = ref.watch(groupPresenceProvider).value ?? const [];
     final members = ref.watch(groupMembersProvider).value ?? const <Profile>[];
-    final now = DateTime.now();
     final active = presence
         .where((p) => p.status == PresenceStatus.studying)
         .toList()
-      ..sort((a, b) {
-        final ax = a.startedAt ?? now;
-        final bx = b.startedAt ?? now;
-        return ax.compareTo(bx); // en uzun süredir çalışan üstte
-      });
+      // En uzun süredir çalışan üstte (startedAt'e göre; saniyeden bağımsız).
+      ..sort((a, b) => (a.startedAt ?? DateTime.now())
+          .compareTo(b.startedAt ?? DateTime.now()));
 
-    Profile? memberFor(String id) {
-      for (final m in members) {
-        if (m.id == id) return m;
-      }
-      return null;
-    }
+    final memberById = {for (final m in members) m.id: m};
 
     final green = subjectColor('chart-2');
 
@@ -101,11 +72,9 @@ class _ActiveMembersCardState extends ConsumerState<ActiveMembersCard> {
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 5),
                   child: _ActiveRow(
-                    name: memberFor(p.userId)?.displayName ?? 'İsimsiz',
-                    avatarUrl: memberFor(p.userId)?.avatarUrl,
-                    elapsed: p.startedAt == null
-                        ? 0
-                        : now.difference(p.startedAt!).inSeconds,
+                    name: memberById[p.userId]?.displayName ?? 'İsimsiz',
+                    avatarUrl: memberById[p.userId]?.avatarUrl,
+                    startedAt: p.startedAt,
                     green: green,
                   ),
                 ),
@@ -120,13 +89,13 @@ class _ActiveRow extends StatelessWidget {
   const _ActiveRow({
     required this.name,
     required this.avatarUrl,
-    required this.elapsed,
+    required this.startedAt,
     required this.green,
   });
 
   final String name;
   final String? avatarUrl;
-  final int elapsed;
+  final DateTime? startedAt;
   final Color green;
 
   @override
@@ -159,11 +128,18 @@ class _ActiveRow extends StatelessWidget {
               style: theme.textTheme.bodyMedium
                   ?.copyWith(fontWeight: FontWeight.w500)),
         ),
-        Text(formatHms(elapsed),
-            style: theme.textTheme.titleSmall?.copyWith(
-              color: green,
-              fontFeatures: const [],
-            )),
+        // Yalnızca bu metin saniyede bir kendini yeniler.
+        SecondTicker(
+          builder: (_, now) {
+            final elapsed =
+                startedAt == null ? 0 : now.difference(startedAt!).inSeconds;
+            return Text(formatHms(elapsed),
+                style: theme.textTheme.titleSmall?.copyWith(
+                  color: green,
+                  fontFeatures: const [],
+                ));
+          },
+        ),
       ],
     );
   }

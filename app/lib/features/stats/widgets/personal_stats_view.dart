@@ -515,23 +515,23 @@ class _SubjectBreakdownCardState extends ConsumerState<_SubjectBreakdownCard> {
       );
     }
 
-    Subject? subjectFor(String? id) {
-      for (final s in subjects) {
-        if (s.id == id) return s;
-      }
-      return null;
-    }
+    // id→Subject map'i: döngü içinde O(1) arama (önceki O(slices×subjects)).
+    final subjectById = {for (final s in subjects) s.id: s};
+    Subject? subjectFor(String? id) => id == null ? null : subjectById[id];
 
     final total = breakdown.fold<int>(0, (s, e) => s + e.value);
     final slices = [
       for (final entry in breakdown)
-        SubjectDonutSlice(
-          label: subjectFor(entry.key)?.name ?? 'Genel',
-          color: subjectFor(entry.key) != null
-              ? subjectColor(subjectFor(entry.key)!.color)
-              : theme.colorScheme.onSurfaceVariant,
-          seconds: entry.value,
-        ),
+        () {
+          final subject = subjectFor(entry.key);
+          return SubjectDonutSlice(
+            label: subject?.name ?? 'Genel',
+            color: subject != null
+                ? subjectColor(subject.color)
+                : theme.colorScheme.onSurfaceVariant,
+            seconds: entry.value,
+          );
+        }(),
     ];
 
     String valueFor(int seconds) => _showPercent
