@@ -17,15 +17,19 @@ class StudyHeatmap extends StatelessWidget {
     super.key,
     required this.sessions,
     this.weeks = 15,
+    this.precomputedTotals,
   });
 
   final List<StudySession> sessions;
   final int weeks;
 
+  /// Çağıran zaten `dailyTotals(sessions)` hesapladıysa buradan geçirir.
+  final Map<DateTime, int>? precomputedTotals;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final totals = dailyTotals(sessions);
+    final totals = precomputedTotals ?? dailyTotals(sessions);
     final maxSeconds = totals.values.fold<int>(0, (m, v) => v > m ? v : m);
 
     final today = dayOf(DateTime.now());

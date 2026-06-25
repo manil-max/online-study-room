@@ -16,18 +16,27 @@ const _kMonths = [
 /// Kişisel rekorlar: toplam, rekor seri, en verimli gün, aktif gün, en çok ders.
 /// Renkli stat döşemeleri (§3.11). Card'sız içerik — çağıran sarmalar.
 class StudyRecords extends ConsumerWidget {
-  const StudyRecords({super.key, required this.sessions, this.columns = 2});
+  const StudyRecords({
+    super.key,
+    required this.sessions,
+    this.columns = 2,
+    this.totals,
+  });
 
   final List<StudySession> sessions;
   final int columns;
+
+  /// Çağıran zaten `dailyTotals(sessions)` hesapladıysa buradan geçirir; böylece
+  /// bu widget (ve `longestStudyStreak`) haritayı yeniden kurmaz.
+  final Map<DateTime, int>? totals;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final subjects = ref.watch(userSubjectsProvider).value ?? const <Subject>[];
 
     final total = totalSeconds(sessions);
-    final longest = longestStudyStreak(sessions);
-    final daily = dailyTotals(sessions);
+    final daily = totals ?? dailyTotals(sessions);
+    final longest = longestStudyStreak(sessions, totals: daily);
     final activeDays = daily.length;
 
     // En verimli gün.

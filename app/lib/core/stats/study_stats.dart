@@ -68,12 +68,13 @@ List<DayTotal> lastNDays(
   Iterable<StudySession> sessions,
   int count, {
   DateTime? today,
+  Map<DateTime, int>? totals,
 }) {
-  final totals = dailyTotals(sessions);
+  final dayMap = totals ?? dailyTotals(sessions);
   final end = dayOf(today ?? DateTime.now());
   return List.generate(count, (i) {
     final day = end.subtract(Duration(days: count - 1 - i));
-    return DayTotal(day, totals[day] ?? 0);
+    return DayTotal(day, dayMap[day] ?? 0);
   });
 }
 
@@ -82,16 +83,17 @@ List<DayTotal> lastNDays(
 List<DayTotal> dailyRange(
   Iterable<StudySession> sessions,
   DateTime fromDay,
-  DateTime toDay,
-) {
-  final totals = dailyTotals(sessions);
+  DateTime toDay, {
+  Map<DateTime, int>? totals,
+}) {
+  final dayMap = totals ?? dailyTotals(sessions);
   final from = dayOf(fromDay);
   final to = dayOf(toDay);
   final days = to.difference(from).inDays;
   if (days < 0) return const [];
   return List.generate(days + 1, (i) {
     final day = from.add(Duration(days: i));
-    return DayTotal(day, totals[day] ?? 0);
+    return DayTotal(day, dayMap[day] ?? 0);
   });
 }
 
@@ -172,11 +174,12 @@ int currentStreak(
   Iterable<StudySession> sessions,
   int goalSeconds, {
   DateTime? today,
+  Map<DateTime, int>? totals,
 }) {
   if (goalSeconds <= 0) return 0;
-  final totals = dailyTotals(sessions);
+  final dayMap = totals ?? dailyTotals(sessions);
   final start = dayOf(today ?? DateTime.now());
-  bool met(DateTime d) => (totals[d] ?? 0) >= goalSeconds;
+  bool met(DateTime d) => (dayMap[d] ?? 0) >= goalSeconds;
 
   // Bugün tutturulduysa bugünden, yoksa (gün sürüyor) dünden başla.
   var cursor = met(start) ? start : start.subtract(const Duration(days: 1));
@@ -189,8 +192,11 @@ int currentStreak(
 }
 
 /// En uzun (üst üste en az 1 sn çalışılan) gün serisi — "rekor seri" (§3.11).
-int longestStudyStreak(Iterable<StudySession> sessions) {
-  final days = dailyTotals(sessions).keys.toList()..sort();
+int longestStudyStreak(
+  Iterable<StudySession> sessions, {
+  Map<DateTime, int>? totals,
+}) {
+  final days = (totals ?? dailyTotals(sessions)).keys.toList()..sort();
   if (days.isEmpty) return 0;
   var best = 1;
   var cur = 1;

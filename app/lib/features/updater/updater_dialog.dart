@@ -35,16 +35,30 @@ class _UpdaterDialogState extends State<UpdaterDialog> {
   bool _downloading = false;
   double _progress = 0; // 0..1
   String? _error;
+  CancelToken? _cancelToken;
+
+  @override
+  void dispose() {
+    // Pencere kapanırsa süren indirmeyi bırak (kaynak sızıntısını önler).
+    _cancelToken?.cancel();
+    super.dispose();
+  }
 
   Future<void> _downloadAndInstall() async {
+    final cancelToken = CancelToken();
     setState(() {
       _downloading = true;
       _progress = 0;
       _error = null;
+      _cancelToken = cancelToken;
     });
 
     try {
-      final dio = Dio();
+      // Takılı bağlantıda sonsuza kadar beklememek için zaman aşımları.
+      final dio = Dio(BaseOptions(
+        connectTimeout: const Duration(seconds: 20),
+        receiveTimeout: const Duration(minutes: 3),
+      ));
       final dir = await getTemporaryDirectory();
       final savePath = '${dir.path}/update_${widget.info.versionCode}.apk';
       final apkFile = File(savePath);
@@ -52,6 +66,7 @@ class _UpdaterDialogState extends State<UpdaterDialog> {
       await dio.download(
         widget.info.downloadUrl,
         savePath,
+        cancelToken: cancelToken,
         onReceiveProgress: (received, total) {
           if (total > 0 && mounted) {
             setState(() => _progress = received / total);
@@ -64,7 +79,7 @@ class _UpdaterDialogState extends State<UpdaterDialog> {
       final sha256Url = widget.info.sha256Url;
       if (sha256Url != null) {
         final expected = _parseSha256(
-          (await dio.get<String>(sha256Url)).data,
+          (await dio.get<String>(sha256Url, cancelToken: cancelToken)).data,
         );
         final actual = sha256.convert(await apkFile.readAsBytes()).toString();
         if (expected == null || expected != actual) {
@@ -92,12 +107,15 @@ class _UpdaterDialogState extends State<UpdaterDialog> {
       // Kurulum ekranı açıldı; pencereyi kapat.
       if (mounted) Navigator.of(context).pop();
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          _downloading = false;
-          _error = 'İndirme başarısız oldu. İnternet bağlantını kontrol et.';
-        });
-      }
+      if (!mounted) return;
+      // Kullanıcı iptal ettiyse hata gösterme, sadece indirmeyi durdur.
+      final cancelled = e is DioException && e.type == DioExceptionType.cancel;
+      setState(() {
+        _downloading = false;
+        _error = cancelled
+            ? null
+            : 'İndirme başarısız oldu. İnternet bağlantını kontrol et.';
+      });
     }
   }
 
@@ -145,7 +163,12 @@ class _UpdaterDialogState extends State<UpdaterDialog> {
         ),
       ),
       actions: _downloading
-          ? null
+          ? [
+              TextButton(
+                onPressed: () => _cancelToken?.cancel(),
+                child: const Text('İptal'),
+              ),
+            ]
           : [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),

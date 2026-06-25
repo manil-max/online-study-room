@@ -73,6 +73,10 @@ class PersonalStatsView extends StatelessWidget {
       );
     }
 
+    // Gün→saniye haritasını bir kez kur; gün-bazlı çocuklar (rekorlar, ısı
+    // haritası, trend, aralık) bunu paylaşır → haritayı tekrar tekrar kurmaz.
+    final dailyTotalsMap = dailyTotals(sessions);
+
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -99,13 +103,13 @@ class PersonalStatsView extends StatelessWidget {
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
-            child: StudyRecords(sessions: sessions),
+            child: StudyRecords(sessions: sessions, totals: dailyTotalsMap),
           ),
         ),
         const SizedBox(height: 16),
         Text('Günlük dağılım', style: theme.textTheme.titleMedium),
         const SizedBox(height: 8),
-        _TrendCard(sessions: sessions),
+        _TrendCard(sessions: sessions, totals: dailyTotalsMap),
         const SizedBox(height: 16),
         _WeekComparisonCard(sessions: sessions, now: now),
         const SizedBox(height: 16),
@@ -114,7 +118,10 @@ class PersonalStatsView extends StatelessWidget {
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
-            child: StudyHeatmap(sessions: sessions, weeks: 26),
+            child: StudyHeatmap(
+                sessions: sessions,
+                weeks: 26,
+                precomputedTotals: dailyTotalsMap),
           ),
         ),
         const SizedBox(height: 16),
@@ -158,7 +165,7 @@ class PersonalStatsView extends StatelessWidget {
         const SizedBox(height: 16),
         Text('Seçili tarih aralığı', style: theme.textTheme.titleMedium),
         const SizedBox(height: 8),
-        _RangeCard(sessions: sessions),
+        _RangeCard(sessions: sessions, totals: dailyTotalsMap),
         const SizedBox(height: 16),
         Text('Son 30 gün', style: theme.textTheme.titleMedium),
         const SizedBox(height: 8),
@@ -194,9 +201,10 @@ class PersonalStatsView extends StatelessWidget {
 
 /// Günlük çubuk grafiği + gün aralığı seçici (7 / 14 / 30 gün).
 class _TrendCard extends ConsumerStatefulWidget {
-  const _TrendCard({required this.sessions});
+  const _TrendCard({required this.sessions, this.totals});
 
   final List<StudySession> sessions;
+  final Map<DateTime, int>? totals;
 
   @override
   ConsumerState<_TrendCard> createState() => _TrendCardState();
@@ -207,7 +215,7 @@ class _TrendCardState extends ConsumerState<_TrendCard> {
 
   @override
   Widget build(BuildContext context) {
-    final series = lastNDays(widget.sessions, _days);
+    final series = lastNDays(widget.sessions, _days, totals: widget.totals);
     final goalSeconds = ref.watch(dailyGoalMinutesProvider) * 60;
     return Card(
       child: Padding(
@@ -238,9 +246,10 @@ class _TrendCardState extends ConsumerState<_TrendCard> {
 /// Serbest tarih aralığı: kullanıcı bir aralık seçer; toplam + günlük ortalama
 /// ve (aralık 45 günü aşmıyorsa) günlük grafik gösterilir (project.md §3.4).
 class _RangeCard extends StatefulWidget {
-  const _RangeCard({required this.sessions});
+  const _RangeCard({required this.sessions, this.totals});
 
   final List<StudySession> sessions;
+  final Map<DateTime, int>? totals;
 
   @override
   State<_RangeCard> createState() => _RangeCardState();
@@ -283,7 +292,7 @@ class _RangeCardState extends State<_RangeCard> {
     final total = totalSeconds(inRange(widget.sessions, from, to));
     final avg = dailyAverageSeconds(widget.sessions, from, to);
     final dayCount = to.difference(from).inDays + 1;
-    final series = dailyRange(widget.sessions, from, to);
+    final series = dailyRange(widget.sessions, from, to, totals: widget.totals);
 
     String d(DateTime x) => '${x.day}.${x.month}.${x.year}';
 
