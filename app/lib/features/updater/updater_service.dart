@@ -1,6 +1,7 @@
-import 'dart:io';
+import 'dart:io' show Platform;
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:package_info_plus/package_info_plus.dart';
 
 /// GitHub Releases üzerinden in-app güncelleme kontrolü.
@@ -26,7 +27,9 @@ class UpdaterService {
   /// Yeni sürüm varsa bilgisini, yoksa `null` döndürür.
   /// Ağ/parse hatalarında sessizce `null` döner (uygulama açılışını bloklamaz).
   Future<UpdateInfo?> checkForUpdate() async {
-    if (!Platform.isAndroid) return null;
+    // Web ve Android dışı platformlarda güncelleme yok. kIsWeb derleme-zamanı
+    // sabiti; web'de `Platform`'a hiç dokunulmaz (web'de erişmek hata fırlatır).
+    if (kIsWeb || !Platform.isAndroid) return null;
 
     try {
       final info = await PackageInfo.fromPlatform();
