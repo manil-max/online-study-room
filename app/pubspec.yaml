@@ -43,6 +43,12 @@ dependencies:
   image_picker: ^1.2.2
   shared_preferences: ^2.5.5
 
+  # In-app güncelleme (GitHub Releases üzerinden, sadece Android).
+  package_info_plus: ^10.1.0  # Yüklü sürümün build number'ını okur.
+  dio: ^5.7.0                 # APK'yı ilerleme yüzdesiyle indirir.
+  path_provider: ^2.1.5       # İndirilen APK'yı cache klasörüne yazar.
+  open_filex: ^4.5.0          # APK'yı açıp Android kurulum ekranını tetikler.
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -51,3 +51,7 @@ desktop.ini
 
 # --- Tasarım referansı (kardeşin Next.js mockup'ı — koda dahil değil, sadece yerel referans) ---
 project-continuation/
+
+# Güncelleme sistemi yerel gizli dosyaları
+**/android/key.jks.base64.txt
+**/KEYSTORE_SECRETS.txt

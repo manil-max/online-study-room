@@ -10,7 +10,7 @@
 
 ## Özet Durum
 
-- **Aktif Faz:** Oturum kalıcılığı sağlamlaştırıldı (Faz 1.1) — SDK zaten oturumu kalıcı tutuyor; profil çekimi çevrimdışında kullanıcıyı dışarı atmıyor. Tamamlananlar: Faz 1 (auth+profil+sınıf), Faz 2 (presence+manuel giriş), Faz 3 istatistikler (3a–3d). Supabase uçtan uca test edildi ✅. Kalan: Faz 4 widget (Android cihaz ister — ertelendi), Şifre sıfırlama (opsiyonel), Çevrimdışı tespiti/heartbeat, tasarım (en son).
+- **Aktif Faz:** FAZ 5.1 - Otomatik Güncelleme Sistemi (GitHub Releases). Kod + CI hazır; kalan = GitHub Secrets kurulumu ve ilk `v2` tag testi.
 - **Proje konumu:** `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room` (İngilizce ad — Türkçe/boşluklu yol Flutter'ı bozuyordu; aşağıdaki nota bak)
 - **Sıradaki adım:** 2026-06-22 geri bildirim turu büyük ölçüde işlendi: Sınıf→Grup terminolojisi,
   Derssiz→Genel, profilden Derslerim kaldırma, uzun tarih, büyük seri, İstatistik grup
@@ -399,8 +399,23 @@ istatistik zenginleştirme (renk-kodlu tablo, scatter — bkz. memory `ui-design
 
 ## FAZ 5 — Yayın & Dağıtım
 
+### 5.1 Otomatik Güncelleme Sistemi (In-App Update — GitHub Releases) 🟢
+**Tasarım:** APK'lar GitHub Releases'te tutulur (ücretsiz, public). Uygulama açılışta
+GitHub API'den en son release etiketini okur, kendi `buildNumber`'ıyla karşılaştırır.
+Supabase'e gerek yok. (Önceki Supabase tablolu plan iptal edildi — `0007` silindi.)
+- [x] **Flutter paketleri**: `package_info_plus`, `dio`, `path_provider`, `open_filex` (`pubspec.yaml`).
+- [x] **Android izinleri**: `AndroidManifest.xml` → `INTERNET` + `REQUEST_INSTALL_PACKAGES`.
+- [x] **Kalıcı release keystore + signing config**: `android/key.jks` + `key.properties` (gitignored), `build.gradle.kts` release imzası. Release APK imzalı derlendi (58.6MB). ⚠️ Anahtar kalıcı, yedeklenmeli.
+- [x] **Güncelleme Servisi (`UpdaterService`)**: GitHub `releases/latest` → `v<buildNumber>` etiketini mevcut sürümle karşılaştırır (`features/updater/updater_service.dart`). Sadece Android.
+- [x] **Güncelleme Ekranı (`UpdaterDialog`)**: Sürüm notları + indirme % çubuğu, bitince `open_filex` ile kurulum (`features/updater/updater_dialog.dart`).
+- [x] **Ana Ekrana Bağlama**: `auth_gate.dart` açılışta bir kez `maybeShowUpdateDialog`.
+- [x] **CI (GitHub Actions)**: `v*` etiketi push'unda APK derleyip Releases'e koyar (`.github/workflows/release.yml`). Etiket sayısı = `versionCode`.
+- [ ] **Kurulum (kullanıcı)**: GitHub Secrets (`KEYSTORE_BASE64`, `STORE_PASSWORD`, `KEY_PASSWORD`, `KEY_ALIAS`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`) eklenmeli; ilk `git tag v2` ile test.
+- **Direkt indirme linki:** `https://github.com/manil-max/online-study-room/releases/latest/download/app-release.apk`
+
+### 5.2 Manuel Dağıtım (Eski Yöntem)
 - [ ] Release APK üretimi
-- [ ] Cihazlara kurulum (sideload)
+- [ ] Cihazlara ilk kurulum (sideload)
 - [ ] Windows kurulum paketi
 - [ ] Kullanım / kurulum notları (/docs)
 
