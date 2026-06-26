@@ -430,8 +430,8 @@ class _MatrixCardState extends State<_MatrixCard> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.75),
-                  width: 1.5,
+                  color: theme.colorScheme.primary.withValues(alpha: 0.60),
+                  width: 1,
                 ),
               ),
             ),
@@ -443,8 +443,8 @@ class _MatrixCardState extends State<_MatrixCard> {
           right: 6,
           child: Center(
             child: Material(
-              color: theme.colorScheme.surfaceContainerHighest,
-              elevation: 2,
+              color: theme.colorScheme.surface,
+              elevation: 1,
               borderRadius: BorderRadius.circular(16),
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(10, 2, 2, 2),
@@ -452,7 +452,7 @@ class _MatrixCardState extends State<_MatrixCard> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
-                      widget.config.type.icon,
+                      Icons.drag_indicator,
                       size: 15,
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
@@ -558,32 +558,35 @@ class _ResizeHandle extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Positioned(
-      left: anchor.left ? -9 : null,
-      right: anchor.left ? null : -9,
-      top: anchor.top ? -9 : null,
-      bottom: anchor.top ? null : -9,
+      left: anchor.left ? -10 : null,
+      right: anchor.left ? null : -10,
+      top: anchor.top ? -10 : null,
+      bottom: anchor.top ? null : -10,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onPanStart: (_) => onStart(),
         onPanUpdate: (details) => onUpdate(details, anchor),
         onPanEnd: (_) => onEnd(),
         child: SizedBox(
-          width: 28,
-          height: 28,
+          width: 32,
+          height: 32,
           child: Center(
             child: DecoratedBox(
               decoration: BoxDecoration(
-                color: theme.colorScheme.primary,
+                color: theme.colorScheme.surface,
                 shape: BoxShape.circle,
-                border: Border.all(color: theme.colorScheme.surface, width: 2),
+                border: Border.all(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.75),
+                  width: 1.4,
+                ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.18),
-                    blurRadius: 6,
+                    color: Colors.black.withValues(alpha: 0.12),
+                    blurRadius: 5,
                   ),
                 ],
               ),
-              child: const SizedBox(width: 10, height: 10),
+              child: const SizedBox(width: 9, height: 9),
             ),
           ),
         ),

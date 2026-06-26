@@ -469,7 +469,7 @@ Supabase'e gerek yok. (Önceki Supabase tablolu plan iptal edildi — `0007` sil
 - `[X]` R4 · Occupancy matrisi + çarpışma & akıcı reflow fiziği 🔴 Opus 4.8
 - `[X]` R5 · Sürükle: tam-boy yarı saydam feedback + hücre hedefleme 🟠 Opus 4.6
 - `[X]` R6 · Boyutlandırma: hücre-snap yükseklik + doğru köşe/kenar geometri 🟠 Opus 4.6
-- `[ ]` R7 · Tutamaç & düzenleme UI estetiği (ince çizgi + zarif noktalar) 🔵 Sonnet 4.6
+- `[X]` R7 · Tutamaç & düzenleme UI estetiği (ince çizgi + zarif noktalar) 🔵 Sonnet 4.6
 - `[ ]` R8 · Göç doğrulama + string + cilalama + analyze/test 🟢 Gemini 3.5 Flash
 
 ---
@@ -877,7 +877,7 @@ Supabase'e gerek yok. (Önceki Supabase tablolu plan iptal edildi — `0007` sil
     sabit tutuyor. Delta hücre adımına snapleniyor, min 1×1 ve 6 sütun sınırı korunuyor.
     Canlı resize `setBounds(... persist:false)` ile R4 reflow'dan geçiyor; pan bitince düzen kalıcı.
 
-- [ ] **R7 · Tutamaç & düzenleme UI estetiği 🔵 Sonnet 4.6**
+- [x] **R7 · Tutamaç & düzenleme UI estetiği 🔵 Sonnet 4.6 — ✅ YAPILDI**
   - **Dosya:** `home_screen.dart` (+ ufak ortak widget'lar).
   - **Adımlar:** Kaba mavi yuvarlaklar → **minimal**: düzenleme modunda kartı saran **ince**
     çerçeve (1px, primary @ ~0.6) + köşelerde/kenar ortalarında **zarif ufak noktalar/haplar**
@@ -885,6 +885,9 @@ Supabase'e gerek yok. (Önceki Supabase tablolu plan iptal edildi — `0007` sil
     kaldır ×). Hover/aktif durumda hafif vurgulanır. Tutarlı tema renkleri.
   - **Kabul:** Tutamaçlar minimal ve profesyonel; göze batmaz ama tutması kolay; düzenleme modu
     "launcher" hissi verir; dokunma hedefleri yeterli (≥24px efektif).
+  - **Uygulandı (2026-06-26):** Düzenleme çerçevesi daha ince ve düşük vurgulu hale getirildi.
+    Üst kontrol hapı sadeleştirildi; köşe tutamaçları küçük, yüzey renkli, ince primary bordürlü
+    ve 32px dokunma alanlı olacak şekilde cilalandı.
 
 - [ ] **R8 · Göç doğrulama + string + cilalama + analyze/test 🟢 Gemini 3.5 Flash**
   - **Dosyalar:** `home_screen.dart` (metinler), `progress.md`, gerekiyorsa ufak rötuşlar.
