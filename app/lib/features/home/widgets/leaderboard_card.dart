@@ -41,125 +41,137 @@ class LeaderboardCard extends ConsumerWidget {
     final members = ref.watch(groupMembersProvider).value ?? const <Profile>[];
     final meId = ref.watch(authStateProvider).value?.id;
 
-    final count = size == DashboardCardSize.small
-        ? 3
-        : size == DashboardCardSize.large
-            ? 10
-            : 5;
-    // Bugünün sıralaması (userId → saniye), büyükten küçüğe.
-    final todayByUser = todaySecondsByUser(stats);
-    final board = (todayByUser.entries.toList()
-          ..sort((a, b) => b.value.compareTo(a.value)))
-        .take(count)
-        .toList();
-    // Grup günlük hedefi: grubun bugünkü TOPLAM çalışması / hedef + grup serisi.
-    final goalSeconds = group.dailyGoalMinutes * 60;
-    final groupTodayTotal = todayByUser.values.fold<int>(0, (a, v) => a + v);
-    final groupGoalPct =
-        goalSeconds > 0 ? (groupTodayTotal / goalSeconds).clamp(0.0, 1.0) : 0.0;
-    final groupStreak =
-        currentStreak(const [], goalSeconds, totals: groupDayTotals(stats));
-    // Her üyenin çalışma serisi (üst üste çalıştığı gün), günlük toplamlardan.
-    final streaks = <String, int>{
-      for (final e in board)
-        e.key: studyStreak(const [], totals: userDayTotals(stats, e.key)),
-    };
-
-    Profile? memberFor(String id) {
-      for (final m in members) {
-        if (m.id == id) return m;
-      }
-      return null;
-    }
-
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isCompact = constraints.maxWidth < 220;
+          final availableHeight = constraints.maxHeight;
+          final isHeightBounded = availableHeight < double.infinity;
+          
+          // Header takes ~110px. Each row takes ~36px.
+          final int count;
+          if (isHeightBounded) {
+            final rowSpace = availableHeight - 110;
+            count = (rowSpace / 36).floor().clamp(2, 15);
+          } else {
+            count = 5;
+          }
+
+          // Bugünün sıralaması (userId → saniye), büyükten küçüğe.
+          final todayByUser = todaySecondsByUser(stats);
+          
+          // Grup günlük hedefi: grubun bugünkü TOPLAM çalışması / hedef + grup serisi.
+          final goalSeconds = group.dailyGoalMinutes * 60;
+          final groupTodayTotal = todayByUser.values.fold<int>(0, (a, v) => a + v);
+          final groupGoalPct =
+              goalSeconds > 0 ? (groupTodayTotal / goalSeconds).clamp(0.0, 1.0) : 0.0;
+          final groupStreak =
+              currentStreak(const [], goalSeconds, totals: groupDayTotals(stats));
+
+          Profile? memberFor(String id) {
+            for (final m in members) {
+              if (m.id == id) return m;
+            }
+            return null;
+          }
+
+          final board = (todayByUser.entries.toList()
+                ..sort((a, b) => b.value.compareTo(a.value)))
+              .take(count)
+              .toList();
+
+          final streaks = <String, int>{
+            for (final e in board)
+              e.key: studyStreak(const [], totals: userDayTotals(stats, e.key)),
+          };
+
+          return Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Grup sıralaması', style: theme.textTheme.titleMedium),
-                const Spacer(),
-                Flexible(
-                  child: Text(
-                    group.name,
-                    textAlign: TextAlign.end,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodySmall
-                        ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                Row(
+                  children: [
+                    Text('Sıralama', style: theme.textTheme.titleMedium),
+                    const Spacer(),
+                    if (!isCompact)
+                      Flexible(
+                        child: Text(
+                          group.name,
+                          textAlign: TextAlign.end,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodySmall
+                              ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                        ),
+                      ),
+                  ],
+                ),
+                if (!isCompact) ...[
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Icon(Icons.flag_outlined,
+                          size: 15, color: theme.colorScheme.onSurfaceVariant),
+                      const SizedBox(width: 4),
+                      Text('Grup hedefi',
+                          style: theme.textTheme.labelMedium?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant)),
+                      const Spacer(),
+                      if (groupStreak > 0) ...[
+                        Icon(Icons.local_fire_department,
+                            size: 14, color: subjectColor('chart-5')),
+                        const SizedBox(width: 2),
+                        Text('$groupStreak',
+                            style: theme.textTheme.labelSmall
+                                ?.copyWith(color: subjectColor('chart-5'))),
+                        const SizedBox(width: 8),
+                      ],
+                      Text('%${(groupGoalPct * 100).round()}',
+                          style: theme.textTheme.labelMedium
+                              ?.copyWith(fontWeight: FontWeight.w700)),
+                    ],
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            // Grup günlük hedefi ilerlemesi + grup serisi.
-            Row(
-              children: [
-                Icon(Icons.flag_outlined,
-                    size: 15, color: theme.colorScheme.onSurfaceVariant),
-                const SizedBox(width: 4),
-                Text('Grup hedefi',
-                    style: theme.textTheme.labelMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant)),
-                const Spacer(),
-                if (groupStreak > 0) ...[
-                  Icon(Icons.local_fire_department,
-                      size: 14, color: subjectColor('chart-5')),
-                  const SizedBox(width: 2),
-                  Text('$groupStreak',
-                      style: theme.textTheme.labelSmall
-                          ?.copyWith(color: subjectColor('chart-5'))),
-                  const SizedBox(width: 8),
+                  const SizedBox(height: 6),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(6),
+                    child: LinearProgressIndicator(
+                      value: groupGoalPct,
+                      minHeight: 7,
+                      backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                      color: groupGoalPct >= 1.0
+                          ? subjectColor('chart-2')
+                          : theme.colorScheme.primary,
+                    ),
+                  ),
                 ],
-                Text('%${(groupGoalPct * 100).round()}',
-                    style: theme.textTheme.labelMedium
-                        ?.copyWith(fontWeight: FontWeight.w700)),
+                const SizedBox(height: 12),
+                if (board.isEmpty)
+                  Text(
+                    'Bugün henüz kimse çalışmamış.',
+                    style: theme.textTheme.bodyMedium
+                        ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                  )
+                else
+                  Expanded(
+                    child: ListView.builder(
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: board.length,
+                      itemBuilder: (context, i) {
+                        return _Row(
+                          rank: i + 1,
+                          member: memberFor(board[i].key),
+                          seconds: board[i].value,
+                          streak: streaks[board[i].key] ?? 0,
+                          isMe: board[i].key == meId,
+                          isCompact: isCompact,
+                        );
+                      },
+                    ),
+                  ),
               ],
             ),
-            const SizedBox(height: 6),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(6),
-              child: LinearProgressIndicator(
-                value: groupGoalPct,
-                minHeight: 7,
-                backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                color: groupGoalPct >= 1.0
-                    ? subjectColor('chart-2')
-                    : theme.colorScheme.primary,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              '${formatHuman(groupTodayTotal)} / ${formatHuman(goalSeconds)}',
-              style: theme.textTheme.bodySmall
-                  ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-            ),
-            const Divider(height: 20),
-            Text(
-              'Bugünkü sıralama',
-              style: theme.textTheme.labelSmall
-                  ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-            ),
-            const SizedBox(height: 8),
-            if (board.isEmpty)
-              Text(
-                'Bugün henüz kimse çalışmamış.',
-                style: theme.textTheme.bodyMedium
-                    ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-              )
-            else
-              for (var i = 0; i < board.length; i++)
-                _Row(
-                  rank: i + 1,
-                  member: memberFor(board[i].key),
-                  seconds: board[i].value,
-                  streak: streaks[board[i].key] ?? 0,
-                  isMe: board[i].key == meId,
-                ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -172,6 +184,7 @@ class _Row extends StatelessWidget {
     required this.seconds,
     required this.streak,
     required this.isMe,
+    this.isCompact = false,
   });
 
   final int rank;
@@ -179,6 +192,7 @@ class _Row extends StatelessWidget {
   final int seconds;
   final int streak;
   final bool isMe;
+  final bool isCompact;
 
   @override
   Widget build(BuildContext context) {
@@ -199,49 +213,51 @@ class _Row extends StatelessWidget {
         onTapDown: (d) => _showDetailAt(context, name, d.globalPosition),
         onTap: () {},
         child: Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 22,
-            child: Text(
-              '$rank',
-              style: theme.textTheme.titleSmall
-                  ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-            ),
-          ),
-          UserAvatar(
-            displayName: name,
-            avatarUrl: member?.avatarUrl,
-            radius: 14,
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              isMe ? '$name (sen)' : name,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: isMe ? FontWeight.w600 : null,
-                color: isMe ? theme.colorScheme.primary : null,
+          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 22,
+                child: Text(
+                  '$rank',
+                  style: theme.textTheme.titleSmall
+                      ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                ),
               ),
-            ),
+              UserAvatar(
+                displayName: name,
+                avatarUrl: member?.avatarUrl,
+                radius: 14,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: isCompact
+                    ? const SizedBox.shrink()
+                    : Text(
+                        isMe ? '$name (sen)' : name,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: isMe ? FontWeight.w600 : null,
+                          color: isMe ? theme.colorScheme.primary : null,
+                        ),
+                      ),
+              ),
+              if (!isCompact && streak > 0) ...[
+                Icon(Icons.local_fire_department,
+                    size: 14, color: subjectColor('chart-5')),
+                const SizedBox(width: 2),
+                Text('$streak',
+                    style: theme.textTheme.labelSmall
+                        ?.copyWith(color: subjectColor('chart-5'))),
+                const SizedBox(width: 8),
+              ],
+              Text(
+                formatHuman(seconds),
+                style: theme.textTheme.bodySmall
+                    ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              ),
+            ],
           ),
-          if (streak > 0) ...[
-            Icon(Icons.local_fire_department,
-                size: 14, color: subjectColor('chart-5')),
-            const SizedBox(width: 2),
-            Text('$streak',
-                style: theme.textTheme.labelSmall
-                    ?.copyWith(color: subjectColor('chart-5'))),
-            const SizedBox(width: 8),
-          ],
-          Text(
-            formatHuman(seconds),
-            style: theme.textTheme.bodySmall
-                ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-          ),
-        ],
-      ),
         ),
       ),
     );

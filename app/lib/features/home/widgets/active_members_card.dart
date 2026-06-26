@@ -40,51 +40,78 @@ class ActiveMembersCard extends ConsumerWidget {
     final green = subjectColor('chart-2');
 
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isCompact = constraints.maxWidth < 220;
+          final availableHeight = constraints.maxHeight;
+          final isHeightBounded = availableHeight < double.infinity;
+
+          // Header is ~45px, each row is ~42px.
+          final int maxItems;
+          if (isHeightBounded) {
+            maxItems = ((availableHeight - 60) / 42).floor().clamp(1, 20);
+          } else {
+            maxItems = active.length;
+          }
+
+          final visibleActive = active.take(maxItems).toList();
+
+          return Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Şu an çalışanlar', style: theme.textTheme.titleMedium),
-                const Spacer(),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: green.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text('${active.length} aktif',
-                      style: theme.textTheme.labelSmall
-                          ?.copyWith(color: green, fontWeight: FontWeight.w700)),
+                Row(
+                  children: [
+                    Text('Şu an çalışanlar', style: theme.textTheme.titleMedium),
+                    const Spacer(),
+                    Container(
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: green.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text('${active.length} aktif',
+                          style: theme.textTheme.labelSmall
+                              ?.copyWith(color: green, fontWeight: FontWeight.w700)),
+                    ),
+                  ],
                 ),
+                const SizedBox(height: 12),
+                if (active.isEmpty)
+                  Text('Şu an çalışan kimse yok.',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant))
+                else
+                  Expanded(
+                    child: ListView.builder(
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: visibleActive.length,
+                      itemBuilder: (context, i) {
+                        final p = visibleActive[i];
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 5),
+                          child: _ActiveRow(
+                            name: (memberById[p.userId] != null &&
+                                    !memberById[p.userId]!.isActive)
+                                ? 'Eski Grup Üyesi'
+                                : (memberById[p.userId]?.displayName.isNotEmpty == true
+                                    ? memberById[p.userId]!.displayName
+                                    : 'İsimsiz'),
+                            avatarUrl: memberById[p.userId]?.avatarUrl,
+                            startedAt: p.startedAt,
+                            green: green,
+                            isCompact: isCompact,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
               ],
             ),
-            const SizedBox(height: 12),
-            if (active.isEmpty)
-              Text('Şu an çalışan kimse yok.',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant))
-            else
-              for (final p in active)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 5),
-                  child: _ActiveRow(
-                    name: (memberById[p.userId] != null &&
-                            !memberById[p.userId]!.isActive)
-                        ? 'Eski Grup Üyesi'
-                        : (memberById[p.userId]?.displayName.isNotEmpty == true
-                            ? memberById[p.userId]!.displayName
-                            : 'İsimsiz'),
-                    avatarUrl: memberById[p.userId]?.avatarUrl,
-                    startedAt: p.startedAt,
-                    green: green,
-                  ),
-                ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -96,12 +123,14 @@ class _ActiveRow extends StatelessWidget {
     required this.avatarUrl,
     required this.startedAt,
     required this.green,
+    this.isCompact = false,
   });
 
   final String name;
   final String? avatarUrl;
   final DateTime? startedAt;
   final Color green;
+  final bool isCompact;
 
   @override
   Widget build(BuildContext context) {
@@ -127,12 +156,15 @@ class _ActiveRow extends StatelessWidget {
           ],
         ),
         const SizedBox(width: 10),
-        Expanded(
-          child: Text(name,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.bodyMedium
-                  ?.copyWith(fontWeight: FontWeight.w500)),
-        ),
+        if (!isCompact)
+          Expanded(
+            child: Text(name,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodyMedium
+                    ?.copyWith(fontWeight: FontWeight.w500)),
+          )
+        else
+          const Spacer(),
         // Yalnızca bu metin saniyede bir kendini yeniler.
         SecondTicker(
           builder: (_, now) {
