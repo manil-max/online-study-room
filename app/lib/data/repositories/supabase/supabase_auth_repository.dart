@@ -29,24 +29,28 @@ class SupabaseAuthRepository implements AuthRepository {
       }
     }
 
-    try {
-      await for (final state in _client.auth.onAuthStateChange) {
-        try {
-          _current = await _profileFor(state.session);
-          yield _current;
-        } catch (error) {
-          if (await _recoverFromStaleRefreshToken(error)) {
-            yield null;
-          } else {
-            rethrow;
+    while (true) {
+      try {
+        await for (final state in _client.auth.onAuthStateChange) {
+          try {
+            _current = await _profileFor(state.session);
+            yield _current;
+          } catch (error) {
+            if (await _recoverFromStaleRefreshToken(error)) {
+              yield null;
+            } else {
+              rethrow;
+            }
           }
         }
-      }
-    } catch (error) {
-      if (await _recoverFromStaleRefreshToken(error)) {
-        yield null;
-      } else {
-        rethrow;
+        return;
+      } catch (error) {
+        if (await _recoverFromStaleRefreshToken(error)) {
+          yield null;
+          continue;
+        } else {
+          rethrow;
+        }
       }
     }
   }

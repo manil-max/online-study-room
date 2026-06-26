@@ -51,6 +51,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           password: _passwordController.text,
         );
       }
+      ref.invalidate(authStateProvider);
       // Başarılıysa AuthGate otomatik olarak ana uygulamaya geçer.
     } on AuthException catch (e) {
       setState(() => _error = e.message);
@@ -78,8 +79,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Icon(Icons.groups,
-                        size: 64, color: theme.colorScheme.primary),
+                    Icon(
+                      Icons.groups,
+                      size: 64,
+                      color: theme.colorScheme.primary,
+                    ),
                     const SizedBox(height: 16),
                     Text(
                       'Online Çalışma Sınıfı',
@@ -149,8 +153,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                           ? const SizedBox(
                               height: 20,
                               width: 20,
-                              child:
-                                  CircularProgressIndicator(strokeWidth: 2),
+                              child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : Text(_isRegister ? 'Kayıt ol' : 'Giriş yap'),
                     ),
@@ -159,9 +162,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                       onPressed: _loading
                           ? null
                           : () => setState(() {
-                                _isRegister = !_isRegister;
-                                _error = null;
-                              }),
+                              _isRegister = !_isRegister;
+                              _error = null;
+                            }),
                       child: Text(
                         _isRegister
                             ? 'Zaten hesabın var mı? Giriş yap'

@@ -928,6 +928,9 @@ Supabase'e gerek yok. (Önceki Supabase tablolu plan iptal edildi — `0007` sil
 - **2026-06-26 (auth refresh token):** Web/Chrome'da bozulmuş Supabase refresh token
   (`refresh_token_already_used`) uygulamayı hata ekranında bırakıyordu. Auth akışı bu özel durumda
   yerel oturumu temizleyip giriş ekranına dönecek şekilde sağlamlaştırıldı.
+- **2026-06-26 (auth giriş akışı):** Stale refresh-token temizliğinden sonra Supabase auth stream'i
+  kapanıp yeni giriş olayını kaçırabiliyordu. Stream artık temizleme sonrası dinlemeye devam ediyor;
+  başarılı giriş/kayıt sonrası AuthGate bilinçli yenileniyor.
 - **2026-06-20:** Proje başlatıldı. Dokümanlar oluşturuldu (project.md, progress.md,
   AGENTS.md). Tech stack, giriş yöntemi ve ilk platform kararlaştırıldı. Detaylı planlama
   aşamasına geçildi.
