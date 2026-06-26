@@ -99,124 +99,131 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
         goalSeconds > 0 ? (todayTotal / goalSeconds).clamp(0.0, 1.0) : 0.0;
     final reached = goalSeconds > 0 && todayTotal >= goalSeconds;
     final clockStyle = ref.watch(clockStyleProvider);
-    final small = widget.size == DashboardCardSize.small;
-    final isLarge = widget.size == DashboardCardSize.large;
 
     return Card(
-      child: Stack(
-        children: [
-          // Saat görünümü + tam ekran odak modu (§3.12).
-          Positioned(
-            top: 4,
-            right: 4,
-            child: Row(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final small = constraints.maxWidth < 280;
+            final isLarge = constraints.maxWidth >= 400;
+            
+            return Stack(
               children: [
-                IconButton(
-                  tooltip: 'Geçmiş oturumlar',
-                  icon: const Icon(Icons.history),
-                  onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute(
-                        builder: (_) => const SessionHistoryScreen()),
-                  ),
-                ),
-                Builder(
-                  builder: (iconContext) => IconButton(
-                    tooltip: 'Saat görünümü',
-                    icon: const Icon(Icons.tune),
-                    onPressed: () => showClockStyleMenu(iconContext, ref),
-                  ),
-                ),
-                IconButton(
-                  tooltip: 'Tam ekran odak',
-                  icon: const Icon(Icons.fullscreen),
-                  onPressed: () => openFocusTimer(context),
-                ),
-              ],
-            ),
-          ),
-          // Seri (streak) — yalnız varsa (§3.7).
-          if (streak > 0)
-            Positioned(
-                top: 14,
-                left: 14,
-                child: _StreakChip(streak: streak, compact: small)),
-          Padding(
-            // Üstteki ikon/seri rozetiyle çakışmasın diye üst boşluk biraz fazla.
-            padding: const EdgeInsets.fromLTRB(16, 48, 16, 20),
-            child: Column(
-              children: [
-                Text(
-                  'Bugün',
-                  style: theme.textTheme.labelLarge?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                // Dar kartta taşmasın diye ölçekle.
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    formatHumanSeconds(todayTotal),
-                    maxLines: 1,
-                    style: theme.textTheme.headlineMedium,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: StudyClock(
-                    seconds: liveExtra,
-                    pctToGoal: pct,
-                    running: timer.isRunning,
-                    style: clockStyle,
-                    fontSize: small ? 34 : (isLarge ? 56 : 40),
-                    diameter: small ? 130 : (isLarge ? 220 : 160),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                _GoalProgress(
-                  todaySeconds: todayTotal,
-                  goalSeconds: goalSeconds,
-                  pct: pct,
-                  reached: reached,
-                  onEdit: () => _editGoal(context, goalMinutes),
-                ),
-                const SizedBox(height: 16),
-                _SubjectSelector(
-                  subjects: subjects,
-                  selectedId: timer.subjectId,
-                  running: timer.isRunning,
-                  onSelect: notifier.selectSubject,
-                ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  child: timer.isRunning
-                      ? FilledButton.icon(
-                          style: FilledButton.styleFrom(
-                            backgroundColor: theme.colorScheme.error,
-                          ),
-                          onPressed: notifier.stop,
-                          icon: const Icon(Icons.stop),
-                          label: const Text('Durdur'),
-                        )
-                      : FilledButton.icon(
-                          onPressed: notifier.start,
-                          icon: const Icon(Icons.play_arrow),
-                          label: const Text('Çalışmaya başla'),
+                // Saat görünümü + tam ekran odak modu (§3.12).
+                Positioned(
+                  top: 4,
+                  right: 4,
+                  child: Row(
+                    children: [
+                      IconButton(
+                        tooltip: 'Geçmiş oturumlar',
+                        icon: const Icon(Icons.history),
+                        onPressed: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                              builder: (_) => const SessionHistoryScreen()),
                         ),
+                      ),
+                      Builder(
+                        builder: (iconContext) => IconButton(
+                          tooltip: 'Saat görünümü',
+                          icon: const Icon(Icons.tune),
+                          onPressed: () => showClockStyleMenu(iconContext, ref),
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: 'Tam ekran odak',
+                        icon: const Icon(Icons.fullscreen),
+                        onPressed: () => openFocusTimer(context),
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 4),
-                TextButton.icon(
-                  onPressed: () => addManualSessionFlow(context, ref),
-                  icon: const Icon(Icons.edit_calendar, size: 18),
-                  label: const Text('Manuel süre ekle'),
+                // Seri (streak) — yalnız varsa (§3.7).
+                if (streak > 0)
+                  Positioned(
+                      top: 14,
+                      left: 14,
+                      child: _StreakChip(streak: streak, compact: small)),
+                Padding(
+                  // Üstteki ikon/seri rozetiyle çakışmasın diye üst boşluk biraz fazla.
+                  padding: const EdgeInsets.fromLTRB(16, 48, 16, 20),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        Text(
+                          'Bugün',
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        // Dar kartta taşmasın diye ölçekle.
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            formatHumanSeconds(todayTotal),
+                            maxLines: 1,
+                            style: theme.textTheme.headlineMedium,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: StudyClock(
+                            seconds: liveExtra,
+                            pctToGoal: pct,
+                            running: timer.isRunning,
+                            style: clockStyle,
+                            fontSize: small ? 34 : (isLarge ? 56 : 40),
+                            diameter: small ? 130 : (isLarge ? 220 : 160),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        _GoalProgress(
+                          todaySeconds: todayTotal,
+                          goalSeconds: goalSeconds,
+                          pct: pct,
+                          reached: reached,
+                          onEdit: () => _editGoal(context, goalMinutes),
+                        ),
+                        const SizedBox(height: 16),
+                        _SubjectSelector(
+                          subjects: subjects,
+                          selectedId: timer.subjectId,
+                          running: timer.isRunning,
+                          onSelect: notifier.selectSubject,
+                        ),
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          width: double.infinity,
+                          child: timer.isRunning
+                              ? FilledButton.icon(
+                                  style: FilledButton.styleFrom(
+                                    backgroundColor: theme.colorScheme.error,
+                                  ),
+                                  onPressed: notifier.stop,
+                                  icon: const Icon(Icons.stop),
+                                  label: const Text('Durdur'),
+                                )
+                              : FilledButton.icon(
+                                  onPressed: notifier.start,
+                                  icon: const Icon(Icons.play_arrow),
+                                  label: const Text('Çalışmaya başla'),
+                                ),
+                        ),
+                        const SizedBox(height: 4),
+                        TextButton.icon(
+                          onPressed: () => addManualSessionFlow(context, ref),
+                          icon: const Icon(Icons.edit_calendar, size: 18),
+                          label: const Text('Manuel süre ekle'),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ],
-            ),
-          ),
-        ],
-      ),
+            );
+          },
+        ),
     );
   }
 }
