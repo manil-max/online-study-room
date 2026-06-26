@@ -455,7 +455,7 @@ Supabase'e gerek yok. (Önceki Supabase tablolu plan iptal edildi — `0007` sil
 - `[X]` 2B · Grid veri modeli + persistence 🔵
 - `[X]` 2C · Doğrudan sürükle + reflow 🔴
 - `[~]` 2D · Boyutlandırma 🔴 (genişlik ✅, yükseklik ve 4 köşeden resize eklenecek)
-- `[ ]` 2E · İçerik responsive (16 kart) 🟣
+- `[X]` 2E · İçerik responsive (16 kart) 🟣
 - `[X]` 2F · Düzenleme odak koruma 🔵
 - `[ ]` 2G · Kamp ateşi canlı ekran 🔴+🔵 (Canlı Grup Hedefi saniye saniye akması buraya dahil)
 - `[ ]` 2H · Eksiksiz saat/zamanlayıcı 🔵+🟣

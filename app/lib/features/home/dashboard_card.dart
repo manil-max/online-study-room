@@ -222,40 +222,35 @@ class DashboardCardConfig {
   int get hashCode => Object.hash(type, width);
 }
 
-/// Bir kart türünün widget'ını, seçilen boyuta göre üretir.
 Widget dashboardCardFor(DashboardCardType type, DashboardCardSize size) {
-  switch (type) {
-    case DashboardCardType.timer:
-      return StudyTimerCard(size: size);
-    case DashboardCardType.goal:
-      return GoalCard(size: size);
-    case DashboardCardType.today:
-      return TodaySummaryCard(size: size);
-    case DashboardCardType.weekly:
-      return WeeklyChartCard(size: size);
-    case DashboardCardType.line:
-      return LineChartCard(size: size);
-    case DashboardCardType.monthly:
-      return PeriodSummaryCard(size: size);
-    case DashboardCardType.weekdayWeekend:
-      return WeekdayWeekendCard(size: size);
-    case DashboardCardType.hours:
-      return HourActivityCard(size: size);
-    case DashboardCardType.rhythm:
-      return RhythmCard(size: size);
-    case DashboardCardType.scatter:
-      return ScatterCard(size: size);
-    case DashboardCardType.records:
-      return RecordsCard(size: size);
-    case DashboardCardType.heatmap:
-      return HeatmapCard(size: size);
-    case DashboardCardType.leaderboard:
-      return LeaderboardCard(size: size);
-    case DashboardCardType.groupGoal:
-      return GroupGoalCard(size: size);
-    case DashboardCardType.groupTrend:
-      return GroupTrendCard(size: size);
-    case DashboardCardType.activeMembers:
-      return ActiveMembersCard(size: size);
-  }
+  final Widget card = switch (type) {
+    DashboardCardType.timer => StudyTimerCard(size: size),
+    DashboardCardType.goal => GoalCard(size: size),
+    DashboardCardType.today => TodaySummaryCard(size: size),
+    DashboardCardType.weekly => WeeklyChartCard(size: size),
+    DashboardCardType.line => LineChartCard(size: size),
+    DashboardCardType.monthly => PeriodSummaryCard(size: size),
+    DashboardCardType.weekdayWeekend => WeekdayWeekendCard(size: size),
+    DashboardCardType.hours => HourActivityCard(size: size),
+    DashboardCardType.rhythm => RhythmCard(size: size),
+    DashboardCardType.scatter => ScatterCard(size: size),
+    DashboardCardType.records => RecordsCard(size: size),
+    DashboardCardType.heatmap => HeatmapCard(size: size),
+    DashboardCardType.leaderboard => LeaderboardCard(size: size),
+    DashboardCardType.groupGoal => GroupGoalCard(size: size),
+    DashboardCardType.groupTrend => GroupTrendCard(size: size),
+    DashboardCardType.activeMembers => ActiveMembersCard(size: size),
+  };
+
+  // Provide a fixed height to prevent unbounded constraints in the Row
+  final double height = size == DashboardCardSize.small
+      ? 180.0
+      : size == DashboardCardSize.large
+          ? 320.0
+          : 240.0;
+
+  return SizedBox(
+    height: height,
+    child: card,
+  );
 }
