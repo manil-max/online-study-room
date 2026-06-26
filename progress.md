@@ -454,7 +454,7 @@ Supabase'e gerek yok. (Önceki Supabase tablolu plan iptal edildi — `0007` sil
 - `[X]` 2A · Serbest ızgara TASARIM 🔴
 - `[X]` 2B · Grid veri modeli + persistence 🔵
 - `[X]` 2C · Doğrudan sürükle + reflow 🔴
-- `[~]` 2D · Boyutlandırma 🔴 (genişlik ✅, yükseklik ve 4 köşeden resize eklenecek)
+- `[X]` 2D · Boyutlandırma 🔴 (genişlik + yükseklik + 4 köşeden resize ✅)
 - `[X]` 2E · İçerik responsive (16 kart) 🟣
 - `[X]` 2F · Düzenleme odak koruma 🔵
 - `[ ]` 2G · Kamp ateşi canlı ekran 🔴+🔵 (Canlı Grup Hedefi saniye saniye akması buraya dahil)
@@ -664,11 +664,21 @@ Supabase'e gerek yok. (Önceki Supabase tablolu plan iptal edildi — `0007` sil
     - Bırakınca `setBounds` ile kalıcılaştır.
   - **Kabul:** Kart sürüklenince komşular tatlı animasyonla yer açar; bırakınca düzen kaydolur; FPS düşmez.
 
-- [~] **2D · Serbest/akıcı boyutlandırma 🔴 Opus — 🔶 KISMEN (commit 843ad8e): genişlik resize ✅, yükseklik resize §2E sonrası**
-  > Uygulanan: sağ alt köşede tutamaç; `onPanUpdate` ile `width` canlı değişir (hücreye snap, 1..12). Sabit S/M/L UI'ı kalktı. **Yükseklik resize yok** (otomatik yükseklik; sabit-hücreli yükseklik §2E'ye bağlı).
-  - **Dosya:** `home_screen.dart` (grid kart sarmalayıcısı).
-  - **Adımlar:** Düzenleme modunda kart köşe/kenarında resize handle; sürükleyince `gridW/gridH` canlı değişir (hücreye snap ama hareket akıcı), çakışırsa komşular reflow. min 1×1, max sütun genişliği. Sabit S/M/L UI'ı kalkar.
-  - **Kabul:** Kullanıcı kartı serbestçe büyütüp küçültür; içerik 2E sayesinde bozulmaz; 60fps.
+- [x] **2D · Serbest/akıcı boyutlandırma 🔴 Opus — ✅ TAMAM**
+  > Uygulanan (2E sonrası): `DashboardCardConfig`'e serbest **yükseklik (px, opsiyonel)**
+  > eklendi (`height`/`effectiveHeight`; null=boyuta göre `defaultCardHeight` 180/240/320,
+  > sınırlar `kMinCardHeight 120`..`kMaxCardHeight 560`). Kalıcılık `"tür:genişlik:yükseklik"`
+  > (ör. `line:12:300`); eski `"tür:genişlik"`/`"tür:boyut"`/`"tür"` geriye-uyumlu okunuyor.
+  > Düzenleme kartı **4 köşeden** tutamaçla boyutlanır: genişlik hücreye snap (1..12),
+  > yükseklik serbest px; her köşe dx/dy'yi yönüne göre uygular (sol/sağ, üst/alt). Yükseklik
+  > canlı (persist:false), sürükleme bitince `persist()` ile kalıcı (prefs spam'i önler).
+  > Üst kontrol çubuğu **ortalanmış hap**a taşındı (köşeler tutamaca açıldı; sürükle ipucu +
+  > `g/12 · Hpx` etiketi + kaldır ×, dar kartta `FittedBox` ile küçülür). 6 yeni serileştirme
+  > testi (toplam 68 test geçiyor). `dashboardCardFor`'a opsiyonel `height` parametresi.
+  - **Dosyalar:** `dashboard_card.dart`, `dashboard_providers.dart`, `home_screen.dart`,
+    `test/features/dashboard_card_test.dart` (yeni).
+  - **Kabul:** Kullanıcı kartı 4 köşeden serbestçe büyütüp küçültür; içerik 2E sayesinde
+    bozulmaz; eski kayıtlı düzen yeni formata göç eder. ✅
 
 - [ ] **2E · İçerik responsive adaptasyonu 🟣 Gemini 3.1 Pro**
   - **Dosyalar:** `app/lib/features/home/widgets/` altındaki 16 kart (+ `study_timer_card.dart`).

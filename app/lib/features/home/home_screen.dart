@@ -153,7 +153,9 @@ class _GridDashboard extends StatelessWidget {
             widthOf: (c) => c.width,
             build: (c) => GestureDetector(
               onLongPress: onLongPressCard,
-              child: _HoverLift(child: dashboardCardFor(c.type, c.size)),
+              child: _HoverLift(
+                  child: dashboardCardFor(c.type, c.size,
+                      height: c.effectiveHeight)),
             ),
           ),
       ],
@@ -255,7 +257,8 @@ class _EditableGridState extends ConsumerState<_EditableGrid> {
               padding: const EdgeInsets.only(bottom: 10),
               child: Text(
                 'Kartı gövdesinden sürükle → komşular yer açar, boşluğa bırak. '
-                'Sağ alt köşeden çekerek genişliği ayarla · × kaldır · sağ üstten + ekle.',
+                'Herhangi bir köşeden çekerek genişlik ve yüksekliği ayarla · '
+                '× kaldır · sağ üstten + ekle.',
                 style: theme.textTheme.bodySmall
                     ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
               ),
@@ -287,6 +290,10 @@ class _EditableGridState extends ConsumerState<_EditableGrid> {
                             notifier.toggle(layout[s.origIndex!].type),
                         onWidth: (w) =>
                             notifier.setWidth(layout[s.origIndex!].type, w),
+                        onHeight: (h) => notifier.setHeight(
+                            layout[s.origIndex!].type, h,
+                            persist: false),
+                        onCommit: notifier.persist,
                       ),
               ),
             const Divider(height: 24),
@@ -304,9 +311,11 @@ class _EditableGridState extends ConsumerState<_EditableGrid> {
   }
 }
 
-/// Düzenleme modundaki tek kart: gövdesinden sürüklenebilir (reorder), sağ üstte
-/// kaldır (×), sağ alt köşede genişlik tutamacı. Kartın kendisi etkileşimsizdir
-/// (IgnorePointer) — yalnızca düzenleme kontrolleri tıklanır.
+/// Düzenleme modundaki tek kart: gövdesinden sürüklenebilir (reorder), üstte
+/// ortalanmış kontrol hapı (sürükle ipucu + boyut etiketi + kaldır ×) ve **dört
+/// köşede** boyut tutamacı (genişlik = hücreye snap, yükseklik = serbest px).
+/// Kartın kendisi etkileşimsizdir (IgnorePointer) — yalnızca düzenleme
+/// kontrolleri tıklanır.
 class _EditCard extends StatefulWidget {
   const _EditCard({
     super.key,
@@ -318,6 +327,8 @@ class _EditCard extends StatefulWidget {
     required this.onAccept,
     required this.onRemove,
     required this.onWidth,
+    required this.onHeight,
+    required this.onCommit,
   });
 
   final DashboardCardConfig config;
@@ -327,14 +338,37 @@ class _EditCard extends StatefulWidget {
   final VoidCallback onDragCancel;
   final VoidCallback onAccept;
   final VoidCallback onRemove;
-  final ValueChanged<int> onWidth;
+  final ValueChanged<int> onWidth; // ızgara genişliği (hücre)
+  final ValueChanged<double> onHeight; // serbest yükseklik (px, canlı)
+  final VoidCallback onCommit; // sürükleme bitince kalıcılaştır
 
   @override
   State<_EditCard> createState() => _EditCardState();
 }
 
 class _EditCardState extends State<_EditCard> {
-  int? _resizeStartWidth;
+  // Boyutlandırma jesti başındaki değerler + biriken kaydırma (köşe işaretine
+  // göre yönlü → 4 köşeden de sezgisel büyüt/küçült).
+  int? _startWidth;
+  double? _startHeight;
+  double _accDx = 0;
+  double _accDy = 0;
+
+  void _resizeStart() {
+    _startWidth = widget.config.width;
+    _startHeight = widget.config.effectiveHeight;
+    _accDx = 0;
+    _accDy = 0;
+  }
+
+  void _resizeUpdate(Offset delta, int signX, int signY, double cell) {
+    _accDx += delta.dx * signX;
+    _accDy += delta.dy * signY;
+    final w = (_startWidth! + (_accDx / cell).round()).clamp(1, kGridColumns);
+    if (w != widget.config.width) widget.onWidth(w);
+    final h = (_startHeight! + _accDy).clamp(kMinCardHeight, kMaxCardHeight);
+    if ((h - widget.config.effectiveHeight).abs() >= 0.5) widget.onHeight(h);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -351,41 +385,12 @@ class _EditCardState extends State<_EditCard> {
             border: Border.all(color: theme.colorScheme.primary, width: 1.5),
             borderRadius: BorderRadius.circular(18),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Üst kontrol çubuğu: sürükle ipucu + genişlik etiketi + kaldır.
-              Padding(
-                padding: const EdgeInsets.fromLTRB(10, 4, 4, 0),
-                child: Row(
-                  children: [
-                    Icon(Icons.drag_indicator,
-                        size: 18, color: theme.colorScheme.onSurfaceVariant),
-                    const SizedBox(width: 4),
-                    Text('${widget.config.width}/$kGridColumns',
-                        style: theme.textTheme.labelSmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant)),
-                    const Spacer(),
-                    IconButton(
-                      tooltip: 'Kaldır',
-                      visualDensity: VisualDensity.compact,
-                      padding: EdgeInsets.zero,
-                      constraints:
-                          const BoxConstraints(minWidth: 32, minHeight: 32),
-                      icon: Icon(Icons.remove_circle_outline,
-                          color: theme.colorScheme.error),
-                      onPressed: widget.onRemove,
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(6, 0, 6, 6),
-                child: IgnorePointer(
-                  child: dashboardCardFor(widget.config.type, widget.config.size),
-                ),
-              ),
-            ],
+          child: Padding(
+            padding: const EdgeInsets.all(6),
+            child: IgnorePointer(
+              child: dashboardCardFor(widget.config.type, widget.config.size,
+                  height: widget.config.effectiveHeight),
+            ),
           ),
         );
 
@@ -404,45 +409,94 @@ class _EditCardState extends State<_EditCard> {
       },
     );
 
-    // Sağ alt köşe genişlik tutamacı (Stack üstünde, sürüklemeyi engellemez).
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Bu kartın kapladığı hücre genişliği ≈ satırdaki orantılı pay; tek hücre
-        // genişliği için satırın tamamını 12'ye böleriz (yaklaşık snap).
-        final cell = constraints.maxWidth / widget.config.width.clamp(1, kGridColumns);
+        // Bu kartın hücre genişliği ≈ satırdaki orantılı pay; tek hücre genişliği
+        // için kartın pikselini mevcut hücre sayısına böleriz (yaklaşık snap).
+        final cell =
+            constraints.maxWidth / widget.config.width.clamp(1, kGridColumns);
+
+        Widget corner({required bool left, required bool top}) {
+          final signX = left ? -1 : 1;
+          final signY = top ? -1 : 1;
+          return Positioned(
+            left: left ? -8 : null,
+            right: left ? null : -8,
+            top: top ? -8 : null,
+            bottom: top ? null : -8,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onPanStart: (_) => _resizeStart(),
+              onPanUpdate: (d) => _resizeUpdate(d.delta, signX, signY, cell),
+              onPanEnd: (_) => widget.onCommit(),
+              child: Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary,
+                  shape: BoxShape.circle,
+                  border:
+                      Border.all(color: theme.colorScheme.surface, width: 2),
+                ),
+                child: Icon(Icons.open_with,
+                    size: 12, color: theme.colorScheme.onPrimary),
+              ),
+            ),
+          );
+        }
+
         return Stack(
           clipBehavior: Clip.none,
           children: [
             body,
+            // Üst ortada kontrol hapı: sürükle ipucu + boyut etiketi + kaldır.
             Positioned(
+              top: -6,
+              left: 0,
               right: 0,
-              bottom: 0,
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onPanStart: (_) => _resizeStartWidth = widget.config.width,
-                onPanUpdate: (d) {
-                  final start = _resizeStartWidth ?? widget.config.width;
-                  final deltaCells = (d.localPosition.dx / cell).round();
-                  final w = (start + deltaCells).clamp(1, kGridColumns);
-                  if (w != widget.config.width) widget.onWidth(w);
-                },
-                onPanEnd: (_) => _resizeStartWidth = null,
-                child: Container(
-                  width: 34,
-                  height: 34,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primaryContainer,
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(12),
-                      bottomRight: Radius.circular(18),
+              child: Center(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Material(
+                  color: theme.colorScheme.surfaceContainerHighest,
+                  elevation: 2,
+                  borderRadius: BorderRadius.circular(20),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(10, 2, 2, 2),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.drag_indicator,
+                            size: 16,
+                            color: theme.colorScheme.onSurfaceVariant),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${widget.config.width}/$kGridColumns · '
+                          '${widget.config.effectiveHeight.round()}px',
+                          style: theme.textTheme.labelSmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant),
+                        ),
+                        IconButton(
+                          tooltip: 'Kaldır',
+                          visualDensity: VisualDensity.compact,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(
+                              minWidth: 30, minHeight: 30),
+                          icon: Icon(Icons.remove_circle_outline,
+                              size: 18, color: theme.colorScheme.error),
+                          onPressed: widget.onRemove,
+                        ),
+                      ],
                     ),
                   ),
-                  child: Icon(Icons.open_in_full,
-                      size: 16, color: theme.colorScheme.onPrimaryContainer),
+                  ),
                 ),
               ),
             ),
+            corner(left: false, top: false), // sağ alt
+            corner(left: true, top: false), // sol alt
+            corner(left: false, top: true), // sağ üst
+            corner(left: true, top: true), // sol üst
           ],
         );
       },

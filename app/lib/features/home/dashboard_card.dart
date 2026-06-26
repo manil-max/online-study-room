@@ -156,18 +156,37 @@ extension DashboardCardSizeInfo on DashboardCardSize {
 /// olunca — FAZ 6 §2E — gelecek).
 const int kGridColumns = 12;
 
-/// Bir Ana Sayfa kartının yapılandırması: tür + ızgara genişliği (hücre, 1..12).
-/// Konum = listedeki sıra (akış yerleşimi). Kalıcılık için `"tür:genişlik"`
-/// (ör. `"weekly:12"`) biçiminde serileştirilir; eski `"tür:boyut"`/`"tür"`
-/// biçimleri de okunur (geriye-uyum).
+/// Kart yüksekliğinin (piksel) serbest boyutlandırma sınırları (§2D). Yükseklik
+/// artık ızgara hücresine değil, köşeden çekerek serbestçe (px) ayarlanır;
+/// içerik responsive olduğundan (§2E) bu aralıkta bozulmaz.
+const double kMinCardHeight = 120;
+const double kMaxCardHeight = 560;
+
+/// Bir boyut için varsayılan kart yüksekliği (px). Kullanıcı henüz yükseklik
+/// ayarlamadıysa (eski düzenler dâhil) bu kullanılır.
+double defaultCardHeight(DashboardCardSize size) => switch (size) {
+      DashboardCardSize.small => 180,
+      DashboardCardSize.medium => 240,
+      DashboardCardSize.large => 320,
+    };
+
+/// Bir Ana Sayfa kartının yapılandırması: tür + ızgara genişliği (hücre, 1..12)
+/// + serbest yükseklik (px, opsiyonel). Konum = listedeki sıra (akış yerleşimi).
+/// Kalıcılık için `"tür:genişlik"` ya da yükseklik ayarlıysa
+/// `"tür:genişlik:yükseklik"` (ör. `"weekly:12:300"`) biçiminde serileştirilir;
+/// eski `"tür:boyut"`/`"tür"` biçimleri de okunur (geriye-uyum).
 class DashboardCardConfig {
-  const DashboardCardConfig(this.type, {this.width = kGridColumns})
+  const DashboardCardConfig(this.type, {this.width = kGridColumns, this.height})
       : assert(width >= 1 && width <= kGridColumns);
 
   final DashboardCardType type;
 
   /// Izgara hücresi cinsinden genişlik (1..[kGridColumns]).
   final int width;
+
+  /// Serbestçe ayarlanmış yükseklik (px). null ise [size]'a göre varsayılan
+  /// ([defaultCardHeight]) kullanılır.
+  final double? height;
 
   /// Kart içeriği hâlâ S/M/L'ye göre çiziliyor (16 kart). Genişlikten türetilir;
   /// kartlar tam responsive olunca (FAZ 6 §2E) bu köprü kaldırılabilir.
@@ -177,14 +196,22 @@ class DashboardCardConfig {
           ? DashboardCardSize.large
           : DashboardCardSize.medium;
 
+  /// Çizimde kullanılacak gerçek yükseklik (px): kullanıcı ayarladıysa o,
+  /// yoksa boyuta göre varsayılan.
+  double get effectiveHeight => height ?? defaultCardHeight(size);
+
   DashboardCardConfig withWidth(int w) =>
-      DashboardCardConfig(type, width: w.clamp(1, kGridColumns));
+      DashboardCardConfig(type, width: w.clamp(1, kGridColumns), height: height);
 
-  /// `"tür:genişlik"` (ör. `"weekly:12"`).
-  String encode() => '${type.name}:$width';
+  DashboardCardConfig withHeight(double h) => DashboardCardConfig(type,
+      width: width, height: h.clamp(kMinCardHeight, kMaxCardHeight));
 
-  /// `"tür:genişlik"` (yeni), `"tür:boyut"` (eski S/M/L) veya sade `"tür"`
-  /// (en eski) çözümler; geçersizse null.
+  /// `"tür:genişlik"` veya (yükseklik ayarlıysa) `"tür:genişlik:yükseklik"`.
+  String encode() =>
+      height == null ? '${type.name}:$width' : '${type.name}:$width:${height!.round()}';
+
+  /// `"tür:genişlik[:yükseklik]"` (yeni), `"tür:boyut"` (eski S/M/L) veya sade
+  /// `"tür"` (en eski) çözümler; geçersizse null.
   static DashboardCardConfig? decode(String raw) {
     final parts = raw.split(':');
     DashboardCardType? type;
@@ -209,20 +236,27 @@ class DashboardCardConfig {
         };
       }
     }
-    return DashboardCardConfig(type, width: width);
+    double? height;
+    if (parts.length > 2) {
+      final h = double.tryParse(parts[2]);
+      if (h != null) height = h.clamp(kMinCardHeight, kMaxCardHeight);
+    }
+    return DashboardCardConfig(type, width: width, height: height);
   }
 
   @override
   bool operator ==(Object other) =>
       other is DashboardCardConfig &&
       other.type == type &&
-      other.width == width;
+      other.width == width &&
+      other.height == height;
 
   @override
-  int get hashCode => Object.hash(type, width);
+  int get hashCode => Object.hash(type, width, height);
 }
 
-Widget dashboardCardFor(DashboardCardType type, DashboardCardSize size) {
+Widget dashboardCardFor(DashboardCardType type, DashboardCardSize size,
+    {double? height}) {
   final Widget card = switch (type) {
     DashboardCardType.timer => StudyTimerCard(size: size),
     DashboardCardType.goal => GoalCard(size: size),
@@ -242,15 +276,10 @@ Widget dashboardCardFor(DashboardCardType type, DashboardCardSize size) {
     DashboardCardType.activeMembers => ActiveMembersCard(size: size),
   };
 
-  // Provide a fixed height to prevent unbounded constraints in the Row
-  final double height = size == DashboardCardSize.small
-      ? 180.0
-      : size == DashboardCardSize.large
-          ? 320.0
-          : 240.0;
-
+  // Sınırlı yükseklik ver (Row'da sınırsız kısıtı engeller). Kullanıcı serbest
+  // boyut ayarladıysa onu, yoksa boyuta göre varsayılanı kullan (§2D).
   return SizedBox(
-    height: height,
+    height: height ?? defaultCardHeight(size),
     child: card,
   );
 }

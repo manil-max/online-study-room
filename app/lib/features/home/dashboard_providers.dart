@@ -63,6 +63,21 @@ class DashboardLayoutNotifier extends Notifier<List<DashboardCardConfig>> {
     _save();
   }
 
+  /// Bir kartın serbest yüksekliğini (px) ayarlar. Sürükleyerek boyutlandırma
+  /// sırasında [persist] `false` verilir (her piksel için diske yazmamak için);
+  /// sürükleme bitince [persist] kalır → kalıcılaşır (§2D).
+  void setHeight(DashboardCardType type, double height, {bool persist = true}) {
+    final i = _indexOf(type);
+    if (i < 0) return;
+    final list = [...state];
+    list[i] = list[i].withHeight(height);
+    state = list;
+    if (persist) _save();
+  }
+
+  /// Mevcut düzeni diske yazar (canlı sürükleme bitince çağrılır).
+  void persist() => _save();
+
   /// Ana Sayfa düzenini varsayılana döndür.
   void reset() {
     state = List.of(_kDefaultLayout);
