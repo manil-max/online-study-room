@@ -470,7 +470,7 @@ Supabase'e gerek yok. (Önceki Supabase tablolu plan iptal edildi — `0007` sil
 - `[X]` R5 · Sürükle: tam-boy yarı saydam feedback + hücre hedefleme 🟠 Opus 4.6
 - `[X]` R6 · Boyutlandırma: hücre-snap yükseklik + doğru köşe/kenar geometri 🟠 Opus 4.6
 - `[X]` R7 · Tutamaç & düzenleme UI estetiği (ince çizgi + zarif noktalar) 🔵 Sonnet 4.6
-- `[ ]` R8 · Göç doğrulama + string + cilalama + analyze/test 🟢 Gemini 3.5 Flash
+- `[X]` R8 · Göç doğrulama + string + cilalama + analyze/test 🟢 Gemini 3.5 Flash
 
 ---
 
@@ -889,13 +889,18 @@ Supabase'e gerek yok. (Önceki Supabase tablolu plan iptal edildi — `0007` sil
     Üst kontrol hapı sadeleştirildi; köşe tutamaçları küçük, yüzey renkli, ince primary bordürlü
     ve 32px dokunma alanlı olacak şekilde cilalandı.
 
-- [ ] **R8 · Göç doğrulama + string + cilalama + analyze/test 🟢 Gemini 3.5 Flash**
+- [x] **R8 · Göç doğrulama + string + cilalama + analyze/test 🟢 Gemini 3.5 Flash — ✅ YAPILDI**
   - **Dosyalar:** `home_screen.dart` (metinler), `progress.md`, gerekiyorsa ufak rötuşlar.
   - **Adımlar:** Eski kayıtlı düzenlerin (gerçek cihaz prefs) yeni formata göçtüğünü doğrula;
     düzenleme ipucu metnini yeni davranışa göre güncelle ("kartı tut, boş hücreye bırak;
     köşelerden hücreye snap büyüt"); kalan lint/uyarıları temizle; `flutter analyze` + tüm
     testler + manuel `flutter run` (5005 portu). progress.md R1–R8 `[X]` işaretle.
   - **Kabul:** Analiz temiz, tüm testler geçer, manuel akış pürüzsüz; eski düzen göçü sağlam.
+  - **Uygulandı (2026-06-26):** Düzenleme ipucu güncel davranışa göre yenilendi. Eski layout
+    göçü provider testiyle doğrulandı; `flutter analyze`, `flutter test` ve
+    `flutter build web --dart-define-from-file=env.json` temiz geçti. Web build sırasında yalnız
+    mevcut `ua_client_hints` paketinin Wasm dry-run `dart:html` uyumluluk uyarısı görüldü; klasik
+    web build başarıyla üretildi.
 
 ### §2.2 Sıralama & bağımlılıklar
 1. **Zorunlu sıra:** R1(🔴 tasarım) → R2(model/migration) → R3(render) → R4(reflow) →

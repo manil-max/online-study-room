@@ -68,8 +68,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 children: [
                   if (_editing) ...[
                     Text(
-                      'Kartlar 6 sütunlu matriste duruyor. Şimdilik kaldırma/ekleme aktif; '
-                      'sürükleme ve hücreye snap boyutlandırma sıradaki adımda gelecek.',
+                      'Kartı tutup sürükle; hedef hücreye bırakınca komşular yer açar. '
+                      'Köşelerden çekerek hücreye oturan genişlik ve yükseklik ayarla.',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
