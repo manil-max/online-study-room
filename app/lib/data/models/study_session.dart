@@ -5,12 +5,12 @@ import 'package:flutter/foundation.dart';
 enum StudySource { live, manual }
 
 /// Tek bir çalışma oturumu. Supabase `study_sessions` tablosuna karşılık gelir.
+/// Oturum yalnızca kullanıcıya aittir; grup istatistiği group_members join'iyle hesaplanır.
 @immutable
 class StudySession {
   const StudySession({
     required this.id,
     required this.userId,
-    required this.groupId,
     required this.start,
     required this.end,
     required this.durationSeconds,
@@ -20,7 +20,6 @@ class StudySession {
 
   final String id;
   final String userId;
-  final String groupId;
   final String? subjectId;
   final DateTime start;
   final DateTime end;
@@ -34,7 +33,6 @@ class StudySession {
     return StudySession(
       id: map['id'] as String,
       userId: map['user_id'] as String,
-      groupId: map['group_id'] as String,
       subjectId: map['subject_id'] as String?,
       start: DateTime.parse(map['start_time'] as String),
       end: DateTime.parse(map['end_time'] as String),
@@ -47,7 +45,6 @@ class StudySession {
     return {
       'id': id,
       'user_id': userId,
-      'group_id': groupId,
       'subject_id': subjectId,
       'start_time': start.toIso8601String(),
       'end_time': end.toIso8601String(),
@@ -61,7 +58,6 @@ class StudySession {
       other is StudySession &&
       other.id == id &&
       other.userId == userId &&
-      other.groupId == groupId &&
       other.subjectId == subjectId &&
       other.start == start &&
       other.end == end &&
@@ -72,7 +68,6 @@ class StudySession {
   int get hashCode => Object.hash(
         id,
         userId,
-        groupId,
         subjectId,
         start,
         end,

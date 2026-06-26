@@ -123,8 +123,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   Future<void> _recordSession(
       DateTime start, DateTime end, String? subjectId) async {
     final user = ref.read(authStateProvider).value;
-    final group = ref.read(userGroupProvider).value;
-    if (user == null || group == null) return;
+    if (user == null) return;
 
     final duration = end.difference(start).inSeconds;
     if (duration <= 0) return;
@@ -133,7 +132,6 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
           StudySession(
             id: _uuid.v4(),
             userId: user.id,
-            groupId: group.id,
             subjectId: subjectId,
             start: start,
             end: end,

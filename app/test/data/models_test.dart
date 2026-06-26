@@ -41,7 +41,6 @@ void main() {
       final session = StudySession(
         id: 's1',
         userId: 'u1',
-        groupId: 'g1',
         start: DateTime.parse('2026-06-21T08:30:00.000Z'),
         end: DateTime.parse('2026-06-21T09:30:00.000Z'),
         durationSeconds: 3600,

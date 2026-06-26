@@ -42,12 +42,10 @@ class SupabaseStudyRepository implements StudyRepository {
 
   @override
   Stream<List<StudySession>> watchGroupSessions(String groupId) {
-    return _client
-        .from('study_sessions')
-        .stream(primaryKey: ['id'])
-        .eq('group_id', groupId)
-        .order('start_time')
-        .map((rows) => rows.map(StudySession.fromMap).toList());
+    // group_id sütunu kaldırıldı (0010). Bu metot artık kullanılmıyor
+    // (UI/provider'da çağıran yok — K4 kararı). Arayüz uyumluluğu için
+    // boş stream döndürüyoruz. İleride üyelik tabanlı sorguya geçilebilir.
+    return Stream.value(const []);
   }
 
   /// Sunucuda toplanmış günlük veriyi `group_daily_totals` RPC'sinden çeker.
@@ -63,9 +61,9 @@ class SupabaseStudyRepository implements StudyRepository {
 
   @override
   Stream<List<DailyStat>> watchGroupDailyStats(String groupId) {
-    // Ham oturumları akıtmak yerine: RPC ile özet çek + study_sessions'taki
-    // değişiklikleri hafif bir realtime kanalıyla dinleyip özeti tazele.
-    // Böylece istemciye inen veri (üye × aktif gün) ile sınırlı kalır.
+    // group_id sütunu kaldırıldı (0010). Realtime filtre artık group_id'ye
+    // dayanamaz; tüm study_sessions değişikliklerinde RPC'yi yeniden çağırırız
+    // (RPC zaten group_id parametresiyle sunucuda süzüyor — K6 kararı).
     late final StreamController<List<DailyStat>> controller;
     RealtimeChannel? channel;
 
@@ -86,11 +84,6 @@ class SupabaseStudyRepository implements StudyRepository {
               event: PostgresChangeEvent.all,
               schema: 'public',
               table: 'study_sessions',
-              filter: PostgresChangeFilter(
-                type: PostgresChangeFilterType.eq,
-                column: 'group_id',
-                value: groupId,
-              ),
               callback: (_) => refresh(),
             )
             .subscribe();

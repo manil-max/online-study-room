@@ -7,19 +7,17 @@ import '../../../core/widgets/number_stepper.dart';
 import '../../../data/models/study_session.dart';
 import '../../../data/models/subject.dart';
 import '../../../data/providers/auth_providers.dart';
-import '../../../data/providers/group_providers.dart';
 import '../../../data/providers/study_providers.dart';
 import '../../../data/providers/subject_providers.dart';
 
-/// Manuel süre ekleme akışı (her ekrandan çağrılabilir): aktif sınıf/kullanıcı
+/// Manuel süre ekleme akışı (her ekrandan çağrılabilir): aktif kullanıcı
 /// kontrolü + ders seçimli diyalog + `study_sessions`'a yazma. Oturumu seçilen
-/// günün ortasına (12:00) yerleştirir. Sınıf yoksa kullanıcıyı uyarır.
+/// günün ortasına (12:00) yerleştirir. Kullanıcı yoksa uyarır.
 Future<void> addManualSessionFlow(BuildContext context, WidgetRef ref) async {
   final user = ref.read(authStateProvider).value;
-  final group = ref.read(userGroupProvider).value;
-  if (user == null || group == null) {
+  if (user == null) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Önce bir gruba katıl ya da grup oluştur.')),
+      const SnackBar(content: Text('Önce giriş yap.')),
     );
     return;
   }
@@ -33,7 +31,6 @@ Future<void> addManualSessionFlow(BuildContext context, WidgetRef ref) async {
         StudySession(
           id: const Uuid().v4(),
           userId: user.id,
-          groupId: group.id,
           subjectId: result.subjectId,
           start: start,
           end: start.add(Duration(seconds: result.seconds)),

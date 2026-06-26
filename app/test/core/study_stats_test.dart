@@ -5,7 +5,6 @@ import 'package:online_study_room/data/models/study_session.dart';
 StudySession _s(String user, DateTime start, int seconds) => StudySession(
       id: '$user-${start.toIso8601String()}',
       userId: user,
-      groupId: 'g1',
       start: start,
       end: start.add(Duration(seconds: seconds)),
       durationSeconds: seconds,
@@ -144,7 +143,6 @@ void main() {
     StudySession s(String? subjectId, int seconds) => StudySession(
           id: '$subjectId-$seconds',
           userId: 'u1',
-          groupId: 'g1',
           subjectId: subjectId,
           start: DateTime(2026, 6, 20, 8),
           end: DateTime(2026, 6, 20, 8).add(Duration(seconds: seconds)),

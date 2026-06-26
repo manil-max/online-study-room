@@ -448,8 +448,8 @@ Supabase'e gerek yok. (Önceki Supabase tablolu plan iptal edildi — `0007` sil
 
 - `[X]` 1A · Grup hedefi migration apply 🟢
 - `[X]` 1B · Çoklu grup mimarisi TASARIM 🔴
-- `[ ]` 1C · DB migration'ları (0008–0011) 🟣
-- `[ ]` 1D · Dart veri katmanı refactor 🟣
+- `[X]` 1C · DB migration'ları (0008–0011) 🟣
+- `[X]` 1D · Dart veri katmanı refactor 🟣
 - `[ ]` 1E · "Eski Grup Üyesi" etiketi 🟢
 - `[X]` 2A · Serbest ızgara TASARIM 🔴
 - `[X]` 2B · Grid veri modeli + persistence 🔵
@@ -527,7 +527,7 @@ Supabase'e gerek yok. (Önceki Supabase tablolu plan iptal edildi — `0007` sil
 
   **K10 — Tarihsel kayıp (kabul edilen):** 0010 kolonu DROP edince eski satırların orijinal group_id'si kaybolur; grup ataması üyelik penceresinden (joined_at..left_at) yeniden kurulur. Üye katılmadan önceki oturumlar artık o gruba sayılmaz (K7 join koşulu) — kilitli kararla tutarlı.
 
-- [ ] **1C · DB migration'ları 🟣 Gemini 3.1 Pro**
+- [x] **1C · DB migration'ları 🟣 Gemini 3.1 Pro**
   - **Amaç:** 1B tasarımını migration dosyalarına dök. Önce yerel/staging Supabase'de dene, sonra prod.
   - **Dosyalar (yeni):**
     - `supabase/migrations/0008_membership_lifecycle.sql`
@@ -602,7 +602,7 @@ Supabase'e gerek yok. (Önceki Supabase tablolu plan iptal edildi — `0007` sil
   - **Kabul:** 4 migration staging'de hatasız çalışır; iki gruplu test kullanıcısının tek oturumu her iki grubun `group_daily_totals` sonucunda görünür; üye `left_at` set edilince geçmiş satırları RPC'de KALIR ama yeni oturumları sayılmaz.
   - **Tuzak:** `presence` tablosu group_id'yi KORUR — ona dokunma. `idx_sessions_user` kalır.
 
-- [ ] **1D · Dart veri katmanı refactor 🟣 Gemini 3.1 Pro**
+- [x] **1D · Dart veri katmanı refactor 🟣 Gemini 3.1 Pro**
   - **Amaç:** 0010 sonrası `study_sessions` satırlarında `group_id` yok; Dart bunu yansıtmalı. group_id'siz dünyada oturum kaydı + grup okuması.
   - **Dosyalar:**
     - `app/lib/data/models/study_session.dart` — `groupId` alanını TAMAMEN kaldır: constructor `required this.groupId` (sat.13), field (sat.23), `fromMap` `groupId: map['group_id']` (sat.37), `toMap` `'group_id': groupId` (sat.50), `==` (sat.64), `hashCode` (sat.75). **Tuzak:** `fromMap`'te `map['group_id'] as String` kalırsa kolon gittiği için runtime'da patlar.

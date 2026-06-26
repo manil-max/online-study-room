@@ -17,12 +17,6 @@ class InMemoryStudyRepository implements StudyRepository {
     return List.unmodifiable(list);
   }
 
-  List<StudySession> _groupSessions(String groupId) {
-    final list = _sessions.where((s) => s.groupId == groupId).toList()
-      ..sort((a, b) => b.start.compareTo(a.start));
-    return List.unmodifiable(list);
-  }
-
   @override
   Future<void> addSession(StudySession session) async {
     _sessions.add(session);
@@ -54,18 +48,17 @@ class InMemoryStudyRepository implements StudyRepository {
 
   @override
   Stream<List<StudySession>> watchGroupSessions(String groupId) async* {
-    yield _groupSessions(groupId);
-    await for (final _ in _changes.stream) {
-      yield _groupSessions(groupId);
-    }
+    // group_id sütunu kaldırıldı (K4). Bu metot artık kullanılmıyor;
+    // arayüz uyumluluğu için boş liste döndürüyoruz.
+    yield const [];
   }
 
-  /// Grup oturumlarını (userId, gün) bazında toplar — Supabase RPC'sinin
-  /// bellek-içi karşılığı.
+  /// Tüm oturumları (userId, gün) bazında toplar — Supabase RPC'sinin
+  /// bellek-içi karşılığı. Demo modda tüm oturumlar görünür.
   List<DailyStat> _groupDailyStats(String groupId) {
+    // Bellek-içi modda group_members bilgisi yok; tüm oturumları topla.
     final totals = <String, Map<DateTime, int>>{};
     for (final s in _sessions) {
-      if (s.groupId != groupId) continue;
       (totals[s.userId] ??= {}).update(
         s.day,
         (v) => v + s.durationSeconds,

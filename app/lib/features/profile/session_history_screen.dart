@@ -276,7 +276,6 @@ class _SessionTile extends ConsumerWidget {
           StudySession(
             id: session.id,
             userId: session.userId,
-            groupId: session.groupId,
             subjectId: result.subjectId,
             start: start,
             end: start.add(Duration(seconds: result.seconds)),
