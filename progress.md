@@ -457,9 +457,20 @@ Supabase'e gerek yok. (Önceki Supabase tablolu plan iptal edildi — `0007` sil
 - `[X]` 2D · Boyutlandırma 🔴 (genişlik + yükseklik + 4 köşeden resize ✅)
 - `[X]` 2E · İçerik responsive (16 kart) 🟣
 - `[X]` 2F · Düzenleme odak koruma 🔵
+- `[~]` 2D · Boyutlandırma 🔴 — **§2.2 REFACTOR ile yeniden yazılıyor** (akış ızgarası → gerçek 6×N 2D matris). Aşağı bak.
 - `[ ]` 2G · Kamp ateşi canlı ekran 🔴+🔵 (Canlı Grup Hedefi saniye saniye akması buraya dahil)
 - `[ ]` 2H · Eksiksiz saat/zamanlayıcı 🔵+🟣
 - `[ ]` 2I · Ayarlar ve Grup Yönetimi overhaul 🔵+🟢 (Grup ayarlarının derli toplu hale gelmesi)
+
+#### §2.2 — Gerçek 6×N 2D Matris Izgara REFACTOR (2026-06-26 geri bildirim)
+- `[ ]` R1 · 2D matris TASARIM (koordinat/hücre/reflow/migration) 🔴 Opus 4.8
+- `[ ]` R2 · Veri modeli x,y,w,h + persistence + eski format göçü 🟣 Gemini 3.1 Pro
+- `[ ]` R3 · Stack + AnimatedPositioned statik render (akış kaldırılır) 🔵 Sonnet 4.6
+- `[ ]` R4 · Occupancy matrisi + çarpışma & akıcı reflow fiziği 🔴 Opus 4.8
+- `[ ]` R5 · Sürükle: tam-boy yarı saydam feedback + hücre hedefleme 🟠 Opus 4.6
+- `[ ]` R6 · Boyutlandırma: hücre-snap yükseklik + doğru köşe/kenar geometri 🟠 Opus 4.6
+- `[ ]` R7 · Tutamaç & düzenleme UI estetiği (ince çizgi + zarif noktalar) 🔵 Sonnet 4.6
+- `[ ]` R8 · Göç doğrulama + string + cilalama + analyze/test 🟢 Gemini 3.5 Flash
 
 ---
 
@@ -713,6 +724,159 @@ Supabase'e gerek yok. (Önceki Supabase tablolu plan iptal edildi — `0007` sil
     - 🟢 **Ana ekran sıfırlama** butonunu ana ayarlardan çıkar, **"ana ekran düzenleme" menüsüne** taşı (`DashboardLayoutNotifier.reset()` zaten var; sadece UI konumu + tetik).
   - **Tuzak:** Gelişmiş bildirim sistemi (her tür/öncelik) §5'e ait; burada sadece iskele + sıfırlama taşıması.
   - **Kabul:** Ayarlar menüsü gruplu; ana ekran sıfırlama düzenleme menüsünden erişilir; mevcut prefs bozulmaz.
+
+---
+
+## §2.2 — Gerçek 6×N 2D Matris Izgara REFACTOR (2026-06-26 geri bildirim) 🔴
+
+> **Neden:** §2.1'de (2A–2D) uygulanan **akış (flow/Wrap) ızgarası** Android ana ekranı
+> (launcher) hissini vermiyor. Kart sıra ile diziliyor; serbest (X,Y) konum yok, boşluk
+> bırakılamıyor; yükseklik küsuratlı piksel; üst tutamaç ters yönde uzuyor; sürükleyince
+> kart küçük çipe dönüşüyor; çarpışmada kartlar ışınlanıyor; tutamaçlar kaba. Bu refactor
+> akış mantığını **tamamen** kaldırıp **gerçek 6 sütunlu 2D matris** (Stack +
+> `AnimatedPositioned`) kurar.
+>
+> **Kullanıcının 7 şikâyeti → faz eşlemesi:** #1 (6 sütun) → R1/R2 · #2 (hücre-snap
+> yükseklik) → R1/R6 · #3 (tutamaç yön/geometri) → R6 · #4 (tam-boy drag feedback) → R5 ·
+> #5 (serbest 2D konum) → R3/R5 · #6 (akıcı reflow) → R4 · #7 (minimal tutamaç UI) → R7.
+>
+> **KİLİTLİ KARARLAR (kullanıcı emri — R1 bunları detaylandırır, değiştirmez):**
+> - **Sütun = 6** (`kGridColumns = 6`). Yükseklik aşağı doğru sonsuz N satır.
+> - **Hücre kare:** satır birim yüksekliği = hücre genişliği (`rowH = cellW`). Hem genişlik
+>   hem yükseklik **hücreye snap** — küsuratlı px YOK.
+> - **Konum mutlak (x,y):** liste sırası DEĞİL. Kullanıcı kartı boş hücrelere serbest koyar.
+> - **Yerleşim:** `Stack` + `AnimatedPositioned` (akış `_packRows`/`Row`/`Expanded` kaldırılır).
+> - **Sürükleme:** tam-boy, `Opacity ~0.6` feedback (çip kaldırılır).
+> - **Tutamaç:** minimal — ince çerçeve + zarif köşe/kenar noktaları/hapları.
+
+### Hücre geometrisi (R1 kilitler, R3 uygular)
+- `cellW = (maxWidth - (kCols-1)*gap) / kCols` · `rowH = cellW` (kare) · `gap = 8px` (öneri).
+- Kart pikseli: `left = x*(cellW+gap)`, `top = y*(rowH+gap)`,
+  `w_px = w*cellW + (w-1)*gap`, `h_px = h*rowH + (h-1)*gap`.
+- Sınırlar: `1 ≤ w ≤ 6`, `1 ≤ h`, `0 ≤ x ≤ 6-w`, `y ≥ 0`. Toplam yükseklik = `maxY*(rowH+gap)`;
+  `SingleChildScrollView` + `SizedBox(height: toplam)` ile dikey kaydırma (sonsuz N).
+
+### Durum özeti (R1–R8)
+`[ ]` bekliyor · `[~]` kısmen · `[X]` bitti — (yukarıdaki hızlı-bakış listesiyle eş)
+
+- [ ] **R1 · 2D matris mimari TASARIM 🔴 Opus 4.8**
+  - **Amaç:** Kod yazmaz; R2–R8'in birebir uygulayacağı kilitli tasarımı üretir (yukarıdaki
+    kilitli kararları somutlaştırır, açık soruları kapatır). Çıktı bu bölüme yazılır.
+  - **Üretilecek kararlar:**
+    1. **Hücre oranı kesinleşir:** `rowH = cellW` mi yoksa sabit oran mı (içerik 1×1'de
+       sığıyor mu? 16 kartın min satır gereksinimi tablosu). `gap`, dış padding netleşir.
+    2. **Veri modeli:** `DashboardCardConfig(type, x, y, w, h)` (hepsi int). `==`/`hashCode`,
+       `withBounds`. Eski `width`/`height` alanları kalkar.
+    3. **Reflow algoritması (sözde-kod):** occupancy matrisi `bool[rows][cols]`; yerleştirme
+       çakışmayı **aşağı it** + (boşsa) **yukarı sıkıştır**; sürükle/resize sırasında canlı.
+       İki strateji tanımla: (a) serbest bırakma (gaps korunur) (b) çakışmada it. Hangisi
+       varsayılan? **Karar: serbest konum; yalnız çakışan komşu itilir, kendiliğinden
+       sıkıştırma YOK** (launcher hissi).
+    4. **Migration (eski → yeni):** `"tür:genişlik[:yükseklik]"`/`"tür:boyut"`/`"tür"` →
+       `w = round(eskiGenişlik/2).clamp(1,6)`; `h = max(1, round(eskiPx / nominalRowH))`
+       (nominalRowH≈80); ardından **auto-flow** ile sırayla ilk uygun (x,y)'ye yerleştir.
+    5. **Tutamaç geometri matematiği:** her köşe/kenar için `onPanUpdate` delta → hangi kenar
+       hareket eder (top çekince `y` azalır + `h` artar; sol çekince `x` azalır + `w` artar;
+       sağ/alt sadece `w`/`h` artar). Snap eşiği (hücrenin yarısı). Min 1×1 koruması.
+    6. **Sürükleme:** `Draggable`/`LongPressDraggable` tam-boy feedback; parmağın altındaki
+       hücreyi `(localPos / (cell+gap)).floor()` ile bul; hedef hücre **hayalet vurgu**;
+       bırakınca `setBounds`. 60fps için sadece sürüklenen + itilen komşular animasyonlu.
+    7. **Widget ağacı:** `_GridDashboard`/`_EditableGrid`/`_EditCard`/`_packRows`/`_row`/
+       `_DragChip`/`_DropPlaceholder` → yeni `MatrixGrid` (view+edit ortak) + `GridCard` +
+       `ReflowController`. Hangileri silinir/kalır listesi.
+  - **Kabul:** R2–R8 için net veri modeli, reflow sözde-kodu, geometri formülleri, migration
+    kuralı, widget ağacı kararı bu bölüme yazılı; açık soru kalmadı.
+
+- [ ] **R2 · Veri modeli (x,y,w,h) + persistence + eski format göçü 🟣 Gemini 3.1 Pro**
+  - **Dosyalar:** `app/lib/features/home/dashboard_card.dart`,
+    `app/lib/features/home/dashboard_providers.dart`,
+    `app/test/features/dashboard_card_test.dart` (genişlet).
+  - **Adımlar:**
+    - `kGridColumns = 6`. `DashboardCardConfig`: `width`/`height` → `int x, y, w, h` (R1'e göre).
+      `encode()` = `"tür:x:y:w:h"`. `decode()` yeni 5-parça + eski `"tür:genişlik[:yükseklik]"`
+      + `"tür:boyut"` + `"tür"` çözüp **R1 migration kuralı**yla x,y,w,h'e göçürür.
+      `==`/`hashCode`/`withBounds` güncellenir.
+    - `DashboardLayoutNotifier`: `setWidth`/`setHeight`/`reorderItem` → `setBounds(type,x,y,w,h)`,
+      `addCard(type)` (ilk uygun boş hücre), `removeCard`/`toggle`. `_kDefaultLayout` x,y,w,h ile.
+      Yükleme sırasında eski string listesi göçer ve **bir kez yeniden kaydedilir** (idempotent).
+    - `size`/`effectiveHeight`/`dashboardCardFor`'un `size` köprüsü: 16 kartın imzası R3'te
+      değişene dek geçici korunur (shim) ya da R3 ile aynı turda güncellenir — R1 kararına uy.
+  - **Tuzak:** `dashboardCardFor(type, size)` 16 karta `size` geçiyor; imza değişimi R3 ile
+    koordineli. `defaultCardHeight`/`kMin/MaxCardHeight` px sabitleri kalkar (hücre bazlı).
+  - **Kabul:** Eski kayıtlı düzenler çökmeden yeni 6×N formatına göçer; serileştirme testleri
+    (yeni + tüm eski formatlar) geçer; `flutter analyze` temiz.
+
+- [ ] **R3 · Stack + AnimatedPositioned statik render 🔵 Sonnet 4.6**
+  - **Dosya:** `app/lib/features/home/home_screen.dart` (akış widget'ları kaldırılır).
+  - **Adımlar:** `_packRows`/`_row`/`_GridDashboard` (akış) → `LayoutBuilder` ile `cellW`/`rowH`
+    hesaplayıp her kartı `AnimatedPositioned(left,top,width,height)` ile **mutlak** çizen
+    `MatrixGrid`. Normal modda kartlar (x,y,w,h)'de; basılı-tut → düzenleme. Dikey kaydırma
+    `SingleChildScrollView` + toplam yükseklikli `SizedBox`. Animasyon süresi ~180ms easeOut.
+  - **Tuzak:** Kart içeriği artık hücre-bazlı yükseklik alır (`h*rowH`); `dashboardCardFor`
+    yüksekliği piksel yerine bu hesaptan alır. Boş hücreler düzenleme modunda hafif ızgara
+    çizgisiyle gösterilebilir (R5/R7'ye hazırlık).
+  - **Kabul:** Kartlar 6 sütunlu matriste doğru konum/boyutta; ekran kaydırılır; içerik (§2E)
+    tüm hücre oranlarında bozulmaz; `flutter analyze` temiz, 62+ test geçer.
+
+- [ ] **R4 · Occupancy matrisi + çarpışma & akıcı reflow fiziği 🔴 Opus 4.8**
+  - **Dosya:** `home_screen.dart` (+ gerekiyorsa `core/grid/reflow.dart` saf mantık).
+  - **Adımlar:** R1 sözde-kodundan `bool[rows][cols]` occupancy; `placeAt(card, x, y)` çakışan
+    komşuları **aşağı iter** (launcher mantığı, kendiliğinden sıkıştırma yok). İtme animasyonu
+    `AnimatedPositioned` ile pürüzsüz; ışınlanma yok. Saf yerleştirme/çakışma fonksiyonları
+    **birim testli** (`test/core/grid_reflow_test.dart`).
+  - **Tuzak:** Sonsuz döngü/taşma (it → yeni çakışma → it...) sınırlanmalı; matris yüksekliği
+    dinamik büyür. Boş bırakma korunur (yalnız gerçek çakışanlar itilir).
+  - **Kabul:** Bir kart başka kartın üstüne gelince komşular akıcı (60fps) yer açar, ışınlanma
+    yok; boş hücreler korunur; reflow birim testleri geçer.
+
+- [ ] **R5 · Sürükle: tam-boy yarı saydam feedback + hücre hedefleme 🟠 Opus 4.6**
+  - **Dosya:** `home_screen.dart`.
+  - **Adımlar:** `_DragChip`/`_DropPlaceholder` kaldırılır. `LongPressDraggable` feedback'i
+    kartın **gerçek görseli, tam boyut, `Opacity 0.6`**. Parmağın altındaki hücreyi hesapla;
+    hedef (x,y)'de **hayalet/vurgu** göster; geçerli (boş veya itilebilir) ise bırakınca
+    `setBounds` + R4 reflow. Geçersiz konumda eski yere döner. Düzenleme moduna geçişte scroll
+    offset korunur (mevcut §2F davranışı sürdürülür).
+  - **Tuzak:** Feedback tam boy olduğundan büyük kartlarda performans; sadece sürüklenen +
+    itilen komşular yeniden çizilir (`RepaintBoundary`). Web'de pointer güvenilirliği (mevcut
+    Draggable yaklaşımıyla uyum).
+  - **Kabul:** Sürüklenen kart küçülmez, yarı saydam tam boy süzülür; hedef hücre net görünür;
+    serbest boş hücreye bırakılabilir; komşular akıcı yer açar.
+
+- [ ] **R6 · Boyutlandırma: hücre-snap yükseklik + doğru köşe/kenar geometri 🟠 Opus 4.6**
+  - **Dosya:** `home_screen.dart`.
+  - **Adımlar:** R1 geometri matematiğiyle 4 köşe (+ ops. 4 kenar) tutamaçları. **Hata #3 fix:**
+    üstten çekince `y` azalır & `h` artar (alt kenar sabit); soldan çekince `x` azalır & `w`
+    artar (sağ kenar sabit); sağ/alt sadece `w`/`h`. **Genişlik VE yükseklik hücreye snap**
+    (eşik = hücrenin yarısı), küsuratlı px yok. Canlı resize'da R4 reflow; min 1×1, max w=6.
+  - **Tuzak:** Snap sırasında titreme (jitter) — biriken delta + eşik ile stabilize. Sol/üst
+    resize sırasında konum (x,y) değiştiği için occupancy yeniden hesaplanır.
+  - **Kabul:** Kart 4 köşe/kenardan hücreye oturarak büyür/küçülür; üst tutamaç doğru yönde
+    (yukarı) uzar; yükseklik satır katlarına snap eder; çakışmada akıcı reflow.
+
+- [ ] **R7 · Tutamaç & düzenleme UI estetiği 🔵 Sonnet 4.6**
+  - **Dosya:** `home_screen.dart` (+ ufak ortak widget'lar).
+  - **Adımlar:** Kaba mavi yuvarlaklar → **minimal**: düzenleme modunda kartı saran **ince**
+    çerçeve (1px, primary @ ~0.6) + köşelerde/kenar ortalarında **zarif ufak noktalar/haplar**
+    (6–10px, yumuşak gölge). Üst kontrol hapı sadeleştirilir (sürükle ipucu + `g×s` etiketi +
+    kaldır ×). Hover/aktif durumda hafif vurgulanır. Tutarlı tema renkleri.
+  - **Kabul:** Tutamaçlar minimal ve profesyonel; göze batmaz ama tutması kolay; düzenleme modu
+    "launcher" hissi verir; dokunma hedefleri yeterli (≥24px efektif).
+
+- [ ] **R8 · Göç doğrulama + string + cilalama + analyze/test 🟢 Gemini 3.5 Flash**
+  - **Dosyalar:** `home_screen.dart` (metinler), `progress.md`, gerekiyorsa ufak rötuşlar.
+  - **Adımlar:** Eski kayıtlı düzenlerin (gerçek cihaz prefs) yeni formata göçtüğünü doğrula;
+    düzenleme ipucu metnini yeni davranışa göre güncelle ("kartı tut, boş hücreye bırak;
+    köşelerden hücreye snap büyüt"); kalan lint/uyarıları temizle; `flutter analyze` + tüm
+    testler + manuel `flutter run` (5005 portu). progress.md R1–R8 `[X]` işaretle.
+  - **Kabul:** Analiz temiz, tüm testler geçer, manuel akış pürüzsüz; eski düzen göçü sağlam.
+
+### §2.2 Sıralama & bağımlılıklar
+1. **Zorunlu sıra:** R1(🔴 tasarım) → R2(model/migration) → R3(render) → R4(reflow) →
+   {R5(drag), R6(resize)} → R7(UI) → R8(cila). R5/R6 R4'e bağlı (reflow); paralel gidebilir.
+2. R2'nin `dashboardCardFor` imza değişimi R3 ile **aynı turda** koordineli (16 kart kırılmasın).
+3. 🔴 R1 kilitlenmeden R2+ başlamaz. R4 reflow birim testleri R5/R6'dan ÖNCE yeşil olmalı.
+4. **§2.1 (akış) kodu R3'te tamamen kaldırılır** — `_packRows`/`_row`/`_DragChip`/
+   `_DropPlaceholder`/eski `_EditableGrid` silinir; geriye dönüş yok.
 
 ---
 
