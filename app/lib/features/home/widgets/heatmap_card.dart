@@ -12,12 +12,6 @@ class HeatmapCard extends ConsumerWidget {
 
   final DashboardCardSize size;
 
-  int get _weeks => switch (size) {
-        DashboardCardSize.small => 9,
-        DashboardCardSize.medium => 15,
-        DashboardCardSize.large => 26,
-      };
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
@@ -31,7 +25,18 @@ class HeatmapCard extends ConsumerWidget {
           children: [
             Text('Çalışma takvimi', style: theme.textTheme.titleMedium),
             const SizedBox(height: 12),
-            StudyHeatmap(sessions: sessions, weeks: _weeks),
+            Expanded(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  // Her hafta ortalama 18px yer kaplıyor (kutu + boşluk + eksen).
+                  final weeks = ((constraints.maxWidth - 40) / 18).floor().clamp(4, 52);
+                  return SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: StudyHeatmap(sessions: sessions, weeks: weeks),
+                  );
+                },
+              ),
+            ),
           ],
         ),
       ),

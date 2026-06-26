@@ -31,57 +31,106 @@ class _WeeklyChartCardState extends ConsumerState<WeeklyChartCard> {
     final total = series.fold<int>(0, (sum, d) => sum + d.seconds);
 
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: Row(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isCompact = constraints.maxWidth < 280;
+          final isLarge = constraints.maxWidth >= 400;
+          final chartHeight = isLarge ? 220.0 : (isCompact ? 140.0 : 160.0);
+
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Çalışma grafiği', style: theme.textTheme.titleMedium),
-                  const Spacer(),
-                  Text(
-                    formatHuman(total),
-                    style: theme.textTheme.titleMedium
-                        ?.copyWith(color: theme.colorScheme.primary),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: Row(
+                      children: [
+                        Text('Çalışma grafiği', style: theme.textTheme.titleMedium),
+                        const Spacer(),
+                        if (isCompact)
+                          _DayFilter(
+                            value: _days,
+                            options: const [7, 14, 30],
+                            onChanged: (v) => setState(() => _days = v),
+                            isCompact: true,
+                          ),
+                        if (!isCompact)
+                          Text(
+                            formatHuman(total),
+                            style: theme.textTheme.titleMedium
+                                ?.copyWith(color: theme.colorScheme.primary),
+                          ),
+                      ],
+                    ),
+                  ),
+                  if (isCompact) ...[
+                    const SizedBox(height: 4),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Text(
+                        formatHuman(total),
+                        style: theme.textTheme.titleMedium
+                            ?.copyWith(color: theme.colorScheme.primary),
+                      ),
+                    ),
+                  ],
+                  if (!isCompact) ...[
+                    const SizedBox(height: 10),
+                    _DayFilter(
+                      value: _days,
+                      options: const [7, 14, 30],
+                      onChanged: (v) => setState(() => _days = v),
+                      isCompact: false,
+                    ),
+                  ],
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    height: chartHeight,
+                    child: DailyBarChart(days: series, goalSeconds: goalSeconds),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 10),
-            _DayFilter(
-              value: _days,
-              options: const [7, 14, 30],
-              onChanged: (v) => setState(() => _days = v),
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              height: isLarge ? 220 : 160,
-              child: DailyBarChart(days: series, goalSeconds: goalSeconds),
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
 }
 
-/// Gün-aralığı filtresi (kart içi küçük segment butonu).
+/// Gün-aralığı filtresi (kart içi küçük segment butonu veya dropdown).
 class _DayFilter extends StatelessWidget {
   const _DayFilter({
     required this.value,
     required this.options,
     required this.onChanged,
+    required this.isCompact,
   });
 
   final int value;
   final List<int> options;
   final ValueChanged<int> onChanged;
+  final bool isCompact;
 
   @override
   Widget build(BuildContext context) {
+    if (isCompact) {
+      return DropdownButton<int>(
+        value: value,
+        isDense: true,
+        underline: const SizedBox.shrink(),
+        icon: const Icon(Icons.arrow_drop_down, size: 20),
+        items: [
+          for (final o in options)
+            DropdownMenuItem(value: o, child: Text('$o gün')),
+        ],
+        onChanged: (v) {
+          if (v != null) onChanged(v);
+        },
+      );
+    }
     return Align(
       alignment: Alignment.centerLeft,
       child: SegmentedButton<int>(
