@@ -183,5 +183,37 @@ void main() {
         'today:0:4:3:2',
       ]);
     });
+
+    test('setBounds carpisan kartlari asagi iter', () async {
+      SharedPreferences.setMockInitialValues({
+        'dashboard_layout': ['timer:0:0:6:2', 'today:0:2:6:2'],
+      });
+      final prefs = await SharedPreferences.getInstance();
+      final container = ProviderContainer(
+        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      );
+      addTearDown(container.dispose);
+
+      container
+          .read(dashboardLayoutProvider.notifier)
+          .setBounds(DashboardCardType.timer, y: 1);
+
+      expect(container.read(dashboardLayoutProvider), [
+        const DashboardCardConfig(
+          DashboardCardType.timer,
+          x: 0,
+          y: 1,
+          w: 6,
+          h: 2,
+        ),
+        const DashboardCardConfig(
+          DashboardCardType.today,
+          x: 0,
+          y: 3,
+          w: 6,
+          h: 2,
+        ),
+      ]);
+    });
   });
 }

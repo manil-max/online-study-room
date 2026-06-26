@@ -466,7 +466,7 @@ Supabase'e gerek yok. (Önceki Supabase tablolu plan iptal edildi — `0007` sil
 - `[X]` R1 · 2D matris TASARIM (koordinat/hücre/reflow/migration) 🔴 Opus 4.8
 - `[X]` R2 · Veri modeli x,y,w,h + persistence + eski format göçü 🟣 Gemini 3.1 Pro
 - `[X]` R3 · Stack + AnimatedPositioned statik render (akış kaldırılır) 🔵 Sonnet 4.6
-- `[ ]` R4 · Occupancy matrisi + çarpışma & akıcı reflow fiziği 🔴 Opus 4.8
+- `[X]` R4 · Occupancy matrisi + çarpışma & akıcı reflow fiziği 🔴 Opus 4.8
 - `[ ]` R5 · Sürükle: tam-boy yarı saydam feedback + hücre hedefleme 🟠 Opus 4.6
 - `[ ]` R6 · Boyutlandırma: hücre-snap yükseklik + doğru köşe/kenar geometri 🟠 Opus 4.6
 - `[ ]` R7 · Tutamaç & düzenleme UI estetiği (ince çizgi + zarif noktalar) 🔵 Sonnet 4.6
@@ -829,7 +829,7 @@ Supabase'e gerek yok. (Önceki Supabase tablolu plan iptal edildi — `0007` sil
     `_DragChip`/`_DropPlaceholder` akış parçaları kaldırıldı. Sürükleme/reflow/resize
     davranışları R4–R6'ya bırakıldı.
 
-- [ ] **R4 · Occupancy matrisi + çarpışma & akıcı reflow fiziği 🔴 Opus 4.8**
+- [x] **R4 · Occupancy matrisi + çarpışma & akıcı reflow fiziği 🔴 Opus 4.8 — ✅ YAPILDI**
   - **Dosya:** `home_screen.dart` (+ gerekiyorsa `core/grid/reflow.dart` saf mantık).
   - **Adımlar:** R1 sözde-kodundan `bool[rows][cols]` occupancy; `placeAt(card, x, y)` çakışan
     komşuları **aşağı iter** (launcher mantığı, kendiliğinden sıkıştırma yok). İtme animasyonu
@@ -839,6 +839,11 @@ Supabase'e gerek yok. (Önceki Supabase tablolu plan iptal edildi — `0007` sil
     dinamik büyür. Boş bırakma korunur (yalnız gerçek çakışanlar itilir).
   - **Kabul:** Bir kart başka kartın üstüne gelince komşular akıcı (60fps) yer açar, ışınlanma
     yok; boş hücreler korunur; reflow birim testleri geçer.
+  - **Uygulandı (2026-06-26):** `core/grid/grid_reflow.dart` saf reflow motoru eklendi.
+    `placeGridItem` hedef kartı 6 sütun sınırlarına kırpıyor, yalnız çarpışan kartları aşağı
+    itiyor, zincir çarpışmayı yayıyor ve boşlukları kendiliğinden sıkıştırmıyor. Provider
+    `setBounds` bu motoru kullanıyor; R5/R6 hareketleri veri seviyesinde aynı reflow'dan geçecek.
+    `test/core/grid_reflow_test.dart` ve provider testi eklendi.
 
 - [ ] **R5 · Sürükle: tam-boy yarı saydam feedback + hücre hedefleme 🟠 Opus 4.6**
   - **Dosya:** `home_screen.dart`.

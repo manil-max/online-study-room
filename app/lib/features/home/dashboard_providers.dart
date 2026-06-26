@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/grid/grid_reflow.dart';
 import '../../core/prefs/app_prefs.dart';
 import 'dashboard_card.dart';
 
@@ -76,8 +77,35 @@ class DashboardLayoutNotifier extends Notifier<List<DashboardCardConfig>> {
     final i = _indexOf(type);
     if (i < 0) return;
     final list = [...state];
-    list[i] = list[i].withBounds(x: x, y: y, w: w, h: h);
-    state = list;
+    final target = list[i].withBounds(x: x, y: y, w: w, h: h);
+    final flowed = placeGridItem(
+      items: [
+        for (final config in list)
+          GridItemBounds(
+            id: config.type.name,
+            x: config.x,
+            y: config.y,
+            w: config.w,
+            h: config.h,
+          ),
+      ],
+      id: type.name,
+      x: target.x,
+      y: target.y,
+      w: target.w,
+      h: target.h,
+      columns: kGridColumns,
+    );
+    final byId = {for (final item in flowed) item.id: item};
+    state = [
+      for (final config in list)
+        config.withBounds(
+          x: byId[config.type.name]!.x,
+          y: byId[config.type.name]!.y,
+          w: byId[config.type.name]!.w,
+          h: byId[config.type.name]!.h,
+        ),
+    ];
     if (persist) _save();
   }
 
