@@ -372,11 +372,14 @@ class _MembersCard extends ConsumerWidget {
                     avatarUrl: m.avatarUrl,
                     radius: 18,
                   ),
-                  title: Text(m.displayName.isEmpty ? 'İsimsiz' : m.displayName),
+                  title: Text(!m.isActive
+                      ? 'Eski Grup Üyesi'
+                      : (m.displayName.isEmpty ? 'İsimsiz' : m.displayName)),
                   subtitle: m.id == group.createdBy
                       ? const Text('Yönetici')
                       : null,
                   trailing: (isAdmin &&
+                          m.isActive &&
                           m.id != currentUserId &&
                           m.id != group.createdBy)
                       ? IconButton(

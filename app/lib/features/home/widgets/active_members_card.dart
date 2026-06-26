@@ -72,7 +72,12 @@ class ActiveMembersCard extends ConsumerWidget {
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 5),
                   child: _ActiveRow(
-                    name: memberById[p.userId]?.displayName ?? 'İsimsiz',
+                    name: (memberById[p.userId] != null &&
+                            !memberById[p.userId]!.isActive)
+                        ? 'Eski Grup Üyesi'
+                        : (memberById[p.userId]?.displayName.isNotEmpty == true
+                            ? memberById[p.userId]!.displayName
+                            : 'İsimsiz'),
                     avatarUrl: memberById[p.userId]?.avatarUrl,
                     startedAt: p.startedAt,
                     green: green,

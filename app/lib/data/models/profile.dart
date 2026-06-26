@@ -12,12 +12,14 @@ class Profile {
     required this.createdAt,
     this.avatarUrl,
     this.dailyGoalMinutes = kDefaultDailyGoalMinutes,
+    this.isActive = true,
   });
 
   final String id;
   final String displayName;
   final String? avatarUrl;
   final DateTime createdAt;
+  final bool isActive;
 
   /// Günlük çalışma hedefi (dakika). Seri (streak) ve hedef ilerleme buna bağlı.
   final int dailyGoalMinutes;
@@ -26,6 +28,7 @@ class Profile {
     String? displayName,
     String? avatarUrl,
     int? dailyGoalMinutes,
+    bool? isActive,
   }) {
     return Profile(
       id: id,
@@ -33,6 +36,7 @@ class Profile {
       avatarUrl: avatarUrl ?? this.avatarUrl,
       createdAt: createdAt,
       dailyGoalMinutes: dailyGoalMinutes ?? this.dailyGoalMinutes,
+      isActive: isActive ?? this.isActive,
     );
   }
 
@@ -44,6 +48,7 @@ class Profile {
       createdAt: DateTime.parse(map['created_at'] as String),
       dailyGoalMinutes:
           (map['daily_goal_minutes'] as int?) ?? kDefaultDailyGoalMinutes,
+      isActive: map['is_active'] as bool? ?? true,
     );
   }
 
@@ -54,6 +59,7 @@ class Profile {
       'avatar_url': avatarUrl,
       'created_at': createdAt.toIso8601String(),
       'daily_goal_minutes': dailyGoalMinutes,
+      'is_active': isActive,
     };
   }
 
@@ -64,9 +70,10 @@ class Profile {
       other.displayName == displayName &&
       other.avatarUrl == avatarUrl &&
       other.createdAt == createdAt &&
-      other.dailyGoalMinutes == dailyGoalMinutes;
+      other.dailyGoalMinutes == dailyGoalMinutes &&
+      other.isActive == isActive;
 
   @override
   int get hashCode =>
-      Object.hash(id, displayName, avatarUrl, createdAt, dailyGoalMinutes);
+      Object.hash(id, displayName, avatarUrl, createdAt, dailyGoalMinutes, isActive);
 }

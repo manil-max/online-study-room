@@ -183,9 +183,11 @@ class _Row extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final name = member?.displayName.isNotEmpty == true
-        ? member!.displayName
-        : 'İsimsiz';
+    final name = (member != null && !member!.isActive)
+        ? 'Eski Grup Üyesi'
+        : (member?.displayName.isNotEmpty == true
+            ? member!.displayName
+            : 'İsimsiz');
     // Üzerine gelince basit özet (tooltip); tıklayınca tıklanan yerde detay.
     final brief = StringBuffer('$rank. · Bugün ${formatHuman(seconds)}');
     if (streak > 0) brief.write(' · 🔥$streak gün');

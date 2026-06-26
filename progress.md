@@ -450,7 +450,7 @@ Supabase'e gerek yok. (Önceki Supabase tablolu plan iptal edildi — `0007` sil
 - `[X]` 1B · Çoklu grup mimarisi TASARIM 🔴
 - `[X]` 1C · DB migration'ları (0008–0011) 🟣
 - `[X]` 1D · Dart veri katmanı refactor 🟣
-- `[ ]` 1E · "Eski Grup Üyesi" etiketi 🟢
+- `[X]` 1E · "Eski Grup Üyesi" etiketi 🟢
 - `[X]` 2A · Serbest ızgara TASARIM 🔴
 - `[X]` 2B · Grid veri modeli + persistence 🔵
 - `[X]` 2C · Doğrudan sürükle + reflow 🔴
@@ -616,7 +616,7 @@ Supabase'e gerek yok. (Önceki Supabase tablolu plan iptal edildi — `0007` sil
   - **Kabul:** `flutter analyze` temiz; iki gruplu kullanıcı tek "Çalış" → her iki grup leaderboard'ında görünür; kişisel toplam (profil) ÇİFT saymaz; 47 test geçer (test fixture'larında group_id varsa onları da temizle).
   - **Tuzak:** `grep -rn "groupId\|group_id" app/lib` ile tüm kalıntıları bul; test dosyaları dahil.
 
-- [ ] **1E · "Eski Grup Üyesi" etiketi 🟢 Flash**
+- [x] **1E · "Eski Grup Üyesi" etiketi 🟢 Flash**
   - **Amaç:** Madde 5 — ayrılan üyenin adı listede korunsun.
   - **Önkoşul:** 1D'de `watchMembers` artık `left_at` taşıyan üyeleri de döndürmeli (aktif + ayrılmış). Bu, member modeline `leftAt`/`isActive` bilgisi taşımayı gerektirir; 1D çıktısındaki member akışına dayan.
   - **Dosyalar/satırlar:** "İsimsiz" fallback'i, üyelik ayrılmışsa "Eski Grup Üyesi" olacak:

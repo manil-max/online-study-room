@@ -256,6 +256,10 @@ kendi sunucumuzu (self-host) veya başka ücretsiz katmanı değerlendiririz.
 - **Widget içeriği:** Hangi bilgiler, hangi boyut, hangi platform öncelikli?
 - **Tasarım dili:** Renkler, tema (açık/koyu), genel görünüm/his.
 - **Tek mi çok mu sınıf:** İlk sürüm tek sınıf; çoklu sınıf gerçekten istenecek mi?
+- ❓ **Gelecek UI Geliştirmeleri (Kullanıcı Geri Bildirimi - 26 Haziran):**
+  - **Grid Boyutlandırma:** Ana ekrandaki kartların sadece sağ alt köşeden (genişlik) değil, Android widget'ları gibi 4 kenar ve köşeden (hem genişlik hem yükseklik) ayarlanabilmesi.
+  - **Canlı Grup Hedefi:** Grup hedef ilerleme barının (örn. 360 dk), üyeler durdur tuşuna basmadan *canlı* olarak (çalışan kişi sayısına göre saniye saniye) akması.
+  - **Grup Yönetimi Arayüzü:** Grup ayarları ve üye yönetiminin daha kolay/derli toplu yapılabilmesi için UI/UX iyileştirmeleri.
 
 ---
 

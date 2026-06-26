@@ -76,7 +76,9 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
     final heatRows = [
       for (final m in widget.members)
         HeatRow(
-          label: m.displayName.isEmpty ? 'İsimsiz' : m.displayName,
+          label: !m.isActive
+              ? 'Eski Grup Üyesi'
+              : (m.displayName.isEmpty ? 'İsimsiz' : m.displayName),
           avatarUrl: m.avatarUrl,
           highlight: m.id == widget.currentUserId,
           values: [

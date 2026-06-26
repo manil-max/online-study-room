@@ -72,16 +72,18 @@ class SupabaseGroupRepository implements GroupRepository {
     }
     final group = StudyGroup.fromMap(row);
     try {
-      await _client.from('group_members').insert({
-        'group_id': group.id,
-        'user_id': member.id,
-        'role': 'member',
-      });
+      await _client.from('group_members').upsert(
+        {
+          'group_id': group.id,
+          'user_id': member.id,
+          'role': 'member',
+          'left_at': null,
+          'joined_at': DateTime.now().toUtc().toIso8601String(),
+        },
+        onConflict: 'group_id,user_id',
+      );
     } on PostgrestException catch (e) {
-      // Zaten üyeyse (unique violation) sorun değil; sınıfı döndür.
-      if (e.code != '23505') {
-        throw GroupException('Gruba katılınamadı: ${e.message}');
-      }
+      throw GroupException('Gruba katılınamadı: ${e.message}');
     }
     return group;
   }
@@ -114,7 +116,11 @@ class SupabaseGroupRepository implements GroupRepository {
           if (ids.isEmpty) return <Profile>[];
           final profs =
               await _client.from('profiles').select().inFilter('id', ids);
-          return profs.map<Profile>(Profile.fromMap).toList();
+          return profs.map<Profile>((pMap) {
+            final profile = Profile.fromMap(pMap);
+            final memberRow = rows.firstWhere((r) => r['user_id'] == profile.id);
+            return profile.copyWith(isActive: memberRow['left_at'] == null);
+          }).toList();
         });
   }
 
@@ -164,7 +170,7 @@ class SupabaseGroupRepository implements GroupRepository {
     try {
       await _client
           .from('group_members')
-          .delete()
+          .update({'left_at': DateTime.now().toUtc().toIso8601String()})
           .eq('group_id', groupId)
           .eq('user_id', userId);
     } on PostgrestException catch (e) {
