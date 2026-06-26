@@ -465,7 +465,7 @@ Supabase'e gerek yok. (Önceki Supabase tablolu plan iptal edildi — `0007` sil
 #### §2.2 — Gerçek 6×N 2D Matris Izgara REFACTOR (2026-06-26 geri bildirim)
 - `[X]` R1 · 2D matris TASARIM (koordinat/hücre/reflow/migration) 🔴 Opus 4.8
 - `[X]` R2 · Veri modeli x,y,w,h + persistence + eski format göçü 🟣 Gemini 3.1 Pro
-- `[ ]` R3 · Stack + AnimatedPositioned statik render (akış kaldırılır) 🔵 Sonnet 4.6
+- `[X]` R3 · Stack + AnimatedPositioned statik render (akış kaldırılır) 🔵 Sonnet 4.6
 - `[ ]` R4 · Occupancy matrisi + çarpışma & akıcı reflow fiziği 🔴 Opus 4.8
 - `[ ]` R5 · Sürükle: tam-boy yarı saydam feedback + hücre hedefleme 🟠 Opus 4.6
 - `[ ]` R6 · Boyutlandırma: hücre-snap yükseklik + doğru köşe/kenar geometri 🟠 Opus 4.6
@@ -811,7 +811,7 @@ Supabase'e gerek yok. (Önceki Supabase tablolu plan iptal edildi — `0007` sil
     bir kez yeniden kaydediyor. R3'e kadar mevcut akış ekranının derlenmesi için `width`,
     `effectiveHeight`, `setWidth`, `setHeight`, `reorderItem` köprüleri geçici bırakıldı.
 
-- [ ] **R3 · Stack + AnimatedPositioned statik render 🔵 Sonnet 4.6**
+- [x] **R3 · Stack + AnimatedPositioned statik render 🔵 Sonnet 4.6 — ✅ YAPILDI**
   - **Dosya:** `app/lib/features/home/home_screen.dart` (akış widget'ları kaldırılır).
   - **Adımlar:** `_packRows`/`_row`/`_GridDashboard` (akış) → `LayoutBuilder` ile `cellW`/`rowH`
     hesaplayıp her kartı `AnimatedPositioned(left,top,width,height)` ile **mutlak** çizen
@@ -822,6 +822,12 @@ Supabase'e gerek yok. (Önceki Supabase tablolu plan iptal edildi — `0007` sil
     çizgisiyle gösterilebilir (R5/R7'ye hazırlık).
   - **Kabul:** Kartlar 6 sütunlu matriste doğru konum/boyutta; ekran kaydırılır; içerik (§2E)
     tüm hücre oranlarında bozulmaz; `flutter analyze` temiz, 62+ test geçer.
+  - **Uygulandı (2026-06-26):** `home_screen.dart` akış/Row paketlemesinden çıkarıldı.
+    Normal ve düzenleme modu ortak `_MatrixGrid` kullanıyor; kartlar `x,y,w,h` ile
+    `Stack + AnimatedPositioned` içinde çiziliyor. Dikey kaydırma `SingleChildScrollView`
+    ve toplam matris yüksekliğiyle korunuyor. Eski `_packRows`/`_row`/`_Slot`/
+    `_DragChip`/`_DropPlaceholder` akış parçaları kaldırıldı. Sürükleme/reflow/resize
+    davranışları R4–R6'ya bırakıldı.
 
 - [ ] **R4 · Occupancy matrisi + çarpışma & akıcı reflow fiziği 🔴 Opus 4.8**
   - **Dosya:** `home_screen.dart` (+ gerekiyorsa `core/grid/reflow.dart` saf mantık).
