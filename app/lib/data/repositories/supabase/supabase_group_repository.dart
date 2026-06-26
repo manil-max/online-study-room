@@ -28,32 +28,20 @@ class SupabaseGroupRepository implements GroupRepository {
     if (name.trim().isEmpty) {
       throw const GroupException('Grup adı boş olamaz.');
     }
-    // Benzersiz davet kodu bulana kadar dene (çakışma çok olası değil).
-    for (var attempt = 0; attempt < 5; attempt++) {
-      try {
-        final row = await _client
-            .from('groups')
-            .insert({
-              'name': name.trim(),
-              'invite_code': _newCode(),
-              'created_by': creator.id,
-            })
-            .select()
-            .single();
-        final group = StudyGroup.fromMap(row);
-        await _client.from('group_members').insert({
-          'group_id': group.id,
-          'user_id': creator.id,
-          'role': 'admin',
-        });
-        return group;
-      } on PostgrestException catch (e) {
-        // 23505 = unique violation (davet kodu çakıştı) → tekrar dene.
-        if (e.code == '23505' && attempt < 4) continue;
-        throw GroupException('Grup oluşturulamadı: ${e.message}');
+    // Grup + admin üyeliği tek transaction'da sunucuda kurulur (RPC).
+    // Davet kodu sunucuda üretilir; istemci groups'a doğrudan insert atmaz.
+    try {
+      final row = await _client.rpc(
+        'create_group',
+        params: {'p_name': name.trim()},
+      );
+      if (row == null) {
+        throw const GroupException('Grup oluşturulamadı, tekrar deneyin.');
       }
+      return StudyGroup.fromMap(Map<String, dynamic>.from(row as Map));
+    } on PostgrestException catch (e) {
+      throw GroupException('Grup oluşturulamadı: ${e.message}');
     }
-    throw const GroupException('Grup oluşturulamadı, tekrar deneyin.');
   }
 
   @override
@@ -61,31 +49,19 @@ class SupabaseGroupRepository implements GroupRepository {
     required String inviteCode,
     required Profile member,
   }) async {
+    // Davet kodu SUNUCUDA doğrulanır (RPC). İstemci artık groups tablosunu
+    // kodla sorgulamaz ve group_members'a doğrudan insert atmaz — böylece
+    // kod bilinmeden gruba katılma / kod ifşası mümkün değildir.
     final code = inviteCode.trim().toUpperCase();
-    final row = await _client
-        .from('groups')
-        .select()
-        .eq('invite_code', code)
-        .maybeSingle();
-    if (row == null) {
-      throw const GroupException('Bu koda ait grup bulunamadı.');
-    }
-    final group = StudyGroup.fromMap(row);
     try {
-      await _client.from('group_members').upsert(
-        {
-          'group_id': group.id,
-          'user_id': member.id,
-          'role': 'member',
-          'left_at': null,
-          'joined_at': DateTime.now().toUtc().toIso8601String(),
-        },
-        onConflict: 'group_id,user_id',
-      );
+      final row = await _client.rpc('join_group', params: {'p_code': code});
+      if (row == null) {
+        throw const GroupException('Bu koda ait grup bulunamadı.');
+      }
+      return StudyGroup.fromMap(Map<String, dynamic>.from(row as Map));
     } on PostgrestException catch (e) {
       throw GroupException('Gruba katılınamadı: ${e.message}');
     }
-    return group;
   }
 
   @override
