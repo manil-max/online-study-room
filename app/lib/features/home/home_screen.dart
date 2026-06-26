@@ -80,6 +80,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     layout: layout,
                     editing: _editing,
                     onLongPressCard: () => _setEditing(true),
+                    onMoveCard: (type, x, y) => ref
+                        .read(dashboardLayoutProvider.notifier)
+                        .setBounds(type, x: x, y: y),
                     onRemove: ref
                         .read(dashboardLayoutProvider.notifier)
                         .removeCard,
@@ -105,18 +108,40 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
 const double _kGap = 8.0;
 
-class _MatrixGrid extends StatelessWidget {
+class _MatrixGrid extends StatefulWidget {
   const _MatrixGrid({
     required this.layout,
     required this.editing,
     required this.onLongPressCard,
+    required this.onMoveCard,
     required this.onRemove,
   });
 
   final List<DashboardCardConfig> layout;
   final bool editing;
   final VoidCallback onLongPressCard;
+  final void Function(DashboardCardType type, int x, int y) onMoveCard;
   final ValueChanged<DashboardCardType> onRemove;
+
+  @override
+  State<_MatrixGrid> createState() => _MatrixGridState();
+}
+
+class _DragTargetCell {
+  const _DragTargetCell(this.type, this.x, this.y);
+
+  final DashboardCardType type;
+  final int x;
+  final int y;
+}
+
+class _MatrixGridState extends State<_MatrixGrid> {
+  final GlobalKey _gridKey = GlobalKey();
+  _DragTargetCell? _target;
+
+  void _clearTarget() {
+    if (_target != null) setState(() => _target = null);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -124,10 +149,18 @@ class _MatrixGrid extends StatelessWidget {
       builder: (context, constraints) {
         final cell =
             (constraints.maxWidth - (kGridColumns - 1) * _kGap) / kGridColumns;
-        final totalRows = layout.fold<int>(
+        final baseRows = widget.layout.fold<int>(
           1,
           (max, c) => max > c.y + c.h ? max : c.y + c.h,
         );
+        final draggedConfig = _target == null
+            ? null
+            : widget.layout.where((c) => c.type == _target!.type).firstOrNull;
+        final totalRows = draggedConfig == null
+            ? baseRows
+            : (baseRows > _target!.y + draggedConfig.h
+                  ? baseRows
+                  : _target!.y + draggedConfig.h);
         final height = totalRows * cell + (totalRows - 1) * _kGap;
 
         double leftOf(DashboardCardConfig c) => c.x * (cell + _kGap);
@@ -136,33 +169,98 @@ class _MatrixGrid extends StatelessWidget {
         double heightOf(DashboardCardConfig c) =>
             c.h * cell + (c.h - 1) * _kGap;
 
-        return SizedBox(
-          height: height,
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              if (editing) _GridBackdrop(cell: cell, rows: totalRows),
-              for (final c in layout)
-                AnimatedPositioned(
-                  key: ValueKey(c.type),
-                  duration: const Duration(milliseconds: 180),
-                  curve: Curves.easeOut,
-                  left: leftOf(c),
-                  top: topOf(c),
-                  width: widthOf(c),
-                  height: heightOf(c),
-                  child: _MatrixCard(
-                    config: c,
-                    height: heightOf(c),
-                    editing: editing,
-                    onLongPressCard: onLongPressCard,
-                    onRemove: () => onRemove(c.type),
-                  ),
-                ),
-            ],
-          ),
+        void updateTarget(details) {
+          final box = _gridKey.currentContext?.findRenderObject() as RenderBox?;
+          if (box == null) return;
+          final config = widget.layout
+              .where((c) => c.type == details.data)
+              .firstOrNull;
+          if (config == null) return;
+
+          final local = box.globalToLocal(details.offset);
+          final stride = cell + _kGap;
+          final x = (local.dx / stride).floor().clamp(
+            0,
+            kGridColumns - config.w,
+          );
+          final y = (local.dy / stride).floor().clamp(0, 9999);
+          final next = _DragTargetCell(config.type, x, y);
+          if (_target?.type != next.type ||
+              _target?.x != next.x ||
+              _target?.y != next.y) {
+            setState(() => _target = next);
+          }
+        }
+
+        return DragTarget<DashboardCardType>(
+          onWillAcceptWithDetails: (_) => widget.editing,
+          onMove: updateTarget,
+          onLeave: (_) => _clearTarget(),
+          onAcceptWithDetails: (details) {
+            final target = _target;
+            if (target != null) {
+              widget.onMoveCard(details.data, target.x, target.y);
+            }
+            _clearTarget();
+          },
+          builder: (context, candidateData, rejectedData) {
+            return SizedBox(
+              key: _gridKey,
+              height: height,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  if (widget.editing)
+                    _GridBackdrop(cell: cell, rows: totalRows),
+                  if (draggedConfig != null && _target != null)
+                    Positioned(
+                      left: _target!.x * (cell + _kGap),
+                      top: _target!.y * (cell + _kGap),
+                      width: widthOf(draggedConfig),
+                      height: heightOf(draggedConfig),
+                      child: _DropGhost(),
+                    ),
+                  for (final c in widget.layout)
+                    AnimatedPositioned(
+                      key: ValueKey(c.type),
+                      duration: const Duration(milliseconds: 180),
+                      curve: Curves.easeOut,
+                      left: leftOf(c),
+                      top: topOf(c),
+                      width: widthOf(c),
+                      height: heightOf(c),
+                      child: _MatrixCard(
+                        config: c,
+                        width: widthOf(c),
+                        height: heightOf(c),
+                        editing: widget.editing,
+                        onLongPressCard: widget.onLongPressCard,
+                        onRemove: () => widget.onRemove(c.type),
+                      ),
+                    ),
+                ],
+              ),
+            );
+          },
         );
       },
+    );
+  }
+}
+
+class _DropGhost extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primaryContainer.withValues(alpha: 0.22),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: theme.colorScheme.primary.withValues(alpha: 0.75),
+          width: 1.5,
+        ),
+      ),
     );
   }
 }
@@ -204,6 +302,7 @@ class _GridBackdrop extends StatelessWidget {
 class _MatrixCard extends StatelessWidget {
   const _MatrixCard({
     required this.config,
+    required this.width,
     required this.height,
     required this.editing,
     required this.onLongPressCard,
@@ -211,6 +310,7 @@ class _MatrixCard extends StatelessWidget {
   });
 
   final DashboardCardConfig config;
+  final double width;
   final double height;
   final bool editing;
   final VoidCallback onLongPressCard;
@@ -228,7 +328,7 @@ class _MatrixCard extends StatelessWidget {
       );
     }
 
-    return Stack(
+    final editCard = Stack(
       clipBehavior: Clip.none,
       children: [
         Positioned.fill(child: IgnorePointer(child: card)),
@@ -293,6 +393,23 @@ class _MatrixCard extends StatelessWidget {
           ),
         ),
       ],
+    );
+
+    return LongPressDraggable<DashboardCardType>(
+      data: config.type,
+      feedback: SizedBox(
+        width: width,
+        height: height,
+        child: Opacity(
+          opacity: 0.6,
+          child: Material(
+            color: Colors.transparent,
+            child: dashboardCardFor(config.type, config.size, height: height),
+          ),
+        ),
+      ),
+      childWhenDragging: Opacity(opacity: 0.28, child: editCard),
+      child: editCard,
     );
   }
 }

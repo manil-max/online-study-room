@@ -467,7 +467,7 @@ Supabase'e gerek yok. (Önceki Supabase tablolu plan iptal edildi — `0007` sil
 - `[X]` R2 · Veri modeli x,y,w,h + persistence + eski format göçü 🟣 Gemini 3.1 Pro
 - `[X]` R3 · Stack + AnimatedPositioned statik render (akış kaldırılır) 🔵 Sonnet 4.6
 - `[X]` R4 · Occupancy matrisi + çarpışma & akıcı reflow fiziği 🔴 Opus 4.8
-- `[ ]` R5 · Sürükle: tam-boy yarı saydam feedback + hücre hedefleme 🟠 Opus 4.6
+- `[X]` R5 · Sürükle: tam-boy yarı saydam feedback + hücre hedefleme 🟠 Opus 4.6
 - `[ ]` R6 · Boyutlandırma: hücre-snap yükseklik + doğru köşe/kenar geometri 🟠 Opus 4.6
 - `[ ]` R7 · Tutamaç & düzenleme UI estetiği (ince çizgi + zarif noktalar) 🔵 Sonnet 4.6
 - `[ ]` R8 · Göç doğrulama + string + cilalama + analyze/test 🟢 Gemini 3.5 Flash
@@ -845,7 +845,7 @@ Supabase'e gerek yok. (Önceki Supabase tablolu plan iptal edildi — `0007` sil
     `setBounds` bu motoru kullanıyor; R5/R6 hareketleri veri seviyesinde aynı reflow'dan geçecek.
     `test/core/grid_reflow_test.dart` ve provider testi eklendi.
 
-- [ ] **R5 · Sürükle: tam-boy yarı saydam feedback + hücre hedefleme 🟠 Opus 4.6**
+- [x] **R5 · Sürükle: tam-boy yarı saydam feedback + hücre hedefleme 🟠 Opus 4.6 — ✅ YAPILDI**
   - **Dosya:** `home_screen.dart`.
   - **Adımlar:** `_DragChip`/`_DropPlaceholder` kaldırılır. `LongPressDraggable` feedback'i
     kartın **gerçek görseli, tam boyut, `Opacity 0.6`**. Parmağın altındaki hücreyi hesapla;
@@ -857,6 +857,10 @@ Supabase'e gerek yok. (Önceki Supabase tablolu plan iptal edildi — `0007` sil
     Draggable yaklaşımıyla uyum).
   - **Kabul:** Sürüklenen kart küçülmez, yarı saydam tam boy süzülür; hedef hücre net görünür;
     serbest boş hücreye bırakılabilir; komşular akıcı yer açar.
+  - **Uygulandı (2026-06-26):** Düzenleme modunda kart gövdesi `LongPressDraggable` oldu.
+    Feedback kartın gerçek boyutunda ve `Opacity(0.6)` ile çiziliyor; sürükleme sırasında
+    pointer konumundan hedef hücre hesaplanıyor, aynı boyutta hayalet kutu gösteriliyor ve
+    bırakınca `setBounds` çağrılıyor. Çakışmalar R4 reflow motoruyla aşağı itilerek çözülüyor.
 
 - [ ] **R6 · Boyutlandırma: hücre-snap yükseklik + doğru köşe/kenar geometri 🟠 Opus 4.6**
   - **Dosya:** `home_screen.dart`.
