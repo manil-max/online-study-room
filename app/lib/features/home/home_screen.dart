@@ -83,6 +83,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     onMoveCard: (type, x, y) => ref
                         .read(dashboardLayoutProvider.notifier)
                         .setBounds(type, x: x, y: y),
+                    onResizeCard: (type, x, y, w, h, persist) => ref
+                        .read(dashboardLayoutProvider.notifier)
+                        .setBounds(
+                          type,
+                          x: x,
+                          y: y,
+                          w: w,
+                          h: h,
+                          persist: persist,
+                        ),
+                    onCommit: ref
+                        .read(dashboardLayoutProvider.notifier)
+                        .persist,
                     onRemove: ref
                         .read(dashboardLayoutProvider.notifier)
                         .removeCard,
@@ -114,6 +127,8 @@ class _MatrixGrid extends StatefulWidget {
     required this.editing,
     required this.onLongPressCard,
     required this.onMoveCard,
+    required this.onResizeCard,
+    required this.onCommit,
     required this.onRemove,
   });
 
@@ -121,6 +136,16 @@ class _MatrixGrid extends StatefulWidget {
   final bool editing;
   final VoidCallback onLongPressCard;
   final void Function(DashboardCardType type, int x, int y) onMoveCard;
+  final void Function(
+    DashboardCardType type,
+    int x,
+    int y,
+    int w,
+    int h,
+    bool persist,
+  )
+  onResizeCard;
+  final VoidCallback onCommit;
   final ValueChanged<DashboardCardType> onRemove;
 
   @override
@@ -231,10 +256,14 @@ class _MatrixGridState extends State<_MatrixGrid> {
                       height: heightOf(c),
                       child: _MatrixCard(
                         config: c,
+                        cell: cell,
                         width: widthOf(c),
                         height: heightOf(c),
                         editing: widget.editing,
                         onLongPressCard: widget.onLongPressCard,
+                        onResize: (x, y, w, h, persist) =>
+                            widget.onResizeCard(c.type, x, y, w, h, persist),
+                        onCommit: widget.onCommit,
                         onRemove: () => widget.onRemove(c.type),
                       ),
                     ),
@@ -299,31 +328,94 @@ class _GridBackdrop extends StatelessWidget {
   }
 }
 
-class _MatrixCard extends StatelessWidget {
+class _MatrixCard extends StatefulWidget {
   const _MatrixCard({
     required this.config,
+    required this.cell,
     required this.width,
     required this.height,
     required this.editing,
     required this.onLongPressCard,
+    required this.onResize,
+    required this.onCommit,
     required this.onRemove,
   });
 
   final DashboardCardConfig config;
+  final double cell;
   final double width;
   final double height;
   final bool editing;
   final VoidCallback onLongPressCard;
+  final void Function(int x, int y, int w, int h, bool persist) onResize;
+  final VoidCallback onCommit;
   final VoidCallback onRemove;
+
+  @override
+  State<_MatrixCard> createState() => _MatrixCardState();
+}
+
+class _MatrixCardState extends State<_MatrixCard> {
+  DashboardCardConfig? _resizeStart;
+  double _dx = 0;
+  double _dy = 0;
+
+  void _onResizeStart() {
+    _resizeStart = widget.config;
+    _dx = 0;
+    _dy = 0;
+  }
+
+  void _onResizeUpdate(DragUpdateDetails details, _ResizeAnchor anchor) {
+    final start = _resizeStart;
+    if (start == null) return;
+    _dx += details.delta.dx;
+    _dy += details.delta.dy;
+    final stride = widget.cell + _kGap;
+    final colDelta = (_dx / stride).round();
+    final rowDelta = (_dy / stride).round();
+
+    var x = start.x;
+    var y = start.y;
+    var w = start.w;
+    var h = start.h;
+
+    if (anchor.left) {
+      final right = start.x + start.w;
+      x = (start.x + colDelta).clamp(0, right - 1);
+      w = right - x;
+    } else {
+      w = (start.w + colDelta).clamp(1, kGridColumns - start.x);
+    }
+
+    if (anchor.top) {
+      final bottom = start.y + start.h;
+      y = (start.y + rowDelta).clamp(0, bottom - 1);
+      h = bottom - y;
+    } else {
+      h = (start.h + rowDelta).clamp(1, 99);
+    }
+
+    widget.onResize(x, y, w, h, false);
+  }
+
+  void _onResizeEnd() {
+    _resizeStart = null;
+    widget.onCommit();
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final card = dashboardCardFor(config.type, config.size, height: height);
+    final card = dashboardCardFor(
+      widget.config.type,
+      widget.config.size,
+      height: widget.height,
+    );
 
-    if (!editing) {
+    if (!widget.editing) {
       return GestureDetector(
-        onLongPress: onLongPressCard,
+        onLongPress: widget.onLongPressCard,
         child: _HoverLift(child: card),
       );
     }
@@ -360,13 +452,13 @@ class _MatrixCard extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
-                      config.type.icon,
+                      widget.config.type.icon,
                       size: 15,
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      '${config.w}×${config.h}',
+                      '${widget.config.w}×${widget.config.h}',
                       style: theme.textTheme.labelSmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
@@ -384,7 +476,7 @@ class _MatrixCard extends StatelessWidget {
                         size: 17,
                         color: theme.colorScheme.error,
                       ),
-                      onPressed: onRemove,
+                      onPressed: widget.onRemove,
                     ),
                   ],
                 ),
@@ -392,24 +484,110 @@ class _MatrixCard extends StatelessWidget {
             ),
           ),
         ),
+        _ResizeHandle(
+          anchor: const _ResizeAnchor(left: true, top: true),
+          onStart: _onResizeStart,
+          onUpdate: _onResizeUpdate,
+          onEnd: _onResizeEnd,
+        ),
+        _ResizeHandle(
+          anchor: const _ResizeAnchor(left: false, top: true),
+          onStart: _onResizeStart,
+          onUpdate: _onResizeUpdate,
+          onEnd: _onResizeEnd,
+        ),
+        _ResizeHandle(
+          anchor: const _ResizeAnchor(left: true, top: false),
+          onStart: _onResizeStart,
+          onUpdate: _onResizeUpdate,
+          onEnd: _onResizeEnd,
+        ),
+        _ResizeHandle(
+          anchor: const _ResizeAnchor(left: false, top: false),
+          onStart: _onResizeStart,
+          onUpdate: _onResizeUpdate,
+          onEnd: _onResizeEnd,
+        ),
       ],
     );
 
     return LongPressDraggable<DashboardCardType>(
-      data: config.type,
+      data: widget.config.type,
       feedback: SizedBox(
-        width: width,
-        height: height,
+        width: widget.width,
+        height: widget.height,
         child: Opacity(
           opacity: 0.6,
           child: Material(
             color: Colors.transparent,
-            child: dashboardCardFor(config.type, config.size, height: height),
+            child: dashboardCardFor(
+              widget.config.type,
+              widget.config.size,
+              height: widget.height,
+            ),
           ),
         ),
       ),
       childWhenDragging: Opacity(opacity: 0.28, child: editCard),
       child: editCard,
+    );
+  }
+}
+
+class _ResizeAnchor {
+  const _ResizeAnchor({required this.left, required this.top});
+
+  final bool left;
+  final bool top;
+}
+
+class _ResizeHandle extends StatelessWidget {
+  const _ResizeHandle({
+    required this.anchor,
+    required this.onStart,
+    required this.onUpdate,
+    required this.onEnd,
+  });
+
+  final _ResizeAnchor anchor;
+  final VoidCallback onStart;
+  final void Function(DragUpdateDetails details, _ResizeAnchor anchor) onUpdate;
+  final VoidCallback onEnd;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Positioned(
+      left: anchor.left ? -9 : null,
+      right: anchor.left ? null : -9,
+      top: anchor.top ? -9 : null,
+      bottom: anchor.top ? null : -9,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onPanStart: (_) => onStart(),
+        onPanUpdate: (details) => onUpdate(details, anchor),
+        onPanEnd: (_) => onEnd(),
+        child: SizedBox(
+          width: 28,
+          height: 28,
+          child: Center(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary,
+                shape: BoxShape.circle,
+                border: Border.all(color: theme.colorScheme.surface, width: 2),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.18),
+                    blurRadius: 6,
+                  ),
+                ],
+              ),
+              child: const SizedBox(width: 10, height: 10),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

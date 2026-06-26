@@ -468,7 +468,7 @@ Supabase'e gerek yok. (Önceki Supabase tablolu plan iptal edildi — `0007` sil
 - `[X]` R3 · Stack + AnimatedPositioned statik render (akış kaldırılır) 🔵 Sonnet 4.6
 - `[X]` R4 · Occupancy matrisi + çarpışma & akıcı reflow fiziği 🔴 Opus 4.8
 - `[X]` R5 · Sürükle: tam-boy yarı saydam feedback + hücre hedefleme 🟠 Opus 4.6
-- `[ ]` R6 · Boyutlandırma: hücre-snap yükseklik + doğru köşe/kenar geometri 🟠 Opus 4.6
+- `[X]` R6 · Boyutlandırma: hücre-snap yükseklik + doğru köşe/kenar geometri 🟠 Opus 4.6
 - `[ ]` R7 · Tutamaç & düzenleme UI estetiği (ince çizgi + zarif noktalar) 🔵 Sonnet 4.6
 - `[ ]` R8 · Göç doğrulama + string + cilalama + analyze/test 🟢 Gemini 3.5 Flash
 
@@ -862,7 +862,7 @@ Supabase'e gerek yok. (Önceki Supabase tablolu plan iptal edildi — `0007` sil
     pointer konumundan hedef hücre hesaplanıyor, aynı boyutta hayalet kutu gösteriliyor ve
     bırakınca `setBounds` çağrılıyor. Çakışmalar R4 reflow motoruyla aşağı itilerek çözülüyor.
 
-- [ ] **R6 · Boyutlandırma: hücre-snap yükseklik + doğru köşe/kenar geometri 🟠 Opus 4.6**
+- [x] **R6 · Boyutlandırma: hücre-snap yükseklik + doğru köşe/kenar geometri 🟠 Opus 4.6 — ✅ YAPILDI**
   - **Dosya:** `home_screen.dart`.
   - **Adımlar:** R1 geometri matematiğiyle 4 köşe (+ ops. 4 kenar) tutamaçları. **Hata #3 fix:**
     üstten çekince `y` azalır & `h` artar (alt kenar sabit); soldan çekince `x` azalır & `w`
@@ -872,6 +872,10 @@ Supabase'e gerek yok. (Önceki Supabase tablolu plan iptal edildi — `0007` sil
     resize sırasında konum (x,y) değiştiği için occupancy yeniden hesaplanır.
   - **Kabul:** Kart 4 köşe/kenardan hücreye oturarak büyür/küçülür; üst tutamaç doğru yönde
     (yukarı) uzar; yükseklik satır katlarına snap eder; çakışmada akıcı reflow.
+  - **Uygulandı (2026-06-26):** Düzenleme modunda 4 köşe tutamacı eklendi. Sağ/alt köşeler
+    `w/h` büyütüp küçültüyor; sol/üst köşeler ilgili `x/y` konumunu da değiştirerek karşı kenarı
+    sabit tutuyor. Delta hücre adımına snapleniyor, min 1×1 ve 6 sütun sınırı korunuyor.
+    Canlı resize `setBounds(... persist:false)` ile R4 reflow'dan geçiyor; pan bitince düzen kalıcı.
 
 - [ ] **R7 · Tutamaç & düzenleme UI estetiği 🔵 Sonnet 4.6**
   - **Dosya:** `home_screen.dart` (+ ufak ortak widget'lar).
