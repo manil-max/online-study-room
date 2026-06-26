@@ -1,198 +1,175 @@
 # OPTIMIZATIONS.md
 
-> Salt-okuma optimizasyon denetimi (Flutter istemci + Supabase). Hiçbir değişiklik
-> uygulanmadı. Bulgular ROI'ye göre sıralı. Ölçümle kanıtlanamayan yerler **"likely"**
-> olarak işaretlendi ve neyin ölçülmesi gerektiği belirtildi.
-> Kapsam: `app/lib` (veri katmanı, provider'lar, stats, canlı ekranlar) + APK çıktısı.
+Kapsam: `online-study-room` tam optimizasyon denetimi (Flutter uygulaması `app/` + Supabase arka ucu `supabase/migrations/`). Yalnızca kod analizi; çalışma zamanı profillenmedi. Koddan kanıtlanamayan iddialar **olası** etiketiyle ve neyin ölçüleceğiyle birlikte verildi.
+
+> Bu turda hiçbir şey değiştirilmedi — yalnızca bulgular (optimizasyon-prompt kuralı gereği). Önceki `OPTIMIZATIONS.md` migration yorumlarında "F1" olarak anılıyor (`group_daily_totals` sunucu-taraflı agregasyonu). Çakışmamak için yeni bulgu kimlikleri **N1+** olarak numaralandırıldı.
 
 ---
 
-## 0) Uygulanma Durumu (sonradan eklendi)
+## 1) Optimizasyon Özeti
 
-| Bulgu | Durum |
-|---|---|
-| F2, F3, F5, F7 | ✅ Uygulandı (commit'ler: SecondTicker + map/dedup; dailyTotals memoize) |
-| F6a (indirme timeout/iptal) | ✅ Uygulandı |
-| **F1 (sunucu agregasyonu)** | ✅ Uygulandı — `group_daily_totals` RPC (migration `0007`) + realtime sinyalli `watchGroupDailyStats`; grup geneli tüm tüketiciler agregaya bağlandı. ⚠️ **Migration Supabase'e uygulanmalı ve canlı doğrulanmalı.** Gün sınırı `Europe/Istanbul`. Rollback: tüketicileri `groupSessionsProvider`'a geri al. |
-| F4 (profil join), F6b (split-APK) | ⏸️ Yapılmadı (kullanıcı kapsam dışı bıraktı) |
+Mevcut durum: temiz mimari (repository deseni, Riverpod, in-memory ↔ Supabase geçişi). Sunucu-taraflı günlük agregasyon (`group_daily_totals`) en büyük veri-hacmi sorununu zaten çözmüş. Kalan sorunlar: **realtime fan-out / yeniden agregasyon**, **sınırsız stream'ler** ve tüm oturum listesi üzerinde **gereksiz istemci-taraflı yeniden hesap**.
 
-## 1) Optimization Summary
+En yüksek etkili 3 iyileştirme:
+1. **`watchGroupDailyStats`'ı debounce et + daralt** — `study_sessions` tablosundaki *herhangi* bir satır değişimi (tablo geneli, filtresiz), abone olan her istemci için tüm grup agregasyon RPC'sini yeniden çalıştırıyor. Eşzamanlı kullanıcı arttıkça asıl ölçeklenme uçurumu bu (DB CPU + ağ).
+2. **`watchUserSessions`'ı sınırla** — kullanıcının tüm oturum geçmişini, sınırsız, sıralı, her değişimde akıtıyor. Bellek + transfer + sonraki yeniden hesaplar sınırsız büyür.
+3. **Tek `dailyTotals` hesabını paylaş** — `currentStreakProvider`, `todayRecordedSecondsProvider` ve istatistik widget'ları aynı oturum listesini bağımsız olarak tekrar tarıyor (her rebuild'de birden çok O(n) geçiş); tek bir memoize edilmiş haritadan türetmek yerine.
 
-**Mevcut durum:** Mimari temiz (saf stats fonksiyonları, repository soyutlaması). Ciddi
-bir hata yok; ancak birkaç desen **veri büyüdükçe** doğrusalın üstünde maliyet üretiyor.
-Şu anki küçük N'de (kişisel proje, küçük sınıflar) sorun hissedilmez — asıl risk ölçeklenme.
-
-**En yüksek etkili 3 iyileştirme:**
-1. **Sınırsız oturum stream'leri** (`watchGroupSessions` / `watchUserSessions`) — tüm geçmiş her tick'te realtime akıyor. Zaman penceresi + sunucu tarafı agregasyon.
-2. **Saniyelik `setState(() {})` ile tüm liste rebuild** — canlı üye/leaderboard her saniye yeniden sıralanıp baştan çiziliyor. Tick'i en küçük widget'a (geçen-süre metni) indirgemek.
-3. **`build()` içinde tekrarlı `dailyTotals` ve tam-liste taramaları** — stats ekranı her rebuild'de aynı O(n) haritayı defalarca kuruyor. Tek sefer hesaplayıp paylaş / memoize.
-
-**Değişmezse en büyük risk:** Sınıf birkaç aylık veri biriktirince canlı ekran her
-oturum eklemesinde tüm geçmişi indirip yeniden işler → artan ağ/DB maliyeti, bellek
-şişmesi ve düşük cihazlarda saniyelik jank/batarya tüketimi.
+Değişmezse en büyük risk: birkaç kullanıcıyla sorunsuz çalışır, ama tablo-geneli realtime yeniden agregasyon maliyeti **(aktif kullanıcı × gün başına oturum × abone sayısı)** ile ölçeklenir — gerçek sınıf yükünde tam RPC yeniden-çalıştırmalarından oluşan bir "thundering herd".
 
 ---
 
-## 2) Findings (Prioritized)
+## 2) Bulgular (Öncelik Sırasıyla)
 
-### F1 — Sınırsız grup oturum stream'i (tüm geçmiş, realtime)
-- **Category:** DB / Network / Memory
-- **Severity:** High (veri büyüdükçe Critical'e yaklaşır)
-- **Impact:** Ağ baytları, DB yükü, istemci belleği, leaderboard/stats latency
-- **Evidence:** [supabase_study_repository.dart:41-48](app/lib/data/repositories/supabase/supabase_study_repository.dart) `watchGroupSessions` → `.stream(primaryKey:['id']).eq('group_id', …).order('start_time')` filtresiz tüm geçmişi çeker; bunu [study_providers.dart:35](app/lib/data/providers/study_providers.dart) `groupSessionsProvider` besler ve `groupTodaySecondsProvider`, leaderboard, sınıf istatistikleri tümü bu tek listeden türetilir.
-- **Why it's inefficient:** Supabase realtime `.stream()` ilgili satır kümesini istemcide tutar ve değişimde günceller; sınıftaki **her üyenin tüm zamanların her oturumu** istemciye iniyor. N (oturum) ayda lineer büyür; "bugünün toplamı" gibi türevler bile tüm geçmiş üzerinde yeniden hesaplanır.
-- **Recommended fix:**
-  - Canlı/leaderboard görünümü için stream'i pencerele: `.gte('start_time', <son 60-90 gün>)`.
-  - "Tüm zamanlar" gereken yerler için ayrı, **on-demand** sorgu veya Postgres **view/RPC** ile sunucu tarafı agregasyon (`group_id,user_id → sum(duration)` ve `group_id,day → sum`). Böylece istemciye ham satır yerine özet iner.
-  - `study_sessions(group_id, start_time)` ve `(user_id, start_time)` bileşik index'leri.
-- **Tradeoffs / Risks:** Pencereleme, "tüm zamanlar leaderboard"ı bölmeyi gerektirir; agregasyon RPC bakım yükü ekler. Realtime + agregasyon birlikte tasarım ister.
-- **Expected impact:** Büyük veride payload ve istemci CPU'sunda **%70–95** azalma (geçmiş boyutuna bağlı); küçük veride nötr.
-- **Removal Safety:** Needs Verification (RLS ve realtime davranışı doğrulanmalı)
-- **Reuse Scope:** service-wide
+### N1 — Tablo-geneli realtime tetiği tüm RPC'yi yeniden agregasyona zorluyor
+- **Kategori:** DB / Network / Caching
+- **Önem:** High
+- **Etki:** DB CPU, gecikme, çıkış trafiği, pil; ölçeklenme tavanı
+- **Kanıt:** `supabase_study_repository.dart:63-96` (`watchGroupDailyStats`). Realtime kanalı `study_sessions`'a **filtresiz** abone (`event: all`, tüm tablo — `group_id` 0010'da kaldırıldı) ve her değişimde `refresh()` çağırıyor. `refresh()` `group_daily_totals(p_group_id)`'i (tam `study_sessions ⨝ group_members` GROUP BY) sıfırdan çalıştırıp tüm sonucu yeniden gönderiyor.
+- **Neden verimsiz:** Herhangi bir kullanıcının tek bir oturum kaydı, herhangi bir gruba abone tüm istemcileri uyandırıp sıfırdan agregasyon yaptırıyor. Debounce/birleştirme yok: yazma patlaması = tam RPC patlaması. 1 satırlık değişimde bile tüm sonuç kümesi yeniden gönderiliyor.
+- **Önerilen düzeltme:** (a) `refresh()`'i **debounce** et (~750ms–2s içindeki olayları birleştir — her olayda sıfırlanan bir `Timer`). (b) Kaynaktaki gürültüyü azalt: oturumları daha seyrek yaz veya flush'lar arası istemcide topla. (c) Uzun vadede trigger ile güncellenen materyalize bir `group_daily_totals` tablosu tut; okuma anında yeniden agregasyon yerine onu group'a göre filtreli akıt.
+- **Tradeoff / Risk:** Debounce, canlı leaderboard'a N saniyeye kadar bayatlık ekler (çalışma takipçisi için kabul edilebilir). Materyalize tablo yazma yoluna karmaşıklık + migration ekler.
+- **Beklenen etki:** High — O(yazma × abone) tam agregasyonu, debounce penceresi başına O(1)'e indirir; yük altında büyük DB-yükü azalması.
+- **Kaldırma Güvenliği:** Doğrulama Gerekir (kabul edilebilir bayatlık ürün tarafıyla teyit edilmeli)
+- **Yeniden Kullanım Kapsamı:** servis-geneli (tüm grup istatistik tüketicileri)
 
-### F2 — Saniyelik `setState(() {})` tüm üye listesini yeniden sıralayıp çiziyor
-- **Category:** Frontend / CPU
-- **Severity:** High
-- **Impact:** Çerçeve süresi (jank), batarya, CPU — ekran açıkken sürekli 1Hz
-- **Evidence:** [classroom_screen.dart:190-192](app/lib/features/classroom/classroom_screen.dart) `_LiveMembers` her saniye `setState(() {})`; ardından `build` içinde [classroom_screen.dart:215](app/lib/features/classroom/classroom_screen.dart) `[...members]..sort(...)` + tüm `_MemberTile`'lar yeniden kurulur. Aynı desen [active_members_card.dart:33-35](app/lib/features/home/widgets/active_members_card.dart) (her saniye `presence.where(...).toList()..sort(...)`).
-- **Why it's inefficient:** Saniyede değişen tek şey "ne kadar süredir çalışıyor" metni. Oysa her tick'te tüm liste kopyalanıp sıralanıyor, presence/maps yeniden kuruluyor ve tüm satırlar (avatar dâhil) yeniden inşa ediliyor. Üye sayısı arttıkça 1Hz maliyeti lineer büyür.
-- **Recommended fix:** Tick'i izole et: sadece geçen-süre gösteren küçük bir `_ElapsedText` widget'ı kendi 1sn timer'ına sahip olsun (ya da `ValueListenableBuilder`/`AnimatedBuilder`). Liste sıralaması ve tile inşası yalnızca presence/members **gerçekten değiştiğinde** (provider tetiklediğinde) yapılsın. Satırlara `const`/`RepaintBoundary` ekle.
-- **Tradeoffs / Risks:** Küçük refactor; sıralama ölçütü "süreye göre" ise sıranın saniyelik güncellenmemesi kabul edilmeli (genelde fark edilmez).
-- **Expected impact:** 1Hz rebuild işini üye başına tek `Text` güncellemesine indirir → canlı ekran CPU'sunda **~%80+** azalma.
-- **Removal Safety:** Safe
-- **Reuse Scope:** module (classroom + home)
+### N2 — Sınırsız `watchUserSessions` stream'i
+- **Kategori:** Memory / Network
+- **Önem:** High
+- **Etki:** İstemci belleği, transfer, sonraki CPU
+- **Kanıt:** `supabase_study_repository.dart:34-41` kullanıcının **tüm** `study_sessions`'ını `start_time`'a göre sıralı, `.limit()`/sayfalama olmadan akıtıyor. `study_providers.dart:29-33` bunu uygulama geneline açıyor; istatistik ekranları ve `currentStreak`/`todayRecorded` tüm listeyi tüketiyor.
+- **Neden verimsiz:** Yoğun kullanıcı binlerce satır biriktirir; her realtime değişimde tüm küme yeniden akıtılıp decode edilir, sonra her bağımlı provider yeniden tarar.
+- **Önerilen düzeltme:** Çoğu görünüm yalnızca yakın bir pencereye ihtiyaç duyar (ör. son 90–365 gün) — akıtılan kümeye sunucu-taraflı tarih filtresi / `.limit()` ekle, eski geçmişi talep üzerine getir (geçmiş ekranı sayfalasın). Tüm-zaman agregalarını sunucuda tut (grup için RPC ile zaten öyle; tüm-zaman kişisel istatistik gerekiyorsa kullanıcı başına bir `user_daily_totals` RPC ekle).
+- **Tradeoff / Risk:** "Tüm-zaman" kişisel istatistikler (en uzun seri, ömür boyu toplam) tam istemci listesi yerine sunucu agregası gerektirir. Hangi ekranların gerçekten tüm geçmişe ihtiyaç duyduğunu doğrula.
+- **Beklenen etki:** Medium–High; hesap yaşından bağımsız sınırlı bellek/transfer.
+- **Kaldırma Güvenliği:** Doğrulama Gerekir (hangi ekranlar tüm geçmişe muhtaç)
+- **Yeniden Kullanım Kapsamı:** servis-geneli
 
-### F3 — `build()` içinde tekrar tekrar `dailyTotals` ve tam-liste taramaları
-- **Category:** CPU / Algorithm
-- **Severity:** Medium
-- **Impact:** Stats ekranı rebuild latency'si; gereksiz tekrar hesap
-- **Evidence:** [personal_stats_view.dart:31-49](app/lib/features/stats/widgets/personal_stats_view.dart) `build` içinde `secondsOnDay`, `inRange`×4+, `dailyAverageSeconds`, `weekdayWeekendSplit`; alt widget'lar bağımsızca yeniden tarıyor: `lastNDays`→`dailyTotals` ([study_stats.dart:67](app/lib/core/stats/study_stats.dart)), `StudyRecords`→`longestStudyStreak`→`dailyTotals` ([study_stats.dart:192](app/lib/core/stats/study_stats.dart)), `hourlyTotals`, `weekdayHourTotals`, `subjectBreakdown`, `StudyHeatmap`. `dailyTotals(sessions)` aynı rebuild'de **birden çok kez** sıfırdan kuruluyor.
-- **Why it's inefficient:** Her fonksiyon O(n) ama hiçbiri memoize değil; `groupSessionsProvider`/`userSessionsProvider` her tick'te yeni liste yayınladığında **veya** herhangi bir üst rebuild olduğunda tüm grafik hesapları yeniden koşar. `inRange(...).toList()` ([:152](app/lib/features/stats/widgets/personal_stats_view.dart)) ek kopya üretir.
-- **Recommended fix:** `dailyTotals`'ı bir kez hesaplayıp aşağı geçir; ya da oturum listesine bağlı türev bir provider'da bir "StatsBundle" (dailyTotals, hourly, weekdayHour, subjectBreakdown, records) üret — veri değiştiğinde bir kez hesaplanır, rebuild'lerde yeniden kullanılır. Saf fonksiyonları `DateTime` anahtarlı map yerine `int` epoch-day anahtarıyla kurmak hash maliyetini de düşürür (mikro).
-- **Tradeoffs / Risks:** Hafif yeniden yapı; bundle invalidasyonu sessions referansına bağlanmalı.
-- **Expected impact:** Stats sekmesi rebuild CPU'sunda **%40–60** (veri arttıkça artar).
-- **Removal Safety:** Likely Safe
-- **Reuse Scope:** module (stats)
+### N3 — Provider'lar arası gereksiz tam-liste yeniden hesabı
+- **Kategori:** Algorithm / CPU
+- **Önem:** Medium
+- **Etki:** Rebuild'lerde CPU, jank (**olası** — ölç)
+- **Kanıt:** `study_providers.dart:46-65`. `todayRecordedSecondsProvider` tüm listeyi fold ediyor; `currentStreakProvider` `currentStreak(sessions, ...)` çağırıyor, o da içeride tüm geçmiş üzerinde `dailyTotals(sessions)` (`study_stats.dart:51-57`) kuruyor. İstatistik widget'ları `lastNDays` / `dailyRange` / `longestStudyStreak` çağırıyor; paylaşılan `totals` haritası verilmedikçe her biri `dailyTotals`'ı yeniden kuruyor. Aynı veride frame/rebuild başına birden çok bağımsız O(n) tarama.
+- **Neden verimsiz:** `dailyTotals` aynı kaynaktan defalarca yeniden hesaplanıyor; bunu önlemek için var olan `totals`-enjeksiyon parametresi var ama provider'lar paylaşılan harita sunmuyor.
+- **Önerilen düzeltme:** Tek bir `dailyTotalsProvider` ekle (`userSessionsProvider`'dan türetilmiş memoize `Map<DateTime,int>`); streak/today/range provider'ları ve istatistik widget'ları bunu mevcut `totals:` parametreleriyle tüketsin.
+- **Tradeoff / Risk:** İşlevsel olarak yok; tarama sayısını azaltır.
+- **Beklenen etki:** Medium; ~4–6 tam taramayı veri değişimi başına 1'e indirir.
+- **Kaldırma Güvenliği:** Muhtemelen Güvenli
+- **Yeniden Kullanım Kapsamı:** modül (`study_providers` + istatistik widget'ları)
+- **Sınıflandırma:** Yeniden Kullanım Fırsatı
 
-### F4 — Grup repo'da iki-adımlı "stream + her tick'te yeniden select" (N+1 benzeri)
-- **Category:** Network / DB
-- **Severity:** Medium
-- **Impact:** Üyelik değişiminde fazladan tur (RTT); ayrıca profil güncellemeleri yansımaz
-- **Evidence:** [supabase_group_repository.dart:106-119](app/lib/data/repositories/supabase/supabase_group_repository.dart) `watchMembers`: `group_members` stream'i her emisyonda `profiles.select().inFilter('id', ids)` ile ayrı sorgu. Aynı desen `watchUserGroups` ([:89-104](app/lib/data/repositories/supabase/supabase_group_repository.dart)).
-- **Why it's inefficient:** Her stream tick'i ek bir round-trip doğurur; `profiles` tablosu izlenmediği için isim/avatar değişiklikleri canlı yansımaz (doğruluk/tazelik açığı). `asyncMap` ardışık çalışır (paralel değil).
-- **Recommended fix:** Sunucu tarafı `view`/RPC ile join (üye + profil tek sorgu) ya da profilleri istemcide cache'leyip yalnız **eksik id'leri** çek. Profil tazeliği gerekiyorsa `profiles`'ı da stream'e dâhil et.
-- **Tradeoffs / Risks:** View/RPC bakım yükü; cache invalidasyonu. Küçük gruplarda kazanç sınırlı.
-- **Expected impact:** Üyelik tick'i başına 1 RTT eksi; orta.
-- **Removal Safety:** Needs Verification
-- **Reuse Scope:** module (group)
+### N4 — Grup/üye stream'lerinde realtime yeniden-getirme + O(n·m) eşleştirme
+- **Kategori:** DB / Algorithm
+- **Önem:** Medium
+- **Etki:** Round-trip, üyelik değişiminde CPU
+- **Kanıt:** `supabase_group_repository.dart:92-125`. `watchUserGroups` ve `watchMembers` `.stream(...).asyncMap(...)` kullanıyor → **her** üyelik değişiminde ikinci bir sorgu (`groups`/`profiles ... inFilter(ids)`) atıyor. `watchMembers`'ta `rows.firstWhere((r) => r['user_id'] == profile.id)` (satır 121) profiller üzerindeki `.map` içinde çalışıyor → O(profil × satır).
+- **Neden verimsiz:** Değişim olayı başına ekstra round-trip; aktif-bayrak join'i için karesel eşleştirme. Küçük sınıflarda sorun değil, üyelik büyüyünce/değişince israf.
+- **Önerilen düzeltme:** Map'lemeden önce bir kez `Map<userId, row>` kur (O(n)), `firstWhere` yerine. Üye+profilleri tek sorguda almak için gömülü join'li RPC/`select` düşün (PostgREST resource embedding `group_members(*, profiles(*))`); stream-sonra-yeniden-getir yerine.
+- **Tradeoff / Risk:** Gömülü join realtime semantiğini değiştirir (embed'ler realtime değil); stream'i tetik olarak koru, aramayı optimize et.
+- **Beklenen etki:** Low–Medium; kareseli kaldırır, round-trip'i yarıya indirir.
+- **Kaldırma Güvenliği:** Muhtemelen Güvenli (`firstWhere`→map değişimi); Doğrulama Gerekir (embedding)
+- **Yeniden Kullanım Kapsamı:** modül
 
-### F5 — Döngü içinde lineer arama (`subjectFor` / `memberFor`)
-- **Category:** Algorithm / CPU
-- **Severity:** Low
-- **Impact:** O(slices×subjects) / O(active×members) — küçük ama gereksiz
-- **Evidence:** [personal_stats_view.dart:518-535](app/lib/features/stats/widgets/personal_stats_view.dart) `subjectFor` her slice için listeyi tarar; [active_members_card.dart:62-66](app/lib/features/home/widgets/active_members_card.dart) `memberFor` her aktif için.
-- **Why it's inefficient:** Liste araması döngü içinde; map ile O(1) yapılabilir.
-- **Recommended fix:** Döngü öncesi `{for (final s in subjects) s.id: s}` / `{for (final m in members) m.id: m}` map'i kur.
-- **Tradeoffs / Risks:** Yok.
-- **Expected impact:** İhmal edilebilir ama bedava; çok ders/üyede fark eder.
-- **Removal Safety:** Safe
-- **Reuse Scope:** local file
+### N5 — Atomik olmayan grup oluşturma (2 yazma, rollback yok)
+- **Kategori:** Reliability
+- **Önem:** Medium
+- **Etki:** Yetim gruplar, tutarsız durum
+- **Kanıt:** `supabase_group_repository.dart:24-57`. `createGroup` önce `groups`'a, sonra ayrı olarak oluşturanı `group_members`'a ekliyor. İkinci insert başarısız olursa (ağ/RLS) grup admin üyesi olmadan kalır.
+- **Neden sorun:** Transaction yok; retry döngüsü yalnız davet-kodu çakışmasını kapsıyor, üyelik adımını değil.
+- **Önerilen düzeltme:** Grubu + admin üyeliğini tek transaction'da ekleyen `create_group(name)` SECURITY DEFINER RPC'si (davet-kodu gizliliği sorununu da çözer — bkz. Güvenlik denetimi). İstemci tek RPC çağırır.
+- **Tradeoff / Risk:** Migration ekler; mantığı sunucuya taşır (bütünlük için artı).
+- **Beklenen etki:** Reliability (niteliksel); yetim durumu yok eder.
+- **Kaldırma Güvenliği:** Doğrulama Gerekir
+- **Yeniden Kullanım Kapsamı:** servis-geneli
 
-### F6 — Güncelleme indirmesinde timeout/iptal/yeniden-deneme yok (universal APK)
-- **Category:** Reliability / Cost / Network
-- **Severity:** Medium
-- **Impact:** Takılı indirme UX'i; gereksiz büyük indirme
-- **Evidence:** [updater_dialog.dart](app/lib/features/updater/updater_dialog.dart) `Dio().download(...)` `receiveTimeout`/`CancelToken` olmadan; her çağrıda yeni `Dio()`. Ayrıca CI `flutter build apk --release` **universal APK** üretiyor (gözlemlenen **58.6MB**; tüm ABI'ler tek dosyada).
-- **Why it's inefficient:** Yavaş/kopuk bağlantıda ilerleme çubuğu sonsuz takılabilir, kullanıcı iptal edemez. Universal APK, cihazın kullanmadığı ABI'leri de indirtir → güncelleme başına ~2× gereksiz bayt (kendi-güncelleme modelinde doğrudan maliyet).
-- **Recommended fix:** `receiveTimeout` + `CancelToken` + "İptal" düğmesi; bozuk dosyada otomatik tek retry. Boyut için `--split-per-abi` (arm64 ~%50 küçük) — ancak tek-link indirme modeliyle uyumu için indirme linkinde ABI seçimini çözmek gerekir; ya da `appbundle` Play Store dışı dağıtımda işe yaramaz, bu yüzden split-per-abi + servis tarafında `arm64-v8a` linkini seçmek en uygunu.
-- **Tradeoffs / Risks:** Split APK, "latest/download/app-release.apk" sabit linkini ABI-bilinçli yapmaya zorlar; updater_service asset seçimini cihaz ABI'sine göre güncellemeli.
-- **Expected impact:** Güncelleme indirme boyutunda **~%50** (arm64 cihazlar); güvenilirlikte belirgin UX iyileşmesi.
-- **Removal Safety:** Needs Verification (ABI'ye göre asset eşleme tasarlanmalı)
-- **Reuse Scope:** module (updater + CI)
+### N6 — `placeGridItem` reflow'u tekrarlı lineer taramalarla O(n²)
+- **Kategori:** Algorithm / Frontend
+- **Önem:** Low (**olası** olarak mevcut ölçekte ihmal edilebilir)
+- **Etki:** Kart sürükleme/yeniden boyutlamada CPU
+- **Kanıt:** `grid_reflow.dart:50-111`. Her BFS adımında: `result.firstWhere(id)` (lineer), `result.where(overlaps).toList()..sort()` (tüm öğeleri tarar), collider başına `result.indexWhere(...)`. Guard sınırı `n²·4`. Her sürükleme tick'inde çalışıyor.
+- **Neden verimsiz:** Düğüm başına tekrarlı lineer arama + tam overlap taraması; reflow başına O(n²). ~10–30 kartlık dashboard için ihmal edilebilir, ama yüksek frekanslı (sürükleme) bir yolda.
+- **Önerilen düzeltme:** Öğeleri bir kez id'ye göre `Map`'le; yalnız taşınan alt kümeyi yeniden tara. Profil sürükleme jank'i göstermedikçe uğraşma.
+- **Tradeoff / Risk:** Küçük N için erken — önce ölç.
+- **Beklenen etki:** Low.
+- **Kaldırma Güvenliği:** Muhtemelen Güvenli
+- **Yeniden Kullanım Kapsamı:** yerel dosya
 
-### F7 — Çoğaltılmış yardımcı: `_isSameDay`
-- **Category:** Reuse / Maintainability
-- **Severity:** Low
-- **Impact:** Bakım/drift riski (mantık iki yerde)
-- **Evidence:** [study_providers.dart:41-42](app/lib/data/providers/study_providers.dart) yerel `_isSameDay`, [study_stats.dart:11-12](app/lib/core/stats/study_stats.dart) `isSameDay` ile birebir aynı.
-- **Why it's inefficient:** Kopya mantık; biri değişirse sapma.
-- **Recommended fix:** `study_stats.dart`'taki `isSameDay`'i kullan, yereli sil. → **Reuse Opportunity**
-- **Tradeoffs / Risks:** Yok.
-- **Expected impact:** Sadece bakım.
-- **Removal Safety:** Safe
-- **Reuse Scope:** module
+### N7 — build dizininde commit edilmiş Chrome aygıt-profili kalıntıları
+- **Kategori:** Build / Cost (repo hijyeni)
+- **Önem:** Low
+- **Etki:** Repo şişkinliği, klon süresi, kazara veri
+- **Kanıt:** `app/.dart_tool/chrome-device/Default/...` (History, Login Data, Web Data, vb.) diskte mevcut. `.gitignore` `.dart_tool/`'u kapsıyor → izlenmiyor; `git ls-files` ile doğrula. Ignore kuralından önce girdiyse geçmişi şişirir.
+- **Neden sorun:** Flutter web debug Chrome profili VCS'e asla girmemeli; içinde bir tarayıcı `Login Data` SQLite dosyası var.
+- **Önerilen düzeltme:** Hiçbirinin izlenmediğini teyit et (`git ls-files | grep chrome-device` → boş). Geçmişte varsa temizle. Yoksa işlem yok.
+- **Kaldırma Güvenliği:** Güvenli (izlenmiyorsa)
+- **Yeniden Kullanım Kapsamı:** yerel
+- **Sınıflandırma:** Ölü Kod / kalıntı (güvenli kaldırma adayı — izlenmediği doğrulanmalı)
+
+### N8 — Repository arayüzünde tutulan ölü metot
+- **Kategori:** Code Reuse / Dead Code
+- **Önem:** Low
+- **Etki:** Anlaşılırlık, bakım
+- **Kanıt:** `supabase_study_repository.dart:44-49` `watchGroupSessions`, çağıranı olmadığını (group_id 0010'da kaldırıldı) belirten yorumla `Stream.value(const [])` döndürüyor. Arayüz metodu + in-memory implementasyonu yalnız biçim için tutuluyor.
+- **Neden sorun:** Hep boş dönen bir metot, gelecekteki çağıranlar için tuzak (sessiz boş veri).
+- **Önerilen düzeltme:** `StudyRepository`'den ve tüm implementasyonlardan kaldır, ya da yüksek sesle belgele. Önce sıfır referans doğrula.
+- **Kaldırma Güvenliği:** Doğrulama Gerekir (çağıranları grep'le)
+- **Yeniden Kullanım Kapsamı:** modül
+- **Sınıflandırma:** Ölü Kod
 
 ---
 
-## 3) Quick Wins (Do First)
+## 3) Hızlı Kazanımlar (Önce Yap)
+- **N1 debounce** — `refresh()`'i olayda-sıfırlanan bir `Timer` (≈1s) ile sar. Küçük değişiklik, büyük yük azalması.
+- **N3 paylaşılan `dailyTotalsProvider`** — mevcut `totals:` parametrelerini besleyen tek memoize harita.
+- **N4 `firstWhere`→`Map` araması** `watchMembers`'ta — kareseli kaldırır.
+- **N8** çağıranı olmadığını teyit ettikten sonra hep-boş `watchGroupSessions`'ı sil.
 
-| # | Değişiklik | Süre | Etki |
-|---|---|---|---|
-| F5 | Döngü öncesi id→nesne map'i (subjectFor/memberFor) | ~10 dk | Küçük ama bedava |
-| F7 | `_isSameDay` kopyasını sil, `isSameDay` kullan | ~5 dk | Bakım |
-| F2 | 1Hz tick'i `_ElapsedText`'e izole et | ~1-2 sa | **Yüksek** (canlı ekran CPU/batarya) |
-| F6a | dio `receiveTimeout` + `CancelToken` + İptal düğmesi | ~30 dk | Güvenilirlik |
+## 4) Daha Derin Optimizasyonlar (Sonra Yap)
+- **N1 (tam):** trigger ile güncellenen materyalize `group_daily_totals` tablosu; okuma anında yeniden agregasyon yerine onu group'a göre filtreli akıt.
+- **N2:** akıtılan geçmişi yakın pencereyle sınırla + geçmiş ekranını sayfala; tüm-zaman kişisel istatistik için kullanıcı başına günlük-toplam RPC'si ekle.
+- **N5:** transaction'lı `create_group` RPC'si (davet-kodu gizlilik açığını da kapatır).
 
-## 4) Deeper Optimizations (Do Next)
+## 5) Doğrulama Planı
+- **N1:** 50 eşzamanlı yazıcı simüle et; debounce öncesi/sonrası Supabase'te RPC çağrısı/sn (Logs/`pg_stat_statements`) ve istemci çıkış trafiğini ölç. Doğruluk: debounce'lu stream'in nihai değeri, sakinleştikten sonra debounce'suz değere eşit olmalı.
+- **N2:** 5k oturumlu bir hesap tohumla; pencereleme öncesi/sonrası stream payload boyutu, decode süresi, provider rebuild süresini ölç. Geçmiş ekranı sayfalamayla eski veriye hâlâ ulaşmalı.
+- **N3:** `dailyTotals`'a sayaç/log ekle; paylaşılan provider öncesi/sonrası veri değişimi başına çağrı sayısını say. İstatistik çıktılarını golden-test ile sabitle.
+- **N4/N6:** sentetik 200-üyeli grup / 30-kartlık grid ile mikro-benchmark; duvar saatini kıyasla. Widget test'leri özdeş üye listeleri / yerleşimleri doğrulasın.
+- **N5:** entegrasyon testi: üyelik insert'ini başarısız olmaya zorla, (RPC düzeltmesinden sonra) yetim grup kalmadığını doğrula.
+- Genel: `flutter analyze` temiz kalsın; `study_stats.dart` etrafına unit test ekle (saf fonksiyonlar — refactor öncesi davranışı kilitlemek kolay).
 
-- **F1:** Oturum stream'lerini pencereleme + Postgres view/RPC ile sunucu-tarafı agregasyon; bileşik index'ler. (Mimari; en yüksek ölçek getirisi.)
-- **F3:** Veriye bağlı türev provider'da tek "StatsBundle" hesabı; saf fonksiyonlarda `int` epoch-day anahtarı.
-- **F4:** Üye+profil join'ini view/RPC'ye taşı veya profil cache'i.
-- **F6b:** `--split-per-abi` + updater_service'te ABI-bilinçli asset seçimi (güncelleme boyutu ~%50).
+## 6) Optimize Kod / Yama (örnekleme — uygulanmadı)
 
-## 5) Validation Plan
-
-- **Profiling:** Flutter DevTools → Performance; classroom/home ekranı açıkken 10 sn kaydet. Hedef: 1Hz rebuild'lerde "raster + UI thread" süresinin düşmesi, `_LiveMembers.build` sayısının sabit kalması (sadece `_ElapsedText` rebuild).
-- **Rebuild sayacı:** `debugProfileBuildsEnabled` veya geçici `print`/`Timeline` ile F2 öncesi/sonrası `build` çağrısı sayısını karşılaştır.
-- **Veri ölçeği testi:** `study_sessions`'a sentetik 5k/20k satır seed'leyip (a) stream payload boyutu (DevTools Network), (b) `groupSessionsProvider` ilk-emisyon süresi, (c) stats sekmesi açılış süresini F1/F3 öncesi-sonrası ölç.
-- **Metics karşılaştırma:** indirilen bayt (Supabase logs / network), istemci bellek (DevTools Memory), stats build mikrosaniyesi (`Stopwatch` ile `dailyTotals` çağrı sayısı).
-- **Doğruluk korunumu:** Mevcut `flutter test` (bildirilen 18/18) yeşil kalmalı; özellikle `study_stats` testleri F3 refactor sonrası değişmemeli. Leaderboard/streak değerleri F1 pencereleme sonrası "tüm zamanlar" vs "pencere" ayrımıyla beklenen sonucu vermeli (yeni test ekle).
-
-## 6) Optimized Code / Patch (öneri taslakları — UYGULANMADI)
-
-**F5 — map ile lookup:**
+**N1 — debounce'lu refresh** (`supabase_study_repository.dart`):
 ```dart
-// önce: subjectFor her slice'ta listeyi tarar
-final subjectById = {for (final s in subjects) s.id: s};
-Subject? subjectFor(String? id) => id == null ? null : subjectById[id];
-```
-
-**F2 — tick'i izole et (kavramsal):**
-```dart
-// _LiveMembers artık 1sn setState YAPMAZ; sıralama yalnız provider değişince.
-// Her satırda geçen süreyi gösteren küçük, kendi timer'lı widget:
-class _ElapsedText extends StatefulWidget {
-  const _ElapsedText({required this.startedAt});
-  final DateTime startedAt;
-  // initState'te Timer.periodic(1s) -> sadece bu Text setState olur
+Timer? _debounce;
+void scheduleRefresh() {
+  _debounce?.cancel();
+  _debounce = Timer(const Duration(milliseconds: 1000), refresh);
 }
+// kanal callback'i:
+callback: (_) => scheduleRefresh(),
+// onCancel: _debounce?.cancel(); ...
 ```
 
-**F1 — pencereli stream (repository):**
+**N3 — paylaşılan günlük toplamlar** (`study_providers.dart`):
 ```dart
-Stream<List<StudySession>> watchGroupSessions(String groupId) {
-  final since = DateTime.now().subtract(const Duration(days: 90)).toIso8601String();
-  return _client.from('study_sessions')
-    .stream(primaryKey: ['id']).eq('group_id', groupId)
-    .gte('start_time', since)        // ← pencere
-    .order('start_time')
-    .map((rows) => rows.map(StudySession.fromMap).toList());
-}
-// "tüm zamanlar" toplamları için ayrı RPC: rpc('group_totals', {gid}) → userId,sum
+final dailyTotalsProvider = Provider<Map<DateTime, int>>((ref) {
+  final sessions = ref.watch(userSessionsProvider).value ?? const [];
+  return dailyTotals(sessions);            // bir kez hesaplanır
+});
+
+final currentStreakProvider = Provider<int>((ref) {
+  final totals = ref.watch(dailyTotalsProvider);
+  final goalSeconds = ref.watch(dailyGoalMinutesProvider) * 60;
+  return currentStreak(const [], goalSeconds, totals: totals); // haritayı yeniden kullan
+});
 ```
 
-**F6a — indirme güvenilirliği:**
+**N4 — O(n) üye eşleştirme** (`supabase_group_repository.dart`):
 ```dart
-final cancel = CancelToken();
-await dio.download(url, savePath, cancelToken: cancel,
-  options: Options(receiveTimeout: const Duration(minutes: 3)),
-  onReceiveProgress: ...);
-// UI: "İptal" -> cancel.cancel();
+final byUser = {for (final r in rows) r['user_id'] as String: r};
+return profs.map<Profile>((pMap) {
+  final p = Profile.fromMap(pMap);
+  return p.copyWith(isActive: byUser[p.id]?['left_at'] == null);
+}).toList();
 ```
-
----
-
-### Notlar / Varsayımlar
-- Üretim verisi ölçeği gözlemlenmedi; F1/F3 etkileri **veri büyüklüğüne bağlı** ("likely"). Küçük N'de fark hissedilmez — denetim ölçeklenme riskine odaklıdır.
-- Mikro-optimizasyonlardan (örn. `DateTime`→`int` anahtar) yalnız F3 refactor'üne dâhil edilebilecek olanlar önerildi; tek başına yapılması önerilmez.
-- RLS, doğru index'ler ve realtime yayın boyutu sunucu tarafında doğrulanmalı (kod tek başına kanıtlamaz).
