@@ -26,7 +26,16 @@ class RhythmCard extends ConsumerWidget {
           children: [
             Text('Haftalık ritim', style: theme.textTheme.titleMedium),
             const SizedBox(height: 12),
-            WeekHourHeatmap(grid: weekdayHourTotals(sessions)),
+            Expanded(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: WeekHourHeatmap(grid: weekdayHourTotals(sessions)),
+                  );
+                },
+              ),
+            ),
           ],
         ),
       ),

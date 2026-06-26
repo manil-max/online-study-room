@@ -22,16 +22,24 @@ class HourActivityCard extends ConsumerWidget {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Çalışma saatleri', style: theme.textTheme.titleMedium),
-            const SizedBox(height: 12),
-            HourActivityChart(
-              hourly: hourly,
-              height: size == DashboardCardSize.large ? 180 : 130,
-            ),
-          ],
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isLarge = constraints.maxWidth >= 400;
+            final isCompact = constraints.maxWidth < 280;
+            final chartHeight = isLarge ? 180.0 : (isCompact ? 100.0 : 130.0);
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Çalışma saatleri', style: theme.textTheme.titleMedium),
+                const SizedBox(height: 12),
+                HourActivityChart(
+                  hourly: hourly,
+                  height: chartHeight,
+                ),
+              ],
+            );
+          },
         ),
       ),
     );

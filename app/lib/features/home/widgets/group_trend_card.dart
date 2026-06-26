@@ -23,38 +23,61 @@ class GroupTrendCard extends ConsumerWidget {
     if (group == null) return const GroupCardShell(title: 'Grup günlük trendi');
 
     final stats = ref.watch(groupDailyStatsProvider).value ?? const [];
-    final isLarge = size == DashboardCardSize.large;
-    final days = isLarge ? 14 : 7;
-    final series = lastNDays(const [], days, totals: groupDayTotals(stats));
-    final total = series.fold<int>(0, (s, d) => s + d.seconds);
-
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: Row(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isCompact = constraints.maxWidth < 280;
+          final isLarge = constraints.maxWidth >= 400;
+          final days = isLarge ? 14 : (isCompact ? 7 : 10);
+          final chartHeight = isLarge ? 200.0 : (isCompact ? 130.0 : 150.0);
+
+          final series = lastNDays(const [], days, totals: groupDayTotals(stats));
+          final total = series.fold<int>(0, (s, d) => s + d.seconds);
+
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Grup günlük trendi',
-                      style: theme.textTheme.titleMedium),
-                  const Spacer(),
-                  Text(formatHuman(total),
-                      style: theme.textTheme.titleMedium
-                          ?.copyWith(color: theme.colorScheme.primary)),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Grup günlük trendi',
+                            style: theme.textTheme.titleMedium,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (!isCompact)
+                          Text(formatHuman(total),
+                              style: theme.textTheme.titleMedium
+                                  ?.copyWith(color: theme.colorScheme.primary)),
+                      ],
+                    ),
+                  ),
+                  if (isCompact) ...[
+                    const SizedBox(height: 4),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Text(formatHuman(total),
+                          style: theme.textTheme.titleMedium
+                              ?.copyWith(color: theme.colorScheme.primary)),
+                    ),
+                  ],
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    height: chartHeight,
+                    child: DailyBarChart(
+                        days: series, goalSeconds: group.dailyGoalMinutes * 60),
+                  ),
                 ],
               ),
             ),
-            const SizedBox(height: 12),
-            SizedBox(
-              height: isLarge ? 200 : 150,
-              child: DailyBarChart(
-                  days: series, goalSeconds: group.dailyGoalMinutes * 60),
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

@@ -26,7 +26,6 @@ class _WeeklyChartCardState extends ConsumerState<WeeklyChartCard> {
     final theme = Theme.of(context);
     final sessions = ref.watch(userSessionsProvider).value ?? const [];
     final goalSeconds = ref.watch(dailyGoalMinutesProvider) * 60;
-    final isLarge = widget.size == DashboardCardSize.large;
     final series = lastNDays(sessions, _days);
     final total = series.fold<int>(0, (sum, d) => sum + d.seconds);
 
