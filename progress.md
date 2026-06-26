@@ -507,3 +507,240 @@ Supabase'e gerek yok. (Önceki Supabase tablolu plan iptal edildi — `0007` sil
   şema kuruldu, e-posta doğrulaması kapatıldı, anahtarlar `env.json`'a girildi. Web'de passkeys
   hatası `web/passkeys_bundle.js` ile giderildi. Chrome'da kayıt → sınıf → çalışma kaydı
   test edildi; veriler gerçek veritabanında (profiles/groups/study_sessions) doğrulandı.
+
+---
+
+## FAZ 6 — Kritik Düzeltmeler + Arayüz/Ana Ekran (new_features.md §1 & §2)
+
+> Bu bölüm **uygulayıcı AI** içindir. Her mini-faz; amacı, dokunulacak TAM dosyaları (satırla), birebir adımları, mevcut→yeni kod/SQL örneklerini, dikkat edilecek tuzakları ve kabul kriterini içerir. Bir mini-fazı yapan AI **sadece o fazın dosyalarına dokunmalı**, faz bitince `flutter analyze` çalıştırmalı (temiz olmalı) ve mevcut testleri (47 test) bozmamalı.
+
+### Model tier göstergesi (maliyet optimizasyonu)
+- 🔴 **Opus 4.8** — en zor/novel iş: grid fiziği, akışkan animasyon, mimari karar.
+- 🟣 **Gemini 3.1 Pro** — çapraz-dosya refactor + DB/mantık (güçlü reasoning, geniş bağlam, Opus'tan ucuz).
+- 🔵 **Sonnet 4.6** — standart widget/provider/repo implementasyonu.
+- 🟢 **Gemini 3.5 Flash** — migration çalıştırma, string/etiket değişimi, boilerplate.
+- Kural: bir mini-faz tek modelle biter; model takılırsa bir üst tier'e yükselt. 🔴 tasarım fazları (1B, 2A) kendi implementasyonlarından ÖNCE bitmeli.
+
+### Proje gerçekleri (uygulayıcının bilmesi şart)
+- Flutter ^3.12, Riverpod 3.3 (Notifier/Provider), Supabase 2.15, fl_chart. Uygulama kökü: `app/`. Migrationlar: `supabase/migrations/`.
+- Repo katmanı **çift implementasyonludur**: her arayüz hem `supabase/` hem `in_memory/` altında. İkisi de güncellenmeli yoksa demo/offline mod kırılır.
+- Gün sınırı her yerde **Europe/Istanbul**.
+- RLS aktif. İki SECURITY DEFINER helper var: `is_group_member(gid)` (0001), 0004'te admin helper'ları. `study_sessions` ve `presence` SELECT politikaları `is_group_member(group_id)`'a dayanır.
+- `group_members` PK = `(group_id, user_id)`, `joined_at timestamptz not null default now()` ZATEN VAR, `role` ('admin'|'member') var.
+- Realtime publication: `presence, study_sessions, group_members, groups` (0001 satır 208-211).
+
+---
+
+## §1 — Kritik Düzeltmeler & Mimari
+
+> **Kilitli mimari karar:** `study_sessions.group_id` KALDIRILIR. Oturum yalnızca kullanıcıya aittir. Grup istatistiği `study_sessions ⨝ group_members` join'iyle, **üyelik penceresine** (`joined_at .. coalesce(left_at, now())`) göre hesaplanır. `group_members.left_at timestamptz null` ile yumuşak silme: üye çıkınca satır SİLİNMEZ, `left_at=now()` yazılır → geçmiş veri ve isim korunur, ad "Eski Grup Üyesi" gösterilir.
+
+### 1A · Grup hedefi migration'ı 🟢 Flash
+- [x] **Amaç:** Madde 1 — grup hedefi kaydedilemiyor; migration zaten yazılı ama uygulanmamış.
+- [x] **Adım:** Supabase paneli → SQL Editor → `supabase/migrations/0006_group_goal.sql` içeriğini yapıştır → Run. (Sadece `groups.daily_goal_minutes int not null default 360` ekler.)
+- [x] **Kabul:** Admin grup hedefini değiştirip uygulamayı kapatıp açınca değer kalıcı.
+- [x] **Tuzak:** Kod tarafı (`updateGroupGoal`) zaten var; bu faz **sadece DB apply**.
+
+### 1B · Çoklu grup mimarisi — TASARIM 🔴 Opus
+- **Amaç:** 1C–1E'nin uygulanabilmesi için kesin teknik tasarım üretmek. Kod yazmaz; karar + sözde-kod üretir, aşağıdaki kararları doğrular/keskinleştirir.
+- **Üretilecek kararlar:**
+  1. **RLS yeniden yazımı (kritik):** group_id gidince `sessions_select` politikası `is_group_member(group_id)` kullanamaz. Yeni görünürlük: "bir kullanıcının oturumunu görebilirim ⇔ kendisiyle ortak bir grubun **aktif** üyesiyim (o kişi o grubu terk etmiş olsa bile)". Bunun için yeni SECURITY DEFINER helper `can_see_user_sessions(target uuid)` tasarla (recursion'ı önlemek için DEFINER). Sözde-SQL:
+     ```sql
+     exists (
+       select 1 from group_members me
+       join group_members other on other.group_id = me.group_id
+       where me.user_id = auth.uid() and me.left_at is null
+         and other.user_id = target            -- other.left_at filtrelenmez → ayrılan üye geçmişi görünür
+     )
+     ```
+  2. **`is_group_member` güncellemesi:** `and left_at is null` eklenir (ayrılan kişi gruba erişimi yitirir; ama kalan üyeler hâlâ onun satırını görür çünkü kontrol VİEWER'ın aktif üyeliğine bakar).
+  3. **Soft-delete = UPDATE:** `members_delete` (sadece-self) yerine `members_update` politikaları gerekir (self + admin). 0004'teki admin "remove member" koşulu UPDATE'e taşınmalı. Hard delete sadece grup silme cascade'inde kalır.
+  4. **Re-join:** PK `(group_id,user_id)` olduğundan ayrılıp dönen üye için INSERT çakışır → **upsert** (`left_at=null, joined_at=now()`).
+  5. **Realtime:** `.stream().eq('group_id',…)` ve postgres-changes `group_id` filtresi artık imkânsız; tüm `study_sessions` değişikliklerine abone olup RPC'yi yeniden çağır (filtre yok).
+  6. **Tarihsel doğruluk:** RPC join'i `s.start_time >= gm.joined_at and (gm.left_at is null or s.start_time < gm.left_at)` ile sınırlanır → üye katılmadan önceki/ayrıldıktan sonraki oturumlar gruba sayılmaz.
+  7. **`watchGroupSessions(groupId)` ham oturum akışı:** çağıranları tespit et (`grep watchGroupSessions`). Grup geneli istatistik zaten RPC'den (`watchGroupDailyStats`) geliyorsa, ham akış için ya members listesi üzerinden `user_id in (...)` sorgusu kur ya da kullanımı kaldır. Karar bu fazda netleşir.
+- **Kabul:** 1C–1E için net SQL/Dart sözde-kodu + RLS politika metinleri hazır.
+
+### 1C · DB migration'ları 🟣 Gemini 3.1 Pro
+- **Amaç:** 1B tasarımını migration dosyalarına dök. Önce yerel/staging Supabase'de dene, sonra prod.
+- **Dosyalar (yeni):**
+  - `supabase/migrations/0008_membership_lifecycle.sql`
+  - `supabase/migrations/0009_session_visibility.sql`
+  - `supabase/migrations/0010_drop_session_group_id.sql`
+  - `supabase/migrations/0011_group_daily_totals_v2.sql`
+- **`0008` (üyelik yaşam döngüsü):**
+  ```sql
+  alter table public.group_members
+    add column if not exists left_at timestamptz;
+
+  -- is_group_member artık yalnız AKTİF üyeliği sayar
+  create or replace function public.is_group_member(gid uuid)
+  returns boolean language sql security definer set search_path = public stable as $$
+    select exists (
+      select 1 from public.group_members
+      where group_id = gid and user_id = auth.uid() and left_at is null
+    );
+  $$;
+
+  -- soft-delete için UPDATE politikaları (eski members_delete'i tamamlar)
+  drop policy if exists members_update_self on public.group_members;
+  create policy members_update_self on public.group_members
+    for update to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
+  -- admin başkasını çıkarabilsin: 0004'teki admin koşulunu BURAYA kopyala
+  -- (ör. is_group_admin(group_id) veya groups.created_by = auth.uid()).
+  -- 0004'ü aç, members delete admin politikasının USING koşulunu birebir al.
+  ```
+  > Dikkat: 0004 dosyasını aç, admin koşulunu (helper adı ne ise) `members_update_admin` politikasında birebir kullan. Yanlış koşul → admin üye çıkaramaz.
+- **`0009` (oturum görünürlüğü helper'ı):**
+  ```sql
+  create or replace function public.can_see_user_sessions(target uuid)
+  returns boolean language sql security definer set search_path = public stable as $$
+    select target = auth.uid() or exists (
+      select 1 from public.group_members me
+      join public.group_members other on other.group_id = me.group_id
+      where me.user_id = auth.uid() and me.left_at is null
+        and other.user_id = target
+    );
+  $$;
+  ```
+- **`0010` (group_id DROP — SIRALAMA ÖNEMLİ):**
+  ```sql
+  -- 1) Önce kolona bağlı politikayı group_id'siz yeniden yaz
+  drop policy if exists sessions_select on public.study_sessions;
+  create policy sessions_select on public.study_sessions
+    for select to authenticated using (public.can_see_user_sessions(user_id));
+  -- 2) group_id'ye bağlı index'i düşür
+  drop index if exists public.idx_sessions_group;
+  -- 3) kolonu düşür (NOT NULL FK idi; veri diğer kolonlarda durur)
+  alter table public.study_sessions drop column if exists group_id;
+  ```
+  > Tuzak: kolonu önce düşürmeye çalışırsan politika bağımlılığı hata verir. Sıra: politika → index → kolon.
+- **`0011` (RPC v2):**
+  ```sql
+  create or replace function public.group_daily_totals(p_group_id uuid)
+  returns table (user_id uuid, day date, seconds bigint)
+  language sql stable security invoker set search_path = public as $$
+    select s.user_id,
+           (s.start_time at time zone 'Europe/Istanbul')::date as day,
+           sum(s.duration_seconds)::bigint as seconds
+    from public.study_sessions s
+    join public.group_members gm
+      on gm.user_id = s.user_id and gm.group_id = p_group_id
+    where s.start_time >= gm.joined_at
+      and (gm.left_at is null or s.start_time < gm.left_at)
+    group by s.user_id, (s.start_time at time zone 'Europe/Istanbul')::date;
+  $$;
+  grant execute on function public.group_daily_totals(uuid) to authenticated;
+  ```
+  > İmza (`p_group_id uuid` → `(user_id,day,seconds)`) aynı kaldı → Dart `_fetchDailyStats` ve `DailyStat.fromMap` değişmez.
+- **Kabul:** 4 migration staging'de hatasız çalışır; iki gruplu test kullanıcısının tek oturumu her iki grubun `group_daily_totals` sonucunda görünür; üye `left_at` set edilince geçmiş satırları RPC'de KALIR ama yeni oturumları sayılmaz.
+- **Tuzak:** `presence` tablosu group_id'yi KORUR — ona dokunma. `idx_sessions_user` kalır.
+
+### 1D · Dart veri katmanı refactor 🟣 Gemini 3.1 Pro
+- **Amaç:** 0010 sonrası `study_sessions` satırlarında `group_id` yok; Dart bunu yansıtmalı. group_id'siz dünyada oturum kaydı + grup okuması.
+- **Dosyalar:**
+  - `app/lib/data/models/study_session.dart` — `groupId` alanını TAMAMEN kaldır: constructor `required this.groupId` (sat.13), field (sat.23), `fromMap` `groupId: map['group_id']` (sat.37), `toMap` `'group_id': groupId` (sat.50), `==` (sat.64), `hashCode` (sat.75). **Tuzak:** `fromMap`'te `map['group_id'] as String` kalırsa kolon gittiği için runtime'da patlar.
+  - `app/lib/data/providers/study_providers.dart` — `_recordSession` (≈122-144): `final group = ref.read(userGroupProvider)...` ve `groupId: group.id` satırlarını SİL; `group == null` guard'ını kaldır (artık gruba bağlı değil; sadece `user == null` guard kalır). Oturum yalnız `user.id` ile yazılır.
+  - `app/lib/data/repositories/supabase/supabase_study_repository.dart`:
+    - `addSession` — `session.toMap()` artık group_id içermez (model'den gitti), değişiklik gerekmeyebilir; doğrula.
+    - `watchGroupSessions(groupId)` — `.eq('group_id', groupId)` ARTIK YOK. 1B kararına göre: ya kaldır ya members'tan `user_id` listesiyle `.inFilter('user_id', ids)` kur.
+    - `watchGroupDailyStats(groupId)` — postgres-changes filtresindeki `column:'group_id'` bloğunu KALDIR; tüm `study_sessions` değişikliğinde `refresh()` çağır (RPC zaten group'a göre süzüyor).
+  - `app/lib/data/repositories/in_memory/in_memory_study_repository.dart` — `_groupSessions`/`_groupDailyStats` yardımcıları group_id'ye göre süzüyordu; bunları **üyelik tabanlı** süzmeye çevir (in-memory grup üyeliği state'inden). Demo modun davranışı Supabase ile tutarlı olmalı.
+  - `app/lib/data/repositories/study_repository.dart` — arayüz imzaları büyük ihtimalle aynı kalır (groupId parametreleri grup okuması için duruyor); sadece `watchGroupSessions`'ın kaderi 1B'ye göre.
+- **Kabul:** `flutter analyze` temiz; iki gruplu kullanıcı tek "Çalış" → her iki grup leaderboard'ında görünür; kişisel toplam (profil) ÇİFT saymaz; 47 test geçer (test fixture'larında group_id varsa onları da temizle).
+- **Tuzak:** `grep -rn "groupId\|group_id" app/lib` ile tüm kalıntıları bul; test dosyaları dahil.
+
+### 1E · "Eski Grup Üyesi" etiketi 🟢 Flash
+- **Amaç:** Madde 5 — ayrılan üyenin adı listede korunsun.
+- **Önkoşul:** 1D'de `watchMembers` artık `left_at` taşıyan üyeleri de döndürmeli (aktif + ayrılmış). Bu, member modeline `leftAt`/`isActive` bilgisi taşımayı gerektirir; 1D çıktısındaki member akışına dayan.
+- **Dosyalar/satırlar:** "İsimsiz" fallback'i, üyelik ayrılmışsa "Eski Grup Üyesi" olacak:
+  - `app/lib/features/home/widgets/leaderboard_card.dart:186`
+  - `app/lib/features/home/widgets/active_members_card.dart:75`
+  - `app/lib/features/classroom/widgets/class_detail_screen.dart:375`
+  - `app/lib/features/stats/widgets/class_stats_view.dart:79`
+- **Kural:** profil adı boş **ve** üyelik aktif → "İsimsiz" (eski davranış); üyelik ayrılmış (`left_at != null`) → "Eski Grup Üyesi" (ad olsa bile bu mu yoksa "ad (Eski Üye)" mi? — karar: sadece "Eski Grup Üyesi").
+- **Dosya:** `supabase_group_repository.dart` `removeMember` (≈163-173) ve `leaveGroup` (≈176): `.delete()` yerine `.update({'left_at': DateTime.now().toUtc().toIso8601String()})`. `joinGroup` (≈75) INSERT → **upsert** (`onConflict: 'group_id,user_id'`, `left_at=null, joined_at=now()`) ki ayrılıp dönen üye geri katılabilsin.
+- **Kabul:** Üye çıkar → listede "Eski Grup Üyesi" + geçmiş süresi grup istatistiğinde duruyor; aynı üye tekrar katılınca normal görünüyor, geçmişi bozulmuyor.
+
+---
+
+## §2 — Arayüz & Ana Ekran
+
+> Mevcut Ana Sayfa `home_screen.dart`'ta **masonry** düzen (`_MasonryDashboard`) + düzenleme modu (`_EditableDashboard`, tutamaçtan DragTarget reorder). Kart tipleri+boyut `dashboard_card.dart` (16 tip, S/M/L). Layout state `dashboard_providers.dart` (`DashboardLayoutNotifier`, SharedPreferences `"tür:boyut"`). Hedef: bunları gerçek serbest ızgaraya çevirmek.
+
+### 2A · Serbest ızgara mimari TASARIM 🔴 Opus
+- **Amaç:** masonry → hücre-tabanlı serbest grid geçiş tasarımı (kod yazmaz; karar + sözde-kod).
+- **Üretilecek kararlar:**
+  1. **Koordinat sistemi:** Sütun sayısı sabit (öneri: **12 sütun**, "neredeyse serbest" his için), satır birimi yüksekliği ≈ sütun genişliği (kare hücre). Her kart `gridX, gridY (sol-üst hücre), gridW, gridH (hücre span)`, hepsi int. min 1×1, max W = sütun sayısı. (new_features: hücre oranı deneme-yanılma → 12 başla, gerekirse ayarla.)
+  2. **Yerleşim widget'ı:** `_MasonryDashboard` (Row+Expanded) → `Stack` + `AnimatedPositioned` (kartlar mutlak konumlu) veya özel `MultiChildLayoutDelegate`. Reflow animasyonu için `AnimatedPositioned` önerilir.
+  3. **Doluluk/çakışma:** occupancy matrisi (bool[rows][cols]); yerleştirme/taşıma çakışmayı çözer (aşağı it + yukarı sıkıştır).
+  4. **Persistence:** `"tür:x:y:w:h"`; eski `"tür:boyut"` formatından göç: S→2×2, M→tam genişlik×3, L→tam genişlik×4 gibi eşle ve sırayla auto-flow ile yerleştir.
+  5. **Performans:** sürükleme/resize sırasında setState yerine sadece sürüklenen kartın konumu + komşu animasyonları; 60fps hedef; `RepaintBoundary` her kartta.
+- **Kabul:** 2B–2F için net veri modeli, reflow algoritması sözde-kodu, widget ağacı kararı.
+
+### 2B · Grid veri modeli + persistence 🔵 Sonnet
+- **Dosyalar:** `app/lib/features/home/dashboard_card.dart`, `dashboard_providers.dart`.
+- **Adımlar:**
+  - `DashboardCardConfig`'e `int x, y, w, h` ekle (2A kararına göre default). `encode()` → `'${type.name}:$x:$y:$w:$h'`. `decode()` hem yeni 5-parça hem eski `"tür"`/`"tür:boyut"` formatını çözsün (geriye-uyum; eski → 2A göç kuralı). `==`/`hashCode` güncelle.
+  - `DashboardLayoutNotifier`: `setSize/cycleSize/reorderItem` yerine `setBounds(type, x, y, w, h)`, `addCard(type)` (boş ilk uygun yere yerleştir), `removeCard(type)`. `_kDefaultLayout`'a x,y,w,h ver. `toggle` → grid'e ekleme/çıkarma.
+  - `DashboardCardSize` enum'u kaldırılır veya deprecated; `dashboardCardFor` artık `size` yerine genişlik/oran bilgisi alabilir (2E ile koordine).
+- **Tuzak:** `dashboardCardFor(type, size)` çağrısı 16 kart widget'ına `size` geçiyor; imza değişirse 16 widget + `home_screen.dart` derlemesi kırılır — 2E ile birlikte planla veya geçici `size` shim bırak.
+- **Kabul:** Eski kayıtlı düzenler çökme olmadan yeni formata göç eder; `flutter analyze` temiz.
+
+### 2C · Doğal sürükle-bırak + akışkan reflow 🔴 Opus
+- **Dosya:** `app/lib/features/home/home_screen.dart` (yeni grid widget'ı; `_MasonryDashboard`/`_EditableDashboard` yerini alır).
+- **Adımlar:**
+  - Düzenleme modunda karta **doğrudan basılı tut → sürükle** (tutamaç ⠿ zorunluluğu kalkar; Madde 7/19). `LongPressDraggable` veya pointer event'leriyle.
+  - Sürüklerken parmağın altındaki hücreyi hesapla; hedef hücreye göre komşu kartları occupancy'e göre kaydır; her kart `AnimatedPositioned` ile **pürüzsüz** yeni yerine akar (Android ana ekran hissi).
+  - Bırakınca `setBounds` ile kalıcılaştır.
+- **Kabul:** Kart sürüklenince komşular tatlı animasyonla yer açar; bırakınca düzen kaydolur; FPS düşmez.
+
+### 2D · Serbest/akıcı boyutlandırma 🔴 Opus
+- **Dosya:** `home_screen.dart` (grid kart sarmalayıcısı).
+- **Adımlar:** Düzenleme modunda kart köşe/kenarında resize handle; sürükleyince `gridW/gridH` canlı değişir (hücreye snap ama hareket akıcı), çakışırsa komşular reflow. min 1×1, max sütun genişliği. Sabit S/M/L UI'ı kalkar.
+- **Kabul:** Kullanıcı kartı serbestçe büyütüp küçültür; içerik 2E sayesinde bozulmaz; 60fps.
+
+### 2E · İçerik responsive adaptasyonu 🟣 Gemini 3.1 Pro
+- **Dosyalar:** `app/lib/features/home/widgets/` altındaki 16 kart (+ `study_timer_card.dart`).
+- **Adımlar:** Her kart `LayoutBuilder` ile gelen genişlik/yükseklik/orana göre içeriği yeniden düzenlesin: küçükken özet/ikon, büyükken grafik+detay. Yazı/saat/grafik **taşmasın, üst üste binmesin** (`FittedBox`, esnek font, eşik-tabanlı görünüm). Sabit boyut varsayımlarını kaldır.
+- **Bölme:** Karmaşık kartlar (line/heatmap/leaderboard/scatter/rhythm) 🟣 Pro; basit özet kartları (today/goal/records) 🔵 Sonnet'e devredilebilir.
+- **Kabul:** Her kart 1×1'den tam-genişlik×büyük'e kadar tüm oranlarda düzgün; overflow/clipping yok.
+
+### 2F · Düzenleme modu odak koruma 🔵 Sonnet
+- **Dosya:** `home_screen.dart`.
+- **Sorun:** Bir karta basılı tutup düzenlemeye geçince ekran başa/ilk karta zıplıyor (Madde, "Kritik").
+- **Adım:** Düzenleme moduna geçişte mevcut `ScrollController.offset`'i koru; aynı scroll pozisyonunda kal. Gerekirse basılan kartın konumunu görünür tut (`Scrollable.ensureVisible` yerine offset sabitleme).
+- **Kabul:** Hangi karta basılırsa o konumda düzenleme açılır; ekran zıplamaz.
+
+### 2G · Kamp ateşi canlı çalışma ekranı 🔴 Opus (animasyon) + 🔵 Sonnet (layout/veri)
+- **Dosyalar:** `app/lib/features/classroom/classroom_screen.dart`, presence provider'ları (`presenceRepositoryProvider`, `groupMembersProvider`).
+- **Adımlar:** Canlı çalışanlar düz liste yerine dinamik sahne (Madde 6): ortada yanan ateş animasyonu; `status=studying` avatarları ateş etrafında, `onBreak`/`offline` karanlığa çekilir. 🔵: presence verisini avatar konumlarına bağla, layout iskeleti. 🔴: ateş/parçacık animasyonu, geçiş efektleri (AI hava durumu/etkileşim ekleyebilir — serbest).
+- **Kabul:** Çalışan üyeler ateş etrafında canlı görünür; durum değişince avatar yumuşak geçişle yer değiştirir.
+
+### 2H · Eksiksiz saat/zamanlayıcı 🔵 Sonnet (UI) + 🟣 Gemini 3.1 Pro (state machine)
+- **Dosyalar:** `app/lib/features/classroom/widgets/study_timer_card.dart`, `focus_timer_screen.dart`, `app/lib/data/providers/study_providers.dart` (`StudyTimerNotifier`).
+- **Adımlar:**
+  - 🟣 State machine: mevcut kronometreye ek **Geri Sayım**, **Pomodoro (25/5, döngü sayısı)**, ayarlanabilir hazır planlar. Mod geçişleri, döngü sayacı, otomatik mola, bildirim/ses tetik noktaları. Her mod bittiğinde mevcut `_recordSession` akışıyla oturum kaydı tutarlı kalsın (1D sonrası group_id'siz).
+  - 🔵 UI: mod seçici, estetik saat stilleri (halka/ilerleme), geri sayım/pomodoro ekranları, tam-ekran odak moduyla uyum.
+- **Tuzak:** Sayaç bildirimi (persistent notification, §5 Madde 10) bu fazda DEĞİL; sadece in-app timer. State machine'i bildirim tetik noktalarını dışarı verecek şekilde tasarla (§5'e hazır).
+- **Kabul:** Kronometre + geri sayım + pomodoro çalışır; pomodoro döngüsü mola/çalışma geçişlerini doğru yapar; her tamamlanan çalışma süresi istatistiğe yazılır.
+
+### 2I · Ayarlar overhaul 🔵 Sonnet + 🟢 Flash
+- **Dosyalar:** `app/lib/features/profile/` (ayarlar ekranı), `home_screen.dart` (ana ekran sıfırlama butonu konumu), `core/prefs/`.
+- **Adımlar:**
+  - 🔵 Ayarlar menüsünü gruplu, genişletilebilir bir yapıya çevir ("her şey özelleştirilebilir" iskeleti; tema, sayaç, görünürlük, bildirim grupları placeholder).
+  - 🟢 **Ana ekran sıfırlama** butonunu ana ayarlardan çıkar, **"ana ekran düzenleme" menüsüne** taşı (`DashboardLayoutNotifier.reset()` zaten var; sadece UI konumu + tetik).
+- **Tuzak:** Gelişmiş bildirim sistemi (her tür/öncelik) §5'e ait; burada sadece iskele + sıfırlama taşıması.
+- **Kabul:** Ayarlar menüsü gruplu; ana ekran sıfırlama düzenleme menüsünden erişilir; mevcut prefs bozulmaz.
+
+---
+
+## Sıralama & bağımlılıklar
+1. **§1 önce, sıra zorunlu:** 1A → 1B(🔴 tasarım) → 1C(DB) → 1D(Dart) → 1E. (1C migrationları ile 1D Dart'ı birlikte deploy edilmeli — biri olmadan diğeri prod'u kırar.)
+2. **§2:** 2A(🔴 tasarım) → 2B → {2C, 2D} → 2E → 2F. Grid çekirdeği (2B–2F) bitince 2G/2H/2I bağımsız ilerler. 2E ile 2B'nin `dashboardCardFor` imza değişimi koordineli olmalı.
+3. 🔴 tasarım fazları (1B, 2A) kendi implementasyonlarından ÖNCE kilitlenir.
+
+## Doğrulama (faz geneli)
+- Her mini-faz sonu: `cd app && flutter analyze` temiz + 47 test geçer (`flutter test`) + ilgili ekran `flutter run` ile manuel.
+- **§1 kabul senaryosu:** 2 grupta üye olan test kullanıcısıyla tek oturum tut → her iki grubun leaderboard/günlük totalinde görünür, kişisel profil toplamı çift saymaz. Bir üyeyi çıkar → listede "Eski Grup Üyesi", geçmiş süresi grupta durur, yeni oturumu o gruba yazılmaz. Çıkan üye geri katılınca normalleşir.
+- **§2 kabul senaryosu:** Karta doğrudan basılı tut → sürükle, komşular animasyonla yer açar; köşeden serbest resize; tüm oranlarda içerik bozulmaz; düzenlemeye geçişte ekran zıplamaz; eski kayıtlı düzen yeni formata göç eder.
