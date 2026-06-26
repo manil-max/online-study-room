@@ -5,10 +5,15 @@ import 'dashboard_card.dart';
 import 'dashboard_providers.dart';
 import 'widgets/card_picker.dart';
 
-/// Ana Sayfa: kişiye özel, **özelleştirilebilir** kontrol paneli (§3.9/§3.11).
-/// Normalde kartlar masonry düzeninde görünür. Bir kartı **basılı tutunca** (veya
-/// sağ üst düzenle) düzenleme moduna geçilir: kartlar sürükle-bırakla sıralanır,
-/// kart üstündeki S/M/L ile boyutlandırılır, × ile kaldırılır, + ile eklenir.
+/// Ana Sayfa: kişiye özel, **özelleştirilebilir** serbest ızgara (§2 FAZ 6).
+/// Kartlar [kGridColumns] sütunlu bir akış ızgarasında, her biri 1..12 hücre
+/// **genişliğinde** dizilir; yükseklik içeriğe göre otomatiktir.
+///
+/// Normal modda kartlar görünür ve etkileşimlidir. Bir kartı **gövdesine basılı
+/// tutunca** düzenleme moduna geçilir: kart doğrudan gövdesinden sürüklenerek
+/// sıralanır (komşular animasyonla yer açar — Android ana ekran hissi), sağ alt
+/// köşeden tutup çekerek **serbestçe genişletilip daraltılır**, × ile kaldırılır,
+/// sağ üstten + ile yeni kart eklenir.
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
@@ -19,7 +24,17 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _editing = false;
 
+  // Görünüm ↔ düzenleme geçişinde kaydırma konumunu korur (§2F): kullanıcı hangi
+  // kartı düzenlemek için basılı tuttuysa ekran oraya sabit kalır, başa zıplamaz.
+  final ScrollController _scroll = ScrollController();
+
   void _setEditing(bool value) => setState(() => _editing = value);
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -53,108 +68,138 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       body: layout.isEmpty
           ? _EmptyDashboard(onEdit: () => showCardPicker(context))
           : _editing
-              ? _EditableDashboard(layout: layout)
+              ? _EditableGrid(layout: layout, scroll: _scroll)
               : SingleChildScrollView(
+                  controller: _scroll,
                   padding: const EdgeInsets.all(16),
-                  child: _MasonryDashboard(
+                  child: _GridDashboard(
                     layout: layout,
                     onLongPressCard: () => _setEditing(true),
                   ),
                 ),
     );
   }
-
 }
 
-/// Ana Sayfa kartlarını **masonry** (taşlama) düzeninde yerleştirir: küçük (yarım
-/// genişlik) kartlar iki bağımsız sütuna paylaştırılır — böylece kısa bir kartın
-/// altında uzun komşusu yüzünden boşluk kalmaz. Orta/büyük kartlar tam satır kaplar.
-class _MasonryDashboard extends StatelessWidget {
-  const _MasonryDashboard({required this.layout, required this.onLongPressCard});
+const double _kGap = 12.0;
+
+/// Bir kart listesini, genişlikleri toplamı [kGridColumns]'u aşmayacak şekilde
+/// satırlara böler (akış yerleşimi). Her satır, taşan kartı bir sonraki satıra
+/// indirir; tek kart bir satırdan geniş olamaz (genişlik zaten 1..12 sınırlı).
+List<List<T>> _packRows<T>(List<T> items, int Function(T) widthOf) {
+  final rows = <List<T>>[];
+  var current = <T>[];
+  var used = 0;
+  for (final item in items) {
+    final w = widthOf(item).clamp(1, kGridColumns);
+    if (current.isNotEmpty && used + w > kGridColumns) {
+      rows.add(current);
+      current = <T>[];
+      used = 0;
+    }
+    current.add(item);
+    used += w;
+  }
+  if (current.isNotEmpty) rows.add(current);
+  return rows;
+}
+
+/// Bir satırı, kartların genişliğiyle orantılı `Expanded(flex)` hücrelere yayar.
+/// Satır tam dolmadıysa kalan boşluk için şeffaf bir esnek alan bırakılır.
+Widget _row<T>({
+  required List<T> rowItems,
+  required int Function(T) widthOf,
+  required Widget Function(T) build,
+}) {
+  final children = <Widget>[];
+  var used = 0;
+  for (var i = 0; i < rowItems.length; i++) {
+    final item = rowItems[i];
+    final w = widthOf(item).clamp(1, kGridColumns);
+    used += w;
+    children.add(Expanded(
+      flex: w,
+      child: Padding(
+        padding: EdgeInsets.only(right: i == rowItems.length - 1 ? 0 : _kGap),
+        child: build(item),
+      ),
+    ));
+  }
+  final remaining = kGridColumns - used;
+  if (remaining > 0) children.add(Spacer(flex: remaining));
+  return Padding(
+    padding: const EdgeInsets.only(bottom: _kGap),
+    child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: children),
+  );
+}
+
+/// Normal mod: kartları serbest ızgarada (genişliklerine göre) gösterir. Bir
+/// karta **basılı tutmak** düzenleme moduna geçirir (Android ana ekran kalıbı).
+class _GridDashboard extends StatelessWidget {
+  const _GridDashboard({required this.layout, required this.onLongPressCard});
 
   final List<DashboardCardConfig> layout;
   final VoidCallback onLongPressCard;
 
   @override
   Widget build(BuildContext context) {
-    const gap = 12.0;
-    final rows = <Widget>[];
-    final pending = <DashboardCardConfig>[];
-
-    Widget cardOf(DashboardCardConfig c) => Padding(
-          padding: const EdgeInsets.only(bottom: gap),
-          // Basılı tut → düzenleme modu (Android ana ekran kalıbı).
-          child: GestureDetector(
-            onLongPress: onLongPressCard,
-            child: _HoverLift(child: dashboardCardFor(c.type, c.size)),
-          ),
-        );
-
-    void flushPending() {
-      if (pending.isEmpty) return;
-      final left = <Widget>[];
-      final right = <Widget>[];
-      for (var i = 0; i < pending.length; i++) {
-        (i.isEven ? left : right).add(cardOf(pending[i]));
-      }
-      rows.add(Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch, children: left),
-          ),
-          const SizedBox(width: gap),
-          Expanded(
-            child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch, children: right),
-          ),
-        ],
-      ));
-      pending.clear();
-    }
-
-    for (final card in layout) {
-      if (card.size.isHalfWidth) {
-        pending.add(card);
-      } else {
-        flushPending();
-        rows.add(cardOf(card));
-      }
-    }
-    flushPending();
-
+    final rows = _packRows<DashboardCardConfig>(layout, (c) => c.width);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: rows,
+      children: [
+        for (final r in rows)
+          _row<DashboardCardConfig>(
+            rowItems: r,
+            widthOf: (c) => c.width,
+            build: (c) => GestureDetector(
+              onLongPress: onLongPressCard,
+              child: _HoverLift(child: dashboardCardFor(c.type, c.size)),
+            ),
+          ),
+      ],
     );
   }
 }
 
-/// Düzenleme modu: kartlar gerçek ızgarada. Tutamaçtan (⠿) sürükleyince sürüklenen
-/// kart listeden çıkar ve gideceği yerde **kesik çizgili bir boşluk** belirir (diğer
-/// kartlar yer açar — Android ana ekran mantığı); bırakınca oraya yerleşir.
-class _EditableDashboard extends ConsumerStatefulWidget {
-  const _EditableDashboard({required this.layout});
+/// Düzenleme modunda akış paketlemesi için bir slot: gerçek kart ya da (sürükleme
+/// sırasında) bırakma boşluğu (placeholder).
+class _Slot {
+  _Slot.card(this.origIndex, this.width) : isPlaceholder = false;
+  _Slot.placeholder(this.width)
+      : isPlaceholder = true,
+        origIndex = null;
 
-  final List<DashboardCardConfig> layout;
-
-  @override
-  ConsumerState<_EditableDashboard> createState() =>
-      _EditableDashboardState();
+  final bool isPlaceholder;
+  final int? origIndex; // layout'taki gerçek indeks
+  final int width; // ızgara genişliği (hücre)
 }
 
-class _EditableDashboardState extends ConsumerState<_EditableDashboard> {
-  int? _from; // sürüklenen kartın layout'taki indeksi
-  int? _to; // ekleme konumu (sürüklenen çıkarılmış indirgenmiş listede 0..n)
+/// Düzenleme modu: kartlar serbest ızgarada. Kart **gövdesine** basılı tutup
+/// sürükleyince listeden çıkar ve gideceği yerde **kesik çizgili bir boşluk**
+/// belirir (diğer kartlar yer açar — Android ana ekran mantığı); bırakınca oraya
+/// yerleşir. Sağ alt köşedeki tutamaçtan çekerek genişlik serbestçe ayarlanır.
+class _EditableGrid extends ConsumerStatefulWidget {
+  const _EditableGrid({required this.layout, required this.scroll});
+
+  final List<DashboardCardConfig> layout;
+  final ScrollController scroll;
+
+  @override
+  ConsumerState<_EditableGrid> createState() => _EditableGridState();
+}
+
+class _EditableGridState extends ConsumerState<_EditableGrid> {
+  int? _from; // sürüklenen kartın layout indeksi
+  int? _to; // indirgenmiş listede ekleme konumu (0..n)
 
   void _commit() {
     final from = _from;
     final to = _to;
     if (from != null && to != null) {
-      ref
-          .read(dashboardLayoutProvider.notifier)
-          .reorderItem(from, to.clamp(0, widget.layout.length - 1));
+      // _to, sürüklenen çıkarılmış indirgenmiş listeye göre. Gerçek hedef indeksi:
+      // to konumundan önce gelen ve from'dan büyük indeksler bir kaymış sayılır.
+      final target = to.clamp(0, widget.layout.length - 1);
+      ref.read(dashboardLayoutProvider.notifier).reorderItem(from, target);
     }
     _clear();
   }
@@ -175,77 +220,33 @@ class _EditableDashboardState extends ConsumerState<_EditableDashboard> {
     final notifier = ref.read(dashboardLayoutProvider.notifier);
     final showTimerInClass = ref.watch(classroomShowTimerProvider);
     final dragging = _from != null;
-    const gap = 12.0;
 
-    // Sürüklenen kart çıkarılmış indirgenmiş liste (origIndex taşır).
+    // Sürüklenen kart çıkarılmış indirgenmiş liste (gerçek indeksleri taşır).
     final reduced = <int>[];
     for (var i = 0; i < layout.length; i++) {
       if (i == _from) continue;
       reduced.add(i);
     }
-    final dragSize =
-        _from != null ? layout[_from!].size : DashboardCardSize.medium;
+    final dragWidth =
+        _from != null ? layout[_from!].width : (kGridColumns ~/ 2);
 
-    // Görsel slotlar: kartlar + (sürüklerken) _to konumunda boşluk.
-    final entries = <_Slot>[];
+    // Slotlar: kartlar + (sürüklerken) _to konumunda boşluk.
+    final slots = <_Slot>[];
     for (var k = 0; k <= reduced.length; k++) {
-      if (dragging && _to == k) entries.add(_Slot.placeholder(dragSize));
+      if (dragging && _to == k) slots.add(_Slot.placeholder(dragWidth));
       if (k < reduced.length) {
         final oi = reduced[k];
-        entries.add(_Slot.card(oi, k, layout[oi].size));
+        slots.add(_Slot.card(oi, layout[oi].width));
       }
     }
 
-    Widget slotWidget(_Slot s) => Padding(
-          padding: const EdgeInsets.only(bottom: gap),
-          child: s.isPlaceholder
-              ? const _DropPlaceholder()
-              : _editCard(s.origIndex!, s.reducedPos!, layout[s.origIndex!],
-                  notifier),
-        );
+    final rows = _packRows<_Slot>(slots, (s) => s.width);
 
-    // Masonry paketle (küçükler yan yana, diğerleri tam satır).
-    final rows = <Widget>[];
-    final pending = <_Slot>[];
-    void flush() {
-      if (pending.isEmpty) return;
-      final left = <Widget>[];
-      final right = <Widget>[];
-      for (var i = 0; i < pending.length; i++) {
-        (i.isEven ? left : right).add(slotWidget(pending[i]));
-      }
-      rows.add(Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-              child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: left)),
-          const SizedBox(width: gap),
-          Expanded(
-              child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: right)),
-        ],
-      ));
-      pending.clear();
-    }
-
-    for (final s in entries) {
-      if (s.size.isHalfWidth) {
-        pending.add(s);
-      } else {
-        flush();
-        rows.add(slotWidget(s));
-      }
-    }
-    flush();
-
-    // Dış hedef: boşluğa/placeholder'a bırakınca da mevcut _to'ya yerleştir.
     return DragTarget<int>(
       onWillAcceptWithDetails: (_) => dragging,
       onAcceptWithDetails: (_) => _commit(),
       builder: (context, cand, rej) => SingleChildScrollView(
+        controller: widget.scroll,
         padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -253,13 +254,41 @@ class _EditableDashboardState extends ConsumerState<_EditableDashboard> {
             Padding(
               padding: const EdgeInsets.only(bottom: 10),
               child: Text(
-                'Tutamaçtan (⠿) sürükle → kartlar yer açar, boşluğa bırak. '
-                'Boyut: S/M/L · × kaldır · sağ üstten + ekle.',
+                'Kartı gövdesinden sürükle → komşular yer açar, boşluğa bırak. '
+                'Sağ alt köşeden çekerek genişliği ayarla · × kaldır · sağ üstten + ekle.',
                 style: theme.textTheme.bodySmall
                     ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
               ),
             ),
-            ...rows,
+            for (final r in rows)
+              _row<_Slot>(
+                rowItems: r,
+                widthOf: (s) => s.width,
+                build: (s) => s.isPlaceholder
+                    ? const _DropPlaceholder()
+                    : _EditCard(
+                        key: ValueKey(layout[s.origIndex!].type),
+                        config: layout[s.origIndex!],
+                        origIndex: s.origIndex!,
+                        onReorderHover: (i) {
+                          // i = bu kartın indirgenmiş listedeki konumu.
+                          final pos = reduced.indexOf(i);
+                          if (pos >= 0 && _to != pos) {
+                            setState(() => _to = pos);
+                          }
+                        },
+                        onDragStart: () => setState(() {
+                          _from = s.origIndex;
+                          _to = reduced.indexOf(s.origIndex!).clamp(0, reduced.length);
+                        }),
+                        onDragCancel: _clear,
+                        onAccept: _commit,
+                        onRemove: () =>
+                            notifier.toggle(layout[s.origIndex!].type),
+                        onWidth: (w) =>
+                            notifier.setWidth(layout[s.origIndex!].type, w),
+                      ),
+              ),
             const Divider(height: 24),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
@@ -273,38 +302,50 @@ class _EditableDashboardState extends ConsumerState<_EditableDashboard> {
       ),
     );
   }
+}
 
-  Widget _editCard(int origIndex, int reducedPos, DashboardCardConfig card,
-      DashboardLayoutNotifier notifier) {
+/// Düzenleme modundaki tek kart: gövdesinden sürüklenebilir (reorder), sağ üstte
+/// kaldır (×), sağ alt köşede genişlik tutamacı. Kartın kendisi etkileşimsizdir
+/// (IgnorePointer) — yalnızca düzenleme kontrolleri tıklanır.
+class _EditCard extends StatefulWidget {
+  const _EditCard({
+    super.key,
+    required this.config,
+    required this.origIndex,
+    required this.onReorderHover,
+    required this.onDragStart,
+    required this.onDragCancel,
+    required this.onAccept,
+    required this.onRemove,
+    required this.onWidth,
+  });
+
+  final DashboardCardConfig config;
+  final int origIndex;
+  final ValueChanged<int> onReorderHover; // başka kartın indeksiyle hover
+  final VoidCallback onDragStart;
+  final VoidCallback onDragCancel;
+  final VoidCallback onAccept;
+  final VoidCallback onRemove;
+  final ValueChanged<int> onWidth;
+
+  @override
+  State<_EditCard> createState() => _EditCardState();
+}
+
+class _EditCardState extends State<_EditCard> {
+  int? _resizeStartWidth;
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return DragTarget<int>(
-      onWillAcceptWithDetails: (d) => d.data != origIndex,
-      onMove: (_) {
-        if (_to != reducedPos) setState(() => _to = reducedPos);
-      },
-      onAcceptWithDetails: (_) => _commit(),
+
+    final body = DragTarget<int>(
+      onWillAcceptWithDetails: (d) => d.data != widget.origIndex,
+      onMove: (_) => widget.onReorderHover(widget.origIndex),
+      onAcceptWithDetails: (_) => widget.onAccept(),
       builder: (context, cand, rej) {
-        final handle = MouseRegion(
-          cursor: SystemMouseCursors.grab,
-          child: Draggable<int>(
-            data: origIndex,
-            feedback: _DragChip(card: card),
-            onDragStarted: () => setState(() {
-              _from = origIndex;
-              _to = reducedPos;
-            }),
-            onDraggableCanceled: (_, _) => _clear(),
-            onDragEnd: (d) {
-              if (!d.wasAccepted) _clear();
-            },
-            child: Padding(
-              padding: const EdgeInsets.all(6),
-              child: Icon(Icons.drag_indicator,
-                  size: 20, color: theme.colorScheme.onSurfaceVariant),
-            ),
-          ),
-        );
-        return DecoratedBox(
+        final card = DecoratedBox(
           decoration: BoxDecoration(
             color: theme.colorScheme.surface,
             border: Border.all(color: theme.colorScheme.primary, width: 1.5),
@@ -313,15 +354,18 @@ class _EditableDashboardState extends ConsumerState<_EditableDashboard> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // Üst kontrol çubuğu: sürükle ipucu + genişlik etiketi + kaldır.
               Padding(
-                padding: const EdgeInsets.fromLTRB(2, 2, 4, 2),
+                padding: const EdgeInsets.fromLTRB(10, 4, 4, 0),
                 child: Row(
                   children: [
-                    handle,
+                    Icon(Icons.drag_indicator,
+                        size: 18, color: theme.colorScheme.onSurfaceVariant),
+                    const SizedBox(width: 4),
+                    Text('${widget.config.width}/$kGridColumns',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant)),
                     const Spacer(),
-                    _SizeSelector(
-                        size: card.size,
-                        onSize: (s) => notifier.setSize(card.type, s)),
                     IconButton(
                       tooltip: 'Kaldır',
                       visualDensity: VisualDensity.compact,
@@ -330,7 +374,7 @@ class _EditableDashboardState extends ConsumerState<_EditableDashboard> {
                           const BoxConstraints(minWidth: 32, minHeight: 32),
                       icon: Icon(Icons.remove_circle_outline,
                           color: theme.colorScheme.error),
-                      onPressed: () => notifier.toggle(card.type),
+                      onPressed: widget.onRemove,
                     ),
                   ],
                 ),
@@ -338,30 +382,72 @@ class _EditableDashboardState extends ConsumerState<_EditableDashboard> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(6, 0, 6, 6),
                 child: IgnorePointer(
-                  child: dashboardCardFor(card.type, card.size),
+                  child: dashboardCardFor(widget.config.type, widget.config.size),
                 ),
               ),
             ],
           ),
         );
+
+        // Gövdeden sürükle → reorder. Tüm kart basılı-tut ile taşınır.
+        return LongPressDraggable<int>(
+          data: widget.origIndex,
+          onDragStarted: widget.onDragStart,
+          onDraggableCanceled: (_, _) => widget.onDragCancel(),
+          onDragEnd: (d) {
+            if (!d.wasAccepted) widget.onDragCancel();
+          },
+          feedback: _DragChip(config: widget.config),
+          childWhenDragging: Opacity(opacity: 0.35, child: card),
+          child: card,
+        );
+      },
+    );
+
+    // Sağ alt köşe genişlik tutamacı (Stack üstünde, sürüklemeyi engellemez).
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Bu kartın kapladığı hücre genişliği ≈ satırdaki orantılı pay; tek hücre
+        // genişliği için satırın tamamını 12'ye böleriz (yaklaşık snap).
+        final cell = constraints.maxWidth / widget.config.width.clamp(1, kGridColumns);
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            body,
+            Positioned(
+              right: 0,
+              bottom: 0,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onPanStart: (_) => _resizeStartWidth = widget.config.width,
+                onPanUpdate: (d) {
+                  final start = _resizeStartWidth ?? widget.config.width;
+                  final deltaCells = (d.localPosition.dx / cell).round();
+                  final w = (start + deltaCells).clamp(1, kGridColumns);
+                  if (w != widget.config.width) widget.onWidth(w);
+                },
+                onPanEnd: (_) => _resizeStartWidth = null,
+                child: Container(
+                  width: 34,
+                  height: 34,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primaryContainer,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(12),
+                      bottomRight: Radius.circular(18),
+                    ),
+                  ),
+                  child: Icon(Icons.open_in_full,
+                      size: 16, color: theme.colorScheme.onPrimaryContainer),
+                ),
+              ),
+            ),
+          ],
+        );
       },
     );
   }
-}
-
-/// Masonry paketleme için bir slot: kart veya (sürükleme sırasında) boşluk.
-class _Slot {
-  _Slot.placeholder(this.size)
-      : isPlaceholder = true,
-        origIndex = null,
-        reducedPos = null;
-  _Slot.card(this.origIndex, this.reducedPos, this.size)
-      : isPlaceholder = false;
-
-  final bool isPlaceholder;
-  final int? origIndex;
-  final int? reducedPos;
-  final DashboardCardSize size;
 }
 
 /// Sürüklenen kartın gideceği yeri gösteren kesik(çe) çizgili boşluk.
@@ -386,9 +472,9 @@ class _DropPlaceholder extends StatelessWidget {
 
 /// Sürükleme sırasında parmağın altında süzülen küçük etiket.
 class _DragChip extends StatelessWidget {
-  const _DragChip({required this.card});
+  const _DragChip({required this.config});
 
-  final DashboardCardConfig card;
+  final DashboardCardConfig config;
 
   @override
   Widget build(BuildContext context) {
@@ -408,40 +494,14 @@ class _DragChip extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(card.type.icon,
+            Icon(config.type.icon,
                 size: 18, color: theme.colorScheme.onPrimaryContainer),
             const SizedBox(width: 8),
-            Text(card.type.title,
+            Text(config.type.title,
                 style: theme.textTheme.labelLarge
                     ?.copyWith(color: theme.colorScheme.onPrimaryContainer)),
           ],
         ),
-      ),
-    );
-  }
-}
-
-/// Düzenleme kartının görseli: üstte kontrol çubuğu (sürükle ikonu, S/M/L, ×) +
-/// S / M / L boyut seçici (düzenleme çubuğu için kompakt).
-class _SizeSelector extends StatelessWidget {
-  const _SizeSelector({required this.size, required this.onSize});
-
-  final DashboardCardSize size;
-  final ValueChanged<DashboardCardSize> onSize;
-
-  @override
-  Widget build(BuildContext context) {
-    return SegmentedButton<DashboardCardSize>(
-      segments: [
-        for (final s in DashboardCardSize.values)
-          ButtonSegment(value: s, icon: Icon(s.icon), tooltip: s.label),
-      ],
-      selected: {size},
-      onSelectionChanged: (s) => onSize(s.first),
-      showSelectedIcon: false,
-      style: const ButtonStyle(
-        visualDensity: VisualDensity.compact,
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
       ),
     );
   }

@@ -150,22 +150,41 @@ extension DashboardCardSizeInfo on DashboardCardSize {
       };
 }
 
-/// Bir Ana Sayfa kartının yapılandırması: tür + boyut (§3.11). Kalıcılık için
-/// `"tür:boyut"` (ör. `"weekly:large"`) biçiminde serileştirilir.
+/// Ana Sayfa serbest ızgarasının sütun sayısı (§2 FAZ 6). Kartlar bu ızgarada
+/// 1..[kGridColumns] hücre **genişliğinde** serbestçe boyutlandırılır; yükseklik
+/// içeriğe göre otomatiktir (sabit-hücreli tam 2D yerleşim, kartlar responsive
+/// olunca — FAZ 6 §2E — gelecek).
+const int kGridColumns = 12;
+
+/// Bir Ana Sayfa kartının yapılandırması: tür + ızgara genişliği (hücre, 1..12).
+/// Konum = listedeki sıra (akış yerleşimi). Kalıcılık için `"tür:genişlik"`
+/// (ör. `"weekly:12"`) biçiminde serileştirilir; eski `"tür:boyut"`/`"tür"`
+/// biçimleri de okunur (geriye-uyum).
 class DashboardCardConfig {
-  const DashboardCardConfig(this.type,
-      {this.size = DashboardCardSize.medium});
+  const DashboardCardConfig(this.type, {this.width = kGridColumns})
+      : assert(width >= 1 && width <= kGridColumns);
 
   final DashboardCardType type;
-  final DashboardCardSize size;
 
-  DashboardCardConfig withSize(DashboardCardSize size) =>
-      DashboardCardConfig(type, size: size);
+  /// Izgara hücresi cinsinden genişlik (1..[kGridColumns]).
+  final int width;
 
-  /// `"tür:boyut"` (ör. `"weekly:large"`).
-  String encode() => '${type.name}:${size.name}';
+  /// Kart içeriği hâlâ S/M/L'ye göre çiziliyor (16 kart). Genişlikten türetilir;
+  /// kartlar tam responsive olunca (FAZ 6 §2E) bu köprü kaldırılabilir.
+  DashboardCardSize get size => width <= 4
+      ? DashboardCardSize.small
+      : width >= 9
+          ? DashboardCardSize.large
+          : DashboardCardSize.medium;
 
-  /// `"tür:boyut"` (veya eski biçimde sade `"tür"`) çözümler; geçersizse null.
+  DashboardCardConfig withWidth(int w) =>
+      DashboardCardConfig(type, width: w.clamp(1, kGridColumns));
+
+  /// `"tür:genişlik"` (ör. `"weekly:12"`).
+  String encode() => '${type.name}:$width';
+
+  /// `"tür:genişlik"` (yeni), `"tür:boyut"` (eski S/M/L) veya sade `"tür"`
+  /// (en eski) çözümler; geçersizse null.
   static DashboardCardConfig? decode(String raw) {
     final parts = raw.split(':');
     DashboardCardType? type;
@@ -176,26 +195,31 @@ class DashboardCardConfig {
       }
     }
     if (type == null) return null;
-    var size = DashboardCardSize.medium;
+    var width = kGridColumns;
     if (parts.length > 1) {
-      for (final s in DashboardCardSize.values) {
-        if (s.name == parts[1]) {
-          size = s;
-          break;
-        }
+      final p = parts[1];
+      final n = int.tryParse(p);
+      if (n != null) {
+        width = n.clamp(1, kGridColumns);
+      } else {
+        // Eski S/M/L: küçük = yarım genişlik, orta/büyük = tam genişlik.
+        width = switch (p) {
+          'small' => kGridColumns ~/ 2,
+          _ => kGridColumns,
+        };
       }
     }
-    return DashboardCardConfig(type, size: size);
+    return DashboardCardConfig(type, width: width);
   }
 
   @override
   bool operator ==(Object other) =>
       other is DashboardCardConfig &&
       other.type == type &&
-      other.size == size;
+      other.width == width;
 
   @override
-  int get hashCode => Object.hash(type, size);
+  int get hashCode => Object.hash(type, width);
 }
 
 /// Bir kart türünün widget'ını, seçilen boyuta göre üretir.
