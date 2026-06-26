@@ -6,12 +6,12 @@ import 'dashboard_card.dart';
 const _kLayoutKey = 'dashboard_layout';
 const _kClassroomTimerKey = 'classroom_show_timer';
 
-/// Varsayılan Ana Sayfa düzeni (ilk açılış): sayaç (tam) + bugün özeti (yarım)
-/// + sıralama (yarım). Genişlikler ızgara hücresi cinsinden (1..[kGridColumns]).
+/// Varsayılan Ana Sayfa düzeni (ilk açılış): sayaç üstte tam genişlik, altında
+/// bugün özeti + sıralama yan yana. Değerler 6 sütunlu matris hücresidir.
 const List<DashboardCardConfig> _kDefaultLayout = [
-  DashboardCardConfig(DashboardCardType.timer, width: kGridColumns),
-  DashboardCardConfig(DashboardCardType.today, width: kGridColumns ~/ 2),
-  DashboardCardConfig(DashboardCardType.leaderboard, width: kGridColumns ~/ 2),
+  DashboardCardConfig(DashboardCardType.timer, x: 0, y: 0, w: 6, h: 4),
+  DashboardCardConfig(DashboardCardType.today, x: 0, y: 4, w: 3, h: 3),
+  DashboardCardConfig(DashboardCardType.leaderboard, x: 3, y: 4, w: 3, h: 3),
 ];
 
 /// Ana Sayfa kart düzeni (sıralı kartlar; tür + boyut). Kişiye özel, cihazda
@@ -23,11 +23,14 @@ class DashboardLayoutNotifier extends Notifier<List<DashboardCardConfig>> {
     final prefs = ref.watch(sharedPreferencesProvider);
     final stored = prefs.getStringList(_kLayoutKey);
     if (stored == null) return List.of(_kDefaultLayout);
-    // "tür:boyut" (veya eski sade "tür") çözümle; bilinmeyenleri yok say. Boş
-    // liste de geçerlidir (kullanıcı tüm kartları kaldırmış olabilir).
-    return [
-      for (final raw in stored) ?DashboardCardConfig.decode(raw),
-    ];
+    // Eski "tür:genişlik[:yükseklik]", "tür:boyut" ve sade "tür" kayıtları
+    // 6 sütunlu x/y/w/h formata göçer. Boş liste geçerlidir.
+    final decoded = DashboardCardConfig.decodeList(stored);
+    final migrated = decoded.map((c) => c.encode()).toList();
+    if (!_sameStringList(stored, migrated)) {
+      prefs.setStringList(_kLayoutKey, migrated);
+    }
+    return decoded;
   }
 
   void _save() {
@@ -39,40 +42,59 @@ class DashboardLayoutNotifier extends Notifier<List<DashboardCardConfig>> {
   int _indexOf(DashboardCardType type) =>
       state.indexWhere((c) => c.type == type);
 
-  /// Kartı ekle (yoksa sona, yarım genişlik) veya çıkar (varsa).
+  /// Kartı ekle (yoksa ilk uygun boş hücreye) veya çıkar (varsa).
   void toggle(DashboardCardType type) {
     final i = _indexOf(type);
     if (i >= 0) {
-      state = [...state]..removeAt(i);
+      removeCard(type);
     } else {
-      state = [
-        ...state,
-        DashboardCardConfig(type, width: kGridColumns ~/ 2),
-      ];
+      addCard(type);
     }
+  }
+
+  void addCard(DashboardCardType type) {
+    if (_indexOf(type) >= 0) return;
+    state = [...state, DashboardCardConfig.firstAvailable(state, type)];
     _save();
+  }
+
+  void removeCard(DashboardCardType type) {
+    final i = _indexOf(type);
+    if (i < 0) return;
+    state = [...state]..removeAt(i);
+    _save();
+  }
+
+  void setBounds(
+    DashboardCardType type, {
+    int? x,
+    int? y,
+    int? w,
+    int? h,
+    bool persist = true,
+  }) {
+    final i = _indexOf(type);
+    if (i < 0) return;
+    final list = [...state];
+    list[i] = list[i].withBounds(x: x, y: y, w: w, h: h);
+    state = list;
+    if (persist) _save();
   }
 
   /// Bir kartın ızgara genişliğini (hücre, 1..[kGridColumns]) ayarlar.
   void setWidth(DashboardCardType type, int width) {
-    final i = _indexOf(type);
-    if (i < 0) return;
-    final list = [...state];
-    list[i] = list[i].withWidth(width);
-    state = list;
-    _save();
+    setBounds(type, w: width);
   }
 
   /// Bir kartın serbest yüksekliğini (px) ayarlar. Sürükleyerek boyutlandırma
   /// sırasında [persist] `false` verilir (her piksel için diske yazmamak için);
   /// sürükleme bitince [persist] kalır → kalıcılaşır (§2D).
   void setHeight(DashboardCardType type, double height, {bool persist = true}) {
-    final i = _indexOf(type);
-    if (i < 0) return;
-    final list = [...state];
-    list[i] = list[i].withHeight(height);
-    state = list;
-    if (persist) _save();
+    setBounds(
+      type,
+      h: DashboardCardConfig.rowsForLegacyHeight(height),
+      persist: persist,
+    );
   }
 
   /// Mevcut düzeni diske yazar (canlı sürükleme bitince çağrılır).
@@ -95,9 +117,18 @@ class DashboardLayoutNotifier extends Notifier<List<DashboardCardConfig>> {
   }
 }
 
+bool _sameStringList(List<String> a, List<String> b) {
+  if (a.length != b.length) return false;
+  for (var i = 0; i < a.length; i++) {
+    if (a[i] != b[i]) return false;
+  }
+  return true;
+}
+
 final dashboardLayoutProvider =
     NotifierProvider<DashboardLayoutNotifier, List<DashboardCardConfig>>(
-        DashboardLayoutNotifier.new);
+      DashboardLayoutNotifier.new,
+    );
 
 /// Sayaç kartı Sınıflar ekranında da gösterilsin mi? (Varsayılan kapalı — sayaç
 /// Ana Sayfa'da gelir; isteyen Sınıflar'a ekler.) Cihazda kalıcı.
@@ -116,4 +147,5 @@ class ClassroomShowTimerNotifier extends Notifier<bool> {
 
 final classroomShowTimerProvider =
     NotifierProvider<ClassroomShowTimerNotifier, bool>(
-        ClassroomShowTimerNotifier.new);
+      ClassroomShowTimerNotifier.new,
+    );

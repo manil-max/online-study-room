@@ -299,6 +299,11 @@ kendi sunucumuzu (self-host) veya başka ücretsiz katmanı değerlendiririz.
   profil çekimi başarısız olursa (çevrimdışı/geçici hata) kullanıcı **dışarı atılmaz** —
   geçerli oturum varsa metadata'dan geçici profille içeride kalır (§3.3 çevrimdışı dayanıklılık).
   Böylece internet olmadan da uygulama açılınca giriş korunur.
+- **2026-06-26 (Ana Sayfa gerçek 6×N matris):** Akış/Wrap tabanlı dashboard yerine
+  Android launcher hissi için 6 sütunlu, aşağı doğru sınırsız 2D matris seçildi. Kalıcı kart
+  düzeni `DashboardCardConfig(type, x, y, w, h)` ve `"tür:x:y:w:h"` formatıdır. Eski yerel
+  kayıtlar (`"tür:genişlik[:yükseklik]"`, `"tür:boyut"`, `"tür"`) uygulama açılışında
+  güvenli biçimde yeni formata göçürülür; gizli/veritabanı verisi içermez.
 
 ### 3.8 Sınıflar — Çoklu Sınıf + Admin ✅ (2026-06-21 kararı)
 

@@ -40,86 +40,85 @@ enum DashboardCardType {
 
 extension DashboardCardInfo on DashboardCardType {
   String get title => switch (this) {
-        DashboardCardType.timer => 'Sayaç',
-        DashboardCardType.goal => 'Günlük hedef',
-        DashboardCardType.today => 'Bugün özeti',
-        DashboardCardType.weekly => 'Haftalık grafik',
-        DashboardCardType.line => 'Eğilim grafiği',
-        DashboardCardType.monthly => 'Dönem özeti',
-        DashboardCardType.weekdayWeekend => 'Hafta içi / sonu',
-        DashboardCardType.hours => 'Çalışma saatleri',
-        DashboardCardType.rhythm => 'Haftalık ritim',
-        DashboardCardType.scatter => 'Oturum dağılımı',
-        DashboardCardType.records => 'Rekorlar',
-        DashboardCardType.heatmap => 'Çalışma takvimi',
-        DashboardCardType.leaderboard => 'Grup sıralaması',
-        DashboardCardType.groupGoal => 'Grup hedefi',
-        DashboardCardType.groupTrend => 'Grup günlük trendi',
-        DashboardCardType.activeMembers => 'Şu an çalışanlar',
-      };
+    DashboardCardType.timer => 'Sayaç',
+    DashboardCardType.goal => 'Günlük hedef',
+    DashboardCardType.today => 'Bugün özeti',
+    DashboardCardType.weekly => 'Haftalık grafik',
+    DashboardCardType.line => 'Eğilim grafiği',
+    DashboardCardType.monthly => 'Dönem özeti',
+    DashboardCardType.weekdayWeekend => 'Hafta içi / sonu',
+    DashboardCardType.hours => 'Çalışma saatleri',
+    DashboardCardType.rhythm => 'Haftalık ritim',
+    DashboardCardType.scatter => 'Oturum dağılımı',
+    DashboardCardType.records => 'Rekorlar',
+    DashboardCardType.heatmap => 'Çalışma takvimi',
+    DashboardCardType.leaderboard => 'Grup sıralaması',
+    DashboardCardType.groupGoal => 'Grup hedefi',
+    DashboardCardType.groupTrend => 'Grup günlük trendi',
+    DashboardCardType.activeMembers => 'Şu an çalışanlar',
+  };
 
   String get description => switch (this) {
-        DashboardCardType.timer => 'Kronometre, günlük hedef ve seri',
-        DashboardCardType.goal => 'Hedef ilerlemesi ve büyük seri göstergesi',
-        DashboardCardType.today => 'Bugünkü toplam ve ders dağılımı',
-        DashboardCardType.weekly => 'Günlük çubuk grafiği (7/14/30 gün filtreli)',
-        DashboardCardType.line => 'Çalışma eğilimi çizgi grafiği (14/30/90 gün)',
-        DashboardCardType.monthly => 'Bugün / hafta / ay / yıl toplam ve ortalama',
-        DashboardCardType.weekdayWeekend => 'Hafta içi ile hafta sonu kıyası',
-        DashboardCardType.hours => 'Günün hangi saatlerinde çalıştığın',
-        DashboardCardType.rhythm => 'Haftanın gün × saat çalışma ısı haritası',
-        DashboardCardType.scatter => 'Her oturum bir nokta (süre × gün, derse göre renkli)',
-        DashboardCardType.records => 'Toplam, rekor seri, en verimli gün, en çok ders',
-        DashboardCardType.heatmap => 'GitHub tarzı çalışma yoğunluğu ısı haritası',
-        DashboardCardType.leaderboard => 'Aktif grubun bugünkü sıralaması',
-        DashboardCardType.groupGoal => 'Grubun günlük hedef ilerlemesi + grup serisi',
-        DashboardCardType.groupTrend => 'Grubun son günlerdeki toplam çalışma grafiği',
-        DashboardCardType.activeMembers => 'Grupta o an çalışan üyeler (canlı süreyle)',
-      };
+    DashboardCardType.timer => 'Kronometre, günlük hedef ve seri',
+    DashboardCardType.goal => 'Hedef ilerlemesi ve büyük seri göstergesi',
+    DashboardCardType.today => 'Bugünkü toplam ve ders dağılımı',
+    DashboardCardType.weekly => 'Günlük çubuk grafiği (7/14/30 gün filtreli)',
+    DashboardCardType.line => 'Çalışma eğilimi çizgi grafiği (14/30/90 gün)',
+    DashboardCardType.monthly => 'Bugün / hafta / ay / yıl toplam ve ortalama',
+    DashboardCardType.weekdayWeekend => 'Hafta içi ile hafta sonu kıyası',
+    DashboardCardType.hours => 'Günün hangi saatlerinde çalıştığın',
+    DashboardCardType.rhythm => 'Haftanın gün × saat çalışma ısı haritası',
+    DashboardCardType.scatter =>
+      'Her oturum bir nokta (süre × gün, derse göre renkli)',
+    DashboardCardType.records =>
+      'Toplam, rekor seri, en verimli gün, en çok ders',
+    DashboardCardType.heatmap => 'GitHub tarzı çalışma yoğunluğu ısı haritası',
+    DashboardCardType.leaderboard => 'Aktif grubun bugünkü sıralaması',
+    DashboardCardType.groupGoal =>
+      'Grubun günlük hedef ilerlemesi + grup serisi',
+    DashboardCardType.groupTrend =>
+      'Grubun son günlerdeki toplam çalışma grafiği',
+    DashboardCardType.activeMembers =>
+      'Grupta o an çalışan üyeler (canlı süreyle)',
+  };
 
   /// Ekleme menüsünde gruplama başlığı.
   String get category => switch (this) {
-        DashboardCardType.timer ||
-        DashboardCardType.goal =>
-          'Sayaç & Hedef',
-        DashboardCardType.today ||
-        DashboardCardType.monthly ||
-        DashboardCardType.weekdayWeekend ||
-        DashboardCardType.records =>
-          'Özetler',
-        DashboardCardType.weekly ||
-        DashboardCardType.line ||
-        DashboardCardType.scatter =>
-          'Grafikler',
-        DashboardCardType.hours ||
-        DashboardCardType.rhythm ||
-        DashboardCardType.heatmap =>
-          'Isı haritaları',
-        DashboardCardType.leaderboard ||
-        DashboardCardType.groupGoal ||
-        DashboardCardType.groupTrend ||
-        DashboardCardType.activeMembers =>
-          'Grup',
-      };
+    DashboardCardType.timer || DashboardCardType.goal => 'Sayaç & Hedef',
+    DashboardCardType.today ||
+    DashboardCardType.monthly ||
+    DashboardCardType.weekdayWeekend ||
+    DashboardCardType.records => 'Özetler',
+    DashboardCardType.weekly ||
+    DashboardCardType.line ||
+    DashboardCardType.scatter => 'Grafikler',
+    DashboardCardType.hours ||
+    DashboardCardType.rhythm ||
+    DashboardCardType.heatmap => 'Isı haritaları',
+    DashboardCardType.leaderboard ||
+    DashboardCardType.groupGoal ||
+    DashboardCardType.groupTrend ||
+    DashboardCardType.activeMembers => 'Grup',
+  };
 
   IconData get icon => switch (this) {
-        DashboardCardType.timer => Icons.timer_outlined,
-        DashboardCardType.goal => Icons.flag_outlined,
-        DashboardCardType.today => Icons.today_outlined,
-        DashboardCardType.weekly => Icons.bar_chart,
-        DashboardCardType.line => Icons.show_chart,
-        DashboardCardType.monthly => Icons.calendar_month_outlined,
-        DashboardCardType.weekdayWeekend => Icons.weekend_outlined,
-        DashboardCardType.hours => Icons.schedule_outlined,
-        DashboardCardType.rhythm => Icons.view_week_outlined,
-        DashboardCardType.scatter => Icons.scatter_plot_outlined,
-        DashboardCardType.records => Icons.military_tech_outlined,
-        DashboardCardType.heatmap => Icons.grid_on_outlined,
-        DashboardCardType.leaderboard => Icons.leaderboard_outlined,
-        DashboardCardType.groupGoal => Icons.flag_circle_outlined,
-        DashboardCardType.groupTrend => Icons.insights_outlined,
-        DashboardCardType.activeMembers => Icons.groups_2_outlined,
-      };
+    DashboardCardType.timer => Icons.timer_outlined,
+    DashboardCardType.goal => Icons.flag_outlined,
+    DashboardCardType.today => Icons.today_outlined,
+    DashboardCardType.weekly => Icons.bar_chart,
+    DashboardCardType.line => Icons.show_chart,
+    DashboardCardType.monthly => Icons.calendar_month_outlined,
+    DashboardCardType.weekdayWeekend => Icons.weekend_outlined,
+    DashboardCardType.hours => Icons.schedule_outlined,
+    DashboardCardType.rhythm => Icons.view_week_outlined,
+    DashboardCardType.scatter => Icons.scatter_plot_outlined,
+    DashboardCardType.records => Icons.military_tech_outlined,
+    DashboardCardType.heatmap => Icons.grid_on_outlined,
+    DashboardCardType.leaderboard => Icons.leaderboard_outlined,
+    DashboardCardType.groupGoal => Icons.flag_circle_outlined,
+    DashboardCardType.groupTrend => Icons.insights_outlined,
+    DashboardCardType.activeMembers => Icons.groups_2_outlined,
+  };
 }
 
 /// Kart boyutu (§3.11). Küçük = yarım genişlik (yan yana 2'li), Orta = tam
@@ -128,135 +127,260 @@ enum DashboardCardSize { small, medium, large }
 
 extension DashboardCardSizeInfo on DashboardCardSize {
   String get label => switch (this) {
-        DashboardCardSize.small => 'Küçük',
-        DashboardCardSize.medium => 'Orta',
-        DashboardCardSize.large => 'Büyük',
-      };
+    DashboardCardSize.small => 'Küçük',
+    DashboardCardSize.medium => 'Orta',
+    DashboardCardSize.large => 'Büyük',
+  };
 
   IconData get icon => switch (this) {
-        DashboardCardSize.small => Icons.crop_square,
-        DashboardCardSize.medium => Icons.crop_7_5,
-        DashboardCardSize.large => Icons.crop_16_9,
-      };
+    DashboardCardSize.small => Icons.crop_square,
+    DashboardCardSize.medium => Icons.crop_7_5,
+    DashboardCardSize.large => Icons.crop_16_9,
+  };
 
   /// Küçük kartlar yarım genişlik (grid'de yan yana 2 tane), diğerleri tam.
   bool get isHalfWidth => this == DashboardCardSize.small;
 
   /// Sıradaki boyut (döngüsel: küçük → orta → büyük → küçük).
   DashboardCardSize get next => switch (this) {
-        DashboardCardSize.small => DashboardCardSize.medium,
-        DashboardCardSize.medium => DashboardCardSize.large,
-        DashboardCardSize.large => DashboardCardSize.small,
-      };
+    DashboardCardSize.small => DashboardCardSize.medium,
+    DashboardCardSize.medium => DashboardCardSize.large,
+    DashboardCardSize.large => DashboardCardSize.small,
+  };
 }
 
-/// Ana Sayfa serbest ızgarasının sütun sayısı (§2 FAZ 6). Kartlar bu ızgarada
-/// 1..[kGridColumns] hücre **genişliğinde** serbestçe boyutlandırılır; yükseklik
-/// içeriğe göre otomatiktir (sabit-hücreli tam 2D yerleşim, kartlar responsive
-/// olunca — FAZ 6 §2E — gelecek).
-const int kGridColumns = 12;
+/// Ana Sayfa matrisinin sütun sayısı (§2.2). Yükseklik aşağı doğru sınırsız
+/// satır olarak büyür; kartlar `x,y,w,h` hücreleriyle saklanır.
+const int kGridColumns = 6;
 
-/// Kart yüksekliğinin (piksel) serbest boyutlandırma sınırları (§2D). Yükseklik
-/// artık ızgara hücresine değil, köşeden çekerek serbestçe (px) ayarlanır;
-/// içerik responsive olduğundan (§2E) bu aralıkta bozulmaz.
-const double kMinCardHeight = 120;
-const double kMaxCardHeight = 560;
+const int kDefaultCardRows = 3;
+const int _kLegacyGridColumns = 12;
+const double _kLegacyNominalRowHeight = 80;
 
-/// Bir boyut için varsayılan kart yüksekliği (px). Kullanıcı henüz yükseklik
-/// ayarlamadıysa (eski düzenler dâhil) bu kullanılır.
+// R3, render katmanını hücre tabanlı yüksekliğe taşıyana kadar eski akış
+// ekranını derlenir tutan geçici köprüler.
+const double kMinCardHeight = _kLegacyNominalRowHeight;
+const double kMaxCardHeight = _kLegacyNominalRowHeight * 7;
+
+/// R3'e kadar eski render'a verilecek nominal yükseklik. Kalıcı veri artık
+/// piksel değil, [DashboardCardConfig.h] satırıdır.
 double defaultCardHeight(DashboardCardSize size) => switch (size) {
-      DashboardCardSize.small => 180,
-      DashboardCardSize.medium => 240,
-      DashboardCardSize.large => 320,
-    };
+  DashboardCardSize.small => _kLegacyNominalRowHeight * 2,
+  DashboardCardSize.medium => _kLegacyNominalRowHeight * 3,
+  DashboardCardSize.large => _kLegacyNominalRowHeight * 4,
+};
 
-/// Bir Ana Sayfa kartının yapılandırması: tür + ızgara genişliği (hücre, 1..12)
-/// + serbest yükseklik (px, opsiyonel). Konum = listedeki sıra (akış yerleşimi).
-/// Kalıcılık için `"tür:genişlik"` ya da yükseklik ayarlıysa
-/// `"tür:genişlik:yükseklik"` (ör. `"weekly:12:300"`) biçiminde serileştirilir;
-/// eski `"tür:boyut"`/`"tür"` biçimleri de okunur (geriye-uyum).
+class _DecodedDashboardCard {
+  const _DecodedDashboardCard(this.config, {required this.isLegacy});
+
+  final DashboardCardConfig config;
+  final bool isLegacy;
+}
+
+/// Bir Ana Sayfa kartının 6xN matris yerleşimi. Kalıcı format `"tür:x:y:w:h"`;
+/// eski `"tür:genişlik[:yükseklik]"`, `"tür:boyut"` ve sade `"tür"` formatları
+/// geriye uyumluluk için okunup yeni formata göçürülür.
 class DashboardCardConfig {
-  const DashboardCardConfig(this.type, {this.width = kGridColumns, this.height})
-      : assert(width >= 1 && width <= kGridColumns);
+  const DashboardCardConfig(
+    this.type, {
+    this.x = 0,
+    this.y = 0,
+    this.w = kGridColumns,
+    this.h = kDefaultCardRows,
+  }) : assert(x >= 0),
+       assert(y >= 0),
+       assert(w >= 1 && w <= kGridColumns),
+       assert(h >= 1),
+       assert(x + w <= kGridColumns);
 
   final DashboardCardType type;
+  final int x;
+  final int y;
+  final int w;
+  final int h;
 
-  /// Izgara hücresi cinsinden genişlik (1..[kGridColumns]).
-  final int width;
+  /// R3'e kadar eski akış ekranını derlenir tutan genişlik köprüsü.
+  int get width => w;
 
-  /// Serbestçe ayarlanmış yükseklik (px). null ise [size]'a göre varsayılan
-  /// ([defaultCardHeight]) kullanılır.
-  final double? height;
-
-  /// Kart içeriği hâlâ S/M/L'ye göre çiziliyor (16 kart). Genişlikten türetilir;
-  /// kartlar tam responsive olunca (FAZ 6 §2E) bu köprü kaldırılabilir.
-  DashboardCardSize get size => width <= 4
+  /// Kart içeriği hâlâ S/M/L'ye göre çiziliyor (16 kart). R3'te piksel yerine
+  /// hücre boyutu verildiğinde bu köprü sadeleşecek.
+  DashboardCardSize get size => w <= 2
       ? DashboardCardSize.small
-      : width >= 9
-          ? DashboardCardSize.large
-          : DashboardCardSize.medium;
+      : w >= 5
+      ? DashboardCardSize.large
+      : DashboardCardSize.medium;
 
-  /// Çizimde kullanılacak gerçek yükseklik (px): kullanıcı ayarladıysa o,
-  /// yoksa boyuta göre varsayılan.
-  double get effectiveHeight => height ?? defaultCardHeight(size);
+  /// R3'e kadar eski `SizedBox(height: ...)` kullanan render için hücre satırını
+  /// nominal piksele çevirir. Kalıcı veri yine hücre tabanlıdır.
+  double get effectiveHeight => h * _kLegacyNominalRowHeight;
 
-  DashboardCardConfig withWidth(int w) =>
-      DashboardCardConfig(type, width: w.clamp(1, kGridColumns), height: height);
+  DashboardCardConfig withBounds({int? x, int? y, int? w, int? h}) {
+    return _clamped(type, x ?? this.x, y ?? this.y, w ?? this.w, h ?? this.h);
+  }
 
-  DashboardCardConfig withHeight(double h) => DashboardCardConfig(type,
-      width: width, height: h.clamp(kMinCardHeight, kMaxCardHeight));
+  DashboardCardConfig withWidth(int width) => withBounds(w: width);
 
-  /// `"tür:genişlik"` veya (yükseklik ayarlıysa) `"tür:genişlik:yükseklik"`.
-  String encode() =>
-      height == null ? '${type.name}:$width' : '${type.name}:$width:${height!.round()}';
+  DashboardCardConfig withHeight(double heightPx) =>
+      withBounds(h: rowsForLegacyHeight(heightPx));
 
-  /// `"tür:genişlik[:yükseklik]"` (yeni), `"tür:boyut"` (eski S/M/L) veya sade
-  /// `"tür"` (en eski) çözümler; geçersizse null.
-  static DashboardCardConfig? decode(String raw) {
+  String encode() => '${type.name}:$x:$y:$w:$h';
+
+  static DashboardCardConfig? decode(String raw) => _decodeRaw(raw)?.config;
+
+  static List<DashboardCardConfig> decodeList(List<String> rawItems) {
+    final placed = <DashboardCardConfig>[];
+    for (final raw in rawItems) {
+      final decoded = _decodeRaw(raw);
+      if (decoded == null) continue;
+      final config = decoded.isLegacy
+          ? _firstAvailable(placed, decoded.config)
+          : decoded.config;
+      placed.add(config);
+    }
+    return placed;
+  }
+
+  static DashboardCardConfig firstAvailable(
+    List<DashboardCardConfig> existing,
+    DashboardCardType type, {
+    int w = kGridColumns ~/ 2,
+    int h = kDefaultCardRows,
+  }) {
+    return _firstAvailable(existing, _clamped(type, 0, 0, w, h));
+  }
+
+  static int rowsForLegacyHeight(double heightPx) {
+    final rows = (heightPx / _kLegacyNominalRowHeight).round();
+    return rows.clamp(1, 99);
+  }
+
+  static DashboardCardConfig _clamped(
+    DashboardCardType type,
+    int x,
+    int y,
+    int w,
+    int h,
+  ) {
+    final safeW = w.clamp(1, kGridColumns);
+    final safeX = x.clamp(0, kGridColumns - safeW);
+    return DashboardCardConfig(
+      type,
+      x: safeX,
+      y: y < 0 ? 0 : y,
+      w: safeW,
+      h: h < 1 ? 1 : h,
+    );
+  }
+
+  static _DecodedDashboardCard? _decodeRaw(String raw) {
     final parts = raw.split(':');
-    DashboardCardType? type;
-    for (final t in DashboardCardType.values) {
-      if (t.name == parts.first) {
-        type = t;
-        break;
-      }
-    }
+    final type = DashboardCardType.values
+        .where((t) => t.name == parts.first)
+        .firstOrNull;
     if (type == null) return null;
-    var width = kGridColumns;
-    if (parts.length > 1) {
-      final p = parts[1];
-      final n = int.tryParse(p);
-      if (n != null) {
-        width = n.clamp(1, kGridColumns);
-      } else {
-        // Eski S/M/L: küçük = yarım genişlik, orta/büyük = tam genişlik.
-        width = switch (p) {
-          'small' => kGridColumns ~/ 2,
-          _ => kGridColumns,
-        };
+
+    if (parts.length == 5) {
+      final x = int.tryParse(parts[1]);
+      final y = int.tryParse(parts[2]);
+      final w = int.tryParse(parts[3]);
+      final h = int.tryParse(parts[4]);
+      if (x != null && y != null && w != null && h != null) {
+        return _DecodedDashboardCard(
+          _clamped(type, x, y, w, h),
+          isLegacy: false,
+        );
       }
     }
-    double? height;
-    if (parts.length > 2) {
-      final h = double.tryParse(parts[2]);
-      if (h != null) height = h.clamp(kMinCardHeight, kMaxCardHeight);
+
+    return _DecodedDashboardCard(_decodeLegacy(type, parts), isLegacy: true);
+  }
+
+  static DashboardCardConfig _decodeLegacy(
+    DashboardCardType type,
+    List<String> parts,
+  ) {
+    var legacyWidth = _kLegacyGridColumns;
+    var legacyHeight = defaultCardHeight(DashboardCardSize.large);
+
+    if (parts.length > 1) {
+      final numericWidth = int.tryParse(parts[1]);
+      if (numericWidth != null) {
+        legacyWidth = numericWidth.clamp(1, _kLegacyGridColumns);
+        legacyHeight = defaultCardHeight(_legacySizeForWidth(legacyWidth));
+      } else {
+        final size = switch (parts[1]) {
+          'small' => DashboardCardSize.small,
+          'medium' => DashboardCardSize.medium,
+          'large' => DashboardCardSize.large,
+          _ => DashboardCardSize.large,
+        };
+        legacyWidth = size == DashboardCardSize.small
+            ? _kLegacyGridColumns ~/ 2
+            : _kLegacyGridColumns;
+        legacyHeight = defaultCardHeight(size);
+      }
     }
-    return DashboardCardConfig(type, width: width, height: height);
+
+    if (parts.length > 2) {
+      final parsedHeight = double.tryParse(parts[2]);
+      if (parsedHeight != null) legacyHeight = parsedHeight;
+    }
+
+    final w = (legacyWidth / 2).round().clamp(1, kGridColumns);
+    final h = rowsForLegacyHeight(legacyHeight);
+    return _clamped(type, 0, 0, w, h);
+  }
+
+  static DashboardCardSize _legacySizeForWidth(int legacyWidth) {
+    if (legacyWidth <= 4) return DashboardCardSize.small;
+    if (legacyWidth >= 9) return DashboardCardSize.large;
+    return DashboardCardSize.medium;
+  }
+
+  static DashboardCardConfig _firstAvailable(
+    List<DashboardCardConfig> existing,
+    DashboardCardConfig target,
+  ) {
+    for (var y = 0; y < 10000; y++) {
+      for (var x = 0; x <= kGridColumns - target.w; x++) {
+        final candidate = target.withBounds(x: x, y: y);
+        if (existing.every((c) => !candidate.overlaps(c))) {
+          return candidate;
+        }
+      }
+    }
+    final bottom = existing.fold(
+      0,
+      (max, c) => max > c.y + c.h ? max : c.y + c.h,
+    );
+    return target.withBounds(x: 0, y: bottom);
+  }
+
+  bool overlaps(DashboardCardConfig other) {
+    return x < other.x + other.w &&
+        x + w > other.x &&
+        y < other.y + other.h &&
+        y + h > other.y;
   }
 
   @override
   bool operator ==(Object other) =>
       other is DashboardCardConfig &&
       other.type == type &&
-      other.width == width &&
-      other.height == height;
+      other.x == x &&
+      other.y == y &&
+      other.w == w &&
+      other.h == h;
 
   @override
-  int get hashCode => Object.hash(type, width, height);
+  int get hashCode => Object.hash(type, x, y, w, h);
 }
 
-Widget dashboardCardFor(DashboardCardType type, DashboardCardSize size,
-    {double? height}) {
+Widget dashboardCardFor(
+  DashboardCardType type,
+  DashboardCardSize size, {
+  double? height,
+}) {
   final Widget card = switch (type) {
     DashboardCardType.timer => StudyTimerCard(size: size),
     DashboardCardType.goal => GoalCard(size: size),
@@ -278,8 +402,5 @@ Widget dashboardCardFor(DashboardCardType type, DashboardCardSize size,
 
   // Sınırlı yükseklik ver (Row'da sınırsız kısıtı engeller). Kullanıcı serbest
   // boyut ayarladıysa onu, yoksa boyuta göre varsayılanı kullan (§2D).
-  return SizedBox(
-    height: height ?? defaultCardHeight(size),
-    child: card,
-  );
+  return SizedBox(height: height ?? defaultCardHeight(size), child: card);
 }

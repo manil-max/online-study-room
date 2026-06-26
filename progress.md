@@ -463,8 +463,8 @@ Supabase'e gerek yok. (Önceki Supabase tablolu plan iptal edildi — `0007` sil
 - `[ ]` 2I · Ayarlar ve Grup Yönetimi overhaul 🔵+🟢 (Grup ayarlarının derli toplu hale gelmesi)
 
 #### §2.2 — Gerçek 6×N 2D Matris Izgara REFACTOR (2026-06-26 geri bildirim)
-- `[ ]` R1 · 2D matris TASARIM (koordinat/hücre/reflow/migration) 🔴 Opus 4.8
-- `[ ]` R2 · Veri modeli x,y,w,h + persistence + eski format göçü 🟣 Gemini 3.1 Pro
+- `[X]` R1 · 2D matris TASARIM (koordinat/hücre/reflow/migration) 🔴 Opus 4.8
+- `[X]` R2 · Veri modeli x,y,w,h + persistence + eski format göçü 🟣 Gemini 3.1 Pro
 - `[ ]` R3 · Stack + AnimatedPositioned statik render (akış kaldırılır) 🔵 Sonnet 4.6
 - `[ ]` R4 · Occupancy matrisi + çarpışma & akıcı reflow fiziği 🔴 Opus 4.8
 - `[ ]` R5 · Sürükle: tam-boy yarı saydam feedback + hücre hedefleme 🟠 Opus 4.6
@@ -759,7 +759,7 @@ Supabase'e gerek yok. (Önceki Supabase tablolu plan iptal edildi — `0007` sil
 ### Durum özeti (R1–R8)
 `[ ]` bekliyor · `[~]` kısmen · `[X]` bitti — (yukarıdaki hızlı-bakış listesiyle eş)
 
-- [ ] **R1 · 2D matris mimari TASARIM 🔴 Opus 4.8**
+- [x] **R1 · 2D matris mimari TASARIM 🔴 Opus 4.8 — ✅ TASARIM TAMAM**
   - **Amaç:** Kod yazmaz; R2–R8'in birebir uygulayacağı kilitli tasarımı üretir (yukarıdaki
     kilitli kararları somutlaştırır, açık soruları kapatır). Çıktı bu bölüme yazılır.
   - **Üretilecek kararlar:**
@@ -787,7 +787,7 @@ Supabase'e gerek yok. (Önceki Supabase tablolu plan iptal edildi — `0007` sil
   - **Kabul:** R2–R8 için net veri modeli, reflow sözde-kodu, geometri formülleri, migration
     kuralı, widget ağacı kararı bu bölüme yazılı; açık soru kalmadı.
 
-- [ ] **R2 · Veri modeli (x,y,w,h) + persistence + eski format göçü 🟣 Gemini 3.1 Pro**
+- [x] **R2 · Veri modeli (x,y,w,h) + persistence + eski format göçü 🟣 Gemini 3.1 Pro — ✅ YAPILDI**
   - **Dosyalar:** `app/lib/features/home/dashboard_card.dart`,
     `app/lib/features/home/dashboard_providers.dart`,
     `app/test/features/dashboard_card_test.dart` (genişlet).
@@ -805,6 +805,11 @@ Supabase'e gerek yok. (Önceki Supabase tablolu plan iptal edildi — `0007` sil
     koordineli. `defaultCardHeight`/`kMin/MaxCardHeight` px sabitleri kalkar (hücre bazlı).
   - **Kabul:** Eski kayıtlı düzenler çökmeden yeni 6×N formatına göçer; serileştirme testleri
     (yeni + tüm eski formatlar) geçer; `flutter analyze` temiz.
+  - **Uygulandı (2026-06-26):** `DashboardCardConfig` artık kalıcı olarak `x,y,w,h` (int hücre)
+    saklıyor; format `"tür:x:y:w:h"`. Eski `"tür:genişlik[:yükseklik]"`, `"tür:boyut"` ve
+    sade `"tür"` kayıtları R1 kuralıyla 6 sütuna göçüyor ve provider yüklemede prefs'i yeni formata
+    bir kez yeniden kaydediyor. R3'e kadar mevcut akış ekranının derlenmesi için `width`,
+    `effectiveHeight`, `setWidth`, `setHeight`, `reorderItem` köprüleri geçici bırakıldı.
 
 - [ ] **R3 · Stack + AnimatedPositioned statik render 🔵 Sonnet 4.6**
   - **Dosya:** `app/lib/features/home/home_screen.dart` (akış widget'ları kaldırılır).
