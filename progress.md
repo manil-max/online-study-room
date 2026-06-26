@@ -531,17 +531,37 @@ Supabase'e gerek yok. (Önceki Supabase tablolu plan iptal edildi — `0007` sil
 
 ---
 
+### Durum özeti (hızlı bakış)
+`[X]` bitti · `[~]` kısmen · `[ ]` bekliyor
+
+- `[ ]` 1A · Grup hedefi migration apply 🟢
+- `[X]` 1B · Çoklu grup mimarisi TASARIM 🔴
+- `[ ]` 1C · DB migration'ları (0008–0011) 🟣
+- `[ ]` 1D · Dart veri katmanı refactor 🟣
+- `[ ]` 1E · "Eski Grup Üyesi" etiketi 🟢
+- `[X]` 2A · Serbest ızgara TASARIM 🔴
+- `[X]` 2B · Grid veri modeli + persistence 🔵
+- `[X]` 2C · Doğrudan sürükle + reflow 🔴
+- `[~]` 2D · Boyutlandırma 🔴 (genişlik ✅, yükseklik §2E sonrası)
+- `[ ]` 2E · İçerik responsive (16 kart) 🟣
+- `[X]` 2F · Düzenleme odak koruma 🔵
+- `[ ]` 2G · Kamp ateşi canlı ekran 🔴+🔵
+- `[ ]` 2H · Eksiksiz saat/zamanlayıcı 🔵+🟣
+- `[ ]` 2I · Ayarlar overhaul 🔵+🟢
+
+---
+
 ## §1 — Kritik Düzeltmeler & Mimari
 
 > **Kilitli mimari karar:** `study_sessions.group_id` KALDIRILIR. Oturum yalnızca kullanıcıya aittir. Grup istatistiği `study_sessions ⨝ group_members` join'iyle, **üyelik penceresine** (`joined_at .. coalesce(left_at, now())`) göre hesaplanır. `group_members.left_at timestamptz null` ile yumuşak silme: üye çıkınca satır SİLİNMEZ, `left_at=now()` yazılır → geçmiş veri ve isim korunur, ad "Eski Grup Üyesi" gösterilir.
 
-### 1A · Grup hedefi migration'ı 🟢 Flash
+### [ ] 1A · Grup hedefi migration'ı 🟢 Flash
 - [x] **Amaç:** Madde 1 — grup hedefi kaydedilemiyor; migration zaten yazılı ama uygulanmamış.
 - [x] **Adım:** Supabase paneli → SQL Editor → `supabase/migrations/0006_group_goal.sql` içeriğini yapıştır → Run. (Sadece `groups.daily_goal_minutes int not null default 360` ekler.)
 - [x] **Kabul:** Admin grup hedefini değiştirip uygulamayı kapatıp açınca değer kalıcı.
 - [x] **Tuzak:** Kod tarafı (`updateGroupGoal`) zaten var; bu faz **sadece DB apply**.
 
-### 1B · Çoklu grup mimarisi — TASARIM 🔴 Opus — ✅ TASARIM TAMAM
+### [X] 1B · Çoklu grup mimarisi — TASARIM 🔴 Opus — ✅ TASARIM TAMAM
 - **Amaç:** 1C–1E'nin uygulanabilmesi için kesin teknik tasarım üretmek. Kod yazmaz; karar + sözde-kod üretir, aşağıdaki kararları doğrular/keskinleştirir.
 - **Üretilecek kararlar:**
   1. **RLS yeniden yazımı (kritik):** group_id gidince `sessions_select` politikası `is_group_member(group_id)` kullanamaz. Yeni görünürlük: "bir kullanıcının oturumunu görebilirim ⇔ kendisiyle ortak bir grubun **aktif** üyesiyim (o kişi o grubu terk etmiş olsa bile)". Bunun için yeni SECURITY DEFINER helper `can_see_user_sessions(target uuid)` tasarla (recursion'ı önlemek için DEFINER). Sözde-SQL:
@@ -595,7 +615,7 @@ create policy members_update_self on public.group_members
 
 **K10 — Tarihsel kayıp (kabul edilen):** 0010 kolonu DROP edince eski satırların orijinal group_id'si kaybolur; grup ataması üyelik penceresinden (joined_at..left_at) yeniden kurulur. Üye katılmadan önceki oturumlar artık o gruba sayılmaz (K7 join koşulu) — kilitli kararla tutarlı.
 
-### 1C · DB migration'ları 🟣 Gemini 3.1 Pro
+### [ ] 1C · DB migration'ları 🟣 Gemini 3.1 Pro
 - **Amaç:** 1B tasarımını migration dosyalarına dök. Önce yerel/staging Supabase'de dene, sonra prod.
 - **Dosyalar (yeni):**
   - `supabase/migrations/0008_membership_lifecycle.sql`
@@ -670,7 +690,7 @@ create policy members_update_self on public.group_members
 - **Kabul:** 4 migration staging'de hatasız çalışır; iki gruplu test kullanıcısının tek oturumu her iki grubun `group_daily_totals` sonucunda görünür; üye `left_at` set edilince geçmiş satırları RPC'de KALIR ama yeni oturumları sayılmaz.
 - **Tuzak:** `presence` tablosu group_id'yi KORUR — ona dokunma. `idx_sessions_user` kalır.
 
-### 1D · Dart veri katmanı refactor 🟣 Gemini 3.1 Pro
+### [ ] 1D · Dart veri katmanı refactor 🟣 Gemini 3.1 Pro
 - **Amaç:** 0010 sonrası `study_sessions` satırlarında `group_id` yok; Dart bunu yansıtmalı. group_id'siz dünyada oturum kaydı + grup okuması.
 - **Dosyalar:**
   - `app/lib/data/models/study_session.dart` — `groupId` alanını TAMAMEN kaldır: constructor `required this.groupId` (sat.13), field (sat.23), `fromMap` `groupId: map['group_id']` (sat.37), `toMap` `'group_id': groupId` (sat.50), `==` (sat.64), `hashCode` (sat.75). **Tuzak:** `fromMap`'te `map['group_id'] as String` kalırsa kolon gittiği için runtime'da patlar.
@@ -684,7 +704,7 @@ create policy members_update_self on public.group_members
 - **Kabul:** `flutter analyze` temiz; iki gruplu kullanıcı tek "Çalış" → her iki grup leaderboard'ında görünür; kişisel toplam (profil) ÇİFT saymaz; 47 test geçer (test fixture'larında group_id varsa onları da temizle).
 - **Tuzak:** `grep -rn "groupId\|group_id" app/lib` ile tüm kalıntıları bul; test dosyaları dahil.
 
-### 1E · "Eski Grup Üyesi" etiketi 🟢 Flash
+### [ ] 1E · "Eski Grup Üyesi" etiketi 🟢 Flash
 - **Amaç:** Madde 5 — ayrılan üyenin adı listede korunsun.
 - **Önkoşul:** 1D'de `watchMembers` artık `left_at` taşıyan üyeleri de döndürmeli (aktif + ayrılmış). Bu, member modeline `leftAt`/`isActive` bilgisi taşımayı gerektirir; 1D çıktısındaki member akışına dayan.
 - **Dosyalar/satırlar:** "İsimsiz" fallback'i, üyelik ayrılmışsa "Eski Grup Üyesi" olacak:
@@ -702,7 +722,7 @@ create policy members_update_self on public.group_members
 
 > Mevcut Ana Sayfa `home_screen.dart`'ta **masonry** düzen (`_MasonryDashboard`) + düzenleme modu (`_EditableDashboard`, tutamaçtan DragTarget reorder). Kart tipleri+boyut `dashboard_card.dart` (16 tip, S/M/L). Layout state `dashboard_providers.dart` (`DashboardLayoutNotifier`, SharedPreferences `"tür:boyut"`). Hedef: bunları gerçek serbest ızgaraya çevirmek.
 
-### 2A · Serbest ızgara mimari TASARIM 🔴 Opus — ✅ YAPILDI (commit 843ad8e)
+### [X] 2A · Serbest ızgara mimari TASARIM 🔴 Opus — ✅ YAPILDI (commit 843ad8e)
 > **Uygulanan karar (tasarımdan sapma, gerekçeli):** Sabit-hücreli tam 2D (x,y,w,h + Stack/AnimatedPositioned) yerine **12 sütunlu width-cell akış ızgarası** uygulandı. Sebep: 16 kart henüz responsive değil (§2E yapılmadı); sabit hücre yüksekliği içeriği kırardı. Şipariş edilen: kart başına serbest **genişlik** (1..12 hücre), otomatik yükseklik, gövdeden sürükle + animasyonlu gap, köşeden genişlik resize. Konum = liste sırası. Tam 2D yerleşim + yükseklik resize **§2E sonrasına ertelendi**.
 - **Amaç:** masonry → hücre-tabanlı serbest grid geçiş tasarımı (kod yazmaz; karar + sözde-kod).
 - **Üretilecek kararlar:**
@@ -713,7 +733,7 @@ create policy members_update_self on public.group_members
   5. **Performans:** sürükleme/resize sırasında setState yerine sadece sürüklenen kartın konumu + komşu animasyonları; 60fps hedef; `RepaintBoundary` her kartta.
 - **Kabul:** 2B–2F için net veri modeli, reflow algoritması sözde-kodu, widget ağacı kararı.
 
-### 2B · Grid veri modeli + persistence 🔵 Sonnet — ✅ YAPILDI (commit 843ad8e; Opus yaptı)
+### [X] 2B · Grid veri modeli + persistence 🔵 Sonnet — ✅ YAPILDI (commit 843ad8e; Opus yaptı)
 > Uygulanan: `DashboardCardConfig`'e `int width` (1..12 hücre) eklendi (x/y/w/h yerine width — 2A sapması). `encode()` = `"tür:genişlik"`; `decode()` yeni + eski `"tür:boyut"` + sade `"tür"` çözer. `setWidth` eklendi; `setSize/cycleSize` kaldırıldı. `DashboardCardSize` + `dashboardCardFor(type,size)` KORUNDU (size, width'ten türetilir — şim) → 16 kart bozulmadı, §2E bağımsız.
 - **Dosyalar:** `app/lib/features/home/dashboard_card.dart`, `dashboard_providers.dart`.
 - **Adımlar:**
@@ -723,7 +743,7 @@ create policy members_update_self on public.group_members
 - **Tuzak:** `dashboardCardFor(type, size)` çağrısı 16 kart widget'ına `size` geçiyor; imza değişirse 16 widget + `home_screen.dart` derlemesi kırılır — 2E ile birlikte planla veya geçici `size` shim bırak.
 - **Kabul:** Eski kayıtlı düzenler çökme olmadan yeni formata göç eder; `flutter analyze` temiz.
 
-### 2C · Doğal sürükle-bırak + akışkan reflow 🔴 Opus — ✅ YAPILDI (commit 843ad8e)
+### [X] 2C · Doğal sürükle-bırak + akışkan reflow 🔴 Opus — ✅ YAPILDI (commit 843ad8e)
 > Uygulanan: `LongPressDraggable` kart **gövdesinden** (tutamaç zorunluluğu kalktı). Sürüklerken `_to` konumunda kesik-çizgili gap belirir, komşular yer açar. `_packRows` width-toplamı ≤12 ile satırlara böler; bırakınca `reorderItem`. (Akış reorder; mutlak x/y Stack §2E sonrası.)
 - **Dosya:** `app/lib/features/home/home_screen.dart` (yeni grid widget'ı; `_MasonryDashboard`/`_EditableDashboard` yerini alır).
 - **Adımlar:**
@@ -732,31 +752,31 @@ create policy members_update_self on public.group_members
   - Bırakınca `setBounds` ile kalıcılaştır.
 - **Kabul:** Kart sürüklenince komşular tatlı animasyonla yer açar; bırakınca düzen kaydolur; FPS düşmez.
 
-### 2D · Serbest/akıcı boyutlandırma 🔴 Opus — 🔶 KISMEN (commit 843ad8e): genişlik resize ✅, yükseklik resize §2E sonrası
+### [~] 2D · Serbest/akıcı boyutlandırma 🔴 Opus — 🔶 KISMEN (commit 843ad8e): genişlik resize ✅, yükseklik resize §2E sonrası
 > Uygulanan: sağ alt köşede tutamaç; `onPanUpdate` ile `width` canlı değişir (hücreye snap, 1..12). Sabit S/M/L UI'ı kalktı. **Yükseklik resize yok** (otomatik yükseklik; sabit-hücreli yükseklik §2E'ye bağlı).
 - **Dosya:** `home_screen.dart` (grid kart sarmalayıcısı).
 - **Adımlar:** Düzenleme modunda kart köşe/kenarında resize handle; sürükleyince `gridW/gridH` canlı değişir (hücreye snap ama hareket akıcı), çakışırsa komşular reflow. min 1×1, max sütun genişliği. Sabit S/M/L UI'ı kalkar.
 - **Kabul:** Kullanıcı kartı serbestçe büyütüp küçültür; içerik 2E sayesinde bozulmaz; 60fps.
 
-### 2E · İçerik responsive adaptasyonu 🟣 Gemini 3.1 Pro
+### [ ] 2E · İçerik responsive adaptasyonu 🟣 Gemini 3.1 Pro
 - **Dosyalar:** `app/lib/features/home/widgets/` altındaki 16 kart (+ `study_timer_card.dart`).
 - **Adımlar:** Her kart `LayoutBuilder` ile gelen genişlik/yükseklik/orana göre içeriği yeniden düzenlesin: küçükken özet/ikon, büyükken grafik+detay. Yazı/saat/grafik **taşmasın, üst üste binmesin** (`FittedBox`, esnek font, eşik-tabanlı görünüm). Sabit boyut varsayımlarını kaldır.
 - **Bölme:** Karmaşık kartlar (line/heatmap/leaderboard/scatter/rhythm) 🟣 Pro; basit özet kartları (today/goal/records) 🔵 Sonnet'e devredilebilir.
 - **Kabul:** Her kart 1×1'den tam-genişlik×büyük'e kadar tüm oranlarda düzgün; overflow/clipping yok.
 
-### 2F · Düzenleme modu odak koruma 🔵 Sonnet — ✅ YAPILDI (commit 843ad8e; Opus yaptı)
+### [X] 2F · Düzenleme modu odak koruma 🔵 Sonnet — ✅ YAPILDI (commit 843ad8e; Opus yaptı)
 > Uygulanan: tek `ScrollController` `_HomeScreenState`'te tutulup view+edit'e paylaştırıldı → mod geçişinde offset korunur, ekran başa zıplamaz.
 - **Dosya:** `home_screen.dart`.
 - **Sorun:** Bir karta basılı tutup düzenlemeye geçince ekran başa/ilk karta zıplıyor (Madde, "Kritik").
 - **Adım:** Düzenleme moduna geçişte mevcut `ScrollController.offset`'i koru; aynı scroll pozisyonunda kal. Gerekirse basılan kartın konumunu görünür tut (`Scrollable.ensureVisible` yerine offset sabitleme).
 - **Kabul:** Hangi karta basılırsa o konumda düzenleme açılır; ekran zıplamaz.
 
-### 2G · Kamp ateşi canlı çalışma ekranı 🔴 Opus (animasyon) + 🔵 Sonnet (layout/veri)
+### [ ] 2G · Kamp ateşi canlı çalışma ekranı 🔴 Opus (animasyon) + 🔵 Sonnet (layout/veri)
 - **Dosyalar:** `app/lib/features/classroom/classroom_screen.dart`, presence provider'ları (`presenceRepositoryProvider`, `groupMembersProvider`).
 - **Adımlar:** Canlı çalışanlar düz liste yerine dinamik sahne (Madde 6): ortada yanan ateş animasyonu; `status=studying` avatarları ateş etrafında, `onBreak`/`offline` karanlığa çekilir. 🔵: presence verisini avatar konumlarına bağla, layout iskeleti. 🔴: ateş/parçacık animasyonu, geçiş efektleri (AI hava durumu/etkileşim ekleyebilir — serbest).
 - **Kabul:** Çalışan üyeler ateş etrafında canlı görünür; durum değişince avatar yumuşak geçişle yer değiştirir.
 
-### 2H · Eksiksiz saat/zamanlayıcı 🔵 Sonnet (UI) + 🟣 Gemini 3.1 Pro (state machine)
+### [ ] 2H · Eksiksiz saat/zamanlayıcı 🔵 Sonnet (UI) + 🟣 Gemini 3.1 Pro (state machine)
 - **Dosyalar:** `app/lib/features/classroom/widgets/study_timer_card.dart`, `focus_timer_screen.dart`, `app/lib/data/providers/study_providers.dart` (`StudyTimerNotifier`).
 - **Adımlar:**
   - 🟣 State machine: mevcut kronometreye ek **Geri Sayım**, **Pomodoro (25/5, döngü sayısı)**, ayarlanabilir hazır planlar. Mod geçişleri, döngü sayacı, otomatik mola, bildirim/ses tetik noktaları. Her mod bittiğinde mevcut `_recordSession` akışıyla oturum kaydı tutarlı kalsın (1D sonrası group_id'siz).
@@ -764,7 +784,7 @@ create policy members_update_self on public.group_members
 - **Tuzak:** Sayaç bildirimi (persistent notification, §5 Madde 10) bu fazda DEĞİL; sadece in-app timer. State machine'i bildirim tetik noktalarını dışarı verecek şekilde tasarla (§5'e hazır).
 - **Kabul:** Kronometre + geri sayım + pomodoro çalışır; pomodoro döngüsü mola/çalışma geçişlerini doğru yapar; her tamamlanan çalışma süresi istatistiğe yazılır.
 
-### 2I · Ayarlar overhaul 🔵 Sonnet + 🟢 Flash
+### [ ] 2I · Ayarlar overhaul 🔵 Sonnet + 🟢 Flash
 - **Dosyalar:** `app/lib/features/profile/` (ayarlar ekranı), `home_screen.dart` (ana ekran sıfırlama butonu konumu), `core/prefs/`.
 - **Adımlar:**
   - 🔵 Ayarlar menüsünü gruplu, genişletilebilir bir yapıya çevir ("her şey özelleştirilebilir" iskeleti; tema, sayaç, görünürlük, bildirim grupları placeholder).
