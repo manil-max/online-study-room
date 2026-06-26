@@ -18,13 +18,65 @@ class SupabaseAuthRepository implements AuthRepository {
   @override
   Stream<Profile?> authStateChanges() async* {
     // Açılışta mevcut oturum (varsa) yayınlanır.
-    _current = await _profileFor(_client.auth.currentSession);
-    yield _current;
-
-    await for (final state in _client.auth.onAuthStateChange) {
-      _current = await _profileFor(state.session);
+    try {
+      _current = await _profileFor(_client.auth.currentSession);
       yield _current;
+    } catch (error) {
+      if (await _recoverFromStaleRefreshToken(error)) {
+        yield null;
+      } else {
+        rethrow;
+      }
     }
+
+    try {
+      await for (final state in _client.auth.onAuthStateChange) {
+        try {
+          _current = await _profileFor(state.session);
+          yield _current;
+        } catch (error) {
+          if (await _recoverFromStaleRefreshToken(error)) {
+            yield null;
+          } else {
+            rethrow;
+          }
+        }
+      }
+    } catch (error) {
+      if (await _recoverFromStaleRefreshToken(error)) {
+        yield null;
+      } else {
+        rethrow;
+      }
+    }
+  }
+
+  Future<bool> _recoverFromStaleRefreshToken(Object error) async {
+    if (!_isStaleRefreshToken(error)) return false;
+    await _clearLocalSession();
+    return true;
+  }
+
+  bool _isStaleRefreshToken(Object error) {
+    if (error is supa.AuthApiException) {
+      final code = error.code?.toLowerCase();
+      final message = error.message.toLowerCase();
+      return code == 'refresh_token_already_used' ||
+          message.contains('invalid refresh token');
+    }
+    if (error is supa.AuthException) {
+      return error.message.toLowerCase().contains('invalid refresh token');
+    }
+    return false;
+  }
+
+  Future<void> _clearLocalSession() async {
+    try {
+      await _client.auth.signOut(scope: supa.SignOutScope.local);
+    } catch (_) {
+      // Oturum zaten bozuksa sign-out da hata verebilir; UI login'e dönmeli.
+    }
+    _current = null;
   }
 
   /// Oturumdaki kullanıcı için profil satırını getirir (yoksa metadata'dan kurar).
@@ -115,7 +167,8 @@ class SupabaseAuthRepository implements AuthRepository {
     }
     await _client
         .from('profiles')
-        .update({'display_name': name}).eq('id', cur.id);
+        .update({'display_name': name})
+        .eq('id', cur.id);
     _current = cur.copyWith(displayName: name);
   }
 
@@ -126,7 +179,8 @@ class SupabaseAuthRepository implements AuthRepository {
     final safe = minutes.clamp(1, 24 * 60);
     await _client
         .from('profiles')
-        .update({'daily_goal_minutes': safe}).eq('id', cur.id);
+        .update({'daily_goal_minutes': safe})
+        .eq('id', cur.id);
     _current = cur.copyWith(dailyGoalMinutes: safe);
   }
 
@@ -140,7 +194,9 @@ class SupabaseAuthRepository implements AuthRepository {
     // Dosya yolu: <uid>/avatar — RLS politikası ilk klasörün uid olmasını şart koşar.
     final path = '${cur.id}/avatar';
     try {
-      await _client.storage.from('avatars').uploadBinary(
+      await _client.storage
+          .from('avatars')
+          .uploadBinary(
             path,
             bytes,
             fileOptions: supa.FileOptions(
@@ -151,7 +207,10 @@ class SupabaseAuthRepository implements AuthRepository {
       final base = _client.storage.from('avatars').getPublicUrl(path);
       // Önbellek kırıcı: ayni yola yüklenince CDN eskisini göstermesin.
       final url = '$base?v=${DateTime.now().millisecondsSinceEpoch}';
-      await _client.from('profiles').update({'avatar_url': url}).eq('id', cur.id);
+      await _client
+          .from('profiles')
+          .update({'avatar_url': url})
+          .eq('id', cur.id);
       _current = cur.copyWith(avatarUrl: url);
     } on supa.StorageException catch (e) {
       throw AuthException('Fotoğraf yüklenemedi: ${e.message}');
