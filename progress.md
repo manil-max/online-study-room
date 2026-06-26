@@ -541,7 +541,7 @@ Supabase'e gerek yok. (Önceki Supabase tablolu plan iptal edildi — `0007` sil
 - [x] **Kabul:** Admin grup hedefini değiştirip uygulamayı kapatıp açınca değer kalıcı.
 - [x] **Tuzak:** Kod tarafı (`updateGroupGoal`) zaten var; bu faz **sadece DB apply**.
 
-### 1B · Çoklu grup mimarisi — TASARIM 🔴 Opus
+### 1B · Çoklu grup mimarisi — TASARIM 🔴 Opus — ✅ TASARIM TAMAM
 - **Amaç:** 1C–1E'nin uygulanabilmesi için kesin teknik tasarım üretmek. Kod yazmaz; karar + sözde-kod üretir, aşağıdaki kararları doğrular/keskinleştirir.
 - **Üretilecek kararlar:**
   1. **RLS yeniden yazımı (kritik):** group_id gidince `sessions_select` politikası `is_group_member(group_id)` kullanamaz. Yeni görünürlük: "bir kullanıcının oturumunu görebilirim ⇔ kendisiyle ortak bir grubun **aktif** üyesiyim (o kişi o grubu terk etmiş olsa bile)". Bunun için yeni SECURITY DEFINER helper `can_see_user_sessions(target uuid)` tasarla (recursion'ı önlemek için DEFINER). Sözde-SQL:
@@ -560,6 +560,40 @@ Supabase'e gerek yok. (Önceki Supabase tablolu plan iptal edildi — `0007` sil
   6. **Tarihsel doğruluk:** RPC join'i `s.start_time >= gm.joined_at and (gm.left_at is null or s.start_time < gm.left_at)` ile sınırlanır → üye katılmadan önceki/ayrıldıktan sonraki oturumlar gruba sayılmaz.
   7. **`watchGroupSessions(groupId)` ham oturum akışı:** çağıranları tespit et (`grep watchGroupSessions`). Grup geneli istatistik zaten RPC'den (`watchGroupDailyStats`) geliyorsa, ham akış için ya members listesi üzerinden `user_id in (...)` sorgusu kur ya da kullanımı kaldır. Karar bu fazda netleşir.
 - **Kabul:** 1C–1E için net SQL/Dart sözde-kodu + RLS politika metinleri hazır.
+
+#### 1B çıktısı — KESİNLEŞEN TASARIM (kaynak okuması ile doğrulandı)
+
+> Aşağısı 1C–1E'nin **birebir uygulayacağı** kilitli karardır. Mevcut kaynak kodu okunarak (0001/0004 RLS, repo'lar, çağıranlar) netleştirildi. Açık soru kalmadı.
+
+**K1 — Admin koşulu somut.** 0004'te `is_group_admin(gid uuid)` helper'ı var (`groups.created_by = auth.uid()`). Mevcut `members_delete` (0004) = `using (user_id = auth.uid() or public.is_group_admin(group_id))`. Soft-delete'e geçişte aynı koşul **UPDATE** politikasına taşınır:
+```sql
+drop policy if exists members_update_self on public.group_members;
+create policy members_update_self on public.group_members
+  for update to authenticated
+  using (user_id = auth.uid() or public.is_group_admin(group_id))
+  with check (user_id = auth.uid() or public.is_group_admin(group_id));
+```
+> `members_delete` SİLİNMEZ (grup silme cascade + temizlik için kalır). Ayrı `members_update_admin` politikasına gerek yok — tek `members_update_self` koşulu hem self hem admin'i kapsıyor.
+
+**K2 — Görünürlük helper'ı (1C/0009'da yazılacak):** `can_see_user_sessions(target uuid)`, SECURITY DEFINER (recursion engeli). Kendi oturumların + seninle ortak grupta (sen aktif üye, hedef aktif/ayrılmış) olanların oturumları görünür. (SQL 1C §0009'da.)
+
+**K3 — `is_group_member` güncellemesi (0008):** gövdeye `and left_at is null` eklenir. Etki: ayrılan kişi gruba erişimi yitirir; **kalan üyeler** onun group_members satırını + geçmiş oturumlarını görmeye devam eder (kontrol VİEWER'ın aktif üyeliğine bakar). `presence_select`/`members_select`/`groups`/`sessions_select` bu helper'ı kullandığı için ek değişiklik gerekmez (sessions_select 0010'da can_see_user_sessions'a geçer).
+
+**K4 — `watchGroupSessions(groupId)` kararı NET:** UI/provider'da **çağıran YOK** (grep: yalnız arayüz + 2 impl + 1 test `study_repository_test.dart`). Karar: metot KORUNUR ama 1D'de **üyelik tabanlı** yeniden yazılır — grubun aktif+ayrılmış üyelerinin `user_id` listesiyle `study_sessions`'ı süz (`.inFilter('user_id', ids)`); in-memory eşdeğeri üyelik state'inden. İlgili test de group_id'siz senaryoya güncellenir.
+
+**K5 — Re-join (1E/repo):** PK `(group_id,user_id)` → ayrılıp dönende INSERT çakışır. `joinGroup` **upsert** olur: `onConflict: 'group_id,user_id'`, `left_at=null, joined_at=now()`. `createGroup`/`joinGroup` mevcut INSERT'leri (sat. ~44, ~75) buna göre.
+
+**K6 — Realtime:** `supabase_study_repository`:
+- `watchGroupSessions`: `.eq('group_id',…)` → K4 üye-listesi sorgusu.
+- `watchGroupDailyStats`: postgres-changes `filter: PostgresChangeFilter(column:'group_id'…)` bloğu KALDIRILIR; tüm `study_sessions` değişikliğinde `refresh()` (RPC zaten grupça süzer). Publication zaten tabloyu içeriyor.
+
+**K7 — RPC v2 imza-uyumlu (0011):** `group_daily_totals(p_group_id uuid) → (user_id,day,seconds)` aynı kalır → Dart `_fetchDailyStats` + `DailyStat.fromMap` **değişmez**. İçi `study_sessions ⨝ group_members` (üyelik penceresi). SECURITY INVOKER kalır (çağıranın RLS'i geçerli; K2 sonrası görünürlük doğru).
+
+**K8 — Migration deploy sırası (zorunlu):** `0008` (left_at + is_group_member + members_update) → `0009` (can_see_user_sessions) → `0010` (sessions_select rewrite → idx drop → column drop) → `0011` (RPC v2). **0010 içinde sıra:** politika → index → kolon. Dart (1D) bu migration'larla **aynı sürümde** çıkmalı; biri olmadan diğeri prod'u kırar (`fromMap` group_id arar / RLS kolon arar).
+
+**K9 — Dokunulmayacak:** `presence` tablosu `group_id`'yi KORUR (0001) → ona dokunma. `idx_sessions_user` kalır. `subjects`, `profiles` etkilenmez.
+
+**K10 — Tarihsel kayıp (kabul edilen):** 0010 kolonu DROP edince eski satırların orijinal group_id'si kaybolur; grup ataması üyelik penceresinden (joined_at..left_at) yeniden kurulur. Üye katılmadan önceki oturumlar artık o gruba sayılmaz (K7 join koşulu) — kilitli kararla tutarlı.
 
 ### 1C · DB migration'ları 🟣 Gemini 3.1 Pro
 - **Amaç:** 1B tasarımını migration dosyalarına dök. Önce yerel/staging Supabase'de dene, sonra prod.
@@ -668,7 +702,8 @@ Supabase'e gerek yok. (Önceki Supabase tablolu plan iptal edildi — `0007` sil
 
 > Mevcut Ana Sayfa `home_screen.dart`'ta **masonry** düzen (`_MasonryDashboard`) + düzenleme modu (`_EditableDashboard`, tutamaçtan DragTarget reorder). Kart tipleri+boyut `dashboard_card.dart` (16 tip, S/M/L). Layout state `dashboard_providers.dart` (`DashboardLayoutNotifier`, SharedPreferences `"tür:boyut"`). Hedef: bunları gerçek serbest ızgaraya çevirmek.
 
-### 2A · Serbest ızgara mimari TASARIM 🔴 Opus
+### 2A · Serbest ızgara mimari TASARIM 🔴 Opus — ✅ YAPILDI (commit 843ad8e)
+> **Uygulanan karar (tasarımdan sapma, gerekçeli):** Sabit-hücreli tam 2D (x,y,w,h + Stack/AnimatedPositioned) yerine **12 sütunlu width-cell akış ızgarası** uygulandı. Sebep: 16 kart henüz responsive değil (§2E yapılmadı); sabit hücre yüksekliği içeriği kırardı. Şipariş edilen: kart başına serbest **genişlik** (1..12 hücre), otomatik yükseklik, gövdeden sürükle + animasyonlu gap, köşeden genişlik resize. Konum = liste sırası. Tam 2D yerleşim + yükseklik resize **§2E sonrasına ertelendi**.
 - **Amaç:** masonry → hücre-tabanlı serbest grid geçiş tasarımı (kod yazmaz; karar + sözde-kod).
 - **Üretilecek kararlar:**
   1. **Koordinat sistemi:** Sütun sayısı sabit (öneri: **12 sütun**, "neredeyse serbest" his için), satır birimi yüksekliği ≈ sütun genişliği (kare hücre). Her kart `gridX, gridY (sol-üst hücre), gridW, gridH (hücre span)`, hepsi int. min 1×1, max W = sütun sayısı. (new_features: hücre oranı deneme-yanılma → 12 başla, gerekirse ayarla.)
@@ -678,7 +713,8 @@ Supabase'e gerek yok. (Önceki Supabase tablolu plan iptal edildi — `0007` sil
   5. **Performans:** sürükleme/resize sırasında setState yerine sadece sürüklenen kartın konumu + komşu animasyonları; 60fps hedef; `RepaintBoundary` her kartta.
 - **Kabul:** 2B–2F için net veri modeli, reflow algoritması sözde-kodu, widget ağacı kararı.
 
-### 2B · Grid veri modeli + persistence 🔵 Sonnet
+### 2B · Grid veri modeli + persistence 🔵 Sonnet — ✅ YAPILDI (commit 843ad8e; Opus yaptı)
+> Uygulanan: `DashboardCardConfig`'e `int width` (1..12 hücre) eklendi (x/y/w/h yerine width — 2A sapması). `encode()` = `"tür:genişlik"`; `decode()` yeni + eski `"tür:boyut"` + sade `"tür"` çözer. `setWidth` eklendi; `setSize/cycleSize` kaldırıldı. `DashboardCardSize` + `dashboardCardFor(type,size)` KORUNDU (size, width'ten türetilir — şim) → 16 kart bozulmadı, §2E bağımsız.
 - **Dosyalar:** `app/lib/features/home/dashboard_card.dart`, `dashboard_providers.dart`.
 - **Adımlar:**
   - `DashboardCardConfig`'e `int x, y, w, h` ekle (2A kararına göre default). `encode()` → `'${type.name}:$x:$y:$w:$h'`. `decode()` hem yeni 5-parça hem eski `"tür"`/`"tür:boyut"` formatını çözsün (geriye-uyum; eski → 2A göç kuralı). `==`/`hashCode` güncelle.
@@ -687,7 +723,8 @@ Supabase'e gerek yok. (Önceki Supabase tablolu plan iptal edildi — `0007` sil
 - **Tuzak:** `dashboardCardFor(type, size)` çağrısı 16 kart widget'ına `size` geçiyor; imza değişirse 16 widget + `home_screen.dart` derlemesi kırılır — 2E ile birlikte planla veya geçici `size` shim bırak.
 - **Kabul:** Eski kayıtlı düzenler çökme olmadan yeni formata göç eder; `flutter analyze` temiz.
 
-### 2C · Doğal sürükle-bırak + akışkan reflow 🔴 Opus
+### 2C · Doğal sürükle-bırak + akışkan reflow 🔴 Opus — ✅ YAPILDI (commit 843ad8e)
+> Uygulanan: `LongPressDraggable` kart **gövdesinden** (tutamaç zorunluluğu kalktı). Sürüklerken `_to` konumunda kesik-çizgili gap belirir, komşular yer açar. `_packRows` width-toplamı ≤12 ile satırlara böler; bırakınca `reorderItem`. (Akış reorder; mutlak x/y Stack §2E sonrası.)
 - **Dosya:** `app/lib/features/home/home_screen.dart` (yeni grid widget'ı; `_MasonryDashboard`/`_EditableDashboard` yerini alır).
 - **Adımlar:**
   - Düzenleme modunda karta **doğrudan basılı tut → sürükle** (tutamaç ⠿ zorunluluğu kalkar; Madde 7/19). `LongPressDraggable` veya pointer event'leriyle.
@@ -695,7 +732,8 @@ Supabase'e gerek yok. (Önceki Supabase tablolu plan iptal edildi — `0007` sil
   - Bırakınca `setBounds` ile kalıcılaştır.
 - **Kabul:** Kart sürüklenince komşular tatlı animasyonla yer açar; bırakınca düzen kaydolur; FPS düşmez.
 
-### 2D · Serbest/akıcı boyutlandırma 🔴 Opus
+### 2D · Serbest/akıcı boyutlandırma 🔴 Opus — 🔶 KISMEN (commit 843ad8e): genişlik resize ✅, yükseklik resize §2E sonrası
+> Uygulanan: sağ alt köşede tutamaç; `onPanUpdate` ile `width` canlı değişir (hücreye snap, 1..12). Sabit S/M/L UI'ı kalktı. **Yükseklik resize yok** (otomatik yükseklik; sabit-hücreli yükseklik §2E'ye bağlı).
 - **Dosya:** `home_screen.dart` (grid kart sarmalayıcısı).
 - **Adımlar:** Düzenleme modunda kart köşe/kenarında resize handle; sürükleyince `gridW/gridH` canlı değişir (hücreye snap ama hareket akıcı), çakışırsa komşular reflow. min 1×1, max sütun genişliği. Sabit S/M/L UI'ı kalkar.
 - **Kabul:** Kullanıcı kartı serbestçe büyütüp küçültür; içerik 2E sayesinde bozulmaz; 60fps.
@@ -706,7 +744,8 @@ Supabase'e gerek yok. (Önceki Supabase tablolu plan iptal edildi — `0007` sil
 - **Bölme:** Karmaşık kartlar (line/heatmap/leaderboard/scatter/rhythm) 🟣 Pro; basit özet kartları (today/goal/records) 🔵 Sonnet'e devredilebilir.
 - **Kabul:** Her kart 1×1'den tam-genişlik×büyük'e kadar tüm oranlarda düzgün; overflow/clipping yok.
 
-### 2F · Düzenleme modu odak koruma 🔵 Sonnet
+### 2F · Düzenleme modu odak koruma 🔵 Sonnet — ✅ YAPILDI (commit 843ad8e; Opus yaptı)
+> Uygulanan: tek `ScrollController` `_HomeScreenState`'te tutulup view+edit'e paylaştırıldı → mod geçişinde offset korunur, ekran başa zıplamaz.
 - **Dosya:** `home_screen.dart`.
 - **Sorun:** Bir karta basılı tutup düzenlemeye geçince ekran başa/ilk karta zıplıyor (Madde, "Kritik").
 - **Adım:** Düzenleme moduna geçişte mevcut `ScrollController.offset`'i koru; aynı scroll pozisyonunda kal. Gerekirse basılan kartın konumunu görünür tut (`Scrollable.ensureVisible` yerine offset sabitleme).
