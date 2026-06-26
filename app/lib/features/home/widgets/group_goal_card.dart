@@ -35,84 +35,145 @@ class GroupGoalCard extends ConsumerWidget {
         reached ? subjectColor('chart-2') : theme.colorScheme.primary;
 
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isCompact = constraints.maxWidth < 220;
+          final isLarge = constraints.maxWidth >= 400;
+          final ringSize = isCompact ? 64.0 : (isLarge ? 116.0 : 76.0);
+
+          final ring = SizedBox(
+            width: ringSize,
+            height: ringSize,
+            child: Stack(
+              alignment: Alignment.center,
               children: [
-                Text('Grup hedefi', style: theme.textTheme.titleMedium),
-                const Spacer(),
-                Flexible(
-                  child: Text(group.name,
-                      textAlign: TextAlign.end,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant)),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                SizedBox(
-                  width: 76,
-                  height: 76,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      SizedBox.expand(
-                        child: CircularProgressIndicator(
-                          value: pct,
-                          strokeWidth: 8,
-                          backgroundColor:
-                              theme.colorScheme.surfaceContainerHighest,
-                          valueColor:
-                              AlwaysStoppedAnimation<Color>(ringColor),
-                        ),
-                      ),
-                      Text('%${(pct * 100).round()}',
-                          style: theme.textTheme.titleMedium
-                              ?.copyWith(fontWeight: FontWeight.w700)),
-                    ],
+                SizedBox.expand(
+                  child: CircularProgressIndicator(
+                    value: pct,
+                    strokeWidth: isCompact ? 6 : (isLarge ? 11 : 8),
+                    backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                    valueColor: AlwaysStoppedAnimation<Color>(ringColor),
                   ),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
+                Text('%${(pct * 100).round()}',
+                    style: (isLarge
+                            ? theme.textTheme.headlineSmall
+                            : theme.textTheme.titleMedium)
+                        ?.copyWith(fontWeight: FontWeight.w700)),
+              ],
+            ),
+          );
+
+          if (isCompact) {
+            return Padding(
+              padding: const EdgeInsets.all(16),
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text('Grup hedefi', style: theme.textTheme.labelMedium),
+                        const Spacer(),
+                        if (reached)
+                          Icon(Icons.check_circle, color: subjectColor('chart-2'), size: 16),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Center(child: ring),
+                    const SizedBox(height: 12),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
                         '${formatHuman(todayTotal)} / ${formatHuman(goalSeconds)}',
                         style: theme.textTheme.titleSmall,
                       ),
-                      const SizedBox(height: 4),
-                      Text('grup toplamı (bugün)',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant)),
-                      const SizedBox(height: 8),
-                      Row(
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: fire.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.local_fire_department,
-                              size: 18, color: fire),
+                          Icon(Icons.local_fire_department, color: fire, size: 16),
                           const SizedBox(width: 4),
                           Text('$streak',
-                              style: theme.textTheme.titleSmall?.copyWith(
-                                  color: fire, fontWeight: FontWeight.w800)),
-                          const SizedBox(width: 4),
-                          Text('grup serisi',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                  color: theme.colorScheme.onSurfaceVariant)),
+                              style: theme.textTheme.titleSmall
+                                  ?.copyWith(color: fire, fontWeight: FontWeight.w800)),
                         ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          return Padding(
+            padding: const EdgeInsets.all(16),
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text('Grup hedefi', style: theme.textTheme.titleMedium),
+                      const Spacer(),
+                      Flexible(
+                        child: Text(group.name,
+                            textAlign: TextAlign.end,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant)),
                       ),
                     ],
                   ),
-                ),
-              ],
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      ring,
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${formatHuman(todayTotal)} / ${formatHuman(goalSeconds)}',
+                              style: theme.textTheme.titleSmall,
+                            ),
+                            const SizedBox(height: 4),
+                            Text('grup toplamı (bugün)',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant)),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Icon(Icons.local_fire_department,
+                                    size: 18, color: fire),
+                                const SizedBox(width: 4),
+                                Text('$streak',
+                                    style: theme.textTheme.titleSmall?.copyWith(
+                                        color: fire, fontWeight: FontWeight.w800)),
+                                const SizedBox(width: 4),
+                                Text('grup serisi',
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                        color: theme.colorScheme.onSurfaceVariant)),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

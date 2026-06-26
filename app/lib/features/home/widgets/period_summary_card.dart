@@ -52,58 +52,113 @@ class _PeriodSummaryCardState extends ConsumerState<PeriodSummaryCard> {
         .length;
 
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Text('Dönem özeti', style: theme.textTheme.titleMedium),
-              ],
-            ),
-            const SizedBox(height: 12),
-            // Etkileşimli dönem seçici.
-            SegmentedButton<_Period>(
-              segments: [
-                for (final p in _Period.values)
-                  ButtonSegment(value: p, label: Text(p.label)),
-              ],
-              selected: {_period},
-              onSelectionChanged: (s) => setState(() => _period = s.first),
-              showSelectedIcon: false,
-              style: const ButtonStyle(
-                visualDensity: VisualDensity.compact,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isCompact = constraints.maxWidth < 280;
+          final isVeryCompact = constraints.maxWidth < 180;
+
+          Widget selector = isCompact
+              ? DropdownButton<_Period>(
+                  value: _period,
+                  isDense: true,
+                  underline: const SizedBox.shrink(),
+                  icon: const Icon(Icons.arrow_drop_down, size: 20),
+                  items: _Period.values
+                      .map((p) => DropdownMenuItem(
+                            value: p,
+                            child: Text(p.label, style: theme.textTheme.bodyMedium),
+                          ))
+                      .toList(),
+                  onChanged: (v) {
+                    if (v != null) setState(() => _period = v);
+                  },
+                )
+              : SegmentedButton<_Period>(
+                  segments: [
+                    for (final p in _Period.values)
+                      ButtonSegment(value: p, label: Text(p.label)),
+                  ],
+                  selected: {_period},
+                  onSelectionChanged: (s) => setState(() => _period = s.first),
+                  showSelectedIcon: false,
+                  style: const ButtonStyle(
+                    visualDensity: VisualDensity.compact,
+                  ),
+                );
+
+          Widget statsRow = isVeryCompact
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _Stat(
+                      label: 'Toplam',
+                      value: formatHuman(total),
+                      color: theme.colorScheme.primary,
+                    ),
+                    const SizedBox(height: 8),
+                    _Stat(
+                      label: 'Günlük ort.',
+                      value: formatHuman(avg),
+                      color: theme.colorScheme.secondary,
+                    ),
+                    const SizedBox(height: 8),
+                    _Stat(
+                      label: 'Aktif gün',
+                      value: '$activeDays',
+                      color: theme.colorScheme.tertiary,
+                    ),
+                  ],
+                )
+              : Row(
+                  children: [
+                    Expanded(
+                      child: _Stat(
+                        label: 'Toplam',
+                        value: formatHuman(total),
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                    Expanded(
+                      child: _Stat(
+                        label: 'Günlük ort.',
+                        value: formatHuman(avg),
+                        color: theme.colorScheme.secondary,
+                      ),
+                    ),
+                    Expanded(
+                      child: _Stat(
+                        label: 'Aktif gün',
+                        value: '$activeDays',
+                        color: theme.colorScheme.tertiary,
+                      ),
+                    ),
+                  ],
+                );
+
+          return Padding(
+            padding: const EdgeInsets.all(16),
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text('Dönem özeti', style: theme.textTheme.titleMedium),
+                      const Spacer(),
+                      if (isCompact) selector,
+                    ],
+                  ),
+                  if (!isCompact) ...[
+                    const SizedBox(height: 12),
+                    selector,
+                  ],
+                  const SizedBox(height: 16),
+                  statsRow,
+                ],
               ),
             ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: _Stat(
-                    label: 'Toplam',
-                    value: formatHuman(total),
-                    color: theme.colorScheme.primary,
-                  ),
-                ),
-                Expanded(
-                  child: _Stat(
-                    label: 'Günlük ort.',
-                    value: formatHuman(avg),
-                    color: theme.colorScheme.secondary,
-                  ),
-                ),
-                Expanded(
-                  child: _Stat(
-                    label: 'Aktif gün',
-                    value: '$activeDays',
-                    color: theme.colorScheme.tertiary,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

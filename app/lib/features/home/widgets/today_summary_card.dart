@@ -33,109 +33,124 @@ class TodaySummaryCard extends ConsumerWidget {
       return null;
     }
 
-    // Küçük kart: yalnızca büyük toplam + ders sayısı (kompakt).
-    if (size == DashboardCardSize.small) {
-      return Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Bugün', style: theme.textTheme.labelMedium),
-              const SizedBox(height: 8),
-              Text(
-                formatHuman(total),
-                style: theme.textTheme.headlineSmall
-                    ?.copyWith(color: theme.colorScheme.primary),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                breakdown.isEmpty
-                    ? 'Henüz kayıt yok'
-                    : '${breakdown.length} ders',
-                style: theme.textTheme.bodySmall
-                    ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    final maxSeconds =
-        breakdown.isEmpty ? 1 : breakdown.first.value.clamp(1, 1 << 30);
-
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isCompact = constraints.maxWidth < 180;
+          
+          if (isCompact) {
+            return Padding(
+              padding: const EdgeInsets.all(16),
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Bugün', style: theme.textTheme.labelMedium),
+                    const SizedBox(height: 8),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        formatHuman(total),
+                        style: theme.textTheme.headlineSmall
+                            ?.copyWith(color: theme.colorScheme.primary),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      breakdown.isEmpty
+                          ? 'Kayıt yok'
+                          : '${breakdown.length} ders',
+                      style: theme.textTheme.bodySmall
+                          ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          final maxSeconds =
+              breakdown.isEmpty ? 1 : breakdown.first.value.clamp(1, 1 << 30);
+
+          return Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Bugün özeti', style: theme.textTheme.titleMedium),
-                const Spacer(),
-                Text(
-                  formatHuman(total),
-                  style: theme.textTheme.titleMedium
-                      ?.copyWith(color: theme.colorScheme.primary),
+                Row(
+                  children: [
+                    Text('Bugün özeti', style: theme.textTheme.titleMedium),
+                    const Spacer(),
+                    Text(
+                      formatHuman(total),
+                      style: theme.textTheme.titleMedium
+                          ?.copyWith(color: theme.colorScheme.primary),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: breakdown.isEmpty
+                      ? Text(
+                          'Bugün henüz çalışma kaydın yok. Sayaçtan başla!',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant),
+                        )
+                      : ListView.builder(
+                          itemCount: breakdown.length,
+                          itemBuilder: (context, index) {
+                            final entry = breakdown[index];
+                            final subject = subjectFor(entry.key);
+                            final name = subject?.name ?? 'Genel';
+                            final color = subject != null
+                                ? subjectColor(subject.color)
+                                : theme.colorScheme.onSurfaceVariant;
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      CircleAvatar(
+                                          radius: 5, backgroundColor: color),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(name,
+                                            style: theme.textTheme.bodyMedium,
+                                            overflow: TextOverflow.ellipsis),
+                                      ),
+                                      Text(
+                                        formatHuman(entry.value),
+                                        style: theme.textTheme.bodySmall?.copyWith(
+                                            color: theme.colorScheme
+                                                .onSurfaceVariant),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 6),
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(4),
+                                    child: LinearProgressIndicator(
+                                      value: entry.value / maxSeconds,
+                                      minHeight: 8,
+                                      backgroundColor: theme
+                                          .colorScheme.surfaceContainerHighest,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                          color),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            if (breakdown.isEmpty)
-              Text(
-                'Bugün henüz çalışma kaydın yok. Sayaçtan başla!',
-                style: theme.textTheme.bodyMedium
-                    ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-              )
-            else
-              for (final entry in breakdown) ...[
-                Builder(
-                  builder: (_) {
-                    final subject = subjectFor(entry.key);
-                    final name = subject?.name ?? 'Genel';
-                    final color = subject != null
-                        ? subjectColor(subject.color)
-                        : theme.colorScheme.onSurfaceVariant;
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            CircleAvatar(radius: 5, backgroundColor: color),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(name,
-                                  style: theme.textTheme.bodyMedium,
-                                  overflow: TextOverflow.ellipsis),
-                            ),
-                            Text(
-                              formatHuman(entry.value),
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                  color: theme.colorScheme.onSurfaceVariant),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
-                          child: LinearProgressIndicator(
-                            value: entry.value / maxSeconds,
-                            minHeight: 8,
-                            backgroundColor:
-                                theme.colorScheme.surfaceContainerHighest,
-                            valueColor: AlwaysStoppedAnimation<Color>(color),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                      ],
-                    );
-                  },
-                ),
-              ],
-          ],
-        ),
+          );
+        },
       ),
     );
   }
