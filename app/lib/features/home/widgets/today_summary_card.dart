@@ -36,8 +36,13 @@ class TodaySummaryCard extends ConsumerWidget {
     return Card(
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final isCompact = constraints.maxWidth < 180;
-          
+          // Dar VEYA çok kısa hücrede kaydırma-güvenli özet düzenine düş; böylece
+          // tam genişlikte h=1 gibi çok kısa hücrede taşma (RenderFlex) olmaz.
+          // 140 eşiği CardScaffold'un doldurma eşiğiyle (minBody 96 + başlık 44)
+          // hizalıdır.
+          final isCompact = constraints.maxWidth < 180 ||
+              (constraints.maxHeight.isFinite && constraints.maxHeight < 140);
+
           if (isCompact) {
             return Padding(
               padding: const EdgeInsets.all(16),

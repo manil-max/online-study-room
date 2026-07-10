@@ -40,13 +40,6 @@
 - Değişiklik release/update hazırlanırken `app/android/app/src/main/AndroidManifest.xml` içindeki `android:label` üzerinden yapılacak.
 - `pubspec.yaml` proje adı şimdilik değiştirilmez; kullanıcıya görünen ad yeterli.
 
-### WP-4: Home Responsive QA
-- **Backlog:** Ana Sayfa responsive kart cilası
-- **Bağımlılık:** Önce mevcut 2E tamamlandı bilgisi doğrulansın.
-- **SAHİP dosyalar:** `app/lib/features/home/widgets/*`, home widget testleri
-- **DOKUNMA:** `classroom/*`, `profile/*`, `dashboard_providers.dart`
-- **Not:** Bu iş büyük ölçüde tamamlanmış görünüyor; muhtemelen QA/ince düzeltme veya backlog kapatma işi.
-
 ### WP-5: Presence Lifecycle
 - **Backlog:** Çevrimdışı tespiti, heartbeat/yaşam döngüsü
 - **Bağımlılık:** Presence RLS 0013 Supabase'de uygulanmış olmalı.
@@ -137,6 +130,12 @@
 
 > Son 5 iş. Ajan bunları okuyarak "neye dokunma, ne değişti" anlar.
 > Daha eski işler aşağıdaki Geçmiş tablosuna düşer.
+
+### WP-4: Home Responsive QA — 2026-07-10 ✅
+- **Değişen dosyalar:** `home/widgets/today_summary_card.dart`, `home/widgets/leaderboard_card.dart`, `home/widgets/active_members_card.dart`, `test/features/dashboard_cards_render_test.dart`
+- **Ne yapıldı:** 2E'de `CardScaffold`'a taşınMAYAN 3 kart (bugün özeti, sıralama, aktif üyeler) çok kısa hücrede (telefonda tam genişlik + `h=1` ≈ 328×48) taşıyordu. Bu kartlara yükseklik-tabanlı doldur/kaydır geri düşüşü eklendi: başlık + en az bir satır sığmıyorsa `Expanded` yerine düz `Column` + dış `SingleChildScrollView` (taşma yok). Ayrıca kart başlıkları `Flexible/Expanded`+ellipsis'e, dar hücrede satır sonundaki süre/saniye metni `FittedBox(scaleDown)`'a alındı (yatay taşma yok). Render testi: `null` grup yerine gerçek grup+üye+presence+günlük istatistikle çizen ayrı grup-kartı grubu + `kisa` (328×48) boyutu eklendi.
+- **Dokunma:** `classroom/*`, `profile/*`, `dashboard_providers.dart`, `dashboard_card.dart`, diğer `home/widgets/*` kartları. Codex'in WP-2/WP-3 dosyalarına dokunulmadı.
+- **Test:** WP-4 dosyaları `flutter analyze` temiz; `dashboard_cards_render_test.dart` 76 test (45→76) geçiyor. Grup-kartı yolu ilk kez render-test kapsamına alındı; iki gizli yatay taşma (aktif üyeler + sıralama başlığı/satırı) yakalanıp düzeltildi.
 
 ### WP-3: Auth Recovery — 2026-07-10 ✅
 - **Değişen dosyalar:** `data/repositories/auth_repository.dart`, `data/repositories/in_memory/in_memory_auth_repository.dart`, `data/repositories/supabase/supabase_auth_repository.dart`, `features/auth/auth_screen.dart`, `test/data/auth_repository_test.dart`, `test/widget_test.dart`

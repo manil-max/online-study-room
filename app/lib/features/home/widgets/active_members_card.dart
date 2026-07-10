@@ -44,68 +44,108 @@ class ActiveMembersCard extends ConsumerWidget {
         builder: (context, constraints) {
           final isCompact = constraints.maxWidth < 220;
           final availableHeight = constraints.maxHeight;
-          final isHeightBounded = availableHeight < double.infinity;
+          final isHeightBounded = availableHeight.isFinite;
 
-          // Header is ~45px, each row is ~42px.
+          // Sabit başlık (dikey padding dahil) ~68px, her satır ~42px.
+          const rowHeight = 42.0;
+          const headerHeight = 32 + 24 + 12;
+
+          // Başlık + en az bir satır sığmıyorsa TÜM içerik kaydırılır (Expanded
+          // yerine düz Column) → çok kısa hücrede taşma (RenderFlex) olmaz.
+          final fill =
+              !isHeightBounded || availableHeight >= headerHeight + rowHeight;
+
           final int maxItems;
-          if (isHeightBounded) {
-            maxItems = ((availableHeight - 60) / 42).floor().clamp(1, 20);
+          if (fill && isHeightBounded) {
+            maxItems =
+                ((availableHeight - headerHeight) / rowHeight).floor().clamp(1, 20);
+          } else if (isHeightBounded) {
+            maxItems = 3;
           } else {
             maxItems = active.length;
           }
 
           final visibleActive = active.take(maxItems).toList();
 
+          Widget rowFor(int i) {
+            final p = visibleActive[i];
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 5),
+              child: _ActiveRow(
+                name: (memberById[p.userId] != null &&
+                        !memberById[p.userId]!.isActive)
+                    ? 'Eski Grup Üyesi'
+                    : (memberById[p.userId]?.displayName.isNotEmpty == true
+                        ? memberById[p.userId]!.displayName
+                        : 'İsimsiz'),
+                avatarUrl: memberById[p.userId]?.avatarUrl,
+                startedAt: p.startedAt,
+                green: green,
+                isCompact: isCompact,
+              ),
+            );
+          }
+
+          final header = Row(
+            children: [
+              Expanded(
+                child: Text('Şu an çalışanlar',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleMedium),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: green.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text('${active.length} aktif',
+                    style: theme.textTheme.labelSmall
+                        ?.copyWith(color: green, fontWeight: FontWeight.w700)),
+              ),
+            ],
+          );
+
+          final emptyText = Text('Şu an çalışan kimse yok.',
+              style: theme.textTheme.bodyMedium
+                  ?.copyWith(color: theme.colorScheme.onSurfaceVariant));
+
+          if (!fill) {
+            return Padding(
+              padding: const EdgeInsets.all(16),
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    header,
+                    const SizedBox(height: 12),
+                    if (active.isEmpty)
+                      emptyText
+                    else
+                      for (var i = 0; i < visibleActive.length; i++) rowFor(i),
+                  ],
+                ),
+              ),
+            );
+          }
+
           return Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Text('Şu an çalışanlar', style: theme.textTheme.titleMedium),
-                    const Spacer(),
-                    Container(
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: green.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text('${active.length} aktif',
-                          style: theme.textTheme.labelSmall
-                              ?.copyWith(color: green, fontWeight: FontWeight.w700)),
-                    ),
-                  ],
-                ),
+                header,
                 const SizedBox(height: 12),
                 if (active.isEmpty)
-                  Text('Şu an çalışan kimse yok.',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant))
+                  emptyText
                 else
                   Expanded(
                     child: ListView.builder(
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: visibleActive.length,
-                      itemBuilder: (context, i) {
-                        final p = visibleActive[i];
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 5),
-                          child: _ActiveRow(
-                            name: (memberById[p.userId] != null &&
-                                    !memberById[p.userId]!.isActive)
-                                ? 'Eski Grup Üyesi'
-                                : (memberById[p.userId]?.displayName.isNotEmpty == true
-                                    ? memberById[p.userId]!.displayName
-                                    : 'İsimsiz'),
-                            avatarUrl: memberById[p.userId]?.avatarUrl,
-                            startedAt: p.startedAt,
-                            green: green,
-                            isCompact: isCompact,
-                          ),
-                        );
-                      },
+                      itemBuilder: (context, i) => rowFor(i),
                     ),
                   ),
               ],
@@ -135,6 +175,19 @@ class _ActiveRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // Yalnızca bu metin saniyede bir kendini yeniler.
+    final time = SecondTicker(
+      builder: (_, now) {
+        final elapsed =
+            startedAt == null ? 0 : now.difference(startedAt!).inSeconds;
+        return Text(formatHms(elapsed),
+            maxLines: 1,
+            style: theme.textTheme.titleSmall?.copyWith(
+              color: green,
+              fontFeatures: const [],
+            ));
+      },
+    );
     return Row(
       children: [
         Stack(
@@ -156,27 +209,24 @@ class _ActiveRow extends StatelessWidget {
           ],
         ),
         const SizedBox(width: 10),
-        if (!isCompact)
+        if (!isCompact) ...[
           Expanded(
             child: Text(name,
                 overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.bodyMedium
                     ?.copyWith(fontWeight: FontWeight.w500)),
-          )
-        else
-          const Spacer(),
-        // Yalnızca bu metin saniyede bir kendini yeniler.
-        SecondTicker(
-          builder: (_, now) {
-            final elapsed =
-                startedAt == null ? 0 : now.difference(startedAt!).inSeconds;
-            return Text(formatHms(elapsed),
-                style: theme.textTheme.titleSmall?.copyWith(
-                  color: green,
-                  fontFeatures: const [],
-                ));
-          },
-        ),
+          ),
+          const SizedBox(width: 8),
+          time,
+        ] else
+          // Dar hücrede ad gizli; süre kalan alana yaslanır ve gerekiyorsa
+          // küçülerek taşmayı önler.
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: FittedBox(fit: BoxFit.scaleDown, child: time),
+            ),
+          ),
       ],
     );
   }

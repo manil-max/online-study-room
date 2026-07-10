@@ -46,13 +46,22 @@ class LeaderboardCard extends ConsumerWidget {
         builder: (context, constraints) {
           final isCompact = constraints.maxWidth < 220;
           final availableHeight = constraints.maxHeight;
-          final isHeightBounded = availableHeight < double.infinity;
-          
-          // Header takes ~110px. Each row takes ~36px.
+          final isHeightBounded = availableHeight.isFinite;
+
+          // Sabit başlık yüksekliği tahmini (dikey padding dahil): başlık satırı +
+          // (yalnız geniş kartta) grup hedefi bloğu + listeden önceki boşluk.
+          const rowHeight = 36.0;
+          final headerHeight = 32 + 24 + 12 + (isCompact ? 0.0 : 43.0);
+
+          // Kart, başlık + en az bir satırı sığdıramayacak kadar kısaysa TÜM içerik
+          // kaydırılır (Expanded yerine düz Column) → hiçbir boyutta taşma olmaz.
+          final fill = !isHeightBounded || availableHeight >= headerHeight + rowHeight;
+
           final int count;
-          if (isHeightBounded) {
-            final rowSpace = availableHeight - 110;
-            count = (rowSpace / 36).floor().clamp(2, 15);
+          if (fill && isHeightBounded) {
+            count = ((availableHeight - headerHeight) / rowHeight).floor().clamp(1, 15);
+          } else if (isHeightBounded) {
+            count = 3;
           } else {
             count = 5;
           }
@@ -85,87 +94,117 @@ class LeaderboardCard extends ConsumerWidget {
               e.key: studyStreak(const [], totals: userDayTotals(stats, e.key)),
           };
 
+          final headerChildren = <Widget>[
+            Row(
+              children: [
+                Flexible(
+                  child: Text('Sıralama',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleMedium),
+                ),
+                const Spacer(),
+                if (!isCompact)
+                  Flexible(
+                    child: Text(
+                      group.name,
+                      textAlign: TextAlign.end,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall
+                          ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                    ),
+                  ),
+              ],
+            ),
+            if (!isCompact) ...[
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Icon(Icons.flag_outlined,
+                      size: 15, color: theme.colorScheme.onSurfaceVariant),
+                  const SizedBox(width: 4),
+                  Text('Grup hedefi',
+                      style: theme.textTheme.labelMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant)),
+                  const Spacer(),
+                  if (groupStreak > 0) ...[
+                    Icon(Icons.local_fire_department,
+                        size: 14, color: subjectColor('chart-5')),
+                    const SizedBox(width: 2),
+                    Text('$groupStreak',
+                        style: theme.textTheme.labelSmall
+                            ?.copyWith(color: subjectColor('chart-5'))),
+                    const SizedBox(width: 8),
+                  ],
+                  Text('%${(groupGoalPct * 100).round()}',
+                      style: theme.textTheme.labelMedium
+                          ?.copyWith(fontWeight: FontWeight.w700)),
+                ],
+              ),
+              const SizedBox(height: 6),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: LinearProgressIndicator(
+                  value: groupGoalPct,
+                  minHeight: 7,
+                  backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                  color: groupGoalPct >= 1.0
+                      ? subjectColor('chart-2')
+                      : theme.colorScheme.primary,
+                ),
+              ),
+            ],
+            const SizedBox(height: 12),
+          ];
+
+          Widget rowFor(int i) => _Row(
+                rank: i + 1,
+                member: memberFor(board[i].key),
+                seconds: board[i].value,
+                streak: streaks[board[i].key] ?? 0,
+                isMe: board[i].key == meId,
+                isCompact: isCompact,
+              );
+
+          final emptyText = Text(
+            'Bugün henüz kimse çalışmamış.',
+            style: theme.textTheme.bodyMedium
+                ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+          );
+
+          // Kısa kart: Expanded yerine düz Column + dış kaydırma (taşma önlenir).
+          if (!fill) {
+            return Padding(
+              padding: const EdgeInsets.all(16),
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ...headerChildren,
+                    if (board.isEmpty)
+                      emptyText
+                    else
+                      for (var i = 0; i < board.length; i++) rowFor(i),
+                  ],
+                ),
+              ),
+            );
+          }
+
           return Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Text('Sıralama', style: theme.textTheme.titleMedium),
-                    const Spacer(),
-                    if (!isCompact)
-                      Flexible(
-                        child: Text(
-                          group.name,
-                          textAlign: TextAlign.end,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.bodySmall
-                              ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-                        ),
-                      ),
-                  ],
-                ),
-                if (!isCompact) ...[
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Icon(Icons.flag_outlined,
-                          size: 15, color: theme.colorScheme.onSurfaceVariant),
-                      const SizedBox(width: 4),
-                      Text('Grup hedefi',
-                          style: theme.textTheme.labelMedium?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant)),
-                      const Spacer(),
-                      if (groupStreak > 0) ...[
-                        Icon(Icons.local_fire_department,
-                            size: 14, color: subjectColor('chart-5')),
-                        const SizedBox(width: 2),
-                        Text('$groupStreak',
-                            style: theme.textTheme.labelSmall
-                                ?.copyWith(color: subjectColor('chart-5'))),
-                        const SizedBox(width: 8),
-                      ],
-                      Text('%${(groupGoalPct * 100).round()}',
-                          style: theme.textTheme.labelMedium
-                              ?.copyWith(fontWeight: FontWeight.w700)),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(6),
-                    child: LinearProgressIndicator(
-                      value: groupGoalPct,
-                      minHeight: 7,
-                      backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                      color: groupGoalPct >= 1.0
-                          ? subjectColor('chart-2')
-                          : theme.colorScheme.primary,
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 12),
+                ...headerChildren,
                 if (board.isEmpty)
-                  Text(
-                    'Bugün henüz kimse çalışmamış.',
-                    style: theme.textTheme.bodyMedium
-                        ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-                  )
+                  emptyText
                 else
                   Expanded(
                     child: ListView.builder(
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: board.length,
-                      itemBuilder: (context, i) {
-                        return _Row(
-                          rank: i + 1,
-                          member: memberFor(board[i].key),
-                          seconds: board[i].value,
-                          streak: streaks[board[i].key] ?? 0,
-                          isMe: board[i].key == meId,
-                          isCompact: isCompact,
-                        );
-                      },
+                      itemBuilder: (context, i) => rowFor(i),
                     ),
                   ),
               ],
@@ -230,32 +269,48 @@ class _Row extends StatelessWidget {
                 radius: 14,
               ),
               const SizedBox(width: 8),
-              Expanded(
-                child: isCompact
-                    ? const SizedBox.shrink()
-                    : Text(
-                        isMe ? '$name (sen)' : name,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          fontWeight: isMe ? FontWeight.w600 : null,
-                          color: isMe ? theme.colorScheme.primary : null,
-                        ),
+              if (!isCompact) ...[
+                Expanded(
+                  child: Text(
+                    isMe ? '$name (sen)' : name,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: isMe ? FontWeight.w600 : null,
+                      color: isMe ? theme.colorScheme.primary : null,
+                    ),
+                  ),
+                ),
+                if (streak > 0) ...[
+                  Icon(Icons.local_fire_department,
+                      size: 14, color: subjectColor('chart-5')),
+                  const SizedBox(width: 2),
+                  Text('$streak',
+                      style: theme.textTheme.labelSmall
+                          ?.copyWith(color: subjectColor('chart-5'))),
+                  const SizedBox(width: 8),
+                ],
+                Text(
+                  formatHuman(seconds),
+                  style: theme.textTheme.bodySmall
+                      ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                ),
+              ] else
+                // Dar hücrede ad gizli; süre kalan alana yaslanır ve gerekiyorsa
+                // küçülerek taşmayı önler.
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        formatHuman(seconds),
+                        maxLines: 1,
+                        style: theme.textTheme.bodySmall
+                            ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                       ),
-              ),
-              if (!isCompact && streak > 0) ...[
-                Icon(Icons.local_fire_department,
-                    size: 14, color: subjectColor('chart-5')),
-                const SizedBox(width: 2),
-                Text('$streak',
-                    style: theme.textTheme.labelSmall
-                        ?.copyWith(color: subjectColor('chart-5'))),
-                const SizedBox(width: 8),
-              ],
-              Text(
-                formatHuman(seconds),
-                style: theme.textTheme.bodySmall
-                    ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-              ),
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
