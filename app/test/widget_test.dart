@@ -5,13 +5,19 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:online_study_room/core/prefs/app_prefs.dart';
 import 'package:online_study_room/data/providers/auth_providers.dart';
+import 'package:online_study_room/data/providers/group_providers.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_auth_repository.dart';
+import 'package:online_study_room/data/repositories/in_memory/in_memory_group_repository.dart';
 import 'package:online_study_room/main.dart';
 
 /// Giriş yapmış bir kullanıcıyla seed'lenmiş repo döndürür.
 Future<InMemoryAuthRepository> _signedInRepo() async {
   final repo = InMemoryAuthRepository();
-  await repo.signUp(email: 'ali@ornek.com', password: '123456', displayName: 'Ali');
+  await repo.signUp(
+    email: 'ali@ornek.com',
+    password: '123456',
+    displayName: 'Ali',
+  );
   return repo;
 }
 
@@ -21,6 +27,7 @@ Widget _appWith(InMemoryAuthRepository repo) {
   return ProviderScope(
     overrides: [
       authRepositoryProvider.overrideWithValue(repo),
+      groupRepositoryProvider.overrideWithValue(InMemoryGroupRepository()),
       sharedPreferencesProvider.overrideWithValue(_prefs),
     ],
     child: const OnlineStudyRoomApp(),
@@ -40,7 +47,11 @@ void main() {
   testWidgets('Giriş yapılmamışken giriş ekranı görünür', (tester) async {
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [sharedPreferencesProvider.overrideWithValue(_prefs)],
+        overrides: [
+          authRepositoryProvider.overrideWithValue(InMemoryAuthRepository()),
+          groupRepositoryProvider.overrideWithValue(InMemoryGroupRepository()),
+          sharedPreferencesProvider.overrideWithValue(_prefs),
+        ],
         child: const OnlineStudyRoomApp(),
       ),
     );
@@ -60,8 +71,9 @@ void main() {
     expect(find.text('Profil'), findsWidgets);
   });
 
-  testWidgets('Sınıfı olmayan kullanıcı oluştur/katıl seçeneklerini görür',
-      (tester) async {
+  testWidgets('Sınıfı olmayan kullanıcı oluştur/katıl seçeneklerini görür', (
+    tester,
+  ) async {
     await tester.pumpWidget(_appWith(await _signedInRepo()));
     await tester.pumpAndSettle();
 

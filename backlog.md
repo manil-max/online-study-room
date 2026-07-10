@@ -17,10 +17,12 @@
   - **Kalan:** Sayaç widget'ında gerçek başlat/durdur aksiyonları ve arka plan kontrolü WP-2 ile yapılacak.
   - *Kaynak: project.md §3.6, progress.md FAZ 4.2, new_features.md §5 Madde 4*
 
-- [ ] **Persistent notification (kalıcı bildirim + kontrol paneli)**
+- [~] **Persistent notification (kalıcı bildirim + kontrol paneli)**
   - Sayaç çalışırken bildirim çubuğunda kalıcı bildirim
   - Durdur/başlat/mola aksiyonları bildirimde
   - Gelişmiş kontrol paneli görünümü
+  - **WP-2 tamamlandı:** Kalıcı Android sayaç bildirimi, `Durdur` aksiyonu, notification permission ve restart sonrası timer geri yükleme eklendi.
+  - **Kalan:** Ayrı `Başlat` ve manuel `Mola` aksiyonları ürün kararına göre ileride netleştirilecek.
   - *Kaynak: new_features.md §5 Madde 10*
 
 - [ ] **E-posta doğrulama + şifre sıfırlama**
@@ -90,9 +92,10 @@
   - Heartbeat sistemi
   - *Kaynak: progress.md FAZ 2.2 bekleyen*
 
-- [ ] **Arka planda süre tutma (mobil arka plan servisi)**
+- [x] **Arka planda süre tutma (mobil arka plan servisi)**
   - Telefon kilitlenince/arka plana alınınca sayacın devam etmesi
   - Platform-seviyesi çözüm
+  - **WP-2 tamamlandı:** Aktif timer wall-clock başlangıcı cihazda saklanıyor; uygulama kapanıp açıldığında sayaç aynı oturumdan devam ediyor.
   - *Kaynak: progress.md FAZ 2.1 bekleyen*
 
 ---

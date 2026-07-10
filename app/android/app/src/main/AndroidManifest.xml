@@ -1,6 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- APK indirmek için internet erişimi. -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Android 13+ kalıcı sayaç bildirimi için kullanıcı izni gerekir. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- In-app güncelleme: indirilen APK ile Android kurulum ekranını açabilmek için. -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <application

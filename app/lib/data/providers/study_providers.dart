@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart' hide Presence;
 import 'package:uuid/uuid.dart';
 
 import '../../core/config/supabase_config.dart';
+import '../../core/notifications/timer_notification_service.dart';
 import '../../core/prefs/app_prefs.dart';
 import '../../core/stats/study_stats.dart';
 import '../models/daily_stat.dart';
@@ -227,12 +228,12 @@ class StudyTimerState {
 
   /// Mevcut fazın hedef süresi (saniye); kronometrede null.
   int? get phaseTargetSeconds => timerPhaseTargetSeconds(
-        mode: mode,
-        phase: phase,
-        countdownMinutes: countdownMinutes,
-        workMinutes: workMinutes,
-        breakMinutes: breakMinutes,
-      );
+    mode: mode,
+    phase: phase,
+    countdownMinutes: countdownMinutes,
+    workMinutes: workMinutes,
+    breakMinutes: breakMinutes,
+  );
 
   StudyTimerState copyWith({
     TimerMode? mode,
@@ -278,31 +279,86 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   static const _kWork = 'timer_work_min';
   static const _kBreak = 'timer_break_min';
   static const _kCycles = 'timer_cycles';
+  static const _kActiveStartedAt = 'timer_active_started_at';
+  static const _kActiveMode = 'timer_active_mode';
+  static const _kActivePhase = 'timer_active_phase';
+  static const _kActiveCycle = 'timer_active_cycle';
+  static const _kActiveSubject = 'timer_active_subject';
 
   Timer? _tick;
+  StreamSubscription<TimerNotificationAction>? _notificationCommands;
 
   @override
   StudyTimerState build() {
-    ref.onDispose(() => _tick?.cancel());
+    _notificationCommands = ref
+        .read(timerNotificationServiceProvider)
+        .commands
+        .listen((action) {
+          if (action == TimerNotificationAction.stop) {
+            unawaited(stop());
+          }
+        });
+    ref.onDispose(() {
+      _tick?.cancel();
+      _notificationCommands?.cancel();
+    });
     final prefs = ref.read(sharedPreferencesProvider);
     final modeName = prefs.getString(_kMode);
     final mode = TimerMode.values.firstWhere(
       (m) => m.name == modeName,
       orElse: () => TimerMode.stopwatch,
     );
-    return StudyTimerState(
-      mode: mode,
+    final activeMode = TimerMode.values.firstWhere(
+      (m) => m.name == prefs.getString(_kActiveMode),
+      orElse: () => mode,
+    );
+    final activePhase = TimerPhase.values.firstWhere(
+      (p) => p.name == prefs.getString(_kActivePhase),
+      orElse: () => TimerPhase.work,
+    );
+    final activeStartedAt = DateTime.tryParse(
+      prefs.getString(_kActiveStartedAt) ?? '',
+    );
+    final activeSubject = prefs.getString(_kActiveSubject);
+    final initial = StudyTimerState(
+      mode: activeStartedAt == null ? mode : activeMode,
+      isRunning: activeStartedAt != null,
+      startedAt: activeStartedAt,
+      subjectId: activeSubject == '' ? null : activeSubject,
+      phase: activeStartedAt == null ? TimerPhase.work : activePhase,
+      cycle: activeStartedAt == null
+          ? 1
+          : (prefs.getInt(_kActiveCycle) ?? 1)
+                .clamp(kMinPomodoroCycles, kMaxPomodoroCycles)
+                .toInt(),
       countdownMinutes: prefs.getInt(_kCountdown) ?? 25,
       workMinutes: prefs.getInt(_kWork) ?? 25,
       breakMinutes: prefs.getInt(_kBreak) ?? 5,
       cycles: prefs.getInt(_kCycles) ?? 4,
     );
+    if (initial.isRunning) {
+      Future.microtask(() {
+        if (!state.isRunning) return;
+        _publishPresence(
+          status: state.phase == TimerPhase.work
+              ? PresenceStatus.studying
+              : PresenceStatus.onBreak,
+          startedAt: state.startedAt,
+        );
+        _startTick();
+        unawaited(_syncTimerNotification());
+      });
+    }
+    return initial;
   }
 
   /// Aktif dersi seçer (yalnızca sayaç dururken; null → derssiz).
   void selectSubject(String? subjectId) {
     if (state.isRunning) return;
-    state = state.copyWith(subjectId: subjectId, clearSubject: subjectId == null);
+    state = state.copyWith(
+      subjectId: subjectId,
+      clearSubject: subjectId == null,
+    );
   }
 
   /// Modu değiştirir (yalnız dururken). Faz/döngü sıfırlanır, seçim kalıcılaşır.
@@ -323,12 +379,18 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   /// Pomodoro ayarlarını değiştirir (dakika + döngü; yalnız dururken).
   void setPomodoro({int? workMinutes, int? breakMinutes, int? cycles}) {
     if (state.isRunning) return;
-    final w = (workMinutes ?? state.workMinutes)
-        .clamp(kMinTimerMinutes, kMaxTimerMinutes);
-    final b = (breakMinutes ?? state.breakMinutes)
-        .clamp(kMinTimerMinutes, kMaxTimerMinutes);
-    final c =
-        (cycles ?? state.cycles).clamp(kMinPomodoroCycles, kMaxPomodoroCycles);
+    final w = (workMinutes ?? state.workMinutes).clamp(
+      kMinTimerMinutes,
+      kMaxTimerMinutes,
+    );
+    final b = (breakMinutes ?? state.breakMinutes).clamp(
+      kMinTimerMinutes,
+      kMaxTimerMinutes,
+    );
+    final c = (cycles ?? state.cycles).clamp(
+      kMinPomodoroCycles,
+      kMaxPomodoroCycles,
+    );
     state = state.copyWith(workMinutes: w, breakMinutes: b, cycles: c);
     final prefs = ref.read(sharedPreferencesProvider);
     prefs.setInt(_kWork, w);
@@ -346,8 +408,10 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       phase: TimerPhase.work,
       cycle: 1,
     );
+    _persistActiveTimer();
     _publishPresence(status: PresenceStatus.studying, startedAt: now);
     _startTick();
+    unawaited(_showTimerNotification(requestPermission: true));
   }
 
   /// Kullanıcı elle durdurur: çalışma fazındaysa geçen süreyi kaydet, çevrimdışına çek.
@@ -411,7 +475,9 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
             : PresenceStatus.onBreak,
         startedAt: now,
       );
+      _persistActiveTimer();
       _startTick();
+      unawaited(_syncTimerNotification());
     }
 
     // Çalışma fazı hedefe ulaştıysa süreyi kaydet (mola kaydedilmez).
@@ -432,19 +498,26 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       eventSeq: lastEvent != null ? state.eventSeq + 1 : state.eventSeq,
       lastEvent: lastEvent,
     );
+    _clearActiveTimer();
     _publishPresence(status: PresenceStatus.offline, startedAt: null);
+    unawaited(ref.read(timerNotificationServiceProvider).cancel());
   }
 
   /// Tamamlanan bir aralığı `study_sessions`'a yazar.
   Future<void> _recordSession(
-      DateTime start, DateTime end, String? subjectId) async {
+    DateTime start,
+    DateTime end,
+    String? subjectId,
+  ) async {
     final user = ref.read(authStateProvider).value;
     if (user == null) return;
 
     final duration = end.difference(start).inSeconds;
     if (duration <= 0) return;
 
-    await ref.read(studyRepositoryProvider).addSession(
+    await ref
+        .read(studyRepositoryProvider)
+        .addSession(
           StudySession(
             id: _uuid.v4(),
             userId: user.id,
@@ -474,10 +547,85 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       todaySeconds: ref.read(todayRecordedSecondsProvider),
     );
     // Yangına-at-unut: presence yazımı başarısız olsa bile çalışma akışı sürmeli.
-    ref.read(presenceRepositoryProvider).setPresence(presence).catchError((_) {});
+    ref
+        .read(presenceRepositoryProvider)
+        .setPresence(presence)
+        .catchError((_) {});
+  }
+
+  void _persistActiveTimer() {
+    if (!state.isRunning || state.startedAt == null) return;
+    final prefs = ref.read(sharedPreferencesProvider);
+    prefs.setString(_kActiveStartedAt, state.startedAt!.toIso8601String());
+    prefs.setString(_kActiveMode, state.mode.name);
+    prefs.setString(_kActivePhase, state.phase.name);
+    prefs.setInt(_kActiveCycle, state.cycle);
+    prefs.setString(_kActiveSubject, state.subjectId ?? '');
+  }
+
+  void _clearActiveTimer() {
+    final prefs = ref.read(sharedPreferencesProvider);
+    prefs.remove(_kActiveStartedAt);
+    prefs.remove(_kActiveMode);
+    prefs.remove(_kActivePhase);
+    prefs.remove(_kActiveCycle);
+    prefs.remove(_kActiveSubject);
+  }
+
+  Future<void> _showTimerNotification({bool requestPermission = false}) async {
+    if (requestPermission) {
+      await ref
+          .read(timerNotificationServiceProvider)
+          .requestPermissionIfNeeded();
+    }
+    await _syncTimerNotification();
+  }
+
+  Future<void> _syncTimerNotification() async {
+    if (!state.isRunning || state.startedAt == null) {
+      await ref.read(timerNotificationServiceProvider).cancel();
+      return;
+    }
+    await ref
+        .read(timerNotificationServiceProvider)
+        .showRunning(_notificationSnapshot(DateTime.now()));
+  }
+
+  TimerNotificationSnapshot _notificationSnapshot(DateTime now) {
+    final startedAt = state.startedAt!;
+    final elapsed = now.difference(startedAt).inSeconds;
+    final target = state.phaseTargetSeconds;
+    final remaining = target == null
+        ? null
+        : (target - elapsed).clamp(0, target).toInt();
+    final phaseLabel = switch (state.mode) {
+      TimerMode.stopwatch => 'Çalışma',
+      TimerMode.countdown => 'Geri sayım',
+      TimerMode.pomodoro =>
+        state.phase == TimerPhase.work
+            ? 'Çalışma ${state.cycle}/${state.cycles}'
+            : 'Mola',
+    };
+    final title = state.phase == TimerPhase.rest
+        ? 'Odak Kampı molada'
+        : 'Odak Kampı çalışıyor';
+    return TimerNotificationSnapshot(
+      title: title,
+      modeLabel: switch (state.mode) {
+        TimerMode.stopwatch => 'Kronometre',
+        TimerMode.countdown => 'Geri sayım',
+        TimerMode.pomodoro => 'Pomodoro',
+      },
+      phaseLabel: phaseLabel,
+      startedAt: startedAt,
+      elapsedSeconds: elapsed,
+      remainingSeconds: remaining,
+      isCountingDown: target != null,
+    );
   }
 }
 
 final studyTimerProvider =
     NotifierProvider<StudyTimerNotifier, StudyTimerState>(
-        StudyTimerNotifier.new);
+      StudyTimerNotifier.new,
+    );

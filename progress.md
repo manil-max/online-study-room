@@ -40,13 +40,6 @@
 - Değişiklik release/update hazırlanırken `app/android/app/src/main/AndroidManifest.xml` içindeki `android:label` üzerinden yapılacak.
 - `pubspec.yaml` proje adı şimdilik değiştirilmez; kullanıcıya görünen ad yeterli.
 
-### WP-2: Persistent Notification + Background Timer
-- **Backlog:** Persistent notification, arka planda süre tutma
-- **Bağımlılık:** Claude'un kamp ateşi/timer işi ve WP-1 bitmeli.
-- **SAHİP dosyalar:** `app/lib/data/providers/study_providers.dart`, `app/lib/features/classroom/widgets/study_timer_card.dart`, Android notification/service dosyaları
-- **DOKUNMA:** `profile/*`, `auth_repository*`
-- **Not:** Bildirimden başlat/durdur/mola aksiyonları timer state machine ile aynı anda tasarlanmalı.
-
 ### WP-3: Auth Recovery
 - **Backlog:** E-posta doğrulama + şifre sıfırlama
 - **Bağımlılık:** Claude'un auth/profile değişiklikleri commitlenmeli.
@@ -151,6 +144,13 @@
 
 > Son 5 iş. Ajan bunları okuyarak "neye dokunma, ne değişti" anlar.
 > Daha eski işler aşağıdaki Geçmiş tablosuna düşer.
+
+### WP-2: Persistent Notification + Background Timer — 2026-07-10 ✅
+- **Değişen dosyalar:** `app/lib/core/notifications/timer_notification_service.dart`, `app/lib/data/providers/study_providers.dart`, `app/lib/main.dart`, `app/android/app/src/main/AndroidManifest.xml`, `app/android/app/build.gradle.kts`, `app/pubspec.yaml`, `app/pubspec.lock`, `app/test/core/timer_notification_service_test.dart`, `app/test/features/timer_state_machine_test.dart`, `app/test/widget_test.dart`
+- **Ne yapıldı:** `flutter_local_notifications` ile Android kalıcı sayaç bildirimi eklendi. Sayaç çalışırken bildirim chronometer gösterir ve `Durdur` aksiyonu uygulama açıkken timer state machine'e bağlanır. Aktif timer başlangıcı/modu/fazı/konusu `SharedPreferences` ile saklanır; uygulama yeniden açılınca timer kaldığı yerden wall-clock süreyle devam eder. Android 13+ `POST_NOTIFICATIONS` izni ve desugaring config eklendi.
+- **Dokunma:** `profile/*`, `auth_repository*`, `home/*`, `presence_providers.dart`, Supabase migration dosyaları.
+- **Kalan:** Ayrı `Başlat`/manuel `Mola` bildirim aksiyonları eklenmedi; mevcut ürün kararında mola manuel buton değil, pomodoro fazı olarak çalışıyor.
+- **Test:** `flutter analyze` temiz. `flutter test --dart-define-from-file=env.json` tüm testler geçti. `flutter build apk --debug --dart-define-from-file=env.json` geçti.
 
 ### WP-1: Android Widget Foundation — 2026-07-10 ✅
 - **Commit:** `616a92d`

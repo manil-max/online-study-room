@@ -1,5 +1,25 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:online_study_room/core/notifications/timer_notification_service.dart';
+import 'package:online_study_room/core/prefs/app_prefs.dart';
 import 'package:online_study_room/data/providers/study_providers.dart';
+
+class _NoopTimerNotificationService implements TimerNotificationGateway {
+  const _NoopTimerNotificationService();
+
+  @override
+  Stream<TimerNotificationAction> get commands => const Stream.empty();
+
+  @override
+  Future<void> cancel() async {}
+
+  @override
+  Future<void> requestPermissionIfNeeded() async {}
+
+  @override
+  Future<void> showRunning(TimerNotificationSnapshot snapshot) async {}
+}
 
 void main() {
   group('timerPhaseTargetSeconds', () {
@@ -106,38 +126,101 @@ void main() {
       expect(t.event, TimerEvent.allDone);
     });
 
-    test('tam pomodoro dizisi: N döngü → N çalışma kaydı + doğru faz sırası', () {
-      const cycles = 3;
-      var phase = TimerPhase.work;
-      var cycle = 1;
-      var workRecords = 0;
-      final events = <TimerEvent>[];
+    test(
+      'tam pomodoro dizisi: N döngü → N çalışma kaydı + doğru faz sırası',
+      () {
+        const cycles = 3;
+        var phase = TimerPhase.work;
+        var cycle = 1;
+        var workRecords = 0;
+        final events = <TimerEvent>[];
 
-      // Her faz hedefe ulaştığında geçişi uygula; bitene dek yürüt.
-      for (var guard = 0; guard < 50; guard++) {
-        final t = nextPhaseTransition(
-          mode: TimerMode.pomodoro,
-          phase: phase,
-          cycle: cycle,
-          cycles: cycles,
+        // Her faz hedefe ulaştığında geçişi uygula; bitene dek yürüt.
+        for (var guard = 0; guard < 50; guard++) {
+          final t = nextPhaseTransition(
+            mode: TimerMode.pomodoro,
+            phase: phase,
+            cycle: cycle,
+            cycles: cycles,
+          );
+          if (t.recordWork) workRecords++;
+          events.add(t.event);
+          if (t.finished) break;
+          phase = t.nextPhase;
+          cycle = t.nextCycle;
+        }
+
+        // 3 döngü = 3 çalışma kaydı.
+        expect(workRecords, cycles);
+        // Olay sırası: work,break,work,break,work(all done)
+        expect(events, [
+          TimerEvent.workDone,
+          TimerEvent.breakDone,
+          TimerEvent.workDone,
+          TimerEvent.breakDone,
+          TimerEvent.allDone,
+        ]);
+      },
+    );
+  });
+
+  group('StudyTimerNotifier persistence', () {
+    test(
+      'start persists active timer and a new container restores it',
+      () async {
+        SharedPreferences.setMockInitialValues({});
+        final prefs = await SharedPreferences.getInstance();
+        final container = ProviderContainer(
+          overrides: [
+            sharedPreferencesProvider.overrideWithValue(prefs),
+            timerNotificationServiceProvider.overrideWithValue(
+              const _NoopTimerNotificationService(),
+            ),
+          ],
         );
-        if (t.recordWork) workRecords++;
-        events.add(t.event);
-        if (t.finished) break;
-        phase = t.nextPhase;
-        cycle = t.nextCycle;
-      }
+        addTearDown(container.dispose);
 
-      // 3 döngü = 3 çalışma kaydı.
-      expect(workRecords, cycles);
-      // Olay sırası: work,break,work,break,work(all done)
-      expect(events, [
-        TimerEvent.workDone,
-        TimerEvent.breakDone,
-        TimerEvent.workDone,
-        TimerEvent.breakDone,
-        TimerEvent.allDone,
-      ]);
+        container.read(studyTimerProvider.notifier).start();
+        final running = container.read(studyTimerProvider);
+
+        expect(running.isRunning, isTrue);
+        expect(prefs.getString('timer_active_started_at'), isNotNull);
+
+        final restoredContainer = ProviderContainer(
+          overrides: [
+            sharedPreferencesProvider.overrideWithValue(prefs),
+            timerNotificationServiceProvider.overrideWithValue(
+              const _NoopTimerNotificationService(),
+            ),
+          ],
+        );
+        addTearDown(restoredContainer.dispose);
+
+        final restored = restoredContainer.read(studyTimerProvider);
+        expect(restored.isRunning, isTrue);
+        expect(restored.startedAt, isNotNull);
+        expect(restored.mode, running.mode);
+      },
+    );
+
+    test('stop clears active timer persistence', () async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      final container = ProviderContainer(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          timerNotificationServiceProvider.overrideWithValue(
+            const _NoopTimerNotificationService(),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      container.read(studyTimerProvider.notifier).start();
+      await container.read(studyTimerProvider.notifier).stop();
+
+      expect(container.read(studyTimerProvider).isRunning, isFalse);
+      expect(prefs.getString('timer_active_started_at'), isNull);
     });
   });
 }
