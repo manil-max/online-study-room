@@ -9,10 +9,11 @@ import '../../../data/models/daily_stat.dart';
 import '../../../data/models/profile.dart';
 import '../../classroom/widgets/class_switcher.dart';
 import 'daily_bar_chart.dart';
+import 'daily_line_chart.dart';
 import 'stat_heat_table.dart';
 
 /// Seçilebilir dönem (sınıf leaderboard'u için).
-enum _Period { today, week, month }
+enum _Period { today, week, month, all }
 
 /// Sınıf (ortak) istatistikleri: dönem seçici + kıyaslamalı sıralama (leaderboard)
 /// + sınıf toplamı/ortalaması. Tam şeffaf (project.md §3.4): herkes herkesi görür.
@@ -44,6 +45,7 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
         _Period.today => (dayOf(now), now),
         _Period.week => (startOfWeek(now), now),
         _Period.month => (startOfMonth(now), now),
+        _Period.all => (DateTime(2000), now),
       };
 
   @override
@@ -95,6 +97,25 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
     final todayGroupTotal = groupDay[dayOf(now)] ?? 0;
     final groupStreak = currentStreak(const [], goalSeconds, totals: groupDay);
 
+    // Tüm-zamanlar metrikleri (§WP-10) — dönem seçiminden bağımsız.
+    final allTimeTotal = totalOfDayTotals(groupDay);
+    final activeDays = activeDayCount(groupDay);
+    final peak = peakDay(groupDay);
+    final recordStreak = longestStudyStreak(const [], totals: groupDay);
+    // En istikrarlı üye: en uzun (ardışık çalışılan gün) serisi.
+    String? consistentName;
+    var consistentStreak = 0;
+    for (final m in widget.members) {
+      final st =
+          longestStudyStreak(const [], totals: userDayTotals(widget.stats, m.id));
+      if (st > consistentStreak) {
+        consistentStreak = st;
+        consistentName = !m.isActive
+            ? 'Eski Grup Üyesi'
+            : (m.displayName.isEmpty ? 'İsimsiz' : m.displayName);
+      }
+    }
+
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -123,8 +144,9 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
           child: SegmentedButton<_Period>(
             segments: const [
               ButtonSegment(value: _Period.today, label: Text('Bugün')),
-              ButtonSegment(value: _Period.week, label: Text('Bu hafta')),
-              ButtonSegment(value: _Period.month, label: Text('Bu ay')),
+              ButtonSegment(value: _Period.week, label: Text('Hafta')),
+              ButtonSegment(value: _Period.month, label: Text('Ay')),
+              ButtonSegment(value: _Period.all, label: Text('Tümü')),
             ],
             selected: {_period},
             onSelectionChanged: (s) => setState(() => _period = s.first),
@@ -170,6 +192,38 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
               ],
             ),
           ),
+        ),
+        const SizedBox(height: 16),
+        // Grup eğilimi — daha uzun pencere (çizgi grafik, yeni tür §WP-10).
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Text('Grup eğilimi (son 30 gün)',
+                      style: theme.textTheme.titleSmall),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  height: 160,
+                  child: DailyLineChart(
+                      days: lastNDays(const [], 30, totals: groupDay)),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        _AllTimeCard(
+          total: allTimeTotal,
+          activeDays: activeDays,
+          peak: peak,
+          recordStreak: recordStreak,
+          consistentName: consistentName,
+          consistentStreak: consistentStreak,
         ),
         const SizedBox(height: 16),
         Text('Karşılaştırma tablosu', style: theme.textTheme.titleMedium),
@@ -291,6 +345,159 @@ class _GroupGoalCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Tüm-zamanlar sınıf metrikleri kartı (§WP-10): grup geneli toplam, aktif gün
+/// sayısı, en yoğun gün, grup rekor serisi ve en istikrarlı üye.
+class _AllTimeCard extends StatelessWidget {
+  const _AllTimeCard({
+    required this.total,
+    required this.activeDays,
+    required this.peak,
+    required this.recordStreak,
+    required this.consistentName,
+    required this.consistentStreak,
+  });
+
+  final int total;
+  final int activeDays;
+  final DayTotal? peak;
+  final int recordStreak;
+  final String? consistentName;
+  final int consistentStreak;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final fire = subjectColor('chart-5');
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.auto_graph, size: 20, color: theme.colorScheme.primary),
+                const SizedBox(width: 6),
+                Text('Tüm zamanlar', style: theme.textTheme.titleMedium),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _Metric(
+                    label: 'Grup toplamı',
+                    value: formatHuman(total),
+                  ),
+                ),
+                Expanded(
+                  child: _Metric(
+                    label: 'Aktif gün',
+                    value: '$activeDays',
+                  ),
+                ),
+                Expanded(
+                  child: _Metric(
+                    label: 'Rekor seri',
+                    value: recordStreak > 0 ? '$recordStreak gün' : '—',
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Divider(height: 1, color: theme.colorScheme.outlineVariant),
+            const SizedBox(height: 12),
+            _AllTimeRow(
+              icon: Icons.event_available_outlined,
+              label: 'En yoğun gün',
+              value: peak == null
+                  ? '—'
+                  : '${peak!.day.day}.${peak!.day.month}.${peak!.day.year} · '
+                      '${formatHuman(peak!.seconds)}',
+            ),
+            const SizedBox(height: 8),
+            _AllTimeRow(
+              icon: Icons.local_fire_department,
+              iconColor: fire,
+              label: 'En istikrarlı üye',
+              value: consistentName == null || consistentStreak <= 0
+                  ? '—'
+                  : '$consistentName · $consistentStreak gün',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _Metric extends StatelessWidget {
+  const _Metric({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.labelSmall
+                ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+        const SizedBox(height: 4),
+        Text(value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.titleMedium
+                ?.copyWith(fontWeight: FontWeight.w700)),
+      ],
+    );
+  }
+}
+
+class _AllTimeRow extends StatelessWidget {
+  const _AllTimeRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+    this.iconColor,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color? iconColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      children: [
+        Icon(icon,
+            size: 18, color: iconColor ?? theme.colorScheme.onSurfaceVariant),
+        const SizedBox(width: 8),
+        Text(label,
+            style: theme.textTheme.bodyMedium
+                ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+        const Spacer(),
+        Flexible(
+          child: Text(value,
+              textAlign: TextAlign.end,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodyMedium
+                  ?.copyWith(fontWeight: FontWeight.w600)),
+        ),
+      ],
     );
   }
 }

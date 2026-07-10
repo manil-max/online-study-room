@@ -202,4 +202,35 @@ void main() {
     ];
     expect(longestStudyStreak(s), 3);
   });
+
+  group('tüm-zamanlar metrikleri (gün→saniye haritası, §WP-10)', () {
+    final totals = {
+      DateTime(2026, 6, 18): 600,
+      DateTime(2026, 6, 19): 0, // çalışılmamış
+      DateTime(2026, 6, 20): 1500,
+      DateTime(2026, 6, 21): 1500, // tepe eşitliği → en erken (20) kazanır
+    };
+
+    test('totalOfDayTotals tüm günleri toplar', () {
+      expect(totalOfDayTotals(totals), 3600);
+      expect(totalOfDayTotals(const {}), 0);
+    });
+
+    test('activeDayCount yalnız >0 günleri sayar', () {
+      expect(activeDayCount(totals), 3);
+      expect(activeDayCount(const {}), 0);
+    });
+
+    test('peakDay en yoğun günü verir, eşitlikte en erken', () {
+      final peak = peakDay(totals);
+      expect(peak, isNotNull);
+      expect(peak!.seconds, 1500);
+      expect(peak.day, DateTime(2026, 6, 20));
+    });
+
+    test('peakDay veri yoksa/hepsi 0 ise null', () {
+      expect(peakDay(const {}), isNull);
+      expect(peakDay({DateTime(2026, 6, 18): 0}), isNull);
+    });
+  });
 }

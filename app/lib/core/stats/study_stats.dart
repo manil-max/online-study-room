@@ -282,3 +282,30 @@ List<MapEntry<String, int>> leaderboard(Iterable<StudySession> sessions) {
     ..sort((a, b) => b.value.compareTo(a.value));
   return entries;
 }
+
+// ── Gün→saniye haritası üzerinden tüm-zamanlar metrikleri (§WP-10) ───────────
+// Aşağıdakiler bir `Map<DateTime,int>` (gün → saniye) alır; hem grup
+// (`groupDayTotals`) hem kişi (`userDayTotals`/`dailyTotals`) için kullanılır.
+
+/// Haritadaki tüm günlerin toplamı (tüm-zamanlar toplam süre, saniye).
+int totalOfDayTotals(Map<DateTime, int> dayTotals) =>
+    dayTotals.values.fold<int>(0, (sum, s) => sum + s);
+
+/// Çalışılan (toplamı > 0) farklı gün sayısı.
+int activeDayCount(Map<DateTime, int> dayTotals) =>
+    dayTotals.values.where((s) => s > 0).length;
+
+/// En yoğun gün (en yüksek toplam süreli gün) ve süresi. Veri yoksa `null`.
+/// Eşitlikte en erken gün kazanır (deterministik).
+DayTotal? peakDay(Map<DateTime, int> dayTotals) {
+  DayTotal? best;
+  for (final entry in dayTotals.entries) {
+    if (entry.value <= 0) continue;
+    if (best == null ||
+        entry.value > best.seconds ||
+        (entry.value == best.seconds && entry.key.isBefore(best.day))) {
+      best = DayTotal(entry.key, entry.value);
+    }
+  }
+  return best;
+}

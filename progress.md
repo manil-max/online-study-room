@@ -41,13 +41,6 @@
 - Sınıf ekranındaki sohbet girişi ayrı **Sohbet** ekranına taşındı; grup bilgileri ve yönetim **Ayarlar** girişinden açılır.
 - Gamification migration'ı üretim Supabase'e uygulanmadan da Başarılar kartı varsayılan profil ile görünür; `0017_gamification_profiles.sql` uygulanınca kalıcı seri koruma verisine otomatik döner.
 
-### WP-10: Class Metrics Pack
-- **Backlog:** Daha fazla sınıf metriği, grup çizgi grafiği, tüm zamanlar istatistiği, yeni grafik türleri
-- **Bağımlılık:** İstenen metrikler seçilmeli.
-- **SAHİP dosyalar:** `app/lib/core/stats/*`, stats/dashboard chart widget'ları, gerekiyorsa RPC migration
-- **DOKUNMA:** auth/profile/native Android
-- **Not:** `study_sessions.group_id` geri getirilmez; grup metrikleri üyelik join'iyle hesaplanır.
-
 ### WP-11: Windows Desktop Track
 - **Backlog:** Windows build + widget, Windows installer
 - **Bağımlılık:** Ana uygulama analyze/test temiz olmalı.
@@ -96,6 +89,13 @@
 
 > Son 5 iş. Ajan bunları okuyarak "neye dokunma, ne değişti" anlar.
 > Daha eski işler aşağıdaki Geçmiş tablosuna düşer.
+
+### WP-10: Class Metrics Pack — 2026-07-10 ✅
+- **Değişen dosyalar:** `core/stats/study_stats.dart` (+`totalOfDayTotals`/`activeDayCount`/`peakDay`), `features/stats/widgets/class_stats_view.dart`, `test/core/study_stats_test.dart`
+- **Ne yapıldı:** Grup istatistik sekmesine tüm-zamanlar metrikleri eklendi. Dönem seçicisine **"Tümü"** dönemi (leaderboard/tablo/özet tüm-zamanları kapsar). Yeni **"Grup eğilimi (son 30 gün)" çizgi grafiği** (mevcut 7 günlük çubuğa ek, `DailyLineChart` yeniden kullanıldı). Yeni **"Tüm zamanlar" kartı:** grup toplamı, aktif gün sayısı, grup rekor serisi, en yoğun gün (tarih+süre), en istikrarlı üye (en uzun ardışık çalışma serisi). Metrikler saf fonksiyonlarla (`Map<DateTime,int>` üzerinde) hesaplanır — hem grup hem kişi için kullanılabilir.
+- **Kararlar:** **Migration gerekmedi** — `group_daily_totals` RPC zaten tüm-zamanlar (pencere sınırsız) per-user-per-gün veriyi döndürüyor; tüm-zamanlar metrikleri istemci tarafında `DailyStat` agregasyonuyla hesaplanır. Grup metrikleri üyelik join'iyle (RPC) gelir; `study_sessions.group_id` geri getirilmedi.
+- **Dokunma:** auth/profile/native Android, dashboard/home kartları (WP-16/WP-4), classroom/campfire. Codex'in v3 hazırlık/WP dosyalarına dokunulmadı.
+- **Test:** `flutter analyze` tüm proje temiz. `flutter test --concurrency=1 --dart-define-from-file=env.json` 203 test geçti (tüm-zamanlar metrikleri için 4 yeni birim testi dahil). Grup stats görünümü test-render PNG'siyle taşmasız doğrulandı.
 
 ### WP-9: Gamification — 2026-07-10 ✅
 - **Değişen dosyalar:** yeni `app/lib/core/stats/gamification.dart`, yeni `app/lib/data/models/gamification_profile.dart`, yeni `gamification_repository` çift implementasyonu, yeni `app/lib/data/providers/gamification_providers.dart`, `app/lib/features/profile/profile_screen.dart`, yeni `app/lib/features/profile/widgets/gamification_card.dart`, yeni gamification testleri, yeni `supabase/migrations/0017_gamification_profiles.sql`
