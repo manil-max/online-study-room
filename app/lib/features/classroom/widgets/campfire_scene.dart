@@ -95,7 +95,31 @@ class _Camper {
     final diff = now.difference(s).inSeconds;
     return diff > 0 ? diff : 0;
   }
+
+  /// Üyenin o andaki duruşu. Çevrimdışı → uyur, molada → boşta; çalışan üye
+  /// çoğunlukla laptopla çalışır ama her döngünün sonunda kısa süre ateşte
+  /// marşmelov kızartır (üyeden üyeye kayık, sahne canlansın diye).
+  CritterPose poseAt(DateTime now) {
+    switch (status) {
+      case PresenceStatus.offline:
+        return CritterPose.sleepy;
+      case PresenceStatus.onBreak:
+        return CritterPose.idle;
+      case PresenceStatus.studying:
+        final inCycle = liveExtra(now) % _kPoseCycleSeconds;
+        return inCycle >= _kRoastStartSeconds
+            ? CritterPose.roasting
+            : CritterPose.working;
+    }
+  }
+
+  bool roastingAt(DateTime now) => poseAt(now) == CritterPose.roasting;
 }
+
+/// Poz döngüsü: çalışan üye her [_kPoseCycleSeconds] sn'de bir, son
+/// (döngü − [_kRoastStartSeconds]) sn boyunca marşmelov kızartır; gerisinde laptop.
+const int _kPoseCycleSeconds = 170;
+const int _kRoastStartSeconds = 135;
 
 /// Sahnenin gece atmosferli dış çerçevesi (koyu gökyüzü gradyanı + yuvarlak köşe).
 class _SceneFrame extends StatelessWidget {
@@ -294,7 +318,7 @@ class _SceneLayoutState extends State<_SceneLayout>
                           fireY: fireY,
                           sticks: [
                             for (final p in placements)
-                              if (p.camper.studying)
+                              if (p.camper.roastingAt(DateTime.now()))
                                 MarshStick(
                                   x: p.x,
                                   y: p.y -
@@ -453,6 +477,7 @@ class _CritterBody extends StatelessWidget {
     final studying = camper.studying;
     final offline = camper.status == PresenceStatus.offline;
     final box = boxFor(scale);
+    final species = speciesFor(camper.animal.id);
 
     final baseOpacity = studying
         ? (back ? 0.86 : 1.0)
@@ -466,28 +491,30 @@ class _CritterBody extends StatelessWidget {
         onTap: () => _showCamperDetails(context, camper),
         child: AnimatedBuilder(
           animation: controller,
-          builder: (context, child) {
+          builder: (context, _) {
             final t = controller.value;
+            // Duruş zamana göre hesaplanır (laptop ↔ marşmelov dönüşümü);
+            // painter yalnız duruş değişince yeniden çizer.
+            final pose = camper.poseAt(DateTime.now());
             final breath =
                 math.sin((t * (studying ? 1.6 : 1.0) + phase) * 2 * math.pi);
             final sy = 1 + breath * (studying ? 0.035 : 0.02);
             final dy = -breath.abs() * (studying ? 2.0 : 0.8);
             return Transform.translate(
               offset: Offset(0, dy),
-              child: Transform.scale(scaleY: sy, scaleX: 2 - sy, child: child),
+              child: Transform.scale(
+                scaleY: sy,
+                scaleX: 2 - sy,
+                child: Opacity(
+                  opacity: baseOpacity,
+                  child: CustomPaint(
+                    size: Size(box, box),
+                    painter: CritterPainter(species: species, pose: pose),
+                  ),
+                ),
+              ),
             );
           },
-          child: Opacity(
-            opacity: baseOpacity,
-            child: CustomPaint(
-              size: Size(box, box),
-              painter: CritterPainter(
-                species: speciesFor(camper.animal.id),
-                studying: studying,
-                asleep: !studying,
-              ),
-            ),
-          ),
         ),
       ),
     );
@@ -575,8 +602,7 @@ void _showCamperDetails(BuildContext context, _Camper camper) {
                   size: const Size(72, 72),
                   painter: CritterPainter(
                     species: speciesFor(camper.animal.id),
-                    studying: false,
-                    asleep: false,
+                    pose: CritterPose.idle,
                   ),
                 ),
                 const SizedBox(height: 8),

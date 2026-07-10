@@ -709,18 +709,28 @@ CritterSpecies speciesFor(String id) {
   }
 }
 
-/// Kütüğünde oturan tombul hayvan (Party Animals ruhu, elle çizim). [studying]
-/// ise kolunu kaldırır (marşmelov overlay'de); [asleep] ise gözleri kapalıdır.
+/// Bir hayvanın sahnedeki duruşu (§2G, referans katalog pozları).
+/// - [working]: kütüğünde **laptopla** çalışır (çalışan üye — asıl poz).
+/// - [roasting]: ateşe **dala geçmiş marşmelov** uzatır (kol kalkık; marşmelov
+///   overlay'de çizilir). Çalışan üye ara sıra bu poza geçer.
+/// - [idle]: uyanık ama boşta oturur (molada).
+/// - [sleepy]: uyur — gözler kapalı, baş yana eğik (çevrimdışı).
+enum CritterPose { working, roasting, idle, sleepy }
+
+/// Kütüğünde oturan tombul hayvan (Party Animals ruhu, elle çizim). Duruş
+/// [pose] ile belirlenir; ateş yönünden gelen sıcak kenar-ışığı hacim katar.
 class CritterPainter extends CustomPainter {
   CritterPainter({
     required this.species,
-    required this.studying,
-    required this.asleep,
+    required this.pose,
   });
 
   final CritterSpecies species;
-  final bool studying;
-  final bool asleep;
+  final CritterPose pose;
+
+  bool get _asleep => pose == CritterPose.sleepy;
+  bool get _roasting => pose == CritterPose.roasting;
+  bool get _working => pose == CritterPose.working;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -793,6 +803,12 @@ class CritterPainter extends CustomPainter {
       Paint()..color = species.belly,
     );
 
+    // — Ateşten sıcak kenar-ışığı (gövdeye hacim; alt-öne düşer) —
+    _rimLight(canvas, bodyPath, bodyRect);
+
+    // — Laptop (yalnız çalışırken; kollar üstünde durur) —
+    if (_working) _laptop(canvas, bodyCx, bodyCy + 9);
+
     // — Kollar —
     _arms(canvas, bodyCx, bodyCy, bodyW);
 
@@ -801,6 +817,94 @@ class CritterPainter extends CustomPainter {
 
     // — Yüz —
     _face(canvas, bodyCx, bodyCy - 4);
+  }
+
+  /// Ateş yönünden (alt-ön) gelen sıcak parıltı — gövdeye yumuşak hacim katar.
+  /// Gövde yoluna kırpılır ki arka plana taşmasın.
+  void _rimLight(Canvas canvas, Path bodyPath, Rect bodyRect) {
+    canvas.save();
+    canvas.clipPath(bodyPath);
+    final glow = Rect.fromCenter(
+      center: Offset(bodyRect.center.dx, bodyRect.bottom - 4),
+      width: bodyRect.width * 1.2,
+      height: bodyRect.height * 1.05,
+    );
+    canvas.drawOval(
+      glow,
+      Paint()
+        ..blendMode = BlendMode.plus
+        ..shader = RadialGradient(
+          colors: [
+            const Color(0xFFFFB25A).withValues(alpha: 0.26),
+            const Color(0xFFFF8A3A).withValues(alpha: 0.10),
+            const Color(0x00FF8A3A),
+          ],
+          stops: const [0, 0.55, 1],
+        ).createShader(glow),
+    );
+    canvas.restore();
+  }
+
+  /// Açık laptop: klavye tabanı + ekran; ekranda soluk mavi parıltı ("çalışıyor").
+  void _laptop(Canvas canvas, double cx, double cy) {
+    canvas.save();
+    canvas.translate(cx, cy);
+
+    // Ekranın öne vuran parıltısı (yumuşak).
+    canvas.drawOval(
+      Rect.fromCenter(center: const Offset(0, -3), width: 30, height: 22),
+      Paint()
+        ..blendMode = BlendMode.plus
+        ..shader = RadialGradient(
+          colors: [
+            const Color(0xFF9AD6FF).withValues(alpha: 0.28),
+            const Color(0x009AD6FF),
+          ],
+        ).createShader(
+            Rect.fromCenter(center: const Offset(0, -3), width: 30, height: 22)),
+    );
+
+    // Taban (klavye) — hafif perspektif yamuk.
+    final base = Path()
+      ..moveTo(-10, 4)
+      ..lineTo(10, 4)
+      ..lineTo(13, 9)
+      ..lineTo(-13, 9)
+      ..close();
+    canvas.drawPath(base, Paint()..color = const Color(0xFF3B4048));
+    canvas.drawPath(
+      base,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 0.7
+        ..color = const Color(0xFF20242A),
+    );
+
+    // Ekran gövdesi + cam.
+    final shell = RRect.fromRectAndRadius(
+        const Rect.fromLTWH(-11, -9.5, 22, 14.5), const Radius.circular(2.4));
+    canvas.drawRRect(shell, Paint()..color = const Color(0xFF23272E));
+    final glassRect = const Rect.fromLTWH(-9, -8, 18, 11.5);
+    final glass =
+        RRect.fromRectAndRadius(glassRect, const Radius.circular(1.6));
+    canvas.drawRRect(
+      glass,
+      Paint()
+        ..shader = const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFFA9DCFF), Color(0xFF5C9FE0)],
+        ).createShader(glassRect),
+    );
+    // Ekran satır izleri.
+    final line = Paint()
+      ..color = Colors.white.withValues(alpha: 0.5)
+      ..strokeWidth = 0.9
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(const Offset(-6, -5), const Offset(4, -5), line);
+    canvas.drawLine(const Offset(-6, -2), const Offset(2, -2), line);
+    canvas.drawLine(const Offset(-6, 1), const Offset(5, 1), line);
+    canvas.restore();
   }
 
   void _log(Canvas canvas, double cx, double y) {
@@ -839,13 +943,39 @@ class CritterPainter extends CustomPainter {
 
   void _arms(Canvas canvas, double cx, double cy, double bodyW) {
     final armColor = _darken(species.body, 0.06);
-    // Sol kol (dinlenirken aşağı; her durumda gövdeye yaslı).
+    final pawColor = _lighten(armColor, 0.05);
+
+    // Çalışırken iki kol öne, patiler laptobun üstünde (klavyede).
+    if (_working) {
+      for (final side in [-1.0, 1.0]) {
+        canvas.save();
+        canvas.translate(cx + side * (bodyW / 2 - 5), cy + 2);
+        canvas.rotate(side * 0.5);
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(
+              const Rect.fromLTWH(-4, -2, 8, 16), const Radius.circular(4)),
+          Paint()..color = armColor,
+        );
+        canvas.restore();
+      }
+      // Patiler laptop tabanının üstünde.
+      for (final dx in [-6.0, 6.0]) {
+        canvas.drawOval(
+          Rect.fromCenter(
+              center: Offset(cx + dx, cy + 13), width: 7, height: 5),
+          Paint()..color = pawColor,
+        );
+      }
+      return;
+    }
+
+    // Sol kol (aşağı; gövdeye yaslı).
     canvas.drawOval(
       Rect.fromCenter(
           center: Offset(cx - bodyW / 2 + 3, cy + 4), width: 9, height: 15),
       Paint()..color = armColor,
     );
-    if (studying) {
+    if (_roasting) {
       // Sağ kol kalkık (marşmelov çubuğunu tutar — overlay).
       canvas.save();
       canvas.translate(cx + bodyW / 2 - 4, cy - 2);
@@ -855,10 +985,10 @@ class CritterPainter extends CustomPainter {
             const Rect.fromLTWH(-4.5, -14, 9, 18), const Radius.circular(4.5)),
         Paint()..color = armColor,
       );
-      // Pati
-      canvas.drawCircle(const Offset(0, -13), 4, Paint()..color = _lighten(armColor, 0.05));
+      canvas.drawCircle(const Offset(0, -13), 4, Paint()..color = pawColor);
       canvas.restore();
     } else {
+      // Boşta/uyurken sağ kol da aşağı.
       canvas.drawOval(
         Rect.fromCenter(
             center: Offset(cx + bodyW / 2 - 3, cy + 4), width: 9, height: 15),
@@ -945,8 +1075,8 @@ class CritterPainter extends CustomPainter {
     }
 
     final eyeY = cy - 2;
-    if (asleep) {
-      // Kapalı gözler (kavis) + zzz atmosferi widget tarafında.
+    if (_asleep) {
+      // Kapalı gözler (kavis).
       final p = Paint()
         ..color = const Color(0xFF2A2A2A)
         ..style = PaintingStyle.stroke
@@ -957,6 +1087,24 @@ class CritterPainter extends CustomPainter {
           ..moveTo(cx + dx - 3, eyeY)
           ..quadraticBezierTo(cx + dx, eyeY + 3, cx + dx + 3, eyeY);
         canvas.drawPath(path, p);
+      }
+      // Küçük "z z z" (uyku).
+      final zPaint = Paint()
+        ..color = Colors.white.withValues(alpha: 0.75)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.1
+        ..strokeCap = StrokeCap.round;
+      var zx = cx + 12.0;
+      var zy = cy - 10.0;
+      for (final s in [3.2, 2.4, 1.7]) {
+        final z = Path()
+          ..moveTo(zx, zy)
+          ..lineTo(zx + s, zy)
+          ..lineTo(zx, zy + s)
+          ..lineTo(zx + s, zy + s);
+        canvas.drawPath(z, zPaint);
+        zx += s + 1.5;
+        zy -= s + 1.0;
       }
     } else {
       for (final dx in [-6.0, 6.0]) {
@@ -1003,7 +1151,5 @@ class CritterPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(CritterPainter old) =>
-      old.species != species ||
-      old.studying != studying ||
-      old.asleep != asleep;
+      old.species != species || old.pose != pose;
 }
