@@ -13,6 +13,7 @@ class Profile {
     this.avatarUrl,
     this.dailyGoalMinutes = kDefaultDailyGoalMinutes,
     this.isActive = true,
+    this.animal,
   });
 
   final String id;
@@ -24,11 +25,16 @@ class Profile {
   /// Günlük çalışma hedefi (dakika). Seri (streak) ve hedef ilerleme buna bağlı.
   final int dailyGoalMinutes;
 
+  /// Kamp ateşi sahnesinde kullanıcıyı temsil eden hayvanın kimliği (§2G).
+  /// Seçilmemişse null; UI kullanıcıya göre deterministik varsayılan atar.
+  final String? animal;
+
   Profile copyWith({
     String? displayName,
     String? avatarUrl,
     int? dailyGoalMinutes,
     bool? isActive,
+    String? animal,
   }) {
     return Profile(
       id: id,
@@ -37,6 +43,7 @@ class Profile {
       createdAt: createdAt,
       dailyGoalMinutes: dailyGoalMinutes ?? this.dailyGoalMinutes,
       isActive: isActive ?? this.isActive,
+      animal: animal ?? this.animal,
     );
   }
 
@@ -49,6 +56,7 @@ class Profile {
       dailyGoalMinutes:
           (map['daily_goal_minutes'] as int?) ?? kDefaultDailyGoalMinutes,
       isActive: map['is_active'] as bool? ?? true,
+      animal: map['animal'] as String?,
     );
   }
 
@@ -60,6 +68,7 @@ class Profile {
       'created_at': createdAt.toIso8601String(),
       'daily_goal_minutes': dailyGoalMinutes,
       'is_active': isActive,
+      'animal': animal,
     };
   }
 
@@ -71,9 +80,10 @@ class Profile {
       other.avatarUrl == avatarUrl &&
       other.createdAt == createdAt &&
       other.dailyGoalMinutes == dailyGoalMinutes &&
-      other.isActive == isActive;
+      other.isActive == isActive &&
+      other.animal == animal;
 
   @override
-  int get hashCode =>
-      Object.hash(id, displayName, avatarUrl, createdAt, dailyGoalMinutes, isActive);
+  int get hashCode => Object.hash(
+      id, displayName, avatarUrl, createdAt, dailyGoalMinutes, isActive, animal);
 }

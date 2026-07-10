@@ -15,7 +15,7 @@
 - **RLS helper'ları:** `is_group_member(gid)`, `can_see_user_sessions(target)`, `is_group_admin(gid)`
 - **Dashboard:** 6 sütunlu 2D matris, 19 kart türü, `grid_reflow.dart` motoru
 - **Tema:** 5 palet, koyu varsayılan, `AppTheme` palet-parametreli
-- **Son WP numarası:** 0 (WP sistemi yeni başlıyor, ilk WP → WP-1)
+- **Son WP numarası:** 16 (WP-1 aktif, WP-2..WP-16 plan kuyruğunda)
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
   - Flutter: `C:\src\flutter` · Android SDK: `C:\Android\Sdk`
@@ -27,7 +27,164 @@
 
 ## ⚡ Aktif İş Paketleri
 
-*(Şu an aktif WP yok. Planlayıcı ajan backlog'dan seçip buraya yazacak.)*
+### WP-1: Android Widget Foundation
+- **Ajan:** Codex
+- **Durum:** [~] Kod tamamlandı, global doğrulama Claude değişiklikleri nedeniyle bekliyor
+- **Backlog:** Android ana ekran widget sistemi
+- **Amaç:** `home_widget` tabanlı Android ana ekran widget altyapısını Claude'un kamp ateşi/profil/auth değişiklikleriyle çakışmadan hazırlamak.
+- **SAHİP dosyalar:**
+  - `app/pubspec.yaml` (yalnız widget dependency gerekiyorsa)
+  - `app/android/app/src/main/AndroidManifest.xml` (yalnız widget receiver/service kayıtları)
+  - `app/android/app/src/main/kotlin/**/widgets/*` (yeni)
+  - `app/android/app/src/main/res/xml/*widget*.xml` (yeni)
+  - `app/android/app/src/main/res/layout/*widget*.xml` (yeni)
+  - `app/lib/features/android_widgets/**` (yeni)
+  - `app/test/features/android_widgets/**` (yeni)
+- **DOKUNMA:**
+  - `app/lib/features/classroom/*`
+  - `app/lib/features/profile/*`
+  - `app/lib/data/repositories/auth_repository.dart`
+  - `app/lib/data/repositories/in_memory/in_memory_auth_repository.dart`
+  - `app/lib/data/repositories/supabase/supabase_auth_repository.dart`
+  - `app/lib/data/providers/study_providers.dart`
+  - `supabase/migrations/0014_profile_animal.sql`
+- **Adımlar:**
+  - [x] Mevcut Android paket yolunu ve Flutter embedding yapısını oku.
+  - [x] Widget türlerini minimum temelle ekle: timer, günlük/haftalık özet, grup leaderboard.
+  - [x] Flutter tarafında widget verisini hazırlayan izole servis/provider oluştur.
+  - [x] Android native tarafında küçük/orta/geniş boyut metadata ve layout'larını ekle.
+  - [x] Uygulama içinden widget verisini güncelleyen dar kapsamlı API yaz.
+  - [~] Test/analiz: WP-1 dosyaları temiz; global analyze/test Claude'un aktif debug/metin değişiklikleri nedeniyle bekliyor.
+- **Tuzaklar:**
+  - Timer başlat/durdur aksiyonları `study_providers.dart` gerektirirse bu WP'de yapılmaz; WP-2'ye bırakılır.
+  - Widget'ta gerçek Supabase yetkisi yok; hassas veri yazma/okuma istemci kısayoluyla yapılmaz.
+  - Android native dosya yolu mevcut paket adına göre doğrulanmalı.
+- **Kabul:** Widget altyapısı derlenir, veri yazma/okuma servisi izole çalışır, Claude'un aktif dosyalarına dokunulmaz.
+- **Doğrulama:**
+  - [x] `flutter test test/features/android_widget_service_test.dart --dart-define-from-file=env.json`
+  - [x] `flutter analyze lib/features/android_widgets test/features/android_widget_service_test.dart`
+  - [x] `flutter build apk --debug --dart-define-from-file=env.json`
+  - [ ] Global `flutter analyze`: `test/tmp_render_campfire.dart` içindeki Claude debug dosyası nedeniyle bekliyor.
+  - [ ] Global `flutter test`: `test/widget_test.dart` içinde mevcut metin beklentileri nedeniyle 2 hata var.
+- **Model önerisi:** 🔵 Sonnet
+
+> ⚠️ Çakışma kontrolü: WP-1, Claude'un görünen aktif dosyalarıyla çakışmıyor. Timer aksiyonları ve profil/auth entegrasyonu sonraki WP'lere bırakıldı.
+
+---
+
+## 🧭 Plan Kuyruğu
+
+> Bu bölüm backlog'daki işlerin uygulanma sırasını ve dosya sahipliğini önden netleştirir. Aktif çalışmaya alınacak iş, buradan seçilip yukarıdaki "Aktif İş Paketleri" bölümüne taşınır.
+
+### Bir Sonraki Sürüm Notu
+- Android ana ekran görünen adı `online_study_room` yerine **Odak Kampı** olacak.
+- Değişiklik release/update hazırlanırken `app/android/app/src/main/AndroidManifest.xml` içindeki `android:label` üzerinden yapılacak.
+- `pubspec.yaml` proje adı şimdilik değiştirilmez; kullanıcıya görünen ad yeterli.
+
+### WP-2: Persistent Notification + Background Timer
+- **Backlog:** Persistent notification, arka planda süre tutma
+- **Bağımlılık:** Claude'un kamp ateşi/timer işi ve WP-1 bitmeli.
+- **SAHİP dosyalar:** `app/lib/data/providers/study_providers.dart`, `app/lib/features/classroom/widgets/study_timer_card.dart`, Android notification/service dosyaları
+- **DOKUNMA:** `profile/*`, `auth_repository*`
+- **Not:** Bildirimden başlat/durdur/mola aksiyonları timer state machine ile aynı anda tasarlanmalı.
+
+### WP-3: Auth Recovery
+- **Backlog:** E-posta doğrulama + şifre sıfırlama
+- **Bağımlılık:** Claude'un auth/profile değişiklikleri commitlenmeli.
+- **SAHİP dosyalar:** auth repository çift implementasyon, giriş/kayıt ekranları, ilgili auth testleri
+- **DOKUNMA:** `classroom/*`, widget/native Android dosyaları
+- **Not:** Supabase Confirm email ayarı repo dışı işlem olabilir; uygulama sadece akışı destekler.
+
+### WP-4: Home Responsive QA
+- **Backlog:** Ana Sayfa responsive kart cilası
+- **Bağımlılık:** Önce mevcut 2E tamamlandı bilgisi doğrulansın.
+- **SAHİP dosyalar:** `app/lib/features/home/widgets/*`, home widget testleri
+- **DOKUNMA:** `classroom/*`, `profile/*`, `dashboard_providers.dart`
+- **Not:** Bu iş büyük ölçüde tamamlanmış görünüyor; muhtemelen QA/ince düzeltme veya backlog kapatma işi.
+
+### WP-5: Presence Lifecycle
+- **Backlog:** Çevrimdışı tespiti, heartbeat/yaşam döngüsü
+- **Bağımlılık:** Presence RLS 0013 Supabase'de uygulanmış olmalı.
+- **SAHİP dosyalar:** presence provider/repository, app lifecycle entegrasyonu, gerekiyorsa yeni `0015_*` migration
+- **DOKUNMA:** timer widget'ları, profil/auth
+- **Not:** Yetki kuralı gerekiyorsa mutlaka RLS/RPC ile uygulanır.
+
+### WP-6: Android Surface Extensions
+- **Backlog:** Dynamic panel / Live Activities benzeri durum hapı, kilit ekranı widget'ı
+- **Bağımlılık:** WP-1 ve WP-2 bitmeli.
+- **SAHİP dosyalar:** Android native notification/widget dosyaları, `features/android_widgets/**`
+- **DOKUNMA:** classroom/profile/auth
+- **Not:** Android sürüm desteği araştırma gerektirir; mümkün değilse fallback persistent notification olur.
+
+### WP-7: Class Chat
+- **Backlog:** Sınıf sohbeti
+- **Bağımlılık:** Yeni DB tasarımı onaylanmalı.
+- **SAHİP dosyalar:** yeni chat migration, chat repository çift implementasyon, class detail chat UI, chat testleri
+- **DOKUNMA:** timer, widget native dosyaları, profile/auth
+- **Not:** Mesaj okuma/yazma yetkisi RLS ile grup üyeliğine bağlanmalı.
+
+### WP-8: Nudge + Notifications
+- **Backlog:** Dürtme sistemi, kapsamlı bildirim sistemi
+- **Bağımlılık:** WP-2 bildirim altyapısı; chat yapılırsa WP-7 ile uyum.
+- **SAHİP dosyalar:** notification preferences, nudge UI/repository, ilgili migration/RLS
+- **DOKUNMA:** timer state machine'e doğrudan müdahale etme
+- **Not:** Taciz/spam önlemek için rate limit veya cooldown düşünülmeli.
+
+### WP-9: Gamification
+- **Backlog:** Streak freeze, taç/rozet, başarımlar, profil başarı alanı
+- **Bağımlılık:** Claude profil hayvan/kamp ateşi değişiklikleri bitmeli.
+- **SAHİP dosyalar:** stats saf fonksiyonları, gamification modelleri/repository, profile UI, gerekiyorsa migration
+- **DOKUNMA:** Android widget/native, auth recovery
+- **Not:** Türetilen istatistik mi tablo mu kararı önceden netleşmeli.
+
+### WP-10: Class Metrics Pack
+- **Backlog:** Daha fazla sınıf metriği, grup çizgi grafiği, tüm zamanlar istatistiği, yeni grafik türleri
+- **Bağımlılık:** İstenen metrikler seçilmeli.
+- **SAHİP dosyalar:** `app/lib/core/stats/*`, stats/dashboard chart widget'ları, gerekiyorsa RPC migration
+- **DOKUNMA:** auth/profile/native Android
+- **Not:** `study_sessions.group_id` geri getirilmez; grup metrikleri üyelik join'iyle hesaplanır.
+
+### WP-11: Windows Desktop Track
+- **Backlog:** Windows build + widget, Windows installer
+- **Bağımlılık:** Ana uygulama analyze/test temiz olmalı.
+- **SAHİP dosyalar:** Windows runner/config, always-on-top mini pencere, dağıtım notları
+- **DOKUNMA:** Android native widget dosyaları
+- **Not:** Windows widget gerçek OS widget değil, mini Flutter pencere olarak kalmalı.
+
+### WP-12: Sync & Offline Track
+- **Backlog:** Çoklu cihaz senkron testi, çevrimdışı cache
+- **Bağımlılık:** Presence/timer akışları stabil olmalı.
+- **SAHİP dosyalar:** senkron testleri, cache adapter katmanı, seçilirse Drift/Hive dosyaları
+- **DOKUNMA:** mevcut repository sözleşmelerini kırma
+- **Not:** Drift/Hive seçimi geri dönüşü zor karar; başlamadan kullanıcı onayı gerekir.
+
+### WP-13: Release Channels
+- **Backlog:** Beta/staging test uygulaması
+- **Bağımlılık:** Release akışı stabil olmalı.
+- **SAHİP dosyalar:** Android product flavors, CI release workflow, updater kanal mantığı
+- **DOKUNMA:** release keystore dosyaları; `key.jks` yeniden üretilmez
+- **Not:** Build number/tag kuralı korunmalı.
+
+### WP-14: Admin / Reports
+- **Backlog:** Admin paneli, otomatik e-posta raporları
+- **Bağımlılık:** Admin rol modeli ve e-posta sağlayıcı kararı.
+- **SAHİP dosyalar:** admin UI, admin RPC/RLS, rapor üretim servisleri
+- **DOKUNMA:** service_role istemciye konmaz
+- **Not:** Public repo olduğu için güvenlik tasarımı ayrı gözden geçirilmeli.
+
+### WP-15: Device Integrations
+- **Backlog:** Samsung Modes & Routines entegrasyonu
+- **Bağımlılık:** Android platform araştırması.
+- **SAHİP dosyalar:** Android intent/integration denemeleri, ayarlar entegrasyonu
+- **DOKUNMA:** genel timer state machine'i araştırma bitmeden değiştirme
+- **Not:** Önce spike olarak yapılmalı; desteklenmezse backlog notu düşülür.
+
+### WP-16: Dashboard Advanced Polish
+- **Backlog:** Gelişmiş grid boyutlandırma, canlı grup hedefi, grup yönetimi UI iyileştirme
+- **Bağımlılık:** Mevcut 6xN grid ve 2E responsive sonucu doğrulansın.
+- **SAHİP dosyalar:** dashboard grid UI, group management UI, ilgili home/profile ekranları
+- **DOKUNMA:** classroom timer/campfire dosyaları
+- **Not:** Grid boyutlandırma ve canlı grup hedefinin bir kısmı zaten yapılmış olabilir; önce backlog temizlik turu gerekir.
 
 ---
 
@@ -36,11 +193,24 @@
 > Son 5 iş. Ajan bunları okuyarak "neye dokunma, ne değişti" anlar.
 > Daha eski işler aşağıdaki Geçmiş tablosuna düşer.
 
-### Kamp Ateşi Canlı Ekran (eski 2G) — 2026-07-10 ✅
-- **Değişen dosyalar:** `classroom/classroom_screen.dart`, yeni `classroom/widgets/campfire_scene.dart`
-- **Ne yapıldı:** `CustomPainter` ile canlı ateş animasyonu (radial parıltı + 4 katman titreşen alev + kıvılcım parçacıkları + odun kütükleri). Çalışan üyeler ateş çevresinde sıcak halka, mola/çevrimdışı alttaki karanlık vinyet şeridinde. Avatar dokununca detay alt sayfası. Ateş çalışan sayısıyla büyür (`intensity`). Eski `_LiveMembers`/`_MemberTile` listesi kaldırıldı.
-- **Dokunma:** `study_timer_card.dart`, `focus_timer_screen.dart`, `home/*`, `profile/*`
-- **Test:** 2 widget testi (`campfire_scene_test.dart`), 79 test geçiyor
+### Kamp Ateşi — Ormanda Hayvanlı Sahne (eski 2G, yeniden tasarım) — 2026-07-10 ✅
+- **Değişen dosyalar:** `classroom/widgets/campfire_scene.dart` (baştan yazıldı), yeni
+  `classroom/widgets/camp_critter.dart` (tüm çizimler), yeni `core/animals/camp_animal.dart`,
+  yeni `profile/widgets/camp_animal_picker.dart`, `profile/settings_screen.dart` (+"Kamp ateşi" grubu),
+  `data/models/profile.dart` (+`animal`), `data/repositories/auth_repository.dart` + `in_memory/` +
+  `supabase/` (+`updateAnimal`), yeni `supabase/migrations/0014_profile_animal.sql`.
+- **Ne yapıldı:** Gece ormanında **45° taşlı kamp ateşi** sahnesi (hepsi `CustomPainter`, ek paket yok).
+  Tüm grup üyeleri ateş çevresinde **elipse** dizilir: üst yaydakiler **alevin ARKASINDA** (küçük/soluk),
+  alt yaydakiler **ÖNÜNDE** (büyük) → gerçek derinlik. Her üye **kendi kütüğünde oturan elle çizilmiş
+  tombul hayvan** (Party Animals ruhu; 12 tür, ortak gövde + türe göre kulak/renk/kuyruk/gaga). **Çalışan**
+  üye gerçekçi bir **dalda marşmelov** kızartır; marşmelov **oturum süresine göre kademeli pişer**
+  (çiğ→altın→kızarmış→koyu + kömür lekesi/buhar, ~40dk). İsim/süre en üst katmanda (alev arkasında bile
+  okunur). Orman arka plan: ay+yıldız+katmanlı çam silüetleri (kenarlarda yoğun)+zemin açıklığı. Sahne
+  yüksekliği 480px. Nefes animasyonu; çevrimdışı uyur/soluk. **Hayvan seçimi** Ayarlar→Kamp ateşi
+  (`profiles.animal`, 0014 — **kullanıcı çalıştırdı**). Seçilmeyene `userId` hash'iyle deterministik varsayılan.
+- **Dokunma:** `home/*`, `dashboard_card.dart`, `study_providers.dart`, timer widget'ları.
+- **Test:** `camp_animal` birim testleri + `campfire_scene_test.dart` geçiyor; `flutter analyze` temiz.
+  (Not: sahne, test render'ından PNG'ye çekilip görsel doğrulandı.)
 
 ### Eksiksiz Sayaç/Zamanlayıcı (eski 2H) — 2026-07-10 ✅
 - **Değişen dosyalar:** `classroom/widgets/study_timer_card.dart`, `focus_timer_screen.dart`, `clock_style.dart`, `data/providers/study_providers.dart`, yeni `timer_mode_controls.dart`

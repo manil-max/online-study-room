@@ -1,16 +1,50 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/animals/camp_animal.dart';
+import '../../data/providers/auth_providers.dart';
+import '../../data/providers/group_providers.dart';
 import '../home/dashboard_providers.dart';
 import 'appearance_screen.dart';
+import 'widgets/camp_animal_picker.dart';
 
 /// Ayarlar: görünüm, Ana Sayfa davranışı ve gelecek özelleştirme alanları.
-class SettingsScreen extends ConsumerWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+  /// Seçim anında (realtime beklemeden) tile'ı güncellemek için optimistik id.
+  String? _animalOverride;
+
+  Future<void> _pickAnimal() async {
+    final profile = ref.read(authStateProvider).value;
+    if (profile == null) return;
+    final currentId = _animalOverride ?? profile.animal;
+    final shownId = campAnimalFor(userId: profile.id, animalId: currentId).id;
+
+    final picked = await showCampAnimalPicker(context, currentId: shownId);
+    if (picked == null || picked == currentId) return;
+
+    await ref.read(authRepositoryProvider).updateAnimal(picked);
+    // Sahnenin (grup üyeleri akışının) yeni hayvanı hemen çekmesi için yenile.
+    ref.invalidate(groupMembersProvider);
+    if (mounted) setState(() => _animalOverride = picked);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final showTimerInClass = ref.watch(classroomShowTimerProvider);
+    final profile = ref.watch(authStateProvider).value;
+    final animal = profile == null
+        ? null
+        : campAnimalFor(
+            userId: profile.id,
+            animalId: _animalOverride ?? profile.animal,
+          );
 
     return Scaffold(
       appBar: AppBar(title: const Text('Ayarlar')),
@@ -30,6 +64,28 @@ class SettingsScreen extends ConsumerWidget {
                 onTap: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const AppearanceScreen()),
                 ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          _SettingsGroup(
+            icon: Icons.local_fire_department_outlined,
+            title: 'Kamp ateşi',
+            subtitle: 'Canlı çalışma ekranındaki görünümün',
+            children: [
+              ListTile(
+                leading: Text(
+                  animal?.emoji ?? '🦊',
+                  style: const TextStyle(fontSize: 26),
+                ),
+                title: const Text('Kamp hayvanın'),
+                subtitle: Text(
+                  animal == null
+                      ? 'Seni temsil eden hayvanı seç'
+                      : '${animal.label} — dokunup değiştir',
+                ),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: profile == null ? null : _pickAnimal,
               ),
             ],
           ),

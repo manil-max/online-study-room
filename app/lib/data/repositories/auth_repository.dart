@@ -37,6 +37,10 @@ abstract class AuthRepository {
   /// Giriş yapan kullanıcının günlük hedefini (dakika) günceller (§3.7).
   Future<void> updateDailyGoal(int minutes);
 
+  /// Giriş yapan kullanıcının kamp hayvanını günceller (§2G). [animal] katalog
+  /// kimliğidir (bkz. `core/animals/camp_animal.dart`).
+  Future<void> updateAnimal(String animal);
+
   /// Profil fotoğrafını yükler ve `avatar_url`'ı günceller (Supabase Storage gerekir).
   Future<void> updateAvatar({
     required Uint8List bytes,

@@ -189,6 +189,19 @@ class SupabaseAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<void> updateAnimal(String animal) async {
+    final cur = _current;
+    if (cur == null) return;
+    final safe = animal.trim();
+    if (safe.isEmpty) return;
+    await _client
+        .from('profiles')
+        .update({'animal': safe})
+        .eq('id', cur.id);
+    _current = cur.copyWith(animal: safe);
+  }
+
+  @override
   Future<void> updateAvatar({
     required Uint8List bytes,
     required String contentType,
