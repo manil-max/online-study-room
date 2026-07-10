@@ -40,13 +40,6 @@
 - Değişiklik release/update hazırlanırken `app/android/app/src/main/AndroidManifest.xml` içindeki `android:label` üzerinden yapılacak.
 - `pubspec.yaml` proje adı şimdilik değiştirilmez; kullanıcıya görünen ad yeterli.
 
-### WP-5: Presence Lifecycle
-- **Backlog:** Çevrimdışı tespiti, heartbeat/yaşam döngüsü
-- **Bağımlılık:** Presence RLS 0013 Supabase'de uygulanmış olmalı.
-- **SAHİP dosyalar:** presence provider/repository, app lifecycle entegrasyonu, gerekiyorsa yeni `0015_*` migration
-- **DOKUNMA:** timer widget'ları, profil/auth
-- **Not:** Yetki kuralı gerekiyorsa mutlaka RLS/RPC ile uygulanır.
-
 ### WP-6: Android Surface Extensions
 - **Backlog:** Dynamic panel / Live Activities benzeri durum hapı, kilit ekranı widget'ı
 - **Bağımlılık:** WP-1 ve WP-2 bitmeli.
@@ -130,6 +123,13 @@
 
 > Son 5 iş. Ajan bunları okuyarak "neye dokunma, ne değişti" anlar.
 > Daha eski işler aşağıdaki Geçmiş tablosuna düşer.
+
+### WP-5: Presence Lifecycle — 2026-07-10 ✅
+- **Değişen dosyalar:** `data/models/presence.dart` (+`updatedAt`), `data/providers/presence_providers.dart` (bayatlama + periyodik yeniden değerlendirme), yeni `data/providers/presence_lifecycle.dart` (heartbeat + `WidgetsBindingObserver`), `core/navigation/home_shell.dart` (tek satır aktivasyon), `test/data/presence_repository_test.dart`
+- **Ne yapıldı:** Çevrimdışı tespiti + heartbeat. Sayaç yalnız başlat/faz/durdur anında presence yazdığından uzun oturumda satır bayatlıyor, uygulama öldürülünce karşı taraf "hayalet çalışıyor" görüyordu. `PresenceLifecycle` denetleyicisi (kabuk izler) çalışma sürerken 20sn'de bir presence'ı yeniden yazıp sunucu `updated_at`'ini tazeler ve uygulama öne gelince (`resumed`) hemen bir kez tazeler. Okuma tarafı `applyPresenceStaleness` ile `updated_at`'i 70sn'den eski `studying/onBreak` satırları **çevrimdışı** gösterir; `groupPresenceProvider` DB değişmese de 20sn'de bir yeniden değerlendirir. `Presence` modeline `updatedAt` eklendi (`fromMap` `updated_at` okur). **Migration gerekmedi** — `presence.updated_at` zaten 0001'de var ve her upsert tazeliyor.
+- **Kararlar:** `groupPresenceProvider` `StreamProvider` olarak KALDI (Provider'a çevrilseydi `overrideWith(Stream...)` kullanan campfire/render testleri kırılırdı). `updatedAt` null (bellek-içi/eski satır) ise durum korunur → yanlış çevrimdışı yok. Heartbeat "yangına-at-unut".
+- **Dokunma:** `study_providers.dart` (sayaç state machine — yalnız OKUNDU), timer widget'ları, `profile/*`, `auth*`, Codex'in WP-2/WP-3 dosyaları.
+- **Test:** `flutter analyze` tüm proje temiz. `flutter test --concurrency=1 --dart-define-from-file=env.json` 185 test geçti (presence bayatlama için 5 yeni birim testi dahil).
 
 ### WP-4: Home Responsive QA — 2026-07-10 ✅
 - **Değişen dosyalar:** `home/widgets/today_summary_card.dart`, `home/widgets/leaderboard_card.dart`, `home/widgets/active_members_card.dart`, `test/features/dashboard_cards_render_test.dart`

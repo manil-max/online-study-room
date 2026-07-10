@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/data/models/presence.dart';
+import 'package:online_study_room/data/providers/presence_providers.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_presence_repository.dart';
 
 Presence _presence(
@@ -45,5 +46,62 @@ void main() {
     expect(round.status, p.status);
     // started_at UTC olarak yazılıp okunur → aynı anı temsil etmeli (saat dilimi kaymasın).
     expect(round.startedAt!.isAtSameMomentAs(p.startedAt!), isTrue);
+    // updated_at da okunur (bayatlama tespiti buna dayanır).
+    expect(round.updatedAt, isNotNull);
+  });
+
+  group('applyPresenceStaleness (§WP-5 çevrimdışı tespiti)', () {
+    final now = DateTime(2026, 7, 10, 12, 0, 0);
+
+    Presence studying(String id, {DateTime? updatedAt}) => Presence(
+          userId: id,
+          groupId: 'g1',
+          status: PresenceStatus.studying,
+          todaySeconds: 0,
+          startedAt: now.subtract(const Duration(minutes: 30)),
+          updatedAt: updatedAt,
+        );
+
+    test('taze satır çalışıyor kalır', () {
+      final rows = [studying('u1', updatedAt: now.subtract(const Duration(seconds: 10)))];
+      final result = applyPresenceStaleness(rows, now: now);
+      expect(result.single.status, PresenceStatus.studying);
+    });
+
+    test('bayat satır çevrimdışına çekilir', () {
+      final rows = [
+        studying('u1', updatedAt: now.subtract(kPresenceStaleThreshold * 2)),
+      ];
+      final result = applyPresenceStaleness(rows, now: now);
+      expect(result.single.status, PresenceStatus.offline);
+      // Kimlik/grup korunur; yalnız durum değişir.
+      expect(result.single.userId, 'u1');
+    });
+
+    test('updatedAt null ise durum korunur (bellek-içi/eski satır)', () {
+      final rows = [studying('u1', updatedAt: null)];
+      final result = applyPresenceStaleness(rows, now: now);
+      expect(result.single.status, PresenceStatus.studying);
+    });
+
+    test('eşik sınırındaki satır hâlâ canlı sayılır', () {
+      final rows = [studying('u1', updatedAt: now.subtract(kPresenceStaleThreshold))];
+      final result = applyPresenceStaleness(rows, now: now);
+      expect(result.single.status, PresenceStatus.studying);
+    });
+
+    test('zaten çevrimdışı satır olduğu gibi kalır', () {
+      final rows = [
+        Presence(
+          userId: 'u1',
+          groupId: 'g1',
+          status: PresenceStatus.offline,
+          todaySeconds: 0,
+          updatedAt: now.subtract(kPresenceStaleThreshold * 3),
+        ),
+      ];
+      final result = applyPresenceStaleness(rows, now: now);
+      expect(result.single.status, PresenceStatus.offline);
+    });
   });
 }

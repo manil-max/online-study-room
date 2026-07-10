@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../data/providers/presence_lifecycle.dart';
 import '../../features/classroom/classroom_screen.dart';
 import '../../features/classroom/widgets/class_switcher.dart';
 import '../../features/home/home_screen.dart';
@@ -34,6 +35,11 @@ class HomeShell extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final index = ref.watch(navIndexProvider);
     const classesTabIndex = 1; // "Sınıflar" sekmesinin indeksi
+
+    // Presence heartbeat/yaşam-döngüsünü oturum boyunca diri tut (§WP-5): çalışma
+    // sürerken satırı düzenli tazeler, uygulama öldürülünce karşı taraf çevrimdışı
+    // görür. Kabuk her zaman monte olduğu için burada izlenir.
+    ref.watch(presenceLifecycleProvider);
 
     return Scaffold(
       body: IndexedStack(index: index, children: _screens),

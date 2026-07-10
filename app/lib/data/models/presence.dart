@@ -14,6 +14,7 @@ class Presence {
     this.groupId,
     this.startedAt,
     this.subjectId,
+    this.updatedAt,
   });
 
   final String userId;
@@ -31,6 +32,11 @@ class Presence {
 
   final String? subjectId;
 
+  /// Satırın en son yazıldığı an (sunucu `updated_at`). Heartbeat her yazımda
+  /// tazeler; uygulama öldürülünce heartbeat durur ve bu değer bayatlar →
+  /// çevrimdışı tespiti (§WP-5) bunu kullanır. Bellek-içi/eski satırlarda `null`.
+  final DateTime? updatedAt;
+
   bool get isStudying => status == PresenceStatus.studying;
 
   Presence copyWith({
@@ -39,6 +45,7 @@ class Presence {
     DateTime? startedAt,
     int? todaySeconds,
     String? subjectId,
+    DateTime? updatedAt,
   }) {
     return Presence(
       userId: userId,
@@ -47,11 +54,13 @@ class Presence {
       startedAt: startedAt ?? this.startedAt,
       todaySeconds: todaySeconds ?? this.todaySeconds,
       subjectId: subjectId ?? this.subjectId,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 
   factory Presence.fromMap(Map<String, dynamic> map) {
     final started = map['started_at'] as String?;
+    final updated = map['updated_at'] as String?;
     return Presence(
       userId: map['user_id'] as String,
       groupId: map['group_id'] as String?,
@@ -59,6 +68,7 @@ class Presence {
       startedAt: started == null ? null : DateTime.parse(started),
       todaySeconds: (map['today_seconds'] as int?) ?? 0,
       subjectId: map['subject_id'] as String?,
+      updatedAt: updated == null ? null : DateTime.parse(updated),
     );
   }
 
@@ -84,9 +94,10 @@ class Presence {
       other.status == status &&
       other.startedAt == startedAt &&
       other.todaySeconds == todaySeconds &&
-      other.subjectId == subjectId;
+      other.subjectId == subjectId &&
+      other.updatedAt == updatedAt;
 
   @override
-  int get hashCode =>
-      Object.hash(userId, groupId, status, startedAt, todaySeconds, subjectId);
+  int get hashCode => Object.hash(
+      userId, groupId, status, startedAt, todaySeconds, subjectId, updatedAt);
 }
