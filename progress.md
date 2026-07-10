@@ -9,13 +9,13 @@
 
 - **Framework:** Flutter ^3.12 · Riverpod 3.3 · Supabase 2.15 · fl_chart
 - **Uygulama kökü:** `app/` — tüm flutter komutları burada çalışır
-- **Migration'lar:** `supabase/migrations/` (son: `0016`) — sıralı, elle uygulanır
+- **Migration'lar:** `supabase/migrations/` (son: `0017`) — sıralı, elle uygulanır
 - **Repo katmanı çift:** her arayüz `supabase/` + `in_memory/` altında
 - **Gün sınırı:** `Europe/Istanbul`
 - **RLS helper'ları:** `is_group_member(gid)`, `can_see_user_sessions(target)`, `is_group_admin(gid)`
 - **Dashboard:** 6 sütunlu 2D matris, 19 kart türü, `grid_reflow.dart` motoru
 - **Tema:** 5 palet, koyu varsayılan, `AppTheme` palet-parametreli
-- **Son WP numarası:** 16 (WP-8 tamamlandı, WP-9..WP-16 plan kuyruğunda)
+- **Son WP numarası:** 16 (WP-9 tamamlandı, WP-10..WP-16 plan kuyruğunda)
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
   - Flutter: `C:\src\flutter` · Android SDK: `C:\Android\Sdk`
@@ -39,13 +39,6 @@
 - Android ana ekran görünen adı `online_study_room` yerine **Odak Kampı** olacak.
 - Değişiklik release/update hazırlanırken `app/android/app/src/main/AndroidManifest.xml` içindeki `android:label` üzerinden yapılacak.
 - `pubspec.yaml` proje adı şimdilik değiştirilmez; kullanıcıya görünen ad yeterli.
-
-### WP-9: Gamification
-- **Backlog:** Streak freeze, taç/rozet, başarımlar, profil başarı alanı
-- **Bağımlılık:** Claude profil hayvan/kamp ateşi değişiklikleri bitmeli.
-- **SAHİP dosyalar:** stats saf fonksiyonları, gamification modelleri/repository, profile UI, gerekiyorsa migration
-- **DOKUNMA:** Android widget/native, auth recovery
-- **Not:** Türetilen istatistik mi tablo mu kararı önceden netleşmeli.
 
 ### WP-10: Class Metrics Pack
 - **Backlog:** Daha fazla sınıf metriği, grup çizgi grafiği, tüm zamanlar istatistiği, yeni grafik türleri
@@ -102,6 +95,13 @@
 
 > Son 5 iş. Ajan bunları okuyarak "neye dokunma, ne değişti" anlar.
 > Daha eski işler aşağıdaki Geçmiş tablosuna düşer.
+
+### WP-9: Gamification — 2026-07-10 ✅
+- **Değişen dosyalar:** yeni `app/lib/core/stats/gamification.dart`, yeni `app/lib/data/models/gamification_profile.dart`, yeni `gamification_repository` çift implementasyonu, yeni `app/lib/data/providers/gamification_providers.dart`, `app/lib/features/profile/profile_screen.dart`, yeni `app/lib/features/profile/widgets/gamification_card.dart`, yeni gamification testleri, yeni `supabase/migrations/0017_gamification_profiles.sql`
+- **Ne yapıldı:** Profil ekranına Başarılar paneli eklendi. Seri koruma hakkı, freeze-aware seri özeti, türetilmiş başarımlar ve taç seviyesi oturum istatistiklerinden hesaplanıyor. Gamification cüzdanında kalıcı `streak_freezes` tutuluyor; başarımlar tabloya yazılmıyor.
+- **Güvenlik:** `0017_gamification_profiles.sql` kullanıcının yalnız kendi gamification cüzdanını okumasına/yazmasına izin veren RLS politikaları kurar ve yeni kullanıcı için varsayılan 1 seri koruma hakkı üretir.
+- **Dokunma:** Android widget/native, auth recovery, timer state machine. Claude'un kamp ateşi dosyaları ve `zz_*` görsel testleri commit'e alınmadı.
+- **Test:** `flutter analyze` temiz. `flutter test --concurrency=1 --dart-define-from-file=env.json` 199 test geçti. `ANDROID_HOME=C:\Android\Sdk` ve `ANDROID_SDK_ROOT=C:\Android\Sdk` ile `flutter build apk --debug --dart-define-from-file=env.json` geçti.
 
 ### WP-8: Nudge + Notifications — 2026-07-10 ✅
 - **Değişen dosyalar:** yeni `app/lib/data/models/nudge.dart`, yeni `nudge_repository` çift implementasyonu, yeni `nudge_providers.dart`, yeni `nudge_notification_listener.dart`, yeni `core/notifications/nudge_notification_service.dart`, yeni `core/notifications/notification_preferences.dart`, `core/navigation/home_shell.dart`, `features/classroom/widgets/class_detail_screen.dart`, `features/profile/settings_screen.dart`, yeni nudge/preference testleri, yeni `supabase/migrations/0016_nudges.sql`

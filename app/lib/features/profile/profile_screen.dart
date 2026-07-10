@@ -7,6 +7,7 @@ import '../../data/providers/auth_providers.dart';
 import '../../data/repositories/auth_repository.dart';
 import 'session_history_screen.dart';
 import 'settings_screen.dart';
+import 'widgets/gamification_card.dart';
 
 /// Profil sekmesi: foto, görünen ad, ayarlar, davet kodu. Bkz. project.md §3.2.
 class ProfileScreen extends ConsumerWidget {
@@ -111,6 +112,8 @@ class ProfileScreen extends ConsumerWidget {
             icon: const Icon(Icons.logout),
             label: const Text('Çıkış yap'),
           ),
+          const SizedBox(height: 16),
+          const GamificationCard(),
         ],
       ),
     );
