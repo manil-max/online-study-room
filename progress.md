@@ -4,23 +4,16 @@
 > bölünmüştür. Proje bilgileri için → `project.md`. AI ajan kuralları için → `AGENTS.md`.
 >
 > Durum: `[ ]` yapılacak · `[~]` devam ediyor · `[x]` tamamlandı
-> Son güncelleme: 2026-06-20
+> Son güncelleme: 2026-07-10
 
 ---
 
 ## Özet Durum
 
-- **Aktif Faz:** FAZ 5.1 - Otomatik Güncelleme Sistemi (GitHub Releases). Kod + CI hazır; kalan = GitHub Secrets kurulumu ve ilk `v2` tag testi.
+- **Aktif Faz:** FAZ 5.1 - Otomatik Güncelleme Sistemi (GitHub Releases) tamamlandı. `v2` etiketi remote'a pushlandı; GitHub Actions release'i oluşturdu ve `app-release.apk` dahil asset'leri yayınladı.
 - **Proje konumu:** `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room` (İngilizce ad — Türkçe/boşluklu yol Flutter'ı bozuyordu; aşağıdaki nota bak)
-- **Sıradaki adım:** 2026-06-22 geri bildirim turu büyük ölçüde işlendi: Sınıf→Grup terminolojisi,
-  Derssiz→Genel, profilden Derslerim kaldırma, uzun tarih, büyük seri, İstatistik grup
-  değiştirici, seçilebilir metin, tıklanabilir sıralama + üye bilgi sayfası, grup üye serileri.
-  **Kalan büyük işler (FAZ 3.11 — aşağıda):** (1) **Grup hedefi** (admin-ayarlı, migration 0006)
-  ve grup serisinin gruba göre hesaplanması; (2) **Zengin & etkileşimli Ana Sayfa**: kartları
-  **yeniden boyutlandırma** (küçük/orta/büyük), 2 sütun grid, veri formatı seçimi, daha çok
-  kart türü; (3) **etkileşimli istatistik**: grafik dokunmatik ipuçları, takvim **ısı haritası**
-  (study streak heatmap), çizgi grafiği, tablo görünümü.
-- **Bekleyen (kullanıcı/admin):** Kalmadı ✅ (Tüm temel veritabanı migration'ları 0001–0007 başarıyla Supabase'e uygulandı).
+- **Sıradaki adım:** Yeni mini faz seçilecek. FAZ 3.11/3.12 ve FAZ 5.1 kapanmış durumda; devam etmeden önce `project.md` ile açık kararlar ve en öncelikli kullanıcı geri bildirimi birlikte seçilmeli.
+- **Bekleyen (kullanıcı/admin):** Kalmadı ✅ (Tüm temel veritabanı migration'ları 0001–0007 başarıyla Supabase'e uygulandı; `v2` release akışı da tamamlandı).
 - **Çözüldü (2026-06-21):** Windows **Geliştirici Modu açıldı** ✅ — eklentiler (image_picker vb.) symlink gerektirdiği için **web/Chrome derlemesi de** bunu istiyormuş (önceki not yanlıştı). Kapalıyken `flutter run -d chrome` "Error when reading ../../../../../AppData/.../package: cannot find path" + binlerce takip hatası veriyordu. `flutter clean && flutter pub get` + Geliştirici Modu ile düzeldi; `flutter build web` temiz derleniyor.
 
 ---
@@ -410,7 +403,7 @@ Supabase'e gerek yok. (Önceki Supabase tablolu plan iptal edildi — `0007` sil
 - [x] **Güncelleme Ekranı (`UpdaterDialog`)**: Sürüm notları + indirme % çubuğu, bitince `open_filex` ile kurulum (`features/updater/updater_dialog.dart`).
 - [x] **Ana Ekrana Bağlama**: `auth_gate.dart` açılışta bir kez `maybeShowUpdateDialog`.
 - [x] **CI (GitHub Actions)**: `v*` etiketi push'unda APK derleyip Releases'e koyar (`.github/workflows/release.yml`). Etiket sayısı = `versionCode`.
-- [ ] **Kurulum (kullanıcı)**: GitHub Secrets (`KEYSTORE_BASE64`, `STORE_PASSWORD`, `KEY_PASSWORD`, `KEY_ALIAS`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`) eklenmeli; ilk `git tag v2` ile test.
+- [x] **Kurulum (kullanıcı)**: GitHub Secrets (`KEYSTORE_BASE64`, `STORE_PASSWORD`, `KEY_PASSWORD`, `KEY_ALIAS`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`) eklendi; `git tag v2` remote'a pushlandı ve GitHub Actions release'i başarıyla oluşturdu.
 - [x] **Güvenlik sertleştirme**: İndirilen APK için **SHA-256 bütünlük doğrulaması** (CI `.sha256` üretir, uygulama kurulumdan önce karşılaştırır; uyuşmazsa siler/iptal) + asset adı `app-release.apk` ile sıkı eşleşme (rastgele `.apk` reddedilir).
 - **Direkt indirme linki:** `https://github.com/manil-max/online-study-room/releases/latest/download/app-release.apk`
 
@@ -925,6 +918,10 @@ Supabase'e gerek yok. (Önceki Supabase tablolu plan iptal edildi — `0007` sil
 
 ## Yapılanlar Günlüğü
 
+- **2026-07-10 (v2 release durumu düzeltildi):** `progress.md` üst özeti güncellendi.
+  `v2` tag'inin remote'da olduğu, `app/pubspec.yaml` sürümünün `1.0.1+2` olduğu ve GitHub
+  Releases'te `v2` release'inin yayınlandığı doğrulandı. FAZ 5.1 kurulum/test maddesi tamamlandı
+  olarak işaretlendi.
 - **2026-06-26 (auth refresh token):** Web/Chrome'da bozulmuş Supabase refresh token
   (`refresh_token_already_used`) uygulamayı hata ekranında bırakıyordu. Auth akışı bu özel durumda
   yerel oturumu temizleyip giriş ekranına dönecek şekilde sağlamlaştırıldı.
