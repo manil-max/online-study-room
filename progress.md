@@ -35,10 +35,11 @@
 
 > Bu bölüm backlog'daki işlerin uygulanma sırasını ve dosya sahipliğini önden netleştirir. Aktif çalışmaya alınacak iş, buradan seçilip yukarıdaki "Aktif İş Paketleri" bölümüne taşınır.
 
-### Bir Sonraki Sürüm Notu
-- Android ana ekran görünen adı `online_study_room` yerine **Odak Kampı** olacak.
-- Değişiklik release/update hazırlanırken `app/android/app/src/main/AndroidManifest.xml` içindeki `android:label` üzerinden yapılacak.
-- `pubspec.yaml` proje adı şimdilik değiştirilmez; kullanıcıya görünen ad yeterli.
+### V3 Hazırlık Notu
+- Görünen uygulama adı Android/Web/Flutter başlıklarında **Odak Kampı** olarak ayarlandı.
+- `pubspec.yaml` paket adı değiştirilmedi; import ve uygulama kimliği kırılmasın diye `online_study_room` teknik ad olarak kalır.
+- Sınıf ekranındaki sohbet girişi ayrı **Sohbet** ekranına taşındı; grup bilgileri ve yönetim **Ayarlar** girişinden açılır.
+- Gamification migration'ı üretim Supabase'e uygulanmadan da Başarılar kartı varsayılan profil ile görünür; `0017_gamification_profiles.sql` uygulanınca kalıcı seri koruma verisine otomatik döner.
 
 ### WP-10: Class Metrics Pack
 - **Backlog:** Daha fazla sınıf metriği, grup çizgi grafiği, tüm zamanlar istatistiği, yeni grafik türleri

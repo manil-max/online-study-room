@@ -1,11 +1,11 @@
 {
-    "name": "online_study_room",
-    "short_name": "online_study_room",
+    "name": "Odak Kampı",
+    "short_name": "Odak Kampı",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Odak Kampı çalışma odası.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

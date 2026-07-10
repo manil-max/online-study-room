@@ -9,9 +9,14 @@ import '../../../data/providers/chat_providers.dart';
 import '../../../data/repositories/chat_repository.dart';
 
 class ClassChatCard extends ConsumerStatefulWidget {
-  const ClassChatCard({super.key, required this.group});
+  const ClassChatCard({
+    super.key,
+    required this.group,
+    this.messageListHeight = 280,
+  });
 
   final StudyGroup group;
+  final double messageListHeight;
 
   @override
   ConsumerState<ClassChatCard> createState() => _ClassChatCardState();
@@ -48,7 +53,7 @@ class _ClassChatCardState extends ConsumerState<ClassChatCard> {
             ),
             const SizedBox(height: 8),
             SizedBox(
-              height: 280,
+              height: widget.messageListHeight,
               child: messagesAsync.when(
                 data: (messages) =>
                     _MessageList(messages: messages, currentUserId: user?.id),

@@ -119,7 +119,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Online Çalışma Sınıfı',
+                      'Odak Kampı',
                       textAlign: TextAlign.center,
                       style: theme.textTheme.headlineSmall,
                     ),

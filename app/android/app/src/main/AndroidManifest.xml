@@ -6,7 +6,7 @@
     <!-- In-app güncelleme: indirilen APK ile Android kurulum ekranını açabilmek için. -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <application
-        android:label="online_study_room"
+        android:label="Odak Kampı"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

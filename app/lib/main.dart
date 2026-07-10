@@ -44,7 +44,7 @@ class OnlineStudyRoomApp extends ConsumerWidget {
     // Tema tercihleri (palet + mod) kişiye özel, cihazda kalıcı.
     final settings = ref.watch(themeSettingsProvider);
     return MaterialApp(
-      title: 'Online Çalışma Sınıfı',
+      title: 'Odak Kampı',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(settings.palette),
       darkTheme: AppTheme.dark(settings.palette),

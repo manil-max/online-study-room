@@ -5,6 +5,7 @@ import '../../core/config/supabase_config.dart';
 import '../../core/stats/gamification.dart';
 import '../../core/stats/study_stats.dart';
 import '../models/gamification_profile.dart';
+import '../models/study_session.dart';
 import '../repositories/gamification_repository.dart';
 import '../repositories/in_memory/in_memory_gamification_repository.dart';
 import '../repositories/supabase/supabase_gamification_repository.dart';
@@ -63,9 +64,16 @@ final gamificationSummaryProvider = Provider<AsyncValue<GamificationSummary?>>((
     );
   }
   if (profileAsync.hasError) {
-    return AsyncValue.error(
-      profileAsync.error!,
-      profileAsync.stackTrace ?? StackTrace.current,
+    final profile = GamificationProfile.initial(user.id);
+    final sessions = sessionsAsync.value;
+    if (sessions == null) return const AsyncValue.loading();
+
+    return AsyncValue.data(
+      _buildGamificationSummary(
+        profile: profile,
+        sessions: sessions,
+        goalSeconds: goalSeconds,
+      ),
     );
   }
   final sessions = sessionsAsync.value;
@@ -74,6 +82,20 @@ final gamificationSummaryProvider = Provider<AsyncValue<GamificationSummary?>>((
     return const AsyncValue.loading();
   }
 
+  return AsyncValue.data(
+    _buildGamificationSummary(
+      profile: profile,
+      sessions: sessions,
+      goalSeconds: goalSeconds,
+    ),
+  );
+});
+
+GamificationSummary _buildGamificationSummary({
+  required GamificationProfile profile,
+  required List<StudySession> sessions,
+  required int goalSeconds,
+}) {
   final totals = dailyTotals(sessions);
   final freezeAwareStreak = currentStreakWithFreezes(
     totals: totals,
@@ -86,14 +108,12 @@ final gamificationSummaryProvider = Provider<AsyncValue<GamificationSummary?>>((
     streak: freezeAwareStreak.streak,
   );
 
-  return AsyncValue.data(
-    GamificationSummary(
-      profile: profile,
-      freezeAwareStreak: freezeAwareStreak,
-      achievements: achievements,
-      crownTier: crownTierFor(achievements),
-      totalSeconds: totalSeconds(sessions),
-      sessionCount: sessions.length,
-    ),
+  return GamificationSummary(
+    profile: profile,
+    freezeAwareStreak: freezeAwareStreak,
+    achievements: achievements,
+    crownTier: crownTierFor(achievements),
+    totalSeconds: totalSeconds(sessions),
+    sessionCount: sessions.length,
   );
-});
+}

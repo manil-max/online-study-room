@@ -8,6 +8,7 @@ import '../home/dashboard_providers.dart';
 import '../home/widgets/group_goal_card.dart';
 import '../home/widgets/group_trend_card.dart';
 import 'widgets/campfire_scene.dart';
+import 'widgets/class_chat_screen.dart';
 import 'widgets/class_detail_screen.dart';
 import 'widgets/class_switcher.dart';
 import 'widgets/study_timer_card.dart';
@@ -150,17 +151,29 @@ class _GroupView extends ConsumerWidget {
                   ],
                 ),
                 const SizedBox(height: 8),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: TextButton.icon(
-                    icon: const Icon(Icons.forum_outlined),
-                    label: const Text('Sohbet ve ayarlar'),
-                    onPressed: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => ClassDetailScreen(group: group),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  children: [
+                    TextButton.icon(
+                      icon: const Icon(Icons.forum_outlined),
+                      label: const Text('Sohbet'),
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => ClassChatScreen(group: group),
+                        ),
                       ),
                     ),
-                  ),
+                    TextButton.icon(
+                      icon: const Icon(Icons.settings_outlined),
+                      label: const Text('Ayarlar'),
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => ClassDetailScreen(group: group),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
