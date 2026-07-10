@@ -8,7 +8,7 @@ plugins {
 }
 
 // İmzalama bilgileri android/key.properties dosyasından okunur (repoya commit edilmez).
-// CI ortamında bu dosya GitHub Secrets'tan üretilir. Yoksa debug imzasına düşülür.
+// CI ortamında bu dosya GitHub Secrets'tan üretilir.
 val keystoreProperties = Properties()
 val keystorePropertiesFile = rootProject.file("key.properties")
 if (keystorePropertiesFile.exists()) {
@@ -50,14 +50,15 @@ android {
 
     buildTypes {
         release {
-            // key.properties varsa kalıcı release anahtarıyla, yoksa debug anahtarıyla imzala.
-            // Güncelleme sisteminin çalışması için yayınlanan TÜM APK'lar aynı release
-            // anahtarıyla imzalanmalıdır; aksi halde Android "imza uyuşmuyor" hatası verir.
-            signingConfig = if (keystorePropertiesFile.exists()) {
-                signingConfigs.getByName("release")
-            } else {
-                signingConfigs.getByName("debug")
+            // Yayınlanan TÜM APK'lar aynı kalıcı release anahtarıyla imzalanmalı.
+            // key.properties yoksa debug imzasına düşmek yerine release derlemesini durdur.
+            if (!keystorePropertiesFile.exists()) {
+                throw GradleException(
+                    "Release imzası için android/key.properties gerekli. " +
+                        "Debug imzalı release APK üretimi engellendi."
+                )
             }
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 }
