@@ -80,6 +80,16 @@ class InMemoryAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<void> sendPasswordResetEmail(String email) async {
+    final key = email.trim().toLowerCase();
+    if (key.isEmpty || !key.contains('@')) {
+      throw const AuthException('Geçerli bir e-posta girin.');
+    }
+    // Güvenlik için hesap var/yok bilgisi dönülmez. Gerçek e-posta gönderimi
+    // Supabase implementasyonunda yapılır.
+  }
+
+  @override
   Future<void> updateDisplayName(String displayName) async {
     final cur = _current;
     if (cur == null) return;
@@ -129,7 +139,8 @@ class InMemoryAuthRepository implements AuthRepository {
   }) async {
     // Bellek-içi modda gerçek depolama yok; yükleme Supabase gerektirir.
     throw const AuthException(
-        'Profil fotoğrafı yüklemek için Supabase bağlantısı gerekli.');
+      'Profil fotoğrafı yüklemek için Supabase bağlantısı gerekli.',
+    );
   }
 
   @override

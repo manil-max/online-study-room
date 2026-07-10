@@ -162,6 +162,19 @@ class SupabaseAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<void> sendPasswordResetEmail(String email) async {
+    final safe = email.trim();
+    if (safe.isEmpty || !safe.contains('@')) {
+      throw const AuthException('Geçerli bir e-posta girin.');
+    }
+    try {
+      await _client.auth.resetPasswordForEmail(safe);
+    } on supa.AuthException catch (e) {
+      throw AuthException(_translate(e.message));
+    }
+  }
+
+  @override
   Future<void> updateDisplayName(String displayName) async {
     final cur = _current;
     if (cur == null) return;
@@ -194,10 +207,7 @@ class SupabaseAuthRepository implements AuthRepository {
     if (cur == null) return;
     final safe = animal.trim();
     if (safe.isEmpty) return;
-    await _client
-        .from('profiles')
-        .update({'animal': safe})
-        .eq('id', cur.id);
+    await _client.from('profiles').update({'animal': safe}).eq('id', cur.id);
     _current = cur.copyWith(animal: safe);
   }
 

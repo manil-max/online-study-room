@@ -26,10 +26,11 @@ abstract class AuthRepository {
     required String displayName,
   });
 
-  Future<Profile> signIn({
-    required String email,
-    required String password,
-  });
+  Future<Profile> signIn({required String email, required String password});
+
+  /// E-postaya şifre sıfırlama bağlantısı gönderir. Güvenlik için e-posta
+  /// kayıtlı değilse bile kullanıcıya hesap var/yok bilgisi sızdırılmamalıdır.
+  Future<void> sendPasswordResetEmail(String email);
 
   /// Giriş yapan kullanıcının görünen adını günceller.
   Future<void> updateDisplayName(String displayName);

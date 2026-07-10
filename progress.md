@@ -40,13 +40,6 @@
 - Değişiklik release/update hazırlanırken `app/android/app/src/main/AndroidManifest.xml` içindeki `android:label` üzerinden yapılacak.
 - `pubspec.yaml` proje adı şimdilik değiştirilmez; kullanıcıya görünen ad yeterli.
 
-### WP-3: Auth Recovery
-- **Backlog:** E-posta doğrulama + şifre sıfırlama
-- **Bağımlılık:** Claude'un auth/profile değişiklikleri commitlenmeli.
-- **SAHİP dosyalar:** auth repository çift implementasyon, giriş/kayıt ekranları, ilgili auth testleri
-- **DOKUNMA:** `classroom/*`, widget/native Android dosyaları
-- **Not:** Supabase Confirm email ayarı repo dışı işlem olabilir; uygulama sadece akışı destekler.
-
 ### WP-4: Home Responsive QA
 - **Backlog:** Ana Sayfa responsive kart cilası
 - **Bağımlılık:** Önce mevcut 2E tamamlandı bilgisi doğrulansın.
@@ -144,6 +137,13 @@
 
 > Son 5 iş. Ajan bunları okuyarak "neye dokunma, ne değişti" anlar.
 > Daha eski işler aşağıdaki Geçmiş tablosuna düşer.
+
+### WP-3: Auth Recovery — 2026-07-10 ✅
+- **Değişen dosyalar:** `data/repositories/auth_repository.dart`, `data/repositories/in_memory/in_memory_auth_repository.dart`, `data/repositories/supabase/supabase_auth_repository.dart`, `features/auth/auth_screen.dart`, `test/data/auth_repository_test.dart`, `test/widget_test.dart`
+- **Ne yapıldı:** Auth repository arayüzüne `sendPasswordResetEmail` eklendi. Supabase implementasyonu `resetPasswordForEmail` çağırıyor; in-memory implementasyon hesap var/yok bilgisi sızdırmadan geçerli e-posta kabul ediyor. Giriş ekranına `Şifremi unuttum` akışı ve kayıt sonrası e-posta doğrulama bilgi mesajı eklendi.
+- **Dokunma:** `classroom/*`, `home/*`, Android widget/native dosyaları, Supabase migration dosyaları.
+- **Not:** Supabase Confirm email ayarı repo dışından açık olmalı; uygulama session dönmeyen kayıt cevabını doğrulama mesajı olarak ele alıyor.
+- **Test:** `flutter analyze` temiz. `flutter test --concurrency=1 --dart-define-from-file=env.json` tüm testler geçti.
 
 ### WP-2: Persistent Notification + Background Timer — 2026-07-10 ✅
 - **Değişen dosyalar:** `app/lib/core/notifications/timer_notification_service.dart`, `app/lib/data/providers/study_providers.dart`, `app/lib/main.dart`, `app/android/app/src/main/AndroidManifest.xml`, `app/android/app/build.gradle.kts`, `app/pubspec.yaml`, `app/pubspec.lock`, `app/test/core/timer_notification_service_test.dart`, `app/test/features/timer_state_machine_test.dart`, `app/test/widget_test.dart`

@@ -58,6 +58,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Giriş yap'), findsWidgets);
+    expect(find.text('Şifremi unuttum'), findsOneWidget);
     expect(find.text('E-posta'), findsOneWidget);
   });
 

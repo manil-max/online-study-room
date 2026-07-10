@@ -25,10 +25,11 @@
   - **Kalan:** Ayrı `Başlat` ve manuel `Mola` aksiyonları ürün kararına göre ileride netleştirilecek.
   - *Kaynak: new_features.md §5 Madde 10*
 
-- [ ] **E-posta doğrulama + şifre sıfırlama**
+- [x] **E-posta doğrulama + şifre sıfırlama**
   - Supabase Confirm email aktif edilecek
   - Kayıt sonrası "e-posta onay linki" uyarısı
   - Giriş sayfasına "Şifremi Unuttum" + resetPasswordForEmail
+  - **WP-3 tamamlandı:** Uygulama e-posta doğrulama uyarısını gösteriyor; şifre sıfırlama bağlantısı gönderme akışı eklendi. Supabase Confirm email ayarı dashboard üzerinden açık tutulmalı.
   - *Kaynak: new_features.md §Öncelikli, progress.md FAZ 1.1 bekleyen*
 
 - [ ] **Ana Sayfa responsive kart cilası** (2E devamı)

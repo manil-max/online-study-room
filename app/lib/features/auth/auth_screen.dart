@@ -21,6 +21,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   bool _isRegister = false;
   bool _loading = false;
   String? _error;
+  String? _info;
 
   @override
   void dispose() {
@@ -35,6 +36,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     setState(() {
       _loading = true;
       _error = null;
+      _info = null;
     });
 
     final auth = ref.read(authRepositoryProvider);
@@ -54,8 +56,39 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       ref.invalidate(authStateProvider);
       // Başarılıysa AuthGate otomatik olarak ana uygulamaya geçer.
     } on AuthException catch (e) {
-      setState(() => _error = e.message);
+      final verifiedEmailNotice = e.message.contains('e-postana gönderilen');
+      setState(() {
+        if (verifiedEmailNotice) {
+          _info = e.message;
+          _isRegister = false;
+          _passwordController.clear();
+        } else {
+          _error = e.message;
+        }
+      });
     } catch (e) {
+      setState(() => _error = 'Beklenmeyen bir hata oluştu.');
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _sendPasswordReset() async {
+    final email = _emailController.text.trim();
+    setState(() {
+      _loading = true;
+      _error = null;
+      _info = null;
+    });
+    try {
+      await ref.read(authRepositoryProvider).sendPasswordResetEmail(email);
+      setState(() {
+        _info =
+            'Şifre sıfırlama bağlantısı e-postana gönderildi. Gelen kutunu kontrol et.';
+      });
+    } on AuthException catch (e) {
+      setState(() => _error = e.message);
+    } catch (_) {
       setState(() => _error = 'Beklenmeyen bir hata oluştu.');
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -146,6 +179,13 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                         style: TextStyle(color: theme.colorScheme.error),
                       ),
                     ],
+                    if (_info != null) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        _info!,
+                        style: TextStyle(color: theme.colorScheme.primary),
+                      ),
+                    ],
                     const SizedBox(height: 20),
                     FilledButton(
                       onPressed: _loading ? null : _submit,
@@ -158,12 +198,19 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                           : Text(_isRegister ? 'Kayıt ol' : 'Giriş yap'),
                     ),
                     const SizedBox(height: 8),
+                    if (!_isRegister)
+                      TextButton.icon(
+                        onPressed: _loading ? null : _sendPasswordReset,
+                        icon: const Icon(Icons.mark_email_read_outlined),
+                        label: const Text('Şifremi unuttum'),
+                      ),
                     TextButton(
                       onPressed: _loading
                           ? null
                           : () => setState(() {
                               _isRegister = !_isRegister;
                               _error = null;
+                              _info = null;
                             }),
                       child: Text(
                         _isRegister
