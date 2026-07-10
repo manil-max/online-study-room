@@ -8,6 +8,7 @@ import '../home/dashboard_providers.dart';
 import '../home/widgets/group_goal_card.dart';
 import '../home/widgets/group_trend_card.dart';
 import 'widgets/campfire_scene.dart';
+import 'widgets/class_detail_screen.dart';
 import 'widgets/class_switcher.dart';
 import 'widgets/study_timer_card.dart';
 
@@ -60,14 +61,17 @@ class _NoGroupView extends ConsumerWidget {
           children: [
             Icon(Icons.groups, size: 72, color: theme.colorScheme.primary),
             const SizedBox(height: 16),
-            Text('Henüz bir grupta değilsin',
-                style: theme.textTheme.titleLarge),
+            Text(
+              'Henüz bir grupta değilsin',
+              style: theme.textTheme.titleLarge,
+            ),
             const SizedBox(height: 8),
             Text(
               'Yeni bir grup oluştur ya da davet koduyla bir gruba katıl.',
               textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium
-                  ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
             const SizedBox(height: 24),
             FilledButton.icon(
@@ -103,10 +107,7 @@ class _GroupView extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        if (showTimer) ...[
-          const StudyTimerCard(),
-          const SizedBox(height: 8),
-        ],
+        if (showTimer) ...[const StudyTimerCard(), const SizedBox(height: 8)],
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -117,10 +118,12 @@ class _GroupView extends ConsumerWidget {
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    Text('Davet kodu: ',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        )),
+                    Text(
+                      'Davet kodu: ',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
                     SelectableText(
                       group.inviteCode,
                       style: theme.textTheme.titleMedium?.copyWith(
@@ -133,15 +136,31 @@ class _GroupView extends ConsumerWidget {
                       icon: const Icon(Icons.copy, size: 18),
                       onPressed: () async {
                         await Clipboard.setData(
-                            ClipboardData(text: group.inviteCode));
+                          ClipboardData(text: group.inviteCode),
+                        );
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Davet kodu kopyalandı')),
+                            const SnackBar(
+                              content: Text('Davet kodu kopyalandı'),
+                            ),
                           );
                         }
                       },
                     ),
                   ],
+                ),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    icon: const Icon(Icons.forum_outlined),
+                    label: const Text('Sohbet ve ayarlar'),
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => ClassDetailScreen(group: group),
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -162,5 +181,3 @@ class _GroupView extends ConsumerWidget {
     );
   }
 }
-
-

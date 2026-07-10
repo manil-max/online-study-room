@@ -122,10 +122,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             subtitle: 'Zamanlayıcı modları ve odak ayarları',
             initiallyExpanded: false,
             children: [
-              _DisabledTile(
-                icon: Icons.hourglass_empty_outlined,
-                title: 'Geri sayım ve pomodoro',
-                subtitle: 'Yakında',
+              ListTile(
+                leading: Icon(Icons.hourglass_empty_outlined),
+                title: Text('Geri sayım ve pomodoro'),
+                subtitle: Text(
+                  'Sayaç kartında modu seçip süreleri ayarlayabilirsin.',
+                ),
               ),
               Divider(height: 1),
               _DisabledTile(
