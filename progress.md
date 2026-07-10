@@ -9,13 +9,13 @@
 
 - **Framework:** Flutter ^3.12 · Riverpod 3.3 · Supabase 2.15 · fl_chart
 - **Uygulama kökü:** `app/` — tüm flutter komutları burada çalışır
-- **Migration'lar:** `supabase/migrations/` (son: `0015`) — sıralı, elle uygulanır
+- **Migration'lar:** `supabase/migrations/` (son: `0016`) — sıralı, elle uygulanır
 - **Repo katmanı çift:** her arayüz `supabase/` + `in_memory/` altında
 - **Gün sınırı:** `Europe/Istanbul`
 - **RLS helper'ları:** `is_group_member(gid)`, `can_see_user_sessions(target)`, `is_group_admin(gid)`
 - **Dashboard:** 6 sütunlu 2D matris, 19 kart türü, `grid_reflow.dart` motoru
 - **Tema:** 5 palet, koyu varsayılan, `AppTheme` palet-parametreli
-- **Son WP numarası:** 16 (WP-7 tamamlandı, WP-8..WP-16 plan kuyruğunda)
+- **Son WP numarası:** 16 (WP-8 tamamlandı, WP-9..WP-16 plan kuyruğunda)
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
   - Flutter: `C:\src\flutter` · Android SDK: `C:\Android\Sdk`
@@ -39,13 +39,6 @@
 - Android ana ekran görünen adı `online_study_room` yerine **Odak Kampı** olacak.
 - Değişiklik release/update hazırlanırken `app/android/app/src/main/AndroidManifest.xml` içindeki `android:label` üzerinden yapılacak.
 - `pubspec.yaml` proje adı şimdilik değiştirilmez; kullanıcıya görünen ad yeterli.
-
-### WP-8: Nudge + Notifications
-- **Backlog:** Dürtme sistemi, kapsamlı bildirim sistemi
-- **Bağımlılık:** WP-2 bildirim altyapısı; chat yapılırsa WP-7 ile uyum.
-- **SAHİP dosyalar:** notification preferences, nudge UI/repository, ilgili migration/RLS
-- **DOKUNMA:** timer state machine'e doğrudan müdahale etme
-- **Not:** Taciz/spam önlemek için rate limit veya cooldown düşünülmeli.
 
 ### WP-9: Gamification
 - **Backlog:** Streak freeze, taç/rozet, başarımlar, profil başarı alanı
@@ -109,6 +102,13 @@
 
 > Son 5 iş. Ajan bunları okuyarak "neye dokunma, ne değişti" anlar.
 > Daha eski işler aşağıdaki Geçmiş tablosuna düşer.
+
+### WP-8: Nudge + Notifications — 2026-07-10 ✅
+- **Değişen dosyalar:** yeni `app/lib/data/models/nudge.dart`, yeni `nudge_repository` çift implementasyonu, yeni `nudge_providers.dart`, yeni `nudge_notification_listener.dart`, yeni `core/notifications/nudge_notification_service.dart`, yeni `core/notifications/notification_preferences.dart`, `core/navigation/home_shell.dart`, `features/classroom/widgets/class_detail_screen.dart`, `features/profile/settings_screen.dart`, yeni nudge/preference testleri, yeni `supabase/migrations/0016_nudges.sql`
+- **Ne yapıldı:** Sınıf üye listesine `Dürt` aksiyonu eklendi. Gelen dürtmeler uygulama açıkken yerel Android bildirimi olarak gösterilir; Ayarlar > Bildirimler altında dürtme bildirimleri aç/kapat tercihi kalıcı hale geldi.
+- **Güvenlik:** `0016_nudges.sql` doğrudan insert/update policy açmaz; yazma `send_nudge` ve `mark_nudge_read` SECURITY DEFINER RPC'lerinden geçer. RPC aktif grup üyeliğini, self-send engelini ve aynı alıcıya 10 dakika cooldown'u DB tarafında zorlar.
+- **Dokunma:** timer state machine, Android widget/native dosyaları, auth recovery. Claude'un `camp_critter.dart` değişikliği commit'e alınmadı.
+- **Test:** `flutter analyze` temiz. `flutter test --concurrency=1 --dart-define-from-file=env.json` 194 test geçti. `ANDROID_HOME=C:\Android\Sdk` ve `ANDROID_SDK_ROOT=C:\Android\Sdk` ile `flutter build apk --debug --dart-define-from-file=env.json` geçti.
 
 ### WP-7: Class Chat — 2026-07-10 ✅
 - **Değişen dosyalar:** yeni `app/lib/data/models/chat_message.dart`, yeni `app/lib/data/repositories/chat_repository.dart`, yeni `in_memory/supabase` chat repository implementasyonları, yeni `app/lib/data/providers/chat_providers.dart`, yeni `app/lib/features/classroom/widgets/class_chat_card.dart`, `app/lib/features/classroom/widgets/class_detail_screen.dart`, yeni `app/test/data/chat_repository_test.dart`, yeni `supabase/migrations/0015_class_chat.sql`

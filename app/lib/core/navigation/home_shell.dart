@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/providers/presence_lifecycle.dart';
+import '../../data/providers/nudge_notification_listener.dart';
 import '../../features/classroom/classroom_screen.dart';
 import '../../features/classroom/widgets/class_switcher.dart';
 import '../../features/home/home_screen.dart';
@@ -16,8 +17,9 @@ class NavIndexNotifier extends Notifier<int> {
   void setIndex(int index) => state = index;
 }
 
-final navIndexProvider =
-    NotifierProvider<NavIndexNotifier, int>(NavIndexNotifier.new);
+final navIndexProvider = NotifierProvider<NavIndexNotifier, int>(
+  NavIndexNotifier.new,
+);
 
 /// Uygulamanın ana kabuğu: alt menüde 4 sekme (Ana Sayfa / Sınıflar / İstatistik
 /// / Profil). Ekranlar IndexedStack ile tutulur, böylece sekme değişince durum korunur.
@@ -40,6 +42,7 @@ class HomeShell extends ConsumerWidget {
     // sürerken satırı düzenli tazeler, uygulama öldürülünce karşı taraf çevrimdışı
     // görür. Kabuk her zaman monte olduğu için burada izlenir.
     ref.watch(presenceLifecycleProvider);
+    ref.watch(nudgeNotificationListenerProvider);
 
     return Scaffold(
       body: IndexedStack(index: index, children: _screens),

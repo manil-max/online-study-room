@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/animals/camp_animal.dart';
+import '../../core/notifications/notification_preferences.dart';
+import '../../core/notifications/nudge_notification_service.dart';
 import '../../data/providers/auth_providers.dart';
 import '../../data/providers/group_providers.dart';
 import '../home/dashboard_providers.dart';
@@ -38,6 +40,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final showTimerInClass = ref.watch(classroomShowTimerProvider);
+    final notificationPrefs = ref.watch(notificationPreferencesProvider);
     final profile = ref.watch(authStateProvider).value;
     final animal = profile == null
         ? null
@@ -133,22 +136,35 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ],
           ),
           const SizedBox(height: 10),
-          const _SettingsGroup(
+          _SettingsGroup(
             icon: Icons.notifications_outlined,
             title: 'Bildirimler',
-            subtitle: 'Hatırlatıcılar ve zamanlayıcı uyarıları',
+            subtitle: 'Dürtme ve hatırlatma tercihleri',
             initiallyExpanded: false,
             children: [
-              _DisabledTile(
-                icon: Icons.notification_important_outlined,
-                title: 'Çalışma hatırlatıcıları',
-                subtitle: 'Yakında',
+              SwitchListTile(
+                secondary: const Icon(Icons.notifications_active_outlined),
+                title: const Text('Dürtme bildirimleri'),
+                subtitle: const Text(
+                  'Sınıf arkadaşların seni dürttüğünde bildir.',
+                ),
+                value: notificationPrefs.nudgeNotificationsEnabled,
+                onChanged: (value) async {
+                  if (value) {
+                    await ref
+                        .read(nudgeNotificationServiceProvider)
+                        .requestPermissionIfNeeded();
+                  }
+                  await ref
+                      .read(notificationPreferencesProvider.notifier)
+                      .setNudgeNotificationsEnabled(value);
+                },
               ),
-              Divider(height: 1),
-              _DisabledTile(
+              const Divider(height: 1),
+              const _DisabledTile(
                 icon: Icons.alarm_outlined,
-                title: 'Zamanlayıcı uyarıları',
-                subtitle: 'Yakında',
+                title: 'Çalışma hatırlatıcıları',
+                subtitle: 'Planlanmış hatırlatıcılar sonraki sürümde',
               ),
             ],
           ),

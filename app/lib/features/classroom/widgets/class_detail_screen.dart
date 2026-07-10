@@ -9,7 +9,9 @@ import '../../../data/models/profile.dart';
 import '../../../data/models/study_group.dart';
 import '../../../data/providers/auth_providers.dart';
 import '../../../data/providers/group_providers.dart';
+import '../../../data/providers/nudge_providers.dart';
 import '../../../data/repositories/group_repository.dart';
+import '../../../data/repositories/nudge_repository.dart';
 import 'class_chat_card.dart';
 
 /// Bir sınıfın bilgi + ayarları (§3.8). Üst kısım bilgiler (davet kodu, üyeler);
@@ -382,6 +384,7 @@ class _MembersCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final repo = ref.read(groupRepositoryProvider);
+    final currentUser = ref.watch(authStateProvider).value;
     return Card(
       child: StreamBuilder<List<Profile>>(
         stream: repo.watchMembers(group.id),
@@ -410,15 +413,32 @@ class _MembersCard extends ConsumerWidget {
                   subtitle: m.id == group.createdBy
                       ? const Text('Yönetici')
                       : null,
-                  trailing:
-                      (isAdmin &&
-                          m.isActive &&
-                          m.id != currentUserId &&
-                          m.id != group.createdBy)
-                      ? IconButton(
-                          tooltip: 'Çıkar',
-                          icon: const Icon(Icons.person_remove_outlined),
-                          onPressed: () => _removeMember(context, repo, m),
+                  trailing: m.isActive && m.id != currentUserId
+                      ? Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              tooltip: 'Dürt',
+                              icon: const Icon(
+                                Icons.notifications_active_outlined,
+                              ),
+                              onPressed: currentUser == null
+                                  ? null
+                                  : () => _sendNudge(
+                                      context,
+                                      ref,
+                                      currentUser,
+                                      m,
+                                    ),
+                            ),
+                            if (isAdmin && m.id != group.createdBy)
+                              IconButton(
+                                tooltip: 'Çıkar',
+                                icon: const Icon(Icons.person_remove_outlined),
+                                onPressed: () =>
+                                    _removeMember(context, repo, m),
+                              ),
+                          ],
                         )
                       : null,
                 ),
@@ -446,6 +466,25 @@ class _MembersCard extends ConsumerWidget {
     try {
       await repo.removeMember(group.id, member.id);
     } on GroupException catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+    }
+  }
+
+  Future<void> _sendNudge(
+    BuildContext context,
+    WidgetRef ref,
+    Profile sender,
+    Profile recipient,
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await ref
+          .read(nudgeRepositoryProvider)
+          .sendNudge(groupId: group.id, sender: sender, recipient: recipient);
+      messenger.showSnackBar(
+        SnackBar(content: Text('${recipient.displayName} dürtüldü')),
+      );
+    } on NudgeException catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(e.message)));
     }
   }
