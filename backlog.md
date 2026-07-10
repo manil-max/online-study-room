@@ -8,11 +8,13 @@
 
 ## 🔴 Yüksek Öncelik
 
-- [ ] **Android ana ekran widget sistemi** (home_widget paketi)
+- [~] **Android ana ekran widget sistemi** (home_widget paketi)
   - Sayaç widget'ı (tek dokunuşla başlat/durdur)
   - Günlük/haftalık istatistik panosu widget'ı
   - Grup leaderboard widget'ı
   - Çeşitli boyut/tür seçenekleri
+  - **WP-1 tamamlandı (`616a92d`):** `home_widget` dependency, Android provider/layout/xml altyapısı ve Flutter widget veri servisi eklendi.
+  - **Kalan:** Sayaç widget'ında gerçek başlat/durdur aksiyonları ve arka plan kontrolü WP-2 ile yapılacak.
   - *Kaynak: project.md §3.6, progress.md FAZ 4.2, new_features.md §5 Madde 4*
 
 - [ ] **Persistent notification (kalıcı bildirim + kontrol paneli)**

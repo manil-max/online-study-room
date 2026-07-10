@@ -27,48 +27,7 @@
 
 ## ⚡ Aktif İş Paketleri
 
-### WP-1: Android Widget Foundation
-- **Ajan:** Codex
-- **Durum:** [~] Kod tamamlandı, global doğrulama Claude değişiklikleri nedeniyle bekliyor
-- **Backlog:** Android ana ekran widget sistemi
-- **Amaç:** `home_widget` tabanlı Android ana ekran widget altyapısını Claude'un kamp ateşi/profil/auth değişiklikleriyle çakışmadan hazırlamak.
-- **SAHİP dosyalar:**
-  - `app/pubspec.yaml` (yalnız widget dependency gerekiyorsa)
-  - `app/android/app/src/main/AndroidManifest.xml` (yalnız widget receiver/service kayıtları)
-  - `app/android/app/src/main/kotlin/**/widgets/*` (yeni)
-  - `app/android/app/src/main/res/xml/*widget*.xml` (yeni)
-  - `app/android/app/src/main/res/layout/*widget*.xml` (yeni)
-  - `app/lib/features/android_widgets/**` (yeni)
-  - `app/test/features/android_widgets/**` (yeni)
-- **DOKUNMA:**
-  - `app/lib/features/classroom/*`
-  - `app/lib/features/profile/*`
-  - `app/lib/data/repositories/auth_repository.dart`
-  - `app/lib/data/repositories/in_memory/in_memory_auth_repository.dart`
-  - `app/lib/data/repositories/supabase/supabase_auth_repository.dart`
-  - `app/lib/data/providers/study_providers.dart`
-  - `supabase/migrations/0014_profile_animal.sql`
-- **Adımlar:**
-  - [x] Mevcut Android paket yolunu ve Flutter embedding yapısını oku.
-  - [x] Widget türlerini minimum temelle ekle: timer, günlük/haftalık özet, grup leaderboard.
-  - [x] Flutter tarafında widget verisini hazırlayan izole servis/provider oluştur.
-  - [x] Android native tarafında küçük/orta/geniş boyut metadata ve layout'larını ekle.
-  - [x] Uygulama içinden widget verisini güncelleyen dar kapsamlı API yaz.
-  - [~] Test/analiz: WP-1 dosyaları temiz; global analyze/test Claude'un aktif debug/metin değişiklikleri nedeniyle bekliyor.
-- **Tuzaklar:**
-  - Timer başlat/durdur aksiyonları `study_providers.dart` gerektirirse bu WP'de yapılmaz; WP-2'ye bırakılır.
-  - Widget'ta gerçek Supabase yetkisi yok; hassas veri yazma/okuma istemci kısayoluyla yapılmaz.
-  - Android native dosya yolu mevcut paket adına göre doğrulanmalı.
-- **Kabul:** Widget altyapısı derlenir, veri yazma/okuma servisi izole çalışır, Claude'un aktif dosyalarına dokunulmaz.
-- **Doğrulama:**
-  - [x] `flutter test test/features/android_widget_service_test.dart --dart-define-from-file=env.json`
-  - [x] `flutter analyze lib/features/android_widgets test/features/android_widget_service_test.dart`
-  - [x] `flutter build apk --debug --dart-define-from-file=env.json`
-  - [ ] Global `flutter analyze`: `test/tmp_render_campfire.dart` içindeki Claude debug dosyası nedeniyle bekliyor.
-  - [ ] Global `flutter test`: `test/widget_test.dart` içinde mevcut metin beklentileri nedeniyle 2 hata var.
-- **Model önerisi:** 🔵 Sonnet
-
-> ⚠️ Çakışma kontrolü: WP-1, Claude'un görünen aktif dosyalarıyla çakışmıyor. Timer aksiyonları ve profil/auth entegrasyonu sonraki WP'lere bırakıldı.
+*(Şu an aktif WP yok. Sıradaki iş Plan Kuyruğu'ndan seçilecek.)*
 
 ---
 
@@ -192,6 +151,14 @@
 
 > Son 5 iş. Ajan bunları okuyarak "neye dokunma, ne değişti" anlar.
 > Daha eski işler aşağıdaki Geçmiş tablosuna düşer.
+
+### WP-1: Android Widget Foundation — 2026-07-10 ✅
+- **Commit:** `616a92d`
+- **Değişen dosyalar:** `app/pubspec.yaml`, `app/pubspec.lock`, `app/android/app/src/main/AndroidManifest.xml`, yeni `app/lib/features/android_widgets/android_widget_service.dart`, yeni Android widget provider/layout/xml dosyaları, yeni `app/test/features/android_widget_service_test.dart`
+- **Ne yapıldı:** `home_widget` eklendi. Timer, günlük/haftalık istatistik ve grup leaderboard için Android ana ekran widget altyapısı kuruldu. Flutter tarafında native widget verisini yazan izole servis/provider eklendi.
+- **Dokunma:** `classroom/*`, `profile/*`, `auth_repository*`, `study_providers.dart`, `supabase/migrations/0014_profile_animal.sql`
+- **Kalan:** Timer widget başlat/durdur aksiyonları ve arka plan kontrolü WP-2'ye bırakıldı.
+- **Test:** WP-1 özel test + WP-1 özel analyze temiz; `flutter build apk --debug --dart-define-from-file=env.json` geçti. Global analyze/test Claude'un aktif debug/test değişiklikleri nedeniyle bu committe bekletildi.
 
 ### Kamp Ateşi — Ormanda Hayvanlı Sahne (eski 2G, yeniden tasarım) — 2026-07-10 ✅
 - **Değişen dosyalar:** `classroom/widgets/campfire_scene.dart` (baştan yazıldı), yeni
