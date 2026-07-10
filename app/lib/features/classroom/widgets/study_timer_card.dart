@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/subject_colors.dart';
@@ -18,6 +19,7 @@ import '../../profile/widgets/goal_editor_dialog.dart';
 import '../../profile/widgets/manual_session_dialog.dart';
 import 'clock_style.dart';
 import 'focus_timer_screen.dart';
+import 'timer_mode_controls.dart';
 
 /// Çalışma sayacı kartı: bugünkü toplam + canlı süre + başlat/durdur.
 /// Her saniye yeniden çizmek için kendi periyodik zamanlayıcısı vardır.
@@ -52,6 +54,26 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
     super.dispose();
   }
 
+  /// Faz geçişi/bitişinde geri bildirim: ses + titreşim + (ekran öndeyse) uyarı.
+  /// Kalıcı bildirim §5'e ait; burada yalnız uygulama-içi tetik (state machine
+  /// olayı dışarı veriyor, UI tepki veriyor).
+  void _onTimerEvent(TimerEvent event) {
+    HapticFeedback.mediumImpact();
+    SystemSound.play(SystemSoundType.alert);
+    final msg = switch (event) {
+      TimerEvent.workDone => 'Mola zamanı 🍵',
+      TimerEvent.breakDone => 'Mola bitti, çalışmaya dön 💪',
+      TimerEvent.countdownDone => 'Süre doldu ✅',
+      TimerEvent.allDone => 'Pomodoro tamamlandı 🎉',
+    };
+    final route = ModalRoute.of(context);
+    if (route?.isCurrent ?? false) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(msg), duration: const Duration(seconds: 2)),
+      );
+    }
+  }
+
   Future<void> _editGoal(BuildContext context, int currentMinutes) async {
     final result =
         await showGoalEditorDialog(context, initialMinutes: currentMinutes);
@@ -72,20 +94,36 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
     final timer = ref.watch(studyTimerProvider);
     final recorded = ref.watch(todayRecordedSecondsProvider);
 
-    // Durdurma anında o anki toplamı dondur (kayıtlı toplam yetişene kadar).
+    // Durdurmada "Bugün"ü dondur + faz geçişinde ses/titreşim/uyarı (§2H).
     ref.listen<StudyTimerState>(studyTimerProvider, (prev, next) {
-      final wasRunning = prev?.isRunning ?? false;
-      if (wasRunning && !next.isRunning && prev?.startedAt != null) {
-        final extra = DateTime.now().difference(prev!.startedAt!).inSeconds;
+      if (prev == null) return;
+      if (prev.isRunning && !next.isRunning && prev.startedAt != null) {
+        var extra = DateTime.now().difference(prev.startedAt!).inSeconds;
+        final prevTarget = prev.phaseTargetSeconds;
+        if (prevTarget != null) extra = extra.clamp(0, prevTarget);
+        if (prev.phase != TimerPhase.work) extra = 0; // mola toplama sayılmaz
         _frozenTotal =
             ref.read(todayRecordedSecondsProvider) + (extra > 0 ? extra : 0);
       }
+      if (next.eventSeq != prev.eventSeq && next.lastEvent != null) {
+        _onTimerEvent(next.lastEvent!);
+      }
     });
 
-    final liveExtra = (timer.isRunning && timer.startedAt != null)
-        ? DateTime.now().difference(timer.startedAt!).inSeconds
+    final now = DateTime.now();
+    final elapsed = (timer.isRunning && timer.startedAt != null)
+        ? now.difference(timer.startedAt!).inSeconds
         : 0;
-    final base = recorded + liveExtra;
+    final target = timer.phaseTargetSeconds;
+    final inWork = timer.phase == TimerPhase.work;
+    // Büyük saat: kronometre yukarı sayar; geri sayım/pomodoro kalanı geri sayar
+    // (dururken hedefin tamamını gösterir).
+    final displaySeconds = target == null
+        ? elapsed
+        : (timer.isRunning ? (target - elapsed).clamp(0, target) : target);
+    // "Bugün" toplamına yalnız ÇALIŞMA fazının canlı süresi eklenir (mola hariç).
+    final liveWork = (timer.isRunning && inWork) ? elapsed : 0;
+    final base = recorded + liveWork;
     // Kayıtlı toplam dondurulan değere yetiştiyse dondurmayı bırak.
     if (_frozenTotal != null && base >= _frozenTotal!) _frozenTotal = null;
     final todayTotal = _frozenTotal ?? base;
@@ -98,6 +136,10 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
     final pct =
         goalSeconds > 0 ? (todayTotal / goalSeconds).clamp(0.0, 1.0) : 0.0;
     final reached = goalSeconds > 0 && todayTotal >= goalSeconds;
+    // Saat halkası/renk geçişi: timer modunda FAZ ilerlemesi, kronometrede hedef.
+    final clockPct = target == null
+        ? pct
+        : (target > 0 ? (elapsed / target).clamp(0.0, 1.0) : 0.0);
     final clockStyle = ref.watch(clockStyleProvider);
 
     return Card(
@@ -169,8 +211,8 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
                         FittedBox(
                           fit: BoxFit.scaleDown,
                           child: StudyClock(
-                            seconds: liveExtra,
-                            pctToGoal: pct,
+                            seconds: displaySeconds,
+                            pctToGoal: clockPct,
                             running: timer.isRunning,
                             style: clockStyle,
                             fontSize: small ? 34 : (isLarge ? 56 : 40),
@@ -178,6 +220,15 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
                           ),
                         ),
                         const SizedBox(height: 16),
+                        // Çalışırken faz göstergesi; dururken mod seçici + ayarlar.
+                        if (timer.isRunning) ...[
+                          TimerPhaseIndicator(timer: timer),
+                          if (timer.mode != TimerMode.stopwatch)
+                            const SizedBox(height: 16),
+                        ] else ...[
+                          const TimerModeControls(),
+                          const SizedBox(height: 16),
+                        ],
                         _GoalProgress(
                           todaySeconds: todayTotal,
                           goalSeconds: goalSeconds,

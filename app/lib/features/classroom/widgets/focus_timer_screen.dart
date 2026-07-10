@@ -10,6 +10,7 @@ import '../../../data/models/subject.dart';
 import '../../../data/providers/study_providers.dart';
 import '../../../data/providers/subject_providers.dart';
 import 'clock_style.dart';
+import 'timer_mode_controls.dart';
 
 /// Tam ekran odak modunu açar (§3.12). Sistem çubukları gizlenir; çıkışta
 /// (ekran kapanınca) geri yüklenir.
@@ -64,12 +65,22 @@ class _FocusTimerScreenState extends ConsumerState<FocusTimerScreen> {
       if (s.id == timer.subjectId) selected = s;
     }
 
-    final liveExtra = (timer.isRunning && timer.startedAt != null)
+    final elapsed = (timer.isRunning && timer.startedAt != null)
         ? DateTime.now().difference(timer.startedAt!).inSeconds
         : 0;
-    final todayTotal = recorded + (liveExtra > 0 ? liveExtra : 0);
+    final target = timer.phaseTargetSeconds;
+    final inWork = timer.phase == TimerPhase.work;
+    // Geri sayım/pomodoro kalanı geri sayar; kronometre yukarı.
+    final displaySeconds = target == null
+        ? elapsed
+        : (timer.isRunning ? (target - elapsed).clamp(0, target) : target);
+    final liveWork = (timer.isRunning && inWork) ? elapsed : 0;
+    final todayTotal = recorded + liveWork;
     final goalSeconds = ref.watch(dailyGoalMinutesProvider) * 60;
-    final pct = goalSeconds > 0 ? todayTotal / goalSeconds : 0.0;
+    final goalPct = goalSeconds > 0 ? todayTotal / goalSeconds : 0.0;
+    final clockPct = target == null
+        ? goalPct
+        : (target > 0 ? (elapsed / target).clamp(0.0, 1.0) : 0.0);
     final clockStyle = ref.watch(clockStyleProvider);
 
     return Scaffold(
@@ -116,6 +127,11 @@ class _FocusTimerScreenState extends ConsumerState<FocusTimerScreen> {
                       ),
                     ],
                   ),
+                  if (timer.isRunning &&
+                      timer.mode != TimerMode.stopwatch) ...[
+                    const SizedBox(height: 12),
+                    TimerPhaseIndicator(timer: timer),
+                  ],
                   const SizedBox(height: 24),
                   // Dar ekranda büyük saat taşmasın diye ölçekle (FittedBox).
                   Padding(
@@ -123,8 +139,8 @@ class _FocusTimerScreenState extends ConsumerState<FocusTimerScreen> {
                     child: FittedBox(
                       fit: BoxFit.scaleDown,
                       child: StudyClock(
-                        seconds: liveExtra,
-                        pctToGoal: pct,
+                        seconds: displaySeconds,
+                        pctToGoal: clockPct,
                         running: timer.isRunning,
                         style: clockStyle,
                         fontSize: 72,

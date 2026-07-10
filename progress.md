@@ -15,7 +15,7 @@
 > eklemek serbest ama yalnız kendi feature klasörüne. Her faz sonunda `cd app && flutter
 > analyze` temiz + `flutter test` geçmeli.
 
-### Tur 1 (şu an paralel)
+### Tur 1 ✅ BİTTİ (2026-07-10) — 2G (Claude) + 2I (Codex) commit `24bb809`
 
 **🔥 2G — Kamp ateşi canlı ekran → CLAUDE**
 - **SAHİP (yaz):** `app/lib/features/classroom/classroom_screen.dart`; yeni
@@ -39,11 +39,34 @@
 > **Çakışma kontrolü:** 2G ve 2I'nin ortak dosyası YOK. 2G `home_screen.dart`'a hiç dokunmaz,
 > bu yüzden 2I'nin oradaki minimal değişikliği güvenli.
 
-### Tur 2 (Tur 1 bitince — yine paralel)
-- **2H** (timer): `study_timer_card.dart`, `focus_timer_screen.dart`, `clock_style.dart`,
-  `data/providers/study_providers.dart` (StudyTimerNotifier).
-- **2E** (16 kart responsive): `home/widgets/*_card.dart` (timer_card HARİÇ),
-  `dashboard_card.dart`, `home_screen.dart` boyut köprüsü.
+### Tur 2 (şu an paralel — Claude 2G debug'ını kapattı, classroom serbest)
+
+> Bu iki iş dosya olarak neredeyse hiç çakışmıyor: 2H yalnız timer/classroom + study_providers,
+> güvenlik hardening yalnız `supabase/migrations` + release dosyaları.
+
+**⏱ 2H — Eksiksiz sayaç/zamanlayıcı → CLAUDE**
+- **SAHİP (yaz):** `app/lib/features/classroom/widgets/study_timer_card.dart`,
+  `app/lib/features/classroom/widgets/focus_timer_screen.dart`,
+  `app/lib/features/classroom/widgets/clock_style.dart`,
+  `app/lib/data/providers/study_providers.dart` (`StudyTimerNotifier`);
+  gerekirse yeni `app/lib/features/classroom/widgets/timer_*` + `app/test/features/timer_*`.
+- **DOKUNMA:** `home/*`, `profile/*`, `supabase/migrations/*`, `presence_providers.dart`.
+
+**🔒 Güvenlik hardening → CODEX**
+- **SAHİP (yaz):** `supabase/migrations/0013_presence_membership_hardening.sql` (yeni),
+  gerekirse `supabase/README.md`.
+- **Opsiyonel ayrı mini faz (release sertleştirme):** `.github/workflows/release.yml`,
+  `app/android/app/build.gradle.kts`, `app/lib/features/updater/*`.
+- **DOKUNMA:** `classroom/*`, timer widget'ları, `study_providers.dart`, `home/*`, `profile/*`.
+- **Not (progress.md):** yalnız kendi hardening satırını işaretle; 2H bölümüne dokunma
+  (progress.md aynı çalışma ağacında; çakışmayı önlemek için sadece kendi bölümünü düzenle).
+
+### Tur 3 (Tur 2 bitince)
+**🏠 Ana Sayfa responsive kart cilası (2E devamı)**
+- **SAHİP:** `app/lib/features/home/widgets/*` (timer kartı HARİÇ), `dashboard_card.dart`,
+  gerekirse sınırlı `home_screen.dart` boyut köprüsü.
+- **Neden Tur 3:** `home_screen.dart`/`dashboard_card.dart` geniş temas alanı; başka UI işiyle
+  aynı anda gitmesin. Timer kartı 2H'de değiştiği için dışta tutulur.
 
 ---
 
@@ -491,10 +514,12 @@ Supabase'e gerek yok. (Önceki Supabase tablolu plan iptal edildi — `0007` sil
 - `[X]` 2F · Düzenleme odak koruma 🔵
 - `[~]` 2D · Boyutlandırma 🔴 — **§2.2 REFACTOR ile yeniden yazılıyor** (akış ızgarası → gerçek 6×N 2D matris). Aşağı bak.
 - `[X]` 2G · Kamp ateşi canlı ekran 🔴+🔵 (Claude — 2026-07-10)
-- `[ ]` 2H · Eksiksiz saat/zamanlayıcı 🔵+🟣
+- `[X]` 2H · Eksiksiz saat/zamanlayıcı 🔵+🟣 (Claude — 2026-07-10: kronometre + geri sayım + pomodoro)
 - `[X]` 2I · Ayarlar ve Grup Yönetimi overhaul 🔵+🟢 (Grup ayarlarının derli toplu hale gelmesi)
-- `[ ]` Güvenlik hardening · Presence yazma RLS'i: kullanıcı yalnız aktif üyesi olduğu gruba
-  `presence` insert/update atabilsin (`is_group_member(group_id)` ile). Şimdilik ertelendi.
+- `[X]` Güvenlik hardening · Presence yazma RLS'i: kullanıcı yalnız aktif üyesi olduğu gruba
+  `presence` insert/update atabilsin (`is_group_member(group_id)` ile). 0013 migration eklendi.
+  - **Uygulandı (2026-07-10):** `0013_presence_membership_hardening.sql` eklendi; kullanıcı
+    Supabase SQL Editor'da çalıştırmalı.
 
 #### §2.2 — Gerçek 6×N 2D Matris Izgara REFACTOR (2026-06-26 geri bildirim)
 - `[X]` R1 · 2D matris TASARIM (koordinat/hücre/reflow/migration) 🔴 Opus 4.8
@@ -752,13 +777,25 @@ Supabase'e gerek yok. (Önceki Supabase tablolu plan iptal edildi — `0007` sil
     `_LiveMembers`/`_MemberTile` listesi kaldırıldı, yerine `CampfireScene`. 2 widget testi
     (`test/features/campfire_scene_test.dart`) + `flutter analyze` temiz + 79 test geçiyor.
 
-- [ ] **2H · Eksiksiz saat/zamanlayıcı 🔵 Sonnet (UI) + 🟣 Gemini 3.1 Pro (state machine)**
-  - **Dosyalar:** `app/lib/features/classroom/widgets/study_timer_card.dart`, `focus_timer_screen.dart`, `app/lib/data/providers/study_providers.dart` (`StudyTimerNotifier`).
+- [x] **2H · Eksiksiz saat/zamanlayıcı 🔵 Sonnet (UI) + 🟣 Gemini 3.1 Pro (state machine) — ✅ YAPILDI (Claude, 2026-07-10)**
+  - **Dosyalar:** `app/lib/features/classroom/widgets/study_timer_card.dart`, `focus_timer_screen.dart`, `app/lib/data/providers/study_providers.dart` (`StudyTimerNotifier`), yeni `timer_mode_controls.dart` + 2 test.
   - **Adımlar:**
     - 🟣 State machine: mevcut kronometreye ek **Geri Sayım**, **Pomodoro (25/5, döngü sayısı)**, ayarlanabilir hazır planlar. Mod geçişleri, döngü sayacı, otomatik mola, bildirim/ses tetik noktaları. Her mod bittiğinde mevcut `_recordSession` akışıyla oturum kaydı tutarlı kalsın (1D sonrası group_id'siz).
     - 🔵 UI: mod seçici, estetik saat stilleri (halka/ilerleme), geri sayım/pomodoro ekranları, tam-ekran odak moduyla uyum.
   - **Tuzak:** Sayaç bildirimi (persistent notification, §5 Madde 10) bu fazda DEĞİL; sadece in-app timer. State machine'i bildirim tetik noktalarını dışarı verecek şekilde tasarla (§5'e hazır).
   - **Kabul:** Kronometre + geri sayım + pomodoro çalışır; pomodoro döngüsü mola/çalışma geçişlerini doğru yapar; her tamamlanan çalışma süresi istatistiğe yazılır.
+  - **Uygulandı (2026-07-10):** `StudyTimerNotifier` mod-duyarlı state machine oldu (`TimerMode`
+    stopwatch/countdown/pomodoro + `TimerPhase` work/rest). Notifier içi periyodik timer faz hedefine
+    ulaşınca **otomatik geçiş** yapar: geri sayım biter & çalışmayı kaydeder; pomodoro çalışma→mola→
+    çalışma… döngüsü, her **çalışma** aralığı kaydedilir (mola kaydedilmez), son döngüde biter.
+    Mola fazında presence **`onBreak`** → 2G kamp ateşinde otomatik "karanlığa çekilme". Mod + süreler
+    (geri sayım dk / pomodoro çalışma-mola-döngü) `shared_preferences`'ta kalıcı. Faz-geçiş olayları
+    (`eventSeq`/`lastEvent`) dışarı verilir; UI ses (`SystemSound.alert`) + titreşim + kısa uyarı
+    gösterir (kalıcı bildirim §5'e bırakıldı). UI: `timer_mode_controls.dart` (SegmentedButton mod
+    seçici + moda özel `NumberStepper` ayarları; dar kartta ikon-only) + `TimerPhaseIndicator`
+    (Çalışma n/N · Mola). Büyük saat timer modunda **geri sayar**, halka faz ilerlemesini gösterir;
+    "Bugün" toplamına yalnız çalışma fazı canlı süresi eklenir. Tam ekran odak modu da mod-duyarlı.
+    Saf `nextPhaseTransition`/`timerPhaseTargetSeconds` testli; toplam **90 test** geçiyor, analyze temiz.
 
 - [x] **2I · Ayarlar overhaul 🔵 Sonnet + 🟢 Flash**
   - **Dosyalar:** `app/lib/features/profile/` (ayarlar ekranı), `home_screen.dart` (ana ekran sıfırlama butonu konumu), `core/prefs/`.

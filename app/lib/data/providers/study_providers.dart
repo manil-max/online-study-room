@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide Presence;
 import 'package:uuid/uuid.dart';
 
 import '../../core/config/supabase_config.dart';
+import '../../core/prefs/app_prefs.dart';
 import '../../core/stats/study_stats.dart';
 import '../models/daily_stat.dart';
 import '../models/presence.dart';
@@ -72,51 +75,364 @@ final groupTodaySecondsProvider = Provider<Map<String, int>>((ref) {
   return todaySecondsByUser(stats);
 });
 
-/// Çalışma sayacının durumu.
+/// Sayaç modu (§2H). Kronometre yukarı sayar; geri sayım ve pomodoro hedef
+/// süreye ulaşınca otomatik biter/geçiş yapar.
+enum TimerMode { stopwatch, countdown, pomodoro }
+
+/// Pomodoro fazı. Kronometre/geri sayım her zaman `work` sayılır.
+enum TimerPhase { work, rest }
+
+/// Bir faz tamamlandığında UI'ın (ses/titreşim/uyarı) tepki vermesi için sinyal.
+enum TimerEvent { countdownDone, workDone, breakDone, allDone }
+
+/// Sınırlar (dakika). UI ve mantık ortak kullanır.
+const int kMinTimerMinutes = 1;
+const int kMaxTimerMinutes = 180;
+const int kMinPomodoroCycles = 1;
+const int kMaxPomodoroCycles = 12;
+
+/// Bir çalışma/mola fazının hedef süresi (saniye); kronometrede hedef yoktur → null.
+/// Saf fonksiyon (testli).
+int? timerPhaseTargetSeconds({
+  required TimerMode mode,
+  required TimerPhase phase,
+  required int countdownMinutes,
+  required int workMinutes,
+  required int breakMinutes,
+}) {
+  switch (mode) {
+    case TimerMode.stopwatch:
+      return null;
+    case TimerMode.countdown:
+      return countdownMinutes * 60;
+    case TimerMode.pomodoro:
+      return (phase == TimerPhase.work ? workMinutes : breakMinutes) * 60;
+  }
+}
+
+/// Bir faz hedefe ulaştığında ne olacağının saf kararı (testli). Timer/UI'dan
+/// bağımsız: kayıt gerekli mi, sayaç bitti mi, sıradaki faz/döngü ne.
+class PhaseTransition {
+  const PhaseTransition({
+    required this.finished,
+    required this.recordWork,
+    required this.nextPhase,
+    required this.nextCycle,
+    required this.event,
+  });
+
+  /// Sayaç tamamen bitti mi (geri sayım sonu / son pomodoro döngüsü).
+  final bool finished;
+
+  /// Biten çalışma aralığı `study_sessions`'a yazılacak mı (mola → false).
+  final bool recordWork;
+
+  /// Bitmediyse sıradaki faz ve döngü numarası.
+  final TimerPhase nextPhase;
+  final int nextCycle;
+  final TimerEvent event;
+}
+
+/// Çalışan bir faz hedefe ulaştığında sıradaki geçişi hesaplar (saf, testli).
+/// - countdown: biter, çalışma kaydedilir.
+/// - pomodoro work: son döngüyse biter (kaydet); değilse molaya geçer (kaydet).
+/// - pomodoro rest: sıradaki çalışma döngüsüne geçer (kayıt yok).
+PhaseTransition nextPhaseTransition({
+  required TimerMode mode,
+  required TimerPhase phase,
+  required int cycle,
+  required int cycles,
+}) {
+  if (mode == TimerMode.countdown) {
+    return const PhaseTransition(
+      finished: true,
+      recordWork: true,
+      nextPhase: TimerPhase.work,
+      nextCycle: 1,
+      event: TimerEvent.countdownDone,
+    );
+  }
+  if (mode == TimerMode.pomodoro && phase == TimerPhase.work) {
+    final lastCycle = cycle >= cycles;
+    return PhaseTransition(
+      finished: lastCycle,
+      recordWork: true,
+      nextPhase: lastCycle ? TimerPhase.work : TimerPhase.rest,
+      nextCycle: lastCycle ? 1 : cycle,
+      event: lastCycle ? TimerEvent.allDone : TimerEvent.workDone,
+    );
+  }
+  if (mode == TimerMode.pomodoro && phase == TimerPhase.rest) {
+    return PhaseTransition(
+      finished: false,
+      recordWork: false,
+      nextPhase: TimerPhase.work,
+      nextCycle: cycle + 1,
+      event: TimerEvent.breakDone,
+    );
+  }
+  // Kronometre (hedefsiz) — teoride çağrılmaz; güvenli varsayılan.
+  return const PhaseTransition(
+    finished: true,
+    recordWork: true,
+    nextPhase: TimerPhase.work,
+    nextCycle: 1,
+    event: TimerEvent.countdownDone,
+  );
+}
+
+/// Çalışma sayacının durumu (§3.5 + §2H mod/faz).
 class StudyTimerState {
-  const StudyTimerState({this.isRunning = false, this.startedAt, this.subjectId});
+  const StudyTimerState({
+    this.mode = TimerMode.stopwatch,
+    this.isRunning = false,
+    this.startedAt,
+    this.subjectId,
+    this.phase = TimerPhase.work,
+    this.cycle = 1,
+    this.countdownMinutes = 25,
+    this.workMinutes = 25,
+    this.breakMinutes = 5,
+    this.cycles = 4,
+    this.eventSeq = 0,
+    this.lastEvent,
+  });
+
+  final TimerMode mode;
   final bool isRunning;
 
-  /// Çalışırken mevcut oturumun başlangıcı (anlık süre buradan hesaplanır).
+  /// Çalışırken mevcut FAZ segmentinin başlangıcı (anlık süre buradan hesaplanır).
   final DateTime? startedAt;
 
   /// Seçili ders (opsiyonel — null ise "derssiz"). Bkz. project.md §3.7.
   final String? subjectId;
+
+  /// Pomodoro fazı (çalışma/mola). Diğer modlarda her zaman `work`.
+  final TimerPhase phase;
+
+  /// Pomodoro'da kaçıncı döngüdeyiz (1..cycles).
+  final int cycle;
+
+  /// Geri sayım hedefi (dakika).
+  final int countdownMinutes;
+
+  /// Pomodoro çalışma/mola süreleri (dakika) ve toplam döngü sayısı.
+  final int workMinutes;
+  final int breakMinutes;
+  final int cycles;
+
+  /// Her faz tamamlanışında artan sayaç + son olay (UI ses/titreşim/uyarı için).
+  final int eventSeq;
+  final TimerEvent? lastEvent;
+
+  /// Mevcut fazın hedef süresi (saniye); kronometrede null.
+  int? get phaseTargetSeconds => timerPhaseTargetSeconds(
+        mode: mode,
+        phase: phase,
+        countdownMinutes: countdownMinutes,
+        workMinutes: workMinutes,
+        breakMinutes: breakMinutes,
+      );
+
+  StudyTimerState copyWith({
+    TimerMode? mode,
+    bool? isRunning,
+    DateTime? startedAt,
+    bool clearStartedAt = false,
+    String? subjectId,
+    bool clearSubject = false,
+    TimerPhase? phase,
+    int? cycle,
+    int? countdownMinutes,
+    int? workMinutes,
+    int? breakMinutes,
+    int? cycles,
+    int? eventSeq,
+    TimerEvent? lastEvent,
+  }) {
+    return StudyTimerState(
+      mode: mode ?? this.mode,
+      isRunning: isRunning ?? this.isRunning,
+      startedAt: clearStartedAt ? null : (startedAt ?? this.startedAt),
+      subjectId: clearSubject ? null : (subjectId ?? this.subjectId),
+      phase: phase ?? this.phase,
+      cycle: cycle ?? this.cycle,
+      countdownMinutes: countdownMinutes ?? this.countdownMinutes,
+      workMinutes: workMinutes ?? this.workMinutes,
+      breakMinutes: breakMinutes ?? this.breakMinutes,
+      cycles: cycles ?? this.cycles,
+      eventSeq: eventSeq ?? this.eventSeq,
+      lastEvent: lastEvent ?? this.lastEvent,
+    );
+  }
 }
 
-/// Çalışma sayacını yönetir: başlat / durdur ve durunca oturumu kaydet.
+/// Çalışma sayacını yönetir: başlat / durdur + geri sayım/pomodoro otomatik
+/// faz geçişleri; her tamamlanan **çalışma** aralığını `study_sessions`'a yazar.
+/// Mola fazında presence `onBreak` olur (kamp ateşi sahnesi mola→karanlık, 2G).
 /// Not: süre arka planda kesintisiz sayılır (bkz. project.md §3.5).
 class StudyTimerNotifier extends Notifier<StudyTimerState> {
   static const _uuid = Uuid();
+  static const _kMode = 'timer_mode';
+  static const _kCountdown = 'timer_countdown_min';
+  static const _kWork = 'timer_work_min';
+  static const _kBreak = 'timer_break_min';
+  static const _kCycles = 'timer_cycles';
+
+  Timer? _tick;
 
   @override
-  StudyTimerState build() => const StudyTimerState();
+  StudyTimerState build() {
+    ref.onDispose(() => _tick?.cancel());
+    final prefs = ref.read(sharedPreferencesProvider);
+    final modeName = prefs.getString(_kMode);
+    final mode = TimerMode.values.firstWhere(
+      (m) => m.name == modeName,
+      orElse: () => TimerMode.stopwatch,
+    );
+    return StudyTimerState(
+      mode: mode,
+      countdownMinutes: prefs.getInt(_kCountdown) ?? 25,
+      workMinutes: prefs.getInt(_kWork) ?? 25,
+      breakMinutes: prefs.getInt(_kBreak) ?? 5,
+      cycles: prefs.getInt(_kCycles) ?? 4,
+    );
+  }
 
   /// Aktif dersi seçer (yalnızca sayaç dururken; null → derssiz).
   void selectSubject(String? subjectId) {
     if (state.isRunning) return;
-    state = StudyTimerState(subjectId: subjectId);
+    state = state.copyWith(subjectId: subjectId, clearSubject: subjectId == null);
   }
 
-  /// Çalışmaya başla.
+  /// Modu değiştirir (yalnız dururken). Faz/döngü sıfırlanır, seçim kalıcılaşır.
+  void setMode(TimerMode mode) {
+    if (state.isRunning) return;
+    state = state.copyWith(mode: mode, phase: TimerPhase.work, cycle: 1);
+    ref.read(sharedPreferencesProvider).setString(_kMode, mode.name);
+  }
+
+  /// Geri sayım süresini ayarlar (dakika; yalnız dururken).
+  void setCountdownMinutes(int minutes) {
+    if (state.isRunning) return;
+    final m = minutes.clamp(kMinTimerMinutes, kMaxTimerMinutes);
+    state = state.copyWith(countdownMinutes: m);
+    ref.read(sharedPreferencesProvider).setInt(_kCountdown, m);
+  }
+
+  /// Pomodoro ayarlarını değiştirir (dakika + döngü; yalnız dururken).
+  void setPomodoro({int? workMinutes, int? breakMinutes, int? cycles}) {
+    if (state.isRunning) return;
+    final w = (workMinutes ?? state.workMinutes)
+        .clamp(kMinTimerMinutes, kMaxTimerMinutes);
+    final b = (breakMinutes ?? state.breakMinutes)
+        .clamp(kMinTimerMinutes, kMaxTimerMinutes);
+    final c =
+        (cycles ?? state.cycles).clamp(kMinPomodoroCycles, kMaxPomodoroCycles);
+    state = state.copyWith(workMinutes: w, breakMinutes: b, cycles: c);
+    final prefs = ref.read(sharedPreferencesProvider);
+    prefs.setInt(_kWork, w);
+    prefs.setInt(_kBreak, b);
+    prefs.setInt(_kCycles, c);
+  }
+
+  /// Çalışmaya başla (mevcut moda göre ilk fazı kurar).
   void start() {
     if (state.isRunning) return;
     final now = DateTime.now();
-    state = StudyTimerState(
-        isRunning: true, startedAt: now, subjectId: state.subjectId);
+    state = state.copyWith(
+      isRunning: true,
+      startedAt: now,
+      phase: TimerPhase.work,
+      cycle: 1,
+    );
     _publishPresence(status: PresenceStatus.studying, startedAt: now);
+    _startTick();
   }
 
-  /// Durdur: süreyi kaydet, durumu çevrimdışına çek. Ders seçimi korunur.
+  /// Kullanıcı elle durdurur: çalışma fazındaysa geçen süreyi kaydet, çevrimdışına çek.
   Future<void> stop() async {
     if (!state.isRunning) return;
     final startedAt = state.startedAt;
     final subjectId = state.subjectId;
-    state = StudyTimerState(subjectId: subjectId);
-    _publishPresence(status: PresenceStatus.offline, startedAt: null);
-    if (startedAt != null) {
+    final wasWork = state.phase == TimerPhase.work;
+    _finish();
+    if (wasWork && startedAt != null) {
       await _recordSession(startedAt, DateTime.now(), subjectId);
     }
+  }
+
+  void _startTick() {
+    _tick?.cancel();
+    // Kronometrede otomatik geçiş yok; timer yalnız geri sayım/pomodoro için.
+    if (state.phaseTargetSeconds == null) return;
+    _tick = Timer.periodic(const Duration(seconds: 1), (_) => _onTick());
+  }
+
+  void _onTick() {
+    final target = state.phaseTargetSeconds;
+    final startedAt = state.startedAt;
+    if (!state.isRunning || target == null || startedAt == null) return;
+    final elapsed = DateTime.now().difference(startedAt).inSeconds;
+    if (elapsed >= target) {
+      // Geç tetiklense bile hedef süreyi (target) kaydet → overshoot sayılmaz.
+      _completePhase(target);
+    }
+  }
+
+  /// Mevcut faz hedefe ulaştı: saf karara göre kaydet/geçiş yap.
+  Future<void> _completePhase(int targetSeconds) async {
+    final startedAt = state.startedAt;
+    final subjectId = state.subjectId;
+    if (startedAt == null) return;
+    final phaseEnd = startedAt.add(Duration(seconds: targetSeconds));
+
+    final t = nextPhaseTransition(
+      mode: state.mode,
+      phase: state.phase,
+      cycle: state.cycle,
+      cycles: state.cycles,
+    );
+
+    if (t.finished) {
+      _finish(lastEvent: t.event);
+    } else {
+      final now = DateTime.now();
+      state = state.copyWith(
+        phase: t.nextPhase,
+        cycle: t.nextCycle,
+        startedAt: now,
+        eventSeq: state.eventSeq + 1,
+        lastEvent: t.event,
+      );
+      _publishPresence(
+        status: t.nextPhase == TimerPhase.work
+            ? PresenceStatus.studying
+            : PresenceStatus.onBreak,
+        startedAt: now,
+      );
+      _startTick();
+    }
+
+    // Çalışma fazı hedefe ulaştıysa süreyi kaydet (mola kaydedilmez).
+    if (t.recordWork) {
+      await _recordSession(startedAt, phaseEnd, subjectId);
+    }
+  }
+
+  /// Sayacı durdurur (kayıt yapmadan): timer'ı iptal et, çevrimdışına çek.
+  void _finish({TimerEvent? lastEvent}) {
+    _tick?.cancel();
+    _tick = null;
+    state = state.copyWith(
+      isRunning: false,
+      clearStartedAt: true,
+      phase: TimerPhase.work,
+      cycle: 1,
+      eventSeq: lastEvent != null ? state.eventSeq + 1 : state.eventSeq,
+      lastEvent: lastEvent,
+    );
+    _publishPresence(status: PresenceStatus.offline, startedAt: null);
   }
 
   /// Tamamlanan bir aralığı `study_sessions`'a yazar.
