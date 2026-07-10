@@ -64,7 +64,12 @@ class GoalCard extends ConsumerWidget {
                   children: [
                     Row(
                       children: [
-                        Text('Günlük hedef', style: theme.textTheme.labelMedium),
+                        Flexible(
+                          child: Text('Günlük hedef',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.labelMedium),
+                        ),
                         const Spacer(),
                         if (reached)
                           Icon(Icons.check_circle, color: subjectColor('chart-2'), size: 16),
@@ -112,7 +117,12 @@ class GoalCard extends ConsumerWidget {
                 children: [
                   Row(
                     children: [
-                      Text('Günlük hedef', style: theme.textTheme.titleMedium),
+                      Flexible(
+                        child: Text('Günlük hedef',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.titleMedium),
+                      ),
                       const Spacer(),
                       if (reached)
                         Icon(Icons.check_circle, color: subjectColor('chart-2')),

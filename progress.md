@@ -750,11 +750,23 @@ Supabase'e gerek yok. (Önceki Supabase tablolu plan iptal edildi — `0007` sil
   - **Kabul:** Kullanıcı kartı 4 köşeden serbestçe büyütüp küçültür; içerik 2E sayesinde
     bozulmaz; eski kayıtlı düzen yeni formata göç eder. ✅
 
-- [ ] **2E · İçerik responsive adaptasyonu 🟣 Gemini 3.1 Pro**
+- [x] **2E · İçerik responsive adaptasyonu 🟣 Gemini 3.1 Pro — ✅ YAPILDI (Claude, 2026-07-10)**
   - **Dosyalar:** `app/lib/features/home/widgets/` altındaki 16 kart (+ `study_timer_card.dart`).
   - **Adımlar:** Her kart `LayoutBuilder` ile gelen genişlik/yükseklik/orana göre içeriği yeniden düzenlesin: küçükken özet/ikon, büyükken grafik+detay. Yazı/saat/grafik **taşmasın, üst üste binmesin** (`FittedBox`, esnek font, eşik-tabanlı görünüm). Sabit boyut varsayımlarını kaldır.
   - **Bölme:** Karmaşık kartlar (line/heatmap/leaderboard/scatter/rhythm) 🟣 Pro; basit özet kartları (today/goal/records) 🔵 Sonnet'e devredilebilir.
   - **Kabul:** Her kart 1×1'den tam-genişlik×büyük'e kadar tüm oranlarda düzgün; overflow/clipping yok.
+  - **Uygulandı (2026-07-10):** Ortak `home/widgets/card_scaffold.dart` eklendi: `CardScaffold`
+    (başlık + kalan alanı dolduran gövde; yükseklik başlık+min gövdeye yetmezse tüm kart kaydırılır
+    → hiçbir en-boy oranında taşma yok) + saf `cardShouldFill()` + tek-satır ellipsis `cardTitle()`.
+    Grafik kartları (weekly/line/scatter/group_trend/hours) artık **sabit piksel + her zaman scroll**
+    yerine **hücre yüksekliğini doldurur** (büyüyünce grafik büyür). `HourActivityChart` verilen
+    yüksekliğe **tam** sığacak şekilde yeniden yazıldı (tepe satırı/eksen sabit, çubuklar `Expanded`;
+    tepe metni tek satır ellipsis) — stats ekranına da fayda. heatmap/rhythm ızgaralarına dikey+yatay
+    kaydırma; records/heatmap/rhythm CardScaffold'a taşındı. Dar ende yatay taşan başlık/etiket
+    satırları (`goal`, `group_goal`, `period`, `weekday_weekend` değer metni) `Flexible`+ellipsis ile
+    korundu. Yeni `test/features/dashboard_cards_render_test.dart`: 16 kartı (timer hariç) minik
+    (150×90) / orta / geniş boyutlarda gerçek veriyle render edip **hiçbir overflow istisnası
+    atılmadığını** doğrular (45 test). `flutter analyze` temiz + **135 test** geçiyor.
 
 - [x] **2F · Düzenleme modu odak koruma 🔵 Sonnet — ✅ YAPILDI (commit 843ad8e; Opus yaptı)**
   > Uygulanan: tek `ScrollController` `_HomeScreenState`'te tutulup view+edit'e paylaştırıldı → mod geçişinde offset korunur, ekran başa zıplamaz.
@@ -1009,6 +1021,13 @@ Supabase'e gerek yok. (Önceki Supabase tablolu plan iptal edildi — `0007` sil
 
 ## Yapılanlar Günlüğü
 
+- **2026-07-10 (2E — kart içeriği responsive ✅):** Ana Sayfa'nın 16 kartı 6×N ızgarada her
+  hücre boyutunda taşmadan çizilecek şekilde sağlamlaştırıldı. Ortak `card_scaffold.dart`
+  (`CardScaffold` doldur-veya-kaydır + `cardTitle` + saf `cardShouldFill`); grafik kartları hücre
+  yüksekliğini doldurur; `HourActivityChart` verilen kutuya tam sığar; heatmap/rhythm dikey+yatay
+  kaydırma; dar ende taşan başlık/etiketler `Flexible`+ellipsis. Yeni render/overflow testi (45)
+  ile birlikte `flutter analyze` temiz + 135 test geçiyor. §2 (Arayüz & Ana Ekran) grid çekirdeği
+  artık eksiksiz.
 - **2026-07-10 (v2 release durumu düzeltildi):** `progress.md` üst özeti güncellendi.
   `v2` tag'inin remote'da olduğu, `app/pubspec.yaml` sürümünün `1.0.1+2` olduğu ve GitHub
   Releases'te `v2` release'inin yayınlandığı doğrulandı. FAZ 5.1 kurulum/test maddesi tamamlandı

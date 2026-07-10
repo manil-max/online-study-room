@@ -73,7 +73,12 @@ class GroupGoalCard extends ConsumerWidget {
                   children: [
                     Row(
                       children: [
-                        Text('Grup hedefi', style: theme.textTheme.labelMedium),
+                        Flexible(
+                          child: Text('Grup hedefi',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.labelMedium),
+                        ),
                         const Spacer(),
                         if (reached)
                           Icon(Icons.check_circle, color: subjectColor('chart-2'), size: 16),
@@ -121,7 +126,12 @@ class GroupGoalCard extends ConsumerWidget {
                 children: [
                   Row(
                     children: [
-                      Text('Grup hedefi', style: theme.textTheme.titleMedium),
+                      Flexible(
+                        child: Text('Grup hedefi',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.titleMedium),
+                      ),
                       const Spacer(),
                       Flexible(
                         child: Text(group.name,

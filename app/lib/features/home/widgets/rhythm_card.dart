@@ -5,6 +5,7 @@ import '../../../core/stats/study_stats.dart';
 import '../../../data/providers/study_providers.dart';
 import '../../stats/widgets/week_hour_heatmap.dart';
 import '../dashboard_card.dart';
+import 'card_scaffold.dart';
 
 /// "Haftalık ritim" kartı (§3.11): haftanın hangi gün/saatlerinde çalıştığın
 /// (7 gün × 24 saat ısı haritası).
@@ -15,28 +16,18 @@ class RhythmCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final sessions = ref.watch(userSessionsProvider).value ?? const [];
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Haftalık ritim', style: theme.textTheme.titleMedium),
-            const SizedBox(height: 12),
-            Expanded(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  return SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: WeekHourHeatmap(grid: weekdayHourTotals(sessions)),
-                  );
-                },
-              ),
-            ),
-          ],
+    return CardScaffold(
+      header: cardTitle(context, 'Haftalık ritim'),
+      bodyBuilder: (context, bodyHeight) => SizedBox(
+        height: bodyHeight,
+        // Dikey + yatay kaydırma → kısa/dar hücrede taşma olmaz (§2E).
+        child: SingleChildScrollView(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: WeekHourHeatmap(grid: weekdayHourTotals(sessions)),
+          ),
         ),
       ),
     );

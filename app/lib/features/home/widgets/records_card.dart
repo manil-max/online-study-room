@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../data/providers/study_providers.dart';
 import '../../stats/widgets/study_records.dart';
 import '../dashboard_card.dart';
+import 'card_scaffold.dart';
 
 /// "Rekorlar" kartı (§3.11): toplam, rekor seri, en verimli gün, aktif gün,
 /// en çok çalışılan ders — renkli stat döşemeleri.
@@ -14,33 +15,21 @@ class RecordsCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final sessions = ref.watch(userSessionsProvider).value ?? const [];
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Rekorlar', style: theme.textTheme.titleMedium),
-            const SizedBox(height: 12),
-            Expanded(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final cols = constraints.maxWidth > 400
-                      ? 3
-                      : (constraints.maxWidth > 250 ? 2 : 1);
-                  return SingleChildScrollView(
-                    child: StudyRecords(
-                      sessions: sessions,
-                      columns: cols,
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
+    return CardScaffold(
+      header: cardTitle(context, 'Rekorlar'),
+      bodyBuilder: (context, bodyHeight) => SizedBox(
+        height: bodyHeight,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final cols = constraints.maxWidth > 400
+                ? 3
+                : (constraints.maxWidth > 250 ? 2 : 1);
+            return SingleChildScrollView(
+              child: StudyRecords(sessions: sessions, columns: cols),
+            );
+          },
         ),
       ),
     );

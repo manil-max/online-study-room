@@ -143,7 +143,12 @@ class _PeriodSummaryCardState extends ConsumerState<PeriodSummaryCard> {
                 children: [
                   Row(
                     children: [
-                      Text('Dönem özeti', style: theme.textTheme.titleMedium),
+                      Flexible(
+                        child: Text('Dönem özeti',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.titleMedium),
+                      ),
                       const Spacer(),
                       if (isCompact) selector,
                     ],

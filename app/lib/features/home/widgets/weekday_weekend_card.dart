@@ -6,6 +6,7 @@ import '../../../core/theme/subject_colors.dart';
 import '../../../core/utils/duration_format.dart';
 import '../../../data/providers/study_providers.dart';
 import '../dashboard_card.dart';
+import 'card_scaffold.dart';
 
 /// Hafta içi (Pzt–Cum) ile hafta sonu (Cmt–Paz) çalışma kıyası (§3.11 kart).
 class WeekdayWeekendCard extends ConsumerWidget {
@@ -23,22 +24,24 @@ class WeekdayWeekendCard extends ConsumerWidget {
     final weekdayColor = subjectColor('chart-1');
     final weekendColor = subjectColor('chart-4');
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
+    return CardScaffold(
+      header:
+          Text('Hafta içi / hafta sonu', style: theme.textTheme.titleMedium),
+      minBodyHeight: 76,
+      fallbackBodyHeight: 96,
+      bodyBuilder: (context, bodyHeight) => SizedBox(
+        height: bodyHeight,
         child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Hafta içi / hafta sonu',
-                style: theme.textTheme.titleMedium),
-            const SizedBox(height: 16),
             _Bar(
               label: 'Hafta içi',
               seconds: split.weekday,
               fraction: split.weekday / max,
               color: weekdayColor,
             ),
-            const SizedBox(height: 12),
             _Bar(
               label: 'Hafta sonu',
               seconds: split.weekend,
@@ -73,10 +76,19 @@ class _Bar extends StatelessWidget {
       children: [
         Row(
           children: [
-            Expanded(child: Text(label, style: theme.textTheme.bodyMedium)),
-            Text(formatHuman(seconds),
-                style: theme.textTheme.bodyMedium
-                    ?.copyWith(fontWeight: FontWeight.w600)),
+            Expanded(
+                child: Text(label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodyMedium)),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(formatHuman(seconds),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodyMedium
+                      ?.copyWith(fontWeight: FontWeight.w600)),
+            ),
           ],
         ),
         const SizedBox(height: 6),

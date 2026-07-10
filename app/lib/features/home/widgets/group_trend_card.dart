@@ -7,6 +7,7 @@ import '../../../data/providers/group_providers.dart';
 import '../../../data/providers/study_providers.dart';
 import '../../stats/widgets/daily_bar_chart.dart';
 import '../dashboard_card.dart';
+import 'card_scaffold.dart';
 import 'group_card_shell.dart';
 
 /// "Grup günlük trendi" kartı (§3.11): grubun son günlerdeki toplam çalışma
@@ -23,62 +24,52 @@ class GroupTrendCard extends ConsumerWidget {
     if (group == null) return const GroupCardShell(title: 'Grup günlük trendi');
 
     final stats = ref.watch(groupDailyStatsProvider).value ?? const [];
-    return Card(
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final isCompact = constraints.maxWidth < 280;
-          final isLarge = constraints.maxWidth >= 400;
-          final days = isLarge ? 14 : (isCompact ? 7 : 10);
-          final chartHeight = isLarge ? 200.0 : (isCompact ? 130.0 : 150.0);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isCompact = constraints.maxWidth < 280;
+        final isLarge = constraints.maxWidth >= 400;
+        final days = isLarge ? 14 : (isCompact ? 7 : 10);
 
-          final series = lastNDays(const [], days, totals: groupDayTotals(stats));
-          final total = series.fold<int>(0, (s, d) => s + d.seconds);
+        final series = lastNDays(const [], days, totals: groupDayTotals(stats));
+        final total = series.fold<int>(0, (s, d) => s + d.seconds);
 
-          return Padding(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            'Grup günlük trendi',
-                            style: theme.textTheme.titleMedium,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        if (!isCompact)
-                          Text(formatHuman(total),
-                              style: theme.textTheme.titleMedium
-                                  ?.copyWith(color: theme.colorScheme.primary)),
-                      ],
-                    ),
+        final header = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Grup günlük trendi',
+                    style: theme.textTheme.titleMedium,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  if (isCompact) ...[
-                    const SizedBox(height: 4),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: Text(formatHuman(total),
-                          style: theme.textTheme.titleMedium
-                              ?.copyWith(color: theme.colorScheme.primary)),
-                    ),
-                  ],
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    height: chartHeight,
-                    child: DailyBarChart(
-                        days: series, goalSeconds: group.dailyGoalMinutes * 60),
-                  ),
-                ],
-              ),
+                ),
+                if (!isCompact)
+                  Text(formatHuman(total),
+                      style: theme.textTheme.titleMedium
+                          ?.copyWith(color: theme.colorScheme.primary)),
+              ],
             ),
-          );
-        },
-      ),
+            if (isCompact) ...[
+              const SizedBox(height: 4),
+              Text(formatHuman(total),
+                  style: theme.textTheme.titleMedium
+                      ?.copyWith(color: theme.colorScheme.primary)),
+            ],
+          ],
+        );
+
+        return CardScaffold(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+          header: header,
+          bodyBuilder: (context, bodyHeight) => SizedBox(
+            height: bodyHeight,
+            child: DailyBarChart(
+                days: series, goalSeconds: group.dailyGoalMinutes * 60),
+          ),
+        );
+      },
     );
   }
 }
