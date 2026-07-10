@@ -32,6 +32,8 @@ class TimerNotificationSnapshot {
     required this.elapsedSeconds,
     required this.remainingSeconds,
     required this.isCountingDown,
+    this.progress,
+    this.progressMax,
   });
 
   final String title;
@@ -41,6 +43,14 @@ class TimerNotificationSnapshot {
   final int elapsedSeconds;
   final int? remainingSeconds;
   final bool isCountingDown;
+  final int? progress;
+  final int? progressMax;
+
+  bool get hasProgress =>
+      progressMax != null &&
+      progressMax! > 0 &&
+      progress != null &&
+      progress! >= 0;
 
   String get body {
     if (remainingSeconds == null) {
@@ -145,6 +155,12 @@ class TimerNotificationService implements TimerNotificationGateway {
       usesChronometer: true,
       chronometerCountDown: snapshot.isCountingDown,
       category: AndroidNotificationCategory.progress,
+      visibility: NotificationVisibility.public,
+      showProgress: snapshot.hasProgress,
+      maxProgress: snapshot.progressMax ?? 0,
+      progress: snapshot.progress ?? 0,
+      ticker: snapshot.body,
+      subText: snapshot.phaseLabel,
       styleInformation: BigTextStyleInformation(snapshot.expandedBody),
       actions: const [
         AndroidNotificationAction(

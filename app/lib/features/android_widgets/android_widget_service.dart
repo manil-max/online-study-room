@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:home_widget/home_widget.dart';
 
-final androidWidgetServiceProvider = Provider<AndroidWidgetService>(
+final androidWidgetServiceProvider = Provider<AndroidWidgetGateway>(
   (ref) => const AndroidWidgetService(),
 );
 
@@ -74,6 +74,25 @@ class AndroidWidgetSnapshot {
       leaderboardTitle = 'Kamp sıralaması',
       leaderboardRows = const ['Henüz kayıt yok', '-', '-'];
 
+  AndroidWidgetSnapshot.timer({
+    required String elapsed,
+    required String status,
+    required String action,
+  }) : this(
+         timerTitle: const AndroidWidgetSnapshot.placeholder().timerTitle,
+         timerElapsed: elapsed,
+         timerStatus: status,
+         timerAction: action,
+         statsTitle: const AndroidWidgetSnapshot.placeholder().statsTitle,
+         statsToday: const AndroidWidgetSnapshot.placeholder().statsToday,
+         statsWeek: const AndroidWidgetSnapshot.placeholder().statsWeek,
+         statsStreak: const AndroidWidgetSnapshot.placeholder().statsStreak,
+         leaderboardTitle:
+             const AndroidWidgetSnapshot.placeholder().leaderboardTitle,
+         leaderboardRows:
+             const AndroidWidgetSnapshot.placeholder().leaderboardRows,
+       );
+
   final String timerTitle;
   final String timerElapsed;
   final String timerStatus;
@@ -113,15 +132,25 @@ class AndroidWidgetSnapshot {
   }
 }
 
-class AndroidWidgetService {
+abstract interface class AndroidWidgetGateway {
+  Future<void> saveSnapshot(AndroidWidgetSnapshot snapshot);
+
+  Future<void> refresh({Iterable<StudyHomeWidget>? widgets});
+
+  Future<void> seedPlaceholder();
+}
+
+class AndroidWidgetService implements AndroidWidgetGateway {
   const AndroidWidgetService();
 
+  @override
   Future<void> saveSnapshot(AndroidWidgetSnapshot snapshot) async {
     for (final entry in snapshot.toWidgetData().entries) {
       await _saveValue(entry.key, entry.value);
     }
   }
 
+  @override
   Future<void> refresh({Iterable<StudyHomeWidget>? widgets}) async {
     for (final widget in widgets ?? StudyHomeWidget.values) {
       await HomeWidget.updateWidget(
@@ -131,6 +160,7 @@ class AndroidWidgetService {
     }
   }
 
+  @override
   Future<void> seedPlaceholder() async {
     await saveSnapshot(const AndroidWidgetSnapshot.placeholder());
     await refresh();

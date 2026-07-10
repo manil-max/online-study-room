@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:online_study_room/core/notifications/timer_notification_service.dart';
 import 'package:online_study_room/core/prefs/app_prefs.dart';
 import 'package:online_study_room/data/providers/study_providers.dart';
+import 'package:online_study_room/features/android_widgets/android_widget_service.dart';
 
 class _NoopTimerNotificationService implements TimerNotificationGateway {
   const _NoopTimerNotificationService();
@@ -19,6 +20,19 @@ class _NoopTimerNotificationService implements TimerNotificationGateway {
 
   @override
   Future<void> showRunning(TimerNotificationSnapshot snapshot) async {}
+}
+
+class _NoopAndroidWidgetService implements AndroidWidgetGateway {
+  const _NoopAndroidWidgetService();
+
+  @override
+  Future<void> refresh({Iterable<StudyHomeWidget>? widgets}) async {}
+
+  @override
+  Future<void> saveSnapshot(AndroidWidgetSnapshot snapshot) async {}
+
+  @override
+  Future<void> seedPlaceholder() async {}
 }
 
 void main() {
@@ -176,6 +190,9 @@ void main() {
             timerNotificationServiceProvider.overrideWithValue(
               const _NoopTimerNotificationService(),
             ),
+            androidWidgetServiceProvider.overrideWithValue(
+              const _NoopAndroidWidgetService(),
+            ),
           ],
         );
         addTearDown(container.dispose);
@@ -191,6 +208,9 @@ void main() {
             sharedPreferencesProvider.overrideWithValue(prefs),
             timerNotificationServiceProvider.overrideWithValue(
               const _NoopTimerNotificationService(),
+            ),
+            androidWidgetServiceProvider.overrideWithValue(
+              const _NoopAndroidWidgetService(),
             ),
           ],
         );
@@ -211,6 +231,9 @@ void main() {
           sharedPreferencesProvider.overrideWithValue(prefs),
           timerNotificationServiceProvider.overrideWithValue(
             const _NoopTimerNotificationService(),
+          ),
+          androidWidgetServiceProvider.overrideWithValue(
+            const _NoopAndroidWidgetService(),
           ),
         ],
       );

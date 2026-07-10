@@ -8,6 +8,8 @@ import '../../core/config/supabase_config.dart';
 import '../../core/notifications/timer_notification_service.dart';
 import '../../core/prefs/app_prefs.dart';
 import '../../core/stats/study_stats.dart';
+import '../../core/utils/duration_format.dart';
+import '../../features/android_widgets/android_widget_service.dart';
 import '../models/daily_stat.dart';
 import '../models/presence.dart';
 import '../models/profile.dart';
@@ -346,7 +348,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
           startedAt: state.startedAt,
         );
         _startTick();
-        unawaited(_syncTimerNotification());
+        unawaited(_syncTimerSurfaces());
       });
     }
     return initial;
@@ -411,7 +413,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     _persistActiveTimer();
     _publishPresence(status: PresenceStatus.studying, startedAt: now);
     _startTick();
-    unawaited(_showTimerNotification(requestPermission: true));
+    unawaited(_showTimerSurfaces(requestPermission: true));
   }
 
   /// Kullanıcı elle durdurur: çalışma fazındaysa geçen süreyi kaydet, çevrimdışına çek.
@@ -477,7 +479,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       );
       _persistActiveTimer();
       _startTick();
-      unawaited(_syncTimerNotification());
+      unawaited(_syncTimerSurfaces());
     }
 
     // Çalışma fazı hedefe ulaştıysa süreyi kaydet (mola kaydedilmez).
@@ -501,6 +503,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     _clearActiveTimer();
     _publishPresence(status: PresenceStatus.offline, startedAt: null);
     unawaited(ref.read(timerNotificationServiceProvider).cancel());
+    unawaited(_syncTimerWidget());
   }
 
   /// Tamamlanan bir aralığı `study_sessions`'a yazar.
@@ -572,13 +575,17 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     prefs.remove(_kActiveSubject);
   }
 
-  Future<void> _showTimerNotification({bool requestPermission = false}) async {
+  Future<void> _showTimerSurfaces({bool requestPermission = false}) async {
     if (requestPermission) {
       await ref
           .read(timerNotificationServiceProvider)
           .requestPermissionIfNeeded();
     }
-    await _syncTimerNotification();
+    await _syncTimerSurfaces();
+  }
+
+  Future<void> _syncTimerSurfaces() async {
+    await Future.wait([_syncTimerNotification(), _syncTimerWidget()]);
   }
 
   Future<void> _syncTimerNotification() async {
@@ -589,6 +596,37 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     await ref
         .read(timerNotificationServiceProvider)
         .showRunning(_notificationSnapshot(DateTime.now()));
+  }
+
+  Future<void> _syncTimerWidget() async {
+    final widgetService = ref.read(androidWidgetServiceProvider);
+    if (!state.isRunning || state.startedAt == null) {
+      await widgetService.saveSnapshot(
+        AndroidWidgetSnapshot.timer(
+          elapsed: '00:00:00',
+          status: 'Çalışma hazır',
+          action: 'Uygulamayı aç',
+        ),
+      );
+      await widgetService.refresh(widgets: const [StudyHomeWidget.timer]);
+      return;
+    }
+
+    final now = DateTime.now();
+    final startedAt = state.startedAt!;
+    final elapsed = now.difference(startedAt).inSeconds;
+    final target = state.phaseTargetSeconds;
+    final remaining = target == null
+        ? null
+        : (target - elapsed).clamp(0, target).toInt();
+    await widgetService.saveSnapshot(
+      AndroidWidgetSnapshot.timer(
+        elapsed: formatHms(remaining ?? elapsed),
+        status: state.phase == TimerPhase.rest ? 'Mola' : 'Çalışıyor',
+        action: 'Durdurmak için aç',
+      ),
+    );
+    await widgetService.refresh(widgets: const [StudyHomeWidget.timer]);
   }
 
   TimerNotificationSnapshot _notificationSnapshot(DateTime now) {
@@ -621,6 +659,8 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       elapsedSeconds: elapsed,
       remainingSeconds: remaining,
       isCountingDown: target != null,
+      progress: target == null ? null : elapsed.clamp(0, target).toInt(),
+      progressMax: target,
     );
   }
 }

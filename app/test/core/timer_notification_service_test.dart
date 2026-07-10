@@ -27,9 +27,26 @@ void main() {
       elapsedSeconds: 120,
       remainingSeconds: 1500,
       isCountingDown: true,
+      progress: 120,
+      progressMax: 1620,
     );
 
     expect(snapshot.body, contains('Kalan 00:25:00'));
     expect(snapshot.expandedBody, contains('Kalan süre: 25 dk 0 sn'));
+    expect(snapshot.hasProgress, isTrue);
+  });
+
+  test('stopwatch snapshot does not expose finite progress', () {
+    final snapshot = TimerNotificationSnapshot(
+      title: 'Odak Kampı çalışıyor',
+      modeLabel: 'Kronometre',
+      phaseLabel: 'Çalışma',
+      startedAt: DateTime(2026),
+      elapsedSeconds: 15,
+      remainingSeconds: null,
+      isCountingDown: false,
+    );
+
+    expect(snapshot.hasProgress, isFalse);
   });
 }

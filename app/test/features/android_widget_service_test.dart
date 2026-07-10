@@ -13,6 +13,19 @@ void main() {
     );
   });
 
+  test('timer snapshot keeps non-timer slots on placeholders', () {
+    final snapshot = AndroidWidgetSnapshot.timer(
+      elapsed: '00:24:59',
+      status: 'Çalışıyor',
+      action: 'Durdurmak için aç',
+    );
+
+    expect(snapshot.timerElapsed, '00:24:59');
+    expect(snapshot.timerStatus, 'Çalışıyor');
+    expect(snapshot.statsToday, '0 dk');
+    expect(snapshot.paddedLeaderboardRows, ['Henüz kayıt yok', '-', '-']);
+  });
+
   test('leaderboard rows are trimmed to three slots', () {
     const snapshot = AndroidWidgetSnapshot(
       timerTitle: 'Timer',

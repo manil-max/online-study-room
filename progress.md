@@ -15,7 +15,7 @@
 - **RLS helper'ları:** `is_group_member(gid)`, `can_see_user_sessions(target)`, `is_group_admin(gid)`
 - **Dashboard:** 6 sütunlu 2D matris, 19 kart türü, `grid_reflow.dart` motoru
 - **Tema:** 5 palet, koyu varsayılan, `AppTheme` palet-parametreli
-- **Son WP numarası:** 16 (WP-1 aktif, WP-2..WP-16 plan kuyruğunda)
+- **Son WP numarası:** 16 (WP-6 tamamlandı, WP-7..WP-16 plan kuyruğunda)
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
   - Flutter: `C:\src\flutter` · Android SDK: `C:\Android\Sdk`
@@ -39,13 +39,6 @@
 - Android ana ekran görünen adı `online_study_room` yerine **Odak Kampı** olacak.
 - Değişiklik release/update hazırlanırken `app/android/app/src/main/AndroidManifest.xml` içindeki `android:label` üzerinden yapılacak.
 - `pubspec.yaml` proje adı şimdilik değiştirilmez; kullanıcıya görünen ad yeterli.
-
-### WP-6: Android Surface Extensions
-- **Backlog:** Dynamic panel / Live Activities benzeri durum hapı, kilit ekranı widget'ı
-- **Bağımlılık:** WP-1 ve WP-2 bitmeli.
-- **SAHİP dosyalar:** Android native notification/widget dosyaları, `features/android_widgets/**`
-- **DOKUNMA:** classroom/profile/auth
-- **Not:** Android sürüm desteği araştırma gerektirir; mümkün değilse fallback persistent notification olur.
 
 ### WP-7: Class Chat
 - **Backlog:** Sınıf sohbeti
@@ -123,6 +116,13 @@
 
 > Son 5 iş. Ajan bunları okuyarak "neye dokunma, ne değişti" anlar.
 > Daha eski işler aşağıdaki Geçmiş tablosuna düşer.
+
+### WP-6: Android Surface Extensions — 2026-07-10 ✅
+- **Değişen dosyalar:** `app/lib/core/notifications/timer_notification_service.dart`, `app/lib/data/providers/study_providers.dart`, `app/lib/features/android_widgets/android_widget_service.dart`, `app/test/core/timer_notification_service_test.dart`, `app/test/features/android_widget_service_test.dart`, `app/test/features/timer_state_machine_test.dart`
+- **Ne yapıldı:** Android sayaç bildirimi hedefli modlarda progress bar gösterecek şekilde genişletildi; bildirim `public` lock-screen visibility, phase subText ve ticker bilgisiyle kilit ekranında/durum yüzeylerinde daha anlamlı hale geldi. Timer start/restore/faz geçişi/durdurma akışı Android timer widget verisini güncelliyor; hedefli sayaçlarda widget kalan süreyi, kronometrede geçen süreyi gösteriyor.
+- **Kararlar:** Android 16 "Live Updates" ayrı bir Flutter API'siyle uygulanmadı; mevcut `flutter_local_notifications` altyapısı üzerinde progress-centric ongoing notification fallback'i seçildi. "Kilit ekranı widget'ı" Android telefonlarda modern API olarak widget değil, kilit ekranında görünür ongoing notification davranışıyla karşılandı.
+- **Dokunma:** `classroom/*`, `profile/*`, `auth*`, Supabase migration dosyaları.
+- **Test:** `flutter analyze` temiz. `flutter test --concurrency=1 --dart-define-from-file=env.json` 187 test geçti. `ANDROID_HOME=C:\Android\Sdk` ve `ANDROID_SDK_ROOT=C:\Android\Sdk` ile `flutter build apk --debug --dart-define-from-file=env.json` geçti.
 
 ### WP-5: Presence Lifecycle — 2026-07-10 ✅
 - **Değişen dosyalar:** `data/models/presence.dart` (+`updatedAt`), `data/providers/presence_providers.dart` (bayatlama + periyodik yeniden değerlendirme), yeni `data/providers/presence_lifecycle.dart` (heartbeat + `WidgetsBindingObserver`), `core/navigation/home_shell.dart` (tek satır aktivasyon), `test/data/presence_repository_test.dart`
