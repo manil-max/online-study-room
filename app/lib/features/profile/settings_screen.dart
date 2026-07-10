@@ -4,100 +4,157 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../home/dashboard_providers.dart';
 import 'appearance_screen.dart';
 
-/// Ayarlar: görünüm (tema/palet), Ana Sayfa davranışı ve sıfırlama.
+/// Ayarlar: görünüm, Ana Sayfa davranışı ve gelecek özelleştirme alanları.
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final showTimerInClass = ref.watch(classroomShowTimerProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Ayarlar')),
       body: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
         children: [
-          const _SectionTitle('Görünüm'),
-          Card(
-            child: ListTile(
-              leading: const Icon(Icons.palette_outlined),
-              title: const Text('Renk paleti ve tema'),
-              subtitle: const Text('Açık/koyu + 5 renk paleti'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const AppearanceScreen()),
+          _SettingsGroup(
+            icon: Icons.palette_outlined,
+            title: 'Görünüm',
+            subtitle: 'Tema modu ve renk paleti',
+            children: [
+              ListTile(
+                leading: const Icon(Icons.color_lens_outlined),
+                title: const Text('Renk paleti ve tema'),
+                subtitle: const Text('Açık, koyu, sistem ve palet seçimi'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const AppearanceScreen()),
+                ),
               ),
-            ),
+            ],
           ),
-          const _SectionTitle('Ana Sayfa'),
-          Card(
-            child: Column(
-              children: [
-                SwitchListTile(
-                  secondary: const Icon(Icons.timer_outlined),
-                  title: const Text('Gruplar ekranında da sayaç göster'),
-                  subtitle: const Text('Sayaç varsayılan Ana Sayfa’dadır.'),
-                  value: showTimerInClass,
-                  onChanged: ref.read(classroomShowTimerProvider.notifier).set,
+          const SizedBox(height: 10),
+          _SettingsGroup(
+            icon: Icons.dashboard_customize_outlined,
+            title: 'Ana Sayfa',
+            subtitle: 'Kart görünürlüğü ve düzenleme davranışı',
+            children: [
+              SwitchListTile(
+                secondary: const Icon(Icons.timer_outlined),
+                title: const Text('Gruplar ekranında da sayaç göster'),
+                subtitle: const Text('Sayaç varsayılan Ana Sayfa’dadır.'),
+                value: showTimerInClass,
+                onChanged: ref.read(classroomShowTimerProvider.notifier).set,
+              ),
+              const Divider(height: 1),
+              const ListTile(
+                leading: Icon(Icons.restart_alt),
+                title: Text('Ana Sayfa düzenini sıfırlama'),
+                subtitle: Text(
+                  'Kart düzenleme modundaki Sıfırla butonundan yapılır.',
                 ),
-                const Divider(height: 1),
-                ListTile(
-                  leading: Icon(Icons.restart_alt,
-                      color: theme.colorScheme.error),
-                  title: const Text('Ana Sayfa’yı sıfırla'),
-                  subtitle:
-                      const Text('Kart düzenini varsayılana döndürür'),
-                  onTap: () => _confirmReset(context, ref),
-                ),
-              ],
-            ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          const _SettingsGroup(
+            icon: Icons.timer_outlined,
+            title: 'Sayaç',
+            subtitle: 'Zamanlayıcı modları ve odak ayarları',
+            initiallyExpanded: false,
+            children: [
+              _DisabledTile(
+                icon: Icons.hourglass_empty_outlined,
+                title: 'Geri sayım ve pomodoro',
+                subtitle: 'Yakında',
+              ),
+              Divider(height: 1),
+              _DisabledTile(
+                icon: Icons.tune_outlined,
+                title: 'Sayaç varsayılanları',
+                subtitle: 'Yakında',
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          const _SettingsGroup(
+            icon: Icons.notifications_outlined,
+            title: 'Bildirimler',
+            subtitle: 'Hatırlatıcılar ve zamanlayıcı uyarıları',
+            initiallyExpanded: false,
+            children: [
+              _DisabledTile(
+                icon: Icons.notification_important_outlined,
+                title: 'Çalışma hatırlatıcıları',
+                subtitle: 'Yakında',
+              ),
+              Divider(height: 1),
+              _DisabledTile(
+                icon: Icons.alarm_outlined,
+                title: 'Zamanlayıcı uyarıları',
+                subtitle: 'Yakında',
+              ),
+            ],
           ),
         ],
       ),
     );
-  }
-
-  Future<void> _confirmReset(BuildContext context, WidgetRef ref) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Ana Sayfa’yı sıfırla'),
-        content: const Text(
-            'Kart düzeni varsayılana döner (eklediğin kartlar ve boyutlar sıfırlanır). Devam?'),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Vazgeç')),
-          FilledButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Sıfırla')),
-        ],
-      ),
-    );
-    if (ok == true) {
-      ref.read(dashboardLayoutProvider.notifier).reset();
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Ana Sayfa sıfırlandı')),
-        );
-      }
-    }
   }
 }
 
-class _SectionTitle extends StatelessWidget {
-  const _SectionTitle(this.text);
+class _SettingsGroup extends StatelessWidget {
+  const _SettingsGroup({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.children,
+    this.initiallyExpanded = true,
+  });
 
-  final String text;
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final List<Widget> children;
+  final bool initiallyExpanded;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-      child: Text(text,
-          style: theme.textTheme.titleSmall
-              ?.copyWith(color: theme.colorScheme.primary)),
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: ExpansionTile(
+        initiallyExpanded: initiallyExpanded,
+        leading: Icon(icon, color: theme.colorScheme.primary),
+        title: Text(title),
+        subtitle: Text(subtitle),
+        children: children,
+      ),
+    );
+  }
+}
+
+class _DisabledTile extends StatelessWidget {
+  const _DisabledTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      enabled: false,
+      leading: Icon(icon),
+      title: Text(title),
+      subtitle: Text(subtitle),
+      trailing: const Chip(
+        visualDensity: VisualDensity.compact,
+        label: Text('Yakında'),
+      ),
     );
   }
 }

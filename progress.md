@@ -8,6 +8,45 @@
 
 ---
 
+## ⚡ PARALEL ÇALIŞMA — Dosya Sahipliği (2026-07-10)
+
+> **İki AI ajanı aynı anda çalışıyor.** Çakışmayı önlemek için her faz **yalnız kendi
+> SAHİP dosyalarına** yazar. Başka fazın dosyasına ASLA dokunma; gerekirse oku. Yeni dosya
+> eklemek serbest ama yalnız kendi feature klasörüne. Her faz sonunda `cd app && flutter
+> analyze` temiz + `flutter test` geçmeli.
+
+### Tur 1 (şu an paralel)
+
+**🔥 2G — Kamp ateşi canlı ekran → CLAUDE**
+- **SAHİP (yaz):** `app/lib/features/classroom/classroom_screen.dart`; yeni
+  `app/lib/features/classroom/widgets/*` (ör. `campfire_scene.dart`); yeni
+  `app/test/features/classroom_*`.
+- **Oku, YAZMA:** `data/providers/presence_providers.dart`, `data/providers/group_providers.dart`,
+  `data/models/*`.
+- **DOKUNMA:** `study_timer_card.dart`, `focus_timer_screen.dart` (2H); `home/*`; `profile/*`;
+  `core/prefs/*`.
+
+**⚙️ 2I — Ayarlar overhaul → CODEX**
+- **SAHİP (yaz):** `app/lib/features/profile/settings_screen.dart`,
+  `app/lib/features/profile/profile_screen.dart`, `app/lib/features/profile/appearance_screen.dart`;
+  yeni `app/lib/features/profile/widgets/*`; `app/lib/core/prefs/*` (yeni pref anahtarı gerekirse).
+- **İZİNLİ ama SINIRLI:** `app/lib/features/home/home_screen.dart` — **YALNIZ** düzenleme
+  modunun AppBar'ına "Ana Sayfa'yı sıfırla" butonu eklemek için; grid/reflow/sürükle koduna
+  DOKUNMA. `dashboardLayoutProvider.reset()` zaten var, sadece çağır.
+- **DOKUNMA:** `classroom/*`; `presence_providers.dart`; `dashboard_card.dart`;
+  `dashboard_providers.dart`; `study_timer_card.dart`.
+
+> **Çakışma kontrolü:** 2G ve 2I'nin ortak dosyası YOK. 2G `home_screen.dart`'a hiç dokunmaz,
+> bu yüzden 2I'nin oradaki minimal değişikliği güvenli.
+
+### Tur 2 (Tur 1 bitince — yine paralel)
+- **2H** (timer): `study_timer_card.dart`, `focus_timer_screen.dart`, `clock_style.dart`,
+  `data/providers/study_providers.dart` (StudyTimerNotifier).
+- **2E** (16 kart responsive): `home/widgets/*_card.dart` (timer_card HARİÇ),
+  `dashboard_card.dart`, `home_screen.dart` boyut köprüsü.
+
+---
+
 ## Özet Durum
 
 - **Aktif Faz:** FAZ 5.1 - Otomatik Güncelleme Sistemi (GitHub Releases) tamamlandı. `v2` etiketi remote'a pushlandı; GitHub Actions release'i oluşturdu ve `app-release.apk` dahil asset'leri yayınladı.
@@ -451,9 +490,11 @@ Supabase'e gerek yok. (Önceki Supabase tablolu plan iptal edildi — `0007` sil
 - `[X]` 2E · İçerik responsive (16 kart) 🟣
 - `[X]` 2F · Düzenleme odak koruma 🔵
 - `[~]` 2D · Boyutlandırma 🔴 — **§2.2 REFACTOR ile yeniden yazılıyor** (akış ızgarası → gerçek 6×N 2D matris). Aşağı bak.
-- `[ ]` 2G · Kamp ateşi canlı ekran 🔴+🔵 (Canlı Grup Hedefi saniye saniye akması buraya dahil)
+- `[X]` 2G · Kamp ateşi canlı ekran 🔴+🔵 (Claude — 2026-07-10)
 - `[ ]` 2H · Eksiksiz saat/zamanlayıcı 🔵+🟣
-- `[ ]` 2I · Ayarlar ve Grup Yönetimi overhaul 🔵+🟢 (Grup ayarlarının derli toplu hale gelmesi)
+- `[X]` 2I · Ayarlar ve Grup Yönetimi overhaul 🔵+🟢 (Grup ayarlarının derli toplu hale gelmesi)
+- `[ ]` Güvenlik hardening · Presence yazma RLS'i: kullanıcı yalnız aktif üyesi olduğu gruba
+  `presence` insert/update atabilsin (`is_group_member(group_id)` ile). Şimdilik ertelendi.
 
 #### §2.2 — Gerçek 6×N 2D Matris Izgara REFACTOR (2026-06-26 geri bildirim)
 - `[X]` R1 · 2D matris TASARIM (koordinat/hücre/reflow/migration) 🔴 Opus 4.8
@@ -697,10 +738,19 @@ Supabase'e gerek yok. (Önceki Supabase tablolu plan iptal edildi — `0007` sil
   - **Adım:** Düzenleme moduna geçişte mevcut `ScrollController.offset`'i koru; aynı scroll pozisyonunda kal. Gerekirse basılan kartın konumunu görünür tut (`Scrollable.ensureVisible` yerine offset sabitleme).
   - **Kabul:** Hangi karta basılırsa o konumda düzenleme açılır; ekran zıplamaz.
 
-- [ ] **2G · Kamp ateşi canlı çalışma ekranı 🔴 Opus (animasyon) + 🔵 Sonnet (layout/veri)**
+- [x] **2G · Kamp ateşi canlı çalışma ekranı 🔴 Opus (animasyon) + 🔵 Sonnet (layout/veri) — ✅ YAPILDI**
   - **Dosyalar:** `app/lib/features/classroom/classroom_screen.dart`, presence provider'ları (`presenceRepositoryProvider`, `groupMembersProvider`).
   - **Adımlar:** Canlı çalışanlar düz liste yerine dinamik sahne (Madde 6): ortada yanan ateş animasyonu; `status=studying` avatarları ateş etrafında, `onBreak`/`offline` karanlığa çekilir. 🔵: presence verisini avatar konumlarına bağla, layout iskeleti. 🔴: ateş/parçacık animasyonu, geçiş efektleri (AI hava durumu/etkileşim ekleyebilir — serbest).
   - **Kabul:** Çalışan üyeler ateş etrafında canlı görünür; durum değişince avatar yumuşak geçişle yer değiştirir.
+  - **Uygulandı (2026-07-10):** Yeni `classroom/widgets/campfire_scene.dart` — `CustomPainter` ile
+    canlı ateş (radial parıltı + 4 katman titreşen alev + yükselen kıvılcım parçacıkları + odun
+    kütükleri), ateş **çalışan sayısıyla büyür** (`intensity`). Çalışan üyeler ateş çevresinde üst
+    yayda sıcak halka ışığıyla + anlık süre (`SecondTicker`); mola/çevrimdışı üyeler alttaki
+    karanlık vinyet şeridinde soluk. Durum değişince avatar `AnimatedPositioned` ile halka↔karanlık
+    arası akar. Avatar dokununca detay alt sayfası (durum + bugünkü toplam + anlık oturum). Sol üst
+    "🔥 N çalışıyor" rozeti; kimse yoksa "Ateş sönük" ipucu. `classroom_screen.dart`'ta eski
+    `_LiveMembers`/`_MemberTile` listesi kaldırıldı, yerine `CampfireScene`. 2 widget testi
+    (`test/features/campfire_scene_test.dart`) + `flutter analyze` temiz + 79 test geçiyor.
 
 - [ ] **2H · Eksiksiz saat/zamanlayıcı 🔵 Sonnet (UI) + 🟣 Gemini 3.1 Pro (state machine)**
   - **Dosyalar:** `app/lib/features/classroom/widgets/study_timer_card.dart`, `focus_timer_screen.dart`, `app/lib/data/providers/study_providers.dart` (`StudyTimerNotifier`).
@@ -710,13 +760,17 @@ Supabase'e gerek yok. (Önceki Supabase tablolu plan iptal edildi — `0007` sil
   - **Tuzak:** Sayaç bildirimi (persistent notification, §5 Madde 10) bu fazda DEĞİL; sadece in-app timer. State machine'i bildirim tetik noktalarını dışarı verecek şekilde tasarla (§5'e hazır).
   - **Kabul:** Kronometre + geri sayım + pomodoro çalışır; pomodoro döngüsü mola/çalışma geçişlerini doğru yapar; her tamamlanan çalışma süresi istatistiğe yazılır.
 
-- [ ] **2I · Ayarlar overhaul 🔵 Sonnet + 🟢 Flash**
+- [x] **2I · Ayarlar overhaul 🔵 Sonnet + 🟢 Flash**
   - **Dosyalar:** `app/lib/features/profile/` (ayarlar ekranı), `home_screen.dart` (ana ekran sıfırlama butonu konumu), `core/prefs/`.
   - **Adımlar:**
     - 🔵 Ayarlar menüsünü gruplu, genişletilebilir bir yapıya çevir ("her şey özelleştirilebilir" iskeleti; tema, sayaç, görünürlük, bildirim grupları placeholder).
     - 🟢 **Ana ekran sıfırlama** butonunu ana ayarlardan çıkar, **"ana ekran düzenleme" menüsüne** taşı (`DashboardLayoutNotifier.reset()` zaten var; sadece UI konumu + tetik).
   - **Tuzak:** Gelişmiş bildirim sistemi (her tür/öncelik) §5'e ait; burada sadece iskele + sıfırlama taşıması.
   - **Kabul:** Ayarlar menüsü gruplu; ana ekran sıfırlama düzenleme menüsünden erişilir; mevcut prefs bozulmaz.
+  - **Uygulandı (2026-07-10):** Ayarlar ekranı genişletilebilir Görünüm, Ana Sayfa, Sayaç ve
+    Bildirimler gruplarına ayrıldı. Ana Sayfa sıfırlama ana ayarlardan kaldırıldı; düzenleme
+    modunun AppBar'ına onaylı "Sıfırla" aksiyonu eklendi. Profildeki Ayarlar alt yazısı yeni
+    yapıya göre güncellendi.
 
 ---
 

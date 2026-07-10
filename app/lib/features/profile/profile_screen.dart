@@ -94,12 +94,12 @@ class ProfileScreen extends ConsumerWidget {
                 ListTile(
                   leading: const Icon(Icons.settings_outlined),
                   title: const Text('Ayarlar'),
-                  subtitle: const Text('Görünüm, Ana Sayfa ve sıfırlama'),
+                  subtitle: const Text(
+                    'Görünüm, Ana Sayfa, sayaç ve bildirimler',
+                  ),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const SettingsScreen(),
-                    ),
+                    MaterialPageRoute(builder: (_) => const SettingsScreen()),
                   ),
                 ),
               ],
@@ -117,7 +117,10 @@ class ProfileScreen extends ConsumerWidget {
   }
 
   Future<void> _editName(
-      BuildContext context, WidgetRef ref, String current) async {
+    BuildContext context,
+    WidgetRef ref,
+    String current,
+  ) async {
     final controller = TextEditingController(text: current);
     final name = await showDialog<String>(
       context: context,
@@ -165,13 +168,13 @@ class ProfileScreen extends ConsumerWidget {
     if (file == null) return;
 
     final bytes = await file.readAsBytes();
-    final contentType = file.mimeType ??
+    final contentType =
+        file.mimeType ??
         (file.name.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg');
     try {
-      await ref.read(authRepositoryProvider).updateAvatar(
-            bytes: bytes,
-            contentType: contentType,
-          );
+      await ref
+          .read(authRepositoryProvider)
+          .updateAvatar(bytes: bytes, contentType: contentType);
       ref.invalidate(authStateProvider);
       messenger.showSnackBar(
         const SnackBar(content: Text('Profil fotoğrafı güncellendi')),

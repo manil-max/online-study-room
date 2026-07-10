@@ -2,19 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/theme/subject_colors.dart';
-import '../../core/utils/duration_format.dart';
-import '../../core/widgets/second_ticker.dart';
-import '../../core/widgets/user_avatar.dart';
-import '../../data/models/presence.dart';
-import '../../data/models/profile.dart';
 import '../../data/providers/group_providers.dart';
-import '../../data/providers/presence_providers.dart';
-import '../../data/providers/study_providers.dart';
 import '../../data/models/study_group.dart';
 import '../home/dashboard_providers.dart';
 import '../home/widgets/group_goal_card.dart';
 import '../home/widgets/group_trend_card.dart';
+import 'widgets/campfire_scene.dart';
 import 'widgets/class_switcher.dart';
 import 'widgets/study_timer_card.dart';
 
@@ -161,144 +154,13 @@ class _GroupView extends ConsumerWidget {
         const SizedBox(height: 12),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 4),
-          child: Text('Üyeler', style: theme.textTheme.titleMedium),
+          child: Text('Kamp ateşi', style: theme.textTheme.titleMedium),
         ),
-        const SizedBox(height: 4),
-        const _LiveMembers(),
+        const SizedBox(height: 8),
+        const CampfireScene(),
       ],
     );
   }
 }
 
-/// Canlı sınıf listesi: her üyenin durumu (çalışıyor/mola/çevrimdışı), anlık
-/// süresi ve bugünkü toplamı. Çalışan üyeler üstte. Anlık süre yalnızca çalışan
-/// üyelerin satırında kendi `SecondTicker`'ı ile yenilenir; liste sıralaması
-/// yalnızca presence/üye verisi değişince yapılır (bkz. project.md §3.5).
-class _LiveMembers extends ConsumerWidget {
-  const _LiveMembers();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final membersAsync = ref.watch(groupMembersProvider);
-    final presenceList = ref.watch(groupPresenceProvider).value ?? const [];
-    final todayByUser = ref.watch(groupTodaySecondsProvider);
-
-    return membersAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Text('Üyeler yüklenemedi: $e'),
-      data: (members) {
-        final presenceByUser = {for (final p in presenceList) p.userId: p};
-
-        // Çalışanlar üstte; aynı grupta isme göre sırala.
-        final sorted = [...members]..sort((a, b) {
-            final aStudying =
-                presenceByUser[a.id]?.status == PresenceStatus.studying;
-            final bStudying =
-                presenceByUser[b.id]?.status == PresenceStatus.studying;
-            if (aStudying != bStudying) return aStudying ? -1 : 1;
-            return a.displayName.toLowerCase().compareTo(
-                  b.displayName.toLowerCase(),
-                );
-          });
-
-        return Column(
-          children: [
-            for (final m in sorted)
-              _MemberTile(
-                member: m,
-                presence: presenceByUser[m.id],
-                recordedToday: todayByUser[m.id] ?? 0,
-              ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-/// Tek bir üyenin canlı kartı. Çalışırken anlık süre (alt yazı + sağdaki sayaç)
-/// kendi `SecondTicker`'ı ile saniyede bir yenilenir; üye çevrimdışıysa statiktir.
-class _MemberTile extends StatelessWidget {
-  const _MemberTile({
-    required this.member,
-    required this.presence,
-    required this.recordedToday,
-  });
-
-  final Profile member;
-  final Presence? presence;
-  final int recordedToday;
-
-  /// `now`'a göre çalışırken geçen ek süre (saniye); değilse 0.
-  int _liveExtra(DateTime now) {
-    final startedAt = presence?.startedAt;
-    if (presence?.status != PresenceStatus.studying || startedAt == null) {
-      return 0;
-    }
-    final diff = now.difference(startedAt).inSeconds;
-    return diff > 0 ? diff : 0;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final status = presence?.status ?? PresenceStatus.offline;
-    final isStudying = status == PresenceStatus.studying;
-
-    final (Color dotColor, String label) = switch (status) {
-      PresenceStatus.studying => (subjectColor('chart-2'), 'Çalışıyor'),
-      PresenceStatus.onBreak => (subjectColor('chart-3'), 'Mola'),
-      PresenceStatus.offline => (theme.colorScheme.outline, 'Çevrimdışı'),
-    };
-
-    // Çalışmıyorsa anlık kısım sabit; gereksiz timer kurmamak için statik metin.
-    final Widget subtitle = isStudying
-        ? SecondTicker(
-            builder: (_, now) => Text(
-              '$label · Bugün ${formatHumanSeconds(recordedToday + _liveExtra(now))}',
-            ),
-          )
-        : Text('$label · Bugün ${formatHumanSeconds(recordedToday)}');
-
-    final Widget? trailing = isStudying
-        ? SecondTicker(
-            builder: (_, now) => Text(
-              formatHms(_liveExtra(now)),
-              style: theme.textTheme.titleMedium?.copyWith(
-                color: subjectColor('chart-2'),
-                fontFeatures: const [],
-              ),
-            ),
-          )
-        : null;
-
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 4),
-      leading: Stack(
-        children: [
-          UserAvatar(
-            displayName: member.displayName,
-            avatarUrl: member.avatarUrl,
-          ),
-          Positioned(
-            right: 0,
-            bottom: 0,
-            child: Container(
-              width: 12,
-              height: 12,
-              decoration: BoxDecoration(
-                color: dotColor,
-                shape: BoxShape.circle,
-                border: Border.all(color: theme.colorScheme.surface, width: 2),
-              ),
-            ),
-          ),
-        ],
-      ),
-      title: Text(member.displayName),
-      subtitle: subtitle,
-      trailing: trailing,
-    );
-  }
-}
 

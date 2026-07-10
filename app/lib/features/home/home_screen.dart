@@ -23,6 +23,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   void _setEditing(bool value) => setState(() => _editing = value);
 
+  Future<void> _confirmResetDashboard() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Ana Sayfa’yı sıfırla'),
+        content: const Text(
+          'Kart düzeni varsayılana döner (eklediğin kartlar ve boyutlar sıfırlanır). Devam?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Vazgeç'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Sıfırla'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+
+    ref.read(dashboardLayoutProvider.notifier).reset();
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Ana Sayfa sıfırlandı')));
+  }
+
   @override
   void dispose() {
     _scroll.dispose();
@@ -44,13 +72,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               )
             : null,
         actions: [
-          if (_editing)
+          if (_editing) ...[
+            IconButton(
+              tooltip: 'Ana Sayfa’yı sıfırla',
+              icon: const Icon(Icons.restart_alt),
+              onPressed: _confirmResetDashboard,
+            ),
             IconButton(
               tooltip: 'Kart ekle',
               icon: const Icon(Icons.add),
               onPressed: () => showCardPicker(context),
-            )
-          else
+            ),
+          ] else
             IconButton(
               tooltip: 'Kartları düzenle',
               icon: const Icon(Icons.dashboard_customize_outlined),
@@ -437,6 +470,32 @@ class _MatrixCardState extends State<_MatrixCard> {
             ),
           ),
         ),
+        // Boyutlandırma tutamaçları (kontrol hapından ÖNCE çizilir ki büyük
+        // dokunma alanları hapın "kaldır" butonunu dar kartlarda örtmesin).
+        _ResizeHandle(
+          anchor: const _ResizeAnchor(left: true, top: true),
+          onStart: _onResizeStart,
+          onUpdate: _onResizeUpdate,
+          onEnd: _onResizeEnd,
+        ),
+        _ResizeHandle(
+          anchor: const _ResizeAnchor(left: false, top: true),
+          onStart: _onResizeStart,
+          onUpdate: _onResizeUpdate,
+          onEnd: _onResizeEnd,
+        ),
+        _ResizeHandle(
+          anchor: const _ResizeAnchor(left: true, top: false),
+          onStart: _onResizeStart,
+          onUpdate: _onResizeUpdate,
+          onEnd: _onResizeEnd,
+        ),
+        _ResizeHandle(
+          anchor: const _ResizeAnchor(left: false, top: false),
+          onStart: _onResizeStart,
+          onUpdate: _onResizeUpdate,
+          onEnd: _onResizeEnd,
+        ),
         Positioned(
           top: -6,
           left: 6,
@@ -483,30 +542,6 @@ class _MatrixCardState extends State<_MatrixCard> {
               ),
             ),
           ),
-        ),
-        _ResizeHandle(
-          anchor: const _ResizeAnchor(left: true, top: true),
-          onStart: _onResizeStart,
-          onUpdate: _onResizeUpdate,
-          onEnd: _onResizeEnd,
-        ),
-        _ResizeHandle(
-          anchor: const _ResizeAnchor(left: false, top: true),
-          onStart: _onResizeStart,
-          onUpdate: _onResizeUpdate,
-          onEnd: _onResizeEnd,
-        ),
-        _ResizeHandle(
-          anchor: const _ResizeAnchor(left: true, top: false),
-          onStart: _onResizeStart,
-          onUpdate: _onResizeUpdate,
-          onEnd: _onResizeEnd,
-        ),
-        _ResizeHandle(
-          anchor: const _ResizeAnchor(left: false, top: false),
-          onStart: _onResizeStart,
-          onUpdate: _onResizeUpdate,
-          onEnd: _onResizeEnd,
         ),
       ],
     );
@@ -557,36 +592,39 @@ class _ResizeHandle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // Dokunma alanı bilerek görünen noktadan çok daha büyük (48px, min. parmak
+    // hedefi) ve kartın dışına daha çok taşar (−22px) → telefonda kenardan
+    // tutması kolaylaşır. Görünen nokta küçük/zarif kalır (launcher hissi).
     return Positioned(
-      left: anchor.left ? -10 : null,
-      right: anchor.left ? null : -10,
-      top: anchor.top ? -10 : null,
-      bottom: anchor.top ? null : -10,
+      left: anchor.left ? -22 : null,
+      right: anchor.left ? null : -22,
+      top: anchor.top ? -22 : null,
+      bottom: anchor.top ? null : -22,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onPanStart: (_) => onStart(),
         onPanUpdate: (details) => onUpdate(details, anchor),
         onPanEnd: (_) => onEnd(),
         child: SizedBox(
-          width: 32,
-          height: 32,
+          width: 48,
+          height: 48,
           child: Center(
             child: DecoratedBox(
               decoration: BoxDecoration(
                 color: theme.colorScheme.surface,
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.75),
-                  width: 1.4,
+                  color: theme.colorScheme.primary.withValues(alpha: 0.85),
+                  width: 1.6,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.12),
-                    blurRadius: 5,
+                    color: Colors.black.withValues(alpha: 0.16),
+                    blurRadius: 6,
                   ),
                 ],
               ),
-              child: const SizedBox(width: 9, height: 9),
+              child: const SizedBox(width: 12, height: 12),
             ),
           ),
         ),
