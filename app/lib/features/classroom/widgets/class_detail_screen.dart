@@ -10,6 +10,7 @@ import '../../../data/models/study_group.dart';
 import '../../../data/providers/auth_providers.dart';
 import '../../../data/providers/group_providers.dart';
 import '../../../data/repositories/group_repository.dart';
+import 'class_chat_card.dart';
 
 /// Bir sınıfın bilgi + ayarları (§3.8). Üst kısım bilgiler (davet kodu, üyeler);
 /// alt kısım ayarlar (sınıftan çık) ve admin işlemleri (ad değiştir, kod yenile,
@@ -49,15 +50,20 @@ class ClassDetailScreen extends ConsumerWidget {
               ),
               if (isAdmin)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: theme.colorScheme.primaryContainer,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Text('Yönetici',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.colorScheme.onPrimaryContainer,
-                      )),
+                  child: Text(
+                    'Yönetici',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.onPrimaryContainer,
+                    ),
+                  ),
                 ),
             ],
           ),
@@ -74,8 +80,9 @@ class ClassDetailScreen extends ConsumerWidget {
                   title: const Text('Davet kodu'),
                   subtitle: SelectableText(
                     group.inviteCode,
-                    style: theme.textTheme.titleMedium
-                        ?.copyWith(letterSpacing: 2),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      letterSpacing: 2,
+                    ),
                   ),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -85,11 +92,13 @@ class ClassDetailScreen extends ConsumerWidget {
                         icon: const Icon(Icons.copy, size: 20),
                         onPressed: () async {
                           await Clipboard.setData(
-                              ClipboardData(text: group.inviteCode));
+                            ClipboardData(text: group.inviteCode),
+                          );
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                  content: Text('Davet kodu kopyalandı')),
+                                content: Text('Davet kodu kopyalandı'),
+                              ),
                             );
                           }
                         },
@@ -136,15 +145,8 @@ class ClassDetailScreen extends ConsumerWidget {
           _MembersCard(group: group, isAdmin: isAdmin, currentUserId: userId),
           const SizedBox(height: 16),
 
-          // --- Sohbet (ileride) ---
-          Card(
-            child: ListTile(
-              leading: const Icon(Icons.forum_outlined),
-              title: const Text('Sohbet'),
-              subtitle: const Text('Yakında'),
-              enabled: false,
-            ),
-          ),
+          // --- Sohbet ---
+          ClassChatCard(group: group),
           const SizedBox(height: 16),
 
           // --- Ayarlar / tehlikeli işlemler ---
@@ -154,8 +156,10 @@ class ClassDetailScreen extends ConsumerWidget {
             Card(
               child: ListTile(
                 leading: Icon(Icons.logout, color: theme.colorScheme.error),
-                title: Text('Gruptan çık',
-                    style: TextStyle(color: theme.colorScheme.error)),
+                title: Text(
+                  'Gruptan çık',
+                  style: TextStyle(color: theme.colorScheme.error),
+                ),
                 onTap: userId == null
                     ? null
                     : () => _leave(context, ref, repo, userId),
@@ -164,10 +168,14 @@ class ClassDetailScreen extends ConsumerWidget {
           if (isAdmin)
             Card(
               child: ListTile(
-                leading: Icon(Icons.delete_outline,
-                    color: theme.colorScheme.error),
-                title: Text('Grubu sil',
-                    style: TextStyle(color: theme.colorScheme.error)),
+                leading: Icon(
+                  Icons.delete_outline,
+                  color: theme.colorScheme.error,
+                ),
+                title: Text(
+                  'Grubu sil',
+                  style: TextStyle(color: theme.colorScheme.error),
+                ),
                 subtitle: const Text('Tüm üyeler için kalıcı olarak silinir'),
                 onTap: () => _deleteGroup(context, ref, repo),
               ),
@@ -191,15 +199,19 @@ class ClassDetailScreen extends ConsumerWidget {
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Vazgeç')),
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Vazgeç'),
+          ),
           FilledButton(
-              onPressed: () => Navigator.pop(ctx, controller.text),
-              child: const Text('Kaydet')),
+            onPressed: () => Navigator.pop(ctx, controller.text),
+            child: const Text('Kaydet'),
+          ),
         ],
       ),
     );
-    if (name == null || name.trim().isEmpty || name.trim() == group.name) return;
+    if (name == null || name.trim().isEmpty || name.trim() == group.name) {
+      return;
+    }
     if (!context.mounted) return;
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
@@ -256,8 +268,9 @@ class ClassDetailScreen extends ConsumerWidget {
           ),
           actions: [
             TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('Vazgeç')),
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Vazgeç'),
+            ),
             FilledButton(
               onPressed: () => Navigator.pop(ctx, (hours * 60 + minutes)),
               child: const Text('Kaydet'),
@@ -266,7 +279,9 @@ class ClassDetailScreen extends ConsumerWidget {
         ),
       ),
     );
-    if (picked == null || picked < 1 || picked == group.dailyGoalMinutes) return;
+    if (picked == null || picked < 1 || picked == group.dailyGoalMinutes) {
+      return;
+    }
     if (!context.mounted) return;
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
@@ -280,12 +295,16 @@ class ClassDetailScreen extends ConsumerWidget {
   }
 
   Future<void> _regenerateCode(
-      BuildContext context, GroupRepository repo) async {
-    final ok = await _confirm(context,
-        title: 'Kodu yenile',
-        message:
-            'Yeni bir davet kodu üretilecek; eski kod artık çalışmaz. Devam?',
-        action: 'Yenile');
+    BuildContext context,
+    GroupRepository repo,
+  ) async {
+    final ok = await _confirm(
+      context,
+      title: 'Kodu yenile',
+      message:
+          'Yeni bir davet kodu üretilecek; eski kod artık çalışmaz. Devam?',
+      action: 'Yenile',
+    );
     if (!ok || !context.mounted) return;
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
@@ -298,12 +317,18 @@ class ClassDetailScreen extends ConsumerWidget {
     }
   }
 
-  Future<void> _leave(BuildContext context, WidgetRef ref, GroupRepository repo,
-      String userId) async {
-    final ok = await _confirm(context,
-        title: 'Gruptan çık',
-        message: '"${group.name}" grubundan çıkmak istediğine emin misin?',
-        action: 'Çık');
+  Future<void> _leave(
+    BuildContext context,
+    WidgetRef ref,
+    GroupRepository repo,
+    String userId,
+  ) async {
+    final ok = await _confirm(
+      context,
+      title: 'Gruptan çık',
+      message: '"${group.name}" grubundan çıkmak istediğine emin misin?',
+      action: 'Çık',
+    );
     if (!ok || !context.mounted) return;
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
@@ -317,13 +342,18 @@ class ClassDetailScreen extends ConsumerWidget {
   }
 
   Future<void> _deleteGroup(
-      BuildContext context, WidgetRef ref, GroupRepository repo) async {
-    final ok = await _confirm(context,
-        title: 'Grubu sil',
-        message:
-            '"${group.name}" grubu tüm üyeler için kalıcı olarak silinecek. '
-            'Bu işlem geri alınamaz. Devam?',
-        action: 'Sil');
+    BuildContext context,
+    WidgetRef ref,
+    GroupRepository repo,
+  ) async {
+    final ok = await _confirm(
+      context,
+      title: 'Grubu sil',
+      message:
+          '"${group.name}" grubu tüm üyeler için kalıcı olarak silinecek. '
+          'Bu işlem geri alınamaz. Devam?',
+      action: 'Sil',
+    );
     if (!ok || !context.mounted) return;
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
@@ -372,21 +402,23 @@ class _MembersCard extends ConsumerWidget {
                     avatarUrl: m.avatarUrl,
                     radius: 18,
                   ),
-                  title: Text(!m.isActive
-                      ? 'Eski Grup Üyesi'
-                      : (m.displayName.isEmpty ? 'İsimsiz' : m.displayName)),
+                  title: Text(
+                    !m.isActive
+                        ? 'Eski Grup Üyesi'
+                        : (m.displayName.isEmpty ? 'İsimsiz' : m.displayName),
+                  ),
                   subtitle: m.id == group.createdBy
                       ? const Text('Yönetici')
                       : null,
-                  trailing: (isAdmin &&
+                  trailing:
+                      (isAdmin &&
                           m.isActive &&
                           m.id != currentUserId &&
                           m.id != group.createdBy)
                       ? IconButton(
                           tooltip: 'Çıkar',
                           icon: const Icon(Icons.person_remove_outlined),
-                          onPressed: () =>
-                              _removeMember(context, repo, m),
+                          onPressed: () => _removeMember(context, repo, m),
                         )
                       : null,
                 ),
@@ -398,12 +430,16 @@ class _MembersCard extends ConsumerWidget {
   }
 
   Future<void> _removeMember(
-      BuildContext context, GroupRepository repo, Profile member) async {
-    final ok = await _confirm(context,
-        title: 'Üyeyi çıkar',
-        message:
-            '${member.displayName} gruptan çıkarılsın mı?',
-        action: 'Çıkar');
+    BuildContext context,
+    GroupRepository repo,
+    Profile member,
+  ) async {
+    final ok = await _confirm(
+      context,
+      title: 'Üyeyi çıkar',
+      message: '${member.displayName} gruptan çıkarılsın mı?',
+      action: 'Çıkar',
+    );
     if (!ok) return;
     if (!context.mounted) return;
     final messenger = ScaffoldMessenger.of(context);
@@ -429,10 +465,13 @@ Future<bool> _confirm(
       content: Text(message),
       actions: [
         TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Vazgeç')),
+          onPressed: () => Navigator.pop(ctx, false),
+          child: const Text('Vazgeç'),
+        ),
         FilledButton(
-            onPressed: () => Navigator.pop(ctx, true), child: Text(action)),
+          onPressed: () => Navigator.pop(ctx, true),
+          child: Text(action),
+        ),
       ],
     ),
   );
