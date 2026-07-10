@@ -19,6 +19,11 @@ Bu klasör veritabanı şemasını (migrations) içerir. Aşağıdaki adımlar b
 3. Bu, herkese açık (public) bir **`avatars`** bucket'ı oluşturur ve kullanıcıların
    yalnızca kendi klasörlerine yazmasına izin verir. (Profil fotoğrafı yükleme bunu kullanır.)
 
+## 2.2 Ek migration'lar
+Yeni özellikler ve güvenlik düzeltmeleri için `migrations/0003_*.sql` ve sonrasını sıra ile
+çalıştır. Özellikle `0008` → `0009` → `0010` → `0011` sırası bozulmamalı; en son
+`0013_presence_membership_hardening.sql` presence yazımını aktif grup üyeliğiyle sınırlar.
+
 ## 3. E-posta doğrulamasını kapat (küçük grup için pratiklik)
 - Sol menü → **Authentication** → **Sign In / Providers** → **Email** →
   **Confirm email** seçeneğini **kapat** → Save.
