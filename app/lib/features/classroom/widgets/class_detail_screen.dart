@@ -109,7 +109,7 @@ class ClassDetailScreen extends ConsumerWidget {
                         IconButton(
                           tooltip: 'Kodu yenile',
                           icon: const Icon(Icons.refresh, size: 20),
-                          onPressed: () => _regenerateCode(context, repo),
+                          onPressed: () => _regenerateCode(context, ref, repo),
                         ),
                     ],
                   ),
@@ -219,7 +219,10 @@ class ClassDetailScreen extends ConsumerWidget {
     final navigator = Navigator.of(context);
     try {
       await ref.read(groupRepositoryProvider).updateGroupName(group.id, name);
-      // Bu ekran eski adı tutuyor; en basiti kapatmak (liste güncel veriyle döner).
+      // groups tablosu realtime publication'da degil ve watchUserGroups yalniz
+      // group_members akisiyla tetiklenir; ad degisince akis tetiklenmez. Bu yuzden
+      // gruplari elle tazele ki liste/ekranlar yeni adi aninda gostersin.
+      ref.invalidate(userGroupsProvider);
       navigator.pop();
     } on GroupException catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(e.message)));
@@ -289,7 +292,8 @@ class ClassDetailScreen extends ConsumerWidget {
     final navigator = Navigator.of(context);
     try {
       await ref.read(groupRepositoryProvider).updateGroupGoal(group.id, picked);
-      // Bu ekran eski hedefi tutuyor; en basiti kapatmak (liste güncel veriyle döner).
+      // Ad degisimiyle ayni tazeleme gerekcesi (bkz. _renameDialog).
+      ref.invalidate(userGroupsProvider);
       navigator.pop();
     } on GroupException catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(e.message)));
@@ -298,6 +302,7 @@ class ClassDetailScreen extends ConsumerWidget {
 
   Future<void> _regenerateCode(
     BuildContext context,
+    WidgetRef ref,
     GroupRepository repo,
   ) async {
     final ok = await _confirm(
@@ -312,6 +317,8 @@ class ClassDetailScreen extends ConsumerWidget {
     final navigator = Navigator.of(context);
     try {
       final code = await repo.regenerateInviteCode(group.id);
+      // Yeni davet kodu da groups tablosunda; akis tetiklenmez (bkz. _renameDialog).
+      ref.invalidate(userGroupsProvider);
       navigator.pop();
       messenger.showSnackBar(SnackBar(content: Text('Yeni kod: $code')));
     } on GroupException catch (e) {
