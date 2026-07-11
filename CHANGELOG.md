@@ -4,6 +4,32 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [v7 / 1.0.6+7] - 2026-07-12
+
+### Öne çıkanlar
+
+- **Bildirim Merkezi:** Dürtme, çalışma hatırlatıcıları, alarm/zamanlayıcı, duyuru,
+  güncelleme ve sessiz saatler artık tek ekrandan yönetiliyor.
+- **Çalışma hatırlatıcıları:** Seçtiğin saat ve günlerde yerel bildirimle hatırlatma
+  kurabilirsin.
+- **Sessiz saatler:** Belirlediğin aralıkta dürtme ve hatırlatıcı bildirimleri susturulur.
+- **Sosyal Profil 2.0 ve Başarı Yolculuğu:** Kademeli başarılar, XP ve taç vitrini.
+- Beş sekmeli yapı netleşti (Ana Sayfa / Saat / Gruplar / İstatistik / Profil);
+  Ayarlar'daki tekrar eden "Ana Sayfa" grubu kaldırıldı.
+
+### Düzeltmeler
+
+- Duyurular Bildirim Merkezi'nde okundu takibiyle listelenir.
+- Bildirim türleri ve cihaz izin durumu tek yerde açıkça görünür.
+
+### Notlar
+
+- Hatırlatıcı ve alarmlar Android'de yerel bildirimdir; cihaz izni gerekir ve uygulama
+  tamamen kapalıyken tam-zamanlı teslim garanti edilmez.
+- Bildirim Merkezi'nin sunucu tarafı özellikleri (hatırlatıcı ve duyuru okundu kaydı)
+  için `0023_notification_center.sql` ve önceki `0020–0022` migration'ları canlı
+  Supabase şemasına uygulanmalıdır.
+
 ## [v6 / 1.0.5+6] - 2026-07-11
 
 ### Düzeltmeler

@@ -3,6 +3,27 @@
   "source": "CHANGELOG.md",
   "releases": [
     {
+      "versionName": "1.0.6",
+      "buildNumber": 7,
+      "channel": "stable",
+      "date": "2026-07-12",
+      "title": "V7 Bildirim Merkezi ve sosyal profil",
+      "highlights": [
+        "Bildirim Merkezi: dürtme, hatırlatıcı, alarm/zamanlayıcı, duyuru, güncelleme ve sessiz saatler tek yerden.",
+        "Çalışma hatırlatıcıları: seçtiğin saat/günlerde yerel bildirim.",
+        "Sessiz saatler: seçilen aralıkta dürtme ve hatırlatıcı bildirimleri susturulur.",
+        "Sosyal Profil 2.0 ve Başarı Yolculuğu (kademeli başarılar, XP, taç)."
+      ],
+      "fixes": [
+        "Ayarlar'daki tekrar eden \"Ana Sayfa\" grubu kaldırıldı; beş sekmeli yapı netleşti.",
+        "Duyurular Bildirim Merkezi'nde okundu takibiyle listelenir."
+      ],
+      "notes": [
+        "Hatırlatıcı ve alarmlar Android yerel bildirimidir; cihaz izni gerekir.",
+        "Bildirim Merkezi'nin sunucu özellikleri için 0020–0023 migration'ları canlı Supabase'e uygulanmalıdır."
+      ]
+    },
+    {
       "versionName": "1.0.5",
       "buildNumber": 6,
       "channel": "stable",
