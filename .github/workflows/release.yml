@@ -80,7 +80,9 @@ jobs:
       - name: APK'yı adlandır + SHA-256 üret (in-app bütünlük doğrulaması)
         working-directory: app/build/app/outputs/flutter-apk
         run: |
-          mv "${{ steps.meta.outputs.src }}" "${{ steps.meta.outputs.asset }}"
+          if [ "${{ steps.meta.outputs.src }}" != "${{ steps.meta.outputs.asset }}" ]; then
+            mv "${{ steps.meta.outputs.src }}" "${{ steps.meta.outputs.asset }}"
+          fi
           sha256sum "${{ steps.meta.outputs.asset }}" > "${{ steps.meta.outputs.asset }}.sha256"
 
       - name: GitHub Release'e APK + checksum yükle
