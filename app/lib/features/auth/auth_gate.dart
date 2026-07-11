@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/providers/auth_providers.dart';
 import '../../core/navigation/home_shell.dart';
 import '../updater/updater_dialog.dart';
+import '../updater/release_notes_screen.dart';
 import 'auth_screen.dart';
 
 /// Oturum durumuna göre giriş ekranını veya ana uygulamayı gösterir.
@@ -20,8 +21,10 @@ class _AuthGateState extends ConsumerState<AuthGate> {
     super.initState();
     // Uygulama açılışında bir kez güncelleme kontrolü (sadece Android'de iş yapar).
     // Sessizdir: güncelleme yoksa veya hata olursa kullanıcı hiçbir şey görmez.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) maybeShowUpdateDialog(context);
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      await maybeShowWhatsNewDialog(context);
+      if (mounted) await maybeShowUpdateDialog(context);
     });
   }
 

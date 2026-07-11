@@ -16,7 +16,8 @@
 - **Dashboard:** 6 sütunlu 2D matris, 19 kart türü, `grid_reflow.dart` motoru
 - **Tema:** 5 hazır palet, koyu varsayılan, `AppTheme` palet-parametreli; WP-26 ile ek hazır palet + 3 custom slot planlandı
 - **Desktop:** WP-11 ilk EXE/build hattını açtı; WP-27/28 ile Windows'a özel masaüstü UX ve dağıtım planlandı
-- **Son WP numarası:** 28 (WP-27/28 Windows masaüstü UX ve dağıtım için planlandı)
+- **Release:** Stable/Beta kanalı GitHub Releases ile çalışır; WP-29 ikon/branding, WP-30 sürüm notları ve güncelleme geçmişi için planlandı
+- **Son WP numarası:** 30 (WP-29/30 ikon ve sürüm notları sistemi için planlandı)
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
   - Flutter: `C:\src\flutter` · Android SDK: `C:\Android\Sdk`
@@ -34,7 +35,7 @@
 
 ### Gemini Lane
 - **Sorumlu:** Gemini
-- **Durum:** [x] Boşta — WP-25 tamamlandı
+- **Durum:** [x] Boşta — WP-25 ve WP-29 tamamlandı
 - **Aktif WP:** —
 - **Kapsam:** Yeni atama bekleniyor.
 
@@ -47,9 +48,9 @@
 
 ### Codex Lane
 - **Sorumlu:** Codex
-- **Durum:** [x] Boşta — WP-14 tamamlandı
-- **Aktif WP:** —
-- **Not:** Yeni atama bekleniyor. WP-14 teslim notu Son Tamamlananlar bölümüne taşındı.
+- **Durum:** [ ] Çalışıyor — WP-30
+- **Aktif WP:** WP-30 Version History, Release Notes Popup & Update Notification
+- **Not:** WP-29 Gemini tarafından aktif kabul edildi; WP-30 ikon/resource alanlarına dokunmadan release notes/updater/settings alanında ilerliyor.
 
 ---
 
@@ -337,6 +338,82 @@
 - **Kabul:** Windows release artifact üretim yolu belgelenir ve mümkünse CI/VS'li ortamda doğrulanır; EXE adı/ikon/pencere davranışı düzgünleşir; mobil/Android build etkilenmez.
 - **Model matrisi (limit dostu):** WP-28 | Claude Sonnet 5 medium / GPT-5.6 Terra medium / Gemini 3.5 Flash medium
 - **Efor:** Orta-yüksek; dağıtım/CI/desktop API riski var.
+
+### WP-29: Stable/Beta App Icon & Branding Refresh 🔥
+- **Durum:** [x] Tamamlandı
+- **Sorumlu:** Gemini
+- **Backlog:** Stable ve beta uygulama kapak/app icon görsellerini yenileme
+- **Kapsam:** `references/app icon/` altındaki referans görseli kullanarak stable uygulama ikonlarını yenile; beta flavor için ayırt edilebilir ama aynı aileden ikinci ikon üret. Android launcher icon, adaptive icon gerekiyorsa foreground/background, Windows icon tarafı ve beta/stable flavor ayrımı netleşsin.
+- **SAHİP dosyalar:**
+  - `references/app icon/**` (yalnız okunur kaynak)
+  - `app/android/app/src/main/res/mipmap-*/ic_launcher.png`
+  - `app/android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml` (yeni/gerekirse)
+  - `app/android/app/src/main/res/drawable*/ic_launcher_foreground.*` (yeni/gerekirse)
+  - `app/android/app/src/stable/res/**` (yeni/gerekirse)
+  - `app/android/app/src/beta/res/**` (yeni/gerekirse)
+  - `app/android/app/build.gradle.kts`
+  - `app/windows/runner/resources/**` (Windows icon gerekiyorsa)
+  - `app/windows/runner/Runner.rc` (Windows icon gerekiyorsa)
+  - `docs/BRANDING.md` (yeni/gerekirse)
+- **DOKUNMA:**
+  - `app/lib/features/**` UI kodları
+  - `app/lib/data/**`
+  - `supabase/migrations/**`
+  - `.github/workflows/release.yml` (WP-30/WP-28 alanı; yalnız ikon asset adları zorunluysa küçük not)
+- **Adımlar:**
+  - [ ] Referans görseli incele; stable için temiz launcher icon üretim stratejisini belirle (maskelenebilir/adaptive icon uyumlu).
+  - [ ] Stable iconu tüm Android density klasörlerine üret; gerekiyorsa adaptive icon XML + foreground/background ayır.
+  - [ ] Beta flavor için farklılaştırılmış ikon üret: örn. küçük “BETA” şeridi, mor/mavi ton, veya köşede test rozeti. Aynı marka ailesinden kalsın ama uygulama çekmecesinde karışmasın.
+  - [ ] Android flavor source-set ile beta/stable ikon ayrımını doğrula; manifest `android:icon` aynı resource adını kullansa bile flavor resource override çalışmalı.
+  - [ ] Windows icon gerekiyorsa `.ico`/resource tarafını güncelle ve `DAGITIM.md`ye kısa not düş.
+  - [ ] Android stable ve beta debug/release build resource kontrolü yap; iki uygulama yan yana kurulduğunda ikonları farklı görünmeli.
+- **Tuzaklar:**
+  - Android adaptive icon maskeleri ikonun kenarlarını kırpabilir; safe-zone korunmalı.
+  - Beta ikon stable ile fazla benzer olursa kullanıcı gerçek/beta uygulamayı karıştırır.
+  - Kaynak görsel lisansı/kalitesi düşükse `docs/BRANDING.md` içinde kaynak ve karar notu tutulmalı.
+- **Kabul:** Stable ve beta uygulama ikonları farklı ve net görünür; launcher/app switcher ikonları güncellenir; beta/stable yan yana kurulumda karışmaz; Android build ikon resource hatası vermez.
+- **Model matrisi (limit dostu):** WP-29 | Claude Sonnet 5 medium / GPT-5.6 Terra medium / Gemini 3.5 Flash medium
+- **Efor:** Orta; asset üretimi + Android flavor resource kontrolü.
+
+### WP-30: Version History, Release Notes Popup & Update Notification 📝
+- **Durum:** [ ] Bekliyor
+- **Backlog:** V5 ve sonrası için sürüm listesi, GitHub release notları, uygulama içi tek seferlik güncelleme notu, geçmiş sürüm notları ve update bildirimi
+- **Kapsam:** Sürüm notlarını tek kaynakta tut: GitHub release body, repo içi MD, uygulama içi “Güncelleme Notları” geçmişi ve güncelleme sonrası tek seferlik pop-up aynı veriden beslensin. Ayrıca yeni güncelleme varsa uygulama açılışında/local check sonrası opsiyonel bildirim gösterilsin.
+- **SAHİP dosyalar:**
+  - `CHANGELOG.md` (yeni)
+  - `docs/VERSIONS.md` (yeni/gerekirse)
+  - `app/assets/release_notes.json` (yeni)
+  - `app/pubspec.yaml` (asset kaydı + sürüm notu)
+  - `app/lib/features/updater/updater_service.dart`
+  - `app/lib/features/updater/updater_dialog.dart`
+  - `app/lib/features/updater/release_notes_service.dart` (yeni)
+  - `app/lib/features/updater/release_notes_screen.dart` (yeni)
+  - `app/lib/features/profile/settings_screen.dart`
+  - `app/lib/core/notifications/update_notification_service.dart` (yeni/gerekirse)
+  - `.github/workflows/release.yml`
+  - `app/test/features/release_notes_test.dart` (yeni)
+- **DOKUNMA:**
+  - `app/android/app/src/**` ikon/resource dosyaları (WP-29 alanı)
+  - `app/lib/data/providers/study_providers.dart`
+  - `supabase/migrations/**`
+  - Windows installer dağıtım ayrıntıları (WP-28 alanı)
+- **Adımlar:**
+  - [ ] `CHANGELOG.md` ve `app/assets/release_notes.json` formatını belirle: versionName, buildNumber, channel, date, title, highlights, fixes, notes.
+  - [ ] V1→V4 geçmişini mevcut progress/GitHub release bağlamından özetle; V5 taslak notunu “hazırlanıyor” olarak ekle.
+  - [ ] Uygulama açılışında `PackageInfo.buildNumber` ile son görülen sürümü `SharedPreferences`ten karşılaştır; kullanıcı yeni build'e geçmişse “Yenilikler” pop-up'ını tek sefer göster.
+  - [ ] Ayarlar/Profil içine “Güncelleme notları” girişi ekle; kullanıcı geçmişten bugüne tüm sürüm notlarını okuyabilsin.
+  - [ ] `UpdaterDialog` içindeki GitHub release body gösterimini aynı tasarım diliyle düzenle; release body boşsa bundled release notes fallback kullansın.
+  - [ ] GitHub workflow'da `generate_release_notes` yanında/yerine ilgili sürümün changelog bölümünü release body olarak kullanma stratejisi kur. Otomasyon zorlaşırsa ilk fazda `CHANGELOG.md` kopyalama dokümante edilir.
+  - [ ] Yeni güncelleme bulunduğunda, kullanıcı bildirim izni verdiyse local notification göster; tıklayınca update dialog/ekranı açılsın. Push/FCM bu WP'de yok.
+  - [ ] Testler: ilk açılışta pop-up bir kez görünür, aynı sürümde tekrar görünmez, ayarlar geçmiş listesi render eder, update notification izinsiz sessiz kalır.
+- **Tuzaklar:**
+  - Gerçek push notification için FCM/server gerekir; bu WP yalnız local/best-effort update bildirimi yapar.
+  - Android 13+ bildirim izni yoksa update bildirimi gösterilemez; dialog fallback devam etmeli.
+  - GitHub release notu ile bundled JSON farklılaşırsa kullanıcı farklı metinler görür; mümkün olduğunca tek kaynak prensibi korunmalı.
+  - Beta ve stable notları karışmamalı; channel alanı şart.
+- **Kabul:** Yeni sürüme güncelleyen kullanıcı bir kez “Yenilikler” pop-up'ı görür; Ayarlar’dan tüm geçmiş sürüm notlarına ulaşır; GitHub release notu ile repo/app içi notlar aynı kaynağa dayanır; update varsa izinli cihazda bildirim tetiklenebilir; testler geçer.
+- **Model matrisi (limit dostu):** WP-30 | Claude Sonnet 5 high / GPT-5.6 Terra high / Gemini 3.5 Flash medium
+- **Efor:** Yüksek; release süreci + app içi UX + notification + test.
 
 ---
 ## ✅ Son Tamamlananlar (ajan bağlamı için)

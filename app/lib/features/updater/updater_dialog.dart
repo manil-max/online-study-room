@@ -6,13 +6,28 @@ import 'package:flutter/material.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 
+import '../../core/notifications/update_notification_service.dart';
+import 'release_notes_service.dart';
 import 'updater_service.dart';
 
 /// Açılışta çağrılır: yeni sürüm varsa güncelleme penceresini gösterir.
 /// Sessizdir; güncelleme yoksa veya hata olursa hiçbir şey yapmaz.
 Future<void> maybeShowUpdateDialog(BuildContext context) async {
-  final info = await UpdaterService().checkForUpdate();
+  var info = await UpdaterService().checkForUpdate();
   if (info == null || !context.mounted) return;
+
+  if (info.releaseNotes.trim().isEmpty) {
+    final bundledNote = await ReleaseNotesService().noteForBuild(
+      info.versionCode,
+      channel: UpdaterService.channel,
+    );
+    if (bundledNote != null) {
+      info = info.copyWith(releaseNotes: bundledNote.plainText);
+    }
+  }
+
+  await UpdateNotificationService.instance.showUpdateAvailable(info);
+  if (!context.mounted) return;
 
   await showDialog<void>(
     context: context,

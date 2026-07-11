@@ -8,6 +8,15 @@
 
 ## 🔴 Yüksek Öncelik
 
+- [x] **Stable/Beta app icon + release notes sistemi** — **WP-29 tamamlandı**, WP-30 planlandı
+  - Stable uygulama ikonu `references/app icon/` içindeki referans görselden yenilenecek.
+  - Beta uygulama ikonu stable'dan ayırt edilebilir olacak (rozet/renk/şerit gibi).
+  - Sürüm listesi hem GitHub release tarafında hem repo içinde MD/JSON olarak tutulacak.
+  - Güncelleme sonrası tek seferlik “Yenilikler” pop-up'ı gösterilecek.
+  - Profil/Ayarlar’dan geçmişten bugüne güncelleme notları okunabilecek.
+  - Yeni güncelleme varsa izinli cihazlarda local update bildirimi değerlendirilecek; gerçek push/FCM ayrı fazdır.
+  - *Kaynak: kullanıcı geri bildirimi; WP-29/WP-30.*
+
 - [~] **Windows desktop UX redesign + dağıtım fazı** — **WP-27 ve WP-28 planlandı**
   - İlk EXE derlendi; ancak mevcut görünüm mobil app'in Windows'a büyütülmüş hali.
   - Windows için ayrı masaüstü deneyimi gerekiyor: sol navigation rail/sidebar, geniş ekran düzenleri, mini pencere uyumu, klavye/fare/pencere davranışı.

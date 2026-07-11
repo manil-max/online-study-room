@@ -164,4 +164,20 @@ class UpdateInfo {
   /// APK'nın beklenen SHA-256 özetini içeren `.sha256` dosyasının linki.
   /// `null` ise bütünlük doğrulaması atlanır (eski/manuel release'ler için).
   final String? sha256Url;
+
+  UpdateInfo copyWith({
+    int? versionCode,
+    String? versionName,
+    String? releaseNotes,
+    String? downloadUrl,
+    String? sha256Url,
+  }) {
+    return UpdateInfo(
+      versionCode: versionCode ?? this.versionCode,
+      versionName: versionName ?? this.versionName,
+      releaseNotes: releaseNotes ?? this.releaseNotes,
+      downloadUrl: downloadUrl ?? this.downloadUrl,
+      sha256Url: sha256Url ?? this.sha256Url,
+    );
+  }
 }
