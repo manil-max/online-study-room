@@ -102,7 +102,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   if (_editing) ...[
                     Text(
                       'Kartı tutup sürükle; hedef hücreye bırakınca komşular yer açar. '
-                      'Köşelerden çekerek hücreye oturan genişlik ve yükseklik ayarla.',
+                      'Boyut için karta dokun, aşağıdaki −/+ ile genişlik ve '
+                      'yüksekliği ayarla (ya da köşelerden çek).',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
@@ -196,9 +197,24 @@ class _DragTargetCell {
 class _MatrixGridState extends State<_MatrixGrid> {
   final GlobalKey _gridKey = GlobalKey();
   _DragTargetCell? _target;
+  DashboardCardType? _selected;
 
   void _clearTarget() {
     if (_target != null) setState(() => _target = null);
+  }
+
+  void _selectCard(DashboardCardType type) {
+    if (_selected != type) setState(() => _selected = type);
+  }
+
+  /// Panelin bağlanacağı kart: kullanıcı seçtiyse o, seçmediyse (ya da seçtiği
+  /// kart silindiyse) ilk kart. Düzen boşsa `null`.
+  DashboardCardType? _effectiveSelected() {
+    final layout = widget.layout;
+    if (layout.isEmpty) return null;
+    final chosen = _selected;
+    if (chosen != null && layout.any((c) => c.type == chosen)) return chosen;
+    return layout.first.type;
   }
 
   @override
@@ -220,6 +236,7 @@ class _MatrixGridState extends State<_MatrixGrid> {
                   ? baseRows
                   : _target!.y + draggedConfig.h);
         final height = totalRows * cell + (totalRows - 1) * _kGap;
+        final selectedType = _effectiveSelected();
 
         double leftOf(DashboardCardConfig c) => c.x * (cell + _kGap);
         double topOf(DashboardCardConfig c) => c.y * (cell + _kGap);
@@ -250,7 +267,7 @@ class _MatrixGridState extends State<_MatrixGrid> {
           }
         }
 
-        return DragTarget<DashboardCardType>(
+        final grid = DragTarget<DashboardCardType>(
           onWillAcceptWithDetails: (_) => widget.editing,
           onMove: updateTarget,
           onLeave: (_) => _clearTarget(),
@@ -293,6 +310,8 @@ class _MatrixGridState extends State<_MatrixGrid> {
                         width: widthOf(c),
                         height: heightOf(c),
                         editing: widget.editing,
+                        selected: widget.editing && selectedType == c.type,
+                        onSelect: () => _selectCard(c.type),
                         onLongPressCard: widget.onLongPressCard,
                         onResize: (x, y, w, h, persist) =>
                             widget.onResizeCard(c.type, x, y, w, h, persist),
@@ -304,6 +323,35 @@ class _MatrixGridState extends State<_MatrixGrid> {
               ),
             );
           },
+        );
+
+        if (!widget.editing) return grid;
+
+        final selectedConfig = selectedType == null
+            ? null
+            : widget.layout.where((c) => c.type == selectedType).firstOrNull;
+
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            grid,
+            if (selectedConfig != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: _SizePanel(
+                  config: selectedConfig,
+                  onResize: (w, h) => widget.onResizeCard(
+                    selectedConfig.type,
+                    selectedConfig.x,
+                    selectedConfig.y,
+                    w,
+                    h,
+                    true,
+                  ),
+                ),
+              ),
+          ],
         );
       },
     );
@@ -368,6 +416,8 @@ class _MatrixCard extends StatefulWidget {
     required this.width,
     required this.height,
     required this.editing,
+    required this.selected,
+    required this.onSelect,
     required this.onLongPressCard,
     required this.onResize,
     required this.onCommit,
@@ -379,6 +429,8 @@ class _MatrixCard extends StatefulWidget {
   final double width;
   final double height;
   final bool editing;
+  final bool selected;
+  final VoidCallback onSelect;
   final VoidCallback onLongPressCard;
   final void Function(int x, int y, int w, int h, bool persist) onResize;
   final VoidCallback onCommit;
@@ -394,6 +446,7 @@ class _MatrixCardState extends State<_MatrixCard> {
   double _dy = 0;
 
   void _onResizeStart() {
+    widget.onSelect();
     _resizeStart = widget.config;
     _dx = 0;
     _dy = 0;
@@ -463,8 +516,10 @@ class _MatrixCardState extends State<_MatrixCard> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.60),
-                  width: 1,
+                  color: theme.colorScheme.primary.withValues(
+                    alpha: widget.selected ? 1.0 : 0.60,
+                  ),
+                  width: widget.selected ? 2 : 1,
                 ),
               ),
             ),
@@ -546,25 +601,162 @@ class _MatrixCardState extends State<_MatrixCard> {
       ],
     );
 
-    return LongPressDraggable<DashboardCardType>(
-      data: widget.config.type,
-      feedback: SizedBox(
-        width: widget.width,
-        height: widget.height,
-        child: Opacity(
-          opacity: 0.6,
-          child: Material(
-            color: Colors.transparent,
-            child: dashboardCardFor(
-              widget.config.type,
-              widget.config.size,
-              height: widget.height,
+    return GestureDetector(
+      behavior: HitTestBehavior.deferToChild,
+      onTap: widget.onSelect,
+      child: LongPressDraggable<DashboardCardType>(
+        data: widget.config.type,
+        onDragStarted: widget.onSelect,
+        feedback: SizedBox(
+          width: widget.width,
+          height: widget.height,
+          child: Opacity(
+            opacity: 0.6,
+            child: Material(
+              color: Colors.transparent,
+              child: dashboardCardFor(
+                widget.config.type,
+                widget.config.size,
+                height: widget.height,
+              ),
             ),
           ),
         ),
+        childWhenDragging: Opacity(opacity: 0.28, child: editCard),
+        child: editCard,
       ),
-      childWhenDragging: Opacity(opacity: 0.28, child: editCard),
-      child: editCard,
+    );
+  }
+}
+
+/// Seçili kartın altındaki dokunmatik dostu boyut paneli: köşeden sürüklemek
+/// yerine büyük −/+ düğmeleriyle genişlik/yükseklik ayarlanır (uzun-basma ile
+/// taşıma çakışması olmadan). Sürükleme yolu da ayrıca korunur.
+class _SizePanel extends StatelessWidget {
+  const _SizePanel({required this.config, required this.onResize});
+
+  final DashboardCardConfig config;
+  final void Function(int w, int h) onResize;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: theme.colorScheme.primary.withValues(alpha: 0.35),
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  config.type.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  'Boyut ${config.w}×${config.h} • dokun ve ayarla',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          _SizeStepper(
+            icon: Icons.swap_horiz,
+            onDecrease: config.w > 1
+                ? () => onResize(config.w - 1, config.h)
+                : null,
+            onIncrease: config.w < kGridColumns
+                ? () => onResize(config.w + 1, config.h)
+                : null,
+          ),
+          const SizedBox(width: 6),
+          _SizeStepper(
+            icon: Icons.swap_vert,
+            onDecrease: config.h > 1
+                ? () => onResize(config.w, config.h - 1)
+                : null,
+            onIncrease: () => onResize(config.w, config.h + 1),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// [−] [yön ikonu] [+] üçlüsü; her buton 40px dokunma hedefi (parmak için).
+class _SizeStepper extends StatelessWidget {
+  const _SizeStepper({
+    required this.icon,
+    required this.onDecrease,
+    required this.onIncrease,
+  });
+
+  final IconData icon;
+  final VoidCallback? onDecrease;
+  final VoidCallback? onIncrease;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _StepButton(icon: Icons.remove, onTap: onDecrease),
+          Icon(icon, size: 16, color: theme.colorScheme.onSurfaceVariant),
+          _StepButton(icon: Icons.add, onTap: onIncrease),
+        ],
+      ),
+    );
+  }
+}
+
+class _StepButton extends StatelessWidget {
+  const _StepButton({required this.icon, required this.onTap});
+
+  final IconData icon;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final enabled = onTap != null;
+    return InkResponse(
+      onTap: onTap,
+      radius: 22,
+      child: SizedBox(
+        width: 40,
+        height: 40,
+        child: Icon(
+          icon,
+          size: 20,
+          color: enabled
+              ? theme.colorScheme.primary
+              : theme.colorScheme.onSurface.withValues(alpha: 0.28),
+        ),
+      ),
     );
   }
 }
