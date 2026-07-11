@@ -4,7 +4,27 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
-## [v5 / 1.0.4+5] - Hazırlanıyor
+## [v6 / 1.0.5+6] - 2026-07-11
+
+### Düzeltmeler
+
+- Sayaç bildirimindeki başlıkta artık takılı kalan “0 sn” yerine canlı ilerleyen
+  saat (HH:MM:SS) gösterilir.
+- Grup adı, hedefi veya davet kodu değiştirildiğinde liste anında tazelenir;
+  değişikliği görmek için uygulamayı kapatıp açmak gerekmez.
+- Kimse dürtmese bile tekrar tekrar gelen sahte “... seni dürttü” bildirimi
+  giderildi; her dürtme yalnızca bir kez bildirilir.
+- Bildirim ya da ana ekran widget'ındaki Durdur/Başlat komutu, uygulama kapalıyken
+  basıldıysa artık uygulama açılışında da işlenir (önceden yalnız arka plandan öne
+  gelişte çalışıyordu).
+
+### Notlar
+
+- Uygulama tamamen kapalıyken Durdur/Başlat'ın ve widget canlı saatinin anında
+  çalışması için bir foreground service gerekir; bu ayrı bir iş paketi olarak
+  cihaz üzerinde test edilerek eklenecektir.
+
+## [v5 / 1.0.4+5] - 2026-07-11
 
 ### Öne çıkanlar
 

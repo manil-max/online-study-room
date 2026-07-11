@@ -5,7 +5,8 @@ Bu dosya ürün tarafındaki okunur sürüm indeksidir. Ayrıntılı değişikli
 
 | Kanal | Tag | Uygulama sürümü | Durum | Kısa not |
 |---|---:|---:|---|---|
-| stable | v5 | 1.0.4+5 | Hazırlanıyor | V5 release notes, ikon/branding ve Android dış yüzey hazırlığı |
+| stable | v6 | 1.0.5+6 | Yayında | Bildirim/grup/dürtme düzeltmeleri ve sayaç komutlarının açılışta işlenmesi |
+| stable | v5 | 1.0.4+5 | Yayında | V5 release notes, ikon/branding ve Android dış yüzey hazırlığı |
 | stable | v4 | 1.0.3+4 | Yayında | Odak Kampı adı, V4 temel deneyim ve grup/sayaç hazırlıkları |
 | stable | v3 | 1.0.2+3 | Yayında | Bildirim, dürtme ve canlı sayaç altyapısı |
 | stable | v2 | 1.0.1+2 | Yayında | Ana sayfa, çalışma odası ve temel responsive iyileştirmeler |

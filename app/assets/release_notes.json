@@ -3,10 +3,32 @@
   "source": "CHANGELOG.md",
   "releases": [
     {
+      "versionName": "1.0.5",
+      "buildNumber": 6,
+      "channel": "stable",
+      "date": "2026-07-11",
+      "title": "V6 bildirim ve grup düzeltmeleri",
+      "highlights": [
+        "Sayaç bildiriminde artık canlı ilerleyen saat gösterilir; \"0 sn\"de takılmaz.",
+        "Grup adı/hedefi/davet kodu değişiklikleri anında yansır.",
+        "Sahte tekrarlayan dürtme bildirimleri giderildi."
+      ],
+      "fixes": [
+        "Sayaç bildirimindeki takılı \"0 sn\" yerine canlı kronometre (HH:MM:SS) gösterilir.",
+        "Grup adı, hedefi veya davet kodu değişince liste anında tazelenir; uygulamayı yeniden açmak gerekmez.",
+        "Kimse dürtmese bile tekrar gelen sahte \"seni dürttü\" bildirimi durduruldu; her dürtme bir kez bildirilir.",
+        "Bildirim/widget Durdur-Başlat komutu, uygulama kapalıyken basıldıysa açılışta da işlenir."
+      ],
+      "notes": [
+        "Uygulama tamamen kapalıyken Durdur/Başlat ve widget canlı saatinin anında çalışması için foreground service gerekir; ayrı bir iş paketi olarak cihazda test edilerek eklenecek.",
+        "Push bildirim yoktur; güncelleme bildirimi uygulama açıldığında yapılan yerel kontrolle best-effort çalışır."
+      ]
+    },
+    {
       "versionName": "1.0.4",
       "buildNumber": 5,
       "channel": "stable",
-      "date": "Hazırlanıyor",
+      "date": "2026-07-11",
       "title": "V5 hazırlığı",
       "highlights": [
         "Android saat, bildirim ve widget deneyimi sadeleştiriliyor.",
@@ -14,10 +36,9 @@
         "Yeni ikon/branding ve tema geliştirmeleri ayrı iş paketleriyle V5'e hazırlanıyor."
       ],
       "fixes": [
-        "V5 yayın notları artık uygulama içi JSON, CHANGELOG ve GitHub Release akışıyla aynı kaynaktan takip edilecek."
+        "V5 yayın notları artık uygulama içi JSON, CHANGELOG ve GitHub Release akışıyla aynı kaynaktan takip edilir."
       ],
       "notes": [
-        "Bu kayıt V5 çıkmadan önce güncellenecek taslak nottur.",
         "Push bildirim yoktur; güncelleme bildirimi uygulama açıldığında yapılan yerel kontrolle best-effort çalışır."
       ]
     },
