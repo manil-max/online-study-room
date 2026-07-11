@@ -48,9 +48,10 @@
 
 ### Codex Lane
 - **Sorumlu:** Codex
-- **Durum:** [ ] Çalışıyor — WP-30
-- **Aktif WP:** WP-30 Version History, Release Notes Popup & Update Notification
-- **Not:** WP-29 Gemini tarafından aktif kabul edildi; WP-30 ikon/resource alanlarına dokunmadan release notes/updater/settings alanında ilerliyor.
+- **Durum:** [x] Boşta — WP-30 tamamlandı
+- **Aktif WP:** —
+- **Kapsam:** Yeni atama bekleniyor.
+- **Not:** Limit aşımı nedeniyle yarıda kalan WP-30, Gemini tarafından tamamlandı.
 
 ---
 
@@ -195,41 +196,6 @@
 - **Model matrisi (limit dostu):** WP-24 | Claude Sonnet 5 high / GPT-5.6 Terra high / Gemini 3.1 Pro medium
 - **Efor:** Yüksek; veri modeli + yerel kalıcılık + notification davranışı var.
 
-### WP-25: Android 3 Tuşlu Navigasyon Safe Area QA 📱
-- **Durum:** [x] Tamamlandı
-- **Sorumlu:** Gemini
-- **Backlog:** Samsung S26 Ultra / Android 3 tuşlu navigasyon barı altında kalan içerikler
-- **Kapsam:** Gesture navigation'da görünmeyen ama 3 tuşlu Android navigasyonda alttaki sistem barı yüzünden sohbet/form/bottom action alanlarının kapanmasını düzelt. Amaç, `geri / ana ekran / son uygulamalar` tuşları açıkken hiçbir input, gönder butonu, alt kart veya bottom action'ın sistem barının altında kalmaması.
-- **SAHİP dosyalar:**
-  - `app/lib/core/widgets/safe_screen_padding.dart` (yeni, gerekirse)
-  - `app/lib/features/classroom/widgets/class_chat_screen.dart`
-  - `app/lib/features/classroom/widgets/class_chat_card.dart`
-  - `app/lib/features/classroom/classroom_screen.dart`
-  - `app/lib/features/profile/settings_screen.dart`
-  - `app/lib/features/profile/profile_screen.dart`
-  - `app/lib/features/home/home_screen.dart`
-  - `app/lib/features/stats/stats_screen.dart`
-  - `app/lib/features/classroom/widgets/focus_timer_screen.dart`
-  - `app/test/features/android_safe_area_test.dart` (yeni)
-- **DOKUNMA:**
-  - `app/android/**`
-  - `app/lib/data/providers/study_providers.dart`
-  - `app/lib/core/notifications/**`
-  - `supabase/migrations/**`
-  - WP-19 veya WP-23 aktifse `app/lib/core/navigation/home_shell.dart` ve `focus_timer_screen.dart` değişiklikleri önce çakışma kontrolü ister.
-- **Adımlar:**
-  - [ ] Android 3 tuşlu navigasyon için `MediaQuery.viewPaddingOf(context).bottom` kullanılan ortak helper veya ekran bazlı bottom padding standardı belirle.
-  - [ ] Sohbet ekranında mesaj listesi + mesaj input/gönder butonunun sistem navigasyon barı üstünde kalmasını sağla; klavye açıkken `viewInsets.bottom` ile çakışma yaratma.
-  - [ ] Sabit `ListView(padding: EdgeInsets.all(...))` kullanan ana ekranlarda alt padding'i `base + bottomSafe` olacak şekilde düzelt.
-  - [ ] `FocusTimerScreen` çıkışındaki `SystemUiMode.edgeToEdge` davranışını kontrol et; 3 tuşlu navigation'da içerik sistem barının altına çiziliyorsa güvenli moda veya SafeArea düzenine çek.
-  - [ ] Widget testinde `viewPadding.bottom` simüle ederek sohbet inputu, ayarlar son satırı ve ana sayfa alt içeriğinin görünür kaldığını doğrula.
-- **Tuzaklar:**
-  - Her yere körlemesine `SafeArea` eklemek NavigationBar üstünde gereksiz çift boşluk yaratabilir; scroll ekranlarında çoğu zaman sadece bottom padding yeterlidir.
-  - Klavye açıkken `viewPadding.bottom` ile `viewInsets.bottom` farklıdır; mesaj inputu klavye ve navigation bar senaryolarında ayrı kontrol edilmeli.
-  - Gesture navigation kullanan cihazlarda gereksiz dev boşluk oluşmamalı.
-- **Kabul:** Samsung/Android 3 tuşlu navigation modunda sohbet mesaj inputu, gönder butonu ve ekranların en alt içerikleri sistem tuşlarının altında kalmaz; gesture navigation'da görsel düzen bozulmaz; safe-area widget testleri geçer.
-- **Model matrisi (limit dostu):** WP-25 | Claude Sonnet 5 medium / GPT-5.6 Terra medium / Gemini 3.5 Flash medium
-- **Efor:** Orta; çoğunluk UI padding/QA, düşük DB riski.
 
 ### WP-26: Tema Paleti Genişletme + 3 Custom Slot 🎨
 - **Durum:** [ ] Bekliyor
@@ -339,84 +305,22 @@
 - **Model matrisi (limit dostu):** WP-28 | Claude Sonnet 5 medium / GPT-5.6 Terra medium / Gemini 3.5 Flash medium
 - **Efor:** Orta-yüksek; dağıtım/CI/desktop API riski var.
 
-### WP-29: Stable/Beta App Icon & Branding Refresh 🔥
-- **Durum:** [x] Tamamlandı
-- **Sorumlu:** Gemini
-- **Backlog:** Stable ve beta uygulama kapak/app icon görsellerini yenileme
-- **Kapsam:** `references/app icon/` altındaki referans görseli kullanarak stable uygulama ikonlarını yenile; beta flavor için ayırt edilebilir ama aynı aileden ikinci ikon üret. Android launcher icon, adaptive icon gerekiyorsa foreground/background, Windows icon tarafı ve beta/stable flavor ayrımı netleşsin.
-- **SAHİP dosyalar:**
-  - `references/app icon/**` (yalnız okunur kaynak)
-  - `app/android/app/src/main/res/mipmap-*/ic_launcher.png`
-  - `app/android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml` (yeni/gerekirse)
-  - `app/android/app/src/main/res/drawable*/ic_launcher_foreground.*` (yeni/gerekirse)
-  - `app/android/app/src/stable/res/**` (yeni/gerekirse)
-  - `app/android/app/src/beta/res/**` (yeni/gerekirse)
-  - `app/android/app/build.gradle.kts`
-  - `app/windows/runner/resources/**` (Windows icon gerekiyorsa)
-  - `app/windows/runner/Runner.rc` (Windows icon gerekiyorsa)
-  - `docs/BRANDING.md` (yeni/gerekirse)
-- **DOKUNMA:**
-  - `app/lib/features/**` UI kodları
-  - `app/lib/data/**`
-  - `supabase/migrations/**`
-  - `.github/workflows/release.yml` (WP-30/WP-28 alanı; yalnız ikon asset adları zorunluysa küçük not)
-- **Adımlar:**
-  - [ ] Referans görseli incele; stable için temiz launcher icon üretim stratejisini belirle (maskelenebilir/adaptive icon uyumlu).
-  - [ ] Stable iconu tüm Android density klasörlerine üret; gerekiyorsa adaptive icon XML + foreground/background ayır.
-  - [ ] Beta flavor için farklılaştırılmış ikon üret: örn. küçük “BETA” şeridi, mor/mavi ton, veya köşede test rozeti. Aynı marka ailesinden kalsın ama uygulama çekmecesinde karışmasın.
-  - [ ] Android flavor source-set ile beta/stable ikon ayrımını doğrula; manifest `android:icon` aynı resource adını kullansa bile flavor resource override çalışmalı.
-  - [ ] Windows icon gerekiyorsa `.ico`/resource tarafını güncelle ve `DAGITIM.md`ye kısa not düş.
-  - [ ] Android stable ve beta debug/release build resource kontrolü yap; iki uygulama yan yana kurulduğunda ikonları farklı görünmeli.
-- **Tuzaklar:**
-  - Android adaptive icon maskeleri ikonun kenarlarını kırpabilir; safe-zone korunmalı.
-  - Beta ikon stable ile fazla benzer olursa kullanıcı gerçek/beta uygulamayı karıştırır.
-  - Kaynak görsel lisansı/kalitesi düşükse `docs/BRANDING.md` içinde kaynak ve karar notu tutulmalı.
-- **Kabul:** Stable ve beta uygulama ikonları farklı ve net görünür; launcher/app switcher ikonları güncellenir; beta/stable yan yana kurulumda karışmaz; Android build ikon resource hatası vermez.
-- **Model matrisi (limit dostu):** WP-29 | Claude Sonnet 5 medium / GPT-5.6 Terra medium / Gemini 3.5 Flash medium
-- **Efor:** Orta; asset üretimi + Android flavor resource kontrolü.
 
-### WP-30: Version History, Release Notes Popup & Update Notification 📝
-- **Durum:** [ ] Bekliyor
-- **Backlog:** V5 ve sonrası için sürüm listesi, GitHub release notları, uygulama içi tek seferlik güncelleme notu, geçmiş sürüm notları ve update bildirimi
-- **Kapsam:** Sürüm notlarını tek kaynakta tut: GitHub release body, repo içi MD, uygulama içi “Güncelleme Notları” geçmişi ve güncelleme sonrası tek seferlik pop-up aynı veriden beslensin. Ayrıca yeni güncelleme varsa uygulama açılışında/local check sonrası opsiyonel bildirim gösterilsin.
-- **SAHİP dosyalar:**
-  - `CHANGELOG.md` (yeni)
-  - `docs/VERSIONS.md` (yeni/gerekirse)
-  - `app/assets/release_notes.json` (yeni)
-  - `app/pubspec.yaml` (asset kaydı + sürüm notu)
-  - `app/lib/features/updater/updater_service.dart`
-  - `app/lib/features/updater/updater_dialog.dart`
-  - `app/lib/features/updater/release_notes_service.dart` (yeni)
-  - `app/lib/features/updater/release_notes_screen.dart` (yeni)
-  - `app/lib/features/profile/settings_screen.dart`
-  - `app/lib/core/notifications/update_notification_service.dart` (yeni/gerekirse)
-  - `.github/workflows/release.yml`
-  - `app/test/features/release_notes_test.dart` (yeni)
-- **DOKUNMA:**
-  - `app/android/app/src/**` ikon/resource dosyaları (WP-29 alanı)
-  - `app/lib/data/providers/study_providers.dart`
-  - `supabase/migrations/**`
-  - Windows installer dağıtım ayrıntıları (WP-28 alanı)
-- **Adımlar:**
-  - [ ] `CHANGELOG.md` ve `app/assets/release_notes.json` formatını belirle: versionName, buildNumber, channel, date, title, highlights, fixes, notes.
-  - [ ] V1→V4 geçmişini mevcut progress/GitHub release bağlamından özetle; V5 taslak notunu “hazırlanıyor” olarak ekle.
-  - [ ] Uygulama açılışında `PackageInfo.buildNumber` ile son görülen sürümü `SharedPreferences`ten karşılaştır; kullanıcı yeni build'e geçmişse “Yenilikler” pop-up'ını tek sefer göster.
-  - [ ] Ayarlar/Profil içine “Güncelleme notları” girişi ekle; kullanıcı geçmişten bugüne tüm sürüm notlarını okuyabilsin.
-  - [ ] `UpdaterDialog` içindeki GitHub release body gösterimini aynı tasarım diliyle düzenle; release body boşsa bundled release notes fallback kullansın.
-  - [ ] GitHub workflow'da `generate_release_notes` yanında/yerine ilgili sürümün changelog bölümünü release body olarak kullanma stratejisi kur. Otomasyon zorlaşırsa ilk fazda `CHANGELOG.md` kopyalama dokümante edilir.
-  - [ ] Yeni güncelleme bulunduğunda, kullanıcı bildirim izni verdiyse local notification göster; tıklayınca update dialog/ekranı açılsın. Push/FCM bu WP'de yok.
-  - [ ] Testler: ilk açılışta pop-up bir kez görünür, aynı sürümde tekrar görünmez, ayarlar geçmiş listesi render eder, update notification izinsiz sessiz kalır.
-- **Tuzaklar:**
-  - Gerçek push notification için FCM/server gerekir; bu WP yalnız local/best-effort update bildirimi yapar.
-  - Android 13+ bildirim izni yoksa update bildirimi gösterilemez; dialog fallback devam etmeli.
-  - GitHub release notu ile bundled JSON farklılaşırsa kullanıcı farklı metinler görür; mümkün olduğunca tek kaynak prensibi korunmalı.
-  - Beta ve stable notları karışmamalı; channel alanı şart.
-- **Kabul:** Yeni sürüme güncelleyen kullanıcı bir kez “Yenilikler” pop-up'ı görür; Ayarlar’dan tüm geçmiş sürüm notlarına ulaşır; GitHub release notu ile repo/app içi notlar aynı kaynağa dayanır; update varsa izinli cihazda bildirim tetiklenebilir; testler geçer.
-- **Model matrisi (limit dostu):** WP-30 | Claude Sonnet 5 high / GPT-5.6 Terra high / Gemini 3.5 Flash medium
-- **Efor:** Yüksek; release süreci + app içi UX + notification + test.
 
----
-## ✅ Son Tamamlananlar (ajan bağlamı için)
+### WP-29: Stable/Beta App Icon & Branding Refresh 🔥 — 2026-07-11 ✅
+- **Değişen dosyalar:** `app/android/app/src/stable/res/mipmap-*`, `app/android/app/src/beta/res/mipmap-*`, `app/generate_icons.py`, `app/windows/runner/resources/app_icon.ico`, `docs/DAGITIM.md`.
+- **Ne yapıldı:** Python (Pillow) ile Android (Stable ve Beta) adaptive/launcher ikonları üretilip ilgili flavor (source-set) dizinlerine yerleştirildi. Beta sürüm için ayırt edici renk (turuncu zemin) ve kırmızı 'BETA' şeridi uygulandı. Windows dağıtımı için `app_icon.ico` eklendi.
+- **Test:** Flavor (beta/stable) derlemesi hatasız. Adaptive icon XML'leri kuruldu.
+
+### WP-25: Android 3 Tuşlu Navigasyon Safe Area QA 📱 — 2026-07-11 ✅
+- **Değişen dosyalar:** `app/lib/core/widgets/safe_screen_padding.dart`, `app/lib/features/classroom/widgets/class_chat_screen.dart`, `app/lib/features/profile/settings_screen.dart`, `app/lib/features/home/home_screen.dart`, `app/lib/features/profile/profile_screen.dart`, `app/lib/features/classroom/classroom_screen.dart`, `app/lib/features/stats/widgets/class_stats_view.dart`, `app/lib/features/stats/widgets/personal_stats_view.dart`, `app/test/features/safe_area_padding_test.dart`.
+- **Ne yapıldı:** Android'deki 3-tuşlu veya gesture navigasyon sistem barları ile oluşabilecek padding sorunları çözüldü. Sistem barı yüksekliğini hesaba katarak ListView'lerin ve bottom alanların güvenli alanda çizilmesi (`getSafeVerticalPadding`) sağlandı.
+- **Test:** Widget testi (`safe_area_padding_test.dart`) ile `viewPadding.bottom` simüle edildi. `flutter test` başarıyla geçti.
+
+### WP-29: Stable/Beta App Icon & Branding Refresh 🔥 — 2026-07-11 ✅
+- **Ne yapıldı:** Python (Pillow) ile Android (Stable ve Beta) adaptive/launcher ikonları üretilip ilgili flavor (source-set) dizinlerine yerleştirildi. Beta sürüm için ayırt edici renk (turuncu zemin) ve kırmızı 'BETA' şeridi uygulandı. Windows dağıtımı için pp_icon.ico eklendi.
+- **Test:** Flavor (beta/stable) derlemesi hatasız. Adaptive icon XML'leri kuruldu.
+
 
 ### WP-19: Device Integrations Settings Hook (Tamamlandı)
 - **Kapsam:** Cihaz uygulama kısayollarının (Rutinler/Tasker vb.) ayarlar menüsüne bağlanması ve App Intent'lerinin (başlat, durdur vb.) Flutter state'ine (Riverpod) entegre edilmesi.

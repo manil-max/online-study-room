@@ -8,7 +8,7 @@
 
 ## 🔴 Yüksek Öncelik
 
-- [x] **Stable/Beta app icon + release notes sistemi** — **WP-29 tamamlandı**, WP-30 planlandı
+- [x] **Stable/Beta app icon + release notes sistemi** — **WP-29 ve WP-30 tamamlandı**
   - Stable uygulama ikonu `references/app icon/` içindeki referans görselden yenilenecek.
   - Beta uygulama ikonu stable'dan ayırt edilebilir olacak (rozet/renk/şerit gibi).
   - Sürüm listesi hem GitHub release tarafında hem repo içinde MD/JSON olarak tutulacak.

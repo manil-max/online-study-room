@@ -1,0 +1,115 @@
+{
+  "schemaVersion": 1,
+  "source": "CHANGELOG.md",
+  "releases": [
+    {
+      "versionName": "1.0.4",
+      "buildNumber": 5,
+      "channel": "stable",
+      "date": "Hazırlanıyor",
+      "title": "V5 hazırlığı",
+      "highlights": [
+        "Android saat, bildirim ve widget deneyimi sadeleştiriliyor.",
+        "Sürüm geçmişi, tek seferlik Yenilikler penceresi ve güncelleme notları ekranı eklendi.",
+        "Yeni ikon/branding ve tema geliştirmeleri ayrı iş paketleriyle V5'e hazırlanıyor."
+      ],
+      "fixes": [
+        "V5 yayın notları artık uygulama içi JSON, CHANGELOG ve GitHub Release akışıyla aynı kaynaktan takip edilecek."
+      ],
+      "notes": [
+        "Bu kayıt V5 çıkmadan önce güncellenecek taslak nottur.",
+        "Push bildirim yoktur; güncelleme bildirimi uygulama açıldığında yapılan yerel kontrolle best-effort çalışır."
+      ]
+    },
+    {
+      "versionName": "1.0.3",
+      "buildNumber": 4,
+      "channel": "stable",
+      "date": "2026-07-11",
+      "title": "V4 temel deneyim güncellemesi",
+      "highlights": [
+        "Odak Kampı adı Android, Web ve Flutter başlıklarında netleştirildi.",
+        "Canlı sayaç yüzeyleri, sade bildirim akışı ve grup ekranı hiyerarşisi V4 hazırlığına alındı.",
+        "Grup sohbeti ve ayar girişleri daha anlaşılır bir akışa taşındı."
+      ],
+      "fixes": [
+        "Gamification profili yokken başarılar kartının boş kalmaması için güvenli varsayılan davranış eklendi.",
+        "Sayaç ayarları gibi ana ekrandan yönetilen gereksiz ayar kopyaları sadeleştirildi."
+      ],
+      "notes": [
+        "Üretim Supabase migration'ları uygulanınca kalıcı seri/gamification verisi otomatik devreye girer."
+      ]
+    },
+    {
+      "versionName": "1.0.2",
+      "buildNumber": 3,
+      "channel": "stable",
+      "date": "2026-07-10",
+      "title": "V3 sosyal odak ve bildirim altyapısı",
+      "highlights": [
+        "Kalıcı sayaç bildirimi ve Android bildirim izni altyapısı eklendi.",
+        "Dürtme bildirimleri ve bildirim tercihleri ayarlara bağlandı.",
+        "Grup/presence ve canlı çalışma yüzeyleri daha güvenilir hale getirildi."
+      ],
+      "fixes": [
+        "Uygulama yeniden açıldığında aktif sayaç durumunun wall-clock süreyle toparlanması iyileştirildi.",
+        "Demo/offline akışlarda temel repository davranışları güçlendirildi."
+      ],
+      "notes": [
+        "Bildirimler Android izinlerine bağlıdır; izin verilmezse uygulama içi akış devam eder."
+      ]
+    },
+    {
+      "versionName": "1.0.1",
+      "buildNumber": 2,
+      "channel": "stable",
+      "date": "2026-06-27",
+      "title": "V2 odak odası ve ana sayfa iyileştirmeleri",
+      "highlights": [
+        "Ana sayfa kart düzeni ve çalışma odası deneyimi geliştirildi.",
+        "Odak/pomodoro sayaç davranışları daha okunur hale getirildi.",
+        "İstatistik ve grup hedefi yüzeyleri sonraki sürümlere zemin olacak şekilde toparlandı."
+      ],
+      "fixes": [
+        "Kart taşmaları ve temel responsive düzen sorunları azaltıldı.",
+        "Test edilebilirlik için bazı provider ve repository sınırları netleştirildi."
+      ],
+      "notes": [
+        "Bu sürüm sonraki widget, bildirim ve grup ekranı geliştirmelerinin temelini attı."
+      ]
+    },
+    {
+      "versionName": "1.0.0",
+      "buildNumber": 1,
+      "channel": "stable",
+      "date": "2026-06-21",
+      "title": "İlk Odak Kampı yayını",
+      "highlights": [
+        "Odak oturumu başlatma, durdurma ve temel çalışma takibi yayınlandı.",
+        "Profil, grup ve temel istatistik ekranları uygulamaya eklendi.",
+        "Supabase bağlı ve Supabase'siz demo kullanım için temel mimari kuruldu."
+      ],
+      "fixes": [],
+      "notes": [
+        "İlk sürüm; sürüm notları geçmişi WP-30 ile sonradan uygulama içine taşındı."
+      ]
+    },
+    {
+      "versionName": "1.0.0-beta",
+      "buildNumber": 1,
+      "channel": "beta",
+      "date": "2026-07-11",
+      "title": "İlk beta kanalı",
+      "highlights": [
+        "Stable ve beta release kanalları ayrıldı.",
+        "Beta APK adı ve GitHub prerelease akışı ayrı takip edilmeye başladı."
+      ],
+      "fixes": [
+        "Beta kullanıcılarının stable güncellemelerle karışmaması için kanal bilgisi eklendi."
+      ],
+      "notes": [
+        "Beta sürümler prerelease olarak yayınlanır ve test amaçlıdır."
+      ]
+    }
+  ]
+}

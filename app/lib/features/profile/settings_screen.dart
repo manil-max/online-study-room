@@ -10,6 +10,7 @@ import '../../data/providers/admin_providers.dart';
 import '../../data/providers/group_providers.dart';
 import '../admin/admin_screen.dart';
 import '../home/dashboard_providers.dart';
+import '../updater/release_notes_screen.dart';
 import 'appearance_screen.dart';
 import 'widgets/camp_animal_picker.dart';
 import 'widgets/report_issue_dialog.dart';
@@ -162,6 +163,28 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 icon: Icons.alarm_outlined,
                 title: 'Çalışma hatırlatıcıları',
                 subtitle: 'Planlanmış hatırlatıcılar sonraki sürümde',
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          _SettingsGroup(
+            icon: Icons.new_releases_outlined,
+            title: 'Sürüm ve güncellemeler',
+            subtitle: 'Yenilikler, geçmiş notlar ve güncelleme bilgileri',
+            initiallyExpanded: false,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.article_outlined),
+                title: const Text('Güncelleme notları'),
+                subtitle: const Text(
+                  'Geçmişten bugüne yayınlanan sürüm notlarını oku',
+                ),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const ReleaseNotesScreen(),
+                  ),
+                ),
               ),
             ],
           ),

@@ -58,9 +58,9 @@ class UpdateNotificationService {
     );
 
     await _plugin.show(
-      30030,
-      'Yeni güncelleme hazır',
-      '${info.versionName} yayınlandı. Yenilikleri görmek için aç.',
+      id: 30030,
+      title: 'Yeni güncelleme hazır',
+      body: '${info.versionName} yayınlandı. Yenilikleri görmek için aç.',
       notificationDetails: const NotificationDetails(android: details),
       payload: 'update:${info.versionCode}',
     );

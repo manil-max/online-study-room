@@ -1,10 +1,8 @@
 name: Release APK
 
-# İki kanal (WP-13):
-#   Stable:  git tag vN     && git push origin vN       -> "Odak Kampı"      (herkese)
-#   Beta:    git tag beta-vN && git push origin beta-vN  -> "Odak Kampı Beta" (prerelease)
-# Etiketteki 'v' sonrası sayı hem APK versionCode'u hem de uygulamanın güncelleme
-# kontrolünde kullandığı sürüm numarasıdır — ikisi asla şaşmaz.
+# Stable: git tag vN && git push origin vN
+# Beta:   git tag beta-vN && git push origin beta-vN
+# Tag sonundaki N hem APK versionCode hem de updater build numarasidir.
 on:
   push:
     tags:
@@ -12,7 +10,7 @@ on:
       - 'beta-v*'
 
 permissions:
-  contents: write   # Release oluşturup APK yükleyebilmek için.
+  contents: write
 
 jobs:
   build:
@@ -23,11 +21,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Kanal ve sürüm bilgisini çıkar
+      - name: Kanal ve surum bilgisini cikar
         id: meta
         run: |
           TAG="$GITHUB_REF_NAME"
-          # 'v' harfinden sonraki sayı: v4 -> 4, beta-v1 -> 1
           CODE="${TAG##*v}"
           echo "code=$CODE" >> "$GITHUB_OUTPUT"
           if [[ "$TAG" == beta* ]]; then
@@ -40,7 +37,6 @@ jobs:
             echo "flavor=stable" >> "$GITHUB_OUTPUT"
             echo "channel=stable" >> "$GITHUB_OUTPUT"
             echo "prerelease=false" >> "$GITHUB_OUTPUT"
-            # Stable asset adı sabit tutulur: eski kullanıcıların updater'ı bu adı arar.
             echo "src=app-stable-release.apk" >> "$GITHUB_OUTPUT"
             echo "asset=app-release.apk" >> "$GITHUB_OUTPUT"
           fi
@@ -54,10 +50,10 @@ jobs:
         with:
           channel: stable
 
-      - name: Keystore'u secret'tan çöz
+      - name: Keystore'u secrettan coz
         run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/key.jks
 
-      - name: key.properties oluştur
+      - name: key.properties olustur
         run: |
           cat > android/key.properties <<EOF
           storePassword=${{ secrets.STORE_PASSWORD }}
@@ -77,7 +73,7 @@ jobs:
             --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
             --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
 
-      - name: APK'yı adlandır + SHA-256 üret (in-app bütünlük doğrulaması)
+      - name: APK dosyasini adlandir ve SHA-256 uret
         working-directory: app/build/app/outputs/flutter-apk
         run: |
           if [ "${{ steps.meta.outputs.src }}" != "${{ steps.meta.outputs.asset }}" ]; then
@@ -85,11 +81,40 @@ jobs:
           fi
           sha256sum "${{ steps.meta.outputs.asset }}" > "${{ steps.meta.outputs.asset }}.sha256"
 
-      - name: GitHub Release'e APK + checksum yükle
+      - name: CHANGELOG bolumunu release body olarak hazirla
+        working-directory: ${{ github.workspace }}
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          tag = "${{ github.ref_name }}".lower()
+          changelog = Path("CHANGELOG.md")
+          output = Path("release_body.md")
+          if not changelog.exists():
+              output.write_text(f"# {tag}\n\nRelease notu CHANGELOG.md icinde bulunamadi.\n", encoding="utf-8")
+              raise SystemExit(0)
+
+          lines = changelog.read_text(encoding="utf-8").splitlines()
+          starts = [i for i, line in enumerate(lines) if line.startswith("## ")]
+          selected = None
+          for index, start in enumerate(starts):
+              heading = lines[start].lower()
+              if tag in heading:
+                  end = starts[index + 1] if index + 1 < len(starts) else len(lines)
+                  selected = "\n".join(lines[start:end]).strip()
+                  break
+
+          if selected is None:
+              selected = f"# {tag}\n\nBu tag icin CHANGELOG.md bolumu bulunamadi; release body'yi elle kontrol et."
+
+          output.write_text(selected + "\n", encoding="utf-8")
+          PY
+
+      - name: GitHub Release'e APK ve checksum yukle
         uses: softprops/action-gh-release@v2
         with:
           prerelease: ${{ steps.meta.outputs.prerelease }}
-          generate_release_notes: true
+          body_path: release_body.md
           files: |
             app/build/app/outputs/flutter-apk/${{ steps.meta.outputs.asset }}
             app/build/app/outputs/flutter-apk/${{ steps.meta.outputs.asset }}.sha256

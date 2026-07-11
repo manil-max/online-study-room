@@ -32,7 +32,7 @@ Future<void> maybeShowUpdateDialog(BuildContext context) async {
   await showDialog<void>(
     context: context,
     barrierDismissible: true,
-    builder: (_) => UpdaterDialog(info: info),
+    builder: (_) => UpdaterDialog(info: info!),
   );
 }
 
