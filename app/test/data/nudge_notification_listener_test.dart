@@ -30,7 +30,7 @@ Nudge _nudge(String id, {DateTime? readAt}) => Nudge(
       readAt: readAt,
     );
 
-Future<void> _tick() => Future.delayed(const Duration(milliseconds: 10), () => _);
+Future<void> _tick() => Future.delayed(const Duration(milliseconds: 10), () => null);
 
 void main() {
   const userId = 'u1';
@@ -52,7 +52,7 @@ void main() {
         receivedNudgesProvider(userId).overrideWith((ref) => nudges),
       ],
     );
-    container.listen(nudgeNotificationListenerProvider, (_, __) {});
+    container.listen(nudgeNotificationListenerProvider, (prev, next) {});
     await container.read(authStateProvider.future);
     await _tick();
     return (container, fake);

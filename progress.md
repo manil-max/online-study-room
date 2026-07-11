@@ -1,6 +1,6 @@
 # progress.md — İlerleme Takibi
 
-> Son güncelleme: 2026-07-11
+> Son güncelleme: 2026-07-12
 > Sistem: İş Paketi (WP) tabanlı. Planlama → `.agents/skills/planner/SKILL.md`, Uygulama → `.agents/skills/worker/SKILL.md`.
 
 ---
@@ -17,7 +17,7 @@
 - **Tema:** 5 hazır palet, koyu varsayılan, `AppTheme` palet-parametreli; WP-26 ile ek hazır palet + 3 custom slot planlandı
 - **Desktop:** WP-11 ilk EXE/build hattını açtı; WP-27/28 ile Windows'a özel masaüstü UX ve dağıtım planlandı
 - **Release:** Stable/Beta kanalı GitHub Releases ile çalışır; WP-29 ikon/branding, WP-30 sürüm notları ve güncelleme geçmişi için planlandı
-- **Son WP numarası:** 30 (WP-29/30 ikon ve sürüm notları sistemi için planlandı)
+- **Son WP numarası:** 36 (WP-31…36 V6 sonrası hesap, admin, profil, navigasyon ve bildirim güncellemeleri için planlandı)
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
   - Flutter: `C:\src\flutter` · Android SDK: `C:\Android\Sdk`
@@ -35,9 +35,9 @@
 
 ### Gemini Lane
 - **Sorumlu:** Gemini
-- **Durum:** [ ] Çalışıyor
-- **Aktif WP:** WP-24
-- **Kapsam:** Alarm ve çoklu timer modelleri, yerel depo ve arayüzler kodlanıyor.
+- **Durum:** [x] Boşta — WP-26 tamamlandı
+- **Aktif WP:** —
+- **Kapsam:** Yeni atama bekleniyor.
 
 ### Claude Lane
 - **Sorumlu:** Claude
@@ -59,10 +59,10 @@
 
 > Bu bölüm backlog'daki işlerin uygulanma sırasını ve dosya sahipliğini önden netleştirir. Aktif çalışmaya alınacak iş, buradan seçilip yukarıdaki "Aktif İş Paketleri" bölümüne taşınır.
 
-### V4 Hazırlık Notu
+### V6 Durum Notu
 - Görünen uygulama adı Android/Web/Flutter başlıklarında **Odak Kampı** olarak ayarlandı.
 - `pubspec.yaml` paket adı değiştirilmedi; import ve uygulama kimliği kırılmasın diye `online_study_room` teknik ad olarak kalır.
-- V4 ile birlikte WP-17 ve WP-18 tamamlandı: canlı sayaç yüzeyleri, widget önizlemeleri, sade bildirim akışı, grup ekranı hiyerarşisi ve sayaç ayarlarının kaldırılması artık teslim durumunda görünür.
+- V6 itibarıyla WP-17 ve WP-18 tamamlandı: canlı sayaç yüzeyleri, widget önizlemeleri, sade bildirim akışı, grup ekranı hiyerarşisi ve sayaç ayarlarının kaldırılması teslim durumunda görünür.
 - Sınıf ekranındaki sohbet girişi ayrı **Sohbet** ekranına taşındı; grup bilgileri ve yönetim **Ayarlar** girişinden açılır.
 - Gamification migration'ı üretim Supabase'e uygulanmadan da Başarılar kartı varsayılan profil ile görünür; `0017_gamification_profiles.sql` uygulanınca kalıcı seri koruma verisine otomatik döner.
 
@@ -75,7 +75,7 @@
   - Timer/alarm eylemleri uygulamayı açmaya zorlamadan bildirim/widget üzerinden çalışmalı.
   - Ağır ayarlar ana akışı boğmamalı; Apple/Google Clock sadeliği + Samsung/MultiTimer pratik gücü.
   - Sleep/snore gibi hassas özellikler ilk teslimde yok; ileride ancak açık izin, yerel veri ve medikal iddia olmadan.
-- **Çakışma kontrolü:** WP-23 `home_shell.dart` ve `focus_timer_screen.dart` nedeniyle WP-19 bittikten sonra başlamalı. WP-24 veri/notification temeliyle paralel başlayabilir ama `timer_notification_service.dart` değişirse WP-17/WP-19 alanıyla çakışma kontrolü yapılmalı.
+- **Çakışma kontrolü:** WP-23 `home_shell.dart` ve `focus_timer_screen.dart` nedeniyle WP-19 bittikten sonra başlamalı.
 
 ### WP-23: Clock Center + Landscape StandBy 🕰️
 - **Durum:** [x] Tamamlandı
@@ -108,7 +108,6 @@
 - **Model matrisi (limit dostu):** WP-23 | Claude Sonnet 5 high / GPT-5.6 Terra high / Gemini 3.5 Flash high
 - **Efor:** Orta-yüksek; çoğunluk UI/responsive, düşük DB riski.
 
-### WP-24: Alarm + Çoklu Timer Temeli ⏲️
 - **Durum:** [/] Devam Ediyor
 - **Backlog:** V5 Saat uygulaması yerini alma fazı
 - **Kapsam:** Google/Samsung Clock ve MultiTimer çizgisinde, çalışma uygulamasını bozmadan kişisel alarm ve çoklu timer altyapısını kur. İlk teslim yerel/offline çalışır; Supabase sync ve sleep tracking yok.
@@ -122,20 +121,73 @@
   - `app/lib/core/notifications/alarm_notification_service.dart` (yeni)
   - `app/lib/features/clock/alarms_screen.dart` (yeni)
   - `app/lib/features/clock/timers_screen.dart` (yeni)
-  - `app/test/data/alarm_repository_test.dart` (yeni)
-  - `app/test/features/alarms_screen_test.dart` (yeni)
+- **Adımlar:**
+  - [x] Veri modellerini (AlarmRule, TimerPreset) ve In-Memory Repoları oluştur (progress'i bozmamak için önce bellek).
+  - [x] `LocalAlarmRepository`'yi `SharedPreferences` ile bağla ve Riverpod providerlarını (liste stream/async) ayağa kaldır.
+- Sınıf ekranındaki sohbet girişi ayrı **Sohbet** ekranına taşındı; grup bilgileri ve yönetim **Ayarlar** girişinden açılır.
+- Gamification migration'ı üretim Supabase'e uygulanmadan da Başarılar kartı varsayılan profil ile görünür; `0017_gamification_profiles.sql` uygulanınca kalıcı seri koruma verisine otomatik döner.
+
+
+### V5 Araştırma Notu: Saat Uygulaması Yerini Alma ⏱️
+- **Kaynak özeti:** Apple Clock/StandBy, Google Clock, Samsung Clock ve popüler saat/timer uygulamaları incelendi.
+- **Ürün yönü:** Odak Kampı'nın çekirdeği çalışma/pomodoro olmaya devam eder; fakat kullanıcı isterse varsayılan Saat uygulamasını açmadan alarm, çoklu timer, kronometre, yatay masa/başucu saati ve dış yüzey kontrollerini buradan yönetebilmelidir.
+- **Tasarım ilkeleri:**
+  - Büyük, tek bakışta okunur zaman; yatay kullanım birinci sınıf davranış olmalı.
+  - Timer/alarm eylemleri uygulamayı açmaya zorlamadan bildirim/widget üzerinden çalışmalı.
+  - Ağır ayarlar ana akışı boğmamalı; Apple/Google Clock sadeliği + Samsung/MultiTimer pratik gücü.
+  - Sleep/snore gibi hassas özellikler ilk teslimde yok; ileride ancak açık izin, yerel veri ve medikal iddia olmadan.
+- **Çakışma kontrolü:** WP-23 `home_shell.dart` ve `focus_timer_screen.dart` nedeniyle WP-19 bittikten sonra başlamalı.
+
+### WP-23: Clock Center + Landscape StandBy 🕰️
+- **Durum:** [x] Tamamlandı
+- **Backlog:** V5 Saat uygulaması yerini alma fazı
+- **Kapsam:** Apple StandBy ve modern saat uygulamalarındaki “telefonu yatay koyunca büyük, sakin, okunur saat” deneyimini Odak Kampı'nın çalışma odağıyla birleştir. Bu WP alarm motoru yazmaz; görsel merkez, navigasyon ve landscape/focus deneyimini kurar.
+- **SAHİP dosyalar:**
+  - `app/lib/features/clock/clock_screen.dart` (yeni)
+  - `app/lib/features/clock/widgets/standby_clock_view.dart` (yeni)
+  - `app/lib/features/clock/widgets/clock_mode_tabs.dart` (yeni)
+  - `app/lib/features/clock/widgets/large_time_face.dart` (yeni)
+  - `app/lib/features/classroom/widgets/focus_timer_screen.dart`
+  - `app/lib/core/navigation/home_shell.dart`
+  - `app/test/features/clock_screen_test.dart` (yeni)
 - **DOKUNMA:**
-  - `app/lib/data/providers/study_providers.dart` (yalnız gerekiyorsa sonraki entegrasyon WP'si)
-  - `app/lib/core/notifications/timer_notification_service.dart` (mevcut çalışma sayacı bildirimi ayrı kalsın)
-  - `app/android/**` (exact alarm izinleri ayrı native WP'ye bırakılır)
+  - `app/android/**`
+  - `app/lib/data/providers/study_providers.dart`
+  - `app/lib/core/notifications/**`
   - `supabase/migrations/**`
 - **Adımlar:**
-  - [ ] Alarm modeli: saat/dakika, gün tekrarı, tek tarih, etiket, aktif/pasif, snooze süresi, kademeli ses seçeneği alanlarını tanımla.
-  - [ ] Çoklu timer modeli: etiket, renk/ikon, süre, kalan süre, running/paused/done, preset ve recent timer mantığını kur.
-  - [ ] Local repository + in-memory test double yaz; `SharedPreferences` veya mevcut prefs altyapısıyla cihazda kalıcı tut.
-  - [ ] Alarm ve Timers ekranlarını ekle: hızlı alarm, preset timer, aynı anda çoklu timer, pause/resume/reset/delete.
-  - [ ] `AlarmNotificationService` ile alarm/timer bitiş bildirimlerini çalışma sayacı bildiriminden ayrı kanal ve sade aksiyonlarla hazırla.
-  - [ ] Repository ve ekran testleri ekle; alarm verisinin Supabase'e gitmediğini ve normal çalışma oturumlarını etkilemediğini doğrula.
+  - [x] Yeni `ClockScreen` oluştur: sekmeler/segmentler `Saat`, `Kronometre`, `Timer`, `Odak` mantığında; mevcut `studyTimerProvider` yalnız okunur/kontrollü kullanılsın.
+  - [x] Landscape algılanınca `StandByClockView` göster: dev saat, tarih, seçili mod, çalışma/pomodoro kalan süre, düşük parlaklık/kırmızı gece tonu seçeneği.
+  - [x] `FocusTimerScreen`i StandBy tasarım ilkeleriyle büyüt: yatayda iki kolon, dokunması kolay başlat/durdur, analog/dijital saat yüzü geçişi.
+  - [x] `HomeShell`e “Saat” erişimi ekle veya mevcut Timer kartından tek dokunuşla Clock Center aç; WP-19 ile aynı anda yapılmayacak.
+  - [x] Widget testleriyle portrait/landscape taşma ve temel navigasyonu doğrula.
+- **Tuzaklar:**
+  - StandBy tasarımı iOS kopyası olmamalı; yalnız kullanım kalıbı alınır.
+  - Yatay moda geçişte global orientation lock yapma; kullanıcı telefonu çevirdiğinde responsive düzen değişsin.
+  - `HomeShell` WP-19 ile çakışırsa WP-23 bekler.
+- **Kabul:** Telefon yataydayken büyük saat/odak ekranı taşmadan çalışır; mevcut kronometre/geri sayım/pomodoro durumu doğru görünür; dikeyde normal Clock Center akışı bozulmaz.
+- **Model matrisi (limit dostu):** WP-23 | Claude Sonnet 5 high / GPT-5.6 Terra high / Gemini 3.5 Flash high
+- **Efor:** Orta-yüksek; çoğunluk UI/responsive, düşük DB riski.
+
+- **Durum:** [/] Devam Ediyor
+- **Backlog:** V5 Saat uygulaması yerini alma fazı
+- **Kapsam:** Google/Samsung Clock ve MultiTimer çizgisinde, çalışma uygulamasını bozmadan kişisel alarm ve çoklu timer altyapısını kur. İlk teslim yerel/offline çalışır; Supabase sync ve sleep tracking yok.
+- **SAHİP dosyalar:**
+  - `app/lib/data/models/alarm_rule.dart` (yeni)
+  - `app/lib/data/models/timer_preset.dart` (yeni)
+  - `app/lib/data/repositories/alarm_repository.dart` (yeni)
+  - `app/lib/data/repositories/in_memory/in_memory_alarm_repository.dart` (yeni)
+  - `app/lib/data/repositories/local/local_alarm_repository.dart` (yeni)
+  - `app/lib/data/providers/alarm_providers.dart` (yeni)
+  - `app/lib/core/notifications/alarm_notification_service.dart` (yeni)
+  - `app/lib/features/clock/alarms_screen.dart` (yeni)
+  - `app/lib/features/clock/timers_screen.dart` (yeni)
+- **Adımlar:**
+  - [x] Veri modellerini (AlarmRule, TimerPreset) ve In-Memory Repoları oluştur (progress'i bozmamak için önce bellek).
+  - [x] `LocalAlarmRepository`'yi `SharedPreferences` ile bağla ve Riverpod providerlarını (liste stream/async) ayağa kaldır.
+  - [x] Alarm ve Timers ekranlarını ekle: hızlı alarm, preset timer, aynı anda çoklu timer, pause/resume/reset/delete.
+  - [x] `AlarmNotificationService` ile alarm/timer bitiş bildirimlerini çalışma sayacı bildiriminden ayrı kanal ve sade aksiyonlarla hazırla.
+  - [x] Repository ve ekran testleri ekle; alarm verisinin Supabase'e gitmediğini ve normal çalışma oturumlarını etkilemediğini doğrula.
 - **Tuzaklar:**
   - Android exact alarm / arka plan garanti davranışı platform izni ister; bu WP'de native izin eklenmez, sonraki WP'de ele alınır.
   - Alarmy tarzı görevli alarm/anti-snooze ilk teslimde yok; önce güvenilir temel.
@@ -146,32 +198,6 @@
 
 
 ### WP-26: Tema Paleti Genişletme + 3 Custom Slot 🎨
-- **Durum:** [ ] Bekliyor
-- **Backlog:** Mevcut renk paletleri yeterince iyi hissettirmiyor; daha fazla hazır seçenek ve kullanıcıya özel renk seçimi
-- **Kapsam:** Görünüm ayarlarında daha profesyonel hazır paletler ekle ve 3 adet kullanıcı tanımlı custom palet slotu sun. Kullanıcı her slotta primary/accent ve gerekirse onPrimary/onAccent renklerini seçip kalıcı kaydedebilmeli. Supabase sync yok; cihazda kalıcı ayar yeterli.
-- **SAHİP dosyalar:**
-  - `app/lib/core/theme/app_theme.dart`
-  - `app/lib/core/theme/theme_settings.dart`
-  - `app/lib/features/profile/appearance_screen.dart`
-  - `app/lib/features/profile/widgets/custom_palette_editor.dart` (yeni)
-  - `app/test/core/theme_settings_test.dart` (yeni veya mevcutsa güncelle)
-  - `app/test/features/appearance_screen_test.dart` (yeni veya mevcutsa güncelle)
-- **DOKUNMA:**
-  - `app/lib/features/classroom/**`
-  - `app/lib/features/home/**`
-  - `app/lib/data/providers/study_providers.dart`
-  - `app/android/**`
-  - `supabase/migrations/**`
-- **Adımlar:**
-  - [ ] Hazır palet sayısını artır: mevcut 5 palete ek olarak en az 6 yeni dengeli seçenek ekle (örn. Slate Mint, Rose Noir, Cyber Blue, Forest, Cream Coffee, Mono Amber). İsimler Türkçe ve kullanıcı dostu olsun.
-  - [ ] `AppPalette` modelini custom paletleri de temsil edecek şekilde genişlet; eski `theme_palette` id'leri bozulmadan geriye uyumlu kalsın.
-  - [ ] `ThemeSettingsNotifier` içinde 3 custom slotu `SharedPreferences` ile sakla (`custom_palette_1/2/3` gibi); geçersiz renk/eksik slot durumunda güvenli varsayılana düş.
-  - [ ] Görünüm ekranında hazır paletleri daha iyi önizleme kartlarıyla göster; custom slotlarda “Düzenle / Uygula / Sıfırla” akışı ekle.
-  - [ ] Basit color picker UI kur: hex girişi + renk önizleme + önerilen kontrast/on renk otomatik seçimi. Ağır paket ekleme gerekiyorsa önce mevcut Flutter bileşenleriyle çöz.
-  - [ ] Kontrast tuzağına karşı `onPrimary/onAccent` için siyah/beyaz otomatik seçim veya kullanıcı override'ı sağla.
-  - [ ] Tema ayarı testleri: eski palet id'si çalışır, custom slot kaydedilir/yüklenir, bozuk hex varsayılana döner, AppearanceScreen custom slotları render eder.
-- **Tuzaklar:**
-  - Kullanıcı okunamaz renk seçerse buton/text kontrastı bozulabilir; otomatik `on` renk hesaplaması şart.
   - Mevcut palet id'leri (`navy`, `purple`, `emerald`, `sunset`, `ocean`) değişmemeli; eski kullanıcı ayarı kırılmasın.
   - Custom paletler yerel cihaz ayarıdır; hesaplar arası sync bu WP'nin dışında.
   - `appearance_screen.dart` WP-19 ayarlar entegrasyonu ile aynı dosyaya doğrudan çakışmaz ama aynı anda çalışan ajan varsa status kontrolü yapılmalı.
@@ -252,6 +278,58 @@
 - **Kabul:** Windows release artifact üretim yolu belgelenir ve mümkünse CI/VS'li ortamda doğrulanır; EXE adı/ikon/pencere davranışı düzgünleşir; mobil/Android build etkilenmez.
 - **Model matrisi (limit dostu):** WP-28 | Claude Sonnet 5 medium / GPT-5.6 Terra medium / Gemini 3.5 Flash medium
 - **Efor:** Orta-yüksek; dağıtım/CI/desktop API riski var.
+
+## 🚀 V6 Sonrası Planlanan Yeni İş Paketleri
+
+> WP-20, WP-21 ve WP-22 artık tamamlandı. Aşağıdaki paketler WP-28 sonrasında konuşulan yeni yol haritasıdır.
+
+### WP-31: Hesabımı Yönet Merkezi ve Çalışan Şifre Sıfırlama 🔐
+- **Durum:** [ ] Bekliyor
+- **Kapsam:** Ayarlar'da bağlı e-posta, e-posta değiştirme, güvenli çıkış ve uçtan uca çalışan şifre sıfırlama. Reset bağlantısı uygulamaya döner, recovery oturumunda kullanıcı yeni şifresini belirler.
+- **SAHİP dosyalar:** `features/profile/settings_screen.dart`, yeni hesap/recovery ekranları, `auth_repository` çift implementasyonu, `main.dart`, gerekli Android deep-link ayarları ve testler.
+- **Kabul:** Reset e-postası → uygulamaya dönüş → yeni şifre → yeniden giriş gerçek kullanıcı smoke testiyle doğrulanır.
+- **Model seviyesi:** Yüksek — GPT-5.6 Terra high / Claude Sonnet 5 high / Gemini 3.1 Pro high
+
+### WP-32: Geri Bildirim Ekran Görüntüsü Eki 📎
+- **Durum:** [ ] Bekliyor
+- **Kapsam:** Hata/öneri formuna tek JPEG/PNG/WebP görsel ekleme; private Storage bucket, 5 MB sınırı ve admin önizlemesi.
+- **SAHİP dosyalar:** `0019_feedback_attachments.sql`, feedback model/repository çiftleri, rapor dialogu, admin ekranı ve testler.
+- **Kabul:** Kullanıcı yalnız kendi ekini, süper-admin yalnız ilgili ticket ekini görebilir; eski eksiz ticket'lar çalışmaya devam eder.
+- **Model seviyesi:** Yüksek — GPT-5.6 Terra high / Claude Sonnet 5 high / Gemini 3.1 Pro high
+
+### WP-33: Süper-Admin Güvenli İşlem Servisi 🛡️
+- **Durum:** [ ] Bekliyor — `0019` sonrası `0020` migration uygulanır.
+- **Kapsam:** Edge Function üzerinden kullanıcı listesi, reset e-postası, askıya alma/açma, kontrollü soft-delete ve değiştirilemez denetim kaydı. `service_role` yalnız sunucu secret ortamında kalır.
+- **SAHİP dosyalar:** `0020_super_admin_operations.sql`, yeni `supabase/functions/admin-user-actions/**` ve sunucu test/runbook dosyaları.
+- **Kabul:** Yetkisiz çağrı engellenir; tüm kritik işlemler gerekçe/audit üretir; admin şifreyi görmez veya doğrudan belirlemez.
+- **Model seviyesi:** Yüksek — GPT-5.6 Terra high / Claude Sonnet 5 high / Gemini 3.1 Pro high
+
+### WP-34: Süper-Admin Paneli, Grup Moderasyonu ve Duyurular 🧭
+- **Durum:** [ ] Bekliyor — WP-33 sonrası `0021` migration uygulanır.
+- **Kapsam:** Yönetim ekranında Kullanıcılar, Gruplar, Raporlar, Duyurular ve Denetim sekmeleri; hedefli uygulama içi duyuru, grup moderasyonu ve rapor iç notları.
+- **SAHİP dosyalar:** `0021_admin_operations.sql`, `admin-operations` Edge Function, admin model/repository/provider/UI/test dosyaları.
+- **Kabul:** Kritik işlemler çift onay + gerekçe + audit olmadan çalışmaz; normal kullanıcı yalnız kendi duyurusunu/raporunu görür.
+- **Model seviyesi:** Yüksek — GPT-5.6 Terra high / Claude Sonnet 5 high / Gemini 3.1 Pro high
+
+### WP-35: Sosyal Profil 2.0 + Başarı Yolculuğu 🏆
+- **Durum:** [ ] Bekliyor — `0022` migration, WP-34 sonrasında uygulanır.
+- **Kapsam:** 60+ aşamalı çalışma/odak/sosyal/eğlenceli başarı; XP, taç rütbeleri, seçilebilir 3 rozet, seri alev efekti ve grup üyesine dokununca açılan sosyal profil vitrini.
+- **SAHİP dosyalar:** `0022_social_profile_progression.sql`, gamification model/repository/provider dosyaları, profil/başarı/üye profili ekranları, grup/leaderboard/kamp ateşi yüzeyleri ve testler.
+- **Kabul:** Başarılar 3+ kademe ve ilerleme gösterir; XP taç seviyesine dönüşür; ortak gruptaki üyeler birbirlerinin izinli profil vitrini/rozet/seri bilgisini görür.
+- **Model seviyesi:** Yüksek — GPT-5.6 Terra high / Claude Sonnet 5 high / Gemini 3.1 Pro high
+
+### WP-36: Beş Sekmeli Bilgi Mimarisi + Bildirim Merkezi 🔔
+- **Durum:** [ ] Bekliyor — WP-23, WP-24 ve WP-34 sonrası `0023` migration uygulanır.
+- **Kapsam:** Ana Sayfa / Saat / Gruplar / İstatistikler / Profil yapısı; Ana Sayfa'nın yalnız günlük kişisel alan kalması; Grup ve İstatistik ekranlarının kendi verilerini eksiksiz sunması; Ayarlar'daki Ana Sayfa grubunun kaldırılması; hatırlatıcı, alarm/timer, dürtme, duyuru, güncelleme ve sessiz saatleri tek Bildirim Merkezi'nde toplama.
+- **SAHİP dosyalar:** `0023_notification_center.sql`, bildirim/hatırlatıcı yerel repository-service-provider'ları, Ayarlar, Grup, İstatistik ekranları ve testler.
+- **Kabul:** Beş alan net biçimde ayrışır; bildirim türleri tek yerden yönetilir; izin/cihaz sınırları açıkça gösterilir.
+- **Model seviyesi:** Yüksek — GPT-5.6 Terra high / Claude Sonnet 5 high / Gemini 3.1 Pro high
+
+---
+
+## ✅ Tamamlanan İş Paketleri
+
+> Aşağıdaki kartlar yalnız teslim edilmiş/bitmiş WP'leri gösterir. Yeni iş seçimi için üstteki **Plan Kuyruğu** ve **V6 Sonrası Planlanan Yeni İş Paketleri** bölümlerine bakılır.
 
 
 

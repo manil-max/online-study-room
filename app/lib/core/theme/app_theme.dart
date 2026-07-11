@@ -18,6 +18,28 @@ class AppPalette {
   final Color onPrimary;
   final Color accent;
   final Color onAccent;
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'name': name,
+      'primary': primary.toARGB32(),
+      'onPrimary': onPrimary.toARGB32(),
+      'accent': accent.toARGB32(),
+      'onAccent': onAccent.toARGB32(),
+    };
+  }
+
+  factory AppPalette.fromMap(Map<String, dynamic> map) {
+    return AppPalette(
+      id: map['id'] as String,
+      name: map['name'] as String,
+      primary: Color(map['primary'] as int),
+      onPrimary: Color(map['onPrimary'] as int),
+      accent: Color(map['accent'] as int),
+      onAccent: Color(map['onAccent'] as int),
+    );
+  }
 }
 
 /// Hazır paletler (ilk: kardeşin tasarım referansı — lacivert/mavi).
@@ -61,6 +83,54 @@ const List<AppPalette> kAppPalettes = [
     onPrimary: Color(0xFF04161A),
     accent: Color(0xFF6366F1),
     onAccent: Color(0xFFF1F2FF),
+  ),
+  AppPalette(
+    id: 'slate_mint',
+    name: 'Slate Mint',
+    primary: Color(0xFF94A3B8),
+    onPrimary: Color(0xFF0F172A),
+    accent: Color(0xFF34D399),
+    onAccent: Color(0xFF022C22),
+  ),
+  AppPalette(
+    id: 'rose_noir',
+    name: 'Rose Noir',
+    primary: Color(0xFFF43F5E),
+    onPrimary: Color(0xFF20030A),
+    accent: Color(0xFF9CA3AF),
+    onAccent: Color(0xFF111827),
+  ),
+  AppPalette(
+    id: 'cyber_blue',
+    name: 'Cyber Blue',
+    primary: Color(0xFF00E5FF),
+    onPrimary: Color(0xFF001F24),
+    accent: Color(0xFFFF007F),
+    onAccent: Color(0xFF240011),
+  ),
+  AppPalette(
+    id: 'forest',
+    name: 'Orman',
+    primary: Color(0xFF22C55E),
+    onPrimary: Color(0xFF021707),
+    accent: Color(0xFFEAB308),
+    onAccent: Color(0xFF1C1401),
+  ),
+  AppPalette(
+    id: 'cream_coffee',
+    name: 'Krem Kahve',
+    primary: Color(0xFFD4A373),
+    onPrimary: Color(0xFF2A1C11),
+    accent: Color(0xFFFAEDCD),
+    onAccent: Color(0xFF3A311D),
+  ),
+  AppPalette(
+    id: 'mono_amber',
+    name: 'Mono Amber',
+    primary: Color(0xFFF59E0B),
+    onPrimary: Color(0xFF241400),
+    accent: Color(0xFFFCD34D),
+    onAccent: Color(0xFF241C04),
   ),
 ];
 
