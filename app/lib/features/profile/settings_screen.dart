@@ -2,14 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/animals/camp_animal.dart';
-import '../../core/notifications/notification_preferences.dart';
-import '../../core/notifications/nudge_notification_service.dart';
 import '../../core/widgets/safe_screen_padding.dart';
 import '../../data/providers/auth_providers.dart';
 import '../../data/providers/admin_providers.dart';
 import '../../data/providers/group_providers.dart';
 import '../admin/admin_screen.dart';
 import '../home/dashboard_providers.dart';
+import '../notifications/notification_center_screen.dart';
 import '../updater/release_notes_screen.dart';
 import 'account_settings_screen.dart';
 import 'achievements_screen.dart';
@@ -58,7 +57,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final showTimerInClass = ref.watch(classroomShowTimerProvider);
-    final notificationPrefs = ref.watch(notificationPreferencesProvider);
     final profile = ref.watch(authStateProvider).value;
     final isAdmin = ref.watch(adminIsSuperAdminProvider).value ?? false;
     final animal = profile == null
@@ -140,9 +138,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           const SizedBox(height: 10),
           _SettingsGroup(
-            icon: Icons.dashboard_customize_outlined,
-            title: 'Ana Sayfa',
-            subtitle: 'Kart görünürlüğü ve düzenleme davranışı',
+            icon: Icons.groups_outlined,
+            title: 'Gruplar',
+            subtitle: 'Grup ekranı davranışı',
+            initiallyExpanded: false,
             children: [
               SwitchListTile(
                 secondary: const Icon(Icons.timer_outlined),
@@ -151,47 +150,26 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 value: showTimerInClass,
                 onChanged: ref.read(classroomShowTimerProvider.notifier).set,
               ),
-              const Divider(height: 1),
-              const ListTile(
-                leading: Icon(Icons.restart_alt),
-                title: Text('Ana Sayfa düzenini sıfırlama'),
-                subtitle: Text(
-                  'Kart düzenleme modundaki Sıfırla butonundan yapılır.',
-                ),
-              ),
             ],
           ),
-
           const SizedBox(height: 10),
           _SettingsGroup(
             icon: Icons.notifications_outlined,
-            title: 'Bildirimler',
-            subtitle: 'Dürtme ve hatırlatma tercihleri',
-            initiallyExpanded: false,
+            title: 'Bildirim Merkezi',
+            subtitle: 'Dürtme, hatırlatıcı, duyuru ve sessiz saatler',
             children: [
-              SwitchListTile(
-                secondary: const Icon(Icons.notifications_active_outlined),
-                title: const Text('Dürtme bildirimleri'),
+              ListTile(
+                leading: const Icon(Icons.notifications_active_outlined),
+                title: const Text('Bildirim Merkezi’ni aç'),
                 subtitle: const Text(
-                  'Sınıf arkadaşların seni dürttüğünde bildir.',
+                  'Tüm bildirim türlerini ve sessiz saatleri tek yerden yönet',
                 ),
-                value: notificationPrefs.nudgeNotificationsEnabled,
-                onChanged: (value) async {
-                  if (value) {
-                    await ref
-                        .read(nudgeNotificationServiceProvider)
-                        .requestPermissionIfNeeded();
-                  }
-                  await ref
-                      .read(notificationPreferencesProvider.notifier)
-                      .setNudgeNotificationsEnabled(value);
-                },
-              ),
-              const Divider(height: 1),
-              const _DisabledTile(
-                icon: Icons.alarm_outlined,
-                title: 'Çalışma hatırlatıcıları',
-                subtitle: 'Planlanmış hatırlatıcılar sonraki sürümde',
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const NotificationCenterScreen(),
+                  ),
+                ),
               ),
             ],
           ),
@@ -292,32 +270,6 @@ class _SettingsGroup extends StatelessWidget {
         title: Text(title),
         subtitle: Text(subtitle),
         children: children,
-      ),
-    );
-  }
-}
-
-class _DisabledTile extends StatelessWidget {
-  const _DisabledTile({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      enabled: false,
-      leading: Icon(icon),
-      title: Text(title),
-      subtitle: Text(subtitle),
-      trailing: const Chip(
-        visualDensity: VisualDensity.compact,
-        label: Text('Yakında'),
       ),
     );
   }

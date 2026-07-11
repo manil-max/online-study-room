@@ -47,10 +47,14 @@ final nudgeNotificationListenerProvider = Provider<void>((ref) {
       return;
     }
 
+    // Sessiz saatlerde bildirim gösterme; yine de "bildirildi" olarak işaretle
+    // ki sessiz saat bitince eski dürtmeler topluca patlamasın (§WP-36).
+    final quiet = preferences.isWithinQuietHours(DateTime.now());
     var changed = false;
     for (final nudge in unread) {
       if (!notified.add(nudge.id)) continue; // zaten bildirildi
       changed = true;
+      if (quiet) continue;
       unawaited(ref.read(nudgeNotificationServiceProvider).showNudge(nudge));
     }
     if (changed) {

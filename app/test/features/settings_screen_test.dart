@@ -53,8 +53,11 @@ void main() {
 
     expect(find.text('Görünüm'), findsOneWidget);
     expect(find.text('Kamp ateşi'), findsOneWidget);
-    expect(find.text('Ana Sayfa'), findsOneWidget);
-    expect(find.text('Bildirimler'), findsOneWidget);
+    // WP-36: "Ana Sayfa" grubu kaldırıldı; sayaç anahtarı "Gruplar" grubuna taşındı.
+    expect(find.text('Ana Sayfa'), findsNothing);
+    expect(find.text('Gruplar'), findsOneWidget);
+    // WP-36: "Bildirimler" grubu tek girişli "Bildirim Merkezi" oldu.
+    expect(find.text('Bildirim Merkezi'), findsOneWidget);
     expect(find.text('Cihaz Entegrasyonları'), findsOneWidget);
     expect(find.text('Destek'), findsOneWidget);
     expect(find.text('Geri bildirim gönder'), findsOneWidget);

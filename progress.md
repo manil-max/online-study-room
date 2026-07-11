@@ -10,7 +10,7 @@
 - **Framework:** Flutter ^3.12 · Riverpod 3.3 · Supabase 2.15 · fl_chart
 - **Uygulama kökü:** `app/` — Flutter komutları yalnız burada çalışır.
 - **Repo katmanı çift:** Her arayüz `supabase/` ve `in_memory/` repository'leriyle desteklenir.
-- **Migration'lar:** `supabase/migrations/` — yerelde `0001–0022` vardır. Canlı şemada `0001–0019` etkileri doğrulandı; `0020–0022` SQL Editor'da sırasıyla uygulanır. `0022` tekrar-çalıştırılabilir olarak düzeltildi.
+- **Migration'lar:** `supabase/migrations/` — yerelde `0001–0023` vardır. Canlı şemada `0001–0019` etkileri doğrulandı; `0020–0023` SQL Editor'da sırasıyla uygulanır. `0022` ve `0023` tekrar-çalıştırılabilir (idempotent).
 - **Gün sınırı:** `Europe/Istanbul`
 - **RLS helper'ları:** `is_group_member(gid)`, `can_see_user_sessions(target)`, `is_group_admin(gid)`, `is_super_admin()`
 - **Dashboard:** 6 sütunlu 2D matris, 19 kart türü, `grid_reflow.dart` motoru.
@@ -59,7 +59,6 @@
 |---|---|---|---|
 | WP-27 | Bekliyor | Windows desktop shell ve responsive layout | — |
 | WP-28 | Bekliyor | Windows dağıtım, installer ve desktop polish | WP-27 |
-| WP-36 | Bekliyor | Beş sekmeli bilgi mimarisi, dolu Gruplar/İstatistikler ve Bildirim Merkezi | WP-34 |
 
 ### WP-27: Windows Desktop Shell ve Responsive Layout
 
@@ -70,13 +69,6 @@
 
 - **Kapsam:** Installer, dağıtım akışı, güncelleme/çökme mesajları ve masaüstü son kalite kontrolleri.
 - **Kabul:** Windows kullanıcıları kurulabilir, güncellenebilir ve desteklenebilir bir paket alır.
-
-
-### WP-36: Beş Sekmeli Bilgi Mimarisi + Bildirim Merkezi
-
-- **Kapsam:** Ana Sayfa / Saat / Gruplar / İstatistikler / Profil; Ana Sayfa'nın yalnız günlük kişisel alan kalması; Ayarlar'daki Ana Sayfa grubunun kaldırılması; hatırlatıcı, alarm/timer, dürtme, duyuru, güncelleme ve sessiz saatleri tek Bildirim Merkezi'nde toplama.
-- **Veri:** `0023_notification_center.sql` planlanır; yalnız WP başladığında oluşturulur.
-- **Kabul:** Beş alan net ayrışır, Gruplar ve İstatistikler boş kalmaz; bildirim türleri tek yerden yönetilir ve cihaz/izin sınırları açıkça görünür.
 
 ---
 
@@ -119,8 +111,11 @@
 | WP-33 | Güvenli süper-admin kullanıcı işlemleri |
 | WP-34 | Süper-Admin Paneli, Grup Moderasyonu ve Duyurular |
 | WP-35 | Sosyal Profil 2.0 + Başarı Yolculuğu |
+| WP-36 | Beş Sekmeli IA Sadeleştirmesi + Bildirim Merkezi |
 
 ### Son Teslim Notları
+
+- **WP-36:** Ayarlar'daki "Ana Sayfa" grubu kaldırıldı (sayaç anahtarı "Gruplar" grubuna taşındı); dürtme, hatırlatıcı, alarm/timer, duyuru, güncelleme ve sessiz saatleri tek yerden yöneten `NotificationCenterScreen` eklendi. `0023_notification_center.sql` (study_reminders + announcement_reads, RLS owner-only), çift `NotificationRepository`, yerel hatırlatıcı planlama servisi ve sessiz-saat mantığı; dürtme dinleyicisi ve güncelleme bildirimi tercihlere saygı gösterir. Gruplar/İstatistik sekmeleri zaten dolu doğrulandı.
 
 - **WP-26:** Hazır paletler, kalıcı tema ayarları ve üç özel renk slotu eklendi (`bd5a906`).
 - **WP-24:** Yerel alarm, preset, etiketli çoklu timer, pause/resume/reset/delete ve alarm bildirim kanalı eklendi (`c47042d`).

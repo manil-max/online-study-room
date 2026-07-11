@@ -3,6 +3,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../features/updater/updater_service.dart';
+import 'notification_preferences.dart';
 
 /// Yeni sürüm bulunduğunda gösterilen yerel/best-effort bildirim.
 ///
@@ -35,6 +36,10 @@ class UpdateNotificationService {
     if (!_isAndroid) return;
 
     final prefs = await SharedPreferences.getInstance();
+    // Bildirim Merkezi'ndeki "Güncelleme bildirimleri" tercihine saygı göster.
+    if (!(prefs.getBool(NotificationPreferencesNotifier.kUpdates) ?? true)) {
+      return;
+    }
     if (prefs.getInt(_kLastNotifiedVersionCode) == info.versionCode) return;
 
     await initialize();

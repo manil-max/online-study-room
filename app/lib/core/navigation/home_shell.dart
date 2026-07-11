@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/providers/device_integration_listener.dart';
+import '../../data/providers/notification_providers.dart';
 import '../../data/providers/nudge_notification_listener.dart';
 import '../../data/providers/presence_lifecycle.dart';
 import '../../features/classroom/classroom_screen.dart';
@@ -47,6 +48,8 @@ class HomeShell extends ConsumerWidget {
     ref.watch(presenceLifecycleProvider);
     ref.watch(nudgeNotificationListenerProvider);
     ref.watch(deviceIntegrationListenerProvider);
+    // Hatırlatıcı planlamasını tercih/veri değiştikçe senkron tut (§WP-36).
+    ref.watch(reminderSyncListenerProvider);
 
     return Scaffold(
       body: IndexedStack(index: index, children: _screens),
