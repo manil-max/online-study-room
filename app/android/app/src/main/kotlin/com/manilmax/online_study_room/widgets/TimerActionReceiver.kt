@@ -3,7 +3,8 @@ package com.manilmax.online_study_room.widgets
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import es.antonborri.home_widget.HomeWidgetBackgroundReceiver
+import android.net.Uri
+import es.antonborri.home_widget.HomeWidgetBackgroundIntent
 
 /**
  * Widget veya bildirim üzerinden gelen zamanlayıcı (sayaç) başlatma/durdurma
@@ -19,11 +20,13 @@ class TimerActionReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == ACTION_TOGGLE_TIMER) {
-            val backgroundIntent = Intent(context, HomeWidgetBackgroundReceiver::class.java).apply {
-                data = android.net.Uri.parse("homeWidget://timer/toggle")
-                action = HomeWidgetBackgroundReceiver.ACTION_BACKGROUND
-            }
-            context.sendBroadcast(backgroundIntent)
+            // home_widget 0.9.3: arka plan Dart callback'ini tetiklemenin resmi
+            // yolu HomeWidgetBackgroundIntent.getBroadcast(...). Bu, dogru action
+            // ("...action.BACKGROUND") ve hedef (HomeWidgetBackgroundReceiver) ile
+            // hazir bir PendingIntent dondurur; biz sadece send() ederiz.
+            HomeWidgetBackgroundIntent
+                .getBroadcast(context, Uri.parse("homeWidget://timer/toggle"))
+                .send()
         }
     }
 }
