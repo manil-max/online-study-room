@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/config/supabase_config.dart';
 import '../../core/stats/gamification.dart';
 import '../../core/stats/study_stats.dart';
+import '../models/achievement.dart';
 import '../models/gamification_profile.dart';
 import '../models/study_session.dart';
 import '../repositories/gamification_repository.dart';
@@ -23,8 +24,15 @@ final gamificationRepositoryProvider = Provider<GamificationRepository>((ref) {
 
 final gamificationProfileProvider =
     StreamProvider.family<GamificationProfile, String>((ref, userId) {
-      return ref.watch(gamificationRepositoryProvider).watchProfile(userId);
-    });
+  final repo = ref.watch(gamificationRepositoryProvider);
+  return repo.watchProfile(userId);
+});
+
+final userAchievementsProvider =
+    StreamProvider.family<List<UserAchievement>, String>((ref, userId) {
+  final repo = ref.watch(gamificationRepositoryProvider);
+  return repo.watchUserAchievements(userId);
+});
 
 class GamificationSummary {
   const GamificationSummary({

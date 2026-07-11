@@ -12,6 +12,7 @@ import '../admin/admin_screen.dart';
 import '../home/dashboard_providers.dart';
 import '../updater/release_notes_screen.dart';
 import 'account_settings_screen.dart';
+import 'achievements_screen.dart';
 import 'appearance_screen.dart';
 import 'widgets/camp_animal_picker.dart';
 import 'widgets/report_issue_dialog.dart';
@@ -78,9 +79,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             subtitle: 'E-posta, şifre ve güvenli çıkış',
             children: [
               ListTile(
-                leading: const Icon(Icons.manage_accounts_outlined),
+                leading: const Icon(Icons.emoji_events),
+                title: const Text('Başarı Yolculuğum 🏆'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () {
+                  Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => const AchievementsScreen(),
+                  ));
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.manage_accounts),
                 title: const Text('Hesabımı Yönet'),
-                subtitle: const Text('Güvenlik ve profil ayarları'),
+                subtitle: const Text('Güvenlik ve hesap ayarları'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const AccountSettingsScreen()),

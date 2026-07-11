@@ -73,12 +73,6 @@
 - **Kabul:** Windows kullanıcıları kurulabilir, güncellenebilir ve desteklenebilir bir paket alır.
 
 
-### WP-35: Sosyal Profil 2.0 + Başarı Yolculuğu 🏆
-- **Durum:** [~] Uygulanıyor — Gemini
-- **Kapsam:** 60+ aşamalı çalışma/odak/sosyal/eğlenceli başarı; XP, taç rütbeleri, seçilebilir 3 rozet, seri alev efekti ve grup üyesine dokununca açılan sosyal profil vitrini.
-- **Veri:** `0022_social_profile_progression.sql` planlanır; yalnız WP başladığında oluşturulur.
-- **Kabul:** Başarılar kademe ve ilerleme gösterir; XP taç seviyesine dönüşür; ortak gruptaki üyeler izinli profil, rozet ve seri bilgisini görür.
-
 ### WP-36: Beş Sekmeli Bilgi Mimarisi + Bildirim Merkezi
 
 - **Kapsam:** Ana Sayfa / Saat / Gruplar / İstatistikler / Profil; Ana Sayfa'nın yalnız günlük kişisel alan kalması; Ayarlar'daki Ana Sayfa grubunun kaldırılması; hatırlatıcı, alarm/timer, dürtme, duyuru, güncelleme ve sessiz saatleri tek Bildirim Merkezi'nde toplama.
@@ -125,6 +119,7 @@
 | WP-32 | Geri bildirim ekran görüntüsü eki |
 | WP-33 | Güvenli süper-admin kullanıcı işlemleri |
 | WP-34 | Süper-Admin Paneli, Grup Moderasyonu ve Duyurular |
+| WP-35 | Sosyal Profil 2.0 + Başarı Yolculuğu |
 
 ### Son Teslim Notları
 
@@ -135,3 +130,4 @@
 - **WP-32:** `0019_feedback_attachments.sql`, görsel seçimi ve admin önizlemesi eklendi.
 - **WP-33:** Süper-admin Edge function ve RLS logları oluşturuldu, arayüz testleri düzenlendi.
 - **WP-34:** Süper-Admin çoklu sekme (Dashboard, Users, Groups, Reports, Announcements, Audit Log), duyurular ve grup moderasyonu eklendi.
+- **WP-35:** Sosyal Profil vitrini (SocialProfileDialog), Başarı Yolculuğu sayfası ve 60+ kademeli başarı kural motoru eklendi.

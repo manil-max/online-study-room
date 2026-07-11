@@ -12,6 +12,7 @@ import '../../../data/models/profile.dart';
 import '../../../data/providers/group_providers.dart';
 import '../../../data/providers/presence_providers.dart';
 import '../../../data/providers/study_providers.dart';
+import '../../profile/widgets/social_profile_dialog.dart';
 import 'camp_critter.dart';
 
 double _lerp(double a, double b, double t) => a + (b - a) * t;
@@ -246,13 +247,16 @@ class _SceneLayoutState extends State<_SceneLayout>
               curve: Curves.easeOutCubic,
               left: p.x - _CritterBody.boxFor(p.scale) / 2,
               top: p.y - _CritterBody.boxFor(p.scale) * _CritterBody.anchor,
-              child: _CritterBody(
-                camper: p.camper,
-                depth: p.depth,
-                scale: p.scale,
-                back: p.back,
-                phase: p.phase,
-                controller: _controller,
+              child: GestureDetector(
+                onTap: () => SocialProfileDialog.show(context, p.camper.member),
+                child: _CritterBody(
+                  camper: p.camper,
+                  depth: p.depth,
+                  scale: p.scale,
+                  back: p.back,
+                  phase: p.phase,
+                  controller: _controller,
+                ),
               ),
             );
 

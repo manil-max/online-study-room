@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../models/achievement.dart';
 import '../../models/gamification_profile.dart';
 import '../gamification_repository.dart';
 
@@ -28,5 +29,30 @@ class SupabaseGamificationRepository implements GamificationRepository {
       'streak_freezes': value.clamp(0, 99),
       'updated_at': now,
     });
+  }
+
+  @override
+  Future<void> updateProfile(GamificationProfile profile) async {
+    final now = DateTime.now().toUtc().toIso8601String();
+    final map = profile.copyWith(updatedAt: DateTime.parse(now)).toMap();
+    await _client.from('gamification_profiles').upsert(map);
+  }
+
+  @override
+  Stream<List<UserAchievement>> watchUserAchievements(String userId) {
+    return _client
+        .from('user_achievements')
+        .stream(primaryKey: ['id'])
+        .eq('user_id', userId)
+        .map((rows) => rows.map((e) => UserAchievement.fromMap(e)).toList());
+  }
+
+  @override
+  Future<void> updateUserAchievements(List<UserAchievement> achievements) async {
+    if (achievements.isEmpty) return;
+    final now = DateTime.now().toUtc().toIso8601String();
+    
+    final maps = achievements.map((e) => e.copyWith(updatedAt: DateTime.parse(now)).toMap()).toList();
+    await _client.from('user_achievements').upsert(maps);
   }
 }

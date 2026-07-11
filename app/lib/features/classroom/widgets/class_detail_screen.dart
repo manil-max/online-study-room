@@ -12,6 +12,7 @@ import '../../../data/providers/group_providers.dart';
 import '../../../data/providers/nudge_providers.dart';
 import '../../../data/repositories/group_repository.dart';
 import '../../../data/repositories/nudge_repository.dart';
+import '../../profile/widgets/social_profile_dialog.dart';
 import 'class_chat_card.dart';
 
 /// Bir sınıfın bilgi + ayarları (§3.8). Üst kısım bilgiler (davet kodu, üyeler);
@@ -420,6 +421,7 @@ class _MembersCard extends ConsumerWidget {
                   subtitle: m.id == group.createdBy
                       ? const Text('Yönetici')
                       : null,
+                  onTap: () => SocialProfileDialog.show(context, m),
                   trailing: m.isActive && m.id != currentUserId
                       ? Row(
                           mainAxisSize: MainAxisSize.min,
