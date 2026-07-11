@@ -36,6 +36,11 @@ class _NoopAndroidWidgetService implements AndroidWidgetGateway {
 }
 
 void main() {
+  // studyTimerProvider.build() bir AppLifecycleListener kurar; bu da
+  // WidgetsBinding.instance ister. Plain test()'lerde binding init edilmezse
+  // provider kurulurken patlar (persistence testleri bu yüzden kırılıyordu).
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   group('timerPhaseTargetSeconds', () {
     test('kronometrede hedef yok (null)', () {
       expect(

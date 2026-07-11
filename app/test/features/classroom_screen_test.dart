@@ -38,7 +38,10 @@ void main() {
       userSessionsProvider.overrideWith((ref) => Stream.value([])),
     ];
 
-    tester.view.physicalSize = const Size(1080, 1920); // 360x640 logical
+    // ClassroomScreen gövdesi lazy bir ListView; GroupGoalCard + CampfireScene (480px)
+    // + GroupTrendCard sırayla dizili. 640px viewport'ta trend kartı ekran dışında kalıp
+    // build edilmez; sıra kontrolü (getTopLeft) için üçünü de kurduracak kadar yüksek tut.
+    tester.view.physicalSize = const Size(1080, 6000); // 360x2000 logical
     tester.view.devicePixelRatio = 3.0;
 
     final details = <FlutterErrorDetails>[];
@@ -53,12 +56,18 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    // CampfireScene sonsuz bir alev animasyonu (AnimationController.repeat) barındırır;
+    // pumpAndSettle bu yüzden asla oturmaz (10 dk timeout). Ağacı kurup akışları
+    // (Stream.value) çözmek ve AnimatedPositioned yerleşimini (560 ms) tamamlamak için
+    // sınırlı pump yeterli.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
 
     FlutterError.onError = prev;
     expect(details.map((d) => d.exceptionAsString()), isEmpty);
 
-    expect(find.text('Test Group'), findsOneWidget);
+    // Grup adı hem başlıkta hem GroupGoalCard içinde görünür (meşru → 1+).
+    expect(find.text('Test Group'), findsWidgets);
     expect(find.text('TEST12'), findsOneWidget);
     expect(find.byTooltip('Sohbet'), findsOneWidget);
     expect(find.byTooltip('Ayarlar'), findsOneWidget);

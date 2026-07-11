@@ -30,7 +30,10 @@ void main() {
       ),
     ];
 
-    tester.view.physicalSize = const Size(1080, 4000);
+    // Ayarlar gövdesi lazy bir ListView; ekran dışı gruplar kurulmaz. Tüm grupların
+    // (WP-30 "Sürüm ve güncellemeler" eklendikten sonra dahil) tek karede build
+    // edilip find.text ile bulunabilmesi için viewport'u bolca yüksek tut.
+    tester.view.physicalSize = const Size(1080, 12000);
     tester.view.devicePixelRatio = 3.0;
 
     final details = <FlutterErrorDetails>[];
