@@ -8,6 +8,13 @@
 
 ## 🔴 Yüksek Öncelik
 
+- [~] **Windows desktop UX redesign + dağıtım fazı** — **WP-27 ve WP-28 planlandı**
+  - İlk EXE derlendi; ancak mevcut görünüm mobil app'in Windows'a büyütülmüş hali.
+  - Windows için ayrı masaüstü deneyimi gerekiyor: sol navigation rail/sidebar, geniş ekran düzenleri, mini pencere uyumu, klavye/fare/pencere davranışı.
+  - **WP-27:** Desktop shell ve responsive layout.
+  - **WP-28:** Windows dağıtım/installer/metadata/pencere davranışı polish.
+  - *Kaynak: kullanıcı geri bildirimi + WP-11 Windows EXE sonrası durum.*
+
 - [~] **Tema paleti genişletme + custom renk slotları** — **WP-26 planlandı**
   - Mevcut paletler kullanıcıya yeterince iyi gelmedi; daha fazla profesyonel hazır palet eklenecek.
   - 3 adet custom slot olacak; kullanıcı primary/accent renklerini seçip kendi temasını kalıcı yapabilecek.
@@ -146,11 +153,11 @@
   - İlk teslim: sunucu-doğrulamalı süper-admin, salt-okunur kullanıcı/grup/oturum özeti ve geri bildirim/hata raporu merkezi.
   - *Kaynak: new_features.md §6*
 
-- [~] **Samsung Modes & Routines entegrasyonu** — **WP-15 tamamlandı, WP-19 planlı**
+- [x] **Samsung Modes & Routines entegrasyonu** — **WP-15 ve WP-19 tamamlandı**
   - Cihaz "Ders Çalışma Modu"nu algılama
   - Otomatik odak ekranına geçiş
   - **WP-15 tamamlandı:** Native Android App Shortcuts ve Flutter Servis köprüsü eklendi.
-  - **WP-19 Planlandı:** Settings ekranından kontrol ve Timer/Navigasyon eylemlerinin UI state'e bağlanması.
+  - **WP-19 tamamlandı:** Settings ekranından kontrol ve Timer/Navigasyon eylemlerinin UI state'e bağlanması.
   - *Kaynak: new_features.md §5*
 
 - [ ] **Otomatik e-posta raporları**
