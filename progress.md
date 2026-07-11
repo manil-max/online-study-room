@@ -35,9 +35,9 @@
 
 ### Gemini Lane
 - **Sorumlu:** Gemini
-- **Durum:** [x] Boşta — WP-23 tamamlandı
-- **Aktif WP:** —
-- **Kapsam:** Yeni atama bekleniyor.
+- **Durum:** [ ] Çalışıyor
+- **Aktif WP:** WP-24
+- **Kapsam:** Alarm ve çoklu timer modelleri, yerel depo ve arayüzler kodlanıyor.
 
 ### Claude Lane
 - **Sorumlu:** Claude
@@ -109,7 +109,7 @@
 - **Efor:** Orta-yüksek; çoğunluk UI/responsive, düşük DB riski.
 
 ### WP-24: Alarm + Çoklu Timer Temeli ⏲️
-- **Durum:** [ ] Bekliyor
+- **Durum:** [/] Devam Ediyor
 - **Backlog:** V5 Saat uygulaması yerini alma fazı
 - **Kapsam:** Google/Samsung Clock ve MultiTimer çizgisinde, çalışma uygulamasını bozmadan kişisel alarm ve çoklu timer altyapısını kur. İlk teslim yerel/offline çalışır; Supabase sync ve sleep tracking yok.
 - **SAHİP dosyalar:**
