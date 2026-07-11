@@ -4,4 +4,16 @@
     <string name="shortcut_start_timer_long">Odaklanmaya Başla (Rutinler)</string>
     <string name="shortcut_stop_timer_short">Odak Bitir</string>
     <string name="shortcut_stop_timer_long">Odaklanmayı Bitir (Rutinler)</string>
+    <string name="shortcut_start_pomodoro_short">Pomodoro</string>
+    <string name="shortcut_start_pomodoro_long">Pomodoro Başlat</string>
+    <string name="shortcut_start_stopwatch_short">Kronometre</string>
+    <string name="shortcut_start_stopwatch_long">Kronometre Başlat</string>
+    <string name="shortcut_take_break_short">Mola Ver</string>
+    <string name="shortcut_take_break_long">Çalışmaya Mola Ver</string>
+    <string name="shortcut_open_stats_short">İstatistikler</string>
+    <string name="shortcut_open_stats_long">Günlük İstatistiklerimi Gör</string>
+    <string name="shortcut_open_chat_short">Sohbet</string>
+    <string name="shortcut_open_chat_long">Sınıf Sohbetini Aç</string>
+    <string name="shortcut_open_leaderboard_short">Sıralama</string>
+    <string name="shortcut_open_leaderboard_long">Grup Liderlik Tablosunu Aç</string>
 </resources>

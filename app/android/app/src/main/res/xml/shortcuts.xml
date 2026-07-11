@@ -22,4 +22,70 @@
             android:targetPackage="com.manilmax.online_study_room"
             android:targetClass="com.manilmax.online_study_room.MainActivity" />
     </shortcut>
+    <shortcut
+        android:shortcutId="samsung_routine_start_pomodoro"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_start_pomodoro_short"
+        android:shortcutLongLabel="@string/shortcut_start_pomodoro_long">
+        <intent
+            android:action="com.manilmax.online_study_room.START_POMODORO"
+            android:targetPackage="com.manilmax.online_study_room"
+            android:targetClass="com.manilmax.online_study_room.MainActivity" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="samsung_routine_start_stopwatch"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_start_stopwatch_short"
+        android:shortcutLongLabel="@string/shortcut_start_stopwatch_long">
+        <intent
+            android:action="com.manilmax.online_study_room.START_STOPWATCH"
+            android:targetPackage="com.manilmax.online_study_room"
+            android:targetClass="com.manilmax.online_study_room.MainActivity" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="samsung_routine_take_break"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_take_break_short"
+        android:shortcutLongLabel="@string/shortcut_take_break_long">
+        <intent
+            android:action="com.manilmax.online_study_room.TAKE_BREAK"
+            android:targetPackage="com.manilmax.online_study_room"
+            android:targetClass="com.manilmax.online_study_room.MainActivity" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="samsung_routine_open_stats"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_open_stats_short"
+        android:shortcutLongLabel="@string/shortcut_open_stats_long">
+        <intent
+            android:action="com.manilmax.online_study_room.OPEN_STATS"
+            android:targetPackage="com.manilmax.online_study_room"
+            android:targetClass="com.manilmax.online_study_room.MainActivity" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="samsung_routine_open_chat"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_open_chat_short"
+        android:shortcutLongLabel="@string/shortcut_open_chat_long">
+        <intent
+            android:action="com.manilmax.online_study_room.OPEN_CHAT"
+            android:targetPackage="com.manilmax.online_study_room"
+            android:targetClass="com.manilmax.online_study_room.MainActivity" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="samsung_routine_open_leaderboard"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_open_leaderboard_short"
+        android:shortcutLongLabel="@string/shortcut_open_leaderboard_long">
+        <intent
+            android:action="com.manilmax.online_study_room.OPEN_LEADERBOARD"
+            android:targetPackage="com.manilmax.online_study_room"
+            android:targetClass="com.manilmax.online_study_room.MainActivity" />
+    </shortcut>
 </shortcuts>

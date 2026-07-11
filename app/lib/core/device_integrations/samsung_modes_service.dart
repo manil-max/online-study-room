@@ -38,8 +38,16 @@ class DeviceIntegrationService {
 final deviceIntegrationServiceProvider = Provider<DeviceIntegrationService>((ref) {
   return DeviceIntegrationService(
     onActionReceived: (action) {
-      // TODO (WP-19): action'a göre timer'ı başlat veya durdur.
-      // Örnek: if (action == 'com.manilmax.online_study_room.START_TIMER') ...
+      // TODO (WP-19): action'a göre yönlendirme yap veya timer'ı başlat/durdur.
+      // Desteklenen aksiyonlar (shortcuts.xml'den gelir):
+      // - com.manilmax.online_study_room.START_TIMER
+      // - com.manilmax.online_study_room.STOP_TIMER
+      // - com.manilmax.online_study_room.START_POMODORO
+      // - com.manilmax.online_study_room.START_STOPWATCH
+      // - com.manilmax.online_study_room.TAKE_BREAK
+      // - com.manilmax.online_study_room.OPEN_STATS
+      // - com.manilmax.online_study_room.OPEN_CHAT
+      // - com.manilmax.online_study_room.OPEN_LEADERBOARD
     },
   );
 });

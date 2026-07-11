@@ -39,9 +39,9 @@
 
 ### Claude Lane
 - **Sorumlu:** Claude
-- **Durum:** [~] Uygulama devam ediyor
-- **Aktif WP:** WP-11: Windows Desktop Track
-- **Kapsam:** Windows build + widget, Windows installer
+- **Durum:** [x] Boşta — WP-11 ve WP-13 tamamlandı
+- **Aktif WP:** —
+- **Kapsam:** Yeni atama bekleniyor.
 - **Kurallar:** Bu lane yalnız Claude tarafından güncellenir; ilerleme her geçişte yazılır.
 
 ### Codex Lane
@@ -94,24 +94,6 @@
 - V4 ile birlikte WP-17 ve WP-18 tamamlandı: canlı sayaç yüzeyleri, widget önizlemeleri, sade bildirim akışı, grup ekranı hiyerarşisi ve sayaç ayarlarının kaldırılması artık teslim durumunda görünür.
 - Sınıf ekranındaki sohbet girişi ayrı **Sohbet** ekranına taşındı; grup bilgileri ve yönetim **Ayarlar** girişinden açılır.
 - Gamification migration'ı üretim Supabase'e uygulanmadan da Başarılar kartı varsayılan profil ile görünür; `0017_gamification_profiles.sql` uygulanınca kalıcı seri koruma verisine otomatik döner.
-
-### WP-11: Windows Desktop Track
-- **Backlog:** Windows build + widget, Windows installer
-- **Bağımlılık:** Ana uygulama analyze/test temiz olmalı.
-- **SAHİP dosyalar:** Windows runner/config, always-on-top mini pencere, dağıtım notları
-- **DOKUNMA:** Android native widget dosyaları
-- **Not:** Windows widget gerçek OS widget değil, mini Flutter pencere olarak kalmalı.
-- **Model matrisi (limit dostu):** WP-11 | Claude Sonnet 5 high / GPT-5.3-Codex medium / Gemini 3.5 Flash high
-- **Kaçınılacak varsayılan:** Opus 4.8, GPT-5.4 ve Gemini 3.1 Pro; yalnızca Windows runner/installer tarafında tekrarlı build hatası çözülemezse yükselt.
-
-### WP-13: Release Channels
-- **Backlog:** Beta/staging test uygulaması
-- **Bağımlılık:** Release akışı stabil olmalı.
-- **SAHİP dosyalar:** Android product flavors, CI release workflow, updater kanal mantığı
-- **DOKUNMA:** release keystore dosyaları; `key.jks` yeniden üretilmez
-- **Not:** Build number/tag kuralı korunmalı.
-- **Model matrisi (limit dostu):** WP-13 | Claude Sonnet 5 medium / GPT-5.3-Codex medium / Gemini 3.5 Flash medium
-- **Kaçınılacak varsayılan:** Opus 4.8 ve Gemini 3.1 Pro; CI/release hatası somut logla daraltılmadan pahalı modele geçme.
 
 ### WP-19: Device Integrations Settings Hook
 - **Durum:** [ ] WP-14 ve WP-15 sonrası
