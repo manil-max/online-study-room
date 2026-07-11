@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/config/supabase_config.dart';
+import '../../core/stats/achievement_engine.dart';
 import '../../core/stats/gamification.dart';
 import '../../core/stats/study_stats.dart';
 import '../models/achievement.dart';
@@ -24,14 +25,47 @@ final gamificationRepositoryProvider = Provider<GamificationRepository>((ref) {
 
 final gamificationProfileProvider =
     StreamProvider.family<GamificationProfile, String>((ref, userId) {
-  final repo = ref.watch(gamificationRepositoryProvider);
-  return repo.watchProfile(userId);
-});
+      final repo = ref.watch(gamificationRepositoryProvider);
+      return repo.watchProfile(userId);
+    });
 
 final userAchievementsProvider =
     StreamProvider.family<List<UserAchievement>, String>((ref, userId) {
-  final repo = ref.watch(gamificationRepositoryProvider);
-  return repo.watchUserAchievements(userId);
+      final repo = ref.watch(gamificationRepositoryProvider);
+      return repo.watchUserAchievements(userId);
+    });
+
+/// Profil açıldığında mevcut oturumları kalıcı başarı ilerlemesine işler.
+/// Hesaplama yalnızca değişiklik olduğunda yazar; stream güncellemelerinin
+/// sonsuz bir yazma döngüsü oluşturmasını engeller.
+final gamificationProgressSyncProvider = FutureProvider.autoDispose<void>((
+  ref,
+) async {
+  final user = ref.watch(authStateProvider).value;
+  if (user == null) return;
+
+  final sessions = await ref.watch(userSessionsProvider.future);
+  final profile = await ref.watch(gamificationProfileProvider(user.id).future);
+  final achievements = await ref.watch(
+    userAchievementsProvider(user.id).future,
+  );
+  final result = AchievementEngine.calculateProgression(
+    profile: profile,
+    currentAchievements: achievements,
+    allSessions: sessions,
+  );
+  final repository = ref.read(gamificationRepositoryProvider);
+  final profileChanged =
+      result.newProfile.xp != profile.xp ||
+      result.newProfile.crownRank != profile.crownRank;
+
+  // Profil satırı önce yazılır; eski kullanıcılar için de güvenli başlangıçtır.
+  if (profileChanged || achievements.isEmpty) {
+    await repository.updateProfile(result.newProfile);
+  }
+  if (result.newAchievements.isNotEmpty) {
+    await repository.updateUserAchievements(result.newAchievements);
+  }
 });
 
 class GamificationSummary {

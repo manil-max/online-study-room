@@ -48,11 +48,17 @@ class SupabaseGamificationRepository implements GamificationRepository {
   }
 
   @override
-  Future<void> updateUserAchievements(List<UserAchievement> achievements) async {
+  Future<void> updateUserAchievements(
+    List<UserAchievement> achievements,
+  ) async {
     if (achievements.isEmpty) return;
     final now = DateTime.now().toUtc().toIso8601String();
-    
-    final maps = achievements.map((e) => e.copyWith(updatedAt: DateTime.parse(now)).toMap()).toList();
-    await _client.from('user_achievements').upsert(maps);
+
+    final maps = achievements
+        .map((e) => e.copyWith(updatedAt: DateTime.parse(now)).toUpsertMap())
+        .toList();
+    await _client
+        .from('user_achievements')
+        .upsert(maps, onConflict: 'user_id,achievement_id');
   }
 }

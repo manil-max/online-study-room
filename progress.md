@@ -10,7 +10,7 @@
 - **Framework:** Flutter ^3.12 · Riverpod 3.3 · Supabase 2.15 · fl_chart
 - **Uygulama kökü:** `app/` — Flutter komutları yalnız burada çalışır.
 - **Repo katmanı çift:** Her arayüz `supabase/` ve `in_memory/` repository'leriyle desteklenir.
-- **Migration'lar:** `supabase/migrations/` — yerelde `0001–0021` vardır. Canlı şemada `0001–0019` etkileri doğrulandı; `0020–0021`, aktif admin çalışmasının parçasıdır ve tamamlanmadan üretime uygulanmaz.
+- **Migration'lar:** `supabase/migrations/` — yerelde `0001–0022` vardır. Canlı şemada `0001–0019` etkileri doğrulandı; `0020–0022` SQL Editor'da sırasıyla uygulanır. `0022` tekrar-çalıştırılabilir olarak düzeltildi.
 - **Gün sınırı:** `Europe/Istanbul`
 - **RLS helper'ları:** `is_group_member(gid)`, `can_see_user_sessions(target)`, `is_group_admin(gid)`, `is_super_admin()`
 - **Dashboard:** 6 sütunlu 2D matris, 19 kart türü, `grid_reflow.dart` motoru.
@@ -33,10 +33,9 @@
 
 ### Gemini Lane
 - **Sorumlu:** Gemini
-- **Durum:** [~] Aktif — WP-35 uygulanacak
-- **Aktif WP:** WP-35
-- **Kapsam:** Sosyal profil, XP, taç ve aşamalı başarılar 🏆.
-- **Not:** `0020_super_admin_operations.sql` ve `0021_admin_operations.sql` bu işin parçasıdır; tamamlanma ve doğrulama olmadan üretime uygulanmaz.
+- **Durum:** [x] Boşta
+- **Aktif WP:** —
+- **Kapsam:** Yeni atama bekleniyor.
 
 ### Claude Lane
 
@@ -60,7 +59,7 @@
 |---|---|---|---|
 | WP-27 | Bekliyor | Windows desktop shell ve responsive layout | — |
 | WP-28 | Bekliyor | Windows dağıtım, installer ve desktop polish | WP-27 |
-| WP-36 | Bekliyor | Beş sekmeli bilgi mimarisi, dolu Gruplar/İstatistikler ve Bildirim Merkezi | WP-34, WP-35 |
+| WP-36 | Bekliyor | Beş sekmeli bilgi mimarisi, dolu Gruplar/İstatistikler ve Bildirim Merkezi | WP-34 |
 
 ### WP-27: Windows Desktop Shell ve Responsive Layout
 
@@ -130,4 +129,4 @@
 - **WP-32:** `0019_feedback_attachments.sql`, görsel seçimi ve admin önizlemesi eklendi.
 - **WP-33:** Süper-admin Edge function ve RLS logları oluşturuldu, arayüz testleri düzenlendi.
 - **WP-34:** Süper-Admin çoklu sekme (Dashboard, Users, Groups, Reports, Announcements, Audit Log), duyurular ve grup moderasyonu eklendi.
-- **WP-35:** Sosyal Profil vitrini (SocialProfileDialog), Başarı Yolculuğu sayfası ve 60+ kademeli başarı kural motoru eklendi.
+- **WP-35:** Sosyal Profil vitrini (SocialProfileDialog), Başarı Yolculuğu, 60+ kademeli başarı kural motoru, güvenli Supabase upsert/senkronizasyon ve `0022` migration düzeltmesi eklendi.

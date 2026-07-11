@@ -75,4 +75,22 @@ void main() {
       expect(achs.length, 2);
     });
   });
+
+  group('UserAchievement Supabase yazımı', () {
+    test('yeni başarı boş UUID göndermeden yazılır', () {
+      final achievement = UserAchievement(
+        id: '',
+        userId: 'u1',
+        achievementId: 'study_hours',
+        createdAt: DateTime(2026, 1, 1),
+        updatedAt: DateTime(2026, 1, 1),
+      );
+
+      final map = achievement.toUpsertMap();
+
+      expect(map.containsKey('id'), isFalse);
+      expect(map['user_id'], 'u1');
+      expect(map['achievement_id'], 'study_hours');
+    });
+  });
 }

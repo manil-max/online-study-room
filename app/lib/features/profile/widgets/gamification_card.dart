@@ -10,6 +10,8 @@ class GamificationCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Profil açıldığında kalıcı XP ve başarı ilerlemesini güncel tutar.
+    ref.watch(gamificationProgressSyncProvider);
     final theme = Theme.of(context);
     final summaryAsync = ref.watch(gamificationSummaryProvider);
 

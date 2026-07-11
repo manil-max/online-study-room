@@ -50,7 +50,9 @@ class UserAchievement {
       achievementId: map['achievement_id'] as String,
       tier: map['tier'] as int? ?? 1,
       progress: map['progress'] as int? ?? 0,
-      unlockedAt: map['unlocked_at'] != null ? DateTime.parse(map['unlocked_at'] as String) : null,
+      unlockedAt: map['unlocked_at'] != null
+          ? DateTime.parse(map['unlocked_at'] as String)
+          : null,
       createdAt: DateTime.parse(map['created_at'] as String),
       updatedAt: DateTime.parse(map['updated_at'] as String),
     );
@@ -65,6 +67,21 @@ class UserAchievement {
       'progress': progress,
       'unlocked_at': unlockedAt?.toIso8601String(),
       'created_at': createdAt.toIso8601String(),
+      'updated_at': updatedAt.toIso8601String(),
+    };
+  }
+
+  /// Supabase upsert'i için yazılabilir alanlar.
+  /// Yeni kayıtta boş bir id göndermeyiz; PostgreSQL `gen_random_uuid()` ile
+  /// üretir. Çakışma anahtarı `(user_id, achievement_id)`dir.
+  Map<String, dynamic> toUpsertMap() {
+    return {
+      if (id.isNotEmpty) 'id': id,
+      'user_id': userId,
+      'achievement_id': achievementId,
+      'tier': tier,
+      'progress': progress,
+      'unlocked_at': unlockedAt?.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
     };
   }

@@ -83,15 +83,19 @@ class SupabaseAdminRepository implements AdminRepository {
     try {
       String? attachmentPath;
       if (attachmentBytes != null && attachmentExt != null) {
-        final ext = attachmentExt.startsWith('.') ? attachmentExt : '.$attachmentExt';
+        final ext = attachmentExt.startsWith('.')
+            ? attachmentExt
+            : '.$attachmentExt';
         final fileName = '${const Uuid().v4()}$ext';
         final path = '$userId/$fileName';
-        
-        await _client.storage.from('feedback_attachments').uploadBinary(
-          path,
-          attachmentBytes,
-          fileOptions: const FileOptions(upsert: true),
-        );
+
+        await _client.storage
+            .from('feedback_attachments')
+            .uploadBinary(
+              path,
+              attachmentBytes,
+              fileOptions: const FileOptions(upsert: true),
+            );
         attachmentPath = path;
       }
 
@@ -220,7 +224,7 @@ class SupabaseAdminRepository implements AdminRepository {
   Future<List<StudyGroup>> fetchGroups() async {
     try {
       final response = await _client
-          .from('study_groups')
+          .from('groups')
           .select()
           .order('created_at', ascending: false);
       return response.map((e) => StudyGroup.fromMap(e)).toList();

@@ -52,7 +52,7 @@ serve(async (req) => {
     switch (action) {
       case 'delete_group': {
         const { error } = await supabaseAdmin
-          .from('study_groups')
+          .from('groups')
           .delete()
           .eq('id', targetGroupId)
         if (error) throw error
@@ -61,7 +61,7 @@ serve(async (req) => {
       }
       case 'remove_group_member': {
         const { error } = await supabaseAdmin
-          .from('study_group_members')
+          .from('group_members')
           .delete()
           .eq('group_id', targetGroupId)
           .eq('user_id', targetUserId)
