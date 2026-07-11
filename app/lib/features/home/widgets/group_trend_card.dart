@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/stats/study_stats.dart';
 import '../../../core/utils/duration_format.dart';
+import '../../classroom/widgets/class_switcher.dart';
 import '../../../data/providers/group_providers.dart';
 import '../../../data/providers/study_providers.dart';
 import '../../stats/widgets/daily_bar_chart.dart';
@@ -21,7 +22,13 @@ class GroupTrendCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final group = ref.watch(userGroupProvider).value;
-    if (group == null) return const GroupCardShell(title: 'Grup günlük trendi');
+    if (group == null) {
+      return GroupCardShell(
+        title: 'Grup günlük trendi',
+        onCreateGroup: () => createGroupFlow(context, ref),
+        onJoinGroup: () => joinGroupFlow(context, ref),
+      );
+    }
 
     final stats = ref.watch(groupDailyStatsProvider).value ?? const [];
     return LayoutBuilder(
@@ -46,16 +53,22 @@ class GroupTrendCard extends ConsumerWidget {
                   ),
                 ),
                 if (!isCompact)
-                  Text(formatHuman(total),
-                      style: theme.textTheme.titleMedium
-                          ?.copyWith(color: theme.colorScheme.primary)),
+                  Text(
+                    formatHuman(total),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
               ],
             ),
             if (isCompact) ...[
               const SizedBox(height: 4),
-              Text(formatHuman(total),
-                  style: theme.textTheme.titleMedium
-                      ?.copyWith(color: theme.colorScheme.primary)),
+              Text(
+                formatHuman(total),
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: theme.colorScheme.primary,
+                ),
+              ),
             ],
           ],
         );
@@ -66,7 +79,9 @@ class GroupTrendCard extends ConsumerWidget {
           bodyBuilder: (context, bodyHeight) => SizedBox(
             height: bodyHeight,
             child: DailyBarChart(
-                days: series, goalSeconds: group.dailyGoalMinutes * 60),
+              days: series,
+              goalSeconds: group.dailyGoalMinutes * 60,
+            ),
           ),
         );
       },

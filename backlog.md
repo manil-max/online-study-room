@@ -14,7 +14,7 @@
   - Grup leaderboard widget'ı
   - Çeşitli boyut/tür seçenekleri
   - **WP-1 tamamlandı (`616a92d`):** `home_widget` dependency, Android provider/layout/xml altyapısı ve Flutter widget veri servisi eklendi.
-  - **Kalan:** Sayaç widget'ında gerçek başlat/durdur aksiyonları ve arka plan kontrolü WP-2 ile yapılacak.
+  - **Kalan (WP-17 aktif):** Widget ekleme ekranına gerçek önizlemeler; sayaç widget'ında uygulamayı açmadan başlat/durdur; istatistik ve sıralama widget'larında görünür, anlamlı içerik ve farklı boyutlar.
   - *Kaynak: project.md §3.6, progress.md FAZ 4.2, new_features.md §5 Madde 4*
 
 - [~] **Persistent notification (kalıcı bildirim + kontrol paneli)**
@@ -22,7 +22,7 @@
   - Durdur/başlat/mola aksiyonları bildirimde
   - Gelişmiş kontrol paneli görünümü
   - **WP-2 tamamlandı:** Kalıcı Android sayaç bildirimi, `Durdur` aksiyonu, notification permission ve restart sonrası timer geri yükleme eklendi.
-  - **Kalan:** Ayrı `Başlat` ve manuel `Mola` aksiyonları ürün kararına göre ileride netleştirilecek.
+  - **Kalan (WP-17 aktif):** Bildirim yalnız `SS:DD:SS` sayacını ve bağlama göre `Durdur`/`Başlat` aksiyonunu gösterir; aksiyon uygulamayı açmadan çalışır. Aktif sayaç bildirimi silinemez, durunca kaldırılabilir.
   - *Kaynak: new_features.md §5 Madde 10*
 
 - [x] **E-posta doğrulama + şifre sıfırlama**
@@ -41,10 +41,11 @@
 
 ## 🟡 Orta Öncelik
 
-- [ ] **Dinamik panel / Live Activities (Android durum çubuğu baloncuğu)**
+- [~] **Dinamik panel / Live Activities (Android durum çubuğu baloncuğu)**
   - Yeni nesil Android "dinamik buton/hap" entegrasyonu
   - Arka plandayken durum çubuğunda minik gösterge
   - Tıklandığında üstten şık kontrol paneli
+  - **WP-17 aktif:** Sistem destekliyse devam eden kronometre bildirimi One UI'nın durum çubuğu/dinamik panel yüzeyine beslenir; kapalı cihaz/One UI sürümünde standart kalıcı bildirim güvenli geri dönüş olur.
   - *Kaynak: new_features.md §5 Madde Live Activities*
 
 - [ ] **Kilit ekranı widget'ı**

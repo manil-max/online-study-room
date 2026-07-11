@@ -7,10 +7,12 @@ import '../../../core/utils/duration_format.dart';
 import '../../../core/widgets/anchored_menu.dart';
 import '../../../core/widgets/user_avatar.dart';
 import '../../../data/models/profile.dart';
+import '../../classroom/widgets/class_switcher.dart';
 import '../../../data/providers/auth_providers.dart';
 import '../../../data/providers/group_providers.dart';
 import '../../../data/providers/study_providers.dart';
 import '../dashboard_card.dart';
+import 'group_card_shell.dart';
 
 /// Aktif grubun bugünkü sıralaması (§3.9 kart). "sen" vurgulu. Boyuta göre üye
 /// sayısı: küçük 3, orta 5, büyük 10.
@@ -25,15 +27,10 @@ class LeaderboardCard extends ConsumerWidget {
     final group = ref.watch(userGroupProvider).value;
 
     if (group == null) {
-      return Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Text(
-            'Bir gruba katılınca sıralama burada görünür.',
-            style: theme.textTheme.bodyMedium
-                ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-          ),
-        ),
+      return GroupCardShell(
+        title: 'Grup sıralaması',
+        onCreateGroup: () => createGroupFlow(context, ref),
+        onJoinGroup: () => joinGroupFlow(context, ref),
       );
     }
 
@@ -55,11 +52,14 @@ class LeaderboardCard extends ConsumerWidget {
 
           // Kart, başlık + en az bir satırı sığdıramayacak kadar kısaysa TÜM içerik
           // kaydırılır (Expanded yerine düz Column) → hiçbir boyutta taşma olmaz.
-          final fill = !isHeightBounded || availableHeight >= headerHeight + rowHeight;
+          final fill =
+              !isHeightBounded || availableHeight >= headerHeight + rowHeight;
 
           final int count;
           if (fill && isHeightBounded) {
-            count = ((availableHeight - headerHeight) / rowHeight).floor().clamp(1, 15);
+            count = ((availableHeight - headerHeight) / rowHeight)
+                .floor()
+                .clamp(1, 15);
           } else if (isHeightBounded) {
             count = 3;
           } else {
@@ -68,14 +68,21 @@ class LeaderboardCard extends ConsumerWidget {
 
           // Bugünün sıralaması (userId → saniye), büyükten küçüğe.
           final todayByUser = todaySecondsByUser(stats);
-          
+
           // Grup günlük hedefi: grubun bugünkü TOPLAM çalışması / hedef + grup serisi.
           final goalSeconds = group.dailyGoalMinutes * 60;
-          final groupTodayTotal = todayByUser.values.fold<int>(0, (a, v) => a + v);
-          final groupGoalPct =
-              goalSeconds > 0 ? (groupTodayTotal / goalSeconds).clamp(0.0, 1.0) : 0.0;
-          final groupStreak =
-              currentStreak(const [], goalSeconds, totals: groupDayTotals(stats));
+          final groupTodayTotal = todayByUser.values.fold<int>(
+            0,
+            (a, v) => a + v,
+          );
+          final groupGoalPct = goalSeconds > 0
+              ? (groupTodayTotal / goalSeconds).clamp(0.0, 1.0)
+              : 0.0;
+          final groupStreak = currentStreak(
+            const [],
+            goalSeconds,
+            totals: groupDayTotals(stats),
+          );
 
           Profile? memberFor(String id) {
             for (final m in members) {
@@ -84,10 +91,11 @@ class LeaderboardCard extends ConsumerWidget {
             return null;
           }
 
-          final board = (todayByUser.entries.toList()
-                ..sort((a, b) => b.value.compareTo(a.value)))
-              .take(count)
-              .toList();
+          final board =
+              (todayByUser.entries.toList()
+                    ..sort((a, b) => b.value.compareTo(a.value)))
+                  .take(count)
+                  .toList();
 
           final streaks = <String, int>{
             for (final e in board)
@@ -98,10 +106,12 @@ class LeaderboardCard extends ConsumerWidget {
             Row(
               children: [
                 Flexible(
-                  child: Text('Sıralama',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.titleMedium),
+                  child: Text(
+                    'Sıralama',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleMedium,
+                  ),
                 ),
                 const Spacer(),
                 if (!isCompact)
@@ -110,8 +120,9 @@ class LeaderboardCard extends ConsumerWidget {
                       group.name,
                       textAlign: TextAlign.end,
                       overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodySmall
-                          ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ),
               ],
@@ -120,25 +131,40 @@ class LeaderboardCard extends ConsumerWidget {
               const SizedBox(height: 10),
               Row(
                 children: [
-                  Icon(Icons.flag_outlined,
-                      size: 15, color: theme.colorScheme.onSurfaceVariant),
+                  Icon(
+                    Icons.flag_outlined,
+                    size: 15,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                   const SizedBox(width: 4),
-                  Text('Grup hedefi',
-                      style: theme.textTheme.labelMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant)),
+                  Text(
+                    'Grup hedefi',
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
                   const Spacer(),
                   if (groupStreak > 0) ...[
-                    Icon(Icons.local_fire_department,
-                        size: 14, color: subjectColor('chart-5')),
+                    Icon(
+                      Icons.local_fire_department,
+                      size: 14,
+                      color: subjectColor('chart-5'),
+                    ),
                     const SizedBox(width: 2),
-                    Text('$groupStreak',
-                        style: theme.textTheme.labelSmall
-                            ?.copyWith(color: subjectColor('chart-5'))),
+                    Text(
+                      '$groupStreak',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: subjectColor('chart-5'),
+                      ),
+                    ),
                     const SizedBox(width: 8),
                   ],
-                  Text('%${(groupGoalPct * 100).round()}',
-                      style: theme.textTheme.labelMedium
-                          ?.copyWith(fontWeight: FontWeight.w700)),
+                  Text(
+                    '%${(groupGoalPct * 100).round()}',
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 6),
@@ -158,18 +184,19 @@ class LeaderboardCard extends ConsumerWidget {
           ];
 
           Widget rowFor(int i) => _Row(
-                rank: i + 1,
-                member: memberFor(board[i].key),
-                seconds: board[i].value,
-                streak: streaks[board[i].key] ?? 0,
-                isMe: board[i].key == meId,
-                isCompact: isCompact,
-              );
+            rank: i + 1,
+            member: memberFor(board[i].key),
+            seconds: board[i].value,
+            streak: streaks[board[i].key] ?? 0,
+            isMe: board[i].key == meId,
+            isCompact: isCompact,
+          );
 
           final emptyText = Text(
             'Bugün henüz kimse çalışmamış.',
-            style: theme.textTheme.bodyMedium
-                ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
           );
 
           // Kısa kart: Expanded yerine düz Column + dış kaydırma (taşma önlenir).
@@ -239,8 +266,8 @@ class _Row extends StatelessWidget {
     final name = (member != null && !member!.isActive)
         ? 'Eski Grup Üyesi'
         : (member?.displayName.isNotEmpty == true
-            ? member!.displayName
-            : 'İsimsiz');
+              ? member!.displayName
+              : 'İsimsiz');
     // Üzerine gelince basit özet (tooltip); tıklayınca tıklanan yerde detay.
     final brief = StringBuffer('$rank. · Bugün ${formatHuman(seconds)}');
     if (streak > 0) brief.write(' · 🔥$streak gün');
@@ -259,8 +286,9 @@ class _Row extends StatelessWidget {
                 width: 22,
                 child: Text(
                   '$rank',
-                  style: theme.textTheme.titleSmall
-                      ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ),
               UserAvatar(
@@ -281,18 +309,25 @@ class _Row extends StatelessWidget {
                   ),
                 ),
                 if (streak > 0) ...[
-                  Icon(Icons.local_fire_department,
-                      size: 14, color: subjectColor('chart-5')),
+                  Icon(
+                    Icons.local_fire_department,
+                    size: 14,
+                    color: subjectColor('chart-5'),
+                  ),
                   const SizedBox(width: 2),
-                  Text('$streak',
-                      style: theme.textTheme.labelSmall
-                          ?.copyWith(color: subjectColor('chart-5'))),
+                  Text(
+                    '$streak',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: subjectColor('chart-5'),
+                    ),
+                  ),
                   const SizedBox(width: 8),
                 ],
                 Text(
                   formatHuman(seconds),
-                  style: theme.textTheme.bodySmall
-                      ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ] else
                 // Dar hücrede ad gizli; süre kalan alana yaslanır ve gerekiyorsa
@@ -305,8 +340,9 @@ class _Row extends StatelessWidget {
                       child: Text(
                         formatHuman(seconds),
                         maxLines: 1,
-                        style: theme.textTheme.bodySmall
-                            ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
                       ),
                     ),
                   ),
@@ -336,21 +372,23 @@ class _Row extends StatelessWidget {
                 Row(
                   children: [
                     UserAvatar(
-                        displayName: name,
-                        avatarUrl: member?.avatarUrl,
-                        radius: 20),
+                      displayName: name,
+                      avatarUrl: member?.avatarUrl,
+                      radius: 20,
+                    ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: Text(isMe ? '$name (sen)' : name,
-                          style: theme.textTheme.titleMedium,
-                          overflow: TextOverflow.ellipsis),
+                      child: Text(
+                        isMe ? '$name (sen)' : name,
+                        style: theme.textTheme.titleMedium,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 12),
                 _InfoRow(label: 'Sıralama', value: '$rank.'),
-                _InfoRow(
-                    label: 'Bugünkü çalışma', value: formatHuman(seconds)),
+                _InfoRow(label: 'Bugünkü çalışma', value: formatHuman(seconds)),
                 if (streak > 0)
                   _InfoRow(label: 'Çalışma serisi', value: '$streak gün'),
               ],
@@ -376,9 +414,12 @@ class _InfoRow extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label,
-              style: theme.textTheme.bodyMedium
-                  ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+          Text(
+            label,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
           Text(value, style: theme.textTheme.titleSmall),
         ],
       ),

@@ -1,6 +1,20 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:home_widget/home_widget.dart';
+
+import 'package:online_study_room/core/notifications/timer_external_command_store.dart';
+import 'package:online_study_room/core/prefs/app_prefs.dart';
+
+@pragma('vm:entry-point')
+Future<void> widgetBackgroundCallback(Uri? uri) async {
+  if (uri?.host == 'timer' && uri?.path == '/toggle') {
+    final prefs = await SharedPreferences.getInstance();
+    final store = TimerExternalCommandStore(prefs);
+    final isRunning = prefs.containsKey('timer_active_started_at');
+    await store.setCommand(isRunning ? 'stop' : 'start');
+  }
+}
 
 final androidWidgetServiceProvider = Provider<AndroidWidgetGateway>(
   (ref) => const AndroidWidgetService(),

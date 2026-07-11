@@ -11,6 +11,7 @@ void main() {
       elapsedSeconds: 3661,
       remainingSeconds: null,
       isCountingDown: false,
+      isRunning: true,
     );
 
     expect(snapshot.body, contains('Kronometre'));
@@ -29,6 +30,7 @@ void main() {
       isCountingDown: true,
       progress: 120,
       progressMax: 1620,
+      isRunning: true,
     );
 
     expect(snapshot.body, contains('Kalan 00:25:00'));
@@ -45,6 +47,7 @@ void main() {
       elapsedSeconds: 15,
       remainingSeconds: null,
       isCountingDown: false,
+      isRunning: true,
     );
 
     expect(snapshot.hasProgress, isFalse);

@@ -28,10 +28,18 @@ void main() {
       StudySession(
         id: 's$d',
         userId: 'u1',
-        start: DateTime(now.year, now.month, now.day, 8 + (d % 12))
-            .subtract(Duration(days: d)),
-        end: DateTime(now.year, now.month, now.day, 9 + (d % 12))
-            .subtract(Duration(days: d)),
+        start: DateTime(
+          now.year,
+          now.month,
+          now.day,
+          8 + (d % 12),
+        ).subtract(Duration(days: d)),
+        end: DateTime(
+          now.year,
+          now.month,
+          now.day,
+          9 + (d % 12),
+        ).subtract(Duration(days: d)),
         durationSeconds: 1800 + (d % 5) * 900,
         source: StudySource.live,
         subjectId: d.isEven ? 'sub1' : (d % 3 == 0 ? 'sub2' : null),
@@ -81,8 +89,11 @@ void main() {
                 body: Center(
                   child: SizedBox(
                     width: w,
-                    child: dashboardCardFor(type, DashboardCardSize.medium,
-                        height: h),
+                    child: dashboardCardFor(
+                      type,
+                      DashboardCardSize.medium,
+                      height: h,
+                    ),
                   ),
                 ),
               ),
@@ -102,6 +113,34 @@ void main() {
       });
     }
   }
+
+  testWidgets('grup boş durum kartları hızlı eylemleri gösterir', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: overrides,
+        child: MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: SizedBox(
+                width: 320,
+                child: dashboardCardFor(
+                  DashboardCardType.groupGoal,
+                  DashboardCardSize.medium,
+                  height: 180,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('Grup oluştur'), findsOneWidget);
+    expect(find.text('Koda katıl'), findsOneWidget);
+  });
 
   // Grup kartları: yukarıdaki test grubu grubu `null` yaptığı için grup kartları
   // "grup yok" (GroupCardShell) yoluna gider ve GERÇEK içerikleri hiç çizilmez.
@@ -143,13 +182,20 @@ void main() {
       for (var u = 0; u < 6; u++)
         DailyStat(
           userId: 'u$u',
-          day: DateTime(now.year, now.month, now.day)
-              .subtract(Duration(days: d)),
+          day: DateTime(
+            now.year,
+            now.month,
+            now.day,
+          ).subtract(Duration(days: d)),
           seconds: 1800 + ((d + u) % 5) * 900,
         ),
   ];
 
-  final me = Profile(id: 'u1', displayName: 'Ben', createdAt: DateTime(2024, 1, 1));
+  final me = Profile(
+    id: 'u1',
+    displayName: 'Ben',
+    createdAt: DateTime(2024, 1, 1),
+  );
 
   final groupOverrides = [
     userSessionsProvider.overrideWith((ref) => Stream.value(sessions)),
@@ -171,8 +217,9 @@ void main() {
 
   for (final type in groupCardTypes) {
     for (final (label, w, h) in sizes) {
-      testWidgets('${type.name} kartı (grup dolu) $label boyutta taşmaz',
-          (tester) async {
+      testWidgets('${type.name} kartı (grup dolu) $label boyutta taşmaz', (
+        tester,
+      ) async {
         final details = <FlutterErrorDetails>[];
         final prev = FlutterError.onError;
         FlutterError.onError = details.add;
@@ -186,8 +233,11 @@ void main() {
                 body: Center(
                   child: SizedBox(
                     width: w,
-                    child: dashboardCardFor(type, DashboardCardSize.medium,
-                        height: h),
+                    child: dashboardCardFor(
+                      type,
+                      DashboardCardSize.medium,
+                      height: h,
+                    ),
                   ),
                 ),
               ),

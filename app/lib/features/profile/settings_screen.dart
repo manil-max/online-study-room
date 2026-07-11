@@ -115,28 +115,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 10),
-          const _SettingsGroup(
-            icon: Icons.timer_outlined,
-            title: 'Sayaç',
-            subtitle: 'Zamanlayıcı modları ve odak ayarları',
-            initiallyExpanded: false,
-            children: [
-              ListTile(
-                leading: Icon(Icons.hourglass_empty_outlined),
-                title: Text('Geri sayım ve pomodoro'),
-                subtitle: Text(
-                  'Sayaç kartında modu seçip süreleri ayarlayabilirsin.',
-                ),
-              ),
-              Divider(height: 1),
-              _DisabledTile(
-                icon: Icons.tune_outlined,
-                title: 'Sayaç varsayılanları',
-                subtitle: 'Yakında',
-              ),
-            ],
-          ),
+
           const SizedBox(height: 10),
           _SettingsGroup(
             icon: Icons.notifications_outlined,

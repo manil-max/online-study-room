@@ -11,9 +11,13 @@ import 'core/theme/app_theme.dart';
 import 'core/theme/theme_settings.dart';
 import 'features/auth/auth_gate.dart';
 
+import 'package:home_widget/home_widget.dart';
+import 'package:online_study_room/features/android_widgets/android_widget_service.dart';
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await TimerNotificationService.instance.initialize();
+  await HomeWidget.registerBackgroundCallback(widgetBackgroundCallback);
 
   // Anahtarlar verilmişse Supabase'i başlat; verilmemişse uygulama bellek-içi
   // modda açılır (Supabase'siz hızlı deneme için). Bkz. core/config/supabase_config.dart

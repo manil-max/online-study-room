@@ -37,6 +37,13 @@
             android:name="flutterEmbedding"
             android:value="2" />
         <receiver
+            android:name=".widgets.TimerActionReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.manilmax.online_study_room.ACTION_TOGGLE_TIMER" />
+            </intent-filter>
+        </receiver>
+        <receiver
             android:name=".widgets.TimerWidgetProvider"
             android:exported="true">
             <intent-filter>

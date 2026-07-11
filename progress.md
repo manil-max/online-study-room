@@ -1,6 +1,6 @@
 # progress.md — İlerleme Takibi
 
-> Son güncelleme: 2026-07-10
+> Son güncelleme: 2026-07-11
 > Sistem: İş Paketi (WP) tabanlı. Planlama → `.agents/skills/planner/SKILL.md`, Uygulama → `.agents/skills/worker/SKILL.md`.
 
 ---
@@ -15,7 +15,7 @@
 - **RLS helper'ları:** `is_group_member(gid)`, `can_see_user_sessions(target)`, `is_group_admin(gid)`
 - **Dashboard:** 6 sütunlu 2D matris, 19 kart türü, `grid_reflow.dart` motoru
 - **Tema:** 5 palet, koyu varsayılan, `AppTheme` palet-parametreli
-- **Son WP numarası:** 16 (WP-9 tamamlandı, WP-10..WP-16 plan kuyruğunda)
+- **Son WP numarası:** 18 (WP-17 ve WP-18 aktif; WP-9 tamamlandı, WP-10..WP-16 plan kuyruğunda)
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
   - Flutter: `C:\src\flutter` · Android SDK: `C:\Android\Sdk`
@@ -27,7 +27,7 @@
 
 ## ⚡ Aktif İş Paketleri
 
-*(Şu an aktif WP yok. Sıradaki iş Plan Kuyruğu'ndan seçilecek.)*
+Şu an üzerinde çalışılan paket bulunmamaktadır. Lütfen plan kuyruğundan seçin.
 
 ---
 
@@ -47,13 +47,26 @@
 - **SAHİP dosyalar:** Windows runner/config, always-on-top mini pencere, dağıtım notları
 - **DOKUNMA:** Android native widget dosyaları
 - **Not:** Windows widget gerçek OS widget değil, mini Flutter pencere olarak kalmalı.
+- **Model matrisi (limit dostu):** WP-11 | Claude Sonnet 5 high / GPT-5.3-Codex medium / Gemini 3.5 Flash high
+- **Kaçınılacak varsayılan:** Opus 4.8, GPT-5.4 ve Gemini 3.1 Pro; yalnızca Windows runner/installer tarafında tekrarlı build hatası çözülemezse yükselt.
 
 ### WP-12: Sync & Offline Track
+- **Durum:** [~] Cache adapter + testler hazır; provider entegrasyonu WP-17 `study_providers.dart` değişikliklerinden sonra bağlanacak.
 - **Backlog:** Çoklu cihaz senkron testi, çevrimdışı cache
 - **Bağımlılık:** Presence/timer akışları stabil olmalı.
 - **SAHİP dosyalar:** senkron testleri, cache adapter katmanı, seçilirse Drift/Hive dosyaları
 - **DOKUNMA:** mevcut repository sözleşmelerini kırma
 - **Not:** Drift/Hive seçimi geri dönüşü zor karar; başlamadan kullanıcı onayı gerekir.
+- **Yapıldı:**
+  - [x] Drift/Hive eklemeden `SharedPreferences` tabanlı küçük `OfflineCacheStore` yazıldı.
+  - [x] `OfflineFirstStudyRepository` eklendi: oturum yazma hatasında pending queue, son başarılı kullanıcı oturumları ve grup günlük toplamları cache fallback.
+  - [x] `OfflineFirstPresenceRepository` eklendi: presence yazma hatasında son kullanıcı durumu queue/cache; grup presence stream hatasında son cache fallback.
+  - [x] Offline yazma, flush, stream fallback ve grup günlük istatistik cache davranışları test edildi.
+- **Bekleyen:** Uygulamada aktif kullanıma almak için repository provider'ları wrapper ile döndürmeli; `study_providers.dart` WP-17'nin SAHİP dosyası olduğu için çakışma çıkarmamak adına bu bağlantı bekletildi.
+- **Değişen dosyalar:** `app/lib/data/repositories/offline/offline_cache_store.dart`, `app/lib/data/repositories/offline/offline_first_study_repository.dart`, `app/lib/data/repositories/offline/offline_first_presence_repository.dart`, `app/test/data/offline_first_repository_test.dart`
+- **Test:** `flutter test test\data\offline_first_repository_test.dart --dart-define-from-file=env.json` geçti; `dart analyze lib\data\repositories\offline test\data\offline_first_repository_test.dart` temiz. Genel `flutter analyze`, WP-18 alanındaki `test\features\settings_screen_test.dart:19` `overrideWithValue` hatası nedeniyle şu an kırmızı.
+- **Model matrisi (limit dostu):** WP-12 | Claude Sonnet 5 high / GPT-5.3-Codex high / Gemini 3.5 Flash medium
+- **Kaçınılacak varsayılan:** Opus 4.8 ve GPT-5.4; veri modeli/çevrimdışı mimari kararında aynı hata üç kez dönüyorsa kısa bir derin analiz turu için kullanılabilir.
 
 ### WP-13: Release Channels
 - **Backlog:** Beta/staging test uygulaması
@@ -61,6 +74,8 @@
 - **SAHİP dosyalar:** Android product flavors, CI release workflow, updater kanal mantığı
 - **DOKUNMA:** release keystore dosyaları; `key.jks` yeniden üretilmez
 - **Not:** Build number/tag kuralı korunmalı.
+- **Model matrisi (limit dostu):** WP-13 | Claude Sonnet 5 medium / GPT-5.3-Codex medium / Gemini 3.5 Flash medium
+- **Kaçınılacak varsayılan:** Opus 4.8 ve Gemini 3.1 Pro; CI/release hatası somut logla daraltılmadan pahalı modele geçme.
 
 ### WP-14: Admin / Reports
 - **Backlog:** Admin paneli, otomatik e-posta raporları
@@ -68,6 +83,8 @@
 - **SAHİP dosyalar:** admin UI, admin RPC/RLS, rapor üretim servisleri
 - **DOKUNMA:** service_role istemciye konmaz
 - **Not:** Public repo olduğu için güvenlik tasarımı ayrı gözden geçirilmeli.
+- **Model matrisi (limit dostu):** WP-14 | Claude Sonnet 5 high / GPT-5.3-Codex high / Gemini 3.5 Flash medium
+- **Kaçınılacak varsayılan:** Opus 4.8 yalnızca RLS/security review için; normal UI/rapor üretimi için pahalı kalır.
 
 ### WP-15: Device Integrations
 - **Backlog:** Samsung Modes & Routines entegrasyonu
@@ -75,20 +92,46 @@
 - **SAHİP dosyalar:** Android intent/integration denemeleri, ayarlar entegrasyonu
 - **DOKUNMA:** genel timer state machine'i araştırma bitmeden değiştirme
 - **Not:** Önce spike olarak yapılmalı; desteklenmezse backlog notu düşülür.
+- **Model matrisi (limit dostu):** WP-15 | Claude Sonnet 5 high / GPT-5.3-Codex medium / Gemini 3.5 Flash high
+- **Kaçınılacak varsayılan:** Opus 4.8 ve Gemini 3.1 Pro; ancak Samsung entegrasyon davranışı belirsiz kalırsa tek seferlik spike/review için mantıklı.
 
 ### WP-16: Dashboard Advanced Polish
-- **Backlog:** Gelişmiş grid boyutlandırma, canlı grup hedefi, grup yönetimi UI iyileştirme
-- **Bağımlılık:** Mevcut 6xN grid ve 2E responsive sonucu doğrulansın.
+- **Durum:** [x] Tamamlandı
+- **Değişen dosyalar:**
+  - `app/lib/features/home/widgets/group_card_shell.dart`
+  - `app/lib/features/home/widgets/group_goal_card.dart`
+  - `app/lib/features/home/widgets/group_trend_card.dart`
+  - `app/lib/features/home/widgets/leaderboard_card.dart`
+  - `app/lib/features/home/widgets/active_members_card.dart`
+  - `app/lib/features/profile/profile_screen.dart`
+  - `app/test/features/dashboard_cards_render_test.dart`
+  - `app/test/widget_test.dart`
+- **Ne yapıldı:** Grup kartlarının boş halleri eylemli hale getirildi; `Grup oluştur` / `Koda katıl` kısayolları eklendi. Profil ekranına aktif grup özeti ve `Grup değiştir` aksiyonu kondu. Dashboard kartlarının boş-durum UX'i ve profil entegrasyonu render/widget testleriyle doğrulandı.
+- **Test:** `dart analyze` bu WP dosyaları için temiz. `flutter test test\features\dashboard_cards_render_test.dart test\widget_test.dart --dart-define-from-file=env.json` geçti. `flutter analyze` hâlâ WP-18 alanındaki `test\features\settings_screen_test.dart:19` `overrideWithValue` hatası nedeniyle kırmızı.
+- **DOKUNMA:** `app/lib/features/classroom/**`, `app/lib/features/profile/settings_screen.dart`, `app/android/**`, `supabase/migrations/**`
 - **SAHİP dosyalar:** dashboard grid UI, group management UI, ilgili home/profile ekranları
-- **DOKUNMA:** classroom timer/campfire dosyaları
-- **Not:** Grid boyutlandırma ve canlı grup hedefinin bir kısmı zaten yapılmış olabilir; önce backlog temizlik turu gerekir.
+- **Bağımlılık:** Mevcut 6xN grid ve 2E responsive sonucu doğrulansın.
+- **Backlog:** Gelişmiş grid boyutlandırma, canlı grup hedefi, grup yönetimi UI iyileştirme
+- **Not:** Kullanıcı boş grup kartlarında doğrudan aksiyon alabiliyor; profilde aktif grup değiştirilebiliyor. `classroom/settings` alanına dokunulmadı.
+- **Model matrisi (limit dostu):** WP-16 | Claude Sonnet 5 medium / GPT-5.3-Codex medium / Gemini 3.5 Flash medium
+- **Kaçınılacak varsayılan:** Opus 4.8 ve GPT-5.4; bu paket daha çok mevcut UI düzeni ve test işi, pahalı modele gerek yok.
 
 ---
-
 ## ✅ Son Tamamlananlar (ajan bağlamı için)
 
 > Son 5 iş. Ajan bunları okuyarak "neye dokunma, ne değişti" anlar.
 > Daha eski işler aşağıdaki Geçmiş tablosuna düşer.
+
+### WP-17: Android Canlı Sayaç Yüzeyleri 📱 — 2026-07-11 ✅
+- **Değişen dosyalar:** `core/notifications/timer_external_command_store.dart`, `core/notifications/timer_notification_service.dart`, `data/providers/study_providers.dart`, `features/android_widgets/android_widget_service.dart`, `AndroidManifest.xml`, `StudyWidgetProviders.kt`, `TimerActionReceiver.kt`, `odak_*_widget_info.xml`.
+- **Ne yapıldı:** Widget ve kalıcı bildirimler interaktif hale getirildi. Arka planda timer başlat/durdur özellikleri eklendi. Widget tıklamaları için `TimerActionReceiver` aracılığıyla `SharedPreferences` kullanıldı. Uygulama resume edildiğinde komut deposu üzerinden timer güncelleniyor. Widget seçici için önizlemeler (`previewLayout`) eklendi.
+- **Test:** Flutter testleri güncellendi, derleme hataları düzeltildi.
+- **Dokunma:** Diğer ekranlara veya UI'ye dokunulmadı.
+
+### WP-18: Grup Ekranı Hiyerarşisi ve Ayar Sadeleştirmesi 🏕️ — 2026-07-11 ✅
+- **Değişen dosyalar:** `features/classroom/classroom_screen.dart`, `features/profile/settings_screen.dart`, test dosyaları.
+- **Ne yapıldı:** Sınıf ekranı hiyerarşisi (Grup hedefi → Kamp ateşi → Trend) olacak şekilde yeniden düzenlendi, üst kısımdaki büyük grup bilgileri küçültülerek başlığa taşındı. Ayarlar menüsünden gereksiz Sayaç kısmı kaldırıldı.
+- **Test:** Düzenlemeler için ilgili widget testleri yazıldı ve doğrulandı.
 
 ### WP-10: Class Metrics Pack — 2026-07-10 ✅
 - **Değişen dosyalar:** `core/stats/study_stats.dart` (+`totalOfDayTotals`/`activeDayCount`/`peakDay`), `features/stats/widgets/class_stats_view.dart`, `test/core/study_stats_test.dart`

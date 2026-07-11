@@ -109,87 +109,90 @@ class _GroupView extends ConsumerWidget {
       padding: const EdgeInsets.all(16),
       children: [
         if (showTimer) ...[const StudyTimerCard(), const SizedBox(height: 8)],
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(group.name, style: theme.textTheme.titleLarge),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Text(
-                      'Davet kodu: ',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      group.name,
+                      style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    SelectableText(
-                      group.inviteCode,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w500,
-                        letterSpacing: 2,
+                  ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        tooltip: 'Sohbet',
+                        icon: const Icon(Icons.forum_outlined),
+                        onPressed: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => ClassChatScreen(group: group),
+                          ),
+                        ),
                       ),
+                      IconButton(
+                        tooltip: 'Ayarlar',
+                        icon: const Icon(Icons.settings_outlined),
+                        onPressed: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => ClassDetailScreen(group: group),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              Row(
+                children: [
+                  Text(
+                    'Kod: ',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
-                    IconButton(
-                      tooltip: 'Kopyala',
-                      icon: const Icon(Icons.copy, size: 18),
-                      onPressed: () async {
-                        await Clipboard.setData(
-                          ClipboardData(text: group.inviteCode),
+                  ),
+                  SelectableText(
+                    group.inviteCode,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 2,
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Kopyala',
+                    icon: const Icon(Icons.copy, size: 16),
+                    visualDensity: VisualDensity.compact,
+                    onPressed: () async {
+                      await Clipboard.setData(
+                        ClipboardData(text: group.inviteCode),
+                      );
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Davet kodu kopyalandı'),
+                          ),
                         );
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Davet kodu kopyalandı'),
-                            ),
-                          );
-                        }
-                      },
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 4,
-                  children: [
-                    TextButton.icon(
-                      icon: const Icon(Icons.forum_outlined),
-                      label: const Text('Sohbet'),
-                      onPressed: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => ClassChatScreen(group: group),
-                        ),
-                      ),
-                    ),
-                    TextButton.icon(
-                      icon: const Icon(Icons.settings_outlined),
-                      label: const Text('Ayarlar'),
-                      onPressed: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => ClassDetailScreen(group: group),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 8),
         const GroupGoalCard(),
-        const SizedBox(height: 8),
-        const GroupTrendCard(),
-        const SizedBox(height: 12),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4),
-          child: Text('Kamp ateşi', style: theme.textTheme.titleMedium),
-        ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 16),
         const CampfireScene(),
+        const SizedBox(height: 16),
+        const GroupTrendCard(),
       ],
     );
   }

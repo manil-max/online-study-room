@@ -155,3 +155,4 @@ değildir; sadelik, güvenilirlik ve iyi kullanıcı deneyimi önceliklidir.
 | Haz 26 | `study_sessions.group_id` KALDIRILDI — oturum yalnızca kullanıcıya ait. |
 | Haz 26 | Soft-delete: `group_members.left_at` (hard delete yerine). |
 | Tem 10 | Kamp ateşi canlı ekran (düz liste yerine). Sayaç: kronometre + geri sayım + pomodoro. |
+| Tem 11 | Android dış sayaç kontrolleri (bildirim/widget) uygulamayı öne getirmeden dayanıklı yerel komut akışına gider; Flutter açılışta bu durumu uzlaştırır. One UI dinamik panelinin görünümü sistem kontrolündedir, işlevsel kalıcı bildirim desteklenmeyen cihazlar için geri dönüştür. |

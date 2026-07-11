@@ -1,8 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../utils/duration_format.dart';
 
@@ -10,7 +12,7 @@ final timerNotificationServiceProvider = Provider<TimerNotificationGateway>(
   (ref) => TimerNotificationService.instance,
 );
 
-enum TimerNotificationAction { open, stop }
+enum TimerNotificationAction { open, stop, start }
 
 abstract interface class TimerNotificationGateway {
   Stream<TimerNotificationAction> get commands;
@@ -32,6 +34,7 @@ class TimerNotificationSnapshot {
     required this.elapsedSeconds,
     required this.remainingSeconds,
     required this.isCountingDown,
+    required this.isRunning,
     this.progress,
     this.progressMax,
   });
@@ -43,6 +46,7 @@ class TimerNotificationSnapshot {
   final int elapsedSeconds;
   final int? remainingSeconds;
   final bool isCountingDown;
+  final bool isRunning;
   final int? progress;
   final int? progressMax;
 
@@ -77,8 +81,14 @@ class TimerNotificationSnapshot {
 }
 
 @pragma('vm:entry-point')
-void timerNotificationBackgroundHandler(NotificationResponse response) {
-  TimerNotificationService.dispatchResponse(response);
+void timerNotificationBackgroundHandler(NotificationResponse response) async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final prefs = await SharedPreferences.getInstance();
+  if (response.actionId == 'stop_timer') {
+    await prefs.setString('timer_external_command', 'stop');
+  } else if (response.actionId == 'start_timer') {
+    await prefs.setString('timer_external_command', 'start');
+  }
 }
 
 class TimerNotificationService implements TimerNotificationGateway {
@@ -92,6 +102,7 @@ class TimerNotificationService implements TimerNotificationGateway {
   static const String _channelId = 'study_timer_ongoing';
   static const String _channelName = 'Çalışma sayacı';
   static const String _stopActionId = 'stop_timer';
+  static const String _startActionId = 'start_timer';
 
   static final _commands =
       StreamController<TimerNotificationAction>.broadcast();
@@ -159,14 +170,11 @@ class TimerNotificationService implements TimerNotificationGateway {
       showProgress: snapshot.hasProgress,
       maxProgress: snapshot.progressMax ?? 0,
       progress: snapshot.progress ?? 0,
-      ticker: snapshot.body,
-      subText: snapshot.phaseLabel,
-      styleInformation: BigTextStyleInformation(snapshot.expandedBody),
-      actions: const [
+      actions: [
         AndroidNotificationAction(
-          _stopActionId,
-          'Durdur',
-          showsUserInterface: true,
+          snapshot.isRunning ? _stopActionId : _startActionId,
+          snapshot.isRunning ? 'Durdur' : 'Başlat',
+          showsUserInterface: false,
           cancelNotification: false,
         ),
       ],
@@ -174,10 +182,10 @@ class TimerNotificationService implements TimerNotificationGateway {
 
     await _plugin.show(
       id: _notificationId,
-      title: snapshot.title,
+      title: 'Odak Kampı',
       body: snapshot.body,
       notificationDetails: NotificationDetails(android: details),
-      payload: 'timer:open',
+      payload: 'timer:toggle',
     );
   }
 

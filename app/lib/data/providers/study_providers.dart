@@ -4,7 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide Presence;
 import 'package:uuid/uuid.dart';
 
+import 'package:flutter/widgets.dart';
+
 import '../../core/config/supabase_config.dart';
+import '../../core/notifications/timer_external_command_store.dart';
 import '../../core/notifications/timer_notification_service.dart';
 import '../../core/prefs/app_prefs.dart';
 import '../../core/stats/study_stats.dart';
@@ -289,6 +292,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
 
   Timer? _tick;
   StreamSubscription<TimerNotificationAction>? _notificationCommands;
+  AppLifecycleListener? _lifecycleListener;
 
   @override
   StudyTimerState build() {
@@ -300,9 +304,13 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
             unawaited(stop());
           }
         });
+    _lifecycleListener = AppLifecycleListener(
+      onResume: () => unawaited(_onAppResumed()),
+    );
     ref.onDispose(() {
       _tick?.cancel();
       _notificationCommands?.cancel();
+      _lifecycleListener?.dispose();
     });
     final prefs = ref.read(sharedPreferencesProvider);
     final modeName = prefs.getString(_kMode);
@@ -352,6 +360,20 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       });
     }
     return initial;
+  }
+
+  Future<void> _onAppResumed() async {
+    final store = ref.read(timerExternalCommandStoreProvider);
+    await store.reload();
+    final cmd = store.command;
+    if (cmd == null) return;
+    
+    if (cmd == 'start' && !state.isRunning) {
+      start();
+    } else if (cmd == 'stop' && state.isRunning) {
+      await stop();
+    }
+    await store.clearCommand();
   }
 
   /// Aktif dersi seçer (yalnızca sayaç dururken; null → derssiz).
@@ -605,7 +627,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
         AndroidWidgetSnapshot.timer(
           elapsed: '00:00:00',
           status: 'Çalışma hazır',
-          action: 'Uygulamayı aç',
+          action: 'Başlat',
         ),
       );
       await widgetService.refresh(widgets: const [StudyHomeWidget.timer]);
@@ -623,7 +645,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       AndroidWidgetSnapshot.timer(
         elapsed: formatHms(remaining ?? elapsed),
         status: state.phase == TimerPhase.rest ? 'Mola' : 'Çalışıyor',
-        action: 'Durdurmak için aç',
+        action: 'Durdur',
       ),
     );
     await widgetService.refresh(widgets: const [StudyHomeWidget.timer]);
@@ -659,6 +681,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       elapsedSeconds: elapsed,
       remainingSeconds: remaining,
       isCountingDown: target != null,
+      isRunning: state.isRunning,
       progress: target == null ? null : elapsed.clamp(0, target).toInt(),
       progressMax: target,
     );

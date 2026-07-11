@@ -110,4 +110,18 @@ void main() {
 
     expect(find.text('E-posta'), findsOneWidget);
   });
+
+  testWidgets('Profilde aktif grup kartı boş durum eylemleri gösterir', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_appWith(await _signedInRepo()));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Profil'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Aktif grup'), findsOneWidget);
+    expect(find.text('Grup oluştur'), findsOneWidget);
+    expect(find.text('Koda katıl'), findsOneWidget);
+  });
 }

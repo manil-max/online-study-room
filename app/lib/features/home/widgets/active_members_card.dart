@@ -7,6 +7,7 @@ import '../../../core/widgets/second_ticker.dart';
 import '../../../core/widgets/user_avatar.dart';
 import '../../../data/models/presence.dart';
 import '../../../data/models/profile.dart';
+import '../../classroom/widgets/class_switcher.dart';
 import '../../../data/providers/group_providers.dart';
 import '../../../data/providers/presence_providers.dart';
 import '../dashboard_card.dart';
@@ -24,16 +25,24 @@ class ActiveMembersCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final group = ref.watch(userGroupProvider).value;
-    if (group == null) return const GroupCardShell(title: 'Şu an çalışanlar');
+    if (group == null) {
+      return GroupCardShell(
+        title: 'Şu an çalışanlar',
+        onCreateGroup: () => createGroupFlow(context, ref),
+        onJoinGroup: () => joinGroupFlow(context, ref),
+      );
+    }
 
     final presence = ref.watch(groupPresenceProvider).value ?? const [];
     final members = ref.watch(groupMembersProvider).value ?? const <Profile>[];
-    final active = presence
-        .where((p) => p.status == PresenceStatus.studying)
-        .toList()
-      // En uzun süredir çalışan üstte (startedAt'e göre; saniyeden bağımsız).
-      ..sort((a, b) => (a.startedAt ?? DateTime.now())
-          .compareTo(b.startedAt ?? DateTime.now()));
+    final active =
+        presence.where((p) => p.status == PresenceStatus.studying).toList()
+          // En uzun süredir çalışan üstte (startedAt'e göre; saniyeden bağımsız).
+          ..sort(
+            (a, b) => (a.startedAt ?? DateTime.now()).compareTo(
+              b.startedAt ?? DateTime.now(),
+            ),
+          );
 
     final memberById = {for (final m in members) m.id: m};
 
@@ -57,8 +66,9 @@ class ActiveMembersCard extends ConsumerWidget {
 
           final int maxItems;
           if (fill && isHeightBounded) {
-            maxItems =
-                ((availableHeight - headerHeight) / rowHeight).floor().clamp(1, 20);
+            maxItems = ((availableHeight - headerHeight) / rowHeight)
+                .floor()
+                .clamp(1, 20);
           } else if (isHeightBounded) {
             maxItems = 3;
           } else {
@@ -72,12 +82,13 @@ class ActiveMembersCard extends ConsumerWidget {
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: 5),
               child: _ActiveRow(
-                name: (memberById[p.userId] != null &&
+                name:
+                    (memberById[p.userId] != null &&
                         !memberById[p.userId]!.isActive)
                     ? 'Eski Grup Üyesi'
                     : (memberById[p.userId]?.displayName.isNotEmpty == true
-                        ? memberById[p.userId]!.displayName
-                        : 'İsimsiz'),
+                          ? memberById[p.userId]!.displayName
+                          : 'İsimsiz'),
                 avatarUrl: memberById[p.userId]?.avatarUrl,
                 startedAt: p.startedAt,
                 green: green,
@@ -89,10 +100,12 @@ class ActiveMembersCard extends ConsumerWidget {
           final header = Row(
             children: [
               Expanded(
-                child: Text('Şu an çalışanlar',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.titleMedium),
+                child: Text(
+                  'Şu an çalışanlar',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.titleMedium,
+                ),
               ),
               const SizedBox(width: 8),
               Container(
@@ -101,16 +114,23 @@ class ActiveMembersCard extends ConsumerWidget {
                   color: green.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Text('${active.length} aktif',
-                    style: theme.textTheme.labelSmall
-                        ?.copyWith(color: green, fontWeight: FontWeight.w700)),
+                child: Text(
+                  '${active.length} aktif',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: green,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ),
             ],
           );
 
-          final emptyText = Text('Şu an çalışan kimse yok.',
-              style: theme.textTheme.bodyMedium
-                  ?.copyWith(color: theme.colorScheme.onSurfaceVariant));
+          final emptyText = Text(
+            'Şu an çalışan kimse yok.',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          );
 
           if (!fill) {
             return Padding(
@@ -178,14 +198,17 @@ class _ActiveRow extends StatelessWidget {
     // Yalnızca bu metin saniyede bir kendini yeniler.
     final time = SecondTicker(
       builder: (_, now) {
-        final elapsed =
-            startedAt == null ? 0 : now.difference(startedAt!).inSeconds;
-        return Text(formatHms(elapsed),
-            maxLines: 1,
-            style: theme.textTheme.titleSmall?.copyWith(
-              color: green,
-              fontFeatures: const [],
-            ));
+        final elapsed = startedAt == null
+            ? 0
+            : now.difference(startedAt!).inSeconds;
+        return Text(
+          formatHms(elapsed),
+          maxLines: 1,
+          style: theme.textTheme.titleSmall?.copyWith(
+            color: green,
+            fontFeatures: const [],
+          ),
+        );
       },
     );
     return Row(
@@ -202,7 +225,10 @@ class _ActiveRow extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: green,
                   shape: BoxShape.circle,
-                  border: Border.all(color: theme.colorScheme.surface, width: 2),
+                  border: Border.all(
+                    color: theme.colorScheme.surface,
+                    width: 2,
+                  ),
                 ),
               ),
             ),
@@ -211,10 +237,13 @@ class _ActiveRow extends StatelessWidget {
         const SizedBox(width: 10),
         if (!isCompact) ...[
           Expanded(
-            child: Text(name,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.bodyMedium
-                    ?.copyWith(fontWeight: FontWeight.w500)),
+            child: Text(
+              name,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           ),
           const SizedBox(width: 8),
           time,

@@ -50,6 +50,17 @@ class TimerWidgetProvider : HomeWidgetProvider() {
                     R.id.timer_widget_action,
                     widgetData.text(StudyWidgetKeys.TimerAction, "Uygulamayı aç"),
                 )
+
+                val actionIntent = android.content.Intent(context, TimerActionReceiver::class.java).apply {
+                    action = TimerActionReceiver.ACTION_TOGGLE_TIMER
+                }
+                val pendingIntent = android.app.PendingIntent.getBroadcast(
+                    context,
+                    0,
+                    actionIntent,
+                    android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE
+                )
+                setOnClickPendingIntent(R.id.timer_widget_action, pendingIntent)
             }
             appWidgetManager.updateAppWidget(widgetId, views)
         }
