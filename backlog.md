@@ -14,7 +14,7 @@
   - Grup leaderboard widget'ı
   - Çeşitli boyut/tür seçenekleri
   - **WP-1 tamamlandı (`616a92d`):** `home_widget` dependency, Android provider/layout/xml altyapısı ve Flutter widget veri servisi eklendi.
-  - **Kalan (WP-17 aktif):** Widget ekleme ekranına gerçek önizlemeler; sayaç widget'ında uygulamayı açmadan başlat/durdur; istatistik ve sıralama widget'larında görünür, anlamlı içerik ve farklı boyutlar.
+  - **WP-17 tamamlandı:** Widget ekleme ekranına gerçek önizlemeler; sayaç widget'ında uygulamayı açmadan başlat/durdur; istatistik ve sıralama widget'larında görünür, anlamlı içerik ve farklı boyutlar artık teslimde.
   - *Kaynak: project.md §3.6, progress.md FAZ 4.2, new_features.md §5 Madde 4*
 
 - [~] **Persistent notification (kalıcı bildirim + kontrol paneli)**
@@ -22,7 +22,7 @@
   - Durdur/başlat/mola aksiyonları bildirimde
   - Gelişmiş kontrol paneli görünümü
   - **WP-2 tamamlandı:** Kalıcı Android sayaç bildirimi, `Durdur` aksiyonu, notification permission ve restart sonrası timer geri yükleme eklendi.
-  - **Kalan (WP-17 aktif):** Bildirim yalnız `SS:DD:SS` sayacını ve bağlama göre `Durdur`/`Başlat` aksiyonunu gösterir; aksiyon uygulamayı açmadan çalışır. Aktif sayaç bildirimi silinemez, durunca kaldırılabilir.
+  - **WP-17 tamamlandı:** Bildirim yalnız `SS:DD:SS` sayacını ve bağlama göre `Durdur`/`Başlat` aksiyonunu gösterir; aksiyon uygulamayı açmadan çalışır. Aktif sayaç bildirimi silinemez, durunca kaldırılabilir.
   - *Kaynak: new_features.md §5 Madde 10*
 
 - [x] **E-posta doğrulama + şifre sıfırlama**
@@ -45,7 +45,7 @@
   - Yeni nesil Android "dinamik buton/hap" entegrasyonu
   - Arka plandayken durum çubuğunda minik gösterge
   - Tıklandığında üstten şık kontrol paneli
-  - **WP-17 aktif:** Sistem destekliyse devam eden kronometre bildirimi One UI'nın durum çubuğu/dinamik panel yüzeyine beslenir; kapalı cihaz/One UI sürümünde standart kalıcı bildirim güvenli geri dönüş olur.
+  - **WP-17 tamamlandı:** Sistem destekliyse devam eden kronometre bildirimi One UI'nın durum çubuğu/dinamik panel yüzeyine beslenir; kapalı cihaz/One UI sürümünde standart kalıcı bildirim güvenli geri dönüş olur.
   - *Kaynak: new_features.md §5 Madde Live Activities*
 
 - [ ] **Kilit ekranı widget'ı**
@@ -110,20 +110,21 @@
   - Gizli geliştirici menüleri, debug ekranları
   - *Kaynak: new_features.md §6*
 
-- [ ] **Admin paneli (süper-admin arayüzü)**
-  - Kullanıcı/grup yönetimi, veritabanı denetimi
-  - Supabase kota/limit takibi
-  - Geri bildirim/hata raporu merkezi
-  - Veri analizi grafikleri, toplu duyuru araçları
+- [~] **Admin paneli (süper-admin arayüzü)** — **WP-14 planlandı**
+  - İlk teslim: sunucu-doğrulamalı süper-admin, salt-okunur kullanıcı/grup/oturum özeti ve geri bildirim/hata raporu merkezi.
+  - Sonraki teslim: yönetimsel silme/düzenleme, Supabase kota/limit takibi, ayrıntılı analiz ve toplu duyuru araçları.
   - *Kaynak: new_features.md §6*
 
-- [ ] **Samsung Modes & Routines entegrasyonu**
+- [~] **Samsung Modes & Routines entegrasyonu** — **WP-15 Gemini spike**
   - Cihaz "Ders Çalışma Modu"nu algılama
   - Otomatik odak ekranına geçiş
+  - **WP-15 kapsamı:** Yalnız Android/Samsung entegrasyon spike'ı; `settings_screen.dart` ve Flutter ayarlar UI'ına dokunulmaz.
+  - **WP-19 sonrası:** WP-14 bittikten ve WP-15 destek kararını yazdıktan sonra ayarlar ekranına küçük bağlantı eklenir.
   - *Kaynak: new_features.md §5*
 
 - [ ] **Otomatik e-posta raporları**
   - Ay sonlarında kullanıcılara özet e-posta
+  - **WP-14 sonrası bekliyor:** e-posta sağlayıcısı, gönderen adresi ve sunucu tarafındaki gizli anahtar yönetimi netleşmeden planlı uygulamaya alınmaz.
   - *Kaynak: new_features.md §5 Madde 21*
 
 - [ ] **Yeni grafik türleri**
@@ -169,6 +170,7 @@
 
 ## ❓ Açık Sorular
 
+- Otomatik aylık rapor için hangi e-posta sağlayıcısı ve hangi gönderen adresi kullanılacak? Anahtar yalnız Supabase Edge Function/secret olarak saklanacak; Flutter uygulamasına girmeyecek.
 - İstatistik detayı: Hangi grafik tipleri, hangi kıyaslamalar en faydalı?
 - Widget içeriği: Hangi bilgiler, hangi boyut, hangi platform öncelikli?
 - Tasarım dili: Renkler/tema son halini aldı mı yoksa daha iyileştirme var mı?

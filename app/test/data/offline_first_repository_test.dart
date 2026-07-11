@@ -1,9 +1,14 @@
 import 'dart:async';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:online_study_room/core/prefs/app_prefs.dart';
 import 'package:online_study_room/data/models/daily_stat.dart';
 import 'package:online_study_room/data/models/presence.dart';
 import 'package:online_study_room/data/models/study_session.dart';
+import 'package:online_study_room/data/providers/offline_providers.dart';
+import 'package:online_study_room/data/providers/presence_providers.dart';
+import 'package:online_study_room/data/providers/study_providers.dart';
 import 'package:online_study_room/data/repositories/offline/offline_cache_store.dart';
 import 'package:online_study_room/data/repositories/offline/offline_first_presence_repository.dart';
 import 'package:online_study_room/data/repositories/offline/offline_first_study_repository.dart';
@@ -94,6 +99,25 @@ void main() {
     final offlineRows = await offlineRepo.watchGroupDailyStats('g1').first;
 
     expect(offlineRows.single.seconds, 1200);
+  });
+
+  test('repository providers now return offline-first wrappers', () async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final container = ProviderContainer(
+      overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+    );
+    addTearDown(container.dispose);
+
+    expect(
+      container.read(studyRepositoryProvider),
+      isA<OfflineFirstStudyRepository>(),
+    );
+    expect(
+      container.read(presenceRepositoryProvider),
+      isA<OfflineFirstPresenceRepository>(),
+    );
+    expect(container.read(offlineCacheStoreProvider), isA<OfflineCacheStore>());
   });
 
   test(

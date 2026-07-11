@@ -16,11 +16,11 @@ Kullanıcı: **"progress.md oku ve WP-N'yi yap"**
 ## Akış
 
 ```
-1. progress.md oku           → kendi WP'ni bul
+1. progress.md oku           → kendi lane'ini ve WP'ni bul
 2. "Proje Gerçekleri" oku    → teknik bağlam
 3. "Son Tamamlananlar" oku   → son değişikliklerin bağlamı
 4. WP adımlarını sırayla yap → sadece SAHİP dosyalara yaz
-5. Her adım bitince          → WP'deki checkbox'ı [x] yap
+5. Her adım bitince          → kendi lane'ini ve WP'deki checkbox'ı [x] yap
 6. Tümü bitince              → test + analyze + progress güncelle + commit
 ```
 
@@ -61,9 +61,19 @@ Kullanıcı: **"progress.md oku ve WP-N'yi yap"**
 1. **Sadece kendi WP'nin SAHİP dosyalarına yaz**
 2. Başka WP'nin SAHİP dosyasına **ASLA dokunma** (okuyabilirsin)
 3. DOKUNMA listesindeki dosyaları **kesinlikle değiştirme**
-4. `progress.md`'de **sadece kendi WP bölümünü** düzenle
+4. `progress.md`'de **sadece kendi lane'ini ve kendi WP bölümünü** düzenle
 5. Yeni dosya eklemek serbest ama **yalnız kendi feature klasörüne**
 6. Ortak dosya değişikliği gerekiyorsa → WP'de belirtilmiş olmalı, yoksa **dur ve kullanıcıya sor**
+
+---
+
+## Lane Disiplini
+
+- `progress.md` üç canlı lane içerir: `Gemini`, `Claude`, `Codex`.
+- Her agent yalnız kendi lane'inde çalışan WP kartını günceller.
+- Bir WP başka ajana geçiyorsa, tek editte yeni lane'e taşınır ve kısa bir handoff notu yazılır.
+- Başlatma, bloklanma, devretme ve tamamlanma gibi her anlamlı geçişte `progress.md` anında güncellenir.
+- Başka lane'lerdeki kartlar yalnız okunur; reassign yoksa dokunma.
 
 ---
 
@@ -80,7 +90,7 @@ flutter test
 - İkisi de temiz olmalı. **Hatayla commit atma — önce düzelt.**
 
 ### 2. progress.md Güncelle
-- Kendi WP bloğunda durumu `✅` yap
+- Kendi lane'inde kendi WP bloğunun durumunu `✅` yap
 - WP bloğunu "Aktif İş Paketleri"nden kes → "Son Tamamlananlar"a yapıştır
 - "Son Tamamlananlar"ı kısalt (sadece: değişen dosyalar, kararlar, dokunma listesi)
 - "Son Tamamlananlar" 5'ten fazlaysa → en eskisini "Geçmiş" tablosuna tek satır olarak sıkıştır

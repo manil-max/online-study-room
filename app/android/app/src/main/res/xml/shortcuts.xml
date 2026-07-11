@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="samsung_routine_start_timer"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_start_timer_short"
+        android:shortcutLongLabel="@string/shortcut_start_timer_long">
+        <intent
+            android:action="com.manilmax.online_study_room.START_TIMER"
+            android:targetPackage="com.manilmax.online_study_room"
+            android:targetClass="com.manilmax.online_study_room.MainActivity" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="samsung_routine_stop_timer"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_stop_timer_short"
+        android:shortcutLongLabel="@string/shortcut_stop_timer_long">
+        <intent
+            android:action="com.manilmax.online_study_room.STOP_TIMER"
+            android:targetPackage="com.manilmax.online_study_room"
+            android:targetClass="com.manilmax.online_study_room.MainActivity" />
+    </shortcut>
+</shortcuts>

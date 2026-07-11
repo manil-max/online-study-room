@@ -5,10 +5,21 @@ import 'package:supabase_flutter/supabase_flutter.dart' hide Presence;
 
 import '../../core/config/supabase_config.dart';
 import '../models/presence.dart';
+import '../repositories/offline/offline_first_presence_repository.dart';
 import '../repositories/presence_repository.dart';
 import '../repositories/in_memory/in_memory_presence_repository.dart';
 import '../repositories/supabase/supabase_presence_repository.dart';
+import 'offline_providers.dart';
 import 'group_providers.dart';
+
+SupabaseClient? _supabaseClientOrNull() {
+  if (!SupabaseConfig.isConfigured) return null;
+  try {
+    return Supabase.instance.client;
+  } catch (_) {
+    return null;
+  }
+}
 
 /// Heartbeat aralığı: yerel kullanıcı çalışırken presence satırı bu sıklıkta
 /// yeniden yazılır (sunucu `updated_at`'i tazelenir). Bkz. [presence_lifecycle].
@@ -19,14 +30,20 @@ const Duration kPresenceHeartbeatInterval = Duration(seconds: 20);
 /// heartbeat durur, satır bu süre sonra bayatlar ve çevrimdışı gösterilir.
 const Duration kPresenceStaleThreshold = Duration(seconds: 70);
 
-/// Aktif PresenceRepository. Anahtarlar verilmişse Supabase, yoksa bellek-içi.
+/// Aktif PresenceRepository. Remote katman Supabase veya bellek-içi olabilir;
+/// ikisinin üstüne offline-first cache sarılır.
 final presenceRepositoryProvider = Provider<PresenceRepository>((ref) {
-  if (SupabaseConfig.isConfigured) {
-    return SupabasePresenceRepository(Supabase.instance.client);
+  final cache = ref.watch(offlineCacheStoreProvider);
+  final client = _supabaseClientOrNull();
+  if (client != null) {
+    return OfflineFirstPresenceRepository(
+      remote: SupabasePresenceRepository(client),
+      cache: cache,
+    );
   }
-  final repo = InMemoryPresenceRepository();
-  ref.onDispose(repo.dispose);
-  return repo;
+  final remote = InMemoryPresenceRepository();
+  ref.onDispose(remote.dispose);
+  return OfflineFirstPresenceRepository(remote: remote, cache: cache);
 });
 
 /// Bayat presence satırlarını çevrimdışına çeker (§WP-5 çevrimdışı tespiti).
@@ -67,13 +84,10 @@ final groupPresenceProvider = StreamProvider<List<Presence>>((ref) {
   final controller = StreamController<List<Presence>>();
   var latest = const <Presence>[];
 
-  final sub = repo.watchGroupPresence(group.id).listen(
-    (rows) {
-      latest = rows;
-      controller.add(rows);
-    },
-    onError: controller.addError,
-  );
+  final sub = repo.watchGroupPresence(group.id).listen((rows) {
+    latest = rows;
+    controller.add(rows);
+  }, onError: controller.addError);
   // Periyodik yeniden değerlendirme (bayatlama için); en son satırları tekrar iter.
   final ticker = Timer.periodic(
     kPresenceHeartbeatInterval,
@@ -85,6 +99,7 @@ final groupPresenceProvider = StreamProvider<List<Presence>>((ref) {
     controller.close();
   });
 
-  return controller.stream
-      .map((rows) => applyPresenceStaleness(rows, now: DateTime.now()));
+  return controller.stream.map(
+    (rows) => applyPresenceStaleness(rows, now: DateTime.now()),
+  );
 });

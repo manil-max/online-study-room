@@ -15,7 +15,7 @@
 - **RLS helper'ları:** `is_group_member(gid)`, `can_see_user_sessions(target)`, `is_group_admin(gid)`
 - **Dashboard:** 6 sütunlu 2D matris, 19 kart türü, `grid_reflow.dart` motoru
 - **Tema:** 5 palet, koyu varsayılan, `AppTheme` palet-parametreli
-- **Son WP numarası:** 18 (WP-17 ve WP-18 aktif; WP-9 tamamlandı, WP-10..WP-16 plan kuyruğunda)
+- **Son WP numarası:** 19 (WP-12, WP-16, WP-17 ve WP-18 tamamlandı; WP-14 ve WP-15 aktif/planlı)
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
   - Flutter: `C:\src\flutter` · Android SDK: `C:\Android\Sdk`
@@ -27,7 +27,60 @@
 
 ## ⚡ Aktif İş Paketleri
 
-Şu an üzerinde çalışılan paket bulunmamaktadır. Lütfen plan kuyruğundan seçin.
+> Bu bölüm üç canlı çalışma hattına ayrıldı: `Gemini`, `Claude`, `Codex`.
+> Her agent yalnız kendi lane'ini günceller. Bir WP başka ajana geçerse kart aynı editte yeni lane'e taşınır ve not düşülür.
+> Her anlamlı geçişte `progress.md` güncellenir: başlatma, bloklanma, devretme, tamamlanma.
+
+### Gemini Lane
+- **Sorumlu:** Gemini
+- **Durum:** [ ] Boş / tamamlandı
+- **Aktif WP:** —
+- **Not:** Yeni iş ataması gelince kart buraya taşınır.
+
+### Claude Lane
+- **Sorumlu:** Claude
+- **Durum:** [~] Uygulama devam ediyor
+- **Aktif WP:** WP-11: Windows Desktop Track
+- **Kapsam:** Windows build + widget, Windows installer
+- **Kurallar:** Bu lane yalnız Claude tarafından güncellenir; ilerleme her geçişte yazılır.
+
+### Codex Lane
+- **Sorumlu:** Codex
+- **Durum:** [~] Uygulama devam ediyor
+- **Aktif WP:** WP-14: Güvenli Admin ve Geri Bildirim Temeli 🛡️
+- **Kapsam:** Süper-admin yetkisinin sunucuda doğrulandığı, salt-okunur denetim özeti ve geri bildirim/hata raporu merkezi. Bu ilk teslimde kullanıcı/grup silme, toplu duyuru, Supabase kota API'si ve otomatik e-posta gönderimi yoktur.
+- **SAHİP dosyalar:**
+  - `supabase/migrations/0018_admin_feedback.sql` (yeni)
+  - `app/lib/data/models/feedback_ticket.dart` (yeni)
+  - `app/lib/data/repositories/admin_repository.dart` (yeni)
+  - `app/lib/data/repositories/in_memory/in_memory_admin_repository.dart` (yeni)
+  - `app/lib/data/repositories/supabase/supabase_admin_repository.dart` (yeni)
+  - `app/lib/data/providers/admin_providers.dart` (yeni)
+  - `app/lib/features/admin/admin_screen.dart` ve `app/lib/features/admin/widgets/*` (yeni)
+  - `app/lib/features/profile/widgets/report_issue_dialog.dart` (yeni)
+  - `app/lib/features/profile/settings_screen.dart`
+  - `app/test/data/admin_repository_test.dart`, `app/test/features/admin_screen_test.dart` (yeni)
+- **DOKUNMA:**
+  - `app/lib/data/repositories/auth_repository.dart`
+  - `app/lib/features/classroom/**`, `app/lib/features/home/**`, `app/android/**`
+  - `app/lib/main.dart`, `app/lib/core/navigation/home_shell.dart`
+  - `supabase/migrations/0001_*`…`0017_*`; istemciye `service_role` veya e-posta anahtarı konmaz
+- **Adımlar:**
+  - [ ] `app_admins` ve `feedback_tickets` tablolarını, `is_super_admin()` helper'ını ve yalnız süper-admin'e açık özet/rapor RPC'lerini `0018` migration'ında kur; ilk admini SQL Editor'da elle ekleme talimatını migration başlığına yaz.
+  - [ ] RLS ile herkesin yalnız kendi raporunu oluşturup takip etmesini, süper-admin'in ise tüm raporları okuyup durumunu güncellemesini sağla; rastgele bir kullanıcıya kullanıcı/grup verisi sızmadığını test et.
+  - [ ] Çift repository + provider katmanını kur; InMemory modunda aynı ekran akışı çalışsın.
+  - [ ] Ayarlara `Geri bildirim gönder` girişi ve `Admin` rolü varsa açılan yönetici ekranını ekle. Yönetici ekranı kullanıcı/grup/oturum sayıları, açık raporlar ve rapor durum güncellemesiyle sınırlı olsun.
+  - [ ] Repository, yetki ve ekran testlerini ekle; migration'ın Supabase SQL Editor'da elle uygulanacağı adımı teslim notuna koy.
+- **Tuzaklar:**
+  - İstemcideki `isAdmin` görünürlüğü yalnız UX içindir; her veri ve durum değişikliği RLS/RPC içinde tekrar doğrulanmalı.
+  - `SECURITY DEFINER` RPC'ler `set search_path = public` kullanmalı, yalnız gerekli alanları döndürmeli ve admin değilse hata vermeli.
+  - İlk süper-admin UUID'si migration'a sabit yazılmaz; migration sonrası yetkili kişi SQL Editor'dan eklenir. `service_role` hiçbir Flutter dosyasına, `env.json`a veya repoya konmaz.
+  - Supabase kota/limit verisi anon istemciden güvenli okunamaz; bu teslimde gösterilmez. Otomatik e-posta, sağlayıcı ve sunucu sırrı seçilmeden başlatılmaz.
+- **Kabul:** Normal kullanıcı rapor gönderebilir fakat admin ekranına veya diğer kullanıcıların raporlarına erişemez. Süper-admin yalnız güvenli RPC'ler üzerinden özet ve rapor listesini görür, raporu durumlandırır. InMemory ve Supabase repository testleri ile ekran testi geçer; `flutter analyze` ve ilgili testler temizdir.
+- **Model matrisi (limit dostu):** WP-14 | Claude Sonnet 5 high / GPT-5.6 Terra high / Gemini 3.5 Flash medium
+- **Kaçınılacak varsayılan:** Opus 4.8 ve Gemini 3.1 Pro. Yalnızca migration/RLS denetiminde somut güvenlik açığı veya üç başarısız düzeltme turu olursa kısa bir ikinci görüş için yükselt.
+
+> ⚠️ Çakışma kontrolü: WP-14 `settings_screen.dart` dosyasını sahiplenir. WP-15 bu dosyaya ve Flutter ayarlar UI'ına dokunmaz; kalan ayarlar bağlantısı WP-19'a ayrıldı.
 
 ---
 
@@ -35,9 +88,10 @@
 
 > Bu bölüm backlog'daki işlerin uygulanma sırasını ve dosya sahipliğini önden netleştirir. Aktif çalışmaya alınacak iş, buradan seçilip yukarıdaki "Aktif İş Paketleri" bölümüne taşınır.
 
-### V3 Hazırlık Notu
+### V4 Hazırlık Notu
 - Görünen uygulama adı Android/Web/Flutter başlıklarında **Odak Kampı** olarak ayarlandı.
 - `pubspec.yaml` paket adı değiştirilmedi; import ve uygulama kimliği kırılmasın diye `online_study_room` teknik ad olarak kalır.
+- V4 ile birlikte WP-17 ve WP-18 tamamlandı: canlı sayaç yüzeyleri, widget önizlemeleri, sade bildirim akışı, grup ekranı hiyerarşisi ve sayaç ayarlarının kaldırılması artık teslim durumunda görünür.
 - Sınıf ekranındaki sohbet girişi ayrı **Sohbet** ekranına taşındı; grup bilgileri ve yönetim **Ayarlar** girişinden açılır.
 - Gamification migration'ı üretim Supabase'e uygulanmadan da Başarılar kartı varsayılan profil ile görünür; `0017_gamification_profiles.sql` uygulanınca kalıcı seri koruma verisine otomatik döner.
 
@@ -50,24 +104,6 @@
 - **Model matrisi (limit dostu):** WP-11 | Claude Sonnet 5 high / GPT-5.3-Codex medium / Gemini 3.5 Flash high
 - **Kaçınılacak varsayılan:** Opus 4.8, GPT-5.4 ve Gemini 3.1 Pro; yalnızca Windows runner/installer tarafında tekrarlı build hatası çözülemezse yükselt.
 
-### WP-12: Sync & Offline Track
-- **Durum:** [~] Cache adapter + testler hazır; provider entegrasyonu WP-17 `study_providers.dart` değişikliklerinden sonra bağlanacak.
-- **Backlog:** Çoklu cihaz senkron testi, çevrimdışı cache
-- **Bağımlılık:** Presence/timer akışları stabil olmalı.
-- **SAHİP dosyalar:** senkron testleri, cache adapter katmanı, seçilirse Drift/Hive dosyaları
-- **DOKUNMA:** mevcut repository sözleşmelerini kırma
-- **Not:** Drift/Hive seçimi geri dönüşü zor karar; başlamadan kullanıcı onayı gerekir.
-- **Yapıldı:**
-  - [x] Drift/Hive eklemeden `SharedPreferences` tabanlı küçük `OfflineCacheStore` yazıldı.
-  - [x] `OfflineFirstStudyRepository` eklendi: oturum yazma hatasında pending queue, son başarılı kullanıcı oturumları ve grup günlük toplamları cache fallback.
-  - [x] `OfflineFirstPresenceRepository` eklendi: presence yazma hatasında son kullanıcı durumu queue/cache; grup presence stream hatasında son cache fallback.
-  - [x] Offline yazma, flush, stream fallback ve grup günlük istatistik cache davranışları test edildi.
-- **Bekleyen:** Uygulamada aktif kullanıma almak için repository provider'ları wrapper ile döndürmeli; `study_providers.dart` WP-17'nin SAHİP dosyası olduğu için çakışma çıkarmamak adına bu bağlantı bekletildi.
-- **Değişen dosyalar:** `app/lib/data/repositories/offline/offline_cache_store.dart`, `app/lib/data/repositories/offline/offline_first_study_repository.dart`, `app/lib/data/repositories/offline/offline_first_presence_repository.dart`, `app/test/data/offline_first_repository_test.dart`
-- **Test:** `flutter test test\data\offline_first_repository_test.dart --dart-define-from-file=env.json` geçti; `dart analyze lib\data\repositories\offline test\data\offline_first_repository_test.dart` temiz. Genel `flutter analyze`, WP-18 alanındaki `test\features\settings_screen_test.dart:19` `overrideWithValue` hatası nedeniyle şu an kırmızı.
-- **Model matrisi (limit dostu):** WP-12 | Claude Sonnet 5 high / GPT-5.3-Codex high / Gemini 3.5 Flash medium
-- **Kaçınılacak varsayılan:** Opus 4.8 ve GPT-5.4; veri modeli/çevrimdışı mimari kararında aynı hata üç kez dönüyorsa kısa bir derin analiz turu için kullanılabilir.
-
 ### WP-13: Release Channels
 - **Backlog:** Beta/staging test uygulaması
 - **Bağımlılık:** Release akışı stabil olmalı.
@@ -77,50 +113,49 @@
 - **Model matrisi (limit dostu):** WP-13 | Claude Sonnet 5 medium / GPT-5.3-Codex medium / Gemini 3.5 Flash medium
 - **Kaçınılacak varsayılan:** Opus 4.8 ve Gemini 3.1 Pro; CI/release hatası somut logla daraltılmadan pahalı modele geçme.
 
-### WP-14: Admin / Reports
-- **Backlog:** Admin paneli, otomatik e-posta raporları
-- **Bağımlılık:** Admin rol modeli ve e-posta sağlayıcı kararı.
-- **SAHİP dosyalar:** admin UI, admin RPC/RLS, rapor üretim servisleri
-- **DOKUNMA:** service_role istemciye konmaz
-- **Not:** Public repo olduğu için güvenlik tasarımı ayrı gözden geçirilmeli.
-- **Model matrisi (limit dostu):** WP-14 | Claude Sonnet 5 high / GPT-5.3-Codex high / Gemini 3.5 Flash medium
-- **Kaçınılacak varsayılan:** Opus 4.8 yalnızca RLS/security review için; normal UI/rapor üretimi için pahalı kalır.
-
-### WP-15: Device Integrations
-- **Backlog:** Samsung Modes & Routines entegrasyonu
-- **Bağımlılık:** Android platform araştırması.
-- **SAHİP dosyalar:** Android intent/integration denemeleri, ayarlar entegrasyonu
-- **DOKUNMA:** genel timer state machine'i araştırma bitmeden değiştirme
-- **Not:** Önce spike olarak yapılmalı; desteklenmezse backlog notu düşülür.
-- **Model matrisi (limit dostu):** WP-15 | Claude Sonnet 5 high / GPT-5.3-Codex medium / Gemini 3.5 Flash high
-- **Kaçınılacak varsayılan:** Opus 4.8 ve Gemini 3.1 Pro; ancak Samsung entegrasyon davranışı belirsiz kalırsa tek seferlik spike/review için mantıklı.
-
-### WP-16: Dashboard Advanced Polish
-- **Durum:** [x] Tamamlandı
-- **Değişen dosyalar:**
-  - `app/lib/features/home/widgets/group_card_shell.dart`
-  - `app/lib/features/home/widgets/group_goal_card.dart`
-  - `app/lib/features/home/widgets/group_trend_card.dart`
-  - `app/lib/features/home/widgets/leaderboard_card.dart`
-  - `app/lib/features/home/widgets/active_members_card.dart`
-  - `app/lib/features/profile/profile_screen.dart`
-  - `app/test/features/dashboard_cards_render_test.dart`
-  - `app/test/widget_test.dart`
-- **Ne yapıldı:** Grup kartlarının boş halleri eylemli hale getirildi; `Grup oluştur` / `Koda katıl` kısayolları eklendi. Profil ekranına aktif grup özeti ve `Grup değiştir` aksiyonu kondu. Dashboard kartlarının boş-durum UX'i ve profil entegrasyonu render/widget testleriyle doğrulandı.
-- **Test:** `dart analyze` bu WP dosyaları için temiz. `flutter test test\features\dashboard_cards_render_test.dart test\widget_test.dart --dart-define-from-file=env.json` geçti. `flutter analyze` hâlâ WP-18 alanındaki `test\features\settings_screen_test.dart:19` `overrideWithValue` hatası nedeniyle kırmızı.
-- **DOKUNMA:** `app/lib/features/classroom/**`, `app/lib/features/profile/settings_screen.dart`, `app/android/**`, `supabase/migrations/**`
-- **SAHİP dosyalar:** dashboard grid UI, group management UI, ilgili home/profile ekranları
-- **Bağımlılık:** Mevcut 6xN grid ve 2E responsive sonucu doğrulansın.
-- **Backlog:** Gelişmiş grid boyutlandırma, canlı grup hedefi, grup yönetimi UI iyileştirme
-- **Not:** Kullanıcı boş grup kartlarında doğrudan aksiyon alabiliyor; profilde aktif grup değiştirilebiliyor. `classroom/settings` alanına dokunulmadı.
-- **Model matrisi (limit dostu):** WP-16 | Claude Sonnet 5 medium / GPT-5.3-Codex medium / Gemini 3.5 Flash medium
-- **Kaçınılacak varsayılan:** Opus 4.8 ve GPT-5.4; bu paket daha çok mevcut UI düzeni ve test işi, pahalı modele gerek yok.
+### WP-19: Device Integrations Settings Hook
+- **Durum:** [ ] WP-14 ve WP-15 sonrası
+- **Backlog:** Samsung Modes & Routines entegrasyonunun ayarlar ekranına bağlanması
+- **Bağımlılık:** WP-14 `settings_screen.dart` değişiklikleri tamamlanmalı; WP-15 destek/fallback kararını yazmalı.
+- **SAHİP dosyalar:**
+  - `app/lib/features/profile/settings_screen.dart`
+  - `app/lib/features/profile/widgets/device_integration_settings.dart` (yeni, gerekirse)
+  - `app/test/features/settings_screen_test.dart`
+- **DOKUNMA:**
+  - `app/android/**` (WP-15 sonucunu kullan; yeniden platform spike yapma)
+  - `app/lib/features/admin/**`
+  - `app/lib/data/providers/study_providers.dart`, `app/lib/core/notifications/**`
+- **Adımlar:**
+  - [ ] WP-15 sonucuna göre ayarlarda küçük bir entegrasyon satırı ekle.
+  - [ ] Destek yoksa kullanıcıya sade fallback/durum metni göster; karmaşık ayar ekleme.
+  - [ ] Settings ekran testini güncelle.
+- **Kabul:** WP-19, WP-14'ün ayarlar düzenini bozmadan WP-15'in teknik sonucunu kullanıcıya görünür hale getirir.
+- **Model matrisi (limit dostu):** WP-19 | Claude Sonnet 5 medium / GPT-5.3-Codex medium / Gemini 3.5 Flash medium
 
 ---
 ## ✅ Son Tamamlananlar (ajan bağlamı için)
 
 > Son 5 iş. Ajan bunları okuyarak "neye dokunma, ne değişti" anlar.
 > Daha eski işler aşağıdaki Geçmiş tablosuna düşer.
+
+### WP-15: Device Integrations Spike — 2026-07-11 ✅
+- **Değişen dosyalar:** `app/android/app/src/main/res/xml/shortcuts.xml` (yeni), `app/android/app/src/main/res/values/strings.xml` (yeni), `app/android/app/src/main/AndroidManifest.xml`, `app/android/app/src/main/kotlin/com/manilmax/online_study_room/MainActivity.kt`, `app/lib/core/device_integrations/samsung_modes_service.dart` (yeni).
+- **Ne yapıldı:** Samsung Modes & Routines ve Tasker gibi otomasyon uygulamalarıyla entegrasyon için en standart yöntem olan "App Shortcuts" (Uygulama Kısayolları) yaklaşımı spike edildi. Statik kısayollar (`shortcuts.xml`) eklendi. Samsung Rutinleri bu kısayolları doğrudan aksiyon olarak seçebilir. Tıklanan kısayollar `MainActivity` üzerinden `MethodChannel` aracılığıyla Flutter'daki izole `DeviceIntegrationService`'e iletiliyor.
+- **Kararlar:** Özel izinler (DND vb.) gerektirmeden en güvenli yolun kısayollar üzerinden otomasyona "tetiklenebilir" bir API sunmak olduğuna karar verildi. Flutter tarafında UI ve State bağlaması (Timer'ı başlatma/durdurma) bir sonraki faz olan WP-19'a bırakıldı.
+- **Dokunma:** `settings_screen.dart`, `study_providers.dart` ve hiçbir UI dosyasına dokunulmadı.
+- **Test:** Sadece izole servis ve native kod eklendi, derleme kontrol edildi.
+
+### WP-12: Sync & Offline Track 📴 — 2026-07-11 ✅
+- **Değişen dosyalar:** `app/lib/data/providers/offline_providers.dart`, `app/lib/data/providers/study_providers.dart`, `app/lib/data/providers/presence_providers.dart`, `app/test/data/offline_first_repository_test.dart`
+- **Ne yapıldı:** Study ve presence repository provider'ları offline-first cache wrapper ile sarıldı. Supabase instance hazırsa remote katman Supabase kullanılıyor, hazır değilse güvenli bellek-içi remote ile aynı wrapper devam ediyor. Cache fallback ve pending flush akışları provider seviyesine bağlandı.
+- **Test:** `dart analyze lib/data/providers/offline_providers.dart lib/data/providers/study_providers.dart lib/data/providers/presence_providers.dart test/data/offline_first_repository_test.dart` temiz. `flutter test test/data/offline_first_repository_test.dart --dart-define-from-file=env.json` geçti.
+- **Dokunma:** `app/lib/data/repositories/auth_repository.dart`, `app/lib/features/classroom/**`, `app/lib/features/home/**`, `app/android/**`, `supabase/migrations/**`
+
+### WP-16: Dashboard Advanced Polish 🧩 — 2026-07-11 ✅
+- **Değişen dosyalar:** `app/lib/features/home/widgets/group_card_shell.dart`, `app/lib/features/home/widgets/group_goal_card.dart`, `app/lib/features/home/widgets/group_trend_card.dart`, `app/lib/features/home/widgets/leaderboard_card.dart`, `app/lib/features/home/widgets/active_members_card.dart`, `app/lib/features/profile/profile_screen.dart`, `app/test/features/dashboard_cards_render_test.dart`, `app/test/widget_test.dart`
+- **Ne yapıldı:** Grup kartlarının boş halleri eylemli hale getirildi; `Grup oluştur` / `Koda katıl` kısayolları eklendi. Profil ekranına aktif grup özeti ve `Grup değiştir` aksiyonu kondu. Dashboard kartlarının boş-durum UX'i ve profil entegrasyonu render/widget testleriyle doğrulandı.
+- **Test:** `dart analyze` bu WP dosyaları için temiz. `flutter test test\features\dashboard_cards_render_test.dart test\widget_test.dart --dart-define-from-file=env.json` geçti. `flutter analyze` hâlâ WP-18 alanındaki `test\features\settings_screen_test.dart:19` `overrideWithValue` hatası nedeniyle kırmızı.
+- **Dokunma:** `app/lib/features/classroom/**`, `app/lib/features/profile/settings_screen.dart`, `app/android/**`, `supabase/migrations/**`
 
 ### WP-17: Android Canlı Sayaç Yüzeyleri 📱 — 2026-07-11 ✅
 - **Değişen dosyalar:** `core/notifications/timer_external_command_store.dart`, `core/notifications/timer_notification_service.dart`, `data/providers/study_providers.dart`, `features/android_widgets/android_widget_service.dart`, `AndroidManifest.xml`, `StudyWidgetProviders.kt`, `TimerActionReceiver.kt`, `odak_*_widget_info.xml`.

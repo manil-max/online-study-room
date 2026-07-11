@@ -18,20 +18,37 @@ import '../models/presence.dart';
 import '../models/profile.dart';
 import '../models/study_session.dart';
 import '../repositories/study_repository.dart';
+import '../repositories/offline/offline_first_study_repository.dart';
 import '../repositories/in_memory/in_memory_study_repository.dart';
 import '../repositories/supabase/supabase_study_repository.dart';
+import 'offline_providers.dart';
 import 'auth_providers.dart';
 import 'group_providers.dart';
 import 'presence_providers.dart';
 
-/// Aktif StudyRepository. Anahtarlar verilmişse Supabase, yoksa bellek-içi.
-final studyRepositoryProvider = Provider<StudyRepository>((ref) {
-  if (SupabaseConfig.isConfigured) {
-    return SupabaseStudyRepository(Supabase.instance.client);
+SupabaseClient? _supabaseClientOrNull() {
+  if (!SupabaseConfig.isConfigured) return null;
+  try {
+    return Supabase.instance.client;
+  } catch (_) {
+    return null;
   }
-  final repo = InMemoryStudyRepository();
-  ref.onDispose(repo.dispose);
-  return repo;
+}
+
+/// Aktif StudyRepository. Remote katman Supabase veya bellek-içi olabilir;
+/// ikisinin üstüne offline-first cache sarılır.
+final studyRepositoryProvider = Provider<StudyRepository>((ref) {
+  final cache = ref.watch(offlineCacheStoreProvider);
+  final client = _supabaseClientOrNull();
+  if (client != null) {
+    return OfflineFirstStudyRepository(
+      remote: SupabaseStudyRepository(client),
+      cache: cache,
+    );
+  }
+  final remote = InMemoryStudyRepository();
+  ref.onDispose(remote.dispose);
+  return OfflineFirstStudyRepository(remote: remote, cache: cache);
 });
 
 /// Giriş yapan kullanıcının oturumları (yeni → eski).
@@ -367,7 +384,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     await store.reload();
     final cmd = store.command;
     if (cmd == null) return;
-    
+
     if (cmd == 'start' && !state.isRunning) {
       start();
     } else if (cmd == 'stop' && state.isRunning) {

@@ -11,7 +11,7 @@ description: >
 
 Kullanıcı yeni iş planlamanı istediğinde:
 1. `backlog.md` oku → en yüksek öncelikli işi belirle
-2. `progress.md` oku → aktif WP var mı? Çakışma riski?
+2. `progress.md` oku → aktif lane'ler, mevcut WP'ler ve çakışma riski
 3. `project.md` oku → teknik kısıtlar (veri modeli, RLS, migration sırası)
 4. İşi **1-2 bağımsız iş paketine** (WP) böl
 5. WP'leri `progress.md`'nin "Aktif İş Paketleri" bölümüne yaz
@@ -61,6 +61,10 @@ Her WP `progress.md`'ye şu formatta yazılır:
 - Son kullanılan WP numarasını `progress.md`'nin "Proje Gerçekleri" bölümünden oku
 
 ### 4. Çakışma Kontrolü
+- Önce `progress.md`'deki aktif lane'lerle karşılaştır:
+  - Aynı lane'de başka WP varsa kullanıcıyı uyar
+  - WP aktif lane'in SAHİP dosyalarına dokunuyorsa kullanıcıyı uyar
+  - Aynı dosyaya iki WP giriyorsa işi sıralı yap
 - WP'ler arası ortak dosya varsa bölümün sonuna ekle:
   ```
   > ⚠️ Çakışma kontrolü: WP-N ve WP-M ortak dosyası YOK.
@@ -101,7 +105,7 @@ Her WP `progress.md`'ye şu formatta yazılır:
 
 ```
 1. backlog.md oku         → öncelik sırası
-2. progress.md oku        → aktif WP var mı?
+2. progress.md oku        → aktif lane/WP var mı, çakışma var mı?
 3. project.md oku         → teknik kısıtlar
 4. WP'leri hazırla        → bağımsız, detaylı
 5. progress.md'ye yaz     → "Aktif İş Paketleri"ne

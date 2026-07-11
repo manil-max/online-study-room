@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="shortcut_start_timer_short">Odak Başlat</string>
+    <string name="shortcut_start_timer_long">Odaklanmaya Başla (Rutinler)</string>
+    <string name="shortcut_stop_timer_short">Odak Bitir</string>
+    <string name="shortcut_stop_timer_long">Odaklanmayı Bitir (Rutinler)</string>
+</resources>
