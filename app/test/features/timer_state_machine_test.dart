@@ -250,5 +250,74 @@ void main() {
       expect(container.read(studyTimerProvider).isRunning, isFalse);
       expect(prefs.getString('timer_active_started_at'), isNull);
     });
+
+    test(
+      'soğuk açılışta bekleyen "stop" komutu aktif sayacı durdurur',
+      () async {
+        // Uygulama kapalıyken bildirimdeki Durdur'a basıldı: aktif sayaç + komut
+        // prefs'te duruyor. Açılışta (onResume tetiklenmese bile) durmalı.
+        SharedPreferences.setMockInitialValues({
+          'timer_active_started_at': DateTime.now()
+              .subtract(const Duration(minutes: 3))
+              .toIso8601String(),
+          'timer_active_mode': TimerMode.stopwatch.name,
+          'timer_active_phase': TimerPhase.work.name,
+          'timer_active_cycle': 1,
+          'timer_external_command': 'stop',
+        });
+        final prefs = await SharedPreferences.getInstance();
+        final container = ProviderContainer(
+          overrides: [
+            sharedPreferencesProvider.overrideWithValue(prefs),
+            timerNotificationServiceProvider.overrideWithValue(
+              const _NoopTimerNotificationService(),
+            ),
+            androidWidgetServiceProvider.overrideWithValue(
+              const _NoopAndroidWidgetService(),
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
+
+        // İlk okuma çalışan sayacı restore eder.
+        expect(container.read(studyTimerProvider).isRunning, isTrue);
+
+        // build() microtask'ı bekleyen komutu işleyene kadar bekle.
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+
+        expect(container.read(studyTimerProvider).isRunning, isFalse);
+        expect(prefs.getString('timer_external_command'), isNull);
+      },
+    );
+
+    test(
+      'soğuk açılışta bekleyen "start" komutu sayacı başlatır',
+      () async {
+        SharedPreferences.setMockInitialValues({
+          'timer_mode': TimerMode.stopwatch.name,
+          'timer_external_command': 'start',
+        });
+        final prefs = await SharedPreferences.getInstance();
+        final container = ProviderContainer(
+          overrides: [
+            sharedPreferencesProvider.overrideWithValue(prefs),
+            timerNotificationServiceProvider.overrideWithValue(
+              const _NoopTimerNotificationService(),
+            ),
+            androidWidgetServiceProvider.overrideWithValue(
+              const _NoopAndroidWidgetService(),
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
+
+        expect(container.read(studyTimerProvider).isRunning, isFalse);
+
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+
+        expect(container.read(studyTimerProvider).isRunning, isTrue);
+        expect(prefs.getString('timer_external_command'), isNull);
+      },
+    );
   });
 }

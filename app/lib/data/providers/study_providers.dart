@@ -310,6 +310,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   Timer? _tick;
   StreamSubscription<TimerNotificationAction>? _notificationCommands;
   AppLifecycleListener? _lifecycleListener;
+  bool _disposed = false;
 
   @override
   StudyTimerState build() {
@@ -325,6 +326,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       onResume: () => unawaited(_onAppResumed()),
     );
     ref.onDispose(() {
+      _disposed = true;
       _tick?.cancel();
       _notificationCommands?.cancel();
       _lifecycleListener?.dispose();
@@ -363,25 +365,37 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       breakMinutes: prefs.getInt(_kBreak) ?? 5,
       cycles: prefs.getInt(_kCycles) ?? 4,
     );
-    if (initial.isRunning) {
-      Future.microtask(() {
-        if (!state.isRunning) return;
-        _publishPresence(
-          status: state.phase == TimerPhase.work
-              ? PresenceStatus.studying
-              : PresenceStatus.onBreak,
-          startedAt: state.startedAt,
-        );
-        _startTick();
-        unawaited(_syncTimerSurfaces());
-      });
-    }
+    Future.microtask(() async {
+      // Bildirim/widget'tan gelen Durdur/Başlat komutu eskiden yalnız onResume'da
+      // işleniyordu; onResume ise SOĞUK açılışta tetiklenmez → uygulama kapalıyken
+      // basılan Durdur, kullanıcı uygulamayı açsa bile işlenmezdi. Komutu init
+      // anında da işle ki açılışta hemen onurlandırılsın. (Uygulama tamamen
+      // kapalıyken gerçek zamanlı işleme için foreground service gerekir; o ayrı
+      // iş paketi — bkz. background-timer-actions-unreliable.)
+      await _processPendingExternalCommand();
+      if (_disposed || !state.isRunning) return;
+      _publishPresence(
+        status: state.phase == TimerPhase.work
+            ? PresenceStatus.studying
+            : PresenceStatus.onBreak,
+        startedAt: state.startedAt,
+      );
+      _startTick();
+      unawaited(_syncTimerSurfaces());
+    });
     return initial;
   }
 
-  Future<void> _onAppResumed() async {
+  Future<void> _onAppResumed() => _processPendingExternalCommand();
+
+  /// Bildirim/widget aksiyonunun [SharedPreferences]'e yazdığı bekleyen
+  /// Durdur/Başlat komutunu işler. Hem uygulama öne gelince (onResume) hem de
+  /// soğuk açılışta ([build] içindeki microtask) çağrılır; komut tek seferliktir
+  /// (işlenince temizlenir).
+  Future<void> _processPendingExternalCommand() async {
     final store = ref.read(timerExternalCommandStoreProvider);
     await store.reload();
+    if (_disposed) return;
     final cmd = store.command;
     if (cmd == null) return;
 
