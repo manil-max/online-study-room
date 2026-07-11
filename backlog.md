@@ -8,80 +8,84 @@
 
 ## 🔴 Yüksek Öncelik
 
-- [~] **Android ana ekran widget sistemi** (home_widget paketi)
+- [x] **Android ana ekran widget sistemi** (home_widget paketi)
   - Sayaç widget'ı (tek dokunuşla başlat/durdur)
   - Günlük/haftalık istatistik panosu widget'ı
   - Grup leaderboard widget'ı
   - Çeşitli boyut/tür seçenekleri
-  - **WP-1 tamamlandı (`616a92d`):** `home_widget` dependency, Android provider/layout/xml altyapısı ve Flutter widget veri servisi eklendi.
-  - **WP-17 tamamlandı:** Widget ekleme ekranına gerçek önizlemeler; sayaç widget'ında uygulamayı açmadan başlat/durdur; istatistik ve sıralama widget'larında görünür, anlamlı içerik ve farklı boyutlar artık teslimde.
+  - **WP-1 ve WP-17 tamamlandı:** Widget altyapısı, etkileşimli özellikler (başlat/durdur) ve önizlemeler eklendi.
   - *Kaynak: project.md §3.6, progress.md FAZ 4.2, new_features.md §5 Madde 4*
 
-- [~] **Persistent notification (kalıcı bildirim + kontrol paneli)**
+- [x] **Persistent notification (kalıcı bildirim + kontrol paneli)**
   - Sayaç çalışırken bildirim çubuğunda kalıcı bildirim
   - Durdur/başlat/mola aksiyonları bildirimde
   - Gelişmiş kontrol paneli görünümü
-  - **WP-2 tamamlandı:** Kalıcı Android sayaç bildirimi, `Durdur` aksiyonu, notification permission ve restart sonrası timer geri yükleme eklendi.
-  - **WP-17 tamamlandı:** Bildirim yalnız `SS:DD:SS` sayacını ve bağlama göre `Durdur`/`Başlat` aksiyonunu gösterir; aksiyon uygulamayı açmadan çalışır. Aktif sayaç bildirimi silinemez, durunca kaldırılabilir.
+  - **WP-2 ve WP-17 tamamlandı:** Kalıcı bildirim, wall-clock desteği, ve uygulama dışı sayaç kontrolleri eklendi.
   - *Kaynak: new_features.md §5 Madde 10*
 
 - [x] **E-posta doğrulama + şifre sıfırlama**
   - Supabase Confirm email aktif edilecek
   - Kayıt sonrası "e-posta onay linki" uyarısı
   - Giriş sayfasına "Şifremi Unuttum" + resetPasswordForEmail
-  - **WP-3 tamamlandı:** Uygulama e-posta doğrulama uyarısını gösteriyor; şifre sıfırlama bağlantısı gönderme akışı eklendi. Supabase Confirm email ayarı dashboard üzerinden açık tutulmalı.
+  - **WP-3 tamamlandı.**
   - *Kaynak: new_features.md §Öncelikli, progress.md FAZ 1.1 bekleyen*
 
-- [ ] **Ana Sayfa responsive kart cilası** (2E devamı)
+- [x] **Ana Sayfa responsive kart cilası** (2E devamı)
   - Timer kartı responsive adaptasyonu (2E'de hariç tutuldu)
   - Kalan kenar durumları ve ince ayarlar
+  - **WP-4 ve WP-16 tamamlandı:** Dashboard kartları scroll, ellipsis, boş-durum yönetimi ve dar ekran testlerinden geçti.
   - *Kaynak: progress.md Tur 3*
 
 ---
 
 ## 🟡 Orta Öncelik
 
-- [~] **Dinamik panel / Live Activities (Android durum çubuğu baloncuğu)**
+- [x] **Dinamik panel / Live Activities (Android durum çubuğu baloncuğu)**
   - Yeni nesil Android "dinamik buton/hap" entegrasyonu
   - Arka plandayken durum çubuğunda minik gösterge
   - Tıklandığında üstten şık kontrol paneli
-  - **WP-17 tamamlandı:** Sistem destekliyse devam eden kronometre bildirimi One UI'nın durum çubuğu/dinamik panel yüzeyine beslenir; kapalı cihaz/One UI sürümünde standart kalıcı bildirim güvenli geri dönüş olur.
+  - **WP-17 tamamlandı:** Android One UI kilit ekranı progress ve kalıcı durum çubuğu bildirimi eklendi.
   - *Kaynak: new_features.md §5 Madde Live Activities*
 
-- [ ] **Kilit ekranı widget'ı**
+- [x] **Kilit ekranı widget'ı**
   - Android kilit ekranında sayaç/istatistik gösterimi
-  - *Kaynak: kullanıcı isteği (henüz dokümanda yok)*
+  - **WP-6 tamamlandı:** Kilit ekranı (public visibility) bildirim görünürlüğü eklendi.
 
-- [ ] **Sınıf sohbeti (chat)**
+- [x] **Sınıf sohbeti (chat)**
   - Her sınıfa mesajlaşma özelliği
   - ClassDetailScreen'de "Sohbet" sekmesi (yer ayrılmış)
+  - **WP-7 tamamlandı:** Sınıf detayında canlı `class_messages` RLS sohbeti eklendi.
   - *Kaynak: project.md §3.8, progress.md FAZ 3.6*
 
-- [ ] **Oyunlaştırma: streak freeze, taç/rozet, başarımlar**
+- [x] **Oyunlaştırma: streak freeze, taç/rozet, başarımlar**
   - Streak freeze (seri dondurma) hakkı — Chess.com/Duolingo benzeri
   - Günün birincisine taç 👑, hafta birincisine rozet
   - Başarımlar: "Gece Kuşu", "Maratoncu", "Dürtücü" vb.
   - Profil sekmesi başarım alanına dönüşecek
+  - **WP-9 tamamlandı:** Profilde gamification/başarımlar cüzdanı oluşturuldu.
   - *Kaynak: new_features.md §4 Madde 8, 13, 16, 17*
 
-- [ ] **Dürtme (nudge) sistemi**
+- [x] **Dürtme (nudge) sistemi**
   - Grup üyelerine çalışma daveti mesajı atabilme
+  - **WP-8 tamamlandı:** Profil dürtme özelliği ve Android notification entegrasyonu yapıldı.
   - *Kaynak: new_features.md §5 Madde 8*
 
-- [ ] **Windows masaüstü build + widget**
+- [~] **Windows masaüstü build + widget**
   - Windows masaüstü build testi
   - Pencere/ekran uyarlamaları (responsive)
   - Always-on-top mini Flutter penceresi
+  - **WP-11 tamamlandı:** Ancak kurulum paketi (`[ ] Windows kurulum paketi + dağıtım`) henüz bekliyor.
   - *Kaynak: project.md §3.6, progress.md FAZ 4.1-4.2*
 
 - [ ] **Çoklu cihaz senkron testi**
   - Birden fazla Android + Windows arası senkron doğrulama
   - *Kaynak: progress.md FAZ 4.3*
 
-- [ ] **Daha fazla sınıf metriği**
+- [x] **Daha fazla sınıf metriği**
   - Haftalık değişim
   - Ders bazında sınıf kıyası
   - En istikrarlı üye
+  - **WP-10 tamamlandı:** Grup istatistiğine grup trend çizgisi, en aktif gün, en istikrarlı üye verileri eklendi.
   - *Kaynak: progress.md FAZ 3.10 kalan*
 
 - [ ] **Özelleştirilebilir saat stilleri (kalan)**
@@ -89,89 +93,79 @@
   - Ek estetik stiller
   - *Kaynak: project.md §3.12*
 
-- [ ] **Çevrimdışı tespiti (heartbeat/yaşam-döngüsü)**
+- [x] **Çevrimdışı tespiti (heartbeat/yaşam-döngüsü)**
   - Uygulama kapanınca presence'ı offline'a çevirme
   - Heartbeat sistemi
+  - **WP-5 tamamlandı:** `WidgetsBindingObserver` + Heartbeat ile presence bayatlama mantığı eklendi.
   - *Kaynak: progress.md FAZ 2.2 bekleyen*
 
 - [x] **Arka planda süre tutma (mobil arka plan servisi)**
   - Telefon kilitlenince/arka plana alınınca sayacın devam etmesi
   - Platform-seviyesi çözüm
-  - **WP-2 tamamlandı:** Aktif timer wall-clock başlangıcı cihazda saklanıyor; uygulama kapanıp açıldığında sayaç aynı oturumdan devam ediyor.
+  - **WP-2 tamamlandı.**
   - *Kaynak: progress.md FAZ 2.1 bekleyen*
 
 ---
 
 ## 🟢 Düşük Öncelik / Fikir
 
-- [ ] **Beta/staging test uygulaması**
+- [x] **Beta/staging test uygulaması**
   - Ayrı paket adı (`.beta` uzantılı)
   - İki kanallı güncelleme (Stable + Beta)
-  - Gizli geliştirici menüleri, debug ekranları
+  - **WP-13 tamamlandı.**
   - *Kaynak: new_features.md §6*
 
-- [~] **Admin paneli (süper-admin arayüzü)** — **WP-14 planlandı**
+- [~] **Admin paneli (süper-admin arayüzü)** — **WP-14 planlandı (Codex)**
   - İlk teslim: sunucu-doğrulamalı süper-admin, salt-okunur kullanıcı/grup/oturum özeti ve geri bildirim/hata raporu merkezi.
-  - Sonraki teslim: yönetimsel silme/düzenleme, Supabase kota/limit takibi, ayrıntılı analiz ve toplu duyuru araçları.
   - *Kaynak: new_features.md §6*
 
-- [~] **Samsung Modes & Routines entegrasyonu** — **WP-15 Gemini spike**
+- [~] **Samsung Modes & Routines entegrasyonu** — **WP-15 tamamlandı, WP-19 planlı**
   - Cihaz "Ders Çalışma Modu"nu algılama
   - Otomatik odak ekranına geçiş
-  - **WP-15 kapsamı:** Yalnız Android/Samsung entegrasyon spike'ı; `settings_screen.dart` ve Flutter ayarlar UI'ına dokunulmaz.
-  - **WP-19 sonrası:** WP-14 bittikten ve WP-15 destek kararını yazdıktan sonra ayarlar ekranına küçük bağlantı eklenir.
+  - **WP-15 tamamlandı:** Native Android App Shortcuts ve Flutter Servis köprüsü eklendi.
+  - **WP-19 Planlandı:** Settings ekranından kontrol ve Timer/Navigasyon eylemlerinin UI state'e bağlanması.
   - *Kaynak: new_features.md §5*
 
 - [ ] **Otomatik e-posta raporları**
   - Ay sonlarında kullanıcılara özet e-posta
-  - **WP-14 sonrası bekliyor:** e-posta sağlayıcısı, gönderen adresi ve sunucu tarafındaki gizli anahtar yönetimi netleşmeden planlı uygulamaya alınmaz.
+  - **WP-14 sonrası bekliyor.**
   - *Kaynak: new_features.md §5 Madde 21*
 
 - [ ] **Yeni grafik türleri**
-  - Radar grafik
-  - Diğer yeni grafik/animasyon fikirleri
-  - *Kaynak: new_features.md §3 Madde 15*
+  - Radar grafik vb.
 
-- [ ] **Çizgisel grup grafiği**
+- [x] **Çizgisel grup grafiği**
   - Tarihe bağlı grubun çalışma ivmesi çizgi grafiği
-  - *Kaynak: new_features.md §3 Madde 12*
+  - **WP-10 tamamlandı.**
 
-- [ ] **Grup içi tüm zamanlar istatistiği**
+- [x] **Grup içi tüm zamanlar istatistiği**
   - Sadece bugün/hafta değil, tüm zamanlar rekorları detaylı
-  - *Kaynak: new_features.md §3 Madde 14*
+  - **WP-10 tamamlandı.**
 
-- [ ] **Çevrimdışı cache (Drift/Hive)**
+- [x] **Çevrimdışı cache (Drift/Hive)**
   - Yerel veri saklama, çevrimdışı dayanıklılık
-  - *Kaynak: project.md §4*
+  - **WP-12 tamamlandı:** Supabase ve in-memory repo'lar `offline_first_repository` pattern'iyle sarıldı.
 
 - [ ] **Kapsamlı bildirim sistemi**
   - Kişiye özel çalışma hatırlatıcıları (açılıp kapatılabilen)
-  - Her bildirim türü/tarzı/önceliği detaylıca ayarlanabilir
-  - *Kaynak: new_features.md §5 Madde 10*
 
 - [ ] **Windows kurulum paketi + dağıtım**
   - exe/MSIX kurulum paketi
-  - Kullanım/kurulum notları
-  - *Kaynak: progress.md FAZ 5.2*
 
 - [ ] **Grid boyutlandırma gelişmiş** (kullanıcı geri bildirimi)
-  - Kartların 4 kenar ve köşeden (genişlik + yükseklik) ayarlanması — Android widget mantığı
-  - *Kaynak: project.md §9 Gelecek UI Geliştirmeleri*
+  - Kartların 4 kenar ve köşeden (genişlik + yükseklik) ayarlanması
 
 - [ ] **Canlı grup hedefi**
   - Grup hedef ilerleme barının çalışan kişi sayısına göre saniye saniye akması
-  - *Kaynak: project.md §9 Gelecek UI Geliştirmeleri*
 
-- [ ] **Grup yönetimi UI iyileştirme**
+- [x] **Grup yönetimi UI iyileştirme**
   - Grup ayarları ve üye yönetiminin daha kolay/derli toplu yapılması
-  - *Kaynak: project.md §9 Gelecek UI Geliştirmeleri*
+  - **WP-18 tamamlandı:** Ayarlar menüsü ve grup yönetimi ekranı sadeleştirildi.
 
 ---
 
 ## ❓ Açık Sorular
 
-- Otomatik aylık rapor için hangi e-posta sağlayıcısı ve hangi gönderen adresi kullanılacak? Anahtar yalnız Supabase Edge Function/secret olarak saklanacak; Flutter uygulamasına girmeyecek.
-- İstatistik detayı: Hangi grafik tipleri, hangi kıyaslamalar en faydalı?
-- Widget içeriği: Hangi bilgiler, hangi boyut, hangi platform öncelikli?
-- Tasarım dili: Renkler/tema son halini aldı mı yoksa daha iyileştirme var mı?
-- Çoklu sınıf: İlk sürüm çoklu sınıfı destekliyor — gerçekten kullanılıyor mu?
+- Otomatik aylık rapor için hangi e-posta sağlayıcısı ve hangi gönderen adresi kullanılacak?
+- Çoklu sınıf özelliği aktif olarak kullanılıyor mu yoksa tek sınıfa mı odaklanılmalı?
+- Gelecek Widget planlamalarında ekranda en çok görülmek istenen bilgiler netleşti mi?
