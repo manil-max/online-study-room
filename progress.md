@@ -35,7 +35,7 @@
 
 ### Gemini Lane
 - **Sorumlu:** Gemini
-- **Durum:** [x] Boşta — WP-22, WP-21, WP-20, WP-25 ve WP-29 tamamlandı
+- **Durum:** [x] Boşta — WP-23 tamamlandı
 - **Aktif WP:** —
 - **Kapsam:** Yeni atama bekleniyor.
 
@@ -78,7 +78,7 @@
 - **Çakışma kontrolü:** WP-23 `home_shell.dart` ve `focus_timer_screen.dart` nedeniyle WP-19 bittikten sonra başlamalı. WP-24 veri/notification temeliyle paralel başlayabilir ama `timer_notification_service.dart` değişirse WP-17/WP-19 alanıyla çakışma kontrolü yapılmalı.
 
 ### WP-23: Clock Center + Landscape StandBy 🕰️
-- **Durum:** [ ] Bekliyor — WP-19 sonrası önerilir
+- **Durum:** [x] Tamamlandı
 - **Backlog:** V5 Saat uygulaması yerini alma fazı
 - **Kapsam:** Apple StandBy ve modern saat uygulamalarındaki “telefonu yatay koyunca büyük, sakin, okunur saat” deneyimini Odak Kampı'nın çalışma odağıyla birleştir. Bu WP alarm motoru yazmaz; görsel merkez, navigasyon ve landscape/focus deneyimini kurar.
 - **SAHİP dosyalar:**
@@ -95,11 +95,11 @@
   - `app/lib/core/notifications/**`
   - `supabase/migrations/**`
 - **Adımlar:**
-  - [ ] Yeni `ClockScreen` oluştur: sekmeler/segmentler `Saat`, `Kronometre`, `Timer`, `Odak` mantığında; mevcut `studyTimerProvider` yalnız okunur/kontrollü kullanılsın.
-  - [ ] Landscape algılanınca `StandByClockView` göster: dev saat, tarih, seçili mod, çalışma/pomodoro kalan süre, düşük parlaklık/kırmızı gece tonu seçeneği.
-  - [ ] `FocusTimerScreen`i StandBy tasarım ilkeleriyle büyüt: yatayda iki kolon, dokunması kolay başlat/durdur, analog/dijital saat yüzü geçişi.
-  - [ ] `HomeShell`e “Saat” erişimi ekle veya mevcut Timer kartından tek dokunuşla Clock Center aç; WP-19 ile aynı anda yapılmayacak.
-  - [ ] Widget testleriyle portrait/landscape taşma ve temel navigasyonu doğrula.
+  - [x] Yeni `ClockScreen` oluştur: sekmeler/segmentler `Saat`, `Kronometre`, `Timer`, `Odak` mantığında; mevcut `studyTimerProvider` yalnız okunur/kontrollü kullanılsın.
+  - [x] Landscape algılanınca `StandByClockView` göster: dev saat, tarih, seçili mod, çalışma/pomodoro kalan süre, düşük parlaklık/kırmızı gece tonu seçeneği.
+  - [x] `FocusTimerScreen`i StandBy tasarım ilkeleriyle büyüt: yatayda iki kolon, dokunması kolay başlat/durdur, analog/dijital saat yüzü geçişi.
+  - [x] `HomeShell`e “Saat” erişimi ekle veya mevcut Timer kartından tek dokunuşla Clock Center aç; WP-19 ile aynı anda yapılmayacak.
+  - [x] Widget testleriyle portrait/landscape taşma ve temel navigasyonu doğrula.
 - **Tuzaklar:**
   - StandBy tasarımı iOS kopyası olmamalı; yalnız kullanım kalıbı alınır.
   - Yatay moda geçişte global orientation lock yapma; kullanıcı telefonu çevirdiğinde responsive düzen değişsin.

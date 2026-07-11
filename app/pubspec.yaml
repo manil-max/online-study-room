@@ -55,6 +55,7 @@ dependencies:
   # Masaüstü (WP-11): pencere boyutu/başlık + "üstte kalan mini pencere".
   # Yalnız Windows/macOS/Linux'ta kullanılır; web'de koşullu import ile devre dışı.
   window_manager: ^0.4.3
+  intl: ^0.20.2
 
 dev_dependencies:
   flutter_test:

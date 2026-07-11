@@ -4,7 +4,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:home_widget/home_widget.dart';
 
 import 'package:online_study_room/core/notifications/timer_external_command_store.dart';
-import 'package:online_study_room/core/prefs/app_prefs.dart';
 
 @pragma('vm:entry-point')
 Future<void> widgetBackgroundCallback(Uri? uri) async {

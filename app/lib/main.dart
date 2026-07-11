@@ -25,7 +25,7 @@ Future<void> main() async {
   final isAndroid = !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
   if (isAndroid) {
     await TimerNotificationService.instance.initialize();
-    await HomeWidget.registerBackgroundCallback(widgetBackgroundCallback);
+    await HomeWidget.registerInteractivityCallback(widgetBackgroundCallback);
   }
 
   // Masaüstünde (Windows/macOS/Linux) pencere boyutu/başlığı hazırlanır;

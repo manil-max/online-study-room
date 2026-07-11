@@ -94,7 +94,7 @@ void main() {
     await tester.pumpAndSettle();
 
     final navBar = tester.widget<NavigationBar>(find.byType(NavigationBar));
-    expect(navBar.selectedIndex, 2);
+    expect(navBar.selectedIndex, 3);
   });
 
   testWidgets('Çıkış yapınca giriş ekranına dönülür', (tester) async {

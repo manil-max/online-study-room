@@ -6,6 +6,7 @@ import '../../data/providers/nudge_notification_listener.dart';
 import '../../data/providers/presence_lifecycle.dart';
 import '../../features/classroom/classroom_screen.dart';
 import '../../features/classroom/widgets/class_switcher.dart';
+import '../../features/clock/clock_screen.dart';
 import '../../features/home/home_screen.dart';
 import '../../features/profile/profile_screen.dart';
 import '../../features/stats/stats_screen.dart';
@@ -29,6 +30,7 @@ class HomeShell extends ConsumerWidget {
 
   static const List<Widget> _screens = [
     HomeScreen(),
+    ClockScreen(),
     ClassroomScreen(),
     StatsScreen(),
     ProfileScreen(),
@@ -37,7 +39,7 @@ class HomeShell extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final index = ref.watch(navIndexProvider);
-    const classesTabIndex = 1; // "Sınıflar" sekmesinin indeksi
+    const classesTabIndex = 2; // "Sınıflar" sekmesinin indeksi
 
     // Presence heartbeat/yaşam-döngüsünü oturum boyunca diri tut (§WP-5): çalışma
     // sürerken satırı düzenli tazeler, uygulama öldürülünce karşı taraf çevrimdışı
@@ -70,6 +72,11 @@ class HomeShell extends ConsumerWidget {
               icon: Icon(Icons.home_outlined),
               selectedIcon: Icon(Icons.home),
               label: 'Ana Sayfa',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.access_time_outlined),
+              selectedIcon: Icon(Icons.access_time_filled),
+              label: 'Saat',
             ),
             NavigationDestination(
               icon: Icon(Icons.groups_outlined),

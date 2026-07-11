@@ -106,74 +106,115 @@ class _FocusTimerScreenState extends ConsumerState<FocusTimerScreen> {
                 onPressed: () => Navigator.of(context).maybePop(),
               ),
             ),
-            Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
+            OrientationBuilder(
+              builder: (context, orientation) {
+                final isLandscape = orientation == Orientation.landscape;
+
+                final subjectWidget = Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircleAvatar(
+                      radius: 5,
+                      backgroundColor: selected != null
+                          ? subjectColor(selected.color)
+                          : theme.colorScheme.onSurfaceVariant,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      selected?.name ?? 'Genel',
+                      style: theme.textTheme.titleMedium
+                          ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                    ),
+                  ],
+                );
+
+                final clockWidget = Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: StudyClock(
+                      seconds: displaySeconds,
+                      pctToGoal: clockPct,
+                      running: timer.isRunning,
+                      style: clockStyle,
+                      fontSize: 72,
+                      diameter: 300,
+                    ),
+                  ),
+                );
+
+                final todayTextWidget = Text(
+                  'Bugün ${formatHumanSeconds(todayTotal)}',
+                  style: theme.textTheme.bodyMedium
+                      ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                );
+
+                final startStopButton = SizedBox(
+                  width: 96,
+                  height: 96,
+                  child: FilledButton(
+                    style: FilledButton.styleFrom(
+                      shape: const CircleBorder(),
+                      backgroundColor: timer.isRunning
+                          ? theme.colorScheme.error
+                          : theme.colorScheme.primary,
+                    ),
+                    onPressed: timer.isRunning ? notifier.stop : notifier.start,
+                    child: Icon(
+                      timer.isRunning ? Icons.stop : Icons.play_arrow,
+                      size: 44,
+                    ),
+                  ),
+                );
+
+                if (isLandscape) {
+                  return Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: clockWidget,
+                        ),
+                        Expanded(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              subjectWidget,
+                              if (timer.isRunning && timer.mode != TimerMode.stopwatch) ...[
+                                const SizedBox(height: 12),
+                                TimerPhaseIndicator(timer: timer),
+                              ],
+                              const SizedBox(height: 24),
+                              todayTextWidget,
+                              const SizedBox(height: 32),
+                              startStopButton,
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                return Center(
+                  child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      CircleAvatar(
-                        radius: 5,
-                        backgroundColor: selected != null
-                            ? subjectColor(selected.color)
-                            : theme.colorScheme.onSurfaceVariant,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        selected?.name ?? 'Genel',
-                        style: theme.textTheme.titleMedium
-                            ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-                      ),
+                      subjectWidget,
+                      if (timer.isRunning && timer.mode != TimerMode.stopwatch) ...[
+                        const SizedBox(height: 12),
+                        TimerPhaseIndicator(timer: timer),
+                      ],
+                      const SizedBox(height: 24),
+                      clockWidget,
+                      const SizedBox(height: 8),
+                      todayTextWidget,
+                      const SizedBox(height: 40),
+                      startStopButton,
                     ],
                   ),
-                  if (timer.isRunning &&
-                      timer.mode != TimerMode.stopwatch) ...[
-                    const SizedBox(height: 12),
-                    TimerPhaseIndicator(timer: timer),
-                  ],
-                  const SizedBox(height: 24),
-                  // Dar ekranda büyük saat taşmasın diye ölçekle (FittedBox).
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: StudyClock(
-                        seconds: displaySeconds,
-                        pctToGoal: clockPct,
-                        running: timer.isRunning,
-                        style: clockStyle,
-                        fontSize: 72,
-                        diameter: 300,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Bugün ${formatHumanSeconds(todayTotal)}',
-                    style: theme.textTheme.bodyMedium
-                        ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-                  ),
-                  const SizedBox(height: 40),
-                  SizedBox(
-                    width: 96,
-                    height: 96,
-                    child: FilledButton(
-                      style: FilledButton.styleFrom(
-                        shape: const CircleBorder(),
-                        backgroundColor: timer.isRunning
-                            ? theme.colorScheme.error
-                            : theme.colorScheme.primary,
-                      ),
-                      onPressed: timer.isRunning ? notifier.stop : notifier.start,
-                      child: Icon(
-                        timer.isRunning ? Icons.stop : Icons.play_arrow,
-                        size: 44,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                );
+              },
             ),
           ],
         ),

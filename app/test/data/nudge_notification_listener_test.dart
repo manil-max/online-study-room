@@ -30,7 +30,7 @@ Nudge _nudge(String id, {DateTime? readAt}) => Nudge(
       readAt: readAt,
     );
 
-Future<void> _tick() => Future<void>.delayed(Duration.zero);
+Future<void> _tick() => Future.delayed(const Duration(milliseconds: 10), () => _);
 
 void main() {
   const userId = 'u1';
