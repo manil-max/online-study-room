@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../data/providers/presence_lifecycle.dart';
+import '../../data/providers/device_integration_listener.dart';
 import '../../data/providers/nudge_notification_listener.dart';
+import '../../data/providers/presence_lifecycle.dart';
 import '../../features/classroom/classroom_screen.dart';
 import '../../features/classroom/widgets/class_switcher.dart';
 import '../../features/home/home_screen.dart';
@@ -43,6 +44,7 @@ class HomeShell extends ConsumerWidget {
     // görür. Kabuk her zaman monte olduğu için burada izlenir.
     ref.watch(presenceLifecycleProvider);
     ref.watch(nudgeNotificationListenerProvider);
+    ref.watch(deviceIntegrationListenerProvider);
 
     return Scaffold(
       body: IndexedStack(index: index, children: _screens),

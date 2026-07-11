@@ -165,6 +165,22 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ],
           ),
           const SizedBox(height: 10),
+          const _SettingsGroup(
+            icon: Icons.integration_instructions_outlined,
+            title: 'Cihaz Entegrasyonları',
+            subtitle: 'Otomasyon ve Bixby Routines',
+            initiallyExpanded: false,
+            children: [
+              ListTile(
+                leading: Icon(Icons.shortcut_outlined),
+                title: Text('Uygulama Kısayolları (Rutinler)'),
+                subtitle: Text(
+                  'Samsung Modes & Routines veya Tasker gibi uygulamalardan "Odak Başlat", "Mola Ver", "Sohbet" gibi aksiyonları seçerek uygulamayı otomatik tetikleyebilirsiniz.',
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
           _SettingsGroup(
             icon: Icons.support_agent_outlined,
             title: 'Destek',

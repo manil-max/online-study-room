@@ -8,6 +8,33 @@
 
 ## 🔴 Yüksek Öncelik
 
+- [~] **Tema paleti genişletme + custom renk slotları** — **WP-26 planlandı**
+  - Mevcut paletler kullanıcıya yeterince iyi gelmedi; daha fazla profesyonel hazır palet eklenecek.
+  - 3 adet custom slot olacak; kullanıcı primary/accent renklerini seçip kendi temasını kalıcı yapabilecek.
+  - Okunabilirlik için kontrast/on renk otomatik kontrol edilecek.
+  - *Kaynak: kullanıcı geri bildirimi; WP-26.*
+
+- [~] **Android 3 tuşlu navigasyon safe-area düzeltmesi** — **WP-25 planlandı**
+  - Samsung S26 Ultra gibi 3 tuşlu navigation kullanan cihazlarda sohbet/form/bottom action alanları sistem tuşlarının altında kalmamalı.
+  - Gesture navigation kullanan cihazlarda gereksiz ekstra boşluk oluşturmayacak şekilde `viewPadding.bottom` / `SafeArea` standardı kurulacak.
+  - *Kaynak: kullanıcı geri bildirimi; WP-25.*
+
+- [~] **V5 Saat uygulaması yerini alma fazı** — **WP-23 ve WP-24 planlandı**
+  - Hedef: Odak Kampı'nın yalnız “çalışma sayacı” değil, telefondaki varsayılan Saat uygulamasının pratik yerini alabilecek bir zaman merkezi olması.
+  - Araştırma özeti:
+    - Apple Clock/StandBy: Dünya saati, alarm, kronometre, timer; kronometrede dijital/analog yüz geçişi ve tur kaydı; yatay şarjda büyük başucu/masa saati, widget/Live Activity görünümü ve gece kırmızı ton.
+    - Google Clock: Alarm/timer/kronometre/dünya saati yanında Bedtime, sleep sounds, upcoming events, Wear OS, alarm sorun uyarıları, kademeli ses, ses tuşu davranışı, müzik servisleri, Assistant Routine, ana ekran widget resize ve analog/dijital/seconds/24h ayarları.
+    - Samsung Clock: Alarm tarihleri, tekrar eden alarmı tek gün atlama, snooze, şehir hava durumu, globe/map/time-zone converter, lap copy/delete, preset ve aynı anda çoklu timer.
+    - Popüler uygulamalar: Alarmy/Alarm Clock Xtreme gibi uygulamalarda görevle alarm kapatma, anti-snooze, kademeli ses, büyük snooze, hızlı alarm; MultiTimer tarafında renk/ikon/etiket, auto-repeat, start delay, timer geçmişi; Pomodoro uygulamalarında hızlı minimal başlatma, özelleştirilebilir döngüler, gamification ve dikkat dağıtıcı engelleme.
+  - İlk teslim dilimi:
+    - **WP-23:** Clock Center + yatay StandBy/focus ekranı.
+    - **WP-24:** Alarm + çoklu timer temeli, preset/label/tekrar ve güvenilir notification davranışı.
+  - Sonraki dilimler:
+    - Gelişmiş widget/dinamik bildirim yüzeyleri, yatay tablet/masa modu polish.
+    - Bedtime/focus routine, sakin sesler ve takvim/“yarınki plan” entegrasyonu.
+    - Ağır uyananlar için opsiyonel görevli alarm/anti-snooze.
+  - *Kaynaklar: Apple Support StandBy/Clock, Google Clock Help/Play, Samsung Clock support/Play, Alarmy, Alarm Clock Xtreme, MultiTimer, Zapier Pomodoro araştırması.*
+
 - [x] **Android ana ekran widget sistemi** (home_widget paketi)
   - Sayaç widget'ı (tek dokunuşla başlat/durdur)
   - Günlük/haftalık istatistik panosu widget'ı

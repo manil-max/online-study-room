@@ -14,8 +14,8 @@
 - **Gün sınırı:** `Europe/Istanbul`
 - **RLS helper'ları:** `is_group_member(gid)`, `can_see_user_sessions(target)`, `is_group_admin(gid)`
 - **Dashboard:** 6 sütunlu 2D matris, 19 kart türü, `grid_reflow.dart` motoru
-- **Tema:** 5 palet, koyu varsayılan, `AppTheme` palet-parametreli
-- **Son WP numarası:** 19 (WP-12, WP-14, WP-16, WP-17 ve WP-18 tamamlandı; WP-15 planlı/tamamlanmış olabilir, lane notlarına bak)
+- **Tema:** 5 hazır palet, koyu varsayılan, `AppTheme` palet-parametreli; WP-26 ile ek hazır palet + 3 custom slot planlandı
+- **Son WP numarası:** 26 (WP-26 tema paleti genişletme için planlandı)
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
   - Flutter: `C:\src\flutter` · Android SDK: `C:\Android\Sdk`
@@ -133,6 +133,152 @@
   - [ ] Gerçek veri DB'den her yenilendiğinde (örn. 20 saniyede bir) sanal ilerlemeyi gerçek veriyle senkronize et (zıplamaları önlemek için `TweenAnimationBuilder` kullan).
 - **Kabul:** Grup çalışırken bar yavaşça (canlı gibi) dolar, boşken durur.
 - **Model matrisi:** WP-22 | Claude Sonnet 5 high / Gemini 3.5 Flash high
+
+### V5 Araştırma Notu: Saat Uygulaması Yerini Alma ⏱️
+- **Kaynak özeti:** Apple Clock/StandBy, Google Clock, Samsung Clock ve popüler saat/timer uygulamaları incelendi.
+- **Ürün yönü:** Odak Kampı'nın çekirdeği çalışma/pomodoro olmaya devam eder; fakat kullanıcı isterse varsayılan Saat uygulamasını açmadan alarm, çoklu timer, kronometre, yatay masa/başucu saati ve dış yüzey kontrollerini buradan yönetebilmelidir.
+- **Tasarım ilkeleri:**
+  - Büyük, tek bakışta okunur zaman; yatay kullanım birinci sınıf davranış olmalı.
+  - Timer/alarm eylemleri uygulamayı açmaya zorlamadan bildirim/widget üzerinden çalışmalı.
+  - Ağır ayarlar ana akışı boğmamalı; Apple/Google Clock sadeliği + Samsung/MultiTimer pratik gücü.
+  - Sleep/snore gibi hassas özellikler ilk teslimde yok; ileride ancak açık izin, yerel veri ve medikal iddia olmadan.
+- **Çakışma kontrolü:** WP-23 `home_shell.dart` ve `focus_timer_screen.dart` nedeniyle WP-19 bittikten sonra başlamalı. WP-24 veri/notification temeliyle paralel başlayabilir ama `timer_notification_service.dart` değişirse WP-17/WP-19 alanıyla çakışma kontrolü yapılmalı.
+
+### WP-23: Clock Center + Landscape StandBy 🕰️
+- **Durum:** [ ] Bekliyor — WP-19 sonrası önerilir
+- **Backlog:** V5 Saat uygulaması yerini alma fazı
+- **Kapsam:** Apple StandBy ve modern saat uygulamalarındaki “telefonu yatay koyunca büyük, sakin, okunur saat” deneyimini Odak Kampı'nın çalışma odağıyla birleştir. Bu WP alarm motoru yazmaz; görsel merkez, navigasyon ve landscape/focus deneyimini kurar.
+- **SAHİP dosyalar:**
+  - `app/lib/features/clock/clock_screen.dart` (yeni)
+  - `app/lib/features/clock/widgets/standby_clock_view.dart` (yeni)
+  - `app/lib/features/clock/widgets/clock_mode_tabs.dart` (yeni)
+  - `app/lib/features/clock/widgets/large_time_face.dart` (yeni)
+  - `app/lib/features/classroom/widgets/focus_timer_screen.dart`
+  - `app/lib/core/navigation/home_shell.dart`
+  - `app/test/features/clock_screen_test.dart` (yeni)
+- **DOKUNMA:**
+  - `app/android/**`
+  - `app/lib/data/providers/study_providers.dart`
+  - `app/lib/core/notifications/**`
+  - `supabase/migrations/**`
+- **Adımlar:**
+  - [ ] Yeni `ClockScreen` oluştur: sekmeler/segmentler `Saat`, `Kronometre`, `Timer`, `Odak` mantığında; mevcut `studyTimerProvider` yalnız okunur/kontrollü kullanılsın.
+  - [ ] Landscape algılanınca `StandByClockView` göster: dev saat, tarih, seçili mod, çalışma/pomodoro kalan süre, düşük parlaklık/kırmızı gece tonu seçeneği.
+  - [ ] `FocusTimerScreen`i StandBy tasarım ilkeleriyle büyüt: yatayda iki kolon, dokunması kolay başlat/durdur, analog/dijital saat yüzü geçişi.
+  - [ ] `HomeShell`e “Saat” erişimi ekle veya mevcut Timer kartından tek dokunuşla Clock Center aç; WP-19 ile aynı anda yapılmayacak.
+  - [ ] Widget testleriyle portrait/landscape taşma ve temel navigasyonu doğrula.
+- **Tuzaklar:**
+  - StandBy tasarımı iOS kopyası olmamalı; yalnız kullanım kalıbı alınır.
+  - Yatay moda geçişte global orientation lock yapma; kullanıcı telefonu çevirdiğinde responsive düzen değişsin.
+  - `HomeShell` WP-19 ile çakışırsa WP-23 bekler.
+- **Kabul:** Telefon yataydayken büyük saat/odak ekranı taşmadan çalışır; mevcut kronometre/geri sayım/pomodoro durumu doğru görünür; dikeyde normal Clock Center akışı bozulmaz.
+- **Model matrisi (limit dostu):** WP-23 | Claude Sonnet 5 high / GPT-5.6 Terra high / Gemini 3.5 Flash high
+- **Efor:** Orta-yüksek; çoğunluk UI/responsive, düşük DB riski.
+
+### WP-24: Alarm + Çoklu Timer Temeli ⏲️
+- **Durum:** [ ] Bekliyor
+- **Backlog:** V5 Saat uygulaması yerini alma fazı
+- **Kapsam:** Google/Samsung Clock ve MultiTimer çizgisinde, çalışma uygulamasını bozmadan kişisel alarm ve çoklu timer altyapısını kur. İlk teslim yerel/offline çalışır; Supabase sync ve sleep tracking yok.
+- **SAHİP dosyalar:**
+  - `app/lib/data/models/alarm_rule.dart` (yeni)
+  - `app/lib/data/models/timer_preset.dart` (yeni)
+  - `app/lib/data/repositories/alarm_repository.dart` (yeni)
+  - `app/lib/data/repositories/in_memory/in_memory_alarm_repository.dart` (yeni)
+  - `app/lib/data/repositories/local/local_alarm_repository.dart` (yeni)
+  - `app/lib/data/providers/alarm_providers.dart` (yeni)
+  - `app/lib/core/notifications/alarm_notification_service.dart` (yeni)
+  - `app/lib/features/clock/alarms_screen.dart` (yeni)
+  - `app/lib/features/clock/timers_screen.dart` (yeni)
+  - `app/test/data/alarm_repository_test.dart` (yeni)
+  - `app/test/features/alarms_screen_test.dart` (yeni)
+- **DOKUNMA:**
+  - `app/lib/data/providers/study_providers.dart` (yalnız gerekiyorsa sonraki entegrasyon WP'si)
+  - `app/lib/core/notifications/timer_notification_service.dart` (mevcut çalışma sayacı bildirimi ayrı kalsın)
+  - `app/android/**` (exact alarm izinleri ayrı native WP'ye bırakılır)
+  - `supabase/migrations/**`
+- **Adımlar:**
+  - [ ] Alarm modeli: saat/dakika, gün tekrarı, tek tarih, etiket, aktif/pasif, snooze süresi, kademeli ses seçeneği alanlarını tanımla.
+  - [ ] Çoklu timer modeli: etiket, renk/ikon, süre, kalan süre, running/paused/done, preset ve recent timer mantığını kur.
+  - [ ] Local repository + in-memory test double yaz; `SharedPreferences` veya mevcut prefs altyapısıyla cihazda kalıcı tut.
+  - [ ] Alarm ve Timers ekranlarını ekle: hızlı alarm, preset timer, aynı anda çoklu timer, pause/resume/reset/delete.
+  - [ ] `AlarmNotificationService` ile alarm/timer bitiş bildirimlerini çalışma sayacı bildiriminden ayrı kanal ve sade aksiyonlarla hazırla.
+  - [ ] Repository ve ekran testleri ekle; alarm verisinin Supabase'e gitmediğini ve normal çalışma oturumlarını etkilemediğini doğrula.
+- **Tuzaklar:**
+  - Android exact alarm / arka plan garanti davranışı platform izni ister; bu WP'de native izin eklenmez, sonraki WP'de ele alınır.
+  - Alarmy tarzı görevli alarm/anti-snooze ilk teslimde yok; önce güvenilir temel.
+  - Çoklu timer ile çalışma timer'ı aynı state machine'e zorla sokulmaz; çakışma olmaması için ayrı provider ailesi tercih edilir.
+- **Kabul:** Kullanıcı birden fazla timer'ı etiketli/presetli çalıştırabilir, alarm oluşturup aç/kapatabilir; uygulama yeniden açıldığında yerel durum korunur; testler geçer.
+- **Model matrisi (limit dostu):** WP-24 | Claude Sonnet 5 high / GPT-5.6 Terra high / Gemini 3.1 Pro medium
+- **Efor:** Yüksek; veri modeli + yerel kalıcılık + notification davranışı var.
+
+### WP-25: Android 3 Tuşlu Navigasyon Safe Area QA 📱
+- **Durum:** [ ] Bekliyor
+- **Backlog:** Samsung S26 Ultra / Android 3 tuşlu navigasyon barı altında kalan içerikler
+- **Kapsam:** Gesture navigation'da görünmeyen ama 3 tuşlu Android navigasyonda alttaki sistem barı yüzünden sohbet/form/bottom action alanlarının kapanmasını düzelt. Amaç, `geri / ana ekran / son uygulamalar` tuşları açıkken hiçbir input, gönder butonu, alt kart veya bottom action'ın sistem barının altında kalmaması.
+- **SAHİP dosyalar:**
+  - `app/lib/core/widgets/safe_screen_padding.dart` (yeni, gerekirse)
+  - `app/lib/features/classroom/widgets/class_chat_screen.dart`
+  - `app/lib/features/classroom/widgets/class_chat_card.dart`
+  - `app/lib/features/classroom/classroom_screen.dart`
+  - `app/lib/features/profile/settings_screen.dart`
+  - `app/lib/features/profile/profile_screen.dart`
+  - `app/lib/features/home/home_screen.dart`
+  - `app/lib/features/stats/stats_screen.dart`
+  - `app/lib/features/classroom/widgets/focus_timer_screen.dart`
+  - `app/test/features/android_safe_area_test.dart` (yeni)
+- **DOKUNMA:**
+  - `app/android/**`
+  - `app/lib/data/providers/study_providers.dart`
+  - `app/lib/core/notifications/**`
+  - `supabase/migrations/**`
+  - WP-19 veya WP-23 aktifse `app/lib/core/navigation/home_shell.dart` ve `focus_timer_screen.dart` değişiklikleri önce çakışma kontrolü ister.
+- **Adımlar:**
+  - [ ] Android 3 tuşlu navigasyon için `MediaQuery.viewPaddingOf(context).bottom` kullanılan ortak helper veya ekran bazlı bottom padding standardı belirle.
+  - [ ] Sohbet ekranında mesaj listesi + mesaj input/gönder butonunun sistem navigasyon barı üstünde kalmasını sağla; klavye açıkken `viewInsets.bottom` ile çakışma yaratma.
+  - [ ] Sabit `ListView(padding: EdgeInsets.all(...))` kullanan ana ekranlarda alt padding'i `base + bottomSafe` olacak şekilde düzelt.
+  - [ ] `FocusTimerScreen` çıkışındaki `SystemUiMode.edgeToEdge` davranışını kontrol et; 3 tuşlu navigation'da içerik sistem barının altına çiziliyorsa güvenli moda veya SafeArea düzenine çek.
+  - [ ] Widget testinde `viewPadding.bottom` simüle ederek sohbet inputu, ayarlar son satırı ve ana sayfa alt içeriğinin görünür kaldığını doğrula.
+- **Tuzaklar:**
+  - Her yere körlemesine `SafeArea` eklemek NavigationBar üstünde gereksiz çift boşluk yaratabilir; scroll ekranlarında çoğu zaman sadece bottom padding yeterlidir.
+  - Klavye açıkken `viewPadding.bottom` ile `viewInsets.bottom` farklıdır; mesaj inputu klavye ve navigation bar senaryolarında ayrı kontrol edilmeli.
+  - Gesture navigation kullanan cihazlarda gereksiz dev boşluk oluşmamalı.
+- **Kabul:** Samsung/Android 3 tuşlu navigation modunda sohbet mesaj inputu, gönder butonu ve ekranların en alt içerikleri sistem tuşlarının altında kalmaz; gesture navigation'da görsel düzen bozulmaz; safe-area widget testleri geçer.
+- **Model matrisi (limit dostu):** WP-25 | Claude Sonnet 5 medium / GPT-5.6 Terra medium / Gemini 3.5 Flash medium
+- **Efor:** Orta; çoğunluk UI padding/QA, düşük DB riski.
+
+### WP-26: Tema Paleti Genişletme + 3 Custom Slot 🎨
+- **Durum:** [ ] Bekliyor
+- **Backlog:** Mevcut renk paletleri yeterince iyi hissettirmiyor; daha fazla hazır seçenek ve kullanıcıya özel renk seçimi
+- **Kapsam:** Görünüm ayarlarında daha profesyonel hazır paletler ekle ve 3 adet kullanıcı tanımlı custom palet slotu sun. Kullanıcı her slotta primary/accent ve gerekirse onPrimary/onAccent renklerini seçip kalıcı kaydedebilmeli. Supabase sync yok; cihazda kalıcı ayar yeterli.
+- **SAHİP dosyalar:**
+  - `app/lib/core/theme/app_theme.dart`
+  - `app/lib/core/theme/theme_settings.dart`
+  - `app/lib/features/profile/appearance_screen.dart`
+  - `app/lib/features/profile/widgets/custom_palette_editor.dart` (yeni)
+  - `app/test/core/theme_settings_test.dart` (yeni veya mevcutsa güncelle)
+  - `app/test/features/appearance_screen_test.dart` (yeni veya mevcutsa güncelle)
+- **DOKUNMA:**
+  - `app/lib/features/classroom/**`
+  - `app/lib/features/home/**`
+  - `app/lib/data/providers/study_providers.dart`
+  - `app/android/**`
+  - `supabase/migrations/**`
+- **Adımlar:**
+  - [ ] Hazır palet sayısını artır: mevcut 5 palete ek olarak en az 6 yeni dengeli seçenek ekle (örn. Slate Mint, Rose Noir, Cyber Blue, Forest, Cream Coffee, Mono Amber). İsimler Türkçe ve kullanıcı dostu olsun.
+  - [ ] `AppPalette` modelini custom paletleri de temsil edecek şekilde genişlet; eski `theme_palette` id'leri bozulmadan geriye uyumlu kalsın.
+  - [ ] `ThemeSettingsNotifier` içinde 3 custom slotu `SharedPreferences` ile sakla (`custom_palette_1/2/3` gibi); geçersiz renk/eksik slot durumunda güvenli varsayılana düş.
+  - [ ] Görünüm ekranında hazır paletleri daha iyi önizleme kartlarıyla göster; custom slotlarda “Düzenle / Uygula / Sıfırla” akışı ekle.
+  - [ ] Basit color picker UI kur: hex girişi + renk önizleme + önerilen kontrast/on renk otomatik seçimi. Ağır paket ekleme gerekiyorsa önce mevcut Flutter bileşenleriyle çöz.
+  - [ ] Kontrast tuzağına karşı `onPrimary/onAccent` için siyah/beyaz otomatik seçim veya kullanıcı override'ı sağla.
+  - [ ] Tema ayarı testleri: eski palet id'si çalışır, custom slot kaydedilir/yüklenir, bozuk hex varsayılana döner, AppearanceScreen custom slotları render eder.
+- **Tuzaklar:**
+  - Kullanıcı okunamaz renk seçerse buton/text kontrastı bozulabilir; otomatik `on` renk hesaplaması şart.
+  - Mevcut palet id'leri (`navy`, `purple`, `emerald`, `sunset`, `ocean`) değişmemeli; eski kullanıcı ayarı kırılmasın.
+  - Custom paletler yerel cihaz ayarıdır; hesaplar arası sync bu WP'nin dışında.
+  - `appearance_screen.dart` WP-19 ayarlar entegrasyonu ile aynı dosyaya doğrudan çakışmaz ama aynı anda çalışan ajan varsa status kontrolü yapılmalı.
+- **Kabul:** Kullanıcı 10+ hazır paletten seçim yapabilir, 3 custom slotu düzenleyip kalıcı kullanabilir; uygulama yeniden açıldığında custom palet korunur; seçilen renklerde temel kontrast okunabilir kalır; tema ve appearance testleri geçer.
+- **Model matrisi (limit dostu):** WP-26 | Claude Sonnet 5 medium / GPT-5.6 Terra medium / Gemini 3.5 Flash medium
+- **Efor:** Orta; tema modeli + ayar UI + test, DB/native riski yok.
 
 ---
 ## ✅ Son Tamamlananlar (ajan bağlamı için)

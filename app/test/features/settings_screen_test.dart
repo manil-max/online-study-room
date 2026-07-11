@@ -52,6 +52,7 @@ void main() {
     expect(find.text('Kamp ateşi'), findsOneWidget);
     expect(find.text('Ana Sayfa'), findsOneWidget);
     expect(find.text('Bildirimler'), findsOneWidget);
+    expect(find.text('Cihaz Entegrasyonları'), findsOneWidget);
     expect(find.text('Destek'), findsOneWidget);
     expect(find.text('Geri bildirim gönder'), findsOneWidget);
     expect(find.text('Yönetim'), findsNothing);
