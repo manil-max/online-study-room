@@ -35,7 +35,7 @@
 
 ### Gemini Lane
 - **Sorumlu:** Gemini
-- **Durum:** [x] Boşta — WP-21, WP-20, WP-25 ve WP-29 tamamlandı
+- **Durum:** [x] Boşta — WP-22, WP-21, WP-20, WP-25 ve WP-29 tamamlandı
 - **Aktif WP:** —
 - **Kapsam:** Yeni atama bekleniyor.
 
@@ -66,22 +66,6 @@
 - Sınıf ekranındaki sohbet girişi ayrı **Sohbet** ekranına taşındı; grup bilgileri ve yönetim **Ayarlar** girişinden açılır.
 - Gamification migration'ı üretim Supabase'e uygulanmadan da Başarılar kartı varsayılan profil ile görünür; `0017_gamification_profiles.sql` uygulanınca kalıcı seri koruma verisine otomatik döner.
 
-
-### WP-22: Canlı Grup Hedefi Animasyonu 🎯
-- **Durum:** [ ] Bekliyor
-- **Backlog:** Grup hedef ilerleme barının çalışan kişi sayısına göre saniye saniye akması
-- **Kapsam:** Mevcut `GroupGoalCard`'ın içindeki progress bar'ın durağan (sadece veri gelince güncellenen) yapısını, aktif çalışan üye sayısına orantılı olarak her saniye pürüzsüz akan canlı bir animasyona çevirmek.
-- **SAHİP dosyalar:**
-  - `app/lib/features/home/widgets/group_goal_card.dart`
-- **DOKUNMA:**
-  - `app/lib/data/providers/**` (Sadece okunacak, state değiştirilmeyecek)
-  - `supabase/**`, `app/lib/features/classroom/**`
-- **Adımlar:**
-  - [ ] `GroupGoalCard` içinde `activeMembersCount` (aktif çalışan sayısı) verisini oku.
-  - [ ] Eğer aktif çalışan varsa, bir `Ticker` veya periyodik `Timer` kurarak hedefin görsel (sanal) ilerlemesini saniyede `activeMembersCount * 1 saniye` kadar artır.
-  - [ ] Gerçek veri DB'den her yenilendiğinde (örn. 20 saniyede bir) sanal ilerlemeyi gerçek veriyle senkronize et (zıplamaları önlemek için `TweenAnimationBuilder` kullan).
-- **Kabul:** Grup çalışırken bar yavaşça (canlı gibi) dolar, boşken durur.
-- **Model matrisi:** WP-22 | Claude Sonnet 5 high / Gemini 3.5 Flash high
 
 ### V5 Araştırma Notu: Saat Uygulaması Yerini Alma ⏱️
 - **Kaynak özeti:** Apple Clock/StandBy, Google Clock, Samsung Clock ve popüler saat/timer uygulamaları incelendi.
@@ -270,6 +254,11 @@
 - **Efor:** Orta-yüksek; dağıtım/CI/desktop API riski var.
 
 
+
+### WP-22: Canlı Grup Hedefi Animasyonu 🎯 — 2026-07-12 ✅
+- **Değişen dosyalar:** `app/lib/features/home/widgets/group_goal_card.dart`
+- **Ne yapıldı:** `GroupGoalCard` ConsumerStatefulWidget'a çevrildi. Saniyede bir tetiklenen periyodik bir Timer kurularak aktif çalışan sayısı kadar (`activeMembersCount`) ilerleme oranına sanal bir ekleme (`_virtualOffset`) yapıldı. Düzenli olarak Riverpod'dan gelen veritabanı toplamı (`groupDailyStatsProvider`) güncellendiğinde bu ofset sıfırlanarak senkronizasyon sağlandı. İlerleme halkasının pürüzsüz akması için `TweenAnimationBuilder` kullanıldı.
+- **Test:** Widget testleri koşturuldu, tümü hatasız geçti.
 
 ### WP-21: Gelişmiş Grid Boyutlandırma 📐 — 2026-07-12 ✅
 - **Değişen dosyalar:** `app/lib/features/home/home_screen.dart`, `app/lib/core/grid/grid_reflow.dart`

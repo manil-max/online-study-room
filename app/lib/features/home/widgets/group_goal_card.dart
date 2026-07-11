@@ -1,24 +1,61 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/stats/study_stats.dart';
 import '../../../core/theme/subject_colors.dart';
 import '../../../core/utils/duration_format.dart';
-import '../../classroom/widgets/class_switcher.dart';
+import '../../../data/models/presence.dart';
 import '../../../data/providers/group_providers.dart';
+import '../../../data/providers/presence_providers.dart';
 import '../../../data/providers/study_providers.dart';
+import '../../classroom/widgets/class_switcher.dart';
 import '../dashboard_card.dart';
 import 'group_card_shell.dart';
 
 /// "Grup hedefi" kartı (§3.11): grubun bugünkü TOPLAM çalışması / günlük grup
 /// hedefi (halka) + grup serisi (üst üste hedef tutulan gün).
-class GroupGoalCard extends ConsumerWidget {
+class GroupGoalCard extends ConsumerStatefulWidget {
   const GroupGoalCard({super.key, this.size = DashboardCardSize.medium});
 
   final DashboardCardSize size;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<GroupGoalCard> createState() => _GroupGoalCardState();
+}
+
+class _GroupGoalCardState extends ConsumerState<GroupGoalCard> {
+  Timer? _timer;
+  int _virtualOffset = 0;
+  int _lastDbTotal = -1;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(seconds: 1), _tick);
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _tick(Timer timer) {
+    if (!mounted) return;
+    final presence = ref.read(groupPresenceProvider).value ?? const [];
+    final activeCount =
+        presence.where((p) => p.status == PresenceStatus.studying).length;
+    if (activeCount > 0) {
+      setState(() {
+        _virtualOffset += activeCount;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final group = ref.watch(userGroupProvider).value;
     if (group == null) {
@@ -32,7 +69,14 @@ class GroupGoalCard extends ConsumerWidget {
     final stats = ref.watch(groupDailyStatsProvider).value ?? const [];
     final dayTotals = groupDayTotals(stats);
     final goalSeconds = group.dailyGoalMinutes * 60;
-    final todayTotal = dayTotals[dayOf(DateTime.now())] ?? 0;
+    
+    final dbTodayTotal = dayTotals[dayOf(DateTime.now())] ?? 0;
+    if (dbTodayTotal != _lastDbTotal) {
+      _lastDbTotal = dbTodayTotal;
+      _virtualOffset = 0;
+    }
+    
+    final todayTotal = dbTodayTotal + _virtualOffset;
     final pct = goalSeconds <= 0
         ? 0.0
         : (todayTotal / goalSeconds).clamp(0.0, 1.0);
@@ -57,11 +101,18 @@ class GroupGoalCard extends ConsumerWidget {
               alignment: Alignment.center,
               children: [
                 SizedBox.expand(
-                  child: CircularProgressIndicator(
-                    value: pct,
-                    strokeWidth: isCompact ? 6 : (isLarge ? 11 : 8),
-                    backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                    valueColor: AlwaysStoppedAnimation<Color>(ringColor),
+                  child: TweenAnimationBuilder<double>(
+                    duration: const Duration(seconds: 1),
+                    curve: Curves.linear,
+                    tween: Tween<double>(end: pct),
+                    builder: (context, value, _) {
+                      return CircularProgressIndicator(
+                        value: value,
+                        strokeWidth: isCompact ? 6 : (isLarge ? 11 : 8),
+                        backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                        valueColor: AlwaysStoppedAnimation<Color>(ringColor),
+                      );
+                    },
                   ),
                 ),
                 Text(
