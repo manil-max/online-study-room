@@ -52,6 +52,10 @@ dependencies:
   open_filex: ^4.5.0          # APK'yı açıp Android kurulum ekranını tetikler.
   crypto: ^3.0.6              # İndirilen APK'nın SHA-256 bütünlük doğrulaması.
 
+  # Masaüstü (WP-11): pencere boyutu/başlık + "üstte kalan mini pencere".
+  # Yalnız Windows/macOS/Linux'ta kullanılır; web'de koşullu import ile devre dışı.
+  window_manager: ^0.4.3
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

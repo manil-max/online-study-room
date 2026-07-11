@@ -27,7 +27,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   FlutterWindow window(project);
   Win32Window::Point origin(10, 10);
   Win32Window::Size size(1280, 720);
-  if (!window.Create(L"online_study_room", origin, size)) {
+  // Baslangic basligi ASCII tutulur (kaynak-kodlama riski yok); Dart tarafi
+  // (window_manager) uygulama acilinca basligi "Odak Kampi"ya ayarlar.
+  if (!window.Create(L"Odak Kampi", origin, size)) {
     return EXIT_FAILURE;
   }
   window.SetQuitOnClose(true);
