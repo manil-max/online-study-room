@@ -34,9 +34,9 @@
 
 ### Gemini Lane
 - **Sorumlu:** Gemini
-- **Durum:** [ ] Boş / tamamlandı
+- **Durum:** [x] Boşta — WP-25 tamamlandı
 - **Aktif WP:** —
-- **Not:** Yeni iş ataması gelince kart buraya taşınır.
+- **Kapsam:** Yeni atama bekleniyor.
 
 ### Claude Lane
 - **Sorumlu:** Claude
@@ -195,7 +195,8 @@
 - **Efor:** Yüksek; veri modeli + yerel kalıcılık + notification davranışı var.
 
 ### WP-25: Android 3 Tuşlu Navigasyon Safe Area QA 📱
-- **Durum:** [ ] Bekliyor
+- **Durum:** [x] Tamamlandı
+- **Sorumlu:** Gemini
 - **Backlog:** Samsung S26 Ultra / Android 3 tuşlu navigasyon barı altında kalan içerikler
 - **Kapsam:** Gesture navigation'da görünmeyen ama 3 tuşlu Android navigasyonda alttaki sistem barı yüzünden sohbet/form/bottom action alanlarının kapanmasını düzelt. Amaç, `geri / ana ekran / son uygulamalar` tuşları açıkken hiçbir input, gönder butonu, alt kart veya bottom action'ın sistem barının altında kalmaması.
 - **SAHİP dosyalar:**

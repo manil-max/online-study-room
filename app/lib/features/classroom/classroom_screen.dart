@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../data/providers/group_providers.dart';
+import '../../core/widgets/safe_screen_padding.dart';
 import '../../data/models/study_group.dart';
+import '../../data/providers/group_providers.dart';
 import '../home/dashboard_providers.dart';
 import '../home/widgets/group_goal_card.dart';
 import '../home/widgets/group_trend_card.dart';
@@ -56,7 +57,7 @@ class _NoGroupView extends ConsumerWidget {
     final theme = Theme.of(context);
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: getSafeVerticalPadding(context, horizontal: 24, vertical: 24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -106,7 +107,7 @@ class _GroupView extends ConsumerWidget {
     final showTimer = ref.watch(classroomShowTimerProvider);
 
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: getSafeVerticalPadding(context, horizontal: 16, vertical: 16),
       children: [
         if (showTimer) ...[const StudyTimerCard(), const SizedBox(height: 8)],
         Padding(

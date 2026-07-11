@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/stats/study_stats.dart';
 import '../../../core/theme/subject_colors.dart';
 import '../../../core/utils/duration_format.dart';
+import '../../../core/widgets/safe_screen_padding.dart';
 import '../../../data/models/study_session.dart';
 import '../../../data/models/subject.dart';
 import '../../../data/providers/study_providers.dart';
@@ -78,7 +79,7 @@ class PersonalStatsView extends StatelessWidget {
     final dailyTotalsMap = dailyTotals(sessions);
 
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: getSafeVerticalPadding(context),
       children: [
         Text('Dönem toplamları', style: theme.textTheme.titleMedium),
         const SizedBox(height: 8),

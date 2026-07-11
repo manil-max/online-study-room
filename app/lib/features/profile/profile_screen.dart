@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../core/utils/duration_format.dart';
+import '../../core/widgets/safe_screen_padding.dart';
 import '../../core/widgets/user_avatar.dart';
 import '../../data/models/study_group.dart';
 import '../../data/providers/auth_providers.dart';
@@ -27,7 +28,7 @@ class ProfileScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Profil')),
       body: ListView(
-        padding: const EdgeInsets.all(24),
+        padding: getSafeVerticalPadding(context, horizontal: 24, vertical: 24),
         children: [
           Center(
             child: Stack(

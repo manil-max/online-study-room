@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/stats/study_stats.dart';
 import '../../../core/theme/subject_colors.dart';
 import '../../../core/utils/duration_format.dart';
+import '../../../core/widgets/safe_screen_padding.dart';
 import '../../../core/widgets/user_avatar.dart';
 import '../../../data/models/daily_stat.dart';
 import '../../../data/models/profile.dart';
@@ -117,7 +118,7 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
     }
 
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: getSafeVerticalPadding(context),
       children: [
         // Grup başlığı + grup değiştirici (yalnızca geçiş, basılan yerde açılır).
         Row(

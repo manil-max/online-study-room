@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/animals/camp_animal.dart';
 import '../../core/notifications/notification_preferences.dart';
 import '../../core/notifications/nudge_notification_service.dart';
+import '../../core/widgets/safe_screen_padding.dart';
 import '../../data/providers/auth_providers.dart';
 import '../../data/providers/admin_providers.dart';
 import '../../data/providers/group_providers.dart';
@@ -67,7 +68,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Ayarlar')),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+        padding: getSafePadding(context, const EdgeInsets.fromLTRB(16, 12, 16, 24)),
         children: [
           _SettingsGroup(
             icon: Icons.palette_outlined,

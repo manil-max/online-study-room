@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/widgets/safe_screen_padding.dart';
 import 'dashboard_card.dart';
 import 'dashboard_providers.dart';
 import 'widgets/card_picker.dart';
@@ -95,7 +96,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ? _EmptyDashboard(onEdit: () => showCardPicker(context))
           : SingleChildScrollView(
               controller: _scroll,
-              padding: const EdgeInsets.all(16),
+              padding: getSafeVerticalPadding(context),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [

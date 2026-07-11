@@ -21,7 +21,7 @@
   - Okunabilirlik için kontrast/on renk otomatik kontrol edilecek.
   - *Kaynak: kullanıcı geri bildirimi; WP-26.*
 
-- [~] **Android 3 tuşlu navigasyon safe-area düzeltmesi** — **WP-25 planlandı**
+- [x] **Android 3 tuşlu navigasyon safe-area düzeltmesi** — **WP-25 tamamlandı**
   - Samsung S26 Ultra gibi 3 tuşlu navigation kullanan cihazlarda sohbet/form/bottom action alanları sistem tuşlarının altında kalmamalı.
   - Gesture navigation kullanan cihazlarda gereksiz ekstra boşluk oluşturmayacak şekilde `viewPadding.bottom` / `SafeArea` standardı kurulacak.
   - *Kaynak: kullanıcı geri bildirimi; WP-25.*
