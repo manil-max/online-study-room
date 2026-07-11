@@ -72,12 +72,6 @@
 - **Kapsam:** Installer, dağıtım akışı, güncelleme/çökme mesajları ve masaüstü son kalite kontrolleri.
 - **Kabul:** Windows kullanıcıları kurulabilir, güncellenebilir ve desteklenebilir bir paket alır.
 
-### WP-34: Süper-Admin Paneli, Grup Moderasyonu ve Duyurular 🧭
-- **Durum:** [x] Tamamlandı — Gemini
-- **Kapsam:** Yönetim ekranında Kullanıcılar, Gruplar, Raporlar, Duyurular ve Denetim sekmeleri; hedefli uygulama içi duyuru, grup moderasyonu ve rapor iç notları.
-- **SAHİP dosyalar:** `0021_admin_operations.sql`, `admin-operations` Edge Function, admin model/repository/provider/UI/test dosyaları.
-- **Kabul:** Kritik işlemler çift onay + gerekçe + audit olmadan çalışmaz; normal kullanıcı yalnız kendi duyurusunu/raporunu görür.
-- **Model seviyesi:** Yüksek — GPT-5.6 Terra high / Claude Sonnet 5 high / Gemini 3.1 Pro high
 
 ### WP-35: Sosyal Profil 2.0 + Başarı Yolculuğu 🏆
 - **Durum:** [~] Uygulanıyor — Gemini
@@ -130,6 +124,7 @@
 | WP-31 | Hesabımı Yönet Merkezi ve çalışan şifre sıfırlama |
 | WP-32 | Geri bildirim ekran görüntüsü eki |
 | WP-33 | Güvenli süper-admin kullanıcı işlemleri |
+| WP-34 | Süper-Admin Paneli, Grup Moderasyonu ve Duyurular |
 
 ### Son Teslim Notları
 
@@ -138,4 +133,5 @@
 - **WP-23:** Clock Center, yatay StandBy görünümü ve ana shell'den Saat erişimi eklendi (`8618d86`).
 - **WP-31:** Bağlı e-posta, e-posta değiştirme, güvenli çıkış ve recovery akışı ile `AccountSettingsScreen`/`RecoveryScreen` oluşturuldu.
 - **WP-32:** `0019_feedback_attachments.sql`, görsel seçimi ve admin önizlemesi eklendi.
-- **WP-33:** Yetkili kullanıcı işlemlerinin güvenli süper-admin temeli tamamlandı.
+- **WP-33:** Süper-admin Edge function ve RLS logları oluşturuldu, arayüz testleri düzenlendi.
+- **WP-34:** Süper-Admin çoklu sekme (Dashboard, Users, Groups, Reports, Announcements, Audit Log), duyurular ve grup moderasyonu eklendi.
