@@ -7,7 +7,7 @@ import '../admin_repository.dart';
 
 class InMemoryAdminRepository implements AdminRepository {
   InMemoryAdminRepository({Set<String> superAdminUserIds = const {}})
-      : _superAdminUserIds = {...superAdminUserIds};
+    : _superAdminUserIds = {...superAdminUserIds};
 
   final _uuid = const Uuid();
   final Set<String> _superAdminUserIds;
@@ -26,8 +26,9 @@ class InMemoryAdminRepository implements AdminRepository {
       userCount: 0,
       groupCount: 0,
       sessionCount: 0,
-      openTicketCount:
-          _tickets.where((t) => t.status == FeedbackTicketStatus.open).length,
+      openTicketCount: _tickets
+          .where((t) => t.status == FeedbackTicketStatus.open)
+          .length,
     );
   }
 
@@ -37,10 +38,11 @@ class InMemoryAdminRepository implements AdminRepository {
     FeedbackTicketStatus? status,
   }) async {
     _requireAdmin(userId);
-    final rows = _tickets
-        .where((ticket) => status == null || ticket.status == status)
-        .toList()
-      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    final rows =
+        _tickets
+            .where((ticket) => status == null || ticket.status == status)
+            .toList()
+          ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
     return List.unmodifiable(rows);
   }
 

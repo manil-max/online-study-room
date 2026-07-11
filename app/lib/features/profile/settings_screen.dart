@@ -5,10 +5,13 @@ import '../../core/animals/camp_animal.dart';
 import '../../core/notifications/notification_preferences.dart';
 import '../../core/notifications/nudge_notification_service.dart';
 import '../../data/providers/auth_providers.dart';
+import '../../data/providers/admin_providers.dart';
 import '../../data/providers/group_providers.dart';
+import '../admin/admin_screen.dart';
 import '../home/dashboard_providers.dart';
 import 'appearance_screen.dart';
 import 'widgets/camp_animal_picker.dart';
+import 'widgets/report_issue_dialog.dart';
 
 /// Ayarlar: görünüm, Ana Sayfa davranışı ve gelecek özelleştirme alanları.
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -37,11 +40,23 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     if (mounted) setState(() => _animalOverride = picked);
   }
 
+  Future<void> _openReportDialog() async {
+    final sent = await showDialog<bool>(
+      context: context,
+      builder: (_) => const ReportIssueDialog(),
+    );
+    if (!mounted || sent != true) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Geri bildirimin gönderildi.')),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final showTimerInClass = ref.watch(classroomShowTimerProvider);
     final notificationPrefs = ref.watch(notificationPreferencesProvider);
     final profile = ref.watch(authStateProvider).value;
+    final isAdmin = ref.watch(adminIsSuperAdminProvider).value ?? false;
     final animal = profile == null
         ? null
         : campAnimalFor(
@@ -147,6 +162,33 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 title: 'Çalışma hatırlatıcıları',
                 subtitle: 'Planlanmış hatırlatıcılar sonraki sürümde',
               ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          _SettingsGroup(
+            icon: Icons.support_agent_outlined,
+            title: 'Destek',
+            subtitle: 'Geri bildirim ve güvenli yönetim',
+            children: [
+              ListTile(
+                leading: const Icon(Icons.feedback_outlined),
+                title: const Text('Geri bildirim gönder'),
+                subtitle: const Text('Hata veya önerini bize ilet'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: profile == null ? null : _openReportDialog,
+              ),
+              if (isAdmin) ...[
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(Icons.admin_panel_settings_outlined),
+                  title: const Text('Yönetim'),
+                  subtitle: const Text('Özetler ve kullanıcı raporları'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const AdminScreen()),
+                  ),
+                ),
+              ],
             ],
           ),
         ],

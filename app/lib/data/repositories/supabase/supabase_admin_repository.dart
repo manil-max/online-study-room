@@ -36,12 +36,17 @@ class SupabaseAdminRepository implements AdminRepository {
     FeedbackTicketStatus? status,
   }) async {
     try {
-      final rows = await _client.rpc(
-        'admin_feedback_tickets',
-        params: {'p_status': status?.dbValue},
-      ) as List<dynamic>;
+      final rows =
+          await _client.rpc(
+                'admin_feedback_tickets',
+                params: {'p_status': status?.dbValue},
+              )
+              as List<dynamic>;
       return rows
-          .map((row) => FeedbackTicket.fromMap(Map<String, dynamic>.from(row)))
+          .map(
+            (row) =>
+                FeedbackTicket.fromMap(Map<String, dynamic>.from(row as Map)),
+          )
           .toList();
     } on PostgrestException catch (e) {
       throw AdminException(_friendlyMessage(e.message));

@@ -88,7 +88,7 @@
   - **WP-10 tamamlandı:** Grup istatistiğine grup trend çizgisi, en aktif gün, en istikrarlı üye verileri eklendi.
   - *Kaynak: progress.md FAZ 3.10 kalan*
 
-- [ ] **Özelleştirilebilir saat stilleri (kalan)**
+- [~] **Özelleştirilebilir saat stilleri (kalan)** — **WP-20 planlandı**
   - Sınıf "yarış"/dilim görünümü
   - Ek estetik stiller
   - *Kaynak: project.md §3.12*
@@ -152,10 +152,10 @@
 - [ ] **Windows kurulum paketi + dağıtım**
   - exe/MSIX kurulum paketi
 
-- [ ] **Grid boyutlandırma gelişmiş** (kullanıcı geri bildirimi)
+- [~] **Grid boyutlandırma gelişmiş** (kullanıcı geri bildirimi) — **WP-21 planlandı**
   - Kartların 4 kenar ve köşeden (genişlik + yükseklik) ayarlanması
 
-- [ ] **Canlı grup hedefi**
+- [~] **Canlı grup hedefi** — **WP-22 planlandı**
   - Grup hedef ilerleme barının çalışan kişi sayısına göre saniye saniye akması
 
 - [x] **Grup yönetimi UI iyileştirme**
