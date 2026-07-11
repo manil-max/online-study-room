@@ -37,6 +37,23 @@ android {
         versionName = flutter.versionName
     }
 
+    // Yayın kanalları (WP-13): "stable" gerçek uygulama, "beta" ayrı paket adı
+    // (.beta) ile yan yana kurulabilen test uygulaması. İkisi de aynı release
+    // anahtarıyla imzalanır. Uygulama adı flavor'a göre manifest'e enjekte edilir.
+    flavorDimensions += "channel"
+    productFlavors {
+        create("stable") {
+            dimension = "channel"
+            manifestPlaceholders["appName"] = "Odak Kampı"
+        }
+        create("beta") {
+            dimension = "channel"
+            applicationIdSuffix = ".beta"
+            versionNameSuffix = "-beta"
+            manifestPlaceholders["appName"] = "Odak Kampı Beta"
+        }
+    }
+
     signingConfigs {
         create("release") {
             if (keystorePropertiesFile.exists()) {
