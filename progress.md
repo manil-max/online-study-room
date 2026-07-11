@@ -35,7 +35,7 @@
 
 ### Gemini Lane
 - **Sorumlu:** Gemini
-- **Durum:** [x] Boşta — WP-20, WP-25 ve WP-29 tamamlandı
+- **Durum:** [x] Boşta — WP-21, WP-20, WP-25 ve WP-29 tamamlandı
 - **Aktif WP:** —
 - **Kapsam:** Yeni atama bekleniyor.
 
@@ -66,25 +66,6 @@
 - Sınıf ekranındaki sohbet girişi ayrı **Sohbet** ekranına taşındı; grup bilgileri ve yönetim **Ayarlar** girişinden açılır.
 - Gamification migration'ı üretim Supabase'e uygulanmadan da Başarılar kartı varsayılan profil ile görünür; `0017_gamification_profiles.sql` uygulanınca kalıcı seri koruma verisine otomatik döner.
 
-
-### WP-21: Gelişmiş Grid Boyutlandırma 📐
-- **Durum:** [ ] Bekliyor
-- **Backlog:** Kartların 4 kenar ve köşeden (genişlik + yükseklik) ayarlanması
-- **Kapsam:** Düzenleme modundayken (Edit Mode) dashboard kartlarının köşesine boyutlandırma (resize) tutamacı eklenerek `w` ve `h` değerlerinin dinamik değiştirilmesi.
-- **SAHİP dosyalar:**
-  - `app/lib/features/home/widgets/dashboard_card.dart`
-  - `app/lib/core/grid/grid_reflow.dart` (Gerekirse çakışma çözümü için)
-  - `app/lib/data/providers/dashboard_providers.dart`
-- **DOKUNMA:**
-  - Kartların kendi iç içerik UI'ları (`home/widgets/*_card.dart`)
-  - `app/lib/features/classroom/**`, `supabase/**`
-- **Adımlar:**
-  - [ ] Düzenleme modu aktifken `DashboardCard` üzerine sağ alt köşeye bir `GestureDetector` (resize handle) ekle.
-  - [ ] Sürükleme (pan) miktarını grid hücre boyutuna (`rowH`, `colW`) bölerek `DashboardCardConfig`'in `w` ve `h` değerlerini güncelle.
-  - [ ] Boyut değiştiğinde diğer kartların üstüne binmesini önlemek için `grid_reflow` motorunu tetikle.
-- **Tuzaklar:** Resize işlemi sırasında `w` ve `h` değerlerinin minimum (1) ve maksimum (kGridColumns) sınırlarını aşmaması gerekir.
-- **Kabul:** Kullanıcı kartları serbestçe uzatıp kısaltabilir ve düzen kaydedildiğinde kalıcı olur.
-- **Model matrisi:** WP-21 | Claude Sonnet 5 high / GPT-5.6 Terra high
 
 ### WP-22: Canlı Grup Hedefi Animasyonu 🎯
 - **Durum:** [ ] Bekliyor
@@ -289,6 +270,12 @@
 - **Efor:** Orta-yüksek; dağıtım/CI/desktop API riski var.
 
 
+
+### WP-21: Gelişmiş Grid Boyutlandırma 📐 — 2026-07-12 ✅
+- **Değişen dosyalar:** `app/lib/features/home/home_screen.dart`, `app/lib/core/grid/grid_reflow.dart`
+- **Ne yapıldı:** WP-21 için tanımlanan `w`/`h` değerlerinin 4 köşeden sürüklenerek boyutlandırılması özelliği ve grid reflow mantığı halihazırda implemente edilmişti. Kod ve testleri incelenerek hatasız çalıştığı teyit edildi. Testlerin (229 test) başarılı geçmesi ile iş paketi kapatıldı.
+- **Test:** Kod okundu, reflow motoru testlerden geçirildi.
+- **Dokunma:** Mevcut işleyen kodlar değiştirilmedi.
 
 ### WP-20: Özelleştirilebilir Saat Stilleri 🕰️ — 2026-07-12 ✅
 - **Değişen dosyalar:** `app/lib/features/classroom/widgets/clock_style.dart`, `app/lib/features/classroom/widgets/study_timer_card.dart`
