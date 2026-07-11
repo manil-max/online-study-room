@@ -17,6 +17,12 @@ enum ClockStyle {
 
   /// Hedefe yaklaştıkça rakam rengi zıt→yeşil döner.
   colorShift,
+
+  /// Pasta dilimi gibi dolan yarış stili.
+  slice,
+
+  /// Çok ince çizgi stili (minimal/neon esintili).
+  minimal,
 }
 
 extension ClockStyleInfo on ClockStyle {
@@ -24,12 +30,16 @@ extension ClockStyleInfo on ClockStyle {
         ClockStyle.digits => 'Sade rakam',
         ClockStyle.ring => 'Hedef halkası',
         ClockStyle.colorShift => 'Renk geçişi',
+        ClockStyle.slice => 'Yarış dilimi',
+        ClockStyle.minimal => 'Minimal',
       };
 
   IconData get icon => switch (this) {
         ClockStyle.digits => Icons.schedule,
         ClockStyle.ring => Icons.donut_large,
         ClockStyle.colorShift => Icons.gradient,
+        ClockStyle.slice => Icons.pie_chart,
+        ClockStyle.minimal => Icons.trip_origin,
       };
 }
 
@@ -128,6 +138,62 @@ class StudyClock extends StatelessWidget {
             ],
           ),
         );
+      case ClockStyle.slice:
+        return SizedBox(
+          width: diameter,
+          height: diameter,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              SizedBox.expand(
+                child: CustomPaint(
+                  painter: ClockPainter(
+                    pctToGoal: pctToGoal.clamp(0.0, 1.0),
+                    color: goalColor(pctToGoal),
+                    bgColor: theme.colorScheme.surfaceContainerHighest,
+                    isSlice: true,
+                  ),
+                ),
+              ),
+              // Dilim dolu olduğundan yazının arkasında daha belirgin görünmesi için gölge veya zıt renk gerekebilir,
+              // şimdilik primary veya onSurface kullanıyoruz.
+              _digits(
+                text,
+                fontSize * 0.72,
+                running
+                    ? theme.colorScheme.onSurface
+                    : theme.colorScheme.onSurfaceVariant,
+              ),
+            ],
+          ),
+        );
+      case ClockStyle.minimal:
+        return SizedBox(
+          width: diameter,
+          height: diameter,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              SizedBox.expand(
+                child: CustomPaint(
+                  painter: ClockPainter(
+                    pctToGoal: pctToGoal.clamp(0.0, 1.0),
+                    color: goalColor(pctToGoal),
+                    bgColor: theme.colorScheme.surfaceContainerHighest,
+                    isSlice: false,
+                  ),
+                ),
+              ),
+              _digits(
+                text,
+                fontSize * 0.72,
+                running
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.onSurface,
+              ),
+            ],
+          ),
+        );
     }
   }
 
@@ -180,3 +246,74 @@ Future<void> showClockStyleMenu(BuildContext context, WidgetRef ref) async {
   );
   if (result != null) ref.read(clockStyleProvider.notifier).set(result);
 }
+
+class ClockPainter extends CustomPainter {
+  ClockPainter({
+    required this.pctToGoal,
+    required this.color,
+    required this.bgColor,
+    required this.isSlice,
+  });
+
+  final double pctToGoal;
+  final Color color;
+  final Color bgColor;
+  final bool isSlice;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width < size.height ? size.width / 2 : size.height / 2;
+
+    if (isSlice) {
+      // Pasta dilimi / yarış stili
+      final bgPaint = Paint()
+        ..color = bgColor.withValues(alpha: 0.3)
+        ..style = PaintingStyle.fill;
+      canvas.drawCircle(center, radius, bgPaint);
+
+      final slicePaint = Paint()
+        ..color = color.withValues(alpha: 0.8)
+        ..style = PaintingStyle.fill;
+      
+      // -pi/2'den (saat 12) başla, 2*pi * pctToGoal kadar dön
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: radius),
+        -1.57079632679, // -math.pi / 2
+        6.28318530718 * pctToGoal, // 2 * math.pi * pctToGoal
+        true,
+        slicePaint,
+      );
+    } else {
+      // Minimal stil - ekstra ince çizgi
+      final bgPaint = Paint()
+        ..color = bgColor
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2;
+      canvas.drawCircle(center, radius, bgPaint);
+
+      final progressPaint = Paint()
+        ..color = color
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2
+        ..strokeCap = StrokeCap.round;
+      
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: radius),
+        -1.57079632679,
+        6.28318530718 * pctToGoal,
+        false,
+        progressPaint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant ClockPainter oldDelegate) {
+    return pctToGoal != oldDelegate.pctToGoal ||
+        color != oldDelegate.color ||
+        bgColor != oldDelegate.bgColor ||
+        isSlice != oldDelegate.isSlice;
+  }
+}
+

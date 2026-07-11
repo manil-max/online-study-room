@@ -89,6 +89,18 @@ değildir; sadelik, güvenilirlik ve iyi kullanıcı deneyimi önceliklidir.
 - **presence** (Realtime) — `user_id`, `group_id`, `status` (`studying`/`break`/`offline`),
   `current_subject_id?`, `started_at`
   > ⚠️ Presence'taki `group_id` **korunuyor** — dokunma.
+- **feedback_tickets** — `id`, `user_id`, `kind`, `subject`, `message`, `status`, zaman damgaları;
+  WP-32 ile isteğe bağlı `attachment_path` eklenmesi planlandı. Ekler public URL değil,
+  private `feedback-attachments` Storage bucket'ındaki dosya yoluyla ilişkilendirilir.
+- **admin_audit_log** — WP-33 ile planlandı; süper-admin işlemlerinin yapanı, hedefi,
+  türü, gerekçesi, sonucu ve zamanı için append-only denetim kaydı.
+- **admin_announcements / announcement_reads** — WP-34 ile planlandı; tüm kullanıcılara
+  veya belirli gruba uygulama içi duyuru ve okundu bilgisi. İlk fazda push/e-posta yoktur.
+- **user_progression / achievement_progress** — WP-35 ile planlandı; XP, taç/rütbe,
+  kuşanılmış rozetler ve çok kademeli başarı ilerlemesi. Görünür profil vitrini yalnız ortak
+  aktif grup üyelerine açılır.
+- **study_reminders** — WP-36 ile planlandı; cihazda yerel, tekrar eden çalışma
+  hatırlatıcıları ve sessiz saat tercihleri. İlk fazda hesaplar arası sync veya FCM yoktur.
 
 **İstatistikler ayrı tabloda tutulmaz**; `study_sessions` üzerinden sorgu/agregasyonla üretilir.
 
@@ -135,6 +147,12 @@ değildir; sadelik, güvenilirlik ve iyi kullanıcı deneyimi önceliklidir.
 | 0010 | `drop_session_group_id.sql` | `study_sessions.group_id` DROP (sıra: politika → index → kolon) |
 | 0011 | `group_daily_totals_v2.sql` | RPC v2 (üyelik pencereli join) |
 | 0013 | `presence_membership_hardening.sql` | Presence yazma RLS'i |
+| 0018 | `admin_feedback.sql` | Süper-admin, geri bildirim ticket'ları ve admin RPC'leri |
+| 0019 | `feedback_attachments.sql` | Planlandı: private geri bildirim görsel eki + Storage RLS |
+| 0020 | `super_admin_operations.sql` | Planlandı: admin audit kaydı ve sunucu-güvenli kullanıcı işlemleri desteği |
+| 0021 | `admin_operations.sql` | Planlandı: grup moderasyonu, duyurular ve iç rapor notları |
+| 0022 | `social_profile_progression.sql` | Planlandı: XP/taç, aşamalı başarı ve profil vitrini RLS'i |
+| 0023 | `notification_center.sql` | Planlandı: bildirim merkezi tercih/veri desteği |
 
 > Not: 0007 ve 0012 atlanmış (iptal edilen/kullanılmayan migration'lar).
 
@@ -159,3 +177,8 @@ değildir; sadelik, güvenilirlik ve iyi kullanıcı deneyimi önceliklidir.
 | Tem 11 | V5 yönü: Odak Kampı, varsayılan Saat uygulamasının pratik yerini alabilecek bir “Clock Center” fazına genişletilecek. İlk dilim yatay StandBy/focus görünümü ve yerel alarm/çoklu timer temeli; sleep/snore gibi hassas özellikler açık izinli ayrı faza bırakılır. |
 | Tem 11 | Windows sürümü yalnız mobil layout'un EXE build'i olarak kalmayacak; geniş ekranda sol navigation rail/sidebar ve masaüstü odaklı responsive düzen hedeflenecek. Dağıtım/installer/pencere state'i ayrı desktop polish fazında ele alınacak. |
 | Tem 11 | Sürüm notları tek kaynak prensibiyle yönetilecek: GitHub release, repo MD/JSON, uygulama içi tek seferlik “Yenilikler” pop-up'ı ve Ayarlar’daki geçmiş notlar aynı sürüm verisine dayanacak. Update bildirimi ilk fazda local/best-effort olacak; gerçek push ayrı karar ister. |
+| Tem 11 | Geri bildirim görselleri yalnız private Storage bucket'ta tutulacak; ticket'ta public URL değil dosya yolu bulunacak, erişim RLS ve kısa ömürlü imzalı URL ile sağlanacak. |
+| Tem 11 | Süper-adminin Auth kullanıcı yönetimi gerektiren işlemleri yalnız Edge Function üzerinden yapılır; service-role anahtarı Flutter istemcisine veya repoya konmaz. Şifre yalnız reset e-postasıyla kullanıcı tarafından belirlenir; tüm kritik işlemler gerekçe ve denetim kaydı üretir. |
+| Tem 11 | WP-26 ile tema yalnız primary/accent seçimi olmayacak; tüm uygulama yüzeyleri ThemeExtension renk tokenlarıyla yönetilecek. Sabit gri/surface renkleri ana UI'dan temizlenecek, özel çizim ve semantik renkler belgeli istisna kalacak. |
+| Tem 11 | Ana navigasyon beş sekmeye genişletilecek: Ana Sayfa / Saat / Gruplar / İstatistikler / Profil. Ana Sayfa günlük kişisel çalışma alanıdır; Saat, grup, analiz ve profil verilerinin asıl evi kendi sekmeleridir. |
+| Tem 11 | Sosyal profil/başarı sistemi XP-taç, kademeli rozetler ve ortak grup üyeleriyle sınırlı profil vitrini kullanır. Kritik XP/başarı ilerlemesi istemciye güvenilmeden hesaplanır; seri efekti hareket azaltma tercihini destekler. |

@@ -8,6 +8,35 @@
 
 ## 🔴 Yüksek Öncelik
 
+- [~] **Hesabımı yönet merkezi** — **WP-31 planlandı**
+  - Profil/Ayarlar içinde bağlı e-postayı gösteren ve hesap güvenliği işlemlerini tek yerde toplayan bir ekran olacak.
+  - İlk teslim: bağlı e-posta bilgisi, uçtan uca çalışan şifre sıfırlama (e-posta bağlantısı + uygulamaya dönüş + yeni şifre), e-posta değiştirme akışı ve çıkış yapma.
+  - Şifre uygulama içinde kalıcı tutulmaz; yeni şifre yalnız e-posta bağlantısının açtığı doğrulanmış recovery oturumunda Supabase'e iletilir.
+  - Hesap silme geri döndürülemez olduğu için ilk teslimin dışında bırakıldı; politika/geri alma ihtiyacı netleşince ayrı WP olarak ele alınacak.
+  - *Kaynak: kullanıcı isteği, 2026-07-11; WP-31.*
+
+- [~] **Geri bildirime ekran görüntüsü ekleme** — **WP-32 planlandı**
+  - Hata/öneri gönderirken tek bir ekran görüntüsü veya fotoğraf seçilip güvenli biçimde ticket'a bağlanacak.
+  - Süper-admin, Yönetim ekranında eki görüntüleyebilecek; dosyalar herkese açık olmayacak.
+  - *Kaynak: kullanıcı isteği, 2026-07-11; WP-32.*
+
+- [~] **Süper-admin operasyon merkezi** — **WP-33 ve WP-34 planlandı**
+  - Kullanıcı listesi, güvenli reset e-postası, askıya alma/açma, grup moderasyonu, uygulama içi duyuru ve her işlem için denetim kaydı.
+  - Şifreyi admin belirlemez veya görmez; kullanıcıya yalnız güvenli reset bağlantısı gönderilir.
+  - Hesap silme ilk teslimde kontrollü soft-delete isteği olarak ele alınacak; kalıcı veri silme/retention politikası netleşmeden hard-delete yapılmayacak.
+  - *Kaynak: kullanıcı isteği, 2026-07-11; WP-33/WP-34.*
+
+- [~] **Sosyal Profil 2.0 + aşamalı Başarı Yolculuğu** — **WP-35 planlandı**
+  - Profil, ayar benzeri zengin bir “oyuncu profili”ne dönüşecek: 60+ çalışma/odak/sosyal/eğlenceli başarı, her başarıda 3+ kademe, ilerleme çubuğu ve XP ödülü.
+  - XP seviyeleri taç/rütbe görünümünü yükseltecek; seçilen rozetler, taç ve seri alevi gruplarda, sıralamalarda ve üye profillerinde görülecek.
+  - Grup üyesine dokununca ortak grup üyelerinin görebildiği profil vitrini açılacak: özet istatistik, seri, seçili rozetler, taç/rütbe ve hareket azaltma destekli seri efekti.
+  - *Kaynak: kullanıcı isteği, 2026-07-11; Clash of Clans aşamalı başarılar + Clash Royale rozet/vitrin yaklaşımı referans alınarak; WP-35.*
+
+- [~] **Beş sekmeli bilgi mimarisi + Bildirim Merkezi** — **WP-36 planlandı**
+  - Ana Sayfa yalnız günlük kişisel, özelleştirilebilir çalışma alanı olacak. Ayrı **Saat / Gruplar / İstatistikler / Profil** alanları kendi verilerinin eksiksiz ana ekranı haline gelecek.
+  - Ayarlar'daki tekrar eden Ana Sayfa grubu kaldırılacak; bildirimler dürtmenin ötesinde hatırlatıcı, alarm/timer, duyuru, güncelleme ve sessiz saat tercihlerini tek merkezde toplayacak.
+  - *Kaynak: kullanıcı isteği, 2026-07-11; WP-36.*
+
 - [x] **Stable/Beta app icon + release notes sistemi** — **WP-29 ve WP-30 tamamlandı**
   - Stable uygulama ikonu `references/app icon/` içindeki referans görselden yenilenecek.
   - Beta uygulama ikonu stable'dan ayırt edilebilir olacak (rozet/renk/şerit gibi).
@@ -24,10 +53,12 @@
   - **WP-28:** Windows dağıtım/installer/metadata/pencere davranışı polish.
   - *Kaynak: kullanıcı geri bildirimi + WP-11 Windows EXE sonrası durum.*
 
-- [~] **Tema paleti genişletme + custom renk slotları** — **WP-26 planlandı**
-  - Mevcut paletler kullanıcıya yeterince iyi gelmedi; daha fazla profesyonel hazır palet eklenecek.
-  - 3 adet custom slot olacak; kullanıcı primary/accent renklerini seçip kendi temasını kalıcı yapabilecek.
-  - Okunabilirlik için kontrast/on renk otomatik kontrol edilecek.
+- [~] **Görünüm Sistemi 2.0 — tam tema stüdyosu + sabit renk temizliği** — **WP-26 genişletildi**
+  - Mevcut palet yalnız yazı/vurgu rengini değiştirmemeli; sayfa zemini, kartlar, inputlar, navigasyon, grafikler, kenarlıklar ve durum yüzeyleri seçilen temayla birlikte değişmeli.
+  - Çok sayıda hazır, karakteri belirgin tema (AMOLED, pastel, retro, neon, kahve, orman, okyanus, mono vb.) ile kullanıcıya gerçekten farklı uygulama hissi verilecek.
+  - Her biri tam renk rolleri, yoğunluk/köşe/gradient tercihleri taşıyan 5 kaydedilebilir özel tema slotu olacak.
+  - Uygulamadaki rastgele/sabit gri ve `Colors.*` kullanımları tema tokenlarına taşınacak; yalnız sahne illüstrasyonları, ders renkleri ve semantik hata/uyarı gibi bilinçli istisnalar kalacak.
+  - Kontrast otomatik denetlenecek; okunamayan kombinasyonlar engellenecek veya kullanıcıya uyarı verilecek.
   - *Kaynak: kullanıcı geri bildirimi; WP-26.*
 
 - [x] **Android 3 tuşlu navigasyon safe-area düzeltmesi** — **WP-25 tamamlandı**
@@ -35,7 +66,7 @@
   - Gesture navigation kullanan cihazlarda gereksiz ekstra boşluk oluşturmayacak şekilde `viewPadding.bottom` / `SafeArea` standardı kurulacak.
   - *Kaynak: kullanıcı geri bildirimi; WP-25.*
 
-- [~] **V5 Saat uygulaması yerini alma fazı** — **WP-23 ve WP-24 planlandı**
+- [~] **Saat sekmesi / Clock Center — dünya standartlarında zaman deneyimi** — **WP-23 ve WP-24 genişletildi**
   - Hedef: Odak Kampı'nın yalnız “çalışma sayacı” değil, telefondaki varsayılan Saat uygulamasının pratik yerini alabilecek bir zaman merkezi olması.
   - Araştırma özeti:
     - Apple Clock/StandBy: Dünya saati, alarm, kronometre, timer; kronometrede dijital/analog yüz geçişi ve tur kaydı; yatay şarjda büyük başucu/masa saati, widget/Live Activity görünümü ve gece kırmızı ton.
@@ -43,7 +74,7 @@
     - Samsung Clock: Alarm tarihleri, tekrar eden alarmı tek gün atlama, snooze, şehir hava durumu, globe/map/time-zone converter, lap copy/delete, preset ve aynı anda çoklu timer.
     - Popüler uygulamalar: Alarmy/Alarm Clock Xtreme gibi uygulamalarda görevle alarm kapatma, anti-snooze, kademeli ses, büyük snooze, hızlı alarm; MultiTimer tarafında renk/ikon/etiket, auto-repeat, start delay, timer geçmişi; Pomodoro uygulamalarında hızlı minimal başlatma, özelleştirilebilir döngüler, gamification ve dikkat dağıtıcı engelleme.
   - İlk teslim dilimi:
-    - **WP-23:** Clock Center + yatay StandBy/focus ekranı.
+    - **WP-23:** Beş sekmeli navigasyonda ayrı Saat alanı + Clock Center + yatay StandBy/focus ekranı.
     - **WP-24:** Alarm + çoklu timer temeli, preset/label/tekrar ve güvenilir notification davranışı.
   - Sonraki dilimler:
     - Gelişmiş widget/dinamik bildirim yüzeyleri, yatay tablet/masa modu polish.
@@ -158,8 +189,10 @@
   - **WP-13 tamamlandı.**
   - *Kaynak: new_features.md §6*
 
-- [~] **Admin paneli (süper-admin arayüzü)** — **WP-14 planlandı (Codex)**
-  - İlk teslim: sunucu-doğrulamalı süper-admin, salt-okunur kullanıcı/grup/oturum özeti ve geri bildirim/hata raporu merkezi.
+- [x] **Admin paneli (süper-admin arayüzü)** — **WP-14 tamamlandı**
+  - Sunucu-doğrulamalı süper-admin, salt-okunur kullanıcı/grup/oturum özeti ve geri bildirim/hata raporu merkezi teslim edildi.
+  - Ayarlar'daki `Yönetim` girişi yalnız `app_admins` tablosunda tanımlı süper-adminlere görünür; normal kullanıcılar geri bildirim gönderip kendi raporlarını takip edebilir.
+  - Kurulum notu: `0018_admin_feedback.sql` uygulandıktan sonra ilk yönetici, Supabase SQL Editor'dan `app_admins` tablosuna eklenmelidir.
   - *Kaynak: new_features.md §6*
 
 - [x] **Samsung Modes & Routines entegrasyonu** — **WP-15 ve WP-19 tamamlandı**
@@ -189,8 +222,8 @@
   - Yerel veri saklama, çevrimdışı dayanıklılık
   - **WP-12 tamamlandı:** Supabase ve in-memory repo'lar `offline_first_repository` pattern'iyle sarıldı.
 
-- [ ] **Kapsamlı bildirim sistemi**
-  - Kişiye özel çalışma hatırlatıcıları (açılıp kapatılabilen)
+- [~] **Kapsamlı Bildirim Merkezi** — **WP-36 planlandı**
+  - Kişiye özel çalışma hatırlatıcıları, sessiz saatler, alarm/timer, dürtme, grup duyurusu ve güncelleme tercihleri tek yerde yönetilecek.
 
 - [ ] **Windows kurulum paketi + dağıtım**
   - exe/MSIX kurulum paketi
@@ -212,3 +245,5 @@
 - Otomatik aylık rapor için hangi e-posta sağlayıcısı ve hangi gönderen adresi kullanılacak?
 - Çoklu sınıf özelliği aktif olarak kullanılıyor mu yoksa tek sınıfa mı odaklanılmalı?
 - Gelecek Widget planlamalarında ekranda en çok görülmek istenen bilgiler netleşti mi?
+- Hesap silme sunulacak mı? Sunulacaksa uygulama içi geri alma süresi mi, yoksa yalnız destek talebiyle silme mi uygulanacak?
+- Süper-adminin başlattığı soft-delete sonrası kullanıcı verisi ne kadar süre saklanacak ve kalıcı silme kim tarafından/onayla yapılacak?

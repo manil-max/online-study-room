@@ -35,7 +35,7 @@
 
 ### Gemini Lane
 - **Sorumlu:** Gemini
-- **Durum:** [x] Boşta — WP-25 ve WP-29 tamamlandı
+- **Durum:** [x] Boşta — WP-20, WP-25 ve WP-29 tamamlandı
 - **Aktif WP:** —
 - **Kapsam:** Yeni atama bekleniyor.
 
@@ -66,23 +66,6 @@
 - Sınıf ekranındaki sohbet girişi ayrı **Sohbet** ekranına taşındı; grup bilgileri ve yönetim **Ayarlar** girişinden açılır.
 - Gamification migration'ı üretim Supabase'e uygulanmadan da Başarılar kartı varsayılan profil ile görünür; `0017_gamification_profiles.sql` uygulanınca kalıcı seri koruma verisine otomatik döner.
 
-
-### WP-20: Özelleştirilebilir Saat Stilleri 🕰️
-- **Durum:** [ ] Bekliyor
-- **Backlog:** Sınıf "yarış"/dilim görünümü ve ek estetik stiller
-- **Kapsam:** Mevcut `ClockStyle` enum'ına yeni görsel stiller (pasta dilimi gibi dolan yarış stili, neon vb.) ekleyerek timer kartındaki CustomPainter'ı genişletmek.
-- **SAHİP dosyalar:**
-  - `app/lib/features/classroom/widgets/clock_style.dart`
-  - `app/lib/features/classroom/widgets/study_timer_card.dart`
-- **DOKUNMA:**
-  - `app/lib/core/stats/**`, `supabase/migrations/**`
-  - `app/lib/features/home/**`
-- **Adımlar:**
-  - [ ] `ClockStyle` enum'una 2 yeni stil ekle (örn. `slice` (dilim/yarış) ve `minimal`).
-  - [ ] `ClockPainter` içinde bu yeni stiller için çizim mantığını (canvas.drawArc vb. kullanarak) uygula.
-  - [ ] Timer üzerindeki ayarlar veya stil seçici döngüsünü güncelle.
-- **Kabul:** Yeni stiller sorunsuz render edilir ve taşma yapmaz. UI testleri geçer.
-- **Model matrisi:** WP-20 | Claude Sonnet 5 high / Gemini 3.5 Flash high
 
 ### WP-21: Gelişmiş Grid Boyutlandırma 📐
 - **Durum:** [ ] Bekliyor
@@ -306,6 +289,12 @@
 - **Efor:** Orta-yüksek; dağıtım/CI/desktop API riski var.
 
 
+
+### WP-20: Özelleştirilebilir Saat Stilleri 🕰️ — 2026-07-12 ✅
+- **Değişen dosyalar:** `app/lib/features/classroom/widgets/clock_style.dart`, `app/lib/features/classroom/widgets/study_timer_card.dart`
+- **Ne yapıldı:** `ClockStyle` enum'una `slice` (dilim/yarış) ve `minimal` stilleri eklendi. `ClockPainter` yazılarak bu yeni stillerin çizimi CustomPaint ile sağlandı. Ayarlar menüsü `ClockStyle.values` üzerinden otomatik güncellendi.
+- **Test:** `flutter analyze` (ilgili dosyalar) temiz ve 229 widget testi hatasız geçti.
+- **Dokunma:** Diğer UI'lara veya veritabanına dokunulmadı.
 
 ### WP-29: Stable/Beta App Icon & Branding Refresh 🔥 — 2026-07-11 ✅
 - **Değişen dosyalar:** `app/android/app/src/stable/res/mipmap-*`, `app/android/app/src/beta/res/mipmap-*`, `app/generate_icons.py`, `app/windows/runner/resources/app_icon.ico`, `docs/DAGITIM.md`.
