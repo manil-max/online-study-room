@@ -106,7 +106,7 @@ class SupabaseAdminRepository implements AdminRepository {
             'kind': kind.dbValue,
             'subject': normalizeFeedbackSubject(subject),
             'message': normalizeFeedbackMessage(message),
-            if (attachmentPath != null) 'attachment_path': attachmentPath,
+            'attachment_path': ?attachmentPath,
           })
           .select()
           .single();
@@ -206,7 +206,7 @@ class SupabaseAdminRepository implements AdminRepository {
         body: {
           'action': action,
           'targetGroupId': targetGroupId,
-          if (targetUserId != null) 'targetUserId': targetUserId,
+          'targetUserId': ?targetUserId,
           'reason': reason,
         },
       );

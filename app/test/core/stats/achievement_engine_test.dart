@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/core/stats/achievement_engine.dart';
-import 'package:online_study_room/data/models/achievement.dart';
 import 'package:online_study_room/data/models/gamification_profile.dart';
 import 'package:online_study_room/data/models/study_session.dart';
 

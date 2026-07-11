@@ -1,3 +1,8 @@
+// Alan `_preferences` private, ama kurucu parametresi public adlı (`preferences:`)
+// kalmalı — testler bu adla çağırıyor. Named parametre `_` ile başlayamayacağı
+// için initializing formal burada uygulanamaz; lint bilinçli devre dışı.
+// ignore_for_file: prefer_initializing_formals
+
 import 'dart:convert';
 
 import 'package:flutter/services.dart';

@@ -54,7 +54,7 @@ class ReleaseNotesScreen extends StatelessWidget {
           return ListView.separated(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
             itemCount: notes.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 10),
+            separatorBuilder: (_, _) => const SizedBox(height: 10),
             itemBuilder: (context, index) => ReleaseNoteCard(note: notes[index]),
           );
         },

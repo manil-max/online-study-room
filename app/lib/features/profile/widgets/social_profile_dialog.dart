@@ -130,7 +130,7 @@ class SocialProfileDialog extends ConsumerWidget {
                             const SizedBox(height: 12),
                             achievementsAsync.when(
                               loading: () => const SizedBox(height: 40, child: Center(child: CircularProgressIndicator())),
-                              error: (_, __) => const SizedBox(height: 40, child: Center(child: Text('Hata'))),
+                              error: (_, _) => const SizedBox(height: 40, child: Center(child: Text('Hata'))),
                               data: (achievements) => _BadgeShowcase(
                                 selectedBadgeIds: gamification.selectedBadges,
                                 allAchievements: achievements,
@@ -323,14 +323,17 @@ class _BadgeItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    
     // Tier rengi
-    Color tierColor;
-    if (userAch.tier >= 6) tierColor = Colors.cyanAccent;
-    else if (userAch.tier >= 4) tierColor = Colors.amber;
-    else if (userAch.tier >= 2) tierColor = Colors.grey.shade400;
-    else tierColor = Colors.brown.shade400;
+    final Color tierColor;
+    if (userAch.tier >= 6) {
+      tierColor = Colors.cyanAccent;
+    } else if (userAch.tier >= 4) {
+      tierColor = Colors.amber;
+    } else if (userAch.tier >= 2) {
+      tierColor = Colors.grey.shade400;
+    } else {
+      tierColor = Colors.brown.shade400;
+    }
 
     return Tooltip(
       message: '${def.title} (Aşama ${userAch.tier})\n${def.getDescription(def.tierRequirements[userAch.tier - 1])}',

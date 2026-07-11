@@ -222,7 +222,7 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
                 const SizedBox(height: 16),
                 Card(
                   elevation: 0,
-                  color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.4),
+                  color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
                   child: Column(
                     children: [
                       ListTile(
@@ -255,7 +255,7 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
                 const SizedBox(height: 16),
                 Card(
                   elevation: 0,
-                  color: theme.colorScheme.errorContainer.withOpacity(0.4),
+                  color: theme.colorScheme.errorContainer.withValues(alpha: 0.4),
                   child: ListTile(
                     leading: Icon(Icons.logout, color: theme.colorScheme.error),
                     title: Text(
@@ -265,7 +265,7 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
                     subtitle: Text(
                       'Cihazdaki oturumu sonlandır',
                       style: TextStyle(
-                          color: theme.colorScheme.error.withOpacity(0.8)),
+                          color: theme.colorScheme.error.withValues(alpha: 0.8)),
                     ),
                     onTap: _signOut,
                   ),
