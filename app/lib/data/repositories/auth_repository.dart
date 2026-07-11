@@ -20,6 +20,9 @@ abstract class AuthRepository {
   /// O an giriş yapmış kullanıcı (yoksa null).
   Profile? get currentUser;
 
+  /// O an giriş yapmış kullanıcının e-posta adresi (yoksa null).
+  String? get currentUserEmail;
+
   Future<Profile> signUp({
     required String email,
     required String password,
@@ -31,6 +34,15 @@ abstract class AuthRepository {
   /// E-postaya şifre sıfırlama bağlantısı gönderir. Güvenlik için e-posta
   /// kayıtlı değilse bile kullanıcıya hesap var/yok bilgisi sızdırılmamalıdır.
   Future<void> sendPasswordResetEmail(String email);
+
+  /// Giriş yapan kullanıcının şifresini günceller.
+  Future<void> updatePassword(String newPassword);
+
+  /// Giriş yapan kullanıcının e-postasını günceller.
+  Future<void> updateEmail(String newEmail);
+
+  /// Yalnızca şifre sıfırlama (recovery) oturumu başladığında tetiklenir.
+  Stream<void> get passwordRecoveryEvents;
 
   /// Giriş yapan kullanıcının görünen adını günceller.
   Future<void> updateDisplayName(String displayName);

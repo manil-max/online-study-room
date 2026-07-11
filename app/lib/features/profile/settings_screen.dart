@@ -11,6 +11,7 @@ import '../../data/providers/group_providers.dart';
 import '../admin/admin_screen.dart';
 import '../home/dashboard_providers.dart';
 import '../updater/release_notes_screen.dart';
+import 'account_settings_screen.dart';
 import 'appearance_screen.dart';
 import 'widgets/camp_animal_picker.dart';
 import 'widgets/report_issue_dialog.dart';
@@ -71,6 +72,23 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       body: ListView(
         padding: getSafePadding(context, const EdgeInsets.fromLTRB(16, 12, 16, 24)),
         children: [
+          _SettingsGroup(
+            icon: Icons.person_outline,
+            title: 'Hesap',
+            subtitle: 'E-posta, şifre ve güvenli çıkış',
+            children: [
+              ListTile(
+                leading: const Icon(Icons.manage_accounts_outlined),
+                title: const Text('Hesabımı Yönet'),
+                subtitle: const Text('Güvenlik ve profil ayarları'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const AccountSettingsScreen()),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
           _SettingsGroup(
             icon: Icons.palette_outlined,
             title: 'Görünüm',

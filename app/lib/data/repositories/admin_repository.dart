@@ -1,4 +1,11 @@
+import 'dart:typed_data';
+
+import '../models/admin_audit_log.dart';
+import '../models/admin_user_dto.dart';
+import '../models/announcement.dart';
 import '../models/feedback_ticket.dart';
+import '../models/feedback_ticket_note.dart';
+import '../models/study_group.dart';
 
 const int kMaxFeedbackSubjectLength = 80;
 const int kMaxFeedbackMessageLength = 1200;
@@ -52,6 +59,8 @@ abstract class AdminRepository {
     required FeedbackTicketKind kind,
     required String subject,
     required String message,
+    Uint8List? attachmentBytes,
+    String? attachmentExt,
   });
 
   Future<void> updateFeedbackStatus({
@@ -59,6 +68,47 @@ abstract class AdminRepository {
     required String ticketId,
     required FeedbackTicketStatus status,
   });
+
+  Future<String?> getFeedbackAttachmentUrl(String path);
+
+  Future<List<AdminUserDto>> fetchUsers();
+
+  Future<void> performUserAction({
+    required String action,
+    required String targetUserId,
+    required String reason,
+  });
+
+  Future<void> performGroupAction({
+    required String action,
+    required String targetGroupId,
+    String? targetUserId,
+    required String reason,
+  });
+
+  Future<List<StudyGroup>> fetchGroups();
+
+  Future<List<Announcement>> fetchAnnouncements();
+
+  Future<void> createAnnouncement({
+    required String title,
+    required String message,
+    required String targetType,
+    String? targetId,
+    required String adminId,
+  });
+
+  Future<void> deleteAnnouncement(String announcementId);
+
+  Future<List<FeedbackTicketNote>> fetchTicketNotes(String ticketId);
+
+  Future<void> addTicketNote({
+    required String ticketId,
+    required String note,
+    required String adminId,
+  });
+
+  Future<List<AdminAuditLog>> fetchAuditLogs();
 }
 
 String normalizeFeedbackSubject(String subject) {

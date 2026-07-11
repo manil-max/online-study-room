@@ -18,10 +18,10 @@ Kullanıcı: **"progress.md oku ve WP-N'yi yap"**
 ```
 1. progress.md oku           → kendi lane'ini ve WP'ni bul
 2. "Proje Gerçekleri" oku    → teknik bağlam
-3. "Son Tamamlananlar" oku   → son değişikliklerin bağlamı
-4. WP adımlarını sırayla yap → sadece SAHİP dosyalara yaz
-5. Her adım bitince          → kendi lane'ini ve WP'deki checkbox'ı [x] yap
-6. Tümü bitince              → test + analyze + progress güncelle + commit
+3. "✅ Tamamlanan İş Paketleri"ni oku → son değişikliklerin bağlamı
+4. Başlamadan önce            → kendi lane'ini `Aktif`, WP durumunu `[~] Uygulanıyor` yap
+5. WP adımlarını sırayla yap → sadece SAHİP dosyalara yaz
+6. Tümü bitince               → test + analyze + WP'yi tamamlananlara taşı + commit
 ```
 
 ---
@@ -75,6 +75,34 @@ Kullanıcı: **"progress.md oku ve WP-N'yi yap"**
 - Başlatma, bloklanma, devretme ve tamamlanma gibi her anlamlı geçişte `progress.md` anında güncellenir.
 - Başka lane'lerdeki kartlar yalnız okunur; reassign yoksa dokunma.
 
+## progress.md Yaşam Döngüsü (Zorunlu)
+
+`progress.md` plan listesi değil, canlı durum kaynağıdır. Eski metni kopyalayıp dosyanın
+tamamını yeniden yazma. Her durum değişikliğinden hemen önce dosyayı yeniden oku ve yalnız
+kendi lane'inle kendi WP kartına dar bir patch uygula.
+
+### Başlatırken
+
+1. Kendi lane'inde `**Durum:** [~] Aktif — WP-N ...` ve `**Aktif WP:** WP-N` yaz.
+2. Plan Kuyruğu'ndaki kendi kartını `**Durum:** [~] Uygulanıyor — <ajan>` yap.
+3. Kullanıcının açıkladığı güncel sürüm/faz etiketini koru. Dosyada `V6` yazıyorsa eski
+   `V4`/`V5` başlıklarını veya eski plan metnini geri getirme.
+
+### Bitirirken
+
+1. Testler temiz olduktan sonra Plan Kuyruğu'ndaki **kendi WP kartını tamamen kaldır**.
+2. Aynı kartı `## ✅ Tamamlanan İş Paketleri` başlığının hemen altına, en yeni tamamlanan
+   iş olarak ekle. Kartta en az şu alanlar bulunur:
+   - `### WP-N: Ad — YYYY-AA-GG ✅`
+   - `Değişen dosyalar`, `Ne yapıldı`, `Test`
+3. Aynı WP hem Plan Kuyruğu'nda hem Tamamlananlar'da **asla** bulunmaz; eski/tekrarlanan
+   WP kartlarını çoğaltma.
+4. Kendi lane'ini `Boşta`, `Aktif WP: —` yap. `Son WP numarası` yalnız yeni WP planlanıyorsa
+   artırılır; tamamlanan eski WP yüzünden geriye alınmaz.
+5. Tamamlanan iş listesi uzarsa en eski özeti Geçmiş tablosuna sıkıştır; fakat başlıkları
+   (`## 🧭 Plan Kuyruğu`, `## 🚀 V6 Sonrası Planlanan Yeni İş Paketleri`,
+   `## ✅ Tamamlanan İş Paketleri`) silme veya yeniden adlandırma.
+
 ---
 
 ## WP Bitirme Sırası
@@ -90,11 +118,8 @@ flutter test
 - İkisi de temiz olmalı. **Hatayla commit atma — önce düzelt.**
 
 ### 2. progress.md Güncelle
-- Kendi lane'inde kendi WP bloğunun durumunu `✅` yap
-- WP bloğunu "Aktif İş Paketleri"nden kes → "Son Tamamlananlar"a yapıştır
-- "Son Tamamlananlar"ı kısalt (sadece: değişen dosyalar, kararlar, dokunma listesi)
-- "Son Tamamlananlar" 5'ten fazlaysa → en eskisini "Geçmiş" tablosuna tek satır olarak sıkıştır
-- "Son WP numarası"nı "Proje Gerçekleri"nde güncelle
+- Yukarıdaki **progress.md Yaşam Döngüsü** adımlarını uygula: plan kartını kaldır, tamamlananlar başlığı altına tek özet olarak taşı ve lane'i boşalt.
+- Dokümanı stale kopyadan geri yazma; güncel sürüm/faz etiketlerini ve başka ajanların eklediği WP'leri koru.
 
 ### 3. Commit At
 ```bash

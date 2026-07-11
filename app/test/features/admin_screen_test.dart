@@ -38,9 +38,20 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Yönetim'), findsOneWidget);
-    expect(find.text('Kullanıcılar'), findsOneWidget);
-    expect(find.text('Açık raporlar'), findsOneWidget);
+    expect(find.text('Yönetim Paneli'), findsOneWidget);
+    expect(find.text('Kullanıcılar'), findsWidgets);
+    expect(find.text('Raporlar'), findsWidgets);
+    
+    // Raporlar sekmesine geç
+    await tester.tap(find.text('Raporlar').first);
+    await tester.pumpAndSettle();
+
+    final listFinder = find.byType(Scrollable).last;
+    await tester.scrollUntilVisible(
+      find.text('Bildirim aksiyonu'),
+      200,
+      scrollable: listFinder,
+    );
     expect(find.text('Bildirim aksiyonu'), findsOneWidget);
     expect(find.text('Açık'), findsOneWidget);
   });

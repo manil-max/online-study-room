@@ -1,5 +1,7 @@
 import 'dart:typed_data';
 
+import 'dart:async';
+
 import 'package:supabase_flutter/supabase_flutter.dart' as supa;
 
 import '../../models/profile.dart';
@@ -11,9 +13,16 @@ class SupabaseAuthRepository implements AuthRepository {
 
   final supa.SupabaseClient _client;
   Profile? _current;
+  final _recoveryController = StreamController<void>.broadcast();
 
   @override
   Profile? get currentUser => _current;
+
+  @override
+  String? get currentUserEmail => _client.auth.currentUser?.email;
+
+  @override
+  Stream<void> get passwordRecoveryEvents => _recoveryController.stream;
 
   @override
   Stream<Profile?> authStateChanges() async* {
@@ -32,6 +41,9 @@ class SupabaseAuthRepository implements AuthRepository {
     while (true) {
       try {
         await for (final state in _client.auth.onAuthStateChange) {
+          if (state.event == supa.AuthChangeEvent.passwordRecovery) {
+            _recoveryController.add(null);
+          }
           try {
             _current = await _profileFor(state.session);
             yield _current;
@@ -169,6 +181,31 @@ class SupabaseAuthRepository implements AuthRepository {
     }
     try {
       await _client.auth.resetPasswordForEmail(safe);
+    } on supa.AuthException catch (e) {
+      throw AuthException(_translate(e.message));
+    }
+  }
+
+  @override
+  Future<void> updatePassword(String newPassword) async {
+    if (newPassword.length < 6) {
+      throw const AuthException('Şifre en az 6 karakter olmalı.');
+    }
+    try {
+      await _client.auth.updateUser(supa.UserAttributes(password: newPassword));
+    } on supa.AuthException catch (e) {
+      throw AuthException(_translate(e.message));
+    }
+  }
+
+  @override
+  Future<void> updateEmail(String newEmail) async {
+    final key = newEmail.trim().toLowerCase();
+    if (key.isEmpty || !key.contains('@')) {
+      throw const AuthException('Geçerli bir e-posta girin.');
+    }
+    try {
+      await _client.auth.updateUser(supa.UserAttributes(email: key));
     } on supa.AuthException catch (e) {
       throw AuthException(_translate(e.message));
     }

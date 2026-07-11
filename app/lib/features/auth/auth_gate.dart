@@ -1,11 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/providers/auth_providers.dart';
 import '../../core/navigation/home_shell.dart';
-import '../updater/updater_dialog.dart';
 import '../updater/release_notes_screen.dart';
+import '../updater/updater_dialog.dart';
 import 'auth_screen.dart';
+import 'recovery_screen.dart';
 
 /// Oturum durumuna göre giriş ekranını veya ana uygulamayı gösterir.
 class AuthGate extends ConsumerStatefulWidget {
@@ -16,6 +19,8 @@ class AuthGate extends ConsumerStatefulWidget {
 }
 
 class _AuthGateState extends ConsumerState<AuthGate> {
+  late final StreamSubscription<void> _recoverySub;
+
   @override
   void initState() {
     super.initState();
@@ -26,6 +31,23 @@ class _AuthGateState extends ConsumerState<AuthGate> {
       await maybeShowWhatsNewDialog(context);
       if (mounted) await maybeShowUpdateDialog(context);
     });
+
+    _recoverySub = ref
+        .read(authRepositoryProvider)
+        .passwordRecoveryEvents
+        .listen((_) {
+      if (mounted) {
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const RecoveryScreen()),
+        );
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _recoverySub.cancel();
+    super.dispose();
   }
 
   @override

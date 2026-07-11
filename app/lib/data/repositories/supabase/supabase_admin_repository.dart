@@ -1,6 +1,14 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'dart:typed_data';
 
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:uuid/uuid.dart';
+
+import '../../models/admin_audit_log.dart';
+import '../../models/admin_user_dto.dart';
+import '../../models/announcement.dart';
 import '../../models/feedback_ticket.dart';
+import '../../models/feedback_ticket_note.dart';
+import '../../models/study_group.dart';
 import '../admin_repository.dart';
 
 class SupabaseAdminRepository implements AdminRepository {
@@ -69,8 +77,24 @@ class SupabaseAdminRepository implements AdminRepository {
     required FeedbackTicketKind kind,
     required String subject,
     required String message,
+    Uint8List? attachmentBytes,
+    String? attachmentExt,
   }) async {
     try {
+      String? attachmentPath;
+      if (attachmentBytes != null && attachmentExt != null) {
+        final ext = attachmentExt.startsWith('.') ? attachmentExt : '.$attachmentExt';
+        final fileName = '${const Uuid().v4()}$ext';
+        final path = '$userId/$fileName';
+        
+        await _client.storage.from('feedback_attachments').uploadBinary(
+          path,
+          attachmentBytes,
+          fileOptions: const FileOptions(upsert: true),
+        );
+        attachmentPath = path;
+      }
+
       final row = await _client
           .from('feedback_tickets')
           .insert({
@@ -78,12 +102,17 @@ class SupabaseAdminRepository implements AdminRepository {
             'kind': kind.dbValue,
             'subject': normalizeFeedbackSubject(subject),
             'message': normalizeFeedbackMessage(message),
+            if (attachmentPath != null) 'attachment_path': attachmentPath,
           })
           .select()
           .single();
       return FeedbackTicket.fromMap(row);
+    } on StorageException catch (e) {
+      throw AdminException('Görsel yüklenemedi: ${e.message}');
     } on PostgrestException catch (e) {
       throw AdminException('Geri bildirim gönderilemedi: ${e.message}');
+    } catch (e) {
+      throw AdminException('Beklenmeyen bir hata oluştu: $e');
     }
   }
 
@@ -99,7 +128,192 @@ class SupabaseAdminRepository implements AdminRepository {
         params: {'p_ticket_id': ticketId, 'p_status': status.dbValue},
       );
     } on PostgrestException catch (e) {
-      throw AdminException(_friendlyMessage(e.message));
+      throw AdminException('Durum güncellenemedi: ${e.message}');
+    }
+  }
+
+  @override
+  Future<String?> getFeedbackAttachmentUrl(String path) async {
+    try {
+      return await _client.storage
+          .from('feedback_attachments')
+          .createSignedUrl(path, 3600);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  @override
+  Future<List<AdminUserDto>> fetchUsers() async {
+    try {
+      final response = await _client.functions.invoke(
+        'admin-user-actions',
+        body: {'action': 'list_users'},
+      );
+      if (response.status != 200) {
+        throw AdminException('Kullanıcılar alınamadı: ${response.data}');
+      }
+      final items = (response.data['data'] as List<dynamic>?) ?? [];
+      return items
+          .map((e) => AdminUserDto.fromMap(Map<String, dynamic>.from(e as Map)))
+          .toList();
+    } on FunctionException catch (e) {
+      throw AdminException('Servis hatası: ${e.details}');
+    } catch (e) {
+      throw AdminException('Beklenmeyen hata: $e');
+    }
+  }
+
+  @override
+  Future<void> performUserAction({
+    required String action,
+    required String targetUserId,
+    required String reason,
+  }) async {
+    try {
+      final response = await _client.functions.invoke(
+        'admin-user-actions',
+        body: {
+          'action': action,
+          'targetUserId': targetUserId,
+          'reason': reason,
+        },
+      );
+      if (response.status != 200) {
+        throw AdminException('İşlem başarısız: ${response.data}');
+      }
+    } on FunctionException catch (e) {
+      throw AdminException('Servis hatası: ${e.details}');
+    } catch (e) {
+      throw AdminException('Beklenmeyen hata: $e');
+    }
+  }
+
+  @override
+  Future<void> performGroupAction({
+    required String action,
+    required String targetGroupId,
+    String? targetUserId,
+    required String reason,
+  }) async {
+    try {
+      final response = await _client.functions.invoke(
+        'admin-operations',
+        body: {
+          'action': action,
+          'targetGroupId': targetGroupId,
+          if (targetUserId != null) 'targetUserId': targetUserId,
+          'reason': reason,
+        },
+      );
+      if (response.status != 200) {
+        throw AdminException('İşlem başarısız: ${response.data}');
+      }
+    } on FunctionException catch (e) {
+      throw AdminException('Servis hatası: ${e.details}');
+    } catch (e) {
+      throw AdminException('Beklenmeyen hata: $e');
+    }
+  }
+
+  @override
+  Future<List<StudyGroup>> fetchGroups() async {
+    try {
+      final response = await _client
+          .from('study_groups')
+          .select()
+          .order('created_at', ascending: false);
+      return response.map((e) => StudyGroup.fromMap(e)).toList();
+    } catch (e) {
+      throw AdminException('Gruplar alınamadı: $e');
+    }
+  }
+
+  @override
+  Future<List<Announcement>> fetchAnnouncements() async {
+    try {
+      final response = await _client
+          .from('announcements')
+          .select()
+          .order('created_at', ascending: false);
+      return response.map((e) => Announcement.fromMap(e)).toList();
+    } catch (e) {
+      throw AdminException('Duyurular alınamadı: $e');
+    }
+  }
+
+  @override
+  Future<void> createAnnouncement({
+    required String title,
+    required String message,
+    required String targetType,
+    String? targetId,
+    required String adminId,
+  }) async {
+    try {
+      await _client.from('announcements').insert({
+        'title': title,
+        'message': message,
+        'target_type': targetType,
+        'target_id': targetId,
+        'created_by': adminId,
+      });
+    } catch (e) {
+      throw AdminException('Duyuru oluşturulamadı: $e');
+    }
+  }
+
+  @override
+  Future<void> deleteAnnouncement(String announcementId) async {
+    try {
+      await _client.from('announcements').delete().eq('id', announcementId);
+    } catch (e) {
+      throw AdminException('Duyuru silinemedi: $e');
+    }
+  }
+
+  @override
+  Future<List<FeedbackTicketNote>> fetchTicketNotes(String ticketId) async {
+    try {
+      final response = await _client
+          .from('feedback_ticket_notes')
+          .select()
+          .eq('ticket_id', ticketId)
+          .order('created_at');
+      return response.map((e) => FeedbackTicketNote.fromMap(e)).toList();
+    } catch (e) {
+      throw AdminException('Notlar alınamadı: $e');
+    }
+  }
+
+  @override
+  Future<void> addTicketNote({
+    required String ticketId,
+    required String note,
+    required String adminId,
+  }) async {
+    try {
+      await _client.from('feedback_ticket_notes').insert({
+        'ticket_id': ticketId,
+        'admin_id': adminId,
+        'note': note,
+      });
+    } catch (e) {
+      throw AdminException('Not eklenemedi: $e');
+    }
+  }
+
+  @override
+  Future<List<AdminAuditLog>> fetchAuditLogs() async {
+    try {
+      final response = await _client
+          .from('admin_audit_logs')
+          .select()
+          .order('created_at', ascending: false)
+          .limit(100);
+      return response.map((e) => AdminAuditLog.fromMap(e)).toList();
+    } catch (e) {
+      throw AdminException('Denetim kayıtları alınamadı: $e');
     }
   }
 

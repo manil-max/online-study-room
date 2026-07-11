@@ -1,5 +1,8 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../data/models/feedback_ticket.dart';
 import '../../../data/providers/admin_providers.dart';
@@ -20,11 +23,44 @@ class _ReportIssueDialogState extends ConsumerState<ReportIssueDialog> {
   var _kind = FeedbackTicketKind.feedback;
   var _isSubmitting = false;
 
+  final _imagePicker = ImagePicker();
+  Uint8List? _attachmentBytes;
+  String? _attachmentExt;
+
   @override
   void dispose() {
     _subjectController.dispose();
     _messageController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickImage() async {
+    try {
+      final xFile = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 70, // Optimize size
+      );
+      if (xFile == null) return;
+      
+      final bytes = await xFile.readAsBytes();
+      // Simple 5MB check
+      if (bytes.lengthInBytes > 5 * 1024 * 1024) {
+        _showError('Dosya boyutu 5MB''dan küçük olmalıdır.');
+        return;
+      }
+      
+      String ext = xFile.name.split('.').last.toLowerCase();
+      if (!['jpg', 'jpeg', 'png', 'webp'].contains(ext)) {
+        ext = 'jpg'; // Fallback
+      }
+
+      setState(() {
+        _attachmentBytes = bytes;
+        _attachmentExt = ext;
+      });
+    } catch (e) {
+      _showError('Resim seçilemedi.');
+    }
   }
 
   Future<void> _submit() async {
@@ -45,6 +81,8 @@ class _ReportIssueDialogState extends ConsumerState<ReportIssueDialog> {
             kind: _kind,
             subject: _subjectController.text,
             message: _messageController.text,
+            attachmentBytes: _attachmentBytes,
+            attachmentExt: _attachmentExt,
           );
       ref.invalidate(myFeedbackTicketsProvider);
       ref.invalidate(adminDashboardSummaryProvider);
@@ -126,15 +164,44 @@ class _ReportIssueDialogState extends ConsumerState<ReportIssueDialog> {
                   alignLabelWithHint: true,
                   border: OutlineInputBorder(),
                 ),
-                validator: (value) {
-                  try {
-                    normalizeFeedbackMessage(value ?? '');
-                    return null;
-                  } on AdminException catch (e) {
-                    return e.message;
-                  }
-                },
+                validator: (val) => val == null || val.trim().isEmpty
+                    ? 'Mesaj gerekli'
+                    : null,
               ),
+              const SizedBox(height: 16),
+              if (_attachmentBytes != null)
+                Stack(
+                  alignment: Alignment.topRight,
+                  children: [
+                    Container(
+                      height: 120,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Theme.of(context).dividerColor),
+                        image: DecorationImage(
+                          image: MemoryImage(_attachmentBytes!),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.cancel, color: Colors.white),
+                      onPressed: _isSubmitting
+                          ? null
+                          : () => setState(() {
+                                _attachmentBytes = null;
+                                _attachmentExt = null;
+                              }),
+                    ),
+                  ],
+                )
+              else
+                OutlinedButton.icon(
+                  onPressed: _isSubmitting ? null : _pickImage,
+                  icon: const Icon(Icons.attach_file),
+                  label: const Text('Ekran görüntüsü ekle (Opsiyonel)'),
+                ),
             ],
           ),
         ),
@@ -142,7 +209,7 @@ class _ReportIssueDialogState extends ConsumerState<ReportIssueDialog> {
       actions: [
         TextButton(
           onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(),
-          child: const Text('Vazgeç'),
+          child: const Text('İptal'),
         ),
         FilledButton(
           onPressed: _isSubmitting ? null : _submit,

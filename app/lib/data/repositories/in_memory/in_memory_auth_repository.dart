@@ -21,11 +21,25 @@ class InMemoryAuthRepository implements AuthRepository {
   final Map<String, _Account> _accounts = {};
   final StreamController<Profile?> _controller =
       StreamController<Profile?>.broadcast();
+  final StreamController<void> _recoveryController =
+      StreamController<void>.broadcast();
 
   Profile? _current;
 
   @override
   Profile? get currentUser => _current;
+
+  @override
+  String? get currentUserEmail {
+    if (_current == null) return null;
+    for (final entry in _accounts.entries) {
+      if (entry.value.profile.id == _current!.id) return entry.key;
+    }
+    return null;
+  }
+
+  @override
+  Stream<void> get passwordRecoveryEvents => _recoveryController.stream;
 
   @override
   Stream<Profile?> authStateChanges() async* {
@@ -90,6 +104,46 @@ class InMemoryAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<void> updatePassword(String newPassword) async {
+    final cur = _current;
+    if (cur == null) return;
+    if (newPassword.length < 6) {
+      throw const AuthException('Şifre en az 6 karakter olmalı.');
+    }
+    for (final key in _accounts.keys) {
+      if (_accounts[key]!.profile.id == cur.id) {
+        _accounts[key] = _Account(newPassword, _accounts[key]!.profile);
+        break;
+      }
+    }
+  }
+
+  @override
+  Future<void> updateEmail(String newEmail) async {
+    final cur = _current;
+    if (cur == null) return;
+    final key = newEmail.trim().toLowerCase();
+    if (key.isEmpty || !key.contains('@')) {
+      throw const AuthException('Geçerli bir e-posta girin.');
+    }
+    if (_accounts.containsKey(key)) {
+      throw const AuthException('Bu e-posta zaten kayıtlı.');
+    }
+
+    String? oldKey;
+    for (final k in _accounts.keys) {
+      if (_accounts[k]!.profile.id == cur.id) {
+        oldKey = k;
+        break;
+      }
+    }
+    if (oldKey != null) {
+      final acc = _accounts.remove(oldKey)!;
+      _accounts[key] = acc;
+    }
+  }
+
+  @override
   Future<void> updateDisplayName(String displayName) async {
     final cur = _current;
     if (cur == null) return;
@@ -149,5 +203,8 @@ class InMemoryAuthRepository implements AuthRepository {
     _controller.add(null);
   }
 
-  void dispose() => _controller.close();
+  void dispose() {
+    _controller.close();
+    _recoveryController.close();
+  }
 }
