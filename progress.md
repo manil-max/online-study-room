@@ -15,7 +15,8 @@
 - **RLS helper'ları:** `is_group_member(gid)`, `can_see_user_sessions(target)`, `is_group_admin(gid)`
 - **Dashboard:** 6 sütunlu 2D matris, 19 kart türü, `grid_reflow.dart` motoru
 - **Tema:** 5 hazır palet, koyu varsayılan, `AppTheme` palet-parametreli; WP-26 ile ek hazır palet + 3 custom slot planlandı
-- **Son WP numarası:** 26 (WP-26 tema paleti genişletme için planlandı)
+- **Desktop:** WP-11 ilk EXE/build hattını açtı; WP-27/28 ile Windows'a özel masaüstü UX ve dağıtım planlandı
+- **Son WP numarası:** 28 (WP-27/28 Windows masaüstü UX ve dağıtım için planlandı)
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
   - Flutter: `C:\src\flutter` · Android SDK: `C:\Android\Sdk`
@@ -63,24 +64,6 @@
 - Sınıf ekranındaki sohbet girişi ayrı **Sohbet** ekranına taşındı; grup bilgileri ve yönetim **Ayarlar** girişinden açılır.
 - Gamification migration'ı üretim Supabase'e uygulanmadan da Başarılar kartı varsayılan profil ile görünür; `0017_gamification_profiles.sql` uygulanınca kalıcı seri koruma verisine otomatik döner.
 
-### WP-19: Device Integrations Settings Hook
-- **Durum:** [ ] WP-14 ve WP-15 sonrası
-- **Backlog:** Samsung Modes & Routines entegrasyonunun ayarlar ekranına bağlanması
-- **Bağımlılık:** WP-14 `settings_screen.dart` değişiklikleri tamamlanmalı; WP-15 destek/fallback kararını yazmalı.
-- **SAHİP dosyalar:**
-  - `app/lib/features/profile/settings_screen.dart`
-  - `app/lib/features/profile/widgets/device_integration_settings.dart` (yeni, gerekirse)
-  - `app/test/features/settings_screen_test.dart`
-- **DOKUNMA:**
-  - `app/android/**` (WP-15 sonucunu kullan; yeniden platform spike yapma)
-  - `app/lib/features/admin/**`
-  - `app/lib/data/providers/study_providers.dart`, `app/lib/core/notifications/**`
-- **Adımlar:**
-  - [ ] WP-15 sonucuna göre ayarlarda küçük bir entegrasyon satırı ekle. (Desteklenen kısayolları listele veya "Rutinlere eklenebilir" bilgisi ver).
-  - [ ] Destek yoksa kullanıcıya sade fallback/durum metni göster; karmaşık ayar ekleme.
-  - [ ] DeviceIntegrationService'ten gelen initial aksiyonları dinleyip Timer'ı tetikleyen ana dinleyiciyi kur (örn. HomeShell veya main.dart içinde).
-- **Kabul:** Kısayoldan gelen (örn. START_POMODORO) aksiyonların, Flutter ayağında doğru state değişikliğini (timer başlatma vb.) tetiklemesi.
-- **Model matrisi:** WP-19 | Claude Sonnet 5 medium / GPT-5.3-Codex medium / Gemini 3.5 Flash medium
 
 ### WP-20: Özelleştirilebilir Saat Stilleri 🕰️
 - **Durum:** [ ] Bekliyor
@@ -280,8 +263,87 @@
 - **Model matrisi (limit dostu):** WP-26 | Claude Sonnet 5 medium / GPT-5.6 Terra medium / Gemini 3.5 Flash medium
 - **Efor:** Orta; tema modeli + ayar UI + test, DB/native riski yok.
 
+### Windows Desktop Faz Notu 🖥️
+- **Durum:** İlk EXE Claude tarafından derlendi; mevcut Windows uygulaması işlevsel ama görsel/etkileşim olarak mobil app'in büyük ekrana taşınmış hali.
+- **Ürün yönü:** Windows sürümü ayrı bir masaüstü deneyimi gibi davranmalı: solda kalıcı navigasyon/rail, geniş içerik alanı, pencere boyutuna duyarlı master-detail yerleşimler, klavye/fare rahatlığı ve mini/always-on-top akışı.
+- **Karar:** Mobil `NavigationBar` Windows'ta ana navigasyon olmamalı. Desktop genişliğinde `NavigationRail` veya sol sidebar kullanılacak; mobile/tablet davranışı korunacak.
+- **Çakışma kontrolü:** WP-27 `HomeShell` ve bazı ekran düzenlerine dokunur; WP-19/WP-23/WP-25 aynı anda aktifse sıraya alınmalı. WP-28 daha çok Windows dağıtım/QA dosyalarına dokunur ve WP-27 sonrasında anlamlıdır.
+
+### WP-27: Windows Desktop Shell & Responsive Layout 🪟
+- **Durum:** [ ] Bekliyor — WP-19/WP-23/WP-25 ile `HomeShell` çakışması kontrol edilmeli
+- **Backlog:** Windows app mobil build gibi duruyor; masaüstüne özel tasarım gerekiyor
+- **Kapsam:** Windows geniş ekranlarda mobil alt sekme navigasyonunu kaldırıp sol navigation rail/sidebar + geniş dashboard deneyimi kur. Mevcut Android/mobil davranışı bozulmaz; breakpoint ile platform/genişlik bazlı ayrım yapılır.
+- **SAHİP dosyalar:**
+  - `app/lib/core/navigation/home_shell.dart`
+  - `app/lib/core/desktop/desktop_breakpoints.dart` (yeni, gerekirse)
+  - `app/lib/features/home/home_screen.dart`
+  - `app/lib/features/classroom/classroom_screen.dart`
+  - `app/lib/features/stats/stats_screen.dart`
+  - `app/lib/features/profile/profile_screen.dart`
+  - `app/test/features/desktop_shell_test.dart` (yeni)
+- **DOKUNMA:**
+  - `app/android/**`
+  - `supabase/migrations/**`
+  - `app/lib/data/repositories/**`
+  - `app/lib/data/providers/study_providers.dart`
+  - `app/lib/core/notifications/**`
+  - `app/windows/**` (WP-28 alanı; yalnız okunur)
+- **Adımlar:**
+  - [ ] Desktop breakpoint helper'ı belirle: Windows/macOS/Linux veya genişlik >= ~900 px olduğunda desktop shell.
+  - [ ] `HomeShell` içinde mobile `NavigationBar`, desktop `NavigationRail`/sidebar olacak responsive yapı kur; mevcut `IndexedStack`, presence/nudge/device listener davranışı korunur.
+  - [ ] Desktop sidebar'a uygulama başlığı, aktif grup/sayaç kısa durumu ve ana sekmeler ekle; mobile alt bar aynen kalsın.
+  - [ ] Home/Classroom/Stats/Profile ekranlarında geniş ekranda tek kolon mobil hissini azalt: max content width, iki kolon/side panel veya daha rahat boşluklandırma stratejisi uygula.
+  - [ ] Mini pencere modunda sidebar otomatik gizlenmeli veya compact rail'e düşmeli; 320 px mini pencere hâlâ kullanılabilir kalmalı.
+  - [ ] Widget testlerinde 390 px mobile alt bar, 1100 px desktop rail görünürlüğü ve mini genişlik compact davranışı doğrula.
+- **Tuzaklar:**
+  - Platformu sadece `defaultTargetPlatform.windows` ile kilitleme; web/desktop geniş ekranlarda da breakpoint mantığı kullanılabilir ama Android tabletin davranışı ayrıca düşünülmeli.
+  - `HomeShell` WP-19/WP-23/WP-25 ile ortak dosya; aynı anda verilirse çakışır.
+  - Desktop rail, ekran içeriklerini sıkıştırıp dashboard kart taşmalarını artırmamalı.
+- **Kabul:** Windows 1100×720 boyutta sol navigasyonlu gerçek desktop shell görünür; mobilde alt navigation davranışı korunur; mini pencere okunabilir kalır; desktop shell testleri geçer.
+- **Model matrisi (limit dostu):** WP-27 | Claude Sonnet 5 high / GPT-5.6 Terra high / Gemini 3.5 Flash medium
+- **Efor:** Yüksek; ortak shell ve ana ekranların responsive davranışı var.
+
+### WP-28: Windows Distribution & Desktop Polish 📦
+- **Durum:** [ ] Bekliyor — WP-27 sonrası önerilir
+- **Backlog:** Windows kurulum paketi + dağıtım ve desktop kalite cilası
+- **Kapsam:** İlk EXE'nin ötesinde Windows'a yakışır dağıtım ve pencere davranışı: ikon/metadata, installer notları, pencere durum kalıcılığı, updater stratejisi ve QA checklist. UI shell tasarımı WP-27'nin alanıdır.
+- **SAHİP dosyalar:**
+  - `app/windows/DAGITIM.md`
+  - `app/windows/runner/main.cpp`
+  - `app/windows/runner/Runner.rc`
+  - `app/windows/runner/resources/**` (ikon/asset gerekiyorsa)
+  - `.github/workflows/release.yml`
+  - `app/lib/core/desktop/desktop_window.dart`
+  - `app/lib/core/desktop/desktop_window_io.dart`
+  - `app/lib/core/desktop/desktop_window_stub.dart`
+  - `app/test/core/desktop_window_test.dart` (yeni, mümkünse)
+- **DOKUNMA:**
+  - `app/lib/core/navigation/home_shell.dart` (WP-27 alanı; yalnız gerekirse küçük bağlantı)
+  - `app/lib/features/home/**`, `classroom/**`, `stats/**`, `profile/**` UI yeniden tasarımı
+  - `app/android/**`
+  - `supabase/migrations/**`
+- **Adımlar:**
+  - [ ] Windows app metadata/ikon/başlık durumunu doğrula; EXE'nin kullanıcıya görünen adı Odak Kampı olmalı.
+  - [ ] Pencere boyutu/konumu/mini-pencere state'i için yerel kalıcılık planla veya uygula; mini mode ile full mode arasında güvenli geçiş.
+  - [ ] Windows build ve release workflow'unu netleştir: artifact adı, zip/installer çıktısı, beta/stable kanalıyla ilişkisi.
+  - [ ] `DAGITIM.md`'yi gerçek build komutları, imzalama/unsigned uyarısı, Windows SmartScreen beklentisi ve test checklist ile güncelle.
+  - [ ] Windows updater konusu için karar ver: ilk faz manuel zip/installer mı, yoksa GitHub Releases kontrolü sonraki WP mi?
+  - [ ] Visual Studio yüklü ortamda `flutter build windows --release --dart-define-from-file=env.json` ve smoke test notunu kaydet.
+- **Tuzaklar:**
+  - Bu makinede Visual Studio yoksa Windows build doğrulaması yerel yapılamaz; CI/VS'li makine gerekir.
+  - `window_manager` generated dosyaları başka ajanlarca silinmişse commit'e karışmamalı; `flutter pub get` sonrası generated dosyalar dikkatle kontrol edilir.
+  - Otomatik updater Windows için Android APK updater ile aynı değildir; yanlış söz vermemek lazım.
+- **Kabul:** Windows release artifact üretim yolu belgelenir ve mümkünse CI/VS'li ortamda doğrulanır; EXE adı/ikon/pencere davranışı düzgünleşir; mobil/Android build etkilenmez.
+- **Model matrisi (limit dostu):** WP-28 | Claude Sonnet 5 medium / GPT-5.6 Terra medium / Gemini 3.5 Flash medium
+- **Efor:** Orta-yüksek; dağıtım/CI/desktop API riski var.
+
 ---
 ## ✅ Son Tamamlananlar (ajan bağlamı için)
+
+### WP-19: Device Integrations Settings Hook (Tamamlandı)
+- **Kapsam:** Cihaz uygulama kısayollarının (Rutinler/Tasker vb.) ayarlar menüsüne bağlanması ve App Intent'lerinin (başlat, durdur vb.) Flutter state'ine (Riverpod) entegre edilmesi.
+- **Detay:** `deviceIntegrationListenerProvider` ile App Shortcut'lardan gelen (soğuk/sıcak) aksiyonlar dinlenip `studyTimerProvider` ve `navIndexProvider` tetiklendi. `SettingsScreen`'e entegrasyon sekmesi eklendi ve testleri güncellendi.
+
 
 > Son 5 iş. Ajan bunları okuyarak "neye dokunma, ne değişti" anlar.
 > Daha eski işler aşağıdaki Geçmiş tablosuna düşer.
