@@ -35,8 +35,6 @@ Future<void> initDesktopWindow() async {
 }
 
 Widget desktopChrome(Widget child) {
-  debugPrint('### desktopChrome CALLED, _isDesktop=$_isDesktop, '
-      'platform=$defaultTargetPlatform');
   if (!_isDesktop) return child;
   return _DesktopChrome(child: child);
 }
@@ -95,22 +93,10 @@ class _DesktopChromeState extends State<_DesktopChrome> {
 
   @override
   Widget build(BuildContext context) {
-    debugPrint('### _DesktopChrome.build RUNNING (pill should render)');
-    // GECICI TESHIS: build sonucu gercekten ekrana yansiyor mu?
-    return const ColoredBox(color: Color(0xFFFF0000));
-    // ignore: dead_code
     final theme = Theme.of(context);
     return Stack(
       children: [
         Positioned.fill(child: widget.child),
-        // GECICI TESHIS: sade kirmizi kutu — Stack/Positioned boyaniyor mu?
-        Positioned(
-          top: 40,
-          right: 40,
-          child: IgnorePointer(
-            child: Container(width: 64, height: 64, color: const Color(0xFFFF0000)),
-          ),
-        ),
         // Kontrol pili kendi Overlay'ine sarılır: MaterialApp.builder'da
         // Navigator'ın kardeşi olduğumuz için üstümüzde bir Overlay yok ve
         // IconButton tooltip'leri `Overlay.of(context)` arar. Kendi
