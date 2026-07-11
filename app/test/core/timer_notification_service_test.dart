@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/core/notifications/timer_notification_service.dart';
 
 void main() {
-  test('notification body shows elapsed time for stopwatch', () {
+  test('stopwatch body has no static elapsed (live time is the chronometer)', () {
     final snapshot = TimerNotificationSnapshot(
       title: 'Odak Kampı çalışıyor',
       modeLabel: 'Kronometre',
@@ -14,8 +14,11 @@ void main() {
       isRunning: true,
     );
 
-    expect(snapshot.body, contains('Kronometre'));
-    expect(snapshot.body, contains('1 sa 1 dk 1 sn'));
+    // Gövde sabit süre içermez (yoksa bildirim yenilenmediği için "0 sn"de takılır);
+    // geçen süre başlıktaki canlı kronometre ile gösterilir.
+    expect(snapshot.body, 'Kronometre çalışıyor');
+    expect(snapshot.body, isNot(contains('sn')));
+    // Genişletilmiş görünüm anlık bir özet olarak geçen süreyi gösterebilir.
     expect(snapshot.expandedBody, contains('Geçen süre: 1 sa 1 dk 1 sn'));
   });
 
@@ -33,7 +36,8 @@ void main() {
       isRunning: true,
     );
 
-    expect(snapshot.body, contains('Kalan 00:25:00'));
+    // Kalan süre başlıktaki geri sayan kronometre ile gösterilir; gövde faz etiketi.
+    expect(snapshot.body, 'Geri sayım');
     expect(snapshot.expandedBody, contains('Kalan süre: 25 dk 0 sn'));
     expect(snapshot.hasProgress, isTrue);
   });

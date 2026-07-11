@@ -57,10 +57,13 @@ class TimerNotificationSnapshot {
       progress! >= 0;
 
   String get body {
+    // Geçen/kalan süre bildirim başlığındaki CANLI kronometre (usesChronometer)
+    // ile saat gibi (HH:MM:SS) tikleyerek gösterilir. Gövdeye sabit bir sayı
+    // yazmayız; yoksa bildirim tekrar push edilmediği için "0 sn"de takılır.
     if (remainingSeconds == null) {
-      return '$modeLabel çalışıyor • ${formatHumanSeconds(elapsedSeconds)}';
+      return '$modeLabel çalışıyor';
     }
-    return '$phaseLabel • Kalan ${formatHms(remainingSeconds!)}';
+    return phaseLabel;
   }
 
   String get expandedBody {
