@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../data/providers/group_providers.dart';
+import '../../data/providers/study_providers.dart';
+import '../../data/providers/subject_providers.dart';
 import '../../data/providers/device_integration_listener.dart';
 import '../../data/providers/notification_providers.dart';
 import '../../data/providers/nudge_notification_listener.dart';
@@ -8,9 +11,11 @@ import '../../data/providers/presence_lifecycle.dart';
 import '../../features/classroom/classroom_screen.dart';
 import '../../features/classroom/widgets/class_switcher.dart';
 import '../../features/clock/clock_screen.dart';
+import '../../features/desktop/desktop_home_shell.dart';
 import '../../features/home/home_screen.dart';
 import '../../features/profile/profile_screen.dart';
 import '../../features/stats/stats_screen.dart';
+import '../desktop/desktop_window.dart';
 
 /// Alt navigasyonda seçili sekme indeksini tutar.
 class NavIndexNotifier extends Notifier<int> {
@@ -50,6 +55,21 @@ class HomeShell extends ConsumerWidget {
     ref.watch(deviceIntegrationListenerProvider);
     // Hatırlatıcı planlamasını tercih/veri değiştikçe senkron tut (§WP-36).
     ref.watch(reminderSyncListenerProvider);
+
+    if (isDesktopWindow) {
+      return DesktopHomeShell(
+        selectedIndex: index,
+        screens: _screens,
+        onDestinationSelected: ref.read(navIndexProvider.notifier).setIndex,
+        onRefresh: () {
+          ref.invalidate(userSessionsProvider);
+          ref.invalidate(groupDailyStatsProvider);
+          ref.invalidate(userGroupsProvider);
+          ref.invalidate(groupMembersProvider);
+          ref.invalidate(userSubjectsProvider);
+        },
+      );
+    }
 
     return Scaffold(
       body: IndexedStack(index: index, children: _screens),

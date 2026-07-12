@@ -1,162 +1,247 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:screen_retriever/screen_retriever.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
 
-/// Masaüstü (Windows/macOS/Linux) gerçek implementasyonu — WP-11.
-/// Mobil native platformlarda (Android/iOS) `_isDesktop` false olduğundan tüm
-/// çağrılar no-op'tur; `window_manager` yalnız masaüstünde devreye girer.
+import 'desktop_layout.dart';
 
-bool get _isDesktop =>
-    defaultTargetPlatform == TargetPlatform.windows ||
-    defaultTargetPlatform == TargetPlatform.linux ||
-    defaultTargetPlatform == TargetPlatform.macOS;
+bool get _isDesktop => defaultTargetPlatform == TargetPlatform.windows;
 
 bool get isDesktopWindow => _isDesktop;
 
-const Size _kDefaultSize = Size(1100, 720);
-const Size _kDefaultMinSize = Size(360, 480);
-const Size _kMiniSize = Size(320, 184);
-const Size _kMiniMinSize = Size(260, 140);
+const _defaultSize = Size(1100, 720);
+const _defaultMinimumSize = Size(560, 540);
+const _compactSize = Size(360, 220);
+const _compactMinimumSize = Size(320, 180);
 
-Future<void> initDesktopWindow() async {
-  if (!_isDesktop) return;
-  await windowManager.ensureInitialized();
-  const options = WindowOptions(
-    size: _kDefaultSize,
-    minimumSize: _kDefaultMinSize,
-    center: true,
-    title: 'Odak Kampı',
-    titleBarStyle: TitleBarStyle.normal,
-  );
-  await windowManager.waitUntilReadyToShow(options, () async {
-    await windowManager.show();
-    await windowManager.focus();
-  });
+class _PreferenceKeys {
+  static const x = 'desktop.window.x';
+  static const y = 'desktop.window.y';
+  static const width = 'desktop.window.width';
+  static const height = 'desktop.window.height';
+  static const maximized = 'desktop.window.maximized';
+  static const pinned = 'desktop.window.pinned';
+  static const compact = 'desktop.window.compact';
 }
 
-Widget desktopChrome(Widget child) {
+final _controller = _DesktopWindowController();
+
+Future<void> initDesktopWindow() => _controller.initialize();
+
+Future<void> toggleDesktopCompactMode() => _controller.toggleCompactMode();
+
+Future<void> toggleDesktopAlwaysOnTop() => _controller.toggleAlwaysOnTop();
+
+Widget desktopChrome(Widget child, {required Widget compactChild}) {
   if (!_isDesktop) return child;
-  return _DesktopChrome(child: child);
+  return _DesktopChrome(compactChild: compactChild, child: child);
 }
 
-/// Uygulamanın sağ üstüne küçük bir "üstte tut / mini pencere" kontrol kümesi
-/// bindirir. Mini modda pencere küçülür ve daima üstte kalır (kamp arkadaşlarını
-/// izlerken masaüstünde köşede duran mini sayaç penceresi gibi).
+class _DesktopWindowController extends ChangeNotifier with WindowListener {
+  SharedPreferences? _preferences;
+  bool _initialized = false;
+  bool _busy = false;
+  bool _isCompact = false;
+  bool _isPinned = false;
+  bool _normalWasMaximized = false;
+  Rect _normalBounds = const Rect.fromLTWH(100, 100, 1100, 720);
+  Timer? _saveTimer;
+
+  bool get isCompact => _isCompact;
+  bool get isPinned => _isPinned;
+
+  Future<void> initialize() async {
+    if (!_isDesktop || _initialized) return;
+    _initialized = true;
+    await windowManager.ensureInitialized();
+    _preferences = await SharedPreferences.getInstance();
+
+    final primary = await screenRetriever.getPrimaryDisplay();
+    final displays = await screenRetriever.getAllDisplays();
+    final primaryArea = _workArea(primary);
+    final saved = Rect.fromLTWH(
+      _preferences?.getDouble(_PreferenceKeys.x) ??
+          primaryArea.left + (primaryArea.width - _defaultSize.width) / 2,
+      _preferences?.getDouble(_PreferenceKeys.y) ??
+          primaryArea.top + (primaryArea.height - _defaultSize.height) / 2,
+      _preferences?.getDouble(_PreferenceKeys.width) ?? _defaultSize.width,
+      _preferences?.getDouble(_PreferenceKeys.height) ?? _defaultSize.height,
+    );
+    _normalBounds = clampDesktopWindowBounds(
+      requested: saved,
+      workAreas: displays.map(_workArea).toList(),
+      primaryWorkArea: primaryArea,
+      minimumSize: _defaultMinimumSize,
+    );
+    _normalWasMaximized =
+        _preferences?.getBool(_PreferenceKeys.maximized) ?? false;
+    _isPinned = _preferences?.getBool(_PreferenceKeys.pinned) ?? false;
+    _isCompact = _preferences?.getBool(_PreferenceKeys.compact) ?? false;
+
+    final options = WindowOptions(
+      size: _isCompact ? _compactSize : _normalBounds.size,
+      minimumSize: _isCompact ? _compactMinimumSize : _defaultMinimumSize,
+      center: false,
+      title: 'Odak Kampı',
+      titleBarStyle: TitleBarStyle.normal,
+    );
+    await windowManager.waitUntilReadyToShow(options, () async {
+      if (_isCompact) {
+        await windowManager.setAlignment(Alignment.topRight);
+        await windowManager.setAlwaysOnTop(true);
+      } else {
+        await windowManager.setBounds(_normalBounds);
+        await windowManager.setAlwaysOnTop(_isPinned);
+        if (_normalWasMaximized) await windowManager.maximize();
+      }
+      await windowManager.show();
+      await windowManager.focus();
+    });
+    windowManager.addListener(this);
+  }
+
+  Future<void> toggleCompactMode() async {
+    if (!_isDesktop || !_initialized || _busy) return;
+    _busy = true;
+    try {
+      if (_isCompact) {
+        await windowManager.setMinimumSize(_defaultMinimumSize);
+        final restored = await _clampToConnectedDisplay(_normalBounds);
+        await windowManager.setBounds(restored);
+        if (_normalWasMaximized) await windowManager.maximize();
+        await windowManager.setAlwaysOnTop(_isPinned);
+        _normalBounds = restored;
+        _isCompact = false;
+      } else {
+        _normalWasMaximized = await windowManager.isMaximized();
+        if (_normalWasMaximized) await windowManager.unmaximize();
+        _normalBounds = await windowManager.getBounds();
+        await _saveNormalBounds();
+        await windowManager.setMinimumSize(_compactMinimumSize);
+        await windowManager.setSize(_compactSize);
+        await windowManager.setAlignment(Alignment.topRight);
+        await windowManager.setAlwaysOnTop(true);
+        _isCompact = true;
+      }
+      await _preferences?.setBool(_PreferenceKeys.compact, _isCompact);
+      await _preferences?.setBool(
+        _PreferenceKeys.maximized,
+        _normalWasMaximized,
+      );
+      notifyListeners();
+    } finally {
+      _busy = false;
+    }
+  }
+
+  Future<void> toggleAlwaysOnTop() async {
+    if (!_isDesktop || !_initialized || _busy) return;
+    _isPinned = !_isPinned;
+    if (!_isCompact) await windowManager.setAlwaysOnTop(_isPinned);
+    await _preferences?.setBool(_PreferenceKeys.pinned, _isPinned);
+    notifyListeners();
+  }
+
+  Rect _workArea(Display display) => Rect.fromLTWH(
+    display.visiblePosition?.dx ?? 0,
+    display.visiblePosition?.dy ?? 0,
+    display.visibleSize?.width ?? display.size.width,
+    display.visibleSize?.height ?? display.size.height,
+  );
+
+  Future<Rect> _clampToConnectedDisplay(Rect requested) async {
+    final primary = await screenRetriever.getPrimaryDisplay();
+    final displays = await screenRetriever.getAllDisplays();
+    return clampDesktopWindowBounds(
+      requested: requested,
+      workAreas: displays.map(_workArea).toList(),
+      primaryWorkArea: _workArea(primary),
+      minimumSize: _defaultMinimumSize,
+    );
+  }
+
+  void _scheduleSave() {
+    if (_isCompact || _busy) return;
+    _saveTimer?.cancel();
+    _saveTimer = Timer(const Duration(milliseconds: 300), _saveNormalBounds);
+  }
+
+  Future<void> _saveNormalBounds() async {
+    if (_isCompact) return;
+    final bounds = await windowManager.getBounds();
+    _normalBounds = bounds;
+    await Future.wait([
+      _preferences!.setDouble(_PreferenceKeys.x, bounds.left),
+      _preferences!.setDouble(_PreferenceKeys.y, bounds.top),
+      _preferences!.setDouble(_PreferenceKeys.width, bounds.width),
+      _preferences!.setDouble(_PreferenceKeys.height, bounds.height),
+    ]);
+  }
+
+  @override
+  void onWindowMoved() => _scheduleSave();
+
+  @override
+  void onWindowResized() => _scheduleSave();
+
+  @override
+  void onWindowMaximize() {
+    if (_isCompact || _busy) return;
+    _normalWasMaximized = true;
+    unawaited(_preferences?.setBool(_PreferenceKeys.maximized, true));
+  }
+
+  @override
+  void onWindowUnmaximize() {
+    if (_isCompact || _busy) return;
+    _normalWasMaximized = false;
+    unawaited(_preferences?.setBool(_PreferenceKeys.maximized, false));
+  }
+}
+
 class _DesktopChrome extends StatefulWidget {
-  const _DesktopChrome({required this.child});
+  const _DesktopChrome({required this.child, required this.compactChild});
 
   final Widget child;
+  final Widget compactChild;
 
   @override
   State<_DesktopChrome> createState() => _DesktopChromeState();
 }
 
 class _DesktopChromeState extends State<_DesktopChrome> {
-  bool _pinned = false;
-  bool _mini = false;
-  bool _busy = false;
-
-  Future<void> _togglePin() async {
-    if (_busy) return;
-    _busy = true;
-    final next = !_pinned;
-    await windowManager.setAlwaysOnTop(next);
-    if (mounted) setState(() => _pinned = next);
-    _busy = false;
+  @override
+  void initState() {
+    super.initState();
+    _controller.addListener(_onWindowStateChanged);
   }
 
-  Future<void> _toggleMini() async {
-    if (_busy) return;
-    _busy = true;
-    if (_mini) {
-      // Tam boyuta dön: önce boyutu büyüt, sonra minimum sınırı geri yükselt.
-      await windowManager.setSize(_kDefaultSize);
-      await windowManager.setMinimumSize(_kDefaultMinSize);
-      await windowManager.center();
-      if (!_pinned) await windowManager.setAlwaysOnTop(false);
-      if (mounted) setState(() => _mini = false);
-    } else {
-      // Mini moda geç: minimum sınırı düşür, küçült, köşeye al, üstte tut.
-      await windowManager.setMinimumSize(_kMiniMinSize);
-      await windowManager.setSize(_kMiniSize);
-      await windowManager.setAlignment(Alignment.topRight);
-      await windowManager.setAlwaysOnTop(true);
-      if (mounted) {
-        setState(() {
-          _mini = true;
-          _pinned = true;
-        });
-      }
-    }
-    _busy = false;
+  @override
+  void dispose() {
+    _controller.removeListener(_onWindowStateChanged);
+    super.dispose();
+  }
+
+  void _onWindowStateChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Stack(
-      children: [
-        Positioned.fill(child: widget.child),
-        // Kontrol pili kendi Overlay'ine sarılır: MaterialApp.builder'da
-        // Navigator'ın kardeşi olduğumuz için üstümüzde bir Overlay yok ve
-        // IconButton tooltip'leri `Overlay.of(context)` arar. Kendi
-        // Overlay'imizi vererek "No Overlay widget found" hatasını önler ve
-        // tooltip'leri korunmuş oluruz. Boş alan tıklamayı emmez; alttaki
-        // uygulama etkileşimi bozulmadan devam eder.
-        Positioned.fill(
-          child: Overlay(
-            initialEntries: [
-              OverlayEntry(
-                builder: (context) => Align(
-                  alignment: Alignment.topRight,
-                  child: Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: Material(
-                      color: theme.colorScheme.surface.withValues(alpha: 0.82),
-                      elevation: 3,
-                      borderRadius: BorderRadius.circular(20),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 2),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              visualDensity: VisualDensity.compact,
-                              tooltip: _pinned
-                                  ? 'Üstte tutmayı bırak'
-                                  : 'Her zaman üstte tut',
-                              isSelected: _pinned,
-                              icon: Icon(
-                                _pinned
-                                    ? Icons.push_pin
-                                    : Icons.push_pin_outlined,
-                                size: 18,
-                              ),
-                              onPressed: _togglePin,
-                            ),
-                            IconButton(
-                              visualDensity: VisualDensity.compact,
-                              tooltip: _mini ? 'Tam boyuta dön' : 'Mini pencere',
-                              isSelected: _mini,
-                              icon: Icon(
-                                _mini
-                                    ? Icons.fullscreen
-                                    : Icons.picture_in_picture_alt_outlined,
-                                size: 18,
-                              ),
-                              onPressed: _toggleMini,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 180),
+      child: _controller.isCompact
+          ? KeyedSubtree(
+              key: const ValueKey('desktop-compact-focus'),
+              child: widget.compactChild,
+            )
+          : KeyedSubtree(
+              key: const ValueKey('desktop-full-app'),
+              child: widget.child,
+            ),
     );
   }
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/desktop/desktop_layout.dart';
+import '../../core/desktop/desktop_window.dart';
 import '../../core/widgets/safe_screen_padding.dart';
 import 'dashboard_card.dart';
 import 'dashboard_providers.dart';
@@ -96,58 +98,76 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ? _EmptyDashboard(onEdit: () => showCardPicker(context))
           : SingleChildScrollView(
               controller: _scroll,
-              padding: getSafeVerticalPadding(context),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  if (_editing) ...[
-                    Text(
-                      'Kartı tutup sürükle; hedef hücreye bırakınca komşular yer açar. '
-                      'Boyut için karta dokun, aşağıdaki −/+ ile genişlik ve '
-                      'yüksekliği ayarla (ya da köşelerden çek).',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                  ],
-                  _MatrixGrid(
-                    layout: layout,
-                    editing: _editing,
-                    onLongPressCard: () => _setEditing(true),
-                    onMoveCard: (type, x, y) => ref
-                        .read(dashboardLayoutProvider.notifier)
-                        .setBounds(type, x: x, y: y),
-                    onResizeCard: (type, x, y, w, h, persist) => ref
-                        .read(dashboardLayoutProvider.notifier)
-                        .setBounds(
-                          type,
-                          x: x,
-                          y: y,
-                          w: w,
-                          h: h,
-                          persist: persist,
-                        ),
-                    onCommit: ref
-                        .read(dashboardLayoutProvider.notifier)
-                        .persist,
-                    onRemove: ref
-                        .read(dashboardLayoutProvider.notifier)
-                        .removeCard,
+              padding: getSafeVerticalPadding(
+                context,
+                horizontal: isDesktopWindow ? 24 : 16,
+              ),
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: DesktopBreakpoints.maxContentWidth,
                   ),
-                  if (_editing) ...[
-                    const Divider(height: 24),
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text('Gruplar ekranında da sayaç göster'),
-                      subtitle: const Text('Sayaç varsayılan Ana Sayfa’dadır.'),
-                      value: ref.watch(classroomShowTimerProvider),
-                      onChanged: ref
-                          .read(classroomShowTimerProvider.notifier)
-                          .set,
-                    ),
-                  ],
-                ],
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (_editing) ...[
+                        Text(
+                          'Kartı tutup sürükle; hedef hücreye bırakınca komşular yer açar. '
+                          'Boyut için karta dokun, aşağıdaki −/+ ile genişlik ve '
+                          'yüksekliği ayarla (ya da köşelerden çek).',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                              ),
+                        ),
+                        const SizedBox(height: 10),
+                      ],
+                      _MatrixGrid(
+                        layout: layout,
+                        editing: _editing,
+                        onLongPressCard: () => _setEditing(true),
+                        onMoveCard: (type, x, y) => ref
+                            .read(dashboardLayoutProvider.notifier)
+                            .setBounds(type, x: x, y: y),
+                        onResizeCard: (type, x, y, w, h, persist) => ref
+                            .read(dashboardLayoutProvider.notifier)
+                            .setBounds(
+                              type,
+                              x: x,
+                              y: y,
+                              w: w,
+                              h: h,
+                              persist: persist,
+                            ),
+                        onCommit: ref
+                            .read(dashboardLayoutProvider.notifier)
+                            .persist,
+                        onRemove: ref
+                            .read(dashboardLayoutProvider.notifier)
+                            .removeCard,
+                      ),
+                      if (_editing) ...[
+                        const Divider(height: 24),
+                        SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: const Text(
+                            'Gruplar ekranında da sayaç göster',
+                          ),
+                          subtitle: const Text(
+                            'Sayaç varsayılan Ana Sayfa’dadır.',
+                          ),
+                          value: ref.watch(classroomShowTimerProvider),
+                          onChanged: ref
+                              .read(classroomShowTimerProvider.notifier)
+                              .set,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
               ),
             ),
     );
@@ -503,6 +523,7 @@ class _MatrixCardState extends State<_MatrixCard> {
     if (!widget.editing) {
       return GestureDetector(
         onLongPress: widget.onLongPressCard,
+        onSecondaryTap: widget.onLongPressCard,
         child: _HoverLift(child: card),
       );
     }

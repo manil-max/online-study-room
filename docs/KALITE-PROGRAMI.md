@@ -443,9 +443,10 @@ Her iddia `Kodda doğrulandı` / `Cihazda doğrulanmalı` / `Ürün kararı gere
 5. **Tema derinliği/aileleri:** §8.5'teki 12 aile ve katmanlı editör kapsamı.
 6. **Saat kapsamı:** §8.4'teki alanların hangileri ilk sürümde (Uyku/StandBy dahil mi?).
 7. **Sosyal profil gizlilik politikası:** yalnız ortak aktif grup üyesi görünürlüğü (RLS `0022` düzeltmesi) — onay.
-8. **Windows dağıtımı:** Microsoft Store MSIX (önerilen) mı, doğrudan imzalı
-   MSIX + App Installer mı? Windows 10 yalnız best-effort olsun mu? Kapatınca
-   normal çıkış mı, isteğe bağlı system tray mi?
+8. **Windows dağıtımı:** Hedef yalnız Windows 11'dir; Windows 10 geliştirme ve QA
+   kapsamı dışındadır (`Ürün kararı verildi`). Kalan kararlar: Microsoft Store
+   MSIX (önerilen) mı, doğrudan imzalı MSIX + App Installer mı? Kapatınca normal
+   çıkış mı, isteğe bağlı system tray mi?
 
 ---
 

@@ -176,7 +176,7 @@ kalır; repoya veya artefakt loguna yazılmaz.
 
 | Alan | Minimum matris |
 |---|---|
-| OS | Windows 11 24H2 + 25H2; Windows 10 yalnız best-effort/ürün kararı |
+| OS | Windows 11 24H2 + 25H2; Windows 10 kapsam dışı |
 | Ekran | 1366×768, 1920×1080, 2560×1440; tek + çoklu monitör |
 | Ölçek | %100, %125, %150, %200 |
 | Girdi | mouse, touchpad, yalnız klavye, touch varsa temel smoke |
@@ -203,8 +203,8 @@ Windows CI, update kanalı, installer testleri ve Windows release gate uygulanı
 
 1. **Stable kanal:** Microsoft Store MSIX (önerilen) mı, doğrudan imzalı
    MSIX + App Installer mı?
-2. **Windows 10:** 14 Ekim 2025'te destek sona erdi. Windows 11 primary + Windows
-   10 best-effort önerisi kabul mü?
+2. **İşletim sistemi:** Ürün kararı yalnız Windows 11'dir. Windows 10 geliştirme,
+   uyumluluk ve QA matrisinin tamamı kapsam dışıdır.
 3. **Kapatma davranışı:** normal çıkış (önerilen) mı, isteğe bağlı system tray mi?
 4. **Focus entegrasyonu:** Windows Rahatsız Etmeyin entegrasyonu ilk sürümde mi,
    sonraki izinli WP'de mi? Öneri: sonraki WP.

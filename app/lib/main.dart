@@ -14,6 +14,7 @@ import 'core/prefs/app_prefs.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_settings.dart';
 import 'features/auth/auth_gate.dart';
+import 'features/desktop/compact_focus_view.dart';
 
 import 'package:home_widget/home_widget.dart';
 import 'package:online_study_room/features/android_widgets/android_widget_service.dart';
@@ -78,8 +79,10 @@ class OnlineStudyRoomApp extends ConsumerWidget {
       ],
       // Masaüstünde uygulamanın etrafına "üstte tut / mini pencere" kontrol
       // kümesi eklenir; web/mobilde child olduğu gibi döner.
-      builder: (context, child) =>
-          desktopChrome(child ?? const SizedBox.shrink()),
+      builder: (context, child) => desktopChrome(
+        child ?? const SizedBox.shrink(),
+        compactChild: const CompactFocusView(),
+      ),
       home: const AuthGate(),
     );
   }

@@ -11,4 +11,8 @@ Future<void> initDesktopWindow() async {}
 
 /// Masaüstünde uygulamanın etrafına "üstte tut / mini" kontrolleri ekler.
 /// Web'de child'ı olduğu gibi döndürür.
-Widget desktopChrome(Widget child) => child;
+Widget desktopChrome(Widget child, {required Widget compactChild}) => child;
+
+Future<void> toggleDesktopCompactMode() async {}
+
+Future<void> toggleDesktopAlwaysOnTop() async {}
