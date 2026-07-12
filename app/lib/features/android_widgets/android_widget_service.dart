@@ -106,6 +106,39 @@ class AndroidWidgetSnapshot {
              const AndroidWidgetSnapshot.placeholder().leaderboardRows,
        );
 
+  AndroidWidgetSnapshot.stats({
+    required String today,
+    required String week,
+    required String streak,
+  }) : this(
+         timerTitle: const AndroidWidgetSnapshot.placeholder().timerTitle,
+         timerElapsed: const AndroidWidgetSnapshot.placeholder().timerElapsed,
+         timerStatus: const AndroidWidgetSnapshot.placeholder().timerStatus,
+         timerAction: const AndroidWidgetSnapshot.placeholder().timerAction,
+         statsTitle: 'Çalışma özeti',
+         statsToday: today,
+         statsWeek: week,
+         statsStreak: streak,
+         leaderboardTitle:
+             const AndroidWidgetSnapshot.placeholder().leaderboardTitle,
+         leaderboardRows:
+             const AndroidWidgetSnapshot.placeholder().leaderboardRows,
+       );
+
+  AndroidWidgetSnapshot.leaderboard({required List<String> rows})
+    : this(
+        timerTitle: const AndroidWidgetSnapshot.placeholder().timerTitle,
+        timerElapsed: const AndroidWidgetSnapshot.placeholder().timerElapsed,
+        timerStatus: const AndroidWidgetSnapshot.placeholder().timerStatus,
+        timerAction: const AndroidWidgetSnapshot.placeholder().timerAction,
+        statsTitle: const AndroidWidgetSnapshot.placeholder().statsTitle,
+        statsToday: const AndroidWidgetSnapshot.placeholder().statsToday,
+        statsWeek: const AndroidWidgetSnapshot.placeholder().statsWeek,
+        statsStreak: const AndroidWidgetSnapshot.placeholder().statsStreak,
+        leaderboardTitle: 'Grup sıralaması',
+        leaderboardRows: rows,
+      );
+
   final String timerTitle;
   final String timerElapsed;
   final String timerStatus;

@@ -3,6 +3,7 @@ package com.manilmax.online_study_room.widgets
 import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.SharedPreferences
+import android.os.SystemClock
 import android.widget.RemoteViews
 import com.manilmax.online_study_room.R
 import es.antonborri.home_widget.HomeWidgetProvider
@@ -34,14 +35,19 @@ class TimerWidgetProvider : HomeWidgetProvider() {
     ) {
         appWidgetIds.forEach { widgetId ->
             val views = RemoteViews(context.packageName, R.layout.odak_timer_widget).apply {
+                val appPrefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
+                val startedAt = appPrefs.getString("flutter.timer_active_started_at", null)
                 setTextViewText(
                     R.id.timer_widget_title,
                     widgetData.text(StudyWidgetKeys.TimerTitle, "Odak Kampı"),
                 )
-                setTextViewText(
-                    R.id.timer_widget_elapsed,
-                    widgetData.text(StudyWidgetKeys.TimerElapsed, "00:00:00"),
-                )
+                val startMillis = startedAt?.let { runCatching { java.time.Instant.parse(it).toEpochMilli() }.getOrNull() }
+                if (startMillis != null) {
+                    val base = SystemClock.elapsedRealtime() - (System.currentTimeMillis() - startMillis)
+                    setChronometer(R.id.timer_widget_elapsed, base, null, true)
+                } else {
+                    setChronometer(R.id.timer_widget_elapsed, SystemClock.elapsedRealtime(), "00:00:00", false)
+                }
                 setTextViewText(
                     R.id.timer_widget_status,
                     widgetData.text(StudyWidgetKeys.TimerStatus, "Çalışma hazır"),

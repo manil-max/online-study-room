@@ -53,14 +53,14 @@
 
 ### Codex Lane
 - **Durum:** [~] Aktif
-- **Faz/WP:** V8-A · WP-41
+- **Faz/WP:** V8-A · WP-42
 - **Aşama:** Geliştiriliyor
-- **SAHİP yollar:** `app/lib/core/notifications/timer_notification_service.dart`, `app/android/app/src/main/kotlin/**/TimerActionReceiver.kt`, `progress.md` (kendi lane + WP-41)
-- **Ortak/riskli yüzey:** Bildirim receiver/service; `study_providers.dart` salt okunur (WP-40)
+- **SAHİP yollar:** `app/lib/features/android_widgets/android_widget_service.dart`, `app/android/app/src/main/kotlin/**/widgets/*`, `progress.md` (kendi lane + WP-42)
+- **Ortak/riskli yüzey:** Widget provider'ları; `study_providers.dart` ve bildirim salt okunur
 - **Dal:** — (ana dal `main`)
 - **Başlangıç:** 2026-07-12 19:30 (Europe/Istanbul)
 - **Son güncelleme:** 2026-07-12 20:10 (Europe/Istanbul)
-- **Not:** Kullanıcı yönlendirmesiyle WP-40 cihaz QA'sı bloklamadan WP-41'e geçildi.
+- **Not:** WP-41 kod/test tamamlandı; kullanıcı yönlendirmesiyle WP-42'ye geçildi.
 
 ---
 
@@ -140,8 +140,8 @@
 
 ### WP-42: V8-A · Widget Paritesi + Olay Bazlı Stats Besleme 📲
 - **Program/Faz:** V8-A · **Bağımlılık: WP-40; WP-41 ile paralel DEĞİL** (`study_providers` paylaşımı → serileştir)
-- **Ajan:** —
-- **Durum:** [ ] Bekliyor
+- **Ajan:** Codex
+- **Durum:** [~] Geliştiriliyor
 - **Problem:** Yalnız timer widget besleniyor; stats/leaderboard placeholder (B4).
 - **Kapsam dışı:** Bildirim (WP-41), senkron canonical projection (WP-43 sağlar; burada tüketilir).
 - **SAHİP dosyalar (yaz):** `app/lib/features/android_widgets/android_widget_service.dart`, `app/android/app/src/main/kotlin/**/widgets/*` (Chronometer RemoteViews), yeni widget besleme pipeline.

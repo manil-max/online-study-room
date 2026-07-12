@@ -678,7 +678,39 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   }
 
   Future<void> _syncTimerSurfaces() async {
-    await Future.wait([_syncTimerNotification(), _syncTimerWidget()]);
+    await Future.wait([
+      _syncTimerNotification(),
+      _syncTimerWidget(),
+      _syncStatsWidgets(),
+    ]);
+  }
+
+  Future<void> _syncStatsWidgets() async {
+    final widgetService = ref.read(androidWidgetServiceProvider);
+    final sessions = ref.read(userSessionsProvider).value ?? const <StudySession>[];
+    final today = ref.read(todayRecordedSecondsProvider);
+    final week = sessions
+        .where((session) => !session.day.isBefore(startOfWeek(DateTime.now())))
+        .fold<int>(0, (sum, session) => sum + session.durationSeconds);
+    await widgetService.saveSnapshot(AndroidWidgetSnapshot.stats(
+      today: 'Bugün: ${formatHuman(today)}',
+      week: 'Hafta: ${formatHuman(week)}',
+      streak: 'Seri: ${ref.read(currentStreakProvider)} gün',
+    ));
+    final members = ref.read(groupMembersProvider).value ?? const <Profile>[];
+    final todayTotals = ref.read(groupTodaySecondsProvider);
+    final names = {for (final member in members) member.id: member.displayName};
+    final rows = todayTotals.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    await widgetService.saveSnapshot(AndroidWidgetSnapshot.leaderboard(
+      rows: rows.take(3).map((entry) {
+        final name = names[entry.key] ?? 'Grup üyesi';
+        return '$name · ${formatHuman(entry.value)}';
+      }).toList(),
+    ));
+    await widgetService.refresh(
+      widgets: const [StudyHomeWidget.stats, StudyHomeWidget.leaderboard],
+    );
   }
 
   Future<void> _syncTimerNotification() async {
