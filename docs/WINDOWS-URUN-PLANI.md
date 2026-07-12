@@ -73,8 +73,9 @@ Sistem title bar
 - Geniş rail `≥1008`, kompakt rail `640–1007`, minimal düzen `<640` olur.
 - Sayfa başlıkları ve eylemler bağlamsaldır; mobil AppBar kopyaları desktop'ta
   üst üste iki başlık üretmez.
-- Ana sayfa içerik genişliği sınırlandırılır; 6 sütunlu kayıt modeli korunur,
-  desktop yalnız sunumu adapte eder. Mobil kayıt düzeni bozulmaz.
+- Ana sayfa içerik genişliği sınırlandırılır; telefon/tablet/Windows aynı grid
+  motorunun cihaz-yerel 6/8/12/16 profillerini kullanır (WP-52). Desktop için
+  ikinci veri modeli kurulmaz; mevcut mobil düzen göçte kaybolmaz.
 
 ### Compact Focus penceresi
 
@@ -197,10 +198,25 @@ desktop içerik iskeleti, klavye/fare davranışları, compact focus, window sta
 erişilebilirlik tek desktop presentation diliminde uygulanır. Mobil navigasyon ve
 veri katmanı korunur.
 
+### WP-52 — Adaptif Dashboard Grid ve Cihaz Yoğunluğu
+
+Dashboard'un sabit 6×N modeli cihaz-yerel **6/8/12/16** sütun profillerine
+dönüşür. Telefon, tablet ve Windows aynı kart motorunu kullanır; layout profilleri
+cihazda ayrı saklanır ve yoğunluklar arasında tekrar geçişte yuvarlama drift'i veya
+kart kaybı oluşmaz. WP-52, gerçek desktop iç tasarımından önce tamamlanır.
+
+### WP-53 — Windows Desktop Design 2.0
+
+WP-27'nin shell/pencere temelinin üstünde beş ekranın iç bilgi mimarisi masaüstüne
+özgü hale getirilir: command bar, master-detail, çok panelli analiz ve bağlamsal
+eylemler. Mobil widget/provider ağacı veri doğruluğu için korunur; fakat `≥1008`
+genişlikte ana deneyim büyütülmüş mobil AppBar/tek-kolon liste olmaz.
+
 ### WP-28 — Windows Paketleme, Güncelleme ve Release QA
 
-WP-27 cihaz kabulünden sonra runner metadata/ikon, MSIX kimliği, imza stratejisi,
-Windows CI, update kanalı, installer testleri ve Windows release gate uygulanır.
+WP-52 ve WP-53 cihaz/ürün kabulünden sonra runner metadata/ikon, MSIX kimliği,
+imza stratejisi, Windows CI, update kanalı, installer testleri ve Windows release
+gate uygulanır. Sıra: `WP-27 base → WP-52 → WP-53 → WP-28`.
 
 ## 7. Ürün kararları
 

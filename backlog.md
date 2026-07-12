@@ -8,13 +8,14 @@
 
 ## 🔴 Yüksek Öncelik
 
-- [~] **Kalite Programı — Faz 0 + V8 Güven Sürümü** — **planner ile WP'lere bölünecek**
-  - **Faz 0A:** Tek kaynak & tamamlanma denetimi — **WP-37 (repo/doküman denetimi) + WP-38 (canlı backend durum matrisi) planlandı.** Yeni özellik üretmez.
-  - **Faz 0B:** Test & gözlemlenebilirlik temeli (integration test, native widget/bildirim test planı, Sentry).
+- [~] **Kalite Programı — Faz 0 + V8 Güven Sürümü** — **WP-37–50 olarak planlandı**
+  - **Faz 0A:** Tek kaynak & tamamlanma denetimi — **WP-37 + WP-38 tamamlandı**; canlı migration/RLS uygulama teyidi release kapısında yeniden doğrulanır.
+  - **Faz 0B:** Test & gözlemlenebilirlik temeli — **WP-46 (integration + native QA matrisi), WP-47 (Sentry/gözlemlenebilirlik)**.
   - **V8-A:** Sayaç–bildirim–widget tek doğruluk kaynağı — **WP-40 (state store+foreground), WP-41 (chronometer bildirim), WP-42 (widget paritesi) planlandı.**
   - **V8-B:** Genel senkronizasyon denetimi — **WP-43 planlandı.**
   - **V8-C:** Küçük IA — **WP-44 (istatistik sırası) + WP-45 (gruplar sırası/kamp ateşi/animasyon) planlandı.**
-  - *Kaynak: kalite pivotu 2026-07-12; KALITE-PROGRAMI §7–8. Faz 0 + V8 tümü WP'ye bölündü (WP-37, WP-38, WP-40→45). WP-39 kullanıcı kararıyla iptal edildi.*
+  - **V8 beta/stable:** **WP-48 (beta + cihaz QA), WP-49 (soak), WP-50 (release/rollback karar paketi)**.
+  - *Kaynak: kalite pivotu 2026-07-12; KALITE-PROGRAMI §7–8. Faz 0 + V8 tümü WP'ye bölündü (WP-37, WP-38, WP-40→50). WP-39 kullanıcı kararıyla iptal edildi.*
 
 - [~] **"Tamamlandı" görünüp ürün kabulü bekleyenler** — Faz 0'da yeniden sınıflandırılacak
   - WP-23 (Saat), WP-26 (Tema), WP-35 (Başarım), Android widget, WP-36 (IA): kod var ama (2) tanımını (cihazda güvenilir + kullanıcı beklentisi) tam karşılamıyor. Kanıt: KALITE-PROGRAMI §3.
@@ -57,12 +58,15 @@
   - Yeni güncelleme varsa izinli cihazlarda local update bildirimi değerlendirilecek; gerçek push/FCM ayrı fazdır.
   - *Kaynak: kullanıcı geri bildirimi; WP-29/WP-30.*
 
-- [~] **Windows desktop UX redesign + dağıtım fazı** — **WP-27 ve WP-28 planlandı**
-  - İlk EXE derlendi; ancak mevcut görünüm mobil app'in Windows'a büyütülmüş hali.
-  - Windows için ayrı masaüstü deneyimi gerekiyor: sol navigation rail/sidebar, geniş ekran düzenleri, mini pencere uyumu, klavye/fare/pencere davranışı.
-  - **WP-27:** Desktop shell ve responsive layout.
-  - **WP-28:** Windows dağıtım/installer/metadata/pencere davranışı polish.
-  - *Kaynak: kullanıcı geri bildirimi + WP-11 Windows EXE sonrası durum.*
+- [~] **Windows desktop ürünü + güvenilir dağıtım** — **WP-27/WP-52/WP-53/WP-28 sırasıyla planlandı**
+  - Yerel denetim: Flutter 3.44.2, Visual Studio 2022 ve Windows SDK hazır; eski “build ortamı yok” notu güncel değil. Mevcut uygulama hâlâ mobil alt navigasyon + sınırsız büyüyen grid kullanıyor.
+  - **WP-27:** Windows-only adaptif sol rail (`<640` minimal, `640–1007` kompakt, `≥1008` geniş), max 1440 px desktop içerik, klavye/fare/Narrator/high-contrast, pencere state'i ve bütün uygulamayı küçültmeyen ayrı Compact Focus.
+  - **WP-52:** Telefon/tablet/Windows için cihaz-yerel 6/8/12/16 sütun dashboard profilleri; güvenli layout göçü ve kayıpsız yoğunluk geçişi.
+  - **WP-53:** Beş ana ekranın command bar/master-detail/çok panel düzenleriyle gerçek Windows ekran-içi ürün tasarımı; büyütülmüş mobil akış ana IA olmayacak.
+  - **WP-28:** Odak Kampı runner metadata/ikon, MSIX kimliği/imza, Windows CI, Store/App Installer update stratejisi, temiz VM install→update→uninstall ve release QA.
+  - Stable önerisi Microsoft Store MSIX; ZIP yalnız geliştirme/portable yedek. Yalnız Windows 11 hedeflenir; Windows 10 kapsam dışıdır.
+  - Kanonik araştırma/tasarım: `docs/WINDOWS-URUN-PLANI.md` · program kapısı: `docs/KALITE-PROGRAMI.md §8.7`.
+  - *Kaynak: kullanıcı geri bildirimi + WP-11 Windows EXE sonrası durum + Microsoft/Flutter resmi dokümanları.*
 
 - [~] **Görünüm Sistemi 2.0 — tam tema stüdyosu + sabit renk temizliği** — **WP-26 genişletildi**
   - Mevcut palet yalnız yazı/vurgu rengini değiştirmemeli; sayfa zemini, kartlar, inputlar, navigasyon, grafikler, kenarlıklar ve durum yüzeyleri seçilen temayla birlikte değişmeli.

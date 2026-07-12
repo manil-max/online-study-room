@@ -389,8 +389,10 @@ presentation shell kurar. Kanonik ayrıntılı tasarım: `docs/WINDOWS-URUN-PLAN
 
 - `<640` minimal, `640–1007` kompakt sol rail, `≥1008` etiketli geniş rail;
   mobil alt navigasyon değiştirilmez.
-- Geniş içerik max 1440 px içinde masaüstü panellerine adapte olur; mevcut 6
-  sütunlu dashboard kayıt modeli ikinci bir desktop veri modeline çatallanmaz.
+- Geniş içerik max 1440 px içinde masaüstü panellerine adapte olur. Dashboard
+  telefon/tablet/Windows için aynı motoru kullanan cihaz-yerel 6/8/12/16 sütun
+  profillerine genişler; ikinci bir desktop veri modeli veya Supabase layout
+  senkronu kurulmaz (WP-52).
 - Mini pencere bütün uygulamayı küçültmez; timer/aktif ders/temel kontrollerden
   oluşan ayrı Compact Focus yüzeyidir.
 - Klavye, mouse/hover, görünür focus, Narrator, high contrast, %100–%200 ölçek,
