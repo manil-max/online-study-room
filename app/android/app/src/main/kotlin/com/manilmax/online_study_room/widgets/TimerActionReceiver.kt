@@ -3,15 +3,13 @@ package com.manilmax.online_study_room.widgets
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
-import es.antonborri.home_widget.HomeWidgetBackgroundIntent
+import org.json.JSONObject
 
 /**
  * Widget veya bildirim üzerinden gelen zamanlayıcı (sayaç) başlatma/durdurma
  * eylemlerini yakalayan BroadcastReceiver.
  *
- * Flutter'ın uyandırılması ve Dart kodunun arka planda çalıştırılabilmesi için
- * home_widget paketinin HomeWidgetBackgroundReceiver'ına delege eder.
+ * Flutter UI'ını açmadan ortak state store'a sıralı komut yazar.
  */
 class TimerActionReceiver : BroadcastReceiver() {
     companion object {
@@ -20,13 +18,15 @@ class TimerActionReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == ACTION_TOGGLE_TIMER) {
-            // home_widget 0.9.3: arka plan Dart callback'ini tetiklemenin resmi
-            // yolu HomeWidgetBackgroundIntent.getBroadcast(...). Bu, dogru action
-            // ("...action.BACKGROUND") ve hedef (HomeWidgetBackgroundReceiver) ile
-            // hazir bir PendingIntent dondurur; biz sadece send() ederiz.
-            HomeWidgetBackgroundIntent
-                .getBroadcast(context, Uri.parse("homeWidget://timer/toggle"))
-                .send()
+            val prefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
+            val active = prefs.contains("flutter.timer_active_started_at")
+            val raw = prefs.getString("flutter.timer_external_command", null)
+            val sequence = try { JSONObject(raw ?: "{}").optInt("sequence", 0) + 1 } catch (_: Exception) { 1 }
+            val command = if (active) "stop" else "start"
+            prefs.edit().putString(
+                "flutter.timer_external_command",
+                JSONObject().put("command", command).put("sequence", sequence).toString(),
+            ).apply()
         }
     }
 }

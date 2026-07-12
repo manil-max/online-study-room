@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
@@ -87,11 +88,21 @@ class TimerNotificationSnapshot {
 void timerNotificationBackgroundHandler(NotificationResponse response) async {
   WidgetsFlutterBinding.ensureInitialized();
   final prefs = await SharedPreferences.getInstance();
-  if (response.actionId == 'stop_timer') {
-    await prefs.setString('timer_external_command', 'stop');
-  } else if (response.actionId == 'start_timer') {
-    await prefs.setString('timer_external_command', 'start');
-  }
+  final command = response.actionId == 'stop_timer'
+      ? 'stop'
+      : response.actionId == 'start_timer'
+      ? 'start'
+      : null;
+  if (command == null) return;
+  var sequence = 1;
+  try {
+    final raw = prefs.getString('timer_external_command');
+    sequence = ((jsonDecode(raw ?? '{}') as Map<String, dynamic>)['sequence'] as int? ?? 0) + 1;
+  } catch (_) {}
+  await prefs.setString(
+    'timer_external_command',
+    jsonEncode({'command': command, 'sequence': sequence}),
+  );
 }
 
 class TimerNotificationService implements TimerNotificationGateway {

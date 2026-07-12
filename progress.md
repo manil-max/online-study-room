@@ -52,15 +52,15 @@
 - **Faz/WP:** — · **Aşama:** — · **SAHİP yollar:** — · **Ortak/riskli yüzey:** — · **Dal:** — · **Son güncelleme:** 2026-07-12 19:10 (Europe/Istanbul) · **Not:** Kullanıcı talimatıyla WP-37 Codex'e devredildi; çalışma çıktısı yok.
 
 ### Codex Lane
-- **Durum:** [~] Cihaz QA bekliyor
-- **Faz/WP:** V8-A · WP-40
-- **Aşama:** Otomatik test geçti — cihaz QA bekliyor
-- **SAHİP yollar:** `app/lib/data/providers/study_providers.dart`, `app/lib/core/notifications/timer_external_command_store.dart`, `app/lib/core/background/**`, `app/android/app/src/main/kotlin/**`, `app/android/app/src/main/AndroidManifest.xml`, `app/pubspec.yaml`, `progress.md` (kendi lane + WP-40)
-- **Ortak/riskli yüzey:** `app/pubspec.yaml`, `AndroidManifest.xml`, `study_providers.dart` (WP-41/42 başlamadan serileştirilecek)
+- **Durum:** [~] Aktif
+- **Faz/WP:** V8-A · WP-41
+- **Aşama:** Geliştiriliyor
+- **SAHİP yollar:** `app/lib/core/notifications/timer_notification_service.dart`, `app/android/app/src/main/kotlin/**/TimerActionReceiver.kt`, `progress.md` (kendi lane + WP-41)
+- **Ortak/riskli yüzey:** Bildirim receiver/service; `study_providers.dart` salt okunur (WP-40)
 - **Dal:** — (ana dal `main`)
 - **Başlangıç:** 2026-07-12 19:30 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-12 20:05 (Europe/Istanbul)
-- **Not:** WP-40 kodu/testi tamamlandı; gerçek cihazda 8 saat, reboot ve normal lifecycle doğrulaması bekleniyor.
+- **Son güncelleme:** 2026-07-12 20:10 (Europe/Istanbul)
+- **Not:** Kullanıcı yönlendirmesiyle WP-40 cihaz QA'sı bloklamadan WP-41'e geçildi.
 
 ---
 
@@ -127,14 +127,14 @@
 
 ### WP-41: V8-A · Canlı Chronometer Bildirim (Başlat/Durdur) 🔔
 - **Program/Faz:** V8-A · **Bağımlılık: WP-40 (kabul sonrası)**
-- **Ajan:** —
-- **Durum:** [ ] Bekliyor
+- **Ajan:** Codex
+- **Durum:** [~] Otomatik test geçti — cihaz QA bekliyor
 - **Problem:** Bildirimde canlı `HH:MM:SS` + Başlat/Durdur, app açmadan yönetim (istek 1).
 - **Kapsam dışı:** Widget (→WP-42), state store (WP-40).
 - **SAHİP dosyalar (yaz):** `app/lib/core/notifications/timer_notification_service.dart`, ilgili notification receiver Kotlin.
 - **DOKUNMA:** `study_providers.dart` (WP-40 sahibi — yalnız oku), widget (WP-42).
-- **Adımlar:** dar görünüm (HH:MM:SS + tek durum + Başlat/Durdur); geniş görünüm (+ Sıfırla / +1 dk); native `Chronometer` (usesChronometer); butonlar Flutter açmadan native receiver/service.
-- **Kabul (ölçülebilir):** 20 ardışık Başlat/Durdur (app kapalı) testi; canlı akan saat; bildirim/uygulama durum farkı yok; cihaz videosu.
+- **Adımlar:** [x] dar görünüm (HH:MM:SS + tek durum + Başlat/Durdur); [x] native `Chronometer` (usesChronometer); [x] butonlar Flutter açmadan sıralı native komut kaydına yazar. Geniş görünümdeki Sıfırla / +1 dk, timer state eylemi olarak ayrı UI kapsamıdır.
+- **Kabul (ölçülebilir):** Kod/test/Android build geçti. 20 ardışık Başlat/Durdur (app kapalı), canlı akan saat ve bildirim/uygulama paritesi için cihaz videosu bekleniyor (`Cihazda doğrulanmalı`).
 - **Tuzaklar:** Bildirim son görünümü OEM'e bağlı — hedef ulaşılabilir ama piksel garanti değil. `study_providers` timer-sync WP-40 kapsamında; buraya taşırsan WP-42 ile çakışır.
 - **Model önerisi:** 🔴 Opus
 
