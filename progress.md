@@ -38,15 +38,14 @@
 **Lane şablonu** (doldurulacak alanlar): Durum · Faz/WP · Aşama (8-merdiven) · SAHİP yollar · Ortak/riskli yüzey · Başlangıç · Son güncelleme · Not. *(Branch yok — herkes `main`'de; AGENTS.md §1.5.)*
 
 ### Gemini Lane
-- **Durum:** [~] Aktif
-- **Faz/WP:** Faz 0A · WP-38
-- **Aşama:** Ürün kabulü bekliyor
-- **SAHİP yollar:** `docs/BACKEND-DURUM.md` (yeni), `progress.md` (kendi lane + WP-38)
-- **Ortak/riskli yüzey:** Yok (yalnız doküman)
-- **Dal:** `wp38-backend-durum`
-- **Başlangıç:** 2026-07-12 18:42 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-12 18:43 (Europe/Istanbul)
-- **Not:** Doküman hazır. Kullanıcının SQL doğrulama sorgularını canlıda çalıştırması ve kararları (B7 Blocker) gözden geçirmesi bekleniyor. (Kanıt: `Cihazda/canlıda doğrulanmalı`)
+- **Durum:** [x] Boşta
+- **Faz/WP:** —
+- **Aşama:** —
+- **SAHİP yollar:** —
+- **Ortak/riskli yüzey:** —
+- **Başlangıç:** —
+- **Son güncelleme:** 2026-07-12 19:10 (Europe/Istanbul)
+- **Not:** WP-38 kullanıcı tarafından onaylandı ve kapatıldı.
 
 ### Claude Lane
 - **Durum:** [x] Boşta
@@ -127,27 +126,6 @@
 - **Tuzaklar:** Sadece dosya okuyarak kanıtla; "tahminen" yazma → emin değilsen `Cihazda doğrulanmalı` etiketi.
 - **Model önerisi:** 🔴 Opus (geniş kod okuma + muhakeme)
 
-### WP-38: Faz 0A · Canlı Backend Durum Matrisi 🗄️
-- **Program/Faz:** Faz 0A (KALITE-PROGRAMI §7)
-- **Ajan:** —
-- **Durum:** [~] Ürün kabulü bekliyor (Gemini, dal: `wp38-backend-durum`)
-- **Problem:** Canlıda yalnız `0001–0019` doğrulandı; `0020–0023` ve Edge Function deploy durumu belirsiz (B8). Bildirim Merkezi/başarım/admin sunucu özellikleri buna bağlı.
-- **Kapsam dışı:** Kod değişikliği YOK. Migration UYGULAMA yok (yalnız durum tespiti + doğrulama SQL'i hazırla; uygulamayı kullanıcı yapar).
-- **SAHİP dosyalar (yaz):**
-  - `docs/BACKEND-DURUM.md` (yeni)
-- **DOKUNMA:** `supabase/migrations/**` (yalnız oku), `app/**` (oku), diğer `docs/*`.
-- **Adımlar:**
-  - [ ] `supabase/migrations/` yerel listesi (0001–0023) + her birinin özeti.
-  - [ ] Her migration için "canlıda uygulandı mı?" doğrulama sorgusu (tablo/kolon/policy/RPC var mı).
-  - [ ] Edge Function envanteri: repoda tanımlı fonksiyonlar + deploy gerekenler.
-  - [ ] Canlı/yerel migration matrisi (uygulandı / eksik / bilinmiyor).
-  - [ ] Kullanıcı aksiyon listesi: canlıya sırayla uygulanacak migration'lar + doğrulama adımları.
-- **Veri/Migration etkisi:** Yalnız tespit + doğrulama sorguları (yazma yok).
-- **RLS/Güvenlik:** `0022` RLS uyuşmazlığını (B7 — sosyal profil geniş açık) **blocker** işaretle.
-- **Edge-case'ler:** —
-- **Kabul (ölçülebilir):** `docs/BACKEND-DURUM.md` = migration matrisi (0001–0023 durum) + Edge Function listesi + kullanıcının çalıştıracağı doğrulama SQL'i + uygulama sırası.
-- **Tuzaklar:** Ajan canlı Supabase'e erişemez → durumu "bilinmiyor" işaretle, kullanıcı doğrulaması için hazırla (`Cihazda/canlıda doğrulanmalı`). Gizli anahtar isteme.
-- **Model önerisi:** 🟣 Pro
 
 ### WP-39: CI Kalite Güvenlik Ağı (opsiyonel) ⚙️
 - **Program/Faz:** Faz 0B / altyapı — **OPSİYONEL**
@@ -304,8 +282,11 @@
 | WP-34 | Süper-Admin Paneli, Grup Moderasyonu ve Duyurular |
 | WP-35 | Sosyal Profil 2.0 + Başarı Yolculuğu |
 | WP-36 | Beş Sekmeli IA Sadeleştirmesi + Bildirim Merkezi |
+| WP-38 | Faz 0A · Canlı Backend Durum Matrisi |
 
 ### Son Teslim Notları
+
+- **WP-38:** Canlı Supabase durumunu denetlemek için yerel migration listesi, Edge Function envanteri ve doğrulama SQL sorguları `docs/BACKEND-DURUM.md` olarak eklendi. Blocker RLS (B7) kullanıcı kararına bırakıldı.
 
 - **WP-36:** Ayarlar'daki "Ana Sayfa" grubu kaldırıldı (sayaç anahtarı "Gruplar" grubuna taşındı); dürtme, hatırlatıcı, alarm/timer, duyuru, güncelleme ve sessiz saatleri tek yerden yöneten `NotificationCenterScreen` eklendi. `0023_notification_center.sql` (study_reminders + announcement_reads, RLS owner-only), çift `NotificationRepository`, yerel hatırlatıcı planlama servisi ve sessiz-saat mantığı; dürtme dinleyicisi ve güncelleme bildirimi tercihlere saygı gösterir. Gruplar/İstatistik sekmeleri zaten dolu doğrulandı.
 
