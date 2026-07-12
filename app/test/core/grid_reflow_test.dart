@@ -99,4 +99,30 @@ void main() {
       );
     });
   });
+
+  group('compactGridItemsUp', () {
+    test('bosluklari kaldirir, yatay konum ve boyutlari korur', () {
+      final result = compactGridItemsUp(const [
+        GridItemBounds(id: 'a', x: 0, y: 5, w: 3, h: 2),
+        GridItemBounds(id: 'b', x: 3, y: 8, w: 3, h: 2),
+        GridItemBounds(id: 'c', x: 0, y: 14, w: 6, h: 3),
+      ]);
+
+      expect(result, const [
+        GridItemBounds(id: 'a', x: 0, y: 0, w: 3, h: 2),
+        GridItemBounds(id: 'b', x: 3, y: 0, w: 3, h: 2),
+        GridItemBounds(id: 'c', x: 0, y: 2, w: 6, h: 3),
+      ]);
+    });
+
+    test('zaten sikisik duzeni degistirmez', () {
+      const input = [
+        GridItemBounds(id: 'a', x: 0, y: 0, w: 6, h: 2),
+        GridItemBounds(id: 'b', x: 0, y: 2, w: 3, h: 2),
+        GridItemBounds(id: 'c', x: 3, y: 2, w: 3, h: 2),
+      ];
+
+      expect(compactGridItemsUp(input), input);
+    });
+  });
 }

@@ -319,6 +319,29 @@ class DashboardLayoutNotifier extends Notifier<List<DashboardCardConfig>> {
   /// Mevcut düzeni diske yazar (canlı sürükleme bitince çağrılır).
   void persist() => _save();
 
+  /// Yatay konumları ve boyutları koruyup tüm dikey boşlukları yukarı toplar.
+  void compactUp() {
+    final columns = ref.read(dashboardGridColumnsProvider);
+    final compacted = compactGridItemsUp([
+      for (final config in state)
+        GridItemBounds(
+          id: config.type.name,
+          x: config.x,
+          y: config.y,
+          w: config.w,
+          h: config.h,
+        ),
+    ]);
+    final byId = {for (final item in compacted) item.id: item};
+    final next = [
+      for (final config in state)
+        config.withBounds(y: byId[config.type.name]!.y, columns: columns),
+    ];
+    if (_sameLayout(state, next)) return;
+    state = next;
+    _save();
+  }
+
   /// Ana Sayfa düzenini varsayılana döndür.
   void reset() {
     state = defaultDashboardLayout(ref.read(dashboardGridColumnsProvider));
@@ -334,6 +357,17 @@ class DashboardLayoutNotifier extends Notifier<List<DashboardCardConfig>> {
     state = list;
     _save();
   }
+}
+
+bool _sameLayout(
+  List<DashboardCardConfig> first,
+  List<DashboardCardConfig> second,
+) {
+  if (first.length != second.length) return false;
+  for (var i = 0; i < first.length; i++) {
+    if (first[i] != second[i]) return false;
+  }
+  return true;
 }
 
 final dashboardLayoutProvider =

@@ -221,6 +221,29 @@ void main() {
       ]);
     });
 
+    test('compactUp bosluklari kaldirir ve aktif profile kaydeder', () async {
+      SharedPreferences.setMockInitialValues({
+        'dashboard_layout_v2_6': [
+          'timer:0:6:3:2',
+          'today:3:9:3:2',
+          'leaderboard:0:14:6:3',
+        ],
+      });
+      final prefs = await SharedPreferences.getInstance();
+      final container = ProviderContainer(
+        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      );
+      addTearDown(container.dispose);
+
+      container.read(dashboardLayoutProvider.notifier).compactUp();
+
+      expect(prefs.getStringList('dashboard_layout_v2_6'), [
+        'timer:0:0:3:2',
+        'today:3:0:3:2',
+        'leaderboard:0:2:6:3',
+      ]);
+    });
+
     test('6, 12 ve 16 sutun profilleri bagimsiz saklanir', () async {
       SharedPreferences.setMockInitialValues({
         'dashboard_layout': ['timer:0:0:6:4', 'today:0:4:3:2'],

@@ -156,6 +156,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   label: const Text('Bitti'),
                 ),
                 OutlinedButton.icon(
+                  onPressed: ref
+                      .read(dashboardLayoutProvider.notifier)
+                      .compactUp,
+                  icon: const Icon(Icons.vertical_align_top),
+                  label: const Text('Yukarı topla'),
+                ),
+                OutlinedButton.icon(
                   onPressed: _confirmResetDashboard,
                   icon: const Icon(Icons.restart_alt),
                   label: const Text('Sıfırla'),
@@ -189,6 +196,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             : null,
         actions: [
           if (_editing) ...[
+            IconButton(
+              tooltip: 'Boşlukları yukarı topla',
+              icon: const Icon(Icons.vertical_align_top),
+              onPressed: ref.read(dashboardLayoutProvider.notifier).compactUp,
+            ),
             IconButton(
               tooltip: 'Ana Sayfa’yı sıfırla',
               icon: const Icon(Icons.restart_alt),

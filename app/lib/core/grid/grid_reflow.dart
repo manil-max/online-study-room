@@ -110,6 +110,36 @@ List<GridItemBounds> placeGridItem({
   return result;
 }
 
+/// Kartların yatay konum ve boyutlarını koruyarak aradaki dikey boşlukları
+/// kaldırır. Üstteki kartlar önceliklidir; her kart çakışmadığı ilk satıra
+/// taşınır ve hiçbir kart mevcut konumundan aşağı itilmez.
+List<GridItemBounds> compactGridItemsUp(List<GridItemBounds> items) {
+  final ordered = [...items]
+    ..sort((a, b) {
+      final byY = a.y.compareTo(b.y);
+      if (byY != 0) return byY;
+      final byX = a.x.compareTo(b.x);
+      if (byX != 0) return byX;
+      return a.id.compareTo(b.id);
+    });
+  final placed = <GridItemBounds>[];
+
+  for (final item in ordered) {
+    var compacted = item;
+    for (var y = 0; y <= item.y; y++) {
+      final candidate = item.copyWith(y: y);
+      if (placed.every((other) => !candidate.overlaps(other))) {
+        compacted = candidate;
+        break;
+      }
+    }
+    placed.add(compacted);
+  }
+
+  final byId = {for (final item in placed) item.id: item};
+  return [for (final item in items) byId[item.id]!];
+}
+
 GridItemBounds _clamp(
   GridItemBounds item, {
   required int x,
