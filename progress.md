@@ -35,19 +35,33 @@
 > **Bu bölüm paralel ajanların TEK paylaşılan gerçeğidir.** Her ajan görevi alır almaz (kod yazmadan önce) kendi lane'ini doldurur; başlamadan önce tüm lane'leri okuyup çakışma ön-kontrolü yapar (AGENTS.md §1). Çakışma varsa başlamaz, kullanıcıyı gerekçeyle uyarır.
 > Bir WP tamamlanınca (cihaz QA + kabul) kartı buradan/plandan kaldırılır, **Tamamlanan İş Paketleri**ne tek kez eklenir.
 
-**Lane şablonu** (doldurulacak alanlar): Durum · Faz/WP · Aşama (8-merdiven) · SAHİP yollar · Ortak/riskli yüzey · Dal · Başlangıç · Son güncelleme · Not.
+**Lane şablonu** (doldurulacak alanlar): Durum · Faz/WP · Aşama (8-merdiven) · SAHİP yollar · Ortak/riskli yüzey · Başlangıç · Son güncelleme · Not. *(Branch yok — herkes `main`'de; AGENTS.md §1.5.)*
 
 ### Gemini Lane
-- **Durum:** [x] Boşta
-- **Faz/WP:** — · **Aşama:** — · **SAHİP yollar:** — · **Ortak/riskli yüzey:** — · **Dal:** — · **Son güncelleme:** 2026-07-12
+- **Durum:** [~] Aktif
+- **Faz/WP:** Faz 0A · WP-38
+- **Aşama:** Ürün kabulü bekliyor
+- **SAHİP yollar:** `docs/BACKEND-DURUM.md` (yeni), `progress.md` (kendi lane + WP-38)
+- **Ortak/riskli yüzey:** Yok (yalnız doküman)
+- **Dal:** `wp38-backend-durum`
+- **Başlangıç:** 2026-07-12 18:42 (Europe/Istanbul)
+- **Son güncelleme:** 2026-07-12 18:43 (Europe/Istanbul)
+- **Not:** Doküman hazır. Kullanıcının SQL doğrulama sorgularını canlıda çalıştırması ve kararları (B7 Blocker) gözden geçirmesi bekleniyor. (Kanıt: `Cihazda/canlıda doğrulanmalı`)
 
 ### Claude Lane
 - **Durum:** [x] Boşta
-- **Faz/WP:** — · **Aşama:** — · **SAHİP yollar:** — · **Ortak/riskli yüzey:** — · **Dal:** — · **Son güncelleme:** 2026-07-12
+- **Faz/WP:** — · **Aşama:** — · **SAHİP yollar:** — · **Ortak/riskli yüzey:** — · **Dal:** — · **Son güncelleme:** 2026-07-12 19:10 (Europe/Istanbul) · **Not:** Kullanıcı talimatıyla WP-37 Codex'e devredildi; çalışma çıktısı yok.
 
 ### Codex Lane
-- **Durum:** [x] Boşta
-- **Faz/WP:** — · **Aşama:** — · **SAHİP yollar:** — · **Ortak/riskli yüzey:** — · **Dal:** — · **Son güncelleme:** 2026-07-12
+- **Durum:** [~] Aktif
+- **Faz/WP:** Faz 0A · WP-37
+- **Aşama:** Geliştiriliyor
+- **SAHİP yollar:** `docs/DENETIM-FAZ0A.md` (yeni), `progress.md` (kendi lane + WP-37 kartı)
+- **Ortak/riskli yüzey:** Yok (kod yazılmaz; `app/**` ve `supabase/**` yalnız okunur)
+- **Dal:** — (ana dal `main`)
+- **Başlangıç:** 2026-07-12 19:10 (Europe/Istanbul)
+- **Son güncelleme:** 2026-07-12 19:10 (Europe/Istanbul)
+- **Not:** Kullanıcı talimatıyla Claude'dan devralındı. Denetim/doküman işi; uygulama kodu diff'i boş kalacak.
 
 ---
 
@@ -76,7 +90,7 @@
 |---|---|---|---|
 | WP-37 | Bekliyor | Faz 0A · Repo & doküman gerçeği denetimi (kod yok) | — |
 | WP-38 | Bekliyor | Faz 0A · Canlı backend durum matrisi (kod yok) | — |
-| WP-39 | Bekliyor | Merge otomasyonu (A): CI kalite kapısı + PR auto-merge | — |
+| WP-39 | Bekliyor (opsiyonel) | CI kalite güvenlik ağı (main'e push'ta analyze+test) | — |
 | WP-40 | Bekliyor | V8-A · Native timer state store + foreground service | — |
 | WP-41 | Bekliyor | V8-A · Canlı chronometer bildirim (Başlat/Durdur) | WP-40 |
 | WP-42 | Bekliyor | V8-A · Widget paritesi + olay bazlı stats besleme | WP-40 |
@@ -92,8 +106,8 @@
 
 ### WP-37: Faz 0A · Repo & Doküman Gerçeği Denetimi 🔎
 - **Program/Faz:** Faz 0A (KALITE-PROGRAMI §7)
-- **Ajan:** —
-- **Durum:** [ ] Bekliyor
+- **Ajan:** Codex
+- **Durum:** [~] Geliştiriliyor
 - **Problem:** `progress`/`backlog`/`project` ile gerçek kod/migration birbirini tam yansıtmıyor (B10). "Tamamlandı" görünen WP'ler (Saat, Tema, Başarım, widget, IA) 8-aşamalı merdivende gerçekte hangi seviyede belirsiz. Tek doğru proje gerçeği yok.
 - **Kapsam dışı:** Kod değişikliği YOK. Canlı Supabase/backend durumu (→ WP-38). Yeni özellik yok. Doküman düzeltmelerini uygulamak (yalnız öner; onay kullanıcıya).
 - **SAHİP dosyalar (yaz):**
@@ -111,13 +125,12 @@
 - **Edge-case'ler:** —
 - **Kabul (ölçülebilir):** `docs/DENETIM-FAZ0A.md` şunları içerir: (1) WP-1..36 yeniden sınıflandırma tablosu, (2) özellik envanteri, (3) P0/P1/P2 bug listesi, (4) risk kaydı, (5) v8 blocker listesi — her iddia kanıt etiketli. `git diff app/` **boş**.
 - **Tuzaklar:** Sadece dosya okuyarak kanıtla; "tahminen" yazma → emin değilsen `Cihazda doğrulanmalı` etiketi.
-- **Dal önerisi:** `wp37-faz0a-denetim`
 - **Model önerisi:** 🔴 Opus (geniş kod okuma + muhakeme)
 
 ### WP-38: Faz 0A · Canlı Backend Durum Matrisi 🗄️
 - **Program/Faz:** Faz 0A (KALITE-PROGRAMI §7)
 - **Ajan:** —
-- **Durum:** [ ] Bekliyor
+- **Durum:** [~] Ürün kabulü bekliyor (Gemini, dal: `wp38-backend-durum`)
 - **Problem:** Canlıda yalnız `0001–0019` doğrulandı; `0020–0023` ve Edge Function deploy durumu belirsiz (B8). Bildirim Merkezi/başarım/admin sunucu özellikleri buna bağlı.
 - **Kapsam dışı:** Kod değişikliği YOK. Migration UYGULAMA yok (yalnız durum tespiti + doğrulama SQL'i hazırla; uygulamayı kullanıcı yapar).
 - **SAHİP dosyalar (yaz):**
@@ -134,27 +147,21 @@
 - **Edge-case'ler:** —
 - **Kabul (ölçülebilir):** `docs/BACKEND-DURUM.md` = migration matrisi (0001–0023 durum) + Edge Function listesi + kullanıcının çalıştıracağı doğrulama SQL'i + uygulama sırası.
 - **Tuzaklar:** Ajan canlı Supabase'e erişemez → durumu "bilinmiyor" işaretle, kullanıcı doğrulaması için hazırla (`Cihazda/canlıda doğrulanmalı`). Gizli anahtar isteme.
-- **Dal önerisi:** `wp38-backend-durum`
 - **Model önerisi:** 🟣 Pro
 
-### WP-39: Merge Otomasyonu (A) · CI Kalite Kapısı + PR Auto-merge ⚙️
-- **Program/Faz:** Faz 0B / altyapı (bootstrap)
+### WP-39: CI Kalite Güvenlik Ağı (opsiyonel) ⚙️
+- **Program/Faz:** Faz 0B / altyapı — **OPSİYONEL**
 - **Ajan:** —
-- **Durum:** [ ] Bekliyor
-- **Problem:** Merge manuel; kalite kapısı otomatik değil. Karar: **A** (PR + CI + auto-merge). Merge'ü ve kalite kapısını aynı anda çözer.
-- **Kapsam dışı:** Uygulama kodu değişikliği. Repo ayarlarının (auto-merge/branch protection) ajan tarafından açılması (izin gerekir → kullanıcı yapar/onaylar).
-- **SAHİP dosyalar (yaz):**
-  - `.github/workflows/ci.yml` (yeni)
-  - `docs/MERGE-OTOMASYONU.md` (yeni — kullanıcı ayar rehberi)
+- **Durum:** [ ] Bekliyor (opsiyonel)
+- **Not:** Branch modeli iptal edildi (herkes `main`'de). **Merge yok → merge otomasyonu gereksiz.** Bu WP artık yalnızca isteğe bağlı bir güvenlik ağıdır: `main`'e push edildiğinde `analyze`+`test` çalıştırıp bozuk commit'i yakalar. Zaten commit öncesi DoD (analyze+test) ajan tarafından zorunlu olduğu için bu bir yedek katmandır.
+- **Kapsam dışı:** Uygulama kodu. Branch/PR/auto-merge (yok).
+- **SAHİP dosyalar (yaz):** `.github/workflows/ci.yml` (yeni).
 - **DOKUNMA:** `.github/workflows/release.yml` (yalnız oku, deseni taklit et), `app/**`.
 - **Adımlar:**
-  - [ ] PR'da tetiklenen `ci.yml`: checkout → Flutter kur → `flutter pub get` → `flutter analyze` (bayraksız) → `flutter test`. dart-define'lar `secrets`'tan (release.yml deseni).
-  - [ ] `docs/MERGE-OTOMASYONU.md`: kullanıcının GitHub'da yapacağı ayarlar (auto-merge aç, `main` branch protection + required check, squash merge, dal otomatik sil) + ajan akışı `git push -u origin wpNN-…` + `gh pr create` + `gh pr merge --auto --squash`.
-- **Veri/Migration etkisi:** Yok.
-- **RLS/Güvenlik:** Secrets CI'da; anahtar loglanmaz. WP dalları **public repo'ya push edilir** (yayınlama) — kullanıcı A'yı seçerek bunu onayladı.
-- **Kabul (ölçülebilir):** PR açınca CI çalışır; testler yeşilse PR auto-merge olur; kırmızıysa merge engellenir.
-- **Tuzaklar:** Bootstrap — bu WP kendi auto-merge'ünü kullanamaz; ilk kurulum PR'ı **kullanıcı elle merge eder**. Repo ayarları ajan değil kullanıcı tarafından açılır.
-- **Dal önerisi:** `wp39-merge-otomasyonu`
+  - [ ] `push: branches: [main]` tetikli `ci.yml`: checkout → Flutter kur → `flutter pub get` → `flutter analyze` (bayraksız) → `flutter test`. dart-define'lar `secrets`'tan (release.yml deseni).
+  - [ ] Kırmızıysa kullanıcıya görünür bir uyarı (Actions sekmesi / rozet).
+- **Kabul (ölçülebilir):** `main`'e push sonrası CI analyze+test çalışır; kırmızı olduğunda görünür.
+- **Tuzaklar:** Bu bir "gate" değil (push sonrası çalışır); asıl gate commit öncesi ajan DoD'sidir.
 - **Model önerisi:** 🟣 Pro
 
 ### WP-40: V8-A · Native Timer State Store + Foreground Service ⏱️
@@ -178,7 +185,6 @@
 - **RLS/Güvenlik:** Yok; sır yok.
 - **Kabul (ölçülebilir):** app kapalıyken 8 saatte ≤ ±1 sn; force-stop dışı lifecycle'da kontrol kaybı yok; reboot sonrası restore; **cihaz kanıtı** (`Cihazda doğrulanmalı`).
 - **Tuzaklar:** Sıcak dosyalar (pubspec/manifest/study_providers) → başka WP ile aynı anda GİRİLMEZ. OEM pil kısıtı testi.
-- **Dal önerisi:** `wp40-timer-foreground`
 - **Model önerisi:** 🔴 Opus
 
 ### WP-41: V8-A · Canlı Chronometer Bildirim (Başlat/Durdur) 🔔
@@ -192,7 +198,6 @@
 - **Adımlar:** dar görünüm (HH:MM:SS + tek durum + Başlat/Durdur); geniş görünüm (+ Sıfırla / +1 dk); native `Chronometer` (usesChronometer); butonlar Flutter açmadan native receiver/service.
 - **Kabul (ölçülebilir):** 20 ardışık Başlat/Durdur (app kapalı) testi; canlı akan saat; bildirim/uygulama durum farkı yok; cihaz videosu.
 - **Tuzaklar:** Bildirim son görünümü OEM'e bağlı — hedef ulaşılabilir ama piksel garanti değil. `study_providers` timer-sync WP-40 kapsamında; buraya taşırsan WP-42 ile çakışır.
-- **Dal önerisi:** `wp41-notif-chronometer`
 - **Model önerisi:** 🔴 Opus
 
 ### WP-42: V8-A · Widget Paritesi + Olay Bazlı Stats Besleme 📲
@@ -206,7 +211,6 @@
 - **Adımlar:** timer widget native `Chronometer`; Başlat/Durdur app açmadan; stats/leaderboard **olay bazlı** besleme (session ekl/düzenle/sil, sync, grup değişimi, gün sınırı, manuel refresh); light/dark + dynamic color; boş-durum.
 - **Kabul (ölçülebilir):** placeholder yok; oturum sonrası widget ≤ 5 sn; 48 dp dokunma; cihaz videosu.
 - **Tuzaklar:** Saniyede bir Flutter yeniden çizme YOK; periyodik <15 dk garanti değil → native Chronometer + olay bazlı.
-- **Dal önerisi:** `wp42-widget-parity`
 - **Model önerisi:** 🔴 Opus
 
 ### WP-43: V8-B · Genel Senkronizasyon Denetimi 🔄
@@ -220,7 +224,6 @@
 - **Adımlar:** istatistik tüketici envanteri; tek `Europe/Istanbul` gün-sınırı yardımcısı; insert/update/delete sonrası invalidation standardı; offline outbox + realtime reconciliation; idempotency (aynı session bir kez); çoklu cihaz conflict; widget snapshot canonical projection'dan; freshness/version + manuel yenileme.
 - **Kabul (ölçülebilir):** her ekranda aynı toplam; session sonrası UI ≤ 1 sn; widget ≤ 5 sn; offline session bir kez yazılır; gün değişiminde bugün sıfırlanır; 23:59–00:01 testi geçer.
 - **Tuzaklar:** V8-A ile `study_providers`/widget çakışması → V8-A kabulünden SONRA başla.
-- **Dal önerisi:** `wp43-sync-denetimi`
 - **Model önerisi:** 🔴 Opus
 
 ### WP-44: V8-C · İstatistik Grup Sırası 📊
@@ -234,7 +237,6 @@
 - **Adımlar:** sıra = grup hedefi → özet → **sıralama** → grup günlük trendi → uzun eğilim → tüm zamanlar → karşılaştırma; golden test.
 - **Kabul (ölçülebilir):** golden test yeni sırayı sabitler; analyze 0, test yeşil. `Ürün kararı`: §8.3 tam sıra onayı.
 - **Tuzaklar:** V8-B stats hesabını değiştirebilir ama bu yalnız SIRA → düşük risk; V8-B'den önce yapılabilir.
-- **Dal önerisi:** `wp44-stats-sira`
 - **Model önerisi:** 🔵 Sonnet
 
 ### WP-45: V8-C · Gruplar Sırası + Kamp Ateşi + Animasyon 🔥
@@ -248,7 +250,6 @@
 - **Adımlar:** sıra = kamp ateşi → grup hedefi → grup sıralaması → trend → yönetim; davet kodu/grup değiştirme kompakt başlığa/açılır alana; animasyon kısalt + `reduce-motion`.
 - **Kabul (ölçülebilir):** ilk sahne ≤ 300 ms, tam yerleşim ≤ 700 ms; reduce-motion çalışır; screenshot/golden.
 - **Tuzaklar:** Sonsuz/dekoratif animasyon batarya tüketmemeli.
-- **Dal önerisi:** `wp45-gruplar-sira`
 - **Model önerisi:** 🔵 Sonnet
 
 ### WP-27: Windows Desktop Shell ve Responsive Layout
