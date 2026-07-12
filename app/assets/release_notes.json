@@ -3,6 +3,23 @@
   "source": "CHANGELOG.md",
   "releases": [
     {
+      "versionName": "1.0.9",
+      "buildNumber": 10,
+      "channel": "beta",
+      "date": "2026-07-13",
+      "title": "beta-v10: tek canlı akan bildirim + app-kapalı Durdur",
+      "highlights": [
+        "Sayaç bildirimi tek: başlığında saniye saniye akan HH:MM:SS + altında Durdur butonu (saat uygulaması gibi).",
+        "Durdur uygulama tamamen kapalıyken de çalışır; oturum gerçek durdurma anıyla kaydedilir."
+      ],
+      "fixes": [
+        "Önceki çift bildirim (düz 'arka planda korunuyor' + ayrı kronometre) kaldırıldı; tek temiz bildirim kaldı."
+      ],
+      "notes": [
+        "Ana ekran widget'ı ve widget butonları bir sonraki beta'da aynı mantıkla elden geçirilecek."
+      ]
+    },
+    {
       "versionName": "1.0.8",
       "buildNumber": 9,
       "channel": "beta",

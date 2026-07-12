@@ -4,6 +4,25 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [beta-v10 / 1.0.9+10] - 2026-07-13
+
+> ⚠️ **Beta test sürümü.** Sayaç bildirimi tamamen yeniden yapıldı.
+
+### Düzeltmeler
+
+- **Artık TEK bildirim, canlı akan saat ve Durdur butonu:** Sayaç çalışırken tek bir
+  bildirim çıkar; başlığında saniye saniye akan `HH:MM:SS` süre ve altında **Durdur**
+  butonu bulunur. Önceki çift bildirim (biri düz "arka planda korunuyor", biri ayrı
+  kronometre) kaldırıldı — tek, temiz, saat uygulaması gibi.
+- **Durdur uygulama tamamen kapalıyken de çalışır:** Bildirimdeki Durdur'a basınca
+  sayaç, uygulamayı açmadan durur; oturum gerçek durdurma anıyla kaydedilir (uygulamayı
+  sonra açsan bile aradaki süre yanlış eklenmez).
+
+### Bilinen / sıradaki
+
+- **Ana ekran widget'ı** ve widget üzerindeki Başlat/Durdur bir sonraki beta'da
+  aynı mantıkla elden geçirilecek (WP-42).
+
 ## [beta-v9 / 1.0.8+9] - 2026-07-13
 
 > ⚠️ **Beta test sürümü.** beta-v8 cihaz geri bildirimine göre düzeltmeler.
