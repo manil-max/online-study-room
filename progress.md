@@ -52,15 +52,14 @@
 - **Faz/WP:** — · **Aşama:** — · **SAHİP yollar:** — · **Ortak/riskli yüzey:** — · **Dal:** — · **Son güncelleme:** 2026-07-12 19:10 (Europe/Istanbul) · **Not:** Kullanıcı talimatıyla WP-37 Codex'e devredildi; çalışma çıktısı yok.
 
 ### Codex Lane
-- **Durum:** [~] Aktif
-- **Faz/WP:** Faz 0A · WP-37
-- **Aşama:** Geliştiriliyor
-- **SAHİP yollar:** `docs/DENETIM-FAZ0A.md` (yeni), `progress.md` (kendi lane + WP-37 kartı)
-- **Ortak/riskli yüzey:** Yok (kod yazılmaz; `app/**` ve `supabase/**` yalnız okunur)
+- **Durum:** [x] Boşta
+- **Faz/WP:** —
+- **Aşama:** —
+- **SAHİP yollar:** —
+- **Ortak/riskli yüzey:** —
 - **Dal:** — (ana dal `main`)
-- **Başlangıç:** 2026-07-12 19:10 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-12 19:10 (Europe/Istanbul)
-- **Not:** Kullanıcı talimatıyla Claude'dan devralındı. Denetim/doküman işi; uygulama kodu diff'i boş kalacak.
+- **Son güncelleme:** 2026-07-12 19:25 (Europe/Istanbul)
+- **Not:** WP-37 teslimi kullanıcı tarafından kabul edildi; cihaz QA bu doküman işi için uygulanamaz.
 
 ---
 
@@ -87,7 +86,6 @@
 
 | WP | Durum | Kısa kapsam | Bağımlılık |
 |---|---|---|---|
-| WP-37 | Bekliyor | Faz 0A · Repo & doküman gerçeği denetimi (kod yok) | — |
 | WP-38 | Bekliyor | Faz 0A · Canlı backend durum matrisi (kod yok) | — |
 | WP-39 | Bekliyor (opsiyonel) | CI kalite güvenlik ağı (main'e push'ta analyze+test) | — |
 | WP-40 | Bekliyor | V8-A · Native timer state store + foreground service | — |
@@ -102,29 +100,6 @@
 > **Dağıtım notu:** Hemen paralel verilebilecek bağımsızlar: **WP-37, WP-38, WP-44, WP-45** (dördü ayrı dosyalar, çakışmasız). **WP-40** V8-A'nın temelidir; WP-41/42 ondan sonra, ikisi `study_providers` timer-sync'i paylaştığı için birbirleriyle **paralel değil** (serileştir). **WP-43** V8-A bitince.
 
 > ✅ Çakışma kontrolü: WP-37 ve WP-38 yalnız kendi yeni doc dosyalarına yazar (`docs/DENETIM-FAZ0A.md` vs `docs/BACKEND-DURUM.md`), `app/**` ve `supabase/**`'a dokunmaz → **paralel güvenli**, aktif lane yok.
-
-### WP-37: Faz 0A · Repo & Doküman Gerçeği Denetimi 🔎
-- **Program/Faz:** Faz 0A (KALITE-PROGRAMI §7)
-- **Ajan:** Codex
-- **Durum:** [~] Geliştiriliyor
-- **Problem:** `progress`/`backlog`/`project` ile gerçek kod/migration birbirini tam yansıtmıyor (B10). "Tamamlandı" görünen WP'ler (Saat, Tema, Başarım, widget, IA) 8-aşamalı merdivende gerçekte hangi seviyede belirsiz. Tek doğru proje gerçeği yok.
-- **Kapsam dışı:** Kod değişikliği YOK. Canlı Supabase/backend durumu (→ WP-38). Yeni özellik yok. Doküman düzeltmelerini uygulamak (yalnız öner; onay kullanıcıya).
-- **SAHİP dosyalar (yaz):**
-  - `docs/DENETIM-FAZ0A.md` (yeni)
-  - `progress.md` (yalnız kendi lane + bu WP kartı)
-- **DOKUNMA:** `app/**`, `supabase/**` (yalnız oku), diğer `docs/*`, başka lane kartları.
-- **Adımlar:**
-  - [ ] WP-1..36'yı 8-aşamalı merdivende yeniden sınıflandır (gerçekte "Kod tamamlandı" mı "Ürün kabulü geçti" mi?), her satır kanıt etiketli.
-  - [ ] Özellik envanteri: Saat, Tema, Başarım, widget, bildirim, senkron, gruplar, istatistik, profil → durum + gerçek davranış + eksik.
-  - [ ] Bilinen bug listesi P0/P1/P2 (kullanıcı şikâyetleri + B1–B9 kod bulguları).
-  - [ ] Risk kaydı + **v8 blocker listesi**.
-  - [ ] `backlog`/`project`/`progress` tutarsızlıklarını düzeltme önerisiyle listele.
-- **Veri/Migration etkisi:** Yok (doküman).
-- **RLS/Güvenlik:** Kod yok; ama denetimde güvenlik açıklarını (ör. B7 RLS) **P0** işaretle.
-- **Edge-case'ler:** —
-- **Kabul (ölçülebilir):** `docs/DENETIM-FAZ0A.md` şunları içerir: (1) WP-1..36 yeniden sınıflandırma tablosu, (2) özellik envanteri, (3) P0/P1/P2 bug listesi, (4) risk kaydı, (5) v8 blocker listesi — her iddia kanıt etiketli. `git diff app/` **boş**.
-- **Tuzaklar:** Sadece dosya okuyarak kanıtla; "tahminen" yazma → emin değilsen `Cihazda doğrulanmalı` etiketi.
-- **Model önerisi:** 🔴 Opus (geniş kod okuma + muhakeme)
 
 
 ### WP-39: CI Kalite Güvenlik Ağı (opsiyonel) ⚙️
@@ -248,6 +223,7 @@
 
 | WP | Tamamlanan kapsam |
 |---|---|
+| WP-37 | Faz 0A · Repo ve doküman gerçeği denetimi |
 | WP-1 | Android Widget Foundation |
 | WP-2 | Persistent Notification + Background Timer |
 | WP-3 | Auth Recovery (ilk temel akış) |
@@ -285,6 +261,8 @@
 | WP-38 | Faz 0A · Canlı Backend Durum Matrisi |
 
 ### Son Teslim Notları
+
+- **WP-37:** `docs/DENETIM-FAZ0A.md` ile WP-1–36'nın kanıtlanabilir aşamaları, özellik envanteri, P0/P1/P2 listesi, risk/v8 blocker kaydı ve belge tutarsızlığı önerileri teslim edildi. `app/` diff'i boş; canlı backend teyidi WP-38'de kalır.
 
 - **WP-38:** Canlı Supabase durumunu denetlemek için yerel migration listesi, Edge Function envanteri ve doğrulama SQL sorguları `docs/BACKEND-DURUM.md` olarak eklendi. Blocker RLS (B7) kullanıcı kararına bırakıldı.
 
