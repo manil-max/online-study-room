@@ -13,6 +13,12 @@ Future<void> initDesktopWindow() async {}
 /// Web'de child'ı olduğu gibi döndürür.
 Widget desktopChrome(Widget child, {required Widget compactChild}) => child;
 
+Widget desktopChromeBody({
+  required bool isCompact,
+  required Widget child,
+  required Widget compactChild,
+}) => isCompact ? compactChild : child;
+
 Future<void> toggleDesktopCompactMode() async {}
 
 Future<void> toggleDesktopAlwaysOnTop() async {}

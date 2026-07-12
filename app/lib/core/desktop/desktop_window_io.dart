@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:screen_retriever/screen_retriever.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
@@ -39,6 +40,13 @@ Widget desktopChrome(Widget child, {required Widget compactChild}) {
   if (!_isDesktop) return child;
   return _DesktopChrome(compactChild: compactChild, child: child);
 }
+
+@visibleForTesting
+Widget desktopChromeBody({
+  required bool isCompact,
+  required Widget child,
+  required Widget compactChild,
+}) => isCompact ? compactChild : child;
 
 class _DesktopWindowController extends ChangeNotifier with WindowListener {
   SharedPreferences? _preferences;
@@ -79,7 +87,12 @@ class _DesktopWindowController extends ChangeNotifier with WindowListener {
     _normalWasMaximized =
         _preferences?.getBool(_PreferenceKeys.maximized) ?? false;
     _isPinned = _preferences?.getBool(_PreferenceKeys.pinned) ?? false;
-    _isCompact = _preferences?.getBool(_PreferenceKeys.compact) ?? false;
+    // Compact Focus bir oturum-içi çalışma yüzeyidir. Cold-start'ta Flutter
+    // yüzeyi hazır olmadan 360×220 pencere göstermek bazı Windows 11/GPU
+    // kombinasyonlarında gri/boş ilk frame üretiyor. Normal bounds ve pin
+    // korunur; uygulama her açılışta güvenli normal kabukla başlar.
+    _isCompact = false;
+    await _preferences?.setBool(_PreferenceKeys.compact, false);
 
     final options = WindowOptions(
       size: _isCompact ? _compactSize : _normalBounds.size,
@@ -115,23 +128,29 @@ class _DesktopWindowController extends ChangeNotifier with WindowListener {
         await windowManager.setAlwaysOnTop(_isPinned);
         _normalBounds = restored;
         _isCompact = false;
+        notifyListeners();
       } else {
         _normalWasMaximized = await windowManager.isMaximized();
         if (_normalWasMaximized) await windowManager.unmaximize();
         _normalBounds = await windowManager.getBounds();
         await _saveNormalBounds();
+
+        // Önce ayrı Compact Focus ağacını çiz, sonra native pencereyi küçült.
+        // Tersi sıra tam uygulamayı bir frame boyunca 360×220 alana sıkıştırıp
+        // kullanıcı QA'sındaki boş/flicker yüzeyi üretiyordu.
+        _isCompact = true;
+        notifyListeners();
+        await SchedulerBinding.instance.endOfFrame;
         await windowManager.setMinimumSize(_compactMinimumSize);
         await windowManager.setSize(_compactSize);
         await windowManager.setAlignment(Alignment.topRight);
         await windowManager.setAlwaysOnTop(true);
-        _isCompact = true;
       }
       await _preferences?.setBool(_PreferenceKeys.compact, _isCompact);
       await _preferences?.setBool(
         _PreferenceKeys.maximized,
         _normalWasMaximized,
       );
-      notifyListeners();
     } finally {
       _busy = false;
     }
@@ -231,17 +250,10 @@ class _DesktopChromeState extends State<_DesktopChrome> {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 180),
-      child: _controller.isCompact
-          ? KeyedSubtree(
-              key: const ValueKey('desktop-compact-focus'),
-              child: widget.compactChild,
-            )
-          : KeyedSubtree(
-              key: const ValueKey('desktop-full-app'),
-              child: widget.child,
-            ),
+    return desktopChromeBody(
+      isCompact: _controller.isCompact,
+      compactChild: widget.compactChild,
+      child: widget.child,
     );
   }
 }

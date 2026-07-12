@@ -1,10 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:online_study_room/core/desktop/desktop_window.dart';
 import 'package:online_study_room/data/providers/auth_providers.dart';
 import 'package:online_study_room/features/desktop/compact_focus_view.dart';
 
 void main() {
+  testWidgets('compact modda tam uygulama ağacını aynı anda çizmez', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: desktopChromeBody(
+          isCompact: true,
+          child: const Text('Tam uygulama'),
+          compactChild: const Text('Compact Focus'),
+        ),
+      ),
+    );
+
+    expect(find.text('Compact Focus'), findsOneWidget);
+    expect(find.text('Tam uygulama'), findsNothing);
+    expect(find.byType(AnimatedSwitcher), findsNothing);
+  });
+
   testWidgets('oturum yoksa kayıt başlatmaz ve tam pencereye yönlendirir', (
     tester,
   ) async {

@@ -87,7 +87,9 @@ Mevcut “bütün uygulamayı küçült” yaklaşımı değiştirilir. Compact 
 
 gösterir. Hedef normal boyut yaklaşık 360×220; içerik 320×180'e kadar taşmadan
 çalışır. Compact'a geçerken normal pencere bounds/maximize durumu saklanır;
-dönüşte aynı monitörde güvenli alana geri gelir.
+dönüşte aynı monitörde güvenli alana geri gelir. Compact oturum-içi geçici
+moddur; uygulama cold-start'ta gri/boş ilk frame riskini önlemek için her zaman
+güvenli normal pencerede açılır.
 
 ### Klavye ve fare sözleşmesi
 
@@ -111,7 +113,8 @@ dönüşte aynı monitörde güvenli alana geri gelir.
 
 ### Pencere yaşam döngüsü
 
-- Normal bounds, maximize, son monitör, pin ve compact tercihleri yerelde tutulur.
+- Normal bounds, maximize, son monitör ve pin yerelde tutulur; compact cold-start
+  modu olarak geri yüklenmez.
 - Kayıtlı monitör yoksa pencere görünür çalışma alanına clamp edilir.
 - Sleep/resume, ekran çıkarma, DPI değişimi ve çoklu monitör geçişi test edilir.
 - “Kapatınca tray'e küçült” varsayılan yapılmaz; kullanıcı kararı olmadan arka

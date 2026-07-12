@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/desktop/desktop_window.dart';
 import '../../core/widgets/safe_screen_padding.dart';
 import '../../data/models/study_group.dart';
 import '../../data/providers/group_providers.dart';
 import '../home/dashboard_providers.dart';
 import '../home/widgets/group_goal_card.dart';
 import '../home/widgets/group_trend_card.dart';
+import '../desktop/desktop_page_scaffold.dart';
 import 'widgets/campfire_scene.dart';
 import 'widgets/class_chat_screen.dart';
 import 'widgets/class_detail_screen.dart';
@@ -23,6 +25,31 @@ class ClassroomScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final groupAsync = ref.watch(userGroupProvider);
+    final body = groupAsync.when(
+      data: (group) =>
+          group == null ? const _NoGroupView() : _GroupView(group: group),
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(child: Text('Bir hata oluştu: $e')),
+    );
+
+    if (isDesktopWindow) {
+      return DesktopPageScaffold(
+        title: 'Gruplar',
+        subtitle:
+            'Kamp arkadaşlarınla ilerlemeyi, hedefleri ve ortak ritmi izle.',
+        icon: Icons.groups_outlined,
+        actions: [
+          Builder(
+            builder: (buttonContext) => OutlinedButton.icon(
+              onPressed: () => showClassSwitcher(buttonContext, ref),
+              icon: const Icon(Icons.swap_horiz),
+              label: const Text('Grup değiştir'),
+            ),
+          ),
+        ],
+        child: body,
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -38,12 +65,7 @@ class ClassroomScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: groupAsync.when(
-        data: (group) =>
-            group == null ? const _NoGroupView() : _GroupView(group: group),
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Bir hata oluştu: $e')),
-      ),
+      body: body,
     );
   }
 }
@@ -110,6 +132,42 @@ class _GroupView extends ConsumerWidget {
     // ateşin üstünde büyük alan kaplamaz, alttaki açılır yönetim paneline taşındı.
     // (Grup sıralaması kartı bu sekmede yok — sıralama İstatistikler sekmesinde;
     // buraya ayrı bir sıralama kartı eklemek WP-45 kapsamı dışı, `Ürün kararı`.)
+    if (isDesktopWindow) {
+      return SingleChildScrollView(
+        child: DesktopContent(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _CompactGroupHeader(group: group),
+              const SizedBox(height: 16),
+              DesktopResponsiveColumns(
+                breakpoint: 1100,
+                secondaryWidth: 390,
+                primary: const DesktopPanel(
+                  padding: EdgeInsets.all(12),
+                  child: CampfireScene(),
+                ),
+                secondary: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (showTimer) ...[
+                      const StudyTimerCard(),
+                      const SizedBox(height: 12),
+                    ],
+                    const GroupGoalCard(),
+                    const SizedBox(height: 12),
+                    const GroupTrendCard(),
+                    const SizedBox(height: 12),
+                    _GroupManagementTile(group: group),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return ListView(
       padding: getSafeVerticalPadding(context, horizontal: 16, vertical: 16),
       children: [
@@ -144,8 +202,9 @@ class _CompactGroupHeader extends StatelessWidget {
         Expanded(
           child: Text(
             group.name,
-            style:
-                theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -154,18 +213,14 @@ class _CompactGroupHeader extends StatelessWidget {
           tooltip: 'Sohbet',
           icon: const Icon(Icons.forum_outlined),
           onPressed: () => Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => ClassChatScreen(group: group),
-            ),
+            MaterialPageRoute(builder: (_) => ClassChatScreen(group: group)),
           ),
         ),
         IconButton(
           tooltip: 'Ayarlar',
           icon: const Icon(Icons.settings_outlined),
           onPressed: () => Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => ClassDetailScreen(group: group),
-            ),
+            MaterialPageRoute(builder: (_) => ClassDetailScreen(group: group)),
           ),
         ),
       ],
@@ -218,9 +273,7 @@ class _GroupManagementTile extends StatelessWidget {
                   );
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Davet kodu kopyalandı'),
-                      ),
+                      const SnackBar(content: Text('Davet kodu kopyalandı')),
                     );
                   }
                 },

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/desktop/desktop_window.dart';
 import '../../data/providers/auth_providers.dart';
 import '../../data/providers/group_providers.dart';
 import '../../data/providers/study_providers.dart';
+import '../desktop/desktop_page_scaffold.dart';
 import 'widgets/class_stats_view.dart';
 import 'widgets/personal_stats_view.dart';
 
@@ -17,23 +19,46 @@ class StatsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return DefaultTabController(
       length: 2,
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('İstatistik'),
-          bottom: const TabBar(
-            tabs: [
-              Tab(text: 'Kişisel'),
-              Tab(text: 'Grup'),
-            ],
-          ),
-        ),
-        body: TabBarView(
-          children: [
-            _PersonalTab(),
-            _ClassTab(),
-          ],
-        ),
-      ),
+      child: isDesktopWindow
+          ? DesktopPageScaffold(
+              title: 'İstatistik',
+              subtitle:
+                  'Çalışma ritmini incele, dönemleri karşılaştır ve grubundaki ilerlemeyi gör.',
+              icon: Icons.query_stats_outlined,
+              child: Column(
+                children: [
+                  const DesktopContent(
+                    padding: EdgeInsets.fromLTRB(24, 18, 24, 0),
+                    maxWidth: 720,
+                    child: DesktopPanel(
+                      padding: EdgeInsets.symmetric(horizontal: 8),
+                      child: TabBar(
+                        tabs: [
+                          Tab(text: 'Kişisel'),
+                          Tab(text: 'Grup'),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Expanded(
+                    child: TabBarView(children: [_PersonalTab(), _ClassTab()]),
+                  ),
+                ],
+              ),
+            )
+          : Scaffold(
+              appBar: AppBar(
+                title: const Text('İstatistik'),
+                bottom: const TabBar(
+                  tabs: [
+                    Tab(text: 'Kişisel'),
+                    Tab(text: 'Grup'),
+                  ],
+                ),
+              ),
+              body: TabBarView(children: [_PersonalTab(), _ClassTab()]),
+            ),
     );
   }
 }
@@ -64,8 +89,9 @@ class _ClassTab extends ConsumerWidget {
           child: Text(
             'Grup istatistiklerini görmek için önce bir gruba katıl.',
             textAlign: TextAlign.center,
-            style: theme.textTheme.bodyMedium
-                ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
           ),
         ),
       );

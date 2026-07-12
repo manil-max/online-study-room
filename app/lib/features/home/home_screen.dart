@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/desktop/desktop_layout.dart';
 import '../../core/desktop/desktop_window.dart';
 import '../../core/widgets/safe_screen_padding.dart';
+import '../desktop/desktop_page_scaffold.dart';
 import 'dashboard_card.dart';
 import 'dashboard_providers.dart';
 import 'widgets/card_picker.dart';
@@ -63,6 +64,113 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final layout = ref.watch(dashboardLayoutProvider);
+    final body = layout.isEmpty
+        ? _EmptyDashboard(onEdit: () => showCardPicker(context))
+        : SingleChildScrollView(
+            controller: _scroll,
+            padding: getSafeVerticalPadding(
+              context,
+              horizontal: isDesktopWindow ? 24 : 16,
+            ),
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxWidth: DesktopBreakpoints.maxContentWidth,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (_editing) ...[
+                      Text(
+                        'Kartı tutup sürükle; hedef hücreye bırakınca komşular yer açar. '
+                        'Boyut için karta dokun, aşağıdaki −/+ ile genişlik ve '
+                        'yüksekliği ayarla (ya da köşelerden çek).',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                    ],
+                    _MatrixGrid(
+                      layout: layout,
+                      editing: _editing,
+                      onLongPressCard: () => _setEditing(true),
+                      onMoveCard: (type, x, y) => ref
+                          .read(dashboardLayoutProvider.notifier)
+                          .setBounds(type, x: x, y: y),
+                      onResizeCard: (type, x, y, w, h, persist) => ref
+                          .read(dashboardLayoutProvider.notifier)
+                          .setBounds(
+                            type,
+                            x: x,
+                            y: y,
+                            w: w,
+                            h: h,
+                            persist: persist,
+                          ),
+                      onCommit: ref
+                          .read(dashboardLayoutProvider.notifier)
+                          .persist,
+                      onRemove: ref
+                          .read(dashboardLayoutProvider.notifier)
+                          .removeCard,
+                    ),
+                    if (_editing) ...[
+                      const Divider(height: 24),
+                      SwitchListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('Gruplar ekranında da sayaç göster'),
+                        subtitle: const Text(
+                          'Sayaç varsayılan Ana Sayfa’dadır.',
+                        ),
+                        value: ref.watch(classroomShowTimerProvider),
+                        onChanged: ref
+                            .read(classroomShowTimerProvider.notifier)
+                            .set,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          );
+
+    if (isDesktopWindow) {
+      return DesktopPageScaffold(
+        title: _editing ? 'Panoyu düzenle' : 'Ana Sayfa',
+        subtitle: _editing
+            ? 'Kartları sürükle, yeniden boyutlandır ve çalışma alanını kişiselleştir.'
+            : 'Bugünkü odağın, grubun ve çalışma ritmin tek görünümde.',
+        icon: Icons.space_dashboard_outlined,
+        actions: _editing
+            ? [
+                TextButton.icon(
+                  onPressed: () => _setEditing(false),
+                  icon: const Icon(Icons.check),
+                  label: const Text('Bitti'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: _confirmResetDashboard,
+                  icon: const Icon(Icons.restart_alt),
+                  label: const Text('Sıfırla'),
+                ),
+                FilledButton.icon(
+                  onPressed: () => showCardPicker(context),
+                  icon: const Icon(Icons.add),
+                  label: const Text('Kart ekle'),
+                ),
+              ]
+            : [
+                FilledButton.tonalIcon(
+                  onPressed: () => _setEditing(true),
+                  icon: const Icon(Icons.dashboard_customize_outlined),
+                  label: const Text('Panoyu düzenle'),
+                ),
+              ],
+        child: body,
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -94,82 +202,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
         ],
       ),
-      body: layout.isEmpty
-          ? _EmptyDashboard(onEdit: () => showCardPicker(context))
-          : SingleChildScrollView(
-              controller: _scroll,
-              padding: getSafeVerticalPadding(
-                context,
-                horizontal: isDesktopWindow ? 24 : 16,
-              ),
-              child: Align(
-                alignment: Alignment.topCenter,
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    maxWidth: DesktopBreakpoints.maxContentWidth,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      if (_editing) ...[
-                        Text(
-                          'Kartı tutup sürükle; hedef hücreye bırakınca komşular yer açar. '
-                          'Boyut için karta dokun, aşağıdaki −/+ ile genişlik ve '
-                          'yüksekliği ayarla (ya da köşelerden çek).',
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurfaceVariant,
-                              ),
-                        ),
-                        const SizedBox(height: 10),
-                      ],
-                      _MatrixGrid(
-                        layout: layout,
-                        editing: _editing,
-                        onLongPressCard: () => _setEditing(true),
-                        onMoveCard: (type, x, y) => ref
-                            .read(dashboardLayoutProvider.notifier)
-                            .setBounds(type, x: x, y: y),
-                        onResizeCard: (type, x, y, w, h, persist) => ref
-                            .read(dashboardLayoutProvider.notifier)
-                            .setBounds(
-                              type,
-                              x: x,
-                              y: y,
-                              w: w,
-                              h: h,
-                              persist: persist,
-                            ),
-                        onCommit: ref
-                            .read(dashboardLayoutProvider.notifier)
-                            .persist,
-                        onRemove: ref
-                            .read(dashboardLayoutProvider.notifier)
-                            .removeCard,
-                      ),
-                      if (_editing) ...[
-                        const Divider(height: 24),
-                        SwitchListTile(
-                          contentPadding: EdgeInsets.zero,
-                          title: const Text(
-                            'Gruplar ekranında da sayaç göster',
-                          ),
-                          subtitle: const Text(
-                            'Sayaç varsayılan Ana Sayfa’dadır.',
-                          ),
-                          value: ref.watch(classroomShowTimerProvider),
-                          onChanged: ref
-                              .read(classroomShowTimerProvider.notifier)
-                              .set,
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-            ),
+      body: body,
     );
   }
 }

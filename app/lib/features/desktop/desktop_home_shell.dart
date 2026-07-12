@@ -90,8 +90,12 @@ class DesktopHomeShell extends StatelessWidget {
                 children: [
                   NavigationRail(
                     key: const ValueKey('desktop-navigation-rail'),
+                    backgroundColor: Theme.of(
+                      context,
+                    ).colorScheme.surfaceContainerLow,
                     extended: expanded,
                     minExtendedWidth: 208,
+                    groupAlignment: -0.72,
                     selectedIndex: selectedIndex,
                     onDestinationSelected: onDestinationSelected,
                     labelType: expanded
@@ -103,25 +107,44 @@ class DesktopHomeShell extends StatelessWidget {
                       padding: const EdgeInsets.only(top: 12, bottom: 8),
                       child: Semantics(
                         label: 'Odak Kampı ana navigasyonu',
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.local_fire_department, size: 28),
-                            if (expanded) ...[
-                              const SizedBox(width: 10),
-                              Text(
-                                'Odak Kampı',
-                                style: Theme.of(context).textTheme.titleMedium
-                                    ?.copyWith(fontWeight: FontWeight.w700),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.primaryContainer,
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.local_fire_department,
+                                size: 26,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onPrimaryContainer,
                               ),
+                              if (expanded) ...[
+                                const SizedBox(width: 10),
+                                Text(
+                                  'Odak Kampı',
+                                  style: Theme.of(context).textTheme.titleMedium
+                                      ?.copyWith(fontWeight: FontWeight.w700),
+                                ),
+                              ],
                             ],
-                          ],
+                          ),
                         ),
                       ),
                     ),
                     trailing: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
+                        const SizedBox(width: 40, child: Divider(height: 18)),
                         IconButton(
                           tooltip: 'Yenile (F5)',
                           onPressed: onRefresh,
