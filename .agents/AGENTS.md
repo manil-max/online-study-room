@@ -98,6 +98,8 @@ Paralel ajanlar aynı `main` dalında commit atarsa `pubspec.yaml`, `progress.md
 
 > Solo geliştirici notu: Her iş ayrı bir "taslak katman"dır; beğenip kabul edince `main`'e alırsın, beğenmezsen dalı silersin — `main` hep temiz kalır. İzole gerçek paralellik için `git worktree` de kullanılabilir; şart değil.
 
+**Merge otomasyonu = A (seçildi 2026-07-12):** Merge elle yapılmaz. WP dalı push edilir → `gh pr create` → CI (`.github/workflows/ci.yml`) `analyze`+`test` çalıştırır → yeşilse **PR `main`'e auto-merge** olur (squash) ve dal silinir. Böylece merge otomatiktir ve **testten geçmeyen kod main'e giremez** (kalite kapısı). Kurulum: **WP-39**. Bu, WP dallarının public repo'ya **push edilmesini** gerektirir (kullanıcı A'yı seçerek onayladı). Auto-merge/branch-protection repo ayarlarını **kullanıcı açar**.
+
 ---
 
 ## 2. Zorunlu Kod Kuralları

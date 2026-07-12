@@ -20,7 +20,7 @@
 - **Navigasyon hedefi:** Ana Sayfa / Saat / Gruplar / İstatistikler / Profil. Ana Sayfa günlük kullanım alanıdır; diğer alanların verisi kendi sekmelerinde eksiksiz bulunur.
 - **Release:** Stable/Beta kanalı GitHub Releases ile çalışır. **v7 yayında (özellik sürümü).** İlk kalite-kapılı stable önerisi: **v8 "Güven Sürümü"** (`Ürün kararı gerekiyor`).
 - **Kalite kapıları:** Her WP DoD'siz kapanmaz; stable release kalite kapısından geçer (AGENTS.md §3). Server-authoritative XP, RLS/sosyal profil, platform sınırları → `docs/KALITE-PROGRAMI.md`.
-- **Son WP numarası:** 36
+- **Son WP numarası:** 45
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
   - Flutter: `C:\src\flutter` · Android SDK: `C:\Android\Sdk`
@@ -74,8 +74,182 @@
 
 | WP | Durum | Kısa kapsam | Bağımlılık |
 |---|---|---|---|
+| WP-37 | Bekliyor | Faz 0A · Repo & doküman gerçeği denetimi (kod yok) | — |
+| WP-38 | Bekliyor | Faz 0A · Canlı backend durum matrisi (kod yok) | — |
+| WP-39 | Bekliyor | Merge otomasyonu (A): CI kalite kapısı + PR auto-merge | — |
+| WP-40 | Bekliyor | V8-A · Native timer state store + foreground service | — |
+| WP-41 | Bekliyor | V8-A · Canlı chronometer bildirim (Başlat/Durdur) | WP-40 |
+| WP-42 | Bekliyor | V8-A · Widget paritesi + olay bazlı stats besleme | WP-40 |
+| WP-43 | Bekliyor | V8-B · Genel senkronizasyon denetimi | WP-40, WP-42 |
+| WP-44 | Bekliyor | V8-C · İstatistik grup sırası (düşük risk, bağımsız) | — |
+| WP-45 | Bekliyor | V8-C · Gruplar sırası + kamp ateşi + animasyon (bağımsız) | — |
 | WP-27 | Bekliyor | Windows desktop shell ve responsive layout | — |
 | WP-28 | Bekliyor | Windows dağıtım, installer ve desktop polish | WP-27 |
+
+> **Dağıtım notu:** Hemen paralel verilebilecek bağımsızlar: **WP-37, WP-38, WP-44, WP-45** (dördü ayrı dosyalar, çakışmasız). **WP-40** V8-A'nın temelidir; WP-41/42 ondan sonra, ikisi `study_providers` timer-sync'i paylaştığı için birbirleriyle **paralel değil** (serileştir). **WP-43** V8-A bitince.
+
+> ✅ Çakışma kontrolü: WP-37 ve WP-38 yalnız kendi yeni doc dosyalarına yazar (`docs/DENETIM-FAZ0A.md` vs `docs/BACKEND-DURUM.md`), `app/**` ve `supabase/**`'a dokunmaz → **paralel güvenli**, aktif lane yok.
+
+### WP-37: Faz 0A · Repo & Doküman Gerçeği Denetimi 🔎
+- **Program/Faz:** Faz 0A (KALITE-PROGRAMI §7)
+- **Ajan:** —
+- **Durum:** [ ] Bekliyor
+- **Problem:** `progress`/`backlog`/`project` ile gerçek kod/migration birbirini tam yansıtmıyor (B10). "Tamamlandı" görünen WP'ler (Saat, Tema, Başarım, widget, IA) 8-aşamalı merdivende gerçekte hangi seviyede belirsiz. Tek doğru proje gerçeği yok.
+- **Kapsam dışı:** Kod değişikliği YOK. Canlı Supabase/backend durumu (→ WP-38). Yeni özellik yok. Doküman düzeltmelerini uygulamak (yalnız öner; onay kullanıcıya).
+- **SAHİP dosyalar (yaz):**
+  - `docs/DENETIM-FAZ0A.md` (yeni)
+  - `progress.md` (yalnız kendi lane + bu WP kartı)
+- **DOKUNMA:** `app/**`, `supabase/**` (yalnız oku), diğer `docs/*`, başka lane kartları.
+- **Adımlar:**
+  - [ ] WP-1..36'yı 8-aşamalı merdivende yeniden sınıflandır (gerçekte "Kod tamamlandı" mı "Ürün kabulü geçti" mi?), her satır kanıt etiketli.
+  - [ ] Özellik envanteri: Saat, Tema, Başarım, widget, bildirim, senkron, gruplar, istatistik, profil → durum + gerçek davranış + eksik.
+  - [ ] Bilinen bug listesi P0/P1/P2 (kullanıcı şikâyetleri + B1–B9 kod bulguları).
+  - [ ] Risk kaydı + **v8 blocker listesi**.
+  - [ ] `backlog`/`project`/`progress` tutarsızlıklarını düzeltme önerisiyle listele.
+- **Veri/Migration etkisi:** Yok (doküman).
+- **RLS/Güvenlik:** Kod yok; ama denetimde güvenlik açıklarını (ör. B7 RLS) **P0** işaretle.
+- **Edge-case'ler:** —
+- **Kabul (ölçülebilir):** `docs/DENETIM-FAZ0A.md` şunları içerir: (1) WP-1..36 yeniden sınıflandırma tablosu, (2) özellik envanteri, (3) P0/P1/P2 bug listesi, (4) risk kaydı, (5) v8 blocker listesi — her iddia kanıt etiketli. `git diff app/` **boş**.
+- **Tuzaklar:** Sadece dosya okuyarak kanıtla; "tahminen" yazma → emin değilsen `Cihazda doğrulanmalı` etiketi.
+- **Dal önerisi:** `wp37-faz0a-denetim`
+- **Model önerisi:** 🔴 Opus (geniş kod okuma + muhakeme)
+
+### WP-38: Faz 0A · Canlı Backend Durum Matrisi 🗄️
+- **Program/Faz:** Faz 0A (KALITE-PROGRAMI §7)
+- **Ajan:** —
+- **Durum:** [ ] Bekliyor
+- **Problem:** Canlıda yalnız `0001–0019` doğrulandı; `0020–0023` ve Edge Function deploy durumu belirsiz (B8). Bildirim Merkezi/başarım/admin sunucu özellikleri buna bağlı.
+- **Kapsam dışı:** Kod değişikliği YOK. Migration UYGULAMA yok (yalnız durum tespiti + doğrulama SQL'i hazırla; uygulamayı kullanıcı yapar).
+- **SAHİP dosyalar (yaz):**
+  - `docs/BACKEND-DURUM.md` (yeni)
+- **DOKUNMA:** `supabase/migrations/**` (yalnız oku), `app/**` (oku), diğer `docs/*`.
+- **Adımlar:**
+  - [ ] `supabase/migrations/` yerel listesi (0001–0023) + her birinin özeti.
+  - [ ] Her migration için "canlıda uygulandı mı?" doğrulama sorgusu (tablo/kolon/policy/RPC var mı).
+  - [ ] Edge Function envanteri: repoda tanımlı fonksiyonlar + deploy gerekenler.
+  - [ ] Canlı/yerel migration matrisi (uygulandı / eksik / bilinmiyor).
+  - [ ] Kullanıcı aksiyon listesi: canlıya sırayla uygulanacak migration'lar + doğrulama adımları.
+- **Veri/Migration etkisi:** Yalnız tespit + doğrulama sorguları (yazma yok).
+- **RLS/Güvenlik:** `0022` RLS uyuşmazlığını (B7 — sosyal profil geniş açık) **blocker** işaretle.
+- **Edge-case'ler:** —
+- **Kabul (ölçülebilir):** `docs/BACKEND-DURUM.md` = migration matrisi (0001–0023 durum) + Edge Function listesi + kullanıcının çalıştıracağı doğrulama SQL'i + uygulama sırası.
+- **Tuzaklar:** Ajan canlı Supabase'e erişemez → durumu "bilinmiyor" işaretle, kullanıcı doğrulaması için hazırla (`Cihazda/canlıda doğrulanmalı`). Gizli anahtar isteme.
+- **Dal önerisi:** `wp38-backend-durum`
+- **Model önerisi:** 🟣 Pro
+
+### WP-39: Merge Otomasyonu (A) · CI Kalite Kapısı + PR Auto-merge ⚙️
+- **Program/Faz:** Faz 0B / altyapı (bootstrap)
+- **Ajan:** —
+- **Durum:** [ ] Bekliyor
+- **Problem:** Merge manuel; kalite kapısı otomatik değil. Karar: **A** (PR + CI + auto-merge). Merge'ü ve kalite kapısını aynı anda çözer.
+- **Kapsam dışı:** Uygulama kodu değişikliği. Repo ayarlarının (auto-merge/branch protection) ajan tarafından açılması (izin gerekir → kullanıcı yapar/onaylar).
+- **SAHİP dosyalar (yaz):**
+  - `.github/workflows/ci.yml` (yeni)
+  - `docs/MERGE-OTOMASYONU.md` (yeni — kullanıcı ayar rehberi)
+- **DOKUNMA:** `.github/workflows/release.yml` (yalnız oku, deseni taklit et), `app/**`.
+- **Adımlar:**
+  - [ ] PR'da tetiklenen `ci.yml`: checkout → Flutter kur → `flutter pub get` → `flutter analyze` (bayraksız) → `flutter test`. dart-define'lar `secrets`'tan (release.yml deseni).
+  - [ ] `docs/MERGE-OTOMASYONU.md`: kullanıcının GitHub'da yapacağı ayarlar (auto-merge aç, `main` branch protection + required check, squash merge, dal otomatik sil) + ajan akışı `git push -u origin wpNN-…` + `gh pr create` + `gh pr merge --auto --squash`.
+- **Veri/Migration etkisi:** Yok.
+- **RLS/Güvenlik:** Secrets CI'da; anahtar loglanmaz. WP dalları **public repo'ya push edilir** (yayınlama) — kullanıcı A'yı seçerek bunu onayladı.
+- **Kabul (ölçülebilir):** PR açınca CI çalışır; testler yeşilse PR auto-merge olur; kırmızıysa merge engellenir.
+- **Tuzaklar:** Bootstrap — bu WP kendi auto-merge'ünü kullanamaz; ilk kurulum PR'ı **kullanıcı elle merge eder**. Repo ayarları ajan değil kullanıcı tarafından açılır.
+- **Dal önerisi:** `wp39-merge-otomasyonu`
+- **Model önerisi:** 🟣 Pro
+
+### WP-40: V8-A · Native Timer State Store + Foreground Service ⏱️
+- **Program/Faz:** V8-A (KALITE-PROGRAMI §8.1) — **V8'in temeli, ilk yapılır**
+- **Ajan:** —
+- **Durum:** [ ] Bekliyor
+- **Problem:** Sayaç app kapalıyken güvenilir değil; tek gerçek zaman kaynağı ve foreground service yok (B4/B5).
+- **Kapsam dışı:** Bildirim UI (→WP-41), widget (→WP-42), senkron denetimi (→WP-43).
+- **SAHİP dosyalar (yaz):**
+  - `app/lib/data/providers/study_providers.dart` (timer state alanları + servis köprüsü)
+  - `app/lib/core/notifications/timer_external_command_store.dart` + yeni `app/lib/core/background/*`
+  - `app/android/app/src/main/kotlin/**/` (foreground service Kotlin + boot receiver)
+  - `app/android/app/src/main/AndroidManifest.xml`, `app/pubspec.yaml` (flutter_foreground_task)
+- **DOKUNMA:** `core/theme/**`, `features/clock/**`, widget provider'ları (WP-42), diğer feature'lar.
+- **Adımlar:**
+  - [ ] State modeli: mode/status/startedAt/accumulatedSeconds/targetSeconds/phase/cycle/subjectId/commandSeq/lastUpdatedAt.
+  - [ ] Foreground service (ongoing, start/stop) + izinler (`FOREGROUND_SERVICE`+tip, `WAKE_LOCK`).
+  - [ ] Boot receiver (`RECEIVE_BOOT_COMPLETED`) → aktif sayaç restore.
+  - [ ] Komut kuyruğu (sürüm/sequence) `timer_external_command_store` üstüne.
+- **Veri/Migration etkisi:** Yok (yerel state).
+- **RLS/Güvenlik:** Yok; sır yok.
+- **Kabul (ölçülebilir):** app kapalıyken 8 saatte ≤ ±1 sn; force-stop dışı lifecycle'da kontrol kaybı yok; reboot sonrası restore; **cihaz kanıtı** (`Cihazda doğrulanmalı`).
+- **Tuzaklar:** Sıcak dosyalar (pubspec/manifest/study_providers) → başka WP ile aynı anda GİRİLMEZ. OEM pil kısıtı testi.
+- **Dal önerisi:** `wp40-timer-foreground`
+- **Model önerisi:** 🔴 Opus
+
+### WP-41: V8-A · Canlı Chronometer Bildirim (Başlat/Durdur) 🔔
+- **Program/Faz:** V8-A · **Bağımlılık: WP-40 (kabul sonrası)**
+- **Ajan:** —
+- **Durum:** [ ] Bekliyor
+- **Problem:** Bildirimde canlı `HH:MM:SS` + Başlat/Durdur, app açmadan yönetim (istek 1).
+- **Kapsam dışı:** Widget (→WP-42), state store (WP-40).
+- **SAHİP dosyalar (yaz):** `app/lib/core/notifications/timer_notification_service.dart`, ilgili notification receiver Kotlin.
+- **DOKUNMA:** `study_providers.dart` (WP-40 sahibi — yalnız oku), widget (WP-42).
+- **Adımlar:** dar görünüm (HH:MM:SS + tek durum + Başlat/Durdur); geniş görünüm (+ Sıfırla / +1 dk); native `Chronometer` (usesChronometer); butonlar Flutter açmadan native receiver/service.
+- **Kabul (ölçülebilir):** 20 ardışık Başlat/Durdur (app kapalı) testi; canlı akan saat; bildirim/uygulama durum farkı yok; cihaz videosu.
+- **Tuzaklar:** Bildirim son görünümü OEM'e bağlı — hedef ulaşılabilir ama piksel garanti değil. `study_providers` timer-sync WP-40 kapsamında; buraya taşırsan WP-42 ile çakışır.
+- **Dal önerisi:** `wp41-notif-chronometer`
+- **Model önerisi:** 🔴 Opus
+
+### WP-42: V8-A · Widget Paritesi + Olay Bazlı Stats Besleme 📲
+- **Program/Faz:** V8-A · **Bağımlılık: WP-40; WP-41 ile paralel DEĞİL** (`study_providers` paylaşımı → serileştir)
+- **Ajan:** —
+- **Durum:** [ ] Bekliyor
+- **Problem:** Yalnız timer widget besleniyor; stats/leaderboard placeholder (B4).
+- **Kapsam dışı:** Bildirim (WP-41), senkron canonical projection (WP-43 sağlar; burada tüketilir).
+- **SAHİP dosyalar (yaz):** `app/lib/features/android_widgets/android_widget_service.dart`, `app/android/app/src/main/kotlin/**/widgets/*` (Chronometer RemoteViews), yeni widget besleme pipeline.
+- **DOKUNMA:** `study_providers.dart` timer-sync (WP-40/41 — dar okuma), notification (WP-41).
+- **Adımlar:** timer widget native `Chronometer`; Başlat/Durdur app açmadan; stats/leaderboard **olay bazlı** besleme (session ekl/düzenle/sil, sync, grup değişimi, gün sınırı, manuel refresh); light/dark + dynamic color; boş-durum.
+- **Kabul (ölçülebilir):** placeholder yok; oturum sonrası widget ≤ 5 sn; 48 dp dokunma; cihaz videosu.
+- **Tuzaklar:** Saniyede bir Flutter yeniden çizme YOK; periyodik <15 dk garanti değil → native Chronometer + olay bazlı.
+- **Dal önerisi:** `wp42-widget-parity`
+- **Model önerisi:** 🔴 Opus
+
+### WP-43: V8-B · Genel Senkronizasyon Denetimi 🔄
+- **Program/Faz:** V8-B (KALITE-PROGRAMI §8.2) · **Bağımlılık: WP-40, WP-42 (kabul sonrası)**
+- **Ajan:** —
+- **Durum:** [ ] Bekliyor
+- **Problem:** Aynı metrik farklı ekranlarda tekrar/farklı hesaplanıyor; idempotency, tek gün-sınırı yardımcısı, invalidation standardı yok.
+- **Kapsam dışı:** Native timer (WP-40), widget UI (WP-42) — buradan yalnız canonical projection tüketilir.
+- **SAHİP dosyalar (yaz):** `app/lib/core/stats/*` (canonical projection), `app/lib/data/repositories/offline/*` (outbox/idempotency), ilgili provider invalidation standardı.
+- **DOKUNMA:** `study_providers.dart` timer state (WP-40 — oku), widget service (WP-42 — oku).
+- **Adımlar:** istatistik tüketici envanteri; tek `Europe/Istanbul` gün-sınırı yardımcısı; insert/update/delete sonrası invalidation standardı; offline outbox + realtime reconciliation; idempotency (aynı session bir kez); çoklu cihaz conflict; widget snapshot canonical projection'dan; freshness/version + manuel yenileme.
+- **Kabul (ölçülebilir):** her ekranda aynı toplam; session sonrası UI ≤ 1 sn; widget ≤ 5 sn; offline session bir kez yazılır; gün değişiminde bugün sıfırlanır; 23:59–00:01 testi geçer.
+- **Tuzaklar:** V8-A ile `study_providers`/widget çakışması → V8-A kabulünden SONRA başla.
+- **Dal önerisi:** `wp43-sync-denetimi`
+- **Model önerisi:** 🔴 Opus
+
+### WP-44: V8-C · İstatistik Grup Sırası 📊
+- **Program/Faz:** V8-C (KALITE-PROGRAMI §8.3) · **Bağımsız — hemen verilebilir**
+- **Ajan:** —
+- **Durum:** [ ] Bekliyor
+- **Problem:** Sıralama en altta; kullanıcı "grup günlük trendi"nin üstüne istiyor (istek 3).
+- **Kapsam dışı:** Hesaplama mantığı değişmez (yalnız sıra); gruplar sekmesi (WP-45).
+- **SAHİP dosyalar (yaz):** `app/lib/features/stats/widgets/class_stats_view.dart` + yeni golden test.
+- **DOKUNMA:** diğer stats widget'ları, `features/classroom/**`.
+- **Adımlar:** sıra = grup hedefi → özet → **sıralama** → grup günlük trendi → uzun eğilim → tüm zamanlar → karşılaştırma; golden test.
+- **Kabul (ölçülebilir):** golden test yeni sırayı sabitler; analyze 0, test yeşil. `Ürün kararı`: §8.3 tam sıra onayı.
+- **Tuzaklar:** V8-B stats hesabını değiştirebilir ama bu yalnız SIRA → düşük risk; V8-B'den önce yapılabilir.
+- **Dal önerisi:** `wp44-stats-sira`
+- **Model önerisi:** 🔵 Sonnet
+
+### WP-45: V8-C · Gruplar Sırası + Kamp Ateşi + Animasyon 🔥
+- **Program/Faz:** V8-C · **Bağımsız — WP-44 ile paralel güvenli (farklı dosyalar)**
+- **Ajan:** —
+- **Durum:** [ ] Bekliyor
+- **Problem:** Kamp ateşi üste; sıra ateş→hedef→sıralama; toparlanma animasyonu uzun (istek 4).
+- **Kapsam dışı:** İstatistik sekmesi (WP-44); grup hedef/trend kartlarının iç mantığı.
+- **SAHİP dosyalar (yaz):** `app/lib/features/classroom/classroom_screen.dart`, `app/lib/features/classroom/widgets/campfire_scene.dart` (animasyon süresi).
+- **DOKUNMA:** `features/stats/**` (WP-44), group_goal_card/group_trend_card (yalnız yeniden sırala).
+- **Adımlar:** sıra = kamp ateşi → grup hedefi → grup sıralaması → trend → yönetim; davet kodu/grup değiştirme kompakt başlığa/açılır alana; animasyon kısalt + `reduce-motion`.
+- **Kabul (ölçülebilir):** ilk sahne ≤ 300 ms, tam yerleşim ≤ 700 ms; reduce-motion çalışır; screenshot/golden.
+- **Tuzaklar:** Sonsuz/dekoratif animasyon batarya tüketmemeli.
+- **Dal önerisi:** `wp45-gruplar-sira`
+- **Model önerisi:** 🔵 Sonnet
 
 ### WP-27: Windows Desktop Shell ve Responsive Layout
 
