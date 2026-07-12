@@ -173,6 +173,34 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
           ],
         ),
         const SizedBox(height: 16),
+        // Sıralama (leaderboard) — kullanıcı isteği (§8.3): grup günlük trendinin
+        // ÜSTÜNDE, özet kartlarının hemen altında. Seçili döneme (SegmentedButton)
+        // bağlı olduğu için dönem seçicinin yakınında durur.
+        Text('Sıralama', style: theme.textTheme.titleMedium),
+        const SizedBox(height: 4),
+        if (rows.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 24),
+            child: Center(
+              child: Text(
+                'Bu dönemde henüz çalışma kaydı yok.',
+                style: theme.textTheme.bodyMedium
+                    ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              ),
+            ),
+          )
+        else
+          for (var i = 0; i < rows.length; i++)
+            _LeaderboardRow(
+              rank: i + 1,
+              name: rows[i].member.displayName,
+              avatarUrl: rows[i].member.avatarUrl,
+              seconds: rows[i].seconds,
+              maxSeconds: maxSeconds,
+              streak: streaks[rows[i].member.id] ?? 0,
+              isMe: rows[i].member.id == widget.currentUserId,
+            ),
+        const SizedBox(height: 16),
         Card(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
@@ -242,31 +270,6 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
                   ),
           ),
         ),
-        const SizedBox(height: 16),
-        Text('Sıralama', style: theme.textTheme.titleMedium),
-        const SizedBox(height: 4),
-        if (rows.isEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 24),
-            child: Center(
-              child: Text(
-                'Bu dönemde henüz çalışma kaydı yok.',
-                style: theme.textTheme.bodyMedium
-                    ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-              ),
-            ),
-          )
-        else
-          for (var i = 0; i < rows.length; i++)
-            _LeaderboardRow(
-              rank: i + 1,
-              name: rows[i].member.displayName,
-              avatarUrl: rows[i].member.avatarUrl,
-              seconds: rows[i].seconds,
-              maxSeconds: maxSeconds,
-              streak: streaks[rows[i].member.id] ?? 0,
-              isMe: rows[i].member.id == widget.currentUserId,
-            ),
       ],
     );
   }
