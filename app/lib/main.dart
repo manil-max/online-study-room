@@ -76,13 +76,11 @@ class OnlineStudyRoomApp extends ConsumerWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      // Metinler fare ile seçilebilsin (web). SelectionArea, Navigator'ın
-      // Overlay'inin altında olmalı; bu yüzden builder yerine home'u sarıyoruz.
       // Masaüstünde uygulamanın etrafına "üstte tut / mini pencere" kontrol
       // kümesi eklenir; web/mobilde child olduğu gibi döner.
       builder: (context, child) =>
           desktopChrome(child ?? const SizedBox.shrink()),
-      home: const SelectionArea(child: AuthGate()),
+      home: const AuthGate(),
     );
   }
 }
