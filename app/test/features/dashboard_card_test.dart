@@ -221,7 +221,7 @@ void main() {
       ]);
     });
 
-    test('6 ve 12 sutun profilleri birbirinden bagimsiz saklanir', () async {
+    test('6, 12 ve 16 sutun profilleri bagimsiz saklanir', () async {
       SharedPreferences.setMockInitialValues({
         'dashboard_layout': ['timer:0:0:6:4', 'today:0:4:3:2'],
       });
@@ -246,6 +246,16 @@ void main() {
 
       container
           .read(dashboardGridDensityProvider.notifier)
+          .set(DashboardGridDensity.columns16);
+      expect(container.read(dashboardGridColumnsProvider), 16);
+      expect(container.read(dashboardLayoutProvider).first.w, 13);
+      container
+          .read(dashboardLayoutProvider.notifier)
+          .setBounds(DashboardCardType.timer, w: 15);
+      final customized16 = [...container.read(dashboardLayoutProvider)];
+
+      container
+          .read(dashboardGridDensityProvider.notifier)
           .set(DashboardGridDensity.columns6);
       expect(container.read(dashboardLayoutProvider).first.w, 6);
 
@@ -253,10 +263,14 @@ void main() {
           .read(dashboardGridDensityProvider.notifier)
           .set(DashboardGridDensity.columns12);
       expect(container.read(dashboardLayoutProvider), customized12);
-      expect(prefs.getString('dashboard_grid_density'), 'columns12');
+      container
+          .read(dashboardGridDensityProvider.notifier)
+          .set(DashboardGridDensity.columns16);
+      expect(container.read(dashboardLayoutProvider), customized16);
+      expect(prefs.getString('dashboard_grid_density'), 'columns16');
     });
 
-    test('otomatik yogunluk gorunum genisligine gore 6 8 12 secer', () async {
+    test('otomatik yogunluk genislige gore 6 8 12 16 secer', () async {
       SharedPreferences.setMockInitialValues({});
       final prefs = await SharedPreferences.getInstance();
       final container = ProviderContainer(
@@ -270,6 +284,8 @@ void main() {
       expect(container.read(dashboardGridColumnsProvider), 8);
       notifier.resolveForWidth(1200);
       expect(container.read(dashboardGridColumnsProvider), 12);
+      notifier.resolveForWidth(1400);
+      expect(container.read(dashboardGridColumnsProvider), 16);
       notifier.resolveForWidth(600);
       expect(container.read(dashboardGridColumnsProvider), 6);
     });
