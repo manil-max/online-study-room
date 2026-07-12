@@ -1,0 +1,44 @@
+name: PR Kalite Kapısı
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-quality-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  flutter-quality:
+    name: Flutter kalite kontrolü
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Bağımlılıkları yükle
+        run: flutter pub get
+
+      - name: Statik analiz
+        run: flutter analyze
+
+      - name: Testler
+        run: >-
+          flutter test
+          --dart-define=SUPABASE_URL="$SUPABASE_URL"
+          --dart-define=SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY"

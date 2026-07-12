@@ -46,8 +46,8 @@
 - **Faz/WP:** — · **Aşama:** — · **SAHİP yollar:** — · **Ortak/riskli yüzey:** — · **Dal:** — · **Son güncelleme:** 2026-07-12
 
 ### Codex Lane
-- **Durum:** [x] Boşta
-- **Faz/WP:** — · **Aşama:** — · **SAHİP yollar:** — · **Ortak/riskli yüzey:** — · **Dal:** — · **Son güncelleme:** 2026-07-12
+- **Durum:** [~] Aktif
+- **Faz/WP:** Faz 0B · WP-39 · **Aşama:** Otomatik test geçti — kabul bekliyor · **SAHİP yollar:** `.github/workflows/ci.yml` (yeni), `docs/MERGE-OTOMASYONU.md` (yeni), `progress.md` (yalnız kendi lane + WP-39 kartı) · **Ortak/riskli yüzey:** GitHub Actions secrets ve repo ayarları (kullanıcı yapılandırır) · **Dal:** `wp39-merge-otomasyonu` · **Başlangıç:** 2026-07-12 (Europe/Istanbul) · **Son güncelleme:** 2026-07-12 · **Not:** Yerel analiz ve 254 test geçti; bootstrap PR'ı kullanıcı tarafından elle merge edilir.
 
 ---
 
@@ -139,8 +139,8 @@
 
 ### WP-39: Merge Otomasyonu (A) · CI Kalite Kapısı + PR Auto-merge ⚙️
 - **Program/Faz:** Faz 0B / altyapı (bootstrap)
-- **Ajan:** —
-- **Durum:** [ ] Bekliyor
+- **Ajan:** Codex
+- **Durum:** [~] Otomatik test geçti — kabul bekliyor
 - **Problem:** Merge manuel; kalite kapısı otomatik değil. Karar: **A** (PR + CI + auto-merge). Merge'ü ve kalite kapısını aynı anda çözer.
 - **Kapsam dışı:** Uygulama kodu değişikliği. Repo ayarlarının (auto-merge/branch protection) ajan tarafından açılması (izin gerekir → kullanıcı yapar/onaylar).
 - **SAHİP dosyalar (yaz):**
@@ -148,11 +148,12 @@
   - `docs/MERGE-OTOMASYONU.md` (yeni — kullanıcı ayar rehberi)
 - **DOKUNMA:** `.github/workflows/release.yml` (yalnız oku, deseni taklit et), `app/**`.
 - **Adımlar:**
-  - [ ] PR'da tetiklenen `ci.yml`: checkout → Flutter kur → `flutter pub get` → `flutter analyze` (bayraksız) → `flutter test`. dart-define'lar `secrets`'tan (release.yml deseni).
-  - [ ] `docs/MERGE-OTOMASYONU.md`: kullanıcının GitHub'da yapacağı ayarlar (auto-merge aç, `main` branch protection + required check, squash merge, dal otomatik sil) + ajan akışı `git push -u origin wpNN-…` + `gh pr create` + `gh pr merge --auto --squash`.
+  - [x] PR'da tetiklenen `ci.yml`: checkout → Flutter kur → `flutter pub get` → `flutter analyze` (bayraksız) → `flutter test`. dart-define'lar `secrets`'tan (release.yml deseni).
+  - [x] `docs/MERGE-OTOMASYONU.md`: kullanıcının GitHub'da yapacağı ayarlar (auto-merge aç, `main` branch protection + required check, squash merge, dal otomatik sil) + ajan akışı `git push -u origin wpNN-…` + `gh pr create` + `gh pr merge --auto --squash`.
 - **Veri/Migration etkisi:** Yok.
 - **RLS/Güvenlik:** Secrets CI'da; anahtar loglanmaz. WP dalları **public repo'ya push edilir** (yayınlama) — kullanıcı A'yı seçerek bunu onayladı.
 - **Kabul (ölçülebilir):** PR açınca CI çalışır; testler yeşilse PR auto-merge olur; kırmızıysa merge engellenir.
+- **Doğrulama:** `flutter analyze` (0 sorun) ve `flutter test --dart-define=SUPABASE_URL= --dart-define=SUPABASE_ANON_KEY=` (254 test) geçti. GitHub Actions/branch-protection kanıtı ilk PR'da kullanıcı tarafından doğrulanacak.
 - **Tuzaklar:** Bootstrap — bu WP kendi auto-merge'ünü kullanamaz; ilk kurulum PR'ı **kullanıcı elle merge eder**. Repo ayarları ajan değil kullanıcı tarafından açılır.
 - **Dal önerisi:** `wp39-merge-otomasyonu`
 - **Model önerisi:** 🟣 Pro
