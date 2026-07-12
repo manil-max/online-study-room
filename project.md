@@ -3,8 +3,9 @@
 > Bu doküman projenin **teknik referans kaynağıdır**. Mimari, veri modeli, güvenlik ve
 > alınan kararları içerir. Özellik istekleri ve yapılacaklar → `backlog.md`.
 > İlerleme takibi → `progress.md`. Ajan kuralları → `.agents/AGENTS.md`.
+> **Kalite programı (vizyon + teknik + kalite kapıları) → `docs/KALITE-PROGRAMI.md` (kanonik).**
 >
-> Son güncelleme: 2026-07-10
+> Son güncelleme: 2026-07-12
 
 ---
 
@@ -42,7 +43,12 @@ değildir; sadelik, güvenilirlik ve iyi kullanıcı deneyimi önceliklidir.
 | Grafikler | **fl_chart** | Esnek grafik kütüphanesi |
 | Android widget | **home_widget** paketi | Native Android widget'ını Flutter'dan beslemek |
 | Windows widget | Always-on-top mini Flutter penceresi | Basit ve kontrollü |
-| Yerel veri / cache | ❓ **Drift** veya **Hive** | Çevrimdışı destek (ileride) |
+| Yerel veri / cache | **Drift (SQLite)** | Pro hedef: sorgulanabilir sağlam yerel depo (KALITE-PROGRAMI §5.1) |
+| Arka plan yürütme | **flutter_foreground_task + Kotlin foreground service** | Canlı sayaç/widget app kapalıyken (v8) |
+| Hata izleme | **Sentry** | Crash + performans (pro) |
+| Sunucu mantığı | **Supabase Edge Functions + pg_cron** | Server-authoritative XP/başarı, tutarlı hesap |
+
+> Pro seviye tam yığın denetimi (tut/ekle/değiştir), platform sınırları ve AI katmanı: **`docs/KALITE-PROGRAMI.md` §5–6.**
 
 ---
 
@@ -182,3 +188,7 @@ değildir; sadelik, güvenilirlik ve iyi kullanıcı deneyimi önceliklidir.
 | Tem 11 | WP-26 ile tema yalnız primary/accent seçimi olmayacak; tüm uygulama yüzeyleri ThemeExtension renk tokenlarıyla yönetilecek. Sabit gri/surface renkleri ana UI'dan temizlenecek, özel çizim ve semantik renkler belgeli istisna kalacak. |
 | Tem 11 | Ana navigasyon beş sekmeye genişletilecek: Ana Sayfa / Saat / Gruplar / İstatistikler / Profil. Ana Sayfa günlük kişisel çalışma alanıdır; Saat, grup, analiz ve profil verilerinin asıl evi kendi sekmeleridir. |
 | Tem 11 | Sosyal profil/başarı sistemi XP-taç, kademeli rozetler ve ortak grup üyeleriyle sınırlı profil vitrini kullanır. Kritik XP/başarı ilerlemesi istemciye güvenilmeden hesaplanır; seri efekti hareket azaltma tercihini destekler. |
+| **Tem 12** | **Kalite pivotu.** Amaç "çalışsın" değil birinci sınıf kalite. İki "tamamlandı" tanımından yalnız (2) geçerli; 8-aşamalı iş merdiveni + kanıt etiketleri benimsendi. Klasik özellik yol haritası yerine **kalite programı** (`docs/KALITE-PROGRAMI.md`). |
+| **Tem 12** | **Server-authoritative ilerleme.** XP/başarı istemcide hesaplanıp yazılamaz; append-only XP ledger + idempotent achievement event + benzersiz ödül anahtarı + Edge Function/pg_cron. `0022`'nin geniş açık RLS'i düzeltilecek: sosyal profil yalnız ortak aktif grup üyesine görünür, e-posta gizli, adminlik erişimi otomatik genişletmez. |
+| **Tem 12** | **Çok-ajanlı çakışma protokolü.** Paralel 3–4 ajan: her ajan görevi alır almaz `progress.md` Aktif Çalışma Kaydı'na SAHİP yol/ortak yüzeyini işler; başlamadan tüm kaydı okuyup çakışma ön-kontrolü yapar; risk varsa başlamaz, kullanıcıyı gerekçeyle uyarır. Saat/Tema/Başarım aynı anda açılmaz. |
+| **Tem 12** | **Platform sınırları belgelendi.** Bildirim görünümü OEM'e bağlı; home widget < 15 dk periyodik güncelleme garanti değil → canlı süre native `Chronometer`, state receiver/service, stats widget'ları olay bazlı. Native temel (foreground service, exact alarm, boot receiver) v8/Saat'te eklenip cihazda kanıtlanır. |

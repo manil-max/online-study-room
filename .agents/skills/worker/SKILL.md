@@ -1,151 +1,137 @@
 ---
 name: worker
 description: >
-  İş paketini (WP) uygulayan ajan. Kullanıcı "progress.md oku ve WP-N'yi yap"
-  deyince WP detayını okur ve kurallara uygun şekilde kodu yazar.
+  Bir Faz/WP'yi birinci sınıf kalitede uygulayan ajan. Kullanıcı "worker'ı oku ve
+  şu Fazı/WP'yi yap" deyince tetiklenir. Basit tetik, altında derin kalite ve
+  çakışma protokolü.
 ---
 
-# Uygulayıcı Ajan Rehberi
+# Uygulayıcı Ajan Rehberi (Kalite Programı)
+
+> Çekirdek kurallar `.agents/AGENTS.md`'de; kanonik program `docs/KALITE-PROGRAMI.md`'de.
+> Burası **nasıl** uygulanacağının titiz rehberidir. Bu skill, kullanıcının basit
+> promtunun altındaki derin iş akışıdır.
 
 ## Tetik
 
-Kullanıcı: **"progress.md oku ve WP-N'yi yap"**
+Kullanıcı (kısa): **"worker'ı oku ve V8-A'yı / WP-N'yi yap"** (Faz veya WP olabilir).
 
 ---
 
-## Akış
+## Akış (özet)
 
 ```
-1. progress.md oku           → kendi lane'ini ve WP'ni bul
-2. "Proje Gerçekleri" oku    → teknik bağlam
-3. "✅ Tamamlanan İş Paketleri"ni oku → son değişikliklerin bağlamı
-4. Başlamadan önce            → kendi lane'ini `Aktif`, WP durumunu `[~] Uygulanıyor` yap
-5. WP adımlarını sırayla yap → sadece SAHİP dosyalara yaz
-6. Tümü bitince               → test + analyze + WP'yi tamamlananlara taşı + commit
+1. progress.md oku            → kendi lane + verilen Faz/WP kartı
+2. AGENTS.md + KALITE-PROGRAMI → kural + kabul kriterleri + DoD
+3. ÇAKIŞMA ÖN-KONTROLÜ (Adım 0) → gerekiyorsa DUR ve UYAR
+4. CLAIM et                   → Aktif Çalışma Kaydı'na kendi lane'ini yaz (iki-aşamalı)
+5. Tasarım/teknik tasarımı netleştir → belirsizlik varsa sor
+6. Adımları sırayla uygula    → yalnız SAHİP dosyalara yaz, DoD'yi izle
+7. Doğrula                    → analyze 0 uyarı + test + (mümkünse) cihaz kanıtı
+8. Kapat                      → durumu güncelle, kabul bekleyeni işaretle, commit
 ```
 
 ---
 
-## Kod Kuralları
+## Adım 0 — Çakışma Ön-Kontrolü (kod yazmadan ÖNCE, zorunlu)
 
-### Derleme
-- `cd app` içinde çalış, repo kökünde değil
-- Her `flutter` komutuna `--dart-define-from-file=env.json` geç
-- Web testi: `flutter run -d chrome --web-port=5005 --dart-define-from-file=env.json`
+`.agents/AGENTS.md §1.2`'yi uygula:
 
-### Repo Katmanı
-- Her repository **çift implementasyonlu**: `supabase/` + `in_memory/`
-- Yeni özellik ekliyorsan **ikisini de güncelle** yoksa demo/offline mod kırılır
-- Arayüz değişikliği → `data/repositories/xxx_repository.dart` (abstract)
+1. **Tüm Aktif Çalışma Kaydı'nı oku** (her lane).
+2. Verilen görevin **SAHİP yolları + ortak/riskli yüzeyini**, diğer aktif lane'lerin SAHİP/ortak yüzeyi ve §1.4 sıcak dosyalarıyla karşılaştır.
+3. Şu durumlardan biri varsa **BAŞLAMA, kullanıcıyı somut ve gerekçeli uyar:**
+   - SAHİP yol kesişimi · ortak sıcak dosya · aynı/çakışan migration · büyük program (Saat/Tema/Başarım) eşzamanlılığı · henüz kabul edilmemiş bir WP'ye bağımlılık.
+4. Uyarı, hangi lane/WP ile, hangi dosyada, **neden** sorun olacağını ve **somut öneri** (serileştir / kapsamı daralt / farklı WP) içerir. Örnek şablon `AGENTS.md §1.2`'de.
+5. Çakışma yoksa → CLAIM (Adım 1) → kaydı **yeniden oku** → hâlâ temizse başla.
 
-### Veritabanı
-- Yeni migration → `supabase/migrations/NNNN_ad.sql` (sıralı, son numaradan devam)
-- Migration sırası bozulmamalı (0001→...→0013→...)
-- RLS zorunlu — istemci kontrolü kozmetik, güvenlik DB'de
-- SECURITY DEFINER helper'lar: `is_group_member(gid)`, `can_see_user_sessions(target)`, `is_group_admin(gid)`
-
-### Güvenlik
-- `env.json`, `key.jks`, `key.properties` **commit etme**
-- Commit öncesi `git status` ile gizli dosya kontrolü
-- Supabase `service_role` key asla istemcide olmaz
-
-### Dil
-- Kullanıcıya görünen metinler **Türkçe**
-- Kod/değişken isimleri **İngilizce**
-- Gün sınırı her yerde **Europe/Istanbul**
+> **Kullanıcı görevi sana açıkça vermiş olsa bile bu kural geçerlidir.** "Bana verildi" çakışmayı geçersiz kılmaz — çakışma görürsen BAŞLAMA, uyar, onay bekle. Emin değilsen çakışma **var** say ve sor. "Belki sorun olmaz" ile başlama.
 
 ---
 
-## Paralel Çalışma Kuralları (Kritik)
+## Adım 1 — CLAIM + dal aç (başlamadan önce)
 
-1. **Sadece kendi WP'nin SAHİP dosyalarına yaz**
-2. Başka WP'nin SAHİP dosyasına **ASLA dokunma** (okuyabilirsin)
-3. DOKUNMA listesindeki dosyaları **kesinlikle değiştirme**
-4. `progress.md`'de **sadece kendi lane'ini ve kendi WP bölümünü** düzenle
-5. Yeni dosya eklemek serbest ama **yalnız kendi feature klasörüne**
-6. Ortak dosya değişikliği gerekiyorsa → WP'de belirtilmiş olmalı, yoksa **dur ve kullanıcıya sor**
+1. **Dal aç:** `git switch -c wpNN-kisa-ad` (AGENTS.md §1.5). Tüm commit'ler bu dala gider; `main`'e sen merge etmezsin.
+2. `progress.md` Aktif Çalışma Kaydı'nda kendi lane'ini doldur (format `AGENTS.md §1.1`): Durum `[~] Aktif`, Faz/WP, Aşama `Geliştiriliyor`, **SAHİP yollar**, **ortak/riskli yüzey**, **Dal: `wpNN-kisa-ad`**, başlangıç + son güncelleme (Europe/Istanbul), not. Güncel sürüm/faz etiketini koru; eski plan metnini geri getirme.
 
 ---
 
-## Lane Disiplini
+## Kalite Barı (bu programın özü)
 
-- `progress.md` üç canlı lane içerir: `Gemini`, `Claude`, `Codex`.
-- Her agent yalnız kendi lane'inde çalışan WP kartını günceller.
-- Bir WP başka ajana geçiyorsa, tek editte yeni lane'e taşınır ve kısa bir handoff notu yazılır.
-- Başlatma, bloklanma, devretme ve tamamlanma gibi her anlamlı geçişte `progress.md` anında güncellenir.
-- Başka lane'lerdeki kartlar yalnız okunur; reassign yoksa dokunma.
+Her WP birinci sınıf çıktı üretir. Uygularken:
 
-## progress.md Yaşam Döngüsü (Zorunlu)
+- **Kabul kriterleri ölçülebilir.** "Güzel/profesyonel" değil; "oturum sonrası UI ≤ 1 sn'de güncellenir", "sayaç 8 saatte ≤ ±1 sn sapar" gibi (KALITE-PROGRAMI §4.4). Kart kabul kriteri belirsizse **netleştir, gerekirse sor.**
+- **Ölü anahtar yasak.** Eklediğin her düğme/ayar gerçekten çalışır.
+- **Referans kıyası.** Kıyaslanan davranışı (ör. Google Saat alarm akışı) referans al, birebir kopyalama — Odak Kampı kimliğiyle özgün yap.
+- **Platform sınırlarına saygı.** Bildirim görünümü OEM'e bağlıdır; widget < 15 dk periyodik güncelleme garanti değildir → canlı süre için native `Chronometer`, state için receiver/service, stats widget'ları **olay bazlı**. Saniyede bir Flutter yeniden çizme yok.
+- **Boş/hata/çevrimdışı** her ekranda düşünülür.
 
-`progress.md` plan listesi değil, canlı durum kaynağıdır. Eski metni kopyalayıp dosyanın
-tamamını yeniden yazma. Her durum değişikliğinden hemen önce dosyayı yeniden oku ve yalnız
-kendi lane'inle kendi WP kartına dar bir patch uygula.
+---
 
-### Başlatırken
+## Kod Kuralları (özet — tamamı AGENTS.md'de)
 
-1. Kendi lane'inde `**Durum:** [~] Aktif — WP-N ...` ve `**Aktif WP:** WP-N` yaz.
-2. Plan Kuyruğu'ndaki kendi kartını `**Durum:** [~] Uygulanıyor — <ajan>` yap.
-3. Kullanıcının açıkladığı güncel sürüm/faz etiketini koru. Dosyada `V6` yazıyorsa eski
-   `V4`/`V5` başlıklarını veya eski plan metnini geri getirme.
+- `cd app`; her `run/test/build`'e `--dart-define-from-file=env.json`; `analyze` bayraksız.
+- Repository **çift**: `supabase/` + `in_memory/` birlikte.
+- Migration `NNNN_ad.sql` sıralı; RLS zorunlu; **XP/kritik ilerleme server-authoritative**; sır istemcide yok.
+- Kullanıcı metni Türkçe; gün sınırı Europe/Istanbul tek yardımcıdan.
 
-### Bitirirken
+---
 
-1. Testler temiz olduktan sonra Plan Kuyruğu'ndaki **kendi WP kartını tamamen kaldır**.
-2. Aynı kartı `## ✅ Tamamlanan İş Paketleri` başlığının hemen altına, en yeni tamamlanan
-   iş olarak ekle. Kartta en az şu alanlar bulunur:
-   - `### WP-N: Ad — YYYY-AA-GG ✅`
-   - `Değişen dosyalar`, `Ne yapıldı`, `Test`
-3. Aynı WP hem Plan Kuyruğu'nda hem Tamamlananlar'da **asla** bulunmaz; eski/tekrarlanan
-   WP kartlarını çoğaltma.
-4. Kendi lane'ini `Boşta`, `Aktif WP: —` yap. `Son WP numarası` yalnız yeni WP planlanıyorsa
-   artırılır; tamamlanan eski WP yüzünden geriye alınmaz.
-5. Tamamlanan iş listesi uzarsa en eski özeti Geçmiş tablosuna sıkıştır; fakat başlıkları
-   (`## 🧭 Plan Kuyruğu`, `## 🚀 V6 Sonrası Planlanan Yeni İş Paketleri`,
-   `## ✅ Tamamlanan İş Paketleri`) silme veya yeniden adlandırma.
+## Lane & progress.md Yaşam Döngüsü
+
+`progress.md` plan listesi değil, **canlı durum kaynağıdır.** Her durum değişiminden hemen önce dosyayı yeniden oku; yalnız **kendi lane + kendi WP kartına dar patch** uygula. Tüm dosyayı stale kopyadan yeniden yazma; başka ajanların kartlarını ve güncel faz etiketlerini koru.
+
+- Üç+ canlı lane: `Gemini`, `Claude`, `Codex` (+ gerekirse ek). Yalnız kendi lane.
+- Anlamlı her geçişte (başlat / blokla / devret / test geçti / kabul bekliyor / tamamlandı) `progress.md` anında güncellenir.
+- Handoff: WP başka ajana geçiyorsa tek editte yeni lane'e taşınır + kısa handoff notu.
 
 ---
 
 ## WP Bitirme Sırası
 
-WP'nin tüm adımları `[x]` olduğunda:
+Tüm adımlar `[x]` olduğunda:
 
-### 1. Test Et
+### 1. Doğrula
 ```bash
 cd app
-flutter analyze --dart-define-from-file=env.json
-flutter test
+flutter analyze                       # 0 uyarı (bayraksız)
+flutter test                          # yeşil
+flutter test --tags golden            # tema/görsel değiştiyse
 ```
-- İkisi de temiz olmalı. **Hatayla commit atma — önce düzelt.**
+Hatayla **commit atma** — önce düzelt. Mümkünse gerçek cihaz kanıtı (ekran görüntüsü/video) topla.
 
-### 2. progress.md Güncelle
-- Yukarıdaki **progress.md Yaşam Döngüsü** adımlarını uygula: plan kartını kaldır, tamamlananlar başlığı altına tek özet olarak taşı ve lane'i boşalt.
-- Dokümanı stale kopyadan geri yazma; güncel sürüm/faz etiketlerini ve başka ajanların eklediği WP'leri koru.
+### 2. Durumu güncelle (iki olasılık)
+- **Cihaz QA + ürün kabulü VARSA:** kartı Plan Kuyruğu'ndan kaldır → `## ✅ Tamamlanan İş Paketleri` altına ekle (`### WP-N: Ad — YYYY-AA-GG ✅` + `Değişen dosyalar` / `Ne yapıldı` / `Test` / `Kanıt`). Lane'i `Boşta`, `Aktif WP: —` yap. Aynı WP iki başlıkta **asla** bulunmaz.
+- **Yalnız kod+test bitti, cihaz/kabul YOK:** kartı **"Kabul Bekleyen"** durumuna al (`Aşama: Otomatik test geçti — cihaz QA / ürün kabulü bekliyor`), lane'i boşaltma seçeneğini kullanıcıya bırak. Kanıt etiketi `Cihazda doğrulanmalı`.
 
-### 3. Commit At
+### 3. Commit (kendi dalına)
 ```bash
 git add -A
-git commit -m "WP-N: [kısa açıklama]"
+git commit -m "WP-N: [kısa açıklama]"   # wpNN-kisa-ad dalında
 ```
-- **Push yapma** (kullanıcı istemediği sürece)
-- WP başına **tek commit**
+**Push yok** (istenmedikçe). WP başına **tek commit**. **`main`'e merge ETME** — WP "Ürün kabulü"nden geçince kullanıcı birleştirir (AGENTS.md §1.5). Kullanıcıya dal adını bildir.
+
+### 4. Teslim özeti (kullanıcıya)
+Kısa Türkçe: ne yapıldı · değişen dosyalar · test durumu · **hangi kanıt etiketi** (Kodda doğrulandı / Cihazda doğrulanmalı) · varsa uygulanması gereken migration · açık kalan `Ürün kararı`.
 
 ---
 
 ## Karar Alma
 
-- WP'deki adımlarda belirsizlik varsa → WP'nin "Tuzaklar" bölümüne bak
-- Geri dönüşü zor karar → `progress.md`'ye "⚠️ Soru" yaz, **dur ve kullanıcıya sor**
-- Küçük teknik karar (değişken adı, widget seçimi) → kendin al, devam et
+- Küçük teknik karar (değişken adı, widget seçimi) → kendin al, devam et.
+- Belirsiz kabul kriteri / birden çok yaklaşım / geri dönüşü zor karar → `progress.md`'ye `⚠️ Soru` yaz, **dur ve sor** (`Ürün kararı gerekiyor`).
+- Migration/RLS/güvenlik etkisi olan karar → asla tek başına "idare eder" deme; AGENTS.md §2 güvenlik kurallarına göre değerlendir, gerekirse sor.
 
 ---
 
-## Sık Karşılaşılan Tuzaklar
+## Sık Tuzaklar
 
 | Tuzak | Çözüm |
 |---|---|
-| `fromMap`'te kaldırılmış kolon | `grep -rn "kolon_adı" app/lib` ile tüm kalıntıları bul |
-| Test fixture'da eski alan | Test dosyalarını da güncelle |
-| `dashboardCardFor` imza değişimi | 19 kart widget'ı + `home_screen.dart` etkilenir |
-| Migration sırası | Son migration numarasını `supabase/migrations/` dizininden oku |
-| Presence tablosu `group_id` | KORUNUYOR — dokunma |
-| `shared_preferences` key çakışması | Mevcut key'leri `core/prefs/` altında kontrol et |
+| Çakışma ön-kontrolünü atlamak | Adım 0 zorunlu — başlamadan tüm Aktif Kayıt okunur |
+| `analyze`'e `--dart-define-from-file` vermek | analyze bu bayrağı kabul etmez; bayraksız çalıştır |
+| Tek repo implementasyonu güncellemek | `supabase/` + `in_memory/` birlikte |
+| XP/başarıyı istemcide yazmak | Server-authoritative; ledger + idempotent event |
+| `fromMap`'te kaldırılmış kolon | `grep -rn "kolon" app/lib` ile kalıntı ara |
+| Migration sırası | Son numarayı `supabase/migrations/` dizininden oku |
+| Presence `group_id` | KORUNUYOR — dokunma |
+| Sıcak dosyaya (pubspec/theme/main) sessiz giriş | WP'de yazılı değilse dur ve sor |

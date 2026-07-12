@@ -2,11 +2,22 @@
 
 > Üstteki en öncelikli. Yeni fikir en alta eklenir, birlikte sıralanır.
 > Bir işe başlayınca buradan alınır → `progress.md`'ye WP olarak geçer.
-> Kaynak: `new_features.md` (21 maddelik geri bildirim) + `progress.md` bekleyen maddeler + `project.md` açık sorular.
+> **Öncelik artık `docs/KALITE-PROGRAMI.md` faz sırasına tabidir** (Faz 0 → V8 Güven → Saat → Tema → Başarım → Masaüstü). Kaynak: KALITE-PROGRAMI + `progress.md` + `project.md` açık sorular.
 
 ---
 
 ## 🔴 Yüksek Öncelik
+
+- [~] **Kalite Programı — Faz 0 + V8 Güven Sürümü** — **planner ile WP'lere bölünecek**
+  - **Faz 0A:** Tek kaynak & tamamlanma denetimi (özellik envanteri, P0/P1/P2 bug listesi, canlı migration + Edge Function durum matrisi, v8 blocker listesi). Yeni özellik üretmez.
+  - **Faz 0B:** Test & gözlemlenebilirlik temeli (integration test, native widget/bildirim test planı, Sentry).
+  - **V8-A:** Sayaç–bildirim–widget tek doğruluk kaynağı (foreground service, canlı `Chronometer`, olay bazlı stats widget'ları).
+  - **V8-B:** Genel senkronizasyon denetimi (canonical projection, idempotency, çoklu cihaz).
+  - **V8-C:** Küçük IA — İstatistik sırası (sıralama trendin üstüne) + Gruplar sırası (kamp ateşi üste) + animasyon kısaltma.
+  - *Kaynak: kalite pivotu 2026-07-12; KALITE-PROGRAMI §7–8.*
+
+- [~] **"Tamamlandı" görünüp ürün kabulü bekleyenler** — Faz 0'da yeniden sınıflandırılacak
+  - WP-23 (Saat), WP-26 (Tema), WP-35 (Başarım), Android widget, WP-36 (IA): kod var ama (2) tanımını (cihazda güvenilir + kullanıcı beklentisi) tam karşılamıyor. Kanıt: KALITE-PROGRAMI §3.
 
 - [~] **Hesabımı yönet merkezi** — **WP-31 planlandı**
   - Profil/Ayarlar içinde bağlı e-postayı gösteren ve hesap güvenliği işlemlerini tek yerde toplayan bir ekran olacak.

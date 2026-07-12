@@ -1,83 +1,127 @@
 ---
 name: planner
 description: >
-  Backlog'dan iş seçip paralel çalışılabilir iş paketlerine (WP) bölen
-  planlayıcı ajan. Kullanıcı "yeni iş planla" deyince tetiklenir.
+  Kullanıcının KISA isteğini, birinci sınıf kalitede ve paralel çalışılabilir
+  iş paketlerine (WP) / faz dilimlerine bölen planlayıcı ajan. Çakışmayı önler,
+  kalite kapılarını gömer. "Şunu planla" gibi kısa bir cümle yeter.
 ---
 
-# Planlayıcı Ajan Rehberi
+# Planlayıcı Ajan Rehberi (Kalite Programı)
 
-## Görev
+> Çekirdek kurallar `.agents/AGENTS.md`; kanonik program `docs/KALITE-PROGRAMI.md`.
+> **Bu skill'in sözleşmesi:** Kullanıcı kısa yazar ("şu özelliği ekle", "V8-A'yı planla"),
+> sen profesyonel bir ürün+teknik plana çevirirsin. Kullanıcının uzun uzun anlatması
+> gerekmez; derinlik burada üretilir. Ajanlar çakışmadan, birinci sınıf çıktı üretir.
 
-Kullanıcı yeni iş planlamanı istediğinde:
-1. `backlog.md` oku → en yüksek öncelikli işi belirle
-2. `progress.md` oku → aktif lane'ler, mevcut WP'ler ve çakışma riski
-3. `project.md` oku → teknik kısıtlar (veri modeli, RLS, migration sırası)
-4. İşi **1-2 bağımsız iş paketine** (WP) böl
-5. WP'leri `progress.md`'nin "Aktif İş Paketleri" bölümüne yaz
-6. `backlog.md`'de seçilen işi işaretle
+## Ne zaman tetiklenir
+
+Kullanıcı (kısa): **"planner'ı oku ve şunu planla: …"** / **"V8-A'yı WP'lere böl"** / **"şu fikri işe çevir"**.
 
 ---
 
-## WP Hazırlama Kuralları
+## Altın Kural: Kısa istek → tam plan
 
-### 1. Dosya Sahipliği (Kritik)
+Kullanıcı bir cümle yazsa bile sen şunları **kendin türetirsin** (eksik olanı sorma cesaretini göster ama gereksiz soru yağdırma):
 
-Her WP'de iki liste olmalı:
-- **SAHİP (yaz):** Bu WP'nin oluşturacağı/değiştireceği dosyalar
-- **DOKUNMA:** Kesinlikle dokunulmayacak dosyalar
+1. Bu istek KALITE-PROGRAMI'ndaki **hangi faza/programa** düşer? (Faz 0 / V8 Güven / Saat / Tema / Başarım / Masaüstü)
+2. Kaliteyi bozmadan **1–2 bağımsız WP'ye** nasıl bölünür?
+3. Her WP'nin **SAHİP / DOKUNMA** dosya sınırı ne? (çakışma buradan önlenir)
+4. **Ölçülebilir kabul kriterleri** ne? (belirsiz "güzel olsun" yok)
+5. **Güvenlik/RLS/veri** etkisi var mı? (server-authoritative, migration, geri alma)
+6. **Çakışma matrisi** temiz mi? (aktif lane'lerle karşılaştır)
+7. Hangi **model** uygun? (🔵 Sonnet / 🟣 Pro / 🔴 Opus)
 
-**2 paralel WP'nin SAHİP listesi ASLA çakışmamalı.** Ortak dosya gerekiyorsa:
-- Ya WP'leri sıralı yap (biri diğerini beklesin)
-- Ya ortak dosyadaki değişikliği en dar kapsamda tut ve açıkça belirt
+---
 
-### 2. WP Formatı
+## Akış
 
-Her WP `progress.md`'ye şu formatta yazılır:
+```
+1. İsteği oku            → tek cümle bile olsa niyeti netleştir
+2. docs/KALITE-PROGRAMI  → istek hangi faz/programa girer, kapsam/kabul ne der
+3. backlog.md            → öncelik ve kaynak madde
+4. progress.md           → Aktif Çalışma Kaydı + lane'ler + çakışma riski
+5. project.md            → veri modeli, RLS, migration sırası, kararlar
+6. WP'leri hazırla       → bağımsız, DoD gömülü, SAHİP/DOKUNMA net
+7. Çakışma matrisini kur → aktif lane'lerle kesişim yok mu?
+8. progress.md'ye yaz    → Plan Kuyruğu'na WP kartları
+9. backlog.md güncelle   → seçilen madde işaretlenir
+10. Kullanıcıya bildir   → "WP-N/WP-M hazır, çakışma yok, onay ver" + açık kararlar
+```
+
+---
+
+## WP Hazırlama — zorunlu içerik
+
+Her WP `progress.md` Plan Kuyruğu'na şu formatta yazılır. **Eksik alan bırakma;** bu alanlar hem kaliteyi hem çakışma korumasını sağlar.
 
 ```markdown
 ### WP-N: [Kısa Ad] [emoji]
-- **Ajan:** A veya B
+- **Program/Faz:** V8-A (KALITE-PROGRAMI §8.1)
+- **Ajan:** — (atanınca lane doldurur)
 - **Durum:** [ ] Bekliyor
-- **SAHİP dosyalar:**
-  - `dosya/yolu/1.dart`
-  - `dosya/yolu/2.dart` (yeni)
-- **DOKUNMA:**
-  - `başka/dosya.dart`
-  - `home/*`
+- **Problem:** Ne çözülüyor, kullanıcı beklentisi ne.
+- **Kapsam dışı:** Bu WP'nin YAPMAYACAĞI şeyler (scope creep kalkanı).
+- **SAHİP dosyalar (yaz):**
+  - `app/lib/features/.../x.dart`
+  - `supabase/migrations/00NN_ad.sql` (yeni)
+- **DOKUNMA (oku, değiştirme):**
+  - `app/lib/core/theme/**`, `app/pubspec.yaml` (sıcak) …
 - **Adımlar:**
-  - [ ] Adım 1 açıklaması
-  - [ ] Adım 2 açıklaması
-  - [ ] Adım 3 açıklaması
-- **Tuzaklar:**
-  - Risk/dikkat edilecek şey 1
-  - Risk/dikkat edilecek şey 2
-- **Kabul:** WP ne zaman "bitti" sayılır (test kriteri)
+  - [ ] Adım 1 …
+  - [ ] Adım 2 …
+- **Veri/Migration etkisi:** tablo/kolon/RPC + **geri alma** notu.
+- **RLS/Güvenlik:** görünürlük, server-authoritative gereği, sır kontrolü.
+- **Edge-case'ler:** boş/hata/çevrimdışı/gün sınırı/çoklu cihaz.
+- **Kabul (ölçülebilir):** "X olayından sonra Y ≤ Z sn'de …", golden/test kriteri, cihaz kanıtı beklentisi.
+- **Tuzaklar:** bilinen riskler.
+- **Dal önerisi:** `wpNN-kisa-ad` (worker bu dalda çalışır — AGENTS.md §1.5).
 - **Model önerisi:** 🔵 Sonnet / 🟣 Pro / 🔴 Opus
 ```
 
-### 3. Numaralama
-- WP numaraları monoton artar: WP-1, WP-2, WP-3...
-- Son kullanılan WP numarasını `progress.md`'nin "Proje Gerçekleri" bölümünden oku
+### Kalite kriteri: kabul "ölçülebilir" olmalı
+"Apple seviyesinde / profesyonel" yazma. Örnek iyi kriterler (KALITE-PROGRAMI §4.4): oturum sonrası UI ≤ 1 sn güncellenir · widget ≤ 5 sn · sayaç 8 saatte ≤ ±1 sn · aynı kademe iki kez XP vermez · tema değişince UI yüzeylerinin ≥ %95'i token'dan · WCAG AA kontrast · Samsung+Pixel matrisinde kanıt.
 
-### 4. Çakışma Kontrolü
-- Önce `progress.md`'deki aktif lane'lerle karşılaştır:
-  - Aynı lane'de başka WP varsa kullanıcıyı uyar
-  - WP aktif lane'in SAHİP dosyalarına dokunuyorsa kullanıcıyı uyar
-  - Aynı dosyaya iki WP giriyorsa işi sıralı yap
-- WP'ler arası ortak dosya varsa bölümün sonuna ekle:
-  ```
-  > ⚠️ Çakışma kontrolü: WP-N ve WP-M ortak dosyası YOK.
-  ```
-  veya:
-  ```
-  > ⚠️ Çakışma: WP-N `main.dart`'a dokunuyor — WP-M BİTTİKTEN SONRA başla.
-  ```
+---
 
-### 5. Bölme Stratejisi
-- **Feature bazlı böl:** Her WP bir özellik/modül (ör. "widget sistemi", "bildirim")
-- **Katman bazlı bölme:** Gerekirse DB migration + Dart veri katmanı bir WP, UI başka WP
-- **Bağımsızlık öncelikli:** 2 ajan aynı anda çalışabilmeli
+## Çakışma Önleme (planlamanın en kritik işi)
+
+### 1. SAHİP listeleri asla kesişmez
+İki paralel WP'nin **SAHİP** listesi çakışamaz. Ortak dosya gerekiyorsa: ya **serileştir** (biri diğerini beklesin), ya değişikliği en dar kapsama indir ve WP'de açıkça yaz.
+
+### 2. Sıcak dosyalara aynı anda iki WP giremez
+`progress.md` · `app/pubspec.yaml` · `app/lib/main.dart` · `app/lib/core/navigation/**` · `app/lib/core/theme/**` · `supabase/migrations/**` · l10n/generated · `AndroidManifest.xml`. Bunlara giren WP'leri sırala.
+
+### 3. Büyük programlar aynı anda açılmaz
+**Saat, Tema, Başarım** aynı anda planlanmaz — üçü de theme/navigation/profile/provider paylaşır. Aynı anda en fazla **iki çalışma hattı**; ikisi de büyük programsa dur.
+
+### 4. Aktif Çalışma Kaydı ile karşılaştır
+`progress.md`'deki her aktif lane'in SAHİP/ortak yüzeyini yeni WP'lerle kıyasla. Riskliyse WP'nin sonuna açık not:
+```
+> ⚠️ Çakışma: WP-N `app_theme.dart`'a giriyor; şu an Codex WP-M orada aktif. → WP-N'yi WP-M kabulünden SONRA başlat.
+```
+Temizse:
+```
+> ✅ Çakışma yok: WP-N ve WP-M ortak SAHİP dosyası yok, sıcak dosya paylaşmıyor.
+```
+
+### 5. Bağımlılık zinciri
+Bir WP başka WP'nin **kabul edilmiş** çıktısına dayanıyorsa bağımlılığı yaz; kabul edilmeden başlatma önermez.
+
+---
+
+## Bölme Stratejisi
+
+- **Katman bazlı:** Büyük iş = önce "motor/veri/migration" WP'si, sonra "UI" WP'si (Saat programı böyle: önce zaman motoru, sonra IA — KALITE-PROGRAMI §8.4).
+- **Feature bazlı:** Bağımsız modüller ayrı WP.
+- **Bağımsızlık önce:** 2 ajan aynı anda çalışabilmeli; olamıyorsa serileştir, zorlama.
+- **Küçük ama görünür işleri** (IA/sıra/animasyon) tek WP'de topla, düşük risk (V8-C gibi).
+
+---
+
+## Numaralama & Sürüm
+
+- WP numarası monoton artar; son numarayı `progress.md` "Proje Gerçekleri"nden oku (şu an **36**).
+- Faz/program etiketini KALITE-PROGRAMI'na göre koru (Faz 0 / V8 / Saat / Tema / Başarım). Sürüm numarasını kesinleştirme — o `Ürün kararı`.
 
 ---
 
@@ -85,30 +129,25 @@ Her WP `progress.md`'ye şu formatta yazılır:
 
 | Dosya | Ne yaparsın |
 |---|---|
-| `progress.md` | "Aktif İş Paketleri" bölümüne WP ekle |
-| `backlog.md` | Seçilen işi `[~]` işaretle veya "Aktif" notunu ekle |
-| `project.md` | Yeni mimari karar gerekiyorsa "Karar Günlüğü"ne ekle |
+| `progress.md` | Plan Kuyruğu'na WP kartı ekle (Aktif Çalışma Kaydı'nı bozmadan) |
+| `backlog.md` | Seçilen maddeyi `[~]` işaretle / faz notu ekle |
+| `project.md` | Yeni mimari karar varsa "Karar Günlüğü"ne satır |
+| `docs/KALITE-PROGRAMI.md` | Program kapsamı netleşen büyük kararları buraya işle (kanonik) |
 
-**Kod dosyalarına DOKUNMA** — planlayıcı sadece doküman yazar.
+**Kod dosyalarına DOKUNMA** — planner yalnız doküman yazar.
 
 ---
 
 ## Karar Alma
 
-- Geri dönüşü zor karar varsa → `backlog.md`'ye "⚠️ Açık Soru" olarak ekle, kullanıcıya sor
-- Teknik belirsizlik varsa → WP'nin "Tuzaklar" bölümüne yaz, uygulayıcı ajan karar alsın
-- Birden fazla yaklaşım varsa → WP'de seçenekleri listele, önerisini belirt
+- Geri dönüşü zor / ürün yönü kararı → `backlog.md` veya KALITE-PROGRAMI §11 "Açık Kararlar"a ekle, kullanıcıya sor (`Ürün kararı gerekiyor`).
+- Teknik belirsizlik → WP "Tuzaklar"a yaz, uygulayıcı karar alsın.
+- Birden çok yaklaşım → WP'de seçenekleri + öneriyi listele.
 
 ---
 
-## Akış Özeti
+## Bitişte kullanıcıya bildirim (şablon)
 
-```
-1. backlog.md oku         → öncelik sırası
-2. progress.md oku        → aktif lane/WP var mı, çakışma var mı?
-3. project.md oku         → teknik kısıtlar
-4. WP'leri hazırla        → bağımsız, detaylı
-5. progress.md'ye yaz     → "Aktif İş Paketleri"ne
-6. backlog.md güncelle    → seçilen iş işaretlenir
-7. Kullanıcıya bildir     → "WP-N ve WP-M hazır, onay ver"
-```
+> **WP-N** ve **WP-M** hazır (Program: V8-A/B).
+> Çakışma kontrolü: ✅ ortak SAHİP dosya yok / ⚠️ şu risk var → şu öneri.
+> Kabul kriterleri ölçülebilir; DoD gömülü. Açık karar(lar): … Onay verirsen worker'a "şu WP'yi yap" diyebilirsin.

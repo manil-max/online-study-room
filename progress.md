@@ -1,7 +1,9 @@
 # progress.md — İlerleme Takibi
 
 > Son güncelleme: 2026-07-12
-> Sistem: İş Paketi (WP) tabanlı. Planlama: `.agents/skills/planner/SKILL.md` · Uygulama: `.agents/skills/worker/SKILL.md`.
+> Sistem: İş Paketi (WP) tabanlı, **Kalite Programı**. Kanonik program: `docs/KALITE-PROGRAMI.md`.
+> Planlama: `.agents/skills/planner/SKILL.md` · Uygulama: `.agents/skills/worker/SKILL.md` · Kurallar: `.agents/AGENTS.md`.
+> **"Tamamlandı" = kod DEĞİL; kullanıcı beklentisini karşılayan + cihazda güvenilir çalışan iş.** İş durum merdiveni (8 aşama) ve kanıt etiketleri (`Kodda doğrulandı` / `Cihazda doğrulanmalı` / `Ürün kararı gerekiyor`) için bkz. AGENTS.md §0.
 
 ---
 
@@ -16,7 +18,8 @@
 - **Dashboard:** 6 sütunlu 2D matris, 19 kart türü, `grid_reflow.dart` motoru.
 - **Tema:** Hazır paletler + özel palet slotları; görünür tüm yüzeyler palette bağlanmalıdır, sabit gri renk eklenmez.
 - **Navigasyon hedefi:** Ana Sayfa / Saat / Gruplar / İstatistikler / Profil. Ana Sayfa günlük kullanım alanıdır; diğer alanların verisi kendi sekmelerinde eksiksiz bulunur.
-- **Release:** Stable/Beta kanalı GitHub Releases ile çalışır.
+- **Release:** Stable/Beta kanalı GitHub Releases ile çalışır. **v7 yayında (özellik sürümü).** İlk kalite-kapılı stable önerisi: **v8 "Güven Sürümü"** (`Ürün kararı gerekiyor`).
+- **Kalite kapıları:** Her WP DoD'siz kapanmaz; stable release kalite kapısından geçer (AGENTS.md §3). Server-authoritative XP, RLS/sosyal profil, platform sınırları → `docs/KALITE-PROGRAMI.md`.
 - **Son WP numarası:** 36
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
@@ -27,33 +30,47 @@
 
 ---
 
-## ⚡ Aktif İş Paketleri
+## ⚡ Aktif Çalışma Kaydı (çakışma koordinasyon yüzeyi)
 
-> Bu bölüm yalnız şu anda kodlanan WP'leri içerir. Bir WP tamamlanınca kartı buradan ve planlananlar listesinden kaldırılır, doğrudan **Tamamlanan İş Paketleri** bölümüne tek kez eklenir.
+> **Bu bölüm paralel ajanların TEK paylaşılan gerçeğidir.** Her ajan görevi alır almaz (kod yazmadan önce) kendi lane'ini doldurur; başlamadan önce tüm lane'leri okuyup çakışma ön-kontrolü yapar (AGENTS.md §1). Çakışma varsa başlamaz, kullanıcıyı gerekçeyle uyarır.
+> Bir WP tamamlanınca (cihaz QA + kabul) kartı buradan/plandan kaldırılır, **Tamamlanan İş Paketleri**ne tek kez eklenir.
+
+**Lane şablonu** (doldurulacak alanlar): Durum · Faz/WP · Aşama (8-merdiven) · SAHİP yollar · Ortak/riskli yüzey · Dal · Başlangıç · Son güncelleme · Not.
 
 ### Gemini Lane
-- **Sorumlu:** Gemini
 - **Durum:** [x] Boşta
-- **Aktif WP:** —
-- **Kapsam:** Yeni atama bekleniyor.
+- **Faz/WP:** — · **Aşama:** — · **SAHİP yollar:** — · **Ortak/riskli yüzey:** — · **Dal:** — · **Son güncelleme:** 2026-07-12
 
 ### Claude Lane
-
-- **Sorumlu:** Claude
 - **Durum:** [x] Boşta
-- **Aktif WP:** —
+- **Faz/WP:** — · **Aşama:** — · **SAHİP yollar:** — · **Ortak/riskli yüzey:** — · **Dal:** — · **Son güncelleme:** 2026-07-12
 
 ### Codex Lane
-
-- **Sorumlu:** Codex
 - **Durum:** [x] Boşta
-- **Aktif WP:** —
+- **Faz/WP:** — · **Aşama:** — · **SAHİP yollar:** — · **Ortak/riskli yüzey:** — · **Dal:** — · **Son güncelleme:** 2026-07-12
 
 ---
 
+## Kalite Programı — Faz/Program Sırası
+
+> Kaynak: `docs/KALITE-PROGRAMI.md`. Bunlar program dilimleridir; planner tetiklenince WP'lere bölünür. Aynı anda en fazla **iki çalışma hattı**; Saat/Tema/Başarım aynı anda AÇILMAZ.
+
+| Sıra | Program/Faz | Kapsam | Durum | Not |
+|---|---|---|---|---|
+| 1 | **Faz 0A** | Tek kaynak & tamamlanma denetimi (envanter, P0/P1/P2 bug, migration/Edge Function canlı durum) | Planlandı | Yeni özellik üretmez |
+| 2 | **Faz 0B** | Test & gözlemlenebilirlik temeli (integration test, native test planı, Sentry) | Planlandı | — |
+| 3 | **V8-A** | Sayaç–bildirim–widget tek doğruluk kaynağı (foreground service, canlı `Chronometer`) | Planlandı | native + cihaz QA |
+| 4 | **V8-B** | Genel senkronizasyon denetimi (canonical projection, idempotency) | Planlandı | — |
+| 5 | **V8-C** | Küçük IA: İstatistik sırası + Gruplar sırası/kamp ateşi + animasyon | Planlandı | düşük risk, golden test |
+| 6 | **V8 beta → soak → stable** | Kalite kapısı | Planlandı | `Ürün kararı`: sürüm no |
+| 7 | **Saat programı** | Saat 1–5 (motor → IA → alarm → kronometre/timer → StandBy/widget) | Planlandı | tek başına program |
+| 8 | **Tema Stüdyosu** | Token motoru + 12+ tema ailesi + katmanlı editör | Planlandı | Saat ile eşzamanlı açılmaz |
+| 9 | **Başarım & Sosyal Profil 3.0** | Tek motor, server-authoritative XP ledger, herkese açık profil RLS | Planlandı | güvenlik ağırlıklı |
+| 10 | **Windows masaüstü** | WP-27/28 (aşağıda) | Planlandı | — |
+
 ## Planlanan İş Paketleri
 
-> Burada yalnız başlanmamış işler bulunur. Sıra, bağımlılık ve ürün önceliğine göre korunur.
+> Burada yalnız başlanmamış, WP'ye bölünmüş işler bulunur. Sıra, bağımlılık ve ürün önceliğine göre korunur.
 
 | WP | Durum | Kısa kapsam | Bağımlılık |
 |---|---|---|---|
