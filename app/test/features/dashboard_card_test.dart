@@ -293,24 +293,22 @@ void main() {
       expect(prefs.getString('dashboard_grid_density'), 'columns16');
     });
 
-    test('otomatik yogunluk genislige gore 6 8 12 16 secer', () async {
-      SharedPreferences.setMockInitialValues({});
+    test('eski automatic tercihi guvenli bicimde 6 sutuna duser', () async {
+      SharedPreferences.setMockInitialValues({
+        'dashboard_grid_density': 'automatic',
+      });
       final prefs = await SharedPreferences.getInstance();
       final container = ProviderContainer(
         overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
       );
       addTearDown(container.dispose);
 
-      final notifier = container.read(dashboardGridColumnsProvider.notifier);
+      expect(
+        container.read(dashboardGridDensityProvider),
+        DashboardGridDensity.columns6,
+      );
       expect(container.read(dashboardGridColumnsProvider), 6);
-      notifier.resolveForWidth(900);
-      expect(container.read(dashboardGridColumnsProvider), 8);
-      notifier.resolveForWidth(1200);
-      expect(container.read(dashboardGridColumnsProvider), 12);
-      notifier.resolveForWidth(1400);
-      expect(container.read(dashboardGridColumnsProvider), 16);
-      notifier.resolveForWidth(600);
-      expect(container.read(dashboardGridColumnsProvider), 6);
+      expect(prefs.getString('dashboard_grid_density'), 'columns6');
     });
   });
 }

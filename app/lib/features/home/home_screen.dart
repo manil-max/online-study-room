@@ -97,9 +97,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       layout: layout,
                       columns: columns,
                       editing: _editing,
-                      onViewportWidth: ref
-                          .read(dashboardGridColumnsProvider.notifier)
-                          .resolveForWidth,
                       onLongPressCard: () => _setEditing(true),
                       onMoveCard: (type, x, y) => ref
                           .read(dashboardLayoutProvider.notifier)
@@ -231,7 +228,6 @@ class _MatrixGrid extends StatefulWidget {
     required this.layout,
     required this.columns,
     required this.editing,
-    required this.onViewportWidth,
     required this.onLongPressCard,
     required this.onMoveCard,
     required this.onResizeCard,
@@ -242,7 +238,6 @@ class _MatrixGrid extends StatefulWidget {
   final List<DashboardCardConfig> layout;
   final int columns;
   final bool editing;
-  final ValueChanged<double> onViewportWidth;
   final VoidCallback onLongPressCard;
   final void Function(DashboardCardType type, int x, int y) onMoveCard;
   final void Function(
@@ -273,7 +268,6 @@ class _MatrixGridState extends State<_MatrixGrid> {
   final GlobalKey _gridKey = GlobalKey();
   _DragTargetCell? _target;
   DashboardCardType? _selected;
-  double? _lastReportedWidth;
 
   void _clearTarget() {
     if (_target != null) setState(() => _target = null);
@@ -297,12 +291,6 @@ class _MatrixGridState extends State<_MatrixGrid> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        if (_lastReportedWidth != constraints.maxWidth) {
-          _lastReportedWidth = constraints.maxWidth;
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) widget.onViewportWidth(constraints.maxWidth);
-          });
-        }
         final cell =
             (constraints.maxWidth - (widget.columns - 1) * _kGap) /
             widget.columns;

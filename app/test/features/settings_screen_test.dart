@@ -7,11 +7,15 @@ import 'package:online_study_room/data/models/profile.dart';
 import 'package:online_study_room/data/providers/admin_providers.dart';
 import 'package:online_study_room/data/providers/auth_providers.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_admin_repository.dart';
+import 'package:online_study_room/features/notifications/notification_center_screen.dart';
 import 'package:online_study_room/features/profile/settings_screen.dart';
+import 'package:online_study_room/features/updater/release_notes_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  testWidgets('SettingsScreen renders without Timer group', (tester) async {
+  testWidgets('SettingsScreen ayarlari tek katmanda ve dogrudan acar', (
+    tester,
+  ) async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
     final adminRepo = InMemoryAdminRepository();
@@ -51,27 +55,37 @@ void main() {
     FlutterError.onError = prev;
     expect(details.map((d) => d.exceptionAsString()), isEmpty);
 
-    expect(find.text('Görünüm'), findsOneWidget);
-    expect(find.text('Ana Sayfa ızgarası'), findsOneWidget);
+    expect(find.byType(ExpansionTile), findsNothing);
+    expect(find.text('Görünüm'), findsNothing);
+    expect(find.text('Ana Sayfa ızgarası'), findsNothing);
     expect(find.text('Izgara yoğunluğu'), findsOneWidget);
-    expect(find.text('Otomatik'), findsOneWidget);
-    await tester.tap(find.text('Otomatik'));
+    expect(find.text('Otomatik'), findsNothing);
+    await tester.tap(find.text('6 sütun'));
     await tester.pumpAndSettle();
     expect(find.text('16 sütun'), findsOneWidget);
-    expect(find.text('Kamp ateşi'), findsOneWidget);
-    // WP-36: "Ana Sayfa" grubu kaldırıldı; sayaç anahtarı "Gruplar" grubuna taşındı.
-    expect(find.text('Ana Sayfa'), findsNothing);
-    expect(find.text('Gruplar'), findsOneWidget);
-    // WP-36: "Bildirimler" grubu tek girişli "Bildirim Merkezi" oldu.
+    await tester.tap(find.text('16 sütun'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Kamp ateşi'), findsNothing);
+    expect(find.text('Kamp hayvanın'), findsOneWidget);
+    expect(find.text('Gruplar'), findsNothing);
+    expect(find.text('Gruplar ekranında da sayaç göster'), findsNothing);
     expect(find.text('Bildirim Merkezi'), findsOneWidget);
-    expect(find.text('Cihaz Entegrasyonları'), findsOneWidget);
-    expect(find.text('Destek'), findsOneWidget);
+    expect(find.text('Bildirim Merkezi’ni aç'), findsNothing);
+    expect(find.text('Sürüm ve güncellemeler'), findsOneWidget);
+    expect(find.text('Uygulama Kısayolları (Rutinler)'), findsOneWidget);
     expect(find.text('Geri bildirim gönder'), findsOneWidget);
     expect(find.text('Yönetim'), findsNothing);
 
-    // Verify timer group is removed
-    expect(find.text('Sayaç'), findsNothing);
-    expect(find.text('Zamanlayıcı modları ve odak ayarları'), findsNothing);
+    await tester.tap(find.text('Bildirim Merkezi'));
+    await tester.pumpAndSettle();
+    expect(find.byType(NotificationCenterScreen), findsOneWidget);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Sürüm ve güncellemeler'));
+    await tester.pumpAndSettle();
+    expect(find.byType(ReleaseNotesScreen), findsOneWidget);
 
     tester.view.resetPhysicalSize();
     tester.view.resetDevicePixelRatio();

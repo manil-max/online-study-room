@@ -10,25 +10,17 @@ const _kLastColumnsKey = 'dashboard_grid_last_columns';
 const _kDensityKey = 'dashboard_grid_density';
 const _kClassroomTimerKey = 'classroom_show_timer';
 
-enum DashboardGridDensity {
-  automatic,
-  columns6,
-  columns8,
-  columns12,
-  columns16,
-}
+enum DashboardGridDensity { columns6, columns8, columns12, columns16 }
 
 extension DashboardGridDensityX on DashboardGridDensity {
   String get label => switch (this) {
-    DashboardGridDensity.automatic => 'Otomatik',
     DashboardGridDensity.columns6 => '6 sütun',
     DashboardGridDensity.columns8 => '8 sütun',
     DashboardGridDensity.columns12 => '12 sütun',
     DashboardGridDensity.columns16 => '16 sütun',
   };
 
-  int? get fixedColumns => switch (this) {
-    DashboardGridDensity.automatic => null,
+  int get columns => switch (this) {
     DashboardGridDensity.columns6 => 6,
     DashboardGridDensity.columns8 => 8,
     DashboardGridDensity.columns12 => 12,
@@ -39,11 +31,14 @@ extension DashboardGridDensityX on DashboardGridDensity {
 class DashboardGridDensityNotifier extends Notifier<DashboardGridDensity> {
   @override
   DashboardGridDensity build() {
-    final raw = ref.watch(sharedPreferencesProvider).getString(_kDensityKey);
-    return DashboardGridDensity.values
-            .where((value) => value.name == raw)
-            .firstOrNull ??
-        DashboardGridDensity.automatic;
+    final prefs = ref.watch(sharedPreferencesProvider);
+    final raw = prefs.getString(_kDensityKey);
+    final stored = DashboardGridDensity.values
+        .where((value) => value.name == raw)
+        .firstOrNull;
+    if (stored != null) return stored;
+    prefs.setString(_kDensityKey, DashboardGridDensity.columns6.name);
+    return DashboardGridDensity.columns6;
   }
 
   void set(DashboardGridDensity value) {
@@ -57,33 +52,9 @@ final dashboardGridDensityProvider =
       DashboardGridDensityNotifier.new,
     );
 
-class DashboardGridColumnsNotifier extends Notifier<int> {
-  @override
-  int build() {
-    return ref.watch(dashboardGridDensityProvider).fixedColumns ??
-        kDefaultGridColumns;
-  }
-
-  void resolveForWidth(double width) {
-    if (ref.read(dashboardGridDensityProvider) !=
-        DashboardGridDensity.automatic) {
-      return;
-    }
-    final next = width < 720
-        ? 6
-        : width < 1080
-        ? 8
-        : width < 1360
-        ? 12
-        : 16;
-    if (next != state) state = next;
-  }
-}
-
-final dashboardGridColumnsProvider =
-    NotifierProvider<DashboardGridColumnsNotifier, int>(
-      DashboardGridColumnsNotifier.new,
-    );
+final dashboardGridColumnsProvider = Provider<int>(
+  (ref) => ref.watch(dashboardGridDensityProvider).columns,
+);
 
 String _profileKey(int columns) => '$_kLayoutProfilePrefix$columns';
 
