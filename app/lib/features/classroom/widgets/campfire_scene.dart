@@ -178,7 +178,8 @@ class _SceneLayoutState extends State<_SceneLayout>
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 3200),
-    )..repeat();
+    );
+    // Döngü reduce-motion'a göre didChangeDependencies'te başlatılır/durdurulur.
     final rnd = math.Random(7);
     _embers = List.generate(
       18,
@@ -193,6 +194,22 @@ class _SceneLayoutState extends State<_SceneLayout>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // reduce-motion (sistem "animasyonları azalt"): sonsuz/dekoratif alev, ember
+    // ve nefes döngüsünü durdur (batarya) ve sabit sıcak bir karede dondur; aksi
+    // halde döngüyü sürdür. Yerleşim (AnimatedPositioned) süresi build'de ayrıca
+    // 0'a çekilir, böylece sahne beklemeden yerleşir.
+    final reduceMotion = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    if (reduceMotion) {
+      if (_controller.isAnimating) _controller.stop();
+      _controller.value = 0.55;
+    } else if (!_controller.isAnimating) {
+      _controller.repeat();
+    }
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
     super.dispose();
@@ -202,6 +219,12 @@ class _SceneLayoutState extends State<_SceneLayout>
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final n = widget.campers.length;
+
+    // Yerleşim süresi: normalde kısa ve snappy (≤ 700 ms tam yerleşim hedefi),
+    // reduce-motion'da anında.
+    final reduceMotion = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final settle =
+        reduceMotion ? Duration.zero : const Duration(milliseconds: 420);
 
     final intensity = widget.studyingCount == 0
         ? 0.24
@@ -243,7 +266,7 @@ class _SceneLayoutState extends State<_SceneLayout>
 
         Widget body(_Placement p) => AnimatedPositioned(
               key: ValueKey('b-${p.camper.member.id}'),
-              duration: const Duration(milliseconds: 560),
+              duration: settle,
               curve: Curves.easeOutCubic,
               left: p.x - _CritterBody.boxFor(p.scale) / 2,
               top: p.y - _CritterBody.boxFor(p.scale) * _CritterBody.anchor,
@@ -345,7 +368,7 @@ class _SceneLayoutState extends State<_SceneLayout>
               for (final p in placements)
                 AnimatedPositioned(
                   key: ValueKey('l-${p.camper.member.id}'),
-                  duration: const Duration(milliseconds: 560),
+                  duration: settle,
                   curve: Curves.easeOutCubic,
                   left: p.x - 55,
                   top: p.y -

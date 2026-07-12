@@ -19,17 +19,28 @@ Widget _harness({
   required List<Profile> members,
   required List<Presence> presence,
   required Map<String, int> today,
+  bool reduceMotion = false,
 }) {
+  const scene = Scaffold(
+    body: SizedBox(width: 400, child: CampfireScene()),
+  );
   return ProviderScope(
     overrides: [
       groupMembersProvider.overrideWith((ref) => Stream.value(members)),
       groupPresenceProvider.overrideWith((ref) => Stream.value(presence)),
       groupTodaySecondsProvider.overrideWithValue(today),
     ],
-    child: const MaterialApp(
-      home: Scaffold(
-        body: SizedBox(width: 400, child: CampfireScene()),
-      ),
+    child: MaterialApp(
+      // reduce-motion'ı MaterialApp'in ALTINDA override et (aksi halde MaterialApp
+      // kendi MediaQuery'siyle üzerine yazar).
+      home: reduceMotion
+          ? Builder(
+              builder: (context) => MediaQuery(
+                data: MediaQuery.of(context).copyWith(disableAnimations: true),
+                child: scene,
+              ),
+            )
+          : scene,
     ),
   );
 }
@@ -95,6 +106,32 @@ void main() {
       find.textContaining('Ateş sönük'),
       findsOneWidget,
     );
+
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets(
+      'reduce-motion açıkken sonsuz alev döngüsü durur (sahne pumpAndSettle ile '
+      'oturur, batarya tüketen animasyon yok)', (tester) async {
+    await tester.pumpWidget(_harness(
+      members: [_profile('u1', 'Ada'), _profile('u2', 'Bora')],
+      presence: [
+        Presence(userId: 'u1', status: PresenceStatus.offline, todaySeconds: 0),
+        Presence(userId: 'u2', status: PresenceStatus.offline, todaySeconds: 0),
+      ],
+      today: {'u1': 0, 'u2': 0},
+      reduceMotion: true,
+    ));
+
+    // Normalde alev AnimationController.repeat() sonsuz döner ve pumpAndSettle
+    // 10 dk timeout ile hang eder. reduce-motion'da döngü durdurulduğundan
+    // pumpAndSettle sorunsuz oturmalı — bu, animasyonun gerçekten durduğunun
+    // davranışsal kanıtı.
+    await tester.pumpAndSettle();
+
+    expect(find.byType(CampfireScene), findsOneWidget);
+    expect(find.text('Ada'), findsOneWidget);
+    expect(find.text('Bora'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox());
   });

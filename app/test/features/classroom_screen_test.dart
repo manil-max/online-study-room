@@ -66,21 +66,41 @@ void main() {
     FlutterError.onError = prev;
     expect(details.map((d) => d.exceptionAsString()), isEmpty);
 
-    // Grup adı hem başlıkta hem GroupGoalCard içinde görünür (meşru → 1+).
+    // Grup adı hem kompakt başlıkta hem GroupGoalCard içinde görünür (meşru → 1+).
     expect(find.text('Test Group'), findsWidgets);
-    expect(find.text('TEST12'), findsOneWidget);
     expect(find.byTooltip('Sohbet'), findsOneWidget);
     expect(find.byTooltip('Ayarlar'), findsOneWidget);
-    expect(find.byTooltip('Kopyala'), findsOneWidget);
 
-    // Verify order
-    final goalY = tester.getTopLeft(find.byType(GroupGoalCard)).dy;
+    // Davet kodu artık kamp ateşinin üstünde değil; alttaki açılır "Grup bilgileri"
+    // panelinde. Kapalıyken kod/kopyala görünmez.
+    expect(find.text('Grup bilgileri'), findsOneWidget);
+    expect(find.text('TEST12'), findsNothing);
+    expect(find.byTooltip('Kopyala'), findsNothing);
+
+    // Sıra (§8.3 Gruplar): kamp ateşi EN ÜSTTE → grup hedefi → trend.
     final campfireY = tester.getTopLeft(find.byType(CampfireScene)).dy;
+    final goalY = tester.getTopLeft(find.byType(GroupGoalCard)).dy;
     final trendY = tester.getTopLeft(find.byType(GroupTrendCard)).dy;
 
-    expect(goalY < campfireY, isTrue);
-    expect(campfireY < trendY, isTrue);
+    expect(campfireY < goalY, isTrue,
+        reason: 'kamp ateşi grup hedefinin ÜSTÜNDE olmalı (kullanıcı isteği)');
+    expect(goalY < trendY, isTrue, reason: 'grup hedefi trendin üstünde olmalı');
 
+    // Yönetim paneli en altta (trendin altında).
+    final mgmtY = tester.getTopLeft(find.text('Grup bilgileri')).dy;
+    expect(trendY < mgmtY, isTrue, reason: 'yönetim paneli en altta olmalı');
+
+    // Açılır panel gerçekten çalışır: dokununca davet kodu + kopyala görünür.
+    // (CampfireScene sonsuz alev animasyonu barındırdığı için pumpAndSettle
+    // yerine ExpansionTile'ın 200 ms açılışını sınırlı pump ile bekle.)
+    await tester.tap(find.text('Grup bilgileri'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('TEST12'), findsOneWidget);
+    expect(find.byTooltip('Kopyala'), findsOneWidget);
+
+    // Sonsuz animasyon timer'ını temizle.
+    await tester.pumpWidget(const SizedBox());
     tester.view.resetPhysicalSize();
     tester.view.resetDevicePixelRatio();
   });

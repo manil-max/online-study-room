@@ -102,99 +102,133 @@ class _GroupView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     // Sayaç varsayılan olarak Ana Sayfa'dadır; isteyen Sınıflar'a ekler (§3.9).
     final showTimer = ref.watch(classroomShowTimerProvider);
 
+    // Sıra (KALITE-PROGRAMI §8.3 Gruplar): kamp ateşi → grup hedefi → trend →
+    // yönetim. Kamp ateşi en üstte; davet kodu gibi operasyonel bilgiler artık
+    // ateşin üstünde büyük alan kaplamaz, alttaki açılır yönetim paneline taşındı.
+    // (Grup sıralaması kartı bu sekmede yok — sıralama İstatistikler sekmesinde;
+    // buraya ayrı bir sıralama kartı eklemek WP-45 kapsamı dışı, `Ürün kararı`.)
     return ListView(
       padding: getSafeVerticalPadding(context, horizontal: 16, vertical: 16),
       children: [
         if (showTimer) ...[const StudyTimerCard(), const SizedBox(height: 8)],
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        _CompactGroupHeader(group: group),
+        const SizedBox(height: 8),
+        const CampfireScene(),
+        const SizedBox(height: 16),
+        const GroupGoalCard(),
+        const SizedBox(height: 16),
+        const GroupTrendCard(),
+        const SizedBox(height: 16),
+        _GroupManagementTile(group: group),
+      ],
+    );
+  }
+}
+
+/// Kamp ateşinin üstünde yalnız tek satır kaplayan kompakt başlık: grup adı +
+/// sohbet/ayarlar kısayolları. Davet kodu buraya değil, alttaki açılır panele
+/// (`_GroupManagementTile`) taşındı ki ateş sahnesi üstte kalsın (§8.3).
+class _CompactGroupHeader extends StatelessWidget {
+  const _CompactGroupHeader({required this.group});
+
+  final StudyGroup group;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            group.name,
+            style:
+                theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        IconButton(
+          tooltip: 'Sohbet',
+          icon: const Icon(Icons.forum_outlined),
+          onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => ClassChatScreen(group: group),
+            ),
+          ),
+        ),
+        IconButton(
+          tooltip: 'Ayarlar',
+          icon: const Icon(Icons.settings_outlined),
+          onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => ClassDetailScreen(group: group),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Alttaki açılır "Grup bilgileri" paneli: davet kodu + kopyala. Varsayılan
+/// kapalıdır; operasyonel bilgi kamp ateşi sahnesinin üstünden alınıp buraya
+/// taşındı (§8.3 — davet kodu büyük alan kaplamamalı).
+class _GroupManagementTile extends StatelessWidget {
+  const _GroupManagementTile({required this.group});
+
+  final StudyGroup group;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: ExpansionTile(
+        leading: const Icon(Icons.info_outline),
+        title: const Text('Grup bilgileri'),
+        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 8, 12),
+        children: [
+          Row(
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(
-                      group.name,
-                      style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        tooltip: 'Sohbet',
-                        icon: const Icon(Icons.forum_outlined),
-                        onPressed: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => ClassChatScreen(group: group),
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        tooltip: 'Ayarlar',
-                        icon: const Icon(Icons.settings_outlined),
-                        onPressed: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => ClassDetailScreen(group: group),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+              Text(
+                'Davet kodu: ',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               ),
-              Row(
-                children: [
-                  Text(
-                    'Kod: ',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
+              Flexible(
+                child: SelectableText(
+                  group.inviteCode,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 2,
                   ),
-                  SelectableText(
-                    group.inviteCode,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: 2,
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: 'Kopyala',
-                    icon: const Icon(Icons.copy, size: 16),
-                    visualDensity: VisualDensity.compact,
-                    onPressed: () async {
-                      await Clipboard.setData(
-                        ClipboardData(text: group.inviteCode),
-                      );
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Davet kodu kopyalandı'),
-                          ),
-                        );
-                      }
-                    },
-                  ),
-                ],
+                ),
+              ),
+              IconButton(
+                tooltip: 'Kopyala',
+                icon: const Icon(Icons.copy, size: 18),
+                visualDensity: VisualDensity.compact,
+                onPressed: () async {
+                  await Clipboard.setData(
+                    ClipboardData(text: group.inviteCode),
+                  );
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Davet kodu kopyalandı'),
+                      ),
+                    );
+                  }
+                },
               ),
             ],
           ),
-        ),
-        const SizedBox(height: 8),
-        const GroupGoalCard(),
-        const SizedBox(height: 16),
-        const CampfireScene(),
-        const SizedBox(height: 16),
-        const GroupTrendCard(),
-      ],
+        ],
+      ),
     );
   }
 }
