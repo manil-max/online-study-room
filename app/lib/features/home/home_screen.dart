@@ -63,6 +63,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final columns = ref.watch(dashboardGridColumnsProvider);
     final layout = ref.watch(dashboardLayoutProvider);
     final body = layout.isEmpty
         ? _EmptyDashboard(onEdit: () => showCardPicker(context))
@@ -94,7 +95,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ],
                     _MatrixGrid(
                       layout: layout,
+                      columns: columns,
                       editing: _editing,
+                      onViewportWidth: ref
+                          .read(dashboardGridColumnsProvider.notifier)
+                          .resolveForWidth,
                       onLongPressCard: () => _setEditing(true),
                       onMoveCard: (type, x, y) => ref
                           .read(dashboardLayoutProvider.notifier)
@@ -212,7 +217,9 @@ const double _kGap = 8.0;
 class _MatrixGrid extends StatefulWidget {
   const _MatrixGrid({
     required this.layout,
+    required this.columns,
     required this.editing,
+    required this.onViewportWidth,
     required this.onLongPressCard,
     required this.onMoveCard,
     required this.onResizeCard,
@@ -221,7 +228,9 @@ class _MatrixGrid extends StatefulWidget {
   });
 
   final List<DashboardCardConfig> layout;
+  final int columns;
   final bool editing;
+  final ValueChanged<double> onViewportWidth;
   final VoidCallback onLongPressCard;
   final void Function(DashboardCardType type, int x, int y) onMoveCard;
   final void Function(
@@ -252,6 +261,7 @@ class _MatrixGridState extends State<_MatrixGrid> {
   final GlobalKey _gridKey = GlobalKey();
   _DragTargetCell? _target;
   DashboardCardType? _selected;
+  double? _lastReportedWidth;
 
   void _clearTarget() {
     if (_target != null) setState(() => _target = null);
@@ -275,8 +285,15 @@ class _MatrixGridState extends State<_MatrixGrid> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
+        if (_lastReportedWidth != constraints.maxWidth) {
+          _lastReportedWidth = constraints.maxWidth;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) widget.onViewportWidth(constraints.maxWidth);
+          });
+        }
         final cell =
-            (constraints.maxWidth - (kGridColumns - 1) * _kGap) / kGridColumns;
+            (constraints.maxWidth - (widget.columns - 1) * _kGap) /
+            widget.columns;
         final baseRows = widget.layout.fold<int>(
           1,
           (max, c) => max > c.y + c.h ? max : c.y + c.h,
@@ -310,7 +327,7 @@ class _MatrixGridState extends State<_MatrixGrid> {
           final stride = cell + _kGap;
           final x = (local.dx / stride).floor().clamp(
             0,
-            kGridColumns - config.w,
+            widget.columns - config.w,
           );
           final y = (local.dy / stride).floor().clamp(0, 9999);
           final next = _DragTargetCell(config.type, x, y);
@@ -340,7 +357,11 @@ class _MatrixGridState extends State<_MatrixGrid> {
                 clipBehavior: Clip.none,
                 children: [
                   if (widget.editing)
-                    _GridBackdrop(cell: cell, rows: totalRows),
+                    _GridBackdrop(
+                      cell: cell,
+                      rows: totalRows,
+                      columns: widget.columns,
+                    ),
                   if (draggedConfig != null && _target != null)
                     Positioned(
                       left: _target!.x * (cell + _kGap),
@@ -360,6 +381,7 @@ class _MatrixGridState extends State<_MatrixGrid> {
                       height: heightOf(c),
                       child: _MatrixCard(
                         config: c,
+                        columns: widget.columns,
                         cell: cell,
                         width: widthOf(c),
                         height: heightOf(c),
@@ -395,6 +417,7 @@ class _MatrixGridState extends State<_MatrixGrid> {
                 padding: const EdgeInsets.only(top: 12),
                 child: _SizePanel(
                   config: selectedConfig,
+                  columns: widget.columns,
                   onResize: (w, h) => widget.onResizeCard(
                     selectedConfig.type,
                     selectedConfig.x,
@@ -430,10 +453,15 @@ class _DropGhost extends StatelessWidget {
 }
 
 class _GridBackdrop extends StatelessWidget {
-  const _GridBackdrop({required this.cell, required this.rows});
+  const _GridBackdrop({
+    required this.cell,
+    required this.rows,
+    required this.columns,
+  });
 
   final double cell;
   final int rows;
+  final int columns;
 
   @override
   Widget build(BuildContext context) {
@@ -441,7 +469,7 @@ class _GridBackdrop extends StatelessWidget {
     return Stack(
       children: [
         for (var y = 0; y < rows; y++)
-          for (var x = 0; x < kGridColumns; x++)
+          for (var x = 0; x < columns; x++)
             Positioned(
               left: x * (cell + _kGap),
               top: y * (cell + _kGap),
@@ -466,6 +494,7 @@ class _GridBackdrop extends StatelessWidget {
 class _MatrixCard extends StatefulWidget {
   const _MatrixCard({
     required this.config,
+    required this.columns,
     required this.cell,
     required this.width,
     required this.height,
@@ -479,6 +508,7 @@ class _MatrixCard extends StatefulWidget {
   });
 
   final DashboardCardConfig config;
+  final int columns;
   final double cell;
   final double width;
   final double height;
@@ -525,7 +555,7 @@ class _MatrixCardState extends State<_MatrixCard> {
       x = (start.x + colDelta).clamp(0, right - 1);
       w = right - x;
     } else {
-      w = (start.w + colDelta).clamp(1, kGridColumns - start.x);
+      w = (start.w + colDelta).clamp(1, widget.columns - start.x);
     }
 
     if (anchor.top) {
@@ -549,7 +579,7 @@ class _MatrixCardState extends State<_MatrixCard> {
     final theme = Theme.of(context);
     final card = dashboardCardFor(
       widget.config.type,
-      widget.config.size,
+      widget.config.sizeForColumns(widget.columns),
       height: widget.height,
     );
 
@@ -671,7 +701,7 @@ class _MatrixCardState extends State<_MatrixCard> {
               color: Colors.transparent,
               child: dashboardCardFor(
                 widget.config.type,
-                widget.config.size,
+                widget.config.sizeForColumns(widget.columns),
                 height: widget.height,
               ),
             ),
@@ -688,9 +718,14 @@ class _MatrixCardState extends State<_MatrixCard> {
 /// yerine büyük −/+ düğmeleriyle genişlik/yükseklik ayarlanır (uzun-basma ile
 /// taşıma çakışması olmadan). Sürükleme yolu da ayrıca korunur.
 class _SizePanel extends StatelessWidget {
-  const _SizePanel({required this.config, required this.onResize});
+  const _SizePanel({
+    required this.config,
+    required this.columns,
+    required this.onResize,
+  });
 
   final DashboardCardConfig config;
+  final int columns;
   final void Function(int w, int h) onResize;
 
   @override
@@ -737,7 +772,7 @@ class _SizePanel extends StatelessWidget {
             onDecrease: config.w > 1
                 ? () => onResize(config.w - 1, config.h)
                 : null,
-            onIncrease: config.w < kGridColumns
+            onIncrease: config.w < columns
                 ? () => onResize(config.w + 1, config.h)
                 : null,
           ),

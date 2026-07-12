@@ -151,7 +151,13 @@ extension DashboardCardSizeInfo on DashboardCardSize {
 
 /// Ana Sayfa matrisinin sütun sayısı (§2.2). Yükseklik aşağı doğru sınırsız
 /// satır olarak büyür; kartlar `x,y,w,h` hücreleriyle saklanır.
-const int kGridColumns = 6;
+const int kDefaultGridColumns = 6;
+const int kMaxGridColumns = 12;
+const List<int> kSupportedGridColumns = [6, 8, 12];
+
+/// Eski çağrılar/testler için 6-sütun varsayılanı. Aktif render sütunu artık
+/// `dashboardGridColumnsProvider` üzerinden gelir.
+const int kGridColumns = kDefaultGridColumns;
 
 const int kDefaultCardRows = 3;
 const int _kLegacyGridColumns = 12;
@@ -189,9 +195,9 @@ class DashboardCardConfig {
     this.h = kDefaultCardRows,
   }) : assert(x >= 0),
        assert(y >= 0),
-       assert(w >= 1 && w <= kGridColumns),
+       assert(w >= 1 && w <= kMaxGridColumns),
        assert(h >= 1),
-       assert(x + w <= kGridColumns);
+       assert(x + w <= kMaxGridColumns);
 
   final DashboardCardType type;
   final int x;
@@ -204,18 +210,33 @@ class DashboardCardConfig {
 
   /// Kart içeriği hâlâ S/M/L'ye göre çiziliyor (16 kart). R3'te piksel yerine
   /// hücre boyutu verildiğinde bu köprü sadeleşecek.
-  DashboardCardSize get size => w <= 2
-      ? DashboardCardSize.small
-      : w >= 5
-      ? DashboardCardSize.large
-      : DashboardCardSize.medium;
+  DashboardCardSize get size => sizeForColumns(kDefaultGridColumns);
+
+  DashboardCardSize sizeForColumns(int columns) {
+    if (w * 3 <= columns) return DashboardCardSize.small;
+    if (w * 6 >= columns * 5) return DashboardCardSize.large;
+    return DashboardCardSize.medium;
+  }
 
   /// R3'e kadar eski `SizedBox(height: ...)` kullanan render için hücre satırını
   /// nominal piksele çevirir. Kalıcı veri yine hücre tabanlıdır.
   double get effectiveHeight => h * _kLegacyNominalRowHeight;
 
-  DashboardCardConfig withBounds({int? x, int? y, int? w, int? h}) {
-    return _clamped(type, x ?? this.x, y ?? this.y, w ?? this.w, h ?? this.h);
+  DashboardCardConfig withBounds({
+    int? x,
+    int? y,
+    int? w,
+    int? h,
+    int columns = kDefaultGridColumns,
+  }) {
+    return _clamped(
+      type,
+      x ?? this.x,
+      y ?? this.y,
+      w ?? this.w,
+      h ?? this.h,
+      columns: columns,
+    );
   }
 
   DashboardCardConfig withWidth(int width) => withBounds(w: width);
@@ -227,13 +248,16 @@ class DashboardCardConfig {
 
   static DashboardCardConfig? decode(String raw) => _decodeRaw(raw)?.config;
 
-  static List<DashboardCardConfig> decodeList(List<String> rawItems) {
+  static List<DashboardCardConfig> decodeList(
+    List<String> rawItems, {
+    int columns = kDefaultGridColumns,
+  }) {
     final placed = <DashboardCardConfig>[];
     for (final raw in rawItems) {
-      final decoded = _decodeRaw(raw);
+      final decoded = _decodeRaw(raw, columns: columns);
       if (decoded == null) continue;
       final config = decoded.isLegacy
-          ? _firstAvailable(placed, decoded.config)
+          ? _firstAvailable(placed, decoded.config, columns: columns)
           : decoded.config;
       placed.add(config);
     }
@@ -243,10 +267,15 @@ class DashboardCardConfig {
   static DashboardCardConfig firstAvailable(
     List<DashboardCardConfig> existing,
     DashboardCardType type, {
-    int w = kGridColumns ~/ 2,
+    int columns = kDefaultGridColumns,
+    int? w,
     int h = kDefaultCardRows,
   }) {
-    return _firstAvailable(existing, _clamped(type, 0, 0, w, h));
+    return _firstAvailable(
+      existing,
+      _clamped(type, 0, 0, w ?? columns ~/ 2, h, columns: columns),
+      columns: columns,
+    );
   }
 
   static int rowsForLegacyHeight(double heightPx) {
@@ -259,10 +288,11 @@ class DashboardCardConfig {
     int x,
     int y,
     int w,
-    int h,
-  ) {
-    final safeW = w.clamp(1, kGridColumns);
-    final safeX = x.clamp(0, kGridColumns - safeW);
+    int h, {
+    int columns = kDefaultGridColumns,
+  }) {
+    final safeW = w.clamp(1, columns);
+    final safeX = x.clamp(0, columns - safeW);
     return DashboardCardConfig(
       type,
       x: safeX,
@@ -272,7 +302,10 @@ class DashboardCardConfig {
     );
   }
 
-  static _DecodedDashboardCard? _decodeRaw(String raw) {
+  static _DecodedDashboardCard? _decodeRaw(
+    String raw, {
+    int columns = kDefaultGridColumns,
+  }) {
     final parts = raw.split(':');
     final type = DashboardCardType.values
         .where((t) => t.name == parts.first)
@@ -286,19 +319,23 @@ class DashboardCardConfig {
       final h = int.tryParse(parts[4]);
       if (x != null && y != null && w != null && h != null) {
         return _DecodedDashboardCard(
-          _clamped(type, x, y, w, h),
+          _clamped(type, x, y, w, h, columns: columns),
           isLegacy: false,
         );
       }
     }
 
-    return _DecodedDashboardCard(_decodeLegacy(type, parts), isLegacy: true);
+    return _DecodedDashboardCard(
+      _decodeLegacy(type, parts, columns: columns),
+      isLegacy: true,
+    );
   }
 
   static DashboardCardConfig _decodeLegacy(
     DashboardCardType type,
-    List<String> parts,
-  ) {
+    List<String> parts, {
+    int columns = kDefaultGridColumns,
+  }) {
     var legacyWidth = _kLegacyGridColumns;
     var legacyHeight = defaultCardHeight(DashboardCardSize.large);
 
@@ -326,9 +363,12 @@ class DashboardCardConfig {
       if (parsedHeight != null) legacyHeight = parsedHeight;
     }
 
-    final w = (legacyWidth / 2).round().clamp(1, kGridColumns);
+    final w = (legacyWidth * columns / _kLegacyGridColumns).round().clamp(
+      1,
+      columns,
+    );
     final h = rowsForLegacyHeight(legacyHeight);
-    return _clamped(type, 0, 0, w, h);
+    return _clamped(type, 0, 0, w, h, columns: columns);
   }
 
   static DashboardCardSize _legacySizeForWidth(int legacyWidth) {
@@ -339,11 +379,12 @@ class DashboardCardConfig {
 
   static DashboardCardConfig _firstAvailable(
     List<DashboardCardConfig> existing,
-    DashboardCardConfig target,
-  ) {
+    DashboardCardConfig target, {
+    required int columns,
+  }) {
     for (var y = 0; y < 10000; y++) {
-      for (var x = 0; x <= kGridColumns - target.w; x++) {
-        final candidate = target.withBounds(x: x, y: y);
+      for (var x = 0; x <= columns - target.w; x++) {
+        final candidate = target.withBounds(x: x, y: y, columns: columns);
         if (existing.every((c) => !candidate.overlaps(c))) {
           return candidate;
         }
@@ -353,7 +394,7 @@ class DashboardCardConfig {
       0,
       (max, c) => max > c.y + c.h ? max : c.y + c.h,
     );
-    return target.withBounds(x: 0, y: bottom);
+    return target.withBounds(x: 0, y: bottom, columns: columns);
   }
 
   bool overlaps(DashboardCardConfig other) {

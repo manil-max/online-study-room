@@ -150,7 +150,7 @@ void main() {
   });
 
   group('DashboardLayoutNotifier migration', () {
-    test('eski prefs listesini yuklemede yeni formata kaydeder', () async {
+    test('eski prefs listesini profil formatina gocurur', () async {
       SharedPreferences.setMockInitialValues({
         'dashboard_layout': ['timer:12:320', 'today:small'],
       });
@@ -178,7 +178,12 @@ void main() {
           h: 2,
         ),
       ]);
+      // Geri alma güvenliği için eski anahtar korunur; aktif profil v2'ye yazılır.
       expect(prefs.getStringList('dashboard_layout'), [
+        'timer:12:320',
+        'today:small',
+      ]);
+      expect(prefs.getStringList('dashboard_layout_v2_6'), [
         'timer:0:0:6:4',
         'today:0:4:3:2',
       ]);
@@ -214,6 +219,59 @@ void main() {
           h: 2,
         ),
       ]);
+    });
+
+    test('6 ve 12 sutun profilleri birbirinden bagimsiz saklanir', () async {
+      SharedPreferences.setMockInitialValues({
+        'dashboard_layout': ['timer:0:0:6:4', 'today:0:4:3:2'],
+      });
+      final prefs = await SharedPreferences.getInstance();
+      final container = ProviderContainer(
+        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      );
+      addTearDown(container.dispose);
+
+      expect(container.read(dashboardLayoutProvider).first.w, 6);
+
+      container
+          .read(dashboardGridDensityProvider.notifier)
+          .set(DashboardGridDensity.columns12);
+      expect(container.read(dashboardGridColumnsProvider), 12);
+      expect(container.read(dashboardLayoutProvider).first.w, 12);
+
+      container
+          .read(dashboardLayoutProvider.notifier)
+          .setBounds(DashboardCardType.timer, w: 10);
+      final customized12 = [...container.read(dashboardLayoutProvider)];
+
+      container
+          .read(dashboardGridDensityProvider.notifier)
+          .set(DashboardGridDensity.columns6);
+      expect(container.read(dashboardLayoutProvider).first.w, 6);
+
+      container
+          .read(dashboardGridDensityProvider.notifier)
+          .set(DashboardGridDensity.columns12);
+      expect(container.read(dashboardLayoutProvider), customized12);
+      expect(prefs.getString('dashboard_grid_density'), 'columns12');
+    });
+
+    test('otomatik yogunluk gorunum genisligine gore 6 8 12 secer', () async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      final container = ProviderContainer(
+        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      );
+      addTearDown(container.dispose);
+
+      final notifier = container.read(dashboardGridColumnsProvider.notifier);
+      expect(container.read(dashboardGridColumnsProvider), 6);
+      notifier.resolveForWidth(900);
+      expect(container.read(dashboardGridColumnsProvider), 8);
+      notifier.resolveForWidth(1200);
+      expect(container.read(dashboardGridColumnsProvider), 12);
+      notifier.resolveForWidth(600);
+      expect(container.read(dashboardGridColumnsProvider), 6);
     });
   });
 }

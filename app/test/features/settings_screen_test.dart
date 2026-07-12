@@ -52,6 +52,9 @@ void main() {
     expect(details.map((d) => d.exceptionAsString()), isEmpty);
 
     expect(find.text('Görünüm'), findsOneWidget);
+    expect(find.text('Ana Sayfa ızgarası'), findsOneWidget);
+    expect(find.text('Izgara yoğunluğu'), findsOneWidget);
+    expect(find.text('Otomatik'), findsOneWidget);
     expect(find.text('Kamp ateşi'), findsOneWidget);
     // WP-36: "Ana Sayfa" grubu kaldırıldı; sayaç anahtarı "Gruplar" grubuna taşındı.
     expect(find.text('Ana Sayfa'), findsNothing);

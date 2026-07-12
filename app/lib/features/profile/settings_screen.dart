@@ -57,6 +57,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final showTimerInClass = ref.watch(classroomShowTimerProvider);
+    final gridDensity = ref.watch(dashboardGridDensityProvider);
+    final gridColumns = ref.watch(dashboardGridColumnsProvider);
     final profile = ref.watch(authStateProvider).value;
     final isAdmin = ref.watch(adminIsSuperAdminProvider).value ?? false;
     final animal = profile == null
@@ -69,7 +71,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Ayarlar')),
       body: ListView(
-        padding: getSafePadding(context, const EdgeInsets.fromLTRB(16, 12, 16, 24)),
+        padding: getSafePadding(
+          context,
+          const EdgeInsets.fromLTRB(16, 12, 16, 24),
+        ),
         children: [
           _SettingsGroup(
             icon: Icons.person_outline,
@@ -81,9 +86,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 title: const Text('Başarı Yolculuğum 🏆'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () {
-                  Navigator.of(context).push(MaterialPageRoute(
-                    builder: (_) => const AchievementsScreen(),
-                  ));
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const AchievementsScreen(),
+                    ),
+                  );
                 },
               ),
               ListTile(
@@ -92,7 +99,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 subtitle: const Text('Güvenlik ve hesap ayarları'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const AccountSettingsScreen()),
+                  MaterialPageRoute(
+                    builder: (_) => const AccountSettingsScreen(),
+                  ),
                 ),
               ),
             ],
@@ -110,6 +119,42 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const AppearanceScreen()),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          _SettingsGroup(
+            icon: Icons.grid_view_outlined,
+            title: 'Ana Sayfa ızgarası',
+            subtitle: 'Kart yoğunluğu ve çalışma alanı',
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                child: DropdownButtonFormField<DashboardGridDensity>(
+                  key: ValueKey(gridDensity),
+                  initialValue: gridDensity,
+                  decoration: InputDecoration(
+                    labelText: 'Izgara yoğunluğu',
+                    helperText: gridDensity == DashboardGridDensity.automatic
+                        ? 'Ekrana göre otomatik • şu an $gridColumns sütun'
+                        : 'Bu cihazda $gridColumns sütun kullanılıyor',
+                    border: const OutlineInputBorder(),
+                  ),
+                  items: [
+                    for (final density in DashboardGridDensity.values)
+                      DropdownMenuItem(
+                        value: density,
+                        child: Text(density.label),
+                      ),
+                  ],
+                  onChanged: (value) {
+                    if (value != null) {
+                      ref
+                          .read(dashboardGridDensityProvider.notifier)
+                          .set(value);
+                    }
+                  },
                 ),
               ),
             ],
@@ -188,9 +233,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const ReleaseNotesScreen(),
-                  ),
+                  MaterialPageRoute(builder: (_) => const ReleaseNotesScreen()),
                 ),
               ),
             ],
