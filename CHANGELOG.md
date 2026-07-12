@@ -4,6 +4,36 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [beta-v8 / 1.0.7+8] - 2026-07-12
+
+> ⚠️ **Beta test sürümü.** "Odak Kampı Beta" olarak ayrı kurulur. Bu sürümdeki
+> native arka plan sayaç, bildirim ve widget davranışı gerçek cihazlarda test
+> ediliyor; cihaz/OEM'e göre değişebilir. Geri bildirim bekleniyor.
+
+### Öne çıkanlar
+
+- **Güvenilir arka plan sayacı (V8-A):** Uygulama kapalıyken de çalışan native
+  zamanlayıcı ve foreground service; cihaz yeniden başlasa bile aktif sayaç
+  geri yüklenir.
+- **Canlı bildirim:** Kalıcı bildirimde akan `HH:MM:SS` kronometre ve uygulamayı
+  açmadan **Başlat/Durdur**.
+- **Widget paritesi:** Ana ekran widget'ında canlı kronometre, olay bazlı
+  istatistik/sıralama beslemesi, açık/koyu tema ve Android 12+ dynamic color.
+- **Senkronizasyon denetimi (V8-B):** Aynı toplam artık her ekranda tutarlı;
+  çevrimdışı açılan oturum tekrar bağlanınca **bir kez** yazılır; gün sınırı
+  (Europe/Istanbul) tek kaynaktan.
+- **İstatistik sırası:** Sıralama (leaderboard) artık grup günlük trendinin
+  **üstünde**, özet kartlarının hemen altında.
+- **Gruplar sekmesi:** Kamp ateşi en üstte; davet kodu alttaki açılır "Grup
+  bilgileri" paneline taşındı; kamp ateşi yerleşme animasyonu hızlandı ve
+  sistemdeki **"animasyonları azalt"** ayarına uyar (batarya dostu).
+
+### Notlar
+
+- Native arka plan sayacı, bildirim aksiyonları ve widget davranışı cihaz pil
+  optimizasyonuna ve OEM kısıtlarına bağlıdır; force-stop sonrası garanti değildir.
+- Yeni sunucu migration'ı yoktur; v7 ile aynı şema (0020–0023) yeterlidir.
+
 ## [v7 / 1.0.6+7] - 2026-07-12
 
 ### Öne çıkanlar

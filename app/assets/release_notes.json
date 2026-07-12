@@ -3,6 +3,26 @@
   "source": "CHANGELOG.md",
   "releases": [
     {
+      "versionName": "1.0.7",
+      "buildNumber": 8,
+      "channel": "beta",
+      "date": "2026-07-12",
+      "title": "V8 beta: güvenilir arka plan sayacı, widget ve IA",
+      "highlights": [
+        "Güvenilir arka plan sayacı: uygulama kapalıyken de çalışan native zamanlayıcı + foreground service; reboot sonrası geri yükleme.",
+        "Kalıcı bildirimde akan HH:MM:SS kronometre ve uygulamayı açmadan Başlat/Durdur.",
+        "Widget paritesi: canlı kronometre, olay bazlı istatistik/sıralama, açık/koyu tema ve dynamic color.",
+        "İstatistik: sıralama artık grup günlük trendinin üstünde. Gruplar: kamp ateşi en üstte, davet kodu açılır panelde, animasyon hızlandı ve 'animasyonları azalt' desteği."
+      ],
+      "fixes": [
+        "Senkron denetimi: aynı toplam her ekranda tutarlı; çevrimdışı oturum tekrar bağlanınca bir kez yazılır; gün sınırı tek kaynaktan."
+      ],
+      "notes": [
+        "Beta test sürümü ('Odak Kampı Beta' olarak ayrı kurulur); native arka plan davranışı cihaz/OEM'e göre değişebilir.",
+        "Yeni sunucu migration'ı yoktur; v7 ile aynı şema (0020–0023) yeterlidir."
+      ]
+    },
+    {
       "versionName": "1.0.6",
       "buildNumber": 7,
       "channel": "stable",
