@@ -9,6 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/config/supabase_config.dart';
 import 'core/desktop/desktop_window.dart';
 import 'core/notifications/timer_notification_service.dart';
+import 'core/observability/observability_service.dart';
 import 'core/prefs/app_prefs.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_settings.dart';
@@ -44,6 +45,7 @@ Future<void> main() async {
 
   // Yerel kalıcı ayarlar (Ana Sayfa yerleşimi, saat stili vb. için).
   final prefs = await SharedPreferences.getInstance();
+  await ObservabilityService.instance.initialize(prefs);
 
   runApp(
     ProviderScope(

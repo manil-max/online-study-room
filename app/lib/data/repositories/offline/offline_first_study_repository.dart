@@ -2,6 +2,7 @@ import 'dart:async';
 
 import '../../models/daily_stat.dart';
 import '../../models/study_session.dart';
+import '../../../core/observability/observability_service.dart';
 import '../study_repository.dart';
 import 'offline_cache_store.dart';
 
@@ -20,14 +21,20 @@ class OfflineFirstStudyRepository implements StudyRepository {
   Future<void> flushPending() async {
     if (_isFlushing) return;
     _isFlushing = true;
+    final stopwatch = Stopwatch()..start();
+    var pendingCount = 0;
+    var appliedCount = 0;
+    var remainingCount = 0;
     try {
       final pending = await _cache.readPendingStudyMutations();
+      pendingCount = pending.length;
       final remaining = <OfflineStudyMutation>[];
 
       for (var i = 0; i < pending.length; i++) {
         final mutation = pending[i];
         try {
           await _applyMutation(mutation);
+          appliedCount++;
         } catch (_) {
           remaining.addAll(pending.skip(i));
           break;
@@ -35,8 +42,17 @@ class OfflineFirstStudyRepository implements StudyRepository {
       }
 
       await _cache.replacePendingStudyMutations(remaining);
+      remainingCount = remaining.length;
     } finally {
       _isFlushing = false;
+      if (pendingCount > 0) {
+        ObservabilityService.instance.outboxFlush(
+          pendingCount: pendingCount,
+          appliedCount: appliedCount,
+          remainingCount: remainingCount,
+          elapsedMilliseconds: stopwatch.elapsedMilliseconds,
+        );
+      }
     }
   }
 
@@ -80,16 +96,30 @@ class OfflineFirstStudyRepository implements StudyRepository {
 
     try {
       await flushPending();
+      final realtimeStopwatch = Stopwatch()..start();
       await for (final rows in _remote.watchUserSessions(userId)) {
         // Realtime snapshot gecikmiş olsa bile yerel outbox'taki değişiklikleri
         // ezemez; flush tamamlanana kadar ikisini geçici canonical listede birleştir.
         final reconciled = await _reconcileRemoteSessions(rows);
+        final pendingCount =
+            (await _cache.readPendingStudyMutations()).length;
+        ObservabilityService.instance.realtimeSnapshot(
+          sessionCount: reconciled.length,
+          pendingOutboxCount: pendingCount,
+          elapsedMilliseconds: realtimeStopwatch.elapsedMilliseconds,
+        );
+        realtimeStopwatch
+          ..reset()
+          ..start();
         await _cache.saveUserSessions(userId, reconciled);
         yield reconciled;
         unawaited(flushPending());
       }
     } catch (error, stackTrace) {
       final fallback = await _cache.readUserSessions(userId);
+      ObservabilityService.instance.realtimeFallback(
+        hadCachedRows: fallback != null,
+      );
       if (fallback != null) {
         yield fallback;
       } else {

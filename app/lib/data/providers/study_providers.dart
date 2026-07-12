@@ -10,6 +10,7 @@ import '../../core/config/supabase_config.dart';
 import '../../core/background/timer_foreground_service.dart';
 import '../../core/notifications/timer_external_command_store.dart';
 import '../../core/notifications/timer_notification_service.dart';
+import '../../core/observability/observability_service.dart';
 import '../../core/prefs/app_prefs.dart';
 import '../../core/stats/canonical_stats_projection.dart';
 import '../../core/stats/study_stats.dart';
@@ -413,6 +414,9 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       lastUpdatedAt: DateTime.tryParse(
         prefs.getString(_kActiveUpdatedAt) ?? '',
       ),
+    );
+    ObservabilityService.instance.timerRestore(
+      hadActiveTimer: activeStartedAt != null,
     );
     Future.microtask(() async {
       // Bildirim/widget'tan gelen Durdur/Başlat komutu eskiden yalnız onResume'da
