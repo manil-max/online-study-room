@@ -30,6 +30,12 @@ class TimerExternalCommandStore {
       return TimerExternalCommand(
         command: map['command'] as String,
         sequence: map['sequence'] as int? ?? 0,
+        // Bildirim/widget "Durdur"u app kapalıyken bastığında, gerçek durdurma
+        // anı buraya yazılır; app açılınca oturum bu `at` ile kaydedilir (yoksa
+        // açılış anına kadar olan süre yanlışlıkla sayılırdı).
+        at: (map['at'] is String)
+            ? DateTime.tryParse(map['at'] as String)
+            : null,
       );
     } catch (_) {
       // Önceki native yazıcılarla geriye uyumluluk.
@@ -53,7 +59,14 @@ class TimerExternalCommandStore {
 }
 
 class TimerExternalCommand {
-  const TimerExternalCommand({required this.command, required this.sequence});
+  const TimerExternalCommand({
+    required this.command,
+    required this.sequence,
+    this.at,
+  });
   final String command;
   final int sequence;
+
+  /// Komut app-kapalı üretildiyse (bildirim/widget "Durdur") gerçek eylem anı.
+  final DateTime? at;
 }

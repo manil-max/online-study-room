@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide Presence;
 import 'package:uuid/uuid.dart';
@@ -353,12 +354,23 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     _lifecycleListener = AppLifecycleListener(
       onResume: () => unawaited(_onAppResumed()),
     );
+    // FGS bildirimindeki "Durdur" butonu (arka plan isolate) uygulama AÇIKKEN de
+    // anında işlensin diye ana isolate'e gönderilen veriyi dinleriz. Uygulama
+    // kapalıyken bu tetiklenmez; komut app açılışında işlenir.
+    try {
+      FlutterForegroundTask.addTaskDataCallback(_onTaskData);
+    } catch (_) {
+      // Platform kanalı olmayan test/web hostu.
+    }
     ref.onDispose(() {
       _disposed = true;
       _tick?.cancel();
       _widgetRefreshDebounce?.cancel();
       _notificationCommands?.cancel();
       _lifecycleListener?.dispose();
+      try {
+        FlutterForegroundTask.removeTaskDataCallback(_onTaskData);
+      } catch (_) {}
     });
     // Stats/leaderboard widget'ları saniyelik timer tick'iyle değil, kaynak
     // veriler değiştiğinde güncellenir. Bir oturum yazılması, senkron akışı,
@@ -441,6 +453,14 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
 
   Future<void> _onAppResumed() => _processPendingExternalCommand();
 
+  /// FGS bildirimindeki Durdur butonundan (arka plan isolate) gelen sinyal:
+  /// uygulama açıkken bekleyen komutu hemen işle.
+  void _onTaskData(Object data) {
+    if (data == TimerForegroundService.toggleButtonId) {
+      unawaited(_processPendingExternalCommand());
+    }
+  }
+
   /// Bildirim/widget aksiyonunun [SharedPreferences]'e yazdığı bekleyen
   /// Durdur/Başlat komutunu işler. Hem uygulama öne gelince (onResume) hem de
   /// soğuk açılışta ([build] içindeki microtask) çağrılır; komut tek seferliktir
@@ -459,7 +479,8 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     if (pending.command == 'start' && !state.isRunning) {
       start();
     } else if (pending.command == 'stop' && state.isRunning) {
-      await stop();
+      // App-kapalı basılan Durdur'da gerçek durdurma anını (pending.at) kullan.
+      await stop(at: pending.at);
     }
   }
 
@@ -537,14 +558,20 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   }
 
   /// Kullanıcı elle durdurur: çalışma fazındaysa geçen süreyi kaydet, çevrimdışına çek.
-  Future<void> stop() async {
+  ///
+  /// [at]: durdurma gerçekten ne zaman istendi. Bildirim/widget "Durdur"u app
+  /// kapalıyken basıldıysa o an buradan gelir; yoksa (uygulama içi Durdur) şimdi.
+  /// Böylece app-kapalı durdurmada, uygulamanın açıldığı ana kadar geçen süre
+  /// yanlışlıkla oturuma eklenmez.
+  Future<void> stop({DateTime? at}) async {
     if (!state.isRunning) return;
     final startedAt = state.startedAt;
     final subjectId = state.subjectId;
     final wasWork = state.phase == TimerPhase.work;
     _finish();
     if (wasWork && startedAt != null) {
-      await _recordSession(startedAt, DateTime.now(), subjectId);
+      final end = (at != null && at.isAfter(startedAt)) ? at : DateTime.now();
+      await _recordSession(startedAt, end, subjectId);
     }
   }
 
@@ -762,13 +789,13 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   }
 
   Future<void> _syncTimerNotification() async {
+    // Sayaç bildirimi artık foreground service'in TEK bildirimidir (canlı akan
+    // süre + Durdur butonu; TimerForegroundService/_TimerTask yönetir, app
+    // kapalıyken bile). Burada yalnız eski flutter_local_notifications
+    // bildirimini (varsa) temizleriz ki çift bildirim çıkmasın.
     if (!state.isRunning || state.startedAt == null) {
       await ref.read(timerNotificationServiceProvider).cancel();
-      return;
     }
-    await ref
-        .read(timerNotificationServiceProvider)
-        .showRunning(_notificationSnapshot(DateTime.now()));
   }
 
   Future<void> _syncTimerWidget() async {
@@ -802,41 +829,6 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     await widgetService.refresh(widgets: const [StudyHomeWidget.timer]);
   }
 
-  TimerNotificationSnapshot _notificationSnapshot(DateTime now) {
-    final startedAt = state.startedAt!;
-    final elapsed = now.difference(startedAt).inSeconds;
-    final target = state.phaseTargetSeconds;
-    final remaining = target == null
-        ? null
-        : (target - elapsed).clamp(0, target).toInt();
-    final phaseLabel = switch (state.mode) {
-      TimerMode.stopwatch => 'Çalışma',
-      TimerMode.countdown => 'Geri sayım',
-      TimerMode.pomodoro =>
-        state.phase == TimerPhase.work
-            ? 'Çalışma ${state.cycle}/${state.cycles}'
-            : 'Mola',
-    };
-    final title = state.phase == TimerPhase.rest
-        ? 'Odak Kampı molada'
-        : 'Odak Kampı çalışıyor';
-    return TimerNotificationSnapshot(
-      title: title,
-      modeLabel: switch (state.mode) {
-        TimerMode.stopwatch => 'Kronometre',
-        TimerMode.countdown => 'Geri sayım',
-        TimerMode.pomodoro => 'Pomodoro',
-      },
-      phaseLabel: phaseLabel,
-      startedAt: startedAt,
-      elapsedSeconds: elapsed,
-      remainingSeconds: remaining,
-      isCountingDown: target != null,
-      isRunning: state.isRunning,
-      progress: target == null ? null : elapsed.clamp(0, target).toInt(),
-      progressMax: target,
-    );
-  }
 }
 
 final studyTimerProvider =
