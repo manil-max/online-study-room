@@ -17,7 +17,13 @@ Widget desktopChromeBody({
   required bool isCompact,
   required Widget child,
   required Widget compactChild,
-}) => isCompact ? compactChild : child;
+}) {
+  if (!isCompact) return child;
+  return Overlay(
+    key: const ValueKey('desktop-compact-overlay'),
+    initialEntries: [OverlayEntry(builder: (_) => compactChild)],
+  );
+}
 
 Future<void> toggleDesktopCompactMode() async {}
 

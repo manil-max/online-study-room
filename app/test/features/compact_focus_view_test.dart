@@ -24,6 +24,37 @@ void main() {
     expect(find.byType(AnimatedSwitcher), findsNothing);
   });
 
+  testWidgets('MaterialApp builder dışında kalan compact tooltip çizilir', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        builder: (context, child) => desktopChromeBody(
+          isCompact: true,
+          child: child ?? const SizedBox.shrink(),
+          compactChild: Material(
+            child: Center(
+              child: IconButton(
+                tooltip: 'Her zaman üstte tut',
+                onPressed: () {},
+                icon: const Icon(Icons.push_pin_outlined),
+              ),
+            ),
+          ),
+        ),
+        home: const SizedBox.shrink(),
+      ),
+    );
+    await tester.pump();
+
+    expect(tester.takeException(), isNull);
+    expect(find.byTooltip('Her zaman üstte tut'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('desktop-compact-overlay')),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('oturum yoksa kayıt başlatmaz ve tam pencereye yönlendirir', (
     tester,
   ) async {
