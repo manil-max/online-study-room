@@ -81,8 +81,11 @@ class OfflineFirstStudyRepository implements StudyRepository {
     try {
       await flushPending();
       await for (final rows in _remote.watchUserSessions(userId)) {
-        await _cache.saveUserSessions(userId, rows);
-        yield rows;
+        // Realtime snapshot gecikmiş olsa bile yerel outbox'taki değişiklikleri
+        // ezemez; flush tamamlanana kadar ikisini geçici canonical listede birleştir.
+        final reconciled = await _reconcileRemoteSessions(rows);
+        await _cache.saveUserSessions(userId, reconciled);
+        yield reconciled;
         unawaited(flushPending());
       }
     } catch (error, stackTrace) {
@@ -132,5 +135,23 @@ class OfflineFirstStudyRepository implements StudyRepository {
         mutation.sessionId,
       ),
     };
+  }
+
+  Future<List<StudySession>> _reconcileRemoteSessions(
+    List<StudySession> remoteRows,
+  ) async {
+    final byId = {for (final session in remoteRows) session.id: session};
+    for (final mutation in await _cache.readPendingStudyMutations()) {
+      switch (mutation.type) {
+        case OfflineStudyMutationType.add:
+        case OfflineStudyMutationType.update:
+          byId[mutation.sessionId] = mutation.session!;
+        case OfflineStudyMutationType.delete:
+          byId.remove(mutation.sessionId);
+      }
+    }
+    final rows = byId.values.toList()
+      ..sort((a, b) => b.start.compareTo(a.start));
+    return rows;
   }
 }

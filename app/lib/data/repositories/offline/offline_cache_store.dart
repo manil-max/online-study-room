@@ -122,7 +122,10 @@ class OfflineCacheStore {
     final existing = current.where((m) => m.sessionId == id).toList();
     final withoutSame = current.where((m) => m.sessionId != id).toList();
     final normalized = _coalesceStudyMutation(existing, mutation);
-    await replacePendingStudyMutations([...withoutSame, normalized]);
+    await replacePendingStudyMutations([
+      ...withoutSame,
+      ...?(normalized == null ? null : <OfflineStudyMutation>[normalized]),
+    ]);
   }
 
   Future<List<Presence>> readPendingPresence() async {
@@ -151,7 +154,7 @@ class OfflineCacheStore {
     );
   }
 
-  static OfflineStudyMutation _coalesceStudyMutation(
+  static OfflineStudyMutation? _coalesceStudyMutation(
     List<OfflineStudyMutation> existing,
     OfflineStudyMutation mutation,
   ) {
@@ -160,7 +163,9 @@ class OfflineCacheStore {
       return OfflineStudyMutation.add(mutation.session!);
     }
     if (mutation.type == OfflineStudyMutationType.delete && hadAdd) {
-      return mutation;
+      // Henüz sunucuya ulaşmamış ekleme silindiyse uzaktaki dünyada hiçbir
+      // işlem yoktur; gereksiz delete yerine outbox kaydını tamamen kaldır.
+      return null;
     }
     return mutation;
   }

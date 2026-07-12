@@ -11,6 +11,7 @@ import '../../core/background/timer_foreground_service.dart';
 import '../../core/notifications/timer_external_command_store.dart';
 import '../../core/notifications/timer_notification_service.dart';
 import '../../core/prefs/app_prefs.dart';
+import '../../core/stats/canonical_stats_projection.dart';
 import '../../core/stats/study_stats.dart';
 import '../../core/utils/duration_format.dart';
 import '../../features/android_widgets/android_widget_service.dart';
@@ -89,6 +90,15 @@ final currentStreakProvider = Provider<int>((ref) {
   final sessions = ref.watch(userSessionsProvider).value ?? const [];
   final goalSeconds = ref.watch(dailyGoalMinutesProvider) * 60;
   return currentStreak(sessions, goalSeconds);
+});
+
+/// UI ve widget için aynı session kümesinden türetilen canonical özet.
+final canonicalStatsProjectionProvider = Provider<CanonicalStatsProjection>((
+  ref,
+) {
+  final sessions =
+      ref.watch(userSessionsProvider).value ?? const <StudySession>[];
+  return CanonicalStatsProjection.fromSessions(sessions);
 });
 
 /// Sınıftaki her üyenin bugün KAYDEDİLMİŞ toplam süresi (userId -> saniye).
@@ -718,21 +728,19 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
 
   Future<void> _syncStatsWidgets() async {
     final widgetService = ref.read(androidWidgetServiceProvider);
-    final sessions =
-        ref.read(userSessionsProvider).value ?? const <StudySession>[];
-    final today = ref.read(todayRecordedSecondsProvider);
-    final week = sessions
-        .where((session) => !session.day.isBefore(startOfWeek(DateTime.now())))
-        .fold<int>(0, (sum, session) => sum + session.durationSeconds);
+    final projection = ref.read(canonicalStatsProjectionProvider);
     await widgetService.saveSnapshot(
       AndroidWidgetSnapshot.stats(
-        today: 'Bugün: ${formatHuman(today)}',
-        week: 'Hafta: ${formatHuman(week)}',
-        streak: 'Seri: ${ref.read(currentStreakProvider)} gün',
+        today: 'Bugün: ${formatHuman(projection.todaySeconds)}',
+        week: 'Hafta: ${formatHuman(projection.weekSeconds)}',
+        streak:
+            'Seri: ${projection.streakForGoal(ref.read(dailyGoalMinutesProvider) * 60)} gün',
       ),
     );
     final members = ref.read(groupMembersProvider).value ?? const <Profile>[];
-    final todayTotals = ref.read(groupTodaySecondsProvider);
+    final todayTotals = CanonicalGroupStatsProjection.fromDailyStats(
+      ref.read(groupDailyStatsProvider).value ?? const <DailyStat>[],
+    ).secondsByUser;
     final names = {for (final member in members) member.id: member.displayName};
     final rows = todayTotals.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));

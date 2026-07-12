@@ -19,15 +19,18 @@ StudySession _session(
 }
 
 void main() {
-  test('watchUserSessions kullanıcıya göre süzer ve yeni→eski sıralar', () async {
-    final repo = InMemoryStudyRepository();
-    await repo.addSession(_session('1', 'u1', DateTime(2026, 6, 20, 8), 600));
-    await repo.addSession(_session('2', 'u1', DateTime(2026, 6, 21, 8), 600));
-    await repo.addSession(_session('3', 'u2', DateTime(2026, 6, 21, 9), 600));
+  test(
+    'watchUserSessions kullanıcıya göre süzer ve yeni→eski sıralar',
+    () async {
+      final repo = InMemoryStudyRepository();
+      await repo.addSession(_session('1', 'u1', DateTime(2026, 6, 20, 8), 600));
+      await repo.addSession(_session('2', 'u1', DateTime(2026, 6, 21, 8), 600));
+      await repo.addSession(_session('3', 'u2', DateTime(2026, 6, 21, 9), 600));
 
-    final mine = await repo.watchUserSessions('u1').first;
-    expect(mine.map((e) => e.id).toList(), ['2', '1']);
-  });
+      final mine = await repo.watchUserSessions('u1').first;
+      expect(mine.map((e) => e.id).toList(), ['2', '1']);
+    },
+  );
 
   test('watchGroupSessions artık boş döner (group_id kaldırıldı)', () async {
     final repo = InMemoryStudyRepository();
@@ -41,11 +44,28 @@ void main() {
   test('updateSession süreyi günceller', () async {
     final repo = InMemoryStudyRepository();
     await repo.addSession(_session('1', 'u1', DateTime(2026, 6, 21, 8), 600));
-    await repo.updateSession(_session('1', 'u1', DateTime(2026, 6, 21, 8), 1800));
+    await repo.updateSession(
+      _session('1', 'u1', DateTime(2026, 6, 21, 8), 1800),
+    );
 
     final mine = await repo.watchUserSessions('u1').first;
     expect(mine.single.durationSeconds, 1800);
   });
+
+  test(
+    'addSession aynı id ile tekrarlandığında ikinci kayıt oluşturmaz',
+    () async {
+      final repo = InMemoryStudyRepository();
+      await repo.addSession(_session('1', 'u1', DateTime(2026, 6, 21, 8), 600));
+      await repo.addSession(
+        _session('1', 'u1', DateTime(2026, 6, 21, 8), 1800),
+      );
+
+      final mine = await repo.watchUserSessions('u1').first;
+      expect(mine, hasLength(1));
+      expect(mine.single.durationSeconds, 1800);
+    },
+  );
 
   test('deleteSession oturumu kaldırır', () async {
     final repo = InMemoryStudyRepository();

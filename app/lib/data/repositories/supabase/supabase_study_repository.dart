@@ -14,7 +14,11 @@ class SupabaseStudyRepository implements StudyRepository {
 
   @override
   Future<void> addSession(StudySession session) async {
-    await _client.from('study_sessions').insert(session.toMap());
+    // Oturum id'si istemcide üretilen idempotency anahtarıdır. Ağ cevabı
+    // kaybolup outbox tekrar denendiğinde aynı oturum ikinci kez eklenmez.
+    await _client
+        .from('study_sessions')
+        .upsert(session.toMap(), onConflict: 'id');
   }
 
   @override
@@ -50,10 +54,9 @@ class SupabaseStudyRepository implements StudyRepository {
 
   /// Sunucuda toplanmış günlük veriyi `group_daily_totals` RPC'sinden çeker.
   Future<List<DailyStat>> _fetchDailyStats(String groupId) async {
-    final rows = await _client.rpc(
-      'group_daily_totals',
-      params: {'p_group_id': groupId},
-    ) as List<dynamic>;
+    final rows =
+        await _client.rpc('group_daily_totals', params: {'p_group_id': groupId})
+            as List<dynamic>;
     return rows
         .map((r) => DailyStat.fromMap(Map<String, dynamic>.from(r as Map)))
         .toList();
@@ -69,7 +72,9 @@ class SupabaseStudyRepository implements StudyRepository {
 
     Future<void> refresh() async {
       try {
-        if (!controller.isClosed) controller.add(await _fetchDailyStats(groupId));
+        if (!controller.isClosed) {
+          controller.add(await _fetchDailyStats(groupId));
+        }
       } catch (e, st) {
         if (!controller.isClosed) controller.addError(e, st);
       }

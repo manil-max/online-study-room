@@ -19,7 +19,12 @@ class InMemoryStudyRepository implements StudyRepository {
 
   @override
   Future<void> addSession(StudySession session) async {
-    _sessions.add(session);
+    final index = _sessions.indexWhere((item) => item.id == session.id);
+    if (index == -1) {
+      _sessions.add(session);
+    } else {
+      _sessions[index] = session;
+    }
     _changes.add(null);
   }
 

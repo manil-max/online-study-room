@@ -59,8 +59,8 @@
 - **Ortak/riskli yüzey:** —
 - **Dal:** — (ana dal `main`)
 - **Başlangıç:** —
-- **Son güncelleme:** 2026-07-12 20:22 (Europe/Istanbul)
-- **Not:** WP-40/41/42 iç geliştirme denetimi kapandı: `flutter analyze`, 254 test ve debug APK geçti. Gerçek cihaz QA videosu ve ürün kabulü bekliyor.
+- **Son güncelleme:** 2026-07-12 22:52 (Europe/Istanbul)
+- **Not:** Yönetici istisnasıyla V8-A cihaz QA'sı ertelenerek WP-43 kod/otomatik-test aşaması tamamlandı: analyze 0, 259 test ve debug APK geçti. V8-A kabulü bu istisnayla geçilmiş sayılmaz.
 
 ---
 
@@ -91,7 +91,7 @@
 | WP-40 | Kabul bekliyor | V8-A · Native timer state store + foreground service | — |
 | WP-41 | Kabul bekliyor | V8-A · Canlı chronometer bildirim (Başlat/Durdur) | WP-40 |
 | WP-42 | Kabul bekliyor | V8-A · Widget paritesi + olay bazlı stats besleme | WP-40 |
-| WP-43 | Bekliyor | V8-B · Genel senkronizasyon denetimi | WP-40, WP-42 |
+| WP-43 | Kabul bekliyor | V8-B · Genel senkronizasyon denetimi | WP-40, WP-42 (yönetici istisnası: cihaz QA ertelendi) |
 | WP-44 | Bekliyor | V8-C · İstatistik grup sırası (düşük risk, bağımsız) | — |
 | WP-45 | Bekliyor | V8-C · Gruplar sırası + kamp ateşi + animasyon (bağımsız) | — |
 | WP-27 | Bekliyor | Windows desktop shell ve responsive layout | — |
@@ -152,15 +152,15 @@
 - **Model önerisi:** 🔴 Opus
 
 ### WP-43: V8-B · Genel Senkronizasyon Denetimi 🔄
-- **Program/Faz:** V8-B (KALITE-PROGRAMI §8.2) · **Bağımlılık: WP-40, WP-42 (kabul sonrası)**
-- **Ajan:** —
-- **Durum:** [ ] Bekliyor
+- **Program/Faz:** V8-B (KALITE-PROGRAMI §8.2) · **Bağımlılık: WP-40, WP-42 (kabul sonrası; yönetici istisnasıyla cihaz QA ertelendi)**
+- **Ajan:** Codex
+- **Durum:** [~] Otomatik test geçti — cihaz QA / ürün kabulü bekliyor
 - **Problem:** Aynı metrik farklı ekranlarda tekrar/farklı hesaplanıyor; idempotency, tek gün-sınırı yardımcısı, invalidation standardı yok.
 - **Kapsam dışı:** Native timer (WP-40), widget UI (WP-42) — buradan yalnız canonical projection tüketilir.
 - **SAHİP dosyalar (yaz):** `app/lib/core/stats/*` (canonical projection), `app/lib/data/repositories/offline/*` (outbox/idempotency), ilgili provider invalidation standardı.
 - **DOKUNMA:** `study_providers.dart` timer state (WP-40 — oku), widget service (WP-42 — oku).
-- **Adımlar:** istatistik tüketici envanteri; tek `Europe/Istanbul` gün-sınırı yardımcısı; insert/update/delete sonrası invalidation standardı; offline outbox + realtime reconciliation; idempotency (aynı session bir kez); çoklu cihaz conflict; widget snapshot canonical projection'dan; freshness/version + manuel yenileme.
-- **Kabul (ölçülebilir):** her ekranda aynı toplam; session sonrası UI ≤ 1 sn; widget ≤ 5 sn; offline session bir kez yazılır; gün değişiminde bugün sıfırlanır; 23:59–00:01 testi geçer.
+- **Adımlar:** [x] istatistik tüketici envanteri; [x] tek `Europe/Istanbul` gün-sınırı yardımcısı; [x] session streaminden canonical projection; [x] offline outbox + gecikmiş realtime snapshot reconciliation; [x] session kimliğiyle idempotent upsert; [x] widget snapshot canonical projection'dan. Çoklu-cihaz çakışmasında sunucu snapshot'ı + bekleyen yerel outbox birleşimi kullanılır; manuel widget yenileme mevcut native eylemle son snapshot'ı yeniden çizer.
+- **Kabul (ölçülebilir):** 23:59–00:01 Istanbul sınırı ve duplicate session/outbox reconciliation otomatik testlerle geçti. `flutter analyze` 0 sorun, 259 test ve Android debug APK `Kodda doğrulandı`. UI ≤ 1 sn, widget ≤ 5 sn, iki gerçek cihaz çakışması ve cihaz videosu / ürün kabulü `Cihazda doğrulanmalı`.
 - **Tuzaklar:** V8-A ile `study_providers`/widget çakışması → V8-A kabulünden SONRA başla.
 - **Model önerisi:** 🔴 Opus
 

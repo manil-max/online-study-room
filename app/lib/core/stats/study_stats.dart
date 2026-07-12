@@ -1,12 +1,13 @@
 import '../../data/models/daily_stat.dart';
 import '../../data/models/study_session.dart';
+import 'istanbul_calendar.dart';
 
 /// Çalışma oturumlarından istatistik üreten saf (yan etkisiz) yardımcılar.
 /// Tümü `study_sessions` üzerinden hesaplanır (bkz. project.md §3.4/§6); ayrı bir
 /// istatistik tablosu yoktur. Gün ayrımı oturumun **başlangıç** gününe göredir.
 
 /// Bir günü (saat sıfırlanmış) verir.
-DateTime dayOf(DateTime t) => DateTime(t.year, t.month, t.day);
+DateTime dayOf(DateTime t) => istanbulDay(t);
 
 /// Aynı gün mü?
 bool isSameDay(DateTime a, DateTime b) =>
@@ -51,7 +52,8 @@ int secondsOnDay(Iterable<StudySession> sessions, DateTime day) => sessions
 Map<DateTime, int> dailyTotals(Iterable<StudySession> sessions) {
   final totals = <DateTime, int>{};
   for (final s in sessions) {
-    totals[s.day] = (totals[s.day] ?? 0) + s.durationSeconds;
+    final day = dayOf(s.start);
+    totals[day] = (totals[day] ?? 0) + s.durationSeconds;
   }
   return totals;
 }
@@ -119,7 +121,7 @@ double dailyAverageSeconds(
   var weekday = 0;
   var weekend = 0;
   for (final s in sessions) {
-    final wd = s.day.weekday;
+    final wd = istanbulWeekday(s.start);
     if (wd == DateTime.saturday || wd == DateTime.sunday) {
       weekend += s.durationSeconds;
     } else {
@@ -134,7 +136,7 @@ double dailyAverageSeconds(
 List<int> hourlyTotals(Iterable<StudySession> sessions) {
   final totals = List<int>.filled(24, 0);
   for (final s in sessions) {
-    totals[s.start.hour] += s.durationSeconds;
+    totals[istanbulHour(s.start)] += s.durationSeconds;
   }
   return totals;
 }
@@ -145,17 +147,15 @@ List<int> hourlyTotals(Iterable<StudySession> sessions) {
 List<List<int>> weekdayHourTotals(Iterable<StudySession> sessions) {
   final grid = List.generate(7, (_) => List<int>.filled(24, 0));
   for (final s in sessions) {
-    final row = s.start.weekday - 1; // Pzt(1)→0 … Paz(7)→6
-    grid[row][s.start.hour] += s.durationSeconds;
+    final row = istanbulWeekday(s.start) - 1; // Pzt(1)→0 … Paz(7)→6
+    grid[row][istanbulHour(s.start)] += s.durationSeconds;
   }
   return grid;
 }
 
 /// Oturumları derse göre toplar: `subjectId` (null → derssiz) → saniye,
 /// büyükten küçüğe sıralı (ders bazında dağılım — project.md §3.7).
-List<MapEntry<String?, int>> subjectBreakdown(
-  Iterable<StudySession> sessions,
-) {
+List<MapEntry<String?, int>> subjectBreakdown(Iterable<StudySession> sessions) {
   final totals = <String?, int>{};
   for (final s in sessions) {
     totals[s.subjectId] = (totals[s.subjectId] ?? 0) + s.durationSeconds;
@@ -218,8 +218,7 @@ int studyStreak(
   Iterable<StudySession> sessions, {
   DateTime? today,
   Map<DateTime, int>? totals,
-}) =>
-    currentStreak(sessions, 1, today: today, totals: totals);
+}) => currentStreak(sessions, 1, today: today, totals: totals);
 
 // ── Grup geneli agregalar: per-user-per-gün toplamlardan (DailyStat) ─────────
 
@@ -228,7 +227,8 @@ int studyStreak(
 Map<DateTime, int> groupDayTotals(Iterable<DailyStat> stats) {
   final totals = <DateTime, int>{};
   for (final s in stats) {
-    totals[s.day] = (totals[s.day] ?? 0) + s.seconds;
+    final day = calendarDay(s.day);
+    totals[day] = (totals[day] ?? 0) + s.seconds;
   }
   return totals;
 }
@@ -238,13 +238,17 @@ Map<DateTime, int> userDayTotals(Iterable<DailyStat> stats, String userId) {
   final totals = <DateTime, int>{};
   for (final s in stats) {
     if (s.userId != userId) continue;
-    totals[s.day] = (totals[s.day] ?? 0) + s.seconds;
+    final day = calendarDay(s.day);
+    totals[day] = (totals[day] ?? 0) + s.seconds;
   }
   return totals;
 }
 
 /// Belirli gündeki (varsayılan: bugün) kullanıcı → saniye haritası.
-Map<String, int> todaySecondsByUser(Iterable<DailyStat> stats, {DateTime? today}) {
+Map<String, int> todaySecondsByUser(
+  Iterable<DailyStat> stats, {
+  DateTime? today,
+}) {
   final d = dayOf(today ?? DateTime.now());
   final totals = <String, int>{};
   for (final s in stats) {

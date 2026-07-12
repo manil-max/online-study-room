@@ -66,6 +66,17 @@ void main() {
     expect(await cache.readPendingStudyMutations(), isEmpty);
   });
 
+  test('offline add sonra silme outbox kaydını tamamen kaldırır', () async {
+    final cache = await _store();
+    final remote = _FakeStudyRepository()..failWrites = true;
+    final repo = OfflineFirstStudyRepository(remote: remote, cache: cache);
+
+    await repo.addSession(_session('ephemeral'));
+    await repo.deleteSession('ephemeral');
+
+    expect(await cache.readPendingStudyMutations(), isEmpty);
+  });
+
   test(
     'study stream falls back to cached user sessions after remote error',
     () async {
@@ -79,6 +90,17 @@ void main() {
       expect(rows.single.id, 'cached');
     },
   );
+
+  test('gecikmiş realtime snapshot bekleyen yerel eklemeyi ezmez', () async {
+    final cache = await _store();
+    final remote = _FakeStudyRepository()..failWrites = true;
+    final repo = OfflineFirstStudyRepository(remote: remote, cache: cache);
+    await repo.addSession(_session('pending'));
+
+    final reconciled = await repo.watchUserSessions('u1').skip(1).first;
+
+    expect(reconciled.map((session) => session.id), contains('pending'));
+  });
 
   test('group daily stats are cached for offline dashboard reads', () async {
     final cache = await _store();
