@@ -57,6 +57,6 @@ void main() {
       leaderboardRows: [],
     );
 
-    expect(snapshot.paddedLeaderboardRows, ['-', '-', '-']);
+    expect(snapshot.paddedLeaderboardRows, ['Henüz grup verisi yok', '-', '-']);
   });
 }

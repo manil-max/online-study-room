@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/leaderboard_widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#181718"
+    android:background="@color/widget_leaderboard_surface"
+    android:contentDescription="Grup sıralaması widget'ını yenile"
     android:gravity="center_vertical"
     android:orientation="vertical"
     android:padding="14dp">
@@ -14,7 +16,7 @@
         android:ellipsize="end"
         android:maxLines="1"
         android:text="Kamp sıralaması"
-        android:textColor="#F7E6BC"
+        android:textColor="@color/widget_heading"
         android:textSize="14sp"
         android:textStyle="bold" />
 
@@ -26,7 +28,7 @@
         android:ellipsize="end"
         android:maxLines="1"
         android:text="Henüz kayıt yok"
-        android:textColor="#FFFFFF"
+        android:textColor="@color/widget_primary_text"
         android:textSize="13sp"
         android:textStyle="bold" />
 
@@ -38,7 +40,7 @@
         android:ellipsize="end"
         android:maxLines="1"
         android:text="-"
-        android:textColor="#B9C9BE"
+        android:textColor="@color/widget_secondary_text"
         android:textSize="12sp" />
 
     <TextView
@@ -49,6 +51,6 @@
         android:ellipsize="end"
         android:maxLines="1"
         android:text="-"
-        android:textColor="#B9C9BE"
+        android:textColor="@color/widget_secondary_text"
         android:textSize="12sp" />
 </LinearLayout>

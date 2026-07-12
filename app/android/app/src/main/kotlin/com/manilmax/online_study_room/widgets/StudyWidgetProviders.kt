@@ -37,12 +37,16 @@ class TimerWidgetProvider : HomeWidgetProvider() {
             val views = RemoteViews(context.packageName, R.layout.odak_timer_widget).apply {
                 val appPrefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
                 val startedAt = appPrefs.getString("flutter.timer_active_started_at", null)
+                val mode = appPrefs.getString("flutter.timer_active_mode", null)
                 setTextViewText(
                     R.id.timer_widget_title,
                     widgetData.text(StudyWidgetKeys.TimerTitle, "Odak Kampı"),
                 )
                 val startMillis = startedAt?.let { runCatching { java.time.Instant.parse(it).toEpochMilli() }.getOrNull() }
-                if (startMillis != null) {
+                // Chronometer yalnız kronometre modunda anlamlıdır. Geri sayım
+                // ve Pomodoro'da Flutter'ın son olay anında yazdığı süre sabit
+                // gösterilir; yanlış yönde akan native sayaç gösterilmez.
+                if (startMillis != null && mode == "stopwatch") {
                     val base = SystemClock.elapsedRealtime() - (System.currentTimeMillis() - startMillis)
                     setChronometer(R.id.timer_widget_elapsed, base, null, true)
                 } else {
@@ -84,11 +88,15 @@ class StudyStatsWidgetProvider : HomeWidgetProvider() {
             val views = RemoteViews(context.packageName, R.layout.odak_stats_widget).apply {
                 setTextViewText(
                     R.id.stats_widget_title,
-                    widgetData.text(StudyWidgetKeys.StatsTitle, "Bugün"),
+                    "${widgetData.text(StudyWidgetKeys.StatsTitle, "Bugün")} · Yenile",
                 )
                 setTextViewText(
                     R.id.stats_widget_today,
                     widgetData.text(StudyWidgetKeys.StatsToday, "0 dk"),
+                )
+                setOnClickPendingIntent(
+                    R.id.stats_widget_root,
+                    WidgetRefreshReceiver.pendingIntent(context, 1),
                 )
                 setTextViewText(
                     R.id.stats_widget_week,
@@ -116,11 +124,15 @@ class GroupLeaderboardWidgetProvider : HomeWidgetProvider() {
                 RemoteViews(context.packageName, R.layout.odak_leaderboard_widget).apply {
                     setTextViewText(
                         R.id.leaderboard_widget_title,
-                        widgetData.text(StudyWidgetKeys.LeaderboardTitle, "Kamp sıralaması"),
+                        "${widgetData.text(StudyWidgetKeys.LeaderboardTitle, "Kamp sıralaması")} · Yenile",
                     )
                     setTextViewText(
                         R.id.leaderboard_widget_row_1,
                         widgetData.text(StudyWidgetKeys.LeaderboardRow1, "Henüz kayıt yok"),
+                    )
+                    setOnClickPendingIntent(
+                        R.id.leaderboard_widget_root,
+                        WidgetRefreshReceiver.pendingIntent(context, 2),
                     )
                     setTextViewText(
                         R.id.leaderboard_widget_row_2,

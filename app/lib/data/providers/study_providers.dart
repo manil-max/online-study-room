@@ -324,6 +324,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   static const _kActiveUpdatedAt = 'timer_active_updated_at';
 
   Timer? _tick;
+  Timer? _widgetRefreshDebounce;
   StreamSubscription<TimerNotificationAction>? _notificationCommands;
   AppLifecycleListener? _lifecycleListener;
   bool _disposed = false;
@@ -344,8 +345,25 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     ref.onDispose(() {
       _disposed = true;
       _tick?.cancel();
+      _widgetRefreshDebounce?.cancel();
       _notificationCommands?.cancel();
       _lifecycleListener?.dispose();
+    });
+    // Stats/leaderboard widget'ları saniyelik timer tick'iyle değil, kaynak
+    // veriler değiştiğinde güncellenir. Bir oturum yazılması, senkron akışı,
+    // gruba giriş/çıkış ve grup toplamlarının gelmesi aynı kısa pencereye
+    // düşebileceği için native widget güncellemelerini tek olaya birleştiririz.
+    ref.listen(userSessionsProvider, (_, next) {
+      if (next.hasValue) _scheduleStatsWidgetRefresh();
+    });
+    ref.listen(groupDailyStatsProvider, (_, next) {
+      if (next.hasValue) _scheduleStatsWidgetRefresh();
+    });
+    ref.listen(groupMembersProvider, (_, next) {
+      if (next.hasValue) _scheduleStatsWidgetRefresh();
+    });
+    ref.listen(userGroupProvider, (_, next) {
+      if (next.hasValue) _scheduleStatsWidgetRefresh();
     });
     final prefs = ref.read(sharedPreferencesProvider);
     final modeName = prefs.getString(_kMode);
@@ -490,13 +508,15 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       lastUpdatedAt: now,
     );
     _persistActiveTimer();
-    unawaited(TimerForegroundService.start(
-      startedAt: now,
-      mode: state.mode.name,
-      phase: state.phase.name,
-      cycle: state.cycle,
-      subjectId: state.subjectId,
-    ));
+    unawaited(
+      TimerForegroundService.start(
+        startedAt: now,
+        mode: state.mode.name,
+        phase: state.phase.name,
+        cycle: state.cycle,
+        subjectId: state.subjectId,
+      ),
+    );
     _publishPresence(status: PresenceStatus.studying, startedAt: now);
     _startTick();
     unawaited(_showTimerSurfaces(requestPermission: true));
@@ -653,7 +673,10 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     prefs.setString(_kActiveSubject, state.subjectId ?? '');
     prefs.setInt(_kActiveAccumulated, state.accumulatedSeconds);
     prefs.setInt(_kActiveCommandSeq, state.commandSeq);
-    prefs.setString(_kActiveUpdatedAt, DateTime.now().toUtc().toIso8601String());
+    prefs.setString(
+      _kActiveUpdatedAt,
+      DateTime.now().toUtc().toIso8601String(),
+    );
   }
 
   void _clearActiveTimer() {
@@ -685,29 +708,42 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     ]);
   }
 
+  void _scheduleStatsWidgetRefresh() {
+    if (_disposed) return;
+    _widgetRefreshDebounce?.cancel();
+    _widgetRefreshDebounce = Timer(const Duration(milliseconds: 250), () {
+      if (!_disposed) unawaited(_syncStatsWidgets());
+    });
+  }
+
   Future<void> _syncStatsWidgets() async {
     final widgetService = ref.read(androidWidgetServiceProvider);
-    final sessions = ref.read(userSessionsProvider).value ?? const <StudySession>[];
+    final sessions =
+        ref.read(userSessionsProvider).value ?? const <StudySession>[];
     final today = ref.read(todayRecordedSecondsProvider);
     final week = sessions
         .where((session) => !session.day.isBefore(startOfWeek(DateTime.now())))
         .fold<int>(0, (sum, session) => sum + session.durationSeconds);
-    await widgetService.saveSnapshot(AndroidWidgetSnapshot.stats(
-      today: 'Bugün: ${formatHuman(today)}',
-      week: 'Hafta: ${formatHuman(week)}',
-      streak: 'Seri: ${ref.read(currentStreakProvider)} gün',
-    ));
+    await widgetService.saveSnapshot(
+      AndroidWidgetSnapshot.stats(
+        today: 'Bugün: ${formatHuman(today)}',
+        week: 'Hafta: ${formatHuman(week)}',
+        streak: 'Seri: ${ref.read(currentStreakProvider)} gün',
+      ),
+    );
     final members = ref.read(groupMembersProvider).value ?? const <Profile>[];
     final todayTotals = ref.read(groupTodaySecondsProvider);
     final names = {for (final member in members) member.id: member.displayName};
     final rows = todayTotals.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
-    await widgetService.saveSnapshot(AndroidWidgetSnapshot.leaderboard(
-      rows: rows.take(3).map((entry) {
-        final name = names[entry.key] ?? 'Grup üyesi';
-        return '$name · ${formatHuman(entry.value)}';
-      }).toList(),
-    ));
+    await widgetService.saveSnapshot(
+      AndroidWidgetSnapshot.leaderboard(
+        rows: rows.take(3).map((entry) {
+          final name = names[entry.key] ?? 'Grup üyesi';
+          return '$name · ${formatHuman(entry.value)}';
+        }).toList(),
+      ),
+    );
     await widgetService.refresh(
       widgets: const [StudyHomeWidget.stats, StudyHomeWidget.leaderboard],
     );

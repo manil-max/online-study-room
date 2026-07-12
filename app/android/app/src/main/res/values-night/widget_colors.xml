@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="widget_stats_surface">#141B22</color>
+    <color name="widget_leaderboard_surface">#181718</color>
+    <color name="widget_heading">#F7E6BC</color>
+    <color name="widget_primary_text">#FFFFFF</color>
+    <color name="widget_secondary_text">#B9C9BE</color>
+    <color name="widget_accent">#FFB15C</color>
+</resources>

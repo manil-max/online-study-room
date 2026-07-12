@@ -52,15 +52,15 @@
 - **Faz/WP:** — · **Aşama:** — · **SAHİP yollar:** — · **Ortak/riskli yüzey:** — · **Dal:** — · **Son güncelleme:** 2026-07-12 19:10 (Europe/Istanbul) · **Not:** Kullanıcı talimatıyla WP-37 Codex'e devredildi; çalışma çıktısı yok.
 
 ### Codex Lane
-- **Durum:** [~] Aktif
-- **Faz/WP:** V8-A · WP-42
-- **Aşama:** Geliştiriliyor
-- **SAHİP yollar:** `app/lib/features/android_widgets/android_widget_service.dart`, `app/android/app/src/main/kotlin/**/widgets/*`, `progress.md` (kendi lane + WP-42)
-- **Ortak/riskli yüzey:** Widget provider'ları; `study_providers.dart` ve bildirim salt okunur
+- **Durum:** [x] Boşta
+- **Faz/WP:** —
+- **Aşama:** —
+- **SAHİP yollar:** —
+- **Ortak/riskli yüzey:** —
 - **Dal:** — (ana dal `main`)
-- **Başlangıç:** 2026-07-12 19:30 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-12 20:10 (Europe/Istanbul)
-- **Not:** WP-41 kod/test tamamlandı; kullanıcı yönlendirmesiyle WP-42'ye geçildi.
+- **Başlangıç:** —
+- **Son güncelleme:** 2026-07-12 20:22 (Europe/Istanbul)
+- **Not:** WP-40/41/42 iç geliştirme denetimi kapandı: `flutter analyze`, 254 test ve debug APK geçti. Gerçek cihaz QA videosu ve ürün kabulü bekliyor.
 
 ---
 
@@ -88,9 +88,9 @@
 | WP | Durum | Kısa kapsam | Bağımlılık |
 |---|---|---|---|
 | WP-38 | Bekliyor | Faz 0A · Canlı backend durum matrisi (kod yok) | — |
-| WP-40 | Bekliyor | V8-A · Native timer state store + foreground service | — |
-| WP-41 | Bekliyor | V8-A · Canlı chronometer bildirim (Başlat/Durdur) | WP-40 |
-| WP-42 | Bekliyor | V8-A · Widget paritesi + olay bazlı stats besleme | WP-40 |
+| WP-40 | Kabul bekliyor | V8-A · Native timer state store + foreground service | — |
+| WP-41 | Kabul bekliyor | V8-A · Canlı chronometer bildirim (Başlat/Durdur) | WP-40 |
+| WP-42 | Kabul bekliyor | V8-A · Widget paritesi + olay bazlı stats besleme | WP-40 |
 | WP-43 | Bekliyor | V8-B · Genel senkronizasyon denetimi | WP-40, WP-42 |
 | WP-44 | Bekliyor | V8-C · İstatistik grup sırası (düşük risk, bağımsız) | — |
 | WP-45 | Bekliyor | V8-C · Gruplar sırası + kamp ateşi + animasyon (bağımsız) | — |
@@ -105,7 +105,7 @@
 ### WP-40: V8-A · Native Timer State Store + Foreground Service ⏱️
 - **Program/Faz:** V8-A (KALITE-PROGRAMI §8.1) — **V8'in temeli, ilk yapılır**
 - **Ajan:** Codex
-- **Durum:** [~] Otomatik test geçti — cihaz QA bekliyor
+- **Durum:** [~] Otomatik test geçti — cihaz QA / ürün kabulü bekliyor
 - **Problem:** Sayaç app kapalıyken güvenilir değil; tek gerçek zaman kaynağı ve foreground service yok (B4/B5).
 - **Kapsam dışı:** Bildirim UI (→WP-41), widget (→WP-42), senkron denetimi (→WP-43).
 - **SAHİP dosyalar (yaz):**
@@ -128,7 +128,7 @@
 ### WP-41: V8-A · Canlı Chronometer Bildirim (Başlat/Durdur) 🔔
 - **Program/Faz:** V8-A · **Bağımlılık: WP-40 (kabul sonrası)**
 - **Ajan:** Codex
-- **Durum:** [~] Otomatik test geçti — cihaz QA bekliyor
+- **Durum:** [~] Otomatik test geçti — cihaz QA / ürün kabulü bekliyor
 - **Problem:** Bildirimde canlı `HH:MM:SS` + Başlat/Durdur, app açmadan yönetim (istek 1).
 - **Kapsam dışı:** Widget (→WP-42), state store (WP-40).
 - **SAHİP dosyalar (yaz):** `app/lib/core/notifications/timer_notification_service.dart`, ilgili notification receiver Kotlin.
@@ -141,13 +141,13 @@
 ### WP-42: V8-A · Widget Paritesi + Olay Bazlı Stats Besleme 📲
 - **Program/Faz:** V8-A · **Bağımlılık: WP-40; WP-41 ile paralel DEĞİL** (`study_providers` paylaşımı → serileştir)
 - **Ajan:** Codex
-- **Durum:** [~] Geliştiriliyor
+- **Durum:** [~] Otomatik test geçti — cihaz QA / ürün kabulü bekliyor
 - **Problem:** Yalnız timer widget besleniyor; stats/leaderboard placeholder (B4).
 - **Kapsam dışı:** Bildirim (WP-41), senkron canonical projection (WP-43 sağlar; burada tüketilir).
 - **SAHİP dosyalar (yaz):** `app/lib/features/android_widgets/android_widget_service.dart`, `app/android/app/src/main/kotlin/**/widgets/*` (Chronometer RemoteViews), yeni widget besleme pipeline.
 - **DOKUNMA:** `study_providers.dart` timer-sync (WP-40/41 — dar okuma), notification (WP-41).
 - **Adımlar:** timer widget native `Chronometer`; Başlat/Durdur app açmadan; stats/leaderboard **olay bazlı** besleme (session ekl/düzenle/sil, sync, grup değişimi, gün sınırı, manuel refresh); light/dark + dynamic color; boş-durum.
-- **Kabul (ölçülebilir):** placeholder yok; oturum sonrası widget ≤ 5 sn; 48 dp dokunma; cihaz videosu.
+- **Kabul (ölçülebilir):** Boş durumda anlamlı metin var; oturum, senkronizasyon ve grup/membership akışlarında olay bazlı yenileme var; 48 dp dokunma alanı ile light/dark ve Android 12+ dynamic color kaynakları eklendi. `flutter analyze`, 254 test ve Android debug APK geçti (`Kodda doğrulandı`). Oturum sonrası ≤ 5 sn ve cihaz videosu / ürün kabulü `Cihazda doğrulanmalı`.
 - **Tuzaklar:** Saniyede bir Flutter yeniden çizme YOK; periyodik <15 dk garanti değil → native Chronometer + olay bazlı.
 - **Model önerisi:** 🔴 Opus
 

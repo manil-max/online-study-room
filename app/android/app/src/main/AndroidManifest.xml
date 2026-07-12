@@ -61,6 +61,9 @@
                 <action android:name="com.manilmax.online_study_room.ACTION_TOGGLE_TIMER" />
             </intent-filter>
         </receiver>
+        <receiver
+            android:name=".widgets.WidgetRefreshReceiver"
+            android:exported="false" />
         <service
             android:name="com.pravera.flutter_foreground_task.service.ForegroundService"
             android:foregroundServiceType="dataSync"

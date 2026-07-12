@@ -171,6 +171,9 @@ class AndroidWidgetSnapshot {
   @visibleForTesting
   List<String> get paddedLeaderboardRows {
     final rows = leaderboardRows.where((row) => row.trim().isNotEmpty).toList();
+    if (rows.isEmpty) {
+      rows.add('Henüz grup verisi yok');
+    }
     while (rows.length < 3) {
       rows.add('-');
     }
