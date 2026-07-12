@@ -138,7 +138,11 @@ class _SceneFrame extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
       child: Container(
-        height: 480,
+        // Sahne, tüm painter'lar (ateş/halka/ağaç/zemin) yükseklik oranlıdır;
+        // yükseklik küçülünce kompozisyon orantılı sıkışır ve üst/alttaki boş
+        // gökyüzü/zemin bandı birlikte azalır. 480 çok uzundu (cihaz geri
+        // bildirimi) → gereksiz boşluk kırpıldı.
+        height: 360,
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,

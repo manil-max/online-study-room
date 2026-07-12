@@ -38,7 +38,7 @@ void main() {
       userSessionsProvider.overrideWith((ref) => Stream.value([])),
     ];
 
-    // ClassroomScreen gövdesi lazy bir ListView; GroupGoalCard + CampfireScene (480px)
+    // ClassroomScreen gövdesi lazy bir ListView; CampfireScene (360px) + GroupGoalCard
     // + GroupTrendCard sırayla dizili. 640px viewport'ta trend kartı ekran dışında kalıp
     // build edilmez; sıra kontrolü (getTopLeft) için üçünü de kurduracak kadar yüksek tut.
     tester.view.physicalSize = const Size(1080, 6000); // 360x2000 logical
