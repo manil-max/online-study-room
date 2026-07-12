@@ -52,15 +52,15 @@
 - **Faz/WP:** — · **Aşama:** — · **SAHİP yollar:** — · **Ortak/riskli yüzey:** — · **Dal:** — · **Son güncelleme:** 2026-07-12 19:10 (Europe/Istanbul) · **Not:** Kullanıcı talimatıyla WP-37 Codex'e devredildi; çalışma çıktısı yok.
 
 ### Codex Lane
-- **Durum:** [~] Aktif
+- **Durum:** [~] Cihaz QA bekliyor
 - **Faz/WP:** V8-A · WP-40
-- **Aşama:** Geliştiriliyor
+- **Aşama:** Otomatik test geçti — cihaz QA bekliyor
 - **SAHİP yollar:** `app/lib/data/providers/study_providers.dart`, `app/lib/core/notifications/timer_external_command_store.dart`, `app/lib/core/background/**`, `app/android/app/src/main/kotlin/**`, `app/android/app/src/main/AndroidManifest.xml`, `app/pubspec.yaml`, `progress.md` (kendi lane + WP-40)
 - **Ortak/riskli yüzey:** `app/pubspec.yaml`, `AndroidManifest.xml`, `study_providers.dart` (WP-41/42 başlamadan serileştirilecek)
 - **Dal:** — (ana dal `main`)
 - **Başlangıç:** 2026-07-12 19:30 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-12 19:30 (Europe/Istanbul)
-- **Not:** Kullanıcı talimatıyla WP-39 iptal edildi; V8-A temelinin geliştirilmesine başlandı.
+- **Son güncelleme:** 2026-07-12 20:05 (Europe/Istanbul)
+- **Not:** WP-40 kodu/testi tamamlandı; gerçek cihazda 8 saat, reboot ve normal lifecycle doğrulaması bekleniyor.
 
 ---
 
@@ -105,7 +105,7 @@
 ### WP-40: V8-A · Native Timer State Store + Foreground Service ⏱️
 - **Program/Faz:** V8-A (KALITE-PROGRAMI §8.1) — **V8'in temeli, ilk yapılır**
 - **Ajan:** Codex
-- **Durum:** [~] Geliştiriliyor
+- **Durum:** [~] Otomatik test geçti — cihaz QA bekliyor
 - **Problem:** Sayaç app kapalıyken güvenilir değil; tek gerçek zaman kaynağı ve foreground service yok (B4/B5).
 - **Kapsam dışı:** Bildirim UI (→WP-41), widget (→WP-42), senkron denetimi (→WP-43).
 - **SAHİP dosyalar (yaz):**
@@ -115,13 +115,13 @@
   - `app/android/app/src/main/AndroidManifest.xml`, `app/pubspec.yaml` (flutter_foreground_task)
 - **DOKUNMA:** `core/theme/**`, `features/clock/**`, widget provider'ları (WP-42), diğer feature'lar.
 - **Adımlar:**
-  - [ ] State modeli: mode/status/startedAt/accumulatedSeconds/targetSeconds/phase/cycle/subjectId/commandSeq/lastUpdatedAt.
-  - [ ] Foreground service (ongoing, start/stop) + izinler (`FOREGROUND_SERVICE`+tip, `WAKE_LOCK`).
-  - [ ] Boot receiver (`RECEIVE_BOOT_COMPLETED`) → aktif sayaç restore.
-  - [ ] Komut kuyruğu (sürüm/sequence) `timer_external_command_store` üstüne.
+  - [x] State modeli: mode/status/startedAt/accumulatedSeconds/targetSeconds/phase/cycle/subjectId/commandSeq/lastUpdatedAt.
+  - [x] Foreground service (ongoing, start/stop) + izinler (`FOREGROUND_SERVICE`+tip, `WAKE_LOCK`).
+  - [x] Boot receiver (`RECEIVE_BOOT_COMPLETED`) → aktif sayaç restore.
+  - [x] Komut kuyruğu (sürüm/sequence) `timer_external_command_store` üstüne.
 - **Veri/Migration etkisi:** Yok (yerel state).
 - **RLS/Güvenlik:** Yok; sır yok.
-- **Kabul (ölçülebilir):** app kapalıyken 8 saatte ≤ ±1 sn; force-stop dışı lifecycle'da kontrol kaybı yok; reboot sonrası restore; **cihaz kanıtı** (`Cihazda doğrulanmalı`).
+- **Kabul (ölçülebilir):** Kod tamamlandı; `flutter analyze`, 254 test ve Android debug APK geçti. App kapalıyken 8 saatte ≤ ±1 sn, force-stop dışı lifecycle ve reboot sonrası restore için **cihaz kanıtı bekleniyor** (`Cihazda doğrulanmalı`).
 - **Tuzaklar:** Sıcak dosyalar (pubspec/manifest/study_providers) → başka WP ile aynı anda GİRİLMEZ. OEM pil kısıtı testi.
 - **Model önerisi:** 🔴 Opus
 

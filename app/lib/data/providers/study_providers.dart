@@ -7,6 +7,7 @@ import 'package:uuid/uuid.dart';
 import 'package:flutter/widgets.dart';
 
 import '../../core/config/supabase_config.dart';
+import '../../core/background/timer_foreground_service.dart';
 import '../../core/notifications/timer_external_command_store.dart';
 import '../../core/notifications/timer_notification_service.dart';
 import '../../core/prefs/app_prefs.dart';
@@ -219,6 +220,9 @@ class StudyTimerState {
     this.cycles = 4,
     this.eventSeq = 0,
     this.lastEvent,
+    this.accumulatedSeconds = 0,
+    this.commandSeq = 0,
+    this.lastUpdatedAt,
   });
 
   final TimerMode mode;
@@ -247,6 +251,9 @@ class StudyTimerState {
   /// Her faz tamamlanışında artan sayaç + son olay (UI ses/titreşim/uyarı için).
   final int eventSeq;
   final TimerEvent? lastEvent;
+  final int accumulatedSeconds;
+  final int commandSeq;
+  final DateTime? lastUpdatedAt;
 
   /// Mevcut fazın hedef süresi (saniye); kronometrede null.
   int? get phaseTargetSeconds => timerPhaseTargetSeconds(
@@ -272,6 +279,9 @@ class StudyTimerState {
     int? cycles,
     int? eventSeq,
     TimerEvent? lastEvent,
+    int? accumulatedSeconds,
+    int? commandSeq,
+    DateTime? lastUpdatedAt,
   }) {
     return StudyTimerState(
       mode: mode ?? this.mode,
@@ -286,6 +296,9 @@ class StudyTimerState {
       cycles: cycles ?? this.cycles,
       eventSeq: eventSeq ?? this.eventSeq,
       lastEvent: lastEvent ?? this.lastEvent,
+      accumulatedSeconds: accumulatedSeconds ?? this.accumulatedSeconds,
+      commandSeq: commandSeq ?? this.commandSeq,
+      lastUpdatedAt: lastUpdatedAt ?? this.lastUpdatedAt,
     );
   }
 }
@@ -306,6 +319,9 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   static const _kActivePhase = 'timer_active_phase';
   static const _kActiveCycle = 'timer_active_cycle';
   static const _kActiveSubject = 'timer_active_subject';
+  static const _kActiveAccumulated = 'timer_active_accumulated_seconds';
+  static const _kActiveCommandSeq = 'timer_active_command_seq';
+  static const _kActiveUpdatedAt = 'timer_active_updated_at';
 
   Timer? _tick;
   StreamSubscription<TimerNotificationAction>? _notificationCommands;
@@ -364,6 +380,11 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       workMinutes: prefs.getInt(_kWork) ?? 25,
       breakMinutes: prefs.getInt(_kBreak) ?? 5,
       cycles: prefs.getInt(_kCycles) ?? 4,
+      accumulatedSeconds: prefs.getInt(_kActiveAccumulated) ?? 0,
+      commandSeq: prefs.getInt(_kActiveCommandSeq) ?? 0,
+      lastUpdatedAt: DateTime.tryParse(
+        prefs.getString(_kActiveUpdatedAt) ?? '',
+      ),
     );
     Future.microtask(() async {
       // Bildirim/widget'tan gelen Durdur/Başlat komutu eskiden yalnız onResume'da
@@ -396,15 +417,18 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     final store = ref.read(timerExternalCommandStoreProvider);
     await store.reload();
     if (_disposed) return;
-    final cmd = store.command;
-    if (cmd == null) return;
+    final pending = store.pendingCommand;
+    if (pending == null || pending.sequence < state.commandSeq) return;
+    // Komutu önce tüket: stop() kayıt/senkron beklerken aynı komut tekrar
+    // işlenmez ve soğuk açılış kuyruğu deterministik kalır.
+    await store.clearCommand();
 
-    if (cmd == 'start' && !state.isRunning) {
+    state = state.copyWith(commandSeq: pending.sequence);
+    if (pending.command == 'start' && !state.isRunning) {
       start();
-    } else if (cmd == 'stop' && state.isRunning) {
+    } else if (pending.command == 'stop' && state.isRunning) {
       await stop();
     }
-    await store.clearCommand();
   }
 
   /// Aktif dersi seçer (yalnızca sayaç dururken; null → derssiz).
@@ -462,8 +486,17 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       startedAt: now,
       phase: TimerPhase.work,
       cycle: 1,
+      accumulatedSeconds: 0,
+      lastUpdatedAt: now,
     );
     _persistActiveTimer();
+    unawaited(TimerForegroundService.start(
+      startedAt: now,
+      mode: state.mode.name,
+      phase: state.phase.name,
+      cycle: state.cycle,
+      subjectId: state.subjectId,
+    ));
     _publishPresence(status: PresenceStatus.studying, startedAt: now);
     _startTick();
     unawaited(_showTimerSurfaces(requestPermission: true));
@@ -554,6 +587,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       lastEvent: lastEvent,
     );
     _clearActiveTimer();
+    unawaited(TimerForegroundService.stop());
     _publishPresence(status: PresenceStatus.offline, startedAt: null);
     unawaited(ref.read(timerNotificationServiceProvider).cancel());
     unawaited(_syncTimerWidget());
@@ -617,6 +651,9 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     prefs.setString(_kActivePhase, state.phase.name);
     prefs.setInt(_kActiveCycle, state.cycle);
     prefs.setString(_kActiveSubject, state.subjectId ?? '');
+    prefs.setInt(_kActiveAccumulated, state.accumulatedSeconds);
+    prefs.setInt(_kActiveCommandSeq, state.commandSeq);
+    prefs.setString(_kActiveUpdatedAt, DateTime.now().toUtc().toIso8601String());
   }
 
   void _clearActiveTimer() {
@@ -626,6 +663,9 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     prefs.remove(_kActivePhase);
     prefs.remove(_kActiveCycle);
     prefs.remove(_kActiveSubject);
+    prefs.remove(_kActiveAccumulated);
+    prefs.remove(_kActiveCommandSeq);
+    prefs.remove(_kActiveUpdatedAt);
   }
 
   Future<void> _showTimerSurfaces({bool requestPermission = false}) async {
