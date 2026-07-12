@@ -113,8 +113,12 @@ class TimerNotificationService implements TimerNotificationGateway {
   );
 
   static const int _notificationId = 7001;
-  static const String _channelId = 'study_timer_ongoing';
-  static const String _channelName = 'Çalışma sayacı';
+  // Yeni kanal id: eski `study_timer_ongoing` LOW importance ile oluşturulmuştu ve
+  // Android kanal importance'ını kilitler (koddan değiştirmek etkisizdir). Canlı
+  // kronometreli bildirim düz servis bildiriminin altında gizli kalıyordu → yeni
+  // kanal + DEFAULT importance ile baskın/görünür yapılır.
+  static const String _channelId = 'study_timer_live';
+  static const String _channelName = 'Çalışma sayacı (canlı)';
   static const String _stopActionId = 'stop_timer';
   static const String _startActionId = 'start_timer';
 
@@ -170,8 +174,13 @@ class TimerNotificationService implements TimerNotificationGateway {
       _channelName,
       channelDescription:
           'Çalışma sayacı çalışırken gösterilen kalıcı bildirim',
-      importance: Importance.low,
-      priority: Priority.low,
+      // DEFAULT: kronometreli bildirim tepside görünür ve düz FGS bildiriminin
+      // ÜSTÜNDE durur. Sürekli çalışan sayaç bildirimi olduğu için ses/titreşim
+      // KAPALI (görünür ama sessiz); onlyAlertOnce ek güvence.
+      importance: Importance.defaultImportance,
+      priority: Priority.defaultPriority,
+      playSound: false,
+      enableVibration: false,
       ongoing: true,
       autoCancel: false,
       onlyAlertOnce: true,

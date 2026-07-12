@@ -59,9 +59,14 @@ class TimerForegroundService {
     if (_initialized) return;
     FlutterForegroundTask.init(
       androidNotificationOptions: AndroidNotificationOptions(
-        channelId: 'timer_foreground_service',
-        channelName: 'Çalışma sayacı servisi',
+        // Yeni kanal id: MIN importance eski kanalda kilitli kaldığı için v2.
+        // FGS bildirimi zorunludur ama MIN yapılıp dibe itilir; kullanıcı yalnız
+        // WP-41'in canlı kronometreli (DEFAULT) bildirimini baskın görür.
+        channelId: 'timer_foreground_service_v2',
+        channelName: 'Sayaç servisi (arka plan)',
         channelDescription: 'Çalışan sayacın arka planda korunması',
+        channelImportance: NotificationChannelImportance.MIN,
+        priority: NotificationPriority.MIN,
         onlyAlertOnce: true,
       ),
       iosNotificationOptions: const IOSNotificationOptions(showNotification: false),
