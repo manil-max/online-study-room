@@ -82,23 +82,17 @@ Uyarı formatı (Türkçe, somut, gerekçeli):
 
 `progress.md` (yalnız kendi lane) · `app/pubspec.yaml` · `app/lib/main.dart` · `app/lib/core/navigation/**` · `app/lib/core/theme/**` · `supabase/migrations/**` (numara sırası) · l10n/generated dosyalar · `AndroidManifest.xml`.
 
-### 1.5 Git disiplini — WP başına ayrı dal (VARSAYILAN)
+### 1.5 Git disiplini — tek dal (`main`), branch/merge/push yok
 
-Paralel ajanlar aynı `main` dalında commit atarsa `pubspec.yaml`, `progress.md`, generated dosyalar merge conflict üretir. Bu yüzden **her WP kendi dalında çalışır:**
+Ajanlar aynı çalışma dizinini paylaşır ve doğrudan `main` üzerinde çalışır. Çakışma; branch, PR veya auto-merge ile değil, **Aktif Çalışma Kaydı + ayrık SAHİP dosyalar** ile önlenir.
 
-1. **Başlarken dal aç:** `git switch -c wpNN-kisa-ad` (ör. `wp40-timer-foreground`). `progress.md` claim'ine dal adını yaz.
-2. Tüm commit'ler **o dala** gider. WP başına **tek commit**. **Push yok** (kullanıcı istemedikçe).
-3. **Merge kullanıcıya aittir.** Ajan `main`'e merge ETMEZ; WP "Ürün kabulü"nden geçince kullanıcı birleştirir:
-   ```bash
-   git switch main
-   git merge wpNN-kisa-ad      # temizse birleşir; çakışma çıkarsa kullanıcı çözer
-   git branch -d wpNN-kisa-ad  # birleşen dalı sil
-   ```
-4. Böylece paralel WP'ler birbirini kirletmez; olası çakışma yalnız **merge anında, kontrollü** çıkar.
+- Yeni branch açma, merge yapma veya push etme; kullanıcı özellikle istemedikçe bu işlemler yapılmaz.
+- Her WP için tek, ayrık commit atılır.
+- Commit öncesi `flutter analyze` (0 uyarı) ve `flutter test` yeşil olmalıdır.
+- Yalnız kendi SAHİP dosyalarını açık yollarla stage/commit et. **`git add -A`** ve `git commit -a` yasaktır.
+- `index.lock` görülürse başka bir ajan commit ediyordur; kısa süre bekleyip yeniden dene.
 
-> Solo geliştirici notu: Her iş ayrı bir "taslak katman"dır; beğenip kabul edince `main`'e alırsın, beğenmezsen dalı silersin — `main` hep temiz kalır. İzole gerçek paralellik için `git worktree` de kullanılabilir; şart değil.
-
-**Merge otomasyonu = A (seçildi 2026-07-12):** Merge elle yapılmaz. WP dalı push edilir → `gh pr create` → CI (`.github/workflows/ci.yml`) `analyze`+`test` çalıştırır → yeşilse **PR `main`'e auto-merge** olur (squash) ve dal silinir. Böylece merge otomatiktir ve **testten geçmeyen kod main'e giremez** (kalite kapısı). Kurulum: **WP-39**. Bu, WP dallarının public repo'ya **push edilmesini** gerektirir (kullanıcı A'yı seçerek onayladı). Auto-merge/branch-protection repo ayarlarını **kullanıcı açar**.
+CI/PR auto-merge için WP-39 iptal edilmiştir. Yerel DoD ve gerçek cihaz QA kalite kapısı olmaya devam eder.
 
 ---
 

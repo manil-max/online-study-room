@@ -14,8 +14,7 @@
   - **V8-A:** Sayaç–bildirim–widget tek doğruluk kaynağı — **WP-40 (state store+foreground), WP-41 (chronometer bildirim), WP-42 (widget paritesi) planlandı.**
   - **V8-B:** Genel senkronizasyon denetimi — **WP-43 planlandı.**
   - **V8-C:** Küçük IA — **WP-44 (istatistik sırası) + WP-45 (gruplar sırası/kamp ateşi/animasyon) planlandı.**
-  - **Merge otomasyonu (A):** CI kalite kapısı + PR auto-merge — **WP-39 planlandı.**
-  - *Kaynak: kalite pivotu 2026-07-12; KALITE-PROGRAMI §7–8. Faz 0 + V8 tümü WP'ye bölündü (WP-37→45).*
+  - *Kaynak: kalite pivotu 2026-07-12; KALITE-PROGRAMI §7–8. Faz 0 + V8 tümü WP'ye bölündü (WP-37, WP-38, WP-40→45). WP-39 kullanıcı kararıyla iptal edildi.*
 
 - [~] **"Tamamlandı" görünüp ürün kabulü bekleyenler** — Faz 0'da yeniden sınıflandırılacak
   - WP-23 (Saat), WP-26 (Tema), WP-35 (Başarım), Android widget, WP-36 (IA): kod var ama (2) tanımını (cihazda güvenilir + kullanıcı beklentisi) tam karşılamıyor. Kanıt: KALITE-PROGRAMI §3.

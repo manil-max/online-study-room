@@ -24,16 +24,15 @@
 Ajan en fazla **"otomatik test geçti"**ye kadar götürür. Gerisi sende:
 1. **Dağıtım** — `progress.md`'den WP seç, bağımlılığa uy, ayrı ajanlara ayrık WP ver.
 2. **Çakışma kararı** — ajan uyarırsa yukarıdaki 3 cevaptan biri.
-3. **Merge kurulumu (bir kez)** — WP-39'u kurdur + GitHub'da auto-merge & branch protection'ı aç. Sonrası otomatik.
-4. **Gerçek cihaz QA + kabul** — APK'yı Samsung/Pixel'de dene; beklediğin gibiyse kabul, değilse geri gönder.
-5. **Canlı Supabase migration** — WP-38'in verdiği SQL'i SQL Editor'da sırayla uygula.
+3. **Gerçek cihaz QA + kabul** — APK'yı Samsung/Pixel'de dene; beklediğin gibiyse kabul, değilse geri gönder.
+4. **Canlı Supabase migration** — WP-38'in verdiği SQL'i SQL Editor'da sırayla uygula.
 6. **Ürün kararları + sürüm** — `Ürün kararı gerekiyor` etiketliler ve sürüm etiketi (`git tag vN && git push origin vN`).
 
 ## 4. Günlük ritim
 1. `progress.md` → hazır/bağımsız WP'leri gör.
 2. Her ajana bir WP: `worker'ı oku, WP-N'yi yap`.
 3. Uyarı gelirse karar ver; bitince cihazda dene → kabul.
-4. Kabulde (merge otomasyonu A ile) merge otomatik; migration gerekiyorsa uygula.
+4. Kabulde çalışma kaydını kapat; migration gerekiyorsa uygula.
 5. Yeni iş lazımsa: `planner'ı oku, şunu planla: …`.
 
 ## 5. Hangi ajana hangi iş (model)
@@ -45,7 +44,6 @@ En güçlü modeli en riskli işe ver.
 
 ## 6. Şu an dağıtıma hazır (anlık — güncel liste `progress.md`)
 - **Hemen paralel (çakışmasız):** WP-37, WP-38, WP-44, WP-45.
-- **Önce kur:** WP-39 (merge otomasyonu; bootstrap — ilk PR'ı elle merge + GitHub ayarı bir kez).
 - **V8-A zinciri:** WP-40 (temel) → sonra WP-41 ve WP-42 (ikisi sırayla, paralel değil) → sonra WP-43.
 
 ## 7. Sürüm

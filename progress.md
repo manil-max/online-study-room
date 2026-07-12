@@ -52,14 +52,15 @@
 - **Faz/WP:** — · **Aşama:** — · **SAHİP yollar:** — · **Ortak/riskli yüzey:** — · **Dal:** — · **Son güncelleme:** 2026-07-12 19:10 (Europe/Istanbul) · **Not:** Kullanıcı talimatıyla WP-37 Codex'e devredildi; çalışma çıktısı yok.
 
 ### Codex Lane
-- **Durum:** [x] Boşta
-- **Faz/WP:** —
-- **Aşama:** —
-- **SAHİP yollar:** —
-- **Ortak/riskli yüzey:** —
+- **Durum:** [~] Aktif
+- **Faz/WP:** V8-A · WP-40
+- **Aşama:** Geliştiriliyor
+- **SAHİP yollar:** `app/lib/data/providers/study_providers.dart`, `app/lib/core/notifications/timer_external_command_store.dart`, `app/lib/core/background/**`, `app/android/app/src/main/kotlin/**`, `app/android/app/src/main/AndroidManifest.xml`, `app/pubspec.yaml`, `progress.md` (kendi lane + WP-40)
+- **Ortak/riskli yüzey:** `app/pubspec.yaml`, `AndroidManifest.xml`, `study_providers.dart` (WP-41/42 başlamadan serileştirilecek)
 - **Dal:** — (ana dal `main`)
-- **Son güncelleme:** 2026-07-12 19:25 (Europe/Istanbul)
-- **Not:** WP-37 teslimi kullanıcı tarafından kabul edildi; cihaz QA bu doküman işi için uygulanamaz.
+- **Başlangıç:** 2026-07-12 19:30 (Europe/Istanbul)
+- **Son güncelleme:** 2026-07-12 19:30 (Europe/Istanbul)
+- **Not:** Kullanıcı talimatıyla WP-39 iptal edildi; V8-A temelinin geliştirilmesine başlandı.
 
 ---
 
@@ -87,7 +88,6 @@
 | WP | Durum | Kısa kapsam | Bağımlılık |
 |---|---|---|---|
 | WP-38 | Bekliyor | Faz 0A · Canlı backend durum matrisi (kod yok) | — |
-| WP-39 | Bekliyor (opsiyonel) | CI kalite güvenlik ağı (main'e push'ta analyze+test) | — |
 | WP-40 | Bekliyor | V8-A · Native timer state store + foreground service | — |
 | WP-41 | Bekliyor | V8-A · Canlı chronometer bildirim (Başlat/Durdur) | WP-40 |
 | WP-42 | Bekliyor | V8-A · Widget paritesi + olay bazlı stats besleme | WP-40 |
@@ -97,30 +97,15 @@
 | WP-27 | Bekliyor | Windows desktop shell ve responsive layout | — |
 | WP-28 | Bekliyor | Windows dağıtım, installer ve desktop polish | WP-27 |
 
-> **Dağıtım notu:** Hemen paralel verilebilecek bağımsızlar: **WP-37, WP-38, WP-44, WP-45** (dördü ayrı dosyalar, çakışmasız). **WP-40** V8-A'nın temelidir; WP-41/42 ondan sonra, ikisi `study_providers` timer-sync'i paylaştığı için birbirleriyle **paralel değil** (serileştir). **WP-43** V8-A bitince.
+> **Dağıtım notu:** WP-39 iptal edildi. **WP-40** V8-A'nın temelidir; WP-41/42 ondan sonra, ikisi `study_providers` timer-sync'i paylaştığı için birbirleriyle paralel değildir. WP-43, V8-A'dan sonra başlar. WP-44 ve WP-45 ayrık dosyalarda bağımsız yürütülebilir.
 
 > ✅ Çakışma kontrolü: WP-37 ve WP-38 yalnız kendi yeni doc dosyalarına yazar (`docs/DENETIM-FAZ0A.md` vs `docs/BACKEND-DURUM.md`), `app/**` ve `supabase/**`'a dokunmaz → **paralel güvenli**, aktif lane yok.
 
 
-### WP-39: CI Kalite Güvenlik Ağı (opsiyonel) ⚙️
-- **Program/Faz:** Faz 0B / altyapı — **OPSİYONEL**
-- **Ajan:** —
-- **Durum:** [ ] Bekliyor (opsiyonel)
-- **Not:** Branch modeli iptal edildi (herkes `main`'de). **Merge yok → merge otomasyonu gereksiz.** Bu WP artık yalnızca isteğe bağlı bir güvenlik ağıdır: `main`'e push edildiğinde `analyze`+`test` çalıştırıp bozuk commit'i yakalar. Zaten commit öncesi DoD (analyze+test) ajan tarafından zorunlu olduğu için bu bir yedek katmandır.
-- **Kapsam dışı:** Uygulama kodu. Branch/PR/auto-merge (yok).
-- **SAHİP dosyalar (yaz):** `.github/workflows/ci.yml` (yeni).
-- **DOKUNMA:** `.github/workflows/release.yml` (yalnız oku, deseni taklit et), `app/**`.
-- **Adımlar:**
-  - [ ] `push: branches: [main]` tetikli `ci.yml`: checkout → Flutter kur → `flutter pub get` → `flutter analyze` (bayraksız) → `flutter test`. dart-define'lar `secrets`'tan (release.yml deseni).
-  - [ ] Kırmızıysa kullanıcıya görünür bir uyarı (Actions sekmesi / rozet).
-- **Kabul (ölçülebilir):** `main`'e push sonrası CI analyze+test çalışır; kırmızı olduğunda görünür.
-- **Tuzaklar:** Bu bir "gate" değil (push sonrası çalışır); asıl gate commit öncesi ajan DoD'sidir.
-- **Model önerisi:** 🟣 Pro
-
 ### WP-40: V8-A · Native Timer State Store + Foreground Service ⏱️
 - **Program/Faz:** V8-A (KALITE-PROGRAMI §8.1) — **V8'in temeli, ilk yapılır**
-- **Ajan:** —
-- **Durum:** [ ] Bekliyor
+- **Ajan:** Codex
+- **Durum:** [~] Geliştiriliyor
 - **Problem:** Sayaç app kapalıyken güvenilir değil; tek gerçek zaman kaynağı ve foreground service yok (B4/B5).
 - **Kapsam dışı:** Bildirim UI (→WP-41), widget (→WP-42), senkron denetimi (→WP-43).
 - **SAHİP dosyalar (yaz):**
