@@ -4,6 +4,25 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [beta-v9 / 1.0.8+9] - 2026-07-13
+
+> ⚠️ **Beta test sürümü.** beta-v8 cihaz geri bildirimine göre düzeltmeler.
+
+### Düzeltmeler
+
+- **Sayaç bildirimi artık tek ve canlı:** Sayaç çalışırken bildirimde saniye saniye
+  akan `HH:MM:SS` kronometre baskın olarak görünür. Önceden servisin düz "arka planda
+  korunuyor" bildirimi öne çıkıp canlı bildirimi gizliyordu; artık düz servis
+  bildirimi en dibe alındı, üstte tek canlı kronometreli bildirim kalıyor (sessiz).
+- **Kamp ateşi sahnesi kısaldı:** Gruplar sekmesindeki kamp ateşi çok uzundu ve
+  üstte/altta gereksiz boşluk kaplıyordu; sahne kısaltıldı.
+
+### Bilinen / sıradaki
+
+- Bildirim ve widget'taki **Başlat/Durdur butonlarının uygulama tamamen kapalıyken**
+  işlenmesi bir sonraki beta'da (arka plan komut işleme). Şu an bu butonlar uygulama
+  açık/açılırken çalışır.
+
 ## [beta-v8 / 1.0.7+8] - 2026-07-12
 
 > ⚠️ **Beta test sürümü.** "Odak Kampı Beta" olarak ayrı kurulur. Bu sürümdeki

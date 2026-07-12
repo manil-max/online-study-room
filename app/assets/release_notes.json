@@ -3,6 +3,23 @@
   "source": "CHANGELOG.md",
   "releases": [
     {
+      "versionName": "1.0.8",
+      "buildNumber": 9,
+      "channel": "beta",
+      "date": "2026-07-13",
+      "title": "beta-v9: tek canlı kronometre bildirimi + kamp ateşi",
+      "highlights": [
+        "Sayaç bildirimi artık tek ve canlı: saniye saniye akan HH:MM:SS kronometre baskın görünür (düz servis bildirimi dibe alındı).",
+        "Gruplar sekmesindeki kamp ateşi sahnesi kısaltıldı; üstteki/alttaki gereksiz boşluk kırpıldı."
+      ],
+      "fixes": [
+        "beta-v8'de bildirimde canlı saat gizli kalıyordu; artık üstte tek canlı kronometreli bildirim (sessiz) kalıyor."
+      ],
+      "notes": [
+        "Bildirim/widget Başlat-Durdur butonlarının uygulama TAMAMEN kapalıyken işlenmesi bir sonraki beta'da; şu an uygulama açık/açılırken çalışır."
+      ]
+    },
+    {
       "versionName": "1.0.7",
       "buildNumber": 8,
       "channel": "beta",
