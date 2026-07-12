@@ -42,7 +42,7 @@ değildir; sadelik, güvenilirlik ve iyi kullanıcı deneyimi önceliklidir.
 | State management | **Riverpod 3.3** | Test edilebilir, modern |
 | Grafikler | **fl_chart** | Esnek grafik kütüphanesi |
 | Android widget | **home_widget** paketi | Native Android widget'ını Flutter'dan beslemek |
-| Windows widget | Always-on-top mini Flutter penceresi | Basit ve kontrollü |
+| Windows masaüstü | Adaptif desktop shell + ayrı always-on-top Compact Focus | Mobil EXE kopyası değil; klavye/fare/pencere ürünü |
 | Yerel veri / cache | **Drift (SQLite)** | Pro hedef: sorgulanabilir sağlam yerel depo (KALITE-PROGRAMI §5.1) |
 | Arka plan yürütme | **flutter_foreground_task + Kotlin foreground service** | Canlı sayaç/widget app kapalıyken (v8) |
 | Hata izleme | **Sentry** | Crash + performans (pro) |
@@ -133,7 +133,7 @@ değildir; sadelik, güvenilirlik ve iyi kullanıcı deneyimi önceliklidir.
 | Flutter SDK | Ücretsiz | Açık kaynak |
 | Supabase Free tier | Ücretsiz | Küçük grup için yeter |
 | Android dağıtımı | Ücretsiz | APK sideload + GitHub Releases |
-| Windows dağıtımı | Ücretsiz | Doğrudan exe |
+| Windows dağıtımı | Store veya imzalama maliyetine bağlı | Stable hedefi MSIX/Microsoft Store; ZIP yalnız QA/portable |
 | Otomatik güncelleme | Ücretsiz | GitHub Releases + in-app update |
 
 ---
@@ -193,3 +193,4 @@ değildir; sadelik, güvenilirlik ve iyi kullanıcı deneyimi önceliklidir.
 | **Tem 12** | **Çok-ajanlı çakışma protokolü.** Paralel 3–4 ajan: her ajan görevi alır almaz `progress.md` Aktif Çalışma Kaydı'na SAHİP yol/ortak yüzeyini işler; başlamadan tüm kaydı okuyup çakışma ön-kontrolü yapar; risk varsa başlamaz, kullanıcıyı gerekçeyle uyarır. Saat/Tema/Başarım aynı anda açılmaz. |
 | **Tem 12** | **Platform sınırları belgelendi.** Bildirim görünümü OEM'e bağlı; home widget < 15 dk periyodik güncelleme garanti değil → canlı süre native `Chronometer`, state receiver/service, stats widget'ları olay bazlı. Native temel (foreground service, exact alarm, boot receiver) v8/Saat'te eklenip cihazda kanıtlanır. |
 | **Tem 12** | **WP-39 iptal edildi.** CI/PR auto-merge kurulmayacak; kalite kapısı her WP'nin yerel `analyze` + `test` doğrulaması ve gerçek cihaz QA'sıdır. |
+| **Tem 13** | **Windows ürün yönü.** Flutter/Riverpod/Supabase çekirdeği korunur; Windows'ta adaptif sol rail, desktop içerik iskeleti, klavye/fare/Narrator/high-contrast ve ayrı Compact Focus yüzeyi kullanılır. Stable dağıtım önerisi MSIX/Microsoft Store; imza/identity kalıcıdır. Ayrıntı: `docs/WINDOWS-URUN-PLANI.md`, WP-27/28. |

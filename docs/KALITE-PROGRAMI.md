@@ -382,6 +382,30 @@ Profile + groups + leaderboard
 
 **Güvenlik:** yalnız ortak aktif grup üyesi görebilir · e-posta görünmez · adminlik erişimi otomatik genişletmez · seçilen rozet gerçekten açılmış olmalı · kullanıcı yalnız kendi vitrinini değiştirir · XP/tier istemciden keyfi yazılamaz.
 
+### 8.7 Windows Masaüstü Ürünü (mobil EXE değil)
+
+Windows hattı Flutter/Riverpod/Supabase çekirdeğini korur; ayrı bir desktop
+presentation shell kurar. Kanonik ayrıntılı tasarım: `docs/WINDOWS-URUN-PLANI.md`.
+
+- `<640` minimal, `640–1007` kompakt sol rail, `≥1008` etiketli geniş rail;
+  mobil alt navigasyon değiştirilmez.
+- Geniş içerik max 1440 px içinde masaüstü panellerine adapte olur; mevcut 6
+  sütunlu dashboard kayıt modeli ikinci bir desktop veri modeline çatallanmaz.
+- Mini pencere bütün uygulamayı küçültmez; timer/aktif ders/temel kontrollerden
+  oluşan ayrı Compact Focus yüzeyidir.
+- Klavye, mouse/hover, görünür focus, Narrator, high contrast, %100–%200 ölçek,
+  çoklu monitör ve sleep/resume birinci sınıf gereksinimdir.
+- İlk sürüm standart Windows title bar'ını korur; özel Mica/title bar ancak Snap,
+  yüksek kontrast, DPI ve caption davranışları kanıtlanırsa değerlendirilir.
+- Stable dağıtım hedefi MSIX'tir; önerilen kanal Microsoft Store'dur. ZIP yalnız
+  geliştirme/portable yedektir. İmza/kimlik secret store dışında tutulmaz.
+
+**Windows kalite kapısı:** gerçek Windows release build · 1366×768/1080p/1440p
+ve %100/%125/%150/%200 ölçek · yalnız klavye temel yolculuk · Narrator/high
+contrast · compact/normal pencere restore · multi-monitor + sleep/resume ·
+offline→online ve Android+Windows aynı hesap · temiz install/update/uninstall ·
+Windows App Certification/paket doğrulama · çökme/P0=0.
+
 ---
 
 ## 9. Cihaz QA Matrisi ve Test Senaryoları
@@ -419,6 +443,9 @@ Her iddia `Kodda doğrulandı` / `Cihazda doğrulanmalı` / `Ürün kararı gere
 5. **Tema derinliği/aileleri:** §8.5'teki 12 aile ve katmanlı editör kapsamı.
 6. **Saat kapsamı:** §8.4'teki alanların hangileri ilk sürümde (Uyku/StandBy dahil mi?).
 7. **Sosyal profil gizlilik politikası:** yalnız ortak aktif grup üyesi görünürlüğü (RLS `0022` düzeltmesi) — onay.
+8. **Windows dağıtımı:** Microsoft Store MSIX (önerilen) mı, doğrudan imzalı
+   MSIX + App Installer mı? Windows 10 yalnız best-effort olsun mu? Kapatınca
+   normal çıkış mı, isteğe bağlı system tray mi?
 
 ---
 
@@ -444,3 +471,9 @@ Her iddia `Kodda doğrulandı` / `Cihazda doğrulanmalı` / `Ürün kararı gere
 - Google Clock özellikleri — https://support.google.com/clock/faq/6273949
 - flutter_foreground_task — https://pub.dev/packages/flutter_foreground_task
 - flutter_local_notifications (chronometer) — https://pub.dev/packages/flutter_local_notifications
+- Windows NavigationView — https://learn.microsoft.com/en-us/windows/apps/develop/ui/controls/navigationview
+- Windows keyboard interactions — https://learn.microsoft.com/en-us/windows/apps/develop/input/keyboard-interactions
+- Windows accessibility — https://learn.microsoft.com/en-us/windows/apps/design/accessibility/accessibility-overview
+- Flutter Windows deployment — https://docs.flutter.dev/deployment/windows
+- MSIX signing — https://learn.microsoft.com/en-us/windows/msix/package/sign-msix-package-guide
+- MSIX container/update model — https://learn.microsoft.com/en-us/windows/msix/msix-containerization-overview
