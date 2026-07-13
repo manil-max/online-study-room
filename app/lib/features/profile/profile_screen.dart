@@ -3,20 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../core/desktop/desktop_window.dart';
-import '../../core/utils/duration_format.dart';
 import '../../core/widgets/safe_screen_padding.dart';
 import '../../core/widgets/user_avatar.dart';
-import '../../data/models/study_group.dart';
 import '../../data/providers/auth_providers.dart';
-import '../../data/providers/group_providers.dart';
 import '../../data/repositories/auth_repository.dart';
-import '../classroom/widgets/class_switcher.dart';
 import '../desktop/desktop_page_scaffold.dart';
 import 'session_history_screen.dart';
 import 'settings_screen.dart';
 import 'widgets/gamification_card.dart';
 
-/// Profil sekmesi: foto, görünen ad, ayarlar, davet kodu. Bkz. project.md §3.2.
+/// Profil sekmesi: foto, görünen ad, ayarlar. Grup yönetimi → Gruplar sekmesi.
+/// Bkz. project.md §3.2.
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
@@ -24,14 +21,11 @@ class ProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final profile = ref.watch(authStateProvider).value;
-    final activeGroup = ref.watch(userGroupProvider).value;
-    final groupMembers = ref.watch(groupMembersProvider).value ?? const [];
 
     if (isDesktopWindow) {
       return DesktopPageScaffold(
         title: 'Profil ve hesap',
-        subtitle:
-            'Kimliğini, çalışma geçmişini, tercihlerini ve aktif grubunu yönet.',
+        subtitle: 'Kimliğini, çalışma geçmişini ve tercihlerini yönet.',
         icon: Icons.person_outline,
         child: SingleChildScrollView(
           child: DesktopContent(
@@ -152,20 +146,9 @@ class ProfileScreen extends ConsumerWidget {
                   ),
                 ],
               ),
-              secondary: Column(
+              secondary: const Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _ActiveGroupCard(
-                    group: activeGroup,
-                    memberCount: groupMembers.length,
-                    onCreateGroup: () => createGroupFlow(context, ref),
-                    onJoinGroup: () => joinGroupFlow(context, ref),
-                    onSwitchGroup: () =>
-                        showClassSwitcher(context, ref, switchOnly: true),
-                  ),
-                  const SizedBox(height: 16),
-                  const GamificationCard(),
-                ],
+                children: [GamificationCard()],
               ),
             ),
           ),
@@ -268,15 +251,6 @@ class ProfileScreen extends ConsumerWidget {
             label: const Text('Çıkış yap'),
           ),
           const SizedBox(height: 16),
-          _ActiveGroupCard(
-            group: activeGroup,
-            memberCount: groupMembers.length,
-            onCreateGroup: () => createGroupFlow(context, ref),
-            onJoinGroup: () => joinGroupFlow(context, ref),
-            onSwitchGroup: () =>
-                showClassSwitcher(context, ref, switchOnly: true),
-          ),
-          const SizedBox(height: 16),
           const GamificationCard(),
         ],
       ),
@@ -349,124 +323,5 @@ class ProfileScreen extends ConsumerWidget {
     } on AuthException catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(e.message)));
     }
-  }
-}
-
-class _ActiveGroupCard extends StatelessWidget {
-  const _ActiveGroupCard({
-    required this.group,
-    required this.memberCount,
-    required this.onCreateGroup,
-    required this.onJoinGroup,
-    required this.onSwitchGroup,
-  });
-
-  final StudyGroup? group;
-  final int memberCount;
-  final VoidCallback onCreateGroup;
-  final VoidCallback onJoinGroup;
-  final VoidCallback onSwitchGroup;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final currentGroup = group;
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: currentGroup == null
-            ? Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Aktif grup', style: theme.textTheme.titleMedium),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Henüz bir grubun yok. Buradan oluşturabilir veya kodla katılabilirsin.',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      FilledButton.tonalIcon(
-                        onPressed: onCreateGroup,
-                        icon: const Icon(Icons.add),
-                        label: const Text('Grup oluştur'),
-                      ),
-                      OutlinedButton.icon(
-                        onPressed: onJoinGroup,
-                        icon: const Icon(Icons.login),
-                        label: const Text('Koda katıl'),
-                      ),
-                    ],
-                  ),
-                ],
-              )
-            : Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          'Aktif grup',
-                          style: theme.textTheme.titleMedium,
-                        ),
-                      ),
-                      FilledButton.tonalIcon(
-                        onPressed: onSwitchGroup,
-                        icon: const Icon(Icons.swap_horiz),
-                        label: const Text('Grup değiştir'),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          currentGroup.name,
-                          style: theme.textTheme.titleLarge,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.surfaceContainerHighest,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          '$memberCount üye',
-                          style: theme.textTheme.labelMedium,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Günlük hedef: ${formatHuman(currentGroup.dailyGoalMinutes * 60)}',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Davet kodu: ${currentGroup.inviteCode}',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-      ),
-    );
   }
 }

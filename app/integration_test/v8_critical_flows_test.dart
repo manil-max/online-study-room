@@ -20,14 +20,16 @@ void main() {
 
     expect(find.text('Ana Sayfa'), findsWidgets);
     var navigation = tester.widget<NavigationBar>(find.byType(NavigationBar));
-    navigation.onDestinationSelected!(3);
+    // 2 = Gruplar, 4 = Profil (home_shell destinations)
+    navigation.onDestinationSelected!(2);
     await tester.pumpAndSettle();
     navigation = tester.widget<NavigationBar>(find.byType(NavigationBar));
-    expect(navigation.selectedIndex, 3);
+    expect(navigation.selectedIndex, 2);
+    expect(find.text('Henüz bir grupta değilsin'), findsOneWidget);
     navigation.onDestinationSelected!(4);
     await tester.pumpAndSettle();
     navigation = tester.widget<NavigationBar>(find.byType(NavigationBar));
     expect(navigation.selectedIndex, 4);
-    expect(find.text('Aktif grup'), findsOneWidget);
+    expect(find.text('Ayarlar'), findsOneWidget);
   });
 }

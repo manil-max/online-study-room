@@ -30,9 +30,12 @@ void main() {
     await tester.tap(find.text('İstatistik'));
     await tester.pumpAndSettle();
     expect(find.text('İstatistik'), findsWidgets);
+    await tester.tap(find.text('Gruplar'));
+    await tester.pumpAndSettle();
+    expect(find.text('Henüz bir grupta değilsin'), findsOneWidget);
     await tester.tap(find.text('Profil'));
     await tester.pumpAndSettle();
-    expect(find.text('Aktif grup'), findsOneWidget);
+    expect(find.text('Ayarlar'), findsOneWidget);
   });
 
   test(
