@@ -6,14 +6,14 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
+import com.manilmax.online_study_room.alarm.AlarmIds
+import com.manilmax.online_study_room.alarm.NativeAlarmScheduler
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
+import java.util.TimeZone
 
 /**
- * WP-58: Android 12+ exact alarm izin durumu ve ayar ekranı.
- *
- * Flutter tarafı önce flutter_local_notifications API'sini dener;
- * bu kanal yedek / tutarlı native kaynaktır.
+ * Dart ↔ native: exact izin + zamanlama + TZ + mirror reschedule.
  */
 object ExactAlarmHelper {
     const val CHANNEL = "com.manilmax.online_study_room/exact_alarm"
@@ -25,6 +25,70 @@ object ExactAlarmHelper {
             }
             "requestExactAlarmsPermission" -> {
                 openExactAlarmSettings(context)
+                result.success(true)
+            }
+            "getLocalTimezoneId" -> {
+                result.success(TimeZone.getDefault().id)
+            }
+            "scheduleAlarm" -> {
+                val id = call.argument<String>("id") ?: return result.error("arg", "id", null)
+                val triggerAtMs = (call.argument<Number>("triggerAtMs"))?.toLong()
+                    ?: return result.error("arg", "triggerAtMs", null)
+                NativeAlarmScheduler.scheduleAlarm(
+                    context,
+                    id = id,
+                    triggerAtMs = triggerAtMs,
+                    label = call.argument<String>("label") ?: "Alarm",
+                    hour = call.argument<Number>("hour")?.toInt() ?: 0,
+                    minute = call.argument<Number>("minute")?.toInt() ?: 0,
+                    crescendo = call.argument<Boolean>("crescendo") ?: true,
+                    vibrate = call.argument<Boolean>("vibrate") ?: true,
+                    antiSnooze = call.argument<Boolean>("antiSnooze") ?: false,
+                    snoozeMin = call.argument<Number>("snoozeMin")?.toInt() ?: 5,
+                )
+                result.success(true)
+            }
+            "scheduleTimer" -> {
+                val id = call.argument<String>("id") ?: return result.error("arg", "id", null)
+                val triggerAtMs = (call.argument<Number>("triggerAtMs"))?.toLong()
+                    ?: return result.error("arg", "triggerAtMs", null)
+                NativeAlarmScheduler.scheduleTimer(
+                    context,
+                    id = id,
+                    triggerAtMs = triggerAtMs,
+                    label = call.argument<String>("label") ?: "Timer",
+                )
+                result.success(true)
+            }
+            "cancel" -> {
+                val id = call.argument<String>("id") ?: return result.error("arg", "id", null)
+                val kind = call.argument<String>("kind") ?: AlarmIds.KIND_ALARM
+                NativeAlarmScheduler.cancel(context, kind, id)
+                result.success(true)
+            }
+            "rescheduleFromMirror" -> {
+                NativeAlarmScheduler.rescheduleFromMirror(context)
+                result.success(true)
+            }
+            "cancelAllFromMirror" -> {
+                NativeAlarmScheduler.cancelAllFromMirror(context)
+                result.success(true)
+            }
+            "previewRing" -> {
+                // Test/önizleme: hemen AlarmRingActivity
+                val intent = Intent(context, com.manilmax.online_study_room.alarm.AlarmRingActivity::class.java).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    putExtra(AlarmIds.EXTRA_KIND, AlarmIds.KIND_ALARM)
+                    putExtra(AlarmIds.EXTRA_ID, call.argument<String>("id") ?: "preview")
+                    putExtra(AlarmIds.EXTRA_LABEL, call.argument<String>("label") ?: "Önizleme")
+                    putExtra(AlarmIds.EXTRA_HOUR, call.argument<Number>("hour")?.toInt() ?: 0)
+                    putExtra(AlarmIds.EXTRA_MINUTE, call.argument<Number>("minute")?.toInt() ?: 0)
+                    putExtra(AlarmIds.EXTRA_CRESCENDO, call.argument<Boolean>("crescendo") ?: true)
+                    putExtra(AlarmIds.EXTRA_VIBRATE, call.argument<Boolean>("vibrate") ?: true)
+                    putExtra(AlarmIds.EXTRA_ANTI_SNOOZE, call.argument<Boolean>("antiSnooze") ?: false)
+                    putExtra(AlarmIds.EXTRA_SNOOZE_MIN, call.argument<Number>("snoozeMin")?.toInt() ?: 5)
+                }
+                context.startActivity(intent)
                 result.success(true)
             }
             else -> result.notImplemented()

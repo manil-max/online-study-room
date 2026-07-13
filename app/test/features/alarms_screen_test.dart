@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -13,25 +14,54 @@ import 'package:online_study_room/data/repositories/in_memory/in_memory_alarm_re
 
 class MockAlarmNotificationService implements AlarmNotificationService {
   @override
-  Future<void> scheduleAlarm(AlarmRule alarm) async {}
+  Future<void> scheduleAlarm(
+    AlarmRule alarm, {
+    SharedPreferences? prefs,
+    DateTime? now,
+  }) async {}
+
   @override
   Future<void> cancelAlarm(String id) async {}
+
   @override
-  Future<void> initialize() async {}
+  Future<void> cancelTimer(String id) async {}
+
   @override
-  Future<void> rescheduleAll(List<AlarmRule> alarms) async {}
+  Future<void> cancelById(String id) async {}
+
   @override
-  Future<void> scheduleTimer(TimerInstance instance) async {}
+  Future<void> initialize({
+    void Function(NotificationResponse)? onResponse,
+  }) async {}
+
+  @override
+  Future<void> rescheduleAll(
+    List<AlarmRule> alarms, {
+    SharedPreferences? prefs,
+    DateTime? now,
+  }) async {}
+
+  @override
+  Future<void> scheduleTimer(
+    TimerInstance instance, {
+    SharedPreferences? prefs,
+  }) async {}
+
   @override
   Future<void> showImmediate(String title, String body) async {}
+
   @override
   Future<ExactAlarmStatus> exactAlarmStatus() async => ExactAlarmStatus.granted;
+
   @override
   Future<bool> requestExactAlarmPermission() async => true;
+
   @override
-  bool get lastUsedExact => true;
+  Future<void> previewNativeRing(AlarmRule alarm) async {}
+
   @override
-  set lastUsedExact(bool value) {}
+  bool lastUsedExact = true;
+
   @override
   dynamic noSuchMethod(Invocation invocation) => null;
 }

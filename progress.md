@@ -81,7 +81,7 @@
 - **Not:** Ayarlar tek katmana indirildi; ExpansionTile yok, Gruplar sayacı kaldırıldı, bildirim/sürüm doğrudan açılıyor, grid Auto seçeneği kaldırılıp eski değer 6'ya göçüyor. Analyze + 283 test + Windows release build PASS; görsel cihaz QA bekliyor. Push yok.
 
 ### Grok Lane
-- **Durum:** [x] Boşta — WP-58/59/60 kod+otomatik test geçti (cihaz QA / ürün kabulü bekliyor)
+- **Durum:** [x] Boşta — Saat P0 reliability kod+test geçti (cihaz QA bekliyor)
 - **Faz/WP:** —
 - **Aşama:** —
 - **SAHİP yollar:** —
@@ -89,7 +89,7 @@
 - **Dal:** main
 - **Başlangıç:** —
 - **Son güncelleme:** 2026-07-13
-- **Not:** Saat Merkezi R1–R3 kodlandı: epoch motor, exact alarm, Alarm 2.0, çoklu timer, dünya saati, lap kronometre, StandBy burn-in. `flutter analyze` (clock paths) 0; time_engine+clock+alarms testleri 20/20 PASS. `Cihazda doğrulanmalı`.
+- **Not:** P0 native: AlarmManager exact, AlarmRingActivity (USAGE_ALARM crescendo + lock screen), boot/timezone reschedule, timer mirror process-death, device TZ (Istanbul sabiti kaldırıldı). 23 test PASS. **Hâlâ cihaz kanıtı şart** (reboot, OEM, gerçek ses).
 
 ---
 
@@ -539,7 +539,8 @@
 - **WP-41/42/51 + Grok timer hotfix (2026-07-13):** Native `StudyTimerService`, app-kapalı Başlat/Durdur, chronometer bildirim, beta-v13–v15 rötuşları; in-app start idle race fix (`94945ac`). Ürün sahibi kapatma kararı.
 - **WP-54–57 (2026-07-13):** Tema Stüdyosu + Başarım 3.0 ledger/UI; taç 0/2.5k/10k/25k/75k; saat +10 XP; profil/tap/taç polish. SQL 0025–0027 canlı uygulama kullanıcının; 0028 genel yayın sıfırlaması.
 
-- **WP-58/59/60 Saat Merkezi (2026-07-13, Grok):** Epoch time engine; exact alarm Android; Alarm 2.0 (skip/anti-snooze/crescendo); multi-timer studio; dünya saati; lap kronometre; StandBy burn-in. Hub 6 sekme. Analyze (clock paths) 0; 20 ilgili test PASS. Ürün kabulü cihaz QA sonrası.
+- **WP-58/59/60 Saat Merkezi (2026-07-13, Grok):** Epoch time engine; Alarm 2.0 UI; multi-timer; dünya/kronometre/StandBy hub.
+- **Saat P0 reliability (2026-07-13, Grok):** Native `AlarmManager` + `AlarmRingActivity` (USAGE_ALARM MediaPlayer 30sn crescendo, kilit ekranı, anti-snooze math, dismiss/snooze); boot/timezone mirror reschedule; multi-timer endsAt native schedule; device TZ (artık sabit Istanbul değil); analyze 0; 23 test PASS. Cihaz reboot/OEM/ses hâlâ `Cihazda doğrulanmalı`.
 
 - **WP-37:** `docs/DENETIM-FAZ0A.md` ile WP-1–36'nın kanıtlanabilir aşamaları, özellik envanteri, P0/P1/P2 listesi, risk/v8 blocker kaydı ve belge tutarsızlığı önerileri teslim edildi. `app/` diff'i boş; canlı backend teyidi WP-38'de kalır.
 

@@ -8,11 +8,14 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'core/config/supabase_config.dart';
 import 'core/desktop/desktop_window.dart';
+import 'core/notifications/alarm_notification_service.dart';
+import 'core/notifications/native_alarm_bridge.dart';
 import 'core/notifications/timer_notification_service.dart';
 import 'core/observability/observability_service.dart';
 import 'core/prefs/app_prefs.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_settings.dart';
+import 'core/time_engine/device_timezone.dart';
 import 'features/auth/auth_gate.dart';
 import 'features/desktop/compact_focus_view.dart';
 
@@ -47,6 +50,19 @@ Future<void> main() async {
   // Yerel kalıcı ayarlar (Ana Sayfa yerleşimi, saat stili vb. için).
   final prefs = await SharedPreferences.getInstance();
   await ObservabilityService.instance.initialize(prefs);
+
+  // Saat P0: cihaz TZ + alarm servisi; boot sonrası native mirror reschedule.
+  await DeviceTimezone.ensureInitialized();
+  await AlarmNotificationService.instance.initialize();
+  if (isAndroid) {
+    final bridge = NativeAlarmBridge.instance;
+    if (bridge.consumeRescheduleFlag(prefs)) {
+      // Boot/timezone: native zaten mirror'dan kurdu; bayrağı temizle.
+      // Dart tarafı provider açılınca mirror'ı tazeleyecek.
+    }
+    // Native boot receiver'ın kaçırdığı durum için ek güvence
+    await bridge.rescheduleFromMirror();
+  }
 
   runApp(
     ProviderScope(

@@ -27,15 +27,29 @@ class _StandByClockViewState extends ConsumerState<StandByClockView> {
   @override
   void initState() {
     super.initState();
-    // Sistem UI'yi gizle — masa saati hissi
+    // Sistem UI'yi gizle + gece düşük parlaklık (AMOLED masa saati)
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    _applyBrightness();
     _burnIn.tick(_now);
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
       final n = DateTime.now();
+      final hourChanged = n.hour != _now.hour;
       _burnIn.tick(n);
       setState(() => _now = n);
+      if (hourChanged) _applyBrightness();
     });
+  }
+
+  void _applyBrightness() {
+    final night = _now.hour >= 21 || _now.hour < 7;
+    // 0.0–1.0 uygulama parlaklığı (null = sistem)
+    SystemChrome.setSystemUIOverlayStyle(
+      SystemUiOverlayStyle(
+        statusBarBrightness: night ? Brightness.dark : Brightness.light,
+        systemNavigationBarColor: Colors.black,
+      ),
+    );
   }
 
   @override

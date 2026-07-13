@@ -1,3 +1,6 @@
+import 'dart:io' show Platform;
+
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
@@ -252,8 +255,18 @@ class _AlarmTile extends ConsumerWidget {
                   label: const Text('Düzenle'),
                 ),
                 TextButton.icon(
-                  onPressed: () {
-                    Navigator.of(context).push(
+                  onPressed: () async {
+                    final isAndroid =
+                        !kIsWeb && Platform.isAndroid;
+                    if (isAndroid) {
+                      // Native: USAGE_ALARM MediaPlayer + kilit ekranı
+                      await ref
+                          .read(alarmNotificationServiceProvider)
+                          .previewNativeRing(alarm);
+                      return;
+                    }
+                    if (!context.mounted) return;
+                    await Navigator.of(context).push(
                       MaterialPageRoute<void>(
                         builder: (_) => AlarmRingingScreen(alarm: alarm),
                         fullscreenDialog: true,

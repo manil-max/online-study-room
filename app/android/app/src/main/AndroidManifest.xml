@@ -88,18 +88,32 @@
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
-        <!-- WP-58: Kişisel alarm / timezone / boot köprüsü -->
+        <!-- Saat P0: native exact alarm receiver + full-screen ring -->
         <receiver
-            android:name=".AlarmReceiver"
-            android:exported="false">
+            android:name=".alarm.AlarmReceiver"
+            android:exported="false"
+            android:enabled="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
                 <action android:name="android.intent.action.TIMEZONE_CHANGED" />
                 <action android:name="android.intent.action.TIME_CHANGED" />
-                <action android:name="com.manilmax.online_study_room.ACTION_ALARM_FIRE" />
+                <action android:name="com.manilmax.online_study_room.ACTION_FIRE_ALARM" />
+                <action android:name="com.manilmax.online_study_room.ACTION_FIRE_TIMER" />
+                <action android:name="com.manilmax.online_study_room.ACTION_ALARM_DISMISS" />
+                <action android:name="com.manilmax.online_study_room.ACTION_ALARM_SNOOZE" />
             </intent-filter>
         </receiver>
+        <activity
+            android:name=".alarm.AlarmRingActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:launchMode="singleInstance"
+            android:showOnLockScreen="true"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.DeviceDefault.NoActionBar" />
         <receiver
             android:name=".widgets.TimerWidgetProvider"
             android:exported="true">

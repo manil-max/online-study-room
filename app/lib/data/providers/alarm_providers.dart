@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/notifications/alarm_notification_service.dart';
+import '../../core/notifications/native_alarm_bridge.dart';
 import '../../core/prefs/app_prefs.dart';
 import '../../core/time_engine/alarm_scheduler.dart';
 import '../../core/time_engine/epoch_clock.dart';
@@ -49,7 +50,7 @@ class AlarmsNotifier extends AsyncNotifier<List<AlarmRule>> {
   Future<void> saveAlarm(AlarmRule alarm) async {
     final repo = ref.read(alarmRepositoryProvider);
     await repo.saveAlarm(alarm);
-    await ref.read(alarmNotificationServiceProvider).scheduleAlarm(alarm);
+    await _syncNative();
     ref.invalidateSelf();
   }
 
@@ -57,6 +58,7 @@ class AlarmsNotifier extends AsyncNotifier<List<AlarmRule>> {
     final repo = ref.read(alarmRepositoryProvider);
     await repo.deleteAlarm(id);
     await ref.read(alarmNotificationServiceProvider).cancelAlarm(id);
+    await _syncNative();
     ref.invalidateSelf();
   }
 
@@ -81,8 +83,18 @@ class AlarmsNotifier extends AsyncNotifier<List<AlarmRule>> {
   }
 
   Future<void> rescheduleAll() async {
-    final alarms = state.value ?? await future;
-    await ref.read(alarmNotificationServiceProvider).rescheduleAll(alarms);
+    await _syncNative();
+  }
+
+  /// Mirror + her aktif alarm için native schedule (boot dayanıklı).
+  Future<void> _syncNative() async {
+    final repo = ref.read(alarmRepositoryProvider);
+    final alarms = await repo.getAlarms();
+    final now = ref.read(epochClockProvider).nowDateTime();
+    final prefs = ref.read(sharedPreferencesProvider);
+    final svc = ref.read(alarmNotificationServiceProvider);
+    await NativeAlarmBridge.instance.writeAlarmMirror(prefs, alarms, now);
+    await svc.rescheduleAll(alarms, prefs: prefs, now: now);
   }
 }
 
@@ -164,6 +176,7 @@ class TimerInstancesNotifier extends AsyncNotifier<List<TimerInstance>> {
     for (final inst in adjusted) {
       if (inst.status == TimerStateStatus.done &&
           raw.any((r) => r.id == inst.id && r.status == TimerStateStatus.running)) {
+        // Native ring zaten çalmış olabilir; UI yedek bildirimi
         unawaited(
           ref.read(alarmNotificationServiceProvider).showImmediate(
                 'Zamanlayıcı',
@@ -174,9 +187,26 @@ class TimerInstancesNotifier extends AsyncNotifier<List<TimerInstance>> {
       unawaited(repo.saveTimerInstance(inst));
     }
 
+    // Process death: çalışan timer'ları native AlarmManager'a yaz
+    unawaited(_syncTimerNative(adjusted));
+
     _startTicker();
     ref.onDispose(() => _ticker?.cancel());
     return adjusted;
+  }
+
+  Future<void> _syncTimerNative(List<TimerInstance> list) async {
+    final prefs = ref.read(sharedPreferencesProvider);
+    final nowMs = ref.read(epochClockProvider).nowMs();
+    final svc = ref.read(alarmNotificationServiceProvider);
+    await NativeAlarmBridge.instance.writeTimerMirror(prefs, list, nowMs);
+    for (final inst in list) {
+      if (inst.status == TimerStateStatus.running) {
+        await svc.scheduleTimer(inst, prefs: prefs);
+      } else {
+        await svc.cancelTimer(inst.id);
+      }
+    }
   }
 
   void _startTicker() {
@@ -201,7 +231,7 @@ class TimerInstancesNotifier extends AsyncNotifier<List<TimerInstance>> {
                   ),
             );
             unawaited(
-              ref.read(alarmNotificationServiceProvider).cancelAlarm(inst.id),
+              ref.read(alarmNotificationServiceProvider).cancelTimer(inst.id),
             );
             unawaited(
               ref.read(alarmRepositoryProvider).saveTimerInstance(
@@ -227,7 +257,10 @@ class TimerInstancesNotifier extends AsyncNotifier<List<TimerInstance>> {
         }
         return inst;
       }).toList();
-      if (changed) state = AsyncData(updated);
+      if (changed) {
+        state = AsyncData(updated);
+        unawaited(_syncTimerNative(updated));
+      }
     });
   }
 
@@ -251,9 +284,8 @@ class TimerInstancesNotifier extends AsyncNotifier<List<TimerInstance>> {
       inst = inst.syncedWith(c, nowMs);
     }
     await ref.read(alarmRepositoryProvider).saveTimerInstance(inst);
-    if (inst.status == TimerStateStatus.running) {
-      await ref.read(alarmNotificationServiceProvider).scheduleTimer(inst);
-    }
+    final all = await ref.read(alarmRepositoryProvider).getTimerInstances();
+    await _syncTimerNative(all);
     _doneNotified.remove(inst.id);
     ref.invalidateSelf();
   }
@@ -317,8 +349,10 @@ class TimerInstancesNotifier extends AsyncNotifier<List<TimerInstance>> {
 
   Future<void> deleteInstance(String id) async {
     await ref.read(alarmRepositoryProvider).deleteTimerInstance(id);
-    await ref.read(alarmNotificationServiceProvider).cancelAlarm(id);
+    await ref.read(alarmNotificationServiceProvider).cancelTimer(id);
     _doneNotified.remove(id);
+    final all = await ref.read(alarmRepositoryProvider).getTimerInstances();
+    await _syncTimerNative(all);
     ref.invalidateSelf();
   }
 
@@ -330,13 +364,17 @@ class TimerInstancesNotifier extends AsyncNotifier<List<TimerInstance>> {
     final index = list.indexWhere((e) => e.id == id);
     if (index < 0) return;
     final nowMs = ref.read(epochClockProvider).nowMs();
-    var inst = fn(list[index], nowMs);
+    final inst = fn(list[index], nowMs);
     await ref.read(alarmRepositoryProvider).saveTimerInstance(inst);
-    if (inst.status == TimerStateStatus.running) {
-      await ref.read(alarmNotificationServiceProvider).scheduleTimer(inst);
-    } else {
-      await ref.read(alarmNotificationServiceProvider).cancelAlarm(inst.id);
+    final all = await ref.read(alarmRepositoryProvider).getTimerInstances();
+    final merged = <TimerInstance>[
+      for (final t in all)
+        if (t.id == inst.id) inst else t,
+    ];
+    if (!merged.any((t) => t.id == inst.id)) {
+      merged.add(inst);
     }
+    await _syncTimerNative(merged);
     ref.invalidateSelf();
   }
 }

@@ -5,6 +5,7 @@ library;
 
 export 'alarm_scheduler.dart';
 export 'burn_in_offset.dart';
+export 'device_timezone.dart';
 export 'epoch_clock.dart';
 export 'epoch_countdown.dart';
 export 'epoch_stopwatch.dart';
