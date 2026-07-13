@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
 
-/// Seçilebilir renk paleti (§ tema ayarları). Her palet birincil + vurgu rengini
-/// belirler; koyu lacivert zemin tüm paletlerde ortaktır.
+import 'theme_presets.dart';
+import 'theme_tokens.dart';
+
+export 'theme_presets.dart';
+export 'theme_tokens.dart';
+
+/// Seçilebilir renk paleti (eski WP-26 yolu — ThemePreset ile köprülenir).
+/// Yeni kod: `ThemePreset` / `context.appColors`.
 class AppPalette {
   const AppPalette({
     required this.id,
@@ -140,146 +146,204 @@ AppPalette paletteById(String id) => kAppPalettes.firstWhere(
       orElse: () => kAppPalettes.first,
     );
 
-/// Uygulama teması. Koyu lacivert zemin (kardeşin `globals.css` oklch → sRGB);
-/// birincil/vurgu rengi seçilen [AppPalette]'ten gelir. Açık tema da sağlanır.
+/// WP-54: 5 katmanlı ThemeExtension + 12 preset motoru.
+/// Geriye uyum: [light]/[dark] hâlâ AppPalette kabul eder (eski ayar ekranı).
 class AppTheme {
   AppTheme._();
 
-  // --- Ortak koyu yüzeyler (tüm paletlerde aynı) ---
-  static const Color _bg = Color(0xFF0B1016); // zemin (en koyu lacivert)
-  static const Color _card = Color(0xFF151B23); // kart yüzeyi
-  static const Color _surfaceHigh = Color(0xFF202730); // ikincil yüzey
-  static const Color _amber = Color(0xFFE69825); // tertiary (amber)
-  static const Color _fg = Color(0xFFEFF2F5); // metin (near-white)
-  static const Color _muted = Color(0xFF9299A2); // soluk metin
-  static const Color _error = Color(0xFFEA3C3F);
-
-  static ColorScheme _darkScheme(AppPalette p) =>
-      const ColorScheme.dark().copyWith(
-        brightness: Brightness.dark,
-        primary: p.primary,
-        onPrimary: p.onPrimary,
-        primaryContainer:
-            Color.alphaBlend(p.primary.withValues(alpha: 0.30), _card),
-        onPrimaryContainer: p.onPrimary,
-        secondary: p.accent,
-        onSecondary: p.onAccent,
-        secondaryContainer:
-            Color.alphaBlend(p.accent.withValues(alpha: 0.30), _card),
-        onSecondaryContainer: p.onAccent,
-        tertiary: _amber,
-        onTertiary: const Color(0xFF241700),
-        surface: _card,
-        onSurface: _fg,
-        onSurfaceVariant: _muted,
-        surfaceContainerLowest: _bg,
-        surfaceContainerLow: const Color(0xFF11161D),
-        surfaceContainer: const Color(0xFF161D26),
-        surfaceContainerHigh: const Color(0xFF1B222B),
-        surfaceContainerHighest: _surfaceHigh,
-        error: _error,
-        onError: Colors.white,
-        outline: const Color(0xFF2C343F),
-        outlineVariant: const Color(0xFF20262E),
+  /// Tercih edilen giriş: sanat ailesi (ThemePreset).
+  static ThemeData fromPreset(ThemePreset preset, {Color? dynamicSeed}) {
+    var colors = preset.colors;
+    if (preset.isDynamic && dynamicSeed != null) {
+      final scheme = ColorScheme.fromSeed(
+        seedColor: dynamicSeed,
+        brightness: preset.brightness,
       );
-
-  static ColorScheme _lightScheme(AppPalette p) => ColorScheme.fromSeed(
-        seedColor: p.primary,
-        primary: p.primary,
-        secondary: p.accent,
-        tertiary: _amber,
+      colors = AppColors.fromScheme(scheme).copyWith(
+        scaffold: scheme.surfaceContainerLowest,
+        surface1: scheme.surface,
+        surface2: scheme.surfaceContainerHigh,
       );
-
-  static ThemeData dark(AppPalette palette) =>
-      _build(_darkScheme(palette), scaffold: _bg);
-
-  static ThemeData light(AppPalette palette) {
-    final scheme = _lightScheme(palette);
-    return _build(scheme, scaffold: scheme.surface);
+    }
+    return _buildFromTokens(
+      colors: colors,
+      shapes: preset.shapes,
+      atmosphere: preset.atmosphere,
+      motion: preset.motion,
+      typography: preset.typography(),
+      brightness: preset.brightness,
+    );
   }
 
-  static ThemeData _build(ColorScheme scheme, {required Color scaffold}) {
-    final isDark = scheme.brightness == Brightness.dark;
+  /// Eski yol: palet → en yakın preset (veya palet renkleriyle override).
+  static ThemeData dark(AppPalette palette) {
+    final base = themePresetById(migratePaletteIdToPreset(palette.id));
+    final colors = base.colors.copyWith(
+      primary: palette.primary,
+      onPrimary: palette.onPrimary,
+      accent: palette.accent,
+      onAccent: palette.onAccent,
+    );
+    return _buildFromTokens(
+      colors: colors,
+      shapes: base.shapes,
+      atmosphere: base.atmosphere.copyWith(
+        glowColor: palette.primary,
+        gradientStart: colors.scaffold,
+        gradientEnd: colors.surface1,
+      ),
+      motion: base.motion,
+      typography: AppTypography.standard(textPrimary: colors.textPrimary),
+      brightness: Brightness.dark,
+    );
+  }
+
+  static ThemeData light(AppPalette palette) {
+    final nordic = themePresetById('nordic_snow');
+    final colors = nordic.colors.copyWith(
+      primary: palette.primary,
+      onPrimary: palette.onPrimary,
+      accent: palette.accent,
+      onAccent: palette.onAccent,
+    );
+    return _buildFromTokens(
+      colors: colors,
+      shapes: nordic.shapes,
+      atmosphere: nordic.atmosphere.copyWith(glowColor: palette.primary),
+      motion: nordic.motion,
+      typography: AppTypography.standard(textPrimary: colors.textPrimary),
+      brightness: Brightness.light,
+    );
+  }
+
+  static ThemeData _buildFromTokens({
+    required AppColors colors,
+    required AppShapes shapes,
+    required AppAtmosphere atmosphere,
+    required AppMotion motion,
+    required AppTypography typography,
+    required Brightness brightness,
+  }) {
+    final scheme = ColorScheme(
+      brightness: brightness,
+      primary: colors.primary,
+      onPrimary: colors.onPrimary,
+      secondary: colors.accent,
+      onSecondary: colors.onAccent,
+      tertiary: colors.accent,
+      onTertiary: colors.onAccent,
+      error: colors.error,
+      onError: colors.onError,
+      surface: colors.surface1,
+      onSurface: colors.textPrimary,
+      onSurfaceVariant: colors.textSecondary,
+      surfaceContainerLowest: colors.scaffold,
+      surfaceContainerLow: Color.alphaBlend(
+        colors.surface1.withValues(alpha: 0.5),
+        colors.scaffold,
+      ),
+      surfaceContainer: colors.surface1,
+      surfaceContainerHigh: colors.surface2,
+      surfaceContainerHighest: colors.surface2,
+      outline: colors.border,
+      outlineVariant: colors.border.withValues(alpha: 0.7),
+    );
+
+    final radius = shapes.cardRadius;
+    final rSm = BorderRadius.circular(shapes.sharp ? 0 : shapes.radiusSm);
+
     return ThemeData(
       useMaterial3: true,
+      brightness: brightness,
       colorScheme: scheme,
-      scaffoldBackgroundColor: scaffold,
+      scaffoldBackgroundColor: colors.scaffold,
+      extensions: <ThemeExtension<dynamic>>[
+        colors,
+        typography,
+        shapes,
+        atmosphere,
+        motion,
+      ],
       cardTheme: CardThemeData(
-        color: scheme.surface,
-        elevation: 0,
+        color: colors.surface1,
+        elevation: shapes.cardElevation,
         clipBehavior: Clip.antiAlias,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: scheme.outlineVariant, width: 1),
+          borderRadius: radius,
+          side: BorderSide(
+            color: colors.border,
+            width: shapes.borderWidth,
+          ),
         ),
         margin: EdgeInsets.zero,
       ),
       appBarTheme: AppBarTheme(
-        backgroundColor: scaffold,
-        foregroundColor: scheme.onSurface,
+        backgroundColor: colors.scaffold,
+        foregroundColor: colors.textPrimary,
         elevation: 0,
         scrolledUnderElevation: 0.5,
         centerTitle: false,
-        titleTextStyle: TextStyle(
-          color: scheme.onSurface,
-          fontSize: 20,
-          fontWeight: FontWeight.w700,
-        ),
+        titleTextStyle: typography.title,
       ),
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: isDark ? const Color(0xFF11161D) : scheme.surface,
-        indicatorColor: scheme.primary.withValues(alpha: 0.18),
+        backgroundColor: colors.surface1,
+        indicatorColor: colors.primary.withValues(alpha: 0.18),
         elevation: 0,
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           final selected = states.contains(WidgetState.selected);
-          return TextStyle(
-            fontSize: 12,
+          return typography.label.copyWith(
             fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-            color: selected ? scheme.primary : scheme.onSurfaceVariant,
+            color: selected ? colors.primary : colors.textSecondary,
           );
         }),
         iconTheme: WidgetStateProperty.resolveWith((states) {
           final selected = states.contains(WidgetState.selected);
           return IconThemeData(
-            color: selected ? scheme.primary : scheme.onSurfaceVariant,
+            color: selected ? colors.primary : colors.textSecondary,
           );
         }),
       ),
       dividerTheme: DividerThemeData(
-        color: scheme.outlineVariant,
+        color: colors.border,
         thickness: 1,
       ),
       segmentedButtonTheme: SegmentedButtonThemeData(
         style: ButtonStyle(
-          side: WidgetStatePropertyAll(
-              BorderSide(color: scheme.outlineVariant)),
-          backgroundColor: WidgetStateProperty.resolveWith((states) =>
-              states.contains(WidgetState.selected)
-                  ? scheme.primary.withValues(alpha: 0.18)
-                  : Colors.transparent),
-          foregroundColor: WidgetStateProperty.resolveWith((states) =>
-              states.contains(WidgetState.selected)
-                  ? scheme.primary
-                  : scheme.onSurfaceVariant),
+          side: WidgetStatePropertyAll(BorderSide(color: colors.border)),
+          backgroundColor: WidgetStateProperty.resolveWith(
+            (states) => states.contains(WidgetState.selected)
+                ? colors.primary.withValues(alpha: 0.18)
+                : scheme.surface.withValues(alpha: 0),
+          ),
+          foregroundColor: WidgetStateProperty.resolveWith(
+            (states) => states.contains(WidgetState.selected)
+                ? colors.primary
+                : colors.textSecondary,
+          ),
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(borderRadius: rSm),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: scheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        fillColor: colors.surface2.withValues(alpha: 0.6),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: scheme.outlineVariant),
+          borderRadius: rSm,
+          borderSide: BorderSide(color: colors.border),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: scheme.outlineVariant),
+          borderRadius: rSm,
+          borderSide: BorderSide(color: colors.border),
         ),
+      ),
+      textTheme: TextTheme(
+        displayLarge: typography.displayClock,
+        titleLarge: typography.title,
+        bodyMedium: typography.body,
+        labelMedium: typography.label,
       ),
     );
   }

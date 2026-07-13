@@ -5,17 +5,22 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../prefs/app_prefs.dart';
 import 'app_theme.dart';
 
-/// Tema tercihleri: seçili palet + açık/koyu/sistem modu. Cihazda kalıcı.
+/// Tema tercihleri: sanat ailesi (12 preset) + eski palet + açık/koyu/sistem.
 class ThemeSettings {
   const ThemeSettings({
+    required this.familyId,
     required this.paletteId,
     required this.mode,
     this.customPalettes = const [],
   });
 
+  /// WP-54: ThemePreset id (campfire_night, deep_amoled, …).
+  final String familyId;
   final String paletteId;
   final ThemeMode mode;
   final List<AppPalette> customPalettes;
+
+  ThemePreset get family => themePresetById(familyId);
 
   AppPalette get palette {
     if (paletteId.startsWith('custom_')) {
@@ -27,7 +32,14 @@ class ThemeSettings {
     return paletteById(paletteId);
   }
 
-  ThemeSettings copyWith({String? paletteId, ThemeMode? mode, List<AppPalette>? customPalettes}) => ThemeSettings(
+  ThemeSettings copyWith({
+    String? familyId,
+    String? paletteId,
+    ThemeMode? mode,
+    List<AppPalette>? customPalettes,
+  }) =>
+      ThemeSettings(
+        familyId: familyId ?? this.familyId,
         paletteId: paletteId ?? this.paletteId,
         mode: mode ?? this.mode,
         customPalettes: customPalettes ?? this.customPalettes,
@@ -35,6 +47,7 @@ class ThemeSettings {
 }
 
 class ThemeSettingsNotifier extends Notifier<ThemeSettings> {
+  static const _kFamily = 'theme_family';
   static const _kPalette = 'theme_palette';
   static const _kMode = 'theme_mode';
   static const _kCustomPalettes = 'custom_palettes';
@@ -43,10 +56,13 @@ class ThemeSettingsNotifier extends Notifier<ThemeSettings> {
   ThemeSettings build() {
     final prefs = ref.watch(sharedPreferencesProvider);
     final paletteId = prefs.getString(_kPalette) ?? kAppPalettes.first.id;
+    final storedFamily = prefs.getString(_kFamily);
+    final familyId = storedFamily ?? migratePaletteIdToPreset(paletteId);
+
     final mode = switch (prefs.getString(_kMode)) {
       'light' => ThemeMode.light,
       'system' => ThemeMode.system,
-      _ => ThemeMode.dark, // varsayılan koyu (kardeşin tasarımı)
+      _ => ThemeMode.dark,
     };
 
     List<AppPalette> customPalettes = [];
@@ -72,12 +88,17 @@ class ThemeSettingsNotifier extends Notifier<ThemeSettings> {
       );
     }
 
-    return ThemeSettings(paletteId: paletteId, mode: mode, customPalettes: customPalettes);
+    return ThemeSettings(
+      familyId: familyId,
+      paletteId: paletteId,
+      mode: mode,
+      customPalettes: customPalettes,
+    );
   }
 
   void saveCustomPalette(int index, AppPalette palette) {
     if (index < 0 || index >= state.customPalettes.length) return;
-    
+
     final updatedList = List<AppPalette>.from(state.customPalettes);
     updatedList[index] = AppPalette(
       id: 'custom_${index + 1}',
@@ -87,17 +108,26 @@ class ThemeSettingsNotifier extends Notifier<ThemeSettings> {
       accent: palette.accent,
       onAccent: palette.onAccent,
     );
-    
+
     state = state.copyWith(customPalettes: updatedList);
-    
+
     final prefs = ref.read(sharedPreferencesProvider);
     final jsonList = updatedList.map((p) => jsonEncode(p.toMap())).toList();
     prefs.setStringList(_kCustomPalettes, jsonList);
   }
 
+  void setFamily(String id) {
+    state = state.copyWith(familyId: id);
+    ref.read(sharedPreferencesProvider).setString(_kFamily, id);
+  }
+
   void setPalette(String id) {
-    state = state.copyWith(paletteId: id);
-    ref.read(sharedPreferencesProvider).setString(_kPalette, id);
+    // Eski palet seçimi → family'yi de hizala
+    final family = migratePaletteIdToPreset(id);
+    state = state.copyWith(paletteId: id, familyId: family);
+    final prefs = ref.read(sharedPreferencesProvider);
+    prefs.setString(_kPalette, id);
+    prefs.setString(_kFamily, family);
   }
 
   void setMode(ThemeMode mode) {
@@ -108,4 +138,5 @@ class ThemeSettingsNotifier extends Notifier<ThemeSettings> {
 
 final themeSettingsProvider =
     NotifierProvider<ThemeSettingsNotifier, ThemeSettings>(
-        ThemeSettingsNotifier.new);
+      ThemeSettingsNotifier.new,
+    );

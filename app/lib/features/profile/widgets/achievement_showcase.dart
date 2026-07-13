@@ -618,7 +618,7 @@ class _BadgeCircle extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final color = secretLocked
-        ? Colors.black87
+        ? theme.colorScheme.onSurface.withValues(alpha: 0.87)
         : unlocked
             ? crownColorFor(
                 tier >= 5
@@ -645,7 +645,7 @@ class _BadgeCircle extends StatelessWidget {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: secretLocked
-                ? Colors.black
+                ? theme.colorScheme.onSurface
                 : color.withValues(alpha: 0.15),
             border: Border.all(color: color, width: 2),
           ),
@@ -654,7 +654,7 @@ class _BadgeCircle extends StatelessWidget {
                 ? Text(
                     '?',
                     style: theme.textTheme.headlineSmall?.copyWith(
-                      color: Colors.white70,
+                      color: theme.colorScheme.surface.withValues(alpha: 0.7),
                       fontWeight: FontWeight.w900,
                     ),
                   )

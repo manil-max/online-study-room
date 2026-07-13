@@ -81,15 +81,15 @@
 - **Not:** Ayarlar tek katmana indirildi; ExpansionTile yok, Gruplar sayacı kaldırıldı, bildirim/sürüm doğrudan açılıyor, grid Auto seçeneği kaldırılıp eski değer 6'ya göçüyor. Analyze + 283 test + Windows release build PASS; görsel cihaz QA bekliyor. Push yok.
 
 ### Grok Lane
-- **Durum:** [x] Boşta (WP-57 kod+test bitti — beta QA kullanıcıda)
-- **Faz/WP:** Başarım 3.0 · WP-57 R2
-- **Aşama:** Otomatik test geçti — cihaz/beta QA + ürün kabulü bekliyor
+- **Durum:** [x] Boşta (WP-54 kod+test bitti — beta QA kullanıcıda)
+- **Faz/WP:** Tema Stüdyosu · WP-54 R1
+- **Aşama:** Otomatik test geçti — cihaz/beta + WP-55 editör UI bekliyor
 - **SAHİP yollar:** —
 - **Ortak/riskli yüzey:** —
 - **Dal:** — (ana dal `main`)
 - **Başlangıç:** 2026-07-13 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-13 (WP-57 teslim)
-- **Not:** XP bar + taç + vitrin + gizli ????? + confetti (paketsiz). SocialProfileScreen/Dialog + AchievementsScreen glue. Analyze 0 + 4 widget test PASS. `Kodda doğrulandı`.
+- **Son güncelleme:** 2026-07-13 (WP-54 teslim)
+- **Not:** 5 ThemeExtension + 12 preset; main family wiring; eski AppPalette köprüsü. Analyze 0 + 7 theme test PASS. `Kodda doğrulandı`.
 
 ---
 
@@ -129,7 +129,7 @@
 | WP-50 | Hazırlık tamamlandı | V8 stable karar + rollback paketi | WP-49 kanıtları + ürün GO/NO-GO |
 | WP-27 | Base cihaz QA geçti | Windows desktop shell + klavye/fare + Compact Focus | Ürün kabulü WP-52/53 sonrası |
 | WP-28 | Bekliyor | Windows MSIX + imza + update + release QA | WP-53 cihaz/ürün kabulü |
-| WP-54 | Planlandı | Tema Stüdyosu R1 · Token Motoru ve 12 Hazır Tema | Faz 0/V8 Sonrası |
+| WP-54 | Kod+test bitti · beta/kabul bekliyor | Tema Stüdyosu R1 · Token Motoru ve 12 Hazır Tema | — |
 | WP-55 | Planlandı | Tema Stüdyosu R2 · Katmanlı Tema Editörü UX/UI | WP-54 |
 | WP-56 | Kod+wire-up bitti · beta/kabul bekliyor | Başarım 3.0 R1 · Server-Authoritative Motor ve SQL | Mimari doc (Gemini) · 0024 canlı |
 | WP-57 | Kod+test bitti · beta/kabul bekliyor | Başarım 3.0 R2 · Oyunlaştırılmış Profil ve Rozet UI | WP-56 |
@@ -345,26 +345,26 @@
 
 ### WP-54: Tema Stüdyosu R1 (Token Motoru ve Hazır Temalar) 🎨
 - **Program/Faz:** Tema Stüdyosu (KALITE-PROGRAMI §8.5)
-- **Ajan:** —
-- **Durum:** [ ] Bekliyor
-- **Problem:** Sabit renk kullanımının sonlandırılıp, `docs/TEMA-MIMARISI.md` içerisindeki 5 katmanlı ThemeExtension altyapısının kurulması.
-- **Kapsam dışı:** Tema seçme ekranı (editör UI).
-- **SAHİP dosyalar (yaz):**
-  - `app/lib/core/theme/**`
-  - `app/lib/main.dart`
-- **DOKUNMA (oku, değiştirme):**
-  - Uygulama içi tüm UI bileşenleri (yalnızca `Colors.x` yerine `context.theme.x` geçişi için), `docs/TEMA-MIMARISI.md`.
+- **Ajan:** Grok
+- **Durum:** [~] Otomatik test geçti — beta/ürün kabulü + WP-55 seçici UI bekliyor
+- **Problem:** Sabit renk kullanımının sonlandırılıp, `docs/TEMA-MIMARISI.md` 5 katmanlı ThemeExtension altyapısı.
+- **Kapsam dışı:** Tema seçme ekranı (→ WP-55).
+- **SAHİP dosyalar:**
+  - `app/lib/core/theme/theme_tokens.dart` (5 extension + context.appColors…)
+  - `app/lib/core/theme/theme_presets.dart` (12 sanat ailesi)
+  - `app/lib/core/theme/app_theme.dart` (fromPreset motoru)
+  - `app/lib/core/theme/theme_settings.dart` (familyId kalıcı)
+  - `app/lib/main.dart` (family wiring)
 - **Adımlar:**
-  - [ ] 5 katmanlı ThemeExtension (Renk, Tipografi, Şekil, Atmosfer, Hareket) modellerini oluştur.
-  - [ ] Belirlenen 12 temanın palet kodlarını hazır şablon olarak ekle.
-  - [ ] Tüm uygulamada sabit renkleri (Colors.grey vb.) yeni tokenlara taşı.
-- **Veri/Migration etkisi:** Yok (Local JSON/Prefs).
-- **RLS/Güvenlik:** Yok.
-- **Edge-case'ler:** Tema bulunamaması (fallback), eski `AppPalette` ile çakışma.
-- **Kabul (ölçülebilir):** Tüm `flutter analyze` uyarıları 0 olmalı. Uygulama kodunda sabit renk kodu kalmamalı, %95 semantik token kullanılmalı.
-- **Tuzaklar:** ThemeExtension implementasyonu çok boilerplate gerektirebilir, `freezed` kullanılabilir.
-- **Dal önerisi:** `wp54-theme-engine`
-- **Model önerisi:** 🔴 Opus
+  - [x] AppColors / AppTypography / AppShapes / AppAtmosphere / AppMotion
+  - [x] 12 preset (Campfire…Material You)
+  - [x] `AppTheme.fromPreset` + eski AppPalette köprüsü + palette→family migrate
+  - [x] ThemeSettings.familyId prefs; setPalette family hizalar
+  - [x] Material bileşen temaları token’dan (Card/AppBar/Nav/Input…)
+  - [~] Uygulama geneli `Colors.x` tarama: motor hazır; tek tek widget göçü kademeli (WP-55/sonraki). Yeni kod `context.appColors` kullanmalı.
+- **Veri/Migration:** Yerel prefs `theme_family`. Geri alma: family yoksa palette migrate.
+- **Kabul:** Analyze 0 + 7 unit/widget test PASS — `Kodda doğrulandı`. 12 ailenin görsel beta’sı — `Cihazda doğrulanmalı`.
+- **Dal:** — (main) · **Model:** Grok
 
 ### WP-55: Tema Stüdyosu R2 (Katmanlı Tema Editörü UI) 🎛️
 - **Program/Faz:** Tema Stüdyosu

@@ -61,13 +61,21 @@ class OnlineStudyRoomApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Tema tercihleri (palet + mod) kişiye özel, cihazda kalıcı.
+    // WP-54: 12 sanat ailesi (ThemePreset) + 5 katman ThemeExtension.
+    // Eski palet yolu hâlâ ThemeSettings.palette üzerinden köprülüdür.
     final settings = ref.watch(themeSettingsProvider);
+    final family = settings.family;
+    final lightFamily = family.brightness == Brightness.light
+        ? family
+        : themePresetById('nordic_snow');
+    final darkFamily = family.brightness == Brightness.dark
+        ? family
+        : themePresetById('campfire_night');
     return MaterialApp(
       title: 'Odak Kampı',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.light(settings.palette),
-      darkTheme: AppTheme.dark(settings.palette),
+      theme: AppTheme.fromPreset(lightFamily),
+      darkTheme: AppTheme.fromPreset(darkFamily),
       themeMode: settings.mode,
       // UI metinleri Türkçe; tarih seçici vb. yerleşik bileşenler de Türkçe görünür.
       locale: const Locale('tr'),
