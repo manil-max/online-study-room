@@ -51,19 +51,20 @@ class LeaderboardCard extends ConsumerWidget {
           final headerHeight = 32 + 24 + 12 + (isCompact ? 0.0 : 43.0);
 
           // Kart, başlık + en az bir satırı sığdıramayacak kadar kısaysa TÜM içerik
-          // kaydırılır (Expanded yerine düz Column) → hiçbir boyutta taşma olmaz.
+          // kaydırılır (Expanded yerine düz Column). Sınırsız yükseklikte (ListView)
+          // Expanded kullanılmamalı, bu yüzden fill = false olmalı.
           final fill =
-              !isHeightBounded || availableHeight >= headerHeight + rowHeight;
+              isHeightBounded && availableHeight >= headerHeight + rowHeight;
 
           final int count;
-          if (fill && isHeightBounded) {
+          if (fill) {
             count = ((availableHeight - headerHeight) / rowHeight)
                 .floor()
                 .clamp(1, 15);
           } else if (isHeightBounded) {
             count = 3;
           } else {
-            count = 5;
+            count = 10; // Sınırsız yükseklikte en fazla 10 kişi gösterelim.
           }
 
           // Bugünün sıralaması (userId → saniye), büyükten küçüğe.

@@ -31,6 +31,16 @@
 ---
 
 ## ⚡ Aktif Çalışma Kaydı (çakışma koordinasyon yüzeyi)
+- **Geliştirme ortamı:**
+  - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
+  - Flutter: `C:\src\flutter` · Android SDK: `C:\Android\Sdk`
+  - JDK: `C:\Program Files\Android\Android Studio\jbr`
+  - Web test: `flutter run -d chrome --web-port=5005 --dart-define-from-file=env.json`
+  - GitHub: `manil-max/online-study-room` (public)
+
+---
+
+## ⚡ Aktif Çalışma Kaydı (çakışma koordinasyon yüzeyi)
 
 > **Bu bölüm paralel ajanların TEK paylaşılan gerçeğidir.** Her ajan görevi alır almaz (kod yazmadan önce) kendi lane'ini doldurur; başlamadan önce tüm lane'leri okuyup çakışma ön-kontrolü yapar (AGENTS.md §1). Çakışma varsa başlamaz, kullanıcıyı gerekçeyle uyarır.
 > Bir WP tamamlanınca (cihaz QA + kabul) kartı buradan/plandan kaldırılır, **Tamamlanan İş Paketleri**ne tek kez eklenir.
@@ -38,14 +48,15 @@
 **Lane şablonu** (doldurulacak alanlar): Durum · Faz/WP · Aşama (8-merdiven) · SAHİP yollar · Ortak/riskli yüzey · Başlangıç · Son güncelleme · Not. *(Branch yok — herkes `main`'de; AGENTS.md §1.5.)*
 
 ### Gemini Lane
-- **Durum:** [x] Boşta
-- **Faz/WP:** —
-- **Aşama:** —
-- **SAHİP yollar:** —
-- **Ortak/riskli yüzey:** —
-- **Başlangıç:** —
-- **Son güncelleme:** 2026-07-12 19:10 (Europe/Istanbul)
-- **Not:** WP-38 kullanıcı tarafından onaylandı ve kapatıldı.
+- **Durum:** [~] Aktif
+- **Faz/WP:** V8-C · İstatistik & Gruplar IA İyileştirmeleri (Kalan Kararlar)
+- **Aşama:** Otomatik test geçti — cihaz QA / ürün kabulü bekliyor
+- **SAHİP yollar:** `app/lib/features/stats/**`, `app/lib/features/classroom/**`
+- **Ortak/riskli yüzey:** Yok
+- **Dal:** — (ana dal `main`)
+- **Başlangıç:** 2026-07-13 11:57 (Europe/Istanbul)
+- **Son güncelleme:** 2026-07-13 (Europe/Istanbul)
+- **Not:** Gruplar (Classroom) sekmesine ürün kararına istinaden "Sıralama" (LeaderboardCard) eklendi; İstatistik sekmesindeki 7'li sıranın halihazırda hedeflenen yapıda olduğu doğrulandı. `LeaderboardCard`ın limitsiz yükseklik (ListView) içindeki çökme sorunu giderildi. `flutter analyze` 0 uyarı ve tüm 283 test başarıyla geçti. Görsel QA onayı bekleniyor.
 
 ### Claude Lane
 - **Durum:** [~] Aktif

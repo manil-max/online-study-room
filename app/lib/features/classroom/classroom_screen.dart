@@ -9,6 +9,7 @@ import '../../data/providers/group_providers.dart';
 import '../home/dashboard_providers.dart';
 import '../home/widgets/group_goal_card.dart';
 import '../home/widgets/group_trend_card.dart';
+import '../home/widgets/leaderboard_card.dart';
 import '../desktop/desktop_page_scaffold.dart';
 import 'widgets/campfire_scene.dart';
 import 'widgets/class_chat_screen.dart';
@@ -127,11 +128,9 @@ class _GroupView extends ConsumerWidget {
     // Sayaç varsayılan olarak Ana Sayfa'dadır; isteyen Sınıflar'a ekler (§3.9).
     final showTimer = ref.watch(classroomShowTimerProvider);
 
-    // Sıra (KALITE-PROGRAMI §8.3 Gruplar): kamp ateşi → grup hedefi → trend →
-    // yönetim. Kamp ateşi en üstte; davet kodu gibi operasyonel bilgiler artık
+    // Sıra (KALITE-PROGRAMI §8.3 Gruplar): kamp ateşi → grup hedefi → sıralama →
+    // trend → yönetim. Kamp ateşi en üstte; davet kodu gibi operasyonel bilgiler
     // ateşin üstünde büyük alan kaplamaz, alttaki açılır yönetim paneline taşındı.
-    // (Grup sıralaması kartı bu sekmede yok — sıralama İstatistikler sekmesinde;
-    // buraya ayrı bir sıralama kartı eklemek WP-45 kapsamı dışı, `Ürün kararı`.)
     if (isDesktopWindow) {
       return SingleChildScrollView(
         child: DesktopContent(
@@ -156,6 +155,8 @@ class _GroupView extends ConsumerWidget {
                     ],
                     const GroupGoalCard(),
                     const SizedBox(height: 12),
+                    const LeaderboardCard(),
+                    const SizedBox(height: 12),
                     const GroupTrendCard(),
                     const SizedBox(height: 12),
                     _GroupManagementTile(group: group),
@@ -177,6 +178,8 @@ class _GroupView extends ConsumerWidget {
         const CampfireScene(),
         const SizedBox(height: 16),
         const GroupGoalCard(),
+        const SizedBox(height: 16),
+        const LeaderboardCard(),
         const SizedBox(height: 16),
         const GroupTrendCard(),
         const SizedBox(height: 16),
