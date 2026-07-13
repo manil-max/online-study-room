@@ -146,6 +146,10 @@ class _UserCard extends ConsumerWidget {
             ),
             const SizedBox(height: 8),
             Text('ID: ${user.id}', style: theme.textTheme.bodySmall),
+            const SizedBox(height: 4),
+            Text('Kayıt: ${user.createdAt.toLocal().toString().substring(0, 16)}', style: theme.textTheme.bodySmall),
+            if (user.lastSignInAt != null)
+              Text('Son Giriş: ${user.lastSignInAt!.toLocal().toString().substring(0, 16)}', style: theme.textTheme.bodySmall),
             if (!isDeleted) ...[
               const SizedBox(height: 12),
               Wrap(

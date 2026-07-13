@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.manilmax" "\0"
-            VALUE "FileDescription", "online_study_room" "\0"
+            VALUE "FileDescription", "Odak Kampı" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "online_study_room" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2026 com.manilmax. All rights reserved." "\0"
             VALUE "OriginalFilename", "online_study_room.exe" "\0"
-            VALUE "ProductName", "online_study_room" "\0"
+            VALUE "ProductName", "Odak Kampı" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

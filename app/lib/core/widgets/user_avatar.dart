@@ -8,11 +8,15 @@ class UserAvatar extends StatelessWidget {
     required this.displayName,
     this.avatarUrl,
     this.radius = 20,
+    this.onTap,
+    this.enableZoom = true,
   });
 
   final String displayName;
   final String? avatarUrl;
   final double radius;
+  final VoidCallback? onTap;
+  final bool enableZoom;
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +26,7 @@ class UserAvatar extends StatelessWidget {
         ? displayName.substring(0, 1).toUpperCase()
         : '?';
 
-    return CircleAvatar(
+    final avatar = CircleAvatar(
       radius: radius,
       backgroundColor: theme.colorScheme.primaryContainer,
       foregroundImage: hasPhoto ? NetworkImage(avatarUrl!) : null,
@@ -36,5 +40,42 @@ class UserAvatar extends StatelessWidget {
               ),
             ),
     );
+
+    if (onTap != null) {
+      return GestureDetector(onTap: onTap, child: avatar);
+    }
+
+    if (hasPhoto && enableZoom) {
+      return GestureDetector(
+        onTap: () {
+          showDialog(
+            context: context,
+            builder: (_) => Dialog(
+              backgroundColor: Colors.transparent,
+              insetPadding: EdgeInsets.zero,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  InteractiveViewer(
+                    child: Image.network(avatarUrl!),
+                  ),
+                  Positioned(
+                    top: 40,
+                    right: 20,
+                    child: IconButton(
+                      icon: const Icon(Icons.close, color: Colors.white, size: 32),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+        child: avatar,
+      );
+    }
+
+    return avatar;
   }
 }

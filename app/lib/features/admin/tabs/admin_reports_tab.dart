@@ -216,7 +216,9 @@ class _AttachmentPreviewDialogState extends ConsumerState<_AttachmentPreviewDial
               child: Center(child: Text('Görsel yüklenemedi.')),
             )
           else
-            Image.network(_url!, fit: BoxFit.contain),
+            InteractiveViewer(
+              child: Image.network(_url!, fit: BoxFit.contain),
+            ),
           Container(
             margin: const EdgeInsets.all(8),
             decoration: BoxDecoration(

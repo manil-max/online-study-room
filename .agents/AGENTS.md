@@ -115,6 +115,14 @@ CI/PR auto-merge için WP-39 iptal edilmiştir. Yerel DoD ve gerçek cihaz QA ka
 - **Gizli dosyalar asla commit edilmez:** `env.json`, `app/android/key.jks`, `app/android/key.properties`, `KEYSTORE_SECRETS.txt`, Supabase `service_role`. Commit öncesi `git status` ile doğrula.
 - **Release keystore kalıcıdır.** `key.jks` değişirse Android güncellemeleri reddeder — yeniden üretme.
 - Migration'lar **sırayla** çalışır (`NNNN_ad.sql`, son numaradan devam). Sırayı bozma, kısmen uygulama. Canlı Supabase'e SQL Editor'dan uygulanır; her WP kendi migration + geri alma notunu getirir.
+- **Migration Başlık Kuralı:** Yeni bir migration dosyası oluştururken, her zaman `supabase/migrations/` klasöründeki mevcut en yüksek numarayı kontrol et ve **1 artırarak** ilerle. Ayrıca dosyanın en üstünde açıklama, işleyiş özeti ve rollback talimatı içeren şu standart yorum bloğu mutlaka bulunmalıdır:
+  ```sql
+  -- NNNN: [Kısa Açıklama]
+  --
+  -- [Detaylı açıklama ve notlar]
+  --
+  -- Geri alma (Rollback): [Geri almak için çalıştırılması gereken SQL veya notlar]
+  ```
 
 ### Dil & Stil
 - Kullanıcıya görünen metin **Türkçe**; kod/teknik isim İngilizce. Gün sınırı her yerde **Europe/Istanbul** (tek yardımcıdan).

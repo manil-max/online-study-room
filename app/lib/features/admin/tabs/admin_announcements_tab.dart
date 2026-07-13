@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:online_study_room/data/models/announcement.dart';
+import 'package:online_study_room/data/models/study_group.dart';
 import 'package:online_study_room/data/providers/admin_providers.dart';
 import 'package:online_study_room/data/providers/auth_providers.dart';
 
@@ -155,13 +156,27 @@ class _CreateAnnouncementDialogState extends ConsumerState<_CreateAnnouncementDi
               },
               decoration: const InputDecoration(labelText: 'Hedef'),
             ),
-            if (_targetType != 'all') ...[
+            if (_targetType == 'group') ...[
+              const SizedBox(height: 8),
+              ref.watch(adminGroupsProvider).when(
+                data: (groups) {
+                  if (groups.isEmpty) return const Text('Hiç grup yok.');
+                  return DropdownButtonFormField<String>(
+                    items: groups.map((g) => DropdownMenuItem(value: g.id, child: Text(g.name))).toList(),
+                    onChanged: (val) {
+                      if (val != null) _targetIdController.text = val;
+                    },
+                    decoration: const InputDecoration(labelText: 'Grup Seçin'),
+                  );
+                },
+                loading: () => const CircularProgressIndicator(),
+                error: (e, _) => const Text('Gruplar yüklenemedi.'),
+              ),
+            ] else if (_targetType == 'user') ...[
               const SizedBox(height: 8),
               TextField(
                 controller: _targetIdController,
-                decoration: InputDecoration(
-                  labelText: _targetType == 'group' ? 'Grup ID' : 'Kullanıcı ID',
-                ),
+                decoration: const InputDecoration(labelText: 'Kullanıcı ID'),
               ),
             ]
           ],

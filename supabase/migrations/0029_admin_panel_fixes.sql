@@ -1,3 +1,17 @@
+-- =====================================================================
+-- 0029_admin_panel_fixes.sql — Admin Panel İyileştirmeleri ve Geri Bildirim Bildirimleri
+--
+-- Admin panelindeki eksikleri giderir:
+-- 1) Adminlerin (super_admin) tüm grupları görebilmesi için groups tablosuna RLS policy eklendi.
+-- 2) Yeni geri bildirim (feedback) gönderildiğinde adminlere bildirim düşmesi için admin_notifications tablosu ve trigger eklendi.
+--
+-- Geri alma (Rollback):
+-- drop trigger if exists on_new_feedback on public.feedback_tickets;
+-- drop function if exists public.notify_admins_on_feedback();
+-- drop policy if exists groups_admin_all on public.groups;
+-- drop table if exists public.admin_notifications;
+-- =====================================================================
+
 -- 1. Adminler tüm grupları görebilir (RLS)
 drop policy if exists groups_admin_all on public.groups;
 create policy groups_admin_all on public.groups

@@ -1,12 +1,14 @@
--- 0027: Taç eşikleri 0/2500/10000/25000/75000 + saat başına 10 XP
+-- =====================================================================
+-- 0027_crown_thresholds_and_hour_xp.sql — Taç eşikleri 0/2500/10000/25000/75000 + saat başına 10 XP
 --
 -- XP kaynakları (server-authoritative):
 --   1) Başarım kademe ödülleri (achievements_dict.tiers.xp)
 --   2) Her tamamlanan 1 saat çalışma → 10 XP (event_key: uid|study_hour_xp|h_N)
 --
 -- Not: Genel yayın öncesi XP sıfırlama → 0028_xp_reset_general_launch.sql
--- Geri alma: 0026 crown + 0025 process_achievement_event.
-
+--
+-- Geri alma (Rollback): 0026 crown + 0025 process_achievement_event.
+-- =====================================================================
 -- ---------------------------------------------------------------------
 -- 1) 5 kademeli taç eşikleri
 -- ---------------------------------------------------------------------
@@ -39,6 +41,9 @@ end $$;
 -- ---------------------------------------------------------------------
 -- 2) Sistem sözlük satırı (FK için; UI katalogda gizlenir)
 -- ---------------------------------------------------------------------
+alter table public.achievements_dict drop constraint if exists achievements_dict_category_check;
+alter table public.achievements_dict add constraint achievements_dict_category_check check (category in ('study', 'streak', 'group', 'social', 'secret', 'system'));
+
 insert into public.achievements_dict (
   id, category, name, description, max_tier, icon_key, is_secret, tiers
 ) values (

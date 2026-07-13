@@ -1,4 +1,5 @@
--- 0028: GENEL YAYIN / herkese açık çıkış öncesi XP temiz sayfa
+-- =====================================================================
+-- 0028_xp_reset_general_launch.sql — GENEL YAYIN / herkese açık çıkış öncesi XP temiz sayfa
 --
 -- ⚠️ BUNU YALNIZCA genel sürüme çıkmadan hemen önce SQL Editor'da çalıştır.
 -- Beta test sırasında GEREKMEZ (0027 eşik + saat XP yeter).
@@ -8,7 +9,8 @@
 --   • gamification_profiles.xp → 0, crown_rank → bronze_beginner
 --   • user_achievements silinir (rozetler de taze başlar)
 --
--- Geri alınamaz (ledger append-only geçmişi silinir).
+-- Geri alma (Rollback): Geri alınamaz (ledger append-only geçmişi silinir).
+-- =====================================================================
 
 -- Ledger (trigger profile xp'yi güncelleyebilir; önce ledger temizle)
 truncate table public.xp_ledger;

@@ -262,3 +262,7 @@
 - Gelecek Widget planlamalarında ekranda en çok görülmek istenen bilgiler netleşti mi?
 - Hesap silme sunulacak mı? Sunulacaksa uygulama içi geri alma süresi mi, yoksa yalnız destek talebiyle silme mi uygulanacak?
 - Süper-adminin başlattığı soft-delete sonrası kullanıcı verisi ne kadar süre saklanacak ve kalıcı silme kim tarafından/onayla yapılacak?
+
+## Windows Masaüstü Optimizasyonu
+- **Sorun:** Windows release'i boşta 300-400 MB RAM tüketiyor ve hafif donmalar var.
+- **Aksiyon:** İleriki fazlarda Flutter DevTools ile bellek profillemesi (memory profiling) yapılacak ve UI render darboğazları çözülecek.
