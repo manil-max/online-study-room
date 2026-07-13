@@ -118,6 +118,10 @@
 | WP-50 | Hazırlık tamamlandı | V8 stable karar + rollback paketi | WP-49 kanıtları + ürün GO/NO-GO |
 | WP-27 | Base cihaz QA geçti | Windows desktop shell + klavye/fare + Compact Focus | Ürün kabulü WP-52/53 sonrası |
 | WP-28 | Bekliyor | Windows MSIX + imza + update + release QA | WP-53 cihaz/ürün kabulü |
+| WP-54 | Planlandı | Tema Stüdyosu R1 · Token Motoru ve 12 Hazır Tema | Faz 0/V8 Sonrası |
+| WP-55 | Planlandı | Tema Stüdyosu R2 · Katmanlı Tema Editörü UX/UI | WP-54 |
+| WP-56 | Planlandı | Başarım 3.0 R1 · Server-Authoritative Motor ve SQL | Faz 0/V8 Sonrası |
+| WP-57 | Planlandı | Başarım 3.0 R2 · Oyunlaştırılmış Profil ve Rozet UI | WP-56 |
 
 > **Dağıtım notu:** WP-39 iptal edildi. **WP-40** V8-A'nın temelidir; WP-41/42 ondan sonra, ikisi `study_providers` timer-sync'i paylaştığı için birbirleriyle paralel değildir. WP-43, V8-A'dan sonra başlar. WP-44 ve WP-45 ayrık dosyalarda bağımsız yürütülebilir.
 
@@ -323,6 +327,93 @@
 - **Kabul (ölçülebilir):** Windows release ilk anlamlı pencere ≤2.5 sn; sekme geçişi ≤150 ms; compact↔normal ≤300 ms; 10 sn resize'da overflow/kırmızı ekran 0 ve hedef ≥55 fps; 1366×768/1080p/1440p × %100/%125/%150/%200 matriste taşma 0; yalnız klavye ile temel yolculuk PASS; Narrator/high-contrast kanıtı; mobil golden/widget testleri değişmeden yeşil. `Cihazda doğrulanmalı`.
 - **Tuzaklar:** Flutter'ı WinUI'ya yeniden yazma; desktop için ikinci veri/state sistemi kurma; özel Mica title bar'ı Snap/high-contrast/DPI kanıtı olmadan açma; mini modda tam app ağacını sıkıştırma.
 - **Dal önerisi:** `wp27-windows-desktop-shell` · **Model önerisi:** 🔴 Opus
+
+
+### WP-54: Tema Stüdyosu R1 (Token Motoru ve Hazır Temalar) 🎨
+- **Program/Faz:** Tema Stüdyosu (KALITE-PROGRAMI §8.5)
+- **Ajan:** —
+- **Durum:** [ ] Bekliyor
+- **Problem:** Sabit renk kullanımının sonlandırılıp, `docs/TEMA-MIMARISI.md` içerisindeki 5 katmanlı ThemeExtension altyapısının kurulması.
+- **Kapsam dışı:** Tema seçme ekranı (editör UI).
+- **SAHİP dosyalar (yaz):**
+  - `app/lib/core/theme/**`
+  - `app/lib/main.dart`
+- **DOKUNMA (oku, değiştirme):**
+  - Uygulama içi tüm UI bileşenleri (yalnızca `Colors.x` yerine `context.theme.x` geçişi için), `docs/TEMA-MIMARISI.md`.
+- **Adımlar:**
+  - [ ] 5 katmanlı ThemeExtension (Renk, Tipografi, Şekil, Atmosfer, Hareket) modellerini oluştur.
+  - [ ] Belirlenen 12 temanın palet kodlarını hazır şablon olarak ekle.
+  - [ ] Tüm uygulamada sabit renkleri (Colors.grey vb.) yeni tokenlara taşı.
+- **Veri/Migration etkisi:** Yok (Local JSON/Prefs).
+- **RLS/Güvenlik:** Yok.
+- **Edge-case'ler:** Tema bulunamaması (fallback), eski `AppPalette` ile çakışma.
+- **Kabul (ölçülebilir):** Tüm `flutter analyze` uyarıları 0 olmalı. Uygulama kodunda sabit renk kodu kalmamalı, %95 semantik token kullanılmalı.
+- **Tuzaklar:** ThemeExtension implementasyonu çok boilerplate gerektirebilir, `freezed` kullanılabilir.
+- **Dal önerisi:** `wp54-theme-engine`
+- **Model önerisi:** 🔴 Opus
+
+### WP-55: Tema Stüdyosu R2 (Katmanlı Tema Editörü UI) 🎛️
+- **Program/Faz:** Tema Stüdyosu
+- **Ajan:** —
+- **Durum:** [ ] Bekliyor
+- **Problem:** Kullanıcının 12 temadan birini seçip, canlı önizleme ile (mood, renk, köşe) kişiselleştirebileceği editör ekranının yapılması.
+- **Kapsam dışı:** Yeni tema paletleri ekleme.
+- **SAHİP dosyalar (yaz):**
+  - `app/lib/features/profile/theme_studio_screen.dart`
+- **DOKUNMA (oku, değiştirme):**
+  - `app/lib/core/theme/**` (WP-54 çıktısı).
+- **Adımlar:**
+  - [ ] 7 adımlı huni UI'sini oluştur (Tema Seç -> Mood -> Vurgu -> Önizleme).
+  - [ ] Canlı önizleme için sahte bir "Dashboard" ve "Sayaç" widget'ı ekle.
+- **Veri/Migration etkisi:** Kullanıcı tercihleri `user_preferences` tablosuna JSON olarak basılacak.
+- **RLS/Güvenlik:** RLS kuralları yalnız kendi temasını güncelleyebilir şeklinde (`auth.uid()`).
+- **Edge-case'ler:** Çevrimdışı durum, geçersiz renk formatı.
+- **Kabul (ölçülebilir):** Tema değiştiğinde uygulamanın restart etmeden UI'nin anında güncellenmesi.
+- **Dal önerisi:** `wp55-theme-editor-ui`
+- **Model önerisi:** 🔴 Opus
+
+### WP-56: Başarım 3.0 R1 (Server-Authoritative Motor ve SQL) 🏆
+- **Program/Faz:** Başarım 3.0 (KALITE-PROGRAMI §8.6)
+- **Ajan:** —
+- **Durum:** [ ] Bekliyor
+- **Problem:** İstemci taraflı (hileye açık) başarı hesaplamalarının `docs/BASARIM-MIMARISI.md`'deki Server-Authoritative ledger sistemine geçirilmesi.
+- **Kapsam dışı:** Profil vitrini ve rozet çizimleri.
+- **SAHİP dosyalar (yaz):**
+  - `supabase/migrations/0024_achievements_ledger.sql`
+  - `app/lib/data/providers/achievement_provider.dart`
+- **DOKUNMA (oku, değiştirme):**
+  - `docs/BASARIM-MIMARISI.md`
+- **Adımlar:**
+  - [ ] `xp_ledger` tablosu ve tetikleyici (RPC) mantıklarını yaz.
+  - [ ] Tüm başarım kademelerini (eşik değerlerini) ve gizli Paskalya Yumurtalarını SQL'e aktar.
+  - [ ] İstemcinin bu olayları fırlatması için API entegrasyonu sağla.
+- **Veri/Migration etkisi:** `0024_achievements_ledger.sql` canlı sisteme eklenecek.
+- **RLS/Güvenlik:** Yalnız INSERT yetkisi, update kapalı (append-only ledger). Güvenlik kritik.
+- **Edge-case'ler:** Çift olay yollanması (idempotency event_key ile çözülmeli).
+- **Kabul (ölçülebilir):** Aynı `event_key` ile çağrılan RPC hata fırlatmadan (veya ignore ederek) çift XP vermemeli.
+- **Dal önerisi:** `wp56-achievements-engine`
+- **Model önerisi:** 🔴 Opus
+
+### WP-57: Başarım 3.0 R2 (Oyunlaştırılmış Profil ve Rozet UI) 🏅
+- **Program/Faz:** Başarım 3.0
+- **Ajan:** —
+- **Durum:** [ ] Bekliyor
+- **Problem:** Kullanıcının kilitli (????) veya açılmış başarımlarını görebileceği, taç/XP çubuğu bulunan sosyal profil vitrini.
+- **Kapsam dışı:** Backend ledger motoru.
+- **SAHİP dosyalar (yaz):**
+  - `app/lib/features/profile/widgets/achievement_showcase.dart`
+  - `app/lib/features/profile/social_profile_screen.dart`
+- **DOKUNMA (oku, değiştirme):**
+  - `achievement_provider.dart` (WP-56 çıktısı).
+- **Adımlar:**
+  - [ ] XP seviye barı ve taç sistemini entegre et.
+  - [ ] Gizli rozetlerin siyah siluet (????) mantığını kodla.
+  - [ ] Yeni başarım açıldığında fırlatılacak efsanevi animasyon efekti (örn. Confetti).
+- **Veri/Migration etkisi:** Yok (UI).
+- **RLS/Güvenlik:** Ortak gruptaki üyeler profili salt-okunur (read-only) görebilmeli.
+- **Kabul (ölçülebilir):** Kullanıcı gizli başarımı başardığında animasyonun ≤ 250 ms içinde render edilmesi.
+- **Dal önerisi:** `wp57-achievements-ui`
+- **Model önerisi:** 🔴 Opus
 
 ### WP-28: Windows MSIX, Güncelleme ve Release QA 📦
 - **Program/Faz:** Windows dağıtım/release (`KALITE-PROGRAMI §8.7`) · **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-53 gerçek Windows cihaz/ürün kabulü
