@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.14+15
+version: 1.0.16+16
 
 environment:
   sdk: ^3.12.2
@@ -74,6 +74,7 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  msix: ^3.18.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -115,3 +116,14 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+msix_config:
+  display_name: Odak Kampı
+  publisher_display_name: Odak Kampi Team
+  identity_name: OdakKampi.App
+  publisher: CN=OdakKampiTest
+  msix_version: 1.0.0.0
+  windows_build_args: "--dart-define-from-file=env.json"
+  install_certificate: false
+  capabilities: "internetClient"
+  languages: "tr-TR, en-US"

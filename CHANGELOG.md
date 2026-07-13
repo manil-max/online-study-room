@@ -4,6 +4,30 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [beta-v16 / 1.0.16+16] - 2026-07-13
+
+> ⚠️ **Beta test sürümü.** Saat Merkezi + native alarm güvenilirlik (P0). Cihaz QA odaklı.
+
+### Saat Merkezi (yeni)
+
+- **6 sekmeli Saat Merkezi:** Saat · Dünya · Alarm · Timer · Kronometre · Odak.
+- **Epoch zaman motoru:** Süre duvar saati farkından; Doze/frame atlamaya dayanıklı.
+- **Alarm 2.0:** Tekrar günleri, sonrakini atla, anti-snooze (matematik), kademeli ses,
+  erteleme, exact alarm izin uyarısı.
+- **Native alarm (P0):** `AlarmManager` + kilit ekranı `AlarmRingActivity`;
+  varsayılan alarm sesi ile 30 sn crescendo; Kapat / Ertele native.
+- **Boot / timezone:** Yeniden başlatma ve saat dilimi değişiminde alarm/timer
+  mirror'dan yeniden planlanır.
+- **Çoklu timer:** Preset'ler, +1/+5 dk, app kill sonrası bitiş için native schedule.
+- **Dünya saati:** Gündüz/gece kartları + ofset etiketi.
+- **Kronometre:** Tur, en hızlı/yavaş highlight, kopyala.
+- **StandBy:** Yatay masa saati, gece kırmızı ton, burn-in kayması.
+
+### Not
+
+- Çalışma sayacı (Odak / native StudyTimer) ayrı kaldı; bu beta kişisel saat ürününü dener.
+- SQL 0025–0027 canlıda olmalı; 0028 yalnız genel yayın. Bu beta XP sıfırlamaz.
+
 ## [beta-v15 / 1.0.14+15] - 2026-07-13
 
 > ⚠️ **Beta test sürümü.** beta-v14 görünüm rötuşunun küçük düzeltmesi.

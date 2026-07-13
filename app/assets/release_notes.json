@@ -3,6 +3,25 @@
   "source": "CHANGELOG.md",
   "releases": [
     {
+      "versionName": "1.0.16",
+      "buildNumber": 16,
+      "channel": "beta",
+      "date": "2026-07-13",
+      "title": "beta-v16: Saat Merkezi + native alarm",
+      "highlights": [
+        "Saat Merkezi: Dünya, Alarm 2.0, çoklu timer, kronometre, StandBy.",
+        "Native alarm: kilit ekranı, crescendo ses, boot sonrası yeniden planlama.",
+        "Timer bitişi app kapalıyken de planlanır (process-death)."
+      ],
+      "fixes": [
+        "Alarm zamanlaması cihaz saat dilimine bağlandı (sabit İstanbul kaldırıldı)."
+      ],
+      "notes": [
+        "Odak sayacı ayrı; bu beta kişisel saat/alarm/timer deneyimini dener.",
+        "Cihaz QA: reboot, exact izin, 3 timer, Önizle sesi."
+      ]
+    },
+    {
       "versionName": "1.0.14",
       "buildNumber": 15,
       "channel": "beta",
