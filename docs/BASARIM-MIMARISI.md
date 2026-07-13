@@ -145,6 +145,9 @@ Bu başarımlar 5 kategoriye ayrılmıştır. Her birinin elde edilmesi giderek 
   - Kademe 5 (Efsanevi): 300 kez (Ödül: 15000 XP)
 
 ### 🕵️ Gizli / Eğlenceli Başarımlar (Sürpriz Paskalya Yumurtaları - Tek Seferlik Ödüller)
+
+**Görünüm Kuralları:** Bu başarımlar, kullanıcının profilindeki başarımlar listesinde kilitliyken `?????` (Soru işareti) veya siyah bir siluet olarak görünür. Şartlarının ne olduğu asla yazmaz ("Gizli bir başarım, açmak için şanslı veya çok dikkatli olmalısın" yazar). Kullanıcı tesadüfen bu şartı sağladığında ekranda efsanevi bir animasyonla rozet açılır!
+
 - **Gece Kuşu:** Gece 00:00 ile 04:00 arası kesintisiz en az 2 saat odaklanıldığında kazanılır. (Ödül: 500 XP)
 - **Gün Doğumu:** Sabah 05:00 - 07:00 arası kesintisiz en az 1 saat odaklanıldığında kazanılır. (Ödül: 500 XP)
 - **404 Dakika:** Tesadüfen bir oturuşta tam olarak 404 dakika (6 saat 44 dk) çalışıldığında gizli olarak açılır. (Ödül: 4044 XP)
@@ -152,3 +155,7 @@ Bu başarımlar 5 kategoriye ayrılmıştır. Her birinin elde edilmesi giderek 
 - **Mola Düşmanı:** Pomodoro modunda veya sayaçta üst üste 4 kez mola hakkını "Atla" diyerek mola vermeden doğrudan çalışmaya devam ettiğinde açılır. (Ödül: 1000 XP)
 - **Son Saniye Kurtarıcısı:** Gece gün dönümüne (00:00'a) sadece saniyeler/dakikalar kalmışken, saat tam 23:55 ile 23:59 arasında günlük hedefini %100'e tamamladığında açılır. (Ödül: 1500 XP)
 - **1337 Elite:** Öğleden sonra tam saat 13:37'de kronometreyi başlatıp o oturumu en az 1 saat hiç bozmadan sürdürdüğünde açılır. (Ödül: 1337 XP)
+- **Cuma Gecesi Ateşi:** Herkesin dışarıda olduğu Cuma akşamı 21:00 ile 00:00 saatleri arasında kesintisiz en az 2.5 saat masada çalışıldığında açılır. Gerçek bir fedakarlık rozeti. (Ödül: 2000 XP)
+- **Sınır Tanımaz:** Kendine koyduğun günlük hedefi (örneğin 2 saat) doldurduktan sonra bile sayacı durdurmayıp, aynı gün içinde hedefin tam %300'üne (3 katına) ulaştığında açılır. (Ödül: 3000 XP)
+- **Matrix Hatası (Asimetrik):** Kronometreyi tesadüfen tam olarak 111, 222, 333 veya 555. dakikasında (aynı rakamlardan oluşan bir dakikada) durdurduğunda verilir. (Ödül: 1111 XP)
+- **Yılbaşı Nöbeti:** 31 Aralık gecesi saat 23:50 ile 1 Ocak saat 00:10 arasında uygulamada kronometresi açık şekilde yeni yıla masada giren efsanelere verilir. (Ödül: 5000 XP)

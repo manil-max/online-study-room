@@ -4,6 +4,26 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [beta-v11 / 1.0.10+11] - 2026-07-13
+
+> ⚠️ **Beta test sürümü.** beta-v10 cihaz geri bildirimine göre sayaç bildirimi iki noktada elden geçirildi.
+
+### Düzeltmeler
+
+- **Bildirimde gövde yazısı kalktı (saat uygulaması gibi):** Sayaç bildiriminde artık
+  "Odak Kampı çalışıyor" alt satırı yok; yalnız akan `HH:MM:SS` süre ve buton görünür.
+- **Durdur↔Başlat kalıcı toggle:** Bildirimdeki **Durdur**'a basınca bildirim artık
+  kaybolmaz; süre kaydedilir ve buton **Başlat**'a döner (`00:00:00`). Uygulamayı hiç
+  açmadan **Başlat** ile yeni bir oturuma devam edebilirsin; her Durdur ayrı bir oturum
+  olarak doğru kaydedilir (arka arkaya durdur/başlat oturum sayımını bozmaz).
+
+### Bilinen / sıradaki
+
+- Bildirimin cihazın **dinamik paneline** (HyperOS "Live notifications" / Samsung "Now Bar")
+  native kronometre gibi terfi etmesi ayrı bir adımda ele alınacak (WP-51).
+- **Ana ekran widget'ı** ve widget üzerindeki Başlat/Durdur bir sonraki beta'da aynı
+  mantıkla elden geçirilecek (WP-42).
+
 ## [beta-v10 / 1.0.9+10] - 2026-07-13
 
 > ⚠️ **Beta test sürümü.** Sayaç bildirimi tamamen yeniden yapıldı.

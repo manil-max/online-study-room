@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -437,7 +438,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       // anında da işle ki açılışta hemen onurlandırılsın. (Uygulama tamamen
       // kapalıyken gerçek zamanlı işleme için foreground service gerekir; o ayrı
       // iş paketi — bkz. background-timer-actions-unreliable.)
-      await _processPendingExternalCommand();
+      await _syncBackgroundTimerState();
       if (_disposed || !state.isRunning) return;
       _publishPresence(
         status: state.phase == TimerPhase.work
@@ -451,13 +452,99 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     return initial;
   }
 
-  Future<void> _onAppResumed() => _processPendingExternalCommand();
+  Future<void> _onAppResumed() => _syncBackgroundTimerState();
 
-  /// FGS bildirimindeki Durdur butonundan (arka plan isolate) gelen sinyal:
-  /// uygulama açıkken bekleyen komutu hemen işle.
+  /// FGS bildirimindeki Durdur/Başlat butonundan (arka plan isolate) gelen
+  /// sinyal: uygulama açıkken arka plan durumunu hemen uzlaştır.
   void _onTaskData(Object data) {
-    if (data == TimerForegroundService.toggleButtonId) {
-      unawaited(_processPendingExternalCommand());
+    if (data == TimerForegroundService.toggleButtonId ||
+        data == TimerForegroundService.startButtonId) {
+      unawaited(_syncBackgroundTimerState());
+    }
+  }
+
+  /// Arka plandaki (FGS) durum ile ana isolate'i uzlaştırır: önce app-kapalı
+  /// Durdur/Başlat toggle'ının etkilerini ([_reconcileBackgroundTimer]), sonra
+  /// widget'ın tek-atımlık başlat/durdur komutunu ([_processPendingExternalCommand])
+  /// işler. Hem soğuk açılışta hem onResume/onTaskData'da çağrılır.
+  Future<void> _syncBackgroundTimerState() async {
+    if (_disposed) return;
+    await _reconcileBackgroundTimer();
+    if (_disposed) return;
+    await _processPendingExternalCommand();
+  }
+
+  /// FGS bildiriminden gelen app-kapalı Durdur↔Başlat toggle'ını uzlaştırır:
+  /// (1) Durdur ile üretilmiş tamamlanmış çalışma aralıklarını oturum olarak
+  /// kaydeder; (2) FGS moduna göre sayacın çalışır/durur durumunu düzeltir.
+  /// Server-authoritative kayıt korunur — arka plan yalnız aralık verisini
+  /// kuyruğa yazar, gerçek oturum yazımı burada (kimlik doğrulamalı) yapılır.
+  Future<void> _reconcileBackgroundTimer() async {
+    if (_disposed) return;
+    final prefs = ref.read(sharedPreferencesProvider);
+    await prefs.reload();
+    if (_disposed) return;
+
+    // 1. App-kapalı Durdur'ların ürettiği tamamlanmış aralıkları oturum yaz.
+    // Kimlik henüz hazır değilse (soğuk açılışta auth restore beklenir) kuyruğu
+    // KORU; onResume'da (auth hazır) yeniden denenir — yoksa aralık kaybolurdu.
+    final raw = prefs.getString(TimerForegroundService.pendingIntervalsKey);
+    if (raw != null && ref.read(authStateProvider).value != null) {
+      try {
+        final decoded = jsonDecode(raw);
+        if (decoded is List) {
+          for (final entry in decoded) {
+            if (_disposed) return;
+            if (entry is! Map) continue;
+            final start = DateTime.tryParse(entry['start']?.toString() ?? '');
+            final end = DateTime.tryParse(entry['end']?.toString() ?? '');
+            final subjectRaw = entry['subject']?.toString();
+            final subject =
+                (subjectRaw == null || subjectRaw.isEmpty) ? null : subjectRaw;
+            if (start != null && end != null && end.isAfter(start)) {
+              await _recordSession(start, end, subject);
+            }
+          }
+        }
+      } catch (_) {
+        // Bozuk kuyruk yok sayılır (aşağıda temizlenir).
+      }
+      await prefs.remove(TimerForegroundService.pendingIntervalsKey);
+    }
+    if (_disposed) return;
+
+    // 2. FGS moduna göre çalışır durumu uzlaştır.
+    final fgMode = prefs.getString(TimerForegroundService.fgModeKey);
+    if (fgMode == 'idle') {
+      // App-kapalı Durdur ile duraklatıldı: aralık(lar) yukarıda kaydedildi,
+      // sayaç kapalı olmalı; kalan idle bildirimi de kapatılır.
+      if (state.isRunning) {
+        _finish();
+      } else {
+        unawaited(TimerForegroundService.stop());
+      }
+    } else if (fgMode == 'running') {
+      // App-kapalı Başlat ile yeni oturum başladıysa ve build() bunu henüz
+      // yansıtmadıysa (ör. bildirimden Başlat), aktif başlangıcı benimse.
+      final fgStart =
+          DateTime.tryParse(prefs.getString(_kActiveStartedAt) ?? '');
+      if (fgStart != null && !state.isRunning) {
+        state = state.copyWith(
+          isRunning: true,
+          startedAt: fgStart,
+          phase: TimerPhase.work,
+          cycle: 1,
+          accumulatedSeconds: 0,
+          lastUpdatedAt: DateTime.now(),
+        );
+        _persistActiveTimer();
+        _publishPresence(
+          status: PresenceStatus.studying,
+          startedAt: fgStart,
+        );
+        _startTick();
+        unawaited(_syncTimerSurfaces());
+      }
     }
   }
 
@@ -466,6 +553,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   /// soğuk açılışta ([build] içindeki microtask) çağrılır; komut tek seferliktir
   /// (işlenince temizlenir).
   Future<void> _processPendingExternalCommand() async {
+    if (_disposed) return;
     final store = ref.read(timerExternalCommandStoreProvider);
     await store.reload();
     if (_disposed) return;
@@ -742,6 +830,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   }
 
   Future<void> _syncTimerSurfaces() async {
+    if (_disposed) return;
     await Future.wait([
       _syncTimerNotification(),
       _syncTimerWidget(),
@@ -758,6 +847,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   }
 
   Future<void> _syncStatsWidgets() async {
+    if (_disposed) return;
     final widgetService = ref.read(androidWidgetServiceProvider);
     final projection = ref.read(canonicalStatsProjectionProvider);
     await widgetService.saveSnapshot(
@@ -768,6 +858,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
             'Seri: ${projection.streakForGoal(ref.read(dailyGoalMinutesProvider) * 60)} gün',
       ),
     );
+    if (_disposed) return;
     final members = ref.read(groupMembersProvider).value ?? const <Profile>[];
     final todayTotals = CanonicalGroupStatsProjection.fromDailyStats(
       ref.read(groupDailyStatsProvider).value ?? const <DailyStat>[],

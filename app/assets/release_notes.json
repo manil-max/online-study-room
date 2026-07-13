@@ -3,6 +3,23 @@
   "source": "CHANGELOG.md",
   "releases": [
     {
+      "versionName": "1.0.10",
+      "buildNumber": 11,
+      "channel": "beta",
+      "date": "2026-07-13",
+      "title": "beta-v11: bildirimde gövde yazısı yok + Durdur↔Başlat toggle",
+      "highlights": [
+        "Sayaç bildiriminde 'Odak Kampı çalışıyor' alt satırı kaldırıldı; saat uygulaması gibi yalnız akan HH:MM:SS + buton.",
+        "Durdur'a basınca bildirim kaybolmaz: süre kaydedilir, buton Başlat'a döner ve uygulamayı açmadan yeni oturum başlatabilirsin."
+      ],
+      "fixes": [
+        "Arka arkaya Durdur/Başlat (uygulama kapalıyken) oturum sayımını bozmaz; her çalışma aralığı ayrı oturum olarak doğru kaydedilir."
+      ],
+      "notes": [
+        "Dinamik panele native kronometre terfisi (WP-51) ve ana ekran widget'ı (WP-42) sıradaki adımlarda."
+      ]
+    },
+    {
       "versionName": "1.0.9",
       "buildNumber": 10,
       "channel": "beta",

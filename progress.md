@@ -59,15 +59,15 @@
 - **Not:** Server-authoritative başarı sistemi, XP ledger yapısı ve Supabase RPC tasarımları `docs/BASARIM-MIMARISI.md` dosyasına başarıyla işlendi. Başarım eşik değerleri ve gizli sürpriz rozetler kullanıcı onayıyla kodlanmaya hazır hale getirildi.
 
 ### Claude Lane
-- **Durum:** [~] Aktif
-- **Faz/WP:** V8-A · WP-41 (beta-v10 cihaz QA: 2 revizyon planlandı) + WP-42 (widget, bekliyor) + yeni WP-51 (dinamik panel/native kronometre, planlandı) · WP-45 (beta-v9 cihaz doğrulaması bekliyor) · WP-44 kapandı
-- **Aşama:** PLAN modu — kullanıcı "sadece planla, kod yok" dedi (limit az). beta-v10 cihaz QA: tek bildirim + akan HH:MM:SS + app-kapalı Durdur ÇALIŞIYOR ✅; 2 revizyon istendi → WP-41 R1/R2 + yeni WP-51 planlandı (aşağıda). Kod bir sonraki turda.
-- **SAHİP yollar:** `app/lib/core/notifications/timer_notification_service.dart` + `app/lib/core/background/timer_foreground_service.dart` (bildirim birleştirme) + notification receiver Kotlin (WP-41); `app/lib/features/android_widgets/android_widget_service.dart` + `app/android/app/src/main/kotlin/**/widgets/*` (WP-42); beta yayın dosyaları (`pubspec/CHANGELOG/release_notes`); app-kapalı işleme için gerekirse `study_providers.dart` (Codex bıraktı, serbest). `app/lib/features/classroom/**` kullanıcı talimatıyla WP-27 desktop revizyonuna devredildi.
-- **Ortak/riskli yüzey:** Codex WP-50 dokümanlarında; `main.dart`/`pubspec`/`study_providers` artık aktif Codex lane'inde DEĞİL → app-kapalı buton işlemesi için düzenlenebilir (WP-47 kodunu bozmadan).
+- **Durum:** [~] Aktif (WP-41 R1/R2 kod+test bitti — cihaz QA bekliyor)
+- **Faz/WP:** V8-A · WP-41 R1/R2 (beta-v11 kodlandı, cihaz QA bekliyor) + WP-42 (widget, bekliyor) + WP-51 (dinamik panel/native kronometre, planlandı)
+- **Aşama:** Otomatik test geçti — cihaz QA bekliyor. R1+R2 kodlandı: `flutter analyze` 0 + **286 test** (3 yeni reconcile testi dahil) + **beta-v11 APK (1.0.10+11) PASS**. Cihaz videosu bekleniyor.
+- **SAHİP yollar:** `app/lib/core/background/timer_foreground_service.dart` + `app/lib/data/providers/study_providers.dart` (app-kapalı Durdur↔Başlat uzlaştırma) + `app/test/features/timer_background_reconcile_test.dart` (yeni) + beta yayın dosyaları (`pubspec/CHANGELOG/release_notes`); WP-42 için `android_widget_service.dart` + `android/**/widgets/*` (sonraki).
+- **Ortak/riskli yüzey:** Yok — Gemini WP-45'i commit'ledi (`ec79aea`), tree temiz; SAHİP kesişimi yok. `study_providers` app-kapalı işleme için serbest.
 - **Dal:** — (ana dal `main`, ayrık dosyalar)
 - **Başlangıç:** 2026-07-12 22:55 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-13 (beta-v10 cihaz QA + revizyon planı)
-- **Not:** **WP-40/43/44 kapandı.** WP-45 kamp ateşi 480→360 (`11df506`, beta-v9). **WP-41 çekirdek çalışıyor (beta-v10, `75191e6`):** TEK bildirim + akan HH:MM:SS + app-kapalı Durdur cihazda doğrulandı ✅. **Kullanıcı beta-v10 cihaz QA'da 2 revizyon istedi (bkz. WP-41 → Cihaz QA turu 2):** R1 = bildirimdeki "Odak Kampı çalışıyor" gövde yazısı kaldırılsın (saat uygulaması gibi yalnız süre). R2 = Durdur'a basınca bildirim KAYBOLMASIN; süre kaydedilsin (işlev doğru) ama bildirim **Başlat**'a dönüşsün, app açmadan tekrar başlatılabilsin (kalıcı Durdur↔Başlat toggle). Ayrıca dinamik panel/native saat görünümü hedefi → **yeni WP-51**. Kullanıcı **"sadece planla, kod yazma"** dedi → bu tur yalnız plan; kod sonraki turda beta-v11. **Sonra = WP-42 widget** (canlı kronometre + Başlat/Durdur aynı komut/at mantığı).
+- **Son güncelleme:** 2026-07-13 (beta-v11 R1/R2 kodlandı + APK build)
+- **Not:** **WP-41 R1/R2 kodlandı (beta-v11):** R1 = bildirim gövde yazısı kaldırıldı (`notificationText: ''`). R2 = Durdur↔Başlat kalıcı toggle: Durdur'da servis kapanmaz, tamamlanan aralık `timer_pending_intervals` kuyruğuna yazılır + bildirim `00:00:00`+Başlat olur (idle mod); Başlat'ta yeni oturum (running mod); app açılınca `_reconcileBackgroundTimer` kuyruğu **server-authoritative** oturum olarak kaydeder ve sayacı uzlaştırır. Arka arkaya Durdur/Başlat (app kapalı) oturum sayımını bozmaz (test: 5 çift → 5 oturum). **Kanıt:** `Cihazda doğrulanmalı` — cihazda (a) gövde yazısı yok; (b) Durdur→00:00:00+Başlat, süre kaydedildi; (c) Başlat→app açmadan akan yeni oturum; (d) 10 ardışık toggle sayımı bozmaz. **Sonra = WP-42 widget.**
 
 ### Codex Lane
 - **Durum:** [x] Boşta
@@ -106,7 +106,7 @@
 | WP | Durum | Kısa kapsam | Bağımlılık |
 |---|---|---|---|
 | WP-38 | Bekliyor | Faz 0A · Canlı backend durum matrisi (kod yok) | — |
-| WP-41 | Çekirdek çalışıyor · R1/R2 revizyon planlandı | V8-A · Canlı chronometer bildirim (gövde yazısı yok + Durdur↔Başlat toggle) | WP-40 |
+| WP-41 | R1/R2 kodlandı (beta-v11) · cihaz QA bekliyor | V8-A · Canlı chronometer bildirim (gövde yazısı yok + Durdur↔Başlat toggle) | WP-40 |
 | WP-42 | Kabul bekliyor | V8-A · Widget paritesi + olay bazlı stats besleme | WP-40 |
 | WP-51 | Planlandı | V8-A · Dinamik panel / native kronometre bildirim tasarımı | WP-41 R1/R2 |
 | WP-52 | Kod tamamlandı · cihaz QA bekliyor | Adaptif dashboard · cihaz başına 6/8/12/16 sütun + güvenli layout profilleri | WP-27 base shell |
@@ -130,7 +130,7 @@
 ### WP-41: V8-A · Canlı Chronometer Bildirim (Başlat/Durdur) 🔔
 - **Program/Faz:** V8-A · **Bağımlılık: WP-40 (tamamlandı)**
 - **Ajan:** Claude (Codex'ten devir — Codex WP-47'de; kullanıcı talimatı)
-- **Durum:** [~] Çekirdek cihazda çalışıyor (beta-v10) — 2 revizyon planlandı (R1/R2, aşağıda); kod bir sonraki turda
+- **Durum:** [~] R1/R2 kodlandı (beta-v11) — cihaz QA bekliyor. Çekirdek beta-v10'da cihazda doğrulandı ✅.
 - **Problem:** Bildirimde canlı `HH:MM:SS` + Başlat/Durdur, app açmadan yönetim (istek 1).
 - **Kapsam dışı:** Widget (→WP-42), state store (WP-40).
 - **SAHİP dosyalar (yaz):** `app/lib/core/notifications/timer_notification_service.dart`, ilgili notification receiver Kotlin.
@@ -147,6 +147,9 @@
   - **Not (yan gözlem):** Kullanıcı "ana uygulamanın bildirim iznini kapattım ama hâlâ çıkıyor" dedi — bu beklenen: `dataSync` foreground service'in zorunlu bildirimi POST_NOTIFICATIONS iznine bağlı değildir (servis çalıştıkça görünür). Ayrı bug değil; R2 idle davranışıyla birlikte kullanıcıya kapatma yolu (ongoing kaldırma) sunulur.
   - **Tasarım isteği (native saat/dinamik panel görünümü) → yeni WP-51'e ayrıldı** (native `Chronometer`/`ProgressStyle`/Live Updates gerektirir; flutter_foreground_task text-update ile yaklaşık; gerçek native kronometre için Kotlin bildirim). R1/R2 önce, WP-51 sonra.
   - **Kabul (R1/R2, ölçülebilir):** Cihazda (a) bildirimde gövde yazısı yok, yalnız süre+buton; (b) Durdur→süre kaydedilir + bildirim `00:00:00` + **Başlat** olur; (c) Başlat→app açmadan yeni oturum başlar, süre akar; (d) 10 ardışık Durdur/Başlat (app kapalı) oturum sayımını bozmaz. `Cihazda doğrulanmalı`.
+
+- **Uygulama (beta-v11, 2026-07-13, Claude):** R1+R2 kodlandı. **Plandan sapma (daha sağlam):** Tek-atımlık komut store yerine, app-kapalı Durdur her tamamlanan çalışma aralığını `timer_pending_intervals` **kuyruğuna** yazar (last-write-wins komut modeli arka arkaya Durdur→Başlat'ta ilk oturumu kaybederdi — kabul (d) bunu men eder). Değişen dosyalar: `timer_foreground_service.dart` (gövde yazısı `''`; `_runningButtons`/`_idleButtons`; `_pauseToIdle`→kuyruğa aralık + idle + Başlat butonu, `stopService` YOK; `_resumeToRunning`→`timer_active_started_at=now` + running + Durdur; `timer_fg_mode` bayrağı); `study_providers.dart` (`_reconcileBackgroundTimer`→kuyruğu **server-authoritative** `_recordSession` ile yaz + FGS moduna göre sayacı uzlaştır, auth hazır değilse kuyruğu koru; `_syncBackgroundTimerState` = reconcile + widget komutu; dispose-sonrası `ref` yarışları için `_disposed`/guard'lar). Widget'ın tek-atımlık `timer_external_command` yolu (WP-42) korundu. **Test:** yeni `timer_background_reconcile_test.dart` (idle→oturum+dur; Durdur→Başlat→eski oturum+yeni çalışır; 5 çift→5 oturum). `flutter analyze` 0 + **286 test** yeşil + **beta-v11 APK `1.0.10+11` (`app-beta-release.apk`, 64 MB) PASS**. `Kodda doğrulandı` — cihaz videosu bekliyor.
+  - **Ürün kararı (R2-a, açık):** Idle'da FGS canlı kaldığı için bildirim görünür kalır (flutter_foreground_task bildirimi doğası gereği `ongoing`/kaydırılamaz). Tam "kaydırıp atma" ancak WP-51 native yeniden yazımıyla gelir. Beta-v11'de idle = `00:00:00`+Başlat (temiz), ama swipe-dismiss yok. Kullanıcı onayı bekliyor.
 
 ### WP-42: V8-A · Widget Paritesi + Olay Bazlı Stats Besleme 📲
 - **Program/Faz:** V8-A · **Bağımlılık: WP-40; WP-41 ile paralel DEĞİL** (`study_providers` paylaşımı → serileştir; ikisi de Claude'da, sırayla)
