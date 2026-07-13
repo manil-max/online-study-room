@@ -3,35 +3,45 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/stats/gamification.dart';
 import '../../../core/utils/duration_format.dart';
+import '../../../data/providers/auth_providers.dart';
 import '../../../data/providers/gamification_providers.dart';
+import '../social_profile_screen.dart';
+import 'achievement_showcase.dart';
 
 class GamificationCard extends ConsumerWidget {
   const GamificationCard({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // WP-56: profil açılınca sunucu ledger'ı yeniden değerlendirir (istemci XP yazmaz).
+    // WP-56: profil açılınca sunucu ledger'ı yeniden değerlendirir.
     ref.watch(gamificationProgressSyncProvider);
     final theme = Theme.of(context);
     final summaryAsync = ref.watch(gamificationSummaryProvider);
+    final authProfile = ref.watch(authStateProvider).value;
 
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: summaryAsync.when(
-          data: (summary) {
-            if (summary == null) {
-              return Text(
-                'Başarılar giriş yaptıktan sonra görünür.',
-                style: theme.textTheme.bodyMedium,
-              );
-            }
-            return _SummaryContent(summary: summary);
-          },
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, stackTrace) => Text(
-            'Başarılar yüklenemedi.',
-            style: TextStyle(color: theme.colorScheme.error),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: authProfile == null
+            ? null
+            : () => SocialProfileScreen.open(context, authProfile),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: summaryAsync.when(
+            data: (summary) {
+              if (summary == null) {
+                return Text(
+                  'Başarılar giriş yaptıktan sonra görünür.',
+                  style: theme.textTheme.bodyMedium,
+                );
+              }
+              return _SummaryContent(summary: summary);
+            },
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (error, stackTrace) => Text(
+              'Başarılar yüklenemedi.',
+              style: TextStyle(color: theme.colorScheme.error),
+            ),
           ),
         ),
       ),
@@ -47,6 +57,9 @@ class _SummaryContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final rank = summary.profile.crownRank;
+    final rankColor = crownColorFor(rank, theme.colorScheme);
+    final bar = xpBarMetrics(summary.profile.xp);
     final unlocked = summary.achievements.where((a) => a.unlocked).toList();
     final locked = summary.achievements.where((a) => !a.unlocked).toList();
 
@@ -62,10 +75,32 @@ class _SummaryContent extends StatelessWidget {
             ),
             Chip(
               visualDensity: VisualDensity.compact,
-              avatar: const Icon(Icons.workspace_premium_outlined, size: 18),
-              label: Text(summary.crownTier.label),
+              avatar: Icon(
+                Icons.workspace_premium_outlined,
+                size: 18,
+                color: rankColor,
+              ),
+              label: Text(crownLabelTr(rank)),
             ),
+            const Icon(Icons.chevron_right),
           ],
+        ),
+        const SizedBox(height: 10),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(6),
+          child: LinearProgressIndicator(
+            value: bar.progress,
+            minHeight: 8,
+            color: rankColor,
+            backgroundColor: theme.colorScheme.surfaceContainerHighest,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          '${summary.profile.xp} XP · sonraki taç ${bar.next}',
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
         ),
         const SizedBox(height: 12),
         Wrap(
@@ -97,7 +132,7 @@ class _SummaryContent extends StatelessWidget {
         ],
         const SizedBox(height: 12),
         Text(
-          '${summary.unlockedAchievementCount}/${summary.achievements.length} başarım açık',
+          '${summary.unlockedAchievementCount}/${summary.achievements.length} klasik başarım · dokunarak 3.0 vitrin',
           style: theme.textTheme.labelLarge,
         ),
         const SizedBox(height: 8),

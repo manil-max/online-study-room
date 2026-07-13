@@ -81,15 +81,15 @@
 - **Not:** Ayarlar tek katmana indirildi; ExpansionTile yok, Gruplar sayacı kaldırıldı, bildirim/sürüm doğrudan açılıyor, grid Auto seçeneği kaldırılıp eski değer 6'ya göçüyor. Analyze + 283 test + Windows release build PASS; görsel cihaz QA bekliyor. Push yok.
 
 ### Grok Lane
-- **Durum:** [x] Boşta (WP-56 kod+wire-up bitti — beta QA kullanıcıda)
-- **Faz/WP:** Başarım 3.0 · WP-56 R1
+- **Durum:** [x] Boşta (WP-57 kod+test bitti — beta QA kullanıcıda)
+- **Faz/WP:** Başarım 3.0 · WP-57 R2
 - **Aşama:** Otomatik test geçti — cihaz/beta QA + ürün kabulü bekliyor
 - **SAHİP yollar:** —
 - **Ortak/riskli yüzey:** —
 - **Dal:** — (ana dal `main`)
 - **Başlangıç:** 2026-07-13 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-13 (WP-56 wire-up commit)
-- **Not:** Wire-up tamam: `gamificationProgressSyncProvider` → `process_achievement_event`; Supabase repo XP/achievement client write kapalı; profil + başarılar ekranı sync izliyor. Analyze 0 + 9 achievement test PASS. `Kodda doğrulandı`. Beta: `Cihazda doğrulanmalı`.
+- **Son güncelleme:** 2026-07-13 (WP-57 teslim)
+- **Not:** XP bar + taç + vitrin + gizli ????? + confetti (paketsiz). SocialProfileScreen/Dialog + AchievementsScreen glue. Analyze 0 + 4 widget test PASS. `Kodda doğrulandı`.
 
 ---
 
@@ -132,7 +132,7 @@
 | WP-54 | Planlandı | Tema Stüdyosu R1 · Token Motoru ve 12 Hazır Tema | Faz 0/V8 Sonrası |
 | WP-55 | Planlandı | Tema Stüdyosu R2 · Katmanlı Tema Editörü UX/UI | WP-54 |
 | WP-56 | Kod+wire-up bitti · beta/kabul bekliyor | Başarım 3.0 R1 · Server-Authoritative Motor ve SQL | Mimari doc (Gemini) · 0024 canlı |
-| WP-57 | Planlandı | Başarım 3.0 R2 · Oyunlaştırılmış Profil ve Rozet UI | WP-56 |
+| WP-57 | Kod+test bitti · beta/kabul bekliyor | Başarım 3.0 R2 · Oyunlaştırılmış Profil ve Rozet UI | WP-56 |
 | WP-58 | Planlandı | Saat Merkezi R1 · Zaman Motoru ve Exact Alarm Altyapısı | Faz 0/V8 Sonrası |
 | WP-59 | Planlandı | Saat Merkezi R2 · Alarm 2.0 ve Çoklu Timer UI | WP-58 |
 | WP-60 | Planlandı | Saat Merkezi R3 · Dünya Saati, Kronometre ve StandBy Modu | WP-58 |
@@ -415,24 +415,26 @@
 
 ### WP-57: Başarım 3.0 R2 (Oyunlaştırılmış Profil ve Rozet UI) 🏅
 - **Program/Faz:** Başarım 3.0
-- **Ajan:** —
-- **Durum:** [ ] Bekliyor
+- **Ajan:** Grok
+- **Durum:** [~] Otomatik test geçti — beta/ürün kabulü bekliyor
 - **Problem:** Kullanıcının kilitli (????) veya açılmış başarımlarını görebileceği, taç/XP çubuğu bulunan sosyal profil vitrini.
-- **Kapsam dışı:** Backend ledger motoru.
+- **Kapsam dışı:** Backend ledger motoru (WP-56).
 - **SAHİP dosyalar (yaz):**
   - `app/lib/features/profile/widgets/achievement_showcase.dart`
   - `app/lib/features/profile/social_profile_screen.dart`
-- **DOKUNMA (oku, değiştirme):**
-  - `achievement_provider.dart` (WP-56 çıktısı).
+  - glue: `social_profile_dialog.dart`, `achievements_screen.dart`, `gamification_card.dart`
+- **DOKUNMA (oku):** `achievement_provider` / gamification stream (WP-56)
 - **Adımlar:**
-  - [ ] XP seviye barı ve taç sistemini entegre et.
-  - [ ] Gizli rozetlerin siyah siluet (????) mantığını kodla.
-  - [ ] Yeni başarım açıldığında fırlatılacak efsanevi animasyon efekti (örn. Confetti).
-- **Veri/Migration etkisi:** Yok (UI).
-- **RLS/Güvenlik:** Ortak gruptaki üyeler profili salt-okunur (read-only) görebilmeli.
-- **Kabul (ölçülebilir):** Kullanıcı gizli başarımı başardığında animasyonun ≤ 250 ms içinde render edilmesi.
-- **Dal önerisi:** `wp57-achievements-ui`
-- **Model önerisi:** 🔴 Opus
+  - [x] XP seviye barı + taç etiketleri (`crownLabelTr` / `xpBarMetrics`)
+  - [x] Gizli rozet: kilitliyken `?????` + siyah siluet; açıkken gerçek ad
+  - [x] Confetti (CustomPainter, pubspec yok) — yeni ödülde post-frame ≤ 250 ms arm
+  - [x] SocialProfileScreen (tam) + Dialog (kompakt) + AchievementsScreen yönlendirme
+  - [x] Vitrin 3 rozet pin (kendi profil); başkasında salt-okunur
+  - [x] Widget test 4 PASS
+- **Veri/Migration etkisi:** Yok.
+- **RLS/Güvenlik:** Başka kullanıcı okuma mevcut `can_see_user_sessions` stream’lerine bağlı; e-posta gösterilmez.
+- **Kabul:** Gizli kilit UI + confetti arm — `Kodda doğrulandı`. Cihazda gizli başarım açılışı görsel QA — `Cihazda doğrulanmalı`.
+- **Dal:** — (main) · **Model:** Grok
 
 
 ### WP-58: Saat Merkezi R1 (Zaman Motoru ve Exact Alarm Altyapısı) ⚙️
