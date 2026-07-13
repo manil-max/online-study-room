@@ -59,15 +59,15 @@
 - **Not:** Server-authoritative başarı sistemi, XP ledger yapısı ve Supabase RPC tasarımları `docs/BASARIM-MIMARISI.md` dosyasına başarıyla işlendi. Başarım eşik değerleri ve gizli sürpriz rozetler kullanıcı onayıyla kodlanmaya hazır hale getirildi.
 
 ### Claude Lane
-- **Durum:** [~] Aktif (WP-41 + WP-42/51 birleşik kod+test bitti — cihaz QA bekliyor)
-- **Faz/WP:** V8-A · WP-41 R1/R2 (beta-v11) + **WP-42+WP-51 birleşik native yeniden yazım (beta-v12)** + **beta-v13 kritik çökme düzeltmesi** — cihaz QA bekliyor
-- **Aşama:** Cihazda çalışıyor (beta-v13 çökme düzeltmesi + beta-v14 sade widget/pill düğme + beta-v15 bildirimde süre kırpması düzeltmesi PASS). **AÇIK BUG (beta-v15) → Grok hotfix (devralındı):** idle bildirim (00:00:00+Başlat) dururken uygulamadan kronometre başlatınca **bildirim güncellenmiyor** (00:00:00 Başlat'ta kalıyor); widget doğru. Yani in-app start native `StudyTimerService` idle→running bildirim geçişini tetiklemiyor. Araştırılmadı; bakılacak: `study_providers.dart` in-app `start()`→`TimerForegroundService.start()` `startTimer` channel'ını çağırıyor mu, native `handleStart` aynı NOTIFICATION_ID 7040 ile running bildirimi postluyor mu.
-- **SAHİP yollar:** `app/lib/core/background/timer_foreground_service.dart` + `app/lib/data/providers/study_providers.dart` + `app/test/features/timer_background_reconcile_test.dart`; **native:** `app/android/**/timer/StudyTimerService.kt` (yeni), `MainActivity.kt`, `widgets/TimerActionReceiver.kt`, `widgets/StudyWidgetProviders.kt`, `widgets/TimerWidgets.kt` (yeni), `AndroidManifest.xml`; beta yayın dosyaları (`pubspec/CHANGELOG/release_notes`).
-- **Ortak/riskli yüzey:** Yok — diğer lane'ler docs/Faz 0'da; SAHİP kesişimi yok.
-- **Dal:** — (ana dal `main`, ayrık dosyalar)
-- **Başlangıç:** 2026-07-12 22:55 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-13 (WP-42+51 native yeniden yazım + beta-v12 APK)
-- **Not:** **Kullanıcı kararı: WP-42 + WP-51 birleştirildi (tam native).** Sayaç bildirimi ve widget artık native Kotlin `StudyTimerService` ile yönetiliyor (flutter_foreground_task timer yolundan çıkıldı). Widget/bildirim Başlat/Durdur **uygulama tamamen kapalıyken** de çalışır (BroadcastReceiver → `startForegroundService`). Süre native `Chronometer`/`setUsesChronometer` ile akar (Flutter update yok). **Server-authoritative kayıt korundu:** native yalnız `timer_pending_intervals` kuyruğuna aralık yazar; oturum kaydını app açılışında Dart `_reconcileBackgroundTimer` yapar (WP-41'de test edilen mekanizma yeniden kullanıldı). App önplandaysa native→Dart `reconcile` method channel'ıyla anında uzlaşır. **beta-v13 (2026-07-13): beta-v12 cihaz testinde açılış çökme döngüsü çıktı** — foreground servis `START_STICKY` boş-komut yeniden başlatmasında `startForeground` çağrılmadan Android 12+ zaman aşımına düşüyordu. Düzeltme: `START_NOT_STICKY` + her komut yolunda güvenli `startForeground` + bildirim aksiyonlarında `getForegroundService` (arka plan başlatma yasağı) + onStartCommand try/catch. Ayrıca bildirim özel RemoteViews ile durak-saati görünümüne yaklaştırıldı (fallback korumalı). **⚠️ Hâlâ cihaz QA bekliyor; sorun çıkarsa `git revert`.** `Cihazda doğrulanmalı`.
+- **Durum:** [x] Boşta — WP-41 + WP-42/51 ürün kabulü (kullanıcı 2026-07-13)
+- **Faz/WP:** —
+- **Aşama:** —
+- **SAHİP yollar:** —
+- **Ortak/riskli yüzey:** —
+- **Dal:** — (main)
+- **Başlangıç:** —
+- **Son güncelleme:** 2026-07-13
+- **Not:** V8-A native sayaç/bildirim/widget (beta-v11…v15) + Grok in-app start hotfix (`94945ac`) ile kod hattı kapatıldı. Kalan: sonraki beta cihaz smoke; OEM Live Panel ince ayar ayrı polish (kapsam dışı).
 
 ### Codex Lane
 - **Durum:** [x] Boşta
@@ -81,16 +81,15 @@
 - **Not:** Ayarlar tek katmana indirildi; ExpansionTile yok, Gruplar sayacı kaldırıldı, bildirim/sürüm doğrudan açılıyor, grid Auto seçeneği kaldırılıp eski değer 6'ya göçüyor. Analyze + 283 test + Windows release build PASS; görsel cihaz QA bekliyor. Push yok.
 
 ### Grok Lane
-- **Durum:** [~] Aktif — Claude timer bug devralındı
-- **Faz/WP:** WP-42/51 hotfix · in-app start → bildirim idle kalma
-- **Aşama:** Kod fix uygulandı — cihaz QA bekliyor
-- **SAHİP yollar:** `study_providers.dart` reconcile/start, `StudyTimerService.kt` handleStart
-- **Ortak/riskli yüzey:** Claude timer (devir; limit bitti)
+- **Durum:** [x] Boşta — WP-54…57 + polish ürün kabulü (kullanıcı 2026-07-13)
+- **Faz/WP:** —
+- **Aşama:** —
+- **SAHİP yollar:** —
+- **Ortak/riskli yüzey:** —
 - **Dal:** — (main)
-- **Başlangıç:** 2026-07-13
+- **Başlangıç:** —
 - **Son güncelleme:** 2026-07-13
-- **Not:** beta-v15: idle iken uygulamadan start → reconcile eski idle ile _finish. Fix: fg_mode race + commit + notify. Grok başarı/tema kodu bitti (beta QA + SQL 0025–0027).
-
+- **Not:** Tema Stüdyosu, Başarım 3.0, taç/XP 0/2.5k/10k/25k/75k + saat 10 XP, profil polish, timer hotfix. **SQL:** 0025–0027 (canlı), 0028 yalnız genel yayın. Admin panel fix = 0029.
 
 ---
 
@@ -102,13 +101,13 @@
 |---|---|---|---|---|
 | 1 | **Faz 0A** | Tek kaynak & tamamlanma denetimi (envanter, P0/P1/P2 bug, migration/Edge Function canlı durum) | Planlandı | Yeni özellik üretmez |
 | 2 | **Faz 0B** | Test & gözlemlenebilirlik temeli (integration test, native test planı, Sentry) | Planlandı | — |
-| 3 | **V8-A** | Sayaç–bildirim–widget tek doğruluk kaynağı (foreground service, canlı `Chronometer`) | Planlandı | native + cihaz QA |
+| 3 | **V8-A** | Sayaç–bildirim–widget tek doğruluk kaynağı (foreground service, canlı `Chronometer`) | Kod+ürün kabulü (WP-40–42/51) | Sonraki beta smoke; WP-48 paket |
 | 4 | **V8-B** | Genel senkronizasyon denetimi (canonical projection, idempotency) | Planlandı | — |
 | 5 | **V8-C** | Küçük IA: İstatistik sırası + Gruplar sırası/kamp ateşi + animasyon | Planlandı | düşük risk, golden test |
 | 6 | **V8 beta → soak → stable** | Kalite kapısı | Planlandı | `Ürün kararı`: sürüm no |
 | 7 | **Saat programı** | Saat 1–5 (motor → IA → alarm → kronometre/timer → StandBy/widget) | Planlandı | tek başına program |
-| 8 | **Tema Stüdyosu** | Token motoru + 12+ tema ailesi + katmanlı editör | Planlandı | Saat ile eşzamanlı açılmaz |
-| 9 | **Başarım & Sosyal Profil 3.0** | Tek motor, server-authoritative XP ledger, herkese açık profil RLS | Planlandı | güvenlik ağırlıklı |
+| 8 | **Tema Stüdyosu** | Token motoru + 12+ tema ailesi + katmanlı editör | WP-54/55 tamamlandı | PRO hex stüdyo sonraki |
+| 9 | **Başarım & Sosyal Profil 3.0** | Tek motor, server-authoritative XP ledger, herkese açık profil RLS | WP-56/57 tamamlandı | 0025–0027 SQL canlı; 0028 genel yayın; B7 RLS ayrı |
 | 10 | **Windows masaüstü** | WP-27 base → WP-52 adaptif grid → WP-53 desktop IA → WP-28 MSIX/release | Araştırıldı · planlandı | `docs/WINDOWS-URUN-PLANI.md` |
 
 ## Planlanan İş Paketleri
@@ -118,8 +117,6 @@
 | WP | Durum | Kısa kapsam | Bağımlılık |
 |---|---|---|---|
 | WP-38 | Bekliyor | Faz 0A · Canlı backend durum matrisi (kod yok) | — |
-| WP-41 | R1/R2 kodlandı (beta-v11) · cihaz QA bekliyor | V8-A · Canlı chronometer bildirim (gövde yazısı yok + Durdur↔Başlat toggle) | WP-40 |
-| WP-42+51 | Native yeniden yazım kodlandı (beta-v12) · cihaz QA bekliyor | V8-A · Native servis: widget+bildirim app-kapalı Başlat/Durdur + native Chronometer | WP-41 |
 | WP-52 | Kod tamamlandı · cihaz QA bekliyor | Adaptif dashboard · cihaz başına 6/8/12/16 sütun + güvenli layout profilleri | WP-27 base shell |
 | WP-53 | R1 Ayarlar kodlandı · diğer ekranlar planlandı | Windows Desktop Design 2.0 · ekran-içi gerçek masaüstü IA | WP-52 + WP-27 base shell |
 | WP-45 | Bekliyor | V8-C · Gruplar sırası + kamp ateşi + animasyon (bağımsız) | — |
@@ -130,10 +127,6 @@
 | WP-50 | Hazırlık tamamlandı | V8 stable karar + rollback paketi | WP-49 kanıtları + ürün GO/NO-GO |
 | WP-27 | Base cihaz QA geçti | Windows desktop shell + klavye/fare + Compact Focus | Ürün kabulü WP-52/53 sonrası |
 | WP-28 | Bekliyor | Windows MSIX + imza + update + release QA | WP-53 cihaz/ürün kabulü |
-| WP-54 | Kod+test bitti · beta/kabul bekliyor | Tema Stüdyosu R1 · Token Motoru ve 12 Hazır Tema | — |
-| WP-55 | Kod+test bitti · beta/kabul bekliyor | Tema Stüdyosu R2 · Katmanlı Tema Editörü UX/UI | WP-54 |
-| WP-56 | Kod+wire-up bitti · beta/kabul bekliyor | Başarım 3.0 R1 · Server-Authoritative Motor ve SQL | Mimari doc (Gemini) · 0024 canlı |
-| WP-57 | Kod+test bitti · beta/kabul bekliyor | Başarım 3.0 R2 · Oyunlaştırılmış Profil ve Rozet UI | WP-56 |
 | WP-58 | Planlandı | Saat Merkezi R1 · Zaman Motoru ve Exact Alarm Altyapısı | Faz 0/V8 Sonrası |
 | WP-59 | Planlandı | Saat Merkezi R2 · Alarm 2.0 ve Çoklu Timer UI | WP-58 |
 | WP-60 | Planlandı | Saat Merkezi R3 · Dünya Saati, Kronometre ve StandBy Modu | WP-58 |
@@ -148,7 +141,7 @@
 ### WP-41: V8-A · Canlı Chronometer Bildirim (Başlat/Durdur) 🔔
 - **Program/Faz:** V8-A · **Bağımlılık: WP-40 (tamamlandı)**
 - **Ajan:** Claude (Codex'ten devir — Codex WP-47'de; kullanıcı talimatı)
-- **Durum:** [~] R1/R2 kodlandı (beta-v11) — cihaz QA bekliyor. Çekirdek beta-v10'da cihazda doğrulandı ✅.
+- **Durum:** [x] **Tamamlandı** (2026-07-13) — ürün kabulü · kod+beta hattı (v11–v15) + in-app start hotfix
 - **Problem:** Bildirimde canlı `HH:MM:SS` + Başlat/Durdur, app açmadan yönetim (istek 1).
 - **Kapsam dışı:** Widget (→WP-42), state store (WP-40).
 - **SAHİP dosyalar (yaz):** `app/lib/core/notifications/timer_notification_service.dart`, ilgili notification receiver Kotlin.
@@ -172,7 +165,7 @@
 ### WP-42 (+WP-51 birleşik): V8-A · Native Sayaç Servisi — Widget/Bildirim App-Kapalı Kontrol 📲
 - **Program/Faz:** V8-A · **Bağımlılık: WP-41 (kod bitti)** · **Kullanıcı kararı: WP-42 + WP-51 tam native olarak birleştirildi**
 - **Ajan:** Claude (Codex'ten devir — kullanıcı talimatı)
-- **Durum:** [~] Native yeniden yazım kodlandı (beta-v12) — cihaz QA bekliyor. **Çekirdek özellik native'e taşındı → öncelikli cihaz doğrulaması gerekir.**
+- **Durum:** [x] **Tamamlandı** (2026-07-13) — native servis ürün kabulü · WP-51 birleşik
 - **Uygulama (beta-v12, 2026-07-13, Claude):** Sayaç bildirimi + widget'ı **native Kotlin `StudyTimerService`** yönetir (flutter_foreground_task timer yolundan çıkıldı). Yeni/değişen: `timer/StudyTimerService.kt` (foreground servis: ACTION_START/STOP/STOP_SILENT/TOGGLE, native `Chronometer` bildirim, `timer_pending_intervals` kuyruğu, idle=00:00:00+Başlat kaydırılabilir), `widgets/TimerActionReceiver.kt` (widget düğmesi → servis), `widgets/StudyWidgetProviders.kt` (Chronometer `_ms` epoch anahtarından, Başlat/Durdur durum metni), `widgets/TimerWidgets.kt` (native widget tazeleme), `MainActivity.kt` (method channel `…/timer`: Dart→native start/stop, native→Dart `reconcile` + runtime receiver), `AndroidManifest.xml` (servis kaydı). Dart: `timer_foreground_service.dart` method-channel köprüsüne indirildi; `study_providers.dart` FGS task-data callback yerine `reconcile` method-channel handler + `timer_active_started_at_ms` yazımı. **Server-authoritative kayıt WP-41 reconcile'ıyla korundu** (native yalnız aralık kuyruğa yazar). `flutter analyze` 0 + **286 test** + **beta-v12 release+debug APK PASS** (Kotlin derlendi). `Kodda doğrulandı`.
 - **Problem:** Yalnız timer widget besleniyor; stats/leaderboard placeholder (B4).
 - **Kapsam dışı:** Bildirim (WP-41), senkron canonical projection (WP-43 sağlar; burada tüketilir).
@@ -347,7 +340,7 @@
 ### WP-54: Tema Stüdyosu R1 (Token Motoru ve Hazır Temalar) 🎨
 - **Program/Faz:** Tema Stüdyosu (KALITE-PROGRAMI §8.5)
 - **Ajan:** Grok
-- **Durum:** [~] Otomatik test geçti — beta/ürün kabulü + WP-55 seçici UI bekliyor
+- **Durum:** [x] **Tamamlandı** (2026-07-13) — ürün kabulü · token motoru + 12 preset
 - **Problem:** Sabit renk kullanımının sonlandırılıp, `docs/TEMA-MIMARISI.md` 5 katmanlı ThemeExtension altyapısı.
 - **Kapsam dışı:** Tema seçme ekranı (→ WP-55).
 - **SAHİP dosyalar:**
@@ -370,7 +363,7 @@
 ### WP-55: Tema Stüdyosu R2 (Katmanlı Tema Editörü UI) 🎛️
 - **Program/Faz:** Tema Stüdyosu
 - **Ajan:** Grok
-- **Durum:** [~] Otomatik test geçti — beta/ürün kabulü bekliyor
+- **Durum:** [x] **Tamamlandı** (2026-07-13) — ürün kabulü · Tema Stüdyosu UI
 - **Problem:** 12 temadan seçim + canlı önizleme + mood.
 - **Kapsam dışı:** PRO hex stüdyo; sunucu `user_preferences` JSON (yerel prefs familyId yeterli R2).
 - **SAHİP:** `theme_studio_screen.dart` + `appearance_screen` glue
@@ -385,7 +378,7 @@
 ### WP-56: Başarım 3.0 R1 (Server-Authoritative Motor ve SQL) 🏆
 - **Program/Faz:** Başarım 3.0 (KALITE-PROGRAMI §8.6)
 - **Ajan:** Grok
-- **Durum:** [~] Otomatik test geçti — **kod+wire-up bitti** · canlı migration kullanıcıda uygulandı · beta/ürün kabulü bekliyor
+- **Durum:** [x] **Tamamlandı** (2026-07-13) — ürün kabulü · ledger+wire-up · SQL 0024–0027
 - **Problem:** İstemci taraflı (hileye açık) başarı hesaplamalarının `docs/BASARIM-MIMARISI.md`'deki Server-Authoritative ledger sistemine geçirilmesi.
 - **Kapsam dışı:** Profil vitrini ve rozet çizimleri (→ WP-57).
 - **SAHİP dosyalar (yaz):**
@@ -412,7 +405,7 @@
 ### WP-57: Başarım 3.0 R2 (Oyunlaştırılmış Profil ve Rozet UI) 🏅
 - **Program/Faz:** Başarım 3.0
 - **Ajan:** Grok
-- **Durum:** [~] Otomatik test geçti — beta/ürün kabulü bekliyor
+- **Durum:** [x] **Tamamlandı** (2026-07-13) — ürün kabulü · vitrin/taç/confetti + polish
 - **Problem:** Kullanıcının kilitli (????) veya açılmış başarımlarını görebileceği, taç/XP çubuğu bulunan sosyal profil vitrini.
 - **Kapsam dışı:** Backend ledger motoru (WP-56).
 - **SAHİP dosyalar (yaz):**
@@ -526,6 +519,12 @@
 | WP | Tamamlanan kapsam |
 |---|---|
 | WP-40 | V8-A · Native timer state store + foreground service — beta-v8 cihaz QA + ürün kabulü |
+| WP-41 | V8-A · Canlı chronometer bildirim R1/R2 (beta-v11–v15 hattı) — ürün kabulü 2026-07-13 |
+| WP-42+51 | V8-A · Native sayaç servisi + widget/bildirim app-kapalı + Grok in-app start fix — ürün kabulü 2026-07-13 |
+| WP-54 | Tema Stüdyosu R1 · Token motoru + 12 hazır tema — ürün kabulü 2026-07-13 |
+| WP-55 | Tema Stüdyosu R2 · Katmanlı editör UI — ürün kabulü 2026-07-13 |
+| WP-56 | Başarım 3.0 R1 · Server-authoritative ledger + wire-up + XP eşik/saat — ürün kabulü 2026-07-13 |
+| WP-57 | Başarım 3.0 R2 · Oyunlaştırılmış profil/rozet UI + polish — ürün kabulü 2026-07-13 |
 | WP-43 | V8-B · Genel senkronizasyon denetimi (canonical projection, idempotency) — beta-v8 cihaz QA + ürün kabulü |
 | WP-44 | V8-C · İstatistik grup sırası (sıralama üste) — beta-v8 cihaz QA + ürün kabulü |
 | WP-37 | Faz 0A · Repo ve doküman gerçeği denetimi |
@@ -566,6 +565,9 @@
 | WP-38 | Faz 0A · Canlı Backend Durum Matrisi |
 
 ### Son Teslim Notları
+
+- **WP-41/42/51 + Grok timer hotfix (2026-07-13):** Native `StudyTimerService`, app-kapalı Başlat/Durdur, chronometer bildirim, beta-v13–v15 rötuşları; in-app start idle race fix (`94945ac`). Ürün sahibi kapatma kararı.
+- **WP-54–57 (2026-07-13):** Tema Stüdyosu + Başarım 3.0 ledger/UI; taç 0/2.5k/10k/25k/75k; saat +10 XP; profil/tap/taç polish. SQL 0025–0027 canlı uygulama kullanıcının; 0028 genel yayın sıfırlaması.
 
 - **WP-37:** `docs/DENETIM-FAZ0A.md` ile WP-1–36'nın kanıtlanabilir aşamaları, özellik envanteri, P0/P1/P2 listesi, risk/v8 blocker kaydı ve belge tutarsızlığı önerileri teslim edildi. `app/` diff'i boş; canlı backend teyidi WP-38'de kalır.
 
