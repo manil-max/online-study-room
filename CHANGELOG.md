@@ -4,6 +4,18 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [beta-v18 / 1.0.18+18] - 2026-07-13
+
+### Highlights
+- Taç rütbesi artık profil dışında da görünür: sıralama, aktif üyeler, sohbet, istatistik, grup üyeleri, profil fotoğrafı.
+- Profil sırası: **Başarılar** üstte, altında Çalışma kayıtları → Ayarlar.
+- Saat: Widget/izinler Ayarlar’a taşındı (ayrı sekme yok); Ana Sayfa sekmesine tekrar basınca en üste kayar.
+- Atmosfer temaları: Buzul, Yumuşak Krem, Gelecek Kenarı + Türkçe aile adları (15 tema).
+
+### Notes
+- XP sıfırlama (`0028`) **henüz çalıştırma** — beta testte kalsın; **stable/genel yayın tag’inden hemen önce** SQL Editor’da uygula.
+- Windows işleri (WP-53/28) bu betada kapsam dışı.
+
 ## [beta-v17 / 1.0.17+17] - 2026-07-13
 
 > ⚠️ **Beta test sürümü.** beta-v16 alarm app-kapalı çalmama + hub/widget düzeltmeleri.

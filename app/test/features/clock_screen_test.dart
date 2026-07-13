@@ -10,7 +10,6 @@ import 'package:online_study_room/data/providers/study_providers.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_auth_repository.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_study_repository.dart';
 import 'package:online_study_room/features/clock/clock_screen.dart';
-import 'package:online_study_room/features/clock/clock_widgets_screen.dart';
 import 'package:online_study_room/features/clock/widgets/standby_clock_view.dart';
 import 'package:online_study_room/core/notifications/timer_notification_service.dart';
 
@@ -58,7 +57,7 @@ void main() {
     );
   }
 
-  testWidgets('ClockScreen shows 6 equal strip tabs including Widget left',
+  testWidgets('ClockScreen shows 5 equal strip tabs without Widget tab',
       (tester) async {
     tester.view.physicalSize = const Size(1080, 2400);
     tester.view.devicePixelRatio = 3.0;
@@ -69,7 +68,8 @@ void main() {
     await tester.pump();
 
     expect(find.text('Saat Merkezi'), findsOneWidget);
-    expect(find.text('Widget'), findsOneWidget);
+    expect(find.text('Widget'), findsNothing);
+    expect(find.byKey(const Key('clock_tab_widgets')), findsNothing);
     expect(find.text('Saat'), findsOneWidget);
     expect(find.text('Alarm'), findsOneWidget);
     expect(find.text('Timer'), findsOneWidget);
@@ -77,21 +77,6 @@ void main() {
     expect(find.text('Dünya'), findsOneWidget);
     // Birleşik çalışma kartı ana Saat sekmesinde
     expect(find.text('Çalışma oturumu'), findsOneWidget);
-  });
-
-  testWidgets('Widget tab opens permissions/widgets screen', (tester) async {
-    tester.view.physicalSize = const Size(1080, 2400);
-    tester.view.devicePixelRatio = 3.0;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
-
-    await tester.pumpWidget(buildApp());
-    await tester.pump();
-
-    await tester.tap(find.byKey(const Key('clock_tab_widgets')));
-    await tester.pump();
-    expect(find.byType(ClockWidgetsScreen), findsOneWidget);
-    expect(find.textContaining('Ana ekran widget'), findsOneWidget);
   });
 
   testWidgets('ClockScreen shows StandByClockView in landscape', (tester) async {

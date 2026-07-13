@@ -81,15 +81,15 @@
 - **Not:** Ayarlar tek katmana indirildi; ExpansionTile yok, Gruplar sayacı kaldırıldı, bildirim/sürüm doğrudan açılıyor, grid Auto seçeneği kaldırılıp eski değer 6'ya göçüyor. Analyze + 283 test + Windows release build PASS; görsel cihaz QA bekliyor. Push yok.
 
 ### Grok Lane
-- **Durum:** [x] Boşta — beta-v17 kodlandı (cihaz QA)
-- **Faz/WP:** —
+- **Durum:** [x] Boşta — beta-v18 hazır (1.0.18+18)
+- **Faz/WP:** WP-48 paket
 - **Aşama:** —
 - **SAHİP yollar:** —
 - **Ortak/riskli yüzey:** —
 - **Dal:** main
 - **Başlangıç:** —
 - **Son güncelleme:** 2026-07-13
-- **Not:** P1: setAlarmClock + her fire’da fullScreen notif; izin wizard; hub 6 ikon tek satır Widget solda; Saat+çalışma birleşik; Clock/Alarm widget. beta-v17.
+- **Not:** Taç LiveCrownedAvatar; profil Başarılar üstte; test-only WP’ler (Windows hariç) tamamlandı; XP 0028 stable’da.
 
 ---
 
@@ -99,37 +99,29 @@
 
 | Sıra | Program/Faz | Kapsam | Durum | Not |
 |---|---|---|---|---|
-| 1 | **Faz 0A** | Tek kaynak & tamamlanma denetimi (envanter, P0/P1/P2 bug, migration/Edge Function canlı durum) | Planlandı | Yeni özellik üretmez |
-| 2 | **Faz 0B** | Test & gözlemlenebilirlik temeli (integration test, native test planı, Sentry) | Planlandı | — |
-| 3 | **V8-A** | Sayaç–bildirim–widget tek doğruluk kaynağı (foreground service, canlı `Chronometer`) | Kod+ürün kabulü (WP-40–42/51) | Sonraki beta smoke; WP-48 paket |
-| 4 | **V8-B** | Genel senkronizasyon denetimi (canonical projection, idempotency) | Planlandı | — |
-| 5 | **V8-C** | Küçük IA: İstatistik sırası + Gruplar sırası/kamp ateşi + animasyon | Planlandı | düşük risk, golden test |
-| 6 | **V8 beta → soak → stable** | Kalite kapısı | Planlandı | `Ürün kararı`: sürüm no |
-| 7 | **Saat programı** | Saat 1–5 (motor → IA → alarm → kronometre/timer → StandBy/widget) | Kod tamamlandı · cihaz QA bekliyor | WP-58/59/60 |
-| 8 | **Tema Stüdyosu** | Token motoru + 12+ tema ailesi + katmanlı editör | WP-54/55 tamamlandı | PRO hex stüdyo sonraki |
-| 9 | **Başarım & Sosyal Profil 3.0** | Tek motor, server-authoritative XP ledger, herkese açık profil RLS | WP-56/57 tamamlandı | 0025–0027 SQL canlı; 0028 genel yayın; B7 RLS ayrı |
-| 10 | **Windows masaüstü** | WP-27 base → WP-52 adaptif grid → WP-53 desktop IA → WP-28 MSIX/release | Araştırıldı · planlandı | `docs/WINDOWS-URUN-PLANI.md` |
+| 1 | **Faz 0A** | Tek kaynak & tamamlanma denetimi | Kapandı (ürün) | WP-37/38 arşiv |
+| 2 | **Faz 0B** | Test & gözlemlenebilirlik (integration + Sentry) | Kapandı (ürün) | WP-46/47 arşiv; sorun→debug |
+| 3 | **V8-A** | Sayaç–bildirim–widget tek doğruluk | Tamamlandı | WP-40–42/51 |
+| 4 | **V8-B** | Genel senkronizasyon | Tamamlandı | WP-43 |
+| 5 | **V8-C** | IA / kamp ateşi polish | Kapandı (ürün) | WP-44/45; sorun→debug |
+| 6 | **V8 beta → soak → stable** | Kalite kapısı | Aktif | beta-v18 → soak → stable |
+| 7 | **Saat programı** | Alarm/timer/StandBy/widget | Tamamlandı (ürün) | WP-58/59/60; sorun→debug |
+| 8 | **Tema Stüdyosu** | Token + atmosfer aileleri | Tamamlandı | WP-54/55 + 15 aile polish |
+| 9 | **Başarım & Sosyal Profil 3.0** | Ledger + taç her yerde | Tamamlandı | 0028 = **stable tag öncesi** |
+| 10 | **Windows masaüstü** | Shell → IA → MSIX | Açık | WP-27/52/53/28 — stable’dan bağımsız |
 
 ## Planlanan İş Paketleri
 
-> Burada yalnız başlanmamış, WP'ye bölünmüş işler bulunur. Sıra, bağımlılık ve ürün önceliğine göre korunur.
+> Burada yalnız açık / Windows / yayın kapısı işleri kalır. Cihaz QA’sı bekleyen ama kodu bitmiş Android işleri ürün kararıyla **Tamamlanan**’a alındı (2026-07-13); sorun çıkarsa debug başlığıyla geri açılır.
 
 | WP | Durum | Kısa kapsam | Bağımlılık |
 |---|---|---|---|
-| WP-38 | Bekliyor | Faz 0A · Canlı backend durum matrisi (kod yok) | — |
-| WP-52 | Kod tamamlandı · cihaz QA bekliyor | Adaptif dashboard · cihaz başına 6/8/12/16 sütun + güvenli layout profilleri | WP-27 base shell |
-| WP-53 | R1 Ayarlar kodlandı · diğer ekranlar planlandı | Windows Desktop Design 2.0 · ekran-içi gerçek masaüstü IA | WP-52 + WP-27 base shell |
-| WP-45 | Bekliyor | V8-C · Gruplar sırası + kamp ateşi + animasyon (bağımsız) | — |
-| WP-46 | Kabul bekliyor | Faz 0B · V8 integration test + Android QA matrisi | WP-40–45 kod aşaması |
-| WP-47 | Kabul bekliyor | Faz 0B · Sentry + senkron gözlemlenebilirliği | WP-46 kod aşaması (yönetici istisnası: cihaz QA ertelendi) |
-| WP-48 | Bekliyor | V8 beta paketi + cihaz QA kanıtı | WP-40–47 |
+| WP-48 | Aktif | beta-v18 paket + kısa cihaz smoke → sorun yoksa stable kapısı | — |
 | WP-49 | Bekliyor | V8 beta soak + hata kapısı | WP-48 |
-| WP-50 | Hazırlık tamamlandı | V8 stable karar + rollback paketi | WP-49 kanıtları + ürün GO/NO-GO |
-| WP-27 | Base cihaz QA geçti | Windows desktop shell + klavye/fare + Compact Focus | Ürün kabulü WP-52/53 sonrası |
-| WP-28 | Bekliyor | Windows MSIX + imza + update + release QA | WP-53 cihaz/ürün kabulü |
-| WP-58 | Otomatik test geçti · cihaz QA bekliyor | Saat Merkezi R1 · Epoch motor + Exact Alarm | — |
-| WP-59 | Otomatik test geçti · cihaz QA bekliyor | Saat Merkezi R2 · Alarm 2.0 + Çoklu Timer Studio | WP-58 |
-| WP-60 | Otomatik test geçti · cihaz QA bekliyor | Saat Merkezi R3 · Dünya / Kronometre / StandBy | WP-58 |
+| WP-50 | Hazırlık | V8/stable karar + rollback; **XP sıfırlama (0028) stable tag öncesi** | WP-49 GO |
+| WP-53 | R1 kod · açık | Windows Desktop Design 2.0 · ekran-içi masaüstü IA | WP-27 base |
+| WP-27 | Base QA geçti · ürün kabulü açık | Windows desktop shell + Compact Focus | WP-53 ile birlikte |
+| WP-28 | Bekliyor | Windows MSIX + imza + update + release QA | WP-53 ürün kabulü |
 
 > **Dağıtım notu:** WP-39 iptal edildi. **WP-40** V8-A'nın temelidir; WP-41/42 ondan sonra, ikisi `study_providers` timer-sync'i paylaştığı için birbirleriyle paralel değildir. WP-43, V8-A'dan sonra başlar. WP-44 ve WP-45 ayrık dosyalarda bağımsız yürütülebilir.
 
@@ -488,6 +480,13 @@
 
 | WP | Tamamlanan kapsam |
 |---|---|
+| WP-58 | Saat Merkezi R1 · Epoch + Exact Alarm — ürün kapanış 2026-07-13 (cihaz smoke sorun→debug) |
+| WP-59 | Saat Merkezi R2 · Alarm 2.0 + Multi-timer — ürün kapanış 2026-07-13 |
+| WP-60 | Saat Merkezi R3 · Dünya/Krono/StandBy + hub — ürün kapanış 2026-07-13 |
+| WP-52 | Adaptif dashboard 6/8/12/16 — kod+test; ürün kapanış 2026-07-13 (Windows resize ayrı) |
+| WP-45 | V8-C · Gruplar/kamp ateşi polish — ürün kapanış 2026-07-13 |
+| WP-46 | Faz 0B · Integration test + Android QA matrisi — ürün kapanış 2026-07-13 |
+| WP-47 | Faz 0B · Sentry + senkron gözlemlenebilirlik — ürün kapanış 2026-07-13 |
 | WP-40 | V8-A · Native timer state store + foreground service — beta-v8 cihaz QA + ürün kabulü |
 | WP-41 | V8-A · Canlı chronometer bildirim R1/R2 (beta-v11–v15 hattı) — ürün kabulü 2026-07-13 |
 | WP-42+51 | V8-A · Native sayaç servisi + widget/bildirim app-kapalı + Grok in-app start fix — ürün kabulü 2026-07-13 |
@@ -536,6 +535,8 @@
 
 ### Son Teslim Notları
 
+- **Ürün kapanış 2026-07-13 (Windows hariç test-bekleyen):** WP-52/45/46/47/58/59/60 ve V8-A/B/C cihaz QA’sı bekleyen kalemler **Tamamlanan**’a alındı. Kalan yayın: **beta-v18 → smoke → (oksa) stable**; **XP reset `0028` yalnız stable tag / genel yayın anında**. Windows: WP-27/53/28 açık.
+- **beta-v18 polish:** Taç avatarları sıralama/aktif/chat/istatistik/profilde; profilde Başarılar → Çalışma kayıtları üstünde; Widget/izinler Ayarlar’da; tap-to-top Ana Sayfa; 15 atmosfer tema.
 - **WP-41/42/51 + Grok timer hotfix (2026-07-13):** Native `StudyTimerService`, app-kapalı Başlat/Durdur, chronometer bildirim, beta-v13–v15 rötuşları; in-app start idle race fix (`94945ac`). Ürün sahibi kapatma kararı.
 - **WP-54–57 (2026-07-13):** Tema Stüdyosu + Başarım 3.0 ledger/UI; taç 0/2.5k/10k/25k/75k; saat +10 XP; profil/tap/taç polish. SQL 0025–0027 canlı uygulama kullanıcının; 0028 genel yayın sıfırlaması.
 

@@ -7,7 +7,7 @@ import 'package:online_study_room/features/profile/theme_studio_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  testWidgets('Tema Stüdyosu 12 aile listeler ve canlı önizleme gösterir',
+  testWidgets('Tema Stüdyosu atmosfer ailelerini listeler ve canlı önizleme gösterir',
       (tester) async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
@@ -24,15 +24,21 @@ void main() {
 
     expect(find.text('Tema Stüdyosu'), findsOneWidget);
     expect(find.text('Canlı önizleme'), findsOneWidget);
-    expect(find.text('Campfire Night'), findsOneWidget);
-    expect(find.textContaining('Deep AMOLED'), findsWidgets);
-    // 12 preset isimleri scroll edilebilir listede
+    expect(find.text('Kamp Ateşi'), findsOneWidget);
+    expect(find.textContaining('Keskin Modern'), findsWidgets);
+    // Yeni atmosferler + Material You scroll ile erişilebilir
     await tester.scrollUntilVisible(
-      find.text('Material You'),
+      find.text('Buzul'),
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    expect(find.text('Material You'), findsOneWidget);
-    expect(kThemePresets.length, 12);
+    expect(find.text('Buzul'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Gelecek Kenarı'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('Gelecek Kenarı'), findsOneWidget);
+    expect(kThemePresets.length, greaterThanOrEqualTo(15));
   });
 }

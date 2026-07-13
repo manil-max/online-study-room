@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../data/providers/gamification_providers.dart';
 import '../stats/progression_visuals.dart';
 import 'user_avatar.dart';
 
 /// Profil fotoğrafı + 5 kademeli taç halkası (üstte taç ikonu).
 ///
-/// [crownRank] null ise düz [UserAvatar] (taçsız).
+/// [crownRank] null/boş ise düz [UserAvatar] (taçsız).
 class CrownedAvatar extends StatelessWidget {
   const CrownedAvatar({
     super.key,
@@ -90,6 +92,37 @@ class CrownedAvatar extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: avatar,
+    );
+  }
+}
+
+/// [userId] ile `gamification_profiles.crown_rank` canlı izler; sıralama,
+/// aktif üyeler, chat, profil vb. her yerde taç göstermek için.
+class LiveCrownedAvatar extends ConsumerWidget {
+  const LiveCrownedAvatar({
+    super.key,
+    required this.userId,
+    required this.displayName,
+    this.avatarUrl,
+    this.radius = 20,
+    this.onTap,
+  });
+
+  final String userId;
+  final String displayName;
+  final String? avatarUrl;
+  final double radius;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final rank = ref.watch(gamificationProfileProvider(userId)).asData?.value.crownRank;
+    return CrownedAvatar(
+      displayName: displayName,
+      avatarUrl: avatarUrl,
+      radius: radius,
+      crownRank: rank,
+      onTap: onTap,
     );
   }
 }

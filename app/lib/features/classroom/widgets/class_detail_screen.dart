@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/utils/duration_format.dart';
 import '../../../core/widgets/number_stepper.dart';
-import '../../../core/widgets/user_avatar.dart';
+import '../../../core/widgets/crowned_avatar.dart';
 import '../../../data/models/profile.dart';
 import '../../../data/models/study_group.dart';
 import '../../../data/providers/auth_providers.dart';
@@ -408,7 +408,8 @@ class _MembersCard extends ConsumerWidget {
             children: [
               for (final m in members)
                 ListTile(
-                  leading: UserAvatar(
+                  leading: LiveCrownedAvatar(
+                    userId: m.id,
                     displayName: m.displayName,
                     avatarUrl: m.avatarUrl,
                     radius: 18,

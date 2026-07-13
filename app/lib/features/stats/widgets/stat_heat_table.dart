@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/subject_colors.dart';
 import '../../../core/utils/duration_format.dart';
-import '../../../core/widgets/user_avatar.dart';
+import '../../../core/widgets/crowned_avatar.dart';
 
 /// Isı tablosunda bir satır: isim + her sütun için saniye değerleri.
 class HeatRow {
@@ -10,12 +10,14 @@ class HeatRow {
     required this.label,
     required this.values,
     this.avatarUrl,
+    this.userId,
     this.highlight = false,
   });
 
   final String label;
   final List<int> values;
   final String? avatarUrl;
+  final String? userId;
   final bool highlight; // "sen" satırı
 }
 
@@ -113,10 +115,19 @@ class StatHeatTable extends StatelessWidget {
                   width: 130,
                   child: Row(
                     children: [
-                      UserAvatar(
+                      if (r.userId != null)
+                        LiveCrownedAvatar(
+                          userId: r.userId!,
                           displayName: r.label,
                           avatarUrl: r.avatarUrl,
-                          radius: 12),
+                          radius: 12,
+                        )
+                      else
+                        CrownedAvatar(
+                          displayName: r.label,
+                          avatarUrl: r.avatarUrl,
+                          radius: 12,
+                        ),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(

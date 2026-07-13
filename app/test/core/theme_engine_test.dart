@@ -4,12 +4,15 @@ import 'package:online_study_room/core/theme/app_theme.dart';
 
 void main() {
   group('ThemePreset / WP-54', () {
-    test('12 hazır tema tanımlı ve id benzersiz', () {
-      expect(kThemePresets.length, 12);
+    test('hazır atmosfer temaları tanımlı ve id benzersiz', () {
+      expect(kThemePresets.length, greaterThanOrEqualTo(15));
       final ids = kThemePresets.map((p) => p.id).toSet();
-      expect(ids.length, 12);
+      expect(ids.length, kThemePresets.length);
       expect(ids.contains('campfire_night'), isTrue);
       expect(ids.contains('material_you'), isTrue);
+      expect(ids.contains('glacier_ice'), isTrue);
+      expect(ids.contains('soft_cream'), isTrue);
+      expect(ids.contains('future_edge'), isTrue);
     });
 
     test('themePresetById bilinmeyende campfire fallback', () {

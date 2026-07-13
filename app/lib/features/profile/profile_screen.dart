@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../core/desktop/desktop_window.dart';
+import '../../core/widgets/crowned_avatar.dart';
 import '../../core/widgets/safe_screen_padding.dart';
-import '../../core/widgets/user_avatar.dart';
 import '../../data/providers/auth_providers.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../desktop/desktop_page_scaffold.dart';
@@ -29,127 +29,129 @@ class ProfileScreen extends ConsumerWidget {
         icon: Icons.person_outline,
         child: SingleChildScrollView(
           child: DesktopContent(
-            child: DesktopResponsiveColumns(
-              breakpoint: 1060,
-              secondaryWidth: 430,
-              primary: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  DesktopPanel(
-                    child: Row(
-                      children: [
-                        Stack(
-                          children: [
-                            UserAvatar(
-                              displayName: profile?.displayName ?? '',
-                              avatarUrl: profile?.avatarUrl,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                DesktopPanel(
+                  child: Row(
+                    children: [
+                      Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          if (profile != null)
+                            LiveCrownedAvatar(
+                              userId: profile.id,
+                              displayName: profile.displayName,
+                              avatarUrl: profile.avatarUrl,
+                              radius: 42,
+                            )
+                          else
+                            const CrownedAvatar(
+                              displayName: '',
                               radius: 42,
                             ),
-                            if (profile != null)
-                              Positioned(
-                                right: 0,
-                                bottom: 0,
-                                child: Material(
-                                  color: theme.colorScheme.primary,
-                                  shape: const CircleBorder(),
-                                  child: InkWell(
-                                    customBorder: const CircleBorder(),
-                                    onTap: () => _pickAvatar(context, ref),
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(6),
-                                      child: Icon(
-                                        Icons.photo_camera,
-                                        size: 16,
-                                        color: theme.colorScheme.onPrimary,
-                                      ),
+                          if (profile != null)
+                            Positioned(
+                              right: 0,
+                              bottom: 0,
+                              child: Material(
+                                color: theme.colorScheme.primary,
+                                shape: const CircleBorder(),
+                                child: InkWell(
+                                  customBorder: const CircleBorder(),
+                                  onTap: () => _pickAvatar(context, ref),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(6),
+                                    child: Icon(
+                                      Icons.photo_camera,
+                                      size: 16,
+                                      color: theme.colorScheme.onPrimary,
                                     ),
                                   ),
                                 ),
                               ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(width: 20),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              profile?.displayName ?? 'Kullanıcı',
+                              style: theme.textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Odak Kampı hesabı',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
                           ],
                         ),
-                        const SizedBox(width: 20),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                profile?.displayName ?? 'Kullanıcı',
-                                style: theme.textTheme.headlineSmall?.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Odak Kampı hesabı',
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                ),
-                              ),
-                            ],
+                      ),
+                      if (profile != null)
+                        OutlinedButton.icon(
+                          onPressed: () =>
+                              _editName(context, ref, profile.displayName),
+                          icon: const Icon(Icons.edit_outlined),
+                          label: const Text('Adı düzenle'),
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const GamificationCard(),
+                const SizedBox(height: 16),
+                DesktopPanel(
+                  padding: EdgeInsets.zero,
+                  child: Column(
+                    children: [
+                      ListTile(
+                        leading: const Icon(Icons.history),
+                        title: const Text('Çalışma kayıtlarım'),
+                        subtitle: const Text(
+                          'Oturumlarını görüntüle, düzenle veya manuel süre ekle',
+                        ),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const SessionHistoryScreen(),
                           ),
                         ),
-                        if (profile != null)
-                          OutlinedButton.icon(
-                            onPressed: () =>
-                                _editName(context, ref, profile.displayName),
-                            icon: const Icon(Icons.edit_outlined),
-                            label: const Text('Adı düzenle'),
-                          ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  DesktopPanel(
-                    padding: EdgeInsets.zero,
-                    child: Column(
-                      children: [
-                        ListTile(
-                          leading: const Icon(Icons.history),
-                          title: const Text('Çalışma kayıtlarım'),
-                          subtitle: const Text(
-                            'Oturumlarını görüntüle, düzenle veya manuel süre ekle',
-                          ),
-                          trailing: const Icon(Icons.chevron_right),
-                          onTap: () => Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const SessionHistoryScreen(),
-                            ),
+                      ),
+                      const Divider(height: 1),
+                      ListTile(
+                        leading: const Icon(Icons.settings_outlined),
+                        title: const Text('Ayarlar'),
+                        subtitle: const Text(
+                          'Görünüm, pano, sayaç ve bildirim tercihleri',
+                        ),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const SettingsScreen(),
                           ),
                         ),
-                        const Divider(height: 1),
-                        ListTile(
-                          leading: const Icon(Icons.settings_outlined),
-                          title: const Text('Ayarlar'),
-                          subtitle: const Text(
-                            'Görünüm, pano, sayaç ve bildirim tercihleri',
-                          ),
-                          trailing: const Icon(Icons.chevron_right),
-                          onTap: () => Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const SettingsScreen(),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 16),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: TextButton.icon(
-                      onPressed: () =>
-                          ref.read(authRepositoryProvider).signOut(),
-                      icon: const Icon(Icons.logout),
-                      label: const Text('Hesaptan çık'),
-                    ),
+                ),
+                const SizedBox(height: 16),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    onPressed: () =>
+                        ref.read(authRepositoryProvider).signOut(),
+                    icon: const Icon(Icons.logout),
+                    label: const Text('Hesaptan çık'),
                   ),
-                ],
-              ),
-              secondary: const Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [GamificationCard()],
-              ),
+                ),
+              ],
             ),
           ),
         ),
@@ -163,12 +165,17 @@ class ProfileScreen extends ConsumerWidget {
         children: [
           Center(
             child: Stack(
+              clipBehavior: Clip.none,
               children: [
-                UserAvatar(
-                  displayName: profile?.displayName ?? '',
-                  avatarUrl: profile?.avatarUrl,
-                  radius: 48,
-                ),
+                if (profile != null)
+                  LiveCrownedAvatar(
+                    userId: profile.id,
+                    displayName: profile.displayName,
+                    avatarUrl: profile.avatarUrl,
+                    radius: 48,
+                  )
+                else
+                  const CrownedAvatar(displayName: 'Misafir', radius: 48),
                 if (profile != null)
                   Positioned(
                     right: 0,
@@ -214,7 +221,9 @@ class ProfileScreen extends ConsumerWidget {
                 ),
             ],
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
+          const GamificationCard(),
+          const SizedBox(height: 16),
           Card(
             child: Column(
               children: [
@@ -250,8 +259,6 @@ class ProfileScreen extends ConsumerWidget {
             icon: const Icon(Icons.logout),
             label: const Text('Çıkış yap'),
           ),
-          const SizedBox(height: 16),
-          const GamificationCard(),
         ],
       ),
     );

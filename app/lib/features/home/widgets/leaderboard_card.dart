@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/stats/study_stats.dart';
 import '../../../core/theme/subject_colors.dart';
 import '../../../core/utils/duration_format.dart';
-import '../../../core/widgets/user_avatar.dart';
+import '../../../core/widgets/crowned_avatar.dart';
 import '../../../data/models/profile.dart';
 import '../../classroom/widgets/class_switcher.dart';
 import '../../../data/providers/auth_providers.dart';
@@ -294,11 +294,18 @@ class _Row extends StatelessWidget {
                   ),
                 ),
               ),
-              UserAvatar(
-                displayName: name,
-                avatarUrl: member?.avatarUrl,
-                radius: 14,
-              ),
+              if (member != null)
+                LiveCrownedAvatar(
+                  userId: member!.id,
+                  displayName: name,
+                  avatarUrl: member!.avatarUrl,
+                  radius: 14,
+                )
+              else
+                CrownedAvatar(
+                  displayName: name,
+                  radius: 14,
+                ),
               const SizedBox(width: 8),
               if (!isCompact) ...[
                 Expanded(

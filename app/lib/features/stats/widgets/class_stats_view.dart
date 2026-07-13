@@ -5,7 +5,7 @@ import '../../../core/stats/study_stats.dart';
 import '../../../core/theme/subject_colors.dart';
 import '../../../core/utils/duration_format.dart';
 import '../../../core/widgets/safe_screen_padding.dart';
-import '../../../core/widgets/user_avatar.dart';
+import '../../../core/widgets/crowned_avatar.dart';
 import '../../../data/models/daily_stat.dart';
 import '../../../data/models/profile.dart';
 import '../../classroom/widgets/class_switcher.dart';
@@ -84,6 +84,7 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
               ? 'Eski Grup Üyesi'
               : (m.displayName.isEmpty ? 'İsimsiz' : m.displayName),
           avatarUrl: m.avatarUrl,
+          userId: m.id,
           highlight: m.id == widget.currentUserId,
           values: [
             todayTotals[m.id] ?? 0,
@@ -578,7 +579,19 @@ class _LeaderboardRow extends StatelessWidget {
             child: Text(medal, style: theme.textTheme.titleMedium),
           ),
           const SizedBox(width: 8),
-          UserAvatar(displayName: name, avatarUrl: avatarUrl, radius: 16),
+          if (profile != null)
+            LiveCrownedAvatar(
+              userId: profile!.id,
+              displayName: name,
+              avatarUrl: avatarUrl,
+              radius: 16,
+            )
+          else
+            CrownedAvatar(
+              displayName: name,
+              avatarUrl: avatarUrl,
+              radius: 16,
+            ),
           const SizedBox(width: 8),
           Expanded(
             child: Column(

@@ -12,16 +12,15 @@ import '../../data/providers/study_providers.dart';
 import '../classroom/widgets/study_timer_card.dart';
 import '../desktop/desktop_page_scaffold.dart';
 import 'alarms_screen.dart';
-import 'clock_widgets_screen.dart';
 import 'stopwatch_screen.dart';
 import 'timers_screen.dart';
 import 'widgets/standby_clock_view.dart';
 import 'world_clock_screen.dart';
 
 /// Saat Merkezi sekmeleri — tek satır ikon şeridi (kaydırma yok).
-/// Sıra: Widget (sol) · Saat+Odak · Alarm · Timer · Krono · Dünya
+/// Sıra: Saat+Odak · Alarm · Timer · Krono · Dünya
+/// (Widget/izinler → Ayarlar · Bildirim & izinler)
 enum ClockTab {
-  widgets,
   home,
   alarm,
   multiTimer,
@@ -249,7 +248,6 @@ class _ClockScreenState extends ConsumerState<ClockScreen> {
   /// Eşit genişlikte ikon+kısa etiket — kaydırma yok, tek ekrana sığar.
   Widget _buildIconStrip() {
     const items = <(ClockTab, IconData, String, Key)>[
-      (ClockTab.widgets, Icons.widgets_outlined, 'Widget', Key('clock_tab_widgets')),
       (ClockTab.home, Icons.schedule, 'Saat', Key('clock_tab_home')),
       (ClockTab.alarm, Icons.alarm, 'Alarm', Key('clock_tab_alarm')),
       (ClockTab.multiTimer, Icons.hourglass_empty, 'Timer', Key('clock_tab_timer')),
@@ -284,7 +282,6 @@ class _ClockScreenState extends ConsumerState<ClockScreen> {
 
   Widget _buildTabBody() {
     return switch (_tab) {
-      ClockTab.widgets => const ClockWidgetsScreen(embedded: true),
       ClockTab.home => _buildHome(context),
       ClockTab.alarm => const AlarmsScreen(embedded: true),
       ClockTab.multiTimer => const TimersScreen(embedded: true),

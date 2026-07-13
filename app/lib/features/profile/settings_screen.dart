@@ -7,6 +7,7 @@ import '../../data/providers/auth_providers.dart';
 import '../../data/providers/admin_providers.dart';
 import '../../data/providers/group_providers.dart';
 import '../admin/admin_screen.dart';
+import '../clock/clock_widgets_screen.dart';
 import '../home/dashboard_providers.dart';
 import '../notifications/notification_center_screen.dart';
 import '../updater/release_notes_screen.dart';
@@ -104,8 +105,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           _SettingsCard(
             child: ListTile(
               leading: const Icon(Icons.color_lens_outlined),
-              title: const Text('Renk paleti ve tema'),
-              subtitle: const Text('Açık, koyu, sistem ve palet seçimi'),
+              title: const Text('Görünüm ve atmosfer temaları'),
+              subtitle: const Text(
+                'Buzul, ateş, neon, yumuşak… tüm arayüz havası',
+              ),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const AppearanceScreen()),
@@ -169,6 +172,22 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (_) => const NotificationCenterScreen(),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          _SettingsCard(
+            child: ListTile(
+              leading: const Icon(Icons.widgets_outlined),
+              title: const Text('Widget ve alarm izinleri'),
+              subtitle: const Text(
+                'Ana ekran widget’ları · bildirim, kesin alarm, pil, tam ekran',
+              ),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const ClockWidgetsScreen(),
                 ),
               ),
             ),

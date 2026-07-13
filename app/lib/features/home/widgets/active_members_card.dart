@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/subject_colors.dart';
 import '../../../core/utils/duration_format.dart';
 import '../../../core/widgets/second_ticker.dart';
-import '../../../core/widgets/user_avatar.dart';
+import '../../../core/widgets/crowned_avatar.dart';
 import '../../../data/models/presence.dart';
 import '../../../data/models/profile.dart';
 import '../../classroom/widgets/class_switcher.dart';
@@ -218,8 +218,21 @@ class _ActiveRow extends StatelessWidget {
     final row = Row(
       children: [
         Stack(
+          clipBehavior: Clip.none,
           children: [
-            UserAvatar(displayName: name, avatarUrl: avatarUrl, radius: 16),
+            if (profile != null)
+              LiveCrownedAvatar(
+                userId: profile!.id,
+                displayName: name,
+                avatarUrl: avatarUrl,
+                radius: 16,
+              )
+            else
+              CrownedAvatar(
+                displayName: name,
+                avatarUrl: avatarUrl,
+                radius: 16,
+              ),
             Positioned(
               right: 0,
               bottom: 0,

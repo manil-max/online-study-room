@@ -7,6 +7,7 @@ import 'package:online_study_room/data/models/profile.dart';
 import 'package:online_study_room/data/providers/admin_providers.dart';
 import 'package:online_study_room/data/providers/auth_providers.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_admin_repository.dart';
+import 'package:online_study_room/features/clock/clock_widgets_screen.dart';
 import 'package:online_study_room/features/notifications/notification_center_screen.dart';
 import 'package:online_study_room/features/profile/settings_screen.dart';
 import 'package:online_study_room/features/updater/release_notes_screen.dart';
@@ -72,6 +73,8 @@ void main() {
     expect(find.text('Gruplar ekranında da sayaç göster'), findsNothing);
     expect(find.text('Bildirim Merkezi'), findsOneWidget);
     expect(find.text('Bildirim Merkezi’ni aç'), findsNothing);
+    expect(find.text('Widget ve alarm izinleri'), findsOneWidget);
+    expect(find.text('Görünüm ve atmosfer temaları'), findsOneWidget);
     expect(find.text('Sürüm ve güncellemeler'), findsOneWidget);
     expect(find.text('Uygulama Kısayolları (Rutinler)'), findsOneWidget);
     expect(find.text('Geri bildirim gönder'), findsOneWidget);
@@ -80,6 +83,13 @@ void main() {
     await tester.tap(find.text('Bildirim Merkezi'));
     await tester.pumpAndSettle();
     expect(find.byType(NotificationCenterScreen), findsOneWidget);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Widget ve alarm izinleri'));
+    await tester.pumpAndSettle();
+    expect(find.byType(ClockWidgetsScreen), findsOneWidget);
+    expect(find.textContaining('Ana ekran widget'), findsOneWidget);
     await tester.pageBack();
     await tester.pumpAndSettle();
 

@@ -5,6 +5,9 @@ Bu dosya ürün tarafındaki okunur sürüm indeksidir. Ayrıntılı değişikli
 
 | Kanal | Tag | Uygulama sürümü | Durum | Kısa not |
 |---|---:|---:|---|---|
+| beta | beta-v18 | 1.0.18+18 | Test | Taç her yerde, profil sırası, tap-to-top, atmosfer temaları; XP reset stable’da |
+| beta | beta-v17 | 1.0.17+17 | Test | Alarm app-kapalı + widget sekmesi |
+| stable | v7 | — | Yayında (özellik) | v7 kanalı; bir sonraki kalite stable v8 adayı |
 | stable | v6 | 1.0.5+6 | Yayında | Bildirim/grup/dürtme düzeltmeleri ve sayaç komutlarının açılışta işlenmesi |
 | stable | v5 | 1.0.4+5 | Yayında | V5 release notes, ikon/branding ve Android dış yüzey hazırlığı |
 | stable | v4 | 1.0.3+4 | Yayında | Odak Kampı adı, V4 temel deneyim ve grup/sayaç hazırlıkları |

@@ -16,18 +16,9 @@ import '../../features/home/home_screen.dart';
 import '../../features/profile/profile_screen.dart';
 import '../../features/stats/stats_screen.dart';
 import '../desktop/desktop_window.dart';
+import 'nav_index.dart';
 
-/// Alt navigasyonda seçili sekme indeksini tutar.
-class NavIndexNotifier extends Notifier<int> {
-  @override
-  int build() => 0;
-
-  void setIndex(int index) => state = index;
-}
-
-final navIndexProvider = NotifierProvider<NavIndexNotifier, int>(
-  NavIndexNotifier.new,
-);
+export 'nav_index.dart';
 
 /// Uygulamanın ana kabuğu: alt menüde 4 sekme (Ana Sayfa / Sınıflar / İstatistik
 /// / Profil). Ekranlar IndexedStack ile tutulur, böylece sekme değişince durum korunur.

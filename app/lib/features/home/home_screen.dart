@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/desktop/desktop_layout.dart';
 import '../../core/desktop/desktop_window.dart';
+import '../../core/navigation/nav_index.dart';
 import '../../core/widgets/safe_screen_padding.dart';
 import '../desktop/desktop_page_scaffold.dart';
 import 'dashboard_card.dart';
@@ -61,8 +62,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     super.dispose();
   }
 
+  void _scrollToTop() {
+    if (!_scroll.hasClients) return;
+    _scroll.animateTo(
+      0,
+      duration: const Duration(milliseconds: 320),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Alt menüde Ana Sayfa’ya zaten oradayken bas → en üste kay.
+    ref.listen<NavReselect>(navReselectProvider, (prev, next) {
+      if (next.tabIndex == kHomeTabIndex && next.tick > (prev?.tick ?? 0)) {
+        _scrollToTop();
+      }
+    });
+
     final columns = ref.watch(dashboardGridColumnsProvider);
     final layout = ref.watch(dashboardLayoutProvider);
     final body = layout.isEmpty

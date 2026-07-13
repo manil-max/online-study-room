@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/widgets/user_avatar.dart';
+import '../../../core/widgets/crowned_avatar.dart';
 import '../../../data/models/chat_message.dart';
 import '../../../data/models/study_group.dart';
 import '../../../data/providers/auth_providers.dart';
@@ -193,7 +193,8 @@ class _MessageBubble extends StatelessWidget {
                 avatarUrl: message.authorAvatarUrl,
                 animal: message.authorAnimal,
               ),
-              child: UserAvatar(
+              child: LiveCrownedAvatar(
+                userId: message.userId,
                 displayName: name,
                 avatarUrl: message.authorAvatarUrl,
                 radius: 14,

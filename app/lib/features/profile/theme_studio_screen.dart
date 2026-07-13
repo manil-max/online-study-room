@@ -5,7 +5,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/theme/theme_settings.dart';
 import '../../core/widgets/safe_screen_padding.dart';
 
-/// WP-55: Katmanlı Tema Stüdyosu — 12 aile seçimi + mood + canlı önizleme.
+/// WP-55: Katmanlı Tema Stüdyosu — atmosfer aileleri + mood + canlı önizleme.
 ///
 /// Tercihler [themeSettingsProvider] üzerinden anında uygulanır (restart yok).
 class ThemeStudioScreen extends ConsumerStatefulWidget {
@@ -88,7 +88,8 @@ class _ThemeStudioScreenState extends ConsumerState<ThemeStudioScreen> {
                   Text('1 · Atmosfer seç', style: theme.textTheme.titleMedium),
                   const SizedBox(height: 4),
                   Text(
-                    '12 hazır sanat yönünden birini seç. Anında önizlenir.',
+                    'Buzul, ateş, neon, yumuşak… tüm arayüz havası değişir. '
+                    'Anında önizlenir.',
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: colors.textSecondary,
                     ),

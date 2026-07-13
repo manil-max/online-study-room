@@ -3,6 +3,24 @@
   "source": "CHANGELOG.md",
   "releases": [
     {
+      "versionName": "1.0.18",
+      "buildNumber": 18,
+      "channel": "beta",
+      "date": "2026-07-13",
+      "title": "beta-v18: taç her yerde + profil sırası + stable hazırlık",
+      "highlights": [
+        "Taçlar sıralama, aktif üyeler, sohbet, istatistik ve profil fotoğrafında.",
+        "Profilde Başarılar, Çalışma kayıtlarının üstünde.",
+        "Widget/izinler Ayarlar’da; Ana Sayfa’ya tekrar basınca en üste kayar.",
+        "Yeni atmosfer temaları: Buzul, Yumuşak Krem, Gelecek Kenarı."
+      ],
+      "fixes": [],
+      "notes": [
+        "XP sıfırlama stable yayın anında (şimdi değil).",
+        "Windows bu betada kapsam dışı."
+      ]
+    },
+    {
       "versionName": "1.0.17",
       "buildNumber": 17,
       "channel": "beta",

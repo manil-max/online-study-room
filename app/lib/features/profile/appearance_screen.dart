@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/theme_presets.dart';
 import '../../core/theme/theme_settings.dart';
 import 'theme_studio_screen.dart';
 import 'widgets/custom_palette_editor.dart';
 
-/// Görünüm ayarları: Tema Stüdyosu (12 aile) + eski palet + açık/koyu/sistem.
+/// Görünüm: atmosfer temaları (tam UI havası) + eski palet + açık/koyu/sistem.
 class AppearanceScreen extends ConsumerWidget {
   const AppearanceScreen({super.key});
 
@@ -18,7 +19,7 @@ class AppearanceScreen extends ConsumerWidget {
     final family = settings.family;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Görünüm')),
+      appBar: AppBar(title: const Text('Görünüm ve atmosfer')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -26,7 +27,10 @@ class AppearanceScreen extends ConsumerWidget {
             child: ListTile(
               leading: Icon(Icons.palette_outlined, color: theme.colorScheme.primary),
               title: const Text('Tema Stüdyosu'),
-              subtitle: Text('${family.name} · 12 sanat yönü, canlı önizleme'),
+              subtitle: Text(
+                '${family.name} · buzul, ateş, neon, yumuşak… '
+                '${kThemePresets.length} atmosfer, canlı önizleme',
+              ),
               trailing: const Icon(Icons.chevron_right),
               onTap: () {
                 Navigator.of(context).push(
