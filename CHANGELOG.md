@@ -4,6 +4,16 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [beta-v15 / 1.0.14+15] - 2026-07-13
+
+> ⚠️ **Beta test sürümü.** beta-v14 görünüm rötuşunun küçük düzeltmesi.
+
+### Görünüm
+
+- **Bildirimdeki süre tam görünüyor:** Rakamlar çok büyük olduğu için son saniyeler
+  (`00:00:` gibi) kırpılıyordu; boyut biraz küçültülüp düğmeye yer açıldı, artık tüm
+  `HH:MM:SS` sığıyor.
+
 ## [beta-v14 / 1.0.13+14] - 2026-07-13
 
 > ⚠️ **Beta test sürümü.** beta-v13 cihazda sorunsuz çalıştı; bu sürüm yalnız görünüm rötuşu.

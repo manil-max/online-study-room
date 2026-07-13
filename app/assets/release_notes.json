@@ -3,6 +3,18 @@
   "source": "CHANGELOG.md",
   "releases": [
     {
+      "versionName": "1.0.14",
+      "buildNumber": 15,
+      "channel": "beta",
+      "date": "2026-07-13",
+      "title": "beta-v15: bildirimde süre tam görünüyor",
+      "highlights": [
+        "Bildirimdeki HH:MM:SS artık kırpılmıyor; rakam boyutu satıra sığacak şekilde ayarlandı."
+      ],
+      "fixes": [],
+      "notes": []
+    },
+    {
       "versionName": "1.0.13",
       "buildNumber": 14,
       "channel": "beta",
