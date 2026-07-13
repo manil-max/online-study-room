@@ -10,9 +10,8 @@ import 'package:online_study_room/data/providers/study_providers.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_auth_repository.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_study_repository.dart';
 import 'package:online_study_room/features/clock/clock_screen.dart';
-import 'package:online_study_room/features/clock/stopwatch_screen.dart';
+import 'package:online_study_room/features/clock/clock_widgets_screen.dart';
 import 'package:online_study_room/features/clock/widgets/standby_clock_view.dart';
-import 'package:online_study_room/features/classroom/widgets/study_timer_card.dart';
 import 'package:online_study_room/core/notifications/timer_notification_service.dart';
 
 class MockTimerNotificationService implements TimerNotificationService {
@@ -59,8 +58,9 @@ void main() {
     );
   }
 
-  testWidgets('ClockScreen renders Saat Merkezi segments', (tester) async {
-    tester.view.physicalSize = const Size(1440, 2560);
+  testWidgets('ClockScreen shows 6 equal strip tabs including Widget left',
+      (tester) async {
+    tester.view.physicalSize = const Size(1080, 2400);
     tester.view.devicePixelRatio = 3.0;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -69,20 +69,18 @@ void main() {
     await tester.pump();
 
     expect(find.text('Saat Merkezi'), findsOneWidget);
-    expect(find.byType(SegmentedButton<ClockTab>), findsOneWidget);
-
-    // Segment ikonları mevcut (6 alan)
-    expect(find.byIcon(Icons.schedule), findsWidgets);
-    expect(find.byIcon(Icons.public), findsWidgets);
-    expect(find.byIcon(Icons.alarm), findsWidgets);
-    expect(find.byIcon(Icons.hourglass_empty), findsWidgets);
-    expect(find.byIcon(Icons.timer_outlined), findsWidgets);
-    expect(find.byIcon(Icons.av_timer), findsWidgets);
+    expect(find.text('Widget'), findsOneWidget);
+    expect(find.text('Saat'), findsOneWidget);
+    expect(find.text('Alarm'), findsOneWidget);
+    expect(find.text('Timer'), findsOneWidget);
+    expect(find.text('Krono'), findsOneWidget);
+    expect(find.text('Dünya'), findsOneWidget);
+    // Birleşik çalışma kartı ana Saat sekmesinde
+    expect(find.text('Çalışma oturumu'), findsOneWidget);
   });
 
-  testWidgets('Odak tab shows StudyTimerCard; Kronometre is separate',
-      (tester) async {
-    tester.view.physicalSize = const Size(1440, 2560);
+  testWidgets('Widget tab opens permissions/widgets screen', (tester) async {
+    tester.view.physicalSize = const Size(1080, 2400);
     tester.view.devicePixelRatio = 3.0;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -90,18 +88,10 @@ void main() {
     await tester.pumpWidget(buildApp());
     await tester.pump();
 
-    // Odak: çalışma sayacı
-    await tester.ensureVisible(find.byKey(const Key('clock_tab_focus')));
-    await tester.tap(find.byKey(const Key('clock_tab_focus')));
+    await tester.tap(find.byKey(const Key('clock_tab_widgets')));
     await tester.pump();
-    expect(find.byType(StudyTimerCard), findsOneWidget);
-
-    // Kronometre: ayrı motor (StudyTimerCard yok)
-    await tester.ensureVisible(find.byKey(const Key('clock_tab_stopwatch')));
-    await tester.tap(find.byKey(const Key('clock_tab_stopwatch')));
-    await tester.pump();
-    expect(find.byType(StudyTimerCard), findsNothing);
-    expect(find.byType(StopwatchScreen), findsOneWidget);
+    expect(find.byType(ClockWidgetsScreen), findsOneWidget);
+    expect(find.textContaining('Ana ekran widget'), findsOneWidget);
   });
 
   testWidgets('ClockScreen shows StandByClockView in landscape', (tester) async {
@@ -114,6 +104,5 @@ void main() {
     await tester.pump();
 
     expect(find.byType(StandByClockView), findsOneWidget);
-    expect(find.byType(SegmentedButton<ClockTab>), findsNothing);
   });
 }

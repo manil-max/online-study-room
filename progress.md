@@ -81,7 +81,7 @@
 - **Not:** Ayarlar tek katmana indirildi; ExpansionTile yok, Gruplar sayacı kaldırıldı, bildirim/sürüm doğrudan açılıyor, grid Auto seçeneği kaldırılıp eski değer 6'ya göçüyor. Analyze + 283 test + Windows release build PASS; görsel cihaz QA bekliyor. Push yok.
 
 ### Grok Lane
-- **Durum:** [x] Boşta — Saat P0 reliability kod+test geçti (cihaz QA bekliyor)
+- **Durum:** [x] Boşta — beta-v17 kodlandı (cihaz QA)
 - **Faz/WP:** —
 - **Aşama:** —
 - **SAHİP yollar:** —
@@ -89,7 +89,7 @@
 - **Dal:** main
 - **Başlangıç:** —
 - **Son güncelleme:** 2026-07-13
-- **Not:** P0 native: AlarmManager exact, AlarmRingActivity (USAGE_ALARM crescendo + lock screen), boot/timezone reschedule, timer mirror process-death, device TZ (Istanbul sabiti kaldırıldı). 23 test PASS. **Hâlâ cihaz kanıtı şart** (reboot, OEM, gerçek ses).
+- **Not:** P1: setAlarmClock + her fire’da fullScreen notif; izin wizard; hub 6 ikon tek satır Widget solda; Saat+çalışma birleşik; Clock/Alarm widget. beta-v17.
 
 ---
 

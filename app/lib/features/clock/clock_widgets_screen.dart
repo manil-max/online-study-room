@@ -1,0 +1,252 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../core/time_engine/clock_permissions.dart';
+import '../../data/providers/alarm_providers.dart';
+
+/// En sol sekme: ana ekran widget'ları + alarm izin durumu.
+class ClockWidgetsScreen extends ConsumerStatefulWidget {
+  const ClockWidgetsScreen({super.key, this.embedded = false});
+
+  final bool embedded;
+
+  @override
+  ConsumerState<ClockWidgetsScreen> createState() => _ClockWidgetsScreenState();
+}
+
+class _ClockWidgetsScreenState extends ConsumerState<ClockWidgetsScreen>
+    with WidgetsBindingObserver {
+  ClockPermissionSnapshot _perms = ClockPermissionSnapshot.ok;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _refresh();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _refresh();
+  }
+
+  Future<void> _refresh() async {
+    final s = await ClockPermissions.instance.snapshot();
+    if (mounted) {
+      setState(() {
+        _perms = s;
+        _loading = false;
+      });
+    }
+    ref.invalidate(exactAlarmStatusProvider);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final body = ListView(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+      children: [
+        Text(
+          'Ana ekran widget’ları',
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Uzun bas → Widget’lar → “Odak Kampı” / “Odak Kampı Beta”',
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: 16),
+        _WidgetCard(
+          icon: Icons.timer,
+          title: 'Çalışma sayacı',
+          subtitle: 'Akan süre + Başlat/Durdur (app kapalı çalışır)',
+        ),
+        _WidgetCard(
+          icon: Icons.schedule,
+          title: 'Dijital saat',
+          subtitle: 'Canlı saat (TextClock) — pil dostu',
+        ),
+        _WidgetCard(
+          icon: Icons.alarm,
+          title: 'Sıradaki alarm',
+          subtitle: 'Bir sonraki alarm saati ve etiketi',
+        ),
+        _WidgetCard(
+          icon: Icons.bar_chart,
+          title: 'İstatistik',
+          subtitle: 'Bugün / hafta / seri özeti',
+        ),
+        _WidgetCard(
+          icon: Icons.emoji_events_outlined,
+          title: 'Grup sıralaması',
+          subtitle: 'Kamp leaderboard özeti',
+        ),
+        const SizedBox(height: 20),
+        Text(
+          'Alarm için gerekli izinler',
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'App kapalıyken alarm çalması için hepsi yeşil olmalı. '
+          'İzin istemediyse aşağıdaki düğmelerle aç.',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: 12),
+        if (_loading)
+          const Center(child: CircularProgressIndicator())
+        else ...[
+          _PermTile(
+            title: 'Bildirimler',
+            ok: _perms.notifications,
+            detail: 'Android 13+ zorunlu; alarm bildirimi + ses',
+            onFix: () async {
+              await ClockPermissions.instance.requestNotifications();
+              await ClockPermissions.instance.openNotificationSettings();
+              await _refresh();
+            },
+          ),
+          _PermTile(
+            title: 'Kesin alarm (Exact)',
+            ok: _perms.exactAlarm,
+            detail: 'Android 12+ — saatinde çalsın',
+            onFix: () async {
+              await ClockPermissions.instance.openExactAlarmSettings();
+              await _refresh();
+            },
+          ),
+          _PermTile(
+            title: 'Pil kısıtlaması yok',
+            ok: _perms.batteryUnrestricted,
+            detail: 'OEM arka plan öldürmesin (HyperOS/Samsung önemli)',
+            onFix: () async {
+              await ClockPermissions.instance.openBatterySettings();
+              await _refresh();
+            },
+          ),
+          _PermTile(
+            title: 'Tam ekran alarm',
+            ok: _perms.fullScreenIntent,
+            detail: 'Kilit ekranında alarm yüzeyi',
+            onFix: () async {
+              await ClockPermissions.instance.openFullScreenSettings();
+              await _refresh();
+            },
+          ),
+          if (!_perms.allOk) ...[
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: () async {
+                await ClockPermissions.instance.requestNotifications();
+                if (!_perms.exactAlarm) {
+                  await ClockPermissions.instance.openExactAlarmSettings();
+                }
+                if (!_perms.batteryUnrestricted) {
+                  await ClockPermissions.instance.openBatterySettings();
+                }
+                if (!_perms.fullScreenIntent) {
+                  await ClockPermissions.instance.openFullScreenSettings();
+                }
+                await _refresh();
+              },
+              icon: const Icon(Icons.security),
+              label: const Text('Eksik izinleri aç'),
+            ),
+          ] else
+            Card(
+              color: theme.colorScheme.primaryContainer,
+              child: const ListTile(
+                leading: Icon(Icons.check_circle),
+                title: Text('Tüm izinler tamam'),
+                subtitle: Text('App kapalı alarm için hazır'),
+              ),
+            ),
+        ],
+        const SizedBox(height: 16),
+        OutlinedButton.icon(
+          onPressed: _refresh,
+          icon: const Icon(Icons.refresh),
+          label: const Text('İzinleri yenile'),
+        ),
+      ],
+    );
+
+    if (widget.embedded) return body;
+    return Scaffold(
+      appBar: AppBar(title: const Text('Widget ve izinler')),
+      body: body,
+    );
+  }
+}
+
+class _WidgetCard extends StatelessWidget {
+  const _WidgetCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: ListTile(
+        leading: Icon(icon),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+        subtitle: Text(subtitle),
+      ),
+    );
+  }
+}
+
+class _PermTile extends StatelessWidget {
+  const _PermTile({
+    required this.title,
+    required this.ok,
+    required this.detail,
+    required this.onFix,
+  });
+
+  final String title;
+  final bool ok;
+  final String detail;
+  final VoidCallback onFix;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: ListTile(
+        leading: Icon(
+          ok ? Icons.check_circle : Icons.warning_amber_rounded,
+          color: ok ? Colors.green : Colors.orange,
+        ),
+        title: Text(title),
+        subtitle: Text(detail),
+        trailing: ok
+            ? null
+            : TextButton(onPressed: onFix, child: const Text('Aç')),
+      ),
+    );
+  }
+}

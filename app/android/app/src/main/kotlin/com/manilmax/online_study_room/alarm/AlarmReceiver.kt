@@ -110,15 +110,13 @@ class AlarmReceiver : BroadcastReceiver() {
                 src.getIntExtra(AlarmIds.EXTRA_SNOOZE_MIN, 5),
             )
         }
-        // Android 10+ background start kısıtı: full-screen intent / SYSTEM_ALERT
-        // yoksa Activity başlamayabilir. AlarmClock kategorisi + SHOW_WHEN_LOCKED
-        // Activity tarafında; burada yine de deneriz.
+        // KRİTİK: App kapalıyken startActivity çoğu OEM'de sessizce başarısız.
+        // Her zaman fullScreenIntent bildirim + mümkünse Activity.
+        AlarmNotificationFallback.show(context, ring)
         try {
             context.startActivity(ring)
         } catch (e: Exception) {
-            Log.e(TAG, "startActivity ring failed", e)
-            // Fallback: high-priority notification with fullScreenIntent
-            AlarmNotificationFallback.show(context, ring)
+            Log.e(TAG, "startActivity ring failed (notif already shown)", e)
         }
     }
 

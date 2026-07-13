@@ -14,6 +14,8 @@
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <!-- Saat P1: pil optimizasyonu muafiyeti iste (OEM kill engeli) -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <application
         android:label="${appName}"
         android:name="${applicationName}"
@@ -143,6 +145,28 @@
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/odak_leaderboard_widget_info" />
+        </receiver>
+        <receiver
+            android:name=".widgets.ClockWidgetProvider"
+            android:exported="true"
+            android:label="Odak dijital saat">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/odak_clock_widget_info" />
+        </receiver>
+        <receiver
+            android:name=".widgets.AlarmWidgetProvider"
+            android:exported="true"
+            android:label="Odak sıradaki alarm">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/odak_alarm_widget_info" />
         </receiver>
     </application>
     <!-- Required to query activities that can process text, see:

@@ -7,6 +7,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../core/notifications/alarm_notification_service.dart';
 import '../../core/time_engine/alarm_scheduler.dart';
+import '../../core/time_engine/clock_permissions.dart';
 import '../../core/time_engine/exact_alarm_permission.dart';
 import '../../data/models/alarm_rule.dart';
 import '../../data/providers/alarm_providers.dart';
@@ -136,6 +137,48 @@ class AlarmsScreen extends ConsumerWidget {
     WidgetRef ref, {
     AlarmRule? existing,
   }) async {
+    // App-kapalı çalma için izinleri hatırlat / iste
+    final perms = await ClockPermissions.instance.ensureForAlarm();
+    if (!perms.allOk && context.mounted) {
+      final go = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Alarm izinleri'),
+          content: Text(
+            'App kapalıyken alarm çalsın diye şunlar gerekli:\n\n'
+            '• ${perms.missingLabels.join('\n• ')}\n\n'
+            'Şimdi ayarları açmak ister misin?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Sonra'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('İzinleri aç'),
+            ),
+          ],
+        ),
+      );
+      if (go == true) {
+        if (!perms.notifications) {
+          await ClockPermissions.instance.requestNotifications();
+          await ClockPermissions.instance.openNotificationSettings();
+        }
+        if (!perms.exactAlarm) {
+          await ClockPermissions.instance.openExactAlarmSettings();
+        }
+        if (!perms.batteryUnrestricted) {
+          await ClockPermissions.instance.openBatterySettings();
+        }
+        if (!perms.fullScreenIntent) {
+          await ClockPermissions.instance.openFullScreenSettings();
+        }
+      }
+    }
+
+    if (!context.mounted) return;
     final result = await showModalBottomSheet<AlarmRule>(
       context: context,
       isScrollControlled: true,

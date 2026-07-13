@@ -44,7 +44,14 @@ object NativeAlarmScheduler {
             antiSnooze = antiSnooze,
             snoozeMin = snoozeMin,
         )
-        setExact(am, triggerAtMs, pi)
+        setExactWithContext(
+            context, am, triggerAtMs, pi,
+            kind = AlarmIds.KIND_ALARM,
+            id = id,
+            label = label,
+            hour = hour,
+            minute = minute,
+        )
         Log.i(TAG, "scheduleAlarm id=$id at=$triggerAtMs")
     }
 
@@ -67,7 +74,14 @@ object NativeAlarmScheduler {
             antiSnooze = false,
             snoozeMin = 5,
         )
-        setExact(am, triggerAtMs, pi)
+        setExactWithContext(
+            context, am, triggerAtMs, pi,
+            kind = AlarmIds.KIND_TIMER,
+            id = id,
+            label = label,
+            hour = 0,
+            minute = 0,
+        )
         Log.i(TAG, "scheduleTimer id=$id at=$triggerAtMs")
     }
 
@@ -157,7 +171,7 @@ object NativeAlarmScheduler {
     }
 
     private fun fireNow(context: Context, a: MirrorAlarm) {
-        val intent = Intent(context, AlarmRingActivity::class.java).apply {
+        val ring = Intent(context, AlarmRingActivity::class.java).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
             putExtra(AlarmIds.EXTRA_KIND, AlarmIds.KIND_ALARM)
             putExtra(AlarmIds.EXTRA_ID, a.id)
@@ -169,29 +183,89 @@ object NativeAlarmScheduler {
             putExtra(AlarmIds.EXTRA_ANTI_SNOOZE, a.antiSnooze)
             putExtra(AlarmIds.EXTRA_SNOOZE_MIN, a.snoozeMin)
         }
-        context.startActivity(intent)
+        // App kapalıyken Activity tek başına yetmez: her zaman fullScreen notif.
+        AlarmNotificationFallback.show(context, ring)
+        runCatching { context.startActivity(ring) }
     }
 
-    private fun setExact(am: AlarmManager, triggerAtMs: Long, pi: PendingIntent) {
+    /**
+     * Saat uygulaması kalitesi: [AlarmManager.setAlarmClock] Doze'da
+     * ertelenmez; status bar'da yaklaşan alarm gösterir.
+     * Exact izni yoksa bile setAndAllowWhileIdle dener (asla sessiz yutma).
+     */
+    private fun setExactWithContext(
+        context: Context,
+        am: AlarmManager,
+        triggerAtMs: Long,
+        pi: PendingIntent,
+        kind: String,
+        id: String,
+        label: String,
+        hour: Int,
+        minute: Int,
+    ) {
+        val showIntent = Intent(context, AlarmRingActivity::class.java).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            putExtra(AlarmIds.EXTRA_KIND, kind)
+            putExtra(AlarmIds.EXTRA_ID, id)
+            putExtra(AlarmIds.EXTRA_LABEL, label)
+            putExtra(AlarmIds.EXTRA_HOUR, hour)
+            putExtra(AlarmIds.EXTRA_MINUTE, minute)
+        }
+        val showPi = PendingIntent.getActivity(
+            context,
+            AlarmIds.requestCode(kind, id) + 9000,
+            showIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+
         val canExact = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            am.canScheduleExactAlarms()
+            runCatching { am.canScheduleExactAlarms() }.getOrDefault(false)
         } else {
             true
         }
-        when {
-            canExact && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M -> {
-                am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMs, pi)
+
+        // 1) setAlarmClock — en güvenilir (saat uygulaması API'si)
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                am.setAlarmClock(AlarmManager.AlarmClockInfo(triggerAtMs, showPi), pi)
+                Log.i(TAG, "setAlarmClock ok id=$id at=$triggerAtMs")
+                return
             }
-            canExact -> {
+        } catch (e: SecurityException) {
+            Log.w(TAG, "setAlarmClock SecurityException, fallback", e)
+        } catch (e: Exception) {
+            Log.w(TAG, "setAlarmClock failed, fallback", e)
+        }
+
+        // 2) exact while idle
+        try {
+            if (canExact && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMs, pi)
+                Log.i(TAG, "setExactAndAllowWhileIdle ok id=$id")
+                return
+            }
+            if (canExact) {
                 @Suppress("DEPRECATION")
                 am.setExact(AlarmManager.RTC_WAKEUP, triggerAtMs, pi)
+                return
             }
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.M -> {
+        } catch (e: SecurityException) {
+            Log.w(TAG, "exact denied, inexact fallback", e)
+        } catch (e: Exception) {
+            Log.w(TAG, "exact failed", e)
+        }
+
+        // 3) inexact — en azından bir şey kurulsun (sessiz yutma YOK)
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMs, pi)
-            }
-            else -> {
+            } else {
                 am.set(AlarmManager.RTC_WAKEUP, triggerAtMs, pi)
             }
+            Log.i(TAG, "inexact schedule id=$id")
+        } catch (e: Exception) {
+            Log.e(TAG, "ALL schedule paths failed id=$id", e)
         }
     }
 

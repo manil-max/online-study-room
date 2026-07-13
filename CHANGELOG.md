@@ -4,6 +4,28 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [beta-v17 / 1.0.17+17] - 2026-07-13
+
+> ⚠️ **Beta test sürümü.** beta-v16 alarm app-kapalı çalmama + hub/widget düzeltmeleri.
+
+### Alarm güvenilirlik
+
+- **`setAlarmClock`:** Doze ertelemesini azaltan saat-uygulaması API’si.
+- **Her tetikte fullScreen bildirim + Activity** (app kapalıyken Activity tek başına yetmiyordu).
+- **İzin sihirbazı:** Bildirim, kesin alarm, pil, tam ekran — Widget sekmesi + alarm eklerken.
+- Exact izni yoksa artık sessizce yutulmuyor; inexact yedek kuruluyor.
+
+### Saat hub
+
+- **6 sekme tek satır:** Widget · Saat · Alarm · Timer · Krono · Dünya (kaydırma yok).
+- **En sol: Widget** — ana ekran widget listesi + izin durumu.
+- **Saat = çalışma birleşik:** Büyük saat + çalışma oturumu Başlat/Durdur + Mod/ders.
+
+### Widget
+
+- Yeni: **Dijital saat** (TextClock), **Sıradaki alarm**.
+- Mevcut: çalışma sayacı, istatistik, sıralama.
+
 ## [beta-v16 / 1.0.16+16] - 2026-07-13
 
 > ⚠️ **Beta test sürümü.** Saat Merkezi + native alarm güvenilirlik (P0). Cihaz QA odaklı.

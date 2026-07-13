@@ -48,6 +48,11 @@ class AlarmsNotifier extends AsyncNotifier<List<AlarmRule>> {
   }
 
   Future<void> saveAlarm(AlarmRule alarm) async {
+    // Alarm kaydı öncesi bildirim izni (Android 13+) — sessizce dene
+    try {
+      // ignore: avoid_dynamic_calls
+      await ref.read(alarmNotificationServiceProvider).exactAlarmStatus();
+    } catch (_) {}
     final repo = ref.read(alarmRepositoryProvider);
     await repo.saveAlarm(alarm);
     await _syncNative();
