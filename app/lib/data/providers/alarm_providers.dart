@@ -7,6 +7,7 @@ import '../../core/notifications/alarm_notification_service.dart';
 import '../../core/notifications/native_alarm_bridge.dart';
 import '../../core/prefs/app_prefs.dart';
 import '../../core/time_engine/alarm_scheduler.dart';
+import '../../core/time_engine/clock_study_recorder.dart';
 import '../../core/time_engine/epoch_clock.dart';
 import '../../core/time_engine/epoch_countdown.dart';
 import '../../core/time_engine/epoch_stopwatch.dart';
@@ -145,6 +146,8 @@ final timerInstancesProvider =
 class TimerInstancesNotifier extends AsyncNotifier<List<TimerInstance>> {
   Timer? _ticker;
   final Set<String> _doneNotified = {};
+  /// Çalışma süresine yazılmış timer id'leri (çift XP/oturum engeli).
+  final Set<String> _studyCredited = {};
 
   @override
   FutureOr<List<TimerInstance>> build() async {
@@ -188,6 +191,8 @@ class TimerInstancesNotifier extends AsyncNotifier<List<TimerInstance>> {
                 '${inst.label} süresi doldu!',
               ),
         );
+        // Tamamlanan süre → çalışma oturumu
+        unawaited(_creditTimerStudy(inst, fullDuration: true));
       }
       unawaited(repo.saveTimerInstance(inst));
     }
@@ -238,16 +243,16 @@ class TimerInstancesNotifier extends AsyncNotifier<List<TimerInstance>> {
             unawaited(
               ref.read(alarmNotificationServiceProvider).cancelTimer(inst.id),
             );
-            unawaited(
-              ref.read(alarmRepositoryProvider).saveTimerInstance(
-                    inst.copyWith(
-                      remainingSeconds: 0,
-                      status: TimerStateStatus.done,
-                      lastUpdatedAt: clock.nowDateTime(),
-                      clearEndsAt: true,
-                    ),
-                  ),
+            final done = inst.copyWith(
+              remainingSeconds: 0,
+              status: TimerStateStatus.done,
+              lastUpdatedAt: clock.nowDateTime(),
+              clearEndsAt: true,
             );
+            unawaited(
+              ref.read(alarmRepositoryProvider).saveTimerInstance(done),
+            );
+            unawaited(_creditTimerStudy(done, fullDuration: true));
           }
           return inst.copyWith(
             remainingSeconds: 0,
@@ -311,6 +316,7 @@ class TimerInstancesNotifier extends AsyncNotifier<List<TimerInstance>> {
   }
 
   Future<void> pauseInstance(String id) async {
+    // Pause çalışma kaydı yazmaz; süre bitince veya Stop/Sil'de yazılır.
     await _mutate(id, (inst, nowMs) {
       final c = inst.countdown.pause(nowMs);
       return inst.syncedWith(c, nowMs).copyWith(
@@ -332,6 +338,28 @@ class TimerInstancesNotifier extends AsyncNotifier<List<TimerInstance>> {
   }
 
   Future<void> stopInstance(String id) async {
+    final before = state.value?.where((e) => e.id == id).firstOrNull;
+    if (before != null &&
+        (before.status == TimerStateStatus.running ||
+            before.status == TimerStateStatus.paused ||
+            before.status == TimerStateStatus.done)) {
+      final nowMs = ref.read(epochClockProvider).nowMs();
+      final rem = before.status == TimerStateStatus.running
+          ? before.remainingAt(nowMs)
+          : before.remainingSeconds;
+      final elapsed = (before.durationSeconds - rem).clamp(0, before.durationSeconds);
+      if (before.status == TimerStateStatus.done) {
+        unawaited(_creditTimerStudy(before, fullDuration: true));
+      } else if (elapsed > 0) {
+        unawaited(
+          _creditTimerStudy(
+            before.copyWith(remainingSeconds: rem),
+            fullDuration: false,
+            elapsedOverride: elapsed,
+          ),
+        );
+      }
+    }
     await _mutate(id, (inst, nowMs) {
       return inst.copyWith(
         status: TimerStateStatus.initial,
@@ -340,6 +368,32 @@ class TimerInstancesNotifier extends AsyncNotifier<List<TimerInstance>> {
         clearEndsAt: true,
       );
     });
+    // Sıfırlandıktan sonra tekrar kullanılabilsin
+    _studyCredited.remove(id);
+    _doneNotified.remove(id);
+  }
+
+  /// Timer süresini çalışma oturumuna yaz.
+  Future<void> _creditTimerStudy(
+    TimerInstance inst, {
+    required bool fullDuration,
+    int? elapsedOverride,
+  }) async {
+    if (_studyCredited.contains(inst.id)) return;
+    final seconds = elapsedOverride ??
+        (fullDuration
+            ? inst.durationSeconds
+            : (inst.durationSeconds - inst.remainingSeconds)
+                .clamp(0, inst.durationSeconds));
+    if (seconds < ClockStudyRecorder.minDurationSeconds) return;
+    _studyCredited.add(inst.id);
+    final ok = await ref.read(clockStudyRecorderProvider).recordDuration(
+          durationSeconds: seconds,
+        );
+    if (!ok) {
+      // Giriş yok / çok kısa → tekrar denenebilsin
+      _studyCredited.remove(inst.id);
+    }
   }
 
   Future<void> addMinute(String id, {int minutes = 1}) async {
@@ -353,9 +407,29 @@ class TimerInstancesNotifier extends AsyncNotifier<List<TimerInstance>> {
   }
 
   Future<void> deleteInstance(String id) async {
+    final before = state.value?.where((e) => e.id == id).firstOrNull;
+    if (before != null &&
+        before.status != TimerStateStatus.initial &&
+        !_studyCredited.contains(id)) {
+      final nowMs = ref.read(epochClockProvider).nowMs();
+      final rem = before.status == TimerStateStatus.running
+          ? before.remainingAt(nowMs)
+          : before.remainingSeconds;
+      final elapsed = before.status == TimerStateStatus.done
+          ? before.durationSeconds
+          : (before.durationSeconds - rem).clamp(0, before.durationSeconds);
+      unawaited(
+        _creditTimerStudy(
+          before,
+          fullDuration: before.status == TimerStateStatus.done,
+          elapsedOverride: elapsed,
+        ),
+      );
+    }
     await ref.read(alarmRepositoryProvider).deleteTimerInstance(id);
     await ref.read(alarmNotificationServiceProvider).cancelTimer(id);
     _doneNotified.remove(id);
+    _studyCredited.remove(id);
     final all = await ref.read(alarmRepositoryProvider).getTimerInstances();
     await _syncTimerNative(all);
     ref.invalidateSelf();
@@ -393,6 +467,7 @@ final stopwatchProvider =
 
 class StopwatchNotifier extends Notifier<EpochStopwatchState> {
   static const _prefsKey = 'clock_stopwatch_state_v1';
+  static const _creditedKey = 'clock_stopwatch_study_credited_ms';
 
   @override
   EpochStopwatchState build() {
@@ -415,6 +490,28 @@ class StopwatchNotifier extends Notifier<EpochStopwatchState> {
 
   int get nowMs => ref.read(epochClockProvider).nowMs();
 
+  int get _creditedMs =>
+      ref.read(sharedPreferencesProvider).getInt(_creditedKey) ?? 0;
+
+  Future<void> _setCreditedMs(int ms) async {
+    await ref.read(sharedPreferencesProvider).setInt(_creditedKey, ms);
+  }
+
+  /// Henüz çalışma kaydına yazılmamış süreyi yaz (pause / reset).
+  Future<void> _creditUnrecordedStudy() async {
+    final elapsed = state.elapsedMs(nowMs);
+    final already = _creditedMs;
+    final deltaMs = elapsed - already;
+    if (deltaMs < ClockStudyRecorder.minDurationSeconds * 1000) return;
+    final sec = deltaMs ~/ 1000;
+    final ok = await ref.read(clockStudyRecorderProvider).recordDuration(
+          durationSeconds: sec,
+        );
+    if (ok) {
+      await _setCreditedMs(already + sec * 1000);
+    }
+  }
+
   void start() {
     state = state.start(nowMs);
     unawaited(_persist());
@@ -423,16 +520,29 @@ class StopwatchNotifier extends Notifier<EpochStopwatchState> {
   void pause() {
     state = state.pause(nowMs);
     unawaited(_persist());
+    unawaited(_creditUnrecordedStudy());
   }
 
   void toggle() {
+    final wasRunning = state.running;
     state = state.toggle(nowMs);
     unawaited(_persist());
+    if (wasRunning && !state.running) {
+      unawaited(_creditUnrecordedStudy());
+    }
   }
 
   void reset() {
-    state = state.reset();
-    unawaited(_persist());
+    // Sıfırlamadan önce kalan süreyi yaz
+    if (state.running) {
+      state = state.pause(nowMs);
+    }
+    unawaited(() async {
+      await _creditUnrecordedStudy();
+      state = state.reset();
+      await _setCreditedMs(0);
+      await _persist();
+    }());
   }
 
   void lap() {

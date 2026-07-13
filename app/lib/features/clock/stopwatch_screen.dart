@@ -59,11 +59,14 @@ class _StopwatchScreenState extends ConsumerState<StopwatchScreen> {
         const SizedBox(height: 8),
         Text(
           sw.running
-              ? 'Çalışıyor'
-              : (elapsed.inMilliseconds > 0 ? 'Duraklatıldı' : 'Hazır'),
+              ? 'Çalışıyor · çalışma süresine sayılır'
+              : (elapsed.inMilliseconds > 0
+                  ? 'Duraklatıldı · kayıt yazıldı (≥30 sn)'
+                  : 'Hazır · duraklat/sıfırla ile kaydet'),
           style: theme.textTheme.labelLarge?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),
+          textAlign: TextAlign.center,
         ),
         const SizedBox(height: 28),
         Row(
