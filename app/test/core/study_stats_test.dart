@@ -1,6 +1,22 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/core/stats/study_stats.dart';
 import 'package:online_study_room/data/models/study_session.dart';
+import 'package:timezone/data/latest.dart' as tz_data;
+import 'package:timezone/timezone.dart' as tz;
+
+bool _tzReady = false;
+
+void _ensureTz() {
+  if (_tzReady) return;
+  tz_data.initializeTimeZones();
+  _tzReady = true;
+}
+
+/// CI (UTC) ve yerel makinede aynı duvar saatini üretmek için Europe/Istanbul.
+DateTime _ist(int y, int m, int d, [int h = 12, int min = 0]) {
+  _ensureTz();
+  return tz.TZDateTime(tz.getLocation('Europe/Istanbul'), y, m, d, h, min);
+}
 
 StudySession _s(String user, DateTime start, int seconds) => StudySession(
       id: '$user-${start.toIso8601String()}',
@@ -13,37 +29,39 @@ StudySession _s(String user, DateTime start, int seconds) => StudySession(
 
 void main() {
   test('startOfWeek Pazartesi 00:00 verir', () {
-    // 2026-06-21 bir Pazar.
-    final monday = startOfWeek(DateTime(2026, 6, 21, 15, 30));
+    // 2026-06-21 bir Pazar (İstanbul).
+    final monday = startOfWeek(_ist(2026, 6, 21, 15, 30));
     expect(monday, DateTime(2026, 6, 15));
   });
 
   test('totalSeconds ve inRange', () {
     final sessions = [
-      _s('u1', DateTime(2026, 6, 18, 9), 600),
-      _s('u1', DateTime(2026, 6, 20, 9), 1200),
-      _s('u1', DateTime(2026, 6, 25, 9), 300),
+      _s('u1', _ist(2026, 6, 18, 9), 600),
+      _s('u1', _ist(2026, 6, 20, 9), 1200),
+      _s('u1', _ist(2026, 6, 25, 9), 300),
     ];
     expect(totalSeconds(sessions), 2100);
-    final ranged = inRange(sessions, DateTime(2026, 6, 18), DateTime(2026, 6, 20));
+    final ranged =
+        inRange(sessions, _ist(2026, 6, 18), _ist(2026, 6, 20));
     expect(totalSeconds(ranged), 1800);
   });
 
   test('secondsOnDay yalnızca o günü toplar', () {
     final sessions = [
-      _s('u1', DateTime(2026, 6, 20, 8), 600),
-      _s('u1', DateTime(2026, 6, 20, 14), 900),
-      _s('u1', DateTime(2026, 6, 21, 8), 300),
+      _s('u1', _ist(2026, 6, 20, 8), 600),
+      _s('u1', _ist(2026, 6, 20, 14), 900),
+      _s('u1', _ist(2026, 6, 21, 8), 300),
     ];
-    expect(secondsOnDay(sessions, DateTime(2026, 6, 20)), 1500);
+    expect(secondsOnDay(sessions, _ist(2026, 6, 20)), 1500);
   });
 
   test('lastNDays eski→yeni sıralı, boş günler 0', () {
     final sessions = [
-      _s('u1', DateTime(2026, 6, 19, 8), 600),
-      _s('u1', DateTime(2026, 6, 21, 8), 1200),
+      _s('u1', _ist(2026, 6, 19, 8), 600),
+      _s('u1', _ist(2026, 6, 21, 8), 1200),
     ];
-    final series = lastNDays(sessions, 3, today: DateTime(2026, 6, 21, 23));
+    // Gece 23:00 yerel UTC’de ertesi güne kaymasın diye İstanbul 23:00.
+    final series = lastNDays(sessions, 3, today: _ist(2026, 6, 21, 23));
     expect(series.map((d) => d.day).toList(),
         [DateTime(2026, 6, 19), DateTime(2026, 6, 20), DateTime(2026, 6, 21)]);
     expect(series.map((d) => d.seconds).toList(), [600, 0, 1200]);
@@ -51,35 +69,41 @@ void main() {
 
   test('dailyRange aralıktaki her günü verir, boş günler 0', () {
     final sessions = [
-      _s('u1', DateTime(2026, 6, 18, 8), 600),
-      _s('u1', DateTime(2026, 6, 20, 8), 1200),
+      _s('u1', _ist(2026, 6, 18, 8), 600),
+      _s('u1', _ist(2026, 6, 20, 8), 1200),
     ];
-    final series = dailyRange(sessions, DateTime(2026, 6, 18), DateTime(2026, 6, 20));
+    final series =
+        dailyRange(sessions, _ist(2026, 6, 18), _ist(2026, 6, 20));
     expect(series.map((d) => d.day).toList(),
         [DateTime(2026, 6, 18), DateTime(2026, 6, 19), DateTime(2026, 6, 20)]);
     expect(series.map((d) => d.seconds).toList(), [600, 0, 1200]);
   });
 
   test('dailyRange ters aralıkta boş liste', () {
-    final series = dailyRange(const [], DateTime(2026, 6, 20), DateTime(2026, 6, 18));
+    final series =
+        dailyRange(const [], _ist(2026, 6, 20), _ist(2026, 6, 18));
     expect(series, isEmpty);
   });
 
   test('dailyAverageSeconds boş günleri paydaya katar', () {
     final sessions = [
-      _s('u1', DateTime(2026, 6, 20, 8), 600),
-      _s('u1', DateTime(2026, 6, 22, 8), 600),
+      _s('u1', _ist(2026, 6, 20, 8), 600),
+      _s('u1', _ist(2026, 6, 22, 8), 600),
     ];
     // 20–22 arası 3 gün, toplam 1200 → ortalama 400.
-    final avg = dailyAverageSeconds(sessions, DateTime(2026, 6, 20), DateTime(2026, 6, 22));
+    final avg = dailyAverageSeconds(
+      sessions,
+      _ist(2026, 6, 20),
+      _ist(2026, 6, 22),
+    );
     expect(avg, 400);
   });
 
   test('weekdayWeekendSplit hafta içi/sonu ayırır', () {
     final sessions = [
-      _s('u1', DateTime(2026, 6, 19, 8), 600), // Cuma → hafta içi
-      _s('u1', DateTime(2026, 6, 20, 8), 900), // Cumartesi → hafta sonu
-      _s('u1', DateTime(2026, 6, 21, 8), 300), // Pazar → hafta sonu
+      _s('u1', _ist(2026, 6, 19, 8), 600), // Cuma → hafta içi
+      _s('u1', _ist(2026, 6, 20, 8), 900), // Cumartesi → hafta sonu
+      _s('u1', _ist(2026, 6, 21, 8), 300), // Pazar → hafta sonu
     ];
     final split = weekdayWeekendSplit(sessions);
     expect(split.weekday, 600);
@@ -88,9 +112,9 @@ void main() {
 
   test('leaderboard kullanıcı başına toplar ve büyükten küçüğe sıralar', () {
     final sessions = [
-      _s('u1', DateTime(2026, 6, 20, 8), 600),
-      _s('u2', DateTime(2026, 6, 20, 8), 1500),
-      _s('u1', DateTime(2026, 6, 21, 8), 300),
+      _s('u1', _ist(2026, 6, 20, 8), 600),
+      _s('u2', _ist(2026, 6, 20, 8), 1500),
+      _s('u1', _ist(2026, 6, 21, 8), 300),
     ];
     final board = leaderboard(sessions);
     expect(board.map((e) => e.key).toList(), ['u2', 'u1']);
@@ -99,9 +123,9 @@ void main() {
   });
 
   group('currentStreak (günlük hedefe bağlı seri)', () {
-    // Hedef: 1 saat (3600 sn). today = 2026-06-21.
+    // Hedef: 1 saat (3600 sn). today = 2026-06-21 (İstanbul).
     const goal = 3600;
-    final today = DateTime(2026, 6, 21, 20);
+    final today = _ist(2026, 6, 21, 20);
 
     test('hiç oturum yoksa 0', () {
       expect(currentStreak(const [], goal, today: today), 0);
@@ -109,32 +133,32 @@ void main() {
 
     test('bugün hedefi tutturduysa bugünden geriye sayar', () {
       final sessions = [
-        _s('u1', DateTime(2026, 6, 21, 8), 3600), // bugün ✓
-        _s('u1', DateTime(2026, 6, 20, 8), 4000), // dün ✓
-        _s('u1', DateTime(2026, 6, 19, 8), 1000), // 2 gün önce ✗
+        _s('u1', _ist(2026, 6, 21, 8), 3600), // bugün ✓
+        _s('u1', _ist(2026, 6, 20, 8), 4000), // dün ✓
+        _s('u1', _ist(2026, 6, 19, 8), 1000), // 2 gün önce ✗
       ];
       expect(currentStreak(sessions, goal, today: today), 2);
     });
 
     test('bugün henüz hedefte değilse seri kırılmaz (dünden sayar)', () {
       final sessions = [
-        _s('u1', DateTime(2026, 6, 21, 8), 1000), // bugün ✗ (gün sürüyor)
-        _s('u1', DateTime(2026, 6, 20, 8), 3600), // dün ✓
-        _s('u1', DateTime(2026, 6, 19, 8), 3700), // 2 gün önce ✓
+        _s('u1', _ist(2026, 6, 21, 8), 1000), // bugün ✗ (gün sürüyor)
+        _s('u1', _ist(2026, 6, 20, 8), 3600), // dün ✓
+        _s('u1', _ist(2026, 6, 19, 8), 3700), // 2 gün önce ✓
       ];
       expect(currentStreak(sessions, goal, today: today), 2);
     });
 
     test('bugün ve dün hedefte değilse 0', () {
       final sessions = [
-        _s('u1', DateTime(2026, 6, 21, 8), 1000), // bugün ✗
-        _s('u1', DateTime(2026, 6, 20, 8), 1000), // dün ✗
+        _s('u1', _ist(2026, 6, 21, 8), 1000), // bugün ✗
+        _s('u1', _ist(2026, 6, 20, 8), 1000), // dün ✗
       ];
       expect(currentStreak(sessions, goal, today: today), 0);
     });
 
     test('hedef 0/negatifse 0 döner (sonsuz döngü olmaz)', () {
-      final sessions = [_s('u1', DateTime(2026, 6, 21, 8), 3600)];
+      final sessions = [_s('u1', _ist(2026, 6, 21, 8), 3600)];
       expect(currentStreak(sessions, 0, today: today), 0);
     });
   });
@@ -144,8 +168,8 @@ void main() {
           id: '$subjectId-$seconds',
           userId: 'u1',
           subjectId: subjectId,
-          start: DateTime(2026, 6, 20, 8),
-          end: DateTime(2026, 6, 20, 8).add(Duration(seconds: seconds)),
+          start: _ist(2026, 6, 20, 8),
+          end: _ist(2026, 6, 20, 8).add(Duration(seconds: seconds)),
           durationSeconds: seconds,
           source: StudySource.live,
         );
@@ -164,10 +188,10 @@ void main() {
 
   test('hourlyTotals oturumu başlangıç saatine yazar (0–23)', () {
     final totals = hourlyTotals([
-      _s('u1', DateTime(2026, 6, 20, 9, 30), 600), // 09:00
-      _s('u1', DateTime(2026, 6, 21, 9, 5), 300), // 09:00 (toplanır)
-      _s('u1', DateTime(2026, 6, 20, 14, 0), 1200), // 14:00
-      _s('u1', DateTime(2026, 6, 20, 0, 10), 100), // 00:00
+      _s('u1', _ist(2026, 6, 20, 9, 30), 600), // 09:00
+      _s('u1', _ist(2026, 6, 21, 9, 5), 300), // 09:00 (toplanır)
+      _s('u1', _ist(2026, 6, 20, 14, 0), 1200), // 14:00
+      _s('u1', _ist(2026, 6, 20, 0, 10), 100), // 00:00
     ]);
     expect(totals.length, 24);
     expect(totals[9], 900); // 600 + 300
@@ -177,11 +201,11 @@ void main() {
   });
 
   test('weekdayHourTotals gün (Pzt=0..Paz=6) × saat ızgarası', () {
-    // 2026-06-22 Pazartesi, 2026-06-21 Pazar.
+    // 2026-06-22 Pazartesi, 2026-06-21 Pazar (İstanbul).
     final grid = weekdayHourTotals([
-      _s('u1', DateTime(2026, 6, 22, 9, 0), 600), // Pzt(0) 09
-      _s('u1', DateTime(2026, 6, 22, 9, 30), 200), // Pzt(0) 09 (toplanır)
-      _s('u1', DateTime(2026, 6, 21, 14, 0), 900), // Paz(6) 14
+      _s('u1', _ist(2026, 6, 22, 9, 0), 600), // Pzt(0) 09
+      _s('u1', _ist(2026, 6, 22, 9, 30), 200), // Pzt(0) 09 (toplanır)
+      _s('u1', _ist(2026, 6, 21, 14, 0), 900), // Paz(6) 14
     ]);
     expect(grid.length, 7);
     expect(grid[0].length, 24);
@@ -194,11 +218,11 @@ void main() {
     expect(longestStudyStreak(const []), 0);
     // 18,19,20 (3 ardışık), boşluk, 23,24 (2 ardışık) → en uzun 3.
     final s = [
-      _s('u1', DateTime(2026, 6, 18, 9), 600),
-      _s('u1', DateTime(2026, 6, 19, 9), 600),
-      _s('u1', DateTime(2026, 6, 20, 9), 600),
-      _s('u1', DateTime(2026, 6, 23, 9), 600),
-      _s('u1', DateTime(2026, 6, 24, 9), 600),
+      _s('u1', _ist(2026, 6, 18, 9), 600),
+      _s('u1', _ist(2026, 6, 19, 9), 600),
+      _s('u1', _ist(2026, 6, 20, 9), 600),
+      _s('u1', _ist(2026, 6, 23, 9), 600),
+      _s('u1', _ist(2026, 6, 24, 9), 600),
     ];
     expect(longestStudyStreak(s), 3);
   });

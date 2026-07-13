@@ -22,7 +22,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Görünüm'), findsOneWidget);
+    expect(find.text('Görünüm ve atmosfer'), findsOneWidget);
     expect(find.text('Hazır Paletler'), findsOneWidget);
     // Some predefined palettes should be found
     expect(find.text('Lacivert'), findsOneWidget);

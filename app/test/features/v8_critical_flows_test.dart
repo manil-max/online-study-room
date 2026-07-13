@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/core/stats/study_stats.dart';
 import 'package:online_study_room/data/models/study_session.dart';
@@ -35,6 +36,12 @@ void main() {
     expect(find.text('Henüz bir grupta değilsin'), findsOneWidget);
     await tester.tap(find.text('Profil'));
     await tester.pumpAndSettle();
+    // Profil: Başarılar üstte → Ayarlar için kaydır.
+    await tester.scrollUntilVisible(
+      find.text('Ayarlar'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('Ayarlar'), findsOneWidget);
   });
 

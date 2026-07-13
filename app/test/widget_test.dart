@@ -102,9 +102,14 @@ void main() {
     await tester.pumpWidget(_appWith(repo));
     await tester.pumpAndSettle();
 
-    // Profil sekmesine geç ve çıkış yap.
+    // Profil sekmesine geç ve çıkış yap (Başarılar kartı üstte; kaydır).
     await tester.tap(find.text('Profil'));
     await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Çıkış yap'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.tap(find.text('Çıkış yap'));
     await tester.pumpAndSettle();
 
