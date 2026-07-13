@@ -95,9 +95,13 @@ class StudyTimerService : Service() {
         // restore tutarlı olsun.
         if (!prefs().contains(KEY_PHASE)) editor.putString(KEY_PHASE, "work")
         if (!prefs().contains(KEY_CYCLE)) editor.putInt(KEY_CYCLE, 1)
-        editor.apply()
+        // commit: broadcast/reconcile apply() gecikmesi yüzünden hâlâ "idle"
+        // okuyup uygulamadan başlatmayı geri almasın (beta-v15 in-app start bug).
+        editor.commit()
 
         startForegroundCompat(buildRunningNotification(startedAtMs))
+        // DETACH sonrası idle bildirim kalmış olabilir; running'i ayrıca da bas.
+        notificationManager().notify(NOTIFICATION_ID, buildRunningNotification(startedAtMs))
         TimerWidgets.updateAll(this)
         notifyStateChanged()
     }

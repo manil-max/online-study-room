@@ -517,14 +517,36 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     if (_disposed) return;
 
     // 2. FGS moduna göre çalışır durumu uzlaştır.
+    //
+    // beta-v15 bug: Uygulama içi start() → native handleStart prefs'i
+    // `apply()` ile yazar + hemen broadcast atar → reconcile hâlâ eski
+    // `idle` okuyup _finish() çağırıyordu → bildirim 00:00:00+Başlat'ta
+    // kalıyordu (widget Dart yolu doğru olduğu için bozulmuyordu).
+    // Kural: `idle` yalnız native aktif started_at YOKSA sayacı kapatır.
     final fgMode = prefs.getString(TimerForegroundService.fgModeKey);
+    final hasActiveStart =
+        (prefs.getString(_kActiveStartedAt)?.isNotEmpty ?? false) ||
+        (prefs.getInt(_kActiveStartedAtMs) ?? 0) > 0;
     if (fgMode == 'idle') {
-      // App-kapalı Durdur ile duraklatıldı: aralık(lar) yukarıda kaydedildi,
-      // sayaç kapalı olmalı; kalan idle bildirimi de kapatılır.
-      if (state.isRunning) {
+      if (state.isRunning && !hasActiveStart) {
+        // Gerçek app-kapalı Durdur: native started_at sildi, Dart hâlâ running.
         _finish();
-      } else {
-        unawaited(TimerForegroundService.stop());
+      } else if (state.isRunning && hasActiveStart) {
+        // Yerel start yeni yazıldı / native apply gecikmiş: native'i yeniden it.
+        final started = state.startedAt;
+        if (started != null) {
+          unawaited(
+            TimerForegroundService.start(
+              startedAt: started,
+              mode: state.mode.name,
+              phase: state.phase.name,
+              cycle: state.cycle,
+              subjectId: state.subjectId,
+            ),
+          );
+        }
+      } else if (!state.isRunning && !hasActiveStart) {
+        // İkisi de idle — sessiz; gereksiz stopTimer spam'i yok.
       }
     } else if (fgMode == 'running') {
       // App-kapalı Başlat ile yeni oturum başladıysa ve build() bunu henüz
@@ -634,6 +656,11 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       lastUpdatedAt: now,
     );
     _persistActiveTimer();
+    // Native broadcast / apply yarışında reconcile'ın idle sanmaması için
+    // fg_mode'u Dart tarafında da hemen running yaz.
+    ref
+        .read(sharedPreferencesProvider)
+        .setString(TimerForegroundService.fgModeKey, 'running');
     unawaited(
       TimerForegroundService.start(
         startedAt: now,
@@ -739,6 +766,9 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       lastEvent: lastEvent,
     );
     _clearActiveTimer();
+    ref
+        .read(sharedPreferencesProvider)
+        .setString(TimerForegroundService.fgModeKey, 'idle');
     unawaited(TimerForegroundService.stop());
     _publishPresence(status: PresenceStatus.offline, startedAt: null);
     unawaited(ref.read(timerNotificationServiceProvider).cancel());

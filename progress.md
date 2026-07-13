@@ -61,7 +61,7 @@
 ### Claude Lane
 - **Durum:** [~] Aktif (WP-41 + WP-42/51 birleşik kod+test bitti — cihaz QA bekliyor)
 - **Faz/WP:** V8-A · WP-41 R1/R2 (beta-v11) + **WP-42+WP-51 birleşik native yeniden yazım (beta-v12)** + **beta-v13 kritik çökme düzeltmesi** — cihaz QA bekliyor
-- **Aşama:** Otomatik test geçti — cihaz QA bekliyor. `flutter analyze` 0 + beta debug APK PASS (Kotlin derlendi, beta-v13). **beta-v12 cihazda çökme döngüsü tespit edildi → beta-v13 ile giderildi.** Cihaz videosu bekleniyor.
+- **Aşama:** Cihazda çalışıyor (beta-v13 çökme düzeltmesi + beta-v14 sade widget/pill düğme + beta-v15 bildirimde süre kırpması düzeltmesi PASS). **AÇIK BUG (beta-v15) → Grok hotfix (devralındı):** idle bildirim (00:00:00+Başlat) dururken uygulamadan kronometre başlatınca **bildirim güncellenmiyor** (00:00:00 Başlat'ta kalıyor); widget doğru. Yani in-app start native `StudyTimerService` idle→running bildirim geçişini tetiklemiyor. Araştırılmadı; bakılacak: `study_providers.dart` in-app `start()`→`TimerForegroundService.start()` `startTimer` channel'ını çağırıyor mu, native `handleStart` aynı NOTIFICATION_ID 7040 ile running bildirimi postluyor mu.
 - **SAHİP yollar:** `app/lib/core/background/timer_foreground_service.dart` + `app/lib/data/providers/study_providers.dart` + `app/test/features/timer_background_reconcile_test.dart`; **native:** `app/android/**/timer/StudyTimerService.kt` (yeni), `MainActivity.kt`, `widgets/TimerActionReceiver.kt`, `widgets/StudyWidgetProviders.kt`, `widgets/TimerWidgets.kt` (yeni), `AndroidManifest.xml`; beta yayın dosyaları (`pubspec/CHANGELOG/release_notes`).
 - **Ortak/riskli yüzey:** Yok — diğer lane'ler docs/Faz 0'da; SAHİP kesişimi yok.
 - **Dal:** — (ana dal `main`, ayrık dosyalar)
@@ -81,15 +81,16 @@
 - **Not:** Ayarlar tek katmana indirildi; ExpansionTile yok, Gruplar sayacı kaldırıldı, bildirim/sürüm doğrudan açılıyor, grid Auto seçeneği kaldırılıp eski değer 6'ya göçüyor. Analyze + 283 test + Windows release build PASS; görsel cihaz QA bekliyor. Push yok.
 
 ### Grok Lane
-- **Durum:** [~] Aktif → otomatik test geçti (beta QA bekliyor)
-- **Faz/WP:** Başarım/profil polish · 5 kademe renk + taç + tema fix
-- **Aşama:** Otomatik test geçti — cihaz QA bekliyor
-- **SAHİP yollar:** `progression_visuals.dart`, `crowned_avatar.dart`, `achievement_showcase.dart`, `profile_tap.dart`, `main.dart` tema, `0026_crown_five_tiers.sql`
-- **Ortak/riskli yüzey:** leaderboard/active_members/class_chat/class_stats (yalnız profil tap glue)
+- **Durum:** [~] Aktif — Claude timer bug devralındı
+- **Faz/WP:** WP-42/51 hotfix · in-app start → bildirim idle kalma
+- **Aşama:** Kod fix uygulandı — cihaz QA bekliyor
+- **SAHİP yollar:** `study_providers.dart` reconcile/start, `StudyTimerService.kt` handleStart
+- **Ortak/riskli yüzey:** Claude timer (devir; limit bitti)
 - **Dal:** — (main)
 - **Başlangıç:** 2026-07-13
-- **Son güncelleme:** 2026-07-13 (beta QA maddeleri 1–5)
-- **Not:** 5 kademe renk + gizli mor; PP taç; her yerde profil; tema fromFamily; 0026 SQL uygula (+0025 hâlâ açıksa).
+- **Son güncelleme:** 2026-07-13
+- **Not:** beta-v15: idle iken uygulamadan start → reconcile eski idle ile _finish. Fix: fg_mode race + commit + notify. Grok başarı/tema kodu bitti (beta QA + SQL 0025–0027).
+
 
 ---
 
