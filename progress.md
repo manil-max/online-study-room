@@ -60,14 +60,14 @@
 
 ### Claude Lane
 - **Durum:** [~] Aktif (WP-41 + WP-42/51 birleşik kod+test bitti — cihaz QA bekliyor)
-- **Faz/WP:** V8-A · WP-41 R1/R2 (beta-v11) + **WP-42+WP-51 birleşik native yeniden yazım (beta-v12)** — hepsi cihaz QA bekliyor
-- **Aşama:** Otomatik test geçti — cihaz QA bekliyor. `flutter analyze` 0 + **286 test** + **beta-v12 APK (1.0.11+12) release PASS** + beta debug APK PASS (Kotlin derlendi). Cihaz videosu bekleniyor.
+- **Faz/WP:** V8-A · WP-41 R1/R2 (beta-v11) + **WP-42+WP-51 birleşik native yeniden yazım (beta-v12)** + **beta-v13 kritik çökme düzeltmesi** — cihaz QA bekliyor
+- **Aşama:** Otomatik test geçti — cihaz QA bekliyor. `flutter analyze` 0 + beta debug APK PASS (Kotlin derlendi, beta-v13). **beta-v12 cihazda çökme döngüsü tespit edildi → beta-v13 ile giderildi.** Cihaz videosu bekleniyor.
 - **SAHİP yollar:** `app/lib/core/background/timer_foreground_service.dart` + `app/lib/data/providers/study_providers.dart` + `app/test/features/timer_background_reconcile_test.dart`; **native:** `app/android/**/timer/StudyTimerService.kt` (yeni), `MainActivity.kt`, `widgets/TimerActionReceiver.kt`, `widgets/StudyWidgetProviders.kt`, `widgets/TimerWidgets.kt` (yeni), `AndroidManifest.xml`; beta yayın dosyaları (`pubspec/CHANGELOG/release_notes`).
 - **Ortak/riskli yüzey:** Yok — diğer lane'ler docs/Faz 0'da; SAHİP kesişimi yok.
 - **Dal:** — (ana dal `main`, ayrık dosyalar)
 - **Başlangıç:** 2026-07-12 22:55 (Europe/Istanbul)
 - **Son güncelleme:** 2026-07-13 (WP-42+51 native yeniden yazım + beta-v12 APK)
-- **Not:** **Kullanıcı kararı: WP-42 + WP-51 birleştirildi (tam native).** Sayaç bildirimi ve widget artık native Kotlin `StudyTimerService` ile yönetiliyor (flutter_foreground_task timer yolundan çıkıldı). Widget/bildirim Başlat/Durdur **uygulama tamamen kapalıyken** de çalışır (BroadcastReceiver → `startForegroundService`). Süre native `Chronometer`/`setUsesChronometer` ile akar (Flutter update yok). **Server-authoritative kayıt korundu:** native yalnız `timer_pending_intervals` kuyruğuna aralık yazar; oturum kaydını app açılışında Dart `_reconcileBackgroundTimer` yapar (WP-41'de test edilen mekanizma yeniden kullanıldı). App önplandaysa native→Dart `reconcile` method channel'ıyla anında uzlaşır. **⚠️ Cihaz testi YOK — çekirdek özellik (sayaç bildirimi) native'e taşındığı için öncelikli cihaz doğrulaması gerekir; sorun çıkarsa `git revert` ile geri alınır.** `Cihazda doğrulanmalı`.
+- **Not:** **Kullanıcı kararı: WP-42 + WP-51 birleştirildi (tam native).** Sayaç bildirimi ve widget artık native Kotlin `StudyTimerService` ile yönetiliyor (flutter_foreground_task timer yolundan çıkıldı). Widget/bildirim Başlat/Durdur **uygulama tamamen kapalıyken** de çalışır (BroadcastReceiver → `startForegroundService`). Süre native `Chronometer`/`setUsesChronometer` ile akar (Flutter update yok). **Server-authoritative kayıt korundu:** native yalnız `timer_pending_intervals` kuyruğuna aralık yazar; oturum kaydını app açılışında Dart `_reconcileBackgroundTimer` yapar (WP-41'de test edilen mekanizma yeniden kullanıldı). App önplandaysa native→Dart `reconcile` method channel'ıyla anında uzlaşır. **beta-v13 (2026-07-13): beta-v12 cihaz testinde açılış çökme döngüsü çıktı** — foreground servis `START_STICKY` boş-komut yeniden başlatmasında `startForeground` çağrılmadan Android 12+ zaman aşımına düşüyordu. Düzeltme: `START_NOT_STICKY` + her komut yolunda güvenli `startForeground` + bildirim aksiyonlarında `getForegroundService` (arka plan başlatma yasağı) + onStartCommand try/catch. Ayrıca bildirim özel RemoteViews ile durak-saati görünümüne yaklaştırıldı (fallback korumalı). **⚠️ Hâlâ cihaz QA bekliyor; sorun çıkarsa `git revert`.** `Cihazda doğrulanmalı`.
 
 ### Codex Lane
 - **Durum:** [x] Boşta
@@ -79,6 +79,17 @@
 - **Başlangıç:** 2026-07-13 (Europe/Istanbul)
 - **Son güncelleme:** 2026-07-13 (WP-53 R1 kod kapıları geçti)
 - **Not:** Ayarlar tek katmana indirildi; ExpansionTile yok, Gruplar sayacı kaldırıldı, bildirim/sürüm doğrudan açılıyor, grid Auto seçeneği kaldırılıp eski değer 6'ya göçüyor. Analyze + 283 test + Windows release build PASS; görsel cihaz QA bekliyor. Push yok.
+
+### Grok Lane
+- **Durum:** [~] Aktif (WP-56 kod+test bitti — canlı migration / ürün kabulü bekliyor)
+- **Faz/WP:** Başarım 3.0 · WP-56 R1 (Server-Authoritative Motor ve SQL)
+- **Aşama:** Otomatik test geçti — canlı SQL Editor uygulaması + ürün kabulü bekliyor
+- **SAHİP yollar:** `supabase/migrations/0024_achievements_ledger.sql`, `app/lib/data/providers/achievement_provider.dart`, `app/lib/core/stats/achievement_ledger_engine.dart`, `app/lib/data/models/achievement_ledger.dart`, `app/lib/data/repositories/achievement_repository.dart`, `app/lib/data/repositories/{supabase,in_memory}/*achievement*`, `app/test/core/achievement_ledger_engine_test.dart`
+- **Ortak/riskli yüzey:** `supabase/migrations/**` (yalnız 0024)
+- **Dal:** — (ana dal `main`, ayrık dosyalar — AGENTS.md §1.5)
+- **Başlangıç:** 2026-07-13 (Europe/Istanbul)
+- **Son güncelleme:** 2026-07-13 (WP-56 analyze 0 + 8 birim test PASS)
+- **Not:** `process_achievement_event` RPC + append-only `xp_ledger` (event_key unique) + sözlük 21 başarım. İstemci XP yazamaz (RLS + XP guard trigger). B7: sosyal okuma `can_see_user_sessions`. Eski `gamificationProgressSyncProvider` istemci yazımı 0024 sonrası RLS ile engellenir — oturum bitince `notifySessionCompletedForAchievementsProvider` bağlanmalı (WP-57 / wire-up). Canlı migration henüz uygulanmadı. `Kodda doğrulandı` · canlı: `Cihazda doğrulanmalı`.
 
 ---
 
@@ -120,7 +131,7 @@
 | WP-28 | Bekliyor | Windows MSIX + imza + update + release QA | WP-53 cihaz/ürün kabulü |
 | WP-54 | Planlandı | Tema Stüdyosu R1 · Token Motoru ve 12 Hazır Tema | Faz 0/V8 Sonrası |
 | WP-55 | Planlandı | Tema Stüdyosu R2 · Katmanlı Tema Editörü UX/UI | WP-54 |
-| WP-56 | Planlandı | Başarım 3.0 R1 · Server-Authoritative Motor ve SQL | Faz 0/V8 Sonrası |
+| WP-56 | Kod+test geçti · canlı migration/kabul bekliyor | Başarım 3.0 R1 · Server-Authoritative Motor ve SQL | Mimari doc (Gemini) |
 | WP-57 | Planlandı | Başarım 3.0 R2 · Oyunlaştırılmış Profil ve Rozet UI | WP-56 |
 | WP-58 | Planlandı | Saat Merkezi R1 · Zaman Motoru ve Exact Alarm Altyapısı | Faz 0/V8 Sonrası |
 | WP-59 | Planlandı | Saat Merkezi R2 · Alarm 2.0 ve Çoklu Timer UI | WP-58 |
@@ -377,25 +388,30 @@
 
 ### WP-56: Başarım 3.0 R1 (Server-Authoritative Motor ve SQL) 🏆
 - **Program/Faz:** Başarım 3.0 (KALITE-PROGRAMI §8.6)
-- **Ajan:** —
-- **Durum:** [ ] Bekliyor
+- **Ajan:** Grok
+- **Durum:** [~] Otomatik test geçti — canlı migration (SQL Editor) + ürün kabulü bekliyor
 - **Problem:** İstemci taraflı (hileye açık) başarı hesaplamalarının `docs/BASARIM-MIMARISI.md`'deki Server-Authoritative ledger sistemine geçirilmesi.
-- **Kapsam dışı:** Profil vitrini ve rozet çizimleri.
+- **Kapsam dışı:** Profil vitrini ve rozet çizimleri (→ WP-57).
 - **SAHİP dosyalar (yaz):**
   - `supabase/migrations/0024_achievements_ledger.sql`
   - `app/lib/data/providers/achievement_provider.dart`
+  - (+ motor/repo/model/test: `achievement_ledger_engine.dart`, `achievement_ledger.dart`, `achievement_repository` dual, `achievement_ledger_engine_test.dart`)
 - **DOKUNMA (oku, değiştirme):**
   - `docs/BASARIM-MIMARISI.md`
 - **Adımlar:**
-  - [ ] `xp_ledger` tablosu ve tetikleyici (RPC) mantıklarını yaz.
-  - [ ] Tüm başarım kademelerini (eşik değerlerini) ve gizli Paskalya Yumurtalarını SQL'e aktar.
-  - [ ] İstemcinin bu olayları fırlatması için API entegrasyonu sağla.
-- **Veri/Migration etkisi:** `0024_achievements_ledger.sql` canlı sisteme eklenecek.
-- **RLS/Güvenlik:** Yalnız INSERT yetkisi, update kapalı (append-only ledger). Güvenlik kritik.
-- **Edge-case'ler:** Çift olay yollanması (idempotency event_key ile çözülmeli).
-- **Kabul (ölçülebilir):** Aynı `event_key` ile çağrılan RPC hata fırlatmadan (veya ignore ederek) çift XP vermemeli.
-- **Dal önerisi:** `wp56-achievements-engine`
-- **Model önerisi:** 🔴 Opus
+  - [x] `xp_ledger` tablosu + append-only + `event_key` UNIQUE; trigger ile `gamification_profiles.xp` / `user_achievements` projeksiyonu.
+  - [x] `achievements_dict` seed: 11 açık + 10 gizli (BASARIM-MIMARISI eşikleri/XP).
+  - [x] RPC `process_achievement_event(p_event_type, p_payload)` SECURITY DEFINER; metrikler Europe/Istanbul.
+  - [x] İstemci API: `achievement_provider` + dual repo (Supabase RPC / in_memory engine).
+  - [x] B7 sıkılaştırma: gamification/user_achievements SELECT → `can_see_user_sessions`; istemci achievement INSERT/UPDATE kaldırıldı; XP guard trigger.
+  - [x] Birim test: idempotency + steel_will/marathon/secret_404/pi (8 test PASS).
+- **Veri/Migration etkisi:** `0024_achievements_ledger.sql` canlıya SQL Editor ile uygulanmalı. **Geri alma:** migration başındaki drop notu.
+- **RLS/Güvenlik:** Ledger istemci yazamaz; yalnız RPC. XP/crown istemci update ile değiştirilemez (guard).
+- **Edge-case'ler:** Çift olay → `ON CONFLICT (event_key) DO NOTHING`. Grup/sosyal metrikler (alpha_wolf, inspiration, …) R1'de 0 (sözlük hazır). `secret_break_enemy` pomodoro skip verisi yok → 0.
+- **Kabul (ölçülebilir):** Aynı `event_key` ile ikinci process çift XP vermez — **Dart engine test ile `Kodda doğrulandı`**. Canlı Supabase RPC smoke + RLS denemesi `Cihazda doğrulanmalı`.
+- **Uygulama notu (2026-07-13, Grok):** Analyze 0 (yeni dosyalar). `flutter test test/core/achievement_ledger_engine_test.dart` 8/8. Eski `gamificationProgressSyncProvider` hâlâ istemci yazmaya çalışır; 0024 sonrası RLS reddeder — wire-up: oturum bitişinde `notifySessionCompletedForAchievementsProvider` (sonraki iş / WP-57 öncesi).
+- **Dal:** — (main, ayrık dosyalar)
+- **Model:** Grok
 
 ### WP-57: Başarım 3.0 R2 (Oyunlaştırılmış Profil ve Rozet UI) 🏅
 - **Program/Faz:** Başarım 3.0
