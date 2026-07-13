@@ -3,6 +3,21 @@
   "source": "CHANGELOG.md",
   "releases": [
     {
+      "versionName": "1.0.13",
+      "buildNumber": 14,
+      "channel": "beta",
+      "date": "2026-07-13",
+      "title": "beta-v14: sade widget + yumuşak düğme köşeleri",
+      "highlights": [
+        "Ana ekran widget'ı sadeleşti: yalnız akan saat + tek Başlat/Durdur düğmesi.",
+        "Bildirim/widget düğmesinin köşeleri yuvarlatıldı (pill görünümü)."
+      ],
+      "fixes": [],
+      "notes": [
+        "beta-v13 cihazda sorunsuz; bu sürüm yalnız görünüm rötuşu."
+      ]
+    },
+    {
       "versionName": "1.0.12",
       "buildNumber": 13,
       "channel": "beta",

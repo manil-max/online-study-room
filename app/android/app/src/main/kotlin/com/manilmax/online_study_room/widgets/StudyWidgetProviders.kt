@@ -44,10 +44,7 @@ class TimerWidgetProvider : HomeWidgetProvider() {
                         ?.let { runCatching { java.time.Instant.parse(it).toEpochMilli() }.getOrNull() }
                 val mode = appPrefs.getString("flutter.timer_active_mode", null)
                 val isRunning = startMillis != null
-                setTextViewText(
-                    R.id.timer_widget_title,
-                    widgetData.text(StudyWidgetKeys.TimerTitle, "Odak Kampı"),
-                )
+                // Sade tasarım: yalnız akan saat + tek düğme (başlık/durum yazısı yok).
                 // Chronometer yalnız kronometre modunda anlamlıdır. Geri sayım
                 // ve Pomodoro'da Flutter'ın son olay anında yazdığı süre sabit
                 // gösterilir; yanlış yönde akan native sayaç gösterilmez.
@@ -57,10 +54,6 @@ class TimerWidgetProvider : HomeWidgetProvider() {
                 } else {
                     setChronometer(R.id.timer_widget_elapsed, SystemClock.elapsedRealtime(), "00:00:00", false)
                 }
-                setTextViewText(
-                    R.id.timer_widget_status,
-                    if (isRunning) "Çalışıyor" else "Çalışma hazır",
-                )
                 // Tek düğme sayacı çalışıyorsa Durdur, duruyorsa Başlat yapar
                 // (native servise gider; app kapalıyken de çalışır).
                 setTextViewText(

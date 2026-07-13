@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Sayaç bildirimi/widget'ındaki Başlat/Durdur düğmesinin yumuşak (pill) arka planı. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="#26FFFFFF" />
+    <corners android:radius="22dp" />
+</shape>

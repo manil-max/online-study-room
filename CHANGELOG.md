@@ -4,6 +4,17 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [beta-v14 / 1.0.13+14] - 2026-07-13
+
+> ⚠️ **Beta test sürümü.** beta-v13 cihazda sorunsuz çalıştı; bu sürüm yalnız görünüm rötuşu.
+
+### Görünüm
+
+- **Ana ekran widget'ı sadeleşti:** Artık yalnız akan saat + tek Başlat/Durdur düğmesi
+  (başlık ve durum yazısı kaldırıldı).
+- **Bildirim/widget düğmesi yumuşadı:** Başlat/Durdur düğmesinin köşeleri yuvarlatıldı
+  (pill görünümü).
+
 ## [beta-v13 / 1.0.12+13] - 2026-07-13
 
 > ⚠️ **Beta test sürümü.** beta-v12'de cihazda görülen **açılış çökme döngüsü** giderildi + sayaç bildirimi durak-saati görünümüne yaklaştırıldı.
