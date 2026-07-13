@@ -155,11 +155,13 @@ void main() {
       );
     });
 
-    test('crownRankForXp eşikleri', () {
-      expect(crownRankForXp(0), 'wood_novice');
-      expect(crownRankForXp(1000), 'bronze_beginner');
-      expect(crownRankForXp(5000), 'silver_learner');
-      expect(crownRankForXp(100000), 'diamond_owl');
+    test('crownRankForXp 5 kademe eşikleri', () {
+      expect(crownRankForXp(0), 'bronze_beginner');
+      expect(crownRankForXp(999), 'bronze_beginner');
+      expect(crownRankForXp(1000), 'silver_learner');
+      expect(crownRankForXp(5000), 'gold_achiever');
+      expect(crownRankForXp(15000), 'platinum_scholar');
+      expect(crownRankForXp(50000), 'diamond_owl');
     });
   });
 

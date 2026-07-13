@@ -4,80 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
 import '../../../core/stats/achievement_ledger_engine.dart';
+import '../../../core/stats/progression_visuals.dart';
 import '../../../data/models/achievement.dart';
 import '../../../data/models/achievement_ledger.dart';
 import '../../../data/models/gamification_profile.dart';
 
-/// Taç rütbesi Türkçe etiketi (Başarım 3.0).
-String crownLabelTr(String rank) {
-  switch (rank) {
-    case 'diamond_owl':
-      return 'Elmas Baykuş';
-    case 'ruby_master':
-      return 'Yakut Üstat';
-    case 'platinum_scholar':
-      return 'Platin Bilgin';
-    case 'gold_achiever':
-      return 'Altın Başaran';
-    case 'silver_learner':
-      return 'Gümüş Öğrenci';
-    case 'bronze_beginner':
-      return 'Bronz Başlangıç';
-    case 'wood_novice':
-    default:
-      return 'Ahşap Çaylak';
-  }
-}
-
-Color crownColorFor(String rank, ColorScheme scheme) {
-  switch (rank) {
-    case 'diamond_owl':
-      return Colors.cyanAccent.shade400;
-    case 'ruby_master':
-      return Colors.redAccent.shade200;
-    case 'platinum_scholar':
-      return Colors.blueGrey.shade300;
-    case 'gold_achiever':
-      return Colors.amber.shade600;
-    case 'silver_learner':
-      return Colors.grey.shade400;
-    case 'bronze_beginner':
-      return Colors.brown.shade400;
-    default:
-      return scheme.outline;
-  }
-}
-
-/// XP → bir sonraki taç eşiği (0..1 progress için).
-({int floor, int next, double progress}) xpBarMetrics(int xp) {
-  const thresholds = <int>[
-    0,
-    1000,
-    5000,
-    10000,
-    25000,
-    50000,
-    100000,
-  ];
-  var floor = 0;
-  var next = thresholds.last;
-  for (var i = 0; i < thresholds.length - 1; i++) {
-    if (xp >= thresholds[i] && xp < thresholds[i + 1]) {
-      floor = thresholds[i];
-      next = thresholds[i + 1];
-      break;
-    }
-    if (xp >= thresholds.last) {
-      floor = thresholds.last;
-      next = thresholds.last;
-    }
-  }
-  if (next <= floor) {
-    return (floor: floor, next: next, progress: 1.0);
-  }
-  final progress = ((xp - floor) / (next - floor)).clamp(0.0, 1.0);
-  return (floor: floor, next: next, progress: progress);
-}
+export '../../../core/stats/progression_visuals.dart'
+    show crownColorFor, crownLabelTr, xpBarMetrics, tierColorFor, tierLabelTr;
 
 IconData achievementIconData(String iconKey) {
   switch (iconKey) {
@@ -462,7 +395,7 @@ class _XpBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final atCap = xp >= 100000;
+    final atCap = xp >= kCrownXpThresholds.last;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -478,12 +411,51 @@ class _XpBar extends StatelessWidget {
         const SizedBox(height: 6),
         Text(
           atCap
-              ? 'Maksimum taç seviyesine ulaşıldı'
+              ? 'Maksimum taç seviyesine ulaşıldı (Elmas)'
               : 'Sonraki taç: $next XP (${(progress * 100).round()}%)',
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),
           textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            for (var i = 1; i <= 5; i++)
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 2),
+                  child: Column(
+                    children: [
+                      Container(
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: tierColorFor(i).withValues(
+                            alpha: crownTierNumber(
+                                      crownRankForXp(xp),
+                                    ) >=
+                                    i
+                                ? 1
+                                : 0.25,
+                          ),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        tierLabelTr(i),
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          fontSize: 9,
+                          color: tierColorFor(i),
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
         ),
       ],
     );
@@ -563,8 +535,15 @@ class _VitrinRow extends StatelessWidget {
                 def: def,
                 tier: ua?.tier ?? 1,
                 unlocked: ua?.isUnlocked == true,
+                userAch: ua,
                 onLongPress:
                     isSelf && onToggle != null ? () => onToggle!(id) : null,
+                onTap: () => showAchievementDetail(
+                  context,
+                  def: def,
+                  userAch: ua,
+                  unlocked: ua?.isUnlocked == true,
+                ),
               );
             }),
           ),
@@ -572,6 +551,110 @@ class _VitrinRow extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Profil vitrininde veya katalogda rozete basınca açıklama.
+Future<void> showAchievementDetail(
+  BuildContext context, {
+  required AchievementDictEntry def,
+  UserAchievement? userAch,
+  required bool unlocked,
+}) {
+  final secretLocked = def.isSecret && !unlocked;
+  final tier = unlocked ? (userAch?.tier ?? 1) : 0;
+  final theme = Theme.of(context);
+  final color = badgeVisualColor(
+    tier: tier < 1 ? 1 : tier,
+    unlocked: unlocked,
+    isSecret: def.isSecret,
+    secretLocked: secretLocked,
+    scheme: theme.colorScheme,
+  );
+
+  return showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    builder: (ctx) {
+      return SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                secretLocked
+                    ? Icons.help_outline
+                    : achievementIconData(def.iconKey),
+                size: 48,
+                color: color,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                secretLocked ? '?????' : def.name,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              if (secretLocked)
+                Text(
+                  'Gizli bir başarım. Açmak için şanslı veya çok dikkatli olmalısın.',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                  textAlign: TextAlign.center,
+                )
+              else ...[
+                Text(
+                  def.description,
+                  style: theme.textTheme.bodyMedium,
+                  textAlign: TextAlign.center,
+                ),
+                if (def.isSecret) ...[
+                  const SizedBox(height: 8),
+                  Chip(
+                    avatar: Icon(Icons.auto_awesome,
+                        size: 16, color: kSecretAchievementColor),
+                    label: const Text('Gizli başarım'),
+                    backgroundColor:
+                        kSecretAchievementColor.withValues(alpha: 0.15),
+                  ),
+                ] else if (unlocked) ...[
+                  const SizedBox(height: 10),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: color),
+                    ),
+                    child: Text(
+                      'Kademe $tier/${def.maxTier} · ${tierLabelTr(tier)}',
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        color: color,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ] else
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(
+                      'Henüz açılmadı · en fazla ${def.maxTier} kademe',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+              ],
+            ],
+          ),
+        ),
+      );
+    },
+  );
 }
 
 class _EmptySlot extends StatelessWidget {
@@ -604,66 +687,103 @@ class _BadgeCircle extends StatelessWidget {
     required this.def,
     required this.tier,
     required this.unlocked,
+    this.userAch,
     this.onLongPress,
+    this.onTap,
     this.secretLocked = false,
   });
 
   final AchievementDictEntry def;
   final int tier;
   final bool unlocked;
+  final UserAchievement? userAch;
   final VoidCallback? onLongPress;
+  final VoidCallback? onTap;
   final bool secretLocked;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final color = secretLocked
-        ? theme.colorScheme.onSurface.withValues(alpha: 0.87)
-        : unlocked
-            ? crownColorFor(
-                tier >= 5
-                    ? 'diamond_owl'
-                    : tier >= 3
-                        ? 'gold_achiever'
-                        : 'bronze_beginner',
-                theme.colorScheme,
-              )
-            : theme.colorScheme.outline;
+    final color = badgeVisualColor(
+      tier: tier < 1 ? 1 : tier,
+      unlocked: unlocked,
+      isSecret: def.isSecret,
+      secretLocked: secretLocked,
+      scheme: theme.colorScheme,
+    );
 
     final title = secretLocked ? '?????' : def.name;
     final subtitle = secretLocked
-        ? 'Gizli bir başarım, açmak için şanslı veya çok dikkatli olmalısın'
-        : 'Aşama $tier';
+        ? 'Gizli başarım'
+        : unlocked
+            ? '${tierLabelTr(tier)} · Kademe $tier'
+            : 'Kilitli';
 
     return Tooltip(
       message: '$title\n$subtitle',
       child: GestureDetector(
+        // onTap yoksa üst widget (katalog kartı) sheet açar; çift sheet olmaz.
+        onTap: onTap,
         onLongPress: onLongPress,
-        child: Container(
-          width: 64,
-          height: 64,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: secretLocked
-                ? theme.colorScheme.onSurface
-                : color.withValues(alpha: 0.15),
-            border: Border.all(color: color, width: 2),
-          ),
-          child: Center(
-            child: secretLocked
-                ? Text(
-                    '?',
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      color: theme.colorScheme.surface.withValues(alpha: 0.7),
-                      fontWeight: FontWeight.w900,
-                    ),
-                  )
-                : Icon(
-                    achievementIconData(def.iconKey),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: secretLocked
+                    ? kSecretLockedColor
+                    : color.withValues(alpha: 0.15),
+                border: Border.all(color: color, width: 2.5),
+                boxShadow: unlocked
+                    ? [
+                        BoxShadow(
+                          color: color.withValues(alpha: 0.35),
+                          blurRadius: 6,
+                        ),
+                      ]
+                    : null,
+              ),
+              child: Center(
+                child: secretLocked
+                    ? Text(
+                        '?',
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          color: kSecretAchievementColor.withValues(alpha: 0.85),
+                          fontWeight: FontWeight.w900,
+                        ),
+                      )
+                    : Icon(
+                        achievementIconData(def.iconKey),
+                        color: color,
+                        size: 30,
+                      ),
+              ),
+            ),
+            if (unlocked && !def.isSecret)
+              Positioned(
+                right: -2,
+                bottom: -2,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                  decoration: BoxDecoration(
                     color: color,
-                    size: 30,
+                    borderRadius: BorderRadius.circular(8),
                   ),
-          ),
+                  child: Text(
+                    '$tier',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: Colors.black87,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 10,
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );
@@ -707,66 +827,132 @@ class _CatalogTile extends StatelessWidget {
         ? 1.0
         : (progress / need).clamp(0.0, 1.0);
 
+    final tierColor = badgeVisualColor(
+      tier: tier,
+      unlocked: unlocked,
+      isSecret: def.isSecret,
+      secretLocked: secretLocked,
+      scheme: theme.colorScheme,
+    );
+
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
-      child: ListTile(
-        contentPadding: const EdgeInsets.all(14),
-        leading: _BadgeCircle(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => showAchievementDetail(
+          context,
           def: def,
-          tier: tier,
+          userAch: userAch,
           unlocked: unlocked,
-          secretLocked: secretLocked,
         ),
-        title: Row(
-          children: [
-            Expanded(
-              child: Text(
-                secretLocked ? '?????' : def.name,
-                style: const TextStyle(fontWeight: FontWeight.bold),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _BadgeCircle(
+                def: def,
+                tier: tier,
+                unlocked: unlocked,
+                userAch: userAch,
+                secretLocked: secretLocked,
               ),
-            ),
-            if (isSelf && unlocked && onToggle != null)
-              IconButton(
-                tooltip: isSelected ? 'Vitrinden kaldır' : 'Vitrine ekle',
-                icon: Icon(
-                  isSelected ? Icons.push_pin : Icons.push_pin_outlined,
-                  color: isSelected ? theme.colorScheme.primary : null,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            secretLocked ? '?????' : def.name,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        if (isSelf && unlocked && onToggle != null)
+                          IconButton(
+                            tooltip:
+                                isSelected ? 'Vitrinden kaldır' : 'Vitrine ekle',
+                            icon: Icon(
+                              isSelected
+                                  ? Icons.push_pin
+                                  : Icons.push_pin_outlined,
+                              color:
+                                  isSelected ? theme.colorScheme.primary : null,
+                            ),
+                            onPressed: () => onToggle!(def.id),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      secretLocked
+                          ? 'Gizli bir başarım — şartı gizli tutulur'
+                          : def.description,
+                      style: theme.textTheme.bodySmall,
+                    ),
+                    if (!secretLocked) ...[
+                      const SizedBox(height: 8),
+                      // 5 kademe renk şeridi
+                      if (!def.isSecret)
+                        Row(
+                          children: [
+                            for (var i = 1; i <= def.maxTier.clamp(1, 5); i++)
+                              Expanded(
+                                child: Container(
+                                  height: 5,
+                                  margin: const EdgeInsets.only(right: 3),
+                                  decoration: BoxDecoration(
+                                    color: tierColorFor(i).withValues(
+                                      alpha: unlocked && tier >= i ? 1 : 0.22,
+                                    ),
+                                    borderRadius: BorderRadius.circular(2),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      if (def.isSecret && unlocked)
+                        Text(
+                          'Gizli · açıldı',
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            color: kSecretAchievementColor,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        )
+                      else if (unlocked && tier >= def.maxTier)
+                        Text(
+                          'Maksimum kademe · ${tierLabelTr(tier)}',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: tierColor,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        )
+                      else ...[
+                        const SizedBox(height: 6),
+                        LinearProgressIndicator(
+                          value: pct,
+                          color: tierColor,
+                          backgroundColor:
+                              theme.colorScheme.surfaceContainerHighest,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          unlocked
+                              ? 'Kademe $tier/${def.maxTier} (${tierLabelTr(tier)}) · sonraki $need'
+                              : 'İlerleme: $progress / $need',
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: unlocked ? tierColor : null,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ],
                 ),
-                onPressed: () => onToggle!(def.id),
               ),
-          ],
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 4),
-            Text(
-              secretLocked
-                  ? 'Gizli bir başarım, açmak için şanslı veya çok dikkatli olmalısın'
-                  : def.description,
-              style: theme.textTheme.bodySmall,
-            ),
-            if (!secretLocked) ...[
-              const SizedBox(height: 8),
-              if (unlocked && tier >= def.maxTier)
-                Text(
-                  'Maksimum kademe',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.primary,
-                  ),
-                )
-              else ...[
-                LinearProgressIndicator(value: pct),
-                const SizedBox(height: 4),
-                Text(
-                  unlocked
-                      ? 'Kademe $tier/${def.maxTier} · sonraki eşik $need'
-                      : 'İlerleme: $progress / $need',
-                  style: theme.textTheme.labelSmall,
-                ),
-              ],
             ],
-          ],
+          ),
         ),
       ),
     );

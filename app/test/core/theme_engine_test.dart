@@ -41,6 +41,17 @@ void main() {
       expect(theme.colorScheme.primary, kAppPalettes.first.primary);
     });
 
+    test('fromFamily karşı parlaklıkta primary DNA taşır', () {
+      final darkFamily = themePresetById('campfire_night');
+      final light = AppTheme.fromFamily(darkFamily, Brightness.light);
+      final dark = AppTheme.fromFamily(darkFamily, Brightness.dark);
+      expect(dark.brightness, Brightness.dark);
+      expect(light.brightness, Brightness.light);
+      expect(dark.colorScheme.primary, darkFamily.colors.primary);
+      // Light modda da aile primary korunur (seçim yok sayılmaz).
+      expect(light.extension<AppColors>()!.primary, darkFamily.colors.primary);
+    });
+
     test('AppColors.lerp ve AppShapes.lerp', () {
       final a = kThemePresets[0].colors;
       final b = kThemePresets[2].colors;

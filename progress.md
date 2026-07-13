@@ -81,15 +81,15 @@
 - **Not:** Ayarlar tek katmana indirildi; ExpansionTile yok, Gruplar sayacı kaldırıldı, bildirim/sürüm doğrudan açılıyor, grid Auto seçeneği kaldırılıp eski değer 6'ya göçüyor. Analyze + 283 test + Windows release build PASS; görsel cihaz QA bekliyor. Push yok.
 
 ### Grok Lane
-- **Durum:** [x] Boşta (1→2→3 zinciri bitti — beta QA kullanıcıda)
-- **Faz/WP:** WP-55 + başarım polish + Colors token
-- **Aşama:** Otomatik test geçti
-- **SAHİP yollar:** —
-- **Ortak/riskli yüzey:** —
+- **Durum:** [~] Aktif → otomatik test geçti (beta QA bekliyor)
+- **Faz/WP:** Başarım/profil polish · 5 kademe renk + taç + tema fix
+- **Aşama:** Otomatik test geçti — cihaz QA bekliyor
+- **SAHİP yollar:** `progression_visuals.dart`, `crowned_avatar.dart`, `achievement_showcase.dart`, `profile_tap.dart`, `main.dart` tema, `0026_crown_five_tiers.sql`
+- **Ortak/riskli yüzey:** leaderboard/active_members/class_chat/class_stats (yalnız profil tap glue)
 - **Dal:** — (main)
 - **Başlangıç:** 2026-07-13
-- **Son güncelleme:** 2026-07-13 (zincir teslim)
-- **Not:** WP-55 Tema Stüdyosu UI; confetti `lastAchievementAwardsProvider`; 0025 inspiration/team_player; Colors→scheme (auth/account/admin/home/subjects). Analyze 0 + testler PASS. 0025 SQL Editor’da uygula.
+- **Son güncelleme:** 2026-07-13 (beta QA maddeleri 1–5)
+- **Not:** 5 kademe renk + gizli mor; PP taç; her yerde profil; tema fromFamily; 0026 SQL uygula (+0025 hâlâ açıksa).
 
 ---
 

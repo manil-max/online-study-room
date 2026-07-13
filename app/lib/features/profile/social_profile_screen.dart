@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/widgets/crowned_avatar.dart';
 import '../../core/widgets/safe_screen_padding.dart';
-import '../../core/widgets/user_avatar.dart';
 import '../../data/models/achievement_ledger.dart';
 import '../../data/models/gamification_profile.dart';
 import '../../data/models/profile.dart';
@@ -66,14 +66,6 @@ class SocialProfileScreen extends ConsumerWidget {
       body: ListView(
         padding: getSafeVerticalPadding(context, horizontal: 20, vertical: 16),
         children: [
-          Center(
-            child: UserAvatar(
-              displayName: profile.displayName,
-              avatarUrl: profile.avatarUrl,
-              radius: 44,
-            ),
-          ),
-          const SizedBox(height: 12),
           gamificationAsync.when(
             loading: () => const Padding(
               padding: EdgeInsets.all(32),
@@ -89,28 +81,50 @@ class SocialProfileScreen extends ConsumerWidget {
             ),
             data: (gamification) {
               return achievementsAsync.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
+                loading: () => Column(
+                  children: [
+                    CrownedAvatar(
+                      displayName: profile.displayName,
+                      avatarUrl: profile.avatarUrl,
+                      radius: 44,
+                      crownRank: gamification.crownRank,
+                    ),
+                    const SizedBox(height: 24),
+                    const Center(child: CircularProgressIndicator()),
+                  ],
+                ),
                 error: (err, _) => Text(
                   'Başarımlar yüklenemedi: $err',
                   style: TextStyle(color: theme.colorScheme.error),
                 ),
                 data: (achs) {
-                  return AchievementShowcase(
-                    gamification: gamification,
-                    userAchievements: achs,
-                    displayName: profile.displayName,
-                    isSelf: isSelf,
-                    compact: false,
-                    showCatalog: true,
-                    forceConfettiAwards: confettiAwards,
-                    onToggleShowcaseBadge: isSelf
-                        ? (badgeId) => _toggleBadge(
-                              context,
-                              ref,
-                              gamification,
-                              badgeId,
-                            )
-                        : null,
+                  return Column(
+                    children: [
+                      CrownedAvatar(
+                        displayName: profile.displayName,
+                        avatarUrl: profile.avatarUrl,
+                        radius: 44,
+                        crownRank: gamification.crownRank,
+                      ),
+                      const SizedBox(height: 16),
+                      AchievementShowcase(
+                        gamification: gamification,
+                        userAchievements: achs,
+                        displayName: profile.displayName,
+                        isSelf: isSelf,
+                        compact: false,
+                        showCatalog: true,
+                        forceConfettiAwards: confettiAwards,
+                        onToggleShowcaseBadge: isSelf
+                            ? (badgeId) => _toggleBadge(
+                                  context,
+                                  ref,
+                                  gamification,
+                                  badgeId,
+                                )
+                            : null,
+                      ),
+                    ],
                   );
                 },
               );

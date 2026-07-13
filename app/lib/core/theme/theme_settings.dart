@@ -117,8 +117,15 @@ class ThemeSettingsNotifier extends Notifier<ThemeSettings> {
   }
 
   void setFamily(String id) {
-    state = state.copyWith(familyId: id);
-    ref.read(sharedPreferencesProvider).setString(_kFamily, id);
+    // Aile seçilince mood'u ailenin parlaklığına hizala — seçim hemen görünsün.
+    final preset = themePresetById(id);
+    final mode = preset.brightness == Brightness.dark
+        ? ThemeMode.dark
+        : ThemeMode.light;
+    state = state.copyWith(familyId: id, mode: mode);
+    final prefs = ref.read(sharedPreferencesProvider);
+    prefs.setString(_kFamily, id);
+    prefs.setString(_kMode, mode.name);
   }
 
   void setPalette(String id) {

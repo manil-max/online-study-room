@@ -4,13 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/stats/study_stats.dart';
 import '../../../core/theme/subject_colors.dart';
 import '../../../core/utils/duration_format.dart';
-import '../../../core/widgets/anchored_menu.dart';
 import '../../../core/widgets/user_avatar.dart';
 import '../../../data/models/profile.dart';
 import '../../classroom/widgets/class_switcher.dart';
 import '../../../data/providers/auth_providers.dart';
 import '../../../data/providers/group_providers.dart';
 import '../../../data/providers/study_providers.dart';
+import '../../profile/widgets/profile_tap.dart';
 import '../dashboard_card.dart';
 import 'group_card_shell.dart';
 
@@ -269,16 +269,18 @@ class _Row extends StatelessWidget {
         : (member?.displayName.isNotEmpty == true
               ? member!.displayName
               : 'İsimsiz');
-    // Üzerine gelince basit özet (tooltip); tıklayınca tıklanan yerde detay.
+    // Üzerine gelince özet; tıklayınca sosyal profil (isim/PP her yerde).
     final brief = StringBuffer('$rank. · Bugün ${formatHuman(seconds)}');
     if (streak > 0) brief.write(' · 🔥$streak gün');
+    final canOpenProfile = member != null && member!.isActive;
     return Tooltip(
       message: brief.toString(),
       waitDuration: const Duration(milliseconds: 350),
       child: InkWell(
         borderRadius: BorderRadius.circular(8),
-        onTapDown: (d) => _showDetailAt(context, name, d.globalPosition),
-        onTap: () {},
+        onTap: canOpenProfile
+            ? () => openMemberProfile(context, member!)
+            : null,
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
           child: Row(
@@ -351,78 +353,6 @@ class _Row extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  /// Tıklanan noktada açılan detay paneli (alttan açılan pencere yerine §3.12).
-  void _showDetailAt(BuildContext context, String name, Offset position) {
-    final theme = Theme.of(context);
-    showMenuAtPosition<void>(
-      context: context,
-      globalPosition: position,
-      items: [
-        PopupMenuItem<void>(
-          enabled: false,
-          child: SizedBox(
-            width: 220,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    UserAvatar(
-                      displayName: name,
-                      avatarUrl: member?.avatarUrl,
-                      radius: 20,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        isMe ? '$name (sen)' : name,
-                        style: theme.textTheme.titleMedium,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                _InfoRow(label: 'Sıralama', value: '$rank.'),
-                _InfoRow(label: 'Bugünkü çalışma', value: formatHuman(seconds)),
-                if (streak > 0)
-                  _InfoRow(label: 'Çalışma serisi', value: '$streak gün'),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _InfoRow extends StatelessWidget {
-  const _InfoRow({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-          Text(value, style: theme.textTheme.titleSmall),
-        ],
       ),
     );
   }

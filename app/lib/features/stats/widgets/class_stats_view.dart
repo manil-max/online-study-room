@@ -9,6 +9,7 @@ import '../../../core/widgets/user_avatar.dart';
 import '../../../data/models/daily_stat.dart';
 import '../../../data/models/profile.dart';
 import '../../classroom/widgets/class_switcher.dart';
+import '../../profile/widgets/profile_tap.dart';
 import 'daily_bar_chart.dart';
 import 'daily_line_chart.dart';
 import 'stat_heat_table.dart';
@@ -199,6 +200,7 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
               maxSeconds: maxSeconds,
               streak: streaks[rows[i].member.id] ?? 0,
               isMe: rows[i].member.id == widget.currentUserId,
+              profile: rows[i].member.isActive ? rows[i].member : null,
             ),
         const SizedBox(height: 16),
         Card(
@@ -544,6 +546,7 @@ class _LeaderboardRow extends StatelessWidget {
     required this.maxSeconds,
     required this.streak,
     required this.isMe,
+    this.profile,
   });
 
   final int rank;
@@ -553,6 +556,7 @@ class _LeaderboardRow extends StatelessWidget {
   final int maxSeconds;
   final int streak;
   final bool isMe;
+  final Profile? profile;
 
   @override
   Widget build(BuildContext context) {
@@ -565,7 +569,7 @@ class _LeaderboardRow extends StatelessWidget {
       _ => '$rank.',
     };
 
-    return Padding(
+    final row = Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         children: [
@@ -627,6 +631,12 @@ class _LeaderboardRow extends StatelessWidget {
           ),
         ],
       ),
+    );
+    if (profile == null) return row;
+    return InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: () => openMemberProfile(context, profile!),
+      child: row,
     );
   }
 }

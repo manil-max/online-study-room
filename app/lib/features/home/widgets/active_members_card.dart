@@ -10,6 +10,7 @@ import '../../../data/models/profile.dart';
 import '../../classroom/widgets/class_switcher.dart';
 import '../../../data/providers/group_providers.dart';
 import '../../../data/providers/presence_providers.dart';
+import '../../profile/widgets/profile_tap.dart';
 import '../dashboard_card.dart';
 import 'group_card_shell.dart';
 
@@ -79,20 +80,21 @@ class ActiveMembersCard extends ConsumerWidget {
 
           Widget rowFor(int i) {
             final p = visibleActive[i];
+            final member = memberById[p.userId];
+            final name = (member != null && !member.isActive)
+                ? 'Eski Grup Üyesi'
+                : (member?.displayName.isNotEmpty == true
+                      ? member!.displayName
+                      : 'İsimsiz');
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: 5),
               child: _ActiveRow(
-                name:
-                    (memberById[p.userId] != null &&
-                        !memberById[p.userId]!.isActive)
-                    ? 'Eski Grup Üyesi'
-                    : (memberById[p.userId]?.displayName.isNotEmpty == true
-                          ? memberById[p.userId]!.displayName
-                          : 'İsimsiz'),
-                avatarUrl: memberById[p.userId]?.avatarUrl,
+                name: name,
+                avatarUrl: member?.avatarUrl,
                 startedAt: p.startedAt,
                 green: green,
                 isCompact: isCompact,
+                profile: member != null && member.isActive ? member : null,
               ),
             );
           }
@@ -184,6 +186,7 @@ class _ActiveRow extends StatelessWidget {
     required this.startedAt,
     required this.green,
     this.isCompact = false,
+    this.profile,
   });
 
   final String name;
@@ -191,6 +194,7 @@ class _ActiveRow extends StatelessWidget {
   final DateTime? startedAt;
   final Color green;
   final bool isCompact;
+  final Profile? profile;
 
   @override
   Widget build(BuildContext context) {
@@ -211,7 +215,7 @@ class _ActiveRow extends StatelessWidget {
         );
       },
     );
-    return Row(
+    final row = Row(
       children: [
         Stack(
           children: [
@@ -248,8 +252,6 @@ class _ActiveRow extends StatelessWidget {
           const SizedBox(width: 8),
           time,
         ] else
-          // Dar hücrede ad gizli; süre kalan alana yaslanır ve gerekiyorsa
-          // küçülerek taşmayı önler.
           Expanded(
             child: Align(
               alignment: Alignment.centerRight,
@@ -257,6 +259,12 @@ class _ActiveRow extends StatelessWidget {
             ),
           ),
       ],
+    );
+    if (profile == null) return row;
+    return InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: () => openMemberProfile(context, profile!),
+      child: row,
     );
   }
 }

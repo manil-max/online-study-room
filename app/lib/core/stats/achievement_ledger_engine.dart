@@ -153,14 +153,18 @@ List<AchievementDictEntry> kAchievementDictV3() {
   ];
 }
 
+/// 5 kademeli taç XP eşikleri (bronz → elmas). SQL `_recalc_crown_rank` ile aynı.
+const List<int> kCrownXpThresholds = <int>[0, 1000, 5000, 15000, 50000];
+
+/// XP → 5 basamaklı taç rütbesi.
+/// Eski 7'li rütbeler (wood_novice, ruby_master) görselde [normalize] edilir;
+/// yeni yazımlar yalnız bu 5 id'yi üretir.
 String crownRankForXp(int xp) {
-  if (xp >= 100000) return 'diamond_owl';
-  if (xp >= 50000) return 'ruby_master';
-  if (xp >= 25000) return 'platinum_scholar';
-  if (xp >= 10000) return 'gold_achiever';
-  if (xp >= 5000) return 'silver_learner';
-  if (xp >= 1000) return 'bronze_beginner';
-  return 'wood_novice';
+  if (xp >= kCrownXpThresholds[4]) return 'diamond_owl';
+  if (xp >= kCrownXpThresholds[3]) return 'platinum_scholar';
+  if (xp >= kCrownXpThresholds[2]) return 'gold_achiever';
+  if (xp >= kCrownXpThresholds[1]) return 'silver_learner';
+  return 'bronze_beginner';
 }
 
 String ledgerEventKey(String userId, String achievementId, int tier) =>

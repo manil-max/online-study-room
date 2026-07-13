@@ -7,6 +7,7 @@ import '../../../data/models/study_group.dart';
 import '../../../data/providers/auth_providers.dart';
 import '../../../data/providers/chat_providers.dart';
 import '../../../data/repositories/chat_repository.dart';
+import '../../profile/widgets/profile_tap.dart';
 
 class ClassChatCard extends ConsumerStatefulWidget {
   const ClassChatCard({
@@ -184,10 +185,19 @@ class _MessageBubble extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           if (!mine) ...[
-            UserAvatar(
-              displayName: name,
-              avatarUrl: message.authorAvatarUrl,
-              radius: 14,
+            GestureDetector(
+              onTap: () => openMemberProfileById(
+                context,
+                userId: message.userId,
+                displayName: name,
+                avatarUrl: message.authorAvatarUrl,
+                animal: message.authorAnimal,
+              ),
+              child: UserAvatar(
+                displayName: name,
+                avatarUrl: message.authorAvatarUrl,
+                radius: 14,
+              ),
             ),
             const SizedBox(width: 8),
           ],

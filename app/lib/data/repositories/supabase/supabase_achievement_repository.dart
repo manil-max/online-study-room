@@ -47,7 +47,7 @@ class SupabaseAchievementRepository implements AchievementRepository {
       eventType: eventType,
       awarded: const [],
       totalXp: 0,
-      crownRank: 'wood_novice',
+      crownRank: 'bronze_beginner',
     );
   }
 }

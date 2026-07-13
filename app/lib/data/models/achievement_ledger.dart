@@ -132,7 +132,7 @@ class AchievementEventResult {
       eventType: map['event_type'] as String? ?? '',
       awarded: awards,
       totalXp: map['total_xp'] as int? ?? 0,
-      crownRank: map['crown_rank'] as String? ?? 'wood_novice',
+      crownRank: map['crown_rank'] as String? ?? 'bronze_beginner',
       metrics: metricsRaw is Map
           ? Map<String, dynamic>.from(metricsRaw)
           : const {},

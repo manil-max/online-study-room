@@ -151,6 +151,64 @@ AppPalette paletteById(String id) => kAppPalettes.firstWhere(
 class AppTheme {
   AppTheme._();
 
+  /// Seçili aileyi hem açık hem koyu moda uyarlar (beta: tema “gelmedi” düzeltmesi).
+  ///
+  /// Ailenin kendi brightness'i ile eşleşiyorsa full token; karşı moda
+  /// [ColorScheme.fromSeed] ile primary/accent DNA taşınır.
+  static ThemeData fromFamily(ThemePreset family, Brightness brightness,
+      {Color? dynamicSeed}) {
+    if (family.isDynamic) {
+      final seed = dynamicSeed ?? family.colors.primary;
+      final scheme = ColorScheme.fromSeed(seedColor: seed, brightness: brightness);
+      final colors = AppColors.fromScheme(scheme).copyWith(
+        scaffold: scheme.surfaceContainerLowest,
+        surface1: scheme.surface,
+        surface2: scheme.surfaceContainerHigh,
+      );
+      return _buildFromTokens(
+        colors: colors,
+        shapes: family.shapes,
+        atmosphere: family.atmosphere.copyWith(glowColor: scheme.primary),
+        motion: family.motion,
+        typography: family.typography(),
+        brightness: brightness,
+      );
+    }
+    if (family.brightness == brightness) {
+      return fromPreset(family, dynamicSeed: dynamicSeed);
+    }
+    // Karşı parlaklık: aile primary ile seed, yüzeyler moda göre.
+    final scheme = ColorScheme.fromSeed(
+      seedColor: family.colors.primary,
+      brightness: brightness,
+    );
+    final colors = AppColors.fromScheme(scheme).copyWith(
+      primary: family.colors.primary,
+      onPrimary: family.colors.onPrimary,
+      accent: family.colors.accent,
+      onAccent: family.colors.onAccent,
+      scaffold: scheme.surfaceContainerLowest,
+      surface1: scheme.surface,
+      surface2: scheme.surfaceContainerHigh,
+    );
+    return _buildFromTokens(
+      colors: colors,
+      shapes: family.shapes,
+      atmosphere: family.atmosphere.copyWith(
+        glowColor: family.colors.primary,
+        gradientStart: colors.scaffold,
+        gradientEnd: colors.surface1,
+      ),
+      motion: family.motion,
+      typography: AppTypography.standard(
+        textPrimary: colors.textPrimary,
+        serif: family.serifTitles,
+        monoClock: family.monospaceClock,
+      ),
+      brightness: brightness,
+    );
+  }
+
   /// Tercih edilen giriş: sanat ailesi (ThemePreset).
   static ThemeData fromPreset(ThemePreset preset, {Color? dynamicSeed}) {
     var colors = preset.colors;
