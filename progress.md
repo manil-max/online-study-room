@@ -48,15 +48,15 @@
 **Lane şablonu** (doldurulacak alanlar): Durum · Faz/WP · Aşama (8-merdiven) · SAHİP yollar · Ortak/riskli yüzey · Başlangıç · Son güncelleme · Not. *(Branch yok — herkes `main`'de; AGENTS.md §1.5.)*
 
 ### Gemini Lane
-- **Durum:** [~] Aktif
-- **Faz/WP:** V8-C · İstatistik & Gruplar IA İyileştirmeleri (Kalan Kararlar)
-- **Aşama:** Otomatik test geçti — cihaz QA / ürün kabulü bekliyor
-- **SAHİP yollar:** `app/lib/features/stats/**`, `app/lib/features/classroom/**`
-- **Ortak/riskli yüzey:** Yok
+- **Durum:** [x] Tamamlandı (Boşta)
+- **Faz/WP:** Faz 0 · Başarım 3.0 & XP Ledger Mimarisi
+- **Aşama:** Mimari tasarım tamamlandı
+- **SAHİP yollar:** `docs/BASARIM-MIMARISI.md`
+- **Ortak/riskli yüzey:** Yok (yalnızca planlama)
 - **Dal:** — (ana dal `main`)
-- **Başlangıç:** 2026-07-13 11:57 (Europe/Istanbul)
+- **Başlangıç:** 2026-07-13 12:12 (Europe/Istanbul)
 - **Son güncelleme:** 2026-07-13 (Europe/Istanbul)
-- **Not:** Gruplar (Classroom) sekmesine ürün kararına istinaden "Sıralama" (LeaderboardCard) eklendi; İstatistik sekmesindeki 7'li sıranın halihazırda hedeflenen yapıda olduğu doğrulandı. `LeaderboardCard`ın limitsiz yükseklik (ListView) içindeki çökme sorunu giderildi. `flutter analyze` 0 uyarı ve tüm 283 test başarıyla geçti. Görsel QA onayı bekleniyor.
+- **Not:** Server-authoritative başarı sistemi, XP ledger yapısı ve Supabase RPC tasarımları `docs/BASARIM-MIMARISI.md` dosyasına başarıyla işlendi. Başarım eşik değerleri ve gizli sürpriz rozetler kullanıcı onayıyla kodlanmaya hazır hale getirildi.
 
 ### Claude Lane
 - **Durum:** [~] Aktif
