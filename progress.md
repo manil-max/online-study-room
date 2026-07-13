@@ -122,6 +122,9 @@
 | WP-55 | Planlandı | Tema Stüdyosu R2 · Katmanlı Tema Editörü UX/UI | WP-54 |
 | WP-56 | Planlandı | Başarım 3.0 R1 · Server-Authoritative Motor ve SQL | Faz 0/V8 Sonrası |
 | WP-57 | Planlandı | Başarım 3.0 R2 · Oyunlaştırılmış Profil ve Rozet UI | WP-56 |
+| WP-58 | Planlandı | Saat Merkezi R1 · Zaman Motoru ve Exact Alarm Altyapısı | Faz 0/V8 Sonrası |
+| WP-59 | Planlandı | Saat Merkezi R2 · Alarm 2.0 ve Çoklu Timer UI | WP-58 |
+| WP-60 | Planlandı | Saat Merkezi R3 · Dünya Saati, Kronometre ve StandBy Modu | WP-58 |
 
 > **Dağıtım notu:** WP-39 iptal edildi. **WP-40** V8-A'nın temelidir; WP-41/42 ondan sonra, ikisi `study_providers` timer-sync'i paylaştığı için birbirleriyle paralel değildir. WP-43, V8-A'dan sonra başlar. WP-44 ve WP-45 ayrık dosyalarda bağımsız yürütülebilir.
 
@@ -413,6 +416,71 @@
 - **RLS/Güvenlik:** Ortak gruptaki üyeler profili salt-okunur (read-only) görebilmeli.
 - **Kabul (ölçülebilir):** Kullanıcı gizli başarımı başardığında animasyonun ≤ 250 ms içinde render edilmesi.
 - **Dal önerisi:** `wp57-achievements-ui`
+- **Model önerisi:** 🔴 Opus
+
+
+### WP-58: Saat Merkezi R1 (Zaman Motoru ve Exact Alarm Altyapısı) ⚙️
+- **Program/Faz:** Saat (KALITE-PROGRAMI §8.4)
+- **Ajan:** —
+- **Durum:** [ ] Bekliyor
+- **Problem:** Saat sisteminin saniye sekmeden, reboot ve timezone değişikliklerine dayanıklı Epoch bazlı motorunun ve `SCHEDULE_EXACT_ALARM` Android Native entegrasyonunun yazılması.
+- **Kapsam dışı:** UI ekranları.
+- **SAHİP dosyalar (yaz):**
+  - `app/lib/core/time_engine/**`
+  - `app/android/app/src/main/kotlin/**/AlarmReceiver.kt`
+  - `app/android/app/src/main/AndroidManifest.xml` (İzin ekleme)
+- **DOKUNMA (oku, değiştirme):**
+  - `docs/SAAT-MIMARISI.md`
+- **Adımlar:**
+  - [ ] Epoch tabanlı merkezi zaman kaynağını oluştur.
+  - [ ] Android 12+ Exact Alarm izin isteme (SCHEDULE_EXACT_ALARM) akışını kur.
+  - [ ] Çoklu Timer ve Alarm modellerini (renk, preset, etiket, skip next) yerel veritabanına hazırla.
+- **Veri/Migration etkisi:** Alarm ve Timer'lar Drift/Hive veya SharedPreferences ile cihaza kaydedilir.
+- **RLS/Güvenlik:** Yok.
+- **Edge-case'ler:** Cihaz reboot edildiğinde alarmların yeniden kurulması (BOOT_COMPLETED receiver). Timezone değişimi.
+- **Kabul (ölçülebilir):** Reboot sonrası alarmların hatasız yeniden zamanlanması. İzin reddedilirse gracefully çalışmaya devam etmesi.
+- **Dal önerisi:** `wp58-time-engine`
+- **Model önerisi:** 🔴 Opus
+
+### WP-59: Saat Merkezi R2 (Alarm 2.0 ve Çoklu Timer UI) ⏰
+- **Program/Faz:** Saat
+- **Ajan:** —
+- **Durum:** [ ] Bekliyor
+- **Problem:** Kullanıcının Crescendo, anti-snooze ve tek günlük atlama ile Süper Alarm kurabileceği; ayrıca aynı anda renkli çoklu timer'lar çalıştırabileceği arayüz.
+- **Kapsam dışı:** Dünya Saati ve StandBy.
+- **SAHİP dosyalar (yaz):**
+  - `app/lib/features/clock/alarm_screen.dart`
+  - `app/lib/features/clock/timer_studio_screen.dart`
+- **DOKUNMA (oku, değiştirme):**
+  - WP-58 motoru.
+- **Adımlar:**
+  - [ ] Kademeli ses (Crescendo) çalma modülünü entegre et.
+  - [ ] Matematik çözerek alarm kapatma arayüzü (Anti-Snooze).
+  - [ ] Çoklu timer ekranında "+1 Dk" ve Preset butonlarını hazırla.
+- **Kabul (ölçülebilir):** Aynı anda 3 timer çalışırken UI takılmamalı. Alarm çalarken sesin 30 saniye içinde linear artışı test edilmeli.
+- **Dal önerisi:** `wp59-alarm-timer-ui`
+- **Model önerisi:** 🔴 Opus
+
+### WP-60: Saat Merkezi R3 (Dünya Saati, Kronometre ve StandBy Modu) 🌍
+- **Program/Faz:** Saat
+- **Ajan:** —
+- **Durum:** [ ] Bekliyor
+- **Problem:** Lap (tur) analizi yapan profesyonel kronometre, gündüz/gece görünümlü Dünya saatleri ve AMOLED burn-in korumalı şarj/yatay masa saati.
+- **Kapsam dışı:** Alarm motoru.
+- **SAHİP dosyalar (yaz):**
+  - `app/lib/features/clock/stopwatch_screen.dart`
+  - `app/lib/features/clock/world_clock_screen.dart`
+  - `app/lib/features/clock/standby_desk_clock.dart`
+- **DOKUNMA (oku, değiştirme):**
+  - WP-58 motoru.
+- **Adımlar:**
+  - [ ] Gündüz/Gece durumuna göre UI rengi değişen Dünya saatleri listesi.
+  - [ ] En yavaş/hızlı turu highlight eden Kronometre UI.
+  - [ ] Cihaz yatay konuma geçtiğinde devreye giren dev masa saati (StandBy).
+  - [ ] StandBy saatinde burn-in koruması için her dakika offset değiştirme.
+- **Edge-case'ler:** Cihazın şarjdan çekilmesi, ekran döndürme kilidi.
+- **Kabul (ölçülebilir):** StandBy modunda 1 saat bekleyişte saatin konumunun rastgele en az 10 piksel değişmiş olması.
+- **Dal önerisi:** `wp60-standby-worldclock`
 - **Model önerisi:** 🔴 Opus
 
 ### WP-28: Windows MSIX, Güncelleme ve Release QA 📦
