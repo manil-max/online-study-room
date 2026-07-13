@@ -4,6 +4,26 @@
   "releases": [
     {
       "versionName": "1.0.18",
+      "buildNumber": 8,
+      "channel": "stable",
+      "date": "2026-07-13",
+      "title": "v8 Güven Sürümü — native sayaç, saat, başarımlar, temalar",
+      "highlights": [
+        "App kapalı sayaç: bildirim/widget Başlat–Durdur, akan süre.",
+        "Saat Merkezi: alarm, timer, kronometre, dünya, StandBy.",
+        "Taçlar her yerde; profilde Başarılar üstte; server XP.",
+        "15 atmosfer tema; Ayarlar’da widget izinleri; Ana Sayfa tap-to-top."
+      ],
+      "fixes": [
+        "Alarm app kapalı çalma, exact izin, timer/krono oturum kaydı."
+      ],
+      "notes": [
+        "Windows bu sürüme dahil değil.",
+        "Sorun olursa hızlı hotfix (v9) çıkarılabilir."
+      ]
+    },
+    {
+      "versionName": "1.0.18",
       "buildNumber": 18,
       "channel": "beta",
       "date": "2026-07-13",
@@ -16,8 +36,7 @@
       ],
       "fixes": [],
       "notes": [
-        "XP sıfırlama stable yayın anında (şimdi değil).",
-        "Windows bu betada kapsam dışı."
+        "v8 stable’a gömüldü."
       ]
     },
     {

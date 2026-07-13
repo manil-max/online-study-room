@@ -4,6 +4,22 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [v8 / 1.0.18+8] - 2026-07-13
+
+> **Stable — Güven Sürümü.** beta-v8…v18 hattının ürün paketi. Windows masaüstü bu sürüme dahil değil.
+
+### Highlights
+- **Native sayaç:** App kapalıyken bildirim/widget Başlat–Durdur; akan süre; oturum kaydı.
+- **Saat Merkezi:** Alarm (app kapalı çalar), timer, kronometre, dünya saati, StandBy; timer/krono çalışma oturumuna yazılır.
+- **Başarım 3.0:** Server-authoritative XP; taç sıralama/aktif/sohbet/istatistik/profil fotoğrafında; profilde Başarılar üstte.
+- **Tema Stüdyosu:** 15 atmosfer (Buzul, Kamp Ateşi, Gelecek Neon, Yumuşak…); anında uygula.
+- **IA:** Widget/izinler Ayarlar’da; Ana Sayfa’ya tekrar basınca en üste kayar; avatar zoom.
+
+### Notes
+- **XP sıfırlama:** Genel yayın için `0028_xp_reset_general_launch.sql` Supabase SQL Editor’da **bir kez** çalıştırılmalı (tag öncesi/hemen sonrası). Çalıştırılmazsa mevcut XP kalır.
+- Sorun olursa bir sonraki stable (v9+) hotfix olarak çıkar.
+- Windows (MSIX/IA) ayrı program; bu APK Android stable.
+
 ## [beta-v18 / 1.0.18+18] - 2026-07-13
 
 ### Highlights
@@ -13,8 +29,7 @@ notları ekranı bu metinle aynı kararları yansıtmalıdır.
 - Atmosfer temaları: Buzul, Yumuşak Krem, Gelecek Kenarı + Türkçe aile adları (15 tema).
 
 ### Notes
-- XP sıfırlama (`0028`) **henüz çalıştırma** — beta testte kalsın; **stable/genel yayın tag’inden hemen önce** SQL Editor’da uygula.
-- Windows işleri (WP-53/28) bu betada kapsam dışı.
+- v8 stable’a gömüldü; ayrı beta paketi gerekmez.
 
 ## [beta-v17 / 1.0.17+17] - 2026-07-13
 

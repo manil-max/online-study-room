@@ -116,9 +116,9 @@
 
 | WP | Durum | Kısa kapsam | Bağımlılık |
 |---|---|---|---|
-| WP-48 | Aktif | beta-v18 paket + kısa cihaz smoke → sorun yoksa stable kapısı | — |
-| WP-49 | Bekliyor | V8 beta soak + hata kapısı | WP-48 |
-| WP-50 | Hazırlık | V8/stable karar + rollback; **XP sıfırlama (0028) stable tag öncesi** | WP-49 GO |
+| WP-48 | Kapandı (ürün) | Kullanıcı GO: doğrudan **v8 stable** (soak atlandı; hotfix = v9) | — |
+| WP-49 | Atlandı | Soak ürün kararıyla atlandı | — |
+| WP-50 | Aktif | **v8 yayında** · 0028 XP reset SQL Editor (kullanıcı) · rollback = önceki v7/v8 APK | — |
 | WP-53 | R1 kod · açık | Windows Desktop Design 2.0 · ekran-içi masaüstü IA | WP-27 base |
 | WP-27 | Base QA geçti · ürün kabulü açık | Windows desktop shell + Compact Focus | WP-53 ile birlikte |
 | WP-28 | Bekliyor | Windows MSIX + imza + update + release QA | WP-53 ürün kabulü |
