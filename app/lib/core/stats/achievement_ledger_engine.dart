@@ -154,7 +154,14 @@ List<AchievementDictEntry> kAchievementDictV3() {
 }
 
 /// 5 kademeli taç XP eşikleri (bronz → elmas). SQL `_recalc_crown_rank` ile aynı.
-const List<int> kCrownXpThresholds = <int>[0, 1000, 5000, 15000, 50000];
+/// 0 / 2.500 / 10.000 / 25.000 / 75.000
+const List<int> kCrownXpThresholds = <int>[0, 2500, 10000, 25000, 75000];
+
+/// Tamamlanan her 1 saat çalışma = 10 XP (başarım ödüllerine ek, idempotent).
+const int kStudyHourXp = 10;
+
+/// Sistem ledger kimliği (rozet kataloğunda gösterilmez).
+const String kStudyHourAchievementId = 'study_hour_xp';
 
 /// XP → 5 basamaklı taç rütbesi.
 /// Eski 7'li rütbeler (wood_novice, ruby_master) görselde [normalize] edilir;
@@ -169,6 +176,10 @@ String crownRankForXp(int xp) {
 
 String ledgerEventKey(String userId, String achievementId, int tier) =>
     '$userId|$achievementId|tier_$tier';
+
+/// Saat XP event_key: `uid|study_hour_xp|h_12` (12. tamamlanan saat).
+String studyHourEventKey(String userId, int hourIndex) =>
+    '$userId|$kStudyHourAchievementId|h_$hourIndex';
 
 tz.TZDateTime _asIstanbul(DateTime instant) =>
     tz.TZDateTime.from(instant, _ledgerIstanbul);
@@ -385,6 +396,10 @@ class AchievementLedgerEngine {
     final awarded = <AchievementAward>[];
 
     for (final def in dictionary) {
+      // Sistem satırları (saat XP) sözlük döngüsünde işlenmez.
+      if (def.id == kStudyHourAchievementId || def.category == 'system') {
+        continue;
+      }
       final progress = _progressFor(def.id, metrics);
       for (final tier in def.tiers) {
         if (progress < tier.threshold) continue;
@@ -402,6 +417,15 @@ class AchievementLedgerEngine {
           ),
         );
       }
+    }
+
+    // Her tamamlanan 1 saat çalışma → 10 XP (idempotent h_1..h_N).
+    final hours = metrics['total_hours'] as int? ?? 0;
+    for (var h = 1; h <= hours; h++) {
+      final key = studyHourEventKey(userId, h);
+      if (_eventKeys.contains(key)) continue;
+      _eventKeys.add(key);
+      _ledgerXp[key] = kStudyHourXp;
     }
 
     return AchievementEventResult(

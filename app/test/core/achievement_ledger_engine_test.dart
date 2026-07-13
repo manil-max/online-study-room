@@ -155,13 +155,51 @@ void main() {
       );
     });
 
-    test('crownRankForXp 5 kademe eşikleri', () {
+    test('crownRankForXp 5 kademe eşikleri 0/2.5k/10k/25k/75k', () {
       expect(crownRankForXp(0), 'bronze_beginner');
-      expect(crownRankForXp(999), 'bronze_beginner');
-      expect(crownRankForXp(1000), 'silver_learner');
-      expect(crownRankForXp(5000), 'gold_achiever');
-      expect(crownRankForXp(15000), 'platinum_scholar');
-      expect(crownRankForXp(50000), 'diamond_owl');
+      expect(crownRankForXp(2499), 'bronze_beginner');
+      expect(crownRankForXp(2500), 'silver_learner');
+      expect(crownRankForXp(10000), 'gold_achiever');
+      expect(crownRankForXp(25000), 'platinum_scholar');
+      expect(crownRankForXp(75000), 'diamond_owl');
+    });
+
+    test('her tamamlanan saat 10 XP verir ve idempotenttir', () {
+      final engine = AchievementLedgerEngine();
+      // 2.5 saat → 2 tam saat → 20 XP (+ steel_will 90dk kademe 2?)
+      // 90 dk = steel_will tier2 (90) → 50+100; hours=1 → 10
+      final sessions = [
+        _session(
+          id: 'h1',
+          start: DateTime.utc(2026, 6, 1, 10, 0),
+          minutes: 150, // 2.5 saat → total_hours=2
+        ),
+      ];
+      final first = engine.processEvent(
+        userId: 'u1',
+        eventType: 'session_completed',
+        sessions: sessions,
+        dailyGoalMinutes: 360,
+      );
+      expect(first.metrics['total_hours'], 2);
+      // Saat XP en az 20
+      expect(engine.totalXp, greaterThanOrEqualTo(20));
+      final hourOnlyKeys = engine.eventKeys
+          .where((k) => k.contains('study_hour_xp'))
+          .toList();
+      expect(hourOnlyKeys.length, 2);
+
+      final second = engine.processEvent(
+        userId: 'u1',
+        eventType: 'session_completed',
+        sessions: sessions,
+        dailyGoalMinutes: 360,
+      );
+      expect(second.totalXp, first.totalXp);
+      expect(
+        engine.eventKeys.where((k) => k.contains('study_hour_xp')).length,
+        2,
+      );
     });
   });
 

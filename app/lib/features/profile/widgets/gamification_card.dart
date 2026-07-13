@@ -97,7 +97,7 @@ class _SummaryContent extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          '${summary.profile.xp} XP · sonraki taç ${bar.next}',
+          '${summary.profile.xp} XP · sonraki taç ${bar.next} · saat başına +10 XP',
           style: theme.textTheme.labelSmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),

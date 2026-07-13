@@ -133,13 +133,14 @@ void main() {
     );
   });
 
-  test('xpBarMetrics ve crownLabelTr 5 kademe', () {
+  test('xpBarMetrics ve crownLabelTr 5 kademe 0/2.5k/10k/25k/75k', () {
     expect(crownLabelTr('gold_achiever'), 'Altın Taç');
-    final m = xpBarMetrics(1500);
-    expect(m.floor, 1000);
-    expect(m.next, 5000);
-    expect(m.progress, closeTo(0.125, 0.001));
-    expect(crownRankForXp(1500), 'silver_learner');
+    final m = xpBarMetrics(5000);
+    expect(m.floor, 2500);
+    expect(m.next, 10000);
+    expect(m.progress, closeTo(0.333, 0.01));
+    expect(crownRankForXp(2500), 'silver_learner');
     expect(crownRankForXp(0), 'bronze_beginner');
+    expect(crownRankForXp(75000), 'diamond_owl');
   });
 }

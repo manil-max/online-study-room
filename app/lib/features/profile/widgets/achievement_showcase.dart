@@ -285,6 +285,8 @@ class AchievementShowcaseState extends State<AchievementShowcase>
   List<Widget> _buildCatalog(ThemeData theme) {
     final byCat = <String, List<AchievementDictEntry>>{};
     for (final d in _dict) {
+      // Saat XP vb. sistem satırları rozet kataloğunda yok.
+      if (d.category == 'system' || d.id == kStudyHourAchievementId) continue;
       byCat.putIfAbsent(d.category, () => []).add(d);
     }
     const order = ['study', 'streak', 'group', 'social', 'secret'];
