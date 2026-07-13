@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/config/supabase_config.dart';
-import '../../core/stats/achievement_engine.dart';
 import '../../core/stats/gamification.dart';
 import '../../core/stats/study_stats.dart';
 import '../models/achievement.dart';
@@ -11,6 +10,7 @@ import '../models/study_session.dart';
 import '../repositories/gamification_repository.dart';
 import '../repositories/in_memory/in_memory_gamification_repository.dart';
 import '../repositories/supabase/supabase_gamification_repository.dart';
+import 'achievement_provider.dart';
 import 'auth_providers.dart';
 import 'study_providers.dart';
 
@@ -35,38 +35,81 @@ final userAchievementsProvider =
       return repo.watchUserAchievements(userId);
     });
 
-/// Profil açıldığında mevcut oturumları kalıcı başarı ilerlemesine işler.
-/// Hesaplama yalnızca değişiklik olduğunda yazar; stream güncellemelerinin
-/// sonsuz bir yazma döngüsü oluşturmasını engeller.
+/// WP-56 kapanış: başarı ilerlemesi **server-authoritative**.
+///
+/// - İstemci XP/tier hesaplayıp yazmaz.
+/// - `process_achievement_event` (Supabase RPC) veya in_memory ledger.
+/// - Aynı `event_key` ikinci kez XP vermez.
+/// - Tetik: oturum listesi değişince / profil-başarım ekranı bu provider'ı izleyince.
+///
+/// [userSessionsProvider] yalnız **okunur** (Claude SAHİP study_providers — yazılmaz).
 final gamificationProgressSyncProvider = FutureProvider.autoDispose<void>((
   ref,
 ) async {
   final user = ref.watch(authStateProvider).value;
   if (user == null) return;
 
-  final sessions = await ref.watch(userSessionsProvider.future);
-  final profile = await ref.watch(gamificationProfileProvider(user.id).future);
-  final achievements = await ref.watch(
-    userAchievementsProvider(user.id).future,
-  );
-  final result = AchievementEngine.calculateProgression(
-    profile: profile,
-    currentAchievements: achievements,
-    allSessions: sessions,
-  );
-  final repository = ref.read(gamificationRepositoryProvider);
-  final profileChanged =
-      result.newProfile.xp != profile.xp ||
-      result.newProfile.crownRank != profile.crownRank;
+  // Oturumlar değişince yeniden değerlendir (idempotent). Değer in_memory
+  // processEvent içinde ayrıca okunur; burada yalnız bağımlılık için await.
+  await ref.watch(userSessionsProvider.future);
 
-  // Profil satırı önce yazılır; eski kullanıcılar için de güvenli başlangıçtır.
-  if (profileChanged || achievements.isEmpty) {
-    await repository.updateProfile(result.newProfile);
-  }
-  if (result.newAchievements.isNotEmpty) {
-    await repository.updateUserAchievements(result.newAchievements);
+  final process = ref.read(processAchievementEventProvider);
+  final result = await process(eventType: 'session_completed');
+
+  // Supabase: ledger trigger gamification_profiles + user_achievements günceller.
+  // Offline/demo: ledger sonucunu yerel cüzdana yansıt (yine motor çıktısı; istemci kuralı yok).
+  if (!SupabaseConfig.isConfigured) {
+    await _applyInMemoryLedgerProjection(
+      ref: ref,
+      userId: user.id,
+      totalXp: result.totalXp,
+      crownRank: result.crownRank,
+      awarded: result.awarded
+          .map(
+            (a) => (
+              achievementId: a.achievementId,
+              tier: a.tier,
+            ),
+          )
+          .toList(),
+    );
   }
 });
+
+/// In-memory demo için ledger → gamification cüzdanı projeksiyonu.
+Future<void> _applyInMemoryLedgerProjection({
+  required Ref ref,
+  required String userId,
+  required int totalXp,
+  required String crownRank,
+  required List<({String achievementId, int tier})> awarded,
+}) async {
+  final gamRepo = ref.read(gamificationRepositoryProvider);
+  final profile = await ref.read(gamificationProfileProvider(userId).future);
+
+  if (profile.xp != totalXp || profile.crownRank != crownRank) {
+    await gamRepo.updateProfile(
+      profile.copyWith(xp: totalXp, crownRank: crownRank),
+    );
+  }
+
+  if (awarded.isEmpty) return;
+
+  final now = DateTime.now();
+  await gamRepo.updateUserAchievements([
+    for (final a in awarded)
+      UserAchievement(
+        id: '',
+        userId: userId,
+        achievementId: a.achievementId,
+        tier: a.tier,
+        progress: a.tier,
+        unlockedAt: now,
+        createdAt: now,
+        updatedAt: now,
+      ),
+  ]);
+}
 
 class GamificationSummary {
   const GamificationSummary({

@@ -10,7 +10,7 @@ class GamificationCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Profil açıldığında kalıcı XP ve başarı ilerlemesini güncel tutar.
+    // WP-56: profil açılınca sunucu ledger'ı yeniden değerlendirir (istemci XP yazmaz).
     ref.watch(gamificationProgressSyncProvider);
     final theme = Theme.of(context);
     final summaryAsync = ref.watch(gamificationSummaryProvider);

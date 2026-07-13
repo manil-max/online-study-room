@@ -17,6 +17,9 @@ class AchievementsScreen extends ConsumerWidget {
       return const Scaffold(body: Center(child: Text('Giriş yapmalısınız.')));
     }
 
+    // WP-56: ekran açılınca process_achievement_event (idempotent).
+    ref.watch(gamificationProgressSyncProvider);
+
     final profileAsync = ref.watch(gamificationProfileProvider(userId));
     final achievementsAsync = ref.watch(userAchievementsProvider(userId));
 

@@ -33,9 +33,15 @@ class SupabaseGamificationRepository implements GamificationRepository {
 
   @override
   Future<void> updateProfile(GamificationProfile profile) async {
+    // WP-56: istemci XP / crown_rank yazamaz (0024 guard + bu dar yazım).
+    // Yalnız seri koruma ve vitrin rozetleri.
     final now = DateTime.now().toUtc().toIso8601String();
-    final map = profile.copyWith(updatedAt: DateTime.parse(now)).toMap();
-    await _client.from('gamification_profiles').upsert(map);
+    await _client.from('gamification_profiles').upsert({
+      'user_id': profile.userId,
+      'streak_freezes': profile.streakFreezes.clamp(0, 99),
+      'selected_badges': profile.selectedBadges,
+      'updated_at': now,
+    });
   }
 
   @override
@@ -51,14 +57,8 @@ class SupabaseGamificationRepository implements GamificationRepository {
   Future<void> updateUserAchievements(
     List<UserAchievement> achievements,
   ) async {
-    if (achievements.isEmpty) return;
-    final now = DateTime.now().toUtc().toIso8601String();
-
-    final maps = achievements
-        .map((e) => e.copyWith(updatedAt: DateTime.parse(now)).toUpsertMap())
-        .toList();
-    await _client
-        .from('user_achievements')
-        .upsert(maps, onConflict: 'user_id,achievement_id');
+    // WP-56 server-authoritative: başarı/tier yalnız process_achievement_event
+    // + xp_ledger trigger yazar. İstemci no-op (eski yolu kırmaz, hile yolunu kapatır).
+    return;
   }
 }

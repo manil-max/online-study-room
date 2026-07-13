@@ -81,15 +81,15 @@
 - **Not:** Ayarlar tek katmana indirildi; ExpansionTile yok, Gruplar sayacı kaldırıldı, bildirim/sürüm doğrudan açılıyor, grid Auto seçeneği kaldırılıp eski değer 6'ya göçüyor. Analyze + 283 test + Windows release build PASS; görsel cihaz QA bekliyor. Push yok.
 
 ### Grok Lane
-- **Durum:** [~] Aktif (WP-56 kod+test bitti — canlı migration / ürün kabulü bekliyor)
-- **Faz/WP:** Başarım 3.0 · WP-56 R1 (Server-Authoritative Motor ve SQL)
-- **Aşama:** Otomatik test geçti — canlı SQL Editor uygulaması + ürün kabulü bekliyor
-- **SAHİP yollar:** `supabase/migrations/0024_achievements_ledger.sql`, `app/lib/data/providers/achievement_provider.dart`, `app/lib/core/stats/achievement_ledger_engine.dart`, `app/lib/data/models/achievement_ledger.dart`, `app/lib/data/repositories/achievement_repository.dart`, `app/lib/data/repositories/{supabase,in_memory}/*achievement*`, `app/test/core/achievement_ledger_engine_test.dart`
-- **Ortak/riskli yüzey:** `supabase/migrations/**` (yalnız 0024)
-- **Dal:** — (ana dal `main`, ayrık dosyalar — AGENTS.md §1.5)
+- **Durum:** [x] Boşta (WP-56 kod+wire-up bitti — beta QA kullanıcıda)
+- **Faz/WP:** Başarım 3.0 · WP-56 R1
+- **Aşama:** Otomatik test geçti — cihaz/beta QA + ürün kabulü bekliyor
+- **SAHİP yollar:** —
+- **Ortak/riskli yüzey:** —
+- **Dal:** — (ana dal `main`)
 - **Başlangıç:** 2026-07-13 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-13 (WP-56 analyze 0 + 8 birim test PASS)
-- **Not:** `process_achievement_event` RPC + append-only `xp_ledger` (event_key unique) + sözlük 21 başarım. İstemci XP yazamaz (RLS + XP guard trigger). B7: sosyal okuma `can_see_user_sessions`. Eski `gamificationProgressSyncProvider` istemci yazımı 0024 sonrası RLS ile engellenir — oturum bitince `notifySessionCompletedForAchievementsProvider` bağlanmalı (WP-57 / wire-up). Canlı migration henüz uygulanmadı. `Kodda doğrulandı` · canlı: `Cihazda doğrulanmalı`.
+- **Son güncelleme:** 2026-07-13 (WP-56 wire-up commit)
+- **Not:** Wire-up tamam: `gamificationProgressSyncProvider` → `process_achievement_event`; Supabase repo XP/achievement client write kapalı; profil + başarılar ekranı sync izliyor. Analyze 0 + 9 achievement test PASS. `Kodda doğrulandı`. Beta: `Cihazda doğrulanmalı`.
 
 ---
 
@@ -131,7 +131,7 @@
 | WP-28 | Bekliyor | Windows MSIX + imza + update + release QA | WP-53 cihaz/ürün kabulü |
 | WP-54 | Planlandı | Tema Stüdyosu R1 · Token Motoru ve 12 Hazır Tema | Faz 0/V8 Sonrası |
 | WP-55 | Planlandı | Tema Stüdyosu R2 · Katmanlı Tema Editörü UX/UI | WP-54 |
-| WP-56 | Kod+test geçti · canlı migration/kabul bekliyor | Başarım 3.0 R1 · Server-Authoritative Motor ve SQL | Mimari doc (Gemini) |
+| WP-56 | Kod+wire-up bitti · beta/kabul bekliyor | Başarım 3.0 R1 · Server-Authoritative Motor ve SQL | Mimari doc (Gemini) · 0024 canlı |
 | WP-57 | Planlandı | Başarım 3.0 R2 · Oyunlaştırılmış Profil ve Rozet UI | WP-56 |
 | WP-58 | Planlandı | Saat Merkezi R1 · Zaman Motoru ve Exact Alarm Altyapısı | Faz 0/V8 Sonrası |
 | WP-59 | Planlandı | Saat Merkezi R2 · Alarm 2.0 ve Çoklu Timer UI | WP-58 |
@@ -389,29 +389,29 @@
 ### WP-56: Başarım 3.0 R1 (Server-Authoritative Motor ve SQL) 🏆
 - **Program/Faz:** Başarım 3.0 (KALITE-PROGRAMI §8.6)
 - **Ajan:** Grok
-- **Durum:** [~] Otomatik test geçti — canlı migration (SQL Editor) + ürün kabulü bekliyor
+- **Durum:** [~] Otomatik test geçti — **kod+wire-up bitti** · canlı migration kullanıcıda uygulandı · beta/ürün kabulü bekliyor
 - **Problem:** İstemci taraflı (hileye açık) başarı hesaplamalarının `docs/BASARIM-MIMARISI.md`'deki Server-Authoritative ledger sistemine geçirilmesi.
 - **Kapsam dışı:** Profil vitrini ve rozet çizimleri (→ WP-57).
 - **SAHİP dosyalar (yaz):**
   - `supabase/migrations/0024_achievements_ledger.sql`
-  - `app/lib/data/providers/achievement_provider.dart`
-  - (+ motor/repo/model/test: `achievement_ledger_engine.dart`, `achievement_ledger.dart`, `achievement_repository` dual, `achievement_ledger_engine_test.dart`)
+  - `app/lib/data/providers/achievement_provider.dart` + `gamification_providers.dart` (wire-up)
+  - `app/lib/data/repositories/supabase/supabase_gamification_repository.dart` (istemci XP yazımı kapalı)
+  - (+ motor/repo/model/test)
 - **DOKUNMA (oku, değiştirme):**
-  - `docs/BASARIM-MIMARISI.md`
+  - `docs/BASARIM-MIMARISI.md` · `study_providers.dart` (Claude — yalnız okuma)
 - **Adımlar:**
-  - [x] `xp_ledger` tablosu + append-only + `event_key` UNIQUE; trigger ile `gamification_profiles.xp` / `user_achievements` projeksiyonu.
-  - [x] `achievements_dict` seed: 11 açık + 10 gizli (BASARIM-MIMARISI eşikleri/XP).
-  - [x] RPC `process_achievement_event(p_event_type, p_payload)` SECURITY DEFINER; metrikler Europe/Istanbul.
-  - [x] İstemci API: `achievement_provider` + dual repo (Supabase RPC / in_memory engine).
-  - [x] B7 sıkılaştırma: gamification/user_achievements SELECT → `can_see_user_sessions`; istemci achievement INSERT/UPDATE kaldırıldı; XP guard trigger.
-  - [x] Birim test: idempotency + steel_will/marathon/secret_404/pi (8 test PASS).
-- **Veri/Migration etkisi:** `0024_achievements_ledger.sql` canlıya SQL Editor ile uygulanmalı. **Geri alma:** migration başındaki drop notu.
-- **RLS/Güvenlik:** Ledger istemci yazamaz; yalnız RPC. XP/crown istemci update ile değiştirilemez (guard).
-- **Edge-case'ler:** Çift olay → `ON CONFLICT (event_key) DO NOTHING`. Grup/sosyal metrikler (alpha_wolf, inspiration, …) R1'de 0 (sözlük hazır). `secret_break_enemy` pomodoro skip verisi yok → 0.
-- **Kabul (ölçülebilir):** Aynı `event_key` ile ikinci process çift XP vermez — **Dart engine test ile `Kodda doğrulandı`**. Canlı Supabase RPC smoke + RLS denemesi `Cihazda doğrulanmalı`.
-- **Uygulama notu (2026-07-13, Grok):** Analyze 0 (yeni dosyalar). `flutter test test/core/achievement_ledger_engine_test.dart` 8/8. Eski `gamificationProgressSyncProvider` hâlâ istemci yazmaya çalışır; 0024 sonrası RLS reddeder — wire-up: oturum bitişinde `notifySessionCompletedForAchievementsProvider` (sonraki iş / WP-57 öncesi).
-- **Dal:** — (main, ayrık dosyalar)
-- **Model:** Grok
+  - [x] `xp_ledger` + RPC + dict seed + B7 RLS
+  - [x] İstemci API dual repo
+  - [x] **Wire-up:** `gamificationProgressSyncProvider` → `process_achievement_event` (istemci `AchievementEngine` yazımı kaldırıldı)
+  - [x] Supabase `updateProfile` yalnız streak_freezes + selected_badges; `updateUserAchievements` no-op
+  - [x] Profil kartı + Başarılar ekranı sync izliyor
+  - [x] Birim test: ledger 8 + wire-up 1 = 9 PASS
+- **Veri/Migration etkisi:** `0024` canlıya **kullanıcı uyguladı**. Geri alma: migration başı notu.
+- **RLS/Güvenlik:** Ledger/RPC only; istemci XP yolu kapalı.
+- **Edge-case'ler:** Idempotent event_key. Grup/sosyal metrik R1=0. `secret_break_enemy` veri yok.
+- **Kabul:** Çift XP yok — `Kodda doğrulandı`. Beta: profil/başarılar aç → oturum sonrası XP artışı; ikinci açılışta çift artmama — `Cihazda doğrulanmalı`.
+- **Uygulama notu (2026-07-13, Grok wire-up):** Eski client write kaldırıldı. Oturum biterken otomatik tetik profil/başarılar ekranı + oturum listesi değişimi ile (study_providers'a yazılmadı).
+- **Dal:** — (main) · **Model:** Grok
 
 ### WP-57: Başarım 3.0 R2 (Oyunlaştırılmış Profil ve Rozet UI) 🏅
 - **Program/Faz:** Başarım 3.0
