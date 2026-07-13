@@ -5,6 +5,7 @@ import '../../core/config/supabase_config.dart';
 import '../../core/stats/gamification.dart';
 import '../../core/stats/study_stats.dart';
 import '../models/achievement.dart';
+import '../models/achievement_ledger.dart';
 import '../models/gamification_profile.dart';
 import '../models/study_session.dart';
 import '../repositories/gamification_repository.dart';
@@ -56,6 +57,13 @@ final gamificationProgressSyncProvider = FutureProvider.autoDispose<void>((
   final process = ref.read(processAchievementEventProvider);
   final result = await process(eventType: 'session_completed');
 
+  // WP-57 polish: yeni ödüller confetti için state'e yazılır.
+  if (result.awarded.isNotEmpty) {
+    ref.read(lastAchievementAwardsProvider.notifier).setAwards(
+          List.of(result.awarded),
+        );
+  }
+
   // Supabase: ledger trigger gamification_profiles + user_achievements günceller.
   // Offline/demo: ledger sonucunu yerel cüzdana yansıt (yine motor çıktısı; istemci kuralı yok).
   if (!SupabaseConfig.isConfigured) {
@@ -75,6 +83,21 @@ final gamificationProgressSyncProvider = FutureProvider.autoDispose<void>((
     );
   }
 });
+
+/// Son process_achievement_event ile kazanılan rozetler (confetti / snack).
+class LastAchievementAwards extends Notifier<List<AchievementAward>> {
+  @override
+  List<AchievementAward> build() => const [];
+
+  void setAwards(List<AchievementAward> awards) => state = awards;
+
+  void clear() => state = const [];
+}
+
+final lastAchievementAwardsProvider =
+    NotifierProvider<LastAchievementAwards, List<AchievementAward>>(
+      LastAchievementAwards.new,
+    );
 
 /// In-memory demo için ledger → gamification cüzdanı projeksiyonu.
 Future<void> _applyInMemoryLedgerProjection({

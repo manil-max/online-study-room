@@ -219,12 +219,12 @@ class _AttachmentPreviewDialogState extends ConsumerState<_AttachmentPreviewDial
             Image.network(_url!, fit: BoxFit.contain),
           Container(
             margin: const EdgeInsets.all(8),
-            decoration: const BoxDecoration(
-              color: Colors.black54,
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.scrim.withValues(alpha: 0.54),
               shape: BoxShape.circle,
             ),
             child: IconButton(
-              icon: const Icon(Icons.close, color: Colors.white),
+              icon: Icon(Icons.close, color: Theme.of(context).colorScheme.onInverseSurface),
               onPressed: () => Navigator.of(context).pop(),
             ),
           ),

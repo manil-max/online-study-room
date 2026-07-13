@@ -52,6 +52,11 @@ class SocialProfileScreen extends ConsumerWidget {
         ref.watch(gamificationProfileProvider(profile.id));
     final achievementsAsync =
         ref.watch(userAchievementsProvider(profile.id));
+    final liveAwards = isSelf
+        ? ref.watch(lastAchievementAwardsProvider)
+        : const <AchievementAward>[];
+    final confettiAwards =
+        newlyAwarded.isNotEmpty ? newlyAwarded : liveAwards;
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -97,7 +102,7 @@ class SocialProfileScreen extends ConsumerWidget {
                     isSelf: isSelf,
                     compact: false,
                     showCatalog: true,
-                    forceConfettiAwards: newlyAwarded,
+                    forceConfettiAwards: confettiAwards,
                     onToggleShowcaseBadge: isSelf
                         ? (badgeId) => _toggleBadge(
                               context,

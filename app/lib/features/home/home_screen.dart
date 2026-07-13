@@ -901,7 +901,7 @@ class _ResizeHandle extends StatelessWidget {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.16),
+                    color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.16),
                     blurRadius: 6,
                   ),
                 ],

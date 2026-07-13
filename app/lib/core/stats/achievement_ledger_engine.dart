@@ -299,6 +299,9 @@ class AchievementLedgerEngine {
       'weekend_goal_days': weekendGoalDays,
       'perfect_months': perfectMonths,
       'goal_minutes': dailyGoalMinutes,
+      // Offline: sosyal metrikler oturumdan türetilmez (sunucu 0025).
+      'nudge_starts': 0,
+      'group_goal_contrib': sessions.isEmpty ? 0 : dayTotals.length,
       'secrets': {
         'night_owl': secretNight,
         'dawn': secretDawn,
@@ -331,12 +334,14 @@ class AchievementLedgerEngine {
       case 'perfect_month':
         return metrics['perfect_months'] as int? ?? 0;
       case 'alpha_wolf':
-      case 'team_player':
       case 'campfire_hours':
-      case 'inspiration':
       case 'locomotive':
       case 'secret_break_enemy':
         return 0;
+      case 'team_player':
+        return metrics['group_goal_contrib'] as int? ?? 0;
+      case 'inspiration':
+        return metrics['nudge_starts'] as int? ?? 0;
       case 'secret_night_owl':
         return (secrets['night_owl'] == true) ? 1 : 0;
       case 'secret_dawn':

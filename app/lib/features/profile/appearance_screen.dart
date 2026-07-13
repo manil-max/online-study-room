@@ -3,9 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/theme_settings.dart';
+import 'theme_studio_screen.dart';
 import 'widgets/custom_palette_editor.dart';
 
-/// Görünüm ayarları: renk paleti seçimi + açık/koyu/sistem modu (kalıcı).
+/// Görünüm ayarları: Tema Stüdyosu (12 aile) + eski palet + açık/koyu/sistem.
 class AppearanceScreen extends ConsumerWidget {
   const AppearanceScreen({super.key});
 
@@ -14,12 +15,27 @@ class AppearanceScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final settings = ref.watch(themeSettingsProvider);
     final notifier = ref.read(themeSettingsProvider.notifier);
+    final family = settings.family;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Görünüm')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          Card(
+            child: ListTile(
+              leading: Icon(Icons.palette_outlined, color: theme.colorScheme.primary),
+              title: const Text('Tema Stüdyosu'),
+              subtitle: Text('${family.name} · 12 sanat yönü, canlı önizleme'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const ThemeStudioScreen()),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 20),
           Text('Tema modu', style: theme.textTheme.titleMedium),
           const SizedBox(height: 8),
           SegmentedButton<ThemeMode>(
@@ -214,7 +230,7 @@ class _Swatch extends StatelessWidget {
       decoration: BoxDecoration(
         color: color,
         shape: BoxShape.circle,
-        border: Border.all(color: Colors.white24),
+        border: Border.all(color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.24)),
       ),
     );
   }

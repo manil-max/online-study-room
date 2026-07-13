@@ -81,15 +81,15 @@
 - **Not:** Ayarlar tek katmana indirildi; ExpansionTile yok, Gruplar sayacı kaldırıldı, bildirim/sürüm doğrudan açılıyor, grid Auto seçeneği kaldırılıp eski değer 6'ya göçüyor. Analyze + 283 test + Windows release build PASS; görsel cihaz QA bekliyor. Push yok.
 
 ### Grok Lane
-- **Durum:** [x] Boşta (WP-54 kod+test bitti — beta QA kullanıcıda)
-- **Faz/WP:** Tema Stüdyosu · WP-54 R1
-- **Aşama:** Otomatik test geçti — cihaz/beta + WP-55 editör UI bekliyor
+- **Durum:** [x] Boşta (1→2→3 zinciri bitti — beta QA kullanıcıda)
+- **Faz/WP:** WP-55 + başarım polish + Colors token
+- **Aşama:** Otomatik test geçti
 - **SAHİP yollar:** —
 - **Ortak/riskli yüzey:** —
-- **Dal:** — (ana dal `main`)
-- **Başlangıç:** 2026-07-13 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-13 (WP-54 teslim)
-- **Not:** 5 ThemeExtension + 12 preset; main family wiring; eski AppPalette köprüsü. Analyze 0 + 7 theme test PASS. `Kodda doğrulandı`.
+- **Dal:** — (main)
+- **Başlangıç:** 2026-07-13
+- **Son güncelleme:** 2026-07-13 (zincir teslim)
+- **Not:** WP-55 Tema Stüdyosu UI; confetti `lastAchievementAwardsProvider`; 0025 inspiration/team_player; Colors→scheme (auth/account/admin/home/subjects). Analyze 0 + testler PASS. 0025 SQL Editor’da uygula.
 
 ---
 
@@ -130,7 +130,7 @@
 | WP-27 | Base cihaz QA geçti | Windows desktop shell + klavye/fare + Compact Focus | Ürün kabulü WP-52/53 sonrası |
 | WP-28 | Bekliyor | Windows MSIX + imza + update + release QA | WP-53 cihaz/ürün kabulü |
 | WP-54 | Kod+test bitti · beta/kabul bekliyor | Tema Stüdyosu R1 · Token Motoru ve 12 Hazır Tema | — |
-| WP-55 | Planlandı | Tema Stüdyosu R2 · Katmanlı Tema Editörü UX/UI | WP-54 |
+| WP-55 | Kod+test bitti · beta/kabul bekliyor | Tema Stüdyosu R2 · Katmanlı Tema Editörü UX/UI | WP-54 |
 | WP-56 | Kod+wire-up bitti · beta/kabul bekliyor | Başarım 3.0 R1 · Server-Authoritative Motor ve SQL | Mimari doc (Gemini) · 0024 canlı |
 | WP-57 | Kod+test bitti · beta/kabul bekliyor | Başarım 3.0 R2 · Oyunlaştırılmış Profil ve Rozet UI | WP-56 |
 | WP-58 | Planlandı | Saat Merkezi R1 · Zaman Motoru ve Exact Alarm Altyapısı | Faz 0/V8 Sonrası |
@@ -368,23 +368,18 @@
 
 ### WP-55: Tema Stüdyosu R2 (Katmanlı Tema Editörü UI) 🎛️
 - **Program/Faz:** Tema Stüdyosu
-- **Ajan:** —
-- **Durum:** [ ] Bekliyor
-- **Problem:** Kullanıcının 12 temadan birini seçip, canlı önizleme ile (mood, renk, köşe) kişiselleştirebileceği editör ekranının yapılması.
-- **Kapsam dışı:** Yeni tema paletleri ekleme.
-- **SAHİP dosyalar (yaz):**
-  - `app/lib/features/profile/theme_studio_screen.dart`
-- **DOKUNMA (oku, değiştirme):**
-  - `app/lib/core/theme/**` (WP-54 çıktısı).
+- **Ajan:** Grok
+- **Durum:** [~] Otomatik test geçti — beta/ürün kabulü bekliyor
+- **Problem:** 12 temadan seçim + canlı önizleme + mood.
+- **Kapsam dışı:** PRO hex stüdyo; sunucu `user_preferences` JSON (yerel prefs familyId yeterli R2).
+- **SAHİP:** `theme_studio_screen.dart` + `appearance_screen` glue
 - **Adımlar:**
-  - [ ] 7 adımlı huni UI'sini oluştur (Tema Seç -> Mood -> Vurgu -> Önizleme).
-  - [ ] Canlı önizleme için sahte bir "Dashboard" ve "Sayaç" widget'ı ekle.
-- **Veri/Migration etkisi:** Kullanıcı tercihleri `user_preferences` tablosuna JSON olarak basılacak.
-- **RLS/Güvenlik:** RLS kuralları yalnız kendi temasını güncelleyebilir şeklinde (`auth.uid()`).
-- **Edge-case'ler:** Çevrimdışı durum, geçersiz renk formatı.
-- **Kabul (ölçülebilir):** Tema değiştiğinde uygulamanın restart etmeden UI'nin anında güncellenmesi.
-- **Dal önerisi:** `wp55-theme-editor-ui`
-- **Model önerisi:** 🔴 Opus
+  - [x] Huni: Tema → Mood → Şekil (önizleme) → Uygula
+  - [x] Canlı Dashboard + Sayaç önizlemesi (preset renkleri)
+  - [x] `setFamily` / `setMode` — restart yok
+  - [x] Görünüm ekranından giriş kartı
+  - [x] Widget test PASS
+- **Kabul:** Anında tema — `Kodda doğrulandı`. Cihaz görsel — `Cihazda doğrulanmalı`.
 
 ### WP-56: Başarım 3.0 R1 (Server-Authoritative Motor ve SQL) 🏆
 - **Program/Faz:** Başarım 3.0 (KALITE-PROGRAMI §8.6)

@@ -77,13 +77,13 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
     } on AuthException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message), backgroundColor: Colors.red),
+          SnackBar(content: Text(e.message), backgroundColor: Theme.of(context).colorScheme.error),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Beklenmeyen bir hata oluştu.'), backgroundColor: Colors.red),
+          SnackBar(content: const Text('Beklenmeyen bir hata oluştu.'), backgroundColor: Theme.of(context).colorScheme.error),
         );
       }
     } finally {
@@ -148,13 +148,13 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
     } on AuthException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message), backgroundColor: Colors.red),
+          SnackBar(content: Text(e.message), backgroundColor: Theme.of(context).colorScheme.error),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Beklenmeyen bir hata oluştu.'), backgroundColor: Colors.red),
+          SnackBar(content: const Text('Beklenmeyen bir hata oluştu.'), backgroundColor: Theme.of(context).colorScheme.error),
         );
       }
     } finally {
@@ -176,7 +176,7 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
             ),
             FilledButton(
               onPressed: () => Navigator.pop(context, true),
-              style: FilledButton.styleFrom(backgroundColor: Colors.red),
+              style: FilledButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.error),
               child: const Text('Çıkış Yap'),
             ),
           ],
@@ -195,7 +195,7 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Çıkış yapılırken bir hata oluştu.'), backgroundColor: Colors.red),
+          SnackBar(content: const Text('Çıkış yapılırken bir hata oluştu.'), backgroundColor: Theme.of(context).colorScheme.error),
         );
         setState(() => _isLoading = false);
       }
