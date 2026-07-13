@@ -66,6 +66,12 @@ class MainActivity : FlutterActivity() {
                 }
             }
         }
+
+        // WP-58: Exact alarm izin kanalı
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, ExactAlarmHelper.CHANNEL)
+            .setMethodCallHandler { call, result ->
+                ExactAlarmHelper.handle(this, call, result)
+            }
     }
 
     override fun onResume() {

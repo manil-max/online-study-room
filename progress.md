@@ -81,15 +81,15 @@
 - **Not:** Ayarlar tek katmana indirildi; ExpansionTile yok, Gruplar sayacı kaldırıldı, bildirim/sürüm doğrudan açılıyor, grid Auto seçeneği kaldırılıp eski değer 6'ya göçüyor. Analyze + 283 test + Windows release build PASS; görsel cihaz QA bekliyor. Push yok.
 
 ### Grok Lane
-- **Durum:** [x] Boşta — WP-54…57 + polish ürün kabulü (kullanıcı 2026-07-13)
+- **Durum:** [x] Boşta — WP-58/59/60 kod+otomatik test geçti (cihaz QA / ürün kabulü bekliyor)
 - **Faz/WP:** —
 - **Aşama:** —
 - **SAHİP yollar:** —
 - **Ortak/riskli yüzey:** —
-- **Dal:** — (main)
+- **Dal:** main
 - **Başlangıç:** —
 - **Son güncelleme:** 2026-07-13
-- **Not:** Tema Stüdyosu, Başarım 3.0, taç/XP 0/2.5k/10k/25k/75k + saat 10 XP, profil polish, timer hotfix. **SQL:** 0025–0027 (canlı), 0028 yalnız genel yayın. Admin panel fix = 0029.
+- **Not:** Saat Merkezi R1–R3 kodlandı: epoch motor, exact alarm, Alarm 2.0, çoklu timer, dünya saati, lap kronometre, StandBy burn-in. `flutter analyze` (clock paths) 0; time_engine+clock+alarms testleri 20/20 PASS. `Cihazda doğrulanmalı`.
 
 ---
 
@@ -105,7 +105,7 @@
 | 4 | **V8-B** | Genel senkronizasyon denetimi (canonical projection, idempotency) | Planlandı | — |
 | 5 | **V8-C** | Küçük IA: İstatistik sırası + Gruplar sırası/kamp ateşi + animasyon | Planlandı | düşük risk, golden test |
 | 6 | **V8 beta → soak → stable** | Kalite kapısı | Planlandı | `Ürün kararı`: sürüm no |
-| 7 | **Saat programı** | Saat 1–5 (motor → IA → alarm → kronometre/timer → StandBy/widget) | Planlandı | tek başına program |
+| 7 | **Saat programı** | Saat 1–5 (motor → IA → alarm → kronometre/timer → StandBy/widget) | Kod tamamlandı · cihaz QA bekliyor | WP-58/59/60 |
 | 8 | **Tema Stüdyosu** | Token motoru + 12+ tema ailesi + katmanlı editör | WP-54/55 tamamlandı | PRO hex stüdyo sonraki |
 | 9 | **Başarım & Sosyal Profil 3.0** | Tek motor, server-authoritative XP ledger, herkese açık profil RLS | WP-56/57 tamamlandı | 0025–0027 SQL canlı; 0028 genel yayın; B7 RLS ayrı |
 | 10 | **Windows masaüstü** | WP-27 base → WP-52 adaptif grid → WP-53 desktop IA → WP-28 MSIX/release | Araştırıldı · planlandı | `docs/WINDOWS-URUN-PLANI.md` |
@@ -127,9 +127,9 @@
 | WP-50 | Hazırlık tamamlandı | V8 stable karar + rollback paketi | WP-49 kanıtları + ürün GO/NO-GO |
 | WP-27 | Base cihaz QA geçti | Windows desktop shell + klavye/fare + Compact Focus | Ürün kabulü WP-52/53 sonrası |
 | WP-28 | Bekliyor | Windows MSIX + imza + update + release QA | WP-53 cihaz/ürün kabulü |
-| WP-58 | Planlandı | Saat Merkezi R1 · Zaman Motoru ve Exact Alarm Altyapısı | Faz 0/V8 Sonrası |
-| WP-59 | Planlandı | Saat Merkezi R2 · Alarm 2.0 ve Çoklu Timer UI | WP-58 |
-| WP-60 | Planlandı | Saat Merkezi R3 · Dünya Saati, Kronometre ve StandBy Modu | WP-58 |
+| WP-58 | Otomatik test geçti · cihaz QA bekliyor | Saat Merkezi R1 · Epoch motor + Exact Alarm | — |
+| WP-59 | Otomatik test geçti · cihaz QA bekliyor | Saat Merkezi R2 · Alarm 2.0 + Çoklu Timer Studio | WP-58 |
+| WP-60 | Otomatik test geçti · cihaz QA bekliyor | Saat Merkezi R3 · Dünya / Kronometre / StandBy | WP-58 |
 
 > **Dağıtım notu:** WP-39 iptal edildi. **WP-40** V8-A'nın temelidir; WP-41/42 ondan sonra, ikisi `study_providers` timer-sync'i paylaştığı için birbirleriyle paralel değildir. WP-43, V8-A'dan sonra başlar. WP-44 ve WP-45 ayrık dosyalarda bağımsız yürütülebilir.
 
@@ -427,68 +427,38 @@
 
 
 ### WP-58: Saat Merkezi R1 (Zaman Motoru ve Exact Alarm Altyapısı) ⚙️
-- **Program/Faz:** Saat (KALITE-PROGRAMI §8.4)
-- **Ajan:** —
-- **Durum:** [ ] Bekliyor
-- **Problem:** Saat sisteminin saniye sekmeden, reboot ve timezone değişikliklerine dayanıklı Epoch bazlı motorunun ve `SCHEDULE_EXACT_ALARM` Android Native entegrasyonunun yazılması.
-- **Kapsam dışı:** UI ekranları.
-- **SAHİP dosyalar (yaz):**
-  - `app/lib/core/time_engine/**`
-  - `app/android/app/src/main/kotlin/**/AlarmReceiver.kt`
-  - `app/android/app/src/main/AndroidManifest.xml` (İzin ekleme)
-- **DOKUNMA (oku, değiştirme):**
-  - `docs/SAAT-MIMARISI.md`
+- **Program/Faz:** Saat (KALITE-PROGRAMI §8.4) · **Ajan:** Grok
+- **Durum:** [~] Otomatik test geçti — cihaz QA / ürün kabulü bekliyor
+- **Problem:** Epoch motor + `SCHEDULE_EXACT_ALARM` + reboot/timezone dayanıklılığı.
+- **SAHİP:** `app/lib/core/time_engine/**`, `ExactAlarmHelper.kt`, `AlarmReceiver.kt`, `AndroidManifest` izinleri, `alarm_notification_service.dart`, modeller
 - **Adımlar:**
-  - [ ] Epoch tabanlı merkezi zaman kaynağını oluştur.
-  - [ ] Android 12+ Exact Alarm izin isteme (SCHEDULE_EXACT_ALARM) akışını kur.
-  - [ ] Çoklu Timer ve Alarm modellerini (renk, preset, etiket, skip next) yerel veritabanına hazırla.
-- **Veri/Migration etkisi:** Alarm ve Timer'lar Drift/Hive veya SharedPreferences ile cihaza kaydedilir.
-- **RLS/Güvenlik:** Yok.
-- **Edge-case'ler:** Cihaz reboot edildiğinde alarmların yeniden kurulması (BOOT_COMPLETED receiver). Timezone değişimi.
-- **Kabul (ölçülebilir):** Reboot sonrası alarmların hatasız yeniden zamanlanması. İzin reddedilirse gracefully çalışmaya devam etmesi.
-- **Dal önerisi:** `wp58-time-engine`
-- **Model önerisi:** 🔴 Opus
+  - [x] Epoch clock / stopwatch / countdown saf motor
+  - [x] AlarmScheduler (tekrar, skip-next, crescendo eğrisi)
+  - [x] Exact alarm izin kanalı + exact/inexact schedule mode
+  - [x] BOOT/TIMEZONE AlarmReceiver iskeleti
+  - [x] AlarmRule + TimerInstance epoch alanları (skip/antiSnooze/crescendo/endsAt)
+- **Kabul:** Unit test motor 14 PASS — `Kodda doğrulandı`. Reboot/exact izin cihaz — `Cihazda doğrulanmalı`.
 
 ### WP-59: Saat Merkezi R2 (Alarm 2.0 ve Çoklu Timer UI) ⏰
-- **Program/Faz:** Saat
-- **Ajan:** —
-- **Durum:** [ ] Bekliyor
-- **Problem:** Kullanıcının Crescendo, anti-snooze ve tek günlük atlama ile Süper Alarm kurabileceği; ayrıca aynı anda renkli çoklu timer'lar çalıştırabileceği arayüz.
-- **Kapsam dışı:** Dünya Saati ve StandBy.
-- **SAHİP dosyalar (yaz):**
-  - `app/lib/features/clock/alarm_screen.dart`
-  - `app/lib/features/clock/timer_studio_screen.dart`
-- **DOKUNMA (oku, değiştirme):**
-  - WP-58 motoru.
+- **Program/Faz:** Saat · **Ajan:** Grok
+- **Durum:** [~] Otomatik test geçti — cihaz QA / ürün kabulü bekliyor
 - **Adımlar:**
-  - [ ] Kademeli ses (Crescendo) çalma modülünü entegre et.
-  - [ ] Matematik çözerek alarm kapatma arayüzü (Anti-Snooze).
-  - [ ] Çoklu timer ekranında "+1 Dk" ve Preset butonlarını hazırla.
-- **Kabul (ölçülebilir):** Aynı anda 3 timer çalışırken UI takılmamalı. Alarm çalarken sesin 30 saniye içinde linear artışı test edilmeli.
-- **Dal önerisi:** `wp59-alarm-timer-ui`
-- **Model önerisi:** 🔴 Opus
+  - [x] Alarm editör: gün chip, hafta içi/her gün, anti-snooze, crescendo, erteleme
+  - [x] Skip next + sıradaki alarm özeti
+  - [x] AlarmRingingScreen (crescendo haptic + matematik anti-snooze)
+  - [x] Exact alarm izin banner (denied)
+  - [x] Multi-timer: preset şeridi, +1/+5 dk, renk, epoch ticker, bildirim planı
+- **Kabul:** Widget test empty/list/editor PASS — `Kodda doğrulandı`. 3 paralel timer + alarm ses cihaz — `Cihazda doğrulanmalı`.
 
 ### WP-60: Saat Merkezi R3 (Dünya Saati, Kronometre ve StandBy Modu) 🌍
-- **Program/Faz:** Saat
-- **Ajan:** —
-- **Durum:** [ ] Bekliyor
-- **Problem:** Lap (tur) analizi yapan profesyonel kronometre, gündüz/gece görünümlü Dünya saatleri ve AMOLED burn-in korumalı şarj/yatay masa saati.
-- **Kapsam dışı:** Alarm motoru.
-- **SAHİP dosyalar (yaz):**
-  - `app/lib/features/clock/stopwatch_screen.dart`
-  - `app/lib/features/clock/world_clock_screen.dart`
-  - `app/lib/features/clock/standby_desk_clock.dart`
-- **DOKUNMA (oku, değiştirme):**
-  - WP-58 motoru.
+- **Program/Faz:** Saat · **Ajan:** Grok
+- **Durum:** [~] Otomatik test geçti — cihaz QA / ürün kabulü bekliyor
 - **Adımlar:**
-  - [ ] Gündüz/Gece durumuna göre UI rengi değişen Dünya saatleri listesi.
-  - [ ] En yavaş/hızlı turu highlight eden Kronometre UI.
-  - [ ] Cihaz yatay konuma geçtiğinde devreye giren dev masa saati (StandBy).
-  - [ ] StandBy saatinde burn-in koruması için her dakika offset değiştirme.
-- **Edge-case'ler:** Cihazın şarjdan çekilmesi, ekran döndürme kilidi.
-- **Kabul (ölçülebilir):** StandBy modunda 1 saat bekleyişte saatin konumunun rastgele en az 10 piksel değişmiş olması.
-- **Dal önerisi:** `wp60-standby-worldclock`
-- **Model önerisi:** 🔴 Opus
+  - [x] WorldClockScreen gündüz/gece gradient + offset etiketi + şehir kataloğu
+  - [x] StopwatchScreen lap analizi (en hızlı yeşil / en yavaş kırmızı) + kopyala
+  - [x] StandBy: gece kırmızı ton + BurnInOffset (dakikada kayma) + sıradaki alarm
+  - [x] ClockScreen hub IA: Saat · Dünya · Alarm · Timer · Kronometre · Odak (StudyTimerCard yalnız Odak)
+- **Kabul:** Burn-in unit ≥10px / 60 periyot; clock hub widget PASS — `Kodda doğrulandı`. Landscape StandBy cihaz — `Cihazda doğrulanmalı`.
 
 ### WP-28: Windows MSIX, Güncelleme ve Release QA 📦
 - **Program/Faz:** Windows dağıtım/release (`KALITE-PROGRAMI §8.7`) · **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-53 gerçek Windows cihaz/ürün kabulü
@@ -568,6 +538,8 @@
 
 - **WP-41/42/51 + Grok timer hotfix (2026-07-13):** Native `StudyTimerService`, app-kapalı Başlat/Durdur, chronometer bildirim, beta-v13–v15 rötuşları; in-app start idle race fix (`94945ac`). Ürün sahibi kapatma kararı.
 - **WP-54–57 (2026-07-13):** Tema Stüdyosu + Başarım 3.0 ledger/UI; taç 0/2.5k/10k/25k/75k; saat +10 XP; profil/tap/taç polish. SQL 0025–0027 canlı uygulama kullanıcının; 0028 genel yayın sıfırlaması.
+
+- **WP-58/59/60 Saat Merkezi (2026-07-13, Grok):** Epoch time engine; exact alarm Android; Alarm 2.0 (skip/anti-snooze/crescendo); multi-timer studio; dünya saati; lap kronometre; StandBy burn-in. Hub 6 sekme. Analyze (clock paths) 0; 20 ilgili test PASS. Ürün kabulü cihaz QA sonrası.
 
 - **WP-37:** `docs/DENETIM-FAZ0A.md` ile WP-1–36'nın kanıtlanabilir aşamaları, özellik envanteri, P0/P1/P2 listesi, risk/v8 blocker kaydı ve belge tutarsızlığı önerileri teslim edildi. `app/` diff'i boş; canlı backend teyidi WP-38'de kalır.
 

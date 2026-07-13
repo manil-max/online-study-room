@@ -1,11 +1,17 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/time_engine/alarm_scheduler.dart';
+import '../../../core/time_engine/burn_in_offset.dart';
 import '../../../core/utils/duration_format.dart';
+import '../../../data/providers/alarm_providers.dart';
 import '../../../data/providers/study_providers.dart';
 
+/// Yatay masa saati — gece kırmızı ton + AMOLED burn-in kayması (WP-60).
 class StandByClockView extends ConsumerStatefulWidget {
   const StandByClockView({super.key});
 
@@ -16,28 +22,61 @@ class StandByClockView extends ConsumerStatefulWidget {
 class _StandByClockViewState extends ConsumerState<StandByClockView> {
   Timer? _timer;
   DateTime _now = DateTime.now();
+  final _burnIn = BurnInOffset(amplitude: 14);
 
   @override
   void initState() {
     super.initState();
+    // Sistem UI'yi gizle — masa saati hissi
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    _burnIn.tick(_now);
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) setState(() => _now = DateTime.now());
+      if (!mounted) return;
+      final n = DateTime.now();
+      _burnIn.tick(n);
+      setState(() => _now = n);
     });
   }
 
   @override
   void dispose() {
     _timer?.cancel();
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     super.dispose();
+  }
+
+  bool get _isNight {
+    final h = _now.hour;
+    return h >= 21 || h < 7;
   }
 
   @override
   Widget build(BuildContext context) {
     final timerState = ref.watch(studyTimerProvider);
-    final theme = Theme.of(context);
+    final alarms = ref.watch(alarmsProvider).asData?.value ?? const [];
 
     final timeStr = DateFormat.Hm().format(_now);
     final dateStr = DateFormat('EEEE, d MMMM', 'tr_TR').format(_now);
+
+    // Gece: düşük mavi / kırmızı-turuncu (melatonin dostu)
+    final clockColor = _isNight
+        ? const Color(0xFFB91C1C)
+        : const Color(0xFFE2E8F0);
+    final subColor = _isNight
+        ? const Color(0xFF7F1D1D)
+        : const Color(0xFF94A3B8);
+
+    // Sıradaki alarm
+    DateTime? nextAlarm;
+    String? nextLabel;
+    for (final a in alarms.where((a) => a.isActive)) {
+      final n = AlarmScheduler.nextFire(a, _now);
+      if (n == null) continue;
+      if (nextAlarm == null || n.isBefore(nextAlarm)) {
+        nextAlarm = n;
+        nextLabel = a.label.isNotEmpty ? a.label : a.timeLabel;
+      }
+    }
 
     Widget? activeTimerWidget;
     if (timerState.isRunning) {
@@ -48,26 +87,25 @@ class _StandByClockViewState extends ConsumerState<StandByClockView> {
       final displaySeconds = target == null
           ? elapsed
           : (target - elapsed).clamp(0, target);
-      
-      String modeText = '';
-      if (timerState.mode == TimerMode.pomodoro) {
-        modeText = timerState.phase == TimerPhase.work ? 'Odak' : 'Mola';
-      } else if (timerState.mode == TimerMode.countdown) {
-        modeText = 'Geri Sayım';
-      } else {
-        modeText = 'Kronometre';
-      }
+
+      String modeText = switch (timerState.mode) {
+        TimerMode.pomodoro =>
+          timerState.phase == TimerPhase.work ? 'Odak' : 'Mola',
+        TimerMode.countdown => 'Geri Sayım',
+        TimerMode.stopwatch => 'Kronometre',
+      };
 
       activeTimerWidget = Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.timer, color: theme.colorScheme.primary, size: 24),
+          Icon(Icons.timer, color: clockColor, size: 22),
           const SizedBox(width: 8),
           Text(
             '$modeText: ${formatHms(displaySeconds)}',
-            style: theme.textTheme.headlineSmall?.copyWith(
-              color: theme.colorScheme.primary,
-              fontWeight: FontWeight.bold,
+            style: TextStyle(
+              color: clockColor,
+              fontWeight: FontWeight.w600,
+              fontSize: 20,
             ),
           ),
         ],
@@ -75,39 +113,60 @@ class _StandByClockViewState extends ConsumerState<StandByClockView> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.black, // StandBy için siyah arka plan
-      body: Center(
-        child: FittedBox(
-          fit: BoxFit.scaleDown,
-          child: Padding(
-            padding: const EdgeInsets.all(32.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  timeStr,
-                  style: const TextStyle(
-                    fontSize: 200,
-                    fontWeight: FontWeight.w200,
-                    color: Colors.white,
-                    height: 1.0,
-                  ),
+      backgroundColor: Colors.black,
+      body: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+          // Tek dokunuş: immersive toggle (çıkış için orientation de yeter)
+        },
+        child: Center(
+          child: Transform.translate(
+            offset: Offset(_burnIn.dx, _burnIn.dy),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      timeStr,
+                      style: TextStyle(
+                        fontSize: 200,
+                        fontWeight: FontWeight.w200,
+                        color: clockColor,
+                        height: 1.0,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      dateStr.toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w600,
+                        color: subColor,
+                        letterSpacing: 2,
+                      ),
+                    ),
+                    if (nextAlarm != null) ...[
+                      const SizedBox(height: 20),
+                      Text(
+                        'Alarm ${DateFormat.Hm().format(nextAlarm)}'
+                        '${nextLabel != null ? ' · $nextLabel' : ''}',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: subColor,
+                        ),
+                      ),
+                    ],
+                    if (activeTimerWidget != null) ...[
+                      const SizedBox(height: 28),
+                      activeTimerWidget,
+                    ],
+                  ],
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  dateStr.toUpperCase(),
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white.withValues(alpha: 0.5),
-                    letterSpacing: 2,
-                  ),
-                ),
-                if (activeTimerWidget != null) ...[
-                  const SizedBox(height: 32),
-                  activeTimerWidget,
-                ],
-              ],
+              ),
             ),
           ),
         ),

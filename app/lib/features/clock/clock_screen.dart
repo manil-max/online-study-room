@@ -5,12 +5,26 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/desktop/desktop_window.dart';
+import '../../core/time_engine/alarm_scheduler.dart';
+import '../../data/providers/alarm_providers.dart';
 import '../../data/providers/study_providers.dart';
 import '../classroom/widgets/study_timer_card.dart';
 import '../desktop/desktop_page_scaffold.dart';
+import 'alarms_screen.dart';
+import 'stopwatch_screen.dart';
+import 'timers_screen.dart';
 import 'widgets/standby_clock_view.dart';
+import 'world_clock_screen.dart';
 
-enum ClockTab { clock, stopwatch, countdown, pomodoro }
+/// Saat Merkezi sekmeleri (KALITE-PROGRAMI §8.4 Saat 2 IA).
+enum ClockTab {
+  clock,
+  world,
+  alarm,
+  multiTimer,
+  stopwatch,
+  focus,
+}
 
 class ClockScreen extends ConsumerStatefulWidget {
   const ClockScreen({super.key});
@@ -43,82 +57,196 @@ class _ClockScreenState extends ConsumerState<ClockScreen> {
   void _onTabChanged(ClockTab tab) {
     setState(() => _tab = tab);
 
+    // Odak sekmesine geçince study timer pomodoro/stopwatch hizası
+    // yalnız sayaç duruyorken (V8-A state bozulmasın).
     final timerState = ref.read(studyTimerProvider);
-    final notifier = ref.read(studyTimerProvider.notifier);
-
-    // Yalnızca sayaç duruyorken modu değiştir
-    if (!timerState.isRunning) {
-      if (tab == ClockTab.stopwatch) {
-        notifier.setMode(TimerMode.stopwatch);
-      } else if (tab == ClockTab.countdown) {
-        notifier.setMode(TimerMode.countdown);
-      } else if (tab == ClockTab.pomodoro) {
-        notifier.setMode(TimerMode.pomodoro);
-      }
+    if (!timerState.isRunning && tab == ClockTab.focus) {
+      // Varsayılan odak: pomodoro tercih edilmez — mevcut mod korunur.
     }
   }
 
-  Widget _buildClockView(BuildContext context) {
+  Widget _buildLocalClock(BuildContext context) {
     final timeStr = DateFormat.Hm().format(_now);
+    final secStr = DateFormat('ss').format(_now);
     final dateStr = DateFormat('EEEE, d MMMM', 'tr_TR').format(_now);
     final theme = Theme.of(context);
 
+    final alarms = ref.watch(alarmsProvider).asData?.value ?? const [];
+    DateTime? next;
+    String? nextLabel;
+    for (final a in alarms.where((a) => a.isActive)) {
+      final n = AlarmScheduler.nextFire(a, _now);
+      if (n == null) continue;
+      if (next == null || n.isBefore(next)) {
+        next = n;
+        nextLabel = a.label.isNotEmpty ? a.label : a.timeLabel;
+      }
+    }
+
     return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            timeStr,
-            style: TextStyle(
-              fontSize: 96,
-              fontWeight: FontWeight.w300,
-              color: theme.colorScheme.onSurface,
-              height: 1.0,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    timeStr,
+                    style: TextStyle(
+                      fontSize: 88,
+                      fontWeight: FontWeight.w200,
+                      color: theme.colorScheme.onSurface,
+                      height: 1.0,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 18, left: 4),
+                    child: Text(
+                      secStr,
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w300,
+                        color: theme.colorScheme.primary,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            dateStr.toUpperCase(),
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: theme.colorScheme.onSurfaceVariant,
-              letterSpacing: 2,
+            const SizedBox(height: 10),
+            Text(
+              dateStr.toUpperCase(),
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: theme.colorScheme.onSurfaceVariant,
+                letterSpacing: 1.6,
+              ),
             ),
-          ),
-        ],
+            if (next != null) ...[
+              const SizedBox(height: 28),
+              Card(
+                child: ListTile(
+                  leading: const Icon(Icons.alarm),
+                  title: Text('Sıradaki alarm · ${DateFormat.Hm().format(next)}'),
+                  subtitle: Text(nextLabel ?? ''),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => _onTabChanged(ClockTab.alarm),
+                ),
+              ),
+            ],
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              alignment: WrapAlignment.center,
+              children: [
+                ActionChip(
+                  avatar: const Icon(Icons.public, size: 18),
+                  label: const Text('Dünya'),
+                  onPressed: () => _onTabChanged(ClockTab.world),
+                ),
+                ActionChip(
+                  avatar: const Icon(Icons.alarm, size: 18),
+                  label: const Text('Alarm'),
+                  onPressed: () => _onTabChanged(ClockTab.alarm),
+                ),
+                ActionChip(
+                  avatar: const Icon(Icons.hourglass_bottom, size: 18),
+                  label: const Text('Timer'),
+                  onPressed: () => _onTabChanged(ClockTab.multiTimer),
+                ),
+                ActionChip(
+                  avatar: const Icon(Icons.timer_outlined, size: 18),
+                  label: const Text('Kronometre'),
+                  onPressed: () => _onTabChanged(ClockTab.stopwatch),
+                ),
+                ActionChip(
+                  avatar: const Icon(Icons.psychology_outlined, size: 18),
+                  label: const Text('Odak'),
+                  onPressed: () => _onTabChanged(ClockTab.focus),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Yatay çevir → StandBy masa saati',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.outline,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildModeSelector({bool compact = false}) {
-    return SegmentedButton<ClockTab>(
-      showSelectedIcon: false,
-      segments: [
-        ButtonSegment(
-          value: ClockTab.clock,
-          icon: const Icon(Icons.schedule),
-          label: compact ? null : const Text('Saat'),
-        ),
-        ButtonSegment(
-          value: ClockTab.stopwatch,
-          icon: const Icon(Icons.timer_outlined),
-          label: compact ? null : const Text('Kronometre'),
-        ),
-        ButtonSegment(
-          value: ClockTab.countdown,
-          icon: const Icon(Icons.hourglass_empty),
-          label: compact ? null : const Text('Timer'),
-        ),
-        ButtonSegment(
-          value: ClockTab.pomodoro,
-          icon: const Icon(Icons.av_timer),
-          label: compact ? null : const Text('Odak'),
-        ),
-      ],
-      selected: {_tab},
-      onSelectionChanged: (set) => _onTabChanged(set.first),
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: SegmentedButton<ClockTab>(
+        showSelectedIcon: false,
+        segments: [
+          ButtonSegment(
+            value: ClockTab.clock,
+            icon: Icon(Icons.schedule, key: compact ? null : const Key('clock_tab_clock')),
+            label: compact ? null : const Text('Saat'),
+          ),
+          ButtonSegment(
+            value: ClockTab.world,
+            icon: const Icon(Icons.public, key: Key('clock_tab_world')),
+            label: compact ? null : const Text('Dünya'),
+          ),
+          ButtonSegment(
+            value: ClockTab.alarm,
+            icon: const Icon(Icons.alarm, key: Key('clock_tab_alarm')),
+            label: compact ? null : const Text('Alarm'),
+          ),
+          ButtonSegment(
+            value: ClockTab.multiTimer,
+            icon: const Icon(Icons.hourglass_empty, key: Key('clock_tab_timer')),
+            label: compact ? null : const Text('Timer'),
+          ),
+          ButtonSegment(
+            value: ClockTab.stopwatch,
+            icon: const Icon(Icons.timer_outlined, key: Key('clock_tab_stopwatch')),
+            label: compact ? null : const Text('Kronometre'),
+          ),
+          ButtonSegment(
+            value: ClockTab.focus,
+            icon: const Icon(Icons.av_timer, key: Key('clock_tab_focus')),
+            label: compact ? null : const Text('Odak'),
+          ),
+        ],
+        selected: {_tab},
+        onSelectionChanged: (set) => _onTabChanged(set.first),
+      ),
     );
+  }
+
+  Widget _buildTabBody() {
+    return switch (_tab) {
+      ClockTab.clock => _buildLocalClock(context),
+      ClockTab.world => const WorldClockScreen(embedded: true),
+      ClockTab.alarm => const AlarmsScreen(embedded: true),
+      ClockTab.multiTimer => const TimersScreen(embedded: true),
+      ClockTab.stopwatch => const StopwatchScreen(embedded: true),
+      ClockTab.focus => const Padding(
+          padding: EdgeInsets.all(16),
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: StudyTimerCard(),
+          ),
+        ),
+    };
   }
 
   @override
@@ -129,25 +257,13 @@ class _ClockScreenState extends ConsumerState<ClockScreen> {
           return const StandByClockView();
         }
 
-        Widget content;
-        if (_tab == ClockTab.clock) {
-          content = _buildClockView(context);
-        } else {
-          // Timer, Kronometre, Odak modları için mevcut sayacı göster
-          content = const Padding(
-            padding: EdgeInsets.all(16.0),
-            child: Align(
-              alignment: Alignment.topCenter,
-              child: StudyTimerCard(),
-            ),
-          );
-        }
+        final content = _buildTabBody();
 
         if (isDesktopWindow) {
           return DesktopPageScaffold(
             title: 'Saat Merkezi',
             subtitle:
-                'Saati izle, kronometreyi yönet veya yapılandırılmış bir odak oturumu başlat.',
+                'Dünya saati, alarm, çoklu timer, kronometre ve odak oturumu.',
             icon: Icons.schedule_outlined,
             actions: [
               FilledButton.tonalIcon(
@@ -167,36 +283,49 @@ class _ClockScreenState extends ConsumerState<ClockScreen> {
                       breakpoint: 1040,
                       secondaryWidth: 300,
                       primary: DesktopPanel(
-                        child: SizedBox(height: 420, child: content),
+                        child: SizedBox(
+                          height: 520,
+                          child: content,
+                        ),
                       ),
                       secondary: DesktopPanel(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Odak araçları',
-                              style: Theme.of(context).textTheme.titleMedium
+                              'Saat araçları',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleMedium
                                   ?.copyWith(fontWeight: FontWeight.w700),
                             ),
                             const SizedBox(height: 12),
+                            const _DesktopClockHint(
+                              icon: Icons.alarm,
+                              title: 'Exact alarm',
+                              detail: 'Android 12+ kesin zamanlama',
+                            ),
+                            const _DesktopClockHint(
+                              icon: Icons.timelapse,
+                              title: 'Epoch motor',
+                              detail: 'Doze dayanıklı süre',
+                            ),
                             const _DesktopClockHint(
                               icon: Icons.keyboard_command_key,
                               title: 'Compact Focus',
                               detail: 'Ctrl + Shift + M',
                             ),
-                            const _DesktopClockHint(
-                              icon: Icons.push_pin_outlined,
-                              title: 'Her zaman üstte',
-                              detail: 'Ctrl + Shift + P',
-                            ),
                             const Divider(height: 28),
                             Text(
-                              'Sayaç çalışırken mod değiştirilmez. Oturumu durdurduktan sonra başka bir moda geçebilirsin.',
-                              style: Theme.of(context).textTheme.bodyMedium
+                              'Odak sekmesi çalışma oturumunu (sunucu kayıtlı) yönetir. '
+                              'Alarm ve çoklu timer cihaz yerelidir.',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
                                   ?.copyWith(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.onSurfaceVariant,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
                                   ),
                             ),
                           ],
@@ -211,20 +340,23 @@ class _ClockScreenState extends ConsumerState<ClockScreen> {
         }
 
         return Scaffold(
-          appBar: AppBar(title: const Text('Saat Merkezi'), centerTitle: true),
+          appBar: AppBar(
+            title: const Text('Saat Merkezi'),
+            centerTitle: true,
+          ),
           body: Column(
             children: [
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: LayoutBuilder(
                   builder: (context, constraints) {
-                    final compact = constraints.maxWidth < 350;
+                    final compact = constraints.maxWidth < 420;
                     return _buildModeSelector(compact: compact);
                   },
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 12),
               Expanded(child: content),
             ],
           ),

@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-/// Alarmların özelliklerini tanımlayan veri modeli.
+/// Alarm özellik modeli (Alarm 2.0).
 class AlarmRule extends Equatable {
   const AlarmRule({
     required this.id,
@@ -11,32 +11,41 @@ class AlarmRule extends Equatable {
     this.label = '',
     this.isActive = true,
     this.snoozeMinutes = 5,
-  }) : assert(hour >= 0 && hour <= 23),
-       assert(minute >= 0 && minute <= 59);
+    this.skipNextOn,
+    this.antiSnooze = false,
+    this.crescendo = true,
+    this.vibrate = true,
+  })  : assert(hour >= 0 && hour <= 23),
+        assert(minute >= 0 && minute <= 59);
 
   final String id;
-  
+
   /// Alarm saati (0-23)
   final int hour;
-  
+
   /// Alarm dakikası (0-59)
   final int minute;
-  
-  /// Hangi günlerde tekrarlanacağı (1 = Pazartesi, 7 = Pazar). 
-  /// Boş ise tekrarsız bir alarmdır (sadece bir kez çalar).
+
+  /// Tekrar günleri (1 = Pazartesi … 7 = Pazar). Boş = tek seferlik.
   final List<int> days;
-  
-  /// Sadece belirli bir tarihte çalacaksa (opsiyonel).
+
+  /// Yalnız belirli bir tarihte (opsiyonel).
   final DateTime? date;
-  
-  /// Alarm etiketi
+
   final String label;
-  
-  /// Alarm aktif/açık mı?
   final bool isActive;
-  
-  /// Erteleme süresi (dakika)
   final int snoozeMinutes;
+
+  /// Bu takvim günündeki occurrence atlanır (tek günlük skip).
+  final DateTime? skipNextOn;
+
+  /// Kapatmak için matematik sorusu.
+  final bool antiSnooze;
+
+  /// 30 sn kademeli ses/haptic.
+  final bool crescendo;
+
+  final bool vibrate;
 
   AlarmRule copyWith({
     String? id,
@@ -47,6 +56,11 @@ class AlarmRule extends Equatable {
     String? label,
     bool? isActive,
     int? snoozeMinutes,
+    DateTime? skipNextOn,
+    bool clearSkipNextOn = false,
+    bool? antiSnooze,
+    bool? crescendo,
+    bool? vibrate,
   }) {
     return AlarmRule(
       id: id ?? this.id,
@@ -57,6 +71,10 @@ class AlarmRule extends Equatable {
       label: label ?? this.label,
       isActive: isActive ?? this.isActive,
       snoozeMinutes: snoozeMinutes ?? this.snoozeMinutes,
+      skipNextOn: clearSkipNextOn ? null : (skipNextOn ?? this.skipNextOn),
+      antiSnooze: antiSnooze ?? this.antiSnooze,
+      crescendo: crescendo ?? this.crescendo,
+      vibrate: vibrate ?? this.vibrate,
     );
   }
 
@@ -70,6 +88,10 @@ class AlarmRule extends Equatable {
       'label': label,
       'isActive': isActive,
       'snoozeMinutes': snoozeMinutes,
+      'skipNextOn': skipNextOn?.toIso8601String(),
+      'antiSnooze': antiSnooze,
+      'crescendo': crescendo,
+      'vibrate': vibrate,
     };
   }
 
@@ -83,7 +105,40 @@ class AlarmRule extends Equatable {
       label: map['label'] as String? ?? '',
       isActive: map['isActive'] as bool? ?? true,
       snoozeMinutes: (map['snoozeMinutes'] as num?)?.toInt() ?? 5,
+      skipNextOn: map['skipNextOn'] != null
+          ? DateTime.parse(map['skipNextOn'] as String)
+          : null,
+      antiSnooze: map['antiSnooze'] as bool? ?? false,
+      crescendo: map['crescendo'] as bool? ?? true,
+      vibrate: map['vibrate'] as bool? ?? true,
     );
+  }
+
+  String get timeLabel =>
+      '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
+
+  /// Türkçe kısa gün özeti.
+  String get daysSummary {
+    if (days.isEmpty) return 'Bir kez';
+    const names = {
+      1: 'Pzt',
+      2: 'Sal',
+      3: 'Çar',
+      4: 'Per',
+      5: 'Cum',
+      6: 'Cmt',
+      7: 'Paz',
+    };
+    final sorted = [...days]..sort();
+    if (sorted.length == 7) return 'Her gün';
+    if (sorted.length == 5 &&
+        sorted.every((d) => d >= 1 && d <= 5)) {
+      return 'Hafta içi';
+    }
+    if (sorted.length == 2 && sorted.contains(6) && sorted.contains(7)) {
+      return 'Hafta sonu';
+    }
+    return sorted.map((d) => names[d] ?? '$d').join(', ');
   }
 
   @override
@@ -96,5 +151,9 @@ class AlarmRule extends Equatable {
         label,
         isActive,
         snoozeMinutes,
+        skipNextOn,
+        antiSnooze,
+        crescendo,
+        vibrate,
       ];
 }

@@ -5,7 +5,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:online_study_room/core/prefs/app_prefs.dart';
 import 'package:online_study_room/features/clock/alarms_screen.dart';
 import 'package:online_study_room/core/notifications/alarm_notification_service.dart';
+import 'package:online_study_room/core/time_engine/exact_alarm_permission.dart';
 import 'package:online_study_room/data/models/alarm_rule.dart';
+import 'package:online_study_room/data/models/timer_preset.dart';
+import 'package:online_study_room/data/providers/alarm_providers.dart';
+import 'package:online_study_room/data/repositories/in_memory/in_memory_alarm_repository.dart';
 
 class MockAlarmNotificationService implements AlarmNotificationService {
   @override
@@ -13,17 +17,35 @@ class MockAlarmNotificationService implements AlarmNotificationService {
   @override
   Future<void> cancelAlarm(String id) async {}
   @override
-  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+  Future<void> initialize() async {}
+  @override
+  Future<void> rescheduleAll(List<AlarmRule> alarms) async {}
+  @override
+  Future<void> scheduleTimer(TimerInstance instance) async {}
+  @override
+  Future<void> showImmediate(String title, String body) async {}
+  @override
+  Future<ExactAlarmStatus> exactAlarmStatus() async => ExactAlarmStatus.granted;
+  @override
+  Future<bool> requestExactAlarmPermission() async => true;
+  @override
+  bool get lastUsedExact => true;
+  @override
+  set lastUsedExact(bool value) {}
+  @override
+  dynamic noSuchMethod(Invocation invocation) => null;
 }
 
 void main() {
   late SharedPreferences prefs;
   late MockAlarmNotificationService mockService;
+  late InMemoryAlarmRepository repo;
 
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
     prefs = await SharedPreferences.getInstance();
     mockService = MockAlarmNotificationService();
+    repo = InMemoryAlarmRepository();
   });
 
   Widget buildApp() {
@@ -31,6 +53,7 @@ void main() {
       overrides: [
         sharedPreferencesProvider.overrideWithValue(prefs),
         alarmNotificationServiceProvider.overrideWithValue(mockService),
+        alarmRepositoryProvider.overrideWithValue(repo),
       ],
       child: const MaterialApp(
         home: AlarmsScreen(),
@@ -38,7 +61,7 @@ void main() {
     );
   }
 
-  testWidgets('AlarmsScreen shows empty state initially', (WidgetTester tester) async {
+  testWidgets('AlarmsScreen shows empty state initially', (tester) async {
     await tester.pumpWidget(buildApp());
     await tester.pumpAndSettle();
 
@@ -46,24 +69,35 @@ void main() {
     expect(find.text('Henüz bir alarm oluşturmadınız.'), findsOneWidget);
   });
 
-  testWidgets('AlarmsScreen can add a new alarm', (WidgetTester tester) async {
+  testWidgets('AlarmsScreen lists alarm after repository save', (tester) async {
+    await repo.saveAlarm(
+      const AlarmRule(
+        id: 'test-1',
+        hour: 7,
+        minute: 30,
+        label: 'Sabah',
+      ),
+    );
+
     await tester.pumpWidget(buildApp());
     await tester.pumpAndSettle();
 
-    // Tap add button
+    expect(find.text('Henüz bir alarm oluşturmadınız.'), findsNothing);
+    expect(find.text('07:30'), findsOneWidget);
+    expect(find.textContaining('Sabah'), findsWidgets);
+    expect(find.byType(Switch), findsOneWidget);
+  });
+
+  testWidgets('AlarmsScreen opens editor sheet', (tester) async {
+    await tester.pumpWidget(buildApp());
+    await tester.pumpAndSettle();
+
     await tester.tap(find.byIcon(Icons.add));
     await tester.pumpAndSettle();
 
-    // Time picker should appear
-    expect(find.text('OK'), findsOneWidget);
-
-    // Tap OK to confirm time
-    await tester.tap(find.text('OK'));
-    await tester.pumpAndSettle();
-
-    // List should no longer be empty
-    expect(find.text('Henüz bir alarm oluşturmadınız.'), findsNothing);
-    expect(find.text('Yeni Alarm'), findsOneWidget);
-    expect(find.byType(Switch), findsOneWidget);
+    expect(find.text('Yeni alarm'), findsOneWidget);
+    expect(find.text('Kaydet'), findsOneWidget);
+    expect(find.text('Anti-snooze'), findsOneWidget);
+    expect(find.text('Kademeli ses (30 sn)'), findsOneWidget);
   });
 }
