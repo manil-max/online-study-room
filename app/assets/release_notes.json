@@ -3,6 +3,24 @@
   "source": "CHANGELOG.md",
   "releases": [
     {
+      "versionName": "1.0.12",
+      "buildNumber": 13,
+      "channel": "beta",
+      "date": "2026-07-13",
+      "title": "beta-v13: açılış çökme döngüsü düzeltildi + durak-saati bildirimi",
+      "highlights": [
+        "KRİTİK: beta-v12'deki 'uygulama açılıp 1 sn sonra kapanıyor' çökme döngüsü giderildi (foreground servis START_NOT_STICKY + güvenli startForeground).",
+        "Sayaç bildirimi durak-saatine yaklaştı: büyük akan HH:MM:SS + tek Durdur/Başlat düğmesi."
+      ],
+      "fixes": [
+        "App-kapalı bildirim/widget Durdur'da native servis çökmesi giderildi; bildirim aksiyonları arka planda getForegroundService kullanır.",
+        "Her komut yolu sessiz toparlanma (try/catch) ile sarıldı — hiçbir durumda uygulamayı çökertmez."
+      ],
+      "notes": [
+        "Uygulama adı olmayan yüzen kapsül (dinamik panel) OEM'e bağlı ayrı iş paketidir; bu sürümde standart canlı bildirim kullanılır."
+      ]
+    },
+    {
       "versionName": "1.0.11",
       "buildNumber": 12,
       "channel": "beta",

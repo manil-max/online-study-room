@@ -11,6 +11,8 @@ import android.content.SharedPreferences
 import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
+import android.os.SystemClock
+import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
 import com.manilmax.online_study_room.MainActivity
 import com.manilmax.online_study_room.R
@@ -33,35 +35,54 @@ import java.time.Instant
  * `StudyTimerNotifier._reconcileBackgroundTimer` tarafından yapılır. Böylece native
  * taraf "aptal" kalır: bildirim + prefs + widget yönetir, muhasebe Dart'ta.
  *
- * Bildirimde native `Chronometer` (setUsesChronometer + setWhen) kullanılır: saat
- * saniyede bir Flutter/Kotlin güncellemesi olmadan akar.
+ * Yaşam döngüsü / çökme güvenliği (beta-v13):
+ * - `START_NOT_STICKY`: Süreç öldürülürse Android servisi **null intent ile
+ *   yeniden başlatmasın**. START_STICKY yeniden başlatması `startForeground`
+ *   çağrılmadan gelir ve Android 12+'da `ForegroundServiceDidNotStartInTimeException`
+ *   ile açılışta çökme döngüsü yaratıyordu. Durum zaten prefs'te; otomatik
+ *   yeniden başlatmaya gerek yok.
+ * - Her komut yolu (Başlat **ve** Durdur) 5 sn içinde `startForeground` çağırır;
+ *   arka plandan getForegroundService ile ayağa kalkan servis kuralı bozmaz.
+ * - Bildirim aksiyonları `getForegroundService` kullanır; uygulama kapalıyken
+ *   arka plan servis başlatma yasağına (`BackgroundServiceStartNotAllowed`) takılmaz.
  */
 class StudyTimerService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        when (intent?.action) {
-            ACTION_START -> {
-                val startedAtMs = intent.getLongExtra(EXTRA_STARTED_AT_MS, System.currentTimeMillis())
-                val mode = intent.getStringExtra(EXTRA_MODE) ?: "stopwatch"
-                handleStart(startedAtMs, mode)
-            }
-            ACTION_STOP -> handleStop(recordInterval = true)
-            ACTION_STOP_SILENT -> handleStop(recordInterval = false)
-            ACTION_TOGGLE -> {
-                if (prefs().contains(KEY_STARTED_AT)) {
-                    handleStop(recordInterval = true)
-                } else {
-                    handleStart(System.currentTimeMillis(), "stopwatch")
+        // Hiçbir komut yolu uygulamayı çökertmesin: FGS bildirimleri/OEM kısıtları
+        // beklenmedik istisna atabilir; servis sessizce toparlanmalı.
+        try {
+            when (intent?.action) {
+                ACTION_START -> {
+                    val startedAtMs =
+                        intent.getLongExtra(EXTRA_STARTED_AT_MS, System.currentTimeMillis())
+                    val mode = intent.getStringExtra(EXTRA_MODE) ?: "stopwatch"
+                    handleStart(startedAtMs, mode)
+                }
+                ACTION_STOP -> handleStop(recordInterval = true)
+                ACTION_STOP_SILENT -> handleStop(recordInterval = false)
+                ACTION_TOGGLE -> {
+                    if (prefs().contains(KEY_STARTED_AT)) {
+                        handleStop(recordInterval = true)
+                    } else {
+                        handleStart(System.currentTimeMillis(), "stopwatch")
+                    }
+                }
+                else -> {
+                    // START_NOT_STICKY ile normalde null-intent yeniden başlatma
+                    // gelmez; yine de gelirse güvenle kendini kapat. FGS bekleyen
+                    // bir başlatma varsa 5 sn kuralını bozmamak için önce kısa bir
+                    // foreground'a geç, sonra bırak.
+                    safeStopEverything()
                 }
             }
-            else -> {
-                // Bilinmeyen komut: servis boşuna ayakta kalmasın.
-                if (!prefs().contains(KEY_STARTED_AT)) stopSelf()
-            }
+        } catch (t: Throwable) {
+            // Çökme yerine sessiz toparlanma: FGS'i düşür, servisi kapat.
+            runCatching { safeStopEverything() }
         }
-        return START_STICKY
+        return START_NOT_STICKY
     }
 
     private fun handleStart(startedAtMs: Long, mode: String) {
@@ -82,6 +103,13 @@ class StudyTimerService : Service() {
     }
 
     private fun handleStop(recordInterval: Boolean) {
+        // ÖNEMLİ: Servis arka plandan `startForegroundService` ile ayağa kalkmış
+        // olabilir (bildirim/widget Durdur). Android 12+ kuralı: 5 sn içinde
+        // `startForeground` çağrılmalı. Bu yüzden bookkeeping'ten ÖNCE idle
+        // bildirimini foreground olarak yayınla, sonra foreground'u bırak
+        // (DETACH — bildirim kalsın ki app açmadan tekrar Başlat'a basılabilsin).
+        startForegroundCompat(buildIdleNotification())
+
         val p = prefs()
         if (recordInterval) {
             val startedAtMs = p.getLong(KEY_STARTED_AT_MS, 0L)
@@ -105,18 +133,36 @@ class StudyTimerService : Service() {
             .putString(KEY_FG_MODE, "idle")
             .apply()
 
-        // FGS'i kaldır ama idle bildirimi (00:00:00 + Başlat) — kaydırılıp
-        // atılabilir (ongoing değil) — kalsın ki app açmadan tekrar başlatılabilsin.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            stopForeground(Service.STOP_FOREGROUND_REMOVE)
-        } else {
-            @Suppress("DEPRECATION")
-            stopForeground(true)
-        }
-        notificationManager().notify(NOTIFICATION_ID, buildIdleNotification())
+        // Foreground durumunu bırak ama idle bildirimi (00:00:00 + Başlat) —
+        // kaydırılıp atılabilir — kalsın ki app açmadan tekrar başlatılabilsin.
+        detachForegroundKeepNotification()
         TimerWidgets.updateAll(this)
         notifyStateChanged()
         stopSelf()
+    }
+
+    /** Beklenmedik/boş komutta güvenli kapanış: kısa foreground + tam kaldırma. */
+    private fun safeStopEverything() {
+        // Foreground borcu olabilir; kısa bir bildirimle kapat ve tamamen kaldır.
+        runCatching { startForegroundCompat(buildIdleNotification()) }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            runCatching { stopForeground(Service.STOP_FOREGROUND_REMOVE) }
+        } else {
+            @Suppress("DEPRECATION")
+            runCatching { stopForeground(true) }
+        }
+        runCatching { notificationManager().cancel(NOTIFICATION_ID) }
+        stopSelf()
+    }
+
+    private fun detachForegroundKeepNotification() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            // DETACH: bildirimi bırakma, yalnız foreground bağını kopar.
+            runCatching { stopForeground(Service.STOP_FOREGROUND_DETACH) }
+        } else {
+            @Suppress("DEPRECATION")
+            runCatching { stopForeground(false) }
+        }
     }
 
     private fun startForegroundCompat(notification: Notification) {
@@ -133,25 +179,58 @@ class StudyTimerService : Service() {
 
     private fun buildRunningNotification(startedAtMs: Long): Notification {
         ensureChannel()
-        return baseBuilder()
+        val builder = baseBuilder()
             .setOngoing(true)
-            .setUsesChronometer(true)
-            .setWhen(startedAtMs)
-            .setContentTitle(null)
-            .addAction(0, "Durdur", actionPending(ACTION_STOP, 1))
             .setContentIntent(openAppPending())
-            .build()
+        // Özel görünüm: durak-saati gibi büyük rakamlar + Durdur. Herhangi bir
+        // nedenle (RemoteViews/OEM) kurulamazsa standart chronometer'a düş.
+        val custom = runCatching { buildRunningRemoteViews(startedAtMs) }.getOrNull()
+        if (custom != null) {
+            builder.setStyle(NotificationCompat.DecoratedCustomViewStyle())
+                .setCustomContentView(custom)
+        } else {
+            builder.setUsesChronometer(true)
+                .setWhen(startedAtMs)
+                .setContentTitle(null)
+                .addAction(0, "Durdur", stopActionPending())
+        }
+        return builder.build()
     }
 
     private fun buildIdleNotification(): Notification {
         ensureChannel()
-        return baseBuilder()
+        val builder = baseBuilder()
             .setOngoing(false)
-            .setUsesChronometer(false)
-            .setContentTitle("00:00:00")
-            .addAction(0, "Başlat", actionPending(ACTION_START, 2))
             .setContentIntent(openAppPending())
-            .build()
+        val custom = runCatching { buildIdleRemoteViews() }.getOrNull()
+        if (custom != null) {
+            builder.setStyle(NotificationCompat.DecoratedCustomViewStyle())
+                .setCustomContentView(custom)
+        } else {
+            builder.setUsesChronometer(false)
+                .setContentTitle("00:00:00")
+                .addAction(0, "Başlat", startActionPending())
+        }
+        return builder.build()
+    }
+
+    private fun buildRunningRemoteViews(startedAtMs: Long): RemoteViews {
+        val views = RemoteViews(packageName, R.layout.timer_notification)
+        // Chronometer'ı gerçek başlangıç anına göre akıt (elapsedRealtime tabanı).
+        val base = SystemClock.elapsedRealtime() - (System.currentTimeMillis() - startedAtMs)
+        views.setChronometer(R.id.notif_timer_elapsed, base, null, true)
+        views.setTextViewText(R.id.notif_timer_action, "Durdur")
+        views.setOnClickPendingIntent(R.id.notif_timer_action, stopActionPending())
+        return views
+    }
+
+    private fun buildIdleRemoteViews(): RemoteViews {
+        val views = RemoteViews(packageName, R.layout.timer_notification)
+        views.setChronometer(R.id.notif_timer_elapsed, SystemClock.elapsedRealtime(), "00:00:00", false)
+        views.setTextViewText(R.id.notif_timer_elapsed, "00:00:00")
+        views.setTextViewText(R.id.notif_timer_action, "Başlat")
+        views.setOnClickPendingIntent(R.id.notif_timer_action, startActionPending())
+        return views
     }
 
     private fun baseBuilder(): NotificationCompat.Builder =
@@ -164,10 +243,21 @@ class StudyTimerService : Service() {
             .setCategory(NotificationCompat.CATEGORY_STOPWATCH)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
 
+    private fun stopActionPending(): PendingIntent = actionPending(ACTION_STOP, 1)
+
+    private fun startActionPending(): PendingIntent = actionPending(ACTION_START, 2)
+
+    /** Bildirim aksiyonu: uygulama kapalıyken de FGS başlatabilmek için
+     *  `getForegroundService` (API 26+) — düz `getService` arka plan yasağına
+     *  takılıp çökertiyordu. */
     private fun actionPending(action: String, requestCode: Int): PendingIntent {
         val intent = Intent(this, StudyTimerService::class.java).apply { this.action = action }
         val flags = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        return PendingIntent.getService(this, requestCode, intent, flags)
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            PendingIntent.getForegroundService(this, requestCode, intent, flags)
+        } else {
+            PendingIntent.getService(this, requestCode, intent, flags)
+        }
     }
 
     private fun openAppPending(): PendingIntent {

@@ -4,6 +4,35 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [beta-v13 / 1.0.12+13] - 2026-07-13
+
+> ⚠️ **Beta test sürümü.** beta-v12'de cihazda görülen **açılış çökme döngüsü** giderildi + sayaç bildirimi durak-saati görünümüne yaklaştırıldı.
+
+### Kritik düzeltme
+
+- **Açılış çökme döngüsü giderildi:** beta-v12'de uygulama kapalıyken bildirim/widget
+  Durdur'a basınca native servis çöküyor, ardından uygulama her açılışta ~1 sn sonra
+  kapanıyordu ("this app has a bug"). Sebep: foreground servis `START_STICKY` ile
+  boş komutla yeniden başlatılıp `startForeground` çağrılmadan Android 12+ zaman
+  aşımına düşüyordu. Servis artık `START_NOT_STICKY` + her komut yolunda güvenli
+  `startForeground`; bildirim aksiyonları arka planda `getForegroundService` kullanır
+  (arka plan servis başlatma yasağına takılmaz). Her komut ayrıca sessiz toparlanma
+  (try/catch) ile sarıldı — hiçbir durumda uygulamayı çökertmez.
+
+### Görünüm
+
+- **Sayaç bildirimi durak-saatine yaklaştırıldı:** "Boş kutu" yerine büyük, akan
+  `HH:MM:SS` rakamları + tek Durdur/Başlat düğmesi. *Not: Android 12+ standart bildirim
+  başlığındaki uygulama adını sistem çizer; özel görünümle bile kaldırılamaz. Uygulama
+  adı olmayan yüzen kapsül (referans görsel) OEM "canlı bildirim" / Android 16 Live
+  Update yoludur — sıradaki adım.*
+
+### Bilinen / sıradaki
+
+- Bildirimin uygulama-adı olmayan **dinamik panel/kapsül** görünümü (HyperOS "Live
+  notifications" / Samsung "Now Bar" / Android 16 Live Updates) OEM'e bağlı ayrı iş
+  paketidir; bu sürümde standart (uygulama-adı başlıklı) canlı bildirim kullanılır.
+
 ## [beta-v12 / 1.0.11+12] - 2026-07-13
 
 > ⚠️ **Beta test sürümü.** Sayaç bildirimi ve ana ekran widget'ı **native** altyapıya taşındı; beta-v11'in R1/R2 düzeltmelerini de içerir.
