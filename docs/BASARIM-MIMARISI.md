@@ -155,7 +155,6 @@ Bu başarımlar 5 kategoriye ayrılmıştır. Her birinin elde edilmesi giderek 
 - **Mola Düşmanı:** Pomodoro modunda veya sayaçta üst üste 4 kez mola hakkını "Atla" diyerek mola vermeden doğrudan çalışmaya devam ettiğinde açılır. (Ödül: 1000 XP)
 - **Son Saniye Kurtarıcısı:** Gece gün dönümüne (00:00'a) sadece saniyeler/dakikalar kalmışken, saat tam 23:55 ile 23:59 arasında günlük hedefini %100'e tamamladığında açılır. (Ödül: 1500 XP)
 - **1337 Elite:** Öğleden sonra tam saat 13:37'de kronometreyi başlatıp o oturumu en az 1 saat hiç bozmadan sürdürdüğünde açılır. (Ödül: 1337 XP)
-- **Cuma Gecesi Ateşi:** Herkesin dışarıda olduğu Cuma akşamı 21:00 ile 00:00 saatleri arasında kesintisiz en az 2.5 saat masada çalışıldığında açılır. Gerçek bir fedakarlık rozeti. (Ödül: 2000 XP)
 - **Sınır Tanımaz:** Kendine koyduğun günlük hedefi (örneğin 2 saat) doldurduktan sonra bile sayacı durdurmayıp, aynı gün içinde hedefin tam %300'üne (3 katına) ulaştığında açılır. (Ödül: 3000 XP)
 - **Matrix Hatası (Asimetrik):** Kronometreyi tesadüfen tam olarak 111, 222, 333 veya 555. dakikasında (aynı rakamlardan oluşan bir dakikada) durdurduğunda verilir. (Ödül: 1111 XP)
 - **Yılbaşı Nöbeti:** 31 Aralık gecesi saat 23:50 ile 1 Ocak saat 00:10 arasında uygulamada kronometresi açık şekilde yeni yıla masada giren efsanelere verilir. (Ödül: 5000 XP)
