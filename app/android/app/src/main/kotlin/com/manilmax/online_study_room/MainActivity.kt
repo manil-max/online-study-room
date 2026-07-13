@@ -1,14 +1,29 @@
 package com.manilmax.online_study_room
 
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
+import android.os.Build
 import android.os.Bundle
+import com.manilmax.online_study_room.timer.StudyTimerService
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterActivity() {
     private val CHANNEL = "com.manilmax.online_study_room/device_integrations"
+    private val TIMER_CHANNEL = "com.manilmax.online_study_room/timer"
     private var initialAction: String? = null
+    private var timerChannel: MethodChannel? = null
+
+    /** Native servis durum değiştirince (widget/bildirim Başlat-Durdur) uygulama
+     *  önplandaysa Dart'a "reconcile" der ki UI anında güncellensin. */
+    private val timerStateReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            timerChannel?.invokeMethod("reconcile", null)
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         initialAction = intent.action
@@ -25,6 +40,48 @@ class MainActivity : FlutterActivity() {
                 result.notImplemented()
             }
         }
+
+        timerChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, TIMER_CHANNEL).also { channel ->
+            channel.setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "startTimer" -> {
+                        val startedAtMs = (call.argument<Number>("startedAtMs"))?.toLong()
+                            ?: System.currentTimeMillis()
+                        val mode = call.argument<String>("mode") ?: "stopwatch"
+                        StudyTimerService.sendCommand(
+                            this,
+                            StudyTimerService.ACTION_START,
+                            startedAtMs = startedAtMs,
+                            mode = mode,
+                        )
+                        result.success(null)
+                    }
+                    // Uygulama içi Durdur: native yalnız bildirimi kaldırır; oturum
+                    // kaydını Dart yapar (çift kayıt olmasın) → STOP_SILENT.
+                    "stopTimer" -> {
+                        StudyTimerService.sendCommand(this, StudyTimerService.ACTION_STOP_SILENT)
+                        result.success(null)
+                    }
+                    else -> result.notImplemented()
+                }
+            }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        val filter = IntentFilter(StudyTimerService.BROADCAST_STATE_CHANGED)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(timerStateReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+        } else {
+            @Suppress("UnspecifiedRegisterReceiverFlag")
+            registerReceiver(timerStateReceiver, filter)
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        runCatching { unregisterReceiver(timerStateReceiver) }
     }
 
     override fun onNewIntent(intent: Intent) {

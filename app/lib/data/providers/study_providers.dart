@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide Presence;
 import 'package:uuid/uuid.dart';
 
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
 import '../../core/config/supabase_config.dart';
@@ -335,6 +335,13 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   static const _kActiveAccumulated = 'timer_active_accumulated_seconds';
   static const _kActiveCommandSeq = 'timer_active_command_seq';
   static const _kActiveUpdatedAt = 'timer_active_updated_at';
+  // Widget'ın native Chronometer'ı için güvenilir epoch-millis anahtarı.
+  static const _kActiveStartedAtMs = 'timer_active_started_at_ms';
+
+  /// Native `StudyTimerService` ile çift yönlü method channel: Dart→native
+  /// (start/stop), native→Dart (`reconcile`).
+  static const MethodChannel _timerChannel =
+      MethodChannel('com.manilmax.online_study_room/timer');
 
   Timer? _tick;
   Timer? _widgetRefreshDebounce;
@@ -355,11 +362,16 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     _lifecycleListener = AppLifecycleListener(
       onResume: () => unawaited(_onAppResumed()),
     );
-    // FGS bildirimindeki "Durdur" butonu (arka plan isolate) uygulama AÇIKKEN de
-    // anında işlensin diye ana isolate'e gönderilen veriyi dinleriz. Uygulama
-    // kapalıyken bu tetiklenmez; komut app açılışında işlenir.
+    // Native foreground servis (widget/bildirim Başlat-Durdur) uygulama AÇIKKEN de
+    // anında yansısın diye native taraf `reconcile` çağırır; biz bu method channel
+    // çağrısında arka plan durumunu uzlaştırırız. Uygulama kapalıyken tetiklenmez;
+    // aralıklar app açılışında kuyruğu işlenir.
     try {
-      FlutterForegroundTask.addTaskDataCallback(_onTaskData);
+      _timerChannel.setMethodCallHandler((call) async {
+        if (call.method == 'reconcile') {
+          await _syncBackgroundTimerState();
+        }
+      });
     } catch (_) {
       // Platform kanalı olmayan test/web hostu.
     }
@@ -370,7 +382,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       _notificationCommands?.cancel();
       _lifecycleListener?.dispose();
       try {
-        FlutterForegroundTask.removeTaskDataCallback(_onTaskData);
+        _timerChannel.setMethodCallHandler(null);
       } catch (_) {}
     });
     // Stats/leaderboard widget'ları saniyelik timer tick'iyle değil, kaynak
@@ -453,15 +465,6 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   }
 
   Future<void> _onAppResumed() => _syncBackgroundTimerState();
-
-  /// FGS bildirimindeki Durdur/Başlat butonundan (arka plan isolate) gelen
-  /// sinyal: uygulama açıkken arka plan durumunu hemen uzlaştır.
-  void _onTaskData(Object data) {
-    if (data == TimerForegroundService.toggleButtonId ||
-        data == TimerForegroundService.startButtonId) {
-      unawaited(_syncBackgroundTimerState());
-    }
-  }
 
   /// Arka plandaki (FGS) durum ile ana isolate'i uzlaştırır: önce app-kapalı
   /// Durdur/Başlat toggle'ının etkilerini ([_reconcileBackgroundTimer]), sonra
@@ -796,6 +799,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     if (!state.isRunning || state.startedAt == null) return;
     final prefs = ref.read(sharedPreferencesProvider);
     prefs.setString(_kActiveStartedAt, state.startedAt!.toIso8601String());
+    prefs.setInt(_kActiveStartedAtMs, state.startedAt!.millisecondsSinceEpoch);
     prefs.setString(_kActiveMode, state.mode.name);
     prefs.setString(_kActivePhase, state.phase.name);
     prefs.setInt(_kActiveCycle, state.cycle);
@@ -811,6 +815,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   void _clearActiveTimer() {
     final prefs = ref.read(sharedPreferencesProvider);
     prefs.remove(_kActiveStartedAt);
+    prefs.remove(_kActiveStartedAtMs);
     prefs.remove(_kActiveMode);
     prefs.remove(_kActivePhase);
     prefs.remove(_kActiveCycle);

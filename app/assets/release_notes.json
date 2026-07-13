@@ -3,6 +3,24 @@
   "source": "CHANGELOG.md",
   "releases": [
     {
+      "versionName": "1.0.11",
+      "buildNumber": 12,
+      "channel": "beta",
+      "date": "2026-07-13",
+      "title": "beta-v12: native widget + bildirim (app-kapalı Başlat/Durdur)",
+      "highlights": [
+        "Ana ekran widget'ı ve bildirim native servise taşındı: Başlat/Durdur uygulama tamamen kapalıyken de çalışır.",
+        "Süre bildirimde ve widget'ta native akar (saniyede bir uygulama güncellemesi yok, pil dostu)."
+      ],
+      "fixes": [
+        "App-kapalı Başlat/Durdur'lar kuyruğa yazılır; uygulama açılınca her aralık sunucuya doğru kaydedilir (sayım bozulmaz).",
+        "beta-v11 dahil: bildirimde gövde yazısı yok + Durdur↔Başlat kalıcı toggle."
+      ],
+      "notes": [
+        "Dinamik panele (HyperOS/Samsung) terfi OEM'e bağlıdır; desteklenmeyen cihazda temiz düz bildirime düşer."
+      ]
+    },
+    {
       "versionName": "1.0.10",
       "buildNumber": 11,
       "channel": "beta",

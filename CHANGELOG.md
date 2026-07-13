@@ -4,6 +4,26 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [beta-v12 / 1.0.11+12] - 2026-07-13
+
+> ⚠️ **Beta test sürümü.** Sayaç bildirimi ve ana ekran widget'ı **native** altyapıya taşındı; beta-v11'in R1/R2 düzeltmelerini de içerir.
+
+### Yenilikler / Düzeltmeler
+
+- **Ana ekran widget'ı ve bildirim artık uygulama tamamen kapalıyken de çalışıyor:**
+  Sayaç bildirimi ve widget artık native bir Android servisiyle yönetiliyor. Widget'taki
+  **Başlat/Durdur** ve bildirimdeki buton, uygulamayı hiç açmadan çalışır. Süre bildirimde
+  ve widget'ta native olarak akar (saniyede bir uygulama güncellemesi yok → pil dostu).
+- **Oturum kaydı güvende:** Uygulama kapalıyken yaptığın Başlat/Durdur'lar bir kuyruğa
+  yazılır; uygulamayı açtığında her çalışma aralığı sunucuya doğru biçimde kaydedilir
+  (arka arkaya durdur/başlat oturum sayımını bozmaz).
+- **beta-v11 dahil:** Bildirimde gövde yazısı yok + Durdur↔Başlat kalıcı toggle.
+
+### Bilinen / sıradaki
+
+- Native bildirimin cihazın **dinamik paneline** (HyperOS "Live notifications" / Samsung
+  "Now Bar") terfisi OEM'e bağlıdır; desteklenmeyen cihazda düz ama temiz canlı bildirime düşer.
+
 ## [beta-v11 / 1.0.10+11] - 2026-07-13
 
 > ⚠️ **Beta test sürümü.** beta-v10 cihaz geri bildirimine göre sayaç bildirimi iki noktada elden geçirildi.

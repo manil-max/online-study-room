@@ -36,29 +36,36 @@ class TimerWidgetProvider : HomeWidgetProvider() {
         appWidgetIds.forEach { widgetId ->
             val views = RemoteViews(context.packageName, R.layout.odak_timer_widget).apply {
                 val appPrefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
-                val startedAt = appPrefs.getString("flutter.timer_active_started_at", null)
+                // Epoch-millis anahtarı (native servis yazar) string ISO'dan daha
+                // güvenilir; yoksa eski string anahtarından geri düş.
+                val startMillis = appPrefs.getLong("flutter.timer_active_started_at_ms", 0L)
+                    .takeIf { it > 0L }
+                    ?: appPrefs.getString("flutter.timer_active_started_at", null)
+                        ?.let { runCatching { java.time.Instant.parse(it).toEpochMilli() }.getOrNull() }
                 val mode = appPrefs.getString("flutter.timer_active_mode", null)
+                val isRunning = startMillis != null
                 setTextViewText(
                     R.id.timer_widget_title,
                     widgetData.text(StudyWidgetKeys.TimerTitle, "Odak Kampı"),
                 )
-                val startMillis = startedAt?.let { runCatching { java.time.Instant.parse(it).toEpochMilli() }.getOrNull() }
                 // Chronometer yalnız kronometre modunda anlamlıdır. Geri sayım
                 // ve Pomodoro'da Flutter'ın son olay anında yazdığı süre sabit
                 // gösterilir; yanlış yönde akan native sayaç gösterilmez.
-                if (startMillis != null && mode == "stopwatch") {
-                    val base = SystemClock.elapsedRealtime() - (System.currentTimeMillis() - startMillis)
+                if (isRunning && mode == "stopwatch") {
+                    val base = SystemClock.elapsedRealtime() - (System.currentTimeMillis() - startMillis!!)
                     setChronometer(R.id.timer_widget_elapsed, base, null, true)
                 } else {
                     setChronometer(R.id.timer_widget_elapsed, SystemClock.elapsedRealtime(), "00:00:00", false)
                 }
                 setTextViewText(
                     R.id.timer_widget_status,
-                    widgetData.text(StudyWidgetKeys.TimerStatus, "Çalışma hazır"),
+                    if (isRunning) "Çalışıyor" else "Çalışma hazır",
                 )
+                // Tek düğme sayacı çalışıyorsa Durdur, duruyorsa Başlat yapar
+                // (native servise gider; app kapalıyken de çalışır).
                 setTextViewText(
                     R.id.timer_widget_action,
-                    widgetData.text(StudyWidgetKeys.TimerAction, "Uygulamayı aç"),
+                    if (isRunning) "Durdur" else "Başlat",
                 )
 
                 val actionIntent = android.content.Intent(context, TimerActionReceiver::class.java).apply {

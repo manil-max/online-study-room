@@ -68,6 +68,13 @@
             android:name="com.pravera.flutter_foreground_task.service.ForegroundService"
             android:foregroundServiceType="dataSync"
             android:exported="false" />
+        <!-- WP-42/51: Sayacın native foreground servisi. Widget/bildirim Başlat-Durdur
+             uygulama kapalıyken de bunu ayağa kaldırır; oturum kaydı app açılışında
+             Dart tarafında yapılır. -->
+        <service
+            android:name=".timer.StudyTimerService"
+            android:foregroundServiceType="dataSync"
+            android:exported="false" />
         <receiver
             android:name=".TimerBootReceiver"
             android:exported="false">
