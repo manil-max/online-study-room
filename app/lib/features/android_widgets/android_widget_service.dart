@@ -4,6 +4,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:home_widget/home_widget.dart';
 
 import 'package:online_study_room/core/notifications/timer_external_command_store.dart';
+import 'package:online_study_room/core/l10n/system_localizations.dart';
+import 'package:online_study_room/l10n/app_localizations.dart';
 
 @pragma('vm:entry-point')
 Future<void> widgetBackgroundCallback(Uri? uri) async {
@@ -18,8 +20,7 @@ Future<void> widgetBackgroundCallback(Uri? uri) async {
 /// Android dışı platformlarda no-op: Windows/web'de home_widget kanalı yok;
 /// her saniye MissingPluginException + async fırtınası jank/RAM şişirir.
 final androidWidgetServiceProvider = Provider<AndroidWidgetGateway>((ref) {
-  final isAndroid =
-      !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+  final isAndroid = !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
   return isAndroid
       ? const AndroidWidgetService()
       : const _NoopAndroidWidgetService();
@@ -102,107 +103,126 @@ class AndroidWidgetSnapshot {
     required this.statsStreak,
     required this.leaderboardTitle,
     required this.leaderboardRows,
-    this.dailyGoalPercent = '0%',
-    this.dailyGoalDetail = '0 dk / 0 dk',
-    this.groupGoalPercent = '0%',
-    this.groupGoalDetail = 'Grup hedefi belirlenmedi',
-    this.leaderboardMyRank = 'Sıralama oluşunca burada görünür',
+    required this.dailyGoalPercent,
+    required this.dailyGoalDetail,
+    required this.groupGoalPercent,
+    required this.groupGoalDetail,
+    required this.leaderboardMyRank,
+    required this.emptyLeaderboardLabel,
   });
 
-  const AndroidWidgetSnapshot.placeholder()
-    : timerTitle = 'Odak Kampı',
+  AndroidWidgetSnapshot.placeholder(AppLocalizations l10n)
+    : timerTitle = l10n.desktopOdakKampi,
       timerElapsed = '00:00:00',
-      timerStatus = 'Çalışma hazır',
-      timerAction = 'Uygulamayı aç',
-      statsTitle = 'Bugün',
-      statsToday = '0 dk',
-      statsWeek = 'Hafta: 0 sa',
-      statsStreak = 'Hedef serisi: 0 gün',
+      timerStatus = l10n.commonCalismaHazir,
+      timerAction = l10n.androidWidgetsUygulamayiAc,
+      statsTitle = l10n.statsBugun,
+      statsToday = l10n.clockMDk('0'),
+      statsWeek = l10n.androidWidgetsHafta0Sa,
+      statsStreak = l10n.androidWidgetsHedefSerisi0Gun,
       dailyGoalPercent = '0%',
-      dailyGoalDetail = '0 dk / 0 dk',
+      dailyGoalDetail = '${l10n.clockMDk('0')} / ${l10n.clockMDk('0')}',
       groupGoalPercent = '0%',
-      groupGoalDetail = 'Grup hedefi belirlenmedi',
-      leaderboardTitle = 'Kamp sıralaması',
-      leaderboardRows = const ['Henüz kayıt yok', '-', '-'],
-      leaderboardMyRank = 'Sıralama oluşunca burada görünür';
+      groupGoalDetail = l10n.commonGrupHedefiBelirlenmedi,
+      leaderboardTitle = l10n.androidWidgetsKampSiralamasi,
+      leaderboardRows = [l10n.androidWidgetsHenuzKayitYok2, '-', '-'],
+      leaderboardMyRank = l10n.commonSiralamaOlusuncaBuradaGorunur,
+      emptyLeaderboardLabel = l10n.androidWidgetsHenuzGrupVerisiYok;
 
   AndroidWidgetSnapshot.timer({
+    required AppLocalizations l10n,
     required String elapsed,
     required String status,
     required String action,
   }) : this(
-         timerTitle: const AndroidWidgetSnapshot.placeholder().timerTitle,
+         timerTitle: l10n.desktopOdakKampi,
          timerElapsed: elapsed,
          timerStatus: status,
          timerAction: action,
-         statsTitle: const AndroidWidgetSnapshot.placeholder().statsTitle,
-         statsToday: const AndroidWidgetSnapshot.placeholder().statsToday,
-         statsWeek: const AndroidWidgetSnapshot.placeholder().statsWeek,
-         statsStreak: const AndroidWidgetSnapshot.placeholder().statsStreak,
-         leaderboardTitle:
-             const AndroidWidgetSnapshot.placeholder().leaderboardTitle,
-         leaderboardRows:
-             const AndroidWidgetSnapshot.placeholder().leaderboardRows,
+         statsTitle: l10n.statsBugun,
+         statsToday: l10n.clockMDk('0'),
+         statsWeek: l10n.androidWidgetsHafta0Sa,
+         statsStreak: l10n.androidWidgetsHedefSerisi0Gun,
+         dailyGoalPercent: '0%',
+         dailyGoalDetail: '${l10n.clockMDk('0')} / ${l10n.clockMDk('0')}',
+         groupGoalPercent: '0%',
+         groupGoalDetail: l10n.commonGrupHedefiBelirlenmedi,
+         leaderboardTitle: l10n.androidWidgetsKampSiralamasi,
+         leaderboardRows: [l10n.androidWidgetsHenuzKayitYok2, '-', '-'],
+         leaderboardMyRank: l10n.commonSiralamaOlusuncaBuradaGorunur,
+         emptyLeaderboardLabel: l10n.androidWidgetsHenuzGrupVerisiYok,
        );
 
   AndroidWidgetSnapshot.stats({
+    required AppLocalizations l10n,
     required String today,
     required String week,
     required String streak,
   }) : this(
-         timerTitle: const AndroidWidgetSnapshot.placeholder().timerTitle,
-         timerElapsed: const AndroidWidgetSnapshot.placeholder().timerElapsed,
-         timerStatus: const AndroidWidgetSnapshot.placeholder().timerStatus,
-         timerAction: const AndroidWidgetSnapshot.placeholder().timerAction,
-         statsTitle: 'Çalışma özeti',
+         timerTitle: l10n.desktopOdakKampi,
+         timerElapsed: '00:00:00',
+         timerStatus: l10n.commonCalismaHazir,
+         timerAction: l10n.androidWidgetsUygulamayiAc,
+         statsTitle: l10n.androidWidgetsCalismaOzeti,
          statsToday: today,
          statsWeek: week,
          statsStreak: streak,
-         leaderboardTitle:
-             const AndroidWidgetSnapshot.placeholder().leaderboardTitle,
-         leaderboardRows:
-             const AndroidWidgetSnapshot.placeholder().leaderboardRows,
+         dailyGoalPercent: '0%',
+         dailyGoalDetail: '${l10n.clockMDk('0')} / ${l10n.clockMDk('0')}',
+         groupGoalPercent: '0%',
+         groupGoalDetail: l10n.commonGrupHedefiBelirlenmedi,
+         leaderboardTitle: l10n.androidWidgetsKampSiralamasi,
+         leaderboardRows: [l10n.androidWidgetsHenuzKayitYok2, '-', '-'],
+         leaderboardMyRank: l10n.commonSiralamaOlusuncaBuradaGorunur,
+         emptyLeaderboardLabel: l10n.androidWidgetsHenuzGrupVerisiYok,
        );
 
   AndroidWidgetSnapshot.leaderboard({
+    required AppLocalizations l10n,
     required List<String> rows,
-    String myRank = 'Sıralama oluşunca burada görünür',
+    String? myRank,
   }) : this(
-         timerTitle: const AndroidWidgetSnapshot.placeholder().timerTitle,
-         timerElapsed: const AndroidWidgetSnapshot.placeholder().timerElapsed,
-         timerStatus: const AndroidWidgetSnapshot.placeholder().timerStatus,
-         timerAction: const AndroidWidgetSnapshot.placeholder().timerAction,
-         statsTitle: const AndroidWidgetSnapshot.placeholder().statsTitle,
-         statsToday: const AndroidWidgetSnapshot.placeholder().statsToday,
-         statsWeek: const AndroidWidgetSnapshot.placeholder().statsWeek,
-         statsStreak: const AndroidWidgetSnapshot.placeholder().statsStreak,
-         leaderboardTitle: 'Grup sıralaması',
+         timerTitle: l10n.desktopOdakKampi,
+         timerElapsed: '00:00:00',
+         timerStatus: l10n.commonCalismaHazir,
+         timerAction: l10n.androidWidgetsUygulamayiAc,
+         statsTitle: l10n.statsBugun,
+         statsToday: l10n.clockMDk('0'),
+         statsWeek: l10n.androidWidgetsHafta0Sa,
+         statsStreak: l10n.androidWidgetsHedefSerisi0Gun,
+         dailyGoalPercent: '0%',
+         dailyGoalDetail: '${l10n.clockMDk('0')} / ${l10n.clockMDk('0')}',
+         groupGoalPercent: '0%',
+         groupGoalDetail: l10n.commonGrupHedefiBelirlenmedi,
+         leaderboardTitle: l10n.homeGrupSiralamasi,
          leaderboardRows: rows,
-         leaderboardMyRank: myRank,
+         leaderboardMyRank: myRank ?? l10n.commonSiralamaOlusuncaBuradaGorunur,
+         emptyLeaderboardLabel: l10n.androidWidgetsHenuzGrupVerisiYok,
        );
 
   AndroidWidgetSnapshot.goals({
+    required AppLocalizations l10n,
     required String dailyPercent,
     required String dailyDetail,
     required String groupPercent,
     required String groupDetail,
   }) : this(
-         timerTitle: const AndroidWidgetSnapshot.placeholder().timerTitle,
-         timerElapsed: const AndroidWidgetSnapshot.placeholder().timerElapsed,
-         timerStatus: const AndroidWidgetSnapshot.placeholder().timerStatus,
-         timerAction: const AndroidWidgetSnapshot.placeholder().timerAction,
-         statsTitle: 'Günlük hedef',
+         timerTitle: l10n.desktopOdakKampi,
+         timerElapsed: '00:00:00',
+         timerStatus: l10n.commonCalismaHazir,
+         timerAction: l10n.androidWidgetsUygulamayiAc,
+         statsTitle: l10n.profileGunlukHedef,
          statsToday: dailyPercent,
          statsWeek: dailyDetail,
-         statsStreak: const AndroidWidgetSnapshot.placeholder().statsStreak,
+         statsStreak: l10n.androidWidgetsHedefSerisi0Gun,
          dailyGoalPercent: dailyPercent,
          dailyGoalDetail: dailyDetail,
          groupGoalPercent: groupPercent,
          groupGoalDetail: groupDetail,
-         leaderboardTitle:
-             const AndroidWidgetSnapshot.placeholder().leaderboardTitle,
-         leaderboardRows:
-             const AndroidWidgetSnapshot.placeholder().leaderboardRows,
+         leaderboardTitle: l10n.androidWidgetsKampSiralamasi,
+         leaderboardRows: [l10n.androidWidgetsHenuzKayitYok2, '-', '-'],
+         leaderboardMyRank: l10n.commonSiralamaOlusuncaBuradaGorunur,
+         emptyLeaderboardLabel: l10n.androidWidgetsHenuzGrupVerisiYok,
        );
 
   final String timerTitle;
@@ -220,6 +240,7 @@ class AndroidWidgetSnapshot {
   final String leaderboardTitle;
   final List<String> leaderboardRows;
   final String leaderboardMyRank;
+  final String emptyLeaderboardLabel;
 
   Map<String, Object> toWidgetData() {
     final rows = paddedLeaderboardRows;
@@ -248,7 +269,7 @@ class AndroidWidgetSnapshot {
   List<String> get paddedLeaderboardRows {
     final rows = leaderboardRows.where((row) => row.trim().isNotEmpty).toList();
     if (rows.isEmpty) {
-      rows.add('Henüz grup verisi yok');
+      rows.add(emptyLeaderboardLabel);
     }
     while (rows.length < 3) {
       rows.add('-');
@@ -287,7 +308,8 @@ class AndroidWidgetService implements AndroidWidgetGateway {
 
   @override
   Future<void> seedPlaceholder() async {
-    await saveSnapshot(const AndroidWidgetSnapshot.placeholder());
+    final l10n = await loadSystemLocalizations();
+    await saveSnapshot(AndroidWidgetSnapshot.placeholder(l10n));
     await refresh();
   }
 

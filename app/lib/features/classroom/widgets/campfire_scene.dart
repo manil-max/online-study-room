@@ -660,7 +660,7 @@ void _showCamperDetails(BuildContext context, _Camper camper) {
               const SizedBox(height: 8),
               Text(name, style: theme.textTheme.titleLarge),
               Text(
-                '${camper.animal.label} 🏕️',
+                '${camper.animal.label(AppLocalizations.of(context))} 🏕️',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),

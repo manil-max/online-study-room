@@ -1,11 +1,19 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/features/android_widgets/android_widget_service.dart';
+import 'package:online_study_room/l10n/app_localizations.dart';
 
 void main() {
+  late AppLocalizations l10n;
+  setUpAll(() async {
+    l10n = await AppLocalizations.delegate.load(const Locale('tr'));
+  });
+
   test(
     'hedef snapshotı günlük ve grup oranlarını native anahtarlara yazar',
     () {
       final snapshot = AndroidWidgetSnapshot.goals(
+        l10n: l10n,
         dailyPercent: '75%',
         dailyDetail: '135 dk / 180 dk',
         groupPercent: '40%',
@@ -33,6 +41,7 @@ void main() {
 
   test('sıralama snapshotı küçük widget için kullanıcının sırasını korur', () {
     final snapshot = AndroidWidgetSnapshot.leaderboard(
+      l10n: l10n,
       rows: const ['Ada · 2 sa', 'Ece · 1 sa'],
       myRank: 'Sen · #2',
     );

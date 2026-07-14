@@ -66,10 +66,10 @@ void main() {
     await tester.pumpWidget(_appWith(await _signedInRepo()));
     await tester.pumpAndSettle();
 
-    expect(find.text('Ana Sayfa'), findsWidgets);
-    expect(find.text('Gruplar'), findsWidgets);
-    expect(find.text('İstatistik'), findsWidgets);
-    expect(find.text('Profil'), findsWidgets);
+    expect(find.text('Home'), findsWidgets);
+    expect(find.text('Groups'), findsWidgets);
+    expect(find.text('Statistics'), findsWidgets);
+    expect(find.text('Profile'), findsWidgets);
   });
 
   testWidgets('Sınıfı olmayan kullanıcı oluştur/katıl seçeneklerini görür', (
@@ -79,7 +79,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Sayaç artık Ana Sayfa'da; Gruplar sekmesine geç.
-    await tester.tap(find.text('Gruplar'));
+    await tester.tap(find.text('Groups'));
     await tester.pumpAndSettle();
 
     expect(find.text('Create group'), findsOneWidget);
@@ -90,7 +90,7 @@ void main() {
     await tester.pumpWidget(_appWith(await _signedInRepo()));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('İstatistik'));
+    await tester.tap(find.text('Statistics'));
     await tester.pumpAndSettle();
 
     final navBar = tester.widget<NavigationBar>(find.byType(NavigationBar));
@@ -103,7 +103,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Profil sekmesine geç ve çıkış yap (Başarılar kartı üstte; kaydır).
-    await tester.tap(find.text('Profil'));
+    await tester.tap(find.text('Profile'));
     await tester.pumpAndSettle();
     final logoutButton = find.widgetWithText(FilledButton, 'Sign Out');
     await tester.ensureVisible(logoutButton);
@@ -120,7 +120,7 @@ void main() {
     await tester.pumpWidget(_appWith(await _signedInRepo()));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Gruplar'));
+    await tester.tap(find.text('Groups'));
     await tester.pumpAndSettle();
 
     expect(find.text("You're not in a group yet"), findsOneWidget);

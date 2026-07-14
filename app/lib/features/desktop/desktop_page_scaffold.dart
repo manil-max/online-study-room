@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/desktop/desktop_layout.dart';
@@ -112,7 +113,9 @@ class DesktopPageScaffold extends StatelessWidget {
                 );
                 return Semantics(
                   container: true,
-                  label: '$title komut çubuğu',
+                  label: AppLocalizations.of(
+                    context,
+                  ).desktopTitleKomutCubugu(title),
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(minHeight: 52),
                     child: Padding(
@@ -187,10 +190,7 @@ class DesktopMasterDetail extends StatelessWidget {
         return Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            SizedBox(
-              width: masterWidth,
-              child: master,
-            ),
+            SizedBox(width: masterWidth, child: master),
             SizedBox(width: spacing),
             Expanded(child: detail),
           ],
@@ -243,9 +243,7 @@ class DesktopSectionList extends StatelessWidget {
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
             child: Material(
-              color: selected
-                  ? scheme.secondaryContainer
-                  : Colors.transparent,
+              color: selected ? scheme.secondaryContainer : Colors.transparent,
               borderRadius: BorderRadius.circular(4),
               child: InkWell(
                 borderRadius: BorderRadius.circular(4),
@@ -305,9 +303,10 @@ class DesktopSectionList extends StatelessWidget {
                                       item.subtitle!,
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
-                                      style: theme.textTheme.bodySmall?.copyWith(
-                                        color: scheme.onSurfaceVariant,
-                                      ),
+                                      style: theme.textTheme.bodySmall
+                                          ?.copyWith(
+                                            color: scheme.onSurfaceVariant,
+                                          ),
                                     ),
                                   ],
                                 ],

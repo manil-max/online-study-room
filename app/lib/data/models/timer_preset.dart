@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:online_study_room/l10n/app_localizations.dart';
 
 import '../../core/time_engine/epoch_countdown.dart';
 
@@ -61,44 +62,44 @@ class TimerPreset extends Equatable {
 }
 
 /// Varsayılan preset listesi (ilk kurulum).
-List<TimerPreset> defaultTimerPresets() => const [
-      TimerPreset(
-        id: 'preset_5',
-        label: '5 dk',
-        durationSeconds: 300,
-        colorHex: '#22C55E',
-      ),
-      TimerPreset(
-        id: 'preset_10',
-        label: '10 dk',
-        durationSeconds: 600,
-        colorHex: '#3B82F6',
-      ),
-      TimerPreset(
-        id: 'preset_15',
-        label: '15 dk',
-        durationSeconds: 900,
-        colorHex: '#8B5CF6',
-      ),
-      TimerPreset(
-        id: 'preset_25',
-        label: '25 dk',
-        durationSeconds: 1500,
-        colorHex: '#F59E0B',
-      ),
-      TimerPreset(
-        id: 'preset_45',
-        label: '45 dk',
-        durationSeconds: 2700,
-        colorHex: '#EF4444',
-      ),
-      TimerPreset(
-        id: 'preset_60',
-        label: '60 dk',
-        durationSeconds: 3600,
-        colorHex: '#06B6D4',
-      ),
-    ];
+List<TimerPreset> defaultTimerPresets(AppLocalizations l10n) => [
+  TimerPreset(
+    id: 'preset_5',
+    label: l10n.commonValue5Dk,
+    durationSeconds: 300,
+    colorHex: '#22C55E',
+  ),
+  TimerPreset(
+    id: 'preset_10',
+    label: l10n.commonValue10Dk,
+    durationSeconds: 600,
+    colorHex: '#3B82F6',
+  ),
+  TimerPreset(
+    id: 'preset_15',
+    label: l10n.commonValue15Dk,
+    durationSeconds: 900,
+    colorHex: '#8B5CF6',
+  ),
+  TimerPreset(
+    id: 'preset_25',
+    label: l10n.commonValue25Dk,
+    durationSeconds: 1500,
+    colorHex: '#F59E0B',
+  ),
+  TimerPreset(
+    id: 'preset_45',
+    label: l10n.commonValue45Dk,
+    durationSeconds: 2700,
+    colorHex: '#EF4444',
+  ),
+  TimerPreset(
+    id: 'preset_60',
+    label: l10n.commonValue60Dk,
+    durationSeconds: 3600,
+    colorHex: '#06B6D4',
+  ),
+];
 
 enum TimerStateStatus { initial, running, paused, done }
 
@@ -138,10 +139,11 @@ class TimerInstance extends Equatable {
       case TimerStateStatus.running:
         return EpochCountdownState(
           durationMs: durationMs,
-          endsAtMs: endsAtEpochMs ??
+          endsAtMs:
+              endsAtEpochMs ??
               (lastUpdatedAt != null
                   ? lastUpdatedAt!.millisecondsSinceEpoch +
-                      remainingSeconds * 1000
+                        remainingSeconds * 1000
                   : null),
           running: true,
         );
@@ -246,15 +248,15 @@ class TimerInstance extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        presetId,
-        label,
-        durationSeconds,
-        remainingSeconds,
-        status,
-        lastUpdatedAt,
-        endsAtEpochMs,
-        colorHex,
-        iconCode,
-      ];
+    id,
+    presetId,
+    label,
+    durationSeconds,
+    remainingSeconds,
+    status,
+    lastUpdatedAt,
+    endsAtEpochMs,
+    colorHex,
+    iconCode,
+  ];
 }

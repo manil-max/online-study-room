@@ -1,12 +1,18 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/core/time_engine/world_clock_math.dart';
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
 /// Testler [homeNow]'ı UTC verir → `timeZoneOffset` her makinede 0 olur ve
 /// offset farkı yalnız hedef TZ'ye bağlı kalır (CI/yerelde deterministik).
 void main() {
-  setUpAll(tz_data.initializeTimeZones);
+  late AppLocalizations l10n;
+  setUpAll(() async {
+    tz_data.initializeTimeZones();
+    l10n = await AppLocalizations.delegate.load(const Locale('tr'));
+  });
 
   group('isDaytimeHour', () {
     test('06:00–17:59 gündüz, dışı gece', () {
@@ -24,10 +30,11 @@ void main() {
         cityLabel: 'İstanbul',
         timeZoneId: 'Europe/Istanbul',
         homeNow: DateTime.utc(2026, 1, 1, 12, 0),
+        l10n: l10n,
       );
       expect(r.localTime.hour, 15); // UTC 12:00 → İstanbul 15:00
       expect(r.dayLabel, 'Bugün');
-      expect(r.offsetLabel, 'Bugün, +3 sa');
+      expect(r.offsetLabel, 'Bugün, UTC+3');
       expect(r.isDaytime, isTrue);
     });
 
@@ -36,11 +43,12 @@ void main() {
         cityLabel: 'Tokyo',
         timeZoneId: 'Asia/Tokyo',
         homeNow: DateTime.utc(2026, 1, 1, 23, 0),
+        l10n: l10n,
       );
       // UTC 23:00 → Tokyo ertesi gün 08:00
       expect(r.localTime.hour, 8);
       expect(r.dayLabel, 'Yarın');
-      expect(r.offsetLabel, 'Yarın, +9 sa');
+      expect(r.offsetLabel, 'Yarın, UTC+9');
       expect(r.isDaytime, isTrue);
     });
 
@@ -49,10 +57,11 @@ void main() {
         cityLabel: 'Los Angeles',
         timeZoneId: 'America/Los_Angeles',
         homeNow: DateTime.utc(2026, 1, 1, 3, 0),
+        l10n: l10n,
       );
       // UTC 03:00 → LA önceki gün 19:00 (kış PST = UTC−8)
       expect(r.dayLabel, 'Dün');
-      expect(r.offsetLabel, 'Dün, −8 sa');
+      expect(r.offsetLabel, 'Dün, UTC−8');
       expect(r.isDaytime, isFalse); // 19:00
     });
 
@@ -61,20 +70,25 @@ void main() {
         cityLabel: 'Mumbai',
         timeZoneId: 'Asia/Kolkata',
         homeNow: DateTime.utc(2026, 1, 1, 12, 0),
+        l10n: l10n,
       );
-      expect(r.offsetLabel, 'Bugün, +5.5 sa');
+      expect(r.offsetLabel, 'Bugün, UTC+5.5');
     });
 
-    test('location parametresi verilince katalog id\'sinden bağımsız çalışır', () {
-      final loc = tz.getLocation('Europe/Istanbul');
-      final r = readWorldClock(
-        cityLabel: 'Özel',
-        timeZoneId: 'ignored',
-        homeNow: DateTime.utc(2026, 6, 1, 9, 0),
-        location: loc,
-      );
-      expect(r.localTime.hour, 12); // UTC 09:00 → İstanbul 12:00
-      expect(r.offsetLabel, 'Bugün, +3 sa');
-    });
+    test(
+      'location parametresi verilince katalog id\'sinden bağımsız çalışır',
+      () {
+        final loc = tz.getLocation('Europe/Istanbul');
+        final r = readWorldClock(
+          cityLabel: 'Özel',
+          timeZoneId: 'ignored',
+          homeNow: DateTime.utc(2026, 6, 1, 9, 0),
+          l10n: l10n,
+          location: loc,
+        );
+        expect(r.localTime.hour, 12); // UTC 09:00 → İstanbul 12:00
+        expect(r.offsetLabel, 'Bugün, UTC+3');
+      },
+    );
   });
 }

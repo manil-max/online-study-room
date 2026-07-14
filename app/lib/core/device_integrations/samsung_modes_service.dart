@@ -8,8 +8,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// Yalnız Android: Windows/web'de MethodChannel yok → MissingPluginException
 /// log fırtınası ve boşa async (WP-71 perf).
 class DeviceIntegrationService {
-  static const _channel =
-      MethodChannel('com.manilmax.online_study_room/device_integrations');
+  static const _channel = MethodChannel(
+    'com.manilmax.online_study_room/device_integrations',
+  );
 
   void Function(String action)? onActionReceived;
   final bool _enabled;

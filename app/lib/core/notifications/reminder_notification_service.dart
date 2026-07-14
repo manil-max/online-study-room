@@ -4,12 +4,13 @@ import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
 import '../../data/models/study_reminder.dart';
+import '../l10n/system_localizations.dart';
 import 'notification_preferences.dart';
 
 final reminderNotificationServiceProvider =
     Provider<ReminderNotificationService>((ref) {
-  return ReminderNotificationService.instance;
-});
+      return ReminderNotificationService.instance;
+    });
 
 /// Kişisel çalışma hatırlatıcılarını yerel bildirim olarak planlar (§WP-36).
 ///
@@ -24,7 +25,6 @@ class ReminderNotificationService {
   );
 
   static const String _channelId = 'study_reminders';
-  static const String _channelName = 'Çalışma Hatırlatıcıları';
 
   final FlutterLocalNotificationsPlugin _plugin;
   bool _initialized = false;
@@ -71,6 +71,7 @@ class ReminderNotificationService {
     await initialize();
     await cancel(reminder);
     if (!reminder.enabled || !prefs.remindersEnabled) return;
+    final l10n = await loadSystemLocalizations();
 
     // Sessiz saatlere denk gelen hatırlatıcıyı planlama (bilinçli kısıt).
     final probe = DateTime(2000, 1, 1, reminder.hour, reminder.minute);
@@ -79,15 +80,15 @@ class ReminderNotificationService {
     final details = NotificationDetails(
       android: AndroidNotificationDetails(
         _channelId,
-        _channelName,
-        channelDescription: 'Planlanmış çalışma hatırlatıcıları',
+        l10n.coreCalismaHatirlaticilari,
+        channelDescription: l10n.corePlanlanmisCalismaHatirlaticilari,
         importance: Importance.high,
         priority: Priority.high,
       ),
     );
 
     final body = (reminder.body == null || reminder.body!.trim().isEmpty)
-        ? 'Çalışma zamanı!'
+        ? l10n.coreCalismaZamani
         : reminder.body!;
 
     if (!reminder.repeats) {
@@ -108,7 +109,11 @@ class ReminderNotificationService {
         id: _weekdayId(reminder.id, weekday),
         title: reminder.title,
         body: body,
-        scheduledDate: _nextWeekdayTime(weekday, reminder.hour, reminder.minute),
+        scheduledDate: _nextWeekdayTime(
+          weekday,
+          reminder.hour,
+          reminder.minute,
+        ),
         notificationDetails: details,
         androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
         matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
@@ -123,11 +128,19 @@ class ReminderNotificationService {
     }
   }
 
-  int _weekdayId(String id, int weekday) => Object.hash(id, weekday) & 0x7fffffff;
+  int _weekdayId(String id, int weekday) =>
+      Object.hash(id, weekday) & 0x7fffffff;
 
   tz.TZDateTime _nextDailyTime(int hour, int minute) {
     final now = tz.TZDateTime.now(tz.local);
-    var scheduled = tz.TZDateTime(tz.local, now.year, now.month, now.day, hour, minute);
+    var scheduled = tz.TZDateTime(
+      tz.local,
+      now.year,
+      now.month,
+      now.day,
+      hour,
+      minute,
+    );
     if (!scheduled.isAfter(now)) {
       scheduled = scheduled.add(const Duration(days: 1));
     }

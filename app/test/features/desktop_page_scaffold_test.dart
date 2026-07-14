@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/features/desktop/desktop_page_scaffold.dart';
@@ -12,6 +13,9 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+        locale: Locale('tr'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: DesktopPageScaffold(
           title: 'Saat Merkezi',
           subtitle:
@@ -43,6 +47,9 @@ void main() {
 
     await tester.pumpWidget(
       const MaterialApp(
+        locale: Locale('tr'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: SizedBox(
             width: 1200,
@@ -72,6 +79,9 @@ void main() {
 
     await tester.pumpWidget(
       const MaterialApp(
+        locale: Locale('tr'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: SizedBox(
             width: 1200,
@@ -98,6 +108,9 @@ void main() {
     String? selected = 'a';
     await tester.pumpWidget(
       MaterialApp(
+        locale: const Locale('tr'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: StatefulBuilder(
             builder: (context, setState) {

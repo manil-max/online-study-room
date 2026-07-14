@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -47,18 +48,23 @@ void main() {
         sharedPreferencesProvider.overrideWithValue(prefs),
         authRepositoryProvider.overrideWithValue(InMemoryAuthRepository()),
         studyRepositoryProvider.overrideWithValue(InMemoryStudyRepository()),
-        timerNotificationServiceProvider
-            .overrideWithValue(MockTimerNotificationService()),
+        timerNotificationServiceProvider.overrideWithValue(
+          MockTimerNotificationService(),
+        ),
         studyTimerProvider.overrideWith(() => MockStudyTimerNotifier()),
       ],
       child: const MaterialApp(
+        locale: Locale('tr'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: ClockScreen(),
       ),
     );
   }
 
-  testWidgets('ClockScreen shows 5 equal strip tabs without Widget tab',
-      (tester) async {
+  testWidgets('ClockScreen shows 5 equal strip tabs without Widget tab', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(1080, 2400);
     tester.view.devicePixelRatio = 3.0;
     addTearDown(tester.view.resetPhysicalSize);
@@ -79,7 +85,9 @@ void main() {
     expect(find.text('Çalışma oturumu'), findsOneWidget);
   });
 
-  testWidgets('ClockScreen shows StandByClockView in landscape', (tester) async {
+  testWidgets('ClockScreen shows StandByClockView in landscape', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(1920, 1080);
     tester.view.devicePixelRatio = 3.0;
     addTearDown(tester.view.resetPhysicalSize);

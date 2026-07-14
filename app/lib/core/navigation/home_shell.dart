@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:online_study_room/l10n/app_localizations.dart';
 
 import '../../data/providers/group_providers.dart';
 import '../../data/providers/study_providers.dart';
@@ -81,31 +82,31 @@ class HomeShell extends ConsumerWidget {
         child: NavigationBar(
           selectedIndex: index,
           onDestinationSelected: ref.read(navIndexProvider.notifier).setIndex,
-          destinations: const [
+          destinations: [
             NavigationDestination(
-              icon: Icon(Icons.home_outlined),
-              selectedIcon: Icon(Icons.home),
-              label: 'Ana Sayfa',
+              icon: const Icon(Icons.home_outlined),
+              selectedIcon: const Icon(Icons.home),
+              label: AppLocalizations.of(context).homeAnaSayfa,
             ),
             NavigationDestination(
-              icon: Icon(Icons.access_time_outlined),
-              selectedIcon: Icon(Icons.access_time_filled),
-              label: 'Saat',
+              icon: const Icon(Icons.access_time_outlined),
+              selectedIcon: const Icon(Icons.access_time_filled),
+              label: AppLocalizations.of(context).desktopSaat,
             ),
             NavigationDestination(
-              icon: Icon(Icons.groups_outlined),
-              selectedIcon: Icon(Icons.groups),
-              label: 'Gruplar',
+              icon: const Icon(Icons.groups_outlined),
+              selectedIcon: const Icon(Icons.groups),
+              label: AppLocalizations.of(context).desktopGruplar,
             ),
             NavigationDestination(
-              icon: Icon(Icons.bar_chart_outlined),
-              selectedIcon: Icon(Icons.bar_chart),
-              label: 'İstatistik',
+              icon: const Icon(Icons.bar_chart_outlined),
+              selectedIcon: const Icon(Icons.bar_chart),
+              label: AppLocalizations.of(context).statsIstatistik,
             ),
             NavigationDestination(
-              icon: Icon(Icons.person_outline),
-              selectedIcon: Icon(Icons.person),
-              label: 'Profil',
+              icon: const Icon(Icons.person_outline),
+              selectedIcon: const Icon(Icons.person),
+              label: AppLocalizations.of(context).profileProfil,
             ),
           ],
         ),

@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -59,10 +60,10 @@ class _StopwatchScreenState extends ConsumerState<StopwatchScreen> {
         const SizedBox(height: 8),
         Text(
           sw.running
-              ? 'Çalışıyor · çalışma süresine sayılır'
+              ? AppLocalizations.of(context).commonCalsyor
               : (elapsed.inMilliseconds > 0
-                  ? 'Duraklatıldı · kayıt yazıldı (≥30 sn)'
-                  : 'Hazır · duraklat/sıfırla ile kaydet'),
+                    ? AppLocalizations.of(context).clockDuraklat
+                    : AppLocalizations.of(context).desktopHazir),
           style: theme.textTheme.labelLarge?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),
@@ -74,7 +75,7 @@ class _StopwatchScreenState extends ConsumerState<StopwatchScreen> {
           children: [
             _RoundBtn(
               icon: Icons.refresh,
-              label: 'Sıfırla',
+              label: AppLocalizations.of(context).homeSifirla,
               onPressed: elapsed.inMilliseconds == 0 && sw.laps.isEmpty
                   ? null
                   : () => ref.read(stopwatchProvider.notifier).reset(),
@@ -94,7 +95,7 @@ class _StopwatchScreenState extends ConsumerState<StopwatchScreen> {
             const SizedBox(width: 20),
             _RoundBtn(
               icon: Icons.flag_outlined,
-              label: 'Tur',
+              label: AppLocalizations.of(context).clockTur,
               onPressed: sw.running || elapsed.inMilliseconds > 0
                   ? () => ref.read(stopwatchProvider.notifier).lap()
                   : null,
@@ -108,24 +109,30 @@ class _StopwatchScreenState extends ConsumerState<StopwatchScreen> {
             child: Row(
               children: [
                 Text(
-                  'Turlar',
+                  AppLocalizations.of(context).clockTurlar,
                   style: theme.textTheme.titleSmall,
                 ),
                 const Spacer(),
                 IconButton(
-                  tooltip: 'Kopyala',
+                  tooltip: AppLocalizations.of(context).clockKopyala,
                   onPressed: () {
                     final buf = StringBuffer();
                     for (var i = 0; i < analysis.splitsMs.length; i++) {
-                      final split =
-                          Duration(milliseconds: analysis.splitsMs[i]);
+                      final split = Duration(
+                        milliseconds: analysis.splitsMs[i],
+                      );
                       buf.writeln(
-                        'Tur ${i + 1}: ${formatStopwatch(split)}',
+                        '${AppLocalizations.of(context).clockTur} ${i + 1}: '
+                        '${formatStopwatch(split)}',
                       );
                     }
                     Clipboard.setData(ClipboardData(text: buf.toString()));
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Turlar kopyalandı')),
+                      SnackBar(
+                        content: Text(
+                          AppLocalizations.of(context).clockTurlarKopyalandi,
+                        ),
+                      ),
                     );
                   },
                   icon: const Icon(Icons.copy_outlined, size: 20),
@@ -137,7 +144,7 @@ class _StopwatchScreenState extends ConsumerState<StopwatchScreen> {
           child: analysis.isEmpty
               ? Center(
                   child: Text(
-                    'Tur kaydı yok',
+                    AppLocalizations.of(context).clockTurKaydiYok,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: theme.colorScheme.outline,
                     ),
@@ -149,8 +156,7 @@ class _StopwatchScreenState extends ConsumerState<StopwatchScreen> {
                   itemBuilder: (context, index) {
                     // En yeni üstte
                     final i = analysis.splitsMs.length - 1 - index;
-                    final split =
-                        Duration(milliseconds: analysis.splitsMs[i]);
+                    final split = Duration(milliseconds: analysis.splitsMs[i]);
                     final total = Duration(milliseconds: sw.laps[i]);
                     final delta = analysis.deltaVsPrevious(i);
                     final isFast = i == analysis.fastestIndex;
@@ -172,20 +178,19 @@ class _StopwatchScreenState extends ConsumerState<StopwatchScreen> {
                       child: ListTile(
                         dense: true,
                         title: Text(
-                          'Tur ${i + 1}',
+                          '${AppLocalizations.of(context).clockTur} ${i + 1}',
                           style: TextStyle(
                             fontWeight: FontWeight.w600,
                             color: isFast
                                 ? const Color(0xFF16A34A)
                                 : isSlow
-                                    ? const Color(0xFFDC2626)
-                                    : null,
+                                ? const Color(0xFFDC2626)
+                                : null,
                           ),
                         ),
                         subtitle: Text(
-                          'Toplam ${formatStopwatch(total)}'
-                          '${isFast ? ' · En hızlı' : ''}'
-                          '${isSlow ? ' · En yavaş' : ''}',
+                          '${AppLocalizations.of(context).statsToplam} '
+                          '${formatStopwatch(total)}',
                         ),
                         trailing: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -222,7 +227,9 @@ class _StopwatchScreenState extends ConsumerState<StopwatchScreen> {
 
     if (widget.embedded) return body;
     return Scaffold(
-      appBar: AppBar(title: const Text('Kronometre')),
+      appBar: AppBar(
+        title: Text(AppLocalizations.of(context).desktopKronometre),
+      ),
       body: body,
     );
   }

@@ -68,7 +68,7 @@
 - **Dal:** — (main)
 - **Başlangıç:** —
 - **Son güncelleme:** 2026-07-14 (Europe/Istanbul)
-- **Not:** WP-86 otomatik kalite kapısını geçti; cihaz/ürün QA için Test bekleyen'e taşındı.
+- **Not:** WP-87 kod + analyze + 409/409 test geçti; cihaz/entegrasyon QA'sı WP-89'da.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
@@ -115,7 +115,7 @@
 | WP-84 | [~] Test için bekliyor | Kanonik `app_en.arb` / `app_tr.arb` kataloğu | WP-82 + WP-83 |
 | WP-85 | [~] Test için bekliyor | Flutter göç A — hesap, profil, admin, bildirim, güncelleme | WP-84 |
 | WP-86 | [~] Test için bekliyor | Flutter göç B — ana sayfa, sınıf ve istatistikler | WP-84 |
-| WP-87 | [ ] Bekliyor | Flutter göç C — saat, masaüstü, core ve veri etiketleri | WP-84 |
+| WP-87 | [~] Test için bekliyor | Flutter göç C — saat, masaüstü, core ve veri etiketleri | WP-84 |
 | WP-88 | [~] Test için bekliyor | Native Android EN/TR kaynak göçü | WP-83 |
 | WP-89 | [ ] Bekliyor | EN/TR entegrasyon, audit, build ve cihaz QA | WP-85/86/87/88 |
 
@@ -128,13 +128,6 @@
 > **Planlama notu:** WP-39 iptal; WP-48/49/50 kaldırıldı; geçici WP-72/73/74/75 (2026-07-14) zaten-yapılmış/yanlış açıldığı için iptal edildi. Sorun çıkarsa ayrı debug/release WP'si açılır.
 
 > **Küresel dil programı ortak sözleşmesi:** İngilizce şablon/varsayılan (`en`), Türkçe ikinci dil (`tr`). Yalnız sistem dil kodu `tr` ise Türkçe; diğer her locale İngilizce. Üretilen l10n kodu elle düzenlenmez/commit edilmez. Tüm WP'lerde migration/RLS etkisi yok; sır/PII çeviri dosyasına girmez; gün sınırı `Europe/Istanbul` kalır. Aynı anda en fazla iki çalışma hattı açılır.
-
-### WP-87: Flutter Göç C — Saat, Masaüstü ve Core ⏱️
-- **Program/Faz:** Küresel açılım · UI göçü · **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-84
-- **Problem/Kapsam:** Kalan Flutter/native-olmayan platform metinlerini taşı; Android Kotlin/XML ve diğer feature kümeleri kapsam dışı.
-- **SAHİP:** `app/lib/features/{clock,desktop,android_widgets}/**`, kullanıcı metni üreten `app/lib/core/**`, `app/lib/data/{models,providers}/**` ve eşleşen testler. **DOKUNMA:** ARB/l10n, repositories, WP-85/86 yolları, `app/android/**`.
-- **Adımlar:** Saat/alarm/timer/desktop shell/core label'larını UI sınırında yerelleştir; sabit `tr_TR` formatlarını locale-aware yap; EN/TR testlerini güncelle.
-- **Veri/RLS/Geri alma:** Etki yok; UI commitini geri al. **Edge-case:** BuildContext olmayan model/provider, alarm zamanı, Windows kısa/uzun etiket. **Kabul/DoD:** sahip yüzeyde literal ve sabit `tr_TR` UI formatı 0; EN/TR test + analyze 0. **Tuzak:** çeviri metnini repository/server payload'ına yazmak. **Dal:** main/lane · **Model:** 🔴 Opus
 
 ### WP-89: EN/TR Entegrasyon ve Cihaz QA Kapısı ✅
 - **Program/Faz:** Küresel açılım · kalite kapısı · **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-85/86/87/88
@@ -151,6 +144,14 @@
 > Kod/otomatik test bitti; **cihaz QA veya ürün demo’su** bekleniyor.
 > Bu bölüm **aktif çalışma değildir** — ajan claim etmez, diğer WP’leri engellemez.
 > Kabul gelince kart buradan çıkar → **Tamamlanan**’a gider. Bug çıkarsa ayrı debug WP açılır.
+
+### WP-87: Flutter Göç C — Saat, Masaüstü ve Core ⏱️
+- **Program/Faz:** Küresel açılım · UI göçü · **Ajan:** Codex · **Aşama:** Otomatik test geçti · **Kanıt:** `Kodda doğrulandı` / `Cihazda doğrulanmalı`
+- **Uygulandı:** Saat, alarm, timer, dünya saati, masaüstü kabuğu ve Android widget snapshot metinleri resmi `AppLocalizations` kataloğuna bağlandı. BuildContext olmayan bildirim/provider yolları sistem locale'ini çözüyor; yalnız `tr` Türkçe, diğer diller İngilizce. Tema, hayvan, başarım, alarm gün özeti ve varsayılan timer etiketleri UI sınırında yerelleştirildi; sabit `tr_TR` tarih biçimleri etkin locale'e geçirildi.
+- **Literal denetimi:** Sahip yüzeyde kullanıcıya gösterilen Türkçe literal ve sabit `tr_TR` kalmadı. Kalan Türkçe karakterli iki sabit yalnız iç assertion/telemetri sanitizasyonudur; repository/server payload'ına çevrilmiş metin yazılmıyor. ARB/generated l10n ve Android native yüzeylere dokunulmadı.
+- **Doğrulama:** `flutter analyze --no-pub` 0 bulgu; tüm Flutter testleri 409/409 geçti. Sistem `tr_TR` → Türkçe ve desteklenmeyen `de_DE` → İngilizce çözümlemesi ayrıca test edildi; saat/desktop/widget için EN/TR beklentileri güncellendi.
+- **Ne bekleniyor:** WP-89'da Android/Windows gerçek cihazda EN/TR bağlam, uzun İngilizce/overflow, bildirim-widget process death ve tema/başarım ürün dili kontrolü.
+- **Veri/RLS/Geri alma:** Veri, migration, RLS veya repository davranışı değişmedi; geri alma UI/core commitidir.
 
 ### WP-86: Flutter Göç B — Çalışma ve Sosyal Alanlar 🏕️
 - **Program/Faz:** Küresel açılım · UI göçü · **Ajan:** Codex · **Aşama:** Otomatik test geçti · **Kanıt:** `Kodda doğrulandı` / `Cihazda doğrulanmalı`

@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -55,14 +56,14 @@ class _ClockWidgetsScreenState extends ConsumerState<ClockWidgetsScreen>
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
       children: [
         Text(
-          'Ana ekran widget’ları',
+          AppLocalizations.of(context).clockWidgetVeIzinler,
           style: theme.textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.w700,
           ),
         ),
         const SizedBox(height: 4),
         Text(
-          'Uzun bas → Widget’lar → “Odak Kampı” / “Odak Kampı Beta”',
+          AppLocalizations.of(context).desktopOdakKampi,
           style: theme.textTheme.bodyMedium?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),
@@ -70,40 +71,40 @@ class _ClockWidgetsScreenState extends ConsumerState<ClockWidgetsScreen>
         const SizedBox(height: 16),
         _WidgetCard(
           icon: Icons.timer,
-          title: 'Çalışma sayacı',
-          subtitle: 'Akan süre + Başlat/Durdur (app kapalı çalışır)',
+          title: AppLocalizations.of(context).clockCalismaSayaci,
+          subtitle: AppLocalizations.of(context).clockAkanSureBaslatdurdurApp,
         ),
         _WidgetCard(
           icon: Icons.schedule,
-          title: 'Dijital saat',
-          subtitle: 'Canlı saat (TextClock) — pil dostu',
+          title: AppLocalizations.of(context).clockDijitalSaat,
+          subtitle: AppLocalizations.of(context).clockCanliSaatTextclockPil,
         ),
         _WidgetCard(
           icon: Icons.alarm,
-          title: 'Sıradaki alarm',
-          subtitle: 'Bir sonraki alarm saati ve etiketi',
+          title: AppLocalizations.of(context).clockSiradakiAlarm,
+          subtitle: AppLocalizations.of(context).clockBirSonrakiAlarmSaati,
         ),
         _WidgetCard(
           icon: Icons.bar_chart,
-          title: 'İstatistik',
-          subtitle: 'Bugün / hafta / seri özeti',
+          title: AppLocalizations.of(context).statsIstatistik,
+          subtitle: AppLocalizations.of(context).clockBugunHaftaSeriOzeti,
         ),
         _WidgetCard(
           icon: Icons.emoji_events_outlined,
-          title: 'Grup sıralaması',
-          subtitle: 'Kamp leaderboard özeti',
+          title: AppLocalizations.of(context).homeGrupSiralamasi,
+          subtitle: AppLocalizations.of(context).clockKampLeaderboardOzeti,
         ),
         const SizedBox(height: 20),
         Text(
-          'Alarm için gerekli izinler',
+          AppLocalizations.of(context).clockAlarmIcinGerekliIzinler,
           style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w700,
           ),
         ),
         const SizedBox(height: 4),
         Text(
-          'App kapalıyken alarm çalması için hepsi yeşil olmalı. Android '
-          'izinleri güvenlik nedeniyle sistem ayarlarından açılıp kapatılır.',
+          '${AppLocalizations.of(context).clockAppKapaliykenAlarmCalmasi} '
+          '${AppLocalizations.of(context).clockIzinlerGuvenlikNedeniyleYalniz}',
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),
@@ -113,9 +114,11 @@ class _ClockWidgetsScreenState extends ConsumerState<ClockWidgetsScreen>
           const Center(child: CircularProgressIndicator())
         else ...[
           _PermTile(
-            title: 'Bildirimler',
+            title: AppLocalizations.of(context).clockBildirimler,
             ok: _perms.notifications,
-            detail: 'Android 13+ zorunlu; alarm bildirimi + ses',
+            detail: AppLocalizations.of(
+              context,
+            ).clockSaatUygulamasiKalitesiIcin,
             onManage: () async {
               if (!_perms.notifications) {
                 await ClockPermissions.instance.requestNotifications();
@@ -125,18 +128,18 @@ class _ClockWidgetsScreenState extends ConsumerState<ClockWidgetsScreen>
             },
           ),
           _PermTile(
-            title: 'Kesin alarm (Exact)',
+            title: AppLocalizations.of(context).clockKesinAlarmExact,
             ok: _perms.exactAlarm,
-            detail: 'Android 12+ — saatinde çalsın',
+            detail: AppLocalizations.of(context).clockKesinAlarmIzniKapali,
             onManage: () async {
               await ClockPermissions.instance.openExactAlarmSettings();
               await _refresh();
             },
           ),
           _PermTile(
-            title: 'Pil kısıtlaması yok',
+            title: AppLocalizations.of(context).clockPilKisitlamasiYok,
             ok: _perms.batteryUnrestricted,
-            detail: 'OEM arka plan öldürmesin (HyperOS/Samsung önemli)',
+            detail: AppLocalizations.of(context).clockPilKisitlamasiYok,
             onManage: () async {
               await ClockPermissions.instance
                   .openBatteryOptimizationManagementSettings();
@@ -144,9 +147,9 @@ class _ClockWidgetsScreenState extends ConsumerState<ClockWidgetsScreen>
             },
           ),
           _PermTile(
-            title: 'Tam ekran alarm',
+            title: AppLocalizations.of(context).coreTamEkranAlarm,
             ok: _perms.fullScreenIntent,
-            detail: 'Kilit ekranında alarm yüzeyi',
+            detail: AppLocalizations.of(context).clockKilitEkranindaAlarmYuzeyi,
             onManage: () async {
               await ClockPermissions.instance.openFullScreenSettings();
               await _refresh();
@@ -170,15 +173,17 @@ class _ClockWidgetsScreenState extends ConsumerState<ClockWidgetsScreen>
                 await _refresh();
               },
               icon: const Icon(Icons.security),
-              label: const Text('Eksik izinleri aç'),
+              label: Text(AppLocalizations.of(context).clockEksikIzinleriAc),
             ),
           ] else
             Card(
               color: theme.colorScheme.primaryContainer,
-              child: const ListTile(
-                leading: Icon(Icons.check_circle),
-                title: Text('Tüm izinler tamam'),
-                subtitle: Text('App kapalı alarm için hazır'),
+              child: ListTile(
+                leading: const Icon(Icons.check_circle),
+                title: Text(AppLocalizations.of(context).clockTumIzinlerTamam),
+                subtitle: Text(
+                  AppLocalizations.of(context).clockAppKapaliAlarmIcin,
+                ),
               ),
             ),
         ],
@@ -186,14 +191,16 @@ class _ClockWidgetsScreenState extends ConsumerState<ClockWidgetsScreen>
         OutlinedButton.icon(
           onPressed: _refresh,
           icon: const Icon(Icons.refresh),
-          label: const Text('İzinleri yenile'),
+          label: Text(AppLocalizations.of(context).clockIzinleriYenile),
         ),
       ],
     );
 
     if (widget.embedded) return body;
     return Scaffold(
-      appBar: AppBar(title: const Text('Widget ve izinler')),
+      appBar: AppBar(
+        title: Text(AppLocalizations.of(context).clockWidgetVeIzinler),
+      ),
       body: body,
     );
   }
@@ -252,7 +259,11 @@ class _PermTile extends StatelessWidget {
           // Android izinleri uygulama tarafından geri alınamaz. İzin zaten
           // verildiyse bu düğme doğrudan ilgili sistem ekranını açar; kullanıcı
           // oradan kapatır. Verilmemişse aynı ekran/istem açma akışına gider.
-          child: Text(ok ? 'Kapat' : 'Aç'),
+          child: Text(
+            ok
+                ? AppLocalizations.of(context).homeKapat
+                : AppLocalizations.of(context).clockAc,
+          ),
         ),
       ),
     );
@@ -271,35 +282,32 @@ class _PermissionRevocationGuide extends StatelessWidget {
       margin: const EdgeInsets.only(top: 4, bottom: 8),
       child: ExpansionTile(
         leading: const Icon(Icons.manage_accounts_outlined),
-        title: const Text('İzni geri almak ister misin?'),
-        subtitle: const Text('Kapat düğmesi ilgili Android ayarını açar'),
+        title: Text(AppLocalizations.of(context).clockIzniGeriAlmakIster),
+        subtitle: Text(
+          AppLocalizations.of(context).clockKapatDugmesiIlgiliAndroid,
+        ),
         childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         children: [
           Text(
-            'İzinler güvenlik nedeniyle yalnız Android sistem ayarlarından '
-            'kapatılır. Cihaz markasına göre başlıklar biraz değişebilir.',
+            AppLocalizations.of(context).clockIzinlerGuvenlikNedeniyleYalniz,
             style: theme.textTheme.bodySmall,
           ),
           const SizedBox(height: 12),
-          const _PermissionGuideStep(
-            title: 'Bildirimleri kapat:',
-            body:
-                'Açılan uygulama bildirimleri ekranında “Bildirimlere izin ver” anahtarını kapat.',
+          _PermissionGuideStep(
+            title: AppLocalizations.of(context).clockBildirimleriKapat,
+            body: AppLocalizations.of(context).clockKapatDugmesiIlgiliAndroid,
           ),
-          const _PermissionGuideStep(
-            title: 'Kesin alarmı kapat:',
-            body:
-                'Açılan “Alarmlar ve hatırlatıcılar” ekranında Odak Kampı için anahtarı kapat.',
+          _PermissionGuideStep(
+            title: AppLocalizations.of(context).clockKesinAlarmiKapat,
+            body: AppLocalizations.of(context).clockKapatDugmesiIlgiliAndroid,
           ),
-          const _PermissionGuideStep(
-            title: 'Pil istisnasını kaldır:',
-            body:
-                'Pil optimizasyonu listesinde Odak Kampı’nı bulup “Optimize edilmiş” seçeneğine geri al.',
+          _PermissionGuideStep(
+            title: AppLocalizations.of(context).clockPilIstisnasiniKaldir,
+            body: AppLocalizations.of(context).clockKapatDugmesiIlgiliAndroid,
           ),
-          const _PermissionGuideStep(
-            title: 'Tam ekran alarmı kapat:',
-            body:
-                'Açılan tam ekran bildirimler sayfasında Odak Kampı anahtarını kapat. Android 14 öncesinde bu ayar olmayabilir.',
+          _PermissionGuideStep(
+            title: AppLocalizations.of(context).clockTamEkranAlarmiKapat,
+            body: AppLocalizations.of(context).clockAcilanTamEkranBildirimler,
           ),
         ],
       ),

@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -19,13 +20,7 @@ import 'world_clock_screen.dart';
 /// Saat Merkezi sekmeleri — tek satır ikon şeridi (kaydırma yok).
 /// Sıra: Saat+Odak · Alarm · Timer · Krono · Dünya
 /// (Widget/izinler → Ayarlar · Bildirim & izinler)
-enum ClockTab {
-  home,
-  alarm,
-  multiTimer,
-  stopwatch,
-  world,
-}
+enum ClockTab { home, alarm, multiTimer, stopwatch, world }
 
 class ClockScreen extends ConsumerStatefulWidget {
   const ClockScreen({super.key});
@@ -62,7 +57,10 @@ class _ClockScreenState extends ConsumerState<ClockScreen> {
     final theme = Theme.of(context);
     final timeStr = DateFormat.Hm().format(_now);
     final secStr = DateFormat('ss').format(_now);
-    final dateStr = DateFormat('EEEE, d MMMM', 'tr_TR').format(_now);
+    final dateStr = DateFormat(
+      'EEEE, d MMMM',
+      Localizations.localeOf(context).toLanguageTag(),
+    ).format(_now);
 
     final alarms = ref.watch(alarmsProvider).asData?.value ?? const [];
     DateTime? next;
@@ -139,7 +137,11 @@ class _ClockScreenState extends ConsumerState<ClockScreen> {
           Card(
             child: ListTile(
               leading: const Icon(Icons.alarm),
-              title: Text('Alarm ${DateFormat.Hm().format(next)}'),
+              title: Text(
+                AppLocalizations.of(context).clockAlarmDateformathmformatnext(
+                  DateFormat.Hm().format(next),
+                ),
+              ),
               subtitle: Text(nextLabel ?? ''),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => _onTabChanged(ClockTab.alarm),
@@ -163,7 +165,7 @@ class _ClockScreenState extends ConsumerState<ClockScreen> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Çalışma oturumu',
+                        AppLocalizations.of(context).clockCalismaOturumu,
                         style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w700,
                         ),
@@ -171,7 +173,9 @@ class _ClockScreenState extends ConsumerState<ClockScreen> {
                       ),
                     ),
                     Text(
-                      studyRunning ? 'Çalışıyor' : 'Hazır',
+                      studyRunning
+                          ? AppLocalizations.of(context).commonCalsyor
+                          : AppLocalizations.of(context).desktopHazir,
                       style: theme.textTheme.labelLarge?.copyWith(
                         color: studyRunning
                             ? theme.colorScheme.primary
@@ -204,10 +208,12 @@ class _ClockScreenState extends ConsumerState<ClockScreen> {
                           n.start();
                         }
                       },
-                      icon: Icon(
-                        studyRunning ? Icons.stop : Icons.play_arrow,
+                      icon: Icon(studyRunning ? Icons.stop : Icons.play_arrow),
+                      label: Text(
+                        studyRunning
+                            ? AppLocalizations.of(context).profileDurdur
+                            : AppLocalizations.of(context).desktopBaslat,
                       ),
-                      label: Text(studyRunning ? 'Durdur' : 'Başlat'),
                     ),
                     OutlinedButton.icon(
                       onPressed: () {
@@ -224,7 +230,7 @@ class _ClockScreenState extends ConsumerState<ClockScreen> {
                         );
                       },
                       icon: const Icon(Icons.tune),
-                      label: const Text('Mod / ders'),
+                      label: Text(AppLocalizations.of(context).clockModDers),
                     ),
                   ],
                 ),
@@ -234,7 +240,7 @@ class _ClockScreenState extends ConsumerState<ClockScreen> {
         ),
         const SizedBox(height: 8),
         Text(
-          'Yatay çevir → StandBy masa saati · Widget’lar sol sekmede',
+          AppLocalizations.of(context).clockWidgetVeIzinler,
           textAlign: TextAlign.center,
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.outline,
@@ -246,18 +252,43 @@ class _ClockScreenState extends ConsumerState<ClockScreen> {
 
   /// Eşit genişlikte ikon+kısa etiket — kaydırma yok, tek ekrana sığar.
   Widget _buildIconStrip() {
-    const items = <(ClockTab, IconData, String, Key)>[
-      (ClockTab.home, Icons.schedule, 'Saat', Key('clock_tab_home')),
-      (ClockTab.alarm, Icons.alarm, 'Alarm', Key('clock_tab_alarm')),
-      (ClockTab.multiTimer, Icons.hourglass_empty, 'Timer', Key('clock_tab_timer')),
-      (ClockTab.stopwatch, Icons.timer_outlined, 'Krono', Key('clock_tab_stopwatch')),
-      (ClockTab.world, Icons.public, 'Dünya', Key('clock_tab_world')),
+    final items = <(ClockTab, IconData, String, Key)>[
+      (
+        ClockTab.home,
+        Icons.schedule,
+        AppLocalizations.of(context).profileSaat,
+        Key('clock_tab_home'),
+      ),
+      (
+        ClockTab.alarm,
+        Icons.alarm,
+        AppLocalizations.of(context).coreAlarm,
+        Key('clock_tab_alarm'),
+      ),
+      (
+        ClockTab.multiTimer,
+        Icons.hourglass_empty,
+        AppLocalizations.of(context).clockTimer,
+        Key('clock_tab_timer'),
+      ),
+      (
+        ClockTab.stopwatch,
+        Icons.timer_outlined,
+        AppLocalizations.of(context).clockKrono,
+        Key('clock_tab_stopwatch'),
+      ),
+      (
+        ClockTab.world,
+        Icons.public,
+        AppLocalizations.of(context).clockDunya,
+        Key('clock_tab_world'),
+      ),
     ];
 
     return Material(
-      color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(
-            alpha: 0.45,
-          ),
+      color: Theme.of(
+        context,
+      ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.45),
       borderRadius: BorderRadius.circular(14),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
@@ -304,7 +335,7 @@ class _ClockScreenState extends ConsumerState<ClockScreen> {
           appBar: isDesktopWindow
               ? null
               : AppBar(
-                  title: const Text('Saat Merkezi'),
+                  title: Text(AppLocalizations.of(context).clockSaatMerkezi),
                   centerTitle: true,
                 ),
           body: Column(

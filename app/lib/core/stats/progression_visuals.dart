@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:online_study_room/l10n/app_localizations.dart';
 
 import 'achievement_ledger_engine.dart' show kCrownXpThresholds;
 
@@ -26,19 +27,19 @@ Color tierColorFor(int tier) {
   }
 }
 
-String tierLabelTr(int tier) {
+String tierLabel(int tier, AppLocalizations l10n) {
   switch (tier.clamp(1, 5)) {
     case 1:
-      return 'Bronz';
+      return l10n.coreBronz;
     case 2:
-      return 'Gümüş';
+      return l10n.coreGumus;
     case 3:
-      return 'Altın';
+      return l10n.coreAltin;
     case 4:
-      return 'Platin';
+      return l10n.corePlatin;
     case 5:
     default:
-      return 'Elmas';
+      return l10n.coreElmas;
   }
 }
 
@@ -84,19 +85,19 @@ int crownTierIndex(String rank) {
 
 int crownTierNumber(String rank) => crownTierIndex(rank) + 1; // 1..5
 
-String crownLabelTr(String rank) {
+String crownLabel(String rank, AppLocalizations l10n) {
   switch (normalizeCrownRank(rank)) {
     case 'diamond_owl':
-      return 'Elmas Taç';
+      return l10n.coreElmasTac;
     case 'platinum_scholar':
-      return 'Platin Taç';
+      return l10n.corePlatinTac;
     case 'gold_achiever':
-      return 'Altın Taç';
+      return l10n.coreAltinTac;
     case 'silver_learner':
-      return 'Gümüş Taç';
+      return l10n.coreGumusTac;
     case 'bronze_beginner':
     default:
-      return 'Bronz Taç';
+      return l10n.coreBronzTac;
   }
 }
 
@@ -142,4 +143,3 @@ Color badgeVisualColor({
   }
   return tierColorFor(tier);
 }
-

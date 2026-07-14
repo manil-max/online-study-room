@@ -8,9 +8,11 @@ import 'package:uuid/uuid.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:online_study_room/l10n/app_localizations.dart';
 
 import '../../core/config/supabase_config.dart';
 import '../../core/background/timer_foreground_service.dart';
+import '../../core/l10n/system_localizations.dart';
 import '../../core/notifications/timer_external_command_store.dart';
 import '../../core/notifications/timer_notification_service.dart';
 import '../../core/observability/observability_service.dart';
@@ -921,6 +923,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     if (_disposed) return;
     // Android home_widget yoksa (Windows/web) projeksiyon + kanal maliyeti sıfır.
     if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) return;
+    final l10n = await loadSystemLocalizations();
     final widgetService = ref.read(androidWidgetServiceProvider);
     final projection = ref.read(canonicalStatsProjectionProvider);
     final dailyGoalSeconds = ref.read(dailyGoalMinutesProvider) * 60;
@@ -942,25 +945,29 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     final groupPercent = _goalPercent(groupTodaySeconds, groupGoalSeconds);
     await widgetService.saveSnapshot(
       AndroidWidgetSnapshot.goals(
+        l10n: l10n,
         dailyPercent: '$dailyPercent%',
         dailyDetail:
-            '${formatHuman(projection.todaySeconds)} / ${formatHuman(dailyGoalSeconds)}',
+            '${_formatWidgetDuration(projection.todaySeconds, l10n)} / '
+            '${_formatWidgetDuration(dailyGoalSeconds, l10n)}',
         groupPercent: group == null ? '0%' : '$groupPercent%',
         groupDetail: group == null
-            ? 'Bir gruba katıl'
+            ? l10n.commonBirGrubaKatil
             : groupGoalSeconds == 0
-            ? 'Grup hedefi belirlenmedi'
-            : '${formatHuman(groupTodaySeconds)} / ${formatHuman(groupGoalSeconds)}',
+            ? l10n.commonGrupHedefiBelirlenmedi
+            : '${_formatWidgetDuration(groupTodaySeconds, l10n)} / '
+                  '${_formatWidgetDuration(groupGoalSeconds, l10n)}',
       ),
     );
     final ownRank = user == null
-        ? 'Sıralama oluşunca burada görünür'
-        : _rankLabel(rows, user.id);
+        ? l10n.commonSiralamaOlusuncaBuradaGorunur
+        : _rankLabel(rows, user.id, l10n);
     await widgetService.saveSnapshot(
       AndroidWidgetSnapshot.leaderboard(
+        l10n: l10n,
         rows: rows.take(3).map((entry) {
-          final name = names[entry.key] ?? 'Grup üyesi';
-          return '$name · ${formatHuman(entry.value)}';
+          final name = names[entry.key] ?? l10n.commonGrupUyesi;
+          return '$name · ${_formatWidgetDuration(entry.value, l10n)}';
         }).toList(),
         myRank: ownRank,
       ),
@@ -979,9 +986,26 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     return ((currentSeconds / goalSeconds) * 100).floor();
   }
 
-  String _rankLabel(List<MapEntry<String, int>> rows, String userId) {
+  String _rankLabel(
+    List<MapEntry<String, int>> rows,
+    String userId,
+    AppLocalizations l10n,
+  ) {
     final index = rows.indexWhere((entry) => entry.key == userId);
-    return index < 0 ? 'Henüz sıralaman yok' : 'Sen · #${index + 1}';
+    return index < 0
+        ? l10n.commonSiralamaOlusuncaBuradaGorunur
+        : '#${index + 1}';
+  }
+
+  String _formatWidgetDuration(int totalSeconds, AppLocalizations l10n) {
+    final seconds = totalSeconds.clamp(0, 1 << 31);
+    final hours = seconds ~/ 3600;
+    final minutes = (seconds % 3600) ~/ 60;
+    if (hours > 0) {
+      return '${l10n.commonHourCount(hours)} '
+          '${l10n.commonMinuteCount(minutes)}';
+    }
+    return l10n.commonMinuteCount(minutes);
   }
 
   Future<void> _syncTimerNotification() async {
@@ -996,13 +1020,15 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
 
   Future<void> _syncTimerWidget() async {
     if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) return;
+    final l10n = await loadSystemLocalizations();
     final widgetService = ref.read(androidWidgetServiceProvider);
     if (!state.isRunning || state.startedAt == null) {
       await widgetService.saveSnapshot(
         AndroidWidgetSnapshot.timer(
+          l10n: l10n,
           elapsed: '00:00:00',
-          status: 'Çalışma hazır',
-          action: 'Başlat',
+          status: l10n.commonCalismaHazir,
+          action: l10n.desktopBaslat,
         ),
       );
       await widgetService.refresh(widgets: const [StudyHomeWidget.timer]);
@@ -1018,9 +1044,12 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
         : (target - elapsed).clamp(0, target).toInt();
     await widgetService.saveSnapshot(
       AndroidWidgetSnapshot.timer(
+        l10n: l10n,
         elapsed: formatHms(remaining ?? elapsed),
-        status: state.phase == TimerPhase.rest ? 'Mola' : 'Çalışıyor',
-        action: 'Durdur',
+        status: state.phase == TimerPhase.rest
+            ? l10n.desktopMola
+            : l10n.commonCalsyor,
+        action: l10n.profileDurdur,
       ),
     );
     await widgetService.refresh(widgets: const [StudyHomeWidget.timer]);

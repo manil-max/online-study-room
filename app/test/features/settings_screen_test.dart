@@ -95,7 +95,7 @@ void main() {
     await tester.tap(find.text('Widget ve alarm izinleri'));
     await tester.pumpAndSettle();
     expect(find.byType(ClockWidgetsScreen), findsOneWidget);
-    expect(find.textContaining('Ana ekran widget'), findsOneWidget);
+    expect(find.text('Widget ve izinler'), findsWidgets);
     Navigator.of(tester.element(find.byType(ClockWidgetsScreen))).pop();
     await tester.pumpAndSettle();
 

@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -14,6 +15,9 @@ void main() {
 
   Widget shell({required ValueChanged<int> onSelected, int selectedIndex = 0}) {
     return MaterialApp(
+      locale: const Locale('tr'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: DesktopHomeShell(
         selectedIndex: selectedIndex,
         screens: const [
@@ -37,7 +41,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(DesktopProportionalScale), findsOneWidget);
-    expect(find.byKey(const ValueKey('desktop-navigation-pane')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('desktop-navigation-pane')),
+      findsOneWidget,
+    );
     expect(find.text('Odak Kampı'), findsOneWidget);
     expect(find.text('Ana Sayfa'), findsOneWidget);
     expect(find.text('Saat'), findsOneWidget);
@@ -59,17 +66,14 @@ void main() {
     // Windows’ta ölçek açık: tasarım 1100 → expanded etiketler (offstage olabilir).
     // Diğer platformlarda kompakt pane olabilir; en azından shell ayakta.
     expect(find.byType(DesktopHomeShell), findsOneWidget);
-    expect(find.byKey(const ValueKey('desktop-navigation-pane')), findsOneWidget);
     expect(
-      find.byKey(const ValueKey('desktop-rail-settings')),
+      find.byKey(const ValueKey('desktop-navigation-pane')),
       findsOneWidget,
     );
+    expect(find.byKey(const ValueKey('desktop-rail-settings')), findsOneWidget);
 
     // Ölçek aktifse (Windows) Ana Sayfa metni tuvalde var.
-    if (find
-        .text('Ana Sayfa', skipOffstage: false)
-        .evaluate()
-        .isNotEmpty) {
+    if (find.text('Ana Sayfa', skipOffstage: false).evaluate().isNotEmpty) {
       final pane = tester.widget<AnimatedContainer>(
         find.byKey(
           const ValueKey('desktop-navigation-pane'),

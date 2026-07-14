@@ -11,7 +11,7 @@ import '../../../data/models/achievement_ledger.dart';
 import '../../../data/models/gamification_profile.dart';
 
 export '../../../core/stats/progression_visuals.dart'
-    show crownColorFor, crownLabelTr, xpBarMetrics, tierColorFor, tierLabelTr;
+    show crownColorFor, crownLabel, xpBarMetrics, tierColorFor;
 
 IconData achievementIconData(String iconKey) {
   switch (iconKey) {
@@ -198,7 +198,7 @@ class AchievementShowcaseState extends State<AchievementShowcase>
   DateTime? _confettiStartedAt;
 
   List<AchievementDictEntry> get _dict =>
-      widget.dictionary ?? kAchievementDictV3();
+      widget.dictionary ?? kAchievementDictV3(AppLocalizations.of(context));
 
   @override
   void initState() {

@@ -7,13 +7,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../data/models/alarm_rule.dart';
 import '../../data/models/timer_preset.dart';
+import '../l10n/system_localizations.dart';
 import '../time_engine/alarm_scheduler.dart';
 
 /// Flutter → Kotlin native AlarmManager köprüsü.
 class NativeAlarmBridge {
   NativeAlarmBridge({MethodChannel? channel})
-      : _channel = channel ??
-            const MethodChannel('com.manilmax.online_study_room/exact_alarm');
+    : _channel =
+          channel ??
+          const MethodChannel('com.manilmax.online_study_room/exact_alarm');
 
   static final instance = NativeAlarmBridge();
 
@@ -37,11 +39,12 @@ class NativeAlarmBridge {
       await cancel(kind: 'alarm', id: alarm.id);
       return;
     }
+    final l10n = await loadSystemLocalizations();
     try {
       await _channel.invokeMethod<void>('scheduleAlarm', {
         'id': alarm.id,
         'triggerAtMs': next.millisecondsSinceEpoch,
-        'label': alarm.label.isNotEmpty ? alarm.label : 'Alarm',
+        'label': alarm.label.isNotEmpty ? alarm.label : l10n.coreAlarm,
         'hour': alarm.hour,
         'minute': alarm.minute,
         'crescendo': alarm.crescendo,
@@ -60,8 +63,8 @@ class NativeAlarmBridge {
       await cancel(kind: 'timer', id: instance.id);
       return;
     }
-    final ends = instance.endsAtEpochMs ??
-        (nowMs + instance.remainingAt(nowMs) * 1000);
+    final ends =
+        instance.endsAtEpochMs ?? (nowMs + instance.remainingAt(nowMs) * 1000);
     if (ends <= nowMs) {
       await cancel(kind: 'timer', id: instance.id);
       return;
@@ -91,10 +94,11 @@ class NativeAlarmBridge {
 
   Future<void> previewRing(AlarmRule alarm) async {
     if (!_android) return;
+    final l10n = await loadSystemLocalizations();
     try {
       await _channel.invokeMethod<void>('previewRing', {
         'id': alarm.id,
-        'label': alarm.label.isNotEmpty ? alarm.label : 'Alarm',
+        'label': alarm.label.isNotEmpty ? alarm.label : l10n.coreAlarm,
         'hour': alarm.hour,
         'minute': alarm.minute,
         'crescendo': alarm.crescendo,
@@ -111,6 +115,7 @@ class NativeAlarmBridge {
     List<AlarmRule> alarms,
     DateTime now,
   ) async {
+    final l10n = await loadSystemLocalizations();
     final list = <Map<String, dynamic>>[];
     for (final a in alarms) {
       if (!a.isActive) continue;
@@ -120,7 +125,7 @@ class NativeAlarmBridge {
         'id': a.id,
         'active': true,
         'triggerAtMs': next.millisecondsSinceEpoch,
-        'label': a.label.isNotEmpty ? a.label : 'Alarm',
+        'label': a.label.isNotEmpty ? a.label : l10n.coreAlarm,
         'hour': a.hour,
         'minute': a.minute,
         'crescendo': a.crescendo,
@@ -140,14 +145,9 @@ class NativeAlarmBridge {
     final list = <Map<String, dynamic>>[];
     for (final t in instances) {
       if (t.status != TimerStateStatus.running) continue;
-      final ends =
-          t.endsAtEpochMs ?? (nowMs + t.remainingAt(nowMs) * 1000);
+      final ends = t.endsAtEpochMs ?? (nowMs + t.remainingAt(nowMs) * 1000);
       if (ends <= nowMs) continue;
-      list.add({
-        'id': t.id,
-        'label': t.label,
-        'endsAtMs': ends,
-      });
+      list.add({'id': t.id, 'label': t.label, 'endsAtMs': ends});
     }
     await prefs.setString(mirrorTimersKey, jsonEncode(list));
   }

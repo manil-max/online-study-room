@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:online_study_room/l10n/app_localizations.dart';
 
 /// Alarm özellik modeli (Alarm 2.0).
 class AlarmRule extends Equatable {
@@ -15,8 +16,8 @@ class AlarmRule extends Equatable {
     this.antiSnooze = false,
     this.crescendo = true,
     this.vibrate = true,
-  })  : assert(hour >= 0 && hour <= 23),
-        assert(minute >= 0 && minute <= 59);
+  }) : assert(hour >= 0 && hour <= 23),
+       assert(minute >= 0 && minute <= 59);
 
   final String id;
 
@@ -117,43 +118,42 @@ class AlarmRule extends Equatable {
   String get timeLabel =>
       '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
 
-  /// Türkçe kısa gün özeti.
-  String get daysSummary {
-    if (days.isEmpty) return 'Bir kez';
-    const names = {
-      1: 'Pzt',
-      2: 'Sal',
-      3: 'Çar',
-      4: 'Per',
-      5: 'Cum',
-      6: 'Cmt',
-      7: 'Paz',
+  /// Etkin locale için kısa gün özeti.
+  String daysSummary(AppLocalizations l10n) {
+    if (days.isEmpty) return l10n.commonBirKez;
+    final names = {
+      1: l10n.statsPzt,
+      2: l10n.statsSal,
+      3: l10n.statsCar,
+      4: l10n.statsPer,
+      5: l10n.statsCum,
+      6: l10n.statsCmt,
+      7: l10n.statsPaz,
     };
     final sorted = [...days]..sort();
-    if (sorted.length == 7) return 'Her gün';
-    if (sorted.length == 5 &&
-        sorted.every((d) => d >= 1 && d <= 5)) {
-      return 'Hafta içi';
+    if (sorted.length == 7) return l10n.notificationsHerGun;
+    if (sorted.length == 5 && sorted.every((d) => d >= 1 && d <= 5)) {
+      return l10n.statsHaftaIci;
     }
     if (sorted.length == 2 && sorted.contains(6) && sorted.contains(7)) {
-      return 'Hafta sonu';
+      return l10n.statsHaftaSonu;
     }
     return sorted.map((d) => names[d] ?? '$d').join(', ');
   }
 
   @override
   List<Object?> get props => [
-        id,
-        hour,
-        minute,
-        days,
-        date,
-        label,
-        isActive,
-        snoozeMinutes,
-        skipNextOn,
-        antiSnooze,
-        crescendo,
-        vibrate,
-      ];
+    id,
+    hour,
+    minute,
+    days,
+    date,
+    label,
+    isActive,
+    snoozeMinutes,
+    skipNextOn,
+    antiSnooze,
+    crescendo,
+    vibrate,
+  ];
 }

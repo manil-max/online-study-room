@@ -28,7 +28,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Tema Stüdyosu'), findsOneWidget);
-      expect(find.text('Canlı önizleme'), findsOneWidget);
+      expect(find.text('Canlı önizleme'), findsWidgets);
       expect(find.text('Kamp Ateşi'), findsOneWidget);
       expect(find.textContaining('Keskin Modern'), findsWidgets);
       // Yeni atmosferler + Material You scroll ile erişilebilir

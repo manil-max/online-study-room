@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -24,15 +25,15 @@ class TimersScreen extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Hızlı başlat',
+                AppLocalizations.of(context).clockHizliBaslat,
                 style: Theme.of(context).textTheme.titleSmall,
               ),
               const SizedBox(height: 4),
               Text(
-                'Biten veya durdurulan timer (≥30 sn) çalışma süresine eklenir.',
+                AppLocalizations.of(context).clockCalismaOturumu,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
             ],
           ),
@@ -49,7 +50,7 @@ class TimersScreen extends ConsumerWidget {
                 if (i == list.length) {
                   return ActionChip(
                     avatar: const Icon(Icons.add, size: 18),
-                    label: const Text('Özel'),
+                    label: Text(AppLocalizations.of(context).clockOzel),
                     onPressed: () => _customDialog(context, ref),
                   );
                 }
@@ -73,10 +74,10 @@ class TimersScreen extends ConsumerWidget {
               if (list.isEmpty) {
                 return Center(
                   child: Text(
-                    'Henüz çalışan bir timer yok.',
+                    AppLocalizations.of(context).clockHenuzCalisanBirTimer,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 );
               }
@@ -88,7 +89,11 @@ class TimersScreen extends ConsumerWidget {
               );
             },
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(child: Text('Hata: $e')),
+            error: (e, _) => Center(
+              child: Text(
+                AppLocalizations.of(context).authBeklenmeyenBirHataOlustu,
+              ),
+            ),
           ),
         ),
       ],
@@ -97,38 +102,43 @@ class TimersScreen extends ConsumerWidget {
     if (embedded) return body;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Çoklu Timer')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context).clockCokluTimer)),
       body: body,
     );
   }
 
   Future<void> _customDialog(BuildContext context, WidgetRef ref) async {
-    final labelCtrl = TextEditingController(text: 'Özel Zamanlayıcı');
+    final l10n = AppLocalizations.of(context);
+    final labelCtrl = TextEditingController(text: l10n.clockOzelZamanlayici);
     var minutes = 5;
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Özel timer'),
+        title: Text(AppLocalizations.of(context).clockOzelTimer),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: labelCtrl,
-              decoration: const InputDecoration(labelText: 'Etiket'),
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(context).clockEtiket,
+              ),
             ),
             const SizedBox(height: 12),
             StatefulBuilder(
               builder: (context, setLocal) {
                 return Row(
                   children: [
-                    const Text('Dakika:'),
+                    Text(AppLocalizations.of(context).clockDakika),
                     Expanded(
                       child: Slider(
                         value: minutes.toDouble(),
                         min: 1,
                         max: 180,
                         divisions: 179,
-                        label: '$minutes dk',
+                        label: AppLocalizations.of(
+                          context,
+                        ).clockMinutesDk(minutes.toString()),
                         onChanged: (v) => setLocal(() => minutes = v.round()),
                       ),
                     ),
@@ -142,19 +152,21 @@ class TimersScreen extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('İptal'),
+            child: Text(AppLocalizations.of(context).updaterIptal),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Başlat'),
+            child: Text(AppLocalizations.of(context).desktopBaslat),
           ),
         ],
       ),
     );
     if (ok == true) {
-      await ref.read(timerInstancesProvider.notifier).addCustom(
+      await ref
+          .read(timerInstancesProvider.notifier)
+          .addCustom(
             label: labelCtrl.text.trim().isEmpty
-                ? 'Özel Zamanlayıcı'
+                ? l10n.clockOzelZamanlayici
                 : labelCtrl.text.trim(),
             durationSeconds: minutes * 60,
           );
@@ -212,7 +224,7 @@ class _TimerCard extends ConsumerWidget {
                 ),
                 if (done)
                   Chip(
-                    label: const Text('Bitti'),
+                    label: Text(AppLocalizations.of(context).homeBitti),
                     visualDensity: VisualDensity.compact,
                     backgroundColor: color.withValues(alpha: 0.15),
                   ),
@@ -222,10 +234,10 @@ class _TimerCard extends ConsumerWidget {
             Text(
               formatCountdown(rem),
               style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                    fontFeatures: const [FontFeature.tabularFigures()],
-                    fontWeight: FontWeight.w300,
-                    color: done ? color : null,
-                  ),
+                fontFeatures: const [FontFeature.tabularFigures()],
+                fontWeight: FontWeight.w300,
+                color: done ? color : null,
+              ),
             ),
             const SizedBox(height: 8),
             ClipRRect(
@@ -243,7 +255,7 @@ class _TimerCard extends ConsumerWidget {
               children: [
                 if (instance.status == TimerStateStatus.running) ...[
                   IconButton(
-                    tooltip: 'Duraklat',
+                    tooltip: AppLocalizations.of(context).clockDuraklat,
                     onPressed: () => ref
                         .read(timerInstancesProvider.notifier)
                         .pauseInstance(instance.id),
@@ -253,18 +265,18 @@ class _TimerCard extends ConsumerWidget {
                     onPressed: () => ref
                         .read(timerInstancesProvider.notifier)
                         .addMinute(instance.id),
-                    child: const Text('+1 dk'),
+                    child: Text(AppLocalizations.of(context).clockValue1Dk),
                   ),
                   TextButton(
                     onPressed: () => ref
                         .read(timerInstancesProvider.notifier)
                         .addMinute(instance.id, minutes: 5),
-                    child: const Text('+5 dk'),
+                    child: Text(AppLocalizations.of(context).clockValue5Dk),
                   ),
                 ] else if (instance.status == TimerStateStatus.paused ||
                     instance.status == TimerStateStatus.initial) ...[
                   IconButton(
-                    tooltip: 'Başlat',
+                    tooltip: AppLocalizations.of(context).desktopBaslat,
                     onPressed: () => ref
                         .read(timerInstancesProvider.notifier)
                         .resumeInstance(instance.id),
@@ -273,7 +285,7 @@ class _TimerCard extends ConsumerWidget {
                 ],
                 if (instance.status == TimerStateStatus.done)
                   IconButton(
-                    tooltip: 'Yeniden',
+                    tooltip: AppLocalizations.of(context).clockYeniden,
                     onPressed: () async {
                       await ref
                           .read(timerInstancesProvider.notifier)
@@ -285,14 +297,14 @@ class _TimerCard extends ConsumerWidget {
                     icon: const Icon(Icons.replay),
                   ),
                 IconButton(
-                  tooltip: 'Sıfırla',
+                  tooltip: AppLocalizations.of(context).homeSifirla,
                   onPressed: () => ref
                       .read(timerInstancesProvider.notifier)
                       .stopInstance(instance.id),
                   icon: const Icon(Icons.stop),
                 ),
                 IconButton(
-                  tooltip: 'Sil',
+                  tooltip: AppLocalizations.of(context).profileSil,
                   onPressed: () => ref
                       .read(timerInstancesProvider.notifier)
                       .deleteInstance(instance.id),

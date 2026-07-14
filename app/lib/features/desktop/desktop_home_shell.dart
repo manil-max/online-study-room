@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -26,31 +27,31 @@ class DesktopHomeShell extends StatelessWidget {
   final ValueChanged<int> onDestinationSelected;
   final VoidCallback onRefresh;
 
-  static const destinations = <DesktopNavItem>[
+  static List<DesktopNavItem> destinations(BuildContext context) => [
     DesktopNavItem(
       icon: Icons.home_outlined,
       selectedIcon: Icons.home,
-      label: 'Ana Sayfa',
+      label: AppLocalizations.of(context).homeAnaSayfa,
     ),
     DesktopNavItem(
       icon: Icons.access_time_outlined,
       selectedIcon: Icons.access_time_filled,
-      label: 'Saat',
+      label: AppLocalizations.of(context).desktopSaat,
     ),
     DesktopNavItem(
       icon: Icons.groups_outlined,
       selectedIcon: Icons.groups,
-      label: 'Gruplar',
+      label: AppLocalizations.of(context).desktopGruplar,
     ),
     DesktopNavItem(
       icon: Icons.bar_chart_outlined,
       selectedIcon: Icons.bar_chart,
-      label: 'İstatistik',
+      label: AppLocalizations.of(context).statsIstatistik,
     ),
     DesktopNavItem(
       icon: Icons.person_outline,
       selectedIcon: Icons.person,
-      label: 'Profil',
+      label: AppLocalizations.of(context).profileProfil,
     ),
   ];
 
@@ -68,12 +69,12 @@ class DesktopHomeShell extends StatelessWidget {
       context: context,
       builder: (pageContext) => Scaffold(
         appBar: AppBar(
-          title: const Text('Ayarlar'),
+          title: Text(AppLocalizations.of(context).profileAyarlar),
           leading: IconButton(
-            tooltip: 'Kapat',
+            tooltip: AppLocalizations.of(context).homeKapat,
             icon: const Icon(Icons.close),
-            onPressed: () => Navigator.of(pageContext, rootNavigator: true)
-                .maybePop(),
+            onPressed: () =>
+                Navigator.of(pageContext, rootNavigator: true).maybePop(),
           ),
         ),
         body: const SettingsScreen(embedded: true),
@@ -82,19 +83,13 @@ class DesktopHomeShell extends StatelessWidget {
   }
 
   Map<ShortcutActivator, VoidCallback> _shortcuts(BuildContext context) => {
-    for (var index = 0; index < destinations.length; index++)
+    for (var index = 0; index < destinations(context).length; index++)
       SingleActivator(_numberKeys[index], control: true): () =>
           onDestinationSelected(index),
-    const SingleActivator(
-      LogicalKeyboardKey.keyM,
-      control: true,
-      shift: true,
-    ): toggleDesktopCompactMode,
-    const SingleActivator(
-      LogicalKeyboardKey.keyP,
-      control: true,
-      shift: true,
-    ): toggleDesktopAlwaysOnTop,
+    const SingleActivator(LogicalKeyboardKey.keyM, control: true, shift: true):
+        toggleDesktopCompactMode,
+    const SingleActivator(LogicalKeyboardKey.keyP, control: true, shift: true):
+        toggleDesktopAlwaysOnTop,
     const SingleActivator(LogicalKeyboardKey.f5): onRefresh,
     SingleActivator(LogicalKeyboardKey.comma, control: true): () =>
         openSettings(context),
@@ -124,7 +119,7 @@ class DesktopHomeShell extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       DesktopNavigationPane(
-                        items: destinations,
+                        items: destinations(context),
                         selectedIndex: selectedIndex,
                         onSelected: onDestinationSelected,
                         footer: _PaneFooter(
@@ -224,25 +219,30 @@ class _PaneFooter extends StatelessWidget {
             DesktopNavFooterAction(
               key: const ValueKey('desktop-rail-settings'),
               icon: Icons.settings_outlined,
-              label: 'Ayarlar',
-              tooltip: 'Ayarlar (Ctrl+,)',
+              label: AppLocalizations.of(context).profileAyarlar,
+              tooltip:
+                  '${AppLocalizations.of(context).profileAyarlar} (Ctrl+,)',
               expanded: expanded,
               onPressed: onSettings,
             ),
             DesktopNavFooterAction(
               icon: Icons.refresh,
-              label: 'Yenile',
-              tooltip: 'Yenile (F5)',
+              label: AppLocalizations.of(context).desktopYenile,
+              tooltip: '${AppLocalizations.of(context).desktopYenile} (F5)',
               expanded: expanded,
               onPressed: onRefresh,
             ),
             DesktopNavFooterAction(
               key: const ValueKey('desktop-rail-pin'),
               icon: pinned ? Icons.push_pin : Icons.push_pin_outlined,
-              label: pinned ? 'Üstte (açık)' : 'Üstte tut',
+              label: pinned
+                  ? '${AppLocalizations.of(context).desktopUstteTut} · '
+                        '${AppLocalizations.of(context).profileAcik}'
+                  : AppLocalizations.of(context).desktopUstteTut,
               tooltip: pinned
-                  ? 'Üstte tut açık — kapatmak için tıkla (Ctrl+Shift+P)'
-                  : 'Her zaman üstte tut (Ctrl+Shift+P)',
+                  ? '${AppLocalizations.of(context).desktopKapat} (Ctrl+Shift+P)'
+                  : '${AppLocalizations.of(context).desktopHerZamanUstteTut} '
+                        '(Ctrl+Shift+P)',
               expanded: expanded,
               selected: pinned,
               onPressed: toggleDesktopAlwaysOnTop,
@@ -251,8 +251,10 @@ class _PaneFooter extends StatelessWidget {
               icon: compact
                   ? Icons.picture_in_picture_alt
                   : Icons.picture_in_picture_alt_outlined,
-              label: 'Compact Focus',
-              tooltip: 'Compact Focus (Ctrl+Shift+M)',
+              label: AppLocalizations.of(context).desktopCompactFocus,
+              tooltip:
+                  '${AppLocalizations.of(context).desktopCompactFocus} '
+                  '(Ctrl+Shift+M)',
               expanded: expanded,
               selected: compact,
               onPressed: toggleDesktopCompactMode,

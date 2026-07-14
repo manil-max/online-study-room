@@ -59,7 +59,7 @@ class AppearanceScreen extends ConsumerWidget {
                           AppLocalizations.of(context).profileTemaStudyosu,
                         ),
                         subtitle: Text(
-                          '${family.name} · ${l10n.profileCanliOnizleme}',
+                          '${family.localizedName(l10n)} · ${l10n.profileCanliOnizleme}',
                         ),
                         trailing: Icon(Icons.chevron_right),
                         onTap: () {
@@ -219,7 +219,7 @@ class _PaletteCard extends StatelessWidget {
             ),
             SizedBox(height: 8),
             Text(
-              palette.name,
+              palette.localizedName(AppLocalizations.of(context)),
               style: theme.textTheme.bodyMedium?.copyWith(
                 fontWeight: selected ? FontWeight.bold : FontWeight.normal,
               ),
@@ -268,7 +268,7 @@ class _CustomPaletteTile extends StatelessWidget {
             _Swatch(color: palette.accent),
           ],
         ),
-        title: Text(palette.name),
+        title: Text(palette.localizedName(AppLocalizations.of(context))),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [

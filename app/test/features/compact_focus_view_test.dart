@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -11,6 +12,9 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
+        locale: const Locale('tr'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: desktopChromeBody(
           isCompact: true,
           child: const Text('Tam uygulama'),
@@ -29,6 +33,9 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
+        locale: const Locale('tr'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         builder: (context, child) => desktopChromeBody(
           isCompact: true,
           child: child ?? const SizedBox.shrink(),
@@ -63,7 +70,12 @@ void main() {
         overrides: [
           authStateProvider.overrideWith((ref) => Stream.value(null)),
         ],
-        child: const MaterialApp(home: CompactFocusView()),
+        child: const MaterialApp(
+          locale: Locale('tr'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: CompactFocusView(),
+        ),
       ),
     );
     await tester.pump();

@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'dart:async';
 import 'dart:math' as math;
 
@@ -70,7 +71,11 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen> {
     if (widget.alarm.antiSnooze) {
       final ans = int.tryParse(_answerCtrl.text.trim());
       if (ans != _a + _b) {
-        setState(() => _error = 'Yanlış cevap — tekrar dene');
+        setState(
+          () => _error = AppLocalizations.of(
+            context,
+          ).clockKapatmakIcinMatematikSorusu,
+        );
         HapticFeedback.vibrate();
         return;
       }
@@ -83,7 +88,9 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen> {
 
   void _snooze() {
     if (widget.alarm.antiSnooze) {
-      setState(() => _error = 'Erteleme için de soruyu çöz');
+      setState(
+        () => _error = AppLocalizations.of(context).clockErtelemeIcinDeSoruyu,
+      );
       return;
     }
     widget.onSnooze?.call();
@@ -94,8 +101,9 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final label =
-        widget.alarm.label.isNotEmpty ? widget.alarm.label : 'Alarm';
+    final label = widget.alarm.label.isNotEmpty
+        ? widget.alarm.label
+        : AppLocalizations.of(context).coreAlarm;
     final glow = Color.lerp(
       const Color(0xFF7F1D1D),
       const Color(0xFFEF4444),
@@ -141,14 +149,14 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Ses seviyesi ${(_level * 100).round()}%',
+                  '${(_level * 100).round()}%',
                   style: const TextStyle(color: Colors.white38, fontSize: 12),
                 ),
               ],
               if (widget.alarm.antiSnooze) ...[
                 const SizedBox(height: 36),
                 Text(
-                  'Kapatmak için çöz: $_a + $_b = ?',
+                  '$_a + $_b = ?',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 18,
@@ -184,7 +192,8 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen> {
                         minimumSize: const Size(0, 52),
                       ),
                       child: Text(
-                        'Ertele (${widget.alarm.snoozeMinutes} dk)',
+                        '${AppLocalizations.of(context).clockErteleme} '
+                        '(${AppLocalizations.of(context).clockMDk(widget.alarm.snoozeMinutes.toString())})',
                       ),
                     ),
                   ),
@@ -197,7 +206,7 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen> {
                         foregroundColor: Colors.white,
                         minimumSize: const Size(0, 52),
                       ),
-                      child: const Text('Kapat'),
+                      child: Text(AppLocalizations.of(context).homeKapat),
                     ),
                   ),
                 ],

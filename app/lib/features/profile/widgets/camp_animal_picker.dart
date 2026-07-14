@@ -100,7 +100,7 @@ class _AnimalTile extends StatelessWidget {
             Text(animal.emoji, style: TextStyle(fontSize: 30)),
             SizedBox(height: 4),
             Text(
-              animal.label,
+              animal.label(AppLocalizations.of(context)),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.labelSmall,

@@ -189,8 +189,8 @@ void main() {
     );
   });
 
-  test('xpBarMetrics ve crownLabelTr 5 kademe 0/2.5k/10k/25k/75k', () {
-    expect(crownLabelTr('gold_achiever'), 'Altın Taç');
+  test('xpBarMetrics ve crownLabel 5 kademe 0/2.5k/10k/25k/75k', () {
+    expect(crownLabel('gold_achiever', AppLocalizationsTr()), 'Altın Taç');
     final m = xpBarMetrics(5000);
     expect(m.floor, 2500);
     expect(m.next, 10000);

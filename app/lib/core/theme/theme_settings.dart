@@ -24,6 +24,7 @@ class ThemeSettings {
   final String familyId;
   final String paletteId;
   final ThemeMode mode;
+
   /// WP-71: lacivert palet seçince kamp ateşi turuncuya düşmesin.
   final ThemeColorSource colorSource;
   final List<AppPalette> customPalettes;
@@ -51,14 +52,13 @@ class ThemeSettings {
     ThemeMode? mode,
     ThemeColorSource? colorSource,
     List<AppPalette>? customPalettes,
-  }) =>
-      ThemeSettings(
-        familyId: familyId ?? this.familyId,
-        paletteId: paletteId ?? this.paletteId,
-        mode: mode ?? this.mode,
-        colorSource: colorSource ?? this.colorSource,
-        customPalettes: customPalettes ?? this.customPalettes,
-      );
+  }) => ThemeSettings(
+    familyId: familyId ?? this.familyId,
+    paletteId: paletteId ?? this.paletteId,
+    mode: mode ?? this.mode,
+    colorSource: colorSource ?? this.colorSource,
+    customPalettes: customPalettes ?? this.customPalettes,
+  );
 }
 
 class ThemeSettingsNotifier extends Notifier<ThemeSettings> {
@@ -86,9 +86,10 @@ class ThemeSettingsNotifier extends Notifier<ThemeSettings> {
       'palette' => ThemeColorSource.palette,
       'family' => ThemeColorSource.family,
       // Eski kurulum: family yoksa veya yalnızca palet kaydı varsa palet renkleri.
-      _ => storedFamily == null
-          ? ThemeColorSource.palette
-          : ThemeColorSource.family,
+      _ =>
+        storedFamily == null
+            ? ThemeColorSource.palette
+            : ThemeColorSource.family,
     };
 
     List<AppPalette> customPalettes = [];
@@ -105,7 +106,7 @@ class ThemeSettingsNotifier extends Notifier<ThemeSettings> {
       customPalettes.add(
         AppPalette(
           id: 'custom_$idx',
-          name: 'Özel $idx',
+          name: 'Custom $idx',
           primary: const Color(0xFF8B5CF6),
           onPrimary: const Color(0xFFFFFFFF),
           accent: const Color(0xFF12C281),

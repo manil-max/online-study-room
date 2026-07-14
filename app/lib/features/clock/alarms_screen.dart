@@ -1,8 +1,10 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'dart:io' show Platform;
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../core/notifications/alarm_notification_service.dart';
@@ -32,9 +34,9 @@ class AlarmsScreen extends ConsumerWidget {
               return const SizedBox.shrink();
             }
             return MaterialBanner(
-              content: const Text(
-                'Kesin alarm izni kapalı. Alarmlar gecikebilir. '
-                'Saat uygulaması kalitesi için izin ver.',
+              content: Text(
+                '${AppLocalizations.of(context).clockKesinAlarmIzniKapali} '
+                '${AppLocalizations.of(context).clockSaatUygulamasiKalitesiIcin}',
               ),
               leading: const Icon(Icons.warning_amber_rounded),
               actions: [
@@ -45,7 +47,7 @@ class AlarmsScreen extends ConsumerWidget {
                         .requestExactAlarmPermission();
                     ref.invalidate(exactAlarmStatusProvider);
                   },
-                  child: const Text('İzin ver'),
+                  child: Text(AppLocalizations.of(context).clockIzinVer),
                 ),
               ],
             );
@@ -70,19 +72,22 @@ class AlarmsScreen extends ConsumerWidget {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          'Henüz bir alarm oluşturmadınız.',
+                          AppLocalizations.of(
+                            context,
+                          ).clockHenuzBirAlarmOlusturmadiniz,
                           style: Theme.of(context).textTheme.titleMedium,
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Tekrarlayan günler, tek günlük atlama ve '
-                          'anti-snooze ile profesyonel alarm kur.',
+                          AppLocalizations.of(
+                            context,
+                          ).clockTekrarlayanGunlerTekGunluk,
                           style: Theme.of(context).textTheme.bodyMedium
                               ?.copyWith(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurfaceVariant,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
                               ),
                           textAlign: TextAlign.center,
                         ),
@@ -100,7 +105,11 @@ class AlarmsScreen extends ConsumerWidget {
               );
             },
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (err, _) => Center(child: Text('Hata: $err')),
+            error: (err, _) => Center(
+              child: Text(
+                AppLocalizations.of(context).authBeklenmeyenBirHataOlustu,
+              ),
+            ),
           ),
         ),
       ],
@@ -112,18 +121,18 @@ class AlarmsScreen extends ConsumerWidget {
         floatingActionButton: FloatingActionButton.extended(
           onPressed: () => _openEditor(context, ref),
           icon: const Icon(Icons.add),
-          label: const Text('Alarm'),
+          label: Text(AppLocalizations.of(context).coreAlarm),
         ),
       );
     }
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Kişisel Alarmlar'),
+        title: Text(AppLocalizations.of(context).clockKisiselAlarmlar),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
-            tooltip: 'Alarm ekle',
+            tooltip: AppLocalizations.of(context).clockAlarmEkle,
             onPressed: () => _openEditor(context, ref),
           ),
         ],
@@ -143,20 +152,20 @@ class AlarmsScreen extends ConsumerWidget {
       final go = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text('Alarm izinleri'),
+          title: Text(AppLocalizations.of(context).clockAlarmIzinleri),
           content: Text(
-            'App kapalıyken alarm çalsın diye şunlar gerekli:\n\n'
-            '• ${perms.missingLabels.join('\n• ')}\n\n'
-            'Şimdi ayarları açmak ister misin?',
+            '${AppLocalizations.of(context).clockAppKapaliykenAlarmCalmasi}\n\n'
+            '• ${perms.missingLabels(AppLocalizations.of(context)).join('\n• ')}\n\n'
+            '${AppLocalizations.of(context).clockSimdiAyarlariAcmakIster}',
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Sonra'),
+              child: Text(AppLocalizations.of(context).updaterSonra),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('İzinleri aç'),
+              child: Text(AppLocalizations.of(context).clockIzinleriAc),
             ),
           ],
         ),
@@ -201,7 +210,8 @@ class _AlarmTile extends ConsumerWidget {
     final theme = Theme.of(context);
     final now = DateTime.now();
     final next = AlarmScheduler.nextFire(alarm, now);
-    final skipActive = alarm.skipNextOn != null &&
+    final skipActive =
+        alarm.skipNextOn != null &&
         alarm.skipNextOn!.year == (next?.year ?? 0) &&
         alarm.skipNextOn!.month == (next?.month ?? 0) &&
         alarm.skipNextOn!.day == (next?.day ?? 0);
@@ -233,9 +243,11 @@ class _AlarmTile extends ConsumerWidget {
                       Text(
                         [
                           if (alarm.label.isNotEmpty) alarm.label,
-                          alarm.daysSummary,
-                          if (alarm.antiSnooze) 'Anti-snooze',
-                          if (alarm.crescendo) 'Kademeli ses',
+                          alarm.daysSummary(AppLocalizations.of(context)),
+                          if (alarm.antiSnooze)
+                            AppLocalizations.of(context).clockAntisnooze,
+                          if (alarm.crescendo)
+                            AppLocalizations.of(context).clockKademeliSes,
                         ].join(' · '),
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
@@ -246,8 +258,11 @@ class _AlarmTile extends ConsumerWidget {
                           padding: const EdgeInsets.only(top: 4),
                           child: Text(
                             skipActive
-                                ? 'Sonraki atlandı'
-                                : 'Sıradaki: ${_fmtNext(next)}',
+                                ? AppLocalizations.of(
+                                    context,
+                                  ).clockSonrakiAtlandi
+                                : '${AppLocalizations.of(context).clockSiradakiAlarm}: '
+                                      '${_fmtNext(context, next)}',
                             style: theme.textTheme.labelMedium?.copyWith(
                               color: theme.colorScheme.primary,
                             ),
@@ -270,16 +285,19 @@ class _AlarmTile extends ConsumerWidget {
               children: [
                 TextButton.icon(
                   onPressed: () {
-                    ref.read(alarmsProvider.notifier).skipNext(
-                          alarm.id,
-                          skip: !skipActive,
-                        );
+                    ref
+                        .read(alarmsProvider.notifier)
+                        .skipNext(alarm.id, skip: !skipActive);
                   },
                   icon: Icon(
                     skipActive ? Icons.event_available : Icons.event_busy,
                     size: 18,
                   ),
-                  label: Text(skipActive ? 'Atlamayı geri al' : 'Sonrakini atla'),
+                  label: Text(
+                    skipActive
+                        ? AppLocalizations.of(context).clockAtlamayGeriAl
+                        : AppLocalizations.of(context).clockSonrakiniAtla,
+                  ),
                 ),
                 TextButton.icon(
                   onPressed: () async {
@@ -295,12 +313,11 @@ class _AlarmTile extends ConsumerWidget {
                     });
                   },
                   icon: const Icon(Icons.edit_outlined, size: 18),
-                  label: const Text('Düzenle'),
+                  label: Text(AppLocalizations.of(context).profileDuzenle),
                 ),
                 TextButton.icon(
                   onPressed: () async {
-                    final isAndroid =
-                        !kIsWeb && Platform.isAndroid;
+                    final isAndroid = !kIsWeb && Platform.isAndroid;
                     if (isAndroid) {
                       // Native: USAGE_ALARM MediaPlayer + kilit ekranı
                       await ref
@@ -317,10 +334,10 @@ class _AlarmTile extends ConsumerWidget {
                     );
                   },
                   icon: const Icon(Icons.play_circle_outline, size: 18),
-                  label: const Text('Önizle'),
+                  label: Text(AppLocalizations.of(context).clockOnizle),
                 ),
                 IconButton(
-                  tooltip: 'Sil',
+                  tooltip: AppLocalizations.of(context).profileSil,
                   onPressed: () {
                     ref.read(alarmsProvider.notifier).deleteAlarm(alarm.id);
                   },
@@ -337,16 +354,19 @@ class _AlarmTile extends ConsumerWidget {
     );
   }
 
-  String _fmtNext(DateTime d) {
+  String _fmtNext(BuildContext context, DateTime d) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final day = DateTime(d.year, d.month, d.day);
     final diff = day.difference(today).inDays;
-    final t =
-        '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
-    if (diff == 0) return 'bugün $t';
-    if (diff == 1) return 'yarın $t';
-    return '${d.day}.${d.month} $t';
+    final l10n = AppLocalizations.of(context);
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    final t = MaterialLocalizations.of(
+      context,
+    ).formatTimeOfDay(TimeOfDay.fromDateTime(d));
+    if (diff == 0) return '${l10n.coreBugun} $t';
+    if (diff == 1) return '${l10n.coreYarin} $t';
+    return '${DateFormat.Md(locale).format(d)} $t';
   }
 }
 
@@ -368,14 +388,14 @@ class _AlarmEditorSheetState extends State<_AlarmEditorSheet> {
   late bool _vibrate;
   late int _snooze;
 
-  static const _dayLabels = {
-    1: 'Pzt',
-    2: 'Sal',
-    3: 'Çar',
-    4: 'Per',
-    5: 'Cum',
-    6: 'Cmt',
-    7: 'Paz',
+  Map<int, String> _dayLabels(BuildContext context) => {
+    1: AppLocalizations.of(context).statsPzt,
+    2: AppLocalizations.of(context).statsSal,
+    3: AppLocalizations.of(context).statsCar,
+    4: AppLocalizations.of(context).statsPer,
+    5: AppLocalizations.of(context).statsCum,
+    6: AppLocalizations.of(context).statsCmt,
+    7: AppLocalizations.of(context).statsPaz,
   };
 
   @override
@@ -410,13 +430,15 @@ class _AlarmEditorSheetState extends State<_AlarmEditorSheet> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              widget.initial == null ? 'Yeni alarm' : 'Alarmı düzenle',
+              widget.initial == null
+                  ? AppLocalizations.of(context).clockYeniAlarmYeniAlarm
+                  : AppLocalizations.of(context).clockAlarmDuzenle,
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 16),
             ListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Saat'),
+              title: Text(AppLocalizations.of(context).profileSaat),
               trailing: Text(
                 _time.format(context),
                 style: Theme.of(context).textTheme.headlineSmall,
@@ -431,18 +453,21 @@ class _AlarmEditorSheetState extends State<_AlarmEditorSheet> {
             ),
             TextField(
               controller: _label,
-              decoration: const InputDecoration(
-                labelText: 'Etiket',
-                hintText: 'Örn. Sabah rutini',
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(context).clockEtiket,
+                hintText: AppLocalizations.of(context).clockOrnSabahRutini,
               ),
             ),
             const SizedBox(height: 16),
-            Text('Tekrar', style: Theme.of(context).textTheme.titleSmall),
+            Text(
+              AppLocalizations.of(context).clockTekrar,
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
             const SizedBox(height: 8),
             Wrap(
               spacing: 6,
               children: [
-                for (final d in _dayLabels.entries)
+                for (final d in _dayLabels(context).entries)
                   FilterChip(
                     label: Text(d.value),
                     selected: _days.contains(d.key),
@@ -463,50 +488,56 @@ class _AlarmEditorSheetState extends State<_AlarmEditorSheet> {
               spacing: 8,
               children: [
                 ActionChip(
-                  label: const Text('Hafta içi'),
+                  label: Text(AppLocalizations.of(context).statsHaftaIci),
                   onPressed: () => setState(() => _days = {1, 2, 3, 4, 5}),
                 ),
                 ActionChip(
-                  label: const Text('Her gün'),
+                  label: Text(AppLocalizations.of(context).notificationsHerGun),
                   onPressed: () =>
                       setState(() => _days = {1, 2, 3, 4, 5, 6, 7}),
                 ),
                 ActionChip(
-                  label: const Text('Bir kez'),
+                  label: Text(AppLocalizations.of(context).commonBirKez),
                   onPressed: () => setState(() => _days = {}),
                 ),
               ],
             ),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Kademeli ses (30 sn)'),
-              subtitle: const Text('Crescendo — ani yüksek ses yok'),
+              title: Text(AppLocalizations.of(context).clockKademeliSes30Sn),
+              subtitle: Text(
+                AppLocalizations.of(context).clockCrescendoAniYuksekSes,
+              ),
               value: _crescendo,
               onChanged: (v) => setState(() => _crescendo = v),
             ),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Anti-snooze'),
-              subtitle: const Text('Kapatmak için matematik sorusu'),
+              title: Text(AppLocalizations.of(context).clockAntisnooze),
+              subtitle: Text(
+                AppLocalizations.of(context).clockKapatmakIcinMatematikSorusu,
+              ),
               value: _antiSnooze,
               onChanged: (v) => setState(() => _antiSnooze = v),
             ),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Titreşim'),
+              title: Text(AppLocalizations.of(context).clockTitresim),
               value: _vibrate,
               onChanged: (v) => setState(() => _vibrate = v),
             ),
             ListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Erteleme'),
+              title: Text(AppLocalizations.of(context).clockErteleme),
               trailing: DropdownButton<int>(
                 value: _snooze,
                 items: const [5, 10, 15, 20]
                     .map(
                       (m) => DropdownMenuItem(
                         value: m,
-                        child: Text('$m dk'),
+                        child: Text(
+                          AppLocalizations.of(context).clockMDk(m.toString()),
+                        ),
                       ),
                     )
                     .toList(),
@@ -524,7 +555,7 @@ class _AlarmEditorSheetState extends State<_AlarmEditorSheet> {
                   minute: _time.minute,
                   days: _days.toList()..sort(),
                   label: _label.text.trim().isEmpty
-                      ? 'Yeni Alarm'
+                      ? AppLocalizations.of(context).clockYeniAlarm
                       : _label.text.trim(),
                   isActive: widget.initial?.isActive ?? true,
                   snoozeMinutes: _snooze,
@@ -535,7 +566,7 @@ class _AlarmEditorSheetState extends State<_AlarmEditorSheet> {
                 );
                 Navigator.of(context).pop(alarm);
               },
-              child: const Text('Kaydet'),
+              child: Text(AppLocalizations.of(context).profileKaydet),
             ),
           ],
         ),

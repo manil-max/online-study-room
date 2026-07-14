@@ -7,8 +7,8 @@ const List<AchievementDef> kAllAchievements = [
   // Çalışma Süresi (Study Time)
   AchievementDef(
     id: 'study_hours',
-    title: 'Bilgelik Saati',
-    descriptionTemplate: 'Toplam {count} saat çalış',
+    title: 'Hour of Wisdom',
+    descriptionTemplate: 'Study {count} hours total',
     category: AchievementCategory.study,
     icon: 'timer',
     maxTier: 6,
@@ -17,7 +17,7 @@ const List<AchievementDef> kAllAchievements = [
   ),
   AchievementDef(
     id: 'study_sessions',
-    title: 'İstikrar',
+    title: 'Consistency',
     descriptionTemplate: 'Toplam {count} oturum tamamla',
     category: AchievementCategory.study,
     icon: 'event_available',
@@ -28,8 +28,8 @@ const List<AchievementDef> kAllAchievements = [
   // Odaklanma (Focus)
   AchievementDef(
     id: 'deep_focus',
-    title: 'Derin Odak',
-    descriptionTemplate: 'Hiç bölmeden {count} dakikalık oturum yap',
+    title: 'Deep Focus',
+    descriptionTemplate: 'Complete an uninterrupted {count}-minute session',
     category: AchievementCategory.focus,
     icon: 'self_improvement',
     maxTier: 6,
@@ -38,8 +38,8 @@ const List<AchievementDef> kAllAchievements = [
   ),
   AchievementDef(
     id: 'weekend_warrior',
-    title: 'Hafta Sonu Savaşçısı',
-    descriptionTemplate: 'Hafta sonu {count} saat çalış',
+    title: 'Weekend Warrior',
+    descriptionTemplate: 'Study {count} hours on weekends',
     category: AchievementCategory.focus,
     icon: 'weekend',
     maxTier: 6,
@@ -49,8 +49,8 @@ const List<AchievementDef> kAllAchievements = [
   // Sosyal ve Eğlenceli
   AchievementDef(
     id: 'night_owl',
-    title: 'Gece Kuşu',
-    descriptionTemplate: 'Gece 00:00 ile 04:00 arası {count} saat çalış',
+    title: 'Night Owl',
+    descriptionTemplate: 'Study {count} hours between 00:00 and 04:00',
     category: AchievementCategory.fun,
     icon: 'dark_mode',
     maxTier: 6,
@@ -59,8 +59,8 @@ const List<AchievementDef> kAllAchievements = [
   ),
   AchievementDef(
     id: 'early_bird',
-    title: 'Erkenci Kuş',
-    descriptionTemplate: 'Sabah 04:00 ile 08:00 arası {count} saat çalış',
+    title: 'Early Bird',
+    descriptionTemplate: 'Study {count} hours between 04:00 and 08:00',
     category: AchievementCategory.fun,
     icon: 'wb_sunny',
     maxTier: 6,
@@ -70,8 +70,8 @@ const List<AchievementDef> kAllAchievements = [
   // ... 60'ı tamamlayacak diğer 4 başarım kalemi (4 x 6 tier = 24 aşama)
   AchievementDef(
     id: 'marathon',
-    title: 'Maraton',
-    descriptionTemplate: 'Bir günde {count} saat çalış',
+    title: 'Marathon',
+    descriptionTemplate: 'Study {count} hours in one day',
     category: AchievementCategory.focus,
     icon: 'directions_run',
     maxTier: 6,
@@ -80,8 +80,8 @@ const List<AchievementDef> kAllAchievements = [
   ),
   AchievementDef(
     id: 'group_study',
-    title: 'Grup Sinerjisi',
-    descriptionTemplate: 'Aynı grupta {count} farklı gün çalış',
+    title: 'Group Synergy',
+    descriptionTemplate: 'Study in the same group on {count} days',
     category: AchievementCategory.social,
     icon: 'groups',
     maxTier: 6,
@@ -90,8 +90,8 @@ const List<AchievementDef> kAllAchievements = [
   ),
   AchievementDef(
     id: 'streak_master',
-    title: 'Seri Ustası',
-    descriptionTemplate: '{count} gün üst üste hedefi tuttur',
+    title: 'Streak Master',
+    descriptionTemplate: 'Meet the goal for {count} consecutive days',
     category: AchievementCategory.social,
     icon: 'local_fire_department',
     maxTier: 6,
@@ -100,8 +100,8 @@ const List<AchievementDef> kAllAchievements = [
   ),
   AchievementDef(
     id: 'perfect_week',
-    title: 'Kusursuz Hafta',
-    descriptionTemplate: '{count} hafta boyunca her gün hedefi tuttur',
+    title: 'Perfect Week',
+    descriptionTemplate: 'Meet the daily goal for {count} weeks',
     category: AchievementCategory.study,
     icon: 'star',
     maxTier: 6,
@@ -128,7 +128,8 @@ class AchievementEngine {
   static ({
     GamificationProfile newProfile,
     List<UserAchievement> newAchievements,
-  }) calculateProgression({
+  })
+  calculateProgression({
     required GamificationProfile profile,
     required List<UserAchievement> currentAchievements,
     required List<StudySession> allSessions,
@@ -140,7 +141,7 @@ class AchievementEngine {
     int morningMinutes = 0;
     int maxSingleSession = 0;
     int maxMinutesInDay = 0;
-    
+
     final Map<String, int> dailyMinutes = {};
     final Set<String> groupStudyDays = {};
 
@@ -149,9 +150,10 @@ class AchievementEngine {
       if (dur <= 0) continue;
 
       totalMinutes += dur;
-      
+
       final start = session.start;
-      if (start.weekday == DateTime.saturday || start.weekday == DateTime.sunday) {
+      if (start.weekday == DateTime.saturday ||
+          start.weekday == DateTime.sunday) {
         weekendMinutes += dur;
       }
 
@@ -164,9 +166,10 @@ class AchievementEngine {
 
       if (dur > maxSingleSession) maxSingleSession = dur;
 
-      final dateKey = '${start.year}-${start.month.toString().padLeft(2, '0')}-${start.day.toString().padLeft(2, '0')}';
+      final dateKey =
+          '${start.year}-${start.month.toString().padLeft(2, '0')}-${start.day.toString().padLeft(2, '0')}';
       dailyMinutes[dateKey] = (dailyMinutes[dateKey] ?? 0) + dur;
-      
+
       if (dailyMinutes[dateKey]! > maxMinutesInDay) {
         maxMinutesInDay = dailyMinutes[dateKey]!;
       }
@@ -225,9 +228,13 @@ class AchievementEngine {
       }
 
       // Mevcut durumu bul
-      UserAchievement? currentAch = currentAchievements.where((a) => a.achievementId == def.id).firstOrNull;
-      int currentMaxTierUnlocked = currentAch?.isUnlocked == true ? currentAch!.tier : 0;
-      
+      UserAchievement? currentAch = currentAchievements
+          .where((a) => a.achievementId == def.id)
+          .firstOrNull;
+      int currentMaxTierUnlocked = currentAch?.isUnlocked == true
+          ? currentAch!.tier
+          : 0;
+
       bool unlockedAny = false;
       int highestTierUnlocked = currentMaxTierUnlocked;
 
@@ -235,7 +242,7 @@ class AchievementEngine {
       for (int i = 0; i < def.maxTier; i++) {
         final req = def.tierRequirements[i];
         final tierLevel = i + 1;
-        
+
         if (progressValue >= req) {
           if (tierLevel > highestTierUnlocked) {
             unlockedAny = true;
@@ -283,9 +290,6 @@ class AchievementEngine {
       updatedAt: DateTime.now(),
     );
 
-    return (
-      newProfile: newProfile,
-      newAchievements: updatedAchievements,
-    );
+    return (newProfile: newProfile, newAchievements: updatedAchievements);
   }
 }

@@ -306,9 +306,9 @@ class _ThemeStudioScreenState extends ConsumerState<ThemeStudioScreen> {
       Card(
         child: ListTile(
           leading: _Swatch(colors: preset.colors),
-          title: Text(preset.name),
+          title: Text(preset.localizedName(l10n)),
           subtitle: Text(
-            '${preset.description}\n'
+            '${l10n.profileCanliOnizleme}\n'
             '${l10n.profileMood}: ${_modeLabel(mode)} · ${_draftShape.label(l10n)}',
           ),
           isThreeLine: true,
@@ -347,6 +347,7 @@ class _ThemeTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
+    final l10n = AppLocalizations.of(context);
     return Material(
       color: selected
           ? preset.colors.primary.withValues(alpha: 0.12)
@@ -367,13 +368,13 @@ class _ThemeTile extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      preset.name,
+                      preset.localizedName(l10n),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(fontWeight: FontWeight.w600),
                     ),
                     Text(
-                      preset.description,
+                      l10n.profileCanliOnizleme,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodySmall,

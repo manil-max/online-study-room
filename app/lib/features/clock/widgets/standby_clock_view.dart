@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -70,7 +71,10 @@ class _StandByClockViewState extends ConsumerState<StandByClockView> {
     final alarms = ref.watch(alarmsProvider).asData?.value ?? const [];
 
     final timeStr = DateFormat.Hm().format(_now);
-    final dateStr = DateFormat('EEEE, d MMMM', 'tr_TR').format(_now);
+    final dateStr = DateFormat(
+      'EEEE, d MMMM',
+      Localizations.localeOf(context).toLanguageTag(),
+    ).format(_now);
 
     // Gece: düşük mavi / kırmızı-turuncu (melatonin dostu)
     final clockColor = _isNight
@@ -104,9 +108,11 @@ class _StandByClockViewState extends ConsumerState<StandByClockView> {
 
       String modeText = switch (timerState.mode) {
         TimerMode.pomodoro =>
-          timerState.phase == TimerPhase.work ? 'Odak' : 'Mola',
-        TimerMode.countdown => 'Geri Sayım',
-        TimerMode.stopwatch => 'Kronometre',
+          timerState.phase == TimerPhase.work
+              ? AppLocalizations.of(context).clockOdak
+              : AppLocalizations.of(context).desktopMola,
+        TimerMode.countdown => AppLocalizations.of(context).clockGeriSayim,
+        TimerMode.stopwatch => AppLocalizations.of(context).desktopKronometre,
       };
 
       activeTimerWidget = Row(
@@ -166,12 +172,9 @@ class _StandByClockViewState extends ConsumerState<StandByClockView> {
                     if (nextAlarm != null) ...[
                       const SizedBox(height: 20),
                       Text(
-                        'Alarm ${DateFormat.Hm().format(nextAlarm)}'
+                        '${AppLocalizations.of(context).clockAlarmDateformathmformatnext(DateFormat.Hm().format(nextAlarm))}'
                         '${nextLabel != null ? ' · $nextLabel' : ''}',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: subColor,
-                        ),
+                        style: TextStyle(fontSize: 16, color: subColor),
                       ),
                     ],
                     if (activeTimerWidget != null) ...[

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:online_study_room/l10n/app_localizations.dart';
 
 import 'theme_presets.dart';
 import 'theme_tokens.dart';
@@ -24,6 +25,19 @@ class AppPalette {
   final Color onPrimary;
   final Color accent;
   final Color onAccent;
+
+  String localizedName(AppLocalizations l10n) => switch (id) {
+    'navy' => l10n.coreLacivert,
+    'purple' => l10n.coreMorGece,
+    'emerald' => l10n.coreZumrut,
+    'sunset' => l10n.coreGunBatimi,
+    'ocean' => l10n.coreOkyanus,
+    'slate_mint' => l10n.coreSlateMint,
+    'custom_1' => '${l10n.profileOzelPalet} 1',
+    'custom_2' => '${l10n.profileOzelPalet} 2',
+    'custom_3' => '${l10n.profileOzelPalet} 3',
+    _ => name,
+  };
 
   Map<String, dynamic> toMap() {
     return {
@@ -52,7 +66,7 @@ class AppPalette {
 const List<AppPalette> kAppPalettes = [
   AppPalette(
     id: 'navy',
-    name: 'Lacivert',
+    name: 'Navy',
     primary: Color(0xFF3186E9),
     onPrimary: Color(0xFFF4F9FF),
     accent: Color(0xFF12C281),
@@ -60,7 +74,7 @@ const List<AppPalette> kAppPalettes = [
   ),
   AppPalette(
     id: 'purple',
-    name: 'Mor Gece',
+    name: 'Purple Night',
     primary: Color(0xFF8B5CF6),
     onPrimary: Color(0xFFF6F2FF),
     accent: Color(0xFFEC4899),
@@ -68,7 +82,7 @@ const List<AppPalette> kAppPalettes = [
   ),
   AppPalette(
     id: 'emerald',
-    name: 'Zümrüt',
+    name: 'Emerald',
     primary: Color(0xFF12C281),
     onPrimary: Color(0xFF04130D),
     accent: Color(0xFF3186E9),
@@ -76,7 +90,7 @@ const List<AppPalette> kAppPalettes = [
   ),
   AppPalette(
     id: 'sunset',
-    name: 'Gün Batımı',
+    name: 'Sunset',
     primary: Color(0xFFF97362),
     onPrimary: Color(0xFF230803),
     accent: Color(0xFFF5A524),
@@ -84,7 +98,7 @@ const List<AppPalette> kAppPalettes = [
   ),
   AppPalette(
     id: 'ocean',
-    name: 'Okyanus',
+    name: 'Ocean',
     primary: Color(0xFF22B8CF),
     onPrimary: Color(0xFF04161A),
     accent: Color(0xFF6366F1),
@@ -116,7 +130,7 @@ const List<AppPalette> kAppPalettes = [
   ),
   AppPalette(
     id: 'forest',
-    name: 'Orman',
+    name: 'Forest',
     primary: Color(0xFF22C55E),
     onPrimary: Color(0xFF021707),
     accent: Color(0xFFEAB308),
@@ -124,7 +138,7 @@ const List<AppPalette> kAppPalettes = [
   ),
   AppPalette(
     id: 'cream_coffee',
-    name: 'Krem Kahve',
+    name: 'Cream Coffee',
     primary: Color(0xFFD4A373),
     onPrimary: Color(0xFF2A1C11),
     accent: Color(0xFFFAEDCD),
@@ -142,9 +156,9 @@ const List<AppPalette> kAppPalettes = [
 
 /// id'ye karşılık gelen palet (bilinmeyen → ilk palet).
 AppPalette paletteById(String id) => kAppPalettes.firstWhere(
-      (p) => p.id == id,
-      orElse: () => kAppPalettes.first,
-    );
+  (p) => p.id == id,
+  orElse: () => kAppPalettes.first,
+);
 
 /// WP-54: 5 katmanlı ThemeExtension + 12 preset motoru.
 /// Geriye uyum: [light]/[dark] hâlâ AppPalette kabul eder (eski ayar ekranı).
@@ -155,11 +169,17 @@ class AppTheme {
   ///
   /// Ailenin kendi brightness'i ile eşleşiyorsa full token; karşı moda
   /// [ColorScheme.fromSeed] ile primary/accent DNA taşınır.
-  static ThemeData fromFamily(ThemePreset family, Brightness brightness,
-      {Color? dynamicSeed}) {
+  static ThemeData fromFamily(
+    ThemePreset family,
+    Brightness brightness, {
+    Color? dynamicSeed,
+  }) {
     if (family.isDynamic) {
       final seed = dynamicSeed ?? family.colors.primary;
-      final scheme = ColorScheme.fromSeed(seedColor: seed, brightness: brightness);
+      final scheme = ColorScheme.fromSeed(
+        seedColor: seed,
+        brightness: brightness,
+      );
       final colors = AppColors.fromScheme(scheme).copyWith(
         scaffold: scheme.surfaceContainerLowest,
         surface1: scheme.surface,
@@ -328,10 +348,7 @@ class AppTheme {
         clipBehavior: Clip.antiAlias,
         shape: RoundedRectangleBorder(
           borderRadius: radius,
-          side: BorderSide(
-            color: colors.border,
-            width: shapes.borderWidth,
-          ),
+          side: BorderSide(color: colors.border, width: shapes.borderWidth),
         ),
         margin: EdgeInsets.zero,
       ),
@@ -361,10 +378,7 @@ class AppTheme {
           );
         }),
       ),
-      dividerTheme: DividerThemeData(
-        color: colors.border,
-        thickness: 1,
-      ),
+      dividerTheme: DividerThemeData(color: colors.border, thickness: 1),
       segmentedButtonTheme: SegmentedButtonThemeData(
         style: ButtonStyle(
           side: WidgetStatePropertyAll(BorderSide(color: colors.border)),

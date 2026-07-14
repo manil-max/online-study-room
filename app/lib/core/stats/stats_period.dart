@@ -4,13 +4,6 @@ import 'study_stats.dart';
 enum StatsPeriod { today, week, month, all }
 
 extension StatsPeriodX on StatsPeriod {
-  String get labelTr => switch (this) {
-        StatsPeriod.today => 'Bugün',
-        StatsPeriod.week => 'Hafta',
-        StatsPeriod.month => 'Ay',
-        StatsPeriod.all => 'Tümü',
-      };
-
   /// Dönem aralığı (from, to) — Istanbul gün sınırı.
   (DateTime from, DateTime to) range({DateTime? now}) {
     final n = now ?? DateTime.now();

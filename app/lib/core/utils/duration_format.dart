@@ -8,24 +8,23 @@ String formatHms(int totalSeconds) {
   return '${two(h)}:${two(m)}:${two(s)}';
 }
 
-/// Saniyeyi okunabilir Türkçe biçimde verir: "2 sa 15 dk", "15 dk", "40 sn".
+/// Saniyeyi locale-bağımsız kısa biçimde verir: "2h 15m", "15m", "40s".
 String formatHuman(int totalSeconds) {
   final seconds = totalSeconds < 0 ? 0 : totalSeconds;
   final h = seconds ~/ 3600;
   final m = (seconds % 3600) ~/ 60;
-  if (h > 0) return '$h sa $m dk';
-  if (m > 0) return '$m dk';
-  return '$seconds sn';
+  if (h > 0) return '${h}h ${m}m';
+  if (m > 0) return '${m}m';
+  return '${seconds}s';
 }
 
-/// Saniyeyi okunabilir Türkçe biçimde, saniyeyi de DAHİL ederek verir:
-/// "2 sa 15 dk 30 sn", "15 dk 05 sn", "40 sn". Günlük/anlık toplamlar için.
+/// Saniyeyi locale-bağımsız kısa biçimde, saniyeyi de dahil ederek verir.
 String formatHumanSeconds(int totalSeconds) {
   final seconds = totalSeconds < 0 ? 0 : totalSeconds;
   final h = seconds ~/ 3600;
   final m = (seconds % 3600) ~/ 60;
   final s = seconds % 60;
-  if (h > 0) return '$h sa $m dk $s sn';
-  if (m > 0) return '$m dk $s sn';
-  return '$s sn';
+  if (h > 0) return '${h}h ${m}m ${s}s';
+  if (m > 0) return '${m}m ${s}s';
+  return '${s}s';
 }

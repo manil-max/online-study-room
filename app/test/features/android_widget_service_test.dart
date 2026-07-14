@@ -1,9 +1,16 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/features/android_widgets/android_widget_service.dart';
+import 'package:online_study_room/l10n/app_localizations.dart';
 
 void main() {
+  late AppLocalizations l10n;
+  setUpAll(() async {
+    l10n = await AppLocalizations.delegate.load(const Locale('tr'));
+  });
+
   test('placeholder snapshot exposes native widget keys', () {
-    const snapshot = AndroidWidgetSnapshot.placeholder();
+    final snapshot = AndroidWidgetSnapshot.placeholder(l10n);
 
     expect(snapshot.toWidgetData(), contains(AndroidWidgetKeys.timerElapsed));
     expect(snapshot.toWidgetData(), contains(AndroidWidgetKeys.statsToday));
@@ -15,6 +22,7 @@ void main() {
 
   test('timer snapshot keeps non-timer slots on placeholders', () {
     final snapshot = AndroidWidgetSnapshot.timer(
+      l10n: l10n,
       elapsed: '00:24:59',
       status: 'Çalışıyor',
       action: 'Durdurmak için aç',
@@ -38,6 +46,12 @@ void main() {
       statsStreak: 'Seri: 3 gün',
       leaderboardTitle: 'Sıralama',
       leaderboardRows: ['1. Ada', '2. Ece', '3. Can', '4. Mert'],
+      dailyGoalPercent: '0%',
+      dailyGoalDetail: '-',
+      groupGoalPercent: '0%',
+      groupGoalDetail: '-',
+      leaderboardMyRank: '-',
+      emptyLeaderboardLabel: '-',
     );
 
     expect(snapshot.paddedLeaderboardRows, ['1. Ada', '2. Ece', '3. Can']);
@@ -55,6 +69,12 @@ void main() {
       statsStreak: 'Seri: 0 gün',
       leaderboardTitle: 'Sıralama',
       leaderboardRows: [],
+      dailyGoalPercent: '0%',
+      dailyGoalDetail: '-',
+      groupGoalPercent: '0%',
+      groupGoalDetail: '-',
+      leaderboardMyRank: '-',
+      emptyLeaderboardLabel: 'Henüz grup verisi yok',
     );
 
     expect(snapshot.paddedLeaderboardRows, ['Henüz grup verisi yok', '-', '-']);

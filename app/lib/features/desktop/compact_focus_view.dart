@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -45,11 +46,11 @@ class _CompactFocusViewState extends ConsumerState<CompactFocusView> {
   }
 
   String _subjectName(String? id, List<Subject> subjects) {
-    if (id == null) return 'Ders seçilmedi';
+    if (id == null) return AppLocalizations.of(context).desktopDersSecilmedi;
     for (final subject in subjects) {
       if (subject.id == id) return subject.name;
     }
-    return 'Ders seçilmedi';
+    return AppLocalizations.of(context).desktopDersSecilmedi;
   }
 
   @override
@@ -69,15 +70,19 @@ class _CompactFocusViewState extends ConsumerState<CompactFocusView> {
               children: [
                 const Icon(Icons.lock_outline, size: 32),
                 const SizedBox(height: 8),
-                const Text(
-                  'Çalışmayı kaydetmek için giriş yapmalısın.',
+                Text(
+                  AppLocalizations.of(
+                    context,
+                  ).desktopCalismayiKaydetmekIcinGiris,
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 12),
                 FilledButton.icon(
                   onPressed: toggleDesktopCompactMode,
                   icon: const Icon(Icons.open_in_full),
-                  label: const Text('Tam pencereye dön'),
+                  label: Text(
+                    AppLocalizations.of(context).desktopTamPencereyeDon,
+                  ),
                 ),
               ],
             ),
@@ -91,14 +96,16 @@ class _CompactFocusViewState extends ConsumerState<CompactFocusView> {
 
     final running = state.isRunning;
     final status = state.phase == TimerPhase.rest
-        ? 'Mola'
+        ? AppLocalizations.of(context).desktopMola
         : running
-        ? 'Odaklanıyor'
-        : 'Hazır';
+        ? AppLocalizations.of(context).desktopOdaklaniyor
+        : AppLocalizations.of(context).desktopHazir;
     final mode = switch (state.mode) {
-      TimerMode.stopwatch => 'Kronometre',
-      TimerMode.countdown => 'Geri sayım',
-      TimerMode.pomodoro => 'Pomodoro ${state.cycle}/${state.cycles}',
+      TimerMode.stopwatch => AppLocalizations.of(context).desktopKronometre,
+      TimerMode.countdown => AppLocalizations.of(context).desktopGeriSayim,
+      TimerMode.pomodoro =>
+        '${AppLocalizations.of(context).classroomPomodoro} '
+            '${state.cycle}/${state.cycles}',
     };
 
     return Material(
@@ -142,8 +149,11 @@ class _CompactFocusViewState extends ConsumerState<CompactFocusView> {
                       final pinned = isDesktopAlwaysOnTop;
                       return IconButton(
                         tooltip: pinned
-                            ? 'Üstte tut açık — kapat'
-                            : 'Her zaman üstte tut',
+                            ? '${AppLocalizations.of(context).desktopUstteTut} · '
+                                  '${AppLocalizations.of(context).desktopKapat}'
+                            : AppLocalizations.of(
+                                context,
+                              ).desktopHerZamanUstteTut,
                         isSelected: pinned,
                         onPressed: toggleDesktopAlwaysOnTop,
                         icon: Icon(
@@ -157,7 +167,9 @@ class _CompactFocusViewState extends ConsumerState<CompactFocusView> {
                     },
                   ),
                   IconButton(
-                    tooltip: 'Tam pencereye dön',
+                    tooltip: AppLocalizations.of(
+                      context,
+                    ).desktopTamPencereyeDon,
                     onPressed: toggleDesktopCompactMode,
                     icon: const Icon(Icons.open_in_full),
                   ),
@@ -166,7 +178,11 @@ class _CompactFocusViewState extends ConsumerState<CompactFocusView> {
               const Spacer(),
               Semantics(
                 liveRegion: true,
-                label: '$status, ${formatHms(_displaySeconds(state))}',
+                label: AppLocalizations.of(context)
+                    .desktopStatusFormathmsdisplaysecondsstate(
+                      formatHms(_displaySeconds(state)),
+                      status,
+                    ),
                 child: Text(
                   formatHms(_displaySeconds(state)),
                   key: const ValueKey('compact-focus-time'),
@@ -186,7 +202,11 @@ class _CompactFocusViewState extends ConsumerState<CompactFocusView> {
                       ? () => ref.read(studyTimerProvider.notifier).stop()
                       : ref.read(studyTimerProvider.notifier).start,
                   icon: Icon(running ? Icons.stop : Icons.play_arrow),
-                  label: Text(running ? 'Durdur ve kaydet' : 'Başlat'),
+                  label: Text(
+                    running
+                        ? AppLocalizations.of(context).desktopDurdurVeKaydet
+                        : AppLocalizations.of(context).desktopBaslat,
+                  ),
                 ),
               ),
             ],

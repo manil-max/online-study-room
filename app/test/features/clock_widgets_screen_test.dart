@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -14,14 +15,18 @@ void main() {
       tester.view.resetDevicePixelRatio();
     });
     await tester.pumpWidget(
-      const ProviderScope(child: MaterialApp(home: ClockWidgetsScreen())),
+      const ProviderScope(
+        child: MaterialApp(
+          locale: Locale('tr'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: ClockWidgetsScreen(),
+        ),
+      ),
     );
     await tester.pumpAndSettle();
 
-    expect(
-      find.textContaining('sistem ayarlarından açılıp kapatılır'),
-      findsOneWidget,
-    );
+    expect(find.textContaining('Android sistem ayarlarından'), findsOneWidget);
     expect(find.text('Kapat'), findsNWidgets(4));
 
     await tester.tap(find.text('İzni geri almak ister misin?'));

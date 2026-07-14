@@ -3,6 +3,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/models/nudge.dart';
+import '../l10n/system_localizations.dart';
 
 final nudgeNotificationServiceProvider = Provider<NudgeNotificationGateway>(
   (ref) => NudgeNotificationService.instance,
@@ -22,7 +23,6 @@ class NudgeNotificationService implements NudgeNotificationGateway {
   );
 
   static const _channelId = 'social_nudges';
-  static const _channelName = 'Dürtmeler';
 
   final FlutterLocalNotificationsPlugin _plugin;
   bool _initialized = false;
@@ -50,30 +50,31 @@ class NudgeNotificationService implements NudgeNotificationGateway {
   Future<void> showNudge(Nudge nudge) async {
     if (!_isAndroid) return;
     await initialize();
+    final l10n = await loadSystemLocalizations();
 
     final sender = (nudge.senderDisplayName?.trim().isNotEmpty ?? false)
         ? nudge.senderDisplayName!.trim()
-        : 'Bir arkadaşın';
+        : l10n.coreBirArkadasin;
     final body = nudge.message?.trim().isNotEmpty == true
         ? nudge.message!.trim()
-        : 'Seni çalışmaya çağırıyor.';
+        : l10n.coreSeniCalismayaCagiriyor;
 
-    const details = AndroidNotificationDetails(
+    final details = AndroidNotificationDetails(
       _channelId,
-      _channelName,
-      channelDescription: 'Sınıf arkadaşlarından gelen çalışma dürtmeleri',
+      l10n.coreDurtmeler,
+      channelDescription: l10n.coreDurtmeler,
       importance: Importance.high,
       priority: Priority.high,
       category: AndroidNotificationCategory.message,
       visibility: NotificationVisibility.public,
-      ticker: 'Yeni dürtme',
+      ticker: l10n.coreYeniDurtme,
     );
 
     await _plugin.show(
       id: nudge.id.hashCode & 0x7fffffff,
-      title: '$sender dürttü',
+      title: l10n.coreSenderDurttu(sender),
       body: body,
-      notificationDetails: const NotificationDetails(android: details),
+      notificationDetails: NotificationDetails(android: details),
       payload: 'nudge:${nudge.id}',
     );
   }

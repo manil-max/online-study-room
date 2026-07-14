@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:online_study_room/l10n/app_localizations.dart';
 
 import 'theme_tokens.dart';
 
@@ -7,8 +8,6 @@ import 'theme_tokens.dart';
 class ThemePreset {
   const ThemePreset({
     required this.id,
-    required this.name,
-    required this.description,
     required this.brightness,
     required this.colors,
     required this.shapes,
@@ -20,8 +19,6 @@ class ThemePreset {
   });
 
   final String id;
-  final String name;
-  final String description;
   final Brightness brightness;
   final AppColors colors;
   final AppShapes shapes;
@@ -33,11 +30,30 @@ class ThemePreset {
   /// Material You — seed dışarıdan uygulanır.
   final bool isDynamic;
 
+  String localizedName(AppLocalizations l10n) => switch (id) {
+    'campfire_night' => l10n.coreKampAtesi,
+    'deep_amoled' => l10n.coreKeskinModern,
+    'nordic_snow' => l10n.coreNordikKar,
+    'ocean_glass' => l10n.coreOkyanusCam,
+    'coffee_library' => l10n.coreKahveKutuphane,
+    'retro_terminal' => l10n.coreRetroTerminal,
+    'neon_focus' => l10n.coreGelecekNeon,
+    'forest_study' => l10n.coreOrmanKabini,
+    'paper_ink' => 'Paper & Ink',
+    'pastel_day' => l10n.coreYumusakPastel,
+    'royal_academy' => l10n.coreKraliyetAkademi,
+    'material_you' => l10n.coreMaterialYou,
+    'glacier_ice' => l10n.coreBuzul,
+    'soft_cream' => l10n.coreYumusakKrem,
+    'future_edge' => l10n.coreGelecekKenari,
+    _ => id,
+  };
+
   AppTypography typography() => AppTypography.standard(
-        textPrimary: colors.textPrimary,
-        serif: serifTitles,
-        monoClock: monospaceClock,
-      );
+    textPrimary: colors.textPrimary,
+    serif: serifTitles,
+    monoClock: monospaceClock,
+  );
 }
 
 AppColors _c({
@@ -54,30 +70,27 @@ AppColors _c({
   Color success = const Color(0xFF22C55E),
   Color error = const Color(0xFFEA3C3F),
   Color onError = const Color(0xFFFFFFFF),
-}) =>
-    AppColors(
-      scaffold: scaffold,
-      surface1: surface1,
-      surface2: surface2,
-      primary: primary,
-      onPrimary: onPrimary,
-      accent: accent,
-      onAccent: onAccent,
-      textPrimary: textPrimary,
-      textSecondary: textSecondary,
-      border: border,
-      success: success,
-      error: error,
-      onError: onError,
-    );
+}) => AppColors(
+  scaffold: scaffold,
+  surface1: surface1,
+  surface2: surface2,
+  primary: primary,
+  onPrimary: onPrimary,
+  accent: accent,
+  onAccent: onAccent,
+  textPrimary: textPrimary,
+  textSecondary: textSecondary,
+  border: border,
+  success: success,
+  error: error,
+  onError: onError,
+);
 
 /// Hazır atmosfer temaları — renk + şekil + glow + hareket (docs/TEMA-MIMARISI.md).
 final List<ThemePreset> kThemePresets = [
   // 1. Ateş — Kamp Ateşi
   ThemePreset(
     id: 'campfire_night',
-    name: 'Kamp Ateşi',
-    description: 'Ateş teması — turuncu glow, gece kampı havası',
     brightness: Brightness.dark,
     colors: _c(
       scaffold: const Color(0xFF07090E),
@@ -104,8 +117,6 @@ final List<ThemePreset> kThemePresets = [
   // 2. Keskin modern — Deep AMOLED
   ThemePreset(
     id: 'deep_amoled',
-    name: 'Keskin Modern',
-    description: 'Saf siyah, keskin köşeler — modern minimal odak',
     brightness: Brightness.dark,
     colors: _c(
       scaffold: Color(0xFF000000),
@@ -132,8 +143,6 @@ final List<ThemePreset> kThemePresets = [
   // 3. Nordic (açık buzul ailesi)
   ThemePreset(
     id: 'nordic_snow',
-    name: 'Nordik Kar',
-    description: 'Ferah İskandinav — açık ton, sakin odak',
     brightness: Brightness.light,
     colors: _c(
       scaffold: Color(0xFFF7F9FC),
@@ -166,8 +175,6 @@ final List<ThemePreset> kThemePresets = [
   // 4. Ocean Glass
   ThemePreset(
     id: 'ocean_glass',
-    name: 'Okyanus Cam',
-    description: 'Cam ve su — soft glassmorphism',
     brightness: Brightness.dark,
     colors: _c(
       scaffold: Color(0xFF0A192F),
@@ -195,8 +202,6 @@ final List<ThemePreset> kThemePresets = [
   // 5. Coffee Library
   ThemePreset(
     id: 'coffee_library',
-    name: 'Kahve Kütüphane',
-    description: 'Sıcak sepya — yumuşak akademik hava',
     brightness: Brightness.dark,
     colors: _c(
       scaffold: Color(0xFF1A120B),
@@ -225,8 +230,6 @@ final List<ThemePreset> kThemePresets = [
   // 6. Retro Terminal
   ThemePreset(
     id: 'retro_terminal',
-    name: 'Retro Terminal',
-    description: 'Fosfor yeşili — keskin hacker terminali',
     brightness: Brightness.dark,
     colors: _c(
       scaffold: Color(0xFF0C0C0C),
@@ -254,8 +257,6 @@ final List<ThemePreset> kThemePresets = [
   // 7. Gelecek neon
   ThemePreset(
     id: 'neon_focus',
-    name: 'Gelecek Neon',
-    description: 'Synthwave / cyberpunk — parlak gelecek havası',
     brightness: Brightness.dark,
     colors: _c(
       scaffold: Color(0xFF0D0221),
@@ -282,8 +283,6 @@ final List<ThemePreset> kThemePresets = [
   // 8. Forest Study
   ThemePreset(
     id: 'forest_study',
-    name: 'Orman Kabini',
-    description: 'Yeşil sakinlik — doğa odak odası',
     brightness: Brightness.dark,
     colors: _c(
       scaffold: Color(0xFF122315),
@@ -316,8 +315,6 @@ final List<ThemePreset> kThemePresets = [
   // 9. Paper & Ink
   ThemePreset(
     id: 'paper_ink',
-    name: 'Kâğıt ve Mürekkep',
-    description: 'E-okuyucu / kağıt minimalizmi',
     brightness: Brightness.light,
     colors: _c(
       scaffold: Color(0xFFF4F4F0),
@@ -352,8 +349,6 @@ final List<ThemePreset> kThemePresets = [
   // 10. Yumuşak pastel
   ThemePreset(
     id: 'pastel_day',
-    name: 'Yumuşak Pastel',
-    description: 'Yumuşak tonlar — bahar pastel, yuvarlak UI',
     brightness: Brightness.light,
     colors: _c(
       scaffold: Color(0xFFE6E6FA),
@@ -381,8 +376,6 @@ final List<ThemePreset> kThemePresets = [
   // 11. Royal Academy
   ThemePreset(
     id: 'royal_academy',
-    name: 'Kraliyet Akademi',
-    description: 'Gece mavisi + altın varak',
     brightness: Brightness.dark,
     colors: _c(
       scaffold: Color(0xFF001427),
@@ -410,8 +403,6 @@ final List<ThemePreset> kThemePresets = [
   // 12. Dynamic Material You (seed fallback; runtime seed ile ezilebilir)
   ThemePreset(
     id: 'material_you',
-    name: 'Material You',
-    description: 'Sistem / dinamik tohum rengi (Android 12+ hissi)',
     brightness: Brightness.dark,
     colors: _c(
       scaffold: Color(0xFF1A1B1E),
@@ -439,8 +430,6 @@ final List<ThemePreset> kThemePresets = [
   // 13. Buzul — koyu buz / glacier
   ThemePreset(
     id: 'glacier_ice',
-    name: 'Buzul',
-    description: 'Buzul teması — buz mavisi, soğuk keskin odak',
     brightness: Brightness.dark,
     colors: _c(
       scaffold: Color(0xFF0A1419),
@@ -467,8 +456,6 @@ final List<ThemePreset> kThemePresets = [
   // 14. Yumuşak krem — warm soft
   ThemePreset(
     id: 'soft_cream',
-    name: 'Yumuşak Krem',
-    description: 'Yumuşak ton — krem, lavanta, yuvarlak kartlar',
     brightness: Brightness.light,
     colors: _c(
       scaffold: Color(0xFFFAF6F1),
@@ -496,8 +483,6 @@ final List<ThemePreset> kThemePresets = [
   // 15. Gelecek kenarı — ultra modern chrome
   ThemePreset(
     id: 'future_edge',
-    name: 'Gelecek Kenarı',
-    description: 'Keskin modern gelecek — krom, cyan, flat UI',
     brightness: Brightness.dark,
     colors: _c(
       scaffold: Color(0xFF09090B),
@@ -524,9 +509,9 @@ final List<ThemePreset> kThemePresets = [
 ];
 
 ThemePreset themePresetById(String id) => kThemePresets.firstWhere(
-      (p) => p.id == id,
-      orElse: () => kThemePresets.first,
-    );
+  (p) => p.id == id,
+  orElse: () => kThemePresets.first,
+);
 
 /// Eski AppPalette id → en yakın ThemePreset (yalnız ilk kurulum / family yokken).
 /// **Not (WP-71):** Bu map artık `setPalette` ile aileyi ezmez; lacivert ≠ kamp ateşi.

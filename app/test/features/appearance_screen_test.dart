@@ -42,9 +42,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Özel Paletler'), findsOneWidget);
-    expect(find.text('Özel 1'), findsOneWidget);
-    expect(find.text('Özel 2'), findsOneWidget);
-    expect(find.text('Özel 3'), findsOneWidget);
+    expect(find.text('Özel Palet 1'), findsOneWidget);
+    expect(find.text('Özel Palet 2'), findsOneWidget);
+    expect(find.text('Özel Palet 3'), findsOneWidget);
 
     // Scroll down to edit buttons
     final editButtons = find.byTooltip('Düzenle');

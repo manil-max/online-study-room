@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -12,7 +13,7 @@ final tz.Location _ledgerIstanbul = () {
 
 /// Başarım 3.0 sözlüğü (SQL seed ile birebir — in_memory / birim test).
 /// Kaynak: docs/BASARIM-MIMARISI.md
-List<AchievementDictEntry> kAchievementDictV3() {
+List<AchievementDictEntry> kAchievementDictV3([AppLocalizations? l10n]) {
   AchievementDictEntry e(
     String id,
     String category,
@@ -32,124 +33,254 @@ List<AchievementDictEntry> kAchievementDictV3() {
       isSecret: secret,
       tiers: [
         for (final t in tiers)
-          AchievementTierDef(
-            tier: t.$1,
-            threshold: t.$2,
-            unit: t.$3,
-            xp: t.$4,
-          ),
+          AchievementTierDef(tier: t.$1, threshold: t.$2, unit: t.$3, xp: t.$4),
       ],
     );
   }
 
   return [
-    e('marathon_total', 'study', 'Maratoncu', 'Toplam çalışma saati', [
-      (1, 50, 'hours', 100),
-      (2, 200, 'hours', 500),
-      (3, 500, 'hours', 1500),
-      (4, 1000, 'hours', 5000),
-      (5, 2500, 'hours', 15000),
-    ], icon: 'timer'),
-    e('steel_will', 'study', 'Çelik İrade', 'Tek oturum dakika', [
-      (1, 60, 'minutes', 50),
-      (2, 90, 'minutes', 100),
-      (3, 120, 'minutes', 250),
-      (4, 180, 'minutes', 1000),
-      (5, 300, 'minutes', 5000),
-    ], icon: 'self_improvement'),
-    e('day_hero', 'study', 'Günün Kahramanı', 'Tek günde saat', [
-      (1, 2, 'day_hours', 50),
-      (2, 4, 'day_hours', 150),
-      (3, 6, 'day_hours', 500),
-      (4, 8, 'day_hours', 1500),
-      (5, 10, 'day_hours', 5000),
-    ], icon: 'directions_run'),
-    e('fire_streak', 'streak', 'Ateş Harlı', 'Günlük hedef serisi', [
-      (1, 7, 'streak_days', 100),
-      (2, 30, 'streak_days', 500),
-      (3, 150, 'streak_days', 2500),
-      (4, 365, 'streak_days', 10000),
-      (5, 730, 'streak_days', 30000),
-    ], icon: 'local_fire_department'),
-    e('weekend_goal_days', 'streak', 'Hafta Sonu Savaşçısı', 'HS hedef gün', [
-      (1, 4, 'weekend_goal_days', 50),
-      (2, 8, 'weekend_goal_days', 150),
-      (3, 20, 'weekend_goal_days', 500),
-      (4, 50, 'weekend_goal_days', 1500),
-      (5, 100, 'weekend_goal_days', 5000),
-    ], icon: 'weekend'),
-    e('perfect_month', 'streak', 'Kusursuz Ay', 'Kusursuz ay sayısı', [
-      (1, 1, 'perfect_months', 300),
-      (2, 3, 'perfect_months', 1000),
-      (3, 6, 'perfect_months', 2500),
-      (4, 12, 'perfect_months', 7500),
-      (5, 24, 'perfect_months', 20000),
-    ], icon: 'star'),
-    e('alpha_wolf', 'group', 'Alfa Kurt', 'Grup gün birincisi', [
-      (1, 5, 'group_day_first', 100),
-      (2, 10, 'group_day_first', 300),
-      (3, 20, 'group_day_first', 1000),
-      (4, 50, 'group_day_first', 3000),
-      (5, 100, 'group_day_first', 10000),
-    ]),
-    e('team_player', 'group', 'Takım Oyuncusu', 'Grup hedef katkısı', [
-      (1, 10, 'group_goal_contrib', 50),
-      (2, 30, 'group_goal_contrib', 200),
-      (3, 100, 'group_goal_contrib', 800),
-      (4, 300, 'group_goal_contrib', 2500),
-      (5, 1000, 'group_goal_contrib', 8000),
-    ], icon: 'groups'),
-    e('campfire_hours', 'group', 'Kamp Ateşi Etrafında', '3+ aktif saat', [
-      (1, 10, 'campfire_hours', 100),
-      (2, 50, 'campfire_hours', 400),
-      (3, 150, 'campfire_hours', 1500),
-      (4, 500, 'campfire_hours', 5000),
-      (5, 1000, 'campfire_hours', 12000),
-    ], icon: 'whatshot'),
-    e('inspiration', 'social', 'İlham Kaynağı', 'Dürtme dönüşümü', [
-      (1, 5, 'nudge_starts', 100),
-      (2, 20, 'nudge_starts', 400),
-      (3, 50, 'nudge_starts', 1200),
-      (4, 150, 'nudge_starts', 4000),
-      (5, 500, 'nudge_starts', 15000),
-    ], icon: 'campaign'),
-    e('locomotive', 'social', 'Lokomotif', 'İlk oturan ilham', [
-      (1, 5, 'locomotive_events', 150),
-      (2, 15, 'locomotive_events', 500),
-      (3, 30, 'locomotive_events', 1500),
-      (4, 100, 'locomotive_events', 4500),
-      (5, 300, 'locomotive_events', 15000),
-    ]),
-    e('secret_night_owl', 'secret', 'Gece Kuşu', 'Gizli başarım', [
-      (1, 1, 'secret_night_owl', 500),
-    ], secret: true, icon: 'dark_mode'),
-    e('secret_dawn', 'secret', 'Gün Doğumu', 'Gizli başarım', [
-      (1, 1, 'secret_dawn', 500),
-    ], secret: true, icon: 'wb_sunny'),
-    e('secret_404', 'secret', '404 Dakika', 'Gizli başarım', [
-      (1, 1, 'secret_404', 4044),
-    ], secret: true, icon: 'error_outline'),
-    e('secret_pi', 'secret', 'Pi Sırrı', 'Gizli başarım', [
-      (1, 1, 'secret_pi', 314),
-    ], secret: true, icon: 'functions'),
-    e('secret_break_enemy', 'secret', 'Mola Düşmanı', 'Gizli başarım', [
-      (1, 1, 'secret_break_enemy', 1000),
-    ], secret: true, icon: 'block'),
-    e('secret_last_second', 'secret', 'Son Saniye Kurtarıcısı', 'Gizli', [
-      (1, 1, 'secret_last_second', 1500),
-    ], secret: true, icon: 'hourglass_bottom'),
-    e('secret_1337', 'secret', '1337 Elite', 'Gizli başarım', [
-      (1, 1, 'secret_1337', 1337),
-    ], secret: true, icon: 'sports_esports'),
-    e('secret_no_limits', 'secret', 'Sınır Tanımaz', 'Gizli başarım', [
-      (1, 1, 'secret_no_limits', 3000),
-    ], secret: true, icon: 'trending_up'),
-    e('secret_matrix', 'secret', 'Matrix Hatası', 'Gizli başarım', [
-      (1, 1, 'secret_matrix', 1111),
-    ], secret: true, icon: 'memory'),
-    e('secret_nye', 'secret', 'Yılbaşı Nöbeti', 'Gizli başarım', [
-      (1, 1, 'secret_nye', 5000),
-    ], secret: true, icon: 'celebration'),
+    e(
+      'marathon_total',
+      'study',
+      (l10n?.coreMaratoncu ?? 'coremaratoncu'),
+      (l10n?.coreToplamCalismaSaati ?? 'coretoplamcalismasaati'),
+      [
+        (1, 50, 'hours', 100),
+        (2, 200, 'hours', 500),
+        (3, 500, 'hours', 1500),
+        (4, 1000, 'hours', 5000),
+        (5, 2500, 'hours', 15000),
+      ],
+      icon: 'timer',
+    ),
+    e(
+      'steel_will',
+      'study',
+      (l10n?.coreCelikIrade ?? 'corecelikirade'),
+      (l10n?.coreTekOturumDakika ?? 'coretekoturumdakika'),
+      [
+        (1, 60, 'minutes', 50),
+        (2, 90, 'minutes', 100),
+        (3, 120, 'minutes', 250),
+        (4, 180, 'minutes', 1000),
+        (5, 300, 'minutes', 5000),
+      ],
+      icon: 'self_improvement',
+    ),
+    e(
+      'day_hero',
+      'study',
+      (l10n?.coreGununKahramani ?? 'coregununkahramani'),
+      (l10n?.coreTekGundeSaat ?? 'coretekgundesaat'),
+      [
+        (1, 2, 'day_hours', 50),
+        (2, 4, 'day_hours', 150),
+        (3, 6, 'day_hours', 500),
+        (4, 8, 'day_hours', 1500),
+        (5, 10, 'day_hours', 5000),
+      ],
+      icon: 'directions_run',
+    ),
+    e(
+      'fire_streak',
+      'streak',
+      (l10n?.coreAtesHarli ?? 'coreatesharli'),
+      (l10n?.coreGunlukHedefSerisi ?? 'coregunlukhedefserisi'),
+      [
+        (1, 7, 'streak_days', 100),
+        (2, 30, 'streak_days', 500),
+        (3, 150, 'streak_days', 2500),
+        (4, 365, 'streak_days', 10000),
+        (5, 730, 'streak_days', 30000),
+      ],
+      icon: 'local_fire_department',
+    ),
+    e(
+      'weekend_goal_days',
+      'streak',
+      (l10n?.coreHaftaSonuSavascisi ?? 'corehaftasonusavascisi'),
+      (l10n?.coreHsHedefGun ?? 'corehshedefgun'),
+      [
+        (1, 4, 'weekend_goal_days', 50),
+        (2, 8, 'weekend_goal_days', 150),
+        (3, 20, 'weekend_goal_days', 500),
+        (4, 50, 'weekend_goal_days', 1500),
+        (5, 100, 'weekend_goal_days', 5000),
+      ],
+      icon: 'weekend',
+    ),
+    e(
+      'perfect_month',
+      'streak',
+      (l10n?.coreKusursuzAy ?? 'corekusursuzay'),
+      (l10n?.coreKusursuzAySayisi ?? 'corekusursuzaysayisi'),
+      [
+        (1, 1, 'perfect_months', 300),
+        (2, 3, 'perfect_months', 1000),
+        (3, 6, 'perfect_months', 2500),
+        (4, 12, 'perfect_months', 7500),
+        (5, 24, 'perfect_months', 20000),
+      ],
+      icon: 'star',
+    ),
+    e(
+      'alpha_wolf',
+      'group',
+      (l10n?.coreAlfaKurt ?? 'corealfakurt'),
+      (l10n?.coreGrupGunBirincisi ?? 'coregrupgunbirincisi'),
+      [
+        (1, 5, 'group_day_first', 100),
+        (2, 10, 'group_day_first', 300),
+        (3, 20, 'group_day_first', 1000),
+        (4, 50, 'group_day_first', 3000),
+        (5, 100, 'group_day_first', 10000),
+      ],
+    ),
+    e(
+      'team_player',
+      'group',
+      (l10n?.coreTakimOyuncusu ?? 'coretakimoyuncusu'),
+      (l10n?.coreGrupHedefKatkisi ?? 'coregruphedefkatkisi'),
+      [
+        (1, 10, 'group_goal_contrib', 50),
+        (2, 30, 'group_goal_contrib', 200),
+        (3, 100, 'group_goal_contrib', 800),
+        (4, 300, 'group_goal_contrib', 2500),
+        (5, 1000, 'group_goal_contrib', 8000),
+      ],
+      icon: 'groups',
+    ),
+    e(
+      'campfire_hours',
+      'group',
+      (l10n?.coreKampAtesiEtrafinda ?? 'corekampatesietrafinda'),
+      '3+ aktif saat',
+      [
+        (1, 10, 'campfire_hours', 100),
+        (2, 50, 'campfire_hours', 400),
+        (3, 150, 'campfire_hours', 1500),
+        (4, 500, 'campfire_hours', 5000),
+        (5, 1000, 'campfire_hours', 12000),
+      ],
+      icon: 'whatshot',
+    ),
+    e(
+      'inspiration',
+      'social',
+      (l10n?.coreIlhamKaynagi ?? 'coreilhamkaynagi'),
+      (l10n?.coreDurtmeDonusumu ?? 'coredurtmedonusumu'),
+      [
+        (1, 5, 'nudge_starts', 100),
+        (2, 20, 'nudge_starts', 400),
+        (3, 50, 'nudge_starts', 1200),
+        (4, 150, 'nudge_starts', 4000),
+        (5, 500, 'nudge_starts', 15000),
+      ],
+      icon: 'campaign',
+    ),
+    e(
+      'locomotive',
+      'social',
+      (l10n?.coreLokomotif ?? 'corelokomotif'),
+      (l10n?.coreIlkOturanIlham ?? 'coreilkoturanilham'),
+      [
+        (1, 5, 'locomotive_events', 150),
+        (2, 15, 'locomotive_events', 500),
+        (3, 30, 'locomotive_events', 1500),
+        (4, 100, 'locomotive_events', 4500),
+        (5, 300, 'locomotive_events', 15000),
+      ],
+    ),
+    e(
+      'secret_night_owl',
+      'secret',
+      (l10n?.coreGeceKusu ?? 'coregecekusu'),
+      (l10n?.profileGizliBasarim ?? 'secret'),
+      [(1, 1, 'secret_night_owl', 500)],
+      secret: true,
+      icon: 'dark_mode',
+    ),
+    e(
+      'secret_dawn',
+      'secret',
+      (l10n?.coreGunDogumu ?? 'coregundogumu'),
+      (l10n?.profileGizliBasarim ?? 'secret'),
+      [(1, 1, 'secret_dawn', 500)],
+      secret: true,
+      icon: 'wb_sunny',
+    ),
+    e(
+      'secret_404',
+      'secret',
+      '404',
+      (l10n?.profileGizliBasarim ?? 'secret'),
+      [(1, 1, 'secret_404', 4044)],
+      secret: true,
+      icon: 'error_outline',
+    ),
+    e(
+      'secret_pi',
+      'secret',
+      (l10n?.corePiSirri ?? 'corepisirri'),
+      (l10n?.profileGizliBasarim ?? 'secret'),
+      [(1, 1, 'secret_pi', 314)],
+      secret: true,
+      icon: 'functions',
+    ),
+    e(
+      'secret_break_enemy',
+      'secret',
+      (l10n?.coreMolaDusmani ?? 'coremoladusmani'),
+      (l10n?.profileGizliBasarim ?? 'secret'),
+      [(1, 1, 'secret_break_enemy', 1000)],
+      secret: true,
+      icon: 'block',
+    ),
+    e(
+      'secret_last_second',
+      'secret',
+      (l10n?.coreSonSaniyeKurtaricisi ?? 'coresonsaniyekurtaricisi'),
+      (l10n?.coreGizli ?? 'coregizli'),
+      [(1, 1, 'secret_last_second', 1500)],
+      secret: true,
+      icon: 'hourglass_bottom',
+    ),
+    e(
+      'secret_1337',
+      'secret',
+      '1337 Elite',
+      (l10n?.profileGizliBasarim ?? 'secret'),
+      [(1, 1, 'secret_1337', 1337)],
+      secret: true,
+      icon: 'sports_esports',
+    ),
+    e(
+      'secret_no_limits',
+      'secret',
+      (l10n?.coreSinirTanimaz ?? 'coresinirtanimaz'),
+      (l10n?.profileGizliBasarim ?? 'secret'),
+      [(1, 1, 'secret_no_limits', 3000)],
+      secret: true,
+      icon: 'trending_up',
+    ),
+    e(
+      'secret_matrix',
+      'secret',
+      (l10n?.coreMatrixHatasi ?? 'corematrixhatasi'),
+      (l10n?.profileGizliBasarim ?? 'secret'),
+      [(1, 1, 'secret_matrix', 1111)],
+      secret: true,
+      icon: 'memory',
+    ),
+    e(
+      'secret_nye',
+      'secret',
+      (l10n?.coreYilbasiNobeti ?? 'coreyilbasinobeti'),
+      (l10n?.profileGizliBasarim ?? 'secret'),
+      [(1, 1, 'secret_nye', 5000)],
+      secret: true,
+      icon: 'celebration',
+    ),
   ];
 }
 
@@ -186,9 +317,8 @@ tz.TZDateTime _asIstanbul(DateTime instant) =>
 
 /// Saf metrik + ödül motoru (server RPC ile aynı kurallar; istemci XP yazmaz).
 class AchievementLedgerEngine {
-  AchievementLedgerEngine({
-    List<AchievementDictEntry>? dictionary,
-  }) : dictionary = dictionary ?? kAchievementDictV3();
+  AchievementLedgerEngine({List<AchievementDictEntry>? dictionary})
+    : dictionary = dictionary ?? kAchievementDictV3();
 
   final List<AchievementDictEntry> dictionary;
 
@@ -245,14 +375,13 @@ class AchievementLedgerEngine {
       if (dur >= 3600 && startLocal.hour >= 5 && startLocal.hour < 7) {
         secretDawn = true;
       }
-      if (startLocal.hour == 13 &&
-          startLocal.minute == 37 &&
-          dur >= 3600) {
+      if (startLocal.hour == 13 && startLocal.minute == 37 && dur >= 3600) {
         secret1337 = true;
       }
       final startMin = startLocal.hour * 60 + startLocal.minute;
       final endMin = endLocal.hour * 60 + endLocal.minute;
-      final crossesNye = (startLocal.month == 12 &&
+      final crossesNye =
+          (startLocal.month == 12 &&
               startLocal.day == 31 &&
               startMin >= 23 * 60 + 50 &&
               endLocal.day != startLocal.day) ||
@@ -300,8 +429,7 @@ class AchievementLedgerEngine {
     final byMonth = <String, int>{};
     for (final e in dayTotals.entries) {
       if (e.value < goalSecs) continue;
-      final key =
-          '${e.key.year}-${e.key.month.toString().padLeft(2, '0')}';
+      final key = '${e.key.year}-${e.key.month.toString().padLeft(2, '0')}';
       byMonth[key] = (byMonth[key] ?? 0) + 1;
     }
     final perfectMonths = byMonth.values.where((d) => d >= 28).length;
@@ -332,9 +460,7 @@ class AchievementLedgerEngine {
   }
 
   int _progressFor(String id, Map<String, dynamic> metrics) {
-    final secrets = Map<String, dynamic>.from(
-      metrics['secrets'] as Map? ?? {},
-    );
+    final secrets = Map<String, dynamic>.from(metrics['secrets'] as Map? ?? {});
     switch (id) {
       case 'marathon_total':
         return metrics['total_hours'] as int? ?? 0;

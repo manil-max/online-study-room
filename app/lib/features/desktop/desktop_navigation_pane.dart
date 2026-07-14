@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/desktop/desktop_layout.dart';
@@ -94,7 +95,9 @@ class DesktopNavigationPane extends StatelessWidget {
                   selected: index == selectedIndex,
                   expanded: expanded,
                   onTap: () => onSelected(index),
-                  semanticsLabel: '${item.label}, sekme ${index + 1}',
+                  semanticsLabel: AppLocalizations.of(
+                    context,
+                  ).desktopItemlabelSekmeIndex1(item.label, '${index + 1}'),
                 );
               },
             ),
@@ -113,7 +116,7 @@ class DesktopNavigationPane extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
               child: Text(
-                'Ctrl+1…5 · Ctrl+, Ayarlar',
+                'Ctrl+1…5 · Ctrl+, ${AppLocalizations.of(context).desktopAyarlar}',
                 style: textTheme.labelSmall?.copyWith(
                   color: scheme.onSurfaceVariant.withValues(alpha: 0.7),
                   fontSize: 10,
@@ -137,7 +140,7 @@ class _PaneHeader extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return Semantics(
-      label: 'Odak Kampı ana navigasyonu',
+      label: AppLocalizations.of(context).desktopOdakKampiAnaNavigasyonu,
       child: Padding(
         padding: EdgeInsets.fromLTRB(
           expanded ? 12 : 8,
@@ -166,7 +169,7 @@ class _PaneHeader extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Odak Kampı',
+                  AppLocalizations.of(context).desktopOdakKampi,
                   overflow: TextOverflow.ellipsis,
                   style: textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w700,
@@ -356,6 +359,7 @@ class DesktopNavFooterAction extends StatefulWidget {
   final VoidCallback onPressed;
   final bool expanded;
   final String? tooltip;
+
   /// Açık/kapalı durum (örn. Üstte tut pin).
   final bool selected;
 
@@ -383,7 +387,9 @@ class _DesktopNavFooterActionState extends State<DesktopNavFooterAction> {
     final iconColor = selected
         ? scheme.onSecondaryContainer
         : scheme.onSurfaceVariant;
-    final labelColor = selected ? scheme.onSecondaryContainer : scheme.onSurface;
+    final labelColor = selected
+        ? scheme.onSecondaryContainer
+        : scheme.onSurface;
 
     final tile = Material(
       color: bg,
@@ -424,17 +430,11 @@ class _DesktopNavFooterActionState extends State<DesktopNavFooterAction> {
                         ),
                       ),
                       if (selected)
-                        Icon(
-                          Icons.check,
-                          size: 16,
-                          color: scheme.primary,
-                        ),
+                        Icon(Icons.check, size: 16, color: scheme.primary),
                     ],
                   ),
                 )
-              : Center(
-                  child: Icon(widget.icon, size: 22, color: iconColor),
-                ),
+              : Center(child: Icon(widget.icon, size: 22, color: iconColor)),
         ),
       ),
     );

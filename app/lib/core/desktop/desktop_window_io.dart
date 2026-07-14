@@ -7,6 +7,7 @@ import 'package:screen_retriever/screen_retriever.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
 
+import '../l10n/system_localizations.dart';
 import 'desktop_layout.dart';
 
 bool get _isDesktop => defaultTargetPlatform == TargetPlatform.windows;
@@ -34,8 +35,7 @@ Future<void> initDesktopWindow() => _controller.initialize();
 
 /// İlk Flutter frame çizildikten sonra çağrılmalı (WP-53-debug cold-start).
 /// Aksi halde Windows boş/beyaz HWND gösterebilir.
-Future<void> showDesktopWindowWhenReady() =>
-    _controller.showWhenFlutterReady();
+Future<void> showDesktopWindowWhenReady() => _controller.showWhenFlutterReady();
 
 Future<void> toggleDesktopCompactMode() => _controller.toggleCompactMode();
 
@@ -115,11 +115,12 @@ class _DesktopWindowController extends ChangeNotifier with WindowListener {
 
     // skipTaskbar: false; show henüz YOK — Flutter ilk frame sonrası
     // [showWhenFlutterReady] çağırır (beyaz boş HWND önlemi).
+    final l10n = await loadSystemLocalizations();
     final options = WindowOptions(
       size: _normalBounds.size,
       minimumSize: _defaultMinimumSize,
       center: false,
-      title: 'Odak Kampı',
+      title: l10n.desktopOdakKampi,
       titleBarStyle: TitleBarStyle.normal,
       backgroundColor: const Color(0xFF0B1020),
     );

@@ -27,14 +27,14 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Ana Sayfa'), findsWidgets);
-    await tester.tap(find.text('İstatistik'));
+    expect(find.text('Home'), findsWidgets);
+    await tester.tap(find.text('Statistics'));
     await tester.pumpAndSettle();
-    expect(find.text('İstatistik'), findsWidgets);
-    await tester.tap(find.text('Gruplar'));
+    expect(find.text('Statistics'), findsWidgets);
+    await tester.tap(find.text('Groups'));
     await tester.pumpAndSettle();
     expect(find.text("You're not in a group yet"), findsOneWidget);
-    await tester.tap(find.text('Profil'));
+    await tester.tap(find.text('Profile'));
     await tester.pumpAndSettle();
     // Profil: Başarılar üstte → Ayarlar için kaydır.
     await tester.scrollUntilVisible(

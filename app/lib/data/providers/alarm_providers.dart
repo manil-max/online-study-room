@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/notifications/alarm_notification_service.dart';
 import '../../core/notifications/native_alarm_bridge.dart';
+import '../../core/l10n/system_localizations.dart';
 import '../../core/prefs/app_prefs.dart';
 import '../../core/time_engine/alarm_scheduler.dart';
 import '../../core/time_engine/clock_study_recorder.dart';
@@ -22,19 +23,21 @@ final alarmRepositoryProvider = Provider<AlarmRepository>((ref) {
   return LocalAlarmRepository(prefs);
 });
 
-final epochClockProvider = Provider<EpochClock>((ref) => const SystemEpochClock());
+final epochClockProvider = Provider<EpochClock>(
+  (ref) => const SystemEpochClock(),
+);
 
 // ─── Exact alarm izin durumu ───────────────────────────────────────────────
 
-final exactAlarmStatusProvider =
-    FutureProvider<ExactAlarmStatus>((ref) async {
+final exactAlarmStatusProvider = FutureProvider<ExactAlarmStatus>((ref) async {
   return ref.watch(alarmNotificationServiceProvider).exactAlarmStatus();
 });
 
 // ─── Alarms ────────────────────────────────────────────────────────────────
 
-final alarmsProvider =
-    AsyncNotifierProvider<AlarmsNotifier, List<AlarmRule>>(AlarmsNotifier.new);
+final alarmsProvider = AsyncNotifierProvider<AlarmsNotifier, List<AlarmRule>>(
+  AlarmsNotifier.new,
+);
 
 class AlarmsNotifier extends AsyncNotifier<List<AlarmRule>> {
   @override
@@ -108,19 +111,29 @@ class AlarmsNotifier extends AsyncNotifier<List<AlarmRule>> {
 
 final timerPresetsProvider =
     AsyncNotifierProvider<TimerPresetsNotifier, List<TimerPreset>>(
-  TimerPresetsNotifier.new,
-);
+      TimerPresetsNotifier.new,
+    );
 
 class TimerPresetsNotifier extends AsyncNotifier<List<TimerPreset>> {
   @override
   FutureOr<List<TimerPreset>> build() async {
     final repo = ref.watch(alarmRepositoryProvider);
+    final l10n = await loadSystemLocalizations();
     var list = await repo.getTimerPresets();
+    final localizedDefaults = defaultTimerPresets(l10n);
     if (list.isEmpty) {
-      for (final p in defaultTimerPresets()) {
+      for (final p in localizedDefaults) {
         await repo.saveTimerPreset(p);
       }
-      list = defaultTimerPresets();
+      list = localizedDefaults;
+    } else {
+      final defaultsById = {for (final p in localizedDefaults) p.id: p};
+      list = [
+        for (final preset in list)
+          defaultsById[preset.id] == null
+              ? preset
+              : preset.copyWith(label: defaultsById[preset.id]!.label),
+      ];
     }
     return list;
   }
@@ -140,12 +153,13 @@ class TimerPresetsNotifier extends AsyncNotifier<List<TimerPreset>> {
 
 final timerInstancesProvider =
     AsyncNotifierProvider<TimerInstancesNotifier, List<TimerInstance>>(
-  TimerInstancesNotifier.new,
-);
+      TimerInstancesNotifier.new,
+    );
 
 class TimerInstancesNotifier extends AsyncNotifier<List<TimerInstance>> {
   Timer? _ticker;
   final Set<String> _doneNotified = {};
+
   /// Çalışma süresine yazılmış timer id'leri (çift XP/oturum engeli).
   final Set<String> _studyCredited = {};
 
@@ -183,14 +197,11 @@ class TimerInstancesNotifier extends AsyncNotifier<List<TimerInstance>> {
 
     for (final inst in adjusted) {
       if (inst.status == TimerStateStatus.done &&
-          raw.any((r) => r.id == inst.id && r.status == TimerStateStatus.running)) {
+          raw.any(
+            (r) => r.id == inst.id && r.status == TimerStateStatus.running,
+          )) {
         // Native ring zaten çalmış olabilir; UI yedek bildirimi
-        unawaited(
-          ref.read(alarmNotificationServiceProvider).showImmediate(
-                'Zamanlayıcı',
-                '${inst.label} süresi doldu!',
-              ),
-        );
+        unawaited(_showTimerDone(inst));
         // Tamamlanan süre → çalışma oturumu
         unawaited(_creditTimerStudy(inst, fullDuration: true));
       }
@@ -234,12 +245,7 @@ class TimerInstancesNotifier extends AsyncNotifier<List<TimerInstance>> {
           changed = true;
           if (!_doneNotified.contains(inst.id)) {
             _doneNotified.add(inst.id);
-            unawaited(
-              ref.read(alarmNotificationServiceProvider).showImmediate(
-                    'Zamanlayıcı',
-                    '${inst.label} süresi doldu!',
-                  ),
-            );
+            unawaited(_showTimerDone(inst));
             unawaited(
               ref.read(alarmNotificationServiceProvider).cancelTimer(inst.id),
             );
@@ -274,7 +280,10 @@ class TimerInstancesNotifier extends AsyncNotifier<List<TimerInstance>> {
     });
   }
 
-  Future<void> addFromPreset(TimerPreset preset, {bool autoStart = true}) async {
+  Future<void> addFromPreset(
+    TimerPreset preset, {
+    bool autoStart = true,
+  }) async {
     final clock = ref.read(epochClockProvider);
     final nowMs = clock.nowMs();
     var inst = TimerInstance(
@@ -289,8 +298,9 @@ class TimerInstancesNotifier extends AsyncNotifier<List<TimerInstance>> {
       iconCode: preset.iconCode,
     );
     if (autoStart) {
-      final c = EpochCountdownState.initial(preset.durationSeconds * 1000)
-          .start(nowMs);
+      final c = EpochCountdownState.initial(
+        preset.durationSeconds * 1000,
+      ).start(nowMs);
       inst = inst.syncedWith(c, nowMs);
     }
     await ref.read(alarmRepositoryProvider).saveTimerInstance(inst);
@@ -298,6 +308,16 @@ class TimerInstancesNotifier extends AsyncNotifier<List<TimerInstance>> {
     await _syncTimerNative(all);
     _doneNotified.remove(inst.id);
     ref.invalidateSelf();
+  }
+
+  Future<void> _showTimerDone(TimerInstance instance) async {
+    final l10n = await loadSystemLocalizations();
+    await ref
+        .read(alarmNotificationServiceProvider)
+        .showImmediate(
+          l10n.coreZamanlayiciBitti,
+          '${instance.label} · ${l10n.homeBitti}',
+        );
   }
 
   Future<void> addCustom({
@@ -319,10 +339,9 @@ class TimerInstancesNotifier extends AsyncNotifier<List<TimerInstance>> {
     // Pause çalışma kaydı yazmaz; süre bitince veya Stop/Sil'de yazılır.
     await _mutate(id, (inst, nowMs) {
       final c = inst.countdown.pause(nowMs);
-      return inst.syncedWith(c, nowMs).copyWith(
-            status: TimerStateStatus.paused,
-            clearEndsAt: true,
-          );
+      return inst
+          .syncedWith(c, nowMs)
+          .copyWith(status: TimerStateStatus.paused, clearEndsAt: true);
     });
   }
 
@@ -347,7 +366,10 @@ class TimerInstancesNotifier extends AsyncNotifier<List<TimerInstance>> {
       final rem = before.status == TimerStateStatus.running
           ? before.remainingAt(nowMs)
           : before.remainingSeconds;
-      final elapsed = (before.durationSeconds - rem).clamp(0, before.durationSeconds);
+      final elapsed = (before.durationSeconds - rem).clamp(
+        0,
+        before.durationSeconds,
+      );
       if (before.status == TimerStateStatus.done) {
         unawaited(_creditTimerStudy(before, fullDuration: true));
       } else if (elapsed > 0) {
@@ -380,16 +402,19 @@ class TimerInstancesNotifier extends AsyncNotifier<List<TimerInstance>> {
     int? elapsedOverride,
   }) async {
     if (_studyCredited.contains(inst.id)) return;
-    final seconds = elapsedOverride ??
+    final seconds =
+        elapsedOverride ??
         (fullDuration
             ? inst.durationSeconds
-            : (inst.durationSeconds - inst.remainingSeconds)
-                .clamp(0, inst.durationSeconds));
+            : (inst.durationSeconds - inst.remainingSeconds).clamp(
+                0,
+                inst.durationSeconds,
+              ));
     if (seconds < ClockStudyRecorder.minDurationSeconds) return;
     _studyCredited.add(inst.id);
-    final ok = await ref.read(clockStudyRecorderProvider).recordDuration(
-          durationSeconds: seconds,
-        );
+    final ok = await ref
+        .read(clockStudyRecorderProvider)
+        .recordDuration(durationSeconds: seconds);
     if (!ok) {
       // Giriş yok / çok kısa → tekrar denenebilsin
       _studyCredited.remove(inst.id);
@@ -462,8 +487,8 @@ class TimerInstancesNotifier extends AsyncNotifier<List<TimerInstance>> {
 
 final stopwatchProvider =
     NotifierProvider<StopwatchNotifier, EpochStopwatchState>(
-  StopwatchNotifier.new,
-);
+      StopwatchNotifier.new,
+    );
 
 class StopwatchNotifier extends Notifier<EpochStopwatchState> {
   static const _prefsKey = 'clock_stopwatch_state_v1';
@@ -504,9 +529,9 @@ class StopwatchNotifier extends Notifier<EpochStopwatchState> {
     final deltaMs = elapsed - already;
     if (deltaMs < ClockStudyRecorder.minDurationSeconds * 1000) return;
     final sec = deltaMs ~/ 1000;
-    final ok = await ref.read(clockStudyRecorderProvider).recordDuration(
-          durationSeconds: sec,
-        );
+    final ok = await ref
+        .read(clockStudyRecorderProvider)
+        .recordDuration(durationSeconds: sec);
     if (ok) {
       await _setCreditedMs(already + sec * 1000);
     }
@@ -555,11 +580,10 @@ class StopwatchNotifier extends Notifier<EpochStopwatchState> {
 
 final worldCitiesProvider =
     NotifierProvider<WorldCitiesNotifier, List<({String label, String tz})>>(
-  WorldCitiesNotifier.new,
-);
+      WorldCitiesNotifier.new,
+    );
 
-class WorldCitiesNotifier
-    extends Notifier<List<({String label, String tz})>> {
+class WorldCitiesNotifier extends Notifier<List<({String label, String tz})>> {
   static const _key = 'world_clock_cities_v1';
 
   @override
@@ -568,7 +592,7 @@ class WorldCitiesNotifier
     final raw = prefs.getStringList(_key);
     if (raw == null || raw.isEmpty) {
       return const [
-        (label: 'Londra', tz: 'Europe/London'),
+        (label: 'London', tz: 'Europe/London'),
         (label: 'New York', tz: 'America/New_York'),
         (label: 'Tokyo', tz: 'Asia/Tokyo'),
         (label: 'Dubai', tz: 'Asia/Dubai'),

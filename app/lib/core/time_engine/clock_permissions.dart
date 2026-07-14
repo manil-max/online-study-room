@@ -3,6 +3,7 @@ import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:online_study_room/l10n/app_localizations.dart';
 
 /// Alarm/timer için cihaz izin özeti (Android).
 @immutable
@@ -22,12 +23,12 @@ class ClockPermissionSnapshot {
   bool get allOk =>
       notifications && exactAlarm && batteryUnrestricted && fullScreenIntent;
 
-  List<String> get missingLabels {
+  List<String> missingLabels(AppLocalizations l10n) {
     final m = <String>[];
-    if (!notifications) m.add('Bildirim');
-    if (!exactAlarm) m.add('Kesin alarm');
-    if (!batteryUnrestricted) m.add('Pil kısıtlamasız');
-    if (!fullScreenIntent) m.add('Tam ekran alarm');
+    if (!notifications) m.add(l10n.coreBildirim);
+    if (!exactAlarm) m.add(l10n.clockKesinAlarmExact);
+    if (!batteryUnrestricted) m.add(l10n.clockPilKisitlamasiYok);
+    if (!fullScreenIntent) m.add(l10n.coreTamEkranAlarm);
     return m;
   }
 

@@ -6,7 +6,9 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:online_study_room/l10n/app_localizations.dart';
 
+import '../l10n/system_localizations.dart';
 import '../utils/duration_format.dart';
 
 final timerNotificationServiceProvider = Provider<TimerNotificationGateway>(
@@ -57,29 +59,24 @@ class TimerNotificationSnapshot {
       progress != null &&
       progress! >= 0;
 
-  String get body {
+  String body(AppLocalizations l10n) {
     // Geçen/kalan süre bildirim başlığındaki CANLI kronometre (usesChronometer)
     // ile saat gibi (HH:MM:SS) tikleyerek gösterilir. Gövdeye sabit bir sayı
     // yazmayız; yoksa bildirim tekrar push edilmediği için "0 sn"de takılır.
     if (remainingSeconds == null) {
-      return '$modeLabel çalışıyor';
+      return '$modeLabel · ${l10n.commonCalsyor}';
     }
     return phaseLabel;
   }
 
-  String get expandedBody {
-    final elapsed = formatHumanSeconds(elapsedSeconds);
+  String expandedBody(AppLocalizations l10n) {
+    final elapsed = formatHms(elapsedSeconds);
     final remaining = remainingSeconds == null
         ? null
-        : 'Kalan süre: ${formatHumanSeconds(remainingSeconds!)}';
-    final lines = [
-      title,
-      'Mod: $modeLabel',
-      'Faz: $phaseLabel',
-      'Geçen süre: $elapsed',
-    ];
+        : formatHms(remainingSeconds!);
+    final lines = [title, modeLabel, phaseLabel, elapsed];
     if (remaining != null) lines.add(remaining);
-    lines.add('Durdurmak için bildirimdeki Durdur aksiyonunu kullan.');
+    lines.add(l10n.coreDurdurmakIcinBildirimdekiDurdur);
     return lines.join('\n');
   }
 }
@@ -97,7 +94,11 @@ void timerNotificationBackgroundHandler(NotificationResponse response) async {
   var sequence = 1;
   try {
     final raw = prefs.getString('timer_external_command');
-    sequence = ((jsonDecode(raw ?? '{}') as Map<String, dynamic>)['sequence'] as int? ?? 0) + 1;
+    sequence =
+        ((jsonDecode(raw ?? '{}') as Map<String, dynamic>)['sequence']
+                as int? ??
+            0) +
+        1;
   } catch (_) {}
   await prefs.setString(
     'timer_external_command',
@@ -118,7 +119,6 @@ class TimerNotificationService implements TimerNotificationGateway {
   // kronometreli bildirim düz servis bildiriminin altında gizli kalıyordu → yeni
   // kanal + DEFAULT importance ile baskın/görünür yapılır.
   static const String _channelId = 'study_timer_live';
-  static const String _channelName = 'Çalışma sayacı (canlı)';
   static const String _stopActionId = 'stop_timer';
   static const String _startActionId = 'start_timer';
 
@@ -168,12 +168,12 @@ class TimerNotificationService implements TimerNotificationGateway {
   Future<void> showRunning(TimerNotificationSnapshot snapshot) async {
     if (!_isAndroid) return;
     await initialize();
+    final l10n = await loadSystemLocalizations();
 
     final details = AndroidNotificationDetails(
       _channelId,
-      _channelName,
-      channelDescription:
-          'Çalışma sayacı çalışırken gösterilen kalıcı bildirim',
+      l10n.clockCalismaSayaci,
+      channelDescription: l10n.coreCalismaSayaciCalisirkenGosterilen,
       // DEFAULT: kronometreli bildirim tepside görünür ve düz FGS bildiriminin
       // ÜSTÜNDE durur. Sürekli çalışan sayaç bildirimi olduğu için ses/titreşim
       // KAPALI (görünür ama sessiz); onlyAlertOnce ek güvence.
@@ -196,7 +196,7 @@ class TimerNotificationService implements TimerNotificationGateway {
       actions: [
         AndroidNotificationAction(
           snapshot.isRunning ? _stopActionId : _startActionId,
-          snapshot.isRunning ? 'Durdur' : 'Başlat',
+          snapshot.isRunning ? l10n.profileDurdur : l10n.desktopBaslat,
           showsUserInterface: false,
           cancelNotification: false,
         ),
@@ -205,8 +205,8 @@ class TimerNotificationService implements TimerNotificationGateway {
 
     await _plugin.show(
       id: _notificationId,
-      title: 'Odak Kampı',
-      body: snapshot.body,
+      title: l10n.coreOdakKampi,
+      body: snapshot.body(l10n),
       notificationDetails: NotificationDetails(android: details),
       payload: 'timer:toggle',
     );

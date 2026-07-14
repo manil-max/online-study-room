@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -86,6 +87,9 @@ void main() {
         alarmRepositoryProvider.overrideWithValue(repo),
       ],
       child: const MaterialApp(
+        locale: Locale('tr'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: AlarmsScreen(),
       ),
     );
@@ -101,12 +105,7 @@ void main() {
 
   testWidgets('AlarmsScreen lists alarm after repository save', (tester) async {
     await repo.saveAlarm(
-      const AlarmRule(
-        id: 'test-1',
-        hour: 7,
-        minute: 30,
-        label: 'Sabah',
-      ),
+      const AlarmRule(id: 'test-1', hour: 7, minute: 30, label: 'Sabah'),
     );
 
     await tester.pumpWidget(buildApp());

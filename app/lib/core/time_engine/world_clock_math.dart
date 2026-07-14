@@ -1,4 +1,5 @@
 import 'package:timezone/timezone.dart' as tz;
+import 'package:online_study_room/l10n/app_localizations.dart';
 
 /// Dünya saati satırı için türetilmiş görünüm.
 class WorldClockReading {
@@ -29,6 +30,7 @@ WorldClockReading readWorldClock({
   required String cityLabel,
   required String timeZoneId,
   required DateTime homeNow,
+  required AppLocalizations l10n,
   tz.Location? location,
 }) {
   final loc = location ?? tz.getLocation(timeZoneId);
@@ -48,16 +50,14 @@ WorldClockReading readWorldClock({
   final remoteDate = DateTime(remote.year, remote.month, remote.day);
   final dayDelta = remoteDate.difference(homeDate).inDays;
   final dayLabel = switch (dayDelta) {
-    0 => 'Bugün',
-    1 => 'Yarın',
-    -1 => 'Dün',
-    _ when dayDelta > 1 => '$dayDelta gün sonra',
-    _ => '${-dayDelta} gün önce',
+    0 => l10n.coreBugun,
+    1 => l10n.coreYarin,
+    -1 => l10n.coreDun,
+    _ when dayDelta > 1 => '+$dayDelta',
+    _ => '$dayDelta',
   };
 
-  final offsetLabel = hours == 0
-      ? '$dayLabel, aynı saat'
-      : '$dayLabel, $sign$hourPart sa';
+  final offsetLabel = hours == 0 ? dayLabel : '$dayLabel, UTC$sign$hourPart';
 
   return WorldClockReading(
     cityLabel: cityLabel,
@@ -71,22 +71,48 @@ WorldClockReading readWorldClock({
 
 /// Hazır şehir kataloğu (IANA TZ).
 const kWorldCityCatalog = <({String label, String tz})>[
-  (label: 'İstanbul', tz: 'Europe/Istanbul'),
-  (label: 'Londra', tz: 'Europe/London'),
+  (label: 'Istanbul', tz: 'Europe/Istanbul'),
+  (label: 'London', tz: 'Europe/London'),
   (label: 'Berlin', tz: 'Europe/Berlin'),
   (label: 'Paris', tz: 'Europe/Paris'),
-  (label: 'Moskova', tz: 'Europe/Moscow'),
+  (label: 'Moscow', tz: 'Europe/Moscow'),
   (label: 'Dubai', tz: 'Asia/Dubai'),
   (label: 'Mumbai', tz: 'Asia/Kolkata'),
-  (label: 'Singapur', tz: 'Asia/Singapore'),
+  (label: 'Singapore', tz: 'Asia/Singapore'),
   (label: 'Tokyo', tz: 'Asia/Tokyo'),
-  (label: 'Seul', tz: 'Asia/Seoul'),
-  (label: 'Sidney', tz: 'Australia/Sydney'),
+  (label: 'Seoul', tz: 'Asia/Seoul'),
+  (label: 'Sydney', tz: 'Australia/Sydney'),
   (label: 'Auckland', tz: 'Pacific/Auckland'),
   (label: 'New York', tz: 'America/New_York'),
   (label: 'Chicago', tz: 'America/Chicago'),
   (label: 'Denver', tz: 'America/Denver'),
   (label: 'Los Angeles', tz: 'America/Los_Angeles'),
   (label: 'São Paulo', tz: 'America/Sao_Paulo'),
-  (label: 'Kahire', tz: 'Africa/Cairo'),
+  (label: 'Cairo', tz: 'Africa/Cairo'),
 ];
+
+String localizedWorldCityLabel(
+  String timeZoneId,
+  AppLocalizations l10n, {
+  String? fallback,
+}) => switch (timeZoneId) {
+  'Europe/Istanbul' => l10n.coreIstanbul,
+  'Europe/London' => l10n.coreLondra,
+  'Europe/Berlin' => l10n.coreBerlin,
+  'Europe/Paris' => l10n.coreParis,
+  'Europe/Moscow' => l10n.coreMoskova,
+  'Asia/Dubai' => l10n.coreDubai,
+  'Asia/Kolkata' => l10n.coreMumbai,
+  'Asia/Singapore' => l10n.coreSingapur,
+  'Asia/Tokyo' => l10n.coreTokyo,
+  'Asia/Seoul' => l10n.coreSeul,
+  'Australia/Sydney' => l10n.coreSidney,
+  'Pacific/Auckland' => l10n.coreAuckland,
+  'America/New_York' => l10n.coreNewYork,
+  'America/Chicago' => l10n.coreChicago,
+  'America/Denver' => l10n.coreDenver,
+  'America/Los_Angeles' => l10n.coreLosAngeles,
+  'America/Sao_Paulo' => l10n.coreSoPaulo,
+  'Africa/Cairo' => l10n.coreKahire,
+  _ => fallback ?? timeZoneId,
+};

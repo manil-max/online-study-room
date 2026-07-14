@@ -9,11 +9,14 @@ import 'package:timezone/timezone.dart' as tz;
 import '../../data/models/alarm_rule.dart';
 import '../../data/models/timer_preset.dart';
 import '../time_engine/alarm_scheduler.dart';
+import '../l10n/system_localizations.dart';
 import '../time_engine/device_timezone.dart';
 import '../time_engine/exact_alarm_permission.dart';
 import 'native_alarm_bridge.dart';
 
-final alarmNotificationServiceProvider = Provider<AlarmNotificationService>((ref) {
+final alarmNotificationServiceProvider = Provider<AlarmNotificationService>((
+  ref,
+) {
   return AlarmNotificationService.instance;
 });
 
@@ -24,16 +27,13 @@ class AlarmNotificationService {
     FlutterLocalNotificationsPlugin? plugin,
     ExactAlarmPermission? exactPermission,
     NativeAlarmBridge? bridge,
-  })  : _plugin = plugin ?? FlutterLocalNotificationsPlugin(),
-        _exact = exactPermission ?? ExactAlarmPermission(),
-        _bridge = bridge ?? NativeAlarmBridge.instance;
+  }) : _plugin = plugin ?? FlutterLocalNotificationsPlugin(),
+       _exact = exactPermission ?? ExactAlarmPermission(),
+       _bridge = bridge ?? NativeAlarmBridge.instance;
 
   static final instance = AlarmNotificationService();
 
   static const String channelId = 'personal_alarms';
-  static const String channelName = 'Alarmlar ve Zamanlayıcılar';
-  static const String channelDesc =
-      'Kişisel alarm ve çoklu timer (yüksek öncelik)';
 
   final FlutterLocalNotificationsPlugin _plugin;
   final ExactAlarmPermission _exact;
@@ -48,6 +48,7 @@ class AlarmNotificationService {
     void Function(NotificationResponse)? onResponse,
   }) async {
     if (_initialized) return;
+    final l10n = await loadSystemLocalizations();
 
     await DeviceTimezone.ensureInitialized();
 
@@ -69,13 +70,15 @@ class AlarmNotificationService {
       onDidReceiveBackgroundNotificationResponse: alarmNotificationBg,
     );
 
-    final androidPlugin = _plugin.resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin>();
+    final androidPlugin = _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
     await androidPlugin?.createNotificationChannel(
-      const AndroidNotificationChannel(
+      AndroidNotificationChannel(
         channelId,
-        channelName,
-        description: channelDesc,
+        l10n.coreAlarmlarVeZamanlayicilar,
+        description: l10n.coreAlarmlarVeZamanlayicilar,
         importance: Importance.max,
         playSound: true,
         enableVibration: true,
@@ -101,6 +104,7 @@ class AlarmNotificationService {
     DateTime? now,
   }) async {
     await initialize();
+    final l10n = await loadSystemLocalizations();
     final n = now ?? DateTime.now();
 
     if (!alarm.isActive) {
@@ -125,14 +129,14 @@ class AlarmNotificationService {
     final mode = await _mode();
     await _plugin.zonedSchedule(
       id: _notifId(alarm.id),
-      title: alarm.label.isNotEmpty ? alarm.label : 'Alarm',
-      body: 'Saat ${alarm.timeLabel} — Odak Kampı',
+      title: alarm.label.isNotEmpty ? alarm.label : l10n.coreAlarm,
+      body: '${l10n.profileSaat} ${alarm.timeLabel} — ${l10n.desktopOdakKampi}',
       scheduledDate: scheduled,
       notificationDetails: NotificationDetails(
         android: AndroidNotificationDetails(
           channelId,
-          channelName,
-          channelDescription: channelDesc,
+          l10n.coreAlarmlarVeZamanlayicilar,
+          channelDescription: l10n.coreAlarmlarVeZamanlayicilar,
           importance: Importance.max,
           priority: Priority.high,
           category: AndroidNotificationCategory.alarm,
@@ -141,9 +145,9 @@ class AlarmNotificationService {
           enableVibration: alarm.vibrate,
           ongoing: true,
           autoCancel: false,
-          actions: const <AndroidNotificationAction>[
-            AndroidNotificationAction('alarm_dismiss', 'Kapat'),
-            AndroidNotificationAction('alarm_snooze', 'Ertele'),
+          actions: <AndroidNotificationAction>[
+            AndroidNotificationAction('alarm_dismiss', l10n.clockKapat),
+            AndroidNotificationAction('alarm_snooze', l10n.coreErtele),
           ],
         ),
       ),
@@ -185,6 +189,7 @@ class AlarmNotificationService {
     SharedPreferences? prefs,
   }) async {
     await initialize();
+    final l10n = await loadSystemLocalizations();
     final nowMs = DateTime.now().millisecondsSinceEpoch;
 
     if (instance.status != TimerStateStatus.running) {
@@ -203,19 +208,20 @@ class AlarmNotificationService {
       return;
     }
 
-    final scheduled =
-        tz.TZDateTime.now(tz.local).add(Duration(seconds: remainingSec));
+    final scheduled = tz.TZDateTime.now(
+      tz.local,
+    ).add(Duration(seconds: remainingSec));
     final mode = await _mode();
     await _plugin.zonedSchedule(
       id: _notifId(instance.id),
-      title: 'Zamanlayıcı bitti',
+      title: l10n.coreZamanlayiciBitti,
       body: instance.label,
       scheduledDate: scheduled,
       notificationDetails: NotificationDetails(
         android: AndroidNotificationDetails(
           channelId,
-          channelName,
-          channelDescription: channelDesc,
+          l10n.coreAlarmlarVeZamanlayicilar,
+          channelDescription: l10n.coreAlarmlarVeZamanlayicilar,
           importance: Importance.max,
           priority: Priority.high,
           category: AndroidNotificationCategory.alarm,
@@ -243,10 +249,11 @@ class AlarmNotificationService {
 
   Future<void> showImmediate(String title, String body) async {
     await initialize();
+    final l10n = await loadSystemLocalizations();
     final details = AndroidNotificationDetails(
       channelId,
-      channelName,
-      channelDescription: channelDesc,
+      l10n.coreAlarmlarVeZamanlayicilar,
+      channelDescription: l10n.coreAlarmlarVeZamanlayicilar,
       importance: Importance.max,
       priority: Priority.high,
       category: AndroidNotificationCategory.alarm,
@@ -259,8 +266,7 @@ class AlarmNotificationService {
     );
   }
 
-  Future<void> previewNativeRing(AlarmRule alarm) =>
-      _bridge.previewRing(alarm);
+  Future<void> previewNativeRing(AlarmRule alarm) => _bridge.previewRing(alarm);
 
   Future<ExactAlarmStatus> exactAlarmStatus() => _exact.status();
 

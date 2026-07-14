@@ -60,10 +60,10 @@ enum CrownTier { none, bronze, silver, gold }
 
 extension CrownTierLabel on CrownTier {
   String get label => switch (this) {
-    CrownTier.none => 'Taç yok',
-    CrownTier.bronze => 'Bronz taç',
-    CrownTier.silver => 'Gümüş taç',
-    CrownTier.gold => 'Altın taç',
+    CrownTier.none => 'No crown',
+    CrownTier.bronze => 'Bronze crown',
+    CrownTier.silver => 'Silver crown',
+    CrownTier.gold => 'Golden crown',
   };
 }
 
@@ -96,26 +96,26 @@ List<AchievementStatus> achievementsFor({
   return [
     AchievementStatus(
       id: AchievementId.firstSession,
-      title: 'İlk kamp',
-      description: 'İlk çalışma oturumunu kaydet',
+      title: 'First camp',
+      description: 'Save first study session',
       unlocked: sessionCount >= 1,
     ),
     AchievementStatus(
       id: AchievementId.oneHourTotal,
-      title: 'Isınma turu',
-      description: 'Toplam 1 saat çalış',
+      title: 'Warm-up lap',
+      description: 'Study for 1 hour in total',
       unlocked: totalSeconds >= 3600,
     ),
     AchievementStatus(
       id: AchievementId.sevenDayStreak,
-      title: 'Seri ateşi',
-      description: '7 günlük hedef serisine ulaş',
+      title: 'Streak flame',
+      description: 'Reach a 7-day goal streak',
       unlocked: streak >= 7,
     ),
     AchievementStatus(
       id: AchievementId.thirtyHourTotal,
-      title: 'Kamp ustası',
-      description: 'Toplam 30 saat çalış',
+      title: 'Camp Master',
+      description: 'Study 30 hours in total',
       unlocked: totalSeconds >= 30 * 3600,
     ),
   ];

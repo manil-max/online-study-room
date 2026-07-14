@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -54,14 +55,14 @@ class _WorldClockScreenState extends ConsumerState<WorldClockScreen> {
             children: [
               Expanded(
                 child: Text(
-                  'Dünya saatleri',
+                  AppLocalizations.of(context).clockDunyaSaatleri,
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
               IconButton(
-                tooltip: 'Şehir ekle',
+                tooltip: AppLocalizations.of(context).clockSehirEkle,
                 onPressed: () => _addCity(context),
                 icon: const Icon(Icons.add_location_alt_outlined),
               ),
@@ -70,7 +71,7 @@ class _WorldClockScreenState extends ConsumerState<WorldClockScreen> {
         ),
         Expanded(
           child: cities.isEmpty
-              ? const Center(child: Text('Şehir ekle'))
+              ? Center(child: Text(AppLocalizations.of(context).clockSehirEkle))
               : ListView.builder(
                   padding: const EdgeInsets.fromLTRB(12, 0, 12, 24),
                   itemCount: cities.length,
@@ -78,27 +79,38 @@ class _WorldClockScreenState extends ConsumerState<WorldClockScreen> {
                     final c = cities[index];
                     WorldClockReading reading;
                     try {
+                      final localizedLabel = localizedWorldCityLabel(
+                        c.tz,
+                        AppLocalizations.of(context),
+                        fallback: c.label,
+                      );
                       reading = readWorldClock(
-                        cityLabel: c.label,
+                        cityLabel: localizedLabel,
                         timeZoneId: c.tz,
                         homeNow: _now,
+                        l10n: AppLocalizations.of(context),
                         location: tz.getLocation(c.tz),
                       );
                     } catch (_) {
                       reading = WorldClockReading(
-                        cityLabel: c.label,
+                        cityLabel: localizedWorldCityLabel(
+                          c.tz,
+                          AppLocalizations.of(context),
+                          fallback: c.label,
+                        ),
                         timeZoneId: c.tz,
                         localTime: _now,
                         isDaytime: true,
-                        offsetLabel: 'TZ bilinmiyor',
+                        offsetLabel: AppLocalizations.of(
+                          context,
+                        ).clockTzBilinmiyor,
                         dayLabel: '—',
                       );
                     }
                     return _CityCard(
                       reading: reading,
-                      onDelete: () => ref
-                          .read(worldCitiesProvider.notifier)
-                          .remove(c.tz),
+                      onDelete: () =>
+                          ref.read(worldCitiesProvider.notifier).remove(c.tz),
                     );
                   },
                 ),
@@ -108,7 +120,7 @@ class _WorldClockScreenState extends ConsumerState<WorldClockScreen> {
 
     if (widget.embedded) return body;
     return Scaffold(
-      appBar: AppBar(title: const Text('Dünya Saati')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context).clockDunyaSaati)),
       body: body,
     );
   }
@@ -124,11 +136,14 @@ class _WorldClockScreenState extends ConsumerState<WorldClockScreen> {
           builder: (_, scroll) {
             return Column(
               children: [
-                const Padding(
-                  padding: EdgeInsets.all(16),
+                Padding(
+                  padding: const EdgeInsets.all(16),
                   child: Text(
-                    'Şehir seç',
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18),
+                    AppLocalizations.of(context).clockSehirSec,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 18,
+                    ),
                   ),
                 ),
                 Expanded(
@@ -138,12 +153,22 @@ class _WorldClockScreenState extends ConsumerState<WorldClockScreen> {
                     itemBuilder: (_, i) {
                       final item = kWorldCityCatalog[i];
                       return ListTile(
-                        title: Text(item.label),
-                        subtitle: Text(item.tz),
-                        onTap: () => Navigator.pop(
-                          ctx,
-                          (label: item.label, tz: item.tz),
+                        title: Text(
+                          localizedWorldCityLabel(
+                            item.tz,
+                            AppLocalizations.of(context),
+                            fallback: item.label,
+                          ),
                         ),
+                        subtitle: Text(item.tz),
+                        onTap: () => Navigator.pop(ctx, (
+                          label: localizedWorldCityLabel(
+                            item.tz,
+                            AppLocalizations.of(context),
+                            fallback: item.label,
+                          ),
+                          tz: item.tz,
+                        )),
                       );
                     },
                   ),
@@ -193,7 +218,10 @@ class _CityCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
       ),
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 10,
+        ),
         title: Text(
           reading.cityLabel,
           style: TextStyle(
@@ -203,7 +231,8 @@ class _CityCard extends StatelessWidget {
           ),
         ),
         subtitle: Text(
-          '${reading.offsetLabel} · ${isDay ? 'Gündüz' : 'Gece'}',
+          '${reading.offsetLabel} · '
+          '${isDay ? AppLocalizations.of(context).clockGunduz : AppLocalizations.of(context).clockGece}',
           style: TextStyle(color: fg.withValues(alpha: 0.8)),
         ),
         trailing: Row(

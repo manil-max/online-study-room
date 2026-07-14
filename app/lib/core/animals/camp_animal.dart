@@ -1,14 +1,12 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
+
 /// Kamp ateşi sahnesinde (§2G) kullanıcıyı temsil eden hayvan.
 ///
 /// Şimdilik emoji tabanlı ve basit (kullanıcı kararı). İleride kıyafet/renk gibi
 /// katmanlar ve daha zengin (ör. Rive) animasyonlar eklenebilir; o yüzden hayvan
 /// kimliği ([id]) kalıcı ve sunucuda saklanır (`profiles.animal`).
 class CampAnimal {
-  const CampAnimal({
-    required this.id,
-    required this.emoji,
-    required this.label,
-  });
+  const CampAnimal({required this.id, required this.emoji});
 
   /// Kalıcı, dile bağımsız kimlik (DB'de saklanan değer).
   final String id;
@@ -16,24 +14,37 @@ class CampAnimal {
   /// Sahnede çizilen emoji.
   final String emoji;
 
-  /// Seçim ekranındaki Türkçe ad.
-  final String label;
+  String label(AppLocalizations l10n) => switch (id) {
+    'fox' => l10n.coreTilki,
+    'rabbit' => l10n.coreTavsan,
+    'bear' => l10n.coreAyi,
+    'cat' => l10n.coreKedi,
+    'dog' => l10n.coreKopek,
+    'panda' => l10n.corePanda,
+    'owl' => l10n.coreBaykus,
+    'frog' => l10n.coreKurbaga,
+    'penguin' => l10n.corePenguen,
+    'koala' => l10n.coreKoala,
+    'tiger' => l10n.coreKaplan,
+    'hedgehog' => l10n.coreKirpi,
+    _ => id,
+  };
 }
 
 /// Seçilebilir hayvanlar. Sıra seçim ızgarasındaki sırayı belirler.
 const List<CampAnimal> kCampAnimals = [
-  CampAnimal(id: 'fox', emoji: '🦊', label: 'Tilki'),
-  CampAnimal(id: 'rabbit', emoji: '🐰', label: 'Tavşan'),
-  CampAnimal(id: 'bear', emoji: '🐻', label: 'Ayı'),
-  CampAnimal(id: 'cat', emoji: '🐱', label: 'Kedi'),
-  CampAnimal(id: 'dog', emoji: '🐶', label: 'Köpek'),
-  CampAnimal(id: 'panda', emoji: '🐼', label: 'Panda'),
-  CampAnimal(id: 'owl', emoji: '🦉', label: 'Baykuş'),
-  CampAnimal(id: 'frog', emoji: '🐸', label: 'Kurbağa'),
-  CampAnimal(id: 'penguin', emoji: '🐧', label: 'Penguen'),
-  CampAnimal(id: 'koala', emoji: '🐨', label: 'Koala'),
-  CampAnimal(id: 'tiger', emoji: '🐯', label: 'Kaplan'),
-  CampAnimal(id: 'hedgehog', emoji: '🦔', label: 'Kirpi'),
+  CampAnimal(id: 'fox', emoji: '🦊'),
+  CampAnimal(id: 'rabbit', emoji: '🐰'),
+  CampAnimal(id: 'bear', emoji: '🐻'),
+  CampAnimal(id: 'cat', emoji: '🐱'),
+  CampAnimal(id: 'dog', emoji: '🐶'),
+  CampAnimal(id: 'panda', emoji: '🐼'),
+  CampAnimal(id: 'owl', emoji: '🦉'),
+  CampAnimal(id: 'frog', emoji: '🐸'),
+  CampAnimal(id: 'penguin', emoji: '🐧'),
+  CampAnimal(id: 'koala', emoji: '🐨'),
+  CampAnimal(id: 'tiger', emoji: '🐯'),
+  CampAnimal(id: 'hedgehog', emoji: '🦔'),
 ];
 
 /// Kimliğe göre hayvanı bulur; bulunamazsa null.
