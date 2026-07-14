@@ -59,15 +59,15 @@
 - **Not:** Server-authoritative başarı sistemi, XP ledger yapısı ve Supabase RPC tasarımları `docs/BASARIM-MIMARISI.md` dosyasına başarıyla işlendi. Başarım eşik değerleri ve gizli sürpriz rozetler kullanıcı onayıyla kodlanmaya hazır hale getirildi.
 
 ### Claude Lane
-- **Durum:** [~] Aktif
+- **Durum:** [~] Aktif — WP-65 karar dokümanı tamamlandı, ürün kabulü bekliyor
 - **Faz/WP:** WP-65 · Aylık Raporlar — E-posta Sağlayıcısı ve Teslim Mimarisi Kararı
-- **Aşama:** Geliştiriliyor
+- **Aşama:** Kod tamamlandı — ürün kabulü bekliyor
 - **SAHİP yollar:** `docs/AYLIK-RAPOR-KARAR.md`, `progress.md` (yalnız bu lane + WP-65 kartı)
 - **Ortak/riskli yüzey:** Yok (yalnız karar dokümanı; kod/migration/secret yok)
 - **Dal:** — (main)
 - **Başlangıç:** 2026-07-14 17:43 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-14 17:43
-- **Not:** Çakışma ön-kontrolü geçti — Codex WP-68 planlama, Grok WP-61 campfire asset; SAHİP kesişimi yok. WP-65 yalnız karar dokümanı üretir, kod/deploy/secret kapsamda değil.
+- **Son güncelleme:** 2026-07-14 17:54
+- **Not:** `docs/AYLIK-RAPOR-KARAR.md` oluşturuldu. 6 sağlayıcı karşılaştırıldı (Resend önerisi), 3 katmanlı mimari (pg_cron→collector→sender), opt-in/out politikası, maliyet analizi, WP-66 retention uyumu, güvenlik değerlendirmesi ve 7 ürün kararı sunuldu. Ürün sahibi yazılı karar verince uygulama WP'si açılır.
 
 ### Codex Lane
 - **Durum:** [~] Aktif
@@ -81,15 +81,15 @@
 - **Not:** WP-68 claim edildi. Aktif Grok WP-61 yalnız kamp ateşi asset/`pubspec.yaml` kulvarında; ortak sahip yok. 1×1 timer + responsive günlük/grup hedefi/sıralaması, olay bazlı snapshot ile uygulanacak. Önceki bakım: `flutter test --concurrency=1` 332 PASS; debug APK derlendi. Push yok.
 
 ### Grok Lane
-- **Durum:** [~] Aktif — ürün karar onayı / demo açık
-- **Faz/WP:** WP-66 · Hesap silme ve veri saklama politikası kararı
-- **Aşama:** Karar taslağı teslim — ürün onayı bekliyor
-- **SAHİP yollar:** `docs/HESAP-SILME-RETENTION-KARARI.md`, `progress.md` (bu lane + WP-66)
-- **Ortak/riskli yüzey:** Yok. Claude WP-65 e-posta kararı; Codex WP-68 widget. Kod/migration yok.
+- **Durum:** [~] Aktif — ürün brief onayı / demo açık
+- **Faz/WP:** WP-67 · İstatistik Görselleştirme R2 brief
+- **Aşama:** Brief teslim — ürün onayı bekliyor
+- **SAHİP yollar:** `docs/ISTATISTIK-R2-BRIEF.md`, `progress.md` (bu lane + WP-67)
+- **Ortak/riskli yüzey:** Yok. Claude WP-65; Codex WP-68. Stats kodu yok.
 - **Dal:** — (ana dal `main`)
-- **Başlangıç:** 2026-07-14 15:10 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-14 15:20
-- **Not:** WP-66 `docs/HESAP-SILME-RETENTION-KARARI.md` (M3 soft+14g+hard önerisi, envanter, WP-65 hizası). WP-62 demo hâlâ açık.
+- **Başlangıç:** 2026-07-14 15:25 (Europe/Istanbul)
+- **Son güncelleme:** 2026-07-14 15:30
+- **Not:** `docs/ISTATISTIK-R2-BRIEF.md` — S1–S3, radar R2-1 hayır, ilk dilim yığılmış ders dengesi. WP-66/62 hâlâ demo onayında.
 
 ---
 
@@ -121,9 +121,9 @@
 | WP-63 | Brief teslim edildi | Android Widget R2 · 1×1 ve responsive ürün sözleşmesi | — |
 | WP-68 | Bekliyor | Android Widget R2 · native responsive sayaç/hedef/sıralama uygulaması | WP-63 briefi |
 | WP-64 | [~] Şablon hazır · cihaz QA operatörde | Çoklu cihaz senkronizasyon QA ve kurtarma provası | WP-53 ürün kabulü |
-| WP-65 | Ürün kararı bekliyor | Aylık rapor/e-posta sağlayıcısı ve teslim mimarisi | Gönderen/izin kararı |
+| WP-65 | [~] Karar dokümanı hazır — ürün onayı bekliyor (Claude) | Aylık rapor/e-posta sağlayıcısı ve teslim mimarisi | Gönderen/izin kararı |
 | WP-66 | [~] Karar taslağı · ürün onayı bekliyor (Grok) | Hesap silme ve veri saklama politikası | Silme/retention kararı |
-| WP-67 | Ürün briefi bekliyor | İstatistik Görselleştirme R2 · grafik kataloğu | Kullanım soruları |
+| WP-67 | [~] Brief hazır · ürün onayı bekliyor (Grok) | İstatistik Görselleştirme R2 · grafik kataloğu | Kullanım soruları |
 | WP-53 | R1 kod · açık | Windows Desktop Design 2.0 · ekran-içi masaüstü IA | WP-27 base |
 | WP-27 | Base QA geçti · ürün kabulü açık | Windows desktop shell + Compact Focus | WP-53 ile birlikte |
 | WP-28 | Bekliyor | Windows MSIX + imza + update + release QA | WP-53 ürün kabulü |
@@ -239,17 +239,19 @@
 - **Değişen dosyalar:** `docs/QA-MULTI-DEVICE-SYNC.md`, `progress.md` (Grok lane + bu kart).
 
 ### WP-65: Aylık Raporlar · E-posta Sağlayıcısı ve Teslim Mimarisi Kararı ✉️
-- **Program/Faz:** Ürün/altyapı keşfi · **Durum:** [ ] Ürün kararı bekliyor · **Bağımlılık:** Gönderen adresi, sağlayıcı ve maliyet onayı
+- **Program/Faz:** Ürün/altyapı keşfi · **Ajan:** Claude · **Durum:** [~] Karar dokümanı hazır — ürün onayı bekliyor · **Bağımlılık:** Gönderen adresi, sağlayıcı ve maliyet onayı
 - **Problem:** Aylık rapor fikrinin e-posta sağlayıcısı, gönderen kimliği, izin/abonelik ve operasyon maliyeti belirlenmeden güvenli bir implementasyon planı yok.
 - **Kapsam:** Sağlayıcı seçenekleri, maliyet/limit, doğrulanmış gönderen, kullanıcı opt-in/opt-out, rapor içeriği, cron/Edge Function sınırı, teslim ve hata/yeniden deneme politikası.
 - **Kapsam dışı:** E-posta gönderimi, Edge Function deploy'u, secret ekleme veya kullanıcıya mail atma.
 - **SAHİP dosyalar (yaz):** `docs/AYLIK-RAPOR-KARAR.md`.
 - **DOKUNMA:** `supabase/functions/**`, `supabase/migrations/**`, `app/**`, CI secrets.
-- **Adımlar:** [ ] Sağlayıcı/sender/izin seçeneklerini karar tablosuna koy; [ ] veri minimizasyonu ve retention etkisini WP-66 ile eşleştir; [ ] maliyet ve başarısız teslim davranışını tanımla; [ ] onaylanan seçeneğe göre ayrı implementasyon WP'sini çıkar.
+- **Adımlar:** [x] Sağlayıcı/sender/izin seçeneklerini karar tablosuna koy; [x] veri minimizasyonu ve retention etkisini WP-66 ile eşleştir; [x] maliyet ve başarısız teslim davranışını tanımla; [ ] onaylanan seçeneğe göre ayrı implementasyon WP'sini çıkar.
 - **Veri/Migration etkisi:** Yok; tasarım aşamasında kişisel veri veya anahtar eklenmez.
 - **RLS/Güvenlik:** E-posta adresi/çalışma özeti hassas veridir; service-role istemciye/repoya girmez, gönderim opt-in olmadan tasarlanmaz.
 - **Kabul (ölçülebilir):** Ürün sahibi sağlayıcı, gönderen, abonelik varsayılanı, rapor alanları, aylık limit/maliyet ve başarısız teslim politikasını yazılı seçer; seçilen yol için sır yönetimi ve rollback notu vardır. `Ürün kararı gerekiyor`.
 - **Tuzaklar:** Sağlayıcı hesabı açmak veya secret eklemek için varsayılan izin kabul etmek; opt-out olmadan mail tasarlamak.
+- **Değişen dosyalar:** `docs/AYLIK-RAPOR-KARAR.md` (yeni, karar dokümanı), `progress.md` (Claude lane + bu kart).
+- **Not (2026-07-14):** 6 sağlayıcı karşılaştırıldı (Resend🥇, Brevo🥈, SES🥉). 3 katmanlı mimari (pg_cron→collect→send), soft opt-in önerisi, 7 ürün kararı (sağlayıcı/gönderen/izin/içerik/zaman/retry/bütçe) sunuldu. WP-66 retention ile çapraz kontrol yapıldı. Kod/deploy yok — yalnız karar dokümanı.
 
 ### WP-66: Hesap Silme ve Veri Saklama Politikası Kararı 🗑️
 - **Program/Faz:** Güvenlik ve hesap yaşam döngüsü · **Ajan:** Grok · **Durum:** [~] Karar taslağı hazır — ürün onayı bekliyor · **Bağımlılık:** Silme modeli ve retention onayı
@@ -266,17 +268,18 @@
 - **Not (2026-07-14):** Auth CASCADE bugün anında wipe yapar; kontrollü UX için soft bayrak + job şart. Claude WP-65 ile e-posta retention çapraz kontrolü belgede.
 
 ### WP-67: İstatistik Görselleştirme R2 · Grafik Kataloğu ve Ürün Briefi 📊
-- **Program/Faz:** İstatistikler keşfi · **Durum:** [ ] Ürün briefi bekliyor · **Bağımlılık:** Hedef kullanıcı soruları
+- **Program/Faz:** İstatistikler keşfi · **Ajan:** Grok · **Durum:** [~] Brief hazır — ürün onayı bekliyor · **Bağımlılık:** Hedef kullanıcı soruları / demo onayı
 - **Problem:** “Yeni grafik türleri / radar grafik” fikri, hangi kararı hızlandıracağı ve hangi verinin anlamlı olduğu belirlenmeden bir görsel türü seçmeye indirgenmiş durumda.
 - **Kapsam:** Kullanıcı soruları, mevcut metrik envanteri, aday grafik karşılaştırması (radar dahil), mobil/Windows yerleşim eskizleri, erişilebilir alternatif metin/tablo ve seçilen ilk dilim için veri sözleşmesi.
 - **Kapsam dışı:** Yeni metrik üretimi, repository/RPC değişikliği, `fl_chart` implementasyonu veya tema refactor'u.
 - **SAHİP dosyalar (yaz):** `docs/ISTATISTIK-R2-BRIEF.md`.
 - **DOKUNMA:** `app/lib/features/stats/**`, `app/lib/core/stats/**`, `supabase/**`, `app/pubspec.yaml`.
-- **Adımlar:** [ ] Kullanıcının cevaplamak istediği en fazla üç istatistik sorusunu topla; [ ] aday grafikleri okunabilirlik ve veri yeterliliğiyle karşılaştır; [ ] mobil/Windows için birincil ve tablo fallback'ini belirle; [ ] seçilen grafiği ayrı uygulama WP'sine böl.
+- **Adımlar:** [x] Önerilen 3 soru S1–S3; [x] aday A–F (radar R2-1 hayır); [x] mobil/Windows + tablo fallback; [x] R2-1 veri sözleşmesi + uygulama WP iskeleti; [ ] ürün onayı.
 - **Veri/Migration etkisi:** Yok; mevcut verinin yeterli olmadığı durumda yeni metrik WP'si ayrıca açılır.
-- **RLS/Güvenlik:** Grup karşılaştırmaları mevcut ortak-grup görünürlüğünü genişletmez; hassas/tekil kullanıcı verisi varsayılan olarak gösterilmez.
-- **Kabul (ölçülebilir):** Ürün sahibi üç kullanıcı sorusunu ve ilk uygulanacak grafik+tablo fallback'ini onaylar; her görsel için kaynak metrik, boş durum ve erişilebilir metin tanımlıdır. `Ürün kararı gerekiyor`.
+- **RLS/Güvenlik:** R2-1 yalnız kendi oturumları; grup ders kırılımı yok.
+- **Kabul (ölçülebilir):** Brief + envanter `Kodda doğrulandı`. Soru/dilim seçimi `Ürün kararı gerekiyor`.
 - **Tuzaklar:** Sadece “güzel” olduğu için grafik eklemek; küçük ekranda radar grafiğini zorlamak; yeni veriyi RLS tasarımı olmadan görünür yapmak.
+- **Not (2026-07-14):** İlk dilim önerisi = haftalık yığılmış ders dengesi; radar sonraya.
 
 ### WP-27: Windows Desktop Shell, Etkileşim ve Compact Focus 🖥️
 - **Program/Faz:** Windows masaüstü (`KALITE-PROGRAMI §8.7`, `docs/WINDOWS-URUN-PLANI.md`) · **Ajan:** Codex · **Durum:** [~] Base gerçek cihaz QA geçti — ürün kabulü WP-52/53 sonrası
