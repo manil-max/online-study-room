@@ -117,8 +117,7 @@
   - Arka plandayken durum çubuğunda minik gösterge
   - Tıklandığında üstten şık kontrol paneli
   - **WP-17 tamamlandı:** Android One UI kilit ekranı progress ve kalıcı durum çubuğu bildirimi eklendi.
-  - [x] **Arka plan güvenilirliği — büyük ölçüde YAPILDI:** native `Chronometer` widget canlı saat (`StudyWidgetProviders.kt`, `odak_timer_widget.xml`), `StudyTimerService.kt` foreground service, `StudyStatsWidgetProvider`/`GroupLeaderboardWidgetProvider` gerçek veri (WP-68). (2026-07-14 teyit.)
-  - [ ] **Kalan dar bug (cihazda tekrar üret → debug WP):** idle bildirim varken uygulamadan kronometre başlatınca bildirim 00:00:00 Başlat'ta kalıyor (senkron). Hafıza: `notif-not-syncing-on-inapp-start`.
+  - [ ] **Dinamik panel cihazda ÇALIŞMIYOR → WP-76 açıldı (tek gerçek kalan kod işi):** native XML/servis iskeleti var ama panel gerçekte görünmüyor/etkileşmiyor; Başlat/Durdur komutları yalnız app resume'da işleniyor, canlı saat güvenilmez, idle→başlat senkron bug. Foreground service tabanlı çalışır panel gerekiyor. Hafıza: `background-timer-actions-unreliable`, `notif-not-syncing-on-inapp-start`.
   - *Kaynak: new_features.md §5 Madde Live Activities*
 
 - [x] **Kilit ekranı widget'ı**

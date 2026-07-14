@@ -20,7 +20,7 @@
 - **Navigasyon hedefi:** Ana Sayfa / Saat / Gruplar / İstatistikler / Profil. Ana Sayfa günlük kullanım alanıdır; diğer alanların verisi kendi sekmelerinde eksiksiz bulunur.
 - **Release:** Stable/Beta kanalı GitHub Releases ile çalışır. **v8 yayımlandı.** WP-48/49/50, ürün sahibinin doğrudan yayın ve soak'ı atlama kararıyla açık iş olmaktan çıkarıldı; sonraki yayın için ayrı WP açılır.
 - **Kalite kapıları:** Her WP DoD'siz kapanmaz; stable release kalite kapısından geçer (AGENTS.md §3). Server-authoritative XP, RLS/sosyal profil, platform sınırları → `docs/KALITE-PROGRAMI.md`.
-- **Son WP numarası:** 71 (72–75 iptal — zaten yapılmıştı)
+- **Son WP numarası:** 76
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
   - Flutter: `C:\src\flutter` · Android SDK: `C:\Android\Sdk`
@@ -104,15 +104,32 @@
 
 > Burada yalnız açık işler kalır. Cihaz QA’sı bekleyen ama kodu bitmiş Android işleri ürün kararıyla **Tamamlanan**’a alındı (2026-07-13); sorun çıkarsa yeni bir debug kartıyla geri açılır.
 
-> **Şu an açık planlı iş yok.** 2026-07-14 proje denetimi: daha önce "planlı" görünen **serbest sürükle-bırak ızgara, canlı grup hedefi, dinamik panel/widget canlı besleme ve saat stilleri** işlerinin **hepsi zaten kodda uygulanmış** (backlog stale idi). Bu yüzden geçici olarak açılan WP-72..75 **iptal** edildi.
+| WP | Durum | Kısa kapsam | Bağımlılık |
+|---|---|---|---|
+| WP-76 | [ ] Bekliyor | Dinamik panel — cihazda çalışan canlı kontrol paneli (Live Activity / durum çubuğu) | — |
+
+> **2026-07-14 proje denetimi:** Serbest sürükle-bırak ızgara, canlı grup hedefi ve saat stilleri **zaten kodda uygulanmış** (backlog stale idi; geçici WP-72/73/75 iptal). **Dinamik panel ise cihazda çalışmıyor** (kullanıcı testi) → **WP-76** açıldı.
 >
 > **Kalan gerçek açık işler:**
+> - **WP-76** — dinamik panel (aşağıda, tek gerçek kod işi).
 > - **Ürün kararı (kod değil, senin kararın):** WP-66 hesap silme retention · WP-67 grafik türleri · WP-69 aylık rapor için DNS + Resend API key.
-> - **Olası debug (cihazda tekrar üretilirse ayrı WP):** idle bildirim varken uygulamadan kronometre başlatınca bildirim 00:00:00'da kalıyor (senkron bug).
->
-> Yeni iş için planner'ı tetikle.
 
-> **Planlama notu:** WP-39 iptal edildi. WP-48/49/50 kullanıcı kararıyla kaldırıldı. WP-72..75 (2026-07-14) proje denetiminde zaten-yapılmış çıktığı için iptal edildi. Sorun çıkarsa ayrı debug/release WP'si açılır.
+> **Planlama notu:** WP-39 iptal; WP-48/49/50 kaldırıldı; geçici WP-72/73/74/75 (2026-07-14) zaten-yapılmış/yanlış açıldığı için iptal edildi. Sorun çıkarsa ayrı debug/release WP'si açılır.
+
+### WP-76: Dinamik Panel — Cihazda Çalışan Canlı Kontrol Paneli 🔔
+- **Program/Faz:** Güvenilirlik / Android canlı yüzey · **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** —
+- **Problem:** Dinamik panel (durum çubuğu canlı baloncuk + genişleyen kontrol paneli / Live Activity) **cihazda çalışmıyor** (kullanıcı 2026-07-14). Native XML/servis iskeleti var ama komutlar (Başlat/Durdur/Mola) uygulama yaşam döngüsüne bağımlı ve **yalnız app resume'da** işleniyor; canlı akan süre güvenilmez; panel gerçekte görünmüyor/etkileşmiyor (hafıza: background-timer-actions-unreliable, notif-not-syncing).
+- **Kapsam dışı:** iOS, yeni istatistik metriği, tema, dashboard UI, backend/RLS/migration.
+- **SAHİP dosyalar (yaz):** `app/lib/core/background/timer_foreground_service.dart`, `app/lib/core/notifications/**`, `app/lib/features/android_widgets/**`, `app/android/app/src/main/kotlin/**/{timer,widgets}/**`, `app/android/app/src/main/{AndroidManifest.xml,res/layout,res/xml}`, ilgili testler.
+- **DOKUNMA:** `features/home/**`, `features/clock/**` UI mantığı, `supabase/**`, `core/theme/**`.
+- **Adımlar:** [ ] Gerçek foreground service (Android 12+ start kısıtları + servis tipi) ile **app-kapalı komut işleme**; [ ] durum çubuğu canlı panel + genişleyen zengin kontrol (Başlat/Durdur/Mola); [ ] native `Chronometer` ile saniyede akan süre; [ ] idle→başlat bildirim senkron bug fix; [ ] Samsung One UI / Android 14+ uyumu + pil kısıt rehberi.
+- **Veri/Migration etkisi:** Yok. Geri alma = paneli kaldırıp mevcut basit bildirime dönmek.
+- **RLS/Güvenlik:** İstemci içi; sunucuya yazım yok; sır yok.
+- **Edge-case'ler:** app tamamen kapalı, OEM arka plan öldürme, düşük pil, boot sonrası, hızlı başlat/durdur, izin reddi, çoklu cihaz.
+- **Kabul (ölçülebilir, CİHAZDA):** App tamamen kapalıyken panelden Başlat/Durdur ≥ %95 çalışır ve ≤ 2 sn yansır; canlı süre saniyede akar ve 8 saatte ≤ ±2 sn sapar; panel genişleyip kontrol sunar; Samsung + Pixel video kanıtı. `Cihazda doğrulanmalı`.
+- **Tuzaklar:** Saniyede Flutter yeniden çizme (native Chronometer kullan); servis başlangıç kısıtları (Android 12+); OEM farkları; foreground bildirimini kaldıramama; komutu yalnız resume'da işlemek.
+- **Dal önerisi:** `wp76-dinamik-panel`
+- **Model önerisi:** 🔴 Opus
 
 ## Test için bekleyenler
 
