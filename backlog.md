@@ -8,10 +8,10 @@
 
 ## 🔴 Yüksek Öncelik
 
-- [~] **Küresel pazara açılış — resmi Flutter l10n (İngilizce varsayılan, Türkçe ikinci dil)** — **WP-82 planlandı**
+- [~] **Küresel pazara açılış — resmi Flutter l10n (İngilizce varsayılan, Türkçe ikinci dil)** — **WP-82–89 planlandı**
   - Sistem dili Türkçeyse `tr`; diğer tüm sistem dillerinde (desteklenmeyenler dahil) `en` açılır.
   - Flutter kullanıcı metinleri `app_en.arb`/`app_tr.arb`a taşınır; uygulama kapalıyken görünen Android metinleri platformun `values`/`values-tr` kaynaklarına taşınır.
-  - Tek seri sıcak-yüzey kartıdır: `pubspec.yaml`, `main.dart`, l10n üretimi, Android kaynakları ve çok sayıda UI dosyası aynı anda başka WP tarafından değiştirilmez.
+  - Paralel plan: WP-82 altyapı + WP-83 ücretsiz çeviri envanteri → WP-84 katalog + WP-88 native → ayrık Flutter göçleri WP-85/86/87 → WP-89 entegrasyon/cihaz QA. Aynı anda en fazla iki hat.
   - *Kaynak: küresel pazar hedefi; KALITE-PROGRAMI §5.1 i18n hedefi.*
 
 - [x] **Kalite Programı — Faz 0 + V8 Güven Sürümü** — **WP-37–47 teslim edildi; v8 yayımlandı**
