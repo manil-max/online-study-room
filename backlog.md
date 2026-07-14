@@ -8,6 +8,12 @@
 
 ## 🔴 Yüksek Öncelik
 
+- [~] **Global açık/özel gruplar — keşfet, katıl, klan mantığı** — **WP-92 → WP-93 planlandı**
+  - Yeni grup varsayılan olarak private kalır ve yalnız davet koduyla katılınır; admin public yaparsa küresel keşif listesinde görünür ve isteyen kullanıcı katılabilir.
+  - Başlangıç kapasitesi 50 üyedir; public listede yalnız güvenli özet gösterilir. Davet kodu, üye listesi, oturumlar ve sosyal profil üyelikten önce asla açılmaz.
+  - Önce `0032` RLS/RPC + çift repository sözleşmesi (WP-92), sonra EN/TR keşif/oluşturma/yönetim arayüzü (WP-93). Canlı migration kullanıcı tarafından uygulanır.
+  - *Kaynak: Play Store öncesi küresel pazar hedefi; kullanıcı isteği 2026-07-15.*
+
 - [~] **Küresel pazara açılış — resmi Flutter l10n (İngilizce varsayılan, Türkçe ikinci dil)** — **WP-82/83 tamamlandı; WP-84/85/86/88 otomatik test geçti; WP-87/89 planlandı**
   - Sistem dili Türkçeyse `tr`; diğer tüm sistem dillerinde (desteklenmeyenler dahil) `en` açılır.
   - Flutter kullanıcı metinleri `app_en.arb`/`app_tr.arb`a taşınır; uygulama kapalıyken görünen Android metinleri platformun `values`/`values-tr` kaynaklarına taşınır.

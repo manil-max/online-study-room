@@ -220,6 +220,7 @@ Yeni devasa Saat/Tema motoru buraya sıkıştırılmaz. Önce mevcut ürün güv
 
 ### Sonraki planlama kuyruğu (2026-07-14)
 
+- **Global açık/özel gruplar** — Play Store öncesi küresel sosyal giriş. WP-92 önce private-varsayılan görünürlük, 50 üyelik atomik limit, güvenli public discovery/join RPC ve RLS sözleşmesini; WP-93 sonra EN/TR keşif, katılım ve yönetim yüzeyini getirir. Public görünürlük, üyelikten önce davet kodu/üye listesi/oturum/presence/sosyal profil erişimi vermez.
 - **Kamp Ateşi R2** — WP-61, önce özgün görsel yön ve lisansı kayıtlı PNG katman setini; WP-62, sonra bu sözleşmeyi kullanan performanslı/reduce-motion uyumlu sahneyi teslim eder. Aynı `pubspec.yaml`/asset yüzeyi nedeniyle seri yürür.
 - **Android Widget R2** — WP-63, 1×1 Başlat/Durdur sayaç + günlük/grup hedef oranı + grup sıralaması için responsive sözleşmeyi teslim etti. WP-68 bu sözleşmeyi native Kotlin/Flutter yüzeylerine uygular; canlı süre native `Chronometer`, istatistikler olay bazlıdır.
 - **Açık ürün/operasyon kararları** — WP-64 çoklu cihaz QA kanıtını; WP-65 aylık rapor e-postasının sağlayıcı/gönderen/izin kararını; WP-66 hesap silme-retention kararını; WP-67 istatistik görselleştirme briefini kapsar. Karar kartları implementasyon veya canlı veri değişikliği yapmaz.
