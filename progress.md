@@ -48,15 +48,15 @@
 **Lane şablonu** (doldurulacak alanlar): Durum · Faz/WP · Aşama (8-merdiven) · SAHİP yollar · Ortak/riskli yüzey · Başlangıç · Son güncelleme · Not. *(Branch yok — herkes `main`'de; AGENTS.md §1.5.)*
 
 ### Gemini Lane
-- **Durum:** [x] Tamamlandı (Boşta)
-- **Faz/WP:** Faz 0 · Geri bildirim gönderme (Debug)
-- **Aşama:** Tamamlandı
-- **SAHİP yollar:** `app/lib/data/repositories/supabase/supabase_admin_repository.dart`
+- **Durum:** [~] Aktif — Planlama (WP-69)
+- **Faz/WP:** WP-69 · Aylık Rapor İmplementasyonu (WP-65 devamı)
+- **Aşama:** Planlandı
+- **SAHİP yollar:** `docs/AYLIK-RAPOR-KARAR.md` (güncelleme), `progress.md` (yalnız bu lane), implementation plan artifact
 - **Ortak/riskli yüzey:** Yok
 - **Dal:** — (main)
 - **Başlangıç:** 2026-07-14 (Europe/Istanbul)
 - **Son güncelleme:** 2026-07-14
-- **Not:** Kullanıcının bildirdiği "Geri bildirim gönderilemiyor" hatası çözüldü. Kodda `?attachmentPath` şeklinde Dart'ta olmayan bir sözdizimi hatası vardı. Bu hata giderildi ve Supabase Row Level Security (RLS) kurallarının zorunlu tuttuğu `status = 'open'` alanının varsayılan olarak gönderilmesi sağlandı.
+- **Not:** Kullanıcının isteği üzerine WP-65 önerilen (varsayılan) seçeneklerle kapatıldı (Resend, soft opt-in, ayın 2'si, $0 limit). Yeni implementasyon WP-69 için plan (artifact) hazırlanıyor.
 
 ### Claude Lane
 - **Durum:** [~] Aktif — WP-65 karar dokümanı tamamlandı, ürün kabulü bekliyor
@@ -81,15 +81,15 @@
 - **Not:** WP-68 kod/doğrulama tamam: 1×1 timer + responsive günlük/grup hedefi/sıralaması olay bazlı snapshot ile uygulandı. `flutter test --concurrency=1` 342 PASS, hedef testler 6 PASS ve debug APK derlendi. Samsung/Pixel fiziksel cihaz QA'sı bekliyor; push yok.
 
 ### Grok Lane
-- **Durum:** [~] Aktif — cihaz QA / ürün kabulü açık
-- **Faz/WP:** WP-53 · Windows Desktop Design 2.0 ekran-içi IA (R2)
-- **Aşama:** Otomatik test geçti — cihaz QA / demo bekliyor
-- **SAHİP yollar:** `app/lib/features/desktop/**`, `features/{home,clock,classroom,stats,profile}/**` (Windows presentation), desktop testleri, `docs/WINDOWS-URUN-PLANI.md`, `progress.md`
-- **Ortak/riskli yüzey:** navigation/widget/android/`study_providers` dokunulmadı.
-- **Dal:** — (ana dal `main`)
-- **Başlangıç:** 2026-07-14 15:40 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-14 15:55
-- **Not:** R2: DesktopDensity/MasterDetail/SectionList/ContextPanel; 5 sekme ≥1008 bağlamsal panel; Profil gömülü Ayarlar/Kayıtlar. Desktop test 7 PASS, analyze 0.
+- **Durum:** [x] Boşta
+- **Faz/WP:** —
+- **Aşama:** —
+- **SAHİP yollar:** —
+- **Ortak/riskli yüzey:** —
+- **Dal:** — (main)
+- **Başlangıç:** —
+- **Son güncelleme:** 2026-07-14 15:36 (Europe/Istanbul)
+- **Not:** WP-53 R2 kod park edildi → **Test için bekleyenler** (aktif çalışma/blokaj değil). Sonraki iş için lane boş.
 
 ---
 
@@ -108,7 +108,7 @@
 | 7 | **Saat programı** | Alarm/timer/StandBy/widget | Tamamlandı (ürün) | WP-58/59/60; sorun→debug |
 | 8 | **Tema Stüdyosu** | Token + atmosfer aileleri | Tamamlandı | WP-54/55 + 15 aile polish |
 | 9 | **Başarım & Sosyal Profil 3.0** | Ledger + taç her yerde | Tamamlandı | 0028 = **stable tag öncesi** |
-| 10 | **Windows masaüstü** | Shell → IA → MSIX | Açık | WP-27/52/53/28 — stable’dan bağımsız |
+| 10 | **Windows masaüstü** | Shell → IA → MSIX | Açık (53 park) | WP-27/52/53(park test)/28 — stable’dan bağımsız |
 
 ## Planlanan İş Paketleri
 
@@ -121,12 +121,11 @@
 | WP-63 | Brief teslim edildi | Android Widget R2 · 1×1 ve responsive ürün sözleşmesi | — |
 | WP-68 | Cihaz QA bekliyor | Android Widget R2 · native responsive sayaç/hedef/sıralama uygulaması | WP-63 briefi |
 | WP-64 | [~] Şablon hazır · cihaz QA operatörde | Çoklu cihaz senkronizasyon QA ve kurtarma provası | WP-53 ürün kabulü |
-| WP-65 | [~] Karar dokümanı hazır — ürün onayı bekliyor (Claude) | Aylık rapor/e-posta sağlayıcısı ve teslim mimarisi | Gönderen/izin kararı |
 | WP-66 | [~] Karar taslağı · ürün onayı bekliyor (Grok) | Hesap silme ve veri saklama politikası | Silme/retention kararı |
 | WP-67 | [~] Brief hazır · ürün onayı bekliyor (Grok) | İstatistik Görselleştirme R2 · grafik kataloğu | Kullanım soruları |
-| WP-53 | [~] R2 otomatik test geçti · cihaz/demo (Grok) | Windows Desktop Design 2.0 · ekran-içi masaüstü IA | WP-27 base |
-| WP-27 | Base QA geçti · ürün kabulü açık | Windows desktop shell + Compact Focus | WP-53 ile birlikte |
-| WP-28 | Bekliyor | Windows MSIX + imza + update + release QA | WP-53 ürün kabulü |
+| WP-69 | [~] Planlanıyor (Gemini) | Aylık Çalışma Raporu Altyapısı (Cron + Edge Function) | WP-65 Kararı |
+| WP-27 | Base QA geçti · ürün kabulü açık | Windows desktop shell + Compact Focus | park: Test için bekleyenler |
+| WP-28 | Bekliyor | Windows MSIX + imza + update + release QA | WP-53 cihaz QA / kabul (park) |
 
 > **Planlama notu:** WP-39 iptal edildi. WP-48/49/50 kullanıcı kararıyla kaldırıldı; yayımlanmış sürümde sorun çıkarsa aynı kartlar diriltilmez, ayrı debug/release WP'si açılır. Kamp Ateşi WP-61 → WP-62 zorunlu seri çalışır; WP-63, kullanıcının widget briefi olmadan kod işine dönüşmez.
 
@@ -135,27 +134,6 @@
 > ✅ Çakışma kontrolü: WP-37 ve WP-38 yalnız kendi yeni doc dosyalarına yazar (`docs/DENETIM-FAZ0A.md` vs `docs/BACKEND-DURUM.md`), `app/**` ve `supabase/**`'a dokunmaz → **paralel güvenli**, aktif lane yok.
 
 
-
-
-### WP-53: Windows Desktop Design 2.0 — Ekran-İçi Ürün IA 🖥️
-- **Program/Faz:** Windows masaüstü kalite programı · **Ajan:** Grok · **Durum:** [~] R2 otomatik test geçti — cihaz QA / ürün kabulü bekliyor · **Bağımlılık:** WP-52 + WP-27 base shell
-- **Problem:** WP-27 gerçek Windows shell, compact focus ve responsive panel temelini kurdu; fakat birçok ekran-içi kart/form bileşeni mobil uygulamayla ortak görsel yoğunluğu ve akışı kullanıyor. Ürün hâlâ “mobil uygulama büyütülmüş” hissini tamamen atmış değil.
-- **Kapsam dışı:** Backend/repository/RLS, yeni özellik veya istatistik metriği, tema motorunu yeniden yazma, MSIX/imza/update (WP-28), Flutter'ı WinUI ile yeniden yazma.
-- **SAHİP dosyalar (yaz):** `app/lib/features/desktop/**`, `features/home/**`, `features/clock/**`, `features/classroom/**`, `features/stats/**`, `features/profile/**` (yalnız Windows presentation/adapters), desktop golden/widget testleri, `docs/WINDOWS-URUN-PLANI.md`.
-- **DOKUNMA:** `data/**`, `supabase/**`, `core/theme/**` (tokenları yalnız tüket), `core/navigation/**` (WP-27 shell sözleşmesi korunur), notification/widget/native Android, `app/windows/**` (WP-28).
-- **Adımlar:**
-  - [x] **R1 Ayarlar IA** (önceki)
-  - [x] **R2 beş ekran:** Ana Sayfa cockpit + bağlam paneli; Saat workspace + kısayol paneli; Gruplar ateş+sağ kolon; İstatistik ≥1008 iki kolon; Profil master-detail (Genel/Kayıtlar/Ayarlar gömülü)
-  - [x] `DesktopDensity` / `DesktopMasterDetail` / `DesktopSectionList` / `DesktopContextPanel`; mobil branch korundu
-  - [x] Hover/focus section list; klavye shell kısayolları (Ctrl+1…5, Compact) mevcut
-  - [ ] 1366×768… golden/resize/Narrator cihaz QA matrisi
-- **Veri/Migration etkisi:** Yok. Geri alma = presentation adaptörlerini kaldır.
-- **RLS/Güvenlik:** Yetki/veri değişmez.
-- **Kabul:** Kod/test `Kodda doğrulandı` (desktop 7 PASS, analyze 0). Tam ürün kabulü + resize matrisi `Cihazda doğrulanmalı`.
-- **Test (2026-07-14):** `desktop_page_scaffold_test` + `desktop_home_shell_test` 7 PASS; analyze SAHİP dosyalar 0 issue.
-- **Tuzaklar:** Yalnız padding/rail; ikinci provider ağacı; Mica title bar.
-
-> ✅ **Çakışma/seri planı:** WP-52, Claude WP-41/42/51 notification-widget-native dosyalarıyla kesişmez ve paralel güvenlidir. WP-53, WP-52'nin `features/home/**` yüzeyini paylaştığı için **WP-52 kabulünden sonra** başlar. WP-28 paketleme/release, gerçek desktop tasarımı ürün kabulü almadan başlamaz: `WP-27 base → WP-52 → WP-53 → WP-28`.
 
 
 ### WP-61: Kamp Ateşi R2 · Görsel Yön, PNG Seti ve Asset Sözleşmesi 🔥
@@ -236,19 +214,8 @@
 - **Değişen dosyalar:** `docs/QA-MULTI-DEVICE-SYNC.md`, `progress.md` (Grok lane + bu kart).
 
 ### WP-65: Aylık Raporlar · E-posta Sağlayıcısı ve Teslim Mimarisi Kararı ✉️
-- **Program/Faz:** Ürün/altyapı keşfi · **Ajan:** Claude · **Durum:** [~] Karar dokümanı hazır — ürün onayı bekliyor · **Bağımlılık:** Gönderen adresi, sağlayıcı ve maliyet onayı
-- **Problem:** Aylık rapor fikrinin e-posta sağlayıcısı, gönderen kimliği, izin/abonelik ve operasyon maliyeti belirlenmeden güvenli bir implementasyon planı yok.
-- **Kapsam:** Sağlayıcı seçenekleri, maliyet/limit, doğrulanmış gönderen, kullanıcı opt-in/opt-out, rapor içeriği, cron/Edge Function sınırı, teslim ve hata/yeniden deneme politikası.
-- **Kapsam dışı:** E-posta gönderimi, Edge Function deploy'u, secret ekleme veya kullanıcıya mail atma.
-- **SAHİP dosyalar (yaz):** `docs/AYLIK-RAPOR-KARAR.md`.
-- **DOKUNMA:** `supabase/functions/**`, `supabase/migrations/**`, `app/**`, CI secrets.
-- **Adımlar:** [x] Sağlayıcı/sender/izin seçeneklerini karar tablosuna koy; [x] veri minimizasyonu ve retention etkisini WP-66 ile eşleştir; [x] maliyet ve başarısız teslim davranışını tanımla; [ ] onaylanan seçeneğe göre ayrı implementasyon WP'sini çıkar.
-- **Veri/Migration etkisi:** Yok; tasarım aşamasında kişisel veri veya anahtar eklenmez.
-- **RLS/Güvenlik:** E-posta adresi/çalışma özeti hassas veridir; service-role istemciye/repoya girmez, gönderim opt-in olmadan tasarlanmaz.
-- **Kabul (ölçülebilir):** Ürün sahibi sağlayıcı, gönderen, abonelik varsayılanı, rapor alanları, aylık limit/maliyet ve başarısız teslim politikasını yazılı seçer; seçilen yol için sır yönetimi ve rollback notu vardır. `Ürün kararı gerekiyor`.
-- **Tuzaklar:** Sağlayıcı hesabı açmak veya secret eklemek için varsayılan izin kabul etmek; opt-out olmadan mail tasarlamak.
-- **Değişen dosyalar:** `docs/AYLIK-RAPOR-KARAR.md` (yeni, karar dokümanı), `progress.md` (Claude lane + bu kart).
-- **Not (2026-07-14):** 6 sağlayıcı karşılaştırıldı (Resend🥇, Brevo🥈, SES🥉). 3 katmanlı mimari (pg_cron→collect→send), soft opt-in önerisi, 7 ürün kararı (sağlayıcı/gönderen/izin/içerik/zaman/retry/bütçe) sunuldu. WP-66 retention ile çapraz kontrol yapıldı. Kod/deploy yok — yalnız karar dokümanı.
+- **Durum:** [x] Tamamlandı (Ürün onayı alındı - varsayılanlar)
+- **Not:** Kullanıcı varsayılan önerileri (Resend, soft opt-in, B seçeneği) kabul etti. İmplementasyon WP-69 olarak planlanıyor. Kart arşive / Tamamlananlara alındı.
 
 ### WP-66: Hesap Silme ve Veri Saklama Politikası Kararı 🗑️
 - **Program/Faz:** Güvenlik ve hesap yaşam döngüsü · **Ajan:** Grok · **Durum:** [~] Karar taslağı hazır — ürün onayı bekliyor · **Bağımlılık:** Silme modeli ve retention onayı
@@ -324,6 +291,29 @@
 - **Kabul (ölçülebilir):** Temiz Windows 11 VM'de standart kullanıcıyla kurulum/ilk açılış/update/uninstall PASS; aynı identity+imzayla veri kayıpsız update; WACK/paket doğrulama PASS; artefakt SHA-256 ve Sentry release eşleşir; P0=0; 24H2+25H2 cihaz/VM videosu; rollback/forward-fix provası PASS. `Cihazda doğrulanmalı`.
 - **Tuzaklar:** Unsigned EXE/ZIP'i stable sayma; Store ve doğrudan MSIX identity'lerini plansız karıştırma; private key'i repoya koyma; Android updater'ı Windows'a kopyalama.
 - **Dal önerisi:** `wp28-windows-msix-release` · **Model önerisi:** 🟣 Pro
+
+---
+
+## Test için bekleyenler
+
+> Kod/otomatik test bitti; **cihaz QA veya ürün demo’su** bekleniyor.  
+> Bu bölüm **aktif çalışma değildir** — ajan claim etmez, diğer WP’leri engellemez.  
+> Kabul gelince kart buradan çıkar → **Tamamlanan**’a gider. Bug çıkarsa ayrı debug WP açılır.
+
+| WP | Durum | Ne bekleniyor | Not |
+|---|---|---|---|
+| **WP-53** | Park · cihaz/demo | Windows’ta 5 sekme + ≥1008 düzen | R2 kod `0bd23f4`; otomatik test geçti. Açılışta beyaz pencere gözlemi (2026-07-14) — sonra debug. **Aktif lane yok.** |
+| WP-62 | Park · demo | Kamp ateşi PNG sahne | Kod+test yeşil; cihaz görsel onayı |
+| WP-68 | Park · cihaz | Android widget R2 | Codex kod/test; Samsung/Pixel smoke |
+
+### WP-53: Windows Desktop Design 2.0 — Ekran-İçi Ürün IA 🖥️ *(park)*
+- **Program/Faz:** Windows masaüstü · **Ajan (son):** Grok · **Durum:** [~] Park — Test için bekleyenler · **aktif çalışma değil**
+- **Bağımlılık (sonraki):** WP-28 MSIX hâlâ cihaz/kabul sonrası; diğer Android/plan işleri **bloklanmaz**
+- **Kod özeti:** R1 Ayarlar + R2 beş ekran desktop IA (`DesktopDensity`, master-detail, context panel); mobil branch korundu. Commit `0bd23f4`.
+- **Otomatik test:** desktop scaffold/shell 7 PASS; analyze 0 (`Kodda doğrulandı`)
+- **Cihaz notu:** `flutter run -d windows` pencere açıldı, içerik beyaz kaldı (kullanıcı 2026-07-14) — demo/debug sonra
+- **Kabul kapısı:** Windows demo + resize/DPI isteğe bağlı; onay → Tamamlanan; fail → debug WP
+- **SAHİP (okuma):** `features/desktop/**`, ilgili presentation; şu an **yazan lane yok**
 
 ---
 
