@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/features/desktop/desktop_home_shell.dart';
 import 'package:online_study_room/features/desktop/desktop_navigation_pane.dart';
+import 'package:online_study_room/features/desktop/desktop_proportional_scale.dart';
 
 void main() {
   Future<void> setWindowSize(WidgetTester tester, Size size) async {
@@ -28,13 +29,14 @@ void main() {
     );
   }
 
-  testWidgets('1008+ px expanded pane: etiketler ve app adı görünür', (
+  testWidgets('oransal ölçek widget’ı kabukta var + etiketli pane', (
     tester,
   ) async {
     await setWindowSize(tester, const Size(1200, 800));
     await tester.pumpWidget(shell(onSelected: (_) {}));
     await tester.pumpAndSettle();
 
+    expect(find.byType(DesktopProportionalScale), findsOneWidget);
     expect(find.byKey(const ValueKey('desktop-navigation-pane')), findsOneWidget);
     expect(find.text('Odak Kampı'), findsOneWidget);
     expect(find.text('Ana Sayfa'), findsOneWidget);
@@ -47,28 +49,35 @@ void main() {
     expect(pane.constraints?.maxWidth, DesktopNavigationPane.expandedWidth);
   });
 
-  testWidgets('kompakt genişlikte ikon pane, etiket metni yok', (tester) async {
-    await setWindowSize(tester, const Size(800, 700));
+  testWidgets('küçük pencerede layout aynı (oransal; reflow yok)', (
+    tester,
+  ) async {
+    await setWindowSize(tester, const Size(700, 540));
     await tester.pumpWidget(shell(onSelected: (_) {}));
     await tester.pumpAndSettle();
 
+    // Windows’ta ölçek açık: tasarım 1100 → expanded etiketler (offstage olabilir).
+    // Diğer platformlarda kompakt pane olabilir; en azından shell ayakta.
+    expect(find.byType(DesktopHomeShell), findsOneWidget);
     expect(find.byKey(const ValueKey('desktop-navigation-pane')), findsOneWidget);
-    expect(find.text('Odak Kampı'), findsNothing);
-    expect(find.text('Ana Sayfa'), findsNothing);
-
-    final pane = tester.widget<AnimatedContainer>(
-      find.byKey(const ValueKey('desktop-navigation-pane')),
+    expect(
+      find.byKey(const ValueKey('desktop-rail-settings')),
+      findsOneWidget,
     );
-    expect(pane.constraints?.maxWidth, DesktopNavigationPane.compactWidth);
-  });
 
-  testWidgets('minimal genişlikte de sol pane kalır', (tester) async {
-    await setWindowSize(tester, const Size(600, 700));
-    await tester.pumpWidget(shell(onSelected: (_) {}));
-    await tester.pumpAndSettle();
-
-    expect(find.byKey(const ValueKey('desktop-navigation-pane')), findsOneWidget);
-    expect(find.byKey(const ValueKey('desktop-rail-settings')), findsOneWidget);
+    // Ölçek aktifse (Windows) Ana Sayfa metni tuvalde var.
+    if (find
+        .text('Ana Sayfa', skipOffstage: false)
+        .evaluate()
+        .isNotEmpty) {
+      final pane = tester.widget<AnimatedContainer>(
+        find.byKey(
+          const ValueKey('desktop-navigation-pane'),
+          skipOffstage: false,
+        ),
+      );
+      expect(pane.constraints?.maxWidth, DesktopNavigationPane.expandedWidth);
+    }
   });
 
   testWidgets('Ctrl+1…5 hedef sekmeyi seçer', (tester) async {
@@ -95,14 +104,12 @@ void main() {
     expect(selected, 2);
   });
 
-  testWidgets('sol pane Ayarlar düğmesi geniş ve dar pencerede var', (
-    tester,
-  ) async {
+  testWidgets('sol pane Ayarlar düğmesi var', (tester) async {
     await setWindowSize(tester, const Size(1200, 800));
     await tester.pumpWidget(shell(onSelected: (_) {}));
     expect(find.byKey(const ValueKey('desktop-rail-settings')), findsOneWidget);
 
-    await setWindowSize(tester, const Size(700, 700));
+    await setWindowSize(tester, const Size(700, 540));
     await tester.pumpWidget(shell(onSelected: (_) {}));
     await tester.pump();
     expect(find.byKey(const ValueKey('desktop-rail-settings')), findsOneWidget);

@@ -5,9 +5,13 @@ import '../../core/desktop/desktop_layout.dart';
 import '../../core/desktop/desktop_window.dart';
 import '../profile/settings_screen.dart';
 import 'desktop_navigation_pane.dart';
+import 'desktop_proportional_scale.dart';
 import 'desktop_surface.dart';
 
 /// Windows ana kabuğu — özel sol NavigationView pane (mobil NavigationBar değil).
+///
+/// Pencere boyutu değişince layout kırılmaz: [DesktopProportionalScale] ile
+/// sabit 1100×720 tasarım tuvali oransal ölçeklenir (kart/grid reflow yok).
 class DesktopHomeShell extends StatelessWidget {
   const DesktopHomeShell({
     required this.selectedIndex,
@@ -98,46 +102,52 @@ class DesktopHomeShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
     return CallbackShortcuts(
       bindings: _shortcuts(context),
       child: Focus(
         autofocus: true,
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final mode = DesktopBreakpoints.navigationMode(
-              constraints.maxWidth,
-            );
-            final expanded = mode == DesktopNavigationMode.expanded;
-            final scheme = Theme.of(context).colorScheme;
-
-            return Scaffold(
-              backgroundColor: scheme.surface,
-              body: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  DesktopNavigationPane(
-                    items: destinations,
-                    selectedIndex: selectedIndex,
-                    onSelected: onDestinationSelected,
-                    footer: _PaneFooter(
-                      expanded: expanded,
-                      onSettings: () => openSettings(context),
-                      onRefresh: onRefresh,
-                    ),
-                  ),
-                  Expanded(
-                    child: ColoredBox(
-                      color: scheme.surface,
-                      child: IndexedStack(
-                        index: selectedIndex,
-                        children: screens,
+        child: Scaffold(
+          backgroundColor: scheme.surfaceContainerLowest,
+          body: DesktopProportionalScale(
+            child: Builder(
+              builder: (context) {
+                // Ölçek içi MediaQuery = tasarım boyutu → pane her zaman expanded.
+                final mode = DesktopBreakpoints.navigationMode(
+                  MediaQuery.sizeOf(context).width,
+                );
+                final expanded = mode == DesktopNavigationMode.expanded;
+                return ColoredBox(
+                  color: scheme.surface,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      DesktopNavigationPane(
+                        items: destinations,
+                        selectedIndex: selectedIndex,
+                        onSelected: onDestinationSelected,
+                        footer: _PaneFooter(
+                          expanded: expanded,
+                          onSettings: () => openSettings(context),
+                          onRefresh: onRefresh,
+                        ),
                       ),
-                    ),
+                      Expanded(
+                        child: ColoredBox(
+                          color: scheme.surface,
+                          child: IndexedStack(
+                            index: selectedIndex,
+                            children: screens,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            );
-          },
+                );
+              },
+            ),
+          ),
         ),
       ),
     );

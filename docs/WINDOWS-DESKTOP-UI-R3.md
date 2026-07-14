@@ -53,6 +53,22 @@ Odak Kampı uyarlaması:
 - Tema Stüdyosu → sol kontroller + sağ sabit önizleme (≥720)
 - Profil / ayar listeleri → `DesktopReadingBody` max ~760–880 (ekranı yırtmaz)
 
+### Oransal ölçek (pencere resize)
+
+**Problem:** Mobil reflow — genişlik değişince grid hücreleri kare olarak yeniden hesaplanıyor, kartlar eziliyor / farklı “düzen” oluşuyor.
+
+**Karar (masaüstü uygulamaları gibi):** Sabit **tasarım tuvali 1100×720** (varsayılan pencere). `DesktopProportionalScale` tüm kabuğu `min(sx,sy)` ile sığdırır.
+
+| Pencere | Davranış |
+|---|---|
+| 1100×720 | ölçek 1.0 |
+| Daralt / alçalt | her şey aynı oranda küçülür; layout aynı |
+| Maximize / 4K | maxScale 1.35 tavanı + letterbox |
+
+- `MediaQuery.size` tuval boyutu → breakpoint/pane/grid **değişmez**
+- Compact Focus (PiP) bu yoldan bağımsız
+- Kod: `desktop_proportional_scale.dart`
+
 ### Pane ölçüleri
 
 | Mod | Genişlik | Etiket |
