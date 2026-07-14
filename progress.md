@@ -60,15 +60,15 @@
 - **Not:** Bu oturum işleri commit'lendi: grid 32-sütun `141ed2a`, core testleri `da7bdd6`, skill docs `1afba2d`. ⚠️ WP-65 karar dokümanı (`docs/AYLIK-RAPOR-KARAR.md`) önceki Claude oturumunda yazıldı ama **COMMIT'LENMEDİ** (untracked); kararı WP-69 zaten uyguladı → ürün API/DNS kararı bekliyor.
 
 ### Codex Lane
-- **Durum:** [~] Aktif
-- **Faz/WP:** WP-81 · Android beta-v20 yayın paketi
-- **Aşama:** Geliştiriliyor
-- **SAHİP yollar:** `app/pubspec.yaml`, `CHANGELOG.md`, `app/assets/release_notes.json`, `docs/VERSIONS.md`, `progress.md`
-- **Ortak/riskli yüzey:** Android release keystore, `beta-v20` git etiketi, GitHub Actions/GitHub Release
+- **Durum:** [x] Boşta
+- **Faz/WP:** —
+- **Aşama:** —
+- **SAHİP yollar:** —
+- **Ortak/riskli yüzey:** —
 - **Dal:** — (ana dal `main`)
-- **Başlangıç:** 2026-07-15 00:42 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-15 00:42 (Europe/Istanbul)
-- **Not:** Kullanıcı onayıyla WP-79/80 düzeltmelerini içeren beta-v20 yayın paketi claim edildi; stable yayın kapsam dışı.
+- **Başlangıç:** —
+- **Son güncelleme:** 2026-07-15 00:55 (Europe/Istanbul)
+- **Not:** beta-v20 GitHub prerelease başarıyla yayımlandı; cihaz QA bekliyor.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
@@ -111,7 +111,7 @@
 | WP-78 | [~] Test için bekliyor | Android beta-v19 — imzalı APK ve GitHub prerelease | WP-76/77 kod commitleri |
 | WP-79 | [~] Test için bekliyor | Bildirim açılışta toplu teslim hata düzeltmesi | beta-v19 cihaz bulgusu |
 | WP-80 | [~] Test için bekliyor | Dinamik panel uygunluk hata düzeltmesi | beta-v19 cihaz bulgusu |
-| WP-81 | [~] Geliştiriliyor | Android beta-v20 — bildirim teslimi + dinamik panel düzeltmeleri | WP-79/80 kod commitleri |
+| WP-81 | [~] Test için bekliyor | Android beta-v20 — bildirim teslimi + dinamik panel düzeltmeleri | WP-79/80 kod commitleri |
 
 > **2026-07-14 proje denetimi:** Serbest sürükle-bırak ızgara, canlı grup hedefi ve saat stilleri **zaten kodda uygulanmış** (backlog stale idi; geçici WP-72/73/75 iptal). Dinamik paneldeki cihaz/eylem sorunu için açılan **WP-76** kod+otomatik test aşamasını geçti; Samsung/Pixel cihaz QA’sı bekliyor.
 >
@@ -120,11 +120,6 @@
 > - **Ürün kararı (kod değil, senin kararın):** WP-66 hesap silme retention · WP-67 grafik türleri · WP-69 aylık rapor için DNS + Resend API key.
 
 > **Planlama notu:** WP-39 iptal; WP-48/49/50 kaldırıldı; geçici WP-72/73/74/75 (2026-07-14) zaten-yapılmış/yanlış açıldığı için iptal edildi. Sorun çıkarsa ayrı debug/release WP'si açılır.
-
-### WP-81: Android beta-v20 Yayın Paketi
-- **Program/Faz:** Android dağıtım · **Ajan:** Codex · **Durum:** [~] Geliştiriliyor · **Bağımlılık:** WP-79/80 kod commitleri
-- **Kapsam:** `1.0.20-beta+20` sürüm notları, imzalı beta APK, `beta-v20` etiketi ve GitHub prerelease. Stable tag/release yok.
-- **Kabul:** Yerel imzalı beta release APK derlemesi; etiketin `beta-v20` olması; GitHub Actions APK + SHA-256 prerelease başarısı; telefonda WP-79/80 cihaz QA için hazır olması.
 
 ## Test için bekleyenler
 
@@ -162,6 +157,11 @@
 - **Kök neden ve düzeltme:** Çalışan sayaç her zaman özel `RemoteViews` bildirimini kullanıyordu. Bu yol OEM'in canlı/dinamik panel uygunluğunu engellediği için kaldırıldı; bildirim artık standart ongoing `CATEGORY_STOPWATCH` + native `Chronometer` + `Mola`/`Durdur` eylemleriyle oluşturuluyor. Uygulama kapalıyken eylemler doğrudan native foreground service'e gitmeye devam eder.
 - **Otomatik kanıt:** `timer_background_reconcile_test.dart` 4/4 PASS; imzalı `beta` release APK derlemesi PASS. Tam analiz, WP-80 dışındaki 4 mevcut uyarıyla başarısız.
 - **Bekleyen cihaz QA:** Yeni beta ile sayacı başlat; uygulamayı görev listesinden kapat; bildirimde akan süre ve Mola/Durdur'u doğrula. Telefonun desteklediği OEM canlı panel/Now Bar/HyperOS yüzeyinde terfi görünürse ekran kaydı al. Terfi, Android sürümü ve OEM politikası nedeniyle garanti edilemez; standart canlı bildirim ve kontroller ise görünmelidir.
+
+### WP-81: Android beta-v20 Yayın Paketi
+- **Program/Faz:** Android dağıtım · **Aşama:** Yayınlandı · **Kanıt:** `Kodda doğrulandı` / `Cihazda doğrulanmalı`
+- **Yayın:** `beta-v20` GitHub prerelease oluşturuldu; `app-beta-release.apk` (73,017,829 bayt) ve SHA-256 varlığı doğrulandı. Stable tag/release yok.
+- **Bekleyen cihaz QA:** beta-v20 ile WP-79 bildirim teslimi ve WP-80 standart canlı sayaç/dinamik panel uygunluğunu telefonda doğrula.
  
 ---
 
