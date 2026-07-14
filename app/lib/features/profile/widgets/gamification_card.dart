@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/stats/gamification.dart';
+import '../../../core/stats/progression_visuals.dart';
 import '../../../core/utils/duration_format.dart';
 import '../../../data/providers/auth_providers.dart';
 import '../../../data/providers/gamification_providers.dart';
 import '../social_profile_screen.dart';
-import 'achievement_showcase.dart';
 
+/// Profil özeti: XP, taç, seri. Klasik başarımlar burada listelenmez —
+/// dokununca [SocialProfileScreen] vitrin/katalog.
 class GamificationCard extends ConsumerWidget {
   const GamificationCard({super.key});
 
@@ -60,8 +61,6 @@ class _SummaryContent extends StatelessWidget {
     final rank = summary.profile.crownRank;
     final rankColor = crownColorFor(rank, theme.colorScheme);
     final bar = xpBarMetrics(summary.profile.xp);
-    final unlocked = summary.achievements.where((a) => a.unlocked).toList();
-    final locked = summary.achievements.where((a) => !a.unlocked).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -130,21 +129,12 @@ class _SummaryContent extends StatelessWidget {
             ),
           ),
         ],
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
         Text(
-          '${summary.unlockedAchievementCount}/${summary.achievements.length} klasik başarım · dokunarak 3.0 vitrin',
-          style: theme.textTheme.labelLarge,
-        ),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (final achievement in unlocked)
-              _AchievementChip(achievement: achievement),
-            for (final achievement in locked.take(2))
-              _AchievementChip(achievement: achievement),
-          ],
+          'Rozetler ve katalog için dokun',
+          style: theme.textTheme.labelMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
         ),
       ],
     );
@@ -163,38 +153,6 @@ class _MetricChip extends StatelessWidget {
       visualDensity: VisualDensity.compact,
       avatar: Icon(icon, size: 18),
       label: Text(label),
-    );
-  }
-}
-
-class _AchievementChip extends StatelessWidget {
-  const _AchievementChip({required this.achievement});
-
-  final AchievementStatus achievement;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final color = achievement.unlocked
-        ? theme.colorScheme.primaryContainer
-        : theme.colorScheme.surfaceContainerHighest;
-    final textColor = achievement.unlocked
-        ? theme.colorScheme.onPrimaryContainer
-        : theme.colorScheme.onSurfaceVariant;
-
-    return Tooltip(
-      message: achievement.description,
-      child: Chip(
-        backgroundColor: color,
-        avatar: Icon(
-          achievement.unlocked
-              ? Icons.check_circle_outline
-              : Icons.radio_button_unchecked,
-          size: 18,
-          color: textColor,
-        ),
-        label: Text(achievement.title, style: TextStyle(color: textColor)),
-      ),
     );
   }
 }
