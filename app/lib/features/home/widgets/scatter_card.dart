@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -26,12 +27,16 @@ class ScatterCard extends ConsumerWidget {
         final header = Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Oturum dağılımı', style: theme.textTheme.titleMedium),
+            Text(
+              AppLocalizations.of(context).homeOturumDagilimi,
+              style: theme.textTheme.titleMedium,
+            ),
             const SizedBox(height: 4),
             Text(
-              'Her nokta bir çalışma oturumu (süre/gün)',
-              style: theme.textTheme.bodySmall
-                  ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              AppLocalizations.of(context).homeOturumDagilimi,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
           ],
         );

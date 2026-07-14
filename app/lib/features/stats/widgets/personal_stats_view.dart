@@ -1,5 +1,7 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../../../core/stats/session_window.dart';
 import '../../../core/stats/stats_period.dart';
@@ -20,15 +22,12 @@ import 'study_heatmap.dart';
 import 'study_records.dart';
 import 'subject_donut.dart';
 import 'week_hour_heatmap.dart';
+import '../stats_l10n.dart';
 
 /// Kişisel istatistik: [sessions] sıcak pencere; [summary] yıl/ömür.
 /// Üst [statsPeriodProvider] alt grafik/donut aralığını senkronlar.
 class PersonalStatsView extends ConsumerWidget {
-  const PersonalStatsView({
-    super.key,
-    required this.sessions,
-    this.summary,
-  });
+  const PersonalStatsView({super.key, required this.sessions, this.summary});
 
   final List<StudySession> sessions;
   final UserStudySummary? summary;
@@ -61,17 +60,19 @@ class PersonalStatsView extends ConsumerWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.timelapse,
-                  size: 56, color: theme.colorScheme.primary),
+              Icon(Icons.timelapse, size: 56, color: theme.colorScheme.primary),
               const SizedBox(height: 12),
-              Text('Henüz çalışma kaydın yok',
-                  style: theme.textTheme.titleMedium),
+              Text(
+                AppLocalizations.of(context).statsHenuzCalismaKaydinYok,
+                style: theme.textTheme.titleMedium,
+              ),
               const SizedBox(height: 4),
               Text(
-                'Ana Sayfa’daki sayaçtan çalışmaya başlayınca istatistiklerin burada görünecek.',
+                AppLocalizations.of(context).statsBuDonemdeCalismaKaydin,
                 textAlign: TextAlign.center,
-                style: theme.textTheme.bodySmall
-                    ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               ),
             ],
           ),
@@ -88,7 +89,7 @@ class PersonalStatsView extends ConsumerWidget {
       children: [
         // Üst dönem + seçili dönem özeti
         Text(
-          'Seçili dönem: ${period.labelTr}',
+          statsPeriodLabel(AppLocalizations.of(context), period),
           style: theme.textTheme.labelMedium?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),
@@ -98,7 +99,7 @@ class PersonalStatsView extends ConsumerWidget {
           children: [
             Expanded(
               child: _StatCard(
-                label: 'Dönem toplamı',
+                label: AppLocalizations.of(context).statsToplam,
                 seconds: period == StatsPeriod.all && lifetime != null
                     ? lifetime
                     : periodTotalSec,
@@ -108,7 +109,7 @@ class PersonalStatsView extends ConsumerWidget {
             const SizedBox(width: 8),
             Expanded(
               child: _StatCard(
-                label: 'Günlük ortalama',
+                label: AppLocalizations.of(context).statsGunlukOrtalama,
                 seconds: avgPeriod.round(),
                 icon: Icons.trending_up,
               ),
@@ -120,7 +121,7 @@ class PersonalStatsView extends ConsumerWidget {
           children: [
             Expanded(
               child: _StatCard(
-                label: 'Hafta içi',
+                label: AppLocalizations.of(context).statsHaftaIci,
                 seconds: split.weekday,
                 icon: Icons.work_outline,
               ),
@@ -128,7 +129,7 @@ class PersonalStatsView extends ConsumerWidget {
             const SizedBox(width: 8),
             Expanded(
               child: _StatCard(
-                label: 'Hafta sonu',
+                label: AppLocalizations.of(context).statsHaftaSonu,
                 seconds: split.weekend,
                 icon: Icons.weekend_outlined,
               ),
@@ -136,38 +137,65 @@ class PersonalStatsView extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: 16),
-        Text('Hızlı toplamlar', style: theme.textTheme.titleMedium),
+        Text(
+          AppLocalizations.of(context).statsDonemToplamlari,
+          style: theme.textTheme.titleMedium,
+        ),
         const SizedBox(height: 8),
         Row(
           children: [
-            Expanded(child: _StatCard(label: 'Bugün', seconds: today)),
+            Expanded(
+              child: _StatCard(
+                label: AppLocalizations.of(context).statsBugun,
+                seconds: today,
+              ),
+            ),
             const SizedBox(width: 8),
-            Expanded(child: _StatCard(label: 'Bu hafta', seconds: thisWeek)),
+            Expanded(
+              child: _StatCard(
+                label: AppLocalizations.of(context).statsBuHafta,
+                seconds: thisWeek,
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 8),
         Row(
           children: [
-            Expanded(child: _StatCard(label: 'Bu ay', seconds: thisMonth)),
+            Expanded(
+              child: _StatCard(
+                label: AppLocalizations.of(context).statsBuAy,
+                seconds: thisMonth,
+              ),
+            ),
             const SizedBox(width: 8),
-            Expanded(child: _StatCard(label: 'Bu yıl', seconds: thisYear)),
+            Expanded(
+              child: _StatCard(
+                label: AppLocalizations.of(context).statsBuYil,
+                seconds: thisYear,
+              ),
+            ),
           ],
         ),
         if (lifetime != null) ...[
           const SizedBox(height: 8),
-          _StatCard(label: 'Tüm zamanlar', seconds: lifetime),
+          _StatCard(
+            label: AppLocalizations.of(context).statsTumZamanlar,
+            seconds: lifetime,
+          ),
         ],
         const SizedBox(height: 8),
         Text(
-          'Üst dönem seçimi, uyumlu grafikleri ve ders dağılımını günceller. '
-          'Alt seçiciler (7/14/30 vb.) yerinde kalır; üstten seçince otomatik '
-          'eşlenir. Detay son $kUserSessionsHotWindowDays gün; yıl/ömür özet.',
+          AppLocalizations.of(context).statsDonemToplamlari,
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
         const SizedBox(height: 16),
-        Text('Rekorlar', style: theme.textTheme.titleMedium),
+        Text(
+          AppLocalizations.of(context).statsRekorlar,
+          style: theme.textTheme.titleMedium,
+        ),
         const SizedBox(height: 8),
         Card(
           child: Padding(
@@ -176,7 +204,10 @@ class PersonalStatsView extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 16),
-        Text('Günlük dağılım', style: theme.textTheme.titleMedium),
+        Text(
+          AppLocalizations.of(context).statsGunlukDagilim,
+          style: theme.textTheme.titleMedium,
+        ),
         const SizedBox(height: 8),
         // Yerel 7/14/30 kalır; master period değişince otomatik senkron.
         _TrendCard(sessions: sessions, totals: dailyTotalsMap),
@@ -184,7 +215,8 @@ class PersonalStatsView extends ConsumerWidget {
         _WeekComparisonCard(sessions: sessions, now: now),
         const SizedBox(height: 16),
         Text(
-          'Çalışma takvimi (son $kUserSessionsHotWindowDays gün)',
+          '${AppLocalizations.of(context).homeCalismaTakvimi} · '
+          '${AppLocalizations.of(context).statsStreakGun(kUserSessionsHotWindowDays.toString())}',
           style: theme.textTheme.titleMedium,
         ),
         const SizedBox(height: 8),
@@ -200,7 +232,8 @@ class PersonalStatsView extends ConsumerWidget {
         ),
         const SizedBox(height: 16),
         Text(
-          'Çalışma saatleri (${period.labelTr})',
+          '${AppLocalizations.of(context).statsCalismaSaatleri} · '
+          '${statsPeriodLabel(AppLocalizations.of(context), period)}',
           style: theme.textTheme.titleMedium,
         ),
         const SizedBox(height: 8),
@@ -212,7 +245,8 @@ class PersonalStatsView extends ConsumerWidget {
         ),
         const SizedBox(height: 16),
         Text(
-          'Oturum dağılımı (${period.labelTr})',
+          '${AppLocalizations.of(context).statsOturumDagilimi} · '
+          '${statsPeriodLabel(AppLocalizations.of(context), period)}',
           style: theme.textTheme.titleMedium,
         ),
         const SizedBox(height: 8),
@@ -224,7 +258,8 @@ class PersonalStatsView extends ConsumerWidget {
         ),
         const SizedBox(height: 16),
         Text(
-          'Haftalık ritim (${period.labelTr})',
+          '${AppLocalizations.of(context).statsHaftalikRitim} · '
+          '${statsPeriodLabel(AppLocalizations.of(context), period)}',
           style: theme.textTheme.titleMedium,
         ),
         const SizedBox(height: 8),
@@ -236,14 +271,18 @@ class PersonalStatsView extends ConsumerWidget {
         ),
         const SizedBox(height: 16),
         Text(
-          'Ders bazında dağılım (${period.labelTr})',
+          '${AppLocalizations.of(context).statsDersBazindaDagilimSon} · '
+          '${statsPeriodLabel(AppLocalizations.of(context), period)}',
           style: theme.textTheme.titleMedium,
         ),
         const SizedBox(height: 8),
         _SubjectBreakdownCard(sessions: periodSessions),
         const SizedBox(height: 16),
         // Serbest tarih aralığı — master dönemden bağımsız (özel aralık).
-        Text('Seçili tarih aralığı', style: theme.textTheme.titleMedium),
+        Text(
+          AppLocalizations.of(context).statsSeciliTarihAraligi,
+          style: theme.textTheme.titleMedium,
+        ),
         const SizedBox(height: 8),
         _RangeCard(sessions: sessions, totals: dailyTotalsMap),
       ],
@@ -293,10 +332,19 @@ class _TrendCardState extends ConsumerState<_TrendCard> {
         child: Column(
           children: [
             SegmentedButton<int>(
-              segments: const [
-                ButtonSegment(value: 7, label: Text('7 gün')),
-                ButtonSegment(value: 14, label: Text('14 gün')),
-                ButtonSegment(value: 30, label: Text('30 gün')),
+              segments: [
+                ButtonSegment(
+                  value: 7,
+                  label: Text(AppLocalizations.of(context).statsValue7Gun),
+                ),
+                ButtonSegment(
+                  value: 14,
+                  label: Text(AppLocalizations.of(context).statsValue14Gun),
+                ),
+                ButtonSegment(
+                  value: 30,
+                  label: Text(AppLocalizations.of(context).statsValue30Gun),
+                ),
               ],
               selected: {_days},
               onSelectionChanged: (s) => setState(() => _days = s.first),
@@ -304,8 +352,9 @@ class _TrendCardState extends ConsumerState<_TrendCard> {
             ),
             const SizedBox(height: 16),
             SizedBox(
-                height: 180,
-                child: DailyBarChart(days: series, goalSeconds: goalSeconds)),
+              height: 180,
+              child: DailyBarChart(days: series, goalSeconds: goalSeconds),
+            ),
           ],
         ),
       ),
@@ -347,10 +396,12 @@ class _RangeCardState extends State<_RangeCard> {
       initialDateRange: _range,
     );
     if (picked != null) {
-      setState(() => _range = DateTimeRange(
-            start: dayOf(picked.start),
-            end: dayOf(picked.end),
-          ));
+      setState(
+        () => _range = DateTimeRange(
+          start: dayOf(picked.start),
+          end: dayOf(picked.end),
+        ),
+      );
     }
   }
 
@@ -364,7 +415,8 @@ class _RangeCardState extends State<_RangeCard> {
     final dayCount = to.difference(from).inDays + 1;
     final series = dailyRange(widget.sessions, from, to, totals: widget.totals);
 
-    String d(DateTime x) => '${x.day}.${x.month}.${x.year}';
+    String d(DateTime x) =>
+        DateFormat.yMd(AppLocalizations.of(context).localeName).format(x);
 
     return Card(
       child: Padding(
@@ -376,24 +428,30 @@ class _RangeCardState extends State<_RangeCard> {
               children: [
                 Expanded(
                   child: Text(
-                    '${d(from)} – ${d(to)}  ($dayCount gün)',
+                    '${d(from)} – ${d(to)} · '
+                    '${AppLocalizations.of(context).statsStreakGun(dayCount.toString())}',
                     style: theme.textTheme.titleSmall,
                   ),
                 ),
                 TextButton.icon(
                   onPressed: _pickRange,
                   icon: const Icon(Icons.date_range, size: 18),
-                  label: const Text('Seç'),
+                  label: Text(AppLocalizations.of(context).statsSec),
                 ),
               ],
             ),
             const SizedBox(height: 8),
             Row(
               children: [
-                Expanded(child: _MiniMetric(label: 'Toplam', value: formatHuman(total))),
                 Expanded(
                   child: _MiniMetric(
-                    label: 'Günlük ort.',
+                    label: AppLocalizations.of(context).statsToplam,
+                    value: formatHuman(total),
+                  ),
+                ),
+                Expanded(
+                  child: _MiniMetric(
+                    label: AppLocalizations.of(context).statsGunlukOrt,
                     value: formatHuman(avg.round()),
                   ),
                 ),
@@ -405,9 +463,10 @@ class _RangeCardState extends State<_RangeCard> {
             ] else ...[
               const SizedBox(height: 12),
               Text(
-                'Grafik için 45 günden kısa bir aralık seçin.',
-                style: theme.textTheme.bodySmall
-                    ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                AppLocalizations.of(context).statsGrafikIcin45Gunden,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               ),
             ],
           ],
@@ -432,7 +491,9 @@ class _WeekComparisonCard extends StatelessWidget {
     final lastWeekEnd = thisWeekStart.subtract(const Duration(days: 1));
 
     final thisWeek = totalSeconds(inRange(sessions, thisWeekStart, now));
-    final lastWeek = totalSeconds(inRange(sessions, lastWeekStart, lastWeekEnd));
+    final lastWeek = totalSeconds(
+      inRange(sessions, lastWeekStart, lastWeekEnd),
+    );
     final diff = thisWeek - lastWeek;
     final improved = diff >= 0;
 
@@ -442,20 +503,22 @@ class _WeekComparisonCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Bu hafta vs geçen hafta',
-                style: theme.textTheme.titleMedium),
+            Text(
+              AppLocalizations.of(context).statsBuHaftaVsGecen,
+              style: theme.textTheme.titleMedium,
+            ),
             const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
                   child: _MiniMetric(
-                    label: 'Bu hafta',
+                    label: AppLocalizations.of(context).statsBuHafta,
                     value: formatHuman(thisWeek),
                   ),
                 ),
                 Expanded(
                   child: _MiniMetric(
-                    label: 'Geçen hafta',
+                    label: AppLocalizations.of(context).statsGecenHafta,
                     value: formatHuman(lastWeek),
                   ),
                 ),
@@ -467,22 +530,25 @@ class _WeekComparisonCard extends StatelessWidget {
                 Icon(
                   improved ? Icons.arrow_upward : Icons.arrow_downward,
                   size: 18,
-                  color:
-                      improved ? subjectColor('chart-2') : theme.colorScheme.error,
+                  color: improved
+                      ? subjectColor('chart-2')
+                      : theme.colorScheme.error,
                 ),
                 const SizedBox(width: 4),
                 Text(
                   '${improved ? '+' : '-'}${formatHuman(diff.abs())}',
                   style: theme.textTheme.titleSmall?.copyWith(
-                    color:
-                      improved ? subjectColor('chart-2') : theme.colorScheme.error,
+                    color: improved
+                        ? subjectColor('chart-2')
+                        : theme.colorScheme.error,
                   ),
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  improved ? 'geçen haftaya göre artış' : 'geçen haftaya göre azalış',
-                  style: theme.textTheme.bodySmall
-                      ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                  AppLocalizations.of(context).statsBuHaftaVsGecen,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ],
             ),
@@ -506,9 +572,12 @@ class _MiniMetric extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: theme.textTheme.labelMedium
-                ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+        Text(
+          label,
+          style: theme.textTheme.labelMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
         const SizedBox(height: 2),
         Text(value, style: theme.textTheme.titleMedium),
       ],
@@ -518,11 +587,7 @@ class _MiniMetric extends StatelessWidget {
 
 /// Tek bir istatistik kartı (etiket + süre).
 class _StatCard extends StatelessWidget {
-  const _StatCard({
-    required this.label,
-    required this.seconds,
-    this.icon,
-  });
+  const _StatCard({required this.label, required this.seconds, this.icon});
 
   final String label;
   final int seconds;
@@ -540,13 +605,18 @@ class _StatCard extends StatelessWidget {
             Row(
               children: [
                 if (icon != null) ...[
-                  Icon(icon, size: 16, color: theme.colorScheme.onSurfaceVariant),
+                  Icon(
+                    icon,
+                    size: 16,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                   const SizedBox(width: 4),
                 ],
                 Text(
                   label,
-                  style: theme.textTheme.labelMedium
-                      ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ],
             ),
@@ -586,9 +656,10 @@ class _SubjectBreakdownCardState extends ConsumerState<_SubjectBreakdownCard> {
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Text(
-            'Bu dönemde çalışma kaydın yok.',
-            style: theme.textTheme.bodyMedium
-                ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+            AppLocalizations.of(context).statsBuDonemdeCalismaKaydin,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
           ),
         ),
       );
@@ -604,7 +675,7 @@ class _SubjectBreakdownCardState extends ConsumerState<_SubjectBreakdownCard> {
         () {
           final subject = subjectFor(entry.key);
           return SubjectDonutSlice(
-            label: subject?.name ?? 'Genel',
+            label: subject?.name ?? AppLocalizations.of(context).statsGenel,
             color: subject != null
                 ? subjectColor(subject.color)
                 : theme.colorScheme.onSurfaceVariant,
@@ -627,9 +698,12 @@ class _SubjectBreakdownCardState extends ConsumerState<_SubjectBreakdownCard> {
             Align(
               alignment: Alignment.centerRight,
               child: SegmentedButton<bool>(
-                segments: const [
+                segments: [
                   ButtonSegment(value: true, label: Text('%')),
-                  ButtonSegment(value: false, label: Text('Süre')),
+                  ButtonSegment(
+                    value: false,
+                    label: Text(AppLocalizations.of(context).statsSure),
+                  ),
                 ],
                 selected: {_showPercent},
                 onSelectionChanged: (s) =>
@@ -659,14 +733,17 @@ class _SubjectBreakdownCardState extends ConsumerState<_SubjectBreakdownCard> {
                               CircleAvatar(radius: 5, backgroundColor: s.color),
                               const SizedBox(width: 8),
                               Expanded(
-                                child: Text(s.label,
-                                    style: theme.textTheme.bodyMedium,
-                                    overflow: TextOverflow.ellipsis),
+                                child: Text(
+                                  s.label,
+                                  style: theme.textTheme.bodyMedium,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
                               Text(
                                 valueFor(s.seconds),
                                 style: theme.textTheme.bodySmall?.copyWith(
-                                    color: theme.colorScheme.onSurfaceVariant),
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
                               ),
                             ],
                           ),

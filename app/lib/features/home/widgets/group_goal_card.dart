@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -45,8 +46,9 @@ class _GroupGoalCardState extends ConsumerState<GroupGoalCard> {
   void _tick(Timer timer) {
     if (!mounted) return;
     final presence = ref.read(groupPresenceProvider).value ?? const [];
-    final activeCount =
-        presence.where((p) => p.status == PresenceStatus.studying).length;
+    final activeCount = presence
+        .where((p) => p.status == PresenceStatus.studying)
+        .length;
     if (activeCount > 0) {
       setState(() {
         _virtualOffset += activeCount;
@@ -60,7 +62,7 @@ class _GroupGoalCardState extends ConsumerState<GroupGoalCard> {
     final group = ref.watch(userGroupProvider).value;
     if (group == null) {
       return GroupCardShell(
-        title: 'Grup hedefi',
+        title: AppLocalizations.of(context).homeGrupHedefi,
         onCreateGroup: () => createGroupFlow(context, ref),
         onJoinGroup: () => joinGroupFlow(context, ref),
       );
@@ -69,13 +71,13 @@ class _GroupGoalCardState extends ConsumerState<GroupGoalCard> {
     final stats = ref.watch(groupDailyStatsProvider).value ?? const [];
     final dayTotals = groupDayTotals(stats);
     final goalSeconds = group.dailyGoalMinutes * 60;
-    
+
     final dbTodayTotal = dayTotals[dayOf(DateTime.now())] ?? 0;
     if (dbTodayTotal != _lastDbTotal) {
       _lastDbTotal = dbTodayTotal;
       _virtualOffset = 0;
     }
-    
+
     final todayTotal = dbTodayTotal + _virtualOffset;
     final pct = goalSeconds <= 0
         ? 0.0
@@ -109,7 +111,8 @@ class _GroupGoalCardState extends ConsumerState<GroupGoalCard> {
                       return CircularProgressIndicator(
                         value: value,
                         strokeWidth: isCompact ? 6 : (isLarge ? 11 : 8),
-                        backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                        backgroundColor:
+                            theme.colorScheme.surfaceContainerHighest,
                         valueColor: AlwaysStoppedAnimation<Color>(ringColor),
                       );
                     },
@@ -138,7 +141,7 @@ class _GroupGoalCardState extends ConsumerState<GroupGoalCard> {
                       children: [
                         Flexible(
                           child: Text(
-                            'Grup hedefi',
+                            AppLocalizations.of(context).homeGrupHedefi,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: theme.textTheme.labelMedium,
@@ -208,7 +211,7 @@ class _GroupGoalCardState extends ConsumerState<GroupGoalCard> {
                     children: [
                       Flexible(
                         child: Text(
-                          'Grup hedefi',
+                          AppLocalizations.of(context).homeGrupHedefi,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.titleMedium,
@@ -242,7 +245,7 @@ class _GroupGoalCardState extends ConsumerState<GroupGoalCard> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'grup toplamı (bugün)',
+                              AppLocalizations.of(context).homeGrupHedefi,
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: theme.colorScheme.onSurfaceVariant,
                               ),

@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 
 import '../classroom/widgets/study_timer_card.dart';
@@ -39,66 +40,97 @@ enum DashboardCardType {
 }
 
 extension DashboardCardInfo on DashboardCardType {
-  String get title => switch (this) {
-    DashboardCardType.timer => 'Sayaç',
-    DashboardCardType.goal => 'Günlük hedef',
-    DashboardCardType.today => 'Bugün özeti',
-    DashboardCardType.weekly => 'Haftalık grafik',
-    DashboardCardType.line => 'Eğilim grafiği',
-    DashboardCardType.monthly => 'Dönem özeti',
-    DashboardCardType.weekdayWeekend => 'Hafta içi / sonu',
-    DashboardCardType.hours => 'Çalışma saatleri',
-    DashboardCardType.rhythm => 'Haftalık ritim',
-    DashboardCardType.scatter => 'Oturum dağılımı',
-    DashboardCardType.records => 'Rekorlar',
-    DashboardCardType.heatmap => 'Çalışma takvimi',
-    DashboardCardType.leaderboard => 'Grup sıralaması',
-    DashboardCardType.groupGoal => 'Grup hedefi',
-    DashboardCardType.groupTrend => 'Grup günlük trendi',
-    DashboardCardType.activeMembers => 'Şu an çalışanlar',
+  String title(BuildContext context) => switch (this) {
+    DashboardCardType.timer => AppLocalizations.of(context).homeSayac,
+    DashboardCardType.goal => AppLocalizations.of(context).homeGunlukHedef,
+    DashboardCardType.today => AppLocalizations.of(context).homeBugunOzeti,
+    DashboardCardType.weekly => AppLocalizations.of(context).homeHaftalikGrafik,
+    DashboardCardType.line => AppLocalizations.of(context).homeEgilimGrafigi,
+    DashboardCardType.monthly => AppLocalizations.of(context).homeDonemOzeti,
+    DashboardCardType.weekdayWeekend => AppLocalizations.of(
+      context,
+    ).homeHaftaIciHaftaSonu,
+    DashboardCardType.hours => AppLocalizations.of(context).homeCalismaSaatleri,
+    DashboardCardType.rhythm => AppLocalizations.of(context).homeHaftalikRitim,
+    DashboardCardType.scatter => AppLocalizations.of(
+      context,
+    ).homeOturumDagilimi,
+    DashboardCardType.records => AppLocalizations.of(context).homeRekorlar,
+    DashboardCardType.heatmap => AppLocalizations.of(
+      context,
+    ).homeCalismaTakvimi,
+    DashboardCardType.leaderboard => AppLocalizations.of(
+      context,
+    ).homeGrupSiralamasi,
+    DashboardCardType.groupGoal => AppLocalizations.of(context).homeGrupHedefi,
+    DashboardCardType.groupTrend => AppLocalizations.of(
+      context,
+    ).homeGrupGunlukTrendi,
+    DashboardCardType.activeMembers => AppLocalizations.of(
+      context,
+    ).homeSuAnCalisanlar,
   };
 
-  String get description => switch (this) {
-    DashboardCardType.timer => 'Kronometre, günlük hedef ve seri',
-    DashboardCardType.goal => 'Hedef ilerlemesi ve büyük seri göstergesi',
-    DashboardCardType.today => 'Bugünkü toplam ve ders dağılımı',
-    DashboardCardType.weekly => 'Günlük çubuk grafiği (7/14/30 gün filtreli)',
-    DashboardCardType.line => 'Çalışma eğilimi çizgi grafiği (14/30/90 gün)',
-    DashboardCardType.monthly => 'Bugün / hafta / ay / yıl toplam ve ortalama',
-    DashboardCardType.weekdayWeekend => 'Hafta içi ile hafta sonu kıyası',
-    DashboardCardType.hours => 'Günün hangi saatlerinde çalıştığın',
-    DashboardCardType.rhythm => 'Haftanın gün × saat çalışma ısı haritası',
-    DashboardCardType.scatter =>
-      'Her oturum bir nokta (süre × gün, derse göre renkli)',
-    DashboardCardType.records =>
-      'Toplam, rekor seri, en verimli gün, en çok ders',
-    DashboardCardType.heatmap => 'GitHub tarzı çalışma yoğunluğu ısı haritası',
-    DashboardCardType.leaderboard => 'Aktif grubun bugünkü sıralaması',
-    DashboardCardType.groupGoal =>
-      'Grubun günlük hedef ilerlemesi + grup serisi',
-    DashboardCardType.groupTrend =>
-      'Grubun son günlerdeki toplam çalışma grafiği',
-    DashboardCardType.activeMembers =>
-      'Grupta o an çalışan üyeler (canlı süreyle)',
+  String description(BuildContext context) => switch (this) {
+    DashboardCardType.timer => AppLocalizations.of(
+      context,
+    ).homeKronometreGunlukHedefVe,
+    DashboardCardType.goal => AppLocalizations.of(
+      context,
+    ).homeHedefIlerlemesiVeBuyuk,
+    DashboardCardType.today => AppLocalizations.of(
+      context,
+    ).homeBugunkuToplamVeDers,
+    DashboardCardType.weekly => AppLocalizations.of(context).homeCalismaGrafigi,
+    DashboardCardType.line => AppLocalizations.of(context).homeEgilimGrafigi,
+    DashboardCardType.monthly => AppLocalizations.of(context).homeDonemOzeti,
+    DashboardCardType.weekdayWeekend => AppLocalizations.of(
+      context,
+    ).homeHaftaIciIleHafta,
+    DashboardCardType.hours => AppLocalizations.of(
+      context,
+    ).homeGununHangiSaatlerindeCalistigin,
+    DashboardCardType.rhythm => AppLocalizations.of(context).homeHaftalikRitim,
+    DashboardCardType.scatter => AppLocalizations.of(
+      context,
+    ).homeOturumDagilimi,
+    DashboardCardType.records => AppLocalizations.of(
+      context,
+    ).homeToplamRekorSeriEn,
+    DashboardCardType.heatmap => AppLocalizations.of(
+      context,
+    ).homeGithubTarziCalismaYogunlugu,
+    DashboardCardType.leaderboard => AppLocalizations.of(
+      context,
+    ).homeAktifGrubunBugunkuSiralamasi,
+    DashboardCardType.groupGoal => AppLocalizations.of(context).homeGrupHedefi,
+    DashboardCardType.groupTrend => AppLocalizations.of(
+      context,
+    ).homeGrubunSonGunlerdekiToplam,
+    DashboardCardType.activeMembers => AppLocalizations.of(
+      context,
+    ).homeSuAnCalisanlar,
   };
 
   /// Ekleme menüsünde gruplama başlığı.
-  String get category => switch (this) {
-    DashboardCardType.timer || DashboardCardType.goal => 'Sayaç & Hedef',
+  String category(BuildContext context) => switch (this) {
+    DashboardCardType.timer || DashboardCardType.goal =>
+      '${AppLocalizations.of(context).homeSayac} & '
+          '${AppLocalizations.of(context).homeGunlukHedef}',
     DashboardCardType.today ||
     DashboardCardType.monthly ||
     DashboardCardType.weekdayWeekend ||
-    DashboardCardType.records => 'Özetler',
+    DashboardCardType.records => AppLocalizations.of(context).homeOzetler,
     DashboardCardType.weekly ||
     DashboardCardType.line ||
-    DashboardCardType.scatter => 'Grafikler',
+    DashboardCardType.scatter => AppLocalizations.of(context).homeGrafikler,
     DashboardCardType.hours ||
     DashboardCardType.rhythm ||
-    DashboardCardType.heatmap => 'Isı haritaları',
+    DashboardCardType.heatmap => AppLocalizations.of(context).homeIsiHaritalari,
     DashboardCardType.leaderboard ||
     DashboardCardType.groupGoal ||
     DashboardCardType.groupTrend ||
-    DashboardCardType.activeMembers => 'Grup',
+    DashboardCardType.activeMembers => AppLocalizations.of(context).homeGrup,
   };
 
   IconData get icon => switch (this) {
@@ -126,10 +158,10 @@ extension DashboardCardInfo on DashboardCardType {
 enum DashboardCardSize { small, medium, large }
 
 extension DashboardCardSizeInfo on DashboardCardSize {
-  String get label => switch (this) {
-    DashboardCardSize.small => 'Küçük',
-    DashboardCardSize.medium => 'Orta',
-    DashboardCardSize.large => 'Büyük',
+  String label(BuildContext context) => switch (this) {
+    DashboardCardSize.small => AppLocalizations.of(context).homeKucuk,
+    DashboardCardSize.medium => AppLocalizations.of(context).homeOrta,
+    DashboardCardSize.large => AppLocalizations.of(context).homeBuyuk,
   };
 
   IconData get icon => switch (this) {

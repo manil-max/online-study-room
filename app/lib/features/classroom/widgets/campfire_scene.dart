@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -35,14 +36,16 @@ class CampfireScene extends ConsumerWidget {
     final todayByUser = ref.watch(groupTodaySecondsProvider);
 
     return membersAsync.when(
-      loading: () => const _SceneFrame(
-        child: Center(child: CircularProgressIndicator()),
-      ),
-      error: (e, _) => _SceneFrame(
+      loading: () =>
+          const _SceneFrame(child: Center(child: CircularProgressIndicator())),
+      error: (_, _) => _SceneFrame(
         child: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
-            child: Text('Üyeler yüklenemedi: $e', textAlign: TextAlign.center),
+            child: Text(
+              AppLocalizations.of(context).authBeklenmeyenBirHataOlustu,
+              textAlign: TextAlign.center,
+            ),
           ),
         ),
       ),
@@ -58,9 +61,11 @@ class CampfireScene extends ConsumerWidget {
               animal: campAnimalFor(userId: m.id, animalId: m.animal),
             ),
         ];
-        campers.sort((a, b) => a.member.displayName
-            .toLowerCase()
-            .compareTo(b.member.displayName.toLowerCase()));
+        campers.sort(
+          (a, b) => a.member.displayName.toLowerCase().compareTo(
+            b.member.displayName.toLowerCase(),
+          ),
+        );
 
         final studyingCount = campers.where((c) => c.studying).length;
 
@@ -88,8 +93,7 @@ class _Camper {
 
   PresenceStatus get status => presence?.status ?? PresenceStatus.offline;
   bool get studying => status == PresenceStatus.studying;
-  DateTime? get startedAt =>
-      studying ? presence?.startedAt : null;
+  DateTime? get startedAt => studying ? presence?.startedAt : null;
 
   int liveExtra(DateTime now) {
     final s = startedAt;
@@ -150,8 +154,9 @@ class _SceneFrame extends StatelessWidget {
             end: Alignment.bottomCenter,
             colors: [top, bottom],
           ),
-          border:
-              Border.all(color: scheme.outlineVariant.withValues(alpha: 0.4)),
+          border: Border.all(
+            color: scheme.outlineVariant.withValues(alpha: 0.4),
+          ),
           borderRadius: BorderRadius.circular(16),
         ),
         child: child,
@@ -205,7 +210,8 @@ class _SceneLayoutState extends State<_SceneLayout>
     // ve nefes döngüsünü durdur (batarya) ve sabit sıcak bir karede dondur; aksi
     // halde döngüyü sürdür. Yerleşim (AnimatedPositioned) süresi build'de ayrıca
     // 0'a çekilir, böylece sahne beklemeden yerleşir.
-    final reduceMotion = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final reduceMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
     if (reduceMotion) {
       if (_controller.isAnimating) _controller.stop();
       _controller.value = 0.55;
@@ -227,9 +233,11 @@ class _SceneLayoutState extends State<_SceneLayout>
 
     // Yerleşim süresi: normalde kısa ve snappy (≤ 700 ms tam yerleşim hedefi),
     // reduce-motion'da anında.
-    final reduceMotion = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
-    final settle =
-        reduceMotion ? Duration.zero : const Duration(milliseconds: 420);
+    final reduceMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final settle = reduceMotion
+        ? Duration.zero
+        : const Duration(milliseconds: 420);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -250,15 +258,17 @@ class _SceneLayoutState extends State<_SceneLayout>
           final mx = cx + rx * math.cos(angle);
           final my = ringCy + ry * sin;
           final depth = (sin + 1) / 2; // 0 arka, 1 ön
-          placements.add(_Placement(
-            camper: widget.campers[i],
-            x: mx,
-            y: my,
-            depth: depth,
-            scale: _lerp(0.6, 1.16, depth),
-            back: sin < -0.2, // üst yay → ateşin arkasında
-            phase: i / (n == 0 ? 1 : n),
-          ));
+          placements.add(
+            _Placement(
+              camper: widget.campers[i],
+              x: mx,
+              y: my,
+              depth: depth,
+              scale: _lerp(0.6, 1.16, depth),
+              back: sin < -0.2, // üst yay → ateşin arkasında
+              phase: i / (n == 0 ? 1 : n),
+            ),
+          );
         }
 
         List<_Placement> layer(bool back) =>
@@ -266,23 +276,23 @@ class _SceneLayoutState extends State<_SceneLayout>
               ..sort((a, b) => a.y.compareTo(b.y));
 
         Widget body(_Placement p) => AnimatedPositioned(
-              key: ValueKey('b-${p.camper.member.id}'),
-              duration: settle,
-              curve: Curves.easeOutCubic,
-              left: p.x - _CritterBody.boxFor(p.scale) / 2,
-              top: p.y - _CritterBody.boxFor(p.scale) * _CritterBody.anchor,
-              child: GestureDetector(
-                onTap: () => SocialProfileDialog.show(context, p.camper.member),
-                child: _CritterBody(
-                  camper: p.camper,
-                  depth: p.depth,
-                  scale: p.scale,
-                  back: p.back,
-                  phase: p.phase,
-                  controller: _controller,
-                ),
-              ),
-            );
+          key: ValueKey('b-${p.camper.member.id}'),
+          duration: settle,
+          curve: Curves.easeOutCubic,
+          left: p.x - _CritterBody.boxFor(p.scale) / 2,
+          top: p.y - _CritterBody.boxFor(p.scale) * _CritterBody.anchor,
+          child: GestureDetector(
+            onTap: () => SocialProfileDialog.show(context, p.camper.member),
+            child: _CritterBody(
+              camper: p.camper,
+              depth: p.depth,
+              scale: p.scale,
+              back: p.back,
+              phase: p.phase,
+              controller: _controller,
+            ),
+          ),
+        );
 
         return ClipRRect(
           borderRadius: BorderRadius.circular(16),
@@ -304,7 +314,11 @@ class _SceneLayoutState extends State<_SceneLayout>
                   child: RepaintBoundary(
                     child: CustomPaint(
                       painter: ClearingPainter(
-                          cx: cx, cy: ringCy + ry * 0.35, rx: rx, ry: ry),
+                        cx: cx,
+                        cy: ringCy + ry * 0.35,
+                        rx: rx,
+                        ry: ry,
+                      ),
                     ),
                   ),
                 ),
@@ -348,8 +362,7 @@ class _SceneLayoutState extends State<_SceneLayout>
                               if (p.camper.roastingAt(DateTime.now()))
                                 MarshStick(
                                   x: p.x,
-                                  y: p.y -
-                                      _CritterBody.boxFor(p.scale) * 0.42,
+                                  y: p.y - _CritterBody.boxFor(p.scale) * 0.42,
                                   phase: p.phase,
                                   startedAt: p.camper.startedAt,
                                 ),
@@ -371,7 +384,8 @@ class _SceneLayoutState extends State<_SceneLayout>
                   duration: settle,
                   curve: Curves.easeOutCubic,
                   left: p.x - 55,
-                  top: p.y -
+                  top:
+                      p.y -
                       _CritterBody.boxFor(p.scale) * _CritterBody.anchor -
                       (p.camper.studying ? 34 : 18),
                   width: 110,
@@ -392,13 +406,15 @@ class _SceneLayoutState extends State<_SceneLayout>
                   child: Center(
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6),
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.black.withValues(alpha: 0.32),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        'Ateş sönük — çalışmaya başla, herkes ısınsın',
+                        AppLocalizations.of(context).classroomCalismayaBasla,
                         style: TextStyle(
                           color: scheme.onSurfaceVariant.withValues(alpha: 0.9),
                           fontSize: 12.5,
@@ -457,7 +473,9 @@ class _StudyingBadge extends StatelessWidget {
           Text('🔥', style: TextStyle(fontSize: 13, color: amber)),
           const SizedBox(width: 6),
           Text(
-            count > 0 ? '$count çalışıyor' : 'kimse yok',
+            count > 0
+                ? '$count · ${AppLocalizations.of(context).classroomCalisiyor}'
+                : AppLocalizations.of(context).classroomHenuzGrupYok,
             style: const TextStyle(
               color: Colors.white,
               fontSize: 12.5,
@@ -523,8 +541,9 @@ class _CritterBody extends StatelessWidget {
             // Duruş zamana göre hesaplanır (laptop ↔ marşmelov dönüşümü);
             // painter yalnız duruş değişince yeniden çizer.
             final pose = camper.poseAt(DateTime.now());
-            final breath =
-                math.sin((t * (studying ? 1.6 : 1.0) + phase) * 2 * math.pi);
+            final breath = math.sin(
+              (t * (studying ? 1.6 : 1.0) + phase) * 2 * math.pi,
+            );
             final sy = 1 + breath * (studying ? 0.035 : 0.02);
             final dy = -breath.abs() * (studying ? 2.0 : 0.8);
             return Transform.translate(
@@ -561,7 +580,7 @@ class _MemberLabel extends StatelessWidget {
     final studying = camper.studying;
     final green = subjectColor('chart-2');
     final name = camper.member.displayName.isEmpty
-        ? 'İsimsiz'
+        ? AppLocalizations.of(context).classroomIsimsiz
         : camper.member.displayName;
 
     return IgnorePointer(
@@ -600,70 +619,84 @@ class _MemberLabel extends StatelessWidget {
 }
 
 void _showCamperDetails(BuildContext context, _Camper camper) {
-    final status = camper.status;
-    final (Color dot, String label) = switch (status) {
-      PresenceStatus.studying => (subjectColor('chart-2'), 'Çalışıyor'),
-      PresenceStatus.onBreak => (subjectColor('chart-3'), 'Molada'),
-      PresenceStatus.offline => (
-          Theme.of(context).colorScheme.outline,
-          'Çevrimdışı'
-        ),
-    };
-    final live = camper.liveExtra(DateTime.now());
-    final name = camper.member.displayName.isEmpty
-        ? 'İsimsiz'
-        : camper.member.displayName;
+  final status = camper.status;
+  final (Color dot, String label) = switch (status) {
+    PresenceStatus.studying => (
+      subjectColor('chart-2'),
+      AppLocalizations.of(context).classroomCalisiyor,
+    ),
+    PresenceStatus.onBreak => (
+      subjectColor('chart-3'),
+      AppLocalizations.of(context).classroomMolada,
+    ),
+    PresenceStatus.offline => (
+      Theme.of(context).colorScheme.outline,
+      AppLocalizations.of(context).classroomCevrimdisi,
+    ),
+  };
+  final live = camper.liveExtra(DateTime.now());
+  final name = camper.member.displayName.isEmpty
+      ? AppLocalizations.of(context).classroomIsimsiz
+      : camper.member.displayName;
 
-    showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      builder: (ctx) {
-        final theme = Theme.of(ctx);
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 4, 24, 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                CustomPaint(
-                  size: const Size(72, 72),
-                  painter: CritterPainter(
-                    species: speciesFor(camper.animal.id),
-                    pose: CritterPose.idle,
-                  ),
+  showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    builder: (ctx) {
+      final theme = Theme.of(ctx);
+      return SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 4, 24, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CustomPaint(
+                size: const Size(72, 72),
+                painter: CritterPainter(
+                  species: speciesFor(camper.animal.id),
+                  pose: CritterPose.idle,
                 ),
-                const SizedBox(height: 8),
-                Text(name, style: theme.textTheme.titleLarge),
-                Text('${camper.animal.label} 🏕️',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant)),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 10,
-                      height: 10,
-                      decoration:
-                          BoxDecoration(color: dot, shape: BoxShape.circle),
+              ),
+              const SizedBox(height: 8),
+              Text(name, style: theme.textTheme.titleLarge),
+              Text(
+                '${camper.animal.label} 🏕️',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 10,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      color: dot,
+                      shape: BoxShape.circle,
                     ),
-                    const SizedBox(width: 6),
-                    Text(label, style: theme.textTheme.bodyMedium),
-                  ],
-                ),
-                const SizedBox(height: 16),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(label, style: theme.textTheme.bodyMedium),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _StatRow(
+                label: AppLocalizations.of(context).classroomBugunkuToplam,
+                value: formatHumanSeconds(camper.recordedToday + live),
+              ),
+              if (status == PresenceStatus.studying)
                 _StatRow(
-                  label: 'Bugünkü toplam',
-                  value: formatHumanSeconds(camper.recordedToday + live),
+                  label: AppLocalizations.of(context).classroomSuAnkiOturum,
+                  value: formatHms(live),
                 ),
-                if (status == PresenceStatus.studying)
-                  _StatRow(label: 'Şu anki oturum', value: formatHms(live)),
-              ],
-            ),
+            ],
           ),
-        );
-      },
-    );
+        ),
+      );
+    },
+  );
 }
 
 class _StatRow extends StatelessWidget {
@@ -680,12 +713,18 @@ class _StatRow extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label,
-              style: theme.textTheme.bodyMedium
-                  ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-          Text(value,
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w600)),
+          Text(
+            label,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          Text(
+            value,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ],
       ),
     );

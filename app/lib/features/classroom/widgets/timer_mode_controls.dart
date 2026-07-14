@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -27,20 +28,26 @@ class TimerModeControls extends ConsumerWidget {
                 ButtonSegment(
                   value: TimerMode.stopwatch,
                   icon: const Icon(Icons.timer_outlined),
-                  label: compact ? null : const Text('Kronometre'),
-                  tooltip: 'Kronometre',
+                  label: compact
+                      ? null
+                      : Text(AppLocalizations.of(context).classroomKronometre),
+                  tooltip: AppLocalizations.of(context).classroomKronometre,
                 ),
                 ButtonSegment(
                   value: TimerMode.countdown,
                   icon: const Icon(Icons.hourglass_empty),
-                  label: compact ? null : const Text('Geri sayım'),
-                  tooltip: 'Geri sayım',
+                  label: compact
+                      ? null
+                      : Text(AppLocalizations.of(context).classroomGeriSayim),
+                  tooltip: AppLocalizations.of(context).classroomGeriSayim,
                 ),
                 ButtonSegment(
                   value: TimerMode.pomodoro,
                   icon: const Icon(Icons.av_timer),
-                  label: compact ? null : const Text('Pomodoro'),
-                  tooltip: 'Pomodoro',
+                  label: compact
+                      ? null
+                      : Text(AppLocalizations.of(context).classroomPomodoro),
+                  tooltip: AppLocalizations.of(context).classroomPomodoro,
                 ),
               ],
               selected: {timer.mode},
@@ -72,7 +79,7 @@ class _ConfigForMode extends StatelessWidget {
         return SizedBox(
           width: 160,
           child: NumberStepper(
-            label: 'Süre (dakika)',
+            label: AppLocalizations.of(context).classroomSureDakika,
             value: timer.countdownMinutes,
             min: kMinTimerMinutes,
             max: kMaxTimerMinutes,
@@ -88,7 +95,7 @@ class _ConfigForMode extends StatelessWidget {
             SizedBox(
               width: 144,
               child: NumberStepper(
-                label: 'Çalışma dk',
+                label: AppLocalizations.of(context).classroomCalismaDk,
                 value: timer.workMinutes,
                 min: kMinTimerMinutes,
                 max: kMaxTimerMinutes,
@@ -98,7 +105,7 @@ class _ConfigForMode extends StatelessWidget {
             SizedBox(
               width: 144,
               child: NumberStepper(
-                label: 'Mola dk',
+                label: AppLocalizations.of(context).classroomMolaDk,
                 value: timer.breakMinutes,
                 min: kMinTimerMinutes,
                 max: kMaxTimerMinutes,
@@ -108,7 +115,7 @@ class _ConfigForMode extends StatelessWidget {
             SizedBox(
               width: 144,
               child: NumberStepper(
-                label: 'Döngü',
+                label: AppLocalizations.of(context).classroomDongu,
                 value: timer.cycles,
                 min: kMinPomodoroCycles,
                 max: kMaxPomodoroCycles,
@@ -122,7 +129,7 @@ class _ConfigForMode extends StatelessWidget {
 }
 
 /// Sayaç çalışırken mevcut faz + ilerlemeyi gösteren küçük gösterge (§2H).
-/// Kronometrede gizli; geri sayımda "Geri sayım"; pomodoro'da "Çalışma n/N" veya
+/// Kronometrede gizli; geri sayımda "Geri Sayım"; pomodoro'da "Çalışma n/N" veya
 /// "Mola". Kamp ateşi (2G) ile tutarlı: mola vurgusu amber.
 class TimerPhaseIndicator extends StatelessWidget {
   const TimerPhaseIndicator({super.key, required this.timer});
@@ -138,22 +145,28 @@ class TimerPhaseIndicator extends StatelessWidget {
 
     final (IconData icon, String label, Color color) = switch (timer.mode) {
       TimerMode.countdown => (
-          Icons.hourglass_bottom,
-          'Geri sayım',
-          theme.colorScheme.primary,
-        ),
-      TimerMode.pomodoro => timer.phase == TimerPhase.work
-          ? (
-              Icons.menu_book_outlined,
-              'Çalışma ${timer.cycle}/${timer.cycles}',
-              theme.colorScheme.primary,
-            )
-          : (
-              Icons.free_breakfast_outlined,
-              'Mola',
-              const Color(0xFFE69825), // amber (chart-3) — mola vurgusu
-            ),
-      TimerMode.stopwatch => (Icons.timer_outlined, '', theme.colorScheme.primary),
+        Icons.hourglass_bottom,
+        AppLocalizations.of(context).classroomGeriSayim,
+        theme.colorScheme.primary,
+      ),
+      TimerMode.pomodoro =>
+        timer.phase == TimerPhase.work
+            ? (
+                Icons.menu_book_outlined,
+                '${AppLocalizations.of(context).classroomCalisiyor} '
+                    '${timer.cycle}/${timer.cycles}',
+                theme.colorScheme.primary,
+              )
+            : (
+                Icons.free_breakfast_outlined,
+                AppLocalizations.of(context).classroomMola,
+                const Color(0xFFE69825), // amber (chart-3) — mola vurgusu
+              ),
+      TimerMode.stopwatch => (
+        Icons.timer_outlined,
+        '',
+        theme.colorScheme.primary,
+      ),
     };
 
     return Container(
@@ -169,8 +182,10 @@ class TimerPhaseIndicator extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             label,
-            style: theme.textTheme.labelLarge
-                ?.copyWith(color: color, fontWeight: FontWeight.w600),
+            style: theme.textTheme.labelLarge?.copyWith(
+              color: color,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),

@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -31,18 +32,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Ana Sayfa’yı sıfırla'),
-        content: const Text(
-          'Kart düzeni varsayılana döner (eklediğin kartlar ve boyutlar sıfırlanır). Devam?',
-        ),
+        title: Text(AppLocalizations.of(context).homeAnaSayfayiSifirla),
+        content: Text(AppLocalizations.of(context).homeAnaSayfayiSifirla),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Vazgeç'),
+            child: Text(AppLocalizations.of(context).homeVazgec),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Sıfırla'),
+            child: Text(AppLocalizations.of(context).homeSifirla),
           ),
         ],
       ),
@@ -50,9 +49,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     if (ok != true || !mounted) return;
 
     ref.read(dashboardLayoutProvider.notifier).reset();
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Ana Sayfa sıfırlandı')));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(AppLocalizations.of(context).homeAnaSayfaSifirlandi),
+      ),
+    );
   }
 
   @override
@@ -100,9 +101,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   children: [
                     if (_editing) ...[
                       Text(
-                        'Kartı tutup sürükle; hedef hücreye bırakınca komşular yer açar. '
-                        'Boyut için karta dokun, aşağıdaki −/+ ile genişlik ve '
-                        'yüksekliği ayarla (ya da köşelerden çek).',
+                        AppLocalizations.of(context).homeKartiTutupSurukleHedef,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
@@ -138,10 +137,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       const Divider(height: 24),
                       SwitchListTile(
                         contentPadding: EdgeInsets.zero,
-                        title: const Text('Gruplar ekranında da sayaç göster'),
-                        subtitle: const Text(
-                          'Sayaç varsayılan Ana Sayfa’dadır.',
+                        title: Text(
+                          AppLocalizations.of(
+                            context,
+                          ).homeGruplarEkranindaDaSayac,
                         ),
+                        subtitle: Text(AppLocalizations.of(context).homeSayac),
                         value: ref.watch(classroomShowTimerProvider),
                         onChanged: ref
                             .read(classroomShowTimerProvider.notifier)
@@ -170,28 +171,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     if (_editing) ...[
                       TextButton(
                         onPressed: () => _setEditing(false),
-                        child: const Text('Bitti'),
+                        child: Text(AppLocalizations.of(context).homeBitti),
                       ),
                       IconButton(
-                        tooltip: 'Yukarı topla',
+                        tooltip: AppLocalizations.of(context).homeYukariTopla,
                         onPressed: ref
                             .read(dashboardLayoutProvider.notifier)
                             .compactUp,
                         icon: const Icon(Icons.vertical_align_top),
                       ),
                       IconButton(
-                        tooltip: 'Sıfırla',
+                        tooltip: AppLocalizations.of(context).homeSifirla,
                         onPressed: _confirmResetDashboard,
                         icon: const Icon(Icons.restart_alt),
                       ),
                       IconButton(
-                        tooltip: 'Kart ekle',
+                        tooltip: AppLocalizations.of(context).homeKartEkle,
                         onPressed: () => showCardPicker(context),
                         icon: const Icon(Icons.add),
                       ),
                     ] else
                       IconButton(
-                        tooltip: 'Panoyu düzenle',
+                        tooltip: AppLocalizations.of(context).homePanoyuDuzenle,
                         onPressed: () => _setEditing(true),
                         icon: const Icon(Icons.dashboard_customize_outlined),
                       ),
@@ -208,10 +209,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_editing ? 'Kartları düzenle' : 'Ana Sayfa'),
+        title: Text(
+          _editing
+              ? AppLocalizations.of(context).homeKartlariDuzenle
+              : AppLocalizations.of(context).homeAnaSayfa,
+        ),
         leading: _editing
             ? IconButton(
-                tooltip: 'Bitti',
+                tooltip: AppLocalizations.of(context).homeBitti,
                 icon: const Icon(Icons.check),
                 onPressed: () => _setEditing(false),
               )
@@ -219,23 +224,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         actions: [
           if (_editing) ...[
             IconButton(
-              tooltip: 'Boşlukları yukarı topla',
+              tooltip: AppLocalizations.of(context).homeBosluklariYukariTopla,
               icon: const Icon(Icons.vertical_align_top),
               onPressed: ref.read(dashboardLayoutProvider.notifier).compactUp,
             ),
             IconButton(
-              tooltip: 'Ana Sayfa’yı sıfırla',
+              tooltip: AppLocalizations.of(context).homeAnaSayfayiSifirla,
               icon: const Icon(Icons.restart_alt),
               onPressed: _confirmResetDashboard,
             ),
             IconButton(
-              tooltip: 'Kart ekle',
+              tooltip: AppLocalizations.of(context).homeKartEkle,
               icon: const Icon(Icons.add),
               onPressed: () => showCardPicker(context),
             ),
           ] else
             IconButton(
-              tooltip: 'Kartları düzenle',
+              tooltip: AppLocalizations.of(context).homeKartlariDuzenle,
               icon: const Icon(Icons.dashboard_customize_outlined),
               onPressed: () => _setEditing(true),
             ),
@@ -392,10 +397,9 @@ class _MatrixGridState extends State<_MatrixGrid> {
                           gap: _kGap,
                           rows: totalRows,
                           columns: widget.columns,
-                          lineColor: Theme.of(context)
-                              .colorScheme
-                              .outlineVariant
-                              .withValues(alpha: 0.45),
+                          lineColor: Theme.of(
+                            context,
+                          ).colorScheme.outlineVariant.withValues(alpha: 0.45),
                         ),
                       ),
                     ),
@@ -757,7 +761,7 @@ class _MatrixCardState extends State<_MatrixCard> {
                       ),
                     ),
                     IconButton(
-                      tooltip: 'Kaldır',
+                      tooltip: AppLocalizations.of(context).homeKaldir,
                       visualDensity: VisualDensity.compact,
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(
@@ -842,7 +846,7 @@ class _SizePanel extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  config.type.title,
+                  config.type.title(context),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.labelLarge?.copyWith(
@@ -995,7 +999,9 @@ class _ResizeHandle extends StatelessWidget {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.16),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.shadow.withValues(alpha: 0.16),
                     blurRadius: 6,
                   ),
                 ],
@@ -1071,10 +1077,13 @@ class _EmptyDashboard extends StatelessWidget {
               color: theme.colorScheme.primary,
             ),
             const SizedBox(height: 16),
-            Text('Ana Sayfan boş', style: theme.textTheme.titleLarge),
+            Text(
+              AppLocalizations.of(context).homeAnaSayfanBos,
+              style: theme.textTheme.titleLarge,
+            ),
             const SizedBox(height: 8),
             Text(
-              'Görmek istediğin kartları ekle (sayaç, bugün özeti, sıralama, grafik).',
+              AppLocalizations.of(context).homeKartEkle,
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
@@ -1084,7 +1093,7 @@ class _EmptyDashboard extends StatelessWidget {
             FilledButton.icon(
               onPressed: onEdit,
               icon: const Icon(Icons.add),
-              label: const Text('Kart ekle'),
+              label: Text(AppLocalizations.of(context).homeKartEkle),
             ),
           ],
         ),

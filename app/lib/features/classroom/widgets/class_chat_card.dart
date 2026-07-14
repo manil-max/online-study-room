@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -49,7 +50,10 @@ class _ClassChatCardState extends ConsumerState<ClassChatCard> {
               children: [
                 const Icon(Icons.forum_outlined),
                 const SizedBox(width: 8),
-                Text('Sohbet', style: theme.textTheme.titleMedium),
+                Text(
+                  AppLocalizations.of(context).classroomSohbet,
+                  style: theme.textTheme.titleMedium,
+                ),
               ],
             ),
             const SizedBox(height: 8),
@@ -61,7 +65,7 @@ class _ClassChatCardState extends ConsumerState<ClassChatCard> {
                 loading: () => const Center(child: CircularProgressIndicator()),
                 error: (error, _) => Center(
                   child: Text(
-                    'Sohbet yüklenemedi.',
+                    AppLocalizations.of(context).classroomSohbetYuklenemedi,
                     style: TextStyle(color: theme.colorScheme.error),
                   ),
                 ),
@@ -79,15 +83,15 @@ class _ClassChatCardState extends ConsumerState<ClassChatCard> {
                     maxLength: kMaxChatMessageLength,
                     enabled: user != null && !_sending,
                     textInputAction: TextInputAction.newline,
-                    decoration: const InputDecoration(
-                      hintText: 'Mesaj yaz',
+                    decoration: InputDecoration(
+                      hintText: AppLocalizations.of(context).classroomMesajYaz,
                       counterText: '',
                     ),
                   ),
                 ),
                 const SizedBox(width: 8),
                 IconButton.filled(
-                  tooltip: 'Gönder',
+                  tooltip: AppLocalizations.of(context).classroomGonder,
                   onPressed: user == null || _sending ? null : _send,
                   icon: _sending
                       ? const SizedBox.square(
@@ -110,6 +114,9 @@ class _ClassChatCardState extends ConsumerState<ClassChatCard> {
 
     setState(() => _sending = true);
     final messenger = ScaffoldMessenger.of(context);
+    final genericError = AppLocalizations.of(
+      context,
+    ).authBeklenmeyenBirHataOlustu;
     try {
       await ref
           .read(chatRepositoryProvider)
@@ -119,8 +126,8 @@ class _ClassChatCardState extends ConsumerState<ClassChatCard> {
             text: _controller.text,
           );
       _controller.clear();
-    } on ChatException catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+    } on ChatException {
+      messenger.showSnackBar(SnackBar(content: Text(genericError)));
     } finally {
       if (mounted) setState(() => _sending = false);
     }
@@ -139,7 +146,7 @@ class _MessageList extends StatelessWidget {
     if (messages.isEmpty) {
       return Center(
         child: Text(
-          'İlk mesajı sen gönder.',
+          AppLocalizations.of(context).classroomIlkMesajiSenGonder,
           style: theme.textTheme.bodyMedium,
         ),
       );
@@ -168,7 +175,7 @@ class _MessageBubble extends StatelessWidget {
     final theme = Theme.of(context);
     final name = (message.authorDisplayName?.trim().isNotEmpty ?? false)
         ? message.authorDisplayName!.trim()
-        : 'İsimsiz';
+        : AppLocalizations.of(context).classroomIsimsiz;
     final bubbleColor = mine
         ? theme.colorScheme.primaryContainer
         : theme.colorScheme.surfaceContainerHighest;

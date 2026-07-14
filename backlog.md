@@ -8,7 +8,7 @@
 
 ## 🔴 Yüksek Öncelik
 
-- [~] **Küresel pazara açılış — resmi Flutter l10n (İngilizce varsayılan, Türkçe ikinci dil)** — **WP-82/83 tamamlandı; WP-84/85/88 otomatik test geçti; WP-86/87/89 planlandı**
+- [~] **Küresel pazara açılış — resmi Flutter l10n (İngilizce varsayılan, Türkçe ikinci dil)** — **WP-82/83 tamamlandı; WP-84/85/86/88 otomatik test geçti; WP-87/89 planlandı**
   - Sistem dili Türkçeyse `tr`; diğer tüm sistem dillerinde (desteklenmeyenler dahil) `en` açılır.
   - Flutter kullanıcı metinleri `app_en.arb`/`app_tr.arb`a taşınır; uygulama kapalıyken görünen Android metinleri platformun `values`/`values-tr` kaynaklarına taşınır.
   - Paralel plan: WP-82 altyapı + WP-83 ücretsiz çeviri envanteri → WP-84 katalog + WP-88 native → ayrık Flutter göçleri WP-85/86/87 → WP-89 entegrasyon/cihaz QA. Aynı anda en fazla iki hat.

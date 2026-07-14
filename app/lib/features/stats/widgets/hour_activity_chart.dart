@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:online_study_room/l10n/app_localizations.dart';
 
 import '../../../core/utils/duration_format.dart';
 
@@ -28,10 +29,11 @@ class HourActivityChart extends StatelessWidget {
         height: height,
         child: Center(
           child: Text(
-            'Henüz çalışma kaydın yok — saat dağılımı burada görünecek.',
+            AppLocalizations.of(context).statsBuDonemdeCalismaKaydin,
             textAlign: TextAlign.center,
-            style: theme.textTheme.bodySmall
-                ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
           ),
         ),
       );
@@ -58,8 +60,11 @@ class HourActivityChart extends StatelessWidget {
               padding: const EdgeInsets.only(left: 2, bottom: 8),
               child: Row(
                 children: [
-                  Icon(Icons.bolt,
-                      size: 16, color: theme.colorScheme.secondary),
+                  Icon(
+                    Icons.bolt,
+                    size: 16,
+                    color: theme.colorScheme.secondary,
+                  ),
                   const SizedBox(width: 4),
                   Flexible(
                     child: Text(
@@ -68,7 +73,8 @@ class HourActivityChart extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant),
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ),
                 ],
@@ -88,8 +94,9 @@ class HourActivityChart extends StatelessWidget {
                               '${h.toString().padLeft(2, '0')}:00 · ${formatHuman(hourly[h])}',
                           waitDuration: Duration.zero,
                           child: Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 1.5),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 1.5,
+                            ),
                             child: Align(
                               alignment: Alignment.bottomCenter,
                               child: Container(
@@ -99,7 +106,8 @@ class HourActivityChart extends StatelessWidget {
                                 decoration: BoxDecoration(
                                   color: barColor(h),
                                   borderRadius: const BorderRadius.vertical(
-                                      top: Radius.circular(3)),
+                                    top: Radius.circular(3),
+                                  ),
                                 ),
                               ),
                             ),
@@ -121,11 +129,14 @@ class HourActivityChart extends StatelessWidget {
                     alignment: label == '00'
                         ? Alignment.centerLeft
                         : label == '23'
-                            ? Alignment.centerRight
-                            : Alignment.center,
-                    child: Text(label,
-                        style: theme.textTheme.labelSmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant)),
+                        ? Alignment.centerRight
+                        : Alignment.center,
+                    child: Text(
+                      label,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
                   ),
                 ),
             ],

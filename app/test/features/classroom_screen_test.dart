@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -15,7 +16,9 @@ import 'package:online_study_room/core/prefs/app_prefs.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  testWidgets('ClassroomScreen renders correctly and checks order', (tester) async {
+  testWidgets('ClassroomScreen renders correctly and checks order', (
+    tester,
+  ) async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
 
@@ -34,7 +37,11 @@ void main() {
       groupMembersProvider.overrideWith((ref) => Stream.value([])),
       groupPresenceProvider.overrideWith((ref) => Stream.value([])),
       groupDailyStatsProvider.overrideWith((ref) => Stream.value([])),
-      authStateProvider.overrideWith((ref) => Stream.value(Profile(id: 'u1', displayName: 'Ben', createdAt: DateTime.now()))),
+      authStateProvider.overrideWith(
+        (ref) => Stream.value(
+          Profile(id: 'u1', displayName: 'Ben', createdAt: DateTime.now()),
+        ),
+      ),
       userSessionsProvider.overrideWith((ref) => Stream.value([])),
     ];
 
@@ -52,6 +59,9 @@ void main() {
       ProviderScope(
         overrides: overrides,
         child: const MaterialApp(
+          locale: Locale('tr'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: ClassroomScreen(),
         ),
       ),
@@ -82,9 +92,16 @@ void main() {
     final goalY = tester.getTopLeft(find.byType(GroupGoalCard)).dy;
     final trendY = tester.getTopLeft(find.byType(GroupTrendCard)).dy;
 
-    expect(campfireY < goalY, isTrue,
-        reason: 'kamp ateşi grup hedefinin ÜSTÜNDE olmalı (kullanıcı isteği)');
-    expect(goalY < trendY, isTrue, reason: 'grup hedefi trendin üstünde olmalı');
+    expect(
+      campfireY < goalY,
+      isTrue,
+      reason: 'kamp ateşi grup hedefinin ÜSTÜNDE olmalı (kullanıcı isteği)',
+    );
+    expect(
+      goalY < trendY,
+      isTrue,
+      reason: 'grup hedefi trendin üstünde olmalı',
+    );
 
     // Yönetim paneli en altta (trendin altında).
     final mgmtY = tester.getTopLeft(find.text('Grup bilgileri')).dy;

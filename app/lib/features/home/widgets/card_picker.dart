@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -27,14 +28,6 @@ Future<void> showCardPicker(BuildContext context) {
   );
 }
 
-const _kOrder = [
-  'Sayaç & Hedef',
-  'Özetler',
-  'Grafikler',
-  'Isı haritaları',
-  'Grup',
-];
-
 class _CardPickerSheet extends ConsumerWidget {
   const _CardPickerSheet();
 
@@ -44,8 +37,17 @@ class _CardPickerSheet extends ConsumerWidget {
     final layout = ref.watch(dashboardLayoutProvider);
     final notifier = ref.read(dashboardLayoutProvider.notifier);
     final used = layout.map((c) => c.type).toSet();
-    final available =
-        DashboardCardType.values.where((t) => !used.contains(t)).toList();
+    final available = DashboardCardType.values
+        .where((t) => !used.contains(t))
+        .toList();
+    final categoryOrder = <String>[
+      '${AppLocalizations.of(context).homeSayac} & '
+          '${AppLocalizations.of(context).homeGunlukHedef}',
+      AppLocalizations.of(context).homeOzetler,
+      AppLocalizations.of(context).homeGrafikler,
+      AppLocalizations.of(context).homeIsiHaritalari,
+      AppLocalizations.of(context).homeGrup,
+    ];
 
     return Column(
       children: [
@@ -58,7 +60,10 @@ class _CardPickerSheet extends ConsumerWidget {
                 color: theme.colorScheme.primary,
               ),
               const SizedBox(width: 10),
-              Text('Kart ekle', style: theme.textTheme.titleLarge),
+              Text(
+                AppLocalizations.of(context).homeKartEkle,
+                style: theme.textTheme.titleLarge,
+              ),
               const Spacer(),
               Text(
                 '${available.length} kart',
@@ -67,7 +72,7 @@ class _CardPickerSheet extends ConsumerWidget {
                 ),
               ),
               IconButton(
-                tooltip: 'Kapat',
+                tooltip: AppLocalizations.of(context).homeKapat,
                 onPressed: () => Navigator.of(context).maybePop(),
                 icon: const Icon(Icons.close),
               ),
@@ -90,7 +95,7 @@ class _CardPickerSheet extends ConsumerWidget {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'Tüm kartlar zaten ekli 🎉',
+                      AppLocalizations.of(context).homeBitti,
                       style: theme.textTheme.titleMedium,
                     ),
                   ],
@@ -109,13 +114,12 @@ class _CardPickerSheet extends ConsumerWidget {
                   medium: 3,
                   expanded: 3,
                 );
-                final w =
-                    (constraints.maxWidth - 40 - gap * (cols - 1)) / cols;
+                final w = (constraints.maxWidth - 40 - gap * (cols - 1)) / cols;
                 return ListView(
                   padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
                   children: [
-                    for (final cat in _kOrder)
-                      if (available.any((t) => t.category == cat)) ...[
+                    for (final cat in categoryOrder)
+                      if (available.any((t) => t.category(context) == cat)) ...[
                         Padding(
                           padding: const EdgeInsets.fromLTRB(2, 8, 2, 8),
                           child: Text(
@@ -130,8 +134,9 @@ class _CardPickerSheet extends ConsumerWidget {
                           spacing: gap,
                           runSpacing: gap,
                           children: [
-                            for (final t
-                                in available.where((t) => t.category == cat))
+                            for (final t in available.where(
+                              (t) => t.category(context) == cat,
+                            ))
                               SizedBox(
                                 width: w,
                                 child: _CardTile(
@@ -142,8 +147,13 @@ class _CardPickerSheet extends ConsumerWidget {
                                       ..hideCurrentSnackBar()
                                       ..showSnackBar(
                                         SnackBar(
-                                          content:
-                                              Text('“${t.title}” eklendi'),
+                                          content: Text(
+                                            AppLocalizations.of(
+                                              context,
+                                            ).homeTtitleEklendi(
+                                              t.title(context),
+                                            ),
+                                          ),
                                           duration: const Duration(
                                             milliseconds: 900,
                                           ),
@@ -200,13 +210,14 @@ class _CardTile extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              type.title,
-              style: theme.textTheme.titleSmall
-                  ?.copyWith(fontWeight: FontWeight.w700),
+              type.title(context),
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
             ),
             const SizedBox(height: 2),
             Text(
-              type.description,
+              type.description(context),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: theme.textTheme.bodySmall?.copyWith(

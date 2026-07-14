@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -72,7 +73,7 @@ class GoalCard extends ConsumerWidget {
                       children: [
                         Flexible(
                           child: Text(
-                            'Günlük hedef',
+                            AppLocalizations.of(context).homeGunlukHedef,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: theme.textTheme.labelMedium,
@@ -100,7 +101,8 @@ class GoalCard extends ConsumerWidget {
                     const SizedBox(height: 8),
                     Tooltip(
                       message:
-                          'Hedef serisi: $streak gün (günlük çalışma hedefine ulaşma)',
+                          '${AppLocalizations.of(context).homeGunlukHedef}: '
+                          '${AppLocalizations.of(context).homeOGun(streak.toString())}',
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 8,
@@ -146,7 +148,7 @@ class GoalCard extends ConsumerWidget {
                     children: [
                       Flexible(
                         child: Text(
-                          'Günlük hedef',
+                          AppLocalizations.of(context).homeGunlukHedef,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.titleMedium,
@@ -176,8 +178,9 @@ class GoalCard extends ConsumerWidget {
                             const SizedBox(height: 4),
                             Text(
                               reached
-                                  ? 'Bugünkü hedefini tuttun! 🎉'
-                                  : 'Hedefe ${formatHuman((goalSeconds - recorded).clamp(0, 1 << 30))} kaldı',
+                                  ? AppLocalizations.of(context).homeBitti
+                                  : '${AppLocalizations.of(context).homeGunlukHedef}: '
+                                        '${formatHuman((goalSeconds - recorded).clamp(0, 1 << 30))}',
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: theme.colorScheme.onSurfaceVariant,
                               ),

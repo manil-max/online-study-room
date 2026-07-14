@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:online_study_room/l10n/app_localizations.dart';
 
 import '../../../core/stats/stats_period.dart';
 import '../../../data/providers/stats_period_provider.dart';
+import '../stats_l10n.dart';
 
 /// Üst dönem seçici: Bugün / Hafta / Ay / Tümü.
 class StatsPeriodBar extends ConsumerWidget {
@@ -17,7 +19,10 @@ class StatsPeriodBar extends ConsumerWidget {
         child: SegmentedButton<StatsPeriod>(
           segments: [
             for (final p in StatsPeriod.values)
-              ButtonSegment(value: p, label: Text(p.labelTr)),
+              ButtonSegment(
+                value: p,
+                label: Text(statsPeriodLabel(AppLocalizations.of(context), p)),
+              ),
           ],
           selected: {period},
           onSelectionChanged: (s) =>

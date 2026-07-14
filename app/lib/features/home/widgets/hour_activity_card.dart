@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -21,7 +22,10 @@ class HourActivityCard extends ConsumerWidget {
     final hourly = hourlyTotals(sessions);
 
     return CardScaffold(
-      header: Text('Çalışma saatleri', style: theme.textTheme.titleMedium),
+      header: Text(
+        AppLocalizations.of(context).homeCalismaSaatleri,
+        style: theme.textTheme.titleMedium,
+      ),
       bodyBuilder: (context, bodyHeight) =>
           HourActivityChart(hourly: hourly, height: bodyHeight),
     );

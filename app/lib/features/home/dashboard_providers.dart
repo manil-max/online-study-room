@@ -10,15 +10,21 @@ const _kLastColumnsKey = 'dashboard_grid_last_columns';
 const _kDensityKey = 'dashboard_grid_density';
 const _kClassroomTimerKey = 'classroom_show_timer';
 
-enum DashboardGridDensity { columns6, columns8, columns12, columns16, columns32 }
+enum DashboardGridDensity {
+  columns6,
+  columns8,
+  columns12,
+  columns16,
+  columns32,
+}
 
 extension DashboardGridDensityX on DashboardGridDensity {
   String get label => switch (this) {
-    DashboardGridDensity.columns6 => '6 sütun',
-    DashboardGridDensity.columns8 => '8 sütun',
-    DashboardGridDensity.columns12 => '12 sütun',
-    DashboardGridDensity.columns16 => '16 sütun',
-    DashboardGridDensity.columns32 => '32 sütun',
+    DashboardGridDensity.columns6 => '6',
+    DashboardGridDensity.columns8 => '8',
+    DashboardGridDensity.columns12 => '12',
+    DashboardGridDensity.columns16 => '16',
+    DashboardGridDensity.columns32 => '32',
   };
 
   int get columns => switch (this) {

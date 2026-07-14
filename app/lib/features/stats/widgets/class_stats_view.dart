@@ -1,5 +1,7 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../../../core/stats/stats_period.dart';
 import '../../../core/stats/study_stats.dart';
@@ -15,6 +17,7 @@ import '../../profile/widgets/profile_tap.dart';
 import 'daily_bar_chart.dart';
 import 'daily_line_chart.dart';
 import 'stat_heat_table.dart';
+import '../stats_l10n.dart';
 
 /// Sınıf (ortak) istatistikleri: ortak dönem + sıralama + özet.
 /// Dönem üst [StatsPeriodBar] / [statsPeriodProvider] ile gelir; yerel seçici yok.
@@ -70,8 +73,10 @@ class ClassStatsView extends ConsumerWidget {
       for (final m in members)
         HeatRow(
           label: !m.isActive
-              ? 'Eski Grup Üyesi'
-              : (m.displayName.isEmpty ? 'İsimsiz' : m.displayName),
+              ? AppLocalizations.of(context).statsEskiGrupUyesi
+              : (m.displayName.isEmpty
+                    ? AppLocalizations.of(context).statsIsimsiz
+                    : m.displayName),
           avatarUrl: m.avatarUrl,
           userId: m.id,
           highlight: m.id == currentUserId,
@@ -98,13 +103,17 @@ class ClassStatsView extends ConsumerWidget {
     String? consistentName;
     var consistentStreak = 0;
     for (final m in members) {
-      final st =
-          longestStudyStreak(const [], totals: userDayTotals(stats, m.id));
+      final st = longestStudyStreak(
+        const [],
+        totals: userDayTotals(stats, m.id),
+      );
       if (st > consistentStreak) {
         consistentStreak = st;
         consistentName = !m.isActive
-            ? 'Eski Grup Üyesi'
-            : (m.displayName.isEmpty ? 'İsimsiz' : m.displayName);
+            ? AppLocalizations.of(context).statsEskiGrupUyesi
+            : (m.displayName.isEmpty
+                  ? AppLocalizations.of(context).statsIsimsiz
+                  : m.displayName);
       }
     }
 
@@ -126,14 +135,14 @@ class ClassStatsView extends ConsumerWidget {
                 onPressed: () =>
                     showClassSwitcher(iconContext, ref, switchOnly: true),
                 icon: const Icon(Icons.swap_horiz, size: 18),
-                label: const Text('Değiştir'),
+                label: Text(AppLocalizations.of(context).statsDegistir),
               ),
             ),
           ],
         ),
         const SizedBox(height: 8),
         Text(
-          'Dönem: ${period.labelTr}',
+          statsPeriodLabel(AppLocalizations.of(context), period),
           style: theme.textTheme.labelMedium?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),
@@ -148,26 +157,36 @@ class ClassStatsView extends ConsumerWidget {
         Row(
           children: [
             Expanded(
-              child: _SummaryCard(label: 'Grup toplamı', seconds: classTotal),
+              child: _SummaryCard(
+                label: AppLocalizations.of(context).statsGrupToplami,
+                seconds: classTotal,
+              ),
             ),
             const SizedBox(width: 8),
             Expanded(
-              child: _SummaryCard(label: 'Kişi başı ort.', seconds: classAvg),
+              child: _SummaryCard(
+                label: AppLocalizations.of(context).statsKisiBasiOrt,
+                seconds: classAvg,
+              ),
             ),
           ],
         ),
         const SizedBox(height: 16),
         // Sıralama — ortak dönem seçimine bağlı.
-        Text('Sıralama', style: theme.textTheme.titleMedium),
+        Text(
+          AppLocalizations.of(context).statsSiralama,
+          style: theme.textTheme.titleMedium,
+        ),
         const SizedBox(height: 4),
         if (rows.isEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 24),
             child: Center(
               child: Text(
-                'Bu dönemde henüz çalışma kaydı yok.',
-                style: theme.textTheme.bodyMedium
-                    ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                AppLocalizations.of(context).statsBuDonemdeHenuzCalisma,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               ),
             ),
           )
@@ -193,7 +212,9 @@ class ClassStatsView extends ConsumerWidget {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 4),
                   child: Text(
-                    'Grup günlük trendi (son $chartDays gün · ${period.labelTr})',
+                    '${AppLocalizations.of(context).statsGrupGunlukTrendiSon} · '
+                    '${AppLocalizations.of(context).statsStreakGun(chartDays.toString())} · '
+                    '${statsPeriodLabel(AppLocalizations.of(context), period)}',
                     style: theme.textTheme.titleSmall,
                   ),
                 ),
@@ -219,7 +240,9 @@ class ClassStatsView extends ConsumerWidget {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 4),
                   child: Text(
-                    'Grup eğilimi (son $trendDays gün · ${period.labelTr})',
+                    '${AppLocalizations.of(context).statsGrupEgilimiSon30} · '
+                    '${AppLocalizations.of(context).statsStreakGun(trendDays.toString())} · '
+                    '${statsPeriodLabel(AppLocalizations.of(context), period)}',
                     style: theme.textTheme.titleSmall,
                   ),
                 ),
@@ -244,17 +267,27 @@ class ClassStatsView extends ConsumerWidget {
           consistentStreak: consistentStreak,
         ),
         const SizedBox(height: 16),
-        Text('Karşılaştırma tablosu', style: theme.textTheme.titleMedium),
+        Text(
+          AppLocalizations.of(context).statsKarsilastirmaTablosu,
+          style: theme.textTheme.titleMedium,
+        ),
         const SizedBox(height: 8),
         Card(
           child: Padding(
             padding: const EdgeInsets.all(12),
             child: heatRows.isEmpty
-                ? Text('Üye yok.',
+                ? Text(
+                    AppLocalizations.of(context).statsUyeYok,
                     style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant))
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  )
                 : StatHeatTable(
-                    columns: const ['Bugün', 'Hafta', 'Ay'],
+                    columns: [
+                      AppLocalizations.of(context).statsBugun,
+                      AppLocalizations.of(context).statsHafta,
+                      AppLocalizations.of(context).statsAy,
+                    ],
                     rows: heatRows,
                   ),
           ),
@@ -279,12 +312,14 @@ class _GroupGoalCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final pct =
-        goalSeconds <= 0 ? 0.0 : (todaySeconds / goalSeconds).clamp(0.0, 1.0);
+    final pct = goalSeconds <= 0
+        ? 0.0
+        : (todaySeconds / goalSeconds).clamp(0.0, 1.0);
     final reached = goalSeconds > 0 && todaySeconds >= goalSeconds;
     final fire = subjectColor('chart-5');
-    final barColor =
-        reached ? subjectColor('chart-2') : theme.colorScheme.primary;
+    final barColor = reached
+        ? subjectColor('chart-2')
+        : theme.colorScheme.primary;
 
     return Card(
       child: Padding(
@@ -296,15 +331,23 @@ class _GroupGoalCard extends StatelessWidget {
               children: [
                 Icon(Icons.flag_outlined, size: 20, color: barColor),
                 const SizedBox(width: 6),
-                Text('Bugünkü grup hedefi',
-                    style: theme.textTheme.titleMedium),
+                Text(
+                  AppLocalizations.of(context).statsBugunkuGrupHedefi,
+                  style: theme.textTheme.titleMedium,
+                ),
                 const Spacer(),
                 if (streak > 0) ...[
                   Icon(Icons.local_fire_department, size: 18, color: fire),
                   const SizedBox(width: 2),
-                  Text('$streak gün',
-                      style: theme.textTheme.labelMedium
-                          ?.copyWith(color: fire, fontWeight: FontWeight.w700)),
+                  Text(
+                    AppLocalizations.of(
+                      context,
+                    ).statsStreakGun(streak.toString()),
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: fire,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ],
               ],
             ),
@@ -312,11 +355,17 @@ class _GroupGoalCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('${formatHuman(todaySeconds)} / ${formatHuman(goalSeconds)}',
-                    style: theme.textTheme.bodyMedium),
-                Text('%${(pct * 100).round()}',
-                    style: theme.textTheme.bodyMedium
-                        ?.copyWith(color: barColor, fontWeight: FontWeight.w700)),
+                Text(
+                  '${formatHuman(todaySeconds)} / ${formatHuman(goalSeconds)}',
+                  style: theme.textTheme.bodyMedium,
+                ),
+                Text(
+                  '%${(pct * 100).round()}',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: barColor,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 6),
@@ -331,9 +380,12 @@ class _GroupGoalCard extends StatelessWidget {
             ),
             if (reached) ...[
               const SizedBox(height: 8),
-              Text('Grup bugünkü hedefini tuttu! 🎉',
-                  style: theme.textTheme.bodySmall
-                      ?.copyWith(color: subjectColor('chart-2'))),
+              Text(
+                AppLocalizations.of(context).statsGrupBugunkuHedefiniTuttu,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: subjectColor('chart-2'),
+                ),
+              ),
             ],
           ],
         ),
@@ -374,9 +426,16 @@ class _AllTimeCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(Icons.auto_graph, size: 20, color: theme.colorScheme.primary),
+                Icon(
+                  Icons.auto_graph,
+                  size: 20,
+                  color: theme.colorScheme.primary,
+                ),
                 const SizedBox(width: 6),
-                Text('Tüm zamanlar', style: theme.textTheme.titleMedium),
+                Text(
+                  AppLocalizations.of(context).statsTumZamanlar,
+                  style: theme.textTheme.titleMedium,
+                ),
               ],
             ),
             const SizedBox(height: 12),
@@ -384,20 +443,24 @@ class _AllTimeCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: _Metric(
-                    label: 'Grup toplamı',
+                    label: AppLocalizations.of(context).statsGrupToplami,
                     value: formatHuman(total),
                   ),
                 ),
                 Expanded(
                   child: _Metric(
-                    label: 'Aktif gün',
+                    label: AppLocalizations.of(context).statsAktifGun,
                     value: '$activeDays',
                   ),
                 ),
                 Expanded(
                   child: _Metric(
-                    label: 'Rekor seri',
-                    value: recordStreak > 0 ? '$recordStreak gün' : '—',
+                    label: AppLocalizations.of(context).statsRekorSeri,
+                    value: recordStreak > 0
+                        ? AppLocalizations.of(
+                            context,
+                          ).statsStreakGun(recordStreak.toString())
+                        : '—',
                   ),
                 ),
               ],
@@ -407,20 +470,21 @@ class _AllTimeCard extends StatelessWidget {
             const SizedBox(height: 12),
             _AllTimeRow(
               icon: Icons.event_available_outlined,
-              label: 'En yoğun gün',
+              label: AppLocalizations.of(context).statsEnYogunGun,
               value: peak == null
                   ? '—'
-                  : '${peak!.day.day}.${peak!.day.month}.${peak!.day.year} · '
-                      '${formatHuman(peak!.seconds)}',
+                  : '${DateFormat.yMd(AppLocalizations.of(context).localeName).format(peak!.day)} · '
+                        '${formatHuman(peak!.seconds)}',
             ),
             const SizedBox(height: 8),
             _AllTimeRow(
               icon: Icons.local_fire_department,
               iconColor: fire,
-              label: 'En istikrarlı üye',
+              label: AppLocalizations.of(context).statsEnIstikrarliUye,
               value: consistentName == null || consistentStreak <= 0
                   ? '—'
-                  : '$consistentName · $consistentStreak gün',
+                  : '$consistentName · '
+                        '${AppLocalizations.of(context).statsStreakGun(consistentStreak.toString())}',
             ),
           ],
         ),
@@ -441,17 +505,23 @@ class _Metric extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.labelSmall
-                ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+        Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
         const SizedBox(height: 4),
-        Text(value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.titleMedium
-                ?.copyWith(fontWeight: FontWeight.w700)),
+        Text(
+          value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
       ],
     );
   }
@@ -475,20 +545,29 @@ class _AllTimeRow extends StatelessWidget {
     final theme = Theme.of(context);
     return Row(
       children: [
-        Icon(icon,
-            size: 18, color: iconColor ?? theme.colorScheme.onSurfaceVariant),
+        Icon(
+          icon,
+          size: 18,
+          color: iconColor ?? theme.colorScheme.onSurfaceVariant,
+        ),
         const SizedBox(width: 8),
-        Text(label,
-            style: theme.textTheme.bodyMedium
-                ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+        Text(
+          label,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
         const Spacer(),
         Flexible(
-          child: Text(value,
-              textAlign: TextAlign.end,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.bodyMedium
-                  ?.copyWith(fontWeight: FontWeight.w600)),
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ),
       ],
     );
@@ -511,9 +590,12 @@ class _SummaryCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label,
-                style: theme.textTheme.labelMedium
-                    ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+            Text(
+              label,
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
             const SizedBox(height: 8),
             Text(formatHuman(seconds), style: theme.textTheme.titleLarge),
           ],
@@ -573,11 +655,7 @@ class _LeaderboardRow extends StatelessWidget {
               radius: 16,
             )
           else
-            CrownedAvatar(
-              displayName: name,
-              avatarUrl: avatarUrl,
-              radius: 16,
-            ),
+            CrownedAvatar(displayName: name, avatarUrl: avatarUrl, radius: 16),
           const SizedBox(width: 8),
           Expanded(
             child: Column(
@@ -599,16 +677,24 @@ class _LeaderboardRow extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         if (streak > 0) ...[
-                          Icon(Icons.local_fire_department,
-                              size: 14, color: subjectColor('chart-5')),
+                          Icon(
+                            Icons.local_fire_department,
+                            size: 14,
+                            color: subjectColor('chart-5'),
+                          ),
                           const SizedBox(width: 2),
-                          Text('$streak',
-                              style: theme.textTheme.labelSmall
-                                  ?.copyWith(color: subjectColor('chart-5'))),
+                          Text(
+                            '$streak',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: subjectColor('chart-5'),
+                            ),
+                          ),
                           const SizedBox(width: 8),
                         ],
-                        Text(formatHuman(seconds),
-                            style: theme.textTheme.bodyMedium),
+                        Text(
+                          formatHuman(seconds),
+                          style: theme.textTheme.bodyMedium,
+                        ),
                       ],
                     ),
                   ],

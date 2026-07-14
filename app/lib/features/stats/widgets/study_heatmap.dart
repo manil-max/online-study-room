@@ -1,12 +1,23 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/stats/study_stats.dart';
 import '../../../core/utils/duration_format.dart';
 import '../../../data/models/study_session.dart';
 
-const _kMonths = [
-  'Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz',
-  'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara',
+List<String> _months(BuildContext context) => [
+  AppLocalizations.of(context).statsOca,
+  AppLocalizations.of(context).statsSub,
+  AppLocalizations.of(context).statsMar,
+  AppLocalizations.of(context).statsNis,
+  AppLocalizations.of(context).statsMay,
+  AppLocalizations.of(context).statsHaz,
+  AppLocalizations.of(context).statsTem,
+  AppLocalizations.of(context).statsAgu,
+  AppLocalizations.of(context).statsEyl,
+  AppLocalizations.of(context).statsEki,
+  AppLocalizations.of(context).statsKas,
+  AppLocalizations.of(context).statsAra,
 ];
 
 /// GitHub tarzı çalışma yoğunluğu ısı haritası (yalnızca görsel — başlık/Card
@@ -29,12 +40,14 @@ class StudyHeatmap extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final months = _months(context);
     final totals = precomputedTotals ?? dailyTotals(sessions);
     final maxSeconds = totals.values.fold<int>(0, (m, v) => v > m ? v : m);
 
     final today = dayOf(DateTime.now());
-    final firstMonday =
-        startOfWeek(today).subtract(Duration(days: (weeks - 1) * 7));
+    final firstMonday = startOfWeek(
+      today,
+    ).subtract(Duration(days: (weeks - 1) * 7));
 
     const cell = 13.0;
     const gap = 3.0;
@@ -67,43 +80,50 @@ class StudyHeatmap extends StatelessWidget {
         final day = weekStart.add(Duration(days: d));
         final isFuture = day.isAfter(today);
         final seconds = totals[day] ?? 0;
-        cells.add(Padding(
-          padding: const EdgeInsets.only(bottom: gap),
-          child: isFuture
-              ? const SizedBox(width: cell, height: cell)
-              : Tooltip(
-                  message:
-                      '${day.day} ${_kMonths[day.month - 1]} · ${formatHuman(seconds)}',
-                  waitDuration: Duration.zero,
-                  child: Container(
-                    width: cell,
-                    height: cell,
-                    decoration: BoxDecoration(
-                      color: colorFor(levelOf(seconds)),
-                      borderRadius: BorderRadius.circular(3),
+        cells.add(
+          Padding(
+            padding: const EdgeInsets.only(bottom: gap),
+            child: isFuture
+                ? const SizedBox(width: cell, height: cell)
+                : Tooltip(
+                    message:
+                        '${day.day} ${months[day.month - 1]} · ${formatHuman(seconds)}',
+                    waitDuration: Duration.zero,
+                    child: Container(
+                      width: cell,
+                      height: cell,
+                      decoration: BoxDecoration(
+                        color: colorFor(levelOf(seconds)),
+                        borderRadius: BorderRadius.circular(3),
+                      ),
                     ),
                   ),
-                ),
-        ));
+          ),
+        );
       }
 
-      columns.add(Padding(
-        padding: const EdgeInsets.only(right: gap),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(
-              height: 14,
-              child: showMonth
-                  ? Text(_kMonths[weekStart.month - 1],
-                      style: theme.textTheme.labelSmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant))
-                  : null,
-            ),
-            ...cells,
-          ],
+      columns.add(
+        Padding(
+          padding: const EdgeInsets.only(right: gap),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                height: 14,
+                child: showMonth
+                    ? Text(
+                        months[weekStart.month - 1],
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      )
+                    : null,
+              ),
+              ...cells,
+            ],
+          ),
         ),
-      ));
+      );
     }
 
     return Column(
@@ -118,9 +138,12 @@ class StudyHeatmap extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            Text('Az',
-                style: theme.textTheme.labelSmall
-                    ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+            Text(
+              AppLocalizations.of(context).statsAz,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
             const SizedBox(width: 6),
             for (var l = 0; l <= 4; l++) ...[
               Container(
@@ -134,9 +157,12 @@ class StudyHeatmap extends StatelessWidget {
               const SizedBox(width: 3),
             ],
             const SizedBox(width: 3),
-            Text('Çok',
-                style: theme.textTheme.labelSmall
-                    ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+            Text(
+              AppLocalizations.of(context).statsCok,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
           ],
         ),
       ],

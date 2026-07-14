@@ -1,5 +1,7 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 import '../../../core/utils/duration_format.dart';
 
@@ -59,8 +61,7 @@ class _SubjectDonutState extends State<SubjectDonut> {
                       _touched = -1;
                       return;
                     }
-                    _touched =
-                        response!.touchedSection!.touchedSectionIndex;
+                    _touched = response!.touchedSection!.touchedSectionIndex;
                   });
                 },
               ),
@@ -81,11 +82,19 @@ class _SubjectDonutState extends State<SubjectDonut> {
             mainAxisSize: MainAxisSize.min,
             children: active == null
                 ? [
-                    Text((total / 3600).toStringAsFixed(1),
-                        style: theme.textTheme.titleMedium),
-                    Text('saat',
-                        style: theme.textTheme.labelSmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant)),
+                    Text(
+                      NumberFormat.decimalPatternDigits(
+                        locale: AppLocalizations.of(context).localeName,
+                        decimalDigits: 1,
+                      ).format(total / 3600),
+                      style: theme.textTheme.titleMedium,
+                    ),
+                    Text(
+                      AppLocalizations.of(context).statsSaat,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
                   ]
                 : [
                     Padding(
@@ -95,16 +104,20 @@ class _SubjectDonutState extends State<SubjectDonut> {
                         textAlign: TextAlign.center,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.labelMedium
-                            ?.copyWith(fontWeight: FontWeight.w600),
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
-                    Text(formatHuman(active.seconds),
-                        style: theme.textTheme.labelSmall),
+                    Text(
+                      formatHuman(active.seconds),
+                      style: theme.textTheme.labelSmall,
+                    ),
                     Text(
                       '%${total == 0 ? 0 : (active.seconds * 100 / total).round()}',
                       style: theme.textTheme.labelSmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant),
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ],
           ),

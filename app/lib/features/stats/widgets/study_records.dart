@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -8,9 +9,19 @@ import '../../../data/models/study_session.dart';
 import '../../../data/models/subject.dart';
 import '../../../data/providers/subject_providers.dart';
 
-const _kMonths = [
-  'Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz',
-  'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara',
+List<String> _months(BuildContext context) => [
+  AppLocalizations.of(context).statsOca,
+  AppLocalizations.of(context).statsSub,
+  AppLocalizations.of(context).statsMar,
+  AppLocalizations.of(context).statsNis,
+  AppLocalizations.of(context).statsMay,
+  AppLocalizations.of(context).statsHaz,
+  AppLocalizations.of(context).statsTem,
+  AppLocalizations.of(context).statsAgu,
+  AppLocalizations.of(context).statsEyl,
+  AppLocalizations.of(context).statsEki,
+  AppLocalizations.of(context).statsKas,
+  AppLocalizations.of(context).statsAra,
 ];
 
 /// Kişisel rekorlar: toplam, rekor seri, en verimli gün, aktif gün, en çok ders.
@@ -32,6 +43,7 @@ class StudyRecords extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final months = _months(context);
     final subjects = ref.watch(userSubjectsProvider).value ?? const <Subject>[];
 
     final total = totalSeconds(sessions);
@@ -55,12 +67,15 @@ class StudyRecords extends ConsumerWidget {
     if (breakdown.isNotEmpty) {
       final id = breakdown.first.key;
       if (id == null) {
-        topSubject = 'Genel';
+        topSubject = AppLocalizations.of(context).statsGenel;
       } else {
         topSubject = subjects
             .where((s) => s.id == id)
             .map((s) => s.name)
-            .firstWhere((_) => true, orElse: () => 'Genel');
+            .firstWhere(
+              (_) => true,
+              orElse: () => AppLocalizations.of(context).statsGenel,
+            );
       }
     }
 
@@ -68,33 +83,35 @@ class StudyRecords extends ConsumerWidget {
       _RecordTile(
         icon: Icons.timelapse,
         color: subjectColor('chart-1'),
-        label: 'Toplam',
+        label: AppLocalizations.of(context).statsToplam,
         value: formatHuman(total),
       ),
       _RecordTile(
         icon: Icons.local_fire_department,
         color: subjectColor('chart-5'),
-        label: 'Rekor seri',
-        value: '$longest gün',
+        label: AppLocalizations.of(context).statsRekorSeri,
+        value: AppLocalizations.of(context).statsStreakGun(longest.toString()),
       ),
       _RecordTile(
         icon: Icons.emoji_events_outlined,
         color: subjectColor('chart-3'),
-        label: 'En verimli gün',
+        label: AppLocalizations.of(context).statsEnVerimliGun,
         value: bestDay == null
             ? '—'
-            : '${formatHuman(bestSeconds)}\n${bestDay!.day} ${_kMonths[bestDay!.month - 1]}',
+            : '${formatHuman(bestSeconds)}\n${bestDay!.day} ${months[bestDay!.month - 1]}',
       ),
       _RecordTile(
         icon: Icons.calendar_month_outlined,
         color: subjectColor('chart-2'),
-        label: 'Aktif gün',
-        value: '$activeDays gün',
+        label: AppLocalizations.of(context).statsAktifGun,
+        value: AppLocalizations.of(
+          context,
+        ).statsStreakGun(activeDays.toString()),
       ),
       _RecordTile(
         icon: Icons.menu_book_outlined,
         color: subjectColor('chart-4'),
-        label: 'En çok ders',
+        label: AppLocalizations.of(context).statsEnCokDers,
         value: topSubject,
       ),
     ];
@@ -107,9 +124,7 @@ class StudyRecords extends ConsumerWidget {
         return Wrap(
           spacing: gap,
           runSpacing: gap,
-          children: [
-            for (final t in tiles) SizedBox(width: w, child: t),
-          ],
+          children: [for (final t in tiles) SizedBox(width: w, child: t)],
         );
       },
     );
@@ -148,13 +163,19 @@ class _RecordTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label,
-                    style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant)),
+                Text(
+                  label,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
                 const SizedBox(height: 2),
-                Text(value,
-                    style: theme.textTheme.titleSmall
-                        ?.copyWith(fontWeight: FontWeight.w700)),
+                Text(
+                  value,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ],
             ),
           ),

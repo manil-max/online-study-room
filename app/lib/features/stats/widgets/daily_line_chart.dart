@@ -1,5 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:online_study_room/l10n/app_localizations.dart';
 
 import '../../../core/stats/study_stats.dart';
 import '../../../core/utils/duration_format.dart';
@@ -14,8 +16,10 @@ class DailyLineChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final maxSeconds =
-        days.fold<int>(0, (m, d) => d.seconds > m ? d.seconds : m);
+    final maxSeconds = days.fold<int>(
+      0,
+      (m, d) => d.seconds > m ? d.seconds : m,
+    );
     final maxMinutes = maxSeconds / 60;
     final maxY = maxMinutes <= 0 ? 60.0 : maxMinutes * 1.2;
 
@@ -34,7 +38,7 @@ class DailyLineChart extends StatelessWidget {
             getTooltipItems: (spots) => [
               for (final s in spots)
                 LineTooltipItem(
-                  '${days[s.x.toInt()].day.day}.${days[s.x.toInt()].day.month}\n'
+                  '${DateFormat.Md(AppLocalizations.of(context).localeName).format(days[s.x.toInt()].day)}\n'
                   '${formatHuman(days[s.x.toInt()].seconds)}',
                   TextStyle(
                     color: theme.colorScheme.onInverseSurface,
@@ -46,12 +50,15 @@ class DailyLineChart extends StatelessWidget {
           ),
         ),
         titlesData: FlTitlesData(
-          leftTitles:
-              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          rightTitles:
-              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          topTitles:
-              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          leftTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          rightTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          topTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
@@ -65,9 +72,12 @@ class DailyLineChart extends StatelessWidget {
                 }
                 return Padding(
                   padding: const EdgeInsets.only(top: 4),
-                  child: Text('${days[i].day.day}',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant)),
+                  child: Text(
+                    '${days[i].day.day}',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
                 );
               },
             ),

@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -18,14 +19,19 @@ class HeatmapCard extends ConsumerWidget {
     final sessions = ref.watch(userSessionsProvider).value ?? const [];
 
     return CardScaffold(
-      header: cardTitle(context, 'Çalışma takvimi'),
+      header: cardTitle(
+        context,
+        AppLocalizations.of(context).homeCalismaTakvimi,
+      ),
       bodyBuilder: (context, bodyHeight) => SizedBox(
         height: bodyHeight,
         child: LayoutBuilder(
           builder: (context, constraints) {
             // Her hafta ortalama 18px yer kaplıyor (kutu + boşluk + eksen).
-            final weeks =
-                ((constraints.maxWidth - 40) / 18).floor().clamp(4, 52);
+            final weeks = ((constraints.maxWidth - 40) / 18).floor().clamp(
+              4,
+              52,
+            );
             // Dikey + yatay kaydırma → kısa/dar hücrede taşma olmaz (§2E).
             return SingleChildScrollView(
               child: SingleChildScrollView(

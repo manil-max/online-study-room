@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -40,7 +41,8 @@ class TodaySummaryCard extends ConsumerWidget {
           // tam genişlikte h=1 gibi çok kısa hücrede taşma (RenderFlex) olmaz.
           // 140 eşiği CardScaffold'un doldurma eşiğiyle (minBody 96 + başlık 44)
           // hizalıdır.
-          final isCompact = constraints.maxWidth < 180 ||
+          final isCompact =
+              constraints.maxWidth < 180 ||
               (constraints.maxHeight.isFinite && constraints.maxHeight < 140);
 
           if (isCompact) {
@@ -50,24 +52,29 @@ class TodaySummaryCard extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Bugün', style: theme.textTheme.labelMedium),
+                    Text(
+                      AppLocalizations.of(context).homeBugun,
+                      style: theme.textTheme.labelMedium,
+                    ),
                     const SizedBox(height: 8),
                     FittedBox(
                       fit: BoxFit.scaleDown,
                       alignment: Alignment.centerLeft,
                       child: Text(
                         formatHuman(total),
-                        style: theme.textTheme.headlineSmall
-                            ?.copyWith(color: theme.colorScheme.primary),
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          color: theme.colorScheme.primary,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       breakdown.isEmpty
-                          ? 'Kayıt yok'
+                          ? AppLocalizations.of(context).homeKayitYok
                           : '${breakdown.length} ders',
-                      style: theme.textTheme.bodySmall
-                          ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 ),
@@ -75,8 +82,9 @@ class TodaySummaryCard extends ConsumerWidget {
             );
           }
 
-          final maxSeconds =
-              breakdown.isEmpty ? 1 : breakdown.first.value.clamp(1, 1 << 30);
+          final maxSeconds = breakdown.isEmpty
+              ? 1
+              : breakdown.first.value.clamp(1, 1 << 30);
 
           return Padding(
             padding: const EdgeInsets.all(16),
@@ -85,12 +93,16 @@ class TodaySummaryCard extends ConsumerWidget {
               children: [
                 Row(
                   children: [
-                    Text('Bugün özeti', style: theme.textTheme.titleMedium),
+                    Text(
+                      AppLocalizations.of(context).homeBugunOzeti,
+                      style: theme.textTheme.titleMedium,
+                    ),
                     const Spacer(),
                     Text(
                       formatHuman(total),
-                      style: theme.textTheme.titleMedium
-                          ?.copyWith(color: theme.colorScheme.primary),
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: theme.colorScheme.primary,
+                      ),
                     ),
                   ],
                 ),
@@ -98,16 +110,21 @@ class TodaySummaryCard extends ConsumerWidget {
                 Expanded(
                   child: breakdown.isEmpty
                       ? Text(
-                          'Bugün henüz çalışma kaydın yok. Sayaçtan başla!',
+                          AppLocalizations.of(
+                            context,
+                          ).homeBugunHenuzCalismaKaydin,
                           style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant),
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
                         )
                       : ListView.builder(
                           itemCount: breakdown.length,
                           itemBuilder: (context, index) {
                             final entry = breakdown[index];
                             final subject = subjectFor(entry.key);
-                            final name = subject?.name ?? 'Genel';
+                            final name =
+                                subject?.name ??
+                                AppLocalizations.of(context).homeGenel;
                             final color = subject != null
                                 ? subjectColor(subject.color)
                                 : theme.colorScheme.onSurfaceVariant;
@@ -119,18 +136,25 @@ class TodaySummaryCard extends ConsumerWidget {
                                   Row(
                                     children: [
                                       CircleAvatar(
-                                          radius: 5, backgroundColor: color),
+                                        radius: 5,
+                                        backgroundColor: color,
+                                      ),
                                       const SizedBox(width: 8),
                                       Expanded(
-                                        child: Text(name,
-                                            style: theme.textTheme.bodyMedium,
-                                            overflow: TextOverflow.ellipsis),
+                                        child: Text(
+                                          name,
+                                          style: theme.textTheme.bodyMedium,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
                                       ),
                                       Text(
                                         formatHuman(entry.value),
-                                        style: theme.textTheme.bodySmall?.copyWith(
-                                            color: theme.colorScheme
-                                                .onSurfaceVariant),
+                                        style: theme.textTheme.bodySmall
+                                            ?.copyWith(
+                                              color: theme
+                                                  .colorScheme
+                                                  .onSurfaceVariant,
+                                            ),
                                       ),
                                     ],
                                   ),
@@ -141,9 +165,11 @@ class TodaySummaryCard extends ConsumerWidget {
                                       value: entry.value / maxSeconds,
                                       minHeight: 8,
                                       backgroundColor: theme
-                                          .colorScheme.surfaceContainerHighest,
+                                          .colorScheme
+                                          .surfaceContainerHighest,
                                       valueColor: AlwaysStoppedAnimation<Color>(
-                                          color),
+                                        color,
+                                      ),
                                     ),
                                   ),
                                 ],

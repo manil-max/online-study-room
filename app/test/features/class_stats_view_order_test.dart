@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -5,15 +6,11 @@ import 'package:online_study_room/data/models/daily_stat.dart';
 import 'package:online_study_room/data/models/profile.dart';
 import 'package:online_study_room/features/stats/widgets/class_stats_view.dart';
 
-Profile _profile(String id, String name) => Profile(
-      id: id,
-      displayName: name,
-      createdAt: DateTime(2026, 1, 1),
-    );
+Profile _profile(String id, String name) =>
+    Profile(id: id, displayName: name, createdAt: DateTime(2026, 1, 1));
 
 void main() {
-  testWidgets(
-      'ClassStatsView bölümleri §8.3 sırasında dizilir '
+  testWidgets('ClassStatsView bölümleri §8.3 sırasında dizilir '
       '(hedef → özet → sıralama → günlük trend → uzun eğilim → tüm zamanlar → '
       'karşılaştırma)', (tester) async {
     // İç bölümlerin (fl_chart + heat tablo) hepsinin build olması için uzun viewport;
@@ -40,6 +37,9 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         child: MaterialApp(
+          locale: const Locale('tr'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: ClassStatsView(
               stats: stats,
@@ -64,22 +64,37 @@ void main() {
     final goal = topOf('Bugünkü grup hedefi');
     final summary = topOf('Kişi başı ort.');
     final ranking = topOf('Sıralama');
-    final dailyTrend = topOf('Grup günlük trendi (son 7 gün · Hafta)');
-    final longTrend = topOf('Grup eğilimi (son 7 gün · Hafta)');
+    final dailyTrend = topOf('Grup günlük trendi (son 7 gün) · 7 gün · Hafta');
+    final longTrend = topOf('Grup eğilimi (son 30 gün) · 7 gün · Hafta');
     final allTime = topOf('Tüm zamanlar');
     final comparison = topOf('Karşılaştırma tablosu');
 
     expect(goal < summary, isTrue, reason: 'hedef, özetin üstünde olmalı');
-    expect(summary < ranking, isTrue,
-        reason: 'özet, sıralamanın üstünde olmalı');
-    expect(ranking < dailyTrend, isTrue,
-        reason: 'sıralama, günlük trendin ÜSTÜNDE olmalı (kullanıcı isteği)');
-    expect(dailyTrend < longTrend, isTrue,
-        reason: 'günlük trend, uzun eğilimin üstünde olmalı');
-    expect(longTrend < allTime, isTrue,
-        reason: 'uzun eğilim, tüm zamanların üstünde olmalı');
-    expect(allTime < comparison, isTrue,
-        reason: 'tüm zamanlar, karşılaştırmanın üstünde olmalı');
+    expect(
+      summary < ranking,
+      isTrue,
+      reason: 'özet, sıralamanın üstünde olmalı',
+    );
+    expect(
+      ranking < dailyTrend,
+      isTrue,
+      reason: 'sıralama, günlük trendin ÜSTÜNDE olmalı (kullanıcı isteği)',
+    );
+    expect(
+      dailyTrend < longTrend,
+      isTrue,
+      reason: 'günlük trend, uzun eğilimin üstünde olmalı',
+    );
+    expect(
+      longTrend < allTime,
+      isTrue,
+      reason: 'uzun eğilim, tüm zamanların üstünde olmalı',
+    );
+    expect(
+      allTime < comparison,
+      isTrue,
+      reason: 'tüm zamanlar, karşılaştırmanın üstünde olmalı',
+    );
 
     // Sıralama gerçekten dolu render olur (ölü bölüm değil): geçerli kullanıcı
     // "(sen)" etiketiyle işaretli bir leaderboard satırı olarak görünür.

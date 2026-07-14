@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -28,7 +29,7 @@ class LeaderboardCard extends ConsumerWidget {
 
     if (group == null) {
       return GroupCardShell(
-        title: 'Grup sıralaması',
+        title: AppLocalizations.of(context).homeGrupSiralamasi,
         onCreateGroup: () => createGroupFlow(context, ref),
         onJoinGroup: () => joinGroupFlow(context, ref),
       );
@@ -108,7 +109,7 @@ class LeaderboardCard extends ConsumerWidget {
               children: [
                 Flexible(
                   child: Text(
-                    'Sıralama',
+                    AppLocalizations.of(context).homeSiralama,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.titleMedium,
@@ -139,7 +140,7 @@ class LeaderboardCard extends ConsumerWidget {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    'Grup hedefi',
+                    AppLocalizations.of(context).homeGrupHedefi,
                     style: theme.textTheme.labelMedium?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
@@ -194,7 +195,7 @@ class LeaderboardCard extends ConsumerWidget {
           );
 
           final emptyText = Text(
-            'Bugün henüz kimse çalışmamış.',
+            AppLocalizations.of(context).homeBugunHenuzKimseCalismamis,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -265,13 +266,20 @@ class _Row extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final name = (member != null && !member!.isActive)
-        ? 'Eski Grup Üyesi'
+        ? AppLocalizations.of(context).homeEskiGrupUyesi
         : (member?.displayName.isNotEmpty == true
               ? member!.displayName
-              : 'İsimsiz');
+              : AppLocalizations.of(context).homeIsimsiz);
     // Üzerine gelince özet; tıklayınca sosyal profil (isim/PP her yerde).
-    final brief = StringBuffer('$rank. · Bugün ${formatHuman(seconds)}');
-    if (streak > 0) brief.write(' · 🔥$streak gün');
+    final brief = StringBuffer(
+      '$rank. · ${AppLocalizations.of(context).homeBugun} '
+      '${formatHuman(seconds)}',
+    );
+    if (streak > 0) {
+      brief.write(
+        ' · 🔥${AppLocalizations.of(context).homeOGun(streak.toString())}',
+      );
+    }
     final canOpenProfile = member != null && member!.isActive;
     return Tooltip(
       message: brief.toString(),
@@ -302,10 +310,7 @@ class _Row extends StatelessWidget {
                   radius: 14,
                 )
               else
-                CrownedAvatar(
-                  displayName: name,
-                  radius: 14,
-                ),
+                CrownedAvatar(displayName: name, radius: 14),
               const SizedBox(width: 8),
               if (!isCompact) ...[
                 Expanded(

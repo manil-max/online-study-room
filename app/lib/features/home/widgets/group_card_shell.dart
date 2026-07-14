@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 
 /// Grup kartları için "henüz grupta değilsin" yer tutucusu.
@@ -35,7 +36,7 @@ class GroupCardShell extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Bir gruba katılınca burada görünür.',
+                      AppLocalizations.of(context).homeBirGrubaKatilincaBurada,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
@@ -53,13 +54,15 @@ class GroupCardShell extends StatelessWidget {
                       FilledButton.tonalIcon(
                         onPressed: onCreateGroup,
                         icon: const Icon(Icons.add),
-                        label: const Text('Grup oluştur'),
+                        label: Text(
+                          AppLocalizations.of(context).homeGrupOlustur,
+                        ),
                       ),
                     if (onJoinGroup != null)
                       OutlinedButton.icon(
                         onPressed: onJoinGroup,
                         icon: const Icon(Icons.login),
-                        label: const Text('Koda katıl'),
+                        label: Text(AppLocalizations.of(context).homeKodaKatil),
                       ),
                   ],
                 ),

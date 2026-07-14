@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -25,8 +26,10 @@ class WeekdayWeekendCard extends ConsumerWidget {
     final weekendColor = subjectColor('chart-4');
 
     return CardScaffold(
-      header:
-          Text('Hafta içi / hafta sonu', style: theme.textTheme.titleMedium),
+      header: Text(
+        AppLocalizations.of(context).homeHaftaIciHaftaSonu,
+        style: theme.textTheme.titleMedium,
+      ),
       minBodyHeight: 88,
       fallbackBodyHeight: 110,
       bodyBuilder: (context, bodyHeight) => SizedBox(
@@ -36,7 +39,7 @@ class WeekdayWeekendCard extends ConsumerWidget {
           children: [
             Expanded(
               child: _Bar(
-                label: 'Hafta içi',
+                label: AppLocalizations.of(context).homeHaftaIci,
                 seconds: split.weekday,
                 fraction: split.weekday / max,
                 color: weekdayColor,
@@ -44,7 +47,7 @@ class WeekdayWeekendCard extends ConsumerWidget {
             ),
             Expanded(
               child: _Bar(
-                label: 'Hafta sonu',
+                label: AppLocalizations.of(context).homeHaftaSonu,
                 seconds: split.weekend,
                 fraction: split.weekend / max,
                 color: weekendColor,
@@ -99,8 +102,9 @@ class _Bar extends StatelessWidget {
                     formatHuman(seconds),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodyMedium
-                        ?.copyWith(fontWeight: FontWeight.w600),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ],

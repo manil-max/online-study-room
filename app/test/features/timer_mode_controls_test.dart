@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,6 +13,9 @@ Future<Widget> _harness() async {
   return ProviderScope(
     overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
     child: const MaterialApp(
+      locale: Locale('tr'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: Scaffold(
         body: Center(child: SizedBox(width: 400, child: TimerModeControls())),
       ),
@@ -29,8 +33,9 @@ void main() {
     expect(find.text('Çalışma dk'), findsNothing);
   });
 
-  testWidgets('Pomodoro seçilince çalışma/mola/döngü editörleri gelir',
-      (tester) async {
+  testWidgets('Pomodoro seçilince çalışma/mola/döngü editörleri gelir', (
+    tester,
+  ) async {
     await tester.pumpWidget(await _harness());
     await tester.pumpAndSettle();
 

@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -19,12 +20,14 @@ class StatsScreen extends ConsumerWidget {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: isDesktopWindow ? null : const Text('İstatistik'),
+          title: isDesktopWindow
+              ? null
+              : Text(AppLocalizations.of(context).statsIstatistik),
           toolbarHeight: isDesktopWindow ? 0 : kToolbarHeight,
-          bottom: const TabBar(
+          bottom: TabBar(
             tabs: [
-              Tab(text: 'Kişisel'),
-              Tab(text: 'Grup'),
+              Tab(text: AppLocalizations.of(context).statsKisisel),
+              Tab(text: AppLocalizations.of(context).statsGrup),
             ],
           ),
         ),
@@ -34,12 +37,7 @@ class StatsScreen extends ConsumerWidget {
             // Ortak dönem — her iki sekme ve alt seçiciler dinler.
             StatsPeriodBar(),
             Expanded(
-              child: TabBarView(
-                children: [
-                  _PersonalTab(),
-                  _ClassTab(),
-                ],
-              ),
+              child: TabBarView(children: [_PersonalTab(), _ClassTab()]),
             ),
           ],
         ),
@@ -57,7 +55,9 @@ class _PersonalTab extends ConsumerWidget {
     final summaryAsync = ref.watch(userStudySummaryProvider);
     return sessionsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('İstatistik yüklenemedi: $e')),
+      error: (_, _) => Center(
+        child: Text(AppLocalizations.of(context).authBeklenmeyenBirHataOlustu),
+      ),
       data: (sessions) => PersonalStatsView(
         sessions: sessions,
         summary: summaryAsync.asData?.value,
@@ -78,7 +78,7 @@ class _ClassTab extends ConsumerWidget {
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Text(
-            'Grup istatistiklerini görmek için önce bir gruba katıl.',
+            AppLocalizations.of(context).statsGrupIstatistikleriniGormekIcin,
             textAlign: TextAlign.center,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
@@ -94,7 +94,9 @@ class _ClassTab extends ConsumerWidget {
 
     return statsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('İstatistik yüklenemedi: $e')),
+      error: (_, _) => Center(
+        child: Text(AppLocalizations.of(context).authBeklenmeyenBirHataOlustu),
+      ),
       data: (stats) => ClassStatsView(
         stats: stats,
         members: members,

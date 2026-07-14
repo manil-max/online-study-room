@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -39,7 +40,12 @@ class _WeeklyChartCardState extends ConsumerState<WeeklyChartCard> {
           children: [
             Row(
               children: [
-                Flexible(child: cardTitle(context, 'Çalışma grafiği')),
+                Flexible(
+                  child: cardTitle(
+                    context,
+                    AppLocalizations.of(context).homeCalismaGrafigi,
+                  ),
+                ),
                 const Spacer(),
                 if (isCompact)
                   _DayFilter(
@@ -51,8 +57,9 @@ class _WeeklyChartCardState extends ConsumerState<WeeklyChartCard> {
                 if (!isCompact)
                   Text(
                     formatHuman(total),
-                    style: theme.textTheme.titleMedium
-                        ?.copyWith(color: theme.colorScheme.primary),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: theme.colorScheme.primary,
+                    ),
                   ),
               ],
             ),
@@ -60,8 +67,9 @@ class _WeeklyChartCardState extends ConsumerState<WeeklyChartCard> {
               const SizedBox(height: 4),
               Text(
                 formatHuman(total),
-                style: theme.textTheme.titleMedium
-                    ?.copyWith(color: theme.colorScheme.primary),
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: theme.colorScheme.primary,
+                ),
               ),
             ],
             if (!isCompact) ...[
@@ -113,7 +121,10 @@ class _DayFilter extends StatelessWidget {
         icon: const Icon(Icons.arrow_drop_down, size: 20),
         items: [
           for (final o in options)
-            DropdownMenuItem(value: o, child: Text('$o gün')),
+            DropdownMenuItem(
+              value: o,
+              child: Text(AppLocalizations.of(context).homeOGun(o.toString())),
+            ),
         ],
         onChanged: (v) {
           if (v != null) onChanged(v);
@@ -125,7 +136,10 @@ class _DayFilter extends StatelessWidget {
       child: SegmentedButton<int>(
         segments: [
           for (final o in options)
-            ButtonSegment(value: o, label: Text('$o gün')),
+            ButtonSegment(
+              value: o,
+              label: Text(AppLocalizations.of(context).homeOGun(o.toString())),
+            ),
         ],
         selected: {value},
         onSelectionChanged: (s) => onChanged(s.first),

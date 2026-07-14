@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,9 +9,19 @@ import '../../../data/models/study_session.dart';
 import '../../../data/models/subject.dart';
 import '../../../data/providers/subject_providers.dart';
 
-const _kMonthsShort = [
-  'Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz',
-  'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara',
+List<String> _months(BuildContext context) => [
+  AppLocalizations.of(context).statsOca,
+  AppLocalizations.of(context).statsSub,
+  AppLocalizations.of(context).statsMar,
+  AppLocalizations.of(context).statsNis,
+  AppLocalizations.of(context).statsMay,
+  AppLocalizations.of(context).statsHaz,
+  AppLocalizations.of(context).statsTem,
+  AppLocalizations.of(context).statsAgu,
+  AppLocalizations.of(context).statsEyl,
+  AppLocalizations.of(context).statsEki,
+  AppLocalizations.of(context).statsKas,
+  AppLocalizations.of(context).statsAra,
 ];
 
 /// Oturum dağılım grafiği (scatter): son [days] gündeki her çalışma oturumu bir
@@ -30,6 +41,7 @@ class SessionScatterChart extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final months = _months(context);
     final subjects = ref.watch(userSubjectsProvider).value ?? const <Subject>[];
     final colorBySubject = {for (final s in subjects) s.id: s.color};
 
@@ -42,10 +54,11 @@ class SessionScatterChart extends ConsumerWidget {
         height: height,
         child: Center(
           child: Text(
-            'Son $days günde oturum yok — dağılım burada görünecek.',
+            AppLocalizations.of(context).statsBuDonemdeCalismaKaydin,
             textAlign: TextAlign.center,
-            style: theme.textTheme.bodySmall
-                ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
           ),
         ),
       );
@@ -64,23 +77,24 @@ class SessionScatterChart extends ConsumerWidget {
       final x = s.day.difference(startDay).inDays.toDouble();
       final y = s.durationSeconds / 60;
       if (y > maxMin) maxMin = y;
-      spots.add(ScatterSpot(
-        x,
-        y,
-        dotPainter: FlDotCirclePainter(
-          color: colorOf(s.subjectId).withValues(alpha: 0.85),
-          radius: 5,
-          strokeWidth: 1,
-          strokeColor: theme.colorScheme.surface,
+      spots.add(
+        ScatterSpot(
+          x,
+          y,
+          dotPainter: FlDotCirclePainter(
+            color: colorOf(s.subjectId).withValues(alpha: 0.85),
+            radius: 5,
+            strokeWidth: 1,
+            strokeColor: theme.colorScheme.surface,
+          ),
         ),
-      ));
+      );
     }
     final maxY = maxMin <= 0 ? 60.0 : maxMin * 1.2;
 
     DateTime dateAt(double x) => startDay.add(Duration(days: x.round()));
     // Alt eksende ~3-4 tarih etiketi (dar kartta da karışmasın).
-    final step =
-        (days / 3).ceilToDouble().clamp(1, days.toDouble()).toDouble();
+    final step = (days / 3).ceilToDouble().clamp(1, days.toDouble()).toDouble();
 
     return SizedBox(
       height: height,
@@ -108,14 +122,17 @@ class SessionScatterChart extends ConsumerWidget {
                 getTitlesWidget: (value, meta) => Text(
                   '${value.round()}',
                   style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant),
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ),
             ),
-            rightTitles:
-                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            topTitles:
-                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            rightTitles: const AxisTitles(
+              sideTitles: SideTitles(showTitles: false),
+            ),
+            topTitles: const AxisTitles(
+              sideTitles: SideTitles(showTitles: false),
+            ),
             bottomTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
@@ -132,10 +149,13 @@ class SessionScatterChart extends ConsumerWidget {
                   final d = dateAt(i.toDouble());
                   return Padding(
                     padding: const EdgeInsets.only(top: 4),
-                    child: Text('${d.day} ${_kMonthsShort[d.month - 1]}',
-                        style: theme.textTheme.labelSmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                            fontSize: 9)),
+                    child: Text(
+                      '${d.day} ${months[d.month - 1]}',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        fontSize: 9,
+                      ),
+                    ),
                   );
                 },
               ),
@@ -151,7 +171,7 @@ class SessionScatterChart extends ConsumerWidget {
                 final m = mins % 60;
                 final dur = h > 0 ? '$h sa $m dk' : '$m dk';
                 return ScatterTooltipItem(
-                  '${d.day} ${_kMonthsShort[d.month - 1]}\n$dur',
+                  '${d.day} ${months[d.month - 1]}\n$dur',
                   textStyle: TextStyle(
                     color: theme.colorScheme.onInverseSurface,
                     fontWeight: FontWeight.w500,

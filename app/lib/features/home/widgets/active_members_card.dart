@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -28,7 +29,7 @@ class ActiveMembersCard extends ConsumerWidget {
     final group = ref.watch(userGroupProvider).value;
     if (group == null) {
       return GroupCardShell(
-        title: 'Şu an çalışanlar',
+        title: AppLocalizations.of(context).homeSuAnCalisanlar,
         onCreateGroup: () => createGroupFlow(context, ref),
         onJoinGroup: () => joinGroupFlow(context, ref),
       );
@@ -82,10 +83,10 @@ class ActiveMembersCard extends ConsumerWidget {
             final p = visibleActive[i];
             final member = memberById[p.userId];
             final name = (member != null && !member.isActive)
-                ? 'Eski Grup Üyesi'
+                ? AppLocalizations.of(context).homeEskiGrupUyesi
                 : (member?.displayName.isNotEmpty == true
                       ? member!.displayName
-                      : 'İsimsiz');
+                      : AppLocalizations.of(context).homeIsimsiz);
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: 5),
               child: _ActiveRow(
@@ -103,7 +104,7 @@ class ActiveMembersCard extends ConsumerWidget {
             children: [
               Expanded(
                 child: Text(
-                  'Şu an çalışanlar',
+                  AppLocalizations.of(context).homeSuAnCalisanlar,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.titleMedium,
@@ -128,7 +129,7 @@ class ActiveMembersCard extends ConsumerWidget {
           );
 
           final emptyText = Text(
-            'Şu an çalışan kimse yok.',
+            AppLocalizations.of(context).homeSuAnCalisanKimse,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),

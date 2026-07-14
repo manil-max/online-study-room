@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -36,7 +37,7 @@ class StudyTimerCard extends ConsumerStatefulWidget {
 class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
   Timer? _ticker;
 
-  /// Durdur/Mola anında "Bugün" toplamını geçici dondurur: biten oturum
+  /// Durdur/Mola anında bugünün toplamını geçici dondurur: biten oturum
   /// veritabanına yazılıp kayıtlı toplam güncellenene kadar değer düşmesin.
   int? _frozenTotal;
 
@@ -74,11 +75,12 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
   void _onTimerEvent(TimerEvent event) {
     HapticFeedback.mediumImpact();
     SystemSound.play(SystemSoundType.alert);
+    final l10n = AppLocalizations.of(context);
     final msg = switch (event) {
-      TimerEvent.workDone => 'Mola zamanı 🍵',
-      TimerEvent.breakDone => 'Mola bitti, çalışmaya dön 💪',
-      TimerEvent.countdownDone => 'Süre doldu ✅',
-      TimerEvent.allDone => 'Pomodoro tamamlandı 🎉',
+      TimerEvent.workDone => l10n.classroomMola,
+      TimerEvent.breakDone => l10n.classroomCalismayaBasla,
+      TimerEvent.countdownDone => l10n.homeBitti,
+      TimerEvent.allDone => l10n.homeBitti,
     };
     final route = ModalRoute.of(context);
     if (route?.isCurrent ?? false) {
@@ -96,11 +98,14 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
     if (result == null) return;
     if (!context.mounted) return;
     final messenger = ScaffoldMessenger.of(context);
+    final genericError = AppLocalizations.of(
+      context,
+    ).authBeklenmeyenBirHataOlustu;
     try {
       await ref.read(authRepositoryProvider).updateDailyGoal(result);
       ref.invalidate(authStateProvider);
-    } on AuthException catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+    } on AuthException {
+      messenger.showSnackBar(SnackBar(content: Text(genericError)));
     }
   }
 
@@ -112,7 +117,7 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
     _syncTicker(timer.isRunning);
     final recorded = ref.watch(todayRecordedSecondsProvider);
 
-    // Durdurmada "Bugün"ü dondur + faz geçişinde ses/titreşim/uyarı (§2H).
+    // Durdurmada bugünün toplamını dondur + faz geçişinde ses/titreşim/uyarı (§2H).
     ref.listen<StudyTimerState>(studyTimerProvider, (prev, next) {
       if (prev == null) return;
       if (prev.isRunning && !next.isRunning && prev.startedAt != null) {
@@ -139,7 +144,7 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
     final displaySeconds = target == null
         ? elapsed
         : (timer.isRunning ? (target - elapsed).clamp(0, target) : target);
-    // "Bugün" toplamına yalnız ÇALIŞMA fazının canlı süresi eklenir (mola hariç).
+    // Bugünün toplamına yalnız ÇALIŞMA fazının canlı süresi eklenir (mola hariç).
     final liveWork = (timer.isRunning && inWork) ? elapsed : 0;
     final base = recorded + liveWork;
     // Kayıtlı toplam dondurulan değere yetiştiyse dondurmayı bırak.
@@ -176,7 +181,9 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
                 child: Row(
                   children: [
                     IconButton(
-                      tooltip: 'Geçmiş oturumlar',
+                      tooltip: AppLocalizations.of(
+                        context,
+                      ).classroomGecmisOturumlar,
                       icon: const Icon(Icons.history),
                       onPressed: () => Navigator.of(context).push(
                         MaterialPageRoute(
@@ -186,13 +193,17 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
                     ),
                     Builder(
                       builder: (iconContext) => IconButton(
-                        tooltip: 'Saat görünümü',
+                        tooltip: AppLocalizations.of(
+                          context,
+                        ).classroomSaatGorunumu,
                         icon: const Icon(Icons.tune),
                         onPressed: () => showClockStyleMenu(iconContext, ref),
                       ),
                     ),
                     IconButton(
-                      tooltip: 'Tam ekran odak',
+                      tooltip: AppLocalizations.of(
+                        context,
+                      ).classroomTamEkranOdak,
                       icon: const Icon(Icons.fullscreen),
                       onPressed: () => openFocusTimer(context),
                     ),
@@ -213,7 +224,7 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
                   child: Column(
                     children: [
                       Text(
-                        'Bugün',
+                        AppLocalizations.of(context).classroomBugun,
                         style: theme.textTheme.labelLarge?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                         ),
@@ -274,19 +285,27 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
                                 ),
                                 onPressed: notifier.stop,
                                 icon: const Icon(Icons.stop),
-                                label: const Text('Durdur'),
+                                label: Text(
+                                  AppLocalizations.of(context).classroomDurdur,
+                                ),
                               )
                             : FilledButton.icon(
                                 onPressed: notifier.start,
                                 icon: const Icon(Icons.play_arrow),
-                                label: const Text('Çalışmaya başla'),
+                                label: Text(
+                                  AppLocalizations.of(
+                                    context,
+                                  ).classroomCalismayaBasla,
+                                ),
                               ),
                       ),
                       const SizedBox(height: 4),
                       TextButton.icon(
                         onPressed: () => addManualSessionFlow(context, ref),
                         icon: const Icon(Icons.edit_calendar, size: 18),
-                        label: const Text('Manuel süre ekle'),
+                        label: Text(
+                          AppLocalizations.of(context).classroomManuelSureEkle,
+                        ),
                       ),
                     ],
                   ),
@@ -300,7 +319,7 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
   }
 }
 
-/// Sayaç için ders seçici — kapalıyken seçili dersi (veya "Genel") gösteren
+/// Sayaç için ders seçici — kapalıyken seçili dersi (veya "Genel"i) gösteren
 /// bir "dropdown" hap; dururken dokununca ders listesi alt sayfası açılır
 /// (Claude Code model seçici mantığı). Çalışırken kilitlidir (yalnız etiket).
 /// Ders seçimi opsiyoneldir (§3.7).
@@ -328,7 +347,7 @@ class _SubjectSelector extends StatelessWidget {
     final dotColor = selected != null
         ? subjectColor(selected.color)
         : theme.colorScheme.onSurfaceVariant;
-    final label = selected?.name ?? 'Genel';
+    final label = selected?.name ?? AppLocalizations.of(context).classroomGenel;
 
     final content = Row(
       mainAxisSize: MainAxisSize.min,
@@ -378,7 +397,7 @@ class _SubjectSelector extends StatelessWidget {
           enabled: false,
           height: 32,
           child: Text(
-            'Ders',
+            AppLocalizations.of(context).classroomDers,
             style: theme.textTheme.labelMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -404,13 +423,13 @@ class _SubjectSelector extends StatelessWidget {
             ),
           ),
         const PopupMenuDivider(),
-        const PopupMenuItem<_SubjectMenuResult>(
-          value: _SubjectMenuResult.edit(),
+        PopupMenuItem<_SubjectMenuResult>(
+          value: const _SubjectMenuResult.edit(),
           child: Row(
             children: [
               Icon(Icons.tune, size: 20),
               SizedBox(width: 12),
-              Text('Dersleri düzenle'),
+              Text(AppLocalizations.of(context).classroomDersleriDuzenle),
             ],
           ),
         ),
@@ -429,7 +448,7 @@ class _SubjectSelector extends StatelessWidget {
   }
 }
 
-/// Ders menüsü sonucu: bir ders seç (null = Genel) veya "Dersleri düzenle".
+/// Ders menüsü sonucu: bir ders seç (null = Genel) veya dersleri düzenle.
 class _SubjectMenuResult {
   const _SubjectMenuResult.pick(this.subjectId) : isEdit = false;
   const _SubjectMenuResult.edit() : subjectId = null, isEdit = true;
@@ -495,7 +514,7 @@ class _GoalProgress extends StatelessWidget {
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
-                    'Günlük hedef',
+                    AppLocalizations.of(context).classroomGunlukHedef,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.labelMedium?.copyWith(color: muted),

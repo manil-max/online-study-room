@@ -67,10 +67,10 @@ void main() {
     expect(find.text('Ana Sayfa ızgarası'), findsNothing);
     expect(find.text('Izgara yoğunluğu'), findsOneWidget);
     expect(find.text('Otomatik'), findsNothing);
-    await tester.tap(find.text('6 sütun'));
+    await tester.tap(find.text('6'));
     await tester.pumpAndSettle();
-    expect(find.text('16 sütun'), findsOneWidget);
-    await tester.tap(find.text('16 sütun'));
+    expect(find.text('16'), findsOneWidget);
+    await tester.tap(find.text('16'));
     await tester.pumpAndSettle();
 
     expect(find.text('Kamp ateşi'), findsNothing);

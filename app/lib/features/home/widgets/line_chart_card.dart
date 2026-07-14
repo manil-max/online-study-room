@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -36,20 +37,38 @@ class _LineChartCardState extends ConsumerState<LineChartCard> {
                 isDense: true,
                 underline: const SizedBox.shrink(),
                 icon: const Icon(Icons.arrow_drop_down, size: 20),
-                items: const [
-                  DropdownMenuItem(value: 14, child: Text('14 gün')),
-                  DropdownMenuItem(value: 30, child: Text('30 gün')),
-                  DropdownMenuItem(value: 90, child: Text('90 gün')),
+                items: [
+                  DropdownMenuItem(
+                    value: 14,
+                    child: Text(AppLocalizations.of(context).homeValue14Gun),
+                  ),
+                  DropdownMenuItem(
+                    value: 30,
+                    child: Text(AppLocalizations.of(context).homeValue30Gun),
+                  ),
+                  DropdownMenuItem(
+                    value: 90,
+                    child: Text(AppLocalizations.of(context).homeValue90Gun),
+                  ),
                 ],
                 onChanged: (v) {
                   if (v != null) setState(() => _days = v);
                 },
               )
             : SegmentedButton<int>(
-                segments: const [
-                  ButtonSegment(value: 14, label: Text('14 gün')),
-                  ButtonSegment(value: 30, label: Text('30 gün')),
-                  ButtonSegment(value: 90, label: Text('90 gün')),
+                segments: [
+                  ButtonSegment(
+                    value: 14,
+                    label: Text(AppLocalizations.of(context).homeValue14Gun),
+                  ),
+                  ButtonSegment(
+                    value: 30,
+                    label: Text(AppLocalizations.of(context).homeValue30Gun),
+                  ),
+                  ButtonSegment(
+                    value: 90,
+                    label: Text(AppLocalizations.of(context).homeValue90Gun),
+                  ),
                 ],
                 selected: {_days},
                 onSelectionChanged: (s) => setState(() => _days = s.first),
@@ -68,14 +87,20 @@ class _LineChartCardState extends ConsumerState<LineChartCard> {
           children: [
             Row(
               children: [
-                Flexible(child: cardTitle(context, 'Eğilim')),
+                Flexible(
+                  child: cardTitle(
+                    context,
+                    AppLocalizations.of(context).homeEgilim,
+                  ),
+                ),
                 const Spacer(),
                 if (isCompact) selector,
                 if (!isCompact)
                   Text(
                     formatHuman(total),
-                    style: theme.textTheme.titleMedium
-                        ?.copyWith(color: theme.colorScheme.primary),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: theme.colorScheme.primary,
+                    ),
                   ),
               ],
             ),
@@ -83,8 +108,9 @@ class _LineChartCardState extends ConsumerState<LineChartCard> {
               const SizedBox(height: 4),
               Text(
                 formatHuman(total),
-                style: theme.textTheme.titleMedium
-                    ?.copyWith(color: theme.colorScheme.primary),
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: theme.colorScheme.primary,
+                ),
               ),
             ],
             if (!isCompact) ...[

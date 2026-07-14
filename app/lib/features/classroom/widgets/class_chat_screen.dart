@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 
 import '../../../data/models/study_group.dart';
@@ -18,7 +19,7 @@ class ClassChatScreen extends StatelessWidget {
     );
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Sohbet')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context).classroomSohbet)),
       body: ListView(
         padding: getSafeVerticalPadding(context),
         children: [

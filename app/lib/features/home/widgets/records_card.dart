@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -18,7 +19,7 @@ class RecordsCard extends ConsumerWidget {
     final sessions = ref.watch(userSessionsProvider).value ?? const [];
 
     return CardScaffold(
-      header: cardTitle(context, 'Rekorlar'),
+      header: cardTitle(context, AppLocalizations.of(context).homeRekorlar),
       bodyBuilder: (context, bodyHeight) => SizedBox(
         height: bodyHeight,
         child: LayoutBuilder(

@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -85,6 +86,9 @@ void main() {
           ProviderScope(
             overrides: overrides,
             child: MaterialApp(
+              locale: const Locale('tr'),
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
               home: Scaffold(
                 body: Center(
                   child: SizedBox(
@@ -121,6 +125,9 @@ void main() {
       ProviderScope(
         overrides: overrides,
         child: MaterialApp(
+          locale: const Locale('tr'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: Center(
               child: SizedBox(
@@ -229,6 +236,9 @@ void main() {
           ProviderScope(
             overrides: groupOverrides,
             child: MaterialApp(
+              locale: const Locale('tr'),
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
               home: Scaffold(
                 body: Center(
                   child: SizedBox(

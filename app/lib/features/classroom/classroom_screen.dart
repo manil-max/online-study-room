@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -29,7 +30,9 @@ class ClassroomScreen extends ConsumerWidget {
       data: (group) =>
           group == null ? const _NoGroupView() : _GroupView(group: group),
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Bir hata oluştu: $e')),
+      error: (_, _) => Center(
+        child: Text(AppLocalizations.of(context).authBeklenmeyenBirHataOlustu),
+      ),
     );
 
     // Windows: sol rail yeter; büyük başlık/sağ panel yok.
@@ -40,7 +43,7 @@ class ClassroomScreen extends ConsumerWidget {
         actions: [
           Builder(
             builder: (iconContext) => IconButton(
-              tooltip: 'Grup değiştir',
+              tooltip: AppLocalizations.of(context).classroomGrupDegistir,
               icon: const Icon(Icons.swap_horiz),
               onPressed: () => showClassSwitcher(iconContext, ref),
             ),
@@ -68,12 +71,12 @@ class _NoGroupView extends ConsumerWidget {
             Icon(Icons.groups, size: 72, color: theme.colorScheme.primary),
             const SizedBox(height: 16),
             Text(
-              'Henüz bir grupta değilsin',
+              AppLocalizations.of(context).classroomHenuzBirGruptaDegilsin,
               style: theme.textTheme.titleLarge,
             ),
             const SizedBox(height: 8),
             Text(
-              'Yeni bir grup oluştur ya da davet koduyla bir gruba katıl.',
+              AppLocalizations.of(context).classroomYeniBirGrupOlustur,
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
@@ -83,13 +86,13 @@ class _NoGroupView extends ConsumerWidget {
             FilledButton.icon(
               onPressed: () => createGroupFlow(context, ref),
               icon: const Icon(Icons.add),
-              label: const Text('Grup oluştur'),
+              label: Text(AppLocalizations.of(context).classroomGrupOlustur),
             ),
             const SizedBox(height: 8),
             OutlinedButton.icon(
               onPressed: () => joinGroupFlow(context, ref),
               icon: const Icon(Icons.login),
-              label: const Text('Koda katıl'),
+              label: Text(AppLocalizations.of(context).classroomKodaKatil),
             ),
           ],
         ),
@@ -155,14 +158,14 @@ class _CompactGroupHeader extends StatelessWidget {
           ),
         ),
         IconButton(
-          tooltip: 'Sohbet',
+          tooltip: AppLocalizations.of(context).classroomSohbet,
           icon: const Icon(Icons.forum_outlined),
           onPressed: () => Navigator.of(context).push(
             MaterialPageRoute(builder: (_) => ClassChatScreen(group: group)),
           ),
         ),
         IconButton(
-          tooltip: 'Ayarlar',
+          tooltip: AppLocalizations.of(context).classroomAyarlar,
           icon: const Icon(Icons.settings_outlined),
           onPressed: () => Navigator.of(context).push(
             MaterialPageRoute(builder: (_) => ClassDetailScreen(group: group)),
@@ -173,7 +176,7 @@ class _CompactGroupHeader extends StatelessWidget {
   }
 }
 
-/// Alttaki açılır "Grup bilgileri" paneli: davet kodu + kopyala. Varsayılan
+/// Alttaki açılır grup bilgileri paneli: davet kodu + kopyala. Varsayılan
 /// kapalıdır; operasyonel bilgi kamp ateşi sahnesinin üstünden alınıp buraya
 /// taşındı (§8.3 — davet kodu büyük alan kaplamamalı).
 class _GroupManagementTile extends StatelessWidget {
@@ -188,7 +191,7 @@ class _GroupManagementTile extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: ExpansionTile(
         leading: const Icon(Icons.info_outline),
-        title: const Text('Grup bilgileri'),
+        title: Text(AppLocalizations.of(context).classroomGrupBilgileri),
         childrenPadding: const EdgeInsets.fromLTRB(16, 0, 8, 12),
         children: [
           Row(
@@ -209,7 +212,7 @@ class _GroupManagementTile extends StatelessWidget {
                 ),
               ),
               IconButton(
-                tooltip: 'Kopyala',
+                tooltip: AppLocalizations.of(context).classroomKopyala,
                 icon: const Icon(Icons.copy, size: 18),
                 visualDensity: VisualDensity.compact,
                 onPressed: () async {
@@ -218,7 +221,13 @@ class _GroupManagementTile extends StatelessWidget {
                   );
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Davet kodu kopyalandı')),
+                      SnackBar(
+                        content: Text(
+                          AppLocalizations.of(
+                            context,
+                          ).classroomDavetKoduKopyalandi,
+                        ),
+                      ),
                     );
                   }
                 },

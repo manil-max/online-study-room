@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -92,7 +93,7 @@ class _FocusTimerScreenState extends ConsumerState<FocusTimerScreen> {
               alignment: Alignment.topLeft,
               child: Builder(
                 builder: (iconContext) => IconButton(
-                  tooltip: 'Saat görünümü',
+                  tooltip: AppLocalizations.of(context).classroomSaatGorunumu,
                   icon: const Icon(Icons.tune),
                   onPressed: () => showClockStyleMenu(iconContext, ref),
                 ),
@@ -101,7 +102,7 @@ class _FocusTimerScreenState extends ConsumerState<FocusTimerScreen> {
             Align(
               alignment: Alignment.topRight,
               child: IconButton(
-                tooltip: 'Küçült',
+                tooltip: AppLocalizations.of(context).classroomKucult,
                 icon: const Icon(Icons.fullscreen_exit),
                 onPressed: () => Navigator.of(context).maybePop(),
               ),
@@ -121,9 +122,11 @@ class _FocusTimerScreenState extends ConsumerState<FocusTimerScreen> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      selected?.name ?? 'Genel',
-                      style: theme.textTheme.titleMedium
-                          ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                      selected?.name ??
+                          AppLocalizations.of(context).classroomGenel,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 );
@@ -144,9 +147,11 @@ class _FocusTimerScreenState extends ConsumerState<FocusTimerScreen> {
                 );
 
                 final todayTextWidget = Text(
-                  'Bugün ${formatHumanSeconds(todayTotal)}',
-                  style: theme.textTheme.bodyMedium
-                      ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                  '${AppLocalizations.of(context).classroomBugun} '
+                  '${formatHumanSeconds(todayTotal)}',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 );
 
                 final startStopButton = SizedBox(
@@ -172,15 +177,14 @@ class _FocusTimerScreenState extends ConsumerState<FocusTimerScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Expanded(
-                          child: clockWidget,
-                        ),
+                        Expanded(child: clockWidget),
                         Expanded(
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               subjectWidget,
-                              if (timer.isRunning && timer.mode != TimerMode.stopwatch) ...[
+                              if (timer.isRunning &&
+                                  timer.mode != TimerMode.stopwatch) ...[
                                 const SizedBox(height: 12),
                                 TimerPhaseIndicator(timer: timer),
                               ],
@@ -201,7 +205,8 @@ class _FocusTimerScreenState extends ConsumerState<FocusTimerScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       subjectWidget,
-                      if (timer.isRunning && timer.mode != TimerMode.stopwatch) ...[
+                      if (timer.isRunning &&
+                          timer.mode != TimerMode.stopwatch) ...[
                         const SizedBox(height: 12),
                         TimerPhaseIndicator(timer: timer),
                       ],

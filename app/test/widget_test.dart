@@ -82,8 +82,8 @@ void main() {
     await tester.tap(find.text('Gruplar'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Grup oluştur'), findsOneWidget);
-    expect(find.text('Koda katıl'), findsOneWidget);
+    expect(find.text('Create group'), findsOneWidget);
+    expect(find.text('Join with code'), findsOneWidget);
   });
 
   testWidgets('İstatistik sekmesine geçilebilir', (tester) async {
@@ -123,8 +123,8 @@ void main() {
     await tester.tap(find.text('Gruplar'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Henüz bir grupta değilsin'), findsOneWidget);
-    expect(find.text('Grup oluştur'), findsOneWidget);
-    expect(find.text('Koda katıl'), findsOneWidget);
+    expect(find.text("You're not in a group yet"), findsOneWidget);
+    expect(find.text('Create group'), findsOneWidget);
+    expect(find.text('Join with code'), findsOneWidget);
   });
 }

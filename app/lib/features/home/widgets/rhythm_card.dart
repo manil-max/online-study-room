@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -19,7 +20,10 @@ class RhythmCard extends ConsumerWidget {
     final sessions = ref.watch(userSessionsProvider).value ?? const [];
 
     return CardScaffold(
-      header: cardTitle(context, 'Haftalık ritim'),
+      header: cardTitle(
+        context,
+        AppLocalizations.of(context).homeHaftalikRitim,
+      ),
       bodyBuilder: (context, bodyHeight) => SizedBox(
         height: bodyHeight,
         // Dikey + yatay kaydırma → kısa/dar hücrede taşma olmaz (§2E).

@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -24,7 +25,7 @@ class GroupTrendCard extends ConsumerWidget {
     final group = ref.watch(userGroupProvider).value;
     if (group == null) {
       return GroupCardShell(
-        title: 'Grup günlük trendi',
+        title: AppLocalizations.of(context).homeGrupGunlukTrendi,
         onCreateGroup: () => createGroupFlow(context, ref),
         onJoinGroup: () => joinGroupFlow(context, ref),
       );
@@ -47,7 +48,7 @@ class GroupTrendCard extends ConsumerWidget {
               children: [
                 Expanded(
                   child: Text(
-                    'Grup günlük trendi',
+                    AppLocalizations.of(context).homeGrupGunlukTrendi,
                     style: theme.textTheme.titleMedium,
                     overflow: TextOverflow.ellipsis,
                   ),

@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -16,8 +17,12 @@ import 'class_detail_screen.dart';
 /// ona göre konumlanır); sekmeye basılı tutunca [at] basış konumudur.
 /// [switchOnly] true ise yalnızca grup değiştirme (oluştur/katıl/⋮ gizli) —
 /// İstatistik gibi yerlerde sadece geçiş için.
-Future<void> showClassSwitcher(BuildContext context, WidgetRef ref,
-    {Offset? at, bool switchOnly = false}) {
+Future<void> showClassSwitcher(
+  BuildContext context,
+  WidgetRef ref, {
+  Offset? at,
+  bool switchOnly = false,
+}) {
   final theme = Theme.of(context);
   final groups = ref.read(userGroupsProvider).value ?? const <StudyGroup>[];
   final activeId = ref.read(userGroupProvider).value?.id;
@@ -27,18 +32,20 @@ Future<void> showClassSwitcher(BuildContext context, WidgetRef ref,
       enabled: false,
       height: 32,
       child: Text(
-        'Gruplarım',
-        style: theme.textTheme.labelMedium
-            ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+        AppLocalizations.of(context).classroomGruplarim,
+        style: theme.textTheme.labelMedium?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
       ),
     ),
     if (groups.isEmpty)
       PopupMenuItem<void>(
         enabled: false,
         child: Text(
-          'Henüz grup yok',
-          style: theme.textTheme.bodyMedium
-              ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+          AppLocalizations.of(context).classroomHenuzGrupYok,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
         ),
       ),
     for (final g in groups)
@@ -55,9 +62,7 @@ Future<void> showClassSwitcher(BuildContext context, WidgetRef ref,
                   ? theme.colorScheme.onPrimary
                   : theme.colorScheme.onSurfaceVariant,
               child: Text(
-                g.name.isNotEmpty
-                    ? g.name.characters.first.toUpperCase()
-                    : '?',
+                g.name.isNotEmpty ? g.name.characters.first.toUpperCase() : '?',
                 style: theme.textTheme.labelMedium,
               ),
             ),
@@ -73,21 +78,21 @@ Future<void> showClassSwitcher(BuildContext context, WidgetRef ref,
       const PopupMenuDivider(),
       PopupMenuItem<void>(
         onTap: () => createGroupFlow(context, ref),
-        child: const Row(
+        child: Row(
           children: [
             Icon(Icons.add, size: 20),
             SizedBox(width: 12),
-            Text('Grup oluştur'),
+            Text(AppLocalizations.of(context).classroomGrupOlustur),
           ],
         ),
       ),
       PopupMenuItem<void>(
         onTap: () => joinGroupFlow(context, ref),
-        child: const Row(
+        child: Row(
           children: [
             Icon(Icons.login, size: 20),
             SizedBox(width: 12),
-            Text('Gruba katıl'),
+            Text(AppLocalizations.of(context).classroomGrubaKatil),
           ],
         ),
       ),
@@ -96,7 +101,10 @@ Future<void> showClassSwitcher(BuildContext context, WidgetRef ref,
 
   return at != null
       ? showMenuAtPosition<void>(
-          context: context, globalPosition: at, items: items)
+          context: context,
+          globalPosition: at,
+          items: items,
+        )
       : showAnchoredMenu<void>(context: context, items: items);
 }
 
@@ -110,15 +118,15 @@ class _ClassDetailButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return IconButton(
-      tooltip: 'Grup bilgileri ve ayarları',
+      tooltip: AppLocalizations.of(context).classroomGrupBilgileriVeAyarlari,
       icon: const Icon(Icons.more_vert, size: 20),
       visualDensity: VisualDensity.compact,
       onPressed: () {
         final nav = Navigator.of(context, rootNavigator: true);
         Navigator.of(context).pop(); // menüyü kapat
-        nav.push(MaterialPageRoute(
-          builder: (_) => ClassDetailScreen(group: group),
-        ));
+        nav.push(
+          MaterialPageRoute(builder: (_) => ClassDetailScreen(group: group)),
+        );
       },
     );
   }
@@ -129,9 +137,9 @@ class _ClassDetailButton extends StatelessWidget {
 Future<bool> createGroupFlow(BuildContext context, WidgetRef ref) async {
   final name = await _promptText(
     context,
-    title: 'Grup oluştur',
-    label: 'Grup adı',
-    action: 'Oluştur',
+    title: AppLocalizations.of(context).classroomGrupOlustur,
+    label: AppLocalizations.of(context).classroomGrupAdi,
+    action: AppLocalizations.of(context).classroomOlustur,
   );
   if (name == null || name.trim().isEmpty) return false;
 
@@ -139,14 +147,17 @@ Future<bool> createGroupFlow(BuildContext context, WidgetRef ref) async {
   if (user == null) return false;
   if (!context.mounted) return false;
   final messenger = ScaffoldMessenger.of(context);
+  final genericError = AppLocalizations.of(
+    context,
+  ).authBeklenmeyenBirHataOlustu;
   try {
     final group = await ref
         .read(groupRepositoryProvider)
         .createGroup(name: name, creator: user);
     ref.read(activeGroupIdProvider.notifier).select(group.id);
     return true;
-  } on GroupException catch (e) {
-    messenger.showSnackBar(SnackBar(content: Text(e.message)));
+  } on GroupException {
+    messenger.showSnackBar(SnackBar(content: Text(genericError)));
     return false;
   }
 }
@@ -156,9 +167,9 @@ Future<bool> createGroupFlow(BuildContext context, WidgetRef ref) async {
 Future<bool> joinGroupFlow(BuildContext context, WidgetRef ref) async {
   final code = await _promptText(
     context,
-    title: 'Gruba katıl',
-    label: 'Davet kodu',
-    action: 'Katıl',
+    title: AppLocalizations.of(context).classroomGrubaKatil,
+    label: AppLocalizations.of(context).classroomDavetKodu,
+    action: AppLocalizations.of(context).classroomKatil,
     uppercase: true,
   );
   if (code == null || code.trim().isEmpty) return false;
@@ -167,14 +178,17 @@ Future<bool> joinGroupFlow(BuildContext context, WidgetRef ref) async {
   if (user == null) return false;
   if (!context.mounted) return false;
   final messenger = ScaffoldMessenger.of(context);
+  final genericError = AppLocalizations.of(
+    context,
+  ).authBeklenmeyenBirHataOlustu;
   try {
     final group = await ref
         .read(groupRepositoryProvider)
         .joinGroup(inviteCode: code, member: user);
     ref.read(activeGroupIdProvider.notifier).select(group.id);
     return true;
-  } on GroupException catch (e) {
-    messenger.showSnackBar(SnackBar(content: Text(e.message)));
+  } on GroupException {
+    messenger.showSnackBar(SnackBar(content: Text(genericError)));
     return false;
   }
 }
@@ -195,15 +209,16 @@ Future<String?> _promptText(
       content: TextField(
         controller: controller,
         autofocus: true,
-        textCapitalization:
-            uppercase ? TextCapitalization.characters : TextCapitalization.words,
+        textCapitalization: uppercase
+            ? TextCapitalization.characters
+            : TextCapitalization.words,
         decoration: InputDecoration(labelText: label),
         onSubmitted: (_) => Navigator.pop(ctx, controller.text),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(ctx),
-          child: const Text('Vazgeç'),
+          child: Text(AppLocalizations.of(context).classroomVazgec),
         ),
         FilledButton(
           onPressed: () => Navigator.pop(ctx, controller.text),

@@ -131,7 +131,7 @@ class StatHeatTable extends StatelessWidget {
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
-                          r.highlight ? '${r.label} (sen)' : r.label,
+                          r.label,
                           overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.bodySmall?.copyWith(
                             fontWeight:

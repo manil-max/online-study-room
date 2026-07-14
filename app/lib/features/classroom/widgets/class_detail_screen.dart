@@ -1,6 +1,8 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../../../core/utils/duration_format.dart';
 import '../../../core/widgets/number_stepper.dart';
@@ -32,11 +34,11 @@ class ClassDetailScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Grup'),
+        title: Text(AppLocalizations.of(context).classroomGrup),
         actions: [
           if (isAdmin)
             IconButton(
-              tooltip: 'Adı değiştir',
+              tooltip: AppLocalizations.of(context).classroomAdiDegistir,
               icon: const Icon(Icons.edit),
               onPressed: () => _renameDialog(context, ref),
             ),
@@ -62,7 +64,7 @@ class ClassDetailScreen extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    'Yönetici',
+                    AppLocalizations.of(context).classroomYonetici,
                     style: theme.textTheme.labelSmall?.copyWith(
                       color: theme.colorScheme.onPrimaryContainer,
                     ),
@@ -73,14 +75,17 @@ class ClassDetailScreen extends ConsumerWidget {
           const SizedBox(height: 16),
 
           // --- Bilgiler ---
-          Text('Bilgiler', style: theme.textTheme.titleMedium),
+          Text(
+            AppLocalizations.of(context).classroomBilgiler,
+            style: theme.textTheme.titleMedium,
+          ),
           const SizedBox(height: 8),
           Card(
             child: Column(
               children: [
                 ListTile(
                   leading: const Icon(Icons.vpn_key_outlined),
-                  title: const Text('Davet kodu'),
+                  title: Text(AppLocalizations.of(context).classroomDavetKodu),
                   subtitle: SelectableText(
                     group.inviteCode,
                     style: theme.textTheme.titleMedium?.copyWith(
@@ -91,7 +96,7 @@ class ClassDetailScreen extends ConsumerWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(
-                        tooltip: 'Kopyala',
+                        tooltip: AppLocalizations.of(context).classroomKopyala,
                         icon: const Icon(Icons.copy, size: 20),
                         onPressed: () async {
                           await Clipboard.setData(
@@ -99,8 +104,12 @@ class ClassDetailScreen extends ConsumerWidget {
                           );
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Davet kodu kopyalandı'),
+                              SnackBar(
+                                content: Text(
+                                  AppLocalizations.of(
+                                    context,
+                                  ).classroomDavetKoduKopyalandi,
+                                ),
                               ),
                             );
                           }
@@ -108,7 +117,9 @@ class ClassDetailScreen extends ConsumerWidget {
                       ),
                       if (isAdmin)
                         IconButton(
-                          tooltip: 'Kodu yenile',
+                          tooltip: AppLocalizations.of(
+                            context,
+                          ).classroomKoduYenile,
                           icon: const Icon(Icons.refresh, size: 20),
                           onPressed: () => _regenerateCode(context, ref, repo),
                         ),
@@ -117,13 +128,18 @@ class ClassDetailScreen extends ConsumerWidget {
                 ),
                 ListTile(
                   leading: const Icon(Icons.flag_outlined),
-                  title: const Text('Günlük grup hedefi'),
+                  title: Text(
+                    AppLocalizations.of(context).classroomGunlukGrupHedefi,
+                  ),
                   subtitle: Text(
-                    '${formatHuman(group.dailyGoalMinutes * 60)} (grup toplamı)',
+                    '${formatHuman(group.dailyGoalMinutes * 60)} · '
+                    '${AppLocalizations.of(context).classroomBugunkuToplam}',
                   ),
                   trailing: isAdmin
                       ? IconButton(
-                          tooltip: 'Hedefi değiştir',
+                          tooltip: AppLocalizations.of(
+                            context,
+                          ).classroomHedefiDegistir,
                           icon: const Icon(Icons.edit, size: 20),
                           onPressed: () => _editGoalDialog(context, ref),
                         )
@@ -132,9 +148,13 @@ class ClassDetailScreen extends ConsumerWidget {
                 ),
                 ListTile(
                   leading: const Icon(Icons.event_outlined),
-                  title: const Text('Oluşturulma'),
+                  title: Text(
+                    AppLocalizations.of(context).classroomOlusturulma,
+                  ),
                   subtitle: Text(
-                    '${group.createdAt.day}.${group.createdAt.month}.${group.createdAt.year}',
+                    DateFormat.yMd(
+                      AppLocalizations.of(context).localeName,
+                    ).format(group.createdAt),
                   ),
                 ),
               ],
@@ -143,7 +163,10 @@ class ClassDetailScreen extends ConsumerWidget {
           const SizedBox(height: 16),
 
           // --- Üyeler ---
-          Text('Üyeler', style: theme.textTheme.titleMedium),
+          Text(
+            AppLocalizations.of(context).classroomUyeler,
+            style: theme.textTheme.titleMedium,
+          ),
           const SizedBox(height: 8),
           _MembersCard(group: group, isAdmin: isAdmin, currentUserId: userId),
           const SizedBox(height: 16),
@@ -153,14 +176,17 @@ class ClassDetailScreen extends ConsumerWidget {
           const SizedBox(height: 16),
 
           // --- Ayarlar / tehlikeli işlemler ---
-          Text('Ayarlar', style: theme.textTheme.titleMedium),
+          Text(
+            AppLocalizations.of(context).classroomAyarlar,
+            style: theme.textTheme.titleMedium,
+          ),
           const SizedBox(height: 8),
           if (!isAdmin)
             Card(
               child: ListTile(
                 leading: Icon(Icons.logout, color: theme.colorScheme.error),
                 title: Text(
-                  'Gruptan çık',
+                  AppLocalizations.of(context).classroomGruptanCik,
                   style: TextStyle(color: theme.colorScheme.error),
                 ),
                 onTap: userId == null
@@ -176,10 +202,12 @@ class ClassDetailScreen extends ConsumerWidget {
                   color: theme.colorScheme.error,
                 ),
                 title: Text(
-                  'Grubu sil',
+                  AppLocalizations.of(context).classroomGrubuSil,
                   style: TextStyle(color: theme.colorScheme.error),
                 ),
-                subtitle: const Text('Tüm üyeler için kalıcı olarak silinir'),
+                subtitle: Text(
+                  AppLocalizations.of(context).classroomTumUyelerIcinKalici,
+                ),
                 onTap: () => _deleteGroup(context, ref, repo),
               ),
             ),
@@ -193,21 +221,23 @@ class ClassDetailScreen extends ConsumerWidget {
     final name = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Grup adını değiştir'),
+        title: Text(AppLocalizations.of(context).classroomGrupAdiniDegistir),
         content: TextField(
           controller: controller,
           autofocus: true,
           textCapitalization: TextCapitalization.words,
-          decoration: const InputDecoration(labelText: 'Grup adı'),
+          decoration: InputDecoration(
+            labelText: AppLocalizations.of(context).classroomGrupAdi,
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Vazgeç'),
+            child: Text(AppLocalizations.of(context).classroomVazgec),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, controller.text),
-            child: const Text('Kaydet'),
+            child: Text(AppLocalizations.of(context).classroomKaydet),
           ),
         ],
       ),
@@ -217,6 +247,9 @@ class ClassDetailScreen extends ConsumerWidget {
     }
     if (!context.mounted) return;
     final messenger = ScaffoldMessenger.of(context);
+    final genericError = AppLocalizations.of(
+      context,
+    ).authBeklenmeyenBirHataOlustu;
     final navigator = Navigator.of(context);
     try {
       await ref.read(groupRepositoryProvider).updateGroupName(group.id, name);
@@ -225,8 +258,8 @@ class ClassDetailScreen extends ConsumerWidget {
       // gruplari elle tazele ki liste/ekranlar yeni adi aninda gostersin.
       ref.invalidate(userGroupsProvider);
       navigator.pop();
-    } on GroupException catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+    } on GroupException {
+      messenger.showSnackBar(SnackBar(content: Text(genericError)));
     }
   }
 
@@ -237,13 +270,13 @@ class ClassDetailScreen extends ConsumerWidget {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setState) => AlertDialog(
-          title: const Text('Günlük grup hedefi'),
+          title: Text(AppLocalizations.of(context).classroomGunlukGrupHedefi),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'Grubun bir günde toplamda çalışmayı hedeflediği süre. '
-                'O günkü grup toplamı bu süreye ulaşırsa grup serisi büyür.',
+                '${AppLocalizations.of(context).classroomGrubunBirGundeToplamda} '
+                '${AppLocalizations.of(context).classroomOGunkuGrupToplami}',
                 style: Theme.of(ctx).textTheme.bodySmall,
               ),
               const SizedBox(height: 16),
@@ -251,7 +284,7 @@ class ClassDetailScreen extends ConsumerWidget {
                 children: [
                   Expanded(
                     child: NumberStepper(
-                      label: 'Saat',
+                      label: AppLocalizations.of(context).classroomSaat,
                       value: hours,
                       min: 0,
                       max: 24,
@@ -261,7 +294,7 @@ class ClassDetailScreen extends ConsumerWidget {
                   const SizedBox(width: 16),
                   Expanded(
                     child: NumberStepper(
-                      label: 'Dakika',
+                      label: AppLocalizations.of(context).classroomDakika,
                       value: minutes,
                       min: 0,
                       max: 59,
@@ -275,11 +308,11 @@ class ClassDetailScreen extends ConsumerWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Vazgeç'),
+              child: Text(AppLocalizations.of(context).classroomVazgec),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(ctx, (hours * 60 + minutes)),
-              child: const Text('Kaydet'),
+              child: Text(AppLocalizations.of(context).classroomKaydet),
             ),
           ],
         ),
@@ -290,14 +323,17 @@ class ClassDetailScreen extends ConsumerWidget {
     }
     if (!context.mounted) return;
     final messenger = ScaffoldMessenger.of(context);
+    final genericError = AppLocalizations.of(
+      context,
+    ).authBeklenmeyenBirHataOlustu;
     final navigator = Navigator.of(context);
     try {
       await ref.read(groupRepositoryProvider).updateGroupGoal(group.id, picked);
       // Ad degisimiyle ayni tazeleme gerekcesi (bkz. _renameDialog).
       ref.invalidate(userGroupsProvider);
       navigator.pop();
-    } on GroupException catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+    } on GroupException {
+      messenger.showSnackBar(SnackBar(content: Text(genericError)));
     }
   }
 
@@ -308,22 +344,27 @@ class ClassDetailScreen extends ConsumerWidget {
   ) async {
     final ok = await _confirm(
       context,
-      title: 'Kodu yenile',
-      message:
-          'Yeni bir davet kodu üretilecek; eski kod artık çalışmaz. Devam?',
-      action: 'Yenile',
+      title: AppLocalizations.of(context).classroomKoduYenile,
+      message: AppLocalizations.of(context).classroomYeniBirDavetKodu,
+      action: AppLocalizations.of(context).classroomYenile,
     );
     if (!ok || !context.mounted) return;
     final messenger = ScaffoldMessenger.of(context);
+    final genericError = AppLocalizations.of(
+      context,
+    ).authBeklenmeyenBirHataOlustu;
+    final l10n = AppLocalizations.of(context);
     final navigator = Navigator.of(context);
     try {
       final code = await repo.regenerateInviteCode(group.id);
       // Yeni davet kodu da groups tablosunda; akis tetiklenmez (bkz. _renameDialog).
       ref.invalidate(userGroupsProvider);
       navigator.pop();
-      messenger.showSnackBar(SnackBar(content: Text('Yeni kod: $code')));
-    } on GroupException catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.classroomYeniKodCode(code))),
+      );
+    } on GroupException {
+      messenger.showSnackBar(SnackBar(content: Text(genericError)));
     }
   }
 
@@ -335,19 +376,25 @@ class ClassDetailScreen extends ConsumerWidget {
   ) async {
     final ok = await _confirm(
       context,
-      title: 'Gruptan çık',
-      message: '"${group.name}" grubundan çıkmak istediğine emin misin?',
-      action: 'Çık',
+      title: AppLocalizations.of(context).classroomGruptanCik,
+      message:
+          '"${group.name}" · '
+          '${AppLocalizations.of(context).classroomGruptanCik}. '
+          '${AppLocalizations.of(context).classroomBuIslemGeriAlinamaz}',
+      action: AppLocalizations.of(context).classroomCik,
     );
     if (!ok || !context.mounted) return;
     final messenger = ScaffoldMessenger.of(context);
+    final genericError = AppLocalizations.of(
+      context,
+    ).authBeklenmeyenBirHataOlustu;
     final navigator = Navigator.of(context);
     try {
       await repo.leaveGroup(group.id, userId);
       ref.read(activeGroupIdProvider.notifier).select(null);
       navigator.pop();
-    } on GroupException catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+    } on GroupException {
+      messenger.showSnackBar(SnackBar(content: Text(genericError)));
     }
   }
 
@@ -358,21 +405,25 @@ class ClassDetailScreen extends ConsumerWidget {
   ) async {
     final ok = await _confirm(
       context,
-      title: 'Grubu sil',
+      title: AppLocalizations.of(context).classroomGrubuSil,
       message:
-          '"${group.name}" grubu tüm üyeler için kalıcı olarak silinecek. '
-          'Bu işlem geri alınamaz. Devam?',
-      action: 'Sil',
+          '"${group.name}" · '
+          '${AppLocalizations.of(context).classroomTumUyelerIcinKalici}. '
+          '${AppLocalizations.of(context).classroomBuIslemGeriAlinamaz}',
+      action: AppLocalizations.of(context).classroomSil,
     );
     if (!ok || !context.mounted) return;
     final messenger = ScaffoldMessenger.of(context);
+    final genericError = AppLocalizations.of(
+      context,
+    ).authBeklenmeyenBirHataOlustu;
     final navigator = Navigator.of(context);
     try {
       await repo.deleteGroup(group.id);
       ref.read(activeGroupIdProvider.notifier).select(null);
       navigator.pop();
-    } on GroupException catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+    } on GroupException {
+      messenger.showSnackBar(SnackBar(content: Text(genericError)));
     }
   }
 }
@@ -416,11 +467,13 @@ class _MembersCard extends ConsumerWidget {
                   ),
                   title: Text(
                     !m.isActive
-                        ? 'Eski Grup Üyesi'
-                        : (m.displayName.isEmpty ? 'İsimsiz' : m.displayName),
+                        ? AppLocalizations.of(context).classroomEskiGrupUyesi
+                        : (m.displayName.isEmpty
+                              ? AppLocalizations.of(context).classroomIsimsiz
+                              : m.displayName),
                   ),
                   subtitle: m.id == group.createdBy
-                      ? const Text('Yönetici')
+                      ? Text(AppLocalizations.of(context).classroomYonetici)
                       : null,
                   onTap: () => SocialProfileDialog.show(context, m),
                   trailing: m.isActive && m.id != currentUserId
@@ -428,7 +481,9 @@ class _MembersCard extends ConsumerWidget {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             IconButton(
-                              tooltip: 'Dürt',
+                              tooltip: AppLocalizations.of(
+                                context,
+                              ).classroomDurt,
                               icon: const Icon(
                                 Icons.notifications_active_outlined,
                               ),
@@ -443,7 +498,9 @@ class _MembersCard extends ConsumerWidget {
                             ),
                             if (isAdmin && m.id != group.createdBy)
                               IconButton(
-                                tooltip: 'Çıkar',
+                                tooltip: AppLocalizations.of(
+                                  context,
+                                ).classroomCikar,
                                 icon: const Icon(Icons.person_remove_outlined),
                                 onPressed: () =>
                                     _removeMember(context, repo, m),
@@ -466,17 +523,22 @@ class _MembersCard extends ConsumerWidget {
   ) async {
     final ok = await _confirm(
       context,
-      title: 'Üyeyi çıkar',
-      message: '${member.displayName} gruptan çıkarılsın mı?',
-      action: 'Çıkar',
+      title: AppLocalizations.of(context).classroomUyeyiCikar,
+      message: AppLocalizations.of(
+        context,
+      ).classroomMemberdisplaynameGruptanCikarilsinMi(member.displayName),
+      action: AppLocalizations.of(context).classroomCikar,
     );
     if (!ok) return;
     if (!context.mounted) return;
     final messenger = ScaffoldMessenger.of(context);
+    final genericError = AppLocalizations.of(
+      context,
+    ).authBeklenmeyenBirHataOlustu;
     try {
       await repo.removeMember(group.id, member.id);
-    } on GroupException catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+    } on GroupException {
+      messenger.showSnackBar(SnackBar(content: Text(genericError)));
     }
   }
 
@@ -487,15 +549,23 @@ class _MembersCard extends ConsumerWidget {
     Profile recipient,
   ) async {
     final messenger = ScaffoldMessenger.of(context);
+    final genericError = AppLocalizations.of(
+      context,
+    ).authBeklenmeyenBirHataOlustu;
+    final l10n = AppLocalizations.of(context);
     try {
       await ref
           .read(nudgeRepositoryProvider)
           .sendNudge(groupId: group.id, sender: sender, recipient: recipient);
       messenger.showSnackBar(
-        SnackBar(content: Text('${recipient.displayName} dürtüldü')),
+        SnackBar(
+          content: Text(
+            l10n.classroomRecipientdisplaynameDurtuldu(recipient.displayName),
+          ),
+        ),
       );
-    } on NudgeException catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+    } on NudgeException {
+      messenger.showSnackBar(SnackBar(content: Text(genericError)));
     }
   }
 }
@@ -515,7 +585,7 @@ Future<bool> _confirm(
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(ctx, false),
-          child: const Text('Vazgeç'),
+          child: Text(AppLocalizations.of(context).classroomVazgec),
         ),
         FilledButton(
           onPressed: () => Navigator.pop(ctx, true),

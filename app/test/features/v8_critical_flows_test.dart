@@ -33,7 +33,7 @@ void main() {
     expect(find.text('İstatistik'), findsWidgets);
     await tester.tap(find.text('Gruplar'));
     await tester.pumpAndSettle();
-    expect(find.text('Henüz bir grupta değilsin'), findsOneWidget);
+    expect(find.text("You're not in a group yet"), findsOneWidget);
     await tester.tap(find.text('Profil'));
     await tester.pumpAndSettle();
     // Profil: Başarılar üstte → Ayarlar için kaydır.

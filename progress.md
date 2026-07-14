@@ -68,7 +68,7 @@
 - **Dal:** — (main)
 - **Başlangıç:** —
 - **Son güncelleme:** 2026-07-14 (Europe/Istanbul)
-- **Not:** WP-85 otomatik kapıları geçti; cihaz/bağlam QA'sı WP-89'da yapılacak.
+- **Not:** WP-86 otomatik kalite kapısını geçti; cihaz/ürün QA için Test bekleyen'e taşındı.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
@@ -114,7 +114,7 @@
 | WP-81 | [~] Test için bekliyor | Android beta-v20 — bildirim teslimi + dinamik panel düzeltmeleri | WP-79/80 kod commitleri |
 | WP-84 | [~] Test için bekliyor | Kanonik `app_en.arb` / `app_tr.arb` kataloğu | WP-82 + WP-83 |
 | WP-85 | [~] Test için bekliyor | Flutter göç A — hesap, profil, admin, bildirim, güncelleme | WP-84 |
-| WP-86 | [ ] Bekliyor | Flutter göç B — ana sayfa, sınıf ve istatistikler | WP-84 |
+| WP-86 | [~] Test için bekliyor | Flutter göç B — ana sayfa, sınıf ve istatistikler | WP-84 |
 | WP-87 | [ ] Bekliyor | Flutter göç C — saat, masaüstü, core ve veri etiketleri | WP-84 |
 | WP-88 | [~] Test için bekliyor | Native Android EN/TR kaynak göçü | WP-83 |
 | WP-89 | [ ] Bekliyor | EN/TR entegrasyon, audit, build ve cihaz QA | WP-85/86/87/88 |
@@ -128,13 +128,6 @@
 > **Planlama notu:** WP-39 iptal; WP-48/49/50 kaldırıldı; geçici WP-72/73/74/75 (2026-07-14) zaten-yapılmış/yanlış açıldığı için iptal edildi. Sorun çıkarsa ayrı debug/release WP'si açılır.
 
 > **Küresel dil programı ortak sözleşmesi:** İngilizce şablon/varsayılan (`en`), Türkçe ikinci dil (`tr`). Yalnız sistem dil kodu `tr` ise Türkçe; diğer her locale İngilizce. Üretilen l10n kodu elle düzenlenmez/commit edilmez. Tüm WP'lerde migration/RLS etkisi yok; sır/PII çeviri dosyasına girmez; gün sınırı `Europe/Istanbul` kalır. Aynı anda en fazla iki çalışma hattı açılır.
-
-### WP-86: Flutter Göç B — Çalışma ve Sosyal Alanlar 🏕️
-- **Program/Faz:** Küresel açılım · UI göçü · **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-84
-- **Problem/Kapsam:** Ana Sayfa, sınıf ve istatistik yüzeylerini katalog çağrılarına geçir; ARB/core/native kapsam dışı.
-- **SAHİP:** `app/lib/features/{home,classroom,stats}/**` ve eşleşen testler. **DOKUNMA:** ARB/l10n, diğer feature'lar, core/data, native.
-- **Adımlar:** Kart/menü/chart/boş-hata/semantics metinlerini taşı; sayısal/tarihsel değerleri locale-aware biçimle; EN/TR testlerini güncelle.
-- **Veri/RLS/Geri alma:** Etki yok; UI commitini geri al. **Edge-case:** chart kısa etiketleri, grup adı/kullanıcı içeriği, dar kartta İngilizce taşması. **Kabul/DoD:** sahip yüzeyde literal 0; 360/600/1200 px EN/TR overflow 0; test + analyze 0. **Tuzak:** kullanıcı tarafından girilen metni çevirmek. **Dal:** main/lane · **Model:** 🔴 Opus
 
 ### WP-87: Flutter Göç C — Saat, Masaüstü ve Core ⏱️
 - **Program/Faz:** Küresel açılım · UI göçü · **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-84
@@ -158,6 +151,14 @@
 > Kod/otomatik test bitti; **cihaz QA veya ürün demo’su** bekleniyor.
 > Bu bölüm **aktif çalışma değildir** — ajan claim etmez, diğer WP’leri engellemez.
 > Kabul gelince kart buradan çıkar → **Tamamlanan**’a gider. Bug çıkarsa ayrı debug WP açılır.
+
+### WP-86: Flutter Göç B — Çalışma ve Sosyal Alanlar 🏕️
+- **Program/Faz:** Küresel açılım · UI göçü · **Ajan:** Codex · **Aşama:** Otomatik test geçti · **Kanıt:** `Kodda doğrulandı` / `Cihazda doğrulanmalı`
+- **Uygulandı:** Ana sayfa kartları, sınıf/sohbet/sayaç yüzeyleri ve kişisel/sınıf istatistikleri resmi `AppLocalizations` kataloğuna bağlandı. Tarih ve ondalık gösterimleri etkin locale göre biçimleniyor; hata nesneleri kullanıcıya doğrudan basılmıyor. Kullanıcı/grup adları, sohbet ve ders içerikleri aynen korunuyor.
+- **Literal denetimi:** Sahip yüzeyde doğrudan görünür metin olarak yalnız teknik işaretler, emoji ve sayısal gösterimler kaldı; sabit `tr_TR`, `labelTr` ve ham hata sunumu yok. Core'daki `formatHuman` WP-87'nin açık sahipliğinde kaldığı için bu WP'de değiştirilmedi; ARB/generated l10n, core/data ve native yüzeylere dokunulmadı.
+- **Doğrulama:** `flutter analyze` 0 bulgu; tüm Flutter testleri 407/407 geçti. EN/TR için 360/600/1200 px genişliklerinde ana sayfa, dönem seçici ve sınıfsız sınıf yüzeyi doğrulandı; overflow hatası 0.
+- **Ne bekleniyor:** WP-89'da Android/Windows gerçek cihazda EN/TR bağlam, uzun İngilizce/overflow, erişilebilirlik ve katalog terim kalitesi kontrolü. Mevcut katalog anahtarlarının bazı bağlamlarda kısa/genel karşılık kullanması ürün dili QA'sında gözden geçirilmeli.
+- **Veri/RLS/Geri alma:** Veri, migration, RLS veya repository davranışı değişmedi; geri alma UI commitidir.
 
 ### WP-85: Flutter Göç A — Hesap ve Yönetim 👤
 - **Program/Faz:** Küresel açılım · UI göçü · **Ajan:** Codex · **Aşama:** Otomatik test geçti · **Kanıt:** `Kodda doğrulandı` / `Cihazda doğrulanmalı`

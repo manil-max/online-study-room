@@ -1,8 +1,17 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/utils/duration_format.dart';
 
-const _kDays = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
+List<String> _days(BuildContext context) => [
+  AppLocalizations.of(context).statsPzt,
+  AppLocalizations.of(context).statsSal,
+  AppLocalizations.of(context).statsCar,
+  AppLocalizations.of(context).statsPer,
+  AppLocalizations.of(context).statsCum,
+  AppLocalizations.of(context).statsCmt,
+  AppLocalizations.of(context).statsPaz,
+];
 
 /// Haftalık ritim ısı haritası: 7 gün (satır) × 24 saat (sütun). Renk koyuluğu o
 /// gün/saatteki toplam süreyle artar. Her hücre dokunulabilir (gün + saat + süre).
@@ -18,6 +27,7 @@ class WeekHourHeatmap extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final days = _days(context);
     var maxV = 0;
     var total = 0;
     for (final row in grid) {
@@ -29,9 +39,10 @@ class WeekHourHeatmap extends StatelessWidget {
 
     if (total == 0) {
       return Text(
-        'Henüz çalışma kaydın yok — haftalık ritim burada görünecek.',
-        style: theme.textTheme.bodySmall
-            ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+        AppLocalizations.of(context).statsBuDonemdeCalismaKaydin,
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
       );
     }
 
@@ -50,8 +61,9 @@ class WeekHourHeatmap extends StatelessWidget {
             ? constraints.maxWidth
             : 320.0;
         // 24 sütun + aralık, etiket sütunu hariç. Min/max ile güvenli boyut.
-        final cell =
-            (((avail - labelWidth) / 24) - gap).clamp(6.0, 22.0).toDouble();
+        final cell = (((avail - labelWidth) / 24) - gap)
+            .clamp(6.0, 22.0)
+            .toDouble();
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -63,16 +75,19 @@ class WeekHourHeatmap extends StatelessWidget {
                   children: [
                     SizedBox(
                       width: labelWidth,
-                      child: Text(_kDays[d],
-                          style: theme.textTheme.labelSmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant)),
+                      child: Text(
+                        days[d],
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
                     ),
                     for (var h = 0; h < 24; h++)
                       Padding(
                         padding: const EdgeInsets.only(right: gap),
                         child: Tooltip(
                           message:
-                              '${_kDays[d]} ${h.toString().padLeft(2, '0')}:00 · ${formatHuman(grid[d][h])}',
+                              '${days[d]} ${h.toString().padLeft(2, '0')}:00 · ${formatHuman(grid[d][h])}',
                           waitDuration: const Duration(milliseconds: 200),
                           child: Container(
                             width: cell,
@@ -97,9 +112,12 @@ class WeekHourHeatmap extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     for (final l in ['00', '06', '12', '18', '23'])
-                      Text(l,
-                          style: theme.textTheme.labelSmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant)),
+                      Text(
+                        l,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
                   ],
                 ),
               ),

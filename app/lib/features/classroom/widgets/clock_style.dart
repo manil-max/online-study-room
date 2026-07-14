@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -26,21 +27,21 @@ enum ClockStyle {
 }
 
 extension ClockStyleInfo on ClockStyle {
-  String get label => switch (this) {
-        ClockStyle.digits => 'Sade rakam',
-        ClockStyle.ring => 'Hedef halkası',
-        ClockStyle.colorShift => 'Renk geçişi',
-        ClockStyle.slice => 'Yarış dilimi',
-        ClockStyle.minimal => 'Minimal',
-      };
+  String label(BuildContext context) => switch (this) {
+    ClockStyle.digits => AppLocalizations.of(context).classroomSadeRakam,
+    ClockStyle.ring => AppLocalizations.of(context).classroomHedefHalkasi,
+    ClockStyle.colorShift => AppLocalizations.of(context).classroomRenkGecisi,
+    ClockStyle.slice => AppLocalizations.of(context).classroomYarisDilimi,
+    ClockStyle.minimal => AppLocalizations.of(context).classroomMinimal,
+  };
 
   IconData get icon => switch (this) {
-        ClockStyle.digits => Icons.schedule,
-        ClockStyle.ring => Icons.donut_large,
-        ClockStyle.colorShift => Icons.gradient,
-        ClockStyle.slice => Icons.pie_chart,
-        ClockStyle.minimal => Icons.trip_origin,
-      };
+    ClockStyle.digits => Icons.schedule,
+    ClockStyle.ring => Icons.donut_large,
+    ClockStyle.colorShift => Icons.gradient,
+    ClockStyle.slice => Icons.pie_chart,
+    ClockStyle.minimal => Icons.trip_origin,
+  };
 }
 
 class ClockStyleNotifier extends Notifier<ClockStyle> {
@@ -62,8 +63,9 @@ class ClockStyleNotifier extends Notifier<ClockStyle> {
 }
 
 /// Seçili saat stili (kişiye özel, cihazda kalıcı).
-final clockStyleProvider =
-    NotifierProvider<ClockStyleNotifier, ClockStyle>(ClockStyleNotifier.new);
+final clockStyleProvider = NotifierProvider<ClockStyleNotifier, ClockStyle>(
+  ClockStyleNotifier.new,
+);
 
 /// Hedefe göre renk: 0 → kırmızı (chart-5), 0.5 → amber (chart-3),
 /// 1.0 → yeşil (chart-2). Aradaki değerler yumuşak geçişli.
@@ -124,8 +126,9 @@ class StudyClock extends StatelessWidget {
                   value: pctToGoal.clamp(0.0, 1.0),
                   strokeWidth: 9,
                   backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                  valueColor:
-                      AlwaysStoppedAnimation<Color>(goalColor(pctToGoal)),
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    goalColor(pctToGoal),
+                  ),
                 ),
               ),
               _digits(
@@ -224,9 +227,10 @@ Future<void> showClockStyleMenu(BuildContext context, WidgetRef ref) async {
         enabled: false,
         height: 32,
         child: Text(
-          'Saat görünümü',
-          style: theme.textTheme.labelMedium
-              ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+          AppLocalizations.of(context).classroomSaatGorunumu,
+          style: theme.textTheme.labelMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
         ),
       ),
       for (final s in ClockStyle.values)
@@ -236,7 +240,7 @@ Future<void> showClockStyleMenu(BuildContext context, WidgetRef ref) async {
             children: [
               Icon(s.icon, size: 20),
               const SizedBox(width: 12),
-              Expanded(child: Text(s.label)),
+              Expanded(child: Text(s.label(context))),
               if (s == current)
                 Icon(Icons.check, size: 18, color: theme.colorScheme.primary),
             ],
@@ -275,7 +279,7 @@ class ClockPainter extends CustomPainter {
       final slicePaint = Paint()
         ..color = color.withValues(alpha: 0.8)
         ..style = PaintingStyle.fill;
-      
+
       // -pi/2'den (saat 12) başla, 2*pi * pctToGoal kadar dön
       canvas.drawArc(
         Rect.fromCircle(center: center, radius: radius),
@@ -297,7 +301,7 @@ class ClockPainter extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2
         ..strokeCap = StrokeCap.round;
-      
+
       canvas.drawArc(
         Rect.fromCircle(center: center, radius: radius),
         -1.57079632679,
@@ -316,4 +320,3 @@ class ClockPainter extends CustomPainter {
         isSlice != oldDelegate.isSlice;
   }
 }
-

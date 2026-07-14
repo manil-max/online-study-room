@@ -311,29 +311,32 @@ void main() {
       expect(prefs.getString('dashboard_grid_density'), 'columns6');
     });
 
-    test('columns32 yogunlugu 32 sutun/etiket verir ve duzeni olceker', () async {
-      SharedPreferences.setMockInitialValues({});
-      final prefs = await SharedPreferences.getInstance();
-      final container = ProviderContainer(
-        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
-      );
-      addTearDown(container.dispose);
+    test(
+      'columns32 yogunlugu 32 sutun/etiket verir ve duzeni olceker',
+      () async {
+        SharedPreferences.setMockInitialValues({});
+        final prefs = await SharedPreferences.getInstance();
+        final container = ProviderContainer(
+          overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+        );
+        addTearDown(container.dispose);
 
-      expect(DashboardGridDensity.columns32.columns, 32);
-      expect(DashboardGridDensity.columns32.label, '32 sütun');
+        expect(DashboardGridDensity.columns32.columns, 32);
+        expect(DashboardGridDensity.columns32.label, '32');
 
-      container
-          .read(dashboardGridDensityProvider.notifier)
-          .set(DashboardGridDensity.columns32);
-      expect(container.read(dashboardGridColumnsProvider), 32);
+        container
+            .read(dashboardGridDensityProvider.notifier)
+            .set(DashboardGridDensity.columns32);
+        expect(container.read(dashboardGridColumnsProvider), 32);
 
-      // Varsayilan duzen 32 sutunda tasmadan olceklenir (timer tam genislik).
-      final layout = container.read(dashboardLayoutProvider);
-      expect(layout.first.w, 32);
-      for (final card in layout) {
-        expect(card.x + card.w, lessThanOrEqualTo(32));
-      }
-      expect(prefs.getString('dashboard_grid_density'), 'columns32');
-    });
+        // Varsayilan duzen 32 sutunda tasmadan olceklenir (timer tam genislik).
+        final layout = container.read(dashboardLayoutProvider);
+        expect(layout.first.w, 32);
+        for (final card in layout) {
+          expect(card.x + card.w, lessThanOrEqualTo(32));
+        }
+        expect(prefs.getString('dashboard_grid_density'), 'columns32');
+      },
+    );
   });
 }
