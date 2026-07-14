@@ -72,13 +72,13 @@
 ### Codex Lane
 - **Durum:** [~] Aktif
 - **Faz/WP:** WP-70 · Windows performans tabanı ve donma tanısı
-- **Aşama:** Planlandı — ölçüm altyapısı geliştiriliyor
+- **Aşama:** Otomatik test + ilk gerçek Windows release tabanı geçti — ikinci makine / ürün kabulü bekliyor
 - **SAHİP yollar:** `docs/WINDOWS-PERFORMANCE-BASELINE.md`, `scripts/windows_performance_baseline.ps1`, `app/test/performance/windows_performance_baseline_test.dart`, `progress.md` (yalnız bu lane + WP-70 kartı)
 - **Ortak/riskli yüzey:** Yok. `app/lib/features/desktop/**` ve `app/windows/**` WP-53/28 hattına ait — DOKUNMA.
 - **Dal:** — (ana dal `main`)
 - **Başlangıç:** 2026-07-14 20:55 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-14 20:55
-- **Not:** WP-68 otomatik doğrulama tamam, Samsung/Pixel cihaz QA bekliyor. WP-70; mevcut Windows release'inin RAM/donma iddiasını ölçülebilir tabana bağlayacak, masaüstü IA koduna girmeyecek.
+- **Son güncelleme:** 2026-07-14 21:15
+- **Not:** WP-68 otomatik doğrulama tamam, Samsung/Pixel cihaz QA bekliyor. WP-70: release build + sözleşme testi geçti; 5×60 sn gerçek Windows koşumunda p95 Working Set 85.91 MB/private 93.03 MB/pencere 437 ms. 300–400 MB iddiası temiz release'te üretilmedi; ikinci Windows 11 tekrarı ve ürün kabulü bekliyor.
 
 ### Grok Lane
 - **Durum:** [~] Aktif — kullanıcı yeniden dene
@@ -120,7 +120,7 @@
 | WP-62 | [~] Otomatik test geçti · demo/cihaz bekliyor (Grok) | Kamp Ateşi R2 · katmanlı sahne ve performanslı animasyon | WP-61 |
 | WP-63 | Brief teslim edildi | Android Widget R2 · 1×1 ve responsive ürün sözleşmesi | — |
 | WP-68 | Cihaz QA bekliyor | Android Widget R2 · native responsive sayaç/hedef/sıralama uygulaması | WP-63 briefi |
-| WP-70 | Geliştiriliyor (Codex) | Windows performans tabanı · release RAM/başlangıç/donma ölçümü | — |
+| WP-70 | [~] İlk gerçek taban geçti · ikinci Windows QA/kabul bekliyor (Codex) | Windows performans tabanı · release RAM/başlangıç/donma ölçümü | — |
 | WP-64 | [~] Şablon hazır · cihaz QA operatörde | Çoklu cihaz senkronizasyon QA ve kurtarma provası | WP-53 ürün kabulü |
 | WP-66 | [~] Karar taslağı · ürün onayı bekliyor (Grok) | Hesap silme ve veri saklama politikası | Silme/retention kararı |
 | WP-67 | [~] Brief hazır · ürün onayı bekliyor (Grok) | İstatistik Görselleştirme R2 · grafik kataloğu | Kullanım soruları |
@@ -200,13 +200,13 @@
 > ✅ Çakışma yok: Aktif Grok WP-61 yalnız kamp ateşi assetleri/`pubspec.yaml` ve WP-64 QA dokümanlarına sahip. WP-68 `pubspec.yaml`a dokunmaz; Android widget kaynakları ve `study_providers.dart` ortak değildir.
 
 ### WP-70: Windows Performans Tabanı ve Donma Tanısı 🖥️
-- **Program/Faz:** Windows masaüstü kalitesi (`KALITE-PROGRAMI §8.7`) · **Ajan:** Codex · **Durum:** [~] Geliştiriliyor · **Bağımlılık:** Yok
+- **Program/Faz:** Windows masaüstü kalitesi (`KALITE-PROGRAMI §8.7`) · **Ajan:** Codex · **Durum:** [~] Otomatik test + ilk gerçek Windows tabanı geçti — ikinci makine / ürün kabulü bekliyor · **Bağımlılık:** Yok
 - **Problem:** Windows release'inin boşta 300–400 MB RAM tükettiği ve hafif donduğu bildiriliyor; şu an karşılaştırılabilir release ölçümü, tekrarlanabilir örnekleme veya performans bütçesi yok. Ölçmeden UI/mimari değişikliği yapmak rastgele optimizasyona yol açar.
 - **Kapsam:** Windows release build'i için kontrollü başlangıç/boşta işlem ölçümü; Working Set, private bytes, CPU ve pencere görünme süresi örnekleme; JSON kanıtı ve yorumlanabilir rapor; kısa, tekrarlanabilir koşum komutu. İlk bulguyu ayrı düzeltme WP'lerine dönüştürmek.
 - **Kapsam dışı:** `app/lib/features/desktop/**` veya Windows IA değişikliği, widget ağacı/tema/veri katmanı optimizasyonu, `app/windows/**` paketleme, yeni paket, `pubspec.yaml`, backend/RLS/migration, kullanıcı analitiği veya otomatik upload.
 - **SAHİP dosyalar (yaz):** `scripts/windows_performance_baseline.ps1`, `docs/WINDOWS-PERFORMANCE-BASELINE.md`, `app/test/performance/windows_performance_baseline_test.dart`, `progress.md` (yalnız Codex lane + bu kart).
 - **DOKUNMA:** `app/lib/features/desktop/**` (WP-53), `app/windows/**` (WP-28), `app/pubspec.yaml`, `app/lib/main.dart`, `core/theme/**`, `supabase/**`, Android/native widget yolları.
-- **Adımlar:** [ ] Release artefaktı ve koşum ön şartlarını doğrulayan, test hesabı/verisi kaydetmeyen örnekleme betiği yaz; [ ] en az 5 temiz başlatma ve 60 sn boşta örneğinin CPU/RAM/pencere sürelerini JSON'a kaydet; [ ] ölçüm şemasını unit testle sabitle; [ ] raporda p50/p95, makine/build/ölçüm sınırı ve düzeltme eşiğini kaydet; [ ] ilk bulguyu kök neden/düzeltme WP'sine ayır.
+- **Adımlar:** [x] Release artefaktı ve koşum ön şartlarını doğrulayan, test hesabı/verisi kaydetmeyen örnekleme betiği yaz; [x] 5 temiz başlatma ve 60 sn boşta örneğinin RAM/pencere sürelerini JSON'a kaydet; [x] ölçüm şemasını unit testle sabitle; [x] raporda p50/p95, makine/build/ölçüm sınırı ve düzeltme eşiğini kaydet; [x] ilk bulguyu değerlendir: temiz release'te 300–400 MB iddiası üretilmedi, bu nedenle düzeltme WP'si açılmadı; [ ] ikinci Windows 11 makinesinde aynı release koşumunu tekrar et.
 - **Veri/Migration etkisi:** Yok. Ölçüm yalnız yerel, gitignore altında bir JSON çıktısıdır; geri alma = betik/dokümanı kaldırmak. Kullanıcı verisi, token, ekran içeriği veya telemetry toplanmaz.
 - **RLS/Güvenlik:** Ağ isteği ve gizli veri yok; betik yalnız süreç düzeyi sayaçları/kendi çalıştırdığı release process'ini okur. Çıktı kullanıcı adı, e-posta, dosya yolu veya environment değişkeni içermez.
 - **Edge-case'ler:** Release exe yok, birden çok uygulama süreci, pencere oluşmaması, önceden açık instance, antivirus/ilk-çalıştırma etkisi, düşük güç modu, örnekleme sırasında uygulamanın kapanması, yüksek DPI/çoklu ekran.
