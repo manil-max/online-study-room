@@ -103,22 +103,29 @@ $$;
 grant execute on function public.get_user_monthly_stats(uuid, text) to authenticated;
 
 -- 5. pg_cron Job (Her ayın 2'si 06:00 UTC = 09:00 İstanbul)
--- Not: pg_cron 'cron' şemasında çalışır. Eğer aktif değilse önce CREATE EXTENSION pg_cron;
--- Edge function endpointi:
-select cron.schedule(
-  'monthly-report-collector',
-  '0 6 2 * *',
-  $$
-    select net.http_post(
-      url := 'http://localhost:54321/functions/v1/collect-reports',
-      headers := jsonb_build_object(
-        'Content-Type', 'application/json',
-        'Authorization', 'Bearer ' || current_setting('app.settings.service_role_key', true)
-      ),
-      body := jsonb_build_object('month', to_char(now() - interval '1 day', 'YYYY-MM'))
+-- pg_cron yoksa (yerel / bazı planlar) atla — tablolar ve RPC yine kurulur.
+-- Dashboard: Database → Extensions → pg_cron aç, sonra job'u elle ekle.
+do $$
+begin
+  if exists (select 1 from pg_namespace where nspname = 'cron') then
+    perform cron.schedule(
+      'monthly-report-collector',
+      '0 6 2 * *',
+      $cron$
+        select net.http_post(
+          url := 'http://localhost:54321/functions/v1/collect-reports',
+          headers := jsonb_build_object(
+            'Content-Type', 'application/json',
+            'Authorization', 'Bearer ' || current_setting('app.settings.service_role_key', true)
+          ),
+          body := jsonb_build_object('month', to_char(now() - interval '1 day', 'YYYY-MM'))
+        );
+      $cron$
     );
-  $$
-);
+  else
+    raise notice 'pg_cron (schema cron) yok — monthly-report-collector planlanmadı. Aylık rapor tabloları/RPC kuruldu; zamanlamayı Dashboard veya harici cron ile ekleyin.';
+  end if;
+end $$;
 
 -- Geri alma (Rollback):
 -- select cron.unschedule('monthly-report-collector');
