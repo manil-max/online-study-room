@@ -59,26 +59,26 @@
 - **Not:** WP-69 implementasyonu (DB Migration, Edge Functions, Settings UI Toggle) başarıyla kodlandı. Canlı gönderim için API key ve DNS konfigürasyonu ürün sahibi tarafından yapılmalıdır.
 
 ### Claude Lane
-- **Durum:** [~] Aktif — WP-65 karar dokümanı tamamlandı, ürün kabulü bekliyor
-- **Faz/WP:** WP-65 · Aylık Raporlar — E-posta Sağlayıcısı ve Teslim Mimarisi Kararı
-- **Aşama:** Kod tamamlandı — ürün kabulü bekliyor
-- **SAHİP yollar:** `docs/AYLIK-RAPOR-KARAR.md`, `progress.md` (yalnız bu lane + WP-65 kartı)
-- **Ortak/riskli yüzey:** Yok (yalnız karar dokümanı; kod/migration/secret yok)
+- **Durum:** [x] Boşta
+- **Faz/WP:** — (bu oturum: 32-sütun grid + core test kapsamı + worker/planner skill güncellemesi)
+- **Aşama:** —
+- **SAHİP yollar:** —
+- **Ortak/riskli yüzey:** —
 - **Dal:** — (main)
-- **Başlangıç:** 2026-07-14 17:43 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-14 17:54
-- **Not:** `docs/AYLIK-RAPOR-KARAR.md` oluşturuldu. 6 sağlayıcı karşılaştırıldı (Resend önerisi), 3 katmanlı mimari (pg_cron→collector→sender), opt-in/out politikası, maliyet analizi, WP-66 retention uyumu, güvenlik değerlendirmesi ve 7 ürün kararı sunuldu. Ürün sahibi yazılı karar verince uygulama WP'si açılır.
+- **Başlangıç:** —
+- **Son güncelleme:** 2026-07-14 (planner uyumlama)
+- **Not:** Bu oturum işleri commit'lendi: grid 32-sütun `141ed2a`, core testleri `da7bdd6`, skill docs `1afba2d`. ⚠️ WP-65 karar dokümanı (`docs/AYLIK-RAPOR-KARAR.md`) önceki Claude oturumunda yazıldı ama **COMMIT'LENMEDİ** (untracked); kararı WP-69 zaten uyguladı → ürün API/DNS kararı bekliyor.
 
 ### Codex Lane
-- **Durum:** [~] Aktif
-- **Faz/WP:** WP-70 · Windows performans tabanı ve donma tanısı
-- **Aşama:** Otomatik test + ilk gerçek Windows release tabanı geçti — ikinci makine / ürün kabulü bekliyor
-- **SAHİP yollar:** `docs/WINDOWS-PERFORMANCE-BASELINE.md`, `scripts/windows_performance_baseline.ps1`, `app/test/performance/windows_performance_baseline_test.dart`, `progress.md` (yalnız bu lane + WP-70 kartı)
-- **Ortak/riskli yüzey:** Yok. `app/lib/features/desktop/**` ve `app/windows/**` WP-53/28 hattına ait — DOKUNMA.
+- **Durum:** [x] Boşta
+- **Faz/WP:** —
+- **Aşama:** —
+- **SAHİP yollar:** —
+- **Ortak/riskli yüzey:** —
 - **Dal:** — (ana dal `main`)
-- **Başlangıç:** 2026-07-14 20:55 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-14 21:15
-- **Not:** WP-68 otomatik doğrulama tamam, Samsung/Pixel cihaz QA bekliyor. WP-70: release build + sözleşme testi geçti; 5×60 sn gerçek Windows koşumunda p95 Working Set 85.91 MB/private 93.03 MB/pencere 437 ms. 300–400 MB iddiası temiz release'te üretilmedi; ikinci Windows 11 tekrarı ve ürün kabulü bekliyor.
+- **Başlangıç:** —
+- **Son güncelleme:** 2026-07-14 21:32
+- **Not:** WP-70, yeni worker kuralına göre Test için bekleyenler'e park edildi. Sonraki iş için lane serbest.
 
 ### Grok Lane
 - **Durum:** [~] Aktif — kullanıcı yeniden dene
@@ -120,7 +120,6 @@
 | WP-62 | [~] Otomatik test geçti · demo/cihaz bekliyor (Grok) | Kamp Ateşi R2 · katmanlı sahne ve performanslı animasyon | WP-61 |
 | WP-63 | Brief teslim edildi | Android Widget R2 · 1×1 ve responsive ürün sözleşmesi | — |
 | WP-68 | Cihaz QA bekliyor | Android Widget R2 · native responsive sayaç/hedef/sıralama uygulaması | WP-63 briefi |
-| WP-70 | [~] İlk gerçek taban geçti · ikinci Windows QA/kabul bekliyor (Codex) | Windows performans tabanı · release RAM/başlangıç/donma ölçümü | — |
 | WP-64 | [~] Şablon hazır · cihaz QA operatörde | Çoklu cihaz senkronizasyon QA ve kurtarma provası | WP-53 ürün kabulü |
 | WP-66 | [~] Karar taslağı · ürün onayı bekliyor (Grok) | Hesap silme ve veri saklama politikası | Silme/retention kararı |
 | WP-67 | [~] Brief hazır · ürün onayı bekliyor (Grok) | İstatistik Görselleştirme R2 · grafik kataloğu | Kullanım soruları |
@@ -198,23 +197,6 @@
 - **Model önerisi:** 🔴 Opus
 
 > ✅ Çakışma yok: Aktif Grok WP-61 yalnız kamp ateşi assetleri/`pubspec.yaml` ve WP-64 QA dokümanlarına sahip. WP-68 `pubspec.yaml`a dokunmaz; Android widget kaynakları ve `study_providers.dart` ortak değildir.
-
-### WP-70: Windows Performans Tabanı ve Donma Tanısı 🖥️
-- **Program/Faz:** Windows masaüstü kalitesi (`KALITE-PROGRAMI §8.7`) · **Ajan:** Codex · **Durum:** [~] Otomatik test + ilk gerçek Windows tabanı geçti — ikinci makine / ürün kabulü bekliyor · **Bağımlılık:** Yok
-- **Problem:** Windows release'inin boşta 300–400 MB RAM tükettiği ve hafif donduğu bildiriliyor; şu an karşılaştırılabilir release ölçümü, tekrarlanabilir örnekleme veya performans bütçesi yok. Ölçmeden UI/mimari değişikliği yapmak rastgele optimizasyona yol açar.
-- **Kapsam:** Windows release build'i için kontrollü başlangıç/boşta işlem ölçümü; Working Set, private bytes, CPU ve pencere görünme süresi örnekleme; JSON kanıtı ve yorumlanabilir rapor; kısa, tekrarlanabilir koşum komutu. İlk bulguyu ayrı düzeltme WP'lerine dönüştürmek.
-- **Kapsam dışı:** `app/lib/features/desktop/**` veya Windows IA değişikliği, widget ağacı/tema/veri katmanı optimizasyonu, `app/windows/**` paketleme, yeni paket, `pubspec.yaml`, backend/RLS/migration, kullanıcı analitiği veya otomatik upload.
-- **SAHİP dosyalar (yaz):** `scripts/windows_performance_baseline.ps1`, `docs/WINDOWS-PERFORMANCE-BASELINE.md`, `app/test/performance/windows_performance_baseline_test.dart`, `progress.md` (yalnız Codex lane + bu kart).
-- **DOKUNMA:** `app/lib/features/desktop/**` (WP-53), `app/windows/**` (WP-28), `app/pubspec.yaml`, `app/lib/main.dart`, `core/theme/**`, `supabase/**`, Android/native widget yolları.
-- **Adımlar:** [x] Release artefaktı ve koşum ön şartlarını doğrulayan, test hesabı/verisi kaydetmeyen örnekleme betiği yaz; [x] 5 temiz başlatma ve 60 sn boşta örneğinin RAM/pencere sürelerini JSON'a kaydet; [x] ölçüm şemasını unit testle sabitle; [x] raporda p50/p95, makine/build/ölçüm sınırı ve düzeltme eşiğini kaydet; [x] ilk bulguyu değerlendir: temiz release'te 300–400 MB iddiası üretilmedi, bu nedenle düzeltme WP'si açılmadı; [ ] ikinci Windows 11 makinesinde aynı release koşumunu tekrar et.
-- **Veri/Migration etkisi:** Yok. Ölçüm yalnız yerel, gitignore altında bir JSON çıktısıdır; geri alma = betik/dokümanı kaldırmak. Kullanıcı verisi, token, ekran içeriği veya telemetry toplanmaz.
-- **RLS/Güvenlik:** Ağ isteği ve gizli veri yok; betik yalnız süreç düzeyi sayaçları/kendi çalıştırdığı release process'ini okur. Çıktı kullanıcı adı, e-posta, dosya yolu veya environment değişkeni içermez.
-- **Edge-case'ler:** Release exe yok, birden çok uygulama süreci, pencere oluşmaması, önceden açık instance, antivirus/ilk-çalıştırma etkisi, düşük güç modu, örnekleme sırasında uygulamanın kapanması, yüksek DPI/çoklu ekran.
-- **Kabul (ölçülebilir):** Temiz Windows makinesinde 5 koşumdan her biri için pencere görünme süresi ve 60 sn örnekleri JSON'a yazılır; p50/p95 RAM/CPU değerleri raporda kaynak makine/build bilgisiyle gösterilir; aynı komut iki kez çalışınca şema doğrulaması geçer ve hassas veri alanı 0'dır. Çıkan bütçe ihlali için ayrı düzeltme WP'si açılır. `Cihazda doğrulanmalı`.
-- **Tuzaklar:** Debug profile göre hüküm vermek; yalnız Working Set'i bellek sızıntısı sanmak; ölçüm aracının uygulamayı veya sonuçları etkilemesi; tek koşumu genellemek; anonimleştirilmemiş yolu/hesabı kanıta yazmak.
-- **Model önerisi:** 🟣 Pro
-
-> ✅ Çakışma yok: WP-70 yalnız yeni `scripts/`, `docs/` ve `app/test/performance/` yollarına yazar. Gemini WP-69 aylık rapor planı, Claude WP-65 karar belgesi ve park durumundaki WP-53 masaüstü IA kaynaklarıyla ortak sahip/sıcak dosya yoktur.
 
 ### WP-64: Çoklu Cihaz Senkronizasyon QA ve Kurtarma Provası 🔄
 - **Program/Faz:** Güvenilirlik / platformlar arası doğrulama · **Ajan:** Grok · **Durum:** [~] Şablon hazır — cihaz QA / ürün kabulü bekliyor · **Bağımlılık:** WP-53 ürün kabulü + Android yayımlı sürüm
@@ -323,15 +305,22 @@
 | **WP-53** | Park · cihaz/demo | Windows’ta 5 sekme + ≥1008 düzen | R2 `0bd23f4`. Beyaz ekran cold-start fix Grok (show after first frame). **Yeniden dene.** |
 | WP-62 | Park · demo | Kamp ateşi PNG sahne | Kod+test yeşil; cihaz görsel onayı |
 | WP-68 | Park · cihaz | Android widget R2 | Codex kod/test; Samsung/Pixel smoke |
+| WP-70 | Park · ikinci Windows | Windows release performans tabanı | `340b589`; ikinci Windows 11 + ürün kabulü |
 
 ### WP-53: Windows Desktop Design 2.0 — Ekran-İçi Ürün IA 🖥️ *(park)*
 - **Program/Faz:** Windows masaüstü · **Ajan (son):** Grok · **Durum:** [~] Park — Test için bekleyenler · **aktif çalışma değil**
 - **Bağımlılık (sonraki):** WP-28 MSIX hâlâ cihaz/kabul sonrası; diğer Android/plan işleri **bloklanmaz**
 - **Kod özeti:** R1 Ayarlar + R2 beş ekran desktop IA (`DesktopDensity`, master-detail, context panel); mobil branch korundu. Commit `0bd23f4`.
 - **Otomatik test:** desktop scaffold/shell 7 PASS; analyze 0 (`Kodda doğrulandı`)
+
 - **Cihaz notu:** `flutter run -d windows` pencere açıldı, içerik beyaz kaldı (kullanıcı 2026-07-14) — demo/debug sonra
 - **Kabul kapısı:** Windows demo + resize/DPI isteğe bağlı; onay → Tamamlanan; fail → debug WP
 - **SAHİP (okuma):** `features/desktop/**`, ilgili presentation; şu an **yazan lane yok**
+
+### WP-70: Windows Performans Tabanı ve Donma Tanısı 🖥️ *(park)*
+- **Durum:** [~] Park — Test için bekleyenler · **aktif çalışma değil**
+- **Kod/test:** `340b589`; release build + ölçüm sözleşmesi testi geçti. 5×60 sn gerçek Windows release koşumunda p95 Working Set 85.91 MB, private 93.03 MB ve pencere görünme 437 ms idi; 300–400 MB iddiası temiz release'te üretilmedi. `Kodda doğrulandı`.
+- **Bekleyen:** Aynı release betiğinin ikinci Windows 11 makinesinde koşumu ve ürün kabulü. `Cihazda doğrulanmalı`.
 
 ---
 
