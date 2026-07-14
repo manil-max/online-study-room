@@ -55,17 +55,17 @@ Odak Kampı uyarlaması:
 
 ### Oransal ölçek (pencere resize)
 
-**Problem:** Mobil reflow — genişlik değişince grid hücreleri kare olarak yeniden hesaplanıyor, kartlar eziliyor / farklı “düzen” oluşuyor.
+**Problem:** Mobil reflow — genişlik değişince kartlar eziliyor / farklı düzen; sabit tuval + letterbox ise kenar boşluğu bırakıyor.
 
-**Karar (masaüstü uygulamaları gibi):** Sabit **tasarım tuvali 1100×720** (varsayılan pencere). `DesktopProportionalScale` tüm kabuğu `min(sx,sy)` ile sığdırır.
+**Karar:** Letterbox **yok**. Genişliğe göre **tek scale** (`width / 1100`, min 0.65 / max 1.5). Mantıksal yükseklik = `fizikselY / scale` → pencereyi tam doldurur; sx=sy → arayüz elemanları aynı oranda büyür/küçülür, esnek kalır.
 
 | Pencere | Davranış |
 |---|---|
-| 1100×720 | ölçek 1.0 |
-| Daralt / alçalt | her şey aynı oranda küçülür; layout aynı |
-| Maximize / 4K | maxScale 1.35 tavanı + letterbox |
+| ~1100 geniş | ölçek ~1.0, tam dolu |
+| Daralt | her şey aynı oranda küçülür, kenar şeridi yok |
+| Maximize / 4K | ölçek tavanı + tam dolu (boş bant yok) |
+| Uzun/kısa | yükseklik mantıksal olarak esner |
 
-- `MediaQuery.size` tuval boyutu → breakpoint/pane/grid **değişmez**
 - Compact Focus (PiP) bu yoldan bağımsız
 - Kod: `desktop_proportional_scale.dart`
 

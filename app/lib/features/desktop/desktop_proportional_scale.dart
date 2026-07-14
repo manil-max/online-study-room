@@ -1,46 +1,47 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 
 import '../../core/desktop/desktop_window.dart';
 
-/// Windows varsayılan pencere (desktop_window_io ile aynı).
+/// Referans genişlik — “normal” pencere yoğunluğu (~varsayılan 1100).
 ///
-/// Tüm kabuk bu “tasarım tuvali” üzerinde kurulur; gerçek pencere
-/// büyüyüp küçülünce **layout değişmez**, yalnızca oransal ölçeklenir.
-const Size kDesktopDesignSize = Size(1100, 720);
+/// Sabit tuval + letterbox YOK. Genişliğe göre tek [scale]; mantıksal yükseklik
+/// pencereye sığacak şekilde ayarlanır → sol/sağ veya üst/alt boş şerit kalmaz,
+/// tüm UI aynı oranda büyür/küçülür.
+const double kDesktopReferenceWidth = 1100;
 
-/// Pencere / tasarım oranından ölçek hesaplar.
+/// Eski API uyumu (testler / doc).
+const Size kDesktopDesignSize = Size(kDesktopReferenceWidth, 720);
+
+/// Genişliğe göre tek ölçek (yükseklik ayrı esner; oran bozulmaz).
 double desktopProportionalScale({
   required Size viewport,
   Size design = kDesktopDesignSize,
-  double maxScale = 1.35,
+  double maxScale = 1.5,
+  double minScale = 0.65,
 }) {
-  if (viewport.width <= 0 || viewport.height <= 0) return 1;
-  final sx = viewport.width / design.width;
-  final sy = viewport.height / design.height;
-  final fit = math.min(sx, sy);
-  if (fit > maxScale) return maxScale;
-  return fit;
+  if (viewport.width <= 0) return 1;
+  final raw = viewport.width / design.width;
+  return raw.clamp(minScale, maxScale);
 }
 
-/// Sabit tasarım tuvali + oransal sığdırma.
+/// Pencereyi tam dolduran, tek oranlı ölçek.
 ///
-/// FittedBox yerine [Transform.scale] + [RepaintBoundary]:
-/// - Ölçek GPU transform (ucuz)
-/// - Alt ağaç ayrı raster katmanı → saniyelik kart tick’leri tüm kabuğu yeniden
-///   boyamaz
+/// - Letterbox yok (tam ekranda kenar boşluğu yok)
+/// - sx == sy → arayüz elemanları birbirine göre bozulmaz
+/// - Mantıksal boyut = fiziksel / scale → layout esnek (dar/yüksek pencere OK)
 class DesktopProportionalScale extends StatelessWidget {
   const DesktopProportionalScale({
     required this.child,
-    this.designSize = kDesktopDesignSize,
-    this.maxScale = 1.35,
+    this.referenceWidth = kDesktopReferenceWidth,
+    this.maxScale = 1.5,
+    this.minScale = 0.65,
     super.key,
   });
 
   final Widget child;
-  final Size designSize;
+  final double referenceWidth;
   final double maxScale;
+  final double minScale;
 
   @override
   Widget build(BuildContext context) {
@@ -48,43 +49,36 @@ class DesktopProportionalScale extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final viewport = Size(constraints.maxWidth, constraints.maxHeight);
-        final scale = desktopProportionalScale(
-          viewport: viewport,
-          design: designSize,
-          maxScale: maxScale,
-        );
-        final scheme = Theme.of(context).colorScheme;
-        final parent = MediaQuery.of(context);
+        final vw = constraints.maxWidth;
+        final vh = constraints.maxHeight;
+        if (vw <= 0 || vh <= 0) return child;
 
-        // Transform.scale layout boyutunu değiştirmez → dış kutu ölçekli ölçülerde.
-        return ColoredBox(
-          color: scheme.surfaceContainerLowest,
-          child: Center(
+        final scale = desktopProportionalScale(
+          viewport: Size(vw, vh),
+          design: Size(referenceWidth, 720),
+          maxScale: maxScale,
+          minScale: minScale,
+        );
+
+        // Mantıksal tuval: genişlik referansa yakın; yükseklik pencereye göre.
+        // FittedBox.fill + (logicalW, logicalH) → scaleX = scaleY = scale,
+        // boyalı alan tam vw×vh (boş şerit yok).
+        final logicalW = vw / scale;
+        final logicalH = vh / scale;
+
+        final parent = MediaQuery.of(context);
+        return SizedBox(
+          width: vw,
+          height: vh,
+          child: FittedBox(
+            fit: BoxFit.fill,
+            alignment: Alignment.center,
             child: SizedBox(
-              width: designSize.width * scale,
-              height: designSize.height * scale,
-              child: ClipRect(
-                child: OverflowBox(
-                  alignment: Alignment.topLeft,
-                  minWidth: designSize.width,
-                  maxWidth: designSize.width,
-                  minHeight: designSize.height,
-                  maxHeight: designSize.height,
-                  child: Transform.scale(
-                    scale: scale,
-                    alignment: Alignment.topLeft,
-                    filterQuality: FilterQuality.medium,
-                    child: SizedBox(
-                      width: designSize.width,
-                      height: designSize.height,
-                      child: MediaQuery(
-                        data: parent.copyWith(size: designSize),
-                        child: RepaintBoundary(child: child),
-                      ),
-                    ),
-                  ),
-                ),
+              width: logicalW,
+              height: logicalH,
+              child: MediaQuery(
+                data: parent.copyWith(size: Size(logicalW, logicalH)),
+                child: RepaintBoundary(child: child),
               ),
             ),
           ),
