@@ -11,8 +11,6 @@ import android.content.SharedPreferences
 import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
-import android.os.SystemClock
-import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
 import com.manilmax.online_study_room.MainActivity
 import com.manilmax.online_study_room.R
@@ -270,28 +268,21 @@ class StudyTimerService : Service() {
             .setContentIntent(openAppPending())
             .setContentTitle(if (isBreak) "Mola sürüyor" else "Odaklanıyorsun")
             .setContentText(if (isBreak) "Mola bittiğinde çalışmaya dönebilirsin" else "Canlı sayaç çalışıyor")
-        // Dar panelde süre + ana eylem; genişletilmiş panelde iki doğrudan native
-        // eylem vardır. RemoteViews desteklenmezse standart aksiyonlara düşer.
-        val custom = runCatching {
-            buildRunningRemoteViews(startedAtMs, isBreak)
-        }.getOrNull()
-        val expanded = runCatching {
-            buildRunningExpandedRemoteViews(startedAtMs, isBreak)
-        }.getOrNull()
-        if (custom != null) {
-            builder.setStyle(NotificationCompat.DecoratedCustomViewStyle())
-                .setCustomContentView(custom)
-            if (expanded != null) builder.setCustomBigContentView(expanded)
+        // Canlı/dinamik panel terfisi yalnız sistemin tanıdığı standart ongoing
+        // bildirimlerde mümkün. Özel RemoteViews kullanmak, OEM'in bu bildirimi
+        // saat/kronometre etkinliği olarak sınıflandırmasını engeller. Native
+        // Chronometer ve gerçek NotificationCompat aksiyonları hem panel hem de
+        // uygulama kapalıyken kontrol için tek, uyumlu yüzeydir.
+        builder.setUsesChronometer(true)
+            .setWhen(startedAtMs)
+            .setShowWhen(true)
+            .setSubText(if (isBreak) "Mola" else "Odak")
+        if (isBreak) {
+            builder.addAction(0, "Çalışmaya dön", endBreakActionPending())
         } else {
-            builder.setUsesChronometer(true)
-                .setWhen(startedAtMs)
-            if (isBreak) {
-                builder.addAction(0, "Çalışmaya dön", endBreakActionPending())
-            } else {
-                builder.addAction(0, "Mola", breakActionPending())
-            }
-            builder.addAction(0, "Durdur", stopActionPending())
+            builder.addAction(0, "Mola", breakActionPending())
         }
+        builder.addAction(0, "Durdur", stopActionPending())
         return builder.build()
     }
 
@@ -300,74 +291,12 @@ class StudyTimerService : Service() {
         val builder = baseBuilder()
             .setOngoing(false)
             .setContentIntent(openAppPending())
-        val custom = runCatching { buildIdleRemoteViews() }.getOrNull()
-        val expanded = runCatching { buildIdleExpandedRemoteViews() }.getOrNull()
-        if (custom != null) {
-            builder.setStyle(NotificationCompat.DecoratedCustomViewStyle())
-                .setCustomContentView(custom)
-            if (expanded != null) builder.setCustomBigContentView(expanded)
-        } else {
-            builder.setUsesChronometer(false)
-                .setContentTitle("00:00:00")
-                .addAction(0, "Başlat", startActionPending())
-        }
+            .setUsesChronometer(false)
+            .setShowWhen(false)
+            .setContentTitle("00:00:00")
+            .setContentText("Çalışmaya hazır")
+            .addAction(0, "Başlat", startActionPending())
         return builder.build()
-    }
-
-    private fun buildRunningRemoteViews(startedAtMs: Long, isBreak: Boolean): RemoteViews {
-        val views = RemoteViews(packageName, R.layout.timer_notification)
-        // Chronometer'ı gerçek başlangıç anına göre akıt (elapsedRealtime tabanı).
-        val base = SystemClock.elapsedRealtime() - (System.currentTimeMillis() - startedAtMs)
-        views.setChronometer(R.id.notif_timer_elapsed, base, null, true)
-        views.setTextViewText(R.id.notif_timer_action, if (isBreak) "Bitti" else "Durdur")
-        views.setOnClickPendingIntent(R.id.notif_timer_action, stopActionPending())
-        return views
-    }
-
-    private fun buildRunningExpandedRemoteViews(startedAtMs: Long, isBreak: Boolean): RemoteViews {
-        val views = RemoteViews(packageName, R.layout.timer_notification_expanded)
-        val base = SystemClock.elapsedRealtime() - (System.currentTimeMillis() - startedAtMs)
-        views.setChronometer(R.id.notif_panel_elapsed, base, null, true)
-        views.setTextViewText(
-            R.id.notif_panel_status,
-            if (isBreak) "Mola sürüyor" else "Odaklanıyorsun",
-        )
-        views.setTextViewText(
-            R.id.notif_panel_primary_action,
-            if (isBreak) "Çalışmaya dön" else "Mola",
-        )
-        views.setOnClickPendingIntent(
-            R.id.notif_panel_primary_action,
-            if (isBreak) endBreakActionPending() else breakActionPending(),
-        )
-        views.setTextViewText(R.id.notif_panel_stop_action, "Durdur")
-        views.setOnClickPendingIntent(R.id.notif_panel_stop_action, stopActionPending())
-        return views
-    }
-
-    private fun buildIdleRemoteViews(): RemoteViews {
-        val views = RemoteViews(packageName, R.layout.timer_notification)
-        views.setChronometer(R.id.notif_timer_elapsed, SystemClock.elapsedRealtime(), "00:00:00", false)
-        views.setTextViewText(R.id.notif_timer_elapsed, "00:00:00")
-        views.setTextViewText(R.id.notif_timer_action, "Başlat")
-        views.setOnClickPendingIntent(R.id.notif_timer_action, startActionPending())
-        return views
-    }
-
-    private fun buildIdleExpandedRemoteViews(): RemoteViews {
-        val views = RemoteViews(packageName, R.layout.timer_notification_expanded)
-        views.setTextViewText(R.id.notif_panel_status, "Çalışmaya hazır")
-        views.setChronometer(
-            R.id.notif_panel_elapsed,
-            SystemClock.elapsedRealtime(),
-            "00:00:00",
-            false,
-        )
-        views.setTextViewText(R.id.notif_panel_elapsed, "00:00:00")
-        views.setTextViewText(R.id.notif_panel_primary_action, "Başlat")
-        views.setOnClickPendingIntent(R.id.notif_panel_primary_action, startActionPending())
-        views.setViewVisibility(R.id.notif_panel_stop_action, android.view.View.GONE)
-        return views
     }
 
     private fun baseBuilder(): NotificationCompat.Builder =

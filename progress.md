@@ -67,8 +67,8 @@
 - **Ortak/riskli yüzey:** —
 - **Dal:** — (ana dal `main`)
 - **Başlangıç:** —
-- **Son güncelleme:** 2026-07-15 00:05 (Europe/Istanbul)
-- **Not:** WP-79 kodu ve otomatik testleri tamamlandı; yeni beta ve Android cihaz QA bekliyor.
+- **Son güncelleme:** 2026-07-15 00:34 (Europe/Istanbul)
+- **Not:** WP-80 kodu ve imzalı Android beta derlemesi tamamlandı; yeni beta ve cihaz QA bekliyor.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
@@ -110,6 +110,7 @@
 | WP-77 | [~] Test için bekliyor | İzin yönetimi — verilen dört Android iznini geri alma ve rehberi | — |
 | WP-78 | [~] Test için bekliyor | Android beta-v19 — imzalı APK ve GitHub prerelease | WP-76/77 kod commitleri |
 | WP-79 | [~] Test için bekliyor | Bildirim açılışta toplu teslim hata düzeltmesi | beta-v19 cihaz bulgusu |
+| WP-80 | [~] Test için bekliyor | Dinamik panel uygunluk hata düzeltmesi | beta-v19 cihaz bulgusu |
 
 > **2026-07-14 proje denetimi:** Serbest sürükle-bırak ızgara, canlı grup hedefi ve saat stilleri **zaten kodda uygulanmış** (backlog stale idi; geçici WP-72/73/75 iptal). Dinamik paneldeki cihaz/eylem sorunu için açılan **WP-76** kod+otomatik test aşamasını geçti; Samsung/Pixel cihaz QA’sı bekliyor.
 >
@@ -149,6 +150,12 @@
 - **Düzeltildi:** Açılışta çalışan güncelleme kontrolünün Android sistem bildirimi üretmesi kaldırıldı; güncelleme anahtarı yalnız uygulama içi güncelleme penceresini yönetir. Dürtme dinleyicisi her uygulama oturumunun ilk stream anlık görüntüsünü sessizce temel alır; yalnız sonradan canlı gelen yeni dürtme için bildirim gösterir.
 - **Otomatik kanıt:** Dürtme/açılış senaryosu dahil 9 test PASS; değişen dosyalarda `flutter analyze` 0. Tam analiz, WP-79 dışı mevcut 4 uyarıyla başarısız.
 - **Bekleyen cihaz QA:** Bir sonraki beta kurulunca (1) uygulamayı açarken Android sisteminde güncelleme bildirimi oluşmadığını, (2) uygulama kapalıyken gönderilen dürtmelerin açılışta patlamadığını, (3) uygulama açıkken yeni gönderilen dürtmenin yalnız bir kez geldiğini doğrula.
+
+### WP-80: Dinamik Panel Uygunluk Hata Düzeltmesi
+- **Program/Faz:** Android güvenilirlik bakım · **Aşama:** Otomatik test geçti · **Kanıt:** `Kodda doğrulandı` / `Cihazda doğrulanmalı`
+- **Kök neden ve düzeltme:** Çalışan sayaç her zaman özel `RemoteViews` bildirimini kullanıyordu. Bu yol OEM'in canlı/dinamik panel uygunluğunu engellediği için kaldırıldı; bildirim artık standart ongoing `CATEGORY_STOPWATCH` + native `Chronometer` + `Mola`/`Durdur` eylemleriyle oluşturuluyor. Uygulama kapalıyken eylemler doğrudan native foreground service'e gitmeye devam eder.
+- **Otomatik kanıt:** `timer_background_reconcile_test.dart` 4/4 PASS; imzalı `beta` release APK derlemesi PASS. Tam analiz, WP-80 dışındaki 4 mevcut uyarıyla başarısız.
+- **Bekleyen cihaz QA:** Yeni beta ile sayacı başlat; uygulamayı görev listesinden kapat; bildirimde akan süre ve Mola/Durdur'u doğrula. Telefonun desteklediği OEM canlı panel/Now Bar/HyperOS yüzeyinde terfi görünürse ekran kaydı al. Terfi, Android sürümü ve OEM politikası nedeniyle garanti edilemez; standart canlı bildirim ve kontroller ise görünmelidir.
  
 ---
 
