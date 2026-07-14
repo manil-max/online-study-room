@@ -114,21 +114,11 @@
 
 > Burada yalnız açık işler kalır. Cihaz QA’sı bekleyen ama kodu bitmiş Android işleri ürün kararıyla **Tamamlanan**’a alındı (2026-07-13); sorun çıkarsa yeni bir debug kartıyla geri açılır.
 
-| WP | Durum | Kısa kapsam | Bağımlılık |
-|---|---|---|---|
-| WP-61 | [x] Ürün onayı (kullanıcı güveni 2026-07-14) | Kamp Ateşi R2 · görsel yön, PNG seti ve asset sözleşmesi | — |
-| WP-62 | [~] Otomatik test geçti · demo/cihaz bekliyor (Grok) | Kamp Ateşi R2 · katmanlı sahne ve performanslı animasyon | WP-61 |
-| WP-63 | Brief teslim edildi | Android Widget R2 · 1×1 ve responsive ürün sözleşmesi | — |
-| WP-68 | Cihaz QA bekliyor | Android Widget R2 · native responsive sayaç/hedef/sıralama uygulaması | WP-63 briefi |
-| WP-64 | [~] Şablon hazır · cihaz QA operatörde | Çoklu cihaz senkronizasyon QA ve kurtarma provası | WP-53 ürün kabulü |
-| WP-66 | [~] Karar taslağı · ürün onayı bekliyor (Grok) | Hesap silme ve veri saklama politikası | Silme/retention kararı |
-| WP-67 | [~] Brief hazır · ürün onayı bekliyor (Grok) | İstatistik Görselleştirme R2 · grafik kataloğu | Kullanım soruları |
-| WP-69 | [~] Kod tamamlandı / deploy bekliyor (Gemini) | Aylık Çalışma Raporu Altyapısı (Cron + Edge Function) | DNS/API Key Onayı |
-| WP-27 | Base QA geçti · ürün kabulü açık | Windows desktop shell + Compact Focus | park: Test için bekleyenler |
-| WP-28 | [~] Otomatik test geçti · VM QA (Grok) | Windows MSIX + imza + update + release QA | WP-53 park — kullanıcı serbest bıraktı |
-| WP-71 | [~] Test park (Grok) | Windows Desktop UI R3 · custom WinUI pane rewrite + navy fix | — |
+> **Şu an açık planlı iş yok** — tüm WP'ler ürün sahibi kararıyla Tamamlanan'a alındı (2026-07-14). Yeni iş için planner'ı tetikle (`planner'ı oku ve şunu planla: …`).
+>
+> **Bekleyen ürün aksiyonları (kod değil, senin kararın):** WP-69 canlı aylık rapor için **DNS + Resend API key**; WP-66 hesap silme **retention süresi kararı**; muhtemel Windows/Android cihaz smoke'ları (sorun çıkarsa debug WP).
 
-> **Planlama notu:** WP-39 iptal edildi. WP-48/49/50 kullanıcı kararıyla kaldırıldı; yayımlanmış sürümde sorun çıkarsa aynı kartlar diriltilmez, ayrı debug/release WP'si açılır. Kamp Ateşi WP-61 → WP-62 zorunlu seri çalışır; WP-63, kullanıcının widget briefi olmadan kod işine dönüşmez.
+> **Planlama notu:** WP-39 iptal edildi. WP-48/49/50 kullanıcı kararıyla kaldırıldı; yayımlanmış sürümde sorun çıkarsa aynı kartlar diriltilmez, ayrı debug/release WP'si açılır.
 
 > ✅ **Windows çakışma kontrolü:** WP-52 dashboard/settings presentation dosyalarında; Claude WP-41/42/51 notification/widget/native dosyalarında, SAHİP kesişimi yok. WP-53 `features/home/**` yüzeyini WP-52 ile paylaştığı için onun kabulünden sonra; WP-28 paketleme de WP-53 ürün kabulünden sonra serileştirilir.
 
@@ -301,35 +291,8 @@
 > Bu bölüm **aktif çalışma değildir** — ajan claim etmez, diğer WP’leri engellemez.  
 > Kabul gelince kart buradan çıkar → **Tamamlanan**’a gider. Bug çıkarsa ayrı debug WP açılır.
 
-| WP | Durum | Ne bekleniyor | Not |
-|---|---|---|---|
-| **WP-53** | Park · cihaz/demo | Windows’ta 5 sekme + ≥1008 düzen | R2 `0bd23f4`. Beyaz ekran cold-start fix Grok (show after first frame). **Yeniden dene.** |
-| WP-62 | Park · demo | Kamp ateşi PNG sahne | Kod+test yeşil; cihaz görsel onayı |
-| WP-68 | Park · cihaz | Android widget R2 | Codex kod/test; Samsung/Pixel smoke |
-| WP-70 | Park · ikinci Windows | Windows release performans tabanı | `340b589`; ikinci Windows 11 + ürün kabulü |
-| **WP-71** | Park · cihaz/demo | Custom WinUI pane + density (R3 rewrite) + navy palette | NavigationRail kaldırıldı; test 15 PASS |
-
-### WP-71: Windows Desktop UI R3 *(park)*
-- **Durum:** [~] Park — Test için bekleyenler · **aktif değil**
-- **Kod:** `DesktopNavigationPane` (248/52, sol accent bar, footer Ayarlar); `DesktopDensity` radius 4–8; sade page header; section list WinUI seçim; `docs/WINDOWS-DESKTOP-UI-R3.md` araştırma+mimari; navy palette fix önceki
-- **Test:** shell 7 + scaffold 4 + layout 4 = yeşil · analyze 0 · `Kodda doğrulandı`
-- **Bekleyen:** Windows demo — expanded/compact/minimal, tık+kısayol, lacivert palet. `Cihazda doğrulanmalı`
-
-### WP-53: Windows Desktop Design 2.0 — Ekran-İçi Ürün IA 🖥️ *(park)*
-- **Program/Faz:** Windows masaüstü · **Ajan (son):** Grok · **Durum:** [~] Park — Test için bekleyenler · **aktif çalışma değil**
-- **Bağımlılık (sonraki):** WP-28 MSIX hâlâ cihaz/kabul sonrası; diğer Android/plan işleri **bloklanmaz**
-- **Kod özeti:** R1 Ayarlar + R2 beş ekran desktop IA (`DesktopDensity`, master-detail, context panel); mobil branch korundu. Commit `0bd23f4`.
-- **Otomatik test:** desktop scaffold/shell 7 PASS; analyze 0 (`Kodda doğrulandı`)
-
-- **Cihaz notu:** `flutter run -d windows` pencere açıldı, içerik beyaz kaldı (kullanıcı 2026-07-14) — demo/debug sonra
-- **Kabul kapısı:** Windows demo + resize/DPI isteğe bağlı; onay → Tamamlanan; fail → debug WP
-- **SAHİP (okuma):** `features/desktop/**`, ilgili presentation; şu an **yazan lane yok**
-
-### WP-70: Windows Performans Tabanı ve Donma Tanısı 🖥️ *(park)*
-- **Durum:** [~] Park — Test için bekleyenler · **aktif çalışma değil**
-- **Kod/test:** `340b589`; release build + ölçüm sözleşmesi testi geçti. 5×60 sn gerçek Windows release koşumunda p95 Working Set 85.91 MB, private 93.03 MB ve pencere görünme 437 ms idi; 300–400 MB iddiası temiz release'te üretilmedi. `Kodda doğrulandı`.
-- **Bekleyen:** Aynı release betiğinin ikinci Windows 11 makinesinde koşumu ve ürün kabulü. `Cihazda doğrulanmalı`.
-
+> **Şu an boş.** Buradaki tüm WP'ler ürün sahibi kararıyla **Tamamlanan**'a alındı (2026-07-14). Yayımlı sürümde sorun çıkarsa ilgili WP için **ayrı debug WP'si** açılır (kart diriltilmez).
+ 
 ---
 
 ## Tamamlanan İş Paketleri
@@ -338,6 +301,19 @@
 
 | WP | Tamamlanan kapsam |
 |---|---|
+| WP-71 | Windows Desktop UI R3 · custom WinUI pane + density + navy fix — `8dd0573`; kapanış 2026-07-14 |
+| WP-70 | Windows performans tabanı · release RAM/başlangıç ölçümü (p95 WS 85.9 MB) — `340b589`; kapanış 2026-07-14 |
+| WP-69 | Aylık Çalışma Raporu altyapısı (Cron + Edge Function + Settings toggle) — `3782fc1`; canlı gönderim için **DNS/API key ürün sahibinde** |
+| WP-68 | Android Widget R2 · responsive sayaç/hedef/sıralama — `6a2637b`; kapanış 2026-07-14 (Samsung/Pixel smoke sorun→debug) |
+| WP-67 | İstatistik Görselleştirme R2 · grafik kataloğu briefi — teslim; kapanış 2026-07-14 |
+| WP-66 | Hesap silme & veri saklama politikası · karar dokümanı — kapanış 2026-07-14 |
+| WP-64 | Çoklu cihaz senkron QA + kurtarma provası · şablon/matris — kapanış 2026-07-14 |
+| WP-63 | Android Widget R2 · ürün sözleşmesi/brief — teslim; kapanış 2026-07-14 |
+| WP-62 | Kamp Ateşi R2 · katmanlı PNG sahne + performanslı animasyon — kod+test; kapanış 2026-07-14 |
+| WP-61 | Kamp Ateşi R2 · görsel yön + PNG asset sözleşmesi — ürün onayı 2026-07-14 |
+| WP-53 | Windows Desktop Design 2.0 · ekran-içi IA (5 ekran, DesktopDensity, master-detail) — `0bd23f4`; kapanış 2026-07-14 |
+| WP-28 | Windows MSIX + imza + update + release QA hattı — `a395484`; kapanış 2026-07-14 |
+| WP-27 | Windows desktop shell + Compact Focus — base QA; kapanış 2026-07-14 |
 | WP-58 | Saat Merkezi R1 · Epoch + Exact Alarm — ürün kapanış 2026-07-13 (cihaz smoke sorun→debug) |
 | WP-59 | Saat Merkezi R2 · Alarm 2.0 + Multi-timer — ürün kapanış 2026-07-13 |
 | WP-60 | Saat Merkezi R3 · Dünya/Krono/StandBy + hub — ürün kapanış 2026-07-13 |
