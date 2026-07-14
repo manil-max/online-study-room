@@ -3,6 +3,25 @@
   "source": "CHANGELOG.md",
   "releases": [
     {
+      "versionName": "1.0.20",
+      "buildNumber": 20,
+      "channel": "beta",
+      "date": "2026-07-15",
+      "title": "beta-v20: bildirim teslimi + dinamik panel düzeltmesi",
+      "highlights": [
+        "Sayaç bildirimi standart Android canlı kronometre ve Mola/Durdur eylemleriyle çalışır.",
+        "Uygulama kapalıyken gelen eski dürtmeler açılışta topluca bildirim oluşturmaz.",
+        "Güncelleme kontrolü uygulama açılırken Android sistem bildirimi üretmez."
+      ],
+      "fixes": [
+        "Özel bildirim şablonunun OEM dinamik panel uygunluğunu engellemesi giderildi.",
+        "Dürtme dinleyicisinin yeniden açılışta birikmiş kayıtları yeni sanması giderildi."
+      ],
+      "notes": [
+        "Bu bir beta test sürümüdür; canlı panel terfisi Android sürümü ve OEM politikasına bağlıdır."
+      ]
+    },
+    {
       "versionName": "1.0.19",
       "buildNumber": 19,
       "channel": "beta",

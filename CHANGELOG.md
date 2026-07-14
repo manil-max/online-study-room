@@ -4,6 +4,32 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [beta-v20 / 1.0.20+20] - 2026-07-15
+
+> ⚠️ **Beta test sürümü.** Bu paket stable değildir; bildirim teslimi ve dinamik
+> sayaç paneli düzeltmeleri gerçek Android cihazda doğrulansın diye yayımlanır.
+
+### Fixes
+- **Açılışta güncelleme bildirimi:** Uygulama açılırken Android sistem bildirimi
+  oluşturulmaz; güncelleme anahtarı yalnız uygulama içi güncelleme penceresini
+  yönetir.
+- **Dürtme patlaması:** Uygulama kapalıyken gelen eski dürtmeler açılışta topluca
+  bildirim üretmez. Uygulama açıkken canlı gelen yeni dürtme yalnız bir kez görünür.
+- **Dinamik panel uygunluğu:** Sayaç bildirimi özel şablon yerine standart Android
+  canlı kronometre, **Mola** ve **Durdur** eylemlerini kullanır; OEM canlı paneli
+  için uygun yüzey budur.
+
+### Test odağı
+- Uygulamayı açarken Android sisteminde güncelleme bildirimi görünmediğini doğrula.
+- Uygulama kapalıyken gönderilmiş dürtmelerin açılışta patlamadığını; uygulama
+  açıkken yeni dürtmenin bir kez geldiğini doğrula.
+- Sayacı başlatıp uygulamayı görev listesinden kapat; bildirimde süre, Mola ve
+  Durdur'u dene. Destekleyen cihazda canlı panel/Now Bar/HyperOS terfisini kaydet.
+
+### Notes
+- OEM canlı paneli Android sürümü ve üretici politikasına bağlıdır; standart canlı
+  bildirim ve kontroller tüm desteklenen Android sürümlerinde çalışmalıdır.
+
 ## [beta-v19 / 1.0.19+19] - 2026-07-14
 
 > ⚠️ **Beta test sürümü.** Bu paket stable değildir; dinamik sayaç paneli ve

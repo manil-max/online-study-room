@@ -60,15 +60,15 @@
 - **Not:** Bu oturum işleri commit'lendi: grid 32-sütun `141ed2a`, core testleri `da7bdd6`, skill docs `1afba2d`. ⚠️ WP-65 karar dokümanı (`docs/AYLIK-RAPOR-KARAR.md`) önceki Claude oturumunda yazıldı ama **COMMIT'LENMEDİ** (untracked); kararı WP-69 zaten uyguladı → ürün API/DNS kararı bekliyor.
 
 ### Codex Lane
-- **Durum:** [x] Boşta
-- **Faz/WP:** —
-- **Aşama:** —
-- **SAHİP yollar:** —
-- **Ortak/riskli yüzey:** —
+- **Durum:** [~] Aktif
+- **Faz/WP:** WP-81 · Android beta-v20 yayın paketi
+- **Aşama:** Geliştiriliyor
+- **SAHİP yollar:** `app/pubspec.yaml`, `CHANGELOG.md`, `app/assets/release_notes.json`, `docs/VERSIONS.md`, `progress.md`
+- **Ortak/riskli yüzey:** Android release keystore, `beta-v20` git etiketi, GitHub Actions/GitHub Release
 - **Dal:** — (ana dal `main`)
-- **Başlangıç:** —
-- **Son güncelleme:** 2026-07-15 00:34 (Europe/Istanbul)
-- **Not:** WP-80 kodu ve imzalı Android beta derlemesi tamamlandı; yeni beta ve cihaz QA bekliyor.
+- **Başlangıç:** 2026-07-15 00:42 (Europe/Istanbul)
+- **Son güncelleme:** 2026-07-15 00:42 (Europe/Istanbul)
+- **Not:** Kullanıcı onayıyla WP-79/80 düzeltmelerini içeren beta-v20 yayın paketi claim edildi; stable yayın kapsam dışı.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
@@ -111,6 +111,7 @@
 | WP-78 | [~] Test için bekliyor | Android beta-v19 — imzalı APK ve GitHub prerelease | WP-76/77 kod commitleri |
 | WP-79 | [~] Test için bekliyor | Bildirim açılışta toplu teslim hata düzeltmesi | beta-v19 cihaz bulgusu |
 | WP-80 | [~] Test için bekliyor | Dinamik panel uygunluk hata düzeltmesi | beta-v19 cihaz bulgusu |
+| WP-81 | [~] Geliştiriliyor | Android beta-v20 — bildirim teslimi + dinamik panel düzeltmeleri | WP-79/80 kod commitleri |
 
 > **2026-07-14 proje denetimi:** Serbest sürükle-bırak ızgara, canlı grup hedefi ve saat stilleri **zaten kodda uygulanmış** (backlog stale idi; geçici WP-72/73/75 iptal). Dinamik paneldeki cihaz/eylem sorunu için açılan **WP-76** kod+otomatik test aşamasını geçti; Samsung/Pixel cihaz QA’sı bekliyor.
 >
@@ -119,6 +120,11 @@
 > - **Ürün kararı (kod değil, senin kararın):** WP-66 hesap silme retention · WP-67 grafik türleri · WP-69 aylık rapor için DNS + Resend API key.
 
 > **Planlama notu:** WP-39 iptal; WP-48/49/50 kaldırıldı; geçici WP-72/73/74/75 (2026-07-14) zaten-yapılmış/yanlış açıldığı için iptal edildi. Sorun çıkarsa ayrı debug/release WP'si açılır.
+
+### WP-81: Android beta-v20 Yayın Paketi
+- **Program/Faz:** Android dağıtım · **Ajan:** Codex · **Durum:** [~] Geliştiriliyor · **Bağımlılık:** WP-79/80 kod commitleri
+- **Kapsam:** `1.0.20-beta+20` sürüm notları, imzalı beta APK, `beta-v20` etiketi ve GitHub prerelease. Stable tag/release yok.
+- **Kabul:** Yerel imzalı beta release APK derlemesi; etiketin `beta-v20` olması; GitHub Actions APK + SHA-256 prerelease başarısı; telefonda WP-79/80 cihaz QA için hazır olması.
 
 ## Test için bekleyenler
 

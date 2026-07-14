@@ -5,6 +5,7 @@ Bu dosya ürün tarafındaki okunur sürüm indeksidir. Ayrıntılı değişikli
 
 | Kanal | Tag | Uygulama sürümü | Durum | Kısa not |
 |---|---:|---:|---|---|
+| beta | beta-v20 | 1.0.20+20 | Yayınlanacak | Bildirim teslimi + dinamik panel uygunluk düzeltmeleri |
 | beta | beta-v19 | 1.0.19+19 | Test için hazırlanıyor | Dinamik panel + izinleri geri alma rehberi |
 | stable | v8 | 1.0.18+8 | Yayında | Güven Sürümü: native sayaç, Saat Merkezi, başarımlar/taç, 15 tema |
 | beta | beta-v18 | 1.0.18+18 | Süperseed | v8’e gömüldü |
@@ -31,5 +32,5 @@ Bu dosya ürün tarafındaki okunur sürüm indeksidir. Ayrıntılı değişikli
 ## Bildirim sınırı
 
 Güncelleme bildirimi FCM/push değildir. Uygulama açılışında GitHub Releases
-kontrol edilir; yeni APK bulunursa ve Android bildirim izni varsa yerel bildirim
-gösterilir. İzin yoksa dialog fallback akışı devam eder.
+kontrol edilir; yeni APK varsa uygulama içi güncelleme penceresi gösterilir.
+Android sistem bildirimine dönüştürülmez.
