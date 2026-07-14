@@ -5,12 +5,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../prefs/app_prefs.dart';
 import 'app_theme.dart';
 
-/// Tema tercihleri: sanat ailesi (12 preset) + eski palet + açık/koyu/sistem.
+/// Tema rengi nereden uygulanıyor?
+/// - [family]: Tema Stüdyosu atmosfer ailesi (tam UI havası)
+/// - [palette]: Görünüm > Hazır/Özel palet (renk; aileye zorlanmaz)
+enum ThemeColorSource { family, palette }
+
+/// Tema tercihleri: sanat ailesi (preset) + eski palet + açık/koyu/sistem.
 class ThemeSettings {
   const ThemeSettings({
     required this.familyId,
     required this.paletteId,
     required this.mode,
+    this.colorSource = ThemeColorSource.family,
     this.customPalettes = const [],
   });
 
@@ -18,6 +24,8 @@ class ThemeSettings {
   final String familyId;
   final String paletteId;
   final ThemeMode mode;
+  /// WP-71: lacivert palet seçince kamp ateşi turuncuya düşmesin.
+  final ThemeColorSource colorSource;
   final List<AppPalette> customPalettes;
 
   ThemePreset get family => themePresetById(familyId);
@@ -32,16 +40,23 @@ class ThemeSettings {
     return paletteById(paletteId);
   }
 
+  /// true → AppTheme.light/dark(palette); false → fromFamily.
+  bool get usePaletteColors =>
+      colorSource == ThemeColorSource.palette ||
+      paletteId.startsWith('custom_');
+
   ThemeSettings copyWith({
     String? familyId,
     String? paletteId,
     ThemeMode? mode,
+    ThemeColorSource? colorSource,
     List<AppPalette>? customPalettes,
   }) =>
       ThemeSettings(
         familyId: familyId ?? this.familyId,
         paletteId: paletteId ?? this.paletteId,
         mode: mode ?? this.mode,
+        colorSource: colorSource ?? this.colorSource,
         customPalettes: customPalettes ?? this.customPalettes,
       );
 }
@@ -50,6 +65,7 @@ class ThemeSettingsNotifier extends Notifier<ThemeSettings> {
   static const _kFamily = 'theme_family';
   static const _kPalette = 'theme_palette';
   static const _kMode = 'theme_mode';
+  static const _kColorSource = 'theme_color_source';
   static const _kCustomPalettes = 'custom_palettes';
 
   @override
@@ -63,6 +79,16 @@ class ThemeSettingsNotifier extends Notifier<ThemeSettings> {
       'light' => ThemeMode.light,
       'system' => ThemeMode.system,
       _ => ThemeMode.dark,
+    };
+
+    final storedSource = prefs.getString(_kColorSource);
+    final colorSource = switch (storedSource) {
+      'palette' => ThemeColorSource.palette,
+      'family' => ThemeColorSource.family,
+      // Eski kurulum: family yoksa veya yalnızca palet kaydı varsa palet renkleri.
+      _ => storedFamily == null
+          ? ThemeColorSource.palette
+          : ThemeColorSource.family,
     };
 
     List<AppPalette> customPalettes = [];
@@ -92,6 +118,7 @@ class ThemeSettingsNotifier extends Notifier<ThemeSettings> {
       familyId: familyId,
       paletteId: paletteId,
       mode: mode,
+      colorSource: colorSource,
       customPalettes: customPalettes,
     );
   }
@@ -122,19 +149,27 @@ class ThemeSettingsNotifier extends Notifier<ThemeSettings> {
     final mode = preset.brightness == Brightness.dark
         ? ThemeMode.dark
         : ThemeMode.light;
-    state = state.copyWith(familyId: id, mode: mode);
+    state = state.copyWith(
+      familyId: id,
+      mode: mode,
+      colorSource: ThemeColorSource.family,
+    );
     final prefs = ref.read(sharedPreferencesProvider);
     prefs.setString(_kFamily, id);
     prefs.setString(_kMode, mode.name);
+    prefs.setString(_kColorSource, 'family');
   }
 
   void setPalette(String id) {
-    // Eski palet seçimi → family'yi de hizala
-    final family = migratePaletteIdToPreset(id);
-    state = state.copyWith(paletteId: id, familyId: family);
+    // Hazır/özel palet: renk kaynağı palet. Aileyi turuncu kamp ateşine ZORLAMA
+    // (eski migratePaletteIdToPreset('navy')→campfire_night bug'ı).
+    state = state.copyWith(
+      paletteId: id,
+      colorSource: ThemeColorSource.palette,
+    );
     final prefs = ref.read(sharedPreferencesProvider);
     prefs.setString(_kPalette, id);
-    prefs.setString(_kFamily, family);
+    prefs.setString(_kColorSource, 'palette');
   }
 
   void setMode(ThemeMode mode) {

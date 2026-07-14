@@ -107,54 +107,79 @@ class DesktopHomeShell extends StatelessWidget {
               constraints.maxWidth,
             );
             final expanded = mode == DesktopNavigationMode.expanded;
+            // WP-71: Fluent/WinUI + macOS sidebar sentezi — keskin köşe,
+            // mobil “yuvarlak tatlı pill” indicator yok; küçük pencere OK.
+            final scheme = Theme.of(context).colorScheme;
+            const railRadius = 4.0;
             return Scaffold(
               body: Row(
                 children: [
                   NavigationRail(
                     key: const ValueKey('desktop-navigation-rail'),
-                    backgroundColor: Theme.of(
-                      context,
-                    ).colorScheme.surfaceContainerLow,
+                    backgroundColor: scheme.surfaceContainerLowest,
                     extended: expanded,
-                    minExtendedWidth: 208,
-                    groupAlignment: -0.72,
+                    minWidth: 64,
+                    minExtendedWidth: 200,
+                    groupAlignment: -1.0,
                     selectedIndex: selectedIndex,
                     onDestinationSelected: onDestinationSelected,
+                    // WinUI-benzeri seçim: az yuvarlatılmış dikdörtgen
+                    indicatorShape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(railRadius),
+                    ),
+                    indicatorColor: scheme.secondaryContainer,
+                    selectedIconTheme: IconThemeData(
+                      color: scheme.onSecondaryContainer,
+                      size: 22,
+                    ),
+                    unselectedIconTheme: IconThemeData(
+                      color: scheme.onSurfaceVariant,
+                      size: 22,
+                    ),
+                    selectedLabelTextStyle: Theme.of(context)
+                        .textTheme
+                        .labelLarge
+                        ?.copyWith(
+                          color: scheme.onSecondaryContainer,
+                          fontWeight: FontWeight.w600,
+                        ),
+                    unselectedLabelTextStyle: Theme.of(context)
+                        .textTheme
+                        .labelLarge
+                        ?.copyWith(color: scheme.onSurfaceVariant),
                     labelType: expanded
                         ? NavigationRailLabelType.none
-                        : mode == DesktopNavigationMode.minimal
-                        ? NavigationRailLabelType.selected
-                        : NavigationRailLabelType.none,
+                        : NavigationRailLabelType.all,
                     leading: Padding(
-                      padding: const EdgeInsets.only(top: 12, bottom: 8),
+                      padding: const EdgeInsets.fromLTRB(8, 12, 8, 12),
                       child: Semantics(
                         label: 'Odak Kampı ana navigasyonu',
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 10,
+                            horizontal: 10,
+                            vertical: 8,
                           ),
                           decoration: BoxDecoration(
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.primaryContainer,
-                            borderRadius: BorderRadius.circular(14),
+                            color: scheme.surfaceContainerHigh,
+                            borderRadius: BorderRadius.circular(railRadius),
+                            border: Border.all(color: scheme.outlineVariant),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
                                 Icons.local_fire_department,
-                                size: 26,
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onPrimaryContainer,
+                                size: 22,
+                                color: scheme.primary,
                               ),
                               if (expanded) ...[
                                 const SizedBox(width: 10),
                                 Text(
                                   'Odak Kampı',
-                                  style: Theme.of(context).textTheme.titleMedium
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleSmall
                                       ?.copyWith(fontWeight: FontWeight.w700),
                                 ),
                               ],
@@ -166,53 +191,77 @@ class DesktopHomeShell extends StatelessWidget {
                     trailing: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const SizedBox(width: 40, child: Divider(height: 18)),
-                        // Ayarlar — profil dışında, sol rail (dar/geniş hep görünür)
+                        Divider(
+                          height: 1,
+                          thickness: 1,
+                          color: scheme.outlineVariant,
+                        ),
+                        const SizedBox(height: 8),
                         IconButton(
                           key: const ValueKey('desktop-rail-settings'),
                           tooltip: 'Ayarlar (Ctrl+,)',
+                          style: IconButton.styleFrom(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(railRadius),
+                            ),
+                          ),
                           onPressed: () => openSettings(context),
                           icon: const Icon(Icons.settings_outlined),
                         ),
                         if (expanded)
-                          Text(
-                            'Ayarlar',
-                            style: Theme.of(context).textTheme.labelSmall,
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 4),
+                            child: Text(
+                              'Ayarlar',
+                              style: Theme.of(context).textTheme.labelSmall,
+                            ),
                           ),
                         IconButton(
                           tooltip: 'Yenile (F5)',
+                          style: IconButton.styleFrom(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(railRadius),
+                            ),
+                          ),
                           onPressed: onRefresh,
                           icon: const Icon(Icons.refresh),
                         ),
                         IconButton(
                           tooltip: 'Her zaman üstte tut (Ctrl+Shift+P)',
+                          style: IconButton.styleFrom(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(railRadius),
+                            ),
+                          ),
                           onPressed: toggleDesktopAlwaysOnTop,
                           icon: const Icon(Icons.push_pin_outlined),
                         ),
                         IconButton(
                           tooltip: 'Compact Focus (Ctrl+Shift+M)',
+                          style: IconButton.styleFrom(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(railRadius),
+                            ),
+                          ),
                           onPressed: toggleDesktopCompactMode,
                           icon: const Icon(
                             Icons.picture_in_picture_alt_outlined,
                           ),
                         ),
+                        const SizedBox(height: 8),
                       ],
                     ),
                     destinations: _destinations,
                   ),
-                  const VerticalDivider(width: 1),
+                  VerticalDivider(
+                    width: 1,
+                    thickness: 1,
+                    color: scheme.outlineVariant,
+                  ),
                   Expanded(
-                    child: Align(
-                      alignment: Alignment.topCenter,
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(
-                          maxWidth: DesktopBreakpoints.maxContentWidth,
-                        ),
-                        child: IndexedStack(
-                          index: selectedIndex,
-                          children: screens,
-                        ),
-                      ),
+                    child: IndexedStack(
+                      index: selectedIndex,
+                      children: screens,
                     ),
                   ),
                 ],

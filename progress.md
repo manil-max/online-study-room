@@ -81,15 +81,15 @@
 - **Not:** WP-70, yeni worker kuralına göre Test için bekleyenler'e park edildi. Sonraki iş için lane serbest.
 
 ### Grok Lane
-- **Durum:** [~] Aktif — kullanıcı yeniden dene
-- **Faz/WP:** WP-53-debug · Windows cold-start beyaz ekran
-- **Aşama:** Otomatik test geçti — cihaz doğrulama
-- **SAHİP yollar:** `desktop_window_io/stub`, `main.dart`, `auth_gate.dart`, show API test, `progress.md`
-- **Ortak/riskli yüzey:** Codex WP-70 performans docs — kesişim yok.
+- **Durum:** [x] Boşta
+- **Faz/WP:** —
+- **Aşama:** —
+- **SAHİP yollar:** —
+- **Ortak/riskli yüzey:** —
 - **Dal:** — (main)
-- **Başlangıç:** 2026-07-14 16:30 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-14 16:40
-- **Not:** show() first-frame sonrası; maximize gecikmeli; ErrorWidget + loading metni. Desktop ilgili test 8 PASS.
+- **Başlangıç:** —
+- **Son güncelleme:** 2026-07-14 16:10 (Europe/Istanbul)
+- **Not:** WP-71 kod+test → Test için bekleyenler. Lane serbest.
 
 ---
 
@@ -126,6 +126,7 @@
 | WP-69 | [~] Kod tamamlandı / deploy bekliyor (Gemini) | Aylık Çalışma Raporu Altyapısı (Cron + Edge Function) | DNS/API Key Onayı |
 | WP-27 | Base QA geçti · ürün kabulü açık | Windows desktop shell + Compact Focus | park: Test için bekleyenler |
 | WP-28 | [~] Otomatik test geçti · VM QA (Grok) | Windows MSIX + imza + update + release QA | WP-53 park — kullanıcı serbest bıraktı |
+| WP-71 | [~] Test park (Grok) | Windows Desktop UI R3 · Fluent/macOS dil + lacivert palet fix | — |
 
 > **Planlama notu:** WP-39 iptal edildi. WP-48/49/50 kullanıcı kararıyla kaldırıldı; yayımlanmış sürümde sorun çıkarsa aynı kartlar diriltilmez, ayrı debug/release WP'si açılır. Kamp Ateşi WP-61 → WP-62 zorunlu seri çalışır; WP-63, kullanıcının widget briefi olmadan kod işine dönüşmez.
 
@@ -306,6 +307,12 @@
 | WP-62 | Park · demo | Kamp ateşi PNG sahne | Kod+test yeşil; cihaz görsel onayı |
 | WP-68 | Park · cihaz | Android widget R2 | Codex kod/test; Samsung/Pixel smoke |
 | WP-70 | Park · ikinci Windows | Windows release performans tabanı | `340b589`; ikinci Windows 11 + ürün kabulü |
+| **WP-71** | Park · cihaz/demo | Masaüstü dil (keskin rail) + lacivert palet fix | Fluent/macOS sentezi; navy→campfire bug kapalı; test yeşil |
+
+### WP-71: Windows Desktop UI R3 *(park)*
+- **Durum:** [~] Park — Test için bekleyenler · **aktif değil**
+- **Kod:** `docs/WINDOWS-DESKTOP-UI-R3.md`; rail indicator radius 4; `ThemeColorSource.palette` (navy mavi kalır); theme_settings + shell test PASS
+- **Bekleyen:** Windows’ta lacivert palet + küçük pencere rail görünümü. `Cihazda doğrulanmalı`
 
 ### WP-53: Windows Desktop Design 2.0 — Ekran-İçi Ürün IA 🖥️ *(park)*
 - **Program/Faz:** Windows masaüstü · **Ajan (son):** Grok · **Durum:** [~] Park — Test için bekleyenler · **aktif çalışma değil**

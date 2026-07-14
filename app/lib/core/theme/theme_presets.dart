@@ -528,21 +528,22 @@ ThemePreset themePresetById(String id) => kThemePresets.firstWhere(
       orElse: () => kThemePresets.first,
     );
 
-/// Eski AppPalette id → en yakın ThemePreset (geriye uyum).
+/// Eski AppPalette id → en yakın ThemePreset (yalnız ilk kurulum / family yokken).
+/// **Not (WP-71):** Bu map artık `setPalette` ile aileyi ezmez; lacivert ≠ kamp ateşi.
 String migratePaletteIdToPreset(String paletteId) {
   const map = {
-    'navy': 'campfire_night',
+    'navy': 'ocean_glass',
     'purple': 'neon_focus',
     'emerald': 'forest_study',
     'sunset': 'campfire_night',
     'ocean': 'ocean_glass',
     'slate_mint': 'nordic_snow',
     'rose_noir': 'neon_focus',
-    'cyber_blue': 'neon_focus',
+    'cyber_blue': 'glacier_ice',
     'forest': 'forest_study',
     'cream_coffee': 'coffee_library',
     'mono_amber': 'campfire_night',
   };
-  if (paletteId.startsWith('custom_')) return 'campfire_night';
-  return map[paletteId] ?? 'campfire_night';
+  if (paletteId.startsWith('custom_')) return 'deep_amoled';
+  return map[paletteId] ?? 'ocean_glass';
 }

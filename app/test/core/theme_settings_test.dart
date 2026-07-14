@@ -46,4 +46,41 @@ void main() {
     expect(settings.customPalettes[0].primary, Colors.red);
     expect(settings.customPalettes[0].id, 'custom_1'); // zorunlu id override edildi mi kontrol et
   });
+
+  test('setPalette navy does not force campfire_night family colors', () async {
+    SharedPreferences.setMockInitialValues({
+      'theme_family': 'deep_amoled',
+      'theme_palette': 'emerald',
+      'theme_color_source': 'family',
+    });
+    final prefs = await SharedPreferences.getInstance();
+    final container = ProviderContainer(
+      overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+    );
+
+    final notifier = container.read(themeSettingsProvider.notifier);
+    notifier.setPalette('navy');
+    final settings = container.read(themeSettingsProvider);
+
+    expect(settings.paletteId, 'navy');
+    expect(settings.colorSource, ThemeColorSource.palette);
+    expect(settings.usePaletteColors, isTrue);
+    // Eski bug: family campfire_night (turuncu) oluyordu
+    expect(settings.familyId, isNot('campfire_night'));
+    expect(settings.palette.primary, paletteById('navy').primary);
+  });
+
+  test('setFamily switches to atmosphere family colors', () async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final container = ProviderContainer(
+      overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+    );
+    final notifier = container.read(themeSettingsProvider.notifier);
+    notifier.setFamily('campfire_night');
+    final settings = container.read(themeSettingsProvider);
+    expect(settings.colorSource, ThemeColorSource.family);
+    expect(settings.usePaletteColors, isFalse);
+    expect(settings.familyId, 'campfire_night');
+  });
 }

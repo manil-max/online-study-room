@@ -120,7 +120,9 @@ class OnlineStudyRoomApp extends ConsumerWidget {
     final family = settings.family;
     final ThemeData lightTheme;
     final ThemeData darkTheme;
-    if (settings.paletteId.startsWith('custom_')) {
+    // Hazır/özel palet seçildiyse AppPalette renkleri; Tema Stüdyosu ailesi değil.
+    // (navy palet → campfire_night turuncu bug'ı WP-71 ile kapatıldı.)
+    if (settings.usePaletteColors) {
       lightTheme = AppTheme.light(settings.palette);
       darkTheme = AppTheme.dark(settings.palette);
     } else {
