@@ -38,15 +38,15 @@
 **Lane şablonu** (doldurulacak alanlar): Durum · Faz/WP · Aşama (8-merdiven) · SAHİP yollar · Ortak/riskli yüzey · Başlangıç · Son güncelleme · Not. *(Branch yok — herkes `main`'de; AGENTS.md §1.5.)*
 
 ### Gemini Lane
-- **Durum:** [x] Tamamlandı (Boşta)
-- **Faz/WP:** WP-69 · Aylık Rapor İmplementasyonu
-- **Aşama:** Kod tamamlandı (Ürün onayı/deploy bekliyor)
-- **SAHİP yollar:** `supabase/migrations/0030_monthly_report_infrastructure.sql`, `supabase/functions/collect-reports/**`, `supabase/functions/send-report/**`, `app/lib/features/profile/settings_screen.dart`, `app/lib/data/repositories/**`
-- **Ortak/riskli yüzey:** Yok
+- **Durum:** [x] Boşta
+- **Faz/WP:** —
+- **Aşama:** —
+- **SAHİP yollar:** —
+- **Ortak/riskli yüzey:** —
 - **Dal:** — (main)
-- **Başlangıç:** 2026-07-14 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-14
-- **Not:** WP-69 implementasyonu (DB Migration, Edge Functions, Settings UI Toggle) başarıyla kodlandı. Canlı gönderim için API key ve DNS konfigürasyonu ürün sahibi tarafından yapılmalıdır.
+- **Başlangıç:** —
+- **Son güncelleme:** 2026-07-14 (Europe/Istanbul)
+- **Not:** WP-83 tamamlandı, envanter ve sözlük oluşturuldu.
 
 ### Claude Lane
 - **Durum:** [x] Boşta
@@ -60,15 +60,15 @@
 - **Not:** Bu oturum işleri commit'lendi: grid 32-sütun `141ed2a`, core testleri `da7bdd6`, skill docs `1afba2d`. ⚠️ WP-65 karar dokümanı (`docs/AYLIK-RAPOR-KARAR.md`) önceki Claude oturumunda yazıldı ama **COMMIT'LENMEDİ** (untracked); kararı WP-69 zaten uyguladı → ürün API/DNS kararı bekliyor.
 
 ### Codex Lane
-- **Durum:** [x] Boşta
-- **Faz/WP:** —
-- **Aşama:** —
-- **SAHİP yollar:** —
-- **Ortak/riskli yüzey:** —
+- **Durum:** [~] Aktif
+- **Faz/WP:** Küresel açılım · WP-82
+- **Aşama:** Kod tamamlandı — depo kalite kapısı bloklu
+- **SAHİP yollar:** `app/pubspec.yaml`, `app/l10n.yaml`, `app/lib/main.dart`, `app/lib/l10n/.gitignore`, `app/lib/l10n/app_en.arb`, `app/lib/l10n/app_tr.arb`, `app/test/l10n/l10n_bootstrap_test.dart`
+- **Ortak/riskli yüzey:** `app/pubspec.yaml`, `app/lib/main.dart`, l10n/generated (sıcak; WP-84 başlamaz)
 - **Dal:** — (ana dal `main`)
-- **Başlangıç:** —
-- **Son güncelleme:** 2026-07-15 00:55 (Europe/Istanbul)
-- **Not:** beta-v20 GitHub prerelease başarıyla yayımlandı; cihaz QA bekliyor.
+- **Başlangıç:** 2026-07-14 18:47 (Europe/Istanbul)
+- **Son güncelleme:** 2026-07-14 18:58 (Europe/Istanbul)
+- **Not:** WP-82 hedef testi 4/4, sahip dosya analizi 0, Windows release build PASS. Tam kapı WP-82 dışı 4 analyze uyarısı + `theme_engine_test` ve `widget_test` hatalarıyla bloklu; commit atılmadı.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
@@ -112,8 +112,7 @@
 | WP-79 | [~] Test için bekliyor | Bildirim açılışta toplu teslim hata düzeltmesi | beta-v19 cihaz bulgusu |
 | WP-80 | [~] Test için bekliyor | Dinamik panel uygunluk hata düzeltmesi | beta-v19 cihaz bulgusu |
 | WP-81 | [~] Test için bekliyor | Android beta-v20 — bildirim teslimi + dinamik panel düzeltmeleri | WP-79/80 kod commitleri |
-| WP-82 | [ ] Bekliyor | Flutter l10n çekirdeği + sistem dili resolver'ı | — |
-| WP-83 | [ ] Bekliyor | Ücretsiz EN/TR metin envanteri ve ürün dili sözlüğü | —; WP-82 ile paralel |
+| WP-82 | [~] Kalite kapısı bloklu | Flutter l10n çekirdeği + sistem dili resolver'ı | — |
 | WP-84 | [ ] Bekliyor | Kanonik `app_en.arb` / `app_tr.arb` kataloğu | WP-82 + WP-83 |
 | WP-85 | [ ] Bekliyor | Flutter göç A — hesap, profil, admin, bildirim, güncelleme | WP-84 |
 | WP-86 | [ ] Bekliyor | Flutter göç B — ana sayfa, sınıf ve istatistikler | WP-84 |
@@ -132,20 +131,12 @@
 > **Küresel dil programı ortak sözleşmesi:** İngilizce şablon/varsayılan (`en`), Türkçe ikinci dil (`tr`). Yalnız sistem dil kodu `tr` ise Türkçe; diğer her locale İngilizce. Üretilen l10n kodu elle düzenlenmez/commit edilmez. Tüm WP'lerde migration/RLS etkisi yok; sır/PII çeviri dosyasına girmez; gün sınırı `Europe/Istanbul` kalır. Aynı anda en fazla iki çalışma hattı açılır.
 
 ### WP-82: Flutter l10n Çekirdeği ve Locale Resolver 🌐
-- **Program/Faz:** Küresel açılım · altyapı · **Ajan:** Codex · **Durum:** [ ] Bekliyor
+- **Program/Faz:** Küresel açılım · altyapı · **Ajan:** Codex · **Durum:** [~] Kod tamamlandı — kalite kapısı bloklu
 - **Problem/Kapsam:** Resmî `gen-l10n` altyapısını ve sistem dili kararını kur; feature metin göçü, tam katalog ve native Android kapsam dışı.
-- **SAHİP:** `app/pubspec.yaml`, `app/l10n.yaml`, `app/lib/main.dart`, başlangıç `app/lib/l10n/app_en.arb` + `app_tr.arb`, `app/test/l10n/l10n_bootstrap_test.dart`. **DOKUNMA:** `features/**`, `core/**`, `data/**`, `app/android/**`.
-- **Adımlar:** Delegate/supported locale bağlantısı; sabit `Locale('tr')`ı kaldır; `tr*→tr`, null/desteklenmeyen/en-*→en resolver; minimal placeholder/plural örneği ve test kabuğu.
+- **SAHİP:** `app/pubspec.yaml`, `app/l10n.yaml`, `app/lib/main.dart`, `app/lib/l10n/.gitignore`, başlangıç `app/lib/l10n/app_en.arb` + `app_tr.arb`, `app/test/l10n/l10n_bootstrap_test.dart`. **DOKUNMA:** `features/**`, `core/**`, `data/**`, `app/android/**`.
+- **Adımlar:** Delegate/supported locale bağlantısı; sabit `Locale('tr')`ı kaldır; `tr*→tr`, null/desteklenmeyen/en-*→en resolver; canlı uygulama başlığı seed anahtarı + metadata ve test kabuğu. Placeholder/plural kataloğu WP-84'tedir.
 - **Veri/RLS/Geri alma:** Etki yok; tek altyapı commitini geri almak yeterli. **Edge-case:** `tr-TR`, `en-GB`, `de-DE`, null locale, runtime locale değişimi.
 - **Kabul/DoD:** `flutter gen-l10n`, resolver testleri, `flutter analyze` 0 ve ilgili testler yeşil; ilk frame locale kararı deterministik. **Tuzak:** feature metni ekleyerek kapsamı büyütmek veya generated kodu commit etmek. **Dal:** main/lane · **Model:** 🔴 Opus
-
-### WP-83: EN/TR Metin Envanteri ve Ürün Dili Sözlüğü 📝
-- **Program/Faz:** Küresel açılım · içerik hazırlığı · **Ajan:** — · **Durum:** [ ] Bekliyor · **WP-82 ile paralel güvenli**
-- **Problem/Kapsam:** Ücretli çevirmen olmadan mevcut UI metinlerinin eksiksiz TR kaynak + doğal EN karşılık + anahtar/placeholder kataloğunu üret; uygulama kodu/ARB düzenlemek kapsam dışı.
-- **SAHİP:** yeni `docs/L10N-SOZLUK.md`, `docs/L10N-ENVANTER.md`. **DOKUNMA:** `app/**`, `progress.md` dışında diğer plan kartları.
-- **Adımlar:** Tüm `Text/Tooltip/Semantics/SnackBar/dialog/form/boş-hata/bildirim` yüzeylerini sınıflandır; yorum/log/test fixture'ını ayır; ürün terimlerini tekilleştir; her satıra feature sahibi, önerilen camelCase anahtar, TR, EN, placeholder/plural notu yaz.
-- **Veri/RLS/Geri alma:** Etki yok; doküman silinerek geri alınır. **Edge-case:** bağlama göre aynı Türkçe kelimenin farklı EN karşılığı, çoğul, cinsiyetsiz dil, uzun metin.
-- **Kabul/DoD:** Navigasyonla erişilen ekran/yüzeylerin %100'ü envanterde; yinelenen/çelişen anahtar 0; en az iki bağlam örneğiyle sözlük tutarlılığı; sır/PII 0. **Tuzak:** diakritik aramayı tam envanter sanmak. **Dal:** main/lane · **Model:** 🟣 Pro
 
 ### WP-84: Kanonik ARB Kataloğu 🔤
 - **Program/Faz:** Küresel açılım · katalog · **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-82 + WP-83
@@ -243,6 +234,7 @@
 
 | WP | Tamamlanan kapsam |
 |---|---|
+| WP-83 | EN/TR Metin Envanteri ve Ürün Dili Sözlüğü — `docs/L10N-SOZLUK.md` ve `docs/L10N-ENVANTER.md` oluşturuldu; kapanış 2026-07-14 |
 | WP-71 | Windows Desktop UI R3 · custom WinUI pane + density + navy fix — `8dd0573`; kapanış 2026-07-14 |
 | WP-70 | Windows performans tabanı · release RAM/başlangıç ölçümü (p95 WS 85.9 MB) — `340b589`; kapanış 2026-07-14 |
 | WP-69 | Aylık Çalışma Raporu altyapısı (Cron + Edge Function + Settings toggle) — `3782fc1`; canlı gönderim için **DNS/API key ürün sahibinde** |
