@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../core/desktop/desktop_layout.dart';
 import '../../core/desktop/desktop_window.dart';
 import '../../core/widgets/crowned_avatar.dart';
 import '../../core/widgets/safe_screen_padding.dart';
@@ -152,6 +153,7 @@ class _DesktopProfileWorkspaceState
     extends ConsumerState<_DesktopProfileWorkspace> {
   String _section = 'overview';
 
+  // Ayarlar sol rail'de (DesktopHomeShell); profilde yalnız hesap + kayıtlar.
   static const _sections = <DesktopSectionItem>[
     DesktopSectionItem(
       id: 'overview',
@@ -165,12 +167,6 @@ class _DesktopProfileWorkspaceState
       label: 'Çalışma kayıtları',
       subtitle: 'Oturumlar ve manuel süre',
     ),
-    DesktopSectionItem(
-      id: 'settings',
-      icon: Icons.settings_outlined,
-      label: 'Ayarlar',
-      subtitle: 'Görünüm, pano, bildirim',
-    ),
   ];
 
   @override
@@ -181,6 +177,9 @@ class _DesktopProfileWorkspaceState
     return Padding(
       padding: DesktopDensity.of(context).pagePadding,
       child: DesktopMasterDetail(
+        // Dar pencerede de sol liste görünsün (yalnız fullscreen değil).
+        breakpoint: DesktopBreakpoints.compact,
+        masterWidth: 260,
         master: DesktopSectionList(
           items: _sections,
           selectedId: _section,
@@ -190,10 +189,6 @@ class _DesktopProfileWorkspaceState
           'history' => const DesktopPanel(
               padding: EdgeInsets.zero,
               child: SessionHistoryScreen(embedded: true),
-            ),
-          'settings' => const DesktopPanel(
-              padding: EdgeInsets.zero,
-              child: SettingsScreen(embedded: true),
             ),
           _ => SingleChildScrollView(
               child: Column(

@@ -58,4 +58,15 @@ void main() {
 
     expect(selected, 3);
   });
+
+  testWidgets('sol rail Ayarlar düğmesi görünür (geniş ve dar)', (tester) async {
+    await setWindowSize(tester, const Size(1200, 800));
+    await tester.pumpWidget(shell(onSelected: (_) {}));
+    expect(find.byKey(const ValueKey('desktop-rail-settings')), findsOneWidget);
+
+    await setWindowSize(tester, const Size(700, 700));
+    await tester.pumpWidget(shell(onSelected: (_) {}));
+    await tester.pump();
+    expect(find.byKey(const ValueKey('desktop-rail-settings')), findsOneWidget);
+  });
 }

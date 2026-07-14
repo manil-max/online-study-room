@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 
 import '../../core/desktop/desktop_layout.dart';
 import '../../core/desktop/desktop_window.dart';
+import '../profile/settings_screen.dart';
+import 'desktop_page_scaffold.dart';
 
 class DesktopHomeShell extends StatelessWidget {
   const DesktopHomeShell({
@@ -54,7 +56,27 @@ class DesktopHomeShell extends StatelessWidget {
     LogicalKeyboardKey.digit5,
   ];
 
-  Map<ShortcutActivator, VoidCallback> get _shortcuts => {
+  static void openSettings(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (pageContext) => DesktopPageScaffold(
+          title: 'Ayarlar',
+          subtitle: 'Görünüm, pano, sayaç ve bildirim tercihleri',
+          icon: Icons.settings_outlined,
+          actions: [
+            IconButton(
+              tooltip: 'Kapat',
+              onPressed: () => Navigator.of(pageContext).maybePop(),
+              icon: const Icon(Icons.close),
+            ),
+          ],
+          child: const SettingsScreen(embedded: true),
+        ),
+      ),
+    );
+  }
+
+  Map<ShortcutActivator, VoidCallback> _shortcuts(BuildContext context) => {
     for (var index = 0; index < _destinations.length; index++)
       SingleActivator(_numberKeys[index], control: true): () =>
           onDestinationSelected(index),
@@ -71,12 +93,15 @@ class DesktopHomeShell extends StatelessWidget {
     ): () =>
         toggleDesktopAlwaysOnTop(),
     const SingleActivator(LogicalKeyboardKey.f5): onRefresh,
+    // Virgül = ayarlar (masaüstü alışkanlığı)
+    SingleActivator(LogicalKeyboardKey.comma, control: true): () =>
+        openSettings(context),
   };
 
   @override
   Widget build(BuildContext context) {
     return CallbackShortcuts(
-      bindings: _shortcuts,
+      bindings: _shortcuts(context),
       child: Focus(
         autofocus: true,
         child: LayoutBuilder(
@@ -145,6 +170,18 @@ class DesktopHomeShell extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         const SizedBox(width: 40, child: Divider(height: 18)),
+                        // Ayarlar — profil dışında, sol rail (dar/geniş hep görünür)
+                        IconButton(
+                          key: const ValueKey('desktop-rail-settings'),
+                          tooltip: 'Ayarlar (Ctrl+,)',
+                          onPressed: () => openSettings(context),
+                          icon: const Icon(Icons.settings_outlined),
+                        ),
+                        if (expanded)
+                          Text(
+                            'Ayarlar',
+                            style: Theme.of(context).textTheme.labelSmall,
+                          ),
                         IconButton(
                           tooltip: 'Yenile (F5)',
                           onPressed: onRefresh,
