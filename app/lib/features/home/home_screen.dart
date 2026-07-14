@@ -668,56 +668,18 @@ class _MatrixCardState extends State<_MatrixCard> {
     widget.onCommit();
   }
 
-  /// Düzenleme: canlı sayaç/grafik değil, ucuz kabuk (jank ana kaynağı buydu).
-  Widget _editShell(ThemeData theme) {
-    final type = widget.config.type;
-    return Material(
-      color: theme.colorScheme.surfaceContainerHigh,
-      borderRadius: BorderRadius.circular(16),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(type.icon, size: 20, color: theme.colorScheme.primary),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    type.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const Spacer(),
-            Text(
-              '${widget.config.w}×${widget.config.h} hücre',
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // Düzenlemede de gerçek kart görünsün (kullanıcı düzeni buna göre ayarlar).
+    // Jank azaltma: animasyon kapalı + hücre değişmeden rebuild yok + CustomPaint grid.
+    final card = dashboardCardFor(
+      widget.config.type,
+      widget.config.sizeForColumns(widget.columns),
+      height: widget.height,
+    );
 
     if (!widget.editing) {
-      final card = dashboardCardFor(
-        widget.config.type,
-        widget.config.sizeForColumns(widget.columns),
-        height: widget.height,
-      );
       return GestureDetector(
         onLongPress: widget.onLongPressCard,
         onSecondaryTap: widget.onLongPressCard,
@@ -725,11 +687,10 @@ class _MatrixCardState extends State<_MatrixCard> {
       );
     }
 
-    final shell = _editShell(theme);
     final editCard = Stack(
       clipBehavior: Clip.none,
       children: [
-        Positioned.fill(child: IgnorePointer(child: shell)),
+        Positioned.fill(child: IgnorePointer(child: card)),
         Positioned.fill(
           child: IgnorePointer(
             child: DecoratedBox(
@@ -825,15 +786,19 @@ class _MatrixCardState extends State<_MatrixCard> {
       child: LongPressDraggable<DashboardCardType>(
         data: widget.config.type,
         onDragStarted: widget.onSelect,
-        // Feedback de hafif kabuk — ağır dashboard widget değil.
-        feedback: Material(
-          color: Colors.transparent,
-          elevation: 6,
-          borderRadius: BorderRadius.circular(16),
-          child: SizedBox(
-            width: widget.width,
-            height: widget.height,
-            child: Opacity(opacity: 0.92, child: _editShell(theme)),
+        feedback: SizedBox(
+          width: widget.width,
+          height: widget.height,
+          child: Opacity(
+            opacity: 0.75,
+            child: Material(
+              color: Colors.transparent,
+              child: dashboardCardFor(
+                widget.config.type,
+                widget.config.sizeForColumns(widget.columns),
+                height: widget.height,
+              ),
+            ),
           ),
         ),
         childWhenDragging: Opacity(opacity: 0.28, child: editCard),
