@@ -60,15 +60,15 @@
 - **Not:** Bu oturum işleri commit'lendi: grid 32-sütun `141ed2a`, core testleri `da7bdd6`, skill docs `1afba2d`. ⚠️ WP-65 karar dokümanı (`docs/AYLIK-RAPOR-KARAR.md`) önceki Claude oturumunda yazıldı ama **COMMIT'LENMEDİ** (untracked); kararı WP-69 zaten uyguladı → ürün API/DNS kararı bekliyor.
 
 ### Codex Lane
-- **Durum:** [x] Boşta
-- **Faz/WP:** —
-- **Aşama:** —
-- **SAHİP yollar:** —
-- **Ortak/riskli yüzey:** —
+- **Durum:** [~] Aktif
+- **Faz/WP:** WP-78 · Android beta-v19 yayın paketi
+- **Aşama:** Geliştiriliyor
+- **SAHİP yollar:** `app/pubspec.yaml`, `CHANGELOG.md`, `app/assets/release_notes.json`, `docs/VERSIONS.md`, `app/android/app/src/main/kotlin/**/timer/StudyTimerService.kt` (release build compiler fix), `progress.md`
+- **Ortak/riskli yüzey:** Android release keystore, `beta-v19` git etiketi, GitHub Actions/GitHub Release
 - **Dal:** — (ana dal `main`)
-- **Başlangıç:** —
-- **Son güncelleme:** 2026-07-14 23:20 (Europe/Istanbul)
-- **Not:** WP-77 kod + widget testi tamamlandı; gerçek Android ayar yönlendirmesi için park edildi. Lane serbest.
+- **Başlangıç:** 2026-07-14 23:35 (Europe/Istanbul)
+- **Son güncelleme:** 2026-07-14 23:35 (Europe/Istanbul)
+- **Not:** Kullanıcı talimatıyla beta-v19 yayın hazırlığı claim edildi; stable yayın kapsam dışı.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
@@ -108,6 +108,7 @@
 |---|---|---|---|
 | WP-76 | [~] Test için bekliyor | Dinamik panel — cihazda çalışan canlı kontrol paneli (Live Activity / durum çubuğu) | — |
 | WP-77 | [~] Test için bekliyor | İzin yönetimi — verilen dört Android iznini geri alma ve rehberi | — |
+| WP-78 | [~] Geliştiriliyor | Android beta-v19 — imzalı APK ve GitHub prerelease | WP-76/77 kod commitleri |
 
 > **2026-07-14 proje denetimi:** Serbest sürükle-bırak ızgara, canlı grup hedefi ve saat stilleri **zaten kodda uygulanmış** (backlog stale idi; geçici WP-72/73/75 iptal). Dinamik paneldeki cihaz/eylem sorunu için açılan **WP-76** kod+otomatik test aşamasını geçti; Samsung/Pixel cihaz QA’sı bekliyor.
 >
@@ -116,6 +117,12 @@
 > - **Ürün kararı (kod değil, senin kararın):** WP-66 hesap silme retention · WP-67 grafik türleri · WP-69 aylık rapor için DNS + Resend API key.
 
 > **Planlama notu:** WP-39 iptal; WP-48/49/50 kaldırıldı; geçici WP-72/73/74/75 (2026-07-14) zaten-yapılmış/yanlış açıldığı için iptal edildi. Sorun çıkarsa ayrı debug/release WP'si açılır.
+
+### WP-78: Android beta-v19 Yayın Paketi
+- **Program/Faz:** Android dağıtım · **Ajan:** Codex · **Durum:** [~] Geliştiriliyor · **Bağımlılık:** WP-76/77 kod commitleri
+- **Kapsam:** `1.0.19-beta+19` sürüm notları, imzalı beta APK, `beta-v19` etiketi ve GitHub prerelease. Stable tag/release yok.
+- **Derleme düzeltmesi:** WP-76 mola dönüş yolunda `SharedPreferences.getString` varsayılan değeri eksikti; release derlemesinde bulundu ve düzeltildi.
+- **Kabul:** Yerel imzalı beta release APK derlemesi; etiketin `beta-v19` olması; GitHub Actions APK + SHA-256 prerelease başarısı; telefonda kurulup WP-76/77 QA için hazır olması.
 
 ## Test için bekleyenler
 

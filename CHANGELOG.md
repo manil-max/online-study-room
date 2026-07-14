@@ -4,6 +4,30 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [beta-v19 / 1.0.19+19] - 2026-07-14
+
+> ⚠️ **Beta test sürümü.** Bu paket stable değildir; dinamik sayaç paneli ve
+> Android izin yönetimi gerçek cihazda doğrulansın diye yayımlanır.
+
+### Highlights
+- **Dinamik sayaç paneli:** Bildirim genişletildiğinde canlı süre, **Mola** ve
+  **Durdur** kontrolleri gösterilir. Mola sonunda **Çalışmaya dön** kullanılabilir.
+- **App kapalı kontrol:** Bildirim eylemleri Flutter ekranının açılmasını
+  beklemeden native foreground service tarafından işlenir.
+- **İzinleri geri alma:** Widget ve izinler ekranında dört izin için **Kapat**
+  düğmesi ilgili Android ayarına gider; ekrandaki rehber, ayarı nasıl geri
+  alacağını açıklar.
+
+### Test odağı
+- Samsung One UI ve Pixel’de uygulamayı görev listesinden kapatıp panelden
+  Başlat/Durdur/Mola dene.
+- Bildirim, kesin alarm, pil istisnası ve tam ekran alarm için **Kapat** →
+  sistem ayarı → anahtarı kapat → uygulamaya dön akışını dene.
+
+### Notes
+- OEM'e göre dinamik panel görünümü ve ayar başlıkları değişebilir.
+- Sorun varsa stable yerine bu beta sürümünün numarası ve cihaz modeliyle bildir.
+
 ## [v8 / 1.0.18+8] - 2026-07-13
 
 > **Stable — Güven Sürümü.** beta-v8…v18 hattının ürün paketi. Windows masaüstü bu sürüme dahil değil.

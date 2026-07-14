@@ -5,6 +5,7 @@ Bu dosya ürün tarafındaki okunur sürüm indeksidir. Ayrıntılı değişikli
 
 | Kanal | Tag | Uygulama sürümü | Durum | Kısa not |
 |---|---:|---:|---|---|
+| beta | beta-v19 | 1.0.19+19 | Test için hazırlanıyor | Dinamik panel + izinleri geri alma rehberi |
 | stable | v8 | 1.0.18+8 | Yayında | Güven Sürümü: native sayaç, Saat Merkezi, başarımlar/taç, 15 tema |
 | beta | beta-v18 | 1.0.18+18 | Süperseed | v8’e gömüldü |
 | beta | beta-v17 | 1.0.17+17 | Test arşiv | Alarm app-kapalı + widget sekmesi |

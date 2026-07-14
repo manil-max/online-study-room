@@ -169,7 +169,7 @@ class StudyTimerService : Service() {
      *  başlatır. Mola aralığı oturum değildir; bu nedenle kuyruk yazılmaz. */
     private fun handleEndBreak() {
         val p = prefs()
-        if (p.getString(KEY_PHASE) != "rest") return
+        if (p.getString(KEY_PHASE, "") != "rest") return
         handleStart(
             startedAtMs = System.currentTimeMillis(),
             mode = p.getString(KEY_MODE, "stopwatch") ?: "stopwatch",

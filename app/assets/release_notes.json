@@ -3,6 +3,24 @@
   "source": "CHANGELOG.md",
   "releases": [
     {
+      "versionName": "1.0.19",
+      "buildNumber": 19,
+      "channel": "beta",
+      "date": "2026-07-14",
+      "title": "beta-v19: dinamik panel + izinleri geri alma",
+      "highlights": [
+        "Bildirim genişletilince canlı süre, Mola ve Durdur kontrolü görünür.",
+        "Panel eylemleri uygulama kapalıyken native servis tarafından işlenir.",
+        "Widget ve izinler ekranında dört izin için Kapat yönlendirmesi ve Türkçe rehber var."
+      ],
+      "fixes": [
+        "Mola fazı uygulama açıldığında native durumdan uzlaştırılır."
+      ],
+      "notes": [
+        "Bu bir beta test sürümüdür; Samsung/Pixel cihaz sonuçlarını bildir."
+      ]
+    },
+    {
       "versionName": "1.0.18",
       "buildNumber": 8,
       "channel": "stable",
