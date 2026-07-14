@@ -1,6 +1,6 @@
 # progress.md — İlerleme Takibi
 
-> Son güncelleme: 2026-07-13
+> Son güncelleme: 2026-07-14
 > Sistem: İş Paketi (WP) tabanlı, **Kalite Programı**. Kanonik program: `docs/KALITE-PROGRAMI.md`.
 > Planlama: `.agents/skills/planner/SKILL.md` · Uygulama: `.agents/skills/worker/SKILL.md` · Kurallar: `.agents/AGENTS.md`.
 > **"Tamamlandı" = kod DEĞİL; kullanıcı beklentisini karşılayan + cihazda güvenilir çalışan iş.** İş durum merdiveni (8 aşama) ve kanıt etiketleri (`Kodda doğrulandı` / `Cihazda doğrulanmalı` / `Ürün kararı gerekiyor`) için bkz. AGENTS.md §0.
@@ -18,9 +18,9 @@
 - **Dashboard:** 6 sütunlu 2D matris, 19 kart türü, `grid_reflow.dart` motoru.
 - **Tema:** Hazır paletler + özel palet slotları; görünür tüm yüzeyler palette bağlanmalıdır, sabit gri renk eklenmez.
 - **Navigasyon hedefi:** Ana Sayfa / Saat / Gruplar / İstatistikler / Profil. Ana Sayfa günlük kullanım alanıdır; diğer alanların verisi kendi sekmelerinde eksiksiz bulunur.
-- **Release:** Stable/Beta kanalı GitHub Releases ile çalışır. **v7 yayında (özellik sürümü).** İlk kalite-kapılı stable önerisi: **v8 "Güven Sürümü"** (`Ürün kararı gerekiyor`).
+- **Release:** Stable/Beta kanalı GitHub Releases ile çalışır. **v8 yayımlandı.** WP-48/49/50, ürün sahibinin doğrudan yayın ve soak'ı atlama kararıyla açık iş olmaktan çıkarıldı; sonraki yayın için ayrı WP açılır.
 - **Kalite kapıları:** Her WP DoD'siz kapanmaz; stable release kalite kapısından geçer (AGENTS.md §3). Server-authoritative XP, RLS/sosyal profil, platform sınırları → `docs/KALITE-PROGRAMI.md`.
-- **Son WP numarası:** 53
+- **Son WP numarası:** 67
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
   - Flutter: `C:\src\flutter` · Android SDK: `C:\Android\Sdk`
@@ -71,25 +71,25 @@
 
 ### Codex Lane
 - **Durum:** [~] Aktif
-- **Faz/WP:** Bakım · İzin yönetimi + başarımlar ayrıntısı + günlük seri doğruluğu
-- **Aşama:** Kod tamamlandı — cihaz QA / ürün kabulü bekliyor
-- **SAHİP yollar:** `app/lib/features/profile/settings_screen.dart`, `app/lib/features/profile/achievements_screen.dart`, `app/lib/features/profile/widgets/achievement_showcase.dart`, `app/lib/features/clock/clock_widgets_screen.dart`, `app/lib/features/home/widgets/goal_card.dart`, `app/lib/features/classroom/widgets/study_timer_card.dart`, `app/lib/features/android_widgets/android_widget_service.dart`, `app/lib/data/providers/study_providers.dart`, `app/lib/core/stats/study_stats.dart`, `app/lib/core/time_engine/clock_permissions.dart`, `app/android/app/src/main/kotlin/**/ExactAlarmHelper.kt` ve ilgili testler
-- **Ortak/riskli yüzey:** `progress.md` (yalnız bu lane); Android izin ayarları method channel
+- **Faz/WP:** WP-63 · Android Widget R2 ürün briefi ve veri sözleşmesi
+- **Aşama:** Brief şablonu hazır — ürün kararı bekliyor
+- **SAHİP yollar:** `docs/ANDROID-WIDGET-R2-BRIEF.md`, `docs/QA-ANDROID-WIDGETS.md`, `progress.md` (yalnız bu lane + WP-63 kartı)
+- **Ortak/riskli yüzey:** Yok; Flutter/Kotlin widget kodu, manifest ve `pubspec.yaml` kapsam dışı
 - **Dal:** — (ana dal `main`)
 - **Başlangıç:** 2026-07-14 18:04 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-14 18:21
-- **Not:** İzinler her durumda “Yönet” ile Android sistem ayarından açılıp kapatılabilir; pil optimizasyonu için geri alınabilir sistem listesi eklendi. Başarım ayrıntısı tüm kademelerin şartını, XP’sini ve tamamlanan/kilitli durumunu gösterir (kilitli gizli başarımlar gizli kalır). “Seri” metinleri “hedef serisi” olarak netleştirildi; hesap zaten günlük hedefe ulaşmaya dayanıyordu. `flutter test --concurrency=1` 332 PASS; debug APK derlendi. `flutter analyze`: bu kulvar dışındaki iki mevcut uyarı (`admin_announcements_tab.dart`, `appearance_screen.dart`). Cihaz QA bekliyor; push yok.
+- **Son güncelleme:** 2026-07-14 19:36
+- **Not:** `docs/ANDROID-WIDGET-R2-BRIEF.md` ve `docs/QA-ANDROID-WIDGETS.md` hazır. Kullanıcı ilk yüzey/boyut/etkileşim ile kilit ekranı-grup verisi gizlilik kararını vermeden kod WP'si açılamaz. Önceki bakım: `flutter test --concurrency=1` 332 PASS; debug APK derlendi. Push yok.
 
 ### Grok Lane
-- **Durum:** [x] Boşta — beta-v18 hazır (1.0.18+18)
-- **Faz/WP:** WP-48 paket
-- **Aşama:** —
-- **SAHİP yollar:** —
-- **Ortak/riskli yüzey:** —
-- **Dal:** main
-- **Başlangıç:** —
-- **Son güncelleme:** 2026-07-13
-- **Not:** Taç LiveCrownedAvatar; profil Başarılar üstte; test-only WP’ler (Windows hariç) tamamlandı; XP 0028 stable’da.
+- **Durum:** [~] Aktif — cihaz koşumu / ürün kabulü açık
+- **Faz/WP:** WP-64 · Çoklu cihaz senkronizasyon QA ve kurtarma provası
+- **Aşama:** Kod/şablon tamamlandı — cihaz QA bekliyor
+- **SAHİP yollar:** `docs/QA-MULTI-DEVICE-SYNC.md`, `progress.md` (yalnız bu lane + WP-64 kartı)
+- **Ortak/riskli yüzey:** Yok; `app/lib/**` ve `supabase/migrations/**` kapsam dışı (DOKUNMA)
+- **Dal:** — (ana dal `main`)
+- **Başlangıç:** 2026-07-14 14:32 (Europe/Istanbul)
+- **Son güncelleme:** 2026-07-14 14:45
+- **Not:** `docs/QA-MULTI-DEVICE-SYNC.md` yazıldı (matris, MDS-01…14, kurtarma R1–R7, P0/P1 bulgu şablonu). Kod/şema yok. Fiziksel 2×Android + Windows video-zaman damgalı koşum ve ürün kabulü kullanıcı/operatörde.
 
 ---
 
@@ -104,7 +104,7 @@
 | 3 | **V8-A** | Sayaç–bildirim–widget tek doğruluk | Tamamlandı | WP-40–42/51 |
 | 4 | **V8-B** | Genel senkronizasyon | Tamamlandı | WP-43 |
 | 5 | **V8-C** | IA / kamp ateşi polish | Kapandı (ürün) | WP-44/45; sorun→debug |
-| 6 | **V8 beta → soak → stable** | Kalite kapısı | Aktif | beta-v18 → soak → stable |
+| 6 | **V8 beta → soak → stable** | Kalite kapısı | Kapandı (ürün) | v8 yayımlandı; soak ürün kararıyla atlandı; WP-48/49/50 açık iş değil |
 | 7 | **Saat programı** | Alarm/timer/StandBy/widget | Tamamlandı (ürün) | WP-58/59/60; sorun→debug |
 | 8 | **Tema Stüdyosu** | Token + atmosfer aileleri | Tamamlandı | WP-54/55 + 15 aile polish |
 | 9 | **Başarım & Sosyal Profil 3.0** | Ledger + taç her yerde | Tamamlandı | 0028 = **stable tag öncesi** |
@@ -112,23 +112,260 @@
 
 ## Planlanan İş Paketleri
 
-> Burada yalnız açık / Windows / yayın kapısı işleri kalır. Cihaz QA’sı bekleyen ama kodu bitmiş Android işleri ürün kararıyla **Tamamlanan**’a alındı (2026-07-13); sorun çıkarsa debug başlığıyla geri açılır.
+> Burada yalnız açık işler kalır. Cihaz QA’sı bekleyen ama kodu bitmiş Android işleri ürün kararıyla **Tamamlanan**’a alındı (2026-07-13); sorun çıkarsa yeni bir debug kartıyla geri açılır.
 
 | WP | Durum | Kısa kapsam | Bağımlılık |
 |---|---|---|---|
-| WP-48 | Kapandı (ürün) | Kullanıcı GO: doğrudan **v8 stable** (soak atlandı; hotfix = v9) | — |
-| WP-49 | Atlandı | Soak ürün kararıyla atlandı | — |
-| WP-50 | Aktif | **v8 yayında** · 0028 XP reset SQL Editor (kullanıcı) · rollback = önceki v7/v8 APK | — |
+| WP-61 | Bekliyor | Kamp Ateşi R2 · görsel yön, PNG seti ve asset sözleşmesi | — |
+| WP-62 | Bekliyor | Kamp Ateşi R2 · katmanlı sahne ve performanslı animasyon | WP-61 ürün kabulü |
+| WP-63 | Ürün briefi bekliyor | Android Widget R2 · kapsam/öncelik kararı | Kullanıcı briefi |
+| WP-64 | [~] Şablon hazır · cihaz QA bekliyor (Grok) | Çoklu cihaz senkronizasyon QA ve kurtarma provası | WP-53 ürün kabulü |
+| WP-65 | Ürün kararı bekliyor | Aylık rapor/e-posta sağlayıcısı ve teslim mimarisi | Gönderen/izin kararı |
+| WP-66 | Ürün kararı bekliyor | Hesap silme ve veri saklama politikası | Silme/retention kararı |
+| WP-67 | Ürün briefi bekliyor | İstatistik Görselleştirme R2 · grafik kataloğu | Kullanım soruları |
 | WP-53 | R1 kod · açık | Windows Desktop Design 2.0 · ekran-içi masaüstü IA | WP-27 base |
 | WP-27 | Base QA geçti · ürün kabulü açık | Windows desktop shell + Compact Focus | WP-53 ile birlikte |
 | WP-28 | Bekliyor | Windows MSIX + imza + update + release QA | WP-53 ürün kabulü |
 
-> **Dağıtım notu:** WP-39 iptal edildi. **WP-40** V8-A'nın temelidir; WP-41/42 ondan sonra, ikisi `study_providers` timer-sync'i paylaştığı için birbirleriyle paralel değildir. WP-43, V8-A'dan sonra başlar. WP-44 ve WP-45 ayrık dosyalarda bağımsız yürütülebilir.
+> **Planlama notu:** WP-39 iptal edildi. WP-48/49/50 kullanıcı kararıyla kaldırıldı; yayımlanmış sürümde sorun çıkarsa aynı kartlar diriltilmez, ayrı debug/release WP'si açılır. Kamp Ateşi WP-61 → WP-62 zorunlu seri çalışır; WP-63, kullanıcının widget briefi olmadan kod işine dönüşmez.
 
 > ✅ **Windows çakışma kontrolü:** WP-52 dashboard/settings presentation dosyalarında; Claude WP-41/42/51 notification/widget/native dosyalarında, SAHİP kesişimi yok. WP-53 `features/home/**` yüzeyini WP-52 ile paylaştığı için onun kabulünden sonra; WP-28 paketleme de WP-53 ürün kabulünden sonra serileştirilir.
 
 > ✅ Çakışma kontrolü: WP-37 ve WP-38 yalnız kendi yeni doc dosyalarına yazar (`docs/DENETIM-FAZ0A.md` vs `docs/BACKEND-DURUM.md`), `app/**` ve `supabase/**`'a dokunmaz → **paralel güvenli**, aktif lane yok.
 
+
+
+
+### WP-53: Windows Desktop Design 2.0 — Ekran-İçi Ürün IA 🖥️
+- **Program/Faz:** Windows masaüstü kalite programı · **Ajan:** Codex · **Durum:** [~] R1 Ayarlar IA kodlandı — diğer ekranlar planlandı · **Bağımlılık:** WP-52 + WP-27 base shell
+- **Problem:** WP-27 gerçek Windows shell, compact focus ve responsive panel temelini kurdu; fakat birçok ekran-içi kart/form bileşeni mobil uygulamayla ortak görsel yoğunluğu ve akışı kullanıyor. Ürün hâlâ “mobil uygulama büyütülmüş” hissini tamamen atmış değil.
+- **Kapsam dışı:** Backend/repository/RLS, yeni özellik veya istatistik metriği, tema motorunu yeniden yazma, MSIX/imza/update (WP-28), Flutter'ı WinUI ile yeniden yazma.
+- **SAHİP dosyalar (yaz):** `app/lib/features/desktop/**`, `features/home/**`, `features/clock/**`, `features/classroom/**`, `features/stats/**`, `features/profile/**` (yalnız Windows presentation/adapters), desktop golden/widget testleri, `docs/WINDOWS-URUN-PLANI.md`.
+- **DOKUNMA:** `data/**`, `supabase/**`, `core/theme/**` (tokenları yalnız tüket), `core/navigation/**` (WP-27 shell sözleşmesi korunur), notification/widget/native Android, `app/windows/**` (WP-28).
+- **Adımlar:**
+  - [x] **R1 Ayarlar IA:** Açılır kategori→iç ayar çift katmanını kaldır; tüm ayarları doğrudan kart/eylem yap; Gruplar sayacı ayarını bu ekrandan çıkar; Bildirim Merkezi ve sürüm notlarını tek tıkla aç.
+  - [ ] Beş ana ekran için desktop wireframe ve bilgi önceliği: Ana Sayfa çalışma cockpit'i; Saat odak workspace'i; Gruplar master-detail/kamp bağlamı; İstatistik çok panelli analiz; Profil/Ayarlar kategori+detay.
+  - [ ] Mobil AppBar/uzun tek kolon listelerini `≥1008` genişlikte desktop command bar, section navigation, master-detail, tablo/panel ve bağlamsal eylemlere dönüştür; mobil branch aynen korunur.
+  - [ ] Fare/klavye sözleşmesi: hover/right-click, görünür focus, Tab sırası, Esc, context command ve boş/loading/error durumları; hiçbir temel yolculuk mouse zorunlu olmaz.
+  - [ ] Windows 11 yoğunluk/spacing/radius katmanını mevcut tema tokenlarından türet; rastgele sabit renk veya ikinci tema sistemi kurma.
+  - [ ] 1366×768/1080p/1440p × %100/%125/%150/%200 golden/overflow matrisi; Narrator/high-contrast/reduce-motion ve resize stress cihaz QA.
+- **Veri/Migration etkisi:** Yok; aynı provider/repository/state tüketilir. Geri alma = Windows presentation adaptörlerini kaldırıp ortak mobil widget fallback'ine dönmek.
+- **RLS/Güvenlik:** Yetki/veri değişmez; admin ve sosyal görünürlük mevcut RLS ile sınırlı kalır.
+- **Edge-case'ler:** boş grup, hiç session yok, offline/cache, uzun Türkçe metin, 200% ölçek, 560 px minimum pencere, modal/tooltip overlay, çoklu monitör/DPI geçişi.
+- **Kabul (ölçülebilir):** `≥1008` genişlikte beş ana ekranın hiçbirinde mobil alt menü/AppBar veya tam sayfa tek kolon akış ana IA değildir; her ekranda en az bir desktop'a özgü bağlamsal panel/komut alanı vardır; yalnız klavyeyle ana 5 yolculuk PASS; QA matrisinde overflow/kırmızı-gri ErrorWidget 0; 10 sn resize stress'te P0/P1 0; karşılaştırmalı cihaz ekran görüntülerini ürün sahibi kabul eder. `Cihazda doğrulanmalı`.
+- **Tuzaklar:** Yalnız padding/rail değiştirip redesign saymak; işlevleri masaüstünde çoğaltmak; aynı veriyi ikinci provider ağacıyla çatallamak; custom title bar/Mica'yı Snap/high-contrast kanıtı olmadan eklemek.
+- **Model önerisi:** 🔴 Opus
+- **R1 kod kanıtı (2026-07-13):** `ExpansionTile` 0; doğrudan bildirim/sürüm navigasyon widget testi PASS; grid legacy Auto→6 göç testi PASS; `flutter analyze` + 283/283 test + Windows release build PASS. Görsel ürün kabulü `Cihazda doğrulanmalı`.
+
+> ✅ **Çakışma/seri planı:** WP-52, Claude WP-41/42/51 notification-widget-native dosyalarıyla kesişmez ve paralel güvenlidir. WP-53, WP-52'nin `features/home/**` yüzeyini paylaştığı için **WP-52 kabulünden sonra** başlar. WP-28 paketleme/release, gerçek desktop tasarımı ürün kabulü almadan başlamaz: `WP-27 base → WP-52 → WP-53 → WP-28`.
+
+
+### WP-61: Kamp Ateşi R2 · Görsel Yön, PNG Seti ve Asset Sözleşmesi 🔥
+- **Program/Faz:** Gruplar deneyimi R2 · **Durum:** [ ] Bekliyor · **Bağımlılık:** —
+- **Problem:** Mevcut kamp ateşi işlevsel polish aldı (WP-45) fakat özgün bir sahne kimliği, tekrar kullanılabilir PNG seti ve durumlara bağlı görsel dil yok.
+- **Kapsam:** Sanat yönü (katmanlar, renk/kontrast, gece-gündüz davranışı), lisansı/üretim kaynağı kayıtlı PNG seti, isimlendirme-ölçü-alpha sözleşmesi ve Flutter asset manifesti. Üretilecek set: zemin, odun, alevin en az üç katmanı, köz/parçacık, duman ve boş/az/yoğun aktivite durumları.
+- **Kapsam dışı:** `campfire_scene.dart` render/animasyon kodu (→ WP-62), grup verisi/goal hesabı, yeni tema motoru, kullanıcıdan fotoğraf yükleme.
+- **SAHİP dosyalar (yaz):** `app/assets/campfire/**`, `app/pubspec.yaml` (yalnız asset bildirimi), `docs/CAMPFIRE-R2-TASARIM.md`.
+- **DOKUNMA:** `app/lib/features/classroom/**`, `app/lib/core/theme/**`, `supabase/**`, mevcut kullanıcı içeriği/assetleri. `references/campfire/**` yalnız kaynak olarak okunur; sahipliği belirsiz dosyalar değiştirilmez.
+- **Adımlar:** [ ] Sahne durum matrisi ve erişilebilir kontrast kararlarını yaz; [ ] PNG paketini ölçü/alpha/isim sözleşmesine göre üret veya lisansını doğrula; [ ] 1×/2× yoğunluk ve düşük bellek fallback kararını belgeleyip manifesti ekle; [ ] asset envanteri + kaynak/lisans kaydını oluştur.
+- **Veri/Migration etkisi:** Yok. Geri alma = asset manifest satırlarını ve paketi birlikte kaldırmak.
+- **RLS/Güvenlik:** Ağ/veri erişimi yok; üçüncü taraf asset lisansı ve üretim kaynağı dokümana yazılır.
+- **Edge-case'ler:** Koyu/açık tema kontrastı, küçük ekran crop, düşük RAM, asset eksik/bozuk, reduce-motion, APK boyutu artışı.
+- **Kabul (ölçülebilir):** Belgede tüm sahne durumları için hangi PNG katmanlarının kullanıldığı bellidir; her PNG adı/ölçüsü/alpha kuralına uyar; Flutter asset yükleme smoke testi geçer; 360 dp ve tablet önizlemesinde crop/okunamaz kontrast 0; ürün sahibi görsel yönü onaylar. `Cihazda doğrulanmalı`.
+- **Tuzaklar:** İnternetten lisanssız asset almak; tek düz PNG ile animasyon beklemek; `pubspec.yaml` değişikliğini WP-62 ile paralel yapmak.
+
+### WP-62: Kamp Ateşi R2 · Katmanlı Sahne, Animasyon ve Erişilebilirlik 🔥
+- **Program/Faz:** Gruplar deneyimi R2 · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-61 ürün kabulü
+- **Problem:** Sahne, çalışma yoğunluğunu hissettiren akıcı ama dikkat dağıtmayan bir animasyonla ve gerçek PNG katmanlarıyla yeniden kurulmalı.
+- **Kapsam:** WP-61 asset sözleşmesini tüketen katmanlı renderer; boş/az/yoğun grup aktivitesinde anlamlı durum geçişi; alev/köz/dumanın farklı hızlarda animasyonu; reduce-motion statik fallback'i; hata/asset yok durumunda mevcut güvenli görünüm.
+- **Kapsam dışı:** Grup hedefi veya presence veri modelini değiştirmek, yeni RLS/migration, genel tema refactor'u, WP-61 dışında yeni asset üretimi.
+- **SAHİP dosyalar (yaz):** `app/lib/features/classroom/widgets/campfire_scene.dart`, yeni `app/lib/features/classroom/widgets/campfire/**`, ilgili widget/golden testleri; yalnız sahnenin yerleştirilmesi gerekiyorsa `classroom_screen.dart`.
+- **DOKUNMA:** `app/pubspec.yaml` ve `app/assets/campfire/**` (WP-61 sahibi), `data/**`, `supabase/**`, `core/theme/**`, grup hedef/trend hesapları.
+- **Adımlar:** [ ] Asset katmanlarını deterministik render ağacına bağla; [ ] aktivite durumlarını mevcut okunan veriden türet ve eşiklerini belgede sabitle; [ ] reduce-motion/boş/asset-hata fallback'lerini ekle; [ ] golden + davranış testleri ve profil cihaz akıcılık ölçümü yap.
+- **Veri/Migration etkisi:** Yok. Geri alma = önceki vektör/fallback sahneye dönmek; kullanıcı verisi değişmez.
+- **RLS/Güvenlik:** Yeni veri sorgusu veya görünürlük yok; mevcut grup erişim kuralları korunur.
+- **Edge-case'ler:** 0 üye/0 çalışan, çok üye, hızlı presence değişimi, ekran rotasyonu, düşük güç modu, reduce-motion, asset yükleme hatası, koyu/açık yüksek kontrast.
+- **Kabul (ölçülebilir):** Boş/az/yoğun üç durumun golden'ı geçer; reduce-motion'da sürekli ticker 0 olur; 10 hızlı durum değişiminde exception/overflow 0; orta seviye Android'de 60 sn profil kaydında sahne kaynaklı jank ≤%1 ve bellek büyümesi yok; ürün sahibi PNG sahnesini kabul eder. `Cihazda doğrulanmalı`.
+- **Tuzaklar:** Her frame'de tüm sahneyi yeniden kurmak; sahneye iş mantığı taşımak; hareket azaltma tercihini yok saymak.
+
+### WP-63: Android Widget R2 · Ürün Briefi ve Veri Sözleşmesi 📲
+- **Program/Faz:** Android widget iyileştirmesi · **Durum:** [~] Brief şablonu hazır — ürün kararı bekliyor · **Bağımlılık:** Kullanıcının ayrıntıları
+- **Problem:** Widget altyapısı vardır; ancak hangi widget'ın, hangi bilgiyi, hangi boyutta ve hangi etkileşimle öncelikle düzenleneceği net değildir. Belirsiz kapsamla kodlamak yanlış yüzeye yatırım olur.
+- **Kapsam:** Kullanıcıyla 2×1/4×1/4×2 ve olası lock-screen yüzeyleri için öncelik matrisi; gösterilecek veriler, dokunma eylemleri, boş/hata/offline durumu, yenileme tetikleyicileri, gizlilik ve Android sürüm/OEM sınırları.
+- **Kapsam dışı:** Flutter/Kotlin widget kodu, manifest, yeni servis, tasarım implementasyonu. Bunlar brief kabulünden sonra ayrı uygulama WP'sidir.
+- **SAHİP dosyalar (yaz):** `docs/ANDROID-WIDGET-R2-BRIEF.md`, `docs/QA-ANDROID-WIDGETS.md` (R2 kabul matrisi).
+- **DOKUNMA:** `app/lib/features/android_widgets/**`, `app/android/**`, `app/pubspec.yaml`, `supabase/**`.
+- **Adımlar:** [x] Mevcut provider/snapshot/etkileşim envanterini `docs/ANDROID-WIDGET-R2-BRIEF.md`'de doğrula; [ ] kullanıcıdan öncelikli widget/yüzey ve bilgi hiyerarşisini al; [ ] veri kaynağı-yenileme-etkileşim sözleşmesini kullanıcı seçimiyle tamamla; [x] OEM/WorkManager/Chronometer sınırlarını briefte açıkça kaydet; [x] uygulama WP'sinin cihaz QA matrisini `docs/QA-ANDROID-WIDGETS.md` olarak çıkar.
+- **Veri/Migration etkisi:** Yok.
+- **RLS/Güvenlik:** Widget'ta kilit ekranı/başka uygulama görünürlüğü için hassas veri gösterim kararı ürün sahibine aittir; varsayılan en az veri ilkesi uygulanır.
+- **Kabul (ölçülebilir):** Ürün sahibi widget türü önceliğini, her tür için gösterilecek alanları, dokunma eylemlerini ve kilit ekranı gizlilik kuralını yazılı onaylar; her yüzey için yenileme olayı ve boş/hata metni belirlidir. `Ürün kararı gerekiyor`.
+- **Tuzaklar:** Saniyelik Flutter redraw planlamak; OEM görünümünü garanti etmek; brief olmadan “yeniden tasarım” kapsamını varsaymak.
+
+### WP-64: Çoklu Cihaz Senkronizasyon QA ve Kurtarma Provası 🔄
+- **Program/Faz:** Güvenilirlik / platformlar arası doğrulama · **Ajan:** Grok · **Durum:** [~] Şablon hazır — cihaz QA / ürün kabulü bekliyor · **Bağımlılık:** WP-53 ürün kabulü + Android yayımlı sürüm
+- **Problem:** Android ve Windows aynı hesapta kullanıldığında oturum, istatistik ve offline outbox davranışı için güncel uçtan uca cihaz kanıtı yok.
+- **Kapsam:** İki Android + bir Windows ile senkron matrisi; offline→online, eşzamanlı oturum düzenleme, gün sınırı, uygulama kapatma/yeniden açma ve çakışma sonrası kurtarma kanıtı.
+- **Kapsam dışı:** Yeni senkron algoritması veya şema; bulgu çıkarsa her kök neden ayrı debug WP'sidir.
+- **SAHİP dosyalar (yaz):** `docs/QA-MULTI-DEVICE-SYNC.md`, gerekli test fixture/kanıt şablonları.
+- **DOKUNMA:** `app/lib/**`, `supabase/migrations/**`, production RLS politikaları.
+- **Adımlar:** [x] Cihaz/sürüm/test hesabı matrisi + ≥12 senaryo/kanıt/kurtarma şablonu `docs/QA-MULTI-DEVICE-SYNC.md` (MDS-01…14, R1–R7, bulgu şablonu); [ ] belirlenmiş senaryoları video-zaman damgasıyla çalıştır; [ ] veri farkı olursa tekrar üretim adımı ve güvenli kurtarma yolunu kaydet; [ ] P0/P1 bulgularını ayrı WP olarak aç.
+- **Veri/Migration etkisi:** Yok; yalnız redakte test verisi kullanılır.
+- **RLS/Güvenlik:** Gerçek kullanıcı verisi/oturum tokenı kanıta girmez; test hesapları yalnız kendi verisini görür.
+- **Kabul (ölçülebilir):** Tanımlı en az 12 senaryonun her birinde Android/Windows son durumları eşleşir; veri kaybı/çift oturum P0=0; başarısız ağ senaryosunda kullanıcıya uygulanabilir kurtarma adımı vardır; ürün sahibi kanıtı kabul eder. `Cihazda doğrulanmalı`.
+- **Tuzaklar:** Emulator'ı cihaz kanıtı saymak; test sonuçlarını kod düzeltmesiyle karıştırmak; üretim kullanıcı verisi kullanmak.
+- **Not (2026-07-14):** Kod/şema yok. Belge: outbox coalesce + `upsert onConflict:id` + Europe/Istanbul gün sınırı + eşzamanlı düzenleme gözlemi (MDS-07). Fiziksel koşum operatörde; Windows base shell (WP-27) ile koşulabilir, WP-53 IA sonrası tekrar koşum önerilir.
+- **Değişen dosyalar:** `docs/QA-MULTI-DEVICE-SYNC.md`, `progress.md` (Grok lane + bu kart).
+
+### WP-65: Aylık Raporlar · E-posta Sağlayıcısı ve Teslim Mimarisi Kararı ✉️
+- **Program/Faz:** Ürün/altyapı keşfi · **Durum:** [ ] Ürün kararı bekliyor · **Bağımlılık:** Gönderen adresi, sağlayıcı ve maliyet onayı
+- **Problem:** Aylık rapor fikrinin e-posta sağlayıcısı, gönderen kimliği, izin/abonelik ve operasyon maliyeti belirlenmeden güvenli bir implementasyon planı yok.
+- **Kapsam:** Sağlayıcı seçenekleri, maliyet/limit, doğrulanmış gönderen, kullanıcı opt-in/opt-out, rapor içeriği, cron/Edge Function sınırı, teslim ve hata/yeniden deneme politikası.
+- **Kapsam dışı:** E-posta gönderimi, Edge Function deploy'u, secret ekleme veya kullanıcıya mail atma.
+- **SAHİP dosyalar (yaz):** `docs/AYLIK-RAPOR-KARAR.md`.
+- **DOKUNMA:** `supabase/functions/**`, `supabase/migrations/**`, `app/**`, CI secrets.
+- **Adımlar:** [ ] Sağlayıcı/sender/izin seçeneklerini karar tablosuna koy; [ ] veri minimizasyonu ve retention etkisini WP-66 ile eşleştir; [ ] maliyet ve başarısız teslim davranışını tanımla; [ ] onaylanan seçeneğe göre ayrı implementasyon WP'sini çıkar.
+- **Veri/Migration etkisi:** Yok; tasarım aşamasında kişisel veri veya anahtar eklenmez.
+- **RLS/Güvenlik:** E-posta adresi/çalışma özeti hassas veridir; service-role istemciye/repoya girmez, gönderim opt-in olmadan tasarlanmaz.
+- **Kabul (ölçülebilir):** Ürün sahibi sağlayıcı, gönderen, abonelik varsayılanı, rapor alanları, aylık limit/maliyet ve başarısız teslim politikasını yazılı seçer; seçilen yol için sır yönetimi ve rollback notu vardır. `Ürün kararı gerekiyor`.
+- **Tuzaklar:** Sağlayıcı hesabı açmak veya secret eklemek için varsayılan izin kabul etmek; opt-out olmadan mail tasarlamak.
+
+### WP-66: Hesap Silme ve Veri Saklama Politikası Kararı 🗑️
+- **Program/Faz:** Güvenlik ve hesap yaşam döngüsü · **Durum:** [ ] Ürün kararı bekliyor · **Bağımlılık:** Silme modeli ve retention onayı
+- **Problem:** Mevcut soft-delete yönü vardır; kullanıcı hesabı silme, geri alma süresi, rapor/denetim verisi ve kalıcı silme yetkisi tanımlı değildir.
+- **Kapsam:** Veri envanteri, soft-delete/hard-delete seçenekleri, geri alma penceresi, saklama süreleri, kullanıcı/admin onayı, export ve destek talebi akışı; WP-65 e-posta verisiyle tutarlılık.
+- **Kapsam dışı:** SQL migration, Edge Function, gerçek kullanıcı silme, auth kullanıcılarını değiştirme. Onaydan sonra ayrı güvenlik WP'si gerekir.
+- **SAHİP dosyalar (yaz):** `docs/HESAP-SILME-RETENTION-KARARI.md`.
+- **DOKUNMA:** `supabase/**`, `app/lib/**`, Auth yönetimi, production verisi.
+- **Adımlar:** [ ] Tablolar/Storage/denetim kayıtları için veri envanteri çıkar; [ ] alternatifleri geri alınabilirlik ve güvenlik açısından karşılaştır; [ ] kullanıcı ve admin onay akışını seç; [ ] seçilen modelin migration/RLS/Edge Function uygulama WP'sini planla.
+- **Veri/Migration etkisi:** Bu WP'de yok; seçilen model sonraki WP'nin migration ve geri alma planını zorunlu kılar.
+- **RLS/Güvenlik:** Silme isteği yetkilendirilebilir ve denetlenebilir olmalı; service-role yalnız sunucuda; hukuki saklama yükümlülüğü için ürün sahibi karar verir.
+- **Kabul (ölçülebilir):** Her veri sınıfı için saklama süresi ve silme davranışı belirlenir; kullanıcı/admin yetkisi, geri alma süresi ve kalıcı silme onayı yazılıdır; ürün sahibi karar kaydını onaylar. `Ürün kararı gerekiyor`.
+- **Tuzaklar:** Soft-delete'i silme saymak; retention kararını migration içinde doğaçlamak; kullanıcıdan onaysız veri silmek.
+
+### WP-67: İstatistik Görselleştirme R2 · Grafik Kataloğu ve Ürün Briefi 📊
+- **Program/Faz:** İstatistikler keşfi · **Durum:** [ ] Ürün briefi bekliyor · **Bağımlılık:** Hedef kullanıcı soruları
+- **Problem:** “Yeni grafik türleri / radar grafik” fikri, hangi kararı hızlandıracağı ve hangi verinin anlamlı olduğu belirlenmeden bir görsel türü seçmeye indirgenmiş durumda.
+- **Kapsam:** Kullanıcı soruları, mevcut metrik envanteri, aday grafik karşılaştırması (radar dahil), mobil/Windows yerleşim eskizleri, erişilebilir alternatif metin/tablo ve seçilen ilk dilim için veri sözleşmesi.
+- **Kapsam dışı:** Yeni metrik üretimi, repository/RPC değişikliği, `fl_chart` implementasyonu veya tema refactor'u.
+- **SAHİP dosyalar (yaz):** `docs/ISTATISTIK-R2-BRIEF.md`.
+- **DOKUNMA:** `app/lib/features/stats/**`, `app/lib/core/stats/**`, `supabase/**`, `app/pubspec.yaml`.
+- **Adımlar:** [ ] Kullanıcının cevaplamak istediği en fazla üç istatistik sorusunu topla; [ ] aday grafikleri okunabilirlik ve veri yeterliliğiyle karşılaştır; [ ] mobil/Windows için birincil ve tablo fallback'ini belirle; [ ] seçilen grafiği ayrı uygulama WP'sine böl.
+- **Veri/Migration etkisi:** Yok; mevcut verinin yeterli olmadığı durumda yeni metrik WP'si ayrıca açılır.
+- **RLS/Güvenlik:** Grup karşılaştırmaları mevcut ortak-grup görünürlüğünü genişletmez; hassas/tekil kullanıcı verisi varsayılan olarak gösterilmez.
+- **Kabul (ölçülebilir):** Ürün sahibi üç kullanıcı sorusunu ve ilk uygulanacak grafik+tablo fallback'ini onaylar; her görsel için kaynak metrik, boş durum ve erişilebilir metin tanımlıdır. `Ürün kararı gerekiyor`.
+- **Tuzaklar:** Sadece “güzel” olduğu için grafik eklemek; küçük ekranda radar grafiğini zorlamak; yeni veriyi RLS tasarımı olmadan görünür yapmak.
+
+### WP-27: Windows Desktop Shell, Etkileşim ve Compact Focus 🖥️
+- **Program/Faz:** Windows masaüstü (`KALITE-PROGRAMI §8.7`, `docs/WINDOWS-URUN-PLANI.md`) · **Ajan:** Codex · **Durum:** [~] Base gerçek cihaz QA geçti — ürün kabulü WP-52/53 sonrası
+- **Problem:** Uygulama Windows'ta çalışsa da mobil alt navigasyon ve genişleyen 6 sütunlu grid nedeniyle masaüstü ürünü gibi davranmıyor; mini mod bütün uygulamayı küçük pencereye sıkıştırıyor.
+- **Kapsam dışı:** Installer/MSIX/imza/update (→ WP-28), yeni backend özelliği, Windows system tray ve Rahatsız Etmeyin entegrasyonu (ürün kararı).
+- **SAHİP dosyalar (yaz):** `app/lib/core/desktop/**`, `app/lib/core/navigation/home_shell.dart`, `app/lib/features/desktop/**`, `app/lib/features/home/home_screen.dart`, `app/lib/features/clock/**`, `app/lib/features/classroom/**`, `app/lib/features/stats/**`, `app/lib/features/profile/**` (yalnız Windows presentation adaptörleri), ilgili desktop/widget testleri ve `docs/WINDOWS-URUN-PLANI.md`.
+- **DOKUNMA:** `app/android/**`, notification/widget native ürün mantığı, `supabase/**`, repository arayüzleri, `core/theme/**` (tokenları yalnız tüket), Windows installer/runner metadata (→ WP-28).
+- **Adımlar:**
+  - [~] Flutter 3.44.2 + VS 2022 ile gerçek Windows release build + launch smoke PASS; debug ve ölçümlü cihaz matrisi bekliyor.
+  - [x] `<640` minimal, `640–1007` kompakt rail, `≥1008` geniş etiketli rail; mobil `NavigationBar` aynen korunur.
+  - [x] Desktop komut alanı + max 1440 px içerik; dashboard kayıt modeli çatallanmadı.
+  - [x] Ortak Windows 11 sayfa başlığı/panel sistemi; Ana Sayfa, Saat, Gruplar, İstatistik ve Profil için mobil AppBar/list kopyası olmayan responsive desktop sunum dalları.
+  - [x] Ayrı Compact Focus yüzeyi (süre/mod/ders + başlat/durdur + pin/tam pencere); tüm uygulamayı küçültme kaldırıldı. Pause mevcut timer state modelinde olmadığı için eklenmedi.
+  - [~] Normal bounds/maximize/monitör/pin/compact state persist + ekran dışı clamp otomatik testli; sleep/resume/multi-monitor cihaz kabulü bekliyor.
+  - [~] `Ctrl+1…5`, `Ctrl+Shift+M/P`, `F5`, tooltip, hover/right-click tamam; timer için global `Space`/`Esc` mevcut metin alanları ve dialog davranışıyla birlikte sonraki cihaz UX turunda doğrulanacak.
+  - [~] Temel Semantics/focus mevcut; Narrator, high contrast, reduce motion ve %100–%200 cihaz matrisi bekliyor.
+- **Otomatik kanıt (2026-07-13, retest 3):** `flutter analyze` PASS; `flutter test --dart-define-from-file=env.json` PASS (**278**); `flutter build windows --release --dart-define-from-file=env.json` PASS. Debug compact geçişi `360×220`, `Responding=True`; önceki `No Overlay widget found` + RenderFlex overflow yeniden oluşmadı. Regression testi MaterialApp builder dışında Tooltip + bağımsız compact Overlay'i doğrular. Gerçek kullanıcı compact retesti bekliyor.
+- **Veri/Migration etkisi:** Yok. Yalnız yerel pencere tercihleri; geri alma = desktop shell seçimini kapatıp mevcut mobile shell fallback'ine dönmek.
+- **RLS/Güvenlik:** Yeni veri yetkisi yok; gizli değer yok. Desktop da aynı Supabase/RLS ve offline repository katmanını tüketir.
+- **Edge-case'ler:** 1366×768, ultra-wide, %200 ölçek, ikinci monitör çıkarma, minimize/sleep sırasında timer, offline login/cache, text field odaktayken Space kısayolu, compact modda hata/boş state.
+- **Kabul (ölçülebilir):** Windows release ilk anlamlı pencere ≤2.5 sn; sekme geçişi ≤150 ms; compact↔normal ≤300 ms; 10 sn resize'da overflow/kırmızı ekran 0 ve hedef ≥55 fps; 1366×768/1080p/1440p × %100/%125/%150/%200 matriste taşma 0; yalnız klavye ile temel yolculuk PASS; Narrator/high-contrast kanıtı; mobil golden/widget testleri değişmeden yeşil. `Cihazda doğrulanmalı`.
+- **Tuzaklar:** Flutter'ı WinUI'ya yeniden yazma; desktop için ikinci veri/state sistemi kurma; özel Mica title bar'ı Snap/high-contrast/DPI kanıtı olmadan açma; mini modda tam app ağacını sıkıştırma.
+- **Dal önerisi:** `wp27-windows-desktop-shell` · **Model önerisi:** 🔴 Opus
+
+
+
+
+
+### WP-28: Windows MSIX, Güncelleme ve Release QA 📦
+- **Program/Faz:** Windows dağıtım/release (`KALITE-PROGRAMI §8.7`) · **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-53 gerçek Windows cihaz/ürün kabulü
+- **Problem:** Windows release artefaktı, doğru ürün metadata'sı, güvenilir kurulum/güncelleme, kod imzası ve Windows CI kapısı yok; mevcut Android updater Windows'ta çalışmıyor.
+- **Kapsam dışı:** Desktop IA/shell (WP-27), Microsoft Store hesabı açma/satın alma, uygulama özelliği, Android release workflow davranışını değiştirme.
+- **SAHİP dosyalar (yaz):** `app/windows/**` (runner metadata/ikon/manifest/DAGITIM), `app/pubspec.yaml` (yalnız Windows paket config/dev dependency), yeni `.github/workflows/windows-release.yml`, `docs/QA-WINDOWS.md`, `docs/WINDOWS-RELEASE-GATE.md`, Windows updater/channel adaptörü ve testleri.
+- **DOKUNMA:** `app/android/**`, `supabase/migrations/**`, timer/widget ürün mantığı, `.github/workflows/release.yml` Android akışı (yalnız oku), `core/theme/**`.
+- **Adımlar:**
+  - [ ] `Odak Kampı` ProductName/FileDescription/publisher/package identity ve çok boyutlu ikon; Explorer/Start/Ayarlar metadata testi.
+  - [ ] Geliştirme ZIP + beta imzalı MSIX + stable Store MSIX (önerilen) kanal sözleşmesi; Store dışıysa App Installer feed.
+  - [ ] Sertifika/Store/Azure kimliğini secret store'a al; self-signed yalnız QA; PFX/service secret log/artefakta girmez.
+  - [ ] Windows runner CI: analyze + test + release build + MSIX + SHA-256 + Sentry release/symbol eşlemesi.
+  - [ ] Temiz VM install→launch→update→uninstall ve Windows App Certification/paket doğrulama otomasyonu.
+  - [ ] Windows 11 24H2/25H2, DPI, multi-monitor, sleep/resume, offline→online, Android+Windows aynı hesap ve forward-fix rollback matrisi.
+- **Veri/Migration etkisi:** Yok. Paket identity bir kez yayınlandıktan sonra kalıcıdır; geri alma = daha yüksek build numaralı, aynı identity/imzalı bilinen-iyi forward-fix paketi.
+- **RLS/Güvenlik:** RLS aynı kalır. Signing private key, Store/Azure kimliği, Supabase ve Sentry release değerleri yalnız CI secrets; log redaction zorunlu.
+- **Edge-case'ler:** İmza/publisher uyuşmazlığı, düşük version update, SmartScreen, VC++ runtime/plugin DLL eksikliği, install path salt-okunur MSIX container, Store ve GitHub kanallarının birbirini güncelleyememesi, offline installer.
+- **Kabul (ölçülebilir):** Temiz Windows 11 VM'de standart kullanıcıyla kurulum/ilk açılış/update/uninstall PASS; aynı identity+imzayla veri kayıpsız update; WACK/paket doğrulama PASS; artefakt SHA-256 ve Sentry release eşleşir; P0=0; 24H2+25H2 cihaz/VM videosu; rollback/forward-fix provası PASS. `Cihazda doğrulanmalı`.
+- **Tuzaklar:** Unsigned EXE/ZIP'i stable sayma; Store ve doğrudan MSIX identity'lerini plansız karıştırma; private key'i repoya koyma; Android updater'ı Windows'a kopyalama.
+- **Dal önerisi:** `wp28-windows-msix-release` · **Model önerisi:** 🟣 Pro
+
+---
+
+## Tamamlanan İş Paketleri
+
+> Biten her WP yalnız bu başlık altında tutulur. Buradaki kartlar tekrar aktif veya planlanan iş olarak yazılmaz.
+
+| WP | Tamamlanan kapsam |
+|---|---|
+| WP-58 | Saat Merkezi R1 · Epoch + Exact Alarm — ürün kapanış 2026-07-13 (cihaz smoke sorun→debug) |
+| WP-59 | Saat Merkezi R2 · Alarm 2.0 + Multi-timer — ürün kapanış 2026-07-13 |
+| WP-60 | Saat Merkezi R3 · Dünya/Krono/StandBy + hub — ürün kapanış 2026-07-13 |
+| WP-52 | Adaptif dashboard 6/8/12/16 — kod+test; ürün kapanış 2026-07-13 (Windows resize ayrı) |
+| WP-45 | V8-C · Gruplar/kamp ateşi polish — ürün kapanış 2026-07-13 |
+| WP-46 | Faz 0B · Integration test + Android QA matrisi — ürün kapanış 2026-07-13 |
+| WP-47 | Faz 0B · Sentry + senkron gözlemlenebilirlik — ürün kapanış 2026-07-13 |
+| WP-40 | V8-A · Native timer state store + foreground service — beta-v8 cihaz QA + ürün kabulü |
+| WP-41 | V8-A · Canlı chronometer bildirim R1/R2 (beta-v11–v15 hattı) — ürün kabulü 2026-07-13 |
+| WP-42+51 | V8-A · Native sayaç servisi + widget/bildirim app-kapalı + Grok in-app start fix — ürün kabulü 2026-07-13 |
+| WP-54 | Tema Stüdyosu R1 · Token motoru + 12 hazır tema — ürün kabulü 2026-07-13 |
+| WP-55 | Tema Stüdyosu R2 · Katmanlı editör UI — ürün kabulü 2026-07-13 |
+| WP-56 | Başarım 3.0 R1 · Server-authoritative ledger + wire-up + XP eşik/saat — ürün kabulü 2026-07-13 |
+| WP-57 | Başarım 3.0 R2 · Oyunlaştırılmış profil/rozet UI + polish — ürün kabulü 2026-07-13 |
+| WP-43 | V8-B · Genel senkronizasyon denetimi (canonical projection, idempotency) — beta-v8 cihaz QA + ürün kabulü |
+| WP-44 | V8-C · İstatistik grup sırası (sıralama üste) — beta-v8 cihaz QA + ürün kabulü |
+| WP-37 | Faz 0A · Repo ve doküman gerçeği denetimi |
+| WP-1 | Android Widget Foundation |
+| WP-2 | Persistent Notification + Background Timer |
+| WP-3 | Auth Recovery (ilk temel akış) |
+| WP-4 | Home Responsive QA |
+| WP-5 | Presence Lifecycle |
+| WP-6 | Android Surface Extensions |
+| WP-7 | Class Chat |
+| WP-8 | Nudge + Notifications |
+| WP-9 | Gamification |
+| WP-10 | Class Metrics Pack |
+| WP-11 | Windows Desktop Track |
+| WP-12 | Sync & Offline Track |
+| WP-13 | Release Channels |
+| WP-14 | Güvenli Admin ve Geri Bildirim Temeli |
+| WP-15 | Device Integrations Spike ve zengin kısayollar |
+| WP-16 | Dashboard Advanced Polish |
+| WP-17 | Android Canlı Sayaç Yüzeyleri |
+| WP-18 | Grup Ekranı Hiyerarşisi ve Ayar Sadeleştirmesi |
+| WP-19 | Device Integrations Settings Hook |
+| WP-20 | Özelleştirilebilir Saat Stilleri |
+| WP-21 | Gelişmiş Grid Boyutlandırma |
+| WP-22 | Canlı Grup Hedefi Animasyonu |
+| WP-23 | Clock Center + Landscape StandBy |
+| WP-24 | Alarm + Çoklu Timer Temeli |
+| WP-25 | Android 3 Tuşlu Navigasyon Safe Area QA |
+| WP-26 | Tema Paleti ve Özel Slotlar |
+| WP-29 | Stable/Beta App Icon & Branding Refresh |
+| WP-30 | Release Notes, Updater Dialog ve Settings Hook |
+| WP-31 | Hesabımı Yönet Merkezi ve çalışan şifre sıfırlama |
+| WP-32 | Geri bildirim ekran görüntüsü eki |
+| WP-33 | Güvenli süper-admin kullanıcı işlemleri |
+| WP-34 | Süper-Admin Paneli, Grup Moderasyonu ve Duyurular |
+| WP-35 | Sosyal Profil 2.0 + Başarı Yolculuğu |
+| WP-36 | Beş Sekmeli IA Sadeleştirmesi + Bildirim Merkezi |
+| WP-38 | Faz 0A · Canlı Backend Durum Matrisi |
+
+### Ayrıntılı tamamlanan kartlar
+
+> Üstteki özet satırlarının kanıt ve teslim ayrıntılarıdır. Açık işler bu bölüme taşınmaz.
 
 ### WP-41: V8-A · Canlı Chronometer Bildirim (Başlat/Durdur) 🔔
 - **Program/Faz:** V8-A · **Bağımlılık: WP-40 (tamamlandı)**
@@ -179,155 +416,6 @@
 - **DOKUNMA:** widget native (WP-42), `study_providers` timer-sync (dar okuma).
 - **Kabul (ölçülebilir):** Desteklenen OEM'de bildirim dinamik panele terfi eder + native akan saat gösterir (saniyede Flutter update yok); aksiyon butonları app-kapalı çalışır; desteklemeyen OEM'de düz ama temiz canlı bildirime düşer. `Cihazda doğrulanmalı`.
 - **Tuzaklar:** Dinamik panel terfisi OEM garantisi değildir — hedef ulaşılabilir, piksel/panel garanti değil; graceful fallback şart. **Model:** 🔴 Opus
-
-### WP-52: Adaptif Dashboard Grid ve Cihaz Yoğunluğu 🧩
-- **Program/Faz:** Ana Sayfa + Windows/tablet adaptasyonu · **Ajan:** Codex · **Durum:** [~] Kod tamamlandı — cihaz QA/ürün kabulü bekliyor · **Bağımlılık:** WP-27 base shell
-- **Problem:** Dashboard veri modeli ve render motoru sabit `6×N`; tablet ve geniş Windows alanında kartlar gereğinden büyük kalıyor, aynı anda daha az bilgi gösteriliyor. Kullanıcı cihaz başına daha verimli bir grid istiyor.
-- **Kapsam dışı:** Dashboard kartlarının iç veri/grafik mantığını yeniden yazmak, layout'u Supabase ile cihazlar arasında senkronlamak, tema motoru, Windows shell/MSIX.
-- **SAHİP dosyalar (yaz):** `app/lib/features/home/dashboard_card.dart`, `dashboard_providers.dart`, `home_screen.dart`, `app/lib/core/grid/grid_reflow.dart`, `app/lib/features/profile/settings_screen.dart` (yalnız Ana Sayfa grid ayarı), ilgili grid/dashboard/settings testleri.
-- **DOKUNMA:** `supabase/**`, repository/provider veri kaynakları, `core/theme/**`, `core/navigation/**`, `app/pubspec.yaml`, notification/widget dosyaları.
-- **Adımlar:**
-  - [x] Cihaz-yerel `DashboardGridDensity` tercihi: **6 / 8 / 12 / 16**; kullanıcı yoğunluğu açıkça seçer, eski `automatic` tercihi güvenli biçimde 6 sütuna göçer.
-  - [x] Sabit `kGridColumns=6` bağımlılığını config/reflow/render/drag/resize/backdrop boyunca parametreleştir; kart içerik boyutu aktif sütun oranına göre seçilir.
-  - [x] Her sütun yoğunluğu için ayrı yerel layout profili (`6/8/12/16`) sakla. Bir profil ilk açıldığında mevcut düzenden deterministik ölçekle + reflow ile üretilir; geri dönünce önceki profil aynen gelir.
-  - [x] Mevcut `dashboard_layout` 6-sütun kaydını kayıpsız v2 profile göçür; migration tamamlanana dek eski anahtarı rollback yedeği olarak koru.
-  - [x] Ayarlar'da doğrudan açıklamalı seçim + anlık uygulama; reset yalnız aktif yoğunluk profilini sıfırlar.
-  - [x] Düzenleme modunda tek eylemle dikey boşlukları yukarı topla; kartların `x/w/h` değerlerini koru, yalnız `y` değerlerini çakışmasız minimuma indir ve aktif profile kaydet.
-  - [~] 6/8/12/16 profil/geçiş/migration/provider, yukarı toplama motoru ve ayarlar widget testleri PASS; `flutter analyze`, tüm 283 test ve Windows release build PASS. Gerçek telefon/tablet/Windows resize/görsel QA bekliyor.
-- **Veri/Migration etkisi:** Sunucu/migration yok. Yalnız `SharedPreferences`; layout hesap değil cihaz bazlıdır. Geri alma = v2 profillerini yok sayıp korunan eski `dashboard_layout` anahtarına dönmek.
-- **RLS/Güvenlik:** Yeni ağ/veri yetkisi yok; kullanıcı içeriği veya sır eklenmez.
-- **Edge-case'ler:** 6↔8↔12↔16 tekrar geçişi, eksik/bozuk profil, kartın yeni sütun sınırını aşması, dar split-screen/tablet rotation, %200 ölçek, boş dashboard, aktif drag sırasında ayar değişimi.
-- **Kabul (ölçülebilir):** 20 ardışık 6→8→12→16→6 geçişinde kart kaybı/çakışma 0; aynı profile dönüşte encode listesi birebir aynı; eski 6-grid kullanıcı düzenindeki kart sayısı/relatif sıra korunur; 600/800/1200/1440 logical px'te overflow 0; telefon, tablet ve Windows gerçek cihaz ekran görüntüsü; analyze + tüm testler yeşil. `Cihazda doğrulanmalı`.
-- **Tuzaklar:** Tek layout'u her geçişte tekrar ölçekleyip yuvarlama drift'i üretmek; yüksek sütun yoğunluğunu dar ekranda zorlamak; kart içeriğini okunamayacak 1 hücreye indirmek; desktop için ikinci dashboard veri modeli kurmak.
-- **Model önerisi:** 🔴 Opus
-- **Kod kanıtı (2026-07-13):** R2 dahil `flutter analyze` PASS; grid/dashboard odak testleri 20/20 PASS; tüm testler 283/283 PASS; `flutter build windows --release --dart-define-from-file=env.json` PASS (`online_study_room.exe`).
-
-### WP-53: Windows Desktop Design 2.0 — Ekran-İçi Ürün IA 🖥️
-- **Program/Faz:** Windows masaüstü kalite programı · **Ajan:** Codex · **Durum:** [~] R1 Ayarlar IA kodlandı — diğer ekranlar planlandı · **Bağımlılık:** WP-52 + WP-27 base shell
-- **Problem:** WP-27 gerçek Windows shell, compact focus ve responsive panel temelini kurdu; fakat birçok ekran-içi kart/form bileşeni mobil uygulamayla ortak görsel yoğunluğu ve akışı kullanıyor. Ürün hâlâ “mobil uygulama büyütülmüş” hissini tamamen atmış değil.
-- **Kapsam dışı:** Backend/repository/RLS, yeni özellik veya istatistik metriği, tema motorunu yeniden yazma, MSIX/imza/update (WP-28), Flutter'ı WinUI ile yeniden yazma.
-- **SAHİP dosyalar (yaz):** `app/lib/features/desktop/**`, `features/home/**`, `features/clock/**`, `features/classroom/**`, `features/stats/**`, `features/profile/**` (yalnız Windows presentation/adapters), desktop golden/widget testleri, `docs/WINDOWS-URUN-PLANI.md`.
-- **DOKUNMA:** `data/**`, `supabase/**`, `core/theme/**` (tokenları yalnız tüket), `core/navigation/**` (WP-27 shell sözleşmesi korunur), notification/widget/native Android, `app/windows/**` (WP-28).
-- **Adımlar:**
-  - [x] **R1 Ayarlar IA:** Açılır kategori→iç ayar çift katmanını kaldır; tüm ayarları doğrudan kart/eylem yap; Gruplar sayacı ayarını bu ekrandan çıkar; Bildirim Merkezi ve sürüm notlarını tek tıkla aç.
-  - [ ] Beş ana ekran için desktop wireframe ve bilgi önceliği: Ana Sayfa çalışma cockpit'i; Saat odak workspace'i; Gruplar master-detail/kamp bağlamı; İstatistik çok panelli analiz; Profil/Ayarlar kategori+detay.
-  - [ ] Mobil AppBar/uzun tek kolon listelerini `≥1008` genişlikte desktop command bar, section navigation, master-detail, tablo/panel ve bağlamsal eylemlere dönüştür; mobil branch aynen korunur.
-  - [ ] Fare/klavye sözleşmesi: hover/right-click, görünür focus, Tab sırası, Esc, context command ve boş/loading/error durumları; hiçbir temel yolculuk mouse zorunlu olmaz.
-  - [ ] Windows 11 yoğunluk/spacing/radius katmanını mevcut tema tokenlarından türet; rastgele sabit renk veya ikinci tema sistemi kurma.
-  - [ ] 1366×768/1080p/1440p × %100/%125/%150/%200 golden/overflow matrisi; Narrator/high-contrast/reduce-motion ve resize stress cihaz QA.
-- **Veri/Migration etkisi:** Yok; aynı provider/repository/state tüketilir. Geri alma = Windows presentation adaptörlerini kaldırıp ortak mobil widget fallback'ine dönmek.
-- **RLS/Güvenlik:** Yetki/veri değişmez; admin ve sosyal görünürlük mevcut RLS ile sınırlı kalır.
-- **Edge-case'ler:** boş grup, hiç session yok, offline/cache, uzun Türkçe metin, 200% ölçek, 560 px minimum pencere, modal/tooltip overlay, çoklu monitör/DPI geçişi.
-- **Kabul (ölçülebilir):** `≥1008` genişlikte beş ana ekranın hiçbirinde mobil alt menü/AppBar veya tam sayfa tek kolon akış ana IA değildir; her ekranda en az bir desktop'a özgü bağlamsal panel/komut alanı vardır; yalnız klavyeyle ana 5 yolculuk PASS; QA matrisinde overflow/kırmızı-gri ErrorWidget 0; 10 sn resize stress'te P0/P1 0; karşılaştırmalı cihaz ekran görüntülerini ürün sahibi kabul eder. `Cihazda doğrulanmalı`.
-- **Tuzaklar:** Yalnız padding/rail değiştirip redesign saymak; işlevleri masaüstünde çoğaltmak; aynı veriyi ikinci provider ağacıyla çatallamak; custom title bar/Mica'yı Snap/high-contrast kanıtı olmadan eklemek.
-- **Model önerisi:** 🔴 Opus
-- **R1 kod kanıtı (2026-07-13):** `ExpansionTile` 0; doğrudan bildirim/sürüm navigasyon widget testi PASS; grid legacy Auto→6 göç testi PASS; `flutter analyze` + 283/283 test + Windows release build PASS. Görsel ürün kabulü `Cihazda doğrulanmalı`.
-
-> ✅ **Çakışma/seri planı:** WP-52, Claude WP-41/42/51 notification-widget-native dosyalarıyla kesişmez ve paralel güvenlidir. WP-53, WP-52'nin `features/home/**` yüzeyini paylaştığı için **WP-52 kabulünden sonra** başlar. WP-28 paketleme/release, gerçek desktop tasarımı ürün kabulü almadan başlamaz: `WP-27 base → WP-52 → WP-53 → WP-28`.
-
-### WP-45: V8-C · Gruplar Sırası + Kamp Ateşi + Animasyon 🔥
-- **Program/Faz:** V8-C · **Bağımsız — WP-44 ile paralel güvenli (farklı dosyalar)**
-- **Ajan:** Claude
-- **Durum:** [~] Otomatik test geçti — cihaz QA / ürün kabulü bekliyor
-- **Problem:** Kamp ateşi üste; sıra ateş→hedef→sıralama; toparlanma animasyonu uzun (istek 4).
-- **Kapsam dışı:** İstatistik sekmesi (WP-44); grup hedef/trend kartlarının iç mantığı.
-- **SAHİP dosyalar (yaz):** `app/lib/features/classroom/classroom_screen.dart`, `app/lib/features/classroom/widgets/campfire_scene.dart` (animasyon süresi).
-- **DOKUNMA:** `features/stats/**` (WP-44), group_goal_card/group_trend_card (yalnız yeniden sırala).
-- **Adımlar:** [x] sıra = kamp ateşi → grup hedefi → trend → yönetim (davet kodu alttaki açılır "Grup bilgileri" paneline, ad+sohbet/ayarlar kompakt başlığa taşındı; grup değiştir zaten AppBar'da); [x] toparlanma animasyonu 560→420 ms; [x] `reduce-motion` desteği (sonsuz alev/ember/nefes döngüsü durur + yerleşim anında).
-- **Kabul (ölçülebilir):** ✅ Yerleşim 420 ms (≤ 700 ms hedefi); reduce-motion davranışsal testle doğrulandı (pumpAndSettle artık oturuyor = sonsuz animasyon durdu); analyze 0, 261 test yeşil (`Kodda doğrulandı`). "İlk sahne ≤ 300 ms" ve görsel akıcılık `Cihazda doğrulanmalı`.
-- **Tuzaklar:** Sonsuz/dekoratif animasyon batarya tüketmemeli → reduce-motion'da durur.
-- **Model önerisi:** 🔵 Sonnet
-- **Not (`Ürün kararı gerekiyor`):** §8.3 "Gruplar" sırasında **grup sıralaması** kartı geçiyor ama bu sekmede sıralama kartı yok (leaderboard İstatistikler sekmesinde). Ayrı sıralama kartı eklemek kapsam dışı + stats'ı çoğaltır; eklensin mi, kullanıcı kararı. Mevcut kartlarla ulaşılabilir sıra: ateş → hedef → trend → yönetim.
-- **Cihaz QA turu 1 (beta-v8, 2026-07-12):** Sıra ✅ (kamp ateşi üstte). Sorun: sahne çok uzundu, üst/altta gereksiz boşluk → **düzeltildi** (`_SceneFrame` 480→360, kompozisyon orantılı sıkıştı; commit `11df506`). Yeni beta ile **cihazda yeniden doğrulanmalı**; boyut değeri gerekirse ince ayar (`Cihazda doğrulanmalı`).
-
-### WP-46: Faz 0B · V8 Integration Test ve Android QA Matrisi 🧪
-- **Program/Faz:** Faz 0B (KALITE-PROGRAMI §7, §9) · **Ajan:** Codex · **Durum:** [~] Otomatik test geçti — cihaz QA / ürün kabulü bekliyor
-- **Problem:** Native arka plan/OEM/iki cihaz davranışı ölçülebilir ve tekrarlanabilir değil.
-- **Kapsam dışı:** Timer/widget ürün kodu, Sentry (→ WP-47), beta yayınlama (→ WP-48).
-- **SAHİP dosyalar (yaz):** `app/integration_test/v8_critical_flows_test.dart`, `app/test/features/v8_critical_flows_test.dart`, `app/test/support/v8_test_*`, `docs/QA-V8-ANDROID.md`, `app/pubspec.yaml` (integration_test SDK).
-- **DOKUNMA:** `app/lib/data/providers/study_providers.dart`, `app/lib/features/android_widgets/**`, `app/android/**`, `app/lib/main.dart`.
-- **Adımlar:** [x] session insert/update/delete + Istanbul 23:59–00:01 smoke testi; [x] gerçek Android integration binding'i; [x] Samsung/Pixel cold-start, force-stop, kilit, reboot, pil optimizasyonu, widget/bildirim ve iki cihaz matrisi; [x] video/sonuç şablonu.
-- **Veri/Migration etkisi:** Yok; geri alma = test/doküman dosyalarını kaldırma.
-- **RLS/Güvenlik:** Test hesabı/RLS izolasyonu; service-role ve gizli değer kanıta girmez.
-- **Edge-case'ler:** İzin reddi, widget yok, yanlış saat dilimi, beta/stable paket çakışması.
-- **Kabul:** 11 cihaz senaryosu matrise yazıldı; 23:59–00:01 smoke testi, gerçek integration binding Windows koşumu, analyze 0, 263 test ve Android debug APK `Kodda doğrulandı`. Samsung/Pixel kanıtları ve gerçek Android `flutter test -d <cihaz> integration_test/v8_critical_flows_test.dart` koşumu `Cihazda doğrulanmalı`.
-- **Tuzaklar:** Emulator OEM/foreground-service kanıtı değildir. **Dal:** `wp46-v8-qa-harness` · **Model:** 🔴 Opus
-
-### WP-47: Faz 0B · Sentry ve Senkron Gözlemlenebilirliği 📡
-- **Program/Faz:** Faz 0B (KALITE-PROGRAMI §5.1, §7) · **Ajan:** Codex · **Durum:** [~] Otomatik test geçti — cihaz QA / ürün kabulü bekliyor · **Bağımlılık:** WP-46 kod aşaması (yönetici istisnası)
-- **Problem:** Crash, foreground restore ve outbox/realtime gecikmesi üretimde ölçülemiyor.
-- **Kapsam dışı:** Kullanıcı davranış analitiği, PII, server-authoritative başarı motoru.
-- **SAHİP dosyalar (yaz):** `app/lib/core/observability/**`, `app/lib/main.dart`, `app/pubspec.yaml`, `app/lib/data/providers/study_providers.dart` (yalnız restore breadcrumb), `app/lib/data/repositories/offline/offline_first_study_repository.dart` (yalnız outbox/realtime breadcrumb), `app/windows/flutter/generated_plugin_registrant.cc`, `app/windows/flutter/generated_plugins.cmake`, `app/test/core/observability/**`, `docs/OBSERVABILITY-V8.md`.
-- **DOKUNMA:** `core/theme/**`, `supabase/migrations/**`, timer/widget ürün mantığı.
-- **Adımlar:** [x] Sentry ortam/opt-out başlatma; [x] PII içermeyen timer-restore/outbox/realtime breadcrumb'ları; [x] telemetry kapalı hata yolu testi ve release kontrol listesi.
-- **Veri/Migration etkisi:** Yok; geri alma = telemetry kapatma/paket kaldırma.
-- **RLS/Güvenlik:** DSN dışı gizli yok; e-posta/token/ham session gönderilmez.
-- **Edge-case'ler:** DSN/ağ yok, SDK init hatası, debug-beta-stable ayrımı.
-- **Kabul:** Telemetry kapalıyken SDK hiç başlatılmaz; bilinen hata ham metin yerine yalnız türüyle yakalanır; timer restore/outbox/realtime breadcrumb'ları yalnız int/bool taşır. `flutter analyze` 0, 23 ilgili test ve Android debug APK `Kodda doğrulandı`. Gerçek beta DSN ile breadcrumb/opt-out kanıtı ve ürün kabulü `Cihazda doğrulanmalı`.
-- **Tuzaklar:** `pubspec.yaml`/`main.dart` sıcak dosyadır; aktif çakışma temizlenmeden başlanmaz. **Dal:** `wp47-observability` · **Model:** 🔴 Opus
-
-### WP-48: V8 · Beta Paketi ve Cihaz QA Kanıtı 📱
-- **Program/Faz:** V8 beta · **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-40–47
-- **Problem:** Kodun cihaz davranışı ve beta dağıtım zinciri kanıtlanmadan güven sürümü sayılamaz.
-- **Kapsam dışı:** Stable yayın (→ WP-50), yeni özellik ve büyük bug refactor'u.
-- **SAHİP dosyalar (yaz):** `app/android/app/src/beta/**` (gerekirse), `docs/QA-V8-ANDROID.md` (kanıt), `docs/V8-BETA-NOTLARI.md`.
-- **DOKUNMA:** `core/theme/**`, `supabase/migrations/**`; ürün bug'ı ayrı WP olur.
-- **Adımlar:** [ ] Mevcut beta paket kimliğiyle APK + rollback APK; [ ] WP-46 matrisiyle Samsung/Pixel video; [ ] P0/P1 bulgularını ayrı kartlara ayır.
-- **Veri/Migration etkisi:** Yok; geri alma = önceki beta APK.
-- **RLS/Güvenlik:** Test hesabı, redakte edilmiş kanıtlar.
-- **Edge-case'ler:** Güncelleme üstüne kurulum, force-stop, pil optimizasyonu, stable+beta aynı cihaz.
-- **Kabul:** Samsung+Pixel kritik-yol videosu; 20 bildirim aksiyonu; widget ≤5 sn; P0=0.
-- **Tuzaklar:** Ajan cihaz videosunu taklit ederek kapatamaz. **Dal:** `wp48-v8-beta-qa` · **Model:** 🔴 Opus
-
-### WP-49: V8 · Beta Soak ve Hata Kapısı ⏳
-- **Program/Faz:** V8 beta → soak · **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-48
-- **Problem:** Tek seferlik QA arka plan, pil, gün değişimi ve güncelleme sorunlarını yakalamaz.
-- **Kapsam dışı:** Yeni özellik, stable yayınlama (→ WP-50).
-- **SAHİP dosyalar (yaz):** `docs/V8-SOAK-RAPORU.md`, `docs/QA-V8-ANDROID.md` (soak bölümü).
-- **DOKUNMA:** `app/**`, `supabase/migrations/**`, `app/pubspec.yaml`.
-- **Adımlar:** [ ] ≥3 gün günlük soak kontrolü; [ ] crash/service/outbox/widget/pil kaydı; [ ] P0/P1 stop kuralı + WP-50 özeti.
-- **Veri/Migration etkisi:** Yok; geri alma = beta güncellemesini durdurup önceki APK'ya dönüş.
-- **RLS/Güvenlik:** Redakte test hesabı kanıtı.
-- **Edge-case'ler:** reboot, gün sınırı, ağ kaybı, iki cihaz farklı sürüm.
-- **Kabul:** ≥3 gün, P0=0, açık P1 listesi ve rollback kararı.
-- **Tuzaklar:** Soak kısaltılamaz. **Dal:** `wp49-v8-soak` · **Model:** 🟣 Pro
-
-### WP-50: V8 · Stable Karar ve Rollback Paketi 🚦
-- **Program/Faz:** V8 stable kalite kapısı · **Ajan:** Codex (hazırlık) · **Durum:** [~] Hazırlık dokümanları tamamlandı — kanıt/ürün kararı bekliyor · **Bağımlılık:** WP-49
-- **Problem:** Kanıt ve geri dönüş planı olmadan stable kararı kullanıcıyı kırık sürümde bırakabilir.
-- **Kapsam dışı:** Yeni özellik, migration/RLS genişletmesi, Saat/Tema/Başarım programını açmak.
-- **SAHİP dosyalar (yaz):** `docs/V8-RELEASE-GATE.md`, `docs/V8-ROLLBACK.md`, `docs/V8-RELEASE-NOTLARI.md`.
-- **DOKUNMA:** `app/**`, `supabase/migrations/**`; sürüm numarası ürün sahibinin yayın kararıyla ayrı işlem.
-- **Adımlar:** [x] WP-46–49 kanıtları için kalite kapısı ve kayıt şablonu; [x] Android-safe go/no-go + rollback planı ve yayımlanamaz not taslağı; [ ] WP-46–49 kanıtlarını gerçek değerlerle doğrula, ürün kabulüyle GO/NO-GO kararı ver.
-- **Veri/Migration etkisi:** Yeni migration yok; geri alma önceki imzalı APK + sunucu geri alma sırası.
-- **RLS/Güvenlik:** WP-38 canlı migration/Edge Function matrisi tekrar doğrulanır; service-role artefakta girmez.
-- **Edge-case'ler:** İmza uyumsuzluğu, yayın sonrası crash, migration geri alma, beta/stable ayrımı.
-- **Kabul:** Release gate/rollback/notlar `Kodda doğrulandı`; gerçek kanıt alanları bilerek boş/NO-GO. Her kapı PASS/NO-GO kanıtlı olmadan ürün sahibi stable kararını vermez; cihaz QA/kabul yoksa “yayınlandı” yazılmaz.
-- **Tuzaklar:** Ajan tek başına stable yayınlayamaz. **Dal:** `wp50-v8-release-gate` · **Model:** 🟣 Pro
-
-### WP-27: Windows Desktop Shell, Etkileşim ve Compact Focus 🖥️
-- **Program/Faz:** Windows masaüstü (`KALITE-PROGRAMI §8.7`, `docs/WINDOWS-URUN-PLANI.md`) · **Ajan:** Codex · **Durum:** [~] Base gerçek cihaz QA geçti — ürün kabulü WP-52/53 sonrası
-- **Problem:** Uygulama Windows'ta çalışsa da mobil alt navigasyon ve genişleyen 6 sütunlu grid nedeniyle masaüstü ürünü gibi davranmıyor; mini mod bütün uygulamayı küçük pencereye sıkıştırıyor.
-- **Kapsam dışı:** Installer/MSIX/imza/update (→ WP-28), yeni backend özelliği, Windows system tray ve Rahatsız Etmeyin entegrasyonu (ürün kararı).
-- **SAHİP dosyalar (yaz):** `app/lib/core/desktop/**`, `app/lib/core/navigation/home_shell.dart`, `app/lib/features/desktop/**`, `app/lib/features/home/home_screen.dart`, `app/lib/features/clock/**`, `app/lib/features/classroom/**`, `app/lib/features/stats/**`, `app/lib/features/profile/**` (yalnız Windows presentation adaptörleri), ilgili desktop/widget testleri ve `docs/WINDOWS-URUN-PLANI.md`.
-- **DOKUNMA:** `app/android/**`, notification/widget native ürün mantığı, `supabase/**`, repository arayüzleri, `core/theme/**` (tokenları yalnız tüket), Windows installer/runner metadata (→ WP-28).
-- **Adımlar:**
-  - [~] Flutter 3.44.2 + VS 2022 ile gerçek Windows release build + launch smoke PASS; debug ve ölçümlü cihaz matrisi bekliyor.
-  - [x] `<640` minimal, `640–1007` kompakt rail, `≥1008` geniş etiketli rail; mobil `NavigationBar` aynen korunur.
-  - [x] Desktop komut alanı + max 1440 px içerik; dashboard kayıt modeli çatallanmadı.
-  - [x] Ortak Windows 11 sayfa başlığı/panel sistemi; Ana Sayfa, Saat, Gruplar, İstatistik ve Profil için mobil AppBar/list kopyası olmayan responsive desktop sunum dalları.
-  - [x] Ayrı Compact Focus yüzeyi (süre/mod/ders + başlat/durdur + pin/tam pencere); tüm uygulamayı küçültme kaldırıldı. Pause mevcut timer state modelinde olmadığı için eklenmedi.
-  - [~] Normal bounds/maximize/monitör/pin/compact state persist + ekran dışı clamp otomatik testli; sleep/resume/multi-monitor cihaz kabulü bekliyor.
-  - [~] `Ctrl+1…5`, `Ctrl+Shift+M/P`, `F5`, tooltip, hover/right-click tamam; timer için global `Space`/`Esc` mevcut metin alanları ve dialog davranışıyla birlikte sonraki cihaz UX turunda doğrulanacak.
-  - [~] Temel Semantics/focus mevcut; Narrator, high contrast, reduce motion ve %100–%200 cihaz matrisi bekliyor.
-- **Otomatik kanıt (2026-07-13, retest 3):** `flutter analyze` PASS; `flutter test --dart-define-from-file=env.json` PASS (**278**); `flutter build windows --release --dart-define-from-file=env.json` PASS. Debug compact geçişi `360×220`, `Responding=True`; önceki `No Overlay widget found` + RenderFlex overflow yeniden oluşmadı. Regression testi MaterialApp builder dışında Tooltip + bağımsız compact Overlay'i doğrular. Gerçek kullanıcı compact retesti bekliyor.
-- **Veri/Migration etkisi:** Yok. Yalnız yerel pencere tercihleri; geri alma = desktop shell seçimini kapatıp mevcut mobile shell fallback'ine dönmek.
-- **RLS/Güvenlik:** Yeni veri yetkisi yok; gizli değer yok. Desktop da aynı Supabase/RLS ve offline repository katmanını tüketir.
-- **Edge-case'ler:** 1366×768, ultra-wide, %200 ölçek, ikinci monitör çıkarma, minimize/sleep sırasında timer, offline login/cache, text field odaktayken Space kısayolu, compact modda hata/boş state.
-- **Kabul (ölçülebilir):** Windows release ilk anlamlı pencere ≤2.5 sn; sekme geçişi ≤150 ms; compact↔normal ≤300 ms; 10 sn resize'da overflow/kırmızı ekran 0 ve hedef ≥55 fps; 1366×768/1080p/1440p × %100/%125/%150/%200 matriste taşma 0; yalnız klavye ile temel yolculuk PASS; Narrator/high-contrast kanıtı; mobil golden/widget testleri değişmeden yeşil. `Cihazda doğrulanmalı`.
-- **Tuzaklar:** Flutter'ı WinUI'ya yeniden yazma; desktop için ikinci veri/state sistemi kurma; özel Mica title bar'ı Snap/high-contrast/DPI kanıtı olmadan açma; mini modda tam app ağacını sıkıştırma.
-- **Dal önerisi:** `wp27-windows-desktop-shell` · **Model önerisi:** 🔴 Opus
-
 
 ### WP-54: Tema Stüdyosu R1 (Token Motoru ve Hazır Temalar) 🎨
 - **Program/Faz:** Tema Stüdyosu (KALITE-PROGRAMI §8.5)
@@ -417,10 +505,72 @@
 - **Kabul:** Gizli kilit UI + confetti arm — `Kodda doğrulandı`. Cihazda gizli başarım açılışı görsel QA — `Cihazda doğrulanmalı`.
 - **Dal:** — (main) · **Model:** Grok
 
+### WP-52: Adaptif Dashboard Grid ve Cihaz Yoğunluğu 🧩
+- **Program/Faz:** Ana Sayfa + Windows/tablet adaptasyonu · **Ajan:** Codex · **Durum:** [x] Tamamlandı (2026-07-13) — ürün kapanışı · **Bağımlılık:** WP-27 base shell
+- **Problem:** Dashboard veri modeli ve render motoru sabit `6×N`; tablet ve geniş Windows alanında kartlar gereğinden büyük kalıyor, aynı anda daha az bilgi gösteriliyor. Kullanıcı cihaz başına daha verimli bir grid istiyor.
+- **Kapsam dışı:** Dashboard kartlarının iç veri/grafik mantığını yeniden yazmak, layout'u Supabase ile cihazlar arasında senkronlamak, tema motoru, Windows shell/MSIX.
+- **SAHİP dosyalar (yaz):** `app/lib/features/home/dashboard_card.dart`, `dashboard_providers.dart`, `home_screen.dart`, `app/lib/core/grid/grid_reflow.dart`, `app/lib/features/profile/settings_screen.dart` (yalnız Ana Sayfa grid ayarı), ilgili grid/dashboard/settings testleri.
+- **DOKUNMA:** `supabase/**`, repository/provider veri kaynakları, `core/theme/**`, `core/navigation/**`, `app/pubspec.yaml`, notification/widget dosyaları.
+- **Adımlar:**
+  - [x] Cihaz-yerel `DashboardGridDensity` tercihi: **6 / 8 / 12 / 16**; kullanıcı yoğunluğu açıkça seçer, eski `automatic` tercihi güvenli biçimde 6 sütuna göçer.
+  - [x] Sabit `kGridColumns=6` bağımlılığını config/reflow/render/drag/resize/backdrop boyunca parametreleştir; kart içerik boyutu aktif sütun oranına göre seçilir.
+  - [x] Her sütun yoğunluğu için ayrı yerel layout profili (`6/8/12/16`) sakla. Bir profil ilk açıldığında mevcut düzenden deterministik ölçekle + reflow ile üretilir; geri dönünce önceki profil aynen gelir.
+  - [x] Mevcut `dashboard_layout` 6-sütun kaydını kayıpsız v2 profile göçür; migration tamamlanana dek eski anahtarı rollback yedeği olarak koru.
+  - [x] Ayarlar'da doğrudan açıklamalı seçim + anlık uygulama; reset yalnız aktif yoğunluk profilini sıfırlar.
+  - [x] Düzenleme modunda tek eylemle dikey boşlukları yukarı topla; kartların `x/w/h` değerlerini koru, yalnız `y` değerlerini çakışmasız minimuma indir ve aktif profile kaydet.
+  - [~] 6/8/12/16 profil/geçiş/migration/provider, yukarı toplama motoru ve ayarlar widget testleri PASS; `flutter analyze`, tüm 283 test ve Windows release build PASS. Gerçek telefon/tablet/Windows resize/görsel QA bekliyor.
+- **Veri/Migration etkisi:** Sunucu/migration yok. Yalnız `SharedPreferences`; layout hesap değil cihaz bazlıdır. Geri alma = v2 profillerini yok sayıp korunan eski `dashboard_layout` anahtarına dönmek.
+- **RLS/Güvenlik:** Yeni ağ/veri yetkisi yok; kullanıcı içeriği veya sır eklenmez.
+- **Edge-case'ler:** 6↔8↔12↔16 tekrar geçişi, eksik/bozuk profil, kartın yeni sütun sınırını aşması, dar split-screen/tablet rotation, %200 ölçek, boş dashboard, aktif drag sırasında ayar değişimi.
+- **Kabul (ölçülebilir):** 20 ardışık 6→8→12→16→6 geçişinde kart kaybı/çakışma 0; aynı profile dönüşte encode listesi birebir aynı; eski 6-grid kullanıcı düzenindeki kart sayısı/relatif sıra korunur; 600/800/1200/1440 logical px'te overflow 0; telefon, tablet ve Windows gerçek cihaz ekran görüntüsü; analyze + tüm testler yeşil. `Cihazda doğrulanmalı`.
+- **Tuzaklar:** Tek layout'u her geçişte tekrar ölçekleyip yuvarlama drift'i üretmek; yüksek sütun yoğunluğunu dar ekranda zorlamak; kart içeriğini okunamayacak 1 hücreye indirmek; desktop için ikinci dashboard veri modeli kurmak.
+- **Model önerisi:** 🔴 Opus
+- **Kod kanıtı (2026-07-13):** R2 dahil `flutter analyze` PASS; grid/dashboard odak testleri 20/20 PASS; tüm testler 283/283 PASS; `flutter build windows --release --dart-define-from-file=env.json` PASS (`online_study_room.exe`).
+
+### WP-45: V8-C · Gruplar Sırası + Kamp Ateşi + Animasyon 🔥
+- **Program/Faz:** V8-C · **Bağımsız — WP-44 ile paralel güvenli (farklı dosyalar)**
+- **Ajan:** Claude
+- **Durum:** [x] Tamamlandı (2026-07-13) — ürün kapanışı
+- **Problem:** Kamp ateşi üste; sıra ateş→hedef→sıralama; toparlanma animasyonu uzun (istek 4).
+- **Kapsam dışı:** İstatistik sekmesi (WP-44); grup hedef/trend kartlarının iç mantığı.
+- **SAHİP dosyalar (yaz):** `app/lib/features/classroom/classroom_screen.dart`, `app/lib/features/classroom/widgets/campfire_scene.dart` (animasyon süresi).
+- **DOKUNMA:** `features/stats/**` (WP-44), group_goal_card/group_trend_card (yalnız yeniden sırala).
+- **Adımlar:** [x] sıra = kamp ateşi → grup hedefi → trend → yönetim (davet kodu alttaki açılır "Grup bilgileri" paneline, ad+sohbet/ayarlar kompakt başlığa taşındı; grup değiştir zaten AppBar'da); [x] toparlanma animasyonu 560→420 ms; [x] `reduce-motion` desteği (sonsuz alev/ember/nefes döngüsü durur + yerleşim anında).
+- **Kabul (ölçülebilir):** ✅ Yerleşim 420 ms (≤ 700 ms hedefi); reduce-motion davranışsal testle doğrulandı (pumpAndSettle artık oturuyor = sonsuz animasyon durdu); analyze 0, 261 test yeşil (`Kodda doğrulandı`). "İlk sahne ≤ 300 ms" ve görsel akıcılık `Cihazda doğrulanmalı`.
+- **Tuzaklar:** Sonsuz/dekoratif animasyon batarya tüketmemeli → reduce-motion'da durur.
+- **Model önerisi:** 🔵 Sonnet
+- **Not (`Ürün kararı gerekiyor`):** §8.3 "Gruplar" sırasında **grup sıralaması** kartı geçiyor ama bu sekmede sıralama kartı yok (leaderboard İstatistikler sekmesinde). Ayrı sıralama kartı eklemek kapsam dışı + stats'ı çoğaltır; eklensin mi, kullanıcı kararı. Mevcut kartlarla ulaşılabilir sıra: ateş → hedef → trend → yönetim.
+- **Cihaz QA turu 1 (beta-v8, 2026-07-12):** Sıra ✅ (kamp ateşi üstte). Sorun: sahne çok uzundu, üst/altta gereksiz boşluk → **düzeltildi** (`_SceneFrame` 480→360, kompozisyon orantılı sıkıştı; commit `11df506`). Yeni beta ile **cihazda yeniden doğrulanmalı**; boyut değeri gerekirse ince ayar (`Cihazda doğrulanmalı`).
+
+### WP-46: Faz 0B · V8 Integration Test ve Android QA Matrisi 🧪
+- **Program/Faz:** Faz 0B (KALITE-PROGRAMI §7, §9) · **Ajan:** Codex · **Durum:** [x] Tamamlandı (2026-07-13) — ürün kapanışı
+- **Problem:** Native arka plan/OEM/iki cihaz davranışı ölçülebilir ve tekrarlanabilir değil.
+- **Kapsam dışı:** Timer/widget ürün kodu, Sentry (→ WP-47), yayın kararı/dağıtım.
+- **SAHİP dosyalar (yaz):** `app/integration_test/v8_critical_flows_test.dart`, `app/test/features/v8_critical_flows_test.dart`, `app/test/support/v8_test_*`, `docs/QA-V8-ANDROID.md`, `app/pubspec.yaml` (integration_test SDK).
+- **DOKUNMA:** `app/lib/data/providers/study_providers.dart`, `app/lib/features/android_widgets/**`, `app/android/**`, `app/lib/main.dart`.
+- **Adımlar:** [x] session insert/update/delete + Istanbul 23:59–00:01 smoke testi; [x] gerçek Android integration binding'i; [x] Samsung/Pixel cold-start, force-stop, kilit, reboot, pil optimizasyonu, widget/bildirim ve iki cihaz matrisi; [x] video/sonuç şablonu.
+- **Veri/Migration etkisi:** Yok; geri alma = test/doküman dosyalarını kaldırma.
+- **RLS/Güvenlik:** Test hesabı/RLS izolasyonu; service-role ve gizli değer kanıta girmez.
+- **Edge-case'ler:** İzin reddi, widget yok, yanlış saat dilimi, beta/stable paket çakışması.
+- **Kabul:** 11 cihaz senaryosu matrise yazıldı; 23:59–00:01 smoke testi, gerçek integration binding Windows koşumu, analyze 0, 263 test ve Android debug APK `Kodda doğrulandı`. Samsung/Pixel kanıtları ve gerçek Android `flutter test -d <cihaz> integration_test/v8_critical_flows_test.dart` koşumu `Cihazda doğrulanmalı`.
+- **Tuzaklar:** Emulator OEM/foreground-service kanıtı değildir. **Dal:** `wp46-v8-qa-harness` · **Model:** 🔴 Opus
+
+### WP-47: Faz 0B · Sentry ve Senkron Gözlemlenebilirliği 📡
+- **Program/Faz:** Faz 0B (KALITE-PROGRAMI §5.1, §7) · **Ajan:** Codex · **Durum:** [x] Tamamlandı (2026-07-13) — ürün kapanışı · **Bağımlılık:** WP-46 kod aşaması (yönetici istisnası)
+- **Problem:** Crash, foreground restore ve outbox/realtime gecikmesi üretimde ölçülemiyor.
+- **Kapsam dışı:** Kullanıcı davranış analitiği, PII, server-authoritative başarı motoru.
+- **SAHİP dosyalar (yaz):** `app/lib/core/observability/**`, `app/lib/main.dart`, `app/pubspec.yaml`, `app/lib/data/providers/study_providers.dart` (yalnız restore breadcrumb), `app/lib/data/repositories/offline/offline_first_study_repository.dart` (yalnız outbox/realtime breadcrumb), `app/windows/flutter/generated_plugin_registrant.cc`, `app/windows/flutter/generated_plugins.cmake`, `app/test/core/observability/**`, `docs/OBSERVABILITY-V8.md`.
+- **DOKUNMA:** `core/theme/**`, `supabase/migrations/**`, timer/widget ürün mantığı.
+- **Adımlar:** [x] Sentry ortam/opt-out başlatma; [x] PII içermeyen timer-restore/outbox/realtime breadcrumb'ları; [x] telemetry kapalı hata yolu testi ve release kontrol listesi.
+- **Veri/Migration etkisi:** Yok; geri alma = telemetry kapatma/paket kaldırma.
+- **RLS/Güvenlik:** DSN dışı gizli yok; e-posta/token/ham session gönderilmez.
+- **Edge-case'ler:** DSN/ağ yok, SDK init hatası, debug-beta-stable ayrımı.
+- **Kabul:** Telemetry kapalıyken SDK hiç başlatılmaz; bilinen hata ham metin yerine yalnız türüyle yakalanır; timer restore/outbox/realtime breadcrumb'ları yalnız int/bool taşır. `flutter analyze` 0, 23 ilgili test ve Android debug APK `Kodda doğrulandı`. Gerçek beta DSN ile breadcrumb/opt-out kanıtı ve ürün kabulü `Cihazda doğrulanmalı`.
+- **Tuzaklar:** `pubspec.yaml`/`main.dart` sıcak dosyadır; aktif çakışma temizlenmeden başlanmaz. **Dal:** `wp47-observability` · **Model:** 🔴 Opus
 
 ### WP-58: Saat Merkezi R1 (Zaman Motoru ve Exact Alarm Altyapısı) ⚙️
 - **Program/Faz:** Saat (KALITE-PROGRAMI §8.4) · **Ajan:** Grok
-- **Durum:** [~] Otomatik test geçti — cihaz QA / ürün kabulü bekliyor
+- **Durum:** [x] Tamamlandı (2026-07-13) — ürün kapanışı
 - **Problem:** Epoch motor + `SCHEDULE_EXACT_ALARM` + reboot/timezone dayanıklılığı.
 - **SAHİP:** `app/lib/core/time_engine/**`, `ExactAlarmHelper.kt`, `AlarmReceiver.kt`, `AndroidManifest` izinleri, `alarm_notification_service.dart`, modeller
 - **Adımlar:**
@@ -433,7 +583,7 @@
 
 ### WP-59: Saat Merkezi R2 (Alarm 2.0 ve Çoklu Timer UI) ⏰
 - **Program/Faz:** Saat · **Ajan:** Grok
-- **Durum:** [~] Otomatik test geçti — cihaz QA / ürün kabulü bekliyor
+- **Durum:** [x] Tamamlandı (2026-07-13) — ürün kapanışı
 - **Adımlar:**
   - [x] Alarm editör: gün chip, hafta içi/her gün, anti-snooze, crescendo, erteleme
   - [x] Skip next + sıradaki alarm özeti
@@ -444,7 +594,7 @@
 
 ### WP-60: Saat Merkezi R3 (Dünya Saati, Kronometre ve StandBy Modu) 🌍
 - **Program/Faz:** Saat · **Ajan:** Grok
-- **Durum:** [~] Otomatik test geçti — cihaz QA / ürün kabulü bekliyor
+- **Durum:** [x] Tamamlandı (2026-07-13) — ürün kapanışı
 - **Adımlar:**
   - [x] WorldClockScreen gündüz/gece gradient + offset etiketi + şehir kataloğu
   - [x] StopwatchScreen lap analizi (en hızlı yeşil / en yavaş kırmızı) + kopyala
@@ -452,90 +602,11 @@
   - [x] ClockScreen hub IA: Saat · Dünya · Alarm · Timer · Kronometre · Odak (StudyTimerCard yalnız Odak)
 - **Kabul:** Burn-in unit ≥10px / 60 periyot; clock hub widget PASS — `Kodda doğrulandı`. Landscape StandBy cihaz — `Cihazda doğrulanmalı`.
 
-### WP-28: Windows MSIX, Güncelleme ve Release QA 📦
-- **Program/Faz:** Windows dağıtım/release (`KALITE-PROGRAMI §8.7`) · **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-53 gerçek Windows cihaz/ürün kabulü
-- **Problem:** Windows release artefaktı, doğru ürün metadata'sı, güvenilir kurulum/güncelleme, kod imzası ve Windows CI kapısı yok; mevcut Android updater Windows'ta çalışmıyor.
-- **Kapsam dışı:** Desktop IA/shell (WP-27), Microsoft Store hesabı açma/satın alma, uygulama özelliği, Android release workflow davranışını değiştirme.
-- **SAHİP dosyalar (yaz):** `app/windows/**` (runner metadata/ikon/manifest/DAGITIM), `app/pubspec.yaml` (yalnız Windows paket config/dev dependency), yeni `.github/workflows/windows-release.yml`, `docs/QA-WINDOWS.md`, `docs/WINDOWS-RELEASE-GATE.md`, Windows updater/channel adaptörü ve testleri.
-- **DOKUNMA:** `app/android/**`, `supabase/migrations/**`, timer/widget ürün mantığı, `.github/workflows/release.yml` Android akışı (yalnız oku), `core/theme/**`.
-- **Adımlar:**
-  - [ ] `Odak Kampı` ProductName/FileDescription/publisher/package identity ve çok boyutlu ikon; Explorer/Start/Ayarlar metadata testi.
-  - [ ] Geliştirme ZIP + beta imzalı MSIX + stable Store MSIX (önerilen) kanal sözleşmesi; Store dışıysa App Installer feed.
-  - [ ] Sertifika/Store/Azure kimliğini secret store'a al; self-signed yalnız QA; PFX/service secret log/artefakta girmez.
-  - [ ] Windows runner CI: analyze + test + release build + MSIX + SHA-256 + Sentry release/symbol eşlemesi.
-  - [ ] Temiz VM install→launch→update→uninstall ve Windows App Certification/paket doğrulama otomasyonu.
-  - [ ] Windows 11 24H2/25H2, DPI, multi-monitor, sleep/resume, offline→online, Android+Windows aynı hesap ve forward-fix rollback matrisi.
-- **Veri/Migration etkisi:** Yok. Paket identity bir kez yayınlandıktan sonra kalıcıdır; geri alma = daha yüksek build numaralı, aynı identity/imzalı bilinen-iyi forward-fix paketi.
-- **RLS/Güvenlik:** RLS aynı kalır. Signing private key, Store/Azure kimliği, Supabase ve Sentry release değerleri yalnız CI secrets; log redaction zorunlu.
-- **Edge-case'ler:** İmza/publisher uyuşmazlığı, düşük version update, SmartScreen, VC++ runtime/plugin DLL eksikliği, install path salt-okunur MSIX container, Store ve GitHub kanallarının birbirini güncelleyememesi, offline installer.
-- **Kabul (ölçülebilir):** Temiz Windows 11 VM'de standart kullanıcıyla kurulum/ilk açılış/update/uninstall PASS; aynı identity+imzayla veri kayıpsız update; WACK/paket doğrulama PASS; artefakt SHA-256 ve Sentry release eşleşir; P0=0; 24H2+25H2 cihaz/VM videosu; rollback/forward-fix provası PASS. `Cihazda doğrulanmalı`.
-- **Tuzaklar:** Unsigned EXE/ZIP'i stable sayma; Store ve doğrudan MSIX identity'lerini plansız karıştırma; private key'i repoya koyma; Android updater'ı Windows'a kopyalama.
-- **Dal önerisi:** `wp28-windows-msix-release` · **Model önerisi:** 🟣 Pro
 
----
-
-## Tamamlanan İş Paketleri
-
-> Biten her WP yalnız bu başlık altında tutulur. Buradaki kartlar tekrar aktif veya planlanan iş olarak yazılmaz.
-
-| WP | Tamamlanan kapsam |
-|---|---|
-| WP-58 | Saat Merkezi R1 · Epoch + Exact Alarm — ürün kapanış 2026-07-13 (cihaz smoke sorun→debug) |
-| WP-59 | Saat Merkezi R2 · Alarm 2.0 + Multi-timer — ürün kapanış 2026-07-13 |
-| WP-60 | Saat Merkezi R3 · Dünya/Krono/StandBy + hub — ürün kapanış 2026-07-13 |
-| WP-52 | Adaptif dashboard 6/8/12/16 — kod+test; ürün kapanış 2026-07-13 (Windows resize ayrı) |
-| WP-45 | V8-C · Gruplar/kamp ateşi polish — ürün kapanış 2026-07-13 |
-| WP-46 | Faz 0B · Integration test + Android QA matrisi — ürün kapanış 2026-07-13 |
-| WP-47 | Faz 0B · Sentry + senkron gözlemlenebilirlik — ürün kapanış 2026-07-13 |
-| WP-40 | V8-A · Native timer state store + foreground service — beta-v8 cihaz QA + ürün kabulü |
-| WP-41 | V8-A · Canlı chronometer bildirim R1/R2 (beta-v11–v15 hattı) — ürün kabulü 2026-07-13 |
-| WP-42+51 | V8-A · Native sayaç servisi + widget/bildirim app-kapalı + Grok in-app start fix — ürün kabulü 2026-07-13 |
-| WP-54 | Tema Stüdyosu R1 · Token motoru + 12 hazır tema — ürün kabulü 2026-07-13 |
-| WP-55 | Tema Stüdyosu R2 · Katmanlı editör UI — ürün kabulü 2026-07-13 |
-| WP-56 | Başarım 3.0 R1 · Server-authoritative ledger + wire-up + XP eşik/saat — ürün kabulü 2026-07-13 |
-| WP-57 | Başarım 3.0 R2 · Oyunlaştırılmış profil/rozet UI + polish — ürün kabulü 2026-07-13 |
-| WP-43 | V8-B · Genel senkronizasyon denetimi (canonical projection, idempotency) — beta-v8 cihaz QA + ürün kabulü |
-| WP-44 | V8-C · İstatistik grup sırası (sıralama üste) — beta-v8 cihaz QA + ürün kabulü |
-| WP-37 | Faz 0A · Repo ve doküman gerçeği denetimi |
-| WP-1 | Android Widget Foundation |
-| WP-2 | Persistent Notification + Background Timer |
-| WP-3 | Auth Recovery (ilk temel akış) |
-| WP-4 | Home Responsive QA |
-| WP-5 | Presence Lifecycle |
-| WP-6 | Android Surface Extensions |
-| WP-7 | Class Chat |
-| WP-8 | Nudge + Notifications |
-| WP-9 | Gamification |
-| WP-10 | Class Metrics Pack |
-| WP-11 | Windows Desktop Track |
-| WP-12 | Sync & Offline Track |
-| WP-13 | Release Channels |
-| WP-14 | Güvenli Admin ve Geri Bildirim Temeli |
-| WP-15 | Device Integrations Spike ve zengin kısayollar |
-| WP-16 | Dashboard Advanced Polish |
-| WP-17 | Android Canlı Sayaç Yüzeyleri |
-| WP-18 | Grup Ekranı Hiyerarşisi ve Ayar Sadeleştirmesi |
-| WP-19 | Device Integrations Settings Hook |
-| WP-20 | Özelleştirilebilir Saat Stilleri |
-| WP-21 | Gelişmiş Grid Boyutlandırma |
-| WP-22 | Canlı Grup Hedefi Animasyonu |
-| WP-23 | Clock Center + Landscape StandBy |
-| WP-24 | Alarm + Çoklu Timer Temeli |
-| WP-25 | Android 3 Tuşlu Navigasyon Safe Area QA |
-| WP-26 | Tema Paleti ve Özel Slotlar |
-| WP-29 | Stable/Beta App Icon & Branding Refresh |
-| WP-30 | Release Notes, Updater Dialog ve Settings Hook |
-| WP-31 | Hesabımı Yönet Merkezi ve çalışan şifre sıfırlama |
-| WP-32 | Geri bildirim ekran görüntüsü eki |
-| WP-33 | Güvenli süper-admin kullanıcı işlemleri |
-| WP-34 | Süper-Admin Paneli, Grup Moderasyonu ve Duyurular |
-| WP-35 | Sosyal Profil 2.0 + Başarı Yolculuğu |
-| WP-36 | Beş Sekmeli IA Sadeleştirmesi + Bildirim Merkezi |
-| WP-38 | Faz 0A · Canlı Backend Durum Matrisi |
 
 ### Son Teslim Notları
 
-- **Ürün kapanış 2026-07-13 (Windows hariç test-bekleyen):** WP-52/45/46/47/58/59/60 ve V8-A/B/C cihaz QA’sı bekleyen kalemler **Tamamlanan**’a alındı. Kalan yayın: **beta-v18 → smoke → (oksa) stable**; **XP reset `0028` yalnız stable tag / genel yayın anında**. Windows: WP-27/53/28 açık.
+- **Ürün kapanış / yayın 2026-07-13:** WP-52/45/46/47/58/59/60 ve V8-A/B/C cihaz QA’sı bekleyen kalemler **Tamamlanan**’a alındı; v8 yayımlandı. WP-48/49/50, doğrudan yayın/soak'ı atlama kararıyla silindi. Yeni yayın sorunu ayrı debug/release WP'sidir. Windows: WP-27/53/28 açık.
 - **beta-v18 polish:** Taç avatarları sıralama/aktif/chat/istatistik/profilde; profilde Başarılar → Çalışma kayıtları üstünde; Widget/izinler Ayarlar’da; tap-to-top Ana Sayfa; 15 atmosfer tema.
 - **WP-41/42/51 + Grok timer hotfix (2026-07-13):** Native `StudyTimerService`, app-kapalı Başlat/Durdur, chronometer bildirim, beta-v13–v15 rötuşları; in-app start idle race fix (`94945ac`). Ürün sahibi kapatma kararı.
 - **WP-54–57 (2026-07-13):** Tema Stüdyosu + Başarım 3.0 ledger/UI; taç 0/2.5k/10k/25k/75k; saat +10 XP; profil/tap/taç polish. SQL 0025–0027 canlı uygulama kullanıcının; 0028 genel yayın sıfırlaması.
