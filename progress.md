@@ -88,8 +88,8 @@
 - **Ortak/riskli yüzey:** —
 - **Dal:** — (main)
 - **Başlangıç:** —
-- **Son güncelleme:** 2026-07-14 16:10 (Europe/Istanbul)
-- **Not:** WP-71 kod+test → Test için bekleyenler. Lane serbest.
+- **Son güncelleme:** 2026-07-14 17:05 (Europe/Istanbul)
+- **Not:** WP-71 gerçek shell rewrite kod+test → Test için bekleyenler. Lane serbest.
 
 ---
 
@@ -126,7 +126,7 @@
 | WP-69 | [~] Kod tamamlandı / deploy bekliyor (Gemini) | Aylık Çalışma Raporu Altyapısı (Cron + Edge Function) | DNS/API Key Onayı |
 | WP-27 | Base QA geçti · ürün kabulü açık | Windows desktop shell + Compact Focus | park: Test için bekleyenler |
 | WP-28 | [~] Otomatik test geçti · VM QA (Grok) | Windows MSIX + imza + update + release QA | WP-53 park — kullanıcı serbest bıraktı |
-| WP-71 | [~] Test park (Grok) | Windows Desktop UI R3 · Fluent/macOS dil + lacivert palet fix | — |
+| WP-71 | [~] Test park (Grok) | Windows Desktop UI R3 · custom WinUI pane rewrite + navy fix | — |
 
 > **Planlama notu:** WP-39 iptal edildi. WP-48/49/50 kullanıcı kararıyla kaldırıldı; yayımlanmış sürümde sorun çıkarsa aynı kartlar diriltilmez, ayrı debug/release WP'si açılır. Kamp Ateşi WP-61 → WP-62 zorunlu seri çalışır; WP-63, kullanıcının widget briefi olmadan kod işine dönüşmez.
 
@@ -307,12 +307,13 @@
 | WP-62 | Park · demo | Kamp ateşi PNG sahne | Kod+test yeşil; cihaz görsel onayı |
 | WP-68 | Park · cihaz | Android widget R2 | Codex kod/test; Samsung/Pixel smoke |
 | WP-70 | Park · ikinci Windows | Windows release performans tabanı | `340b589`; ikinci Windows 11 + ürün kabulü |
-| **WP-71** | Park · cihaz/demo | Masaüstü dil (keskin rail) + lacivert palet fix | Fluent/macOS sentezi; navy→campfire bug kapalı; test yeşil |
+| **WP-71** | Park · cihaz/demo | Custom WinUI pane + density (R3 rewrite) + navy palette | NavigationRail kaldırıldı; test 15 PASS |
 
 ### WP-71: Windows Desktop UI R3 *(park)*
 - **Durum:** [~] Park — Test için bekleyenler · **aktif değil**
-- **Kod:** `docs/WINDOWS-DESKTOP-UI-R3.md`; rail indicator radius 4; `ThemeColorSource.palette` (navy mavi kalır); theme_settings + shell test PASS
-- **Bekleyen:** Windows’ta lacivert palet + küçük pencere rail görünümü. `Cihazda doğrulanmalı`
+- **Kod:** `DesktopNavigationPane` (248/52, sol accent bar, footer Ayarlar); `DesktopDensity` radius 4–8; sade page header; section list WinUI seçim; `docs/WINDOWS-DESKTOP-UI-R3.md` araştırma+mimari; navy palette fix önceki
+- **Test:** shell 7 + scaffold 4 + layout 4 = yeşil · analyze 0 · `Kodda doğrulandı`
+- **Bekleyen:** Windows demo — expanded/compact/minimal, tık+kısayol, lacivert palet. `Cihazda doğrulanmalı`
 
 ### WP-53: Windows Desktop Design 2.0 — Ekran-İçi Ürün IA 🖥️ *(park)*
 - **Program/Faz:** Windows masaüstü · **Ajan (son):** Grok · **Durum:** [~] Park — Test için bekleyenler · **aktif çalışma değil**

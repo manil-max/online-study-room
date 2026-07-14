@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../core/desktop/desktop_layout.dart';
 
-/// Windows 11 yoğunluğu — tema tokenlarından türetilir (ikinci tema yok).
+/// Windows masaüstü yoğunluğu — Fluent 2 / WinUI köşe + boşluk tokenları.
+///
+/// Radius bilinçli düşük (4–8): mobil “yumuşak kart” dilinden ayrılır.
+/// İçerik kenar boşluğu: minimal ~12, aksi ~20–24 (WinUI content margins).
 class DesktopDensity {
   const DesktopDensity({
     required this.pagePadding,
@@ -20,32 +23,32 @@ class DesktopDensity {
     final width = MediaQuery.sizeOf(context).width;
     if (width >= 1440) {
       return const DesktopDensity(
-        pagePadding: EdgeInsets.fromLTRB(28, 20, 28, 24),
-        panelRadius: 16,
-        sectionGap: 20,
-        commandHeight: 52,
+        pagePadding: EdgeInsets.fromLTRB(24, 16, 24, 20),
+        panelRadius: 8,
+        sectionGap: 16,
+        commandHeight: 40,
       );
     }
     if (width >= DesktopBreakpoints.expanded) {
       return const DesktopDensity(
-        pagePadding: EdgeInsets.fromLTRB(24, 18, 24, 20),
-        panelRadius: 16,
-        sectionGap: 16,
-        commandHeight: 48,
+        pagePadding: EdgeInsets.fromLTRB(20, 14, 20, 16),
+        panelRadius: 6,
+        sectionGap: 12,
+        commandHeight: 40,
       );
     }
+    // ≤1007: WinUI minimal content margin ~12
     return const DesktopDensity(
-      pagePadding: EdgeInsets.fromLTRB(16, 14, 16, 16),
-      panelRadius: 14,
-      sectionGap: 12,
-      commandHeight: 44,
+      pagePadding: EdgeInsets.fromLTRB(12, 12, 12, 12),
+      panelRadius: 4,
+      sectionGap: 10,
+      commandHeight: 36,
     );
   }
 }
 
-/// Windows 11 masaüstü sayfalarının ortak başlık, komut ve içerik yüzeyi.
-/// Mobil ekranların AppBar'ını büyütmek yerine desktop'a tutarlı bir bilgi
-/// hiyerarşisi verir.
+/// Masaüstü sayfa yüzeyi — sakin başlık şeridi (WinUI Header ~52px hissi).
+/// Büyük ikon kutusu / “mobil hero” yok; title + opsiyonel subtitle + actions.
 class DesktopPageScaffold extends StatelessWidget {
   const DesktopPageScaffold({
     required this.title,
@@ -66,49 +69,42 @@ class DesktopPageScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final density = DesktopDensity.of(context);
+    final scheme = theme.colorScheme;
     return Scaffold(
-      backgroundColor: theme.colorScheme.surfaceContainerLowest,
+      backgroundColor: scheme.surfaceContainerLowest,
       body: Column(
         children: [
           Material(
-            color: theme.colorScheme.surface,
+            color: scheme.surface,
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final compact = constraints.maxWidth < 760;
                 final identity = Row(
                   children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.primaryContainer,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        icon,
-                        color: theme.colorScheme.onPrimaryContainer,
-                      ),
-                    ),
-                    const SizedBox(width: 14),
+                    Icon(icon, size: 20, color: scheme.primary),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             title,
-                            style: theme.textTheme.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.w700,
+                            style: theme.textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: -0.2,
                             ),
                           ),
-                          const SizedBox(height: 2),
-                          Text(
-                            subtitle,
-                            maxLines: compact ? 2 : 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
+                          if (subtitle.trim().isNotEmpty) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              subtitle,
+                              maxLines: compact ? 2 : 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: scheme.onSurfaceVariant,
+                              ),
                             ),
-                          ),
+                          ],
                         ],
                       ),
                     ),
@@ -117,43 +113,46 @@ class DesktopPageScaffold extends StatelessWidget {
                 return Semantics(
                   container: true,
                   label: '$title komut çubuğu',
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(
-                      compact ? 20 : density.pagePadding.left,
-                      18,
-                      compact ? 20 : density.pagePadding.right,
-                      18,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(minHeight: 52),
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        density.pagePadding.left,
+                        12,
+                        density.pagePadding.right,
+                        12,
+                      ),
+                      child: compact
+                          ? Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                identity,
+                                if (actions.isNotEmpty) ...[
+                                  const SizedBox(height: 10),
+                                  Wrap(
+                                    spacing: 8,
+                                    runSpacing: 8,
+                                    children: actions,
+                                  ),
+                                ],
+                              ],
+                            )
+                          : Row(
+                              children: [
+                                Expanded(child: identity),
+                                if (actions.isNotEmpty) ...[
+                                  const SizedBox(width: 16),
+                                  Wrap(spacing: 8, children: actions),
+                                ],
+                              ],
+                            ),
                     ),
-                    child: compact
-                        ? Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              identity,
-                              if (actions.isNotEmpty) ...[
-                                const SizedBox(height: 14),
-                                Wrap(
-                                  spacing: 8,
-                                  runSpacing: 8,
-                                  children: actions,
-                                ),
-                              ],
-                            ],
-                          )
-                        : Row(
-                            children: [
-                              Expanded(child: identity),
-                              if (actions.isNotEmpty) ...[
-                                const SizedBox(width: 20),
-                                Wrap(spacing: 8, children: actions),
-                              ],
-                            ],
-                          ),
                   ),
                 );
               },
             ),
           ),
-          Divider(height: 1, color: theme.colorScheme.outlineVariant),
+          Divider(height: 1, thickness: 1, color: scheme.outlineVariant),
           Expanded(child: child),
         ],
       ),
@@ -231,73 +230,93 @@ class DesktopSectionList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     final density = DesktopDensity.of(context);
+    // Master list: macOS/WinUI sidebar — keskin seçim, sol accent bar
     return DesktopPanel(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: ListView.builder(
         itemCount: items.length,
         itemBuilder: (context, index) {
           final item = items[index];
           final selected = item.id == selectedId;
           return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
             child: Material(
               color: selected
-                  ? theme.colorScheme.secondaryContainer
+                  ? scheme.secondaryContainer
                   : Colors.transparent,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(4),
               child: InkWell(
-                borderRadius: BorderRadius.circular(12),
-                hoverColor: theme.colorScheme.onSurface.withValues(alpha: 0.06),
-                focusColor: theme.colorScheme.primary.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(4),
+                hoverColor: scheme.onSurface.withValues(alpha: 0.06),
+                focusColor: scheme.primary.withValues(alpha: 0.12),
                 onTap: () => onSelected(item.id),
                 child: ConstrainedBox(
                   constraints: BoxConstraints(minHeight: density.commandHeight),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          item.icon,
-                          color: selected
-                              ? theme.colorScheme.onSecondaryContainer
-                              : theme.colorScheme.onSurfaceVariant,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                item.label,
-                                style: theme.textTheme.titleSmall?.copyWith(
-                                  fontWeight: selected
-                                      ? FontWeight.w700
-                                      : FontWeight.w500,
-                                  color: selected
-                                      ? theme.colorScheme.onSecondaryContainer
-                                      : null,
-                                ),
-                              ),
-                              if (item.subtitle != null) ...[
-                                const SizedBox(height: 2),
-                                Text(
-                                  item.subtitle!,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: theme.colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-                              ],
-                            ],
+                  child: Stack(
+                    children: [
+                      if (selected)
+                        Positioned(
+                          left: 0,
+                          top: 8,
+                          bottom: 8,
+                          child: Container(
+                            width: 3,
+                            decoration: BoxDecoration(
+                              color: scheme.primary,
+                              borderRadius: BorderRadius.circular(2),
+                            ),
                           ),
                         ),
-                      ],
-                    ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              item.icon,
+                              size: 20,
+                              color: selected
+                                  ? scheme.onSecondaryContainer
+                                  : scheme.onSurfaceVariant,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    item.label,
+                                    style: theme.textTheme.titleSmall?.copyWith(
+                                      fontWeight: selected
+                                          ? FontWeight.w600
+                                          : FontWeight.w500,
+                                      color: selected
+                                          ? scheme.onSecondaryContainer
+                                          : null,
+                                    ),
+                                  ),
+                                  if (item.subtitle != null) ...[
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      item.subtitle!,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: theme.textTheme.bodySmall?.copyWith(
+                                        color: scheme.onSurfaceVariant,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
