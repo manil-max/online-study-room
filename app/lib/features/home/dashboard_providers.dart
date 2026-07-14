@@ -241,6 +241,15 @@ class DashboardLayoutNotifier extends Notifier<List<DashboardCardConfig>> {
     final columns = ref.read(dashboardGridColumnsProvider);
     final list = [...state];
     final target = list[i].withBounds(x: x, y: y, w: w, h: h, columns: columns);
+    // Hücre değişmediyse reflow + Riverpod rebuild yok (sürüklerken jank).
+    final cur = list[i];
+    if (target.x == cur.x &&
+        target.y == cur.y &&
+        target.w == cur.w &&
+        target.h == cur.h) {
+      if (persist) _save();
+      return;
+    }
     final flowed = placeGridItem(
       items: [
         for (final config in list)

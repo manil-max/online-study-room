@@ -363,6 +363,9 @@ class _MatrixGridState extends State<_MatrixGrid> {
           }
         }
 
+        // Düzenlemede animasyon jank üretir; sürükle/bırak anında Positioned.
+        final useAnim = !widget.editing;
+
         final grid = DragTarget<DashboardCardType>(
           onWillAcceptWithDetails: (_) => widget.editing,
           onMove: updateTarget,
@@ -382,10 +385,19 @@ class _MatrixGridState extends State<_MatrixGrid> {
                 clipBehavior: Clip.none,
                 children: [
                   if (widget.editing)
-                    _GridBackdrop(
-                      cell: cell,
-                      rows: totalRows,
-                      columns: widget.columns,
+                    Positioned.fill(
+                      child: CustomPaint(
+                        painter: _GridBackdropPainter(
+                          cell: cell,
+                          gap: _kGap,
+                          rows: totalRows,
+                          columns: widget.columns,
+                          lineColor: Theme.of(context)
+                              .colorScheme
+                              .outlineVariant
+                              .withValues(alpha: 0.45),
+                        ),
+                      ),
                     ),
                   if (draggedConfig != null && _target != null)
                     Positioned(
@@ -393,33 +405,61 @@ class _MatrixGridState extends State<_MatrixGrid> {
                       top: _target!.y * (cell + _kGap),
                       width: widthOf(draggedConfig),
                       height: heightOf(draggedConfig),
-                      child: _DropGhost(),
+                      child: const _DropGhost(),
                     ),
                   for (final c in widget.layout)
-                    AnimatedPositioned(
-                      key: ValueKey(c.type),
-                      duration: const Duration(milliseconds: 180),
-                      curve: Curves.easeOut,
-                      left: leftOf(c),
-                      top: topOf(c),
-                      width: widthOf(c),
-                      height: heightOf(c),
-                      child: _MatrixCard(
-                        config: c,
-                        columns: widget.columns,
-                        cell: cell,
+                    if (useAnim)
+                      AnimatedPositioned(
+                        key: ValueKey(c.type),
+                        duration: const Duration(milliseconds: 180),
+                        curve: Curves.easeOut,
+                        left: leftOf(c),
+                        top: topOf(c),
                         width: widthOf(c),
                         height: heightOf(c),
-                        editing: widget.editing,
-                        selected: widget.editing && selectedType == c.type,
-                        onSelect: () => _selectCard(c.type),
-                        onLongPressCard: widget.onLongPressCard,
-                        onResize: (x, y, w, h, persist) =>
-                            widget.onResizeCard(c.type, x, y, w, h, persist),
-                        onCommit: widget.onCommit,
-                        onRemove: () => widget.onRemove(c.type),
+                        child: RepaintBoundary(
+                          child: _MatrixCard(
+                            config: c,
+                            columns: widget.columns,
+                            cell: cell,
+                            width: widthOf(c),
+                            height: heightOf(c),
+                            editing: widget.editing,
+                            selected: widget.editing && selectedType == c.type,
+                            onSelect: () => _selectCard(c.type),
+                            onLongPressCard: widget.onLongPressCard,
+                            onResize: (x, y, w, h, persist) => widget
+                                .onResizeCard(c.type, x, y, w, h, persist),
+                            onCommit: widget.onCommit,
+                            onRemove: () => widget.onRemove(c.type),
+                          ),
+                        ),
+                      )
+                    else
+                      Positioned(
+                        key: ValueKey(c.type),
+                        left: leftOf(c),
+                        top: topOf(c),
+                        width: widthOf(c),
+                        height: heightOf(c),
+                        child: RepaintBoundary(
+                          child: _MatrixCard(
+                            config: c,
+                            columns: widget.columns,
+                            cell: cell,
+                            width: widthOf(c),
+                            height: heightOf(c),
+                            editing: widget.editing,
+                            selected: selectedType == c.type,
+                            onSelect: () => _selectCard(c.type),
+                            onLongPressCard: widget.onLongPressCard,
+                            onResize: (x, y, w, h, persist) => widget
+                                .onResizeCard(c.type, x, y, w, h, persist),
+                            onCommit: widget.onCommit,
+                            onRemove: () => widget.onRemove(c.type),
+                          ),
+                        ),
                       ),
-                    ),
                 ],
               ),
             );
@@ -461,6 +501,8 @@ class _MatrixGridState extends State<_MatrixGrid> {
 }
 
 class _DropGhost extends StatelessWidget {
+  const _DropGhost();
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -477,42 +519,50 @@ class _DropGhost extends StatelessWidget {
   }
 }
 
-class _GridBackdrop extends StatelessWidget {
-  const _GridBackdrop({
+/// O(rows×cols) widget yerine tek CustomPaint — düzenleme jank'ini keser.
+class _GridBackdropPainter extends CustomPainter {
+  _GridBackdropPainter({
     required this.cell,
+    required this.gap,
     required this.rows,
     required this.columns,
+    required this.lineColor,
   });
 
   final double cell;
+  final double gap;
   final int rows;
   final int columns;
+  final Color lineColor;
 
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Stack(
-      children: [
-        for (var y = 0; y < rows; y++)
-          for (var x = 0; x < columns; x++)
-            Positioned(
-              left: x * (cell + _kGap),
-              top: y * (cell + _kGap),
-              width: cell,
-              height: cell,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: theme.colorScheme.outlineVariant.withValues(
-                      alpha: 0.45,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-      ],
-    );
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1
+      ..color = lineColor;
+    for (var y = 0; y < rows; y++) {
+      for (var x = 0; x < columns; x++) {
+        final left = x * (cell + gap);
+        final top = y * (cell + gap);
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromLTWH(left, top, cell, cell),
+            const Radius.circular(8),
+          ),
+          paint,
+        );
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _GridBackdropPainter old) {
+    return old.cell != cell ||
+        old.gap != gap ||
+        old.rows != rows ||
+        old.columns != columns ||
+        old.lineColor != lineColor;
   }
 }
 
@@ -553,12 +603,20 @@ class _MatrixCardState extends State<_MatrixCard> {
   DashboardCardConfig? _resizeStart;
   double _dx = 0;
   double _dy = 0;
+  int? _lastSentX;
+  int? _lastSentY;
+  int? _lastSentW;
+  int? _lastSentH;
 
   void _onResizeStart() {
     widget.onSelect();
     _resizeStart = widget.config;
     _dx = 0;
     _dy = 0;
+    _lastSentX = widget.config.x;
+    _lastSentY = widget.config.y;
+    _lastSentW = widget.config.w;
+    _lastSentH = widget.config.h;
   }
 
   void _onResizeUpdate(DragUpdateDetails details, _ResizeAnchor anchor) {
@@ -591,6 +649,17 @@ class _MatrixCardState extends State<_MatrixCard> {
       h = (start.h + rowDelta).clamp(1, 99);
     }
 
+    // Aynı hücre → provider'a yazma (gereksiz reflow/rebuild yok).
+    if (x == _lastSentX &&
+        y == _lastSentY &&
+        w == _lastSentW &&
+        h == _lastSentH) {
+      return;
+    }
+    _lastSentX = x;
+    _lastSentY = y;
+    _lastSentW = w;
+    _lastSentH = h;
     widget.onResize(x, y, w, h, false);
   }
 
@@ -599,16 +668,56 @@ class _MatrixCardState extends State<_MatrixCard> {
     widget.onCommit();
   }
 
+  /// Düzenleme: canlı sayaç/grafik değil, ucuz kabuk (jank ana kaynağı buydu).
+  Widget _editShell(ThemeData theme) {
+    final type = widget.config.type;
+    return Material(
+      color: theme.colorScheme.surfaceContainerHigh,
+      borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(type.icon, size: 20, color: theme.colorScheme.primary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    type.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const Spacer(),
+            Text(
+              '${widget.config.w}×${widget.config.h} hücre',
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final card = dashboardCardFor(
-      widget.config.type,
-      widget.config.sizeForColumns(widget.columns),
-      height: widget.height,
-    );
 
     if (!widget.editing) {
+      final card = dashboardCardFor(
+        widget.config.type,
+        widget.config.sizeForColumns(widget.columns),
+        height: widget.height,
+      );
       return GestureDetector(
         onLongPress: widget.onLongPressCard,
         onSecondaryTap: widget.onLongPressCard,
@@ -616,10 +725,11 @@ class _MatrixCardState extends State<_MatrixCard> {
       );
     }
 
+    final shell = _editShell(theme);
     final editCard = Stack(
       clipBehavior: Clip.none,
       children: [
-        Positioned.fill(child: IgnorePointer(child: card)),
+        Positioned.fill(child: IgnorePointer(child: shell)),
         Positioned.fill(
           child: IgnorePointer(
             child: DecoratedBox(
@@ -635,8 +745,6 @@ class _MatrixCardState extends State<_MatrixCard> {
             ),
           ),
         ),
-        // Boyutlandırma tutamaçları (kontrol hapından ÖNCE çizilir ki büyük
-        // dokunma alanları hapın "kaldır" butonunu dar kartlarda örtmesin).
         _ResizeHandle(
           anchor: const _ResizeAnchor(left: true, top: true),
           onStart: _onResizeStart,
@@ -717,19 +825,15 @@ class _MatrixCardState extends State<_MatrixCard> {
       child: LongPressDraggable<DashboardCardType>(
         data: widget.config.type,
         onDragStarted: widget.onSelect,
-        feedback: SizedBox(
-          width: widget.width,
-          height: widget.height,
-          child: Opacity(
-            opacity: 0.6,
-            child: Material(
-              color: Colors.transparent,
-              child: dashboardCardFor(
-                widget.config.type,
-                widget.config.sizeForColumns(widget.columns),
-                height: widget.height,
-              ),
-            ),
+        // Feedback de hafif kabuk — ağır dashboard widget değil.
+        feedback: Material(
+          color: Colors.transparent,
+          elevation: 6,
+          borderRadius: BorderRadius.circular(16),
+          child: SizedBox(
+            width: widget.width,
+            height: widget.height,
+            child: Opacity(opacity: 0.92, child: _editShell(theme)),
           ),
         ),
         childWhenDragging: Opacity(opacity: 0.28, child: editCard),
