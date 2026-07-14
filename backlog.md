@@ -117,6 +117,7 @@
   - Arka plandayken durum çubuğunda minik gösterge
   - Tıklandığında üstten şık kontrol paneli
   - **WP-17 tamamlandı:** Android One UI kilit ekranı progress ve kalıcı durum çubuğu bildirimi eklendi.
+  - [~] **Güvenilirlik açığı → WP-74 planlandı:** bildirim/widget Durdur-Başlat app'e bağımlı, widget canlı saat yok, stats/leaderboard widget'ları gerçek veri almıyor (foreground besleme pipeline); idle→başlat bildirim senkron bug.
   - *Kaynak: new_features.md §5 Madde Live Activities*
 
 - [x] **Kilit ekranı widget'ı**
@@ -160,7 +161,7 @@
   - **WP-10 tamamlandı:** Grup istatistiğine grup trend çizgisi, en aktif gün, en istikrarlı üye verileri eklendi.
   - *Kaynak: progress.md FAZ 3.10 kalan*
 
-- [~] **Özelleştirilebilir saat stilleri (kalan)** — **WP-20 planlandı**
+- [~] **Özelleştirilebilir saat stilleri (kalan)** — **WP-75 planlandı** (eski WP-20)
   - Sınıf "yarış"/dilim görünümü
   - Ek estetik stiller
   - *Kaynak: project.md §3.12*
@@ -221,10 +222,10 @@
 - [ ] **Windows kurulum paketi + dağıtım**
   - exe/MSIX kurulum paketi (WP-28 ile planlanıyor)
 
-- [~] **Grid boyutlandırma gelişmiş** (kullanıcı geri bildirimi) — **WP-21 planlandı**
-  - Kartların 4 kenar ve köşeden (genişlik + yükseklik) ayarlanması
+- [~] **Grid boyutlandırma gelişmiş / serbest sürükle-bırak** (kullanıcı geri bildirimi) — **WP-72 planlandı** (eski WP-21)
+  - Kartları serbest taşı + 4 kenar ve köşeden (genişlik + yükseklik) ayarla, canlı önizleme
 
-- [~] **Canlı grup hedefi** — **WP-22 planlandı**
+- [~] **Canlı grup hedefi** — **WP-73 planlandı** (eski WP-22)
   - Grup hedef ilerleme barının çalışan kişi sayısına göre saniye saniye akması
 
 - [x] **Grup yönetimi UI iyileştirme**

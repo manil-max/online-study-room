@@ -104,11 +104,78 @@
 
 > Burada yalnız açık işler kalır. Cihaz QA’sı bekleyen ama kodu bitmiş Android işleri ürün kararıyla **Tamamlanan**’a alındı (2026-07-13); sorun çıkarsa yeni bir debug kartıyla geri açılır.
 
-> **Şu an açık planlı iş yok** — tüm WP'ler ürün sahibi kararıyla Tamamlanan'a alındı (2026-07-14). Yeni iş için planner'ı tetikle (`planner'ı oku ve şunu planla: …`).
->
-> **Bekleyen ürün aksiyonları (kod değil, senin kararın):** WP-69 canlı aylık rapor için **DNS + Resend API key**; WP-66 hesap silme **retention süresi kararı**; muhtemel Windows/Android cihaz smoke'ları (sorun çıkarsa debug WP).
+| WP | Durum | Kısa kapsam | Bağımlılık |
+|---|---|---|---|
+| WP-72 | [ ] Bekliyor | Serbest sürükle-bırak dashboard ızgarası (taşı + kenar/köşe boyutlandır, canlı önizleme) | — |
+| WP-73 | [ ] Bekliyor | Canlı grup hedefi ilerleme barı (çalışan sayısına göre saniye saniye akan) | — |
+| WP-74 | [ ] Bekliyor | Dinamik panel + widget canlı besleme / arka plan sayaç güvenilirliği | — |
+| WP-75 | [ ] Bekliyor | Özelleştirilebilir saat stilleri kalanı (yarış/dilim görünümü + estetik) | — |
+
+> **Bekleyen ürün aksiyonları (kod değil, senin kararın):** WP-69 canlı aylık rapor için **DNS + Resend API key**; WP-66 hesap silme **retention süresi kararı**; WP-67 grafik türleri onayı.
 
 > **Planlama notu:** WP-39 iptal edildi. WP-48/49/50 kullanıcı kararıyla kaldırıldı; yayımlanmış sürümde sorun çıkarsa aynı kartlar diriltilmez, ayrı debug/release WP'si açılır.
+
+> ✅ **Çakışma kontrolü (2026-07-14):** Tüm lane'ler Boşta. WP-72/73 `features/home`, WP-74 native/widget/notifications, WP-75 `features/clock` — SAHİP kesişimi yok, **paralel güvenli**. ⚠️ WP-74 Android sıcak dosyalarına (manifest/kotlin widget/`study_providers`) girer → aynı anda ikinci bir native WP açılmasın. WP-72 ile WP-73 ikisi de `features/home` yüzeyi paylaşır → aynı anda tek `features/home` WP'si (serileştir).
+
+### WP-72: Serbest Sürükle-Bırak Dashboard Izgarası 🧩
+- **Program/Faz:** Ana Sayfa deneyimi R2 · **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** —
+- **Problem:** Dashboard `grid_reflow.dart` + `setBounds`/`reorderItem` motoruna sahip ama kullanıcı kartları **serbestçe sürükleyip** herhangi bir hücreye taşıyamıyor ve **kenar/köşeden genişlik+yükseklik** ayarlayamıyor. UI vizyonundaki son eksik parça bu (backlog WP-21).
+- **Kapsam dışı:** Yeni kart türü, veri/istatistik değişikliği, tema motoru, Windows presentation adaptörü, backend/RLS/migration.
+- **SAHİP dosyalar (yaz):** `app/lib/features/home/**` (düzenleme/etkileşim widget'ları), `app/lib/core/grid/grid_reflow.dart` (gerekirse genişlet), `app/test/features/dashboard_*` + `app/test/core/grid_reflow_test.dart`.
+- **DOKUNMA:** `data/**`, `supabase/**`, `core/theme/**`, `core/navigation/**`, Android/native/widget yolları, `pubspec.yaml`.
+- **Adımlar:** [ ] Sürükle-taşı: uzun bas → kart hayaleti, boş/çakışan hücrede canlı reflow önizleme; [ ] Kenar+köşe tutamaçları (4 kenar + 4 köşe) ile genişlik/yükseklik; [ ] Bırakınca `placeGridItem`/`compactUp` ile çakışmasız yerleştir + kalıcılaştır (density profili başına); [ ] Reduce-motion + dokunma hedef boyutu (≥44dp) + geri al.
+- **Veri/Migration etkisi:** Yok (yalnız yerel `SharedPreferences` layout). Geri alma = etkileşim widget'ını kaldırıp mevcut `setBounds` menüsüne dönmek.
+- **RLS/Güvenlik:** Yok.
+- **Edge-case'ler:** en dar/en geniş yoğunluk (6↔32 sütun), tek kart, dolu ızgara, sürükleme sırasında yoğunluk değişimi, ekran döndürme, çok küçük kart, üst üste bırakma.
+- **Kabul (ölçülebilir):** Sürükleme sırasında kare süresi ≤ 16 ms (jank yok); bırakınca kartlar çakışmaz ve `compactGridItemsUp` sonrası boşluk kalmaz; kenar+köşe resize her yönde çalışır; yeniden açılışta düzen birebir korunur; overflow/ErrorWidget 0; klavye/erişilebilirlik ile de taşınabilir. `Cihazda doğrulanmalı`.
+- **Tuzaklar:** Her piksel sürüklemede diske yazma (yalnız bırakınca kalıcılaştır — `persist:false` pattern var); reflow sonsuz döngüsü (`grid_reflow` guard'ı koru); dokunma hedefi küçük kalması.
+- **Dal önerisi:** `wp72-serbest-grid`
+- **Model önerisi:** 🔴 Opus
+
+### WP-73: Canlı Grup Hedefi İlerleme Barı 🎯
+- **Program/Faz:** Ana Sayfa deneyimi R2 · **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** —
+- **Problem:** Grup hedef ilerleme barı statik; **çalışan kişi sayısına göre saniye saniye** akmıyor (backlog WP-22). Kullanıcı gruptaki canlı ivmeyi hissetmiyor.
+- **Kapsam dışı:** Hedef belirleme akışı değişikliği, yeni RPC/agregasyon (mevcut grup stats kullanılır), tema, backend/migration.
+- **SAHİP dosyalar (yaz):** `app/lib/features/home/widgets/goal_card.dart` (+ ilgili canlı hesap widget'ı), gerekli provider okuması, `app/test/features/goal_card_*`.
+- **DOKUNMA:** `data/**` yazımı, `supabase/**`, presence/`group_id`, `core/theme/**`.
+- **Adımlar:** [ ] Aktif çalışan sayısı × geçen süreyle **istemci tarafı interpolasyon** (saniyede Supabase çağrısı YOK); [ ] `SecondTicker` ile bar akışı; [ ] çalışan sayısı değişince anında yeniden hesap; [ ] hedefe ulaşınca kutlama durumu.
+- **Veri/Migration etkisi:** Yok. Geri alma = statik bara dönmek.
+- **RLS/Güvenlik:** Mevcut grup görünürlüğü korunur; yeni veri yolu yok.
+- **Edge-case'ler:** kimse çalışmıyor, hedef 0, hedef aşıldı, offline/cache, gün sınırı (Europe/Istanbul), çok büyük grup.
+- **Kabul (ölçülebilir):** Bar, çalışan varken saniyede güncellenir ve UI ≤ 1 sn'de yansır; çalışan sayısı değişince ≤ 1 sn'de ivme değişir; saniyede ağ çağrısı 0; hedef aşımı ve boş durum doğru. `Cihazda doğrulanmalı`.
+- **Tuzaklar:** Saniyede sunucu sorgusu; gün sınırını yerel saatle hesaplamak (tek yardımcı `istanbulDay`); bar taşması.
+- **Dal önerisi:** `wp73-canli-grup-hedefi`
+- **Model önerisi:** 🔵 Sonnet
+
+### WP-74: Dinamik Panel + Widget Canlı Besleme / Arka Plan Güvenilirliği 🔔
+- **Program/Faz:** Güvenilirlik · **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** —
+- **Problem:** ("dinamik panel") Bildirim/widget **Durdur–Başlat** komutları uygulama yaşam döngüsüne aşırı bağımlı; widget'ta **canlı akan saat yok**; `StudyStatsWidgetProvider`/`GroupLeaderboardWidgetProvider` **gerçek veri almıyor** (foreground service besleme pipeline eksik — KALITE B4/B5). Ayrıca idle bildirim varken uygulamadan kronometre başlatınca bildirim `00:00:00 Başlat`'ta kalıyor (hafıza: notif senkron bug).
+- **Kapsam dışı:** Yeni istatistik metriği, tema, iOS, dashboard UI, backend/RLS.
+- **SAHİP dosyalar (yaz):** `app/lib/core/background/timer_foreground_service.dart`, `app/lib/features/android_widgets/**`, `app/lib/core/notifications/**`, `app/android/app/src/main/kotlin/**/widgets/**`, `app/android/app/src/main/{res,AndroidManifest.xml}`, ilgili testler.
+- **DOKUNMA:** `features/home/**`, `features/clock/**` UI, `supabase/**`, `core/theme/**`.
+- **Adımlar:** [ ] Foreground service + arka plan besleme pipeline (WorkManager/isolate) ile stats/leaderboard widget'larına gerçek veri; [ ] widget canlı akan saat (native `Chronometer`); [ ] app-kapalı bildirim/widget Durdur-Başlat komut güvenilirliği; [ ] idle→kronometre başlatınca bildirim senkron bug fix; [ ] OEM (Samsung/HyperOS) pil kısıt notu.
+- **Veri/Migration etkisi:** Yok. Geri alma = pipeline'ı kaldırıp olay-bazlı beslemeye dönmek.
+- **RLS/Güvenlik:** İstemci içi; sunucuya yeni yazım yok; sır yok.
+- **Edge-case'ler:** app kapalı, OEM arka plan öldürme, düşük pil, boot sonrası, çoklu cihaz, hızlı başlat/durdur, izin reddi.
+- **Kabul (ölçülebilir):** App tamamen kapalıyken widget/bildirimden Başlat/Durdur ≥ %95 çalışır; widget canlı saat 8 saatte ≤ ±2 sn sapar; stats/leaderboard widget'ı gerçek güncel veriyi gösterir; idle→başlat senkron bug tekrar üretilemez. `Cihazda doğrulanmalı` (Samsung + Pixel).
+- **Tuzaklar:** Saniyede Flutter yeniden çizme (native Chronometer kullan); servis başlangıç kısıtları (Android 12+ start restrictions); OEM farkları; foreground bildirimini kaldıramama.
+- **Dal önerisi:** `wp74-arka-plan-guvenilirlik`
+- **Model önerisi:** 🔴 Opus
+
+### WP-75: Özelleştirilebilir Saat Stilleri — Yarış/Dilim Görünümü ⏱️
+- **Program/Faz:** Saat / Gruplar görsel · **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** —
+- **Problem:** Saat/sınıf görünümünde "yarış"/dilim tarzı canlı görünüm ve ek estetik stiller eksik (backlog WP-20).
+- **Kapsam dışı:** Zaman motoru değişikliği, backend, yeni veri, tema motoru yeniden yazımı.
+- **SAHİP dosyalar (yaz):** `app/lib/features/classroom/widgets/clock_style.dart` (+ ilgili stiller), `app/lib/features/clock/**` yalnız stil, ilgili testler.
+- **DOKUNMA:** `core/time_engine/**` mantığı, `data/**`, `supabase/**`.
+- **Adımlar:** [ ] Yarış/dilim görünümü (üyeler pist üzerinde ilerler); [ ] 2–3 ek estetik saat yüzü; [ ] stil seçimi kalıcı; [ ] reduce-motion.
+- **Veri/Migration etkisi:** Yok.
+- **RLS/Güvenlik:** Yok.
+- **Edge-case'ler:** tek üye, çok üye, boş grup, reduce-motion, dar ekran.
+- **Kabul (ölçülebilir):** En az 1 yarış/dilim + 2 estetik stil eklenir; seçim kalıcı; 60 fps akıcı ya da reduce-motion'da statik; overflow 0. `Cihazda doğrulanmalı`.
+- **Tuzaklar:** Token yerine sabit renk; ağır animasyonla pil tüketimi.
+- **Dal önerisi:** `wp75-saat-stilleri`
+- **Model önerisi:** 🔵 Sonnet
 
 
 ## Test için bekleyenler
