@@ -136,10 +136,25 @@ class _CompactFocusViewState extends ConsumerState<CompactFocusView> {
                       ],
                     ),
                   ),
-                  IconButton(
-                    tooltip: 'Her zaman üstte tut',
-                    onPressed: toggleDesktopAlwaysOnTop,
-                    icon: const Icon(Icons.push_pin_outlined),
+                  ListenableBuilder(
+                    listenable: desktopWindowListenable,
+                    builder: (context, _) {
+                      final pinned = isDesktopAlwaysOnTop;
+                      return IconButton(
+                        tooltip: pinned
+                            ? 'Üstte tut açık — kapat'
+                            : 'Her zaman üstte tut',
+                        isSelected: pinned,
+                        onPressed: toggleDesktopAlwaysOnTop,
+                        icon: Icon(
+                          pinned ? Icons.push_pin : Icons.push_pin_outlined,
+                        ),
+                        selectedIcon: Icon(
+                          Icons.push_pin,
+                          color: theme.colorScheme.primary,
+                        ),
+                      );
+                    },
                   ),
                   IconButton(
                     tooltip: 'Tam pencereye dön',

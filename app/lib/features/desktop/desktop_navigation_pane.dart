@@ -347,6 +347,7 @@ class DesktopNavFooterAction extends StatefulWidget {
     required this.onPressed,
     this.expanded = true,
     this.tooltip,
+    this.selected = false,
     super.key,
   });
 
@@ -355,6 +356,8 @@ class DesktopNavFooterAction extends StatefulWidget {
   final VoidCallback onPressed;
   final bool expanded;
   final String? tooltip;
+  /// Açık/kapalı durum (örn. Üstte tut pin).
+  final bool selected;
 
   @override
   State<DesktopNavFooterAction> createState() => _DesktopNavFooterActionState();
@@ -368,9 +371,19 @@ class _DesktopNavFooterActionState extends State<DesktopNavFooterAction> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final bg = (_hovered || _focused)
-        ? scheme.onSurface.withValues(alpha: 0.06)
-        : Colors.transparent;
+    final selected = widget.selected;
+    final Color bg;
+    if (selected) {
+      bg = scheme.secondaryContainer;
+    } else if (_hovered || _focused) {
+      bg = scheme.onSurface.withValues(alpha: 0.06);
+    } else {
+      bg = Colors.transparent;
+    }
+    final iconColor = selected
+        ? scheme.onSecondaryContainer
+        : scheme.onSurfaceVariant;
+    final labelColor = selected ? scheme.onSecondaryContainer : scheme.onSurface;
 
     final tile = Material(
       color: bg,
@@ -390,11 +403,7 @@ class _DesktopNavFooterActionState extends State<DesktopNavFooterAction> {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Icon(
-                        widget.icon,
-                        size: 20,
-                        color: scheme.onSurfaceVariant,
-                      ),
+                      Icon(widget.icon, size: 20, color: iconColor),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
@@ -406,21 +415,25 @@ class _DesktopNavFooterActionState extends State<DesktopNavFooterAction> {
                             applyHeightToLastDescent: false,
                           ),
                           style: textTheme.labelLarge?.copyWith(
-                            color: scheme.onSurface,
-                            fontWeight: FontWeight.w500,
+                            color: labelColor,
+                            fontWeight: selected
+                                ? FontWeight.w600
+                                : FontWeight.w500,
                             height: 1.1,
                           ),
                         ),
                       ),
+                      if (selected)
+                        Icon(
+                          Icons.check,
+                          size: 16,
+                          color: scheme.primary,
+                        ),
                     ],
                   ),
                 )
               : Center(
-                  child: Icon(
-                    widget.icon,
-                    size: 22,
-                    color: scheme.onSurfaceVariant,
-                  ),
+                  child: Icon(widget.icon, size: 22, color: iconColor),
                 ),
         ),
       ),

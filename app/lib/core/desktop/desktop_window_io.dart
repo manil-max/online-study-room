@@ -41,6 +41,13 @@ Future<void> toggleDesktopCompactMode() => _controller.toggleCompactMode();
 
 Future<void> toggleDesktopAlwaysOnTop() => _controller.toggleAlwaysOnTop();
 
+/// Pin / compact durum değişince dinle (rail buton aktif görünümü).
+Listenable get desktopWindowListenable => _controller;
+
+bool get isDesktopAlwaysOnTop => _controller.isPinned;
+
+bool get isDesktopCompactMode => _controller.isCompact;
+
 Widget desktopChrome(Widget child, {required Widget compactChild}) {
   if (!_isDesktop) return child;
   return _DesktopChrome(compactChild: compactChild, child: child);

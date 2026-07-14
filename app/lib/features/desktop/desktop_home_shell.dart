@@ -167,40 +167,54 @@ class _PaneFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        DesktopNavFooterAction(
-          key: const ValueKey('desktop-rail-settings'),
-          icon: Icons.settings_outlined,
-          label: 'Ayarlar',
-          tooltip: 'Ayarlar (Ctrl+,)',
-          expanded: expanded,
-          onPressed: onSettings,
-        ),
-        DesktopNavFooterAction(
-          icon: Icons.refresh,
-          label: 'Yenile',
-          tooltip: 'Yenile (F5)',
-          expanded: expanded,
-          onPressed: onRefresh,
-        ),
-        DesktopNavFooterAction(
-          icon: Icons.push_pin_outlined,
-          label: 'Üstte tut',
-          tooltip: 'Her zaman üstte tut (Ctrl+Shift+P)',
-          expanded: expanded,
-          onPressed: toggleDesktopAlwaysOnTop,
-        ),
-        DesktopNavFooterAction(
-          icon: Icons.picture_in_picture_alt_outlined,
-          label: 'Compact Focus',
-          tooltip: 'Compact Focus (Ctrl+Shift+M)',
-          expanded: expanded,
-          onPressed: toggleDesktopCompactMode,
-        ),
-      ],
+    return ListenableBuilder(
+      listenable: desktopWindowListenable,
+      builder: (context, _) {
+        final pinned = isDesktopAlwaysOnTop;
+        final compact = isDesktopCompactMode;
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            DesktopNavFooterAction(
+              key: const ValueKey('desktop-rail-settings'),
+              icon: Icons.settings_outlined,
+              label: 'Ayarlar',
+              tooltip: 'Ayarlar (Ctrl+,)',
+              expanded: expanded,
+              onPressed: onSettings,
+            ),
+            DesktopNavFooterAction(
+              icon: Icons.refresh,
+              label: 'Yenile',
+              tooltip: 'Yenile (F5)',
+              expanded: expanded,
+              onPressed: onRefresh,
+            ),
+            DesktopNavFooterAction(
+              key: const ValueKey('desktop-rail-pin'),
+              icon: pinned ? Icons.push_pin : Icons.push_pin_outlined,
+              label: pinned ? 'Üstte (açık)' : 'Üstte tut',
+              tooltip: pinned
+                  ? 'Üstte tut açık — kapatmak için tıkla (Ctrl+Shift+P)'
+                  : 'Her zaman üstte tut (Ctrl+Shift+P)',
+              expanded: expanded,
+              selected: pinned,
+              onPressed: toggleDesktopAlwaysOnTop,
+            ),
+            DesktopNavFooterAction(
+              icon: compact
+                  ? Icons.picture_in_picture_alt
+                  : Icons.picture_in_picture_alt_outlined,
+              label: 'Compact Focus',
+              tooltip: 'Compact Focus (Ctrl+Shift+M)',
+              expanded: expanded,
+              selected: compact,
+              onPressed: toggleDesktopCompactMode,
+            ),
+          ],
+        );
+      },
     );
   }
 }

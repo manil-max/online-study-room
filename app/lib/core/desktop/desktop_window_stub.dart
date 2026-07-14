@@ -31,3 +31,19 @@ Widget desktopChromeBody({
 Future<void> toggleDesktopCompactMode() async {}
 
 Future<void> toggleDesktopAlwaysOnTop() async {}
+
+Listenable get desktopWindowListenable => const _NoopListenable();
+
+bool get isDesktopAlwaysOnTop => false;
+
+bool get isDesktopCompactMode => false;
+
+class _NoopListenable extends Listenable {
+  const _NoopListenable();
+
+  @override
+  void addListener(VoidCallback listener) {}
+
+  @override
+  void removeListener(VoidCallback listener) {}
+}
