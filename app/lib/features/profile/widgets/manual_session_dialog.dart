@@ -10,9 +10,29 @@ import '../../../data/providers/auth_providers.dart';
 import '../../../data/providers/study_providers.dart';
 import '../../../data/providers/subject_providers.dart';
 
+/// Manuel oturumu "eklendiği anda bitmiş gibi" yerleştirir: seçilen [date]
+/// günü içinde `end` = o günün **şu anki saat-dakikası**, `start = end - süre`.
+/// Böylece giriş, sabit 12:00 yerine gerçekçi bir saatte görünür.
+///
+/// Süre günün geçen kısmından uzunsa (ör. gece 01:00'de 3 saat) `start` gece
+/// yarısına (00:00) kenetlenir; oturum her zaman seçilen güne ait kalır
+/// (`StudySession.day` `start`'tan türetildiği için gün kayması olmaz).
+({DateTime start, DateTime end}) manualSessionRange(DateTime date, int seconds) {
+  final now = DateTime.now();
+  final dayStart = DateTime(date.year, date.month, date.day);
+  var end = DateTime(date.year, date.month, date.day, now.hour, now.minute);
+  var start = end.subtract(Duration(seconds: seconds));
+  if (start.isBefore(dayStart)) {
+    start = dayStart;
+    end = start.add(Duration(seconds: seconds));
+  }
+  return (start: start, end: end);
+}
+
 /// Manuel süre ekleme akışı (her ekrandan çağrılabilir): aktif kullanıcı
 /// kontrolü + ders seçimli diyalog + `study_sessions`'a yazma. Oturumu seçilen
-/// günün ortasına (12:00) yerleştirir. Kullanıcı yoksa uyarır.
+/// günde eklendiği andaki saatte bitmiş gibi yerleştirir ([manualSessionRange]).
+/// Kullanıcı yoksa uyarır.
 Future<void> addManualSessionFlow(BuildContext context, WidgetRef ref) async {
   final user = ref.read(authStateProvider).value;
   if (user == null) {
@@ -25,15 +45,14 @@ Future<void> addManualSessionFlow(BuildContext context, WidgetRef ref) async {
   final result = await showManualSessionDialog(context, subjects: subjects);
   if (result == null) return;
 
-  final start =
-      DateTime(result.date.year, result.date.month, result.date.day, 12, 0);
+  final range = manualSessionRange(result.date, result.seconds);
   await ref.read(studyRepositoryProvider).addSession(
         StudySession(
           id: const Uuid().v4(),
           userId: user.id,
           subjectId: result.subjectId,
-          start: start,
-          end: start.add(Duration(seconds: result.seconds)),
+          start: range.start,
+          end: range.end,
           durationSeconds: result.seconds,
           source: StudySource.manual,
         ),

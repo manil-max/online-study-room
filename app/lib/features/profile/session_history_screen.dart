@@ -216,11 +216,10 @@ class _SessionTile extends ConsumerWidget {
     for (final s in subjects) {
       if (s.id == session.subjectId) subject = s;
     }
-    // Sayaç oturumlarında gerçek saat aralığı; manuelde sadece "Manuel"
-    // (manuel kayıt sentetik 12:00'a yerleştirildiği için saat anlamlı değil).
-    final sourceLabel = isManual
-        ? 'Manuel'
-        : '${_hm(session.start)}–${_hm(session.end)}';
+    // Hem sayaç hem manuel oturumda gerçek saat aralığı gösterilir; manuel giriş
+    // artık eklendiği andaki saate "bitmiş gibi" yerleştiği için saat anlamlıdır
+    // (manuel/sayaç ayrımı baştaki ikonla korunur: edit_calendar / timer).
+    final sourceLabel = '${_hm(session.start)}–${_hm(session.end)}';
 
     return ListTile(
       leading: Icon(
@@ -270,15 +269,14 @@ class _SessionTile extends ConsumerWidget {
     );
     if (result == null) return;
 
-    final start = DateTime(
-        result.date.year, result.date.month, result.date.day, 12, 0);
+    final range = manualSessionRange(result.date, result.seconds);
     await ref.read(studyRepositoryProvider).updateSession(
           StudySession(
             id: session.id,
             userId: session.userId,
             subjectId: result.subjectId,
-            start: start,
-            end: start.add(Duration(seconds: result.seconds)),
+            start: range.start,
+            end: range.end,
             durationSeconds: result.seconds,
             // Düzenlenen oturum manuel sayılır (kaynak ayrımı istatistiği etkilemez).
             source: StudySource.manual,
