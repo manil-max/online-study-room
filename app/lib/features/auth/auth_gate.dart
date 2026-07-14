@@ -57,11 +57,31 @@ class _AuthGateState extends ConsumerState<AuthGate> {
     return authState.when(
       data: (profile) =>
           profile == null ? const AuthScreen() : const HomeShell(),
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+      loading: () => Scaffold(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(height: 16),
+              Text(
+                'Yükleniyor…',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+              ),
+            ],
+          ),
+        ),
       ),
       error: (error, _) => Scaffold(
-        body: Center(child: Text('Bir hata oluştu: $error')),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text('Bir hata oluştu: $error', textAlign: TextAlign.center),
+          ),
+        ),
       ),
     );
   }

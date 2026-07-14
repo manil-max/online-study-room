@@ -81,15 +81,15 @@
 - **Not:** WP-68 otomatik doğrulama tamam, Samsung/Pixel cihaz QA bekliyor. WP-70; mevcut Windows release'inin RAM/donma iddiasını ölçülebilir tabana bağlayacak, masaüstü IA koduna girmeyecek.
 
 ### Grok Lane
-- **Durum:** [~] Aktif — cihaz/VM QA açık
-- **Faz/WP:** WP-28 · Windows MSIX + release QA
-- **Aşama:** Otomatik test geçti — VM kurulum QA bekliyor
-- **SAHİP yollar:** `app/windows/**`, `app/pubspec.yaml` (msix_config), `.github/workflows/windows-release.yml`, `docs/QA-WINDOWS.md`, `docs/WINDOWS-RELEASE-GATE.md`, updater Windows kolu + test, `progress.md`
-- **Ortak/riskli yüzey:** Android release.yml / widget dokunulmadı. PFX secret yok (self-signed QA).
+- **Durum:** [~] Aktif — kullanıcı yeniden dene
+- **Faz/WP:** WP-53-debug · Windows cold-start beyaz ekran
+- **Aşama:** Otomatik test geçti — cihaz doğrulama
+- **SAHİP yollar:** `desktop_window_io/stub`, `main.dart`, `auth_gate.dart`, show API test, `progress.md`
+- **Ortak/riskli yüzey:** Codex WP-70 performans docs — kesişim yok.
 - **Dal:** — (main)
-- **Başlangıç:** 2026-07-14 16:00 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-14 16:15
-- **Not:** CI MSIX+ZIP+SHA; Runner.rc Odak Kampı; Windows MSIX updater. Unit 3 PASS. VM install matrisi açık.
+- **Başlangıç:** 2026-07-14 16:30 (Europe/Istanbul)
+- **Son güncelleme:** 2026-07-14 16:40
+- **Not:** show() first-frame sonrası; maximize gecikmeli; ErrorWidget + loading metni. Desktop ilgili test 8 PASS.
 
 ---
 
@@ -320,7 +320,7 @@
 
 | WP | Durum | Ne bekleniyor | Not |
 |---|---|---|---|
-| **WP-53** | Park · cihaz/demo | Windows’ta 5 sekme + ≥1008 düzen | R2 kod `0bd23f4`; otomatik test geçti. Açılışta beyaz pencere gözlemi (2026-07-14) — sonra debug. **Aktif lane yok.** |
+| **WP-53** | Park · cihaz/demo | Windows’ta 5 sekme + ≥1008 düzen | R2 `0bd23f4`. Beyaz ekran cold-start fix Grok (show after first frame). **Yeniden dene.** |
 | WP-62 | Park · demo | Kamp ateşi PNG sahne | Kod+test yeşil; cihaz görsel onayı |
 | WP-68 | Park · cihaz | Android widget R2 | Codex kod/test; Samsung/Pixel smoke |
 

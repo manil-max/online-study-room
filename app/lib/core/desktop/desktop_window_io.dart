@@ -32,6 +32,11 @@ final _controller = _DesktopWindowController();
 
 Future<void> initDesktopWindow() => _controller.initialize();
 
+/// İlk Flutter frame çizildikten sonra çağrılmalı (WP-53-debug cold-start).
+/// Aksi halde Windows boş/beyaz HWND gösterebilir.
+Future<void> showDesktopWindowWhenReady() =>
+    _controller.showWhenFlutterReady();
+
 Future<void> toggleDesktopCompactMode() => _controller.toggleCompactMode();
 
 Future<void> toggleDesktopAlwaysOnTop() => _controller.toggleAlwaysOnTop();
@@ -57,6 +62,7 @@ Widget desktopChromeBody({
 class _DesktopWindowController extends ChangeNotifier with WindowListener {
   SharedPreferences? _preferences;
   bool _initialized = false;
+  bool _shown = false;
   bool _busy = false;
   bool _isCompact = false;
   bool _isPinned = false;
@@ -100,26 +106,41 @@ class _DesktopWindowController extends ChangeNotifier with WindowListener {
     _isCompact = false;
     await _preferences?.setBool(_PreferenceKeys.compact, false);
 
+    // skipTaskbar: false; show henüz YOK — Flutter ilk frame sonrası
+    // [showWhenFlutterReady] çağırır (beyaz boş HWND önlemi).
     final options = WindowOptions(
-      size: _isCompact ? _compactSize : _normalBounds.size,
-      minimumSize: _isCompact ? _compactMinimumSize : _defaultMinimumSize,
+      size: _normalBounds.size,
+      minimumSize: _defaultMinimumSize,
       center: false,
       title: 'Odak Kampı',
       titleBarStyle: TitleBarStyle.normal,
+      backgroundColor: const Color(0xFF0B1020),
     );
     await windowManager.waitUntilReadyToShow(options, () async {
-      if (_isCompact) {
-        await windowManager.setAlignment(Alignment.topRight);
-        await windowManager.setAlwaysOnTop(true);
-      } else {
-        await windowManager.setBounds(_normalBounds);
-        await windowManager.setAlwaysOnTop(_isPinned);
-        if (_normalWasMaximized) await windowManager.maximize();
-      }
-      await windowManager.show();
-      await windowManager.focus();
+      await windowManager.setBounds(_normalBounds);
+      await windowManager.setAlwaysOnTop(_isPinned);
+      // show/focus/maximize → showWhenFlutterReady
     });
     windowManager.addListener(this);
+  }
+
+  Future<void> showWhenFlutterReady() async {
+    if (!_isDesktop || !_initialized || _shown) return;
+    _shown = true;
+    try {
+      // En az bir frame boyasın diye bir frame daha bekle.
+      await SchedulerBinding.instance.endOfFrame;
+      await windowManager.show();
+      await windowManager.focus();
+      // Maximize show sonrası — bazı GPU'larda maximize+boş surface birlikte
+      // kalıcı beyaz ekran üretiyordu.
+      if (_normalWasMaximized) {
+        await Future<void>.delayed(const Duration(milliseconds: 32));
+        await windowManager.maximize();
+      }
+    } catch (e, st) {
+      debugPrint('showDesktopWindowWhenReady failed: $e\n$st');
+    }
   }
 
   Future<void> toggleCompactMode() async {

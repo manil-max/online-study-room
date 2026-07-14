@@ -9,6 +9,9 @@ bool get isDesktopWindow => false;
 /// Masaüstü penceresini hazırlar (boyut, başlık). Web'de hiçbir şey yapmaz.
 Future<void> initDesktopWindow() async {}
 
+/// İlk frame sonrası pencere gösterimi (web no-op).
+Future<void> showDesktopWindowWhenReady() async {}
+
 /// Masaüstünde uygulamanın etrafına "üstte tut / mini" kontrolleri ekler.
 /// Web'de child'ı olduğu gibi döndürür.
 Widget desktopChrome(Widget child, {required Widget compactChild}) => child;

@@ -1,5 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart'
-    show kIsWeb, defaultTargetPlatform, TargetPlatform;
+    show kIsWeb, defaultTargetPlatform, TargetPlatform, FlutterError;
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -25,16 +27,40 @@ import 'package:online_study_room/features/android_widgets/android_widget_servic
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Windows cold-start: framework hatalarını boş beyaz yüzey yerine okunur
+  // metinle göster (debug + release profil).
+  if (!kIsWeb && defaultTargetPlatform == TargetPlatform.windows) {
+    ErrorWidget.builder = (details) {
+      return Material(
+        color: const Color(0xFF1A1020),
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text(
+              'Arayüz hatası:\n${details.exceptionAsString()}',
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white70, fontSize: 14),
+            ),
+          ),
+        ),
+      );
+    };
+    FlutterError.onError = (details) {
+      FlutterError.presentError(details);
+      debugPrint('FlutterError: ${details.exceptionAsString()}');
+    };
+  }
+
   // Android'e özgü servisler (kalıcı bildirim + ana ekran widget'ı) yalnız
   // Android'de başlatılır; masaüstü/web'de bu eklentiler bulunmaz (çökme önlenir).
   final isAndroid = !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+  final isWindows = !kIsWeb && defaultTargetPlatform == TargetPlatform.windows;
   if (isAndroid) {
     await TimerNotificationService.instance.initialize();
     await HomeWidget.registerInteractivityCallback(widgetBackgroundCallback);
   }
 
-  // Masaüstünde (Windows/macOS/Linux) pencere boyutu/başlığı hazırlanır;
-  // web/mobilde no-op.
+  // Masaüstü: bounds hazırlanır ama pencere henüz show edilmez (beyaz HWND önlemi).
   await initDesktopWindow();
 
   // Anahtarlar verilmişse Supabase'i başlat; verilmemişse uygulama bellek-içi
@@ -53,14 +79,18 @@ Future<void> main() async {
 
   // Saat P0: cihaz TZ + alarm servisi; boot sonrası native mirror reschedule.
   await DeviceTimezone.ensureInitialized();
-  await AlarmNotificationService.instance.initialize();
+  // Windows'ta yalnızca Android ayarlı FLN init bazı ortamlarda takılabiliyor;
+  // masaüstünde try/catch + atla (alarm UI yine de güvenli no-op).
+  try {
+    await AlarmNotificationService.instance.initialize();
+  } catch (e, st) {
+    debugPrint('AlarmNotificationService.initialize failed: $e\n$st');
+  }
   if (isAndroid) {
     final bridge = NativeAlarmBridge.instance;
     if (bridge.consumeRescheduleFlag(prefs)) {
       // Boot/timezone: native zaten mirror'dan kurdu; bayrağı temizle.
-      // Dart tarafı provider açılınca mirror'ı tazeleyecek.
     }
-    // Native boot receiver'ın kaçırdığı durum için ek güvence
     await bridge.rescheduleFromMirror();
   }
 
@@ -70,6 +100,13 @@ Future<void> main() async {
       child: const OnlineStudyRoomApp(),
     ),
   );
+
+  // İlk frame sonrası pencereyi göster (Windows cold-start / WP-53-debug).
+  if (isWindows) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(showDesktopWindowWhenReady());
+    });
+  }
 }
 
 class OnlineStudyRoomApp extends ConsumerWidget {
@@ -106,8 +143,13 @@ class OnlineStudyRoomApp extends ConsumerWidget {
       ],
       // Masaüstünde uygulamanın etrafına "üstte tut / mini pencere" kontrol
       // kümesi eklenir; web/mobilde child olduğu gibi döner.
+      // child null iken shrink yerine koyu zemin (beyaz flaş yok).
       builder: (context, child) => desktopChrome(
-        child ?? const SizedBox.shrink(),
+        child ??
+            const ColoredBox(
+              color: Color(0xFF0B1020),
+              child: SizedBox.expand(),
+            ),
         compactChild: const CompactFocusView(),
       ),
       home: const AuthGate(),
