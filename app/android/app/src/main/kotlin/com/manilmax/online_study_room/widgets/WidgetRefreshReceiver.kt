@@ -34,7 +34,11 @@ class WidgetRefreshReceiver : BroadcastReceiver() {
         if (intent.action != ACTION_REFRESH) return
 
         val manager = AppWidgetManager.getInstance(context)
-        listOf(StudyStatsWidgetProvider::class.java, GroupLeaderboardWidgetProvider::class.java)
+        listOf(
+            StudyStatsWidgetProvider::class.java,
+            GroupGoalWidgetProvider::class.java,
+            GroupLeaderboardWidgetProvider::class.java,
+        )
             .forEach { provider ->
                 val component = ComponentName(context, provider)
                 val ids = manager.getAppWidgetIds(component)

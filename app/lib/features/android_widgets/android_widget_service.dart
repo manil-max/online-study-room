@@ -34,6 +34,11 @@ enum StudyHomeWidget {
     androidName: 'GroupLeaderboardWidgetProvider',
     qualifiedAndroidName:
         'com.manilmax.online_study_room.widgets.GroupLeaderboardWidgetProvider',
+  ),
+  groupGoal(
+    androidName: 'GroupGoalWidgetProvider',
+    qualifiedAndroidName:
+        'com.manilmax.online_study_room.widgets.GroupGoalWidgetProvider',
   );
 
   const StudyHomeWidget({
@@ -54,10 +59,15 @@ abstract final class AndroidWidgetKeys {
   static const statsToday = 'stats_today';
   static const statsWeek = 'stats_week';
   static const statsStreak = 'stats_streak';
+  static const dailyGoalPercent = 'daily_goal_percent';
+  static const dailyGoalDetail = 'daily_goal_detail';
+  static const groupGoalPercent = 'group_goal_percent';
+  static const groupGoalDetail = 'group_goal_detail';
   static const leaderboardTitle = 'leaderboard_title';
   static const leaderboardRow1 = 'leaderboard_row_1';
   static const leaderboardRow2 = 'leaderboard_row_2';
   static const leaderboardRow3 = 'leaderboard_row_3';
+  static const leaderboardMyRank = 'leaderboard_my_rank';
 }
 
 @immutable
@@ -73,6 +83,11 @@ class AndroidWidgetSnapshot {
     required this.statsStreak,
     required this.leaderboardTitle,
     required this.leaderboardRows,
+    this.dailyGoalPercent = '0%',
+    this.dailyGoalDetail = '0 dk / 0 dk',
+    this.groupGoalPercent = '0%',
+    this.groupGoalDetail = 'Grup hedefi belirlenmedi',
+    this.leaderboardMyRank = 'Sıralama oluşunca burada görünür',
   });
 
   const AndroidWidgetSnapshot.placeholder()
@@ -84,8 +99,13 @@ class AndroidWidgetSnapshot {
       statsToday = '0 dk',
       statsWeek = 'Hafta: 0 sa',
       statsStreak = 'Hedef serisi: 0 gün',
+      dailyGoalPercent = '0%',
+      dailyGoalDetail = '0 dk / 0 dk',
+      groupGoalPercent = '0%',
+      groupGoalDetail = 'Grup hedefi belirlenmedi',
       leaderboardTitle = 'Kamp sıralaması',
-      leaderboardRows = const ['Henüz kayıt yok', '-', '-'];
+      leaderboardRows = const ['Henüz kayıt yok', '-', '-'],
+      leaderboardMyRank = 'Sıralama oluşunca burada görünür';
 
   AndroidWidgetSnapshot.timer({
     required String elapsed,
@@ -125,19 +145,46 @@ class AndroidWidgetSnapshot {
              const AndroidWidgetSnapshot.placeholder().leaderboardRows,
        );
 
-  AndroidWidgetSnapshot.leaderboard({required List<String> rows})
-    : this(
-        timerTitle: const AndroidWidgetSnapshot.placeholder().timerTitle,
-        timerElapsed: const AndroidWidgetSnapshot.placeholder().timerElapsed,
-        timerStatus: const AndroidWidgetSnapshot.placeholder().timerStatus,
-        timerAction: const AndroidWidgetSnapshot.placeholder().timerAction,
-        statsTitle: const AndroidWidgetSnapshot.placeholder().statsTitle,
-        statsToday: const AndroidWidgetSnapshot.placeholder().statsToday,
-        statsWeek: const AndroidWidgetSnapshot.placeholder().statsWeek,
-        statsStreak: const AndroidWidgetSnapshot.placeholder().statsStreak,
-        leaderboardTitle: 'Grup sıralaması',
-        leaderboardRows: rows,
-      );
+  AndroidWidgetSnapshot.leaderboard({
+    required List<String> rows,
+    String myRank = 'Sıralama oluşunca burada görünür',
+  }) : this(
+         timerTitle: const AndroidWidgetSnapshot.placeholder().timerTitle,
+         timerElapsed: const AndroidWidgetSnapshot.placeholder().timerElapsed,
+         timerStatus: const AndroidWidgetSnapshot.placeholder().timerStatus,
+         timerAction: const AndroidWidgetSnapshot.placeholder().timerAction,
+         statsTitle: const AndroidWidgetSnapshot.placeholder().statsTitle,
+         statsToday: const AndroidWidgetSnapshot.placeholder().statsToday,
+         statsWeek: const AndroidWidgetSnapshot.placeholder().statsWeek,
+         statsStreak: const AndroidWidgetSnapshot.placeholder().statsStreak,
+         leaderboardTitle: 'Grup sıralaması',
+         leaderboardRows: rows,
+         leaderboardMyRank: myRank,
+       );
+
+  AndroidWidgetSnapshot.goals({
+    required String dailyPercent,
+    required String dailyDetail,
+    required String groupPercent,
+    required String groupDetail,
+  }) : this(
+         timerTitle: const AndroidWidgetSnapshot.placeholder().timerTitle,
+         timerElapsed: const AndroidWidgetSnapshot.placeholder().timerElapsed,
+         timerStatus: const AndroidWidgetSnapshot.placeholder().timerStatus,
+         timerAction: const AndroidWidgetSnapshot.placeholder().timerAction,
+         statsTitle: 'Günlük hedef',
+         statsToday: dailyPercent,
+         statsWeek: dailyDetail,
+         statsStreak: const AndroidWidgetSnapshot.placeholder().statsStreak,
+         dailyGoalPercent: dailyPercent,
+         dailyGoalDetail: dailyDetail,
+         groupGoalPercent: groupPercent,
+         groupGoalDetail: groupDetail,
+         leaderboardTitle:
+             const AndroidWidgetSnapshot.placeholder().leaderboardTitle,
+         leaderboardRows:
+             const AndroidWidgetSnapshot.placeholder().leaderboardRows,
+       );
 
   final String timerTitle;
   final String timerElapsed;
@@ -147,8 +194,13 @@ class AndroidWidgetSnapshot {
   final String statsToday;
   final String statsWeek;
   final String statsStreak;
+  final String dailyGoalPercent;
+  final String dailyGoalDetail;
+  final String groupGoalPercent;
+  final String groupGoalDetail;
   final String leaderboardTitle;
   final List<String> leaderboardRows;
+  final String leaderboardMyRank;
 
   Map<String, Object> toWidgetData() {
     final rows = paddedLeaderboardRows;
@@ -161,10 +213,15 @@ class AndroidWidgetSnapshot {
       AndroidWidgetKeys.statsToday: statsToday,
       AndroidWidgetKeys.statsWeek: statsWeek,
       AndroidWidgetKeys.statsStreak: statsStreak,
+      AndroidWidgetKeys.dailyGoalPercent: dailyGoalPercent,
+      AndroidWidgetKeys.dailyGoalDetail: dailyGoalDetail,
+      AndroidWidgetKeys.groupGoalPercent: groupGoalPercent,
+      AndroidWidgetKeys.groupGoalDetail: groupGoalDetail,
       AndroidWidgetKeys.leaderboardTitle: leaderboardTitle,
       AndroidWidgetKeys.leaderboardRow1: rows[0],
       AndroidWidgetKeys.leaderboardRow2: rows[1],
       AndroidWidgetKeys.leaderboardRow3: rows[2],
+      AndroidWidgetKeys.leaderboardMyRank: leaderboardMyRank,
     };
   }
 

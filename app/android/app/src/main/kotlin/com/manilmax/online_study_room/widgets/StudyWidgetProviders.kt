@@ -2,8 +2,10 @@ package com.manilmax.online_study_room.widgets
 
 import android.appwidget.AppWidgetManager
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
 import android.os.SystemClock
+import android.view.View
 import android.widget.RemoteViews
 import com.manilmax.online_study_room.R
 import es.antonborri.home_widget.HomeWidgetProvider
@@ -17,14 +19,36 @@ private object StudyWidgetKeys {
     const val StatsToday = "stats_today"
     const val StatsWeek = "stats_week"
     const val StatsStreak = "stats_streak"
+    const val DailyGoalPercent = "daily_goal_percent"
+    const val DailyGoalDetail = "daily_goal_detail"
+    const val GroupGoalPercent = "group_goal_percent"
+    const val GroupGoalDetail = "group_goal_detail"
     const val LeaderboardTitle = "leaderboard_title"
     const val LeaderboardRow1 = "leaderboard_row_1"
     const val LeaderboardRow2 = "leaderboard_row_2"
     const val LeaderboardRow3 = "leaderboard_row_3"
+    const val LeaderboardMyRank = "leaderboard_my_rank"
 }
 
 private fun SharedPreferences.text(key: String, fallback: String): String =
     getString(key, fallback) ?: fallback
+
+private fun AppWidgetManager.isCompact(context: Context, widgetId: Int): Boolean {
+    val options = getAppWidgetOptions(widgetId)
+    val width = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 110)
+    val height = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 110)
+    return width < 150 || height < 110
+}
+
+private fun openAppPendingIntent(context: Context, requestCode: Int) =
+    android.app.PendingIntent.getActivity(
+        context,
+        requestCode,
+        context.packageManager.getLaunchIntentForPackage(context.packageName)
+            ?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            ?: Intent(),
+        android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE,
+    )
 
 class TimerWidgetProvider : HomeWidgetProvider() {
     override fun onUpdate(
@@ -35,6 +59,7 @@ class TimerWidgetProvider : HomeWidgetProvider() {
     ) {
         appWidgetIds.forEach { widgetId ->
             val views = RemoteViews(context.packageName, R.layout.odak_timer_widget).apply {
+                val compact = appWidgetManager.isCompact(context, widgetId)
                 val appPrefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
                 // Epoch-millis anahtarı (native servis yazar) string ISO'dan daha
                 // güvenilir; yoksa eski string anahtarından geri düş.
@@ -71,6 +96,14 @@ class TimerWidgetProvider : HomeWidgetProvider() {
                     android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE
                 )
                 setOnClickPendingIntent(R.id.timer_widget_action, pendingIntent)
+                setOnClickPendingIntent(
+                    R.id.timer_widget_root,
+                    openAppPendingIntent(context, 10 + widgetId),
+                )
+                setViewVisibility(
+                    R.id.timer_widget_elapsed,
+                    if (compact) View.GONE else View.VISIBLE,
+                )
             }
             appWidgetManager.updateAppWidget(widgetId, views)
         }
@@ -86,26 +119,32 @@ class StudyStatsWidgetProvider : HomeWidgetProvider() {
     ) {
         appWidgetIds.forEach { widgetId ->
             val views = RemoteViews(context.packageName, R.layout.odak_stats_widget).apply {
+                val compact = appWidgetManager.isCompact(context, widgetId)
+                val percentText = widgetData.text(StudyWidgetKeys.DailyGoalPercent, "0%")
+                val progress = percentText.removeSuffix("%").toIntOrNull()?.coerceIn(0, 100) ?: 0
                 setTextViewText(
                     R.id.stats_widget_title,
-                    "${widgetData.text(StudyWidgetKeys.StatsTitle, "Bugün")} · Yenile",
+                    "Günlük hedef",
                 )
                 setTextViewText(
                     R.id.stats_widget_today,
-                    widgetData.text(StudyWidgetKeys.StatsToday, "0 dk"),
+                    percentText,
                 )
+                setProgressBar(R.id.stats_goal_progress, 100, progress, false)
                 setOnClickPendingIntent(
                     R.id.stats_widget_root,
-                    WidgetRefreshReceiver.pendingIntent(context, 1),
+                    openAppPendingIntent(context, 20 + widgetId),
                 )
                 setTextViewText(
                     R.id.stats_widget_week,
-                    widgetData.text(StudyWidgetKeys.StatsWeek, "Hafta: 0 sa"),
+                    widgetData.text(StudyWidgetKeys.DailyGoalDetail, "0 dk / 0 dk"),
                 )
                 setTextViewText(
                     R.id.stats_widget_streak,
-                    widgetData.text(StudyWidgetKeys.StatsStreak, "Seri: 0 gün"),
+                    widgetData.text(StudyWidgetKeys.StatsStreak, "Hedef serisi: 0 gün"),
                 )
+                setViewVisibility(R.id.stats_widget_week, if (compact) View.GONE else View.VISIBLE)
+                setViewVisibility(R.id.stats_widget_streak, if (compact) View.GONE else View.VISIBLE)
             }
             appWidgetManager.updateAppWidget(widgetId, views)
         }
@@ -122,17 +161,22 @@ class GroupLeaderboardWidgetProvider : HomeWidgetProvider() {
         appWidgetIds.forEach { widgetId ->
             val views =
                 RemoteViews(context.packageName, R.layout.odak_leaderboard_widget).apply {
+                    val compact = appWidgetManager.isCompact(context, widgetId)
                     setTextViewText(
                         R.id.leaderboard_widget_title,
-                        "${widgetData.text(StudyWidgetKeys.LeaderboardTitle, "Kamp sıralaması")} · Yenile",
+                        widgetData.text(StudyWidgetKeys.LeaderboardTitle, "Kamp sıralaması"),
                     )
                     setTextViewText(
                         R.id.leaderboard_widget_row_1,
-                        widgetData.text(StudyWidgetKeys.LeaderboardRow1, "Henüz kayıt yok"),
+                        if (compact) {
+                            widgetData.text(StudyWidgetKeys.LeaderboardMyRank, "Henüz sıralaman yok")
+                        } else {
+                            widgetData.text(StudyWidgetKeys.LeaderboardRow1, "Henüz kayıt yok")
+                        },
                     )
                     setOnClickPendingIntent(
                         R.id.leaderboard_widget_root,
-                        WidgetRefreshReceiver.pendingIntent(context, 2),
+                        openAppPendingIntent(context, 30 + widgetId),
                     )
                     setTextViewText(
                         R.id.leaderboard_widget_row_2,
@@ -142,7 +186,42 @@ class GroupLeaderboardWidgetProvider : HomeWidgetProvider() {
                         R.id.leaderboard_widget_row_3,
                         widgetData.text(StudyWidgetKeys.LeaderboardRow3, "-"),
                     )
+                    setViewVisibility(R.id.leaderboard_widget_row_2, if (compact) View.GONE else View.VISIBLE)
+                    setViewVisibility(R.id.leaderboard_widget_row_3, if (compact) View.GONE else View.VISIBLE)
                 }
+            appWidgetManager.updateAppWidget(widgetId, views)
+        }
+    }
+}
+
+class GroupGoalWidgetProvider : HomeWidgetProvider() {
+    override fun onUpdate(
+        context: Context,
+        appWidgetManager: AppWidgetManager,
+        appWidgetIds: IntArray,
+        widgetData: SharedPreferences,
+    ) {
+        appWidgetIds.forEach { widgetId ->
+            val views = RemoteViews(context.packageName, R.layout.odak_group_goal_widget).apply {
+                val compact = appWidgetManager.isCompact(context, widgetId)
+                val percentText = widgetData.text(StudyWidgetKeys.GroupGoalPercent, "0%")
+                val progress = percentText.removeSuffix("%").toIntOrNull()?.coerceIn(0, 100) ?: 0
+                setTextViewText(R.id.group_goal_widget_title, "Grup hedefi")
+                setTextViewText(R.id.group_goal_widget_percent, percentText)
+                setProgressBar(R.id.group_goal_widget_progress, 100, progress, false)
+                setTextViewText(
+                    R.id.group_goal_widget_detail,
+                    widgetData.text(StudyWidgetKeys.GroupGoalDetail, "Bir gruba katıl"),
+                )
+                setOnClickPendingIntent(
+                    R.id.group_goal_widget_root,
+                    openAppPendingIntent(context, 40 + widgetId),
+                )
+                setViewVisibility(
+                    R.id.group_goal_widget_detail,
+                    if (compact) View.GONE else View.VISIBLE,
+                )
+            }
             appWidgetManager.updateAppWidget(widgetId, views)
         }
     }

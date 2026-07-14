@@ -137,6 +137,17 @@
                 android:resource="@xml/odak_stats_widget_info" />
         </receiver>
         <receiver
+            android:name=".widgets.GroupGoalWidgetProvider"
+            android:exported="true"
+            android:label="Grup hedefi">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/odak_group_goal_widget_info" />
+        </receiver>
+        <receiver
             android:name=".widgets.GroupLeaderboardWidgetProvider"
             android:exported="true">
             <intent-filter>

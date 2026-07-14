@@ -885,15 +885,13 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     if (_disposed) return;
     final widgetService = ref.read(androidWidgetServiceProvider);
     final projection = ref.read(canonicalStatsProjectionProvider);
-    await widgetService.saveSnapshot(
-      AndroidWidgetSnapshot.stats(
-        today: 'Bugün: ${formatHuman(projection.todaySeconds)}',
-        week: 'Hafta: ${formatHuman(projection.weekSeconds)}',
-        streak:
-            'Hedef serisi: ${projection.streakForGoal(ref.read(dailyGoalMinutesProvider) * 60)} gün',
-      ),
+    final dailyGoalSeconds = ref.read(dailyGoalMinutesProvider) * 60;
+    final dailyPercent = _goalPercent(
+      projection.todaySeconds,
+      dailyGoalSeconds,
     );
-    if (_disposed) return;
+    final user = ref.read(authStateProvider).value;
+    final group = ref.read(userGroupProvider).value;
     final members = ref.read(groupMembersProvider).value ?? const <Profile>[];
     final todayTotals = CanonicalGroupStatsProjection.fromDailyStats(
       ref.read(groupDailyStatsProvider).value ?? const <DailyStat>[],
@@ -901,17 +899,51 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     final names = {for (final member in members) member.id: member.displayName};
     final rows = todayTotals.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
+    final groupGoalSeconds = (group?.dailyGoalMinutes ?? 0) * 60;
+    final groupTodaySeconds = todayTotals.values.fold<int>(0, (a, b) => a + b);
+    final groupPercent = _goalPercent(groupTodaySeconds, groupGoalSeconds);
+    await widgetService.saveSnapshot(
+      AndroidWidgetSnapshot.goals(
+        dailyPercent: '$dailyPercent%',
+        dailyDetail:
+            '${formatHuman(projection.todaySeconds)} / ${formatHuman(dailyGoalSeconds)}',
+        groupPercent: group == null ? '0%' : '$groupPercent%',
+        groupDetail: group == null
+            ? 'Bir gruba katıl'
+            : groupGoalSeconds == 0
+            ? 'Grup hedefi belirlenmedi'
+            : '${formatHuman(groupTodaySeconds)} / ${formatHuman(groupGoalSeconds)}',
+      ),
+    );
+    final ownRank = user == null
+        ? 'Sıralama oluşunca burada görünür'
+        : _rankLabel(rows, user.id);
     await widgetService.saveSnapshot(
       AndroidWidgetSnapshot.leaderboard(
         rows: rows.take(3).map((entry) {
           final name = names[entry.key] ?? 'Grup üyesi';
           return '$name · ${formatHuman(entry.value)}';
         }).toList(),
+        myRank: ownRank,
       ),
     );
     await widgetService.refresh(
-      widgets: const [StudyHomeWidget.stats, StudyHomeWidget.leaderboard],
+      widgets: const [
+        StudyHomeWidget.stats,
+        StudyHomeWidget.groupGoal,
+        StudyHomeWidget.leaderboard,
+      ],
     );
+  }
+
+  int _goalPercent(int currentSeconds, int goalSeconds) {
+    if (goalSeconds <= 0) return 0;
+    return ((currentSeconds / goalSeconds) * 100).floor();
+  }
+
+  String _rankLabel(List<MapEntry<String, int>> rows, String userId) {
+    final index = rows.indexWhere((entry) => entry.key == userId);
+    return index < 0 ? 'Henüz sıralaman yok' : 'Sen · #${index + 1}';
   }
 
   Future<void> _syncTimerNotification() async {

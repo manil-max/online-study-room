@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Sade sayaç widget'ı: yalnız akan saat + tek Başlat/Durdur düğmesi. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/timer_widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#151A18"
@@ -25,10 +26,9 @@
         android:layout_marginTop="12dp"
         android:background="@drawable/timer_pill_bg"
         android:gravity="center"
-        android:minWidth="104dp"
         android:minHeight="44dp"
-        android:paddingStart="22dp"
-        android:paddingEnd="22dp"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
         android:text="Başlat"
         android:textColor="#FFD8A6"
         android:textSize="15sp"
