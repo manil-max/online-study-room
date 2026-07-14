@@ -8,6 +8,12 @@
 
 ## 🔴 Yüksek Öncelik
 
+- [~] **Küresel pazara açılış — resmi Flutter l10n (İngilizce varsayılan, Türkçe ikinci dil)** — **WP-82 planlandı**
+  - Sistem dili Türkçeyse `tr`; diğer tüm sistem dillerinde (desteklenmeyenler dahil) `en` açılır.
+  - Flutter kullanıcı metinleri `app_en.arb`/`app_tr.arb`a taşınır; uygulama kapalıyken görünen Android metinleri platformun `values`/`values-tr` kaynaklarına taşınır.
+  - Tek seri sıcak-yüzey kartıdır: `pubspec.yaml`, `main.dart`, l10n üretimi, Android kaynakları ve çok sayıda UI dosyası aynı anda başka WP tarafından değiştirilmez.
+  - *Kaynak: küresel pazar hedefi; KALITE-PROGRAMI §5.1 i18n hedefi.*
+
 - [x] **Kalite Programı — Faz 0 + V8 Güven Sürümü** — **WP-37–47 teslim edildi; v8 yayımlandı**
   - **Faz 0A:** Tek kaynak & tamamlanma denetimi — **WP-37 + WP-38 tamamlandı**; canlı migration/RLS uygulama teyidi release kapısında yeniden doğrulanır.
   - **Faz 0B:** Test & gözlemlenebilirlik temeli — **WP-46 (integration + native QA matrisi), WP-47 (Sentry/gözlemlenebilirlik)**.

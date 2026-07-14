@@ -20,7 +20,7 @@
 - **Navigasyon hedefi:** Ana Sayfa / Saat / Gruplar / İstatistikler / Profil. Ana Sayfa günlük kullanım alanıdır; diğer alanların verisi kendi sekmelerinde eksiksiz bulunur.
 - **Release:** Stable/Beta kanalı GitHub Releases ile çalışır. **v8 yayımlandı.** WP-48/49/50, ürün sahibinin doğrudan yayın ve soak'ı atlama kararıyla açık iş olmaktan çıkarıldı; sonraki yayın için ayrı WP açılır.
 - **Kalite kapıları:** Her WP DoD'siz kapanmaz; stable release kalite kapısından geçer (AGENTS.md §3). Server-authoritative XP, RLS/sosyal profil, platform sınırları → `docs/KALITE-PROGRAMI.md`.
-- **Son WP numarası:** 76
+- **Son WP numarası:** 82
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
   - Flutter: `C:\src\flutter` · Android SDK: `C:\Android\Sdk`
@@ -112,6 +112,7 @@
 | WP-79 | [~] Test için bekliyor | Bildirim açılışta toplu teslim hata düzeltmesi | beta-v19 cihaz bulgusu |
 | WP-80 | [~] Test için bekliyor | Dinamik panel uygunluk hata düzeltmesi | beta-v19 cihaz bulgusu |
 | WP-81 | [~] Test için bekliyor | Android beta-v20 — bildirim teslimi + dinamik panel düzeltmeleri | WP-79/80 kod commitleri |
+| WP-82 | [ ] Bekliyor | Küresel pazara açılış — resmi Flutter l10n, varsayılan İngilizce ve Türkçe | —; tek seri çalışma hattı |
 
 > **2026-07-14 proje denetimi:** Serbest sürükle-bırak ızgara, canlı grup hedefi ve saat stilleri **zaten kodda uygulanmış** (backlog stale idi; geçici WP-72/73/75 iptal). Dinamik paneldeki cihaz/eylem sorunu için açılan **WP-76** kod+otomatik test aşamasını geçti; Samsung/Pixel cihaz QA’sı bekliyor.
 >
@@ -120,6 +121,39 @@
 > - **Ürün kararı (kod değil, senin kararın):** WP-66 hesap silme retention · WP-67 grafik türleri · WP-69 aylık rapor için DNS + Resend API key.
 
 > **Planlama notu:** WP-39 iptal; WP-48/49/50 kaldırıldı; geçici WP-72/73/74/75 (2026-07-14) zaten-yapılmış/yanlış açıldığı için iptal edildi. Sorun çıkarsa ayrı debug/release WP'si açılır.
+
+### WP-82: Küresel Yayına Hazırlık — Flutter l10n ve EN/TR Metin Göçü 🌐
+- **Program/Faz:** Küresel pazara açılış / altyapı modernizasyonu (KALITE-PROGRAMI §5.1 i18n hedefi) · **Ajan:** — · **Durum:** [ ] Bekliyor
+- **Problem:** Uygulama şu an `MaterialApp.locale = Locale('tr')` ile zorla Türkçe açılıyor; kullanıcıya görünen Flutter metinleri kod içine dağılmış. Avrupa/Amerika kullanıcıları sistemleri İngilizce veya Türkçe değilse tutarlı İngilizce, Türkçe sistemlerde ise Türkçe deneyim alamıyor.
+- **Kapsam dışı:** Kullanıcının uygulama içinden dil seçmesi, üçüncü dil, çeviri yönetim SaaS'ı, çeviri makinesi/AI ile otomatik çeviri, backend şema/RLS değişikliği, iOS yerelleştirmesi ve ürün metninin yeniden yazılması. Bu kart yalnız İngilizce varsayılan + Türkçe ikinci dil altyapısı ve mevcut kullanıcıya görünen metinlerin taşınmasıdır.
+- **SAHİP dosyalar (yaz):**
+  - `app/pubspec.yaml`, `app/l10n.yaml`, `app/lib/l10n/app_en.arb`, `app/lib/l10n/app_tr.arb`
+  - `app/lib/main.dart` ve kullanıcıya görünen metin/semantik etiket üreten tüm `app/lib/**/*.dart` dosyaları
+  - `app/test/**` içindeki uygulama kabuğu/test yardımcıları ve metne dayalı beklentiler
+  - Android uygulama kapalıyken görünen yüzeyler için `app/android/app/src/main/res/values/strings.xml`, yeni `values-tr/strings.xml`, ilgili `res/layout/**` ile Kotlin'deki kullanıcı metni üreten sınıflar
+  - Gerekirse Windows paketleme yerel ayar metadatası: `app/pubspec.yaml` içindeki `msix_config.languages` (yalnız `en-us`, `tr-tr`).
+- **DOKUNMA (oku, değiştirme):** `supabase/**`, `app/lib/data/repositories/**`, `app/lib/core/theme/**` (metin kullanımına doğrudan bağlı olmadıkça), timer/alarm iş mantığı, Android servis zamanlama/izin davranışı ve `l10n` tarafından üretilen `.dart_tool/**` dosyaları. Üretilen kod commit edilmez; `flutter gen-l10n` ile yeniden üretilir.
+- **Adımlar:**
+  - [ ] Başlangıçta gerçek envanter çıkar: AST/bağlam destekli arama ile `Text`, `RichText`, `Tooltip`, `Semantics`, `SnackBar`, dialog, form doğrulama, boş/hata durumları, erişilebilirlik etiketleri, chart/format başlıkları, bildirim ve alarm metinlerini sınıflandır; yorumlar, log/debug, sabit teknik anahtarlar, kullanıcı verisi ve test fixture'larını çeviri kapsamından ayır. Her anahtar için kaynak dosya + İngilizce/Türkçe karşılığı izlenebilir bir envanterde kayıtlı olsun.
+  - [ ] Resmî Flutter altyapısını kur: `flutter_localizations` + mevcut `intl`, `l10n.yaml`, şablon `app_en.arb` ve `app_tr.arb`; anlamlı, camelCase anahtarlar; değişkenli metinlerde ARB placeholder/metadata; tarih/sayı/süre için locale-aware `intl` biçimleme. `gen-l10n` çıktısını elle düzenleme veya commit etme.
+  - [ ] `MaterialApp`a üretilen `AppLocalizations` delegate'lerini ve `[Locale('en'), Locale('tr')]` desteğini bağla. Sabit `locale: Locale('tr')` kaldırılır; resolver yalnız sistem dil kodu `tr` ise `tr`, diğer tüm dil/bölge varyantlarında (örn. `en-GB`, `de-DE`, desteklenmeyen dil veya boş locale) varsayılan `en` döndürür.
+  - [ ] Flutter'daki tüm kullanıcıya görünen sabit Türkçe metinleri `AppLocalizations.of(context)` üzerinden ARB anahtarlarına geçir; `BuildContext` olmayan katmanlarda yerelleştirilmiş metni UI sınırında oluştur veya açık locale/çeviri bağımlılığı enjekte et. Bir model/repository veya sunucu payload'ına çevrilmiş UI metni yazma.
+  - [ ] Uygulama kapalıyken görünür Android bildirim/widget/alarm/shortcut metinlerini Android kaynaklarına taşı; temel `values/` İngilizce, `values-tr/` Türkçe olur. Kotlin yalnız `getString`/biçimlendirilmiş kaynak çağırır; `.arb` dosyası Android process-death yüzeyinde doğrudan okunamaz. XML layout sabit `android:text`/`contentDescription` değerleri string kaynağı referansına dönüşür.
+  - [ ] Test kabuğunu yerelleştirme delegate'leriyle standartlaştır; en az İngilizce ve Türkçe widget akışları, resolver fallback'i, placeholder çoğul/tarih-sayı biçimleri, hata/boş durumları ve Android kaynak seçimi için otomatik kapsam ekle. Envanter taraması, UI katmanında yeni kullanıcı metni literal'ı kaçırıldığında test/CI'ı başarısız kılacak şekilde allowlist'li bir koruma içerir.
+  - [ ] Samsung ve Pixel'de, ayrıca Windows'ta cihaz/işletim sistemi dili `tr` ve Türkçe olmayan bir dil (ör. `en`/`de`) ile cold start, giriş, ana sayfa, Saat/alarm/timer, Gruplar, İstatistikler, Profil/Ayarlar, hata/çevrimdışı ve bildirim-widget-alarm yüzeylerini doğrula; Türkçe dışında hiçbir yüzey Türkçe başlamaz.
+- **Veri/Migration etkisi:** Yok; Supabase şeması, migration, kullanıcı kayıtları ve gün sınırı değişmez. **Geri alma:** `l10n.yaml`/ARB bağını ve çağrıları tek committen geri al; Android `values` kaynaklarında İngilizce varsayılanı koru. Yerel tercihlerde dil saklanmadığı için veri geri dönüşü gerekmez.
+- **RLS/Güvenlik:** Yeni ağ çağrısı, sır veya RLS politikası yok. Çeviri anahtarları/ARB dosyalarına e-posta, token, hata yığını, kişisel kullanıcı içeriği ya da Supabase sırları konmaz; server-authoritative ilerleme değişmez.
+- **Edge-case'ler:** `tr-TR` ve yalnız `tr`; `en-US`/`en-GB`; desteklenmeyen `de-DE`; null/boş locale; sistem dili çalışma sırasında değişmesi ve uygulama yeniden açılışı; dilde uzun metin/taşma; locale-aware tarih-sayı/süre; `BuildContext` bulunmayan bildirim/servis kodu; offline ve hata metinleri; Android process death sonrası native alarm/widget/bildirim; Windows paket locale metadatası.
+- **Kabul (ölçülebilir / DoD):**
+  - [ ] `app_en.arb` şablondur ve `app_tr.arb`daki her kullanıcı metni anahtarı/placeholder sözleşmesi onunla birebir uyumludur; `flutter gen-l10n` temiz çalışma ağacında başarıyla biter.
+  - [ ] Sistem dili `tr`/`tr-TR` iken ilk frame Türkçe; `en-*`, `de-DE` ve desteklenmeyen/null dilde ilk frame İngilizce olur. Uygulama bu karar için kalıcı kullanıcı tercihi okumaz/yazmaz.
+  - [ ] Envanterdeki tüm Flutter kullanıcı metinleri ARB çağrısına taşınır; koruma taraması `app/lib`te onaylı allowlist dışındaki kullanıcıya görünen Türkçe literal sayısını **0** raporlar. Native kullanıcı metinleri `values`/`values-tr` kaynaklarında bulunur; Kotlin/layout içinde onaylı istisna dışı sabit Türkçe UI metni sayısı **0**dır.
+  - [ ] EN ve TR'de ana kullanıcı yolculukları ile boş/hata/çevrimdışı ekranlarının widget testleri; resolver fallback ve parametreli/plural/tarih-sayı biçim testleri yeşildir. `flutter analyze` **0 uyarı**, tüm `flutter test --dart-define-from-file=env.json` yeşildir; Android ve Windows release build'leri aynı define ile başarıyla üretilir.
+  - [ ] Samsung + Pixel ve Windows'ta iki sistem diliyle cold-start/giriş/sayaç/alarm/widget/bildirim/ayar ekran kayıtları alınır; metin kesilmesi, erişilemeyen kontrol, yanlış dil ve crash **0**. Kritik metinler WCAG AA, dokunma hedefleri ≥48 dp; TalkBack/Narrator semantik etiketleri seçili locale'te anlaşılır. `Cihazda doğrulanmalı` ve ürün sahibi kabulü olmadan kart Tamamlanan'a taşınmaz.
+- **Tuzaklar:** `locale: const Locale('tr')`ı bırakmak; Flutter ARB'sini native process-death yüzeyine zorlamak; çeviriyi model/repository içine sızdırmak; yalnız diakritik aramayla İngilizce hardcode veya Türkçesiz Türkçe metni kaçırmak; `generated` dosyayı elle düzenlemek/commit etmek; tarihleri sabit `tr_TR` ile biçimlemek; testlerde delegates olmadan `AppLocalizations` çağırmak; `l10n/generated` sıcak yüzeyine paralel WP açmak.
+- **Çakışma ön-kontrolü:** ✅ Aktif Çalışma Kaydı'nda dosya yazan lane yok. WP-76–81 yalnız Test için bekleyenler parkında; çakışma sayılmaz. Ancak WP-82 `app/pubspec.yaml`, `app/lib/main.dart`, Android kaynakları ve l10n üretilen sıcak yüzeylerine girdiği için **tek seri hattıdır**; bu yüzeylere dokunan yeni WP'ler WP-82 otomatik test aşamasını geçene kadar başlatılmaz.
+- **Dal önerisi:** `wp82-flutter-l10n` (uygulama kuralı gereği worker `main` üzerinde kendi lane'iyle ilerler; branch oluşturulmaz).
+- **Model önerisi:** 🔴 Opus
 
 ## Test için bekleyenler
 
