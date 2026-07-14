@@ -1,0 +1,143 @@
+{
+  "package": "campfire_r2",
+  "version": 1,
+  "license": "First-party procedural art generated for Odak Kampı (WP-61). All rights reserved to the project. No third-party stock.",
+  "source": "scripts/generate_campfire_assets.py (pure Python RGBA procedural)",
+  "base_path": "assets/campfire/",
+  "density": {
+    "1.0x": {
+      "canvas_px": 512,
+      "files": {
+        "ground.png": {
+          "role": "zemin/açıklık",
+          "w": 512,
+          "h": 512
+        },
+        "glow.png": {
+          "role": "sıcak zemin ışığı",
+          "w": 512,
+          "h": 512
+        },
+        "wood.png": {
+          "role": "odun yığını",
+          "w": 512,
+          "h": 512
+        },
+        "stones.png": {
+          "role": "taş halka",
+          "w": 512,
+          "h": 512
+        },
+        "flame_back.png": {
+          "role": "alev dış katman",
+          "w": 512,
+          "h": 512
+        },
+        "flame_mid.png": {
+          "role": "alev orta katman",
+          "w": 512,
+          "h": 512
+        },
+        "flame_front.png": {
+          "role": "alev iç çekirdek",
+          "w": 512,
+          "h": 512
+        },
+        "smoke.png": {
+          "role": "duman",
+          "w": 512,
+          "h": 512
+        },
+        "coals.png": {
+          "role": "boş/az durum közleri",
+          "w": 512,
+          "h": 512
+        },
+        "ember_sheet.png": {
+          "role": "köz parçacık sprite sheet (4 kare)",
+          "w": 512,
+          "h": 128,
+          "frames": 4
+        }
+      }
+    },
+    "2.0x": {
+      "canvas_px": 1024,
+      "folder": "2.0x/",
+      "files": {
+        "ground.png": {
+          "role": "zemin/açıklık",
+          "w": 1024,
+          "h": 1024
+        },
+        "glow.png": {
+          "role": "sıcak zemin ışığı",
+          "w": 1024,
+          "h": 1024
+        },
+        "wood.png": {
+          "role": "odun yığını",
+          "w": 1024,
+          "h": 1024
+        },
+        "stones.png": {
+          "role": "taş halka",
+          "w": 1024,
+          "h": 1024
+        },
+        "flame_back.png": {
+          "role": "alev dış katman",
+          "w": 1024,
+          "h": 1024
+        },
+        "flame_mid.png": {
+          "role": "alev orta katman",
+          "w": 1024,
+          "h": 1024
+        },
+        "flame_front.png": {
+          "role": "alev iç çekirdek",
+          "w": 1024,
+          "h": 1024
+        },
+        "smoke.png": {
+          "role": "duman",
+          "w": 1024,
+          "h": 1024
+        },
+        "coals.png": {
+          "role": "boş/az durum közleri",
+          "w": 1024,
+          "h": 1024
+        },
+        "ember_sheet.png": {
+          "role": "köz parçacık sprite sheet (4 kare)",
+          "w": 1024,
+          "h": 256,
+          "frames": 4
+        }
+      }
+    }
+  },
+  "layers_z_order_bottom_to_top": [
+    "ground",
+    "glow",
+    "stones",
+    "wood",
+    "coals",
+    "flame_back",
+    "flame_mid",
+    "flame_front",
+    "smoke",
+    "ember_sheet (particles)"
+  ],
+  "anchor": {
+    "description": "Fire base at canvas center (0.5, 0.5); ground/wood sit slightly below center (+0.05..0.08 cy).",
+    "fire_origin_normalized": [
+      0.5,
+      0.5
+    ]
+  },
+  "alpha": "Straight (non-premultiplied) RGBA PNG-32. No white matte. Transparent outside silhouette.",
+  "naming": "snake_case, English, no spaces: <layer>.png"
+}

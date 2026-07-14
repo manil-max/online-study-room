@@ -20,7 +20,7 @@
 - **Navigasyon hedefi:** Ana Sayfa / Saat / Gruplar / İstatistikler / Profil. Ana Sayfa günlük kullanım alanıdır; diğer alanların verisi kendi sekmelerinde eksiksiz bulunur.
 - **Release:** Stable/Beta kanalı GitHub Releases ile çalışır. **v8 yayımlandı.** WP-48/49/50, ürün sahibinin doğrudan yayın ve soak'ı atlama kararıyla açık iş olmaktan çıkarıldı; sonraki yayın için ayrı WP açılır.
 - **Kalite kapıları:** Her WP DoD'siz kapanmaz; stable release kalite kapısından geçer (AGENTS.md §3). Server-authoritative XP, RLS/sosyal profil, platform sınırları → `docs/KALITE-PROGRAMI.md`.
-- **Son WP numarası:** 67
+- **Son WP numarası:** 68
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
   - Flutter: `C:\src\flutter` · Android SDK: `C:\Android\Sdk`
@@ -59,37 +59,37 @@
 - **Not:** Server-authoritative başarı sistemi, XP ledger yapısı ve Supabase RPC tasarımları `docs/BASARIM-MIMARISI.md` dosyasına başarıyla işlendi. Başarım eşik değerleri ve gizli sürpriz rozetler kullanıcı onayıyla kodlanmaya hazır hale getirildi.
 
 ### Claude Lane
-- **Durum:** [x] Boşta — WP-41 + WP-42/51 ürün kabulü (kullanıcı 2026-07-13)
-- **Faz/WP:** —
-- **Aşama:** —
-- **SAHİP yollar:** —
-- **Ortak/riskli yüzey:** —
+- **Durum:** [~] Aktif
+- **Faz/WP:** WP-65 · Aylık Raporlar — E-posta Sağlayıcısı ve Teslim Mimarisi Kararı
+- **Aşama:** Geliştiriliyor
+- **SAHİP yollar:** `docs/AYLIK-RAPOR-KARAR.md`, `progress.md` (yalnız bu lane + WP-65 kartı)
+- **Ortak/riskli yüzey:** Yok (yalnız karar dokümanı; kod/migration/secret yok)
 - **Dal:** — (main)
-- **Başlangıç:** —
-- **Son güncelleme:** 2026-07-13
-- **Not:** V8-A native sayaç/bildirim/widget (beta-v11…v15) + Grok in-app start hotfix (`94945ac`) ile kod hattı kapatıldı. Kalan: sonraki beta cihaz smoke; OEM Live Panel ince ayar ayrı polish (kapsam dışı).
+- **Başlangıç:** 2026-07-14 17:43 (Europe/Istanbul)
+- **Son güncelleme:** 2026-07-14 17:43
+- **Not:** Çakışma ön-kontrolü geçti — Codex WP-68 planlama, Grok WP-61 campfire asset; SAHİP kesişimi yok. WP-65 yalnız karar dokümanı üretir, kod/deploy/secret kapsamda değil.
 
 ### Codex Lane
 - **Durum:** [~] Aktif
-- **Faz/WP:** WP-63 · Android Widget R2 ürün briefi ve veri sözleşmesi
-- **Aşama:** Brief şablonu hazır — ürün kararı bekliyor
-- **SAHİP yollar:** `docs/ANDROID-WIDGET-R2-BRIEF.md`, `docs/QA-ANDROID-WIDGETS.md`, `progress.md` (yalnız bu lane + WP-63 kartı)
-- **Ortak/riskli yüzey:** Yok; Flutter/Kotlin widget kodu, manifest ve `pubspec.yaml` kapsam dışı
+- **Faz/WP:** WP-68 · Android Widget R2 responsive native yüzeyler
+- **Aşama:** Geliştiriliyor
+- **SAHİP yollar:** `app/lib/features/android_widgets/android_widget_service.dart`, `app/lib/data/providers/study_providers.dart`, `app/android/app/src/main/kotlin/**/widgets/{StudyWidgetProviders,WidgetRefreshReceiver}.kt`, `app/android/app/src/main/res/{layout,xml}/odak_*widget.xml`, `app/android/app/src/main/AndroidManifest.xml`, `app/test/features/android_widget_r2_test.dart`, `docs/QA-ANDROID-WIDGETS.md`, `progress.md` (yalnız bu lane + WP-68 kartı)
+- **Ortak/riskli yüzey:** `AndroidManifest.xml` (sıcak; başka aktif sahip yok). `app/pubspec.yaml` Grok WP-61 sahibi — DOKUNMA.
 - **Dal:** — (ana dal `main`)
 - **Başlangıç:** 2026-07-14 18:04 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-14 19:36
-- **Not:** `docs/ANDROID-WIDGET-R2-BRIEF.md` ve `docs/QA-ANDROID-WIDGETS.md` hazır. Kullanıcı ilk yüzey/boyut/etkileşim ile kilit ekranı-grup verisi gizlilik kararını vermeden kod WP'si açılamaz. Önceki bakım: `flutter test --concurrency=1` 332 PASS; debug APK derlendi. Push yok.
+- **Son güncelleme:** 2026-07-14 20:03
+- **Not:** WP-68 claim edildi. Aktif Grok WP-61 yalnız kamp ateşi asset/`pubspec.yaml` kulvarında; ortak sahip yok. 1×1 timer + responsive günlük/grup hedefi/sıralaması, olay bazlı snapshot ile uygulanacak. Önceki bakım: `flutter test --concurrency=1` 332 PASS; debug APK derlendi. Push yok.
 
 ### Grok Lane
-- **Durum:** [~] Aktif — cihaz koşumu / ürün kabulü açık
-- **Faz/WP:** WP-64 · Çoklu cihaz senkronizasyon QA ve kurtarma provası
-- **Aşama:** Kod/şablon tamamlandı — cihaz QA bekliyor
-- **SAHİP yollar:** `docs/QA-MULTI-DEVICE-SYNC.md`, `progress.md` (yalnız bu lane + WP-64 kartı)
-- **Ortak/riskli yüzey:** Yok; `app/lib/**` ve `supabase/migrations/**` kapsam dışı (DOKUNMA)
+- **Durum:** [~] Aktif — ürün görsel onayı / cihaz QA açık
+- **Faz/WP:** WP-61 · Kamp Ateşi R2 görsel yön + PNG asset sözleşmesi
+- **Aşama:** Otomatik test geçti — ürün kabulü bekliyor
+- **SAHİP yollar:** `docs/CAMPFIRE-R2-TASARIM.md`, `app/assets/campfire/**`, `app/pubspec.yaml` (yalnız asset), `app/test/assets/campfire_assets_test.dart`, `scripts/generate_campfire_assets.py`, `progress.md` (bu lane + WP-61/64)
+- **Ortak/riskli yüzey:** `pubspec.yaml` assets satırları işlendi; Codex WP-68 plan aşamasında widget kodu yok — pubspec çakışması yok. `classroom/**` DOKUNMADI.
 - **Dal:** — (ana dal `main`)
-- **Başlangıç:** 2026-07-14 14:32 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-14 14:45
-- **Not:** `docs/QA-MULTI-DEVICE-SYNC.md` yazıldı (matris, MDS-01…14, kurtarma R1–R7, P0/P1 bulgu şablonu). Kod/şema yok. Fiziksel 2×Android + Windows video-zaman damgalı koşum ve ürün kabulü kullanıcı/operatörde.
+- **Başlangıç:** 2026-07-14 14:42 (Europe/Istanbul)
+- **Son güncelleme:** 2026-07-14 14:50
+- **Not:** WP-61 first-party PNG seti + tasarım sözleşmesi + 3/3 asset smoke PASS. WP-62 render için ürün görsel onayı gerekir. WP-64 cihaz koşumu operatörde.
 
 ---
 
@@ -116,10 +116,11 @@
 
 | WP | Durum | Kısa kapsam | Bağımlılık |
 |---|---|---|---|
-| WP-61 | Bekliyor | Kamp Ateşi R2 · görsel yön, PNG seti ve asset sözleşmesi | — |
+| WP-61 | [~] Otomatik test geçti · ürün kabulü bekliyor (Grok) | Kamp Ateşi R2 · görsel yön, PNG seti ve asset sözleşmesi | — |
 | WP-62 | Bekliyor | Kamp Ateşi R2 · katmanlı sahne ve performanslı animasyon | WP-61 ürün kabulü |
-| WP-63 | Ürün briefi bekliyor | Android Widget R2 · kapsam/öncelik kararı | Kullanıcı briefi |
-| WP-64 | [~] Şablon hazır · cihaz QA bekliyor (Grok) | Çoklu cihaz senkronizasyon QA ve kurtarma provası | WP-53 ürün kabulü |
+| WP-63 | Brief teslim edildi | Android Widget R2 · 1×1 ve responsive ürün sözleşmesi | — |
+| WP-68 | Bekliyor | Android Widget R2 · native responsive sayaç/hedef/sıralama uygulaması | WP-63 briefi |
+| WP-64 | [~] Şablon hazır · cihaz QA operatörde | Çoklu cihaz senkronizasyon QA ve kurtarma provası | WP-53 ürün kabulü |
 | WP-65 | Ürün kararı bekliyor | Aylık rapor/e-posta sağlayıcısı ve teslim mimarisi | Gönderen/izin kararı |
 | WP-66 | Ürün kararı bekliyor | Hesap silme ve veri saklama politikası | Silme/retention kararı |
 | WP-67 | Ürün briefi bekliyor | İstatistik Görselleştirme R2 · grafik kataloğu | Kullanım soruları |
@@ -161,18 +162,19 @@
 
 
 ### WP-61: Kamp Ateşi R2 · Görsel Yön, PNG Seti ve Asset Sözleşmesi 🔥
-- **Program/Faz:** Gruplar deneyimi R2 · **Durum:** [ ] Bekliyor · **Bağımlılık:** —
+- **Program/Faz:** Gruplar deneyimi R2 · **Ajan:** Grok · **Durum:** [~] Otomatik test geçti — ürün görsel kabulü / cihaz QA bekliyor · **Bağımlılık:** —
 - **Problem:** Mevcut kamp ateşi işlevsel polish aldı (WP-45) fakat özgün bir sahne kimliği, tekrar kullanılabilir PNG seti ve durumlara bağlı görsel dil yok.
 - **Kapsam:** Sanat yönü (katmanlar, renk/kontrast, gece-gündüz davranışı), lisansı/üretim kaynağı kayıtlı PNG seti, isimlendirme-ölçü-alpha sözleşmesi ve Flutter asset manifesti. Üretilecek set: zemin, odun, alevin en az üç katmanı, köz/parçacık, duman ve boş/az/yoğun aktivite durumları.
 - **Kapsam dışı:** `campfire_scene.dart` render/animasyon kodu (→ WP-62), grup verisi/goal hesabı, yeni tema motoru, kullanıcıdan fotoğraf yükleme.
-- **SAHİP dosyalar (yaz):** `app/assets/campfire/**`, `app/pubspec.yaml` (yalnız asset bildirimi), `docs/CAMPFIRE-R2-TASARIM.md`.
+- **SAHİP dosyalar (yaz):** `app/assets/campfire/**`, `app/pubspec.yaml` (yalnız asset bildirimi), `docs/CAMPFIRE-R2-TASARIM.md`, `app/test/assets/campfire_assets_test.dart`, `scripts/generate_campfire_assets.py`.
 - **DOKUNMA:** `app/lib/features/classroom/**`, `app/lib/core/theme/**`, `supabase/**`, mevcut kullanıcı içeriği/assetleri. `references/campfire/**` yalnız kaynak olarak okunur; sahipliği belirsiz dosyalar değiştirilmez.
-- **Adımlar:** [ ] Sahne durum matrisi ve erişilebilir kontrast kararlarını yaz; [ ] PNG paketini ölçü/alpha/isim sözleşmesine göre üret veya lisansını doğrula; [ ] 1×/2× yoğunluk ve düşük bellek fallback kararını belgeleyip manifesti ekle; [ ] asset envanteri + kaynak/lisans kaydını oluştur.
+- **Adımlar:** [x] Sahne durum matrisi (empty/low/high) + kontrast `docs/CAMPFIRE-R2-TASARIM.md`; [x] First-party PNG seti 1.0x/2.0x (stock yok); [x] pubspec `assets/campfire/` + `2.0x/`; [x] `inventory.json` lisans/envanter + smoke test 3/3 PASS.
 - **Veri/Migration etkisi:** Yok. Geri alma = asset manifest satırlarını ve paketi birlikte kaldırmak.
-- **RLS/Güvenlik:** Ağ/veri erişimi yok; üçüncü taraf asset lisansı ve üretim kaynağı dokümana yazılır.
+- **RLS/Güvenlik:** Ağ/veri erişimi yok; third-party stock yok; first-party yordamsal üretim kaydı belgede.
 - **Edge-case'ler:** Koyu/açık tema kontrastı, küçük ekran crop, düşük RAM, asset eksik/bozuk, reduce-motion, APK boyutu artışı.
-- **Kabul (ölçülebilir):** Belgede tüm sahne durumları için hangi PNG katmanlarının kullanıldığı bellidir; her PNG adı/ölçüsü/alpha kuralına uyar; Flutter asset yükleme smoke testi geçer; 360 dp ve tablet önizlemesinde crop/okunamaz kontrast 0; ürün sahibi görsel yönü onaylar. `Cihazda doğrulanmalı`.
+- **Kabul (ölçülebilir):** Belgede durum→katman matrisi var; PNG adı/ölçü/alpha sözleşmeye uyar; smoke test yeşil (`Kodda doğrulandı`). 360 dp/tablet görsel + ürün sahibi onayı `Cihazda doğrulanmalı` / ürün kabulü — açık. Onaydan sonra WP-62.
 - **Tuzaklar:** İnternetten lisanssız asset almak; tek düz PNG ile animasyon beklemek; `pubspec.yaml` değişikliğini WP-62 ile paralel yapmak.
+- **Test (2026-07-14):** `flutter test test/assets/campfire_assets_test.dart --dart-define-from-file=env.json` → 3/3 PASS.
 
 ### WP-62: Kamp Ateşi R2 · Katmanlı Sahne, Animasyon ve Erişilebilirlik 🔥
 - **Program/Faz:** Gruplar deneyimi R2 · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-61 ürün kabulü
@@ -189,17 +191,38 @@
 - **Tuzaklar:** Her frame'de tüm sahneyi yeniden kurmak; sahneye iş mantığı taşımak; hareket azaltma tercihini yok saymak.
 
 ### WP-63: Android Widget R2 · Ürün Briefi ve Veri Sözleşmesi 📲
-- **Program/Faz:** Android widget iyileştirmesi · **Durum:** [~] Brief şablonu hazır — ürün kararı bekliyor · **Bağımlılık:** Kullanıcının ayrıntıları
+- **Program/Faz:** Android widget iyileştirmesi · **Durum:** [~] Ürün briefi tamamlandı — uygulama WP'si planlanacak · **Bağımlılık:** —
 - **Problem:** Widget altyapısı vardır; ancak hangi widget'ın, hangi bilgiyi, hangi boyutta ve hangi etkileşimle öncelikle düzenleneceği net değildir. Belirsiz kapsamla kodlamak yanlış yüzeye yatırım olur.
 - **Kapsam:** Kullanıcıyla 2×1/4×1/4×2 ve olası lock-screen yüzeyleri için öncelik matrisi; gösterilecek veriler, dokunma eylemleri, boş/hata/offline durumu, yenileme tetikleyicileri, gizlilik ve Android sürüm/OEM sınırları.
 - **Kapsam dışı:** Flutter/Kotlin widget kodu, manifest, yeni servis, tasarım implementasyonu. Bunlar brief kabulünden sonra ayrı uygulama WP'sidir.
 - **SAHİP dosyalar (yaz):** `docs/ANDROID-WIDGET-R2-BRIEF.md`, `docs/QA-ANDROID-WIDGETS.md` (R2 kabul matrisi).
 - **DOKUNMA:** `app/lib/features/android_widgets/**`, `app/android/**`, `app/pubspec.yaml`, `supabase/**`.
-- **Adımlar:** [x] Mevcut provider/snapshot/etkileşim envanterini `docs/ANDROID-WIDGET-R2-BRIEF.md`'de doğrula; [ ] kullanıcıdan öncelikli widget/yüzey ve bilgi hiyerarşisini al; [ ] veri kaynağı-yenileme-etkileşim sözleşmesini kullanıcı seçimiyle tamamla; [x] OEM/WorkManager/Chronometer sınırlarını briefte açıkça kaydet; [x] uygulama WP'sinin cihaz QA matrisini `docs/QA-ANDROID-WIDGETS.md` olarak çıkar.
+- **Adımlar:** [x] Mevcut provider/snapshot/etkileşim envanterini `docs/ANDROID-WIDGET-R2-BRIEF.md`'de doğrula; [x] kullanıcıdan öncelikli widget/yüzey ve bilgi hiyerarşisini al; [x] veri kaynağı-yenileme-etkileşim sözleşmesini kullanıcı seçimiyle tamamla; [x] OEM/WorkManager/Chronometer sınırlarını briefte açıkça kaydet; [x] uygulama WP'sinin cihaz QA matrisini `docs/QA-ANDROID-WIDGETS.md` olarak çıkar.
 - **Veri/Migration etkisi:** Yok.
 - **RLS/Güvenlik:** Widget'ta kilit ekranı/başka uygulama görünürlüğü için hassas veri gösterim kararı ürün sahibine aittir; varsayılan en az veri ilkesi uygulanır.
 - **Kabul (ölçülebilir):** Ürün sahibi widget türü önceliğini, her tür için gösterilecek alanları, dokunma eylemlerini ve kilit ekranı gizlilik kuralını yazılı onaylar; her yüzey için yenileme olayı ve boş/hata metni belirlidir. `Ürün kararı gerekiyor`.
 - **Tuzaklar:** Saniyelik Flutter redraw planlamak; OEM görünümünü garanti etmek; brief olmadan “yeniden tasarım” kapsamını varsaymak.
+
+### WP-68: Android Widget R2 · Responsive Native Yüzeyler 📲
+- **Program/Faz:** Android Widget R2 · **Ajan:** Codex · **Durum:** [~] Geliştiriliyor · **Bağımlılık:** WP-63 briefi teslim edildi
+- **Problem:** Mevcut sayaç widget'ı tek biçimli; günlük istatistik ve sıralama küçük boyutta bilgi yoğunluğunu ayarlamıyor, ayrı grup hedefi yüzeyi yok. Kullanıcının istediği 1×1 başlangıç ve büyüdükçe açılan içerik sözleşmesi uygulamada yok.
+- **Kapsam:** 1×1 Başlat/Durdur sayaç; günlük hedef oranı ve grup hedef oranı için ayrı native widget'lar; boyuta göre sadeleşen grup sıralaması; olay bazlı snapshot besleme ve uygulamaya açılan kök dokunuşlar. `docs/ANDROID-WIDGET-R2-BRIEF.md` §3–4 sözleşmedir.
+- **Kapsam dışı:** Yeni backend/RPC/migration, grup görünürlük politikasını genişletmek, kilit ekranında çalışma/grup verisi göstermek, saniyelik Flutter redraw, Clock/Alarm widget redesign'i, `StudyTimerService` iş mantığını değiştirmek.
+- **SAHİP dosyalar (yaz):**
+  - `app/lib/features/android_widgets/android_widget_service.dart`, `app/lib/data/providers/study_providers.dart`
+  - `app/android/app/src/main/kotlin/**/widgets/StudyWidgetProviders.kt`, `WidgetRefreshReceiver.kt`, yeni widget yardımcıları
+  - `app/android/app/src/main/res/layout/odak_*_widget.xml`, `app/android/app/src/main/res/xml/*widget*.xml`, `app/android/app/src/main/AndroidManifest.xml`
+  - `app/test/features/android_widget_r2_test.dart`, gerekli güncel widget gateway testleri, `docs/QA-ANDROID-WIDGETS.md`
+- **DOKUNMA:** `StudyTimerService.kt`, `TimerActionReceiver.kt`, timer state machine/repository/RLS, `app/pubspec.yaml` (WP-61 aktif sahibi), `core/theme/**`, `supabase/**`.
+- **Adımlar:** [ ] Snapshot sözleşmesini günlük hedef, grup hedefi ve kendi sıra alanlarıyla genişlet; [ ] mevcut oturum/grup olaylarında yalnız ilgili widget'ları tazele; [ ] 1×1/orta/büyük seçenekleri `AppWidgetOptions` ile native RemoteViews'ta uygula; [ ] root dokunuşları ilgili Flutter yüzeyine, sayaç eylemini mevcut native servise bağla; [ ] boş/offline/grupsuz durumları brief metinleriyle uygula; [ ] Flutter testleri + Android build + Samsung/Pixel QA matrisi.
+- **Veri/Migration etkisi:** Yok. Geri alma = yeni provider/manifest/layout ve snapshot anahtarlarını kaldırıp mevcut timer/stats/leaderboard provider'larına dönmek; kullanıcı/sunucu verisi değişmez.
+- **RLS/Güvenlik:** Yeni ağ isteği/yetki yok; snapshot yalnız kullanıcının zaten istemcide okuyabildiği kişisel/ortak aktif grup verisinden üretilir. E-posta, davet kodu, token ve kilit ekranında grup verisi yok.
+- **Edge-case'ler:** Grupsuz kullanıcı, grup hedefi yok, 0/üstü hedef oranı, gün sınırı Europe/Istanbul, offline eski snapshot, hızlı resize, widget silinip yeniden eklenmesi, koyu/açık/dynamic color, %130 font, cold-start/force-stop/reboot.
+- **Kabul (ölçülebilir):** 1×1'de her widgetta kesilmiş metin/ölü dokunuş 0; desteklenen geniş boyutta briefteki ilave metrik görünür; sayaç uygulama kapalıyken 20 ardışık Başlat/Durdurda çift oturum 0; oturum/grup/hedef olayı sonrası ilgili snapshot ≤5 sn güncellenir; unit/widget testleri + Android debug build geçer; Samsung ve Pixel cihazlarında QA matrisi kanıtlanır. `Cihazda doğrulanmalı`.
+- **Tuzaklar:** Tek RemoteViews layout'unu küçültmek; root "Yenile" ile eski snapshot'ı yeniymiş gibi göstermek; grup bilgisini kilit ekranına sızdırmak; WP-61'in `pubspec.yaml` değişikliğiyle çakışmak.
+- **Model önerisi:** 🔴 Opus
+
+> ✅ Çakışma yok: Aktif Grok WP-61 yalnız kamp ateşi assetleri/`pubspec.yaml` ve WP-64 QA dokümanlarına sahip. WP-68 `pubspec.yaml`a dokunmaz; Android widget kaynakları ve `study_providers.dart` ortak değildir.
 
 ### WP-64: Çoklu Cihaz Senkronizasyon QA ve Kurtarma Provası 🔄
 - **Program/Faz:** Güvenilirlik / platformlar arası doğrulama · **Ajan:** Grok · **Durum:** [~] Şablon hazır — cihaz QA / ürün kabulü bekliyor · **Bağımlılık:** WP-53 ürün kabulü + Android yayımlı sürüm
@@ -213,7 +236,7 @@
 - **RLS/Güvenlik:** Gerçek kullanıcı verisi/oturum tokenı kanıta girmez; test hesapları yalnız kendi verisini görür.
 - **Kabul (ölçülebilir):** Tanımlı en az 12 senaryonun her birinde Android/Windows son durumları eşleşir; veri kaybı/çift oturum P0=0; başarısız ağ senaryosunda kullanıcıya uygulanabilir kurtarma adımı vardır; ürün sahibi kanıtı kabul eder. `Cihazda doğrulanmalı`.
 - **Tuzaklar:** Emulator'ı cihaz kanıtı saymak; test sonuçlarını kod düzeltmesiyle karıştırmak; üretim kullanıcı verisi kullanmak.
-- **Not (2026-07-14):** Kod/şema yok. Belge: outbox coalesce + `upsert onConflict:id` + Europe/Istanbul gün sınırı + eşzamanlı düzenleme gözlemi (MDS-07). Fiziksel koşum operatörde; Windows base shell (WP-27) ile koşulabilir, WP-53 IA sonrası tekrar koşum önerilir.
+- **Not (2026-07-14):** Kod/şema yok. Belge: outbox coalesce + `upsert onConflict:id` + Europe/Istanbul gün sınırı + eşzamanlı düzenleme gözlemi (MDS-07). Fiziksel koşum operatörde; Windows base shell (WP-27) ile koşulabilir, WP-53 IA sonrası tekrar koşum önerilir. Ajan teslimi şablon + kurtarma; cihaz videosu ürün/operatör.
 - **Değişen dosyalar:** `docs/QA-MULTI-DEVICE-SYNC.md`, `progress.md` (Grok lane + bu kart).
 
 ### WP-65: Aylık Raporlar · E-posta Sağlayıcısı ve Teslim Mimarisi Kararı ✉️
