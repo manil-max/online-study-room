@@ -209,7 +209,7 @@ Yeni devasa Saat/Tema motoru buraya sıkıştırılmaz. Önce mevcut ürün güv
 - **V8-A** Sayaç–bildirim–widget tek doğruluk kaynağı (bkz. §9.1)
 - **V8-B** Genel senkronizasyon denetimi (bkz. §9.2)
 - **V8-C** Küçük ama görünür IA düzenlemeleri (bkz. §9.3)
-Sonra: V8 beta → gerçek cihaz soak → V8 stable (kalite kapısıyla).
+**Durum (2026-07-14):** v8 yayımlandı. WP-48/49/50, ürün sahibinin doğrudan yayın ve soak'ı atlama kararıyla açık paket olmaktan çıkarıldı. Yayın sonrası sorunlar aynı kartlara geri yazılmaz; ayrı debug/release WP'si açılır.
 
 ### Sonraki büyük sürümler (ayrı adaylar, sırayla)
 
@@ -218,20 +218,24 @@ Sonra: V8 beta → gerçek cihaz soak → V8 stable (kalite kapısıyla).
 - **Başarım & Sosyal Profil 3.0** — server-authoritative (§9.6)
 - **Windows masaüstü kalitesi** (mevcut WP-27)
 
-### Önerilen 12 adımlık sıra
+### Sonraki planlama kuyruğu (2026-07-14)
 
-1. Proje gerçeği ve kalite kapıları
-2. Migration/RLS/Edge Function canlı durum doğrulaması
-3. Sayaç–bildirim–widget tek doğruluk kaynağı
-4. Genel session/stat senkronizasyonu
-5. Stats ve Groups küçük IA değişiklikleri
-6. V8 beta
-7. Gerçek cihaz soak testi
-8. V8 stable
-9. Saat motoru ve Saat uygulaması
-10. Tema Stüdyosu
-11. Başarım/Sosyal Profil server-authoritative dönüşüm
-12. Windows masaüstü kalitesi
+- **Kamp Ateşi R2** — WP-61, önce özgün görsel yön ve lisansı kayıtlı PNG katman setini; WP-62, sonra bu sözleşmeyi kullanan performanslı/reduce-motion uyumlu sahneyi teslim eder. Aynı `pubspec.yaml`/asset yüzeyi nedeniyle seri yürür.
+- **Android Widget R2** — WP-63, 1×1 Başlat/Durdur sayaç + günlük/grup hedef oranı + grup sıralaması için responsive sözleşmeyi teslim etti. WP-68 bu sözleşmeyi native Kotlin/Flutter yüzeylerine uygular; canlı süre native `Chronometer`, istatistikler olay bazlıdır.
+- **Açık ürün/operasyon kararları** — WP-64 çoklu cihaz QA kanıtını; WP-65 aylık rapor e-postasının sağlayıcı/gönderen/izin kararını; WP-66 hesap silme-retention kararını; WP-67 istatistik görselleştirme briefini kapsar. Karar kartları implementasyon veya canlı veri değişikliği yapmaz.
+
+### Tarihsel 12 adımlık sıra ve güncel durum
+
+1. Proje gerçeği ve kalite kapıları — kapandı.
+2. Migration/RLS/Edge Function canlı durum doğrulaması — kapandı.
+3. Sayaç–bildirim–widget tek doğruluk kaynağı — kapandı.
+4. Genel session/stat senkronizasyonu — kapandı.
+5. Stats ve Groups küçük IA değişiklikleri — kapandı.
+6. V8 beta, 7. cihaz soak, 8. V8 stable — v8 yayımlandı; soak ürün kararıyla atlandı.
+9. Saat motoru ve Saat uygulaması — ürün kapanışı.
+10. Tema Stüdyosu — ürün kapanışı.
+11. Başarım/Sosyal Profil server-authoritative dönüşüm — ürün kapanışı.
+12. Windows masaüstü kalitesi — WP-27/53/28 ile açık.
 
 ---
 
