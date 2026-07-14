@@ -29,23 +29,26 @@ final nudgeNotificationListenerProvider = Provider<void>((ref) {
   final prefs = ref.read(sharedPreferencesProvider);
   final notified =
       (prefs.getStringList(_kNotifiedNudgeIdsKey) ?? const <String>[]).toSet();
-  // İlk kez çalışıyorsak (anahtar yok), mevcut okunmamış yığını sessizce işaretle
-  // ki güncelleme sonrası eski dürtmeler topluca patlamasın; sonraki her dürtme
-  // bir kez bildirilir.
-  var seeded = prefs.containsKey(_kNotifiedNudgeIdsKey);
+  // Her uygulama oturumunun ilk gerçek stream anlık görüntüsü geçmişi temsil
+  // eder. Kalıcı set, aynı dürtmeyi tekrar göstermeyi önler; fakat yalnız ona
+  // güvenmek, uygulama kapalıyken gelen dürtmelerin bir sonraki açılışta topluca
+  // bildirim olarak düşmesine yol açar. İlk anlık görüntüyü her zaman sessizce
+  // temel al; yalnız bu dinleyici kurulduktan sonra canlı gelen dürtmeleri göster.
+  var receivedInitialSnapshot = false;
 
   ref.listen(receivedNudgesProvider(user.id), (previous, next) {
+    if (!next.hasValue) return;
     final unread = (next.value ?? const <Nudge>[])
         .where((n) => n.readAt == null)
         .toList();
-    if (unread.isEmpty) return;
 
-    if (!seeded) {
+    if (!receivedInitialSnapshot) {
       notified.addAll(unread.map((n) => n.id));
-      seeded = true;
+      receivedInitialSnapshot = true;
       unawaited(prefs.setStringList(_kNotifiedNudgeIdsKey, notified.toList()));
       return;
     }
+    if (unread.isEmpty) return;
 
     // Sessiz saatlerde bildirim gösterme; yine de "bildirildi" olarak işaretle
     // ki sessiz saat bitince eski dürtmeler topluca patlamasın (§WP-36).

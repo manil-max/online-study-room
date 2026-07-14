@@ -22,15 +22,16 @@ class _FakeNudgeService implements NudgeNotificationGateway {
 }
 
 Nudge _nudge(String id, {DateTime? readAt}) => Nudge(
-      id: id,
-      groupId: 'g1',
-      senderId: 's1',
-      recipientId: 'u1',
-      createdAt: DateTime(2026),
-      readAt: readAt,
-    );
+  id: id,
+  groupId: 'g1',
+  senderId: 's1',
+  recipientId: 'u1',
+  createdAt: DateTime(2026),
+  readAt: readAt,
+);
 
-Future<void> _tick() => Future.delayed(const Duration(milliseconds: 10), () => null);
+Future<void> _tick() =>
+    Future.delayed(const Duration(milliseconds: 10), () => null);
 
 void main() {
   const userId = 'u1';
@@ -58,64 +59,102 @@ void main() {
     return (container, fake);
   }
 
-  test('ilk gözlem mevcut okunmamışları sessizce işaretler (patlama yok)',
-      () async {
-    SharedPreferences.setMockInitialValues({});
-    final prefs = await SharedPreferences.getInstance();
-    final controller = StreamController<List<Nudge>>();
-    final (container, fake) = await boot(prefs, controller.stream);
-    addTearDown(container.dispose);
-    addTearDown(controller.close);
+  test(
+    'ilk gözlem mevcut okunmamışları sessizce işaretler (patlama yok)',
+    () async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      final controller = StreamController<List<Nudge>>();
+      final (container, fake) = await boot(prefs, controller.stream);
+      addTearDown(container.dispose);
+      addTearDown(controller.close);
 
-    controller.add([_nudge('a')]);
-    await _tick();
+      controller.add([_nudge('a')]);
+      await _tick();
 
-    expect(fake.shown, isEmpty);
-  });
+      expect(fake.shown, isEmpty);
+    },
+  );
 
-  test('seed sonrası yeni dürtme bir kez bildirilir, tazelemede tekrar etmez',
-      () async {
-    SharedPreferences.setMockInitialValues({});
-    final prefs = await SharedPreferences.getInstance();
-    final controller = StreamController<List<Nudge>>();
-    final (container, fake) = await boot(prefs, controller.stream);
-    addTearDown(container.dispose);
-    addTearDown(controller.close);
+  test(
+    'seed sonrası yeni dürtme bir kez bildirilir, tazelemede tekrar etmez',
+    () async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      final controller = StreamController<List<Nudge>>();
+      final (container, fake) = await boot(prefs, controller.stream);
+      addTearDown(container.dispose);
+      addTearDown(controller.close);
 
-    controller.add([_nudge('a')]); // seed
-    await _tick();
-    controller.add([_nudge('a'), _nudge('b')]); // b yeni
-    await _tick();
-    controller.add([_nudge('a'), _nudge('b')]); // stream tazelendi → tekrar yok
-    await _tick();
+      controller.add([_nudge('a')]); // seed
+      await _tick();
+      controller.add([_nudge('a'), _nudge('b')]); // b yeni
+      await _tick();
+      controller.add([
+        _nudge('a'),
+        _nudge('b'),
+      ]); // stream tazelendi → tekrar yok
+      await _tick();
 
-    expect(fake.shown.map((n) => n.id), ['b']);
-  });
+      expect(fake.shown.map((n) => n.id), ['b']);
+    },
+  );
 
-  test('uygulama yeniden açılınca (kalıcı set) eski dürtme tekrar bildirilmez',
-      () async {
-    SharedPreferences.setMockInitialValues({});
-    final prefs = await SharedPreferences.getInstance();
+  test(
+    'uygulama yeniden açılınca (kalıcı set) eski dürtme tekrar bildirilmez',
+    () async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
 
-    // 1. oturum: b bildirildi ve kalıcı sete yazıldı.
-    final c1 = StreamController<List<Nudge>>();
-    final (cont1, fake1) = await boot(prefs, c1.stream);
-    c1.add([_nudge('a')]);
-    await _tick();
-    c1.add([_nudge('a'), _nudge('b')]);
-    await _tick();
-    expect(fake1.shown.map((n) => n.id), ['b']);
-    cont1.dispose();
-    await c1.close();
+      // 1. oturum: b bildirildi ve kalıcı sete yazıldı.
+      final c1 = StreamController<List<Nudge>>();
+      final (cont1, fake1) = await boot(prefs, c1.stream);
+      c1.add([_nudge('a')]);
+      await _tick();
+      c1.add([_nudge('a'), _nudge('b')]);
+      await _tick();
+      expect(fake1.shown.map((n) => n.id), ['b']);
+      cont1.dispose();
+      await c1.close();
 
-    // 2. oturum: aynı prefs; a ve b sette → hiç bildirim yok.
-    final c2 = StreamController<List<Nudge>>();
-    final (cont2, fake2) = await boot(prefs, c2.stream);
-    addTearDown(cont2.dispose);
-    addTearDown(c2.close);
-    c2.add([_nudge('a'), _nudge('b')]);
-    await _tick();
+      // 2. oturum: aynı prefs; a ve b sette → hiç bildirim yok.
+      final c2 = StreamController<List<Nudge>>();
+      final (cont2, fake2) = await boot(prefs, c2.stream);
+      addTearDown(cont2.dispose);
+      addTearDown(c2.close);
+      c2.add([_nudge('a'), _nudge('b')]);
+      await _tick();
 
-    expect(fake2.shown, isEmpty);
-  });
+      expect(fake2.shown, isEmpty);
+    },
+  );
+
+  test(
+    'uygulama kapalıyken gelen dürtmeler açılışta topluca bildirilmez',
+    () async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+
+      // İlk oturum mevcut dürtmeyi sessizce temel alır.
+      final c1 = StreamController<List<Nudge>>();
+      final (cont1, fake1) = await boot(prefs, c1.stream);
+      c1.add([_nudge('a')]);
+      await _tick();
+      expect(fake1.shown, isEmpty);
+      cont1.dispose();
+      await c1.close();
+
+      // b uygulama kapalıyken gelmiş olsun. Yeni oturumun ilk anlık görüntüsü
+      // geçmiş sayılır; Android bildirimi yalnız canlı, sonraki stream olaylarında
+      // gösterilmelidir.
+      final c2 = StreamController<List<Nudge>>();
+      final (cont2, fake2) = await boot(prefs, c2.stream);
+      addTearDown(cont2.dispose);
+      addTearDown(c2.close);
+      c2.add([_nudge('a'), _nudge('b')]);
+      await _tick();
+
+      expect(fake2.shown, isEmpty);
+    },
+  );
 }

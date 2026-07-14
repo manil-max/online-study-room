@@ -60,15 +60,15 @@
 - **Not:** Bu oturum işleri commit'lendi: grid 32-sütun `141ed2a`, core testleri `da7bdd6`, skill docs `1afba2d`. ⚠️ WP-65 karar dokümanı (`docs/AYLIK-RAPOR-KARAR.md`) önceki Claude oturumunda yazıldı ama **COMMIT'LENMEDİ** (untracked); kararı WP-69 zaten uyguladı → ürün API/DNS kararı bekliyor.
 
 ### Codex Lane
-- **Durum:** [~] Aktif
-- **Faz/WP:** WP-78 · Android beta-v19 yayın paketi
-- **Aşama:** Geliştiriliyor
-- **SAHİP yollar:** `app/pubspec.yaml`, `CHANGELOG.md`, `app/assets/release_notes.json`, `docs/VERSIONS.md`, `app/android/app/src/main/kotlin/**/timer/StudyTimerService.kt` (release build compiler fix), `progress.md`
-- **Ortak/riskli yüzey:** Android release keystore, `beta-v19` git etiketi, GitHub Actions/GitHub Release
+- **Durum:** [x] Boşta
+- **Faz/WP:** —
+- **Aşama:** —
+- **SAHİP yollar:** —
+- **Ortak/riskli yüzey:** —
 - **Dal:** — (ana dal `main`)
-- **Başlangıç:** 2026-07-14 23:35 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-14 23:35 (Europe/Istanbul)
-- **Not:** Kullanıcı talimatıyla beta-v19 yayın hazırlığı claim edildi; stable yayın kapsam dışı.
+- **Başlangıç:** —
+- **Son güncelleme:** 2026-07-15 00:05 (Europe/Istanbul)
+- **Not:** WP-79 kodu ve otomatik testleri tamamlandı; yeni beta ve Android cihaz QA bekliyor.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
@@ -108,7 +108,8 @@
 |---|---|---|---|
 | WP-76 | [~] Test için bekliyor | Dinamik panel — cihazda çalışan canlı kontrol paneli (Live Activity / durum çubuğu) | — |
 | WP-77 | [~] Test için bekliyor | İzin yönetimi — verilen dört Android iznini geri alma ve rehberi | — |
-| WP-78 | [~] Geliştiriliyor | Android beta-v19 — imzalı APK ve GitHub prerelease | WP-76/77 kod commitleri |
+| WP-78 | [~] Test için bekliyor | Android beta-v19 — imzalı APK ve GitHub prerelease | WP-76/77 kod commitleri |
+| WP-79 | [~] Test için bekliyor | Bildirim açılışta toplu teslim hata düzeltmesi | beta-v19 cihaz bulgusu |
 
 > **2026-07-14 proje denetimi:** Serbest sürükle-bırak ızgara, canlı grup hedefi ve saat stilleri **zaten kodda uygulanmış** (backlog stale idi; geçici WP-72/73/75 iptal). Dinamik paneldeki cihaz/eylem sorunu için açılan **WP-76** kod+otomatik test aşamasını geçti; Samsung/Pixel cihaz QA’sı bekliyor.
 >
@@ -117,12 +118,6 @@
 > - **Ürün kararı (kod değil, senin kararın):** WP-66 hesap silme retention · WP-67 grafik türleri · WP-69 aylık rapor için DNS + Resend API key.
 
 > **Planlama notu:** WP-39 iptal; WP-48/49/50 kaldırıldı; geçici WP-72/73/74/75 (2026-07-14) zaten-yapılmış/yanlış açıldığı için iptal edildi. Sorun çıkarsa ayrı debug/release WP'si açılır.
-
-### WP-78: Android beta-v19 Yayın Paketi
-- **Program/Faz:** Android dağıtım · **Ajan:** Codex · **Durum:** [~] Geliştiriliyor · **Bağımlılık:** WP-76/77 kod commitleri
-- **Kapsam:** `1.0.19-beta+19` sürüm notları, imzalı beta APK, `beta-v19` etiketi ve GitHub prerelease. Stable tag/release yok.
-- **Derleme düzeltmesi:** WP-76 mola dönüş yolunda `SharedPreferences.getString` varsayılan değeri eksikti; release derlemesinde bulundu ve düzeltildi.
-- **Kabul:** Yerel imzalı beta release APK derlemesi; etiketin `beta-v19` olması; GitHub Actions APK + SHA-256 prerelease başarısı; telefonda kurulup WP-76/77 QA için hazır olması.
 
 ## Test için bekleyenler
 
@@ -143,6 +138,17 @@
 - **Uygulandı:** Widget ve izinler ekranında izin verilmişse dört kartın düğmesi artık **Kapat**, verilmemişse **Aç**. Kapat ilgili Android sistem sayfasını açar; uygulama izni doğrudan geri alamaz. Açılır rehber, Bildirimler / Kesin alarm / Pil istisnası / Tam ekran alarm için kullanıcıya kapanış adımını Türkçe anlatır; OEM başlıklarının değişebileceğini belirtir.
 - **Otomatik kanıt:** `flutter test test/features/clock_widgets_screen_test.dart --dart-define-from-file=env.json` → PASS; `flutter analyze` depodaki WP-77 dışı mevcut 4 uyarı nedeniyle 0 değil.
 - **Bekleyen cihaz QA:** Android 13+ ve Android 14+ cihazlarda her kartta Kapat → ilgili sistem ayarı → anahtarı kapat → uygulamaya dön adımını dene; kartın turuncuya döndüğünü doğrula. Samsung/HyperOS’ta pil ekranı adı farklı olabilir; rehber metni işlevi açıkça anlatmalı.
+
+### WP-78: Android beta-v19 Yayın Paketi
+- **Program/Faz:** Android dağıtım · **Aşama:** Yayınlandı · **Kanıt:** `Kodda doğrulandı` / `Cihazda doğrulanmalı`
+- **Uygulandı:** `beta-v19` etiketi GitHub prerelease olarak yayımlandı; imzalı `app-beta-release.apk` ve SHA-256 varlığı doğrulandı. Stable yayın yapılmadı.
+- **Bekleyen cihaz QA:** Telefonda beta-v19 kurulumu ile WP-76/77 davranışlarının kabulü.
+
+### WP-79: Bildirim Açılışta Toplu Teslim Hata Düzeltmesi
+- **Program/Faz:** Android güvenilirlik bakım · **Aşama:** Otomatik test geçti · **Kanıt:** `Kodda doğrulandı` / `Cihazda doğrulanmalı`
+- **Düzeltildi:** Açılışta çalışan güncelleme kontrolünün Android sistem bildirimi üretmesi kaldırıldı; güncelleme anahtarı yalnız uygulama içi güncelleme penceresini yönetir. Dürtme dinleyicisi her uygulama oturumunun ilk stream anlık görüntüsünü sessizce temel alır; yalnız sonradan canlı gelen yeni dürtme için bildirim gösterir.
+- **Otomatik kanıt:** Dürtme/açılış senaryosu dahil 9 test PASS; değişen dosyalarda `flutter analyze` 0. Tam analiz, WP-79 dışı mevcut 4 uyarıyla başarısız.
+- **Bekleyen cihaz QA:** Bir sonraki beta kurulunca (1) uygulamayı açarken Android sisteminde güncelleme bildirimi oluşmadığını, (2) uygulama kapalıyken gönderilen dürtmelerin açılışta patlamadığını, (3) uygulama açıkken yeni gönderilen dürtmenin yalnız bir kez geldiğini doğrula.
  
 ---
 

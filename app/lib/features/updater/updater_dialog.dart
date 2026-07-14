@@ -5,14 +5,20 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../core/notifications/update_notification_service.dart';
+import '../../core/notifications/notification_preferences.dart';
 import 'release_notes_service.dart';
 import 'updater_service.dart';
 
 /// Açılışta çağrılır: yeni sürüm varsa güncelleme penceresini gösterir.
 /// Sessizdir; güncelleme yoksa veya hata olursa hiçbir şey yapmaz.
 Future<void> maybeShowUpdateDialog(BuildContext context) async {
+  final prefs = await SharedPreferences.getInstance();
+  if (!(prefs.getBool(NotificationPreferencesNotifier.kUpdates) ?? true)) {
+    return;
+  }
+
   var info = await UpdaterService().checkForUpdate();
   if (info == null || !context.mounted) return;
 
@@ -26,7 +32,6 @@ Future<void> maybeShowUpdateDialog(BuildContext context) async {
     }
   }
 
-  await UpdateNotificationService.instance.showUpdateAvailable(info);
   if (!context.mounted) return;
 
   await showDialog<void>(
@@ -70,16 +75,17 @@ class _UpdaterDialogState extends State<UpdaterDialog> {
 
     try {
       // Takılı bağlantıda sonsuza kadar beklememek için zaman aşımları.
-      final dio = Dio(BaseOptions(
-        connectTimeout: const Duration(seconds: 20),
-        receiveTimeout: const Duration(minutes: 3),
-      ));
+      final dio = Dio(
+        BaseOptions(
+          connectTimeout: const Duration(seconds: 20),
+          receiveTimeout: const Duration(minutes: 3),
+        ),
+      );
       final dir = await getTemporaryDirectory();
       final ext = widget.info.packageKind == UpdatePackageKind.msix
           ? 'msix'
           : 'apk';
-      final savePath =
-          '${dir.path}/update_${widget.info.versionCode}.$ext';
+      final savePath = '${dir.path}/update_${widget.info.versionCode}.$ext';
       final packageFile = File(savePath);
 
       await dio.download(
@@ -99,14 +105,16 @@ class _UpdaterDialogState extends State<UpdaterDialog> {
         final expected = _parseSha256(
           (await dio.get<String>(sha256Url, cancelToken: cancelToken)).data,
         );
-        final actual =
-            sha256.convert(await packageFile.readAsBytes()).toString();
+        final actual = sha256
+            .convert(await packageFile.readAsBytes())
+            .toString();
         if (expected == null || expected != actual) {
           if (await packageFile.exists()) await packageFile.delete();
           if (mounted) {
             setState(() {
               _downloading = false;
-              _error = 'Güvenlik doğrulaması başarısız (dosya bütünlüğü). '
+              _error =
+                  'Güvenlik doğrulaması başarısız (dosya bütünlüğü). '
                   'Kurulum iptal edildi.';
             });
           }
