@@ -59,15 +59,26 @@ class StudyTimerService : Service() {
                     val startedAtMs =
                         intent.getLongExtra(EXTRA_STARTED_AT_MS, System.currentTimeMillis())
                     val mode = intent.getStringExtra(EXTRA_MODE) ?: "stopwatch"
-                    handleStart(startedAtMs, mode)
+                    val phase = intent.getStringExtra(EXTRA_PHASE) ?: "work"
+                    val cycle = intent.getIntExtra(EXTRA_CYCLE, 1).coerceAtLeast(1)
+                    val subjectId = intent.getStringExtra(EXTRA_SUBJECT_ID).orEmpty()
+                    handleStart(startedAtMs, mode, phase, cycle, subjectId)
                 }
                 ACTION_STOP -> handleStop(recordInterval = true)
                 ACTION_STOP_SILENT -> handleStop(recordInterval = false)
+                ACTION_START_BREAK -> handleStartBreak()
+                ACTION_END_BREAK -> handleEndBreak()
                 ACTION_TOGGLE -> {
                     if (prefs().contains(KEY_STARTED_AT)) {
                         handleStop(recordInterval = true)
                     } else {
-                        handleStart(System.currentTimeMillis(), "stopwatch")
+                        handleStart(
+                            startedAtMs = System.currentTimeMillis(),
+                            mode = "stopwatch",
+                            phase = "work",
+                            cycle = 1,
+                            subjectId = "",
+                        )
                     }
                 }
                 else -> {
@@ -85,25 +96,87 @@ class StudyTimerService : Service() {
         return START_NOT_STICKY
     }
 
-    private fun handleStart(startedAtMs: Long, mode: String) {
+    private fun handleStart(
+        startedAtMs: Long,
+        mode: String,
+        phase: String,
+        cycle: Int,
+        subjectId: String,
+    ) {
+        // Eski Flutter bildirimi 7001, uygulama kapalıyken yalnız Preferences'a
+        // komut yazıyordu. Native panel tek otoritedir; eski eylemi temizle.
+        notificationManager().cancel(LEGACY_FLUTTER_NOTIFICATION_ID)
         val editor = prefs().edit()
         editor.putString(KEY_STARTED_AT, Instant.ofEpochMilli(startedAtMs).toString())
         editor.putLong(KEY_STARTED_AT_MS, startedAtMs)
         editor.putString(KEY_MODE, mode)
+        editor.putString(KEY_PHASE, phase)
+        editor.putInt(KEY_CYCLE, cycle)
+        editor.putString(KEY_SUBJECT, subjectId)
         editor.putString(KEY_FG_MODE, "running")
-        // Cold-start (widget'tan) faz/döngü yoksa güvenli varsayılan yaz ki Dart
-        // restore tutarlı olsun.
-        if (!prefs().contains(KEY_PHASE)) editor.putString(KEY_PHASE, "work")
-        if (!prefs().contains(KEY_CYCLE)) editor.putInt(KEY_CYCLE, 1)
         // commit: broadcast/reconcile apply() gecikmesi yüzünden hâlâ "idle"
         // okuyup uygulamadan başlatmayı geri almasın (beta-v15 in-app start bug).
         editor.commit()
 
-        startForegroundCompat(buildRunningNotification(startedAtMs))
+        startForegroundCompat(buildRunningNotification(startedAtMs, isBreak = phase == "rest"))
         // DETACH sonrası idle bildirim kalmış olabilir; running'i ayrıca da bas.
-        notificationManager().notify(NOTIFICATION_ID, buildRunningNotification(startedAtMs))
+        notificationManager().notify(
+            NOTIFICATION_ID,
+            buildRunningNotification(startedAtMs, isBreak = phase == "rest"),
+        )
         TimerWidgets.updateAll(this)
         notifyStateChanged()
+    }
+
+    /** Çalışan iş aralığını kapatır ve uygulama kapalıyken de gerçek mola fazına
+     *  geçer. Mola süresi oturuma yazılmaz; Dart açıldığında `rest` fazını
+     *  SharedPreferences'tan uzlaştırır. */
+    private fun handleStartBreak() {
+        val p = prefs()
+        val currentStart = p.getLong(KEY_STARTED_AT_MS, 0L)
+        if (currentStart <= 0L) return
+
+        // getForegroundService ile uyanmış olabileceğimiz için bookkeeping'ten
+        // önce 5 sn içinde foreground olma sözleşmesini yerine getir.
+        val nowMs = System.currentTimeMillis()
+        startForegroundCompat(buildRunningNotification(nowMs, isBreak = true))
+
+        if (p.getString(KEY_PHASE, "work") == "work" && currentStart < nowMs) {
+            appendPendingInterval(
+                p,
+                startMs = currentStart,
+                endMs = nowMs,
+                subject = p.getString(KEY_SUBJECT, "") ?: "",
+            )
+        }
+
+        p.edit()
+            .putString(KEY_STARTED_AT, Instant.ofEpochMilli(nowMs).toString())
+            .putLong(KEY_STARTED_AT_MS, nowMs)
+            .putString(KEY_PHASE, "rest")
+            .putString(KEY_FG_MODE, "running")
+            .commit()
+
+        notificationManager().notify(
+            NOTIFICATION_ID,
+            buildRunningNotification(nowMs, isBreak = true),
+        )
+        TimerWidgets.updateAll(this)
+        notifyStateChanged()
+    }
+
+    /** Molayı bitirip mevcut timer modu/döngüsüyle yeni bir çalışma epoch'u
+     *  başlatır. Mola aralığı oturum değildir; bu nedenle kuyruk yazılmaz. */
+    private fun handleEndBreak() {
+        val p = prefs()
+        if (p.getString(KEY_PHASE) != "rest") return
+        handleStart(
+            startedAtMs = System.currentTimeMillis(),
+            mode = p.getString(KEY_MODE, "stopwatch") ?: "stopwatch",
+            phase = "work",
+            cycle = p.getInt(KEY_CYCLE, 1).coerceAtLeast(1),
+            subjectId = p.getString(KEY_SUBJECT, "") ?: "",
+        )
     }
 
     private fun handleStop(recordInterval: Boolean) {
@@ -170,7 +243,16 @@ class StudyTimerService : Service() {
     }
 
     private fun startForegroundCompat(notification: Notification) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            // dataSync Android 15'te toplam 6 saat ile sınırlı. Kullanıcı açıkça
+            // başlatmış görünür sayaç, manifestte beyan edilen specialUse türüyle
+            // çalışır; bu tür için runtime önkoşulu yoktur.
+            startForeground(
+                NOTIFICATION_ID,
+                notification,
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE,
+            )
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             startForeground(
                 NOTIFICATION_ID,
                 notification,
@@ -181,22 +263,34 @@ class StudyTimerService : Service() {
         }
     }
 
-    private fun buildRunningNotification(startedAtMs: Long): Notification {
+    private fun buildRunningNotification(startedAtMs: Long, isBreak: Boolean = false): Notification {
         ensureChannel()
         val builder = baseBuilder()
             .setOngoing(true)
             .setContentIntent(openAppPending())
-        // Özel görünüm: durak-saati gibi büyük rakamlar + Durdur. Herhangi bir
-        // nedenle (RemoteViews/OEM) kurulamazsa standart chronometer'a düş.
-        val custom = runCatching { buildRunningRemoteViews(startedAtMs) }.getOrNull()
+            .setContentTitle(if (isBreak) "Mola sürüyor" else "Odaklanıyorsun")
+            .setContentText(if (isBreak) "Mola bittiğinde çalışmaya dönebilirsin" else "Canlı sayaç çalışıyor")
+        // Dar panelde süre + ana eylem; genişletilmiş panelde iki doğrudan native
+        // eylem vardır. RemoteViews desteklenmezse standart aksiyonlara düşer.
+        val custom = runCatching {
+            buildRunningRemoteViews(startedAtMs, isBreak)
+        }.getOrNull()
+        val expanded = runCatching {
+            buildRunningExpandedRemoteViews(startedAtMs, isBreak)
+        }.getOrNull()
         if (custom != null) {
             builder.setStyle(NotificationCompat.DecoratedCustomViewStyle())
                 .setCustomContentView(custom)
+            if (expanded != null) builder.setCustomBigContentView(expanded)
         } else {
             builder.setUsesChronometer(true)
                 .setWhen(startedAtMs)
-                .setContentTitle(null)
-                .addAction(0, "Durdur", stopActionPending())
+            if (isBreak) {
+                builder.addAction(0, "Çalışmaya dön", endBreakActionPending())
+            } else {
+                builder.addAction(0, "Mola", breakActionPending())
+            }
+            builder.addAction(0, "Durdur", stopActionPending())
         }
         return builder.build()
     }
@@ -207,9 +301,11 @@ class StudyTimerService : Service() {
             .setOngoing(false)
             .setContentIntent(openAppPending())
         val custom = runCatching { buildIdleRemoteViews() }.getOrNull()
+        val expanded = runCatching { buildIdleExpandedRemoteViews() }.getOrNull()
         if (custom != null) {
             builder.setStyle(NotificationCompat.DecoratedCustomViewStyle())
                 .setCustomContentView(custom)
+            if (expanded != null) builder.setCustomBigContentView(expanded)
         } else {
             builder.setUsesChronometer(false)
                 .setContentTitle("00:00:00")
@@ -218,13 +314,34 @@ class StudyTimerService : Service() {
         return builder.build()
     }
 
-    private fun buildRunningRemoteViews(startedAtMs: Long): RemoteViews {
+    private fun buildRunningRemoteViews(startedAtMs: Long, isBreak: Boolean): RemoteViews {
         val views = RemoteViews(packageName, R.layout.timer_notification)
         // Chronometer'ı gerçek başlangıç anına göre akıt (elapsedRealtime tabanı).
         val base = SystemClock.elapsedRealtime() - (System.currentTimeMillis() - startedAtMs)
         views.setChronometer(R.id.notif_timer_elapsed, base, null, true)
-        views.setTextViewText(R.id.notif_timer_action, "Durdur")
+        views.setTextViewText(R.id.notif_timer_action, if (isBreak) "Bitti" else "Durdur")
         views.setOnClickPendingIntent(R.id.notif_timer_action, stopActionPending())
+        return views
+    }
+
+    private fun buildRunningExpandedRemoteViews(startedAtMs: Long, isBreak: Boolean): RemoteViews {
+        val views = RemoteViews(packageName, R.layout.timer_notification_expanded)
+        val base = SystemClock.elapsedRealtime() - (System.currentTimeMillis() - startedAtMs)
+        views.setChronometer(R.id.notif_panel_elapsed, base, null, true)
+        views.setTextViewText(
+            R.id.notif_panel_status,
+            if (isBreak) "Mola sürüyor" else "Odaklanıyorsun",
+        )
+        views.setTextViewText(
+            R.id.notif_panel_primary_action,
+            if (isBreak) "Çalışmaya dön" else "Mola",
+        )
+        views.setOnClickPendingIntent(
+            R.id.notif_panel_primary_action,
+            if (isBreak) endBreakActionPending() else breakActionPending(),
+        )
+        views.setTextViewText(R.id.notif_panel_stop_action, "Durdur")
+        views.setOnClickPendingIntent(R.id.notif_panel_stop_action, stopActionPending())
         return views
     }
 
@@ -234,6 +351,22 @@ class StudyTimerService : Service() {
         views.setTextViewText(R.id.notif_timer_elapsed, "00:00:00")
         views.setTextViewText(R.id.notif_timer_action, "Başlat")
         views.setOnClickPendingIntent(R.id.notif_timer_action, startActionPending())
+        return views
+    }
+
+    private fun buildIdleExpandedRemoteViews(): RemoteViews {
+        val views = RemoteViews(packageName, R.layout.timer_notification_expanded)
+        views.setTextViewText(R.id.notif_panel_status, "Çalışmaya hazır")
+        views.setChronometer(
+            R.id.notif_panel_elapsed,
+            SystemClock.elapsedRealtime(),
+            "00:00:00",
+            false,
+        )
+        views.setTextViewText(R.id.notif_panel_elapsed, "00:00:00")
+        views.setTextViewText(R.id.notif_panel_primary_action, "Başlat")
+        views.setOnClickPendingIntent(R.id.notif_panel_primary_action, startActionPending())
+        views.setViewVisibility(R.id.notif_panel_stop_action, android.view.View.GONE)
         return views
     }
 
@@ -250,6 +383,10 @@ class StudyTimerService : Service() {
     private fun stopActionPending(): PendingIntent = actionPending(ACTION_STOP, 1)
 
     private fun startActionPending(): PendingIntent = actionPending(ACTION_START, 2)
+
+    private fun breakActionPending(): PendingIntent = actionPending(ACTION_START_BREAK, 3)
+
+    private fun endBreakActionPending(): PendingIntent = actionPending(ACTION_END_BREAK, 4)
 
     /** Bildirim aksiyonu: uygulama kapalıyken de FGS başlatabilmek için
      *  `getForegroundService` (API 26+) — düz `getService` arka plan yasağına
@@ -328,14 +465,20 @@ class StudyTimerService : Service() {
         const val ACTION_STOP = "com.manilmax.online_study_room.timer.STOP"
         const val ACTION_STOP_SILENT = "com.manilmax.online_study_room.timer.STOP_SILENT"
         const val ACTION_TOGGLE = "com.manilmax.online_study_room.timer.TOGGLE"
+        const val ACTION_START_BREAK = "com.manilmax.online_study_room.timer.START_BREAK"
+        const val ACTION_END_BREAK = "com.manilmax.online_study_room.timer.END_BREAK"
 
         const val EXTRA_STARTED_AT_MS = "startedAtMs"
         const val EXTRA_MODE = "mode"
+        const val EXTRA_PHASE = "phase"
+        const val EXTRA_CYCLE = "cycle"
+        const val EXTRA_SUBJECT_ID = "subjectId"
 
         const val BROADCAST_STATE_CHANGED = "com.manilmax.online_study_room.timer.STATE_CHANGED"
 
         private const val CHANNEL_ID = "study_timer_live_fg"
         private const val NOTIFICATION_ID = 7040
+        private const val LEGACY_FLUTTER_NOTIFICATION_ID = 7001
 
         // FlutterSharedPreferences anahtarları "flutter." önekiyle saklanır.
         private const val KEY_STARTED_AT = "flutter.timer_active_started_at"
@@ -353,11 +496,17 @@ class StudyTimerService : Service() {
             action: String,
             startedAtMs: Long? = null,
             mode: String? = null,
+            phase: String? = null,
+            cycle: Int? = null,
+            subjectId: String? = null,
         ) {
             val intent = Intent(context, StudyTimerService::class.java).apply {
                 this.action = action
                 startedAtMs?.let { putExtra(EXTRA_STARTED_AT_MS, it) }
                 mode?.let { putExtra(EXTRA_MODE, it) }
+                phase?.let { putExtra(EXTRA_PHASE, it) }
+                cycle?.let { putExtra(EXTRA_CYCLE, it) }
+                subjectId?.let { putExtra(EXTRA_SUBJECT_ID, it) }
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 context.startForegroundService(intent)

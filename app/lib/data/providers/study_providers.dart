@@ -552,22 +552,40 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
         // İkisi de idle — sessiz; gereksiz stopTimer spam'i yok.
       }
     } else if (fgMode == 'running') {
-      // App-kapalı Başlat ile yeni oturum başladıysa ve build() bunu henüz
-      // yansıtmadıysa (ör. bildirimden Başlat), aktif başlangıcı benimse.
+      // App-kapalı Başlat/Mola ile native panel state'i değiştiyse onu benimse.
+      // Mola da yeni bir epoch ile başlar: tamamlanan çalışma aralığı native
+      // kuyrukta kalır, yeni `rest` fazı ise burada UI/presence'a yansır.
       final fgStart = DateTime.tryParse(
         prefs.getString(_kActiveStartedAt) ?? '',
       );
-      if (fgStart != null && !state.isRunning) {
+      final fgPhase = TimerPhase.values.firstWhere(
+        (phase) => phase.name == prefs.getString(_kActivePhase),
+        orElse: () => TimerPhase.work,
+      );
+      final fgCycle = (prefs.getInt(_kActiveCycle) ?? 1)
+          .clamp(kMinPomodoroCycles, kMaxPomodoroCycles)
+          .toInt();
+      final stateNeedsNativeUpdate =
+          !state.isRunning ||
+          state.startedAt != fgStart ||
+          state.phase != fgPhase ||
+          state.cycle != fgCycle;
+      if (fgStart != null && stateNeedsNativeUpdate) {
         state = state.copyWith(
           isRunning: true,
           startedAt: fgStart,
-          phase: TimerPhase.work,
-          cycle: 1,
+          phase: fgPhase,
+          cycle: fgCycle,
           accumulatedSeconds: 0,
           lastUpdatedAt: DateTime.now(),
         );
         _persistActiveTimer();
-        _publishPresence(status: PresenceStatus.studying, startedAt: fgStart);
+        _publishPresence(
+          status: fgPhase == TimerPhase.work
+              ? PresenceStatus.studying
+              : PresenceStatus.onBreak,
+          startedAt: fgStart,
+        );
         _startTick();
         unawaited(_syncTimerSurfaces());
       }

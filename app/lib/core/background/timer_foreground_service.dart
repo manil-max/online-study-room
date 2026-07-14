@@ -17,8 +17,9 @@ import 'package:flutter/services.dart';
 class TimerForegroundService {
   TimerForegroundService._();
 
-  static const MethodChannel _channel =
-      MethodChannel('com.manilmax.online_study_room/timer');
+  static const MethodChannel _channel = MethodChannel(
+    'com.manilmax.online_study_room/timer',
+  );
 
   /// FGS görünüm modu bayrağı (native yazar, Dart reconcile okur): `running`/`idle`.
   static const fgModeKey = 'timer_fg_mode';
@@ -40,6 +41,9 @@ class TimerForegroundService {
       await _channel.invokeMethod<void>('startTimer', <String, dynamic>{
         'startedAtMs': startedAt.millisecondsSinceEpoch,
         'mode': mode,
+        'phase': phase,
+        'cycle': cycle,
+        'subjectId': subjectId,
       });
     } catch (_) {
       // Test/web-benzeri hostlarda platform kanalı yoktur; timer state bozulmaz.

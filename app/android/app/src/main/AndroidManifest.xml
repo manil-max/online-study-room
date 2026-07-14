@@ -7,6 +7,10 @@
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <!-- Android 14+: uzun süre görünür kalan kullanıcı başlatmalı sayaç için.
+         dataSync Android 15'te 24 saatte 6 saatle sınırlıdır; 8 saatlik sayaç
+         sözleşmesi için bu servis specialUse olarak bildirilir. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <!-- WP-58: Alarm 2.0 — kesin (exact) alarm. Saat merkezi ürünü için gerekli. -->
@@ -80,8 +84,12 @@
              Dart tarafında yapılır. -->
         <service
             android:name=".timer.StudyTimerService"
-            android:foregroundServiceType="dataSync"
-            android:exported="false" />
+            android:foregroundServiceType="specialUse"
+            android:exported="false">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="User-started study stopwatch and break timer with persistent notification controls." />
+        </service>
         <receiver
             android:name=".TimerBootReceiver"
             android:exported="false">

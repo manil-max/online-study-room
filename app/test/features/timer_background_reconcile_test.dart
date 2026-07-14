@@ -83,9 +83,7 @@ Future<(ProviderContainer, InMemoryStudyRepository, Profile)> _buildContainer(
     fireImmediately: true,
   );
   addTearDown(authSub.close);
-  for (var i = 0;
-      i < 100 && !container.read(authStateProvider).hasValue;
-      i++) {
+  for (var i = 0; i < 100 && !container.read(authStateProvider).hasValue; i++) {
     await Future<void>.delayed(const Duration(milliseconds: 5));
   }
   final profile = container.read(authStateProvider).value;
@@ -100,8 +98,7 @@ void main() {
     test(
       'app-kapalı Durdur (idle): kuyruğa yazılan aralık oturum olur + sayaç durur',
       () async {
-        final start =
-            DateTime.now().subtract(const Duration(minutes: 30));
+        final start = DateTime.now().subtract(const Duration(minutes: 30));
         final end = DateTime.now().subtract(const Duration(minutes: 5));
         final (container, studyRepo, profile) = await _buildContainer({
           // Durdur öncesi çalışan oturumdan kalan aktif state (idle'da started_at
@@ -120,16 +117,15 @@ void main() {
         await Future<void>.delayed(const Duration(milliseconds: 20));
 
         // Aralık oturum olarak kaydedildi.
-        final sessions =
-            await studyRepo.watchUserSessions(profile.id).first;
+        final sessions = await studyRepo.watchUserSessions(profile.id).first;
         expect(sessions, hasLength(1));
-        expect(sessions.single.durationSeconds, end.difference(start).inSeconds);
+        expect(
+          sessions.single.durationSeconds,
+          end.difference(start).inSeconds,
+        );
 
         // Kuyruk temizlendi, sayaç durur.
-        expect(
-          container.read(studyTimerProvider).isRunning,
-          isFalse,
-        );
+        expect(container.read(studyTimerProvider).isRunning, isFalse);
         final prefs = container.read(sharedPreferencesProvider);
         expect(prefs.getString('timer_pending_intervals'), isNull);
       },
@@ -138,8 +134,7 @@ void main() {
     test(
       'app-kapalı Durdur→Başlat: eski oturum kaydedilir + yeni oturum çalışır',
       () async {
-        final oldStart =
-            DateTime.now().subtract(const Duration(minutes: 40));
+        final oldStart = DateTime.now().subtract(const Duration(minutes: 40));
         final oldEnd = DateTime.now().subtract(const Duration(minutes: 20));
         final newStart = DateTime.now().subtract(const Duration(minutes: 10));
         final (container, studyRepo, profile) = await _buildContainer({
@@ -161,8 +156,7 @@ void main() {
         await Future<void>.delayed(const Duration(milliseconds: 20));
 
         // Eski aralık kaydedildi; yeni oturum hâlâ çalışıyor (kaydedilmedi).
-        final sessions =
-            await studyRepo.watchUserSessions(profile.id).first;
+        final sessions = await studyRepo.watchUserSessions(profile.id).first;
         expect(sessions, hasLength(1));
         expect(
           sessions.single.durationSeconds,
@@ -170,6 +164,28 @@ void main() {
         );
         expect(container.read(studyTimerProvider).isRunning, isTrue);
         expect(container.read(studyTimerProvider).startedAt, newStart);
+      },
+    );
+
+    test(
+      'app-kapalı Mola: native break fazı ve yeni epoch uygulamaya yansır',
+      () async {
+        final breakStartedAt = DateTime.now().subtract(
+          const Duration(minutes: 3),
+        );
+        final (container, _, _) = await _buildContainer({
+          'timer_active_started_at': breakStartedAt.toIso8601String(),
+          'timer_active_mode': TimerMode.stopwatch.name,
+          'timer_active_phase': TimerPhase.rest.name,
+          'timer_active_cycle': 2,
+          'timer_fg_mode': 'running',
+        });
+
+        final timer = container.read(studyTimerProvider);
+        expect(timer.isRunning, isTrue);
+        expect(timer.startedAt, breakStartedAt);
+        expect(timer.phase, TimerPhase.rest);
+        expect(timer.cycle, 2);
       },
     );
 
@@ -200,8 +216,7 @@ void main() {
         expect(container.read(studyTimerProvider).isRunning, isTrue);
         await Future<void>.delayed(const Duration(milliseconds: 20));
 
-        final sessions =
-            await studyRepo.watchUserSessions(profile.id).first;
+        final sessions = await studyRepo.watchUserSessions(profile.id).first;
         expect(sessions, hasLength(5));
         for (final s in sessions) {
           expect(s.durationSeconds, 10 * 60);

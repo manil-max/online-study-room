@@ -48,11 +48,17 @@ class MainActivity : FlutterActivity() {
                         val startedAtMs = (call.argument<Number>("startedAtMs"))?.toLong()
                             ?: System.currentTimeMillis()
                         val mode = call.argument<String>("mode") ?: "stopwatch"
+                        val phase = call.argument<String>("phase") ?: "work"
+                        val cycle = (call.argument<Number>("cycle"))?.toInt() ?: 1
+                        val subjectId = call.argument<String>("subjectId")
                         StudyTimerService.sendCommand(
                             this,
                             StudyTimerService.ACTION_START,
                             startedAtMs = startedAtMs,
                             mode = mode,
+                            phase = phase,
+                            cycle = cycle,
+                            subjectId = subjectId,
                         )
                         result.success(null)
                     }

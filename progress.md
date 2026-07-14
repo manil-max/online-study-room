@@ -67,8 +67,8 @@
 - **Ortak/riskli yüzey:** —
 - **Dal:** — (ana dal `main`)
 - **Başlangıç:** —
-- **Son güncelleme:** 2026-07-14 21:32
-- **Not:** WP-70, yeni worker kuralına göre Test için bekleyenler'e park edildi. Sonraki iş için lane serbest.
+- **Son güncelleme:** 2026-07-14 22:42 (Europe/Istanbul)
+- **Not:** WP-76 kod + hedef otomatik test tamamlandı; gerçek Android cihaz QA için park edildi. Lane serbest.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
@@ -106,30 +106,15 @@
 
 | WP | Durum | Kısa kapsam | Bağımlılık |
 |---|---|---|---|
-| WP-76 | [ ] Bekliyor | Dinamik panel — cihazda çalışan canlı kontrol paneli (Live Activity / durum çubuğu) | — |
+| WP-76 | [~] Test için bekliyor | Dinamik panel — cihazda çalışan canlı kontrol paneli (Live Activity / durum çubuğu) | — |
 
-> **2026-07-14 proje denetimi:** Serbest sürükle-bırak ızgara, canlı grup hedefi ve saat stilleri **zaten kodda uygulanmış** (backlog stale idi; geçici WP-72/73/75 iptal). **Dinamik panel ise cihazda çalışmıyor** (kullanıcı testi) → **WP-76** açıldı.
+> **2026-07-14 proje denetimi:** Serbest sürükle-bırak ızgara, canlı grup hedefi ve saat stilleri **zaten kodda uygulanmış** (backlog stale idi; geçici WP-72/73/75 iptal). Dinamik paneldeki cihaz/eylem sorunu için açılan **WP-76** kod+otomatik test aşamasını geçti; Samsung/Pixel cihaz QA’sı bekliyor.
 >
 > **Kalan gerçek açık işler:**
-> - **WP-76** — dinamik panel (aşağıda, tek gerçek kod işi).
+> - **WP-76** — dinamik panel cihaz QA’sı (aşağıda, kod işi tamamlandı).
 > - **Ürün kararı (kod değil, senin kararın):** WP-66 hesap silme retention · WP-67 grafik türleri · WP-69 aylık rapor için DNS + Resend API key.
 
 > **Planlama notu:** WP-39 iptal; WP-48/49/50 kaldırıldı; geçici WP-72/73/74/75 (2026-07-14) zaten-yapılmış/yanlış açıldığı için iptal edildi. Sorun çıkarsa ayrı debug/release WP'si açılır.
-
-### WP-76: Dinamik Panel — Cihazda Çalışan Canlı Kontrol Paneli 🔔
-- **Program/Faz:** Güvenilirlik / Android canlı yüzey · **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** —
-- **Problem:** Dinamik panel (durum çubuğu canlı baloncuk + genişleyen kontrol paneli / Live Activity) **cihazda çalışmıyor** (kullanıcı 2026-07-14). Native XML/servis iskeleti var ama komutlar (Başlat/Durdur/Mola) uygulama yaşam döngüsüne bağımlı ve **yalnız app resume'da** işleniyor; canlı akan süre güvenilmez; panel gerçekte görünmüyor/etkileşmiyor (hafıza: background-timer-actions-unreliable, notif-not-syncing).
-- **Kapsam dışı:** iOS, yeni istatistik metriği, tema, dashboard UI, backend/RLS/migration.
-- **SAHİP dosyalar (yaz):** `app/lib/core/background/timer_foreground_service.dart`, `app/lib/core/notifications/**`, `app/lib/features/android_widgets/**`, `app/android/app/src/main/kotlin/**/{timer,widgets}/**`, `app/android/app/src/main/{AndroidManifest.xml,res/layout,res/xml}`, ilgili testler.
-- **DOKUNMA:** `features/home/**`, `features/clock/**` UI mantığı, `supabase/**`, `core/theme/**`.
-- **Adımlar:** [ ] Gerçek foreground service (Android 12+ start kısıtları + servis tipi) ile **app-kapalı komut işleme**; [ ] durum çubuğu canlı panel + genişleyen zengin kontrol (Başlat/Durdur/Mola); [ ] native `Chronometer` ile saniyede akan süre; [ ] idle→başlat bildirim senkron bug fix; [ ] Samsung One UI / Android 14+ uyumu + pil kısıt rehberi.
-- **Veri/Migration etkisi:** Yok. Geri alma = paneli kaldırıp mevcut basit bildirime dönmek.
-- **RLS/Güvenlik:** İstemci içi; sunucuya yazım yok; sır yok.
-- **Edge-case'ler:** app tamamen kapalı, OEM arka plan öldürme, düşük pil, boot sonrası, hızlı başlat/durdur, izin reddi, çoklu cihaz.
-- **Kabul (ölçülebilir, CİHAZDA):** App tamamen kapalıyken panelden Başlat/Durdur ≥ %95 çalışır ve ≤ 2 sn yansır; canlı süre saniyede akar ve 8 saatte ≤ ±2 sn sapar; panel genişleyip kontrol sunar; Samsung + Pixel video kanıtı. `Cihazda doğrulanmalı`.
-- **Tuzaklar:** Saniyede Flutter yeniden çizme (native Chronometer kullan); servis başlangıç kısıtları (Android 12+); OEM farkları; foreground bildirimini kaldıramama; komutu yalnız resume'da işlemek.
-- **Dal önerisi:** `wp76-dinamik-panel`
-- **Model önerisi:** 🔴 Opus
 
 ## Test için bekleyenler
 
@@ -137,7 +122,13 @@
 > Bu bölüm **aktif çalışma değildir** — ajan claim etmez, diğer WP’leri engellemez.  
 > Kabul gelince kart buradan çıkar → **Tamamlanan**’a gider. Bug çıkarsa ayrı debug WP açılır.
 
-> **Şu an boş.** Buradaki tüm WP'ler ürün sahibi kararıyla **Tamamlanan**'a alındı (2026-07-14). Yayımlı sürümde sorun çıkarsa ilgili WP için **ayrı debug WP'si** açılır (kart diriltilmez).
+### WP-76: Dinamik Panel — Cihazda Çalışan Canlı Kontrol Paneli 🔔
+- **Program/Faz:** Güvenilirlik / Android canlı yüzey · **Ajan:** Codex · **Aşama:** Otomatik test geçti · **Kanıt:** `Kodda doğrulandı` / `Cihazda doğrulanmalı`
+- **Uygulandı:** Native foreground bildirim tek otorite yapıldı; eski, resume'a bağlı Flutter bildirimi servis başlatıldığında temizlenir. Dar panelde canlı `Chronometer`, geniş panelde doğrudan native **Mola / Durdur** (mola durumunda **Çalışmaya dön / Durdur**) eylemleri var. Mola, tamamlanan çalışma aralığını kuyruğa alır; mola süresi oturuma yazılmaz. Flutter açıldığında native `rest` fazı UI/presence'a uzlaştırılır.
+- **Android uyumu:** Android 14+ için manifestte beyanlı `specialUse` foreground service kullanılır; Android 15 `dataSync` türünün 6 saat / 24 saat sınırı 8 saatlik sayaç sözleşmesini kesmez. Geri alma = `StudyTimerService` türünü eski `dataSync` bildirime döndürmek ve `timer_notification_expanded.xml`i kaldırmak.
+- **Otomatik kanıt:** `flutter test test/features/timer_background_reconcile_test.dart --dart-define-from-file=env.json` → 4/4 PASS; manifest + geniş panel XML statik doğrulama PASS; `git -c core.whitespace=cr-at-eol diff --check` PASS. `flutter analyze` depodaki WP-76 dışı 4 mevcut uyarı nedeniyle 0 değil. Tam `flutter test` ise WP-76 dışı `theme_engine_test` ve `widget_test` hatalarıyla 385 PASS / 2 FAIL.
+- **Bekleyen cihaz QA:** Samsung One UI ve Pixel (Android 14+) üzerinde bildirim iznini ver; Ayarlar → Pil → uygulama pili **Sınırsız** yap; uygulamayı görev listesinden kapat; panelden 20 ardışık Başlat/Durdur ve Mola/Çalışmaya dön turu yap. Her tur ≤2 sn yansımalı, panel genişlemeli, süre sistem `Chronometer`ı ile akmalı; Samsung + Pixel video kanıtı ve 8 saat sapma ölçümü gerekli. Ortamda Android SDK/bağlı cihaz olmadığı için APK derlemesi burada koşulamadı.
+- **Değişen yollar:** `app/lib/core/background/timer_foreground_service.dart`, `app/lib/data/providers/study_providers.dart`, `app/android/app/src/main/AndroidManifest.xml`, `app/android/app/src/main/kotlin/com/manilmax/online_study_room/{MainActivity.kt,timer/StudyTimerService.kt}`, `app/android/app/src/main/res/layout/timer_notification_expanded.xml`, `app/test/features/timer_background_reconcile_test.dart`.
  
 ---
 
