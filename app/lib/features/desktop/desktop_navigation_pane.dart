@@ -17,7 +17,7 @@ class DesktopNavItem {
 
 /// WinUI NavigationView + macOS sidebar sentezi.
 ///
-/// - Expanded (≥1008): ikon + etiket, ~200px (daha dar; yazı taşmasın)
+/// - Expanded (≥1008): ikon + etiket, ~176px
 /// - Compact (641–1007): yalnız ikon, ~52px
 /// - Minimal (≤640): yine compact ikon şeridi (her zaman görünür menü)
 ///
@@ -36,7 +36,7 @@ class DesktopNavigationPane extends StatelessWidget {
   final ValueChanged<int> onSelected;
   final Widget footer;
 
-  static const double expandedWidth = 200;
+  static const double expandedWidth = 176;
   static const double compactWidth = 52;
   static const double itemHeight = 40;
   static const double itemRadius = 4;
@@ -399,12 +399,12 @@ class _DesktopNavFooterActionState extends State<DesktopNavFooterAction> {
           height: DesktopNavigationPane.itemHeight,
           child: widget.expanded
               ? Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Icon(widget.icon, size: 20, color: iconColor),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           widget.label,
