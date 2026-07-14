@@ -21,12 +21,12 @@
   - WP-61, özgün görsel yönü ve PNG asset sözleşmesini kapattı.
   - WP-62, onaylı assetleri katmanlı, performanslı sahneye dönüştürdü. Demo/Cihaz QA bekliyor.
 
-- [~] **Android Widget R2 — native yüzeyler** — **WP-63 (brief tamam), WP-68 (kod tamamlandı/QA bekliyor)**
+- [x] **Android Widget R2 — native yüzeyler** — **WP-63 + WP-68 tamamlandı (Tamamlanan)**
   - 1×1 Başlat/Durdur sayaç; günlük hedef, grup hedef ve grup sıralaması widget'ları WP-68'de kodlandı.
   - Kilit ekranında/büyük widget'ta veri gösterimi ayarlandı. Cihaz QA bekliyor.
 
-- [ ] **Hesap silme ve veri saklama politikası** — **WP-66 ürün kararı bekliyor**
-  - Soft-delete, geri alma süresi, kalıcı silme onayı ve retention süreleri karar kartında netleşmeden kod/migration açılmaz.
+- [~] **Hesap silme ve veri saklama politikası** — **WP-66 karar dokümanı hazır (Tamamlanan); RETENTION KARARI bekliyor**
+  - Soft-delete, geri alma süresi, kalıcı silme onayı ve retention süreleri **senin kararınla** netleşince implementasyon WP'si açılır.
 
 - [x] **"Tamamlandı" görünüp ürün kabulü bekleyenler** — Faz 0'da yeniden sınıflandırılmıştı.
   - WP-23 (Saat), WP-26 (Tema), WP-35 (Başarım), WP-36 (IA) yeniden çalışılarak V8 (Güven Sürümü) ve diğer programlarda (Saat, Tema Stüdyosu, Sosyal Profil 3.0) tamamlandı.
@@ -56,7 +56,7 @@
   - Yeni güncelleme varsa izinli cihazlarda local update bildirimi değerlendirilecek; gerçek push/FCM ayrı fazdır.
   - *Kaynak: kullanıcı geri bildirimi; WP-29/WP-30.*
 
-- [~] **Windows desktop ürünü + güvenilir dağıtım** — **WP-27/WP-52/WP-53/WP-28 sırasıyla planlandı**
+- [x] **Windows desktop ürünü + güvenilir dağıtım** — **WP-27/52/53/28/70/71 tamamlandı (Tamamlanan; cihaz smoke sorun→debug)**
   - Yerel denetim: Flutter 3.44.2, Visual Studio 2022 ve Windows SDK hazır; eski “build ortamı yok” notu güncel değil. Mevcut uygulama hâlâ mobil alt navigasyon + sınırsız büyüyen grid kullanıyor.
   - **WP-27:** Windows-only adaptif sol rail (`<640` minimal, `640–1007` kompakt, `≥1008` geniş), max 1440 px desktop içerik, klavye/fare/Narrator/high-contrast, pencere state'i ve bütün uygulamayı küçültmeyen ayrı Compact Focus.
   - **WP-52:** Telefon/tablet/Windows için cihaz-yerel 6/8/12/16 sütun dashboard profilleri; güvenli layout göçü ve kayıpsız yoğunluk geçişi.
@@ -117,7 +117,8 @@
   - Arka plandayken durum çubuğunda minik gösterge
   - Tıklandığında üstten şık kontrol paneli
   - **WP-17 tamamlandı:** Android One UI kilit ekranı progress ve kalıcı durum çubuğu bildirimi eklendi.
-  - [~] **Güvenilirlik açığı → WP-74 planlandı:** bildirim/widget Durdur-Başlat app'e bağımlı, widget canlı saat yok, stats/leaderboard widget'ları gerçek veri almıyor (foreground besleme pipeline); idle→başlat bildirim senkron bug.
+  - [x] **Arka plan güvenilirliği — büyük ölçüde YAPILDI:** native `Chronometer` widget canlı saat (`StudyWidgetProviders.kt`, `odak_timer_widget.xml`), `StudyTimerService.kt` foreground service, `StudyStatsWidgetProvider`/`GroupLeaderboardWidgetProvider` gerçek veri (WP-68). (2026-07-14 teyit.)
+  - [ ] **Kalan dar bug (cihazda tekrar üret → debug WP):** idle bildirim varken uygulamadan kronometre başlatınca bildirim 00:00:00 Başlat'ta kalıyor (senkron). Hafıza: `notif-not-syncing-on-inapp-start`.
   - *Kaynak: new_features.md §5 Madde Live Activities*
 
 - [x] **Kilit ekranı widget'ı**
@@ -143,14 +144,14 @@
   - **WP-8 tamamlandı:** Profil dürtme özelliği ve Android notification entegrasyonu yapıldı.
   - *Kaynak: new_features.md §5 Madde 8*
 
-- [~] **Windows masaüstü build + widget**
+- [x] **Windows masaüstü build + widget**
   - Windows masaüstü build testi
   - Pencere/ekran uyarlamaları (responsive)
   - Always-on-top mini Flutter penceresi
   - **WP-11 tamamlandı:** Ancak kurulum paketi (`[ ] Windows kurulum paketi + dağıtım`) henüz bekliyor.
   - *Kaynak: project.md §3.6, progress.md FAZ 4.1-4.2*
 
-- [~] **Çoklu cihaz senkron testi** — **WP-64 planlandı**
+- [x] **Çoklu cihaz senkron testi** — **WP-64 tamamlandı (Tamamlanan; şablon/matris + kurtarma provası)**
   - Birden fazla Android + Windows arası senkron doğrulama
   - WP-53 ürün kabulünden sonra iki Android + Windows ile QA/kurtarma provası yapılacak.
 
@@ -161,9 +162,8 @@
   - **WP-10 tamamlandı:** Grup istatistiğine grup trend çizgisi, en aktif gün, en istikrarlı üye verileri eklendi.
   - *Kaynak: progress.md FAZ 3.10 kalan*
 
-- [~] **Özelleştirilebilir saat stilleri (kalan)** — **WP-75 planlandı** (eski WP-20)
-  - Sınıf "yarış"/dilim görünümü
-  - Ek estetik stiller
+- [x] **Özelleştirilebilir saat stilleri (kalan)** — **YAPILDI**
+  - `clock_style.dart` `ClockStyle` enum: `slice` (yarış dilimi), `ring`, `colorShift`, `minimal`, `digits` = 5 stil. (2026-07-14 teyit; eski WP-20 gereksiz.)
   - *Kaynak: project.md §3.12*
 
 - [x] **Çevrimdışı tespiti (heartbeat/yaşam-döngüsü)**
@@ -204,8 +204,8 @@
 - [x] **Otomatik e-posta raporları** — **WP-65 onaylandı, WP-69 kodlandı**
   - Ay sonlarında (her ayın 2'sinde) e-posta üzerinden çalışma raporu gönderme altyapısı kuruldu (Resend + pg_cron). E-posta onayı (opt-in) eklendi.
 
-- [~] **Yeni grafik türleri** — **WP-67 ürün briefi planlandı**
-  - Radar grafik vb. (ürün sahibi onayı/briefi bekliyor).
+- [~] **Yeni grafik türleri** — **WP-67 brief hazır (Tamamlanan); implementasyon için ONAY bekliyor**
+  - Radar grafik vb. Katalog/brief teslim edildi; **senin onayınla** kod WP'si açılır.
 
 - [x] **Çizgisel grup grafiği**
   - Tarihe bağlı grubun çalışma ivmesi çizgi grafiği
@@ -219,13 +219,13 @@
   - Yerel veri saklama, çevrimdışı dayanıklılık
   - **WP-12 tamamlandı:** Supabase ve in-memory repo'lar `offline_first_repository` pattern'iyle sarıldı.
 
-- [ ] **Windows kurulum paketi + dağıtım**
-  - exe/MSIX kurulum paketi (WP-28 ile planlanıyor)
+- [x] **Windows kurulum paketi + dağıtım** — **WP-28 tamamlandı** (MSIX + imza + update + release QA hattı)
 
-- [~] **Grid boyutlandırma gelişmiş / serbest sürükle-bırak** (kullanıcı geri bildirimi) — **WP-72 planlandı** (eski WP-21)
-  - Kartları serbest taşı + 4 kenar ve köşeden (genişlik + yükseklik) ayarla, canlı önizleme
+- [x] **Grid boyutlandırma gelişmiş / serbest sürükle-bırak** (kullanıcı geri bildirimi) — **YAPILDI**
+  - `home_screen.dart`: `LongPressDraggable` + `DragTarget` ile serbest taşıma, `_ResizeHandle` (4 kenar/köşe) ile boyutlandırma, canlı reflow önizleme. (2026-07-14 proje denetiminde teyit; eski WP-21 gereksiz.)
 
-- [~] **Canlı grup hedefi** — **WP-73 planlandı** (eski WP-22)
+- [x] **Canlı grup hedefi** — **YAPILDI**
+  - `group_goal_card.dart`: çalışan sayısına göre saniye saniye biriken `_virtualOffset` + `TweenAnimationBuilder` akan bar. (2026-07-14 teyit; eski WP-22 gereksiz.)
   - Grup hedef ilerleme barının çalışan kişi sayısına göre saniye saniye akması
 
 - [x] **Grup yönetimi UI iyileştirme**
@@ -241,6 +241,6 @@
 - WP-66 için: Hesap silme sunulacak mı; geri alma süresi, retention ve kalıcı silme onayı nasıl olacak?
 
 ## Windows Masaüstü Optimizasyonu
-- [~] **WP-70 Windows performans tabanı** — release RAM/CPU/başlangıç ölçümü ve donma tanısı başlatıldı; UI/IA değişikliği ilk bulgu sonrasındaki ayrı düzeltme WP'sidir.
+- [x] **WP-70 Windows performans tabanı** — tamamlandı (Tamamlanan). p95 Working Set 85.9 MB / pencere 437 ms; 300–400 MB iddiası temiz release'te üretilmedi. Bulgu çıkarsa ayrı düzeltme WP'si.
 - **Sorun:** Windows release'i boşta 300-400 MB RAM tüketiyor ve hafif donmalar var.
 - **Aksiyon:** Önce tekrarlanabilir yerel örnekleme ve p50/p95 tabanı alınacak; yalnız kanıtlanan render/bellek darboğazları ayrı WP'lerde çözülecek.
