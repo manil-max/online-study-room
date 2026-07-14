@@ -8,6 +8,7 @@ import '../../../data/providers/auth_providers.dart';
 import '../../../data/providers/group_providers.dart';
 import '../../../data/repositories/group_repository.dart';
 import 'class_detail_screen.dart';
+import 'group_discovery_screen.dart';
 
 /// Sınıf değiştirici (Instagram hesap değiştirme mantığı, §3.8): katılınan
 /// sınıflar listelenir, dokununca aktif sınıf değişir; ayrıca "Sınıf oluştur" /
@@ -96,6 +97,19 @@ Future<void> showClassSwitcher(
           ],
         ),
       ),
+      PopupMenuItem<void>(
+        onTap: () => Navigator.of(
+          context,
+          rootNavigator: true,
+        ).push(MaterialPageRoute(builder: (_) => const GroupDiscoveryScreen())),
+        child: Row(
+          children: [
+            const Icon(Icons.travel_explore, size: 20),
+            const SizedBox(width: 12),
+            Text(AppLocalizations.of(context).groupDiscoveryAction),
+          ],
+        ),
+      ),
     ],
   ];
 
@@ -135,13 +149,8 @@ class _ClassDetailButton extends StatelessWidget {
 /// Sınıf oluşturma akışı: ad sorar, oluşturur, yeni sınıfı aktif yapar.
 /// Başarılıysa true döner.
 Future<bool> createGroupFlow(BuildContext context, WidgetRef ref) async {
-  final name = await _promptText(
-    context,
-    title: AppLocalizations.of(context).classroomGrupOlustur,
-    label: AppLocalizations.of(context).classroomGrupAdi,
-    action: AppLocalizations.of(context).classroomOlustur,
-  );
-  if (name == null || name.trim().isEmpty) return false;
+  final draft = await _promptCreateGroup(context);
+  if (draft == null || draft.name.trim().isEmpty) return false;
 
   final user = ref.read(authStateProvider).value;
   if (user == null) return false;
@@ -153,13 +162,97 @@ Future<bool> createGroupFlow(BuildContext context, WidgetRef ref) async {
   try {
     final group = await ref
         .read(groupRepositoryProvider)
-        .createGroup(name: name, creator: user);
+        .createGroup(
+          name: draft.name,
+          creator: user,
+          visibility: draft.visibility,
+        );
     ref.read(activeGroupIdProvider.notifier).select(group.id);
     return true;
   } on GroupException {
     messenger.showSnackBar(SnackBar(content: Text(genericError)));
     return false;
   }
+}
+
+class _CreateGroupDraft {
+  const _CreateGroupDraft({required this.name, required this.visibility});
+
+  final String name;
+  final GroupVisibility visibility;
+}
+
+Future<_CreateGroupDraft?> _promptCreateGroup(BuildContext context) {
+  final controller = TextEditingController();
+  return showDialog<_CreateGroupDraft>(
+    context: context,
+    builder: (ctx) {
+      var visibility = GroupVisibility.private;
+      final l10n = AppLocalizations.of(ctx);
+      return StatefulBuilder(
+        builder: (ctx, setState) => AlertDialog(
+          title: Text(l10n.classroomGrupOlustur),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: controller,
+                  autofocus: true,
+                  textCapitalization: TextCapitalization.words,
+                  decoration: InputDecoration(labelText: l10n.classroomGrupAdi),
+                ),
+                const SizedBox(height: 16),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    l10n.groupDiscoveryPrivacyTitle,
+                    style: Theme.of(ctx).textTheme.titleSmall,
+                  ),
+                ),
+                RadioGroup<GroupVisibility>(
+                  groupValue: visibility,
+                  onChanged: (value) => setState(() => visibility = value!),
+                  child: Column(
+                    children: [
+                      RadioListTile<GroupVisibility>(
+                        contentPadding: EdgeInsets.zero,
+                        value: GroupVisibility.private,
+                        title: Text(l10n.groupDiscoveryPrivate),
+                        subtitle: Text(l10n.groupDiscoveryPrivateDescription),
+                      ),
+                      RadioListTile<GroupVisibility>(
+                        contentPadding: EdgeInsets.zero,
+                        value: GroupVisibility.public,
+                        title: Text(l10n.groupDiscoveryPublic),
+                        subtitle: Text(l10n.groupDiscoveryPublicDescription),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(l10n.classroomVazgec),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(
+                ctx,
+                _CreateGroupDraft(
+                  name: controller.text,
+                  visibility: visibility,
+                ),
+              ),
+              child: Text(l10n.classroomOlustur),
+            ),
+          ],
+        ),
+      );
+    },
+  );
 }
 
 /// Sınıfa katılma akışı: davet kodu sorar, katar, o sınıfı aktif yapar.

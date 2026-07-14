@@ -956,5 +956,22 @@
   "statsEyl": "Eyl",
   "statsEki": "Eki",
   "statsKas": "Kas",
-  "statsAra": "Ara"
+  "statsAra": "Ara",
+  "groupDiscoveryAction": "Grupları keşfet",
+  "groupDiscoveryTitle": "Grupları keşfet",
+  "groupDiscoverySearchHint": "Açık grup ara",
+  "groupDiscoveryPrivacyTitle": "Grup gizliliği",
+  "groupDiscoveryChangePrivacy": "Grup gizliliğini değiştir",
+  "groupDiscoveryPrivate": "Gizli",
+  "groupDiscoveryPublic": "Herkese açık",
+  "groupDiscoveryPrivateDescription": "Yalnızca davet kodu olan kişiler katılabilir.",
+  "groupDiscoveryPublicDescription": "Herkes bu grubu keşfedip katılabilir.",
+  "groupDiscoveryMemberCount": "{current} / {limit} üye",
+  "groupDiscoveryDailyGoal": "Günlük hedef: {minutes} dk",
+  "groupDiscoveryJoined": "Katıldın",
+  "groupDiscoveryFull": "Dolu",
+  "groupDiscoveryEmpty": "Açık grup bulunamadı",
+  "groupDiscoveryRetry": "Tekrar dene",
+  "groupDiscoveryLoadMore": "Daha fazla yükle",
+  "groupDiscoveryPrivacyUpdated": "Grup gizliliği güncellendi"
 }

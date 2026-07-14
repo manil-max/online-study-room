@@ -68,7 +68,7 @@
 - **Dal:** — (main)
 - **Başlangıç:** —
 - **Son güncelleme:** 2026-07-15 (Europe/Istanbul)
-- **Not:** WP-92 otomatik kalite kapısı geçti; canlı migration + cihaz RLS QA bekliyor. WP-93 henüz başlamadı.
+- **Not:** WP-93 otomatik kalite kapısı geçti; 0032 migration'ının canlıya uygulandığı kullanıcı tarafından doğrulandı. Gerçek cihaz Supabase/RLS QA'sı bekliyor.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
@@ -119,7 +119,7 @@
 | WP-88 | [~] Test için bekliyor | Native Android EN/TR kaynak göçü | WP-83 |
 | WP-89 | [~] Test için bekliyor | EN/TR entegrasyon, audit, build ve cihaz QA | WP-85/86/87/88 |
 | WP-92 | [~] Test için bekliyor | Global açık/özel grup sözleşmesi, RLS ve çift repository | — |
-| WP-93 | [ ] Bekliyor | Global grup keşfi ve katılım arayüzü | WP-92 |
+| WP-93 | [~] Test için bekliyor | Global grup keşfi ve katılım arayüzü | WP-92 |
 
 > **2026-07-14 proje denetimi:** Serbest sürükle-bırak ızgara, canlı grup hedefi ve saat stilleri **zaten kodda uygulanmış** (backlog stale idi; geçici WP-72/73/75 iptal). Dinamik paneldeki cihaz/eylem sorunu için açılan **WP-76** kod+otomatik test aşamasını geçti; Samsung/Pixel cihaz QA’sı bekliyor.
 >
@@ -135,16 +135,18 @@
 > **Çakışma matrisi:** ✅ Wave 1: WP-82 + WP-83. Wave 2: WP-84 + WP-88 (WP-83 sonrası). Wave 3: WP-85 + WP-86. Wave 4: WP-87 tek başına veya bitmiş WP-88'in ardından ikinci ayrık hat. Wave 5: WP-89 tek seri kapı. ARB dosyalarına yalnız WP-82 (seed), sonra WP-84, en son WP-89 yazar; UI worker'ları ARB'yi salt okunur kullanır.
 
 ### WP-93: Global Grup Keşfi ve Katılım Deneyimi 🌍
-- **Program/Faz:** Sosyal gruplar · Play Store öncesi ürün yüzeyi · **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-92 otomatik kalite kapısı
+- **Program/Faz:** Sosyal gruplar · Play Store öncesi ürün yüzeyi · **Ajan:** Codex · **Durum:** [~] Test için bekliyor · **Bağımlılık:** WP-92 otomatik kalite kapısı
 - **Problem:** Kullanıcılar açık grupları bulup tek eylemle katılamıyor; grup oluştururken görünürlük seçemiyor.
 - **Kapsam dışı:** WP-92 dışı yetkilendirme, öneri algoritması, herkese açık üye/sosyal profil, yeni navigation sekmesi.
-- **SAHİP dosyalar (yaz):** `app/lib/features/classroom/classroom_screen.dart`, `app/lib/features/classroom/widgets/class_switcher.dart`, yeni `app/lib/features/classroom/widgets/group_discovery_*.dart`, ilgili widget testleri, `app/lib/l10n/app_en.arb`, `app/lib/l10n/app_tr.arb`.
+- **SAHİP dosyalar (yaz):** `app/lib/features/classroom/classroom_screen.dart`, `app/lib/features/classroom/widgets/class_switcher.dart`, `app/lib/features/classroom/widgets/class_detail_screen.dart`, yeni `app/lib/features/classroom/widgets/group_discovery_*.dart`, ilgili widget testleri, `app/lib/l10n/app_en.arb`, `app/lib/l10n/app_tr.arb`.
 - **DOKUNMA (oku, değiştirme):** `supabase/**`, `app/lib/data/repositories/**`, `app/lib/core/navigation/**`, generated l10n dosyaları.
 - **Adımlar:**
-  - [ ] Gruplar yüzeyine “Grupları keşfet” girişi, arama, sayfalı liste, üye sayısı/50, hedef ve açık rozetini ekle.
-  - [ ] Oluşturma akışına private (davet kodu gerekir) / public (herkes katılabilir) seçimi ile anlaşılır gizlilik açıklaması ekle; yönetici mevcut grubun ayarını değiştirebilsin.
-  - [ ] Katıl/katıldın/dolu/private’a döndü/ağ hatası durumlarını bağla; başarılı katılımda aktif grup seçilir ve UI ≤1 sn güncellenir.
-  - [ ] EN/TR ARB metinlerini ekle; 360/600/1200 px ve dar Windows’ta taşma olmadan erişilebilir hedefler/semantics doğrula.
+  - [x] Gruplar yüzeyine “Grupları keşfet” girişi, arama, sayfalı liste, üye sayısı/50, hedef ve açık rozetini ekle.
+  - [x] Oluşturma akışına private (davet kodu gerekir) / public (herkes katılabilir) seçimi ile anlaşılır gizlilik açıklaması ekle; yönetici mevcut grubun ayarını değiştirebilsin.
+  - [x] Katıl/katıldın/dolu/private’a döndü/ağ hatası durumlarını bağla; başarılı katılımda aktif grup seçilir ve UI ≤1 sn güncellenir.
+  - [x] EN/TR ARB metinlerini ekle; 360/600/1200 px ve dar Windows’ta taşma olmadan erişilebilir hedefler/semantics doğrula.
+- **Otomatik kanıt:** `flutter analyze --no-pub` 0 bulgu; `python scripts/l10n_audit.py` (974 Flutter EN/TR anahtarı eş, görünür Türkçe literal 0); keşif widget testleri 6/6 (EN/TR, güvenli liste/katılım, 360/600/1200 px); tam `flutter test` 425/425; Android release APK (59.2 MB) ve Windows release EXE üretildi.
+- **Canlı durum:** Kullanıcı, `0032_public_group_discovery.sql` migration'ını Supabase'e uyguladığını doğruladı. Önceki WP-92 cihaz RLS kanıtı henüz yoktur.
 - **Veri/RLS/Geri alma:** Yeni şema yok; WP-92 API’sini tüketir. Geri alma UI commitidir; grup görünürlüğü verisi korunur.
 - **RLS/Güvenlik:** İstemci keşif sonucundaki herhangi bir kimlikten üyelik/oturum/profil çıkarımı yapmaz; hata mesajı private grup bilgisi ifşa etmez.
 - **Edge-case'ler:** Son kontenjan, zaten üye, arama sonucu yok, yavaş ağ, ekran döndürme, EN uzun etiketler, TalkBack/Narrator, grup public→private değişirken açık ekran.

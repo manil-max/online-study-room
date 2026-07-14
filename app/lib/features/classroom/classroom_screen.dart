@@ -14,6 +14,7 @@ import '../home/widgets/leaderboard_card.dart';
 import 'widgets/campfire_scene.dart';
 import 'widgets/class_chat_screen.dart';
 import 'widgets/class_detail_screen.dart';
+import 'widgets/group_discovery_screen.dart';
 import 'widgets/class_switcher.dart';
 import 'widgets/study_timer_card.dart';
 
@@ -93,6 +94,14 @@ class _NoGroupView extends ConsumerWidget {
               onPressed: () => joinGroupFlow(context, ref),
               icon: const Icon(Icons.login),
               label: Text(AppLocalizations.of(context).classroomKodaKatil),
+            ),
+            const SizedBox(height: 8),
+            TextButton.icon(
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const GroupDiscoveryScreen()),
+              ),
+              icon: const Icon(Icons.travel_explore),
+              label: Text(AppLocalizations.of(context).groupDiscoveryAction),
             ),
           ],
         ),
@@ -197,7 +206,7 @@ class _GroupManagementTile extends StatelessWidget {
           Row(
             children: [
               Text(
-                'Davet kodu: ',
+                AppLocalizations.of(context).classroomDavetKodu,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),

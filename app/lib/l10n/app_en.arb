@@ -4074,5 +4074,80 @@
   "statsAra": "Dec",
   "@statsAra": {
     "description": "Stats user-facing text. Source: Ara"
+  },
+  "groupDiscoveryAction": "Discover groups",
+  "@groupDiscoveryAction": {
+    "description": "Public group discovery entry action"
+  },
+  "groupDiscoveryTitle": "Discover groups",
+  "@groupDiscoveryTitle": {
+    "description": "Public group discovery screen title"
+  },
+  "groupDiscoverySearchHint": "Search public groups",
+  "@groupDiscoverySearchHint": {
+    "description": "Public group discovery search field hint"
+  },
+  "groupDiscoveryPrivacyTitle": "Group privacy",
+  "@groupDiscoveryPrivacyTitle": {
+    "description": "Label for the group privacy setting"
+  },
+  "groupDiscoveryChangePrivacy": "Change group privacy",
+  "@groupDiscoveryChangePrivacy": {
+    "description": "Tooltip for editing group privacy"
+  },
+  "groupDiscoveryPrivate": "Private",
+  "@groupDiscoveryPrivate": {
+    "description": "Private group visibility label"
+  },
+  "groupDiscoveryPublic": "Public",
+  "@groupDiscoveryPublic": {
+    "description": "Public group visibility label"
+  },
+  "groupDiscoveryPrivateDescription": "Only people with the invite code can join.",
+  "@groupDiscoveryPrivateDescription": {
+    "description": "Explanation for private group visibility"
+  },
+  "groupDiscoveryPublicDescription": "Anyone can discover and join this group.",
+  "@groupDiscoveryPublicDescription": {
+    "description": "Explanation for public group visibility"
+  },
+  "groupDiscoveryMemberCount": "{current} / {limit} members",
+  "@groupDiscoveryMemberCount": {
+    "description": "Visible group member count and limit",
+    "placeholders": {
+      "current": { "type": "int" },
+      "limit": { "type": "int" }
+    }
+  },
+  "groupDiscoveryDailyGoal": "Daily goal: {minutes} min",
+  "@groupDiscoveryDailyGoal": {
+    "description": "Visible public group daily goal in minutes",
+    "placeholders": {
+      "minutes": { "type": "int" }
+    }
+  },
+  "groupDiscoveryJoined": "Joined",
+  "@groupDiscoveryJoined": {
+    "description": "State of a group the current user has already joined"
+  },
+  "groupDiscoveryFull": "Full",
+  "@groupDiscoveryFull": {
+    "description": "State of a public group at its member limit"
+  },
+  "groupDiscoveryEmpty": "No public groups found",
+  "@groupDiscoveryEmpty": {
+    "description": "Empty state for public group discovery"
+  },
+  "groupDiscoveryRetry": "Try again",
+  "@groupDiscoveryRetry": {
+    "description": "Retry action after public group discovery fails"
+  },
+  "groupDiscoveryLoadMore": "Load more",
+  "@groupDiscoveryLoadMore": {
+    "description": "Pagination action for public group discovery"
+  },
+  "groupDiscoveryPrivacyUpdated": "Group privacy updated",
+  "@groupDiscoveryPrivacyUpdated": {
+    "description": "Confirmation after an admin changes group privacy"
   }
 }

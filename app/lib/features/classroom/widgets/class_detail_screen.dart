@@ -147,6 +147,35 @@ class ClassDetailScreen extends ConsumerWidget {
                   onTap: isAdmin ? () => _editGoalDialog(context, ref) : null,
                 ),
                 ListTile(
+                  leading: Icon(
+                    group.visibility == GroupVisibility.public
+                        ? Icons.public
+                        : Icons.lock_outline,
+                  ),
+                  title: Text(
+                    AppLocalizations.of(context).groupDiscoveryPrivacyTitle,
+                  ),
+                  subtitle: Text(
+                    group.visibility == GroupVisibility.public
+                        ? AppLocalizations.of(
+                            context,
+                          ).groupDiscoveryPublicDescription
+                        : AppLocalizations.of(
+                            context,
+                          ).groupDiscoveryPrivateDescription,
+                  ),
+                  trailing: isAdmin
+                      ? IconButton(
+                          tooltip: AppLocalizations.of(
+                            context,
+                          ).groupDiscoveryChangePrivacy,
+                          icon: const Icon(Icons.edit, size: 20),
+                          onPressed: () => _editAccessDialog(context, ref),
+                        )
+                      : null,
+                  onTap: isAdmin ? () => _editAccessDialog(context, ref) : null,
+                ),
+                ListTile(
                   leading: const Icon(Icons.event_outlined),
                   title: Text(
                     AppLocalizations.of(context).classroomOlusturulma,
@@ -332,6 +361,81 @@ class ClassDetailScreen extends ConsumerWidget {
       // Ad degisimiyle ayni tazeleme gerekcesi (bkz. _renameDialog).
       ref.invalidate(userGroupsProvider);
       navigator.pop();
+    } on GroupException {
+      messenger.showSnackBar(SnackBar(content: Text(genericError)));
+    }
+  }
+
+  Future<void> _editAccessDialog(BuildContext context, WidgetRef ref) async {
+    final picked = await showDialog<GroupVisibility>(
+      context: context,
+      builder: (ctx) {
+        var visibility = group.visibility;
+        final l10n = AppLocalizations.of(ctx);
+        return StatefulBuilder(
+          builder: (ctx, setState) => AlertDialog(
+            title: Text(l10n.groupDiscoveryPrivacyTitle),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                RadioGroup<GroupVisibility>(
+                  groupValue: visibility,
+                  onChanged: (value) => setState(() => visibility = value!),
+                  child: Column(
+                    children: [
+                      RadioListTile<GroupVisibility>(
+                        contentPadding: EdgeInsets.zero,
+                        value: GroupVisibility.private,
+                        title: Text(l10n.groupDiscoveryPrivate),
+                        subtitle: Text(l10n.groupDiscoveryPrivateDescription),
+                      ),
+                      RadioListTile<GroupVisibility>(
+                        contentPadding: EdgeInsets.zero,
+                        value: GroupVisibility.public,
+                        title: Text(l10n.groupDiscoveryPublic),
+                        subtitle: Text(l10n.groupDiscoveryPublicDescription),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text(l10n.classroomVazgec),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(ctx, visibility),
+                child: Text(l10n.classroomKaydet),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+    if (picked == null || picked == group.visibility || !context.mounted) {
+      return;
+    }
+    final messenger = ScaffoldMessenger.of(context);
+    final genericError = AppLocalizations.of(
+      context,
+    ).authBeklenmeyenBirHataOlustu;
+    final l10n = AppLocalizations.of(context);
+    final navigator = Navigator.of(context);
+    try {
+      await ref
+          .read(groupRepositoryProvider)
+          .updateGroupAccess(
+            group.id,
+            visibility: picked,
+            memberLimit: group.memberLimit,
+          );
+      ref.invalidate(userGroupsProvider);
+      navigator.pop();
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.groupDiscoveryPrivacyUpdated)),
+      );
     } on GroupException {
       messenger.showSnackBar(SnackBar(content: Text(genericError)));
     }
