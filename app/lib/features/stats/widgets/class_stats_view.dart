@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/stats/stats_period.dart';
 import '../../../core/stats/study_stats.dart';
 import '../../../core/theme/subject_colors.dart';
 import '../../../core/utils/duration_format.dart';
@@ -8,18 +9,16 @@ import '../../../core/widgets/safe_screen_padding.dart';
 import '../../../core/widgets/crowned_avatar.dart';
 import '../../../data/models/daily_stat.dart';
 import '../../../data/models/profile.dart';
+import '../../../data/providers/stats_period_provider.dart';
 import '../../classroom/widgets/class_switcher.dart';
 import '../../profile/widgets/profile_tap.dart';
 import 'daily_bar_chart.dart';
 import 'daily_line_chart.dart';
 import 'stat_heat_table.dart';
 
-/// Seçilebilir dönem (sınıf leaderboard'u için).
-enum _Period { today, week, month, all }
-
-/// Sınıf (ortak) istatistikleri: dönem seçici + kıyaslamalı sıralama (leaderboard)
-/// + sınıf toplamı/ortalaması. Tam şeffaf (project.md §3.4): herkes herkesi görür.
-class ClassStatsView extends ConsumerStatefulWidget {
+/// Sınıf (ortak) istatistikleri: ortak dönem + sıralama + özet.
+/// Dönem üst [StatsPeriodBar] / [statsPeriodProvider] ile gelir; yerel seçici yok.
+class ClassStatsView extends ConsumerWidget {
   const ClassStatsView({
     super.key,
     required this.stats,
@@ -37,55 +36,45 @@ class ClassStatsView extends ConsumerStatefulWidget {
   final int groupGoalMinutes;
 
   @override
-  ConsumerState<ClassStatsView> createState() => _ClassStatsViewState();
-}
-
-class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
-  _Period _period = _Period.week;
-
-  (DateTime, DateTime) _range(DateTime now) => switch (_period) {
-        _Period.today => (dayOf(now), now),
-        _Period.week => (startOfWeek(now), now),
-        _Period.month => (startOfMonth(now), now),
-        _Period.all => (DateTime(2000), now),
-      };
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final now = DateTime.now();
-    final (from, to) = _range(now);
+    final period = ref.watch(statsPeriodProvider);
+    final (from, to) = period.range(now: now);
 
     // Seçili dönem leaderboard'u: userId → saniye (per-user-per-gün toplamdan).
-    final totals = userTotalsInRange(widget.stats, from, to);
+    final totals = userTotalsInRange(stats, from, to);
     final rows = [
-      for (final m in widget.members)
-        (member: m, seconds: totals[m.id] ?? 0),
+      for (final m in members) (member: m, seconds: totals[m.id] ?? 0),
     ]..sort((a, b) => b.seconds.compareTo(a.seconds));
 
     final classTotal = totals.values.fold<int>(0, (s, v) => s + v);
-    final memberCount = widget.members.isEmpty ? 1 : widget.members.length;
+    final memberCount = members.isEmpty ? 1 : members.length;
     final classAvg = classTotal ~/ memberCount;
     final maxSeconds = rows.isEmpty ? 0 : rows.first.seconds;
+    // Üst dönem → bar/çizgi penceresi (7 veya 30; yerelde ayrı seçici yok).
+    final chartDays = period.chartDays(options: const [7, 14, 30]);
+    final trendDays = period == StatsPeriod.month || period == StatsPeriod.all
+        ? 30
+        : chartDays;
     // Üye başına çalışma serisi (tüm günlük toplamlardan, dönemden bağımsız).
     final streaks = <String, int>{
-      for (final m in widget.members)
-        m.id: studyStreak(const [], totals: userDayTotals(widget.stats, m.id)),
+      for (final m in members)
+        m.id: studyStreak(const [], totals: userDayTotals(stats, m.id)),
     };
-    // Renk-kodlu karşılaştırma tablosu: üye × [Bugün, Hafta, Ay]. Sütun toplamları
-    // dönem aralıklarındaki per-user toplamlardan; bir kez hesaplanır.
-    final todayTotals = userTotalsInRange(widget.stats, dayOf(now), now);
-    final weekTotals = userTotalsInRange(widget.stats, startOfWeek(now), now);
-    final monthTotals = userTotalsInRange(widget.stats, startOfMonth(now), now);
+    // Renk-kodlu karşılaştırma tablosu: üye × [Bugün, Hafta, Ay].
+    final todayTotals = userTotalsInRange(stats, dayOf(now), now);
+    final weekTotals = userTotalsInRange(stats, startOfWeek(now), now);
+    final monthTotals = userTotalsInRange(stats, startOfMonth(now), now);
     final heatRows = [
-      for (final m in widget.members)
+      for (final m in members)
         HeatRow(
           label: !m.isActive
               ? 'Eski Grup Üyesi'
               : (m.displayName.isEmpty ? 'İsimsiz' : m.displayName),
           avatarUrl: m.avatarUrl,
           userId: m.id,
-          highlight: m.id == widget.currentUserId,
+          highlight: m.id == currentUserId,
           values: [
             todayTotals[m.id] ?? 0,
             weekTotals[m.id] ?? 0,
@@ -95,8 +84,8 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
     ]..sort((a, b) => b.values[2].compareTo(a.values[2]));
 
     // Grup günlük hedefi: bugünkü grup toplamı + gruba göre seri.
-    final goalSeconds = widget.groupGoalMinutes * 60;
-    final groupDay = groupDayTotals(widget.stats);
+    final goalSeconds = groupGoalMinutes * 60;
+    final groupDay = groupDayTotals(stats);
     final todayGroupTotal = groupDay[dayOf(now)] ?? 0;
     final groupStreak = currentStreak(const [], goalSeconds, totals: groupDay);
 
@@ -108,9 +97,9 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
     // En istikrarlı üye: en uzun (ardışık çalışılan gün) serisi.
     String? consistentName;
     var consistentStreak = 0;
-    for (final m in widget.members) {
+    for (final m in members) {
       final st =
-          longestStudyStreak(const [], totals: userDayTotals(widget.stats, m.id));
+          longestStudyStreak(const [], totals: userDayTotals(stats, m.id));
       if (st > consistentStreak) {
         consistentStreak = st;
         consistentName = !m.isActive
@@ -127,7 +116,7 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
           children: [
             Expanded(
               child: Text(
-                widget.groupName,
+                groupName,
                 style: theme.textTheme.titleMedium,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -143,20 +132,13 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
           ],
         ),
         const SizedBox(height: 8),
-        Center(
-          child: SegmentedButton<_Period>(
-            segments: const [
-              ButtonSegment(value: _Period.today, label: Text('Bugün')),
-              ButtonSegment(value: _Period.week, label: Text('Hafta')),
-              ButtonSegment(value: _Period.month, label: Text('Ay')),
-              ButtonSegment(value: _Period.all, label: Text('Tümü')),
-            ],
-            selected: {_period},
-            onSelectionChanged: (s) => setState(() => _period = s.first),
-            showSelectedIcon: false,
+        Text(
+          'Dönem: ${period.labelTr}',
+          style: theme.textTheme.labelMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
         _GroupGoalCard(
           todaySeconds: todayGroupTotal,
           goalSeconds: goalSeconds,
@@ -175,9 +157,7 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
           ],
         ),
         const SizedBox(height: 16),
-        // Sıralama (leaderboard) — kullanıcı isteği (§8.3): grup günlük trendinin
-        // ÜSTÜNDE, özet kartlarının hemen altında. Seçili döneme (SegmentedButton)
-        // bağlı olduğu için dönem seçicinin yakınında durur.
+        // Sıralama — ortak dönem seçimine bağlı.
         Text('Sıralama', style: theme.textTheme.titleMedium),
         const SizedBox(height: 4),
         if (rows.isEmpty)
@@ -200,7 +180,7 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
               seconds: rows[i].seconds,
               maxSeconds: maxSeconds,
               streak: streaks[rows[i].member.id] ?? 0,
-              isMe: rows[i].member.id == widget.currentUserId,
+              isMe: rows[i].member.id == currentUserId,
               profile: rows[i].member.isActive ? rows[i].member : null,
             ),
         const SizedBox(height: 16),
@@ -212,21 +192,24 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
               children: [
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: Text('Grup günlük trendi (son 7 gün)',
-                      style: theme.textTheme.titleSmall),
+                  child: Text(
+                    'Grup günlük trendi (son $chartDays gün · ${period.labelTr})',
+                    style: theme.textTheme.titleSmall,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 SizedBox(
                   height: 150,
                   child: DailyBarChart(
-                      days: lastNDays(const [], 7, totals: groupDay)),
+                    days: lastNDays(const [], chartDays, totals: groupDay),
+                  ),
                 ),
               ],
             ),
           ),
         ),
         const SizedBox(height: 16),
-        // Grup eğilimi — daha uzun pencere (çizgi grafik, yeni tür §WP-10).
+        // Grup eğilimi — master dönemle hizalı çizgi penceresi.
         Card(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
@@ -235,14 +218,17 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
               children: [
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: Text('Grup eğilimi (son 30 gün)',
-                      style: theme.textTheme.titleSmall),
+                  child: Text(
+                    'Grup eğilimi (son $trendDays gün · ${period.labelTr})',
+                    style: theme.textTheme.titleSmall,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 SizedBox(
                   height: 160,
                   child: DailyLineChart(
-                      days: lastNDays(const [], 30, totals: groupDay)),
+                    days: lastNDays(const [], trendDays, totals: groupDay),
+                  ),
                 ),
               ],
             ),

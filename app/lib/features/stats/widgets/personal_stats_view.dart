@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/stats/session_window.dart';
+import '../../../core/stats/stats_period.dart';
 import '../../../core/stats/study_stats.dart';
 import '../../../core/theme/subject_colors.dart';
 import '../../../core/utils/duration_format.dart';
 import '../../../core/widgets/safe_screen_padding.dart';
-import '../../../core/stats/session_window.dart';
 import '../../../data/models/study_session.dart';
 import '../../../data/models/subject.dart';
 import '../../../data/models/user_study_summary.dart';
+import '../../../data/providers/stats_period_provider.dart';
 import '../../../data/providers/study_providers.dart';
 import '../../../data/providers/subject_providers.dart';
 import 'daily_bar_chart.dart';
@@ -19,11 +21,9 @@ import 'study_records.dart';
 import 'subject_donut.dart';
 import 'week_hour_heatmap.dart';
 
-/// Kişisel istatistik özeti: dönem toplamları, günlük ortalama ve
-/// hafta içi / hafta sonu ayrımı. Grafikler Faz 3b'de eklenecek.
-///
-/// [sessions] sıcak pencere (son 90 gün). [summary] yıl / ömür boyu.
-class PersonalStatsView extends StatelessWidget {
+/// Kişisel istatistik: [sessions] sıcak pencere; [summary] yıl/ömür.
+/// Üst [statsPeriodProvider] alt grafik/donut aralığını senkronlar.
+class PersonalStatsView extends ConsumerWidget {
   const PersonalStatsView({
     super.key,
     required this.sessions,
@@ -34,9 +34,12 @@ class PersonalStatsView extends StatelessWidget {
   final UserStudySummary? summary;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final now = DateTime.now();
+    final period = ref.watch(statsPeriodProvider);
+    final (from, to) = period.range(now: now);
+    final periodSessions = inRange(sessions, from, to).toList();
 
     final today = secondsOnDay(sessions, now);
     final thisWeek = totalSeconds(inRange(sessions, startOfWeek(now), now));
@@ -47,20 +50,9 @@ class PersonalStatsView extends StatelessWidget {
         totalSeconds(inRange(sessions, startOfYear(now), now));
     final lifetime = summary?.lifetimeSeconds;
 
-    // Son 30 günün günlük ortalaması (çalışılmayan günler de paydada).
-    final avg30 = dailyAverageSeconds(
-      sessions,
-      dayOf(now).subtract(const Duration(days: 29)),
-      now,
-    );
-
-    // Hafta içi / hafta sonu ayrımı (son 30 gün).
-    final last30 = inRange(
-      sessions,
-      dayOf(now).subtract(const Duration(days: 29)),
-      now,
-    );
-    final split = weekdayWeekendSplit(last30);
+    // Döneme göre ortalama + hafta içi/sonu.
+    final avgPeriod = dailyAverageSeconds(periodSessions, from, to);
+    final split = weekdayWeekendSplit(periodSessions);
 
     if (sessions.isEmpty) {
       return Center(
@@ -87,14 +79,64 @@ class PersonalStatsView extends StatelessWidget {
       );
     }
 
-    // Gün→saniye haritasını bir kez kur; gün-bazlı çocuklar (rekorlar, ısı
-    // haritası, trend, aralık) bunu paylaşır → haritayı tekrar tekrar kurmaz.
+    // Gün→saniye haritası: rekor/heatmap tüm sıcak pencere; trend alt seçici.
     final dailyTotalsMap = dailyTotals(sessions);
+    final periodTotalSec = totalSeconds(periodSessions);
 
     return ListView(
       padding: getSafeVerticalPadding(context),
       children: [
-        Text('Dönem toplamları', style: theme.textTheme.titleMedium),
+        // Üst dönem + seçili dönem özeti
+        Text(
+          'Seçili dönem: ${period.labelTr}',
+          style: theme.textTheme.labelMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: _StatCard(
+                label: 'Dönem toplamı',
+                seconds: period == StatsPeriod.all && lifetime != null
+                    ? lifetime
+                    : periodTotalSec,
+                icon: Icons.timelapse,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _StatCard(
+                label: 'Günlük ortalama',
+                seconds: avgPeriod.round(),
+                icon: Icons.trending_up,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: _StatCard(
+                label: 'Hafta içi',
+                seconds: split.weekday,
+                icon: Icons.work_outline,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _StatCard(
+                label: 'Hafta sonu',
+                seconds: split.weekend,
+                icon: Icons.weekend_outlined,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Text('Hızlı toplamlar', style: theme.textTheme.titleMedium),
         const SizedBox(height: 8),
         Row(
           children: [
@@ -117,8 +159,9 @@ class PersonalStatsView extends StatelessWidget {
         ],
         const SizedBox(height: 8),
         Text(
-          'Grafikler ve kayıt listesi son $kUserSessionsHotWindowDays günü '
-          'gösterir; yıl / tüm zamanlar özet toplamdır.',
+          'Üst dönem seçimi, uyumlu grafikleri ve ders dağılımını günceller. '
+          'Alt seçiciler (7/14/30 vb.) yerinde kalır; üstten seçince otomatik '
+          'eşlenir. Detay son $kUserSessionsHotWindowDays gün; yıl/ömür özet.',
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),
@@ -135,6 +178,7 @@ class PersonalStatsView extends StatelessWidget {
         const SizedBox(height: 16),
         Text('Günlük dağılım', style: theme.textTheme.titleMedium),
         const SizedBox(height: 8),
+        // Yerel 7/14/30 kalır; master period değişince otomatik senkron.
         _TrendCard(sessions: sessions, totals: dailyTotalsMap),
         const SizedBox(height: 16),
         _WeekComparisonCard(sessions: sessions, now: now),
@@ -155,81 +199,62 @@ class PersonalStatsView extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        Text('Çalışma saatleri', style: theme.textTheme.titleMedium),
+        Text(
+          'Çalışma saatleri (${period.labelTr})',
+          style: theme.textTheme.titleMedium,
+        ),
         const SizedBox(height: 8),
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
-            child: HourActivityChart(hourly: hourlyTotals(sessions)),
+            child: HourActivityChart(hourly: hourlyTotals(periodSessions)),
           ),
         ),
         const SizedBox(height: 16),
-        Text('Oturum dağılımı', style: theme.textTheme.titleMedium),
+        Text(
+          'Oturum dağılımı (${period.labelTr})',
+          style: theme.textTheme.titleMedium,
+        ),
         const SizedBox(height: 8),
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
-            child: SessionScatterChart(sessions: sessions),
+            child: SessionScatterChart(sessions: periodSessions),
           ),
         ),
         const SizedBox(height: 16),
-        Text('Haftalık ritim', style: theme.textTheme.titleMedium),
+        Text(
+          'Haftalık ritim (${period.labelTr})',
+          style: theme.textTheme.titleMedium,
+        ),
         const SizedBox(height: 8),
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
-            child: WeekHourHeatmap(grid: weekdayHourTotals(sessions)),
+            child: WeekHourHeatmap(grid: weekdayHourTotals(periodSessions)),
           ),
         ),
         const SizedBox(height: 16),
-        Text('Ders bazında dağılım (son 30 gün)',
-            style: theme.textTheme.titleMedium),
-        const SizedBox(height: 8),
-        _SubjectBreakdownCard(
-          sessions: inRange(
-            sessions,
-            dayOf(now).subtract(const Duration(days: 29)),
-            now,
-          ).toList(),
+        Text(
+          'Ders bazında dağılım (${period.labelTr})',
+          style: theme.textTheme.titleMedium,
         ),
+        const SizedBox(height: 8),
+        _SubjectBreakdownCard(sessions: periodSessions),
         const SizedBox(height: 16),
+        // Serbest tarih aralığı — master dönemden bağımsız (özel aralık).
         Text('Seçili tarih aralığı', style: theme.textTheme.titleMedium),
         const SizedBox(height: 8),
         _RangeCard(sessions: sessions, totals: dailyTotalsMap),
-        const SizedBox(height: 16),
-        Text('Son 30 gün', style: theme.textTheme.titleMedium),
-        const SizedBox(height: 8),
-        _StatCard(
-          label: 'Günlük ortalama',
-          seconds: avg30.round(),
-          icon: Icons.trending_up,
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: _StatCard(
-                label: 'Hafta içi',
-                seconds: split.weekday,
-                icon: Icons.work_outline,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _StatCard(
-                label: 'Hafta sonu',
-                seconds: split.weekend,
-                icon: Icons.weekend_outlined,
-              ),
-            ),
-          ],
-        ),
       ],
     );
   }
 }
 
 /// Günlük çubuk grafiği + gün aralığı seçici (7 / 14 / 30 gün).
+///
+/// Yerel seçici kalır; üst [statsPeriodProvider] değişince en yakın
+/// seçeneğe otomatik senkronlanır (kullanıcı sonra yine yerel değiştirebilir).
 class _TrendCard extends ConsumerStatefulWidget {
   const _TrendCard({required this.sessions, this.totals});
 
@@ -241,10 +266,25 @@ class _TrendCard extends ConsumerStatefulWidget {
 }
 
 class _TrendCardState extends ConsumerState<_TrendCard> {
-  int _days = 14;
+  static const _options = [7, 14, 30];
+  late int _days;
+
+  @override
+  void initState() {
+    super.initState();
+    // İlk açılış: mevcut master dönemle hizala.
+    _days = ref.read(statsPeriodProvider).chartDays(options: _options);
+  }
 
   @override
   Widget build(BuildContext context) {
+    // Master dönem değişince yerel 7/14/30'u güncelle; kullanıcı override edebilir.
+    ref.listen<StatsPeriod>(statsPeriodProvider, (prev, next) {
+      if (prev == next) return;
+      final mapped = next.chartDays(options: _options);
+      if (_days != mapped) setState(() => _days = mapped);
+    });
+
     final series = lastNDays(widget.sessions, _days, totals: widget.totals);
     final goalSeconds = ref.watch(dailyGoalMinutesProvider) * 60;
     return Card(

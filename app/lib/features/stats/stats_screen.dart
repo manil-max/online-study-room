@@ -7,16 +7,14 @@ import '../../data/providers/group_providers.dart';
 import '../../data/providers/study_providers.dart';
 import 'widgets/class_stats_view.dart';
 import 'widgets/personal_stats_view.dart';
+import 'widgets/stats_period_bar.dart';
 
-/// İstatistik sekmesi: Kişisel + Sınıf (ortak) istatistikler. Bkz. project.md §3.4.
-/// Veriler `study_sessions` üzerinden hesaplanır; Kişisel görünüm hazır,
-/// Sınıf (leaderboard) görünümü Faz 3c'de gelecek.
+/// İstatistik sekmesi: Kişisel + Grup. Üstte ortak dönem (Bugün/Hafta/Ay/Tümü).
 class StatsScreen extends ConsumerWidget {
   const StatsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Windows: sol rail yeter; ekstra başlık + sağ ipucu paneli yok.
     return DefaultTabController(
       length: 2,
       child: Scaffold(
@@ -30,14 +28,29 @@ class StatsScreen extends ConsumerWidget {
             ],
           ),
         ),
-        body: TabBarView(children: [_PersonalTab(), _ClassTab()]),
+        body: const Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Ortak dönem — her iki sekme ve alt seçiciler dinler.
+            StatsPeriodBar(),
+            Expanded(
+              child: TabBarView(
+                children: [
+                  _PersonalTab(),
+                  _ClassTab(),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-/// Kişisel istatistikler: sıcak pencere detay + özet (yıl / ömür boyu).
 class _PersonalTab extends ConsumerWidget {
+  const _PersonalTab();
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final sessionsAsync = ref.watch(userSessionsProvider);
@@ -53,8 +66,9 @@ class _PersonalTab extends ConsumerWidget {
   }
 }
 
-/// Sınıf (ortak) istatistikleri: dönem seçici + kıyaslamalı sıralama (leaderboard).
 class _ClassTab extends ConsumerWidget {
+  const _ClassTab();
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
