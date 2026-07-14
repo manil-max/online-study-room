@@ -20,7 +20,7 @@
 - **Navigasyon hedefi:** Ana Sayfa / Saat / Gruplar / İstatistikler / Profil. Ana Sayfa günlük kullanım alanıdır; diğer alanların verisi kendi sekmelerinde eksiksiz bulunur.
 - **Release:** Stable/Beta kanalı GitHub Releases ile çalışır. **v8 yayımlandı.** WP-48/49/50, ürün sahibinin doğrudan yayın ve soak'ı atlama kararıyla açık iş olmaktan çıkarıldı; sonraki yayın için ayrı WP açılır.
 - **Kalite kapıları:** Her WP DoD'siz kapanmaz; stable release kalite kapısından geçer (AGENTS.md §3). Server-authoritative XP, RLS/sosyal profil, platform sınırları → `docs/KALITE-PROGRAMI.md`.
-- **Son WP numarası:** 89
+- **Son WP numarası:** 90
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
   - Flutter: `C:\src\flutter` · Android SDK: `C:\Android\Sdk`
@@ -62,13 +62,13 @@
 ### Codex Lane
 - **Durum:** [~] Aktif
 - **Faz/WP:** Küresel açılım · WP-82
-- **Aşama:** Kod tamamlandı — depo kalite kapısı bloklu
+- **Aşama:** Otomatik kalite kapısı yeniden doğrulanıyor
 - **SAHİP yollar:** `app/pubspec.yaml`, `app/l10n.yaml`, `app/lib/main.dart`, `app/lib/l10n/.gitignore`, `app/lib/l10n/app_en.arb`, `app/lib/l10n/app_tr.arb`, `app/test/l10n/l10n_bootstrap_test.dart`
 - **Ortak/riskli yüzey:** `app/pubspec.yaml`, `app/lib/main.dart`, l10n/generated (sıcak; WP-84 başlamaz)
 - **Dal:** — (ana dal `main`)
 - **Başlangıç:** 2026-07-14 18:47 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-14 18:58 (Europe/Istanbul)
-- **Not:** WP-82 hedef testi 4/4, sahip dosya analizi 0, Windows release build PASS. Tam kapı WP-82 dışı 4 analyze uyarısı + `theme_engine_test` ve `widget_test` hatalarıyla bloklu; commit atılmadı.
+- **Son güncelleme:** 2026-07-14 (Europe/Istanbul)
+- **Not:** WP-90 ile depo kapısı temizlendi (`flutter analyze` 0, tam test 395/395). WP-82 son gen-l10n/test/build doğrulamasında.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
@@ -234,6 +234,7 @@
 
 | WP | Tamamlanan kapsam |
 |---|---|
+| WP-90 | Depo kalite kapısı temizliği — 4 analiz bulgusu ve 2 eski/kırılgan test düzeltildi; `flutter analyze` 0, tam test 395/395; kapanış 2026-07-14 |
 | WP-83 | EN/TR Metin Envanteri ve Ürün Dili Sözlüğü — `docs/L10N-SOZLUK.md` ve `docs/L10N-ENVANTER.md` oluşturuldu; kapanış 2026-07-14 |
 | WP-71 | Windows Desktop UI R3 · custom WinUI pane + density + navy fix — `8dd0573`; kapanış 2026-07-14 |
 | WP-70 | Windows performans tabanı · release RAM/başlangıç ölçümü (p95 WS 85.9 MB) — `340b589`; kapanış 2026-07-14 |

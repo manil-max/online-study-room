@@ -20,10 +20,10 @@ void main() {
       expect(p.id, kThemePresets.first.id);
     });
 
-    test('migratePaletteIdToPreset eski navy → campfire', () {
-      expect(migratePaletteIdToPreset('navy'), 'campfire_night');
+    test('migratePaletteIdToPreset eski kimlikleri kanonik ailelere taşır', () {
+      expect(migratePaletteIdToPreset('navy'), 'ocean_glass');
       expect(migratePaletteIdToPreset('ocean'), 'ocean_glass');
-      expect(migratePaletteIdToPreset('custom_1'), 'campfire_night');
+      expect(migratePaletteIdToPreset('custom_1'), 'deep_amoled');
     });
 
     test('AppTheme.fromPreset tüm extension katmanlarını ekler', () {

@@ -105,12 +105,10 @@ void main() {
     // Profil sekmesine geç ve çıkış yap (Başarılar kartı üstte; kaydır).
     await tester.tap(find.text('Profil'));
     await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(
-      find.text('Çıkış yap'),
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.tap(find.text('Çıkış yap'));
+    final logoutButton = find.widgetWithText(FilledButton, 'Çıkış yap');
+    await tester.ensureVisible(logoutButton);
+    await tester.pumpAndSettle();
+    await tester.tap(logoutButton);
     await tester.pumpAndSettle();
 
     expect(find.text('E-posta'), findsOneWidget);

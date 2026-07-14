@@ -36,9 +36,9 @@ class LayeredCampfireFire extends StatelessWidget {
     // Ateş paketi ~ sahne yüksekliğine orantılı; merkez fireY.
     return LayoutBuilder(
       builder: (context, constraints) {
-        final side = (math.min(constraints.maxWidth, constraints.maxHeight) *
-                0.42)
-            .clamp(120.0, 220.0);
+        final side =
+            (math.min(constraints.maxWidth, constraints.maxHeight) * 0.42)
+                .clamp(120.0, 220.0);
         final left = cx - side / 2;
         final top = fireY - side * 0.52;
 
@@ -164,7 +164,10 @@ class _LayerStackState extends State<_LayerStack> {
         Transform.scale(
           scaleY: flameScaleY * 1.04,
           alignment: Alignment.bottomCenter,
-          child: _png(CampfireAssets.flameFront, flameOp * 1.05 > 1 ? 1 : flameOp * 1.05),
+          child: _png(
+            CampfireAssets.flameFront,
+            flameOp * 1.05 > 1 ? 1 : flameOp * 1.05,
+          ),
         ),
         if (smokeOp > 0.01)
           Transform.translate(
@@ -193,7 +196,7 @@ class _LayerStackState extends State<_LayerStack> {
         fit: BoxFit.contain,
         filterQuality: FilterQuality.medium,
         gaplessPlayback: true,
-        errorBuilder: (_, __, ___) {
+        errorBuilder: (_, _, _) {
           // setState build sırasında olmasın.
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) _onAssetFailed();

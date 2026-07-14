@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:online_study_room/data/models/announcement.dart';
-import 'package:online_study_room/data/models/study_group.dart';
 import 'package:online_study_room/data/providers/admin_providers.dart';
 import 'package:online_study_room/data/providers/auth_providers.dart';
 
@@ -61,16 +60,22 @@ class _AnnouncementCard extends ConsumerWidget {
     return Card(
       child: ListTile(
         title: Text(announcement.title),
-        subtitle: Text('${announcement.message}\nHedef: ${announcement.targetType} ${announcement.targetId ?? ""}'),
+        subtitle: Text(
+          '${announcement.message}\nHedef: ${announcement.targetType} ${announcement.targetId ?? ""}',
+        ),
         trailing: IconButton(
           icon: Icon(Icons.delete, color: theme.colorScheme.error),
           onPressed: () async {
             try {
-              await ref.read(adminRepositoryProvider).deleteAnnouncement(announcement.id);
+              await ref
+                  .read(adminRepositoryProvider)
+                  .deleteAnnouncement(announcement.id);
               ref.invalidate(adminAnnouncementsProvider);
             } catch (e) {
               if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text(e.toString())));
               }
             }
           },
@@ -85,10 +90,12 @@ class _CreateAnnouncementDialog extends ConsumerStatefulWidget {
   const _CreateAnnouncementDialog();
 
   @override
-  ConsumerState<_CreateAnnouncementDialog> createState() => _CreateAnnouncementDialogState();
+  ConsumerState<_CreateAnnouncementDialog> createState() =>
+      _CreateAnnouncementDialogState();
 }
 
-class _CreateAnnouncementDialogState extends ConsumerState<_CreateAnnouncementDialog> {
+class _CreateAnnouncementDialogState
+    extends ConsumerState<_CreateAnnouncementDialog> {
   final _titleController = TextEditingController();
   final _messageController = TextEditingController();
   final _targetIdController = TextEditingController();
@@ -107,7 +114,9 @@ class _CreateAnnouncementDialogState extends ConsumerState<_CreateAnnouncementDi
       final adminId = ref.read(authStateProvider).value?.id;
       if (adminId == null) throw Exception('Yetkisiz işlem');
 
-      await ref.read(adminRepositoryProvider).createAnnouncement(
+      await ref
+          .read(adminRepositoryProvider)
+          .createAnnouncement(
             title: title,
             message: message,
             targetType: _targetType,
@@ -118,7 +127,9 @@ class _CreateAnnouncementDialogState extends ConsumerState<_CreateAnnouncementDi
       if (mounted) Navigator.of(context).pop();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(e.toString())));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -149,7 +160,10 @@ class _CreateAnnouncementDialogState extends ConsumerState<_CreateAnnouncementDi
               items: const [
                 DropdownMenuItem(value: 'all', child: Text('Herkese')),
                 DropdownMenuItem(value: 'group', child: Text('Gruba Özel')),
-                DropdownMenuItem(value: 'user', child: Text('Kullanıcıya Özel')),
+                DropdownMenuItem(
+                  value: 'user',
+                  child: Text('Kullanıcıya Özel'),
+                ),
               ],
               onChanged: (val) {
                 if (val != null) setState(() => _targetType = val);
@@ -158,27 +172,38 @@ class _CreateAnnouncementDialogState extends ConsumerState<_CreateAnnouncementDi
             ),
             if (_targetType == 'group') ...[
               const SizedBox(height: 8),
-              ref.watch(adminGroupsProvider).when(
-                data: (groups) {
-                  if (groups.isEmpty) return const Text('Hiç grup yok.');
-                  return DropdownButtonFormField<String>(
-                    items: groups.map((g) => DropdownMenuItem(value: g.id, child: Text(g.name))).toList(),
-                    onChanged: (val) {
-                      if (val != null) _targetIdController.text = val;
+              ref
+                  .watch(adminGroupsProvider)
+                  .when(
+                    data: (groups) {
+                      if (groups.isEmpty) return const Text('Hiç grup yok.');
+                      return DropdownButtonFormField<String>(
+                        items: groups
+                            .map(
+                              (g) => DropdownMenuItem(
+                                value: g.id,
+                                child: Text(g.name),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (val) {
+                          if (val != null) _targetIdController.text = val;
+                        },
+                        decoration: const InputDecoration(
+                          labelText: 'Grup Seçin',
+                        ),
+                      );
                     },
-                    decoration: const InputDecoration(labelText: 'Grup Seçin'),
-                  );
-                },
-                loading: () => const CircularProgressIndicator(),
-                error: (e, _) => const Text('Gruplar yüklenemedi.'),
-              ),
+                    loading: () => const CircularProgressIndicator(),
+                    error: (e, _) => const Text('Gruplar yüklenemedi.'),
+                  ),
             ] else if (_targetType == 'user') ...[
               const SizedBox(height: 8),
               TextField(
                 controller: _targetIdController,
                 decoration: const InputDecoration(labelText: 'Kullanıcı ID'),
               ),
-            ]
+            ],
           ],
         ),
       ),
@@ -189,7 +214,13 @@ class _CreateAnnouncementDialogState extends ConsumerState<_CreateAnnouncementDi
         ),
         FilledButton(
           onPressed: _isLoading ? null : _submit,
-          child: _isLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('Gönder'),
+          child: _isLoading
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text('Gönder'),
         ),
       ],
     );
