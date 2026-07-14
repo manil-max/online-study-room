@@ -14,6 +14,7 @@ import '../../../data/providers/presence_providers.dart';
 import '../../../data/providers/study_providers.dart';
 import '../../profile/widgets/social_profile_dialog.dart';
 import 'camp_critter.dart';
+import 'campfire/layered_campfire_fire.dart';
 
 double _lerp(double a, double b, double t) => a + (b - a) * t;
 
@@ -230,10 +231,6 @@ class _SceneLayoutState extends State<_SceneLayout>
     final settle =
         reduceMotion ? Duration.zero : const Duration(milliseconds: 420);
 
-    final intensity = widget.studyingCount == 0
-        ? 0.24
-        : (0.55 + widget.studyingCount * 0.09).clamp(0.55, 1.0);
-
     return LayoutBuilder(
       builder: (context, constraints) {
         final w = constraints.maxWidth;
@@ -316,20 +313,19 @@ class _SceneLayoutState extends State<_SceneLayout>
               // — Arka üyeler (ateşin ARKASINDA) —
               for (final p in layer(true)) body(p),
 
-              // — Ateş + taş halka (animasyonlu) —
+              // — Ateş R2: PNG katmanları (WP-62); asset fail → StoneFirePainter —
               Positioned.fill(
                 child: IgnorePointer(
                   child: RepaintBoundary(
                     child: AnimatedBuilder(
                       animation: _controller,
-                      builder: (context, _) => CustomPaint(
-                        painter: StoneFirePainter(
-                          t: _controller.value,
-                          intensity: intensity,
-                          embers: _embers,
-                          cx: cx,
-                          fireY: fireY,
-                        ),
+                      builder: (context, _) => LayeredCampfireFire(
+                        t: _controller.value,
+                        studyingCount: widget.studyingCount,
+                        embers: _embers,
+                        cx: cx,
+                        fireY: fireY,
+                        reduceMotion: reduceMotion,
                       ),
                     ),
                   ),

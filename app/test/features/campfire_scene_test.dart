@@ -7,6 +7,7 @@ import 'package:online_study_room/data/models/profile.dart';
 import 'package:online_study_room/data/providers/group_providers.dart';
 import 'package:online_study_room/data/providers/presence_providers.dart';
 import 'package:online_study_room/data/providers/study_providers.dart';
+import 'package:online_study_room/features/classroom/widgets/campfire/layered_campfire_fire.dart';
 import 'package:online_study_room/features/classroom/widgets/campfire_scene.dart';
 
 Profile _profile(String id, String name) => Profile(
@@ -77,6 +78,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
 
     expect(find.byType(CampfireScene), findsOneWidget);
+    // WP-62: PNG katmanlı ateş sahnede.
+    expect(find.byType(LayeredCampfireFire), findsOneWidget);
     // 1 kişi çalışıyor rozeti.
     expect(find.text('1 çalışıyor'), findsOneWidget);
     // Üye adları sahnede.

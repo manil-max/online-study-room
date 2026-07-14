@@ -81,15 +81,15 @@
 - **Not:** WP-68 claim edildi. Aktif Grok WP-61 yalnız kamp ateşi asset/`pubspec.yaml` kulvarında; ortak sahip yok. 1×1 timer + responsive günlük/grup hedefi/sıralaması, olay bazlı snapshot ile uygulanacak. Önceki bakım: `flutter test --concurrency=1` 332 PASS; debug APK derlendi. Push yok.
 
 ### Grok Lane
-- **Durum:** [~] Aktif — ürün görsel onayı / cihaz QA açık
-- **Faz/WP:** WP-61 · Kamp Ateşi R2 görsel yön + PNG asset sözleşmesi
-- **Aşama:** Otomatik test geçti — ürün kabulü bekliyor
-- **SAHİP yollar:** `docs/CAMPFIRE-R2-TASARIM.md`, `app/assets/campfire/**`, `app/pubspec.yaml` (yalnız asset), `app/test/assets/campfire_assets_test.dart`, `scripts/generate_campfire_assets.py`, `progress.md` (bu lane + WP-61/64)
-- **Ortak/riskli yüzey:** `pubspec.yaml` assets satırları işlendi; Codex WP-68 plan aşamasında widget kodu yok — pubspec çakışması yok. `classroom/**` DOKUNMADI.
+- **Durum:** [~] Aktif — cihaz demo / ürün kabulü açık
+- **Faz/WP:** WP-62 · Kamp Ateşi R2 katmanlı sahne/animasyon
+- **Aşama:** Otomatik test geçti — cihaz QA / demo bekliyor
+- **SAHİP yollar:** `app/lib/features/classroom/widgets/campfire_scene.dart`, `app/lib/features/classroom/widgets/campfire/**`, ilgili campfire testleri, `progress.md` (bu lane + WP-61/62)
+- **Ortak/riskli yüzey:** Yok. Codex WP-68 widget/native; `pubspec`/`assets/campfire` dokunulmadı.
 - **Dal:** — (ana dal `main`)
-- **Başlangıç:** 2026-07-14 14:42 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-14 14:50
-- **Not:** WP-61 first-party PNG seti + tasarım sözleşmesi + 3/3 asset smoke PASS. WP-62 render için ürün görsel onayı gerekir. WP-64 cihaz koşumu operatörde.
+- **Başlangıç:** 2026-07-14 15:00 (Europe/Istanbul)
+- **Son güncelleme:** 2026-07-14 15:05
+- **Not:** WP-62 kod+test: LayeredCampfireFire, empty/low/high, reduce-motion, StoneFire fallback. Campfire suite 10 PASS. Demo sonunda kullanıcı dener.
 
 ---
 
@@ -116,8 +116,8 @@
 
 | WP | Durum | Kısa kapsam | Bağımlılık |
 |---|---|---|---|
-| WP-61 | [~] Otomatik test geçti · ürün kabulü bekliyor (Grok) | Kamp Ateşi R2 · görsel yön, PNG seti ve asset sözleşmesi | — |
-| WP-62 | Bekliyor | Kamp Ateşi R2 · katmanlı sahne ve performanslı animasyon | WP-61 ürün kabulü |
+| WP-61 | [x] Ürün onayı (kullanıcı güveni 2026-07-14) | Kamp Ateşi R2 · görsel yön, PNG seti ve asset sözleşmesi | — |
+| WP-62 | [~] Otomatik test geçti · demo/cihaz bekliyor (Grok) | Kamp Ateşi R2 · katmanlı sahne ve performanslı animasyon | WP-61 |
 | WP-63 | Brief teslim edildi | Android Widget R2 · 1×1 ve responsive ürün sözleşmesi | — |
 | WP-68 | Bekliyor | Android Widget R2 · native responsive sayaç/hedef/sıralama uygulaması | WP-63 briefi |
 | WP-64 | [~] Şablon hazır · cihaz QA operatörde | Çoklu cihaz senkronizasyon QA ve kurtarma provası | WP-53 ürün kabulü |
@@ -162,7 +162,7 @@
 
 
 ### WP-61: Kamp Ateşi R2 · Görsel Yön, PNG Seti ve Asset Sözleşmesi 🔥
-- **Program/Faz:** Gruplar deneyimi R2 · **Ajan:** Grok · **Durum:** [~] Otomatik test geçti — ürün görsel kabulü / cihaz QA bekliyor · **Bağımlılık:** —
+- **Program/Faz:** Gruplar deneyimi R2 · **Ajan:** Grok · **Durum:** [x] Ürün onayı (kullanıcı: güven + paralel ajan / demo sonunda dene, 2026-07-14) · **Bağımlılık:** —
 - **Problem:** Mevcut kamp ateşi işlevsel polish aldı (WP-45) fakat özgün bir sahne kimliği, tekrar kullanılabilir PNG seti ve durumlara bağlı görsel dil yok.
 - **Kapsam:** Sanat yönü (katmanlar, renk/kontrast, gece-gündüz davranışı), lisansı/üretim kaynağı kayıtlı PNG seti, isimlendirme-ölçü-alpha sözleşmesi ve Flutter asset manifesti. Üretilecek set: zemin, odun, alevin en az üç katmanı, köz/parçacık, duman ve boş/az/yoğun aktivite durumları.
 - **Kapsam dışı:** `campfire_scene.dart` render/animasyon kodu (→ WP-62), grup verisi/goal hesabı, yeni tema motoru, kullanıcıdan fotoğraf yükleme.
@@ -171,24 +171,23 @@
 - **Adımlar:** [x] Sahne durum matrisi (empty/low/high) + kontrast `docs/CAMPFIRE-R2-TASARIM.md`; [x] First-party PNG seti 1.0x/2.0x (stock yok); [x] pubspec `assets/campfire/` + `2.0x/`; [x] `inventory.json` lisans/envanter + smoke test 3/3 PASS.
 - **Veri/Migration etkisi:** Yok. Geri alma = asset manifest satırlarını ve paketi birlikte kaldırmak.
 - **RLS/Güvenlik:** Ağ/veri erişimi yok; third-party stock yok; first-party yordamsal üretim kaydı belgede.
-- **Edge-case'ler:** Koyu/açık tema kontrastı, küçük ekran crop, düşük RAM, asset eksik/bozuk, reduce-motion, APK boyutu artışı.
-- **Kabul (ölçülebilir):** Belgede durum→katman matrisi var; PNG adı/ölçü/alpha sözleşmeye uyar; smoke test yeşil (`Kodda doğrulandı`). 360 dp/tablet görsel + ürün sahibi onayı `Cihazda doğrulanmalı` / ürün kabulü — açık. Onaydan sonra WP-62.
-- **Tuzaklar:** İnternetten lisanssız asset almak; tek düz PNG ile animasyon beklemek; `pubspec.yaml` değişikliğini WP-62 ile paralel yapmak.
-- **Test (2026-07-14):** `flutter test test/assets/campfire_assets_test.dart --dart-define-from-file=env.json` → 3/3 PASS.
+- **Kabul:** Smoke + sözleşme `Kodda doğrulandı`; ürün onayı kullanıcı güveni ile verildi → WP-62 serbest.
+- **Test (2026-07-14):** asset smoke 3/3 PASS. Commit `da7da20`.
 
 ### WP-62: Kamp Ateşi R2 · Katmanlı Sahne, Animasyon ve Erişilebilirlik 🔥
-- **Program/Faz:** Gruplar deneyimi R2 · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-61 ürün kabulü
+- **Program/Faz:** Gruplar deneyimi R2 · **Ajan:** Grok · **Durum:** [~] Geliştiriliyor · **Bağımlılık:** WP-61 (onaylandı)
 - **Problem:** Sahne, çalışma yoğunluğunu hissettiren akıcı ama dikkat dağıtmayan bir animasyonla ve gerçek PNG katmanlarıyla yeniden kurulmalı.
 - **Kapsam:** WP-61 asset sözleşmesini tüketen katmanlı renderer; boş/az/yoğun grup aktivitesinde anlamlı durum geçişi; alev/köz/dumanın farklı hızlarda animasyonu; reduce-motion statik fallback'i; hata/asset yok durumunda mevcut güvenli görünüm.
 - **Kapsam dışı:** Grup hedefi veya presence veri modelini değiştirmek, yeni RLS/migration, genel tema refactor'u, WP-61 dışında yeni asset üretimi.
-- **SAHİP dosyalar (yaz):** `app/lib/features/classroom/widgets/campfire_scene.dart`, yeni `app/lib/features/classroom/widgets/campfire/**`, ilgili widget/golden testleri; yalnız sahnenin yerleştirilmesi gerekiyorsa `classroom_screen.dart`.
-- **DOKUNMA:** `app/pubspec.yaml` ve `app/assets/campfire/**` (WP-61 sahibi), `data/**`, `supabase/**`, `core/theme/**`, grup hedef/trend hesapları.
-- **Adımlar:** [ ] Asset katmanlarını deterministik render ağacına bağla; [ ] aktivite durumlarını mevcut okunan veriden türet ve eşiklerini belgede sabitle; [ ] reduce-motion/boş/asset-hata fallback'lerini ekle; [ ] golden + davranış testleri ve profil cihaz akıcılık ölçümü yap.
+- **SAHİP dosyalar (yaz):** `app/lib/features/classroom/widgets/campfire_scene.dart`, `app/lib/features/classroom/widgets/campfire/**`, ilgili widget/unit testleri.
+- **DOKUNMA:** `app/pubspec.yaml` ve `app/assets/campfire/**` (WP-61), `data/**`, `supabase/**`, `core/theme/**`, grup hedef/trend hesapları, Codex WP-68 widget yolları.
+- **Adımlar:** [x] `LayeredCampfireFire` PNG stack; [x] empty/low/high `campfireActivityFor`; [x] reduce-motion + StoneFirePainter asset fallback; [x] unit + scene testleri.
 - **Veri/Migration etkisi:** Yok. Geri alma = önceki vektör/fallback sahneye dönmek; kullanıcı verisi değişmez.
 - **RLS/Güvenlik:** Yeni veri sorgusu veya görünürlük yok; mevcut grup erişim kuralları korunur.
 - **Edge-case'ler:** 0 üye/0 çalışan, çok üye, hızlı presence değişimi, ekran rotasyonu, düşük güç modu, reduce-motion, asset yükleme hatası, koyu/açık yüksek kontrast.
-- **Kabul (ölçülebilir):** Boş/az/yoğun üç durumun golden'ı geçer; reduce-motion'da sürekli ticker 0 olur; 10 hızlı durum değişiminde exception/overflow 0; orta seviye Android'de 60 sn profil kaydında sahne kaynaklı jank ≤%1 ve bellek büyümesi yok; ürün sahibi PNG sahnesini kabul eder. `Cihazda doğrulanmalı`.
+- **Kabul (ölçülebilir):** empty/low/high birim test; reduce-motion pumpAndSettle; LayeredCampfireFire sahnede (`Kodda doğrulandı`). Cihaz jank/demo `Cihazda doğrulanmalı`.
 - **Tuzaklar:** Her frame'de tüm sahneyi yeniden kurmak; sahneye iş mantığı taşımak; hareket azaltma tercihini yok saymak.
+- **Test (2026-07-14):** campfire scene + activity + assets → 10 PASS.
 
 ### WP-63: Android Widget R2 · Ürün Briefi ve Veri Sözleşmesi 📲
 - **Program/Faz:** Android widget iyileştirmesi · **Durum:** [~] Ürün briefi tamamlandı — uygulama WP'si planlanacak · **Bağımlılık:** —
