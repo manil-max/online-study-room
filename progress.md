@@ -60,15 +60,15 @@
 - **Not:** Bu oturum işleri commit'lendi: grid 32-sütun `141ed2a`, core testleri `da7bdd6`, skill docs `1afba2d`. ⚠️ WP-65 karar dokümanı (`docs/AYLIK-RAPOR-KARAR.md`) önceki Claude oturumunda yazıldı ama **COMMIT'LENMEDİ** (untracked); kararı WP-69 zaten uyguladı → ürün API/DNS kararı bekliyor.
 
 ### Codex Lane
-- **Durum:** [~] Aktif
-- **Faz/WP:** Küresel açılım · WP-84
-- **Aşama:** Otomatik kalite kapısı
-- **SAHİP yollar:** `app/lib/l10n/app_en.arb`, `app/lib/l10n/app_tr.arb`
-- **Ortak/riskli yüzey:** ARB/l10n kataloğu sıcak; WP-85/86/87 başlamaz, generated dosyalar salt okunur/ignore
-- **Dal:** — (ana dal `main`)
-- **Başlangıç:** 2026-07-14 19:15 (Europe/Istanbul)
+- **Durum:** [x] Boşta
+- **Faz/WP:** —
+- **Aşama:** —
+- **SAHİP yollar:** —
+- **Ortak/riskli yüzey:** —
+- **Dal:** — (main)
+- **Başlangıç:** —
 - **Son güncelleme:** 2026-07-14 (Europe/Istanbul)
-- **Not:** WP-91 ile stats order testi dönem-senkron başlıklara hizalandı. WP-84 tam test kapısı yeniden çalıştırılıyor.
+- **Not:** WP-84 otomatik kalite kapısını geçti; katalog hazır. Ürün dili ve cihaz doğrulaması WP-89'da yapılacak.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
@@ -112,7 +112,7 @@
 | WP-79 | [~] Test için bekliyor | Bildirim açılışta toplu teslim hata düzeltmesi | beta-v19 cihaz bulgusu |
 | WP-80 | [~] Test için bekliyor | Dinamik panel uygunluk hata düzeltmesi | beta-v19 cihaz bulgusu |
 | WP-81 | [~] Test için bekliyor | Android beta-v20 — bildirim teslimi + dinamik panel düzeltmeleri | WP-79/80 kod commitleri |
-| WP-84 | [~] Geliştiriliyor | Kanonik `app_en.arb` / `app_tr.arb` kataloğu | WP-82 + WP-83 |
+| WP-84 | [~] Test için bekliyor | Kanonik `app_en.arb` / `app_tr.arb` kataloğu | WP-82 + WP-83 |
 | WP-85 | [ ] Bekliyor | Flutter göç A — hesap, profil, admin, bildirim, güncelleme | WP-84 |
 | WP-86 | [ ] Bekliyor | Flutter göç B — ana sayfa, sınıf ve istatistikler | WP-84 |
 | WP-87 | [ ] Bekliyor | Flutter göç C — saat, masaüstü, core ve veri etiketleri | WP-84 |
@@ -128,14 +128,6 @@
 > **Planlama notu:** WP-39 iptal; WP-48/49/50 kaldırıldı; geçici WP-72/73/74/75 (2026-07-14) zaten-yapılmış/yanlış açıldığı için iptal edildi. Sorun çıkarsa ayrı debug/release WP'si açılır.
 
 > **Küresel dil programı ortak sözleşmesi:** İngilizce şablon/varsayılan (`en`), Türkçe ikinci dil (`tr`). Yalnız sistem dil kodu `tr` ise Türkçe; diğer her locale İngilizce. Üretilen l10n kodu elle düzenlenmez/commit edilmez. Tüm WP'lerde migration/RLS etkisi yok; sır/PII çeviri dosyasına girmez; gün sınırı `Europe/Istanbul` kalır. Aynı anda en fazla iki çalışma hattı açılır.
-
-### WP-84: Kanonik ARB Kataloğu 🔤
-- **Program/Faz:** Küresel açılım · katalog · **Ajan:** Codex · **Durum:** [~] Geliştiriliyor · **Bağımlılık:** WP-82 + WP-83
-- **Problem/Kapsam:** Onaylı envanteri tek `app_en.arb`/`app_tr.arb` sözleşmesine dönüştür; Dart ekran göçü ve native kaynaklar kapsam dışı.
-- **SAHİP:** `app/lib/l10n/app_en.arb`, `app/lib/l10n/app_tr.arb`. **DOKUNMA:** `app/lib/**/*.dart`, `app/android/**`, generated çıktılar.
-- **Adımlar:** Tüm anahtarları metadata/placeholder/plural ile ekle; EN şablon ve TR anahtar paritesini doğrula; gen-l10n üretimini çalıştır.
-- **Veri/RLS/Geri alma:** Etki yok; ARB commitini geri al. **Edge-case:** apostrof/kaçış, ICU plural/select, tarih-sayı-süre placeholder'ı.
-- **Kabul/DoD:** envanter↔ARB anahtar kapsaması %100; EN/TR anahtar ve placeholder paritesi %100; `flutter gen-l10n` başarılı; eksik/ölü anahtar 0. **Tuzak:** feature worker'ların sonradan ARB'ye paralel yazması. **Dal:** main/lane · **Model:** 🔴 Opus
 
 ### WP-85: Flutter Göç A — Hesap ve Yönetim 👤
 - **Program/Faz:** Küresel açılım · UI göçü · **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-84
@@ -170,9 +162,17 @@
 
 ## Test için bekleyenler
 
-> Kod/otomatik test bitti; **cihaz QA veya ürün demo’su** bekleniyor.  
-> Bu bölüm **aktif çalışma değildir** — ajan claim etmez, diğer WP’leri engellemez.  
+> Kod/otomatik test bitti; **cihaz QA veya ürün demo’su** bekleniyor.
+> Bu bölüm **aktif çalışma değildir** — ajan claim etmez, diğer WP’leri engellemez.
 > Kabul gelince kart buradan çıkar → **Tamamlanan**’a gider. Bug çıkarsa ayrı debug WP açılır.
+
+### WP-84: Kanonik ARB Kataloğu 🔤
+- **Program/Faz:** Küresel açılım · katalog · **Ajan:** Codex · **Aşama:** Otomatik test geçti · **Kanıt:** `Kodda doğrulandı` / `Cihazda doğrulanmalı`
+- **Uygulandı:** Kanonik `app_en.arb` ve `app_tr.arb` kataloglarında 957 kaynak; tüm kaynaklarda İngilizce metadata, placeholder tanımları ve ortak süre/oturum ICU plural'ları. EN/TR anahtar ve placeholder sözleşmesi eş.
+- **Envanter kapsamı:** WP-83'teki 938 satırın tamamı sınıflandırıldı: 846 kanonik kaynak, 46 bölünmüş liste/ternary parçası ve 46 kullanıcı metni olmayan false-positive; eksik 0.
+- **Doğrulama:** `flutter gen-l10n` geçti; `flutter analyze` 0 bulgu; tüm testler 395/395 ve l10n bootstrap 4/4 geçti; anahtar/metadata/placeholder paritesi %100.
+- **Ne bekleniyor:** WP-85/86/87 entegrasyonlarından sonra WP-89'da EN/TR cihaz, taşma ve bağlam içi ürün dili kontrolü. Ücretsiz makine destekli taslak sözlük ve elle bağlam/terim QA'sı uygulandı; gerçek ekran bağlamı son kapıda doğrulanacak.
+- **Değişen dosyalar:** Yalnız `app/lib/l10n/app_en.arb`, `app/lib/l10n/app_tr.arb`; generated l10n çıktıları ignore edildi.
 
 ### WP-88: Native Android EN/TR Kaynakları 🤖
 - **Program/Faz:** Küresel açılım · native yüzey · **Ajan:** Grok · **Aşama:** Otomatik test geçti · **Kanıt:** `Kodda doğrulandı` / `Cihazda doğrulanmalı`
