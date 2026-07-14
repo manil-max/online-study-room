@@ -21,8 +21,9 @@ void main() {
     );
   }
 
-  testWidgets('gizli kilitli başarım ????? gösterir, isim gizlenir',
-      (tester) async {
+  testWidgets('gizli kilitli başarım ????? gösterir, isim gizlenir', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
@@ -41,10 +42,7 @@ void main() {
 
     expect(find.text('?????'), findsWidgets);
     expect(find.text('Gece Kuşu'), findsNothing);
-    expect(
-      find.textContaining('Gizli bir başarım'),
-      findsWidgets,
-    );
+    expect(find.textContaining('Gizli bir başarım'), findsWidgets);
   });
 
   testWidgets('açık gizli başarım gerçek adını gösterir', (tester) async {
@@ -76,6 +74,46 @@ void main() {
 
     expect(find.text('Gece Kuşu'), findsOneWidget);
   });
+
+  testWidgets('başarım ayrıntısı tüm kademe şartlarını ve XPlerini gösterir', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: AchievementShowcase(
+              gamification: profile(),
+              userAchievements: const [],
+              showCatalog: true,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Maratoncu').first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Tüm kademeler'), findsOneWidget);
+    expect(find.text('Kademe 1 · Toplam 50 saat çalış'), findsOneWidget);
+    expect(find.text('Kademe 5 · Toplam 2500 saat çalış'), findsOneWidget);
+    expect(find.text('+100 XP · Kilitli'), findsOneWidget);
+    expect(find.text('+15000 XP · Kilitli'), findsOneWidget);
+  });
+
+  test(
+    'başarım şartları günlük serinin giriş değil hedef temelli olduğunu söyler',
+    () {
+      final achievement = kAchievementDictV3().firstWhere(
+        (entry) => entry.id == 'fire_streak',
+      );
+      expect(
+        achievementTierConditionTr(achievement, achievement.tiers.first),
+        '7 gün üst üste günlük hedefine ulaş',
+      );
+    },
+  );
 
   testWidgets('yeni ödül confetti ≤ 250 ms içinde görünür', (tester) async {
     final key = GlobalKey<AchievementShowcaseState>();

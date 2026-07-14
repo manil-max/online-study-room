@@ -53,9 +53,10 @@ class ClockPermissions {
   ClockPermissions({
     MethodChannel? channel,
     FlutterLocalNotificationsPlugin? plugin,
-  })  : _channel = channel ??
-            const MethodChannel('com.manilmax.online_study_room/exact_alarm'),
-        _plugin = plugin ?? FlutterLocalNotificationsPlugin();
+  }) : _channel =
+           channel ??
+           const MethodChannel('com.manilmax.online_study_room/exact_alarm'),
+       _plugin = plugin ?? FlutterLocalNotificationsPlugin();
 
   static final instance = ClockPermissions();
 
@@ -79,8 +80,10 @@ class ClockPermissions {
   Future<bool> requestNotifications() async {
     if (!_android) return true;
     try {
-      final android = _plugin.resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>();
+      final android = _plugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
       final ok = await android?.requestNotificationsPermission();
       return ok ?? true;
     } catch (_) {
@@ -99,6 +102,16 @@ class ClockPermissions {
     if (!_android) return;
     try {
       await _channel.invokeMethod<void>('openBatteryOptimizationSettings');
+    } catch (_) {}
+  }
+
+  /// Pil optimizasyonunun hem açılıp hem kapatılabildiği Android sistem listesi.
+  Future<void> openBatteryOptimizationManagementSettings() async {
+    if (!_android) return;
+    try {
+      await _channel.invokeMethod<void>(
+        'openBatteryOptimizationManagementSettings',
+      );
     } catch (_) {}
   }
 

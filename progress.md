@@ -70,15 +70,15 @@
 - **Not:** V8-A native sayaç/bildirim/widget (beta-v11…v15) + Grok in-app start hotfix (`94945ac`) ile kod hattı kapatıldı. Kalan: sonraki beta cihaz smoke; OEM Live Panel ince ayar ayrı polish (kapsam dışı).
 
 ### Codex Lane
-- **Durum:** [x] Boşta
-- **Faz/WP:** —
-- **Aşama:** —
-- **SAHİP yollar:** —
-- **Ortak/riskli yüzey:** —
+- **Durum:** [~] Aktif
+- **Faz/WP:** Bakım · İzin yönetimi + başarımlar ayrıntısı + günlük seri doğruluğu
+- **Aşama:** Kod tamamlandı — cihaz QA / ürün kabulü bekliyor
+- **SAHİP yollar:** `app/lib/features/profile/settings_screen.dart`, `app/lib/features/profile/achievements_screen.dart`, `app/lib/features/profile/widgets/achievement_showcase.dart`, `app/lib/features/clock/clock_widgets_screen.dart`, `app/lib/features/home/widgets/goal_card.dart`, `app/lib/features/classroom/widgets/study_timer_card.dart`, `app/lib/features/android_widgets/android_widget_service.dart`, `app/lib/data/providers/study_providers.dart`, `app/lib/core/stats/study_stats.dart`, `app/lib/core/time_engine/clock_permissions.dart`, `app/android/app/src/main/kotlin/**/ExactAlarmHelper.kt` ve ilgili testler
+- **Ortak/riskli yüzey:** `progress.md` (yalnız bu lane); Android izin ayarları method channel
 - **Dal:** — (ana dal `main`)
-- **Başlangıç:** 2026-07-13 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-13 (WP-53 R1 kod kapıları geçti)
-- **Not:** Ayarlar tek katmana indirildi; ExpansionTile yok, Gruplar sayacı kaldırıldı, bildirim/sürüm doğrudan açılıyor, grid Auto seçeneği kaldırılıp eski değer 6'ya göçüyor. Analyze + 283 test + Windows release build PASS; görsel cihaz QA bekliyor. Push yok.
+- **Başlangıç:** 2026-07-14 18:04 (Europe/Istanbul)
+- **Son güncelleme:** 2026-07-14 18:21
+- **Not:** İzinler her durumda “Yönet” ile Android sistem ayarından açılıp kapatılabilir; pil optimizasyonu için geri alınabilir sistem listesi eklendi. Başarım ayrıntısı tüm kademelerin şartını, XP’sini ve tamamlanan/kilitli durumunu gösterir (kilitli gizli başarımlar gizli kalır). “Seri” metinleri “hedef serisi” olarak netleştirildi; hesap zaten günlük hedefe ulaşmaya dayanıyordu. `flutter test --concurrency=1` 332 PASS; debug APK derlendi. `flutter analyze`: bu kulvar dışındaki iki mevcut uyarı (`admin_announcements_tab.dart`, `appearance_screen.dart`). Cihaz QA bekliyor; push yok.
 
 ### Grok Lane
 - **Durum:** [x] Boşta — beta-v18 hazır (1.0.18+18)

@@ -41,6 +41,10 @@ object ExactAlarmHelper {
                 openBatterySettings(context)
                 result.success(true)
             }
+            "openBatteryOptimizationManagementSettings" -> {
+                openBatteryOptimizationManagementSettings(context)
+                result.success(true)
+            }
             "openNotificationSettings" -> {
                 openNotificationSettings(context)
                 result.success(true)
@@ -172,6 +176,17 @@ object ExactAlarmHelper {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
             runCatching { context.startActivity(fallback) }
+        }
+    }
+
+    /** Kullanıcının optimizasyon istisnasını geri de alabileceği sistem listesi. */
+    private fun openBatteryOptimizationManagementSettings(context: Context) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return
+        val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        runCatching { context.startActivity(intent) }.onFailure {
+            openBatterySettings(context)
         }
     }
 

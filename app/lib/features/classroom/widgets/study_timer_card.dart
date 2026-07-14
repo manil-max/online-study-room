@@ -75,8 +75,10 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
   }
 
   Future<void> _editGoal(BuildContext context, int currentMinutes) async {
-    final result =
-        await showGoalEditorDialog(context, initialMinutes: currentMinutes);
+    final result = await showGoalEditorDialog(
+      context,
+      initialMinutes: currentMinutes,
+    );
     if (result == null) return;
     if (!context.mounted) return;
     final messenger = ScaffoldMessenger.of(context);
@@ -133,8 +135,9 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
     final goalMinutes = ref.watch(dailyGoalMinutesProvider);
     final goalSeconds = goalMinutes * 60;
     final streak = ref.watch(currentStreakProvider);
-    final pct =
-        goalSeconds > 0 ? (todayTotal / goalSeconds).clamp(0.0, 1.0) : 0.0;
+    final pct = goalSeconds > 0
+        ? (todayTotal / goalSeconds).clamp(0.0, 1.0)
+        : 0.0;
     final reached = goalSeconds > 0 && todayTotal >= goalSeconds;
     // Saat halkası/renk geçişi: timer modunda FAZ ilerlemesi, kronometrede hedef.
     final clockPct = target == null
@@ -143,138 +146,140 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
     final clockStyle = ref.watch(clockStyleProvider);
 
     return Card(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final small = constraints.maxWidth < 280;
-            final isLarge = constraints.maxWidth >= 400;
-            
-            return Stack(
-              children: [
-                // Saat görünümü + tam ekran odak modu (§3.12).
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final small = constraints.maxWidth < 280;
+          final isLarge = constraints.maxWidth >= 400;
+
+          return Stack(
+            children: [
+              // Saat görünümü + tam ekran odak modu (§3.12).
+              Positioned(
+                top: 4,
+                right: 4,
+                child: Row(
+                  children: [
+                    IconButton(
+                      tooltip: 'Geçmiş oturumlar',
+                      icon: const Icon(Icons.history),
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const SessionHistoryScreen(),
+                        ),
+                      ),
+                    ),
+                    Builder(
+                      builder: (iconContext) => IconButton(
+                        tooltip: 'Saat görünümü',
+                        icon: const Icon(Icons.tune),
+                        onPressed: () => showClockStyleMenu(iconContext, ref),
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Tam ekran odak',
+                      icon: const Icon(Icons.fullscreen),
+                      onPressed: () => openFocusTimer(context),
+                    ),
+                  ],
+                ),
+              ),
+              // Seri (streak) — yalnız varsa (§3.7).
+              if (streak > 0)
                 Positioned(
-                  top: 4,
-                  right: 4,
-                  child: Row(
+                  top: 14,
+                  left: 14,
+                  child: _StreakChip(streak: streak, compact: small),
+                ),
+              Padding(
+                // Üstteki ikon/seri rozetiyle çakışmasın diye üst boşluk biraz fazla.
+                padding: const EdgeInsets.fromLTRB(16, 48, 16, 20),
+                child: SingleChildScrollView(
+                  child: Column(
                     children: [
-                      IconButton(
-                        tooltip: 'Geçmiş oturumlar',
-                        icon: const Icon(Icons.history),
-                        onPressed: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                              builder: (_) => const SessionHistoryScreen()),
+                      Text(
+                        'Bugün',
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
                         ),
                       ),
-                      Builder(
-                        builder: (iconContext) => IconButton(
-                          tooltip: 'Saat görünümü',
-                          icon: const Icon(Icons.tune),
-                          onPressed: () => showClockStyleMenu(iconContext, ref),
+                      const SizedBox(height: 4),
+                      // Dar kartta taşmasın diye ölçekle.
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          formatHumanSeconds(todayTotal),
+                          maxLines: 1,
+                          style: theme.textTheme.headlineMedium,
                         ),
                       ),
-                      IconButton(
-                        tooltip: 'Tam ekran odak',
-                        icon: const Icon(Icons.fullscreen),
-                        onPressed: () => openFocusTimer(context),
+                      const SizedBox(height: 16),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: StudyClock(
+                          seconds: displaySeconds,
+                          pctToGoal: clockPct,
+                          running: timer.isRunning,
+                          style: clockStyle,
+                          fontSize: small ? 34 : (isLarge ? 56 : 40),
+                          diameter: small ? 130 : (isLarge ? 220 : 160),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      // Çalışırken faz göstergesi; dururken mod seçici + ayarlar.
+                      if (timer.isRunning) ...[
+                        TimerPhaseIndicator(timer: timer),
+                        if (timer.mode != TimerMode.stopwatch)
+                          const SizedBox(height: 16),
+                      ] else ...[
+                        const TimerModeControls(),
+                        const SizedBox(height: 16),
+                      ],
+                      _GoalProgress(
+                        todaySeconds: todayTotal,
+                        goalSeconds: goalSeconds,
+                        pct: pct,
+                        reached: reached,
+                        onEdit: () => _editGoal(context, goalMinutes),
+                      ),
+                      const SizedBox(height: 16),
+                      _SubjectSelector(
+                        subjects: subjects,
+                        selectedId: timer.subjectId,
+                        running: timer.isRunning,
+                        onSelect: notifier.selectSubject,
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: timer.isRunning
+                            ? FilledButton.icon(
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: theme.colorScheme.error,
+                                ),
+                                onPressed: notifier.stop,
+                                icon: const Icon(Icons.stop),
+                                label: const Text('Durdur'),
+                              )
+                            : FilledButton.icon(
+                                onPressed: notifier.start,
+                                icon: const Icon(Icons.play_arrow),
+                                label: const Text('Çalışmaya başla'),
+                              ),
+                      ),
+                      const SizedBox(height: 4),
+                      TextButton.icon(
+                        onPressed: () => addManualSessionFlow(context, ref),
+                        icon: const Icon(Icons.edit_calendar, size: 18),
+                        label: const Text('Manuel süre ekle'),
                       ),
                     ],
                   ),
                 ),
-                // Seri (streak) — yalnız varsa (§3.7).
-                if (streak > 0)
-                  Positioned(
-                      top: 14,
-                      left: 14,
-                      child: _StreakChip(streak: streak, compact: small)),
-                Padding(
-                  // Üstteki ikon/seri rozetiyle çakışmasın diye üst boşluk biraz fazla.
-                  padding: const EdgeInsets.fromLTRB(16, 48, 16, 20),
-                  child: SingleChildScrollView(
-                    child: Column(
-                      children: [
-                        Text(
-                          'Bugün',
-                          style: theme.textTheme.labelLarge?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        // Dar kartta taşmasın diye ölçekle.
-                        FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            formatHumanSeconds(todayTotal),
-                            maxLines: 1,
-                            style: theme.textTheme.headlineMedium,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: StudyClock(
-                            seconds: displaySeconds,
-                            pctToGoal: clockPct,
-                            running: timer.isRunning,
-                            style: clockStyle,
-                            fontSize: small ? 34 : (isLarge ? 56 : 40),
-                            diameter: small ? 130 : (isLarge ? 220 : 160),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        // Çalışırken faz göstergesi; dururken mod seçici + ayarlar.
-                        if (timer.isRunning) ...[
-                          TimerPhaseIndicator(timer: timer),
-                          if (timer.mode != TimerMode.stopwatch)
-                            const SizedBox(height: 16),
-                        ] else ...[
-                          const TimerModeControls(),
-                          const SizedBox(height: 16),
-                        ],
-                        _GoalProgress(
-                          todaySeconds: todayTotal,
-                          goalSeconds: goalSeconds,
-                          pct: pct,
-                          reached: reached,
-                          onEdit: () => _editGoal(context, goalMinutes),
-                        ),
-                        const SizedBox(height: 16),
-                        _SubjectSelector(
-                          subjects: subjects,
-                          selectedId: timer.subjectId,
-                          running: timer.isRunning,
-                          onSelect: notifier.selectSubject,
-                        ),
-                        const SizedBox(height: 16),
-                        SizedBox(
-                          width: double.infinity,
-                          child: timer.isRunning
-                              ? FilledButton.icon(
-                                  style: FilledButton.styleFrom(
-                                    backgroundColor: theme.colorScheme.error,
-                                  ),
-                                  onPressed: notifier.stop,
-                                  icon: const Icon(Icons.stop),
-                                  label: const Text('Durdur'),
-                                )
-                              : FilledButton.icon(
-                                  onPressed: notifier.start,
-                                  icon: const Icon(Icons.play_arrow),
-                                  label: const Text('Çalışmaya başla'),
-                                ),
-                        ),
-                        const SizedBox(height: 4),
-                        TextButton.icon(
-                          onPressed: () => addManualSessionFlow(context, ref),
-                          icon: const Icon(Icons.edit_calendar, size: 18),
-                          label: const Text('Manuel süre ekle'),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            );
-          },
-        ),
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 }
@@ -358,20 +363,29 @@ class _SubjectSelector extends StatelessWidget {
           height: 32,
           child: Text(
             'Ders',
-            style: theme.textTheme.labelMedium
-                ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
           ),
         ),
         PopupMenuItem<_SubjectMenuResult>(
           value: const _SubjectMenuResult.pick(null),
-          child: _subjectMenuRow(theme, 'Genel (ders yok)',
-              theme.colorScheme.onSurfaceVariant, selectedId == null),
+          child: _subjectMenuRow(
+            theme,
+            'Genel (ders yok)',
+            theme.colorScheme.onSurfaceVariant,
+            selectedId == null,
+          ),
         ),
         for (final s in subjects)
           PopupMenuItem<_SubjectMenuResult>(
             value: _SubjectMenuResult.pick(s.id),
             child: _subjectMenuRow(
-                theme, s.name, subjectColor(s.color), selectedId == s.id),
+              theme,
+              s.name,
+              subjectColor(s.color),
+              selectedId == s.id,
+            ),
           ),
         const PopupMenuDivider(),
         const PopupMenuItem<_SubjectMenuResult>(
@@ -389,9 +403,9 @@ class _SubjectSelector extends StatelessWidget {
     if (result == null) return;
     if (result.isEdit) {
       if (context.mounted) {
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const SubjectsScreen()),
-        );
+        Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const SubjectsScreen()));
       }
       return;
     }
@@ -402,16 +416,18 @@ class _SubjectSelector extends StatelessWidget {
 /// Ders menüsü sonucu: bir ders seç (null = Genel) veya "Dersleri düzenle".
 class _SubjectMenuResult {
   const _SubjectMenuResult.pick(this.subjectId) : isEdit = false;
-  const _SubjectMenuResult.edit()
-      : subjectId = null,
-        isEdit = true;
+  const _SubjectMenuResult.edit() : subjectId = null, isEdit = true;
 
   final String? subjectId;
   final bool isEdit;
 }
 
 Widget _subjectMenuRow(
-    ThemeData theme, String label, Color dot, bool selected) {
+  ThemeData theme,
+  String label,
+  Color dot,
+  bool selected,
+) {
   return Row(
     children: [
       CircleAvatar(radius: 6, backgroundColor: dot),
@@ -445,7 +461,9 @@ class _GoalProgress extends StatelessWidget {
     final theme = Theme.of(context);
     final muted = theme.colorScheme.onSurfaceVariant;
     // Hedefe ulaşınca yeşil (chart-2), yoksa birincil renk.
-    final barColor = reached ? subjectColor('chart-2') : theme.colorScheme.primary;
+    final barColor = reached
+        ? subjectColor('chart-2')
+        : theme.colorScheme.primary;
 
     return InkWell(
       borderRadius: BorderRadius.circular(8),
@@ -459,14 +477,18 @@ class _GoalProgress extends StatelessWidget {
               children: [
                 Icon(Icons.flag_outlined, size: 16, color: muted),
                 const SizedBox(width: 6),
-                Text('Günlük hedef',
-                    style: theme.textTheme.labelMedium?.copyWith(color: muted)),
+                Text(
+                  'Günlük hedef',
+                  style: theme.textTheme.labelMedium?.copyWith(color: muted),
+                ),
                 const Spacer(),
-                Text('%${(pct * 100).round()}',
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      color: reached ? barColor : null,
-                      fontWeight: FontWeight.w600,
-                    )),
+                Text(
+                  '%${(pct * 100).round()}',
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: reached ? barColor : null,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 const SizedBox(width: 6),
                 Icon(Icons.edit, size: 14, color: muted),
               ],
@@ -496,7 +518,7 @@ class _GoalProgress extends StatelessWidget {
   }
 }
 
-/// Seri (streak) rozeti: ateş ikonu + üst üste hedef tutturulan gün sayısı.
+/// Hedef serisi rozeti: ateş ikonu + üst üste günlük hedef tutturulan gün sayısı.
 /// [compact] (dar kart) modunda yalnız ikon + sayı gösterir.
 class _StreakChip extends StatelessWidget {
   const _StreakChip({required this.streak, this.compact = false});
@@ -516,8 +538,11 @@ class _StreakChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.local_fire_department,
-              size: compact ? 18 : 22, color: subjectColor('chart-5')),
+          Icon(
+            Icons.local_fire_department,
+            size: compact ? 18 : 22,
+            color: subjectColor('chart-5'),
+          ),
           const SizedBox(width: 6),
           Text(
             '$streak',
@@ -529,9 +554,10 @@ class _StreakChip extends StatelessWidget {
           if (!compact) ...[
             const SizedBox(width: 3),
             Text(
-              'günlük seri',
-              style: theme.textTheme.bodySmall
-                  ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              'hedef serisi',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
           ],
         ],

@@ -20,11 +20,14 @@ class GoalCard extends ConsumerWidget {
     final goalMinutes = ref.watch(dailyGoalMinutesProvider);
     final goalSeconds = goalMinutes * 60;
     final streak = ref.watch(currentStreakProvider);
-    final pct = goalSeconds <= 0 ? 0.0 : (recorded / goalSeconds).clamp(0.0, 1.0);
+    final pct = goalSeconds <= 0
+        ? 0.0
+        : (recorded / goalSeconds).clamp(0.0, 1.0);
     final reached = recorded >= goalSeconds && goalSeconds > 0;
     final fire = subjectColor('chart-5');
-    final ringColor =
-        reached ? subjectColor('chart-2') : theme.colorScheme.primary;
+    final ringColor = reached
+        ? subjectColor('chart-2')
+        : theme.colorScheme.primary;
     return Card(
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -46,11 +49,14 @@ class GoalCard extends ConsumerWidget {
                     valueColor: AlwaysStoppedAnimation<Color>(ringColor),
                   ),
                 ),
-                Text('%${(pct * 100).round()}',
-                    style: (isLarge
-                            ? theme.textTheme.headlineSmall
-                            : theme.textTheme.titleMedium)
-                        ?.copyWith(fontWeight: FontWeight.w700)),
+                Text(
+                  '%${(pct * 100).round()}',
+                  style:
+                      (isLarge
+                              ? theme.textTheme.headlineSmall
+                              : theme.textTheme.titleMedium)
+                          ?.copyWith(fontWeight: FontWeight.w700),
+                ),
               ],
             ),
           );
@@ -65,14 +71,20 @@ class GoalCard extends ConsumerWidget {
                     Row(
                       children: [
                         Flexible(
-                          child: Text('Günlük hedef',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: theme.textTheme.labelMedium),
+                          child: Text(
+                            'Günlük hedef',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.labelMedium,
+                          ),
                         ),
                         const Spacer(),
                         if (reached)
-                          Icon(Icons.check_circle, color: subjectColor('chart-2'), size: 16),
+                          Icon(
+                            Icons.check_circle,
+                            color: subjectColor('chart-2'),
+                            size: 16,
+                          ),
                       ],
                     ),
                     const SizedBox(height: 12),
@@ -86,21 +98,36 @@ class GoalCard extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: fire.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.local_fire_department, color: fire, size: 16),
-                          const SizedBox(width: 4),
-                          Text('$streak',
-                              style: theme.textTheme.titleSmall
-                                  ?.copyWith(color: fire, fontWeight: FontWeight.w800)),
-                        ],
+                    Tooltip(
+                      message:
+                          'Hedef serisi: $streak gün (günlük çalışma hedefine ulaşma)',
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: fire.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.local_fire_department,
+                              color: fire,
+                              size: 16,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '$streak',
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                color: fire,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],
@@ -118,14 +145,19 @@ class GoalCard extends ConsumerWidget {
                   Row(
                     children: [
                       Flexible(
-                        child: Text('Günlük hedef',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.titleMedium),
+                        child: Text(
+                          'Günlük hedef',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.titleMedium,
+                        ),
                       ),
                       const Spacer(),
                       if (reached)
-                        Icon(Icons.check_circle, color: subjectColor('chart-2')),
+                        Icon(
+                          Icons.check_circle,
+                          color: subjectColor('chart-2'),
+                        ),
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -147,7 +179,8 @@ class GoalCard extends ConsumerWidget {
                                   ? 'Bugünkü hedefini tuttun! 🎉'
                                   : 'Hedefe ${formatHuman((goalSeconds - recorded).clamp(0, 1 << 30))} kaldı',
                               style: theme.textTheme.bodySmall?.copyWith(
-                                  color: theme.colorScheme.onSurfaceVariant),
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
                             ),
                           ],
                         ),
@@ -156,23 +189,36 @@ class GoalCard extends ConsumerWidget {
                   ),
                   const SizedBox(height: 16),
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
                     decoration: BoxDecoration(
                       color: fire.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.local_fire_department, color: fire, size: 28),
+                        Icon(
+                          Icons.local_fire_department,
+                          color: fire,
+                          size: 28,
+                        ),
                         const SizedBox(width: 8),
-                        Text('$streak',
-                            style: theme.textTheme.headlineSmall
-                                ?.copyWith(color: fire, fontWeight: FontWeight.w800)),
+                        Text(
+                          '$streak',
+                          style: theme.textTheme.headlineSmall?.copyWith(
+                            color: fire,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
                         const SizedBox(width: 6),
-                        Text('günlük seri',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant)),
+                        Text(
+                          'hedef serisi',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
                       ],
                     ),
                   ),

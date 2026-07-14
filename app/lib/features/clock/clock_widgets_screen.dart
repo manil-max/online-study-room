@@ -102,8 +102,8 @@ class _ClockWidgetsScreenState extends ConsumerState<ClockWidgetsScreen>
         ),
         const SizedBox(height: 4),
         Text(
-          'App kapalıyken alarm çalması için hepsi yeşil olmalı. '
-          'İzin istemediyse aşağıdaki düğmelerle aç.',
+          'App kapalıyken alarm çalması için hepsi yeşil olmalı. Android '
+          'izinleri güvenlik nedeniyle sistem ayarlarından açılıp kapatılır.',
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),
@@ -116,7 +116,7 @@ class _ClockWidgetsScreenState extends ConsumerState<ClockWidgetsScreen>
             title: 'Bildirimler',
             ok: _perms.notifications,
             detail: 'Android 13+ zorunlu; alarm bildirimi + ses',
-            onFix: () async {
+            onManage: () async {
               await ClockPermissions.instance.requestNotifications();
               await ClockPermissions.instance.openNotificationSettings();
               await _refresh();
@@ -126,7 +126,7 @@ class _ClockWidgetsScreenState extends ConsumerState<ClockWidgetsScreen>
             title: 'Kesin alarm (Exact)',
             ok: _perms.exactAlarm,
             detail: 'Android 12+ — saatinde çalsın',
-            onFix: () async {
+            onManage: () async {
               await ClockPermissions.instance.openExactAlarmSettings();
               await _refresh();
             },
@@ -135,8 +135,9 @@ class _ClockWidgetsScreenState extends ConsumerState<ClockWidgetsScreen>
             title: 'Pil kısıtlaması yok',
             ok: _perms.batteryUnrestricted,
             detail: 'OEM arka plan öldürmesin (HyperOS/Samsung önemli)',
-            onFix: () async {
-              await ClockPermissions.instance.openBatterySettings();
+            onManage: () async {
+              await ClockPermissions.instance
+                  .openBatteryOptimizationManagementSettings();
               await _refresh();
             },
           ),
@@ -144,7 +145,7 @@ class _ClockWidgetsScreenState extends ConsumerState<ClockWidgetsScreen>
             title: 'Tam ekran alarm',
             ok: _perms.fullScreenIntent,
             detail: 'Kilit ekranında alarm yüzeyi',
-            onFix: () async {
+            onManage: () async {
               await ClockPermissions.instance.openFullScreenSettings();
               await _refresh();
             },
@@ -224,13 +225,13 @@ class _PermTile extends StatelessWidget {
     required this.title,
     required this.ok,
     required this.detail,
-    required this.onFix,
+    required this.onManage,
   });
 
   final String title;
   final bool ok;
   final String detail;
-  final VoidCallback onFix;
+  final VoidCallback onManage;
 
   @override
   Widget build(BuildContext context) {
@@ -243,9 +244,10 @@ class _PermTile extends StatelessWidget {
         ),
         title: Text(title),
         subtitle: Text(detail),
-        trailing: ok
-            ? null
-            : TextButton(onPressed: onFix, child: const Text('Aç')),
+        trailing: TextButton(
+          onPressed: onManage,
+          child: Text(ok ? 'Yönet' : 'Aç'),
+        ),
       ),
     );
   }

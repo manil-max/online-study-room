@@ -340,8 +340,9 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
 
   /// Native `StudyTimerService` ile çift yönlü method channel: Dart→native
   /// (start/stop), native→Dart (`reconcile`).
-  static const MethodChannel _timerChannel =
-      MethodChannel('com.manilmax.online_study_room/timer');
+  static const MethodChannel _timerChannel = MethodChannel(
+    'com.manilmax.online_study_room/timer',
+  );
 
   Timer? _tick;
   Timer? _widgetRefreshDebounce;
@@ -502,8 +503,9 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
             final start = DateTime.tryParse(entry['start']?.toString() ?? '');
             final end = DateTime.tryParse(entry['end']?.toString() ?? '');
             final subjectRaw = entry['subject']?.toString();
-            final subject =
-                (subjectRaw == null || subjectRaw.isEmpty) ? null : subjectRaw;
+            final subject = (subjectRaw == null || subjectRaw.isEmpty)
+                ? null
+                : subjectRaw;
             if (start != null && end != null && end.isAfter(start)) {
               await _recordSession(start, end, subject);
             }
@@ -551,8 +553,9 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     } else if (fgMode == 'running') {
       // App-kapalı Başlat ile yeni oturum başladıysa ve build() bunu henüz
       // yansıtmadıysa (ör. bildirimden Başlat), aktif başlangıcı benimse.
-      final fgStart =
-          DateTime.tryParse(prefs.getString(_kActiveStartedAt) ?? '');
+      final fgStart = DateTime.tryParse(
+        prefs.getString(_kActiveStartedAt) ?? '',
+      );
       if (fgStart != null && !state.isRunning) {
         state = state.copyWith(
           isRunning: true,
@@ -563,10 +566,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
           lastUpdatedAt: DateTime.now(),
         );
         _persistActiveTimer();
-        _publishPresence(
-          status: PresenceStatus.studying,
-          startedAt: fgStart,
-        );
+        _publishPresence(status: PresenceStatus.studying, startedAt: fgStart);
         _startTick();
         unawaited(_syncTimerSurfaces());
       }
@@ -890,7 +890,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
         today: 'Bugün: ${formatHuman(projection.todaySeconds)}',
         week: 'Hafta: ${formatHuman(projection.weekSeconds)}',
         streak:
-            'Seri: ${projection.streakForGoal(ref.read(dailyGoalMinutesProvider) * 60)} gün',
+            'Hedef serisi: ${projection.streakForGoal(ref.read(dailyGoalMinutesProvider) * 60)} gün',
       ),
     );
     if (_disposed) return;
@@ -954,7 +954,6 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     );
     await widgetService.refresh(widgets: const [StudyHomeWidget.timer]);
   }
-
 }
 
 final studyTimerProvider =

@@ -83,7 +83,7 @@ class AndroidWidgetSnapshot {
       statsTitle = 'Bugün',
       statsToday = '0 dk',
       statsWeek = 'Hafta: 0 sa',
-      statsStreak = 'Seri: 0 gün',
+      statsStreak = 'Hedef serisi: 0 gün',
       leaderboardTitle = 'Kamp sıralaması',
       leaderboardRows = const ['Henüz kayıt yok', '-', '-'];
 
