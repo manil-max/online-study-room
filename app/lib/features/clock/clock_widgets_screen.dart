@@ -117,7 +117,9 @@ class _ClockWidgetsScreenState extends ConsumerState<ClockWidgetsScreen>
             ok: _perms.notifications,
             detail: 'Android 13+ zorunlu; alarm bildirimi + ses',
             onManage: () async {
-              await ClockPermissions.instance.requestNotifications();
+              if (!_perms.notifications) {
+                await ClockPermissions.instance.requestNotifications();
+              }
               await ClockPermissions.instance.openNotificationSettings();
               await _refresh();
             },
@@ -150,6 +152,7 @@ class _ClockWidgetsScreenState extends ConsumerState<ClockWidgetsScreen>
               await _refresh();
             },
           ),
+          const _PermissionRevocationGuide(),
           if (!_perms.allOk) ...[
             const SizedBox(height: 12),
             FilledButton.icon(
@@ -246,9 +249,80 @@ class _PermTile extends StatelessWidget {
         subtitle: Text(detail),
         trailing: TextButton(
           onPressed: onManage,
-          child: Text(ok ? 'Yönet' : 'Aç'),
+          // Android izinleri uygulama tarafından geri alınamaz. İzin zaten
+          // verildiyse bu düğme doğrudan ilgili sistem ekranını açar; kullanıcı
+          // oradan kapatır. Verilmemişse aynı ekran/istem açma akışına gider.
+          child: Text(ok ? 'Kapat' : 'Aç'),
         ),
       ),
     );
   }
+}
+
+/// OEM isimleri değişse de kullanıcıyı uygulamadan doğrudan doğru ayara
+/// götüren dört izin için kısa geri alma rehberi.
+class _PermissionRevocationGuide extends StatelessWidget {
+  const _PermissionRevocationGuide();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      margin: const EdgeInsets.only(top: 4, bottom: 8),
+      child: ExpansionTile(
+        leading: const Icon(Icons.manage_accounts_outlined),
+        title: const Text('İzni geri almak ister misin?'),
+        subtitle: const Text('Kapat düğmesi ilgili Android ayarını açar'),
+        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        children: [
+          Text(
+            'İzinler güvenlik nedeniyle yalnız Android sistem ayarlarından '
+            'kapatılır. Cihaz markasına göre başlıklar biraz değişebilir.',
+            style: theme.textTheme.bodySmall,
+          ),
+          const SizedBox(height: 12),
+          const _PermissionGuideStep(
+            title: 'Bildirimleri kapat:',
+            body:
+                'Açılan uygulama bildirimleri ekranında “Bildirimlere izin ver” anahtarını kapat.',
+          ),
+          const _PermissionGuideStep(
+            title: 'Kesin alarmı kapat:',
+            body:
+                'Açılan “Alarmlar ve hatırlatıcılar” ekranında Odak Kampı için anahtarı kapat.',
+          ),
+          const _PermissionGuideStep(
+            title: 'Pil istisnasını kaldır:',
+            body:
+                'Pil optimizasyonu listesinde Odak Kampı’nı bulup “Optimize edilmiş” seçeneğine geri al.',
+          ),
+          const _PermissionGuideStep(
+            title: 'Tam ekran alarmı kapat:',
+            body:
+                'Açılan tam ekran bildirimler sayfasında Odak Kampı anahtarını kapat. Android 14 öncesinde bu ayar olmayabilir.',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PermissionGuideStep extends StatelessWidget {
+  const _PermissionGuideStep({required this.title, required this.body});
+
+  final String title;
+  final String body;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: 10),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
+        const SizedBox(height: 2),
+        Text(body, style: Theme.of(context).textTheme.bodySmall),
+      ],
+    ),
+  );
 }

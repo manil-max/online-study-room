@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/features/clock/clock_widgets_screen.dart';
 
 void main() {
-  testWidgets('izinler açıldıktan sonra da sistemden yönetilebilir', (
+  testWidgets('izinler açıldıktan sonra sistem ayarından kapatılabilir', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(1080, 6000);
@@ -22,6 +22,14 @@ void main() {
       find.textContaining('sistem ayarlarından açılıp kapatılır'),
       findsOneWidget,
     );
-    expect(find.text('Yönet'), findsNWidgets(4));
+    expect(find.text('Kapat'), findsNWidgets(4));
+
+    await tester.tap(find.text('İzni geri almak ister misin?'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Bildirimleri kapat:'), findsOneWidget);
+    expect(find.text('Kesin alarmı kapat:'), findsOneWidget);
+    expect(find.text('Pil istisnasını kaldır:'), findsOneWidget);
+    expect(find.text('Tam ekran alarmı kapat:'), findsOneWidget);
   });
 }

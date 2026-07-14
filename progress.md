@@ -67,8 +67,8 @@
 - **Ortak/riskli yüzey:** —
 - **Dal:** — (ana dal `main`)
 - **Başlangıç:** —
-- **Son güncelleme:** 2026-07-14 22:42 (Europe/Istanbul)
-- **Not:** WP-76 kod + hedef otomatik test tamamlandı; gerçek Android cihaz QA için park edildi. Lane serbest.
+- **Son güncelleme:** 2026-07-14 23:20 (Europe/Istanbul)
+- **Not:** WP-77 kod + widget testi tamamlandı; gerçek Android ayar yönlendirmesi için park edildi. Lane serbest.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
@@ -107,6 +107,7 @@
 | WP | Durum | Kısa kapsam | Bağımlılık |
 |---|---|---|---|
 | WP-76 | [~] Test için bekliyor | Dinamik panel — cihazda çalışan canlı kontrol paneli (Live Activity / durum çubuğu) | — |
+| WP-77 | [~] Test için bekliyor | İzin yönetimi — verilen dört Android iznini geri alma ve rehberi | — |
 
 > **2026-07-14 proje denetimi:** Serbest sürükle-bırak ızgara, canlı grup hedefi ve saat stilleri **zaten kodda uygulanmış** (backlog stale idi; geçici WP-72/73/75 iptal). Dinamik paneldeki cihaz/eylem sorunu için açılan **WP-76** kod+otomatik test aşamasını geçti; Samsung/Pixel cihaz QA’sı bekliyor.
 >
@@ -129,6 +130,12 @@
 - **Otomatik kanıt:** `flutter test test/features/timer_background_reconcile_test.dart --dart-define-from-file=env.json` → 4/4 PASS; manifest + geniş panel XML statik doğrulama PASS; `git -c core.whitespace=cr-at-eol diff --check` PASS. `flutter analyze` depodaki WP-76 dışı 4 mevcut uyarı nedeniyle 0 değil. Tam `flutter test` ise WP-76 dışı `theme_engine_test` ve `widget_test` hatalarıyla 385 PASS / 2 FAIL.
 - **Bekleyen cihaz QA:** Samsung One UI ve Pixel (Android 14+) üzerinde bildirim iznini ver; Ayarlar → Pil → uygulama pili **Sınırsız** yap; uygulamayı görev listesinden kapat; panelden 20 ardışık Başlat/Durdur ve Mola/Çalışmaya dön turu yap. Her tur ≤2 sn yansımalı, panel genişlemeli, süre sistem `Chronometer`ı ile akmalı; Samsung + Pixel video kanıtı ve 8 saat sapma ölçümü gerekli. Ortamda Android SDK/bağlı cihaz olmadığı için APK derlemesi burada koşulamadı.
 - **Değişen yollar:** `app/lib/core/background/timer_foreground_service.dart`, `app/lib/data/providers/study_providers.dart`, `app/android/app/src/main/AndroidManifest.xml`, `app/android/app/src/main/kotlin/com/manilmax/online_study_room/{MainActivity.kt,timer/StudyTimerService.kt}`, `app/android/app/src/main/res/layout/timer_notification_expanded.xml`, `app/test/features/timer_background_reconcile_test.dart`.
+
+### WP-77: Android İzin Yönetimi ve Geri Alma Rehberi
+- **Program/Faz:** Android güvenilirlik bakım · **Aşama:** Otomatik test geçti · **Kanıt:** `Kodda doğrulandı` / `Cihazda doğrulanmalı`
+- **Uygulandı:** Widget ve izinler ekranında izin verilmişse dört kartın düğmesi artık **Kapat**, verilmemişse **Aç**. Kapat ilgili Android sistem sayfasını açar; uygulama izni doğrudan geri alamaz. Açılır rehber, Bildirimler / Kesin alarm / Pil istisnası / Tam ekran alarm için kullanıcıya kapanış adımını Türkçe anlatır; OEM başlıklarının değişebileceğini belirtir.
+- **Otomatik kanıt:** `flutter test test/features/clock_widgets_screen_test.dart --dart-define-from-file=env.json` → PASS; `flutter analyze` depodaki WP-77 dışı mevcut 4 uyarı nedeniyle 0 değil.
+- **Bekleyen cihaz QA:** Android 13+ ve Android 14+ cihazlarda her kartta Kapat → ilgili sistem ayarı → anahtarı kapat → uygulamaya dön adımını dene; kartın turuncuya döndüğünü doğrula. Samsung/HyperOS’ta pil ekranı adı farklı olabilir; rehber metni işlevi açıkça anlatmalı.
  
 ---
 
