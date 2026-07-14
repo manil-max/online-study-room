@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/desktop/desktop_layout.dart';
 import '../../core/desktop/desktop_window.dart';
 import '../../core/widgets/safe_screen_padding.dart';
 import '../../data/models/study_group.dart';
@@ -11,7 +10,6 @@ import '../home/dashboard_providers.dart';
 import '../home/widgets/group_goal_card.dart';
 import '../home/widgets/group_trend_card.dart';
 import '../home/widgets/leaderboard_card.dart';
-import '../desktop/desktop_page_scaffold.dart';
 import 'widgets/campfire_scene.dart';
 import 'widgets/class_chat_screen.dart';
 import 'widgets/class_detail_screen.dart';
@@ -34,29 +32,11 @@ class ClassroomScreen extends ConsumerWidget {
       error: (e, _) => Center(child: Text('Bir hata oluştu: $e')),
     );
 
-    if (isDesktopWindow) {
-      return DesktopPageScaffold(
-        title: 'Gruplar',
-        subtitle:
-            'Kamp arkadaşlarınla ilerlemeyi, hedefleri ve ortak ritmi izle.',
-        icon: Icons.groups_outlined,
-        actions: [
-          Builder(
-            builder: (buttonContext) => OutlinedButton.icon(
-              onPressed: () => showClassSwitcher(buttonContext, ref),
-              icon: const Icon(Icons.swap_horiz),
-              label: const Text('Grup değiştir'),
-            ),
-          ),
-        ],
-        child: body,
-      );
-    }
-
+    // Windows: sol rail yeter; büyük başlık/sağ panel yok.
     return Scaffold(
       appBar: AppBar(
-        // Başlık şimdilik boş (kullanıcı isteği). Sağ üstte sınıf değiştirici kalır.
-        // Builder: menü tam bu ikonun konumunda açılsın (§3.12 — basılan yerde).
+        toolbarHeight: isDesktopWindow ? 48 : kToolbarHeight,
+        title: isDesktopWindow ? null : null,
         actions: [
           Builder(
             builder: (iconContext) => IconButton(
@@ -129,65 +109,8 @@ class _GroupView extends ConsumerWidget {
     // Sayaç varsayılan olarak Ana Sayfa'dadır; isteyen Sınıflar'a ekler (§3.9).
     final showTimer = ref.watch(classroomShowTimerProvider);
 
-    // Sıra (KALITE-PROGRAMI §8.3 Gruplar): kamp ateşi → grup hedefi → sıralama →
-    // trend → yönetim. Kamp ateşi en üstte; davet kodu gibi operasyonel bilgiler
-    // ateşin üstünde büyük alan kaplamaz, alttaki açılır yönetim paneline taşındı.
-    if (isDesktopWindow) {
-      final density = DesktopDensity.of(context);
-      return SingleChildScrollView(
-        padding: density.pagePadding,
-        child: DesktopContent(
-          padding: EdgeInsets.zero,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _CompactGroupHeader(group: group),
-              SizedBox(height: density.sectionGap),
-              DesktopResponsiveColumns(
-                breakpoint: DesktopBreakpoints.expanded,
-                secondaryWidth: 390,
-                primary: const DesktopPanel(
-                  padding: EdgeInsets.all(12),
-                  child: CampfireScene(),
-                ),
-                secondary: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    if (showTimer) ...[
-                      const StudyTimerCard(),
-                      SizedBox(height: density.sectionGap),
-                    ],
-                    const GroupGoalCard(),
-                    SizedBox(height: density.sectionGap),
-                    const LeaderboardCard(),
-                    SizedBox(height: density.sectionGap),
-                    const GroupTrendCard(),
-                    SizedBox(height: density.sectionGap),
-                    DesktopContextPanel(
-                      title: 'Kamp bağlamı',
-                      icon: Icons.local_fire_department_outlined,
-                      child: Text(
-                        'Ateş gruptaki canlı varlığı yansıtır. '
-                        'Hedef ve sıralama kartları sağ paneldedir; '
-                        'sohbet ve yönetim altta.',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onSurfaceVariant,
-                            ),
-                      ),
-                    ),
-                    SizedBox(height: density.sectionGap),
-                    _GroupManagementTile(group: group),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
+    // Sıra (KALITE-PROGRAMI §8.3 Gruplar): kamp ateşi → hedef → sıralama → trend.
+    // Windows/mobil aynı tek kolon; sağ bağlam paneli yok.
     return ListView(
       padding: getSafeVerticalPadding(context, horizontal: 16, vertical: 16),
       children: [

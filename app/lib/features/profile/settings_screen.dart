@@ -195,6 +195,22 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           const SizedBox(height: 10),
           _SettingsCard(
+            child: SwitchListTile(
+              secondary: const Icon(Icons.mark_email_unread_outlined),
+              title: const Text('Aylık çalışma raporu (E-posta)'),
+              subtitle: const Text(
+                'Her ayın 2\'sinde e-posta ile detaylı çalışma istatistikleri ve özetlerini al.',
+              ),
+              value: profile?.monthlyReportOptIn ?? true,
+              onChanged: profile == null
+                  ? null
+                  : (val) {
+                      ref.read(authRepositoryProvider).updateMonthlyReportOptIn(val);
+                    },
+            ),
+          ),
+          const SizedBox(height: 10),
+          _SettingsCard(
             child: ListTile(
               leading: const Icon(Icons.new_releases_outlined),
               title: const Text('Sürüm ve güncellemeler'),

@@ -249,6 +249,17 @@ class SupabaseAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<void> updateMonthlyReportOptIn(bool value) async {
+    final cur = _current;
+    if (cur == null) return;
+    await _client
+        .from('profiles')
+        .update({'monthly_report_opt_in': value})
+        .eq('id', cur.id);
+    _current = cur.copyWith(monthlyReportOptIn: value);
+  }
+
+  @override
   Future<void> updateAvatar({
     required Uint8List bytes,
     required String contentType,

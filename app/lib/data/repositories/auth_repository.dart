@@ -60,5 +60,8 @@ abstract class AuthRepository {
     required String contentType,
   });
 
+  /// Aylık çalışma raporu e-postası tercihini günceller.
+  Future<void> updateMonthlyReportOptIn(bool value);
+
   Future<void> signOut();
 }

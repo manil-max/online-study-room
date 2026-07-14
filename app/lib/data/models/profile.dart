@@ -14,6 +14,7 @@ class Profile {
     this.dailyGoalMinutes = kDefaultDailyGoalMinutes,
     this.isActive = true,
     this.animal,
+    this.monthlyReportOptIn = true,
   });
 
   final String id;
@@ -29,12 +30,15 @@ class Profile {
   /// Seçilmemişse null; UI kullanıcıya göre deterministik varsayılan atar.
   final String? animal;
 
+  final bool monthlyReportOptIn;
+
   Profile copyWith({
     String? displayName,
     String? avatarUrl,
     int? dailyGoalMinutes,
     bool? isActive,
     String? animal,
+    bool? monthlyReportOptIn,
   }) {
     return Profile(
       id: id,
@@ -44,6 +48,7 @@ class Profile {
       dailyGoalMinutes: dailyGoalMinutes ?? this.dailyGoalMinutes,
       isActive: isActive ?? this.isActive,
       animal: animal ?? this.animal,
+      monthlyReportOptIn: monthlyReportOptIn ?? this.monthlyReportOptIn,
     );
   }
 
@@ -57,6 +62,7 @@ class Profile {
           (map['daily_goal_minutes'] as int?) ?? kDefaultDailyGoalMinutes,
       isActive: map['is_active'] as bool? ?? true,
       animal: map['animal'] as String?,
+      monthlyReportOptIn: map['monthly_report_opt_in'] as bool? ?? true,
     );
   }
 
@@ -69,6 +75,7 @@ class Profile {
       'daily_goal_minutes': dailyGoalMinutes,
       'is_active': isActive,
       'animal': animal,
+      'monthly_report_opt_in': monthlyReportOptIn,
     };
   }
 
@@ -81,9 +88,10 @@ class Profile {
       other.createdAt == createdAt &&
       other.dailyGoalMinutes == dailyGoalMinutes &&
       other.isActive == isActive &&
-      other.animal == animal;
+      other.animal == animal &&
+      other.monthlyReportOptIn == monthlyReportOptIn;
 
   @override
   int get hashCode => Object.hash(
-      id, displayName, avatarUrl, createdAt, dailyGoalMinutes, isActive, animal);
+      id, displayName, avatarUrl, createdAt, dailyGoalMinutes, isActive, animal, monthlyReportOptIn);
 }

@@ -8,46 +8,44 @@
 
 ## 🔴 Yüksek Öncelik
 
-- [~] **Kalite Programı — Faz 0 + V8 Güven Sürümü** — **WP-37–50 olarak planlandı**
+- [x] **Kalite Programı — Faz 0 + V8 Güven Sürümü** — **WP-37–47 teslim edildi; v8 yayımlandı**
   - **Faz 0A:** Tek kaynak & tamamlanma denetimi — **WP-37 + WP-38 tamamlandı**; canlı migration/RLS uygulama teyidi release kapısında yeniden doğrulanır.
   - **Faz 0B:** Test & gözlemlenebilirlik temeli — **WP-46 (integration + native QA matrisi), WP-47 (Sentry/gözlemlenebilirlik)**.
   - **V8-A:** Sayaç–bildirim–widget tek doğruluk kaynağı — **WP-40 (state store+foreground), WP-41 (chronometer bildirim), WP-42 (widget paritesi) planlandı.**
   - **V8-B:** Genel senkronizasyon denetimi — **WP-43 planlandı.**
   - **V8-C:** Küçük IA — **WP-44 (istatistik sırası) + WP-45 (gruplar sırası/kamp ateşi/animasyon) planlandı.**
-  - **V8 beta/stable:** **WP-48 (beta + cihaz QA), WP-49 (soak), WP-50 (release/rollback karar paketi)**.
-  - *Kaynak: kalite pivotu 2026-07-12; KALITE-PROGRAMI §7–8. Faz 0 + V8 tümü WP'ye bölündü (WP-37, WP-38, WP-40→50). WP-39 kullanıcı kararıyla iptal edildi.*
+  - **V8 yayın kararı:** v8 yayımlandı; WP-48/49/50, ürün sahibinin doğrudan yayın ve soak'ı atlama kararıyla kaldırıldı. Yeni yayın sorunu ayrı debug/release WP'si olur.
+  - *Kaynak: kalite pivotu 2026-07-12; KALITE-PROGRAMI §7–8. WP-39 kullanıcı kararıyla iptal edildi.*
 
-- [~] **"Tamamlandı" görünüp ürün kabulü bekleyenler** — Faz 0'da yeniden sınıflandırılacak
-  - WP-23 (Saat), WP-26 (Tema), WP-35 (Başarım), Android widget, WP-36 (IA): kod var ama (2) tanımını (cihazda güvenilir + kullanıcı beklentisi) tam karşılamıyor. Kanıt: KALITE-PROGRAMI §3.
+- [x] **Kamp Ateşi R2 — görsel yeniden tasarım + PNG seti + animasyon** — **WP-61 (onaylandı), WP-62 (kod tamamlandı/QA bekliyor)**
+  - WP-61, özgün görsel yönü ve PNG asset sözleşmesini kapattı.
+  - WP-62, onaylı assetleri katmanlı, performanslı sahneye dönüştürdü. Demo/Cihaz QA bekliyor.
 
-- [~] **Hesabımı yönet merkezi** — **WP-31 planlandı**
-  - Profil/Ayarlar içinde bağlı e-postayı gösteren ve hesap güvenliği işlemlerini tek yerde toplayan bir ekran olacak.
-  - İlk teslim: bağlı e-posta bilgisi, uçtan uca çalışan şifre sıfırlama (e-posta bağlantısı + uygulamaya dönüş + yeni şifre), e-posta değiştirme akışı ve çıkış yapma.
-  - Şifre uygulama içinde kalıcı tutulmaz; yeni şifre yalnız e-posta bağlantısının açtığı doğrulanmış recovery oturumunda Supabase'e iletilir.
-  - Hesap silme geri döndürülemez olduğu için ilk teslimin dışında bırakıldı; politika/geri alma ihtiyacı netleşince ayrı WP olarak ele alınacak.
-  - *Kaynak: kullanıcı isteği, 2026-07-11; WP-31.*
+- [~] **Android Widget R2 — native yüzeyler** — **WP-63 (brief tamam), WP-68 (kod tamamlandı/QA bekliyor)**
+  - 1×1 Başlat/Durdur sayaç; günlük hedef, grup hedef ve grup sıralaması widget'ları WP-68'de kodlandı.
+  - Kilit ekranında/büyük widget'ta veri gösterimi ayarlandı. Cihaz QA bekliyor.
 
-- [~] **Geri bildirime ekran görüntüsü ekleme** — **WP-32 planlandı**
-  - Hata/öneri gönderirken tek bir ekran görüntüsü veya fotoğraf seçilip güvenli biçimde ticket'a bağlanacak.
-  - Süper-admin, Yönetim ekranında eki görüntüleyebilecek; dosyalar herkese açık olmayacak.
-  - *Kaynak: kullanıcı isteği, 2026-07-11; WP-32.*
+- [ ] **Hesap silme ve veri saklama politikası** — **WP-66 ürün kararı bekliyor**
+  - Soft-delete, geri alma süresi, kalıcı silme onayı ve retention süreleri karar kartında netleşmeden kod/migration açılmaz.
 
-- [~] **Süper-admin operasyon merkezi** — **WP-33 ve WP-34 planlandı**
-  - Kullanıcı listesi, güvenli reset e-postası, askıya alma/açma, grup moderasyonu, uygulama içi duyuru ve her işlem için denetim kaydı.
-  - Şifreyi admin belirlemez veya görmez; kullanıcıya yalnız güvenli reset bağlantısı gönderilir.
-  - Hesap silme ilk teslimde kontrollü soft-delete isteği olarak ele alınacak; kalıcı veri silme/retention politikası netleşmeden hard-delete yapılmayacak.
-  - *Kaynak: kullanıcı isteği, 2026-07-11; WP-33/WP-34.*
+- [x] **"Tamamlandı" görünüp ürün kabulü bekleyenler** — Faz 0'da yeniden sınıflandırılmıştı.
+  - WP-23 (Saat), WP-26 (Tema), WP-35 (Başarım), WP-36 (IA) yeniden çalışılarak V8 (Güven Sürümü) ve diğer programlarda (Saat, Tema Stüdyosu, Sosyal Profil 3.0) tamamlandı.
 
-- [~] **Sosyal Profil 2.0 + aşamalı Başarı Yolculuğu** — **WP-35 planlandı**
-  - Profil, ayar benzeri zengin bir “oyuncu profili”ne dönüşecek: 60+ çalışma/odak/sosyal/eğlenceli başarı, her başarıda 3+ kademe, ilerleme çubuğu ve XP ödülü.
-  - XP seviyeleri taç/rütbe görünümünü yükseltecek; seçilen rozetler, taç ve seri alevi gruplarda, sıralamalarda ve üye profillerinde görülecek.
-  - Grup üyesine dokununca ortak grup üyelerinin görebildiği profil vitrini açılacak: özet istatistik, seri, seçili rozetler, taç/rütbe ve hareket azaltma destekli seri efekti.
-  - *Kaynak: kullanıcı isteği, 2026-07-11; Clash of Clans aşamalı başarılar + Clash Royale rozet/vitrin yaklaşımı referans alınarak; WP-35.*
+- [x] **Hesabımı yönet merkezi** — **WP-31 tamamlandı**
+  - Profil/Ayarlar içinde bağlı e-posta, şifre sıfırlama, e-posta değiştirme ve güvenli çıkış özellikleri kodlandı.
 
-- [~] **Beş sekmeli bilgi mimarisi + Bildirim Merkezi** — **WP-36 planlandı**
-  - Ana Sayfa yalnız günlük kişisel, özelleştirilebilir çalışma alanı olacak. Ayrı **Saat / Gruplar / İstatistikler / Profil** alanları kendi verilerinin eksiksiz ana ekranı haline gelecek.
-  - Ayarlar'daki tekrar eden Ana Sayfa grubu kaldırılacak; bildirimler dürtmenin ötesinde hatırlatıcı, alarm/timer, duyuru, güncelleme ve sessiz saat tercihlerini tek merkezde toplayacak.
-  - *Kaynak: kullanıcı isteği, 2026-07-11; WP-36.*
+- [x] **Geri bildirime ekran görüntüsü ekleme** — **WP-32 tamamlandı**
+  - Hata/öneri gönderirken güvenli ekran görüntüsü ekleme yeteneği kodlandı.
+
+- [x] **Süper-admin operasyon merkezi** — **WP-33 ve WP-34 tamamlandı**
+  - Kullanıcı listesi, güvenli reset, grup moderasyonu ve uygulama içi duyurular yapıldı. (Hesap silme ayrı bir kart/politika [WP-66] ile planlanıyor).
+
+- [x] **Sosyal Profil 3.0 + aşamalı Başarı Yolculuğu** — **WP-35, WP-56, WP-57 tamamlandı**
+  - Profil zenginleştirildi; sunucu onaylı (server-authoritative) 60+ başarı, XP, seri alevi ve grup vitrini tamamlandı.
+
+- [x] **Beş sekmeli bilgi mimarisi + Bildirim Merkezi** — **WP-36 tamamlandı**
+  - Ana Sayfa çalışma alanına dönüştürüldü; Saat/Gruplar/İstatistik/Profil ayrı alanlara sahip oldu.
+  - Ayarlar içindeki Bildirim Merkezi (hatırlatıcı, duyuru, ayarlar) tamamlandı.
 
 - [x] **Stable/Beta app icon + release notes sistemi** — **WP-29 ve WP-30 tamamlandı**
   - Stable uygulama ikonu `references/app icon/` içindeki referans görselden yenilenecek.
@@ -68,34 +66,19 @@
   - Kanonik araştırma/tasarım: `docs/WINDOWS-URUN-PLANI.md` · program kapısı: `docs/KALITE-PROGRAMI.md §8.7`.
   - *Kaynak: kullanıcı geri bildirimi + WP-11 Windows EXE sonrası durum + Microsoft/Flutter resmi dokümanları.*
 
-- [~] **Görünüm Sistemi 2.0 — tam tema stüdyosu + sabit renk temizliği** — **WP-26 genişletildi**
-  - Mevcut palet yalnız yazı/vurgu rengini değiştirmemeli; sayfa zemini, kartlar, inputlar, navigasyon, grafikler, kenarlıklar ve durum yüzeyleri seçilen temayla birlikte değişmeli.
-  - Çok sayıda hazır, karakteri belirgin tema (AMOLED, pastel, retro, neon, kahve, orman, okyanus, mono vb.) ile kullanıcıya gerçekten farklı uygulama hissi verilecek.
-  - Her biri tam renk rolleri, yoğunluk/köşe/gradient tercihleri taşıyan 5 kaydedilebilir özel tema slotu olacak.
-  - Uygulamadaki rastgele/sabit gri ve `Colors.*` kullanımları tema tokenlarına taşınacak; yalnız sahne illüstrasyonları, ders renkleri ve semantik hata/uyarı gibi bilinçli istisnalar kalacak.
-  - Kontrast otomatik denetlenecek; okunamayan kombinasyonlar engellenecek veya kullanıcıya uyarı verilecek.
-  - *Kaynak: kullanıcı geri bildirimi; WP-26.*
+- [x] **Görünüm Sistemi 2.0 — tam tema stüdyosu + sabit renk temizliği** — **WP-26, WP-54, WP-55 tamamlandı**
+  - Sabit renk/`Colors.*` kullanımları tokenlara bağlandı.
+  - Atmosfer temaları, renk rolleri, köşe/gradient slotları Tema Stüdyosu'nda uygulandı.
 
 - [x] **Android 3 tuşlu navigasyon safe-area düzeltmesi** — **WP-25 tamamlandı**
   - Samsung S26 Ultra gibi 3 tuşlu navigation kullanan cihazlarda sohbet/form/bottom action alanları sistem tuşlarının altında kalmamalı.
   - Gesture navigation kullanan cihazlarda gereksiz ekstra boşluk oluşturmayacak şekilde `viewPadding.bottom` / `SafeArea` standardı kurulacak.
   - *Kaynak: kullanıcı geri bildirimi; WP-25.*
 
-- [~] **Saat sekmesi / Clock Center — dünya standartlarında zaman deneyimi** — **WP-23 ve WP-24 genişletildi**
-  - Hedef: Odak Kampı'nın yalnız “çalışma sayacı” değil, telefondaki varsayılan Saat uygulamasının pratik yerini alabilecek bir zaman merkezi olması.
-  - Araştırma özeti:
-    - Apple Clock/StandBy: Dünya saati, alarm, kronometre, timer; kronometrede dijital/analog yüz geçişi ve tur kaydı; yatay şarjda büyük başucu/masa saati, widget/Live Activity görünümü ve gece kırmızı ton.
-    - Google Clock: Alarm/timer/kronometre/dünya saati yanında Bedtime, sleep sounds, upcoming events, Wear OS, alarm sorun uyarıları, kademeli ses, ses tuşu davranışı, müzik servisleri, Assistant Routine, ana ekran widget resize ve analog/dijital/seconds/24h ayarları.
-    - Samsung Clock: Alarm tarihleri, tekrar eden alarmı tek gün atlama, snooze, şehir hava durumu, globe/map/time-zone converter, lap copy/delete, preset ve aynı anda çoklu timer.
-    - Popüler uygulamalar: Alarmy/Alarm Clock Xtreme gibi uygulamalarda görevle alarm kapatma, anti-snooze, kademeli ses, büyük snooze, hızlı alarm; MultiTimer tarafında renk/ikon/etiket, auto-repeat, start delay, timer geçmişi; Pomodoro uygulamalarında hızlı minimal başlatma, özelleştirilebilir döngüler, gamification ve dikkat dağıtıcı engelleme.
-  - İlk teslim dilimi:
-    - **WP-23:** Beş sekmeli navigasyonda ayrı Saat alanı + Clock Center + yatay StandBy/focus ekranı.
-    - **WP-24:** Alarm + çoklu timer temeli, preset/label/tekrar ve güvenilir notification davranışı.
-  - Sonraki dilimler:
-    - Gelişmiş widget/dinamik bildirim yüzeyleri, yatay tablet/masa modu polish.
-    - Bedtime/focus routine, sakin sesler ve takvim/“yarınki plan” entegrasyonu.
-    - Ağır uyananlar için opsiyonel görevli alarm/anti-snooze.
-  - *Kaynaklar: Apple Support StandBy/Clock, Google Clock Help/Play, Samsung Clock support/Play, Alarmy, Alarm Clock Xtreme, MultiTimer, Zapier Pomodoro araştırması.*
+- [x] **Saat sekmesi / Clock Center — dünya standartlarında zaman deneyimi** — **WP-23, WP-24, WP-58, WP-59, WP-60 tamamlandı**
+  - Beş sekmeli yapı kuruldu, yatay StandBy ekranı getirildi.
+  - Dünya saati, kronometre, çoklu timer, alarm (kesin, görevli vb.) sorunsuz çalışır hale getirildi.
+  - `timer_foreground_service` ve WP-41/42 native bildirimlerle desteklendi.
 
 - [x] **Android ana ekran widget sistemi** (home_widget paketi)
   - Sayaç widget'ı (tek dokunuşla başlat/durdur)
@@ -120,7 +103,7 @@
   - *Kaynak: new_features.md §Öncelikli, progress.md FAZ 1.1 bekleyen*
 
 - [x] **Ana Sayfa responsive kart cilası** (2E devamı)
-  - Timer kartı responsive adaptasyonu (2E'de hariç tutuldu)
+  - Timer karti responsive adaptasyonu (2E'de hariç tutuldu)
   - Kalan kenar durumları ve ince ayarlar
   - **WP-4 ve WP-16 tamamlandı:** Dashboard kartları scroll, ellipsis, boş-durum yönetimi ve dar ekran testlerinden geçti.
   - *Kaynak: progress.md Tur 3*
@@ -166,9 +149,9 @@
   - **WP-11 tamamlandı:** Ancak kurulum paketi (`[ ] Windows kurulum paketi + dağıtım`) henüz bekliyor.
   - *Kaynak: project.md §3.6, progress.md FAZ 4.1-4.2*
 
-- [ ] **Çoklu cihaz senkron testi**
+- [~] **Çoklu cihaz senkron testi** — **WP-64 planlandı**
   - Birden fazla Android + Windows arası senkron doğrulama
-  - *Kaynak: progress.md FAZ 4.3*
+  - WP-53 ürün kabulünden sonra iki Android + Windows ile QA/kurtarma provası yapılacak.
 
 - [x] **Daha fazla sınıf metriği**
   - Haftalık değişim
@@ -217,13 +200,11 @@
   - **WP-19 tamamlandı:** Settings ekranından kontrol ve Timer/Navigasyon eylemlerinin UI state'e bağlanması.
   - *Kaynak: new_features.md §5*
 
-- [ ] **Otomatik e-posta raporları**
-  - Ay sonlarında kullanıcılara özet e-posta
-  - **WP-14 sonrası bekliyor.**
-  - *Kaynak: new_features.md §5 Madde 21*
+- [x] **Otomatik e-posta raporları** — **WP-65 onaylandı, WP-69 kodlandı**
+  - Ay sonlarında (her ayın 2'sinde) e-posta üzerinden çalışma raporu gönderme altyapısı kuruldu (Resend + pg_cron). E-posta onayı (opt-in) eklendi.
 
-- [ ] **Yeni grafik türleri**
-  - Radar grafik vb.
+- [~] **Yeni grafik türleri** — **WP-67 ürün briefi planlandı**
+  - Radar grafik vb. (ürün sahibi onayı/briefi bekliyor).
 
 - [x] **Çizgisel grup grafiği**
   - Tarihe bağlı grubun çalışma ivmesi çizgi grafiği
@@ -237,11 +218,8 @@
   - Yerel veri saklama, çevrimdışı dayanıklılık
   - **WP-12 tamamlandı:** Supabase ve in-memory repo'lar `offline_first_repository` pattern'iyle sarıldı.
 
-- [~] **Kapsamlı Bildirim Merkezi** — **WP-36 planlandı**
-  - Kişiye özel çalışma hatırlatıcıları, sessiz saatler, alarm/timer, dürtme, grup duyurusu ve güncelleme tercihleri tek yerde yönetilecek.
-
 - [ ] **Windows kurulum paketi + dağıtım**
-  - exe/MSIX kurulum paketi
+  - exe/MSIX kurulum paketi (WP-28 ile planlanıyor)
 
 - [~] **Grid boyutlandırma gelişmiş** (kullanıcı geri bildirimi) — **WP-21 planlandı**
   - Kartların 4 kenar ve köşeden (genişlik + yükseklik) ayarlanması
@@ -257,12 +235,11 @@
 
 ## ❓ Açık Sorular
 
-- Otomatik aylık rapor için hangi e-posta sağlayıcısı ve hangi gönderen adresi kullanılacak?
 - Çoklu sınıf özelliği aktif olarak kullanılıyor mu yoksa tek sınıfa mı odaklanılmalı?
-- Gelecek Widget planlamalarında ekranda en çok görülmek istenen bilgiler netleşti mi?
-- Hesap silme sunulacak mı? Sunulacaksa uygulama içi geri alma süresi mi, yoksa yalnız destek talebiyle silme mi uygulanacak?
-- Süper-adminin başlattığı soft-delete sonrası kullanıcı verisi ne kadar süre saklanacak ve kalıcı silme kim tarafından/onayla yapılacak?
+- WP-63 için: Gelecek Widget düzenlemesinde ekranda en çok görülmek istenen bilgi, boyut ve etkileşim nedir?
+- WP-66 için: Hesap silme sunulacak mı; geri alma süresi, retention ve kalıcı silme onayı nasıl olacak?
 
 ## Windows Masaüstü Optimizasyonu
+- [~] **WP-70 Windows performans tabanı** — release RAM/CPU/başlangıç ölçümü ve donma tanısı başlatıldı; UI/IA değişikliği ilk bulgu sonrasındaki ayrı düzeltme WP'sidir.
 - **Sorun:** Windows release'i boşta 300-400 MB RAM tüketiyor ve hafif donmalar var.
-- **Aksiyon:** İleriki fazlarda Flutter DevTools ile bellek profillemesi (memory profiling) yapılacak ve UI render darboğazları çözülecek.
+- **Aksiyon:** Önce tekrarlanabilir yerel örnekleme ve p50/p95 tabanı alınacak; yalnız kanıtlanan render/bellek darboğazları ayrı WP'lerde çözülecek.

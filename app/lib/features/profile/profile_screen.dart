@@ -2,13 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../../core/desktop/desktop_layout.dart';
 import '../../core/desktop/desktop_window.dart';
 import '../../core/widgets/crowned_avatar.dart';
 import '../../core/widgets/safe_screen_padding.dart';
 import '../../data/providers/auth_providers.dart';
 import '../../data/repositories/auth_repository.dart';
-import '../desktop/desktop_page_scaffold.dart';
 import 'session_history_screen.dart';
 import 'settings_screen.dart';
 import 'widgets/gamification_card.dart';
@@ -23,17 +21,11 @@ class ProfileScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final profile = ref.watch(authStateProvider).value;
 
-    if (isDesktopWindow) {
-      return DesktopPageScaffold(
-        title: 'Profil ve hesap',
-        subtitle: 'Kimliğini, çalışma geçmişini ve tercihlerini yönet.',
-        icon: Icons.person_outline,
-        child: const _DesktopProfileWorkspace(),
-      );
-    }
-
+    // Windows: sol rail + mobil ile aynı liste; master-detail/sağ panel yok.
     return Scaffold(
-      appBar: AppBar(title: const Text('Profil')),
+      appBar: isDesktopWindow
+          ? null
+          : AppBar(title: const Text('Profil')),
       body: ListView(
         padding: getSafeVerticalPadding(context, horizontal: 24, vertical: 24),
         children: [
@@ -134,158 +126,6 @@ class ProfileScreen extends ConsumerWidget {
             label: const Text('Çıkış yap'),
           ),
         ],
-      ),
-    );
-  }
-
-}
-
-/// WP-53: Profil kategori + detay (master-detail). Mobil tek kolon korunur.
-class _DesktopProfileWorkspace extends ConsumerStatefulWidget {
-  const _DesktopProfileWorkspace();
-
-  @override
-  ConsumerState<_DesktopProfileWorkspace> createState() =>
-      _DesktopProfileWorkspaceState();
-}
-
-class _DesktopProfileWorkspaceState
-    extends ConsumerState<_DesktopProfileWorkspace> {
-  String _section = 'overview';
-
-  // Ayarlar sol rail'de (DesktopHomeShell); profilde yalnız hesap + kayıtlar.
-  static const _sections = <DesktopSectionItem>[
-    DesktopSectionItem(
-      id: 'overview',
-      icon: Icons.badge_outlined,
-      label: 'Genel bakış',
-      subtitle: 'Kimlik ve başarılar',
-    ),
-    DesktopSectionItem(
-      id: 'history',
-      icon: Icons.history,
-      label: 'Çalışma kayıtları',
-      subtitle: 'Oturumlar ve manuel süre',
-    ),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    final profile = ref.watch(authStateProvider).value;
-    final theme = Theme.of(context);
-
-    return Padding(
-      padding: DesktopDensity.of(context).pagePadding,
-      child: DesktopMasterDetail(
-        // Dar pencerede de sol liste görünsün (yalnız fullscreen değil).
-        breakpoint: DesktopBreakpoints.compact,
-        masterWidth: 260,
-        master: DesktopSectionList(
-          items: _sections,
-          selectedId: _section,
-          onSelected: (id) => setState(() => _section = id),
-        ),
-        detail: switch (_section) {
-          'history' => const DesktopPanel(
-              padding: EdgeInsets.zero,
-              child: SessionHistoryScreen(embedded: true),
-            ),
-          _ => SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  DesktopPanel(
-                    child: Row(
-                      children: [
-                        Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            if (profile != null)
-                              LiveCrownedAvatar(
-                                userId: profile.id,
-                                displayName: profile.displayName,
-                                avatarUrl: profile.avatarUrl,
-                                radius: 42,
-                              )
-                            else
-                              const CrownedAvatar(
-                                displayName: '',
-                                radius: 42,
-                              ),
-                            if (profile != null)
-                              Positioned(
-                                right: 0,
-                                bottom: 0,
-                                child: Material(
-                                  color: theme.colorScheme.primary,
-                                  shape: const CircleBorder(),
-                                  child: InkWell(
-                                    customBorder: const CircleBorder(),
-                                    onTap: () =>
-                                        _pickAvatar(context, ref),
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(6),
-                                      child: Icon(
-                                        Icons.photo_camera,
-                                        size: 16,
-                                        color: theme.colorScheme.onPrimary,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                        const SizedBox(width: 20),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                profile?.displayName ?? 'Kullanıcı',
-                                style: theme.textTheme.headlineSmall?.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Odak Kampı hesabı',
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        if (profile != null)
-                          OutlinedButton.icon(
-                            onPressed: () => _editName(
-                              context,
-                              ref,
-                              profile.displayName,
-                            ),
-                            icon: const Icon(Icons.edit_outlined),
-                            label: const Text('Adı düzenle'),
-                          ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  const GamificationCard(),
-                  const SizedBox(height: 16),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: TextButton.icon(
-                      onPressed: () =>
-                          ref.read(authRepositoryProvider).signOut(),
-                      icon: const Icon(Icons.logout),
-                      label: const Text('Hesaptan çık'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-        },
       ),
     );
   }

@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/desktop/desktop_layout.dart';
 import '../../core/desktop/desktop_window.dart';
 import '../../core/navigation/nav_index.dart';
 import '../../core/widgets/safe_screen_padding.dart';
-import '../desktop/desktop_page_scaffold.dart';
 import 'dashboard_card.dart';
 import 'dashboard_providers.dart';
 import 'widgets/card_picker.dart';
@@ -155,78 +153,54 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           );
 
+    // Windows: üst dev başlık / sağ ipucu paneli yok — küçük pencerede
+    // sol rail + içerik yeterli (kullanıcı geri bildirimi).
     if (isDesktopWindow) {
-      return DesktopPageScaffold(
-        title: _editing ? 'Panoyu düzenle' : 'Ana Sayfa',
-        subtitle: _editing
-            ? 'Kartları sürükle, yeniden boyutlandır ve çalışma alanını kişiselleştir.'
-            : 'Bugünkü odağın, grubun ve çalışma ritmin tek görünümde.',
-        icon: Icons.space_dashboard_outlined,
-        actions: _editing
-            ? [
-                TextButton.icon(
-                  onPressed: () => _setEditing(false),
-                  icon: const Icon(Icons.check),
-                  label: const Text('Bitti'),
-                ),
-                OutlinedButton.icon(
-                  onPressed: ref
-                      .read(dashboardLayoutProvider.notifier)
-                      .compactUp,
-                  icon: const Icon(Icons.vertical_align_top),
-                  label: const Text('Yukarı topla'),
-                ),
-                OutlinedButton.icon(
-                  onPressed: _confirmResetDashboard,
-                  icon: const Icon(Icons.restart_alt),
-                  label: const Text('Sıfırla'),
-                ),
-                FilledButton.icon(
-                  onPressed: () => showCardPicker(context),
-                  icon: const Icon(Icons.add),
-                  label: const Text('Kart ekle'),
-                ),
-              ]
-            : [
-                FilledButton.tonalIcon(
-                  onPressed: () => _setEditing(true),
-                  icon: const Icon(Icons.dashboard_customize_outlined),
-                  label: const Text('Panoyu düzenle'),
-                ),
-              ],
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final wide =
-                constraints.maxWidth >= DesktopBreakpoints.expanded &&
-                    !_editing;
-            if (!wide) return body;
-            return Padding(
-              padding: DesktopDensity.of(context).pagePadding.copyWith(
-                    top: 8,
-                    bottom: 8,
-                  ),
-              child: DesktopResponsiveColumns(
-                breakpoint: DesktopBreakpoints.expanded,
-                secondaryWidth: 300,
-                primary: body,
-                secondary: DesktopContextPanel(
-                  title: 'Çalışma kokpiti',
-                  icon: Icons.rocket_launch_outlined,
-                  child: Text(
-                    'Pano kartları bugünkü odağını toplar. '
-                    'Düzenle ile kart ekle/taşı; boşlukları Yukarı topla ile sıkıştır. '
-                    'Sayaç ve grup durumu kartlardan veya Gruplar sekmesinden yönetilir.',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .onSurfaceVariant,
-                          height: 1.4,
-                        ),
-                  ),
+      return Scaffold(
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Material(
+              color: Theme.of(context).colorScheme.surface,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                child: Row(
+                  children: [
+                    if (_editing) ...[
+                      TextButton(
+                        onPressed: () => _setEditing(false),
+                        child: const Text('Bitti'),
+                      ),
+                      IconButton(
+                        tooltip: 'Yukarı topla',
+                        onPressed: ref
+                            .read(dashboardLayoutProvider.notifier)
+                            .compactUp,
+                        icon: const Icon(Icons.vertical_align_top),
+                      ),
+                      IconButton(
+                        tooltip: 'Sıfırla',
+                        onPressed: _confirmResetDashboard,
+                        icon: const Icon(Icons.restart_alt),
+                      ),
+                      IconButton(
+                        tooltip: 'Kart ekle',
+                        onPressed: () => showCardPicker(context),
+                        icon: const Icon(Icons.add),
+                      ),
+                    ] else
+                      IconButton(
+                        tooltip: 'Panoyu düzenle',
+                        onPressed: () => _setEditing(true),
+                        icon: const Icon(Icons.dashboard_customize_outlined),
+                      ),
+                    const Spacer(),
+                  ],
                 ),
               ),
-            );
-          },
+            ),
+            Expanded(child: body),
+          ],
         ),
       );
     }

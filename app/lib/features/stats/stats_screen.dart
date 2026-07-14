@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/desktop/desktop_layout.dart';
 import '../../core/desktop/desktop_window.dart';
 import '../../data/providers/auth_providers.dart';
 import '../../data/providers/group_providers.dart';
 import '../../data/providers/study_providers.dart';
-import '../desktop/desktop_page_scaffold.dart';
 import 'widgets/class_stats_view.dart';
 import 'widgets/personal_stats_view.dart';
 
@@ -18,91 +16,22 @@ class StatsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Windows: sol rail yeter; ekstra başlık + sağ ipucu paneli yok.
     return DefaultTabController(
       length: 2,
-      child: isDesktopWindow
-          ? DesktopPageScaffold(
-              title: 'İstatistik',
-              subtitle:
-                  'Çalışma ritmini incele, dönemleri karşılaştır ve grubundaki ilerlemeyi gör.',
-              icon: Icons.query_stats_outlined,
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final wide =
-                      constraints.maxWidth >= DesktopBreakpoints.expanded;
-                  final tabs = const DesktopPanel(
-                    padding: EdgeInsets.symmetric(horizontal: 8),
-                    child: TabBar(
-                      tabs: [
-                        Tab(text: 'Kişisel'),
-                        Tab(text: 'Grup'),
-                      ],
-                    ),
-                  );
-                  final views = TabBarView(
-                    children: [
-                      _PersonalTab(),
-                      _ClassTab(),
-                    ],
-                  );
-                  if (!wide) {
-                    return Column(
-                      children: [
-                        DesktopContent(
-                          padding: const EdgeInsets.fromLTRB(24, 18, 24, 0),
-                          maxWidth: 720,
-                          child: tabs,
-                        ),
-                        const SizedBox(height: 12),
-                        Expanded(child: views),
-                      ],
-                    );
-                  }
-                  // ≥1008: analiz paneli + bağlamsal ipucu (WP-53).
-                  return Padding(
-                    padding: DesktopDensity.of(context).pagePadding,
-                    child: DesktopResponsiveColumns(
-                      breakpoint: DesktopBreakpoints.expanded,
-                      secondaryWidth: 320,
-                      primary: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          tabs,
-                          const SizedBox(height: 12),
-                          Expanded(child: views),
-                        ],
-                      ),
-                      secondary: DesktopContextPanel(
-                        title: 'Nasıl okunur?',
-                        icon: Icons.lightbulb_outline,
-                        child: Text(
-                          'Kişisel sekme kendi oturumlarından türetilir. '
-                          'Grup sekmesi ortak gruptaki günlük toplamları ve '
-                          'sıralamayı gösterir. Gün sınırı Europe/Istanbul.',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurfaceVariant,
-                              ),
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            )
-          : Scaffold(
-              appBar: AppBar(
-                title: const Text('İstatistik'),
-                bottom: const TabBar(
-                  tabs: [
-                    Tab(text: 'Kişisel'),
-                    Tab(text: 'Grup'),
-                  ],
-                ),
-              ),
-              body: TabBarView(children: [_PersonalTab(), _ClassTab()]),
-            ),
+      child: Scaffold(
+        appBar: AppBar(
+          title: isDesktopWindow ? null : const Text('İstatistik'),
+          toolbarHeight: isDesktopWindow ? 0 : kToolbarHeight,
+          bottom: const TabBar(
+            tabs: [
+              Tab(text: 'Kişisel'),
+              Tab(text: 'Grup'),
+            ],
+          ),
+        ),
+        body: TabBarView(children: [_PersonalTab(), _ClassTab()]),
+      ),
     );
   }
 }

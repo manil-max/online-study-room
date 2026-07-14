@@ -106,6 +106,7 @@ class SupabaseAdminRepository implements AdminRepository {
             'kind': kind.dbValue,
             'subject': normalizeFeedbackSubject(subject),
             'message': normalizeFeedbackMessage(message),
+            'status': 'open',
             'attachment_path': ?attachmentPath,
           })
           .select()

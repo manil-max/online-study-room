@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import '../../core/desktop/desktop_layout.dart';
 import '../../core/desktop/desktop_window.dart';
 import '../profile/settings_screen.dart';
-import 'desktop_page_scaffold.dart';
 
 class DesktopHomeShell extends StatelessWidget {
   const DesktopHomeShell({
@@ -59,18 +58,16 @@ class DesktopHomeShell extends StatelessWidget {
   static void openSettings(BuildContext context) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (pageContext) => DesktopPageScaffold(
-          title: 'Ayarlar',
-          subtitle: 'Görünüm, pano, sayaç ve bildirim tercihleri',
-          icon: Icons.settings_outlined,
-          actions: [
-            IconButton(
-              tooltip: 'Kapat',
+        builder: (pageContext) => Scaffold(
+          appBar: AppBar(
+            title: const Text('Ayarlar'),
+            leading: IconButton(
+              tooltip: 'Geri',
+              icon: const Icon(Icons.arrow_back),
               onPressed: () => Navigator.of(pageContext).maybePop(),
-              icon: const Icon(Icons.close),
             ),
-          ],
-          child: const SettingsScreen(embedded: true),
+          ),
+          body: const SettingsScreen(embedded: true),
         ),
       ),
     );
