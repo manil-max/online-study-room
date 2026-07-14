@@ -81,15 +81,15 @@
 - **Not:** WP-68 claim edildi. Aktif Grok WP-61 yalnız kamp ateşi asset/`pubspec.yaml` kulvarında; ortak sahip yok. 1×1 timer + responsive günlük/grup hedefi/sıralaması, olay bazlı snapshot ile uygulanacak. Önceki bakım: `flutter test --concurrency=1` 332 PASS; debug APK derlendi. Push yok.
 
 ### Grok Lane
-- **Durum:** [~] Aktif — cihaz demo / ürün kabulü açık
-- **Faz/WP:** WP-62 · Kamp Ateşi R2 katmanlı sahne/animasyon
-- **Aşama:** Otomatik test geçti — cihaz QA / demo bekliyor
-- **SAHİP yollar:** `app/lib/features/classroom/widgets/campfire_scene.dart`, `app/lib/features/classroom/widgets/campfire/**`, ilgili campfire testleri, `progress.md` (bu lane + WP-61/62)
-- **Ortak/riskli yüzey:** Yok. Codex WP-68 widget/native; `pubspec`/`assets/campfire` dokunulmadı.
+- **Durum:** [~] Aktif — ürün karar onayı / demo açık
+- **Faz/WP:** WP-66 · Hesap silme ve veri saklama politikası kararı
+- **Aşama:** Karar taslağı teslim — ürün onayı bekliyor
+- **SAHİP yollar:** `docs/HESAP-SILME-RETENTION-KARARI.md`, `progress.md` (bu lane + WP-66)
+- **Ortak/riskli yüzey:** Yok. Claude WP-65 e-posta kararı; Codex WP-68 widget. Kod/migration yok.
 - **Dal:** — (ana dal `main`)
-- **Başlangıç:** 2026-07-14 15:00 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-14 15:05
-- **Not:** WP-62 kod+test: LayeredCampfireFire, empty/low/high, reduce-motion, StoneFire fallback. Campfire suite 10 PASS. Demo sonunda kullanıcı dener.
+- **Başlangıç:** 2026-07-14 15:10 (Europe/Istanbul)
+- **Son güncelleme:** 2026-07-14 15:20
+- **Not:** WP-66 `docs/HESAP-SILME-RETENTION-KARARI.md` (M3 soft+14g+hard önerisi, envanter, WP-65 hizası). WP-62 demo hâlâ açık.
 
 ---
 
@@ -122,7 +122,7 @@
 | WP-68 | Bekliyor | Android Widget R2 · native responsive sayaç/hedef/sıralama uygulaması | WP-63 briefi |
 | WP-64 | [~] Şablon hazır · cihaz QA operatörde | Çoklu cihaz senkronizasyon QA ve kurtarma provası | WP-53 ürün kabulü |
 | WP-65 | Ürün kararı bekliyor | Aylık rapor/e-posta sağlayıcısı ve teslim mimarisi | Gönderen/izin kararı |
-| WP-66 | Ürün kararı bekliyor | Hesap silme ve veri saklama politikası | Silme/retention kararı |
+| WP-66 | [~] Karar taslağı · ürün onayı bekliyor (Grok) | Hesap silme ve veri saklama politikası | Silme/retention kararı |
 | WP-67 | Ürün briefi bekliyor | İstatistik Görselleştirme R2 · grafik kataloğu | Kullanım soruları |
 | WP-53 | R1 kod · açık | Windows Desktop Design 2.0 · ekran-içi masaüstü IA | WP-27 base |
 | WP-27 | Base QA geçti · ürün kabulü açık | Windows desktop shell + Compact Focus | WP-53 ile birlikte |
@@ -252,17 +252,18 @@
 - **Tuzaklar:** Sağlayıcı hesabı açmak veya secret eklemek için varsayılan izin kabul etmek; opt-out olmadan mail tasarlamak.
 
 ### WP-66: Hesap Silme ve Veri Saklama Politikası Kararı 🗑️
-- **Program/Faz:** Güvenlik ve hesap yaşam döngüsü · **Durum:** [ ] Ürün kararı bekliyor · **Bağımlılık:** Silme modeli ve retention onayı
+- **Program/Faz:** Güvenlik ve hesap yaşam döngüsü · **Ajan:** Grok · **Durum:** [~] Karar taslağı hazır — ürün onayı bekliyor · **Bağımlılık:** Silme modeli ve retention onayı
 - **Problem:** Mevcut soft-delete yönü vardır; kullanıcı hesabı silme, geri alma süresi, rapor/denetim verisi ve kalıcı silme yetkisi tanımlı değildir.
 - **Kapsam:** Veri envanteri, soft-delete/hard-delete seçenekleri, geri alma penceresi, saklama süreleri, kullanıcı/admin onayı, export ve destek talebi akışı; WP-65 e-posta verisiyle tutarlılık.
 - **Kapsam dışı:** SQL migration, Edge Function, gerçek kullanıcı silme, auth kullanıcılarını değiştirme. Onaydan sonra ayrı güvenlik WP'si gerekir.
 - **SAHİP dosyalar (yaz):** `docs/HESAP-SILME-RETENTION-KARARI.md`.
 - **DOKUNMA:** `supabase/**`, `app/lib/**`, Auth yönetimi, production verisi.
-- **Adımlar:** [ ] Tablolar/Storage/denetim kayıtları için veri envanteri çıkar; [ ] alternatifleri geri alınabilirlik ve güvenlik açısından karşılaştır; [ ] kullanıcı ve admin onay akışını seç; [ ] seçilen modelin migration/RLS/Edge Function uygulama WP'sini planla.
+- **Adımlar:** [x] Tablolar/Storage/denetim envanteri; [x] M1–M4 karşılaştırma; [x] önerilen M3 (14g grace) + yetki/export/WP-65 hizası; [x] implementasyon dilimleri A–D planı; [ ] ürün sahibi §5 onayı.
 - **Veri/Migration etkisi:** Bu WP'de yok; seçilen model sonraki WP'nin migration ve geri alma planını zorunlu kılar.
 - **RLS/Güvenlik:** Silme isteği yetkilendirilebilir ve denetlenebilir olmalı; service-role yalnız sunucuda; hukuki saklama yükümlülüğü için ürün sahibi karar verir.
-- **Kabul (ölçülebilir):** Her veri sınıfı için saklama süresi ve silme davranışı belirlenir; kullanıcı/admin yetkisi, geri alma süresi ve kalıcı silme onayı yazılıdır; ürün sahibi karar kaydını onaylar. `Ürün kararı gerekiyor`.
+- **Kabul (ölçülebilir):** Envanter + model taslağı `Kodda doğrulandı`. Nihai politika `Ürün kararı gerekiyor` (demo / §5).
 - **Tuzaklar:** Soft-delete'i silme saymak; retention kararını migration içinde doğaçlamak; kullanıcıdan onaysız veri silmek.
+- **Not (2026-07-14):** Auth CASCADE bugün anında wipe yapar; kontrollü UX için soft bayrak + job şart. Claude WP-65 ile e-posta retention çapraz kontrolü belgede.
 
 ### WP-67: İstatistik Görselleştirme R2 · Grafik Kataloğu ve Ürün Briefi 📊
 - **Program/Faz:** İstatistikler keşfi · **Durum:** [ ] Ürün briefi bekliyor · **Bağımlılık:** Hedef kullanıcı soruları
