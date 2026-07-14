@@ -17,7 +17,7 @@ class DesktopNavItem {
 
 /// WinUI NavigationView + macOS sidebar sentezi.
 ///
-/// - Expanded (≥1008): ikon + etiket, ~248px
+/// - Expanded (≥1008): ikon + etiket, ~200px (daha dar; yazı taşmasın)
 /// - Compact (641–1007): yalnız ikon, ~52px
 /// - Minimal (≤640): yine compact ikon şeridi (her zaman görünür menü)
 ///
@@ -36,7 +36,7 @@ class DesktopNavigationPane extends StatelessWidget {
   final ValueChanged<int> onSelected;
   final Widget footer;
 
-  static const double expandedWidth = 248;
+  static const double expandedWidth = 200;
   static const double compactWidth = 52;
   static const double itemHeight = 40;
   static const double itemRadius = 4;
@@ -261,8 +261,8 @@ class _NavItemTileState extends State<_NavItemTile> {
                 ),
               Padding(
                 padding: EdgeInsets.only(
-                  left: widget.expanded ? 12 : 0,
-                  right: widget.expanded ? 10 : 0,
+                  left: widget.expanded ? 10 : 0,
+                  right: widget.expanded ? 8 : 0,
                 ),
                 child: widget.expanded
                     ? Row(
@@ -275,7 +275,7 @@ class _NavItemTileState extends State<_NavItemTile> {
                             size: 20,
                             color: iconColor,
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 10),
                           Expanded(
                             child: Text(
                               widget.item.label,
