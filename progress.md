@@ -20,7 +20,7 @@
 - **Navigasyon hedefi:** Ana Sayfa / Saat / Gruplar / İstatistikler / Profil. Ana Sayfa günlük kullanım alanıdır; diğer alanların verisi kendi sekmelerinde eksiksiz bulunur.
 - **Release:** Stable/Beta kanalı GitHub Releases ile çalışır. **v8 yayımlandı.** WP-48/49/50, ürün sahibinin doğrudan yayın ve soak'ı atlama kararıyla açık iş olmaktan çıkarıldı; sonraki yayın için ayrı WP açılır.
 - **Kalite kapıları:** Her WP DoD'siz kapanmaz; stable release kalite kapısından geçer (AGENTS.md §3). Server-authoritative XP, RLS/sosyal profil, platform sınırları → `docs/KALITE-PROGRAMI.md`.
-- **Son WP numarası:** 90
+- **Son WP numarası:** 91
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
   - Flutter: `C:\src\flutter` · Android SDK: `C:\Android\Sdk`
@@ -62,13 +62,13 @@
 ### Codex Lane
 - **Durum:** [~] Aktif
 - **Faz/WP:** Küresel açılım · WP-84
-- **Aşama:** Geliştiriliyor
+- **Aşama:** Otomatik kalite kapısı
 - **SAHİP yollar:** `app/lib/l10n/app_en.arb`, `app/lib/l10n/app_tr.arb`
 - **Ortak/riskli yüzey:** ARB/l10n kataloğu sıcak; WP-85/86/87 başlamaz, generated dosyalar salt okunur/ignore
 - **Dal:** — (ana dal `main`)
 - **Başlangıç:** 2026-07-14 19:15 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-14 19:15 (Europe/Istanbul)
-- **Not:** WP-82 + WP-83 bağımlılıkları hazır. Envanterden kanonik EN/TR katalog ve metadata/parite üretimi yapılıyor.
+- **Son güncelleme:** 2026-07-14 (Europe/Istanbul)
+- **Not:** WP-91 ile stats order testi dönem-senkron başlıklara hizalandı. WP-84 tam test kapısı yeniden çalıştırılıyor.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
@@ -225,6 +225,7 @@
 
 | WP | Tamamlanan kapsam |
 |---|---|
+| WP-91 | Stats dönem-senkron başlık order testi — sabit 7/30 gün beklentisi güncel `7 gün · Hafta` sözleşmesine hizalandı; hedef test geçti; kapanış 2026-07-14 |
 | WP-82 | Flutter l10n çekirdeği + sistem dili resolver'ı — `en` varsayılan, yalnız `tr*` için Türkçe; gen-l10n, 4/4 hedef test, analyze, 395/395 tam test, Windows release build+smoke geçti; kapanış 2026-07-14 |
 | WP-90 | Depo kalite kapısı temizliği — 4 analiz bulgusu ve 2 eski/kırılgan test düzeltildi; `flutter analyze` 0, tam test 395/395; kapanış 2026-07-14 |
 | WP-83 | EN/TR Metin Envanteri ve Ürün Dili Sözlüğü — `docs/L10N-SOZLUK.md` ve `docs/L10N-ENVANTER.md` oluşturuldu; kapanış 2026-07-14 |

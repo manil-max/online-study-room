@@ -64,8 +64,8 @@ void main() {
     final goal = topOf('Bugünkü grup hedefi');
     final summary = topOf('Kişi başı ort.');
     final ranking = topOf('Sıralama');
-    final dailyTrend = topOf('Grup günlük trendi (son 7 gün)');
-    final longTrend = topOf('Grup eğilimi (son 30 gün)');
+    final dailyTrend = topOf('Grup günlük trendi (son 7 gün · Hafta)');
+    final longTrend = topOf('Grup eğilimi (son 7 gün · Hafta)');
     final allTime = topOf('Tüm zamanlar');
     final comparison = topOf('Karşılaştırma tablosu');
 
