@@ -29,7 +29,7 @@
         android:minHeight="44dp"
         android:paddingStart="14dp"
         android:paddingEnd="14dp"
-        android:text="Başlat"
+        android:text="@string/action_start"
         android:textColor="#FFD8A6"
         android:textSize="15sp"
         android:textStyle="bold" />

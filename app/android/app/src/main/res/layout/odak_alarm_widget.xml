@@ -10,7 +10,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Sıradaki alarm"
+        android:text="@string/widget_next_alarm"
         android:textColor="#88FFFFFF"
         android:textSize="11sp" />
 
@@ -19,7 +19,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
-        android:text="—"
+        android:text="@string/widget_em_dash"
         android:textColor="#FFD8A6"
         android:textSize="28sp"
         android:textStyle="bold" />
@@ -31,7 +31,7 @@
         android:layout_marginTop="2dp"
         android:ellipsize="end"
         android:maxLines="1"
-        android:text="Alarm yok"
+        android:text="@string/widget_no_alarm"
         android:textColor="#CCFFFFFF"
         android:textSize="12sp" />
 </LinearLayout>

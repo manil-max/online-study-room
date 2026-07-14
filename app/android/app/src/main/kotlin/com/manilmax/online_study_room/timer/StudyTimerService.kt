@@ -266,8 +266,14 @@ class StudyTimerService : Service() {
         val builder = baseBuilder()
             .setOngoing(true)
             .setContentIntent(openAppPending())
-            .setContentTitle(if (isBreak) "Mola sürüyor" else "Odaklanıyorsun")
-            .setContentText(if (isBreak) "Mola bittiğinde çalışmaya dönebilirsin" else "Canlı sayaç çalışıyor")
+            .setContentTitle(
+                if (isBreak) getString(R.string.timer_break_title)
+                else getString(R.string.timer_focusing_title),
+            )
+            .setContentText(
+                if (isBreak) getString(R.string.timer_break_body)
+                else getString(R.string.timer_focusing_body),
+            )
         // Canlı/dinamik panel terfisi yalnız sistemin tanıdığı standart ongoing
         // bildirimlerde mümkün. Özel RemoteViews kullanmak, OEM'in bu bildirimi
         // saat/kronometre etkinliği olarak sınıflandırmasını engeller. Native
@@ -276,13 +282,16 @@ class StudyTimerService : Service() {
         builder.setUsesChronometer(true)
             .setWhen(startedAtMs)
             .setShowWhen(true)
-            .setSubText(if (isBreak) "Mola" else "Odak")
+            .setSubText(
+                if (isBreak) getString(R.string.timer_subtext_break)
+                else getString(R.string.timer_subtext_focus),
+            )
         if (isBreak) {
-            builder.addAction(0, "Çalışmaya dön", endBreakActionPending())
+            builder.addAction(0, getString(R.string.action_return_to_work), endBreakActionPending())
         } else {
-            builder.addAction(0, "Mola", breakActionPending())
+            builder.addAction(0, getString(R.string.action_break), breakActionPending())
         }
-        builder.addAction(0, "Durdur", stopActionPending())
+        builder.addAction(0, getString(R.string.action_stop), stopActionPending())
         return builder.build()
     }
 
@@ -294,8 +303,8 @@ class StudyTimerService : Service() {
             .setUsesChronometer(false)
             .setShowWhen(false)
             .setContentTitle("00:00:00")
-            .setContentText("Çalışmaya hazır")
-            .addAction(0, "Başlat", startActionPending())
+            .setContentText(getString(R.string.timer_ready))
+            .addAction(0, getString(R.string.action_start), startActionPending())
         return builder.build()
     }
 
@@ -372,10 +381,10 @@ class StudyTimerService : Service() {
         if (existing != null) return
         val channel = NotificationChannel(
             CHANNEL_ID,
-            "Çalışma sayacı",
+            getString(R.string.timer_channel_name),
             NotificationManager.IMPORTANCE_DEFAULT,
         ).apply {
-            description = "Sayaç çalışırken canlı süreyi gösteren bildirim"
+            description = getString(R.string.timer_channel_desc)
             setSound(null, null)
             enableVibration(false)
             setShowBadge(false)

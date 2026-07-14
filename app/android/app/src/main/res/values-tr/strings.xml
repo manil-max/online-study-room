@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Turkish locale (WP-88). Default values/ is English. -->
+<resources>
+    <string name="brand_name">Odak Kampı</string>
+    <string name="alarm_default_label">Alarm</string>
+    <string name="timer_default_label">Zamanlayıcı</string>
+    <string name="preview_label">Önizleme</string>
+
+    <string name="shortcut_start_timer_short">Odak Başlat</string>
+    <string name="shortcut_start_timer_long">Odaklanmaya Başla (Rutinler)</string>
+    <string name="shortcut_stop_timer_short">Odak Bitir</string>
+    <string name="shortcut_stop_timer_long">Odaklanmayı Bitir (Rutinler)</string>
+    <string name="shortcut_start_pomodoro_short">Pomodoro</string>
+    <string name="shortcut_start_pomodoro_long">Pomodoro Başlat</string>
+    <string name="shortcut_start_stopwatch_short">Kronometre</string>
+    <string name="shortcut_start_stopwatch_long">Kronometre Başlat</string>
+    <string name="shortcut_take_break_short">Mola Ver</string>
+    <string name="shortcut_take_break_long">Çalışmaya Mola Ver</string>
+    <string name="shortcut_open_stats_short">İstatistikler</string>
+    <string name="shortcut_open_stats_long">Günlük İstatistiklerimi Gör</string>
+    <string name="shortcut_open_chat_short">Sohbet</string>
+    <string name="shortcut_open_chat_long">Sınıf Sohbetini Aç</string>
+    <string name="shortcut_open_leaderboard_short">Sıralama</string>
+    <string name="shortcut_open_leaderboard_long">Grup Liderlik Tablosunu Aç</string>
+
+    <string name="widget_label_group_goal">Grup hedefi</string>
+    <string name="widget_label_clock">Odak dijital saat</string>
+    <string name="widget_label_next_alarm">Odak sıradaki alarm</string>
+
+    <string name="action_start">Başlat</string>
+    <string name="action_stop">Durdur</string>
+    <string name="action_break">Mola</string>
+    <string name="action_return_to_work">Çalışmaya dön</string>
+    <string name="action_dismiss">Kapat</string>
+    <string name="action_snooze">Ertele</string>
+    <string name="timer_ready">Çalışmaya hazır</string>
+    <string name="timer_focusing_title">Odaklanıyorsun</string>
+    <string name="timer_break_title">Mola sürüyor</string>
+    <string name="timer_focusing_body">Canlı sayaç çalışıyor</string>
+    <string name="timer_break_body">Mola bittiğinde çalışmaya dönebilirsin</string>
+    <string name="timer_subtext_focus">Odak</string>
+    <string name="timer_subtext_break">Mola</string>
+    <string name="timer_channel_name">Çalışma sayacı</string>
+    <string name="timer_channel_desc">Sayaç çalışırken canlı süreyi gösteren bildirim</string>
+
+    <string name="alarm_channel_name">Kritik alarmlar</string>
+    <string name="alarm_channel_desc">Kişisel alarm ve timer bitiş bildirimleri</string>
+    <string name="timer_finished_title">Zamanlayıcı bitti</string>
+    <string name="timer_label_format">Zamanlayıcı · %1$s</string>
+    <string name="anti_snooze_prompt">Kapatmak için: %1$d + %2$d = ?</string>
+    <string name="anti_snooze_hint">Cevap</string>
+    <string name="snooze_minutes_format">Ertele (%1$d dk)</string>
+    <string name="toast_wrong_answer">Yanlış cevap</string>
+    <string name="toast_solve_to_snooze">Erteleme için soruyu çöz</string>
+
+    <string name="widget_daily_goal">Günlük hedef</string>
+    <string name="widget_today">Bugün</string>
+    <string name="widget_goal_detail_zero">0 dk / 0 dk</string>
+    <string name="widget_streak_zero">Hedef serisi: 0 gün</string>
+    <string name="widget_week_preview">Hafta: 0 sa</string>
+    <string name="widget_streak_preview">Seri: 0 gün</string>
+    <string name="widget_minutes_zero">0 dk</string>
+    <string name="widget_leaderboard_title">Kamp sıralaması</string>
+    <string name="widget_no_records">Henüz kayıt yok</string>
+    <string name="widget_no_rank">Henüz sıralaman yok</string>
+    <string name="widget_group_goal">Grup hedefi</string>
+    <string name="widget_join_group">Bir gruba katıl</string>
+    <string name="widget_next_alarm">Sıradaki alarm</string>
+    <string name="widget_no_alarm">Alarm yok</string>
+    <string name="widget_em_dash">—</string>
+    <string name="widget_dash">-</string>
+    <string name="widget_percent_zero">0%</string>
+    <string name="cd_stats_widget">İstatistik widget\'ını yenile</string>
+    <string name="cd_leaderboard_widget">Grup sıralaması widget\'ını yenile</string>
+</resources>

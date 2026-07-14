@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/widget_stats_surface"
-    android:contentDescription="İstatistik widget'ını yenile"
+    android:contentDescription="@string/cd_stats_widget"
     android:gravity="center_vertical"
     android:orientation="vertical"
     android:padding="14dp">
@@ -15,7 +15,7 @@
         android:layout_height="wrap_content"
         android:ellipsize="end"
         android:maxLines="1"
-        android:text="Bugün"
+        android:text="@string/widget_today"
         android:textColor="@color/widget_heading"
         android:textSize="14sp"
         android:textStyle="bold" />
@@ -27,7 +27,7 @@
         android:layout_marginTop="8dp"
         android:ellipsize="end"
         android:maxLines="1"
-        android:text="0 dk"
+        android:text="@string/widget_minutes_zero"
         android:textColor="@color/widget_primary_text"
         android:textSize="24sp"
         android:textStyle="bold" />
@@ -48,7 +48,7 @@
         android:layout_marginTop="6dp"
         android:ellipsize="end"
         android:maxLines="1"
-        android:text="Hafta: 0 sa"
+        android:text="@string/widget_week_preview"
         android:textColor="@color/widget_secondary_text"
         android:textSize="12sp" />
 
@@ -59,7 +59,7 @@
         android:layout_marginTop="3dp"
         android:ellipsize="end"
         android:maxLines="1"
-        android:text="Seri: 0 gün"
+        android:text="@string/widget_streak_preview"
         android:textColor="@color/widget_accent"
         android:textSize="12sp"
         android:textStyle="bold" />

@@ -19,7 +19,8 @@ object AlarmNotificationFallback {
     fun show(context: Context, ringIntent: Intent) {
         ensureChannel(context)
         val id = ringIntent.getStringExtra(AlarmIds.EXTRA_ID) ?: "x"
-        val label = ringIntent.getStringExtra(AlarmIds.EXTRA_LABEL) ?: "Alarm"
+        val label = ringIntent.getStringExtra(AlarmIds.EXTRA_LABEL)
+            ?: context.getString(com.manilmax.online_study_room.R.string.alarm_default_label)
         val kind = ringIntent.getStringExtra(AlarmIds.EXTRA_KIND) ?: AlarmIds.KIND_ALARM
         val code = AlarmIds.requestCode(kind, id)
 
@@ -52,7 +53,11 @@ object AlarmNotificationFallback {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
 
-        val title = if (kind == AlarmIds.KIND_TIMER) "Zamanlayıcı bitti" else label
+        val title = if (kind == AlarmIds.KIND_TIMER) {
+            context.getString(com.manilmax.online_study_room.R.string.timer_finished_title)
+        } else {
+            label
+        }
         val builder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             Notification.Builder(context, CHANNEL)
         } else {
@@ -64,14 +69,26 @@ object AlarmNotificationFallback {
         val notif = builder
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
             .setContentTitle(title)
-            .setContentText("Odak Kampı")
+            .setContentText(context.getString(com.manilmax.online_study_room.R.string.brand_name))
             .setCategory(Notification.CATEGORY_ALARM)
             .setOngoing(true)
             .setAutoCancel(false)
             .setFullScreenIntent(fullPi, true)
             .setContentIntent(fullPi)
-            .addAction(Notification.Action.Builder(null, "Kapat", dismissPi).build())
-            .addAction(Notification.Action.Builder(null, "Ertele", snoozePi).build())
+            .addAction(
+                Notification.Action.Builder(
+                    null,
+                    context.getString(com.manilmax.online_study_room.R.string.action_dismiss),
+                    dismissPi,
+                ).build(),
+            )
+            .addAction(
+                Notification.Action.Builder(
+                    null,
+                    context.getString(com.manilmax.online_study_room.R.string.action_snooze),
+                    snoozePi,
+                ).build(),
+            )
             .setPriority(Notification.PRIORITY_MAX)
             .build()
 
@@ -90,10 +107,10 @@ object AlarmNotificationFallback {
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val ch = NotificationChannel(
             CHANNEL,
-            "Kritik alarmlar",
+            context.getString(com.manilmax.online_study_room.R.string.alarm_channel_name),
             NotificationManager.IMPORTANCE_HIGH,
         ).apply {
-            description = "Kişisel alarm ve timer bitiş bildirimleri"
+            description = context.getString(com.manilmax.online_study_room.R.string.alarm_channel_desc)
             setBypassDnd(true)
             enableVibration(true)
         }

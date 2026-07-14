@@ -1,19 +1,81 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Default locale = English (WP-88). Turkish in values-tr. Brand "Odak Kampı" stays untranslated. -->
 <resources>
-    <string name="shortcut_start_timer_short">Odak Başlat</string>
-    <string name="shortcut_start_timer_long">Odaklanmaya Başla (Rutinler)</string>
-    <string name="shortcut_stop_timer_short">Odak Bitir</string>
-    <string name="shortcut_stop_timer_long">Odaklanmayı Bitir (Rutinler)</string>
+    <!-- Brand (do not translate product name) -->
+    <string name="brand_name">Odak Kampı</string>
+    <string name="alarm_default_label">Alarm</string>
+    <string name="timer_default_label">Timer</string>
+    <string name="preview_label">Preview</string>
+
+    <!-- Shortcuts -->
+    <string name="shortcut_start_timer_short">Start Focus</string>
+    <string name="shortcut_start_timer_long">Start focusing (Routines)</string>
+    <string name="shortcut_stop_timer_short">End Focus</string>
+    <string name="shortcut_stop_timer_long">End focus session (Routines)</string>
     <string name="shortcut_start_pomodoro_short">Pomodoro</string>
-    <string name="shortcut_start_pomodoro_long">Pomodoro Başlat</string>
-    <string name="shortcut_start_stopwatch_short">Kronometre</string>
-    <string name="shortcut_start_stopwatch_long">Kronometre Başlat</string>
-    <string name="shortcut_take_break_short">Mola Ver</string>
-    <string name="shortcut_take_break_long">Çalışmaya Mola Ver</string>
-    <string name="shortcut_open_stats_short">İstatistikler</string>
-    <string name="shortcut_open_stats_long">Günlük İstatistiklerimi Gör</string>
-    <string name="shortcut_open_chat_short">Sohbet</string>
-    <string name="shortcut_open_chat_long">Sınıf Sohbetini Aç</string>
-    <string name="shortcut_open_leaderboard_short">Sıralama</string>
-    <string name="shortcut_open_leaderboard_long">Grup Liderlik Tablosunu Aç</string>
+    <string name="shortcut_start_pomodoro_long">Start Pomodoro</string>
+    <string name="shortcut_start_stopwatch_short">Stopwatch</string>
+    <string name="shortcut_start_stopwatch_long">Start stopwatch</string>
+    <string name="shortcut_take_break_short">Take break</string>
+    <string name="shortcut_take_break_long">Pause study with a break</string>
+    <string name="shortcut_open_stats_short">Statistics</string>
+    <string name="shortcut_open_stats_long">View my daily stats</string>
+    <string name="shortcut_open_chat_short">Chat</string>
+    <string name="shortcut_open_chat_long">Open class chat</string>
+    <string name="shortcut_open_leaderboard_short">Leaderboard</string>
+    <string name="shortcut_open_leaderboard_long">Open group leaderboard</string>
+
+    <!-- Widget picker labels (manifest) -->
+    <string name="widget_label_group_goal">Group goal</string>
+    <string name="widget_label_clock">Odak digital clock</string>
+    <string name="widget_label_next_alarm">Odak next alarm</string>
+
+    <!-- Timer widget / actions -->
+    <string name="action_start">Start</string>
+    <string name="action_stop">Stop</string>
+    <string name="action_break">Break</string>
+    <string name="action_return_to_work">Back to work</string>
+    <string name="action_dismiss">Dismiss</string>
+    <string name="action_snooze">Snooze</string>
+    <string name="timer_ready">Ready to focus</string>
+    <string name="timer_focusing_title">You\'re focusing</string>
+    <string name="timer_break_title">Break in progress</string>
+    <string name="timer_focusing_body">Live timer is running</string>
+    <string name="timer_break_body">Return to study when the break ends</string>
+    <string name="timer_subtext_focus">Focus</string>
+    <string name="timer_subtext_break">Break</string>
+    <string name="timer_channel_name">Study timer</string>
+    <string name="timer_channel_desc">Persistent notification showing live session time</string>
+
+    <!-- Alarm notification / ring UI -->
+    <string name="alarm_channel_name">Critical alarms</string>
+    <string name="alarm_channel_desc">Personal alarm and timer finished notifications</string>
+    <string name="timer_finished_title">Timer finished</string>
+    <string name="timer_label_format">Timer · %1$s</string>
+    <string name="anti_snooze_prompt">Solve to dismiss: %1$d + %2$d = ?</string>
+    <string name="anti_snooze_hint">Answer</string>
+    <string name="snooze_minutes_format">Snooze (%1$d min)</string>
+    <string name="toast_wrong_answer">Wrong answer</string>
+    <string name="toast_solve_to_snooze">Solve the question to snooze</string>
+
+    <!-- Stats / group widgets -->
+    <string name="widget_daily_goal">Daily goal</string>
+    <string name="widget_today">Today</string>
+    <string name="widget_goal_detail_zero">0 min / 0 min</string>
+    <string name="widget_streak_zero">Goal streak: 0 days</string>
+    <string name="widget_week_preview">Week: 0 h</string>
+    <string name="widget_streak_preview">Streak: 0 days</string>
+    <string name="widget_minutes_zero">0 min</string>
+    <string name="widget_leaderboard_title">Camp leaderboard</string>
+    <string name="widget_no_records">No records yet</string>
+    <string name="widget_no_rank">No rank yet</string>
+    <string name="widget_group_goal">Group goal</string>
+    <string name="widget_join_group">Join a group</string>
+    <string name="widget_next_alarm">Next alarm</string>
+    <string name="widget_no_alarm">No alarm</string>
+    <string name="widget_em_dash">—</string>
+    <string name="widget_dash">-</string>
+    <string name="widget_percent_zero">0%</string>
+    <string name="cd_stats_widget">Refresh statistics widget</string>
+    <string name="cd_leaderboard_widget">Refresh group leaderboard widget</string>
 </resources>

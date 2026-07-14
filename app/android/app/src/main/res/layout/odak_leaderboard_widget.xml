@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/widget_leaderboard_surface"
-    android:contentDescription="Grup sıralaması widget'ını yenile"
+    android:contentDescription="@string/cd_leaderboard_widget"
     android:gravity="center_vertical"
     android:orientation="vertical"
     android:padding="14dp">
@@ -15,7 +15,7 @@
         android:layout_height="wrap_content"
         android:ellipsize="end"
         android:maxLines="1"
-        android:text="Kamp sıralaması"
+        android:text="@string/widget_leaderboard_title"
         android:textColor="@color/widget_heading"
         android:textSize="14sp"
         android:textStyle="bold" />
@@ -27,7 +27,7 @@
         android:layout_marginTop="8dp"
         android:ellipsize="end"
         android:maxLines="1"
-        android:text="Henüz kayıt yok"
+        android:text="@string/widget_no_records"
         android:textColor="@color/widget_primary_text"
         android:textSize="13sp"
         android:textStyle="bold" />
@@ -39,7 +39,7 @@
         android:layout_marginTop="5dp"
         android:ellipsize="end"
         android:maxLines="1"
-        android:text="-"
+        android:text="@string/widget_dash"
         android:textColor="@color/widget_secondary_text"
         android:textSize="12sp" />
 
@@ -50,7 +50,7 @@
         android:layout_marginTop="4dp"
         android:ellipsize="end"
         android:maxLines="1"
-        android:text="-"
+        android:text="@string/widget_dash"
         android:textColor="@color/widget_secondary_text"
         android:textSize="12sp" />
 </LinearLayout>

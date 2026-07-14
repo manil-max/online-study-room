@@ -83,7 +83,11 @@ class TimerWidgetProvider : HomeWidgetProvider() {
                 // (native servise gider; app kapalıyken de çalışır).
                 setTextViewText(
                     R.id.timer_widget_action,
-                    if (isRunning) "Durdur" else "Başlat",
+                    if (isRunning) {
+                        context.getString(R.string.action_stop)
+                    } else {
+                        context.getString(R.string.action_start)
+                    },
                 )
 
                 val actionIntent = android.content.Intent(context, TimerActionReceiver::class.java).apply {
@@ -124,7 +128,7 @@ class StudyStatsWidgetProvider : HomeWidgetProvider() {
                 val progress = percentText.removeSuffix("%").toIntOrNull()?.coerceIn(0, 100) ?: 0
                 setTextViewText(
                     R.id.stats_widget_title,
-                    "Günlük hedef",
+                    context.getString(R.string.widget_daily_goal),
                 )
                 setTextViewText(
                     R.id.stats_widget_today,
@@ -137,11 +141,17 @@ class StudyStatsWidgetProvider : HomeWidgetProvider() {
                 )
                 setTextViewText(
                     R.id.stats_widget_week,
-                    widgetData.text(StudyWidgetKeys.DailyGoalDetail, "0 dk / 0 dk"),
+                    widgetData.text(
+                        StudyWidgetKeys.DailyGoalDetail,
+                        context.getString(R.string.widget_goal_detail_zero),
+                    ),
                 )
                 setTextViewText(
                     R.id.stats_widget_streak,
-                    widgetData.text(StudyWidgetKeys.StatsStreak, "Hedef serisi: 0 gün"),
+                    widgetData.text(
+                        StudyWidgetKeys.StatsStreak,
+                        context.getString(R.string.widget_streak_zero),
+                    ),
                 )
                 setViewVisibility(R.id.stats_widget_week, if (compact) View.GONE else View.VISIBLE)
                 setViewVisibility(R.id.stats_widget_streak, if (compact) View.GONE else View.VISIBLE)
@@ -164,14 +174,23 @@ class GroupLeaderboardWidgetProvider : HomeWidgetProvider() {
                     val compact = appWidgetManager.isCompact(context, widgetId)
                     setTextViewText(
                         R.id.leaderboard_widget_title,
-                        widgetData.text(StudyWidgetKeys.LeaderboardTitle, "Kamp sıralaması"),
+                        widgetData.text(
+                            StudyWidgetKeys.LeaderboardTitle,
+                            context.getString(R.string.widget_leaderboard_title),
+                        ),
                     )
                     setTextViewText(
                         R.id.leaderboard_widget_row_1,
                         if (compact) {
-                            widgetData.text(StudyWidgetKeys.LeaderboardMyRank, "Henüz sıralaman yok")
+                            widgetData.text(
+                                StudyWidgetKeys.LeaderboardMyRank,
+                                context.getString(R.string.widget_no_rank),
+                            )
                         } else {
-                            widgetData.text(StudyWidgetKeys.LeaderboardRow1, "Henüz kayıt yok")
+                            widgetData.text(
+                                StudyWidgetKeys.LeaderboardRow1,
+                                context.getString(R.string.widget_no_records),
+                            )
                         },
                     )
                     setOnClickPendingIntent(
@@ -206,12 +225,18 @@ class GroupGoalWidgetProvider : HomeWidgetProvider() {
                 val compact = appWidgetManager.isCompact(context, widgetId)
                 val percentText = widgetData.text(StudyWidgetKeys.GroupGoalPercent, "0%")
                 val progress = percentText.removeSuffix("%").toIntOrNull()?.coerceIn(0, 100) ?: 0
-                setTextViewText(R.id.group_goal_widget_title, "Grup hedefi")
+                setTextViewText(
+                    R.id.group_goal_widget_title,
+                    context.getString(R.string.widget_group_goal),
+                )
                 setTextViewText(R.id.group_goal_widget_percent, percentText)
                 setProgressBar(R.id.group_goal_widget_progress, 100, progress, false)
                 setTextViewText(
                     R.id.group_goal_widget_detail,
-                    widgetData.text(StudyWidgetKeys.GroupGoalDetail, "Bir gruba katıl"),
+                    widgetData.text(
+                        StudyWidgetKeys.GroupGoalDetail,
+                        context.getString(R.string.widget_join_group),
+                    ),
                 )
                 setOnClickPendingIntent(
                     R.id.group_goal_widget_root,
@@ -252,8 +277,9 @@ class AlarmWidgetProvider : HomeWidgetProvider() {
     ) {
         val prefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
         val raw = prefs.getString("flutter.native_alarm_mirror_v1", null)
-        var timeText = "—"
-        var labelText = "Alarm yok"
+        var timeText = context.getString(R.string.widget_em_dash)
+        var labelText = context.getString(R.string.widget_no_alarm)
+        val defaultAlarm = context.getString(R.string.alarm_default_label)
         if (!raw.isNullOrBlank()) {
             try {
                 val arr = org.json.JSONArray(raw)
@@ -266,7 +292,7 @@ class AlarmWidgetProvider : HomeWidgetProvider() {
                         val h = o.optInt("hour", 0)
                         val m = o.optInt("minute", 0)
                         timeText = String.format("%02d:%02d", h, m)
-                        labelText = o.optString("label", "Alarm")
+                        labelText = o.optString("label", defaultAlarm)
                     }
                 }
             } catch (_: Exception) {

@@ -23,6 +23,7 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import com.manilmax.online_study_room.R
 import kotlin.math.min
 import kotlin.random.Random
 
@@ -43,7 +44,7 @@ class AlarmRingActivity : ComponentActivity() {
     private var snoozeMin = 5
     private var kind = AlarmIds.KIND_ALARM
     private var alarmId = ""
-    private var label = "Alarm"
+    private var label = ""
     private var hour = 0
     private var minute = 0
     private var mathA = 0
@@ -113,7 +114,8 @@ class AlarmRingActivity : ComponentActivity() {
     private fun readExtras(i: Intent?) {
         kind = i?.getStringExtra(AlarmIds.EXTRA_KIND) ?: AlarmIds.KIND_ALARM
         alarmId = i?.getStringExtra(AlarmIds.EXTRA_ID) ?: ""
-        label = i?.getStringExtra(AlarmIds.EXTRA_LABEL) ?: "Alarm"
+        label = i?.getStringExtra(AlarmIds.EXTRA_LABEL)
+            ?: getString(R.string.alarm_default_label)
         hour = i?.getIntExtra(AlarmIds.EXTRA_HOUR, 0) ?: 0
         minute = i?.getIntExtra(AlarmIds.EXTRA_MINUTE, 0) ?: 0
         crescendo = i?.getBooleanExtra(AlarmIds.EXTRA_CRESCENDO, true) ?: true
@@ -158,7 +160,7 @@ class AlarmRingActivity : ComponentActivity() {
         }
         val labelText = TextView(this).apply {
             text = if (kind == AlarmIds.KIND_TIMER) {
-                "Zamanlayıcı · $label"
+                getString(R.string.timer_label_format, label)
             } else {
                 label
             }
@@ -178,7 +180,7 @@ class AlarmRingActivity : ComponentActivity() {
 
         if (antiSnooze && kind == AlarmIds.KIND_ALARM) {
             val math = TextView(this).apply {
-                text = "Kapatmak için: $mathA + $mathB = ?"
+                text = getString(R.string.anti_snooze_prompt, mathA, mathB)
                 textSize = 18f
                 setTextColor(0xFFFFFFFF.toInt())
                 setPadding(0, pad, 0, pad / 2)
@@ -187,7 +189,7 @@ class AlarmRingActivity : ComponentActivity() {
                 inputType = android.text.InputType.TYPE_CLASS_NUMBER
                 setTextColor(0xFFFFFFFF.toInt())
                 setHintTextColor(0x66FFFFFF.toInt())
-                hint = "Cevap"
+                hint = getString(R.string.anti_snooze_hint)
             }
             root.addView(math)
             root.addView(answerField)
@@ -198,12 +200,12 @@ class AlarmRingActivity : ComponentActivity() {
             setPadding(0, pad, 0, 0)
         }
         val snoozeBtn = Button(this).apply {
-            text = "Ertele ($snoozeMin dk)"
+            text = getString(R.string.snooze_minutes_format, snoozeMin)
             isEnabled = kind == AlarmIds.KIND_ALARM && !antiSnooze
             setOnClickListener { doSnooze() }
         }
         val dismissBtn = Button(this).apply {
-            text = "Kapat"
+            text = getString(R.string.action_dismiss)
             setOnClickListener { tryDismiss() }
         }
         val lp = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
@@ -278,7 +280,8 @@ class AlarmRingActivity : ComponentActivity() {
         if (antiSnooze && kind == AlarmIds.KIND_ALARM) {
             val ans = answerField?.text?.toString()?.trim()?.toIntOrNull()
             if (ans != mathA + mathB) {
-                Toast.makeText(this, "Yanlış cevap", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.toast_wrong_answer), Toast.LENGTH_SHORT)
+                    .show()
                 pulseVibrate()
                 return
             }
@@ -292,7 +295,8 @@ class AlarmRingActivity : ComponentActivity() {
 
     private fun doSnooze() {
         if (antiSnooze) {
-            Toast.makeText(this, "Erteleme için soruyu çöz", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.toast_solve_to_snooze), Toast.LENGTH_SHORT)
+                .show()
             return
         }
         val trigger = System.currentTimeMillis() + snoozeMin * 60_000L

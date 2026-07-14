@@ -60,15 +60,15 @@
 - **Not:** Bu oturum işleri commit'lendi: grid 32-sütun `141ed2a`, core testleri `da7bdd6`, skill docs `1afba2d`. ⚠️ WP-65 karar dokümanı (`docs/AYLIK-RAPOR-KARAR.md`) önceki Claude oturumunda yazıldı ama **COMMIT'LENMEDİ** (untracked); kararı WP-69 zaten uyguladı → ürün API/DNS kararı bekliyor.
 
 ### Codex Lane
-- **Durum:** [x] Boşta
-- **Faz/WP:** —
-- **Aşama:** —
-- **SAHİP yollar:** —
-- **Ortak/riskli yüzey:** —
+- **Durum:** [~] Aktif
+- **Faz/WP:** Küresel açılım · WP-84
+- **Aşama:** Geliştiriliyor
+- **SAHİP yollar:** `app/lib/l10n/app_en.arb`, `app/lib/l10n/app_tr.arb`
+- **Ortak/riskli yüzey:** ARB/l10n kataloğu sıcak; WP-85/86/87 başlamaz, generated dosyalar salt okunur/ignore
 - **Dal:** — (ana dal `main`)
-- **Başlangıç:** —
-- **Son güncelleme:** 2026-07-14 (Europe/Istanbul)
-- **Not:** WP-82 tamamlandı; resmi l10n çekirdeği, deterministik locale fallback'i ve EN/TR seed katalogları doğrulandı.
+- **Başlangıç:** 2026-07-14 19:15 (Europe/Istanbul)
+- **Son güncelleme:** 2026-07-14 19:15 (Europe/Istanbul)
+- **Not:** WP-82 + WP-83 bağımlılıkları hazır. Envanterden kanonik EN/TR katalog ve metadata/parite üretimi yapılıyor.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
@@ -78,8 +78,8 @@
 - **Ortak/riskli yüzey:** —
 - **Dal:** — (main)
 - **Başlangıç:** —
-- **Son güncelleme:** 2026-07-14 17:05 (Europe/Istanbul)
-- **Not:** WP-71 gerçek shell rewrite kod+test → Test için bekleyenler. Lane serbest.
+- **Son güncelleme:** 2026-07-14 (Europe/Istanbul)
+- **Not:** WP-88 kod+audit+debug APK → Test için bekleyenler. Lane serbest.
 
 ---
 
@@ -112,11 +112,11 @@
 | WP-79 | [~] Test için bekliyor | Bildirim açılışta toplu teslim hata düzeltmesi | beta-v19 cihaz bulgusu |
 | WP-80 | [~] Test için bekliyor | Dinamik panel uygunluk hata düzeltmesi | beta-v19 cihaz bulgusu |
 | WP-81 | [~] Test için bekliyor | Android beta-v20 — bildirim teslimi + dinamik panel düzeltmeleri | WP-79/80 kod commitleri |
-| WP-84 | [ ] Bekliyor | Kanonik `app_en.arb` / `app_tr.arb` kataloğu | WP-82 + WP-83 |
+| WP-84 | [~] Geliştiriliyor | Kanonik `app_en.arb` / `app_tr.arb` kataloğu | WP-82 + WP-83 |
 | WP-85 | [ ] Bekliyor | Flutter göç A — hesap, profil, admin, bildirim, güncelleme | WP-84 |
 | WP-86 | [ ] Bekliyor | Flutter göç B — ana sayfa, sınıf ve istatistikler | WP-84 |
 | WP-87 | [ ] Bekliyor | Flutter göç C — saat, masaüstü, core ve veri etiketleri | WP-84 |
-| WP-88 | [ ] Bekliyor | Native Android EN/TR kaynak göçü | WP-83 |
+| WP-88 | [~] Test için bekliyor | Native Android EN/TR kaynak göçü | WP-83 |
 | WP-89 | [ ] Bekliyor | EN/TR entegrasyon, audit, build ve cihaz QA | WP-85/86/87/88 |
 
 > **2026-07-14 proje denetimi:** Serbest sürükle-bırak ızgara, canlı grup hedefi ve saat stilleri **zaten kodda uygulanmış** (backlog stale idi; geçici WP-72/73/75 iptal). Dinamik paneldeki cihaz/eylem sorunu için açılan **WP-76** kod+otomatik test aşamasını geçti; Samsung/Pixel cihaz QA’sı bekliyor.
@@ -130,7 +130,7 @@
 > **Küresel dil programı ortak sözleşmesi:** İngilizce şablon/varsayılan (`en`), Türkçe ikinci dil (`tr`). Yalnız sistem dil kodu `tr` ise Türkçe; diğer her locale İngilizce. Üretilen l10n kodu elle düzenlenmez/commit edilmez. Tüm WP'lerde migration/RLS etkisi yok; sır/PII çeviri dosyasına girmez; gün sınırı `Europe/Istanbul` kalır. Aynı anda en fazla iki çalışma hattı açılır.
 
 ### WP-84: Kanonik ARB Kataloğu 🔤
-- **Program/Faz:** Küresel açılım · katalog · **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-82 + WP-83
+- **Program/Faz:** Küresel açılım · katalog · **Ajan:** Codex · **Durum:** [~] Geliştiriliyor · **Bağımlılık:** WP-82 + WP-83
 - **Problem/Kapsam:** Onaylı envanteri tek `app_en.arb`/`app_tr.arb` sözleşmesine dönüştür; Dart ekran göçü ve native kaynaklar kapsam dışı.
 - **SAHİP:** `app/lib/l10n/app_en.arb`, `app/lib/l10n/app_tr.arb`. **DOKUNMA:** `app/lib/**/*.dart`, `app/android/**`, generated çıktılar.
 - **Adımlar:** Tüm anahtarları metadata/placeholder/plural ile ekle; EN şablon ve TR anahtar paritesini doğrula; gen-l10n üretimini çalıştır.
@@ -158,13 +158,6 @@
 - **Adımlar:** Saat/alarm/timer/desktop shell/core label'larını UI sınırında yerelleştir; sabit `tr_TR` formatlarını locale-aware yap; EN/TR testlerini güncelle.
 - **Veri/RLS/Geri alma:** Etki yok; UI commitini geri al. **Edge-case:** BuildContext olmayan model/provider, alarm zamanı, Windows kısa/uzun etiket. **Kabul/DoD:** sahip yüzeyde literal ve sabit `tr_TR` UI formatı 0; EN/TR test + analyze 0. **Tuzak:** çeviri metnini repository/server payload'ına yazmak. **Dal:** main/lane · **Model:** 🔴 Opus
 
-### WP-88: Native Android EN/TR Kaynakları 🤖
-- **Program/Faz:** Küresel açılım · native yüzey · **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-83 sözlük
-- **Problem/Kapsam:** Flutter kapalıyken görünen alarm, sayaç bildirimi, widget ve shortcut metinlerini Android kaynaklarına taşı; Dart/ARB kapsam dışı.
-- **SAHİP:** `app/android/app/src/main/res/values*/strings.xml`, kullanıcı metni içeren `res/layout/**`, ilgili Kotlin alarm/timer/widget sınıfları; gerekirse yalnız locale kaynak referansı için `AndroidManifest.xml`. **DOKUNMA:** `app/lib/**`, l10n/ARB, servis zamanlama/oturum mantığı.
-- **Adımlar:** Temel `values` İngilizce, `values-tr` Türkçe; Kotlin `getString`, XML `@string`; format placeholder'larını kaynaklara taşı; resource test/statik audit ekle.
-- **Veri/RLS/Geri alma:** Etki yok; resource commitini geri al. **Edge-case:** process death, boot, notification channel adı, widget preview, marka adının çevrilmemesi. **Kabul/DoD:** Kotlin/layout hardcoded kullanıcı Türkçesi 0; EN/TR Android resource seçimi ve build başarılı. **Tuzak:** ARB'yi native process'te okumaya çalışmak. **Dal:** main/lane · **Model:** 🟣 Pro
-
 ### WP-89: EN/TR Entegrasyon ve Cihaz QA Kapısı ✅
 - **Program/Faz:** Küresel açılım · kalite kapısı · **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-85/86/87/88
 - **Problem/Kapsam:** Tüm parçaları birlikte doğrula, eksik katalog/literal/overflow düzeltmelerini seri kapat; üçüncü dil ve dil seçici kapsam dışı.
@@ -180,6 +173,13 @@
 > Kod/otomatik test bitti; **cihaz QA veya ürün demo’su** bekleniyor.  
 > Bu bölüm **aktif çalışma değildir** — ajan claim etmez, diğer WP’leri engellemez.  
 > Kabul gelince kart buradan çıkar → **Tamamlanan**’a gider. Bug çıkarsa ayrı debug WP açılır.
+
+### WP-88: Native Android EN/TR Kaynakları 🤖
+- **Program/Faz:** Küresel açılım · native yüzey · **Ajan:** Grok · **Aşama:** Otomatik test geçti · **Kanıt:** `Kodda doğrulandı` / `Cihazda doğrulanmalı`
+- **Uygulandı:** `values` varsayılan İngilizce + `values-tr` Türkçe (66 anahtar, parite). Alarm/timer bildirim, ring UI, widget layout/provider, shortcut ve manifest widget label'ları `getString` / `@string`. Marka `Odak Kampı` çevrilmedi. Statik audit: `scripts/l10n_android_audit.py`.
+- **Doğrulama:** audit OK; `flutter build apk --debug` yeşil (`app-debug.apk`).
+- **Ne bekleniyor:** TR ve EN sistem dilinde widget/bildirim/shortcut smoke (process death + widget preview).
+- **Dal:** `wp88-android-native-l10n` · Flutter/ARB dokunulmadı.
 
 ### WP-76: Dinamik Panel — Cihazda Çalışan Canlı Kontrol Paneli 🔔
 - **Program/Faz:** Güvenilirlik / Android canlı yüzey · **Ajan:** Codex · **Aşama:** Otomatik test geçti · **Kanıt:** `Kodda doğrulandı` / `Cihazda doğrulanmalı`

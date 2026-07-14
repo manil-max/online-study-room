@@ -102,7 +102,11 @@ object ExactAlarmHelper {
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                     putExtra(AlarmIds.EXTRA_KIND, AlarmIds.KIND_ALARM)
                     putExtra(AlarmIds.EXTRA_ID, call.argument<String>("id") ?: "preview")
-                    putExtra(AlarmIds.EXTRA_LABEL, call.argument<String>("label") ?: "Önizleme")
+                    putExtra(
+                        AlarmIds.EXTRA_LABEL,
+                        call.argument<String>("label")
+                            ?: context.getString(com.manilmax.online_study_room.R.string.preview_label),
+                    )
                     putExtra(AlarmIds.EXTRA_HOUR, call.argument<Number>("hour")?.toInt() ?: 0)
                     putExtra(AlarmIds.EXTRA_MINUTE, call.argument<Number>("minute")?.toInt() ?: 0)
                     putExtra(AlarmIds.EXTRA_CRESCENDO, call.argument<Boolean>("crescendo") ?: true)

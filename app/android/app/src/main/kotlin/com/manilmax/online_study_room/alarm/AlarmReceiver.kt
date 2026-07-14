@@ -40,7 +40,8 @@ class AlarmReceiver : BroadcastReceiver() {
                         AlarmIds.KIND_ALARM
                     }
                 val id = intent.getStringExtra(AlarmIds.EXTRA_ID) ?: return
-                val label = intent.getStringExtra(AlarmIds.EXTRA_LABEL) ?: "Alarm"
+                val label = intent.getStringExtra(AlarmIds.EXTRA_LABEL)
+                    ?: context.getString(com.manilmax.online_study_room.R.string.alarm_default_label)
                 NativeAlarmScheduler.writePendingRing(context, kind, id, label)
                 launchRing(context, intent, kind, id)
             }
@@ -56,7 +57,8 @@ class AlarmReceiver : BroadcastReceiver() {
 
             AlarmIds.ACTION_SNOOZE -> {
                 val id = intent.getStringExtra(AlarmIds.EXTRA_ID) ?: return
-                val label = intent.getStringExtra(AlarmIds.EXTRA_LABEL) ?: "Alarm"
+                val label = intent.getStringExtra(AlarmIds.EXTRA_LABEL)
+                    ?: context.getString(com.manilmax.online_study_room.R.string.alarm_default_label)
                 val snoozeMin = intent.getIntExtra(AlarmIds.EXTRA_SNOOZE_MIN, 5).coerceIn(1, 60)
                 val trigger = System.currentTimeMillis() + snoozeMin * 60_000L
                 NativeAlarmScheduler.scheduleAlarm(
@@ -89,7 +91,8 @@ class AlarmReceiver : BroadcastReceiver() {
             putExtra(AlarmIds.EXTRA_ID, id)
             putExtra(
                 AlarmIds.EXTRA_LABEL,
-                src.getStringExtra(AlarmIds.EXTRA_LABEL) ?: "Alarm",
+                src.getStringExtra(AlarmIds.EXTRA_LABEL)
+                    ?: context.getString(com.manilmax.online_study_room.R.string.alarm_default_label),
             )
             putExtra(AlarmIds.EXTRA_HOUR, src.getIntExtra(AlarmIds.EXTRA_HOUR, 0))
             putExtra(AlarmIds.EXTRA_MINUTE, src.getIntExtra(AlarmIds.EXTRA_MINUTE, 0))

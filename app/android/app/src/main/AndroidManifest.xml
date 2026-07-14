@@ -147,7 +147,7 @@
         <receiver
             android:name=".widgets.GroupGoalWidgetProvider"
             android:exported="true"
-            android:label="Grup hedefi">
+            android:label="@string/widget_label_group_goal">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
@@ -168,7 +168,7 @@
         <receiver
             android:name=".widgets.ClockWidgetProvider"
             android:exported="true"
-            android:label="Odak dijital saat">
+            android:label="@string/widget_label_clock">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
@@ -179,7 +179,7 @@
         <receiver
             android:name=".widgets.AlarmWidgetProvider"
             android:exported="true"
-            android:label="Odak sıradaki alarm">
+            android:label="@string/widget_label_next_alarm">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>

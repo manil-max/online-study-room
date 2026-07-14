@@ -14,7 +14,7 @@
         android:layout_height="wrap_content"
         android:ellipsize="end"
         android:maxLines="1"
-        android:text="Grup hedefi"
+        android:text="@string/widget_group_goal"
         android:textColor="@color/widget_heading"
         android:textSize="14sp"
         android:textStyle="bold" />
@@ -24,7 +24,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="7dp"
-        android:text="0%"
+        android:text="@string/widget_percent_zero"
         android:textColor="@color/widget_primary_text"
         android:textSize="24sp"
         android:textStyle="bold" />
@@ -45,7 +45,7 @@
         android:layout_marginTop="7dp"
         android:ellipsize="end"
         android:maxLines="1"
-        android:text="Bir gruba katıl"
+        android:text="@string/widget_join_group"
         android:textColor="@color/widget_secondary_text"
         android:textSize="12sp" />
 </LinearLayout>
