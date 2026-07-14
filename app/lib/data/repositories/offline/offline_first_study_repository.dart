@@ -1,8 +1,10 @@
 import 'dart:async';
 
+import '../../../core/observability/observability_service.dart';
+import '../../../core/stats/session_window.dart';
 import '../../models/daily_stat.dart';
 import '../../models/study_session.dart';
-import '../../../core/observability/observability_service.dart';
+import '../../models/user_study_summary.dart';
 import '../study_repository.dart';
 import 'offline_cache_store.dart';
 
@@ -92,7 +94,9 @@ class OfflineFirstStudyRepository implements StudyRepository {
   @override
   Stream<List<StudySession>> watchUserSessions(String userId) async* {
     final cached = await _cache.readUserSessions(userId);
-    if (cached != null) yield cached;
+    if (cached != null) {
+      yield _hotOnly(cached);
+    }
 
     try {
       await flushPending();
@@ -100,7 +104,7 @@ class OfflineFirstStudyRepository implements StudyRepository {
       await for (final rows in _remote.watchUserSessions(userId)) {
         // Realtime snapshot gecikmiş olsa bile yerel outbox'taki değişiklikleri
         // ezemez; flush tamamlanana kadar ikisini geçici canonical listede birleştir.
-        final reconciled = await _reconcileRemoteSessions(rows);
+        final reconciled = _hotOnly(await _reconcileRemoteSessions(rows));
         final pendingCount =
             (await _cache.readPendingStudyMutations()).length;
         ObservabilityService.instance.realtimeSnapshot(
@@ -111,6 +115,7 @@ class OfflineFirstStudyRepository implements StudyRepository {
         realtimeStopwatch
           ..reset()
           ..start();
+        // Disk cache de yalnız sıcak pencere — prefs şişmesin.
         await _cache.saveUserSessions(userId, reconciled);
         yield reconciled;
         unawaited(flushPending());
@@ -121,11 +126,20 @@ class OfflineFirstStudyRepository implements StudyRepository {
         hadCachedRows: fallback != null,
       );
       if (fallback != null) {
-        yield fallback;
+        yield _hotOnly(fallback);
       } else {
         Error.throwWithStackTrace(error, stackTrace);
       }
     }
+  }
+
+  @override
+  Future<UserStudySummary> fetchUserStudySummary(String userId) {
+    return _remote.fetchUserStudySummary(userId);
+  }
+
+  List<StudySession> _hotOnly(List<StudySession> rows) {
+    return filterHotWindowSessions(rows, startOf: (s) => s.start);
   }
 
   @override
@@ -182,6 +196,6 @@ class OfflineFirstStudyRepository implements StudyRepository {
     }
     final rows = byId.values.toList()
       ..sort((a, b) => b.start.compareTo(a.start));
-    return rows;
+    return _hotOnly(rows);
   }
 }

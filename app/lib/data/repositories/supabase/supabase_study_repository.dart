@@ -2,8 +2,10 @@ import 'dart:async';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/stats/session_window.dart';
 import '../../models/daily_stat.dart';
 import '../../models/study_session.dart';
+import '../../models/user_study_summary.dart';
 import '../study_repository.dart';
 
 /// Supabase tabanlı çalışma oturumu deposu. UI hiç değişmeden bellek-içi yerine geçer.
@@ -34,14 +36,99 @@ class SupabaseStudyRepository implements StudyRepository {
     await _client.from('study_sessions').delete().eq('id', sessionId);
   }
 
+  Future<List<StudySession>> _fetchHotWindowSessions(String userId) async {
+    final cutoff = sessionHotWindowStart().toUtc().toIso8601String();
+    final rows = await _client
+        .from('study_sessions')
+        .select()
+        .eq('user_id', userId)
+        .gte('start_time', cutoff)
+        .order('start_time', ascending: false);
+    return (rows as List<dynamic>)
+        .map((r) => StudySession.fromMap(Map<String, dynamic>.from(r as Map)))
+        .toList();
+  }
+
   @override
   Stream<List<StudySession>> watchUserSessions(String userId) {
-    return _client
-        .from('study_sessions')
-        .stream(primaryKey: ['id'])
-        .eq('user_id', userId)
-        .order('start_time', ascending: false)
-        .map((rows) => rows.map(StudySession.fromMap).toList());
+    // Sıcak pencere (90g): select + kullanıcı filtreli realtime yenileme.
+    // Tüm geçmişi stream ile indirmez → RAM/CPU (OPT N2).
+    late final StreamController<List<StudySession>> controller;
+    RealtimeChannel? channel;
+    Timer? debounce;
+    var refreshSeq = 0;
+
+    Future<void> refresh() async {
+      final seq = ++refreshSeq;
+      try {
+        final rows = await _fetchHotWindowSessions(userId);
+        if (!controller.isClosed && seq == refreshSeq) {
+          controller.add(rows);
+        }
+      } catch (e, st) {
+        if (!controller.isClosed && seq == refreshSeq) {
+          controller.addError(e, st);
+        }
+      }
+    }
+
+    void scheduleRefresh() {
+      debounce?.cancel();
+      debounce = Timer(const Duration(milliseconds: 400), () {
+        unawaited(refresh());
+      });
+    }
+
+    controller = StreamController<List<StudySession>>(
+      onListen: () {
+        unawaited(refresh());
+        channel = _client
+            .channel('user_sessions_hot_$userId')
+            .onPostgresChanges(
+              event: PostgresChangeEvent.all,
+              schema: 'public',
+              table: 'study_sessions',
+              filter: PostgresChangeFilter(
+                type: PostgresChangeFilterType.eq,
+                column: 'user_id',
+                value: userId,
+              ),
+              callback: (_) => scheduleRefresh(),
+            )
+            .subscribe();
+      },
+      onCancel: () async {
+        debounce?.cancel();
+        if (channel != null) await _client.removeChannel(channel!);
+      },
+    );
+    return controller.stream;
+  }
+
+  @override
+  Future<UserStudySummary> fetchUserStudySummary(String userId) async {
+    try {
+      final raw = await _client.rpc(
+        'user_study_summary',
+        params: {'p_user_id': userId},
+      );
+      if (raw is Map) {
+        return UserStudySummary.fromMap(Map<String, dynamic>.from(raw));
+      }
+    } catch (_) {
+      // RPC henüz deploy edilmemişse sıcak pencereden kaba özet.
+    }
+    final hot = await _fetchHotWindowSessions(userId);
+    final hotSec = hot.fold<int>(0, (a, s) => a + s.durationSeconds);
+    final yearStart = DateTime(DateTime.now().year);
+    final yearSec = hot
+        .where((s) => !s.start.isBefore(yearStart))
+        .fold<int>(0, (a, s) => a + s.durationSeconds);
+    return UserStudySummary(
+      lifetimeSeconds: hotSec,
+      yearSeconds: yearSec,
+      hotWindowSeconds: hotSec,
+    );
   }
 
   @override

@@ -36,15 +36,19 @@ class StatsScreen extends ConsumerWidget {
   }
 }
 
-/// Kişisel istatistikler: giriş yapan kullanıcının kendi oturumları.
+/// Kişisel istatistikler: sıcak pencere detay + özet (yıl / ömür boyu).
 class _PersonalTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final sessionsAsync = ref.watch(userSessionsProvider);
+    final summaryAsync = ref.watch(userStudySummaryProvider);
     return sessionsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Center(child: Text('İstatistik yüklenemedi: $e')),
-      data: (sessions) => PersonalStatsView(sessions: sessions),
+      data: (sessions) => PersonalStatsView(
+        sessions: sessions,
+        summary: summaryAsync.asData?.value,
+      ),
     );
   }
 }

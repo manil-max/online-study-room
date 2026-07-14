@@ -23,6 +23,7 @@ import '../models/daily_stat.dart';
 import '../models/presence.dart';
 import '../models/profile.dart';
 import '../models/study_session.dart';
+import '../models/user_study_summary.dart';
 import '../repositories/study_repository.dart';
 import '../repositories/offline/offline_first_study_repository.dart';
 import '../repositories/in_memory/in_memory_study_repository.dart';
@@ -57,11 +58,21 @@ final studyRepositoryProvider = Provider<StudyRepository>((ref) {
   return OfflineFirstStudyRepository(remote: remote, cache: cache);
 });
 
-/// Giriş yapan kullanıcının oturumları (yeni → eski).
+/// Giriş yapan kullanıcının **sıcak pencere** oturumları (son 90 gün, yeni → eski).
+/// Ömür boyu / yıl toplamları için [userStudySummaryProvider].
 final userSessionsProvider = StreamProvider<List<StudySession>>((ref) {
   final user = ref.watch(authStateProvider).value;
   if (user == null) return Stream.value(const []);
   return ref.watch(studyRepositoryProvider).watchUserSessions(user.id);
+});
+
+/// Hafif özet: lifetime / bu yıl / 90g saniye (RPC veya bellek-içi).
+final userStudySummaryProvider = FutureProvider<UserStudySummary>((ref) async {
+  final user = ref.watch(authStateProvider).value;
+  if (user == null) return UserStudySummary.empty;
+  // Yeni oturum kaydı sonrası özeti yenile.
+  ref.watch(userSessionsProvider);
+  return ref.watch(studyRepositoryProvider).fetchUserStudySummary(user.id);
 });
 
 /// Kullanıcının sınıfının **per-user-per-gün** toplamları (grup geneli

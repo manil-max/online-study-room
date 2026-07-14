@@ -1,7 +1,9 @@
 import 'dart:async';
 
+import '../../../core/stats/session_window.dart';
 import '../../models/daily_stat.dart';
 import '../../models/study_session.dart';
+import '../../models/user_study_summary.dart';
 import '../study_repository.dart';
 
 /// Bellek-içi (kalıcı olmayan) çalışma oturumu deposu. Supabase'e kadar geçicidir.
@@ -12,9 +14,20 @@ class InMemoryStudyRepository implements StudyRepository {
   final StreamController<void> _changes = StreamController<void>.broadcast();
 
   List<StudySession> _userSessions(String userId) {
-    final list = _sessions.where((s) => s.userId == userId).toList()
+    final list = _sessions
+        .where(
+          (s) =>
+              s.userId == userId && isSessionInHotWindow(s.start),
+        )
+        .toList()
       ..sort((a, b) => b.start.compareTo(a.start));
     return List.unmodifiable(list);
+  }
+
+  List<StudySession> _allUserSessions(String userId) {
+    final list = _sessions.where((s) => s.userId == userId).toList()
+      ..sort((a, b) => b.start.compareTo(a.start));
+    return list;
   }
 
   @override
@@ -49,6 +62,27 @@ class InMemoryStudyRepository implements StudyRepository {
     await for (final _ in _changes.stream) {
       yield _userSessions(userId);
     }
+  }
+
+  @override
+  Future<UserStudySummary> fetchUserStudySummary(String userId) async {
+    final all = _allUserSessions(userId);
+    final now = DateTime.now();
+    final yearStart = DateTime(now.year);
+    final hotStart = sessionHotWindowStart(now: now);
+    var lifetime = 0;
+    var year = 0;
+    var hot = 0;
+    for (final s in all) {
+      lifetime += s.durationSeconds;
+      if (!s.start.isBefore(yearStart)) year += s.durationSeconds;
+      if (!s.start.isBefore(hotStart)) hot += s.durationSeconds;
+    }
+    return UserStudySummary(
+      lifetimeSeconds: lifetime,
+      yearSeconds: year,
+      hotWindowSeconds: hot,
+    );
   }
 
   @override

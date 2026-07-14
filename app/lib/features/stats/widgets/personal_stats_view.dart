@@ -5,8 +5,10 @@ import '../../../core/stats/study_stats.dart';
 import '../../../core/theme/subject_colors.dart';
 import '../../../core/utils/duration_format.dart';
 import '../../../core/widgets/safe_screen_padding.dart';
+import '../../../core/stats/session_window.dart';
 import '../../../data/models/study_session.dart';
 import '../../../data/models/subject.dart';
+import '../../../data/models/user_study_summary.dart';
 import '../../../data/providers/study_providers.dart';
 import '../../../data/providers/subject_providers.dart';
 import 'daily_bar_chart.dart';
@@ -19,10 +21,17 @@ import 'week_hour_heatmap.dart';
 
 /// Kişisel istatistik özeti: dönem toplamları, günlük ortalama ve
 /// hafta içi / hafta sonu ayrımı. Grafikler Faz 3b'de eklenecek.
+///
+/// [sessions] sıcak pencere (son 90 gün). [summary] yıl / ömür boyu.
 class PersonalStatsView extends StatelessWidget {
-  const PersonalStatsView({super.key, required this.sessions});
+  const PersonalStatsView({
+    super.key,
+    required this.sessions,
+    this.summary,
+  });
 
   final List<StudySession> sessions;
+  final UserStudySummary? summary;
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +41,11 @@ class PersonalStatsView extends StatelessWidget {
     final today = secondsOnDay(sessions, now);
     final thisWeek = totalSeconds(inRange(sessions, startOfWeek(now), now));
     final thisMonth = totalSeconds(inRange(sessions, startOfMonth(now), now));
-    final thisYear = totalSeconds(inRange(sessions, startOfYear(now), now));
+    // Yıl ve ömür: özetten (1 yıllık satır listesi RAM'de yok).
+    final thisYear =
+        summary?.yearSeconds ??
+        totalSeconds(inRange(sessions, startOfYear(now), now));
+    final lifetime = summary?.lifetimeSeconds;
 
     // Son 30 günün günlük ortalaması (çalışılmayan günler de paydada).
     final avg30 = dailyAverageSeconds(
@@ -98,6 +111,18 @@ class PersonalStatsView extends StatelessWidget {
             Expanded(child: _StatCard(label: 'Bu yıl', seconds: thisYear)),
           ],
         ),
+        if (lifetime != null) ...[
+          const SizedBox(height: 8),
+          _StatCard(label: 'Tüm zamanlar', seconds: lifetime),
+        ],
+        const SizedBox(height: 8),
+        Text(
+          'Grafikler ve kayıt listesi son $kUserSessionsHotWindowDays günü '
+          'gösterir; yıl / tüm zamanlar özet toplamdır.',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
         const SizedBox(height: 16),
         Text('Rekorlar', style: theme.textTheme.titleMedium),
         const SizedBox(height: 8),
@@ -114,15 +139,19 @@ class PersonalStatsView extends StatelessWidget {
         const SizedBox(height: 16),
         _WeekComparisonCard(sessions: sessions, now: now),
         const SizedBox(height: 16),
-        Text('Çalışma takvimi (son 6 ay)', style: theme.textTheme.titleMedium),
+        Text(
+          'Çalışma takvimi (son $kUserSessionsHotWindowDays gün)',
+          style: theme.textTheme.titleMedium,
+        ),
         const SizedBox(height: 8),
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: StudyHeatmap(
-                sessions: sessions,
-                weeks: 26,
-                precomputedTotals: dailyTotalsMap),
+              sessions: sessions,
+              weeks: 13,
+              precomputedTotals: dailyTotalsMap,
+            ),
           ),
         ),
         const SizedBox(height: 16),

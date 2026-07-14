@@ -6,6 +6,7 @@ import 'package:online_study_room/core/prefs/app_prefs.dart';
 import 'package:online_study_room/data/models/daily_stat.dart';
 import 'package:online_study_room/data/models/presence.dart';
 import 'package:online_study_room/data/models/study_session.dart';
+import 'package:online_study_room/data/models/user_study_summary.dart';
 import 'package:online_study_room/data/providers/offline_providers.dart';
 import 'package:online_study_room/data/providers/presence_providers.dart';
 import 'package:online_study_room/data/providers/study_providers.dart';
@@ -216,6 +217,17 @@ class _FakeStudyRepository implements StudyRepository {
   Stream<List<StudySession>> watchUserSessions(String userId) async* {
     if (failUserSessionStream) throw StateError('offline');
     yield sessions.where((s) => s.userId == userId).toList();
+  }
+
+  @override
+  Future<UserStudySummary> fetchUserStudySummary(String userId) async {
+    final mine = sessions.where((s) => s.userId == userId);
+    final sec = mine.fold<int>(0, (a, s) => a + s.durationSeconds);
+    return UserStudySummary(
+      lifetimeSeconds: sec,
+      yearSeconds: sec,
+      hotWindowSeconds: sec,
+    );
   }
 
   @override

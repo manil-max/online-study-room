@@ -1,5 +1,6 @@
 import '../models/daily_stat.dart';
 import '../models/study_session.dart';
+import '../models/user_study_summary.dart';
 
 /// Çalışma oturumlarının deposu. Anahtar varsa Supabase, yoksa bellek-içi.
 abstract class StudyRepository {
@@ -12,8 +13,12 @@ abstract class StudyRepository {
   /// Bir oturumu siler (yalnızca kendi oturumu).
   Future<void> deleteSession(String sessionId);
 
-  /// Bir kullanıcının oturumlarını (yeni → eski) canlı izler.
+  /// Kullanıcının **sıcak pencere** oturumları (yeni → eski).
+  /// Varsayılan son 90 gün; eski detay RAM'de tutulmaz.
   Stream<List<StudySession>> watchUserSessions(String userId);
+
+  /// Ömür boyu / bu yıl / sıcak pencere toplam saniyeleri (tek hafif sorgu).
+  Future<UserStudySummary> fetchUserStudySummary(String userId);
 
   /// Bir sınıfın tüm oturumlarını canlı izler (istatistik/sıralama için).
   Stream<List<StudySession>> watchGroupSessions(String groupId);

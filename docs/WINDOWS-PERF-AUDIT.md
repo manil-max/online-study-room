@@ -24,10 +24,11 @@
 
 ## Hâlâ açık (öncelik)
 
-### P0 — Sınırsız `watchUserSessions` (OPT N2)
-- **Kanıt:** `supabase_study_repository.dart` limit yok; tüm geçmiş RAM’de.
-- **Etki:** Bellek + her realtime güncellemede decode + provider zinciri.
-- **Öneri:** Son 90–365 gün stream; geçmiş sayfalı. Ürün onayı gerekir.
+### P0 — Sınırsız `watchUserSessions` (OPT N2) → uygulandı
+- Detay: son **90 gün** (select `gte` + user-filter realtime).
+- Özet: `user_study_summary` → lifetime / year / hot_window saniye.
+- UI: “Bu yıl” + “Tüm zamanlar” özetten; grafikler 90g.
+- Migration: `0031_user_study_summary.sql` (**Supabase’e uygula**).
 
 ### P1 — IndexedStack mobilde hâlâ 5 ekran
 - Desktop tembel; **mobil** IndexedStack aynı.
