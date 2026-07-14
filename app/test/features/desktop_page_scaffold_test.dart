@@ -62,4 +62,69 @@ void main() {
     expect(secondary.dx, greaterThan(primary.dx));
     expect(secondary.dy, primary.dy);
   });
+
+  testWidgets('DesktopMasterDetail ≥1008 master ve detail yan yana', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1200, 800);
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 1200,
+            height: 600,
+            child: DesktopMasterDetail(
+              master: SizedBox(key: ValueKey('master'), height: 100),
+              detail: SizedBox(key: ValueKey('detail'), height: 100),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final master = tester.getTopLeft(find.byKey(const ValueKey('master')));
+    final detail = tester.getTopLeft(find.byKey(const ValueKey('detail')));
+    expect(detail.dx, greaterThan(master.dx));
+  });
+
+  testWidgets('DesktopSectionList seçimi onSelected çağırır', (tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(400, 600);
+    addTearDown(tester.view.reset);
+
+    String? selected = 'a';
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: StatefulBuilder(
+            builder: (context, setState) {
+              return DesktopSectionList(
+                selectedId: selected!,
+                onSelected: (id) => setState(() => selected = id),
+                items: const [
+                  DesktopSectionItem(
+                    id: 'a',
+                    icon: Icons.person,
+                    label: 'Genel',
+                  ),
+                  DesktopSectionItem(
+                    id: 'b',
+                    icon: Icons.settings,
+                    label: 'Ayarlar',
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Ayarlar'));
+    await tester.pump();
+    expect(selected, 'b');
+  });
 }

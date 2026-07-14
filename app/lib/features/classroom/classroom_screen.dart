@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/desktop/desktop_layout.dart';
 import '../../core/desktop/desktop_window.dart';
 import '../../core/widgets/safe_screen_padding.dart';
 import '../../data/models/study_group.dart';
@@ -132,15 +133,18 @@ class _GroupView extends ConsumerWidget {
     // trend → yönetim. Kamp ateşi en üstte; davet kodu gibi operasyonel bilgiler
     // ateşin üstünde büyük alan kaplamaz, alttaki açılır yönetim paneline taşındı.
     if (isDesktopWindow) {
+      final density = DesktopDensity.of(context);
       return SingleChildScrollView(
+        padding: density.pagePadding,
         child: DesktopContent(
+          padding: EdgeInsets.zero,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _CompactGroupHeader(group: group),
-              const SizedBox(height: 16),
+              SizedBox(height: density.sectionGap),
               DesktopResponsiveColumns(
-                breakpoint: 1100,
+                breakpoint: DesktopBreakpoints.expanded,
                 secondaryWidth: 390,
                 primary: const DesktopPanel(
                   padding: EdgeInsets.all(12),
@@ -151,14 +155,29 @@ class _GroupView extends ConsumerWidget {
                   children: [
                     if (showTimer) ...[
                       const StudyTimerCard(),
-                      const SizedBox(height: 12),
+                      SizedBox(height: density.sectionGap),
                     ],
                     const GroupGoalCard(),
-                    const SizedBox(height: 12),
+                    SizedBox(height: density.sectionGap),
                     const LeaderboardCard(),
-                    const SizedBox(height: 12),
+                    SizedBox(height: density.sectionGap),
                     const GroupTrendCard(),
-                    const SizedBox(height: 12),
+                    SizedBox(height: density.sectionGap),
+                    DesktopContextPanel(
+                      title: 'Kamp bağlamı',
+                      icon: Icons.local_fire_department_outlined,
+                      child: Text(
+                        'Ateş gruptaki canlı varlığı yansıtır. '
+                        'Hedef ve sıralama kartları sağ paneldedir; '
+                        'sohbet ve yönetim altta.',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
+                            ),
+                      ),
+                    ),
+                    SizedBox(height: density.sectionGap),
                     _GroupManagementTile(group: group),
                   ],
                 ),

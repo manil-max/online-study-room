@@ -14,13 +14,50 @@ import 'widgets/manual_session_dialog.dart';
 /// Çalışma kayıtları: kullanıcının oturumları (yeni → eski), güne göre gruplu.
 /// Manuel süre ekleme, düzenleme ve silme (project.md §3.5 — esnek manuel giriş).
 class SessionHistoryScreen extends ConsumerWidget {
-  const SessionHistoryScreen({super.key});
+  const SessionHistoryScreen({super.key, this.embedded = false});
+
+  /// Desktop master-detail içinde gömülü: AppBar yok (WP-53).
+  final bool embedded;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final sessionsAsync = ref.watch(userSessionsProvider);
     final hasGroup = ref.watch(userGroupProvider).value != null;
+
+    final body = sessionsAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(child: Text('Kayıtlar yüklenemedi: $e')),
+      data: (sessions) {
+        if (!hasGroup) {
+          return _centerInfo(theme,
+              'Kayıt eklemek için önce bir gruba katıl veya grup oluştur.');
+        }
+        if (sessions.isEmpty) {
+          return _centerInfo(
+              theme, 'Henüz kaydın yok. "Manuel ekle" ile geçmiş süre ekleyebilirsin.');
+        }
+        return _SessionList(sessions: sessions);
+      },
+    );
+
+    if (embedded) {
+      return Stack(
+        children: [
+          Positioned.fill(child: body),
+          if (hasGroup)
+            Positioned(
+              right: 16,
+              bottom: 16,
+              child: FloatingActionButton.extended(
+                onPressed: () => _addManual(context, ref),
+                icon: const Icon(Icons.add),
+                label: const Text('Manuel ekle'),
+              ),
+            ),
+        ],
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(title: const Text('Çalışma kayıtlarım')),
@@ -31,21 +68,7 @@ class SessionHistoryScreen extends ConsumerWidget {
               label: const Text('Manuel ekle'),
             )
           : null,
-      body: sessionsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Kayıtlar yüklenemedi: $e')),
-        data: (sessions) {
-          if (!hasGroup) {
-            return _centerInfo(theme,
-                'Kayıt eklemek için önce bir gruba katıl veya grup oluştur.');
-          }
-          if (sessions.isEmpty) {
-            return _centerInfo(
-                theme, 'Henüz kaydın yok. "Manuel ekle" ile geçmiş süre ekleyebilirsin.');
-          }
-          return _SessionList(sessions: sessions);
-        },
-      ),
+      body: body,
     );
   }
 

@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/desktop/desktop_layout.dart';
 import '../../core/desktop/desktop_window.dart';
 import '../../core/time_engine/alarm_scheduler.dart';
 import '../../core/utils/duration_format.dart';
@@ -313,19 +315,72 @@ class _ClockScreenState extends ConsumerState<ClockScreen> {
                 label: const Text('Compact Focus'),
               ),
             ],
-            child: SingleChildScrollView(
-              child: DesktopContent(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final wide =
+                    constraints.maxWidth >= DesktopBreakpoints.expanded;
+                final workspace = Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     _buildIconStrip(),
-                    const SizedBox(height: 20),
-                    DesktopPanel(
-                      child: SizedBox(height: 560, child: content),
+                    const SizedBox(height: 16),
+                    Expanded(
+                      child: DesktopPanel(
+                        child: content,
+                      ),
                     ),
                   ],
-                ),
-              ),
+                );
+                if (!wide) {
+                  return Padding(
+                    padding: DesktopDensity.of(context).pagePadding,
+                    child: SizedBox(height: 640, child: workspace),
+                  );
+                }
+                return Padding(
+                  padding: DesktopDensity.of(context).pagePadding,
+                  child: DesktopResponsiveColumns(
+                    breakpoint: DesktopBreakpoints.expanded,
+                    secondaryWidth: 300,
+                    primary: SizedBox(
+                      height: math.max(560, constraints.maxHeight - 48),
+                      child: workspace,
+                    ),
+                    secondary: DesktopContextPanel(
+                      title: 'Odak kısayolları',
+                      icon: Icons.keyboard_outlined,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Ctrl+Shift+M — Compact Focus\n'
+                            'Ctrl+Shift+P — Her zaman üstte\n'
+                            'Ctrl+1…5 — Ana sekmeler\n'
+                            'F5 — Yenile',
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
+                                  height: 1.45,
+                                ),
+                          ),
+                          const SizedBox(height: 12),
+                          FilledButton.tonalIcon(
+                            onPressed: toggleDesktopCompactMode,
+                            icon: const Icon(
+                              Icons.picture_in_picture_alt_outlined,
+                            ),
+                            label: const Text('Compact Focus aç'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
             ),
           );
         }

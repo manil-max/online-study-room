@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/desktop/desktop_layout.dart';
 import '../../core/desktop/desktop_window.dart';
 import '../../data/providers/auth_providers.dart';
 import '../../data/providers/group_providers.dart';
@@ -25,26 +26,69 @@ class StatsScreen extends ConsumerWidget {
               subtitle:
                   'Çalışma ritmini incele, dönemleri karşılaştır ve grubundaki ilerlemeyi gör.',
               icon: Icons.query_stats_outlined,
-              child: Column(
-                children: [
-                  const DesktopContent(
-                    padding: EdgeInsets.fromLTRB(24, 18, 24, 0),
-                    maxWidth: 720,
-                    child: DesktopPanel(
-                      padding: EdgeInsets.symmetric(horizontal: 8),
-                      child: TabBar(
-                        tabs: [
-                          Tab(text: 'Kişisel'),
-                          Tab(text: 'Grup'),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final wide =
+                      constraints.maxWidth >= DesktopBreakpoints.expanded;
+                  final tabs = const DesktopPanel(
+                    padding: EdgeInsets.symmetric(horizontal: 8),
+                    child: TabBar(
+                      tabs: [
+                        Tab(text: 'Kişisel'),
+                        Tab(text: 'Grup'),
+                      ],
+                    ),
+                  );
+                  final views = TabBarView(
+                    children: [
+                      _PersonalTab(),
+                      _ClassTab(),
+                    ],
+                  );
+                  if (!wide) {
+                    return Column(
+                      children: [
+                        DesktopContent(
+                          padding: const EdgeInsets.fromLTRB(24, 18, 24, 0),
+                          maxWidth: 720,
+                          child: tabs,
+                        ),
+                        const SizedBox(height: 12),
+                        Expanded(child: views),
+                      ],
+                    );
+                  }
+                  // ≥1008: analiz paneli + bağlamsal ipucu (WP-53).
+                  return Padding(
+                    padding: DesktopDensity.of(context).pagePadding,
+                    child: DesktopResponsiveColumns(
+                      breakpoint: DesktopBreakpoints.expanded,
+                      secondaryWidth: 320,
+                      primary: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          tabs,
+                          const SizedBox(height: 12),
+                          Expanded(child: views),
                         ],
                       ),
+                      secondary: DesktopContextPanel(
+                        title: 'Nasıl okunur?',
+                        icon: Icons.lightbulb_outline,
+                        child: Text(
+                          'Kişisel sekme kendi oturumlarından türetilir. '
+                          'Grup sekmesi ortak gruptaki günlük toplamları ve '
+                          'sıralamayı gösterir. Gün sınırı Europe/Istanbul.',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant,
+                              ),
+                        ),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  Expanded(
-                    child: TabBarView(children: [_PersonalTab(), _ClassTab()]),
-                  ),
-                ],
+                  );
+                },
               ),
             )
           : Scaffold(

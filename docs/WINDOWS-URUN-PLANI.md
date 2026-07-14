@@ -240,3 +240,15 @@ gate uygulanır. Sıra: `WP-27 base → WP-52 → WP-53 → WP-28`.
 - Flutter Windows release: https://docs.flutter.dev/deployment/windows
 - MSIX imzalama: https://learn.microsoft.com/en-us/windows/msix/package/sign-msix-package-guide
 - MSIX container/update modeli: https://learn.microsoft.com/en-us/windows/msix/msix-containerization-overview
+
+
+## 8. WP-53 R2 uygulama notu (2026-07-14)
+
+`Kodda doğrulandı`:
+
+- Ortak chrome: `DesktopDensity`, `DesktopMasterDetail`, `DesktopSectionList`, `DesktopContextPanel`.
+- Profil: ≥1008 master-detail (Genel / Kayıtlar / Ayarlar gömülü).
+- İstatistik, Saat, Ana Sayfa, Gruplar: ≥1008 ikincil bağlamsal panel veya master-detail.
+- Mobil AppBar/tek kolon branch korundu; `isDesktopWindow` dışı değişmedi.
+- Klavye: mevcut shell Ctrl+1…5, Compact Focus, F5.
+- Cihaz golden/resize matrisi ve ürün kabulü hâlâ `Cihazda doğrulanmalı`.

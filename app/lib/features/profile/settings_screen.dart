@@ -19,7 +19,10 @@ import 'widgets/report_issue_dialog.dart';
 
 /// Ayarlar: görünüm, Ana Sayfa davranışı ve gelecek özelleştirme alanları.
 class SettingsScreen extends ConsumerStatefulWidget {
-  const SettingsScreen({super.key});
+  const SettingsScreen({super.key, this.embedded = false});
+
+  /// Desktop master-detail içinde gömülü: AppBar yok (WP-53).
+  final bool embedded;
 
   @override
   ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
@@ -68,9 +71,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             animalId: _animalOverride ?? profile.animal,
           );
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Ayarlar')),
-      body: ListView(
+    final list = ListView(
         padding: getSafePadding(
           context,
           const EdgeInsets.fromLTRB(16, 12, 16, 24),
@@ -239,7 +240,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
           ],
         ],
-      ),
+    );
+
+    if (widget.embedded) return list;
+    return Scaffold(
+      appBar: AppBar(title: const Text('Ayarlar')),
+      body: list,
     );
   }
 }

@@ -27,134 +27,7 @@ class ProfileScreen extends ConsumerWidget {
         title: 'Profil ve hesap',
         subtitle: 'Kimliğini, çalışma geçmişini ve tercihlerini yönet.',
         icon: Icons.person_outline,
-        child: SingleChildScrollView(
-          child: DesktopContent(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                DesktopPanel(
-                  child: Row(
-                    children: [
-                      Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          if (profile != null)
-                            LiveCrownedAvatar(
-                              userId: profile.id,
-                              displayName: profile.displayName,
-                              avatarUrl: profile.avatarUrl,
-                              radius: 42,
-                            )
-                          else
-                            const CrownedAvatar(
-                              displayName: '',
-                              radius: 42,
-                            ),
-                          if (profile != null)
-                            Positioned(
-                              right: 0,
-                              bottom: 0,
-                              child: Material(
-                                color: theme.colorScheme.primary,
-                                shape: const CircleBorder(),
-                                child: InkWell(
-                                  customBorder: const CircleBorder(),
-                                  onTap: () => _pickAvatar(context, ref),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(6),
-                                    child: Icon(
-                                      Icons.photo_camera,
-                                      size: 16,
-                                      color: theme.colorScheme.onPrimary,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                      const SizedBox(width: 20),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              profile?.displayName ?? 'Kullanıcı',
-                              style: theme.textTheme.headlineSmall?.copyWith(
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Odak Kampı hesabı',
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (profile != null)
-                        OutlinedButton.icon(
-                          onPressed: () =>
-                              _editName(context, ref, profile.displayName),
-                          icon: const Icon(Icons.edit_outlined),
-                          label: const Text('Adı düzenle'),
-                        ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                const GamificationCard(),
-                const SizedBox(height: 16),
-                DesktopPanel(
-                  padding: EdgeInsets.zero,
-                  child: Column(
-                    children: [
-                      ListTile(
-                        leading: const Icon(Icons.history),
-                        title: const Text('Çalışma kayıtlarım'),
-                        subtitle: const Text(
-                          'Oturumlarını görüntüle, düzenle veya manuel süre ekle',
-                        ),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => const SessionHistoryScreen(),
-                          ),
-                        ),
-                      ),
-                      const Divider(height: 1),
-                      ListTile(
-                        leading: const Icon(Icons.settings_outlined),
-                        title: const Text('Ayarlar'),
-                        subtitle: const Text(
-                          'Görünüm, pano, sayaç ve bildirim tercihleri',
-                        ),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => const SettingsScreen(),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: TextButton.icon(
-                    onPressed: () =>
-                        ref.read(authRepositoryProvider).signOut(),
-                    icon: const Icon(Icons.logout),
-                    label: const Text('Hesaptan çık'),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
+        child: const _DesktopProfileWorkspace(),
       );
     }
 
@@ -264,71 +137,229 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _editName(
-    BuildContext context,
-    WidgetRef ref,
-    String current,
-  ) async {
-    final controller = TextEditingController(text: current);
-    final name = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Görünen adı düzenle'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          textCapitalization: TextCapitalization.words,
-          decoration: const InputDecoration(labelText: 'Görünen ad'),
+}
+
+/// WP-53: Profil kategori + detay (master-detail). Mobil tek kolon korunur.
+class _DesktopProfileWorkspace extends ConsumerStatefulWidget {
+  const _DesktopProfileWorkspace();
+
+  @override
+  ConsumerState<_DesktopProfileWorkspace> createState() =>
+      _DesktopProfileWorkspaceState();
+}
+
+class _DesktopProfileWorkspaceState
+    extends ConsumerState<_DesktopProfileWorkspace> {
+  String _section = 'overview';
+
+  static const _sections = <DesktopSectionItem>[
+    DesktopSectionItem(
+      id: 'overview',
+      icon: Icons.badge_outlined,
+      label: 'Genel bakış',
+      subtitle: 'Kimlik ve başarılar',
+    ),
+    DesktopSectionItem(
+      id: 'history',
+      icon: Icons.history,
+      label: 'Çalışma kayıtları',
+      subtitle: 'Oturumlar ve manuel süre',
+    ),
+    DesktopSectionItem(
+      id: 'settings',
+      icon: Icons.settings_outlined,
+      label: 'Ayarlar',
+      subtitle: 'Görünüm, pano, bildirim',
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final profile = ref.watch(authStateProvider).value;
+    final theme = Theme.of(context);
+
+    return Padding(
+      padding: DesktopDensity.of(context).pagePadding,
+      child: DesktopMasterDetail(
+        master: DesktopSectionList(
+          items: _sections,
+          selectedId: _section,
+          onSelected: (id) => setState(() => _section = id),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Vazgeç'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, controller.text),
-            child: const Text('Kaydet'),
-          ),
-        ],
+        detail: switch (_section) {
+          'history' => const DesktopPanel(
+              padding: EdgeInsets.zero,
+              child: SessionHistoryScreen(embedded: true),
+            ),
+          'settings' => const DesktopPanel(
+              padding: EdgeInsets.zero,
+              child: SettingsScreen(embedded: true),
+            ),
+          _ => SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  DesktopPanel(
+                    child: Row(
+                      children: [
+                        Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            if (profile != null)
+                              LiveCrownedAvatar(
+                                userId: profile.id,
+                                displayName: profile.displayName,
+                                avatarUrl: profile.avatarUrl,
+                                radius: 42,
+                              )
+                            else
+                              const CrownedAvatar(
+                                displayName: '',
+                                radius: 42,
+                              ),
+                            if (profile != null)
+                              Positioned(
+                                right: 0,
+                                bottom: 0,
+                                child: Material(
+                                  color: theme.colorScheme.primary,
+                                  shape: const CircleBorder(),
+                                  child: InkWell(
+                                    customBorder: const CircleBorder(),
+                                    onTap: () =>
+                                        _pickAvatar(context, ref),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(6),
+                                      child: Icon(
+                                        Icons.photo_camera,
+                                        size: 16,
+                                        color: theme.colorScheme.onPrimary,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(width: 20),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                profile?.displayName ?? 'Kullanıcı',
+                                style: theme.textTheme.headlineSmall?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Odak Kampı hesabı',
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (profile != null)
+                          OutlinedButton.icon(
+                            onPressed: () => _editName(
+                              context,
+                              ref,
+                              profile.displayName,
+                            ),
+                            icon: const Icon(Icons.edit_outlined),
+                            label: const Text('Adı düzenle'),
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const GamificationCard(),
+                  const SizedBox(height: 16),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      onPressed: () =>
+                          ref.read(authRepositoryProvider).signOut(),
+                      icon: const Icon(Icons.logout),
+                      label: const Text('Hesaptan çık'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        },
       ),
     );
-    if (name == null || name.trim().isEmpty || name.trim() == current) return;
-    if (!context.mounted) return;
-
-    final messenger = ScaffoldMessenger.of(context);
-    try {
-      await ref.read(authRepositoryProvider).updateDisplayName(name);
-      ref.invalidate(authStateProvider);
-    } on AuthException catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(e.message)));
-    }
   }
 
-  Future<void> _pickAvatar(BuildContext context, WidgetRef ref) async {
-    final messenger = ScaffoldMessenger.of(context);
-    final picker = ImagePicker();
-    final file = await picker.pickImage(
-      source: ImageSource.gallery,
-      maxWidth: 512,
-      maxHeight: 512,
-      imageQuality: 85,
-    );
-    if (file == null) return;
+}
 
-    final bytes = await file.readAsBytes();
-    final contentType =
-        file.mimeType ??
-        (file.name.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg');
-    try {
-      await ref
-          .read(authRepositoryProvider)
-          .updateAvatar(bytes: bytes, contentType: contentType);
-      ref.invalidate(authStateProvider);
-      messenger.showSnackBar(
-        const SnackBar(content: Text('Profil fotoğrafı güncellendi')),
-      );
-    } on AuthException catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(e.message)));
-    }
+Future<void> _editName(
+  BuildContext context,
+  WidgetRef ref,
+  String current,
+) async {
+  final controller = TextEditingController(text: current);
+  final name = await showDialog<String>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('Görünen adı düzenle'),
+      content: TextField(
+        controller: controller,
+        autofocus: true,
+        textCapitalization: TextCapitalization.words,
+        decoration: const InputDecoration(labelText: 'Görünen ad'),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx),
+          child: const Text('Vazgeç'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(ctx, controller.text),
+          child: const Text('Kaydet'),
+        ),
+      ],
+    ),
+  );
+  if (name == null || name.trim().isEmpty || name.trim() == current) return;
+  if (!context.mounted) return;
+
+  final messenger = ScaffoldMessenger.of(context);
+  try {
+    await ref.read(authRepositoryProvider).updateDisplayName(name);
+    ref.invalidate(authStateProvider);
+  } on AuthException catch (e) {
+    messenger.showSnackBar(SnackBar(content: Text(e.message)));
+  }
+}
+
+Future<void> _pickAvatar(BuildContext context, WidgetRef ref) async {
+  final messenger = ScaffoldMessenger.of(context);
+  final picker = ImagePicker();
+  final file = await picker.pickImage(
+    source: ImageSource.gallery,
+    maxWidth: 512,
+    maxHeight: 512,
+    imageQuality: 85,
+  );
+  if (file == null) return;
+
+  final bytes = await file.readAsBytes();
+  final contentType = file.mimeType ??
+      (file.name.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg');
+  try {
+    await ref
+        .read(authRepositoryProvider)
+        .updateAvatar(bytes: bytes, contentType: contentType);
+    ref.invalidate(authStateProvider);
+    messenger.showSnackBar(
+      const SnackBar(content: Text('Profil fotoğrafı güncellendi')),
+    );
+  } on AuthException catch (e) {
+    messenger.showSnackBar(SnackBar(content: Text(e.message)));
   }
 }

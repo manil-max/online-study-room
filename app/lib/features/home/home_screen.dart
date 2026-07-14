@@ -194,7 +194,40 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   label: const Text('Panoyu düzenle'),
                 ),
               ],
-        child: body,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final wide =
+                constraints.maxWidth >= DesktopBreakpoints.expanded &&
+                    !_editing;
+            if (!wide) return body;
+            return Padding(
+              padding: DesktopDensity.of(context).pagePadding.copyWith(
+                    top: 8,
+                    bottom: 8,
+                  ),
+              child: DesktopResponsiveColumns(
+                breakpoint: DesktopBreakpoints.expanded,
+                secondaryWidth: 300,
+                primary: body,
+                secondary: DesktopContextPanel(
+                  title: 'Çalışma kokpiti',
+                  icon: Icons.rocket_launch_outlined,
+                  child: Text(
+                    'Pano kartları bugünkü odağını toplar. '
+                    'Düzenle ile kart ekle/taşı; boşlukları Yukarı topla ile sıkıştır. '
+                    'Sayaç ve grup durumu kartlardan veya Gruplar sekmesinden yönetilir.',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurfaceVariant,
+                          height: 1.4,
+                        ),
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
       );
     }
 
