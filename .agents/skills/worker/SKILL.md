@@ -28,7 +28,8 @@ Kullanıcı (kısa): **"worker'ı oku ve V8-A'yı / WP-N'yi yap"** (Faz veya WP 
 5. Tasarım/teknik tasarımı netleştir → belirsizlik varsa sor
 6. Adımları sırayla uygula    → yalnız SAHİP dosyalara yaz, DoD'yi izle
 7. Doğrula                    → analyze 0 uyarı + test + (mümkünse) cihaz kanıtı
-8. Kapat                      → durumu güncelle, kabul bekleyeni işaretle, commit
+8. Kapat + LANE'İ BIRAK       → cihaz/demo gerekiyorsa kartı "Test için bekleyenler"e taşı
+                                ve lane'i boşalt; tam bittiyse Tamamlanan'a; her hâlde commit
 ```
 
 ---
@@ -81,7 +82,8 @@ Her WP birinci sınıf çıktı üretir. Uygularken:
 `progress.md` plan listesi değil, **canlı durum kaynağıdır.** Her durum değişiminden hemen önce dosyayı yeniden oku; yalnız **kendi lane + kendi WP kartına dar patch** uygula. Tüm dosyayı stale kopyadan yeniden yazma; başka ajanların kartlarını ve güncel faz etiketlerini koru.
 
 - Üç+ canlı lane: `Gemini`, `Claude`, `Codex` (+ gerekirse ek). Yalnız kendi lane.
-- Anlamlı her geçişte (başlat / blokla / devret / test geçti / kabul bekliyor / tamamlandı) `progress.md` anında güncellenir.
+- Anlamlı her geçişte (başlat / blokla / devret / **test için parka al** / tamamlandı) `progress.md` anında güncellenir.
+- **Aktif Çalışma Kaydı yalnız GERÇEKTEN yazılan işi tutar.** Kod bitip cihaz/demo bekleyen kart aktifte kalmaz → `## Test için bekleyenler`e taşınır, lane boşalır. Aktif lane = o an dosya yazan ajan demektir; başkası ona göre çakışma hesaplar.
 - Handoff: WP başka ajana geçiyorsa tek editte yeni lane'e taşınır + kısa handoff notu.
 
 ---
@@ -99,9 +101,19 @@ flutter test --tags golden            # tema/görsel değiştiyse
 ```
 Hatayla **commit atma** — önce düzelt. Mümkünse gerçek cihaz kanıtı (ekran görüntüsü/video) topla.
 
-### 2. Durumu güncelle (iki olasılık)
-- **Cihaz QA + ürün kabulü VARSA:** kartı Plan Kuyruğu'ndan kaldır → `## ✅ Tamamlanan İş Paketleri` altına ekle (`### WP-N: Ad — YYYY-AA-GG ✅` + `Değişen dosyalar` / `Ne yapıldı` / `Test` / `Kanıt`). Lane'i `Boşta`, `Aktif WP: —` yap. Aynı WP iki başlıkta **asla** bulunmaz.
-- **Yalnız kod+test bitti, cihaz/kabul YOK:** kartı **"Kabul Bekleyen"** durumuna al (`Aşama: Otomatik test geçti — cihaz QA / ürün kabulü bekliyor`), lane'i boşaltma seçeneğini kullanıcıya bırak. Kanıt etiketi `Cihazda doğrulanmalı`.
+### 2. Durumu güncelle + LANE'İ BIRAK (iki olasılık)
+
+> **Altın kural:** İş bitince lane'ini **aktif** bırakma. Aktif kalan lane diğer worker'ları çakışma gerekçesiyle bloklar ve "en basit WP bile tekte kapanmaz". İki yol da lane'i boşaltır.
+
+- **Cihaz QA + ürün kabulü VARSA (tam bitti):** kartı diğer başlıklardan kaldır → `## Tamamlanan İş Paketleri` altına ekle (kapsam + değişen dosyalar/ne yapıldı/test/kanıt). Lane: `Durum: [x] Boşta`, `Aktif WP: —`. Aynı WP iki başlıkta **asla** bulunmaz.
+
+- **Kod+otomatik test bitti ama cihaz QA / ürün demosu gerekiyor (EN SIK DURUM):**
+  1. Kartı **Aktif Çalışma Kaydı'ndan çıkar** → `## Test için bekleyenler` bölümüne taşı: özet + **ne bekleniyor** (cihaz/demo) + son commit/dal + kanıt etiketi `Cihazda doğrulanmalı`. Üstteki özet tablosuna da bir satır ekle.
+  2. **Kendi lane'ini boşalt:** `Durum: [x] Boşta`, `Aktif WP: —`.
+  3. Bu bölüm **aktif çalışma DEĞİLDİR** — kimse claim etmez, başka WP'yi engellemez. Böylece bir sonraki worker çakışma ön-kontrolünde bu WP'yi "test bekliyor" görür, üstünden geçer ve **hemen yeni işe başlar**.
+  4. Kabul gelince kart **Tamamlanan**'a taşınır; cihazda bug çıkarsa **ayrı debug WP** açılır (aynı kartı diriltme).
+
+> Yani "işi bitirmek" = lane'i serbest bırakmak. Testi sen beklemezsin; parka koyar, çıkarsın.
 
 ### 3. Commit (kendi dalına)
 ```bash

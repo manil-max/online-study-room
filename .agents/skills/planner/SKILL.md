@@ -19,6 +19,25 @@ Kullanıcı (kısa): **"planner'ı oku ve şunu planla: …"** / **"V8-A'yı WP'
 
 ---
 
+## Adım 0 — İlk iş: repo & progress'i gerçeğe uydur (ZORUNLU, planlamadan önce)
+
+> **Neden:** 4 ajan paralel çalışınca kimi worker commit atmayı, kimi `progress.md`'yi güncellemeyi unutur. Bu yüzden Aktif Çalışma Kaydı yalanlar: bitmiş işler hâlâ "aktif" görünür, çakışma matrisi bozulur, yeni plan yanlış zemine oturur. **Planner önce ortalığı toparlar, sonra planlar.** Yanlış progress üstüne plan kurma.
+
+Planlamaya geçmeden şu uyumlamayı yap:
+
+1. **Gerçeği topla:** `git status`, `git log --oneline -15`, `git branch` oku. Neyin commit edildiğini, hangi dalların açık olduğunu, commit edilmemiş (dirty) değişiklik olup olmadığını çıkar.
+2. **progress.md ↔ gerçek karşılaştır:** Aktif Çalışma Kaydı'ndaki her lane için sor:
+   - Kodu bitmiş ama hâlâ `[~] Aktif` mi görünüyor? → **`## Test için bekleyenler`e taşı** (özet + ne bekleniyor + commit/dal + `Cihazda doğrulanmalı`), lane'i `[x] Boşta` yap.
+   - Ürün kabulü almış ama Aktif/Plan'da mı duruyor? → **Tamamlanan**'a taşı; Plan/Aktif'ten sil (aynı WP iki başlıkta olmaz).
+   - Lane'de "aktif" yazıyor ama karşılık gelen commit/dal yok mu? → kullanıcıya **somut bildir** ("Codex WP-68 kodu commit edilmemiş görünüyor").
+3. **Commit boşluklarını yüzeye çıkar:** commit edilmemiş worker çıktısı varsa, kimin neyi commit etmesi gerektiğini kullanıcıya net söyle. Planner kod commit'lemez; ama **progress.md/doküman uyumlamasını kendi commit'ler** (tek düzenli commit).
+4. **Tekilleştir & tutarlılık:** aynı WP'nin mükerrer kartları, çelişen durum etiketleri, stale faz/sürüm notları temizlenir. `Son WP numarası`'nı `progress.md` "Proje Gerçekleri"nden teyit et.
+5. **Ancak progress.md gerçeği yansıtınca** çakışma matrisini kur ve yeni WP'leri planla. Aktif lane = o an gerçekten dosya yazan ajan; **park (Test için bekleyenler) çakışma saymaz.**
+
+> Kısa özet: **planner'ın 0. işi kod planlamak değil, kayıt hijyeni.** Doğru zemin olmadan doğru plan olmaz.
+
+---
+
 ## Altın Kural: Kısa istek → tam plan
 
 Kullanıcı bir cümle yazsa bile sen şunları **kendin türetirsin** (eksik olanı sorma cesaretini göster ama gereksiz soru yağdırma):
@@ -36,13 +55,14 @@ Kullanıcı bir cümle yazsa bile sen şunları **kendin türetirsin** (eksik ol
 ## Akış
 
 ```
+0. UYUMLAMA (İLK İŞ)     → git durumu/commit'ler vs progress.md'yi gerçeğe uydur (Adım 0)
 1. İsteği oku            → tek cümle bile olsa niyeti netleştir
 2. docs/KALITE-PROGRAMI  → istek hangi faz/programa girer, kapsam/kabul ne der
 3. backlog.md            → öncelik ve kaynak madde
-4. progress.md           → Aktif Çalışma Kaydı + lane'ler + çakışma riski
+4. progress.md           → Aktif Çalışma Kaydı + lane'ler + Test için bekleyenler + çakışma riski
 5. project.md            → veri modeli, RLS, migration sırası, kararlar
 6. WP'leri hazırla       → bağımsız, DoD gömülü, SAHİP/DOKUNMA net
-7. Çakışma matrisini kur → aktif lane'lerle kesişim yok mu?
+7. Çakışma matrisini kur → aktif lane'lerle kesişim yok mu? (park'takiler engellemez)
 8. progress.md'ye yaz    → Plan Kuyruğu'na WP kartları
 9. backlog.md güncelle   → seçilen madde işaretlenir
 10. Kullanıcıya bildir   → "WP-N/WP-M hazır, çakışma yok, onay ver" + açık kararlar
@@ -95,7 +115,7 @@ Her WP `progress.md` Plan Kuyruğu'na şu formatta yazılır. **Eksik alan bıra
 **Saat, Tema, Başarım** aynı anda planlanmaz — üçü de theme/navigation/profile/provider paylaşır. Aynı anda en fazla **iki çalışma hattı**; ikisi de büyük programsa dur.
 
 ### 4. Aktif Çalışma Kaydı ile karşılaştır
-`progress.md`'deki her aktif lane'in SAHİP/ortak yüzeyini yeni WP'lerle kıyasla. Riskliyse WP'nin sonuna açık not:
+`progress.md`'deki her **aktif** lane'in SAHİP/ortak yüzeyini yeni WP'lerle kıyasla. **`## Test için bekleyenler` (park) çakışma saymaz** — orada yazan lane yoktur; yeni worker o dosyalara girebilir (bug çıkarsa ayrı debug WP). Yalnız gerçekten dosya yazan aktif lane bloklar. Riskliyse WP'nin sonuna açık not:
 ```
 > ⚠️ Çakışma: WP-N `app_theme.dart`'a giriyor; şu an Codex WP-M orada aktif. → WP-N'yi WP-M kabulünden SONRA başlat.
 ```
@@ -120,7 +140,7 @@ Bir WP başka WP'nin **kabul edilmiş** çıktısına dayanıyorsa bağımlılı
 
 ## Numaralama & Sürüm
 
-- WP numarası monoton artar; son numarayı `progress.md` "Proje Gerçekleri"nden oku (şu an **36**).
+- WP numarası monoton artar; son numarayı **her seferinde** `progress.md` "Proje Gerçekleri" → `Son WP numarası`'ndan oku (sabit sayı ezberleme; Adım 0'da zaten teyit ettin).
 - Faz/program etiketini KALITE-PROGRAMI'na göre koru (Faz 0 / V8 / Saat / Tema / Başarım). Sürüm numarasını kesinleştirme — o `Ürün kararı`.
 
 ---
@@ -129,12 +149,12 @@ Bir WP başka WP'nin **kabul edilmiş** çıktısına dayanıyorsa bağımlılı
 
 | Dosya | Ne yaparsın |
 |---|---|
-| `progress.md` | Plan Kuyruğu'na WP kartı ekle (Aktif Çalışma Kaydı'nı bozmadan) |
+| `progress.md` | **Adım 0'da gerçeğe uydur** (aktif→park/tamamlanan taşı, mükerrer temizle) + Plan Kuyruğu'na WP kartı ekle |
 | `backlog.md` | Seçilen maddeyi `[~]` işaretle / faz notu ekle |
 | `project.md` | Yeni mimari karar varsa "Karar Günlüğü"ne satır |
 | `docs/KALITE-PROGRAMI.md` | Program kapsamı netleşen büyük kararları buraya işle (kanonik) |
 
-**Kod dosyalarına DOKUNMA** — planner yalnız doküman yazar.
+**Kod dosyalarına DOKUNMA** — planner yalnız doküman yazar. Ama Adım 0 için **git'i okuyabilir** (`status`/`log`/`branch`) ve yaptığı **progress.md/doküman uyumlamasını tek düzenli commit ile** kaydedebilir. Worker'ların commit'lemediği **kodu** planner commit'lemez — onu kullanıcıya bildirir.
 
 ---
 
@@ -148,6 +168,7 @@ Bir WP başka WP'nin **kabul edilmiş** çıktısına dayanıyorsa bağımlılı
 
 ## Bitişte kullanıcıya bildirim (şablon)
 
+> **Uyumlama (Adım 0):** progress.md gerçeğe uyduruldu — [taşınan kartlar: … aktif→park/tamamlanan], [commit boşluğu: … ajan şunu commit'lememiş / yok]. Doküman uyumlaması commit'lendi.
 > **WP-N** ve **WP-M** hazır (Program: V8-A/B).
-> Çakışma kontrolü: ✅ ortak SAHİP dosya yok / ⚠️ şu risk var → şu öneri.
+> Çakışma kontrolü: ✅ ortak SAHİP dosya yok / ⚠️ şu risk var → şu öneri. (Park'takiler çakışma saymaz.)
 > Kabul kriterleri ölçülebilir; DoD gömülü. Açık karar(lar): … Onay verirsen worker'a "şu WP'yi yap" diyebilirsin.
