@@ -152,7 +152,7 @@ extension DashboardCardSizeInfo on DashboardCardSize {
 /// Ana Sayfa matrisinin sütun sayısı (§2.2). Yükseklik aşağı doğru sınırsız
 /// satır olarak büyür; kartlar `x,y,w,h` hücreleriyle saklanır.
 const int kDefaultGridColumns = 6;
-const int kMaxGridColumns = 16;
+const int kMaxGridColumns = 32;
 const List<int> kSupportedGridColumns = [6, 8, 12, 16];
 
 /// Eski çağrılar/testler için 6-sütun varsayılanı. Aktif render sütunu artık
