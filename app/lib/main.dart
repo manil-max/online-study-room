@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/foundation.dart'
     show kIsWeb, defaultTargetPlatform, TargetPlatform, FlutterError;
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -20,6 +19,7 @@ import 'core/theme/theme_settings.dart';
 import 'core/time_engine/device_timezone.dart';
 import 'features/auth/auth_gate.dart';
 import 'features/desktop/compact_focus_view.dart';
+import 'l10n/app_localizations.dart';
 
 import 'package:home_widget/home_widget.dart';
 import 'package:online_study_room/features/android_widgets/android_widget_service.dart';
@@ -130,19 +130,15 @@ class OnlineStudyRoomApp extends ConsumerWidget {
       darkTheme = AppTheme.fromFamily(family, Brightness.dark);
     }
     return MaterialApp(
-      title: 'Odak Kampı',
+      onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
       debugShowCheckedModeBanner: false,
       theme: lightTheme,
       darkTheme: darkTheme,
       themeMode: settings.mode,
-      // UI metinleri Türkçe; tarih seçici vb. yerleşik bileşenler de Türkçe görünür.
-      locale: const Locale('tr'),
-      supportedLocales: const [Locale('tr'), Locale('en')],
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
+      // Yalnız birincil sistem dili Türkçeyse TR; diğer tüm diller EN'e düşer.
+      localeResolutionCallback: resolveAppLocale,
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
       // Masaüstünde uygulamanın etrafına "üstte tut / mini pencere" kontrol
       // kümesi eklenir; web/mobilde child olduğu gibi döner.
       // child null iken shrink yerine koyu zemin (beyaz flaş yok).
@@ -157,4 +153,16 @@ class OnlineStudyRoomApp extends ConsumerWidget {
       home: const AuthGate(),
     );
   }
+}
+
+/// Uygulamanın açık EN/TR sözleşmesi: Türkçe sistemlerde TR, diğer her yerde EN.
+///
+/// [supportedLocales] callback imzasının parçasıdır; destek kümesi üretilen
+/// [AppLocalizations.supportedLocales] üzerinden MaterialApp'e verilir.
+Locale resolveAppLocale(
+  Locale? systemLocale,
+  Iterable<Locale> supportedLocales,
+) {
+  final languageCode = systemLocale?.languageCode.toLowerCase();
+  return languageCode == 'tr' ? const Locale('tr') : const Locale('en');
 }

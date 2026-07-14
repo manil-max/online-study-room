@@ -1,0 +1,7 @@
+{
+  "@@locale": "en",
+  "appTitle": "Focus Camp",
+  "@appTitle": {
+    "description": "Application title shown by Flutter in window and task-switcher metadata."
+  }
+}

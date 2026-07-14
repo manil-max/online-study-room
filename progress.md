@@ -60,15 +60,15 @@
 - **Not:** Bu oturum işleri commit'lendi: grid 32-sütun `141ed2a`, core testleri `da7bdd6`, skill docs `1afba2d`. ⚠️ WP-65 karar dokümanı (`docs/AYLIK-RAPOR-KARAR.md`) önceki Claude oturumunda yazıldı ama **COMMIT'LENMEDİ** (untracked); kararı WP-69 zaten uyguladı → ürün API/DNS kararı bekliyor.
 
 ### Codex Lane
-- **Durum:** [~] Aktif
-- **Faz/WP:** Küresel açılım · WP-82
-- **Aşama:** Otomatik kalite kapısı yeniden doğrulanıyor
-- **SAHİP yollar:** `app/pubspec.yaml`, `app/l10n.yaml`, `app/lib/main.dart`, `app/lib/l10n/.gitignore`, `app/lib/l10n/app_en.arb`, `app/lib/l10n/app_tr.arb`, `app/test/l10n/l10n_bootstrap_test.dart`
-- **Ortak/riskli yüzey:** `app/pubspec.yaml`, `app/lib/main.dart`, l10n/generated (sıcak; WP-84 başlamaz)
+- **Durum:** [x] Boşta
+- **Faz/WP:** —
+- **Aşama:** —
+- **SAHİP yollar:** —
+- **Ortak/riskli yüzey:** —
 - **Dal:** — (ana dal `main`)
-- **Başlangıç:** 2026-07-14 18:47 (Europe/Istanbul)
+- **Başlangıç:** —
 - **Son güncelleme:** 2026-07-14 (Europe/Istanbul)
-- **Not:** WP-90 ile depo kapısı temizlendi (`flutter analyze` 0, tam test 395/395). WP-82 son gen-l10n/test/build doğrulamasında.
+- **Not:** WP-82 tamamlandı; resmi l10n çekirdeği, deterministik locale fallback'i ve EN/TR seed katalogları doğrulandı.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
@@ -112,7 +112,6 @@
 | WP-79 | [~] Test için bekliyor | Bildirim açılışta toplu teslim hata düzeltmesi | beta-v19 cihaz bulgusu |
 | WP-80 | [~] Test için bekliyor | Dinamik panel uygunluk hata düzeltmesi | beta-v19 cihaz bulgusu |
 | WP-81 | [~] Test için bekliyor | Android beta-v20 — bildirim teslimi + dinamik panel düzeltmeleri | WP-79/80 kod commitleri |
-| WP-82 | [~] Kalite kapısı bloklu | Flutter l10n çekirdeği + sistem dili resolver'ı | — |
 | WP-84 | [ ] Bekliyor | Kanonik `app_en.arb` / `app_tr.arb` kataloğu | WP-82 + WP-83 |
 | WP-85 | [ ] Bekliyor | Flutter göç A — hesap, profil, admin, bildirim, güncelleme | WP-84 |
 | WP-86 | [ ] Bekliyor | Flutter göç B — ana sayfa, sınıf ve istatistikler | WP-84 |
@@ -129,14 +128,6 @@
 > **Planlama notu:** WP-39 iptal; WP-48/49/50 kaldırıldı; geçici WP-72/73/74/75 (2026-07-14) zaten-yapılmış/yanlış açıldığı için iptal edildi. Sorun çıkarsa ayrı debug/release WP'si açılır.
 
 > **Küresel dil programı ortak sözleşmesi:** İngilizce şablon/varsayılan (`en`), Türkçe ikinci dil (`tr`). Yalnız sistem dil kodu `tr` ise Türkçe; diğer her locale İngilizce. Üretilen l10n kodu elle düzenlenmez/commit edilmez. Tüm WP'lerde migration/RLS etkisi yok; sır/PII çeviri dosyasına girmez; gün sınırı `Europe/Istanbul` kalır. Aynı anda en fazla iki çalışma hattı açılır.
-
-### WP-82: Flutter l10n Çekirdeği ve Locale Resolver 🌐
-- **Program/Faz:** Küresel açılım · altyapı · **Ajan:** Codex · **Durum:** [~] Kod tamamlandı — kalite kapısı bloklu
-- **Problem/Kapsam:** Resmî `gen-l10n` altyapısını ve sistem dili kararını kur; feature metin göçü, tam katalog ve native Android kapsam dışı.
-- **SAHİP:** `app/pubspec.yaml`, `app/l10n.yaml`, `app/lib/main.dart`, `app/lib/l10n/.gitignore`, başlangıç `app/lib/l10n/app_en.arb` + `app_tr.arb`, `app/test/l10n/l10n_bootstrap_test.dart`. **DOKUNMA:** `features/**`, `core/**`, `data/**`, `app/android/**`.
-- **Adımlar:** Delegate/supported locale bağlantısı; sabit `Locale('tr')`ı kaldır; `tr*→tr`, null/desteklenmeyen/en-*→en resolver; canlı uygulama başlığı seed anahtarı + metadata ve test kabuğu. Placeholder/plural kataloğu WP-84'tedir.
-- **Veri/RLS/Geri alma:** Etki yok; tek altyapı commitini geri almak yeterli. **Edge-case:** `tr-TR`, `en-GB`, `de-DE`, null locale, runtime locale değişimi.
-- **Kabul/DoD:** `flutter gen-l10n`, resolver testleri, `flutter analyze` 0 ve ilgili testler yeşil; ilk frame locale kararı deterministik. **Tuzak:** feature metni ekleyerek kapsamı büyütmek veya generated kodu commit etmek. **Dal:** main/lane · **Model:** 🔴 Opus
 
 ### WP-84: Kanonik ARB Kataloğu 🔤
 - **Program/Faz:** Küresel açılım · katalog · **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-82 + WP-83
@@ -234,6 +225,7 @@
 
 | WP | Tamamlanan kapsam |
 |---|---|
+| WP-82 | Flutter l10n çekirdeği + sistem dili resolver'ı — `en` varsayılan, yalnız `tr*` için Türkçe; gen-l10n, 4/4 hedef test, analyze, 395/395 tam test, Windows release build+smoke geçti; kapanış 2026-07-14 |
 | WP-90 | Depo kalite kapısı temizliği — 4 analiz bulgusu ve 2 eski/kırılgan test düzeltildi; `flutter analyze` 0, tam test 395/395; kapanış 2026-07-14 |
 | WP-83 | EN/TR Metin Envanteri ve Ürün Dili Sözlüğü — `docs/L10N-SOZLUK.md` ve `docs/L10N-ENVANTER.md` oluşturuldu; kapanış 2026-07-14 |
 | WP-71 | Windows Desktop UI R3 · custom WinUI pane + density + navy fix — `8dd0573`; kapanış 2026-07-14 |
