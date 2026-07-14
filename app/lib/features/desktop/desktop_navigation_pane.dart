@@ -240,7 +240,10 @@ class _NavItemTileState extends State<_NavItemTile> {
         splashColor: scheme.primary.withValues(alpha: 0.08),
         child: SizedBox(
           height: DesktopNavigationPane.itemHeight,
+          // Stack varsayılanı topStart → ikon/metin yukarı kayıyordu;
+          // buton dikdörtgeni doğru, içerik dikey ortada olmalı.
           child: Stack(
+            alignment: Alignment.centerLeft,
             children: [
               // WinUI sol kenar selection indicator
               if (selected)
@@ -263,6 +266,7 @@ class _NavItemTileState extends State<_NavItemTile> {
                 ),
                 child: widget.expanded
                     ? Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Icon(
                             selected
@@ -276,11 +280,17 @@ class _NavItemTileState extends State<_NavItemTile> {
                             child: Text(
                               widget.item.label,
                               overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                              textHeightBehavior: const TextHeightBehavior(
+                                applyHeightToFirstAscent: false,
+                                applyHeightToLastDescent: false,
+                              ),
                               style: textTheme.labelLarge?.copyWith(
                                 color: labelColor,
                                 fontWeight: selected
                                     ? FontWeight.w600
                                     : FontWeight.w500,
+                                height: 1.1,
                               ),
                             ),
                           ),
@@ -378,6 +388,7 @@ class _DesktopNavFooterActionState extends State<DesktopNavFooterAction> {
               ? Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Icon(
                         widget.icon,
@@ -389,9 +400,15 @@ class _DesktopNavFooterActionState extends State<DesktopNavFooterAction> {
                         child: Text(
                           widget.label,
                           overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                          textHeightBehavior: const TextHeightBehavior(
+                            applyHeightToFirstAscent: false,
+                            applyHeightToLastDescent: false,
+                          ),
                           style: textTheme.labelLarge?.copyWith(
                             color: scheme.onSurface,
                             fontWeight: FontWeight.w500,
+                            height: 1.1,
                           ),
                         ),
                       ),
