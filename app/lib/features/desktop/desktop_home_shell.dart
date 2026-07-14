@@ -5,6 +5,7 @@ import '../../core/desktop/desktop_layout.dart';
 import '../../core/desktop/desktop_window.dart';
 import '../profile/settings_screen.dart';
 import 'desktop_navigation_pane.dart';
+import 'desktop_surface.dart';
 
 /// Windows ana kabuğu — özel sol NavigationView pane (mobil NavigationBar değil).
 class DesktopHomeShell extends StatelessWidget {
@@ -58,19 +59,20 @@ class DesktopHomeShell extends StatelessWidget {
   ];
 
   static void openSettings(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (pageContext) => Scaffold(
-          appBar: AppBar(
-            title: const Text('Ayarlar'),
-            leading: IconButton(
-              tooltip: 'Geri',
-              icon: const Icon(Icons.arrow_back),
-              onPressed: () => Navigator.of(pageContext).maybePop(),
-            ),
+    // Masaüstü: ortalanmış panel (tam ekran mobil sayfa değil).
+    showDesktopPanel<void>(
+      context: context,
+      builder: (pageContext) => Scaffold(
+        appBar: AppBar(
+          title: const Text('Ayarlar'),
+          leading: IconButton(
+            tooltip: 'Kapat',
+            icon: const Icon(Icons.close),
+            onPressed: () => Navigator.of(pageContext, rootNavigator: true)
+                .maybePop(),
           ),
-          body: const SettingsScreen(embedded: true),
         ),
+        body: const SettingsScreen(embedded: true),
       ),
     );
   }

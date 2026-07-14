@@ -7,6 +7,7 @@ import '../../core/widgets/crowned_avatar.dart';
 import '../../core/widgets/safe_screen_padding.dart';
 import '../../data/providers/auth_providers.dart';
 import '../../data/repositories/auth_repository.dart';
+import '../desktop/desktop_surface.dart';
 import 'session_history_screen.dart';
 import 'settings_screen.dart';
 import 'widgets/gamification_card.dart';
@@ -21,7 +22,7 @@ class ProfileScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final profile = ref.watch(authStateProvider).value;
 
-    // Windows: sol rail + mobil ile aynı liste; master-detail/sağ panel yok.
+    // Windows: içerik okuma genişliğinde ortalanır (full-bleed mobil liste değil).
     return Scaffold(
       appBar: isDesktopWindow
           ? null
@@ -29,101 +30,117 @@ class ProfileScreen extends ConsumerWidget {
       body: ListView(
         padding: getSafeVerticalPadding(context, horizontal: 24, vertical: 24),
         children: [
-          Center(
-            child: Stack(
-              clipBehavior: Clip.none,
+          DesktopReadingBody(
+            maxWidth: DesktopSurface.readingWidth,
+            padding: EdgeInsets.zero,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                if (profile != null)
-                  LiveCrownedAvatar(
-                    userId: profile.id,
-                    displayName: profile.displayName,
-                    avatarUrl: profile.avatarUrl,
-                    radius: 48,
-                  )
-                else
-                  const CrownedAvatar(displayName: 'Misafir', radius: 48),
-                if (profile != null)
-                  Positioned(
-                    right: 0,
-                    bottom: 0,
-                    child: Material(
-                      color: theme.colorScheme.primary,
-                      shape: const CircleBorder(),
-                      child: InkWell(
-                        customBorder: const CircleBorder(),
-                        onTap: () => _pickAvatar(context, ref),
-                        child: Padding(
-                          padding: const EdgeInsets.all(6),
-                          child: Icon(
-                            Icons.photo_camera,
-                            size: 18,
-                            color: theme.colorScheme.onPrimary,
+                Center(
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      if (profile != null)
+                        LiveCrownedAvatar(
+                          userId: profile.id,
+                          displayName: profile.displayName,
+                          avatarUrl: profile.avatarUrl,
+                          radius: 48,
+                        )
+                      else
+                        const CrownedAvatar(
+                          displayName: 'Misafir',
+                          radius: 48,
+                        ),
+                      if (profile != null)
+                        Positioned(
+                          right: 0,
+                          bottom: 0,
+                          child: Material(
+                            color: theme.colorScheme.primary,
+                            shape: const CircleBorder(),
+                            child: InkWell(
+                              customBorder: const CircleBorder(),
+                              onTap: () => _pickAvatar(context, ref),
+                              child: Padding(
+                                padding: const EdgeInsets.all(6),
+                                child: Icon(
+                                  Icons.photo_camera,
+                                  size: 18,
+                                  color: theme.colorScheme.onPrimary,
+                                ),
+                              ),
+                            ),
                           ),
                         ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        profile?.displayName.isNotEmpty == true
+                            ? profile!.displayName
+                            : 'Misafir',
+                        style: theme.textTheme.titleLarge,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                  ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Flexible(
-                child: Text(
-                  profile?.displayName.isNotEmpty == true
-                      ? profile!.displayName
-                      : 'Misafir',
-                  style: theme.textTheme.titleLarge,
-                  overflow: TextOverflow.ellipsis,
+                    if (profile != null)
+                      IconButton(
+                        tooltip: 'Adı düzenle',
+                        icon: const Icon(Icons.edit, size: 18),
+                        onPressed: () =>
+                            _editName(context, ref, profile.displayName),
+                      ),
+                  ],
                 ),
-              ),
-              if (profile != null)
-                IconButton(
-                  tooltip: 'Adı düzenle',
-                  icon: const Icon(Icons.edit, size: 18),
-                  onPressed: () => _editName(context, ref, profile.displayName),
-                ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          const GamificationCard(),
-          const SizedBox(height: 16),
-          Card(
-            child: Column(
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.history),
-                  title: const Text('Çalışma kayıtlarım'),
-                  subtitle: const Text('Manuel süre ekle, düzenle, sil'),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const SessionHistoryScreen(),
-                    ),
+                const SizedBox(height: 24),
+                const GamificationCard(),
+                const SizedBox(height: 16),
+                Card(
+                  child: Column(
+                    children: [
+                      ListTile(
+                        leading: const Icon(Icons.history),
+                        title: const Text('Çalışma kayıtlarım'),
+                        subtitle: const Text(
+                          'Manuel süre ekle, düzenle, sil',
+                        ),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => showDesktopPanel<void>(
+                          context: context,
+                          builder: (_) => const SessionHistoryScreen(),
+                        ),
+                      ),
+                      const Divider(height: 1),
+                      ListTile(
+                        leading: const Icon(Icons.settings_outlined),
+                        title: const Text('Ayarlar'),
+                        subtitle: const Text(
+                          'Görünüm, Ana Sayfa, sayaç ve bildirimler',
+                        ),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => showDesktopPanel<void>(
+                          context: context,
+                          builder: (_) => const SettingsScreen(),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const Divider(height: 1),
-                ListTile(
-                  leading: const Icon(Icons.settings_outlined),
-                  title: const Text('Ayarlar'),
-                  subtitle: const Text(
-                    'Görünüm, Ana Sayfa, sayaç ve bildirimler',
-                  ),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const SettingsScreen()),
-                  ),
+                const SizedBox(height: 16),
+                FilledButton.tonalIcon(
+                  onPressed: () =>
+                      ref.read(authRepositoryProvider).signOut(),
+                  icon: const Icon(Icons.logout),
+                  label: const Text('Çıkış yap'),
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 16),
-          FilledButton.tonalIcon(
-            onPressed: () => ref.read(authRepositoryProvider).signOut(),
-            icon: const Icon(Icons.logout),
-            label: const Text('Çıkış yap'),
           ),
         ],
       ),

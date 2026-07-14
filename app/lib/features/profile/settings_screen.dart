@@ -8,6 +8,7 @@ import '../../data/providers/admin_providers.dart';
 import '../../data/providers/group_providers.dart';
 import '../admin/admin_screen.dart';
 import '../clock/clock_widgets_screen.dart';
+import '../desktop/desktop_surface.dart';
 import '../home/dashboard_providers.dart';
 import '../notifications/notification_center_screen.dart';
 import '../updater/release_notes_screen.dart';
@@ -77,6 +78,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const EdgeInsets.fromLTRB(16, 12, 16, 24),
         ),
         children: [
+          DesktopReadingBody(
+            maxWidth: DesktopSurface.readingWidth,
+            padding: EdgeInsets.zero,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
           _SettingsCard(
             child: ListTile(
               leading: const Icon(Icons.emoji_events),
@@ -255,6 +262,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
             ),
           ],
+              ],
+            ),
+          ),
         ],
     );
 

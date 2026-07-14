@@ -27,26 +27,28 @@ class WeekdayWeekendCard extends ConsumerWidget {
     return CardScaffold(
       header:
           Text('Hafta içi / hafta sonu', style: theme.textTheme.titleMedium),
-      minBodyHeight: 76,
-      fallbackBodyHeight: 96,
+      minBodyHeight: 88,
+      fallbackBodyHeight: 110,
       bodyBuilder: (context, bodyHeight) => SizedBox(
         height: bodyHeight,
         child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _Bar(
-              label: 'Hafta içi',
-              seconds: split.weekday,
-              fraction: split.weekday / max,
-              color: weekdayColor,
+            Expanded(
+              child: _Bar(
+                label: 'Hafta içi',
+                seconds: split.weekday,
+                fraction: split.weekday / max,
+                color: weekdayColor,
+              ),
             ),
-            _Bar(
-              label: 'Hafta sonu',
-              seconds: split.weekend,
-              fraction: split.weekend / max,
-              color: weekendColor,
+            Expanded(
+              child: _Bar(
+                label: 'Hafta sonu',
+                seconds: split.weekend,
+                fraction: split.weekend / max,
+                color: weekendColor,
+              ),
             ),
           ],
         ),
@@ -71,37 +73,51 @@ class _Bar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
+    // Dar hücrede de taşmasın: etiket + bar mevcut yüksekliğe sığar.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final tight = constraints.maxHeight < 40;
+        final barH = tight ? 6.0 : 10.0;
+        final gap = tight ? 2.0 : 4.0;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Expanded(
-                child: Text(label,
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    label,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodyMedium)),
-            const SizedBox(width: 8),
-            Flexible(
-              child: Text(formatHuman(seconds),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodyMedium
-                      ?.copyWith(fontWeight: FontWeight.w600)),
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    formatHuman(seconds),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodyMedium
+                        ?.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: gap),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: fraction,
+                minHeight: barH,
+                backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                valueColor: AlwaysStoppedAnimation<Color>(color),
+              ),
             ),
           ],
-        ),
-        const SizedBox(height: 6),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(4),
-          child: LinearProgressIndicator(
-            value: fraction,
-            minHeight: 10,
-            backgroundColor: theme.colorScheme.surfaceContainerHighest,
-            valueColor: AlwaysStoppedAnimation<Color>(color),
-          ),
-        ),
-      ],
+        );
+      },
     );
   }
 }

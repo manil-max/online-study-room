@@ -68,10 +68,24 @@ class DesktopNavigationPane extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _PaneHeader(expanded: expanded),
-          const SizedBox(height: 4),
+          // Header ile ilk sekme (Ana Sayfa) çakışmasın — WinUI menü boşluğu
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: Divider(
+              height: 1,
+              thickness: 1,
+              color: scheme.outlineVariant.withValues(alpha: 0.7),
+            ),
+          ),
+          const SizedBox(height: 10),
           Expanded(
             child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: contentMargin),
+              padding: const EdgeInsets.fromLTRB(
+                contentMargin,
+                2,
+                contentMargin,
+                8,
+              ),
               itemCount: items.length,
               itemBuilder: (context, index) {
                 final item = items[index];
@@ -127,15 +141,15 @@ class _PaneHeader extends StatelessWidget {
       child: Padding(
         padding: EdgeInsets.fromLTRB(
           expanded ? 12 : 8,
-          14,
+          12,
           expanded ? 12 : 8,
-          10,
+          12,
         ),
         child: Row(
           children: [
             Container(
-              width: 32,
-              height: 32,
+              width: 28,
+              height: 28,
               decoration: BoxDecoration(
                 color: scheme.primaryContainer,
                 borderRadius: BorderRadius.circular(
@@ -144,7 +158,7 @@ class _PaneHeader extends StatelessWidget {
               ),
               child: Icon(
                 Icons.local_fire_department,
-                size: 18,
+                size: 16,
                 color: scheme.onPrimaryContainer,
               ),
             ),

@@ -41,9 +41,17 @@ Odak Kampı uyarlaması:
 |---|---|---|
 | `DesktopNavigationPane` | `features/desktop/desktop_navigation_pane.dart` | Custom sol pane (NavigationRail **değil**) |
 | `DesktopHomeShell` | `features/desktop/desktop_home_shell.dart` | Kabuk: pane + IndexedStack + kısayollar |
+| `DesktopSurface` | `features/desktop/desktop_surface.dart` | Panel/dialog/okuma genişliği (mobil full-bleed yok) |
 | `DesktopDensity` | `features/desktop/desktop_page_scaffold.dart` | Radius 4–8, padding 12–24, commandHeight 36–40 |
 | `DesktopSectionList` | aynı | Master list: sol accent + radius 4 |
 | Breakpoints | `core/desktop/desktop_layout.dart` | 640 / 1008 (MS eşikleri) |
+
+### Panel kuralı (masaüstü)
+
+- Ayarlar / Görünüm / kayıtlar → `showDesktopPanel` (~920×680, iç Navigator)
+- Kart ekle → `showDesktopPicker` (dialog, 2–3 sütun)
+- Tema Stüdyosu → sol kontroller + sağ sabit önizleme (≥720)
+- Profil / ayar listeleri → `DesktopReadingBody` max ~760–880 (ekranı yırtmaz)
 
 ### Pane ölçüleri
 

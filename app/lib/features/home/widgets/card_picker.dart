@@ -1,22 +1,39 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../desktop/desktop_surface.dart';
 import '../dashboard_card.dart';
 import '../dashboard_providers.dart';
 
-/// Kart ekleme seçici (alt sayfa): eklenebilir kartları **kategorilere göre**,
-/// ikon + başlık + açıklamayla gösterir. Dokununca eklenir ve listeden çıkar;
-/// sayfa açık kalır (çoklu ekleme). Eski küçük popup'ın yerine.
+/// Kart ekleme seçici.
+/// Mobil: alt sayfa · Masaüstü: ortalanmış dialog + çok sütun.
 Future<void> showCardPicker(BuildContext context) {
-  return showModalBottomSheet<void>(
+  return showDesktopPicker<void>(
     context: context,
-    showDragHandle: true,
-    isScrollControlled: true,
-    builder: (_) => const _CardPickerSheet(),
+    builder: (ctx) {
+      // Mobil bottom sheet: sınırlı yükseklik için draggable sheet.
+      if (MediaQuery.sizeOf(ctx).shortestSide < 600 &&
+          MediaQuery.sizeOf(ctx).width < 700) {
+        return DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: 0.72,
+          maxChildSize: 0.92,
+          minChildSize: 0.4,
+          builder: (context, scrollController) => const _CardPickerSheet(),
+        );
+      }
+      return const _CardPickerSheet();
+    },
   );
 }
 
-const _kOrder = ['Sayaç & Hedef', 'Özetler', 'Grafikler', 'Isı haritaları', 'Grup'];
+const _kOrder = [
+  'Sayaç & Hedef',
+  'Özetler',
+  'Grafikler',
+  'Isı haritaları',
+  'Grup',
+];
 
 class _CardPickerSheet extends ConsumerWidget {
   const _CardPickerSheet();
@@ -30,99 +47,120 @@ class _CardPickerSheet extends ConsumerWidget {
     final available =
         DashboardCardType.values.where((t) => !used.contains(t)).toList();
 
-    return DraggableScrollableSheet(
-      expand: false,
-      initialChildSize: 0.7,
-      maxChildSize: 0.92,
-      minChildSize: 0.4,
-      builder: (context, scroll) {
-        return Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
-              child: Row(
-                children: [
-                  Icon(Icons.dashboard_customize_outlined,
-                      color: theme.colorScheme.primary),
-                  const SizedBox(width: 10),
-                  Text('Kart ekle', style: theme.textTheme.titleLarge),
-                  const Spacer(),
-                  Text('${available.length} kart',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant)),
-                ],
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 12, 12, 12),
+          child: Row(
+            children: [
+              Icon(
+                Icons.dashboard_customize_outlined,
+                color: theme.colorScheme.primary,
+              ),
+              const SizedBox(width: 10),
+              Text('Kart ekle', style: theme.textTheme.titleLarge),
+              const Spacer(),
+              Text(
+                '${available.length} kart',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              IconButton(
+                tooltip: 'Kapat',
+                onPressed: () => Navigator.of(context).maybePop(),
+                icon: const Icon(Icons.close),
+              ),
+            ],
+          ),
+        ),
+        Divider(height: 1, color: theme.colorScheme.outlineVariant),
+        if (available.isEmpty)
+          Expanded(
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.check_circle_outline,
+                      size: 48,
+                      color: theme.colorScheme.secondary,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Tüm kartlar zaten ekli 🎉',
+                      style: theme.textTheme.titleMedium,
+                    ),
+                  ],
+                ),
               ),
             ),
-            if (available.isEmpty)
-              Expanded(
-                child: Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.check_circle_outline,
-                            size: 48, color: theme.colorScheme.secondary),
-                        const SizedBox(height: 12),
-                        Text('Tüm kartlar zaten ekli 🎉',
-                            style: theme.textTheme.titleMedium),
-                      ],
-                    ),
-                  ),
-                ),
-              )
-            else
-              Expanded(
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    const gap = 10.0;
-                    final w = (constraints.maxWidth - 40 - gap) / 2;
-                    return ListView(
-                      controller: scroll,
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-                      children: [
-                        for (final cat in _kOrder)
-                          if (available.any((t) => t.category == cat)) ...[
-                            Padding(
-                              padding: const EdgeInsets.fromLTRB(2, 8, 2, 8),
-                              child: Text(cat,
-                                  style: theme.textTheme.labelLarge?.copyWith(
-                                      color: theme.colorScheme.primary,
-                                      fontWeight: FontWeight.w700)),
+          )
+        else
+          Expanded(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                const gap = 10.0;
+                final cols = desktopGridColumns(
+                  constraints.maxWidth,
+                  compact: 2,
+                  medium: 3,
+                  expanded: 3,
+                );
+                final w =
+                    (constraints.maxWidth - 40 - gap * (cols - 1)) / cols;
+                return ListView(
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+                  children: [
+                    for (final cat in _kOrder)
+                      if (available.any((t) => t.category == cat)) ...[
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(2, 8, 2, 8),
+                          child: Text(
+                            cat,
+                            style: theme.textTheme.labelLarge?.copyWith(
+                              color: theme.colorScheme.primary,
+                              fontWeight: FontWeight.w700,
                             ),
-                            Wrap(
-                              spacing: gap,
-                              runSpacing: gap,
-                              children: [
-                                for (final t
-                                    in available.where((t) => t.category == cat))
-                                  SizedBox(
-                                    width: w,
-                                    child: _CardTile(
-                                      type: t,
-                                      onAdd: () {
-                                        notifier.toggle(t);
-                                        ScaffoldMessenger.of(context)
-                                          ..hideCurrentSnackBar()
-                                          ..showSnackBar(SnackBar(
-                                            content: Text('“${t.title}” eklendi'),
-                                            duration:
-                                                const Duration(milliseconds: 900),
-                                          ));
-                                      },
-                                    ),
-                                  ),
-                              ],
-                            ),
+                          ),
+                        ),
+                        Wrap(
+                          spacing: gap,
+                          runSpacing: gap,
+                          children: [
+                            for (final t
+                                in available.where((t) => t.category == cat))
+                              SizedBox(
+                                width: w,
+                                child: _CardTile(
+                                  type: t,
+                                  onAdd: () {
+                                    notifier.toggle(t);
+                                    ScaffoldMessenger.of(context)
+                                      ..hideCurrentSnackBar()
+                                      ..showSnackBar(
+                                        SnackBar(
+                                          content:
+                                              Text('“${t.title}” eklendi'),
+                                          duration: const Duration(
+                                            milliseconds: 900,
+                                          ),
+                                        ),
+                                      );
+                                  },
+                                ),
+                              ),
                           ],
+                        ),
                       ],
-                    );
-                  },
-                ),
-              ),
-          ],
-        );
-      },
+                  ],
+                );
+              },
+            ),
+          ),
+      ],
     );
   }
 }
@@ -137,13 +175,13 @@ class _CardTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return InkWell(
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(8),
       onTap: onAdd,
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: theme.colorScheme.surfaceContainerHigh,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(8),
           border: Border.all(color: theme.colorScheme.outlineVariant),
         ),
         child: Column(
@@ -153,20 +191,28 @@ class _CardTile extends StatelessWidget {
               children: [
                 Icon(type.icon, color: theme.colorScheme.primary, size: 20),
                 const Spacer(),
-                Icon(Icons.add_circle,
-                    color: theme.colorScheme.primary, size: 22),
+                Icon(
+                  Icons.add_circle,
+                  color: theme.colorScheme.primary,
+                  size: 22,
+                ),
               ],
             ),
             const SizedBox(height: 8),
-            Text(type.title,
-                style: theme.textTheme.titleSmall
-                    ?.copyWith(fontWeight: FontWeight.w700)),
+            Text(
+              type.title,
+              style: theme.textTheme.titleSmall
+                  ?.copyWith(fontWeight: FontWeight.w700),
+            ),
             const SizedBox(height: 2),
-            Text(type.description,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.bodySmall
-                    ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+            Text(
+              type.description,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
           ],
         ),
       ),

@@ -477,11 +477,15 @@ class _GoalProgress extends StatelessWidget {
               children: [
                 Icon(Icons.flag_outlined, size: 16, color: muted),
                 const SizedBox(width: 6),
-                Text(
-                  'Günlük hedef',
-                  style: theme.textTheme.labelMedium?.copyWith(color: muted),
+                Expanded(
+                  child: Text(
+                    'Günlük hedef',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.labelMedium?.copyWith(color: muted),
+                  ),
                 ),
-                const Spacer(),
+                const SizedBox(width: 4),
                 Text(
                   '%${(pct * 100).round()}',
                   style: theme.textTheme.labelMedium?.copyWith(
@@ -489,7 +493,7 @@ class _GoalProgress extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: 4),
                 Icon(Icons.edit, size: 14, color: muted),
               ],
             ),
