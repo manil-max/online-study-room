@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:online_study_room/data/providers/admin_providers.dart';
 import 'package:online_study_room/data/repositories/admin_repository.dart';
+import 'package:online_study_room/l10n/app_localizations.dart';
 
 class AdminDashboardTab extends ConsumerWidget {
   const AdminDashboardTab({super.key});
@@ -10,6 +11,7 @@ class AdminDashboardTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final summary = ref.watch(adminDashboardSummaryProvider);
+    final l10n = AppLocalizations.of(context);
 
     return RefreshIndicator(
       onRefresh: () async {
@@ -21,7 +23,8 @@ class AdminDashboardTab extends ConsumerWidget {
         children: [
           summary.when(
             loading: () => const _SummarySkeleton(),
-            error: (error, _) => Center(child: Text(error.toString())),
+            error: (error, _) =>
+                Center(child: Text(l10n.authBeklenmeyenBirHataOlustu)),
             data: (value) => _SummaryGrid(summary: value),
           ),
         ],
@@ -37,6 +40,7 @@ class _SummaryGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final value =
         summary ??
         const AdminDashboardSummary(
@@ -55,22 +59,22 @@ class _SummaryGrid extends StatelessWidget {
       childAspectRatio: 1.75,
       children: [
         _SummaryTile(
-          label: 'Kullanıcılar',
+          label: l10n.adminKullanicilar,
           value: value.userCount.toString(),
           icon: Icons.people_outline,
         ),
         _SummaryTile(
-          label: 'Gruplar',
+          label: l10n.adminGruplar,
           value: value.groupCount.toString(),
           icon: Icons.groups_outlined,
         ),
         _SummaryTile(
-          label: 'Oturumlar',
+          label: l10n.adminOturumlar,
           value: value.sessionCount.toString(),
           icon: Icons.timer_outlined,
         ),
         _SummaryTile(
-          label: 'Açık raporlar',
+          label: l10n.adminAcikRaporlar,
           value: value.openTicketCount.toString(),
           icon: Icons.report_problem_outlined,
         ),

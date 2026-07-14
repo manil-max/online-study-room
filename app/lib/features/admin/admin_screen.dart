@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:online_study_room/data/providers/admin_providers.dart';
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'tabs/admin_announcements_tab.dart';
 import 'tabs/admin_audit_log_tab.dart';
 import 'tabs/admin_dashboard_tab.dart';
@@ -15,22 +16,22 @@ class AdminScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isAdmin = ref.watch(adminIsSuperAdminProvider);
+    final l10n = AppLocalizations.of(context);
 
     return isAdmin.when(
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (error, _) => Scaffold(
-        appBar: AppBar(title: const Text('Yönetim')),
-        body: _AdminError(message: error.toString()),
+        appBar: AppBar(title: Text(l10n.adminYonetim)),
+        body: _AdminError(message: l10n.authBeklenmeyenBirHataOlustu),
       ),
       data: (allowed) {
         if (!allowed) {
           return Scaffold(
-            appBar: AppBar(title: const Text('Yönetim')),
-            body: const _AdminError(
+            appBar: AppBar(title: Text(l10n.adminYonetim)),
+            body: _AdminError(
               icon: Icons.lock_outline,
-              message: 'Bu alan yalnızca süper-admin içindir.',
+              message: l10n.adminBuAlanYalnizcaSuperadmin,
             ),
           );
         }
@@ -39,16 +40,25 @@ class AdminScreen extends ConsumerWidget {
           length: 6,
           child: Scaffold(
             appBar: AppBar(
-              title: const Text('Yönetim Paneli'),
-              bottom: const TabBar(
+              title: Text(l10n.adminYonetimPaneli),
+              bottom: TabBar(
                 isScrollable: true,
                 tabs: [
-                  Tab(text: 'Özet', icon: Icon(Icons.dashboard)),
-                  Tab(text: 'Kullanıcılar', icon: Icon(Icons.people)),
-                  Tab(text: 'Gruplar', icon: Icon(Icons.groups)),
-                  Tab(text: 'Raporlar', icon: Icon(Icons.report)),
-                  Tab(text: 'Duyurular', icon: Icon(Icons.campaign)),
-                  Tab(text: 'Denetim', icon: Icon(Icons.admin_panel_settings)),
+                  Tab(text: l10n.adminOzet, icon: const Icon(Icons.dashboard)),
+                  Tab(
+                    text: l10n.adminKullanicilar,
+                    icon: const Icon(Icons.people),
+                  ),
+                  Tab(text: l10n.adminGruplar, icon: const Icon(Icons.groups)),
+                  Tab(text: l10n.adminRaporlar, icon: const Icon(Icons.report)),
+                  Tab(
+                    text: l10n.adminDuyurular,
+                    icon: const Icon(Icons.campaign),
+                  ),
+                  Tab(
+                    text: l10n.adminDenetim,
+                    icon: const Icon(Icons.admin_panel_settings),
+                  ),
                 ],
               ),
             ),

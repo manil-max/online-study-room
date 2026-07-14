@@ -11,6 +11,7 @@ import 'package:online_study_room/features/clock/clock_widgets_screen.dart';
 import 'package:online_study_room/features/notifications/notification_center_screen.dart';
 import 'package:online_study_room/features/profile/settings_screen.dart';
 import 'package:online_study_room/features/updater/release_notes_screen.dart';
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -48,7 +49,12 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: overrides,
-        child: const MaterialApp(home: SettingsScreen()),
+        child: const MaterialApp(
+          locale: Locale('tr'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: SettingsScreen(),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -83,14 +89,14 @@ void main() {
     await tester.tap(find.text('Bildirim Merkezi'));
     await tester.pumpAndSettle();
     expect(find.byType(NotificationCenterScreen), findsOneWidget);
-    await tester.pageBack();
+    Navigator.of(tester.element(find.byType(NotificationCenterScreen))).pop();
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Widget ve alarm izinleri'));
     await tester.pumpAndSettle();
     expect(find.byType(ClockWidgetsScreen), findsOneWidget);
     expect(find.textContaining('Ana ekran widget'), findsOneWidget);
-    await tester.pageBack();
+    Navigator.of(tester.element(find.byType(ClockWidgetsScreen))).pop();
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Sürüm ve güncellemeler'));

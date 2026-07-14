@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -47,8 +48,10 @@ class _ThemeStudioScreenState extends ConsumerState<ThemeStudioScreen> {
     if (familyId != null) notifier.setFamily(familyId);
     if (mode != null) notifier.setMode(mode);
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Tema uygulandı — yeniden başlatma gerekmez.'),
+      SnackBar(
+        content: Text(
+          AppLocalizations.of(context).profileTemaUygulandiYenidenBaslatma,
+        ),
       ),
     );
   }
@@ -65,9 +68,12 @@ class _ThemeStudioScreenState extends ConsumerState<ThemeStudioScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Tema Stüdyosu'),
+        title: Text(AppLocalizations.of(context).profileTemaStudyosu),
         actions: [
-          TextButton(onPressed: _apply, child: const Text('Uygula')),
+          TextButton(
+            onPressed: _apply,
+            child: Text(AppLocalizations.of(context).profileUygula),
+          ),
         ],
       ),
       body: Column(
@@ -108,7 +114,7 @@ class _ThemeStudioScreenState extends ConsumerState<ThemeStudioScreen> {
                     ),
                     children: [
                       _LivePreview(preset: preset, shape: _draftShape),
-                      const SizedBox(height: 20),
+                      SizedBox(height: 20),
                       ...controls,
                     ],
                   );
@@ -120,13 +126,8 @@ class _ThemeStudioScreenState extends ConsumerState<ThemeStudioScreen> {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Expanded(
-                        flex: 5,
-                        child: ListView(
-                          children: controls,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
+                      Expanded(flex: 5, child: ListView(children: controls)),
+                      SizedBox(width: 16),
                       Expanded(
                         flex: 4,
                         child: Align(
@@ -151,18 +152,18 @@ class _ThemeStudioScreenState extends ConsumerState<ThemeStudioScreen> {
                   if (_step > 0)
                     OutlinedButton(
                       onPressed: () => setState(() => _step--),
-                      child: const Text('Geri'),
+                      child: Text(AppLocalizations.of(context).profileGeri),
                     ),
-                  const Spacer(),
+                  Spacer(),
                   if (_step < 3)
                     FilledButton(
                       onPressed: () => setState(() => _step++),
-                      child: const Text('İleri'),
+                      child: Text(AppLocalizations.of(context).profileIleri),
                     )
                   else
                     FilledButton(
                       onPressed: _apply,
-                      child: const Text('Bitir'),
+                      child: Text(AppLocalizations.of(context).profileBitir),
                     ),
                 ],
               ),
@@ -181,18 +182,21 @@ class _ThemeStudioScreenState extends ConsumerState<ThemeStudioScreen> {
     required ThemePreset preset,
     required int gridColumns,
   }) {
+    final l10n = AppLocalizations.of(context);
     if (_step == 0) {
       return [
-        Text('1 · Atmosfer seç', style: theme.textTheme.titleMedium),
-        const SizedBox(height: 4),
         Text(
-          'Buzul, ateş, neon, yumuşak… tüm arayüz havası değişir. '
-          'Anında önizlenir.',
+          AppLocalizations.of(context).profileValue1AtmosferSec,
+          style: theme.textTheme.titleMedium,
+        ),
+        SizedBox(height: 4),
+        Text(
+          AppLocalizations.of(context).profileAnindaOnizlenir,
           style: theme.textTheme.bodySmall?.copyWith(
             color: colors.textSecondary,
           ),
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         if (gridColumns <= 1)
           ...kThemePresets.map((p) {
             final selected = p.id == familyId;
@@ -208,9 +212,9 @@ class _ThemeStudioScreenState extends ConsumerState<ThemeStudioScreen> {
         else
           GridView.builder(
             shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
+            physics: NeverScrollableScrollPhysics(),
             itemCount: kThemePresets.length,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
               mainAxisSpacing: 10,
               crossAxisSpacing: 10,
@@ -229,28 +233,28 @@ class _ThemeStudioScreenState extends ConsumerState<ThemeStudioScreen> {
     }
     if (_step == 1) {
       return [
-        Text('2 · Mood', style: theme.textTheme.titleMedium),
-        const SizedBox(height: 8),
+        Text(l10n.profileValue2Mood, style: theme.textTheme.titleMedium),
+        SizedBox(height: 8),
         Align(
           alignment: Alignment.centerLeft,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
+            constraints: BoxConstraints(maxWidth: 420),
             child: SegmentedButton<ThemeMode>(
-              segments: const [
+              segments: [
                 ButtonSegment(
                   value: ThemeMode.dark,
                   icon: Icon(Icons.dark_mode_outlined),
-                  label: Text('Koyu'),
+                  label: Text(l10n.profileKoyu),
                 ),
                 ButtonSegment(
                   value: ThemeMode.light,
                   icon: Icon(Icons.light_mode_outlined),
-                  label: Text('Açık'),
+                  label: Text(AppLocalizations.of(context).profileAcik),
                 ),
                 ButtonSegment(
                   value: ThemeMode.system,
                   icon: Icon(Icons.brightness_auto_outlined),
-                  label: Text('Sistem'),
+                  label: Text(AppLocalizations.of(context).profileSistem),
                 ),
               ],
               selected: {mode},
@@ -259,10 +263,9 @@ class _ThemeStudioScreenState extends ConsumerState<ThemeStudioScreen> {
             ),
           ),
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         Text(
-          'Açık/koyu aile eşlemesi: açık temalar Nordic/Paper/Pastel; '
-          'koyu temalar Campfire ve diğer gece aileleri.',
+          l10n.profileTemaModu,
           style: theme.textTheme.bodySmall?.copyWith(
             color: colors.textSecondary,
           ),
@@ -271,27 +274,23 @@ class _ThemeStudioScreenState extends ConsumerState<ThemeStudioScreen> {
     }
     if (_step == 2) {
       return [
-        Text(
-          '3 · Kart şekli (önizleme)',
-          style: theme.textTheme.titleMedium,
-        ),
-        const SizedBox(height: 8),
+        Text(l10n.profileSekil, style: theme.textTheme.titleMedium),
+        SizedBox(height: 8),
         Wrap(
           spacing: 8,
           runSpacing: 8,
           children: _ShapeFeel.values.map((feel) {
             final selected = _draftShape == feel;
             return ChoiceChip(
-              label: Text(feel.label),
+              label: Text(feel.label(l10n)),
               selected: selected,
               onSelected: (_) => setState(() => _draftShape = feel),
             );
           }).toList(),
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         Text(
-          'Şekil seçimi önizlemede yansır. Kalıcı şekil motoru WP-55 gelişmiş '
-          'stüdyoda genişletilebilir; şu an aile varsayılanı korunur.',
+          l10n.profileSekilSecimiOnizlemedeYansir,
           style: theme.textTheme.bodySmall?.copyWith(
             color: colors.textSecondary,
           ),
@@ -299,36 +298,39 @@ class _ThemeStudioScreenState extends ConsumerState<ThemeStudioScreen> {
       ];
     }
     return [
-      Text('4 · Özet ve uygula', style: theme.textTheme.titleMedium),
-      const SizedBox(height: 12),
+      Text(
+        AppLocalizations.of(context).profileValue4OzetVeUygula,
+        style: theme.textTheme.titleMedium,
+      ),
+      SizedBox(height: 12),
       Card(
         child: ListTile(
           leading: _Swatch(colors: preset.colors),
           title: Text(preset.name),
           subtitle: Text(
             '${preset.description}\n'
-            'Mood: ${_modeLabel(mode)} · Şekil: ${_draftShape.label}',
+            '${l10n.profileMood}: ${_modeLabel(mode)} · ${_draftShape.label(l10n)}',
           ),
           isThreeLine: true,
         ),
       ),
-      const SizedBox(height: 16),
+      SizedBox(height: 16),
       Align(
         alignment: Alignment.centerLeft,
         child: FilledButton.icon(
           onPressed: _apply,
-          icon: const Icon(Icons.check),
-          label: const Text('Temayı uygula'),
+          icon: Icon(Icons.check),
+          label: Text(AppLocalizations.of(context).profileTemayiUygula),
         ),
       ),
     ];
   }
 
   String _modeLabel(ThemeMode m) => switch (m) {
-        ThemeMode.dark => 'Koyu',
-        ThemeMode.light => 'Açık',
-        ThemeMode.system => 'Sistem',
-      };
+    ThemeMode.dark => AppLocalizations.of(context).profileKoyu,
+    ThemeMode.light => AppLocalizations.of(context).profileAcik,
+    ThemeMode.system => AppLocalizations.of(context).profileSistem,
+  };
 }
 
 class _ThemeTile extends StatelessWidget {
@@ -358,7 +360,7 @@ class _ThemeTile extends StatelessWidget {
           child: Row(
             children: [
               _Swatch(colors: preset.colors),
-              const SizedBox(width: 10),
+              SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -368,7 +370,7 @@ class _ThemeTile extends StatelessWidget {
                       preset.name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontWeight: FontWeight.w600),
+                      style: TextStyle(fontWeight: FontWeight.w600),
                     ),
                     Text(
                       preset.description,
@@ -380,7 +382,11 @@ class _ThemeTile extends StatelessWidget {
                 ),
               ),
               if (selected)
-                Icon(Icons.check_circle, color: preset.colors.primary, size: 20),
+                Icon(
+                  Icons.check_circle,
+                  color: preset.colors.primary,
+                  size: 20,
+                ),
             ],
           ),
         ),
@@ -392,17 +398,17 @@ class _ThemeTile extends StatelessWidget {
 enum _ShapeFeel { sharp, soft, bubble }
 
 extension on _ShapeFeel {
-  String get label => switch (this) {
-        _ShapeFeel.sharp => 'Keskin',
-        _ShapeFeel.soft => 'Yuvarlak',
-        _ShapeFeel.bubble => 'Balon',
-      };
+  String label(AppLocalizations l10n) => switch (this) {
+    _ShapeFeel.sharp => l10n.profileKeskin,
+    _ShapeFeel.soft => l10n.profileYuvarlak,
+    _ShapeFeel.bubble => l10n.profileBalon,
+  };
 
   double get radius => switch (this) {
-        _ShapeFeel.sharp => 0,
-        _ShapeFeel.soft => 16,
-        _ShapeFeel.bubble => 28,
-      };
+    _ShapeFeel.sharp => 0,
+    _ShapeFeel.soft => 16,
+    _ShapeFeel.bubble => 28,
+  };
 }
 
 class _StepHeader extends StatelessWidget {
@@ -412,11 +418,16 @@ class _StepHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const labels = ['Tema', 'Mood', 'Şekil', 'Uygula'];
+    final labels = [
+      AppLocalizations.of(context).profileTema,
+      AppLocalizations.of(context).profileMood,
+      AppLocalizations.of(context).profileSekil,
+      AppLocalizations.of(context).profileUygula,
+    ];
     return Row(
       children: [
         for (var i = 0; i < labels.length; i++) ...[
-          if (i > 0) const Expanded(child: Divider()),
+          if (i > 0) Expanded(child: Divider()),
           InkWell(
             onTap: () => onStep(i),
             borderRadius: BorderRadius.circular(20),
@@ -428,7 +439,7 @@ class _StepHeader extends StatelessWidget {
               foregroundColor: i == step
                   ? Theme.of(context).colorScheme.onPrimary
                   : Theme.of(context).colorScheme.onSurfaceVariant,
-              child: Text('${i + 1}', style: const TextStyle(fontSize: 12)),
+              child: Text('${i + 1}', style: TextStyle(fontSize: 12)),
             ),
           ),
         ],
@@ -492,14 +503,14 @@ class _LivePreview extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Canlı önizleme',
+            AppLocalizations.of(context).profileCanliOnizleme,
             style: TextStyle(
               color: c.textSecondary,
               fontSize: 12,
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           Row(
             children: [
               Expanded(
@@ -514,19 +525,19 @@ class _LivePreview extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Bugün',
+                        AppLocalizations.of(context).profileBugun,
                         style: TextStyle(color: c.textSecondary, fontSize: 11),
                       ),
-                      const SizedBox(height: 4),
+                      SizedBox(height: 4),
                       Text(
-                        '2s 14dk',
+                        '2:14',
                         style: TextStyle(
                           color: c.textPrimary,
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: 8),
                       ClipRRect(
                         borderRadius: BorderRadius.circular(4),
                         child: LinearProgressIndicator(
@@ -540,7 +551,7 @@ class _LivePreview extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: 10),
+              SizedBox(width: 10),
               Expanded(
                 child: Container(
                   padding: const EdgeInsets.all(12),
@@ -562,20 +573,22 @@ class _LivePreview extends StatelessWidget {
                   child: Column(
                     children: [
                       Text(
-                        'Sayaç',
+                        AppLocalizations.of(context).profileSayac,
                         style: TextStyle(color: c.textSecondary, fontSize: 11),
                       ),
-                      const SizedBox(height: 6),
+                      SizedBox(height: 6),
                       Text(
                         '00:42:18',
                         style: TextStyle(
                           color: c.primary,
                           fontSize: 22,
                           fontWeight: FontWeight.w600,
-                          fontFamily: preset.monospaceClock ? 'monospace' : null,
+                          fontFamily: preset.monospaceClock
+                              ? 'monospace'
+                              : null,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: 8),
                       FilledButton(
                         style: FilledButton.styleFrom(
                           backgroundColor: c.primary,
@@ -584,7 +597,10 @@ class _LivePreview extends StatelessWidget {
                           padding: EdgeInsets.zero,
                         ),
                         onPressed: () {},
-                        child: const Text('Durdur', style: TextStyle(fontSize: 12)),
+                        child: Text(
+                          AppLocalizations.of(context).profileDurdur,
+                          style: TextStyle(fontSize: 12),
+                        ),
                       ),
                     ],
                   ),

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/providers/auth_providers.dart';
 import '../../data/repositories/auth_repository.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Giriş ve kayıt ekranı (e-posta + şifre). Tek ekranda iki mod arası geçiş yapılır.
 class AuthScreen extends ConsumerStatefulWidget {
@@ -33,6 +34,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+    final l10n = AppLocalizations.of(context);
     setState(() {
       _loading = true;
       _error = null;
@@ -59,21 +61,22 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       final verifiedEmailNotice = e.message.contains('e-postana gönderilen');
       setState(() {
         if (verifiedEmailNotice) {
-          _info = e.message;
+          _info = l10n.commonEpostaDogrulamasiGerekiyor;
           _isRegister = false;
           _passwordController.clear();
         } else {
-          _error = e.message;
+          _error = _localizedAuthError(l10n, e.message);
         }
       });
     } catch (e) {
-      setState(() => _error = 'Beklenmeyen bir hata oluştu.');
+      setState(() => _error = l10n.authBeklenmeyenBirHataOlustu);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
 
   Future<void> _sendPasswordReset() async {
+    final l10n = AppLocalizations.of(context);
     final email = _emailController.text.trim();
     setState(() {
       _loading = true;
@@ -83,13 +86,12 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     try {
       await ref.read(authRepositoryProvider).sendPasswordResetEmail(email);
       setState(() {
-        _info =
-            'Şifre sıfırlama bağlantısı e-postana gönderildi. Gelen kutunu kontrol et.';
+        _info = l10n.authSifreSifirlamaBaglantisiEpostana;
       });
     } on AuthException catch (e) {
-      setState(() => _error = e.message);
+      setState(() => _error = _localizedAuthError(l10n, e.message));
     } catch (_) {
-      setState(() => _error = 'Beklenmeyen bir hata oluştu.');
+      setState(() => _error = l10n.authBeklenmeyenBirHataOlustu);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -98,6 +100,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       body: SafeArea(
@@ -119,13 +122,15 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Odak Kampı',
+                      l10n.commonOdakKampi,
                       textAlign: TextAlign.center,
                       style: theme.textTheme.headlineSmall,
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      _isRegister ? 'Yeni hesap oluştur' : 'Hesabına giriş yap',
+                      _isRegister
+                          ? l10n.authYeniHesapOlustur
+                          : l10n.authHesabnaGirisYap,
                       textAlign: TextAlign.center,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
@@ -136,12 +141,12 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                       TextFormField(
                         controller: _nameController,
                         textInputAction: TextInputAction.next,
-                        decoration: const InputDecoration(
-                          labelText: 'Görünen ad',
-                          prefixIcon: Icon(Icons.person_outline),
+                        decoration: InputDecoration(
+                          labelText: l10n.authGorunenAd,
+                          prefixIcon: const Icon(Icons.person_outline),
                         ),
                         validator: (v) => (v == null || v.trim().isEmpty)
-                            ? 'Görünen ad girin'
+                            ? l10n.authGorunenAdGirin
                             : null,
                       ),
                       const SizedBox(height: 12),
@@ -150,12 +155,12 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
                       textInputAction: TextInputAction.next,
-                      decoration: const InputDecoration(
-                        labelText: 'E-posta',
-                        prefixIcon: Icon(Icons.mail_outline),
+                      decoration: InputDecoration(
+                        labelText: l10n.authEposta,
+                        prefixIcon: const Icon(Icons.mail_outline),
                       ),
                       validator: (v) => (v == null || !v.contains('@'))
-                          ? 'Geçerli bir e-posta girin'
+                          ? l10n.authGecerliBirEpostaGirin
                           : null,
                     ),
                     const SizedBox(height: 12),
@@ -164,12 +169,12 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                       obscureText: true,
                       textInputAction: TextInputAction.done,
                       onFieldSubmitted: (_) => _submit(),
-                      decoration: const InputDecoration(
-                        labelText: 'Şifre',
-                        prefixIcon: Icon(Icons.lock_outline),
+                      decoration: InputDecoration(
+                        labelText: l10n.authSifre,
+                        prefixIcon: const Icon(Icons.lock_outline),
                       ),
                       validator: (v) => (v == null || v.length < 6)
-                          ? 'Şifre en az 6 karakter olmalı'
+                          ? l10n.authSifreEnAz6
                           : null,
                     ),
                     if (_error != null) ...[
@@ -195,14 +200,16 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                               width: 20,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : Text(_isRegister ? 'Kayıt ol' : 'Giriş yap'),
+                          : Text(
+                              _isRegister ? l10n.authKaytOl : l10n.authGirisYap,
+                            ),
                     ),
                     const SizedBox(height: 8),
                     if (!_isRegister)
                       TextButton.icon(
                         onPressed: _loading ? null : _sendPasswordReset,
                         icon: const Icon(Icons.mark_email_read_outlined),
-                        label: const Text('Şifremi unuttum'),
+                        label: Text(l10n.authSifremiUnuttum),
                       ),
                     TextButton(
                       onPressed: _loading
@@ -214,8 +221,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                             }),
                       child: Text(
                         _isRegister
-                            ? 'Zaten hesabın var mı? Giriş yap'
-                            : 'Hesabın yok mu? Kayıt ol',
+                            ? l10n.authZatenHesabinVarMi
+                            : l10n.authHesabinYokMuKayit,
                       ),
                     ),
                   ],
@@ -226,5 +233,21 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         ),
       ),
     );
+  }
+
+  String _localizedAuthError(AppLocalizations l10n, String message) {
+    if (message.contains('Geçerli bir e-posta')) {
+      return l10n.authGecerliBirEpostaGirin;
+    }
+    if (message.contains('Şifre en az 6 karakter')) {
+      return l10n.authSifreEnAz6;
+    }
+    if (message.contains('Bu e-posta zaten kayıtlı')) {
+      return l10n.commonBuEpostaZatenKayitli;
+    }
+    if (message.contains('E-posta veya şifre hatalı')) {
+      return l10n.commonEpostaVeyaSifreHatali;
+    }
+    return l10n.authBeklenmeyenBirHataOlustu;
   }
 }

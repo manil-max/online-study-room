@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:online_study_room/data/providers/admin_providers.dart';
+import 'package:online_study_room/l10n/app_localizations.dart';
 
 class AdminAuditLogTab extends ConsumerWidget {
   const AdminAuditLogTab({super.key});
@@ -9,6 +10,7 @@ class AdminAuditLogTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final logs = ref.watch(adminAuditLogsProvider);
+    final l10n = AppLocalizations.of(context);
 
     return RefreshIndicator(
       onRefresh: () async {
@@ -17,10 +19,11 @@ class AdminAuditLogTab extends ConsumerWidget {
       },
       child: logs.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, _) => Center(child: Text(err.toString())),
+        error: (err, _) =>
+            Center(child: Text(l10n.authBeklenmeyenBirHataOlustu)),
         data: (items) {
           if (items.isEmpty) {
-            return const Center(child: Text('Kayıt bulunamadı.'));
+            return Center(child: Text(l10n.adminKayitBulunamadi));
           }
           return ListView.separated(
             padding: const EdgeInsets.all(16),
@@ -30,8 +33,18 @@ class AdminAuditLogTab extends ConsumerWidget {
               final log = items[index];
               return Card(
                 child: ListTile(
-                  title: Text('${log.action} - Hedef: ${log.targetUserId ?? "Yok"}'),
-                  subtitle: Text('Gerekçe: ${log.reason}\nTarih: ${log.createdAt}'),
+                  title: Text(
+                    l10n.adminLogactionHedefLogtargetuserid(
+                      log.targetUserId ?? l10n.adminYok,
+                      log.action,
+                    ),
+                  ),
+                  subtitle: Text(
+                    l10n.adminGerekceLogreasonntarihLogcreatedat(
+                      log.reason,
+                      log.createdAt.toString(),
+                    ),
+                  ),
                   isThreeLine: true,
                 ),
               );

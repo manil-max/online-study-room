@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/providers/auth_providers.dart';
 import '../../core/navigation/home_shell.dart';
+import '../../l10n/app_localizations.dart';
 import '../updater/release_notes_screen.dart';
 import '../updater/updater_dialog.dart';
 import 'auth_screen.dart';
@@ -36,12 +37,12 @@ class _AuthGateState extends ConsumerState<AuthGate> {
         .read(authRepositoryProvider)
         .passwordRecoveryEvents
         .listen((_) {
-      if (mounted) {
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const RecoveryScreen()),
-        );
-      }
-    });
+          if (mounted) {
+            Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => const RecoveryScreen()));
+          }
+        });
   }
 
   @override
@@ -53,33 +54,23 @@ class _AuthGateState extends ConsumerState<AuthGate> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authStateProvider);
+    final l10n = AppLocalizations.of(context);
 
     return authState.when(
       data: (profile) =>
           profile == null ? const AuthScreen() : const HomeShell(),
       loading: () => Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
-        body: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const CircularProgressIndicator(),
-              const SizedBox(height: 16),
-              Text(
-                'Yükleniyor…',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-              ),
-            ],
-          ),
-        ),
+        body: const Center(child: CircularProgressIndicator()),
       ),
-      error: (error, _) => Scaffold(
+      error: (_, _) => Scaffold(
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
-            child: Text('Bir hata oluştu: $error', textAlign: TextAlign.center),
+            child: Text(
+              l10n.authBeklenmeyenBirHataOlustu,
+              textAlign: TextAlign.center,
+            ),
           ),
         ),
       ),

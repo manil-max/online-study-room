@@ -38,11 +38,11 @@ void main() {
     await tester.pumpAndSettle();
     // Profil: Başarılar üstte → Ayarlar için kaydır.
     await tester.scrollUntilVisible(
-      find.text('Ayarlar'),
+      find.text('Settings'),
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    expect(find.text('Ayarlar'), findsOneWidget);
+    expect(find.text('Settings'), findsOneWidget);
   });
 
   test(

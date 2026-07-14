@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:online_study_room/data/models/announcement.dart';
 import 'package:online_study_room/data/providers/admin_providers.dart';
 import 'package:online_study_room/data/providers/auth_providers.dart';
+import 'package:online_study_room/l10n/app_localizations.dart';
 
 class AdminAnnouncementsTab extends ConsumerWidget {
   const AdminAnnouncementsTab({super.key});
@@ -11,6 +12,7 @@ class AdminAnnouncementsTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final announcements = ref.watch(adminAnnouncementsProvider);
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       floatingActionButton: FloatingActionButton(
@@ -29,10 +31,11 @@ class AdminAnnouncementsTab extends ConsumerWidget {
         },
         child: announcements.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (err, _) => Center(child: Text(err.toString())),
+          error: (err, _) =>
+              Center(child: Text(l10n.authBeklenmeyenBirHataOlustu)),
           data: (items) {
             if (items.isEmpty) {
-              return const Center(child: Text('Duyuru bulunamadı.'));
+              return Center(child: Text(l10n.adminDuyuruBulunamadi));
             }
             return ListView.separated(
               padding: const EdgeInsets.all(16),
@@ -57,11 +60,21 @@ class _AnnouncementCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
+    final targetType = switch (announcement.targetType) {
+      'group' => l10n.adminGrubaOzel,
+      'user' => l10n.adminKullaniciyaOzel,
+      _ => l10n.adminHerkese,
+    };
     return Card(
       child: ListTile(
         title: Text(announcement.title),
         subtitle: Text(
-          '${announcement.message}\nHedef: ${announcement.targetType} ${announcement.targetId ?? ""}',
+          l10n.adminAnnouncementmessagenhedefAnnouncementtargettypeAnnouncementtargetid(
+            announcement.targetId ?? l10n.adminYok,
+            announcement.message,
+            targetType,
+          ),
         ),
         trailing: IconButton(
           icon: Icon(Icons.delete, color: theme.colorScheme.error),
@@ -71,11 +84,11 @@ class _AnnouncementCard extends ConsumerWidget {
                   .read(adminRepositoryProvider)
                   .deleteAnnouncement(announcement.id);
               ref.invalidate(adminAnnouncementsProvider);
-            } catch (e) {
+            } catch (_) {
               if (context.mounted) {
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(SnackBar(content: Text(e.toString())));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(l10n.authBeklenmeyenBirHataOlustu)),
+                );
               }
             }
           },
@@ -103,6 +116,7 @@ class _CreateAnnouncementDialogState
   bool _isLoading = false;
 
   Future<void> _submit() async {
+    final l10n = AppLocalizations.of(context);
     final title = _titleController.text.trim();
     final message = _messageController.text.trim();
     final targetId = _targetIdController.text.trim();
@@ -112,7 +126,7 @@ class _CreateAnnouncementDialogState
     setState(() => _isLoading = true);
     try {
       final adminId = ref.read(authStateProvider).value?.id;
-      if (adminId == null) throw Exception('Yetkisiz işlem');
+      if (adminId == null) throw StateError('unauthorized');
 
       await ref
           .read(adminRepositoryProvider)
@@ -125,11 +139,11 @@ class _CreateAnnouncementDialogState
           );
       ref.invalidate(adminAnnouncementsProvider);
       if (mounted) Navigator.of(context).pop();
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(e.toString())));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.authBeklenmeyenBirHataOlustu)),
+        );
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -138,37 +152,41 @@ class _CreateAnnouncementDialogState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return AlertDialog(
-      title: const Text('Yeni Duyuru'),
+      title: Text(l10n.adminYeniDuyuru),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: _titleController,
-              decoration: const InputDecoration(labelText: 'Başlık'),
+              decoration: InputDecoration(labelText: l10n.adminBaslik),
             ),
             const SizedBox(height: 8),
             TextField(
               controller: _messageController,
-              decoration: const InputDecoration(labelText: 'Mesaj'),
+              decoration: InputDecoration(labelText: l10n.adminMesaj),
               maxLines: 3,
             ),
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
               initialValue: _targetType,
-              items: const [
-                DropdownMenuItem(value: 'all', child: Text('Herkese')),
-                DropdownMenuItem(value: 'group', child: Text('Gruba Özel')),
+              items: [
+                DropdownMenuItem(value: 'all', child: Text(l10n.adminHerkese)),
+                DropdownMenuItem(
+                  value: 'group',
+                  child: Text(l10n.adminGrubaOzel),
+                ),
                 DropdownMenuItem(
                   value: 'user',
-                  child: Text('Kullanıcıya Özel'),
+                  child: Text(l10n.adminKullaniciyaOzel),
                 ),
               ],
               onChanged: (val) {
                 if (val != null) setState(() => _targetType = val);
               },
-              decoration: const InputDecoration(labelText: 'Hedef'),
+              decoration: InputDecoration(labelText: l10n.adminHedef),
             ),
             if (_targetType == 'group') ...[
               const SizedBox(height: 8),
@@ -176,7 +194,7 @@ class _CreateAnnouncementDialogState
                   .watch(adminGroupsProvider)
                   .when(
                     data: (groups) {
-                      if (groups.isEmpty) return const Text('Hiç grup yok.');
+                      if (groups.isEmpty) return Text(l10n.adminHicGrupYok);
                       return DropdownButtonFormField<String>(
                         items: groups
                             .map(
@@ -189,19 +207,19 @@ class _CreateAnnouncementDialogState
                         onChanged: (val) {
                           if (val != null) _targetIdController.text = val;
                         },
-                        decoration: const InputDecoration(
-                          labelText: 'Grup Seçin',
+                        decoration: InputDecoration(
+                          labelText: l10n.adminGrupSecin,
                         ),
                       );
                     },
                     loading: () => const CircularProgressIndicator(),
-                    error: (e, _) => const Text('Gruplar yüklenemedi.'),
+                    error: (e, _) => Text(l10n.adminGruplarYuklenemedi),
                   ),
             ] else if (_targetType == 'user') ...[
               const SizedBox(height: 8),
               TextField(
                 controller: _targetIdController,
-                decoration: const InputDecoration(labelText: 'Kullanıcı ID'),
+                decoration: InputDecoration(labelText: l10n.adminKullaniciId),
               ),
             ],
           ],
@@ -210,7 +228,7 @@ class _CreateAnnouncementDialogState
       actions: [
         TextButton(
           onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
-          child: const Text('İptal'),
+          child: Text(l10n.adminIptal),
         ),
         FilledButton(
           onPressed: _isLoading ? null : _submit,
@@ -220,7 +238,7 @@ class _CreateAnnouncementDialogState
                   height: 20,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : const Text('Gönder'),
+              : Text(l10n.adminGonder),
         ),
       ],
     );

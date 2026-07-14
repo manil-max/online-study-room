@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/animals/camp_animal.dart';
@@ -31,18 +32,22 @@ class _CampAnimalPicker extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Kamp hayvanın', style: theme.textTheme.titleLarge),
-            const SizedBox(height: 4),
             Text(
-              'Kamp ateşi ekranında seni bu hayvan temsil eder.',
-              style: theme.textTheme.bodyMedium
-                  ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              AppLocalizations.of(context).profileKampHayvanin,
+              style: theme.textTheme.titleLarge,
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 4),
+            Text(
+              AppLocalizations.of(context).profileKampAtesiEkranindaSeni,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            SizedBox(height: 16),
             GridView.count(
               crossAxisCount: 4,
               shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
+              physics: NeverScrollableScrollPhysics(),
               mainAxisSpacing: 12,
               crossAxisSpacing: 12,
               children: [
@@ -92,8 +97,8 @@ class _AnimalTile extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(animal.emoji, style: const TextStyle(fontSize: 30)),
-            const SizedBox(height: 4),
+            Text(animal.emoji, style: TextStyle(fontSize: 30)),
+            SizedBox(height: 4),
             Text(
               animal.label,
               maxLines: 1,

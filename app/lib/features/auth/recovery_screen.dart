@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/providers/auth_providers.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../core/widgets/safe_screen_padding.dart';
+import '../../l10n/app_localizations.dart';
 
 class RecoveryScreen extends ConsumerStatefulWidget {
   const RecoveryScreen({super.key});
@@ -26,6 +27,7 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+    final l10n = AppLocalizations.of(context);
 
     setState(() {
       _loading = true;
@@ -33,17 +35,23 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
     });
 
     try {
-      await ref.read(authRepositoryProvider).updatePassword(_passwordController.text);
+      await ref
+          .read(authRepositoryProvider)
+          .updatePassword(_passwordController.text);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Şifreniz başarıyla sıfırlandı.')),
+          SnackBar(content: Text(l10n.authSifrenizBasariylaSifirlandi)),
         );
         Navigator.of(context).popUntil((route) => route.isFirst);
       }
-    } on AuthException catch (e) {
-      if (mounted) setState(() => _error = e.message);
+    } on AuthException {
+      if (mounted) {
+        setState(() => _error = l10n.authBeklenmeyenBirHataOlustu);
+      }
     } catch (_) {
-      if (mounted) setState(() => _error = 'Beklenmeyen bir hata oluştu.');
+      if (mounted) {
+        setState(() => _error = l10n.authBeklenmeyenBirHataOlustu);
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -51,8 +59,9 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Yeni Şifre Belirle')),
+      appBar: AppBar(title: Text(l10n.authYeniSifreBelirle)),
       body: Center(
         child: SingleChildScrollView(
           padding: getSafePadding(context, const EdgeInsets.all(24)),
@@ -62,31 +71,40 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Icon(Icons.lock_reset, size: 64, color: Theme.of(context).colorScheme.primary),
+                Icon(
+                  Icons.lock_reset,
+                  size: 64,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
                 const SizedBox(height: 24),
-                const Text(
-                  'Güvenliğiniz için yeni bir şifre belirleyin.',
+                Text(
+                  l10n.authGuvenliginizIcinYeniBir,
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 16),
                 ),
                 const SizedBox(height: 32),
                 TextFormField(
                   controller: _passwordController,
-                  decoration: const InputDecoration(
-                    labelText: 'Yeni Şifre',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: l10n.authYeniSifre,
+                    border: const OutlineInputBorder(),
                   ),
                   obscureText: true,
                   validator: (val) {
                     if (val == null || val.length < 6) {
-                      return 'Şifre en az 6 karakter olmalı.';
+                      return l10n.authSifreEnAz6SifreEnAz6KarakterOlmal;
                     }
                     return null;
                   },
                 ),
                 if (_error != null) ...[
                   const SizedBox(height: 16),
-                  Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                  Text(
+                    _error!,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
                 ],
                 const SizedBox(height: 24),
                 FilledButton(
@@ -95,8 +113,9 @@ class _RecoveryScreenState extends ConsumerState<RecoveryScreen> {
                       ? const SizedBox(
                           width: 20,
                           height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2))
-                      : const Text('Şifreyi Kaydet ve Giriş Yap'),
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Text(l10n.authSifreyiKaydetVeGiris),
                 ),
               ],
             ),

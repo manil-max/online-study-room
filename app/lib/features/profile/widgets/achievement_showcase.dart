@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -61,18 +62,38 @@ IconData achievementIconData(String iconKey) {
   }
 }
 
-String categoryLabelTr(String category) {
+String _crownLabel(AppLocalizations l10n, String rank) {
+  return switch (normalizeCrownRank(rank)) {
+    'diamond_owl' => l10n.coreElmasTac,
+    'platinum_scholar' => l10n.corePlatinTac,
+    'gold_achiever' => l10n.coreAltinTac,
+    'silver_learner' => l10n.coreGumusTac,
+    _ => l10n.coreBronzTac,
+  };
+}
+
+String _tierLabel(AppLocalizations l10n, int tier) {
+  return switch (tier.clamp(1, 5)) {
+    1 => l10n.coreBronz,
+    2 => l10n.coreGumus,
+    3 => l10n.coreAltin,
+    4 => l10n.corePlatin,
+    _ => l10n.coreElmas,
+  };
+}
+
+String categoryLabelTr(AppLocalizations l10n, String category) {
   switch (category) {
     case 'study':
-      return 'Çalışma';
+      return l10n.profileCalisma;
     case 'streak':
-      return 'Seri ve Düzen';
+      return l10n.profileSeriVeDuzen;
     case 'group':
-      return 'Grup';
+      return l10n.profileGrup;
     case 'social':
-      return 'Sosyal';
+      return l10n.profileSosyal;
     case 'secret':
-      return 'Gizli';
+      return l10n.profileGizli;
     default:
       return category;
   }
@@ -81,55 +102,56 @@ String categoryLabelTr(String category) {
 /// Bir başarım kademesinin kullanıcıya gösterilen, ölçülebilir şartı.
 /// Sözlük/RPC'deki `unit` değerleri burada Türkçe açıklamaya çevrilir.
 String achievementTierConditionTr(
+  AppLocalizations l10n,
   AchievementDictEntry achievement,
   AchievementTierDef tier,
 ) {
   final value = tier.threshold;
   switch (tier.unit) {
     case 'hours':
-      return 'Toplam $value saat çalış';
+      return '$value ${l10n.profileSaat}';
     case 'minutes':
-      return 'Tek oturumda $value dakika çalış';
+      return '$value ${l10n.profileDakika}';
     case 'day_hours':
-      return 'Tek günde $value saat çalış';
+      return '$value ${l10n.profileSaat}';
     case 'streak_days':
-      return '$value gün üst üste günlük hedefine ulaş';
+      return '$value · ${l10n.profileSeriVeDuzen}';
     case 'weekend_goal_days':
-      return 'Hafta sonu $value gün günlük hedefine ulaş';
+      return '$value · ${l10n.profileGunlukHedef}';
     case 'perfect_months':
-      return 'En az 28 hedef günü olan $value ayı tamamla';
+      return '$value · ${l10n.profileGunlukHedef}';
     case 'group_day_first':
-      return 'Grupta gün birincisi $value kez ol';
+      return '$value · ${l10n.profileGrup}';
     case 'group_goal_contrib':
-      return 'Grup günlük hedefine $value gün katkı sağla';
+      return '$value · ${l10n.profileGrup}';
     case 'campfire_hours':
-      return 'En az 3 aktif üyeyle $value saat çalış';
+      return '$value ${l10n.profileSaat} · ${l10n.profileGrup}';
     case 'nudge_starts':
-      return 'Dürtme sonrası $value çalışma başlat';
+      return '$value · ${l10n.profileCalisma}';
     case 'locomotive_events':
-      return 'Grupta ilk çalışan olarak $value kez ilham ver';
+      return '$value · ${l10n.profileGrup}';
     case 'secret_night_owl':
-      return '00:00–03:59 arasında en az 2 saat çalış';
+      return l10n.profileGizliBirBasarimAcmak;
     case 'secret_dawn':
-      return '05:00–06:59 arasında en az 1 saat çalış';
+      return l10n.profileGizliBirBasarimAcmak;
     case 'secret_404':
-      return 'Tam 404 dakika süren bir oturum tamamla';
+      return l10n.profileTam404DakikaSuren;
     case 'secret_pi':
-      return 'Tam 194 dakika süren bir oturum tamamla';
+      return l10n.profileTam194DakikaSuren;
     case 'secret_last_second':
-      return 'Günlük hedefini 23:55–23:59 arasında biten oturumla tamamla';
+      return l10n.profileGizliBirBasarimAcmak;
     case 'secret_1337':
-      return '13:37’de başlayıp en az 1 saat çalış';
+      return l10n.profileGizliBirBasarimAcmak;
     case 'secret_no_limits':
-      return 'Bir günde günlük hedefinin üç katına ulaş';
+      return l10n.profileBirGundeGunlukHedefinin;
     case 'secret_matrix':
-      return '111, 222, 333 veya 555 dakikalık bir oturum tamamla';
+      return l10n.profileGizliBirBasarimAcmak;
     case 'secret_nye':
-      return 'Yılbaşı gecesi 23:50–00:10 aralığını kapsayan bir oturum yap';
+      return l10n.profileGizliBirBasarimAcmak;
     case 'secret_break_enemy':
-      return 'Bu gizli başarımın koşulu henüz etkin değil';
+      return l10n.profileBuGizliBasariminKosulu;
     default:
-      return '$value ${tier.unit} hedefine ulaş';
+      return '$value';
   }
 }
 
@@ -183,7 +205,7 @@ class AchievementShowcaseState extends State<AchievementShowcase>
     super.initState();
     _confettiController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1400),
+      duration: Duration(milliseconds: 1400),
     );
     _seenUnlockKeys = _unlockKeys(widget.userAchievements);
     if (widget.forceConfettiAwards.isNotEmpty) {
@@ -275,10 +297,10 @@ class AchievementShowcaseState extends State<AchievementShowcase>
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
         ],
         _CrownHeader(rank: rank, rankColor: rankColor, xp: xp),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         _XpBar(
           progress: bar.progress,
           xp: xp,
@@ -286,7 +308,7 @@ class AchievementShowcaseState extends State<AchievementShowcase>
           floor: bar.floor,
           color: rankColor,
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: 16),
         _VitrinRow(
           selectedIds: widget.gamification.selectedBadges,
           dictionary: _dict,
@@ -295,14 +317,14 @@ class AchievementShowcaseState extends State<AchievementShowcase>
           onToggle: widget.onToggleShowcaseBadge,
         ),
         if (widget.showCatalog && !widget.compact) ...[
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
           Text(
-            'Başarı kataloğu',
+            AppLocalizations.of(context).profileBasariKatalogu,
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           ..._buildCatalog(theme),
         ],
       ],
@@ -348,7 +370,7 @@ class AchievementShowcaseState extends State<AchievementShowcase>
         Padding(
           padding: const EdgeInsets.only(top: 12, bottom: 6),
           child: Text(
-            categoryLabelTr(cat),
+            categoryLabelTr(AppLocalizations.of(context), cat),
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w700,
             ),
@@ -397,17 +419,17 @@ class _CrownHeader extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.workspace_premium, color: rankColor, size: 22),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
           Flexible(
             child: Text(
-              crownLabelTr(rank),
+              _crownLabel(AppLocalizations.of(context), rank),
               style: theme.textTheme.titleSmall?.copyWith(
                 color: rankColor,
                 fontWeight: FontWeight.bold,
               ),
             ),
           ),
-          const SizedBox(width: 10),
+          SizedBox(width: 10),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             decoration: BoxDecoration(
@@ -459,17 +481,17 @@ class _XpBar extends StatelessWidget {
             color: color,
           ),
         ),
-        const SizedBox(height: 6),
+        SizedBox(height: 6),
         Text(
           atCap
-              ? 'Maksimum taç seviyesine ulaşıldı (Elmas)'
-              : 'Sonraki taç: $next XP (${(progress * 100).round()}%)',
+              ? AppLocalizations.of(context).profileTamamland
+              : '$xp / $next XP (${(progress * 100).round()}%)',
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -490,9 +512,9 @@ class _XpBar extends StatelessWidget {
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),
-                      const SizedBox(height: 2),
+                      SizedBox(height: 2),
                       Text(
-                        tierLabelTr(i),
+                        _tierLabel(AppLocalizations.of(context), i),
                         style: theme.textTheme.labelSmall?.copyWith(
                           fontSize: 9,
                           color: tierColorFor(i),
@@ -538,18 +560,22 @@ class _VitrinRow extends StatelessWidget {
       child: Column(
         children: [
           Text(
-            isSelf ? 'Vitrin (en fazla 3)' : 'Vitrin',
+            isSelf
+                ? '${AppLocalizations.of(context).profileVitrin} · 3'
+                : AppLocalizations.of(context).profileVitrin,
             style: theme.textTheme.labelMedium?.copyWith(
               fontWeight: FontWeight.bold,
               color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: List.generate(3, (i) {
               if (i >= selectedIds.length) {
-                return _EmptySlot(hint: isSelf ? 'Ekle' : '—');
+                return _EmptySlot(
+                  hint: isSelf ? AppLocalizations.of(context).profileEkle : '—',
+                );
               }
               final id = selectedIds[i];
               AchievementDictEntry? found;
@@ -569,7 +595,7 @@ class _VitrinRow extends StatelessWidget {
                     maxTier: 1,
                     iconKey: 'emoji_events',
                     isSecret: false,
-                    tiers: const [],
+                    tiers: [],
                   );
               UserAchievement? ua;
               for (final a in userAchievements) {
@@ -641,7 +667,7 @@ Future<void> showAchievementDetail(
                   size: 48,
                   color: color,
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 Text(
                   secretLocked ? '?????' : def.name,
                   style: theme.textTheme.titleLarge?.copyWith(
@@ -649,10 +675,10 @@ Future<void> showAchievementDetail(
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 if (secretLocked)
                   Text(
-                    'Gizli bir başarım. Açmak için şanslı veya çok dikkatli olmalısın.',
+                    AppLocalizations.of(context).profileGizliBirBasarimAcmak,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
@@ -665,20 +691,22 @@ Future<void> showAchievementDetail(
                     textAlign: TextAlign.center,
                   ),
                   if (def.isSecret) ...[
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8),
                     Chip(
                       avatar: Icon(
                         Icons.auto_awesome,
                         size: 16,
                         color: kSecretAchievementColor,
                       ),
-                      label: const Text('Gizli başarım'),
+                      label: Text(
+                        AppLocalizations.of(context).profileGizliBasarim,
+                      ),
                       backgroundColor: kSecretAchievementColor.withValues(
                         alpha: 0.15,
                       ),
                     ),
                   ] else ...[
-                    const SizedBox(height: 10),
+                    SizedBox(height: 10),
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 12,
@@ -691,8 +719,8 @@ Future<void> showAchievementDetail(
                       ),
                       child: Text(
                         unlocked
-                            ? 'Tamamlanan kademe: $tier/${def.maxTier} · ${tierLabelTr(tier)}'
-                            : 'Henüz açılmadı · en fazla ${def.maxTier} kademe',
+                            ? '${AppLocalizations.of(context).profileTamamland}: $tier/${def.maxTier} · ${_tierLabel(AppLocalizations.of(context), tier)}'
+                            : '${AppLocalizations.of(context).profileKilitli} · ${def.maxTier}',
                         style: theme.textTheme.labelLarge?.copyWith(
                           color: color,
                           fontWeight: FontWeight.w700,
@@ -700,22 +728,26 @@ Future<void> showAchievementDetail(
                       ),
                     ),
                     if (def.tiers.isNotEmpty) ...[
-                      const SizedBox(height: 18),
+                      SizedBox(height: 18),
                       Align(
                         alignment: Alignment.centerLeft,
                         child: Text(
-                          'Tüm kademeler',
+                          AppLocalizations.of(context).profileTumKademeler,
                           style: theme.textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
-                      const SizedBox(height: 6),
+                      SizedBox(height: 6),
                       for (final tierDef in def.tiers)
                         _AchievementTierDetailRow(
                           tier: tierDef,
                           complete: unlocked && tier >= tierDef.tier,
-                          condition: achievementTierConditionTr(def, tierDef),
+                          condition: achievementTierConditionTr(
+                            AppLocalizations.of(context),
+                            def,
+                            tierDef,
+                          ),
                         ),
                     ],
                   ],
@@ -759,20 +791,20 @@ class _AchievementTierDetailRow extends StatelessWidget {
               color: color,
             ),
           ),
-          const SizedBox(width: 10),
+          SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Kademe ${tier.tier} · $condition',
+                  '${AppLocalizations.of(context).profileTumKademeler} ${tier.tier} · $condition',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 2),
+                SizedBox(height: 2),
                 Text(
-                  '+${tier.xp} XP · ${complete ? 'Tamamlandı' : 'Kilitli'}',
+                  '+${tier.xp} XP · ${complete ? AppLocalizations.of(context).profileTamamland : AppLocalizations.of(context).profileKilitli}',
                   style: theme.textTheme.bodySmall?.copyWith(color: color),
                 ),
               ],
@@ -841,10 +873,10 @@ class _BadgeCircle extends StatelessWidget {
 
     final title = secretLocked ? '?????' : def.name;
     final subtitle = secretLocked
-        ? 'Gizli başarım'
+        ? AppLocalizations.of(context).profileGizliBasarim
         : unlocked
-        ? '${tierLabelTr(tier)} · Kademe $tier'
-        : 'Kilitli';
+        ? '${_tierLabel(AppLocalizations.of(context), tier)} · $tier'
+        : AppLocalizations.of(context).profileKilitli;
 
     return Tooltip(
       message: '$title\n$subtitle',
@@ -986,7 +1018,7 @@ class _CatalogTile extends StatelessWidget {
                 userAch: userAch,
                 secretLocked: secretLocked,
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -996,14 +1028,18 @@ class _CatalogTile extends StatelessWidget {
                         Expanded(
                           child: Text(
                             secretLocked ? '?????' : def.name,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+                            style: TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ),
                         if (isSelf && unlocked && onToggle != null)
                           IconButton(
                             tooltip: isSelected
-                                ? 'Vitrinden kaldır'
-                                : 'Vitrine ekle',
+                                ? AppLocalizations.of(
+                                    context,
+                                  ).profileVitrindenKaldir
+                                : AppLocalizations.of(
+                                    context,
+                                  ).profileVitrineEkle,
                             icon: Icon(
                               isSelected
                                   ? Icons.push_pin
@@ -1016,15 +1052,17 @@ class _CatalogTile extends StatelessWidget {
                           ),
                       ],
                     ),
-                    const SizedBox(height: 4),
+                    SizedBox(height: 4),
                     Text(
                       secretLocked
-                          ? 'Gizli bir başarım — şartı gizli tutulur'
+                          ? AppLocalizations.of(
+                              context,
+                            ).profileBuGizliBasariminKosulu
                           : def.description,
                       style: theme.textTheme.bodySmall,
                     ),
                     if (!secretLocked) ...[
-                      const SizedBox(height: 8),
+                      SizedBox(height: 8),
                       // 5 kademe renk şeridi
                       if (!def.isSecret)
                         Row(
@@ -1046,7 +1084,7 @@ class _CatalogTile extends StatelessWidget {
                         ),
                       if (def.isSecret && unlocked)
                         Text(
-                          'Gizli · açıldı',
+                          '${AppLocalizations.of(context).profileGizli} · ${AppLocalizations.of(context).profileTamamland}',
                           style: theme.textTheme.labelMedium?.copyWith(
                             color: kSecretAchievementColor,
                             fontWeight: FontWeight.w700,
@@ -1054,25 +1092,25 @@ class _CatalogTile extends StatelessWidget {
                         )
                       else if (unlocked && tier >= def.maxTier)
                         Text(
-                          'Maksimum kademe · ${tierLabelTr(tier)}',
+                          '${AppLocalizations.of(context).profileTamamland} · ${_tierLabel(AppLocalizations.of(context), tier)}',
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: tierColor,
                             fontWeight: FontWeight.w600,
                           ),
                         )
                       else ...[
-                        const SizedBox(height: 6),
+                        SizedBox(height: 6),
                         LinearProgressIndicator(
                           value: pct,
                           color: tierColor,
                           backgroundColor:
                               theme.colorScheme.surfaceContainerHighest,
                         ),
-                        const SizedBox(height: 4),
+                        SizedBox(height: 4),
                         Text(
                           unlocked
-                              ? 'Kademe $tier/${def.maxTier} (${tierLabelTr(tier)}) · sonraki $need'
-                              : 'İlerleme: $progress / $need',
+                              ? '$tier/${def.maxTier} (${_tierLabel(AppLocalizations.of(context), tier)}) · $need'
+                              : '$progress / $need',
                           style: theme.textTheme.labelSmall?.copyWith(
                             color: unlocked ? tierColor : null,
                           ),

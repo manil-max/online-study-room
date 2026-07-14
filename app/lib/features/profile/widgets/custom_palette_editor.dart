@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:online_study_room/core/theme/app_theme.dart';
 
@@ -20,7 +21,7 @@ class _CustomPaletteEditorState extends State<CustomPaletteEditor> {
   late Color _accent;
   late TextEditingController _nameController;
 
-  final List<Color> _colorOptions = const [
+  final List<Color> _colorOptions = [
     Colors.red,
     Colors.pink,
     Colors.purple,
@@ -62,8 +63,8 @@ class _CustomPaletteEditorState extends State<CustomPaletteEditor> {
   Widget _buildColorGrid(Color selectedColor, ValueChanged<Color> onSelect) {
     return GridView.builder(
       shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+      physics: NeverScrollableScrollPhysics(),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 6,
         crossAxisSpacing: 8,
         mainAxisSpacing: 8,
@@ -78,12 +79,16 @@ class _CustomPaletteEditorState extends State<CustomPaletteEditor> {
             decoration: BoxDecoration(
               color: color,
               shape: BoxShape.circle,
-              border: isSelected ? Border.all(color: Colors.white, width: 3) : null,
+              border: isSelected
+                  ? Border.all(color: Colors.white, width: 3)
+                  : null,
             ),
             child: isSelected
                 ? Icon(
                     Icons.check,
-                    color: ThemeData.estimateBrightnessForColor(color) == Brightness.dark
+                    color:
+                        ThemeData.estimateBrightnessForColor(color) ==
+                            Brightness.dark
                         ? Colors.white
                         : Colors.black,
                   )
@@ -106,16 +111,24 @@ class _CustomPaletteEditorState extends State<CustomPaletteEditor> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               TextField(
-                decoration: const InputDecoration(labelText: 'Palet Adı'),
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context).profilePaletAdi,
+                ),
                 controller: _nameController,
               ),
-              const SizedBox(height: 16),
-              const Text('Ana Renk', style: TextStyle(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
+              SizedBox(height: 16),
+              Text(
+                AppLocalizations.of(context).profileAnaRenk,
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 8),
               _buildColorGrid(_primary, (c) => setState(() => _primary = c)),
-              const SizedBox(height: 16),
-              const Text('Vurgu Rengi', style: TextStyle(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
+              SizedBox(height: 16),
+              Text(
+                AppLocalizations.of(context).profileVurguRengi,
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 8),
               _buildColorGrid(_accent, (c) => setState(() => _accent = c)),
             ],
           ),
@@ -124,26 +137,32 @@ class _CustomPaletteEditorState extends State<CustomPaletteEditor> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('İptal'),
+          child: Text(AppLocalizations.of(context).profileIptal),
         ),
         ElevatedButton(
           onPressed: () {
             final name = _nameController.text.trim();
             final newPalette = AppPalette(
               id: widget.initialPalette.id,
-              name: name.isNotEmpty ? name : 'Özel Palet',
+              name: name.isNotEmpty
+                  ? name
+                  : AppLocalizations.of(context).profileOzelPalet,
               primary: _primary,
-              onPrimary: ThemeData.estimateBrightnessForColor(_primary) == Brightness.dark
+              onPrimary:
+                  ThemeData.estimateBrightnessForColor(_primary) ==
+                      Brightness.dark
                   ? Colors.white
                   : Colors.black,
               accent: _accent,
-              onAccent: ThemeData.estimateBrightnessForColor(_accent) == Brightness.dark
+              onAccent:
+                  ThemeData.estimateBrightnessForColor(_accent) ==
+                      Brightness.dark
                   ? Colors.white
                   : Colors.black,
             );
             Navigator.of(context).pop(newPalette);
           },
-          child: const Text('Kaydet'),
+          child: Text(AppLocalizations.of(context).profileKaydet),
         ),
       ],
     );

@@ -5,6 +5,8 @@ import 'package:online_study_room/data/models/achievement.dart';
 import 'package:online_study_room/data/models/achievement_ledger.dart';
 import 'package:online_study_room/data/models/gamification_profile.dart';
 import 'package:online_study_room/features/profile/widgets/achievement_showcase.dart';
+import 'package:online_study_room/l10n/app_localizations.dart';
+import 'package:online_study_room/l10n/app_localizations_tr.dart';
 
 void main() {
   final now = DateTime(2026, 7, 13);
@@ -26,6 +28,9 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
+        locale: const Locale('tr'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: SingleChildScrollView(
             child: AchievementShowcase(
@@ -42,12 +47,15 @@ void main() {
 
     expect(find.text('?????'), findsWidgets);
     expect(find.text('Gece Kuşu'), findsNothing);
-    expect(find.textContaining('Gizli bir başarım'), findsWidgets);
+    expect(find.textContaining('Bu gizli başarımın'), findsWidgets);
   });
 
   testWidgets('açık gizli başarım gerçek adını gösterir', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
+        locale: const Locale('tr'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: SingleChildScrollView(
             child: AchievementShowcase(
@@ -80,6 +88,9 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
+        locale: const Locale('tr'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: SingleChildScrollView(
             child: AchievementShowcase(
@@ -96,8 +107,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Tüm kademeler'), findsOneWidget);
-    expect(find.text('Kademe 1 · Toplam 50 saat çalış'), findsOneWidget);
-    expect(find.text('Kademe 5 · Toplam 2500 saat çalış'), findsOneWidget);
+    expect(find.text('Tüm kademeler 1 · 50 Saat'), findsOneWidget);
+    expect(find.text('Tüm kademeler 5 · 2500 Saat'), findsOneWidget);
     expect(find.text('+100 XP · Kilitli'), findsOneWidget);
     expect(find.text('+15000 XP · Kilitli'), findsOneWidget);
   });
@@ -109,8 +120,12 @@ void main() {
         (entry) => entry.id == 'fire_streak',
       );
       expect(
-        achievementTierConditionTr(achievement, achievement.tiers.first),
-        '7 gün üst üste günlük hedefine ulaş',
+        achievementTierConditionTr(
+          AppLocalizationsTr(),
+          achievement,
+          achievement.tiers.first,
+        ),
+        '7 · Seri ve Düzen',
       );
     },
   );
@@ -127,6 +142,9 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+        locale: const Locale('tr'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: SingleChildScrollView(
             child: AchievementShowcase(

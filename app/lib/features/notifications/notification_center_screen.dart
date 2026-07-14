@@ -10,16 +10,17 @@ import '../../data/models/study_reminder.dart';
 import '../../data/providers/auth_providers.dart';
 import '../../data/providers/notification_providers.dart';
 import '../../data/repositories/notification_repository.dart';
+import '../../l10n/app_localizations.dart';
 import '../clock/alarms_screen.dart';
 
-const List<String> _weekdayLabels = [
-  'Pzt',
-  'Sal',
-  'Çar',
-  'Per',
-  'Cum',
-  'Cmt',
-  'Paz',
+List<String> _weekdayLabels(AppLocalizations l10n) => [
+  l10n.notificationsPzt,
+  l10n.notificationsSal,
+  l10n.notificationsCar,
+  l10n.notificationsPer,
+  l10n.notificationsCum,
+  l10n.notificationsCmt,
+  l10n.notificationsPaz,
 ];
 
 String _formatMinutes(int minutes) {
@@ -38,11 +39,15 @@ class NotificationCenterScreen extends ConsumerWidget {
     // Ekran açıkken hatırlatıcı planlaması tercihlerle senkron kalsın.
     ref.watch(reminderSyncListenerProvider);
     final prefs = ref.watch(notificationPreferencesProvider);
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Bildirim Merkezi')),
+      appBar: AppBar(title: Text(l10n.notificationsBildirimMerkezi)),
       body: ListView(
-        padding: getSafePadding(context, const EdgeInsets.fromLTRB(16, 12, 16, 28)),
+        padding: getSafePadding(
+          context,
+          const EdgeInsets.fromLTRB(16, 12, 16, 28),
+        ),
         children: [
           const _PermissionCard(),
           const SizedBox(height: 10),
@@ -100,6 +105,7 @@ class _PermissionCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
     return Card(
       color: theme.colorScheme.surfaceContainerHighest,
       child: Padding(
@@ -113,7 +119,7 @@ class _PermissionCard extends ConsumerWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Cihaz izinleri',
+                    l10n.notificationsCihazIzinleri,
                     style: theme.textTheme.titleMedium,
                   ),
                 ),
@@ -121,9 +127,7 @@ class _PermissionCard extends ConsumerWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Bildirimler cihaz iznine bağlıdır. Alarm ve hatırlatıcılar yalnız '
-              'Android’de yerel bildirim olarak çalışır; sistem izni kapalıysa '
-              'gösterilmez. Uygulama kapalıyken tam-zamanlı teslim garanti edilmez.',
+              l10n.notificationsBildirimlerCihazIznineBaglidir,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -141,14 +145,14 @@ class _PermissionCard extends ConsumerWidget {
                     SnackBar(
                       content: Text(
                         granted
-                            ? 'Bildirim izni verildi.'
-                            : 'Bildirim izni verilmedi. Sistem ayarlarından açabilirsin.',
+                            ? l10n.notificationsBildirimIzniVerildi
+                            : l10n.notificationsBildirimIzniVerilmediSistem,
                       ),
                     ),
                   );
                 },
                 icon: const Icon(Icons.notifications_active_outlined),
-                label: const Text('Bildirim iznini kontrol et'),
+                label: Text(l10n.notificationsBildirimIzniniKontrolEt),
               ),
             ),
           ],
@@ -166,15 +170,16 @@ class _TypesCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final notifier = ref.read(notificationPreferencesProvider.notifier);
+    final l10n = AppLocalizations.of(context);
     return _SectionCard(
       icon: Icons.tune,
-      title: 'Bildirim türleri',
-      subtitle: 'Hangi bildirimleri almak istediğini seç',
+      title: l10n.notificationsBildirimTurleri,
+      subtitle: l10n.notificationsHangiBildirimleriAlmakIstedigini,
       children: [
         SwitchListTile(
           secondary: const Icon(Icons.waving_hand_outlined),
-          title: const Text('Dürtme bildirimleri'),
-          subtitle: const Text('Sınıf arkadaşların seni dürttüğünde bildir'),
+          title: Text(l10n.notificationsDurtmeBildirimleri),
+          subtitle: Text(l10n.notificationsSinifArkadaslarinSeniDurttugunde),
           value: prefs.nudgeNotificationsEnabled,
           onChanged: (value) async {
             if (value) {
@@ -188,36 +193,38 @@ class _TypesCard extends ConsumerWidget {
         const Divider(height: 1),
         SwitchListTile(
           secondary: const Icon(Icons.alarm_outlined),
-          title: const Text('Çalışma hatırlatıcıları'),
-          subtitle: const Text('Planladığın hatırlatıcıları yerel bildirimle al'),
+          title: Text(l10n.notificationsCalismaHatirlaticilari),
+          subtitle: Text(
+            l10n.notificationsPlanladiginHatirlaticilariYerelBildirimle,
+          ),
           value: prefs.remindersEnabled,
           onChanged: notifier.setRemindersEnabled,
         ),
         const Divider(height: 1),
         SwitchListTile(
           secondary: const Icon(Icons.campaign_outlined),
-          title: const Text('Duyurular'),
-          subtitle: const Text('Uygulama ve grup duyurularını göster'),
+          title: Text(l10n.notificationsDuyurular),
+          subtitle: Text(l10n.notificationsUygulamaVeGrupDuyurularini),
           value: prefs.announcementsEnabled,
           onChanged: notifier.setAnnouncementsEnabled,
         ),
         const Divider(height: 1),
         SwitchListTile(
           secondary: const Icon(Icons.new_releases_outlined),
-          title: const Text('Güncelleme bildirimleri'),
-          subtitle: const Text('Yeni sürüm çıkınca haber ver'),
+          title: Text(l10n.notificationsGuncellemeBildirimleri),
+          subtitle: Text(l10n.notificationsYeniSurumCikincaHaber),
           value: prefs.updatesEnabled,
           onChanged: notifier.setUpdatesEnabled,
         ),
         const Divider(height: 1),
         ListTile(
           leading: const Icon(Icons.timer_outlined),
-          title: const Text('Alarm ve zamanlayıcı'),
-          subtitle: const Text('Saat sekmesinden yönetilir'),
+          title: Text(l10n.notificationsAlarmVeZamanlayici),
+          subtitle: Text(l10n.notificationsSaatSekmesindenYonetilir),
           trailing: const Icon(Icons.chevron_right),
-          onTap: () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const AlarmsScreen()),
-          ),
+          onTap: () => Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (_) => const AlarmsScreen())),
         ),
       ],
     );
@@ -241,7 +248,9 @@ class _QuietHoursCard extends ConsumerWidget {
     );
     if (picked == null) return;
     final minutes = picked.hour * 60 + picked.minute;
-    await ref.read(notificationPreferencesProvider.notifier).setQuietHours(
+    await ref
+        .read(notificationPreferencesProvider.notifier)
+        .setQuietHours(
           startMinutes: isStart ? minutes : prefs.quietStartMinutes,
           endMinutes: isStart ? prefs.quietEndMinutes : minutes,
         );
@@ -250,14 +259,15 @@ class _QuietHoursCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final notifier = ref.read(notificationPreferencesProvider.notifier);
+    final l10n = AppLocalizations.of(context);
     return _SectionCard(
       icon: Icons.bedtime_outlined,
-      title: 'Sessiz saatler',
-      subtitle: 'Bu aralıkta dürtme ve hatırlatıcı bildirimi gösterilmez',
+      title: l10n.notificationsSessizSaatler,
+      subtitle: l10n.notificationsBuAraliktaDurtmeVe,
       children: [
         SwitchListTile(
           secondary: const Icon(Icons.do_not_disturb_on_outlined),
-          title: const Text('Sessiz saatleri etkinleştir'),
+          title: Text(l10n.notificationsSessizSaatleriEtkinlestir),
           value: prefs.quietHoursEnabled,
           onChanged: notifier.setQuietHoursEnabled,
         ),
@@ -265,7 +275,7 @@ class _QuietHoursCard extends ConsumerWidget {
           const Divider(height: 1),
           ListTile(
             leading: const Icon(Icons.bedtime),
-            title: const Text('Başlangıç'),
+            title: Text(l10n.notificationsBaslangic),
             trailing: Text(
               _formatMinutes(prefs.quietStartMinutes),
               style: Theme.of(context).textTheme.titleMedium,
@@ -275,7 +285,7 @@ class _QuietHoursCard extends ConsumerWidget {
           const Divider(height: 1),
           ListTile(
             leading: const Icon(Icons.wb_sunny_outlined),
-            title: const Text('Bitiş'),
+            title: Text(l10n.notificationsBitis),
             trailing: Text(
               _formatMinutes(prefs.quietEndMinutes),
               style: Theme.of(context).textTheme.titleMedium,
@@ -297,27 +307,28 @@ class _RemindersCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final remindersAsync = ref.watch(myRemindersProvider);
+    final l10n = AppLocalizations.of(context);
 
     return _SectionCard(
       icon: Icons.alarm_add_outlined,
-      title: 'Hatırlatıcılar',
-      subtitle: 'Belirli saatlerde çalışma hatırlatıcısı kur',
+      title: l10n.notificationsHatirlaticilar,
+      subtitle: l10n.notificationsBelirliSaatlerdeCalismaHatirlaticisi,
       children: [
         remindersAsync.when(
           loading: () => const Padding(
             padding: EdgeInsets.all(20),
             child: Center(child: CircularProgressIndicator()),
           ),
-          error: (e, _) => Padding(
+          error: (_, _) => Padding(
             padding: const EdgeInsets.all(16),
-            child: Text('Hatırlatıcılar yüklenemedi: $e'),
+            child: Text(l10n.authBeklenmeyenBirHataOlustu),
           ),
           data: (reminders) {
             if (reminders.isEmpty) {
               return Padding(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
                 child: Text(
-                  'Henüz hatırlatıcın yok. Aşağıdan bir tane ekleyebilirsin.',
+                  l10n.notificationsHenuzHatirlaticinYokAsagidan,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
@@ -340,7 +351,7 @@ class _RemindersCard extends ConsumerWidget {
             child: FilledButton.tonalIcon(
               onPressed: () => _openReminderDialog(context, ref),
               icon: const Icon(Icons.add),
-              label: const Text('Hatırlatıcı ekle'),
+              label: Text(l10n.notificationsHatirlaticiEkle),
             ),
           ),
         ),
@@ -354,15 +365,17 @@ class _ReminderTile extends ConsumerWidget {
 
   final StudyReminder reminder;
 
-  String get _daysLabel {
-    if (reminder.weekdays.isEmpty) return 'Her gün';
+  String _daysLabel(AppLocalizations l10n) {
+    if (reminder.weekdays.isEmpty) return l10n.notificationsHerGun;
     final sorted = [...reminder.weekdays]..sort();
-    if (sorted.length == 7) return 'Her gün';
-    return sorted.map((d) => _weekdayLabels[d - 1]).join(', ');
+    if (sorted.length == 7) return l10n.notificationsHerGun;
+    final weekdayLabels = _weekdayLabels(l10n);
+    return sorted.map((d) => weekdayLabels[d - 1]).join(', ');
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     return Dismissible(
       key: ValueKey(reminder.id),
       direction: DismissDirection.endToStart,
@@ -384,7 +397,7 @@ class _ReminderTile extends ConsumerWidget {
           style: Theme.of(context).textTheme.titleMedium,
         ),
         title: Text(reminder.title),
-        subtitle: Text(_daysLabel),
+        subtitle: Text(_daysLabel(l10n)),
         value: reminder.enabled,
         onChanged: (value) async {
           await ref
@@ -406,17 +419,18 @@ class _AnnouncementsCard extends ConsumerWidget {
     final prefs = ref.watch(notificationPreferencesProvider);
     final announcementsAsync = ref.watch(myAnnouncementsProvider);
     final read = ref.watch(readAnnouncementIdsProvider).value ?? const {};
+    final l10n = AppLocalizations.of(context);
 
     return _SectionCard(
       icon: Icons.campaign_outlined,
-      title: 'Duyurular',
-      subtitle: 'Uygulama ve grubuna özel duyurular',
+      title: l10n.notificationsDuyurular,
+      subtitle: l10n.notificationsUygulamaVeGrubunaOzel,
       children: [
         if (!prefs.announcementsEnabled)
           Padding(
             padding: const EdgeInsets.all(16),
             child: Text(
-              'Duyurular kapalı. Görmek için üstteki “Duyurular” anahtarını aç.',
+              l10n.notificationsUygulamaVeGrupDuyurularini,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -428,16 +442,16 @@ class _AnnouncementsCard extends ConsumerWidget {
               padding: EdgeInsets.all(20),
               child: Center(child: CircularProgressIndicator()),
             ),
-            error: (e, _) => Padding(
+            error: (_, _) => Padding(
               padding: const EdgeInsets.all(16),
-              child: Text('Duyurular yüklenemedi: $e'),
+              child: Text(l10n.authBeklenmeyenBirHataOlustu),
             ),
             data: (announcements) {
               if (announcements.isEmpty) {
                 return Padding(
                   padding: const EdgeInsets.all(16),
                   child: Text(
-                    'Şimdilik duyuru yok.',
+                    l10n.notificationsSimdilikDuyuruYok,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
@@ -485,7 +499,9 @@ class _AnnouncementTile extends ConsumerWidget {
           ? () async {
               final user = ref.read(authStateProvider).value;
               if (user == null) return;
-              await ref.read(notificationRepositoryProvider).markAnnouncementRead(
+              await ref
+                  .read(notificationRepositoryProvider)
+                  .markAnnouncementRead(
                     userId: user.id,
                     announcementId: announcement.id,
                   );
@@ -497,6 +513,7 @@ class _AnnouncementTile extends ConsumerWidget {
 }
 
 Future<void> _openReminderDialog(BuildContext context, WidgetRef ref) async {
+  final l10n = AppLocalizations.of(context);
   final user = ref.read(authStateProvider).value;
   if (user == null) return;
   final result = await showDialog<StudyReminder>(
@@ -507,10 +524,11 @@ Future<void> _openReminderDialog(BuildContext context, WidgetRef ref) async {
   try {
     await ref.read(notificationRepositoryProvider).upsertReminder(result);
     ref.invalidate(myRemindersProvider);
-  } on NotificationException catch (e) {
+  } on NotificationException {
     if (context.mounted) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(e.message)));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.authBeklenmeyenBirHataOlustu)),
+      );
     }
   }
 }
@@ -525,7 +543,7 @@ class _ReminderDialog extends StatefulWidget {
 }
 
 class _ReminderDialogState extends State<_ReminderDialog> {
-  final _titleController = TextEditingController(text: 'Çalışma zamanı');
+  final _titleController = TextEditingController();
   TimeOfDay _time = const TimeOfDay(hour: 20, minute: 0);
   final Set<int> _weekdays = {};
 
@@ -536,9 +554,21 @@ class _ReminderDialogState extends State<_ReminderDialog> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_titleController.text.isEmpty) {
+      _titleController.text = AppLocalizations.of(
+        context,
+      ).notificationsCalismaZamani;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final weekdayLabels = _weekdayLabels(l10n);
     return AlertDialog(
-      title: const Text('Yeni hatırlatıcı'),
+      title: Text(l10n.notificationsYeniHatirlatici),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -547,16 +577,16 @@ class _ReminderDialogState extends State<_ReminderDialog> {
             TextField(
               controller: _titleController,
               textCapitalization: TextCapitalization.sentences,
-              decoration: const InputDecoration(
-                labelText: 'Başlık',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l10n.notificationsBaslik,
+                border: const OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 16),
             ListTile(
               contentPadding: EdgeInsets.zero,
               leading: const Icon(Icons.access_time),
-              title: const Text('Saat'),
+              title: Text(l10n.notificationsSaat),
               trailing: Text(
                 _time.format(context),
                 style: Theme.of(context).textTheme.titleMedium,
@@ -570,14 +600,14 @@ class _ReminderDialogState extends State<_ReminderDialog> {
               },
             ),
             const SizedBox(height: 8),
-            const Text('Günler (boş = her gün)'),
+            Text(l10n.notificationsGunlerBosHerGun),
             const SizedBox(height: 8),
             Wrap(
               spacing: 6,
               children: [
                 for (var d = 1; d <= 7; d++)
                   FilterChip(
-                    label: Text(_weekdayLabels[d - 1]),
+                    label: Text(weekdayLabels[d - 1]),
                     selected: _weekdays.contains(d),
                     onSelected: (selected) => setState(() {
                       if (selected) {
@@ -595,7 +625,7 @@ class _ReminderDialogState extends State<_ReminderDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Vazgeç'),
+          child: Text(l10n.notificationsVazgec),
         ),
         FilledButton(
           onPressed: () {
@@ -613,7 +643,7 @@ class _ReminderDialogState extends State<_ReminderDialog> {
               ),
             );
           },
-          child: const Text('Kaydet'),
+          child: Text(l10n.notificationsKaydet),
         ),
       ],
     );

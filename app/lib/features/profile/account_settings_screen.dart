@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -25,20 +26,22 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('E-posta Değiştir'),
+          title: Text(AppLocalizations.of(context).profileEpostaDegistir),
           content: Form(
             key: formKey,
             child: TextFormField(
               controller: controller,
-              decoration: const InputDecoration(
-                labelText: 'Yeni E-posta',
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(context).profileYeniEposta,
                 border: OutlineInputBorder(),
               ),
               keyboardType: TextInputType.emailAddress,
               validator: (val) {
                 final text = val?.trim();
                 if (text == null || text.isEmpty || !text.contains('@')) {
-                  return 'Geçerli bir e-posta girin.';
+                  return AppLocalizations.of(
+                    context,
+                  ).profileGecerliBirEpostaGirin;
                 }
                 return null;
               },
@@ -47,7 +50,7 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('İptal'),
+              child: Text(AppLocalizations.of(context).profileIptal),
             ),
             FilledButton(
               onPressed: () {
@@ -55,7 +58,7 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
                   Navigator.pop(context, controller.text.trim());
                 }
               },
-              child: const Text('Kaydet'),
+              child: Text(AppLocalizations.of(context).profileKaydet),
             ),
           ],
         );
@@ -71,19 +74,35 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
       await ref.read(authRepositoryProvider).updateEmail(newEmail);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('E-posta başarıyla güncellendi. Yeni e-postanıza bir doğrulama maili gönderilmiş olabilir.')),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(
+                context,
+              ).profileEpostaBasariylaGuncellendiYeni,
+            ),
+          ),
         );
       }
-    } on AuthException catch (e) {
+    } on AuthException {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message), backgroundColor: Theme.of(context).colorScheme.error),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context).profileBeklenmeyenBirHataOlustu,
+            ),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: const Text('Beklenmeyen bir hata oluştu.'), backgroundColor: Theme.of(context).colorScheme.error),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context).profileBeklenmeyenBirHataOlustu,
+            ),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
         );
       }
     } finally {
@@ -99,19 +118,19 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Şifre Değiştir'),
+          title: Text(AppLocalizations.of(context).profileSifreDegistir),
           content: Form(
             key: formKey,
             child: TextFormField(
               controller: controller,
-              decoration: const InputDecoration(
-                labelText: 'Yeni Şifre',
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(context).profileYeniSifre,
                 border: OutlineInputBorder(),
               ),
               obscureText: true,
               validator: (val) {
                 if (val == null || val.length < 6) {
-                  return 'Şifre en az 6 karakter olmalı.';
+                  return AppLocalizations.of(context).profileSifreEnAz6;
                 }
                 return null;
               },
@@ -120,7 +139,7 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('İptal'),
+              child: Text(AppLocalizations.of(context).profileIptal),
             ),
             FilledButton(
               onPressed: () {
@@ -128,7 +147,7 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
                   Navigator.pop(context, controller.text);
                 }
               },
-              child: const Text('Kaydet'),
+              child: Text(AppLocalizations.of(context).profileKaydet),
             ),
           ],
         );
@@ -142,19 +161,33 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
       await ref.read(authRepositoryProvider).updatePassword(newPassword);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Şifre başarıyla güncellendi.')),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context).profileSifreBasariylaGuncellendi,
+            ),
+          ),
         );
       }
-    } on AuthException catch (e) {
+    } on AuthException {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message), backgroundColor: Theme.of(context).colorScheme.error),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context).profileBeklenmeyenBirHataOlustu,
+            ),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: const Text('Beklenmeyen bir hata oluştu.'), backgroundColor: Theme.of(context).colorScheme.error),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context).profileBeklenmeyenBirHataOlustu,
+            ),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
         );
       }
     } finally {
@@ -167,17 +200,23 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Güvenli Çıkış'),
-          content: const Text('Hesabınızdan çıkış yapmak istediğinize emin misiniz?'),
+          title: Text(AppLocalizations.of(context).profileGuvenliCikis),
+          content: Text(
+            AppLocalizations.of(
+              context,
+            ).profileHesabinizdanCikisYapmakIstediginize,
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('İptal'),
+              child: Text(AppLocalizations.of(context).profileIptal),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(context, true),
-              style: FilledButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.error),
-              child: const Text('Çıkış Yap'),
+              style: FilledButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.error,
+              ),
+              child: Text(AppLocalizations.of(context).profileCikisYap),
             ),
           ],
         );
@@ -195,7 +234,12 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: const Text('Çıkış yapılırken bir hata oluştu.'), backgroundColor: Theme.of(context).colorScheme.error),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context).profileCikisYapilirkenBirHata,
+            ),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
         );
         setState(() => _isLoading = false);
       }
@@ -208,64 +252,88 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
     final email = ref.watch(authRepositoryProvider).currentUserEmail;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Hesabım')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context).profileHesabim)),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(child: CircularProgressIndicator())
           : ListView(
               padding: getSafePadding(
-                  context, const EdgeInsets.symmetric(horizontal: 16, vertical: 24)),
+                context,
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+              ),
               children: [
-                Text('Hesap Bilgileri',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                        color: theme.colorScheme.primary,
-                        fontWeight: FontWeight.bold)),
-                const SizedBox(height: 16),
+                Text(
+                  AppLocalizations.of(context).profileHesapBilgileri,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(height: 16),
                 Card(
                   elevation: 0,
-                  color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+                  color: theme.colorScheme.surfaceContainerHighest.withValues(
+                    alpha: 0.4,
+                  ),
                   child: Column(
                     children: [
                       ListTile(
-                        leading: const Icon(Icons.email_outlined),
-                        title: const Text('E-posta Adresi'),
-                        subtitle: Text(email ?? 'Bilinmiyor'),
+                        leading: Icon(Icons.email_outlined),
+                        title: Text(
+                          AppLocalizations.of(context).profileEpostaAdresi,
+                        ),
+                        subtitle: Text(
+                          email ??
+                              AppLocalizations.of(context).profileBilinmiyor,
+                        ),
                         trailing: TextButton(
                           onPressed: _changeEmail,
-                          child: const Text('Değiştir'),
+                          child: Text(
+                            AppLocalizations.of(context).profileDegistir,
+                          ),
                         ),
                       ),
-                      const Divider(height: 1),
+                      Divider(height: 1),
                       ListTile(
-                        leading: const Icon(Icons.lock_outline),
-                        title: const Text('Şifre'),
-                        subtitle: const Text('••••••••'),
+                        leading: Icon(Icons.lock_outline),
+                        title: Text(AppLocalizations.of(context).profileSifre),
+                        subtitle: Text('••••••••'),
                         trailing: TextButton(
                           onPressed: _changePassword,
-                          child: const Text('Değiştir'),
+                          child: Text(
+                            AppLocalizations.of(context).profileDegistir,
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 32),
-                Text('Güvenlik',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                        color: theme.colorScheme.error,
-                        fontWeight: FontWeight.bold)),
-                const SizedBox(height: 16),
+                SizedBox(height: 32),
+                Text(
+                  AppLocalizations.of(context).profileGuvenlik,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: theme.colorScheme.error,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(height: 16),
                 Card(
                   elevation: 0,
-                  color: theme.colorScheme.errorContainer.withValues(alpha: 0.4),
+                  color: theme.colorScheme.errorContainer.withValues(
+                    alpha: 0.4,
+                  ),
                   child: ListTile(
                     leading: Icon(Icons.logout, color: theme.colorScheme.error),
                     title: Text(
-                      'Güvenli Çıkış',
+                      AppLocalizations.of(context).profileGuvenliCikis,
                       style: TextStyle(color: theme.colorScheme.error),
                     ),
                     subtitle: Text(
-                      'Cihazdaki oturumu sonlandır',
+                      AppLocalizations.of(
+                        context,
+                      ).profileCihazdakiOturumuSonlandir,
                       style: TextStyle(
-                          color: theme.colorScheme.error.withValues(alpha: 0.8)),
+                        color: theme.colorScheme.error.withValues(alpha: 0.8),
+                      ),
                     ),
                     onTap: _signOut,
                   ),

@@ -1,5 +1,7 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../../core/stats/study_stats.dart';
 import '../../core/theme/subject_colors.dart';
@@ -22,20 +24,23 @@ class SessionHistoryScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
     final sessionsAsync = ref.watch(userSessionsProvider);
     final hasGroup = ref.watch(userGroupProvider).value != null;
 
     final body = sessionsAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Kayıtlar yüklenemedi: $e')),
+      loading: () => Center(child: CircularProgressIndicator()),
+      error: (_, _) =>
+          Center(child: Text(l10n.profileBeklenmeyenBirHataOlustu)),
       data: (sessions) {
         if (!hasGroup) {
-          return _centerInfo(theme,
-              'Kayıt eklemek için önce bir gruba katıl veya grup oluştur.');
+          return _centerInfo(
+            theme,
+            AppLocalizations.of(context).profileKayitEklemekIcinOnce,
+          );
         }
         if (sessions.isEmpty) {
-          return _centerInfo(
-              theme, 'Henüz kaydın yok. "Manuel ekle" ile geçmiş süre ekleyebilirsin.');
+          return _centerInfo(theme, l10n.profileHenuzKaydinYok);
         }
         return _SessionList(sessions: sessions);
       },
@@ -51,8 +56,8 @@ class SessionHistoryScreen extends ConsumerWidget {
               bottom: 16,
               child: FloatingActionButton.extended(
                 onPressed: () => _addManual(context, ref),
-                icon: const Icon(Icons.add),
-                label: const Text('Manuel ekle'),
+                icon: Icon(Icons.add),
+                label: Text(l10n.profileManuelEkle),
               ),
             ),
         ],
@@ -60,12 +65,14 @@ class SessionHistoryScreen extends ConsumerWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Çalışma kayıtlarım')),
+      appBar: AppBar(
+        title: Text(AppLocalizations.of(context).profileCalismaKayitlarim),
+      ),
       floatingActionButton: hasGroup
           ? FloatingActionButton.extended(
               onPressed: () => _addManual(context, ref),
-              icon: const Icon(Icons.add),
-              label: const Text('Manuel ekle'),
+              icon: Icon(Icons.add),
+              label: Text(l10n.profileManuelEkle),
             )
           : null,
       body: body,
@@ -73,16 +80,17 @@ class SessionHistoryScreen extends ConsumerWidget {
   }
 
   Widget _centerInfo(ThemeData theme, String text) => Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Text(
-            text,
-            textAlign: TextAlign.center,
-            style: theme.textTheme.bodyMedium
-                ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-          ),
+    child: Padding(
+      padding: const EdgeInsets.all(24),
+      child: Text(
+        text,
+        textAlign: TextAlign.center,
+        style: theme.textTheme.bodyMedium?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
         ),
-      );
+      ),
+    ),
+  );
 
   Future<void> _addManual(BuildContext context, WidgetRef ref) =>
       addManualSessionFlow(context, ref);
@@ -145,17 +153,21 @@ class _TodaySection extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Bugün', style: theme.textTheme.titleSmall),
+              Text(
+                AppLocalizations.of(context).profileBugun,
+                style: theme.textTheme.titleSmall,
+              ),
               Text(
                 formatHuman(total),
-                style: theme.textTheme.titleSmall
-                    ?.copyWith(color: theme.colorScheme.primary),
+                style: theme.textTheme.titleSmall?.copyWith(
+                  color: theme.colorScheme.primary,
+                ),
               ),
             ],
           ),
         ),
         for (final s in sessions) _SessionTile(session: s),
-        const Divider(height: 16),
+        Divider(height: 16),
       ],
     );
   }
@@ -179,26 +191,28 @@ class _PastDayTile extends StatelessWidget {
     final theme = Theme.of(context);
     return ExpansionTile(
       tilePadding: const EdgeInsets.symmetric(horizontal: 16),
-      shape: const Border(),
+      shape: Border(),
       title: Row(
         children: [
           Expanded(
             child: Text(
-              _longDate(day),
+              _longDate(AppLocalizations.of(context), day),
               style: theme.textTheme.titleSmall,
             ),
           ),
           Text(
             formatHuman(total),
-            style: theme.textTheme.titleSmall
-                ?.copyWith(color: theme.colorScheme.primary),
+            style: theme.textTheme.titleSmall?.copyWith(
+              color: theme.colorScheme.primary,
+            ),
           ),
         ],
       ),
       subtitle: Text(
         '${sessions.length} oturum',
-        style: theme.textTheme.bodySmall
-            ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
       ),
       childrenPadding: const EdgeInsets.only(bottom: 8),
       children: [for (final s in sessions) _SessionTile(session: s)],
@@ -210,17 +224,9 @@ class _PastDayTile extends StatelessWidget {
 String _hm(DateTime t) =>
     '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
 
-const _kMonths = [
-  '', 'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', //
-  'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
-];
-const _kWeekdays = [
-  '', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'
-];
-
 /// "21 Haziran 2026 Cumartesi" — okunaklı uzun tarih.
-String _longDate(DateTime d) =>
-    '${d.day} ${_kMonths[d.month]} ${d.year} ${_kWeekdays[d.weekday]}';
+String _longDate(AppLocalizations l10n, DateTime d) =>
+    DateFormat.yMMMMEEEEd(l10n.localeName).format(d);
 
 /// Tek bir oturum satırı: süre, kaynak rozeti, düzenle/sil menüsü.
 class _SessionTile extends ConsumerWidget {
@@ -234,7 +240,7 @@ class _SessionTile extends ConsumerWidget {
     final isManual = session.source == StudySource.manual;
 
     // Oturumun dersini bul (silinmiş/derssiz olabilir → null).
-    final subjects = ref.watch(userSubjectsProvider).value ?? const [];
+    final subjects = ref.watch(userSubjectsProvider).value ?? [];
     Subject? subject;
     for (final s in subjects) {
       if (s.id == session.subjectId) subject = s;
@@ -255,8 +261,10 @@ class _SessionTile extends ConsumerWidget {
           : Row(
               children: [
                 CircleAvatar(
-                    radius: 5, backgroundColor: subjectColor(subject.color)),
-                const SizedBox(width: 6),
+                  radius: 5,
+                  backgroundColor: subjectColor(subject.color),
+                ),
+                SizedBox(width: 6),
                 Flexible(
                   child: Text(
                     '$sourceLabel · ${subject.name}',
@@ -273,16 +281,22 @@ class _SessionTile extends ConsumerWidget {
             _delete(context, ref);
           }
         },
-        itemBuilder: (_) => const [
-          PopupMenuItem(value: 'edit', child: Text('Düzenle')),
-          PopupMenuItem(value: 'delete', child: Text('Sil')),
+        itemBuilder: (_) => [
+          PopupMenuItem(
+            value: 'edit',
+            child: Text(AppLocalizations.of(context).profileDuzenle),
+          ),
+          PopupMenuItem(
+            value: 'delete',
+            child: Text(AppLocalizations.of(context).profileSil),
+          ),
         ],
       ),
     );
   }
 
   Future<void> _edit(BuildContext context, WidgetRef ref) async {
-    final subjects = ref.read(userSubjectsProvider).value ?? const [];
+    final subjects = ref.read(userSubjectsProvider).value ?? [];
     final result = await showManualSessionDialog(
       context,
       initialDate: session.start,
@@ -293,7 +307,9 @@ class _SessionTile extends ConsumerWidget {
     if (result == null) return;
 
     final range = manualSessionRange(result.date, result.seconds);
-    await ref.read(studyRepositoryProvider).updateSession(
+    await ref
+        .read(studyRepositoryProvider)
+        .updateSession(
           StudySession(
             id: session.id,
             userId: session.userId,
@@ -311,16 +327,18 @@ class _SessionTile extends ConsumerWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Kaydı sil'),
-        content: const Text('Bu çalışma kaydı silinsin mi?'),
+        title: Text(AppLocalizations.of(context).profileKaydiSil),
+        content: Text(
+          AppLocalizations.of(context).profileBuCalismaKaydiSilinsin,
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Vazgeç'),
+            child: Text(AppLocalizations.of(context).profileVazgec),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Sil'),
+            child: Text(AppLocalizations.of(context).profileSil),
           ),
         ],
       ),

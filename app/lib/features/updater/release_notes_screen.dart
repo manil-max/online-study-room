@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
 import 'release_notes_service.dart';
 
 Future<void> maybeShowWhatsNewDialog(BuildContext context) async {
@@ -34,9 +35,10 @@ class ReleaseNotesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final notesFuture = (service ?? ReleaseNotesService()).loadBundledNotes();
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Güncelleme notları')),
+      appBar: AppBar(title: Text(l10n.updaterGuncellemeNotlari)),
       body: FutureBuilder<List<ReleaseNote>>(
         future: notesFuture,
         builder: (context, snapshot) {
@@ -46,16 +48,15 @@ class ReleaseNotesScreen extends StatelessWidget {
 
           final notes = snapshot.data ?? const [];
           if (notes.isEmpty) {
-            return const Center(
-              child: Text('Henüz gösterilecek sürüm notu yok.'),
-            );
+            return Center(child: Text(l10n.updaterHenuzGosterilecekSurumNotu));
           }
 
           return ListView.separated(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
             itemCount: notes.length,
             separatorBuilder: (_, _) => const SizedBox(height: 10),
-            itemBuilder: (context, index) => ReleaseNoteCard(note: notes[index]),
+            itemBuilder: (context, index) =>
+                ReleaseNoteCard(note: notes[index]),
           );
         },
       ),
@@ -77,6 +78,7 @@ class WhatsNewDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final shownNote = note;
+    final l10n = AppLocalizations.of(context);
 
     return AlertDialog(
       title: Row(
@@ -86,37 +88,39 @@ class WhatsNewDialog extends StatelessWidget {
           Expanded(
             child: Text(
               shownNote == null
-                  ? 'Yenilikler'
-                  : 'Yenilikler: ${shownNote.versionName}',
+                  ? l10n.updaterYenilikler
+                  : '${l10n.updaterYenilikler}: ${shownNote.versionName}',
             ),
           ),
         ],
       ),
       content: SingleChildScrollView(
         child: shownNote == null
-            ? Text(
-                '$fallbackVersion sürümüne geçtin. '
-                'Bu sürüm için detaylı notlar yakında eklenecek.',
+            ? Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(fallbackVersion),
+                  const SizedBox(height: 8),
+                  Text(l10n.updaterBuSurumIcinDetayli),
+                ],
               )
             : Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    shownNote.title,
-                    style: theme.textTheme.titleMedium,
-                  ),
+                  Text(shownNote.title, style: theme.textTheme.titleMedium),
                   const SizedBox(height: 12),
                   _ReleaseNoteSection(
-                    title: 'Öne çıkanlar',
+                    title: l10n.updaterOneCikanlar,
                     items: shownNote.highlights,
                   ),
                   _ReleaseNoteSection(
-                    title: 'Düzeltmeler',
+                    title: l10n.updaterDuzeltmeler,
                     items: shownNote.fixes,
                   ),
                   _ReleaseNoteSection(
-                    title: 'Notlar',
+                    title: l10n.updaterNotlar,
                     items: shownNote.notes,
                   ),
                 ],
@@ -125,7 +129,7 @@ class WhatsNewDialog extends StatelessWidget {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Tamam'),
+          child: Text(l10n.updaterTamam),
         ),
       ],
     );
@@ -140,6 +144,7 @@ class ReleaseNoteCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
     final channelColor = note.channel == 'beta'
         ? theme.colorScheme.tertiary
         : theme.colorScheme.primary;
@@ -168,15 +173,25 @@ class ReleaseNoteCard extends StatelessWidget {
                 ),
                 Chip(
                   visualDensity: VisualDensity.compact,
-                  label: Text(note.channel == 'beta' ? 'Beta' : 'Stable'),
+                  label: Text(
+                    note.channel == 'beta'
+                        ? l10n.updaterBeta
+                        : l10n.updaterStable,
+                  ),
                   labelStyle: TextStyle(color: channelColor),
                 ),
               ],
             ),
             const SizedBox(height: 12),
-            _ReleaseNoteSection(title: 'Yenilikler', items: note.highlights),
-            _ReleaseNoteSection(title: 'Düzeltmeler', items: note.fixes),
-            _ReleaseNoteSection(title: 'Notlar', items: note.notes),
+            _ReleaseNoteSection(
+              title: l10n.updaterYenilikler,
+              items: note.highlights,
+            ),
+            _ReleaseNoteSection(
+              title: l10n.updaterDuzeltmeler,
+              items: note.fixes,
+            ),
+            _ReleaseNoteSection(title: l10n.updaterNotlar, items: note.notes),
           ],
         ),
       ),
@@ -194,6 +209,7 @@ class _ReleaseNoteSection extends StatelessWidget {
   Widget build(BuildContext context) {
     if (items.isEmpty) return const SizedBox.shrink();
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
@@ -205,7 +221,7 @@ class _ReleaseNoteSection extends StatelessWidget {
           for (final item in items)
             Padding(
               padding: const EdgeInsets.only(bottom: 3),
-              child: Text('• $item'),
+              child: Text(l10n.updaterItem(item)),
             ),
         ],
       ),

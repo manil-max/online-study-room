@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -16,13 +17,16 @@ class AppearanceScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
     final settings = ref.watch(themeSettingsProvider);
     final notifier = ref.read(themeSettingsProvider.notifier);
     final family = settings.family;
     final desktop = isDesktopWindow;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Görünüm ve atmosfer')),
+      appBar: AppBar(
+        title: Text(AppLocalizations.of(context).profileGorunumVeAtmosfer),
+      ),
       body: LayoutBuilder(
         builder: (context, constraints) {
           final cols = desktopGridColumns(
@@ -51,24 +55,28 @@ class AppearanceScreen extends ConsumerWidget {
                           Icons.palette_outlined,
                           color: theme.colorScheme.primary,
                         ),
-                        title: const Text('Tema Stüdyosu'),
-                        subtitle: Text(
-                          '${family.name} · buzul, ateş, neon, yumuşak… '
-                          '${kThemePresets.length} atmosfer, canlı önizleme',
+                        title: Text(
+                          AppLocalizations.of(context).profileTemaStudyosu,
                         ),
-                        trailing: const Icon(Icons.chevron_right),
+                        subtitle: Text(
+                          '${family.name} · ${l10n.profileCanliOnizleme}',
+                        ),
+                        trailing: Icon(Icons.chevron_right),
                         onTap: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (_) => const ThemeStudioScreen(),
+                              builder: (_) => ThemeStudioScreen(),
                             ),
                           );
                         },
                       ),
                     ),
-                    const SizedBox(height: 20),
-                    Text('Tema modu', style: theme.textTheme.titleMedium),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 20),
+                    Text(
+                      l10n.profileTemaModu,
+                      style: theme.textTheme.titleMedium,
+                    ),
+                    SizedBox(height: 8),
                     Align(
                       alignment: Alignment.centerLeft,
                       child: ConstrainedBox(
@@ -76,21 +84,21 @@ class AppearanceScreen extends ConsumerWidget {
                           maxWidth: desktop ? 420 : double.infinity,
                         ),
                         child: SegmentedButton<ThemeMode>(
-                          segments: const [
+                          segments: [
                             ButtonSegment(
                               value: ThemeMode.dark,
                               icon: Icon(Icons.dark_mode_outlined),
-                              label: Text('Koyu'),
+                              label: Text(l10n.profileKoyu),
                             ),
                             ButtonSegment(
                               value: ThemeMode.light,
                               icon: Icon(Icons.light_mode_outlined),
-                              label: Text('Açık'),
+                              label: Text(l10n.profileAcik),
                             ),
                             ButtonSegment(
                               value: ThemeMode.system,
                               icon: Icon(Icons.brightness_auto_outlined),
-                              label: Text('Sistem'),
+                              label: Text(l10n.profileSistem),
                             ),
                           ],
                           selected: {settings.mode},
@@ -99,12 +107,15 @@ class AppearanceScreen extends ConsumerWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 24),
-                    Text('Hazır Paletler', style: theme.textTheme.titleMedium),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 24),
+                    Text(
+                      AppLocalizations.of(context).profileHazirPaletler,
+                      style: theme.textTheme.titleMedium,
+                    ),
+                    SizedBox(height: 8),
                     GridView.builder(
                       shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
+                      physics: NeverScrollableScrollPhysics(),
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: cols,
                         mainAxisSpacing: 10,
@@ -121,24 +132,24 @@ class AppearanceScreen extends ConsumerWidget {
                         );
                       },
                     ),
-                    const SizedBox(height: 24),
+                    SizedBox(height: 24),
                     Text(
-                      'Özel Paletler',
+                      AppLocalizations.of(context).profileOzelPaletler,
                       style: theme.textTheme.titleMedium,
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8),
                     for (int i = 0; i < settings.customPalettes.length; i++)
                       _CustomPaletteTile(
                         palette: settings.customPalettes[i],
-                        selected: settings.paletteId ==
-                            settings.customPalettes[i].id,
+                        selected:
+                            settings.paletteId == settings.customPalettes[i].id,
                         onTap: () =>
                             notifier.setPalette(settings.customPalettes[i].id),
                         onEdit: () async {
                           final result = await showDialog<AppPalette>(
                             context: context,
                             builder: (ctx) => CustomPaletteEditor(
-                              title: 'Özel Palet ${i + 1} Düzenle',
+                              title: l10n.profileOzelPaletI1('${i + 1}'),
                               initialPalette: settings.customPalettes[i],
                             ),
                           );
@@ -186,7 +197,9 @@ class _PaletteCard extends StatelessWidget {
               : theme.colorScheme.surfaceContainer,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: selected ? palette.primary : theme.colorScheme.outlineVariant,
+            color: selected
+                ? palette.primary
+                : theme.colorScheme.outlineVariant,
             width: selected ? 2 : 1,
           ),
         ),
@@ -197,14 +210,14 @@ class _PaletteCard extends StatelessWidget {
             Row(
               children: [
                 _Swatch(color: palette.primary),
-                const SizedBox(width: 4),
+                SizedBox(width: 4),
                 _Swatch(color: palette.accent),
-                const Spacer(),
+                Spacer(),
                 if (selected)
                   Icon(Icons.check_circle, color: palette.primary, size: 18),
               ],
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             Text(
               palette.name,
               style: theme.textTheme.bodyMedium?.copyWith(
@@ -251,7 +264,7 @@ class _CustomPaletteTile extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             _Swatch(color: palette.primary),
-            const SizedBox(width: 4),
+            SizedBox(width: 4),
             _Swatch(color: palette.accent),
           ],
         ),
@@ -260,9 +273,9 @@ class _CustomPaletteTile extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              icon: const Icon(Icons.edit_outlined),
+              icon: Icon(Icons.edit_outlined),
               onPressed: onEdit,
-              tooltip: 'Düzenle',
+              tooltip: AppLocalizations.of(context).profileDuzenle,
             ),
             if (selected) Icon(Icons.check_circle, color: palette.primary),
           ],
@@ -286,10 +299,9 @@ class _Swatch extends StatelessWidget {
         color: color,
         shape: BoxShape.circle,
         border: Border.all(
-          color: Theme.of(context)
-              .colorScheme
-              .onPrimary
-              .withValues(alpha: 0.24),
+          color: Theme.of(
+            context,
+          ).colorScheme.onPrimary.withValues(alpha: 0.24),
         ),
       ),
     );

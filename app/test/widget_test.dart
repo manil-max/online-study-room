@@ -57,9 +57,9 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Giriş yap'), findsWidgets);
-    expect(find.text('Şifremi unuttum'), findsOneWidget);
-    expect(find.text('E-posta'), findsOneWidget);
+    expect(find.text('Log in'), findsWidgets);
+    expect(find.text('I forgot my password'), findsOneWidget);
+    expect(find.text('Email'), findsOneWidget);
   });
 
   testWidgets('Giriş yapılınca 4 sekme görünür', (tester) async {
@@ -105,13 +105,13 @@ void main() {
     // Profil sekmesine geç ve çıkış yap (Başarılar kartı üstte; kaydır).
     await tester.tap(find.text('Profil'));
     await tester.pumpAndSettle();
-    final logoutButton = find.widgetWithText(FilledButton, 'Çıkış yap');
+    final logoutButton = find.widgetWithText(FilledButton, 'Sign Out');
     await tester.ensureVisible(logoutButton);
     await tester.pumpAndSettle();
     await tester.tap(logoutButton);
     await tester.pumpAndSettle();
 
-    expect(find.text('E-posta'), findsOneWidget);
+    expect(find.text('Email'), findsOneWidget);
   });
 
   testWidgets('Gruplar sekmesinde boş durum eylemleri gösterir', (

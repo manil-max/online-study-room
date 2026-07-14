@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -31,10 +32,8 @@ class SocialProfileScreen extends ConsumerWidget {
   }) {
     return Navigator.of(context).push<void>(
       MaterialPageRoute(
-        builder: (_) => SocialProfileScreen(
-          profile: profile,
-          newlyAwarded: newlyAwarded,
-        ),
+        builder: (_) =>
+            SocialProfileScreen(profile: profile, newlyAwarded: newlyAwarded),
       ),
     );
   }
@@ -48,33 +47,37 @@ class SocialProfileScreen extends ConsumerWidget {
       ref.watch(gamificationProgressSyncProvider);
     }
 
-    final gamificationAsync =
-        ref.watch(gamificationProfileProvider(profile.id));
-    final achievementsAsync =
-        ref.watch(userAchievementsProvider(profile.id));
+    final gamificationAsync = ref.watch(
+      gamificationProfileProvider(profile.id),
+    );
+    final achievementsAsync = ref.watch(userAchievementsProvider(profile.id));
     final liveAwards = isSelf
         ? ref.watch(lastAchievementAwardsProvider)
         : const <AchievementAward>[];
-    final confettiAwards =
-        newlyAwarded.isNotEmpty ? newlyAwarded : liveAwards;
+    final confettiAwards = newlyAwarded.isNotEmpty ? newlyAwarded : liveAwards;
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isSelf ? 'Başarı Yolculuğum' : 'Sosyal profil'),
+        title: Text(
+          isSelf
+              ? AppLocalizations.of(context).profileBasarYolculugum
+              : AppLocalizations.of(context).profileSosyalProfil,
+        ),
       ),
       body: ListView(
         padding: getSafeVerticalPadding(context, horizontal: 20, vertical: 16),
         children: [
           gamificationAsync.when(
-            loading: () => const Padding(
+            loading: () => Padding(
               padding: EdgeInsets.all(32),
               child: Center(child: CircularProgressIndicator()),
             ),
             error: (err, _) => Padding(
               padding: const EdgeInsets.all(16),
               child: Text(
-                'Profil yüklenemedi. Ortak gruba üye olmayabilirsiniz.\n$err',
+                l10n.profileBeklenmeyenBirHataOlustu,
                 style: TextStyle(color: theme.colorScheme.error),
                 textAlign: TextAlign.center,
               ),
@@ -89,12 +92,12 @@ class SocialProfileScreen extends ConsumerWidget {
                       radius: 44,
                       crownRank: gamification.crownRank,
                     ),
-                    const SizedBox(height: 24),
-                    const Center(child: CircularProgressIndicator()),
+                    SizedBox(height: 24),
+                    Center(child: CircularProgressIndicator()),
                   ],
                 ),
                 error: (err, _) => Text(
-                  'Başarımlar yüklenemedi: $err',
+                  l10n.profileBasarimlarYuklenemedi,
                   style: TextStyle(color: theme.colorScheme.error),
                 ),
                 data: (achs) {
@@ -106,7 +109,7 @@ class SocialProfileScreen extends ConsumerWidget {
                         radius: 44,
                         crownRank: gamification.crownRank,
                       ),
-                      const SizedBox(height: 16),
+                      SizedBox(height: 16),
                       AchievementShowcase(
                         gamification: gamification,
                         userAchievements: achs,
@@ -117,11 +120,11 @@ class SocialProfileScreen extends ConsumerWidget {
                         forceConfettiAwards: confettiAwards,
                         onToggleShowcaseBadge: isSelf
                             ? (badgeId) => _toggleBadge(
-                                  context,
-                                  ref,
-                                  gamification,
-                                  badgeId,
-                                )
+                                context,
+                                ref,
+                                gamification,
+                                badgeId,
+                              )
                             : null,
                       ),
                     ],
@@ -148,16 +151,16 @@ class SocialProfileScreen extends ConsumerWidget {
     } else {
       if (selected.length >= 3) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Vitrine en fazla 3 rozet ekleyebilirsiniz.'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).profileVitrineEnFazla3),
           ),
         );
         return;
       }
       selected.add(badgeId);
     }
-    ref.read(gamificationRepositoryProvider).updateProfile(
-          gamification.copyWith(selectedBadges: selected),
-        );
+    ref
+        .read(gamificationRepositoryProvider)
+        .updateProfile(gamification.copyWith(selectedBadges: selected));
   }
 }

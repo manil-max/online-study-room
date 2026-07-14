@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/widgets/number_stepper.dart';
@@ -39,32 +40,34 @@ class _GoalEditorDialogState extends State<_GoalEditorDialog> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
     return AlertDialog(
-      title: const Text('Günlük hedef'),
+      title: Text(AppLocalizations.of(context).profileGunlukHedef),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            'Her gün ulaşmak istediğin çalışma süresi. Seri (🔥) bu hedefe bağlı.',
-            style: theme.textTheme.bodySmall
-                ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+            l10n.profileGunlukHedef,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Row(
             children: [
               Expanded(
                 child: NumberStepper(
-                  label: 'Saat',
+                  label: l10n.profileSaat,
                   value: _hours,
                   min: 0,
                   max: 23,
                   onChanged: (v) => setState(() => _hours = v),
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Expanded(
                 child: NumberStepper(
-                  label: 'Dakika',
+                  label: l10n.profileDakika,
                   value: _minutes,
                   min: 0,
                   max: 59,
@@ -78,11 +81,11 @@ class _GoalEditorDialogState extends State<_GoalEditorDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Vazgeç'),
+          child: Text(l10n.profileVazgec),
         ),
         FilledButton(
           onPressed: _total < 15 ? null : () => Navigator.pop(context, _total),
-          child: const Text('Kaydet'),
+          child: Text(l10n.profileKaydet),
         ),
       ],
     );

@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
@@ -17,7 +18,10 @@ import '../../../data/providers/subject_providers.dart';
 /// Süre günün geçen kısmından uzunsa (ör. gece 01:00'de 3 saat) `start` gece
 /// yarısına (00:00) kenetlenir; oturum her zaman seçilen güne ait kalır
 /// (`StudySession.day` `start`'tan türetildiği için gün kayması olmaz).
-({DateTime start, DateTime end}) manualSessionRange(DateTime date, int seconds) {
+({DateTime start, DateTime end}) manualSessionRange(
+  DateTime date,
+  int seconds,
+) {
   final now = DateTime.now();
   final dayStart = DateTime(date.year, date.month, date.day);
   var end = DateTime(date.year, date.month, date.day, now.hour, now.minute);
@@ -37,18 +41,20 @@ Future<void> addManualSessionFlow(BuildContext context, WidgetRef ref) async {
   final user = ref.read(authStateProvider).value;
   if (user == null) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Önce giriş yap.')),
+      SnackBar(content: Text(AppLocalizations.of(context).profileOnceGirisYap)),
     );
     return;
   }
-  final subjects = ref.read(userSubjectsProvider).value ?? const [];
+  final subjects = ref.read(userSubjectsProvider).value ?? [];
   final result = await showManualSessionDialog(context, subjects: subjects);
   if (result == null) return;
 
   final range = manualSessionRange(result.date, result.seconds);
-  await ref.read(studyRepositoryProvider).addSession(
+  await ref
+      .read(studyRepositoryProvider)
+      .addSession(
         StudySession(
-          id: const Uuid().v4(),
+          id: Uuid().v4(),
           userId: user.id,
           subjectId: result.subjectId,
           start: range.start,
@@ -63,7 +69,7 @@ Future<void> addManualSessionFlow(BuildContext context, WidgetRef ref) async {
 /// (+ opsiyonel ders) alır; sonucu `(date, seconds, subjectId)` döndürür. İptal → null.
 /// Bkz. project.md §3.5 (manuel giriş esnek) ve §3.7 (ders opsiyonel).
 Future<({DateTime date, int seconds, String? subjectId})?>
-    showManualSessionDialog(
+showManualSessionDialog(
   BuildContext context, {
   DateTime? initialDate,
   int? initialSeconds,
@@ -124,7 +130,7 @@ class _ManualSessionDialogState extends State<_ManualSessionDialog> {
       initialDate: _date,
       firstDate: DateTime(now.year - 2),
       lastDate: now, // gelecek tarih seçilemez
-      locale: const Locale('tr'),
+      locale: Locale('tr'),
     );
     if (picked != null) setState(() => _date = picked);
   }
@@ -135,39 +141,46 @@ class _ManualSessionDialogState extends State<_ManualSessionDialog> {
     final dateLabel = '${_date.day}.${_date.month}.${_date.year}';
 
     return AlertDialog(
-      title: Text(_isEdit ? 'Süreyi düzenle' : 'Manuel süre ekle'),
+      title: Text(
+        _isEdit
+            ? AppLocalizations.of(context).profileSureyiDuzenle
+            : AppLocalizations.of(context).profileManuelSureEkle,
+      ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ListTile(
             contentPadding: EdgeInsets.zero,
-            leading: const Icon(Icons.calendar_today),
-            title: const Text('Tarih'),
+            leading: Icon(Icons.calendar_today),
+            title: Text(AppLocalizations.of(context).profileTarih),
             subtitle: Text(dateLabel),
             trailing: TextButton(
               onPressed: _pickDate,
-              child: const Text('Değiştir'),
+              child: Text(AppLocalizations.of(context).profileDegistir),
             ),
           ),
-          const SizedBox(height: 8),
-          Text('Süre', style: theme.textTheme.labelLarge),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
+          Text(
+            AppLocalizations.of(context).profileSure,
+            style: theme.textTheme.labelLarge,
+          ),
+          SizedBox(height: 8),
           Row(
             children: [
               Expanded(
                 child: NumberStepper(
-                  label: 'Saat',
+                  label: AppLocalizations.of(context).profileSaat,
                   value: _hours,
                   min: 0,
                   max: 23,
                   onChanged: (v) => setState(() => _hours = v),
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Expanded(
                 child: NumberStepper(
-                  label: 'Dakika',
+                  label: AppLocalizations.of(context).profileDakika,
                   value: _minutes,
                   min: 0,
                   max: 59,
@@ -177,15 +190,18 @@ class _ManualSessionDialogState extends State<_ManualSessionDialog> {
             ],
           ),
           if (widget.subjects.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            Text('Ders (opsiyonel)', style: theme.textTheme.labelLarge),
-            const SizedBox(height: 8),
+            SizedBox(height: 16),
+            Text(
+              AppLocalizations.of(context).profileDersOpsiyonel,
+              style: theme.textTheme.labelLarge,
+            ),
+            SizedBox(height: 8),
             Wrap(
               spacing: 8,
               runSpacing: 8,
               children: [
                 ChoiceChip(
-                  label: const Text('Genel'),
+                  label: Text(AppLocalizations.of(context).profileGenel),
                   selected: _subjectId == null,
                   onSelected: (_) => setState(() => _subjectId = null),
                 ),
@@ -207,19 +223,19 @@ class _ManualSessionDialogState extends State<_ManualSessionDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Vazgeç'),
+          child: Text(AppLocalizations.of(context).profileVazgec),
         ),
         FilledButton(
           onPressed: _totalSeconds <= 0
               ? null
-              : () => Navigator.pop(
-                    context,
-                    (date: _date, seconds: _totalSeconds, subjectId: _subjectId),
-                  ),
-          child: const Text('Kaydet'),
+              : () => Navigator.pop(context, (
+                  date: _date,
+                  seconds: _totalSeconds,
+                  subjectId: _subjectId,
+                )),
+          child: Text(AppLocalizations.of(context).profileKaydet),
         ),
       ],
     );
   }
 }
-

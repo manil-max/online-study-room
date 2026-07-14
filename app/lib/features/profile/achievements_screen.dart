@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -12,8 +13,10 @@ class AchievementsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(authStateProvider).value;
     if (profile == null) {
-      return const Scaffold(
-        body: Center(child: Text('Giriş yapmalısınız.')),
+      return Scaffold(
+        body: Center(
+          child: Text(AppLocalizations.of(context).profileGirisYapmalisiniz),
+        ),
       );
     }
 

@@ -7,6 +7,7 @@ import 'package:online_study_room/data/providers/admin_providers.dart';
 import 'package:online_study_room/data/providers/auth_providers.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_admin_repository.dart';
 import 'package:online_study_room/features/admin/admin_screen.dart';
+import 'package:online_study_room/l10n/app_localizations.dart';
 
 void main() {
   testWidgets('AdminScreen özetleri ve raporları gösterir', (tester) async {
@@ -33,7 +34,12 @@ void main() {
           ),
           adminRepositoryProvider.overrideWithValue(repo),
         ],
-        child: const MaterialApp(home: AdminScreen()),
+        child: const MaterialApp(
+          locale: Locale('tr'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: AdminScreen(),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -41,7 +47,7 @@ void main() {
     expect(find.text('Yönetim Paneli'), findsOneWidget);
     expect(find.text('Kullanıcılar'), findsWidgets);
     expect(find.text('Raporlar'), findsWidgets);
-    
+
     // Raporlar sekmesine geç
     await tester.tap(find.text('Raporlar').first);
     await tester.pumpAndSettle();
@@ -74,7 +80,12 @@ void main() {
           ),
           adminRepositoryProvider.overrideWithValue(repo),
         ],
-        child: const MaterialApp(home: AdminScreen()),
+        child: const MaterialApp(
+          locale: Locale('tr'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: AdminScreen(),
+        ),
       ),
     );
     await tester.pumpAndSettle();

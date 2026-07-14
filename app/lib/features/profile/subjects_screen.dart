@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
@@ -17,41 +18,43 @@ class SubjectsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
     final subjectsAsync = ref.watch(userSubjectsProvider);
     final hasUser = ref.watch(authStateProvider).value != null;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Derslerim')),
+      appBar: AppBar(
+        title: Text(AppLocalizations.of(context).profileDerslerim),
+      ),
       floatingActionButton: hasUser
           ? FloatingActionButton.extended(
               onPressed: () => _addSubject(context, ref),
-              icon: const Icon(Icons.add),
-              label: const Text('Ders ekle'),
+              icon: Icon(Icons.add),
+              label: Text(l10n.profileDersEkle),
             )
           : null,
       body: subjectsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Dersler yüklenemedi: $e')),
+        loading: () => Center(child: CircularProgressIndicator()),
+        error: (_, _) =>
+            Center(child: Text(l10n.profileBeklenmeyenBirHataOlustu)),
         data: (subjects) {
           if (subjects.isEmpty) {
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Text(
-                  'Henüz dersin yok. "Ders ekle" ile başla.\n'
-                  'Ders seçmek zorunlu değil — istersen "Genel" çalışabilirsin.',
+                  '${l10n.profileHenuzDersinYok}\n${l10n.profileDersOpsiyonel}',
                   textAlign: TextAlign.center,
-                  style: theme.textTheme.bodyMedium
-                      ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ),
             );
           }
           return ListView(
             padding: const EdgeInsets.only(top: 8, bottom: 88),
-            children: [
-              for (final s in subjects) _SubjectTile(subject: s),
-            ],
+            children: [for (final s in subjects) _SubjectTile(subject: s)],
           );
         },
       ),
@@ -63,7 +66,9 @@ class SubjectsScreen extends ConsumerWidget {
     if (user == null) return;
     final result = await showSubjectDialog(context);
     if (result == null) return;
-    await ref.read(subjectRepositoryProvider).addSubject(
+    await ref
+        .read(subjectRepositoryProvider)
+        .addSubject(
           Subject(
             id: _uuid.v4(),
             userId: user.id,
@@ -96,9 +101,15 @@ class _SubjectTile extends ConsumerWidget {
             _delete(context, ref);
           }
         },
-        itemBuilder: (_) => const [
-          PopupMenuItem(value: 'edit', child: Text('Düzenle')),
-          PopupMenuItem(value: 'delete', child: Text('Sil')),
+        itemBuilder: (_) => [
+          PopupMenuItem(
+            value: 'edit',
+            child: Text(AppLocalizations.of(context).profileDuzenle),
+          ),
+          PopupMenuItem(
+            value: 'delete',
+            child: Text(AppLocalizations.of(context).profileSil),
+          ),
         ],
       ),
     );
@@ -111,7 +122,9 @@ class _SubjectTile extends ConsumerWidget {
       initialColor: subject.color,
     );
     if (result == null) return;
-    await ref.read(subjectRepositoryProvider).updateSubject(
+    await ref
+        .read(subjectRepositoryProvider)
+        .updateSubject(
           subject.copyWith(name: result.name, color: result.color),
         );
   }
@@ -120,19 +133,18 @@ class _SubjectTile extends ConsumerWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Dersi sil'),
+        title: Text(AppLocalizations.of(context).profileDersiSil),
         content: Text(
-          '"${subject.name}" dersi silinsin mi?\n'
-          'Bu derse ait geçmiş kayıtların süresi korunur, sadece "Genel" olur.',
+          '"${subject.name}"\n${AppLocalizations.of(context).profileBuDerseAitGecmis}',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Vazgeç'),
+            child: Text(AppLocalizations.of(context).profileVazgec),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Sil'),
+            child: Text(AppLocalizations.of(context).profileSil),
           ),
         ],
       ),
@@ -144,7 +156,7 @@ class _SubjectTile extends ConsumerWidget {
 
 /// Ders ekleme/düzenleme diyaloğunun sonucu.
 class SubjectFormResult {
-  const SubjectFormResult({required this.name, required this.color});
+  SubjectFormResult({required this.name, required this.color});
   final String name;
   final String color;
 }
@@ -157,10 +169,8 @@ Future<SubjectFormResult?> showSubjectDialog(
 }) {
   return showDialog<SubjectFormResult>(
     context: context,
-    builder: (_) => _SubjectDialog(
-      initialName: initialName,
-      initialColor: initialColor,
-    ),
+    builder: (_) =>
+        _SubjectDialog(initialName: initialName, initialColor: initialColor),
   );
 }
 
@@ -175,8 +185,9 @@ class _SubjectDialog extends StatefulWidget {
 }
 
 class _SubjectDialogState extends State<_SubjectDialog> {
-  late final TextEditingController _controller =
-      TextEditingController(text: widget.initialName ?? '');
+  late final TextEditingController _controller = TextEditingController(
+    text: widget.initialName ?? '',
+  );
   late String _color = widget.initialColor ?? kSubjectColorTokens.first;
 
   @override
@@ -194,8 +205,9 @@ class _SubjectDialogState extends State<_SubjectDialog> {
   @override
   Widget build(BuildContext context) {
     final isEdit = widget.initialName != null;
+    final l10n = AppLocalizations.of(context);
     return AlertDialog(
-      title: Text(isEdit ? 'Dersi düzenle' : 'Ders ekle'),
+      title: Text(isEdit ? l10n.profileDersiDuzenle : l10n.profileDersEkle),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -204,12 +216,12 @@ class _SubjectDialogState extends State<_SubjectDialog> {
             controller: _controller,
             autofocus: true,
             textCapitalization: TextCapitalization.words,
-            decoration: const InputDecoration(labelText: 'Ders adı'),
+            decoration: InputDecoration(labelText: l10n.profileDersAdi),
             onSubmitted: (_) => _submit(),
           ),
-          const SizedBox(height: 20),
-          const Text('Renk'),
-          const SizedBox(height: 8),
+          SizedBox(height: 20),
+          Text(l10n.profileRenk),
+          SizedBox(height: 8),
           Wrap(
             spacing: 12,
             runSpacing: 12,
@@ -227,12 +239,9 @@ class _SubjectDialogState extends State<_SubjectDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Vazgeç'),
+          child: Text(l10n.profileVazgec),
         ),
-        FilledButton(
-          onPressed: _submit,
-          child: const Text('Kaydet'),
-        ),
+        FilledButton(onPressed: _submit, child: Text(l10n.profileKaydet)),
       ],
     );
   }
@@ -254,7 +263,7 @@ class _ColorDot extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return InkWell(
-      customBorder: const CircleBorder(),
+      customBorder: CircleBorder(),
       onTap: onTap,
       child: Container(
         width: 36,
@@ -267,7 +276,11 @@ class _ColorDot extends StatelessWidget {
               : null,
         ),
         child: selected
-            ? Icon(Icons.check, color: Theme.of(context).colorScheme.onPrimary, size: 18)
+            ? Icon(
+                Icons.check,
+                color: Theme.of(context).colorScheme.onPrimary,
+                size: 18,
+              )
             : null,
       ),
     );

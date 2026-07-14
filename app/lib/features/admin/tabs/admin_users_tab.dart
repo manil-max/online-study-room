@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:online_study_room/data/models/admin_user_dto.dart';
 import 'package:online_study_room/data/providers/admin_providers.dart';
 import 'package:online_study_room/data/repositories/admin_repository.dart';
+import 'package:online_study_room/l10n/app_localizations.dart';
 
 class AdminUsersTab extends ConsumerWidget {
   const AdminUsersTab({super.key});
@@ -11,6 +12,7 @@ class AdminUsersTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final users = ref.watch(adminUsersProvider);
+    final l10n = AppLocalizations.of(context);
 
     return RefreshIndicator(
       onRefresh: () async {
@@ -19,10 +21,11 @@ class AdminUsersTab extends ConsumerWidget {
       },
       child: users.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, _) => Center(child: Text(err.toString())),
+        error: (err, _) =>
+            Center(child: Text(l10n.authBeklenmeyenBirHataOlustu)),
         data: (items) {
           if (items.isEmpty) {
-            return const Center(child: Text('Kullanıcı bulunamadı.'));
+            return Center(child: Text(l10n.adminKullaniciBulunamadi));
           }
           return ListView.separated(
             padding: const EdgeInsets.all(16),
@@ -49,6 +52,7 @@ class _UserCard extends ConsumerWidget {
     String action,
     String promptTitle,
   ) async {
+    final l10n = AppLocalizations.of(context);
     final reasonController = TextEditingController();
     final confirmed = await showDialog<bool>(
       context: context,
@@ -57,19 +61,19 @@ class _UserCard extends ConsumerWidget {
           title: Text(promptTitle),
           content: TextField(
             controller: reasonController,
-            decoration: const InputDecoration(
-              labelText: 'Gerekçe (Zorunlu)',
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              labelText: l10n.adminGerekceZorunlu,
+              border: const OutlineInputBorder(),
             ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('İptal'),
+              child: Text(l10n.adminIptal),
             ),
             FilledButton(
               onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Onayla'),
+              child: Text(l10n.adminOnayla),
             ),
           ],
         );
@@ -81,28 +85,30 @@ class _UserCard extends ConsumerWidget {
     if (reason.isEmpty) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Gerekçe belirtilmelidir.')),
+          SnackBar(content: Text(l10n.adminGerekceBelirtilmelidir)),
         );
       }
       return;
     }
 
     try {
-      await ref.read(adminRepositoryProvider).performUserAction(
+      await ref
+          .read(adminRepositoryProvider)
+          .performUserAction(
             action: action,
             targetUserId: user.id,
             reason: reason,
           );
       ref.invalidate(adminUsersProvider);
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('İşlem başarılı.')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.adminIslemBasarili)));
       }
-    } on AdminException catch (e) {
+    } on AdminException {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message)),
+          SnackBar(content: Text(l10n.authBeklenmeyenBirHataOlustu)),
         );
       }
     }
@@ -111,6 +117,7 @@ class _UserCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
     final isDeleted = user.deleted;
     final isSuspended = user.isSuspended;
 
@@ -132,24 +139,37 @@ class _UserCard extends ConsumerWidget {
                   ),
                 ),
                 if (isDeleted)
-                  const Chip(
-                    label: Text('Silinmiş'),
+                  Chip(
+                    label: Text(l10n.adminSilinmis),
                     visualDensity: VisualDensity.compact,
                   )
                 else if (isSuspended)
                   Chip(
-                    label: const Text('Askıda'),
+                    label: Text(l10n.adminAskida),
                     visualDensity: VisualDensity.compact,
                     backgroundColor: theme.colorScheme.errorContainer,
                   ),
               ],
             ),
             const SizedBox(height: 8),
-            Text('ID: ${user.id}', style: theme.textTheme.bodySmall),
+            Text(
+              l10n.adminIdGroupid(user.id),
+              style: theme.textTheme.bodySmall,
+            ),
             const SizedBox(height: 4),
-            Text('Kayıt: ${user.createdAt.toLocal().toString().substring(0, 16)}', style: theme.textTheme.bodySmall),
+            Text(
+              l10n.adminKayitUsercreatedattolocaltostringsubstring016(
+                user.createdAt.toLocal().toString().substring(0, 16),
+              ),
+              style: theme.textTheme.bodySmall,
+            ),
             if (user.lastSignInAt != null)
-              Text('Son Giriş: ${user.lastSignInAt!.toLocal().toString().substring(0, 16)}', style: theme.textTheme.bodySmall),
+              Text(
+                l10n.adminSonGirisUserlastsigninattolocaltostringsubstring016(
+                  user.lastSignInAt!.toLocal().toString().substring(0, 16),
+                ),
+                style: theme.textTheme.bodySmall,
+              ),
             if (!isDeleted) ...[
               const SizedBox(height: 12),
               Wrap(
@@ -161,10 +181,10 @@ class _UserCard extends ConsumerWidget {
                       context,
                       ref,
                       'send_password_reset',
-                      'Şifre Sıfırlama E-postası Gönder',
+                      l10n.adminSifreSifirlamaEpostasiGonder,
                     ),
                     icon: const Icon(Icons.lock_reset, size: 18),
-                    label: const Text('Şifre Sıfırla'),
+                    label: Text(l10n.adminSifreSifirla),
                   ),
                   if (isSuspended)
                     OutlinedButton.icon(
@@ -172,10 +192,10 @@ class _UserCard extends ConsumerWidget {
                         context,
                         ref,
                         'unsuspend_user',
-                        'Askıyı Kaldır',
+                        l10n.adminAskiyiKaldir,
                       ),
                       icon: const Icon(Icons.play_circle_outline, size: 18),
-                      label: const Text('Askı Kaldır'),
+                      label: Text(l10n.adminAskiKaldir),
                     )
                   else
                     OutlinedButton.icon(
@@ -183,24 +203,31 @@ class _UserCard extends ConsumerWidget {
                         context,
                         ref,
                         'suspend_user',
-                        'Kullanıcıyı Askıya Al',
+                        l10n.adminKullaniciyiAskiyaAl,
                       ),
                       icon: const Icon(Icons.pause_circle_outline, size: 18),
-                      label: const Text('Askıya Al'),
+                      label: Text(l10n.adminAskiyaAl),
                     ),
                   OutlinedButton.icon(
                     onPressed: () => _performAction(
                       context,
                       ref,
                       'soft_delete_user',
-                      'Kullanıcıyı Soft Delete Yap',
+                      l10n.adminKullaniciyiSoftDeleteYap,
                     ),
-                    icon: Icon(Icons.delete_outline, size: 18, color: theme.colorScheme.error),
-                    label: Text('Sil', style: TextStyle(color: theme.colorScheme.error)),
+                    icon: Icon(
+                      Icons.delete_outline,
+                      size: 18,
+                      color: theme.colorScheme.error,
+                    ),
+                    label: Text(
+                      l10n.adminSil,
+                      style: TextStyle(color: theme.colorScheme.error),
+                    ),
                   ),
                 ],
               ),
-            ]
+            ],
           ],
         ),
       ),

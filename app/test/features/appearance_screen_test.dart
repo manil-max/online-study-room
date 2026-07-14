@@ -4,18 +4,22 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:online_study_room/core/prefs/app_prefs.dart';
 import 'package:online_study_room/features/profile/appearance_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:online_study_room/l10n/app_localizations.dart';
 
 void main() {
-  testWidgets('AppearanceScreen shows predefined and custom palettes', (tester) async {
+  testWidgets('AppearanceScreen shows predefined and custom palettes', (
+    tester,
+  ) async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [
-          sharedPreferencesProvider.overrideWithValue(prefs),
-        ],
+        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
         child: const MaterialApp(
+          locale: Locale('tr'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: AppearanceScreen(),
         ),
       ),
@@ -30,7 +34,11 @@ void main() {
 
     // 3 custom palettes
     final scrollable = find.byType(Scrollable).first;
-    await tester.scrollUntilVisible(find.text('Özel Paletler'), 100, scrollable: scrollable);
+    await tester.scrollUntilVisible(
+      find.text('Özel Paletler'),
+      100,
+      scrollable: scrollable,
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('Özel Paletler'), findsOneWidget);
@@ -40,7 +48,11 @@ void main() {
 
     // Scroll down to edit buttons
     final editButtons = find.byTooltip('Düzenle');
-    await tester.scrollUntilVisible(editButtons.first, 100, scrollable: scrollable);
+    await tester.scrollUntilVisible(
+      editButtons.first,
+      100,
+      scrollable: scrollable,
+    );
     await tester.pumpAndSettle();
 
     expect(editButtons, findsNWidgets(3));

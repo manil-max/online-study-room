@@ -31,8 +31,10 @@ class UpdaterService {
 
   /// Derleme kanalı. Beta CI derlemesi `--dart-define=CHANNEL=beta` geçer;
   /// varsayılan `stable` olduğu için mevcut kullanıcılar etkilenmez.
-  static const String channel =
-      String.fromEnvironment('CHANNEL', defaultValue: 'stable');
+  static const String channel = String.fromEnvironment(
+    'CHANNEL',
+    defaultValue: 'stable',
+  );
 
   static bool get _isBeta => channel == 'beta';
 
@@ -114,8 +116,9 @@ class UpdaterService {
       _isBeta ? 'app-beta-release.apk' : 'app-release.apk';
 
   /// CI `windows-release.yml` ile hizalı MSIX adı.
-  static String get _windowsMsixName =>
-      _isBeta ? 'odak-kampi-windows-beta.msix' : 'odak-kampi-windows-stable.msix';
+  static String get _windowsMsixName => _isBeta
+      ? 'odak-kampi-windows-beta.msix'
+      : 'odak-kampi-windows-stable.msix';
 
   /// Beta kanalı için: prerelease + `beta` etiket + asset'i olan en yüksek build.
   static Map<String, dynamic>? _pickLatestBeta(

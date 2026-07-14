@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -32,15 +33,17 @@ class GamificationCard extends ConsumerWidget {
             data: (summary) {
               if (summary == null) {
                 return Text(
-                  'Başarılar giriş yaptıktan sonra görünür.',
+                  AppLocalizations.of(
+                    context,
+                  ).profileBasarilarGirisYaptiktanSonra,
                   style: theme.textTheme.bodyMedium,
                 );
               }
               return _SummaryContent(summary: summary);
             },
-            loading: () => const Center(child: CircularProgressIndicator()),
+            loading: () => Center(child: CircularProgressIndicator()),
             error: (error, stackTrace) => Text(
-              'Başarılar yüklenemedi.',
+              AppLocalizations.of(context).profileBasarilarYuklenemedi,
               style: TextStyle(color: theme.colorScheme.error),
             ),
           ),
@@ -58,6 +61,7 @@ class _SummaryContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
     final rank = summary.profile.crownRank;
     final rankColor = crownColorFor(rank, theme.colorScheme);
     final bar = xpBarMetrics(summary.profile.xp);
@@ -68,9 +72,12 @@ class _SummaryContent extends StatelessWidget {
         Row(
           children: [
             Icon(Icons.emoji_events_outlined, color: theme.colorScheme.primary),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             Expanded(
-              child: Text('Başarılar', style: theme.textTheme.titleMedium),
+              child: Text(
+                AppLocalizations.of(context).profileBasarilar,
+                style: theme.textTheme.titleMedium,
+              ),
             ),
             Chip(
               visualDensity: VisualDensity.compact,
@@ -79,12 +86,12 @@ class _SummaryContent extends StatelessWidget {
                 size: 18,
                 color: rankColor,
               ),
-              label: Text(crownLabelTr(rank)),
+              label: Text(_crownLabel(l10n, rank)),
             ),
-            const Icon(Icons.chevron_right),
+            Icon(Icons.chevron_right),
           ],
         ),
-        const SizedBox(height: 10),
+        SizedBox(height: 10),
         ClipRRect(
           borderRadius: BorderRadius.circular(6),
           child: LinearProgressIndicator(
@@ -94,25 +101,29 @@ class _SummaryContent extends StatelessWidget {
             backgroundColor: theme.colorScheme.surfaceContainerHighest,
           ),
         ),
-        const SizedBox(height: 4),
+        SizedBox(height: 4),
         Text(
-          '${summary.profile.xp} XP · sonraki taç ${bar.next} · saat başına +10 XP',
+          '${summary.profile.xp} / ${bar.next} XP',
           style: theme.textTheme.labelSmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         Wrap(
           spacing: 8,
           runSpacing: 8,
           children: [
             _MetricChip(
               icon: Icons.local_fire_department_outlined,
-              label: '${summary.freezeAwareStreak.streak} gün seri',
+              label: l10n.profileSummaryfreezeawarestreakstreakGunSeri(
+                '${summary.freezeAwareStreak.streak}',
+              ),
             ),
             _MetricChip(
               icon: Icons.shield_outlined,
-              label: '${summary.profile.streakFreezes} koruma hakkı',
+              label: l10n.profileSummaryprofilestreakfreezesKorumaHakki(
+                '${summary.profile.streakFreezes}',
+              ),
             ),
             _MetricChip(
               icon: Icons.timer_outlined,
@@ -120,18 +131,9 @@ class _SummaryContent extends StatelessWidget {
             ),
           ],
         ),
-        if (summary.freezeAwareStreak.freezesUsed > 0) ...[
-          const SizedBox(height: 8),
-          Text(
-            '${summary.freezeAwareStreak.freezesUsed} boş gün seri korumasıyla köprülendi.',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ],
-        const SizedBox(height: 10),
+        SizedBox(height: 10),
         Text(
-          'Rozetler ve katalog için dokun',
+          l10n.profileRozetlerinSerilerinVeIlerlemen,
           style: theme.textTheme.labelMedium?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),
@@ -139,6 +141,16 @@ class _SummaryContent extends StatelessWidget {
       ],
     );
   }
+}
+
+String _crownLabel(AppLocalizations l10n, String rank) {
+  return switch (normalizeCrownRank(rank)) {
+    'diamond_owl' => l10n.coreElmasTac,
+    'platinum_scholar' => l10n.corePlatinTac,
+    'gold_achiever' => l10n.coreAltinTac,
+    'silver_learner' => l10n.coreGumusTac,
+    _ => l10n.coreBronzTac,
+  };
 }
 
 class _MetricChip extends StatelessWidget {

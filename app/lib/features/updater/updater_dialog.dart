@@ -8,12 +8,14 @@ import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/notifications/notification_preferences.dart';
+import '../../l10n/app_localizations.dart';
 import 'release_notes_service.dart';
 import 'updater_service.dart';
 
 /// Açılışta çağrılır: yeni sürüm varsa güncelleme penceresini gösterir.
 /// Sessizdir; güncelleme yoksa veya hata olursa hiçbir şey yapmaz.
 Future<void> maybeShowUpdateDialog(BuildContext context) async {
+  final l10n = AppLocalizations.of(context);
   final prefs = await SharedPreferences.getInstance();
   if (!(prefs.getBool(NotificationPreferencesNotifier.kUpdates) ?? true)) {
     return;
@@ -28,7 +30,13 @@ Future<void> maybeShowUpdateDialog(BuildContext context) async {
       channel: UpdaterService.channel,
     );
     if (bundledNote != null) {
-      info = info.copyWith(releaseNotes: bundledNote.plainText);
+      info = info.copyWith(
+        releaseNotes: bundledNote.plainText(
+          highlightsLabel: l10n.updaterYenilikler,
+          fixesLabel: l10n.updaterDuzeltmeler,
+          notesLabel: l10n.updaterNotlar,
+        ),
+      );
     }
   }
 
@@ -65,6 +73,7 @@ class _UpdaterDialogState extends State<UpdaterDialog> {
   }
 
   Future<void> _downloadAndInstall() async {
+    final l10n = AppLocalizations.of(context);
     final cancelToken = CancelToken();
     setState(() {
       _downloading = true;
@@ -113,9 +122,7 @@ class _UpdaterDialogState extends State<UpdaterDialog> {
           if (mounted) {
             setState(() {
               _downloading = false;
-              _error =
-                  'Güvenlik doğrulaması başarısız (dosya bütünlüğü). '
-                  'Kurulum iptal edildi.';
+              _error = l10n.updaterKurulumIptalEdildi;
             });
           }
           return;
@@ -127,7 +134,7 @@ class _UpdaterDialogState extends State<UpdaterDialog> {
       if (result.type != ResultType.done && mounted) {
         setState(() {
           _downloading = false;
-          _error = 'Kurulum açılamadı: ${result.message}';
+          _error = l10n.updaterKurulumIptalEdildi;
         });
         return;
       }
@@ -138,9 +145,7 @@ class _UpdaterDialogState extends State<UpdaterDialog> {
       final cancelled = e is DioException && e.type == DioExceptionType.cancel;
       setState(() {
         _downloading = false;
-        _error = cancelled
-            ? null
-            : 'İndirme başarısız oldu. İnternet bağlantını kontrol et.';
+        _error = cancelled ? null : l10n.updaterIndirmeBasarisizOlduInternet;
       });
     }
   }
@@ -156,13 +161,18 @@ class _UpdaterDialogState extends State<UpdaterDialog> {
   Widget build(BuildContext context) {
     final info = widget.info;
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
 
     return AlertDialog(
       title: Row(
         children: [
           const Icon(Icons.system_update),
           const SizedBox(width: 8),
-          Expanded(child: Text('Güncelleme var: ${info.versionName}')),
+          Expanded(
+            child: Text(
+              l10n.updaterGuncellemeVarInfoversionname(info.versionName),
+            ),
+          ),
         ],
       ),
       content: SingleChildScrollView(
@@ -171,7 +181,10 @@ class _UpdaterDialogState extends State<UpdaterDialog> {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (info.releaseNotes.isNotEmpty) ...[
-              Text('Yenilikler:', style: theme.textTheme.titleSmall),
+              Text(
+                l10n.updaterYeniliklerYenilikler,
+                style: theme.textTheme.titleSmall,
+              ),
               const SizedBox(height: 4),
               Text(info.releaseNotes),
               const SizedBox(height: 16),
@@ -179,7 +192,11 @@ class _UpdaterDialogState extends State<UpdaterDialog> {
             if (_downloading) ...[
               LinearProgressIndicator(value: _progress == 0 ? null : _progress),
               const SizedBox(height: 8),
-              Text('İndiriliyor… %${(_progress * 100).toStringAsFixed(0)}'),
+              Text(
+                l10n.updaterIndiriliyorProgress100tostringasfixed0(
+                  (_progress * 100).toStringAsFixed(0),
+                ),
+              ),
             ],
             if (_error != null) ...[
               const SizedBox(height: 8),
@@ -192,18 +209,22 @@ class _UpdaterDialogState extends State<UpdaterDialog> {
           ? [
               TextButton(
                 onPressed: () => _cancelToken?.cancel(),
-                child: const Text('İptal'),
+                child: Text(l10n.updaterIptal),
               ),
             ]
           : [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Sonra'),
+                child: Text(l10n.updaterSonra),
               ),
               FilledButton.icon(
                 onPressed: _downloadAndInstall,
                 icon: const Icon(Icons.download),
-                label: Text(_error == null ? 'Güncelle' : 'Tekrar dene'),
+                label: Text(
+                  _error == null
+                      ? l10n.updaterGuncelle
+                      : l10n.updaterTekrarDene,
+                ),
               ),
             ],
     );

@@ -68,7 +68,7 @@
 - **Dal:** — (main)
 - **Başlangıç:** —
 - **Son güncelleme:** 2026-07-14 (Europe/Istanbul)
-- **Not:** WP-84 otomatik kalite kapısını geçti; katalog hazır. Ürün dili ve cihaz doğrulaması WP-89'da yapılacak.
+- **Not:** WP-85 otomatik kapıları geçti; cihaz/bağlam QA'sı WP-89'da yapılacak.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
@@ -113,7 +113,7 @@
 | WP-80 | [~] Test için bekliyor | Dinamik panel uygunluk hata düzeltmesi | beta-v19 cihaz bulgusu |
 | WP-81 | [~] Test için bekliyor | Android beta-v20 — bildirim teslimi + dinamik panel düzeltmeleri | WP-79/80 kod commitleri |
 | WP-84 | [~] Test için bekliyor | Kanonik `app_en.arb` / `app_tr.arb` kataloğu | WP-82 + WP-83 |
-| WP-85 | [ ] Bekliyor | Flutter göç A — hesap, profil, admin, bildirim, güncelleme | WP-84 |
+| WP-85 | [~] Test için bekliyor | Flutter göç A — hesap, profil, admin, bildirim, güncelleme | WP-84 |
 | WP-86 | [ ] Bekliyor | Flutter göç B — ana sayfa, sınıf ve istatistikler | WP-84 |
 | WP-87 | [ ] Bekliyor | Flutter göç C — saat, masaüstü, core ve veri etiketleri | WP-84 |
 | WP-88 | [~] Test için bekliyor | Native Android EN/TR kaynak göçü | WP-83 |
@@ -128,13 +128,6 @@
 > **Planlama notu:** WP-39 iptal; WP-48/49/50 kaldırıldı; geçici WP-72/73/74/75 (2026-07-14) zaten-yapılmış/yanlış açıldığı için iptal edildi. Sorun çıkarsa ayrı debug/release WP'si açılır.
 
 > **Küresel dil programı ortak sözleşmesi:** İngilizce şablon/varsayılan (`en`), Türkçe ikinci dil (`tr`). Yalnız sistem dil kodu `tr` ise Türkçe; diğer her locale İngilizce. Üretilen l10n kodu elle düzenlenmez/commit edilmez. Tüm WP'lerde migration/RLS etkisi yok; sır/PII çeviri dosyasına girmez; gün sınırı `Europe/Istanbul` kalır. Aynı anda en fazla iki çalışma hattı açılır.
-
-### WP-85: Flutter Göç A — Hesap ve Yönetim 👤
-- **Program/Faz:** Küresel açılım · UI göçü · **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-84
-- **Problem/Kapsam:** Hesap/yönetim yüzeylerini katalog çağrılarına geçir; yeni/eksik ARB anahtarı üretmek kapsam dışı.
-- **SAHİP:** `app/lib/features/{auth,profile,admin,notifications,updater}/**` ve eşleşen `app/test/features/**` testleri. **DOKUNMA:** ARB/l10n, diğer feature'lar, core/data, native.
-- **Adımlar:** Görünür metin, validation, tooltip/semantics ve boş-hata durumlarını `AppLocalizations`a geçir; EN/TR widget testlerini güncelle.
-- **Veri/RLS/Geri alma:** Etki yok; UI commitini geri al. **Edge-case:** auth hata eşleme, admin dinamik değerler, release note içeriği. **Kabul/DoD:** sahip yüzeyde allowlist dışı kullanıcı literalı 0; EN/TR test + analyze 0. **Tuzak:** sunucu hata metnini doğrudan göstermek. **Dal:** main/lane · **Model:** 🟣 Pro
 
 ### WP-86: Flutter Göç B — Çalışma ve Sosyal Alanlar 🏕️
 - **Program/Faz:** Küresel açılım · UI göçü · **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-84
@@ -165,6 +158,14 @@
 > Kod/otomatik test bitti; **cihaz QA veya ürün demo’su** bekleniyor.
 > Bu bölüm **aktif çalışma değildir** — ajan claim etmez, diğer WP’leri engellemez.
 > Kabul gelince kart buradan çıkar → **Tamamlanan**’a gider. Bug çıkarsa ayrı debug WP açılır.
+
+### WP-85: Flutter Göç A — Hesap ve Yönetim 👤
+- **Program/Faz:** Küresel açılım · UI göçü · **Ajan:** Codex · **Aşama:** Otomatik test geçti · **Kanıt:** `Kodda doğrulandı` / `Cihazda doğrulanmalı`
+- **Uygulandı:** Auth, profil, admin, bildirim merkezi ve güncelleyici yüzeylerindeki görünür chrome/validation/tooltip/boş-hata metinleri resmi `AppLocalizations` kataloğuna bağlandı. Auth/repository ve async hata nesneleri artık kullanıcıya doğrudan basılmıyor; kullanıcı tarafından girilen duyuru, hatırlatıcı, rapor ve sürüm-notu içeriği aynen korunuyor.
+- **Literal denetimi:** Sahip yüzeyde doğrudan UI literalı yalnız parola maskesi ve sayısal önizleme değerleri; Türkçe karakterli kalan sabitler yorumlar ile kullanıcıya gösterilmeyen auth hata sınıflandırma karşılaştırmalarıdır. ARB/generated l10n, core/data ve native yüzeylere dokunulmadı.
+- **Doğrulama:** `flutter analyze` 0 bulgu; tüm Flutter testleri 401/401 geçti. Auth + profil + güncelleyici için EN/TR widget kanıtı eklendi; mevcut profil/admin testleri resmi delegate sözleşmesine geçirildi; varsayılan EN uygulama smoke beklentileri güncellendi.
+- **Ne bekleniyor:** WP-89'da Android/Windows gerçek cihazda EN/TR bağlam, uzun İngilizce/overflow, ekran okuyucu ve katalog terim kalitesi kontrolü. Başarım koşullarının ayrıntılı ürün dili ve `profileSaat` İngilizce karşılığı gibi katalog bağlam bulguları WP-89 düzeltme penceresinde ele alınmalı.
+- **Veri/RLS/Geri alma:** Veri, migration, RLS veya repository davranışı değişmedi; geri alma UI commitidir.
 
 ### WP-84: Kanonik ARB Kataloğu 🔤
 - **Program/Faz:** Küresel açılım · katalog · **Ajan:** Codex · **Aşama:** Otomatik test geçti · **Kanıt:** `Kodda doğrulandı` / `Cihazda doğrulanmalı`

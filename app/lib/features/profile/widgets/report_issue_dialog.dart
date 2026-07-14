@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -35,20 +36,21 @@ class _ReportIssueDialogState extends ConsumerState<ReportIssueDialog> {
   }
 
   Future<void> _pickImage() async {
+    final l10n = AppLocalizations.of(context);
     try {
       final xFile = await _imagePicker.pickImage(
         source: ImageSource.gallery,
         imageQuality: 70, // Optimize size
       );
       if (xFile == null) return;
-      
+
       final bytes = await xFile.readAsBytes();
       // Simple 5MB check
       if (bytes.lengthInBytes > 5 * 1024 * 1024) {
-        _showError('Dosya boyutu 5MB''dan küçük olmalıdır.');
+        _showError(l10n.profileDosyaBoyutu5mbdanKucuk);
         return;
       }
-      
+
       String ext = xFile.name.split('.').last.toLowerCase();
       if (!['jpg', 'jpeg', 'png', 'webp'].contains(ext)) {
         ext = 'jpg'; // Fallback
@@ -58,17 +60,18 @@ class _ReportIssueDialogState extends ConsumerState<ReportIssueDialog> {
         _attachmentBytes = bytes;
         _attachmentExt = ext;
       });
-    } catch (e) {
-      _showError('Resim seçilemedi.');
+    } catch (_) {
+      _showError(l10n.profileResimSecilemedi);
     }
   }
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+    final l10n = AppLocalizations.of(context);
 
     final profile = ref.read(authStateProvider).value;
     if (profile == null) {
-      _showError('Geri bildirim göndermek için giriş yapmalısın.');
+      _showError(l10n.profileGeriBildirimGondermekIcin);
       return;
     }
 
@@ -88,10 +91,10 @@ class _ReportIssueDialogState extends ConsumerState<ReportIssueDialog> {
       ref.invalidate(adminDashboardSummaryProvider);
       ref.invalidate(adminFeedbackTicketsProvider);
       if (mounted) Navigator.of(context).pop(true);
-    } on AdminException catch (e) {
-      _showError(e.message);
+    } on AdminException {
+      _showError(l10n.profileGeriBildirimGonderilemedi);
     } catch (_) {
-      _showError('Geri bildirim gönderilemedi.');
+      _showError(l10n.profileGeriBildirimGonderilemedi);
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -107,7 +110,7 @@ class _ReportIssueDialogState extends ConsumerState<ReportIssueDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Geri bildirim gönder'),
+      title: Text(AppLocalizations.of(context).profileGeriBildirimGonder),
       content: Form(
         key: _formKey,
         child: SingleChildScrollView(
@@ -116,16 +119,16 @@ class _ReportIssueDialogState extends ConsumerState<ReportIssueDialog> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               SegmentedButton<FeedbackTicketKind>(
-                segments: const [
+                segments: [
                   ButtonSegment(
                     value: FeedbackTicketKind.feedback,
                     icon: Icon(Icons.lightbulb_outline),
-                    label: Text('Öneri'),
+                    label: Text(AppLocalizations.of(context).profileOneri),
                   ),
                   ButtonSegment(
                     value: FeedbackTicketKind.bug,
                     icon: Icon(Icons.bug_report_outlined),
-                    label: Text('Hata'),
+                    label: Text(AppLocalizations.of(context).profileHata),
                   ),
                 ],
                 selected: {_kind},
@@ -133,42 +136,44 @@ class _ReportIssueDialogState extends ConsumerState<ReportIssueDialog> {
                     ? null
                     : (values) => setState(() => _kind = values.single),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               TextFormField(
                 controller: _subjectController,
                 enabled: !_isSubmitting,
                 maxLength: kMaxFeedbackSubjectLength,
                 textInputAction: TextInputAction.next,
-                decoration: const InputDecoration(
-                  labelText: 'Konu',
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context).profileKonu,
                   border: OutlineInputBorder(),
                 ),
                 validator: (value) {
                   try {
                     normalizeFeedbackSubject(value ?? '');
                     return null;
-                  } on AdminException catch (e) {
-                    return e.message;
+                  } on AdminException {
+                    return AppLocalizations.of(
+                      context,
+                    ).profileBeklenmeyenBirHataOlustu;
                   }
                 },
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               TextFormField(
                 controller: _messageController,
                 enabled: !_isSubmitting,
                 minLines: 4,
                 maxLines: 7,
                 maxLength: kMaxFeedbackMessageLength,
-                decoration: const InputDecoration(
-                  labelText: 'Mesaj',
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context).profileMesaj,
                   alignLabelWithHint: true,
                   border: OutlineInputBorder(),
                 ),
                 validator: (val) => val == null || val.trim().isEmpty
-                    ? 'Mesaj gerekli'
+                    ? AppLocalizations.of(context).profileMesajGerekli
                     : null,
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               if (_attachmentBytes != null)
                 Stack(
                   alignment: Alignment.topRight,
@@ -178,7 +183,9 @@ class _ReportIssueDialogState extends ConsumerState<ReportIssueDialog> {
                       width: double.infinity,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Theme.of(context).dividerColor),
+                        border: Border.all(
+                          color: Theme.of(context).dividerColor,
+                        ),
                         image: DecorationImage(
                           image: MemoryImage(_attachmentBytes!),
                           fit: BoxFit.cover,
@@ -186,21 +193,25 @@ class _ReportIssueDialogState extends ConsumerState<ReportIssueDialog> {
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.cancel, color: Colors.white),
+                      icon: Icon(Icons.cancel, color: Colors.white),
                       onPressed: _isSubmitting
                           ? null
                           : () => setState(() {
-                                _attachmentBytes = null;
-                                _attachmentExt = null;
-                              }),
+                              _attachmentBytes = null;
+                              _attachmentExt = null;
+                            }),
                     ),
                   ],
                 )
               else
                 OutlinedButton.icon(
                   onPressed: _isSubmitting ? null : _pickImage,
-                  icon: const Icon(Icons.attach_file),
-                  label: const Text('Ekran görüntüsü ekle (Opsiyonel)'),
+                  icon: Icon(Icons.attach_file),
+                  label: Text(
+                    AppLocalizations.of(
+                      context,
+                    ).profileEkranGoruntusuEkleOpsiyonel,
+                  ),
                 ),
             ],
           ),
@@ -209,7 +220,7 @@ class _ReportIssueDialogState extends ConsumerState<ReportIssueDialog> {
       actions: [
         TextButton(
           onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(),
-          child: const Text('İptal'),
+          child: Text(AppLocalizations.of(context).profileIptal),
         ),
         FilledButton(
           onPressed: _isSubmitting ? null : _submit,
@@ -218,7 +229,7 @@ class _ReportIssueDialogState extends ConsumerState<ReportIssueDialog> {
                   dimension: 18,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : const Text('Gönder'),
+              : Text(AppLocalizations.of(context).profileGonder),
         ),
       ],
     );

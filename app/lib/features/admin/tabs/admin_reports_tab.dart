@@ -6,6 +6,7 @@ import 'package:online_study_room/data/models/feedback_ticket_note.dart';
 import 'package:online_study_room/data/providers/admin_providers.dart';
 import 'package:online_study_room/data/providers/auth_providers.dart';
 import 'package:online_study_room/data/repositories/admin_repository.dart';
+import 'package:online_study_room/l10n/app_localizations.dart';
 
 class AdminReportsTab extends ConsumerWidget {
   const AdminReportsTab({super.key});
@@ -13,6 +14,7 @@ class AdminReportsTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tickets = ref.watch(adminFeedbackTicketsProvider);
+    final l10n = AppLocalizations.of(context);
 
     return RefreshIndicator(
       onRefresh: () async {
@@ -21,10 +23,11 @@ class AdminReportsTab extends ConsumerWidget {
       },
       child: tickets.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(child: Text(error.toString())),
+        error: (error, _) =>
+            Center(child: Text(l10n.authBeklenmeyenBirHataOlustu)),
         data: (items) {
           if (items.isEmpty) {
-            return const Center(child: Text('Henüz rapor yok.'));
+            return Center(child: Text(l10n.adminHenuzRaporYok));
           }
           return ListView.separated(
             padding: const EdgeInsets.all(16),
@@ -55,6 +58,7 @@ class _TicketCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
     return Card(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
@@ -90,7 +94,7 @@ class _TicketCard extends ConsumerWidget {
               children: [
                 Chip(
                   visualDensity: VisualDensity.compact,
-                  label: Text(_statusLabel(ticket.status)),
+                  label: Text(_statusLabel(l10n, ticket.status)),
                 ),
                 if (ticket.reporterDisplayName?.isNotEmpty == true)
                   Chip(
@@ -102,18 +106,20 @@ class _TicketCard extends ConsumerWidget {
                   ActionChip(
                     visualDensity: VisualDensity.compact,
                     avatar: const Icon(Icons.image_outlined, size: 18),
-                    label: const Text('Ekran Görüntüsü'),
+                    label: Text(l10n.adminEkranGoruntusu),
                     onPressed: () {
                       showDialog(
                         context: context,
-                        builder: (_) => _AttachmentPreviewDialog(path: ticket.attachmentPath!),
+                        builder: (_) => _AttachmentPreviewDialog(
+                          path: ticket.attachmentPath!,
+                        ),
                       );
                     },
                   ),
                 ActionChip(
                   visualDensity: VisualDensity.compact,
                   avatar: const Icon(Icons.note_alt_outlined, size: 18),
-                  label: const Text('İç Notlar'),
+                  label: Text(l10n.adminIcNotlar),
                   onPressed: () => _showNotesDialog(context, ref),
                 ),
               ],
@@ -132,8 +138,9 @@ class _StatusMenu extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     return PopupMenuButton<FeedbackTicketStatus>(
-      tooltip: 'Durumu değiştir',
+      tooltip: l10n.adminDurumuDegistir,
       initialValue: ticket.status,
       onSelected: (status) async {
         final profile = ref.read(authStateProvider).value;
@@ -147,26 +154,26 @@ class _StatusMenu extends ConsumerWidget {
                 status: status,
               );
           ref.invalidate(adminFeedbackTicketsProvider);
-        } on AdminException catch (e) {
+        } on AdminException {
           if (!context.mounted) return;
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(e.message)));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l10n.authBeklenmeyenBirHataOlustu)),
+          );
         }
       },
       itemBuilder: (context) => [
         for (final status in FeedbackTicketStatus.values)
-          PopupMenuItem(value: status, child: Text(_statusLabel(status))),
+          PopupMenuItem(value: status, child: Text(_statusLabel(l10n, status))),
       ],
     );
   }
 }
 
-String _statusLabel(FeedbackTicketStatus status) {
+String _statusLabel(AppLocalizations l10n, FeedbackTicketStatus status) {
   return switch (status) {
-    FeedbackTicketStatus.open => 'Açık',
-    FeedbackTicketStatus.inProgress => 'İnceleniyor',
-    FeedbackTicketStatus.closed => 'Kapalı',
+    FeedbackTicketStatus.open => l10n.adminAcik,
+    FeedbackTicketStatus.inProgress => l10n.adminInceleniyor,
+    FeedbackTicketStatus.closed => l10n.adminKapali,
   };
 }
 
@@ -175,10 +182,12 @@ class _AttachmentPreviewDialog extends ConsumerStatefulWidget {
   final String path;
 
   @override
-  ConsumerState<_AttachmentPreviewDialog> createState() => _AttachmentPreviewDialogState();
+  ConsumerState<_AttachmentPreviewDialog> createState() =>
+      _AttachmentPreviewDialogState();
 }
 
-class _AttachmentPreviewDialogState extends ConsumerState<_AttachmentPreviewDialog> {
+class _AttachmentPreviewDialogState
+    extends ConsumerState<_AttachmentPreviewDialog> {
   String? _url;
   bool _loading = true;
 
@@ -189,7 +198,9 @@ class _AttachmentPreviewDialogState extends ConsumerState<_AttachmentPreviewDial
   }
 
   Future<void> _loadUrl() async {
-    final url = await ref.read(adminRepositoryProvider).getFeedbackAttachmentUrl(widget.path);
+    final url = await ref
+        .read(adminRepositoryProvider)
+        .getFeedbackAttachmentUrl(widget.path);
     if (mounted) {
       setState(() {
         _url = url;
@@ -200,6 +211,7 @@ class _AttachmentPreviewDialogState extends ConsumerState<_AttachmentPreviewDial
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Dialog(
       clipBehavior: Clip.antiAlias,
       child: Stack(
@@ -211,22 +223,25 @@ class _AttachmentPreviewDialogState extends ConsumerState<_AttachmentPreviewDial
               child: Center(child: CircularProgressIndicator()),
             )
           else if (_url == null)
-            const SizedBox(
+            SizedBox(
               height: 200,
-              child: Center(child: Text('Görsel yüklenemedi.')),
+              child: Center(child: Text(l10n.adminGorselYuklenemedi)),
             )
           else
-            InteractiveViewer(
-              child: Image.network(_url!, fit: BoxFit.contain),
-            ),
+            InteractiveViewer(child: Image.network(_url!, fit: BoxFit.contain)),
           Container(
             margin: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.scrim.withValues(alpha: 0.54),
+              color: Theme.of(
+                context,
+              ).colorScheme.scrim.withValues(alpha: 0.54),
               shape: BoxShape.circle,
             ),
             child: IconButton(
-              icon: Icon(Icons.close, color: Theme.of(context).colorScheme.onInverseSurface),
+              icon: Icon(
+                Icons.close,
+                color: Theme.of(context).colorScheme.onInverseSurface,
+              ),
               onPressed: () => Navigator.of(context).pop(),
             ),
           ),
@@ -258,17 +273,22 @@ class _TicketNotesDialogState extends ConsumerState<_TicketNotesDialog> {
   Future<void> _loadNotes() async {
     setState(() => _loading = true);
     try {
-      final notes = await ref.read(adminRepositoryProvider).fetchTicketNotes(widget.ticket.id);
+      final notes = await ref
+          .read(adminRepositoryProvider)
+          .fetchTicketNotes(widget.ticket.id);
       if (mounted) {
         setState(() {
           _notes = notes;
           _loading = false;
         });
       }
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
         setState(() => _loading = false);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+        final l10n = AppLocalizations.of(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.authBeklenmeyenBirHataOlustu)),
+        );
       }
     }
   }
@@ -281,22 +301,28 @@ class _TicketNotesDialogState extends ConsumerState<_TicketNotesDialog> {
     if (adminId == null) return;
 
     try {
-      await ref.read(adminRepositoryProvider).addTicketNote(
+      await ref
+          .read(adminRepositoryProvider)
+          .addTicketNote(
             ticketId: widget.ticket.id,
             note: text,
             adminId: adminId,
           );
       _noteController.clear();
       await _loadNotes();
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+        final l10n = AppLocalizations.of(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.authBeklenmeyenBirHataOlustu)),
+        );
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Dialog(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -307,15 +333,30 @@ class _TicketNotesDialogState extends ConsumerState<_TicketNotesDialog> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('İç Notlar', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.of(context).pop()),
+                Text(
+                  l10n.adminIcNotlar,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
               ],
             ),
             const Divider(),
             if (_loading)
-              const SizedBox(height: 100, child: Center(child: CircularProgressIndicator()))
+              const SizedBox(
+                height: 100,
+                child: Center(child: CircularProgressIndicator()),
+              )
             else if (_notes != null && _notes!.isEmpty)
-              const SizedBox(height: 100, child: Center(child: Text('Henüz not yok.')))
+              SizedBox(
+                height: 100,
+                child: Center(child: Text(l10n.adminHenuzNotYok)),
+              )
             else if (_notes != null)
               ConstrainedBox(
                 constraints: const BoxConstraints(maxHeight: 300),
@@ -326,7 +367,12 @@ class _TicketNotesDialogState extends ConsumerState<_TicketNotesDialog> {
                     final note = _notes![index];
                     return ListTile(
                       title: Text(note.note),
-                      subtitle: Text('Admin ID: ${note.adminId} • ${note.createdAt.toString().substring(0, 16)}'),
+                      subtitle: Text(
+                        l10n.adminAdminIdNoteadminidNotecreatedattostringsubstring0(
+                          note.adminId,
+                          note.createdAt.toString().substring(0, 16),
+                        ),
+                      ),
                       contentPadding: EdgeInsets.zero,
                     );
                   },
@@ -338,9 +384,9 @@ class _TicketNotesDialogState extends ConsumerState<_TicketNotesDialog> {
                 Expanded(
                   child: TextField(
                     controller: _noteController,
-                    decoration: const InputDecoration(
-                      hintText: 'Yeni not...',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      hintText: l10n.adminYeniNot,
+                      border: const OutlineInputBorder(),
                       isDense: true,
                     ),
                   ),

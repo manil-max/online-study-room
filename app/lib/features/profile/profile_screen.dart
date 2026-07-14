@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -26,7 +27,7 @@ class ProfileScreen extends ConsumerWidget {
     return Scaffold(
       appBar: isDesktopWindow
           ? null
-          : AppBar(title: const Text('Profil')),
+          : AppBar(title: Text(AppLocalizations.of(context).profileProfil)),
       body: ListView(
         padding: getSafeVerticalPadding(context, horizontal: 24, vertical: 24),
         children: [
@@ -48,8 +49,10 @@ class ProfileScreen extends ConsumerWidget {
                           radius: 48,
                         )
                       else
-                        const CrownedAvatar(
-                          displayName: 'Misafir',
+                        CrownedAvatar(
+                          displayName: AppLocalizations.of(
+                            context,
+                          ).profileMisafir,
                           radius: 48,
                         ),
                       if (profile != null)
@@ -58,9 +61,9 @@ class ProfileScreen extends ConsumerWidget {
                           bottom: 0,
                           child: Material(
                             color: theme.colorScheme.primary,
-                            shape: const CircleBorder(),
+                            shape: CircleBorder(),
                             child: InkWell(
-                              customBorder: const CircleBorder(),
+                              customBorder: CircleBorder(),
                               onTap: () => _pickAvatar(context, ref),
                               child: Padding(
                                 padding: const EdgeInsets.all(6),
@@ -76,7 +79,7 @@ class ProfileScreen extends ConsumerWidget {
                     ],
                   ),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -84,60 +87,67 @@ class ProfileScreen extends ConsumerWidget {
                       child: Text(
                         profile?.displayName.isNotEmpty == true
                             ? profile!.displayName
-                            : 'Misafir',
+                            : AppLocalizations.of(context).profileMisafir,
                         style: theme.textTheme.titleLarge,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     if (profile != null)
                       IconButton(
-                        tooltip: 'Adı düzenle',
-                        icon: const Icon(Icons.edit, size: 18),
+                        tooltip: AppLocalizations.of(context).profileAdiDuzenle,
+                        icon: Icon(Icons.edit, size: 18),
                         onPressed: () =>
                             _editName(context, ref, profile.displayName),
                       ),
                   ],
                 ),
-                const SizedBox(height: 24),
-                const GamificationCard(),
-                const SizedBox(height: 16),
+                SizedBox(height: 24),
+                GamificationCard(),
+                SizedBox(height: 16),
                 Card(
                   child: Column(
                     children: [
                       ListTile(
-                        leading: const Icon(Icons.history),
-                        title: const Text('Çalışma kayıtlarım'),
-                        subtitle: const Text(
-                          'Manuel süre ekle, düzenle, sil',
+                        leading: Icon(Icons.history),
+                        title: Text(
+                          AppLocalizations.of(context).profileCalismaKayitlarim,
                         ),
-                        trailing: const Icon(Icons.chevron_right),
+                        subtitle: Text(
+                          AppLocalizations.of(
+                            context,
+                          ).profileManuelSureEkleDuzenle,
+                        ),
+                        trailing: Icon(Icons.chevron_right),
                         onTap: () => showDesktopPanel<void>(
                           context: context,
-                          builder: (_) => const SessionHistoryScreen(),
+                          builder: (_) => SessionHistoryScreen(),
                         ),
                       ),
-                      const Divider(height: 1),
+                      Divider(height: 1),
                       ListTile(
-                        leading: const Icon(Icons.settings_outlined),
-                        title: const Text('Ayarlar'),
-                        subtitle: const Text(
-                          'Görünüm, Ana Sayfa, sayaç ve bildirimler',
+                        leading: Icon(Icons.settings_outlined),
+                        title: Text(
+                          AppLocalizations.of(context).profileAyarlar,
                         ),
-                        trailing: const Icon(Icons.chevron_right),
+                        subtitle: Text(
+                          AppLocalizations.of(
+                            context,
+                          ).profileGorunumAnaSayfaSayac,
+                        ),
+                        trailing: Icon(Icons.chevron_right),
                         onTap: () => showDesktopPanel<void>(
                           context: context,
-                          builder: (_) => const SettingsScreen(),
+                          builder: (_) => SettingsScreen(),
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 FilledButton.tonalIcon(
-                  onPressed: () =>
-                      ref.read(authRepositoryProvider).signOut(),
-                  icon: const Icon(Icons.logout),
-                  label: const Text('Çıkış yap'),
+                  onPressed: () => ref.read(authRepositoryProvider).signOut(),
+                  icon: Icon(Icons.logout),
+                  label: Text(AppLocalizations.of(context).profileCikisYap),
                 ),
               ],
             ),
@@ -146,7 +156,6 @@ class ProfileScreen extends ConsumerWidget {
       ),
     );
   }
-
 }
 
 Future<void> _editName(
@@ -154,25 +163,26 @@ Future<void> _editName(
   WidgetRef ref,
   String current,
 ) async {
+  final l10n = AppLocalizations.of(context);
   final controller = TextEditingController(text: current);
   final name = await showDialog<String>(
     context: context,
     builder: (ctx) => AlertDialog(
-      title: const Text('Görünen adı düzenle'),
+      title: Text(l10n.profileGorunenAdiDuzenle),
       content: TextField(
         controller: controller,
         autofocus: true,
         textCapitalization: TextCapitalization.words,
-        decoration: const InputDecoration(labelText: 'Görünen ad'),
+        decoration: InputDecoration(labelText: l10n.profileGorunenAd),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(ctx),
-          child: const Text('Vazgeç'),
+          child: Text(l10n.profileVazgec),
         ),
         FilledButton(
           onPressed: () => Navigator.pop(ctx, controller.text),
-          child: const Text('Kaydet'),
+          child: Text(l10n.profileKaydet),
         ),
       ],
     ),
@@ -184,13 +194,16 @@ Future<void> _editName(
   try {
     await ref.read(authRepositoryProvider).updateDisplayName(name);
     ref.invalidate(authStateProvider);
-  } on AuthException catch (e) {
-    messenger.showSnackBar(SnackBar(content: Text(e.message)));
+  } on AuthException {
+    messenger.showSnackBar(
+      SnackBar(content: Text(l10n.authBeklenmeyenBirHataOlustu)),
+    );
   }
 }
 
 Future<void> _pickAvatar(BuildContext context, WidgetRef ref) async {
   final messenger = ScaffoldMessenger.of(context);
+  final l10n = AppLocalizations.of(context);
   final picker = ImagePicker();
   final file = await picker.pickImage(
     source: ImageSource.gallery,
@@ -201,7 +214,8 @@ Future<void> _pickAvatar(BuildContext context, WidgetRef ref) async {
   if (file == null) return;
 
   final bytes = await file.readAsBytes();
-  final contentType = file.mimeType ??
+  final contentType =
+      file.mimeType ??
       (file.name.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg');
   try {
     await ref
@@ -209,9 +223,11 @@ Future<void> _pickAvatar(BuildContext context, WidgetRef ref) async {
         .updateAvatar(bytes: bytes, contentType: contentType);
     ref.invalidate(authStateProvider);
     messenger.showSnackBar(
-      const SnackBar(content: Text('Profil fotoğrafı güncellendi')),
+      SnackBar(content: Text(l10n.profileProfilFotografiGuncellendi)),
     );
-  } on AuthException catch (e) {
-    messenger.showSnackBar(SnackBar(content: Text(e.message)));
+  } on AuthException {
+    messenger.showSnackBar(
+      SnackBar(content: Text(l10n.authBeklenmeyenBirHataOlustu)),
+    );
   }
 }

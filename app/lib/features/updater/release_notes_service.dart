@@ -38,11 +38,12 @@ class ReleaseNotesService {
         : null;
     if (releases is! List) return const [];
 
-    final notes = releases
-        .whereType<Map<String, dynamic>>()
-        .map(ReleaseNote.fromJson)
-        .toList()
-      ..sort((a, b) => b.buildNumber.compareTo(a.buildNumber));
+    final notes =
+        releases
+            .whereType<Map<String, dynamic>>()
+            .map(ReleaseNote.fromJson)
+            .toList()
+          ..sort((a, b) => b.buildNumber.compareTo(a.buildNumber));
     return notes;
   }
 
@@ -77,7 +78,8 @@ class ReleaseNotesService {
 
   Future<bool> shouldShowWhatsNew({int? currentBuildNumber}) async {
     final buildNumber =
-        currentBuildNumber ?? (int.tryParse((await _packageInfoLoader()).buildNumber) ?? 0);
+        currentBuildNumber ??
+        (int.tryParse((await _packageInfoLoader()).buildNumber) ?? 0);
     if (buildNumber <= 0) return false;
     final prefs = await _prefs();
     final lastSeen = prefs.getInt(_kLastSeenBuild) ?? 0;
@@ -149,7 +151,11 @@ class ReleaseNote {
   String get displayVersion =>
       '$versionName+$buildNumber ${channel == 'beta' ? 'Beta' : 'Stable'}';
 
-  String get plainText {
+  String plainText({
+    required String highlightsLabel,
+    required String fixesLabel,
+    required String notesLabel,
+  }) {
     final buffer = StringBuffer();
     if (title.isNotEmpty) buffer.writeln(title);
     void section(String label, List<String> items) {
@@ -161,9 +167,9 @@ class ReleaseNote {
       }
     }
 
-    section('Yenilikler', highlights);
-    section('Düzeltmeler', fixes);
-    section('Notlar', notes);
+    section(highlightsLabel, highlights);
+    section(fixesLabel, fixes);
+    section(notesLabel, notes);
     return buffer.toString().trim();
   }
 

@@ -1,3 +1,4 @@
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -50,16 +51,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Future<void> _openReportDialog() async {
     final sent = await showDialog<bool>(
       context: context,
-      builder: (_) => const ReportIssueDialog(),
+      builder: (_) => ReportIssueDialog(),
     );
     if (!mounted || sent != true) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Geri bildirimin gönderildi.')),
+      SnackBar(
+        content: Text(
+          AppLocalizations.of(context).profileGeriBildiriminGonderildi,
+        ),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final gridDensity = ref.watch(dashboardGridDensityProvider);
     final gridColumns = ref.watch(dashboardGridColumnsProvider);
     final profile = ref.watch(authStateProvider).value;
@@ -72,192 +78,225 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           );
 
     final list = ListView(
-        padding: getSafePadding(
-          context,
-          const EdgeInsets.fromLTRB(16, 12, 16, 24),
-        ),
-        children: [
-          DesktopReadingBody(
-            maxWidth: DesktopSurface.readingWidth,
-            padding: EdgeInsets.zero,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-          _SettingsCard(
-            child: ListTile(
-              leading: const Icon(Icons.manage_accounts),
-              title: const Text('Hesabımı Yönet'),
-              subtitle: const Text('E-posta, şifre ve güvenli çıkış'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const AccountSettingsScreen(),
+      padding: getSafePadding(
+        context,
+        const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      ),
+      children: [
+        DesktopReadingBody(
+          maxWidth: DesktopSurface.readingWidth,
+          padding: EdgeInsets.zero,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _SettingsCard(
+                child: ListTile(
+                  leading: Icon(Icons.manage_accounts),
+                  title: Text(
+                    AppLocalizations.of(context).profileHesabimiYonet,
+                  ),
+                  subtitle: Text(
+                    AppLocalizations.of(context).profileEpostaSifreVeGuvenli,
+                  ),
+                  trailing: Icon(Icons.chevron_right),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => AccountSettingsScreen()),
+                  ),
                 ),
               ),
-            ),
-          ),
-          const SizedBox(height: 10),
-          _SettingsCard(
-            child: ListTile(
-              leading: const Icon(Icons.color_lens_outlined),
-              title: const Text('Görünüm ve atmosfer temaları'),
-              subtitle: const Text(
-                'Buzul, ateş, neon, yumuşak… tüm arayüz havası',
-              ),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const AppearanceScreen()),
-              ),
-            ),
-          ),
-          const SizedBox(height: 10),
-          _SettingsCard(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-              child: DropdownButtonFormField<DashboardGridDensity>(
-                key: ValueKey(gridDensity),
-                initialValue: gridDensity,
-                decoration: InputDecoration(
-                  labelText: 'Izgara yoğunluğu',
-                  helperText: 'Bu cihazda $gridColumns sütun kullanılıyor',
-                  prefixIcon: const Icon(Icons.grid_view_outlined),
-                  border: const OutlineInputBorder(),
+              SizedBox(height: 10),
+              _SettingsCard(
+                child: ListTile(
+                  leading: Icon(Icons.color_lens_outlined),
+                  title: Text(
+                    AppLocalizations.of(
+                      context,
+                    ).profileGorunumVeAtmosferTemalari,
+                  ),
+                  subtitle: Text(l10n.profileGorunumVeAtmosfer),
+                  trailing: Icon(Icons.chevron_right),
+                  onTap: () => Navigator.of(
+                    context,
+                  ).push(MaterialPageRoute(builder: (_) => AppearanceScreen())),
                 ),
-                items: [
-                  for (final density in DashboardGridDensity.values)
-                    DropdownMenuItem(
-                      value: density,
-                      child: Text(density.label),
+              ),
+              SizedBox(height: 10),
+              _SettingsCard(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                  child: DropdownButtonFormField<DashboardGridDensity>(
+                    key: ValueKey(gridDensity),
+                    initialValue: gridDensity,
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(
+                        context,
+                      ).profileIzgaraYogunlugu,
+                      helperText: l10n.profileBuCihazdaGridcolumnsSutun(
+                        '$gridColumns',
+                      ),
+                      prefixIcon: Icon(Icons.grid_view_outlined),
+                      border: OutlineInputBorder(),
                     ),
-                ],
-                onChanged: (value) {
-                  if (value != null) {
-                    ref.read(dashboardGridDensityProvider.notifier).set(value);
-                  }
-                },
-              ),
-            ),
-          ),
-          const SizedBox(height: 10),
-          _SettingsCard(
-            child: ListTile(
-              leading: Text(
-                animal?.emoji ?? '🦊',
-                style: const TextStyle(fontSize: 26),
-              ),
-              title: const Text('Kamp hayvanın'),
-              subtitle: Text(
-                animal == null
-                    ? 'Seni temsil eden hayvanı seç'
-                    : '${animal.label} — dokunup değiştir',
-              ),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: profile == null ? null : _pickAnimal,
-            ),
-          ),
-          const SizedBox(height: 10),
-          _SettingsCard(
-            child: ListTile(
-              leading: const Icon(Icons.notifications_outlined),
-              title: const Text('Bildirim Merkezi'),
-              subtitle: const Text(
-                'Dürtme, hatırlatıcı, duyuru ve sessiz saatleri yönet',
-              ),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const NotificationCenterScreen(),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 10),
-          _SettingsCard(
-            child: ListTile(
-              leading: const Icon(Icons.widgets_outlined),
-              title: const Text('Widget ve alarm izinleri'),
-              subtitle: const Text(
-                'Ana ekran widget’ları · bildirim, kesin alarm, pil, tam ekran',
-              ),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const ClockWidgetsScreen(),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 10),
-          _SettingsCard(
-            child: SwitchListTile(
-              secondary: const Icon(Icons.mark_email_unread_outlined),
-              title: const Text('Aylık çalışma raporu (E-posta)'),
-              subtitle: const Text(
-                'Her ayın 2\'sinde e-posta ile detaylı çalışma istatistikleri ve özetlerini al.',
-              ),
-              value: profile?.monthlyReportOptIn ?? true,
-              onChanged: profile == null
-                  ? null
-                  : (val) {
-                      ref.read(authRepositoryProvider).updateMonthlyReportOptIn(val);
+                    items: [
+                      for (final density in DashboardGridDensity.values)
+                        DropdownMenuItem(
+                          value: density,
+                          child: Text(density.label),
+                        ),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) {
+                        ref
+                            .read(dashboardGridDensityProvider.notifier)
+                            .set(value);
+                      }
                     },
-            ),
-          ),
-          const SizedBox(height: 10),
-          _SettingsCard(
-            child: ListTile(
-              leading: const Icon(Icons.new_releases_outlined),
-              title: const Text('Sürüm ve güncellemeler'),
-              subtitle: const Text('Yenilikleri ve geçmiş sürüm notlarını oku'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const ReleaseNotesScreen()),
+                  ),
+                ),
               ),
-            ),
-          ),
-          const SizedBox(height: 10),
-          const _SettingsCard(
-            child: ListTile(
-              leading: Icon(Icons.shortcut_outlined),
-              title: Text('Uygulama Kısayolları (Rutinler)'),
-              subtitle: Text(
-                'Samsung Modes & Routines veya Tasker ile Odak Başlat, Mola Ver ve Sohbet eylemlerini kullan',
+              SizedBox(height: 10),
+              _SettingsCard(
+                child: ListTile(
+                  leading: Text(
+                    animal?.emoji ?? '🦊',
+                    style: TextStyle(fontSize: 26),
+                  ),
+                  title: Text(AppLocalizations.of(context).profileKampHayvanin),
+                  subtitle: Text(
+                    animal == null
+                        ? AppLocalizations.of(
+                            context,
+                          ).profileSeniTemsilEdenHayvani
+                        : l10n.profileDegistir,
+                  ),
+                  trailing: Icon(Icons.chevron_right),
+                  onTap: profile == null ? null : _pickAnimal,
+                ),
               ),
-            ),
-          ),
-          const SizedBox(height: 10),
-          _SettingsCard(
-            child: ListTile(
-              leading: const Icon(Icons.feedback_outlined),
-              title: const Text('Geri bildirim gönder'),
-              subtitle: const Text('Hata veya önerini bize ilet'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: profile == null ? null : _openReportDialog,
-            ),
-          ),
-          if (isAdmin) ...[
-            const SizedBox(height: 10),
-            _SettingsCard(
-              child: ListTile(
-                leading: const Icon(Icons.admin_panel_settings_outlined),
-                title: const Text('Yönetim'),
-                subtitle: const Text('Özetler ve kullanıcı raporları'),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => Navigator.of(
-                  context,
-                ).push(MaterialPageRoute(builder: (_) => const AdminScreen())),
+              SizedBox(height: 10),
+              _SettingsCard(
+                child: ListTile(
+                  leading: Icon(Icons.notifications_outlined),
+                  title: Text(
+                    AppLocalizations.of(context).profileBildirimMerkezi,
+                  ),
+                  subtitle: Text(
+                    AppLocalizations.of(
+                      context,
+                    ).profileDurtmeHatirlaticiDuyuruVe,
+                  ),
+                  trailing: Icon(Icons.chevron_right),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => NotificationCenterScreen(),
+                    ),
+                  ),
+                ),
               ),
-            ),
-          ],
+              SizedBox(height: 10),
+              _SettingsCard(
+                child: ListTile(
+                  leading: Icon(Icons.widgets_outlined),
+                  title: Text(
+                    AppLocalizations.of(context).profileWidgetVeAlarmIzinleri,
+                  ),
+                  subtitle: Text(l10n.notificationsCihazIzinleri),
+                  trailing: Icon(Icons.chevron_right),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => ClockWidgetsScreen()),
+                  ),
+                ),
+              ),
+              SizedBox(height: 10),
+              _SettingsCard(
+                child: SwitchListTile(
+                  secondary: Icon(Icons.mark_email_unread_outlined),
+                  title: Text(
+                    AppLocalizations.of(
+                      context,
+                    ).profileAylikCalismaRaporuEposta,
+                  ),
+                  subtitle: Text(l10n.profileOzetlerVeKullaniciRaporlari),
+                  value: profile?.monthlyReportOptIn ?? true,
+                  onChanged: profile == null
+                      ? null
+                      : (val) {
+                          ref
+                              .read(authRepositoryProvider)
+                              .updateMonthlyReportOptIn(val);
+                        },
+                ),
+              ),
+              SizedBox(height: 10),
+              _SettingsCard(
+                child: ListTile(
+                  leading: Icon(Icons.new_releases_outlined),
+                  title: Text(
+                    AppLocalizations.of(context).profileSurumVeGuncellemeler,
+                  ),
+                  subtitle: Text(
+                    AppLocalizations.of(
+                      context,
+                    ).profileYenilikleriVeGecmisSurum,
+                  ),
+                  trailing: Icon(Icons.chevron_right),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => ReleaseNotesScreen()),
+                  ),
+                ),
+              ),
+              SizedBox(height: 10),
+              _SettingsCard(
+                child: ListTile(
+                  leading: Icon(Icons.shortcut_outlined),
+                  title: Text(
+                    AppLocalizations.of(
+                      context,
+                    ).profileUygulamaKisayollariRutinler,
+                  ),
+                ),
+              ),
+              SizedBox(height: 10),
+              _SettingsCard(
+                child: ListTile(
+                  leading: Icon(Icons.feedback_outlined),
+                  title: Text(
+                    AppLocalizations.of(context).profileGeriBildirimGonder,
+                  ),
+                  subtitle: Text(
+                    AppLocalizations.of(context).profileHataVeyaOneriniBize,
+                  ),
+                  trailing: Icon(Icons.chevron_right),
+                  onTap: profile == null ? null : _openReportDialog,
+                ),
+              ),
+              if (isAdmin) ...[
+                SizedBox(height: 10),
+                _SettingsCard(
+                  child: ListTile(
+                    leading: Icon(Icons.admin_panel_settings_outlined),
+                    title: Text(AppLocalizations.of(context).profileYonetim),
+                    subtitle: Text(
+                      AppLocalizations.of(
+                        context,
+                      ).profileOzetlerVeKullaniciRaporlari,
+                    ),
+                    trailing: Icon(Icons.chevron_right),
+                    onTap: () => Navigator.of(
+                      context,
+                    ).push(MaterialPageRoute(builder: (_) => AdminScreen())),
+                  ),
+                ),
               ],
-            ),
+            ],
           ),
-        ],
+        ),
+      ],
     );
 
     if (widget.embedded) return list;
     return Scaffold(
-      appBar: AppBar(title: const Text('Ayarlar')),
+      appBar: AppBar(title: Text(l10n.profileAyarlar)),
       body: list,
     );
   }

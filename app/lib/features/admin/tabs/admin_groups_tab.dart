@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:online_study_room/data/models/study_group.dart';
 import 'package:online_study_room/data/providers/admin_providers.dart';
 import 'package:online_study_room/data/repositories/admin_repository.dart';
+import 'package:online_study_room/l10n/app_localizations.dart';
 
 class AdminGroupsTab extends ConsumerWidget {
   const AdminGroupsTab({super.key});
@@ -11,6 +12,7 @@ class AdminGroupsTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final groups = ref.watch(adminGroupsProvider);
+    final l10n = AppLocalizations.of(context);
 
     return RefreshIndicator(
       onRefresh: () async {
@@ -19,10 +21,11 @@ class AdminGroupsTab extends ConsumerWidget {
       },
       child: groups.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, _) => Center(child: Text(err.toString())),
+        error: (err, _) =>
+            Center(child: Text(l10n.authBeklenmeyenBirHataOlustu)),
         data: (items) {
           if (items.isEmpty) {
-            return const Center(child: Text('Grup bulunamadı.'));
+            return Center(child: Text(l10n.adminGrupBulunamadi));
           }
           return ListView.separated(
             padding: const EdgeInsets.all(16),
@@ -49,6 +52,7 @@ class _GroupCard extends ConsumerWidget {
     String action,
     String promptTitle,
   ) async {
+    final l10n = AppLocalizations.of(context);
     final reasonController = TextEditingController();
     final targetUserController = TextEditingController();
     final requiresUser = action == 'remove_group_member';
@@ -64,18 +68,18 @@ class _GroupCard extends ConsumerWidget {
               if (requiresUser) ...[
                 TextField(
                   controller: targetUserController,
-                  decoration: const InputDecoration(
-                    labelText: 'Hedef Kullanıcı ID (Zorunlu)',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: l10n.adminHedefKullaniciIdZorunlu,
+                    border: const OutlineInputBorder(),
                   ),
                 ),
                 const SizedBox(height: 12),
               ],
               TextField(
                 controller: reasonController,
-                decoration: const InputDecoration(
-                  labelText: 'Gerekçe (Zorunlu)',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.adminGerekceZorunlu,
+                  border: const OutlineInputBorder(),
                 ),
               ),
             ],
@@ -83,11 +87,11 @@ class _GroupCard extends ConsumerWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('İptal'),
+              child: Text(l10n.adminIptal),
             ),
             FilledButton(
               onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Onayla'),
+              child: Text(l10n.adminOnayla),
             ),
           ],
         );
@@ -101,14 +105,16 @@ class _GroupCard extends ConsumerWidget {
     if (reason.isEmpty || (requiresUser && targetUser.isEmpty)) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Gerekli alanlar doldurulmalıdır.')),
+          SnackBar(content: Text(l10n.adminGerekliAlanlarDoldurulmalidir)),
         );
       }
       return;
     }
 
     try {
-      await ref.read(adminRepositoryProvider).performGroupAction(
+      await ref
+          .read(adminRepositoryProvider)
+          .performGroupAction(
             action: action,
             targetGroupId: group.id,
             targetUserId: requiresUser ? targetUser : null,
@@ -116,14 +122,14 @@ class _GroupCard extends ConsumerWidget {
           );
       ref.invalidate(adminGroupsProvider);
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('İşlem başarılı.')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.adminIslemBasarili)));
       }
-    } on AdminException catch (e) {
+    } on AdminException {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message)),
+          SnackBar(content: Text(l10n.authBeklenmeyenBirHataOlustu)),
         );
       }
     }
@@ -132,6 +138,7 @@ class _GroupCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
 
     return Card(
       child: Padding(
@@ -139,12 +146,12 @@ class _GroupCard extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              group.name,
-              style: theme.textTheme.titleMedium,
-            ),
+            Text(group.name, style: theme.textTheme.titleMedium),
             const SizedBox(height: 8),
-            Text('ID: ${group.id}', style: theme.textTheme.bodySmall),
+            Text(
+              l10n.adminIdGroupid(group.id),
+              style: theme.textTheme.bodySmall,
+            ),
             const SizedBox(height: 12),
             Wrap(
               spacing: 8,
@@ -155,20 +162,27 @@ class _GroupCard extends ConsumerWidget {
                     context,
                     ref,
                     'remove_group_member',
-                    'Üyeyi At',
+                    l10n.adminUyeyiAt,
                   ),
                   icon: const Icon(Icons.person_remove, size: 18),
-                  label: const Text('Üye At'),
+                  label: Text(l10n.adminUyeAt),
                 ),
                 OutlinedButton.icon(
                   onPressed: () => _performAction(
                     context,
                     ref,
                     'delete_group',
-                    'Grubu Sil',
+                    l10n.adminGrubuSil,
                   ),
-                  icon: Icon(Icons.delete_outline, size: 18, color: theme.colorScheme.error),
-                  label: Text('Grubu Sil', style: TextStyle(color: theme.colorScheme.error)),
+                  icon: Icon(
+                    Icons.delete_outline,
+                    size: 18,
+                    color: theme.colorScheme.error,
+                  ),
+                  label: Text(
+                    l10n.adminGrubuSil,
+                    style: TextStyle(color: theme.colorScheme.error),
+                  ),
                 ),
               ],
             ),
