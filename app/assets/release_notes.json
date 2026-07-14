@@ -3,6 +3,24 @@
   "source": "CHANGELOG.md",
   "releases": [
     {
+      "versionName": "1.0.21",
+      "buildNumber": 21,
+      "channel": "stable",
+      "date": "2026-07-15",
+      "title": "v21: global grup erişimi",
+      "highlights": [
+        "Açık gruplar aranabilir; kapasite ve günlük hedef görülebilir, tek eylemle katılınabilir.",
+        "Yeni veya mevcut gruplar Gizli ya da Herkese açık olarak ayarlanabilir.",
+        "Bu yüzey İngilizce ve Türkçe çalışır; diğer sistem dilleri İngilizceye düşer."
+      ],
+      "fixes": [
+        "Keşif kartları davet kodu, üye listesi, kullanıcı profili veya grup çalışma verisi göstermez."
+      ],
+      "notes": [
+        "Katılım ve kapasite denetimi sunucu tarafında yapılır."
+      ]
+    },
+    {
       "versionName": "1.0.20",
       "buildNumber": 20,
       "channel": "beta",

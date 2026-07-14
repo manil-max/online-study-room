@@ -4,6 +4,27 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [v21 / 1.0.21+21] - 2026-07-15
+
+> **Stable — Global grup erişimi.** Açık gruplar keşfedilebilir; gizli gruplar
+> davet koduyla sınırlı kalır.
+
+### Highlights
+- **Açık grup keşfi:** Grupları keşfet ekranında açık gruplar aranabilir,
+  üyelik kapasitesi ve günlük hedefi görülebilir; tek eylemle katılınabilir.
+- **Grup gizliliği:** Yeni grup oluştururken veya yönetici ayarından **Gizli**
+  (davet kodu gerekir) ya da **Herkese açık** seçilebilir.
+- **Global dil zemini:** Bu yüzey İngilizce ve Türkçe çalışır; desteklenmeyen
+  sistem dilleri İngilizceye düşer.
+
+### Security
+- Keşif kartları davet kodu, üye listesi, kullanıcı profili ve grup çalışma
+  verisi göstermez. Katılım ve kapasite denetimi sunucu tarafında yapılır.
+
+### Notes
+- Açık/özel grup migration'ı yayın öncesinde Supabase'e uygulanmıştır.
+- Sorun görürsen grup adı, cihaz modeli ve uygulama sürümüyle bildir.
+
 ## [beta-v20 / 1.0.20+20] - 2026-07-15
 
 > ⚠️ **Beta test sürümü.** Bu paket stable değildir; bildirim teslimi ve dinamik
