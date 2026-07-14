@@ -67,8 +67,8 @@
 - **Ortak/riskli yüzey:** —
 - **Dal:** — (main)
 - **Başlangıç:** —
-- **Son güncelleme:** 2026-07-14 (Europe/Istanbul)
-- **Not:** WP-87 kod + analyze + 409/409 test geçti; cihaz/entegrasyon QA'sı WP-89'da.
+- **Son güncelleme:** 2026-07-15 (Europe/Istanbul)
+- **Not:** WP-89 otomatik audit, test ve Android/Windows release build geçti; gerçek cihaz QA'sı `docs/QA-L10N-EN-TR.md` ile bekliyor.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
@@ -117,7 +117,7 @@
 | WP-86 | [~] Test için bekliyor | Flutter göç B — ana sayfa, sınıf ve istatistikler | WP-84 |
 | WP-87 | [~] Test için bekliyor | Flutter göç C — saat, masaüstü, core ve veri etiketleri | WP-84 |
 | WP-88 | [~] Test için bekliyor | Native Android EN/TR kaynak göçü | WP-83 |
-| WP-89 | [ ] Bekliyor | EN/TR entegrasyon, audit, build ve cihaz QA | WP-85/86/87/88 |
+| WP-89 | [~] Test için bekliyor | EN/TR entegrasyon, audit, build ve cihaz QA | WP-85/86/87/88 |
 
 > **2026-07-14 proje denetimi:** Serbest sürükle-bırak ızgara, canlı grup hedefi ve saat stilleri **zaten kodda uygulanmış** (backlog stale idi; geçici WP-72/73/75 iptal). Dinamik paneldeki cihaz/eylem sorunu için açılan **WP-76** kod+otomatik test aşamasını geçti; Samsung/Pixel cihaz QA’sı bekliyor.
 >
@@ -129,14 +129,6 @@
 
 > **Küresel dil programı ortak sözleşmesi:** İngilizce şablon/varsayılan (`en`), Türkçe ikinci dil (`tr`). Yalnız sistem dil kodu `tr` ise Türkçe; diğer her locale İngilizce. Üretilen l10n kodu elle düzenlenmez/commit edilmez. Tüm WP'lerde migration/RLS etkisi yok; sır/PII çeviri dosyasına girmez; gün sınırı `Europe/Istanbul` kalır. Aynı anda en fazla iki çalışma hattı açılır.
 
-### WP-89: EN/TR Entegrasyon ve Cihaz QA Kapısı ✅
-- **Program/Faz:** Küresel açılım · kalite kapısı · **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-85/86/87/88
-- **Problem/Kapsam:** Tüm parçaları birlikte doğrula, eksik katalog/literal/overflow düzeltmelerini seri kapat; üçüncü dil ve dil seçici kapsam dışı.
-- **SAHİP:** yeni `scripts/l10n_audit.*`, `app/test/l10n/**`, `app/integration_test/**`, `docs/QA-L10N-EN-TR.md`; bağımlı WP'ler bittikten sonra yalnız bulunan l10n düzeltmeleri. **DOKUNMA:** Supabase/migration/RLS.
-- **Adımlar:** allowlist'li literal audit; en/tr/de/null resolver; ana yolculuklar + boş/hata/çevrimdışı; Android/Windows release build; Samsung/Pixel/Windows iki sistem dili cihaz matrisi.
-- **Veri/RLS/Geri alma:** Etki yok; QA/audit commitini geri al. **Edge-case:** cold start, runtime dil değişimi, process death native yüzey, uzun İngilizce, TalkBack/Narrator.
-- **Kabul/DoD:** Flutter ve native kullanıcı Türkçesi hardcode 0; EN/TR yanlış dil/crash/overflow 0; `flutter analyze` 0, tüm testler ve Android+Windows release build yeşil; Samsung+Pixel+Windows kanıtı ve ürün kabulü olmadan Tamamlanan'a geçmez. **Tuzak:** yalnız otomatik taramayı ürün kabulü sanmak. **Dal:** main/lane · **Model:** 🔴 Opus
-
 > **Çakışma matrisi:** ✅ Wave 1: WP-82 + WP-83. Wave 2: WP-84 + WP-88 (WP-83 sonrası). Wave 3: WP-85 + WP-86. Wave 4: WP-87 tek başına veya bitmiş WP-88'in ardından ikinci ayrık hat. Wave 5: WP-89 tek seri kapı. ARB dosyalarına yalnız WP-82 (seed), sonra WP-84, en son WP-89 yazar; UI worker'ları ARB'yi salt okunur kullanır.
 
 ## Test için bekleyenler
@@ -144,6 +136,14 @@
 > Kod/otomatik test bitti; **cihaz QA veya ürün demo’su** bekleniyor.
 > Bu bölüm **aktif çalışma değildir** — ajan claim etmez, diğer WP’leri engellemez.
 > Kabul gelince kart buradan çıkar → **Tamamlanan**’a gider. Bug çıkarsa ayrı debug WP açılır.
+
+### WP-89: EN/TR Entegrasyon ve Cihaz QA Kapısı ✅
+
+- **Program/Faz:** Küresel açılım · kalite kapısı · **Ajan:** Codex · **Aşama:** Otomatik test geçti · **Kanıt:** `Kodda doğrulandı` / `Cihazda doğrulanmalı` · **Bağımlılık:** WP-85/86/87/88
+- **Uygulandı:** EN/TR ARB anahtar/placeholder sözleşmesini ve kullanıcıya görünür Flutter Türkçe literal'lerini denetleyen `scripts/l10n_audit.py` eklendi; native Android audit de aynı kapıda çalışıyor. Sistem dili `tr` değilse İngilizceye düşme sözleşmesi, EN/TR temel V8 yolculuğu testiyle doğrulandı. Windows cold-start hata yüzeyi de sistem diline göre yerelleştirildi; ham hata metni gösterilmiyor.
+- **Doğrulama:** `python scripts/l10n_audit.py` geçti (957 Flutter anahtarı + native 66 anahtar); `flutter analyze --no-pub` 0 bulgu; tüm Flutter testleri 410/410 geçti. `flutter build apk --release --dart-define-from-file=env.json` ile fresh stable ve beta APK; `flutter build windows --release --dart-define-from-file=env.json` ile Windows release çıktı başarıyla üretildi.
+- **Cihazda doğrulanmalı:** `adb devices -l` bağlı Android göstermedi. Samsung ve Pixel'de EN/TR cold start, native bildirim/widget + process death; Windows'ta EN/TR cold start, uzun İngilizce/overflow ve TalkBack/Narrator kontrolü, ardından ürün sahibi kabulü. Adım adım kanıt matrisi: `docs/QA-L10N-EN-TR.md`.
+- **Veri/RLS/Geri alma:** Veri, migration, RLS veya sır/PII etkisi yok; geri alma bu QA/audit commitidir. Üçüncü dil ve manuel dil seçici kapsam dışıdır.
 
 ### WP-87: Flutter Göç C — Saat, Masaüstü ve Core ⏱️
 - **Program/Faz:** Küresel açılım · UI göçü · **Ajan:** Codex · **Aşama:** Otomatik test geçti · **Kanıt:** `Kodda doğrulandı` / `Cihazda doğrulanmalı`

@@ -16,34 +16,58 @@ StudySession _session(String id, DateTime start, int seconds) => StudySession(
 );
 
 void main() {
-  testWidgets('girişli kullanıcı temel V8 yüzeylerine geçebilir', (
-    tester,
-  ) async {
-    final auth = await signedInV8AuthRepository();
-    final preferences = await v8SharedPreferences();
+  for (final labels in const [
+    (
+      locale: Locale('en'),
+      home: 'Home',
+      statistics: 'Statistics',
+      groups: 'Groups',
+      noGroup: "You're not in a group yet",
+      profile: 'Profile',
+      settings: 'Settings',
+    ),
+    (
+      locale: Locale('tr'),
+      home: 'Ana Sayfa',
+      statistics: 'İstatistik',
+      groups: 'Gruplar',
+      noGroup: 'Henüz bir grupta değilsin',
+      profile: 'Profil',
+      settings: 'Ayarlar',
+    ),
+  ]) {
+    testWidgets(
+      'girişli kullanıcı ${labels.locale.languageCode} temel V8 yüzeylerine geçebilir',
+      (tester) async {
+        tester.binding.platformDispatcher.localesTestValue = [labels.locale];
+        addTearDown(tester.binding.platformDispatcher.clearLocalesTestValue);
 
-    await tester.pumpWidget(
-      buildV8TestApp(authRepository: auth, preferences: preferences),
-    );
-    await tester.pumpAndSettle();
+        final auth = await signedInV8AuthRepository();
+        final preferences = await v8SharedPreferences();
 
-    expect(find.text('Home'), findsWidgets);
-    await tester.tap(find.text('Statistics'));
-    await tester.pumpAndSettle();
-    expect(find.text('Statistics'), findsWidgets);
-    await tester.tap(find.text('Groups'));
-    await tester.pumpAndSettle();
-    expect(find.text("You're not in a group yet"), findsOneWidget);
-    await tester.tap(find.text('Profile'));
-    await tester.pumpAndSettle();
-    // Profil: Başarılar üstte → Ayarlar için kaydır.
-    await tester.scrollUntilVisible(
-      find.text('Settings'),
-      200,
-      scrollable: find.byType(Scrollable).first,
+        await tester.pumpWidget(
+          buildV8TestApp(authRepository: auth, preferences: preferences),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text(labels.home), findsWidgets);
+        await tester.tap(find.text(labels.statistics));
+        await tester.pumpAndSettle();
+        expect(find.text(labels.statistics), findsWidgets);
+        await tester.tap(find.text(labels.groups));
+        await tester.pumpAndSettle();
+        expect(find.text(labels.noGroup), findsOneWidget);
+        await tester.tap(find.text(labels.profile));
+        await tester.pumpAndSettle();
+        await tester.scrollUntilVisible(
+          find.text(labels.settings),
+          200,
+          scrollable: find.byType(Scrollable).first,
+        );
+        expect(find.text(labels.settings), findsOneWidget);
+      },
     );
-    expect(find.text('Settings'), findsOneWidget);
-  });
+  }
 
   test(
     'session ekle-güncelle-sil ve Istanbul gün sınırı deterministiktir',

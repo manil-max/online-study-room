@@ -9,6 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'core/config/supabase_config.dart';
 import 'core/desktop/desktop_window.dart';
+import 'core/l10n/system_localizations.dart';
 import 'core/notifications/alarm_notification_service.dart';
 import 'core/notifications/native_alarm_bridge.dart';
 import 'core/notifications/timer_notification_service.dart';
@@ -27,6 +28,10 @@ import 'package:online_study_room/features/android_widgets/android_widget_servic
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // BuildContext oluşmadan da sistem dil sözleşmesini koru. Bu değer yalnız
+  // Windows cold-start hata yüzeyinde kullanılır.
+  final systemL10n = await loadSystemLocalizations();
+
   // Windows cold-start: framework hatalarını boş beyaz yüzey yerine okunur
   // metinle göster (debug + release profil).
   if (!kIsWeb && defaultTargetPlatform == TargetPlatform.windows) {
@@ -37,7 +42,7 @@ Future<void> main() async {
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Text(
-              'Arayüz hatası:\n${details.exceptionAsString()}',
+              systemL10n.authBeklenmeyenBirHataOlustu,
               textAlign: TextAlign.center,
               style: const TextStyle(color: Colors.white70, fontSize: 14),
             ),
