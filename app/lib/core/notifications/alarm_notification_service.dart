@@ -51,6 +51,16 @@ class AlarmNotificationService {
 
     await DeviceTimezone.ensureInitialized();
 
+    // Windows/macOS/Linux: FLN Windows settings zorunlu; Android-only init
+    // MissingPlugin/Invalid argument fırlatıp log gürültüsü + boşa iş yapıyordu.
+    if (kIsWeb ||
+        defaultTargetPlatform == TargetPlatform.windows ||
+        defaultTargetPlatform == TargetPlatform.linux ||
+        defaultTargetPlatform == TargetPlatform.macOS) {
+      _initialized = true;
+      return;
+    }
+
     const android = AndroidInitializationSettings('@mipmap/ic_launcher');
     const settings = InitializationSettings(android: android);
     await _plugin.initialize(

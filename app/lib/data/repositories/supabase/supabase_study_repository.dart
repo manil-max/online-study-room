@@ -67,33 +67,48 @@ class SupabaseStudyRepository implements StudyRepository {
     // group_id sütunu kaldırıldı (0010). Realtime filtre artık group_id'ye
     // dayanamaz; tüm study_sessions değişikliklerinde RPC'yi yeniden çağırırız
     // (RPC zaten group_id parametresiyle sunucuda süzüyor — K6 kararı).
+    // OPT N1: debounce — her satır değişiminde tam RPC fırtınasını keser.
     late final StreamController<List<DailyStat>> controller;
     RealtimeChannel? channel;
+    Timer? debounce;
+    var refreshSeq = 0;
 
     Future<void> refresh() async {
+      final seq = ++refreshSeq;
       try {
-        if (!controller.isClosed) {
-          controller.add(await _fetchDailyStats(groupId));
+        final stats = await _fetchDailyStats(groupId);
+        if (!controller.isClosed && seq == refreshSeq) {
+          controller.add(stats);
         }
       } catch (e, st) {
-        if (!controller.isClosed) controller.addError(e, st);
+        if (!controller.isClosed && seq == refreshSeq) {
+          controller.addError(e, st);
+        }
       }
+    }
+
+    void scheduleRefresh() {
+      debounce?.cancel();
+      debounce = Timer(const Duration(milliseconds: 900), () {
+        unawaited(refresh());
+      });
     }
 
     controller = StreamController<List<DailyStat>>(
       onListen: () {
-        refresh();
+        unawaited(refresh());
         channel = _client
             .channel('group_daily_$groupId')
             .onPostgresChanges(
               event: PostgresChangeEvent.all,
               schema: 'public',
               table: 'study_sessions',
-              callback: (_) => refresh(),
+              callback: (_) => scheduleRefresh(),
             )
             .subscribe();
       },
       onCancel: () async {
+        debounce?.cancel();
         if (channel != null) await _client.removeChannel(channel!);
       },
     );

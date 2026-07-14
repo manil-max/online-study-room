@@ -10,8 +10,8 @@ import 'desktop_surface.dart';
 
 /// Windows ana kabuğu — özel sol NavigationView pane (mobil NavigationBar değil).
 ///
-/// Pencere boyutu değişince layout kırılmaz: [DesktopProportionalScale] ile
-/// sabit 1100×720 tasarım tuvali oransal ölçeklenir (kart/grid reflow yok).
+/// [DesktopProportionalScale] ile tek oranlı esnek ölçek; sekmeler tembel
+/// yüklenir (IndexedStack 5 ekranı aynı anda tutmaz → RAM/CPU).
 class DesktopHomeShell extends StatelessWidget {
   const DesktopHomeShell({
     required this.selectedIndex,
@@ -136,9 +136,9 @@ class DesktopHomeShell extends StatelessWidget {
                       Expanded(
                         child: ColoredBox(
                           color: scheme.surface,
-                          child: IndexedStack(
-                            index: selectedIndex,
-                            children: screens,
+                          child: _DesktopLazyTabHost(
+                            selectedIndex: selectedIndex,
+                            screens: screens,
                           ),
                         ),
                       ),
@@ -150,6 +150,51 @@ class DesktopHomeShell extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Ziyaret edilen sekmeleri tutar; diğerlerini hiç kurmaz.
+/// IndexedStack gibi durum korur ama 5 ağır ağacı baştan monte etmez.
+class _DesktopLazyTabHost extends StatefulWidget {
+  const _DesktopLazyTabHost({
+    required this.selectedIndex,
+    required this.screens,
+  });
+
+  final int selectedIndex;
+  final List<Widget> screens;
+
+  @override
+  State<_DesktopLazyTabHost> createState() => _DesktopLazyTabHostState();
+}
+
+class _DesktopLazyTabHostState extends State<_DesktopLazyTabHost> {
+  late final Set<int> _activated = {widget.selectedIndex};
+
+  @override
+  void didUpdateWidget(covariant _DesktopLazyTabHost oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!_activated.contains(widget.selectedIndex)) {
+      _activated.add(widget.selectedIndex);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        for (var i = 0; i < widget.screens.length; i++)
+          if (_activated.contains(i))
+            Offstage(
+              offstage: i != widget.selectedIndex,
+              child: TickerMode(
+                enabled: i == widget.selectedIndex,
+                child: widget.screens[i],
+              ),
+            ),
+      ],
     );
   }
 }

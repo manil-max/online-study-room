@@ -73,14 +73,19 @@ final groupDailyStatsProvider = StreamProvider<List<DailyStat>>((ref) {
   return ref.watch(studyRepositoryProvider).watchGroupDailyStats(group.id);
 });
 
+/// OPT N3: oturum listesinden tek sefer `gün → saniye` haritası.
+/// Streak / bugün / grafikler bunu paylaşır (çoklu O(n) taramayı keser).
+final dailyTotalsProvider = Provider<Map<DateTime, int>>((ref) {
+  final sessions = ref.watch(userSessionsProvider).value ?? const [];
+  return dailyTotals(sessions);
+});
+
 /// Kullanıcının bugün KAYDEDİLMİŞ toplam süresi (saniye). Devam eden oturum hariç
 /// (canlı kısım UI'da anlık eklenir).
 final todayRecordedSecondsProvider = Provider<int>((ref) {
-  final sessions = ref.watch(userSessionsProvider).value ?? const [];
-  final now = DateTime.now();
-  return sessions
-      .where((s) => isSameDay(s.day, now))
-      .fold<int>(0, (sum, s) => sum + s.durationSeconds);
+  final totals = ref.watch(dailyTotalsProvider);
+  final today = dayOf(DateTime.now());
+  return totals[today] ?? 0;
 });
 
 /// Kullanıcının günlük hedefi (dakika). Profil yoksa varsayılan (§3.7).
@@ -93,7 +98,8 @@ final dailyGoalMinutesProvider = Provider<int>((ref) {
 final currentStreakProvider = Provider<int>((ref) {
   final sessions = ref.watch(userSessionsProvider).value ?? const [];
   final goalSeconds = ref.watch(dailyGoalMinutesProvider) * 60;
-  return currentStreak(sessions, goalSeconds);
+  final totals = ref.watch(dailyTotalsProvider);
+  return currentStreak(sessions, goalSeconds, totals: totals);
 });
 
 /// UI ve widget için aynı session kümesinden türetilen canonical özet.
