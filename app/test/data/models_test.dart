@@ -34,6 +34,35 @@ void main() {
       );
       expect(StudyGroup.fromMap(group.toMap()), group);
     });
+
+    test('varsayılan erişim private ve 50 kişilik limittir', () {
+      final group = StudyGroup(
+        id: 'g1',
+        name: 'Aile Sınıfı',
+        inviteCode: 'ABC123',
+        createdBy: 'u1',
+        createdAt: DateTime(2026, 6, 21),
+      );
+
+      expect(group.visibility, GroupVisibility.private);
+      expect(group.memberLimit, kDefaultGroupMemberLimit);
+    });
+
+    test('public erişim ve limit map sözleşmesinde korunur', () {
+      final group = StudyGroup.fromMap({
+        'id': 'g1',
+        'name': 'Global Focus',
+        'invite_code': 'ABC123',
+        'created_by': 'u1',
+        'created_at': '2026-06-21T10:00:00.000Z',
+        'daily_goal_minutes': 480,
+        'visibility': 'public',
+        'member_limit': 50,
+      });
+
+      expect(group.visibility, GroupVisibility.public);
+      expect(group.memberLimit, 50);
+    });
   });
 
   group('StudySession', () {

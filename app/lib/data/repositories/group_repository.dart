@@ -16,11 +16,26 @@ abstract class GroupRepository {
   Future<StudyGroup> createGroup({
     required String name,
     required Profile creator,
+    GroupVisibility visibility = GroupVisibility.private,
+    int memberLimit = kDefaultGroupMemberLimit,
   });
 
   /// Davet koduyla sınıfa katılır.
   Future<StudyGroup> joinGroup({
     required String inviteCode,
+    required Profile member,
+  });
+
+  /// Açık grupların güvenli, davet kodu içermeyen keşif özeti.
+  Future<List<PublicGroupSummary>> discoverPublicGroups({
+    String query = '',
+    int offset = 0,
+    int limit = 20,
+  });
+
+  /// Açık bir gruba sunucu tarafında görünürlük ve kapasite kontrolüyle katılır.
+  Future<StudyGroup> joinPublicGroup({
+    required String groupId,
     required Profile member,
   });
 
@@ -39,6 +54,13 @@ abstract class GroupRepository {
   /// Grubun günlük hedefini (dakika) değiştirir (admin). 1..24*60 aralığına
   /// sıkıştırılır.
   Future<void> updateGroupGoal(String groupId, int minutes);
+
+  /// Adminin grubun katılım görünürlüğünü ve üye sınırını değiştirmesi.
+  Future<void> updateGroupAccess(
+    String groupId, {
+    required GroupVisibility visibility,
+    required int memberLimit,
+  });
 
   /// Yeni davet kodu üretir ve döndürür (admin).
   Future<String> regenerateInviteCode(String groupId);

@@ -16,14 +16,16 @@ class SupabaseGroupRepository implements GroupRepository {
   static const _codeAlphabet = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 
   String _newCode() => List.generate(
-        6,
-        (_) => _codeAlphabet[_random.nextInt(_codeAlphabet.length)],
-      ).join();
+    6,
+    (_) => _codeAlphabet[_random.nextInt(_codeAlphabet.length)],
+  ).join();
 
   @override
   Future<StudyGroup> createGroup({
     required String name,
     required Profile creator,
+    GroupVisibility visibility = GroupVisibility.private,
+    int memberLimit = kDefaultGroupMemberLimit,
   }) async {
     if (name.trim().isEmpty) {
       throw const GroupException('Grup adı boş olamaz.');
@@ -32,8 +34,12 @@ class SupabaseGroupRepository implements GroupRepository {
     // Davet kodu sunucuda üretilir; istemci groups'a doğrudan insert atmaz.
     try {
       final row = await _client.rpc(
-        'create_group',
-        params: {'p_name': name.trim()},
+        'create_group_with_access',
+        params: {
+          'p_name': name.trim(),
+          'p_visibility': visibility.dbValue,
+          'p_member_limit': memberLimit,
+        },
       );
       if (row == null) {
         throw const GroupException('Grup oluşturulamadı, tekrar deneyin.');
@@ -65,16 +71,64 @@ class SupabaseGroupRepository implements GroupRepository {
   }
 
   @override
+  Future<List<PublicGroupSummary>> discoverPublicGroups({
+    String query = '',
+    int offset = 0,
+    int limit = 20,
+  }) async {
+    try {
+      final rows =
+          await _client.rpc(
+                'discover_public_groups',
+                params: {
+                  'p_query': query.trim(),
+                  'p_offset': offset < 0 ? 0 : offset,
+                  'p_limit': limit.clamp(1, 50).toInt(),
+                },
+              )
+              as List<dynamic>;
+      return rows
+          .map(
+            (row) => PublicGroupSummary.fromMap(
+              Map<String, dynamic>.from(row as Map),
+            ),
+          )
+          .toList(growable: false);
+    } on PostgrestException catch (e) {
+      throw GroupException('Açık gruplar yüklenemedi: ${e.message}');
+    }
+  }
+
+  @override
+  Future<StudyGroup> joinPublicGroup({
+    required String groupId,
+    required Profile member,
+  }) async {
+    try {
+      final row = await _client.rpc(
+        'join_public_group',
+        params: {'p_group_id': groupId},
+      );
+      if (row == null) {
+        throw const GroupException('Gruba katılınamadı.');
+      }
+      return StudyGroup.fromMap(Map<String, dynamic>.from(row as Map));
+    } on PostgrestException catch (e) {
+      throw GroupException('Gruba katılınamadı: ${e.message}');
+    }
+  }
+
+  @override
   Stream<List<StudyGroup>> watchUserGroups(String userId) {
     return _client
         .from('group_members')
         .stream(primaryKey: ['group_id', 'user_id'])
         .eq('user_id', userId)
         .asyncMap((rows) async {
-          if (rows.isEmpty) return <StudyGroup>[];
-          final ids = rows.map((r) => r['group_id'] as String).toList();
-          final gs =
-              await _client.from('groups').select().inFilter('id', ids);
+          final activeRows = rows.where((row) => row['left_at'] == null);
+          if (activeRows.isEmpty) return <StudyGroup>[];
+          final ids = activeRows.map((r) => r['group_id'] as String).toList();
+          final gs = await _client.from('groups').select().inFilter('id', ids);
           final list = gs.map<StudyGroup>(StudyGroup.fromMap).toList()
             ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
           return list;
@@ -90,11 +144,15 @@ class SupabaseGroupRepository implements GroupRepository {
         .asyncMap((rows) async {
           final ids = rows.map((r) => r['user_id'] as String).toList();
           if (ids.isEmpty) return <Profile>[];
-          final profs =
-              await _client.from('profiles').select().inFilter('id', ids);
+          final profs = await _client
+              .from('profiles')
+              .select()
+              .inFilter('id', ids);
           return profs.map<Profile>((pMap) {
             final profile = Profile.fromMap(pMap);
-            final memberRow = rows.firstWhere((r) => r['user_id'] == profile.id);
+            final memberRow = rows.firstWhere(
+              (r) => r['user_id'] == profile.id,
+            );
             return profile.copyWith(isActive: memberRow['left_at'] == null);
           }).toList();
         });
@@ -108,7 +166,8 @@ class SupabaseGroupRepository implements GroupRepository {
     try {
       await _client
           .from('groups')
-          .update({'name': name.trim()}).eq('id', groupId);
+          .update({'name': name.trim()})
+          .eq('id', groupId);
     } on PostgrestException catch (e) {
       throw GroupException('Grup adı değiştirilemedi: ${e.message}');
     }
@@ -117,10 +176,32 @@ class SupabaseGroupRepository implements GroupRepository {
   @override
   Future<void> updateGroupGoal(String groupId, int minutes) async {
     try {
-      await _client.from('groups').update(
-          {'daily_goal_minutes': minutes.clamp(1, 24 * 60)}).eq('id', groupId);
+      await _client
+          .from('groups')
+          .update({'daily_goal_minutes': minutes.clamp(1, 24 * 60)})
+          .eq('id', groupId);
     } on PostgrestException catch (e) {
       throw GroupException('Grup hedefi değiştirilemedi: ${e.message}');
+    }
+  }
+
+  @override
+  Future<void> updateGroupAccess(
+    String groupId, {
+    required GroupVisibility visibility,
+    required int memberLimit,
+  }) async {
+    try {
+      await _client.rpc(
+        'update_group_access',
+        params: {
+          'p_group_id': groupId,
+          'p_visibility': visibility.dbValue,
+          'p_member_limit': memberLimit,
+        },
+      );
+    } on PostgrestException catch (e) {
+      throw GroupException('Grup erişimi değiştirilemedi: ${e.message}');
     }
   }
 
@@ -131,7 +212,8 @@ class SupabaseGroupRepository implements GroupRepository {
       try {
         await _client
             .from('groups')
-            .update({'invite_code': code}).eq('id', groupId);
+            .update({'invite_code': code})
+            .eq('id', groupId);
         return code;
       } on PostgrestException catch (e) {
         if (e.code == '23505' && attempt < 4) continue; // kod çakıştı

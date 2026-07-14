@@ -68,7 +68,7 @@
 - **Dal:** — (main)
 - **Başlangıç:** —
 - **Son güncelleme:** 2026-07-15 (Europe/Istanbul)
-- **Not:** WP-89 otomatik audit, test ve Android/Windows release build geçti; gerçek cihaz QA'sı `docs/QA-L10N-EN-TR.md` ile bekliyor.
+- **Not:** WP-92 otomatik kalite kapısı geçti; canlı migration + cihaz RLS QA bekliyor. WP-93 henüz başlamadı.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
@@ -118,7 +118,7 @@
 | WP-87 | [~] Test için bekliyor | Flutter göç C — saat, masaüstü, core ve veri etiketleri | WP-84 |
 | WP-88 | [~] Test için bekliyor | Native Android EN/TR kaynak göçü | WP-83 |
 | WP-89 | [~] Test için bekliyor | EN/TR entegrasyon, audit, build ve cihaz QA | WP-85/86/87/88 |
-| WP-92 | [ ] Bekliyor | Global açık/özel grup sözleşmesi, RLS ve çift repository | — |
+| WP-92 | [~] Test için bekliyor | Global açık/özel grup sözleşmesi, RLS ve çift repository | — |
 | WP-93 | [ ] Bekliyor | Global grup keşfi ve katılım arayüzü | WP-92 |
 
 > **2026-07-14 proje denetimi:** Serbest sürükle-bırak ızgara, canlı grup hedefi ve saat stilleri **zaten kodda uygulanmış** (backlog stale idi; geçici WP-72/73/75 iptal). Dinamik paneldeki cihaz/eylem sorunu için açılan **WP-76** kod+otomatik test aşamasını geçti; Samsung/Pixel cihaz QA’sı bekliyor.
@@ -133,24 +133,6 @@
 > **Küresel dil programı ortak sözleşmesi:** İngilizce şablon/varsayılan (`en`), Türkçe ikinci dil (`tr`). Yalnız sistem dil kodu `tr` ise Türkçe; diğer her locale İngilizce. Üretilen l10n kodu elle düzenlenmez/commit edilmez. Tüm WP'lerde migration/RLS etkisi yok; sır/PII çeviri dosyasına girmez; gün sınırı `Europe/Istanbul` kalır. Aynı anda en fazla iki çalışma hattı açılır.
 
 > **Çakışma matrisi:** ✅ Wave 1: WP-82 + WP-83. Wave 2: WP-84 + WP-88 (WP-83 sonrası). Wave 3: WP-85 + WP-86. Wave 4: WP-87 tek başına veya bitmiş WP-88'in ardından ikinci ayrık hat. Wave 5: WP-89 tek seri kapı. ARB dosyalarına yalnız WP-82 (seed), sonra WP-84, en son WP-89 yazar; UI worker'ları ARB'yi salt okunur kullanır.
-
-### WP-92: Global Açık/Özel Grup Sözleşmesi ve RLS 🛡️
-- **Program/Faz:** Sosyal gruplar · Play Store öncesi erişim modeli · **Ajan:** — · **Durum:** [ ] Bekliyor
-- **Problem:** Mevcut gruplar yalnız gizli davet koduyla katılınır; küresel kullanıcıların keşfedip güvenle katılacağı açık grup modeli yoktur. `groups_select` kuralını gevşetmek davet kodunu, üyeleri ve grup içi veriyi sızdırır.
-- **Kapsam dışı:** Tavsiye/ranking algoritması, otomatik moderasyon, herkese açık sohbet/profil, grup görseli, ücretli klan büyütmesi.
-- **SAHİP dosyalar (yaz):** `supabase/migrations/0032_public_group_discovery.sql`, `app/lib/data/models/study_group.dart`, `app/lib/data/repositories/group_repository.dart`, `app/lib/data/repositories/supabase/supabase_group_repository.dart`, `app/lib/data/repositories/in_memory/in_memory_group_repository.dart`, grup repository/model testleri.
-- **DOKUNMA (oku, değiştirme):** `app/lib/features/classroom/**`, `app/lib/l10n/**`, `app/lib/core/navigation/**`, mevcut `0001–0031` migration'ları.
-- **Adımlar:**
-  - [ ] `visibility` (`private` varsayılan / `public`) ve başlangıç `member_limit=50` şema sözleşmesini ekle; mevcut gruplar kapalı kalır.
-  - [ ] Yalnız güvenli alanları döndüren sayfalı/aramalı `discover_public_groups` RPC’si ile kapasite ve görünürlüğü atomik doğrulayan `join_public_group` RPC’sini kur; davet kodu sonuçlara asla girmez.
-  - [ ] Oluşturan adminin görünürlük/kapasite yönetimini sunucu tarafında yetkilendir; private katılım yalnız mevcut `join_group(code)` ile sürer.
-  - [ ] Model, soyut repository, Supabase ve InMemory davranışını aynı sözleşmeye getir; aynı kullanıcı tekrar katılınca idempotent olmalı.
-- **Veri/Migration etkisi:** Yeni `0032`; varsayılan private ile geriye uyumlu. Geri alma: public discovery/join RPC ve ek politikaları kaldır, yeni sütunları bırakıp tüm grupları private kabul et; canlı SQL uygulaması kullanıcıdadır.
-- **RLS/Güvenlik:** Public liste yalnız ad, hedef, üye sayısı, kapasite ve oluşturulma bilgisini döndürür; üye listesi, davet kodu, çalışma oturumu, presence ve sosyal profil üyelikten önce kapalıdır. Kapasite, görünürlük ve katılım sadece SECURITY DEFINER RPC içinde denetlenir; istemci doğrudan `group_members` insert edemez.
-- **Edge-case'ler:** Aynı anda son kontenjana iki istek, ayrılıp yeniden katılma, private’a çevrilen grup, silinen grup, boş arama, uzun/adversarial grup adı, offline/InMemory parity.
-- **Kabul (ölçülebilir):** 50. ve eşzamanlı 51. katılımda aktif üye sayısı ≤50; private grup discovery sonucunda 0; public grup için davet kodu/üye/profil/oturum alanı 0; eski private davet katılımı çalışır; migration statik/RLS denetimi + model/repository testleri, `flutter analyze` 0 ve tüm testler yeşil. Samsung/Pixel canlı Supabase katılım/ayrılma kanıtı gerekir.
-- **Tuzaklar:** Public liste için `groups_select using (visibility='public')` açmak; üyelik sayısını istemcide sayıp limiti aşmak; private’a dönüşte açık üyelik verisini görünür bırakmak.
-- **Dal:** main/lane · **Model:** 🔴 Opus
 
 ### WP-93: Global Grup Keşfi ve Katılım Deneyimi 🌍
 - **Program/Faz:** Sosyal gruplar · Play Store öncesi ürün yüzeyi · **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-92 otomatik kalite kapısı
@@ -177,6 +159,14 @@
 > Kod/otomatik test bitti; **cihaz QA veya ürün demo’su** bekleniyor.
 > Bu bölüm **aktif çalışma değildir** — ajan claim etmez, diğer WP’leri engellemez.
 > Kabul gelince kart buradan çıkar → **Tamamlanan**’a gider. Bug çıkarsa ayrı debug WP açılır.
+
+### WP-92: Global Açık/Özel Grup Sözleşmesi ve RLS 🛡️
+
+- **Program/Faz:** Sosyal gruplar · Play Store öncesi erişim modeli · **Aşama:** Otomatik test geçti · **Kanıt:** `Kodda doğrulandı` / `Cihazda doğrulanmalı`
+- **Uygulandı:** Yeni gruplar private/50 varsayılanıyla oluşturuluyor. Public keşif yalnız ad, hedef, aktif üye sayısı, limit ve oluşturulma zamanını döndüren SECURITY DEFINER RPC’den geçiyor; davet kodu, üye listesi, oturum, presence ve sosyal profil üyelik öncesinde kapalı. Public/private katılımı grup satırı kilidi altında atomik limit denetimiyle çalışıyor; Supabase ve InMemory repository sözleşmeleri eş.
+- **Doğrulama:** `flutter analyze --no-pub` 0 bulgu; yeni model/repository/RLS sözleşme testleri 22/22; tüm Flutter testleri 419/419 geçti. `0032` migration statik testleri public keşif çıktısında invite code olmadığını ve `groups_select` RLS’inin genişletilmediğini doğruluyor.
+- **Cihazda/doğru canlıda doğrulanmalı:** Kullanıcı `supabase/migrations/0032_public_group_discovery.sql` dosyasını önce mevcut migration sırasından sonra Supabase SQL Editor’da uygulamalı. Ardından iki gerçek hesapla oluştur→public yap→keşfet→katıl→ayrıl→private’a al; 50. ve paralel 51. katılımı, eski private davet katılımını ve üye olmayan kullanıcının üye/oturum/profil göremediğini doğrulamalı.
+- **Veri/RLS/Geri alma:** Varsayılan private ile eski gruplar kapalı kalır; rollback notu migration başında. RLS/katılım garantisi canlı Supabase uygulanmadan tamamlanmış sayılmaz.
 
 ### WP-89: EN/TR Entegrasyon ve Cihaz QA Kapısı ✅
 
