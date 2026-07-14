@@ -1,49 +1,173 @@
 name: Windows Release
 
+# Stable: git tag vN && git push origin vN
+# Beta:   git tag beta-vN && git push origin beta-vN
+# Manual: workflow_dispatch
+#
+# N = build number (Android release.yml ile hizalı).
+# Artefakt: odak-kampi-windows-{stable|beta}.msix + .zip + .sha256
+# İmza: secret yoksa self-signed (QA). PFX repoya/log'a GİRMEZ.
+# Store MSIX ayrı kanal (publisher identity kalıcı) — docs/WINDOWS-RELEASE-GATE.md
+
 on:
   push:
     tags:
       - 'v*'
+      - 'beta-v*'
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
     runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: app
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Java (Required for some flutter plugins)
-        uses: actions/setup-java@v3
+      - name: Kanal ve surum
+        id: meta
+        shell: bash
+        run: |
+          set -e
+          TAG="${GITHUB_REF_NAME}"
+          if [[ "$GITHUB_REF" != refs/tags/* ]]; then
+            CODE=$(grep -E '^version:' pubspec.yaml | head -1 | sed -E 's/.*\+([0-9]+).*/\1/')
+            TAG="manual-v${CODE}"
+            CHANNEL=stable
+            PRERELEASE=false
+          else
+            CODE="${TAG##*v}"
+            if [[ "$TAG" == beta* ]]; then
+              CHANNEL=beta
+              PRERELEASE=true
+            else
+              CHANNEL=stable
+              PRERELEASE=false
+            fi
+          fi
+          MSIX_VER="1.0.0.${CODE}"
+          ASSET_MSIX="odak-kampi-windows-${CHANNEL}.msix"
+          ASSET_ZIP="odak-kampi-windows-${CHANNEL}.zip"
+          {
+            echo "tag=$TAG"
+            echo "code=$CODE"
+            echo "channel=$CHANNEL"
+            echo "prerelease=$PRERELEASE"
+            echo "msix_ver=$MSIX_VER"
+            echo "asset_msix=$ASSET_MSIX"
+            echo "asset_zip=$ASSET_ZIP"
+          } >> "$GITHUB_OUTPUT"
+          echo "Windows release meta: tag=$TAG code=$CODE channel=$CHANNEL msix=$MSIX_VER"
+
+      - uses: subosito/flutter-action@v2
         with:
-          distribution: 'zulu'
-          java-version: '17'
+          channel: stable
+          cache: true
 
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: 'stable'
-          # You can specify exact version if needed, e.g. flutter-version: '3.22.x'
+      - name: Flutter Windows desktop
+        run: |
+          flutter config --enable-windows-desktop
+          flutter --version
 
-      - name: Install Dependencies
-        working-directory: ./app
-        run: flutter pub get
+      - name: env.json (secrets; commit edilmez)
+        shell: bash
+        run: |
+          cat > env.json <<EOF
+          {
+            "SUPABASE_URL": "${{ secrets.SUPABASE_URL }}",
+            "SUPABASE_ANON_KEY": "${{ secrets.SUPABASE_ANON_KEY }}",
+            "SENTRY_DSN": "${{ secrets.SENTRY_DSN }}",
+            "SENTRY_ENABLED": "false"
+          }
+          EOF
 
-      - name: Run Tests
-        working-directory: ./app
-        run: flutter test
+      - run: flutter pub get
 
-      - name: Build Windows Executable
-        working-directory: ./app
-        run: flutter build windows --release
+      - name: Analyze
+        run: flutter analyze
 
-      - name: Generate MSIX Package
-        working-directory: ./app
-        run: dart run msix:create
+      - name: Test
+        run: flutter test --dart-define-from-file=env.json --concurrency=1
 
-      - name: Upload MSIX Artifact
+      - name: Build Windows release
+        run: >
+          flutter build windows --release
+          --build-number=${{ steps.meta.outputs.code }}
+          --dart-define-from-file=env.json
+          --dart-define=CHANNEL=${{ steps.meta.outputs.channel }}
+
+      - name: MSIX version in pubspec (CI)
+        shell: bash
+        run: |
+          # msix_config.msix_version = 1.0.0.N
+          python - <<'PY'
+          from pathlib import Path
+          import re, os
+          p = Path("pubspec.yaml")
+          text = p.read_text(encoding="utf-8")
+          ver = os.environ["MSIX_VER"]
+          text2, n = re.subn(
+              r"(msix_version:\s*)[\d.]+",
+              r"\g<1>" + ver,
+              text,
+              count=1,
+          )
+          if n != 1:
+              raise SystemExit(f"msix_version replace failed n={n}")
+          p.write_text(text2, encoding="utf-8")
+          print("msix_version ->", ver)
+          PY
+        env:
+          MSIX_VER: ${{ steps.meta.outputs.msix_ver }}
+
+      - name: Create MSIX (self-signed; install_certificate false)
+        run: dart run msix:create --build-windows false
+
+      - name: Collect artefacts + SHA-256
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $out = "build/windows-dist"
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+          $release = "build/windows/x64/runner/Release"
+          if (-not (Test-Path $release)) { throw "Release dir missing: $release" }
+
+          $msixName = "${{ steps.meta.outputs.asset_msix }}"
+          $zipName = "${{ steps.meta.outputs.asset_zip }}"
+
+          $found = Get-ChildItem -Path $release -Filter *.msix -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($found) {
+            Copy-Item $found.FullName (Join-Path $out $msixName) -Force
+            $hash = (Get-FileHash -Algorithm SHA256 (Join-Path $out $msixName)).Hash.ToLower()
+            Set-Content -Path (Join-Path $out "$msixName.sha256") -Value "$hash  $msixName" -NoNewline
+            Write-Host "MSIX sha256=$hash"
+          } else {
+            Write-Warning "No .msix under $release"
+          }
+
+          Compress-Archive -Path (Join-Path $release '*') -DestinationPath (Join-Path $out $zipName) -Force
+          $zhash = (Get-FileHash -Algorithm SHA256 (Join-Path $out $zipName)).Hash.ToLower()
+          Set-Content -Path (Join-Path $out "$zipName.sha256") -Value "$zhash  $zipName" -NoNewline
+          Get-ChildItem $out | Format-Table Name, Length
+
+      - name: Upload workflow artefacts
         uses: actions/upload-artifact@v4
         with:
-          name: OdakKampi-Windows-MSIX
-          path: app/build/windows/*/runner/Release/*.msix
+          name: OdakKampi-Windows-${{ steps.meta.outputs.channel }}-b${{ steps.meta.outputs.code }}
+          path: app/build/windows-dist/*
+          if-no-files-found: error
+
+      - name: Attach to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: app/build/windows-dist/*
+          prerelease: ${{ steps.meta.outputs.prerelease == 'true' }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

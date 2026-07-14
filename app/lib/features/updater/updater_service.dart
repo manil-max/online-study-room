@@ -6,18 +6,18 @@ import 'package:package_info_plus/package_info_plus.dart';
 
 /// GitHub Releases üzerinden in-app güncelleme kontrolü.
 ///
-/// Tasarım: APK'lar GitHub Releases'te tutulur. Her sürüm `v<buildNumber>`
-/// etiketiyle yayınlanır (ör. `v2`). Uygulama kendi buildNumber'ını
-/// (pubspec'teki `+N`) okur ve GitHub'daki en son release etiketiyle
-/// karşılaştırır. Ücretsiz; Supabase'e gerek yoktur.
+/// - **Android:** sabit isimli APK + SHA-256 (mevcut).
+/// - **Windows (WP-28):** sabit isimli MSIX + SHA-256; kurulum sideload
+///   (Store kanalı ayrı identity). Android updater kopyası değildir.
+/// - iOS/web: yok.
 ///
-/// Yalnızca Android'de anlamlıdır (iOS sideload'a izin vermez).
+/// Etiket: `v<buildNumber>` / `beta-v<buildNumber>`.
 class UpdaterService {
   UpdaterService({Dio? dio}) : _dio = dio ?? Dio();
 
   final Dio _dio;
 
-  /// GitHub deposu — APK release'lerinin yayınlandığı yer.
+  /// GitHub deposu — release artefaktlarının yayınlandığı yer.
   static const String _owner = 'manil-max';
   static const String _repo = 'online-study-room';
 
@@ -39,9 +39,11 @@ class UpdaterService {
   /// Yeni sürüm varsa bilgisini, yoksa `null` döndürür.
   /// Ağ/parse hatalarında sessizce `null` döner (uygulama açılışını bloklamaz).
   Future<UpdateInfo?> checkForUpdate() async {
-    // Web ve Android dışı platformlarda güncelleme yok. kIsWeb derleme-zamanı
-    // sabiti; web'de `Platform`'a hiç dokunulmaz (web'de erişmek hata fırlatır).
-    if (kIsWeb || !Platform.isAndroid) return null;
+    // kIsWeb derleme-zamanı; web'de `Platform`'a hiç dokunulmaz.
+    if (kIsWeb) return null;
+    final isAndroid = Platform.isAndroid;
+    final isWindows = Platform.isWindows;
+    if (!isAndroid && !isWindows) return null;
 
     try {
       final info = await PackageInfo.fromPlatform();
@@ -49,19 +51,19 @@ class UpdaterService {
 
       final options = Options(
         headers: {'Accept': 'application/vnd.github+json'},
-        // GitHub API'si erişilemezse uzun süre bekletme.
         receiveTimeout: const Duration(seconds: 10),
         sendTimeout: const Duration(seconds: 10),
       );
 
+      final assetName = isWindows ? _windowsMsixName : _apkName;
+
       final Map<String, dynamic>? data;
       if (_isBeta) {
-        // Beta: tüm release listesinden en yüksek beta ön-sürümünü seç.
         final res = await _dio.get<List<dynamic>>(
           _allReleasesUrl,
           options: options,
         );
-        data = _pickLatestBeta(res.data);
+        data = _pickLatestBeta(res.data, assetName: assetName);
       } else {
         final res = await _dio.get<Map<String, dynamic>>(
           _latestReleaseUrl,
@@ -75,9 +77,8 @@ class UpdaterService {
       if (latestCode == null || latestCode <= currentCode) return null;
 
       final assets = data['assets'];
-      // Yalnızca CI'nın ürettiği sabit isimli APK'yı kabul et (rastgele .apk değil).
-      final apkUrl = _findAssetUrl(assets, _apkName);
-      if (apkUrl == null) return null;
+      final packageUrl = _findAssetUrl(assets, assetName);
+      if (packageUrl == null) return null;
 
       return UpdateInfo(
         versionCode: latestCode,
@@ -85,12 +86,11 @@ class UpdaterService {
             ? (data['name'] as String).trim()
             : (data['tag_name'] as String? ?? 'v$latestCode'),
         releaseNotes: (data['body'] as String?)?.trim() ?? '',
-        downloadUrl: apkUrl,
-        // Varsa SHA-256 dosyası; indirme sonrası bütünlük doğrulamasında kullanılır.
-        sha256Url: _findAssetUrl(assets, '$_apkName.sha256'),
+        downloadUrl: packageUrl,
+        sha256Url: _findAssetUrl(assets, '$assetName.sha256'),
+        packageKind: isWindows ? UpdatePackageKind.msix : UpdatePackageKind.apk,
       );
     } catch (_) {
-      // Güncelleme kontrolü "best effort"tur; hata olursa görmezden gelinir.
       return null;
     }
   }
@@ -106,15 +106,22 @@ class UpdaterService {
     return int.tryParse(nums.last.group(0)!);
   }
 
+  /// Test görünürlüğü (WP-28).
+  static int? parseVersionCodeForTest(String? tag) => _parseVersionCode(tag);
+
   /// CI tarafından üretilen APK'nın sabit adı (release.yml ile aynı olmalı).
-  /// Beta flavor'ın çıktısı ayrı isimlidir; stable `app-release.apk` korunur
-  /// (eski kullanıcıların güncelleme kontrolü kırılmasın diye CI adı sabit tutar).
   static String get _apkName =>
       _isBeta ? 'app-beta-release.apk' : 'app-release.apk';
 
-  /// Beta kanalı için: prerelease olan ve `beta` etiketli release'ler arasından
-  /// build kodu en yüksek olanı (ve APK asset'i bulunanı) seçer.
-  static Map<String, dynamic>? _pickLatestBeta(List<dynamic>? releases) {
+  /// CI `windows-release.yml` ile hizalı MSIX adı.
+  static String get _windowsMsixName =>
+      _isBeta ? 'odak-kampi-windows-beta.msix' : 'odak-kampi-windows-stable.msix';
+
+  /// Beta kanalı için: prerelease + `beta` etiket + asset'i olan en yüksek build.
+  static Map<String, dynamic>? _pickLatestBeta(
+    List<dynamic>? releases, {
+    required String assetName,
+  }) {
     if (releases == null) return null;
     Map<String, dynamic>? best;
     var bestCode = -1;
@@ -125,7 +132,7 @@ class UpdaterService {
       if (tag == null || !tag.toLowerCase().startsWith('beta')) continue;
       final code = _parseVersionCode(tag);
       if (code == null) continue;
-      if (_findAssetUrl(r['assets'], _apkName) == null) continue;
+      if (_findAssetUrl(r['assets'], assetName) == null) continue;
       if (code > bestCode) {
         bestCode = code;
         best = r;
@@ -146,6 +153,9 @@ class UpdaterService {
   }
 }
 
+/// İndirilecek paket türü (kurulum yolu platforma göre değişir).
+enum UpdatePackageKind { apk, msix }
+
 /// Bulunan yeni sürümün bilgileri.
 class UpdateInfo {
   const UpdateInfo({
@@ -154,6 +164,7 @@ class UpdateInfo {
     required this.releaseNotes,
     required this.downloadUrl,
     this.sha256Url,
+    this.packageKind = UpdatePackageKind.apk,
   });
 
   final int versionCode;
@@ -161,9 +172,11 @@ class UpdateInfo {
   final String releaseNotes;
   final String downloadUrl;
 
-  /// APK'nın beklenen SHA-256 özetini içeren `.sha256` dosyasının linki.
-  /// `null` ise bütünlük doğrulaması atlanır (eski/manuel release'ler için).
+  /// Beklenen SHA-256 dosyasının linki; `null` ise doğrulama atlanır.
   final String? sha256Url;
+
+  /// Android APK veya Windows MSIX.
+  final UpdatePackageKind packageKind;
 
   UpdateInfo copyWith({
     int? versionCode,
@@ -171,6 +184,7 @@ class UpdateInfo {
     String? releaseNotes,
     String? downloadUrl,
     String? sha256Url,
+    UpdatePackageKind? packageKind,
   }) {
     return UpdateInfo(
       versionCode: versionCode ?? this.versionCode,
@@ -178,6 +192,7 @@ class UpdateInfo {
       releaseNotes: releaseNotes ?? this.releaseNotes,
       downloadUrl: downloadUrl ?? this.downloadUrl,
       sha256Url: sha256Url ?? this.sha256Url,
+      packageKind: packageKind ?? this.packageKind,
     );
   }
 }

@@ -20,7 +20,7 @@
 - **Navigasyon hedefi:** Ana Sayfa / Saat / Gruplar / İstatistikler / Profil. Ana Sayfa günlük kullanım alanıdır; diğer alanların verisi kendi sekmelerinde eksiksiz bulunur.
 - **Release:** Stable/Beta kanalı GitHub Releases ile çalışır. **v8 yayımlandı.** WP-48/49/50, ürün sahibinin doğrudan yayın ve soak'ı atlama kararıyla açık iş olmaktan çıkarıldı; sonraki yayın için ayrı WP açılır.
 - **Kalite kapıları:** Her WP DoD'siz kapanmaz; stable release kalite kapısından geçer (AGENTS.md §3). Server-authoritative XP, RLS/sosyal profil, platform sınırları → `docs/KALITE-PROGRAMI.md`.
-- **Son WP numarası:** 68
+- **Son WP numarası:** 70
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
   - Flutter: `C:\src\flutter` · Android SDK: `C:\Android\Sdk`
@@ -48,15 +48,15 @@
 **Lane şablonu** (doldurulacak alanlar): Durum · Faz/WP · Aşama (8-merdiven) · SAHİP yollar · Ortak/riskli yüzey · Başlangıç · Son güncelleme · Not. *(Branch yok — herkes `main`'de; AGENTS.md §1.5.)*
 
 ### Gemini Lane
-- **Durum:** [~] Aktif — Planlama (WP-69)
-- **Faz/WP:** WP-69 · Aylık Rapor İmplementasyonu (WP-65 devamı)
-- **Aşama:** Planlandı
-- **SAHİP yollar:** `docs/AYLIK-RAPOR-KARAR.md` (güncelleme), `progress.md` (yalnız bu lane), implementation plan artifact
+- **Durum:** [x] Tamamlandı (Boşta)
+- **Faz/WP:** WP-69 · Aylık Rapor İmplementasyonu
+- **Aşama:** Kod tamamlandı (Ürün onayı/deploy bekliyor)
+- **SAHİP yollar:** `supabase/migrations/0030_monthly_report_infrastructure.sql`, `supabase/functions/collect-reports/**`, `supabase/functions/send-report/**`, `app/lib/features/profile/settings_screen.dart`, `app/lib/data/repositories/**`
 - **Ortak/riskli yüzey:** Yok
 - **Dal:** — (main)
 - **Başlangıç:** 2026-07-14 (Europe/Istanbul)
 - **Son güncelleme:** 2026-07-14
-- **Not:** Kullanıcının isteği üzerine WP-65 önerilen (varsayılan) seçeneklerle kapatıldı (Resend, soft opt-in, ayın 2'si, $0 limit). Yeni implementasyon WP-69 için plan (artifact) hazırlanıyor.
+- **Not:** WP-69 implementasyonu (DB Migration, Edge Functions, Settings UI Toggle) başarıyla kodlandı. Canlı gönderim için API key ve DNS konfigürasyonu ürün sahibi tarafından yapılmalıdır.
 
 ### Claude Lane
 - **Durum:** [~] Aktif — WP-65 karar dokümanı tamamlandı, ürün kabulü bekliyor
@@ -71,25 +71,25 @@
 
 ### Codex Lane
 - **Durum:** [~] Aktif
-- **Faz/WP:** WP-68 · Android Widget R2 responsive native yüzeyler
-- **Aşama:** Geliştiriliyor
-- **SAHİP yollar:** `app/lib/features/android_widgets/android_widget_service.dart`, `app/lib/data/providers/study_providers.dart`, `app/android/app/src/main/kotlin/**/widgets/{StudyWidgetProviders,WidgetRefreshReceiver}.kt`, `app/android/app/src/main/res/{layout,xml}/odak_*widget.xml`, `app/android/app/src/main/AndroidManifest.xml`, `app/test/features/android_widget_r2_test.dart`, `docs/QA-ANDROID-WIDGETS.md`, `progress.md` (yalnız bu lane + WP-68 kartı)
-- **Ortak/riskli yüzey:** `AndroidManifest.xml` (sıcak; başka aktif sahip yok). `app/pubspec.yaml` Grok WP-61 sahibi — DOKUNMA.
+- **Faz/WP:** WP-70 · Windows performans tabanı ve donma tanısı
+- **Aşama:** Planlandı — ölçüm altyapısı geliştiriliyor
+- **SAHİP yollar:** `docs/WINDOWS-PERFORMANCE-BASELINE.md`, `scripts/windows_performance_baseline.ps1`, `app/test/performance/windows_performance_baseline_test.dart`, `progress.md` (yalnız bu lane + WP-70 kartı)
+- **Ortak/riskli yüzey:** Yok. `app/lib/features/desktop/**` ve `app/windows/**` WP-53/28 hattına ait — DOKUNMA.
 - **Dal:** — (ana dal `main`)
-- **Başlangıç:** 2026-07-14 18:04 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-14 20:03
-- **Not:** WP-68 kod/doğrulama tamam: 1×1 timer + responsive günlük/grup hedefi/sıralaması olay bazlı snapshot ile uygulandı. `flutter test --concurrency=1` 342 PASS, hedef testler 6 PASS ve debug APK derlendi. Samsung/Pixel fiziksel cihaz QA'sı bekliyor; push yok.
+- **Başlangıç:** 2026-07-14 20:55 (Europe/Istanbul)
+- **Son güncelleme:** 2026-07-14 20:55
+- **Not:** WP-68 otomatik doğrulama tamam, Samsung/Pixel cihaz QA bekliyor. WP-70; mevcut Windows release'inin RAM/donma iddiasını ölçülebilir tabana bağlayacak, masaüstü IA koduna girmeyecek.
 
 ### Grok Lane
-- **Durum:** [x] Boşta
-- **Faz/WP:** —
-- **Aşama:** —
-- **SAHİP yollar:** —
-- **Ortak/riskli yüzey:** —
+- **Durum:** [~] Aktif — cihaz/VM QA açık
+- **Faz/WP:** WP-28 · Windows MSIX + release QA
+- **Aşama:** Otomatik test geçti — VM kurulum QA bekliyor
+- **SAHİP yollar:** `app/windows/**`, `app/pubspec.yaml` (msix_config), `.github/workflows/windows-release.yml`, `docs/QA-WINDOWS.md`, `docs/WINDOWS-RELEASE-GATE.md`, updater Windows kolu + test, `progress.md`
+- **Ortak/riskli yüzey:** Android release.yml / widget dokunulmadı. PFX secret yok (self-signed QA).
 - **Dal:** — (main)
-- **Başlangıç:** —
-- **Son güncelleme:** 2026-07-14 15:36 (Europe/Istanbul)
-- **Not:** WP-53 R2 kod park edildi → **Test için bekleyenler** (aktif çalışma/blokaj değil). Sonraki iş için lane boş.
+- **Başlangıç:** 2026-07-14 16:00 (Europe/Istanbul)
+- **Son güncelleme:** 2026-07-14 16:15
+- **Not:** CI MSIX+ZIP+SHA; Runner.rc Odak Kampı; Windows MSIX updater. Unit 3 PASS. VM install matrisi açık.
 
 ---
 
@@ -120,12 +120,13 @@
 | WP-62 | [~] Otomatik test geçti · demo/cihaz bekliyor (Grok) | Kamp Ateşi R2 · katmanlı sahne ve performanslı animasyon | WP-61 |
 | WP-63 | Brief teslim edildi | Android Widget R2 · 1×1 ve responsive ürün sözleşmesi | — |
 | WP-68 | Cihaz QA bekliyor | Android Widget R2 · native responsive sayaç/hedef/sıralama uygulaması | WP-63 briefi |
+| WP-70 | Geliştiriliyor (Codex) | Windows performans tabanı · release RAM/başlangıç/donma ölçümü | — |
 | WP-64 | [~] Şablon hazır · cihaz QA operatörde | Çoklu cihaz senkronizasyon QA ve kurtarma provası | WP-53 ürün kabulü |
 | WP-66 | [~] Karar taslağı · ürün onayı bekliyor (Grok) | Hesap silme ve veri saklama politikası | Silme/retention kararı |
 | WP-67 | [~] Brief hazır · ürün onayı bekliyor (Grok) | İstatistik Görselleştirme R2 · grafik kataloğu | Kullanım soruları |
-| WP-69 | [~] Planlanıyor (Gemini) | Aylık Çalışma Raporu Altyapısı (Cron + Edge Function) | WP-65 Kararı |
+| WP-69 | [~] Kod tamamlandı / deploy bekliyor (Gemini) | Aylık Çalışma Raporu Altyapısı (Cron + Edge Function) | DNS/API Key Onayı |
 | WP-27 | Base QA geçti · ürün kabulü açık | Windows desktop shell + Compact Focus | park: Test için bekleyenler |
-| WP-28 | Bekliyor | Windows MSIX + imza + update + release QA | WP-53 cihaz QA / kabul (park) |
+| WP-28 | [~] Otomatik test geçti · VM QA (Grok) | Windows MSIX + imza + update + release QA | WP-53 park — kullanıcı serbest bıraktı |
 
 > **Planlama notu:** WP-39 iptal edildi. WP-48/49/50 kullanıcı kararıyla kaldırıldı; yayımlanmış sürümde sorun çıkarsa aynı kartlar diriltilmez, ayrı debug/release WP'si açılır. Kamp Ateşi WP-61 → WP-62 zorunlu seri çalışır; WP-63, kullanıcının widget briefi olmadan kod işine dönüşmez.
 
@@ -197,6 +198,23 @@
 - **Model önerisi:** 🔴 Opus
 
 > ✅ Çakışma yok: Aktif Grok WP-61 yalnız kamp ateşi assetleri/`pubspec.yaml` ve WP-64 QA dokümanlarına sahip. WP-68 `pubspec.yaml`a dokunmaz; Android widget kaynakları ve `study_providers.dart` ortak değildir.
+
+### WP-70: Windows Performans Tabanı ve Donma Tanısı 🖥️
+- **Program/Faz:** Windows masaüstü kalitesi (`KALITE-PROGRAMI §8.7`) · **Ajan:** Codex · **Durum:** [~] Geliştiriliyor · **Bağımlılık:** Yok
+- **Problem:** Windows release'inin boşta 300–400 MB RAM tükettiği ve hafif donduğu bildiriliyor; şu an karşılaştırılabilir release ölçümü, tekrarlanabilir örnekleme veya performans bütçesi yok. Ölçmeden UI/mimari değişikliği yapmak rastgele optimizasyona yol açar.
+- **Kapsam:** Windows release build'i için kontrollü başlangıç/boşta işlem ölçümü; Working Set, private bytes, CPU ve pencere görünme süresi örnekleme; JSON kanıtı ve yorumlanabilir rapor; kısa, tekrarlanabilir koşum komutu. İlk bulguyu ayrı düzeltme WP'lerine dönüştürmek.
+- **Kapsam dışı:** `app/lib/features/desktop/**` veya Windows IA değişikliği, widget ağacı/tema/veri katmanı optimizasyonu, `app/windows/**` paketleme, yeni paket, `pubspec.yaml`, backend/RLS/migration, kullanıcı analitiği veya otomatik upload.
+- **SAHİP dosyalar (yaz):** `scripts/windows_performance_baseline.ps1`, `docs/WINDOWS-PERFORMANCE-BASELINE.md`, `app/test/performance/windows_performance_baseline_test.dart`, `progress.md` (yalnız Codex lane + bu kart).
+- **DOKUNMA:** `app/lib/features/desktop/**` (WP-53), `app/windows/**` (WP-28), `app/pubspec.yaml`, `app/lib/main.dart`, `core/theme/**`, `supabase/**`, Android/native widget yolları.
+- **Adımlar:** [ ] Release artefaktı ve koşum ön şartlarını doğrulayan, test hesabı/verisi kaydetmeyen örnekleme betiği yaz; [ ] en az 5 temiz başlatma ve 60 sn boşta örneğinin CPU/RAM/pencere sürelerini JSON'a kaydet; [ ] ölçüm şemasını unit testle sabitle; [ ] raporda p50/p95, makine/build/ölçüm sınırı ve düzeltme eşiğini kaydet; [ ] ilk bulguyu kök neden/düzeltme WP'sine ayır.
+- **Veri/Migration etkisi:** Yok. Ölçüm yalnız yerel, gitignore altında bir JSON çıktısıdır; geri alma = betik/dokümanı kaldırmak. Kullanıcı verisi, token, ekran içeriği veya telemetry toplanmaz.
+- **RLS/Güvenlik:** Ağ isteği ve gizli veri yok; betik yalnız süreç düzeyi sayaçları/kendi çalıştırdığı release process'ini okur. Çıktı kullanıcı adı, e-posta, dosya yolu veya environment değişkeni içermez.
+- **Edge-case'ler:** Release exe yok, birden çok uygulama süreci, pencere oluşmaması, önceden açık instance, antivirus/ilk-çalıştırma etkisi, düşük güç modu, örnekleme sırasında uygulamanın kapanması, yüksek DPI/çoklu ekran.
+- **Kabul (ölçülebilir):** Temiz Windows makinesinde 5 koşumdan her biri için pencere görünme süresi ve 60 sn örnekleri JSON'a yazılır; p50/p95 RAM/CPU değerleri raporda kaynak makine/build bilgisiyle gösterilir; aynı komut iki kez çalışınca şema doğrulaması geçer ve hassas veri alanı 0'dır. Çıkan bütçe ihlali için ayrı düzeltme WP'si açılır. `Cihazda doğrulanmalı`.
+- **Tuzaklar:** Debug profile göre hüküm vermek; yalnız Working Set'i bellek sızıntısı sanmak; ölçüm aracının uygulamayı veya sonuçları etkilemesi; tek koşumu genellemek; anonimleştirilmemiş yolu/hesabı kanıta yazmak.
+- **Model önerisi:** 🟣 Pro
+
+> ✅ Çakışma yok: WP-70 yalnız yeni `scripts/`, `docs/` ve `app/test/performance/` yollarına yazar. Gemini WP-69 aylık rapor planı, Claude WP-65 karar belgesi ve park durumundaki WP-53 masaüstü IA kaynaklarıyla ortak sahip/sıcak dosya yoktur.
 
 ### WP-64: Çoklu Cihaz Senkronizasyon QA ve Kurtarma Provası 🔄
 - **Program/Faz:** Güvenilirlik / platformlar arası doğrulama · **Ajan:** Grok · **Durum:** [~] Şablon hazır — cihaz QA / ürün kabulü bekliyor · **Bağımlılık:** WP-53 ürün kabulü + Android yayımlı sürüm
@@ -273,24 +291,24 @@
 
 
 ### WP-28: Windows MSIX, Güncelleme ve Release QA 📦
-- **Program/Faz:** Windows dağıtım/release (`KALITE-PROGRAMI §8.7`) · **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-53 gerçek Windows cihaz/ürün kabulü
-- **Problem:** Windows release artefaktı, doğru ürün metadata'sı, güvenilir kurulum/güncelleme, kod imzası ve Windows CI kapısı yok; mevcut Android updater Windows'ta çalışmıyor.
-- **Kapsam dışı:** Desktop IA/shell (WP-27), Microsoft Store hesabı açma/satın alma, uygulama özelliği, Android release workflow davranışını değiştirme.
-- **SAHİP dosyalar (yaz):** `app/windows/**` (runner metadata/ikon/manifest/DAGITIM), `app/pubspec.yaml` (yalnız Windows paket config/dev dependency), yeni `.github/workflows/windows-release.yml`, `docs/QA-WINDOWS.md`, `docs/WINDOWS-RELEASE-GATE.md`, Windows updater/channel adaptörü ve testleri.
-- **DOKUNMA:** `app/android/**`, `supabase/migrations/**`, timer/widget ürün mantığı, `.github/workflows/release.yml` Android akışı (yalnız oku), `core/theme/**`.
+- **Program/Faz:** Windows dağıtım/release (`KALITE-PROGRAMI §8.7`) · **Ajan:** Grok · **Durum:** [~] Geliştiriliyor · **Bağımlılık:** WP-53 park — kullanıcı WP-28’i serbest bıraktı
+- **Problem:** Windows release artefaktı, doğru ürün metadata'sı, güvenilir kurulum/güncelleme, kod imzası ve Windows CI kapısı yok; mevcut Android updater Windows'ta çalışmıyordu.
+- **Kapsam dışı:** Desktop IA/shell (WP-27/53), Microsoft Store hesabı açma, Android release.yml davranışı.
+- **SAHİP dosyalar (yaz):** `app/windows/**`, `app/pubspec.yaml` (msix_config), `.github/workflows/windows-release.yml`, `docs/QA-WINDOWS.md`, `docs/WINDOWS-RELEASE-GATE.md`, updater Windows kolu + test.
+- **DOKUNMA:** `app/android/**`, `supabase/migrations/**`, timer/widget, Android `release.yml`, `core/theme/**`.
 - **Adımlar:**
-  - [ ] `Odak Kampı` ProductName/FileDescription/publisher/package identity ve çok boyutlu ikon; Explorer/Start/Ayarlar metadata testi.
-  - [ ] Geliştirme ZIP + beta imzalı MSIX + stable Store MSIX (önerilen) kanal sözleşmesi; Store dışıysa App Installer feed.
-  - [ ] Sertifika/Store/Azure kimliğini secret store'a al; self-signed yalnız QA; PFX/service secret log/artefakta girmez.
-  - [ ] Windows runner CI: analyze + test + release build + MSIX + SHA-256 + Sentry release/symbol eşlemesi.
-  - [ ] Temiz VM install→launch→update→uninstall ve Windows App Certification/paket doğrulama otomasyonu.
-  - [ ] Windows 11 24H2/25H2, DPI, multi-monitor, sleep/resume, offline→online, Android+Windows aynı hesap ve forward-fix rollback matrisi.
-- **Veri/Migration etkisi:** Yok. Paket identity bir kez yayınlandıktan sonra kalıcıdır; geri alma = daha yüksek build numaralı, aynı identity/imzalı bilinen-iyi forward-fix paketi.
-- **RLS/Güvenlik:** RLS aynı kalır. Signing private key, Store/Azure kimliği, Supabase ve Sentry release değerleri yalnız CI secrets; log redaction zorunlu.
-- **Edge-case'ler:** İmza/publisher uyuşmazlığı, düşük version update, SmartScreen, VC++ runtime/plugin DLL eksikliği, install path salt-okunur MSIX container, Store ve GitHub kanallarının birbirini güncelleyememesi, offline installer.
-- **Kabul (ölçülebilir):** Temiz Windows 11 VM'de standart kullanıcıyla kurulum/ilk açılış/update/uninstall PASS; aynı identity+imzayla veri kayıpsız update; WACK/paket doğrulama PASS; artefakt SHA-256 ve Sentry release eşleşir; P0=0; 24H2+25H2 cihaz/VM videosu; rollback/forward-fix provası PASS. `Cihazda doğrulanmalı`.
-- **Tuzaklar:** Unsigned EXE/ZIP'i stable sayma; Store ve doğrudan MSIX identity'lerini plansız karıştırma; private key'i repoya koyma; Android updater'ı Windows'a kopyalama.
-- **Dal önerisi:** `wp28-windows-msix-release` · **Model önerisi:** 🟣 Pro
+  - [x] Runner metadata Odak Kampı; msix_config identity + self-signed QA
+  - [x] Kanal sözleşmesi: ZIP dev + MSIX beta/stable sideload; Store ayrı not
+  - [x] Secret modeli docs’ta; PFX repoya yok; CI env.json secrets
+  - [x] windows-release.yml: analyze+test+build+MSIX+ZIP+SHA-256+Release upload
+  - [x] Updater: Windows MSIX asset + dialog indirme yolu
+  - [ ] Temiz VM install→update→uninstall cihaz QA
+  - [ ] DPI/multi-monitor matrisi (`docs/QA-WINDOWS.md`)
+- **Veri/Migration etkisi:** Yok. Identity kalıcı; geri alma = daha yüksek build bilinen-iyi paket.
+- **RLS/Güvenlik:** Secrets yalnız CI; log redaction.
+- **Kabul:** CI/docs/kod `Kodda doğrulandı`; VM/cihaz matrisi `Cihazda doğrulanmalı`.
+- **Test (2026-07-14):** updater_service_windows_test 3 PASS; analyze updater 0.
+- **Tuzaklar:** Unsigned ZIP’i stable sayma; Store/sideload identity karıştırma; PFX commit.
 
 ---
 

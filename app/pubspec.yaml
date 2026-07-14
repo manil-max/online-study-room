@@ -120,13 +120,18 @@ flutter:
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
 
+# WP-28: Windows MSIX paket kimliği. identity/publisher yayından sonra kalıcıdır.
+# Store imzası ayrı; self-signed yalnız QA. Secret/PFX repoya girmez.
 msix_config:
   display_name: Odak Kampı
-  publisher_display_name: Odak Kampi Team
+  publisher_display_name: Odak Kampı
   identity_name: OdakKampi.App
   publisher: CN=OdakKampiTest
-  msix_version: 1.0.0.0
-  windows_build_args: "--dart-define-from-file=env.json"
+  msix_version: 1.0.0.8
+  logo_path: windows/runner/resources/app_icon.ico
+  capabilities: internetClient
+  languages: tr-tr
   install_certificate: false
-  capabilities: "internetClient"
-  languages: "tr-TR, en-US"
+  store: false
+  windows_build_args: --dart-define-from-file=env.json
+  output_name: odak-kampi-windows

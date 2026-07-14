@@ -75,8 +75,12 @@ class _UpdaterDialogState extends State<UpdaterDialog> {
         receiveTimeout: const Duration(minutes: 3),
       ));
       final dir = await getTemporaryDirectory();
-      final savePath = '${dir.path}/update_${widget.info.versionCode}.apk';
-      final apkFile = File(savePath);
+      final ext = widget.info.packageKind == UpdatePackageKind.msix
+          ? 'msix'
+          : 'apk';
+      final savePath =
+          '${dir.path}/update_${widget.info.versionCode}.$ext';
+      final packageFile = File(savePath);
 
       await dio.download(
         widget.info.downloadUrl,
@@ -89,16 +93,16 @@ class _UpdaterDialogState extends State<UpdaterDialog> {
         },
       );
 
-      // Bütünlük doğrulaması: release SHA-256 yayınlamışsa indirilen APK ile karşılaştır.
-      // Eşleşmezse dosyayı sil ve kurulumu iptal et (kurcalanmış/eksik indirme koruması).
+      // Bütünlük doğrulaması: release SHA-256 yayınlamışsa dosya ile karşılaştır.
       final sha256Url = widget.info.sha256Url;
       if (sha256Url != null) {
         final expected = _parseSha256(
           (await dio.get<String>(sha256Url, cancelToken: cancelToken)).data,
         );
-        final actual = sha256.convert(await apkFile.readAsBytes()).toString();
+        final actual =
+            sha256.convert(await packageFile.readAsBytes()).toString();
         if (expected == null || expected != actual) {
-          if (await apkFile.exists()) await apkFile.delete();
+          if (await packageFile.exists()) await packageFile.delete();
           if (mounted) {
             setState(() {
               _downloading = false;
@@ -110,7 +114,7 @@ class _UpdaterDialogState extends State<UpdaterDialog> {
         }
       }
 
-      // APK'yı aç → Android kurulum ekranı tetiklenir.
+      // APK → Android kurulum; MSIX → Windows paket kurulum UI (sideload).
       final result = await OpenFilex.open(savePath);
       if (result.type != ResultType.done && mounted) {
         setState(() {
@@ -119,7 +123,6 @@ class _UpdaterDialogState extends State<UpdaterDialog> {
         });
         return;
       }
-      // Kurulum ekranı açıldı; pencereyi kapat.
       if (mounted) Navigator.of(context).pop();
     } catch (e) {
       if (!mounted) return;
