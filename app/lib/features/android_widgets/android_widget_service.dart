@@ -15,9 +15,28 @@ Future<void> widgetBackgroundCallback(Uri? uri) async {
   }
 }
 
-final androidWidgetServiceProvider = Provider<AndroidWidgetGateway>(
-  (ref) => const AndroidWidgetService(),
-);
+/// Android dışı platformlarda no-op: Windows/web'de home_widget kanalı yok;
+/// her saniye MissingPluginException + async fırtınası jank/RAM şişirir.
+final androidWidgetServiceProvider = Provider<AndroidWidgetGateway>((ref) {
+  final isAndroid =
+      !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+  return isAndroid
+      ? const AndroidWidgetService()
+      : const _NoopAndroidWidgetService();
+});
+
+class _NoopAndroidWidgetService implements AndroidWidgetGateway {
+  const _NoopAndroidWidgetService();
+
+  @override
+  Future<void> saveSnapshot(AndroidWidgetSnapshot snapshot) async {}
+
+  @override
+  Future<void> refresh({Iterable<StudyHomeWidget>? widgets}) async {}
+
+  @override
+  Future<void> seedPlaceholder() async {}
+}
 
 enum StudyHomeWidget {
   timer(

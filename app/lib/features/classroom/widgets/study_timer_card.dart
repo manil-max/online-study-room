@@ -43,9 +43,23 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
   @override
   void initState() {
     super.initState();
-    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) setState(() {});
+    // Idle'da saniyelik setState yok (Windows IndexedStack + ölçek altında jank).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _syncTicker(ref.read(studyTimerProvider).isRunning);
     });
+  }
+
+  void _syncTicker(bool isRunning) {
+    if (isRunning) {
+      if (_ticker != null) return;
+      _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (mounted) setState(() {});
+      });
+      return;
+    }
+    _ticker?.cancel();
+    _ticker = null;
   }
 
   @override
@@ -94,6 +108,8 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final timer = ref.watch(studyTimerProvider);
+    // Çalışıyorsa saniyelik UI tick; durunca ticker kapalı (Windows perf).
+    _syncTicker(timer.isRunning);
     final recorded = ref.watch(todayRecordedSecondsProvider);
 
     // Durdurmada "Bugün"ü dondur + faz geçişinde ses/titreşim/uyarı (§2H).

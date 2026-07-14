@@ -8,13 +8,9 @@ import '../../core/desktop/desktop_window.dart';
 ///
 /// Tüm kabuk bu “tasarım tuvali” üzerinde kurulur; gerçek pencere
 /// büyüyüp küçülünce **layout değişmez**, yalnızca oransal ölçeklenir.
-/// Mobil reflow (sütun kırılması, kart ezilmesi) yok.
 const Size kDesktopDesignSize = Size(1100, 720);
 
 /// Pencere / tasarım oranından ölçek hesaplar.
-///
-/// Küçük pencerede sığdırmak için serbestçe küçülür; büyük monitörde
-/// [maxScale] ile abartılı şişme engellenir (letterbox kalır).
 double desktopProportionalScale({
   required Size viewport,
   Size design = kDesktopDesignSize,
@@ -28,11 +24,12 @@ double desktopProportionalScale({
   return fit;
 }
 
-/// Tüm çocuk ağacını sabit tasarım boyutunda çizer, pencereye oransal sığdırır.
+/// Sabit tasarım tuvali + oransal sığdırma.
 ///
-/// - MediaQuery.size = [designSize] → breakpoint / grid hep aynı
-/// - FittedBox → font, kart, pane, boşluk aynı oranda büyür/küçülür
-/// - Letterbox kenarları surface rengi
+/// FittedBox yerine [Transform.scale] + [RepaintBoundary]:
+/// - Ölçek GPU transform (ucuz)
+/// - Alt ağaç ayrı raster katmanı → saniyelik kart tick’leri tüm kabuğu yeniden
+///   boyamaz
 class DesktopProportionalScale extends StatelessWidget {
   const DesktopProportionalScale({
     required this.child,
@@ -57,32 +54,35 @@ class DesktopProportionalScale extends StatelessWidget {
           design: designSize,
           maxScale: maxScale,
         );
-        final painted = Size(
-          designSize.width * scale,
-          designSize.height * scale,
-        );
         final scheme = Theme.of(context).colorScheme;
         final parent = MediaQuery.of(context);
 
+        // Transform.scale layout boyutunu değiştirmez → dış kutu ölçekli ölçülerde.
         return ColoredBox(
           color: scheme.surfaceContainerLowest,
           child: Center(
             child: SizedBox(
-              width: painted.width,
-              height: painted.height,
-              child: FittedBox(
-                fit: BoxFit.fill,
-                alignment: Alignment.center,
-                child: SizedBox(
-                  width: designSize.width,
-                  height: designSize.height,
-                  child: MediaQuery(
-                    data: parent.copyWith(
-                      size: designSize,
-                      // Metin zaten FittedBox ile ölçeklenir; ek textScale yok
-                      // (çift ölçek olmasın).
+              width: designSize.width * scale,
+              height: designSize.height * scale,
+              child: ClipRect(
+                child: OverflowBox(
+                  alignment: Alignment.topLeft,
+                  minWidth: designSize.width,
+                  maxWidth: designSize.width,
+                  minHeight: designSize.height,
+                  maxHeight: designSize.height,
+                  child: Transform.scale(
+                    scale: scale,
+                    alignment: Alignment.topLeft,
+                    filterQuality: FilterQuality.medium,
+                    child: SizedBox(
+                      width: designSize.width,
+                      height: designSize.height,
+                      child: MediaQuery(
+                        data: parent.copyWith(size: designSize),
+                        child: RepaintBoundary(child: child),
+                      ),
                     ),
-                    child: child,
                   ),
                 ),
               ),

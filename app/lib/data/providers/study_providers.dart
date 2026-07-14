@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide Presence;
 import 'package:uuid/uuid.dart';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
@@ -883,6 +884,8 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
 
   Future<void> _syncStatsWidgets() async {
     if (_disposed) return;
+    // Android home_widget yoksa (Windows/web) projeksiyon + kanal maliyeti sıfır.
+    if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) return;
     final widgetService = ref.read(androidWidgetServiceProvider);
     final projection = ref.read(canonicalStatsProjectionProvider);
     final dailyGoalSeconds = ref.read(dailyGoalMinutesProvider) * 60;
@@ -957,6 +960,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   }
 
   Future<void> _syncTimerWidget() async {
+    if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) return;
     final widgetService = ref.read(androidWidgetServiceProvider);
     if (!state.isRunning || state.startedAt == null) {
       await widgetService.saveSnapshot(

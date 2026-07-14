@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/device_integrations/samsung_modes_service.dart';
@@ -41,6 +42,11 @@ void _handleDeviceAction(Ref ref, String action) {
 /// Uygulama açıkken veya soğuk başlangıçta gelen cihaz entegrasyonu
 /// (App Shortcuts / Samsung Routines) aksiyonlarını dinler ve tetikler.
 final deviceIntegrationListenerProvider = Provider<void>((ref) {
+  // Windows/web: kanal yok — dinleyiciyi hiç kurma.
+  if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) {
+    return;
+  }
+
   final service = ref.watch(deviceIntegrationServiceProvider);
 
   // Soğuk başlangıçtaki aksiyonu yakala
