@@ -13,7 +13,7 @@ String formatHuman(int totalSeconds) {
   final seconds = totalSeconds < 0 ? 0 : totalSeconds;
   final h = seconds ~/ 3600;
   final m = (seconds % 3600) ~/ 60;
-  if (h > 0) return '${h}h ${m}m';
+  if (h > 0) return m > 0 ? '${h}h ${m}m' : '${h}h';
   if (m > 0) return '${m}m';
   return '${seconds}s';
 }

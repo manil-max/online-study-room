@@ -18,6 +18,8 @@ void main() {
       expect(formatHuman(40), '40s');
       expect(formatHuman(125), '2m');
       expect(formatHuman(3700), '1h 1m');
+      expect(formatHuman(4 * 3600 + 5 * 60), '4h 5m');
+      expect(formatHuman(6 * 3600), '6h');
     });
   });
 

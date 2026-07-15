@@ -1,5 +1,13 @@
 {
   "@@locale": "tr",
+  "profileKademe": "Kademe",
+  "coreEnAz3KisiAktifkenCalis": "En az 3 kişi aktifken çalış",
+  "@profileKademe": {
+    "description": "Başarım kademe etiketi."
+  },
+  "@coreEnAz3KisiAktifkenCalis": {
+    "description": "Kamp ateşi başarım açıklaması."
+  },
   "appTitle": "Odak Kampı",
   "adminAnnouncementmessagenhedefAnnouncementtargettypeAnnouncementtargetid": "{message}\nHedef: {targettype} {targetid}",
   "adminLogactionHedefLogtargetuserid": "{action} - Hedef: {targetuserid}",

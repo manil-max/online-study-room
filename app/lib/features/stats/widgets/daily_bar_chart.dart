@@ -3,6 +3,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/stats/study_stats.dart';
+import '../../../core/utils/duration_format.dart';
 
 List<String> _months(BuildContext context) => [
   AppLocalizations.of(context).statsOca,
@@ -22,15 +23,7 @@ List<String> _months(BuildContext context) => [
 /// Kısa süre etiketi (çubuk üstü): "1s 30d", "45d", "" (boş gün).
 String _short(AppLocalizations l10n, int seconds) {
   if (seconds <= 0) return '';
-  final h = seconds ~/ 3600;
-  final m = (seconds % 3600) ~/ 60;
-  if (h > 0) {
-    return m > 0
-        ? '${l10n.commonHourCount(h)} ${l10n.commonMinuteCount(m)}'
-        : l10n.commonHourCount(h);
-  }
-  if (m > 0) return l10n.commonMinuteCount(m);
-  return '';
+  return formatHuman(seconds);
 }
 
 /// Günlük çalışma süresi çubuk grafiği (y: dakika). Süre **her zaman** çubuğun

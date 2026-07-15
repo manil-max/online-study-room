@@ -6,6 +6,7 @@ import 'package:online_study_room/data/models/achievement_ledger.dart';
 import 'package:online_study_room/data/models/gamification_profile.dart';
 import 'package:online_study_room/features/profile/widgets/achievement_showcase.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
+import 'package:online_study_room/l10n/app_localizations_en.dart';
 import 'package:online_study_room/l10n/app_localizations_tr.dart';
 
 void main() {
@@ -107,8 +108,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Tüm kademeler'), findsOneWidget);
-    expect(find.text('Tüm kademeler 1 · 50 Saat'), findsOneWidget);
-    expect(find.text('Tüm kademeler 5 · 2500 Saat'), findsOneWidget);
+    expect(find.text('Kademe 1 · 50 saat'), findsOneWidget);
+    expect(find.text('Kademe 5 · 2500 saat'), findsOneWidget);
     expect(find.text('+100 XP · Kilitli'), findsOneWidget);
     expect(find.text('+15000 XP · Kilitli'), findsOneWidget);
   });
@@ -129,6 +130,20 @@ void main() {
       );
     },
   );
+
+  test('İngilizce saat koşulu Clock değil hours olarak çekimlenir', () {
+    final achievement = kAchievementDictV3().firstWhere(
+      (entry) => entry.id == 'day_hero',
+    );
+    expect(
+      achievementTierConditionTr(
+        AppLocalizationsEn(),
+        achievement,
+        achievement.tiers[2],
+      ),
+      '6 hours',
+    );
+  });
 
   testWidgets('yeni ödül confetti ≤ 250 ms içinde görünür', (tester) async {
     final key = GlobalKey<AchievementShowcaseState>();

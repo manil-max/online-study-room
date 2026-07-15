@@ -154,7 +154,7 @@ List<AchievementDictEntry> kAchievementDictV3([AppLocalizations? l10n]) {
       'campfire_hours',
       'group',
       (l10n?.coreKampAtesiEtrafinda ?? 'corekampatesietrafinda'),
-      '3+ aktif saat',
+      (l10n?.coreEnAz3KisiAktifkenCalis ?? 'coreenaz3kisiaktifkencalis'),
       [
         (1, 10, 'campfire_hours', 100),
         (2, 50, 'campfire_hours', 400),

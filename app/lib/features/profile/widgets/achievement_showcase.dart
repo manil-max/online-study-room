@@ -109,11 +109,11 @@ String achievementTierConditionTr(
   final value = tier.threshold;
   switch (tier.unit) {
     case 'hours':
-      return '$value ${l10n.profileSaat}';
+      return l10n.commonHourCount(value);
     case 'minutes':
-      return '$value ${l10n.profileDakika}';
+      return l10n.commonMinuteCount(value);
     case 'day_hours':
-      return '$value ${l10n.profileSaat}';
+      return l10n.commonHourCount(value);
     case 'streak_days':
       return '$value · ${l10n.profileSeriVeDuzen}';
     case 'weekend_goal_days':
@@ -125,7 +125,7 @@ String achievementTierConditionTr(
     case 'group_goal_contrib':
       return '$value · ${l10n.profileGrup}';
     case 'campfire_hours':
-      return '$value ${l10n.profileSaat} · ${l10n.profileGrup}';
+      return '${l10n.commonHourCount(value)} · ${l10n.profileGrup}';
     case 'nudge_starts':
       return '$value · ${l10n.profileCalisma}';
     case 'locomotive_events':
@@ -797,7 +797,7 @@ class _AchievementTierDetailRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${AppLocalizations.of(context).profileTumKademeler} ${tier.tier} · $condition',
+                  '${AppLocalizations.of(context).profileKademe} ${tier.tier} · $condition',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),

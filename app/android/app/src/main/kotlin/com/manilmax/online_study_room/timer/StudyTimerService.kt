@@ -116,11 +116,11 @@ class StudyTimerService : Service() {
         // okuyup uygulamadan başlatmayı geri almasın (beta-v15 in-app start bug).
         editor.commit()
 
-        startForegroundCompat(buildRunningNotification(startedAtMs, isBreak = phase == "rest"))
+        startForegroundCompat(buildRunningNotification(startedAtMs))
         // DETACH sonrası idle bildirim kalmış olabilir; running'i ayrıca da bas.
         notificationManager().notify(
             NOTIFICATION_ID,
-            buildRunningNotification(startedAtMs, isBreak = phase == "rest"),
+            buildRunningNotification(startedAtMs),
         )
         TimerWidgets.updateAll(this)
         notifyStateChanged()
@@ -137,7 +137,7 @@ class StudyTimerService : Service() {
         // getForegroundService ile uyanmış olabileceğimiz için bookkeeping'ten
         // önce 5 sn içinde foreground olma sözleşmesini yerine getir.
         val nowMs = System.currentTimeMillis()
-        startForegroundCompat(buildRunningNotification(nowMs, isBreak = true))
+        startForegroundCompat(buildRunningNotification(nowMs))
 
         if (p.getString(KEY_PHASE, "work") == "work" && currentStart < nowMs) {
             appendPendingInterval(
@@ -157,7 +157,7 @@ class StudyTimerService : Service() {
 
         notificationManager().notify(
             NOTIFICATION_ID,
-            buildRunningNotification(nowMs, isBreak = true),
+            buildRunningNotification(nowMs),
         )
         TimerWidgets.updateAll(this)
         notifyStateChanged()
@@ -261,19 +261,15 @@ class StudyTimerService : Service() {
         }
     }
 
-    private fun buildRunningNotification(startedAtMs: Long, isBreak: Boolean = false): Notification {
+    private fun buildRunningNotification(startedAtMs: Long): Notification {
         ensureChannel()
         val builder = baseBuilder()
             .setOngoing(true)
             .setContentIntent(openAppPending())
-            .setContentTitle(
-                if (isBreak) getString(R.string.timer_break_title)
-                else getString(R.string.timer_focusing_title),
-            )
-            .setContentText(
-                if (isBreak) getString(R.string.timer_break_body)
-                else getString(R.string.timer_focusing_body),
-            )
+            // One UI already supplies the app/channel header. Keep the foreground
+            // surface to the chronometer and its Stop action.
+            .setContentTitle("")
+            .setContentText("")
         // Canlı/dinamik panel terfisi yalnız sistemin tanıdığı standart ongoing
         // bildirimlerde mümkün. Özel RemoteViews kullanmak, OEM'in bu bildirimi
         // saat/kronometre etkinliği olarak sınıflandırmasını engeller. Native
@@ -282,15 +278,6 @@ class StudyTimerService : Service() {
         builder.setUsesChronometer(true)
             .setWhen(startedAtMs)
             .setShowWhen(true)
-            .setSubText(
-                if (isBreak) getString(R.string.timer_subtext_break)
-                else getString(R.string.timer_subtext_focus),
-            )
-        if (isBreak) {
-            builder.addAction(0, getString(R.string.action_return_to_work), endBreakActionPending())
-        } else {
-            builder.addAction(0, getString(R.string.action_break), breakActionPending())
-        }
         builder.addAction(0, getString(R.string.action_stop), stopActionPending())
         return builder.build()
     }
@@ -303,7 +290,7 @@ class StudyTimerService : Service() {
             .setUsesChronometer(false)
             .setShowWhen(false)
             .setContentTitle("00:00:00")
-            .setContentText(getString(R.string.timer_ready))
+            .setContentText("")
             .addAction(0, getString(R.string.action_start), startActionPending())
         return builder.build()
     }

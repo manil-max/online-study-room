@@ -1,5 +1,11 @@
 {
   "@@locale": "en",
+  "@profileKademe": {
+    "description": "Achievement tier label."
+  },
+  "@coreEnAz3KisiAktifkenCalis": {
+    "description": "Campfire achievement description."
+  },
   "appTitle": "Focus Camp",
   "@appTitle": {
     "description": "Application title shown by Flutter in window and task-switcher metadata."
@@ -1820,6 +1826,7 @@
     "description": "Core user-facing text. Source: Kamp Ateşi"
   },
   "coreKampAtesiEtrafinda": "Around the Campfire",
+  "coreEnAz3KisiAktifkenCalis": "Study while at least 3 members are active",
   "@coreKampAtesiEtrafinda": {
     "description": "Core user-facing text. Source: Kamp Ateşi Etrafında',"
   },
@@ -3250,6 +3257,7 @@
     "description": "Profile user-facing text. Source: Temayı uygula"
   },
   "profileTumKademeler": "All levels",
+  "profileKademe": "Level",
   "@profileTumKademeler": {
     "description": "Profile user-facing text. Source: Tüm kademeler"
   },

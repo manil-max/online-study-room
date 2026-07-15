@@ -68,7 +68,7 @@
 - **Dal:** — (main)
 - **Başlangıç:** —
 - **Son güncelleme:** 2026-07-15 (Europe/Istanbul)
-- **Not:** WP-93 otomatik kalite kapısı geçti; 0032 migration'ının canlıya uygulandığı kullanıcı tarafından doğrulandı. Gerçek cihaz Supabase/RLS QA'sı bekliyor.
+- **Not:** WP-94 kod+otomatik kalite kapısı geçti; Samsung/One UI görsel QA ve ürün kabulü bekliyor.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
@@ -120,6 +120,7 @@
 | WP-89 | [~] Test için bekliyor | EN/TR entegrasyon, audit, build ve cihaz QA | WP-85/86/87/88 |
 | WP-92 | [~] Test için bekliyor | Global açık/özel grup sözleşmesi, RLS ve çift repository | — |
 | WP-93 | [~] Test için bekliyor | Global grup keşfi ve katılım arayüzü | WP-92 |
+| WP-94 | [~] Test için bekliyor | EN bağlam düzeltmeleri ve sade sayaç bildirimi | — |
 
 > **2026-07-14 proje denetimi:** Serbest sürükle-bırak ızgara, canlı grup hedefi ve saat stilleri **zaten kodda uygulanmış** (backlog stale idi; geçici WP-72/73/75 iptal). Dinamik paneldeki cihaz/eylem sorunu için açılan **WP-76** kod+otomatik test aşamasını geçti; Samsung/Pixel cihaz QA’sı bekliyor.
 >
@@ -161,6 +162,14 @@
 > Kod/otomatik test bitti; **cihaz QA veya ürün demo’su** bekleniyor.
 > Bu bölüm **aktif çalışma değildir** — ajan claim etmez, diğer WP’leri engellemez.
 > Kabul gelince kart buradan çıkar → **Tamamlanan**’a gider. Bug çıkarsa ayrı debug WP açılır.
+
+### WP-94: EN Bağlam Düzeltmeleri ve Sade Sayaç Bildirimi 🔔
+
+- **Program/Faz:** Debug · **Aşama:** Otomatik test geçti · **Kanıt:** `Kodda doğrulandı` / `Cihazda doğrulanmalı`
+- **Uygulandı:** Çalışan bildirimin açıklama ve Mola eylemleri kaldırıldı; One UI zorunlu uygulama başlığı altında yalnız canlı sayaç ve Durdur kalır. Boş durumda `00:00:00` ve Başlat kalır. Başarım kademeleri EN'de `Level 1 · 6 hours` biçiminde; kamp ateşi açıklaması bağlama göre çevrilir. Grafik çubukları uzun `hours/minutes` yerine `4h 5m` gösterir.
+- **Doğrulama:** `flutter analyze` 0 bulgu; tüm Flutter testleri 426/426; release APK derlendi (`app-release.apk`, 59.2 MB). EN koşul ve kısa süre biçimi yeni birim/widget testleriyle kapsandı.
+- **Cihazda doğrulanmalı:** Samsung One UI'da çalışan sayaç bildirimi açılmalı; uygulama başlığı dışındaki içerikte yalnız kronometre + Durdur, durdurulduğunda yalnız `00:00:00` + Başlat görünmeli. EN dilinde Başarımlar ve İstatistikler ekran görüntüsüyle `6 hours`, `Level 1`, `4h 5m` doğrulanmalı.
+- **Veri/RLS/Geri alma:** Veri/migration/RLS etkisi yok. Geri alma, bu UI/native bildirim commitini geri almaktır.
 
 ### WP-92: Global Açık/Özel Grup Sözleşmesi ve RLS 🛡️
 
