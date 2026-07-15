@@ -45,4 +45,15 @@ void main() {
       timeout: const Duration(seconds: 1),
     );
   });
+
+  test('default timeouts are user-friendly (≤2s global, ≤1.5s per source)', () {
+    expect(
+      kPullToRefreshPerSourceTimeout,
+      lessThanOrEqualTo(const Duration(milliseconds: 1500)),
+    );
+    expect(
+      kPullToRefreshGlobalTimeout,
+      lessThanOrEqualTo(const Duration(seconds: 2)),
+    );
+  });
 }

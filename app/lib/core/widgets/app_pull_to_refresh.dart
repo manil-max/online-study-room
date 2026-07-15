@@ -1,33 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../data/providers/achievement_provider.dart';
 import '../../data/providers/auth_providers.dart';
-import '../../data/providers/gamification_providers.dart';
 import '../../data/providers/group_providers.dart';
 import '../../data/providers/notification_providers.dart';
 import '../../data/providers/presence_providers.dart';
 import '../../data/providers/study_providers.dart';
 import '../../data/providers/subject_providers.dart';
+import '../../data/providers/achievement_provider.dart';
+import '../../data/providers/gamification_providers.dart';
 
-/// Tek bir provider refresh için üst süre. Aşıldığında o kaynak atlanır;
-/// spinner kilitlenmez (H2).
+/// Kritik kaynak için üst bekleme. Spinner kullanıcıyı kilitlemesin (WP-102 A).
 @visibleForTesting
-const Duration kPullToRefreshPerSourceTimeout = Duration(seconds: 8);
+const Duration kPullToRefreshPerSourceTimeout = Duration(milliseconds: 1500);
 
-/// Tüm refresh işinin üst sınırı. En yavaş kaynak bile bunu aşamaz.
+/// Tüm kritik refresh işinin üst sınırı. Hedef: indicator ≤ ~2 sn.
 @visibleForTesting
-const Duration kPullToRefreshGlobalTimeout = Duration(seconds: 12);
+const Duration kPullToRefreshGlobalTimeout = Duration(seconds: 2);
 
 /// Tüm route'ları saran klasik mobil aşağı çekerek yenileme davranışı.
 ///
-/// Veri ekranı birden fazla provider kullansa bile tek hareket, oturumları,
-/// grup/presence verisini, dersleri, bildirimleri ve başarım projeksiyonunu
-/// yeniden ister. Böylece uygulamayı kapatıp açmak yerine mevcut ekranda
-/// güncel sunucu sonucuna dönülür.
+/// Spinner **kısa** kalır: yalnız oturum / özet / grup / presence gibi kritik
+/// StreamProvider'lar kısa timeout ile beklenir. Bildirim, başarım, ders listesi
+/// arka planda invalidate edilir (profil/sekme zaten tazeler).
 ///
-/// Hiçbir kaynak (StreamProvider.future hang, yavaş ağ) sonsuz bekleyemez:
-/// per-source ve global timeout spinner'ı her zaman bitirir.
+/// WP-100 local emit yazmaları anında yansıttığı için pull artık "her şeyi
+/// 12 sn sunucudan çek" değil; sıkışık cache/realtime için hafif jest.
 class AppPullToRefresh extends ConsumerWidget {
   const AppPullToRefresh({required this.child, super.key});
 
@@ -60,30 +58,29 @@ Future<void> refreshAppData(WidgetRef ref) async {
   final user = ref.read(authStateProvider).value;
   if (user == null) return;
 
-  // Kritik yüzeyler önce; gamification/dictionary ikincil (yavaş ağda asıl
-  // istatistik/oturum yenilemesini engellemesin diye aynı wait içinde ama
-  // timeout ile korunuyor).
-  final jobs = <Future<void>>[
+  // İkincil: arka planda taze iste; spinner beklemez (desktop invalidate deseni).
+  ref.invalidate(userSubjectsProvider);
+  ref.invalidate(myRemindersProvider);
+  ref.invalidate(myAnnouncementsProvider);
+  ref.invalidate(readAnnouncementIdsProvider);
+  ref.invalidate(achievementDictionaryProvider);
+  ref.invalidate(gamificationProfileProvider(user.id));
+  ref.invalidate(userAchievementsProvider(user.id));
+
+  // Kritik: kısa timeout ile bekle — ana istatistik / bugün / kamp ateşi.
+  final critical = <Future<void>>[
     _settle(ref.refresh(userSessionsProvider.future)),
     _settle(ref.refresh(userStudySummaryProvider.future)),
     _settle(ref.refresh(userGroupsProvider.future)),
     _settle(ref.refresh(groupMembersProvider.future)),
     _settle(ref.refresh(groupDailyStatsProvider.future)),
     _settle(ref.refresh(groupPresenceProvider.future)),
-    _settle(ref.refresh(userSubjectsProvider.future)),
-    _settle(ref.refresh(myRemindersProvider.future)),
-    _settle(ref.refresh(myAnnouncementsProvider.future)),
-    _settle(ref.refresh(readAnnouncementIdsProvider.future)),
-    _settle(ref.refresh(achievementDictionaryProvider.future)),
-    _settle(ref.refresh(gamificationProfileProvider(user.id).future)),
-    _settle(ref.refresh(userAchievementsProvider(user.id).future)),
   ];
 
   try {
-    await Future.wait<void>(jobs).timeout(kPullToRefreshGlobalTimeout);
+    await Future.wait<void>(critical).timeout(kPullToRefreshGlobalTimeout);
   } catch (_) {
-    // Global timeout veya beklenmeyen hata: spinner yine biter; ekranlar
-    // kendi AsyncValue hata/yükleme durumunu gösterir.
+    // Timeout veya hata: indicator biter; ekran AsyncValue ile devam eder.
   }
 }
 
@@ -102,7 +99,6 @@ Future<void> _settle(
   try {
     await future.timeout(timeout);
   } catch (_) {
-    // Mevcut ekran kendi hata durumunu göstermeye devam eder. Yenileme hareketi
-    // tek bir veri kaynağının geçici ağ hatası veya hang'i ile kilitlenmemelidir.
+    // Tek kaynak spinner'ı kilitlemez.
   }
 }
