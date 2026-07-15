@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 
+import '../../core/stats/istanbul_calendar.dart';
+
 /// Sürenin nasıl kaydedildiği. İstatistikte ayrım YAPILMAZ (bkz. project.md §3.5);
 /// yalnızca kayıt amaçlı tutulur.
 enum StudySource { live, manual }
@@ -26,8 +28,9 @@ class StudySession {
   final int durationSeconds;
   final StudySource source;
 
-  /// Oturumun ait olduğu gün (saat bilgisi sıfırlanmış), istatistik gruplaması için.
-  DateTime get day => DateTime(start.year, start.month, start.day);
+  /// Oturumun ait olduğu takvim günü (Europe/Istanbul, saat sıfır).
+  /// UTC `start` parse edilse bile `dailyTotals` / `dayOf` ile aynı anahtarı üretir.
+  DateTime get day => istanbulDay(start);
 
   factory StudySession.fromMap(Map<String, dynamic> map) {
     return StudySession(

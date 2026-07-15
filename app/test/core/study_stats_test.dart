@@ -28,6 +28,52 @@ StudySession _s(String user, DateTime start, int seconds) => StudySession(
     );
 
 void main() {
+  test('resolveTodayDisplayTotal: freeze dünse gece yarısından sonra düşer', () {
+    // Dün 1s 5dk freeze; bugün kayıtlı 0 → ekran 0 (eski bug: 1s 5dk kalırdı).
+    final yesterday = DateTime(2026, 7, 15);
+    final today = DateTime(2026, 7, 16);
+    final r = resolveTodayDisplayTotal(
+      recordedToday: 0,
+      liveWorkSeconds: 0,
+      frozenTotal: 3900, // 1s 5dk
+      frozenOnDay: yesterday,
+      today: today,
+    );
+    expect(r.total, 0);
+    expect(r.keepFrozen, isNull);
+  });
+
+  test('resolveTodayDisplayTotal: aynı günde freeze kaydı gelene kadar tutar', () {
+    final today = DateTime(2026, 7, 16);
+    final r = resolveTodayDisplayTotal(
+      recordedToday: 0,
+      liveWorkSeconds: 0,
+      frozenTotal: 3900,
+      frozenOnDay: today,
+      today: today,
+    );
+    expect(r.total, 3900);
+    expect(r.keepFrozen, 3900);
+
+    final caughtUp = resolveTodayDisplayTotal(
+      recordedToday: 3900,
+      liveWorkSeconds: 0,
+      frozenTotal: 3900,
+      frozenOnDay: today,
+      today: today,
+    );
+    expect(caughtUp.total, 3900);
+    expect(caughtUp.keepFrozen, isNull);
+  });
+
+  test('StudySession.day UTC start için Istanbul günü kullanır', () {
+    // UTC 21:30 → Istanbul 00:30 ertesi gün.
+    final s = _s('u1', DateTime.utc(2026, 7, 15, 21, 30), 600);
+    expect(s.day, DateTime(2026, 7, 16));
+    expect(secondsOnDay([s], DateTime(2026, 7, 16)), 600);
+    expect(secondsOnDay([s], DateTime(2026, 7, 15)), 0);
+  });
+
   test('startOfWeek Pazartesi 00:00 verir', () {
     // 2026-06-21 bir Pazar (İstanbul).
     final monday = startOfWeek(_ist(2026, 6, 21, 15, 30));

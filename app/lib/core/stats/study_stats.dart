@@ -44,9 +44,39 @@ Iterable<StudySession> inRange(
 }
 
 /// Belirli bir gündeki toplam süre (saniye).
-int secondsOnDay(Iterable<StudySession> sessions, DateTime day) => sessions
-    .where((s) => isSameDay(s.day, day))
-    .fold<int>(0, (sum, s) => sum + s.durationSeconds);
+/// [day] tam an veya gün anahtarı olabilir; her iki taraf da Istanbul gününe indirgenir.
+int secondsOnDay(Iterable<StudySession> sessions, DateTime day) {
+  final target = dayOf(day);
+  return sessions
+      .where((s) => isSameDay(s.day, target))
+      .fold<int>(0, (sum, s) => sum + s.durationSeconds);
+}
+
+/// Saat kartı "bugün toplam" dondurma kuralı (saf).
+///
+/// Durdur anında kayıtlı toplam + oturum henüz stream'e düşmeden ekranda düşmesin
+/// diye geçici freeze kullanılır. **Freeze yalnız aynı Istanbul gününde geçerlidir**;
+/// gece yarısından sonra dünün 1s 5dk'sı bugün 0 iken ekranda kalmamalı.
+({int total, int? keepFrozen}) resolveTodayDisplayTotal({
+  required int recordedToday,
+  required int liveWorkSeconds,
+  int? frozenTotal,
+  DateTime? frozenOnDay,
+  required DateTime today,
+}) {
+  final todayKey = dayOf(today);
+  final base = recordedToday + liveWorkSeconds;
+  if (frozenTotal == null || frozenOnDay == null) {
+    return (total: base, keepFrozen: null);
+  }
+  if (!isSameDay(dayOf(frozenOnDay), todayKey)) {
+    return (total: base, keepFrozen: null);
+  }
+  if (base >= frozenTotal) {
+    return (total: base, keepFrozen: null);
+  }
+  return (total: frozenTotal, keepFrozen: frozenTotal);
+}
 
 /// Gün → toplam saniye haritası (yalnızca verisi olan günler).
 Map<DateTime, int> dailyTotals(Iterable<StudySession> sessions) {

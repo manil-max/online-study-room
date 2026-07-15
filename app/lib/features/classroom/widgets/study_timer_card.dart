@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/stats/study_stats.dart';
 import '../../../core/theme/subject_colors.dart';
 import '../../../core/utils/duration_format.dart';
 import '../../../core/widgets/anchored_menu.dart';
@@ -39,7 +40,9 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
 
   /// Durdur/Mola anında bugünün toplamını geçici dondurur: biten oturum
   /// veritabanına yazılıp kayıtlı toplam güncellenene kadar değer düşmesin.
+  /// Yalnız [_frozenOnDay] Istanbul günü için geçerlidir (gece yarısı sızıntısı yok).
   int? _frozenTotal;
+  DateTime? _frozenOnDay;
 
   @override
   void initState() {
@@ -116,6 +119,7 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
     // Çalışıyorsa saniyelik UI tick; durunca ticker kapalı (Windows perf).
     _syncTicker(timer.isRunning);
     final recorded = ref.watch(todayRecordedSecondsProvider);
+    final todayKey = dayOf(DateTime.now());
 
     // Durdurmada bugünün toplamını dondur + faz geçişinde ses/titreşim/uyarı (§2H).
     ref.listen<StudyTimerState>(studyTimerProvider, (prev, next) {
@@ -125,6 +129,8 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
         final prevTarget = prev.phaseTargetSeconds;
         if (prevTarget != null) extra = extra.clamp(0, prevTarget);
         if (prev.phase != TimerPhase.work) extra = 0; // mola toplama sayılmaz
+        // Freeze anındaki Istanbul günü: gece yarısı sonrası dünün değeri sızmasın.
+        _frozenOnDay = dayOf(DateTime.now());
         _frozenTotal =
             ref.read(todayRecordedSecondsProvider) + (extra > 0 ? extra : 0);
       }
@@ -145,11 +151,18 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
         ? elapsed
         : (timer.isRunning ? (target - elapsed).clamp(0, target) : target);
     // Bugünün toplamına yalnız ÇALIŞMA fazının canlı süresi eklenir (mola hariç).
+    // Gece yarısını aşan canlı oturum: elapsed hâlâ doğru; "bugün" kaydı
+    // stream güncellenince recorded ile hizalanır (oturum start günü Istanbul).
     final liveWork = (timer.isRunning && inWork) ? elapsed : 0;
-    final base = recorded + liveWork;
-    // Kayıtlı toplam dondurulan değere yetiştiyse dondurmayı bırak.
-    if (_frozenTotal != null && base >= _frozenTotal!) _frozenTotal = null;
-    final todayTotal = _frozenTotal ?? base;
+    // freeze alanlarını build içinde silme (setState riski yok); kural saf
+    // resolveTodayDisplayTotal içinde: farklı gün → freeze yok sayılır.
+    final todayTotal = resolveTodayDisplayTotal(
+      recordedToday: recorded,
+      liveWorkSeconds: liveWork,
+      frozenTotal: _frozenTotal,
+      frozenOnDay: _frozenOnDay,
+      today: todayKey,
+    ).total;
     final notifier = ref.read(studyTimerProvider.notifier);
     final subjects = ref.watch(userSubjectsProvider).value ?? const <Subject>[];
 
