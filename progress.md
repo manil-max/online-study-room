@@ -60,15 +60,15 @@
 - **Not:** Bu oturum işleri commit'lendi: grid 32-sütun `141ed2a`, core testleri `da7bdd6`, skill docs `1afba2d`. ⚠️ WP-65 karar dokümanı (`docs/AYLIK-RAPOR-KARAR.md`) önceki Claude oturumunda yazıldı ama **COMMIT'LENMEDİ** (untracked); kararı WP-69 zaten uyguladı → ürün API/DNS kararı bekliyor.
 
 ### Codex Lane
-- **Durum:** [~] Aktif
+- **Durum:** [⏸] Cihaz QA bekliyor
 - **Faz/WP:** WP-96 — v22 stable deneme dağıtımı
-- **Aşama:** Geliştiriliyor
-- **SAHİP yollar:** `app/pubspec.yaml`, `CHANGELOG.md`, `progress.md`
-- **Ortak/riskli yüzey:** `app/pubspec.yaml`, Git tag/release (başka aktif lane yok)
+- **Aşama:** Yayınlandı; cihaz kabul testi bekliyor
+- **SAHİP yollar:** —
+- **Ortak/riskli yüzey:** GitHub v22 release / telefon testi
 - **Dal:** main
 - **Başlangıç:** 2026-07-15 14:35 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-15 14:35 (Europe/Istanbul)
-- **Not:** Kullanıcı isteğiyle WP-94/95'i içeren v22 stable GitHub deneme dağıtımı hazırlanıyor; cihaz QA ürün sahibinin telefonunda yapılacak.
+- **Son güncelleme:** 2026-07-15 14:52 (Europe/Istanbul)
+- **Not:** `v22` etiketi `56d2560` sürümleme commit'ine bağlıdır. Doğru Android işi (#26) başarılı oldu; indirilen APK içinden `1.0.22+22` ve WP-94/95 notları doğrulandı. Ürün sahibinin telefon kabul testi bekleniyor.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
