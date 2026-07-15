@@ -4,6 +4,20 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [beta-v25 / 1.0.25+25] - 2026-07-15
+
+> **Beta — Türkçe süre kısaltması düzeltmesi.**
+
+### Fixes
+- **Türkçe süreler artık Türkçe:** grafik, istatistik, hedef, kayıt ve sayaç
+  kartlarında `4h 5m` yerine `4sa 5dk`; saniye değerinde `40sn` görünür.
+- **İngilizce kompakt kaldı:** İngilizce arayüz bilinçli olarak `4h 5m` ve
+  `40s` kullanır; uzun `hours/minutes` etiketleri grafiğe geri dönmez.
+
+### Test focus
+- Telefonun uygulama dilini Türkçe yap; Ana Sayfa ve İstatistikler'de `sa/dk/sn`,
+  ardından İngilizce'de `h/m/s` kaldığını kontrol et.
+
 ## [beta-v24 / 1.0.24+24] - 2026-07-15
 
 > **Beta — Kanıtlı One UI bildirim düzenine dönüş ve evrensel yenileme.**

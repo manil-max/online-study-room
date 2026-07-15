@@ -61,14 +61,14 @@
 
 ### Codex Lane
 - **Durum:** [⏸] Cihaz QA bekliyor
-- **Faz/WP:** WP-97 — One UI sayaç bildirimi, evrensel yenileme ve beta ayrımı
+- **Faz/WP:** WP-98 — Türkçe süre kısaltmaları ve beta-v25
 - **Aşama:** Otomatik test geçti; beta cihaz QA bekliyor
 - **SAHİP yollar:** —
-- **Ortak/riskli yüzey:** Android foreground notification / One UI RemoteViews / root navigation refresh
+- **Ortak/riskli yüzey:** Uygulama geneli süre biçimleme
 - **Dal:** main
 - **Başlangıç:** 2026-07-15 14:35 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-15 15:38 (Europe/Istanbul)
-- **Not:** Kök neden doğrulandı: dil paketi değil, `0bba715` WP-80 özel yatay `timer_notification.xml` görünümünü dinamik panel için silmiş. Kanıtlı görünüm geri getirildi; root pull-to-refresh oturum/istatistik/grup/ders/bildirim/presence/başarım verilerini yeniler; beta launcher adı `Odak Kampı BETA TEST`. `flutter analyze` 0, test 429/429, beta release APK başarılı. Cihaz QA bekliyor; stable tag yok.
+- **Son güncelleme:** 2026-07-15 15:55 (Europe/Istanbul)
+- **Not:** Ortak süre biçimleyicisi sistem/per-app diline göre TR=`sa/dk/sn`, EN=`h/m/s` üretir. `flutter analyze` 0; test 430/430. beta-v25 derlemesi/yayını ve cihaz QA bekliyor; stable tag yok.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
@@ -164,6 +164,14 @@
 > Kod/otomatik test bitti; **cihaz QA veya ürün demo’su** bekleniyor.
 > Bu bölüm **aktif çalışma değildir** — ajan claim etmez, diğer WP’leri engellemez.
 > Kabul gelince kart buradan çıkar → **Tamamlanan**’a gider. Bug çıkarsa ayrı debug WP açılır.
+
+### WP-98: Türkçe Süre Kısaltmaları ve beta-v25 🔤
+
+- **Program/Faz:** Debug · **Aşama:** Otomatik test geçti · **Kanıt:** `Kodda doğrulandı` / `Cihazda doğrulanmalı`
+- **Uygulandı:** Ortak süre biçimleyici artık uygulamanın sistem/per-app dilini kullanır: Türkçe `4sa 5dk` / `40sn`; İngilizce `4h 5m` / `40s`. Bu, grafikleri, istatistik/özet/hedef/leaderboard kartlarını ve saniyeli sayaç özetlerini tek noktadan kapsar.
+- **Doğrulama:** Türkçe ve İngilizce kısaltmalar için birim testleri; `flutter analyze` 0 bulgu; tüm Flutter testleri 430/430.
+- **Cihazda doğrulanmalı:** beta-v25'te Android uygulama dilini Türkçe ve İngilizce yaparak Ana Sayfa/İstatistikler'de her iki biçimi de kontrol et.
+- **Veri/RLS/Geri alma:** Veri, migration veya RLS etkisi yok. Geri alma, ortak süre biçimleme commitini geri almaktır.
 
 ### WP-95: Başarım Ayrıntılarında Tam Cümleli Koşullar 🏆
 

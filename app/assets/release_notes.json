@@ -3,6 +3,23 @@
   "source": "CHANGELOG.md",
   "releases": [
     {
+      "versionName": "1.0.25",
+      "buildNumber": 25,
+      "channel": "beta",
+      "date": "2026-07-15",
+      "title": "beta-v25: Türkçe süre kısaltmaları",
+      "highlights": [
+        "Türkçe grafik, istatistik, hedef, kayıt ve sayaç kartları artık 4sa 5dk ve 40sn gösterir.",
+        "İngilizce kompakt biçim 4h 5m ve 40s olarak kalır; uzun süre etiketleri geri dönmez."
+      ],
+      "fixes": [
+        "Türkçe seçiliyken ortak süre biçimleyicisinin İngilizce h/m/s üretmesi giderildi."
+      ],
+      "notes": [
+        "Ana Sayfa ve İstatistikler'de Türkçe sa/dk/sn; İngilizce h/m/s kontrolünü yap."
+      ]
+    },
+    {
       "versionName": "1.0.24",
       "buildNumber": 24,
       "channel": "beta",
