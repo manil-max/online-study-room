@@ -79,7 +79,7 @@
 - **Dal:** — (main)
 - **Başlangıç:** —
 - **Son güncelleme:** 2026-07-15 (Europe/Istanbul)
-- **Not:** WP-100 kod+otomatik test → Test için bekleyenler.
+- **Not:** WP-101 saat XP 50 + stable v27; migration 0033 SQL Editor.
 
 ---
 
@@ -165,6 +165,14 @@
 > Kod/otomatik test bitti; **cihaz QA veya ürün demo’su** bekleniyor.
 > Bu bölüm **aktif çalışma değildir** — ajan claim etmez, diğer WP’leri engellemez.
 > Kabul gelince kart buradan çıkar → **Tamamlanan**’a gider. Bug çıkarsa ayrı debug WP açılır.
+
+### WP-101: Saat XP 50 + stable v27 ⭐
+
+- **Program/Faz:** XP ekonomi + release · **Aşama:** Kod + tag · **Kanıt:** `Kodda doğrulandı` / `Canlı SQL uygulanmalı`
+- **Uygulandı:** Her tamamlanan 1 saat çalışma **50 XP** (eskiden 10). `kStudyHourXp=50` + `0033_study_hour_xp_50.sql` (RPC, sözlük, eski 10 XP saatlere +40 top-up).
+- **Stable:** tag `v27` / `1.0.27+27` (main: WP-100 senkron + WP-99 bildirim/tercih).
+- **ZORUNLU:** Supabase SQL Editor → `0033_study_hour_xp_50.sql` uygula; yoksa sunucu 10 XP vermeye devam eder.
+- **Cihazda:** güncelleme + profil/başarım aç; 1 saat → +50 XP.
 
 ### WP-100: Senkron Kök Fix — Local Emit, Refresh Timeout, Presence Race 🔄
 

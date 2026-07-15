@@ -164,10 +164,9 @@ void main() {
       expect(crownRankForXp(75000), 'diamond_owl');
     });
 
-    test('her tamamlanan saat 10 XP verir ve idempotenttir', () {
+    test('her tamamlanan saat 50 XP verir ve idempotenttir', () {
       final engine = AchievementLedgerEngine();
-      // 2.5 saat → 2 tam saat → 20 XP (+ steel_will 90dk kademe 2?)
-      // 90 dk = steel_will tier2 (90) → 50+100; hours=1 → 10
+      // 2.5 saat → 2 tam saat → 100 XP saat ödülü (+ başarım kademeleri)
       final sessions = [
         _session(
           id: 'h1',
@@ -182,12 +181,13 @@ void main() {
         dailyGoalMinutes: 360,
       );
       expect(first.metrics['total_hours'], 2);
-      // Saat XP en az 20
-      expect(engine.totalXp, greaterThanOrEqualTo(20));
+      // Saat XP: 2 × 50 = 100 (başarım kademeleri üstüne eklenebilir)
+      expect(engine.totalXp, greaterThanOrEqualTo(100));
       final hourOnlyKeys = engine.eventKeys
           .where((k) => k.contains('study_hour_xp'))
           .toList();
       expect(hourOnlyKeys.length, 2);
+      expect(kStudyHourXp, 50);
 
       final second = engine.processEvent(
         userId: 'u1',

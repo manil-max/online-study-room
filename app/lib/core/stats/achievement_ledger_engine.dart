@@ -288,8 +288,9 @@ List<AchievementDictEntry> kAchievementDictV3([AppLocalizations? l10n]) {
 /// 0 / 2.500 / 10.000 / 25.000 / 75.000
 const List<int> kCrownXpThresholds = <int>[0, 2500, 10000, 25000, 75000];
 
-/// Tamamlanan her 1 saat çalışma = 10 XP (başarım ödüllerine ek, idempotent).
-const int kStudyHourXp = 10;
+/// Tamamlanan her 1 saat çalışma = 50 XP (başarım ödüllerine ek, idempotent).
+/// Sunucu: `0033_study_hour_xp_50.sql` / `process_achievement_event`.
+const int kStudyHourXp = 50;
 
 /// Sistem ledger kimliği (rozet kataloğunda gösterilmez).
 const String kStudyHourAchievementId = 'study_hour_xp';
