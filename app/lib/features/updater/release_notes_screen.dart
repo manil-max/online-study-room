@@ -51,12 +51,14 @@ class ReleaseNotesScreen extends StatelessWidget {
             return Center(child: Text(l10n.updaterHenuzGosterilecekSurumNotu));
           }
 
+          final locale = Localizations.localeOf(context);
           return ListView.separated(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
             itemCount: notes.length,
             separatorBuilder: (_, _) => const SizedBox(height: 10),
-            itemBuilder: (context, index) =>
-                ReleaseNoteCard(note: notes[index]),
+            itemBuilder: (context, index) => ReleaseNoteCard(
+              note: notes[index].forLocale(locale),
+            ),
           );
         },
       ),
@@ -77,7 +79,8 @@ class WhatsNewDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final shownNote = note;
+    final locale = Localizations.localeOf(context);
+    final shownNote = note?.forLocale(locale);
     final l10n = AppLocalizations.of(context);
 
     return AlertDialog(

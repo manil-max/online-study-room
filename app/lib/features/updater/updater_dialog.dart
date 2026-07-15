@@ -30,8 +30,9 @@ Future<void> maybeShowUpdateDialog(BuildContext context) async {
       channel: UpdaterService.channel,
     );
     if (bundledNote != null) {
+      final locale = Localizations.localeOf(context);
       info = info.copyWith(
-        releaseNotes: bundledNote.plainText(
+        releaseNotes: bundledNote.forLocale(locale).plainText(
           highlightsLabel: l10n.updaterYenilikler,
           fixesLabel: l10n.updaterDuzeltmeler,
           notesLabel: l10n.updaterNotlar,

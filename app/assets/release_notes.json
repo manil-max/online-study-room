@@ -1,7 +1,43 @@
 {
-  "schemaVersion": 1,
-  "source": "CHANGELOG.md",
+  "schemaVersion": 2,
+  "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
+    {
+      "versionName": "1.0.27",
+      "buildNumber": 27,
+      "channel": "stable",
+      "date": "2026-07-15",
+      "title": "v27: saat başına 50 XP + senkron güvenilirliği",
+      "highlights": [
+        "Tamamlanan her çalışma saati 50 XP verir (önceden 10); başarım ödüllerine eklenir.",
+        "Manuel süre ekleme, ana sayfa saat toplamını realtime beklemeden hemen günceller.",
+        "Aşağı çekerek yenileme zaman aşımıyla biter; tek yavaş kaynak sonsuz dönemez.",
+        "Widget veya bildirimden sayaç başlatınca grup yüklendiğinde presence yeniden yazılır."
+      ],
+      "fixes": [
+        "Offline-first oturum ve presence yazımları aktif dinleyicilere anında yansır (local emit).",
+        "Uygulama kapalıyken gelen eski dürtmeler açılışta toplu sistem bildirimi üretmez (WP-99)."
+      ],
+      "notes": [
+        "Canlı sunucuda 50 XP için Supabase SQL Editor’da 0033_study_hour_xp_50.sql uygulayın.",
+        "Güncelleme sonrası Profil / Başarımlar’ı bir kez açın; XP ve rozetler yeniden değerlendirilir."
+      ],
+      "titleEn": "v27: 50 XP per study hour + sync reliability",
+      "highlightsEn": [
+        "Each completed hour of study grants 50 XP (was 10), on top of achievement rewards.",
+        "Manual study time now updates the home timer total immediately without waiting for realtime.",
+        "Pull-to-refresh always finishes within a timeout; one slow source can no longer spin forever.",
+        "Starting the timer from a widget or notification republishes group presence when your group finishes loading."
+      ],
+      "fixesEn": [
+        "Offline-first session and presence writes notify active watchers right away (local emit).",
+        "Cold-start nudges that arrived while the app was closed no longer fire a batch of system notifications (from WP-99)."
+      ],
+      "notesEn": [
+        "Apply Supabase migration 0033_study_hour_xp_50.sql so the live server also awards 50 XP/hour.",
+        "Open Profile / Achievements once after update so XP and badges re-evaluate."
+      ]
+    },
     {
       "versionName": "1.0.26",
       "buildNumber": 26,
@@ -19,6 +55,19 @@
       ],
       "notes": [
         "Aylık e-posta anahtarını, açılıştaki eski dürtmeleri ve Ayarlar > Uygulama dili seçeneklerini gerçek cihazda dene."
+      ],
+      "titleEn": "beta-v26: preferences, notifications, and app language",
+      "highlightsEn": [
+        "The monthly email switch stays off when you turn it off; it no longer re-enables while saving.",
+        "Settings adds System default, Turkish, and English app language; the choice applies immediately and is kept.",
+        "Older nudges do not create local notifications on app open; a new nudge while the app is open is shown only once."
+      ],
+      "fixesEn": [
+        "Manual app language also drives shared duration short forms (Turkish sa/dk/sn or English h/m/s).",
+        "Fixed a race where the open listener could treat an old nudge as new."
+      ],
+      "notesEn": [
+        "On a real device, try the monthly email switch, cold start with old nudges, and Settings > App language."
       ]
     },
     {
@@ -36,6 +85,17 @@
       ],
       "notes": [
         "Ana Sayfa ve İstatistikler'de Türkçe sa/dk/sn; İngilizce h/m/s kontrolünü yap."
+      ],
+      "titleEn": "beta-v25: Turkish duration short forms",
+      "highlightsEn": [
+        "Turkish charts, stats, goals, records, and timer cards now show forms like 4sa 5dk and 40sn.",
+        "English compact form stays 4h 5m and 40s; long duration labels do not return."
+      ],
+      "fixesEn": [
+        "Fixed the shared duration formatter emitting English h/m/s while Turkish is selected."
+      ],
+      "notesEn": [
+        "Check Home and Stats for Turkish sa/dk/sn and English h/m/s."
       ]
     },
     {
@@ -54,6 +114,18 @@
       ],
       "notes": [
         "Samsung One UI'da eski yatay görünümü, uygulamayı açmadan Başlat/Durdur kontrolünü ve her ekranda aşağı çekerek yenilemeyi dene."
+      ],
+      "titleEn": "beta-v24: notification layout restore and universal refresh",
+      "highlightsEn": [
+        "Restored the pre–language-pack horizontal timer notification: live timer on the left, single Start/Stop on the right.",
+        "Pull-to-refresh on all app routes requests fresh data; you no longer need to force-close the app.",
+        "The beta package shows as Odak Kampı BETA TEST in the launcher."
+      ],
+      "fixesEn": [
+        "Restored timer_notification.xml needed for dynamic panel eligibility; the issue was not the translation pack."
+      ],
+      "notesEn": [
+        "On Samsung One UI, try the horizontal layout, Start/Stop without opening the app, and pull-to-refresh on every screen."
       ]
     },
     {
@@ -73,6 +145,19 @@
       ],
       "notes": [
         "Samsung One UI'da bildirim görünümünü ve EN/TR başarımlar ekranını dene; sorun varsa ekran görüntüsüyle bildir."
+      ],
+      "titleEn": "v22: notification and English wording fixes",
+      "highlightsEn": [
+        "Under the system app title, the focus notification shows only the live timer and a single Start/Stop action.",
+        "English achievements and chart durations use short, natural wording for the context.",
+        "Tapping an achievement shows full-sentence conditions for every tier; unlocked secrets reveal their condition."
+      ],
+      "fixesEn": [
+        "Removed old notification description lines and the Break action.",
+        "Fixed out-of-context English strings such as Clock/All levels on achievements."
+      ],
+      "notesEn": [
+        "Try the notification layout on Samsung One UI and EN/TR Achievements; send a screenshot if something looks wrong."
       ]
     },
     {
@@ -91,6 +176,18 @@
       ],
       "notes": [
         "Katılım ve kapasite denetimi sunucu tarafında yapılır."
+      ],
+      "titleEn": "v21: global group access",
+      "highlightsEn": [
+        "Public groups are searchable; capacity and daily goal are visible, and you can join in one action.",
+        "New or existing groups can be set to Private or Public.",
+        "This surface works in English and Turkish; other system languages fall back to English."
+      ],
+      "fixesEn": [
+        "Discovery cards never show invite codes, member lists, user profiles, or group study data."
+      ],
+      "notesEn": [
+        "Join and capacity checks run on the server."
       ]
     },
     {
@@ -110,6 +207,19 @@
       ],
       "notes": [
         "Bu bir beta test sürümüdür; canlı panel terfisi Android sürümü ve OEM politikasına bağlıdır."
+      ],
+      "titleEn": "beta-v20: notification delivery + dynamic panel fix",
+      "highlightsEn": [
+        "The timer notification uses a standard Android live chronometer with Break/Stop actions.",
+        "Old nudges that arrived while the app was closed do not create a burst of notifications on open.",
+        "Update checks on launch no longer post an Android system notification."
+      ],
+      "fixesEn": [
+        "Fixed a custom notification template blocking OEM dynamic panel eligibility.",
+        "Fixed the nudge listener treating accumulated rows as new on reopen."
+      ],
+      "notesEn": [
+        "This is a beta; live panel promotion depends on Android version and OEM policy."
       ]
     },
     {
@@ -128,6 +238,18 @@
       ],
       "notes": [
         "Bu bir beta test sürümüdür; Samsung/Pixel cihaz sonuçlarını bildir."
+      ],
+      "titleEn": "beta-v19: dynamic panel + revoking permissions",
+      "highlightsEn": [
+        "Expanding the notification shows live time plus Break and Stop.",
+        "Panel actions are handled by the native service while the app is closed.",
+        "Widget & permissions screen has Close links and a guide for four permissions."
+      ],
+      "fixesEn": [
+        "Break phase is reconciled from native state when the app opens."
+      ],
+      "notesEn": [
+        "This is a beta; report Samsung/Pixel results."
       ]
     },
     {
@@ -148,6 +270,20 @@
       "notes": [
         "Windows bu sürüme dahil değil.",
         "Sorun olursa hızlı hotfix (v9) çıkarılabilir."
+      ],
+      "titleEn": "v8 Trust Release — native timer, clock, achievements, themes",
+      "highlightsEn": [
+        "Timer while app is closed: notification/widget Start–Stop and running time.",
+        "Clock Center: alarm, timer, stopwatch, world clock, StandBy.",
+        "Crowns everywhere; Achievements at the top of profile; server XP.",
+        "15 atmosphere themes; widget permissions in Settings; Home tap-to-top."
+      ],
+      "fixesEn": [
+        "Alarm rings with app closed, exact-alarm permission, timer/stopwatch session recording."
+      ],
+      "notesEn": [
+        "Windows is not included in this release.",
+        "If issues appear, a quick hotfix (v9) can ship."
       ]
     },
     {
@@ -165,6 +301,17 @@
       "fixes": [],
       "notes": [
         "v8 stable’a gömüldü."
+      ],
+      "titleEn": "beta-v18: crowns everywhere + profile order + stable prep",
+      "highlightsEn": [
+        "Crowns on leaderboard, active members, chat, stats, and profile photo.",
+        "Achievements sit above Study history on the profile.",
+        "Widget/permissions in Settings; re-tapping Home scrolls to top.",
+        "New atmosphere themes: Glacier, Soft Cream, Future Edge."
+      ],
+      "fixesEn": [],
+      "notesEn": [
+        "Folded into v8 stable."
       ]
     },
     {
@@ -183,6 +330,18 @@
       ],
       "notes": [
         "Widget sekmesinden Bildirim + Kesin alarm + Pil + Tam ekran izinlerini yeşile çek."
+      ],
+      "titleEn": "beta-v17: alarm-when-closed fix + widgets tab",
+      "highlightsEn": [
+        "Alarms ring with app closed: setAlarmClock + full-screen notification always.",
+        "Clock tabs fit on one row; Widgets + permissions on the far left.",
+        "Study session unified on the Clock tab; digital clock/alarm widgets."
+      ],
+      "fixesEn": [
+        "Planning no longer fails silently when exact-alarm permission is missing."
+      ],
+      "notesEn": [
+        "From the Widgets tab, turn Notification + Exact alarm + Battery + Full-screen permissions green."
       ]
     },
     {
@@ -202,6 +361,19 @@
       "notes": [
         "Odak sayacı ayrı; bu beta kişisel saat/alarm/timer deneyimini dener.",
         "Cihaz QA: reboot, exact izin, 3 timer, Önizle sesi."
+      ],
+      "titleEn": "beta-v16: Clock Center + native alarms",
+      "highlightsEn": [
+        "Clock Center: World, Alarm 2.0, multi timer, stopwatch, StandBy.",
+        "Native alarm: lock screen, crescendo sound, reschedule after boot.",
+        "Timer end is scheduled even if the process dies."
+      ],
+      "fixesEn": [
+        "Alarm scheduling uses the device time zone (fixed Istanbul removed)."
+      ],
+      "notesEn": [
+        "Focus timer is separate; this beta tries the personal clock/alarm/timer experience.",
+        "Device QA: reboot, exact permission, 3 timers, Preview sound."
       ]
     },
     {
@@ -214,7 +386,13 @@
         "Bildirimdeki HH:MM:SS artık kırpılmıyor; rakam boyutu satıra sığacak şekilde ayarlandı."
       ],
       "fixes": [],
-      "notes": []
+      "notes": [],
+      "titleEn": "beta-v15: full timer digits in the notification",
+      "highlightsEn": [
+        "HH:MM:SS in the notification is no longer clipped; digit size fits the row."
+      ],
+      "fixesEn": [],
+      "notesEn": []
     },
     {
       "versionName": "1.0.13",
@@ -229,6 +407,15 @@
       "fixes": [],
       "notes": [
         "beta-v13 cihazda sorunsuz; bu sürüm yalnız görünüm rötuşu."
+      ],
+      "titleEn": "beta-v14: simpler widget + softer button corners",
+      "highlightsEn": [
+        "Home widget simplified: running clock + a single Start/Stop button.",
+        "Notification/widget button corners are rounded (pill look)."
+      ],
+      "fixesEn": [],
+      "notesEn": [
+        "beta-v13 was solid on device; this release is a visual polish only."
       ]
     },
     {
@@ -247,6 +434,18 @@
       ],
       "notes": [
         "Uygulama adı olmayan yüzen kapsül (dinamik panel) OEM'e bağlı ayrı iş paketidir; bu sürümde standart canlı bildirim kullanılır."
+      ],
+      "titleEn": "beta-v13: launch crash loop fixed + stopwatch-style notification",
+      "highlightsEn": [
+        "CRITICAL: fixed the beta-v12 crash loop where the app opened then closed after ~1s (START_NOT_STICKY + safe startForeground).",
+        "Timer notification closer to a stopwatch: large running HH:MM:SS + single Stop/Start."
+      ],
+      "fixesEn": [
+        "Fixed native service crash on Stop from notification/widget while app closed; background actions use getForegroundService.",
+        "Every command path is wrapped for quiet recovery — never crashes the app."
+      ],
+      "notesEn": [
+        "Floating capsule without app name (dynamic panel) is a separate OEM package; this release uses the standard live notification."
       ]
     },
     {
@@ -265,6 +464,18 @@
       ],
       "notes": [
         "Dinamik panele (HyperOS/Samsung) terfi OEM'e bağlıdır; desteklenmeyen cihazda temiz düz bildirime düşer."
+      ],
+      "titleEn": "beta-v12: native widget + notification (Start/Stop with app closed)",
+      "highlightsEn": [
+        "Home widget and notification moved to a native service: Start/Stop work with the app fully closed.",
+        "Time runs natively on notification and widget (no per-second Flutter updates; battery friendly)."
+      ],
+      "fixesEn": [
+        "Start/Stop while closed is queued; each interval is written correctly to the server when the app opens.",
+        "Includes beta-v11: no body text on the notification + durable Stop↔Start toggle."
+      ],
+      "notesEn": [
+        "Promotion into dynamic panels (HyperOS/Samsung) is OEM-dependent; unsupported devices fall back to a clean flat notification."
       ]
     },
     {
@@ -282,6 +493,17 @@
       ],
       "notes": [
         "Dinamik panele native kronometre terfisi (WP-51) ve ana ekran widget'ı (WP-42) sıradaki adımlarda."
+      ],
+      "titleEn": "beta-v11: no body text on notification + Stop↔Start toggle",
+      "highlightsEn": [
+        "Removed the “Focus Camp is running” subtitle; only running HH:MM:SS + button, like a clock app.",
+        "Stop does not dismiss the notification: time is saved, the button becomes Start, and you can start again without opening the app."
+      ],
+      "fixesEn": [
+        "Rapid Stop/Start with the app closed no longer breaks session counting; each work interval is a separate session."
+      ],
+      "notesEn": [
+        "Native chronometer promotion to dynamic panels (WP-51) and the home widget (WP-42) come in later steps."
       ]
     },
     {
@@ -299,6 +521,17 @@
       ],
       "notes": [
         "Ana ekran widget'ı ve widget butonları bir sonraki beta'da aynı mantıkla elden geçirilecek."
+      ],
+      "titleEn": "beta-v10: single live notification + Stop with app closed",
+      "highlightsEn": [
+        "One timer notification: second-by-second HH:MM:SS in the title + Stop underneath (clock-app style).",
+        "Stop works with the app fully closed; the session is saved at the true stop time."
+      ],
+      "fixesEn": [
+        "Removed the previous dual notification (plain “kept in background” + separate chronometer)."
+      ],
+      "notesEn": [
+        "Home widget and widget buttons will get the same treatment in a later beta."
       ]
     },
     {
@@ -316,6 +549,17 @@
       ],
       "notes": [
         "Bildirim/widget Başlat-Durdur butonlarının uygulama TAMAMEN kapalıyken işlenmesi bir sonraki beta'da; şu an uygulama açık/açılırken çalışır."
+      ],
+      "titleEn": "beta-v9: single live chronometer notification + campfire",
+      "highlightsEn": [
+        "Timer notification is single and live: a dominant second-by-second HH:MM:SS chronometer.",
+        "Campfire scene on the Groups tab is shorter; extra top/bottom empty space trimmed."
+      ],
+      "fixesEn": [
+        "On beta-v8 the live clock stayed hidden in the notification; now one live chronometer notification is shown."
+      ],
+      "notesEn": [
+        "Start/Stop from notification/widget while the app is fully closed lands in the next beta."
       ]
     },
     {
@@ -336,6 +580,20 @@
       "notes": [
         "Beta test sürümü ('Odak Kampı Beta' olarak ayrı kurulur); native arka plan davranışı cihaz/OEM'e göre değişebilir.",
         "Yeni sunucu migration'ı yoktur; v7 ile aynı şema (0020–0023) yeterlidir."
+      ],
+      "titleEn": "V8 beta: reliable background timer, widgets, and IA",
+      "highlightsEn": [
+        "Reliable background timer: native scheduler + foreground service while the app is closed.",
+        "Persistent notification with running HH:MM:SS and Start/Stop without opening the app.",
+        "Widget parity: live chronometer, event-based stats/leaderboard, light/dark and dynamic color.",
+        "Stats: leaderboard above group daily trend. Groups: campfire on top, invite code flow cleaned up."
+      ],
+      "fixesEn": [
+        "Sync audit: the same total is consistent on every screen; offline sessions write once when back online."
+      ],
+      "notesEn": [
+        "Beta build (installs as “Odak Kampı Beta”); native background behavior varies by device/OEM.",
+        "No new server migration; the same schema as v7 (0020–0023) is enough."
       ]
     },
     {
@@ -357,6 +615,21 @@
       "notes": [
         "Hatırlatıcı ve alarmlar Android yerel bildirimidir; cihaz izni gerekir.",
         "Bildirim Merkezi'nin sunucu özellikleri için 0020–0023 migration'ları canlı Supabase'e uygulanmalıdır."
+      ],
+      "titleEn": "V7 Notification Center and social profile",
+      "highlightsEn": [
+        "Notification Center: nudges, reminders, alarm/timer, announcements, updates, and quiet hours in one place.",
+        "Study reminders: local notifications at the hours/days you choose.",
+        "Quiet hours mute nudge and reminder notifications in the selected range.",
+        "Social Profile 2.0 and Achievement Journey (tiered achievements, XP, crown)."
+      ],
+      "fixesEn": [
+        "Removed the duplicate Home group in Settings; five-tab structure is clearer.",
+        "Announcements list in Notification Center with read tracking."
+      ],
+      "notesEn": [
+        "Reminders and alarms are Android local notifications; device permission is required.",
+        "Server Notification Center features need migrations 0020–0023 on live Supabase."
       ]
     },
     {
@@ -379,6 +652,22 @@
       "notes": [
         "Uygulama tamamen kapalıyken Durdur/Başlat ve widget canlı saatinin anında çalışması için foreground service gerekir; ayrı bir iş paketi olarak cihazda test edilerek eklenecek.",
         "Push bildirim yoktur; güncelleme bildirimi uygulama açıldığında yapılan yerel kontrolle best-effort çalışır."
+      ],
+      "titleEn": "V6 notification and group fixes",
+      "highlightsEn": [
+        "Timer notification shows live progress and no longer sticks at “0 s”.",
+        "Group name/goal/invite-code changes appear immediately.",
+        "Fake repeating nudge notifications removed."
+      ],
+      "fixesEn": [
+        "Live chronometer (HH:MM:SS) replaces the stuck “0 s” timer notification.",
+        "Group list refreshes immediately when name, goal, or invite code changes.",
+        "Stopped fake “you were nudged” spam; each nudge is notified once.",
+        "Notification/widget Stop–Start commands pressed while closed are handled on open."
+      ],
+      "notesEn": [
+        "Instant Stop/Start and widget live clock while fully closed still need the foreground service path.",
+        "There is no push; update notices are best-effort local checks when the app opens."
       ]
     },
     {
@@ -397,6 +686,18 @@
       ],
       "notes": [
         "Push bildirim yoktur; güncelleme bildirimi uygulama açıldığında yapılan yerel kontrolle best-effort çalışır."
+      ],
+      "titleEn": "V5 groundwork",
+      "highlightsEn": [
+        "Android clock, notification, and widget experience is being simplified.",
+        "Version history, one-shot What’s New dialog, and release notes screen added.",
+        "New icon/branding and theme work prepare for V5 in separate packages."
+      ],
+      "fixesEn": [
+        "V5 release notes now follow the same source as in-app JSON, CHANGELOG, and GitHub Release."
+      ],
+      "notesEn": [
+        "There is no push; update notices are best-effort local checks when the app opens."
       ]
     },
     {
@@ -416,6 +717,19 @@
       ],
       "notes": [
         "Üretim Supabase migration'ları uygulanınca kalıcı seri/gamification verisi otomatik devreye girer."
+      ],
+      "titleEn": "V4 core experience update",
+      "highlightsEn": [
+        "Focus Camp branding clarified on Android, Web, and Flutter titles.",
+        "Live timer surfaces, simpler notification flow, and group hierarchy prepared for V4.",
+        "Group chat and settings entry points follow a clearer flow."
+      ],
+      "fixesEn": [
+        "Safe defaults when the gamification profile is missing so the achievements card is not empty.",
+        "Simplified redundant settings copies managed from Home, such as timer settings."
+      ],
+      "notesEn": [
+        "Once production Supabase migrations are applied, durable streak/gamification data turns on automatically."
       ]
     },
     {
@@ -435,6 +749,19 @@
       ],
       "notes": [
         "Bildirimler Android izinlerine bağlıdır; izin verilmezse uygulama içi akış devam eder."
+      ],
+      "titleEn": "V3 social focus and notification foundations",
+      "highlightsEn": [
+        "Persistent timer notification and Android notification permission plumbing.",
+        "Nudge notifications and notification preferences wired into settings.",
+        "Group/presence and live study surfaces made more reliable."
+      ],
+      "fixesEn": [
+        "Better wall-clock restore of an active timer when the app reopens.",
+        "Stronger base repository behavior in demo/offline flows."
+      ],
+      "notesEn": [
+        "Notifications depend on Android permissions; in-app flow continues if permission is denied."
       ]
     },
     {
@@ -454,6 +781,19 @@
       ],
       "notes": [
         "Bu sürüm sonraki widget, bildirim ve grup ekranı geliştirmelerinin temelini attı."
+      ],
+      "titleEn": "V2 focus room and home improvements",
+      "highlightsEn": [
+        "Home card layout and study-room experience improved.",
+        "Focus/pomodoro timer behavior is easier to read.",
+        "Stats and group goal surfaces prepared for later releases."
+      ],
+      "fixesEn": [
+        "Reduced card overflow and basic responsive layout issues.",
+        "Clearer provider and repository boundaries for testability."
+      ],
+      "notesEn": [
+        "This release laid the groundwork for later widget, notification, and group screen work."
       ]
     },
     {
@@ -470,6 +810,16 @@
       "fixes": [],
       "notes": [
         "İlk sürüm; sürüm notları geçmişi WP-30 ile sonradan uygulama içine taşındı."
+      ],
+      "titleEn": "First Focus Camp release",
+      "highlightsEn": [
+        "Start/stop focus sessions and basic study tracking shipped.",
+        "Profile, group, and basic stats screens added.",
+        "Core architecture for Supabase-connected and offline demo use."
+      ],
+      "fixesEn": [],
+      "notesEn": [
+        "First release; release-note history was moved into the app later with WP-30."
       ]
     },
     {
@@ -487,6 +837,17 @@
       ],
       "notes": [
         "Beta sürümler prerelease olarak yayınlanır ve test amaçlıdır."
+      ],
+      "titleEn": "First beta channel",
+      "highlightsEn": [
+        "Stable and beta release channels are separated.",
+        "Beta APK naming and GitHub prerelease flow tracked separately."
+      ],
+      "fixesEn": [
+        "Channel metadata added so beta users are not mixed with stable updates."
+      ],
+      "notesEn": [
+        "Beta builds publish as prereleases and are for testing."
       ]
     }
   ]

@@ -4,6 +4,7 @@
 // ignore_for_file: prefer_initializing_formals
 
 import 'dart:convert';
+import 'dart:ui' show Locale;
 
 import 'package:flutter/services.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -14,6 +15,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// GitHub Release body boş olduğunda updater bu veriyi fallback olarak kullanır.
 /// Açılıştaki "Yenilikler" penceresi de son görülen build numarasını bu servisle
 /// takip eder.
+///
+/// Metinler TR varsayılan + isteğe bağlı `*En` alanları; [ReleaseNote.forLocale]
+/// uygulama diline göre seçer (yalnız `tr` → TR, diğer → EN, EN yoksa TR).
 class ReleaseNotesService {
   ReleaseNotesService({
     SharedPreferences? preferences,
@@ -124,6 +128,10 @@ class ReleaseNote {
     required this.highlights,
     required this.fixes,
     required this.notes,
+    this.titleEn = '',
+    this.highlightsEn = const [],
+    this.fixesEn = const [],
+    this.notesEn = const [],
   });
 
   factory ReleaseNote.fromJson(Map<String, dynamic> json) {
@@ -136,6 +144,10 @@ class ReleaseNote {
       highlights: _stringList(json['highlights']),
       fixes: _stringList(json['fixes']),
       notes: _stringList(json['notes']),
+      titleEn: _string(json['titleEn']),
+      highlightsEn: _stringList(json['highlightsEn']),
+      fixesEn: _stringList(json['fixesEn']),
+      notesEn: _stringList(json['notesEn']),
     );
   }
 
@@ -143,13 +155,44 @@ class ReleaseNote {
   final int buildNumber;
   final String channel;
   final String date;
+
+  /// Türkçe (veya eski tek-dilli) metinler.
   final String title;
   final List<String> highlights;
   final List<String> fixes;
   final List<String> notes;
 
+  /// İngilizce; boşsa [forLocale] TR'ye düşer.
+  final String titleEn;
+  final List<String> highlightsEn;
+  final List<String> fixesEn;
+  final List<String> notesEn;
+
   String get displayVersion =>
       '$versionName+$buildNumber ${channel == 'beta' ? 'Beta' : 'Stable'}';
+
+  /// Yalnız sistem/uygulama dili `tr` ise Türkçe; aksi halde İngilizce
+  /// (EN yoksa TR yedek).
+  ReleaseNote forLocale(Locale locale) {
+    final useTr = locale.languageCode == 'tr';
+    if (useTr) {
+      return this;
+    }
+    return ReleaseNote(
+      versionName: versionName,
+      buildNumber: buildNumber,
+      channel: channel,
+      date: date,
+      title: titleEn.isNotEmpty ? titleEn : title,
+      highlights: highlightsEn.isNotEmpty ? highlightsEn : highlights,
+      fixes: fixesEn.isNotEmpty ? fixesEn : fixes,
+      notes: notesEn.isNotEmpty ? notesEn : notes,
+      titleEn: titleEn,
+      highlightsEn: highlightsEn,
+      fixesEn: fixesEn,
+      notesEn: notesEn,
+    );
+  }
 
   String plainText({
     required String highlightsLabel,
