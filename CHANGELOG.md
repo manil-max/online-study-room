@@ -4,6 +4,25 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [v22 / 1.0.22+22] - 2026-07-15
+
+> **Stable — Bildirim ve İngilizce bağlam düzeltmeleri.**
+
+### Fixes
+- **Sade odak bildirimi:** Çalışırken sistem başlığı altında yalnız canlı sayaç
+  ve **Durdur**; boşta yalnız `00:00:00` ve **Başlat** görünür. Eski açıklama
+  satırları ile Mola eylemi kaldırıldı.
+- **İngilizce süre metinleri:** Başarımlarda `6 Clock` yerine `6 hours`, kademe
+  satırlarında `Level 1`; grafiklerde uzun süre adları yerine `4h 5m` biçimi.
+- **Başarım ayrıntıları:** Tıklanan başarımlar, aktif dilde tam cümleli koşulları
+  gösterir. Açılmış gizli başarımlar koşulunu açıklar; kilitli olanlar sır kalır.
+
+### Test odağı
+- Samsung One UI'da odak sayacını başlat/durdur; bildirimde sistem başlığı
+  dışında yalnız sayaç ve tek eylem olduğunu doğrula.
+- İngilizce ve Türkçe'de Başarımlar ekranını aç; kademe koşullarının anlamlı
+  cümleler olduğunu ve grafik sürelerinin `4h 5m` biçiminde kaldığını doğrula.
+
 ## [v21 / 1.0.21+21] - 2026-07-15
 
 > **Stable — Global grup erişimi.** Açık gruplar keşfedilebilir; gizli gruplar

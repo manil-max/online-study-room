@@ -60,15 +60,15 @@
 - **Not:** Bu oturum işleri commit'lendi: grid 32-sütun `141ed2a`, core testleri `da7bdd6`, skill docs `1afba2d`. ⚠️ WP-65 karar dokümanı (`docs/AYLIK-RAPOR-KARAR.md`) önceki Claude oturumunda yazıldı ama **COMMIT'LENMEDİ** (untracked); kararı WP-69 zaten uyguladı → ürün API/DNS kararı bekliyor.
 
 ### Codex Lane
-- **Durum:** [x] Boşta
-- **Faz/WP:** —
-- **Aşama:** —
-- **SAHİP yollar:** —
-- **Ortak/riskli yüzey:** —
-- **Dal:** — (main)
-- **Başlangıç:** —
-- **Son güncelleme:** 2026-07-15 (Europe/Istanbul)
-- **Not:** WP-95 kod+otomatik kalite kapısı geçti; EN/TR başarımlar ayrıntı görsel QA ve ürün kabulü bekliyor.
+- **Durum:** [~] Aktif
+- **Faz/WP:** WP-96 — v22 stable deneme dağıtımı
+- **Aşama:** Geliştiriliyor
+- **SAHİP yollar:** `app/pubspec.yaml`, `CHANGELOG.md`, `progress.md`
+- **Ortak/riskli yüzey:** `app/pubspec.yaml`, Git tag/release (başka aktif lane yok)
+- **Dal:** main
+- **Başlangıç:** 2026-07-15 14:35 (Europe/Istanbul)
+- **Son güncelleme:** 2026-07-15 14:35 (Europe/Istanbul)
+- **Not:** Kullanıcı isteğiyle WP-94/95'i içeren v22 stable GitHub deneme dağıtımı hazırlanıyor; cihaz QA ürün sahibinin telefonunda yapılacak.
 
 ### Grok Lane
 - **Durum:** [x] Boşta

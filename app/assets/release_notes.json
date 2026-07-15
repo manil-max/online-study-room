@@ -3,6 +3,25 @@
   "source": "CHANGELOG.md",
   "releases": [
     {
+      "versionName": "1.0.22",
+      "buildNumber": 22,
+      "channel": "stable",
+      "date": "2026-07-15",
+      "title": "v22: bildirim ve İngilizce bağlam düzeltmeleri",
+      "highlights": [
+        "Odak bildirimi sistem başlığı altında yalnız canlı sayaç ve tek Başlat/Durdur eylemini gösterir.",
+        "İngilizce başarımlar ve grafik süreleri bağlama uygun, kısa ve doğal metinler kullanır.",
+        "Başarıma dokununca tüm kademe koşulları tam cümleyle açıklanır; açılmış gizli başarımlar koşulunu gösterir."
+      ],
+      "fixes": [
+        "Bildirimdeki eski açıklama satırları ve Mola eylemi kaldırıldı.",
+        "Başarımlardaki Clock/All levels gibi bağlam dışı İngilizce ifadeler düzeltildi."
+      ],
+      "notes": [
+        "Samsung One UI'da bildirim görünümünü ve EN/TR başarımlar ekranını dene; sorun varsa ekran görüntüsüyle bildir."
+      ]
+    },
+    {
       "versionName": "1.0.21",
       "buildNumber": 21,
       "channel": "stable",
