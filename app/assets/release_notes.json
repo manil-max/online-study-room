@@ -3,6 +3,25 @@
   "source": "CHANGELOG.md",
   "releases": [
     {
+      "versionName": "1.0.26",
+      "buildNumber": 26,
+      "channel": "beta",
+      "date": "2026-07-15",
+      "title": "beta-v26: tercihler, bildirimler ve uygulama dili",
+      "highlights": [
+        "Aylık e-posta anahtarı kapatıldığında kalıcı olarak kapalı kalır; kaydetme sırasında tekrar açılmaz.",
+        "Ayarlar'a Sistem varsayılanı, Türkçe ve İngilizce seçenekleriyle uygulama dili eklendi; seçim anında uygulanır ve korunur.",
+        "Eski dürtmeler uygulama açılışında yerel bildirim üretmez; açık uygulamadaki yeni dürtme yalnızca bir kez gösterilir."
+      ],
+      "fixes": [
+        "Manuel uygulama dili, ortak süre kısaltmalarını da Türkçe sa/dk/sn veya İngilizce h/m/s olarak eşler.",
+        "Açılış dinleyicisinin eski dürtmeyi yeni sanabildiği zamanlama yarışı giderildi."
+      ],
+      "notes": [
+        "Aylık e-posta anahtarını, açılıştaki eski dürtmeleri ve Ayarlar > Uygulama dili seçeneklerini gerçek cihazda dene."
+      ]
+    },
+    {
       "versionName": "1.0.25",
       "buildNumber": 25,
       "channel": "beta",

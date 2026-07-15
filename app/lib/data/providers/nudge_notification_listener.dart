@@ -34,7 +34,9 @@ final nudgeNotificationListenerProvider = Provider<void>((ref) {
   // güvenmek, uygulama kapalıyken gelen dürtmelerin bir sonraki açılışta topluca
   // bildirim olarak düşmesine yol açar. İlk anlık görüntüyü her zaman sessizce
   // temel al; yalnız bu dinleyici kurulduktan sonra canlı gelen dürtmeleri göster.
-  var receivedInitialSnapshot = false;
+  // Stream yeniden bağlansa veya listener sonradan kurulduğunda bile bu an,
+  // geçmiş bildirimler ile gerçek zamanlı yeni dürtmeleri ayırır.
+  final listeningStartedAt = DateTime.now().toUtc();
 
   ref.listen(receivedNudgesProvider(user.id), (previous, next) {
     if (!next.hasValue) return;
@@ -42,19 +44,17 @@ final nudgeNotificationListenerProvider = Provider<void>((ref) {
         .where((n) => n.readAt == null)
         .toList();
 
-    if (!receivedInitialSnapshot) {
-      notified.addAll(unread.map((n) => n.id));
-      receivedInitialSnapshot = true;
-      unawaited(prefs.setStringList(_kNotifiedNudgeIdsKey, notified.toList()));
-      return;
-    }
-    if (unread.isEmpty) return;
-
     // Sessiz saatlerde bildirim gösterme; yine de "bildirildi" olarak işaretle
     // ki sessiz saat bitince eski dürtmeler topluca patlamasın (§WP-36).
     final quiet = preferences.isWithinQuietHours(DateTime.now());
     var changed = false;
     for (final nudge in unread) {
+      // Uygulama açılmadan önce oluşmuş eski bir dürtme asla açılış bildirimi
+      // üretmez; yalnızca gelecekteki tekrarları önlemek için tanınır.
+      if (!nudge.createdAt.toUtc().isAfter(listeningStartedAt)) {
+        changed = notified.add(nudge.id) || changed;
+        continue;
+      }
       if (!notified.add(nudge.id)) continue; // zaten bildirildi
       changed = true;
       if (quiet) continue;
@@ -63,5 +63,5 @@ final nudgeNotificationListenerProvider = Provider<void>((ref) {
     if (changed) {
       unawaited(prefs.setStringList(_kNotifiedNudgeIdsKey, notified.toList()));
     }
-  });
+  }, fireImmediately: true);
 });

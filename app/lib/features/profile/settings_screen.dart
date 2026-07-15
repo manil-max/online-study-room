@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/animals/camp_animal.dart';
+import '../../core/l10n/app_locale.dart';
 import '../../core/widgets/safe_screen_padding.dart';
 import '../../data/providers/auth_providers.dart';
 import '../../data/providers/admin_providers.dart';
@@ -32,6 +33,29 @@ class SettingsScreen extends ConsumerStatefulWidget {
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   /// Seçim anında (realtime beklemeden) tile'ı güncellemek için optimistik id.
   String? _animalOverride;
+  bool? _monthlyReportOptInOverride;
+  bool _isSavingMonthlyReportPreference = false;
+
+  Future<void> _setMonthlyReportOptIn(bool value, bool previousValue) async {
+    setState(() {
+      _monthlyReportOptInOverride = value;
+      _isSavingMonthlyReportPreference = true;
+    });
+    try {
+      await ref.read(authRepositoryProvider).updateMonthlyReportOptIn(value);
+      // Supabase stream'i profil satırı güncellemesinde olay üretmez; yeni değeri
+      // sunucudan yeniden okuyup kalıcı tercihi doğrula.
+      ref.invalidate(authStateProvider);
+    } catch (_) {
+      if (mounted) {
+        setState(() => _monthlyReportOptInOverride = previousValue);
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSavingMonthlyReportPreference = false);
+      }
+    }
+  }
 
   Future<void> _pickAnimal() async {
     final profile = ref.read(authStateProvider).value;
@@ -68,7 +92,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final l10n = AppLocalizations.of(context);
     final gridDensity = ref.watch(dashboardGridDensityProvider);
     final gridColumns = ref.watch(dashboardGridColumnsProvider);
+    final language = ref.watch(appLanguageProvider);
     final profile = ref.watch(authStateProvider).value;
+    final monthlyReportOptIn =
+        _monthlyReportOptInOverride ?? profile?.monthlyReportOptIn ?? true;
     final isAdmin = ref.watch(adminIsSuperAdminProvider).value ?? false;
     final animal = profile == null
         ? null
@@ -118,6 +145,44 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   onTap: () => Navigator.of(
                     context,
                   ).push(MaterialPageRoute(builder: (_) => AppearanceScreen())),
+                ),
+              ),
+              SizedBox(height: 10),
+              _SettingsCard(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                  child: DropdownButtonFormField<AppLanguage>(
+                    key: ValueKey(language),
+                    initialValue: language,
+                    isExpanded: true,
+                    decoration: InputDecoration(
+                      labelText: l10n.profileUygulamaDili,
+                      helperText: l10n.profileDilDegisikligiAnindaUygulanir,
+                      prefixIcon: const Icon(Icons.language_outlined),
+                      border: const OutlineInputBorder(),
+                    ),
+                    items: [
+                      DropdownMenuItem(
+                        value: AppLanguage.system,
+                        child: Text(l10n.profileDilSistemVarsayilani),
+                      ),
+                      DropdownMenuItem(
+                        value: AppLanguage.turkish,
+                        child: Text(l10n.profileDilTurkce),
+                      ),
+                      DropdownMenuItem(
+                        value: AppLanguage.english,
+                        child: Text(l10n.profileDilIngilizce),
+                      ),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) {
+                        ref
+                            .read(appLanguageProvider.notifier)
+                            .setLanguage(value);
+                      }
+                    },
+                  ),
                 ),
               ),
               SizedBox(height: 10),
@@ -217,14 +282,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     ).profileAylikCalismaRaporuEposta,
                   ),
                   subtitle: Text(l10n.profileOzetlerVeKullaniciRaporlari),
-                  value: profile?.monthlyReportOptIn ?? true,
-                  onChanged: profile == null
+                  value: monthlyReportOptIn,
+                  onChanged: profile == null || _isSavingMonthlyReportPreference
                       ? null
-                      : (val) {
-                          ref
-                              .read(authRepositoryProvider)
-                              .updateMonthlyReportOptIn(val);
-                        },
+                      : (value) => _setMonthlyReportOptIn(
+                          value,
+                          profile.monthlyReportOptIn,
+                        ),
                 ),
               ),
               SizedBox(height: 10),

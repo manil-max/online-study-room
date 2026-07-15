@@ -34,7 +34,7 @@
         android:minHeight="44dp"
         android:paddingStart="14dp"
         android:paddingEnd="14dp"
-        android:text="Durdur"
+        android:text="@string/action_stop"
         android:textColor="#FFFFD8A6"
         android:textSize="15sp"
         android:textStyle="bold" />

@@ -4196,6 +4196,26 @@
   "@groupDiscoveryLoadMore": {
     "description": "Pagination action for public group discovery"
   },
+  "profileUygulamaDili": "App language",
+  "@profileUygulamaDili": {
+    "description": "Profile settings label for the manual application language choice"
+  },
+  "profileDilSistemVarsayilani": "System default",
+  "@profileDilSistemVarsayilani": {
+    "description": "Profile settings option that follows the device language"
+  },
+  "profileDilTurkce": "Turkish",
+  "@profileDilTurkce": {
+    "description": "Profile settings Turkish language option"
+  },
+  "profileDilIngilizce": "English",
+  "@profileDilIngilizce": {
+    "description": "Profile settings English language option"
+  },
+  "profileDilDegisikligiAnindaUygulanir": "Changes apply immediately.",
+  "@profileDilDegisikligiAnindaUygulanir": {
+    "description": "Profile settings helper text for the manual language choice"
+  },
   "groupDiscoveryPrivacyUpdated": "Group privacy updated",
   "@groupDiscoveryPrivacyUpdated": {
     "description": "Confirmation after an admin changes group privacy"

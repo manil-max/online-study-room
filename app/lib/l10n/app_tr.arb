@@ -1002,5 +1002,10 @@
   "groupDiscoveryEmpty": "Açık grup bulunamadı",
   "groupDiscoveryRetry": "Tekrar dene",
   "groupDiscoveryLoadMore": "Daha fazla yükle",
-  "groupDiscoveryPrivacyUpdated": "Grup gizliliği güncellendi"
+  "groupDiscoveryPrivacyUpdated": "Grup gizliliği güncellendi",
+  "profileUygulamaDili": "Uygulama dili",
+  "profileDilSistemVarsayilani": "Sistem varsayılanı",
+  "profileDilTurkce": "Türkçe",
+  "profileDilIngilizce": "İngilizce",
+  "profileDilDegisikligiAnindaUygulanir": "Değişiklik hemen uygulanır."
 }

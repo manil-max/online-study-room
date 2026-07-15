@@ -60,15 +60,15 @@
 - **Not:** Bu oturum işleri commit'lendi: grid 32-sütun `141ed2a`, core testleri `da7bdd6`, skill docs `1afba2d`. ⚠️ WP-65 karar dokümanı (`docs/AYLIK-RAPOR-KARAR.md`) önceki Claude oturumunda yazıldı ama **COMMIT'LENMEDİ** (untracked); kararı WP-69 zaten uyguladı → ürün API/DNS kararı bekliyor.
 
 ### Codex Lane
-- **Durum:** [⏸] Cihaz QA bekliyor
-- **Faz/WP:** WP-98 — Türkçe süre kısaltmaları ve beta-v25
-- **Aşama:** Otomatik test geçti; beta cihaz QA bekliyor
-- **SAHİP yollar:** —
-- **Ortak/riskli yüzey:** Uygulama geneli süre biçimleme
+- **Durum:** [~] Aktif
+- **Faz/WP:** WP-99 — Tercih kalıcılığı, açılış bildirimi ve manuel dil seçimi
+- **Aşama:** Otomatik test geçti — beta-v26 cihaz QA bekliyor
+- **SAHİP yollar:** `app/lib/main.dart`, `app/lib/features/profile/settings_screen.dart`, `app/lib/**/notification*`, `app/android/app/src/main/res/layout/timer_notification.xml`, `app/lib/l10n/app_{en,tr}.arb`, ilgili testler
+- **Ortak/riskli yüzey:** `main.dart`, l10n katalogları, bildirim başlangıç akışı
 - **Dal:** main
 - **Başlangıç:** 2026-07-15 14:35 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-15 15:55 (Europe/Istanbul)
-- **Not:** Ortak süre biçimleyicisi sistem/per-app diline göre TR=`sa/dk/sn`, EN=`h/m/s` üretir. `flutter analyze` 0; test 430/430. beta-v25 derlemesi/yayını ve cihaz QA bekliyor; stable tag yok.
+- **Son güncelleme:** 2026-07-15 17:02 (Europe/Istanbul)
+- **Not:** Aylık e-posta anahtarı iyimser/kilitli kaydetmeyle düzeltildi; açılış öncesi dürtmeler sessize alındı; kalıcı Sistem/Türkçe/İngilizce seçici eklendi. `flutter analyze`, 433/433 test, EN/TR audit ve yerel beta APK geçti. Hedef beta-v26; stable tag yok.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
@@ -164,6 +164,14 @@
 > Kod/otomatik test bitti; **cihaz QA veya ürün demo’su** bekleniyor.
 > Bu bölüm **aktif çalışma değildir** — ajan claim etmez, diğer WP’leri engellemez.
 > Kabul gelince kart buradan çıkar → **Tamamlanan**’a gider. Bug çıkarsa ayrı debug WP açılır.
+
+### WP-99: Tercih Kalıcılığı, Açılış Bildirimi ve Manuel Dil Seçimi 🔧
+
+- **Program/Faz:** Debug · **Aşama:** Otomatik test geçti · **Kanıt:** `Kodda doğrulandı` / `Cihazda doğrulanmalı`
+- **Uygulandı:** Aylık e-posta anahtarı kaydetme sürerken yerel değeri korur ve başarısız yazmada geri alır. Başlangıç anından önce oluşturulan dürtmeler sessizce temel alınır; yalnızca sonradan gelen yeni dürtmeler bir kez bildirilir. Ayarlar'a Sistem varsayılanı/Türkçe/İngilizce uygulama dili seçimi eklendi; seçim kalıcıdır ve ortak süre kısaltmalarına uygulanır.
+- **Doğrulama:** Tercih, açılış dürtmesi ve dil kalıcılığı testleri; EN/TR V8 gezinme testi; `flutter analyze` 0 bulgu; tüm Flutter testleri 433/433; l10n audit 1002 Flutter ve 66 Android anahtarında temiz; yerel beta APK derlendi.
+- **Cihazda doğrulanmalı:** beta-v26'da aylık e-posta anahtarını kapatıp sayfaya dön; eski dürtmeler varken cold start yap; sonra açık uygulamada yeni dürtme gönder. Ayarlar'dan Türkçe/İngilizce seç, metinleri ve `sa/dk/sn` / `h/m/s` sürelerini doğrula; uygulamayı yeniden açıp seçimin korunduğunu kontrol et.
+- **Veri/RLS/Geri alma:** Migration/RLS etkisi yok. Aylık tercih mevcut profil alanını kullanır; geri alma bu istemci commitidir.
 
 ### WP-98: Türkçe Süre Kısaltmaları ve beta-v25 🔤
 

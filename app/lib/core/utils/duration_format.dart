@@ -1,4 +1,4 @@
-import 'dart:ui' show PlatformDispatcher;
+import '../l10n/app_locale.dart';
 
 /// Saniyeyi `SS:DD:SS` (saat:dakika:saniye) biçiminde verir. Canlı sayaç için.
 String formatHms(int totalSeconds) {
@@ -13,13 +13,10 @@ String formatHms(int totalSeconds) {
 /// Saniyeyi uygulamanın etkin diliyle kısa biçimde verir.
 ///
 /// İngilizce: "2h 15m", "15m", "40s". Türkçe: "2 sa 15 dk",
-/// "15 dk", "40 sn". Uygulamanın dil sözleşmesi sistem/per-app dilini
-/// kullandığı için burada [PlatformDispatcher] locale'i tek doğruluk kaynağıdır.
+/// "15 dk", "40 sn". Manuel dil tercihi de dahil uygulamanın etkin locale'i
+/// tek doğruluk kaynağıdır.
 String formatHuman(int totalSeconds) {
-  return formatHumanForLocale(
-    totalSeconds,
-    PlatformDispatcher.instance.locale.languageCode,
-  );
+  return formatHumanForLocale(totalSeconds, activeAppLocale.languageCode);
 }
 
 /// [languageCode] için kısa, kullanıcıya görünen süre biçimini üretir.
@@ -41,7 +38,7 @@ String formatHumanForLocale(int totalSeconds, String languageCode) {
 String formatHumanSeconds(int totalSeconds) {
   return formatHumanSecondsForLocale(
     totalSeconds,
-    PlatformDispatcher.instance.locale.languageCode,
+    activeAppLocale.languageCode,
   );
 }
 

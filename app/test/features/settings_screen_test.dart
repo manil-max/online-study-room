@@ -7,6 +7,7 @@ import 'package:online_study_room/data/models/profile.dart';
 import 'package:online_study_room/data/providers/admin_providers.dart';
 import 'package:online_study_room/data/providers/auth_providers.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_admin_repository.dart';
+import 'package:online_study_room/data/repositories/in_memory/in_memory_auth_repository.dart';
 import 'package:online_study_room/features/clock/clock_widgets_screen.dart';
 import 'package:online_study_room/features/notifications/notification_center_screen.dart';
 import 'package:online_study_room/features/profile/settings_screen.dart';
@@ -81,6 +82,7 @@ void main() {
     expect(find.text('Bildirim Merkezi’ni aç'), findsNothing);
     expect(find.text('Widget ve alarm izinleri'), findsOneWidget);
     expect(find.text('Görünüm ve atmosfer temaları'), findsOneWidget);
+    expect(find.text('Uygulama dili'), findsOneWidget);
     expect(find.text('Sürüm ve güncellemeler'), findsOneWidget);
     expect(find.text('Uygulama Kısayolları (Rutinler)'), findsOneWidget);
     expect(find.text('Geri bildirim gönder'), findsOneWidget);
@@ -105,5 +107,45 @@ void main() {
 
     tester.view.resetPhysicalSize();
     tester.view.resetDevicePixelRatio();
+  });
+
+  testWidgets('monthly report switch keeps the optimistic disabled value', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final authRepo = InMemoryAuthRepository();
+    addTearDown(authRepo.dispose);
+    await authRepo.signUp(
+      email: 'ben@example.com',
+      password: 'secret1',
+      displayName: 'Ben',
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          authRepositoryProvider.overrideWithValue(authRepo),
+        ],
+        child: const MaterialApp(
+          locale: Locale('tr'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: SettingsScreen(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final toggle = find.byType(Switch).first;
+    expect(tester.widget<Switch>(toggle).value, isTrue);
+    await tester.ensureVisible(toggle);
+    await tester.pumpAndSettle();
+    await tester.tap(toggle);
+    await tester.pump();
+
+    expect(tester.widget<Switch>(toggle).value, isFalse);
+    expect(authRepo.currentUser?.monthlyReportOptIn, isFalse);
   });
 }

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' show PlatformDispatcher;
 
 import 'package:flutter/foundation.dart'
     show kIsWeb, defaultTargetPlatform, TargetPlatform, FlutterError;
@@ -10,6 +11,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/config/supabase_config.dart';
 import 'core/desktop/desktop_window.dart';
 import 'core/l10n/system_localizations.dart';
+import 'core/l10n/app_locale.dart';
 import 'core/notifications/alarm_notification_service.dart';
 import 'core/notifications/native_alarm_bridge.dart';
 import 'core/notifications/timer_notification_service.dart';
@@ -123,6 +125,14 @@ class OnlineStudyRoomApp extends ConsumerWidget {
     // WP-54/55: seçili sanat ailesi hem açık hem koyu moda uygulanır.
     // Eski yol (karşı moda sabit nordic/campfire) seçimi yok sayıyordu.
     final settings = ref.watch(themeSettingsProvider);
+    final language = ref.watch(appLanguageProvider);
+    // Sistem seçeneğinde locale'i MaterialApp belirler. Bu, Android'in çalışma
+    // anında değişen sistem dilini ve widget testlerindeki platform locale'ini
+    // doğru geçirir; manuel seçimde ise açık locale ile kullanıcı tercihi sabit
+    // kalır.
+    final locale = language == AppLanguage.system
+        ? null
+        : resolvePreferredAppLocale(PlatformDispatcher.instance.locale, language);
     final family = settings.family;
     final ThemeData lightTheme;
     final ThemeData darkTheme;
@@ -136,13 +146,18 @@ class OnlineStudyRoomApp extends ConsumerWidget {
       darkTheme = AppTheme.fromFamily(family, Brightness.dark);
     }
     return MaterialApp(
+      locale: locale,
       onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
       debugShowCheckedModeBanner: false,
       theme: lightTheme,
       darkTheme: darkTheme,
       themeMode: settings.mode,
       // Yalnız birincil sistem dili Türkçeyse TR; diğer tüm diller EN'e düşer.
-      localeResolutionCallback: resolveAppLocale,
+      localeResolutionCallback: (systemLocale, supportedLocales) {
+        final resolved = resolvePreferredAppLocale(systemLocale, language);
+        setActiveAppLocale(resolved);
+        return resolved;
+      },
       supportedLocales: AppLocalizations.supportedLocales,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       // Masaüstünde uygulamanın etrafına "üstte tut / mini pencere" kontrol
@@ -150,7 +165,8 @@ class OnlineStudyRoomApp extends ConsumerWidget {
       // child null iken shrink yerine koyu zemin (beyaz flaş yok).
       builder: (context, child) => desktopChrome(
         AppPullToRefresh(
-          child: child ??
+          child:
+              child ??
               const ColoredBox(
                 color: Color(0xFF0B1020),
                 child: SizedBox.expand(),
@@ -171,6 +187,5 @@ Locale resolveAppLocale(
   Locale? systemLocale,
   Iterable<Locale> supportedLocales,
 ) {
-  final languageCode = systemLocale?.languageCode.toLowerCase();
-  return languageCode == 'tr' ? const Locale('tr') : const Locale('en');
+  return resolvePreferredAppLocale(systemLocale, AppLanguage.system);
 }

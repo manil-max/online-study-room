@@ -4,6 +4,28 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [beta-v26 / 1.0.26+26] - 2026-07-15
+
+> **Beta — tercihler, açılış bildirimleri ve uygulama dili düzeltmeleri.**
+
+### Fixes
+- **Aylık e-posta tercihi kalıcı:** Anahtarı kapattığında ekran eski profil
+  verisi gelene kadar geri açılmaz; kaydetme başarısız olursa önceki değer geri
+  yüklenir.
+- **Açılıştaki eski dürtmeler sessiz:** Dinleyici açılmadan önce oluşturulmuş
+  dürtmeler artık uygulamayı açınca yerel bildirim üretmez. Uygulama açıkken
+  gelen yeni dürtme ise yalnızca bir kez gösterilir.
+- **Ayarlar > Uygulama dili:** Sistem varsayılanı, Türkçe ve İngilizce seçenekleri
+  eklendi. Seçim hemen uygulanır, yeniden açılıştan sonra korunur ve `sa/dk/sn`
+  ile `h/m/s` süre kısaltmalarını da aynı dile göre belirler.
+
+### Test odağı
+- Aylık e-posta anahtarını kapatıp Ayarlar'dan çıkıp geri gir; kapalı kalmalı.
+- Uygulamayı tamamen kapatıp eski dürtmeler varken aç; eski kayıtlar bildirim
+  olarak gelmemeli. Ardından uygulama açıkken yeni bir dürtme gönder.
+- Ayarlar'dan uygulama dilini Türkçe ve İngilizce yap; metinler ve istatistik
+  süreleri anında değişmeli, uygulamayı kapatıp açınca seçim korunmalı.
+
 ## [beta-v25 / 1.0.25+25] - 2026-07-15
 
 > **Beta — Türkçe süre kısaltması düzeltmesi.**
