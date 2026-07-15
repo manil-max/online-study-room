@@ -419,8 +419,20 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     ref.listen(groupMembersProvider, (_, next) {
       if (next.hasValue) _scheduleStatsWidgetRefresh();
     });
-    ref.listen(userGroupProvider, (_, next) {
+    ref.listen(userGroupProvider, (prev, next) {
       if (next.hasValue) _scheduleStatsWidgetRefresh();
+      // Widget/bildirim start sırasında group henüz yüklenmemiş olabilir;
+      // _publishPresence sessizce no-op olur. Grup hazır olunca bir kez
+      // yeniden yaz (H3 — kamp ateşi / şu an çalışanlar).
+      final group = next.asData?.value;
+      if (group != null && state.isRunning && state.startedAt != null) {
+        _publishPresence(
+          status: state.phase == TimerPhase.work
+              ? PresenceStatus.studying
+              : PresenceStatus.onBreak,
+          startedAt: state.startedAt,
+        );
+      }
     });
     final prefs = ref.read(sharedPreferencesProvider);
     final modeName = prefs.getString(_kMode);

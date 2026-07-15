@@ -20,6 +20,11 @@ class OfflineFirstStudyRepository implements StudyRepository {
   final OfflineCacheStore _cache;
   bool _isFlushing = false;
 
+  /// Aktif [watchUserSessions] dinleyicilerine mutation sonrası anında push.
+  /// Realtime gecikse bile UI (bugün toplam, istatistik) cache gerçeğini görür.
+  final Map<String, StreamController<List<StudySession>>> _sessionLocalHubs =
+      {};
+
   Future<void> flushPending() async {
     if (_isFlushing) return;
     _isFlushing = true;
@@ -61,6 +66,7 @@ class OfflineFirstStudyRepository implements StudyRepository {
   @override
   Future<void> addSession(StudySession session) async {
     await _cache.upsertCachedSession(session);
+    await _publishLocalUserSessions(session.userId);
     try {
       await flushPending();
       await _remote.addSession(session);
@@ -72,6 +78,7 @@ class OfflineFirstStudyRepository implements StudyRepository {
   @override
   Future<void> updateSession(StudySession session) async {
     await _cache.upsertCachedSession(session);
+    await _publishLocalUserSessions(session.userId);
     try {
       await flushPending();
       await _remote.updateSession(session);
@@ -82,7 +89,10 @@ class OfflineFirstStudyRepository implements StudyRepository {
 
   @override
   Future<void> deleteSession(String sessionId) async {
-    await _cache.removeCachedSession(sessionId);
+    final affectedUserIds = await _cache.removeCachedSession(sessionId);
+    for (final userId in affectedUserIds) {
+      await _publishLocalUserSessions(userId);
+    }
     try {
       await flushPending();
       await _remote.deleteSession(sessionId);
@@ -92,45 +102,90 @@ class OfflineFirstStudyRepository implements StudyRepository {
   }
 
   @override
-  Stream<List<StudySession>> watchUserSessions(String userId) async* {
-    final cached = await _cache.readUserSessions(userId);
-    if (cached != null) {
-      yield _hotOnly(cached);
+  Stream<List<StudySession>> watchUserSessions(String userId) {
+    // Controller, remote stream bitsin/kopsa bile local hub emit'lerini taşır;
+    // böylece manuel oturum ekleme realtime beklemeden UI'ya yansır (H1).
+    final controller = StreamController<List<StudySession>>();
+    StreamSubscription<List<StudySession>>? remoteSub;
+    StreamSubscription<List<StudySession>>? localSub;
+    var active = true;
+
+    Future<void> emitCached() async {
+      final cached = await _cache.readUserSessions(userId);
+      if (!active || controller.isClosed) return;
+      if (cached != null) {
+        controller.add(_hotOnly(cached));
+      }
     }
 
-    try {
-      await flushPending();
-      final realtimeStopwatch = Stopwatch()..start();
-      await for (final rows in _remote.watchUserSessions(userId)) {
-        // Realtime snapshot gecikmiş olsa bile yerel outbox'taki değişiklikleri
-        // ezemez; flush tamamlanana kadar ikisini geçici canonical listede birleştir.
-        final reconciled = _hotOnly(await _reconcileRemoteSessions(rows));
-        final pendingCount =
-            (await _cache.readPendingStudyMutations()).length;
-        ObservabilityService.instance.realtimeSnapshot(
-          sessionCount: reconciled.length,
-          pendingOutboxCount: pendingCount,
-          elapsedMilliseconds: realtimeStopwatch.elapsedMilliseconds,
-        );
-        realtimeStopwatch
-          ..reset()
-          ..start();
-        // Disk cache de yalnız sıcak pencere — prefs şişmesin.
-        await _cache.saveUserSessions(userId, reconciled);
-        yield reconciled;
+    Future<void> start() async {
+      await emitCached();
+      if (!active || controller.isClosed) return;
+
+      localSub = _sessionHub(userId).stream.listen((rows) {
+        if (!controller.isClosed) controller.add(rows);
+      });
+
+      try {
+        // Remote dinlemeyi bloklamasın: flush arka planda; ilk snapshot cache'ten
+        // zaten gitti. Eski kod await flushPending() ile yavaş ağda watch'u kilitliyordu.
         unawaited(flushPending());
-      }
-    } catch (error, stackTrace) {
-      final fallback = await _cache.readUserSessions(userId);
-      ObservabilityService.instance.realtimeFallback(
-        hadCachedRows: fallback != null,
-      );
-      if (fallback != null) {
-        yield _hotOnly(fallback);
-      } else {
-        Error.throwWithStackTrace(error, stackTrace);
+        final realtimeStopwatch = Stopwatch()..start();
+        remoteSub = _remote.watchUserSessions(userId).listen(
+          (rows) async {
+            final reconciled = _hotOnly(await _reconcileRemoteSessions(rows));
+            final pendingCount =
+                (await _cache.readPendingStudyMutations()).length;
+            ObservabilityService.instance.realtimeSnapshot(
+              sessionCount: reconciled.length,
+              pendingOutboxCount: pendingCount,
+              elapsedMilliseconds: realtimeStopwatch.elapsedMilliseconds,
+            );
+            realtimeStopwatch
+              ..reset()
+              ..start();
+            await _cache.saveUserSessions(userId, reconciled);
+            if (!controller.isClosed) controller.add(reconciled);
+            unawaited(flushPending());
+          },
+          onError: (Object error, StackTrace stackTrace) async {
+            final fallback = await _cache.readUserSessions(userId);
+            ObservabilityService.instance.realtimeFallback(
+              hadCachedRows: fallback != null,
+            );
+            if (controller.isClosed) return;
+            if (fallback != null) {
+              controller.add(_hotOnly(fallback));
+            } else {
+              controller.addError(error, stackTrace);
+            }
+          },
+        );
+      } catch (error, stackTrace) {
+        final fallback = await _cache.readUserSessions(userId);
+        ObservabilityService.instance.realtimeFallback(
+          hadCachedRows: fallback != null,
+        );
+        if (controller.isClosed) return;
+        if (fallback != null) {
+          controller.add(_hotOnly(fallback));
+        } else {
+          controller.addError(error, stackTrace);
+        }
       }
     }
+
+    controller
+      ..onListen = () {
+        unawaited(start());
+      }
+      ..onCancel = () async {
+        active = false;
+        await remoteSub?.cancel();
+        await localSub?.cancel();
+      };
+
+    return controller.stream;
   }
 
   @override
@@ -153,7 +208,7 @@ class OfflineFirstStudyRepository implements StudyRepository {
     if (cached != null) yield cached;
 
     try {
-      await flushPending();
+      unawaited(flushPending());
       await for (final rows in _remote.watchGroupDailyStats(groupId)) {
         await _cache.saveGroupDailyStats(groupId, rows);
         yield rows;
@@ -166,6 +221,23 @@ class OfflineFirstStudyRepository implements StudyRepository {
       } else {
         Error.throwWithStackTrace(error, stackTrace);
       }
+    }
+  }
+
+  StreamController<List<StudySession>> _sessionHub(String userId) {
+    return _sessionLocalHubs.putIfAbsent(
+      userId,
+      () => StreamController<List<StudySession>>.broadcast(),
+    );
+  }
+
+  Future<void> _publishLocalUserSessions(String userId) async {
+    final hub = _sessionLocalHubs[userId];
+    if (hub == null || hub.isClosed || !hub.hasListener) return;
+    final cached =
+        await _cache.readUserSessions(userId) ?? const <StudySession>[];
+    if (!hub.isClosed) {
+      hub.add(_hotOnly(cached));
     }
   }
 

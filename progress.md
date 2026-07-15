@@ -78,8 +78,8 @@
 - **Ortak/riskli yüzey:** —
 - **Dal:** — (main)
 - **Başlangıç:** —
-- **Son güncelleme:** 2026-07-14 (Europe/Istanbul)
-- **Not:** WP-88 kod+audit+debug APK → Test için bekleyenler. Lane serbest.
+- **Son güncelleme:** 2026-07-15 (Europe/Istanbul)
+- **Not:** WP-100 kod+otomatik test → Test için bekleyenler.
 
 ---
 
@@ -123,6 +123,7 @@
 | WP-94 | [~] Test için bekliyor | EN bağlam düzeltmeleri ve sade sayaç bildirimi | — |
 | WP-95 | [~] Test için bekliyor | Başarım ayrıntılarında tam cümleli koşullar | — |
 | WP-97 | [~] Test için bekliyor | Eski One UI sayaç satırı, tüm ekranlarda pull-to-refresh, belirgin beta ayrımı ve beta-v24 | WP-94 cihaz bulgusu |
+| WP-100 | [~] Test için bekliyor | Senkron kök fix: local emit, pull-to-refresh timeout, presence race | cihaz bulgusu |
 
 > **2026-07-14 proje denetimi:** Serbest sürükle-bırak ızgara, canlı grup hedefi ve saat stilleri **zaten kodda uygulanmış** (backlog stale idi; geçici WP-72/73/75 iptal). Dinamik paneldeki cihaz/eylem sorunu için açılan **WP-76** kod+otomatik test aşamasını geçti; Samsung/Pixel cihaz QA’sı bekliyor.
 >
@@ -164,6 +165,17 @@
 > Kod/otomatik test bitti; **cihaz QA veya ürün demo’su** bekleniyor.
 > Bu bölüm **aktif çalışma değildir** — ajan claim etmez, diğer WP’leri engellemez.
 > Kabul gelince kart buradan çıkar → **Tamamlanan**’a gider. Bug çıkarsa ayrı debug WP açılır.
+
+### WP-100: Senkron Kök Fix — Local Emit, Refresh Timeout, Presence Race 🔄
+
+- **Program/Faz:** Debug · **Aşama:** Otomatik test geçti · **Kanıt:** `Kodda doğrulandı` / `Cihazda doğrulanmalı`
+- **Uygulandı (H1):** Offline-first study/presence yazımları aktif watch dinleyicilerine cache'i anında local hub ile push eder; UI realtime beklemez.
+- **Uygulandı (H2):** Pull-to-refresh per-source 8 sn + global 12 sn timeout; hang eden StreamProvider.future spinner'ı kilitleyemez.
+- **Uygulandı (H3):** Group hazır olunca presence yeniden yazılır; local presence emit.
+- **H4:** Açılış dürtme seed mantığı kodda doğrulandı (WP-99); bu WP'de yeniden yazılmadı.
+- **Doğrulama:** offline_first + pull-to-refresh + timer reconcile + nudge testleri yeşil; ilgili analyze 0.
+- **Cihazda doğrulanmalı:** Manuel +30 dk → saat kartı ≤1 sn; pull-to-refresh ≤12 sn; widget/bildirim start → kamp ateşi; cold start eski dürtme yok.
+- **Veri/RLS/Geri alma:** Migration/RLS yok. Geri alma bu istemci commitidir.
 
 ### WP-99: Tercih Kalıcılığı, Açılış Bildirimi ve Manuel Dil Seçimi 🔧
 

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -23,5 +25,24 @@ void main() {
     expect(find.byType(RefreshProgressIndicator), findsOneWidget);
 
     await tester.pumpAndSettle();
+  });
+
+  test('settleRefreshSource completes when source hangs past timeout (H2)', () async {
+    final sw = Stopwatch()..start();
+    await settleRefreshSource(
+      () => Completer<void>().future,
+      timeout: const Duration(milliseconds: 80),
+    );
+    sw.stop();
+
+    expect(sw.elapsedMilliseconds, lessThan(2000));
+    expect(sw.elapsedMilliseconds, greaterThanOrEqualTo(70));
+  });
+
+  test('settleRefreshSource swallows errors', () async {
+    await settleRefreshSource(
+      () async => throw StateError('network'),
+      timeout: const Duration(seconds: 1),
+    );
   });
 }

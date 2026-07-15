@@ -47,16 +47,20 @@ class OfflineCacheStore {
     await saveUserSessions(session.userId, next);
   }
 
-  Future<void> removeCachedSession(String sessionId) async {
+  /// Cache'den oturumu siler; etkilenen kullanıcı id'lerini döner (local emit için).
+  Future<List<String>> removeCachedSession(String sessionId) async {
     final users = _prefs.getStringList(_studyUsersKey) ?? const [];
+    final affected = <String>[];
     for (final userId in users) {
       final current = await readUserSessions(userId);
       if (current == null) continue;
       final next = current.where((s) => s.id != sessionId).toList();
       if (next.length != current.length) {
         await saveUserSessions(userId, next);
+        affected.add(userId);
       }
     }
+    return affected;
   }
 
   Future<List<DailyStat>?> readGroupDailyStats(String groupId) async {

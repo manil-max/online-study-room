@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/presence.dart';
+import '../models/study_group.dart';
 import 'auth_providers.dart';
 import 'group_providers.dart';
 import 'presence_providers.dart';
@@ -28,11 +29,21 @@ class PresenceLifecycle with WidgetsBindingObserver {
   Timer? _heartbeat;
   bool _started = false;
 
+  ProviderSubscription<AsyncValue<StudyGroup?>>? _groupSub;
+
   void start() {
     if (_started) return;
     _started = true;
     WidgetsBinding.instance.addObserver(this);
     _heartbeat = Timer.periodic(kPresenceHeartbeatInterval, (_) => beat());
+    // Group sonradan gelince (soğuk açılış / widget start) hemen presence yaz;
+    // 20 sn heartbeat bekleme (H3).
+    _groupSub = _ref.listen(userGroupProvider, (prev, next) {
+      final group = next.asData?.value;
+      if (group != null) beat();
+    });
+    // Group zaten hazır + timer restore edilmişse ilk beat'i kaçırma.
+    beat();
   }
 
   void dispose() {
@@ -41,6 +52,8 @@ class PresenceLifecycle with WidgetsBindingObserver {
     WidgetsBinding.instance.removeObserver(this);
     _heartbeat?.cancel();
     _heartbeat = null;
+    _groupSub?.close();
+    _groupSub = null;
   }
 
   @override

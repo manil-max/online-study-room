@@ -181,7 +181,59 @@ void main() {
       expect(rows.single.status, PresenceStatus.studying);
     },
   );
+
+  test(
+    'addSession notifies active watchUserSessions without remote re-emit (H1)',
+    () async {
+      final cache = await _store();
+      final remote = _FakeStudyRepository()..holdUserSessionStream = true;
+      final repo = OfflineFirstStudyRepository(remote: remote, cache: cache);
+
+      final events = <List<StudySession>>[];
+      final sub = repo.watchUserSessions('u1').listen(events.add);
+      addTearDown(sub.cancel);
+
+      // İlk snapshot (boş veya remote) gelsin.
+      await _pump();
+      final before = events.length;
+
+      await repo.addSession(_session('local-only'));
+      await _pump();
+
+      expect(events.length, greaterThan(before));
+      expect(
+        events.last.map((s) => s.id),
+        contains('local-only'),
+      );
+      // Remote hold: yeniden emit etmedi; local hub taşıdı.
+      expect(remote.userSessionEmits, lessThanOrEqualTo(1));
+    },
+  );
+
+  test(
+    'setPresence notifies active watchGroupPresence without remote re-emit',
+    () async {
+      final cache = await _store();
+      final remote = _FakePresenceRepository()..holdStream = true;
+      final repo = OfflineFirstPresenceRepository(remote: remote, cache: cache);
+
+      final events = <List<Presence>>[];
+      final sub = repo.watchGroupPresence('g1').listen(events.add);
+      addTearDown(sub.cancel);
+
+      await _pump();
+      final before = events.length;
+
+      await repo.setPresence(_presence(PresenceStatus.studying));
+      await _pump();
+
+      expect(events.length, greaterThan(before));
+      expect(events.last.single.status, PresenceStatus.studying);
+    },
+  );
 }
+
+Future<void> _pump() => Future<void>.delayed(const Duration(milliseconds: 30));
 
 class _FakeStudyRepository implements StudyRepository {
   final sessions = <StudySession>[];
@@ -189,6 +241,11 @@ class _FakeStudyRepository implements StudyRepository {
   bool failWrites = false;
   bool failUserSessionStream = false;
   bool failDailyStatsStream = false;
+
+  /// true: ilk boş/snapshot emit, sonra stream açık kalır ama yeniden emit yok
+  /// (local hub testleri için realtime'ı simüle eder).
+  bool holdUserSessionStream = false;
+  int userSessionEmits = 0;
 
   @override
   Future<void> addSession(StudySession session) async {
@@ -214,9 +271,23 @@ class _FakeStudyRepository implements StudyRepository {
   }
 
   @override
-  Stream<List<StudySession>> watchUserSessions(String userId) async* {
-    if (failUserSessionStream) throw StateError('offline');
-    yield sessions.where((s) => s.userId == userId).toList();
+  Stream<List<StudySession>> watchUserSessions(String userId) {
+    if (failUserSessionStream) {
+      return Stream.error(StateError('offline'));
+    }
+    if (holdUserSessionStream) {
+      final controller = StreamController<List<StudySession>>();
+      controller.onListen = () {
+        userSessionEmits++;
+        controller.add(
+          sessions.where((s) => s.userId == userId).toList(),
+        );
+        // Bilerek kapatma: remote "realtime kopuk / gecikmiş" senaryosu.
+      };
+      return controller.stream;
+    }
+    userSessionEmits++;
+    return Stream.value(sessions.where((s) => s.userId == userId).toList());
   }
 
   @override
@@ -246,6 +317,7 @@ class _FakePresenceRepository implements PresenceRepository {
   final rows = <Presence>[];
   bool failWrites = false;
   bool failStream = false;
+  bool holdStream = false;
 
   @override
   Future<void> setPresence(Presence presence) async {
@@ -255,8 +327,17 @@ class _FakePresenceRepository implements PresenceRepository {
   }
 
   @override
-  Stream<List<Presence>> watchGroupPresence(String groupId) async* {
-    if (failStream) throw StateError('offline');
-    yield rows.where((p) => p.groupId == groupId).toList();
+  Stream<List<Presence>> watchGroupPresence(String groupId) {
+    if (failStream) {
+      return Stream.error(StateError('offline'));
+    }
+    if (holdStream) {
+      final controller = StreamController<List<Presence>>();
+      controller.onListen = () {
+        controller.add(rows.where((p) => p.groupId == groupId).toList());
+      };
+      return controller.stream;
+    }
+    return Stream.value(rows.where((p) => p.groupId == groupId).toList());
   }
 }
