@@ -68,7 +68,7 @@
 - **Dal:** — (main)
 - **Başlangıç:** —
 - **Son güncelleme:** 2026-07-15 (Europe/Istanbul)
-- **Not:** WP-94 kod+otomatik kalite kapısı geçti; Samsung/One UI görsel QA ve ürün kabulü bekliyor.
+- **Not:** WP-95 kod+otomatik kalite kapısı geçti; EN/TR başarımlar ayrıntı görsel QA ve ürün kabulü bekliyor.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
@@ -121,6 +121,7 @@
 | WP-92 | [~] Test için bekliyor | Global açık/özel grup sözleşmesi, RLS ve çift repository | — |
 | WP-93 | [~] Test için bekliyor | Global grup keşfi ve katılım arayüzü | WP-92 |
 | WP-94 | [~] Test için bekliyor | EN bağlam düzeltmeleri ve sade sayaç bildirimi | — |
+| WP-95 | [~] Test için bekliyor | Başarım ayrıntılarında tam cümleli koşullar | — |
 
 > **2026-07-14 proje denetimi:** Serbest sürükle-bırak ızgara, canlı grup hedefi ve saat stilleri **zaten kodda uygulanmış** (backlog stale idi; geçici WP-72/73/75 iptal). Dinamik paneldeki cihaz/eylem sorunu için açılan **WP-76** kod+otomatik test aşamasını geçti; Samsung/Pixel cihaz QA’sı bekliyor.
 >
@@ -162,6 +163,14 @@
 > Kod/otomatik test bitti; **cihaz QA veya ürün demo’su** bekleniyor.
 > Bu bölüm **aktif çalışma değildir** — ajan claim etmez, diğer WP’leri engellemez.
 > Kabul gelince kart buradan çıkar → **Tamamlanan**’a gider. Bug çıkarsa ayrı debug WP açılır.
+
+### WP-95: Başarım Ayrıntılarında Tam Cümleli Koşullar 🏆
+
+- **Program/Faz:** Debug · **Aşama:** Otomatik test geçti · **Kanıt:** `Kodda doğrulandı` / `Cihazda doğrulanmalı`
+- **Uygulandı:** Başarım ayrıntısı artık sunucudan gelen kısa/yerelleştirilmemiş açıklamayı göstermez. Her açık kademe, aktif dilde tam bir koşul cümlesi gösterir; örneğin `Bir günde 6 saat çalış.` / `Study for 6 hours in a single day.` Açılmış gizli başarımlar da gerçek koşulunu açıklar; kilitliyken koşul sır olarak kalır.
+- **Doğrulama:** EN/TR katalog audit'i 997 Flutter anahtarı ve 66 native anahtarda eş. Yeni test, tüm açık başarımların bütün kademelerini iki dilde tam cümle olarak; açılmış gizli başarımların ise gerçek koşulla gösterildiğini denetler. `flutter analyze` 0 bulgu; tüm Flutter testleri 428/428.
+- **Cihazda doğrulanmalı:** EN ve TR'de Başarımlar ekranından her kategoriye en az bir rozet aç; başlık, açıklama ve kademe satırlarında taşma olmadan anlamlı cümleleri doğrula. Kilitli gizli rozetin koşulu görünmemeli; açılmış gizli rozet koşulunu göstermeli.
+- **Veri/RLS/Geri alma:** Veri/migration/RLS veya XP hesaplama etkisi yok. Geri alma, bu ayrıntı metni commitini geri almaktır.
 
 ### WP-94: EN Bağlam Düzeltmeleri ve Sade Sayaç Bildirimi 🔔
 

@@ -108,8 +108,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Tüm kademeler'), findsOneWidget);
-    expect(find.text('Kademe 1 · 50 saat'), findsOneWidget);
-    expect(find.text('Kademe 5 · 2500 saat'), findsOneWidget);
+    expect(find.text('Kademe 1 · Toplam 50 saat çalış.'), findsOneWidget);
+    expect(find.text('Kademe 5 · Toplam 2500 saat çalış.'), findsOneWidget);
     expect(find.text('+100 XP · Kilitli'), findsOneWidget);
     expect(find.text('+15000 XP · Kilitli'), findsOneWidget);
   });
@@ -126,7 +126,7 @@ void main() {
           achievement,
           achievement.tiers.first,
         ),
-        '7 · Seri ve Düzen',
+        'Günlük hedefine 7 gün üst üste ulaş.',
       );
     },
   );
@@ -141,8 +141,36 @@ void main() {
         achievement,
         achievement.tiers[2],
       ),
-      '6 hours',
+      'Study for 6 hours in a single day.',
     );
+  });
+
+  test('tüm açık başarım kademeleri iki dilde tam cümleyle açıklanır', () {
+    for (final l10n in [AppLocalizationsTr(), AppLocalizationsEn()]) {
+      for (final achievement in kAchievementDictV3().where(
+        (entry) => !entry.isSecret,
+      )) {
+        for (final tier in achievement.tiers) {
+          final condition = achievementTierConditionTr(l10n, achievement, tier);
+          expect(condition, endsWith('.'));
+          expect(condition.split(' ').length, greaterThan(3));
+        }
+      }
+    }
+  });
+
+  test('açılan gizli başarımlar gerçek koşullarını açıklar', () {
+    for (final achievement in kAchievementDictV3().where(
+      (entry) => entry.isSecret && entry.id != 'secret_break_enemy',
+    )) {
+      final description = achievementDetailDescription(
+        AppLocalizationsEn(),
+        achievement,
+        true,
+      );
+      expect(description, isNot('Secret achievement'));
+      expect(description.split(' ').length, greaterThan(4));
+    }
   });
 
   testWidgets('yeni ödül confetti ≤ 250 ms içinde görünür', (tester) async {

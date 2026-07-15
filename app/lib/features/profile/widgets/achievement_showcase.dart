@@ -99,14 +99,38 @@ String categoryLabelTr(AppLocalizations l10n, String category) {
   }
 }
 
-/// Bir başarım kademesinin kullanıcıya gösterilen, ölçülebilir şartı.
-/// Sözlük/RPC'deki `unit` değerleri burada Türkçe açıklamaya çevrilir.
+/// Bir başarım kademesinin kullanıcıya gösterilen, doğal dildeki şartı.
+/// Sözlük/RPC'deki teknik `unit` değeri asla doğrudan kullanıcıya gösterilmez.
 String achievementTierConditionTr(
   AppLocalizations l10n,
   AchievementDictEntry achievement,
   AchievementTierDef tier,
 ) {
   final value = tier.threshold;
+  switch (achievement.id) {
+    case 'marathon_total':
+      return l10n.profileBasarimToplamSaatKosulu(value);
+    case 'steel_will':
+      return l10n.profileBasarimTekOturumKosulu(value);
+    case 'day_hero':
+      return l10n.profileBasarimGunlukSaatKosulu(value);
+    case 'fire_streak':
+      return l10n.profileBasarimSeriKosulu(value);
+    case 'weekend_goal_days':
+      return l10n.profileBasarimHaftaSonuKosulu(value);
+    case 'perfect_month':
+      return l10n.profileBasarimKusursuzAyKosulu(value);
+    case 'alpha_wolf':
+      return l10n.profileBasarimGrupBirinciligiKosulu(value);
+    case 'team_player':
+      return l10n.profileBasarimGrupHedefKosulu(value);
+    case 'campfire_hours':
+      return l10n.profileBasarimKampAtesiKosulu(value);
+    case 'inspiration':
+      return l10n.profileBasarimDurtmeKosulu(value);
+    case 'locomotive':
+      return l10n.profileBasarimLokomotifKosulu(value);
+  }
   switch (tier.unit) {
     case 'hours':
       return l10n.commonHourCount(value);
@@ -153,6 +177,30 @@ String achievementTierConditionTr(
     default:
       return '$value';
   }
+}
+
+String achievementDetailDescription(
+  AppLocalizations l10n,
+  AchievementDictEntry achievement,
+  bool unlocked,
+) {
+  if (!achievement.isSecret) {
+    return l10n.profileBasarimKademeleriniTamamla;
+  }
+  if (!unlocked) return l10n.profileGizliBirBasarimAcmak;
+  return switch (achievement.id) {
+    'secret_night_owl' => l10n.profileBasarimGeceKusuAciklama,
+    'secret_dawn' => l10n.profileBasarimGunDogumuAciklama,
+    'secret_404' => l10n.profileBasarim404Aciklama,
+    'secret_pi' => l10n.profileBasarimPiAciklama,
+    'secret_last_second' => l10n.profileBasarimSonSaniyeAciklama,
+    'secret_1337' => l10n.profileBasarim1337Aciklama,
+    'secret_no_limits' => l10n.profileBasarimSinirTanimazAciklama,
+    'secret_matrix' => l10n.profileBasarimMatrixAciklama,
+    'secret_nye' => l10n.profileBasarimYilbasiAciklama,
+    'secret_break_enemy' => l10n.profileBuGizliBasariminKosulu,
+    _ => achievement.description,
+  };
 }
 
 /// Oyunlaştırılmış vitrin: XP barı, taç, vitrin rozetleri, katalog + confetti.
@@ -686,7 +734,11 @@ Future<void> showAchievementDetail(
                   )
                 else ...[
                   Text(
-                    def.description,
+                    achievementDetailDescription(
+                      AppLocalizations.of(context),
+                      def,
+                      unlocked,
+                    ),
                     style: theme.textTheme.bodyMedium,
                     textAlign: TextAlign.center,
                   ),
