@@ -50,7 +50,7 @@ android {
             dimension = "channel"
             applicationIdSuffix = ".beta"
             versionNameSuffix = "-beta"
-            manifestPlaceholders["appName"] = "Odak Kampı Beta"
+            manifestPlaceholders["appName"] = "Odak Kampı BETA TEST"
         }
     }
 

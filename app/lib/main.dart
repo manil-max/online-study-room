@@ -18,6 +18,7 @@ import 'core/prefs/app_prefs.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_settings.dart';
 import 'core/time_engine/device_timezone.dart';
+import 'core/widgets/app_pull_to_refresh.dart';
 import 'features/auth/auth_gate.dart';
 import 'features/desktop/compact_focus_view.dart';
 import 'l10n/app_localizations.dart';
@@ -148,11 +149,13 @@ class OnlineStudyRoomApp extends ConsumerWidget {
       // kümesi eklenir; web/mobilde child olduğu gibi döner.
       // child null iken shrink yerine koyu zemin (beyaz flaş yok).
       builder: (context, child) => desktopChrome(
-        child ??
-            const ColoredBox(
-              color: Color(0xFF0B1020),
-              child: SizedBox.expand(),
-            ),
+        AppPullToRefresh(
+          child: child ??
+              const ColoredBox(
+                color: Color(0xFF0B1020),
+                child: SizedBox.expand(),
+              ),
+        ),
         compactChild: const CompactFocusView(),
       ),
       home: const AuthGate(),

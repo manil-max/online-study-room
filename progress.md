@@ -61,14 +61,14 @@
 
 ### Codex Lane
 - **Durum:** [⏸] Cihaz QA bekliyor
-- **Faz/WP:** WP-97 — One UI sayaç bildirimi satır düzeni
-- **Aşama:** Otomatik test geçti; cihaz QA ve v23 dağıtımı bekliyor
+- **Faz/WP:** WP-97 — One UI sayaç bildirimi, evrensel yenileme ve beta ayrımı
+- **Aşama:** Otomatik test geçti; beta cihaz QA bekliyor
 - **SAHİP yollar:** —
-- **Ortak/riskli yüzey:** Android foreground notification / One UI RemoteViews
+- **Ortak/riskli yüzey:** Android foreground notification / One UI RemoteViews / root navigation refresh
 - **Dal:** main
 - **Başlangıç:** 2026-07-15 14:35 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-15 15:16 (Europe/Istanbul)
-- **Not:** v22 cihaz bulgusu giderildi: özel RemoteViews satırı her zaman `HH:MM:SS` ve sağda tek Başlat/Durdur gösterir. `flutter analyze` 0 bulgu, `flutter test` 428/428, Android release APK başarılı. Samsung One UI ekran kanıtı bekleniyor.
+- **Son güncelleme:** 2026-07-15 15:38 (Europe/Istanbul)
+- **Not:** Kök neden doğrulandı: dil paketi değil, `0bba715` WP-80 özel yatay `timer_notification.xml` görünümünü dinamik panel için silmiş. Kanıtlı görünüm geri getirildi; root pull-to-refresh oturum/istatistik/grup/ders/bildirim/presence/başarım verilerini yeniler; beta launcher adı `Odak Kampı BETA TEST`. `flutter analyze` 0, test 429/429, beta release APK başarılı. Cihaz QA bekliyor; stable tag yok.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
@@ -122,7 +122,7 @@
 | WP-93 | [~] Test için bekliyor | Global grup keşfi ve katılım arayüzü | WP-92 |
 | WP-94 | [~] Test için bekliyor | EN bağlam düzeltmeleri ve sade sayaç bildirimi | — |
 | WP-95 | [~] Test için bekliyor | Başarım ayrıntılarında tam cümleli koşullar | — |
-| WP-97 | [~] Test için bekliyor | One UI bildiriminde yatay `HH:MM:SS` ve sağda Başlat/Durdur | WP-94 cihaz bulgusu |
+| WP-97 | [~] Test için bekliyor | Eski One UI sayaç satırı, tüm ekranlarda pull-to-refresh, belirgin beta ayrımı ve beta-v24 | WP-94 cihaz bulgusu |
 
 > **2026-07-14 proje denetimi:** Serbest sürükle-bırak ızgara, canlı grup hedefi ve saat stilleri **zaten kodda uygulanmış** (backlog stale idi; geçici WP-72/73/75 iptal). Dinamik paneldeki cihaz/eylem sorunu için açılan **WP-76** kod+otomatik test aşamasını geçti; Samsung/Pixel cihaz QA’sı bekliyor.
 >

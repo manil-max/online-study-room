@@ -4,23 +4,24 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
-## [v23 / 1.0.23+23] - 2026-07-15
+## [beta-v24 / 1.0.24+24] - 2026-07-15
 
-> **Stable — One UI sayaç satırı düzeltmesi.**
+> **Beta — Kanıtlı One UI bildirim düzenine dönüş ve evrensel yenileme.**
 
 ### Fixes
-- **Tek satır bildirim:** Odak bildirimi artık sistemin `MM:SS` kronometresini ve
-  alt satıra ayrılan action'ı kullanmaz. Kendi satırında her zaman
-  `HH:MM:SS` ile bunun sağında tek **Başlat/Durdur** düğmesi gösterir.
-- **Canlı süre:** Foreground servis, bildirim metnini saniye sınırında sessizce
-  yeniler; 14 saniye `00:00:14`, bir saat yedi dakika üç saniye
-  `01:07:03` olur.
+- **Geçmişteki satır geri geldi:** Dil paketi öncesinde kullanılan `timer_notification.xml`
+  geri yüklendi: solda canlı sayaç, sağda tek **Başlat/Durdur** düğmesi.
+- **Asıl neden giderildi:** `WP-80`'de dinamik panel uygunluğu için silinen özel
+  görünüm geri getirildi. Bu, çeviri paketiyle ilişkili değildi.
+- **Aşağı çekerek yenile:** Tüm uygulama route'larında dikey listeyi aşağı çekmek,
+  güncel oturum/istatistik, grup, ders, bildirim, presence ve başarım verisini
+  yeniden ister; uygulamayı kapatıp açmak gerekmez.
+- **Belirgin beta paketi:** Launcher adı artık **Odak Kampı BETA TEST**. Mevcut
+  beta ikonundaki BETA şeridi adaptive-icon kırpılsa bile paket stable'la karışmaz.
 
 ### Test odağı
-- Samsung One UI'da sayacı başlat; hem kapalı hem açık bildirimde sürenin
-  `HH:MM:SS` olarak ve Durdur'un aynı satırın sağında kaldığını doğrula.
-- **Durdur**'a, sonra **Başlat**'a uygulamayı açmadan bas; eylem ve sayaç
-  hemen değişmeli.
+- Samsung One UI'da bildirimde eski yatay görünümü; uygulamayı açmadan **Durdur**
+  ve **Başlat** eylemlerini dene.
 
 ## [v22 / 1.0.22+22] - 2026-07-15
 

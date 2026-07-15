@@ -3,20 +3,21 @@
   "source": "CHANGELOG.md",
   "releases": [
     {
-      "versionName": "1.0.23",
-      "buildNumber": 23,
-      "channel": "stable",
+      "versionName": "1.0.24",
+      "buildNumber": 24,
+      "channel": "beta",
       "date": "2026-07-15",
-      "title": "v23: One UI sayaç satırı düzeltmesi",
+      "title": "beta-v24: bildirim geri dönüşü ve evrensel yenileme",
       "highlights": [
-        "Odak bildirimi kendi satırında sabit HH:MM:SS ve sağda tek Başlat/Durdur düğmesi gösterir.",
-        "Sayaç metni foreground servis tarafında saniye sınırında sessizce yenilenir."
+        "Dil paketi öncesindeki yatay sayaç görünümü geri yüklendi: solda canlı sayaç, sağda tek Başlat/Durdur düğmesi.",
+        "Tüm uygulama route'larında aşağı çekerek yenileme güncel veri ister; uygulamayı kapatıp açmak gerekmez.",
+        "Beta paketi launcher'da Odak Kampı BETA TEST adıyla görünür."
       ],
       "fixes": [
-        "One UI'nin standart kronometreyi MM:SS ve eylemi ayrı satırda göstermesi giderildi."
+        "Dinamik panel uygunluğu için silinen timer_notification.xml geri getirildi; sorun çeviri paketi değildi."
       ],
       "notes": [
-        "Samsung One UI'da hem dar hem geniş bildirimde HH:MM:SS + sağdaki tek eylemi dene."
+        "Samsung One UI'da eski yatay görünümü, uygulamayı açmadan Başlat/Durdur kontrolünü ve her ekranda aşağı çekerek yenilemeyi dene."
       ]
     },
     {

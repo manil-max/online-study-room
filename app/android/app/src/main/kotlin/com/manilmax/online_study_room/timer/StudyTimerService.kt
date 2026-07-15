@@ -10,9 +10,8 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.ServiceInfo
 import android.os.Build
-import android.os.Handler
 import android.os.IBinder
-import android.os.Looper
+import android.os.SystemClock
 import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
 import com.manilmax.online_study_room.MainActivity
@@ -21,7 +20,6 @@ import com.manilmax.online_study_room.widgets.TimerWidgets
 import org.json.JSONArray
 import org.json.JSONObject
 import java.time.Instant
-import java.util.Locale
 
 /**
  * Çalışma sayacının **native** foreground servisi (V8-A · WP-42/51 birleşik).
@@ -49,9 +47,6 @@ import java.util.Locale
  *   arka plan servis başlatma yasağına (`BackgroundServiceStartNotAllowed`) takılmaz.
  */
 class StudyTimerService : Service() {
-
-    private val notificationHandler = Handler(Looper.getMainLooper())
-    private var notificationTicker: Runnable? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -129,7 +124,6 @@ class StudyTimerService : Service() {
             NOTIFICATION_ID,
             buildRunningNotification(startedAtMs),
         )
-        startNotificationTicker()
         TimerWidgets.updateAll(this)
         notifyStateChanged()
     }
@@ -167,7 +161,6 @@ class StudyTimerService : Service() {
             NOTIFICATION_ID,
             buildRunningNotification(nowMs),
         )
-        startNotificationTicker()
         TimerWidgets.updateAll(this)
         notifyStateChanged()
     }
@@ -192,7 +185,6 @@ class StudyTimerService : Service() {
         // `startForeground` çağrılmalı. Bu yüzden bookkeeping'ten ÖNCE idle
         // bildirimini foreground olarak yayınla, sonra foreground'u bırak
         // (DETACH — bildirim kalsın ki app açmadan tekrar Başlat'a basılabilsin).
-        stopNotificationTicker()
         startForegroundCompat(buildIdleNotification())
 
         val p = prefs()
@@ -229,7 +221,6 @@ class StudyTimerService : Service() {
     /** Beklenmedik/boş komutta güvenli kapanış: kısa foreground + tam kaldırma. */
     private fun safeStopEverything() {
         // Foreground borcu olabilir; kısa bir bildirimle kapat ve tamamen kaldır.
-        stopNotificationTicker()
         runCatching { startForegroundCompat(buildIdleNotification()) }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             runCatching { stopForeground(Service.STOP_FOREGROUND_REMOVE) }
@@ -274,12 +265,6 @@ class StudyTimerService : Service() {
 
     private fun buildRunningNotification(startedAtMs: Long): Notification {
         ensureChannel()
-        val stopAction = stopActionPending()
-        val contentView = timerNotificationView(
-            elapsed = formatElapsed(startedAtMs),
-            actionLabel = getString(R.string.action_stop),
-            action = stopAction,
-        )
         val builder = baseBuilder()
             .setOngoing(true)
             .setContentIntent(openAppPending())
@@ -290,22 +275,17 @@ class StudyTimerService : Service() {
         // One UI'nin standard görünümü ilk saatte MM:SS üretip aksiyonu alt
         // satıra ayırır. Ürün tercihi bu OEM terfisinden önce tek satırlık,
         // her zaman HH:MM:SS olan kontrol yüzeyidir.
+        val custom = buildRunningRemoteViews(startedAtMs)
         builder.setUsesChronometer(false)
             .setShowWhen(false)
             .setStyle(NotificationCompat.DecoratedCustomViewStyle())
-            .setCustomContentView(contentView)
-            .setCustomBigContentView(contentView)
+            .setCustomContentView(custom)
+            .setCustomBigContentView(custom)
         return builder.build()
     }
 
     private fun buildIdleNotification(): Notification {
         ensureChannel()
-        val startAction = startActionPending()
-        val contentView = timerNotificationView(
-            elapsed = "00:00:00",
-            actionLabel = getString(R.string.action_start),
-            action = startAction,
-        )
         val builder = baseBuilder()
             .setOngoing(false)
             .setContentIntent(openAppPending())
@@ -314,54 +294,34 @@ class StudyTimerService : Service() {
             .setContentTitle("00:00:00")
             .setContentText("")
             .setStyle(NotificationCompat.DecoratedCustomViewStyle())
-            .setCustomContentView(contentView)
-            .setCustomBigContentView(contentView)
+            .setCustomContentView(buildIdleRemoteViews())
+            .setCustomBigContentView(buildIdleRemoteViews())
         return builder.build()
     }
 
-    private fun timerNotificationView(
-        elapsed: String,
-        actionLabel: String,
-        action: PendingIntent,
-    ): RemoteViews =
-        RemoteViews(packageName, R.layout.odak_timer_notification).apply {
-            setTextViewText(R.id.timer_notification_elapsed, elapsed)
-            setTextViewText(R.id.timer_notification_action, actionLabel)
-            setOnClickPendingIntent(R.id.timer_notification_action, action)
-        }
-
-    /** The system Chronometer renders MM:SS before the first hour. The foreground
-     *  service therefore refreshes this silent RemoteViews text once per second to
-     *  keep the requested HH:MM:SS format. */
-    private fun startNotificationTicker() {
-        stopNotificationTicker()
-        val ticker = object : Runnable {
-            override fun run() {
-                val startedAtMs = prefs().getLong(KEY_STARTED_AT_MS, 0L)
-                if (startedAtMs <= 0L) return
-                notificationManager().notify(
-                    NOTIFICATION_ID,
-                    buildRunningNotification(startedAtMs),
-                )
-                val delayToNextSecond = 1000L - (System.currentTimeMillis() % 1000L)
-                notificationHandler.postDelayed(this, delayToNextSecond)
-            }
-        }
-        notificationTicker = ticker
-        ticker.run()
+    /** Dil paketi öncesinde kullanılan kanıtlı One UI satırı: solda akan sayaç,
+     *  sağda doğrudan foreground servise giden tek eylem. */
+    private fun buildRunningRemoteViews(startedAtMs: Long): RemoteViews {
+        val views = RemoteViews(packageName, R.layout.timer_notification)
+        val base = SystemClock.elapsedRealtime() - (System.currentTimeMillis() - startedAtMs)
+        views.setChronometer(R.id.notif_timer_elapsed, base, null, true)
+        views.setTextViewText(R.id.notif_timer_action, getString(R.string.action_stop))
+        views.setOnClickPendingIntent(R.id.notif_timer_action, stopActionPending())
+        return views
     }
 
-    private fun stopNotificationTicker() {
-        notificationTicker?.let(notificationHandler::removeCallbacks)
-        notificationTicker = null
-    }
-
-    private fun formatElapsed(startedAtMs: Long): String {
-        val totalSeconds = ((System.currentTimeMillis() - startedAtMs) / 1000L).coerceAtLeast(0L)
-        val hours = totalSeconds / 3600L
-        val minutes = (totalSeconds % 3600L) / 60L
-        val seconds = totalSeconds % 60L
-        return String.format(Locale.US, "%02d:%02d:%02d", hours, minutes, seconds)
+    private fun buildIdleRemoteViews(): RemoteViews {
+        val views = RemoteViews(packageName, R.layout.timer_notification)
+        views.setChronometer(
+            R.id.notif_timer_elapsed,
+            SystemClock.elapsedRealtime(),
+            "00:00:00",
+            false,
+        )
+        views.setTextViewText(R.id.notif_timer_elapsed, "00:00:00")
+        views.setTextViewText(R.id.notif_timer_action, getString(R.string.action_start))
+        views.setOnClickPendingIntent(R.id.notif_timer_action, startActionPending())
+        return views
     }
 
     private fun baseBuilder(): NotificationCompat.Builder =
