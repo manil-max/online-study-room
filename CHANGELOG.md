@@ -4,6 +4,24 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [v23 / 1.0.23+23] - 2026-07-15
+
+> **Stable — One UI sayaç satırı düzeltmesi.**
+
+### Fixes
+- **Tek satır bildirim:** Odak bildirimi artık sistemin `MM:SS` kronometresini ve
+  alt satıra ayrılan action'ı kullanmaz. Kendi satırında her zaman
+  `HH:MM:SS` ile bunun sağında tek **Başlat/Durdur** düğmesi gösterir.
+- **Canlı süre:** Foreground servis, bildirim metnini saniye sınırında sessizce
+  yeniler; 14 saniye `00:00:14`, bir saat yedi dakika üç saniye
+  `01:07:03` olur.
+
+### Test odağı
+- Samsung One UI'da sayacı başlat; hem kapalı hem açık bildirimde sürenin
+  `HH:MM:SS` olarak ve Durdur'un aynı satırın sağında kaldığını doğrula.
+- **Durdur**'a, sonra **Başlat**'a uygulamayı açmadan bas; eylem ve sayaç
+  hemen değişmeli.
+
 ## [v22 / 1.0.22+22] - 2026-07-15
 
 > **Stable — Bildirim ve İngilizce bağlam düzeltmeleri.**

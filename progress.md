@@ -61,14 +61,14 @@
 
 ### Codex Lane
 - **Durum:** [⏸] Cihaz QA bekliyor
-- **Faz/WP:** WP-96 — v22 stable deneme dağıtımı
-- **Aşama:** Yayınlandı; cihaz kabul testi bekliyor
+- **Faz/WP:** WP-97 — One UI sayaç bildirimi satır düzeni
+- **Aşama:** Otomatik test geçti; cihaz QA ve v23 dağıtımı bekliyor
 - **SAHİP yollar:** —
-- **Ortak/riskli yüzey:** GitHub v22 release / telefon testi
+- **Ortak/riskli yüzey:** Android foreground notification / One UI RemoteViews
 - **Dal:** main
 - **Başlangıç:** 2026-07-15 14:35 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-15 14:52 (Europe/Istanbul)
-- **Not:** `v22` etiketi `56d2560` sürümleme commit'ine bağlıdır. Doğru Android işi (#26) başarılı oldu; indirilen APK içinden `1.0.22+22` ve WP-94/95 notları doğrulandı. Ürün sahibinin telefon kabul testi bekleniyor.
+- **Son güncelleme:** 2026-07-15 15:16 (Europe/Istanbul)
+- **Not:** v22 cihaz bulgusu giderildi: özel RemoteViews satırı her zaman `HH:MM:SS` ve sağda tek Başlat/Durdur gösterir. `flutter analyze` 0 bulgu, `flutter test` 428/428, Android release APK başarılı. Samsung One UI ekran kanıtı bekleniyor.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
@@ -122,6 +122,7 @@
 | WP-93 | [~] Test için bekliyor | Global grup keşfi ve katılım arayüzü | WP-92 |
 | WP-94 | [~] Test için bekliyor | EN bağlam düzeltmeleri ve sade sayaç bildirimi | — |
 | WP-95 | [~] Test için bekliyor | Başarım ayrıntılarında tam cümleli koşullar | — |
+| WP-97 | [~] Test için bekliyor | One UI bildiriminde yatay `HH:MM:SS` ve sağda Başlat/Durdur | WP-94 cihaz bulgusu |
 
 > **2026-07-14 proje denetimi:** Serbest sürükle-bırak ızgara, canlı grup hedefi ve saat stilleri **zaten kodda uygulanmış** (backlog stale idi; geçici WP-72/73/75 iptal). Dinamik paneldeki cihaz/eylem sorunu için açılan **WP-76** kod+otomatik test aşamasını geçti; Samsung/Pixel cihaz QA’sı bekliyor.
 >

@@ -3,6 +3,23 @@
   "source": "CHANGELOG.md",
   "releases": [
     {
+      "versionName": "1.0.23",
+      "buildNumber": 23,
+      "channel": "stable",
+      "date": "2026-07-15",
+      "title": "v23: One UI sayaç satırı düzeltmesi",
+      "highlights": [
+        "Odak bildirimi kendi satırında sabit HH:MM:SS ve sağda tek Başlat/Durdur düğmesi gösterir.",
+        "Sayaç metni foreground servis tarafında saniye sınırında sessizce yenilenir."
+      ],
+      "fixes": [
+        "One UI'nin standart kronometreyi MM:SS ve eylemi ayrı satırda göstermesi giderildi."
+      ],
+      "notes": [
+        "Samsung One UI'da hem dar hem geniş bildirimde HH:MM:SS + sağdaki tek eylemi dene."
+      ]
+    },
+    {
       "versionName": "1.0.22",
       "buildNumber": 22,
       "channel": "stable",
