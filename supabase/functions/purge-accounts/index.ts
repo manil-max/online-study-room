@@ -22,10 +22,41 @@ function authorizeCron(req: Request): Response | null {
 }
 
 /**
- * WP-113: Süresi dolan hesap silme isteklerini işler (service_role).
+ * WP-113 / WP-127: Süresi dolan hesap silme isteklerini işler (service_role).
  * Sıra: claim → storage avatar → related scrub → auth.admin.deleteUser.
- * Idempotent: completed tekrarlanmaz; failed retry_count artar.
+ *
+ * Retry (WP-127): attempt_count < MAX_PURGE_ATTEMPTS olan scheduled|failed işler
+ * seçilir. Hata sonrası attempt < 5 → status='scheduled' (yeniden dene);
+ * attempt >= 5 → status='failed' terminal (fetch `.lt(attempt_count, 5)` ile
+ * bir daha seçilmez). last_error_code gerçek hata sınıfını taşır.
+ *
+ * Not: auth.admin.deleteUser sonrası account_deletion_requests satırı genelde
+ * user_id FK ON DELETE CASCADE ile silinir; status='completed' update'i 0 satır
+ * etkileyebilir — tamamlanma izi results[] + log ile kalır (ayrı audit tablosu yok).
  */
+const MAX_PURGE_ATTEMPTS = 5
+
+function classifyPurgeError(err: unknown): string {
+  const raw = String(err ?? "unknown")
+  const lower = raw.toLowerCase()
+  if (lower.includes("not authorized") || lower.includes("unauthorized") || lower.includes("401")) {
+    return "auth_unauthorized"
+  }
+  if (lower.includes("user not found") || lower.includes("not_found") || lower.includes("404")) {
+    return "user_not_found"
+  }
+  if (lower.includes("network") || lower.includes("fetch failed") || lower.includes("timeout")) {
+    return "network_error"
+  }
+  if (lower.includes("storage")) return "storage_error"
+  if (lower.includes("permission") || lower.includes("rls") || lower.includes("42501")) {
+    return "permission_error"
+  }
+  // Truncate noisy stack for column size safety.
+  const slug = raw.replace(/\s+/g, " ").slice(0, 120)
+  return slug.length > 0 ? `purge_failed:${slug}` : "purge_failed"
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders })
@@ -44,10 +75,12 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
     )
 
+    // WP-127 (a): attempt eşiğini geçen failed işler bir daha seçilmez.
     const { data: jobs, error: fetchError } = await admin
       .from("account_deletion_requests")
       .select("id, user_id, attempt_count, status")
       .in("status", ["scheduled", "failed"])
+      .lt("attempt_count", MAX_PURGE_ATTEMPTS)
       .lte("purge_after", new Date().toISOString())
       .order("purge_after", { ascending: true })
       .limit(limit)
@@ -78,6 +111,7 @@ serve(async (req) => {
             })
             .eq("id", id)
             .in("status", ["scheduled", "failed"])
+            .lt("attempt_count", MAX_PURGE_ATTEMPTS)
         }
 
         // E-posta kuyruğu: pending işleri iptal et
@@ -138,7 +172,8 @@ serve(async (req) => {
           const { error: delErr } = await admin.auth.admin.deleteUser(uid)
           if (delErr) throw delErr
 
-          await admin
+          // deleteUser CASCADE ile request satırını silebilir → 0 satır güncelleme normal.
+          const { data: completedRows, error: completeErr } = await admin
             .from("account_deletion_requests")
             .update({
               status: "completed",
@@ -147,6 +182,20 @@ serve(async (req) => {
               last_error_code: null,
             })
             .eq("id", id)
+            .select("id")
+
+          if (completeErr) {
+            console.warn(
+              "purge complete update skipped/failed (likely cascade delete)",
+              id,
+              completeErr.message,
+            )
+          } else if (!completedRows?.length) {
+            console.info(
+              "purge complete: request row already gone (ON DELETE CASCADE after deleteUser)",
+              id,
+            )
+          }
         }
 
         results.push({
@@ -156,12 +205,14 @@ serve(async (req) => {
         })
       } catch (err) {
         const attempt = (job.attempt_count ?? 0) + 1
-        const code = "purge_failed"
+        const code = classifyPurgeError(err)
+        // attempt >= 5 → terminal failed; altında scheduled (retry kuyruğu).
+        const nextStatus = attempt >= MAX_PURGE_ATTEMPTS ? "failed" : "scheduled"
         if (!dryRun) {
           await admin
             .from("account_deletion_requests")
             .update({
-              status: attempt >= 5 ? "failed" : "failed",
+              status: nextStatus,
               attempt_count: attempt,
               last_error_code: code,
               updated_at: new Date().toISOString(),
@@ -171,10 +222,12 @@ serve(async (req) => {
         results.push({
           id,
           user_id: uid,
-          status: "failed",
+          status: nextStatus,
+          attempt_count: attempt,
           error_code: code,
+          terminal: nextStatus === "failed",
         })
-        console.error("purge failed", id, String(err))
+        console.error("purge failed", id, code, String(err))
       }
     }
 
