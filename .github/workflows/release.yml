@@ -66,12 +66,33 @@ jobs:
 
       - name: Release APK derle (${{ steps.meta.outputs.flavor }})
         run: |
+          # WP-110: GitHub sideload only (stable/beta). Play AAB ayrı komut:
+          # flutter build appbundle --flavor play --release \
+          #   --dart-define=DISTRIBUTION_CHANNEL=play --dart-define-from-file=env.json
+          DIST_CHANNEL=githubStable
+          if [ "${{ steps.meta.outputs.channel }}" = "beta" ]; then
+            DIST_CHANNEL=githubBeta
+          fi
           flutter build apk --release \
             --flavor ${{ steps.meta.outputs.flavor }} \
             --build-number=${{ steps.meta.outputs.code }} \
             --dart-define=CHANNEL=${{ steps.meta.outputs.channel }} \
+            --dart-define=DISTRIBUTION_CHANNEL=$DIST_CHANNEL \
             --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
             --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
+
+      - name: Play installer izni guard (sideload APK'de olmali)
+        run: |
+          # stable/beta APK REQUEST_INSTALL_PACKAGES içermeli (sideload).
+          APK="build/app/outputs/flutter-apk/${{ steps.meta.outputs.src }}"
+          if ! command -v aapt2 >/dev/null 2>&1; then
+            echo "aapt2 yok; permission guard atlandi"
+            exit 0
+          fi
+          PERMS=$(aapt2 dump permissions "$APK" 2>/dev/null || true)
+          echo "$PERMS"
+          echo "$PERMS" | grep -q "android.permission.REQUEST_INSTALL_PACKAGES" \
+            || { echo "sideload APK installer izni eksik"; exit 1; }
 
       - name: APK dosyasini adlandir ve SHA-256 uret
         working-directory: app/build/app/outputs/flutter-apk

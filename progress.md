@@ -79,7 +79,7 @@
 - **Dal:** main
 - **Başlangıç:** —
 - **Son güncelleme:** 2026-07-17 (Europe/Istanbul)
-- **Not:** WP-103…109 kod+commit (yayın sizin). SQL: 0034–0036 + Edge CRON_SECRET.
+- **Not:** WP-110 kod+test; WP-103 park (cihaz). Sonraki: WP-111 veya kullanıcı.
 
 
 ---
@@ -132,7 +132,7 @@
 | WP-107 | [~] Test için bekliyor | Manuel oturum İstanbul gün sınırı + UTC yazım (B4) | cihaz QA |
 | WP-108 | [~] Test için bekliyor | Aylık rapor retry + cron URL (0035) + edge auth iskeleti | Edge deploy + GUC |
 | WP-109 | [~] Test için bekliyor | Güvenlik 0036 (IDOR/profiles) + B7 select doğrulama | SQL + regresyon |
-| WP-110 | [ ] Bekliyor | Play dağıtım kanalı + GitHub APK updater izolasyonu | — |
+| WP-110 | [~] Test için bekliyor | Play flavor + installer izni izolasyonu + updater fail-closed | merged manifest / AAB |
 | WP-111 | [ ] Bekliyor | Gizlilik, kullanım koşulları ve topluluk kuralları | WP-110 URL/kanal sözleşmesi |
 | WP-112 | [ ] Bekliyor | Hesap silme veri sözleşmesi + migration 0037 | WP-66 ürün kararı |
 | WP-113 | [ ] Bekliyor | Hesap hard-delete Edge pipeline + storage/cron | WP-112 |
@@ -837,6 +837,11 @@
 > Kod/otomatik test bitti; **cihaz QA veya ürün demo’su** bekleniyor.
 > Bu bölüm **aktif çalışma değildir** — ajan claim etmez, diğer WP’leri engellemez.
 > Kabul gelince kart buradan çıkar → **Tamamlanan**’a gider. Bug çıkarsa ayrı debug WP açılır.
+
+### WP-110: Play dağıtım kanalı + updater izolasyonu (kod tamam) 🏪
+- **Özet:** `play` flavor; `REQUEST_INSTALL_PACKAGES` yalnız stable/beta; Play’de `checkForUpdate` ağ çağrısı yok; CI `DISTRIBUTION_CHANNEL`.
+- **Komut:** `flutter build appbundle --flavor play --release --dart-define=DISTRIBUTION_CHANNEL=play --dart-define-from-file=env.json`
+- **Beklenen:** merged play manifest installer izni 0; stable/beta updater çalışır (`Cihazda/CI doğrulanmalı`).
 
 ### WP-103: Android ≤13 FGS tip çökmesi (kod tamam) 💥
 - **Özet:** Manifest `dataSync|specialUse`; StudyTimerService API 29–33 DATA_SYNC / 34+ SPECIAL_USE alt kümesi. `version 1.0.29+29`.

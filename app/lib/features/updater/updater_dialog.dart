@@ -7,6 +7,7 @@ import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../core/config/distribution_channel.dart';
 import '../../core/notifications/notification_preferences.dart';
 import '../../l10n/app_localizations.dart';
 import 'release_notes_service.dart';
@@ -14,7 +15,10 @@ import 'updater_service.dart';
 
 /// Açılışta çağrılır: yeni sürüm varsa güncelleme penceresini gösterir.
 /// Sessizdir; güncelleme yoksa veya hata olursa hiçbir şey yapmaz.
+/// WP-110: Play kanalında hiç çalışmaz (sideload updater kapalı).
 Future<void> maybeShowUpdateDialog(BuildContext context) async {
+  if (!DistributionConfig.allowsSideloadUpdates) return;
+
   final l10n = AppLocalizations.of(context);
   final prefs = await SharedPreferences.getInstance();
   if (!(prefs.getBool(NotificationPreferencesNotifier.kUpdates) ?? true)) {
@@ -74,6 +78,16 @@ class _UpdaterDialogState extends State<UpdaterDialog> {
   }
 
   Future<void> _downloadAndInstall() async {
+    // WP-110: Play build'de dialog açılmamalı; yine de fail-closed.
+    if (!DistributionConfig.allowsSideloadUpdates) {
+      if (mounted) {
+        setState(() {
+          _error = 'Güncelleme mağaza üzerinden yönetilir.';
+        });
+      }
+      return;
+    }
+
     final l10n = AppLocalizations.of(context);
     final cancelToken = CancelToken();
     setState(() {

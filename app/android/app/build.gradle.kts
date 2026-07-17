@@ -37,20 +37,29 @@ android {
         versionName = flutter.versionName
     }
 
-    // Yayın kanalları (WP-13): "stable" gerçek uygulama, "beta" ayrı paket adı
-    // (.beta) ile yan yana kurulabilen test uygulaması. İkisi de aynı release
-    // anahtarıyla imzalanır. Uygulama adı flavor'a göre manifest'e enjekte edilir.
+    // Yayın kanalları:
+    // - stable / beta: GitHub sideload (APK + REQUEST_INSTALL_PACKAGES)
+    // - play: Play Store AAB (installer izni yok; aynı applicationId = stable)
+    // WP-110: play ve stable aynı paket kimliği → yan yana kurulamaz (bilinçli).
     flavorDimensions += "channel"
     productFlavors {
         create("stable") {
             dimension = "channel"
+            // Dart tarafı: --dart-define=DISTRIBUTION_CHANNEL=githubStable (CI release.yml)
             manifestPlaceholders["appName"] = "Odak Kampı"
         }
         create("beta") {
             dimension = "channel"
             applicationIdSuffix = ".beta"
             versionNameSuffix = "-beta"
+            // Dart: --dart-define=DISTRIBUTION_CHANNEL=githubBeta
             manifestPlaceholders["appName"] = "Odak Kampı BETA TEST"
+        }
+        create("play") {
+            dimension = "channel"
+            // applicationIdSuffix yok → com.manilmax.online_study_room (stable ile aynı kimlik)
+            // Dart: --dart-define=DISTRIBUTION_CHANNEL=play (zorunlu; aksi updater varsayılanı sideload)
+            manifestPlaceholders["appName"] = "Odak Kampı"
         }
     }
 

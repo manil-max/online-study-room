@@ -1,0 +1,7 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!--
+      WP-110: Play Store kanalı.
+      REQUEST_INSTALL_PACKAGES buraya EKLENMEZ (main'de de yok).
+      applicationId = com.manilmax.online_study_room (stable ile aynı; ikinci ürün yok).
+    -->
+</manifest>

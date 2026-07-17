@@ -4,11 +4,13 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:package_info_plus/package_info_plus.dart';
 
+import '../../core/config/distribution_channel.dart';
+
 /// GitHub Releases üzerinden in-app güncelleme kontrolü.
 ///
-/// - **Android:** sabit isimli APK + SHA-256 (mevcut).
-/// - **Windows (WP-28):** sabit isimli MSIX + SHA-256; kurulum sideload
-///   (Store kanalı ayrı identity). Android updater kopyası değildir.
+/// - **Play (`DISTRIBUTION_CHANNEL=play`):** kapalı (WP-110) — ağ isteği yok.
+/// - **Android GitHub sideload:** sabit isimli APK + SHA-256.
+/// - **Windows (WP-28):** sabit isimli MSIX + SHA-256.
 /// - iOS/web: yok.
 ///
 /// Etiket: `v<buildNumber>` / `beta-v<buildNumber>`.
@@ -29,18 +31,19 @@ class UpdaterService {
   static const String _allReleasesUrl =
       'https://api.github.com/repos/$_owner/$_repo/releases';
 
-  /// Derleme kanalı. Beta CI derlemesi `--dart-define=CHANNEL=beta` geçer;
-  /// varsayılan `stable` olduğu için mevcut kullanıcılar etkilenmez.
-  static const String channel = String.fromEnvironment(
-    'CHANNEL',
-    defaultValue: 'stable',
-  );
+  /// Release notes / etiket kanalı (`stable` | `beta`).
+  /// WP-110: [DistributionConfig.releaseNotesChannel] ile hizalı.
+  static String get channel => DistributionConfig.releaseNotesChannel;
 
-  static bool get _isBeta => channel == 'beta';
+  static bool get _isBeta =>
+      DistributionConfig.current == DistributionChannel.githubBeta;
 
   /// Yeni sürüm varsa bilgisini, yoksa `null` döndürür.
   /// Ağ/parse hatalarında sessizce `null` döner (uygulama açılışını bloklamaz).
   Future<UpdateInfo?> checkForUpdate() async {
+    // WP-110: Play Store build — GitHub APK yolu unreachable (yalnız UI gizle değil).
+    if (!DistributionConfig.allowsSideloadUpdates) return null;
+
     // kIsWeb derleme-zamanı; web'de `Platform`'a hiç dokunulmaz.
     if (kIsWeb) return null;
     final isAndroid = Platform.isAndroid;
