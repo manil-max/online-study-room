@@ -17,13 +17,15 @@ class MainActivity : FlutterActivity() {
     private var initialAction: String? = null
     private var timerChannel: MethodChannel? = null
 
-    /** Native servis durum değiştirince (widget/bildirim Başlat-Durdur) uygulama
-     *  önplandaysa Dart'a "reconcile" der ki UI anında güncellensin. */
+    /** WP-136: Native servis durum değişince Dart'a reconcile.
+     *  Eskiden yalnız onResume…onPause dinleniyordu → arka planda bayat UI.
+     *  Engine ayaktayken (Activity yok edilene kadar) dinlenir. */
     private val timerStateReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             timerChannel?.invokeMethod("reconcile", null)
         }
     }
+    private var timerStateReceiverRegistered = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         initialAction = intent.action
@@ -78,10 +80,23 @@ class MainActivity : FlutterActivity() {
             .setMethodCallHandler { call, result ->
                 ExactAlarmHelper.handle(this, call, result)
             }
+
+        registerTimerStateReceiver()
     }
 
     override fun onResume() {
         super.onResume()
+        // Cold/warm resume: broadcast kaçmış olabilir → store'dan türet.
+        timerChannel?.invokeMethod("reconcile", null)
+    }
+
+    override fun onDestroy() {
+        unregisterTimerStateReceiver()
+        super.onDestroy()
+    }
+
+    private fun registerTimerStateReceiver() {
+        if (timerStateReceiverRegistered) return
         val filter = IntentFilter(StudyTimerService.BROADCAST_STATE_CHANGED)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(timerStateReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
@@ -89,11 +104,13 @@ class MainActivity : FlutterActivity() {
             @Suppress("UnspecifiedRegisterReceiverFlag")
             registerReceiver(timerStateReceiver, filter)
         }
+        timerStateReceiverRegistered = true
     }
 
-    override fun onPause() {
-        super.onPause()
+    private fun unregisterTimerStateReceiver() {
+        if (!timerStateReceiverRegistered) return
         runCatching { unregisterReceiver(timerStateReceiver) }
+        timerStateReceiverRegistered = false
     }
 
     override fun onNewIntent(intent: Intent) {

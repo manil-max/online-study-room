@@ -477,13 +477,14 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       hadActiveTimer: activeStartedAt != null,
     );
     Future.microtask(() async {
-      // Bildirim/widget'tan gelen Durdur/Başlat komutu eskiden yalnız onResume'da
-      // işleniyordu; onResume ise SOĞUK açılışta tetiklenmez → uygulama kapalıyken
-      // basılan Durdur, kullanıcı uygulamayı açsa bile işlenmezdi. Komutu init
-      // anında da işle ki açılışta hemen onurlandırılsın. (Uygulama tamamen
-      // kapalıyken gerçek zamanlı işleme için foreground service gerekir; o ayrı
-      // iş paketi — bkz. background-timer-actions-unreliable.)
+      // WP-136: soğuk açılışta store'dan türet (resume bekleme).
       await _syncBackgroundTimerState();
+      if (_disposed) return;
+      // Auth geç gelebilir → pending kuyruk için kısa yeniden deneme.
+      if (ref.read(authStateProvider).value == null) {
+        await Future<void>.delayed(const Duration(milliseconds: 400));
+        if (!_disposed) await _syncBackgroundTimerState();
+      }
       if (_disposed || !state.isRunning) return;
       _publishPresence(
         status: state.phase == TimerPhase.work
@@ -522,10 +523,10 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     if (_disposed) return;
 
     // 1. App-kapalı Durdur'ların ürettiği tamamlanmış aralıkları oturum yaz.
-    // Kimlik henüz hazır değilse (soğuk açılışta auth restore beklenir) kuyruğu
-    // KORU; onResume'da (auth hazır) yeniden denenir — yoksa aralık kaybolurdu.
+    // Kimlik henüz hazır değilse kuyruğu KORU (clear yarışı yok — WP-136).
     final raw = prefs.getString(TimerForegroundService.pendingIntervalsKey);
     if (raw != null && ref.read(authStateProvider).value != null) {
+      var recordedOk = true;
       try {
         final decoded = jsonDecode(raw);
         if (decoded is List) {
@@ -539,34 +540,42 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
                 ? null
                 : subjectRaw;
             if (start != null && end != null && end.isAfter(start)) {
-              await _recordSession(start, end, subject);
+              try {
+                await _recordSession(start, end, subject);
+              } catch (_) {
+                recordedOk = false;
+              }
             }
           }
         }
       } catch (_) {
         // Bozuk kuyruk yok sayılır (aşağıda temizlenir).
+        recordedOk = true;
       }
-      await prefs.remove(TimerForegroundService.pendingIntervalsKey);
+      // WP-136: yalnız başarılı (veya bozuk) kuyruk temizlenir; partial fail korunur.
+      if (recordedOk) {
+        await prefs.remove(TimerForegroundService.pendingIntervalsKey);
+      }
     }
     if (_disposed) return;
+    // Pending yazımı sonrası store'u yeniden oku (SSOT).
+    await prefs.reload();
+    if (_disposed) return;
 
-    // 2. FGS moduna göre çalışır durumu uzlaştır.
-    //
-    // beta-v15 bug: Uygulama içi start() → native handleStart prefs'i
-    // `apply()` ile yazar + hemen broadcast atar → reconcile hâlâ eski
-    // `idle` okuyup _finish() çağırıyordu → bildirim 00:00:00+Başlat'ta
-    // kalıyordu (widget Dart yolu doğru olduğu için bozulmuyordu).
-    // Kural: `idle` yalnız native aktif started_at YOKSA sayacı kapatır.
-    final fgMode = prefs.getString(TimerForegroundService.fgModeKey);
+    // 2. SSOT: started_at(_ms) + fg_mode → Dart state türet.
+    // WP-135 sonrası native yazımlar commit; yine de keys önceliklidir.
     final hasActiveStart =
         (prefs.getString(_kActiveStartedAt)?.isNotEmpty ?? false) ||
         (prefs.getInt(_kActiveStartedAtMs) ?? 0) > 0;
-    if (fgMode == 'idle') {
+    final fgModeRaw = prefs.getString(TimerForegroundService.fgModeKey);
+    final fgMode = fgModeRaw ?? (hasActiveStart ? 'running' : 'idle');
+
+    if (fgMode == 'idle' || !hasActiveStart) {
       if (state.isRunning && !hasActiveStart) {
         // Gerçek app-kapalı Durdur: native started_at sildi, Dart hâlâ running.
         _finish();
-      } else if (state.isRunning && hasActiveStart) {
-        // Yerel start yeni yazıldı / native apply gecikmiş: native'i yeniden it.
+      } else if (state.isRunning && hasActiveStart && fgMode == 'idle') {
+        // Nadir tutarsızlık: start keys var ama fg idle — native'i yeniden it.
         final started = state.startedAt;
         if (started != null) {
           unawaited(
@@ -579,47 +588,51 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
             ),
           );
         }
-      } else if (!state.isRunning && !hasActiveStart) {
-        // İkisi de idle — sessiz; gereksiz stopTimer spam'i yok.
       }
-    } else if (fgMode == 'running') {
-      // App-kapalı Başlat/Mola ile native panel state'i değiştiyse onu benimse.
-      // Mola da yeni bir epoch ile başlar: tamamlanan çalışma aralığı native
-      // kuyrukta kalır, yeni `rest` fazı ise burada UI/presence'a yansır.
-      final fgStart = DateTime.tryParse(
-        prefs.getString(_kActiveStartedAt) ?? '',
+      return;
+    }
+
+    // running + hasActiveStart: store'dan UI/presence/widget hizala.
+    final ms = prefs.getInt(_kActiveStartedAtMs) ?? 0;
+    final fgStart = DateTime.tryParse(prefs.getString(_kActiveStartedAt) ?? '') ??
+        (ms > 0 ? DateTime.fromMillisecondsSinceEpoch(ms) : null);
+    final fgPhase = TimerPhase.values.firstWhere(
+      (phase) => phase.name == prefs.getString(_kActivePhase),
+      orElse: () => TimerPhase.work,
+    );
+    final fgCycle = (prefs.getInt(_kActiveCycle) ?? 1)
+        .clamp(kMinPomodoroCycles, kMaxPomodoroCycles)
+        .toInt();
+    final fgModeName = prefs.getString(_kActiveMode);
+    final fgTimerMode = TimerMode.values.firstWhere(
+      (m) => m.name == fgModeName,
+      orElse: () => state.mode,
+    );
+    final stateNeedsNativeUpdate =
+        !state.isRunning ||
+        state.startedAt != fgStart ||
+        state.phase != fgPhase ||
+        state.cycle != fgCycle ||
+        state.mode != fgTimerMode;
+    if (fgStart != null && stateNeedsNativeUpdate) {
+      state = state.copyWith(
+        isRunning: true,
+        startedAt: fgStart,
+        phase: fgPhase,
+        cycle: fgCycle,
+        mode: fgTimerMode,
+        accumulatedSeconds: 0,
+        lastUpdatedAt: DateTime.now(),
       );
-      final fgPhase = TimerPhase.values.firstWhere(
-        (phase) => phase.name == prefs.getString(_kActivePhase),
-        orElse: () => TimerPhase.work,
+      _persistActiveTimer();
+      _publishPresence(
+        status: fgPhase == TimerPhase.work
+            ? PresenceStatus.studying
+            : PresenceStatus.onBreak,
+        startedAt: fgStart,
       );
-      final fgCycle = (prefs.getInt(_kActiveCycle) ?? 1)
-          .clamp(kMinPomodoroCycles, kMaxPomodoroCycles)
-          .toInt();
-      final stateNeedsNativeUpdate =
-          !state.isRunning ||
-          state.startedAt != fgStart ||
-          state.phase != fgPhase ||
-          state.cycle != fgCycle;
-      if (fgStart != null && stateNeedsNativeUpdate) {
-        state = state.copyWith(
-          isRunning: true,
-          startedAt: fgStart,
-          phase: fgPhase,
-          cycle: fgCycle,
-          accumulatedSeconds: 0,
-          lastUpdatedAt: DateTime.now(),
-        );
-        _persistActiveTimer();
-        _publishPresence(
-          status: fgPhase == TimerPhase.work
-              ? PresenceStatus.studying
-              : PresenceStatus.onBreak,
-          startedAt: fgStart,
-        );
-        _startTick();
-        unawaited(_syncTimerSurfaces());
-      }
+      _startTick();
+      unawaited(_syncTimerSurfaces());
     }
   }
 
