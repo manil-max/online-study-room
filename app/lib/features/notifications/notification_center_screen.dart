@@ -192,6 +192,36 @@ class _TypesCard extends ConsumerWidget {
         ),
         const Divider(height: 1),
         SwitchListTile(
+          secondary: const Icon(Icons.local_fire_department_outlined),
+          title: Text(l10n.smartStreakReminder),
+          subtitle: Text(l10n.smartStreakReminderBody),
+          value: prefs.smartStreakReminderEnabled,
+          onChanged: (value) async {
+            if (value) {
+              await ref
+                  .read(reminderNotificationServiceProvider)
+                  .requestPermissionIfNeeded();
+            }
+            await notifier.setSmartStreakReminderEnabled(value);
+          },
+        ),
+        const Divider(height: 1),
+        SwitchListTile(
+          secondary: const Icon(Icons.calendar_view_week_outlined),
+          title: Text(l10n.smartWeeklySummary),
+          subtitle: Text(l10n.smartWeeklySummaryBody),
+          value: prefs.smartWeeklySummaryEnabled,
+          onChanged: (value) async {
+            if (value) {
+              await ref
+                  .read(reminderNotificationServiceProvider)
+                  .requestPermissionIfNeeded();
+            }
+            await notifier.setSmartWeeklySummaryEnabled(value);
+          },
+        ),
+        const Divider(height: 1),
+        SwitchListTile(
           secondary: const Icon(Icons.alarm_outlined),
           title: Text(l10n.notificationsCalismaHatirlaticilari),
           subtitle: Text(

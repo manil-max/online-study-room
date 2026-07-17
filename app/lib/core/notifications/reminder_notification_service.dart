@@ -6,6 +6,7 @@ import 'package:timezone/timezone.dart' as tz;
 import '../../data/models/study_reminder.dart';
 import '../l10n/system_localizations.dart';
 import 'notification_preferences.dart';
+import 'smart_reminder_scheduler.dart';
 
 final reminderNotificationServiceProvider =
     Provider<ReminderNotificationService>((ref) {
@@ -58,10 +59,24 @@ class ReminderNotificationService {
     for (final reminder in reminders) {
       await cancel(reminder);
     }
-    if (!prefs.remindersEnabled) return;
+    if (!prefs.remindersEnabled) {
+      await SmartReminderScheduler(_plugin).cancelAll();
+      return;
+    }
     for (final reminder in reminders) {
       await schedule(reminder, prefs);
     }
+    // WP-153: akıllı hatırlatmalar (aynı plugin/channel; FGS yok).
+    final l10n = await loadSystemLocalizations();
+    await SmartReminderScheduler(_plugin).sync(
+      prefs: prefs,
+      streakTitle: l10n.smartStreakTitle,
+      streakBody: l10n.smartStreakBody,
+      weeklyTitle: l10n.smartWeeklyTitle,
+      weeklyBody: l10n.smartWeeklyBody,
+      channelName: l10n.coreCalismaHatirlaticilari,
+      channelDescription: l10n.corePlanlanmisCalismaHatirlaticilari,
+    );
   }
 
   Future<void> schedule(

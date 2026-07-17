@@ -61,6 +61,7 @@ final reminderSyncListenerProvider = Provider<void>((ref) {
   if (reminders == null) return;
   // Bildirim eklentisi yalnız gerçek cihazda vardır; test/masaüstünde çağrı
   // atarsa sessizce yut, arayüzü etkilemesin.
+  // WP-153: syncAll ayrıca smart streak/weekly planlar.
   unawaited(
     ref
         .read(reminderNotificationServiceProvider)

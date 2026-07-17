@@ -13,6 +13,8 @@ class NotificationPreferences {
     required this.quietHoursEnabled,
     required this.quietStartMinutes,
     required this.quietEndMinutes,
+    this.smartStreakReminderEnabled = false,
+    this.smartWeeklySummaryEnabled = false,
   });
 
   final bool nudgeNotificationsEnabled;
@@ -20,6 +22,12 @@ class NotificationPreferences {
   final bool announcementsEnabled;
   final bool updatesEnabled;
   final bool quietHoursEnabled;
+
+  /// WP-153: seri koruma (varsayılan kapalı).
+  final bool smartStreakReminderEnabled;
+
+  /// WP-153: haftalık özet (varsayılan kapalı).
+  final bool smartWeeklySummaryEnabled;
 
   /// Gün içi dakika cinsinden (0–1439) sessiz saat başlangıcı ve bitişi.
   final int quietStartMinutes;
@@ -46,6 +54,8 @@ class NotificationPreferences {
     bool? quietHoursEnabled,
     int? quietStartMinutes,
     int? quietEndMinutes,
+    bool? smartStreakReminderEnabled,
+    bool? smartWeeklySummaryEnabled,
   }) {
     return NotificationPreferences(
       nudgeNotificationsEnabled:
@@ -56,6 +66,10 @@ class NotificationPreferences {
       quietHoursEnabled: quietHoursEnabled ?? this.quietHoursEnabled,
       quietStartMinutes: quietStartMinutes ?? this.quietStartMinutes,
       quietEndMinutes: quietEndMinutes ?? this.quietEndMinutes,
+      smartStreakReminderEnabled:
+          smartStreakReminderEnabled ?? this.smartStreakReminderEnabled,
+      smartWeeklySummaryEnabled:
+          smartWeeklySummaryEnabled ?? this.smartWeeklySummaryEnabled,
     );
   }
 }
@@ -69,6 +83,8 @@ class NotificationPreferencesNotifier
   static const kQuietEnabled = 'notification_quiet_enabled';
   static const kQuietStart = 'notification_quiet_start';
   static const kQuietEnd = 'notification_quiet_end';
+  static const kSmartStreak = 'notification_smart_streak_enabled';
+  static const kSmartWeekly = 'notification_smart_weekly_enabled';
 
   static const _defaultQuietStart = 22 * 60; // 22:00
   static const _defaultQuietEnd = 7 * 60; // 07:00
@@ -84,6 +100,9 @@ class NotificationPreferencesNotifier
       quietHoursEnabled: prefs.getBool(kQuietEnabled) ?? false,
       quietStartMinutes: prefs.getInt(kQuietStart) ?? _defaultQuietStart,
       quietEndMinutes: prefs.getInt(kQuietEnd) ?? _defaultQuietEnd,
+      // WP-153: opt-in only
+      smartStreakReminderEnabled: prefs.getBool(kSmartStreak) ?? false,
+      smartWeeklySummaryEnabled: prefs.getBool(kSmartWeekly) ?? false,
     );
   }
 
@@ -104,6 +123,14 @@ class NotificationPreferencesNotifier
   Future<void> setQuietHoursEnabled(bool value) => _setBool(
       kQuietEnabled, value,
       () => state = state.copyWith(quietHoursEnabled: value));
+
+  Future<void> setSmartStreakReminderEnabled(bool value) => _setBool(
+      kSmartStreak, value,
+      () => state = state.copyWith(smartStreakReminderEnabled: value));
+
+  Future<void> setSmartWeeklySummaryEnabled(bool value) => _setBool(
+      kSmartWeekly, value,
+      () => state = state.copyWith(smartWeeklySummaryEnabled: value));
 
   Future<void> setQuietHours({required int startMinutes, required int endMinutes}) async {
     final prefs = ref.read(sharedPreferencesProvider);
