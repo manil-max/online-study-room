@@ -20,7 +20,7 @@
 - **Navigasyon hedefi:** Ana Sayfa / Saat / Gruplar / İstatistikler / Profil. Ana Sayfa günlük kullanım alanıdır; diğer alanların verisi kendi sekmelerinde eksiksiz bulunur.
 - **Release:** Stable/Beta kanalı GitHub Releases ile çalışır. Yerel `v29` ve `beta-v29` tag'leri WP-104 commitini (`ff369e3`) gösterir; mevcut `main` WP-105–109'u da içerdiği halde `1.0.29+29` taşır. Bir sonraki dağıtımda versionCode mutlaka artırılır; Play production ayrı kalite kapısından geçer.
 - **Kalite kapıları:** Her WP DoD'siz kapanmaz; stable release kalite kapısından geçer (AGENTS.md §3). Server-authoritative XP, RLS/sosyal profil, platform sınırları → `docs/KALITE-PROGRAMI.md`.
-- **Son WP numarası:** 163 (WP-156 plan; uygulama fazları WP-157–163 öneri). **Sıradaki boş numara WP-164** (onay sonrası ayarlanır).
+- **Son WP numarası:** 163 (analitik ızgara WP-157–163 uygulandı). **Sıradaki boş numara WP-164.**
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
   - Flutter: `C:\src\flutter` · Android SDK: `C:\Android\Sdk`
@@ -79,7 +79,7 @@
 - **Dal:** main
 - **Başlangıç:** —
 - **Son güncelleme:** 2026-07-18 (Europe/Istanbul)
-- **Not:** WP-156 analitik planı teslim; onay bekliyor. Kod/migration yok. Push yok.
+- **Not:** WP-157–163 analitik ızgara kodu teslim; flag `analytics_grid_v1` default kapalı. 0040/0041 SQL Editor. Push yok.
 
 
 ---
@@ -107,44 +107,44 @@
 
 | WP | Durum | Kısa kapsam | Bağımlılık |
 |---|---|---|---|
-| WP-104 | [~] Test için bekliyor | Presence bayatlama (updatedAt) + stop oturum kaydı sırası | cihaz QA |
-| WP-105 | [~] Test için bekliyor | 🟠 XP oturum bitince kabuk lifecycle tetik | cihaz/Supabase |
-| WP-106 | [~] Test için bekliyor | watchMembers Map + 0034 active index | migration uygula |
-| WP-107 | [~] Test için bekliyor | Manuel oturum İstanbul gün sınırı + UTC yazım (B4) | cihaz QA |
-| WP-108 | [~] Test için bekliyor | Aylık rapor retry + cron URL (0035) + edge auth iskeleti | Edge deploy + GUC |
-| WP-109 | [~] Test için bekliyor | Güvenlik 0036 (IDOR/profiles) + B7 select doğrulama | SQL + regresyon |
-| WP-110 | [~] Test için bekliyor | Play flavor + installer izolasyonu | AAB merge check |
-| WP-111 | [~] Test için bekliyor | Legal merkez + politikalar + telemetri | canlı HTTPS URL |
-| WP-112 | [~] Test için bekliyor | 0037 hesap silme RPC | SQL Editor |
-| WP-113 | [~] Test için bekliyor | purge-accounts Edge | deploy + CRON |
-| WP-114 | [~] Test için bekliyor | Hesap silme UI + web bilgilendirme | cihaz |
-| WP-115 | [~] Test için bekliyor | 0038 UGC şema/RPC | SQL Editor |
-| WP-116 | [~] Test için bekliyor | report sheet + moderation repo | sohbet menü bağlama polish |
-| WP-117 | [~] Test için bekliyor | Admin UGC kuyruk sekmesi | canlı rapor smoke |
-| WP-118 | [~] Test için bekliyor | TimerActionReceiver exported=false | OEM alarm beyan (Console) |
-| WP-119 | [~] Test için bekliyor | DATA-SAFETY.md taslak | Console form |
+| WP-104 | [x] Tamamlandı | Presence bayatlama (updatedAt) + stop oturum kaydı sırası | ürün kabulü 2026-07-18 |
+| WP-105 | [x] Tamamlandı | XP oturum bitince kabuk lifecycle tetik | ürün kabulü 2026-07-18 |
+| WP-106 | [x] Tamamlandı | watchMembers Map + 0034 active index | 0034 uygulandı ✓ |
+| WP-107 | [x] Tamamlandı | Manuel oturum İstanbul gün sınırı + UTC yazım | ürün kabulü 2026-07-18 |
+| WP-108 | [~] Edge deploy bekliyor | Aylık rapor retry + cron URL (0035) | 0035 uygulandı; **Edge deploy + cron** kaldı |
+| WP-109 | [x] Tamamlandı | Güvenlik 0036 (IDOR/profiles) | 0036 uygulandı ✓ |
+| WP-110 | [x] Tamamlandı | Play flavor + installer izolasyonu | kod+test; AAB WP-122 |
+| WP-111 | [~] Console/URL bekliyor | Legal merkez + politikalar + telemetri | kod ✓; canlı gizlilik HTTPS URL host |
+| WP-112 | [x] Tamamlandı | 0037 hesap silme RPC | 0037 uygulandı ✓ |
+| WP-113 | [~] Edge deploy bekliyor | purge-accounts Edge (hesap silme worker) | 0037 ✓; **functions deploy + CRON** kaldı |
+| WP-114 | [x] Tamamlandı | Hesap silme UI + web bilgilendirme | ürün kabulü 2026-07-18 |
+| WP-115 | [x] Tamamlandı | 0038 UGC şema/RPC | 0038 uygulandı ✓ |
+| WP-116 | [x] Tamamlandı | report sheet + moderation repo | WP-125 ile bağlandı |
+| WP-117 | [x] Tamamlandı | Admin UGC kuyruk sekmesi | ürün kabulü 2026-07-18 |
+| WP-118 | [x] Tamamlandı | TimerActionReceiver exported=false | ürün kabulü 2026-07-18 |
+| WP-119 | [~] Console bekliyor | DATA-SAFETY.md | Play Console Data Safety formu |
 | WP-120 | [ ] Bekliyor | Store listing varlıkları (ekran görüntüsü vb.) | ürün/tasarım |
-| WP-121 | [~] Test için bekliyor | PROD-DEPLOY-RUNBOOK + RLS-SMOKE | canlı ops |
-| WP-122 | [~] Test için bekliyor | PLAY-BUILD-RUNBOOK (AAB play flavor) | versionCode 30+ |
+| WP-121 | [~] Play ops bekliyor | PROD-DEPLOY-RUNBOOK + RLS-SMOKE | Edge deploy sonrası canlı ops |
+| WP-122 | [~] Play build bekliyor | PLAY-BUILD-RUNBOOK (AAB play flavor) | AAB üret + versionCode |
 | WP-123 | [ ] Bekliyor | Cihaz QA matrisi (P0 kanıt) | fiziksel cihaz |
-| WP-124 | [~] Test için bekliyor | PLAY-RELEASE-GATE şablonu | GO imzası |
-| WP-125 | [~] Test için bekliyor | UGC Rapor + Engel UI giriş noktaları (sohbet/profil) | WP-116 |
-| WP-126 | [~] Test için bekliyor | Engellenen kullanıcı mesaj/presence filtreleme | WP-125 |
-| WP-127 | [~] Test için bekliyor | purge-accounts sonsuz retry düzeltmesi | Edge deploy |
-| WP-128 | [~] Test için bekliyor | Play flavor DISTRIBUTION_CHANNEL zorlaması | AAB smoke |
-| WP-129 | [~] Test için bekliyor | Engellenen kullanıcılar ekranı (unblock UI) | WP-126 |
-| WP-130 | [~] Test için bekliyor | Rapor sheet detay alanı | WP-125 |
-| WP-131 | [~] Test için bekliyor | Analyze/lint sertleştirme (0 issue) | — |
-| WP-132 | [~] Test için bekliyor | DATA-SAFETY.md gerçek veri envanteri | Console form |
-| WP-133 | [~] Analiz onaylandı / uygulandı | Widget & dinamik panel analizi → 134–137 | — |
-| WP-134 | [~] Test için bekliyor | 1×1 widget Chronometer her boyutta | S1/S5/S6 cihaz |
-| WP-135 | [~] Test için bekliyor | Toggle commit + idle sıfırlama (TimerStateStore) | S3/S4 20 tur |
-| WP-136 | [~] Test için bekliyor | Reconcile SSOT / engine-scope broadcast | S1/S2/S11 ≤2s |
-| WP-137 | [~] Test için bekliyor | Dinamik panel P2 (usesChronometer + Mola/Durdur) | S12 API33 + bildirim |
-| WP-138 | [~] Test için bekliyor | Sürüm notları v28/v29 + taslak v30 (TR/EN) | Cihaz Yenilikler |
-| WP-139 | [~] Test için bekliyor | l10n parity + hardcoded/admin + native string denetim | docs/l10n |
-| WP-140 | [~] Test için bekliyor | Erişilebilirlik (tooltip/Semantics/48dp) | WP-123 pre-launch |
-| WP-141 | [~] Test için bekliyor | Tema-bağlama / sabit renk denetimi | WP-123 kontrast |
+| WP-124 | [~] Play GO bekliyor | PLAY-RELEASE-GATE şablonu | son kapı: GO imzası |
+| WP-125 | [x] Tamamlandı | UGC Rapor + Engel UI giriş noktaları (sohbet/profil) | ürün kabulü 2026-07-18 |
+| WP-126 | [x] Tamamlandı | Engellenen kullanıcı mesaj/presence filtreleme | ürün kabulü 2026-07-18 |
+| WP-127 | [~] Edge deploy bekliyor | purge-accounts sonsuz retry düzeltmesi | WP-113 ile deploy |
+| WP-128 | [x] Tamamlandı | Play flavor DISTRIBUTION_CHANNEL zorlaması | kod+test; AAB smoke WP-122 |
+| WP-129 | [x] Tamamlandı | Engellenen kullanıcılar ekranı (unblock UI) | ürün kabulü 2026-07-18 |
+| WP-130 | [x] Tamamlandı | Rapor sheet detay alanı | ürün kabulü 2026-07-18 |
+| WP-131 | [x] Tamamlandı | Analyze/lint sertleştirme (0 issue) | — |
+| WP-132 | [~] Console bekliyor | DATA-SAFETY.md gerçek veri envanteri | Play Console formu |
+| WP-133 | [x] Tamamlandı | Widget & dinamik panel analizi → 134–137 | analiz uygulandı |
+| WP-134 | [~] Cihaz kontrolü bekliyor | 1×1 widget Chronometer her boyutta | telefonda widget/saat testi |
+| WP-135 | [~] Cihaz kontrolü bekliyor | Toggle commit + idle sıfırlama (TimerStateStore) | telefonda 20 tur start/stop |
+| WP-136 | [~] Cihaz kontrolü bekliyor | Reconcile SSOT / engine-scope broadcast | telefonda çift yönlü senkron |
+| WP-137 | [~] Cihaz kontrolü bekliyor | Dinamik panel P2 (usesChronometer + Mola/Durdur) | telefonda bildirim davranışı |
+| WP-138 | [x] Tamamlandı | Sürüm notları v28/v29 + taslak v30 (TR/EN) | ürün kabulü 2026-07-18 |
+| WP-139 | [x] Tamamlandı | l10n parity + hardcoded/admin + native string denetim | ürün kabulü 2026-07-18 |
+| WP-140 | [x] Tamamlandı | Erişilebilirlik (tooltip/Semantics/48dp) | ilk tur; TalkBack cihaz smoke opsiyonel |
+| WP-141 | [x] Tamamlandı | Tema-bağlama / sabit renk denetimi | ürün kabulü 2026-07-18 |
 | WP-142 | [~] Analiz teslim | Performans & başlangıç profili | docs/perf |
 | WP-143 | [~] Analiz teslim | Güvenlik derin denetim 2 | docs/security |
 | WP-144 | [~] Analiz teslim | Offline-first dayanıklılık | docs/sync |
