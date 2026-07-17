@@ -168,10 +168,18 @@ class SupabaseGroupRepository implements GroupRepository {
       throw const GroupException('Grup adı boş olamaz.');
     }
     try {
-      await _client
+      final rows = await _client
           .from('groups')
           .update({'name': name.trim()})
-          .eq('id', groupId);
+          .eq('id', groupId)
+          .select('id');
+      if (rows is! List || rows.isEmpty) {
+        throw const GroupException(
+          'Grup adı değiştirilemedi: yetki yok veya grup bulunamadı.',
+        );
+      }
+    } on GroupException {
+      rethrow;
     } on PostgrestException catch (e) {
       throw GroupException('Grup adı değiştirilemedi: ${e.message}');
     }
@@ -180,10 +188,18 @@ class SupabaseGroupRepository implements GroupRepository {
   @override
   Future<void> updateGroupGoal(String groupId, int minutes) async {
     try {
-      await _client
+      final rows = await _client
           .from('groups')
           .update({'daily_goal_minutes': minutes.clamp(1, 24 * 60)})
-          .eq('id', groupId);
+          .eq('id', groupId)
+          .select('id');
+      if (rows is! List || rows.isEmpty) {
+        throw const GroupException(
+          'Grup hedefi değiştirilemedi: yetki yok veya grup bulunamadı.',
+        );
+      }
+    } on GroupException {
+      rethrow;
     } on PostgrestException catch (e) {
       throw GroupException('Grup hedefi değiştirilemedi: ${e.message}');
     }
@@ -214,11 +230,20 @@ class SupabaseGroupRepository implements GroupRepository {
     for (var attempt = 0; attempt < 5; attempt++) {
       final code = _newCode();
       try {
-        await _client
+        // WP-109 B7: 0 satır (RLS) sessiz başarı sayılmasın — select ile doğrula.
+        final rows = await _client
             .from('groups')
             .update({'invite_code': code})
-            .eq('id', groupId);
-        return code;
+            .eq('id', groupId)
+            .select('invite_code');
+        if (rows is! List || rows.isEmpty) {
+          throw const GroupException(
+            'Kod yenilenemedi: yetki yok veya grup bulunamadı.',
+          );
+        }
+        return (rows.first as Map)['invite_code'] as String;
+      } on GroupException {
+        rethrow;
       } on PostgrestException catch (e) {
         if (e.code == '23505' && attempt < 4) continue; // kod çakıştı
         throw GroupException('Kod yenilenemedi: ${e.message}');
@@ -230,11 +255,19 @@ class SupabaseGroupRepository implements GroupRepository {
   @override
   Future<void> removeMember(String groupId, String userId) async {
     try {
-      await _client
+      final rows = await _client
           .from('group_members')
           .update({'left_at': DateTime.now().toUtc().toIso8601String()})
           .eq('group_id', groupId)
-          .eq('user_id', userId);
+          .eq('user_id', userId)
+          .select('user_id');
+      if (rows is! List || rows.isEmpty) {
+        throw const GroupException(
+          'Üye çıkarılamadı: yetki yok veya üye bulunamadı.',
+        );
+      }
+    } on GroupException {
+      rethrow;
     } on PostgrestException catch (e) {
       throw GroupException('Üye çıkarılamadı: ${e.message}');
     }
@@ -247,7 +280,18 @@ class SupabaseGroupRepository implements GroupRepository {
   @override
   Future<void> deleteGroup(String groupId) async {
     try {
-      await _client.from('groups').delete().eq('id', groupId);
+      final rows = await _client
+          .from('groups')
+          .delete()
+          .eq('id', groupId)
+          .select('id');
+      if (rows is! List || rows.isEmpty) {
+        throw const GroupException(
+          'Grup silinemedi: yetki yok veya grup bulunamadı.',
+        );
+      }
+    } on GroupException {
+      rethrow;
     } on PostgrestException catch (e) {
       throw GroupException('Grup silinemedi: ${e.message}');
     }

@@ -71,15 +71,15 @@
 - **Not:** Aylık e-posta anahtarı iyimser/kilitli kaydetmeyle düzeltildi; açılış öncesi dürtmeler sessize alındı; kalıcı Sistem/Türkçe/İngilizce seçici eklendi. `flutter analyze`, 433/433 test, EN/TR audit ve yerel beta APK geçti. Hedef beta-v26; stable tag yok.
 
 ### Grok Lane
-- **Durum:** [~] Aktif
-- **Faz/WP:** WP-108 — Aylık rapor retry + cron URL
-- **Aşama:** Geliştiriliyor
-- **SAHİP yollar:** `supabase/functions/send-report/**`, `supabase/functions/collect-reports/**`, `supabase/migrations/0035_*`
-- **Ortak/riskli yüzey:** edge functions (WP-109 ile serileştir)
+- **Durum:** [x] Boşta
+- **Faz/WP:** —
+- **Aşama:** —
+- **SAHİP yollar:** —
+- **Ortak/riskli yüzey:** —
 - **Dal:** main
-- **Başlangıç:** 2026-07-17 (Europe/Istanbul)
+- **Başlangıç:** —
 - **Son güncelleme:** 2026-07-17 (Europe/Istanbul)
-- **Not:** Yayın/push yok; ardından WP-109.
+- **Not:** WP-103…109 kod+commit (yayın sizin). SQL: 0034–0036 + Edge CRON_SECRET.
 
 
 ---
@@ -130,8 +130,8 @@
 | WP-105 | [~] Test için bekliyor | 🟠 XP oturum bitince kabuk lifecycle tetik | cihaz/Supabase |
 | WP-106 | [~] Test için bekliyor | watchMembers Map + 0034 active index | migration uygula |
 | WP-107 | [ ] Bekliyor | Manuel oturum İstanbul gün sınırı + UTC yazım (B4) | — |
-| WP-108 | [ ] Bekliyor | Aylık rapor retry (B2) + cron localhost URL (B8) — yalnız özellik canlıysa | ürün/ops kararı |
-| WP-109 | [ ] Bekliyor | Güvenlik sertleştirme — Edge Function auth (S2), IDOR (S3), profiles enumeration (S4), sessiz update (B7) | ops sıralama kritik |
+| WP-108 | [~] Test için bekliyor | Aylık rapor retry + cron URL (0035) + edge auth iskeleti | Edge deploy + GUC |
+| WP-109 | [~] Test için bekliyor | Güvenlik 0036 (IDOR/profiles) + B7 select doğrulama | SQL + regresyon |
 
 > **2026-07-14 proje denetimi:** Serbest sürükle-bırak ızgara, canlı grup hedefi ve saat stilleri **zaten kodda uygulanmış** (backlog stale idi; geçici WP-72/73/75 iptal). Dinamik paneldeki cihaz/eylem sorunu için açılan **WP-76** kod+otomatik test aşamasını geçti; Samsung/Pixel cihaz QA’sı bekliyor.
 >
@@ -353,6 +353,15 @@
 ### WP-106: watchMembers Map + index (kod tamam) 🧹
 - **Özet:** Map eşleştirme; migration `0034_group_members_active_index.sql`.
 - **Beklenen:** SQL Editor’da 0034 uygula (`CONCURRENTLY` tek statement).
+
+### WP-108: Aylık rapor retry + cron (kod tamam) 📧
+- **Commit:** `5b45fd0`
+- **Özet:** `pending|failed` + `retry_count<3`; 0035 cron URL `app.settings.*`; edge `CRON_SECRET` / service_role.
+- **Ops:** `CRON_SECRET` Edge secret; `app.settings.supabase_url`, `service_role_key`, `cron_secret` GUC; functions deploy.
+
+### WP-109: Güvenlik sertleştirme (kod tamam) 🛡️
+- **Özet:** 0036 monthly stats self/admin; profiles_select daraltma; group update/delete select doğrulama.
+- **Beklenen:** 0036 SQL Editor; meşru grup/chat/kamp ateşi profil okuma regresyonu.
 
 ### WP-101: Saat XP 50 + stable v27 ⭐
 
