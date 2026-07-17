@@ -20,7 +20,7 @@
 - **Navigasyon hedefi:** Ana Sayfa / Saat / Gruplar / İstatistikler / Profil. Ana Sayfa günlük kullanım alanıdır; diğer alanların verisi kendi sekmelerinde eksiksiz bulunur.
 - **Release:** Stable/Beta kanalı GitHub Releases ile çalışır. Yerel `v29` ve `beta-v29` tag'leri WP-104 commitini (`ff369e3`) gösterir; mevcut `main` WP-105–109'u da içerdiği halde `1.0.29+29` taşır. Bir sonraki dağıtımda versionCode mutlaka artırılır; Play production ayrı kalite kapısından geçer.
 - **Kalite kapıları:** Her WP DoD'siz kapanmaz; stable release kalite kapısından geçer (AGENTS.md §3). Server-authoritative XP, RLS/sosyal profil, platform sınırları → `docs/KALITE-PROGRAMI.md`.
-- **Son WP numarası:** 155 program kuyruğu (151–155 kod). **Sıradaki boş numara WP-165** (QA/Play docs 165+).
+- **Son WP numarası:** 155 program kuyruğu (151–155 kod). **Sıradaki boş numara WP-166.**
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
   - Flutter: `C:\src\flutter` · Android SDK: `C:\Android\Sdk`
@@ -79,7 +79,7 @@
 - **Dal:** main
 - **Başlangıç:** —
 - **Son güncelleme:** 2026-07-18 (Europe/Istanbul)
-- **Not:** WP-151–155 park. QA+Play docs next.
+- **Not:** Program kuyruğu 151–155 + QA/Play docs bitti. Push yok.
 
 
 ---
@@ -168,6 +168,7 @@
 | WP-162 | [~] Test için bekliyor | Kart ekle/çıkar + Stats flag entegrasyon | `4b4d711` |
 | WP-163 | [~] Test için bekliyor | AnalyticsPeriod year/custom/kıyas | UI bar kısmi |
 | WP-164 | [~] Test için bekliyor | Analitik teslim düzeltmesi (ızgara/reflow/veri/0042) | `Cihazda doğrulanmalı` |
+| WP-165 | [~] Ops/cihaz bekliyor | QA runbook + Play sahip checklist | Deploy yok |
 
 > **2026-07-14 proje denetimi:** Serbest sürükle-bırak ızgara, canlı grup hedefi ve saat stilleri **zaten kodda uygulanmış** (backlog stale idi; geçici WP-72/73/75 iptal).
 >
@@ -855,6 +856,12 @@
 > ⚠️ **Ürün kararları:** (1) WP-66 §0 retention varsayılanları, (2) legal site domain/iletişim kimliği, (3) hedef kitle 13+/16+, (4) Play Console'da alarmı core functionality olarak savunma veya safe fallback, (5) geliştirici hesap türü/tarihi. Bunlar planı engellemez; ilgili WP başlamadan kullanıcı onayı gerekir.
 
 ## Test için bekleyenler
+
+### WP-165: QA runbook + Play prep (docs) 📋
+- **Özet:** REGRESSION-RUNBOOK, DEVICE-QA-MATRIX, OWNER-ACTION-CHECKLIST, store listing brief, AAB build notu, Data Safety snapshot.
+- **Yapılmadı:** Edge deploy, Console form, AAB upload, versionCode bump, cihaz testi.
+- **Kanıt:** `Kodda doğrulandı` (docs) · cihaz/Console **sahip**
+- **Commit:** (bu)
 
 ### WP-155: Dil paketleri + RTL (kod+test) 🌐
 - **Özet:** AR/DE ARB (EN baseline çeviri), AppLanguage genişletme, RTL ar, EN/TR regresyon testleri.
