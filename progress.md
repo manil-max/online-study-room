@@ -159,6 +159,14 @@
 | WP-153 | [~] Plan — onay bekliyor | Akıllı hatırlatma PLAN | docs/features |
 | WP-154 | [~] Plan — onay bekliyor | Gamification genişletme PLAN | docs/features |
 | WP-155 | [ ] Bekliyor (Track D) | Ek dil paketleri + RTL | C sonrası |
+| WP-156 | [~] Plan uygulandı (flag kapalı) | İstatistik & Gruplar analitik plan | docs/features |
+| WP-157 | [~] Test için bekliyor | Grafik primitives gauge/stacked/radar/area | `2c7bc91` |
+| WP-158 | [~] Test için bekliyor | Analytics grid shell + prefs + flag | `5f8f1d5` |
+| WP-159 | [~] Test için bekliyor | 22 kart registry (kişisel sarmalayıcılar) | `8d4fff9` |
+| WP-160 | [~] Test için bekliyor | goalGauge/streak/compare/insight | `8d4fff9` |
+| WP-161 | [~] Test için bekliyor | 0040/0041 RPC + grup kartları | SQL Editor |
+| WP-162 | [~] Test için bekliyor | Kart ekle/çıkar + Stats flag entegrasyon | `4b4d711` |
+| WP-163 | [~] Test için bekliyor | AnalyticsPeriod year/custom/kıyas | UI bar kısmi |
 
 > **2026-07-14 proje denetimi:** Serbest sürükle-bırak ızgara, canlı grup hedefi ve saat stilleri **zaten kodda uygulanmış** (backlog stale idi; geçici WP-72/73/75 iptal).
 >
