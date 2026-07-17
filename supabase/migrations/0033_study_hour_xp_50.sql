@@ -1,4 +1,5 @@
--- 0033: Çalışma saati XP 10 → 50
+-- 0033_study_hour_xp_50.sql
+-- Çalışma saati XP 10 → 50
 --
 -- Ürün: her tamamlanan 1 saat çalışma = 50 XP (başarım kademe ödüllerine ek).
 -- 0027'de oran 10 idi; event_key `uid|study_hour_xp|h_N` ile idempotent.

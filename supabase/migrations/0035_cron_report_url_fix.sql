@@ -1,4 +1,5 @@
--- 0035: Aylık rapor cron URL + secret header (WP-108 B8)
+-- 0035_cron_report_url_fix.sql
+-- Aylık rapor cron URL + secret header (WP-108 B8)
 --
 -- 0030 localhost:54321 URL'sini kaldırır; prod Functions URL + cron secret
 -- `app.settings.*` GUC'larından okunur (plaintext secret migration'da yok).

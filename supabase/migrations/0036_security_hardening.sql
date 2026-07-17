@@ -1,4 +1,5 @@
--- 0036: Güvenlik sertleştirme (WP-109 — S3 IDOR + S4 profiles enumeration)
+-- 0036_security_hardening.sql
+-- Güvenlik sertleştirme (WP-109 — S3 IDOR + S4 profiles enumeration)
 --
 -- S3: get_user_monthly_stats — authenticated yalnız kendi (veya super_admin);
 --     service_role / JWT'siz (auth.uid null) edge çağrıları serbest.

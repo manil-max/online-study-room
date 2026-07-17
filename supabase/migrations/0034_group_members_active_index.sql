@@ -1,4 +1,5 @@
--- 0034: Aktif üye partial index (WP-106 / R12)
+-- 0034_group_members_active_index.sql
+-- Aktif üye partial index (WP-106 / R12)
 --
 -- group_members sorguları ve group_daily_totals join'i sıkça
 -- `left_at is null` (aktif üyelik) filtreler. Partial index bu yolu hızlandırır;
