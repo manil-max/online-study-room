@@ -3,7 +3,25 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers':
+    'authorization, x-client-info, apikey, content-type, x-cron-secret',
+}
+
+/** WP-108/109: yalnız cron secret veya service_role Bearer. */
+function authorizeCron(req: Request): Response | null {
+  const cronSecret = Deno.env.get('CRON_SECRET') ?? ''
+  const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+  const headerSecret = req.headers.get('x-cron-secret') ?? ''
+  const authHeader = req.headers.get('Authorization') ?? ''
+
+  if (cronSecret && headerSecret === cronSecret) return null
+  if (cronSecret && authHeader === `Bearer ${cronSecret}`) return null
+  if (serviceKey && authHeader === `Bearer ${serviceKey}`) return null
+
+  return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+    status: 401,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  })
 }
 
 serve(async (req) => {
@@ -12,19 +30,14 @@ serve(async (req) => {
   }
 
   try {
-    const authHeader = req.headers.get('Authorization')
-    if (!authHeader) {
-      throw new Error('Authorization header is missing')
-    }
+    const denied = authorizeCron(req)
+    if (denied) return denied
 
-    // Cron job (veya manuel) çağrısı `service_role` bekler
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      { global: { headers: { Authorization: authHeader } } }
     )
 
-    // İstekten hedef ay bilgisini al (Yoksa varsayılan olarak bir önceki ay)
     const body = await req.json().catch(() => ({}))
     let targetMonth = body.month
     if (!targetMonth) {
@@ -35,7 +48,6 @@ serve(async (req) => {
       targetMonth = `${year}-${month}`
     }
 
-    // 1. Opt-in olan ve bounce etmemiş aktif kullanıcıları çek
     const { data: users, error: fetchError } = await supabaseAdmin
       .from('profiles')
       .select('id')
@@ -45,34 +57,40 @@ serve(async (req) => {
     if (fetchError) throw fetchError
 
     if (!users || users.length === 0) {
-      return new Response(JSON.stringify({ message: 'No eligible users found.' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      })
+      return new Response(
+        JSON.stringify({ message: 'No eligible users found.' }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        },
+      )
     }
 
-    // 2. Kuyruğa eklemek için payload hazırla
-    const queueData = users.map((u: any) => ({
+    const queueData = users.map((u: { id: string }) => ({
       user_id: u.id,
       report_month: targetMonth,
-      status: 'pending'
+      status: 'pending',
     }))
 
-    // 3. Kuyruğa upsert et (Eğer daha önce girildiyse ignore eder - unique constraint 'user_id, report_month')
     const { error: insertError } = await supabaseAdmin
       .from('email_job_queue')
-      .upsert(queueData, { onConflict: 'user_id,report_month', ignoreDuplicates: true })
+      .upsert(queueData, {
+        onConflict: 'user_id,report_month',
+        ignoreDuplicates: true,
+      })
 
     if (insertError) throw insertError
 
-    return new Response(JSON.stringify({ 
-      success: true, 
-      message: `${users.length} users queued for ${targetMonth} report.` 
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200,
-    })
-
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: `${users.length} users queued for ${targetMonth} report.`,
+      }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      },
+    )
   } catch (error) {
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

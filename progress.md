@@ -71,15 +71,15 @@
 - **Not:** Aylık e-posta anahtarı iyimser/kilitli kaydetmeyle düzeltildi; açılış öncesi dürtmeler sessize alındı; kalıcı Sistem/Türkçe/İngilizce seçici eklendi. `flutter analyze`, 433/433 test, EN/TR audit ve yerel beta APK geçti. Hedef beta-v26; stable tag yok.
 
 ### Grok Lane
-- **Durum:** [x] Boşta
-- **Faz/WP:** —
-- **Aşama:** —
-- **SAHİP yollar:** —
-- **Ortak/riskli yüzey:** —
+- **Durum:** [~] Aktif
+- **Faz/WP:** WP-108 — Aylık rapor retry + cron URL
+- **Aşama:** Geliştiriliyor
+- **SAHİP yollar:** `supabase/functions/send-report/**`, `supabase/functions/collect-reports/**`, `supabase/migrations/0035_*`
+- **Ortak/riskli yüzey:** edge functions (WP-109 ile serileştir)
 - **Dal:** main
-- **Başlangıç:** —
+- **Başlangıç:** 2026-07-17 (Europe/Istanbul)
 - **Son güncelleme:** 2026-07-17 (Europe/Istanbul)
-- **Not:** WP-103…106 kod+commit; 103/104/105 cihaz QA parkta. 0034 SQL Editor.
+- **Not:** Yayın/push yok; ardından WP-109.
 
 
 ---
