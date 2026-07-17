@@ -836,6 +836,13 @@
 > Kabul gelince kart buradan çıkar → **Tamamlanan**’a gider. Bug çıkarsa ayrı debug WP açılır.
 
 
+### WP-133: Widget & Dinamik Panel kararlılık ANALİZİ (docs) 📐
+- **Özet:** Kök neden (1×1 compact Chronometer GONE, stop `apply()` asimetri, reconcile yalnız resume, panel sarkacı WP-76→80→v23), SSOT önerisi, ürün P1/P2/P3, faz WP-134–139, cihaz matrisi.
+- **Teslim:** `docs/widget-panel/WIDGET-DINAMIK-PANEL-ANALIZ.md` · `docs/widget-panel/GECMIS-DENEME-OTOPSISI.md`
+- **Commit:** `cfc3e50`
+- **Kanıt:** `Kodda doğrulandı` (salt okuma) · **Claude checklist onayı bekleniyor** · uygulama WP claim etme
+- **Sonraki:** Checklist imzası → WP-134+
+
 ### WP-129: Engellenen kullanıcılar / unblock UI (kod tamam) 🚫
 - **Özet:** Ayarlar → Engellenen kullanıcılar; `fetchBlockedProfiles` (in_memory+supabase); unblock + provider invalidate.
 - **Commit:** `ed234b8`
