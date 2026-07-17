@@ -58,9 +58,13 @@ android {
         create("play") {
             dimension = "channel"
             // applicationIdSuffix yok → com.manilmax.online_study_room (stable ile aynı kimlik)
-            // Dart: --dart-define=DISTRIBUTION_CHANNEL=play (zorunlu; aksi updater varsayılanı sideload)
+            // WP-128: Flutter derlemesi FLUTTER_APP_FLAVOR=play enjekte eder; Dart
+            // DistributionConfig flavor==play iken define unutulsa bile sideload updater kapalı.
+            // --dart-define=DISTRIBUTION_CHANNEL=play hâlâ önerilir (açık niyet / CI).
             manifestPlaceholders["appName"] = "Odak Kampı"
+            manifestPlaceholders["distributionChannel"] = "play"
         }
+
     }
 
     signingConfigs {

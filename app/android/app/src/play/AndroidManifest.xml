@@ -3,5 +3,12 @@
       WP-110: Play Store kanalı.
       REQUEST_INSTALL_PACKAGES buraya EKLENMEZ (main'de de yok).
       applicationId = com.manilmax.online_study_room (stable ile aynı; ikinci ürün yok).
+      WP-128: distributionChannel meta-data denetim/grep için; Dart otoritesi
+      FLUTTER_APP_FLAVOR + DISTRIBUTION_CHANNEL (DistributionConfig).
     -->
+    <application>
+        <meta-data
+            android:name="com.manilmax.online_study_room.DISTRIBUTION_CHANNEL"
+            android:value="${distributionChannel}" />
+    </application>
 </manifest>
