@@ -736,11 +736,19 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     final startedAt = state.startedAt;
     final subjectId = state.subjectId;
     final wasWork = state.phase == TimerPhase.work;
-    _finish();
+    final end = (at != null &&
+            startedAt != null &&
+            at.isAfter(startedAt))
+        ? at
+        : DateTime.now();
+
+    // WP-104: oturum kaydını native FGS teardown (_finish → STOP_SILENT) öncesine
+    // al. Süreç erken ölürse bile offline-first cache/outbox oturumu tutar;
+    // STOP_SILENT kuyruğa interval yazmadığı için çift kayıt üretmez.
     if (wasWork && startedAt != null) {
-      final end = (at != null && at.isAfter(startedAt)) ? at : DateTime.now();
       await _recordSession(startedAt, end, subjectId);
     }
+    _finish();
   }
 
   void _startTick() {
@@ -867,6 +875,8 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       status: status,
       startedAt: startedAt,
       todaySeconds: ref.read(todayRecordedSecondsProvider),
+      // WP-104: yerel satırda updatedAt zorunlu (cache bayatlama eşiği).
+      updatedAt: DateTime.now(),
     );
     // Yangına-at-unut: presence yazımı başarısız olsa bile çalışma akışı sürmeli.
     ref

@@ -71,15 +71,15 @@
 - **Not:** Aylık e-posta anahtarı iyimser/kilitli kaydetmeyle düzeltildi; açılış öncesi dürtmeler sessize alındı; kalıcı Sistem/Türkçe/İngilizce seçici eklendi. `flutter analyze`, 433/433 test, EN/TR audit ve yerel beta APK geçti. Hedef beta-v26; stable tag yok.
 
 ### Grok Lane
-- **Durum:** [~] Aktif
-- **Faz/WP:** WP-103 — Android ≤13 FGS tip çökmesi
-- **Aşama:** Geliştiriliyor
-- **SAHİP yollar:** `app/android/app/src/main/AndroidManifest.xml`, `app/android/app/src/main/kotlin/**/timer/StudyTimerService.kt`, `app/pubspec.yaml` (yalnız version)
-- **Ortak/riskli yüzey:** AndroidManifest.xml, pubspec version
+- **Durum:** [x] Boşta
+- **Faz/WP:** —
+- **Aşama:** —
+- **SAHİP yollar:** —
+- **Ortak/riskli yüzey:** —
 - **Dal:** main
-- **Başlangıç:** 2026-07-17 (Europe/Istanbul)
+- **Başlangıç:** —
 - **Son güncelleme:** 2026-07-17 (Europe/Istanbul)
-- **Not:** Codex WP-99 park/stale; SAHİP kesişimi yok. WP-104 sonra.
+- **Not:** WP-103 `4c3e259` + WP-104 (presence/stop) kod+otomatik test; cihaz QA → Test için bekleyenler.
 
 
 ---
@@ -125,8 +125,8 @@
 | WP-95 | [~] Test için bekliyor | Başarım ayrıntılarında tam cümleli koşullar | — |
 | WP-97 | [~] Test için bekliyor | Eski One UI sayaç satırı, tüm ekranlarda pull-to-refresh, belirgin beta ayrımı ve beta-v24 | WP-94 cihaz bulgusu |
 | WP-100 | [~] Test için bekliyor | Senkron kök fix: local emit, pull-to-refresh timeout, presence race | cihaz bulgusu |
-| WP-103 | [ ] Bekliyor | 🔴 KRİTİK ÇÖKME — Android ≤13'te sayaç başlat/durdur app'i çökertiyor (FGS tip uyumsuzluğu) + stable yayın | — |
-| WP-104 | [ ] Bekliyor | Presence bayatlama açığı (updatedAt=null) + durdurmada oturum kaydı sağlamlaştırma | WP-103 (aynı akış) |
+| WP-103 | [~] Test için bekliyor | 🔴 KRİTİK — Android ≤13 FGS tip (dataSync\|specialUse) + v29 | cihaz QA + stable yayın |
+| WP-104 | [~] Test için bekliyor | Presence bayatlama (updatedAt) + stop oturum kaydı sırası | cihaz QA |
 | WP-105 | [ ] Bekliyor | 🟠 XP/başarım kök fix (B1) — oturum bitince RPC yalnız profil açılınca çalışıyor; XP kaçıyor | — |
 | WP-106 | [ ] Bekliyor | watchMembers O(n·m)→Map + güvenli fallback (B3/R3) + aktif üye partial index (R12) | — |
 | WP-107 | [ ] Bekliyor | Manuel oturum İstanbul gün sınırı + UTC yazım (B4) | — |
@@ -330,6 +330,19 @@
 > Kod/otomatik test bitti; **cihaz QA veya ürün demo’su** bekleniyor.
 > Bu bölüm **aktif çalışma değildir** — ajan claim etmez, diğer WP’leri engellemez.
 > Kabul gelince kart buradan çıkar → **Tamamlanan**’a gider. Bug çıkarsa ayrı debug WP açılır.
+
+### WP-103: Android ≤13 FGS tip çökmesi (kod tamam) 💥
+- **Özet:** Manifest `dataSync|specialUse`; StudyTimerService API 29–33 DATA_SYNC / 34+ SPECIAL_USE alt kümesi. `version 1.0.29+29`.
+- **Commit:** `4c3e259`
+- **Beklenen:** Not 20 / A51 / API 33 emülatörde başlat→arka plan→durdur 0 çökme; S23 regresyon; stable GitHub Release (`Cihazda doğrulanmalı` + ürün kararı).
+- **Kanıt:** `Kodda doğrulandı` (manifest hizası). Analyze: 1 pre-existing info (`updater_dialog`).
+
+### WP-104: Presence bayatlama + stop oturum sırası (kod tamam) 🩹
+- **Özet:** Cache/local presence `updatedAt` damgası; null aktif satır offline; `stop()` önce `_recordSession` sonra `_finish`.
+- **Dosyalar:** `offline_cache_store.dart`, `presence_providers.dart`, `study_providers.dart`, ilgili testler.
+- **Test:** presence + offline_first + timer_state_machine (WP-104 senaryoları dahil) yeşil.
+- **Beklenen:** Cihazda sayaç durunca presence ≤70s “çalışıyor” temizlenir; app-içi Durdur süre kaybı yok.
+- **Kanıt:** `Kodda doğrulandı` / `Cihazda doğrulanmalı`.
 
 ### WP-101: Saat XP 50 + stable v27 ⭐
 

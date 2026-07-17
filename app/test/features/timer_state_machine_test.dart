@@ -3,7 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:online_study_room/core/notifications/timer_notification_service.dart';
 import 'package:online_study_room/core/prefs/app_prefs.dart';
+import 'package:online_study_room/data/providers/auth_providers.dart';
+import 'package:online_study_room/data/providers/group_providers.dart';
 import 'package:online_study_room/data/providers/study_providers.dart';
+import 'package:online_study_room/data/repositories/in_memory/in_memory_auth_repository.dart';
+import 'package:online_study_room/data/repositories/in_memory/in_memory_group_repository.dart';
+import 'package:online_study_room/data/repositories/in_memory/in_memory_study_repository.dart';
 import 'package:online_study_room/features/android_widgets/android_widget_service.dart';
 
 class _NoopTimerNotificationService implements TimerNotificationGateway {
@@ -249,6 +254,60 @@ void main() {
 
       expect(container.read(studyTimerProvider).isRunning, isFalse);
       expect(prefs.getString('timer_active_started_at'), isNull);
+    });
+
+    test('WP-104: app-içi stop oturumu kaydeder (süre kaybı yok)', () async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      final auth = InMemoryAuthRepository();
+      await auth.signUp(
+        email: 'stop-qa@ornek.com',
+        password: '123456',
+        displayName: 'Stop QA',
+      );
+      final studyRepo = InMemoryStudyRepository();
+      final container = ProviderContainer(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          authRepositoryProvider.overrideWithValue(auth),
+          groupRepositoryProvider.overrideWithValue(InMemoryGroupRepository()),
+          studyRepositoryProvider.overrideWithValue(studyRepo),
+          timerNotificationServiceProvider.overrideWithValue(
+            const _NoopTimerNotificationService(),
+          ),
+          androidWidgetServiceProvider.overrideWithValue(
+            const _NoopAndroidWidgetService(),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final authSub = container.listen(
+        authStateProvider,
+        (_, _) {},
+        fireImmediately: true,
+      );
+      addTearDown(authSub.close);
+      for (var i = 0; i < 100 && !container.read(authStateProvider).hasValue; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 5));
+      }
+      final profile = container.read(authStateProvider).value;
+      expect(profile, isNotNull);
+
+      final notifier = container.read(studyTimerProvider.notifier);
+      notifier.start();
+      final startedAt = container.read(studyTimerProvider).startedAt!;
+      // Sabit bitiş: duration>0 garantisi (ms yarışına bağlı kalma).
+      final endAt = startedAt.add(const Duration(seconds: 42));
+      await notifier.stop(at: endAt);
+
+      expect(container.read(studyTimerProvider).isRunning, isFalse);
+      final sessions = await studyRepo.watchUserSessions(profile!.id).first;
+      expect(sessions, isNotEmpty, reason: 'WP-104: stop oturumu yazmalı');
+      expect(sessions.single.userId, profile.id);
+      expect(sessions.single.durationSeconds, 42);
+      expect(sessions.single.start, startedAt);
+      expect(sessions.single.end, endAt);
     });
 
     test(

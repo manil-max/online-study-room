@@ -96,11 +96,14 @@ class OfflineCacheStore {
   Future<void> upsertCachedPresence(Presence presence) async {
     final groupId = presence.groupId;
     if (groupId == null) return;
+    // WP-104: yerel yazımda updatedAt boş kalmasın → applyPresenceStaleness
+    // null satırları bayatlatamazdı; çökme sonrası "hâlâ çalışıyor" kilitlenirdi.
+    final stamped = _stampPresenceUpdatedAt(presence);
     final current = await readGroupPresence(groupId) ?? const [];
     final next = [
       for (final item in current)
-        if (item.userId != presence.userId) item,
-      presence,
+        if (item.userId != stamped.userId) item,
+      stamped,
     ];
     await saveGroupPresence(groupId, next);
   }
@@ -139,11 +142,12 @@ class OfflineCacheStore {
   }
 
   Future<void> queuePresence(Presence presence) async {
+    final stamped = _stampPresenceUpdatedAt(presence);
     final current = await readPendingPresence();
     final next = [
       for (final item in current)
-        if (item.userId != presence.userId) item,
-      presence,
+        if (item.userId != stamped.userId) item,
+      stamped,
     ];
     await _prefs.setString(
       _pendingPresenceKey,
@@ -193,7 +197,14 @@ class OfflineCacheStore {
     };
   }
 
+  /// WP-104: cache'e null `updated_at` yazma — bayatlama eşiği uygulanabilsin.
+  static Presence _stampPresenceUpdatedAt(Presence presence) {
+    if (presence.updatedAt != null) return presence;
+    return presence.copyWith(updatedAt: DateTime.now());
+  }
+
   static Map<String, dynamic> _presenceToJson(Presence presence) {
+    final updated = presence.updatedAt ?? DateTime.now();
     return {
       'user_id': presence.userId,
       'group_id': presence.groupId,
@@ -201,7 +212,7 @@ class OfflineCacheStore {
       'started_at': presence.startedAt?.toUtc().toIso8601String(),
       'today_seconds': presence.todaySeconds,
       'subject_id': presence.subjectId,
-      'updated_at': presence.updatedAt?.toUtc().toIso8601String(),
+      'updated_at': updated.toUtc().toIso8601String(),
     };
   }
 

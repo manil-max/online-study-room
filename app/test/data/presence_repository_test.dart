@@ -78,10 +78,12 @@ void main() {
       expect(result.single.userId, 'u1');
     });
 
-    test('updatedAt null ise durum korunur (bellek-içi/eski satır)', () {
+    test('updatedAt null aktif satır çevrimdışına çekilir (WP-104)', () {
+      // Eski cache kilidi: null updatedAt ile "hâlâ çalışıyor" kalıcı kalmasın.
       final rows = [studying('u1', updatedAt: null)];
       final result = applyPresenceStaleness(rows, now: now);
-      expect(result.single.status, PresenceStatus.studying);
+      expect(result.single.status, PresenceStatus.offline);
+      expect(result.single.userId, 'u1');
     });
 
     test('eşik sınırındaki satır hâlâ canlı sayılır', () {

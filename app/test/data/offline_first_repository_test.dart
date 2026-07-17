@@ -168,6 +168,22 @@ void main() {
     },
   );
 
+  test('WP-104: null updatedAt presence cache damgası alır', () async {
+    final cache = await _store();
+    final withoutStamp = Presence(
+      userId: 'u1',
+      groupId: 'g1',
+      status: PresenceStatus.studying,
+      startedAt: DateTime(2026, 7, 11, 9),
+      todaySeconds: 100,
+      updatedAt: null,
+    );
+    await cache.upsertCachedPresence(withoutStamp);
+    final stored = (await cache.readGroupPresence('g1'))!.single;
+    expect(stored.updatedAt, isNotNull);
+    expect(stored.status, PresenceStatus.studying);
+  });
+
   test(
     'presence stream falls back to cached group rows after remote error',
     () async {

@@ -50,8 +50,12 @@ final presenceRepositoryProvider = Provider<PresenceRepository>((ref) {
 ///
 /// `updated_at`'i [kPresenceStaleThreshold]'dan eski olan `studying`/`onBreak`
 /// satırlar, uygulaması artık heartbeat atmayan (kapanmış/çökmüş) kullanıcıları
-/// temsil eder ve çevrimdışı gösterilir. `updatedAt` bilinmiyorsa (bellek-içi
-/// mod veya eski satır) durum korunur; yanlış çevrimdışı üretilmez.
+/// temsil eder ve çevrimdışı gösterilir.
+///
+/// WP-104: Yerel yazımlar `updatedAt` damgalar (`OfflineCacheStore` /
+/// `_publishPresence`). Eski cache'te `updatedAt==null` kalmış **aktif**
+/// satırlar bayat kabul edilir (yanlış "hâlâ çalışıyor" kilidi önlenir).
+/// Sunucudan gelen satırlarda `updated_at` her zaman vardır ve kazanır.
 List<Presence> applyPresenceStaleness(
   List<Presence> rows, {
   required DateTime now,
@@ -59,9 +63,12 @@ List<Presence> applyPresenceStaleness(
 }) {
   return [
     for (final p in rows)
-      if (p.status == PresenceStatus.offline ||
-          p.updatedAt == null ||
-          now.difference(p.updatedAt!) <= threshold)
+      if (p.status == PresenceStatus.offline)
+        p
+      else if (p.updatedAt == null)
+        // Eski null cache: aktif durumu kilitleme — offline göster.
+        p.copyWith(status: PresenceStatus.offline)
+      else if (now.difference(p.updatedAt!) <= threshold)
         p
       else
         p.copyWith(status: PresenceStatus.offline),
