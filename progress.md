@@ -79,7 +79,7 @@
 - **Dal:** main
 - **Başlangıç:** —
 - **Son güncelleme:** 2026-07-18 (Europe/Istanbul)
-- **Not:** Program kuyruğu: WP-151 bitti (test park). Sırada 152+.
+- **Not:** WP-151–152 park. Sırada 153+.
 
 
 ---
@@ -155,7 +155,7 @@
 | WP-149 | [~] WP-156’ya bağlandı | Streak+heatmap → analitik kart | WP-156 |
 | WP-150 | [~] WP-156’ya devredildi | Stats derinleştirme → büyük plan | WP-156 |
 | WP-151 | [~] Test için bekliyor | Onboarding 4 adım skip/izin/grup | Cihazda doğrulanmalı |
-| WP-152 | [~] Plan — onay bekliyor | Veri export PLAN | docs/features |
+| WP-152 | [~] Test için bekliyor | Veri dışa aktarma JSON | Cihazda doğrulanmalı |
 | WP-153 | [~] Plan — onay bekliyor | Akıllı hatırlatma PLAN | docs/features |
 | WP-154 | [~] Plan — onay bekliyor | Gamification genişletme PLAN | docs/features |
 | WP-155 | [ ] Bekliyor (Track D) | Ek dil paketleri + RTL | C sonrası |
@@ -855,6 +855,12 @@
 > ⚠️ **Ürün kararları:** (1) WP-66 §0 retention varsayılanları, (2) legal site domain/iletişim kimliği, (3) hedef kitle 13+/16+, (4) Play Console'da alarmı core functionality olarak savunma veya safe fallback, (5) geliştirici hesap türü/tarihi. Bunlar planı engellemez; ilgili WP başlamadan kullanıcı onayı gerekir.
 
 ## Test için bekleyenler
+
+### WP-152: Veri dışa aktarma (kod+test) 📦
+- **Özet:** Self-only JSON export; hot/year/all; share_plus; InMemory+Supabase; Ayarlar girişi.
+- **Test:** data_export_test 3 geçti · analyze 0
+- **Kanıt:** `Kodda doğrulandı` · **`Cihazda doğrulanmalı`** (paylaşım sheet, offline hata)
+- **Commit:** (bu commit)
 
 ### WP-151: Onboarding (kod+test) 👋
 - **Özet:** 4 adım atlanabilir; bildirim izni (red OK); grup oluştur/katıl/atla; prefs `onboarding.completed_v1`.
