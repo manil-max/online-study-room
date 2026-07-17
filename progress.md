@@ -71,15 +71,15 @@
 - **Not:** Play Store production programı WP-110–124 olarak planlandı; kanonik belgeler hizalandı. `OPTIMIZATIONS.md` kapsam dışı bırakıldı.
 
 ### Grok Lane
-- **Durum:** [x] Boşta
-- **Faz/WP:** —
-- **Aşama:** —
-- **SAHİP yollar:** —
-- **Ortak/riskli yüzey:** —
+- **Durum:** [~] Aktif
+- **Faz/WP:** WP-111 → Play programı (sıralı commit)
+- **Aşama:** Geliştiriliyor
+- **SAHİP yollar:** (aktif WP kartına göre)
+- **Ortak/riskli yüzey:** progress, ARB, settings, migrations sırası
 - **Dal:** main
-- **Başlangıç:** —
+- **Başlangıç:** 2026-07-17 (Europe/Istanbul)
 - **Son güncelleme:** 2026-07-17 (Europe/Istanbul)
-- **Not:** WP-110 kod+test; WP-103 park (cihaz). Sonraki: WP-111 veya kullanıcı.
+- **Not:** Kullanıcı “bitene kadar” — WP-111+ seri; WP-66 varsayılanları ürün onayı kabulüyle.
 
 
 ---

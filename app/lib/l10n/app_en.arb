@@ -4219,5 +4219,59 @@
   "groupDiscoveryPrivacyUpdated": "Group privacy updated",
   "@groupDiscoveryPrivacyUpdated": {
     "description": "Confirmation after an admin changes group privacy"
+  },
+  "legalCenterTitle": "Privacy & legal",
+  "@legalCenterTitle": {
+    "description": "Settings entry and app bar for legal center"
+  },
+  "legalPrivacyPolicy": "Privacy policy",
+  "@legalPrivacyPolicy": {
+    "description": "Privacy policy document title"
+  },
+  "legalTermsOfUse": "Terms of use",
+  "@legalTermsOfUse": {
+    "description": "Terms of use document title"
+  },
+  "legalCommunityGuidelines": "Community guidelines",
+  "@legalCommunityGuidelines": {
+    "description": "Community guidelines document title"
+  },
+  "legalTelemetryTitle": "Crash and performance telemetry",
+  "@legalTelemetryTitle": {
+    "description": "Telemetry toggle title"
+  },
+  "legalTelemetrySubtitle": "When on, crash types and sync counters may be sent (Sentry); no email or tokens. When off, no new events.",
+  "@legalTelemetrySubtitle": {
+    "description": "Telemetry toggle subtitle"
+  },
+  "legalPolicyVersion": "Policy version: {version}",
+  "@legalPolicyVersion": {
+    "description": "Shows legal document version date",
+    "placeholders": {
+      "version": {"type": "String"}
+    }
+  },
+  "legalCommunityVersion": "Community guidelines version: {version}",
+  "@legalCommunityVersion": {
+    "description": "Shows community guidelines version",
+    "placeholders": {
+      "version": {"type": "String"}
+    }
+  },
+  "legalCopyPublicPrivacyUrl": "Copy public privacy URL",
+  "@legalCopyPublicPrivacyUrl": {
+    "description": "Action to copy HTTPS privacy policy URL"
+  },
+  "legalPublicUrlNotConfigured": "Live HTTPS URL is not configured yet (LEGAL_BASE_URL). Full text is available in-app.",
+  "@legalPublicUrlNotConfigured": {
+    "description": "Shown when LEGAL_BASE_URL is empty"
+  },
+  "legalPublicUrlCopied": "Link copied to clipboard.",
+  "@legalPublicUrlCopied": {
+    "description": "Snackbar after copying legal URL"
+  },
+  "legalDeletionNote": "Account deletion: request + cooling-off window + scheduled hard delete. Clear steps appear under Settings → Account as the server pipeline lands.",
+  "@legalDeletionNote": {
+    "description": "Honest note that deletion UX completes with later WPs"
   }
 }

@@ -16,6 +16,7 @@ import '../notifications/notification_center_screen.dart';
 import '../updater/release_notes_screen.dart';
 import 'account_settings_screen.dart';
 import 'appearance_screen.dart';
+import 'legal_center_screen.dart';
 import 'widgets/camp_animal_picker.dart';
 import 'widgets/report_issue_dialog.dart';
 
@@ -128,6 +129,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   trailing: Icon(Icons.chevron_right),
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute(builder: (_) => AccountSettingsScreen()),
+                  ),
+                ),
+              ),
+              SizedBox(height: 10),
+              _SettingsCard(
+                child: ListTile(
+                  leading: const Icon(Icons.policy_outlined),
+                  title: Text(l10n.legalCenterTitle),
+                  subtitle: Text(l10n.legalPrivacyPolicy),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const LegalCenterScreen(),
+                    ),
                   ),
                 ),
               ),

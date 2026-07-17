@@ -96,14 +96,40 @@ class ObservabilityService {
 
   bool get isEnabled => _enabled;
 
+  var _transportReady = false;
+
   Future<void> initialize(SharedPreferences preferences) async {
     if (_initialized) return;
     _initialized = true;
     if (!_config.isConfigured || !TelemetryPreference.isEnabled(preferences)) {
       return;
     }
+    await _startTransport();
+  }
+
+  /// WP-111: Kullanıcı telemetri tercihi — kapatınca hemen olay kesilir;
+  /// açınca (build DSN açıksa) transport başlatılır.
+  Future<void> setTelemetryEnabled(
+    SharedPreferences preferences,
+    bool enabled,
+  ) async {
+    await TelemetryPreference.setEnabled(preferences, enabled);
+    if (!enabled) {
+      _enabled = false;
+      return;
+    }
+    if (!_config.isConfigured) return;
+    if (!_transportReady) {
+      await _startTransport();
+    } else {
+      _enabled = true;
+    }
+  }
+
+  Future<void> _startTransport() async {
     try {
       await _transport.initialize(_config);
+      _transportReady = true;
       _enabled = true;
       _record('telemetry_started', {
         'environment_is_production': _config.environment == 'production',
@@ -111,6 +137,7 @@ class ObservabilityService {
     } catch (_) {
       // Telemetry hiçbir zaman uygulamanın açılmasını engellemez.
       _enabled = false;
+      _transportReady = false;
     }
   }
 

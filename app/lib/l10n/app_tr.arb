@@ -1007,5 +1007,27 @@
   "profileDilSistemVarsayilani": "Sistem varsayılanı",
   "profileDilTurkce": "Türkçe",
   "profileDilIngilizce": "İngilizce",
-  "profileDilDegisikligiAnindaUygulanir": "Değişiklik hemen uygulanır."
+  "profileDilDegisikligiAnindaUygulanir": "Değişiklik hemen uygulanır.",
+  "legalCenterTitle": "Gizlilik ve yasal",
+  "legalPrivacyPolicy": "Gizlilik politikası",
+  "legalTermsOfUse": "Kullanım koşulları",
+  "legalCommunityGuidelines": "Topluluk kuralları",
+  "legalTelemetryTitle": "Hata ve performans telemetrisi",
+  "legalTelemetrySubtitle": "Açıkken çökme türü ve senkron sayaçları (Sentry) gönderilebilir; e-posta veya token gönderilmez. Kapatınca yeni olay gitmez.",
+  "legalPolicyVersion": "Politika sürümü: {version}",
+  "@legalPolicyVersion": {
+    "placeholders": {
+      "version": {"type": "String"}
+    }
+  },
+  "legalCommunityVersion": "Topluluk kuralları sürümü: {version}",
+  "@legalCommunityVersion": {
+    "placeholders": {
+      "version": {"type": "String"}
+    }
+  },
+  "legalCopyPublicPrivacyUrl": "Herkese açık gizlilik URL’sini kopyala",
+  "legalPublicUrlNotConfigured": "Canlı HTTPS URL henüz yapılandırılmadı (LEGAL_BASE_URL). Metin uygulama içinde okunabilir.",
+  "legalPublicUrlCopied": "Bağlantı panoya kopyalandı.",
+  "legalDeletionNote": "Hesap silme: istek + geri alma penceresi + planlı kalıcı silme. Sunucu boru hattı tamamlandıkça Ayarlar → Hesap altında net adımlar görünür."
 }
