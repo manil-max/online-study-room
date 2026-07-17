@@ -30,8 +30,26 @@ class SessionHistoryScreen extends ConsumerWidget {
 
     final body = sessionsAsync.when(
       loading: () => Center(child: CircularProgressIndicator()),
-      error: (_, _) =>
-          Center(child: Text(l10n.profileBeklenmeyenBirHataOlustu)),
+      // WP-147: error + yeniden dene (boş/loading zaten var).
+      error: (_, _) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                l10n.profileBeklenmeyenBirHataOlustu,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              FilledButton(
+                onPressed: () => ref.invalidate(userSessionsProvider),
+                child: Text(l10n.classroomYenile),
+              ),
+            ],
+          ),
+        ),
+      ),
       data: (sessions) {
         if (!hasGroup) {
           return _centerInfo(

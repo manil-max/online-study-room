@@ -53,10 +53,24 @@ class _PersonalTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final sessionsAsync = ref.watch(userSessionsProvider);
     final summaryAsync = ref.watch(userStudySummaryProvider);
+    final l10n = AppLocalizations.of(context);
     return sessionsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (_, _) => Center(
-        child: Text(AppLocalizations.of(context).authBeklenmeyenBirHataOlustu),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(l10n.authBeklenmeyenBirHataOlustu, textAlign: TextAlign.center),
+              const SizedBox(height: 12),
+              FilledButton(
+                onPressed: () => ref.invalidate(userSessionsProvider),
+                child: Text(l10n.classroomYenile),
+              ),
+            ],
+          ),
+        ),
       ),
       data: (sessions) => PersonalStatsView(
         sessions: sessions,
@@ -92,10 +106,24 @@ class _ClassTab extends ConsumerWidget {
     final members = ref.watch(groupMembersProvider).value ?? const [];
     final currentUserId = ref.watch(authStateProvider).value?.id ?? '';
 
+    final l10n = AppLocalizations.of(context);
     return statsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (_, _) => Center(
-        child: Text(AppLocalizations.of(context).authBeklenmeyenBirHataOlustu),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(l10n.authBeklenmeyenBirHataOlustu, textAlign: TextAlign.center),
+              const SizedBox(height: 12),
+              FilledButton(
+                onPressed: () => ref.invalidate(groupDailyStatsProvider),
+                child: Text(l10n.classroomYenile),
+              ),
+            ],
+          ),
+        ),
       ),
       data: (stats) => ClassStatsView(
         stats: stats,

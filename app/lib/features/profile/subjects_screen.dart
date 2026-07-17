@@ -35,8 +35,25 @@ class SubjectsScreen extends ConsumerWidget {
           : null,
       body: subjectsAsync.when(
         loading: () => Center(child: CircularProgressIndicator()),
-        error: (_, _) =>
-            Center(child: Text(l10n.profileBeklenmeyenBirHataOlustu)),
+        error: (_, _) => Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  l10n.profileBeklenmeyenBirHataOlustu,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+                FilledButton(
+                  onPressed: () => ref.invalidate(userSubjectsProvider),
+                  child: Text(l10n.classroomYenile),
+                ),
+              ],
+            ),
+          ),
+        ),
         data: (subjects) {
           if (subjects.isEmpty) {
             return Center(
