@@ -6,6 +6,9 @@ import '../../core/desktop/desktop_window.dart';
 import '../../data/providers/auth_providers.dart';
 import '../../data/providers/group_providers.dart';
 import '../../data/providers/study_providers.dart';
+import 'analytics/analytics_card_type.dart';
+import 'analytics/analytics_flag.dart';
+import 'analytics/analytics_grid_view.dart';
 import 'widgets/class_stats_view.dart';
 import 'widgets/personal_stats_view.dart';
 import 'widgets/stats_period_bar.dart';
@@ -51,6 +54,9 @@ class _PersonalTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (ref.watch(analyticsGridV1Provider)) {
+      return const AnalyticsGridView(surface: AnalyticsSurface.personalStats);
+    }
     final sessionsAsync = ref.watch(userSessionsProvider);
     final summaryAsync = ref.watch(userStudySummaryProvider);
     final l10n = AppLocalizations.of(context);
@@ -85,6 +91,21 @@ class _ClassTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (ref.watch(analyticsGridV1Provider)) {
+      final group = ref.watch(userGroupProvider).value;
+      if (group == null) {
+        return Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text(
+              AppLocalizations.of(context).statsGrupIstatistikleriniGormekIcin,
+              textAlign: TextAlign.center,
+            ),
+          ),
+        );
+      }
+      return const AnalyticsGridView(surface: AnalyticsSurface.groupStats);
+    }
     final theme = Theme.of(context);
     final group = ref.watch(userGroupProvider).value;
     if (group == null) {
