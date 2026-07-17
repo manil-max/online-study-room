@@ -45,12 +45,13 @@ class StudySession {
   }
 
   Map<String, dynamic> toMap() {
+    // WP-107: timestamptz round-trip için her zaman UTC yaz (cihaz TZ kayması yok).
     return {
       'id': id,
       'user_id': userId,
       'subject_id': subjectId,
-      'start_time': start.toIso8601String(),
-      'end_time': end.toIso8601String(),
+      'start_time': start.toUtc().toIso8601String(),
+      'end_time': end.toUtc().toIso8601String(),
       'duration_seconds': durationSeconds,
       'source': source.name,
     };

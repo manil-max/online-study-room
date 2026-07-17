@@ -1,8 +1,10 @@
 import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:timezone/timezone.dart' as tz;
 import 'package:uuid/uuid.dart';
 
+import '../../../core/stats/istanbul_calendar.dart';
 import '../../../core/theme/subject_colors.dart';
 import '../../../core/widgets/number_stepper.dart';
 import '../../../data/models/study_session.dart';
@@ -11,26 +13,38 @@ import '../../../data/providers/auth_providers.dart';
 import '../../../data/providers/study_providers.dart';
 import '../../../data/providers/subject_providers.dart';
 
-/// Manuel oturumu "eklendiği anda bitmiş gibi" yerleştirir: seçilen [date]
-/// günü içinde `end` = o günün **şu anki saat-dakikası**, `start = end - süre`.
-/// Böylece giriş, sabit 12:00 yerine gerçekçi bir saatte görünür.
+/// Manuel oturumu "eklendiği anda bitmiş gibi" yerleştirir (WP-107).
 ///
-/// Süre günün geçen kısmından uzunsa (ör. gece 01:00'de 3 saat) `start` gece
-/// yarısına (00:00) kenetlenir; oturum her zaman seçilen güne ait kalır
-/// (`StudySession.day` `start`'tan türetildiği için gün kayması olmaz).
+/// Takvim günü ve saat-dakika **Europe/Istanbul** wall-clock'undan alınır
+/// (cihaz TZ'sinden bağımsız). `end` = seçilen günde İstanbul'un şu anki saati;
+/// `start = end - süre`. Süre günün geçen kısmından uzunsa `start` İstanbul
+/// 00:00'a kenetlenir. Dönüş değerleri UTC instant'tır (DB yazımı için).
 ({DateTime start, DateTime end}) manualSessionRange(
   DateTime date,
-  int seconds,
-) {
-  final now = DateTime.now();
-  final dayStart = DateTime(date.year, date.month, date.day);
-  var end = DateTime(date.year, date.month, date.day, now.hour, now.minute);
+  int seconds, {
+  DateTime? now,
+}) {
+  // istanbul_calendar import'u TZ verisini yükler.
+  final loc = tz.getLocation('Europe/Istanbul');
+  final istNow = now == null
+      ? istanbulNow()
+      : tz.TZDateTime.from(now.toUtc(), loc);
+
+  final dayStart = tz.TZDateTime(loc, date.year, date.month, date.day);
+  var end = tz.TZDateTime(
+    loc,
+    date.year,
+    date.month,
+    date.day,
+    istNow.hour,
+    istNow.minute,
+  );
   var start = end.subtract(Duration(seconds: seconds));
   if (start.isBefore(dayStart)) {
     start = dayStart;
     end = start.add(Duration(seconds: seconds));
   }
-  return (start: start, end: end);
+  return (start: start.toUtc(), end: end.toUtc());
 }
 
 /// Manuel süre ekleme akışı (her ekrandan çağrılabilir): aktif kullanıcı
