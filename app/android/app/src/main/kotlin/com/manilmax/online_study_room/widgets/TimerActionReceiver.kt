@@ -7,9 +7,11 @@ import com.manilmax.online_study_room.timer.StudyTimerService
 
 /**
  * Widget'taki tek Başlat/Durdur düğmesinden gelen dokunmayı yakalar ve **native**
- * foreground servisine iletir. Servis, sayaç çalışıyorsa durdurur (idle'a geçer),
- * duruyorsa başlatır — hepsi uygulama tamamen kapalıyken de çalışır (dead-switch
- * sorunu giderilir). Oturum kaydı Dart tarafında (app açılışında) yapılır.
+ * foreground servisine iletir.
+ *
+ * WP-135: idle→start, running→stop+00:00:00 (TimerStateStore.writeIdle).
+ * exported=false (WP-118); PI explicit + IMMUTABLE (widget tarafı).
+ * Oturum kaydı Dart tarafında (app açılışında) yapılır.
  */
 class TimerActionReceiver : BroadcastReceiver() {
     companion object {

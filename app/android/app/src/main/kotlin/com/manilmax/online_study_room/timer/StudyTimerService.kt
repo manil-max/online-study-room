@@ -17,9 +17,6 @@ import androidx.core.app.NotificationCompat
 import com.manilmax.online_study_room.MainActivity
 import com.manilmax.online_study_room.R
 import com.manilmax.online_study_room.widgets.TimerWidgets
-import org.json.JSONArray
-import org.json.JSONObject
-import java.time.Instant
 
 /**
  * Çalışma sayacının **native** foreground servisi (V8-A · WP-42/51 birleşik).
@@ -69,7 +66,8 @@ class StudyTimerService : Service() {
                 ACTION_START_BREAK -> handleStartBreak()
                 ACTION_END_BREAK -> handleEndBreak()
                 ACTION_TOGGLE -> {
-                    if (prefs().contains(KEY_STARTED_AT)) {
+                    // WP-135: idle→start; running→stop + 00:00:00 (writeIdle).
+                    if (TimerStateStore.isRunning(prefs())) {
                         handleStop(recordInterval = true)
                     } else {
                         handleStart(
@@ -103,27 +101,24 @@ class StudyTimerService : Service() {
         cycle: Int,
         subjectId: String,
     ) {
-        // Eski Flutter bildirimi 7001, uygulama kapalıyken yalnız Preferences'a
-        // komut yazıyordu. Native panel tek otoritedir; eski eylemi temizle.
+        // Eski Flutter bildirimi 7001; native panel tek otoritedir.
         notificationManager().cancel(LEGACY_FLUTTER_NOTIFICATION_ID)
-        val editor = prefs().edit()
-        editor.putString(KEY_STARTED_AT, Instant.ofEpochMilli(startedAtMs).toString())
-        editor.putLong(KEY_STARTED_AT_MS, startedAtMs)
-        editor.putString(KEY_MODE, mode)
-        editor.putString(KEY_PHASE, phase)
-        editor.putInt(KEY_CYCLE, cycle)
-        editor.putString(KEY_SUBJECT, subjectId)
-        editor.putString(KEY_FG_MODE, "running")
-        // commit: broadcast/reconcile apply() gecikmesi yüzünden hâlâ "idle"
-        // okuyup uygulamadan başlatmayı geri almasın (beta-v15 in-app start bug).
-        editor.commit()
+        // WP-135: store yazımı senkron commit (beta-v15 idle race koruması).
+        TimerStateStore.writeRunning(
+            prefs(),
+            startedAtMs = startedAtMs,
+            mode = mode,
+            phase = phase,
+            cycle = cycle,
+            subjectId = subjectId,
+        )
 
         startForegroundCompat(buildRunningNotification(startedAtMs))
-        // DETACH sonrası idle bildirim kalmış olabilir; running'i ayrıca da bas.
         notificationManager().notify(
             NOTIFICATION_ID,
             buildRunningNotification(startedAtMs),
         )
+        // Deterministik sıra: store → UI yüzeyler → Dart broadcast.
         TimerWidgets.updateAll(this)
         notifyStateChanged()
     }
@@ -133,29 +128,29 @@ class StudyTimerService : Service() {
      *  SharedPreferences'tan uzlaştırır. */
     private fun handleStartBreak() {
         val p = prefs()
-        val currentStart = p.getLong(KEY_STARTED_AT_MS, 0L)
+        val currentStart = TimerStateStore.startedAtMs(p)
         if (currentStart <= 0L) return
 
-        // getForegroundService ile uyanmış olabileceğimiz için bookkeeping'ten
-        // önce 5 sn içinde foreground olma sözleşmesini yerine getir.
         val nowMs = System.currentTimeMillis()
         startForegroundCompat(buildRunningNotification(nowMs))
 
-        if (p.getString(KEY_PHASE, "work") == "work" && currentStart < nowMs) {
-            appendPendingInterval(
+        if (p.getString(TimerStateStore.KEY_PHASE, "work") == "work" && currentStart < nowMs) {
+            TimerStateStore.appendPendingInterval(
                 p,
                 startMs = currentStart,
                 endMs = nowMs,
-                subject = p.getString(KEY_SUBJECT, "") ?: "",
+                subject = p.getString(TimerStateStore.KEY_SUBJECT, "") ?: "",
             )
         }
 
-        p.edit()
-            .putString(KEY_STARTED_AT, Instant.ofEpochMilli(nowMs).toString())
-            .putLong(KEY_STARTED_AT_MS, nowMs)
-            .putString(KEY_PHASE, "rest")
-            .putString(KEY_FG_MODE, "running")
-            .commit()
+        TimerStateStore.writeRunning(
+            p,
+            startedAtMs = nowMs,
+            mode = p.getString(TimerStateStore.KEY_MODE, "stopwatch") ?: "stopwatch",
+            phase = "rest",
+            cycle = p.getInt(TimerStateStore.KEY_CYCLE, 1).coerceAtLeast(1),
+            subjectId = p.getString(TimerStateStore.KEY_SUBJECT, "") ?: "",
+        )
 
         notificationManager().notify(
             NOTIFICATION_ID,
@@ -169,49 +164,39 @@ class StudyTimerService : Service() {
      *  başlatır. Mola aralığı oturum değildir; bu nedenle kuyruk yazılmaz. */
     private fun handleEndBreak() {
         val p = prefs()
-        if (p.getString(KEY_PHASE, "") != "rest") return
+        if (p.getString(TimerStateStore.KEY_PHASE, "") != "rest") return
         handleStart(
             startedAtMs = System.currentTimeMillis(),
-            mode = p.getString(KEY_MODE, "stopwatch") ?: "stopwatch",
+            mode = p.getString(TimerStateStore.KEY_MODE, "stopwatch") ?: "stopwatch",
             phase = "work",
-            cycle = p.getInt(KEY_CYCLE, 1).coerceAtLeast(1),
-            subjectId = p.getString(KEY_SUBJECT, "") ?: "",
+            cycle = p.getInt(TimerStateStore.KEY_CYCLE, 1).coerceAtLeast(1),
+            subjectId = p.getString(TimerStateStore.KEY_SUBJECT, "") ?: "",
         )
     }
 
     private fun handleStop(recordInterval: Boolean) {
-        // ÖNEMLİ: Servis arka plandan `startForegroundService` ile ayağa kalkmış
-        // olabilir (bildirim/widget Durdur). Android 12+ kuralı: 5 sn içinde
-        // `startForeground` çağrılmalı. Bu yüzden bookkeeping'ten ÖNCE idle
-        // bildirimini foreground olarak yayınla, sonra foreground'u bırak
-        // (DETACH — bildirim kalsın ki app açmadan tekrar Başlat'a basılabilsin).
+        // ÖNEMLİ: 5 sn içinde startForeground (Android 12+ FGS borcu).
         startForegroundCompat(buildIdleNotification())
 
         val p = prefs()
         if (recordInterval) {
-            val startedAtMs = p.getLong(KEY_STARTED_AT_MS, 0L)
-            val phase = p.getString(KEY_PHASE, "work") ?: "work"
+            val startedAtMs = TimerStateStore.startedAtMs(p)
+            val phase = p.getString(TimerStateStore.KEY_PHASE, "work") ?: "work"
             val nowMs = System.currentTimeMillis()
-            // Yalnız çalışma fazı kaydedilir (mola sayılmaz); kronometrede faz hep work.
+            // Yalnız çalışma fazı kaydedilir (mola sayılmaz).
             if (startedAtMs in 1 until nowMs && phase == "work") {
-                appendPendingInterval(
+                TimerStateStore.appendPendingInterval(
                     p,
                     startMs = startedAtMs,
                     endMs = nowMs,
-                    subject = p.getString(KEY_SUBJECT, "") ?: "",
+                    subject = p.getString(TimerStateStore.KEY_SUBJECT, "") ?: "",
                 )
             }
         }
 
-        // Aktif oturum bitti (idle): started_at kalksın, mod idle.
-        p.edit()
-            .remove(KEY_STARTED_AT)
-            .remove(KEY_STARTED_AT_MS)
-            .putString(KEY_FG_MODE, "idle")
-            .apply()
+        // WP-135: idle + sıfır — senkron commit (apply asimetri kapatıldı).
+        TimerStateStore.writeIdle(p)
 
-        // Foreground durumunu bırak ama idle bildirimi (00:00:00 + Başlat) —
-        // kaydırılıp atılabilir — kalsın ki app açmadan tekrar başlatılabilsin.
         detachForegroundKeepNotification()
         TimerWidgets.updateAll(this)
         notifyStateChanged()
@@ -369,26 +354,6 @@ class StudyTimerService : Service() {
         return PendingIntent.getActivity(this, 0, intent, flags)
     }
 
-    private fun appendPendingInterval(
-        p: SharedPreferences,
-        startMs: Long,
-        endMs: Long,
-        subject: String,
-    ) {
-        val list = try {
-            JSONArray(p.getString(KEY_PENDING_INTERVALS, "[]") ?: "[]")
-        } catch (_: Exception) {
-            JSONArray()
-        }
-        list.put(
-            JSONObject()
-                .put("start", Instant.ofEpochMilli(startMs).toString())
-                .put("end", Instant.ofEpochMilli(endMs).toString())
-                .put("subject", subject),
-        )
-        p.edit().putString(KEY_PENDING_INTERVALS, list.toString()).apply()
-    }
-
     /** Uygulama önplandaysa Dart'ın hemen uzlaşması için (yalnız kendi paketimize)
      *  yayın gönder. MainActivity çalışırken bir runtime receiver bunu dinler. */
     private fun notifyStateChanged() {
@@ -417,8 +382,7 @@ class StudyTimerService : Service() {
     private fun notificationManager(): NotificationManager =
         getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-    private fun prefs(): SharedPreferences =
-        getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
+    private fun prefs(): SharedPreferences = TimerStateStore.prefs(this)
 
     companion object {
         const val ACTION_START = "com.manilmax.online_study_room.timer.START"
@@ -439,16 +403,6 @@ class StudyTimerService : Service() {
         private const val CHANNEL_ID = "study_timer_live_fg"
         private const val NOTIFICATION_ID = 7040
         private const val LEGACY_FLUTTER_NOTIFICATION_ID = 7001
-
-        // FlutterSharedPreferences anahtarları "flutter." önekiyle saklanır.
-        private const val KEY_STARTED_AT = "flutter.timer_active_started_at"
-        private const val KEY_STARTED_AT_MS = "flutter.timer_active_started_at_ms"
-        private const val KEY_MODE = "flutter.timer_active_mode"
-        private const val KEY_PHASE = "flutter.timer_active_phase"
-        private const val KEY_CYCLE = "flutter.timer_active_cycle"
-        private const val KEY_SUBJECT = "flutter.timer_active_subject"
-        private const val KEY_FG_MODE = "flutter.timer_fg_mode"
-        private const val KEY_PENDING_INTERVALS = "flutter.timer_pending_intervals"
 
         /** Servisi belirli bir komutla ayağa kaldırır (receiver/notification/Dart). */
         fun sendCommand(
