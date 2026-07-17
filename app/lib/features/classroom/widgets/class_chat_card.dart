@@ -7,6 +7,7 @@ import '../../../data/models/chat_message.dart';
 import '../../../data/models/study_group.dart';
 import '../../../data/providers/auth_providers.dart';
 import '../../../data/providers/chat_providers.dart';
+import '../../../data/providers/moderation_providers.dart';
 import '../../../data/repositories/chat_repository.dart';
 import '../../profile/widgets/profile_tap.dart';
 import '../../safety/block_user_action.dart';
@@ -62,8 +63,20 @@ class _ClassChatCardState extends ConsumerState<ClassChatCard> {
             SizedBox(
               height: widget.messageListHeight,
               child: messagesAsync.when(
-                data: (messages) =>
-                    _MessageList(messages: messages, currentUserId: user?.id),
+                data: (messages) {
+                  // WP-126: engellenen kullanıcı mesajlarını gizle.
+                  final blocked =
+                      ref.watch(blockedUserIdsProvider).value ?? const {};
+                  final visible = blocked.isEmpty
+                      ? messages
+                      : messages
+                          .where((m) => !blocked.contains(m.userId))
+                          .toList(growable: false);
+                  return _MessageList(
+                    messages: visible,
+                    currentUserId: user?.id,
+                  );
+                },
                 loading: () => const Center(child: CircularProgressIndicator()),
                 error: (error, _) => Center(
                   child: Text(

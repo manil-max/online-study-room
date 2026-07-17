@@ -11,6 +11,7 @@ import '../../../core/widgets/second_ticker.dart';
 import '../../../data/models/presence.dart';
 import '../../../data/models/profile.dart';
 import '../../../data/providers/group_providers.dart';
+import '../../../data/providers/moderation_providers.dart';
 import '../../../data/providers/presence_providers.dart';
 import '../../../data/providers/study_providers.dart';
 import '../../profile/widgets/social_profile_dialog.dart';
@@ -34,6 +35,8 @@ class CampfireScene extends ConsumerWidget {
     final membersAsync = ref.watch(groupMembersProvider);
     final presenceList = ref.watch(groupPresenceProvider).value ?? const [];
     final todayByUser = ref.watch(groupTodaySecondsProvider);
+    // WP-126: engellenen üyeleri kamp ateşinden çıkar.
+    final blocked = ref.watch(blockedUserIdsProvider).value ?? const {};
 
     return membersAsync.when(
       loading: () =>
@@ -50,10 +53,16 @@ class CampfireScene extends ConsumerWidget {
         ),
       ),
       data: (members) {
-        final presenceByUser = {for (final p in presenceList) p.userId: p};
+        final visibleMembers = blocked.isEmpty
+            ? members
+            : members.where((m) => !blocked.contains(m.id)).toList();
+        final presenceByUser = {
+          for (final p in presenceList)
+            if (!blocked.contains(p.userId)) p.userId: p,
+        };
 
         final campers = [
-          for (final m in members)
+          for (final m in visibleMembers)
             _Camper(
               member: m,
               presence: presenceByUser[m.id],
