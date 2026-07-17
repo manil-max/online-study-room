@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
 import '../../data/providers/group_providers.dart';
+import '../../data/providers/gamification_providers.dart';
 import '../../data/providers/study_providers.dart';
 import '../../data/providers/subject_providers.dart';
 import '../../data/providers/device_integration_listener.dart';
@@ -43,6 +44,8 @@ class HomeShell extends ConsumerWidget {
     // sürerken satırı düzenli tazeler, uygulama öldürülünce karşı taraf çevrimdışı
     // görür. Kabuk her zaman monte olduğu için burada izlenir.
     ref.watch(presenceLifecycleProvider);
+    // WP-105: oturum bitince XP/başarım RPC — profil ekranı açılmadan tetiklenir.
+    ref.watch(achievementProgressLifecycleProvider);
     ref.watch(nudgeNotificationListenerProvider);
     ref.watch(deviceIntegrationListenerProvider);
     // Hatırlatıcı planlamasını tercih/veri değiştikçe senkron tut (§WP-36).

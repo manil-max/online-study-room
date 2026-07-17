@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -36,52 +38,120 @@ final userAchievementsProvider =
       return repo.watchUserAchievements(userId);
     });
 
-/// WP-56 kapanış: başarı ilerlemesi **server-authoritative**.
+/// WP-56 + WP-105: başarı ilerlemesi **server-authoritative**.
 ///
 /// - İstemci XP/tier hesaplayıp yazmaz.
 /// - `process_achievement_event` (Supabase RPC) veya in_memory ledger.
 /// - Aynı `event_key` ikinci kez XP vermez.
-/// - Tetik: oturum listesi değişince / profil-başarım ekranı bu provider'ı izleyince.
+/// - **WP-105:** Kabuk-ömürlü [achievementProgressLifecycleProvider] oturum
+///   listesi değişince debounce ile tetikler (profil ekranı gerekmez).
+/// - Profil vitrini hâlâ bu provider'ı izleyebilir (confetti / anlık yenileme).
 ///
-/// [userSessionsProvider] yalnız **okunur** (Claude SAHİP study_providers — yazılmaz).
+/// [userSessionsProvider] yalnız **okunur**.
 final gamificationProgressSyncProvider = FutureProvider.autoDispose<void>((
   ref,
 ) async {
   final user = ref.watch(authStateProvider).value;
   if (user == null) return;
 
-  // Oturumlar değişince yeniden değerlendir (idempotent). Değer in_memory
-  // processEvent içinde ayrıca okunur; burada yalnız bağımlılık için await.
   await ref.watch(userSessionsProvider.future);
+  await runAchievementSessionCompletedSync(ref);
+});
 
-  final process = ref.read(processAchievementEventProvider);
-  final result = await process(eventType: 'session_completed');
+/// Oturum tamamlandı olayı: RPC + confetti + (demo) cüzdan projeksiyonu.
+///
+/// WP-105: lifecycle ve profil sync aynı yolu kullanır; mükerrer çağrı
+/// sunucu `event_key` ile idempotent.
+Future<AchievementEventResult?> runAchievementSessionCompletedSync(Ref ref) async {
+  final user = ref.read(authStateProvider).value;
+  if (user == null) return null;
 
-  // WP-57 polish: yeni ödüller confetti için state'e yazılır.
-  if (result.awarded.isNotEmpty) {
-    ref.read(lastAchievementAwardsProvider.notifier).setAwards(
-          List.of(result.awarded),
-        );
+  try {
+    final process = ref.read(processAchievementEventProvider);
+    final result = await process(eventType: 'session_completed');
+
+    if (result.awarded.isNotEmpty) {
+      ref.read(lastAchievementAwardsProvider.notifier).setAwards(
+            List.of(result.awarded),
+          );
+    }
+
+    if (!SupabaseConfig.isConfigured) {
+      await _applyInMemoryLedgerProjection(
+        ref: ref,
+        userId: user.id,
+        totalXp: result.totalXp,
+        crownRank: result.crownRank,
+        awarded: result.awarded
+            .map(
+              (a) => (
+                achievementId: a.achievementId,
+                tier: a.tier,
+              ),
+            )
+            .toList(),
+      );
+    }
+    return result;
+  } catch (_) {
+    // Çevrimdışı / kimlik hazır değil: sessiz geç (sayaç akışını bozma).
+    return null;
   }
+}
 
-  // Supabase: ledger trigger gamification_profiles + user_achievements günceller.
-  // Offline/demo: ledger sonucunu yerel cüzdana yansıt (yine motor çıktısı; istemci kuralı yok).
-  if (!SupabaseConfig.isConfigured) {
-    await _applyInMemoryLedgerProjection(
-      ref: ref,
-      userId: user.id,
-      totalXp: result.totalXp,
-      crownRank: result.crownRank,
-      awarded: result.awarded
-          .map(
-            (a) => (
-              achievementId: a.achievementId,
-              tier: a.tier,
-            ),
-          )
-          .toList(),
+/// WP-105: HomeShell ömrü boyunca oturum listesini dinler; profil açılmadan
+/// `session_completed` fırlatır. Debounce + count/sum coalesce RPC spam'ini keser.
+class AchievementProgressLifecycle {
+  AchievementProgressLifecycle(this._ref);
+
+  final Ref _ref;
+  Timer? _debounce;
+  ProviderSubscription<AsyncValue<List<StudySession>>>? _sessionsSub;
+  bool _started = false;
+  int? _lastCount;
+  int? _lastSum;
+
+  void start() {
+    if (_started) return;
+    _started = true;
+    _sessionsSub = _ref.listen(
+      userSessionsProvider,
+      (prev, next) {
+        final sessions = next.asData?.value;
+        if (sessions == null) return;
+        final count = sessions.length;
+        final sum = sessions.fold<int>(0, (a, s) => a + s.durationSeconds);
+        if (_lastCount == count && _lastSum == sum) return;
+        _lastCount = count;
+        _lastSum = sum;
+        _schedule();
+      },
+      fireImmediately: true,
     );
   }
+
+  void _schedule() {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 800), () {
+      unawaited(runAchievementSessionCompletedSync(_ref));
+    });
+  }
+
+  void dispose() {
+    _debounce?.cancel();
+    _debounce = null;
+    _sessionsSub?.close();
+    _sessionsSub = null;
+    _started = false;
+  }
+}
+
+/// Kabukta `ref.watch` ile diri tutulur (presence lifecycle gibi).
+final achievementProgressLifecycleProvider =
+    Provider<AchievementProgressLifecycle>((ref) {
+  final life = AchievementProgressLifecycle(ref)..start();
+  ref.onDispose(life.dispose);
+  return life;
 });
 
 /// Son process_achievement_event ile kazanılan rozetler (confetti / snack).

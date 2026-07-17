@@ -71,15 +71,15 @@
 - **Not:** Aylık e-posta anahtarı iyimser/kilitli kaydetmeyle düzeltildi; açılış öncesi dürtmeler sessize alındı; kalıcı Sistem/Türkçe/İngilizce seçici eklendi. `flutter analyze`, 433/433 test, EN/TR audit ve yerel beta APK geçti. Hedef beta-v26; stable tag yok.
 
 ### Grok Lane
-- **Durum:** [x] Boşta
-- **Faz/WP:** —
-- **Aşama:** —
-- **SAHİP yollar:** —
-- **Ortak/riskli yüzey:** —
+- **Durum:** [~] Aktif
+- **Faz/WP:** WP-105 — XP oturum bitince sunucu tetiği
+- **Aşama:** Geliştiriliyor
+- **SAHİP yollar:** `app/lib/data/providers/gamification_providers.dart`, `app/lib/core/navigation/home_shell.dart`, ilgili testler
+- **Ortak/riskli yüzey:** home_shell.dart
 - **Dal:** main
-- **Başlangıç:** —
+- **Başlangıç:** 2026-07-17 (Europe/Istanbul)
 - **Son güncelleme:** 2026-07-17 (Europe/Istanbul)
-- **Not:** WP-103 `4c3e259` + WP-104 (presence/stop) kod+otomatik test; cihaz QA → Test için bekleyenler.
+- **Not:** WP-103/104 parkta; study_providers'a dokunulmaz.
 
 
 ---
