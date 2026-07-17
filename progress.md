@@ -71,15 +71,15 @@
 - **Not:** Play Store production programı WP-110–124 olarak planlandı; kanonik belgeler hizalandı. `OPTIMIZATIONS.md` kapsam dışı bırakıldı.
 
 ### Grok Lane
-- **Durum:** [x] Boşta
-- **Faz/WP:** —
-- **Aşama:** —
-- **SAHİP yollar:** —
-- **Ortak/riskli yüzey:** —
+- **Durum:** [~] Aktif
+- **Faz/WP:** WP-134 → WP-137 (widget saat · toggle · reconcile · panel P2)
+- **Aşama:** Geliştiriliyor
+- **SAHİP yollar:** `StudyWidgetProviders.kt`, `odak_timer_widget*`, `StudyTimerService.kt`, `TimerActionReceiver.kt`, `study_providers.dart`, `MainActivity.kt`, `timer_notification.xml`
+- **Ortak/riskli yüzey:** FGS/prefs SSOT (WP-103 tipine dokunulmaz)
 - **Dal:** main
-- **Başlangıç:** —
+- **Başlangıç:** 2026-07-17 (Europe/Istanbul)
 - **Son güncelleme:** 2026-07-17 (Europe/Istanbul)
-- **Not:** WP-133 analiz teslim (`docs/widget-panel/`); Claude checklist onayı bekleniyor. Kod WP-134+ claim edilmez. Push yok.
+- **Not:** Analiz onaylı uygulama; her WP ayrı commit; push yok.
 
 
 ---
@@ -136,11 +136,11 @@
 | WP-130 | [~] Test için bekliyor | Rapor sheet detay alanı | WP-125 |
 | WP-131 | [~] Test için bekliyor | Analyze/lint sertleştirme (0 issue) | — |
 | WP-132 | [~] Test için bekliyor | DATA-SAFETY.md gerçek veri envanteri | Console form |
-| WP-133 | [~] Analiz — doğrulama bekliyor | Widget & dinamik panel kararlılık / mimari analiz (docs only) | Claude checklist |
-| WP-134 | [ ] Bekliyor (analiz onayına bağlı) | Widget canlı saat + compact görünürlük | WP-133 onay |
-| WP-135 | [ ] Bekliyor (analiz onayına bağlı) | 1×1 toggle güvenilirliği (store commit) | WP-134 |
-| WP-136 | [ ] Bekliyor (analiz onayına bağlı) | Reconcile / pending dayanıklılık | WP-135 |
-| WP-137 | [ ] Bekliyor (analiz onayına bağlı) | Dinamik panel MVP (ürün tanımı P1) | WP-136 + ürün P1 |
+| WP-133 | [~] Analiz onaylandı | Widget & dinamik panel kararlılık / mimari analiz | WP-134–137 uygulama |
+| WP-134 | [~] Geliştiriliyor | 1×1 widget canlı saat her boyutta görünür | WP-133 onay |
+| WP-135 | [ ] Bekliyor | Toggle atomikliği + commit + sıfırlama | WP-134 |
+| WP-136 | [ ] Bekliyor | Çift yönlü senkron / reconcile SSOT | WP-135 |
+| WP-137 | [ ] Bekliyor | Dinamik panel P2 (standard + usesChronometer) | WP-136 |
 | WP-138 | [ ] Bekliyor (analiz onayına bağlı) | (ops) OEM standard stil A/B | WP-137 |
 | WP-139 | [ ] Bekliyor (analiz onayına bağlı) | (ops) API 36 Live Updates spike | WP-137 |
 

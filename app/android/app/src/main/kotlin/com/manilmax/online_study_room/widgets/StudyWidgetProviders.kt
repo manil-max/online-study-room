@@ -69,18 +69,32 @@ class TimerWidgetProvider : HomeWidgetProvider() {
                         ?.let { runCatching { java.time.Instant.parse(it).toEpochMilli() }.getOrNull() }
                 val mode = appPrefs.getString("flutter.timer_active_mode", null)
                 val isRunning = startMillis != null
-                // Sade tasarım: yalnız akan saat + tek düğme (başlık/durum yazısı yok).
-                // Chronometer yalnız kronometre modunda anlamlıdır. Geri sayım
-                // ve Pomodoro'da Flutter'ın son olay anında yazdığı süre sabit
-                // gösterilir; yanlış yönde akan native sayaç gösterilmez.
+                // WP-134: Chronometer HER boyutta VISIBLE (compact GONE kaldırıldı).
+                // Compact'te yalnızca punto küçülür — 1×1'de saat üstte, mini düğme altta.
+                // Chronometer yalnız kronometre modunda akar; base formülü korunur.
+                setViewVisibility(R.id.timer_widget_elapsed, View.VISIBLE)
+                setViewVisibility(R.id.timer_widget_action, View.VISIBLE)
+                if (compact) {
+                    setTextViewTextSize(R.id.timer_widget_elapsed, android.util.TypedValue.COMPLEX_UNIT_SP, 16f)
+                    setTextViewTextSize(R.id.timer_widget_action, android.util.TypedValue.COMPLEX_UNIT_SP, 11f)
+                } else {
+                    setTextViewTextSize(R.id.timer_widget_elapsed, android.util.TypedValue.COMPLEX_UNIT_SP, 26f)
+                    setTextViewTextSize(R.id.timer_widget_action, android.util.TypedValue.COMPLEX_UNIT_SP, 13f)
+                }
                 if (isRunning && mode == "stopwatch") {
                     val base = SystemClock.elapsedRealtime() - (System.currentTimeMillis() - startMillis!!)
                     setChronometer(R.id.timer_widget_elapsed, base, null, true)
                 } else {
-                    setChronometer(R.id.timer_widget_elapsed, SystemClock.elapsedRealtime(), "00:00:00", false)
+                    // Idle / sıfır: 00:00:00 (WP-135 semantiği ile hizalı).
+                    setChronometer(
+                        R.id.timer_widget_elapsed,
+                        SystemClock.elapsedRealtime(),
+                        "00:00:00",
+                        false,
+                    )
+                    setTextViewText(R.id.timer_widget_elapsed, "00:00:00")
                 }
-                // Tek düğme sayacı çalışıyorsa Durdur, duruyorsa Başlat yapar
-                // (native servise gider; app kapalıyken de çalışır).
+                // Tek düğme: çalışıyorsa Durdur, duruyorsa Başlat (native servis).
                 setTextViewText(
                     R.id.timer_widget_action,
                     if (isRunning) {
@@ -100,14 +114,8 @@ class TimerWidgetProvider : HomeWidgetProvider() {
                     android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE
                 )
                 setOnClickPendingIntent(R.id.timer_widget_action, pendingIntent)
-                setOnClickPendingIntent(
-                    R.id.timer_widget_root,
-                    openAppPendingIntent(context, 10 + widgetId),
-                )
-                setViewVisibility(
-                    R.id.timer_widget_elapsed,
-                    if (compact) View.GONE else View.VISIBLE,
-                )
+                // Kök tıklama da toggle (küçük 1×1'de düğme isabet alanı dar olabilir).
+                setOnClickPendingIntent(R.id.timer_widget_root, pendingIntent)
             }
             appWidgetManager.updateAppWidget(widgetId, views)
         }
