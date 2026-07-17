@@ -2,7 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:online_study_room/data/providers/moderation_providers.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_moderation_repository.dart';
-import 'package:online_study_room/data/repositories/moderation_repository.dart';
 
 void main() {
   test('blockedUserIdsProvider reflects block and unblock', () async {

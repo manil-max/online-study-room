@@ -34,6 +34,8 @@ Future<void> maybeShowUpdateDialog(BuildContext context) async {
       channel: UpdaterService.channel,
     );
     if (bundledNote != null) {
+      // WP-131: async gap sonrası locale için mounted guard.
+      if (!context.mounted) return;
       final locale = Localizations.localeOf(context);
       info = info.copyWith(
         releaseNotes: bundledNote.forLocale(locale).plainText(

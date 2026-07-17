@@ -173,7 +173,7 @@ class SupabaseGroupRepository implements GroupRepository {
           .update({'name': name.trim()})
           .eq('id', groupId)
           .select('id');
-      if (rows is! List || rows.isEmpty) {
+      if (rows.isEmpty) {
         throw const GroupException(
           'Grup adı değiştirilemedi: yetki yok veya grup bulunamadı.',
         );
@@ -193,7 +193,7 @@ class SupabaseGroupRepository implements GroupRepository {
           .update({'daily_goal_minutes': minutes.clamp(1, 24 * 60)})
           .eq('id', groupId)
           .select('id');
-      if (rows is! List || rows.isEmpty) {
+      if (rows.isEmpty) {
         throw const GroupException(
           'Grup hedefi değiştirilemedi: yetki yok veya grup bulunamadı.',
         );
@@ -236,7 +236,7 @@ class SupabaseGroupRepository implements GroupRepository {
             .update({'invite_code': code})
             .eq('id', groupId)
             .select('invite_code');
-        if (rows is! List || rows.isEmpty) {
+        if (rows.isEmpty) {
           throw const GroupException(
             'Kod yenilenemedi: yetki yok veya grup bulunamadı.',
           );
@@ -261,7 +261,7 @@ class SupabaseGroupRepository implements GroupRepository {
           .eq('group_id', groupId)
           .eq('user_id', userId)
           .select('user_id');
-      if (rows is! List || rows.isEmpty) {
+      if (rows.isEmpty) {
         throw const GroupException(
           'Üye çıkarılamadı: yetki yok veya üye bulunamadı.',
         );
@@ -285,7 +285,7 @@ class SupabaseGroupRepository implements GroupRepository {
           .delete()
           .eq('id', groupId)
           .select('id');
-      if (rows is! List || rows.isEmpty) {
+      if (rows.isEmpty) {
         throw const GroupException(
           'Grup silinemedi: yetki yok veya grup bulunamadı.',
         );
