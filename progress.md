@@ -20,7 +20,7 @@
 - **Navigasyon hedefi:** Ana Sayfa / Saat / Gruplar / İstatistikler / Profil. Ana Sayfa günlük kullanım alanıdır; diğer alanların verisi kendi sekmelerinde eksiksiz bulunur.
 - **Release:** Stable/Beta kanalı GitHub Releases ile çalışır. Yerel `v29` ve `beta-v29` tag'leri WP-104 commitini (`ff369e3`) gösterir; mevcut `main` WP-105–109'u da içerdiği halde `1.0.29+29` taşır. Bir sonraki dağıtımda versionCode mutlaka artırılır; Play production ayrı kalite kapısından geçer.
 - **Kalite kapıları:** Her WP DoD'siz kapanmaz; stable release kalite kapısından geçer (AGENTS.md §3). Server-authoritative XP, RLS/sosyal profil, platform sınırları → `docs/KALITE-PROGRAMI.md`.
-- **Son WP numarası:** 124 (WP-110–124 Play Store production programı planlandı; WP-103–109 kod commitleri mevcut ve cihaz/canlı ops kanıtları ayrı). **Sıradaki boş numara WP-125.**
+- **Son WP numarası:** 124 (WP-110–124 Play Store production programı planlandı; WP-103 cihaz/ürün QA kapandı; WP-104–109 hâlâ park/test-ops). **Sıradaki boş numara WP-125.**
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
   - Flutter: `C:\src\flutter` · Android SDK: `C:\Android\Sdk`
@@ -79,7 +79,7 @@
 - **Dal:** main
 - **Başlangıç:** —
 - **Son güncelleme:** 2026-07-17 (Europe/Istanbul)
-- **Not:** WP-110–118 kod/docs iskelet commitlendi; 119–124 runbook; cihaz/Console/prod deploy sende.
+- **Not:** WP-110–118 kod/docs iskelet commitlendi; 119–124 runbook. 2026-07-17: park WP-76–81/84–89/92–95/97/100/103 cihaz-ürün QA kapanışı progress'e işlendi. Cihaz/Console/prod deploy sende.
 
 
 ---
@@ -107,25 +107,6 @@
 
 | WP | Durum | Kısa kapsam | Bağımlılık |
 |---|---|---|---|
-| WP-76 | [~] Test için bekliyor | Dinamik panel — cihazda çalışan canlı kontrol paneli (Live Activity / durum çubuğu) | — |
-| WP-77 | [~] Test için bekliyor | İzin yönetimi — verilen dört Android iznini geri alma ve rehberi | — |
-| WP-78 | [~] Test için bekliyor | Android beta-v19 — imzalı APK ve GitHub prerelease | WP-76/77 kod commitleri |
-| WP-79 | [~] Test için bekliyor | Bildirim açılışta toplu teslim hata düzeltmesi | beta-v19 cihaz bulgusu |
-| WP-80 | [~] Test için bekliyor | Dinamik panel uygunluk hata düzeltmesi | beta-v19 cihaz bulgusu |
-| WP-81 | [~] Test için bekliyor | Android beta-v20 — bildirim teslimi + dinamik panel düzeltmeleri | WP-79/80 kod commitleri |
-| WP-84 | [~] Test için bekliyor | Kanonik `app_en.arb` / `app_tr.arb` kataloğu | WP-82 + WP-83 |
-| WP-85 | [~] Test için bekliyor | Flutter göç A — hesap, profil, admin, bildirim, güncelleme | WP-84 |
-| WP-86 | [~] Test için bekliyor | Flutter göç B — ana sayfa, sınıf ve istatistikler | WP-84 |
-| WP-87 | [~] Test için bekliyor | Flutter göç C — saat, masaüstü, core ve veri etiketleri | WP-84 |
-| WP-88 | [~] Test için bekliyor | Native Android EN/TR kaynak göçü | WP-83 |
-| WP-89 | [~] Test için bekliyor | EN/TR entegrasyon, audit, build ve cihaz QA | WP-85/86/87/88 |
-| WP-92 | [~] Test için bekliyor | Global açık/özel grup sözleşmesi, RLS ve çift repository | — |
-| WP-93 | [~] Test için bekliyor | Global grup keşfi ve katılım arayüzü | WP-92 |
-| WP-94 | [~] Test için bekliyor | EN bağlam düzeltmeleri ve sade sayaç bildirimi | — |
-| WP-95 | [~] Test için bekliyor | Başarım ayrıntılarında tam cümleli koşullar | — |
-| WP-97 | [~] Test için bekliyor | Eski One UI sayaç satırı, tüm ekranlarda pull-to-refresh, belirgin beta ayrımı ve beta-v24 | WP-94 cihaz bulgusu |
-| WP-100 | [~] Test için bekliyor | Senkron kök fix: local emit, pull-to-refresh timeout, presence race | cihaz bulgusu |
-| WP-103 | [~] Test için bekliyor | 🔴 KRİTİK — Android ≤13 FGS tip (dataSync\|specialUse) + v29 | cihaz QA + stable yayın |
 | WP-104 | [~] Test için bekliyor | Presence bayatlama (updatedAt) + stop oturum kaydı sırası | cihaz QA |
 | WP-105 | [~] Test için bekliyor | 🟠 XP oturum bitince kabuk lifecycle tetik | cihaz/Supabase |
 | WP-106 | [~] Test için bekliyor | watchMembers Map + 0034 active index | migration uygula |
@@ -148,12 +129,13 @@
 | WP-123 | [ ] Bekliyor | Cihaz QA matrisi (P0 kanıt) | fiziksel cihaz |
 | WP-124 | [~] Test için bekliyor | PLAY-RELEASE-GATE şablonu | GO imzası |
 
-> **2026-07-14 proje denetimi:** Serbest sürükle-bırak ızgara, canlı grup hedefi ve saat stilleri **zaten kodda uygulanmış** (backlog stale idi; geçici WP-72/73/75 iptal). Dinamik paneldeki cihaz/eylem sorunu için açılan **WP-76** kod+otomatik test aşamasını geçti; Samsung/Pixel cihaz QA’sı bekliyor.
+> **2026-07-14 proje denetimi:** Serbest sürükle-bırak ızgara, canlı grup hedefi ve saat stilleri **zaten kodda uygulanmış** (backlog stale idi; geçici WP-72/73/75 iptal).
+>
+> **2026-07-17 ürün/cihaz QA kapanışı:** WP-76/77/78/79/80/81, WP-84–89, WP-92/93/94/95/97, WP-100, WP-103 — kullanıcı cihaz/ürün testleri bitti → **Tamamlanan**.
 >
 > **Kalan gerçek açık işler:**
-> - **WP-76** — dinamik panel cihaz QA’sı (aşağıda, kod işi tamamlandı).
 > - **Ürün kararı (kod değil, senin kararın):** WP-66 hesap silme retention · WP-67 grafik türleri · WP-69 aylık rapor için DNS + Resend API key.
-> - **Yeni öncelik:** Play Store production programı **WP-110–124**. Uygulama sırası, bağımlılık dalgaları ve GO/NO-GO kapıları aşağıdaki kartlarda kanoniktir.
+> - **Yeni öncelik:** Play Store production programı **WP-110–124**. Park: WP-104–109 cihaz/canlı ops + WP-110–119/121–122/124 test/ops.
 
 > **Planlama notu:** WP-39 iptal; WP-48/49/50 kaldırıldı; geçici WP-72/73/74/75 (2026-07-14) zaten-yapılmış/yanlış açıldığı için iptal edildi. Sorun çıkarsa ayrı debug/release WP'si açılır.
 
@@ -162,7 +144,7 @@
 > **Çakışma matrisi:** ✅ Wave 1: WP-82 + WP-83. Wave 2: WP-84 + WP-88 (WP-83 sonrası). Wave 3: WP-85 + WP-86. Wave 4: WP-87 tek başına veya bitmiş WP-88'in ardından ikinci ayrık hat. Wave 5: WP-89 tek seri kapı. ARB dosyalarına yalnız WP-82 (seed), sonra WP-84, en son WP-89 yazar; UI worker'ları ARB'yi salt okunur kullanır.
 
 #### Tarihsel uygulama kartı — WP-103 (kodlandı; yeniden claim etme) 💥
-- **Program/Faz:** Debug · Faz 0 (kararlılık) · **Ajan:** Grok · **Durum:** [~] Test için bekliyor · **Model:** 🔴 Opus (yayın + native FGS riski)
+- **Program/Faz:** Debug · Faz 0 (kararlılık) · **Ajan:** Grok · **Durum:** [x] Tamamlandı (cihaz/ürün kabulü 2026-07-17) · **Model:** 🔴 Opus (yayın + native FGS riski)
 - **Problem:** beta-v19'dan (commit `a2688de`, WP-76) beri **Android 10–13 çalıştıran her cihazda** kronometreyi başlatmak da durdurmak da uygulamayı çökertiyor ("Odak Kampı ile ilgili bir sorun oluştu" dialogu). Kök neden: [AndroidManifest.xml](app/android/app/src/main/AndroidManifest.xml) servisi yalnızca `foregroundServiceType="specialUse"` beyan ediyor, ama [StudyTimerService.kt](app/android/app/src/main/kotlin/com/manilmax/online_study_room/timer/StudyTimerService.kt) `startForegroundCompat` içinde API 29–33 dalı hâlâ `FOREGROUND_SERVICE_TYPE_DATA_SYNC` geçiyor. Android, tip manifestin alt kümesi değilse `IllegalArgumentException` fırlatır; servis `startForegroundService` borcunu ödeyemeden ölür → yakalanamayan `RemoteServiceException` ile süreç öldürülür. S23 (Android 14+, SPECIAL_USE dalı) etkilenmez → cihaz farkı tam buradan. Not 20 + A51 (ikisi de final Android 13) etkilenir.
 - **Kapsam dışı:** Presence bayatlama açığı ve durdurmada oturum-kaydı sağlamlaştırma (→ WP-104). Bildirim tasarımı/panel içeriği değişmez. Yeni foreground service türü mimarisi tasarlanmaz — yalnız tip beyanı hizalanır.
 - **SAHİP dosyalar (yaz):**
@@ -319,7 +301,7 @@
 > **Çakışma matrisi (WP-105…109):** ✅ Aktif dosya yazan lane yok. SAHİP kesişimleri: WP-105 (gamification/home_shell) · WP-106 (group_repository + migration 0034) · WP-107 (manual dialog + study_session model) · WP-108 (edge functions + migration 0035) · WP-109 (edge functions + migration 0036 + group_repository). ⚠️ **WP-106 ↔ WP-109** ikisi de `supabase_group_repository.dart`'a yazar → **serileştir** (biri bitince diğeri). ⚠️ **WP-108 ↔ WP-109** ikisi de `send-report`/`collect-reports` edge fonksiyonlarına dokunur + S2 ops sıralaması → **serileştir, S2 cron secret'ten sonra**. Diğerleri paralel güvenli. Migration numaraları 0034/0035/0036 sırayla; aynı anda iki migration WP'si açılırsa numara çakışmasına dikkat.
 
 ### WP-93: Global Grup Keşfi ve Katılım Deneyimi 🌍
-- **Program/Faz:** Sosyal gruplar · Play Store öncesi ürün yüzeyi · **Ajan:** Codex · **Durum:** [~] Test için bekliyor · **Bağımlılık:** WP-92 otomatik kalite kapısı
+- **Program/Faz:** Sosyal gruplar · Play Store öncesi ürün yüzeyi · **Ajan:** Codex · **Durum:** [x] Tamamlandı (cihaz/ürün kabulü 2026-07-17) · **Bağımlılık:** WP-92 otomatik kalite kapısı
 - **Problem:** Kullanıcılar açık grupları bulup tek eylemle katılamıyor; grup oluştururken görünürlük seçemiyor.
 - **Kapsam dışı:** WP-92 dışı yetkilendirme, öneri algoritması, herkese açık üye/sosyal profil, yeni navigation sekmesi.
 - **SAHİP dosyalar (yaz):** `app/lib/features/classroom/classroom_screen.dart`, `app/lib/features/classroom/widgets/class_switcher.dart`, `app/lib/features/classroom/widgets/class_detail_screen.dart`, yeni `app/lib/features/classroom/widgets/group_discovery_*.dart`, ilgili widget testleri, `app/lib/l10n/app_en.arb`, `app/lib/l10n/app_tr.arb`.
@@ -843,12 +825,6 @@
 - **Komut:** `flutter build appbundle --flavor play --release --dart-define=DISTRIBUTION_CHANNEL=play --dart-define-from-file=env.json`
 - **Beklenen:** merged play manifest installer izni 0; stable/beta updater çalışır (`Cihazda/CI doğrulanmalı`).
 
-### WP-103: Android ≤13 FGS tip çökmesi (kod tamam) 💥
-- **Özet:** Manifest `dataSync|specialUse`; StudyTimerService API 29–33 DATA_SYNC / 34+ SPECIAL_USE alt kümesi. `version 1.0.29+29`.
-- **Commit:** `4c3e259`
-- **Beklenen:** Not 20 / A51 / API 33 emülatörde başlat→arka plan→durdur 0 çökme; S23 regresyon; stable GitHub Release (`Cihazda doğrulanmalı` + ürün kararı).
-- **Kanıt:** `Kodda doğrulandı` (manifest hizası). Analyze: 1 pre-existing info (`updater_dialog`).
-
 ### WP-104: Presence bayatlama + stop oturum sırası (kod tamam) 🩹
 - **Özet:** Cache/local presence `updatedAt` damgası; null aktif satır offline; `stop()` önce `_recordSession` sonra `_finish`.
 - **Dosyalar:** `offline_cache_store.dart`, `presence_providers.dart`, `study_providers.dart`, ilgili testler.
@@ -888,17 +864,6 @@
 - **ZORUNLU:** Supabase SQL Editor → `0033_study_hour_xp_50.sql` uygula; yoksa sunucu 10 XP vermeye devam eder.
 - **Cihazda:** güncelleme + profil/başarım aç; 1 saat → +50 XP.
 
-### WP-100: Senkron Kök Fix — Local Emit, Refresh Timeout, Presence Race 🔄
-
-- **Program/Faz:** Debug · **Aşama:** Otomatik test geçti · **Kanıt:** `Kodda doğrulandı` / `Cihazda doğrulanmalı`
-- **Uygulandı (H1):** Offline-first study/presence yazımları aktif watch dinleyicilerine cache'i anında local hub ile push eder; UI realtime beklemez.
-- **Uygulandı (H2):** Pull-to-refresh per-source 8 sn + global 12 sn timeout; hang eden StreamProvider.future spinner'ı kilitleyemez.
-- **Uygulandı (H3):** Group hazır olunca presence yeniden yazılır; local presence emit.
-- **H4:** Açılış dürtme seed mantığı kodda doğrulandı (WP-99); bu WP'de yeniden yazılmadı.
-- **Doğrulama:** offline_first + pull-to-refresh + timer reconcile + nudge testleri yeşil; ilgili analyze 0.
-- **Cihazda doğrulanmalı:** Manuel +30 dk → saat kartı ≤1 sn; pull-to-refresh ≤12 sn; widget/bildirim start → kamp ateşi; cold start eski dürtme yok.
-- **Veri/RLS/Geri alma:** Migration/RLS yok. Geri alma bu istemci commitidir.
-
 ### WP-99: Tercih Kalıcılığı, Açılış Bildirimi ve Manuel Dil Seçimi 🔧
 
 - **Program/Faz:** Debug · **Aşama:** Otomatik test geçti · **Kanıt:** `Kodda doğrulandı` / `Cihazda doğrulanmalı`
@@ -915,121 +880,31 @@
 - **Cihazda doğrulanmalı:** beta-v25'te Android uygulama dilini Türkçe ve İngilizce yaparak Ana Sayfa/İstatistikler'de her iki biçimi de kontrol et.
 - **Veri/RLS/Geri alma:** Veri, migration veya RLS etkisi yok. Geri alma, ortak süre biçimleme commitini geri almaktır.
 
-### WP-95: Başarım Ayrıntılarında Tam Cümleli Koşullar 🏆
-
-- **Program/Faz:** Debug · **Aşama:** Otomatik test geçti · **Kanıt:** `Kodda doğrulandı` / `Cihazda doğrulanmalı`
-- **Uygulandı:** Başarım ayrıntısı artık sunucudan gelen kısa/yerelleştirilmemiş açıklamayı göstermez. Her açık kademe, aktif dilde tam bir koşul cümlesi gösterir; örneğin `Bir günde 6 saat çalış.` / `Study for 6 hours in a single day.` Açılmış gizli başarımlar da gerçek koşulunu açıklar; kilitliyken koşul sır olarak kalır.
-- **Doğrulama:** EN/TR katalog audit'i 997 Flutter anahtarı ve 66 native anahtarda eş. Yeni test, tüm açık başarımların bütün kademelerini iki dilde tam cümle olarak; açılmış gizli başarımların ise gerçek koşulla gösterildiğini denetler. `flutter analyze` 0 bulgu; tüm Flutter testleri 428/428.
-- **Cihazda doğrulanmalı:** EN ve TR'de Başarımlar ekranından her kategoriye en az bir rozet aç; başlık, açıklama ve kademe satırlarında taşma olmadan anlamlı cümleleri doğrula. Kilitli gizli rozetin koşulu görünmemeli; açılmış gizli rozet koşulunu göstermeli.
-- **Veri/RLS/Geri alma:** Veri/migration/RLS veya XP hesaplama etkisi yok. Geri alma, bu ayrıntı metni commitini geri almaktır.
-
-### WP-94: EN Bağlam Düzeltmeleri ve Sade Sayaç Bildirimi 🔔
-
-- **Program/Faz:** Debug · **Aşama:** Otomatik test geçti · **Kanıt:** `Kodda doğrulandı` / `Cihazda doğrulanmalı`
-- **Uygulandı:** Çalışan bildirimin açıklama ve Mola eylemleri kaldırıldı; One UI zorunlu uygulama başlığı altında yalnız canlı sayaç ve Durdur kalır. Boş durumda `00:00:00` ve Başlat kalır. Başarım kademeleri EN'de `Level 1 · 6 hours` biçiminde; kamp ateşi açıklaması bağlama göre çevrilir. Grafik çubukları uzun `hours/minutes` yerine `4h 5m` gösterir.
-- **Doğrulama:** `flutter analyze` 0 bulgu; tüm Flutter testleri 426/426; release APK derlendi (`app-release.apk`, 59.2 MB). EN koşul ve kısa süre biçimi yeni birim/widget testleriyle kapsandı.
-- **Cihazda doğrulanmalı:** Samsung One UI'da çalışan sayaç bildirimi açılmalı; uygulama başlığı dışındaki içerikte yalnız kronometre + Durdur, durdurulduğunda yalnız `00:00:00` + Başlat görünmeli. EN dilinde Başarımlar ve İstatistikler ekran görüntüsüyle `6 hours`, `Level 1`, `4h 5m` doğrulanmalı.
-- **Veri/RLS/Geri alma:** Veri/migration/RLS etkisi yok. Geri alma, bu UI/native bildirim commitini geri almaktır.
-
-### WP-92: Global Açık/Özel Grup Sözleşmesi ve RLS 🛡️
-
-- **Program/Faz:** Sosyal gruplar · Play Store öncesi erişim modeli · **Aşama:** Otomatik test geçti · **Kanıt:** `Kodda doğrulandı` / `Cihazda doğrulanmalı`
-- **Uygulandı:** Yeni gruplar private/50 varsayılanıyla oluşturuluyor. Public keşif yalnız ad, hedef, aktif üye sayısı, limit ve oluşturulma zamanını döndüren SECURITY DEFINER RPC’den geçiyor; davet kodu, üye listesi, oturum, presence ve sosyal profil üyelik öncesinde kapalı. Public/private katılımı grup satırı kilidi altında atomik limit denetimiyle çalışıyor; Supabase ve InMemory repository sözleşmeleri eş.
-- **Doğrulama:** `flutter analyze --no-pub` 0 bulgu; yeni model/repository/RLS sözleşme testleri 22/22; tüm Flutter testleri 419/419 geçti. `0032` migration statik testleri public keşif çıktısında invite code olmadığını ve `groups_select` RLS’inin genişletilmediğini doğruluyor.
-- **Cihazda/doğru canlıda doğrulanmalı:** Kullanıcı `supabase/migrations/0032_public_group_discovery.sql` dosyasını önce mevcut migration sırasından sonra Supabase SQL Editor’da uygulamalı. Ardından iki gerçek hesapla oluştur→public yap→keşfet→katıl→ayrıl→private’a al; 50. ve paralel 51. katılımı, eski private davet katılımını ve üye olmayan kullanıcının üye/oturum/profil göremediğini doğrulamalı.
-- **Veri/RLS/Geri alma:** Varsayılan private ile eski gruplar kapalı kalır; rollback notu migration başında. RLS/katılım garantisi canlı Supabase uygulanmadan tamamlanmış sayılmaz.
-
-### WP-89: EN/TR Entegrasyon ve Cihaz QA Kapısı ✅
-
-- **Program/Faz:** Küresel açılım · kalite kapısı · **Ajan:** Codex · **Aşama:** Otomatik test geçti · **Kanıt:** `Kodda doğrulandı` / `Cihazda doğrulanmalı` · **Bağımlılık:** WP-85/86/87/88
-- **Uygulandı:** EN/TR ARB anahtar/placeholder sözleşmesini ve kullanıcıya görünür Flutter Türkçe literal'lerini denetleyen `scripts/l10n_audit.py` eklendi; native Android audit de aynı kapıda çalışıyor. Sistem dili `tr` değilse İngilizceye düşme sözleşmesi, EN/TR temel V8 yolculuğu testiyle doğrulandı. Windows cold-start hata yüzeyi de sistem diline göre yerelleştirildi; ham hata metni gösterilmiyor.
-- **Doğrulama:** `python scripts/l10n_audit.py` geçti (957 Flutter anahtarı + native 66 anahtar); `flutter analyze --no-pub` 0 bulgu; tüm Flutter testleri 410/410 geçti. `flutter build apk --release --dart-define-from-file=env.json` ile fresh stable ve beta APK; `flutter build windows --release --dart-define-from-file=env.json` ile Windows release çıktı başarıyla üretildi.
-- **Cihazda doğrulanmalı:** `adb devices -l` bağlı Android göstermedi. Samsung ve Pixel'de EN/TR cold start, native bildirim/widget + process death; Windows'ta EN/TR cold start, uzun İngilizce/overflow ve TalkBack/Narrator kontrolü, ardından ürün sahibi kabulü. Adım adım kanıt matrisi: `docs/QA-L10N-EN-TR.md`.
-- **Veri/RLS/Geri alma:** Veri, migration, RLS veya sır/PII etkisi yok; geri alma bu QA/audit commitidir. Üçüncü dil ve manuel dil seçici kapsam dışıdır.
-
-### WP-87: Flutter Göç C — Saat, Masaüstü ve Core ⏱️
-- **Program/Faz:** Küresel açılım · UI göçü · **Ajan:** Codex · **Aşama:** Otomatik test geçti · **Kanıt:** `Kodda doğrulandı` / `Cihazda doğrulanmalı`
-- **Uygulandı:** Saat, alarm, timer, dünya saati, masaüstü kabuğu ve Android widget snapshot metinleri resmi `AppLocalizations` kataloğuna bağlandı. BuildContext olmayan bildirim/provider yolları sistem locale'ini çözüyor; yalnız `tr` Türkçe, diğer diller İngilizce. Tema, hayvan, başarım, alarm gün özeti ve varsayılan timer etiketleri UI sınırında yerelleştirildi; sabit `tr_TR` tarih biçimleri etkin locale'e geçirildi.
-- **Literal denetimi:** Sahip yüzeyde kullanıcıya gösterilen Türkçe literal ve sabit `tr_TR` kalmadı. Kalan Türkçe karakterli iki sabit yalnız iç assertion/telemetri sanitizasyonudur; repository/server payload'ına çevrilmiş metin yazılmıyor. ARB/generated l10n ve Android native yüzeylere dokunulmadı.
-- **Doğrulama:** `flutter analyze --no-pub` 0 bulgu; tüm Flutter testleri 409/409 geçti. Sistem `tr_TR` → Türkçe ve desteklenmeyen `de_DE` → İngilizce çözümlemesi ayrıca test edildi; saat/desktop/widget için EN/TR beklentileri güncellendi.
-- **Ne bekleniyor:** WP-89'da Android/Windows gerçek cihazda EN/TR bağlam, uzun İngilizce/overflow, bildirim-widget process death ve tema/başarım ürün dili kontrolü.
-- **Veri/RLS/Geri alma:** Veri, migration, RLS veya repository davranışı değişmedi; geri alma UI/core commitidir.
-
-### WP-86: Flutter Göç B — Çalışma ve Sosyal Alanlar 🏕️
-- **Program/Faz:** Küresel açılım · UI göçü · **Ajan:** Codex · **Aşama:** Otomatik test geçti · **Kanıt:** `Kodda doğrulandı` / `Cihazda doğrulanmalı`
-- **Uygulandı:** Ana sayfa kartları, sınıf/sohbet/sayaç yüzeyleri ve kişisel/sınıf istatistikleri resmi `AppLocalizations` kataloğuna bağlandı. Tarih ve ondalık gösterimleri etkin locale göre biçimleniyor; hata nesneleri kullanıcıya doğrudan basılmıyor. Kullanıcı/grup adları, sohbet ve ders içerikleri aynen korunuyor.
-- **Literal denetimi:** Sahip yüzeyde doğrudan görünür metin olarak yalnız teknik işaretler, emoji ve sayısal gösterimler kaldı; sabit `tr_TR`, `labelTr` ve ham hata sunumu yok. Core'daki `formatHuman` WP-87'nin açık sahipliğinde kaldığı için bu WP'de değiştirilmedi; ARB/generated l10n, core/data ve native yüzeylere dokunulmadı.
-- **Doğrulama:** `flutter analyze` 0 bulgu; tüm Flutter testleri 407/407 geçti. EN/TR için 360/600/1200 px genişliklerinde ana sayfa, dönem seçici ve sınıfsız sınıf yüzeyi doğrulandı; overflow hatası 0.
-- **Ne bekleniyor:** WP-89'da Android/Windows gerçek cihazda EN/TR bağlam, uzun İngilizce/overflow, erişilebilirlik ve katalog terim kalitesi kontrolü. Mevcut katalog anahtarlarının bazı bağlamlarda kısa/genel karşılık kullanması ürün dili QA'sında gözden geçirilmeli.
-- **Veri/RLS/Geri alma:** Veri, migration, RLS veya repository davranışı değişmedi; geri alma UI commitidir.
-
-### WP-85: Flutter Göç A — Hesap ve Yönetim 👤
-- **Program/Faz:** Küresel açılım · UI göçü · **Ajan:** Codex · **Aşama:** Otomatik test geçti · **Kanıt:** `Kodda doğrulandı` / `Cihazda doğrulanmalı`
-- **Uygulandı:** Auth, profil, admin, bildirim merkezi ve güncelleyici yüzeylerindeki görünür chrome/validation/tooltip/boş-hata metinleri resmi `AppLocalizations` kataloğuna bağlandı. Auth/repository ve async hata nesneleri artık kullanıcıya doğrudan basılmıyor; kullanıcı tarafından girilen duyuru, hatırlatıcı, rapor ve sürüm-notu içeriği aynen korunuyor.
-- **Literal denetimi:** Sahip yüzeyde doğrudan UI literalı yalnız parola maskesi ve sayısal önizleme değerleri; Türkçe karakterli kalan sabitler yorumlar ile kullanıcıya gösterilmeyen auth hata sınıflandırma karşılaştırmalarıdır. ARB/generated l10n, core/data ve native yüzeylere dokunulmadı.
-- **Doğrulama:** `flutter analyze` 0 bulgu; tüm Flutter testleri 401/401 geçti. Auth + profil + güncelleyici için EN/TR widget kanıtı eklendi; mevcut profil/admin testleri resmi delegate sözleşmesine geçirildi; varsayılan EN uygulama smoke beklentileri güncellendi.
-- **Ne bekleniyor:** WP-89'da Android/Windows gerçek cihazda EN/TR bağlam, uzun İngilizce/overflow, ekran okuyucu ve katalog terim kalitesi kontrolü. Başarım koşullarının ayrıntılı ürün dili ve `profileSaat` İngilizce karşılığı gibi katalog bağlam bulguları WP-89 düzeltme penceresinde ele alınmalı.
-- **Veri/RLS/Geri alma:** Veri, migration, RLS veya repository davranışı değişmedi; geri alma UI commitidir.
-
-### WP-84: Kanonik ARB Kataloğu 🔤
-- **Program/Faz:** Küresel açılım · katalog · **Ajan:** Codex · **Aşama:** Otomatik test geçti · **Kanıt:** `Kodda doğrulandı` / `Cihazda doğrulanmalı`
-- **Uygulandı:** Kanonik `app_en.arb` ve `app_tr.arb` kataloglarında 957 kaynak; tüm kaynaklarda İngilizce metadata, placeholder tanımları ve ortak süre/oturum ICU plural'ları. EN/TR anahtar ve placeholder sözleşmesi eş.
-- **Envanter kapsamı:** WP-83'teki 938 satırın tamamı sınıflandırıldı: 846 kanonik kaynak, 46 bölünmüş liste/ternary parçası ve 46 kullanıcı metni olmayan false-positive; eksik 0.
-- **Doğrulama:** `flutter gen-l10n` geçti; `flutter analyze` 0 bulgu; tüm testler 395/395 ve l10n bootstrap 4/4 geçti; anahtar/metadata/placeholder paritesi %100.
-- **Ne bekleniyor:** WP-85/86/87 entegrasyonlarından sonra WP-89'da EN/TR cihaz, taşma ve bağlam içi ürün dili kontrolü. Ücretsiz makine destekli taslak sözlük ve elle bağlam/terim QA'sı uygulandı; gerçek ekran bağlamı son kapıda doğrulanacak.
-- **Değişen dosyalar:** Yalnız `app/lib/l10n/app_en.arb`, `app/lib/l10n/app_tr.arb`; generated l10n çıktıları ignore edildi.
-
-### WP-88: Native Android EN/TR Kaynakları 🤖
-- **Program/Faz:** Küresel açılım · native yüzey · **Ajan:** Grok · **Aşama:** Otomatik test geçti · **Kanıt:** `Kodda doğrulandı` / `Cihazda doğrulanmalı`
-- **Uygulandı:** `values` varsayılan İngilizce + `values-tr` Türkçe (66 anahtar, parite). Alarm/timer bildirim, ring UI, widget layout/provider, shortcut ve manifest widget label'ları `getString` / `@string`. Marka `Odak Kampı` çevrilmedi. Statik audit: `scripts/l10n_android_audit.py`.
-- **Doğrulama:** audit OK; `flutter build apk --debug` yeşil (`app-debug.apk`).
-- **Ne bekleniyor:** TR ve EN sistem dilinde widget/bildirim/shortcut smoke (process death + widget preview).
-- **Dal:** `wp88-android-native-l10n` · Flutter/ARB dokunulmadı.
-
-### WP-76: Dinamik Panel — Cihazda Çalışan Canlı Kontrol Paneli 🔔
-- **Program/Faz:** Güvenilirlik / Android canlı yüzey · **Ajan:** Codex · **Aşama:** Otomatik test geçti · **Kanıt:** `Kodda doğrulandı` / `Cihazda doğrulanmalı`
-- **Uygulandı:** Native foreground bildirim tek otorite yapıldı; eski, resume'a bağlı Flutter bildirimi servis başlatıldığında temizlenir. Dar panelde canlı `Chronometer`, geniş panelde doğrudan native **Mola / Durdur** (mola durumunda **Çalışmaya dön / Durdur**) eylemleri var. Mola, tamamlanan çalışma aralığını kuyruğa alır; mola süresi oturuma yazılmaz. Flutter açıldığında native `rest` fazı UI/presence'a uzlaştırılır.
-- **Android uyumu:** Android 14+ için manifestte beyanlı `specialUse` foreground service kullanılır; Android 15 `dataSync` türünün 6 saat / 24 saat sınırı 8 saatlik sayaç sözleşmesini kesmez. Geri alma = `StudyTimerService` türünü eski `dataSync` bildirime döndürmek ve `timer_notification_expanded.xml`i kaldırmak.
-- **Otomatik kanıt:** `flutter test test/features/timer_background_reconcile_test.dart --dart-define-from-file=env.json` → 4/4 PASS; manifest + geniş panel XML statik doğrulama PASS; `git -c core.whitespace=cr-at-eol diff --check` PASS. `flutter analyze` depodaki WP-76 dışı 4 mevcut uyarı nedeniyle 0 değil. Tam `flutter test` ise WP-76 dışı `theme_engine_test` ve `widget_test` hatalarıyla 385 PASS / 2 FAIL.
-- **Bekleyen cihaz QA:** Samsung One UI ve Pixel (Android 14+) üzerinde bildirim iznini ver; Ayarlar → Pil → uygulama pili **Sınırsız** yap; uygulamayı görev listesinden kapat; panelden 20 ardışık Başlat/Durdur ve Mola/Çalışmaya dön turu yap. Her tur ≤2 sn yansımalı, panel genişlemeli, süre sistem `Chronometer`ı ile akmalı; Samsung + Pixel video kanıtı ve 8 saat sapma ölçümü gerekli. Ortamda Android SDK/bağlı cihaz olmadığı için APK derlemesi burada koşulamadı.
-- **Değişen yollar:** `app/lib/core/background/timer_foreground_service.dart`, `app/lib/data/providers/study_providers.dart`, `app/android/app/src/main/AndroidManifest.xml`, `app/android/app/src/main/kotlin/com/manilmax/online_study_room/{MainActivity.kt,timer/StudyTimerService.kt}`, `app/android/app/src/main/res/layout/timer_notification_expanded.xml`, `app/test/features/timer_background_reconcile_test.dart`.
-
-### WP-77: Android İzin Yönetimi ve Geri Alma Rehberi
-- **Program/Faz:** Android güvenilirlik bakım · **Aşama:** Otomatik test geçti · **Kanıt:** `Kodda doğrulandı` / `Cihazda doğrulanmalı`
-- **Uygulandı:** Widget ve izinler ekranında izin verilmişse dört kartın düğmesi artık **Kapat**, verilmemişse **Aç**. Kapat ilgili Android sistem sayfasını açar; uygulama izni doğrudan geri alamaz. Açılır rehber, Bildirimler / Kesin alarm / Pil istisnası / Tam ekran alarm için kullanıcıya kapanış adımını Türkçe anlatır; OEM başlıklarının değişebileceğini belirtir.
-- **Otomatik kanıt:** `flutter test test/features/clock_widgets_screen_test.dart --dart-define-from-file=env.json` → PASS; `flutter analyze` depodaki WP-77 dışı mevcut 4 uyarı nedeniyle 0 değil.
-- **Bekleyen cihaz QA:** Android 13+ ve Android 14+ cihazlarda her kartta Kapat → ilgili sistem ayarı → anahtarı kapat → uygulamaya dön adımını dene; kartın turuncuya döndüğünü doğrula. Samsung/HyperOS’ta pil ekranı adı farklı olabilir; rehber metni işlevi açıkça anlatmalı.
-
-### WP-78: Android beta-v19 Yayın Paketi
-- **Program/Faz:** Android dağıtım · **Aşama:** Yayınlandı · **Kanıt:** `Kodda doğrulandı` / `Cihazda doğrulanmalı`
-- **Uygulandı:** `beta-v19` etiketi GitHub prerelease olarak yayımlandı; imzalı `app-beta-release.apk` ve SHA-256 varlığı doğrulandı. Stable yayın yapılmadı.
-- **Bekleyen cihaz QA:** Telefonda beta-v19 kurulumu ile WP-76/77 davranışlarının kabulü.
-
-### WP-79: Bildirim Açılışta Toplu Teslim Hata Düzeltmesi
-- **Program/Faz:** Android güvenilirlik bakım · **Aşama:** Otomatik test geçti · **Kanıt:** `Kodda doğrulandı` / `Cihazda doğrulanmalı`
-- **Düzeltildi:** Açılışta çalışan güncelleme kontrolünün Android sistem bildirimi üretmesi kaldırıldı; güncelleme anahtarı yalnız uygulama içi güncelleme penceresini yönetir. Dürtme dinleyicisi her uygulama oturumunun ilk stream anlık görüntüsünü sessizce temel alır; yalnız sonradan canlı gelen yeni dürtme için bildirim gösterir.
-- **Otomatik kanıt:** Dürtme/açılış senaryosu dahil 9 test PASS; değişen dosyalarda `flutter analyze` 0. Tam analiz, WP-79 dışı mevcut 4 uyarıyla başarısız.
-- **Bekleyen cihaz QA:** Bir sonraki beta kurulunca (1) uygulamayı açarken Android sisteminde güncelleme bildirimi oluşmadığını, (2) uygulama kapalıyken gönderilen dürtmelerin açılışta patlamadığını, (3) uygulama açıkken yeni gönderilen dürtmenin yalnız bir kez geldiğini doğrula.
-
-### WP-80: Dinamik Panel Uygunluk Hata Düzeltmesi
-- **Program/Faz:** Android güvenilirlik bakım · **Aşama:** Otomatik test geçti · **Kanıt:** `Kodda doğrulandı` / `Cihazda doğrulanmalı`
-- **Kök neden ve düzeltme:** Çalışan sayaç her zaman özel `RemoteViews` bildirimini kullanıyordu. Bu yol OEM'in canlı/dinamik panel uygunluğunu engellediği için kaldırıldı; bildirim artık standart ongoing `CATEGORY_STOPWATCH` + native `Chronometer` + `Mola`/`Durdur` eylemleriyle oluşturuluyor. Uygulama kapalıyken eylemler doğrudan native foreground service'e gitmeye devam eder.
-- **Otomatik kanıt:** `timer_background_reconcile_test.dart` 4/4 PASS; imzalı `beta` release APK derlemesi PASS. Tam analiz, WP-80 dışındaki 4 mevcut uyarıyla başarısız.
-- **Bekleyen cihaz QA:** Yeni beta ile sayacı başlat; uygulamayı görev listesinden kapat; bildirimde akan süre ve Mola/Durdur'u doğrula. Telefonun desteklediği OEM canlı panel/Now Bar/HyperOS yüzeyinde terfi görünürse ekran kaydı al. Terfi, Android sürümü ve OEM politikası nedeniyle garanti edilemez; standart canlı bildirim ve kontroller ise görünmelidir.
-
-### WP-81: Android beta-v20 Yayın Paketi
-- **Program/Faz:** Android dağıtım · **Aşama:** Yayınlandı · **Kanıt:** `Kodda doğrulandı` / `Cihazda doğrulanmalı`
-- **Yayın:** `beta-v20` GitHub prerelease oluşturuldu; `app-beta-release.apk` (73,017,829 bayt) ve SHA-256 varlığı doğrulandı. Stable tag/release yok.
-- **Bekleyen cihaz QA:** beta-v20 ile WP-79 bildirim teslimi ve WP-80 standart canlı sayaç/dinamik panel uygunluğunu telefonda doğrula.
- 
----
-
 ## Tamamlanan İş Paketleri
 
 > Biten her WP yalnız bu başlık altında tutulur. Buradaki kartlar tekrar aktif veya planlanan iş olarak yazılmaz.
 
 | WP | Tamamlanan kapsam |
 |---|---|
+| WP-103 | 🔴 Android ≤13 FGS tip (dataSync|specialUse) + v29 — cihaz/ürün kabulü 2026-07-17 |
+| WP-100 | Senkron kök fix: local emit, pull-to-refresh timeout, presence race — cihaz/ürün kabulü 2026-07-17 |
+| WP-97 | Eski One UI sayaç satırı, pull-to-refresh, beta ayrımı, beta-v24 — cihaz/ürün kabulü 2026-07-17 |
+| WP-95 | Başarım ayrıntılarında tam cümleli koşullar — cihaz/ürün kabulü 2026-07-17 |
+| WP-94 | EN bağlam düzeltmeleri ve sade sayaç bildirimi — cihaz/ürün kabulü 2026-07-17 |
+| WP-93 | Global grup keşfi ve katılım arayüzü — cihaz/ürün kabulü 2026-07-17 |
+| WP-92 | Global açık/özel grup sözleşmesi, RLS ve çift repository — cihaz/ürün kabulü 2026-07-17 |
+| WP-89 | EN/TR entegrasyon, audit, build ve cihaz QA — cihaz/ürün kabulü 2026-07-17 |
+| WP-88 | Native Android EN/TR kaynak göçü — cihaz/ürün kabulü 2026-07-17 |
+| WP-87 | Flutter göç C — saat, masaüstü, core ve veri etiketleri — cihaz/ürün kabulü 2026-07-17 |
+| WP-86 | Flutter göç B — ana sayfa, sınıf ve istatistikler — cihaz/ürün kabulü 2026-07-17 |
+| WP-85 | Flutter göç A — hesap, profil, admin, bildirim, güncelleme — cihaz/ürün kabulü 2026-07-17 |
+| WP-84 | Kanonik app_en.arb / app_tr.arb kataloğu — cihaz/ürün kabulü 2026-07-17 |
+| WP-81 | Android beta-v20 — bildirim teslimi + dinamik panel düzeltmeleri — cihaz/ürün kabulü 2026-07-17 |
+| WP-80 | Dinamik panel uygunluk hata düzeltmesi — cihaz/ürün kabulü 2026-07-17 |
+| WP-79 | Bildirim açılışta toplu teslim hata düzeltmesi — cihaz/ürün kabulü 2026-07-17 |
+| WP-78 | Android beta-v19 — imzalı APK ve GitHub prerelease — cihaz/ürün kabulü 2026-07-17 |
+| WP-77 | İzin yönetimi — dört Android iznini geri alma ve rehberi — cihaz/ürün kabulü 2026-07-17 |
+| WP-76 | Dinamik panel — canlı kontrol paneli (Live Activity / durum çubuğu) — cihaz/ürün kabulü 2026-07-17 |
 | WP-91 | Stats dönem-senkron başlık order testi — sabit 7/30 gün beklentisi güncel `7 gün · Hafta` sözleşmesine hizalandı; hedef test geçti; kapanış 2026-07-14 |
 | WP-82 | Flutter l10n çekirdeği + sistem dili resolver'ı — `en` varsayılan, yalnız `tr*` için Türkçe; gen-l10n, 4/4 hedef test, analyze, 395/395 tam test, Windows release build+smoke geçti; kapanış 2026-07-14 |
 | WP-90 | Depo kalite kapısı temizliği — 4 analiz bulgusu ve 2 eski/kırılgan test düzeltildi; `flutter analyze` 0, tam test 395/395; kapanış 2026-07-14 |

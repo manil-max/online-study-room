@@ -1,175 +1,282 @@
 # OPTIMIZATIONS.md
 
-Kapsam: `online-study-room` tam optimizasyon denetimi (Flutter uygulaması `app/` + Supabase arka ucu `supabase/migrations/`). Yalnızca kod analizi; çalışma zamanı profillenmedi. Koddan kanıtlanamayan iddialar **olası** etiketiyle ve neyin ölçüleceğiyle birlikte verildi.
+**Tarih:** 2026-07-17  
+**Kapsam:** Düşük/orta risk optimizasyonlar + muhtemel bug taraması + güvenlik notları  
+**Kural:** Kod **değiştirilmedi**. Yalnız rapor.
 
-> Bu turda hiçbir şey değiştirilmedi — yalnızca bulgular (optimizasyon-prompt kuralı gereği). Önceki `OPTIMIZATIONS.md` migration yorumlarında "F1" olarak anılıyor (`group_daily_totals` sunucu-taraflı agregasyonu). Çakışmamak için yeni bulgu kimlikleri **N1+** olarak numaralandırıldı.
-
----
-
-## 1) Optimizasyon Özeti
-
-Mevcut durum: temiz mimari (repository deseni, Riverpod, in-memory ↔ Supabase geçişi). Sunucu-taraflı günlük agregasyon (`group_daily_totals`) en büyük veri-hacmi sorununu zaten çözmüş. Kalan sorunlar: **realtime fan-out / yeniden agregasyon**, **sınırsız stream'ler** ve tüm oturum listesi üzerinde **gereksiz istemci-taraflı yeniden hesap**.
-
-En yüksek etkili 3 iyileştirme:
-1. **`watchGroupDailyStats`'ı debounce et + daralt** — `study_sessions` tablosundaki *herhangi* bir satır değişimi (tablo geneli, filtresiz), abone olan her istemci için tüm grup agregasyon RPC'sini yeniden çalıştırıyor. Eşzamanlı kullanıcı arttıkça asıl ölçeklenme uçurumu bu (DB CPU + ağ).
-2. **`watchUserSessions`'ı sınırla** — kullanıcının tüm oturum geçmişini, sınırsız, sıralı, her değişimde akıtıyor. Bellek + transfer + sonraki yeniden hesaplar sınırsız büyür.
-3. **Tek `dailyTotals` hesabını paylaş** — `currentStreakProvider`, `todayRecordedSecondsProvider` ve istatistik widget'ları aynı oturum listesini bağımsız olarak tekrar tarıyor (her rebuild'de birden çok O(n) geçiş); tek bir memoize edilmiş haritadan türetmek yerine.
-
-Değişmezse en büyük risk: birkaç kullanıcıyla sorunsuz çalışır, ama tablo-geneli realtime yeniden agregasyon maliyeti **(aktif kullanıcı × gün başına oturum × abone sayısı)** ile ölçeklenir — gerçek sınıf yükünde tam RPC yeniden-çalıştırmalarından oluşan bir "thundering herd".
+> **Bu sürümden çıkarılanlar (bilerek):** materialize group stats, Drift/SQLite migrasyonu, chat stream mimarisi rewrite, mobil lazy-tab refaktörü, presence redesign, süre hard-cap ürün kararı gerektiren agresif S1 “hemen uygula” yamaları, cron/secret “force” olmadan production kırma riski taşıyan derin işler.  
+> Bunlar bozma ihtimali yüksek / büyük refactor; buraya yazılmıyor.
 
 ---
 
-## 2) Bulgular (Öncelik Sırasıyla)
+## 1) Optimization Summary
 
-### N1 — Tablo-geneli realtime tetiği tüm RPC'yi yeniden agregasyona zorluyor
-- **Kategori:** DB / Network / Caching
-- **Önem:** High
-- **Etki:** DB CPU, gecikme, çıkış trafiği, pil; ölçeklenme tavanı
-- **Kanıt:** `supabase_study_repository.dart:63-96` (`watchGroupDailyStats`). Realtime kanalı `study_sessions`'a **filtresiz** abone (`event: all`, tüm tablo — `group_id` 0010'da kaldırıldı) ve her değişimde `refresh()` çağırıyor. `refresh()` `group_daily_totals(p_group_id)`'i (tam `study_sessions ⨝ group_members` GROUP BY) sıfırdan çalıştırıp tüm sonucu yeniden gönderiyor.
-- **Neden verimsiz:** Herhangi bir kullanıcının tek bir oturum kaydı, herhangi bir gruba abone tüm istemcileri uyandırıp sıfırdan agregasyon yaptırıyor. Debounce/birleştirme yok: yazma patlaması = tam RPC patlaması. 1 satırlık değişimde bile tüm sonuç kümesi yeniden gönderiliyor.
-- **Önerilen düzeltme:** (a) `refresh()`'i **debounce** et (~750ms–2s içindeki olayları birleştir — her olayda sıfırlanan bir `Timer`). (b) Kaynaktaki gürültüyü azalt: oturumları daha seyrek yaz veya flush'lar arası istemcide topla. (c) Uzun vadede trigger ile güncellenen materyalize bir `group_daily_totals` tablosu tut; okuma anında yeniden agregasyon yerine onu group'a göre filtreli akıt.
-- **Tradeoff / Risk:** Debounce, canlı leaderboard'a N saniyeye kadar bayatlık ekler (çalışma takipçisi için kabul edilebilir). Materyalize tablo yazma yoluna karmaşıklık + migration ekler.
-- **Beklenen etki:** High — O(yazma × abone) tam agregasyonu, debounce penceresi başına O(1)'e indirir; yük altında büyük DB-yükü azalması.
-- **Kaldırma Güvenliği:** Doğrulama Gerekir (kabul edilebilir bayatlık ürün tarafıyla teyit edilmeli)
-- **Yeniden Kullanım Kapsamı:** servis-geneli (tüm grup istatistik tüketicileri)
+**Sağlık:** Küçük grup için yeterli. N1 debounce, N2 90g hot window, N3 `dailyTotalsProvider`, N5 create/join RPC **zaten kodda**.
 
-### N2 — Sınırsız `watchUserSessions` stream'i
-- **Kategori:** Memory / Network
-- **Önem:** High
-- **Etki:** İstemci belleği, transfer, sonraki CPU
-- **Kanıt:** `supabase_study_repository.dart:34-41` kullanıcının **tüm** `study_sessions`'ını `start_time`'a göre sıralı, `.limit()`/sayfalama olmadan akıtıyor. `study_providers.dart:29-33` bunu uygulama geneline açıyor; istatistik ekranları ve `currentStreak`/`todayRecorded` tüm listeyi tüketiyor.
-- **Neden verimsiz:** Yoğun kullanıcı binlerce satır biriktirir; her realtime değişimde tüm küme yeniden akıtılıp decode edilir, sonra her bağımlı provider yeniden tarar.
-- **Önerilen düzeltme:** Çoğu görünüm yalnızca yakın bir pencereye ihtiyaç duyar (ör. son 90–365 gün) — akıtılan kümeye sunucu-taraflı tarih filtresi / `.limit()` ekle, eski geçmişi talep üzerine getir (geçmiş ekranı sayfalasın). Tüm-zaman agregalarını sunucuda tut (grup için RPC ile zaten öyle; tüm-zaman kişisel istatistik gerekiyorsa kullanıcı başına bir `user_daily_totals` RPC ekle).
-- **Tradeoff / Risk:** "Tüm-zaman" kişisel istatistikler (en uzun seri, ömür boyu toplam) tam istemci listesi yerine sunucu agregası gerektirir. Hangi ekranların gerçekten tüm geçmişe ihtiyaç duyduğunu doğrula.
-- **Beklenen etki:** Medium–High; hesap yaşından bağımsız sınırlı bellek/transfer.
-- **Kaldırma Güvenliği:** Doğrulama Gerekir (hangi ekranlar tüm geçmişe muhtaç)
-- **Yeniden Kullanım Kapsamı:** servis-geneli
+**Top 3 (düşük bozma riski, makul ROI):**
+1. **R3** — `watchMembers` içinde `firstWhere` → `Map` (davranış aynı, crash yüzeyi azalır)
+2. **R9** — `userStudySummaryProvider` her session stream tick’inde RPC atmasın (debounce / mutation-only)
+3. **R12** — aktif `group_members(group_id) WHERE left_at IS NULL` index (yalnız ekleme)
 
-### N3 — Provider'lar arası gereksiz tam-liste yeniden hesabı
-- **Kategori:** Algorithm / CPU
-- **Önem:** Medium
-- **Etki:** Rebuild'lerde CPU, jank (**olası** — ölç)
-- **Kanıt:** `study_providers.dart:46-65`. `todayRecordedSecondsProvider` tüm listeyi fold ediyor; `currentStreakProvider` `currentStreak(sessions, ...)` çağırıyor, o da içeride tüm geçmiş üzerinde `dailyTotals(sessions)` (`study_stats.dart:51-57`) kuruyor. İstatistik widget'ları `lastNDays` / `dailyRange` / `longestStudyStreak` çağırıyor; paylaşılan `totals` haritası verilmedikçe her biri `dailyTotals`'ı yeniden kuruyor. Aynı veride frame/rebuild başına birden çok bağımsız O(n) tarama.
-- **Neden verimsiz:** `dailyTotals` aynı kaynaktan defalarca yeniden hesaplanıyor; bunu önlemek için var olan `totals`-enjeksiyon parametresi var ama provider'lar paylaşılan harita sunmuyor.
-- **Önerilen düzeltme:** Tek bir `dailyTotalsProvider` ekle (`userSessionsProvider`'dan türetilmiş memoize `Map<DateTime,int>`); streak/today/range provider'ları ve istatistik widget'ları bunu mevcut `totals:` parametreleriyle tüketsin.
-- **Tradeoff / Risk:** İşlevsel olarak yok; tarama sayısını azaltır.
-- **Beklenen etki:** Medium; ~4–6 tam taramayı veri değişimi başına 1'e indirir.
-- **Kaldırma Güvenliği:** Muhtemelen Güvenli
-- **Yeniden Kullanım Kapsamı:** modül (`study_providers` + istatistik widget'ları)
-- **Sınıflandırma:** Yeniden Kullanım Fırsatı
-
-### N4 — Grup/üye stream'lerinde realtime yeniden-getirme + O(n·m) eşleştirme
-- **Kategori:** DB / Algorithm
-- **Önem:** Medium
-- **Etki:** Round-trip, üyelik değişiminde CPU
-- **Kanıt:** `supabase_group_repository.dart:92-125`. `watchUserGroups` ve `watchMembers` `.stream(...).asyncMap(...)` kullanıyor → **her** üyelik değişiminde ikinci bir sorgu (`groups`/`profiles ... inFilter(ids)`) atıyor. `watchMembers`'ta `rows.firstWhere((r) => r['user_id'] == profile.id)` (satır 121) profiller üzerindeki `.map` içinde çalışıyor → O(profil × satır).
-- **Neden verimsiz:** Değişim olayı başına ekstra round-trip; aktif-bayrak join'i için karesel eşleştirme. Küçük sınıflarda sorun değil, üyelik büyüyünce/değişince israf.
-- **Önerilen düzeltme:** Map'lemeden önce bir kez `Map<userId, row>` kur (O(n)), `firstWhere` yerine. Üye+profilleri tek sorguda almak için gömülü join'li RPC/`select` düşün (PostgREST resource embedding `group_members(*, profiles(*))`); stream-sonra-yeniden-getir yerine.
-- **Tradeoff / Risk:** Gömülü join realtime semantiğini değiştirir (embed'ler realtime değil); stream'i tetik olarak koru, aramayı optimize et.
-- **Beklenen etki:** Low–Medium; kareseli kaldırır, round-trip'i yarıya indirir.
-- **Kaldırma Güvenliği:** Muhtemelen Güvenli (`firstWhere`→map değişimi); Doğrulama Gerekir (embedding)
-- **Yeniden Kullanım Kapsamı:** modül
-
-### N5 — Atomik olmayan grup oluşturma (2 yazma, rollback yok)
-- **Kategori:** Reliability
-- **Önem:** Medium
-- **Etki:** Yetim gruplar, tutarsız durum
-- **Kanıt:** `supabase_group_repository.dart:24-57`. `createGroup` önce `groups`'a, sonra ayrı olarak oluşturanı `group_members`'a ekliyor. İkinci insert başarısız olursa (ağ/RLS) grup admin üyesi olmadan kalır.
-- **Neden sorun:** Transaction yok; retry döngüsü yalnız davet-kodu çakışmasını kapsıyor, üyelik adımını değil.
-- **Önerilen düzeltme:** Grubu + admin üyeliğini tek transaction'da ekleyen `create_group(name)` SECURITY DEFINER RPC'si (davet-kodu gizliliği sorununu da çözer — bkz. Güvenlik denetimi). İstemci tek RPC çağırır.
-- **Tradeoff / Risk:** Migration ekler; mantığı sunucuya taşır (bütünlük için artı).
-- **Beklenen etki:** Reliability (niteliksel); yetim durumu yok eder.
-- **Kaldırma Güvenliği:** Doğrulama Gerekir
-- **Yeniden Kullanım Kapsamı:** servis-geneli
-
-### N6 — `placeGridItem` reflow'u tekrarlı lineer taramalarla O(n²)
-- **Kategori:** Algorithm / Frontend
-- **Önem:** Low (**olası** olarak mevcut ölçekte ihmal edilebilir)
-- **Etki:** Kart sürükleme/yeniden boyutlamada CPU
-- **Kanıt:** `grid_reflow.dart:50-111`. Her BFS adımında: `result.firstWhere(id)` (lineer), `result.where(overlaps).toList()..sort()` (tüm öğeleri tarar), collider başına `result.indexWhere(...)`. Guard sınırı `n²·4`. Her sürükleme tick'inde çalışıyor.
-- **Neden verimsiz:** Düğüm başına tekrarlı lineer arama + tam overlap taraması; reflow başına O(n²). ~10–30 kartlık dashboard için ihmal edilebilir, ama yüksek frekanslı (sürükleme) bir yolda.
-- **Önerilen düzeltme:** Öğeleri bir kez id'ye göre `Map`'le; yalnız taşınan alt kümeyi yeniden tara. Profil sürükleme jank'i göstermedikçe uğraşma.
-- **Tradeoff / Risk:** Küçük N için erken — önce ölç.
-- **Beklenen etki:** Low.
-- **Kaldırma Güvenliği:** Muhtemelen Güvenli
-- **Yeniden Kullanım Kapsamı:** yerel dosya
-
-### N7 — build dizininde commit edilmiş Chrome aygıt-profili kalıntıları
-- **Kategori:** Build / Cost (repo hijyeni)
-- **Önem:** Low
-- **Etki:** Repo şişkinliği, klon süresi, kazara veri
-- **Kanıt:** `app/.dart_tool/chrome-device/Default/...` (History, Login Data, Web Data, vb.) diskte mevcut. `.gitignore` `.dart_tool/`'u kapsıyor → izlenmiyor; `git ls-files` ile doğrula. Ignore kuralından önce girdiyse geçmişi şişirir.
-- **Neden sorun:** Flutter web debug Chrome profili VCS'e asla girmemeli; içinde bir tarayıcı `Login Data` SQLite dosyası var.
-- **Önerilen düzeltme:** Hiçbirinin izlenmediğini teyit et (`git ls-files | grep chrome-device` → boş). Geçmişte varsa temizle. Yoksa işlem yok.
-- **Kaldırma Güvenliği:** Güvenli (izlenmiyorsa)
-- **Yeniden Kullanım Kapsamı:** yerel
-- **Sınıflandırma:** Ölü Kod / kalıntı (güvenli kaldırma adayı — izlenmediği doğrulanmalı)
-
-### N8 — Repository arayüzünde tutulan ölü metot
-- **Kategori:** Code Reuse / Dead Code
-- **Önem:** Low
-- **Etki:** Anlaşılırlık, bakım
-- **Kanıt:** `supabase_study_repository.dart:44-49` `watchGroupSessions`, çağıranı olmadığını (group_id 0010'da kaldırıldı) belirten yorumla `Stream.value(const [])` döndürüyor. Arayüz metodu + in-memory implementasyonu yalnız biçim için tutuluyor.
-- **Neden sorun:** Hep boş dönen bir metot, gelecekteki çağıranlar için tuzak (sessiz boş veri).
-- **Önerilen düzeltme:** `StudyRepository`'den ve tüm implementasyonlardan kaldır, ya da yüksek sesle belgele. Önce sıfır referans doğrula.
-- **Kaldırma Güvenliği:** Doğrulama Gerekir (çağıranları grep'le)
-- **Yeniden Kullanım Kapsamı:** modül
-- **Sınıflandırma:** Ölü Kod
+**Yapılmazsa en büyük pratik risk:** Büyük mimari değil; **muhtemel buglar (B1–B5)** ve **e-posta kuyruk retry (B2)** kullanıcı/işlev tarafında daha çok acıtır.
 
 ---
 
-## 3) Hızlı Kazanımlar (Önce Yap)
-- **N1 debounce** — `refresh()`'i olayda-sıfırlanan bir `Timer` (≈1s) ile sar. Küçük değişiklik, büyük yük azalması.
-- **N3 paylaşılan `dailyTotalsProvider`** — mevcut `totals:` parametrelerini besleyen tek memoize harita.
-- **N4 `firstWhere`→`Map` araması** `watchMembers`'ta — kareseli kaldırır.
-- **N8** çağıranı olmadığını teyit ettikten sonra hep-boş `watchGroupSessions`'ı sil.
+## 2) Findings — güvenli / düşük risk optimizasyonlar
 
-## 4) Daha Derin Optimizasyonlar (Sonra Yap)
-- **N1 (tam):** trigger ile güncellenen materyalize `group_daily_totals` tablosu; okuma anında yeniden agregasyon yerine onu group'a göre filtreli akıt.
-- **N2:** akıtılan geçmişi yakın pencereyle sınırla + geçmiş ekranını sayfala; tüm-zaman kişisel istatistik için kullanıcı başına günlük-toplam RPC'si ekle.
-- **N5:** transaction'lı `create_group` RPC'si (davet-kodu gizlilik açığını da kapatır).
+### R3 — `watchMembers` O(n·m) eşleştirme
+- **Category:** Algorithm  
+- **Severity:** Low–Medium  
+- **Impact:** Üyelik değişiminde CPU; `firstWhere` eşleşmezse crash riski (bkz. B3)  
+- **Evidence:** `app/lib/data/repositories/supabase/supabase_group_repository.dart` `watchMembers` — profil başına `rows.firstWhere(...)`  
+- **Recommended fix:** Bir kez `Map<userId, row>`; `orElse` ile güvenli fallback  
+- **Tradeoffs:** Yok (aynı semantik)  
+- **Expected impact:** Küçük; doğru eşleştirme + StateError koruması  
+- **Removal Safety:** Likely Safe  
+- **Reuse Scope:** module  
 
-## 5) Doğrulama Planı
-- **N1:** 50 eşzamanlı yazıcı simüle et; debounce öncesi/sonrası Supabase'te RPC çağrısı/sn (Logs/`pg_stat_statements`) ve istemci çıkış trafiğini ölç. Doğruluk: debounce'lu stream'in nihai değeri, sakinleştikten sonra debounce'suz değere eşit olmalı.
-- **N2:** 5k oturumlu bir hesap tohumla; pencereleme öncesi/sonrası stream payload boyutu, decode süresi, provider rebuild süresini ölç. Geçmiş ekranı sayfalamayla eski veriye hâlâ ulaşmalı.
-- **N3:** `dailyTotals`'a sayaç/log ekle; paylaşılan provider öncesi/sonrası veri değişimi başına çağrı sayısını say. İstatistik çıktılarını golden-test ile sabitle.
-- **N4/N6:** sentetik 200-üyeli grup / 30-kartlık grid ile mikro-benchmark; duvar saatini kıyasla. Widget test'leri özdeş üye listeleri / yerleşimleri doğrulasın.
-- **N5:** entegrasyon testi: üyelik insert'ini başarısız olmaya zorla, (RPC düzeltmesinden sonra) yetim grup kalmadığını doğrula.
-- Genel: `flutter analyze` temiz kalsın; `study_stats.dart` etrafına unit test ekle (saf fonksiyonlar — refactor öncesi davranışı kilitlemek kolay).
+### R9 — `userStudySummaryProvider` gereksiz yeniden fetch
+- **Category:** Network  
+- **Severity:** Low  
+- **Impact:** `user_study_summary` RPC spam  
+- **Evidence:** `study_providers.dart` — `ref.watch(userSessionsProvider)` her stream emit’te FutureProvider’ı düşürür  
+- **Recommended fix:** Debounce 1–2s **veya** yalnız add/update/delete sonrası invalidate  
+- **Tradeoffs:** Özet 1–2 sn bayat kalabilir  
+- **Expected impact:** Düşük–orta RPC azalması  
+- **Removal Safety:** Likely Safe (kısa bayatlık kabulüyle)  
+- **Reuse Scope:** module  
 
-## 6) Optimize Kod / Yama (örnekleme — uygulanmadı)
+### R11 — Ölü `watchGroupSessions`
+- **Category:** Dead Code  
+- **Severity:** Low  
+- **Evidence:** Interface + 3 impl; supabase boş stream; UI çağıran yok  
+- **Recommended fix:** Grep + test sonrası sil veya `UnsupportedError`  
+- **Removal Safety:** Needs Verification (grep)  
+- **Classification:** Dead Code  
 
-**N1 — debounce'lu refresh** (`supabase_study_repository.dart`):
+### R12 — Aktif üye partial index
+- **Category:** DB  
+- **Severity:** Low  
+- **Evidence:** `group_daily_totals` / RLS helper’lar `left_at is null` filtreler; partial index yok  
+- **Recommended fix:**  
+  `create index concurrently if not exists idx_group_members_active on public.group_members (group_id) where left_at is null;`  
+- **Tradeoffs:** Disk; semantik yok  
+- **Removal Safety:** Safe  
+- **Reuse Scope:** service-wide  
+
+### R8 (dar) — Görünmeyen ekranda yüksek frekanslı ticker
+- **Category:** Frontend  
+- **Severity:** Low  
+- **Evidence:** Stopwatch 50ms, alarm 200ms; Windows audit: mobil IndexedStack sekmeleri canlı  
+- **Recommended fix (dar):** Yalnız `isRunning && mounted/visible` iken yüksek frekans; idle’da iptal (büyük lazy-tab yok)  
+- **Tradeoffs:** Yanlış visibility gate → sayaç donmuş görünür  
+- **Removal Safety:** Needs Verification  
+- **Reuse Scope:** local widgets  
+
+### R13 — Admin Edge Function ortak auth
+- **Category:** Maintainability  
+- **Severity:** Low  
+- **Evidence:** `admin-operations` / `admin-user-actions` kopya auth bloğu  
+- **Recommended fix:** `_shared/auth.ts`  
+- **Classification:** Reuse Opportunity  
+- **Removal Safety:** Likely Safe (davranış aynı tutulursa)  
+
+### Bilgi notu (yüksek risk fix yok)
+- `watchGroupDailyStats` hâlâ tablo-geneli realtime + debounce’lu full RPC (`supabase_study_repository.dart`). Küçük grupta genelde OK. **Materialize/trigger önerisi bu raporda yok** (büyük risk).  
+- Offline cache SharedPreferences JSON: pro hedef Drift; **migrasyon önerisi yok** (büyük risk).
+
+---
+
+## 3) Quick Wins
+
+1. R3 Map + `orElse` (B3 ile birleşik)  
+2. R12 partial index  
+3. R11 ölü API temizliği (testli)  
+4. R9 summary debounce  
+5. R8: stopwatch ticker yalnız running iken  
+
+---
+
+## 4) Deeper Optimizations
+
+Bu sürümde **bilerek boş / erteledi**. Büyük refactor listesi ayrı ürün kararı ister.
+
+---
+
+## 5) Validation Plan (düşük risk maddeler)
+
+| Madde | Doğrulama |
+|---|---|
+| R3 | Üye listesi aynı; soft-left üye `isActive=false`; eksik profile crash yok |
+| R9 | Session ekle → summary en geç ~2s güncellenir; RPC sayısı düşer |
+| R11 | `flutter analyze` + test; referans kalmadı |
+| R12 | `EXPLAIN` group_daily_totals / membership sorguları |
+| R8 | Kronometre çalışırken akıcı; durunca timer iptal |
+
+Genel: `flutter analyze`, `flutter test`, ilgili widget testleri.
+
+---
+
+## 6) Optimized snippets (uygulanmadı)
+
+### R3 + B3
+
 ```dart
-Timer? _debounce;
-void scheduleRefresh() {
-  _debounce?.cancel();
-  _debounce = Timer(const Duration(milliseconds: 1000), refresh);
-}
-// kanal callback'i:
-callback: (_) => scheduleRefresh(),
-// onCancel: _debounce?.cancel(); ...
-```
-
-**N3 — paylaşılan günlük toplamlar** (`study_providers.dart`):
-```dart
-final dailyTotalsProvider = Provider<Map<DateTime, int>>((ref) {
-  final sessions = ref.watch(userSessionsProvider).value ?? const [];
-  return dailyTotals(sessions);            // bir kez hesaplanır
-});
-
-final currentStreakProvider = Provider<int>((ref) {
-  final totals = ref.watch(dailyTotalsProvider);
-  final goalSeconds = ref.watch(dailyGoalMinutesProvider) * 60;
-  return currentStreak(const [], goalSeconds, totals: totals); // haritayı yeniden kullan
-});
-```
-
-**N4 — O(n) üye eşleştirme** (`supabase_group_repository.dart`):
-```dart
-final byUser = {for (final r in rows) r['user_id'] as String: r};
+final byUser = {
+  for (final r in rows) r['user_id'] as String: r,
+};
 return profs.map<Profile>((pMap) {
   final p = Profile.fromMap(pMap);
-  return p.copyWith(isActive: byUser[p.id]?['left_at'] == null);
+  final row = byUser[p.id];
+  return p.copyWith(isActive: row == null ? false : row['left_at'] == null);
 }).toList();
 ```
+
+### R9 (özet)
+
+```dart
+// userSessionsProvider watch'ını kaldır;
+// addSession/update/delete sonrası:
+// ref.invalidate(userStudySummaryProvider);
+```
+
+### R12
+
+```sql
+create index concurrently if not exists idx_group_members_active
+  on public.group_members (group_id)
+  where left_at is null;
+```
+
+---
+
+# 7) Muhtemel bug taraması
+
+Kod okuma ile; runtime reproduce yok. Etiket: **Likely** = yol net, **Possible** = senaryo varsayımlı.
+
+### B1 — XP / başarım oturum bitince gecikebilir veya hiç tetiklenmeyebilir (Likely)
+- **Severity:** Medium (ürün)  
+- **Evidence:** `gamificationProgressSyncProvider` (`gamification_providers.dart`) `session_completed` fırlatır ama **yalnız** şu yerler `watch` eder:  
+  - `features/profile/widgets/gamification_card.dart`  
+  - `features/profile/social_profile_screen.dart`  
+- **Why:** Provider `autoDispose`. Kullanıcı çalışmayı bitirip profil/vitrin açmazsa RPC `process_achievement_event` çalışmaz; XP/taç sunucuda oturuma bağlı metrik olsa da **ledger’a yazılmaz** ta ki biri bu provider’ı izleyene kadar.  
+- **Impact:** Saat XP (50/saat), streak başarıları, confetti gecikir veya “neden XP yok?”  
+- **Suggested fix (ileride):** Home shell veya timer `stop` / `_recordSession` sonrası tek sefer `process(eventType: 'session_completed')`; autoDispose’a bağlı kalma.  
+- **Confidence:** High (call-site grep net)
+
+### B2 — Aylık e-posta job `failed` olduktan sonra asla yeniden denenmez (Likely)
+- **Severity:** Medium (ops / özellik)  
+- **Evidence:** `send-report/index.ts`: hata → `status = failed` (retry_count &lt; 3) veya `abandoned`. Seçim: `.eq('status', 'pending')` only.  
+- **Why:** İlk hata sonrası job `failed`; bir sonraki cron/send yalnızca `pending` alır → **retry_count anlamsız**.  
+- **Impact:** Geçici Resend/API hatasında o ayın raporu kalıcı kaçabilir.  
+- **Suggested fix:** `status in ('pending','failed') and retry_count < 3` veya failed’i tekrar `pending` yap.  
+- **Confidence:** High  
+
+### B3 — `watchMembers` `firstWhere` StateError (Possible → Likely under race)
+- **Severity:** Medium (crash)  
+- **Evidence:** `supabase_group_repository.dart` — profile listesi ile `group_members` satırları eşleşmezse `firstWhere` fırlatır (`orElse` yok).  
+- **Why:** Realtime ara durum, silinmiş profil, veya `inFilter` / stream sıralama tutarsızlığı.  
+- **Impact:** Sınıf üyeleri stream’i hata; kamp ateşi / sınıf ekranı error state.  
+- **Suggested fix:** R3 Map + null-safe `isActive`.  
+- **Confidence:** Medium–High  
+
+### B4 — Manuel oturum gün sınırı cihaz saati; ürün kuralı Europe/Istanbul (Likely TZ bug)
+- **Severity:** Medium (istatistik gün kayması)  
+- **Evidence:**  
+  - `manual_session_dialog.dart` `manualSessionRange` → `DateTime(date.year, month, day, now.hour, now.minute)` (**local**)  
+  - `StudySession.toMap` → `start.toIso8601String()` / `end` (**UTC Z yoksa local string**)  
+  - Ürün kuralı: `istanbulDay` / `Europe/Istanbul` (`istanbul_calendar.dart`, DB `group_daily_totals`)  
+- **Why:** Cihaz TZ ≠ Istanbul veya local ISO parse farkı → oturum **yanlış takvim gününe** düşebilir (özellikle gece 00:00 civarı).  
+- **Impact:** “Bugün” toplamı, streak, heatmap kayması.  
+- **Suggested fix:** Manuel aralığı `istanbul` wall-clock ile kur; DB’ye **UTC** (`toUtc().toIso8601String()`) yaz.  
+- **Confidence:** High (kod yolu net; şiddet kullanıcı TZ’sine bağlı)
+
+### B5 — `user_study_summary` RPC yoksa lifetime/year **hot window ile şişirilir / eksik kalır** (Likely fallback bug)
+- **Severity:** Low–Medium  
+- **Evidence:** `supabase_study_repository.dart` `fetchUserStudySummary` — RPC catch sonrası:  
+  `lifetimeSeconds: hotSec`, `yearSeconds` hot içinden — yani 0031 deploy edilmemişse UI “tüm zamanlar” aslında ~90g.  
+- **Impact:** Yanıltıcı ömür boyu / yıl sayıları.  
+- **Suggested fix:** Fallback’te lifetime’ı göstermeyin veya “özet yüklenemedi”; migration 0031 prod’da zorunlu.  
+- **Confidence:** High  
+
+### B6 — Offline `addSession`: remote fail olunca queue; remote success ama UI hata yutulması (Possible)
+- **Severity:** Low  
+- **Evidence:** `OfflineFirstStudyRepository.addSession` — cache önce yazılır; remote fail → outbox. `catch (_)` boş — kullanıcıya hata yok (bilinçli offline-first).  
+- **Why:** Ağ “başarısız görünüp sonra yazılmış” veya tersi edge; outbox coalesce var (iyi).  
+- **Impact:** Nadir double-feeling; upsert `onConflict: id` çift insert’i yumuşatır.  
+- **Confidence:** Low–Medium (tasarım tercihi; asıl bug değil)
+
+### B7 — `regenerateInviteCode` / bazı update’ler 0 satırda sessiz başarı (Possible)
+- **Severity:** Low–Medium  
+- **Evidence:** `groups.update({'invite_code': code}).eq('id', groupId)` — PostgREST çoğu kurulumda 0 row’da exception atmaz. RLS admin değilse kod “yenilendi” sanılır, DB aynı kalır.  
+- **Suggested fix:** `.select().single()` veya count kontrolü.  
+- **Confidence:** Medium  
+
+### B8 — Cron migration localhost URL (Likely misconfig, app bug değil)
+- **Severity:** Medium (feature dead)  
+- **Evidence:** `0030_monthly_report_infrastructure.sql` → `http://localhost:54321/functions/v1/collect-reports`  
+- **Impact:** Prod’da aylık collector hiç tetiklenmez (pg_cron + net.http_post).  
+- **Confidence:** High  
+
+### B9 — `send-report` / `collect-reports` zayıf auth (güvenlik; bug değil exploit)
+- Bkz. §8 S2. Fonksiyon public ise spam; değilse düşük.
+
+### B10 — Achievement sync her session stream emit’te RPC (perf + olası rate)
+- **Severity:** Low  
+- **Evidence:** `gamificationProgressSyncProvider` `await ref.watch(userSessionsProvider.future)` sonra her değişimde `process_achievement_event`.  
+- **Why:** Idempotent (event_key) ama gereksiz DB CPU; profil kartı açıkken chatty.  
+- **Suggested fix:** Debounce; yalnız net session count/sum değişince.  
+- **Confidence:** Medium  
+
+### B11 — `todayRecordedSecondsProvider` `DateTime.now()` local day vs Istanbul (Possible edge)
+- **Severity:** Low  
+- **Evidence:** `dayOf(DateTime.now())` aslında `istanbulDay` — **OK**.  
+- **Not:** B4 manuel yazım ile tutarsızlık asıl risk; provider tarafı Istanbul’a hizalı.  
+- **Confidence:** N/A (false positive check)
+
+### B12 — Presence heartbeat hata yutma (by design)
+- **Severity:** Info  
+- **Evidence:** `catchError((_) {})` — presence düşer, timer sürer.  
+- **Impact:** “Çalışıyor görünmüyor” şikayeti; timer kaybı yok.  
+
+---
+
+## 8) Güvenlik notları (uygulama yok — farkındalık)
+
+Büyük “hemen kes” yamaları bu raporda **fixinmiyor**; sadece kayıt:
+
+| ID | Konu | Severity | Not |
+|---|---|---|---|
+| S1 | Client `study_sessions` insert + zayıf süre bound | High (abuse) | UI 23h; API daha uzun yazabilir → XP/sıralama. Düzeltme **ürün max süre** ister |
+| S2 | Report Edge Functions: Authorization varlığı yeterli + service_role env | Critical if public | Cron secret ile düzelt; **önce cron job’u güncelle** yoksa mail ölür |
+| S3 | `get_user_monthly_stats` DEFINER + authenticated | High IDOR | Self/admin guard SQL |
+| S4 | `profiles_select using (true)` hâlâ | Medium | Enumerasyon; UI bağımlılığı taransın |
+
+Secrets (`env.json`, keystore): gitignore’da; `git ls-files` ile izlenmiyor (doğrulandı).
+
+---
+
+## 9) Öncelik matrisi (bu raporun kapsamı)
+
+| Öncelik | ID | Tip | Bozma riski |
+|---|---|---|---|
+| 1 | B1 | Bug | Düşük (ek tetik; mevcut UI bozmaz) |
+| 2 | B2 | Bug | Düşük (sorgu genişletme) |
+| 3 | B3 + R3 | Bug+opt | Çok düşük |
+| 4 | B4 | Bug | Orta (TZ; test şart) |
+| 5 | B5 / 0031 deploy | Bug/ops | Düşük |
+| 6 | B8 | Ops | Ops-only |
+| 7 | R9, R12, R11 | Opt | Düşük |
+| 8 | S2/S3 | Security | S2: ops sırası kritik |
+
+---
+
+## 10) Assumptions
+
+- Prod’da migration 0012–0033’ün hepsi uygulanmış olmayabilir → B5/B8 şiddeti ortama bağlı.  
+- Edge Function public invoke varsayımı S2 için; dashboard kilidi doğrulanmadı.  
+- Hiçbir runtime test bu turda koşturulmadı.
+
+---
+
+*Sonuç: Büyük riskli optimizasyonlar listeden çıkarıldı. Asıl “ bozmadan düzeltmeye değer” paket: **B1, B2, B3/R3, B4, R9, R12**. Kod değişikliği yapılmadı.*
