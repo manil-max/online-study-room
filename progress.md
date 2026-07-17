@@ -20,7 +20,7 @@
 - **Navigasyon hedefi:** Ana Sayfa / Saat / Gruplar / İstatistikler / Profil. Ana Sayfa günlük kullanım alanıdır; diğer alanların verisi kendi sekmelerinde eksiksiz bulunur.
 - **Release:** Stable/Beta kanalı GitHub Releases ile çalışır. Yerel `v29` ve `beta-v29` tag'leri WP-104 commitini (`ff369e3`) gösterir; mevcut `main` WP-105–109'u da içerdiği halde `1.0.29+29` taşır. Bir sonraki dağıtımda versionCode mutlaka artırılır; Play production ayrı kalite kapısından geçer.
 - **Kalite kapıları:** Her WP DoD'siz kapanmaz; stable release kalite kapısından geçer (AGENTS.md §3). Server-authoritative XP, RLS/sosyal profil, platform sınırları → `docs/KALITE-PROGRAMI.md`.
-- **Son WP numarası:** 141 (WP-140 a11y + WP-141 tema-bağlama). **Sıradaki boş numara WP-142.**
+- **Son WP numarası:** 155 (142–148 done; 149–154 PLAN onay; 155 D fallback). **Kod WP’leri onay sonrası WP-156+.**
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
   - Flutter: `C:\src\flutter` · Android SDK: `C:\Android\Sdk`
@@ -71,15 +71,15 @@
 - **Not:** Play Store production programı WP-110–124 olarak planlandı; kanonik belgeler hizalandı. `OPTIMIZATIONS.md` kapsam dışı bırakıldı.
 
 ### Grok Lane
-- **Durum:** [x] Boşta
-- **Faz/WP:** —
-- **Aşama:** —
-- **SAHİP yollar:** —
+- **Durum:** [~] Aktif — Track C **onay bekliyor** (kod yok)
+- **Faz/WP:** WP-142–148 teslim; WP-149–154 PLAN; WP-155 D bekliyor
+- **Aşama:** Onay kapısı (Track C)
+- **SAHİP yollar:** `docs/features/*-PLAN.md` (okuma); kod yok
 - **Ortak/riskli yüzey:** —
 - **Dal:** main
-- **Başlangıç:** —
-- **Son güncelleme:** 2026-07-18 (Europe/Istanbul)
-- **Not:** WP-140–141 a11y/tema commit; Test için bekliyor. WP-134–137 dokunulmadı. Push yok.
+- **Başlangıç:** 2026-07-18
+- **Son güncelleme:** 2026-07-18
+- **Not:** Track A/B bitti. Track C plan MD’leri onaylanınca kod WP-156+. Track D (dil) C onay/kod sonrası. Push yok. Timer/FGS donuk.
 
 
 ---
@@ -145,6 +145,20 @@
 | WP-139 | [~] Test için bekliyor | l10n parity + hardcoded/admin + native string denetim | docs/l10n |
 | WP-140 | [~] Test için bekliyor | Erişilebilirlik (tooltip/Semantics/48dp) | WP-123 pre-launch |
 | WP-141 | [~] Test için bekliyor | Tema-bağlama / sabit renk denetimi | WP-123 kontrast |
+| WP-142 | [~] Analiz teslim | Performans & başlangıç profili | docs/perf |
+| WP-143 | [~] Analiz teslim | Güvenlik derin denetim 2 | docs/security |
+| WP-144 | [~] Analiz teslim | Offline-first dayanıklılık | docs/sync |
+| WP-145 | [~] Analiz teslim | Test kapsam boşluğu | docs/test |
+| WP-146 | [~] Test için bekliyor | Istanbul/DST gün-sınırı sertleştirme | birim test |
+| WP-147 | [~] Test için bekliyor | Hata durumları + yenile (kayıt/ders/stats) | cihaz |
+| WP-148 | [~] Test için bekliyor | Regresyon süpürme raporu | docs/debug |
+| WP-149 | [~] Plan — onay bekliyor | Streak+heatmap PLAN | docs/features |
+| WP-150 | [~] Plan — onay bekliyor | Stats derinleştirme PLAN | docs/features |
+| WP-151 | [~] Plan — onay bekliyor | Onboarding PLAN | docs/features |
+| WP-152 | [~] Plan — onay bekliyor | Veri export PLAN | docs/features |
+| WP-153 | [~] Plan — onay bekliyor | Akıllı hatırlatma PLAN | docs/features |
+| WP-154 | [~] Plan — onay bekliyor | Gamification genişletme PLAN | docs/features |
+| WP-155 | [ ] Bekliyor (Track D) | Ek dil paketleri + RTL | C sonrası |
 
 > **2026-07-14 proje denetimi:** Serbest sürükle-bırak ızgara, canlı grup hedefi ve saat stilleri **zaten kodda uygulanmış** (backlog stale idi; geçici WP-72/73/75 iptal).
 >
