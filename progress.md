@@ -20,7 +20,7 @@
 - **Navigasyon hedefi:** Ana Sayfa / Saat / Gruplar / İstatistikler / Profil. Ana Sayfa günlük kullanım alanıdır; diğer alanların verisi kendi sekmelerinde eksiksiz bulunur.
 - **Release:** Stable/Beta kanalı GitHub Releases ile çalışır. Yerel `v29` ve `beta-v29` tag'leri WP-104 commitini (`ff369e3`) gösterir; mevcut `main` WP-105–109'u da içerdiği halde `1.0.29+29` taşır. Bir sonraki dağıtımda versionCode mutlaka artırılır; Play production ayrı kalite kapısından geçer.
 - **Kalite kapıları:** Her WP DoD'siz kapanmaz; stable release kalite kapısından geçer (AGENTS.md §3). Server-authoritative XP, RLS/sosyal profil, platform sınırları → `docs/KALITE-PROGRAMI.md`.
-- **Son WP numarası:** 132 (WP-129–132 unblock/report-details/analyze/DATA-SAFETY commitli; park/test). **Sıradaki boş numara WP-133.**
+- **Son WP numarası:** 139 (WP-133 analiz teslim; WP-134–139 taslak — analiz onayına bağlı). **Sıradaki boş numara WP-140** (onay sonrası uygulama claim).
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
   - Flutter: `C:\src\flutter` · Android SDK: `C:\Android\Sdk`
@@ -79,7 +79,7 @@
 - **Dal:** main
 - **Başlangıç:** —
 - **Son güncelleme:** 2026-07-17 (Europe/Istanbul)
-- **Not:** WP-129–132 kod/docs commit (`ed234b8`…`30e89bc`); Test için bekleyenler. analyze 0 issue. Push yok.
+- **Not:** WP-133 analiz teslim (`docs/widget-panel/`); Claude checklist onayı bekleniyor. Kod WP-134+ claim edilmez. Push yok.
 
 
 ---
@@ -136,6 +136,13 @@
 | WP-130 | [~] Test için bekliyor | Rapor sheet detay alanı | WP-125 |
 | WP-131 | [~] Test için bekliyor | Analyze/lint sertleştirme (0 issue) | — |
 | WP-132 | [~] Test için bekliyor | DATA-SAFETY.md gerçek veri envanteri | Console form |
+| WP-133 | [~] Analiz — doğrulama bekliyor | Widget & dinamik panel kararlılık / mimari analiz (docs only) | Claude checklist |
+| WP-134 | [ ] Bekliyor (analiz onayına bağlı) | Widget canlı saat + compact görünürlük | WP-133 onay |
+| WP-135 | [ ] Bekliyor (analiz onayına bağlı) | 1×1 toggle güvenilirliği (store commit) | WP-134 |
+| WP-136 | [ ] Bekliyor (analiz onayına bağlı) | Reconcile / pending dayanıklılık | WP-135 |
+| WP-137 | [ ] Bekliyor (analiz onayına bağlı) | Dinamik panel MVP (ürün tanımı P1) | WP-136 + ürün P1 |
+| WP-138 | [ ] Bekliyor (analiz onayına bağlı) | (ops) OEM standard stil A/B | WP-137 |
+| WP-139 | [ ] Bekliyor (analiz onayına bağlı) | (ops) API 36 Live Updates spike | WP-137 |
 
 > **2026-07-14 proje denetimi:** Serbest sürükle-bırak ızgara, canlı grup hedefi ve saat stilleri **zaten kodda uygulanmış** (backlog stale idi; geçici WP-72/73/75 iptal).
 >
