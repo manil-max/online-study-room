@@ -18,15 +18,27 @@ void main() {
       );
     });
 
-    test('falls back to English for every non-Turkish or missing locale', () {
+    test('falls back to English for unsupported or missing locales', () {
+      // WP-155: de/ar desteklenir; fr ve bilinmeyen → en.
       for (final locale in <Locale?>[
         const Locale('en', 'US'),
         const Locale('en', 'GB'),
-        const Locale('de', 'DE'),
+        const Locale('fr', 'FR'),
         null,
       ]) {
         expect(resolveAppLocale(locale, supported), const Locale('en'));
       }
+    });
+
+    test('maps supported system locales de and ar', () {
+      expect(
+        resolveAppLocale(const Locale('de', 'DE'), supported),
+        const Locale('de'),
+      );
+      expect(
+        resolveAppLocale(const Locale('ar', 'SA'), supported),
+        const Locale('ar'),
+      );
     });
   });
 
@@ -74,8 +86,12 @@ void main() {
 
     addTearDown(tester.binding.platformDispatcher.clearLocalesTestValue);
 
-    await pumpWithSystemLocale(const Locale('de', 'DE'));
+    // WP-155: Almanca sistem dili artık de (EN baseline ARB), fr → en.
+    await pumpWithSystemLocale(const Locale('fr', 'FR'));
     expect(find.text('en'), findsOneWidget);
+
+    await pumpWithSystemLocale(const Locale('de', 'DE'));
+    expect(find.text('de'), findsOneWidget);
 
     await pumpWithSystemLocale(const Locale('tr', 'TR'));
     expect(find.text('tr'), findsOneWidget);

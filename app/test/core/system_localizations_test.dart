@@ -11,9 +11,16 @@ void main() {
   });
 
   test('unsupported system locale falls back to English', () async {
-    final l10n = await loadSystemLocalizations(const Locale('de', 'DE'));
+    final l10n = await loadSystemLocalizations(const Locale('fr', 'FR'));
 
     expect(l10n.localeName, 'en');
     expect(l10n.commonCalismaHazir, 'Ready to study');
+  });
+
+  test('German system locale loads de catalog (EN baseline strings ok)', () async {
+    final l10n = await loadSystemLocalizations(const Locale('de', 'DE'));
+    expect(l10n.localeName, 'de');
+    // Baseline ARB hâlâ İngilizce metin taşıyabilir.
+    expect(l10n.commonCalismaHazir, isNotEmpty);
   });
 }
