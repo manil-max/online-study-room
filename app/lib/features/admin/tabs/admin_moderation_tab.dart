@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/supabase_config.dart';
 
-/// WP-117: UGC rapor kuyruğu (super-admin, RLS).
+/// WP-117 / WP-139: UGC rapor kuyruğu (super-admin, RLS).
 class AdminModerationTab extends ConsumerStatefulWidget {
   const AdminModerationTab({super.key});
 
@@ -29,8 +30,7 @@ class _AdminModerationTabState extends ConsumerState<AdminModerationTab> {
         .order('created_at', ascending: false)
         .limit(100);
     return [
-      for (final r in rows as List)
-        Map<String, dynamic>.from(r as Map),
+      for (final r in rows as List) Map<String, dynamic>.from(r as Map),
     ];
   }
 
@@ -48,6 +48,7 @@ class _AdminModerationTabState extends ConsumerState<AdminModerationTab> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return FutureBuilder(
       future: _future,
       builder: (context, snap) {
@@ -56,7 +57,7 @@ class _AdminModerationTabState extends ConsumerState<AdminModerationTab> {
         }
         final rows = snap.data ?? const [];
         if (rows.isEmpty) {
-          return const Center(child: Text('UGC rapor yok / No UGC reports'));
+          return Center(child: Text(l10n.adminUgcNoReports));
         }
         return RefreshIndicator(
           onRefresh: () async {
@@ -68,6 +69,7 @@ class _AdminModerationTabState extends ConsumerState<AdminModerationTab> {
             separatorBuilder: (_, _) => const Divider(height: 1),
             itemBuilder: (context, i) {
               final r = rows[i];
+              // Teknik alanlar (target_type, reason, id) ham veridir; UI etiketleri l10n.
               return ListTile(
                 title: Text('${r['target_type']} · ${r['reason']}'),
                 subtitle: Text(
@@ -78,10 +80,19 @@ class _AdminModerationTabState extends ConsumerState<AdminModerationTab> {
                 isThreeLine: true,
                 trailing: PopupMenuButton<String>(
                   onSelected: (s) => _setStatus(r['id'] as String, s),
-                  itemBuilder: (_) => const [
-                    PopupMenuItem(value: 'in_review', child: Text('In review')),
-                    PopupMenuItem(value: 'resolved', child: Text('Resolved')),
-                    PopupMenuItem(value: 'rejected', child: Text('Rejected')),
+                  itemBuilder: (_) => [
+                    PopupMenuItem(
+                      value: 'in_review',
+                      child: Text(l10n.adminUgcStatusInReview),
+                    ),
+                    PopupMenuItem(
+                      value: 'resolved',
+                      child: Text(l10n.adminUgcStatusResolved),
+                    ),
+                    PopupMenuItem(
+                      value: 'rejected',
+                      child: Text(l10n.adminUgcStatusRejected),
+                    ),
                   ],
                 ),
               );

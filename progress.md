@@ -20,7 +20,7 @@
 - **Navigasyon hedefi:** Ana Sayfa / Saat / Gruplar / İstatistikler / Profil. Ana Sayfa günlük kullanım alanıdır; diğer alanların verisi kendi sekmelerinde eksiksiz bulunur.
 - **Release:** Stable/Beta kanalı GitHub Releases ile çalışır. Yerel `v29` ve `beta-v29` tag'leri WP-104 commitini (`ff369e3`) gösterir; mevcut `main` WP-105–109'u da içerdiği halde `1.0.29+29` taşır. Bir sonraki dağıtımda versionCode mutlaka artırılır; Play production ayrı kalite kapısından geçer.
 - **Kalite kapıları:** Her WP DoD'siz kapanmaz; stable release kalite kapısından geçer (AGENTS.md §3). Server-authoritative XP, RLS/sosyal profil, platform sınırları → `docs/KALITE-PROGRAMI.md`.
-- **Son WP numarası:** 137 (WP-134–137 widget/panel SSOT uygulandı; 138–139 opsiyonel spike taslak). **Sıradaki boş numara WP-138.**
+- **Son WP numarası:** 139 (WP-138 sürüm notları + WP-139 l10n denetim). **Sıradaki boş numara WP-140.**
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
   - Flutter: `C:\src\flutter` · Android SDK: `C:\Android\Sdk`
@@ -71,15 +71,15 @@
 - **Not:** Play Store production programı WP-110–124 olarak planlandı; kanonik belgeler hizalandı. `OPTIMIZATIONS.md` kapsam dışı bırakıldı.
 
 ### Grok Lane
-- **Durum:** [~] Aktif
-- **Faz/WP:** WP-138 → WP-139 (sürüm notları + l10n denetim)
-- **Aşama:** Geliştiriliyor
-- **SAHİP yollar:** `app/assets/release_notes.json`, `CHANGELOG.md`, `app/test/features/release_notes_test.dart`, `app/lib/l10n/app_*.arb`, `docs/l10n/**`, native `values*/strings.xml` (string only)
-- **Ortak/riskli yüzey:** ARB
+- **Durum:** [x] Boşta
+- **Faz/WP:** —
+- **Aşama:** —
+- **SAHİP yollar:** —
+- **Ortak/riskli yüzey:** —
 - **Dal:** main
-- **Başlangıç:** 2026-07-17 (Europe/Istanbul)
+- **Başlangıç:** —
 - **Son güncelleme:** 2026-07-17 (Europe/Istanbul)
-- **Not:** WP-134–137 cihaz QA'ya dokunulmaz; push yok.
+- **Not:** WP-138–139 içerik/l10n commit; Test için bekliyor. Push yok. v30 release notu **taslak** (numara release kapısında).
 
 
 ---
@@ -141,8 +141,9 @@
 | WP-135 | [~] Test için bekliyor | Toggle commit + idle sıfırlama (TimerStateStore) | S3/S4 20 tur |
 | WP-136 | [~] Test için bekliyor | Reconcile SSOT / engine-scope broadcast | S1/S2/S11 ≤2s |
 | WP-137 | [~] Test için bekliyor | Dinamik panel P2 (usesChronometer + Mola/Durdur) | S12 API33 + bildirim |
-| WP-138 | [ ] Bekliyor | (ops) custom panel_expanded A/B | WP-137 |
-| WP-139 | [ ] Bekliyor | (ops) API 36 Live Updates spike | WP-137 |
+| WP-138 | [~] Test için bekliyor | Sürüm notları v28/v29 + taslak v30 (TR/EN) | Cihaz Yenilikler |
+| WP-139 | [~] Test için bekliyor | l10n parity + hardcoded/admin + native string denetim | docs/l10n |
+| WP-140 | [ ] Bekliyor | (boş) | — |
 
 > **2026-07-14 proje denetimi:** Serbest sürükle-bırak ızgara, canlı grup hedefi ve saat stilleri **zaten kodda uygulanmış** (backlog stale idi; geçici WP-72/73/75 iptal).
 >
@@ -835,6 +836,18 @@
 > Bu bölüm **aktif çalışma değildir** — ajan claim etmez, diğer WP’leri engellemez.
 > Kabul gelince kart buradan çıkar → **Tamamlanan**’a gider. Bug çıkarsa ayrı debug WP açılır.
 
+
+### WP-138: Sürüm notları v28/v29 + taslak v30 (kod/docs tamam) 📝
+- **Özet:** `release_notes.json` + CHANGELOG senkron; forLocale/asset test. **v30 build 30 taslak** — numara release kapısında kesinleşir (pubspec 1.0.29+29).
+- **Commit:** `c6529c1`
+- **Dil:** MaterialApp.locale → Localizations → forLocale; non-tr → EN, EN boş → TR. Sapma yok.
+- **Kanıt:** `Kodda doğrulandı` / `Cihazda doğrulanmalı` (Ayarlar → Yenilikler, TR/EN)
+
+### WP-139: l10n denetim (kod/docs tamam) 🌐
+- **Özet:** ARB EN/TR parity 100%; admin hardcoded ARB; native 66/66; `docs/l10n/L10N-DENETIM.md`.
+- **Commit:** (bu commit)
+- **Native sınır:** bildirim/widget = sistem dili, app dili değil.
+- **Kanıt:** `Kodda doğrulandı` · analyze 0
 
 ### WP-134: 1×1 widget Chronometer görünür (kod tamam) ⏱️
 - **Özet:** Compact GONE kaldırıldı; 1 hücre minSize; saat üstte mini düğme altta.

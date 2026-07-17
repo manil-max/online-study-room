@@ -1052,5 +1052,9 @@
   "safetyNoBlockedUsers": "Engellenen kullanıcı yok.",
   "safetyBlockedUserFallbackName": "Engellenen kullanıcı",
 "safetyReportDetailsLabel": "Açıklama (isteğe bağlı)",
-  "safetyReportDetailsHint": "Moderatörler için ek bağlam ekle (en fazla 500 karakter)."
+  "safetyReportDetailsHint": "Moderatörler için ek bağlam ekle (en fazla 500 karakter).",
+"adminUgcNoReports": "UGC raporu yok",
+  "adminUgcStatusInReview": "İnceleniyor",
+  "adminUgcStatusResolved": "Çözüldü",
+  "adminUgcStatusRejected": "Reddedildi"
 }

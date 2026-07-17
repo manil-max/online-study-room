@@ -4365,5 +4365,21 @@
   "safetyReportDetailsHint": "Add more context for moderators (max 500 characters).",
   "@safetyReportDetailsHint": {
     "description": "Hint text for report details field"
+  },
+"adminUgcNoReports": "No UGC reports",
+  "@adminUgcNoReports": {
+    "description": "Empty state for super-admin UGC moderation queue"
+  },
+  "adminUgcStatusInReview": "In review",
+  "@adminUgcStatusInReview": {
+    "description": "UGC report status action: in review"
+  },
+  "adminUgcStatusResolved": "Resolved",
+  "@adminUgcStatusResolved": {
+    "description": "UGC report status action: resolved"
+  },
+  "adminUgcStatusRejected": "Rejected",
+  "@adminUgcStatusRejected": {
+    "description": "UGC report status action: rejected"
   }
 }
