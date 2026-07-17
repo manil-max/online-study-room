@@ -8,6 +8,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   passkeys_windows
   screen_retriever_windows
   sentry_flutter
+  share_plus
   url_launcher_windows
   window_manager
 )
