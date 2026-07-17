@@ -4465,5 +4465,188 @@
   "analyticsCardGroupStreak": "Group streak",
   "@analyticsCardGroupStreak": {
     "description": "Analytics card title: group streak"
+  },
+  "onboardingSkip": "Skip",
+  "@onboardingSkip": {
+    "description": "Skip onboarding"
+  },
+  "onboardingContinue": "Continue",
+  "@onboardingContinue": {
+    "description": "Continue to next onboarding step"
+  },
+  "onboardingWelcomeTitle": "Welcome to Focus Camp",
+  "@onboardingWelcomeTitle": {
+    "description": "Onboarding welcome title"
+  },
+  "onboardingWelcomeBody": "Study together, keep your streak, grow with your group. Get ready in a few steps.",
+  "@onboardingWelcomeBody": {
+    "description": "Onboarding welcome body"
+  },
+  "onboardingNotifyTitle": "Study reminders",
+  "@onboardingNotifyTitle": {
+    "description": "Onboarding notifications title"
+  },
+  "onboardingNotifyBody": "Optionally get daily reminders. You can allow notifications now or later in Settings.",
+  "@onboardingNotifyBody": {
+    "description": "Onboarding notifications body"
+  },
+  "onboardingAllowNotifications": "Allow notifications",
+  "@onboardingAllowNotifications": {
+    "description": "Request notification permission"
+  },
+  "onboardingNotNow": "Not now",
+  "@onboardingNotNow": {
+    "description": "Skip notification permission"
+  },
+  "onboardingGroupTitle": "Join a group",
+  "@onboardingGroupTitle": {
+    "description": "Onboarding group title"
+  },
+  "onboardingGroupBody": "Create a group or join with an invite code. You can skip and add one later.",
+  "@onboardingGroupBody": {
+    "description": "Onboarding group body"
+  },
+  "onboardingSkipGroup": "Skip group step",
+  "@onboardingSkipGroup": {
+    "description": "Skip group onboarding step"
+  },
+  "onboardingReadyTitle": "You're ready",
+  "@onboardingReadyTitle": {
+    "description": "Onboarding ready title"
+  },
+  "onboardingReadyBody": "Start the timer on the home screen for your first study session.",
+  "@onboardingReadyBody": {
+    "description": "Onboarding ready body"
+  },
+  "onboardingStart": "Go to campfire",
+  "@onboardingStart": {
+    "description": "Finish onboarding"
+  },
+  "exportMyData": "Export my data",
+  "@exportMyData": {
+    "description": "Settings action to export user data"
+  },
+  "exportMyDataSubtitle": "Share your profile, sessions, subjects and summary as JSON",
+  "@exportMyDataSubtitle": {
+    "description": "Export subtitle"
+  },
+  "exportInProgress": "Exporting…",
+  "@exportInProgress": {
+    "description": "Export in progress"
+  },
+  "exportSuccess": "Export ready",
+  "@exportSuccess": {
+    "description": "Export success snackbar"
+  },
+  "exportEmpty": "Nothing to export",
+  "@exportEmpty": {
+    "description": "Empty export"
+  },
+  "exportFailed": "Export failed. You may be offline; try again.",
+  "@exportFailed": {
+    "description": "Export failure"
+  },
+  "exportRangeLabel": "Date range",
+  "@exportRangeLabel": {
+    "description": "Export date range label"
+  },
+  "exportRangeHot": "Last 90 days",
+  "@exportRangeHot": {
+    "description": "Export hot window range"
+  },
+  "exportRangeYear": "This year",
+  "@exportRangeYear": {
+    "description": "Export year range"
+  },
+  "exportRangeAll": "All (paged)",
+  "@exportRangeAll": {
+    "description": "Export all sessions paged"
+  },
+  "smartRemindersTitle": "Smart reminders",
+  "@smartRemindersTitle": {
+    "description": "Smart reminders settings title"
+  },
+  "smartRemindersSubtitle": "Streak protection and weekly summary",
+  "@smartRemindersSubtitle": {
+    "description": "Smart reminders subtitle"
+  },
+  "smartStreakReminder": "Streak protection reminder",
+  "@smartStreakReminder": {
+    "description": "Toggle streak reminder"
+  },
+  "smartStreakReminderBody": "Remind me if I have not studied today",
+  "@smartStreakReminderBody": {
+    "description": "Streak reminder description"
+  },
+  "smartWeeklySummary": "Weekly summary",
+  "@smartWeeklySummary": {
+    "description": "Toggle weekly summary"
+  },
+  "smartWeeklySummaryBody": "Sunday 18:00 (Istanbul) summary notification",
+  "@smartWeeklySummaryBody": {
+    "description": "Weekly summary description"
+  },
+  "smartStreakTitle": "Streak at risk",
+  "@smartStreakTitle": {
+    "description": "Streak notification title"
+  },
+  "smartStreakBody": "No study yet today. A short session keeps your streak.",
+  "@smartStreakBody": {
+    "description": "Streak notification body"
+  },
+  "smartWeeklyTitle": "Weekly summary",
+  "@smartWeeklyTitle": {
+    "description": "Weekly notification title"
+  },
+  "smartWeeklyBody": "Check this week's study on the Stats tab.",
+  "@smartWeeklyBody": {
+    "description": "Weekly notification body"
+  },
+  "profileLevel": "Level {level}",
+  "@profileLevel": {
+    "description": "Profile level label",
+    "placeholders": {
+      "level": {"type": "int"}
+    }
+  },
+  "profileQuests": "Quests",
+  "@profileQuests": {
+    "description": "Profile quests section"
+  },
+  "questDailyLogin": "Daily login",
+  "@questDailyLogin": {
+    "description": "Daily login quest"
+  },
+  "questWeeklyHours": "5 hours this week",
+  "@questWeeklyHours": {
+    "description": "Weekly hours quest"
+  },
+  "questClaimed": "Done",
+  "@questClaimed": {
+    "description": "Quest completed"
+  },
+  "questLocked": "Locked",
+  "@questLocked": {
+    "description": "Quest locked"
+  },
+  "cosmeticsFrame": "Avatar frame",
+  "@cosmeticsFrame": {
+    "description": "Cosmetic frame label"
+  },
+  "cosmeticsUnlocked": "Unlocked",
+  "@cosmeticsUnlocked": {
+    "description": "Cosmetic unlocked"
+  },
+  "languageArabic": "Arabic",
+  "@languageArabic": {
+    "description": "Arabic language option"
+  },
+  "languageGerman": "German",
+  "@languageGerman": {
+    "description": "German language option"
+  },
+  "rtlPreviewHint": "RTL layout preview",
+  "@rtlPreviewHint": {
+    "description": "RTL accessibility hint"
   }
 }

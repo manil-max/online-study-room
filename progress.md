@@ -79,7 +79,7 @@
 - **Dal:** main
 - **Başlangıç:** —
 - **Son güncelleme:** 2026-07-18 (Europe/Istanbul)
-- **Not:** WP-164 kod+test bitti → Test için bekleyenler. Push yok.
+- **Not:** Program kuyruğu: WP-151 bitti (test park). Sırada 152+.
 
 
 ---
@@ -154,7 +154,7 @@
 | WP-148 | [~] Test için bekliyor | Regresyon süpürme raporu | docs/debug |
 | WP-149 | [~] WP-156’ya bağlandı | Streak+heatmap → analitik kart | WP-156 |
 | WP-150 | [~] WP-156’ya devredildi | Stats derinleştirme → büyük plan | WP-156 |
-| WP-151 | [~] Plan — onay bekliyor | Onboarding PLAN | docs/features |
+| WP-151 | [~] Test için bekliyor | Onboarding 4 adım skip/izin/grup | Cihazda doğrulanmalı |
 | WP-152 | [~] Plan — onay bekliyor | Veri export PLAN | docs/features |
 | WP-153 | [~] Plan — onay bekliyor | Akıllı hatırlatma PLAN | docs/features |
 | WP-154 | [~] Plan — onay bekliyor | Gamification genişletme PLAN | docs/features |
@@ -855,6 +855,13 @@
 > ⚠️ **Ürün kararları:** (1) WP-66 §0 retention varsayılanları, (2) legal site domain/iletişim kimliği, (3) hedef kitle 13+/16+, (4) Play Console'da alarmı core functionality olarak savunma veya safe fallback, (5) geliştirici hesap türü/tarihi. Bunlar planı engellemez; ilgili WP başlamadan kullanıcı onayı gerekir.
 
 ## Test için bekleyenler
+
+### WP-151: Onboarding (kod+test) 👋
+- **Özet:** 4 adım atlanabilir; bildirim izni (red OK); grup oluştur/katıl/atla; prefs `onboarding.completed_v1`.
+- **Test:** analyze 0 · onboarding_test 3 geçti.
+- **Kanıt:** `Kodda doğrulandı` · **`Cihazda doğrulanmalı`** (ilk login, skip, izin red, grup).
+- **Commit:** (bu commit)
+
 
 > Kod/otomatik test bitti; **cihaz QA veya ürün demo’su** bekleniyor.
 > Bu bölüm **aktif çalışma değildir** — ajan claim etmez, diğer WP’leri engellemez.

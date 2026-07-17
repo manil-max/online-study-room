@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/providers/auth_providers.dart';
 import '../../core/navigation/home_shell.dart';
 import '../../l10n/app_localizations.dart';
+import '../onboarding/onboarding_prefs.dart';
+import '../onboarding/onboarding_screen.dart';
 import '../updater/release_notes_screen.dart';
 import '../updater/updater_dialog.dart';
 import 'auth_screen.dart';
@@ -56,9 +58,15 @@ class _AuthGateState extends ConsumerState<AuthGate> {
     final authState = ref.watch(authStateProvider);
     final l10n = AppLocalizations.of(context);
 
+    final onboardingDone = ref.watch(onboardingCompletedProvider);
+
     return authState.when(
-      data: (profile) =>
-          profile == null ? const AuthScreen() : const HomeShell(),
+      data: (profile) {
+        if (profile == null) return const AuthScreen();
+        // WP-151: ilk giriş sonrası atlanabilir onboarding.
+        if (!onboardingDone) return const OnboardingScreen();
+        return const HomeShell();
+      },
       loading: () => Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
         body: const Center(child: CircularProgressIndicator()),
