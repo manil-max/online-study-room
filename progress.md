@@ -71,15 +71,15 @@
 - **Not:** Play Store production programı WP-110–124 olarak planlandı; kanonik belgeler hizalandı. `OPTIMIZATIONS.md` kapsam dışı bırakıldı.
 
 ### Grok Lane
-- **Durum:** [~] Aktif
-- **Faz/WP:** WP-111 → Play programı (sıralı commit)
-- **Aşama:** Geliştiriliyor
-- **SAHİP yollar:** (aktif WP kartına göre)
-- **Ortak/riskli yüzey:** progress, ARB, settings, migrations sırası
+- **Durum:** [x] Boşta
+- **Faz/WP:** —
+- **Aşama:** —
+- **SAHİP yollar:** —
+- **Ortak/riskli yüzey:** —
 - **Dal:** main
-- **Başlangıç:** 2026-07-17 (Europe/Istanbul)
+- **Başlangıç:** —
 - **Son güncelleme:** 2026-07-17 (Europe/Istanbul)
-- **Not:** Kullanıcı “bitene kadar” — WP-111+ seri; WP-66 varsayılanları ürün onayı kabulüyle.
+- **Not:** WP-110–118 kod/docs iskelet commitlendi; 119–124 runbook; cihaz/Console/prod deploy sende.
 
 
 ---
@@ -132,21 +132,21 @@
 | WP-107 | [~] Test için bekliyor | Manuel oturum İstanbul gün sınırı + UTC yazım (B4) | cihaz QA |
 | WP-108 | [~] Test için bekliyor | Aylık rapor retry + cron URL (0035) + edge auth iskeleti | Edge deploy + GUC |
 | WP-109 | [~] Test için bekliyor | Güvenlik 0036 (IDOR/profiles) + B7 select doğrulama | SQL + regresyon |
-| WP-110 | [~] Test için bekliyor | Play flavor + installer izni izolasyonu + updater fail-closed | merged manifest / AAB |
-| WP-111 | [ ] Bekliyor | Gizlilik, kullanım koşulları ve topluluk kuralları | WP-110 URL/kanal sözleşmesi |
-| WP-112 | [ ] Bekliyor | Hesap silme veri sözleşmesi + migration 0037 | WP-66 ürün kararı |
-| WP-113 | [ ] Bekliyor | Hesap hard-delete Edge pipeline + storage/cron | WP-112 |
-| WP-114 | [ ] Bekliyor | Uygulama içi + web hesap silme akışı | WP-112/113 |
-| WP-115 | [ ] Bekliyor | UGC raporlama/engelleme/moderasyon backend + 0038 | WP-112 migration sırası |
-| WP-116 | [ ] Bekliyor | UGC kullanıcı güvenliği arayüzleri | WP-111/115 |
-| WP-117 | [ ] Bekliyor | Admin moderasyon kuyruğu ve audit | WP-115 |
-| WP-118 | [ ] Bekliyor | Android kısıtlı izin ve FGS/Alarm Play uyumu | WP-110 |
-| WP-119 | [ ] Bekliyor | Veri envanteri, Data Safety ve Sentry beyan paketi | WP-111/114/116/118 |
-| WP-120 | [ ] Bekliyor | Store listing, hedef kitle, içerik derecelendirme ve reviewer erişimi | WP-111/119 |
-| WP-121 | [ ] Bekliyor | Production migration/Edge/RLS operasyon kapısı | WP-113/115 + 0034–0038 |
-| WP-122 | [ ] Bekliyor | Play AAB, API 36, imza ve artefakt doğrulama | WP-110/118 |
-| WP-123 | [ ] Bekliyor | Play kritik cihaz QA + erişilebilirlik/pre-launch | WP-114/116/118/121/122 |
-| WP-124 | [ ] Bekliyor | Internal/Closed test, soak, GO/NO-GO ve staged rollout | WP-119–123 |
+| WP-110 | [~] Test için bekliyor | Play flavor + installer izolasyonu | AAB merge check |
+| WP-111 | [~] Test için bekliyor | Legal merkez + politikalar + telemetri | canlı HTTPS URL |
+| WP-112 | [~] Test için bekliyor | 0037 hesap silme RPC | SQL Editor |
+| WP-113 | [~] Test için bekliyor | purge-accounts Edge | deploy + CRON |
+| WP-114 | [~] Test için bekliyor | Hesap silme UI + web bilgilendirme | cihaz |
+| WP-115 | [~] Test için bekliyor | 0038 UGC şema/RPC | SQL Editor |
+| WP-116 | [~] Test için bekliyor | report sheet + moderation repo | sohbet menü bağlama polish |
+| WP-117 | [~] Test için bekliyor | Admin UGC kuyruk sekmesi | canlı rapor smoke |
+| WP-118 | [~] Test için bekliyor | TimerActionReceiver exported=false | OEM alarm beyan (Console) |
+| WP-119 | [~] Test için bekliyor | DATA-SAFETY.md taslak | Console form |
+| WP-120 | [ ] Bekliyor | Store listing varlıkları (ekran görüntüsü vb.) | ürün/tasarım |
+| WP-121 | [~] Test için bekliyor | PROD-DEPLOY-RUNBOOK + RLS-SMOKE | canlı ops |
+| WP-122 | [~] Test için bekliyor | PLAY-BUILD-RUNBOOK (AAB play flavor) | versionCode 30+ |
+| WP-123 | [ ] Bekliyor | Cihaz QA matrisi (P0 kanıt) | fiziksel cihaz |
+| WP-124 | [~] Test için bekliyor | PLAY-RELEASE-GATE şablonu | GO imzası |
 
 > **2026-07-14 proje denetimi:** Serbest sürükle-bırak ızgara, canlı grup hedefi ve saat stilleri **zaten kodda uygulanmış** (backlog stale idi; geçici WP-72/73/75 iptal). Dinamik paneldeki cihaz/eylem sorunu için açılan **WP-76** kod+otomatik test aşamasını geçti; Samsung/Pixel cihaz QA’sı bekliyor.
 >
