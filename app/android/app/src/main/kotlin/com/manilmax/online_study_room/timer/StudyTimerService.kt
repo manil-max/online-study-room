@@ -242,6 +242,12 @@ class StudyTimerService : Service() {
         }
     }
 
+    /**
+     * WP-103: Runtime tip, manifest `dataSync|specialUse` alt kümesi olmalı.
+     * - API 34+ (UPSIDE_DOWN_CAKE): SPECIAL_USE (Android 15 dataSync 6s cap'ten muaf)
+     * - API 29–33: DATA_SYNC (önceki yalnız-specialUse manifest ile uyumsuzdu → çökme)
+     * - API ≤28: tip parametresiz
+     */
     private fun startForegroundCompat(notification: Notification) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             // dataSync Android 15'te toplam 6 saat ile sınırlı. Kullanıcı açıkça

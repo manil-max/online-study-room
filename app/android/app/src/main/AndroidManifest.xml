@@ -81,10 +81,13 @@
             android:exported="false" />
         <!-- WP-42/51: Sayacın native foreground servisi. Widget/bildirim Başlat-Durdur
              uygulama kapalıyken de bunu ayağa kaldırır; oturum kaydı app açılışında
-             Dart tarafında yapılır. -->
+             Dart tarafında yapılır.
+             WP-103: API 29–33 kodu DATA_SYNC, API 34+ SPECIAL_USE kullanır; tip
+             manifest alt kümesi olmalı → dataSync|specialUse (yalnız specialUse
+             iken ≤13 IllegalArgumentException / RemoteServiceException çökmesi). -->
         <service
             android:name=".timer.StudyTimerService"
-            android:foregroundServiceType="specialUse"
+            android:foregroundServiceType="dataSync|specialUse"
             android:exported="false">
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"

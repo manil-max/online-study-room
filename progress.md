@@ -20,7 +20,7 @@
 - **Navigasyon hedefi:** Ana Sayfa / Saat / Gruplar / İstatistikler / Profil. Ana Sayfa günlük kullanım alanıdır; diğer alanların verisi kendi sekmelerinde eksiksiz bulunur.
 - **Release:** Stable/Beta kanalı GitHub Releases ile çalışır. **v8 yayımlandı.** WP-48/49/50, ürün sahibinin doğrudan yayın ve soak'ı atlama kararıyla açık iş olmaktan çıkarıldı; sonraki yayın için ayrı WP açılır.
 - **Kalite kapıları:** Her WP DoD'siz kapanmaz; stable release kalite kapısından geçer (AGENTS.md §3). Server-authoritative XP, RLS/sosyal profil, platform sınırları → `docs/KALITE-PROGRAMI.md`.
-- **Son WP numarası:** 91
+- **Son WP numarası:** 102 (WP-102 beta-v28'de yayınlandı). Planlanan/rezerve: WP-103…109 (FGS çökme + OPTIMIZATIONS.md bulguları); **sıradaki boş numara WP-110**.
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
   - Flutter: `C:\src\flutter` · Android SDK: `C:\Android\Sdk`
@@ -71,15 +71,16 @@
 - **Not:** Aylık e-posta anahtarı iyimser/kilitli kaydetmeyle düzeltildi; açılış öncesi dürtmeler sessize alındı; kalıcı Sistem/Türkçe/İngilizce seçici eklendi. `flutter analyze`, 433/433 test, EN/TR audit ve yerel beta APK geçti. Hedef beta-v26; stable tag yok.
 
 ### Grok Lane
-- **Durum:** [x] Boşta
-- **Faz/WP:** —
-- **Aşama:** —
-- **SAHİP yollar:** —
-- **Ortak/riskli yüzey:** —
-- **Dal:** — (main)
-- **Başlangıç:** —
-- **Son güncelleme:** 2026-07-15 (Europe/Istanbul)
-- **Not:** WP-101 saat XP 50 + stable v27; migration 0033 SQL Editor.
+- **Durum:** [~] Aktif
+- **Faz/WP:** WP-103 — Android ≤13 FGS tip çökmesi
+- **Aşama:** Geliştiriliyor
+- **SAHİP yollar:** `app/android/app/src/main/AndroidManifest.xml`, `app/android/app/src/main/kotlin/**/timer/StudyTimerService.kt`, `app/pubspec.yaml` (yalnız version)
+- **Ortak/riskli yüzey:** AndroidManifest.xml, pubspec version
+- **Dal:** main
+- **Başlangıç:** 2026-07-17 (Europe/Istanbul)
+- **Son güncelleme:** 2026-07-17 (Europe/Istanbul)
+- **Not:** Codex WP-99 park/stale; SAHİP kesişimi yok. WP-104 sonra.
+
 
 ---
 
@@ -124,6 +125,13 @@
 | WP-95 | [~] Test için bekliyor | Başarım ayrıntılarında tam cümleli koşullar | — |
 | WP-97 | [~] Test için bekliyor | Eski One UI sayaç satırı, tüm ekranlarda pull-to-refresh, belirgin beta ayrımı ve beta-v24 | WP-94 cihaz bulgusu |
 | WP-100 | [~] Test için bekliyor | Senkron kök fix: local emit, pull-to-refresh timeout, presence race | cihaz bulgusu |
+| WP-103 | [ ] Bekliyor | 🔴 KRİTİK ÇÖKME — Android ≤13'te sayaç başlat/durdur app'i çökertiyor (FGS tip uyumsuzluğu) + stable yayın | — |
+| WP-104 | [ ] Bekliyor | Presence bayatlama açığı (updatedAt=null) + durdurmada oturum kaydı sağlamlaştırma | WP-103 (aynı akış) |
+| WP-105 | [ ] Bekliyor | 🟠 XP/başarım kök fix (B1) — oturum bitince RPC yalnız profil açılınca çalışıyor; XP kaçıyor | — |
+| WP-106 | [ ] Bekliyor | watchMembers O(n·m)→Map + güvenli fallback (B3/R3) + aktif üye partial index (R12) | — |
+| WP-107 | [ ] Bekliyor | Manuel oturum İstanbul gün sınırı + UTC yazım (B4) | — |
+| WP-108 | [ ] Bekliyor | Aylık rapor retry (B2) + cron localhost URL (B8) — yalnız özellik canlıysa | ürün/ops kararı |
+| WP-109 | [ ] Bekliyor | Güvenlik sertleştirme — Edge Function auth (S2), IDOR (S3), profiles enumeration (S4), sessiz update (B7) | ops sıralama kritik |
 
 > **2026-07-14 proje denetimi:** Serbest sürükle-bırak ızgara, canlı grup hedefi ve saat stilleri **zaten kodda uygulanmış** (backlog stale idi; geçici WP-72/73/75 iptal). Dinamik paneldeki cihaz/eylem sorunu için açılan **WP-76** kod+otomatik test aşamasını geçti; Samsung/Pixel cihaz QA’sı bekliyor.
 >
@@ -137,6 +145,163 @@
 > **Küresel dil programı ortak sözleşmesi:** İngilizce şablon/varsayılan (`en`), Türkçe ikinci dil (`tr`). Yalnız sistem dil kodu `tr` ise Türkçe; diğer her locale İngilizce. Üretilen l10n kodu elle düzenlenmez/commit edilmez. Tüm WP'lerde migration/RLS etkisi yok; sır/PII çeviri dosyasına girmez; gün sınırı `Europe/Istanbul` kalır. Aynı anda en fazla iki çalışma hattı açılır.
 
 > **Çakışma matrisi:** ✅ Wave 1: WP-82 + WP-83. Wave 2: WP-84 + WP-88 (WP-83 sonrası). Wave 3: WP-85 + WP-86. Wave 4: WP-87 tek başına veya bitmiş WP-88'in ardından ikinci ayrık hat. Wave 5: WP-89 tek seri kapı. ARB dosyalarına yalnız WP-82 (seed), sonra WP-84, en son WP-89 yazar; UI worker'ları ARB'yi salt okunur kullanır.
+
+### WP-103: 🔴 KRİTİK — Android ≤13 Sayaç Çökmesi (FGS Tip Uyumsuzluğu) + Stable Yayın 💥
+- **Program/Faz:** Debug · Faz 0 (kararlılık) · **Ajan:** — (atanınca lane doldurur) · **Durum:** [ ] Bekliyor · **Model:** 🔴 Opus (yayın + native FGS riski)
+- **Problem:** beta-v19'dan (commit `a2688de`, WP-76) beri **Android 10–13 çalıştıran her cihazda** kronometreyi başlatmak da durdurmak da uygulamayı çökertiyor ("Odak Kampı ile ilgili bir sorun oluştu" dialogu). Kök neden: [AndroidManifest.xml](app/android/app/src/main/AndroidManifest.xml) servisi yalnızca `foregroundServiceType="specialUse"` beyan ediyor, ama [StudyTimerService.kt](app/android/app/src/main/kotlin/com/manilmax/online_study_room/timer/StudyTimerService.kt) `startForegroundCompat` içinde API 29–33 dalı hâlâ `FOREGROUND_SERVICE_TYPE_DATA_SYNC` geçiyor. Android, tip manifestin alt kümesi değilse `IllegalArgumentException` fırlatır; servis `startForegroundService` borcunu ödeyemeden ölür → yakalanamayan `RemoteServiceException` ile süreç öldürülür. S23 (Android 14+, SPECIAL_USE dalı) etkilenmez → cihaz farkı tam buradan. Not 20 + A51 (ikisi de final Android 13) etkilenir.
+- **Kapsam dışı:** Presence bayatlama açığı ve durdurmada oturum-kaydı sağlamlaştırma (→ WP-104). Bildirim tasarımı/panel içeriği değişmez. Yeni foreground service türü mimarisi tasarlanmaz — yalnız tip beyanı hizalanır.
+- **SAHİP dosyalar (yaz):**
+  - `app/android/app/src/main/AndroidManifest.xml`
+  - `app/android/app/src/main/kotlin/com/manilmax/online_study_room/timer/StudyTimerService.kt`
+  - `app/pubspec.yaml` (yalnız `version:` bump)
+- **DOKUNMA (oku, değiştirme):** `app/lib/**` (Dart akışı doğru, dokunulmaz), `app/lib/data/providers/presence*` (WP-104 sahibi), diğer native receiver/widget dosyaları.
+- **Adımlar:**
+  - [ ] **Çözüm (önerilen — Seçenek A):** Manifestte servisi `android:foregroundServiceType="dataSync|specialUse"` yap. Böylece API 29–33 dalı DATA_SYNC (0x01) geçer → `dataSync|specialUse` (0x40000001) alt kümesi ✓; API 34+ dalı SPECIAL_USE geçer → alt küme ✓. İki izin (`FOREGROUND_SERVICE_DATA_SYNC` + `FOREGROUND_SERVICE_SPECIAL_USE`) zaten beyanlı.
+  - [ ] `<property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" …>` olduğu gibi kalır (specialUse hâlâ beyanlı olduğu için Play Console gereksinimi korunur).
+  - [ ] API 33 emülatörde tekrar-üretim → düzeltme öncesi çökme + `not a subset of foregroundServiceType attribute` logcat imzasını doğrula; düzeltme sonrası başlat/durdur çökmesiz + bildirim akıyor.
+  - [ ] Android 15 (API 35) cihaz/emülatörde regresyon: kod SPECIAL_USE dalına girer, dataSync 6-saat sınırı çalışan tipe uygulandığı için etkilenmez — doğrula.
+  - [ ] `flutter analyze` 0, tam `flutter test` yeşil (Dart değişmedi, native değişiklik testleri etkilemez ama regresyon için çalıştır).
+  - [ ] `version:` bump + imzalı release APK + GitHub Release (stable). Sürüm önerisi `1.0.29+29` / tag `v29` — **Ürün kararı**.
+- **Veri/Migration etkisi:** Yok. Geri alma bu iki dosyanın commitidir.
+- **RLS/Güvenlik:** Yok. Sır yok. Foreground servis kullanıcı-başlatımlı görünür sayaç olarak kalır.
+- **Edge-case'ler:** API ≤28 (tip parametresiz `startForeground`), API 29–33 (DATA_SYNC), API 34 (SPECIAL_USE), API 35 (SPECIAL_USE + dataSync cap muafiyeti); uygulama-kapalı bildirim/widget Durdur (getForegroundService yolu da aynı `startForegroundCompat`'i çağırır — düzeltme oradaki çökmeyi de kapatır); mola başlat/bitir yolları da aynı compat'ı kullanır.
+- **Kabul (ölçülebilir):** Android 13 gerçek cihazda (Not 20 veya A51, ya da API 33 emülatör) başlat→arka plan→aç→durdur döngüsü **0 çökme**; sayaç bildirimi görünür ve süre akar; logcat'te `IllegalArgumentException`/`RemoteServiceException` yok. Android 14+ (S23) regresyonsuz. `flutter analyze` 0. Stable APK GitHub Release'de yayınlanır ve aile cihazlarında doğrulanır (`Cihazda doğrulanmalı`).
+- **Tuzaklar:** **Seçenek B (alternatif):** manifesti specialUse-only bırakıp API 29–33 dalında tipsiz `startForeground(id, notification)` çağırmak — pre-14 cihazlar runtime tip gerektirmediği için bu da çalışır; ama bazı OEM bildirim yüzeyleri tipi kullandığından Seçenek A tercih edilir. · specialUse `<property>`'yi silme (Play Console reddeder). · Yalnız kodu düzeltip manifesti unutmak (ya da tersi) → yine uyumsuzluk. · Android 15'te dataSync beyanının 6-saat cap getireceği yanılgısı — cap çalışan tipe uygulanır, kod 15'te SPECIAL_USE kullanır.
+- **Dal önerisi:** `wp103-fgs-tip-cokme`
+
+> **Çakışma matrisi (WP-103):** ✅ Aktif dosya yazan lane yok (tüm lane'ler Boşta; Codex lane'i WP-99 için stale-aktif ama parkta ve SAHİP yüzeyi `timer_notification.xml`/l10n — bu WP native FGS tipine dokunur, kesişim yok). `AndroidManifest.xml` sıcak dosya ama şu an ona giren aktif WP yok. WP-104 aynı çökme akışının Dart tarafını sağlamlaştırır; ayrı SAHİP yüzeyi (presence/study_providers) → **paralel güvenli**, yalnız aynı cihaz QA turunda birlikte doğrulanması önerilir.
+
+### WP-104: Presence Bayatlama Açığı + Durdurmada Oturum Kaydı Sağlamlaştırma 🩹
+- **Program/Faz:** Debug · **Ajan:** — · **Durum:** [ ] Bekliyor · **Model:** 🟣 Pro
+- **Problem:** WP-103'teki çökmenin iki veri yan-hasarı, çökme düzelse de latent kalır: (1) Yerel yazılan presence nesneleri `updatedAt=null` üretilip offline cache'e öyle saklanıyor ([offline_cache_store.dart:204](app/lib/data/repositories/offline/offline_cache_store.dart:204)); [applyPresenceStaleness](app/lib/data/providers/presence_providers.dart:62) `updatedAt==null` satırları **hiç bayatlatmıyor** → çöken/kapanan cihazın kendi ekranında "hâlâ çalışıyor" kalıcı görünebilir. (2) Uygulama-içi Durdur'da `_recordSession` ağ çağrısı, native durdurma komutundan sonra yarışır ([study_providers.dart:734](app/lib/data/providers/study_providers.dart:734)); süreç erken ölürse oturum süresi kaydedilmeden kaybolur (native `STOP_SILENT` bilerek kuyruğa yazmaz).
+- **Kapsam dışı:** FGS tip düzeltmesi (→ WP-103). Presence heartbeat aralığı/eşik değerleri değişmez. Yeni tablo/kolon yok.
+- **SAHİP dosyalar (yaz):**
+  - `app/lib/data/repositories/offline/offline_cache_store.dart`
+  - `app/lib/data/providers/presence_providers.dart` (yalnız staleness mantığı, gerekirse)
+  - `app/lib/data/providers/study_providers.dart` (yalnız `stop()` sıralaması, gerekirse)
+  - ilgili testler (`test/**presence**`, `test/**timer**`)
+- **DOKUNMA (oku, değiştirme):** native `**/*.kt`, `AndroidManifest.xml` (WP-103 sahibi), `presence.dart` modeli mümkünse salt-okunur.
+- **Adımlar:**
+  - [ ] Yerel presence yazımında `updatedAt`'i `DateTime.now()` ile doldur (cache'e null yazma) → böylece bayatlama eşiği yerel satırlara da uygulanır. Alternatif: `applyPresenceStaleness` içinde `updatedAt==null` satırları için güvenli bir varsayım (ör. yerel kullanıcı için timer state'ten türet) — hangisi seçilirse WP'de gerekçelendir.
+  - [ ] `stop()` içinde oturum kaydını (`_recordSession`) native durdurma komutundan **önce** ya da en azından çökmeye dayanıklı sırada çalıştır; app-içi durdurmada süre kaybı olmadığını testle kanıtla.
+  - [ ] `flutter analyze` 0; presence staleness + timer stop testleri yeşil (null updatedAt bayatlama senaryosu dahil).
+- **Veri/Migration etkisi:** Yok. Geri alma bu istemci commitidir.
+- **RLS/Güvenlik:** Yok. Server-authoritative oturum kaydı korunur (yalnız çağrı sırası sağlamlaştırılır).
+- **Edge-case'ler:** Çevrimdışı yazım (kuyruk), grup henüz yüklenmemiş, çoklu cihaz aynı kullanıcı, uygulama öldürülmesi Durdur'un tam ortasında.
+- **Kabul (ölçülebilir):** Yerel kullanıcı sayacı durdurunca kendi ekranında ≤ eşik (70 sn) içinde "çalışıyor" temizlenir; app-içi Durdur'da oturum süresi %100 kaydedilir (test); `flutter analyze` 0, ilgili + tam test yeşil.
+- **Tuzaklar:** `updatedAt`'i yerelde doldurmak, gerçekten bayat bir satırı taze göstermemeli (yalnız yerel-kaynaklı satır için); sunucudan gelen satırların `updated_at`'i her zaman kazanmalı. Oturum kayıt sırasını değiştirirken çift kayıt (native kuyruk + Dart) üretmemek.
+- **Dal önerisi:** `wp104-presence-oturum-saglamlik`
+
+> **Çakışma matrisi (WP-104):** ✅ WP-103 ile ortak SAHİP dosyası yok (WP-103 = native+manifest+pubspec; WP-104 = Dart presence/study/cache). `study_providers.dart` sıcak ama şu an ona giren aktif lane yok. Paralel güvenli; ürün isterse önce WP-103 stable'a çıkar, WP-104 bir sonraki yayına eklenir.
+
+---
+
+> **OPTIMIZATIONS.md kaynağı (2026-07-17, Grok taraması):** Aşağıdaki WP-105…109, `OPTIMIZATIONS.md`'deki bulgulardan **koda karşı doğrulanmış** olanlardır. Doğrulama (Claude): B1 gerçek/yüksek etki; B3 perf gerçek ama crash şiddeti abartılı (`ids` `rows`'tan türediği için `firstWhere` her zaman eşleşir); B4 mekanik gerçek ama cihaz-TZ'ye bağlı. Düşük değerli perf maddeleri (R8 ticker gate, R9 summary debounce, R11 ölü `watchGroupSessions`) küçük kullanıcı tabanı için ** WP açılmadı**; ileride tek "temizlik" WP'sinde toplanabilir. B5/B8 migration deploy durumuna bağlı; S1 süre hard-cap **ürün kararı** ister (KALITE-PROGRAMI §11'e taşınmalı).
+
+### WP-105: 🟠 XP/Başarım Kök Fix — Oturum Bitince Sunucu Tetiği (B1) 🏆
+- **Program/Faz:** Başarım · Debug · **Ajan:** — · **Durum:** [ ] Bekliyor · **Model:** 🟣 Pro
+- **Problem:** Kullanıcı çalışmayı bitirdiğinde saatlik 50 XP ve başarılar sunucu ledger'ına **yalnızca profil/başarım ekranı açılırsa** yazılıyor. Tek tetik `gamificationProgressSyncProvider` ve o `FutureProvider.autoDispose` — yalnız [gamification_card.dart:19](app/lib/features/profile/widgets/gamification_card.dart:19) ve [social_profile_screen.dart:47](app/lib/features/profile/social_profile_screen.dart:47) izliyor. `notifySessionCompletedForAchievementsProvider` ([achievement_provider.dart:71](app/lib/data/providers/achievement_provider.dart:71)) tanımlı ama **hiçbir yerden çağrılmıyor** (grep ile doğrulandı). 0033'te XP DB trigger'ı değil, istemci-çağrılı `process_achievement_event` RPC'sidir → profili hiç açmayan kullanıcı XP/rozet kaybeder, "neden XP yok?" şikayeti buradan.
+- **Kapsam dışı:** XP formülü/başarım kuralları değişmez (server-authoritative korunur). Confetti/animasyon yeniden tasarlanmaz. `study_providers.dart` sayaç mantığına dokunulmaz (WP-104 territoryi).
+- **SAHİP dosyalar (yaz):**
+  - `app/lib/data/providers/gamification_providers.dart` (autoDispose kaldır / keep-alive tetik)
+  - `app/lib/core/navigation/home_shell.dart` (oturum tamamlanınca tek-sefer `session_completed` tetiği — presence_lifecycle gibi kabuk-ömürlü)
+  - ilgili testler (`test/**gamification**`, `test/**achievement**`)
+- **DOKUNMA (oku, değiştirme):** `app/lib/data/providers/study_providers.dart` (WP-104), `supabase/migrations/**` (0033 doğru, dokunulmaz), profil UI dosyaları (izleme zaten var).
+- **Adımlar:**
+  - [ ] Oturum listesi değişince (yeni tamamlanmış oturum) `process_achievement_event('session_completed')` çalışacak **kabuk-ömürlü** bir tetik ekle — profil ekranından bağımsız. Ör: HomeShell'de `ref.listen(userSessionsProvider, ...)` ile debounce'lu tek sefer çağrı, veya sync provider'ı `keepAlive` yapıp kabukta izle.
+  - [ ] Idempotency korunur (`event_key` aynı oturum için iki kez XP vermez — 0033 zaten sağlıyor); mükerrer tetik güvenli olmalı.
+  - [ ] Çevrimdışı/kimlik-hazır-değil durumunda sessiz geç (mevcut catch deseni).
+  - [ ] `flutter analyze` 0; oturum-bitti→XP testi (profil açılmadan ledger'a yazıldığını doğrula) yeşil.
+- **Veri/Migration etkisi:** Yok (0033 mevcut RPC'yi kullanır). Geri alma bu istemci commitidir.
+- **RLS/Güvenlik:** Server-authoritative; istemci XP hesaplamaz, yalnız olayı tetikler. `process_achievement_event` authenticated'a grant'lı (0033).
+- **Edge-case'ler:** Aynı anda birden çok oturum, hızlı ardışık start/stop, çevrimdışı kuyruk sonrası flush, cold start restore, kullanıcı yokken tetik.
+- **Kabul (ölçülebilir):** Bir oturum tamamlandıktan sonra **profil ekranı hiç açılmadan** ≤ birkaç sn içinde `process_achievement_event` çağrılır ve saatlik XP ledger'a yazılır (test + Supabase kanıtı); aynı oturum iki kez XP vermez; `flutter analyze` 0, ilgili + tam test yeşil.
+- **Tuzaklar:** Tetiği her stream tick'inde çalıştırıp RPC spam'i üretmek (B10 ile aynı tuzak → debounce/coalesce); `study_providers.dart`'a girip WP-104 ile çakışmak; autoDispose'u kaldırırken bellek sızıntısı yaratmak.
+- **Dal önerisi:** `wp105-xp-oturum-tetik`
+
+### WP-106: watchMembers Map Refaktör + Aktif Üye Index (B3/R3 + R12) 🧹
+- **Program/Faz:** Debug/Perf · **Ajan:** — · **Durum:** [ ] Bekliyor · **Model:** 🔵 Sonnet
+- **Problem:** (R3/B3) [supabase_group_repository.dart:153](app/lib/data/repositories/supabase/supabase_group_repository.dart:153) `watchMembers` her profil için `rows.firstWhere(... )` (O(n·m), `orElse` yok). Crash pratikte imkânsız (`ids` `rows`'tan türer) ama gelecekteki bir değişiklikte StateError riski + gereksiz CPU. (R12) `group_members(group_id) WHERE left_at IS NULL` üzerinde partial index yok; RLS helper'ları ve `group_daily_totals` bu filtreyi sık kullanıyor.
+- **Kapsam dışı:** watchMembers'ın davranış/semantiği değişmez (aynı liste, aynı `isActive`). Başka repository metodları refaktör edilmez.
+- **SAHİP dosyalar (yaz):**
+  - `app/lib/data/repositories/supabase/supabase_group_repository.dart`
+  - `supabase/migrations/0034_group_members_active_index.sql` (yeni)
+  - ilgili repository testi
+- **DOKUNMA (oku, değiştirme):** diğer repository'ler, `in_memory` eşdeğeri (davranış zaten aynı).
+- **Adımlar:**
+  - [ ] `rows`'u bir kez `Map<userId, row>`'a çevir; profil eşleştirmesini map'ten yap; eşleşmezse güvenli fallback (`isActive=false`, StateError yok).
+  - [ ] `create index concurrently if not exists idx_group_members_active on public.group_members (group_id) where left_at is null;` migration'ı ekle (geri alma: `drop index`).
+  - [ ] `flutter analyze` 0; üye listesi testinde aynı çıktı + eksik-profil senaryosunda crash yok.
+- **Veri/Migration etkisi:** Yalnız index ekleme (semantik yok); `concurrently` ile kilit-suz. Geri alma: `drop index if exists idx_group_members_active`.
+- **RLS/Güvenlik:** Etki yok; index yalnız performans.
+- **Edge-case'ler:** Boş grup, soft-left üye, silinmiş profil, realtime ara durum.
+- **Kabul (ölçülebilir):** Üye listesi öncekiyle bit-aynı; `EXPLAIN` membership/`group_daily_totals` sorgularında index kullanımı; `flutter analyze` 0, test yeşil. Migration kullanıcı tarafından SQL Editor'da uygulanır (Proje Gerçekleri kuralı).
+- **Tuzaklar:** `concurrently`'yi transaction içinde çalıştırmak (Postgres reddeder); `isActive` fallback'ini yanlış kurup aktif üyeyi pasif göstermek.
+- **Dal önerisi:** `wp106-uyeler-map-index`
+
+### WP-107: Manuel Oturum İstanbul Gün Sınırı + UTC Yazım (B4) 🕛
+- **Program/Faz:** Debug · **Ajan:** — · **Durum:** [ ] Bekliyor · **Model:** 🟣 Pro (TZ + hot model dosyası)
+- **Problem:** [manual_session_dialog.dart:21](app/lib/features/profile/widgets/manual_session_dialog.dart:21) `manualSessionRange` aralığı **cihaz yerel saatiyle** (`DateTime.now()`, `DateTime(y,m,d,…)`) kuruyor; [study_session.dart:52](app/lib/data/models/study_session.dart:52) `toMap` `start.toIso8601String()`'i `.toUtc()` olmadan yazıyor. Ürün gün sınırı `Europe/Istanbul` (`StudySession.day => istanbulDay(start)`). Cihaz TZ ≠ İstanbul veya gece 00:00 civarı manuel giriş yanlış takvim gününe düşebilir → "bugün" toplamı/streak/heatmap kayması.
+- **Kapsam dışı:** Canlı sayaç kaydı (`_recordSession`) gerçek instant kullanır, ayrı ele alınmaz. Gün-sınırı motoru (`istanbul_calendar.dart`) yeniden yazılmaz.
+- **SAHİP dosyalar (yaz):**
+  - `app/lib/features/profile/widgets/manual_session_dialog.dart`
+  - `app/lib/data/models/study_session.dart` (yalnız `toMap` UTC yazımı — **sıcak model dosyası, dikkat**)
+  - ilgili testler (manuel aralık + gün sınırı, TZ mock)
+- **DOKUNMA (oku, değiştirme):** `istanbul_calendar.dart`, canlı sayaç akışı, repository katmanı.
+- **Adımlar:**
+  - [ ] Manuel aralığı İstanbul wall-clock ile kur (cihaz TZ'sinden bağımsız gün/saat).
+  - [ ] `toMap`'te `start`/`end`'i `toUtc().toIso8601String()` ile yaz (Postgres timestamptz round-trip tutarlı). Canlı yol da bundan geçtiği için instant'ların bozulmadığını doğrula.
+  - [ ] `flutter analyze` 0; cihaz TZ = America/New_York mock'uyla gece-yarısı manuel girişin doğru İstanbul gününe düştüğünü testle.
+- **Veri/Migration etkisi:** Yok (yazım formatı; mevcut satırlar timestamptz olarak zaten instant tutar). Geri alma bu istemci commitidir.
+- **RLS/Güvenlik:** Yok.
+- **Edge-case'ler:** Gece 23:00–01:00 arası giriş, cihaz TZ İstanbul dışı, DST geçişleri, süre > günün geçen kısmı (mevcut 00:00 kenetleme korunmalı).
+- **Kabul (ölçülebilir):** TZ-mock testinde manuel oturum her zaman seçilen İstanbul gününe düşer; `toMap` UTC üretir; canlı sayaç süreleri regresyonsuz; `flutter analyze` 0, test yeşil.
+- **Tuzaklar:** `toUtc` değişikliğinin canlı sayaç/istatistik hesabını kaydırması (instant korunur, ama testle kanıtla); yalnız dialog'u düzeltip `toMap`'i unutmak; hedef kitle çoğu İstanbul TZ olduğu için düşük pratik şiddet — öncelik buna göre.
+- **Dal önerisi:** `wp107-manuel-oturum-tz`
+
+### WP-108: Aylık Rapor Retry + Cron URL (B2 + B8) 📧
+- **Program/Faz:** Ops/Backend · **Ajan:** — · **Durum:** [ ] Bekliyor · **Model:** 🔵 Sonnet · **Bağımlılık:** Özelliğin canlı olup olmadığı ürün kararı (WP-69 DNS/Resend key)
+- **Problem:** (B2) `supabase/functions/send-report/index.ts` ilk hatada job'u `status='failed'` yapıyor ama sonraki cron yalnız `.eq('status','pending')` seçiyor → `retry_count` anlamsız, geçici Resend/API hatasında o ayın raporu kalıcı kaçar. (B8) `0030_monthly_report_infrastructure.sql` cron `http://localhost:54321/...` URL kullanıyor → prod'da collector hiç tetiklenmez.
+- **Kapsam dışı:** Rapor içeriği/tasarımı, DNS/Resend kurulumu (WP-69 ürün kararı). Yeni tablo yok.
+- **SAHİP dosyalar (yaz):**
+  - `supabase/functions/send-report/index.ts`
+  - `supabase/migrations/0035_cron_report_url_fix.sql` (yeni — cron URL'yi prod fonksiyon URL'sine güncelle)
+  - `supabase/functions/collect-reports/index.ts` (gerekirse)
+- **DOKUNMA (oku, değiştirme):** app/lib (istemci etkisi yok), diğer edge fonksiyonlar.
+- **Adımlar:**
+  - [ ] Job seçimini `status in ('pending','failed') and retry_count < 3` yap (veya failed'i tekrar pending'e al); retry mantığını test/log ile doğrula.
+  - [ ] Cron `net.http_post` URL'sini gerçek prod fonksiyon URL'siyle değiştir (proje ref'i kullanıcıdan alınır; sırrı migration'a gömme, `current_setting`/secret kullan).
+  - [ ] Yayın öncesi sıralama: cron/secret ayarı yapılmadan fonksiyon davranışı değişirse mail akışı kırılabilir — S2 ile birlikte sıralı yürüt.
+- **Veri/Migration etkisi:** Cron tanımı güncellenir; geri alma eski cron URL'sine dönüştür. Kullanıcı SQL Editor'da uygular.
+- **RLS/Güvenlik:** URL/secret migration'a düz gömülmez; §8 S2 ile birlikte ele alınır.
+- **Edge-case'ler:** Job zaten abandoned, retry_count sınırı, Resend rate limit, cron çift tetik.
+- **Kabul (ölçülebilir):** Geçici hata sonrası job sonraki cron'da yeniden denenir (retry_count artar, 3'te durur); prod cron doğru URL'yi çağırır (log kanıtı). **Önkoşul:** özellik canlıya alınacaksa; değilse bu WP ertelenir.
+- **Tuzaklar:** Prod URL/secret'i migration'a plaintext yazmak; retry'ı sonsuz döngüye açmak; S2 auth'u düzeltmeden URL'yi public bırakmak.
+- **Dal önerisi:** `wp108-aylik-rapor-ops`
+
+### WP-109: Güvenlik Sertleştirme — Edge Auth / IDOR / Enumeration (S2·S3·S4·B7) 🛡️
+- **Program/Faz:** Güvenlik · Play Store öncesi · **Ajan:** — · **Durum:** [ ] Bekliyor · **Model:** 🔴 Opus (güvenlik + sıralama riski) · **Bağımlılık:** WP-108 ile ops sırası (S2)
+- **Problem:** `OPTIMIZATIONS.md §8`: (S2) rapor Edge Function'ları yalnız Authorization varlığını kontrol ediyor + service_role env → public ise Critical. (S3) `get_user_monthly_stats` SECURITY DEFINER + authenticated → IDOR (başkasının istatistiği). (S4) `profiles_select using (true)` → enumeration. (B7) `regenerateInviteCode`/bazı update'ler 0 satırda sessiz başarı (RLS admin değilse "yenilendi" sanılır).
+- **Kapsam dışı:** S1 istemci süre hard-cap (ürün max-süre kararı ister → KALITE-PROGRAMI §11). Büyük RLS yeniden tasarımı.
+- **SAHİP dosyalar (yaz):**
+  - `supabase/functions/send-report/index.ts`, `supabase/functions/collect-reports/index.ts` (cron secret doğrulaması)
+  - `supabase/migrations/0036_security_hardening.sql` (yeni — S3 self/admin guard, S4 profiles_select daraltma)
+  - `app/lib/data/repositories/supabase/supabase_group_repository.dart` (B7 `.select().single()` / count kontrolü)
+- **DOKUNMA (oku, değiştirme):** UI dosyaları (profiles_select daraltması UI bağımlılığını kırmamalı — önce grep).
+- **Adımlar:**
+  - [ ] **S2 (önce):** Edge fonksiyonlarına cron/shared-secret doğrulaması ekle; **cron job'u secret ile güncelledikten SONRA** deploy et (yoksa mail ölür — WP-108 ile sıralı).
+  - [ ] **S3:** `get_user_monthly_stats`'e self-or-admin guard (SQL).
+  - [ ] **S4:** `profiles_select using (true)`'yu daralt (grup üyeliği/görünürlük bazlı); önce UI'nın hangi profilleri okuduğunu grep'le, kırılan yer varsa RPC'ye taşı.
+  - [ ] **B7:** `regenerateInviteCode` ve benzeri update'lere `.select().single()`/etkilenen-satır kontrolü ekle; RLS reddinde kullanıcıya hata göster.
+  - [ ] `flutter analyze` 0; RLS/edge davranış testleri (yetkisiz erişim reddedilir, yetkili geçer).
+- **Veri/Migration etkisi:** RLS politikaları + fonksiyon guard'ları. Geri alma her politika için ayrı `drop/replace`. Kullanıcı SQL Editor'da sırayla uygular.
+- **RLS/Güvenlik:** Bu WP'nin özü. Değişiklikler mevcut meşru akışları kırmamalı; her kısıtlama testle doğrulanır.
+- **Edge-case'ler:** Süper admin, grup admini vs üye, kendi profili vs başkası, davet kodu yenileme yetkisiz, public grup keşfi (WP-92/93) profiles_select'e bağımlıysa dikkat.
+- **Kabul (ölçülebilir):** Yetkisiz kullanıcı başkasının aylık istatistiğini/profil enumerasyonunu **alamaz** (test); yetkisiz davet-kodu yenileme sessiz başarı vermez; meşru akışlar regresyonsuz; `flutter analyze` 0. Play Store öncesi güvenlik kapısı.
+- **Tuzaklar:** `profiles_select` daraltmasının kamp ateşi/üye listesi/keşif UI'sını kırması (WP-92/93 ile kesişim — önce grep); S2'yi cron secret'i ayarlamadan deploy edip maili öldürmek; DEFINER fonksiyonda guard'ı yanlış kurup admini kilitlemek.
+- **Dal önerisi:** `wp109-guvenlik-sertlestirme`
+
+> **Çakışma matrisi (WP-105…109):** ✅ Aktif dosya yazan lane yok. SAHİP kesişimleri: WP-105 (gamification/home_shell) · WP-106 (group_repository + migration 0034) · WP-107 (manual dialog + study_session model) · WP-108 (edge functions + migration 0035) · WP-109 (edge functions + migration 0036 + group_repository). ⚠️ **WP-106 ↔ WP-109** ikisi de `supabase_group_repository.dart`'a yazar → **serileştir** (biri bitince diğeri). ⚠️ **WP-108 ↔ WP-109** ikisi de `send-report`/`collect-reports` edge fonksiyonlarına dokunur + S2 ops sıralaması → **serileştir, S2 cron secret'ten sonra**. Diğerleri paralel güvenli. Migration numaraları 0034/0035/0036 sırayla; aynı anda iki migration WP'si açılırsa numara çakışmasına dikkat.
 
 ### WP-93: Global Grup Keşfi ve Katılım Deneyimi 🌍
 - **Program/Faz:** Sosyal gruplar · Play Store öncesi ürün yüzeyi · **Ajan:** Codex · **Durum:** [~] Test için bekliyor · **Bağımlılık:** WP-92 otomatik kalite kapısı
