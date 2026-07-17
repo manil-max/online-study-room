@@ -8,6 +8,7 @@ import 'package:online_study_room/data/providers/auth_providers.dart';
 import 'package:online_study_room/data/providers/group_providers.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_auth_repository.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_group_repository.dart';
+import 'package:online_study_room/features/onboarding/onboarding_prefs.dart';
 import 'package:online_study_room/main.dart';
 
 /// Giriş yapmış bir kullanıcıyla seed'lenmiş repo döndürür.
@@ -18,6 +19,11 @@ Future<InMemoryAuthRepository> _signedInRepo() async {
     password: '123456',
     displayName: 'Ali',
   );
+  // WP-166: onboarding kullanıcıya özel; entegrasyon testleri ana kabuğu test eder.
+  final profile = await repo.authStateChanges().first;
+  if (profile != null) {
+    await _prefs.setBool(onboardingCompletedKeyFor(profile.id), true);
+  }
   return repo;
 }
 

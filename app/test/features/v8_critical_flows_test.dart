@@ -42,8 +42,8 @@ void main() {
         tester.binding.platformDispatcher.localesTestValue = [labels.locale];
         addTearDown(tester.binding.platformDispatcher.clearLocalesTestValue);
 
-        final auth = await signedInV8AuthRepository();
         final preferences = await v8SharedPreferences();
+        final auth = await signedInV8AuthRepository(prefs: preferences);
 
         await tester.pumpWidget(
           buildV8TestApp(authRepository: auth, preferences: preferences),

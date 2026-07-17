@@ -9,6 +9,7 @@ import 'package:online_study_room/data/providers/auth_providers.dart';
 import 'package:online_study_room/data/providers/group_providers.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_auth_repository.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_group_repository.dart';
+import 'package:online_study_room/features/onboarding/onboarding_prefs.dart';
 import 'package:online_study_room/main.dart';
 
 class V8TestDeviceIntegrationService extends DeviceIntegrationService {
@@ -27,13 +28,21 @@ class V8TestWidgetGateway implements AndroidWidgetGateway {
   Future<void> seedPlaceholder() async {}
 }
 
-Future<InMemoryAuthRepository> signedInV8AuthRepository() async {
+Future<InMemoryAuthRepository> signedInV8AuthRepository({
+  SharedPreferences? prefs,
+}) async {
   final repository = InMemoryAuthRepository();
   await repository.signUp(
     email: 'v8-qa@ornek.com',
     password: '123456',
     displayName: 'V8 QA',
   );
+  if (prefs != null) {
+    final profile = await repository.authStateChanges().first;
+    if (profile != null) {
+      await prefs.setBool(onboardingCompletedKeyFor(profile.id), true);
+    }
+  }
   return repository;
 }
 
