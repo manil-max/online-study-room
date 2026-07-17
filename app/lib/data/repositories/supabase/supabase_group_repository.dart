@@ -148,12 +148,16 @@ class SupabaseGroupRepository implements GroupRepository {
               .from('profiles')
               .select()
               .inFilter('id', ids);
+          // WP-106: O(n) map; firstWhere StateError riski yok.
+          final byUser = {
+            for (final r in rows) r['user_id'] as String: r,
+          };
           return profs.map<Profile>((pMap) {
             final profile = Profile.fromMap(pMap);
-            final memberRow = rows.firstWhere(
-              (r) => r['user_id'] == profile.id,
+            final memberRow = byUser[profile.id];
+            return profile.copyWith(
+              isActive: memberRow == null ? false : memberRow['left_at'] == null,
             );
-            return profile.copyWith(isActive: memberRow['left_at'] == null);
           }).toList();
         });
   }
