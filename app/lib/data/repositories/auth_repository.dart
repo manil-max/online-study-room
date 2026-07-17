@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import '../models/account_deletion_status.dart';
 import '../models/profile.dart';
 
 /// Kimlik doğrulama hatası (kullanıcıya gösterilebilir Türkçe mesaj taşır).
@@ -62,6 +63,15 @@ abstract class AuthRepository {
 
   /// Aylık çalışma raporu e-postası tercihini günceller.
   Future<void> updateMonthlyReportOptIn(bool value);
+
+  /// WP-114: hesap silme isteği (14 gün grace, sunucu).
+  Future<AccountDeletionStatus> requestAccountDeletion();
+
+  /// Grace içinde iptal.
+  Future<AccountDeletionStatus> cancelAccountDeletion();
+
+  /// Son istek durumu.
+  Future<AccountDeletionStatus> fetchAccountDeletionStatus();
 
   Future<void> signOut();
 }

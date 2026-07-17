@@ -246,6 +246,124 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
     }
   }
 
+  /// WP-114: silme isteği — şifre yeniden doğrulama + 14 gün grace (sunucu).
+  Future<void> _requestAccountDeletion() async {
+    final tr = Localizations.localeOf(context).languageCode == 'tr';
+    final passwordController = TextEditingController();
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          title: Text(tr ? 'Hesabı sil' : 'Delete account'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                tr
+                    ? 'Hesabın 14 gün içinde kalıcı silinmek üzere planlanır. Bu süre içinde iptal edebilirsin. Devam için şifreni gir.'
+                    : 'Your account will be scheduled for permanent deletion in 14 days. You can cancel during that window. Enter your password to continue.',
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: passwordController,
+                obscureText: true,
+                decoration: InputDecoration(
+                  labelText: tr ? 'Şifre' : 'Password',
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(AppLocalizations.of(context).profileIptal),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.error,
+              ),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(tr ? 'Silmeyi planla' : 'Schedule deletion'),
+            ),
+          ],
+        );
+      },
+    );
+    if (confirm != true || !mounted) {
+      passwordController.dispose();
+      return;
+    }
+
+    final email = ref.read(authRepositoryProvider).currentUserEmail;
+    final password = passwordController.text;
+    passwordController.dispose();
+    if (email == null || password.isEmpty) return;
+
+    setState(() => _isLoading = true);
+    try {
+      // Yeniden doğrulama: aynı e-posta + şifre ile sign-in denemesi.
+      await ref
+          .read(authRepositoryProvider)
+          .signIn(email: email, password: password);
+      final status = await ref
+          .read(authRepositoryProvider)
+          .requestAccountDeletion();
+      if (!mounted) return;
+      final until = status.purgeAfter?.toLocal().toString() ?? '';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            tr
+                ? 'Silme planlandı. Son tarih: $until'
+                : 'Deletion scheduled. Deadline: $until',
+          ),
+        ),
+      );
+      setState(() {});
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _cancelAccountDeletion() async {
+    setState(() => _isLoading = true);
+    try {
+      await ref.read(authRepositoryProvider).cancelAccountDeletion();
+      if (mounted) {
+        final tr = Localizations.localeOf(context).languageCode == 'tr';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              tr ? 'Silme isteği iptal edildi.' : 'Deletion request canceled.',
+            ),
+          ),
+        );
+        setState(() {});
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -337,6 +455,50 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
                     ),
                     onTap: _signOut,
                   ),
+                ),
+                SizedBox(height: 12),
+                // WP-114: hesap silme
+                FutureBuilder(
+                  future: ref
+                      .read(authRepositoryProvider)
+                      .fetchAccountDeletionStatus(),
+                  builder: (context, snap) {
+                    final tr =
+                        Localizations.localeOf(context).languageCode == 'tr';
+                    final active = snap.data?.active == true;
+                    return Card(
+                      elevation: 0,
+                      color: theme.colorScheme.errorContainer.withValues(
+                        alpha: 0.25,
+                      ),
+                      child: ListTile(
+                        leading: Icon(
+                          Icons.delete_forever,
+                          color: theme.colorScheme.error,
+                        ),
+                        title: Text(
+                          active
+                              ? (tr
+                                    ? 'Silme planlandı — iptal et'
+                                    : 'Deletion scheduled — cancel')
+                              : (tr ? 'Hesabı sil' : 'Delete account'),
+                          style: TextStyle(color: theme.colorScheme.error),
+                        ),
+                        subtitle: Text(
+                          active
+                              ? (tr
+                                    ? 'Son tarih: ${snap.data?.purgeAfter?.toLocal()}'
+                                    : 'Deadline: ${snap.data?.purgeAfter?.toLocal()}')
+                              : (tr
+                                    ? '14 gün geri alma; ardından kalıcı silme'
+                                    : '14-day cooling-off, then permanent delete'),
+                        ),
+                        onTap: active
+                            ? _cancelAccountDeletion
+                            : _requestAccountDeletion,
+                      ),
+                    );
+                  },
                 ),
               ],
             ),

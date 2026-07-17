@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:uuid/uuid.dart';
 
+import '../../models/account_deletion_status.dart';
 import '../../models/profile.dart';
 import '../auth_repository.dart';
 
@@ -207,6 +208,40 @@ class InMemoryAuthRepository implements AuthRepository {
     throw const AuthException(
       'Profil fotoğrafı yüklemek için Supabase bağlantısı gerekli.',
     );
+  }
+
+  AccountDeletionStatus? _deletion;
+
+  @override
+  Future<AccountDeletionStatus> requestAccountDeletion() async {
+    final cur = _current;
+    if (cur == null) {
+      throw const AuthException('Oturum bulunamadı.');
+    }
+    if (_deletion?.active == true) return _deletion!;
+    final now = DateTime.now();
+    _deletion = AccountDeletionStatus(
+      active: true,
+      status: 'scheduled',
+      requestedAt: now,
+      purgeAfter: now.add(const Duration(days: 14)),
+    );
+    return _deletion!;
+  }
+
+  @override
+  Future<AccountDeletionStatus> cancelAccountDeletion() async {
+    final d = _deletion;
+    if (d == null || !d.active) {
+      throw const AuthException('Aktif silme isteği yok.');
+    }
+    _deletion = const AccountDeletionStatus(active: false, status: 'canceled');
+    return _deletion!;
+  }
+
+  @override
+  Future<AccountDeletionStatus> fetchAccountDeletionStatus() async {
+    return _deletion ?? AccountDeletionStatus.inactive;
   }
 
   @override

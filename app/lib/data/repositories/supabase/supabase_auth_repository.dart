@@ -4,6 +4,7 @@ import 'dart:async';
 
 import 'package:supabase_flutter/supabase_flutter.dart' as supa;
 
+import '../../models/account_deletion_status.dart';
 import '../../models/profile.dart';
 import '../auth_repository.dart';
 
@@ -289,6 +290,45 @@ class SupabaseAuthRepository implements AuthRepository {
       _current = cur.copyWith(avatarUrl: url);
     } on supa.StorageException catch (e) {
       throw AuthException('Fotoğraf yüklenemedi: ${e.message}');
+    }
+  }
+
+  @override
+  Future<AccountDeletionStatus> requestAccountDeletion() async {
+    try {
+      final raw = await _client.rpc('request_account_deletion');
+      if (raw is Map) {
+        return AccountDeletionStatus.fromMap(Map<String, dynamic>.from(raw));
+      }
+      return AccountDeletionStatus.inactive;
+    } on supa.PostgrestException catch (e) {
+      throw AuthException(_translate(e.message));
+    }
+  }
+
+  @override
+  Future<AccountDeletionStatus> cancelAccountDeletion() async {
+    try {
+      final raw = await _client.rpc('cancel_account_deletion');
+      if (raw is Map) {
+        return AccountDeletionStatus.fromMap(Map<String, dynamic>.from(raw));
+      }
+      return AccountDeletionStatus.inactive;
+    } on supa.PostgrestException catch (e) {
+      throw AuthException(_translate(e.message));
+    }
+  }
+
+  @override
+  Future<AccountDeletionStatus> fetchAccountDeletionStatus() async {
+    try {
+      final raw = await _client.rpc('my_account_deletion_status');
+      if (raw is Map) {
+        return AccountDeletionStatus.fromMap(Map<String, dynamic>.from(raw));
+      }
+      return AccountDeletionStatus.inactive;
+    } on supa.PostgrestException catch (e) {
+      throw AuthException(_translate(e.message));
     }
   }
 
