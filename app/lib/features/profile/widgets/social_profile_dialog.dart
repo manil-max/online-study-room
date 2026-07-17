@@ -51,6 +51,7 @@ class SocialProfileDialog extends ConsumerWidget {
                   IconButton(
                     icon: Icon(Icons.open_in_full),
                     tooltip: AppLocalizations.of(context).profileTamProfil,
+                    style: IconButton.styleFrom(minimumSize: const Size(48, 48)),
                     onPressed: () {
                       Navigator.of(context).pop();
                       SocialProfileScreen.open(context, profile);
@@ -58,6 +59,8 @@ class SocialProfileDialog extends ConsumerWidget {
                   ),
                   IconButton(
                     icon: Icon(Icons.close),
+                    tooltip: AppLocalizations.of(context).coreKapat,
+                    style: IconButton.styleFrom(minimumSize: const Size(48, 48)),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                 ],

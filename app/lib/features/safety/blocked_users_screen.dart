@@ -104,14 +104,18 @@ class _BlockedUserTileState extends ConsumerState<_BlockedUserTile> {
 
     return Card(
       child: ListTile(
-        leading: LiveCrownedAvatar(
-          userId: p.id,
-          displayName: name,
-          avatarUrl: p.avatarUrl,
-          radius: 20,
+        leading: Semantics(
+          label: name,
+          child: LiveCrownedAvatar(
+            userId: p.id,
+            displayName: name,
+            avatarUrl: p.avatarUrl,
+            radius: 20,
+          ),
         ),
-        title: Text(name, maxLines: 1, overflow: TextOverflow.ellipsis),
+        title: Text(name, maxLines: 2, overflow: TextOverflow.ellipsis),
         trailing: TextButton(
+          style: TextButton.styleFrom(minimumSize: const Size(48, 48)),
           onPressed: _busy ? null : _unblock,
           child: _busy
               ? const SizedBox(
@@ -119,7 +123,7 @@ class _BlockedUserTileState extends ConsumerState<_BlockedUserTile> {
                   height: 18,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : Text(l10n.safetyUnblock),
+              : Text(l10n.safetyUnblock, overflow: TextOverflow.ellipsis),
         ),
       ),
     );

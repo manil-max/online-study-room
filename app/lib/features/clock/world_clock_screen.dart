@@ -249,6 +249,8 @@ class _CityCard extends StatelessWidget {
             ),
             IconButton(
               onPressed: onDelete,
+              tooltip: AppLocalizations.of(context).clockSil,
+              style: IconButton.styleFrom(minimumSize: const Size(48, 48)),
               icon: Icon(Icons.close, color: fg.withValues(alpha: 0.7)),
             ),
           ],

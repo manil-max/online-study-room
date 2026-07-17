@@ -250,10 +250,14 @@ class _PermTile extends StatelessWidget {
       child: ListTile(
         leading: Icon(
           ok ? Icons.check_circle : Icons.warning_amber_rounded,
-          color: ok ? Colors.green : Colors.orange,
+          // WP-141: palette bağlama; durum hem ikon hem renk ile (yalnız renk değil).
+          color: ok
+              ? Theme.of(context).colorScheme.primary
+              : Theme.of(context).colorScheme.tertiary,
+          semanticLabel: title,
         ),
-        title: Text(title),
-        subtitle: Text(detail),
+        title: Text(title, maxLines: 2, overflow: TextOverflow.ellipsis),
+        subtitle: Text(detail, maxLines: 3, overflow: TextOverflow.ellipsis),
         trailing: TextButton(
           onPressed: onManage,
           // Android izinleri uygulama tarafından geri alınamaz. İzin zaten

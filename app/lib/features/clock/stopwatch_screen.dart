@@ -162,6 +162,8 @@ class _StopwatchScreenState extends ConsumerState<StopwatchScreen> {
                     final isFast = i == analysis.fastestIndex;
                     final isSlow = i == analysis.slowestIndex;
 
+                    // WP-141 meşru: tur en hızlı/yavaş semantiği (yeşil/kırmızı)
+                    // ikon+metin etiketleriyle de ayrılır; sabit vurgu rengi bilinçli.
                     Color? bg;
                     if (isFast) {
                       bg = const Color(0xFF22C55E).withValues(alpha: 0.15);
@@ -252,6 +254,7 @@ class _RoundBtn extends StatelessWidget {
       children: [
         IconButton.filledTonal(
           onPressed: onPressed,
+          tooltip: label,
           icon: Icon(icon),
           iconSize: 28,
           style: IconButton.styleFrom(minimumSize: const Size(56, 56)),

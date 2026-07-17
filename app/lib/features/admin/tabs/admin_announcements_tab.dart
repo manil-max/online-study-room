@@ -77,6 +77,8 @@ class _AnnouncementCard extends ConsumerWidget {
           ),
         ),
         trailing: IconButton(
+          tooltip: l10n.adminSil,
+          style: IconButton.styleFrom(minimumSize: const Size(48, 48)),
           icon: Icon(Icons.delete, color: theme.colorScheme.error),
           onPressed: () async {
             try {

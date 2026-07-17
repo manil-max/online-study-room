@@ -238,6 +238,8 @@ class _AttachmentPreviewDialogState
               shape: BoxShape.circle,
             ),
             child: IconButton(
+              tooltip: AppLocalizations.of(context).coreKapat,
+              style: IconButton.styleFrom(minimumSize: const Size(48, 48)),
               icon: Icon(
                 Icons.close,
                 color: Theme.of(context).colorScheme.onInverseSurface,
@@ -341,6 +343,8 @@ class _TicketNotesDialogState extends ConsumerState<_TicketNotesDialog> {
                   ),
                 ),
                 IconButton(
+                  tooltip: l10n.coreKapat,
+                  style: IconButton.styleFrom(minimumSize: const Size(48, 48)),
                   icon: const Icon(Icons.close),
                   onPressed: () => Navigator.of(context).pop(),
                 ),
@@ -393,6 +397,8 @@ class _TicketNotesDialogState extends ConsumerState<_TicketNotesDialog> {
                 ),
                 const SizedBox(width: 8),
                 IconButton.filled(
+                  tooltip: l10n.adminGonder,
+                  style: IconButton.styleFrom(minimumSize: const Size(48, 48)),
                   icon: const Icon(Icons.send, size: 20),
                   onPressed: _addNote,
                 ),

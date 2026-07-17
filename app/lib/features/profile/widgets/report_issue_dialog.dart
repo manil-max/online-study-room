@@ -193,7 +193,14 @@ class _ReportIssueDialogState extends ConsumerState<ReportIssueDialog> {
                       ),
                     ),
                     IconButton(
-                      icon: Icon(Icons.cancel, color: Colors.white),
+                      tooltip: AppLocalizations.of(context).coreKapat,
+                      style: IconButton.styleFrom(
+                        minimumSize: const Size(48, 48),
+                      ),
+                      icon: Icon(
+                        Icons.cancel,
+                        color: Theme.of(context).colorScheme.onInverseSurface,
+                      ),
                       onPressed: _isSubmitting
                           ? null
                           : () => setState(() {
