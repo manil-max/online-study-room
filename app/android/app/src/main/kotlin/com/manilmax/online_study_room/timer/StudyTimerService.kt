@@ -254,24 +254,59 @@ class StudyTimerService : Service() {
         }
     }
 
+    /**
+     * WP-137 P2: varsayılan = standart sistem stili + usesChronometer + aksiyonlar.
+     * Expanded/custom RemoteViews yalnız `flutter.timer_panel_expanded=true` iken
+     * (feature flag, default kapalı) — regresyon izolasyonu.
+     */
     private fun buildRunningNotification(startedAtMs: Long): Notification {
         ensureChannel()
+        val p = prefs()
+        val isBreak = p.getString(TimerStateStore.KEY_PHASE, "work") == "rest"
         val builder = baseBuilder()
             .setOngoing(true)
             .setContentIntent(openAppPending())
-            // One UI already supplies the app/channel header. Keep the foreground
-            // surface to the chronometer and its Stop action.
-            .setContentTitle("")
-            .setContentText("")
-        // One UI'nin standard görünümü ilk saatte MM:SS üretip aksiyonu alt
-        // satıra ayırır. Ürün tercihi bu OEM terfisinden önce tek satırlık,
-        // her zaman HH:MM:SS olan kontrol yüzeyidir.
-        val custom = buildRunningRemoteViews(startedAtMs)
-        builder.setUsesChronometer(false)
-            .setShowWhen(false)
-            .setStyle(NotificationCompat.DecoratedCustomViewStyle())
-            .setCustomContentView(custom)
-            .setCustomBigContentView(custom)
+            .setCategory(NotificationCompat.CATEGORY_STOPWATCH)
+
+        if (useExpandedCustomPanel()) {
+            // Flag açık: One UI satır layout (v23); terfi garanti değil.
+            val custom = buildRunningRemoteViews(startedAtMs, isBreak)
+            builder.setContentTitle("")
+                .setContentText("")
+                .setUsesChronometer(false)
+                .setShowWhen(false)
+                .setStyle(NotificationCompat.DecoratedCustomViewStyle())
+                .setCustomContentView(custom)
+                .setCustomBigContentView(custom)
+        } else {
+            // P2 (default): standard ongoing + native chronometer + actions.
+            builder.setContentTitle(
+                if (isBreak) getString(R.string.timer_break_title)
+                else getString(R.string.timer_focusing_title),
+            )
+                .setContentText(
+                    if (isBreak) getString(R.string.timer_break_body)
+                    else getString(R.string.timer_focusing_body),
+                )
+                .setUsesChronometer(true)
+                .setWhen(startedAtMs)
+                .setShowWhen(true)
+                .setChronometerCountDown(false)
+            if (isBreak) {
+                builder.addAction(
+                    0,
+                    getString(R.string.action_return_to_work),
+                    endBreakActionPending(),
+                )
+            } else {
+                builder.addAction(
+                    0,
+                    getString(R.string.action_break),
+                    breakActionPending(),
+                )
+            }
+            builder.addAction(0, getString(R.string.action_stop), stopActionPending())
+        }
         return builder.build()
     }
 
@@ -280,23 +315,34 @@ class StudyTimerService : Service() {
         val builder = baseBuilder()
             .setOngoing(false)
             .setContentIntent(openAppPending())
+            .setCategory(NotificationCompat.CATEGORY_STOPWATCH)
             .setUsesChronometer(false)
             .setShowWhen(false)
             .setContentTitle("00:00:00")
-            .setContentText("")
-            .setStyle(NotificationCompat.DecoratedCustomViewStyle())
-            .setCustomContentView(buildIdleRemoteViews())
-            .setCustomBigContentView(buildIdleRemoteViews())
+            .setContentText(getString(R.string.timer_ready))
+            .addAction(0, getString(R.string.action_start), startActionPending())
+        if (useExpandedCustomPanel()) {
+            val custom = buildIdleRemoteViews()
+            builder.setStyle(NotificationCompat.DecoratedCustomViewStyle())
+                .setCustomContentView(custom)
+                .setCustomBigContentView(custom)
+                .setContentText("")
+        }
         return builder.build()
     }
 
-    /** Dil paketi öncesinde kullanılan kanıtlı One UI satırı: solda akan sayaç,
-     *  sağda doğrudan foreground servise giden tek eylem. */
-    private fun buildRunningRemoteViews(startedAtMs: Long): RemoteViews {
+    /** Feature flag: SharedPreferences `flutter.timer_panel_expanded` (default false). */
+    private fun useExpandedCustomPanel(): Boolean =
+        prefs().getBoolean(KEY_PANEL_EXPANDED, false)
+
+    private fun buildRunningRemoteViews(startedAtMs: Long, isBreak: Boolean): RemoteViews {
         val views = RemoteViews(packageName, R.layout.timer_notification)
         val base = SystemClock.elapsedRealtime() - (System.currentTimeMillis() - startedAtMs)
         views.setChronometer(R.id.notif_timer_elapsed, base, null, true)
-        views.setTextViewText(R.id.notif_timer_action, getString(R.string.action_stop))
+        views.setTextViewText(
+            R.id.notif_timer_action,
+            if (isBreak) getString(R.string.action_stop) else getString(R.string.action_stop),
+        )
         views.setOnClickPendingIntent(R.id.notif_timer_action, stopActionPending())
         return views
     }
@@ -403,6 +449,8 @@ class StudyTimerService : Service() {
         private const val CHANNEL_ID = "study_timer_live_fg"
         private const val NOTIFICATION_ID = 7040
         private const val LEGACY_FLUTTER_NOTIFICATION_ID = 7001
+        /** WP-137: custom One UI satırı; default false = P2 standard stil. */
+        private const val KEY_PANEL_EXPANDED = "flutter.timer_panel_expanded"
 
         /** Servisi belirli bir komutla ayağa kaldırır (receiver/notification/Dart). */
         fun sendCommand(
