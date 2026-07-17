@@ -20,7 +20,7 @@
 - **Navigasyon hedefi:** Ana Sayfa / Saat / Gruplar / İstatistikler / Profil. Ana Sayfa günlük kullanım alanıdır; diğer alanların verisi kendi sekmelerinde eksiksiz bulunur.
 - **Release:** Stable/Beta kanalı GitHub Releases ile çalışır. Yerel `v29` ve `beta-v29` tag'leri WP-104 commitini (`ff369e3`) gösterir; mevcut `main` WP-105–109'u da içerdiği halde `1.0.29+29` taşır. Bir sonraki dağıtımda versionCode mutlaka artırılır; Play production ayrı kalite kapısından geçer.
 - **Kalite kapıları:** Her WP DoD'siz kapanmaz; stable release kalite kapısından geçer (AGENTS.md §3). Server-authoritative XP, RLS/sosyal profil, platform sınırları → `docs/KALITE-PROGRAMI.md`.
-- **Son WP numarası:** 128 (WP-125–128 Play UGC/purge/channel debug paketi Grok lane’de; WP-110–124 park/test-ops). **Sıradaki boş numara WP-129.**
+- **Son WP numarası:** 132 (WP-129–132 unblock/report-details/analyze/DATA-SAFETY commitli; park/test). **Sıradaki boş numara WP-133.**
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
   - Flutter: `C:\src\flutter` · Android SDK: `C:\Android\Sdk`
@@ -79,7 +79,7 @@
 - **Dal:** main
 - **Başlangıç:** —
 - **Son güncelleme:** 2026-07-17 (Europe/Istanbul)
-- **Not:** WP-125–128 kod+otomatik test commitlendi (`a59e331`…`ee5428f`); Test için bekleyenler’de. Push yok.
+- **Not:** WP-129–132 kod/docs commit (`ed234b8`…`30e89bc`); Test için bekleyenler. analyze 0 issue. Push yok.
 
 
 ---
@@ -130,6 +130,12 @@
 | WP-124 | [~] Test için bekliyor | PLAY-RELEASE-GATE şablonu | GO imzası |
 | WP-125 | [~] Test için bekliyor | UGC Rapor + Engel UI giriş noktaları (sohbet/profil) | WP-116 |
 | WP-126 | [~] Test için bekliyor | Engellenen kullanıcı mesaj/presence filtreleme | WP-125 |
+| WP-127 | [~] Test için bekliyor | purge-accounts sonsuz retry düzeltmesi | Edge deploy |
+| WP-128 | [~] Test için bekliyor | Play flavor DISTRIBUTION_CHANNEL zorlaması | AAB smoke |
+| WP-129 | [~] Test için bekliyor | Engellenen kullanıcılar ekranı (unblock UI) | WP-126 |
+| WP-130 | [~] Test için bekliyor | Rapor sheet detay alanı | WP-125 |
+| WP-131 | [~] Test için bekliyor | Analyze/lint sertleştirme (0 issue) | — |
+| WP-132 | [~] Test için bekliyor | DATA-SAFETY.md gerçek veri envanteri | Console form |
 | WP-127 | [~] Test için bekliyor | purge-accounts sonsuz retry düzeltmesi | Edge deploy |
 | WP-128 | [~] Test için bekliyor | Play flavor DISTRIBUTION_CHANNEL zorlaması | AAB smoke |
 
@@ -823,6 +829,29 @@
 > Kod/otomatik test bitti; **cihaz QA veya ürün demo’su** bekleniyor.
 > Bu bölüm **aktif çalışma değildir** — ajan claim etmez, diğer WP’leri engellemez.
 > Kabul gelince kart buradan çıkar → **Tamamlanan**’a gider. Bug çıkarsa ayrı debug WP açılır.
+
+
+### WP-129: Engellenen kullanıcılar / unblock UI (kod tamam) 🚫
+- **Özet:** Ayarlar → Engellenen kullanıcılar; `fetchBlockedProfiles` (in_memory+supabase); unblock + provider invalidate.
+- **Commit:** `ed234b8`
+- **Test:** `blocked_users_test` 2/2 PASS.
+- **Kanıt:** `Kodda doğrulandı` / `Cihazda doğrulanmalı`.
+
+### WP-130: Rapor sheet detay alanı (kod tamam) 📝
+- **Özet:** Opsiyonel details ≤500; other vurgusu; `p_details` yolu.
+- **Commit:** `fde7e0a` (ARB anahtarları tree’de)
+- **Test:** `report_sheet_details_test` 2/2 PASS.
+- **Kanıt:** `Kodda doğrulandı` / `Cihazda doğrulanmalı` (canlı ugc_reports.details).
+
+### WP-131: Analyze 0 issue (kod tamam) 🧹
+- **Özet:** group_repository type checks, updater_dialog mounted, unused import.
+- **Commit:** `b832626`
+- **Kanıt:** `Kodda doğrulandı` — `flutter analyze` → No issues found.
+
+### WP-132: DATA-SAFETY envanter (docs tamam) 📋
+- **Özet:** `docs/play-store/DATA-SAFETY.md` kanıt tablosu; `PLAY-RELEASE-GATE.md` Console TODO.
+- **Commit:** `30e89bc`
+- **Kanıt:** `Kodda doğrulandı` (docs) / `Console'da doğrulanmalı`.
 
 ### WP-125: UGC Rapor + Engel UI giriş noktaları (kod tamam) 🛡️
 - **Özet:** Sohbet peer long-press → Bildir (`showReportSheet` / `report_ugc`) + Engelle (onay + `block_user`). Sosyal profil AppBar menüsü (user target). ARB `safety*` + `blockedUserIdsProvider`.
