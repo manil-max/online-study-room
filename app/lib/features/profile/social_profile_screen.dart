@@ -9,6 +9,8 @@ import '../../data/models/gamification_profile.dart';
 import '../../data/models/profile.dart';
 import '../../data/providers/auth_providers.dart';
 import '../../data/providers/gamification_providers.dart';
+import '../safety/block_user_action.dart';
+import '../safety/report_sheet.dart';
 import 'widgets/achievement_showcase.dart';
 
 /// Sosyal profil vitrini (Başarım 3.0 R2 / WP-57).
@@ -65,6 +67,39 @@ class SocialProfileScreen extends ConsumerWidget {
               ? AppLocalizations.of(context).profileBasarYolculugum
               : AppLocalizations.of(context).profileSosyalProfil,
         ),
+        actions: [
+          if (!isSelf)
+            PopupMenuButton<String>(
+              tooltip: l10n.safetyReport,
+              onSelected: (value) async {
+                if (value == 'report') {
+                  await showReportSheet(
+                    context,
+                    ref,
+                    targetType: 'user',
+                    targetId: profile.id,
+                    snapshot: profile.displayName,
+                  );
+                } else if (value == 'block') {
+                  await confirmAndBlockUser(
+                    context,
+                    ref,
+                    userId: profile.id,
+                  );
+                }
+              },
+              itemBuilder: (ctx) => [
+                PopupMenuItem(
+                  value: 'report',
+                  child: Text(l10n.safetyReport),
+                ),
+                PopupMenuItem(
+                  value: 'block',
+                  child: Text(l10n.safetyBlock),
+                ),
+              ],
+            ),
+        ],
       ),
       body: ListView(
         padding: getSafeVerticalPadding(context, horizontal: 20, vertical: 16),

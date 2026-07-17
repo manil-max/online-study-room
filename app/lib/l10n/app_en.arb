@@ -4273,5 +4273,69 @@
   "legalDeletionNote": "Account deletion: request + cooling-off window + scheduled hard delete. Clear steps appear under Settings → Account as the server pipeline lands.",
   "@legalDeletionNote": {
     "description": "Honest note that deletion UX completes with later WPs"
+  },
+"safetyReport": "Report",
+  "@safetyReport": {
+    "description": "Report UGC / user action label"
+  },
+  "safetyBlock": "Block",
+  "@safetyBlock": {
+    "description": "Block user action label"
+  },
+  "safetyBlockConfirmTitle": "Block this user?",
+  "@safetyBlockConfirmTitle": {
+    "description": "Confirm dialog title before blocking a user"
+  },
+  "safetyBlockConfirmBody": "You will no longer see their messages or campfire presence. You can unblock later from settings if available.",
+  "@safetyBlockConfirmBody": {
+    "description": "Confirm dialog body explaining block effect"
+  },
+  "safetyBlockConfirmAction": "Block",
+  "@safetyBlockConfirmAction": {
+    "description": "Confirm block button"
+  },
+  "safetyCancel": "Cancel",
+  "@safetyCancel": {
+    "description": "Cancel button on safety dialogs"
+  },
+  "safetyUserBlocked": "User blocked.",
+  "@safetyUserBlocked": {
+    "description": "Snackbar after successful block"
+  },
+  "safetyReportTitle": "Report content",
+  "@safetyReportTitle": {
+    "description": "Report bottom sheet title"
+  },
+  "safetyReportSubmit": "Submit",
+  "@safetyReportSubmit": {
+    "description": "Submit report button"
+  },
+  "safetyReportReceived": "Report received.",
+  "@safetyReportReceived": {
+    "description": "Snackbar after report submitted"
+  },
+  "safetyReasonHarassment": "Harassment",
+  "@safetyReasonHarassment": {
+    "description": "Report reason: harassment"
+  },
+  "safetyReasonSpam": "Spam",
+  "@safetyReasonSpam": {
+    "description": "Report reason: spam"
+  },
+  "safetyReasonHate": "Hate",
+  "@safetyReasonHate": {
+    "description": "Report reason: hate"
+  },
+  "safetyReasonIllegal": "Illegal",
+  "@safetyReasonIllegal": {
+    "description": "Report reason: illegal"
+  },
+  "safetyReasonOther": "Other",
+  "@safetyReasonOther": {
+    "description": "Report reason: other"
+  },
+  "safetyActionFailed": "Action failed. Try again.",
+  "@safetyActionFailed": {
+    "description": "Generic safety action error snackbar"
   }
 }

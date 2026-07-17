@@ -20,7 +20,7 @@
 - **Navigasyon hedefi:** Ana Sayfa / Saat / Gruplar / İstatistikler / Profil. Ana Sayfa günlük kullanım alanıdır; diğer alanların verisi kendi sekmelerinde eksiksiz bulunur.
 - **Release:** Stable/Beta kanalı GitHub Releases ile çalışır. Yerel `v29` ve `beta-v29` tag'leri WP-104 commitini (`ff369e3`) gösterir; mevcut `main` WP-105–109'u da içerdiği halde `1.0.29+29` taşır. Bir sonraki dağıtımda versionCode mutlaka artırılır; Play production ayrı kalite kapısından geçer.
 - **Kalite kapıları:** Her WP DoD'siz kapanmaz; stable release kalite kapısından geçer (AGENTS.md §3). Server-authoritative XP, RLS/sosyal profil, platform sınırları → `docs/KALITE-PROGRAMI.md`.
-- **Son WP numarası:** 124 (WP-110–124 Play Store production programı planlandı; WP-103 cihaz/ürün QA kapandı; WP-104–109 hâlâ park/test-ops). **Sıradaki boş numara WP-125.**
+- **Son WP numarası:** 128 (WP-125–128 Play UGC/purge/channel debug paketi Grok lane’de; WP-110–124 park/test-ops). **Sıradaki boş numara WP-129.**
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
   - Flutter: `C:\src\flutter` · Android SDK: `C:\Android\Sdk`
@@ -71,15 +71,15 @@
 - **Not:** Play Store production programı WP-110–124 olarak planlandı; kanonik belgeler hizalandı. `OPTIMIZATIONS.md` kapsam dışı bırakıldı.
 
 ### Grok Lane
-- **Durum:** [x] Boşta
-- **Faz/WP:** —
-- **Aşama:** —
-- **SAHİP yollar:** —
-- **Ortak/riskli yüzey:** —
+- **Durum:** [~] Aktif
+- **Faz/WP:** WP-125 → WP-128 (Play UGC/purge/channel debug paketi)
+- **Aşama:** Geliştiriliyor
+- **SAHİP yollar:** `app/lib/features/classroom/widgets/class_chat_card.dart`, `app/lib/features/profile/social_profile_screen.dart`, `app/lib/features/classroom/widgets/campfire_scene.dart`, `app/lib/data/providers/moderation_providers.dart`, `app/lib/l10n/app_en.arb`, `app/lib/l10n/app_tr.arb`, `supabase/functions/purge-accounts/index.ts`, `app/lib/core/config/distribution_channel.dart`, `app/android/app/build.gradle.kts`, `app/android/app/src/main/kotlin/**/MainActivity.kt`, `app/android/app/src/play/**`, `app/test/core/distribution_channel_test.dart`
+- **Ortak/riskli yüzey:** ARB (l10n), Android play flavor
 - **Dal:** main
-- **Başlangıç:** —
+- **Başlangıç:** 2026-07-17 (Europe/Istanbul)
 - **Son güncelleme:** 2026-07-17 (Europe/Istanbul)
-- **Not:** WP-110–118 kod/docs iskelet commitlendi; 119–124 runbook. 2026-07-17: park WP-76–81/84–89/92–95/97/100/103 cihaz-ürün QA kapanışı progress'e işlendi. Cihaz/Console/prod deploy sende.
+- **Not:** Kullanıcı sırayla WP-125…128 verdi; her WP ayrı commit; push yok.
 
 
 ---
@@ -128,6 +128,10 @@
 | WP-122 | [~] Test için bekliyor | PLAY-BUILD-RUNBOOK (AAB play flavor) | versionCode 30+ |
 | WP-123 | [ ] Bekliyor | Cihaz QA matrisi (P0 kanıt) | fiziksel cihaz |
 | WP-124 | [~] Test için bekliyor | PLAY-RELEASE-GATE şablonu | GO imzası |
+| WP-125 | [~] Geliştiriliyor | UGC Rapor + Engel UI giriş noktaları (sohbet/profil) | WP-116 |
+| WP-126 | [ ] Bekliyor | Engellenen kullanıcı mesaj/presence filtreleme | WP-125 |
+| WP-127 | [ ] Bekliyor | purge-accounts sonsuz retry düzeltmesi | WP-113 |
+| WP-128 | [ ] Bekliyor | Play flavor DISTRIBUTION_CHANNEL zorlaması | WP-110 |
 
 > **2026-07-14 proje denetimi:** Serbest sürükle-bırak ızgara, canlı grup hedefi ve saat stilleri **zaten kodda uygulanmış** (backlog stale idi; geçici WP-72/73/75 iptal).
 >

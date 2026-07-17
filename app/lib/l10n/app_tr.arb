@@ -1029,5 +1029,21 @@
   "legalCopyPublicPrivacyUrl": "Herkese açık gizlilik URL’sini kopyala",
   "legalPublicUrlNotConfigured": "Canlı HTTPS URL henüz yapılandırılmadı (LEGAL_BASE_URL). Metin uygulama içinde okunabilir.",
   "legalPublicUrlCopied": "Bağlantı panoya kopyalandı.",
-  "legalDeletionNote": "Hesap silme: istek + geri alma penceresi + planlı kalıcı silme. Sunucu boru hattı tamamlandıkça Ayarlar → Hesap altında net adımlar görünür."
+  "legalDeletionNote": "Hesap silme: istek + geri alma penceresi + planlı kalıcı silme. Sunucu boru hattı tamamlandıkça Ayarlar → Hesap altında net adımlar görünür.",
+"safetyReport": "Bildir",
+  "safetyBlock": "Engelle",
+  "safetyBlockConfirmTitle": "Bu kullanıcı engellensin mi?",
+  "safetyBlockConfirmBody": "Mesajlarını ve kamp ateşi görünürlüğünü artık görmezsin. İleride ayarlardan engeli kaldırabilirsin (varsa).",
+  "safetyBlockConfirmAction": "Engelle",
+  "safetyCancel": "İptal",
+  "safetyUserBlocked": "Kullanıcı engellendi.",
+  "safetyReportTitle": "İçerik bildir",
+  "safetyReportSubmit": "Gönder",
+  "safetyReportReceived": "Rapor alındı.",
+  "safetyReasonHarassment": "Taciz",
+  "safetyReasonSpam": "Spam",
+  "safetyReasonHate": "Nefret",
+  "safetyReasonIllegal": "Yasa dışı",
+  "safetyReasonOther": "Diğer",
+  "safetyActionFailed": "İşlem başarısız. Tekrar dene."
 }

@@ -12,3 +12,9 @@ final moderationRepositoryProvider = Provider<ModerationRepository>((ref) {
   }
   return InMemoryModerationRepository();
 });
+
+/// WP-125/126: engellenen kullanıcı id seti (sohbet + presence filtre).
+final blockedUserIdsProvider = FutureProvider<Set<String>>((ref) async {
+  final ids = await ref.watch(moderationRepositoryProvider).listBlockedUserIds();
+  return ids.toSet();
+});

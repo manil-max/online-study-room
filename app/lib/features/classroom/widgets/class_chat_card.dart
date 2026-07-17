@@ -9,6 +9,8 @@ import '../../../data/providers/auth_providers.dart';
 import '../../../data/providers/chat_providers.dart';
 import '../../../data/repositories/chat_repository.dart';
 import '../../profile/widgets/profile_tap.dart';
+import '../../safety/block_user_action.dart';
+import '../../safety/report_sheet.dart';
 
 class ClassChatCard extends ConsumerStatefulWidget {
   const ClassChatCard({
@@ -164,14 +166,61 @@ class _MessageList extends StatelessWidget {
   }
 }
 
-class _MessageBubble extends StatelessWidget {
+class _MessageBubble extends ConsumerWidget {
   const _MessageBubble({required this.message, required this.mine});
 
   final ChatMessage message;
   final bool mine;
 
+  Future<void> _showPeerActions(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context);
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.flag_outlined),
+                title: Text(l10n.safetyReport),
+                onTap: () => Navigator.pop(ctx, 'report'),
+              ),
+              ListTile(
+                leading: const Icon(Icons.block),
+                title: Text(l10n.safetyBlock),
+                onTap: () => Navigator.pop(ctx, 'block'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+    if (!context.mounted || selected == null) return;
+
+    if (selected == 'report') {
+      await showReportSheet(
+        context,
+        ref,
+        targetType: 'message',
+        targetId: message.id,
+        snapshot: message.body,
+      );
+      return;
+    }
+
+    if (selected == 'block') {
+      await confirmAndBlockUser(
+        context,
+        ref,
+        userId: message.userId,
+      );
+    }
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final name = (message.authorDisplayName?.trim().isNotEmpty ?? false)
         ? message.authorDisplayName!.trim()
@@ -182,6 +231,49 @@ class _MessageBubble extends StatelessWidget {
     final textColor = mine
         ? theme.colorScheme.onPrimaryContainer
         : theme.colorScheme.onSurfaceVariant;
+
+    final bubble = DecoratedBox(
+      decoration: BoxDecoration(
+        color: bubbleColor,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 10,
+          vertical: 8,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (!mine)
+              Text(
+                name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: textColor.withValues(alpha: 0.78),
+                ),
+              ),
+            Text(
+              message.body,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: textColor,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Align(
+              alignment: Alignment.centerRight,
+              child: Text(
+                _formatMessageTime(message.createdAt),
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: textColor.withValues(alpha: 0.68),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5),
@@ -200,6 +292,7 @@ class _MessageBubble extends StatelessWidget {
                 avatarUrl: message.authorAvatarUrl,
                 animal: message.authorAnimal,
               ),
+              onLongPress: () => _showPeerActions(context, ref),
               child: LiveCrownedAvatar(
                 userId: message.userId,
                 displayName: name,
@@ -212,48 +305,12 @@ class _MessageBubble extends StatelessWidget {
           Flexible(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 320),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: bubbleColor,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 8,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (!mine)
-                        Text(
-                          name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: textColor.withValues(alpha: 0.78),
-                          ),
-                        ),
-                      Text(
-                        message.body,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: textColor,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: Text(
-                          _formatMessageTime(message.createdAt),
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: textColor.withValues(alpha: 0.68),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+              child: mine
+                  ? bubble
+                  : GestureDetector(
+                      onLongPress: () => _showPeerActions(context, ref),
+                      child: bubble,
+                    ),
             ),
           ),
         ],
