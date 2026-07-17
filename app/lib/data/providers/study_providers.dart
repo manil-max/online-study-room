@@ -366,9 +366,34 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
 
   Timer? _tick;
   Timer? _widgetRefreshDebounce;
+  /// WP-167: soğuk açılış auth-retry gecikmesi; dispose'ta iptal edilmezse
+  /// widget testlerinde FakeTimer sızıntısı oluşur.
+  Timer? _authRetryTimer;
+  Completer<void>? _authRetryCompleter;
   StreamSubscription<TimerNotificationAction>? _notificationCommands;
   AppLifecycleListener? _lifecycleListener;
   bool _disposed = false;
+
+  /// Auth henüz yoksa 400ms bekler; dispose olursa Timer iptal + await serbest.
+  Future<void> _awaitAuthRetryWindow() {
+    _cancelAuthRetryWindow();
+    final completer = Completer<void>();
+    _authRetryCompleter = completer;
+    _authRetryTimer = Timer(const Duration(milliseconds: 400), () {
+      if (!completer.isCompleted) completer.complete();
+    });
+    return completer.future;
+  }
+
+  void _cancelAuthRetryWindow() {
+    _authRetryTimer?.cancel();
+    _authRetryTimer = null;
+    final pending = _authRetryCompleter;
+    _authRetryCompleter = null;
+    if (pending != null && !pending.isCompleted) {
+      pending.complete();
+    }
+  }
 
   @override
   StudyTimerState build() {
@@ -400,6 +425,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       _disposed = true;
       _tick?.cancel();
       _widgetRefreshDebounce?.cancel();
+      _cancelAuthRetryWindow();
       _notificationCommands?.cancel();
       _lifecycleListener?.dispose();
       try {
@@ -481,8 +507,9 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       await _syncBackgroundTimerState();
       if (_disposed) return;
       // Auth geç gelebilir → pending kuyruk için kısa yeniden deneme.
+      // WP-167: Future.delayed dispose'ta iptal edilmiyordu → FakeTimer sızıntısı.
       if (ref.read(authStateProvider).value == null) {
-        await Future<void>.delayed(const Duration(milliseconds: 400));
+        await _awaitAuthRetryWindow();
         if (!_disposed) await _syncBackgroundTimerState();
       }
       if (_disposed || !state.isRunning) return;
