@@ -1,4 +1,5 @@
--- 0038: UGC rapor / engel / moderasyon (WP-115)
+--0038_ugc_moderation.sql
+-- UGC rapor / engel / moderasyon (WP-115)
 --
 -- Geri alma:
 --   drop table if exists public.user_blocks, public.ugc_reports, public.community_terms_acceptances;

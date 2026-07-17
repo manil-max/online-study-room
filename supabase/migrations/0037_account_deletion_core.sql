@@ -1,4 +1,5 @@
--- 0037: Hesap silme çekirdek sözleşmesi (WP-112)
+-- 0037_account_deletion_core.sql
+-- Hesap silme çekirdek sözleşmesi (WP-112)
 --
 -- Ürün varsayılanları (HESAP-SILME-RETENTION-KARARI §0): soft istek → 14 gün
 -- grace → planlı hard-delete (WP-113 worker). Soft-delete ≠ hard-delete değildir.
