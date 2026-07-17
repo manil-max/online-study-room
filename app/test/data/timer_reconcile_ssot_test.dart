@@ -29,14 +29,20 @@ void main() {
     expect(idleMode, 'idle');
   });
 
-  test('pending queue kept when flag says do not clear', () async {
+  test('pending queue cleared only when recordedOk', () async {
     final prefs = await SharedPreferences.getInstance();
     const raw = '[{"start":"a","end":"b"}]';
     await prefs.setString('timer_pending_intervals', raw);
-    const recordedOk = false;
-    if (recordedOk) {
-      await prefs.remove('timer_pending_intervals');
+
+    Future<void> maybeClear(bool recordedOk) async {
+      if (recordedOk) {
+        await prefs.remove('timer_pending_intervals');
+      }
     }
+
+    await maybeClear(false);
     expect(prefs.getString('timer_pending_intervals'), raw);
+    await maybeClear(true);
+    expect(prefs.getString('timer_pending_intervals'), isNull);
   });
 }

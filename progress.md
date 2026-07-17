@@ -20,7 +20,7 @@
 - **Navigasyon hedefi:** Ana Sayfa / Saat / Gruplar / İstatistikler / Profil. Ana Sayfa günlük kullanım alanıdır; diğer alanların verisi kendi sekmelerinde eksiksiz bulunur.
 - **Release:** Stable/Beta kanalı GitHub Releases ile çalışır. Yerel `v29` ve `beta-v29` tag'leri WP-104 commitini (`ff369e3`) gösterir; mevcut `main` WP-105–109'u da içerdiği halde `1.0.29+29` taşır. Bir sonraki dağıtımda versionCode mutlaka artırılır; Play production ayrı kalite kapısından geçer.
 - **Kalite kapıları:** Her WP DoD'siz kapanmaz; stable release kalite kapısından geçer (AGENTS.md §3). Server-authoritative XP, RLS/sosyal profil, platform sınırları → `docs/KALITE-PROGRAMI.md`.
-- **Son WP numarası:** 139 (WP-133 analiz teslim; WP-134–139 taslak — analiz onayına bağlı). **Sıradaki boş numara WP-140** (onay sonrası uygulama claim).
+- **Son WP numarası:** 137 (WP-134–137 widget/panel SSOT uygulandı; 138–139 opsiyonel spike taslak). **Sıradaki boş numara WP-138.**
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
   - Flutter: `C:\src\flutter` · Android SDK: `C:\Android\Sdk`
@@ -71,15 +71,15 @@
 - **Not:** Play Store production programı WP-110–124 olarak planlandı; kanonik belgeler hizalandı. `OPTIMIZATIONS.md` kapsam dışı bırakıldı.
 
 ### Grok Lane
-- **Durum:** [~] Aktif
-- **Faz/WP:** WP-134 → WP-137 (widget saat · toggle · reconcile · panel P2)
-- **Aşama:** Geliştiriliyor
-- **SAHİP yollar:** `StudyWidgetProviders.kt`, `odak_timer_widget*`, `StudyTimerService.kt`, `TimerActionReceiver.kt`, `study_providers.dart`, `MainActivity.kt`, `timer_notification.xml`
-- **Ortak/riskli yüzey:** FGS/prefs SSOT (WP-103 tipine dokunulmaz)
+- **Durum:** [x] Boşta
+- **Faz/WP:** —
+- **Aşama:** —
+- **SAHİP yollar:** —
+- **Ortak/riskli yüzey:** —
 - **Dal:** main
-- **Başlangıç:** 2026-07-17 (Europe/Istanbul)
+- **Başlangıç:** —
 - **Son güncelleme:** 2026-07-17 (Europe/Istanbul)
-- **Not:** Analiz onaylı uygulama; her WP ayrı commit; push yok.
+- **Not:** WP-134–137 kod commit (`479b2a8`…`1f4f4d6`); Test için bekliyor. Push yok.
 
 
 ---
@@ -136,13 +136,13 @@
 | WP-130 | [~] Test için bekliyor | Rapor sheet detay alanı | WP-125 |
 | WP-131 | [~] Test için bekliyor | Analyze/lint sertleştirme (0 issue) | — |
 | WP-132 | [~] Test için bekliyor | DATA-SAFETY.md gerçek veri envanteri | Console form |
-| WP-133 | [~] Analiz onaylandı | Widget & dinamik panel kararlılık / mimari analiz | WP-134–137 uygulama |
-| WP-134 | [~] Geliştiriliyor | 1×1 widget canlı saat her boyutta görünür | WP-133 onay |
-| WP-135 | [ ] Bekliyor | Toggle atomikliği + commit + sıfırlama | WP-134 |
-| WP-136 | [ ] Bekliyor | Çift yönlü senkron / reconcile SSOT | WP-135 |
-| WP-137 | [ ] Bekliyor | Dinamik panel P2 (standard + usesChronometer) | WP-136 |
-| WP-138 | [ ] Bekliyor (analiz onayına bağlı) | (ops) OEM standard stil A/B | WP-137 |
-| WP-139 | [ ] Bekliyor (analiz onayına bağlı) | (ops) API 36 Live Updates spike | WP-137 |
+| WP-133 | [~] Analiz onaylandı / uygulandı | Widget & dinamik panel analizi → 134–137 | — |
+| WP-134 | [~] Test için bekliyor | 1×1 widget Chronometer her boyutta | S1/S5/S6 cihaz |
+| WP-135 | [~] Test için bekliyor | Toggle commit + idle sıfırlama (TimerStateStore) | S3/S4 20 tur |
+| WP-136 | [~] Test için bekliyor | Reconcile SSOT / engine-scope broadcast | S1/S2/S11 ≤2s |
+| WP-137 | [~] Test için bekliyor | Dinamik panel P2 (usesChronometer + Mola/Durdur) | S12 API33 + bildirim |
+| WP-138 | [ ] Bekliyor | (ops) custom panel_expanded A/B | WP-137 |
+| WP-139 | [ ] Bekliyor | (ops) API 36 Live Updates spike | WP-137 |
 
 > **2026-07-14 proje denetimi:** Serbest sürükle-bırak ızgara, canlı grup hedefi ve saat stilleri **zaten kodda uygulanmış** (backlog stale idi; geçici WP-72/73/75 iptal).
 >
@@ -836,6 +836,28 @@
 > Kabul gelince kart buradan çıkar → **Tamamlanan**’a gider. Bug çıkarsa ayrı debug WP açılır.
 
 
+### WP-134: 1×1 widget Chronometer görünür (kod tamam) ⏱️
+- **Özet:** Compact GONE kaldırıldı; 1 hücre minSize; saat üstte mini düğme altta.
+- **Commit:** `479b2a8` · **S:** S5 (1×1 görünür) S6 (akış)
+- **Kanıt:** `Kodda doğrulandı` / `Cihazda doğrulanmalı`
+
+### WP-135: Toggle atomikliği + TimerStateStore (kod tamam) 🔁
+- **Özet:** Tüm yazımlar `commit()`; idle=00:00:00; pending commit.
+- **Commit:** `e8aba1f` · **S:** S3/S4 20 tur
+- **Test:** `timer_state_store_semantics_test` PASS
+- **Kanıt:** `Kodda doğrulandı` / `Cihazda doğrulanmalı`
+
+### WP-136: Reconcile SSOT (kod tamam) 🔄
+- **Özet:** STATE_CHANGED engine-scope; pending clear yarışı; ms türevi.
+- **Commit:** `833c0f7` · **S:** S1/S2/S11
+- **Test:** `timer_reconcile_ssot_test` PASS
+- **Kanıt:** `Kodda doğrulandı` / `Cihazda doğrulanmalı`
+
+### WP-137: Dinamik panel P2 (kod tamam) 🔔
+- **Özet:** Default standard usesChronometer + Mola/Durdur; `timer_panel_expanded` flag default false. FGS tip/NOT_STICKY dokunulmadı.
+- **Commit:** `1f4f4d6` · **S:** S12 + bildirim akış; terfi bonus
+- **Kanıt:** `Kodda doğrulandı` / `Cihazda doğrulanmalı` (Samsung/Pixel/Xiaomi)
+
 ### WP-133: Widget & Dinamik Panel kararlılık ANALİZİ (docs) 📐
 - **Özet:** Kök neden (1×1 compact Chronometer GONE, stop `apply()` asimetri, reconcile yalnız resume, panel sarkacı WP-76→80→v23), SSOT önerisi, ürün P1/P2/P3, faz WP-134–139, cihaz matrisi.
 - **Teslim:** `docs/widget-panel/WIDGET-DINAMIK-PANEL-ANALIZ.md` · `docs/widget-panel/GECMIS-DENEME-OTOPSISI.md`
@@ -973,7 +995,7 @@
 | WP-79 | Bildirim açılışta toplu teslim hata düzeltmesi — cihaz/ürün kabulü 2026-07-17 |
 | WP-78 | Android beta-v19 — imzalı APK ve GitHub prerelease — cihaz/ürün kabulü 2026-07-17 |
 | WP-77 | İzin yönetimi — dört Android iznini geri alma ve rehberi — cihaz/ürün kabulü 2026-07-17 |
-| WP-76 | Dinamik panel — canlı kontrol paneli (Live Activity / durum çubuğu) — cihaz/ürün kabulü 2026-07-17 |
+| WP-76 | Dinamik panel — canlı kontrol paneli — ürün kabulü 2026-07-17 · **şerh:** OEM Live terfisi garanti değil; P2 kontrol bildirimi + senkron 1×1 widget WP-134–137 |
 | WP-91 | Stats dönem-senkron başlık order testi — sabit 7/30 gün beklentisi güncel `7 gün · Hafta` sözleşmesine hizalandı; hedef test geçti; kapanış 2026-07-14 |
 | WP-82 | Flutter l10n çekirdeği + sistem dili resolver'ı — `en` varsayılan, yalnız `tr*` için Türkçe; gen-l10n, 4/4 hedef test, analyze, 395/395 tam test, Windows release build+smoke geçti; kapanış 2026-07-14 |
 | WP-90 | Depo kalite kapısı temizliği — 4 analiz bulgusu ve 2 eski/kırılgan test düzeltildi; `flutter analyze` 0, tam test 395/395; kapanış 2026-07-14 |
