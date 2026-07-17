@@ -991,7 +991,8 @@ class _BadgeCircle extends StatelessWidget {
                   child: Text(
                     '$tier',
                     style: theme.textTheme.labelSmall?.copyWith(
-                      color: Colors.black87,
+                      // WP-141: sabit siyah yerine onPrimary/onSecondary benzeri.
+                      color: theme.colorScheme.onPrimary,
                       fontWeight: FontWeight.w900,
                       fontSize: 10,
                     ),

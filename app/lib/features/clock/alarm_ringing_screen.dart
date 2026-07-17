@@ -104,6 +104,8 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen> {
     final label = widget.alarm.label.isNotEmpty
         ? widget.alarm.label
         : AppLocalizations.of(context).coreAlarm;
+    // WP-141 meşru: kilit ekranı alarm yüzeyi — karanlık tam ekran + kırmızı
+    // parıltı (marka/uyarı illustrasyonu; colorScheme'e bağlı değil bilinçli).
     final glow = Color.lerp(
       const Color(0xFF7F1D1D),
       const Color(0xFFEF4444),

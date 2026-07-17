@@ -21,6 +21,8 @@ class _CustomPaletteEditorState extends State<CustomPaletteEditor> {
   late Color _accent;
   late TextEditingController _nameController;
 
+  // WP-141 meşru: kullanıcı palet seçici — sabit Material örnek renkleri
+  // (tema token değil; seçim hedefi).
   final List<Color> _colorOptions = [
     Colors.red,
     Colors.pink,
