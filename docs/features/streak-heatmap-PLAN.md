@@ -1,6 +1,7 @@
 # WP-149 PLAN — Çalışma serisi (streak) + takvim/heatmap
 
-**Durum:** ⏳ **ONAY BEKLİYOR** — kod yazılmayacak  
+**Durum:** ↪ **WP-156 kart kataloğuna bağlandı** (`streakHeatmap`) — uygulama 156 faz planında  
+**Üst plan:** [`ISTATISTIK-GRUPLAR-ANALITIK-PLAN.md`](./ISTATISTIK-GRUPLAR-ANALITIK-PLAN.md)  
 **Tarih:** 2026-07-18
 
 ## 1. Ürün

@@ -1,6 +1,7 @@
 # WP-150 PLAN — İstatistik derinleştirme
 
-**Durum:** ⏳ **ONAY BEKLİYOR**  
+**Durum:** ↪ **WP-156’ya devredildi** (2026-07-18)  
+**Kanuni plan:** [`ISTATISTIK-GRUPLAR-ANALITIK-PLAN.md`](./ISTATISTIK-GRUPLAR-ANALITIK-PLAN.md)  
 **Tarih:** 2026-07-18
 
 ## 1. Kapsam

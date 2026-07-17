@@ -20,7 +20,7 @@
 - **Navigasyon hedefi:** Ana Sayfa / Saat / Gruplar / İstatistikler / Profil. Ana Sayfa günlük kullanım alanıdır; diğer alanların verisi kendi sekmelerinde eksiksiz bulunur.
 - **Release:** Stable/Beta kanalı GitHub Releases ile çalışır. Yerel `v29` ve `beta-v29` tag'leri WP-104 commitini (`ff369e3`) gösterir; mevcut `main` WP-105–109'u da içerdiği halde `1.0.29+29` taşır. Bir sonraki dağıtımda versionCode mutlaka artırılır; Play production ayrı kalite kapısından geçer.
 - **Kalite kapıları:** Her WP DoD'siz kapanmaz; stable release kalite kapısından geçer (AGENTS.md §3). Server-authoritative XP, RLS/sosyal profil, platform sınırları → `docs/KALITE-PROGRAMI.md`.
-- **Son WP numarası:** 155 (142–148 done; 149–154 PLAN onay; 155 D fallback). **Kod WP’leri onay sonrası WP-156+.**
+- **Son WP numarası:** 163 (WP-156 plan; uygulama fazları WP-157–163 öneri). **Sıradaki boş numara WP-164** (onay sonrası ayarlanır).
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
   - Flutter: `C:\src\flutter` · Android SDK: `C:\Android\Sdk`
@@ -71,15 +71,15 @@
 - **Not:** Play Store production programı WP-110–124 olarak planlandı; kanonik belgeler hizalandı. `OPTIMIZATIONS.md` kapsam dışı bırakıldı.
 
 ### Grok Lane
-- **Durum:** [~] Aktif — Track C **onay bekliyor** (kod yok)
-- **Faz/WP:** WP-142–148 teslim; WP-149–154 PLAN; WP-155 D bekliyor
-- **Aşama:** Onay kapısı (Track C)
-- **SAHİP yollar:** `docs/features/*-PLAN.md` (okuma); kod yok
+- **Durum:** [x] Boşta
+- **Faz/WP:** —
+- **Aşama:** —
+- **SAHİP yollar:** —
 - **Ortak/riskli yüzey:** —
 - **Dal:** main
-- **Başlangıç:** 2026-07-18
-- **Son güncelleme:** 2026-07-18
-- **Not:** Track A/B bitti. Track C plan MD’leri onaylanınca kod WP-156+. Track D (dil) C onay/kod sonrası. Push yok. Timer/FGS donuk.
+- **Başlangıç:** —
+- **Son güncelleme:** 2026-07-18 (Europe/Istanbul)
+- **Not:** WP-156 analitik planı teslim; onay bekliyor. Kod/migration yok. Push yok.
 
 
 ---
@@ -152,8 +152,8 @@
 | WP-146 | [~] Test için bekliyor | Istanbul/DST gün-sınırı sertleştirme | birim test |
 | WP-147 | [~] Test için bekliyor | Hata durumları + yenile (kayıt/ders/stats) | cihaz |
 | WP-148 | [~] Test için bekliyor | Regresyon süpürme raporu | docs/debug |
-| WP-149 | [~] Plan — onay bekliyor | Streak+heatmap PLAN | docs/features |
-| WP-150 | [~] Plan — onay bekliyor | Stats derinleştirme PLAN | docs/features |
+| WP-149 | [~] WP-156’ya bağlandı | Streak+heatmap → analitik kart | WP-156 |
+| WP-150 | [~] WP-156’ya devredildi | Stats derinleştirme → büyük plan | WP-156 |
 | WP-151 | [~] Plan — onay bekliyor | Onboarding PLAN | docs/features |
 | WP-152 | [~] Plan — onay bekliyor | Veri export PLAN | docs/features |
 | WP-153 | [~] Plan — onay bekliyor | Akıllı hatırlatma PLAN | docs/features |
@@ -851,6 +851,12 @@
 > Bu bölüm **aktif çalışma değildir** — ajan claim etmez, diğer WP’leri engellemez.
 > Kabul gelince kart buradan çıkar → **Tamamlanan**’a gider. Bug çıkarsa ayrı debug WP açılır.
 
+
+### WP-156: İstatistik & Gruplar analitik PLANI (docs) 📊
+- **Özet:** Özelleştirilebilir stats/grup ızgarası, 18+ kart, grafik seti, RPC/RLS, faz WP-157–163. WP-150 devredildi; WP-149 kart.
+- **Teslim:** `docs/features/ISTATISTIK-GRUPLAR-ANALITIK-PLAN.md` · `DATA-APP-ARASTIRMA.md`
+- **Kanıt:** `Kodda doğrulandı` (mevcut altyapı okuma) · **Ürün kararı / Claude checklist onayı bekliyor**
+- **Sonraki:** Onaysız kod/migration yok.
 
 ### WP-140: Erişilebilirlik geçişi (kod tamam) ♿
 - **Özet:** İkon-only tooltip/Semantics; min 48dp; overflow; izin kartı ikon+renk.
