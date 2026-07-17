@@ -9,16 +9,20 @@ import '../../data/providers/study_providers.dart';
 import 'analytics/analytics_card_type.dart';
 import 'analytics/analytics_flag.dart';
 import 'analytics/analytics_grid_view.dart';
+import 'analytics/analytics_period_bar.dart';
 import 'widgets/class_stats_view.dart';
 import 'widgets/personal_stats_view.dart';
 import 'widgets/stats_period_bar.dart';
 
-/// İstatistik sekmesi: Kişisel + Grup. Üstte ortak dönem (Bugün/Hafta/Ay/Tümü).
+/// İstatistik sekmesi: Kişisel + Grup.
+/// Flag kapalı: mevcut StatsPeriodBar + eski view'lar birebir.
+/// Flag açık: AnalyticsPeriodBar + ızgara.
 class StatsScreen extends ConsumerWidget {
   const StatsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final gridOn = ref.watch(analyticsGridV1Provider);
     return DefaultTabController(
       length: 2,
       child: Scaffold(
@@ -34,12 +38,14 @@ class StatsScreen extends ConsumerWidget {
             ],
           ),
         ),
-        body: const Column(
+        body: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Ortak dönem — her iki sekme ve alt seçiciler dinler.
-            StatsPeriodBar(),
-            Expanded(
+            if (gridOn)
+              const AnalyticsPeriodBar()
+            else
+              const StatsPeriodBar(),
+            const Expanded(
               child: TabBarView(children: [_PersonalTab(), _ClassTab()]),
             ),
           ],

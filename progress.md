@@ -20,7 +20,7 @@
 - **Navigasyon hedefi:** Ana Sayfa / Saat / Gruplar / İstatistikler / Profil. Ana Sayfa günlük kullanım alanıdır; diğer alanların verisi kendi sekmelerinde eksiksiz bulunur.
 - **Release:** Stable/Beta kanalı GitHub Releases ile çalışır. Yerel `v29` ve `beta-v29` tag'leri WP-104 commitini (`ff369e3`) gösterir; mevcut `main` WP-105–109'u da içerdiği halde `1.0.29+29` taşır. Bir sonraki dağıtımda versionCode mutlaka artırılır; Play production ayrı kalite kapısından geçer.
 - **Kalite kapıları:** Her WP DoD'siz kapanmaz; stable release kalite kapısından geçer (AGENTS.md §3). Server-authoritative XP, RLS/sosyal profil, platform sınırları → `docs/KALITE-PROGRAMI.md`.
-- **Son WP numarası:** 163 (analitik ızgara WP-157–163 uygulandı). **Sıradaki boş numara WP-164.**
+- **Son WP numarası:** 164 (analitik teslim düzeltmesi). **Sıradaki boş numara WP-165.**
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
   - Flutter: `C:\src\flutter` · Android SDK: `C:\Android\Sdk`
@@ -79,7 +79,7 @@
 - **Dal:** main
 - **Başlangıç:** —
 - **Son güncelleme:** 2026-07-18 (Europe/Istanbul)
-- **Not:** WP-157–163 analitik ızgara kodu teslim; flag `analytics_grid_v1` default kapalı. 0040/0041 SQL Editor. Push yok.
+- **Not:** WP-164 kod+test bitti → Test için bekleyenler. Push yok.
 
 
 ---
@@ -167,6 +167,7 @@
 | WP-161 | [~] Test için bekliyor | 0040/0041 RPC + grup kartları | SQL Editor |
 | WP-162 | [~] Test için bekliyor | Kart ekle/çıkar + Stats flag entegrasyon | `4b4d711` |
 | WP-163 | [~] Test için bekliyor | AnalyticsPeriod year/custom/kıyas | UI bar kısmi |
+| WP-164 | [~] Test için bekliyor | Analitik teslim düzeltmesi (ızgara/reflow/veri/0042) | `Cihazda doğrulanmalı` |
 
 > **2026-07-14 proje denetimi:** Serbest sürükle-bırak ızgara, canlı grup hedefi ve saat stilleri **zaten kodda uygulanmış** (backlog stale idi; geçici WP-72/73/75 iptal).
 >
@@ -859,6 +860,13 @@
 > Bu bölüm **aktif çalışma değildir** — ajan claim etmez, diğer WP’leri engellemez.
 > Kabul gelince kart buradan çıkar → **Tamamlanan**’a gider. Bug çıkarsa ayrı debug WP açılır.
 
+### WP-164: Analitik teslim düzeltmesi (kod+otomatik test) 📊
+- **Özet:** Gerçek 6 sütun x/y/w/h ızgara + `grid_reflow`; düzenleme (ekle/sil/sürükle/boyut/sıfırla); dönem year/custom + kıyas toggle; placeholder yasak (subjectStacked, leaderboard history, member donut, yıl aralığı `get_user_day_totals`); çift `AnalyticsQueryRepository`; migration **0042** `start_time` düzeltmesi; flag default kapalı.
+- **DOKUNMA:** Timer/widget/FGS, `dashboard_layout_*`, `group_daily_totals` sözleşmesi.
+- **Test:** `flutter analyze` 0 · `flutter test test/features/stats/` yeşil · reflow/period/aggregate widget testleri.
+- **Migration:** `0042_fix_study_sessions_start_time.sql` → SQL Editor (CREATE OR REPLACE). RLS plan: `docs/features/ANALYTICS-RLS-TEST-PLAN.md`.
+- **Kanıt:** `Kodda doğrulandı` · **`Cihazda doğrulanmalı`** (flag on: ızgara sürükle-boyut, dönem/kıyas, gerçek grup kartları; flag off: eski StatsPeriodBar + Personal/Class birebir; TalkBack 48dp).
+- **Dal:** main · Push yok.
 
 ### WP-156: İstatistik & Gruplar analitik PLANI (docs) 📊
 - **Özet:** Özelleştirilebilir stats/grup ızgarası, 18+ kart, grafik seti, RPC/RLS, faz WP-157–163. WP-150 devredildi; WP-149 kart.

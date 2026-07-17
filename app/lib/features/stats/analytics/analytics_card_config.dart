@@ -1,7 +1,9 @@
 import '../../../core/grid/grid_reflow.dart';
 import 'analytics_card_type.dart';
 
-/// WP-158: ızgara yerleşim birimi. Format: `type:x:y:w:h`
+/// WP-158/164: ızgara yerleşim birimi. Format: `type:x:y:w:h`
+///
+/// [id] konumdan bağımsızdır (yalnız type) — reflow güvenilir çalışsın.
 class AnalyticsCardConfig {
   const AnalyticsCardConfig(
     this.type, {
@@ -19,7 +21,8 @@ class AnalyticsCardConfig {
   final int h;
   final bool comparePrevious;
 
-  String get id => '${type.name}_${x}_$y';
+  /// Kart kimliği konum değişince değişmez (reflow anahtarı).
+  String get id => type.name;
 
   String encode() =>
       '${type.name}:$x:$y:$w:$h${comparePrevious ? ':cmp1' : ''}';
@@ -41,6 +44,23 @@ class AnalyticsCardConfig {
       w: w ?? this.w,
       h: h ?? this.h,
       comparePrevious: comparePrevious ?? this.comparePrevious,
+    );
+  }
+
+  AnalyticsCardConfig withBounds({
+    int? x,
+    int? y,
+    int? w,
+    int? h,
+    int columns = 6,
+  }) {
+    final nextW = (w ?? this.w).clamp(1, columns);
+    final nextX = (x ?? this.x).clamp(0, columns - nextW);
+    return copyWith(
+      x: nextX,
+      y: (y ?? this.y) < 0 ? 0 : (y ?? this.y),
+      w: nextW,
+      h: (h ?? this.h) < 1 ? 1 : (h ?? this.h),
     );
   }
 
@@ -72,15 +92,39 @@ class AnalyticsCardConfig {
 
   static List<AnalyticsCardConfig> decodeList(List<String> raw) {
     final out = <AnalyticsCardConfig>[];
+    final seen = <AnalyticsCardType>{};
     for (final r in raw) {
       final c = decode(r);
-      if (c != null) out.add(c);
+      if (c != null && seen.add(c.type)) out.add(c);
     }
     return out;
   }
 
   static List<String> encodeList(List<AnalyticsCardConfig> items) =>
       [for (final c in items) c.encode()];
+
+  /// İlk uygun boş hücreye yerleştir.
+  static AnalyticsCardConfig firstAvailable(
+    List<AnalyticsCardConfig> existing,
+    AnalyticsCardType type, {
+    int columns = 6,
+  }) {
+    final (dw, dh) = type.defaultCells;
+    final w = dw.clamp(1, columns);
+    final occupied = existing.map((c) => c.toBounds()).toList();
+    for (var y = 0; y < 200; y++) {
+      for (var x = 0; x <= columns - w; x++) {
+        final candidate = GridItemBounds(id: type.name, x: x, y: y, w: w, h: dh);
+        if (occupied.every((o) => !candidate.overlaps(o))) {
+          return AnalyticsCardConfig(type, x: x, y: y, w: w, h: dh);
+        }
+      }
+    }
+    final y = existing.isEmpty
+        ? 0
+        : existing.map((c) => c.y + c.h).reduce((a, b) => a > b ? a : b);
+    return AnalyticsCardConfig(type, x: 0, y: y, w: w, h: dh);
+  }
 }
 
 List<AnalyticsCardConfig> defaultPersonalLayout() {
@@ -104,5 +148,37 @@ List<AnalyticsCardConfig> defaultGroupLayout() {
     AnalyticsCardConfig(AnalyticsCardType.groupMemberDonut, x: 0, y: 8, w: 3, h: 3),
     AnalyticsCardConfig(AnalyticsCardType.groupHeatTable, x: 3, y: 8, w: 3, h: 3),
     AnalyticsCardConfig(AnalyticsCardType.groupStreak, x: 0, y: 11, w: 6, h: 2),
+  ];
+}
+
+/// Taşıma/boyutlandırma sonrası reflow uygula; kart id sabit kalır.
+List<AnalyticsCardConfig> reflowAnalyticsLayout({
+  required List<AnalyticsCardConfig> layout,
+  required AnalyticsCardType moving,
+  required int x,
+  required int y,
+  required int w,
+  required int h,
+  int columns = 6,
+}) {
+  final flowed = placeGridItem(
+    items: [for (final c in layout) c.toBounds()],
+    id: moving.name,
+    x: x,
+    y: y,
+    w: w,
+    h: h,
+    columns: columns,
+  );
+  final byId = {for (final b in flowed) b.id: b};
+  return [
+    for (final c in layout)
+      c.withBounds(
+        x: byId[c.id]?.x ?? c.x,
+        y: byId[c.id]?.y ?? c.y,
+        w: byId[c.id]?.w ?? c.w,
+        h: byId[c.id]?.h ?? c.h,
+        columns: columns,
+      ),
   ];
 }

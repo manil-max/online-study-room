@@ -4381,5 +4381,89 @@
   "adminUgcStatusRejected": "Rejected",
   "@adminUgcStatusRejected": {
     "description": "UGC report status action: rejected"
+  },
+  "analyticsYear": "Year",
+  "@analyticsYear": {
+    "description": "Analytics period chip: year"
+  },
+  "analyticsCustomRange": "Custom",
+  "@analyticsCustomRange": {
+    "description": "Analytics period chip: custom date range"
+  },
+  "analyticsComparePrevious": "Compare with previous equal-length period",
+  "@analyticsComparePrevious": {
+    "description": "Toggle for prior equal-length period comparison"
+  },
+  "analyticsEditDone": "Done",
+  "@analyticsEditDone": {
+    "description": "Finish editing analytics grid layout"
+  },
+  "analyticsResetLayout": "Reset layout",
+  "@analyticsResetLayout": {
+    "description": "Reset analytics cards to default layout"
+  },
+  "analyticsCardWidth": "Width",
+  "@analyticsCardWidth": {
+    "description": "Analytics card width control label"
+  },
+  "analyticsCardHeight": "Height",
+  "@analyticsCardHeight": {
+    "description": "Analytics card height control label"
+  },
+  "analyticsWider": "Wider",
+  "@analyticsWider": {
+    "description": "Increase analytics card width"
+  },
+  "analyticsNarrower": "Narrower",
+  "@analyticsNarrower": {
+    "description": "Decrease analytics card width"
+  },
+  "analyticsTaller": "Taller",
+  "@analyticsTaller": {
+    "description": "Increase analytics card height"
+  },
+  "analyticsShorter": "Shorter",
+  "@analyticsShorter": {
+    "description": "Decrease analytics card height"
+  },
+  "analyticsDragHandle": "Drag to reorder",
+  "@analyticsDragHandle": {
+    "description": "Semantics label for reorder drag handle"
+  },
+  "analyticsCardTotalPeriod": "Period total",
+  "@analyticsCardTotalPeriod": {
+    "description": "Analytics card title: period total"
+  },
+  "analyticsCardSubjectDonut": "Subject breakdown",
+  "@analyticsCardSubjectDonut": {
+    "description": "Analytics card title: subject donut"
+  },
+  "analyticsCardSubjectStacked": "Subjects stacked",
+  "@analyticsCardSubjectStacked": {
+    "description": "Analytics card title: subject stacked bar"
+  },
+  "analyticsCardPeriodCompare": "Period compare",
+  "@analyticsCardPeriodCompare": {
+    "description": "Analytics card title: period comparison"
+  },
+  "analyticsCardInsight": "Insight",
+  "@analyticsCardInsight": {
+    "description": "Analytics card title: insight strip"
+  },
+  "analyticsCardGroupTotal": "Group total",
+  "@analyticsCardGroupTotal": {
+    "description": "Analytics card title: group total"
+  },
+  "analyticsCardLeaderboardHistory": "Leaderboard history",
+  "@analyticsCardLeaderboardHistory": {
+    "description": "Analytics card title: group leaderboard history"
+  },
+  "analyticsCardMemberDonut": "Member contribution",
+  "@analyticsCardMemberDonut": {
+    "description": "Analytics card title: member contribution donut"
+  },
+  "analyticsCardGroupStreak": "Group streak",
+  "@analyticsCardGroupStreak": {
+    "description": "Analytics card title: group streak"
   }
 }

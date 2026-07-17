@@ -49,6 +49,57 @@ class StatsLayoutNotifier extends AsyncNotifier<List<AnalyticsCardConfig>> {
         .reset(AnalyticsSurface.personalStats);
     state = AsyncData(defaultPersonalLayout());
   }
+
+  Future<void> setBounds(
+    AnalyticsCardType type, {
+    int? x,
+    int? y,
+    int? w,
+    int? h,
+  }) async {
+    final current = state.asData?.value;
+    if (current == null) return;
+    final i = current.indexWhere((c) => c.type == type);
+    if (i < 0) return;
+    final cur = current[i];
+    final target = cur.withBounds(x: x, y: y, w: w, h: h);
+    if (target.x == cur.x &&
+        target.y == cur.y &&
+        target.w == cur.w &&
+        target.h == cur.h) {
+      return;
+    }
+    final next = reflowAnalyticsLayout(
+      layout: current,
+      moving: type,
+      x: target.x,
+      y: target.y,
+      w: target.w,
+      h: target.h,
+    );
+    await save(next);
+  }
+
+  Future<void> addCard(AnalyticsCardType type) async {
+    final current = state.asData?.value ?? defaultPersonalLayout();
+    if (current.any((c) => c.type == type)) return;
+    final added = AnalyticsCardConfig.firstAvailable(current, type);
+    final next = reflowAnalyticsLayout(
+      layout: [...current, added],
+      moving: type,
+      x: added.x,
+      y: added.y,
+      w: added.w,
+      h: added.h,
+    );
+    await save(next);
+  }
+
+  Future<void> removeCard(AnalyticsCardType type) async {
+    final current = state.asData?.value;
+    if (current == null) return;
+    await save([for (final c in current) if (c.type != type) c]);
+  }
 }
 
 class GroupStatsLayoutNotifier
@@ -72,5 +123,56 @@ class GroupStatsLayoutNotifier
         .read(analyticsLayoutRepositoryProvider)
         .reset(AnalyticsSurface.groupStats);
     state = AsyncData(defaultGroupLayout());
+  }
+
+  Future<void> setBounds(
+    AnalyticsCardType type, {
+    int? x,
+    int? y,
+    int? w,
+    int? h,
+  }) async {
+    final current = state.asData?.value;
+    if (current == null) return;
+    final i = current.indexWhere((c) => c.type == type);
+    if (i < 0) return;
+    final cur = current[i];
+    final target = cur.withBounds(x: x, y: y, w: w, h: h);
+    if (target.x == cur.x &&
+        target.y == cur.y &&
+        target.w == cur.w &&
+        target.h == cur.h) {
+      return;
+    }
+    final next = reflowAnalyticsLayout(
+      layout: current,
+      moving: type,
+      x: target.x,
+      y: target.y,
+      w: target.w,
+      h: target.h,
+    );
+    await save(next);
+  }
+
+  Future<void> addCard(AnalyticsCardType type) async {
+    final current = state.asData?.value ?? defaultGroupLayout();
+    if (current.any((c) => c.type == type)) return;
+    final added = AnalyticsCardConfig.firstAvailable(current, type);
+    final next = reflowAnalyticsLayout(
+      layout: [...current, added],
+      moving: type,
+      x: added.x,
+      y: added.y,
+      w: added.w,
+      h: added.h,
+    );
+    await save(next);
+  }
+
+  Future<void> removeCard(AnalyticsCardType type) async {
+    final current = state.asData?.value;
+    if (current == null) return;
+    await save([for (final c in current) if (c.type != type) c]);
   }
 }

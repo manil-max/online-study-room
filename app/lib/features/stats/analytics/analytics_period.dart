@@ -20,6 +20,17 @@ class AnalyticsPeriod {
 
   static const week = AnalyticsPeriod(AnalyticsPeriodKind.week);
 
+  @override
+  bool operator ==(Object other) =>
+      other is AnalyticsPeriod &&
+      other.kind == kind &&
+      other.compare == compare &&
+      other.customFrom == customFrom &&
+      other.customTo == customTo;
+
+  @override
+  int get hashCode => Object.hash(kind, compare, customFrom, customTo);
+
   (DateTime from, DateTime to) range({DateTime? now}) {
     final n = now ?? DateTime.now();
     return switch (kind) {
@@ -57,3 +68,5 @@ AnalyticsPeriod analyticsPeriodFromStats(StatsPeriod p) {
     StatsPeriod.all => const AnalyticsPeriod(AnalyticsPeriodKind.all),
   };
 }
+
+
