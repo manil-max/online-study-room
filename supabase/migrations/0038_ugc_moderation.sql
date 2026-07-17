@@ -57,7 +57,13 @@ drop policy if exists ugc_reports_select_own on public.ugc_reports;
 create policy ugc_reports_select_own on public.ugc_reports
   for select to authenticated
   using (reporter_id = auth.uid() or public.is_super_admin());
-revoke insert, update, delete on public.ugc_reports from authenticated, anon;
+-- Super-admin status güncellemesi (WP-117 kuyruk)
+drop policy if exists ugc_reports_update_admin on public.ugc_reports;
+create policy ugc_reports_update_admin on public.ugc_reports
+  for update to authenticated
+  using (public.is_super_admin())
+  with check (public.is_super_admin());
+revoke insert, delete on public.ugc_reports from authenticated, anon;
 
 create or replace function public.accept_community_terms(p_version text)
 returns void

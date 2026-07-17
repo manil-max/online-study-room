@@ -65,9 +65,10 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <!-- WP-118: exported=false — yalnız aynı uygulamanın PendingIntent'i tetikler. -->
         <receiver
             android:name=".widgets.TimerActionReceiver"
-            android:exported="true">
+            android:exported="false">
             <intent-filter>
                 <action android:name="com.manilmax.online_study_room.ACTION_TOGGLE_TIMER" />
             </intent-filter>

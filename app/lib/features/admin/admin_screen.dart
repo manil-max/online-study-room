@@ -7,6 +7,7 @@ import 'tabs/admin_announcements_tab.dart';
 import 'tabs/admin_audit_log_tab.dart';
 import 'tabs/admin_dashboard_tab.dart';
 import 'tabs/admin_groups_tab.dart';
+import 'tabs/admin_moderation_tab.dart';
 import 'tabs/admin_reports_tab.dart';
 import 'tabs/admin_users_tab.dart';
 
@@ -37,7 +38,7 @@ class AdminScreen extends ConsumerWidget {
         }
 
         return DefaultTabController(
-          length: 6,
+          length: 7,
           child: Scaffold(
             appBar: AppBar(
               title: Text(l10n.adminYonetimPaneli),
@@ -51,6 +52,10 @@ class AdminScreen extends ConsumerWidget {
                   ),
                   Tab(text: l10n.adminGruplar, icon: const Icon(Icons.groups)),
                   Tab(text: l10n.adminRaporlar, icon: const Icon(Icons.report)),
+                  const Tab(
+                    text: 'UGC',
+                    icon: Icon(Icons.flag_outlined),
+                  ),
                   Tab(
                     text: l10n.adminDuyurular,
                     icon: const Icon(Icons.campaign),
@@ -68,6 +73,7 @@ class AdminScreen extends ConsumerWidget {
                 AdminUsersTab(),
                 AdminGroupsTab(),
                 AdminReportsTab(),
+                AdminModerationTab(),
                 AdminAnnouncementsTab(),
                 AdminAuditLogTab(),
               ],
