@@ -62,4 +62,38 @@ void main() {
       expect(day.hour, 0);
     });
   });
+
+  // WP-146: 2016 sonrası TR kalıcı UTC+3 — eski DST tarihleri de +3 kalır.
+  group('WP-146 day boundary and permanent +3', () {
+    test('İstanbul gece yarısı ±1 sn aynı/sonraki gün', () {
+      // 2026-06-15 00:00:00 Istanbul = 2026-06-14 21:00:00 UTC
+      final justBefore = DateTime.utc(2026, 6, 14, 20, 59, 59);
+      final justAfter = DateTime.utc(2026, 6, 14, 21, 0, 1);
+      expect(istanbulDay(justBefore), DateTime(2026, 6, 14));
+      expect(istanbulDay(justAfter), DateTime(2026, 6, 15));
+    });
+
+    test('eski AB DST bahar geçiş tarihi hâlâ UTC+3 (kayma yok)', () {
+      // 2015 öncesi AB "son Mart Pazar" — 2026-03-29 01:00 UTC civarı.
+      // TR kalıcı +3: UTC 00:30 → Istanbul 03:30 (aynı gün 29).
+      final spring = DateTime.utc(2026, 3, 29, 0, 30);
+      expect(istanbulDay(spring), DateTime(2026, 3, 29));
+      expect(istanbulHour(spring), 3);
+    });
+
+    test('eski AB DST sonbahar geçiş tarihi hâlâ UTC+3', () {
+      // 2026-10-25 00:30 UTC → Istanbul 03:30, gün 25.
+      final autumn = DateTime.utc(2026, 10, 25, 0, 30);
+      expect(istanbulDay(autumn), DateTime(2026, 10, 25));
+      expect(istanbulHour(autumn), 3);
+    });
+
+    test('cihaz TZ fark etmez: aynı UTC anı aynı Istanbul günü', () {
+      final utc = DateTime.utc(2026, 7, 17, 21, 30); // Istanbul 18th 00:30
+      expect(istanbulDay(utc), DateTime(2026, 7, 18));
+      // Local DateTime with offset baked as UTC wall — still convert via TZ.
+      final asLocalWall = DateTime.parse('2026-07-17T21:30:00.000Z');
+      expect(istanbulDay(asLocalWall), DateTime(2026, 7, 18));
+    });
+  });
 }

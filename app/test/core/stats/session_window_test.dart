@@ -4,6 +4,7 @@ import 'package:online_study_room/data/models/study_session.dart';
 
 void main() {
   group('sessionHotWindow', () {
+    // WP-146: now duvar saati; pencere istanbulDay ile hizalanır.
     final now = DateTime(2026, 7, 14);
 
     StudySession sess(DateTime start) => StudySession(
