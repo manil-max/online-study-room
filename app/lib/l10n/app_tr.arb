@@ -1045,5 +1045,12 @@
   "safetyReasonHate": "Nefret",
   "safetyReasonIllegal": "Yasa dışı",
   "safetyReasonOther": "Diğer",
-  "safetyActionFailed": "İşlem başarısız. Tekrar dene."
+  "safetyActionFailed": "İşlem başarısız. Tekrar dene.",
+"safetyBlockedUsersTitle": "Engellenen kullanıcılar",
+  "safetyUnblock": "Engeli kaldır",
+  "safetyUnblocked": "Engel kaldırıldı.",
+  "safetyNoBlockedUsers": "Engellenen kullanıcı yok.",
+  "safetyBlockedUserFallbackName": "Engellenen kullanıcı",
+"safetyReportDetailsLabel": "Açıklama (isteğe bağlı)",
+  "safetyReportDetailsHint": "Moderatörler için ek bağlam ekle (en fazla 500 karakter)."
 }

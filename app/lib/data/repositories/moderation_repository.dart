@@ -1,4 +1,6 @@
-/// WP-116: UGC rapor / engel soyutlaması.
+import '../models/profile.dart';
+
+/// WP-116 / WP-129: UGC rapor / engel soyutlaması.
 abstract class ModerationRepository {
   Future<void> acceptCommunityTerms(String version);
 
@@ -7,6 +9,10 @@ abstract class ModerationRepository {
   Future<void> unblockUser(String userId);
 
   Future<List<String>> listBlockedUserIds();
+
+  /// Engellenen kullanıcılar ekranı: id → profil özeti.
+  /// Okunamayan id'ler için minimal [Profile] (maskeli ad) döner.
+  Future<List<Profile>> fetchBlockedProfiles();
 
   Future<void> reportUgc({
     required String targetType,

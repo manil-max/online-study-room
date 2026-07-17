@@ -4337,5 +4337,33 @@
   "safetyActionFailed": "Action failed. Try again.",
   "@safetyActionFailed": {
     "description": "Generic safety action error snackbar"
+  },
+"safetyBlockedUsersTitle": "Blocked users",
+  "@safetyBlockedUsersTitle": {
+    "description": "Settings entry and screen title for blocked users list"
+  },
+  "safetyUnblock": "Unblock",
+  "@safetyUnblock": {
+    "description": "Action to remove a user block"
+  },
+  "safetyUnblocked": "User unblocked.",
+  "@safetyUnblocked": {
+    "description": "Snackbar after successful unblock"
+  },
+  "safetyNoBlockedUsers": "No blocked users.",
+  "@safetyNoBlockedUsers": {
+    "description": "Empty state on blocked users screen"
+  },
+  "safetyBlockedUserFallbackName": "Blocked user",
+  "@safetyBlockedUserFallbackName": {
+    "description": "Fallback display name when profile cannot be resolved"
+  },
+"safetyReportDetailsLabel": "Details (optional)",
+  "@safetyReportDetailsLabel": {
+    "description": "Label for optional free-text report details field"
+  },
+  "safetyReportDetailsHint": "Add more context for moderators (max 500 characters).",
+  "@safetyReportDetailsHint": {
+    "description": "Hint text for report details field"
   }
 }

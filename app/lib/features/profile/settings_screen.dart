@@ -14,6 +14,7 @@ import '../desktop/desktop_surface.dart';
 import '../home/dashboard_providers.dart';
 import '../notifications/notification_center_screen.dart';
 import '../updater/release_notes_screen.dart';
+import '../safety/blocked_users_screen.dart';
 import 'account_settings_screen.dart';
 import 'appearance_screen.dart';
 import 'legal_center_screen.dart';
@@ -142,6 +143,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (_) => const LegalCenterScreen(),
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(height: 10),
+              // WP-129: engellenen kullanıcılar / unblock UI
+              _SettingsCard(
+                child: ListTile(
+                  leading: const Icon(Icons.block),
+                  title: Text(l10n.safetyBlockedUsersTitle),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const BlockedUsersScreen(),
                     ),
                   ),
                 ),

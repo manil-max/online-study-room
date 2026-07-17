@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/config/supabase_config.dart';
+import '../models/profile.dart';
 import '../repositories/in_memory/in_memory_moderation_repository.dart';
 import '../repositories/moderation_repository.dart';
 import '../repositories/supabase/supabase_moderation_repository.dart';
@@ -17,4 +18,12 @@ final moderationRepositoryProvider = Provider<ModerationRepository>((ref) {
 final blockedUserIdsProvider = FutureProvider<Set<String>>((ref) async {
   final ids = await ref.watch(moderationRepositoryProvider).listBlockedUserIds();
   return ids.toSet();
+});
+
+/// WP-129: engellenen kullanıcılar ekranı (profil özeti).
+final blockedProfilesProvider =
+    FutureProvider.autoDispose<List<Profile>>((ref) async {
+  // ids değişince liste de yenilensin.
+  ref.watch(blockedUserIdsProvider);
+  return ref.watch(moderationRepositoryProvider).fetchBlockedProfiles();
 });
