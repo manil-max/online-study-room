@@ -71,15 +71,15 @@
 - **Not:** Play Store production programı WP-110–124 olarak planlandı; kanonik belgeler hizalandı. `OPTIMIZATIONS.md` kapsam dışı bırakıldı.
 
 ### Grok Lane
-- **Durum:** [~] Aktif
-- **Faz/WP:** WP-125 → WP-128 (Play UGC/purge/channel debug paketi)
-- **Aşama:** Geliştiriliyor
-- **SAHİP yollar:** `app/lib/features/classroom/widgets/class_chat_card.dart`, `app/lib/features/profile/social_profile_screen.dart`, `app/lib/features/classroom/widgets/campfire_scene.dart`, `app/lib/data/providers/moderation_providers.dart`, `app/lib/l10n/app_en.arb`, `app/lib/l10n/app_tr.arb`, `supabase/functions/purge-accounts/index.ts`, `app/lib/core/config/distribution_channel.dart`, `app/android/app/build.gradle.kts`, `app/android/app/src/main/kotlin/**/MainActivity.kt`, `app/android/app/src/play/**`, `app/test/core/distribution_channel_test.dart`
-- **Ortak/riskli yüzey:** ARB (l10n), Android play flavor
+- **Durum:** [x] Boşta
+- **Faz/WP:** —
+- **Aşama:** —
+- **SAHİP yollar:** —
+- **Ortak/riskli yüzey:** —
 - **Dal:** main
-- **Başlangıç:** 2026-07-17 (Europe/Istanbul)
+- **Başlangıç:** —
 - **Son güncelleme:** 2026-07-17 (Europe/Istanbul)
-- **Not:** Kullanıcı sırayla WP-125…128 verdi; her WP ayrı commit; push yok.
+- **Not:** WP-125–128 kod+otomatik test commitlendi (`a59e331`…`ee5428f`); Test için bekleyenler’de. Push yok.
 
 
 ---
@@ -128,10 +128,10 @@
 | WP-122 | [~] Test için bekliyor | PLAY-BUILD-RUNBOOK (AAB play flavor) | versionCode 30+ |
 | WP-123 | [ ] Bekliyor | Cihaz QA matrisi (P0 kanıt) | fiziksel cihaz |
 | WP-124 | [~] Test için bekliyor | PLAY-RELEASE-GATE şablonu | GO imzası |
-| WP-125 | [~] Geliştiriliyor | UGC Rapor + Engel UI giriş noktaları (sohbet/profil) | WP-116 |
-| WP-126 | [ ] Bekliyor | Engellenen kullanıcı mesaj/presence filtreleme | WP-125 |
-| WP-127 | [ ] Bekliyor | purge-accounts sonsuz retry düzeltmesi | WP-113 |
-| WP-128 | [ ] Bekliyor | Play flavor DISTRIBUTION_CHANNEL zorlaması | WP-110 |
+| WP-125 | [~] Test için bekliyor | UGC Rapor + Engel UI giriş noktaları (sohbet/profil) | WP-116 |
+| WP-126 | [~] Test için bekliyor | Engellenen kullanıcı mesaj/presence filtreleme | WP-125 |
+| WP-127 | [~] Test için bekliyor | purge-accounts sonsuz retry düzeltmesi | Edge deploy |
+| WP-128 | [~] Test için bekliyor | Play flavor DISTRIBUTION_CHANNEL zorlaması | AAB smoke |
 
 > **2026-07-14 proje denetimi:** Serbest sürükle-bırak ızgara, canlı grup hedefi ve saat stilleri **zaten kodda uygulanmış** (backlog stale idi; geçici WP-72/73/75 iptal).
 >
@@ -823,6 +823,30 @@
 > Kod/otomatik test bitti; **cihaz QA veya ürün demo’su** bekleniyor.
 > Bu bölüm **aktif çalışma değildir** — ajan claim etmez, diğer WP’leri engellemez.
 > Kabul gelince kart buradan çıkar → **Tamamlanan**’a gider. Bug çıkarsa ayrı debug WP açılır.
+
+### WP-125: UGC Rapor + Engel UI giriş noktaları (kod tamam) 🛡️
+- **Özet:** Sohbet peer long-press → Bildir (`showReportSheet` / `report_ugc`) + Engelle (onay + `block_user`). Sosyal profil AppBar menüsü (user target). ARB `safety*` + `blockedUserIdsProvider`.
+- **Commit:** `a59e331`
+- **Kanıt:** `Kodda doğrulandı` / `Cihazda doğrulanmalı` (iki hesap: long-press menü, rapor sheet, engel snackbar).
+- **DOKUNMA yapılmadı:** 0038, admin kuyruk, purge Edge.
+
+### WP-126: Engellenen içerik filtreleme (kod tamam) 🙈
+- **Özet:** `blockedUserIdsProvider` ile sohbet mesajları ve kamp ateşi üye/presence listesi engellenenleri gizler; block sonrası invalidate.
+- **Commit:** `caa3b69`
+- **Test:** `moderation_block_filter_test` 2/2 PASS.
+- **Kanıt:** `Kodda doğrulandı` / `Cihazda doğrulanmalı` (A engeller B → mesaj/presence kaybolur).
+
+### WP-127: purge-accounts retry terminal (kod tamam) 🔁
+- **Özet:** Fetch `attempt_count < 5`; hata sonrası `<5` → `scheduled`, `>=5` → terminal `failed`. `last_error_code` sınıflı. deleteUser cascade completed notu.
+- **Commit:** `1f890c0`
+- **Kanıt:** `Kodda doğrulandı` / `Canlıda doğrulanmalı` (Edge deploy + cron dry-run).
+- **DOKUNMA yapılmadı:** hesap silme UI, diğer Edge.
+
+### WP-128: Play flavor kanal zorlaması (kod tamam) 🏪
+- **Özet:** `DistributionConfig.resolve`: `FLUTTER_APP_FLAVOR=play` → her zaman `play`, `allowsSideloadUpdates=false` (define unutulsa/yanlış github* olsa bile). play meta-data + birim testler.
+- **Commit:** `ee5428f`
+- **Test:** `distribution_channel_test` 9/9 PASS.
+- **Kanıt:** `Kodda doğrulandı` / `Cihazda/CI doğrulanmalı` (`--flavor play` define’sız AAB smoke).
 
 ### WP-110: Play dağıtım kanalı + updater izolasyonu (kod tamam) 🏪
 - **Özet:** `play` flavor; `REQUEST_INSTALL_PACKAGES` yalnız stable/beta; Play’de `checkForUpdate` ağ çağrısı yok; CI `DISTRIBUTION_CHANNEL`.
