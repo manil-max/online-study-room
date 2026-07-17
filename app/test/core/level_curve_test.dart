@@ -32,4 +32,16 @@ void main() {
     expect(isFrameUnlocked(xp: 0, requiredLevel: 3), isFalse);
     expect(isFrameUnlocked(xp: 200, requiredLevel: 3), isTrue);
   });
+
+  test('edge XP values and high XP', () {
+    expect(levelForXp(-10), 1);
+    expect(levelForXp(0), 1);
+    expect(levelForXp(1), 1);
+    // Large but safe int
+    final high = levelForXp(50 * 10000 * 10000); // level ~10001
+    expect(high, greaterThan(100));
+    final p = levelProgress(0);
+    expect(p.progress, 0);
+    expect(p.level, 1);
+  });
 }

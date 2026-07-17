@@ -1,23 +1,12 @@
+import 'dart:math' as math;
+
 /// WP-154: XP → seviye (salt okunur türetilmiş; sunucu XP bozulmaz).
 ///
 /// Formül (ürün kararı varsayılan): `level = floor(sqrt(xp / 50)) + 1`
 /// xp=0 → 1; xp=50 → 2; xp=200 → 3; …
 int levelForXp(int xp) {
   if (xp <= 0) return 1;
-  return (xp / 50).floor().sqrtFloor() + 1;
-}
-
-extension on int {
-  int sqrtFloor() {
-    if (this <= 0) return 0;
-    var x = this;
-    var y = (x + 1) ~/ 2;
-    while (y < x) {
-      x = y;
-      y = (x + this ~/ x) ~/ 2;
-    }
-    return x;
-  }
+  return math.sqrt(xp / 50).floor() + 1;
 }
 
 /// Seviye [level] için gereken minimum XP.
