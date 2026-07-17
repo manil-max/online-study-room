@@ -71,15 +71,15 @@
 - **Not:** Aylık e-posta anahtarı iyimser/kilitli kaydetmeyle düzeltildi; açılış öncesi dürtmeler sessize alındı; kalıcı Sistem/Türkçe/İngilizce seçici eklendi. `flutter analyze`, 433/433 test, EN/TR audit ve yerel beta APK geçti. Hedef beta-v26; stable tag yok.
 
 ### Grok Lane
-- **Durum:** [~] Aktif
-- **Faz/WP:** WP-105 — XP oturum bitince sunucu tetiği
-- **Aşama:** Geliştiriliyor
-- **SAHİP yollar:** `app/lib/data/providers/gamification_providers.dart`, `app/lib/core/navigation/home_shell.dart`, ilgili testler
-- **Ortak/riskli yüzey:** home_shell.dart
+- **Durum:** [x] Boşta
+- **Faz/WP:** —
+- **Aşama:** —
+- **SAHİP yollar:** —
+- **Ortak/riskli yüzey:** —
 - **Dal:** main
-- **Başlangıç:** 2026-07-17 (Europe/Istanbul)
+- **Başlangıç:** —
 - **Son güncelleme:** 2026-07-17 (Europe/Istanbul)
-- **Not:** WP-103/104 parkta; study_providers'a dokunulmaz.
+- **Not:** WP-103…106 kod+commit; 103/104/105 cihaz QA parkta. 0034 SQL Editor.
 
 
 ---
@@ -127,8 +127,8 @@
 | WP-100 | [~] Test için bekliyor | Senkron kök fix: local emit, pull-to-refresh timeout, presence race | cihaz bulgusu |
 | WP-103 | [~] Test için bekliyor | 🔴 KRİTİK — Android ≤13 FGS tip (dataSync\|specialUse) + v29 | cihaz QA + stable yayın |
 | WP-104 | [~] Test için bekliyor | Presence bayatlama (updatedAt) + stop oturum kaydı sırası | cihaz QA |
-| WP-105 | [ ] Bekliyor | 🟠 XP/başarım kök fix (B1) — oturum bitince RPC yalnız profil açılınca çalışıyor; XP kaçıyor | — |
-| WP-106 | [ ] Bekliyor | watchMembers O(n·m)→Map + güvenli fallback (B3/R3) + aktif üye partial index (R12) | — |
+| WP-105 | [~] Test için bekliyor | 🟠 XP oturum bitince kabuk lifecycle tetik | cihaz/Supabase |
+| WP-106 | [~] Test için bekliyor | watchMembers Map + 0034 active index | migration uygula |
 | WP-107 | [ ] Bekliyor | Manuel oturum İstanbul gün sınırı + UTC yazım (B4) | — |
 | WP-108 | [ ] Bekliyor | Aylık rapor retry (B2) + cron localhost URL (B8) — yalnız özellik canlıysa | ürün/ops kararı |
 | WP-109 | [ ] Bekliyor | Güvenlik sertleştirme — Edge Function auth (S2), IDOR (S3), profiles enumeration (S4), sessiz update (B7) | ops sıralama kritik |
@@ -343,6 +343,16 @@
 - **Test:** presence + offline_first + timer_state_machine (WP-104 senaryoları dahil) yeşil.
 - **Beklenen:** Cihazda sayaç durunca presence ≤70s “çalışıyor” temizlenir; app-içi Durdur süre kaybı yok.
 - **Kanıt:** `Kodda doğrulandı` / `Cihazda doğrulanmalı`.
+
+### WP-105: XP oturum bitince tetik (kod tamam) 🏆
+- **Özet:** `achievementProgressLifecycleProvider` HomeShell’de; debounce 800ms + session count/sum coalesce.
+- **Commit:** `46bdf60`
+- **Test:** `achievement_lifecycle_test` yeşil.
+- **Beklenen:** Profil açmadan oturum sonrası XP; `Cihazda doğrulanmalı` + Supabase ledger.
+
+### WP-106: watchMembers Map + index (kod tamam) 🧹
+- **Özet:** Map eşleştirme; migration `0034_group_members_active_index.sql`.
+- **Beklenen:** SQL Editor’da 0034 uygula (`CONCURRENTLY` tek statement).
 
 ### WP-101: Saat XP 50 + stable v27 ⭐
 
