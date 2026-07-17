@@ -136,8 +136,6 @@
 | WP-130 | [~] Test için bekliyor | Rapor sheet detay alanı | WP-125 |
 | WP-131 | [~] Test için bekliyor | Analyze/lint sertleştirme (0 issue) | — |
 | WP-132 | [~] Test için bekliyor | DATA-SAFETY.md gerçek veri envanteri | Console form |
-| WP-127 | [~] Test için bekliyor | purge-accounts sonsuz retry düzeltmesi | Edge deploy |
-| WP-128 | [~] Test için bekliyor | Play flavor DISTRIBUTION_CHANNEL zorlaması | AAB smoke |
 
 > **2026-07-14 proje denetimi:** Serbest sürükle-bırak ızgara, canlı grup hedefi ve saat stilleri **zaten kodda uygulanmış** (backlog stale idi; geçici WP-72/73/75 iptal).
 >
