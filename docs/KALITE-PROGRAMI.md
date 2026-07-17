@@ -7,7 +7,7 @@
 > - Teknik & mimari plan sunumu — https://claude.ai/code/artifact/d6047722-025b-43a4-bbda-45f3f0faa321
 > - Codex yönetici değerlendirmesi ve revize plan (kalite programı)
 >
-> `docs/YOL-HARITASI.md` ve `docs/TEKNIK-PLAN.md` bu belgeye taşınmıştır; bundan sonra **bu dosya** güncellenir.
+> Önceki yol haritası ve teknik plan bu belgede birleştirilmiştir; bundan sonra **bu dosya** güncellenir.
 
 ## Kanıt etiketleri (her iddiada kullanılır)
 

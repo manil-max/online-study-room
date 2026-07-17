@@ -18,15 +18,15 @@
 
 | Kapı | PASS koşulu | Kanıt | Durum |
 |---|---|---|---|
-| Kritik yol | Uygulama kapalıyken 20 bildirim Başlat/Durdur; çift session yok | `docs/QA-V8-ANDROID.md` V8-02 | [ ] |
+| Kritik yol | Uygulama kapalıyken 20 bildirim Başlat/Durdur; çift session yok | `QA-V8-ANDROID.md` V8-02 | [ ] |
 | Widget | Timer aksiyonu çalışır; stats/leaderboard oturumdan sonra ≤5 sn yenilenir | V8-07 + video | [ ] |
 | Cihaz çeşitliliği | Samsung ve Pixel üzerinde cold-start, kilit ekranı, reboot, pil optimizasyonu | V8-01/03/05/06 | [ ] |
 | Senkron | Offline outbox, iki cihaz ve Istanbul gün sınırı doğrulanır | V8-08/09/10 | [ ] |
-| Telemetri | Beta ortamında PII'siz breadcrumb ve opt-out kanıtı | `docs/OBSERVABILITY-V8.md` | [ ] |
+| Telemetri | Beta ortamında PII'siz breadcrumb ve opt-out kanıtı | `OBSERVABILITY-V8.md` | [ ] |
 | Otomasyon | Tam test paketi, analyze ve imzalı Android release build yeşil | CI / terminal çıktısı | [ ] |
 | Güvenlik | WP-38 migration/Edge Function/RLS matrisi yeniden kontrol edildi | Backend kanıtı | [ ] |
 | Soak | En az üç gün; P0=0, açık P1 listesi/kararı var | `docs/V8-SOAK-RAPORU.md` | [ ] |
-| Rollback | Aynı imza ile ileri build numaralı geri-dönüş paketi hazır | `docs/V8-ROLLBACK.md` | [ ] |
+| Rollback | Aynı imza ile ileri build numaralı geri-dönüş paketi hazır | `V8-ROLLBACK.md` | [ ] |
 
 ## Kesin NO-GO koşulları
 

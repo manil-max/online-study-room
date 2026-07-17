@@ -60,15 +60,15 @@
 - **Not:** Bu oturum işleri commit'lendi: grid 32-sütun `141ed2a`, core testleri `da7bdd6`, skill docs `1afba2d`. ⚠️ WP-65 karar dokümanı (`docs/AYLIK-RAPOR-KARAR.md`) önceki Claude oturumunda yazıldı ama **COMMIT'LENMEDİ** (untracked); kararı WP-69 zaten uyguladı → ürün API/DNS kararı bekliyor.
 
 ### Codex Lane
-- **Durum:** [~] Aktif
-- **Faz/WP:** WP-99 — Tercih kalıcılığı, açılış bildirimi ve manuel dil seçimi
-- **Aşama:** Otomatik test geçti — beta-v26 cihaz QA bekliyor
-- **SAHİP yollar:** `app/lib/main.dart`, `app/lib/features/profile/settings_screen.dart`, `app/lib/**/notification*`, `app/android/app/src/main/res/layout/timer_notification.xml`, `app/lib/l10n/app_{en,tr}.arb`, ilgili testler
-- **Ortak/riskli yüzey:** `main.dart`, l10n katalogları, bildirim başlangıç akışı
+- **Durum:** [x] Boşta
+- **Faz/WP:** —
+- **Aşama:** —
+- **SAHİP yollar:** —
+- **Ortak/riskli yüzey:** —
 - **Dal:** main
-- **Başlangıç:** 2026-07-15 14:35 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-15 17:02 (Europe/Istanbul)
-- **Not:** Aylık e-posta anahtarı iyimser/kilitli kaydetmeyle düzeltildi; açılış öncesi dürtmeler sessize alındı; kalıcı Sistem/Türkçe/İngilizce seçici eklendi. `flutter analyze`, 433/433 test, EN/TR audit ve yerel beta APK geçti. Hedef beta-v26; stable tag yok.
+- **Başlangıç:** —
+- **Son güncelleme:** 2026-07-17 19:47 (Europe/Istanbul)
+- **Not:** Doküman konsolidasyonu commitlendi: `docs/README.md` güncel giriş noktası; V8 tarihçesi `docs/archive/v8/`; mükerrer yol haritası/teknik plan kaldırıldı. `VERSIONS.md`, mevcut v29 kod adayını tag/yayın iddiası olmadan gösterir. Kod/migration değişikliği yok.
 
 ### Grok Lane
 - **Durum:** [x] Boşta

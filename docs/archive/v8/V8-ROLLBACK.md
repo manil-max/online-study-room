@@ -31,7 +31,7 @@
 4. Sorun sunucu/migration kaynaklıysa geri alma SQL'ini staging'de doğrula;
    veri kaybı riski varsa destructive rollback yapma, ileri düzeltme uygula.
 5. Samsung ve Pixel üzerinde kritik yolu yeniden çalıştır; kanıtlar
-   `docs/QA-V8-ANDROID.md` içine eklenmeden dağıtımı açma.
+   `QA-V8-ANDROID.md` içine eklenmeden dağıtımı açma.
 6. Release gate'i NO-GO/PASS durumuyla güncelle, kullanıcıya etkisini ve
    güncelleme yolunu duyur.
 

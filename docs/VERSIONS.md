@@ -5,6 +5,10 @@ Bu dosya ürün tarafındaki okunur sürüm indeksidir. Ayrıntılı değişikli
 
 | Kanal | Tag | Uygulama sürümü | Durum | Kısa not |
 |---|---:|---:|---|---|
+| geliştirme | — | 1.0.29+29 | Etiket/yayın yok · Play NO-GO | WP-103–109 sonrası mevcut kod; production kararı verilmedi |
+| stable | v28 | 1.0.28+28 | Git etiketi mevcut | v28 / beta-v28 sürüm numarası |
+| stable | v27 | 1.0.27+27 | Git etiketi mevcut | Saat başına XP ve EN/TR sürüm notları |
+| stable | v22 | 1.0.22+22 | Git etiketi mevcut | Cihaz QA bekleyen yayın hattı |
 | stable | v21 | 1.0.21+21 | Yayınlanıyor | Global açık/özel grup keşfi ve EN/TR yüzeyi |
 | beta | beta-v20 | 1.0.20+20 | Yayında · cihaz testi | Bildirim teslimi + dinamik panel uygunluk düzeltmeleri |
 | beta | beta-v19 | 1.0.19+19 | Test için hazırlanıyor | Dinamik panel + izinleri geri alma rehberi |

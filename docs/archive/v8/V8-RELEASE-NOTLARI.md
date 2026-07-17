@@ -1,7 +1,7 @@
 # Odak Kampı V8 — Taslak Sürüm Notları
 
 > **Yayınlanamaz taslak.** Sürüm adı, build numarası, tarih ve içerik ancak
-> `docs/V8-RELEASE-GATE.md` bütün zorunlu kapıları PASS olduğunda kesinleşir.
+> `V8-RELEASE-GATE.md` bütün zorunlu kapıları PASS olduğunda kesinleşir.
 
 ## Güvenilirlik çalışmaları
 

@@ -35,7 +35,7 @@ Cihaz koşumu bu varsayımları doğrular veya çürütür. Çürütme = bug bul
 | Remote + pending birleşimi | `_reconcileRemoteSessions` | Flush bitmeden realtime yerel outbox’ı ezmez |
 | Gün sınırı | `istanbul_calendar.dart` (`Europe/Istanbul`) | “Bugün” tüm platformlarda İstanbul gününe göre |
 | Canonical toplam | `canonical_stats_projection.dart` / `study_stats.dart` | Aynı oturum listesi → aynı toplam (UI tüketimi tutarlı olmalı) |
-| Telemetri (opsiyonel) | `docs/OBSERVABILITY-V8.md` | `outbox_flush` / `realtime_snapshot` yalnız sayım; PII yok |
+| Telemetri (opsiyonel) | `docs/archive/v8/OBSERVABILITY-V8.md` | `outbox_flush` / `realtime_snapshot` yalnız sayım; PII yok |
 
 **Çoklu cihaz çakışma politikası (gözlem):** Aynı oturumu iki cihaz **eşzamanlı** düzenlerse sunucuda sürüm/CRDT yoktur; son başarılı ağ yazımı kalır (`update` by id). Bu “kayıp güncelleme” riski MDS-07’de ölçülür — istenen ürün politikası değilse ayrı tasarım/debug WP açılır.
 
@@ -283,8 +283,8 @@ Bu WP içinde fix yok. Her P0/P1 için `progress.md` Planlanan bölümüne (veya
 
 | Belge | İlişki |
 |---|---|
-| `docs/QA-V8-ANDROID.md` | Tek cihaz Android smoke (V8-08/09 kısmi örtüşme) |
-| `docs/OBSERVABILITY-V8.md` | outbox/realtime breadcrumb (PII’siz) |
+| `docs/archive/v8/QA-V8-ANDROID.md` | Tarihsel tek cihaz Android smoke (V8-08/09 kısmi örtüşme) |
+| `docs/archive/v8/OBSERVABILITY-V8.md` | Tarihsel outbox/realtime breadcrumb sözleşmesi (PII’siz) |
 | `docs/KALITE-PROGRAMI.md` §8.2 | Canonical projection / senkron kabul |
 | WP-43 (tamamlandı) | In-app projection temeli; bu WP çoklu cihaz kanıtı |
 | WP-53 | Windows IA; senkron koşumu base shell ile de yapılabilir |
