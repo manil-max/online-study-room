@@ -1,9 +1,8 @@
 # Hesap Silme ve Veri Saklama Politikası — Karar Kaydı (WP-66)
 
-> **Durum:** Karar taslağı + önerilen varsayılanlar · **kod/migration yok**  
-> **Kanıt:** Veri envanteri migration/repo okuması `Kodda doğrulandı`  
-> **Kabul:** Ürün sahibi bu kaydı onaylar → ayrı güvenlik implementasyon WP’si  
-> **DOKUNMA (bu WP):** `supabase/**`, `app/lib/**`, Auth, production veri
+> **Durum:** §0 varsayılanları **uygulama varsayılanı kabul edildi** (kullanıcı 2026-07-17 “bitene kadar” programı) · migration `0037_account_deletion_core.sql`  
+> **Kanıt:** Veri envanteri `Kodda doğrulandı` · implementasyon WP-112+  
+> **Not:** Prod SQL uygulaması WP-121 kapısı; hard-delete Edge WP-113
 
 **Paralel ajanlar:** Claude WP-65 (`docs/AYLIK-RAPOR-KARAR.md` e-posta); Codex WP-68 widget. Bu belge yalnız retention/silme politikasıdır.
 
