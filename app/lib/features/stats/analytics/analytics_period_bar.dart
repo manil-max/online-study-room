@@ -27,7 +27,7 @@ class AnalyticsPeriodBar extends ConsumerWidget {
               children: [
                 for (final kind in AnalyticsPeriodKind.values)
                   Padding(
-                    padding: const EdgeInsets.only(right: 6),
+                    padding: const EdgeInsetsDirectional.only(end: 6),
                     child: Semantics(
                       button: true,
                       selected: period.kind == kind,

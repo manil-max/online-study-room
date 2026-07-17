@@ -134,7 +134,7 @@ class _PermissionCard extends ConsumerWidget {
             ),
             const SizedBox(height: 12),
             Align(
-              alignment: Alignment.centerLeft,
+              alignment: AlignmentDirectional.centerStart,
               child: FilledButton.tonalIcon(
                 onPressed: () async {
                   final granted = await ref
@@ -377,7 +377,7 @@ class _RemindersCard extends ConsumerWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
           child: Align(
-            alignment: Alignment.centerLeft,
+            alignment: AlignmentDirectional.centerStart,
             child: FilledButton.tonalIcon(
               onPressed: () => _openReminderDialog(context, ref),
               icon: const Icon(Icons.add),
@@ -411,8 +411,8 @@ class _ReminderTile extends ConsumerWidget {
       direction: DismissDirection.endToStart,
       background: Container(
         color: Theme.of(context).colorScheme.errorContainer,
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
+        alignment: AlignmentDirectional.centerEnd,
+        padding: const EdgeInsetsDirectional.only(end: 20),
         child: const Icon(Icons.delete_outline),
       ),
       onDismissed: (_) async {
