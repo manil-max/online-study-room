@@ -8,6 +8,12 @@
 
 ## 🔴 Yüksek Öncelik
 
+- [~] **Google Play production hazırlığı** — **WP-110–124 ayrıntılı planlandı; mevcut karar NO-GO**
+  - Politika bloklayıcıları: Play/sideload kanal ayrımı, GitHub APK updater izolasyonu, gizlilik/koşullar/topluluk kuralları, uygulama içi + web hesap silme ve UGC raporla/engelle/moderasyon.
+  - Teknik/operasyon kapıları: Android kısıtlı izin–FGS–alarm uygunluğu, Data Safety kanıt paketi, production migration/Edge/RLS doğrulaması, target API 36 imzalı AAB ve gerçek cihaz QA.
+  - Yayın kapısı: Internal/uygunsa Closed test, soak, pre-launch raporu ve açık ürün sahibi GO kararı olmadan production submission/rollout yapılmaz.
+  - Kanonik kapsam ve bağımlılık dalgaları `progress.md` WP-110–124; program özeti `docs/KALITE-PROGRAMI.md`; bulgu kanıtı `docs/PLAY-STORE-HAZIRLIK-TARAMASI.md`.
+
 - [~] **Global açık/özel gruplar — keşfet, katıl, klan mantığı** — **WP-92 → WP-93 planlandı**
   - Yeni grup varsayılan olarak private kalır ve yalnız davet koduyla katılınır; admin public yaparsa küresel keşif listesinde görünür ve isteyen kullanıcı katılabilir.
   - Başlangıç kapasitesi 50 üyedir; public listede yalnız güvenli özet gösterilir. Davet kodu, üye listesi, oturumlar ve sosyal profil üyelikten önce asla açılmaz.
@@ -37,8 +43,8 @@
   - 1×1 Başlat/Durdur sayaç; günlük hedef, grup hedef ve grup sıralaması widget'ları WP-68'de kodlandı.
   - Kilit ekranında/büyük widget'ta veri gösterimi ayarlandı. Cihaz QA bekliyor.
 
-- [~] **Hesap silme ve veri saklama politikası** — **WP-66 karar dokümanı hazır (Tamamlanan); RETENTION KARARI bekliyor**
-  - Soft-delete, geri alma süresi, kalıcı silme onayı ve retention süreleri **senin kararınla** netleşince implementasyon WP'si açılır.
+- [~] **Hesap silme ve veri saklama politikası** — **WP-66 karar dokümanı hazır; ürün kararı → WP-112–114**
+  - Geri alma süresi, export, mesajların kaderi ve audit retention kararı `docs/HESAP-SILME-RETENTION-KARARI.md` içinde netleşmeden WP-112 başlamaz; karar sonrası veri sözleşmesi, hard-delete pipeline ve uygulama/web deneyimi sırayla uygulanır.
 
 - [x] **"Tamamlandı" görünüp ürün kabulü bekleyenler** — Faz 0'da yeniden sınıflandırılmıştı.
   - WP-23 (Saat), WP-26 (Tema), WP-35 (Başarım), WP-36 (IA) yeniden çalışılarak V8 (Güven Sürümü) ve diğer programlarda (Saat, Tema Stüdyosu, Sosyal Profil 3.0) tamamlandı.

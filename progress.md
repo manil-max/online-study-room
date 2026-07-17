@@ -1,6 +1,6 @@
 # progress.md — İlerleme Takibi
 
-> Son güncelleme: 2026-07-15
+> Son güncelleme: 2026-07-17
 > Sistem: İş Paketi (WP) tabanlı, **Kalite Programı**. Kanonik program: `docs/KALITE-PROGRAMI.md`.
 > Planlama: `.agents/skills/planner/SKILL.md` · Uygulama: `.agents/skills/worker/SKILL.md` · Kurallar: `.agents/AGENTS.md`.
 > **"Tamamlandı" = kod DEĞİL; kullanıcı beklentisini karşılayan + cihazda güvenilir çalışan iş.** İş durum merdiveni (8 aşama) ve kanıt etiketleri (`Kodda doğrulandı` / `Cihazda doğrulanmalı` / `Ürün kararı gerekiyor`) için bkz. AGENTS.md §0.
@@ -12,15 +12,15 @@
 - **Framework:** Flutter ^3.12 · Riverpod 3.3 · Supabase 2.15 · fl_chart
 - **Uygulama kökü:** `app/` — Flutter komutları yalnız burada çalışır.
 - **Repo katmanı çift:** Her arayüz `supabase/` ve `in_memory/` repository'leriyle desteklenir.
-- **Migration'lar:** `supabase/migrations/` — yerelde `0001–0031` vardır. Canlı şemada `0001–0019` etkileri doğrulandı; sonraki migration'lar kullanıcı tarafından SQL Editor'da sırasıyla uygulanır. Yeni migration en yüksek numaradan devam eder.
+- **Migration'lar:** `supabase/migrations/` — yerelde `0001–0036` vardır. Canlı ortamda dosyanın bulunması deploy kanıtı değildir; özellikle `0034–0036` SQL + Edge secret/deploy doğrulaması bekler. Yeni migration mevcut en yüksek numaradan (`0036`) devam eder.
 - **Gün sınırı:** `Europe/Istanbul`
 - **RLS helper'ları:** `is_group_member(gid)`, `can_see_user_sessions(target)`, `is_group_admin(gid)`, `is_super_admin()`
 - **Dashboard:** 6 sütunlu 2D matris, 19 kart türü, `grid_reflow.dart` motoru.
 - **Tema:** Hazır paletler + özel palet slotları; görünür tüm yüzeyler palette bağlanmalıdır, sabit gri renk eklenmez.
 - **Navigasyon hedefi:** Ana Sayfa / Saat / Gruplar / İstatistikler / Profil. Ana Sayfa günlük kullanım alanıdır; diğer alanların verisi kendi sekmelerinde eksiksiz bulunur.
-- **Release:** Stable/Beta kanalı GitHub Releases ile çalışır. **v8 yayımlandı.** WP-48/49/50, ürün sahibinin doğrudan yayın ve soak'ı atlama kararıyla açık iş olmaktan çıkarıldı; sonraki yayın için ayrı WP açılır.
+- **Release:** Stable/Beta kanalı GitHub Releases ile çalışır. Yerel `v29` ve `beta-v29` tag'leri WP-104 commitini (`ff369e3`) gösterir; mevcut `main` WP-105–109'u da içerdiği halde `1.0.29+29` taşır. Bir sonraki dağıtımda versionCode mutlaka artırılır; Play production ayrı kalite kapısından geçer.
 - **Kalite kapıları:** Her WP DoD'siz kapanmaz; stable release kalite kapısından geçer (AGENTS.md §3). Server-authoritative XP, RLS/sosyal profil, platform sınırları → `docs/KALITE-PROGRAMI.md`.
-- **Son WP numarası:** 102 (WP-102 beta-v28'de yayınlandı). Planlanan/rezerve: WP-103…109 (FGS çökme + OPTIMIZATIONS.md bulguları); **sıradaki boş numara WP-110**.
+- **Son WP numarası:** 124 (WP-110–124 Play Store production programı planlandı; WP-103–109 kod commitleri mevcut ve cihaz/canlı ops kanıtları ayrı). **Sıradaki boş numara WP-125.**
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
   - Flutter: `C:\src\flutter` · Android SDK: `C:\Android\Sdk`
@@ -65,10 +65,10 @@
 - **Aşama:** —
 - **SAHİP yollar:** —
 - **Ortak/riskli yüzey:** —
-- **Dal:** main
+- **Dal:** — (main)
 - **Başlangıç:** —
-- **Son güncelleme:** 2026-07-17 19:47 (Europe/Istanbul)
-- **Not:** Doküman konsolidasyonu commitlendi: `docs/README.md` güncel giriş noktası; V8 tarihçesi `docs/archive/v8/`; mükerrer yol haritası/teknik plan kaldırıldı. `VERSIONS.md`, mevcut v29 kod adayını tag/yayın iddiası olmadan gösterir. Kod/migration değişikliği yok.
+- **Son güncelleme:** 2026-07-17 (Europe/Istanbul)
+- **Not:** Play Store production programı WP-110–124 olarak planlandı; kanonik belgeler hizalandı. `OPTIMIZATIONS.md` kapsam dışı bırakıldı.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
@@ -101,9 +101,9 @@
 | 9 | **Başarım & Sosyal Profil 3.0** | Ledger + taç her yerde | Tamamlandı | 0028 = **stable tag öncesi** |
 | 10 | **Windows masaüstü** | Shell → IA → MSIX | Tamamlandı (ürün 2026-07-14) | WP-27/52/53/28/70/71 — cihaz smoke sorun→debug |
 
-## Planlanan İş Paketleri
+## WP Durum Dizini ve Açık Planlar
 
-> Burada yalnız açık işler kalır. Cihaz QA’sı bekleyen ama kodu bitmiş Android işleri ürün kararıyla **Tamamlanan**’a alındı (2026-07-13); sorun çıkarsa yeni bir debug kartıyla geri açılır.
+> Bu tablo ajanların tek bakışta durum ve bağımlılık görmesi içindir. `[~] Test için bekliyor` satırlarının kanonik kabul kanıtı aşağıdaki **Test için bekleyenler** bölümündedir; eski ayrıntılı uygulama kartları yalnız tarihsel bağlamdır ve yeniden uygulanmaz. Yeni kod işi olarak yalnız `[ ] Bekliyor` satırları claim edilir.
 
 | WP | Durum | Kısa kapsam | Bağımlılık |
 |---|---|---|---|
@@ -129,16 +129,31 @@
 | WP-104 | [~] Test için bekliyor | Presence bayatlama (updatedAt) + stop oturum kaydı sırası | cihaz QA |
 | WP-105 | [~] Test için bekliyor | 🟠 XP oturum bitince kabuk lifecycle tetik | cihaz/Supabase |
 | WP-106 | [~] Test için bekliyor | watchMembers Map + 0034 active index | migration uygula |
-| WP-107 | [ ] Bekliyor | Manuel oturum İstanbul gün sınırı + UTC yazım (B4) | — |
+| WP-107 | [~] Test için bekliyor | Manuel oturum İstanbul gün sınırı + UTC yazım (B4) | cihaz QA |
 | WP-108 | [~] Test için bekliyor | Aylık rapor retry + cron URL (0035) + edge auth iskeleti | Edge deploy + GUC |
 | WP-109 | [~] Test için bekliyor | Güvenlik 0036 (IDOR/profiles) + B7 select doğrulama | SQL + regresyon |
+| WP-110 | [ ] Bekliyor | Play dağıtım kanalı + GitHub APK updater izolasyonu | — |
+| WP-111 | [ ] Bekliyor | Gizlilik, kullanım koşulları ve topluluk kuralları | WP-110 URL/kanal sözleşmesi |
+| WP-112 | [ ] Bekliyor | Hesap silme veri sözleşmesi + migration 0037 | WP-66 ürün kararı |
+| WP-113 | [ ] Bekliyor | Hesap hard-delete Edge pipeline + storage/cron | WP-112 |
+| WP-114 | [ ] Bekliyor | Uygulama içi + web hesap silme akışı | WP-112/113 |
+| WP-115 | [ ] Bekliyor | UGC raporlama/engelleme/moderasyon backend + 0038 | WP-112 migration sırası |
+| WP-116 | [ ] Bekliyor | UGC kullanıcı güvenliği arayüzleri | WP-111/115 |
+| WP-117 | [ ] Bekliyor | Admin moderasyon kuyruğu ve audit | WP-115 |
+| WP-118 | [ ] Bekliyor | Android kısıtlı izin ve FGS/Alarm Play uyumu | WP-110 |
+| WP-119 | [ ] Bekliyor | Veri envanteri, Data Safety ve Sentry beyan paketi | WP-111/114/116/118 |
+| WP-120 | [ ] Bekliyor | Store listing, hedef kitle, içerik derecelendirme ve reviewer erişimi | WP-111/119 |
+| WP-121 | [ ] Bekliyor | Production migration/Edge/RLS operasyon kapısı | WP-113/115 + 0034–0038 |
+| WP-122 | [ ] Bekliyor | Play AAB, API 36, imza ve artefakt doğrulama | WP-110/118 |
+| WP-123 | [ ] Bekliyor | Play kritik cihaz QA + erişilebilirlik/pre-launch | WP-114/116/118/121/122 |
+| WP-124 | [ ] Bekliyor | Internal/Closed test, soak, GO/NO-GO ve staged rollout | WP-119–123 |
 
 > **2026-07-14 proje denetimi:** Serbest sürükle-bırak ızgara, canlı grup hedefi ve saat stilleri **zaten kodda uygulanmış** (backlog stale idi; geçici WP-72/73/75 iptal). Dinamik paneldeki cihaz/eylem sorunu için açılan **WP-76** kod+otomatik test aşamasını geçti; Samsung/Pixel cihaz QA’sı bekliyor.
 >
 > **Kalan gerçek açık işler:**
 > - **WP-76** — dinamik panel cihaz QA’sı (aşağıda, kod işi tamamlandı).
 > - **Ürün kararı (kod değil, senin kararın):** WP-66 hesap silme retention · WP-67 grafik türleri · WP-69 aylık rapor için DNS + Resend API key.
-> - **Yeni öncelik:** WP-92 → WP-93, Play Store öncesi global açık/özel grup keşfi ve güvenli katılım.
+> - **Yeni öncelik:** Play Store production programı **WP-110–124**. Uygulama sırası, bağımlılık dalgaları ve GO/NO-GO kapıları aşağıdaki kartlarda kanoniktir.
 
 > **Planlama notu:** WP-39 iptal; WP-48/49/50 kaldırıldı; geçici WP-72/73/74/75 (2026-07-14) zaten-yapılmış/yanlış açıldığı için iptal edildi. Sorun çıkarsa ayrı debug/release WP'si açılır.
 
@@ -146,8 +161,8 @@
 
 > **Çakışma matrisi:** ✅ Wave 1: WP-82 + WP-83. Wave 2: WP-84 + WP-88 (WP-83 sonrası). Wave 3: WP-85 + WP-86. Wave 4: WP-87 tek başına veya bitmiş WP-88'in ardından ikinci ayrık hat. Wave 5: WP-89 tek seri kapı. ARB dosyalarına yalnız WP-82 (seed), sonra WP-84, en son WP-89 yazar; UI worker'ları ARB'yi salt okunur kullanır.
 
-### WP-103: 🔴 KRİTİK — Android ≤13 Sayaç Çökmesi (FGS Tip Uyumsuzluğu) + Stable Yayın 💥
-- **Program/Faz:** Debug · Faz 0 (kararlılık) · **Ajan:** — (atanınca lane doldurur) · **Durum:** [ ] Bekliyor · **Model:** 🔴 Opus (yayın + native FGS riski)
+#### Tarihsel uygulama kartı — WP-103 (kodlandı; yeniden claim etme) 💥
+- **Program/Faz:** Debug · Faz 0 (kararlılık) · **Ajan:** Grok · **Durum:** [~] Test için bekliyor · **Model:** 🔴 Opus (yayın + native FGS riski)
 - **Problem:** beta-v19'dan (commit `a2688de`, WP-76) beri **Android 10–13 çalıştıran her cihazda** kronometreyi başlatmak da durdurmak da uygulamayı çökertiyor ("Odak Kampı ile ilgili bir sorun oluştu" dialogu). Kök neden: [AndroidManifest.xml](app/android/app/src/main/AndroidManifest.xml) servisi yalnızca `foregroundServiceType="specialUse"` beyan ediyor, ama [StudyTimerService.kt](app/android/app/src/main/kotlin/com/manilmax/online_study_room/timer/StudyTimerService.kt) `startForegroundCompat` içinde API 29–33 dalı hâlâ `FOREGROUND_SERVICE_TYPE_DATA_SYNC` geçiyor. Android, tip manifestin alt kümesi değilse `IllegalArgumentException` fırlatır; servis `startForegroundService` borcunu ödeyemeden ölür → yakalanamayan `RemoteServiceException` ile süreç öldürülür. S23 (Android 14+, SPECIAL_USE dalı) etkilenmez → cihaz farkı tam buradan. Not 20 + A51 (ikisi de final Android 13) etkilenir.
 - **Kapsam dışı:** Presence bayatlama açığı ve durdurmada oturum-kaydı sağlamlaştırma (→ WP-104). Bildirim tasarımı/panel içeriği değişmez. Yeni foreground service türü mimarisi tasarlanmaz — yalnız tip beyanı hizalanır.
 - **SAHİP dosyalar (yaz):**
@@ -171,8 +186,8 @@
 
 > **Çakışma matrisi (WP-103):** ✅ Aktif dosya yazan lane yok (tüm lane'ler Boşta; Codex lane'i WP-99 için stale-aktif ama parkta ve SAHİP yüzeyi `timer_notification.xml`/l10n — bu WP native FGS tipine dokunur, kesişim yok). `AndroidManifest.xml` sıcak dosya ama şu an ona giren aktif WP yok. WP-104 aynı çökme akışının Dart tarafını sağlamlaştırır; ayrı SAHİP yüzeyi (presence/study_providers) → **paralel güvenli**, yalnız aynı cihaz QA turunda birlikte doğrulanması önerilir.
 
-### WP-104: Presence Bayatlama Açığı + Durdurmada Oturum Kaydı Sağlamlaştırma 🩹
-- **Program/Faz:** Debug · **Ajan:** — · **Durum:** [ ] Bekliyor · **Model:** 🟣 Pro
+#### Tarihsel uygulama kartı — WP-104 (kodlandı; yeniden claim etme) 🩹
+- **Program/Faz:** Debug · **Ajan:** Grok · **Durum:** [~] Test için bekliyor · **Model:** 🟣 Pro
 - **Problem:** WP-103'teki çökmenin iki veri yan-hasarı, çökme düzelse de latent kalır: (1) Yerel yazılan presence nesneleri `updatedAt=null` üretilip offline cache'e öyle saklanıyor ([offline_cache_store.dart:204](app/lib/data/repositories/offline/offline_cache_store.dart:204)); [applyPresenceStaleness](app/lib/data/providers/presence_providers.dart:62) `updatedAt==null` satırları **hiç bayatlatmıyor** → çöken/kapanan cihazın kendi ekranında "hâlâ çalışıyor" kalıcı görünebilir. (2) Uygulama-içi Durdur'da `_recordSession` ağ çağrısı, native durdurma komutundan sonra yarışır ([study_providers.dart:734](app/lib/data/providers/study_providers.dart:734)); süreç erken ölürse oturum süresi kaydedilmeden kaybolur (native `STOP_SILENT` bilerek kuyruğa yazmaz).
 - **Kapsam dışı:** FGS tip düzeltmesi (→ WP-103). Presence heartbeat aralığı/eşik değerleri değişmez. Yeni tablo/kolon yok.
 - **SAHİP dosyalar (yaz):**
@@ -198,8 +213,8 @@
 
 > **OPTIMIZATIONS.md kaynağı (2026-07-17, Grok taraması):** Aşağıdaki WP-105…109, `OPTIMIZATIONS.md`'deki bulgulardan **koda karşı doğrulanmış** olanlardır. Doğrulama (Claude): B1 gerçek/yüksek etki; B3 perf gerçek ama crash şiddeti abartılı (`ids` `rows`'tan türediği için `firstWhere` her zaman eşleşir); B4 mekanik gerçek ama cihaz-TZ'ye bağlı. Düşük değerli perf maddeleri (R8 ticker gate, R9 summary debounce, R11 ölü `watchGroupSessions`) küçük kullanıcı tabanı için ** WP açılmadı**; ileride tek "temizlik" WP'sinde toplanabilir. B5/B8 migration deploy durumuna bağlı; S1 süre hard-cap **ürün kararı** ister (KALITE-PROGRAMI §11'e taşınmalı).
 
-### WP-105: 🟠 XP/Başarım Kök Fix — Oturum Bitince Sunucu Tetiği (B1) 🏆
-- **Program/Faz:** Başarım · Debug · **Ajan:** — · **Durum:** [ ] Bekliyor · **Model:** 🟣 Pro
+#### Tarihsel uygulama kartı — WP-105 (kodlandı; yeniden claim etme) 🏆
+- **Program/Faz:** Başarım · Debug · **Ajan:** Grok · **Durum:** [~] Test için bekliyor · **Model:** 🟣 Pro
 - **Problem:** Kullanıcı çalışmayı bitirdiğinde saatlik 50 XP ve başarılar sunucu ledger'ına **yalnızca profil/başarım ekranı açılırsa** yazılıyor. Tek tetik `gamificationProgressSyncProvider` ve o `FutureProvider.autoDispose` — yalnız [gamification_card.dart:19](app/lib/features/profile/widgets/gamification_card.dart:19) ve [social_profile_screen.dart:47](app/lib/features/profile/social_profile_screen.dart:47) izliyor. `notifySessionCompletedForAchievementsProvider` ([achievement_provider.dart:71](app/lib/data/providers/achievement_provider.dart:71)) tanımlı ama **hiçbir yerden çağrılmıyor** (grep ile doğrulandı). 0033'te XP DB trigger'ı değil, istemci-çağrılı `process_achievement_event` RPC'sidir → profili hiç açmayan kullanıcı XP/rozet kaybeder, "neden XP yok?" şikayeti buradan.
 - **Kapsam dışı:** XP formülü/başarım kuralları değişmez (server-authoritative korunur). Confetti/animasyon yeniden tasarlanmaz. `study_providers.dart` sayaç mantığına dokunulmaz (WP-104 territoryi).
 - **SAHİP dosyalar (yaz):**
@@ -219,8 +234,8 @@
 - **Tuzaklar:** Tetiği her stream tick'inde çalıştırıp RPC spam'i üretmek (B10 ile aynı tuzak → debounce/coalesce); `study_providers.dart`'a girip WP-104 ile çakışmak; autoDispose'u kaldırırken bellek sızıntısı yaratmak.
 - **Dal önerisi:** `wp105-xp-oturum-tetik`
 
-### WP-106: watchMembers Map Refaktör + Aktif Üye Index (B3/R3 + R12) 🧹
-- **Program/Faz:** Debug/Perf · **Ajan:** — · **Durum:** [ ] Bekliyor · **Model:** 🔵 Sonnet
+#### Tarihsel uygulama kartı — WP-106 (kodlandı; yeniden claim etme) 🧹
+- **Program/Faz:** Debug/Perf · **Ajan:** Grok · **Durum:** [~] Test için bekliyor · **Model:** 🔵 Sonnet
 - **Problem:** (R3/B3) [supabase_group_repository.dart:153](app/lib/data/repositories/supabase/supabase_group_repository.dart:153) `watchMembers` her profil için `rows.firstWhere(... )` (O(n·m), `orElse` yok). Crash pratikte imkânsız (`ids` `rows`'tan türer) ama gelecekteki bir değişiklikte StateError riski + gereksiz CPU. (R12) `group_members(group_id) WHERE left_at IS NULL` üzerinde partial index yok; RLS helper'ları ve `group_daily_totals` bu filtreyi sık kullanıyor.
 - **Kapsam dışı:** watchMembers'ın davranış/semantiği değişmez (aynı liste, aynı `isActive`). Başka repository metodları refaktör edilmez.
 - **SAHİP dosyalar (yaz):**
@@ -239,8 +254,8 @@
 - **Tuzaklar:** `concurrently`'yi transaction içinde çalıştırmak (Postgres reddeder); `isActive` fallback'ini yanlış kurup aktif üyeyi pasif göstermek.
 - **Dal önerisi:** `wp106-uyeler-map-index`
 
-### WP-107: Manuel Oturum İstanbul Gün Sınırı + UTC Yazım (B4) 🕛
-- **Program/Faz:** Debug · **Ajan:** — · **Durum:** [ ] Bekliyor · **Model:** 🟣 Pro (TZ + hot model dosyası)
+#### Tarihsel uygulama kartı — WP-107 (kodlandı; yeniden claim etme) 🕛
+- **Program/Faz:** Debug · **Ajan:** Grok · **Durum:** [~] Test için bekliyor · **Model:** 🟣 Pro (TZ + hot model dosyası)
 - **Problem:** [manual_session_dialog.dart:21](app/lib/features/profile/widgets/manual_session_dialog.dart:21) `manualSessionRange` aralığı **cihaz yerel saatiyle** (`DateTime.now()`, `DateTime(y,m,d,…)`) kuruyor; [study_session.dart:52](app/lib/data/models/study_session.dart:52) `toMap` `start.toIso8601String()`'i `.toUtc()` olmadan yazıyor. Ürün gün sınırı `Europe/Istanbul` (`StudySession.day => istanbulDay(start)`). Cihaz TZ ≠ İstanbul veya gece 00:00 civarı manuel giriş yanlış takvim gününe düşebilir → "bugün" toplamı/streak/heatmap kayması.
 - **Kapsam dışı:** Canlı sayaç kaydı (`_recordSession`) gerçek instant kullanır, ayrı ele alınmaz. Gün-sınırı motoru (`istanbul_calendar.dart`) yeniden yazılmaz.
 - **SAHİP dosyalar (yaz):**
@@ -259,8 +274,8 @@
 - **Tuzaklar:** `toUtc` değişikliğinin canlı sayaç/istatistik hesabını kaydırması (instant korunur, ama testle kanıtla); yalnız dialog'u düzeltip `toMap`'i unutmak; hedef kitle çoğu İstanbul TZ olduğu için düşük pratik şiddet — öncelik buna göre.
 - **Dal önerisi:** `wp107-manuel-oturum-tz`
 
-### WP-108: Aylık Rapor Retry + Cron URL (B2 + B8) 📧
-- **Program/Faz:** Ops/Backend · **Ajan:** — · **Durum:** [ ] Bekliyor · **Model:** 🔵 Sonnet · **Bağımlılık:** Özelliğin canlı olup olmadığı ürün kararı (WP-69 DNS/Resend key)
+#### Tarihsel uygulama kartı — WP-108 (kodlandı; yeniden claim etme) 📧
+- **Program/Faz:** Ops/Backend · **Ajan:** Grok · **Durum:** [~] Test için bekliyor · **Model:** 🔵 Sonnet · **Bağımlılık:** Özelliğin canlı olup olmadığı ürün kararı (WP-69 DNS/Resend key)
 - **Problem:** (B2) `supabase/functions/send-report/index.ts` ilk hatada job'u `status='failed'` yapıyor ama sonraki cron yalnız `.eq('status','pending')` seçiyor → `retry_count` anlamsız, geçici Resend/API hatasında o ayın raporu kalıcı kaçar. (B8) `0030_monthly_report_infrastructure.sql` cron `http://localhost:54321/...` URL kullanıyor → prod'da collector hiç tetiklenmez.
 - **Kapsam dışı:** Rapor içeriği/tasarımı, DNS/Resend kurulumu (WP-69 ürün kararı). Yeni tablo yok.
 - **SAHİP dosyalar (yaz):**
@@ -279,8 +294,8 @@
 - **Tuzaklar:** Prod URL/secret'i migration'a plaintext yazmak; retry'ı sonsuz döngüye açmak; S2 auth'u düzeltmeden URL'yi public bırakmak.
 - **Dal önerisi:** `wp108-aylik-rapor-ops`
 
-### WP-109: Güvenlik Sertleştirme — Edge Auth / IDOR / Enumeration (S2·S3·S4·B7) 🛡️
-- **Program/Faz:** Güvenlik · Play Store öncesi · **Ajan:** — · **Durum:** [ ] Bekliyor · **Model:** 🔴 Opus (güvenlik + sıralama riski) · **Bağımlılık:** WP-108 ile ops sırası (S2)
+#### Tarihsel uygulama kartı — WP-109 (kodlandı; yeniden claim etme) 🛡️
+- **Program/Faz:** Güvenlik · Play Store öncesi · **Ajan:** Grok · **Durum:** [~] Test için bekliyor · **Model:** 🔴 Opus (güvenlik + sıralama riski) · **Bağımlılık:** WP-108 ile ops sırası (S2)
 - **Problem:** `OPTIMIZATIONS.md §8`: (S2) rapor Edge Function'ları yalnız Authorization varlığını kontrol ediyor + service_role env → public ise Critical. (S3) `get_user_monthly_stats` SECURITY DEFINER + authenticated → IDOR (başkasının istatistiği). (S4) `profiles_select using (true)` → enumeration. (B7) `regenerateInviteCode`/bazı update'ler 0 satırda sessiz başarı (RLS admin değilse "yenilendi" sanılır).
 - **Kapsam dışı:** S1 istemci süre hard-cap (ürün max-süre kararı ister → KALITE-PROGRAMI §11). Büyük RLS yeniden tasarımı.
 - **SAHİP dosyalar (yaz):**
@@ -325,6 +340,498 @@
 
 > **Çakışma matrisi (global gruplar):** ✅ Aktif lane yok. WP-92 ve WP-93 aynı `group_repository`/classroom/l10n yüzeylerine dolaylı bağımlıdır, bu yüzden paralel değil seridir. WP-92 bitmeden WP-93 başlamaz; Android/l10n cihaz QA paketleri parkta olduğundan çakışma sayılmaz.
 
+---
+
+## Play Store Production Programı — WP-110–124
+
+> **Kaynak:** `docs/PLAY-STORE-HAZIRLIK-TARAMASI.md` + 2026-07-17 resmî Google Play politika kontrolü. Amaç APK üretmek değil; politika, veri, güvenlik, cihaz ve operasyon kanıtlarıyla Play production için savunulabilir bir GO kararı üretmektir.
+>
+> **Uygulayıcı sözleşmesi:** Kullanıcı bu paketleri Grok 4.5'e verecek. Grok her WP'de önce `.agents/skills/worker/SKILL.md`, `.agents/AGENTS.md`, `docs/KALITE-PROGRAMI.md` ve kendi WP kartını eksiksiz okur; lane claim eder; yalnız SAHİP dosyalara yazar; her WP'yi ayrı commitler; push/tag/Play deploy yapmaz (kullanıcı ayrıca istemedikçe).
+
+### WP-110: Play Dağıtım Kanalı ve APK Updater İzolasyonu 🏪
+- **Program/Faz:** Play Store · Faz A — Politika bloklayıcıları
+- **Ajan:** — (atanınca lane doldurur)
+- **Durum:** [ ] Bekliyor
+- **Problem:** Stable ve beta Android build'leri aynı ana manifestten `REQUEST_INSTALL_PACKAGES` alıyor; Flutter updater GitHub Releases APK'sını indirip `open_filex` ile kurulum ekranı açıyor. Bu davranış Play build'inde kalırsa self-update/installer politikası nedeniyle ret riski doğar. Play artefaktının sideload artefaktından kod ve merged manifest düzeyinde ayrılması gerekir.
+- **Kapsam dışı:** Exact alarm, full-screen intent, FGS ve pil optimizasyon izinlerinin ürün gerekçesi (WP-118); store listing/Console formu (WP-120); Play'e gerçek yükleme (WP-124).
+- **SAHİP dosyalar (yaz):**
+  - `app/android/app/build.gradle.kts`
+  - `app/android/app/src/main/AndroidManifest.xml`
+  - `app/android/app/src/{stable,beta,play}/AndroidManifest.xml` (gereken source-set overlay'leri)
+  - `app/lib/core/config/distribution_channel.dart` (yeni)
+  - `app/lib/features/updater/updater_service.dart`
+  - `app/lib/features/updater/updater_dialog.dart`
+  - `.github/workflows/release.yml` (yalnız Android varyant/build matrisi)
+  - `app/test/features/updater/**`, yeni distribution-channel testleri
+- **DOKUNMA (oku, değiştirme):** `core/time_engine/**`, alarm/native FGS dosyaları (WP-118); `app/pubspec.yaml` mümkünse dokunma; Windows updater davranışı ve `windows-release.yml` korunur.
+- **Adımlar:**
+  - [ ] Mevcut `stable`/`beta` GitHub-sideload davranışını envanterle; yeni `play` product flavor'ını aynı kalıcı `applicationId=com.manilmax.online_study_room` ile ekle. `play` ve `stable` aynı anda kurulamaz; bu bilinçli olarak aynı ürün kimliğidir.
+  - [ ] `REQUEST_INSTALL_PACKAGES` iznini `main` manifestten çıkar; yalnız GitHub-sideload source setlerinde (`stable`/`beta`) ekle. `play` merged manifestinde izin olmadığını otomatik test/CI ile doğrula.
+  - [ ] Derleme zamanı `DistributionChannel.play/githubStable/githubBeta/windows` sözleşmesi kur. Play build'inde GitHub APK check/download/install yolu çağrılamaz; “Güncelleme” tercihi ölü anahtar bırakmadan gizlenir veya yalnız mağaza tarafından yönetildiğini açıklar.
+  - [ ] `open_filex`, APK indirme, SHA indirme ve unknown-sources kontrolünün Play build kod yolundan erişilemediğini test et. Windows MSIX updater ve GitHub beta/stable davranışı regresyonsuz kalır.
+  - [ ] CI'da Play komutunu tekilleştir: `flutter build appbundle --flavor play --release --dart-define-from-file=env.json` + zorunlu distribution define/guard. Yanlış define ile Play bundle üretimini fail-fast yap.
+  - [ ] `aapt2 dump permissions` veya `apkanalyzer manifest permissions` kontrolünü workflow'a ekle; Play AAB/APK'de `REQUEST_INSTALL_PACKAGES` görülürse build kırılır.
+  - [ ] Release dokümanında GitHub APK ile Play AAB'nin amaç/komut/izin farkını yaz; aynı versionCode'un iki kez yüklenemeyeceğini belirt.
+- **Veri/Migration etkisi:** Yok. Geri alma: play flavor/overlay ve distribution config commitini geri almak; kullanıcı verisi etkilenmez.
+- **RLS/Güvenlik:** Play build harici APK çalıştırmaz. İndirme URL'si/installer intent'i Play kanalında unreachable olmalı; yalnız UI gizleme yeterli değildir.
+- **Edge-case'ler:** Windows; web; debug profile; beta package suffix; Play build yanlış define; GitHub API kesintisi; eski sideload kurulumun Play build ile aynı imza/applicationId üzerinden güncellenmesi.
+- **Kabul (ölçülebilir):** `playRelease` merged manifestinde `REQUEST_INSTALL_PACKAGES` = 0; Play build'de APK indirme/kurma ağ isteği = 0; stable/beta testinde updater hâlâ çalışır; Windows testleri yeşil; `flutter analyze` 0, ilgili ve tam test paketi yeşil; imzasız/debug release üretilmez.
+- **Tuzaklar:** İzni yalnız runtime'da kullanmamak ama manifestte bırakmak; `play` flavor'a farklı applicationId vererek yanlışlıkla ikinci ürün oluşturmak; Windows updater'ı kırmak; yalnız butonu gizleyip arka plan update check'ini açık bırakmak.
+- **Bağımlılık/çakışma:** İlk Android sıcak-dosya WP'sidir. WP-118, `AndroidManifest.xml` nedeniyle WP-110 commitinden sonra başlar.
+- **Dal:** `main` (ayrı lane; branch/push yok)
+- **Model önerisi:** 🔴 Grok 4.5 — Gradle/flavor/politika çapraz yüzeyi
+
+### WP-111: Gizlilik Politikası, Kullanım Koşulları ve Topluluk Kuralları 📜
+- **Program/Faz:** Play Store · Faz A — Hukuk/gizlilik temeli
+- **Ajan:** —
+- **Durum:** [ ] Bekliyor
+- **Problem:** Play Console ve uygulama içinde canlı gizlilik politikası yok; UGC için kullanıcıların içerik üretmeden önce kabul edeceği kullanım/topluluk kuralları bulunmuyor. Sentry, Supabase, avatar, sohbet, çalışma verisi, silme ve retention açıkça anlatılmalı.
+- **Kapsam dışı:** Avukat görüşü yerine geçmek; Data Safety formunu göndermek (WP-119); hesap silme backend'i (WP-112/113); UGC enforcement (WP-115/116).
+- **SAHİP dosyalar (yaz):**
+  - `docs/legal/PRIVACY-POLICY.{tr,en}.md` (yeni)
+  - `docs/legal/TERMS-OF-USE.{tr,en}.md` (yeni)
+  - `docs/legal/COMMUNITY-GUIDELINES.{tr,en}.md` (yeni)
+  - `docs/legal/DATA-RETENTION-SCHEDULE.md` (yeni)
+  - `app/web/legal/**` veya onaylı statik site kaynağı
+  - `app/lib/features/profile/legal_center_screen.dart` (yeni)
+  - `app/lib/features/profile/settings_screen.dart` (yalnız Hukuk ve Gizlilik girişi)
+  - `app/lib/core/observability/observability_service.dart` (yalnız tercih/consent davranışı)
+  - `app/lib/l10n/app_{en,tr}.arb`, ilgili legal/telemetry testleri
+- **DOKUNMA (oku, değiştirme):** Auth/deletion repository'leri (WP-112–114); chat/group repository'leri (WP-115/116); generated l10n dosyaları elle düzenlenmez.
+- **Adımlar:**
+  - [ ] Geliştirici/uygulama adı, iletişim kanalı, veri türleri, amaçlar, işleyiciler (Supabase/Sentry), aktarım güvenliği, retention, silme, çocuk/hedef kitle, kullanıcı hakları ve politika değişiklik tarihini TR/EN yaz.
+  - [ ] Politika URL'sini aktif, herkese açık, giriş istemeyen, coğrafi engeli olmayan HTTPS sayfa olarak yayınlanabilir hale getir; PDF veya düzenlenebilir ortak doküman kullanma. Nihai domain/URL `Ürün kararı gerekiyor`.
+  - [ ] UGC kurallarında yasak içerik/davranış, raporlama, engelleme, moderasyon, itiraz ve yaptırım sürecini tanımla; içerik üretiminden önce kabul edilecek sürüm numarası belirle.
+  - [ ] Ayarlar'a “Gizlilik ve yasal” merkezi ekle; politika/koşullar/topluluk kuralları ve telemetri tercihi erişilebilir olsun. Telemetri varsayılanı ürün/hukuk kararıyla açıkça gösterilsin; değişiklik sonraki açılışta Sentry init davranışını gerçekten etkilesin.
+  - [ ] Uygulama içi metin ile web metninin sürüm/tarih/hash eşleşmesini test et; bozuk URL için kullanıcıya güvenli hata ve kopyalanabilir adres sun.
+  - [ ] Account deletion ve retention bölümlerine WP-112–114 tamamlanmadan “yakında” gibi yanıltıcı kesinlik yazma; belgeyi ilgili WP sonunda nihai davranışla güncelleme kapısı koy.
+- **Veri/Migration etkisi:** Yok. Yerel telemetri tercihi SharedPreferences'ta; rollback legal ekran commitidir, yayımlanmış politika geçmişi silinmez.
+- **RLS/Güvenlik:** Politika sayfasında Supabase URL/anon key dışında sır yok; service role, DSN dışı secret, kullanıcı örneği/PII bulunmaz.
+- **Edge-case'ler:** İnternetsiz açılış; URL 404; dil fallback; telemetry build flag kapalı; kullanıcı koşulları kabul etmemiş; politika sürümü değişmiş.
+- **Kabul (ölçülebilir):** Play Console'a verilebilir canlı HTTPS URL 200 döner; uygulamada ≤3 dokunuşta açılır; TR/EN içerik parity kontrolü geçer; telemetri kapalı yeniden açılışta Sentry init/event = 0; TalkBack sırası doğru; 360 px'te overflow 0; analyze/test yeşil.
+- **Tuzaklar:** Yalnız repo Markdown'ını “canlı URL” saymak; Sentry'yi “anonim” diye kesinlemek; retention ile gerçek pipeline'ı çeliştirmek; UGC kurallarını kabul enforcement olmadan tamamlandı saymak.
+- **Bağımlılık/çakışma:** WP-114 ve WP-116 da `settings_screen`/ARB'ye gireceği için bu WP önce tamamlanır; sonra iki UI WP'si seri uygulanır.
+- **Dal:** `main`
+- **Model önerisi:** 🔴 Grok 4.5 — hukuk metni/veri akışı tutarlılığı
+
+### WP-112: Hesap Silme Veri Sözleşmesi ve Migration 0037 🧾
+- **Program/Faz:** Play Store · Faz A — Account deletion backend R1
+- **Ajan:** —
+- **Durum:** [ ] Bekliyor · **Ürün kararı gerekiyor:** `docs/HESAP-SILME-RETENTION-KARARI.md` §0 önerilen varsayılanları (14 gün, isteğe bağlı export, mesaj silme, admin audit) kullanıcı onaylamadan kodlama başlamaz.
+- **Problem:** Auth hesabı açılabiliyor ancak kullanıcı silme isteği, geri alma penceresi, purge tarihi ve retention durumu için sunucu sözleşmesi yok. Doğrudan `auth.admin.deleteUser` çağrısı storage, grup sahipliği ve denetim kayıtlarında veri kaybı/engel yaratabilir.
+- **Kapsam dışı:** Hard-delete Edge/cron (WP-113); Flutter/web UI (WP-114); genel UGC block/report (WP-115).
+- **SAHİP dosyalar (yaz):**
+  - `supabase/migrations/0037_account_deletion_core.sql` (yeni; başlamadan en yüksek migration tekrar kontrol edilir)
+  - `docs/HESAP-SILME-RETENTION-KARARI.md` (yalnız onaylanan karar/durum)
+  - `docs/play-store/ACCOUNT-DELETION-DATA-MAP.md` (yeni)
+  - SQL/RLS smoke test dosyaları veya doğrulama sorguları
+- **DOKUNMA (oku, değiştirme):** `0036` ve eski migration'lar değiştirilmez; Flutter Auth/UI; Edge functions.
+- **Adımlar:**
+  - [ ] Tüm `auth.users` FK'lerini, `on delete` davranışlarını, storage path'lerini, grup creator/admin durumunu, feedback/audit retention'ını canlıdan bağımsız yerel şema üzerinden çıkar; hard-delete ön koşul grafiği üret.
+  - [ ] `account_deletion_requests` durum makinesi tasarla: `requested → scheduled → processing → completed|failed|canceled`; `requested_at`, `purge_after`, deneme sayısı, PII'siz hata kodu ve idempotency alanları.
+  - [ ] Doğrudan tablo DML'ini revoke et; `request_account_deletion`, `cancel_account_deletion`, `my_account_deletion_status` SECURITY DEFINER RPC'lerini yalnız `auth.uid()` için yaz. Günde 1 istek, server time ve 14×24 saat/kararlaştırılan süre sunucuda hesaplanır.
+  - [ ] Request sırasında `monthly_report_opt_in=false`, presence pasif ve bildirim/rapor işleri yeni queue üretmeyecek şekilde sözleşme kur. Grace süresinde veri saklandığını açıkça modelle; soft-delete'i hard-delete diye raporlama.
+  - [ ] Grup kurucusu için güvenli kuralı uygula: aktif başka admin varsa deterministik devir; yoksa en eski aktif üyeye açık auditli devir veya boş grubu silme. Başka üyelerin mesaj/oturum verisini cascade ile yanlışlıkla silme.
+  - [ ] Mesaj retention kararı, feedback +90 gün ve audit hash ≥1 yıl kurallarını tablo/iş akışına dönüştür; e-posta/display name gibi PII audit'e kopyalanmaz.
+  - [ ] Migration başlığında açıklama/rollback yaz; rollback bekleyen istekleri listeleyip güvenli biçimde cancel etmeden tablo/kolon drop etmez.
+- **Veri/Migration etkisi:** Yeni `0037`; prod'a WP-121 dışında uygulanmaz. Rollback ayrıntısı migration üst bilgisinde ve data-map'te zorunlu.
+- **RLS/Güvenlik:** Kullanıcı yalnız kendi isteğini görür/oluşturur/iptal eder; super-admin normal select ile toplu PII alamaz; service role yalnız WP-113 worker'ında. RPC `search_path` sabit, grant en dar rolde.
+- **Edge-case'ler:** İkinci istek; grace bitişiyle eşzamanlı cancel; hesap zaten silinmiş; grup tek admin; açık feedback; storage object yok; monthly job processing; timezone (süre `timestamptz`, İstanbul yalnız kullanıcı metni).
+- **Kabul (ölçülebilir):** Yetkisiz kullanıcı başka UID isteğini okuyamaz/değiştiremez; aynı istek idempotent; purge tarihi server-side deterministik; grup üyelerinin verisi korunur; SQL smoke matrisi owner/other/admin/anon için geçer; rollback dry-run başarılı.
+- **Tuzaklar:** Client timestamp'e güvenmek; `profiles` bayrağını doğrudan update'e açmak; Auth user'ı migration içinde silmek; CASCADE ile grup üyelerinin içeriğini yok etmek; migration 0037 numarasını paralel worker ile çakıştırmak.
+- **Bağımlılık/çakışma:** Migration sıcak yüzey. WP-115'in 0038'i bundan sonra; aynı anda başlamaz.
+- **Dal:** `main`
+- **Model önerisi:** 🔴 Grok 4.5 — Auth/RLS/destructive lifecycle
+
+### WP-113: Hard-Delete Edge Pipeline, Storage Temizliği ve Cron 🧨
+- **Program/Faz:** Play Store · Faz A/B — Account deletion backend R2
+- **Ajan:** —
+- **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-112 otomatik test geçti
+- **Problem:** Süresi dolan hesapların storage, ilişkisel veri, Auth ve üçüncü taraf işlemciler boyunca güvenli/idempotent hard-delete işlemini yapan service-role pipeline yok.
+- **Kapsam dışı:** Kullanıcı UI/web sayfası (WP-114); genel backend deploy (WP-121); yasal retention kararı değiştirme.
+- **SAHİP dosyalar (yaz):**
+  - `supabase/functions/account-deletion/index.ts` (kullanıcı status/request bridge gerekiyorsa)
+  - `supabase/functions/purge-accounts/index.ts` (yeni)
+  - `supabase/functions/_shared/auth.ts` veya yalnız bu fonksiyonlara ait dar auth helper
+  - `supabase/functions/**/account_deletion*_test.ts`
+  - gerekirse **0037'yi değiştirmeden** yeni `0038_account_deletion_scheduler.sql`; bu durumda WP-115 migration numarası yeniden belirlenir
+  - `docs/play-store/ACCOUNT-DELETION-RUNBOOK.md`
+- **DOKUNMA (oku, değiştirme):** Flutter; chat/moderation UI; mevcut 0030–0037 migration dosyaları; production secrets.
+- **Adımlar:**
+  - [ ] `purge_after <= now()` ve state `scheduled|failed(retryable)` kayıtlarını `FOR UPDATE SKIP LOCKED`/eşdeğer tek-worker sözleşmesiyle claim et; aynı kullanıcı iki kez işlenemez.
+  - [ ] Sıra: yeni e-posta/job üretimini kes → pending queue'ları iptal/anonimleştir → avatar/feedback storage object'lerini listele-sil → retention kararına göre sosyal/mesaj/support verisini scrub/sil → FK preflight → `auth.admin.deleteUser` → PII'siz tamamlanma auditi.
+  - [ ] Grup ownership devrini WP-112 sözleşmesine göre doğrula; başka kullanıcıların grubu/mesajı yanlışlıkla cascade olmamalı. Her destructive adım öncesi hedef UID ve kaynak sayısı doğrulanır.
+  - [ ] CRON endpoint yalnız `CRON_SECRET` veya Supabase doğrulanmış service context kabul eder; CORS wildcard/auth bypass yok. Secret loglanmaz; response yalnız sayım ve sabit hata kodu taşır.
+  - [ ] Retry/backoff ve poison record davranışı ekle; kısmi storage silme sonrası tekrar koşum güvenli olmalı. `completed` durumuna yalnız Auth user gerçekten yoksa geç.
+  - [ ] Sentry/harici işlemci için app'in gerçekten gönderdiği tanımlayıcıları denetle; PII gönderilmiyorsa “silme çağrısı yok” kanıtını, gönderiliyorsa sağlayıcı deletion yolunu runbook'a yaz.
+  - [ ] Staging'de sahte hesapla request→grace override→purge provası; production'da önce dry-run/limit=1 ve kullanıcı onayı olmadan destructive koşum yok.
+- **Veri/Migration etkisi:** Scheduler migration gerekirse mevcut en yüksek numara +1. Geri alma cron unschedule + Edge deploy rollback; silinmiş kullanıcı geri getirilemez, bu nedenle staging ve iki aşamalı prod onayı zorunlu.
+- **RLS/Güvenlik:** Service role yalnız Edge secret store; istemci/repo/env örneğine girmez. Admin manuel purge gerekçe + audit ister; ham e-posta loglanmaz.
+- **Edge-case'ler:** Storage 404; Auth delete geçici hata; FK restrict; cron iki kez; cancel tam claim anında; kullanıcı başka cihazda aktif; feedback retention devam ediyor; grup tek sahibi.
+- **Kabul (ölçülebilir):** Aynı test hesabına 3 tekrar çağrıda tek tamamlanma; Auth/profile/session/avatar/outbox verisi beklenen son durumda; başka üyelerin satır kaybı 0; failed iş retry olur, PII logu 0; unauthorized invoke 401/403; staging dry-run ve rollback runbook'u kanıtlı.
+- **Tuzaklar:** Önce Auth'u silip storage path sahipliğini kaybetmek; tüm bucket'ı silmek; `service_role`'ü Flutter'a koymak; cron secret yanlışken canlı job'u kesmek; tamamlanmamış işi completed işaretlemek.
+- **Bağımlılık/çakışma:** Edge/migration yüzeyi WP-115 ve WP-121 ile seri. WP-114, WP-113 API sözleşmesi sabitlenince paralel başlayabilir.
+- **Dal:** `main`
+- **Model önerisi:** 🔴 Grok 4.5 — destructive/idempotent backend
+
+### WP-114: Uygulama İçi ve Web Hesap Silme Deneyimi 🗑️
+- **Program/Faz:** Play Store · Faz A — Account deletion client/web
+- **Ajan:** —
+- **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-111 legal URL + WP-112 sözleşme; WP-113 API contract
+- **Problem:** Kullanıcı Ayarlar'dan hesabını silemiyor; uygulamayı kaldırmış kullanıcı için de çalışan web silme talep yolu yok. İstek öncesi yeniden doğrulama, geri alma ve cihaz-yerel veri temizliği gerekir.
+- **Kapsam dışı:** Hard-delete algoritması (WP-113); genel privacy metni (WP-111); admin moderasyon.
+- **SAHİP dosyalar (yaz):**
+  - `app/lib/data/repositories/auth_repository.dart`
+  - `app/lib/data/repositories/{supabase,in_memory}/in_memory_auth_repository.dart` ve `supabase_auth_repository.dart`
+  - `app/lib/data/models/account_deletion_status.dart` (yeni)
+  - `app/lib/data/providers/auth_providers.dart` (yalnız deletion provider'ları)
+  - `app/lib/features/profile/account_settings_screen.dart`
+  - `app/lib/features/auth/account_deletion_pending_screen.dart` (yeni)
+  - `app/lib/features/auth/auth_gate.dart` (yalnız pending routing)
+  - `app/lib/core/prefs/local_account_wipe.dart` (yeni)
+  - `app/web/account-deletion/**` veya onaylı public web istemcisi
+  - `app/lib/l10n/app_{en,tr}.arb`, ilgili unit/widget/integration testleri
+- **DOKUNMA (oku, değiştirme):** Migration/Edge (WP-112/113); `settings_screen.dart` (WP-111 tamamlandıktan sonra yalnız mevcut AccountSettings girişini kullan); admin UI.
+- **Adımlar:**
+  - [ ] Auth repository'ye request/cancel/status ve güvenli re-auth sözleşmesi ekle; Supabase + InMemory birlikte uygulanır. Yanlış parola ve hesap enumeration kullanıcıya genel hata verir.
+  - [ ] Hesabım ekranında tehlikeli bölge oluştur: veri özeti, 14 gün/kararlaştırılan süre, kalıcı sonuç, mesaj/support retention, web yolu ve “Önce verilerimi indir” seçeneği açıkça görünür.
+  - [ ] Silme öncesi şifre veya magic-link re-auth; ardından ikinci ekranda açık onay metni. Tek tap ile destructive istek yok; butonlar ≥48 dp ve TalkBack açıklamalı.
+  - [ ] Request başarılıysa timer/notification/widget snapshot, offline outbox, cached profile/session, yerel token/tercihler ve alarm/preset kapsamını veri haritasına göre temizle; server request başarılı olmadan yerel veriyi yok etme.
+  - [ ] Pending hesap tekrar giriş yaparsa normal HomeShell yerine deletion-pending ekranı aç; purge tarihi, politika linki ve “Silme isteğini geri al” göster. Cancel başarılıysa normal profile dön.
+  - [ ] Public HTTPS web sayfası uygulama indirmeden talep başlatmalı: email/magic-link ile kimlik doğrulama veya Google'ın kabul ettiği açık destek formu. Sayfa Odak Kampı/geliştirici adını, işlem süresini ve talep durumunu gösterir; kullanıcıyı uygulamayı yeniden kurmaya zorlamaz.
+  - [ ] Play Console Account deletion URL'si olacak nihai adresi test et; web formunda rate limit, CSRF/state ve enumeration koruması ekle.
+- **Veri/Migration etkisi:** Yeni şema yok; WP-112/113 tüketilir. Local wipe geri alınamaz ama server request cancel edilebilir; bu ayrım kullanıcıya anlatılır.
+- **RLS/Güvenlik:** Re-auth token/parola loglanmaz; web anon endpoint doğrudan UID kabul etmez; cancel yalnız aktif auth sahibinden.
+- **Edge-case'ler:** Çevrimdışı request; request başarılı/response kayıp; çoklu cihaz; sosyal login yok/şifre unutuldu; web magic-link başka cihaz; purge anında cancel; local wipe kısmi hata.
+- **Kabul (ölçülebilir):** Ayarlar'dan ≤4 adımda doğrulanmış talep; yanlış parola ile request=0; pending route normal uygulamaya erişemez; cancel sonrası hesap ≤2 sn'de aktif; web URL anonim tarayıcıda 200 ve uygulama kurmadan talep alınabilir; local PII anahtarları testte 0; TR/EN ve 360 px overflow testi yeşil.
+- **Tuzaklar:** Sadece e-posta gönderip in-app yolu eksik bırakmak; soft suspend'i “silindi” diye göstermek; local wipe'ı server onayından önce yapmak; web formunda kayıtlı e-posta sızdırmak.
+- **Bağımlılık/çakışma:** ARB/auth sıcak yüzeyi nedeniyle WP-111'den sonra; WP-116 ile aynı anda ARB düzenlenmez.
+- **Dal:** `main`
+- **Model önerisi:** 🔴 Grok 4.5 — auth UX + web güvenliği
+
+### WP-115: UGC Raporlama, Engelleme ve Moderasyon Backend'i 🛡️
+- **Program/Faz:** Play Store · Faz A — UGC compliance R1
+- **Ajan:** —
+- **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-112/113 migration sırası kesinleşmiş olmalı
+- **Problem:** Sınıf mesajı, profil/avatar, grup adı ve dürtme kullanıcı üretimi içerik/etkileşimdir; içerik/kullanıcı raporlama, block listesi, şart kabulü ve moderasyon durumu için server-authoritative temel yok.
+- **Kapsam dışı:** Kullanıcı UI (WP-116); admin queue UI (WP-117); hukuk metni yazma (WP-111).
+- **SAHİP dosyalar (yaz):**
+  - `supabase/migrations/0038_ugc_safety.sql` veya o anda geçerli en yüksek+1
+  - `supabase/functions/moderate-content/index.ts` (yeni; yalnız admin işlemi gerekiyorsa)
+  - `docs/play-store/UGC-MODERATION-RUNBOOK.md`
+  - SQL/RLS/Edge testleri
+- **DOKUNMA (oku, değiştirme):** Flutter repository/UI; önceki migration'lar; account deletion edge.
+- **Adımlar:**
+  - [ ] `user_blocks`, `ugc_reports`, `ugc_terms_acceptance`, `moderation_actions` tablolarını ve `class_messages.moderation_state/hidden_at` alanlarını tasarla. Target türleri enum/check ile `message|user|profile|avatar|group` sınırında tutulur.
+  - [ ] `block_user/unblock_user/report_ugc/accept_ugc_terms` RPC'lerini yaz; reporter yalnız kendi raporunu oluşturur/durum özetini görür, hedef reporter kimliğini asla görmez. Kendini block/report, aynı hedef spam ve serbest metin uzunluğu sınırlandırılır.
+  - [ ] Mesaj SELECT/RPC görünürlüğünde blocker'ın blocked kullanıcı içeriğini görmemesini; nudge gönderiminde iki yönde block kontrolünü; sosyal profil/public discovery'de güvenli placeholder/filtre davranışını RLS veya güvenli RPC ile uygula.
+  - [ ] Chat/UGC insert'i için güncel topluluk kuralı kabulini server-side zorunlu yap; yalnız UI checkbox yeterli değildir. Kural sürümü değişince yeniden kabul gerekir.
+  - [ ] Admin moderation action'ları (hide message, restore, warn metadata, suspend handoff) service-role/`is_super_admin()` + audit ile sınırla. Rapor snapshot'ında token/e-posta yok; gerekli içerik minimum tutulur.
+  - [ ] Rate limit: raporlayan kullanıcı/hedef/IP yerine auth user temelli makul pencere; kritik yasa dışı içerik raporu rate limit yüzünden tamamen engellenmez, abuse ayrı işaretlenir.
+  - [ ] Retention: reddedilmiş/çözülen rapor ve evidence süresi legal schedule ile uyumlu; hesap silmede reporter/target hash/anonimleştirme yolu WP-112/113'e bağlanır.
+- **Veri/Migration etkisi:** Yeni migration; WP-121'de staging/prod. Rollback policy/RPC/trigger drop sırası + yeni kolonların güvenli bırakılması.
+- **RLS/Güvenlik:** Rapor hedefi reporter'ı göremez; grup admini platform moderation verisine erişemez; super-admin erişimi auditli; direct table write revoke.
+- **Edge-case'ler:** Silinmiş mesaj; hedef hesap pending deletion; iki yönlü block; aynı mesaj 20 kez rapor; grup private'a döner; moderator kendi içeriğini inceler; realtime hidden update.
+- **Kabul (ölçülebilir):** Owner/other/admin/anon RLS matrisi geçer; blocked sender mesaj/nudge görünürlüğü beklendiği gibi; terms kabulü olmayan insert server'da reddedilir; aynı rapor idempotent/coalesced; reporter kimliği hedef sorgusunda 0 alan; rollback dry-run başarılı.
+- **Tuzaklar:** Mevcut feedback ticket'ı UGC report sanmak; yalnız client filtrelemek; `using(true)` admin policy; rapora gereksiz profil/e-posta snapshot'ı koymak.
+- **Bağımlılık/çakışma:** Migration/Edge sıcak yüzey; WP-113 sonrası seri. WP-116 ve WP-117 bu sözleşme sabitlenince farklı UI yüzeylerinde paralel olabilir.
+- **Dal:** `main`
+- **Model önerisi:** 🔴 Grok 4.5 — RLS/moderasyon güvenliği
+
+### WP-116: Kullanıcı UGC Güvenlik Arayüzleri ve Topluluk Kabulü 🚩
+- **Program/Faz:** Play Store · Faz A — UGC compliance R2
+- **Ajan:** —
+- **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-111 + WP-115
+- **Problem:** Kullanıcı mesajı, kullanıcıyı, profili/avatarı veya grubu uygulama içinden raporlayamıyor; engellenen kullanıcıları yönetemiyor; UGC öncesi topluluk kuralları kabul edilmiyor.
+- **Kapsam dışı:** Admin inceleme (WP-117); backend/RLS (WP-115); genel feedback bug formu.
+- **SAHİP dosyalar (yaz):**
+  - `app/lib/data/repositories/moderation_repository.dart` (yeni)
+  - `app/lib/data/repositories/{supabase,in_memory}/supabase_moderation_repository.dart`, `in_memory_moderation_repository.dart`
+  - `app/lib/data/providers/moderation_providers.dart`
+  - `app/lib/features/safety/**` (report sheet, block list, terms gate)
+  - `app/lib/features/classroom/widgets/class_chat_screen.dart`
+  - `app/lib/features/classroom/widgets/group_discovery_screen.dart` ve grup detail/menu yüzeyi (yalnız report action)
+  - `app/lib/features/profile/social_profile_screen.dart`, `widgets/social_profile_dialog.dart` (yalnız report/block)
+  - `app/lib/features/profile/settings_screen.dart` (yalnız Engellenen kullanıcılar girişi)
+  - `app/lib/l10n/app_{en,tr}.arb`, ilgili testler
+- **DOKUNMA (oku, değiştirme):** Admin UI/repository (WP-117); migration/Edge; auth deletion UI (WP-114 ile seri ARB/settings).
+- **Adımlar:**
+  - [ ] İlk mesaj/grup adı/avatar upload'ından önce güncel community rules modalı + açık kabul; reddedilirse içerik üretimi kilitli, okuma erişimi ürün kararına göre sürer.
+  - [ ] Mesaj uzun basma/menüsünde “Mesajı bildir” ve “Kullanıcıyı engelle”; profil/grup menüsünde hedefe uygun report türü. Kendi içeriğinde report/block gösterme.
+  - [ ] Rapor sebebi kontrollü enum + isteğe bağlı sınırlı açıklama; başarı mesajı, duplicate durumu ve acil güvenlik yönlendirmesi. Reporter'a moderator/target PII gösterme.
+  - [ ] Block sonrası ilgili mesaj/nudge/profil yüzeyi anında provider invalidation ile güncellensin; “Engellenen kullanıcılar” ekranında unblock. Server RLS sonucu ile client optimistik durum uzlaştırılsın.
+  - [ ] Silinmiş/modere edilmiş içerik için nötr placeholder; içerik snapshot'ını cihaz loguna/telemetriye gönderme.
+  - [ ] TR/EN, TalkBack, klavye/Narrator, koyu/açık tema, 48 dp hedef ve destructive unblock/report confirmation testleri.
+- **Veri/Migration etkisi:** WP-115 API tüketilir; repository çift implementasyon zorunlu. Rollback UI commitidir, server block/report verisi korunur.
+- **RLS/Güvenlik:** UI gizleme yetki sayılmaz; tüm write server RPC. Hata metni hedef hesabın varlığını/cezasını ifşa etmez.
+- **Edge-case'ler:** Realtime'da mesaj rapor sırasında silinir; offline; duplicate tap; blocked user aynı grupta; kendi profili; grup private olur; terms version değişir.
+- **Kabul (ölçülebilir):** Mesaj/profil/grup için report yolu ≤3 dokunuş; block sonrası içerik ≤1 sn'de görünmez; uygulama yeniden açılınca block kalıcı; terms kabulü yokken server insert 0; 360/600/1200 px overflow 0; TR/EN widget ve repository testleri + analyze/tam test yeşil.
+- **Tuzaklar:** Feedback formuna yönlendirip bağlamsal report hedefi göndermemek; yalnız listeden gizlemek; block'u grup üyeliğini silmek sanmak; moderator kararını reporter'a ayrıntılı ifşa etmek.
+- **Bağımlılık/çakışma:** WP-114 ile `settings_screen`/ARB sıcak yüzeyini paylaşır; seri çalışır. WP-117 ile SAHİP kesişimi yoksa paralel güvenli.
+- **Dal:** `main`
+- **Model önerisi:** 🔴 Grok 4.5 — çok yüzeyli güvenlik UX'i
+
+### WP-117: Admin UGC Moderasyon Kuyruğu ve Audit Merkezi 🧑‍⚖️
+- **Program/Faz:** Play Store · Faz A — UGC compliance R3
+- **Ajan:** —
+- **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-115
+- **Problem:** Raporlar gelse bile adminin önceliklendirme, evidence görme, içerik gizleme/geri alma, kullanıcı yaptırımı ve audit akışı yoksa moderasyon “etkili ve sürekli” değildir.
+- **Kapsam dışı:** Genel kullanıcı raporlama UI (WP-116); yeni süper-admin kimlik modeli; otomatik AI moderasyonu.
+- **SAHİP dosyalar (yaz):**
+  - `app/lib/data/repositories/admin_repository.dart`
+  - `app/lib/data/repositories/{supabase,in_memory}/supabase_admin_repository.dart`, `in_memory_admin_repository.dart`
+  - `app/lib/features/admin/tabs/admin_moderation_tab.dart` (yeni)
+  - `app/lib/features/admin/admin_screen.dart` (yalnız tab ekleme)
+  - `app/lib/data/models/ugc_report*.dart`, moderation action DTO'ları
+  - admin provider/test dosyaları; gerekli admin l10n girdileri
+- **DOKUNMA (oku, değiştirme):** `moderation_repository.dart` kullanıcı tarafı (WP-116); migration/RLS/Edge (WP-115 sözleşmesi); genel feedback tabı korunur.
+- **Adımlar:**
+  - [ ] Open/in-review/resolved/rejected filtreli kuyruk; severity, target type, created time, duplicate count; pagination ve refresh.
+  - [ ] Evidence ekranında yalnız gerekli içerik snapshot'ı; reporter kimliği rol gerektirmedikçe maskeli. Canlı içerik değişmiş/silinmişse snapshot/current farkını göster.
+  - [ ] Hide/restore message, group/profile escalation, user suspend handoff; her işlem gerekçe, confirmation, actor, timestamp ve before/after audit üretir.
+  - [ ] Aynı rapora iki admin eşzamanlı işlem yaparsa optimistic lock/version ile biri güvenli conflict alır; son-yazma sessizce kazanmaz.
+  - [ ] Yanlış pozitif geri alma ve itiraz notu; destructive hard delete bu WP'de yok.
+  - [ ] Empty/error/offline/unauthorized durumları; admin olmayan kullanıcı navigation ile erişse bile server 403.
+- **Veri/Migration etkisi:** WP-115 contract tüketilir; yeni migration yok. Rollback UI/repository commitidir, audit verisi silinmez.
+- **RLS/Güvenlik:** `is_super_admin()` + Edge auth; grup admini erişemez; raw service role yok; report detail log/Sentry'ye gitmez.
+- **Edge-case'ler:** Target silinmiş; reporter hesabı siliniyor; duplicate reports; moderator kendi raporu; network action sonucu kayıp; stale version.
+- **Kabul (ölçülebilir):** Admin report'u ≤2 sn'de açar; hide action sonrası kullanıcı görünürlüğü ≤2 sn; admin olmayan select/action 0/403; iki eşzamanlı aksiyonda tam bir başarı + bir conflict; her aksiyon için tek audit; widget/repository testleri ve analyze yeşil.
+- **Tuzaklar:** Feedback ve UGC raporlarını tek status enumuyla bozmak; reporter e-postasını listeye koymak; client-side admin kontrolüne güvenmek; audit'i update edilebilir yapmak.
+- **Bağımlılık/çakışma:** WP-116 ile ortak SAHİP yoksa paralel; `app_en/tr.arb` ortaksa sırala veya WP-117 admin metinlerini ayrı commit sonrası rebase değil lane koordinasyonuyla ekle.
+- **Dal:** `main`
+- **Model önerisi:** 🔴 Grok 4.5 — admin/auth/audit
+
+### WP-118: Android Kısıtlı İzinler, FGS ve Alarm Play Uyumu ⏰
+- **Program/Faz:** Play Store · Faz A/C — Android policy + reliability
+- **Ajan:** —
+- **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-110 (`AndroidManifest.xml` sıcak yüzeyi)
+- **Problem:** `USE_EXACT_ALARM`, `USE_FULL_SCREEN_INTENT`, `FOREGROUND_SERVICE_SPECIAL_USE`, `dataSync`, `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` ve exported timer receiver Play incelemesi/platform sürümleri açısından kanıt/fallback gerektiriyor. Mevcut “form doldururuz” yaklaşımı tek başına yeterli değil.
+- **Kapsam dışı:** Installer izni (WP-110); Console form gönderimi (WP-120); store metni; yeni saat özelliği.
+- **SAHİP dosyalar (yaz):**
+  - `app/android/app/src/main/AndroidManifest.xml` + `src/play/AndroidManifest.xml`
+  - `app/android/app/src/main/kotlin/com/manilmax/online_study_room/ExactAlarmHelper.kt`
+  - `app/android/app/src/main/kotlin/com/manilmax/online_study_room/alarm/**`
+  - `app/android/app/src/main/kotlin/com/manilmax/online_study_room/timer/StudyTimerService.kt`
+  - `app/android/app/src/main/kotlin/com/manilmax/online_study_room/widgets/TimerActionReceiver.kt`
+  - `app/lib/core/time_engine/{clock_permissions,exact_alarm_permission,alarm_scheduler}.dart`
+  - `app/lib/core/notifications/native_alarm_bridge.dart`
+  - izin ayar ekranı ve ilgili native/Dart/integration testleri
+- **DOKUNMA (oku, değiştirme):** Gradle/flavor/updater (WP-110 tamamlanmış sözleşme); account/UGC; server migrations.
+- **Adımlar:**
+  - [ ] Her izni feature→API→Play eligibility matrisiyle belgeleyip merged Play manifestten doğrula. Kullanılmayan izin/servis/type kaldırılır; paket var diye izin tutulmaz.
+  - [ ] Play için güvenli varsayılan: `USE_EXACT_ALARM` yalnız Play Console'da core alarm/timer use case onayına dayanıyorsa kalır; aksi `SCHEDULE_EXACT_ALARM` + kullanıcı special access + inexact fallback. İki izni gereksiz birlikte tutma.
+  - [ ] FSI için Android 14+ `canUseFullScreenIntent` kontrolü, ayar yönlendirmesi ve reddedilince heads-up/normal alarm bildirimi fallback'i. Alarm yine yönetilebilir; ekran kilidi bypass iddiası yok.
+  - [ ] `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` Play manifestinden kaldırma/uygunluk kararı; doğrudan exemption intent'i yerine kullanıcı eğitimli genel battery settings yolu. Reddetme timer'ı tamamen kilitlemez.
+  - [ ] FGS `specialUse` gerekçesini kullanıcı başlatmalı, görünür, durdurulabilir sayaçla hizala. API 29–33'te policy'ye uymayan `dataSync` runtime type kullanımı yerine güvenli legacy start tasarımını değerlendir; API 34–36 specialUse deklarasyonu + property tutarlı.
+  - [ ] `flutter_foreground_task` servisinin gerçekten kullanılıp kullanılmadığını kanıtla; ölü ikinci FGS ise manifest/paket yüzeyini daralt. Paket kaldırılacaksa `pubspec.yaml` ayrı sıcak commit/claim gerektirir.
+  - [ ] `TimerActionReceiver` dış uygulama intent'ine kapatılır (`exported=false` veya signature permission + doğrulama); widget/notification PendingIntent kontrolleri regresyonsuz.
+  - [ ] API 33/34/35/36 testleri: izin ilk kurulum, ret, geri alma, reboot, timezone, force-stop dışı process death, 3 paralel timer, full-screen açık/kapalı.
+- **Veri/Migration etkisi:** Yok. Geri alma manifest/native commitidir; kullanıcı alarm verisi korunur.
+- **RLS/Güvenlik:** Exported receiver spoofing kapalı; permission intent'leri explicit/package-scoped; secret yok.
+- **Edge-case'ler:** OEM ayar intent'i bulunmaz; izin sonradan geri alınır; alarm tam izin değişiminde; Android 13/14 davranış farkı; Play/Sideload manifest farkı; reboot.
+- **Kabul (ölçülebilir):** Play manifestinde yalnız kanıtlı izinler; dış adb broadcast timer state değiştiremez; exact/FSI reddinde uygulama çökmez ve fallback alarm oluşur; API33 + Samsung/Pixel API34–36 cihaz matrisinde P0=0; 8 saat timer sapması ≤±1 sn; analyze/test/release build yeşil.
+- **Tuzaklar:** Saat özelliği var diye otomatik “core alarm app” kabul etmek; manifestten izni kaldırıp kodu fallback'siz bırakmak; dataSync'i uzun sayaç etiketi olarak savunmak; OEM ayar ekranını garanti sanmak.
+- **Bağımlılık/çakışma:** WP-110 sonrası tek başına Android sıcak lane. WP-122 AAB bundan sonra.
+- **Dal:** `main`
+- **Model önerisi:** 🔴 Grok 4.5 — native/policy/OEM riski
+
+### WP-119: Veri Envanteri, Data Safety ve Sentry Beyan Paketi 🔐
+- **Program/Faz:** Play Store · Faz A — Disclosure evidence
+- **Ajan:** —
+- **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-111, WP-114, WP-116, WP-118 davranışları sabit
+- **Problem:** Data Safety yalnız tahminle doldurulamaz; uygulama, SDK, server, storage ve build flag'lerinin gerçek veri gönderimi tür/amaç/opsiyonellik/silme bazında kanıtlanmalı.
+- **Kapsam dışı:** Play Console'a kullanıcı adına submit; hukuk görüşü; yeni veri toplama özelliği.
+- **SAHİP dosyalar (yaz):**
+  - `docs/play-store/DATA-INVENTORY.md`
+  - `docs/play-store/DATA-SAFETY-ANSWERS.csv`
+  - `docs/play-store/SDK-DATA-MATRIX.md`
+  - `docs/play-store/PRIVACY-CONSISTENCY-CHECK.md`
+  - gerekirse yalnız test/konfig doğrulaması için observability testleri
+- **DOKUNMA (oku, değiştirme):** Ürün kodu; Console; secrets. Davranış eksikliği bulunursa ayrı debug WP açılır, bu evidence WP'sinde gizlice düzeltilmez.
+- **Adımlar:**
+  - [ ] E-posta, isim, avatar, session/subject, presence, chat, group, XP, feedback attachment, notification preference, offline cache/outbox, Sentry ve e-posta raporunu kaynak→amaç→saklama→silme→işleyici bazında çıkar.
+  - [ ] “Collected”ı cihaz dışına iletim olarak değerlendir; yalnız yerel SharedPreferences verisini yanlışlıkla collected sayma, fakat backup/sync davranışını doğrula.
+  - [ ] Supabase/Sentry/image_picker/home_widget ve diğer SDK'ların gerçek konfigürasyonunu incele. `sendDefaultPii=false`, traces=0 ve controlled breadcrumbs kanıtını testle; release build'de `SENTRY_ENABLED`/DSN durumunu kaydet.
+  - [ ] Her veri türü için collected/shared, required/optional, purpose, encryption in transit, ephemeral, deletion mechanism cevaplarını CSV'ye koy; bilinmeyeni “hayır” varsayma.
+  - [ ] Privacy policy, in-app disclosure, account deletion ve Data Safety cevapları arasında otomatik/manuel consistency checklist çalıştır.
+  - [ ] Closed/open/production track'in Data Safety kapsamında, yalnız internal-only artefaktın istisna olabileceğini runbook'a yaz.
+- **Veri/Migration etkisi:** Yok; read-only audit.
+- **RLS/Güvenlik:** Kanıt dosyasına kullanıcı verisi, DSN token, env değerleri veya service role girmez; yalnız alan adı/boolean/veri sınıfı.
+- **Edge-case'ler:** Sentry buildde kapalı ama eski Play artefaktında açık; farklı flavor veri davranışı; avatar kullanıcı seçimine bağlı; silme grace dönemi; third-party processor alt işleyicileri.
+- **Kabul (ölçülebilir):** Kod/SDK envanterindeki her ağ veri yolu bir Data Safety satırına bağlı; privacy-vs-form çelişkisi 0; bilinmeyen cevap 0 veya açık Console doğrulama maddesi; release konfig testleri yeşil; iki kişi/ajan çapraz review checklist'i tamamlanmış.
+- **Tuzaklar:** Supabase'i “shared”/“processor” ayrımını kanıtsız yorumlamak; yalnız permission listesine bakmak; Sentry build flag'ini kullanıcı opt-out sanmak; eski aktif track artefaktını unutmak.
+- **Bağımlılık/çakışma:** Doküman-only; ürün davranışları sabitlenmeden başlanmaz.
+- **Dal:** `main`
+- **Model önerisi:** 🔴 Grok 4.5 — veri sınıflandırma doğruluğu
+
+### WP-120: Store Listing, App Content Formları ve Reviewer Erişimi 📝
+- **Program/Faz:** Play Store · Faz A/D — Console readiness
+- **Ajan:** —
+- **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-111 + WP-119
+- **Problem:** Mağaza metni/görselleri, hedef kitle, içerik derecelendirme, app access ve kısıtlı izin beyanları olmadan AAB teknik olarak doğru olsa bile review tamamlanamaz.
+- **Kapsam dışı:** Formları/production rollout'u kullanıcı onayı olmadan göndermek; yanıltıcı alarm/çocuk/gizlilik iddiası.
+- **SAHİP dosyalar (yaz):**
+  - `docs/play-store/STORE-LISTING.{tr,en}.md`
+  - `docs/play-store/APP-CONTENT-ANSWERS.md`
+  - `docs/play-store/REVIEWER-GUIDE.md`
+  - `docs/play-store/PERMISSION-DECLARATIONS.md`
+  - `store-assets/android/**` (ikon/feature graphic/screenshot kaynakları ve redacted çıktılar)
+- **DOKUNMA (oku, değiştirme):** App/manifest; Play Console canlı state; kullanıcı secret'ı. Demo hesap parolası repoya yazılmaz.
+- **Adımlar:**
+  - [ ] Ad ≤30, kısa ≤80, uzun ≤4000 karakter sınırlarında TR/EN listing; yalnız gerçekten çalışan özellik/izin davranışı. “Varsayılan alarm uygulaması” veya “kesin çalışır” gibi kanıtsız iddia yok.
+  - [ ] 512×512 ikon, 1024×500 feature graphic, telefon/tablet ekran görüntüleri; beta etiketi, gerçek e-posta, token, grup davet kodu ve kullanıcı PII'si temizlenir.
+  - [ ] App access için ayrı reviewer hesabı + önceden dolu güvenli test grubu/oturumu; şifre secret manager/Console alanında, repo dışında. 60 sn timer, alarm, chat, report/block ve hesap silme yollarını adım adım yaz.
+  - [ ] Ads, target audience, content rating, Data Safety, account deletion URL, privacy URL, news/health/financial/government formlarına WP-119 kanıtına bağlı cevap paketi hazırla.
+  - [ ] Hedef kitle kararı: Families hedeflenmiyorsa chat/sosyal yapıyla uyumlu 13+/16+ seçim ve nötr yaş beyanı; gerçekte uygulanmayan age gate iddiası yok.
+  - [ ] FGS her type için işlev, ertelenme/kesinti etkisi ve tetikleme videosu; exact alarm ve FSI için core functionality/fallback açıklaması. Console onayı yoksa WP-118 safe manifest yolu kullanılır.
+  - [ ] Yeni kişisel geliştirici hesabı olup olmadığını kaydet; WP-124'te 12 tester/14 gün şartını koşullandır.
+- **Veri/Migration etkisi:** Yok.
+- **RLS/Güvenlik:** Reviewer hesabı en az yetkili; admin/service role verilmez; assetlerde PII yok.
+- **Edge-case'ler:** Reviewer lokali EN; alarm izni reddedilmiş; boş yeni hesap; public group yok; tablet screenshot zorunluluğu; Console soruları değişmiş.
+- **Kabul (ölçülebilir):** Tüm zorunlu listing/form alanları cevaplı; metin limitleri otomatik doğrulanmış; asset boyutları birebir; reviewer akışı temiz kurulumda ≤10 dk tamamlanır; permission videoları erişilebilir URL; secret repo taraması 0 bulgu.
+- **Tuzaklar:** Store metninde özelliği abartmak; kapalı beta package'ını policy dışı sanmak; demo hesabına admin vermek; Console formunu repo tahminiyle “tamamlandı” işaretlemek.
+- **Bağımlılık/çakışma:** WP-118 permission gerçekleri ve WP-119 veri cevapları değişirse bu kart yeniden review olur.
+- **Dal:** `main`
+- **Model önerisi:** 🟣 Grok 4.5 — içerik/Console kontrolü
+
+### WP-121: Production Migration, Edge Deploy ve RLS Operasyon Kapısı 🗄️
+- **Program/Faz:** Play Store · Faz B — Backend/ops
+- **Ajan:** —
+- **Durum:** [ ] Bekliyor · **Bağımlılık:** 0034–0038/hesap+UGC migrations ve Edge kodları tamam
+- **Problem:** Yerel migration/Edge dosyası canlı deploy kanıtı değildir. 0034 index, 0035 cron, 0036 güvenlik ve yeni hesap/UGC şemaları uygulanmadan Play kullanıcıları eski güvenlik/ops davranışına düşer.
+- **Kapsam dışı:** Yeni ürün özelliği; kullanıcı onayı olmadan destructive SQL; Play upload.
+- **SAHİP dosyalar (yaz):**
+  - `docs/BACKEND-DURUM.md`
+  - `docs/play-store/PROD-DEPLOY-RUNBOOK.md`
+  - `docs/play-store/RLS-SMOKE.sql` (read-only/transaction rollback güvenli test)
+  - gerekirse deployment scriptleri; mevcut migration içerikleri değiştirilmez
+- **DOKUNMA (oku, değiştirme):** App; migration geçmiş dosyaları; production secrets değerleri; canlı SQL kullanıcı açıkça koştur demeden çalıştırılmaz.
+- **Adımlar:**
+  - [ ] Canlı `schema_migrations`, tablo/kolon/policy/function/index ve Edge version envanterini al; secrets değerini göstermeden var/yok doğrula.
+  - [ ] 0034→0035→0036→0037→0038 sırasını ve `CONCURRENTLY`/transaction kısıtını runbook'ta ayır. Her adım öncesi backup/rollback ve sonrasında verification query.
+  - [ ] `CRON_SECRET`, functions base URL, service role GUC/secret ve Resend bağımlılığını fail-closed sırada kur; önce secret/job, sonra auth isteyen Edge deploy; mail hattını yanlış sırayla kesme.
+  - [ ] Edge `collect-reports`, `send-report`, account deletion ve moderation fonksiyonlarını deploy edip unauthorized/authenticated/admin/cron çağrı matrisiyle test et.
+  - [ ] RLS smoke: profiles ortak grup görünürlüğü, monthly stats self/admin, private/public group, chat, report reporter privacy, block, deletion owner-only.
+  - [ ] SQL/Edge sonrası gerçek test hesaplarında regresyon; service role ve token terminal çıktısında redakte.
+- **Veri/Migration etkisi:** Canlı değişiklik ancak kullanıcı açık komutuyla. Her migration'ın rollback/forward-fix planı; destructive rollback yerine veri koruyan forward-fix öncelikli.
+- **RLS/Güvenlik:** En kritik kapı; anon/authA/authB/groupAdmin/superAdmin/service test matrisi. Secret hiçbir MD/log/commit'e girmez.
+- **Edge-case'ler:** Migration kısmen uygulanmış; index zaten var; cron extension yok; Edge eski version; secret mismatch; test account ortak grupta değil; realtime policy cache.
+- **Kabul (ölçülebilir):** Yerel/canlı migration farkı 0; zorunlu Edge versionları eşleşir; unauthorized çağrılar 401/403; RLS matrix expected sonuç %100; cron dry-run tek job üretir; rollback/forward-fix komutları gözden geçirilmiş.
+- **Tuzaklar:** “Dosya var”ı deploy saymak; SQL Editor'a tüm dosyaları tek transaction yapıştırmak; secret'ı kanıt ekranına almak; live testte gerçek kullanıcı verisi kullanmak.
+- **Bağımlılık/çakışma:** Tek ops lane; başka migration/Edge worker aktifken başlamaz.
+- **Dal:** `main` (doküman/script commit; canlı deploy ayrı kullanıcı yetkisi)
+- **Model önerisi:** 🔴 Grok 4.5 — production güvenliği
+
+### WP-122: Play AAB, Target API 36, İmza ve Artefakt Doğrulama 📦
+- **Program/Faz:** Play Store · Faz C — Build/release engineering
+- **Ajan:** —
+- **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-110 + WP-118
+- **Problem:** Play APK yerine AAB, güncel target API, Play App Signing/upload key ve versionCode ister. Mevcut `v29` tag'i WP-104'te; HEAD WP-105–109'u aynı `+29` ile taşıdığı için yeni build numarası zorunlu.
+- **Kapsam dışı:** Production rollout (WP-124); backend deploy (WP-121); mağaza metni (WP-120).
+- **SAHİP dosyalar (yaz):**
+  - `app/android/app/build.gradle.kts` (yalnız compile/target/signing gerekiyorsa)
+  - `app/pubspec.yaml` (yalnız onaylı version bump)
+  - `.github/workflows/play-release.yml` (yeni)
+  - `docs/play-store/PLAY-BUILD-RUNBOOK.md`
+  - release artefakt checksum/provenance çıktıları (binary commit edilmez)
+- **DOKUNMA (oku, değiştirme):** Keystore/key.properties içeriği; GitHub sideload workflow'u WP-110 sözleşmesi dışında; app feature kodu.
+- **Adımlar:**
+  - [ ] Güncel Flutter/AGP/SDK ile effective compileSdk/targetSdk'i build çıktısı ve merged manifestten doğrula. 31 Ağustos 2026 yeni app/update hedefi için API 36 hazırlığını tamamla; API yükseltme regresyonlarını listele.
+  - [ ] Yeni Play adayında versionCode >29 belirle; sürüm numarası ürün kararıdır. Mevcut v29 tag'ini yeniden taşımak/overwrite etmek yasak.
+  - [ ] Play App Signing stratejisi: mevcut release key ile upload key ilişkisi, encrypted iki yedek ve kurtarma sahibi. Keystore'u yeniden üretme/repoya koyma.
+  - [ ] `flutter build appbundle --flavor play --release --dart-define-from-file=env.json` üret; AAB `bundletool` validate, 64-bit ABI, package ID, min/target, version, izinler, debuggable=false, signature/upload cert fingerprint doğrula.
+  - [ ] Obfuscation kullanılacaksa symbols mapping'i private artefakt olarak sakla; Sentry release `version+build` ile eşleşsin.
+  - [ ] CI secret'ları yalnız ephemeral key.properties oluşturur; log redaction; artefakt SHA-256/provenance. Play manifest installer permission kontrolü tekrar.
+  - [ ] Internal track için upload edilebilir aday üret ama kullanıcı istemeden Console upload/tag/push yapma.
+- **Veri/Migration etkisi:** Yok.
+- **RLS/Güvenlik:** Secrets repo/log dışında; signing key kalıcı; artifact SBOM/dependency lisans ve secret scan.
+- **Edge-case'ler:** API36 build tool eksik; Play App Signing ilk enrollment; aynı versionCode; yanlış flavor; beta suffix; key alias yanlış; AAB local install için bundletool gerekir.
+- **Kabul (ölçülebilir):** AAB validate PASS; package ID doğru; versionCode >29; targetSdk 36; 64-bit mevcut; debuggable false; `REQUEST_INSTALL_PACKAGES` yok; imza fingerprint beklenen; analyze + tam test + Play release build yeşil; SHA-256 kayıtlı.
+- **Tuzaklar:** APK yüklemeye çalışmak; v29 tag'ini force etmek; debug key; targetSdk'i varsaymak; env.json'u artefakta/commit'e dahil etmek.
+- **Bağımlılık/çakışma:** `build.gradle`/`pubspec` sıcak; tek başına. WP-123 bu AAB'yi test eder.
+- **Dal:** `main`
+- **Model önerisi:** 🔴 Grok 4.5 — signing/SDK/release riski
+
+### WP-123: Play Kritik Cihaz QA, Erişilebilirlik ve Pre-Launch Kapısı 🧪
+- **Program/Faz:** Play Store · Faz C — Gerçek cihaz kanıtı
+- **Ajan:** —
+- **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-114/116/118/121/122
+- **Problem:** Otomatik test native/OEM, gerçek Supabase, Play install ve kullanıcı yolculuğunun kanıtı değildir. WP-103–109 park maddeleri de aynı aday üzerinde kapatılmalıdır.
+- **Kapsam dışı:** Bulunan P0/P1'i bu WP içinde plansız düzeltmek; production rollout.
+- **SAHİP dosyalar (yaz):**
+  - `docs/play-store/QA-PLAY-ANDROID.md`
+  - `app/integration_test/play_critical_flows_test.dart` ve support fixture'ları
+  - `docs/play-store/PRE-LAUNCH-REPORT.md`
+  - test kanıt indeksleri (PII redakte; büyük video repo dışında)
+- **DOKUNMA (oku, değiştirme):** Ürün kodu. Bug çıkarsa yeni debug WP açılır; bu QA kartı yalnız kanıt/sonuç yazar.
+- **Adımlar:**
+  - [ ] Cihaz matrisi: Android 13/API33; API34; API35; API36; fiziksel Samsung One UI + Pixel/AOSP. Play Internal'dan kurulum ve update; sideload build ile karıştırma.
+  - [ ] Timer/FGS: 20 notification/widget start-stop, 30 dk kilit, process death, reboot, battery restriction, 8 saat epoch sapma; crash/logcat ve çift session 0.
+  - [ ] Alarm: exact izni kabul/ret/revoke, FSI kabul/ret, timezone/time change, reboot, 3 timer, fallback notification; uygulama kapalı.
+  - [ ] Veri: offline 10 dk→sync, iki cihaz, İstanbul 23:59→00:01, presence ≤70 sn, XP profil açmadan, 0034–0038 RLS gerçek hesaplarla.
+  - [ ] Account deletion: in-app/web request, wrong re-auth, pending login, cancel, staging fast-forward hard purge, local wipe ve başka grup üyelerinin veri korunumu.
+  - [ ] UGC: terms, message/profile/group report, block/unblock, admin hide/restore, reporter privacy.
+  - [ ] A11y/perf: TalkBack, font %200, 48 dp, kontrast, reduce motion, tablet/fold layout; cold start, jank, ANR, battery gözlemi.
+  - [ ] Play Pre-launch report/Firebase Test Lab sonuçlarını çalıştır; permission/policy crawler erişimi için reviewer hesabı.
+- **Veri/Migration etkisi:** Test hesapları/fixtures; gerçek kullanıcı verisi yok. QA sonunda test data cleanup runbook'u.
+- **RLS/Güvenlik:** Kanıtlarda e-posta/token/invite code redakte; test service role cihazda yok.
+- **Edge-case'ler:** OEM alarm kısıtı; ağ captive portal; Play Protect; app update sırasında timer; silme cron gecikmesi; reviewer locale EN.
+- **Kabul (ölçülebilir):** P0=0, açık P1=0 veya yazılı ürün waiver; crash/ANR 0; tüm zorunlu satırlarda cihaz/build/tarih/PASS/video yolu; pre-launch critical issue 0; analyze/tam test/AAB aynı committe; Samsung+Pixel kanıtı mevcut.
+- **Tuzaklar:** Emülatörü OEM kanıtı saymak; farklı commit APK test etmek; FAIL'i checkbox ile kapatmak; PII'li video commit etmek.
+- **Bağımlılık/çakışma:** Ürün koduna yazmaz; bulgu yeni numaralı debug WP açar ve WP-124'ü bloklar.
+- **Dal:** `main` (QA docs/tests)
+- **Model önerisi:** 🔴 Grok 4.5 — entegrasyon/kanıt yönetimi
+
+### WP-124: Internal/Closed Test, Soak, GO/NO-GO ve Staged Rollout 🚀
+- **Program/Faz:** Play Store · Faz D — Release gate
+- **Ajan:** —
+- **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-119–123 PASS
+- **Problem:** Teknik AAB'nin production'a basılması release değildir; tester şartı, feedback/telemetry, rollback, staged rollout ve yayın sonrası doğrulama kapısı gerekir.
+- **Kapsam dışı:** Kullanıcı açıkça istemeden Play Console submit/rollout/push/tag; açık P0 ile risk kabulü.
+- **SAHİP dosyalar (yaz):**
+  - `docs/play-store/PLAY-RELEASE-GATE.md`
+  - `docs/play-store/CLOSED-TEST-PLAN.md`
+  - `docs/play-store/SOAK-REPORT.md`
+  - `docs/play-store/PLAY-ROLLBACK.md`
+  - `docs/VERSIONS.md`, `CHANGELOG.md`, `app/assets/release_notes.json` (yalnız GO adayı kesinleşince)
+- **DOKUNMA (oku, değiştirme):** Ürün kodu; Console kullanıcı onayı olmadan; mevcut tag'leri force etme.
+- **Adımlar:**
+  - [ ] Geliştirici hesabı türü/tarihini doğrula. 13 Kasım 2023 sonrası kişisel hesapsa en az 12 tester'ın 14 gün kesintisiz closed test opt-in şartını zorunlu planla; değilse bile proje kalite kapısı olarak ≥3 gün gerçek kullanım soak uygula.
+  - [ ] Önce Internal track: 5–20 güvenilir hesap, reviewer guide, feedback kanalı, crash/ANR, timer/alarm/account deletion/UGC görev listesi.
+  - [ ] Closed track boyunca build değişirse hangi kanıtların yeniden başlayacağını/korunacağını yaz; tester opt-in continuity ve gerçek kullanım geri bildirimini kaydet.
+  - [ ] GO matrisi: legal URL, account deletion, UGC, Data Safety, permissions, backend deploy, AAB, device QA, pre-launch, signing backup, reviewer account, rollback; her satır kanıt linkli.
+  - [ ] Rollback Play'de düşük versionCode APK değildir: dağıtımı durdur, bilinen iyi davranıştan daha yüksek versionCode forward-fix. Server migration için forward-fix/feature disable; destructive down migration yok.
+  - [ ] Production kullanıcı onayı sonrası staged rollout: öneri %10→%25→%50→%100; her aşama en az 24 saat veya yeterli aktif cihaz. Halt: herhangi P0, crash-free eşiği altı, ANR artışı, deletion/moderation güvenlik hatası.
+  - [ ] Yayın sonrası 24/72 saat: install/update, login, timer, alarm, sync, deletion web URL, UGC report queue, Edge cron, Sentry PII audit; “Yayın sonrası doğrulandı” ancak bunlardan sonra.
+  - [ ] GO'da version/release notes tek kaynaklarını güncelle; tag/push/Console eylemi kullanıcı açık emriyle ayrı adım.
+- **Veri/Migration etkisi:** Yeni migration yok; canlı rollout/ops etkisi yüksek. Rollback planı zorunlu.
+- **RLS/Güvenlik:** Reviewer/tester hesapları sınırlı; secrets repo dışı; security regression otomatik NO-GO.
+- **Edge-case'ler:** 12 tester'dan biri opt-out; Console review ek bilgi ister; FGS/FSI declaration reddi; staged rolloutta yalnız OEM crash; server forward-fix gerekir.
+- **Kabul (ölçülebilir):** Zorunlu tüm gate satırları PASS+kanıt; yeni kişisel hesapta 12/12 tester ≥14 kesintisiz gün; soak P0=0/P1=0 veya waiver; rollback artefakt/runbook hazır; production ancak kullanıcı “GO” dediğinde; 72 saat sonrası doğrulama tamam.
+- **Tuzaklar:** Closed test'i “isteğe bağlı” saymak; Internal-only Data Safety istisnasını closed track'e taşımak; %100 tek adım rollout; eski APK'yı rollback sanmak; ürün sahibi onayı olmadan tag/push.
+- **Bağımlılık/çakışma:** Programın son seri kapısıdır; açık debug WP varken başlamaz.
+- **Dal:** `main`
+- **Model önerisi:** 🔴 Grok 4.5 — release/operasyon koordinasyonu
+
+### Play Programı Dalga ve Çakışma Matrisi
+
+| Dalga | Çalışabilecek WP'ler | Seri kısıt / gerekçe |
+|---|---|---|
+| 1 | WP-110 + WP-111 | Ayrık Android dağıtım ve legal/UI yüzeyi; aktif lane yok |
+| 2 | WP-112 | Migration 0037 ve retention kararı tek başına |
+| 3 | WP-113 + WP-114 hazırlığı | Edge ve Flutter ayrık; WP-114 API contract sabitlenince |
+| 4 | WP-115 | Sonraki migration; account deletion migration/Edge ile seri |
+| 5 | WP-116 + WP-117 | Kullanıcı/admin UI ayrık; ARB ortaksa sırala |
+| 6 | WP-118 | Manifest/native sıcak yüzey; WP-110 sonrası tek başına |
+| 7 | WP-119 + WP-121 hazırlığı | Evidence read-only; canlı ops kullanıcı yetkisi ister |
+| 8 | WP-120 + WP-122 | Store içerik ve AAB ayrık; build.gradle yalnız WP-122 |
+| 9 | WP-123 | Tek aday commit üzerinde cihaz/pre-launch kanıtı |
+| 10 | WP-124 | Son GO/NO-GO, closed test ve rollout |
+
+> ✅ **Aktif-lane kontrolü (2026-07-17):** Gemini, Claude, Codex ve Grok uygulama lane'leri boşta; yalnız bu planner doküman lane'i aktiftir. Parktaki WP-103–109 çakışma sayılmaz. `OPTIMIZATIONS.md` kullanıcıya ait dirty dosyadır ve bu program commitine alınmaz.
+>
+> ⚠️ **Ürün kararları:** (1) WP-66 §0 retention varsayılanları, (2) legal site domain/iletişim kimliği, (3) hedef kitle 13+/16+, (4) Play Console'da alarmı core functionality olarak savunma veya safe fallback, (5) geliştirici hesap türü/tarihi. Bunlar planı engellemez; ilgili WP başlamadan kullanıcı onayı gerekir.
+
 ## Test için bekleyenler
 
 > Kod/otomatik test bitti; **cihaz QA veya ürün demo’su** bekleniyor.
@@ -353,6 +860,11 @@
 ### WP-106: watchMembers Map + index (kod tamam) 🧹
 - **Özet:** Map eşleştirme; migration `0034_group_members_active_index.sql`.
 - **Beklenen:** SQL Editor’da 0034 uygula (`CONCURRENTLY` tek statement).
+
+### WP-107: Manuel oturum İstanbul gün sınırı + UTC yazım (kod tamam) 🕛
+- **Commit:** `110ec21`
+- **Özet:** Manuel oturum duvar saati `Europe/Istanbul` takviminde kurulur; repository payload'ı UTC ISO-8601 yazar.
+- **Beklenen:** İstanbul dışı cihaz TZ'sinde 23:59→00:01 sınırı doğru güne düşer; Supabase satırı UTC `Z` ile saklanır (`Cihazda/canlıda doğrulanmalı`).
 
 ### WP-108: Aylık rapor retry + cron (kod tamam) 📧
 - **Commit:** `5b45fd0`

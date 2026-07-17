@@ -31,7 +31,7 @@ Uygulama **ürün olarak olgun** (sayaç, grup, istatistik, widget, alarm, l10n,
 | Gizlilik / KVKK / Data safety | 🔴 Yüksek | Politika URL’si + silme + form |
 | Kararlılık (cihaz) | 🟠 Orta–Yüksek | WP-103 kodda; **cihaz QA yok** |
 | Güvenlik (sunucu) | 🟡 Orta | 0035–0036 **kodda**; prod’a uygulanmış mı bilinmiyor |
-| İçerik / UGC | 🟡 Orta | Sınıf sohbeti + açık grup |
+| İçerik / UGC | 🔴 Yüksek | Sınıf sohbeti + açık grup var; raporla/engelle/koşul kabulü/moderasyon eksik |
 | Teknik kalite / test | 🟢 Orta–İyi | Geniş test paketi; tam CI/soak belirsiz |
 | Mağaza listesi / varlıklar | ⚪ Bilinmiyor | Repo dışında |
 
@@ -82,7 +82,7 @@ Kaynak: `AndroidManifest.xml` (`Kodda doğrulandı`).
 | `INTERNET` | Supabase, güncelleme | Düşük | Data safety’de ağ |
 | `POST_NOTIFICATIONS` | Sayaç, alarm, dürtme | Orta | Runtime istek + gerekçe metni |
 | **`REQUEST_INSTALL_PACKAGES`** | GitHub APK kur | **🔴 Bloklayıcı** | Play build’de **kaldır**; updater’ı Play In-App Updates veya “Mağazada güncelle” linki yap |
-| `FOREGROUND_SERVICE` + `DATA_SYNC` + **`SPECIAL_USE`** | Uzun sayaç bildirimi | **🔴 Form zorunlu** | Console: FGS declaration; specialUse gerekçesi (kullanıcı başlatmalı çalışma sayacı) |
+| `FOREGROUND_SERVICE` + `DATA_SYNC` + **`SPECIAL_USE`** | Uzun sayaç bildirimi | **🔴 Uygunluk + form + video** | WP-118: temel işlev uygunluğunu/fallback'i kanıtla; Console açıklaması, kesinti etkisi ve demo video hazırla |
 | `WAKE_LOCK` | FGS | Düşük–orta | Gerekçe FGS ile |
 | `RECEIVE_BOOT_COMPLETED` | Alarm/timer restore | Orta | Boot receiver dar tut (mevcut `exported=false` iyi) |
 | **`SCHEDULE_EXACT_ALARM` + `USE_EXACT_ALARM`** | Saat alarm | **🔴** | USE_EXACT_ALARM yalnız alarm saati / takvim sınıfı; gerekçe + form. Aksi yalnız SCHEDULE + kullanıcı ayarı |
@@ -346,7 +346,7 @@ Play review doğrudan “yavaş” diye reddetmez; 1★ yorum üretir.
 
 - [ ] AAB (APK değil tercih)  
 - [ ] 64-bit  
-- [ ] targetSdk güncel (Flutter default — build log’da doğrula; genelde 34/35)  
+- [ ] effective targetSdk **API 36** (31 Ağustos 2026 yeni uygulama/güncelleme takvimi; merged manifest/build çıktısında doğrula)
 - [ ] Play App Signing (Google managed) — keystore stratejisi  
 - [ ] Internal → Closed → Production basamak  
 - [ ] Pre-launch report (Firebase Test Lab)  
@@ -371,37 +371,36 @@ Play review doğrudan “yavaş” diye reddetmez; 1★ yorum üretir.
 
 ### Faz A — Politika bloklayıcıları (yayın yok)
 
-1. Hesap silme (in-app + web) — WP-66 implement  
-2. Gizlilik politikası + uygulama içi link  
-3. Play build: **GitHub APK updater OFF** + `REQUEST_INSTALL_PACKAGES` kaldır  
-4. Data safety formu (dürüst)  
-5. FGS specialUse + exact alarm + FSI Console beyanları  
-6. Battery optimization: agresif prompt’u yumuşat  
+1. **WP-110** — Play/sideload kanal ayrımı; Play build'de GitHub APK updater OFF ve `REQUEST_INSTALL_PACKAGES` yok.
+2. **WP-111** — Gizlilik politikası, kullanım koşulları, topluluk kuralları ve uygulama içi canlı linkler.
+3. **WP-112 → WP-113 → WP-114** — retention kararı, veri sözleşmesi, hard-delete pipeline, uygulama içi + web hesap silme.
+4. **WP-115 → WP-116; WP-117** — UGC raporlama/engelleme/koşul kabulü, kullanıcı arayüzü ve admin moderasyon/audit.
+5. **WP-118** — FGS/exact alarm/FSI/battery optimization/exported component uygunluğu ve güvenli fallback.
 
 ### Faz B — Prod güvenlik/ops
 
-1. 0034, 0035, 0036 SQL  
-2. Edge deploy + `CRON_SECRET` + GUC  
-3. RLS smoke (profiles, monthly stats, group admin)  
+1. **WP-119** — Koddan türetilmiş veri envanteri, Data Safety ve Sentry beyan kanıtı.
+2. **WP-120** — Store listing, App Content formları, hedef kitle/rating, permission declarations ve reviewer hesabı.
+3. **WP-121** — 0034–0038+ migration sırası, Edge deploy, `CRON_SECRET`/GUC ve RLS smoke. Canlı mutasyon açık kullanıcı onayı ister.
+4. **WP-122** — versionCode `29`dan büyük, target API 36, imzalı ve provenance kaydı olan Play AAB.
 
 ### Faz C — Kararlılık kanıtı
 
-1. API 33 + Samsung + Pixel: sayaç / widget / alarm / offline  
-2. WP-103/104/105 cihaz tik  
-3. Pre-launch report 0 crash  
+1. **WP-123** — API 33–36, Samsung + Pixel: sayaç/widget/alarm/offline, hesap silme, UGC ve erişilebilirlik uçtan uca QA.
+2. WP-103–109 için bekleyen cihaz/canlı backend kabul kanıtlarını aynı turda kapat.
+3. Pre-launch report: P0/P1 ve startup/ANR/crash bloklayıcısı 0.
 
 ### Faz D — Soft launch
 
-1. Internal testing (güvenilir 5–20 hesap)  
-2. Closed testing 14+ gün (isteğe bağlı ama yorum kalitesi)  
-3. Production staged rollout %20  
+1. **WP-124** — Internal testing, ölçümlü soak ve GO/NO-GO dosyası.
+2. Geliştirici hesabı 13 Kasım 2023 sonrası açılmış kişisel hesapsa Play production erişimi için **en az 12 tester + kesintisiz 14 gün closed test zorunludur**; diğer hesaplarda da risk bazlı closed test önerilir.
+3. Açık ürün sahibi GO kararı sonrası staged rollout; başlangıç yüzdesi ve durdurma eşikleri WP-124'te belirlenir.
 
 ### Faz E — Sonra
 
-1. UGC raporlama  
-2. Session duration server cap (S1)  
-3. Avatar private  
-4. Play In-App Updates  
+1. Session duration server cap (S1)
+2. Avatar private
+3. Play In-App Updates (yalnız Play kanalı için; self-update geri getirilmez)
 
 ---
 
@@ -422,7 +421,7 @@ Play review doğrudan “yavaş” diye reddetmez; 1★ yorum üretir.
 | Demo hesap (reviewer) | Çalışır | ❓ |
 
 **Özet karar önerisi:** **NO-GO Play production** — Internal testing, A fazı bitmeden açılmamalı.  
-Kapalı beta (sideload / beta package) politikası Play’den farklıdır; karıştırma.
+Sideload beta Play dışı dağıtımdır. Play Console internal/closed track'e yüklenen her artefakt ise Play politikalarına tabidir; “beta” etiketi politika muafiyeti sağlamaz.
 
 ---
 
@@ -441,7 +440,25 @@ Eksik hesap silme review’ı da engelleyebilir.
 
 ---
 
-## 15) Bu taramanın sınırları
+## 15) Resmî politika dayanakları (2026-07-17 doğrulaması)
+
+| Konu | Google Play resmî kaynak | Bu programdaki karşılığı |
+|---|---|---|
+| Hesap silme | https://support.google.com/googleplay/android-developer/answer/13327111 | WP-112–114 |
+| `REQUEST_INSTALL_PACKAGES` | https://support.google.com/googleplay/android-developer/answer/12085295 | WP-110 |
+| Foreground service / FSI beyanı | https://support.google.com/googleplay/android-developer/answer/13392821 | WP-118/120 |
+| UGC güvenliği | https://support.google.com/googleplay/android-developer/answer/9876937 | WP-111/115–117 |
+| Data Safety | https://support.google.com/googleplay/android-developer/answer/10787469 | WP-119 |
+| Gizlilik politikası | https://support.google.com/googleplay/android-developer/answer/10144311 | WP-111/119 |
+| Kişisel hesap closed-test koşulu | https://support.google.com/googleplay/android-developer/answer/14151465 | WP-124 |
+| Target API takvimi | https://support.google.com/googleplay/android-developer/answer/11926878 | WP-122 |
+| Fotoğraf/video izinleri | https://support.google.com/googleplay/android-developer/answer/14115180 | WP-118/119 |
+
+Politikalar değişebildiği için WP-120 ve WP-124 başında bu sayfalar yeniden kontrol edilir; bu tarihli tarama submit gününün yerine geçmez.
+
+---
+
+## 16) Bu taramanın sınırları
 
 - Play Console mevcut form durumuna bakılmadı.  
 - Canlı Supabase şema dump’ı yok (migration dosyası ≠ deploy).  
@@ -451,7 +468,7 @@ Eksik hesap silme review’ı da engelleyebilir.
 
 ---
 
-## 16) Hızlı referans — dosyalar
+## 17) Hızlı referans — dosyalar
 
 | Konu | Dosya |
 |---|---|
@@ -467,4 +484,4 @@ Eksik hesap silme review’ı da engelleyebilir.
 
 ---
 
-*Rapor sonu. Kod / commit / build yok. Play submit öncesi Faz A + C zorunlu kabul edilmeli.*
+*Rapor sonu. Uygulama kodu / build / Play submission yok. Ayrıntılı uygulama planı `progress.md` içindeki WP-110–124 kartlarıdır.*

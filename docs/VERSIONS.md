@@ -5,7 +5,9 @@ Bu dosya ürün tarafındaki okunur sürüm indeksidir. Ayrıntılı değişikli
 
 | Kanal | Tag | Uygulama sürümü | Durum | Kısa not |
 |---|---:|---:|---|---|
-| geliştirme | — | 1.0.29+29 | Etiket/yayın yok · Play NO-GO | WP-103–109 sonrası mevcut kod; production kararı verilmedi |
+| geliştirme | — | 1.0.29+29 | `v29` tag'inden ileride · Play NO-GO | `main`, WP-105–109'u içeriyor fakat build numarası hâlâ 29; bir sonraki dağıtımda versionCode artmalı |
+| stable | v29 | 1.0.29+29 | Yerel Git etiketi WP-104 commitinde | Tag `ff369e3`; mevcut `main` ile aynı kod değildir, tag taşınmaz/üzerine yazılmaz |
+| beta | beta-v29 | 1.0.29+29 | Yerel Git etiketi WP-104 commitinde | `v29` ile aynı commit; sonraki beta yeni build numarası kullanır |
 | stable | v28 | 1.0.28+28 | Git etiketi mevcut | v28 / beta-v28 sürüm numarası |
 | stable | v27 | 1.0.27+27 | Git etiketi mevcut | Saat başına XP ve EN/TR sürüm notları |
 | stable | v22 | 1.0.22+22 | Git etiketi mevcut | Cihaz QA bekleyen yayın hattı |
@@ -36,6 +38,7 @@ Bu dosya ürün tarafındaki okunur sürüm indeksidir. Ayrıntılı değişikli
 
 ## Bildirim sınırı
 
-Güncelleme bildirimi FCM/push değildir. Uygulama açılışında GitHub Releases
-kontrol edilir; yeni APK varsa uygulama içi güncelleme penceresi gösterilir.
-Android sistem bildirimine dönüştürülmez.
+Güncelleme bildirimi FCM/push değildir. Sideload kanalında uygulama açılışında
+GitHub Releases kontrol edilebilir ve yeni APK için uygulama içi pencere gösterilebilir.
+**Play kanalında GitHub APK indirme/kurma tamamen kapalıdır**; güncelleme Play Store
+üzerinden yapılır (WP-110). Android sistem bildirimine dönüştürülmez.

@@ -148,19 +148,34 @@ değildir; sadelik, güvenilirlik ve iyi kullanıcı deneyimi önceliklidir.
 | 0004 | `group_admin.sql` | Admin işlemleri RLS |
 | 0005 | `daily_goal.sql` | `profiles.daily_goal_minutes` |
 | 0006 | `group_goal.sql` | `groups.daily_goal_minutes` |
+| 0007 | `group_daily_totals.sql` | İlk grup günlük toplam RPC'si |
 | 0008 | `membership_lifecycle.sql` | `group_members.left_at` + `is_group_member` güncelleme + UPDATE politikaları |
 | 0009 | `session_visibility.sql` | `can_see_user_sessions` helper |
 | 0010 | `drop_session_group_id.sql` | `study_sessions.group_id` DROP (sıra: politika → index → kolon) |
 | 0011 | `group_daily_totals_v2.sql` | RPC v2 (üyelik pencereli join) |
+| 0012 | `group_join_hardening.sql` | Grup katılımı/RLS sertleştirmesi |
 | 0013 | `presence_membership_hardening.sql` | Presence yazma RLS'i |
+| 0014 | `profile_animal.sql` | Profil hayvanı alanı |
+| 0015 | `class_chat.sql` | Sınıf mesajlaşma tablosu ve politikaları |
+| 0016 | `nudges.sql` | Dürtme verisi ve erişim politikaları |
+| 0017 | `gamification_profiles.sql` | Oyunlaştırma profil alanları |
 | 0018 | `admin_feedback.sql` | Süper-admin, geri bildirim ticket'ları ve admin RPC'leri |
-| 0019 | `feedback_attachments.sql` | Planlandı: private geri bildirim görsel eki + Storage RLS |
-| 0020 | `super_admin_operations.sql` | Planlandı: admin audit kaydı ve sunucu-güvenli kullanıcı işlemleri desteği |
-| 0021 | `admin_operations.sql` | Planlandı: grup moderasyonu, duyurular ve iç rapor notları |
-| 0022 | `social_profile_progression.sql` | Planlandı: XP/taç, aşamalı başarı ve profil vitrini RLS'i |
-| 0023 | `notification_center.sql` | Planlandı: bildirim merkezi tercih/veri desteği |
+| 0019 | `feedback_attachments.sql` | Private geri bildirim görsel eki + Storage RLS |
+| 0020 | `super_admin_operations.sql` | Admin audit ve sunucu-güvenli kullanıcı işlemleri |
+| 0021 | `admin_operations.sql` | Grup moderasyonu, duyurular ve iç rapor notları |
+| 0022 | `social_profile_progression.sql` | XP/taç, aşamalı başarı ve profil vitrini RLS'i |
+| 0023 | `notification_center.sql` | Bildirim merkezi tercih/veri desteği |
+| 0024–0028 | `achievements_*.sql`, `crown_*.sql`, `xp_reset_*.sql` | Server-authoritative XP ledger, sosyal metrik, taç kademeleri ve genel açılış reset'i |
+| 0029 | `admin_panel_fixes.sql` | Admin paneli veri/işlem düzeltmeleri |
+| 0030 | `monthly_report_infrastructure.sql` | Aylık rapor işleri ve cron altyapısı |
+| 0031 | `user_study_summary.sql` | Kullanıcı çalışma özeti |
+| 0032 | `public_group_discovery.sql` | Güvenli public grup keşif/katılım RPC ve RLS'i |
+| 0033 | `study_hour_xp_50.sql` | Saat başına 50 XP olay sözleşmesi |
+| 0034 | `group_members_active_index.sql` | Aktif grup üyeliği partial index'i |
+| 0035 | `cron_report_url_fix.sql` | Rapor cron URL/secret sözleşmesi |
+| 0036 | `security_hardening.sql` | Edge/RPC/profil erişimi güvenlik sertleştirmesi |
 
-> Not: 0007 ve 0012 atlanmış (iptal edilen/kullanılmayan migration'lar).
+> **Deploy gerçeği:** Bu tablo yerel migration envanteridir; canlı Supabase'e uygulanmış olmayı kanıtlamaz. Özellikle `0034–0036` ve ilişkili Edge Function/secret durumu WP-121 operasyon kapısında uzlaştırılır. Yeni migration numarası mevcut en yüksek yerel dosyadan sonra verilir.
 
 ---
 
@@ -168,6 +183,7 @@ değildir; sadelik, güvenilirlik ve iyi kullanıcı deneyimi önceliklidir.
 
 | Tarih | Karar |
 |---|---|
+| **Tem 17** | **Google Play production programı WP-110–124 olarak planlandı.** Play build'i GitHub APK self-update/`REQUEST_INSTALL_PACKAGES` davranışından ayrılır; hesap silme, UGC güvenliği, yasal metinler, kısıtlı izin uygunluğu, Data Safety, backend deploy, target API 36 AAB ve gerçek cihaz/track kanıtları tamamlanmadan production GO verilmez. Her submission/rollout ayrıca açık kullanıcı onayı ister. |
 | Haz 20 | Proje başlatıldı. Stack: Flutter + Supabase. Giriş: e-posta/şifre. iOS kapsam dışı. |
 | Haz 21 | Avatar'lar public Supabase Storage bucket'ında. Profil çekimi başarısızsa kullanıcı dışarı atılmaz. |
 | Haz 21 | Mola butonu KALDIRILDI — sade Başlat/Durdur. Durum: çalışıyor / çevrimdışı. |
