@@ -71,15 +71,15 @@
 - **Not:** Play Store production programı WP-110–124 olarak planlandı; kanonik belgeler hizalandı. `OPTIMIZATIONS.md` kapsam dışı bırakıldı.
 
 ### Grok Lane
-- **Durum:** [x] Boşta
-- **Faz/WP:** —
-- **Aşama:** —
-- **SAHİP yollar:** —
-- **Ortak/riskli yüzey:** —
+- **Durum:** [~] Aktif
+- **Faz/WP:** WP-138 → WP-139 (sürüm notları + l10n denetim)
+- **Aşama:** Geliştiriliyor
+- **SAHİP yollar:** `app/assets/release_notes.json`, `CHANGELOG.md`, `app/test/features/release_notes_test.dart`, `app/lib/l10n/app_*.arb`, `docs/l10n/**`, native `values*/strings.xml` (string only)
+- **Ortak/riskli yüzey:** ARB
 - **Dal:** main
-- **Başlangıç:** —
+- **Başlangıç:** 2026-07-17 (Europe/Istanbul)
 - **Son güncelleme:** 2026-07-17 (Europe/Istanbul)
-- **Not:** WP-134–137 kod commit (`479b2a8`…`1f4f4d6`); Test için bekliyor. Push yok.
+- **Not:** WP-134–137 cihaz QA'ya dokunulmaz; push yok.
 
 
 ---

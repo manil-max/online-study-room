@@ -3,6 +3,104 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.30",
+      "buildNumber": 30,
+      "channel": "stable",
+      "date": "2026-07-17",
+      "title": "v30 (taslak): Play hazırlık, güvenlik ve sayaç yüzeyi",
+      "highlights": [
+        "Hesap silme: istek + 14 gün bekleme + planlı kalıcı silme (Ayarlar → Hesap).",
+        "UGC: sohbet ve profilde Bildir / Engelle; Ayarlar'da engellenen kullanıcılar listesi ve engeli kaldır.",
+        "Gizlilik ve yasal merkez: politikalar, topluluk kuralları, telemetri tercihi.",
+        "1×1 sayaç widget'ında canlı HH:MM:SS her boyutta görünür; Başlat/Durdur ile senkron.",
+        "Sayaç bildirimi (P2): akan süre + Başlat/Durdur ve Mola; widget/bildirim/uygulama aynı durumdan türer."
+      ],
+      "fixes": [
+        "Engelleme sonrası mesaj ve kamp ateşi gizlenir; engel kalkınca geri gelir.",
+        "Sayaç durumu yazımları senkron; durdurunca 00:00:00'a sıfırlanır.",
+        "Play flavor derlemesinde sideload güncelleyici kapalı kalır (define unutulsa bile)."
+      ],
+      "notes": [
+        "Sürüm numarası 1.0.30+30 taslaktır; release kapısında kesinleşir (pubspec şu an 1.0.29+29).",
+        "Play production için 0037/0038 migration, Edge deploy ve cihaz QA hâlâ ops listesinde."
+      ],
+      "titleEn": "v30 (draft): Play prep, safety, and timer surfaces",
+      "highlightsEn": [
+        "Account deletion: request + 14-day grace + scheduled hard delete (Settings → Account).",
+        "UGC: Report / Block from chat and profile; blocked-users list with Unblock in Settings.",
+        "Privacy & legal center: policies, community guidelines, telemetry preference.",
+        "1×1 timer widget shows live HH:MM:SS at every size; Start/Stop stay in sync.",
+        "Timer notification (P2): running time plus Start/Stop and Break; widget, notification, and app share one state."
+      ],
+      "fixesEn": [
+        "After a block, messages and campfire presence hide; they return when unblocked.",
+        "Timer state writes are synchronous; stop resets the display to 00:00:00.",
+        "Play flavor builds keep the sideload updater off even if DISTRIBUTION_CHANNEL is omitted."
+      ],
+      "notesEn": [
+        "Version 1.0.30+30 is draft; the release gate finalizes the number (pubspec is still 1.0.29+29).",
+        "Play production still needs 0037/0038 migrations, Edge deploy, and device QA on the ops list."
+      ]
+    },
+    {
+      "versionName": "1.0.29",
+      "buildNumber": 29,
+      "channel": "stable",
+      "date": "2026-07-16",
+      "title": "v29: Android ≤13 sayaç çökmesi düzeltmesi",
+      "highlights": [
+        "Android 10–13 cihazlarda kronometre başlat/durdur uygulamanın kapanmasına yol açan FGS tip uyumsuzluğu giderildi.",
+        "Sayaç servisi API 29–33'te dataSync, 34+'da specialUse kullanır; manifest her ikisini de beyan eder."
+      ],
+      "fixes": [
+        "IllegalArgumentException / RemoteServiceException ile süreç öldüren specialUse-only beyan düzeltildi (WP-103)."
+      ],
+      "notes": [
+        "Not 20, A51 ve diğer API 33 cihazlarda sayaç başlat → arka plan → durdur dene; çökme olmamalı."
+      ],
+      "titleEn": "v29: Android ≤13 timer crash fix",
+      "highlightsEn": [
+        "Fixed the FGS type mismatch that crashed the app when starting/stopping the stopwatch on Android 10–13.",
+        "The timer service uses dataSync on API 29–33 and specialUse on 34+; the manifest declares both."
+      ],
+      "fixesEn": [
+        "specialUse-only declaration that caused IllegalArgumentException / RemoteServiceException process kills is fixed (WP-103)."
+      ],
+      "notesEn": [
+        "On Note 20, A51, and other API 33 devices: start timer → background → stop; there should be no crash."
+      ]
+    },
+    {
+      "versionName": "1.0.28",
+      "buildNumber": 28,
+      "channel": "stable",
+      "date": "2026-07-16",
+      "title": "v28: gece yarısı saat kartı ve hızlı yenileme",
+      "highlights": [
+        "Gece yarısından sonra ana sayfa saat kartı dünün süresini dondurmaz; Istanbul gününe göre bugün 0'dan başlar.",
+        "Aşağı çekerek yenileme kritik veriyi ~2 sn içinde bitirir; sonsuz dönen spinner engellendi."
+      ],
+      "fixes": [
+        "StudyTimerCard freeze yalnız aynı Europe/Istanbul gününde geçerli (WP-102 / gece yarısı fix).",
+        "Pull-to-refresh dar kritik liste + kısa timeout (oturum, özet, grup, presence)."
+      ],
+      "notes": [
+        "Gece yarısı sonrası Ana Sayfa saat toplamını ve bir ekranda aşağı çekerek yenilemeyi dene."
+      ],
+      "titleEn": "v28: midnight home timer and faster refresh",
+      "highlightsEn": [
+        "After midnight the home timer card no longer freezes yesterday's total; it follows the Istanbul calendar day from 0.",
+        "Pull-to-refresh finishes critical data in about 2 seconds; infinite spinners are blocked."
+      ],
+      "fixesEn": [
+        "StudyTimerCard freeze only applies within the same Europe/Istanbul day (WP-102 / midnight fix).",
+        "Pull-to-refresh uses a short timeout on a narrow critical set (sessions, summary, group, presence)."
+      ],
+      "notesEn": [
+        "After midnight check the home timer total and pull-to-refresh on one screen."
+      ]
+    },
+    {
       "versionName": "1.0.27",
       "buildNumber": 27,
       "channel": "stable",

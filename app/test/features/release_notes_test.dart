@@ -101,6 +101,37 @@ void main() {
       expect(en.title, 'Sadece TR');
       expect(en.highlights, ['A']);
     });
+
+    test('bundled asset includes v28, v29 and staged v30 with EN fields', () async {
+      // TestWidgetsFlutterBinding + rootBundle → assets/release_notes.json
+      final service = ReleaseNotesService(preferences: prefs);
+      final notes = await service.loadBundledNotes();
+      final byBuild = {for (final n in notes) n.buildNumber: n};
+      expect(byBuild.containsKey(28), isTrue);
+      expect(byBuild.containsKey(29), isTrue);
+      expect(byBuild.containsKey(30), isTrue);
+
+      final v29 = byBuild[29]!;
+      expect(v29.titleEn, isNotEmpty);
+      expect(v29.highlightsEn, isNotEmpty);
+      final en = v29.forLocale(const Locale('en'));
+      expect(en.title, v29.titleEn);
+      final tr = v29.forLocale(const Locale('tr'));
+      expect(tr.title, v29.title);
+
+      final v30 = byBuild[30]!;
+      expect(
+        v30.notes.any(
+          (n) =>
+              n.toLowerCase().contains('taslak') ||
+              n.toLowerCase().contains('release'),
+        ),
+        isTrue,
+      );
+      expect(v30.titleEn.toLowerCase(), contains('draft'));
+      final de = v30.forLocale(const Locale('de'));
+      expect(de.title, v30.titleEn); // non-tr → EN
+    });
   });
 
   group('ReleaseNotesScreen', () {

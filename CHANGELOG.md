@@ -4,6 +4,65 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [v30 / 1.0.30+30 — TASLAK] - 2026-07-17
+
+> **Taslak — release kapısında numara kesinleşir.** `pubspec` şu an `1.0.29+29`.
+> İçerik: Play hazırlık, UGC güvenlik, widget/panel senkronu (WP-110–137 özeti).
+
+### Highlights
+- **Hesap silme:** istek + 14 gün grace + planlı hard-delete (Ayarlar → Hesap).
+- **UGC:** Bildir / Engelle (sohbet, profil); engellenen kullanıcılar listesi.
+- **Yasal merkez:** gizlilik, topluluk kuralları, telemetri tercihi.
+- **1×1 sayaç widget:** canlı HH:MM:SS her boyutta; Başlat/Durdur senkron.
+- **Sayaç bildirimi P2:** akan süre + Başlat/Durdur + Mola; tek durum kaynağı.
+
+### Fixes
+- Engelleme mesaj/kamp ateşini gizler; unblock sonrası geri gelir.
+- Sayaç yazımları senkron `commit`; durdurunca 00:00:00.
+- Play flavor’da sideload updater define unutulsa bile kapalı.
+
+### Notes
+- Sürüm no release gate’te kesinleşir. Production: 0037/0038, Edge, cihaz QA.
+
+## [v29 / 1.0.29+29] - 2026-07-16
+
+> **Stable — Android ≤13 sayaç FGS çökmesi (WP-103).**
+
+### Highlights
+- Android 10–13’te kronometre başlat/durdur uygulama kapanması giderildi.
+- Servis API 29–33 `dataSync`, 34+ `specialUse`; manifest `dataSync|specialUse`.
+
+### Fixes
+- specialUse-only beyan + DATA_SYNC runtime uyumsuzluğu (IllegalArgumentException).
+
+### Notes
+- API 33: başlat → arka plan → durdur; 0 çökme.
+
+## [v28 / 1.0.28+28] - 2026-07-16
+
+> **Stable — gece yarısı saat kartı + hızlı pull-to-refresh.**
+
+### Highlights
+- Gece yarısından sonra Ana Sayfa dünün süresini dondurmaz (Europe/Istanbul gün).
+- Aşağı çekerek yenileme kritik veriyi ~2 sn içinde bitirir.
+
+### Fixes
+- StudyTimerCard freeze yalnız aynı Istanbul gününde (WP-102).
+- Pull-to-refresh dar kritik liste + kısa timeout.
+
+### Notes
+- Gece yarısı sonrası saat toplamı + bir ekranda pull-to-refresh.
+
+## [v27 / 1.0.27+27] - 2026-07-15
+
+> **Stable — saat başına 50 XP + senkron güvenilirliği (WP-100/101).**  
+> Ayrıntı: `release_notes.json` v27 girdisi.
+
+### Highlights
+- Her tamamlanan çalışma saati 50 XP (önceden 10).
+- Manuel süre ekleme ana sayfa toplamını hemen günceller.
+- Pull-to-refresh timeout; widget start presence yeniden yazımı.
+
 ## [beta-v26 / 1.0.26+26] - 2026-07-15
 
 > **Beta — tercihler, açılış bildirimleri ve uygulama dili düzeltmeleri.**
