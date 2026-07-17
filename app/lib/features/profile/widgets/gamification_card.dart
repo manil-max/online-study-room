@@ -2,10 +2,13 @@ import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/stats/level_curve.dart';
 import '../../../core/stats/progression_visuals.dart';
+import '../../../core/stats/study_stats.dart';
 import '../../../core/utils/duration_format.dart';
 import '../../../data/providers/auth_providers.dart';
 import '../../../data/providers/gamification_providers.dart';
+import '../../../data/providers/study_providers.dart';
 import '../social_profile_screen.dart';
 
 /// Profil özeti: XP, taç, seri. Klasik başarımlar burada listelenmez —
@@ -39,7 +42,19 @@ class GamificationCard extends ConsumerWidget {
                   style: theme.textTheme.bodyMedium,
                 );
               }
-              return _SummaryContent(summary: summary);
+              final sessions =
+                  ref.watch(userSessionsProvider).asData?.value ?? const [];
+              final now = DateTime.now();
+              final todaySec = secondsOnDay(sessions, now);
+              final weekSec =
+                  totalSeconds(inRange(sessions, startOfWeek(now), now));
+              return _SummaryContent(
+                summary: summary,
+                quests: buildQuestStatuses(
+                  todaySeconds: todaySec,
+                  weekSeconds: weekSec,
+                ),
+              );
             },
             loading: () => Center(child: CircularProgressIndicator()),
             error: (error, stackTrace) => Text(
@@ -54,9 +69,10 @@ class GamificationCard extends ConsumerWidget {
 }
 
 class _SummaryContent extends StatelessWidget {
-  const _SummaryContent({required this.summary});
+  const _SummaryContent({required this.summary, required this.quests});
 
   final GamificationSummary summary;
+  final List<QuestStatus> quests;
 
   @override
   Widget build(BuildContext context) {
@@ -65,6 +81,9 @@ class _SummaryContent extends StatelessWidget {
     final rank = summary.profile.crownRank;
     final rankColor = crownColorFor(rank, theme.colorScheme);
     final bar = xpBarMetrics(summary.profile.xp);
+    final lvl = levelProgress(summary.profile.xp);
+    final frameUnlocked =
+        isFrameUnlocked(xp: summary.profile.xp, requiredLevel: 3);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -81,6 +100,10 @@ class _SummaryContent extends StatelessWidget {
             ),
             Chip(
               visualDensity: VisualDensity.compact,
+              label: Text(l10n.profileLevel(lvl.level)),
+            ),
+            Chip(
+              visualDensity: VisualDensity.compact,
               avatar: Icon(
                 Icons.workspace_premium_outlined,
                 size: 18,
@@ -92,11 +115,34 @@ class _SummaryContent extends StatelessWidget {
           ],
         ),
         SizedBox(height: 10),
+        // WP-154: seviye çubuğu (türetilmiş; XP server-authoritative kalır)
+        Text(
+          l10n.profileLevel(lvl.level),
+          style: theme.textTheme.labelMedium,
+        ),
+        SizedBox(height: 4),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(6),
+          child: LinearProgressIndicator(
+            value: lvl.progress,
+            minHeight: 8,
+            color: theme.colorScheme.tertiary,
+            backgroundColor: theme.colorScheme.surfaceContainerHighest,
+          ),
+        ),
+        SizedBox(height: 4),
+        Text(
+          '${summary.profile.xp} XP → ${lvl.nextXp}',
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        SizedBox(height: 8),
         ClipRRect(
           borderRadius: BorderRadius.circular(6),
           child: LinearProgressIndicator(
             value: bar.progress,
-            minHeight: 8,
+            minHeight: 6,
             color: rankColor,
             backgroundColor: theme.colorScheme.surfaceContainerHighest,
           ),
@@ -109,6 +155,40 @@ class _SummaryContent extends StatelessWidget {
           ),
         ),
         SizedBox(height: 12),
+        Text(l10n.profileQuests, style: theme.textTheme.titleSmall),
+        SizedBox(height: 6),
+        for (final q in quests)
+          ListTile(
+            dense: true,
+            contentPadding: EdgeInsets.zero,
+            leading: Icon(
+              q.done ? Icons.check_circle : Icons.radio_button_unchecked,
+              color: q.done
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.outline,
+            ),
+            title: Text(switch (q.id) {
+              QuestId.dailyLogin => l10n.questDailyLogin,
+              QuestId.weeklyFiveHours => l10n.questWeeklyHours,
+            }),
+            trailing: Text(
+              q.done ? l10n.questClaimed : '${q.progress}/${q.target}',
+              style: theme.textTheme.labelSmall,
+            ),
+          ),
+        ListTile(
+          dense: true,
+          contentPadding: EdgeInsets.zero,
+          leading: Icon(
+            frameUnlocked ? Icons.portrait : Icons.lock_outline,
+          ),
+          title: Text(l10n.cosmeticsFrame),
+          trailing: Text(
+            frameUnlocked ? l10n.cosmeticsUnlocked : l10n.questLocked,
+            style: theme.textTheme.labelSmall,
+          ),
+        ),
+        SizedBox(height: 8),
         Wrap(
           spacing: 8,
           runSpacing: 8,

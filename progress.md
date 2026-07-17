@@ -79,7 +79,7 @@
 - **Dal:** main
 - **Başlangıç:** —
 - **Son güncelleme:** 2026-07-18 (Europe/Istanbul)
-- **Not:** WP-151–153 park. Sırada 154+.
+- **Not:** WP-151–154 park. Sırada 155+QA+Play.
 
 
 ---
@@ -157,7 +157,7 @@
 | WP-151 | [~] Test için bekliyor | Onboarding 4 adım skip/izin/grup | Cihazda doğrulanmalı |
 | WP-152 | [~] Test için bekliyor | Veri dışa aktarma JSON | Cihazda doğrulanmalı |
 | WP-153 | [~] Test için bekliyor | Akıllı hatırlatma seri/haftalık | Cihazda doğrulanmalı |
-| WP-154 | [~] Plan — onay bekliyor | Gamification genişletme PLAN | docs/features |
+| WP-154 | [~] Test için bekliyor | Level/quest/cosmetics + 0043 | SQL Editor + cihaz |
 | WP-155 | [ ] Bekliyor (Track D) | Ek dil paketleri + RTL | C sonrası |
 | WP-156 | [~] Plan uygulandı (flag kapalı) | İstatistik & Gruplar analitik plan | docs/features |
 | WP-157 | [~] Test için bekliyor | Grafik primitives gauge/stacked/radar/area | `2c7bc91` |
@@ -855,6 +855,12 @@
 > ⚠️ **Ürün kararları:** (1) WP-66 §0 retention varsayılanları, (2) legal site domain/iletişim kimliği, (3) hedef kitle 13+/16+, (4) Play Console'da alarmı core functionality olarak savunma veya safe fallback, (5) geliştirici hesap türü/tarihi. Bunlar planı engellemez; ilgili WP başlamadan kullanıcı onayı gerekir.
 
 ## Test için bekleyenler
+
+### WP-154: Gamification genişletme (kod+test) 🏆
+- **Özet:** level=√(xp/50)+1 türetilmiş; görevler görüntü; kozmetik free L3; 0043 cosmetics+dict; client XP yazmaz.
+- **Migration:** 0043 SQL Editor
+- **Kanıt:** `Kodda doğrulandı` · **`Cihazda doğrulanmalı`**
+- **Commit:** (bu)
 
 ### WP-153: Akıllı hatırlatıcılar (kod+test) 🔔
 - **Özet:** Seri koruma (20:00) + haftalık özet (Pazar 18:00) opt-in; sessiz saat; idempotent schedule; FGS/timer dokunulmadı.
