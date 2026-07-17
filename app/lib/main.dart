@@ -163,17 +163,23 @@ class OnlineStudyRoomApp extends ConsumerWidget {
       // Masaüstünde uygulamanın etrafına "üstte tut / mini pencere" kontrol
       // kümesi eklenir; web/mobilde child olduğu gibi döner.
       // child null iken shrink yerine koyu zemin (beyaz flaş yok).
-      builder: (context, child) => desktopChrome(
-        AppPullToRefresh(
-          child:
-              child ??
-              const ColoredBox(
-                color: Color(0xFF0B1020),
-                child: SizedBox.expand(),
-              ),
-        ),
-        compactChild: const CompactFocusView(),
-      ),
+      // WP-155: RTL dillerde (ar) Directionality MaterialApp locale ile gelir;
+      // builder'da ekstra sarmalama gerekmez. Icon mirroring: Icons.*_outlined
+      // çoğunluk simetrik; chevron/back Navigation otomatik RTL.
+      builder: (context, child) {
+        final wrapped = desktopChrome(
+          AppPullToRefresh(
+            child:
+                child ??
+                const ColoredBox(
+                  color: Color(0xFF0B1020),
+                  child: SizedBox.expand(),
+                ),
+          ),
+          compactChild: const CompactFocusView(),
+        );
+        return wrapped;
+      },
       home: const AuthGate(),
     );
   }

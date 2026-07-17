@@ -1,0 +1,4652 @@
+{
+  "@@locale": "de",
+  "profileBasarimKademeleriniTamamla": "Complete the levels below to earn this achievement.",
+  "@profileBasarimKademeleriniTamamla": { "description": "Achievement detail introduction." },
+  "profileBasarimToplamSaatKosulu": "Study for a total of {count, plural, =1 {1 hour} other {{count} hours}}.",
+  "@profileBasarimToplamSaatKosulu": { "description": "Achievement tier condition.", "placeholders": { "count": { "type": "int" } } },
+  "profileBasarimTekOturumKosulu": "Complete one study session lasting {count, plural, =1 {1 minute} other {{count} minutes}}.",
+  "@profileBasarimTekOturumKosulu": { "description": "Achievement tier condition.", "placeholders": { "count": { "type": "int" } } },
+  "profileBasarimGunlukSaatKosulu": "Study for {count, plural, =1 {1 hour} other {{count} hours}} in a single day.",
+  "@profileBasarimGunlukSaatKosulu": { "description": "Achievement tier condition.", "placeholders": { "count": { "type": "int" } } },
+  "profileBasarimSeriKosulu": "Meet your daily goal for {count, plural, =1 {1 consecutive day} other {{count} consecutive days}}.",
+  "@profileBasarimSeriKosulu": { "description": "Achievement tier condition.", "placeholders": { "count": { "type": "int" } } },
+  "profileBasarimHaftaSonuKosulu": "Meet your daily goal on {count, plural, =1 {1 weekend day} other {{count} weekend days}}.",
+  "@profileBasarimHaftaSonuKosulu": { "description": "Achievement tier condition.", "placeholders": { "count": { "type": "int" } } },
+  "profileBasarimKusursuzAyKosulu": "Complete {count, plural, =1 {1 perfect month} other {{count} perfect months}}.",
+  "@profileBasarimKusursuzAyKosulu": { "description": "Achievement tier condition.", "placeholders": { "count": { "type": "int" } } },
+  "profileBasarimGrupBirinciligiKosulu": "Finish first in your group on {count, plural, =1 {1 day} other {{count} days}}.",
+  "@profileBasarimGrupBirinciligiKosulu": { "description": "Achievement tier condition.", "placeholders": { "count": { "type": "int" } } },
+  "profileBasarimGrupHedefKosulu": "Contribute to your group's daily goal on {count, plural, =1 {1 day} other {{count} days}}.",
+  "@profileBasarimGrupHedefKosulu": { "description": "Achievement tier condition.", "placeholders": { "count": { "type": "int" } } },
+  "profileBasarimKampAtesiKosulu": "Study while at least 3 group members are active for {count, plural, =1 {1 hour} other {{count} hours}}.",
+  "@profileBasarimKampAtesiKosulu": { "description": "Achievement tier condition.", "placeholders": { "count": { "type": "int" } } },
+  "profileBasarimDurtmeKosulu": "Have {count, plural, =1 {1 member} other {{count} members}} start studying after your nudge.",
+  "@profileBasarimDurtmeKosulu": { "description": "Achievement tier condition.", "placeholders": { "count": { "type": "int" } } },
+  "profileBasarimLokomotifKosulu": "Be the first group member to start studying {count, plural, =1 {1 time} other {{count} times}}.",
+  "@profileBasarimLokomotifKosulu": { "description": "Achievement tier condition.", "placeholders": { "count": { "type": "int" } } },
+  "profileBasarimGeceKusuAciklama": "Start a study session between midnight and 4:00 AM, then study for at least 2 hours.",
+  "@profileBasarimGeceKusuAciklama": { "description": "Unlocked secret achievement condition." },
+  "profileBasarimGunDogumuAciklama": "Start studying between 5:00 AM and 7:00 AM, then study for at least 1 hour.",
+  "@profileBasarimGunDogumuAciklama": { "description": "Unlocked secret achievement condition." },
+  "profileBasarim404Aciklama": "Complete a study session lasting exactly 404 minutes.",
+  "@profileBasarim404Aciklama": { "description": "Unlocked secret achievement condition." },
+  "profileBasarimPiAciklama": "Complete a study session lasting exactly 194 minutes.",
+  "@profileBasarimPiAciklama": { "description": "Unlocked secret achievement condition." },
+  "profileBasarimSonSaniyeAciklama": "Meet your daily goal with a session that ends between 11:55 PM and 11:59 PM.",
+  "@profileBasarimSonSaniyeAciklama": { "description": "Unlocked secret achievement condition." },
+  "profileBasarim1337Aciklama": "Start at 1:37 PM and study for at least 1 hour.",
+  "@profileBasarim1337Aciklama": { "description": "Unlocked secret achievement condition." },
+  "profileBasarimSinirTanimazAciklama": "Reach three times your daily goal in one day.",
+  "@profileBasarimSinirTanimazAciklama": { "description": "Unlocked secret achievement condition." },
+  "profileBasarimMatrixAciklama": "Complete a study session lasting exactly 111, 222, 333, or 555 minutes.",
+  "@profileBasarimMatrixAciklama": { "description": "Unlocked secret achievement condition." },
+  "profileBasarimYilbasiAciklama": "Study across midnight on New Year's Eve.",
+  "@profileBasarimYilbasiAciklama": { "description": "Unlocked secret achievement condition." },
+  "@profileKademe": {
+    "description": "Achievement tier label."
+  },
+  "@coreEnAz3KisiAktifkenCalis": {
+    "description": "Campfire achievement description."
+  },
+  "appTitle": "Focus Camp",
+  "@appTitle": {
+    "description": "Application title shown by Flutter in window and task-switcher metadata."
+  },
+  "adminAnnouncementmessagenhedefAnnouncementtargettypeAnnouncementtargetid": "{message}\nTarget: {targettype} {targetid}",
+  "@adminAnnouncementmessagenhedefAnnouncementtargettypeAnnouncementtargetid": {
+    "description": "Admin user-facing text. Source: ${announcement.message}\\nHedef: ${announcement.targetType} ${announcement.targetId ??",
+    "placeholders": {
+      "targetid": {
+        "type": "String"
+      },
+      "message": {
+        "type": "String"
+      },
+      "targettype": {
+        "type": "String"
+      }
+    }
+  },
+  "adminLogactionHedefLogtargetuserid": "{action} - Target: {targetuserid}",
+  "@adminLogactionHedefLogtargetuserid": {
+    "description": "Admin user-facing text. Source: ${log.action} - Hedef: ${log.targetUserId ??",
+    "placeholders": {
+      "targetuserid": {
+        "type": "String"
+      },
+      "action": {
+        "type": "String"
+      }
+    }
+  },
+  "adminAdminIdNoteadminidNotecreatedattostringsubstring0": "Admin ID: {adminid} • {createdat}",
+  "@adminAdminIdNoteadminidNotecreatedattostringsubstring0": {
+    "description": "Admin user-facing text. Source: Admin ID: ${note.adminId} • ${note.createdAt.toString().substring(0, 16)}",
+    "placeholders": {
+      "adminid": {
+        "type": "String"
+      },
+      "createdat": {
+        "type": "String"
+      }
+    }
+  },
+  "adminAskiKaldir": "Unsuspend",
+  "@adminAskiKaldir": {
+    "description": "Admin user-facing text. Source: Askı Kaldır"
+  },
+  "adminAskida": "Suspended",
+  "@adminAskida": {
+    "description": "Admin user-facing text. Source: Askıda"
+  },
+  "adminAskiyaAl": "Suspend",
+  "@adminAskiyaAl": {
+    "description": "Admin user-facing text. Source: Askıya Al"
+  },
+  "adminAskiyiKaldir": "Unsuspend",
+  "@adminAskiyiKaldir": {
+    "description": "Admin user-facing text. Source: Askıyı Kaldır"
+  },
+  "adminAcik": "Open",
+  "@adminAcik": {
+    "description": "Admin user-facing text. Source: Açık"
+  },
+  "adminAcikRaporlar": "Open reports",
+  "@adminAcikRaporlar": {
+    "description": "Admin user-facing text. Source: Açık raporlar"
+  },
+  "adminBaslik": "Title",
+  "@adminBaslik": {
+    "description": "Admin user-facing text. Source: Başlık"
+  },
+  "adminBuAlanYalnizcaSuperadmin": "This area is for super-admin only.",
+  "@adminBuAlanYalnizcaSuperadmin": {
+    "description": "Admin user-facing text. Source: Bu alan yalnızca süper-admin içindir."
+  },
+  "adminDenetim": "Audit",
+  "@adminDenetim": {
+    "description": "Admin user-facing text. Source: Denetim"
+  },
+  "adminDurumuDegistir": "Change status",
+  "@adminDurumuDegistir": {
+    "description": "Admin user-facing text. Source: Durumu değiştir"
+  },
+  "adminDuyuruBulunamadi": "Announcement not found.",
+  "@adminDuyuruBulunamadi": {
+    "description": "Admin user-facing text. Source: Duyuru bulunamadı."
+  },
+  "adminDuyurular": "Announcements",
+  "@adminDuyurular": {
+    "description": "Admin user-facing text. Source: Duyurular"
+  },
+  "adminEkranGoruntusu": "Screenshot",
+  "@adminEkranGoruntusu": {
+    "description": "Admin user-facing text. Source: Ekran Görüntüsü"
+  },
+  "adminGerekliAlanlarDoldurulmalidir": "Required fields must be filled.",
+  "@adminGerekliAlanlarDoldurulmalidir": {
+    "description": "Admin user-facing text. Source: Gerekli alanlar doldurulmalıdır."
+  },
+  "adminGerekceZorunlu": "Justification (Required)",
+  "@adminGerekceZorunlu": {
+    "description": "Admin user-facing text. Source: Gerekçe (Zorunlu)"
+  },
+  "adminGerekceBelirtilmelidir": "Justification must be stated.",
+  "@adminGerekceBelirtilmelidir": {
+    "description": "Admin user-facing text. Source: Gerekçe belirtilmelidir."
+  },
+  "adminGerekceLogreasonntarihLogcreatedat": "Reason: {reason}\nDate: {createdat}",
+  "@adminGerekceLogreasonntarihLogcreatedat": {
+    "description": "Admin user-facing text. Source: Gerekçe: ${log.reason}\\nTarih: ${log.createdAt}",
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      },
+      "createdat": {
+        "type": "String"
+      }
+    }
+  },
+  "adminGrubaOzel": "Group-specific",
+  "@adminGrubaOzel": {
+    "description": "Admin user-facing text. Source: Gruba Özel"
+  },
+  "adminGrubuSil": "Delete Group",
+  "@adminGrubuSil": {
+    "description": "Admin user-facing text. Source: Grubu Sil"
+  },
+  "adminGrupSecin": "Select Group",
+  "@adminGrupSecin": {
+    "description": "Admin user-facing text. Source: Grup Seçin"
+  },
+  "adminGrupBulunamadi": "Group not found.",
+  "@adminGrupBulunamadi": {
+    "description": "Admin user-facing text. Source: Grup bulunamadı."
+  },
+  "adminGruplar": "Groups",
+  "@adminGruplar": {
+    "description": "Admin user-facing text. Source: Gruplar"
+  },
+  "adminGruplarYuklenemedi": "Failed to load groups.",
+  "@adminGruplarYuklenemedi": {
+    "description": "Admin user-facing text. Source: Gruplar yüklenemedi."
+  },
+  "adminGonder": "Send",
+  "@adminGonder": {
+    "description": "Admin user-facing text. Source: Gönder"
+  },
+  "adminGorselYuklenemedi": "Failed to load image.",
+  "@adminGorselYuklenemedi": {
+    "description": "Admin user-facing text. Source: Görsel yüklenemedi."
+  },
+  "adminHedef": "Goal",
+  "@adminHedef": {
+    "description": "Admin user-facing text. Source: Hedef"
+  },
+  "adminHedefKullaniciIdZorunlu": "Target User ID (Required)",
+  "@adminHedefKullaniciIdZorunlu": {
+    "description": "Admin user-facing text. Source: Hedef Kullanıcı ID (Zorunlu)"
+  },
+  "adminHenuzNotYok": "No notes yet.",
+  "@adminHenuzNotYok": {
+    "description": "Admin user-facing text. Source: Henüz not yok."
+  },
+  "adminHenuzRaporYok": "No reports yet.",
+  "@adminHenuzRaporYok": {
+    "description": "Admin user-facing text. Source: Henüz rapor yok."
+  },
+  "adminHerkese": "Everyone",
+  "@adminHerkese": {
+    "description": "Admin user-facing text. Source: Herkese"
+  },
+  "adminHicGrupYok": "There are no groups.",
+  "@adminHicGrupYok": {
+    "description": "Admin user-facing text. Source: Hiç grup yok."
+  },
+  "adminIdGroupid": "ID: {id}",
+  "@adminIdGroupid": {
+    "description": "Admin user-facing text. Source: ID: ${group.id}",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "adminKapali": "Closed",
+  "@adminKapali": {
+    "description": "Admin user-facing text. Source: Kapalı"
+  },
+  "adminKayitBulunamadi": "No record found.",
+  "@adminKayitBulunamadi": {
+    "description": "Admin user-facing text. Source: Kayıt bulunamadı."
+  },
+  "adminKayitUsercreatedattolocaltostringsubstring016": "Created: {createdat}",
+  "@adminKayitUsercreatedattolocaltostringsubstring016": {
+    "description": "Admin user-facing text. Source: Kayıt: ${user.createdAt.toLocal().toString().substring(0, 16)}",
+    "placeholders": {
+      "createdat": {
+        "type": "String"
+      }
+    }
+  },
+  "adminKullaniciId": "User ID",
+  "@adminKullaniciId": {
+    "description": "Admin user-facing text. Source: Kullanıcı ID"
+  },
+  "adminKullaniciBulunamadi": "User not found.",
+  "@adminKullaniciBulunamadi": {
+    "description": "Admin user-facing text. Source: Kullanıcı bulunamadı."
+  },
+  "adminKullanicilar": "Users",
+  "@adminKullanicilar": {
+    "description": "Admin user-facing text. Source: Kullanıcılar"
+  },
+  "adminKullaniciyaOzel": "User-specific",
+  "@adminKullaniciyaOzel": {
+    "description": "Admin user-facing text. Source: Kullanıcıya Özel"
+  },
+  "adminKullaniciyiAskiyaAl": "Suspend User",
+  "@adminKullaniciyiAskiyaAl": {
+    "description": "Admin user-facing text. Source: Kullanıcıyı Askıya Al"
+  },
+  "adminKullaniciyiSoftDeleteYap": "Soft-delete user",
+  "@adminKullaniciyiSoftDeleteYap": {
+    "description": "Admin user-facing text. Source: Kullanıcıyı Soft Delete Yap"
+  },
+  "adminMesaj": "Message",
+  "@adminMesaj": {
+    "description": "Admin user-facing text. Source: Mesaj"
+  },
+  "adminOnayla": "Confirm",
+  "@adminOnayla": {
+    "description": "Admin user-facing text. Source: Onayla"
+  },
+  "adminOturumlar": "Sessions",
+  "@adminOturumlar": {
+    "description": "Admin user-facing text. Source: Oturumlar"
+  },
+  "adminRaporlar": "Reports",
+  "@adminRaporlar": {
+    "description": "Admin user-facing text. Source: Raporlar"
+  },
+  "adminSil": "Delete",
+  "@adminSil": {
+    "description": "Admin user-facing text. Source: Sil"
+  },
+  "adminSilinmis": "Deleted",
+  "@adminSilinmis": {
+    "description": "Admin user-facing text. Source: Silinmiş"
+  },
+  "adminSonGirisUserlastsigninattolocaltostringsubstring016": "Last sign-in: {lastsigninat}",
+  "@adminSonGirisUserlastsigninattolocaltostringsubstring016": {
+    "description": "Admin user-facing text. Source: Son Giriş: ${user.lastSignInAt!.toLocal().toString().substring(0, 16)}",
+    "placeholders": {
+      "lastsigninat": {
+        "type": "String"
+      }
+    }
+  },
+  "adminYeniDuyuru": "New Announcement",
+  "@adminYeniDuyuru": {
+    "description": "Admin user-facing text. Source: Yeni Duyuru"
+  },
+  "adminYeniNot": "New note...",
+  "@adminYeniNot": {
+    "description": "Admin user-facing text. Source: Yeni not..."
+  },
+  "adminYetkisizIslem": "Unauthorized operation",
+  "@adminYetkisizIslem": {
+    "description": "Admin user-facing text. Source: Yetkisiz işlem"
+  },
+  "adminYok": "None",
+  "@adminYok": {
+    "description": "Admin user-facing text. Source: Yok"
+  },
+  "adminYonetim": "Administration",
+  "@adminYonetim": {
+    "description": "Admin user-facing text. Source: Yönetim"
+  },
+  "adminYonetimPaneli": "Admin Panel",
+  "@adminYonetimPaneli": {
+    "description": "Admin user-facing text. Source: Yönetim Paneli"
+  },
+  "adminOzet": "Summary",
+  "@adminOzet": {
+    "description": "Admin user-facing text. Source: Özet"
+  },
+  "adminUyeAt": "Remove Member",
+  "@adminUyeAt": {
+    "description": "Admin user-facing text. Source: Üye At"
+  },
+  "adminUyeyiAt": "Remove Member",
+  "@adminUyeyiAt": {
+    "description": "Admin user-facing text. Source: Üyeyi At"
+  },
+  "adminInceleniyor": "Under review",
+  "@adminInceleniyor": {
+    "description": "Admin user-facing text. Source: İnceleniyor"
+  },
+  "adminIptal": "Cancel",
+  "@adminIptal": {
+    "description": "Admin user-facing text. Source: İptal"
+  },
+  "adminIcNotlar": "Internal Notes",
+  "@adminIcNotlar": {
+    "description": "Admin user-facing text. Source: İç Notlar"
+  },
+  "adminIslemBasarili": "Operation completed successfully.",
+  "@adminIslemBasarili": {
+    "description": "Admin user-facing text. Source: İşlem başarılı."
+  },
+  "adminSifreSifirla": "Reset Password",
+  "@adminSifreSifirla": {
+    "description": "Admin user-facing text. Source: Şifre Sıfırla"
+  },
+  "adminSifreSifirlamaEpostasiGonder": "Send Password Reset Email",
+  "@adminSifreSifirlamaEpostasiGonder": {
+    "description": "Admin user-facing text. Source: Şifre Sıfırlama E-postası Gönder"
+  },
+  "androidWidgetsBugun": "Today",
+  "@androidWidgetsBugun": {
+    "description": "Android_widgets user-facing text. Source: Bugün"
+  },
+  "androidWidgetsGrupHedefiBelirlenmedi": "Group goal not set",
+  "@androidWidgetsGrupHedefiBelirlenmedi": {
+    "description": "Android_widgets user-facing text. Source: Grup hedefi belirlenmedi"
+  },
+  "androidWidgetsGrupSiralamasi": "Group leaderboard",
+  "@androidWidgetsGrupSiralamasi": {
+    "description": "Android_widgets user-facing text. Source: Grup sıralaması"
+  },
+  "androidWidgetsGunlukHedef": "Daily goal",
+  "@androidWidgetsGunlukHedef": {
+    "description": "Android_widgets user-facing text. Source: Günlük hedef"
+  },
+  "androidWidgetsHafta0Sa": "Week: 0 hr",
+  "@androidWidgetsHafta0Sa": {
+    "description": "Android_widgets user-facing text. Source: Hafta: 0 sa"
+  },
+  "androidWidgetsHedefSerisi0Gun": "Goal streak: 0 days",
+  "@androidWidgetsHedefSerisi0Gun": {
+    "description": "Android_widgets user-facing text. Source: Hedef serisi: 0 gün"
+  },
+  "androidWidgetsHenuzGrupVerisiYok": "No group data yet",
+  "@androidWidgetsHenuzGrupVerisiYok": {
+    "description": "Android_widgets user-facing text. Source: Henüz grup verisi yok"
+  },
+  "androidWidgetsKampSiralamasi": "Camp leaderboard",
+  "@androidWidgetsKampSiralamasi": {
+    "description": "Android_widgets user-facing text. Source: Kamp sıralaması"
+  },
+  "androidWidgetsOdakKampi": "Focus Camp",
+  "@androidWidgetsOdakKampi": {
+    "description": "Android_widgets user-facing text. Source: Odak Kampı"
+  },
+  "androidWidgetsSiralamaOlusuncaBuradaGorunur": "Once sorted, it appears here",
+  "@androidWidgetsSiralamaOlusuncaBuradaGorunur": {
+    "description": "Android_widgets user-facing text. Source: Sıralama oluşunca burada görünür"
+  },
+  "androidWidgetsUygulamayiAc": "Open the app",
+  "@androidWidgetsUygulamayiAc": {
+    "description": "Android_widgets user-facing text. Source: Uygulamayı aç"
+  },
+  "androidWidgetsCalismaHazir": "Ready to study",
+  "@androidWidgetsCalismaHazir": {
+    "description": "Android_widgets user-facing text. Source: Çalışma hazır"
+  },
+  "androidWidgetsCalismaOzeti": "Study summary",
+  "@androidWidgetsCalismaOzeti": {
+    "description": "Android_widgets user-facing text. Source: Çalışma özeti"
+  },
+  "authBeklenmeyenBirHataOlustu": "An unexpected error occurred.",
+  "@authBeklenmeyenBirHataOlustu": {
+    "description": "Auth user-facing text. Source: Beklenmeyen bir hata oluştu."
+  },
+  "authBirHataOlustuError": "An error occurred: {error}",
+  "@authBirHataOlustuError": {
+    "description": "Auth user-facing text. Source: Bir hata oluştu: $error",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "authEposta": "Email",
+  "@authEposta": {
+    "description": "Auth user-facing text. Source: E-posta"
+  },
+  "authGecerliBirEpostaGirin": "Enter a valid email",
+  "@authGecerliBirEpostaGirin": {
+    "description": "Auth user-facing text. Source: Geçerli bir e-posta girin"
+  },
+  "authGorunenAd": "Display name",
+  "@authGorunenAd": {
+    "description": "Auth user-facing text. Source: Görünen ad"
+  },
+  "authGorunenAdGirin": "Enter display name",
+  "@authGorunenAdGirin": {
+    "description": "Auth user-facing text. Source: Görünen ad girin"
+  },
+  "authGuvenliginizIcinYeniBir": "Set a new password for your security.",
+  "@authGuvenliginizIcinYeniBir": {
+    "description": "Auth user-facing text. Source: Güvenliğiniz için yeni bir şifre belirleyin."
+  },
+  "authHesabinYokMuKayit": "Don't have an account? Sign up",
+  "@authHesabinYokMuKayit": {
+    "description": "Auth user-facing text. Source: Hesabın yok mu? Kayıt ol"
+  },
+  "authKaytOl": "Sign up",
+  "@authKaytOl": {
+    "description": "Auth user-facing text. Source: Kayıt ol"
+  },
+  "authGirisYap": "Log in",
+  "@authGirisYap": {
+    "description": "Auth user-facing text. Source: Giriş yap"
+  },
+  "authYeniHesapOlustur": "Create new account",
+  "@authYeniHesapOlustur": {
+    "description": "Auth user-facing text. Source: Yeni hesap oluştur"
+  },
+  "authHesabnaGirisYap": "Log in to your account",
+  "@authHesabnaGirisYap": {
+    "description": "Auth user-facing text. Source: Hesabına giriş yap"
+  },
+  "authYeniSifre": "New Password",
+  "@authYeniSifre": {
+    "description": "Auth user-facing text. Source: Yeni Şifre"
+  },
+  "authYeniSifreBelirle": "Set New Password",
+  "@authYeniSifreBelirle": {
+    "description": "Auth user-facing text. Source: Yeni Şifre Belirle"
+  },
+  "authZatenHesabinVarMi": "Already have an account? Log in",
+  "@authZatenHesabinVarMi": {
+    "description": "Auth user-facing text. Source: Zaten hesabın var mı? Giriş yap"
+  },
+  "authSifre": "Password",
+  "@authSifre": {
+    "description": "Auth user-facing text. Source: Şifre"
+  },
+  "authSifreEnAz6": "Password must be at least 6 characters",
+  "@authSifreEnAz6": {
+    "description": "Auth user-facing text. Source: Şifre en az 6 karakter olmalı"
+  },
+  "authSifreEnAz6SifreEnAz6KarakterOlmal": "Password must be at least 6 characters.",
+  "@authSifreEnAz6SifreEnAz6KarakterOlmal": {
+    "description": "Auth user-facing text. Source: Şifre en az 6 karakter olmalı."
+  },
+  "authSifreSifirlamaBaglantisiEpostana": "The password reset link has been sent to your email. Check your inbox.",
+  "@authSifreSifirlamaBaglantisiEpostana": {
+    "description": "Auth user-facing text. Source: Şifre sıfırlama bağlantısı e-postana gönderildi. Gelen kutunu kontrol et."
+  },
+  "authSifremiUnuttum": "I forgot my password",
+  "@authSifremiUnuttum": {
+    "description": "Auth user-facing text. Source: Şifremi unuttum"
+  },
+  "authSifrenizBasariylaSifirlandi": "Your password has been successfully reset.",
+  "@authSifrenizBasariylaSifirlandi": {
+    "description": "Auth user-facing text. Source: Şifreniz başarıyla sıfırlandı."
+  },
+  "authSifreyiKaydetVeGiris": "Save Password and Login",
+  "@authSifreyiKaydetVeGiris": {
+    "description": "Auth user-facing text. Source: Şifreyi Kaydet ve Giriş Yap"
+  },
+  "classroomCamperanimallabel": "{label} 🏕️",
+  "@classroomCamperanimallabel": {
+    "description": "Classroom user-facing text. Source: ${camper.animal.label} 🏕️",
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "classroomMemberdisplaynameGruptanCikarilsinMi": "Remove {displayname} from the group?",
+  "@classroomMemberdisplaynameGruptanCikarilsinMi": {
+    "description": "Classroom user-facing text. Source: ${member.displayName} gruptan çıkarılsın mı?",
+    "placeholders": {
+      "displayname": {
+        "type": "String"
+      }
+    }
+  },
+  "classroomRecipientdisplaynameDurtuldu": "{displayname} was nudged",
+  "@classroomRecipientdisplaynameDurtuldu": {
+    "description": "Classroom user-facing text. Source: ${recipient.displayName} dürtüldü",
+    "placeholders": {
+      "displayname": {
+        "type": "String"
+      }
+    }
+  },
+  "classroomAdiDegistir": "Rename",
+  "@classroomAdiDegistir": {
+    "description": "Classroom user-facing text. Source: Adı değiştir"
+  },
+  "classroomAyarlar": "Settings",
+  "@classroomAyarlar": {
+    "description": "Classroom user-facing text. Source: Ayarlar"
+  },
+  "classroomBilgiler": "Information",
+  "@classroomBilgiler": {
+    "description": "Classroom user-facing text. Source: Bilgiler"
+  },
+  "classroomBirHataOlustuE": "An error occurred: {e}",
+  "@classroomBirHataOlustuE": {
+    "description": "Classroom user-facing text. Source: Bir hata oluştu: $e",
+    "placeholders": {
+      "e": {
+        "type": "String"
+      }
+    }
+  },
+  "classroomBuIslemGeriAlinamaz": "This action cannot be undone. Continue?",
+  "@classroomBuIslemGeriAlinamaz": {
+    "description": "Classroom user-facing text. Source: Bu işlem geri alınamaz. Devam?"
+  },
+  "classroomBugun": "Today",
+  "@classroomBugun": {
+    "description": "Classroom user-facing text. Source: Bugün"
+  },
+  "classroomBugunkuToplam": "Total today",
+  "@classroomBugunkuToplam": {
+    "description": "Classroom user-facing text. Source: Bugünkü toplam"
+  },
+  "classroomDakika": "Minute",
+  "@classroomDakika": {
+    "description": "Classroom user-facing text. Source: Dakika"
+  },
+  "classroomDavetKodu": "Invitation code",
+  "@classroomDavetKodu": {
+    "description": "Classroom user-facing text. Source: Davet kodu"
+  },
+  "classroomDavetKoduKopyalandi": "Invitation code copied",
+  "@classroomDavetKoduKopyalandi": {
+    "description": "Classroom user-facing text. Source: Davet kodu kopyalandı"
+  },
+  "classroomDavetKoduDavetKodu": "Invite code:",
+  "@classroomDavetKoduDavetKodu": {
+    "description": "Classroom user-facing text. Source: Davet kodu:"
+  },
+  "classroomDers": "Subject",
+  "@classroomDers": {
+    "description": "Classroom user-facing text. Source: Ders"
+  },
+  "classroomDersleriDuzenle": "Edit subjects",
+  "@classroomDersleriDuzenle": {
+    "description": "Classroom user-facing text. Source: Dersleri düzenle"
+  },
+  "classroomDurdur": "Stop",
+  "@classroomDurdur": {
+    "description": "Classroom user-facing text. Source: Durdur"
+  },
+  "classroomDongu": "Cycle",
+  "@classroomDongu": {
+    "description": "Classroom user-facing text. Source: Döngü"
+  },
+  "classroomDurt": "Nudge",
+  "@classroomDurt": {
+    "description": "Classroom user-facing text. Source: Dürt"
+  },
+  "classroomEskiGrupUyesi": "Former group member",
+  "@classroomEskiGrupUyesi": {
+    "description": "Classroom user-facing text. Source: Eski Grup Üyesi"
+  },
+  "classroomGenel": "General",
+  "@classroomGenel": {
+    "description": "Classroom user-facing text. Source: Genel"
+  },
+  "classroomGeriSayim": "Countdown",
+  "@classroomGeriSayim": {
+    "description": "Classroom user-facing text. Source: Geri sayım"
+  },
+  "classroomGecmisOturumlar": "Past sessions",
+  "@classroomGecmisOturumlar": {
+    "description": "Classroom user-facing text. Source: Geçmiş oturumlar"
+  },
+  "classroomGrubaKatil": "Join group",
+  "@classroomGrubaKatil": {
+    "description": "Classroom user-facing text. Source: Gruba katıl"
+  },
+  "classroomGrubuSil": "Delete group",
+  "@classroomGrubuSil": {
+    "description": "Classroom user-facing text. Source: Grubu sil"
+  },
+  "classroomGrubunBirGundeToplamda": "The total time the group aims to study in a day.",
+  "@classroomGrubunBirGundeToplamda": {
+    "description": "Classroom user-facing text. Source: Grubun bir günde toplamda çalışmayı hedeflediği süre."
+  },
+  "classroomGrup": "Group",
+  "@classroomGrup": {
+    "description": "Classroom user-facing text. Source: Grup"
+  },
+  "classroomGrupAdi": "Group name",
+  "@classroomGrupAdi": {
+    "description": "Classroom user-facing text. Source: Grup adı"
+  },
+  "classroomGrupAdiniDegistir": "Change group name",
+  "@classroomGrupAdiniDegistir": {
+    "description": "Classroom user-facing text. Source: Grup adını değiştir"
+  },
+  "classroomGrupBilgileri": "Group information",
+  "@classroomGrupBilgileri": {
+    "description": "Classroom user-facing text. Source: Grup bilgileri"
+  },
+  "classroomGrupBilgileriVeAyarlari": "Group information and settings",
+  "@classroomGrupBilgileriVeAyarlari": {
+    "description": "Classroom user-facing text. Source: Grup bilgileri ve ayarları"
+  },
+  "classroomGrupDegistir": "Change group",
+  "@classroomGrupDegistir": {
+    "description": "Classroom user-facing text. Source: Grup değiştir"
+  },
+  "classroomGrupOlustur": "Create group",
+  "@classroomGrupOlustur": {
+    "description": "Classroom user-facing text. Source: Grup oluştur"
+  },
+  "classroomGruplarim": "My groups",
+  "@classroomGruplarim": {
+    "description": "Classroom user-facing text. Source: Gruplarım"
+  },
+  "classroomGruptanCik": "Leave group",
+  "@classroomGruptanCik": {
+    "description": "Classroom user-facing text. Source: Gruptan çık"
+  },
+  "classroomGonder": "Send",
+  "@classroomGonder": {
+    "description": "Classroom user-facing text. Source: Gönder"
+  },
+  "classroomGunlukGrupHedefi": "Daily group goal",
+  "@classroomGunlukGrupHedefi": {
+    "description": "Classroom user-facing text. Source: Günlük grup hedefi"
+  },
+  "classroomGunlukHedef": "Daily goal",
+  "@classroomGunlukHedef": {
+    "description": "Classroom user-facing text. Source: Günlük hedef"
+  },
+  "classroomHedefHalkasi": "Goal ring",
+  "@classroomHedefHalkasi": {
+    "description": "Classroom user-facing text. Source: Hedef halkası"
+  },
+  "classroomHedefiDegistir": "Change goal",
+  "@classroomHedefiDegistir": {
+    "description": "Classroom user-facing text. Source: Hedefi değiştir"
+  },
+  "classroomHenuzBirGruptaDegilsin": "You're not in a group yet",
+  "@classroomHenuzBirGruptaDegilsin": {
+    "description": "Classroom user-facing text. Source: Henüz bir grupta değilsin"
+  },
+  "classroomHenuzGrupYok": "No groups yet",
+  "@classroomHenuzGrupYok": {
+    "description": "Classroom user-facing text. Source: Henüz grup yok"
+  },
+  "classroomKatil": "Join",
+  "@classroomKatil": {
+    "description": "Classroom user-facing text. Source: Katıl"
+  },
+  "classroomKaydet": "Save",
+  "@classroomKaydet": {
+    "description": "Classroom user-facing text. Source: Kaydet"
+  },
+  "classroomKodaKatil": "Join with code",
+  "@classroomKodaKatil": {
+    "description": "Classroom user-facing text. Source: Koda katıl"
+  },
+  "classroomKoduYenile": "Regenerate code",
+  "@classroomKoduYenile": {
+    "description": "Classroom user-facing text. Source: Kodu yenile"
+  },
+  "classroomKopyala": "Copy",
+  "@classroomKopyala": {
+    "description": "Classroom user-facing text. Source: Kopyala"
+  },
+  "classroomKronometre": "Stopwatch",
+  "@classroomKronometre": {
+    "description": "Classroom user-facing text. Source: Kronometre"
+  },
+  "classroomKucult": "Minimize",
+  "@classroomKucult": {
+    "description": "Classroom user-facing text. Source: Küçült"
+  },
+  "classroomManuelSureEkle": "Add time manually",
+  "@classroomManuelSureEkle": {
+    "description": "Classroom user-facing text. Source: Manuel süre ekle"
+  },
+  "classroomMesajYaz": "Write a message",
+  "@classroomMesajYaz": {
+    "description": "Classroom user-facing text. Source: Mesaj yaz"
+  },
+  "classroomMinimal": "Minimal",
+  "@classroomMinimal": {
+    "description": "Classroom user-facing text. Source: Minimal"
+  },
+  "classroomMola": "Break",
+  "@classroomMola": {
+    "description": "Classroom user-facing text. Source: Mola"
+  },
+  "classroomMolaDk": "Break (min)",
+  "@classroomMolaDk": {
+    "description": "Classroom user-facing text. Source: Mola dk"
+  },
+  "classroomMolada": "On break",
+  "@classroomMolada": {
+    "description": "Classroom user-facing text. Source: Molada"
+  },
+  "classroomOGunkuGrupToplami": "If the group total for that day reaches this period, the group streak grows.",
+  "@classroomOGunkuGrupToplami": {
+    "description": "Classroom user-facing text. Source: O günkü grup toplamı bu süreye ulaşırsa grup serisi büyür."
+  },
+  "classroomOlustur": "Create",
+  "@classroomOlustur": {
+    "description": "Classroom user-facing text. Source: Oluştur"
+  },
+  "classroomOlusturulma": "Created",
+  "@classroomOlusturulma": {
+    "description": "Classroom user-facing text. Source: Oluşturulma"
+  },
+  "classroomPomodoro": "Pomodoro",
+  "@classroomPomodoro": {
+    "description": "Classroom user-facing text. Source: Pomodoro"
+  },
+  "classroomRenkGecisi": "Color transition",
+  "@classroomRenkGecisi": {
+    "description": "Classroom user-facing text. Source: Renk geçişi"
+  },
+  "classroomSaat": "Clock",
+  "@classroomSaat": {
+    "description": "Classroom user-facing text. Source: Saat"
+  },
+  "classroomSaatGorunumu": "Clock face",
+  "@classroomSaatGorunumu": {
+    "description": "Classroom user-facing text. Source: Saat görünümü"
+  },
+  "classroomSadeRakam": "Plain digits",
+  "@classroomSadeRakam": {
+    "description": "Classroom user-facing text. Source: Sade rakam"
+  },
+  "classroomSil": "Delete",
+  "@classroomSil": {
+    "description": "Classroom user-facing text. Source: Sil"
+  },
+  "classroomSohbet": "Chat",
+  "@classroomSohbet": {
+    "description": "Classroom user-facing text. Source: Sohbet"
+  },
+  "classroomSohbetYuklenemedi": "The chat failed to load.",
+  "@classroomSohbetYuklenemedi": {
+    "description": "Classroom user-facing text. Source: Sohbet yüklenemedi."
+  },
+  "classroomSureDakika": "Duration (minutes)",
+  "@classroomSureDakika": {
+    "description": "Classroom user-facing text. Source: Süre (dakika)"
+  },
+  "classroomTamEkranOdak": "Full-screen focus",
+  "@classroomTamEkranOdak": {
+    "description": "Classroom user-facing text. Source: Tam ekran odak"
+  },
+  "classroomTumUyelerIcinKalici": "Permanently deleted for all members",
+  "@classroomTumUyelerIcinKalici": {
+    "description": "Classroom user-facing text. Source: Tüm üyeler için kalıcı olarak silinir"
+  },
+  "classroomVazgec": "Cancel",
+  "@classroomVazgec": {
+    "description": "Classroom user-facing text. Source: Vazgeç"
+  },
+  "classroomYarisDilimi": "Race segment",
+  "@classroomYarisDilimi": {
+    "description": "Classroom user-facing text. Source: Yarış dilimi"
+  },
+  "classroomYeniBirDavetKodu": "A new invitation code will be generated; the old code will no longer work. Continue?",
+  "@classroomYeniBirDavetKodu": {
+    "description": "Classroom user-facing text. Source: Yeni bir davet kodu üretilecek; eski kod artık çalışmaz. Devam?"
+  },
+  "classroomYeniBirGrupOlustur": "Create a new group or join a group with an invite code.",
+  "@classroomYeniBirGrupOlustur": {
+    "description": "Classroom user-facing text. Source: Yeni bir grup oluştur ya da davet koduyla bir gruba katıl."
+  },
+  "classroomYeniKodCode": "New code: {code}",
+  "@classroomYeniKodCode": {
+    "description": "Classroom user-facing text. Source: Yeni kod: $code",
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "classroomYenile": "Refresh",
+  "@classroomYenile": {
+    "description": "Classroom user-facing text. Source: Yenile"
+  },
+  "classroomYonetici": "Admin",
+  "@classroomYonetici": {
+    "description": "Classroom user-facing text. Source: Yönetici"
+  },
+  "classroomCalismaDk": "Study min",
+  "@classroomCalismaDk": {
+    "description": "Classroom user-facing text. Source: Çalışma dk"
+  },
+  "classroomCalismayaBasla": "Start studying",
+  "@classroomCalismayaBasla": {
+    "description": "Classroom user-facing text. Source: Çalışmaya başla"
+  },
+  "classroomCalisiyor": "Studying",
+  "@classroomCalisiyor": {
+    "description": "Classroom user-facing text. Source: Çalışıyor"
+  },
+  "classroomCevrimdisi": "Offline",
+  "@classroomCevrimdisi": {
+    "description": "Classroom user-facing text. Source: Çevrimdışı"
+  },
+  "classroomCik": "Exit",
+  "@classroomCik": {
+    "description": "Classroom user-facing text. Source: Çık"
+  },
+  "classroomCikar": "Remove",
+  "@classroomCikar": {
+    "description": "Classroom user-facing text. Source: Çıkar"
+  },
+  "classroomUyeler": "Members",
+  "@classroomUyeler": {
+    "description": "Classroom user-facing text. Source: Üyeler"
+  },
+  "classroomUyelerYuklenemediE": "Failed to load members: {e}",
+  "@classroomUyelerYuklenemediE": {
+    "description": "Classroom user-facing text. Source: Üyeler yüklenemedi: $e",
+    "placeholders": {
+      "e": {
+        "type": "String"
+      }
+    }
+  },
+  "classroomUyeyiCikar": "Remove member",
+  "@classroomUyeyiCikar": {
+    "description": "Classroom user-facing text. Source: Üyeyi çıkar"
+  },
+  "classroomIlkMesajiSenGonder": "Send the first message.",
+  "@classroomIlkMesajiSenGonder": {
+    "description": "Classroom user-facing text. Source: İlk mesajı sen gönder."
+  },
+  "classroomIsimsiz": "Unnamed",
+  "@classroomIsimsiz": {
+    "description": "Classroom user-facing text. Source: İsimsiz"
+  },
+  "classroomSuAnkiOturum": "Current session",
+  "@classroomSuAnkiOturum": {
+    "description": "Classroom user-facing text. Source: Şu anki oturum"
+  },
+  "clockMDk": "{m} min",
+  "@clockMDk": {
+    "description": "Clock user-facing text. Source: $m dk",
+    "placeholders": {
+      "m": {
+        "type": "String"
+      }
+    }
+  },
+  "clockMinutesDk": "{minutes} min",
+  "@clockMinutesDk": {
+    "description": "Clock user-facing text. Source: $minutes dk",
+    "placeholders": {
+      "minutes": {
+        "type": "String"
+      }
+    }
+  },
+  "clockValue1Dk": "+1 min",
+  "@clockValue1Dk": {
+    "description": "Clock user-facing text. Source: +1 dk"
+  },
+  "clockValue5Dk": "+5 min",
+  "@clockValue5Dk": {
+    "description": "Clock user-facing text. Source: +5 dk"
+  },
+  "clockAkanSureBaslatdurdurApp": "Flowing time + Start/Stop (runs with app closed)",
+  "@clockAkanSureBaslatdurdurApp": {
+    "description": "Clock user-facing text. Source: Akan süre + Başlat/Durdur (app kapalı çalışır)"
+  },
+  "clockAlarm": "Alarm",
+  "@clockAlarm": {
+    "description": "Clock user-facing text. Source: Alarm"
+  },
+  "clockAlarmDateformathmformatnext": "Alarm at {time}",
+  "@clockAlarmDateformathmformatnext": {
+    "description": "Clock user-facing text. Source: Alarm ${DateFormat.Hm().format(next)}",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "clockAlarmEkle": "Add alarm",
+  "@clockAlarmEkle": {
+    "description": "Clock user-facing text. Source: Alarm ekle"
+  },
+  "clockAlarmIzinleri": "Alarm permissions",
+  "@clockAlarmIzinleri": {
+    "description": "Clock user-facing text. Source: Alarm izinleri"
+  },
+  "clockAlarmIcinGerekliIzinler": "Permissions required for alarm",
+  "@clockAlarmIcinGerekliIzinler": {
+    "description": "Clock user-facing text. Source: Alarm için gerekli izinler"
+  },
+  "clockAntisnooze": "Anti-snooze",
+  "@clockAntisnooze": {
+    "description": "Clock user-facing text. Source: Anti-snooze"
+  },
+  "clockAppKapaliAlarmIcin": "App closed ready for alarm",
+  "@clockAppKapaliAlarmIcin": {
+    "description": "Clock user-facing text. Source: App kapalı alarm için hazır"
+  },
+  "clockAppKapaliykenAlarmCalmasi": "They must all be green for the alarm to sound when the app is closed. Android",
+  "@clockAppKapaliykenAlarmCalmasi": {
+    "description": "Clock user-facing text. Source: App kapalıyken alarm çalması için hepsi yeşil olmalı. Android"
+  },
+  "clockAtlamayGeriAl": "Undo skip",
+  "@clockAtlamayGeriAl": {
+    "description": "Clock user-facing text. Source: Atlamayı geri al"
+  },
+  "clockSonrakiniAtla": "Skip next",
+  "@clockSonrakiniAtla": {
+    "description": "Clock user-facing text. Source: Sonrakini atla"
+  },
+  "clockAcilanTamEkranBildirimler": "On the full-screen notifications page that opens, turn off the Focus Camp switch. This setting may not be available before Android 14.",
+  "@clockAcilanTamEkranBildirimler": {
+    "description": "Clock user-facing text. Source: Açılan tam ekran bildirimler sayfasında Odak Kampı anahtarını kapat. Android 14 öncesinde bu ayar olmayabilir."
+  },
+  "clockBaslat": "Start",
+  "@clockBaslat": {
+    "description": "Clock user-facing text. Source: Başlat"
+  },
+  "clockBildirimler": "Notifications",
+  "@clockBildirimler": {
+    "description": "Clock user-facing text. Source: Bildirimler"
+  },
+  "clockBildirimleriKapat": "Disable notifications:",
+  "@clockBildirimleriKapat": {
+    "description": "Clock user-facing text. Source: Bildirimleri kapat:"
+  },
+  "clockBirKez": "Once",
+  "@clockBirKez": {
+    "description": "Clock user-facing text. Source: Bir kez"
+  },
+  "clockBirSonrakiAlarmSaati": "Next alarm time and label",
+  "@clockBirSonrakiAlarmSaati": {
+    "description": "Clock user-facing text. Source: Bir sonraki alarm saati ve etiketi"
+  },
+  "clockBitti": "Finished",
+  "@clockBitti": {
+    "description": "Clock user-facing text. Source: Bitti"
+  },
+  "clockBugunHaftaSeriOzeti": "Today / week / streak summary",
+  "@clockBugunHaftaSeriOzeti": {
+    "description": "Clock user-facing text. Source: Bugün / hafta / seri özeti"
+  },
+  "clockCanliSaatTextclockPil": "Live clock (TextClock) — battery friendly",
+  "@clockCanliSaatTextclockPil": {
+    "description": "Clock user-facing text. Source: Canlı saat (TextClock) — pil dostu"
+  },
+  "clockCmt": "Sat",
+  "@clockCmt": {
+    "description": "Clock user-facing text. Source: Cmt"
+  },
+  "clockCrescendoAniYuksekSes": "Crescendo — no sudden loud sounds",
+  "@clockCrescendoAniYuksekSes": {
+    "description": "Clock user-facing text. Source: Crescendo — ani yüksek ses yok"
+  },
+  "clockCum": "Fri",
+  "@clockCum": {
+    "description": "Clock user-facing text. Source: Cum"
+  },
+  "clockDakika": "Minute:",
+  "@clockDakika": {
+    "description": "Clock user-facing text. Source: Dakika:"
+  },
+  "clockDijitalSaat": "Digital clock",
+  "@clockDijitalSaat": {
+    "description": "Clock user-facing text. Source: Dijital saat"
+  },
+  "clockDuraklat": "Pause",
+  "@clockDuraklat": {
+    "description": "Clock user-facing text. Source: Duraklat"
+  },
+  "clockDurdur": "Stop",
+  "@clockDurdur": {
+    "description": "Clock user-facing text. Source: Durdur"
+  },
+  "clockDunya": "World",
+  "@clockDunya": {
+    "description": "Clock user-facing text. Source: Dünya"
+  },
+  "clockDunyaSaati": "World Clock",
+  "@clockDunyaSaati": {
+    "description": "Clock user-facing text. Source: Dünya Saati"
+  },
+  "clockDunyaSaatleri": "World clocks",
+  "@clockDunyaSaatleri": {
+    "description": "Clock user-facing text. Source: Dünya saatleri"
+  },
+  "clockDuzenle": "Edit",
+  "@clockDuzenle": {
+    "description": "Clock user-facing text. Source: Düzenle"
+  },
+  "clockEksikIzinleriAc": "Enable missing permissions",
+  "@clockEksikIzinleriAc": {
+    "description": "Clock user-facing text. Source: Eksik izinleri aç"
+  },
+  "clockErteleme": "Snooze",
+  "@clockErteleme": {
+    "description": "Clock user-facing text. Source: Erteleme"
+  },
+  "clockErtelemeIcinDeSoruyu": "Solve the question for procrastination too",
+  "@clockErtelemeIcinDeSoruyu": {
+    "description": "Clock user-facing text. Source: Erteleme için de soruyu çöz"
+  },
+  "clockEtiket": "Label",
+  "@clockEtiket": {
+    "description": "Clock user-facing text. Source: Etiket"
+  },
+  "clockGeriSayim": "Countdown",
+  "@clockGeriSayim": {
+    "description": "Clock user-facing text. Source: Geri Sayım"
+  },
+  "clockGrupSiralamasi": "Group leaderboard",
+  "@clockGrupSiralamasi": {
+    "description": "Clock user-facing text. Source: Grup sıralaması"
+  },
+  "clockGunduz": "Day",
+  "@clockGunduz": {
+    "description": "Clock user-facing text. Source: Gündüz"
+  },
+  "clockGece": "Night",
+  "@clockGece": {
+    "description": "Clock user-facing text. Source: Gece"
+  },
+  "clockHaftaIci": "Weekdays",
+  "@clockHaftaIci": {
+    "description": "Clock user-facing text. Source: Hafta içi"
+  },
+  "clockHataE": "Error: {e}",
+  "@clockHataE": {
+    "description": "Clock user-facing text. Source: Hata: $e",
+    "placeholders": {
+      "e": {
+        "type": "String"
+      }
+    }
+  },
+  "clockHataErr": "Error: {err}",
+  "@clockHataErr": {
+    "description": "Clock user-facing text. Source: Hata: $err",
+    "placeholders": {
+      "err": {
+        "type": "String"
+      }
+    }
+  },
+  "clockHenuzBirAlarmOlusturmadiniz": "You have not created an alarm yet.",
+  "@clockHenuzBirAlarmOlusturmadiniz": {
+    "description": "Clock user-facing text. Source: Henüz bir alarm oluşturmadınız."
+  },
+  "clockHenuzCalisanBirTimer": "There are no running timers yet.",
+  "@clockHenuzCalisanBirTimer": {
+    "description": "Clock user-facing text. Source: Henüz çalışan bir timer yok."
+  },
+  "clockHerGun": "Every day",
+  "@clockHerGun": {
+    "description": "Clock user-facing text. Source: Her gün"
+  },
+  "clockHizliBaslat": "Quick start",
+  "@clockHizliBaslat": {
+    "description": "Clock user-facing text. Source: Hızlı başlat"
+  },
+  "clockKademeliSes": "Gradual volume",
+  "@clockKademeliSes": {
+    "description": "Clock user-facing text. Source: Kademeli ses"
+  },
+  "clockKademeliSes30Sn": "Gradual volume (30 sec)",
+  "@clockKademeliSes30Sn": {
+    "description": "Clock user-facing text. Source: Kademeli ses (30 sn)"
+  },
+  "clockKampLeaderboardOzeti": "Camp leaderboard summary",
+  "@clockKampLeaderboardOzeti": {
+    "description": "Clock user-facing text. Source: Kamp leaderboard özeti"
+  },
+  "clockKapat": "Close",
+  "@clockKapat": {
+    "description": "Clock user-facing text. Source: Kapat"
+  },
+  "clockKapatDugmesiIlgiliAndroid": "Close button opens corresponding Android setting",
+  "@clockKapatDugmesiIlgiliAndroid": {
+    "description": "Clock user-facing text. Source: Kapat düğmesi ilgili Android ayarını açar"
+  },
+  "clockAc": "Enable",
+  "@clockAc": {
+    "description": "Clock user-facing text. Source: Aç"
+  },
+  "clockKapatmakIcinMatematikSorusu": "Math question to close",
+  "@clockKapatmakIcinMatematikSorusu": {
+    "description": "Clock user-facing text. Source: Kapatmak için matematik sorusu"
+  },
+  "clockKaydet": "Save",
+  "@clockKaydet": {
+    "description": "Clock user-facing text. Source: Kaydet"
+  },
+  "clockKesinAlarmExact": "Exact alarm",
+  "@clockKesinAlarmExact": {
+    "description": "Clock user-facing text. Source: Kesin alarm (Exact)"
+  },
+  "clockKesinAlarmIzniKapali": "Exact alarm permission is disabled. Alarms may be delayed.",
+  "@clockKesinAlarmIzniKapali": {
+    "description": "Clock user-facing text. Source: Kesin alarm izni kapalı. Alarmlar gecikebilir."
+  },
+  "clockKesinAlarmiKapat": "Disable exact alarms:",
+  "@clockKesinAlarmiKapat": {
+    "description": "Clock user-facing text. Source: Kesin alarmı kapat:"
+  },
+  "clockKilitEkranindaAlarmYuzeyi": "Alarm screen on the lock screen",
+  "@clockKilitEkranindaAlarmYuzeyi": {
+    "description": "Clock user-facing text. Source: Kilit ekranında alarm yüzeyi"
+  },
+  "clockKisiselAlarmlar": "Personal alarms",
+  "@clockKisiselAlarmlar": {
+    "description": "Clock user-facing text. Source: Kişisel Alarmlar"
+  },
+  "clockKopyala": "Copy",
+  "@clockKopyala": {
+    "description": "Clock user-facing text. Source: Kopyala"
+  },
+  "clockKrono": "Stopwatch",
+  "@clockKrono": {
+    "description": "Clock user-facing text. Source: Krono"
+  },
+  "clockKronometre": "Stopwatch",
+  "@clockKronometre": {
+    "description": "Clock user-facing text. Source: Kronometre"
+  },
+  "clockModDers": "Mode / subject",
+  "@clockModDers": {
+    "description": "Clock user-facing text. Source: Mod / ders"
+  },
+  "clockOdak": "Focus",
+  "@clockOdak": {
+    "description": "Clock user-facing text. Source: Odak"
+  },
+  "clockMola": "Break",
+  "@clockMola": {
+    "description": "Clock user-facing text. Source: Mola"
+  },
+  "clockPaz": "Sun",
+  "@clockPaz": {
+    "description": "Clock user-facing text. Source: Paz"
+  },
+  "clockPer": "Thu",
+  "@clockPer": {
+    "description": "Clock user-facing text. Source: Per"
+  },
+  "clockPilIstisnasiniKaldir": "Remove battery optimization exemption:",
+  "@clockPilIstisnasiniKaldir": {
+    "description": "Clock user-facing text. Source: Pil istisnasını kaldır:"
+  },
+  "clockPilKisitlamasiYok": "No battery restrictions",
+  "@clockPilKisitlamasiYok": {
+    "description": "Clock user-facing text. Source: Pil kısıtlaması yok"
+  },
+  "clockPzt": "Mon",
+  "@clockPzt": {
+    "description": "Clock user-facing text. Source: Pzt"
+  },
+  "clockSaat": "Clock",
+  "@clockSaat": {
+    "description": "Clock user-facing text. Source: Saat"
+  },
+  "clockSaatMerkezi": "Clock Center",
+  "@clockSaatMerkezi": {
+    "description": "Clock user-facing text. Source: Saat Merkezi"
+  },
+  "clockSaatUygulamasiKalitesiIcin": "Allow for clock app quality.",
+  "@clockSaatUygulamasiKalitesiIcin": {
+    "description": "Clock user-facing text. Source: Saat uygulaması kalitesi için izin ver."
+  },
+  "clockSal": "Tue",
+  "@clockSal": {
+    "description": "Clock user-facing text. Source: Sal"
+  },
+  "clockSil": "Delete",
+  "@clockSil": {
+    "description": "Clock user-facing text. Source: Sil"
+  },
+  "clockSonra": "Later",
+  "@clockSonra": {
+    "description": "Clock user-facing text. Source: Sonra"
+  },
+  "clockSonrakiAtlandi": "Next skipped",
+  "@clockSonrakiAtlandi": {
+    "description": "Clock user-facing text. Source: Sonraki atlandı"
+  },
+  "clockSifirla": "Reset",
+  "@clockSifirla": {
+    "description": "Clock user-facing text. Source: Sıfırla"
+  },
+  "clockSiradakiAlarm": "Next alarm",
+  "@clockSiradakiAlarm": {
+    "description": "Clock user-facing text. Source: Sıradaki alarm"
+  },
+  "clockTzBilinmiyor": "Unknown time zone",
+  "@clockTzBilinmiyor": {
+    "description": "Clock user-facing text. Source: TZ bilinmiyor"
+  },
+  "clockTamEkranAlarm": "Full-screen alarm",
+  "@clockTamEkranAlarm": {
+    "description": "Clock user-facing text. Source: Tam ekran alarm"
+  },
+  "clockTamEkranAlarmiKapat": "Disable full-screen alarms:",
+  "@clockTamEkranAlarmiKapat": {
+    "description": "Clock user-facing text. Source: Tam ekran alarmı kapat:"
+  },
+  "clockTekrar": "Repeat",
+  "@clockTekrar": {
+    "description": "Clock user-facing text. Source: Tekrar"
+  },
+  "clockTekrarlayanGunlerTekGunluk": "Set a professional alarm with repeat days, skip-next, and anti-snooze.",
+  "@clockTekrarlayanGunlerTekGunluk": {
+    "description": "Clock user-facing text. Source: Tekrarlayan günler, tek günlük atlama ve"
+  },
+  "clockTimer": "Timer",
+  "@clockTimer": {
+    "description": "Clock user-facing text. Source: Timer"
+  },
+  "clockTitresim": "Vibration",
+  "@clockTitresim": {
+    "description": "Clock user-facing text. Source: Titreşim"
+  },
+  "clockTur": "Lap",
+  "@clockTur": {
+    "description": "Clock user-facing text. Source: Tur"
+  },
+  "clockTurKaydiYok": "No laps recorded",
+  "@clockTurKaydiYok": {
+    "description": "Clock user-facing text. Source: Tur kaydı yok"
+  },
+  "clockTurlar": "Laps",
+  "@clockTurlar": {
+    "description": "Clock user-facing text. Source: Turlar"
+  },
+  "clockTurlarKopyalandi": "Laps copied",
+  "@clockTurlarKopyalandi": {
+    "description": "Clock user-facing text. Source: Turlar kopyalandı"
+  },
+  "clockTumIzinlerTamam": "All permissions granted",
+  "@clockTumIzinlerTamam": {
+    "description": "Clock user-facing text. Source: Tüm izinler tamam"
+  },
+  "clockWidgetVeIzinler": "Widget and permissions",
+  "@clockWidgetVeIzinler": {
+    "description": "Clock user-facing text. Source: Widget ve izinler"
+  },
+  "clockYeniAlarm": "New Alarm",
+  "@clockYeniAlarm": {
+    "description": "Clock user-facing text. Source: Yeni Alarm"
+  },
+  "clockYeniAlarmYeniAlarm": "New alarm",
+  "@clockYeniAlarmYeniAlarm": {
+    "description": "Clock user-facing text. Source: Yeni alarm"
+  },
+  "clockAlarmDuzenle": "Edit alarm",
+  "@clockAlarmDuzenle": {
+    "description": "Clock user-facing text. Source: Alarmı düzenle"
+  },
+  "clockYeniden": "Restart",
+  "@clockYeniden": {
+    "description": "Clock user-facing text. Source: Yeniden"
+  },
+  "clockCalismaOturumu": "Study session",
+  "@clockCalismaOturumu": {
+    "description": "Clock user-facing text. Source: Çalışma oturumu"
+  },
+  "clockCalismaSayaci": "Study timer",
+  "@clockCalismaSayaci": {
+    "description": "Clock user-facing text. Source: Çalışma sayacı"
+  },
+  "clockCalsyor": "Running",
+  "@clockCalsyor": {
+    "description": "Clock user-facing text. Source: Çalışıyor"
+  },
+  "clockHazr": "Ready",
+  "@clockHazr": {
+    "description": "Clock user-facing text. Source: Hazır"
+  },
+  "clockCar": "Wed",
+  "@clockCar": {
+    "description": "Clock user-facing text. Source: Çar"
+  },
+  "clockCokluTimer": "Multi Timer",
+  "@clockCokluTimer": {
+    "description": "Clock user-facing text. Source: Çoklu Timer"
+  },
+  "clockOnizle": "Preview",
+  "@clockOnizle": {
+    "description": "Clock user-facing text. Source: Önizle"
+  },
+  "clockOrnSabahRutini": "For example, morning routine",
+  "@clockOrnSabahRutini": {
+    "description": "Clock user-facing text. Source: Örn. Sabah rutini"
+  },
+  "clockOzel": "Custom",
+  "@clockOzel": {
+    "description": "Clock user-facing text. Source: Özel"
+  },
+  "clockOzelZamanlayici": "Custom timer",
+  "@clockOzelZamanlayici": {
+    "description": "Clock user-facing text. Source: Özel Zamanlayıcı"
+  },
+  "clockOzelTimer": "Custom timer",
+  "@clockOzelTimer": {
+    "description": "Clock user-facing text. Source: Özel timer"
+  },
+  "clockIptal": "Cancel",
+  "@clockIptal": {
+    "description": "Clock user-facing text. Source: İptal"
+  },
+  "clockIstatistik": "Statistics",
+  "@clockIstatistik": {
+    "description": "Clock user-facing text. Source: İstatistik"
+  },
+  "clockIzinVer": "Allow",
+  "@clockIzinVer": {
+    "description": "Clock user-facing text. Source: İzin ver"
+  },
+  "clockIzinlerGuvenlikNedeniyleYalniz": "Permissions can only be set in Android system settings for security reasons.",
+  "@clockIzinlerGuvenlikNedeniyleYalniz": {
+    "description": "Clock user-facing text. Source: İzinler güvenlik nedeniyle yalnız Android sistem ayarlarından"
+  },
+  "clockIzinleriAc": "Enable permissions",
+  "@clockIzinleriAc": {
+    "description": "Clock user-facing text. Source: İzinleri aç"
+  },
+  "clockIzinleriYenile": "Refresh permissions",
+  "@clockIzinleriYenile": {
+    "description": "Clock user-facing text. Source: İzinleri yenile"
+  },
+  "clockIzniGeriAlmakIster": "Do you want to withdraw consent?",
+  "@clockIzniGeriAlmakIster": {
+    "description": "Clock user-facing text. Source: İzni geri almak ister misin?"
+  },
+  "clockSehirEkle": "Add city",
+  "@clockSehirEkle": {
+    "description": "Clock user-facing text. Source: Şehir ekle"
+  },
+  "clockSehirSec": "Select city",
+  "@clockSehirSec": {
+    "description": "Clock user-facing text. Source: Şehir seç"
+  },
+  "clockSimdiAyarlariAcmakIster": "Do you want to open the settings now?",
+  "@clockSimdiAyarlariAcmakIster": {
+    "description": "Clock user-facing text. Source: Şimdi ayarları açmak ister misin?"
+  },
+  "commonValue10Dk": "10 min",
+  "@commonValue10Dk": {
+    "description": "Common user-facing text. Source: 10 dk"
+  },
+  "commonValue15Dk": "15 min",
+  "@commonValue15Dk": {
+    "description": "Common user-facing text. Source: 15 dk"
+  },
+  "commonValue25Dk": "25 min",
+  "@commonValue25Dk": {
+    "description": "Common user-facing text. Source: 25 dk"
+  },
+  "commonValue45Dk": "45 min",
+  "@commonValue45Dk": {
+    "description": "Common user-facing text. Source: 45 dk"
+  },
+  "commonValue5Dk": "5 min",
+  "@commonValue5Dk": {
+    "description": "Common user-facing text. Source: 5 dk"
+  },
+  "commonValue60Dk": "60 min",
+  "@commonValue60Dk": {
+    "description": "Common user-facing text. Source: 60 dk"
+  },
+  "commonAyniKisiyiTekrarDurtmek": "Wait a bit before nudging the same person again.",
+  "@commonAyniKisiyiTekrarDurtmek": {
+    "description": "Common user-facing text. Source: Aynı kişiyi tekrar dürtmek için biraz bekle."
+  },
+  "commonBaslat": "Start",
+  "@commonBaslat": {
+    "description": "Common user-facing text. Source: Başlat"
+  },
+  "commonBirGrubaKatil": "Join a group",
+  "@commonBirGrubaKatil": {
+    "description": "Common user-facing text. Source: Bir gruba katıl"
+  },
+  "commonBirKez": "Once",
+  "@commonBirKez": {
+    "description": "Common user-facing text. Source: Bir kez"
+  },
+  "commonBuEpostaZatenKayitli": "This email is already registered.",
+  "@commonBuEpostaZatenKayitli": {
+    "description": "Common user-facing text. Source: Bu e-posta zaten kayıtlı."
+  },
+  "commonBuGece03000500": "Maintenance is scheduled tonight between 03:00 and 05:00.",
+  "@commonBuGece03000500": {
+    "description": "Common user-facing text. Source: Bu gece 03:00 - 05:00 arası bakım çalışması olacaktır."
+  },
+  "commonBuGruptaDurtmeGonderme": "You are not allowed to send pokes in this group.",
+  "@commonBuGruptaDurtmeGonderme": {
+    "description": "Common user-facing text. Source: Bu grupta dürtme gönderme yetkin yok."
+  },
+  "commonBuIslemIcinAdmin": "Admin privileges are required for this operation.",
+  "@commonBuIslemIcinAdmin": {
+    "description": "Common user-facing text. Source: Bu işlem için admin yetkisi gerekiyor."
+  },
+  "commonBuKodaAitGrup": "The group for this code was not found.",
+  "@commonBuKodaAitGrup": {
+    "description": "Common user-facing text. Source: Bu koda ait grup bulunamadı."
+  },
+  "commonBuKonuInceleniyor": "This issue is being investigated.",
+  "@commonBuKonuInceleniyor": {
+    "description": "Common user-facing text. Source: Bu konu inceleniyor."
+  },
+  "commonCmt": "Sat",
+  "@commonCmt": {
+    "description": "Common user-facing text. Source: Cmt"
+  },
+  "commonCum": "Fri",
+  "@commonCum": {
+    "description": "Common user-facing text. Source: Cum"
+  },
+  "commonDubai": "Dubai",
+  "@commonDubai": {
+    "description": "Common user-facing text. Source: Dubai"
+  },
+  "commonDurdur": "Stop",
+  "@commonDurdur": {
+    "description": "Common user-facing text. Source: Durdur"
+  },
+  "commonDurtmeNotuEnFazla": "The nudge note can be up to 120 characters.",
+  "@commonDurtmeNotuEnFazla": {
+    "description": "Common user-facing text. Source: Dürtme notu en fazla 120 karakter olabilir."
+  },
+  "commonEpostaDogrulamasiGerekiyor": "Email verification required.",
+  "@commonEpostaDogrulamasiGerekiyor": {
+    "description": "Common user-facing text. Source: E-posta doğrulaması gerekiyor."
+  },
+  "commonEpostaVeyaSifreHatali": "Email or password is incorrect.",
+  "@commonEpostaVeyaSifreHatali": {
+    "description": "Common user-facing text. Source: E-posta veya şifre hatalı."
+  },
+  "commonFocusCamp": "Focus Camp",
+  "@commonFocusCamp": {
+    "description": "Common user-facing text. Source: Focus Camp"
+  },
+  "commonGecerliBirEpostaGirin": "Enter a valid email.",
+  "@commonGecerliBirEpostaGirin": {
+    "description": "Common user-facing text. Source: Geçerli bir e-posta girin."
+  },
+  "commonGecersizRaporDurumu": "Invalid report status.",
+  "@commonGecersizRaporDurumu": {
+    "description": "Common user-facing text. Source: Geçersiz rapor durumu."
+  },
+  "commonGirisYapilamadi": "Failed to log in.",
+  "@commonGirisYapilamadi": {
+    "description": "Common user-facing text. Source: Giriş yapılamadı."
+  },
+  "commonGrupAdiBosOlamaz": "Group name cannot be empty.",
+  "@commonGrupAdiBosOlamaz": {
+    "description": "Common user-facing text. Source: Grup adı boş olamaz."
+  },
+  "commonGrupBulunamadi": "Group not found.",
+  "@commonGrupBulunamadi": {
+    "description": "Common user-facing text. Source: Grup bulunamadı."
+  },
+  "commonGrupHedefiBelirlenmedi": "Group goal not set",
+  "@commonGrupHedefiBelirlenmedi": {
+    "description": "Common user-facing text. Source: Grup hedefi belirlenmedi"
+  },
+  "commonGrupOlusturulamadiTekrarDeneyin": "Failed to create group, try again.",
+  "@commonGrupOlusturulamadiTekrarDeneyin": {
+    "description": "Common user-facing text. Source: Grup oluşturulamadı, tekrar deneyin."
+  },
+  "commonGrupUyesi": "Group member",
+  "@commonGrupUyesi": {
+    "description": "Common user-facing text. Source: Grup üyesi"
+  },
+  "commonGorunenAdBosOlamaz": "The display name cannot be empty.",
+  "@commonGorunenAdBosOlamaz": {
+    "description": "Common user-facing text. Source: Görünen ad boş olamaz."
+  },
+  "commonHaftaIci": "Weekdays",
+  "@commonHaftaIci": {
+    "description": "Common user-facing text. Source: Hafta içi"
+  },
+  "commonHaftaSonu": "Weekends",
+  "@commonHaftaSonu": {
+    "description": "Common user-facing text. Source: Hafta sonu"
+  },
+  "commonHatirlaticiBulunamadi": "No reminder found.",
+  "@commonHatirlaticiBulunamadi": {
+    "description": "Common user-facing text. Source: Hatırlatıcı bulunamadı."
+  },
+  "commonHenuzSiralamanYok": "No ranking yet",
+  "@commonHenuzSiralamanYok": {
+    "description": "Common user-facing text. Source: Henüz sıralaman yok' :"
+  },
+  "commonHerGun": "Every day",
+  "@commonHerGun": {
+    "description": "Common user-facing text. Source: Her gün"
+  },
+  "commonHesabinOlusturulduGirisYapabilmek": "Your account has been created. Sent to your e-mail to log in.",
+  "@commonHesabinOlusturulduGirisYapabilmek": {
+    "description": "Common user-facing text. Source: Hesabın oluşturuldu. Giriş yapabilmek için e-postana gönderilen"
+  },
+  "commonKayitTamamlanamadi": "Could not complete the record.",
+  "@commonKayitTamamlanamadi": {
+    "description": "Common user-facing text. Source: Kayıt tamamlanamadı."
+  },
+  "commonKendineDurtmeGonderemezsin": "You can't send yourself a nudge.",
+  "@commonKendineDurtmeGonderemezsin": {
+    "description": "Common user-facing text. Source: Kendine dürtme gönderemezsin."
+  },
+  "commonKodYenilenemediTekrarDeneyin": "The code could not be refreshed, try again.",
+  "@commonKodYenilenemediTekrarDeneyin": {
+    "description": "Common user-facing text. Source: Kod yenilenemedi, tekrar deneyin."
+  },
+  "commonKonuBosOlamaz": "The subject cannot be empty.",
+  "@commonKonuBosOlamaz": {
+    "description": "Common user-facing text. Source: Konu boş olamaz."
+  },
+  "commonKonuEnFazla80": "Subject can be up to 80 characters.",
+  "@commonKonuEnFazla80": {
+    "description": "Common user-facing text. Source: Konu en fazla 80 karakter olabilir."
+  },
+  "commonLondra": "London",
+  "@commonLondra": {
+    "description": "Common user-facing text. Source: Londra"
+  },
+  "commonMesajBosOlamaz": "The message cannot be empty.",
+  "@commonMesajBosOlamaz": {
+    "description": "Common user-facing text. Source: Mesaj boş olamaz."
+  },
+  "commonMesajEnFazla1200": "The message can be up to 1200 characters.",
+  "@commonMesajEnFazla1200": {
+    "description": "Common user-facing text. Source: Mesaj en fazla 1200 karakter olabilir."
+  },
+  "commonMesajEnFazla500": "The message can be up to 500 characters.",
+  "@commonMesajEnFazla500": {
+    "description": "Common user-facing text. Source: Mesaj en fazla 500 karakter olabilir."
+  },
+  "commonMola": "Break",
+  "@commonMola": {
+    "description": "Common user-facing text. Source: Mola"
+  },
+  "commonCalsyor": "Running",
+  "@commonCalsyor": {
+    "description": "Common user-facing text. Source: Çalışıyor"
+  },
+  "commonNewYork": "New York",
+  "@commonNewYork": {
+    "description": "Common user-facing text. Source: New York"
+  },
+  "commonOdakKampi": "Focus Camp",
+  "@commonOdakKampi": {
+    "description": "Common user-facing text. Source: Odak Kampı"
+  },
+  "commonOdakKampinaHosGeldin": "Welcome to Focus Camp 🏕️",
+  "@commonOdakKampinaHosGeldin": {
+    "description": "Common user-facing text. Source: Odak Kampı’na hoş geldin 🏕️"
+  },
+  "commonPaz": "Sun",
+  "@commonPaz": {
+    "description": "Common user-facing text. Source: Paz"
+  },
+  "commonPer": "Thu",
+  "@commonPer": {
+    "description": "Common user-facing text. Source: Per"
+  },
+  "commonProfilFotografiYuklemekIcin": "Supabase connection is required to upload a profile photo.",
+  "@commonProfilFotografiYuklemekIcin": {
+    "description": "Common user-facing text. Source: Profil fotoğrafı yüklemek için Supabase bağlantısı gerekli."
+  },
+  "commonPzt": "Mon",
+  "@commonPzt": {
+    "description": "Common user-facing text. Source: Pzt"
+  },
+  "commonSal": "Tue",
+  "@commonSal": {
+    "description": "Common user-facing text. Source: Sal"
+  },
+  "commonSistemBakimi": "System Maintenance",
+  "@commonSistemBakimi": {
+    "description": "Common user-facing text. Source: Sistem Bakımı"
+  },
+  "commonSpamKurallariniIhlal": "Violating spam rules",
+  "@commonSpamKurallariniIhlal": {
+    "description": "Common user-facing text. Source: Spam kurallarını ihlal"
+  },
+  "commonSiralamaOlusuncaBuradaGorunur": "Once sorted, it appears here",
+  "@commonSiralamaOlusuncaBuradaGorunur": {
+    "description": "Common user-facing text. Source: Sıralama oluşunca burada görünür"
+  },
+  "commonTestGrubu1": "Test Group 1",
+  "@commonTestGrubu1": {
+    "description": "Common user-facing text. Source: Test Grubu 1"
+  },
+  "commonTokyo": "Tokyo",
+  "@commonTokyo": {
+    "description": "Common user-facing text. Source: Tokyo"
+  },
+  "commonZamanlayici": "Timer",
+  "@commonZamanlayici": {
+    "description": "Common user-facing text. Source: Zamanlayıcı"
+  },
+  "commonCalismaHazir": "Ready to study",
+  "@commonCalismaHazir": {
+    "description": "Common user-facing text. Source: Çalışma hazır"
+  },
+  "commonCar": "Wed",
+  "@commonCar": {
+    "description": "Common user-facing text. Source: Çar"
+  },
+  "commonSifreEnAz6": "Password must be at least 6 characters.",
+  "@commonSifreEnAz6": {
+    "description": "Common user-facing text. Source: Şifre en az 6 karakter olmalı."
+  },
+  "coreSenderDurttu": "{sender} nudged",
+  "@coreSenderDurttu": {
+    "description": "Core user-facing text. Source: $sender dürttü",
+    "placeholders": {
+      "sender": {
+        "type": "String"
+      }
+    }
+  },
+  "coreAlarm": "Alarm",
+  "@coreAlarm": {
+    "description": "Core user-facing text. Source: Alarm"
+  },
+  "coreAlarmlarVeZamanlayicilar": "Alarms and Timers",
+  "@coreAlarmlarVeZamanlayicilar": {
+    "description": "Core user-facing text. Source: Alarmlar ve Zamanlayıcılar"
+  },
+  "coreAltin": "Gold",
+  "@coreAltin": {
+    "description": "Core user-facing text. Source: Altın"
+  },
+  "coreAltinTac": "Golden Crown",
+  "@coreAltinTac": {
+    "description": "Core user-facing text. Source: Altın Taç"
+  },
+  "coreAltinTacAltnTac": "Golden crown",
+  "@coreAltinTacAltnTac": {
+    "description": "Core user-facing text. Source: Altın taç"
+  },
+  "coreAnaSayfa": "Home",
+  "@coreAnaSayfa": {
+    "description": "Core user-facing text. Source: Ana Sayfa"
+  },
+  "coreAuckland": "Auckland",
+  "@coreAuckland": {
+    "description": "Core user-facing text. Source: Auckland"
+  },
+  "coreAyi": "Bear",
+  "@coreAyi": {
+    "description": "Core user-facing text. Source: Ayı"
+  },
+  "coreBaykus": "Owl",
+  "@coreBaykus": {
+    "description": "Core user-facing text. Source: Baykuş"
+  },
+  "coreBerlin": "Berlin",
+  "@coreBerlin": {
+    "description": "Core user-facing text. Source: Berlin"
+  },
+  "coreBildirim": "Notification",
+  "@coreBildirim": {
+    "description": "Core user-facing text. Source: Bildirim"
+  },
+  "coreBilgelikSaati": "Hour of Wisdom",
+  "@coreBilgelikSaati": {
+    "description": "Core user-facing text. Source: Bilgelik Saati"
+  },
+  "coreBirArkadasin": "A friend of yours",
+  "@coreBirArkadasin": {
+    "description": "Core user-facing text. Source: Bir arkadaşın"
+  },
+  "coreBronz": "Bronze",
+  "@coreBronz": {
+    "description": "Core user-facing text. Source: Bronz"
+  },
+  "coreBronzTac": "Bronze Crown",
+  "@coreBronzTac": {
+    "description": "Core user-facing text. Source: Bronz Taç"
+  },
+  "coreBronzTacBronzTac": "Bronze crown",
+  "@coreBronzTacBronzTac": {
+    "description": "Core user-facing text. Source: Bronz taç"
+  },
+  "coreBugun": "Today",
+  "@coreBugun": {
+    "description": "Core user-facing text. Source: Bugün"
+  },
+  "coreBuzul": "Glacier",
+  "@coreBuzul": {
+    "description": "Core user-facing text. Source: Buzul"
+  },
+  "coreChicago": "Chicago",
+  "@coreChicago": {
+    "description": "Core user-facing text. Source: Chicago"
+  },
+  "coreCyberBlue": "Cyber Blue",
+  "@coreCyberBlue": {
+    "description": "Core user-facing text. Source: Cyber Blue"
+  },
+  "coreDenver": "Denver",
+  "@coreDenver": {
+    "description": "Core user-facing text. Source: Denver"
+  },
+  "coreDerinOdak": "Deep Focus",
+  "@coreDerinOdak": {
+    "description": "Core user-facing text. Source: Derin Odak"
+  },
+  "coreDubai": "Dubai",
+  "@coreDubai": {
+    "description": "Core user-facing text. Source: Dubai"
+  },
+  "coreDurdur": "Stop",
+  "@coreDurdur": {
+    "description": "Core user-facing text. Source: Durdur"
+  },
+  "coreBaslat": "Start",
+  "@coreBaslat": {
+    "description": "Core user-facing text. Source: Başlat"
+  },
+  "coreDurdurmakIcinBildirimdekiDurdur": "To stop it, use the Stop action in the notification.",
+  "@coreDurdurmakIcinBildirimdekiDurdur": {
+    "description": "Core user-facing text. Source: Durdurmak için bildirimdeki Durdur aksiyonunu kullan."
+  },
+  "coreDun": "Yesterday",
+  "@coreDun": {
+    "description": "Core user-facing text. Source: Dün"
+  },
+  "coreDurtmeler": "Nudges",
+  "@coreDurtmeler": {
+    "description": "Core user-facing text. Source: Dürtmeler"
+  },
+  "coreElmas": "Diamond",
+  "@coreElmas": {
+    "description": "Core user-facing text. Source: Elmas"
+  },
+  "coreElmasTac": "Diamond Crown",
+  "@coreElmasTac": {
+    "description": "Core user-facing text. Source: Elmas Taç"
+  },
+  "coreErkenciKus": "Early Bird",
+  "@coreErkenciKus": {
+    "description": "Core user-facing text. Source: Erkenci Kuş"
+  },
+  "coreErtele": "Snooze",
+  "@coreErtele": {
+    "description": "Core user-facing text. Source: Ertele"
+  },
+  "coreGeceKusu": "Night Owl",
+  "@coreGeceKusu": {
+    "description": "Core user-facing text. Source: Gece Kuşu"
+  },
+  "coreGelecekKenari": "Future Edge",
+  "@coreGelecekKenari": {
+    "description": "Core user-facing text. Source: Gelecek Kenarı"
+  },
+  "coreGelecekNeon": "Future Neon",
+  "@coreGelecekNeon": {
+    "description": "Core user-facing text. Source: Gelecek Neon"
+  },
+  "coreGizliBasarim": "Secret achievement",
+  "@coreGizliBasarim": {
+    "description": "Core user-facing text. Source: Gizli başarım"
+  },
+  "coreGrupSinerjisi": "Group Synergy",
+  "@coreGrupSinerjisi": {
+    "description": "Core user-facing text. Source: Grup Sinerjisi"
+  },
+  "coreGruplar": "Groups",
+  "@coreGruplar": {
+    "description": "Core user-facing text. Source: Gruplar"
+  },
+  "coreGumus": "Silver",
+  "@coreGumus": {
+    "description": "Core user-facing text. Source: Gümüş"
+  },
+  "coreGumusTac": "Silver Crown",
+  "@coreGumusTac": {
+    "description": "Core user-facing text. Source: Gümüş Taç"
+  },
+  "coreGumusTacGumusTac": "Silver crown",
+  "@coreGumusTacGumusTac": {
+    "description": "Core user-facing text. Source: Gümüş taç"
+  },
+  "coreGunBatimi": "Sunset",
+  "@coreGunBatimi": {
+    "description": "Core user-facing text. Source: Gün Batımı"
+  },
+  "coreHaftaSonuSavascisi": "Weekend Warrior",
+  "@coreHaftaSonuSavascisi": {
+    "description": "Core user-facing text. Source: Hafta Sonu Savaşçısı"
+  },
+  "coreIsinmaTuru": "Warm-up lap",
+  "@coreIsinmaTuru": {
+    "description": "Core user-facing text. Source: Isınma turu"
+  },
+  "coreKahire": "Cairo",
+  "@coreKahire": {
+    "description": "Core user-facing text. Source: Kahire"
+  },
+  "coreKahveKutuphane": "Coffee Library",
+  "@coreKahveKutuphane": {
+    "description": "Core user-facing text. Source: Kahve Kütüphane"
+  },
+  "coreKampAtesi": "Campfire",
+  "@coreKampAtesi": {
+    "description": "Core user-facing text. Source: Kamp Ateşi"
+  },
+  "coreKampAtesiEtrafinda": "Around the Campfire",
+  "coreEnAz3KisiAktifkenCalis": "Study while at least 3 members are active",
+  "@coreKampAtesiEtrafinda": {
+    "description": "Core user-facing text. Source: Kamp Ateşi Etrafında',"
+  },
+  "coreKampUstasi": "Camp Master",
+  "@coreKampUstasi": {
+    "description": "Core user-facing text. Source: Kamp ustası"
+  },
+  "coreKapat": "Close",
+  "@coreKapat": {
+    "description": "Core user-facing text. Source: Kapat"
+  },
+  "coreKaplan": "Tiger",
+  "@coreKaplan": {
+    "description": "Core user-facing text. Source: Kaplan"
+  },
+  "coreKedi": "Cat",
+  "@coreKedi": {
+    "description": "Core user-facing text. Source: Kedi"
+  },
+  "coreKesinAlarm": "Exact alarm",
+  "@coreKesinAlarm": {
+    "description": "Core user-facing text. Source: Kesin alarm"
+  },
+  "coreKeskinModern": "Sharp Modern",
+  "@coreKeskinModern": {
+    "description": "Core user-facing text. Source: Keskin Modern"
+  },
+  "coreKirpi": "Hedgehog",
+  "@coreKirpi": {
+    "description": "Core user-facing text. Source: Kirpi"
+  },
+  "coreKoala": "Koala",
+  "@coreKoala": {
+    "description": "Core user-facing text. Source: Koala"
+  },
+  "coreKraliyetAkademi": "Royal Academy",
+  "@coreKraliyetAkademi": {
+    "description": "Core user-facing text. Source: Kraliyet Akademi"
+  },
+  "coreKremKahve": "Cream Coffee",
+  "@coreKremKahve": {
+    "description": "Core user-facing text. Source: Krem Kahve"
+  },
+  "coreKurbaga": "Frog",
+  "@coreKurbaga": {
+    "description": "Core user-facing text. Source: Kurbağa"
+  },
+  "coreKusursuzHafta": "Perfect Week",
+  "@coreKusursuzHafta": {
+    "description": "Core user-facing text. Source: Kusursuz Hafta"
+  },
+  "coreKopek": "Dog",
+  "@coreKopek": {
+    "description": "Core user-facing text. Source: Köpek"
+  },
+  "coreLacivert": "Navy blue",
+  "@coreLacivert": {
+    "description": "Core user-facing text. Source: Lacivert"
+  },
+  "coreLondra": "London",
+  "@coreLondra": {
+    "description": "Core user-facing text. Source: Londra"
+  },
+  "coreLosAngeles": "Los Angeles",
+  "@coreLosAngeles": {
+    "description": "Core user-facing text. Source: Los Angeles"
+  },
+  "coreMaraton": "Marathon",
+  "@coreMaraton": {
+    "description": "Core user-facing text. Source: Maraton"
+  },
+  "coreMaterialYou": "Material You",
+  "@coreMaterialYou": {
+    "description": "Core user-facing text. Source: Material You"
+  },
+  "coreMonoAmber": "Mono Amber",
+  "@coreMonoAmber": {
+    "description": "Core user-facing text. Source: Mono Amber"
+  },
+  "coreMorGece": "Purple Night",
+  "@coreMorGece": {
+    "description": "Core user-facing text. Source: Mor Gece"
+  },
+  "coreMoskova": "Moscow",
+  "@coreMoskova": {
+    "description": "Core user-facing text. Source: Moskova"
+  },
+  "coreMumbai": "Mumbai",
+  "@coreMumbai": {
+    "description": "Core user-facing text. Source: Mumbai"
+  },
+  "coreNewYork": "New York",
+  "@coreNewYork": {
+    "description": "Core user-facing text. Source: New York"
+  },
+  "coreNordikKar": "Nordic Snow",
+  "@coreNordikKar": {
+    "description": "Core user-facing text. Source: Nordik Kar"
+  },
+  "coreOdakKampi": "Focus Camp",
+  "@coreOdakKampi": {
+    "description": "Core user-facing text. Source: Odak Kampı"
+  },
+  "coreOkyanus": "Ocean",
+  "@coreOkyanus": {
+    "description": "Core user-facing text. Source: Okyanus"
+  },
+  "coreOkyanusCam": "Ocean Glass",
+  "@coreOkyanusCam": {
+    "description": "Core user-facing text. Source: Okyanus Cam"
+  },
+  "coreOrman": "Forest",
+  "@coreOrman": {
+    "description": "Core user-facing text. Source: Orman"
+  },
+  "coreOrmanKabini": "Forest Cabin",
+  "@coreOrmanKabini": {
+    "description": "Core user-facing text. Source: Orman Kabini"
+  },
+  "corePanda": "Panda",
+  "@corePanda": {
+    "description": "Core user-facing text. Source: Panda"
+  },
+  "coreParis": "Paris",
+  "@coreParis": {
+    "description": "Core user-facing text. Source: Paris"
+  },
+  "corePenguen": "Penguin",
+  "@corePenguen": {
+    "description": "Core user-facing text. Source: Penguen"
+  },
+  "corePilKisitlamasiz": "Battery unrestricted",
+  "@corePilKisitlamasiz": {
+    "description": "Core user-facing text. Source: Pil kısıtlamasız"
+  },
+  "corePlanlanmisCalismaHatirlaticilari": "Scheduled study reminders",
+  "@corePlanlanmisCalismaHatirlaticilari": {
+    "description": "Core user-facing text. Source: Planlanmış çalışma hatırlatıcıları"
+  },
+  "corePlatin": "Platinum",
+  "@corePlatin": {
+    "description": "Core user-facing text. Source: Platin"
+  },
+  "corePlatinTac": "Platinum Crown",
+  "@corePlatinTac": {
+    "description": "Core user-facing text. Source: Platin Taç"
+  },
+  "coreProfil": "Profile",
+  "@coreProfil": {
+    "description": "Core user-facing text. Source: Profil"
+  },
+  "coreRetroTerminal": "Retro Terminal",
+  "@coreRetroTerminal": {
+    "description": "Core user-facing text. Source: Retro Terminal"
+  },
+  "coreRoseNoir": "Rose Noir",
+  "@coreRoseNoir": {
+    "description": "Core user-facing text. Source: Rose Noir"
+  },
+  "coreSaat": "Clock",
+  "@coreSaat": {
+    "description": "Core user-facing text. Source: Saat"
+  },
+  "coreSeniCalismayaCagiriyor": "Invites you to study.",
+  "@coreSeniCalismayaCagiriyor": {
+    "description": "Core user-facing text. Source: Seni çalışmaya çağırıyor."
+  },
+  "coreSeriUstasi": "Streak Master",
+  "@coreSeriUstasi": {
+    "description": "Core user-facing text. Source: Seri Ustası"
+  },
+  "coreSeriAtesi": "Streak flame",
+  "@coreSeriAtesi": {
+    "description": "Core user-facing text. Source: Seri ateşi"
+  },
+  "coreSeul": "Seoul",
+  "@coreSeul": {
+    "description": "Core user-facing text. Source: Seul"
+  },
+  "coreSidney": "Sydney",
+  "@coreSidney": {
+    "description": "Core user-facing text. Source: Sidney"
+  },
+  "coreSingapur": "Singapore",
+  "@coreSingapur": {
+    "description": "Core user-facing text. Source: Singapur"
+  },
+  "coreSlateMint": "Slate Mint",
+  "@coreSlateMint": {
+    "description": "Core user-facing text. Source: Slate Mint"
+  },
+  "coreSoPaulo": "São Paulo",
+  "@coreSoPaulo": {
+    "description": "Core user-facing text. Source: São Paulo"
+  },
+  "coreSinifArkadaslarindanGelenCalisma": "Study nudges from classmates",
+  "@coreSinifArkadaslarindanGelenCalisma": {
+    "description": "Core user-facing text. Source: Sınıf arkadaşlarından gelen çalışma dürtmeleri"
+  },
+  "coreTamEkranAlarm": "Full-screen alarm",
+  "@coreTamEkranAlarm": {
+    "description": "Core user-facing text. Source: Tam ekran alarm"
+  },
+  "coreTavsan": "Rabbit",
+  "@coreTavsan": {
+    "description": "Core user-facing text. Source: Tavşan"
+  },
+  "coreTacYok": "No crown",
+  "@coreTacYok": {
+    "description": "Core user-facing text. Source: Taç yok"
+  },
+  "coreTilki": "Fox",
+  "@coreTilki": {
+    "description": "Core user-facing text. Source: Tilki"
+  },
+  "coreTokyo": "Tokyo",
+  "@coreTokyo": {
+    "description": "Core user-facing text. Source: Tokyo"
+  },
+  "coreToplam1SaatCalis": "Study for 1 hour in total",
+  "@coreToplam1SaatCalis": {
+    "description": "Core user-facing text. Source: Toplam 1 saat çalış"
+  },
+  "coreToplam30SaatCalis": "Study 30 hours in total",
+  "@coreToplam30SaatCalis": {
+    "description": "Core user-facing text. Source: Toplam 30 saat çalış"
+  },
+  "coreUtc": "UTC",
+  "@coreUtc": {
+    "description": "Core user-facing text. Source: UTC"
+  },
+  "coreYarin": "Tomorrow",
+  "@coreYarin": {
+    "description": "Core user-facing text. Source: Yarın"
+  },
+  "coreYeniDurtme": "New nudge",
+  "@coreYeniDurtme": {
+    "description": "Core user-facing text. Source: Yeni dürtme"
+  },
+  "coreYumusakKrem": "Soft Cream",
+  "@coreYumusakKrem": {
+    "description": "Core user-facing text. Source: Yumuşak Krem"
+  },
+  "coreYumusakPastel": "Soft Pastel",
+  "@coreYumusakPastel": {
+    "description": "Core user-facing text. Source: Yumuşak Pastel"
+  },
+  "coreZamanlayiciBitti": "Timer finished",
+  "@coreZamanlayiciBitti": {
+    "description": "Core user-facing text. Source: Zamanlayıcı bitti"
+  },
+  "coreZumrut": "Emerald",
+  "@coreZumrut": {
+    "description": "Core user-facing text. Source: Zümrüt"
+  },
+  "coreCalismaHatirlaticilari": "Study Reminders",
+  "@coreCalismaHatirlaticilari": {
+    "description": "Core user-facing text. Source: Çalışma Hatırlatıcıları"
+  },
+  "coreCalismaSayaciCalisirkenGosterilen": "Persistent notification shown while the study timer is running",
+  "@coreCalismaSayaciCalisirkenGosterilen": {
+    "description": "Core user-facing text. Source: Çalışma sayacı çalışırken gösterilen kalıcı bildirim"
+  },
+  "coreCalismaZamani": "It's time to study!",
+  "@coreCalismaZamani": {
+    "description": "Core user-facing text. Source: Çalışma zamanı!"
+  },
+  "coreIlkKamp": "First camp",
+  "@coreIlkKamp": {
+    "description": "Core user-facing text. Source: İlk kamp"
+  },
+  "coreIlkCalismaOturumunuKaydet": "Save first study session",
+  "@coreIlkCalismaOturumunuKaydet": {
+    "description": "Core user-facing text. Source: İlk çalışma oturumunu kaydet"
+  },
+  "coreIstanbul": "Istanbul",
+  "@coreIstanbul": {
+    "description": "Core user-facing text. Source: İstanbul"
+  },
+  "coreIstatistik": "Statistics",
+  "@coreIstatistik": {
+    "description": "Core user-facing text. Source: İstatistik"
+  },
+  "coreIstikrar": "Consistency",
+  "@coreIstikrar": {
+    "description": "Core user-facing text. Source: İstikrar"
+  },
+  "desktopStatusFormathmsdisplaysecondsstate": "{status}, {state}",
+  "@desktopStatusFormathmsdisplaysecondsstate": {
+    "description": "Desktop user-facing text. Source: $status, ${formatHms(_displaySeconds(state))}",
+    "placeholders": {
+      "state": {
+        "type": "String"
+      },
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "desktopTitleKomutCubugu": "{title} command bar",
+  "@desktopTitleKomutCubugu": {
+    "description": "Desktop user-facing text. Source: $title komut çubuğu",
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "desktopItemlabelSekmeIndex1": "{label}, tab {index}",
+  "@desktopItemlabelSekmeIndex1": {
+    "description": "Desktop user-facing text. Source: ${item.label}, sekme ${index + 1}",
+    "placeholders": {
+      "label": {
+        "type": "String"
+      },
+      "index": {
+        "type": "String"
+      }
+    }
+  },
+  "desktopAnaSayfa": "Home",
+  "@desktopAnaSayfa": {
+    "description": "Desktop user-facing text. Source: Ana Sayfa"
+  },
+  "desktopAyarlar": "Settings",
+  "@desktopAyarlar": {
+    "description": "Desktop user-facing text. Source: Ayarlar"
+  },
+  "desktopCompactFocus": "Compact Focus",
+  "@desktopCompactFocus": {
+    "description": "Desktop user-facing text. Source: Compact Focus"
+  },
+  "desktopDersSecilmedi": "No subject selected",
+  "@desktopDersSecilmedi": {
+    "description": "Desktop user-facing text. Source: Ders seçilmedi"
+  },
+  "desktopDurdurVeKaydet": "Stop and save",
+  "@desktopDurdurVeKaydet": {
+    "description": "Desktop user-facing text. Source: Durdur ve kaydet"
+  },
+  "desktopBaslat": "Start",
+  "@desktopBaslat": {
+    "description": "Desktop user-facing text. Source: Başlat"
+  },
+  "desktopGeriSayim": "Countdown",
+  "@desktopGeriSayim": {
+    "description": "Desktop user-facing text. Source: Geri sayım"
+  },
+  "desktopGruplar": "Groups",
+  "@desktopGruplar": {
+    "description": "Desktop user-facing text. Source: Gruplar"
+  },
+  "desktopHazir": "Ready",
+  "@desktopHazir": {
+    "description": "Desktop user-facing text. Source: Hazır"
+  },
+  "desktopHerZamanUstteTut": "Always keep it on top",
+  "@desktopHerZamanUstteTut": {
+    "description": "Desktop user-facing text. Source: Her zaman üstte tut"
+  },
+  "desktopKapat": "Close",
+  "@desktopKapat": {
+    "description": "Desktop user-facing text. Source: Kapat"
+  },
+  "desktopKronometre": "Stopwatch",
+  "@desktopKronometre": {
+    "description": "Desktop user-facing text. Source: Kronometre"
+  },
+  "desktopMola": "Break",
+  "@desktopMola": {
+    "description": "Desktop user-facing text. Source: Mola"
+  },
+  "desktopOdakKampi": "Focus Camp",
+  "@desktopOdakKampi": {
+    "description": "Desktop user-facing text. Source: Odak Kampı"
+  },
+  "desktopOdakKampiAnaNavigasyonu": "Focus Camp main navigation",
+  "@desktopOdakKampiAnaNavigasyonu": {
+    "description": "Desktop user-facing text. Source: Odak Kampı ana navigasyonu"
+  },
+  "desktopOdaklaniyor": "Focusing",
+  "@desktopOdaklaniyor": {
+    "description": "Desktop user-facing text. Source: Odaklanıyor"
+  },
+  "desktopProfil": "Profile",
+  "@desktopProfil": {
+    "description": "Desktop user-facing text. Source: Profil"
+  },
+  "desktopSaat": "Clock",
+  "@desktopSaat": {
+    "description": "Desktop user-facing text. Source: Saat"
+  },
+  "desktopTamPencereyeDon": "Back to full window",
+  "@desktopTamPencereyeDon": {
+    "description": "Desktop user-facing text. Source: Tam pencereye dön"
+  },
+  "desktopYenile": "Refresh",
+  "@desktopYenile": {
+    "description": "Desktop user-facing text. Source: Yenile"
+  },
+  "desktopCalismayiKaydetmekIcinGiris": "You must log in to save your study session.",
+  "@desktopCalismayiKaydetmekIcinGiris": {
+    "description": "Desktop user-facing text. Source: Çalışmayı kaydetmek için giriş yapmalısın."
+  },
+  "desktopUstteTut": "Keep on top",
+  "@desktopUstteTut": {
+    "description": "Desktop user-facing text. Source: Üstte tut"
+  },
+  "desktopIstatistik": "Statistics",
+  "@desktopIstatistik": {
+    "description": "Desktop user-facing text. Source: İstatistik"
+  },
+  "homeOGun": "{o} days",
+  "@homeOGun": {
+    "description": "Home user-facing text. Source: $o gün",
+    "placeholders": {
+      "o": {
+        "type": "String"
+      }
+    }
+  },
+  "homeValue14Gun": "14 days",
+  "@homeValue14Gun": {
+    "description": "Home user-facing text. Source: 14 gün"
+  },
+  "homeValue30Gun": "30 days",
+  "@homeValue30Gun": {
+    "description": "Home user-facing text. Source: 30 gün"
+  },
+  "homeValue90Gun": "90 days",
+  "@homeValue90Gun": {
+    "description": "Home user-facing text. Source: 90 gün"
+  },
+  "homeAktifGrubunBugunkuSiralamasi": "Today's ranking of the active group",
+  "@homeAktifGrubunBugunkuSiralamasi": {
+    "description": "Home user-facing text. Source: Aktif grubun bugünkü sıralaması"
+  },
+  "homeAktifGun": "Active day",
+  "@homeAktifGun": {
+    "description": "Home user-facing text. Source: Aktif gün"
+  },
+  "homeAnaSayfaSifirlandi": "Home reset",
+  "@homeAnaSayfaSifirlandi": {
+    "description": "Home user-facing text. Source: Ana Sayfa sıfırlandı"
+  },
+  "homeAnaSayfanBos": "Your Home is empty",
+  "@homeAnaSayfanBos": {
+    "description": "Home user-facing text. Source: Ana Sayfan boş"
+  },
+  "homeAnaSayfayiSifirla": "Reset Home",
+  "@homeAnaSayfayiSifirla": {
+    "description": "Home user-facing text. Source: Ana Sayfa’yı sıfırla"
+  },
+  "homeBirGrubaKatilincaBurada": "It appears here when you join a group.",
+  "@homeBirGrubaKatilincaBurada": {
+    "description": "Home user-facing text. Source: Bir gruba katılınca burada görünür."
+  },
+  "homeBitti": "Finished",
+  "@homeBitti": {
+    "description": "Home user-facing text. Source: Bitti"
+  },
+  "homeBosluklariYukariTopla": "Compact gaps upward",
+  "@homeBosluklariYukariTopla": {
+    "description": "Home user-facing text. Source: Boşlukları yukarı topla"
+  },
+  "homeBugun": "Today",
+  "@homeBugun": {
+    "description": "Home user-facing text. Source: Bugün"
+  },
+  "homeBugunHenuzKimseCalismamis": "No one has worked yet today.",
+  "@homeBugunHenuzKimseCalismamis": {
+    "description": "Home user-facing text. Source: Bugün henüz kimse çalışmamış."
+  },
+  "homeBugunHenuzCalismaKaydin": "You don't have a study session yet today. Start the timer!",
+  "@homeBugunHenuzCalismaKaydin": {
+    "description": "Home user-facing text. Source: Bugün henüz çalışma kaydın yok. Sayaçtan başla!"
+  },
+  "homeBugunOzeti": "Today's summary",
+  "@homeBugunOzeti": {
+    "description": "Home user-facing text. Source: Bugün özeti"
+  },
+  "homeBugunkuToplamVeDers": "Today's total and subject distribution",
+  "@homeBugunkuToplamVeDers": {
+    "description": "Home user-facing text. Source: Bugünkü toplam ve ders dağılımı"
+  },
+  "homeBuyuk": "Large",
+  "@homeBuyuk": {
+    "description": "Home user-facing text. Source: Büyük"
+  },
+  "homeDonemOzeti": "Period summary",
+  "@homeDonemOzeti": {
+    "description": "Home user-facing text. Source: Dönem özeti"
+  },
+  "homeEskiGrupUyesi": "Former Group Member",
+  "@homeEskiGrupUyesi": {
+    "description": "Home user-facing text. Source: Eski Grup Üyesi"
+  },
+  "homeEgilim": "Trend",
+  "@homeEgilim": {
+    "description": "Home user-facing text. Source: Eğilim"
+  },
+  "homeEgilimGrafigi": "Trend chart",
+  "@homeEgilimGrafigi": {
+    "description": "Home user-facing text. Source: Eğilim grafiği"
+  },
+  "homeGenel": "General",
+  "@homeGenel": {
+    "description": "Home user-facing text. Source: Genel"
+  },
+  "homeGithubTarziCalismaYogunlugu": "GitHub style study intensity heat map",
+  "@homeGithubTarziCalismaYogunlugu": {
+    "description": "Home user-facing text. Source: GitHub tarzı çalışma yoğunluğu ısı haritası"
+  },
+  "homeGrafikler": "Charts",
+  "@homeGrafikler": {
+    "description": "Home user-facing text. Source: Grafikler"
+  },
+  "homeGrubunSonGunlerdekiToplam": "Total study chart of the group in recent days",
+  "@homeGrubunSonGunlerdekiToplam": {
+    "description": "Home user-facing text. Source: Grubun son günlerdeki toplam çalışma grafiği"
+  },
+  "homeGrup": "Group",
+  "@homeGrup": {
+    "description": "Home user-facing text. Source: Grup"
+  },
+  "homeGrupGunlukTrendi": "Group daily trend",
+  "@homeGrupGunlukTrendi": {
+    "description": "Home user-facing text. Source: Grup günlük trendi"
+  },
+  "homeGrupHedefi": "Group goal",
+  "@homeGrupHedefi": {
+    "description": "Home user-facing text. Source: Grup hedefi"
+  },
+  "homeGrupOlustur": "Create group",
+  "@homeGrupOlustur": {
+    "description": "Home user-facing text. Source: Grup oluştur"
+  },
+  "homeGrupSiralamasi": "Group leaderboard",
+  "@homeGrupSiralamasi": {
+    "description": "Home user-facing text. Source: Grup sıralaması"
+  },
+  "homeGruplarEkranindaDaSayac": "Show timers on groups screen too",
+  "@homeGruplarEkranindaDaSayac": {
+    "description": "Home user-facing text. Source: Gruplar ekranında da sayaç göster"
+  },
+  "homeGunlukHedef": "Daily goal",
+  "@homeGunlukHedef": {
+    "description": "Home user-facing text. Source: Günlük hedef"
+  },
+  "homeGunlukOrt": "Daily avg.",
+  "@homeGunlukOrt": {
+    "description": "Home user-facing text. Source: Günlük ort."
+  },
+  "homeGununHangiSaatlerindeCalistigin": "What hours of the day do you study?",
+  "@homeGununHangiSaatlerindeCalistigin": {
+    "description": "Home user-facing text. Source: Günün hangi saatlerinde çalıştığın"
+  },
+  "homeHafta": "Week",
+  "@homeHafta": {
+    "description": "Home user-facing text. Source: Hafta"
+  },
+  "homeHaftaIci": "Weekdays",
+  "@homeHaftaIci": {
+    "description": "Home user-facing text. Source: Hafta içi"
+  },
+  "homeHaftaIciHaftaSonu": "Weekdays / weekends",
+  "@homeHaftaIciHaftaSonu": {
+    "description": "Home user-facing text. Source: Hafta içi / hafta sonu"
+  },
+  "homeHaftaIciIleHafta": "Comparison between weekdays and weekends",
+  "@homeHaftaIciIleHafta": {
+    "description": "Home user-facing text. Source: Hafta içi ile hafta sonu kıyası"
+  },
+  "homeHaftaSonu": "Weekends",
+  "@homeHaftaSonu": {
+    "description": "Home user-facing text. Source: Hafta sonu"
+  },
+  "homeHaftalikGrafik": "Weekly chart",
+  "@homeHaftalikGrafik": {
+    "description": "Home user-facing text. Source: Haftalık grafik"
+  },
+  "homeHaftalikRitim": "Weekly rhythm",
+  "@homeHaftalikRitim": {
+    "description": "Home user-facing text. Source: Haftalık ritim"
+  },
+  "homeHedefIlerlemesiVeBuyuk": "Goal progress and large streak indicator",
+  "@homeHedefIlerlemesiVeBuyuk": {
+    "description": "Home user-facing text. Source: Hedef ilerlemesi ve büyük seri göstergesi"
+  },
+  "homeIsiHaritalari": "Heatmaps",
+  "@homeIsiHaritalari": {
+    "description": "Home user-facing text. Source: Isı haritaları"
+  },
+  "homeKaldir": "Remove",
+  "@homeKaldir": {
+    "description": "Home user-facing text. Source: Kaldır"
+  },
+  "homeKapat": "Close",
+  "@homeKapat": {
+    "description": "Home user-facing text. Source: Kapat"
+  },
+  "homeKartEkle": "Add card",
+  "@homeKartEkle": {
+    "description": "Home user-facing text. Source: Kart ekle"
+  },
+  "homeKartlariDuzenle": "Edit cards",
+  "@homeKartlariDuzenle": {
+    "description": "Home user-facing text. Source: Kartları düzenle"
+  },
+  "homeAnaSayfa": "Home",
+  "@homeAnaSayfa": {
+    "description": "Home user-facing text. Source: Ana Sayfa"
+  },
+  "homeKartiTutupSurukleHedef": "Drag the card and drop it on the target cell; neighboring cards will make room.",
+  "@homeKartiTutupSurukleHedef": {
+    "description": "Home user-facing text. Source: Kartı tutup sürükle; hedef hücreye bırakınca komşular yer açar."
+  },
+  "homeKayitYok": "No records",
+  "@homeKayitYok": {
+    "description": "Home user-facing text. Source: Kayıt yok"
+  },
+  "homeKodaKatil": "Join with code",
+  "@homeKodaKatil": {
+    "description": "Home user-facing text. Source: Koda katıl"
+  },
+  "homeKronometreGunlukHedefVe": "Stopwatch, daily goal and streak",
+  "@homeKronometreGunlukHedefVe": {
+    "description": "Home user-facing text. Source: Kronometre, günlük hedef ve seri"
+  },
+  "homeKucuk": "Small",
+  "@homeKucuk": {
+    "description": "Home user-facing text. Source: Küçük"
+  },
+  "homeOrta": "Medium",
+  "@homeOrta": {
+    "description": "Home user-facing text. Source: Orta"
+  },
+  "homeOturumDagilimi": "Session distribution",
+  "@homeOturumDagilimi": {
+    "description": "Home user-facing text. Source: Oturum dağılımı"
+  },
+  "homePanoyuDuzenle": "Edit dashboard",
+  "@homePanoyuDuzenle": {
+    "description": "Home user-facing text. Source: Panoyu düzenle"
+  },
+  "homeRekorlar": "Records",
+  "@homeRekorlar": {
+    "description": "Home user-facing text. Source: Rekorlar"
+  },
+  "homeSayac": "Timer",
+  "@homeSayac": {
+    "description": "Home user-facing text. Source: Sayaç"
+  },
+  "homeSifirla": "Reset",
+  "@homeSifirla": {
+    "description": "Home user-facing text. Source: Sıfırla"
+  },
+  "homeSiralama": "Ranking",
+  "@homeSiralama": {
+    "description": "Home user-facing text. Source: Sıralama"
+  },
+  "homeToplam": "Total",
+  "@homeToplam": {
+    "description": "Home user-facing text. Source: Toplam"
+  },
+  "homeToplamRekorSeriEn": "Total, longest streak, most productive day, and top subject",
+  "@homeToplamRekorSeriEn": {
+    "description": "Home user-facing text. Source: Toplam, rekor seri, en verimli gün, en çok ders"
+  },
+  "homeVazgec": "Cancel",
+  "@homeVazgec": {
+    "description": "Home user-facing text. Source: Vazgeç"
+  },
+  "homeYukariTopla": "Compact upward",
+  "@homeYukariTopla": {
+    "description": "Home user-facing text. Source: Yukarı topla"
+  },
+  "homeYil": "Year",
+  "@homeYil": {
+    "description": "Home user-facing text. Source: Yıl"
+  },
+  "homeCalismaGrafigi": "Study chart",
+  "@homeCalismaGrafigi": {
+    "description": "Home user-facing text. Source: Çalışma grafiği"
+  },
+  "homeCalismaSaatleri": "Study hours",
+  "@homeCalismaSaatleri": {
+    "description": "Home user-facing text. Source: Çalışma saatleri"
+  },
+  "homeCalismaTakvimi": "Study schedule",
+  "@homeCalismaTakvimi": {
+    "description": "Home user-facing text. Source: Çalışma takvimi"
+  },
+  "homeOzetler": "Summaries",
+  "@homeOzetler": {
+    "description": "Home user-facing text. Source: Özetler"
+  },
+  "homeIsimsiz": "Unnamed",
+  "@homeIsimsiz": {
+    "description": "Home user-facing text. Source: İsimsiz"
+  },
+  "homeSuAnCalisanKimse": "There is no one studying right now.",
+  "@homeSuAnCalisanKimse": {
+    "description": "Home user-facing text. Source: Şu an çalışan kimse yok."
+  },
+  "homeSuAnCalisanlar": "Currently studying",
+  "@homeSuAnCalisanlar": {
+    "description": "Home user-facing text. Source: Şu an çalışanlar"
+  },
+  "homeTtitleEklendi": "“{title}” added",
+  "@homeTtitleEklendi": {
+    "description": "Home user-facing text. Source: “${t.title}” eklendi",
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationsAlarmVeZamanlayici": "Alarm and timer",
+  "@notificationsAlarmVeZamanlayici": {
+    "description": "Notifications user-facing text. Source: Alarm ve zamanlayıcı"
+  },
+  "notificationsBaslangic": "Start",
+  "@notificationsBaslangic": {
+    "description": "Notifications user-facing text. Source: Başlangıç"
+  },
+  "notificationsBaslik": "Title",
+  "@notificationsBaslik": {
+    "description": "Notifications user-facing text. Source: Başlık"
+  },
+  "notificationsBelirliSaatlerdeCalismaHatirlaticisi": "Set a study reminder at certain hours",
+  "@notificationsBelirliSaatlerdeCalismaHatirlaticisi": {
+    "description": "Notifications user-facing text. Source: Belirli saatlerde çalışma hatırlatıcısı kur"
+  },
+  "notificationsBildirimMerkezi": "Notification Center",
+  "@notificationsBildirimMerkezi": {
+    "description": "Notifications user-facing text. Source: Bildirim Merkezi"
+  },
+  "notificationsBildirimIzniVerildi": "Notification permission granted.",
+  "@notificationsBildirimIzniVerildi": {
+    "description": "Notifications user-facing text. Source: Bildirim izni verildi."
+  },
+  "notificationsBildirimIzniVerilmediSistem": "Notification permission not granted. You can turn it on from system settings.",
+  "@notificationsBildirimIzniVerilmediSistem": {
+    "description": "Notifications user-facing text. Source: Bildirim izni verilmedi. Sistem ayarlarından açabilirsin."
+  },
+  "notificationsBildirimIzniniKontrolEt": "Check notification permission",
+  "@notificationsBildirimIzniniKontrolEt": {
+    "description": "Notifications user-facing text. Source: Bildirim iznini kontrol et"
+  },
+  "notificationsBildirimTurleri": "Notification types",
+  "@notificationsBildirimTurleri": {
+    "description": "Notifications user-facing text. Source: Bildirim türleri"
+  },
+  "notificationsBildirimlerCihazIznineBaglidir": "Notifications depend on device permission. Alarms and reminders alone",
+  "@notificationsBildirimlerCihazIznineBaglidir": {
+    "description": "Notifications user-facing text. Source: Bildirimler cihaz iznine bağlıdır. Alarm ve hatırlatıcılar yalnız"
+  },
+  "notificationsBitis": "End",
+  "@notificationsBitis": {
+    "description": "Notifications user-facing text. Source: Bitiş"
+  },
+  "notificationsBuAraliktaDurtmeVe": "No pokes and reminder notifications will be shown during this interval",
+  "@notificationsBuAraliktaDurtmeVe": {
+    "description": "Notifications user-facing text. Source: Bu aralıkta dürtme ve hatırlatıcı bildirimi gösterilmez"
+  },
+  "notificationsCihazIzinleri": "Device permissions",
+  "@notificationsCihazIzinleri": {
+    "description": "Notifications user-facing text. Source: Cihaz izinleri"
+  },
+  "notificationsCmt": "Sat",
+  "@notificationsCmt": {
+    "description": "Notifications user-facing text. Source: Cmt"
+  },
+  "notificationsCum": "Fri",
+  "@notificationsCum": {
+    "description": "Notifications user-facing text. Source: Cum"
+  },
+  "notificationsDuyurular": "Announcements",
+  "@notificationsDuyurular": {
+    "description": "Notifications user-facing text. Source: Duyurular"
+  },
+  "notificationsDuyurularYuklenemediE": "Failed to load announcements: {e}",
+  "@notificationsDuyurularYuklenemediE": {
+    "description": "Notifications user-facing text. Source: Duyurular yüklenemedi: $e",
+    "placeholders": {
+      "e": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationsDurtmeBildirimleri": "Nudge notifications",
+  "@notificationsDurtmeBildirimleri": {
+    "description": "Notifications user-facing text. Source: Dürtme bildirimleri"
+  },
+  "notificationsGuncellemeBildirimleri": "Update notifications",
+  "@notificationsGuncellemeBildirimleri": {
+    "description": "Notifications user-facing text. Source: Güncelleme bildirimleri"
+  },
+  "notificationsGunlerBosHerGun": "Days (blank = every day)",
+  "@notificationsGunlerBosHerGun": {
+    "description": "Notifications user-facing text. Source: Günler (boş = her gün)"
+  },
+  "notificationsHangiBildirimleriAlmakIstedigini": "Choose which notifications you want to receive",
+  "@notificationsHangiBildirimleriAlmakIstedigini": {
+    "description": "Notifications user-facing text. Source: Hangi bildirimleri almak istediğini seç"
+  },
+  "notificationsHatirlaticiEkle": "Add reminder",
+  "@notificationsHatirlaticiEkle": {
+    "description": "Notifications user-facing text. Source: Hatırlatıcı ekle"
+  },
+  "notificationsHatirlaticilar": "Reminders",
+  "@notificationsHatirlaticilar": {
+    "description": "Notifications user-facing text. Source: Hatırlatıcılar"
+  },
+  "notificationsHatirlaticilarYuklenemediE": "Failed to load reminders: {e}",
+  "@notificationsHatirlaticilarYuklenemediE": {
+    "description": "Notifications user-facing text. Source: Hatırlatıcılar yüklenemedi: $e",
+    "placeholders": {
+      "e": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationsHenuzHatirlaticinYokAsagidan": "You don't have a reminder yet. You can add one below.",
+  "@notificationsHenuzHatirlaticinYokAsagidan": {
+    "description": "Notifications user-facing text. Source: Henüz hatırlatıcın yok. Aşağıdan bir tane ekleyebilirsin."
+  },
+  "notificationsHerGun": "Every day",
+  "@notificationsHerGun": {
+    "description": "Notifications user-facing text. Source: Her gün"
+  },
+  "notificationsKaydet": "Save",
+  "@notificationsKaydet": {
+    "description": "Notifications user-facing text. Source: Kaydet"
+  },
+  "notificationsPaz": "Sun",
+  "@notificationsPaz": {
+    "description": "Notifications user-facing text. Source: Paz"
+  },
+  "notificationsPer": "Thu",
+  "@notificationsPer": {
+    "description": "Notifications user-facing text. Source: Per"
+  },
+  "notificationsPlanladiginHatirlaticilariYerelBildirimle": "Get your scheduled reminders with local notification",
+  "@notificationsPlanladiginHatirlaticilariYerelBildirimle": {
+    "description": "Notifications user-facing text. Source: Planladığın hatırlatıcıları yerel bildirimle al"
+  },
+  "notificationsPzt": "Mon",
+  "@notificationsPzt": {
+    "description": "Notifications user-facing text. Source: Pzt"
+  },
+  "notificationsSaat": "Clock",
+  "@notificationsSaat": {
+    "description": "Notifications user-facing text. Source: Saat"
+  },
+  "notificationsSaatSekmesindenYonetilir": "Managed from the Clock tab",
+  "@notificationsSaatSekmesindenYonetilir": {
+    "description": "Notifications user-facing text. Source: Saat sekmesinden yönetilir"
+  },
+  "notificationsSal": "Tue",
+  "@notificationsSal": {
+    "description": "Notifications user-facing text. Source: Sal"
+  },
+  "notificationsSessizSaatler": "Quiet hours",
+  "@notificationsSessizSaatler": {
+    "description": "Notifications user-facing text. Source: Sessiz saatler"
+  },
+  "notificationsSessizSaatleriEtkinlestir": "Enable quiet hours",
+  "@notificationsSessizSaatleriEtkinlestir": {
+    "description": "Notifications user-facing text. Source: Sessiz saatleri etkinleştir"
+  },
+  "notificationsSinifArkadaslarinSeniDurttugunde": "Report when your classmates nudge you",
+  "@notificationsSinifArkadaslarinSeniDurttugunde": {
+    "description": "Notifications user-facing text. Source: Sınıf arkadaşların seni dürttüğünde bildir"
+  },
+  "notificationsUygulamaVeGrubunaOzel": "Application and group specific announcements",
+  "@notificationsUygulamaVeGrubunaOzel": {
+    "description": "Notifications user-facing text. Source: Uygulama ve grubuna özel duyurular"
+  },
+  "notificationsUygulamaVeGrupDuyurularini": "Show app and group announcements",
+  "@notificationsUygulamaVeGrupDuyurularini": {
+    "description": "Notifications user-facing text. Source: Uygulama ve grup duyurularını göster"
+  },
+  "notificationsVazgec": "Cancel",
+  "@notificationsVazgec": {
+    "description": "Notifications user-facing text. Source: Vazgeç"
+  },
+  "notificationsYeniHatirlatici": "New reminder",
+  "@notificationsYeniHatirlatici": {
+    "description": "Notifications user-facing text. Source: Yeni hatırlatıcı"
+  },
+  "notificationsYeniSurumCikincaHaber": "Notify me when a new version is released",
+  "@notificationsYeniSurumCikincaHaber": {
+    "description": "Notifications user-facing text. Source: Yeni sürüm çıkınca haber ver"
+  },
+  "notificationsCalismaHatirlaticilari": "Study reminders",
+  "@notificationsCalismaHatirlaticilari": {
+    "description": "Notifications user-facing text. Source: Çalışma hatırlatıcıları"
+  },
+  "notificationsCalismaZamani": "Study time",
+  "@notificationsCalismaZamani": {
+    "description": "Notifications user-facing text. Source: Çalışma zamanı"
+  },
+  "notificationsCar": "Wed",
+  "@notificationsCar": {
+    "description": "Notifications user-facing text. Source: Çar"
+  },
+  "notificationsSimdilikDuyuruYok": "No announcements for now.",
+  "@notificationsSimdilikDuyuruYok": {
+    "description": "Notifications user-facing text. Source: Şimdilik duyuru yok."
+  },
+  "profileSummaryfreezeawarestreakstreakGunSeri": "{streak} day streak",
+  "@profileSummaryfreezeawarestreakstreakGunSeri": {
+    "description": "Profile user-facing text. Source: ${summary.freezeAwareStreak.streak} gün seri",
+    "placeholders": {
+      "streak": {
+        "type": "String"
+      }
+    }
+  },
+  "profileSummaryprofilestreakfreezesKorumaHakki": "{streakfreezes} streak freezes",
+  "@profileSummaryprofilestreakfreezesKorumaHakki": {
+    "description": "Profile user-facing text. Source: ${summary.profile.streakFreezes} koruma hakkı",
+    "placeholders": {
+      "streakfreezes": {
+        "type": "String"
+      }
+    }
+  },
+  "profileValue1AtmosferSec": "1 · Select atmosphere",
+  "@profileValue1AtmosferSec": {
+    "description": "Profile user-facing text. Source: 1 · Atmosfer seç"
+  },
+  "profileValue2Mood": "2 · Mood",
+  "@profileValue2Mood": {
+    "description": "Profile user-facing text. Source: 2 · Mood"
+  },
+  "profileValue4OzetVeUygula": "4 · Summary and apply",
+  "@profileValue4OzetVeUygula": {
+    "description": "Profile user-facing text. Source: 4 · Özet ve uygula"
+  },
+  "profileAdiDuzenle": "Edit name",
+  "@profileAdiDuzenle": {
+    "description": "Profile user-facing text. Source: Adı düzenle"
+  },
+  "profileAnaRenk": "Primary color",
+  "@profileAnaRenk": {
+    "description": "Profile user-facing text. Source: Ana Renk"
+  },
+  "profileAnindaOnizlenir": "Previewed instantly.",
+  "@profileAnindaOnizlenir": {
+    "description": "Profile user-facing text. Source: Anında önizlenir."
+  },
+  "profileAyarlar": "Settings",
+  "@profileAyarlar": {
+    "description": "Profile user-facing text. Source: Ayarlar"
+  },
+  "profileAylikCalismaRaporuEposta": "Monthly study report (E-mail)",
+  "@profileAylikCalismaRaporuEposta": {
+    "description": "Profile user-facing text. Source: Aylık çalışma raporu (E-posta)"
+  },
+  "profileAcik": "On",
+  "@profileAcik": {
+    "description": "Profile user-facing text. Source: Açık"
+  },
+  "profileBalon": "Balloon",
+  "@profileBalon": {
+    "description": "Profile user-facing text. Source: Balon"
+  },
+  "profileBasariYolculugum": "My Achievement Journey 🏆",
+  "@profileBasariYolculugum": {
+    "description": "Profile user-facing text. Source: Başarı Yolculuğum 🏆"
+  },
+  "profileBasarYolculugum": "My Achievement Journey",
+  "@profileBasarYolculugum": {
+    "description": "Profile user-facing text. Source: Başarı Yolculuğum"
+  },
+  "profileSosyalProfil": "Social profile",
+  "@profileSosyalProfil": {
+    "description": "Profile user-facing text. Source: Sosyal profil"
+  },
+  "profileBasariKatalogu": "Achievement catalog",
+  "@profileBasariKatalogu": {
+    "description": "Profile user-facing text. Source: Başarı kataloğu"
+  },
+  "profileBasarilar": "Achievements",
+  "@profileBasarilar": {
+    "description": "Profile user-facing text. Source: Başarılar"
+  },
+  "profileBasarilarGirisYaptiktanSonra": "Achievements appear after you log in.",
+  "@profileBasarilarGirisYaptiktanSonra": {
+    "description": "Profile user-facing text. Source: Başarılar giriş yaptıktan sonra görünür."
+  },
+  "profileBasarilarYuklenemedi": "Achievements could not be loaded.",
+  "@profileBasarilarYuklenemedi": {
+    "description": "Profile user-facing text. Source: Başarılar yüklenemedi."
+  },
+  "profileBasarimlarYuklenemedi": "Achievements failed to load",
+  "@profileBasarimlarYuklenemedi": {
+    "description": "Profile user-facing text. Source: Başarımlar yüklenemedi"
+  },
+  "profileBeklenmeyenBirHataOlustu": "An unexpected error occurred.",
+  "@profileBeklenmeyenBirHataOlustu": {
+    "description": "Profile user-facing text. Source: Beklenmeyen bir hata oluştu."
+  },
+  "profileBildirimMerkezi": "Notification Center",
+  "@profileBildirimMerkezi": {
+    "description": "Profile user-facing text. Source: Bildirim Merkezi"
+  },
+  "profileBilinmiyor": "Unknown",
+  "@profileBilinmiyor": {
+    "description": "Profile user-facing text. Source: Bilinmiyor"
+  },
+  "profileBirGundeGunlukHedefinin": "Reach three times your daily goal in one day",
+  "@profileBirGundeGunlukHedefinin": {
+    "description": "Profile user-facing text. Source: Bir günde günlük hedefinin üç katına ulaş"
+  },
+  "profileBitir": "Finish",
+  "@profileBitir": {
+    "description": "Profile user-facing text. Source: Bitir"
+  },
+  "profileBuCihazdaGridcolumnsSutun": "{gridcolumns} columns are used on this device",
+  "@profileBuCihazdaGridcolumnsSutun": {
+    "description": "Profile user-facing text. Source: Bu cihazda $gridColumns sütun kullanılıyor",
+    "placeholders": {
+      "gridcolumns": {
+        "type": "String"
+      }
+    }
+  },
+  "profileBuDerseAitGecmis": "The duration of past records for this subject is preserved; only the subject changes to ?General?.",
+  "@profileBuDerseAitGecmis": {
+    "description": "Profile user-facing text. Source: Bu derse ait geçmiş kayıtların süresi korunur, sadece"
+  },
+  "profileBuGizliBasariminKosulu": "The condition for this secret achievement is not yet active",
+  "@profileBuGizliBasariminKosulu": {
+    "description": "Profile user-facing text. Source: Bu gizli başarımın koşulu henüz etkin değil"
+  },
+  "profileBuCalismaKaydiSilinsin": "Delete this study record?",
+  "@profileBuCalismaKaydiSilinsin": {
+    "description": "Profile user-facing text. Source: Bu çalışma kaydı silinsin mi?"
+  },
+  "profileBugun": "Today",
+  "@profileBugun": {
+    "description": "Profile user-facing text. Source: Bugün"
+  },
+  "profileCanliOnizleme": "Live preview",
+  "@profileCanliOnizleme": {
+    "description": "Profile user-facing text. Source: Canlı önizleme"
+  },
+  "profileCihazdakiOturumuSonlandir": "Log out of device",
+  "@profileCihazdakiOturumuSonlandir": {
+    "description": "Profile user-facing text. Source: Cihazdaki oturumu sonlandır"
+  },
+  "profileDakika": "Minute",
+  "@profileDakika": {
+    "description": "Profile user-facing text. Source: Dakika"
+  },
+  "profileDersOpsiyonel": "Subject (optional)",
+  "@profileDersOpsiyonel": {
+    "description": "Profile user-facing text. Source: Ders (opsiyonel)"
+  },
+  "profileDersAdi": "Subject name",
+  "@profileDersAdi": {
+    "description": "Profile user-facing text. Source: Ders adı"
+  },
+  "profileDersEkle": "Add subject",
+  "@profileDersEkle": {
+    "description": "Profile user-facing text. Source: Ders ekle"
+  },
+  "profileDersiDuzenle": "Edit subject",
+  "@profileDersiDuzenle": {
+    "description": "Profile user-facing text. Source: Dersi düzenle"
+  },
+  "profileDersiSil": "Delete subject",
+  "@profileDersiSil": {
+    "description": "Profile user-facing text. Source: Dersi sil"
+  },
+  "profileDerslerYuklenemediE": "Failed to load subjects: {e}",
+  "@profileDerslerYuklenemediE": {
+    "description": "Profile user-facing text. Source: Dersler yüklenemedi: $e",
+    "placeholders": {
+      "e": {
+        "type": "String"
+      }
+    }
+  },
+  "profileDerslerim": "My subjects",
+  "@profileDerslerim": {
+    "description": "Profile user-facing text. Source: Derslerim"
+  },
+  "profileDegistir": "Change",
+  "@profileDegistir": {
+    "description": "Profile user-facing text. Source: Değiştir"
+  },
+  "profileDosyaBoyutu5mbdanKucuk": "File size must be less than 5 MB.",
+  "@profileDosyaBoyutu5mbdanKucuk": {
+    "description": "Profile user-facing text. Source: Dosya boyutu 5MB''dan küçük olmalıdır."
+  },
+  "profileDurdur": "Stop",
+  "@profileDurdur": {
+    "description": "Profile user-facing text. Source: Durdur"
+  },
+  "profileDurtmeHatirlaticiDuyuruVe": "Manage pokes, reminders, announcements and quiet hours",
+  "@profileDurtmeHatirlaticiDuyuruVe": {
+    "description": "Profile user-facing text. Source: Dürtme, hatırlatıcı, duyuru ve sessiz saatleri yönet"
+  },
+  "profileDuzenle": "Edit",
+  "@profileDuzenle": {
+    "description": "Profile user-facing text. Source: Düzenle"
+  },
+  "profileEpostaAdresi": "Email Address",
+  "@profileEpostaAdresi": {
+    "description": "Profile user-facing text. Source: E-posta Adresi"
+  },
+  "profileEpostaDegistir": "Change Email",
+  "@profileEpostaDegistir": {
+    "description": "Profile user-facing text. Source: E-posta Değiştir"
+  },
+  "profileEpostaBasariylaGuncellendiYeni": "The email has been updated successfully. A verification email may have been sent to your new email.",
+  "@profileEpostaBasariylaGuncellendiYeni": {
+    "description": "Profile user-facing text. Source: E-posta başarıyla güncellendi. Yeni e-postanıza bir doğrulama maili gönderilmiş olabilir."
+  },
+  "profileEpostaSifreVeGuvenli": "Email, password and secure logout",
+  "@profileEpostaSifreVeGuvenli": {
+    "description": "Profile user-facing text. Source: E-posta, şifre ve güvenli çıkış"
+  },
+  "profileEkle": "Add",
+  "@profileEkle": {
+    "description": "Profile user-facing text. Source: Ekle' :"
+  },
+  "profileEkranGoruntusuEkleOpsiyonel": "Add screenshot (Optional)",
+  "@profileEkranGoruntusuEkleOpsiyonel": {
+    "description": "Profile user-facing text. Source: Ekran görüntüsü ekle (Opsiyonel)"
+  },
+  "profileGenel": "General",
+  "@profileGenel": {
+    "description": "Profile user-facing text. Source: Genel"
+  },
+  "profileGeri": "Back",
+  "@profileGeri": {
+    "description": "Profile user-facing text. Source: Geri"
+  },
+  "profileGeriBildirimGonder": "Send feedback",
+  "@profileGeriBildirimGonder": {
+    "description": "Profile user-facing text. Source: Geri bildirim gönder"
+  },
+  "profileGeriBildirimGonderilemedi": "Feedback could not be sent.",
+  "@profileGeriBildirimGonderilemedi": {
+    "description": "Profile user-facing text. Source: Geri bildirim gönderilemedi."
+  },
+  "profileGeriBildirimGondermekIcin": "You must be logged in to submit feedback.",
+  "@profileGeriBildirimGondermekIcin": {
+    "description": "Profile user-facing text. Source: Geri bildirim göndermek için giriş yapmalısın."
+  },
+  "profileGeriBildiriminGonderildi": "Your feedback has been sent.",
+  "@profileGeriBildiriminGonderildi": {
+    "description": "Profile user-facing text. Source: Geri bildirimin gönderildi."
+  },
+  "profileGecerliBirEpostaGirin": "Enter a valid email.",
+  "@profileGecerliBirEpostaGirin": {
+    "description": "Profile user-facing text. Source: Geçerli bir e-posta girin."
+  },
+  "profileGirisYapmalisiniz": "You must log in.",
+  "@profileGirisYapmalisiniz": {
+    "description": "Profile user-facing text. Source: Giriş yapmalısınız."
+  },
+  "profileGizli": "Hidden",
+  "@profileGizli": {
+    "description": "Profile user-facing text. Source: Gizli"
+  },
+  "profileGizliBasarim": "Secret achievement",
+  "@profileGizliBasarim": {
+    "description": "Profile user-facing text. Source: Gizli başarım"
+  },
+  "profileGizliBirBasarimAcmak": "A secret achievement. You have to be lucky or very careful to open it.",
+  "@profileGizliBirBasarimAcmak": {
+    "description": "Profile user-facing text. Source: Gizli bir başarım. Açmak için şanslı veya çok dikkatli olmalısın."
+  },
+  "profileGrup": "Group",
+  "@profileGrup": {
+    "description": "Profile user-facing text. Source: Grup"
+  },
+  "profileGonder": "Send",
+  "@profileGonder": {
+    "description": "Profile user-facing text. Source: Gönder"
+  },
+  "profileGorunenAd": "Display name",
+  "@profileGorunenAd": {
+    "description": "Profile user-facing text. Source: Görünen ad"
+  },
+  "profileGorunenAdiDuzenle": "Edit display name",
+  "@profileGorunenAdiDuzenle": {
+    "description": "Profile user-facing text. Source: Görünen adı düzenle"
+  },
+  "profileGorunumVeAtmosfer": "Appearance and atmosphere",
+  "@profileGorunumVeAtmosfer": {
+    "description": "Profile user-facing text. Source: Görünüm ve atmosfer"
+  },
+  "profileGorunumVeAtmosferTemalari": "Appearance and atmosphere themes",
+  "@profileGorunumVeAtmosferTemalari": {
+    "description": "Profile user-facing text. Source: Görünüm ve atmosfer temaları"
+  },
+  "profileGorunumAnaSayfaSayac": "Appearance, Home, timer, and notifications",
+  "@profileGorunumAnaSayfaSayac": {
+    "description": "Profile user-facing text. Source: Görünüm, Ana Sayfa, sayaç ve bildirimler"
+  },
+  "profileGunlukHedef": "Daily goal",
+  "@profileGunlukHedef": {
+    "description": "Profile user-facing text. Source: Günlük hedef"
+  },
+  "profileGuvenliCikis": "Secure sign-out",
+  "@profileGuvenliCikis": {
+    "description": "Profile user-facing text. Source: Güvenli Çıkış"
+  },
+  "profileGuvenlik": "Security",
+  "@profileGuvenlik": {
+    "description": "Profile user-facing text. Source: Güvenlik"
+  },
+  "profileHata": "Error",
+  "@profileHata": {
+    "description": "Profile user-facing text. Source: Hata"
+  },
+  "profileHataVeyaOneriniBize": "Let us know your bug or suggestion",
+  "@profileHataVeyaOneriniBize": {
+    "description": "Profile user-facing text. Source: Hata veya önerini bize ilet"
+  },
+  "profileHazirPaletler": "Preset palettes",
+  "@profileHazirPaletler": {
+    "description": "Profile user-facing text. Source: Hazır Paletler"
+  },
+  "profileHenuzDersinYok": "You don't have any subjects yet.",
+  "@profileHenuzDersinYok": {
+    "description": "Profile user-facing text. Source: Henüz dersin yok."
+  },
+  "profileHenuzKaydinYok": "No records yet.",
+  "@profileHenuzKaydinYok": {
+    "description": "Profile user-facing text. Source: Henüz kaydın yok."
+  },
+  "profileHesabim": "My account",
+  "@profileHesabim": {
+    "description": "Profile user-facing text. Source: Hesabım"
+  },
+  "profileHesabimiYonet": "Manage My Account",
+  "@profileHesabimiYonet": {
+    "description": "Profile user-facing text. Source: Hesabımı Yönet"
+  },
+  "profileHesabinizdanCikisYapmakIstediginize": "Are you sure you want to log out of your account?",
+  "@profileHesabinizdanCikisYapmakIstediginize": {
+    "description": "Profile user-facing text. Source: Hesabınızdan çıkış yapmak istediğinize emin misiniz?"
+  },
+  "profileHesapBilgileri": "Account Information",
+  "@profileHesapBilgileri": {
+    "description": "Profile user-facing text. Source: Hesap Bilgileri"
+  },
+  "profileIzgaraYogunlugu": "Grid density",
+  "@profileIzgaraYogunlugu": {
+    "description": "Profile user-facing text. Source: Izgara yoğunluğu"
+  },
+  "profileKampAtesiEkranindaSeni": "This animal represents you on the campfire screen.",
+  "@profileKampAtesiEkranindaSeni": {
+    "description": "Profile user-facing text. Source: Kamp ateşi ekranında seni bu hayvan temsil eder."
+  },
+  "profileKampHayvanin": "Your camp animal",
+  "@profileKampHayvanin": {
+    "description": "Profile user-facing text. Source: Kamp hayvanın"
+  },
+  "profileKaydet": "Save",
+  "@profileKaydet": {
+    "description": "Profile user-facing text. Source: Kaydet"
+  },
+  "profileKaydiSil": "Delete record",
+  "@profileKaydiSil": {
+    "description": "Profile user-facing text. Source: Kaydı sil"
+  },
+  "profileKayitEklemekIcinOnce": "To add a record, first join or create a group.",
+  "@profileKayitEklemekIcinOnce": {
+    "description": "Profile user-facing text. Source: Kayıt eklemek için önce bir gruba katıl veya grup oluştur."
+  },
+  "profileKayitlarYuklenemediE": "Failed to load records: {e}",
+  "@profileKayitlarYuklenemediE": {
+    "description": "Profile user-facing text. Source: Kayıtlar yüklenemedi: $e",
+    "placeholders": {
+      "e": {
+        "type": "String"
+      }
+    }
+  },
+  "profileKeskin": "Sharp",
+  "@profileKeskin": {
+    "description": "Profile user-facing text. Source: Keskin"
+  },
+  "profileKilitli": "Locked",
+  "@profileKilitli": {
+    "description": "Profile user-facing text. Source: Kilitli"
+  },
+  "profileKonu": "Subject",
+  "@profileKonu": {
+    "description": "Profile user-facing text. Source: Konu"
+  },
+  "profileKoyu": "Dark",
+  "@profileKoyu": {
+    "description": "Profile user-facing text. Source: Koyu"
+  },
+  "profileManuelEkle": "Add manually",
+  "@profileManuelEkle": {
+    "description": "Profile user-facing text. Source: Manuel ekle"
+  },
+  "profileManuelSureEkleDuzenle": "Add, edit, delete manual time",
+  "@profileManuelSureEkleDuzenle": {
+    "description": "Profile user-facing text. Source: Manuel süre ekle, düzenle, sil"
+  },
+  "profileMesaj": "Message",
+  "@profileMesaj": {
+    "description": "Profile user-facing text. Source: Mesaj"
+  },
+  "profileMesajGerekli": "Message required",
+  "@profileMesajGerekli": {
+    "description": "Profile user-facing text. Source: Mesaj gerekli"
+  },
+  "profileMisafir": "Guest",
+  "@profileMisafir": {
+    "description": "Profile user-facing text. Source: Misafir"
+  },
+  "profilePaletAdi": "Palette Name",
+  "@profilePaletAdi": {
+    "description": "Profile user-facing text. Source: Palet Adı"
+  },
+  "profileProfil": "Profile",
+  "@profileProfil": {
+    "description": "Profile user-facing text. Source: Profil"
+  },
+  "profileProfilFotografiGuncellendi": "Profile photo updated",
+  "@profileProfilFotografiGuncellendi": {
+    "description": "Profile user-facing text. Source: Profil fotoğrafı güncellendi"
+  },
+  "profileRenk": "Colour",
+  "@profileRenk": {
+    "description": "Profile user-facing text. Source: Renk"
+  },
+  "profileResimSecilemedi": "The image could not be selected.",
+  "@profileResimSecilemedi": {
+    "description": "Profile user-facing text. Source: Resim seçilemedi."
+  },
+  "profileRozetlerinSerilerinVeIlerlemen": "Your badges, streaks and progress",
+  "@profileRozetlerinSerilerinVeIlerlemen": {
+    "description": "Profile user-facing text. Source: Rozetlerin, serilerin ve ilerlemen"
+  },
+  "profileSaat": "Clock",
+  "@profileSaat": {
+    "description": "Profile user-facing text. Source: Saat"
+  },
+  "profileSayac": "Timer",
+  "@profileSayac": {
+    "description": "Profile user-facing text. Source: Sayaç"
+  },
+  "profileSeniTemsilEdenHayvani": "Choose the animal that represents you",
+  "@profileSeniTemsilEdenHayvani": {
+    "description": "Profile user-facing text. Source: Seni temsil eden hayvanı seç"
+  },
+  "profileSeriVeDuzen": "Streaks and consistency",
+  "@profileSeriVeDuzen": {
+    "description": "Profile user-facing text. Source: Seri ve Düzen"
+  },
+  "profileSil": "Delete",
+  "@profileSil": {
+    "description": "Profile user-facing text. Source: Sil"
+  },
+  "profileSistem": "System",
+  "@profileSistem": {
+    "description": "Profile user-facing text. Source: Sistem"
+  },
+  "profileSosyal": "Social",
+  "@profileSosyal": {
+    "description": "Profile user-facing text. Source: Sosyal"
+  },
+  "profileSure": "Duration",
+  "@profileSure": {
+    "description": "Profile user-facing text. Source: Süre"
+  },
+  "profileSureyiDuzenle": "Edit duration",
+  "@profileSureyiDuzenle": {
+    "description": "Profile user-facing text. Source: Süreyi düzenle"
+  },
+  "profileManuelSureEkle": "Add time manually",
+  "@profileManuelSureEkle": {
+    "description": "Profile user-facing text. Source: Manuel süre ekle"
+  },
+  "profileSurumVeGuncellemeler": "Version and updates",
+  "@profileSurumVeGuncellemeler": {
+    "description": "Profile user-facing text. Source: Sürüm ve güncellemeler"
+  },
+  "profileTam194DakikaSuren": "Complete a session lasting exactly 194 minutes",
+  "@profileTam194DakikaSuren": {
+    "description": "Profile user-facing text. Source: Tam 194 dakika süren bir oturum tamamla"
+  },
+  "profileTam404DakikaSuren": "Complete a session lasting exactly 404 minutes",
+  "@profileTam404DakikaSuren": {
+    "description": "Profile user-facing text. Source: Tam 404 dakika süren bir oturum tamamla"
+  },
+  "profileTamProfil": "Full profile",
+  "@profileTamProfil": {
+    "description": "Profile user-facing text. Source: Tam profil"
+  },
+  "profileTamamland": "Completed",
+  "@profileTamamland": {
+    "description": "Profile user-facing text. Source: Tamamlandı"
+  },
+  "profileTarih": "Date",
+  "@profileTarih": {
+    "description": "Profile user-facing text. Source: Tarih"
+  },
+  "profileTemaStudyosu": "Theme Studio",
+  "@profileTemaStudyosu": {
+    "description": "Profile user-facing text. Source: Tema Stüdyosu"
+  },
+  "profileTemaModu": "Theme mode",
+  "@profileTemaModu": {
+    "description": "Profile user-facing text. Source: Tema modu"
+  },
+  "profileTemaUygulandiYenidenBaslatma": "Theme applied — no reboot required.",
+  "@profileTemaUygulandiYenidenBaslatma": {
+    "description": "Profile user-facing text. Source: Tema uygulandı — yeniden başlatma gerekmez."
+  },
+  "profileTemayiUygula": "Apply theme",
+  "@profileTemayiUygula": {
+    "description": "Profile user-facing text. Source: Temayı uygula"
+  },
+  "profileTumKademeler": "All levels",
+  "profileKademe": "Level",
+  "@profileTumKademeler": {
+    "description": "Profile user-facing text. Source: Tüm kademeler"
+  },
+  "profileUygula": "Apply",
+  "@profileUygula": {
+    "description": "Profile user-facing text. Source: Uygula"
+  },
+  "profileUygulamaKisayollariRutinler": "Application Shortcuts (Routines)",
+  "@profileUygulamaKisayollariRutinler": {
+    "description": "Profile user-facing text. Source: Uygulama Kısayolları (Rutinler)"
+  },
+  "profileVazgec": "Cancel",
+  "@profileVazgec": {
+    "description": "Profile user-facing text. Source: Vazgeç"
+  },
+  "profileVitrin": "Showcase",
+  "@profileVitrin": {
+    "description": "Profile user-facing text. Source: Vitrin"
+  },
+  "profileVitrindenKaldir": "Remove from showcase",
+  "@profileVitrindenKaldir": {
+    "description": "Profile user-facing text. Source: Vitrinden kaldır"
+  },
+  "profileVitrineEkle": "Add to showcase",
+  "@profileVitrineEkle": {
+    "description": "Profile user-facing text. Source: Vitrine ekle"
+  },
+  "profileVitrineEnFazla3": "You can add up to 3 badges to the showcase.",
+  "@profileVitrineEnFazla3": {
+    "description": "Profile user-facing text. Source: Vitrine en fazla 3 rozet ekleyebilirsiniz."
+  },
+  "profileVurguRengi": "Accent Color",
+  "@profileVurguRengi": {
+    "description": "Profile user-facing text. Source: Vurgu Rengi"
+  },
+  "profileWidgetVeAlarmIzinleri": "Widget and alarm permissions",
+  "@profileWidgetVeAlarmIzinleri": {
+    "description": "Profile user-facing text. Source: Widget ve alarm izinleri"
+  },
+  "profileYeniEposta": "New Email",
+  "@profileYeniEposta": {
+    "description": "Profile user-facing text. Source: Yeni E-posta"
+  },
+  "profileYeniSifre": "New Password",
+  "@profileYeniSifre": {
+    "description": "Profile user-facing text. Source: Yeni Şifre"
+  },
+  "profileYenilikleriVeGecmisSurum": "Read what's new and past release notes",
+  "@profileYenilikleriVeGecmisSurum": {
+    "description": "Profile user-facing text. Source: Yenilikleri ve geçmiş sürüm notlarını oku"
+  },
+  "profileYuvarlak": "Round",
+  "@profileYuvarlak": {
+    "description": "Profile user-facing text. Source: Yuvarlak"
+  },
+  "profileYonetim": "Administration",
+  "@profileYonetim": {
+    "description": "Profile user-facing text. Source: Yönetim"
+  },
+  "profileCalisma": "Study",
+  "@profileCalisma": {
+    "description": "Profile user-facing text. Source: Çalışma"
+  },
+  "profileCalismaKayitlarim": "My study records",
+  "@profileCalismaKayitlarim": {
+    "description": "Profile user-facing text. Source: Çalışma kayıtlarım"
+  },
+  "profileCikisYap": "Sign Out",
+  "@profileCikisYap": {
+    "description": "Profile user-facing text. Source: Çıkış Yap"
+  },
+  "profileCikisYapCksYap": "Log out",
+  "@profileCikisYapCksYap": {
+    "description": "Profile user-facing text. Source: Çıkış yap"
+  },
+  "profileCikisYapilirkenBirHata": "An error occurred while logging out.",
+  "@profileCikisYapilirkenBirHata": {
+    "description": "Profile user-facing text. Source: Çıkış yapılırken bir hata oluştu."
+  },
+  "profileOnceGirisYap": "Log in first.",
+  "@profileOnceGirisYap": {
+    "description": "Profile user-facing text. Source: Önce giriş yap."
+  },
+  "profileOneri": "Suggestion",
+  "@profileOneri": {
+    "description": "Profile user-facing text. Source: Öneri"
+  },
+  "profileOzelPalet": "Custom Palette",
+  "@profileOzelPalet": {
+    "description": "Profile user-facing text. Source: Özel Palet"
+  },
+  "profileOzelPaletI1": "Custom Palette {index} Edit",
+  "@profileOzelPaletI1": {
+    "description": "Profile user-facing text. Source: Özel Palet ${i + 1} Düzenle",
+    "placeholders": {
+      "index": {
+        "type": "String"
+      }
+    }
+  },
+  "profileOzelPaletler": "Custom Palettes",
+  "@profileOzelPaletler": {
+    "description": "Profile user-facing text. Source: Özel Paletler"
+  },
+  "profileOzetlerVeKullaniciRaporlari": "Summaries and user reports",
+  "@profileOzetlerVeKullaniciRaporlari": {
+    "description": "Profile user-facing text. Source: Özetler ve kullanıcı raporları"
+  },
+  "profileIleri": "Next",
+  "@profileIleri": {
+    "description": "Profile user-facing text. Source: İleri"
+  },
+  "profileIptal": "Cancel",
+  "@profileIptal": {
+    "description": "Profile user-facing text. Source: İptal"
+  },
+  "profileSekilSecimiOnizlemedeYansir": "The shape selection is reflected in the preview. Advanced permanent shape engine WP-55",
+  "@profileSekilSecimiOnizlemedeYansir": {
+    "description": "Profile user-facing text. Source: Şekil seçimi önizlemede yansır. Kalıcı şekil motoru WP-55 gelişmiş"
+  },
+  "profileSifre": "Password",
+  "@profileSifre": {
+    "description": "Profile user-facing text. Source: Şifre"
+  },
+  "profileSifreDegistir": "Change password",
+  "@profileSifreDegistir": {
+    "description": "Profile user-facing text. Source: Şifre Değiştir"
+  },
+  "profileSifreBasariylaGuncellendi": "Password has been updated successfully.",
+  "@profileSifreBasariylaGuncellendi": {
+    "description": "Profile user-facing text. Source: Şifre başarıyla güncellendi."
+  },
+  "profileSifreEnAz6": "Password must be at least 6 characters.",
+  "@profileSifreEnAz6": {
+    "description": "Profile user-facing text. Source: Şifre en az 6 karakter olmalı."
+  },
+  "statsStreakGun": "{streak} day",
+  "@statsStreakGun": {
+    "description": "Stats user-facing text. Source: $streak gün",
+    "placeholders": {
+      "streak": {
+        "type": "String"
+      }
+    }
+  },
+  "statsDdayKmonthsshortdmonth1": "{day} {month}",
+  "@statsDdayKmonthsshortdmonth1": {
+    "description": "Stats user-facing text. Source: ${d.day} ${_kMonthsShort[d.month - 1]}",
+    "placeholders": {
+      "day": {
+        "type": "String"
+      },
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "statsFormathumantodaysecondsFormathumangoalseconds": "{todayseconds} / {goalseconds}",
+  "@statsFormathumantodaysecondsFormathumangoalseconds": {
+    "description": "Stats user-facing text. Source: ${formatHuman(todaySeconds)} / ${formatHuman(goalSeconds)}",
+    "placeholders": {
+      "todayseconds": {
+        "type": "String"
+      },
+      "goalseconds": {
+        "type": "String"
+      }
+    }
+  },
+  "statsValue14Gun": "14 days",
+  "@statsValue14Gun": {
+    "description": "Stats user-facing text. Source: 14 gün"
+  },
+  "statsValue30Gun": "30 days",
+  "@statsValue30Gun": {
+    "description": "Stats user-facing text. Source: 30 gün"
+  },
+  "statsValue7Gun": "7 days",
+  "@statsValue7Gun": {
+    "description": "Stats user-facing text. Source: 7 gün"
+  },
+  "statsAktifGun": "Active day",
+  "@statsAktifGun": {
+    "description": "Stats user-facing text. Source: Aktif gün"
+  },
+  "statsAy": "Month",
+  "@statsAy": {
+    "description": "Stats user-facing text. Source: Ay"
+  },
+  "statsAz": "Low",
+  "@statsAz": {
+    "description": "Stats user-facing text. Source: Az"
+  },
+  "statsBuAy": "This month",
+  "@statsBuAy": {
+    "description": "Stats user-facing text. Source: Bu ay"
+  },
+  "statsBuDonemdeHenuzCalisma": "There is no study record yet during this period.",
+  "@statsBuDonemdeHenuzCalisma": {
+    "description": "Stats user-facing text. Source: Bu dönemde henüz çalışma kaydı yok."
+  },
+  "statsBuDonemdeCalismaKaydin": "You have no study records for this period.",
+  "@statsBuDonemdeCalismaKaydin": {
+    "description": "Stats user-facing text. Source: Bu dönemde çalışma kaydın yok."
+  },
+  "statsBuHafta": "This week",
+  "@statsBuHafta": {
+    "description": "Stats user-facing text. Source: Bu hafta"
+  },
+  "statsBuHaftaVsGecen": "This week vs last week",
+  "@statsBuHaftaVsGecen": {
+    "description": "Stats user-facing text. Source: Bu hafta vs geçen hafta"
+  },
+  "statsBuYil": "This year",
+  "@statsBuYil": {
+    "description": "Stats user-facing text. Source: Bu yıl"
+  },
+  "statsBugun": "Today",
+  "@statsBugun": {
+    "description": "Stats user-facing text. Source: Bugün"
+  },
+  "statsBugunkuGrupHedefi": "Today's group goal",
+  "@statsBugunkuGrupHedefi": {
+    "description": "Stats user-facing text. Source: Bugünkü grup hedefi"
+  },
+  "statsDersBazindaDagilimSon": "Distribution by subject (last 30 days)",
+  "@statsDersBazindaDagilimSon": {
+    "description": "Stats user-facing text. Source: Ders bazında dağılım (son 30 gün)"
+  },
+  "statsDegistir": "Change",
+  "@statsDegistir": {
+    "description": "Stats user-facing text. Source: Değiştir"
+  },
+  "statsDonemToplamlari": "Period totals",
+  "@statsDonemToplamlari": {
+    "description": "Stats user-facing text. Source: Dönem toplamları"
+  },
+  "statsEnIstikrarliUye": "Most consistent member",
+  "@statsEnIstikrarliUye": {
+    "description": "Stats user-facing text. Source: En istikrarlı üye"
+  },
+  "statsEnVerimliGun": "Most productive day",
+  "@statsEnVerimliGun": {
+    "description": "Stats user-facing text. Source: En verimli gün"
+  },
+  "statsEnYogunGun": "Busiest day",
+  "@statsEnYogunGun": {
+    "description": "Stats user-facing text. Source: En yoğun gün"
+  },
+  "statsEnCokDers": "Most subjects",
+  "@statsEnCokDers": {
+    "description": "Stats user-facing text. Source: En çok ders"
+  },
+  "statsEskiGrupUyesi": "Former Group Member",
+  "@statsEskiGrupUyesi": {
+    "description": "Stats user-facing text. Source: Eski Grup Üyesi"
+  },
+  "statsGenel": "General",
+  "@statsGenel": {
+    "description": "Stats user-facing text. Source: Genel"
+  },
+  "statsGecenHafta": "Last week",
+  "@statsGecenHafta": {
+    "description": "Stats user-facing text. Source: Geçen hafta"
+  },
+  "statsGrafikIcin45Gunden": "Select a range of less than 45 days for the chart.",
+  "@statsGrafikIcin45Gunden": {
+    "description": "Stats user-facing text. Source: Grafik için 45 günden kısa bir aralık seçin."
+  },
+  "statsGrup": "Group",
+  "@statsGrup": {
+    "description": "Stats user-facing text. Source: Grup"
+  },
+  "statsGrupBugunkuHedefiniTuttu": "The group achieved today's goal! 🎉",
+  "@statsGrupBugunkuHedefiniTuttu": {
+    "description": "Stats user-facing text. Source: Grup bugünkü hedefini tuttu! 🎉"
+  },
+  "statsGrupEgilimiSon30": "Group trend (last 30 days)",
+  "@statsGrupEgilimiSon30": {
+    "description": "Stats user-facing text. Source: Grup eğilimi (son 30 gün)"
+  },
+  "statsGrupGunlukTrendiSon": "Group daily trend (last 7 days)",
+  "@statsGrupGunlukTrendiSon": {
+    "description": "Stats user-facing text. Source: Grup günlük trendi (son 7 gün)"
+  },
+  "statsGrupIstatistikleriniGormekIcin": "To see group statistics, first join a group.",
+  "@statsGrupIstatistikleriniGormekIcin": {
+    "description": "Stats user-facing text. Source: Grup istatistiklerini görmek için önce bir gruba katıl."
+  },
+  "statsGrupToplami": "Group total",
+  "@statsGrupToplami": {
+    "description": "Stats user-facing text. Source: Grup toplamı"
+  },
+  "statsGunlukDagilim": "Daily distribution",
+  "@statsGunlukDagilim": {
+    "description": "Stats user-facing text. Source: Günlük dağılım"
+  },
+  "statsGunlukOrt": "Daily avg.",
+  "@statsGunlukOrt": {
+    "description": "Stats user-facing text. Source: Günlük ort."
+  },
+  "statsGunlukOrtalama": "Daily average",
+  "@statsGunlukOrtalama": {
+    "description": "Stats user-facing text. Source: Günlük ortalama"
+  },
+  "statsHafta": "Week",
+  "@statsHafta": {
+    "description": "Stats user-facing text. Source: Hafta"
+  },
+  "statsHaftaIci": "Weekdays",
+  "@statsHaftaIci": {
+    "description": "Stats user-facing text. Source: Hafta içi"
+  },
+  "statsHaftaSonu": "Weekends",
+  "@statsHaftaSonu": {
+    "description": "Stats user-facing text. Source: Hafta sonu"
+  },
+  "statsHaftalikRitim": "Weekly rhythm",
+  "@statsHaftalikRitim": {
+    "description": "Stats user-facing text. Source: Haftalık ritim"
+  },
+  "statsHedef": "Goal",
+  "@statsHedef": {
+    "description": "Stats user-facing text. Source: Hedef"
+  },
+  "statsHenuzCalismaKaydinYok": "You do not have a study record yet",
+  "@statsHenuzCalismaKaydinYok": {
+    "description": "Stats user-facing text. Source: Henüz çalışma kaydın yok"
+  },
+  "statsKarsilastirmaTablosu": "Comparison table",
+  "@statsKarsilastirmaTablosu": {
+    "description": "Stats user-facing text. Source: Karşılaştırma tablosu"
+  },
+  "statsKisiBasiOrt": "Average per person",
+  "@statsKisiBasiOrt": {
+    "description": "Stats user-facing text. Source: Kişi başı ort."
+  },
+  "statsKisisel": "Personal",
+  "@statsKisisel": {
+    "description": "Stats user-facing text. Source: Kişisel"
+  },
+  "statsOturumDagilimi": "Session distribution",
+  "@statsOturumDagilimi": {
+    "description": "Stats user-facing text. Source: Oturum dağılımı"
+  },
+  "statsRekorSeri": "Longest streak",
+  "@statsRekorSeri": {
+    "description": "Stats user-facing text. Source: Rekor seri"
+  },
+  "statsRekorlar": "Records",
+  "@statsRekorlar": {
+    "description": "Stats user-facing text. Source: Rekorlar"
+  },
+  "statsSec": "Select",
+  "@statsSec": {
+    "description": "Stats user-facing text. Source: Seç"
+  },
+  "statsSeciliTarihAraligi": "Selected date range",
+  "@statsSeciliTarihAraligi": {
+    "description": "Stats user-facing text. Source: Seçili tarih aralığı"
+  },
+  "statsSon30Gun": "Last 30 days",
+  "@statsSon30Gun": {
+    "description": "Stats user-facing text. Source: Son 30 gün"
+  },
+  "statsSure": "Duration",
+  "@statsSure": {
+    "description": "Stats user-facing text. Source: Süre"
+  },
+  "statsSiralama": "Ranking",
+  "@statsSiralama": {
+    "description": "Stats user-facing text. Source: Sıralama"
+  },
+  "statsToplam": "Total",
+  "@statsToplam": {
+    "description": "Stats user-facing text. Source: Toplam"
+  },
+  "statsTumZamanlar": "All time",
+  "@statsTumZamanlar": {
+    "description": "Stats user-facing text. Source: Tüm zamanlar"
+  },
+  "statsTumu": "All",
+  "@statsTumu": {
+    "description": "Stats user-facing text. Source: Tümü"
+  },
+  "statsSaat": "hours",
+  "@statsSaat": {
+    "description": "Stats user-facing text. Source: saat"
+  },
+  "statsCalismaSaatleri": "Study hours",
+  "@statsCalismaSaatleri": {
+    "description": "Stats user-facing text. Source: Çalışma saatleri"
+  },
+  "statsCok": "High",
+  "@statsCok": {
+    "description": "Stats user-facing text. Source: Çok"
+  },
+  "statsUyeYok": "No members.",
+  "@statsUyeYok": {
+    "description": "Stats user-facing text. Source: Üye yok."
+  },
+  "statsIsimsiz": "Unnamed",
+  "@statsIsimsiz": {
+    "description": "Stats user-facing text. Source: İsimsiz"
+  },
+  "statsIstatistik": "Statistics",
+  "@statsIstatistik": {
+    "description": "Stats user-facing text. Source: İstatistik"
+  },
+  "statsIstatistikYuklenemediE": "Failed to load statistics: {e}",
+  "@statsIstatistikYuklenemediE": {
+    "description": "Stats user-facing text. Source: İstatistik yüklenemedi: $e",
+    "placeholders": {
+      "e": {
+        "type": "String"
+      }
+    }
+  },
+  "updaterBeta": "Beta",
+  "@updaterBeta": {
+    "description": "Updater user-facing text. Source: Beta"
+  },
+  "updaterStable": "Stable",
+  "@updaterStable": {
+    "description": "Updater user-facing text. Source: Stable"
+  },
+  "updaterBuSurumIcinDetayli": "Detailed notes for this version will be added soon.",
+  "@updaterBuSurumIcinDetayli": {
+    "description": "Updater user-facing text. Source: Bu sürüm için detaylı notlar yakında eklenecek."
+  },
+  "updaterDuzeltmeler": "Fixes",
+  "@updaterDuzeltmeler": {
+    "description": "Updater user-facing text. Source: Düzeltmeler"
+  },
+  "updaterGuncelle": "Update",
+  "@updaterGuncelle": {
+    "description": "Updater user-facing text. Source: Güncelle"
+  },
+  "updaterTekrarDene": "Try again",
+  "@updaterTekrarDene": {
+    "description": "Updater user-facing text. Source: Tekrar dene"
+  },
+  "updaterGuncellemeNotlari": "Release notes",
+  "@updaterGuncellemeNotlari": {
+    "description": "Updater user-facing text. Source: Güncelleme notları"
+  },
+  "updaterGuncellemeVarInfoversionname": "Update available: {versionname}",
+  "@updaterGuncellemeVarInfoversionname": {
+    "description": "Updater user-facing text. Source: Güncelleme var: ${info.versionName}",
+    "placeholders": {
+      "versionname": {
+        "type": "String"
+      }
+    }
+  },
+  "updaterHenuzGosterilecekSurumNotu": "There are no release notes to show yet.",
+  "@updaterHenuzGosterilecekSurumNotu": {
+    "description": "Updater user-facing text. Source: Henüz gösterilecek sürüm notu yok."
+  },
+  "updaterKurulumIptalEdildi": "Installation has been cancelled.",
+  "@updaterKurulumIptalEdildi": {
+    "description": "Updater user-facing text. Source: Kurulum iptal edildi."
+  },
+  "updaterNotlar": "Notes",
+  "@updaterNotlar": {
+    "description": "Updater user-facing text. Source: Notlar"
+  },
+  "updaterSonra": "Later",
+  "@updaterSonra": {
+    "description": "Updater user-facing text. Source: Sonra"
+  },
+  "updaterTamam": "OK",
+  "@updaterTamam": {
+    "description": "Updater user-facing text. Source: Tamam"
+  },
+  "updaterYenilikler": "What's New",
+  "@updaterYenilikler": {
+    "description": "Updater user-facing text. Source: Yenilikler"
+  },
+  "updaterYeniliklerYenilikler": "What's New:",
+  "@updaterYeniliklerYenilikler": {
+    "description": "Updater user-facing text. Source: Yenilikler:"
+  },
+  "updaterOneCikanlar": "Highlights",
+  "@updaterOneCikanlar": {
+    "description": "Updater user-facing text. Source: Öne çıkanlar"
+  },
+  "updaterIndiriliyorProgress100tostringasfixed0": "Downloading… %{progress}",
+  "@updaterIndiriliyorProgress100tostringasfixed0": {
+    "description": "Updater user-facing text. Source: İndiriliyor… %${(_progress * 100).toStringAsFixed(0)}",
+    "placeholders": {
+      "progress": {
+        "type": "String"
+      }
+    }
+  },
+  "updaterIndirmeBasarisizOlduInternet": "Download failed. Check your internet connection.",
+  "@updaterIndirmeBasarisizOlduInternet": {
+    "description": "Updater user-facing text. Source: İndirme başarısız oldu. İnternet bağlantını kontrol et."
+  },
+  "updaterIptal": "Cancel",
+  "@updaterIptal": {
+    "description": "Updater user-facing text. Source: İptal"
+  },
+  "updaterItem": "• {item}",
+  "@updaterItem": {
+    "description": "Updater user-facing text. Source: • $item",
+    "placeholders": {
+      "item": {
+        "type": "String"
+      }
+    }
+  },
+  "commonHourCount": "{count, plural, =0 {0 hours} =1 {1 hour} other {{count} hours}}",
+  "@commonHourCount": {
+    "description": "Localized hour count.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "commonMinuteCount": "{count, plural, =0 {0 minutes} =1 {1 minute} other {{count} minutes}}",
+  "@commonMinuteCount": {
+    "description": "Localized minute count.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "commonDayCount": "{count, plural, =0 {0 days} =1 {1 day} other {{count} days}}",
+  "@commonDayCount": {
+    "description": "Localized day count.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "commonSessionCount": "{count, plural, =0 {No sessions} =1 {1 session} other {{count} sessions}}",
+  "@commonSessionCount": {
+    "description": "Localized study session count.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "androidWidgetsHenuzKayitYok2": "No records yet",
+  "@androidWidgetsHenuzKayitYok2": {
+    "description": "Android_widgets user-facing text. Source: Henüz kayıt yok"
+  },
+  "coreAlfaKurt": "Alpha Wolf",
+  "@coreAlfaKurt": {
+    "description": "Core user-facing text. Source: Alfa Kurt"
+  },
+  "coreGrupGunBirincisi": "Top group member of the day",
+  "@coreGrupGunBirincisi": {
+    "description": "Core user-facing text. Source: Grup gün birincisi"
+  },
+  "coreAtesHarli": "Blazing Fire",
+  "@coreAtesHarli": {
+    "description": "Core user-facing text. Source: Ateş Harlı"
+  },
+  "coreGunlukHedefSerisi": "Daily goal streak",
+  "@coreGunlukHedefSerisi": {
+    "description": "Core user-facing text. Source: Günlük hedef serisi"
+  },
+  "coreGunDogumu": "Sunrise",
+  "@coreGunDogumu": {
+    "description": "Core user-facing text. Source: Gün Doğumu"
+  },
+  "coreGununKahramani": "Hero of the Day",
+  "@coreGununKahramani": {
+    "description": "Core user-facing text. Source: Günün Kahramanı"
+  },
+  "coreTekGundeSaat": "Hours in a single day",
+  "@coreTekGundeSaat": {
+    "description": "Core user-facing text. Source: Tek günde saat"
+  },
+  "coreHsHedefGun": "Weekend goal day",
+  "@coreHsHedefGun": {
+    "description": "Core user-facing text. Source: HS hedef gün"
+  },
+  "coreKusursuzAy": "Perfect Month",
+  "@coreKusursuzAy": {
+    "description": "Core user-facing text. Source: Kusursuz Ay"
+  },
+  "coreKusursuzAySayisi": "Number of perfect months",
+  "@coreKusursuzAySayisi": {
+    "description": "Core user-facing text. Source: Kusursuz ay sayısı"
+  },
+  "coreLokomotif": "Locomotive",
+  "@coreLokomotif": {
+    "description": "Core user-facing text. Source: Lokomotif"
+  },
+  "coreIlkOturanIlham": "First to start studying",
+  "@coreIlkOturanIlham": {
+    "description": "Core user-facing text. Source: İlk oturan ilham"
+  },
+  "coreMaratoncu": "Marathoner",
+  "@coreMaratoncu": {
+    "description": "Core user-facing text. Source: Maratoncu"
+  },
+  "coreToplamCalismaSaati": "Total study hours",
+  "@coreToplamCalismaSaati": {
+    "description": "Core user-facing text. Source: Toplam çalışma saati"
+  },
+  "coreMatrixHatasi": "Matrix Error",
+  "@coreMatrixHatasi": {
+    "description": "Core user-facing text. Source: Matrix Hatası"
+  },
+  "coreMolaDusmani": "Break Enemy",
+  "@coreMolaDusmani": {
+    "description": "Core user-facing text. Source: Mola Düşmanı"
+  },
+  "corePiSirri": "Secret of Pi",
+  "@corePiSirri": {
+    "description": "Core user-facing text. Source: Pi Sırrı"
+  },
+  "coreSonSaniyeKurtaricisi": "Last Second Savior",
+  "@coreSonSaniyeKurtaricisi": {
+    "description": "Core user-facing text. Source: Son Saniye Kurtarıcısı"
+  },
+  "coreGizli": "Hidden",
+  "@coreGizli": {
+    "description": "Core user-facing text. Source: Gizli"
+  },
+  "coreSinirTanimaz": "Limitless",
+  "@coreSinirTanimaz": {
+    "description": "Core user-facing text. Source: Sınır Tanımaz"
+  },
+  "coreTakimOyuncusu": "Team Player",
+  "@coreTakimOyuncusu": {
+    "description": "Core user-facing text. Source: Takım Oyuncusu"
+  },
+  "coreGrupHedefKatkisi": "Group goal contribution",
+  "@coreGrupHedefKatkisi": {
+    "description": "Core user-facing text. Source: Grup hedef katkısı"
+  },
+  "coreYilbasiNobeti": "New Year's Eve Vigil",
+  "@coreYilbasiNobeti": {
+    "description": "Core user-facing text. Source: Yılbaşı Nöbeti"
+  },
+  "coreCelikIrade": "Steel Will",
+  "@coreCelikIrade": {
+    "description": "Core user-facing text. Source: Çelik İrade"
+  },
+  "coreTekOturumDakika": "Single-session minutes",
+  "@coreTekOturumDakika": {
+    "description": "Core user-facing text. Source: Tek oturum dakika"
+  },
+  "coreIlhamKaynagi": "Source of Inspiration",
+  "@coreIlhamKaynagi": {
+    "description": "Core user-facing text. Source: İlham Kaynağı"
+  },
+  "coreDurtmeDonusumu": "Nudge conversion",
+  "@coreDurtmeDonusumu": {
+    "description": "Core user-facing text. Source: Dürtme dönüşümü"
+  },
+  "profileOcak": "January",
+  "@profileOcak": {
+    "description": "Profile user-facing text. Source: Ocak"
+  },
+  "profileSubat": "February",
+  "@profileSubat": {
+    "description": "Profile user-facing text. Source: Şubat"
+  },
+  "profileMart": "March",
+  "@profileMart": {
+    "description": "Profile user-facing text. Source: Mart"
+  },
+  "profileNisan": "April",
+  "@profileNisan": {
+    "description": "Profile user-facing text. Source: Nisan"
+  },
+  "profileMayis": "May",
+  "@profileMayis": {
+    "description": "Profile user-facing text. Source: Mayıs"
+  },
+  "profileHaziran": "June",
+  "@profileHaziran": {
+    "description": "Profile user-facing text. Source: Haziran"
+  },
+  "profilePazartesi": "Monday",
+  "@profilePazartesi": {
+    "description": "Profile user-facing text. Source: Pazartesi"
+  },
+  "profileSali": "Tuesday",
+  "@profileSali": {
+    "description": "Profile user-facing text. Source: Salı"
+  },
+  "profileCarsamba": "Wednesday",
+  "@profileCarsamba": {
+    "description": "Profile user-facing text. Source: Çarşamba"
+  },
+  "profilePersembe": "Thursday",
+  "@profilePersembe": {
+    "description": "Profile user-facing text. Source: Perşembe"
+  },
+  "profileCuma": "Friday",
+  "@profileCuma": {
+    "description": "Profile user-facing text. Source: Cuma"
+  },
+  "profileCumartesi": "Saturday",
+  "@profileCumartesi": {
+    "description": "Profile user-facing text. Source: Cumartesi"
+  },
+  "profilePazar": "Sunday",
+  "@profilePazar": {
+    "description": "Profile user-facing text. Source: Pazar"
+  },
+  "profileTema": "Theme",
+  "@profileTema": {
+    "description": "Profile user-facing text. Source: Tema"
+  },
+  "profileMood": "Mood",
+  "@profileMood": {
+    "description": "Profile user-facing text. Source: Mood"
+  },
+  "profileSekil": "Shape",
+  "@profileSekil": {
+    "description": "Profile user-facing text. Source: Şekil"
+  },
+  "profileTemmuz": "July",
+  "@profileTemmuz": {
+    "description": "Profile user-facing text. Source: Temmuz"
+  },
+  "profileAgustos": "August",
+  "@profileAgustos": {
+    "description": "Profile user-facing text. Source: Ağustos"
+  },
+  "profileEylul": "September",
+  "@profileEylul": {
+    "description": "Profile user-facing text. Source: Eylül"
+  },
+  "profileEkim": "October",
+  "@profileEkim": {
+    "description": "Profile user-facing text. Source: Ekim"
+  },
+  "profileKasim": "November",
+  "@profileKasim": {
+    "description": "Profile user-facing text. Source: Kasım"
+  },
+  "profileAralik": "December",
+  "@profileAralik": {
+    "description": "Profile user-facing text. Source: Aralık"
+  },
+  "statsOca": "Jan",
+  "@statsOca": {
+    "description": "Stats user-facing text. Source: Oca"
+  },
+  "statsSub": "Feb",
+  "@statsSub": {
+    "description": "Stats user-facing text. Source: Şub"
+  },
+  "statsMar": "Mar",
+  "@statsMar": {
+    "description": "Stats user-facing text. Source: Mar"
+  },
+  "statsNis": "Apr",
+  "@statsNis": {
+    "description": "Stats user-facing text. Source: Nis"
+  },
+  "statsMay": "May",
+  "@statsMay": {
+    "description": "Stats user-facing text. Source: May"
+  },
+  "statsHaz": "Jun",
+  "@statsHaz": {
+    "description": "Stats user-facing text. Source: Haz"
+  },
+  "statsPzt": "Mon",
+  "@statsPzt": {
+    "description": "Stats user-facing text. Source: Pzt"
+  },
+  "statsSal": "Tue",
+  "@statsSal": {
+    "description": "Stats user-facing text. Source: Sal"
+  },
+  "statsCar": "Wed",
+  "@statsCar": {
+    "description": "Stats user-facing text. Source: Çar"
+  },
+  "statsPer": "Thu",
+  "@statsPer": {
+    "description": "Stats user-facing text. Source: Per"
+  },
+  "statsCum": "Fri",
+  "@statsCum": {
+    "description": "Stats user-facing text. Source: Cum"
+  },
+  "statsCmt": "Sat",
+  "@statsCmt": {
+    "description": "Stats user-facing text. Source: Cmt"
+  },
+  "statsPaz": "Sun",
+  "@statsPaz": {
+    "description": "Stats user-facing text. Source: Paz"
+  },
+  "statsTem": "Jul",
+  "@statsTem": {
+    "description": "Stats user-facing text. Source: Tem"
+  },
+  "statsAgu": "Aug",
+  "@statsAgu": {
+    "description": "Stats user-facing text. Source: Ağu"
+  },
+  "statsEyl": "Sep",
+  "@statsEyl": {
+    "description": "Stats user-facing text. Source: Eyl"
+  },
+  "statsEki": "Oct",
+  "@statsEki": {
+    "description": "Stats user-facing text. Source: Eki"
+  },
+  "statsKas": "Nov",
+  "@statsKas": {
+    "description": "Stats user-facing text. Source: Kas"
+  },
+  "statsAra": "Dec",
+  "@statsAra": {
+    "description": "Stats user-facing text. Source: Ara"
+  },
+  "groupDiscoveryAction": "Discover groups",
+  "@groupDiscoveryAction": {
+    "description": "Public group discovery entry action"
+  },
+  "groupDiscoveryTitle": "Discover groups",
+  "@groupDiscoveryTitle": {
+    "description": "Public group discovery screen title"
+  },
+  "groupDiscoverySearchHint": "Search public groups",
+  "@groupDiscoverySearchHint": {
+    "description": "Public group discovery search field hint"
+  },
+  "groupDiscoveryPrivacyTitle": "Group privacy",
+  "@groupDiscoveryPrivacyTitle": {
+    "description": "Label for the group privacy setting"
+  },
+  "groupDiscoveryChangePrivacy": "Change group privacy",
+  "@groupDiscoveryChangePrivacy": {
+    "description": "Tooltip for editing group privacy"
+  },
+  "groupDiscoveryPrivate": "Private",
+  "@groupDiscoveryPrivate": {
+    "description": "Private group visibility label"
+  },
+  "groupDiscoveryPublic": "Public",
+  "@groupDiscoveryPublic": {
+    "description": "Public group visibility label"
+  },
+  "groupDiscoveryPrivateDescription": "Only people with the invite code can join.",
+  "@groupDiscoveryPrivateDescription": {
+    "description": "Explanation for private group visibility"
+  },
+  "groupDiscoveryPublicDescription": "Anyone can discover and join this group.",
+  "@groupDiscoveryPublicDescription": {
+    "description": "Explanation for public group visibility"
+  },
+  "groupDiscoveryMemberCount": "{current} / {limit} members",
+  "@groupDiscoveryMemberCount": {
+    "description": "Visible group member count and limit",
+    "placeholders": {
+      "current": { "type": "int" },
+      "limit": { "type": "int" }
+    }
+  },
+  "groupDiscoveryDailyGoal": "Daily goal: {minutes} min",
+  "@groupDiscoveryDailyGoal": {
+    "description": "Visible public group daily goal in minutes",
+    "placeholders": {
+      "minutes": { "type": "int" }
+    }
+  },
+  "groupDiscoveryJoined": "Joined",
+  "@groupDiscoveryJoined": {
+    "description": "State of a group the current user has already joined"
+  },
+  "groupDiscoveryFull": "Full",
+  "@groupDiscoveryFull": {
+    "description": "State of a public group at its member limit"
+  },
+  "groupDiscoveryEmpty": "No public groups found",
+  "@groupDiscoveryEmpty": {
+    "description": "Empty state for public group discovery"
+  },
+  "groupDiscoveryRetry": "Try again",
+  "@groupDiscoveryRetry": {
+    "description": "Retry action after public group discovery fails"
+  },
+  "groupDiscoveryLoadMore": "Load more",
+  "@groupDiscoveryLoadMore": {
+    "description": "Pagination action for public group discovery"
+  },
+  "profileUygulamaDili": "App language",
+  "@profileUygulamaDili": {
+    "description": "Profile settings label for the manual application language choice"
+  },
+  "profileDilSistemVarsayilani": "System default",
+  "@profileDilSistemVarsayilani": {
+    "description": "Profile settings option that follows the device language"
+  },
+  "profileDilTurkce": "Turkish",
+  "@profileDilTurkce": {
+    "description": "Profile settings Turkish language option"
+  },
+  "profileDilIngilizce": "English",
+  "@profileDilIngilizce": {
+    "description": "Profile settings English language option"
+  },
+  "profileDilDegisikligiAnindaUygulanir": "Changes apply immediately.",
+  "@profileDilDegisikligiAnindaUygulanir": {
+    "description": "Profile settings helper text for the manual language choice"
+  },
+  "groupDiscoveryPrivacyUpdated": "Group privacy updated",
+  "@groupDiscoveryPrivacyUpdated": {
+    "description": "Confirmation after an admin changes group privacy"
+  },
+  "legalCenterTitle": "Privacy & legal",
+  "@legalCenterTitle": {
+    "description": "Settings entry and app bar for legal center"
+  },
+  "legalPrivacyPolicy": "Privacy policy",
+  "@legalPrivacyPolicy": {
+    "description": "Privacy policy document title"
+  },
+  "legalTermsOfUse": "Terms of use",
+  "@legalTermsOfUse": {
+    "description": "Terms of use document title"
+  },
+  "legalCommunityGuidelines": "Community guidelines",
+  "@legalCommunityGuidelines": {
+    "description": "Community guidelines document title"
+  },
+  "legalTelemetryTitle": "Crash and performance telemetry",
+  "@legalTelemetryTitle": {
+    "description": "Telemetry toggle title"
+  },
+  "legalTelemetrySubtitle": "When on, crash types and sync counters may be sent (Sentry); no email or tokens. When off, no new events.",
+  "@legalTelemetrySubtitle": {
+    "description": "Telemetry toggle subtitle"
+  },
+  "legalPolicyVersion": "Policy version: {version}",
+  "@legalPolicyVersion": {
+    "description": "Shows legal document version date",
+    "placeholders": {
+      "version": {"type": "String"}
+    }
+  },
+  "legalCommunityVersion": "Community guidelines version: {version}",
+  "@legalCommunityVersion": {
+    "description": "Shows community guidelines version",
+    "placeholders": {
+      "version": {"type": "String"}
+    }
+  },
+  "legalCopyPublicPrivacyUrl": "Copy public privacy URL",
+  "@legalCopyPublicPrivacyUrl": {
+    "description": "Action to copy HTTPS privacy policy URL"
+  },
+  "legalPublicUrlNotConfigured": "Live HTTPS URL is not configured yet (LEGAL_BASE_URL). Full text is available in-app.",
+  "@legalPublicUrlNotConfigured": {
+    "description": "Shown when LEGAL_BASE_URL is empty"
+  },
+  "legalPublicUrlCopied": "Link copied to clipboard.",
+  "@legalPublicUrlCopied": {
+    "description": "Snackbar after copying legal URL"
+  },
+  "legalDeletionNote": "Account deletion: request + cooling-off window + scheduled hard delete. Clear steps appear under Settings → Account as the server pipeline lands.",
+  "@legalDeletionNote": {
+    "description": "Honest note that deletion UX completes with later WPs"
+  },
+"safetyReport": "Report",
+  "@safetyReport": {
+    "description": "Report UGC / user action label"
+  },
+  "safetyBlock": "Block",
+  "@safetyBlock": {
+    "description": "Block user action label"
+  },
+  "safetyBlockConfirmTitle": "Block this user?",
+  "@safetyBlockConfirmTitle": {
+    "description": "Confirm dialog title before blocking a user"
+  },
+  "safetyBlockConfirmBody": "You will no longer see their messages or campfire presence. You can unblock later from settings if available.",
+  "@safetyBlockConfirmBody": {
+    "description": "Confirm dialog body explaining block effect"
+  },
+  "safetyBlockConfirmAction": "Block",
+  "@safetyBlockConfirmAction": {
+    "description": "Confirm block button"
+  },
+  "safetyCancel": "Cancel",
+  "@safetyCancel": {
+    "description": "Cancel button on safety dialogs"
+  },
+  "safetyUserBlocked": "User blocked.",
+  "@safetyUserBlocked": {
+    "description": "Snackbar after successful block"
+  },
+  "safetyReportTitle": "Report content",
+  "@safetyReportTitle": {
+    "description": "Report bottom sheet title"
+  },
+  "safetyReportSubmit": "Submit",
+  "@safetyReportSubmit": {
+    "description": "Submit report button"
+  },
+  "safetyReportReceived": "Report received.",
+  "@safetyReportReceived": {
+    "description": "Snackbar after report submitted"
+  },
+  "safetyReasonHarassment": "Harassment",
+  "@safetyReasonHarassment": {
+    "description": "Report reason: harassment"
+  },
+  "safetyReasonSpam": "Spam",
+  "@safetyReasonSpam": {
+    "description": "Report reason: spam"
+  },
+  "safetyReasonHate": "Hate",
+  "@safetyReasonHate": {
+    "description": "Report reason: hate"
+  },
+  "safetyReasonIllegal": "Illegal",
+  "@safetyReasonIllegal": {
+    "description": "Report reason: illegal"
+  },
+  "safetyReasonOther": "Other",
+  "@safetyReasonOther": {
+    "description": "Report reason: other"
+  },
+  "safetyActionFailed": "Action failed. Try again.",
+  "@safetyActionFailed": {
+    "description": "Generic safety action error snackbar"
+  },
+"safetyBlockedUsersTitle": "Blocked users",
+  "@safetyBlockedUsersTitle": {
+    "description": "Settings entry and screen title for blocked users list"
+  },
+  "safetyUnblock": "Unblock",
+  "@safetyUnblock": {
+    "description": "Action to remove a user block"
+  },
+  "safetyUnblocked": "User unblocked.",
+  "@safetyUnblocked": {
+    "description": "Snackbar after successful unblock"
+  },
+  "safetyNoBlockedUsers": "No blocked users.",
+  "@safetyNoBlockedUsers": {
+    "description": "Empty state on blocked users screen"
+  },
+  "safetyBlockedUserFallbackName": "Blocked user",
+  "@safetyBlockedUserFallbackName": {
+    "description": "Fallback display name when profile cannot be resolved"
+  },
+"safetyReportDetailsLabel": "Details (optional)",
+  "@safetyReportDetailsLabel": {
+    "description": "Label for optional free-text report details field"
+  },
+  "safetyReportDetailsHint": "Add more context for moderators (max 500 characters).",
+  "@safetyReportDetailsHint": {
+    "description": "Hint text for report details field"
+  },
+"adminUgcNoReports": "No UGC reports",
+  "@adminUgcNoReports": {
+    "description": "Empty state for super-admin UGC moderation queue"
+  },
+  "adminUgcStatusInReview": "In review",
+  "@adminUgcStatusInReview": {
+    "description": "UGC report status action: in review"
+  },
+  "adminUgcStatusResolved": "Resolved",
+  "@adminUgcStatusResolved": {
+    "description": "UGC report status action: resolved"
+  },
+  "adminUgcStatusRejected": "Rejected",
+  "@adminUgcStatusRejected": {
+    "description": "UGC report status action: rejected"
+  },
+  "analyticsYear": "Year",
+  "@analyticsYear": {
+    "description": "Analytics period chip: year"
+  },
+  "analyticsCustomRange": "Custom",
+  "@analyticsCustomRange": {
+    "description": "Analytics period chip: custom date range"
+  },
+  "analyticsComparePrevious": "Compare with previous equal-length period",
+  "@analyticsComparePrevious": {
+    "description": "Toggle for prior equal-length period comparison"
+  },
+  "analyticsEditDone": "Done",
+  "@analyticsEditDone": {
+    "description": "Finish editing analytics grid layout"
+  },
+  "analyticsResetLayout": "Reset layout",
+  "@analyticsResetLayout": {
+    "description": "Reset analytics cards to default layout"
+  },
+  "analyticsCardWidth": "Width",
+  "@analyticsCardWidth": {
+    "description": "Analytics card width control label"
+  },
+  "analyticsCardHeight": "Height",
+  "@analyticsCardHeight": {
+    "description": "Analytics card height control label"
+  },
+  "analyticsWider": "Wider",
+  "@analyticsWider": {
+    "description": "Increase analytics card width"
+  },
+  "analyticsNarrower": "Narrower",
+  "@analyticsNarrower": {
+    "description": "Decrease analytics card width"
+  },
+  "analyticsTaller": "Taller",
+  "@analyticsTaller": {
+    "description": "Increase analytics card height"
+  },
+  "analyticsShorter": "Shorter",
+  "@analyticsShorter": {
+    "description": "Decrease analytics card height"
+  },
+  "analyticsDragHandle": "Drag to reorder",
+  "@analyticsDragHandle": {
+    "description": "Semantics label for reorder drag handle"
+  },
+  "analyticsCardTotalPeriod": "Period total",
+  "@analyticsCardTotalPeriod": {
+    "description": "Analytics card title: period total"
+  },
+  "analyticsCardSubjectDonut": "Subject breakdown",
+  "@analyticsCardSubjectDonut": {
+    "description": "Analytics card title: subject donut"
+  },
+  "analyticsCardSubjectStacked": "Subjects stacked",
+  "@analyticsCardSubjectStacked": {
+    "description": "Analytics card title: subject stacked bar"
+  },
+  "analyticsCardPeriodCompare": "Period compare",
+  "@analyticsCardPeriodCompare": {
+    "description": "Analytics card title: period comparison"
+  },
+  "analyticsCardInsight": "Insight",
+  "@analyticsCardInsight": {
+    "description": "Analytics card title: insight strip"
+  },
+  "analyticsCardGroupTotal": "Group total",
+  "@analyticsCardGroupTotal": {
+    "description": "Analytics card title: group total"
+  },
+  "analyticsCardLeaderboardHistory": "Leaderboard history",
+  "@analyticsCardLeaderboardHistory": {
+    "description": "Analytics card title: group leaderboard history"
+  },
+  "analyticsCardMemberDonut": "Member contribution",
+  "@analyticsCardMemberDonut": {
+    "description": "Analytics card title: member contribution donut"
+  },
+  "analyticsCardGroupStreak": "Group streak",
+  "@analyticsCardGroupStreak": {
+    "description": "Analytics card title: group streak"
+  },
+  "onboardingSkip": "Skip",
+  "@onboardingSkip": {
+    "description": "Skip onboarding"
+  },
+  "onboardingContinue": "Continue",
+  "@onboardingContinue": {
+    "description": "Continue to next onboarding step"
+  },
+  "onboardingWelcomeTitle": "Welcome to Focus Camp",
+  "@onboardingWelcomeTitle": {
+    "description": "Onboarding welcome title"
+  },
+  "onboardingWelcomeBody": "Study together, keep your streak, grow with your group. Get ready in a few steps.",
+  "@onboardingWelcomeBody": {
+    "description": "Onboarding welcome body"
+  },
+  "onboardingNotifyTitle": "Study reminders",
+  "@onboardingNotifyTitle": {
+    "description": "Onboarding notifications title"
+  },
+  "onboardingNotifyBody": "Optionally get daily reminders. You can allow notifications now or later in Settings.",
+  "@onboardingNotifyBody": {
+    "description": "Onboarding notifications body"
+  },
+  "onboardingAllowNotifications": "Allow notifications",
+  "@onboardingAllowNotifications": {
+    "description": "Request notification permission"
+  },
+  "onboardingNotNow": "Not now",
+  "@onboardingNotNow": {
+    "description": "Skip notification permission"
+  },
+  "onboardingGroupTitle": "Join a group",
+  "@onboardingGroupTitle": {
+    "description": "Onboarding group title"
+  },
+  "onboardingGroupBody": "Create a group or join with an invite code. You can skip and add one later.",
+  "@onboardingGroupBody": {
+    "description": "Onboarding group body"
+  },
+  "onboardingSkipGroup": "Skip group step",
+  "@onboardingSkipGroup": {
+    "description": "Skip group onboarding step"
+  },
+  "onboardingReadyTitle": "You're ready",
+  "@onboardingReadyTitle": {
+    "description": "Onboarding ready title"
+  },
+  "onboardingReadyBody": "Start the timer on the home screen for your first study session.",
+  "@onboardingReadyBody": {
+    "description": "Onboarding ready body"
+  },
+  "onboardingStart": "Go to campfire",
+  "@onboardingStart": {
+    "description": "Finish onboarding"
+  },
+  "exportMyData": "Export my data",
+  "@exportMyData": {
+    "description": "Settings action to export user data"
+  },
+  "exportMyDataSubtitle": "Share your profile, sessions, subjects and summary as JSON",
+  "@exportMyDataSubtitle": {
+    "description": "Export subtitle"
+  },
+  "exportInProgress": "Exporting…",
+  "@exportInProgress": {
+    "description": "Export in progress"
+  },
+  "exportSuccess": "Export ready",
+  "@exportSuccess": {
+    "description": "Export success snackbar"
+  },
+  "exportEmpty": "Nothing to export",
+  "@exportEmpty": {
+    "description": "Empty export"
+  },
+  "exportFailed": "Export failed. You may be offline; try again.",
+  "@exportFailed": {
+    "description": "Export failure"
+  },
+  "exportRangeLabel": "Date range",
+  "@exportRangeLabel": {
+    "description": "Export date range label"
+  },
+  "exportRangeHot": "Last 90 days",
+  "@exportRangeHot": {
+    "description": "Export hot window range"
+  },
+  "exportRangeYear": "This year",
+  "@exportRangeYear": {
+    "description": "Export year range"
+  },
+  "exportRangeAll": "All (paged)",
+  "@exportRangeAll": {
+    "description": "Export all sessions paged"
+  },
+  "smartRemindersTitle": "Smart reminders",
+  "@smartRemindersTitle": {
+    "description": "Smart reminders settings title"
+  },
+  "smartRemindersSubtitle": "Streak protection and weekly summary",
+  "@smartRemindersSubtitle": {
+    "description": "Smart reminders subtitle"
+  },
+  "smartStreakReminder": "Streak protection reminder",
+  "@smartStreakReminder": {
+    "description": "Toggle streak reminder"
+  },
+  "smartStreakReminderBody": "Remind me if I have not studied today",
+  "@smartStreakReminderBody": {
+    "description": "Streak reminder description"
+  },
+  "smartWeeklySummary": "Weekly summary",
+  "@smartWeeklySummary": {
+    "description": "Toggle weekly summary"
+  },
+  "smartWeeklySummaryBody": "Sunday 18:00 (Istanbul) summary notification",
+  "@smartWeeklySummaryBody": {
+    "description": "Weekly summary description"
+  },
+  "smartStreakTitle": "Streak at risk",
+  "@smartStreakTitle": {
+    "description": "Streak notification title"
+  },
+  "smartStreakBody": "No study yet today. A short session keeps your streak.",
+  "@smartStreakBody": {
+    "description": "Streak notification body"
+  },
+  "smartWeeklyTitle": "Weekly summary",
+  "@smartWeeklyTitle": {
+    "description": "Weekly notification title"
+  },
+  "smartWeeklyBody": "Check this week's study on the Stats tab.",
+  "@smartWeeklyBody": {
+    "description": "Weekly notification body"
+  },
+  "profileLevel": "Level {level}",
+  "@profileLevel": {
+    "description": "Profile level label",
+    "placeholders": {
+      "level": {"type": "int"}
+    }
+  },
+  "profileQuests": "Quests",
+  "@profileQuests": {
+    "description": "Profile quests section"
+  },
+  "questDailyLogin": "Daily login",
+  "@questDailyLogin": {
+    "description": "Daily login quest"
+  },
+  "questWeeklyHours": "5 hours this week",
+  "@questWeeklyHours": {
+    "description": "Weekly hours quest"
+  },
+  "questClaimed": "Done",
+  "@questClaimed": {
+    "description": "Quest completed"
+  },
+  "questLocked": "Locked",
+  "@questLocked": {
+    "description": "Quest locked"
+  },
+  "cosmeticsFrame": "Avatar frame",
+  "@cosmeticsFrame": {
+    "description": "Cosmetic frame label"
+  },
+  "cosmeticsUnlocked": "Unlocked",
+  "@cosmeticsUnlocked": {
+    "description": "Cosmetic unlocked"
+  },
+  "languageArabic": "Arabisch",
+  "@languageArabic": {
+    "description": "Arabic language option"
+  },
+  "languageGerman": "Deutsch",
+  "@languageGerman": {
+    "description": "German language option"
+  },
+  "rtlPreviewHint": "RTL layout preview",
+  "@rtlPreviewHint": {
+    "description": "RTL accessibility hint"
+  }
+}

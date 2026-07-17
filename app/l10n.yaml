@@ -5,6 +5,9 @@ output-class: AppLocalizations
 preferred-supported-locales:
   - en
   - tr
+  - ar
+  - de
 nullable-getter: false
 required-resource-attributes: true
 format: true
+untranslated-messages-file: l10n_untranslated.json

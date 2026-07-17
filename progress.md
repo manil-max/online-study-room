@@ -20,7 +20,7 @@
 - **Navigasyon hedefi:** Ana Sayfa / Saat / Gruplar / İstatistikler / Profil. Ana Sayfa günlük kullanım alanıdır; diğer alanların verisi kendi sekmelerinde eksiksiz bulunur.
 - **Release:** Stable/Beta kanalı GitHub Releases ile çalışır. Yerel `v29` ve `beta-v29` tag'leri WP-104 commitini (`ff369e3`) gösterir; mevcut `main` WP-105–109'u da içerdiği halde `1.0.29+29` taşır. Bir sonraki dağıtımda versionCode mutlaka artırılır; Play production ayrı kalite kapısından geçer.
 - **Kalite kapıları:** Her WP DoD'siz kapanmaz; stable release kalite kapısından geçer (AGENTS.md §3). Server-authoritative XP, RLS/sosyal profil, platform sınırları → `docs/KALITE-PROGRAMI.md`.
-- **Son WP numarası:** 164 (analitik teslim düzeltmesi). **Sıradaki boş numara WP-165.**
+- **Son WP numarası:** 155 program kuyruğu (151–155 kod). **Sıradaki boş numara WP-165** (QA/Play docs 165+).
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
   - Flutter: `C:\src\flutter` · Android SDK: `C:\Android\Sdk`
@@ -79,7 +79,7 @@
 - **Dal:** main
 - **Başlangıç:** —
 - **Son güncelleme:** 2026-07-18 (Europe/Istanbul)
-- **Not:** WP-151–154 park. Sırada 155+QA+Play.
+- **Not:** WP-151–155 park. QA+Play docs next.
 
 
 ---
@@ -158,7 +158,7 @@
 | WP-152 | [~] Test için bekliyor | Veri dışa aktarma JSON | Cihazda doğrulanmalı |
 | WP-153 | [~] Test için bekliyor | Akıllı hatırlatma seri/haftalık | Cihazda doğrulanmalı |
 | WP-154 | [~] Test için bekliyor | Level/quest/cosmetics + 0043 | SQL Editor + cihaz |
-| WP-155 | [ ] Bekliyor (Track D) | Ek dil paketleri + RTL | C sonrası |
+| WP-155 | [~] Test için bekliyor | ar/de + RTL altyapı | Cihazda doğrulanmalı |
 | WP-156 | [~] Plan uygulandı (flag kapalı) | İstatistik & Gruplar analitik plan | docs/features |
 | WP-157 | [~] Test için bekliyor | Grafik primitives gauge/stacked/radar/area | `2c7bc91` |
 | WP-158 | [~] Test için bekliyor | Analytics grid shell + prefs + flag | `5f8f1d5` |
@@ -855,6 +855,12 @@
 > ⚠️ **Ürün kararları:** (1) WP-66 §0 retention varsayılanları, (2) legal site domain/iletişim kimliği, (3) hedef kitle 13+/16+, (4) Play Console'da alarmı core functionality olarak savunma veya safe fallback, (5) geliştirici hesap türü/tarihi. Bunlar planı engellemez; ilgili WP başlamadan kullanıcı onayı gerekir.
 
 ## Test için bekleyenler
+
+### WP-155: Dil paketleri + RTL (kod+test) 🌐
+- **Özet:** AR/DE ARB (EN baseline çeviri), AppLanguage genişletme, RTL ar, EN/TR regresyon testleri.
+- **Not:** AR/DE metinler henüz insan çevirisi değil (baseline EN) — ürün çeviri turu açık.
+- **Kanıt:** `Kodda doğrulandı` · **`Cihazda doğrulanmalı`** (RTL layout cihaz)
+- **Commit:** (bu)
 
 ### WP-154: Gamification genişletme (kod+test) 🏆
 - **Özet:** level=√(xp/50)+1 türetilmiş; görevler görüntü; kozmetik free L3; 0043 cosmetics+dict; client XP yazmaz.

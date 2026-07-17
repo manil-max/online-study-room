@@ -218,6 +218,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         value: AppLanguage.english,
                         child: Text(l10n.profileDilIngilizce),
                       ),
+                      // WP-155
+                      DropdownMenuItem(
+                        value: AppLanguage.arabic,
+                        child: Text(l10n.languageArabic),
+                      ),
+                      DropdownMenuItem(
+                        value: AppLanguage.german,
+                        child: Text(l10n.languageGerman),
+                      ),
                     ],
                     onChanged: (value) {
                       if (value != null) {
