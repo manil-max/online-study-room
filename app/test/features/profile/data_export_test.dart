@@ -72,6 +72,32 @@ void main() {
     expect(bundle.payload['sessions'], isEmpty);
   });
 
+  test('export profile strips email and tokens', () async {
+    final repo = InMemoryDataExportRepository();
+    repo.seed(
+      userId: 'u1',
+      profile: {
+        'display_name': 'Ali',
+        'email': 'secret@example.com',
+        'access_token': 'tok',
+        'refresh_token': 'ref',
+        'daily_goal_minutes': 120,
+      },
+    );
+    final bundle = await repo.buildExport(
+      userId: 'u1',
+      range: DataExportRange.all,
+    );
+    final profile = bundle.payload['profile'] as Map<String, dynamic>;
+    expect(profile.containsKey('email'), isFalse);
+    expect(profile.containsKey('access_token'), isFalse);
+    expect(profile.containsKey('refresh_token'), isFalse);
+    expect(profile['display_name'], 'Ali');
+    final encoded = bundle.payload.toString();
+    expect(encoded.contains('secret@example.com'), isFalse);
+    expect(encoded.contains('tok'), isFalse);
+  });
+
   test('year range filters old sessions', () async {
     final repo = InMemoryDataExportRepository();
     final old = DateTime(DateTime.now().year - 1, 6, 1);

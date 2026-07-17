@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/stats/istanbul_calendar.dart';
 import '../../../core/stats/session_window.dart';
 import '../../../core/stats/study_stats.dart';
 import '../../models/study_session.dart';
@@ -114,7 +115,8 @@ class SupabaseDataExportRepository implements DataExportRepository {
       case DataExportRange.hot90:
         gte = sessionHotWindowStart(now: now);
       case DataExportRange.year:
-        gte = startOfYear(now);
+        // Istanbul takvim yılı başlangıcı.
+        gte = startOfYear(istanbulDay(now));
       case DataExportRange.all:
         gte = null;
     }

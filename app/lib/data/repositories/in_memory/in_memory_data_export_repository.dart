@@ -1,3 +1,4 @@
+import '../../../core/stats/istanbul_calendar.dart';
 import '../../../core/stats/session_window.dart';
 import '../../../core/stats/study_stats.dart';
 import '../../models/study_session.dart';
@@ -38,21 +39,25 @@ class InMemoryDataExportRepository implements DataExportRepository {
   }) async {
     final allSessions = sessions[userId] ?? const [];
     final now = DateTime.now();
+    // Istanbul takvim yılı (cihaz TZ kayması / yılbaşı kenarı).
+    final yearStart = startOfYear(istanbulDay(now));
     final filtered = switch (range) {
       DataExportRange.hot90 => allSessions
           .where((s) => isSessionInHotWindow(s.start, now: now))
           .toList(),
       DataExportRange.year => allSessions
-          .where((s) => !dayOf(s.start).isBefore(startOfYear(now)))
+          .where((s) => !dayOf(s.start).isBefore(yearStart))
           .toList(),
       DataExportRange.all => List.of(allSessions),
     };
 
+    // Portability payload: e-posta / token yok; yalnız self aggregate + self sessions.
+    final safeProfile = _sanitizeProfile(profiles[userId]);
     final payload = <String, dynamic>{
       'exported_at': DateTime.now().toUtc().toIso8601String(),
       'schema_version': 1,
       'user_id': userId,
-      'profile': profiles[userId],
+      'profile': safeProfile,
       'summary': summaries[userId]?.toMap(),
       'xp': xpByUser[userId],
       'subjects': [for (final s in subjects[userId] ?? const []) s.toMap()],
@@ -65,5 +70,22 @@ class InMemoryDataExportRepository implements DataExportRepository {
       payload: payload,
       sessionCount: filtered.length,
     );
+  }
+
+  /// E-posta, token ve bilinmeyen gizli alanları dışarı sızdırma.
+  static Map<String, dynamic>? _sanitizeProfile(Map<String, dynamic>? raw) {
+    if (raw == null) return null;
+    const allow = {
+      'display_name',
+      'daily_goal_minutes',
+      'animal',
+      'monthly_report_opt_in',
+      'created_at',
+      'id',
+    };
+    return {
+      for (final e in raw.entries)
+        if (allow.contains(e.key)) e.key: e.value,
+    };
   }
 }
