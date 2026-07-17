@@ -20,7 +20,7 @@
 - **Navigasyon hedefi:** Ana Sayfa / Saat / Gruplar / İstatistikler / Profil. Ana Sayfa günlük kullanım alanıdır; diğer alanların verisi kendi sekmelerinde eksiksiz bulunur.
 - **Release:** Stable/Beta kanalı GitHub Releases ile çalışır. Yerel `v29` ve `beta-v29` tag'leri WP-104 commitini (`ff369e3`) gösterir; mevcut `main` WP-105–109'u da içerdiği halde `1.0.29+29` taşır. Bir sonraki dağıtımda versionCode mutlaka artırılır; Play production ayrı kalite kapısından geçer.
 - **Kalite kapıları:** Her WP DoD'siz kapanmaz; stable release kalite kapısından geçer (AGENTS.md §3). Server-authoritative XP, RLS/sosyal profil, platform sınırları → `docs/KALITE-PROGRAMI.md`.
-- **Son WP numarası:** 139 (WP-138 sürüm notları + WP-139 l10n denetim). **Sıradaki boş numara WP-140.**
+- **Son WP numarası:** 141 (WP-140 a11y + WP-141 tema-bağlama). **Sıradaki boş numara WP-142.**
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
   - Flutter: `C:\src\flutter` · Android SDK: `C:\Android\Sdk`
@@ -78,8 +78,8 @@
 - **Ortak/riskli yüzey:** —
 - **Dal:** main
 - **Başlangıç:** —
-- **Son güncelleme:** 2026-07-17 (Europe/Istanbul)
-- **Not:** WP-138–139 içerik/l10n commit; Test için bekliyor. Push yok. v30 release notu **taslak** (numara release kapısında).
+- **Son güncelleme:** 2026-07-18 (Europe/Istanbul)
+- **Not:** WP-140–141 a11y/tema commit; Test için bekliyor. WP-134–137 dokunulmadı. Push yok.
 
 
 ---
@@ -143,7 +143,8 @@
 | WP-137 | [~] Test için bekliyor | Dinamik panel P2 (usesChronometer + Mola/Durdur) | S12 API33 + bildirim |
 | WP-138 | [~] Test için bekliyor | Sürüm notları v28/v29 + taslak v30 (TR/EN) | Cihaz Yenilikler |
 | WP-139 | [~] Test için bekliyor | l10n parity + hardcoded/admin + native string denetim | docs/l10n |
-| WP-140 | [ ] Bekliyor | (boş) | — |
+| WP-140 | [~] Test için bekliyor | Erişilebilirlik (tooltip/Semantics/48dp) | WP-123 pre-launch |
+| WP-141 | [~] Test için bekliyor | Tema-bağlama / sabit renk denetimi | WP-123 kontrast |
 
 > **2026-07-14 proje denetimi:** Serbest sürükle-bırak ızgara, canlı grup hedefi ve saat stilleri **zaten kodda uygulanmış** (backlog stale idi; geçici WP-72/73/75 iptal).
 >
@@ -836,6 +837,19 @@
 > Bu bölüm **aktif çalışma değildir** — ajan claim etmez, diğer WP’leri engellemez.
 > Kabul gelince kart buradan çıkar → **Tamamlanan**’a gider. Bug çıkarsa ayrı debug WP açılır.
 
+
+### WP-140: Erişilebilirlik geçişi (kod tamam) ♿
+- **Özet:** İkon-only tooltip/Semantics; min 48dp; overflow; izin kartı ikon+renk.
+- **Commit:** `e5f8b55` · docs: `docs/a11y/ERISILEBILIRLIK-DENETIM.md`
+- **DOKUNMA:** timer/widget/FGS (WP-134–137)
+- **Kanıt:** `Kodda doğrulandı` / `Cihazda doğrulanmalı` (TalkBack, textScale 1.3)
+- **Bağımlılık:** WP-123 pre-launch
+
+### WP-141: Tema-bağlama denetimi (kod tamam) 🎨
+- **Özet:** İhlal Colors → colorScheme; palet/alarm/lap meşru işaretli.
+- **Commit:** `812307f` · docs: `docs/a11y/TEMA-BAGLAMA-DENETIM.md`
+- **Kanıt:** `Kodda doğrulandı` / `Cihazda doğrulanmalı` (light/dark)
+- **Bağımlılık:** WP-123 kontrast
 
 ### WP-138: Sürüm notları v28/v29 + taslak v30 (kod/docs tamam) 📝
 - **Özet:** `release_notes.json` + CHANGELOG senkron; forLocale/asset test. **v30 build 30 taslak** — numara release kapısında kesinleşir (pubspec 1.0.29+29).
