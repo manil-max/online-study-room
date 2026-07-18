@@ -7,7 +7,10 @@ import '../../../core/stats/study_stats.dart';
 import '../../../data/providers/stats_period_provider.dart';
 import '../stats_l10n.dart';
 
-/// Üst dönem seçici: Bugün / Hafta / Ay / Yıl / Tümü / Özel + kıyas (WP-178).
+/// Üst dönem seçici: Bugün / Hafta / Ay / Yıl / Tümü / Özel + kompakt kıyas (WP-185).
+///
+/// All ve Custom, Today/Week/Month/Year ile aynı Wrap satırında (6 chip).
+/// Kıyas: tam genişlik SwitchListTile yerine minik icon-toggle.
 class StatsPeriodBar extends ConsumerWidget {
   const StatsPeriodBar({super.key});
 
@@ -18,12 +21,13 @@ class StatsPeriodBar extends ConsumerWidget {
     final theme = Theme.of(context);
 
     // SegmentedButton 6 dilimde taşar — Wrap + FilterChip.
+    // WP-185: All (StatsPeriod.all) ve Custom aynı Wrap'te (6 chip).
     final chips = StatsPeriod.values
         .where((p) => p != StatsPeriod.custom)
         .toList();
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+      padding: const EdgeInsets.fromLTRB(12, 6, 12, 2),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -31,6 +35,7 @@ class StatsPeriodBar extends ConsumerWidget {
             spacing: 6,
             runSpacing: 6,
             alignment: WrapAlignment.center,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               for (final p in chips)
                 FilterChip(
@@ -40,6 +45,7 @@ class StatsPeriodBar extends ConsumerWidget {
                       ref.read(statsPeriodProvider.notifier).setPeriod(p),
                   showCheckmark: false,
                   visualDensity: VisualDensity.compact,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
               FilterChip(
                 label: Text(l10n.analyticsCustomRange),
@@ -47,26 +53,63 @@ class StatsPeriodBar extends ConsumerWidget {
                 onSelected: (_) => _pickCustom(context, ref, sel),
                 showCheckmark: false,
                 visualDensity: VisualDensity.compact,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              // WP-185: kompakt kıyas kontrolü — tam satır SwitchListTile yerine.
+              Tooltip(
+                message: l10n.analyticsComparePrevious,
+                child: Semantics(
+                  button: true,
+                  toggled: sel.comparePrevious,
+                  label: l10n.analyticsComparePrevious,
+                  child: InkWell(
+                    onTap: () => ref
+                        .read(statsPeriodProvider.notifier)
+                        .setComparePrevious(!sel.comparePrevious),
+                    borderRadius: BorderRadius.circular(20),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        minWidth: 48,
+                        minHeight: 48,
+                      ),
+                      child: Center(
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 150),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: sel.comparePrevious
+                                ? theme.colorScheme.secondaryContainer
+                                : theme.colorScheme.surfaceContainerHighest,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: sel.comparePrevious
+                                  ? theme.colorScheme.secondary
+                                  : theme.colorScheme.outlineVariant,
+                            ),
+                          ),
+                          child: Icon(
+                            Icons.compare_arrows,
+                            size: 18,
+                            color: sel.comparePrevious
+                                ? theme.colorScheme.onSecondaryContainer
+                                : theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ],
-          ),
-          const SizedBox(height: 4),
-          SwitchListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 4),
-            dense: true,
-            title: Text(
-              l10n.analyticsComparePrevious,
-              style: theme.textTheme.bodySmall,
-            ),
-            value: sel.comparePrevious,
-            onChanged: (v) =>
-                ref.read(statsPeriodProvider.notifier).setComparePrevious(v),
           ),
           if (sel.period == StatsPeriod.custom &&
               sel.customFrom != null &&
               sel.customTo != null)
             Padding(
-              padding: const EdgeInsets.only(bottom: 4),
+              padding: const EdgeInsets.only(top: 4, bottom: 2),
               child: Text(
                 '${dayOf(sel.customFrom!)} → ${dayOf(sel.customTo!)}',
                 textAlign: TextAlign.center,
