@@ -4,7 +4,7 @@
   "@profileBasarimKademeleriniTamamla": {
     "description": "Achievement detail introduction."
   },
-  "profileBasarimToplamSaatKosulu": "Study for a total of {count, plural, =1 {1 hour} other {{count} hours}}.",
+  "profileBasarimToplamSaatKosulu": "Lerne insgesamt {count, plural, =1 {1 Stunde} other {{count} Stunden}}.",
   "@profileBasarimToplamSaatKosulu": {
     "description": "Achievement tier condition.",
     "placeholders": {
@@ -13,7 +13,7 @@
       }
     }
   },
-  "profileBasarimTekOturumKosulu": "Complete one study session lasting {count, plural, =1 {1 minute} other {{count} minutes}}.",
+  "profileBasarimTekOturumKosulu": "Schließe eine Lernsitzung von {count, plural, =1 {1 Minute} other {{count} Minuten}} ab.",
   "@profileBasarimTekOturumKosulu": {
     "description": "Achievement tier condition.",
     "placeholders": {
@@ -22,7 +22,7 @@
       }
     }
   },
-  "profileBasarimGunlukSaatKosulu": "Study for {count, plural, =1 {1 hour} other {{count} hours}} in a single day.",
+  "profileBasarimGunlukSaatKosulu": "Lerne an einem Tag {count, plural, =1 {1 Stunde} other {{count} Stunden}}.",
   "@profileBasarimGunlukSaatKosulu": {
     "description": "Achievement tier condition.",
     "placeholders": {
@@ -31,7 +31,7 @@
       }
     }
   },
-  "profileBasarimSeriKosulu": "Meet your daily goal for {count, plural, =1 {1 consecutive day} other {{count} consecutive days}}.",
+  "profileBasarimSeriKosulu": "Erreiche dein Tagesziel an {count, plural, =1 {1 aufeinanderfolgenden Tag} other {{count} aufeinanderfolgenden Tagen}}.",
   "@profileBasarimSeriKosulu": {
     "description": "Achievement tier condition.",
     "placeholders": {
@@ -40,7 +40,7 @@
       }
     }
   },
-  "profileBasarimHaftaSonuKosulu": "Meet your daily goal on {count, plural, =1 {1 weekend day} other {{count} weekend days}}.",
+  "profileBasarimHaftaSonuKosulu": "Erreiche dein Tagesziel an {count, plural, =1 {1 Wochenendtag} other {{count} Wochenendtagen}}.",
   "@profileBasarimHaftaSonuKosulu": {
     "description": "Achievement tier condition.",
     "placeholders": {
@@ -49,7 +49,7 @@
       }
     }
   },
-  "profileBasarimKusursuzAyKosulu": "Complete {count, plural, =1 {1 perfect month} other {{count} perfect months}}.",
+  "profileBasarimKusursuzAyKosulu": "Schließe {count, plural, =1 {1 perfekten Monat} other {{count} perfekte Monate}} ab.",
   "@profileBasarimKusursuzAyKosulu": {
     "description": "Achievement tier condition.",
     "placeholders": {
@@ -58,7 +58,7 @@
       }
     }
   },
-  "profileBasarimGrupBirinciligiKosulu": "Finish first in your group on {count, plural, =1 {1 day} other {{count} days}}.",
+  "profileBasarimGrupBirinciligiKosulu": "Werde in deiner Gruppe an {count, plural, =1 {1 Tag} other {{count} Tagen}} Erster.",
   "@profileBasarimGrupBirinciligiKosulu": {
     "description": "Achievement tier condition.",
     "placeholders": {
@@ -67,7 +67,7 @@
       }
     }
   },
-  "profileBasarimGrupHedefKosulu": "Contribute to your group's daily goal on {count, plural, =1 {1 day} other {{count} days}}.",
+  "profileBasarimGrupHedefKosulu": "Trage an {count, plural, =1 {1 Tag} other {{count} Tagen}} zum Tagesziel deiner Gruppe bei.",
   "@profileBasarimGrupHedefKosulu": {
     "description": "Achievement tier condition.",
     "placeholders": {
@@ -76,7 +76,7 @@
       }
     }
   },
-  "profileBasarimKampAtesiKosulu": "Lernen Sie, während mindestens 3 Gruppenmitglieder für {count, plural, =1 {1 hour} other {{count} Stunden}} aktiv sind.",
+  "profileBasarimKampAtesiKosulu": "Lerne, während mindestens 3 Gruppenmitglieder für {count, plural, =1 {1 Stunde} other {{count} Stunden}} aktiv sind.",
   "@profileBasarimKampAtesiKosulu": {
     "description": "Achievement tier condition.",
     "placeholders": {
@@ -85,7 +85,7 @@
       }
     }
   },
-  "profileBasarimDurtmeKosulu": "Lassen Sie {count, plural, =1 {1 member} other {{count}-Mitglieder}} nach Ihrem Anstoß mit dem Lernen beginnen.",
+  "profileBasarimDurtmeKosulu": "Sorge dafür, dass {count, plural, =1 {1 Mitglied} other {{count} Mitglieder}} nach deinem Anstupser mit dem Lernen beginnen.",
   "@profileBasarimDurtmeKosulu": {
     "description": "Achievement tier condition.",
     "placeholders": {
@@ -94,7 +94,7 @@
       }
     }
   },
-  "profileBasarimLokomotifKosulu": "Be the first group member to start studying {count, plural, =1 {1 time} other {{count} times}}.",
+  "profileBasarimLokomotifKosulu": "Sei {count, plural, =1 {1 Mal} other {{count} Mal}} das erste Gruppenmitglied, das mit dem Lernen beginnt.",
   "@profileBasarimLokomotifKosulu": {
     "description": "Achievement tier condition.",
     "placeholders": {
@@ -164,7 +164,7 @@
       }
     }
   },
-  "adminLogactionHedefLogtargetuserid": "{action} - Target: {targetuserid}",
+  "adminLogactionHedefLogtargetuserid": "{action} – Ziel: {targetuserid}",
   "@adminLogactionHedefLogtargetuserid": {
     "description": "Admin user-facing text. Source: ${log.action} - Hedef: ${log.targetUserId ??",
     "placeholders": {
@@ -337,7 +337,7 @@
   "@adminKayitBulunamadi": {
     "description": "Admin user-facing text. Source: Kayıt bulunamadı."
   },
-  "adminKayitUsercreatedattolocaltostringsubstring016": "Created: {createdat}",
+  "adminKayitUsercreatedattolocaltostringsubstring016": "Erstellt: {createdat}",
   "@adminKayitUsercreatedattolocaltostringsubstring016": {
     "description": "Admin user-facing text. Source: Kayıt: ${user.createdAt.toLocal().toString().substring(0, 16)}",
     "placeholders": {
@@ -394,7 +394,7 @@
   "@adminSilinmis": {
     "description": "Admin user-facing text. Source: Silinmiş"
   },
-  "adminSonGirisUserlastsigninattolocaltostringsubstring016": "Last sign-in: {lastsigninat}",
+  "adminSonGirisUserlastsigninattolocaltostringsubstring016": "Letzte Anmeldung: {lastsigninat}",
   "@adminSonGirisUserlastsigninattolocaltostringsubstring016": {
     "description": "Admin user-facing text. Source: Son Giriş: ${user.lastSignInAt!.toLocal().toString().substring(0, 16)}",
     "placeholders": {
@@ -519,7 +519,7 @@
   "@authBeklenmeyenBirHataOlustu": {
     "description": "Auth user-facing text. Source: Beklenmeyen bir hata oluştu."
   },
-  "authBirHataOlustuError": "An error occurred: {error}",
+  "authBirHataOlustuError": "Ein Fehler ist aufgetreten: {error}",
   "@authBirHataOlustuError": {
     "description": "Auth user-facing text. Source: Bir hata oluştu: $error",
     "placeholders": {
@@ -643,11 +643,11 @@
   "@classroomAyarlar": {
     "description": "Classroom user-facing text. Source: Ayarlar"
   },
-  "classroomBilgiler": "Information",
+  "classroomBilgiler": "Informationen",
   "@classroomBilgiler": {
     "description": "Classroom user-facing text. Source: Bilgiler"
   },
-  "classroomBirHataOlustuE": "An error occurred: {e}",
+  "classroomBirHataOlustuE": "Ein Fehler ist aufgetreten: {e}",
   "@classroomBirHataOlustuE": {
     "description": "Classroom user-facing text. Source: Bir hata oluştu: $e",
     "placeholders": {
@@ -920,7 +920,7 @@
   "@classroomYeniBirGrupOlustur": {
     "description": "Classroom user-facing text. Source: Yeni bir grup oluştur ya da davet koduyla bir gruba katıl."
   },
-  "classroomYeniKodCode": "New code: {code}",
+  "classroomYeniKodCode": "Neuer Code: {code}",
   "@classroomYeniKodCode": {
     "description": "Classroom user-facing text. Source: Yeni kod: $code",
     "placeholders": {
@@ -986,11 +986,11 @@
   "@classroomIsimsiz": {
     "description": "Classroom user-facing text. Source: İsimsiz"
   },
-  "classroomSuAnkiOturum": "Aktuelle Session",
+  "classroomSuAnkiOturum": "Aktuelle Sitzung",
   "@classroomSuAnkiOturum": {
     "description": "Classroom user-facing text. Source: Şu anki oturum"
   },
-  "clockMDk": "{m} min",
+  "clockMDk": "{m} Min.",
   "@clockMDk": {
     "description": "Clock user-facing text. Source: $m dk",
     "placeholders": {
@@ -999,7 +999,7 @@
       }
     }
   },
-  "clockMinutesDk": "{minutes} min",
+  "clockMinutesDk": "{minutes} Min.",
   "@clockMinutesDk": {
     "description": "Clock user-facing text. Source: $minutes dk",
     "placeholders": {
@@ -1024,7 +1024,7 @@
   "@clockAlarm": {
     "description": "Clock user-facing text. Source: Alarm"
   },
-  "clockAlarmDateformathmformatnext": "Alarm at {time}",
+  "clockAlarmDateformathmformatnext": "Alarm um {time}",
   "@clockAlarmDateformathmformatnext": {
     "description": "Clock user-facing text. Source: Alarm ${DateFormat.Hm().format(next)}",
     "placeholders": {
@@ -1069,7 +1069,7 @@
   "@clockAcilanTamEkranBildirimler": {
     "description": "Clock user-facing text. Source: Açılan tam ekran bildirimler sayfasında Odak Kampı anahtarını kapat. Android 14 öncesinde bu ayar olmayabilir."
   },
-  "clockBaslat": "Start",
+  "clockBaslat": "Starten",
   "@clockBaslat": {
     "description": "Clock user-facing text. Source: Başlat"
   },
@@ -1121,11 +1121,11 @@
   "@clockDijitalSaat": {
     "description": "Clock user-facing text. Source: Dijital saat"
   },
-  "clockDuraklat": "Pause",
+  "clockDuraklat": "Pausieren",
   "@clockDuraklat": {
     "description": "Clock user-facing text. Source: Duraklat"
   },
-  "clockDurdur": "Stopp",
+  "clockDurdur": "Stoppen",
   "@clockDurdur": {
     "description": "Clock user-facing text. Source: Durdur"
   },
@@ -1181,7 +1181,7 @@
   "@clockHaftaIci": {
     "description": "Clock user-facing text. Source: Hafta içi"
   },
-  "clockHataE": "Error: {e}",
+  "clockHataE": "Fehler: {e}",
   "@clockHataE": {
     "description": "Clock user-facing text. Source: Hata: $e",
     "placeholders": {
@@ -1190,7 +1190,7 @@
       }
     }
   },
-  "clockHataErr": "Error: {err}",
+  "clockHataErr": "Fehler: {err}",
   "@clockHataErr": {
     "description": "Clock user-facing text. Source: Hata: $err",
     "placeholders": {
@@ -1527,7 +1527,7 @@
   "@commonAyniKisiyiTekrarDurtmek": {
     "description": "Common user-facing text. Source: Aynı kişiyi tekrar dürtmek için biraz bekle."
   },
-  "commonBaslat": "Start",
+  "commonBaslat": "Starten",
   "@commonBaslat": {
     "description": "Common user-facing text. Source: Başlat"
   },
@@ -1575,7 +1575,7 @@
   "@commonDubai": {
     "description": "Common user-facing text. Source: Dubai"
   },
-  "commonDurdur": "Stopp",
+  "commonDurdur": "Stoppen",
   "@commonDurdur": {
     "description": "Common user-facing text. Source: Durdur"
   },
@@ -1583,7 +1583,7 @@
   "@commonDurtmeNotuEnFazla": {
     "description": "Common user-facing text. Source: Dürtme notu en fazla 120 karakter olabilir."
   },
-  "commonEpostaDogrulamasiGerekiyor": "eMail-Verifizierung erforderlich",
+  "commonEpostaDogrulamasiGerekiyor": "E-Mail-Bestätigung erforderlich",
   "@commonEpostaDogrulamasiGerekiyor": {
     "description": "Common user-facing text. Source: E-posta doğrulaması gerekiyor."
   },
@@ -1872,7 +1872,7 @@
   "@coreDurdur": {
     "description": "Core user-facing text. Source: Durdur"
   },
-  "coreBaslat": "Start",
+  "coreBaslat": "Starten",
   "@coreBaslat": {
     "description": "Core user-facing text. Source: Başlat"
   },
@@ -2265,7 +2265,7 @@
       }
     }
   },
-  "desktopTitleKomutCubugu": "{title} command bar",
+  "desktopTitleKomutCubugu": "{title}-Befehlsleiste",
   "@desktopTitleKomutCubugu": {
     "description": "Desktop user-facing text. Source: $title komut çubuğu",
     "placeholders": {
@@ -2274,7 +2274,7 @@
       }
     }
   },
-  "desktopItemlabelSekmeIndex1": "{label}, tab {index}",
+  "desktopItemlabelSekmeIndex1": "{label}, Tab {index}",
   "@desktopItemlabelSekmeIndex1": {
     "description": "Desktop user-facing text. Source: ${item.label}, sekme ${index + 1}",
     "placeholders": {
@@ -2378,7 +2378,7 @@
   "@desktopIstatistik": {
     "description": "Desktop user-facing text. Source: İstatistik"
   },
-  "homeOGun": "{o} days",
+  "homeOGun": "{o} Tage",
   "@homeOGun": {
     "description": "Home user-facing text. Source: $o gün",
     "placeholders": {
@@ -2599,7 +2599,7 @@
   "@homeKucuk": {
     "description": "Home user-facing text. Source: Küçük"
   },
-  "homeOrta": "Medium",
+  "homeOrta": "Mittel",
   "@homeOrta": {
     "description": "Home user-facing text. Source: Orta"
   },
@@ -2675,7 +2675,7 @@
   "@homeSuAnCalisanlar": {
     "description": "Home user-facing text. Source: Şu an çalışanlar"
   },
-  "homeTtitleEklendi": "“{title}” added",
+  "homeTtitleEklendi": "„{title}“ hinzugefügt",
   "@homeTtitleEklendi": {
     "description": "Home user-facing text. Source: “${t.title}” eklendi",
     "placeholders": {
@@ -2878,7 +2878,7 @@
   "@notificationsSimdilikDuyuruYok": {
     "description": "Notifications user-facing text. Source: Şimdilik duyuru yok."
   },
-  "profileSummaryfreezeawarestreakstreakGunSeri": "{streak} day streak",
+  "profileSummaryfreezeawarestreakstreakGunSeri": "{streak}-Tage-Serie",
   "@profileSummaryfreezeawarestreakstreakGunSeri": {
     "description": "Profile user-facing text. Source: ${summary.freezeAwareStreak.streak} gün seri",
     "placeholders": {
@@ -3214,7 +3214,7 @@
   "@profileHesabimiYonet": {
     "description": "Profile user-facing text. Source: Hesabımı Yönet"
   },
-  "profileHesabinizdanCikisYapmakIstediginize": "Are you sure you want to log out of your account?",
+  "profileHesabinizdanCikisYapmakIstediginize": "Möchtest du dich wirklich von deinem Konto abmelden?",
   "@profileHesabinizdanCikisYapmakIstediginize": {
     "description": "Profile user-facing text. Source: Hesabınızdan çıkış yapmak istediğinize emin misiniz?"
   },
@@ -3533,7 +3533,7 @@
   "@profileSifreEnAz6": {
     "description": "Profile user-facing text. Source: Şifre en az 6 karakter olmalı."
   },
-  "statsStreakGun": "{streak} day",
+  "statsStreakGun": "{streak} Tag",
   "@statsStreakGun": {
     "description": "Stats user-facing text. Source: $streak gün",
     "placeholders": {
@@ -3542,7 +3542,7 @@
       }
     }
   },
-  "statsDdayKmonthsshortdmonth1": "{day} {month}",
+  "statsDdayKmonthsshortdmonth1": "{day}. {month}",
   "@statsDdayKmonthsshortdmonth1": {
     "description": "Stats user-facing text. Source: ${d.day} ${_kMonthsShort[d.month - 1]}",
     "placeholders": {
@@ -3806,7 +3806,7 @@
   "@statsIstatistik": {
     "description": "Stats user-facing text. Source: İstatistik"
   },
-  "statsIstatistikYuklenemediE": "Failed to load statistics: {e}",
+  "statsIstatistikYuklenemediE": "Statistik konnte nicht geladen werden: {e}",
   "@statsIstatistikYuklenemediE": {
     "description": "Stats user-facing text. Source: İstatistik yüklenemedi: $e",
     "placeholders": {
@@ -3843,7 +3843,7 @@
   "@updaterGuncellemeNotlari": {
     "description": "Updater user-facing text. Source: Güncelleme notları"
   },
-  "updaterGuncellemeVarInfoversionname": "Update available: {versionname}",
+  "updaterGuncellemeVarInfoversionname": "Update verfügbar: {versionname}",
   "@updaterGuncellemeVarInfoversionname": {
     "description": "Updater user-facing text. Source: Güncelleme var: ${info.versionName}",
     "placeholders": {
@@ -3884,7 +3884,7 @@
   "@updaterOneCikanlar": {
     "description": "Updater user-facing text. Source: Öne çıkanlar"
   },
-  "updaterIndiriliyorProgress100tostringasfixed0": "Downloading… %{progress}",
+  "updaterIndiriliyorProgress100tostringasfixed0": "Wird heruntergeladen… %{progress}",
   "@updaterIndiriliyorProgress100tostringasfixed0": {
     "description": "Updater user-facing text. Source: İndiriliyor… %${(_progress * 100).toStringAsFixed(0)}",
     "placeholders": {
@@ -3910,7 +3910,7 @@
       }
     }
   },
-  "commonHourCount": "{count, plural, =0 {0 hours} =1 {1 hour} other {{count} Stunden}}",
+  "commonHourCount": "{count, plural, =0 {0 Stunden} =1 {1 Stunde} other {{count} Stunden}}",
   "@commonHourCount": {
     "description": "Localized hour count.",
     "placeholders": {
@@ -3919,7 +3919,7 @@
       }
     }
   },
-  "commonMinuteCount": "{count, plural, =0 {0 minutes} =1 {1 minute} other {{count} minutes}}",
+  "commonMinuteCount": "{count, plural, =0 {0 Minuten} =1 {1 Minute} other {{count} Minuten}}",
   "@commonMinuteCount": {
     "description": "Localized minute count.",
     "placeholders": {
@@ -3928,7 +3928,7 @@
       }
     }
   },
-  "commonDayCount": "{count, plural, =0 {0 days} =1 {1 day} other {{count} Tage}}",
+  "commonDayCount": "{count, plural, =0 {0 Tage} =1 {1 Tag} other {{count} Tage}}",
   "@commonDayCount": {
     "description": "Localized day count.",
     "placeholders": {
@@ -3937,7 +3937,7 @@
       }
     }
   },
-  "commonSessionCount": "{count, plural, =0 {No sessions} =1 {1 session} other {{count} Sitzungen}}",
+  "commonSessionCount": "{count, plural, =0 {Keine Sitzungen} =1 {1 Sitzung} other {{count} Sitzungen}}",
   "@commonSessionCount": {
     "description": "Localized study session count.",
     "placeholders": {
@@ -3970,7 +3970,7 @@
   "@coreGunDogumu": {
     "description": "Core user-facing text. Source: Gün Doğumu"
   },
-  "coreGununKahramani": "9. Hero Of The Day",
+  "coreGununKahramani": "Held des Tages",
   "@coreGununKahramani": {
     "description": "Core user-facing text. Source: Günün Kahramanı"
   },
@@ -4146,7 +4146,7 @@
   "@profileAralik": {
     "description": "Profile user-facing text. Source: Aralık"
   },
-  "statsOca": "Jan",
+  "statsOca": "Jan.",
   "@statsOca": {
     "description": "Stats user-facing text. Source: Oca"
   },
@@ -4158,7 +4158,7 @@
   "@statsMar": {
     "description": "Stats user-facing text. Source: Mar"
   },
-  "statsNis": "Apr",
+  "statsNis": "Apr.",
   "@statsNis": {
     "description": "Stats user-facing text. Source: Nis"
   },
@@ -4166,7 +4166,7 @@
   "@statsMay": {
     "description": "Stats user-facing text. Source: May"
   },
-  "statsHaz": "Jun",
+  "statsHaz": "Jun.",
   "@statsHaz": {
     "description": "Stats user-facing text. Source: Haz"
   },
@@ -4202,7 +4202,7 @@
   "@statsTem": {
     "description": "Stats user-facing text. Source: Tem"
   },
-  "statsAgu": "Aug",
+  "statsAgu": "Aug.",
   "@statsAgu": {
     "description": "Stats user-facing text. Source: Ağu"
   },
@@ -4214,7 +4214,7 @@
   "@statsEki": {
     "description": "Stats user-facing text. Source: Eki"
   },
-  "statsKas": "Nov",
+  "statsKas": "Nov.",
   "@statsKas": {
     "description": "Stats user-facing text. Source: Kas"
   },
@@ -4385,7 +4385,7 @@
   "@safetyReport": {
     "description": "Report UGC / user action label"
   },
-  "safetyBlock": "Block",
+  "safetyBlock": "Blockieren",
   "@safetyBlock": {
     "description": "Block user action label"
   },
@@ -4397,7 +4397,7 @@
   "@safetyBlockConfirmBody": {
     "description": "Confirm dialog body explaining block effect"
   },
-  "safetyBlockConfirmAction": "Block",
+  "safetyBlockConfirmAction": "Blockieren",
   "@safetyBlockConfirmAction": {
     "description": "Confirm block button"
   },
@@ -4709,7 +4709,7 @@
   "@smartWeeklyBody": {
     "description": "Weekly notification body"
   },
-  "profileLevel": "Level {level}",
+  "profileLevel": "Stufe {level}",
   "@profileLevel": {
     "description": "Profile level label",
     "placeholders": {

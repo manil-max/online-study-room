@@ -76,10 +76,10 @@
 - **Aşama:** —
 - **SAHİP yollar:** —
 - **Ortak/riskli yüzey:** —
-- **Dal:** main
+- **Dal:** — (main)
 - **Başlangıç:** —
 - **Son güncelleme:** 2026-07-18 (Europe/Istanbul)
-- **Not:** WP-183 beta-v31: 1.0.31+31 · analyze 0 · full test **526 passed**. Push yok (tag kullanıcı).
+- **Not:** WP-182 kodda doğrulandı (ar/de l10n; gen-l10n + analyze 0 + test 526; rapor `docs/L10N-TAMAMLAMA-2026-07.md`). Cihazda dil değişimi QA bekler.
 
 
 ---
