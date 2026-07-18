@@ -4,6 +4,17 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [v39 / 1.0.39+39] - 2026-07-19
+
+> **Kararlı (stable) test sürümü.** v38’de görülen grafik renk çakışması giderildi.
+
+### Öne çıkanlar
+- **Grup istatistikleri:** Renkler artık sabit 10’lu paletten dönmüyor. Mevcut grup üye sayısına göre renk çemberine eşit aralıklarla dağıtılıyor; küçük/büyük gruplarda her üyenin rengi ayrıdır.
+- Üye renk haritası donut ve liderlik geçmişi tarafından ortak kullanılır; katkı veya sıralama değişmesi rengi değiştirmez.
+
+### Notlar
+- GitHub sideload **stable** APK; in-app güncelleme stable kullanıcılara gider.
+
 ## [v38 / 1.0.38+38] - 2026-07-19
 
 > **Kararlı (stable) test sürümü.** v37 cihaz geri bildirimiyle grup grafik renkleri hizalandı, sayaç bildirimi eski tek satır düzenine döndü.

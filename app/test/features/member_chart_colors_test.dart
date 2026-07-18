@@ -2,11 +2,29 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/features/stats/widgets/member_chart_colors.dart';
 
 void main() {
-  test('üye grafik rengi sıralamadan bağımsız ve sabittir', () {
-    final aliceContributionColor = memberChartColor('alice-id');
-    final bobContributionColor = memberChartColor('bob-id');
+  test(
+    'her grup büyüklüğünde üye renkleri tekil ve sıralamadan bağımsızdır',
+    () {
+      final colors = memberChartColors([
+        'minik-kus',
+        'onur',
+        'm-anil',
+        'annis',
+      ]);
+      final reordered = memberChartColors([
+        'onur',
+        'annis',
+        'minik-kus',
+        'm-anil',
+      ]);
+      final largeGroup = memberChartColors(
+        List.generate(24, (index) => 'uye-$index'),
+      );
 
-    expect(memberChartColor('alice-id'), aliceContributionColor);
-    expect(memberChartColor('bob-id'), bobContributionColor);
-  });
+      expect(colors.values.toSet(), hasLength(4));
+      expect(reordered, colors);
+      expect(reordered['onur'], colors['onur']);
+      expect(largeGroup.values.toSet(), hasLength(24));
+    },
+  );
 }

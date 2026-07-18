@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import '../../../core/stats/study_stats.dart';
 import '../../../data/models/daily_stat.dart';
 import '../../../data/models/profile.dart';
-import 'member_chart_colors.dart';
 
 /// Liderlik geçmişi: **Y ekseni = sıralama (1 en üstte), X ekseni = zaman**.
 /// Her üye bir çizgi; kümülatif (biriken) toplama göre günlük sıra — futbol
@@ -15,6 +14,7 @@ class LeaderboardRankChart extends StatelessWidget {
   const LeaderboardRankChart({
     super.key,
     required this.members,
+    required this.memberColors,
     required this.stats,
     required this.days,
     required this.currentUserId,
@@ -23,6 +23,7 @@ class LeaderboardRankChart extends StatelessWidget {
   });
 
   final List<Profile> members;
+  final Map<String, Color> memberColors;
   final List<DailyStat> stats;
   final int days;
   final String currentUserId;
@@ -88,7 +89,7 @@ class LeaderboardRankChart extends StatelessWidget {
         LineChartBarData(
           spots: spotsByMember[m.id]!,
           isCurved: false,
-          color: memberChartColor(m.id),
+          color: memberColors[m.id]!,
           barWidth: m.id == currentUserId ? 3.5 : 2,
           dotData: FlDotData(show: window.length <= 14),
         ),
@@ -112,7 +113,7 @@ class LeaderboardRankChart extends StatelessWidget {
                     width: 10,
                     height: 3,
                     decoration: BoxDecoration(
-                      color: memberChartColor(m.id),
+                      color: memberColors[m.id]!,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),

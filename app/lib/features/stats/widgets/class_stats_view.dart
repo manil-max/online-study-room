@@ -54,6 +54,7 @@ class ClassStatsView extends ConsumerWidget {
     final contribAsync = ref.watch(
       analyticsGroupContributionProvider(analyticsPeriod),
     );
+    final memberColors = memberChartColors(members.map((member) => member.id));
 
     // Seçili dönem leaderboard'u: userId → saniye (per-user-per-gün toplamdan).
     final totals = userTotalsInRange(stats, from, to);
@@ -304,7 +305,7 @@ class ClassStatsView extends ConsumerWidget {
                   label: (nameOf[rows[i].userId] ?? '').isEmpty
                       ? AppLocalizations.of(context).statsIsimsiz
                       : nameOf[rows[i].userId]!,
-                  color: memberChartColor(rows[i].userId),
+                  color: memberColors[rows[i].userId] ?? Colors.grey,
                   seconds: rows[i].seconds,
                 ),
             ];
@@ -371,6 +372,7 @@ class ClassStatsView extends ConsumerWidget {
             padding: const EdgeInsets.all(12),
             child: LeaderboardRankChart(
               members: members,
+              memberColors: memberColors,
               stats: stats,
               days: trendDays,
               currentUserId: currentUserId,

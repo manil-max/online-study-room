@@ -1,26 +1,25 @@
 import 'package:flutter/material.dart';
 
-/// Üye kimliğinden türetilen, grafikler arasında sabit kalan renkler.
-/// Aynı kişi katkı donut'ında ve liderlik geçmişinde hep aynı rengi alır.
-const _memberChartPalette = <Color>[
-  Color(0xFF3186E9),
-  Color(0xFF12C281),
-  Color(0xFFE69825),
-  Color(0xFFC35DD9),
-  Color(0xFFF3625D),
-  Color(0xFF4DD0E1),
-  Color(0xFFFF8A65),
-  Color(0xFF9CCC65),
-  Color(0xFF7986CB),
-  Color(0xFFF06292),
-];
+/// Aynı grup üyesine tüm grafiklerde tek, benzersiz renk verir.
+///
+/// Kimlikler alfabetik sıralanır: katkı sıralaması değişse de veya grafik farklı
+/// sırada çizilse de renk eşlemesi korunur. Renkler sabit bir paletten dönmez;
+/// mevcut üye sayısına göre renk çemberine eşit aralıkla yayılır. Böylece her
+/// büyüklükteki grupta her üye ayrı renk alır ve benzer tonlar aynı yere yığılmaz.
+Map<String, Color> memberChartColors(Iterable<String> memberIds) {
+  final ids = memberIds.toSet().toList()..sort();
+  if (ids.isEmpty) return const {};
 
-/// Liste sırası veya sıralama değişse bile üyenin rengi değişmez.
-Color memberChartColor(String memberId) {
-  var hash = 0x811c9dc5;
-  for (final unit in memberId.codeUnits) {
-    hash = (hash ^ unit) * 0x01000193;
-    hash &= 0x7fffffff;
-  }
-  return _memberChartPalette[hash % _memberChartPalette.length];
+  // 24° ile başlamak, ilk rengi uygulamanın mavi vurgu renginden ayırır.
+  // Yüksek saturation + dengeli lightness koyu/açık temada okunur kalır.
+  final hueStep = 360 / ids.length;
+  return Map.unmodifiable({
+    for (var i = 0; i < ids.length; i++)
+      ids[i]: HSLColor.fromAHSL(
+        1,
+        (24 + hueStep * i) % 360,
+        0.70,
+        0.62,
+      ).toColor(),
+  });
 }

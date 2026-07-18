@@ -3,6 +3,36 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.39",
+      "buildNumber": 39,
+      "channel": "stable",
+      "date": "2026-07-19",
+      "title": "v39: Grup grafikleri için tekil dinamik renkler",
+      "highlights": [
+        "Renkler sabit 10'lu paletten dönmez; mevcut grup üye sayısına göre renk çemberine eşit aralıklarla dağıtılır.",
+        "Küçük veya büyük gruplarda her üyenin rengi ayrıdır; yakın tonlar aynı kişilere düşmez.",
+        "Donut ve liderlik geçmişi aynı ortak renk haritasını kullanır."
+      ],
+      "fixes": [
+        "v38'de Minik Kuş ve Onur'un aynı turuncu renge düşmesine yol açan hash çakışması kaldırıldı."
+      ],
+      "notes": [
+        "GitHub sideload stable APK; in-app güncelleme stable kullanıcılara gider."
+      ],
+      "titleEn": "v39: Unique dynamic colors for group charts",
+      "highlightsEn": [
+        "Colors are spaced evenly around the color wheel for the current group size instead of cycling through a fixed ten-color palette.",
+        "Every member gets a distinct color in both small and large groups.",
+        "The donut and leaderboard history share one common color map."
+      ],
+      "fixesEn": [
+        "Removed the hash collision that assigned the same orange to Minik Kuş and Onur in v38."
+      ],
+      "notesEn": [
+        "GitHub sideload stable APK; in-app update goes to stable users."
+      ]
+    },
+    {
       "versionName": "1.0.38",
       "buildNumber": 38,
       "channel": "stable",

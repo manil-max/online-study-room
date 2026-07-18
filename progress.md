@@ -61,15 +61,15 @@
 - **Not:** Bu oturum işleri commit'lendi: grid 32-sütun `141ed2a`, core testleri `da7bdd6`, skill docs `1afba2d`. ⚠️ WP-65 karar dokümanı (`docs/AYLIK-RAPOR-KARAR.md`) önceki Claude oturumunda yazıldı ama **COMMIT'LENMEDİ** (untracked); kararı WP-69 zaten uyguladı → ürün API/DNS kararı bekliyor.
 
 ### Codex Lane
-- **Durum:** [x] Boşta
-- **Faz/WP:** WP-206 · grup grafik renk eşlemesi + sayaç bildirim düzeni · stable v38 yayın
-- **Aşama:** Yayınlandı — gerçek cihaz QA / ürün kabulü bekliyor
-- **SAHİP yollar:** `app/lib/features/stats/widgets/class_stats_view.dart`, `app/lib/features/stats/widgets/leaderboard_rank_chart.dart`, ilgili testler, `app/android/app/src/main/kotlin/com/manilmax/online_study_room/timer/StudyTimerService.kt`, `app/android/app/src/main/res/layout/timer_notification.xml`, ilgili bildirim drawable'ları, `app/pubspec.yaml`, `app/assets/release_notes.json`, `CHANGELOG.md`, `progress.md`
+- **Durum:** [~] Aktif
+- **Faz/WP:** WP-207 · üye grafik renk çakışması düzeltmesi · stable v39 yayın
+- **Aşama:** Otomatik test geçti — stable yayınlanıyor
+- **SAHİP yollar:** `app/lib/features/stats/widgets/member_chart_colors.dart`, `app/lib/features/stats/widgets/class_stats_view.dart`, `app/lib/features/stats/widgets/leaderboard_rank_chart.dart`, ilgili testler, `app/pubspec.yaml`, `app/assets/release_notes.json`, `CHANGELOG.md`, `progress.md`
 - **Ortak/riskli yüzey:** `app/pubspec.yaml`, `CHANGELOG.md`, `progress.md`
 - **Dal:** main
 - **Başlangıç:** 2026-07-19 (Europe/Istanbul)
 - **Son güncelleme:** 2026-07-19 (Europe/Istanbul)
-- **Not:** Android stable `v38` yayınlandı (1a8d3fa); GitHub APK + SHA-256 oluşturdu. Grup renk eşlemesi ve One UI tek satır `00:MM:SS + Başlat/Durdur` cihazda doğrulanmalı. Windows workflow tag ile otomatik tetiklendi; Windows ürün geliştirmesi ayrıca ele alınacak.
+- **Not:** Hash palet çakışması dinamik, üye sayısına göre eşit aralıklı HSL renkleriyle giderildi. Kişi donut ve liderlik geçmişinde aynı, başka üyeden farklı renkte kalır. `flutter analyze` ve 559 test geçti; kullanıcı v39 yayınını açıkça istedi.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
