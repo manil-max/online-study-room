@@ -12,9 +12,14 @@ import '../../../core/widgets/safe_screen_padding.dart';
 import '../../../data/models/study_session.dart';
 import '../../../data/models/subject.dart';
 import '../../../data/models/user_study_summary.dart';
+import '../../../data/providers/analytics_query_providers.dart';
 import '../../../data/providers/stats_period_provider.dart';
 import '../../../data/providers/study_providers.dart';
 import '../../../data/providers/subject_providers.dart';
+import '../analytics/analytics_period.dart';
+import '../charts/area_line_chart.dart';
+import '../charts/gauge_chart.dart';
+import '../charts/radar_stat_chart.dart';
 import 'daily_bar_chart.dart';
 import 'hour_activity_chart.dart';
 import 'session_scatter_chart.dart';
@@ -24,8 +29,8 @@ import 'subject_donut.dart';
 import 'week_hour_heatmap.dart';
 import '../stats_l10n.dart';
 
-/// Kişisel istatistik: [sessions] sıcak pencere; [summary] yıl/ömür.
-/// Üst [statsPeriodProvider] alt grafik/donut aralığını senkronlar.
+/// Kişisel istatistik: sabit ListView bölümleri (WP-179; sürükle-grid yok).
+/// [sessions] sıcak pencere; [summary] yıl/ömür; uzun aralık RPC.
 class PersonalStatsView extends ConsumerWidget {
   const PersonalStatsView({super.key, required this.sessions, this.summary});
 
@@ -35,11 +40,18 @@ class PersonalStatsView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
     final now = DateTime.now();
     final sel = ref.watch(statsPeriodProvider);
     final period = sel.period;
     final (from, to) = sel.range(now: now);
     final periodSessions = inRange(sessions, from, to).toList();
+    final analyticsPeriod = analyticsPeriodFromSelection(sel);
+    final longTotalsAsync = ref.watch(
+      analyticsUserDayTotalsProvider(analyticsPeriod),
+    );
+    final goalMinutes = ref.watch(dailyGoalMinutesProvider);
+    final goalSeconds = goalMinutes * 60;
 
     final today = secondsOnDay(sessions, now);
     final thisWeek = totalSeconds(inRange(sessions, startOfWeek(now), now));
@@ -245,17 +257,102 @@ class PersonalStatsView extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 16),
+        // P6 hedef gauge
+        Text(l10n.homeGunlukHedef, style: theme.textTheme.titleMedium),
+        const SizedBox(height: 8),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                GaugeChart(
+                  progress: goalSeconds <= 0
+                      ? 0
+                      : today / goalSeconds,
+                  label: l10n.homeGunlukHedef,
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Text(
+                    goalSeconds <= 0
+                        ? '—'
+                        : '${formatHuman(today)} / ${formatHuman(goalSeconds)}',
+                    style: theme.textTheme.titleSmall,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        // P2 area trend (dönem serisi)
+        Text(
+          '${l10n.homeEgilimGrafigi} · ${statsPeriodLabel(l10n, period)}',
+          style: theme.textTheme.titleMedium,
+        ),
+        const SizedBox(height: 8),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: SizedBox(
+              height: 140,
+              child: Builder(
+                builder: (context) {
+                  final series = lastNDays(
+                    periodSessions,
+                    period.chartDays(),
+                    totals: dailyTotalsMap,
+                  );
+                  if (series.isEmpty || series.every((d) => d.seconds == 0)) {
+                    return Center(
+                      child: Text(
+                        l10n.statsBuDonemdeCalismaKaydin,
+                        style: theme.textTheme.bodySmall,
+                        textAlign: TextAlign.center,
+                      ),
+                    );
+                  }
+                  return AreaLineChart(
+                    values: [
+                      for (final d in series) d.seconds / 3600.0,
+                    ],
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+        if (sel.comparePrevious) ...[
+          const SizedBox(height: 8),
+          _CompareStrip(
+            currentSeconds: periodTotalSec,
+            previousSeconds: () {
+              final prev = sel.previousRange(now: now);
+              if (prev == null) return 0;
+              return totalSeconds(inRange(sessions, prev.$1, prev.$2));
+            }(),
+          ),
+        ],
+        const SizedBox(height: 16),
         Text(
           '${AppLocalizations.of(context).statsOturumDagilimi} · '
           '${statsPeriodLabel(AppLocalizations.of(context), period)}',
           style: theme.textTheme.titleMedium,
         ),
         const SizedBox(height: 8),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: SessionScatterChart(sessions: periodSessions),
-          ),
+        // P10 scatter — varsayılan katlı (WP ürün kararı)
+        _CollapsibleSection(
+          title: l10n.statsOturumDagilimi,
+          initiallyExpanded: false,
+          child: periodSessions.isEmpty
+              ? Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(
+                    l10n.statsBuDonemdeCalismaKaydin,
+                    style: theme.textTheme.bodySmall,
+                  ),
+                )
+              : SessionScatterChart(sessions: periodSessions),
         ),
         const SizedBox(height: 16),
         Text(
@@ -279,13 +376,215 @@ class PersonalStatsView extends ConsumerWidget {
         const SizedBox(height: 8),
         _SubjectBreakdownCard(sessions: periodSessions),
         const SizedBox(height: 16),
-        // Serbest tarih aralığı — master dönemden bağımsız (özel aralık).
+        // P12 radar — basit türetilmiş skorlar
+        Text(l10n.analyticsCardInsight, style: theme.textTheme.titleMedium),
+        const SizedBox(height: 8),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: SizedBox(
+              height: 200,
+              child: _PersonalRadar(
+                sessions: periodSessions,
+                today: today,
+                goalSeconds: goalSeconds,
+                split: split,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        // P11 detaylı geçmiş (RPC / uzun aralık)
+        Text(
+          l10n.statsSeciliTarihAraligi,
+          style: theme.textTheme.titleMedium,
+        ),
+        const SizedBox(height: 8),
+        longTotalsAsync.when(
+          loading: () => const Card(
+            child: Padding(
+              padding: EdgeInsets.all(24),
+              child: Center(child: CircularProgressIndicator()),
+            ),
+          ),
+          error: (_, _) => Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                l10n.authBeklenmeyenBirHataOlustu,
+                style: theme.textTheme.bodySmall,
+              ),
+            ),
+          ),
+          data: (map) {
+            if (map.isEmpty) {
+              return Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(
+                    l10n.statsBuDonemdeCalismaKaydin,
+                    style: theme.textTheme.bodySmall,
+                  ),
+                ),
+              );
+            }
+            final days = map.keys.toList()..sort();
+            final vals = [for (final d in days) (map[d] ?? 0) / 3600.0];
+            return Card(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${formatHuman(map.values.fold<int>(0, (a, b) => a + b))} · ${days.length}d',
+                      style: theme.textTheme.labelMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      height: 120,
+                      child: AreaLineChart(values: vals),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 16),
         Text(
           AppLocalizations.of(context).statsSeciliTarihAraligi,
           style: theme.textTheme.titleMedium,
         ),
         const SizedBox(height: 8),
         _RangeCard(sessions: sessions, totals: dailyTotalsMap),
+      ],
+    );
+  }
+}
+
+class _CompareStrip extends StatelessWidget {
+  const _CompareStrip({
+    required this.currentSeconds,
+    required this.previousSeconds,
+  });
+
+  final int currentSeconds;
+  final int previousSeconds;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
+    final delta = currentSeconds - previousSeconds;
+    final sign = delta >= 0 ? '+' : '';
+    return Card(
+      color: theme.colorScheme.surfaceContainerHighest,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Text(
+          '${l10n.analyticsComparePrevious}: $sign${formatHuman(delta.abs())} '
+          '(${formatHuman(previousSeconds)} → ${formatHuman(currentSeconds)})',
+          style: theme.textTheme.bodySmall,
+        ),
+      ),
+    );
+  }
+}
+
+class _CollapsibleSection extends StatefulWidget {
+  const _CollapsibleSection({
+    required this.title,
+    required this.child,
+    this.initiallyExpanded = true,
+  });
+
+  final String title;
+  final Widget child;
+  final bool initiallyExpanded;
+
+  @override
+  State<_CollapsibleSection> createState() => _CollapsibleSectionState();
+}
+
+class _CollapsibleSectionState extends State<_CollapsibleSection> {
+  late bool _open = widget.initiallyExpanded;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          ListTile(
+            title: Text(widget.title),
+            trailing: Icon(_open ? Icons.expand_less : Icons.expand_more),
+            onTap: () => setState(() => _open = !_open),
+            minVerticalPadding: 12,
+          ),
+          if (_open)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 0, 8, 12),
+              child: widget.child,
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Basit 5 eksen radar (tempo, tutarlılık, çeşitlilik, süre, odak saati).
+class _PersonalRadar extends StatelessWidget {
+  const _PersonalRadar({
+    required this.sessions,
+    required this.today,
+    required this.goalSeconds,
+    required this.split,
+  });
+
+  final List<StudySession> sessions;
+  final int today;
+  final int goalSeconds;
+  final ({int weekday, int weekend}) split;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    if (sessions.isEmpty) {
+      return Center(
+        child: Text(
+          l10n.statsBuDonemdeCalismaKaydin,
+          style: Theme.of(context).textTheme.bodySmall,
+          textAlign: TextAlign.center,
+        ),
+      );
+    }
+    final total = totalSeconds(sessions).toDouble();
+    final tempo = goalSeconds <= 0
+        ? 0.5
+        : (today / goalSeconds).clamp(0.0, 1.0);
+    final days = dailyTotals(sessions).values.where((s) => s > 0).length;
+    final consistency = (days / 14.0).clamp(0.0, 1.0);
+    final subjects = <String>{
+      for (final s in sessions)
+        if (s.subjectId != null) s.subjectId!,
+    };
+    final variety = (subjects.length / 5.0).clamp(0.0, 1.0);
+    final durationScore = (total / (10 * 3600)).clamp(0.0, 1.0);
+    final balance = total <= 0
+        ? 0.5
+        : (1.0 -
+                ((split.weekday - split.weekend).abs() / total))
+            .clamp(0.0, 1.0);
+
+    return RadarStatChart(
+      values: [tempo, consistency, variety, durationScore, balance],
+      labels: [
+        l10n.homeGunlukHedef,
+        l10n.statsRekorlar,
+        l10n.statsDersBazindaDagilimSon,
+        l10n.statsToplam,
+        l10n.statsHaftaIci,
       ],
     );
   }
