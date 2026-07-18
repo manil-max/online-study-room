@@ -130,12 +130,20 @@ class _GroupGoalCardState extends ConsumerState<GroupGoalCard> {
             ),
           );
 
+          // WP-172: ListView (sınırsız yükseklik) içinde nested scroll jesti yutmasın.
+          final unbounded = !constraints.maxHeight.isFinite;
+
+          Widget maybeScroll(Widget child) => unbounded
+              ? child
+              : SingleChildScrollView(child: child);
+
           if (isCompact) {
             return Padding(
               padding: const EdgeInsets.all(16),
-              child: SingleChildScrollView(
-                child: Column(
+              child: maybeScroll(
+                Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Row(
                       children: [
@@ -203,9 +211,10 @@ class _GroupGoalCardState extends ConsumerState<GroupGoalCard> {
 
           return Padding(
             padding: const EdgeInsets.all(16),
-            child: SingleChildScrollView(
-              child: Column(
+            child: maybeScroll(
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Row(
                     children: [

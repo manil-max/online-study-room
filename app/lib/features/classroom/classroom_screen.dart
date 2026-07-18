@@ -111,6 +111,8 @@ class _NoGroupView extends ConsumerWidget {
 }
 
 /// Kullanıcının sınıfı: ad, davet kodu ve üyeler.
+/// WP-172: sabit ListView — kartlar nested scroll kullanmaz (unbounded yükseklik);
+/// Home dashboard sürükle-bırak burada YOK.
 class _GroupView extends ConsumerWidget {
   const _GroupView({required this.group});
 
@@ -122,8 +124,9 @@ class _GroupView extends ConsumerWidget {
     final showTimer = ref.watch(classroomShowTimerProvider);
 
     // Sıra (KALITE-PROGRAMI §8.3 Gruplar): kamp ateşi → hedef → sıralama → trend.
-    // Windows/mobil aynı tek kolon; sağ bağlam paneli yok.
     return ListView(
+      // Kartlar üzerindeki jestler de dikey kaydırmaya gitsin.
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       padding: getSafeVerticalPadding(context, horizontal: 16, vertical: 16),
       children: [
         if (showTimer) ...[const StudyTimerCard(), const SizedBox(height: 8)],
@@ -138,6 +141,8 @@ class _GroupView extends ConsumerWidget {
         const GroupTrendCard(),
         const SizedBox(height: 16),
         _GroupManagementTile(group: group),
+        // Alt menü için nefes payı
+        const SizedBox(height: 24),
       ],
     );
   }

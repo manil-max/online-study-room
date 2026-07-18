@@ -78,18 +78,23 @@ class CardScaffold extends StatelessWidget {
             );
           }
 
+          // WP-172: Sınırsız yükseklik (Gruplar ListView) → iç kaydırma YOK;
+          // ebeveyn scroll eder. Sonlu ama kısa hücre (Home ızgara) → kart içi kaydırma.
+          final unbounded = !constraints.maxHeight.isFinite;
+          final column = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              header,
+              SizedBox(height: headerGap),
+              bodyBuilder(context, fallbackBodyHeight),
+            ],
+          );
           return Padding(
             padding: padding,
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  header,
-                  SizedBox(height: headerGap),
-                  bodyBuilder(context, fallbackBodyHeight),
-                ],
-              ),
-            ),
+            child: unbounded
+                ? column
+                : SingleChildScrollView(child: column),
           );
         },
       ),

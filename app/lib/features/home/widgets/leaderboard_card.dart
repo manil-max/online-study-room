@@ -201,22 +201,25 @@ class LeaderboardCard extends ConsumerWidget {
             ),
           );
 
-          // Kısa kart: Expanded yerine düz Column + dış kaydırma (taşma önlenir).
+          // Kısa kart / ListView (Gruplar): nested scroll yok (WP-172).
+          // Home sonlu kısa hücrede kart içi kaydırma korunur.
           if (!fill) {
+            final column = Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ...headerChildren,
+                if (board.isEmpty)
+                  emptyText
+                else
+                  for (var i = 0; i < board.length; i++) rowFor(i),
+              ],
+            );
             return Padding(
               padding: const EdgeInsets.all(16),
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    ...headerChildren,
-                    if (board.isEmpty)
-                      emptyText
-                    else
-                      for (var i = 0; i < board.length; i++) rowFor(i),
-                  ],
-                ),
-              ),
+              child: isHeightBounded
+                  ? SingleChildScrollView(child: column)
+                  : column,
             );
           }
 
