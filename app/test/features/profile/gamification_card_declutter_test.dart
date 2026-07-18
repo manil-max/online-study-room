@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/core/prefs/app_prefs.dart';
 import 'package:online_study_room/core/stats/gamification.dart';
+import 'package:online_study_room/core/widgets/crowned_avatar.dart';
 import 'package:online_study_room/data/models/gamification_profile.dart';
 import 'package:online_study_room/data/models/profile.dart';
 import 'package:online_study_room/data/providers/auth_providers.dart';
@@ -11,9 +12,9 @@ import 'package:online_study_room/features/profile/widgets/gamification_card.dar
 import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// WP-187: profil kartında level/quest/streak/freeze/total yok; başarılar başlığı var.
+/// WP-187/192: level/quest/streak yok; taç XP barı + CrownedAvatar var.
 void main() {
-  testWidgets('GamificationCard omits level quest streak xp chrome',
+  testWidgets('GamificationCard omits level quest streak; has crown XP bar',
       (tester) async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
@@ -72,13 +73,15 @@ void main() {
 
     expect(find.byType(GamificationCard), findsOneWidget);
     expect(find.text('Achievements'), findsOneWidget);
+    expect(find.byType(CrownedAvatar), findsOneWidget);
+    expect(find.byType(LinearProgressIndicator), findsOneWidget);
+    expect(find.textContaining('Next crown'), findsOneWidget);
+    expect(find.textContaining('XP'), findsOneWidget);
 
-    // Kaldırılan kalabalık
+    // Level/quest/streak hâlâ yok
     expect(find.textContaining('Level'), findsNothing);
     expect(find.text('Quests'), findsNothing);
     expect(find.textContaining('day streak'), findsNothing);
     expect(find.textContaining('streak freezes'), findsNothing);
-    expect(find.textContaining('XP'), findsNothing);
-    expect(find.byType(LinearProgressIndicator), findsNothing);
   });
 }

@@ -4775,5 +4775,7 @@
   "taskListHint": "Kurzes Ziel schreiben",
   "taskListDelete": "Löschen",
   "taskListCompletedSemantic": "Erledigt",
-  "taskListIncompleteSemantic": "Nicht erledigt"
+  "taskListIncompleteSemantic": "Nicht erledigt",
+  "profileNextCrown": "Nächste Krone",
+  "profileCrownMax": "Höchste Krone"
 }

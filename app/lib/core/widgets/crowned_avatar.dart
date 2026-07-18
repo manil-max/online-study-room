@@ -5,7 +5,7 @@ import '../../data/providers/gamification_providers.dart';
 import '../stats/progression_visuals.dart';
 import 'user_avatar.dart';
 
-/// Profil fotoğrafı + 5 kademeli taç halkası (üstte taç ikonu).
+/// Profil fotoğrafı + 5 kademeli taç halkası + gerçek taç ikonu (WP-192).
 ///
 /// [crownRank] null/boş ise düz [UserAvatar] (taçsız).
 class CrownedAvatar extends StatelessWidget {
@@ -30,7 +30,7 @@ class CrownedAvatar extends StatelessWidget {
     final hasCrown = rank != null && rank.isNotEmpty;
     final color = hasCrown ? crownColorFor(rank) : null;
     // Taç halkası + ikon için ekstra pad.
-    final pad = hasCrown ? radius * 0.35 : 0.0;
+    final pad = hasCrown ? radius * 0.45 : 0.0;
     final size = (radius + pad) * 2;
 
     Widget avatar = UserAvatar(
@@ -40,6 +40,7 @@ class CrownedAvatar extends StatelessWidget {
     );
 
     if (hasCrown && color != null) {
+      final ringSize = radius * 2 + 8;
       avatar = SizedBox(
         width: size,
         height: size,
@@ -47,17 +48,23 @@ class CrownedAvatar extends StatelessWidget {
           clipBehavior: Clip.none,
           alignment: Alignment.center,
           children: [
+            // Renkli glow halka
             Container(
-              width: radius * 2 + 6,
-              height: radius * 2 + 6,
+              width: ringSize,
+              height: ringSize,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: color, width: 2.5),
+                border: Border.all(color: color, width: 3),
                 boxShadow: [
                   BoxShadow(
-                    color: color.withValues(alpha: 0.35),
-                    blurRadius: 8,
-                    spreadRadius: 0.5,
+                    color: color.withValues(alpha: 0.45),
+                    blurRadius: 12,
+                    spreadRadius: 1,
+                  ),
+                  BoxShadow(
+                    color: color.withValues(alpha: 0.2),
+                    blurRadius: 4,
+                    spreadRadius: 0,
                   ),
                 ],
               ),
@@ -68,18 +75,15 @@ class CrownedAvatar extends StatelessWidget {
                 radius: radius,
               ),
             ),
+            // Üstte gerçek taç (CustomPainter)
             Positioned(
-              top: -2,
-              child: Icon(
-                Icons.workspace_premium,
-                size: radius * 0.85,
-                color: color,
-                shadows: [
-                  Shadow(
-                    color: Colors.black.withValues(alpha: 0.45),
-                    blurRadius: 3,
-                  ),
-                ],
+              top: -radius * 0.15,
+              child: CustomPaint(
+                size: Size(radius * 1.15, radius * 0.75),
+                painter: CrownPainter(
+                  color: color,
+                  outline: Colors.black.withValues(alpha: 0.35),
+                ),
               ),
             ),
           ],
@@ -96,8 +100,63 @@ class CrownedAvatar extends StatelessWidget {
   }
 }
 
-/// [userId] ile `gamification_profiles.crown_rank` canlı izler; sıralama,
-/// aktif üyeler, chat, profil vb. her yerde taç göstermek için.
+/// Basit 3 dişli taç silueti (Material madalya yerine gerçek taç).
+class CrownPainter extends CustomPainter {
+  CrownPainter({required this.color, this.outline});
+
+  final Color color;
+  final Color? outline;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+    final path = Path()
+      ..moveTo(w * 0.05, h * 0.92)
+      ..lineTo(w * 0.08, h * 0.42)
+      ..lineTo(w * 0.22, h * 0.62)
+      ..lineTo(w * 0.38, h * 0.12)
+      ..lineTo(w * 0.50, h * 0.48)
+      ..lineTo(w * 0.62, h * 0.12)
+      ..lineTo(w * 0.78, h * 0.62)
+      ..lineTo(w * 0.92, h * 0.42)
+      ..lineTo(w * 0.95, h * 0.92)
+      ..close();
+
+    final fill = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+    canvas.drawPath(path, fill);
+
+    if (outline != null) {
+      final stroke = Paint()
+        ..color = outline!
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.2
+        ..strokeJoin = StrokeJoin.round;
+      canvas.drawPath(path, stroke);
+    }
+
+    // Band
+    final band = RRect.fromLTRBR(
+      w * 0.08,
+      h * 0.72,
+      w * 0.92,
+      h * 0.92,
+      const Radius.circular(2),
+    );
+    canvas.drawRRect(
+      band,
+      Paint()..color = color.withValues(alpha: 0.85),
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CrownPainter oldDelegate) =>
+      oldDelegate.color != color || oldDelegate.outline != outline;
+}
+
+/// [userId] ile `gamification_profiles.crown_rank` canlı izler.
 class LiveCrownedAvatar extends ConsumerWidget {
   const LiveCrownedAvatar({
     super.key,
@@ -116,7 +175,8 @@ class LiveCrownedAvatar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final rank = ref.watch(gamificationProfileProvider(userId)).asData?.value.crownRank;
+    final rank =
+        ref.watch(gamificationProfileProvider(userId)).asData?.value.crownRank;
     return CrownedAvatar(
       displayName: displayName,
       avatarUrl: avatarUrl,

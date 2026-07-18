@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/stats/achievement_ledger_engine.dart';
+import '../../../core/stats/progression_visuals.dart';
+import '../../../core/widgets/crowned_avatar.dart';
 import '../../../data/models/achievement.dart';
 import '../../../data/models/gamification_profile.dart';
 import '../../../data/providers/auth_providers.dart';
@@ -10,17 +12,15 @@ import '../../../data/providers/gamification_providers.dart';
 import '../social_profile_screen.dart';
 import 'achievement_showcase.dart';
 
-/// Profil özeti: yalnız başarım rozetleri (WP-187).
+/// Profil özeti: taç + taç XP barı + başarım rozetleri (WP-187/192).
 ///
-/// Kaldırıldı: seviye çubuğu / Level N / XP metni, quest, streak, freeze, total
-/// saat. Backend XP/ledger'a dokunulmaz — yalnız UI sadeleşti. Dokununca
-/// [SocialProfileScreen] vitrin/katalog.
+/// Level/quest/streak/freeze/total UI yok. Backend XP'ye yazılmaz —
+/// yalnız görüntü (`xpBarMetrics` + sunucu profil XP).
 class GamificationCard extends ConsumerWidget {
   const GamificationCard({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // WP-56: profil açılınca sunucu ledger'ı yeniden değerlendirir.
     ref.watch(gamificationProgressSyncProvider);
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
@@ -47,6 +47,8 @@ class GamificationCard extends ConsumerWidget {
                   ref.watch(userAchievementsProvider(authProfile.id));
               return achsAsync.when(
                 data: (achs) => _BadgeSummary(
+                  displayName: authProfile.displayName,
+                  avatarUrl: authProfile.avatarUrl,
                   profile: summary.profile,
                   achievements: achs,
                 ),
@@ -58,6 +60,8 @@ class GamificationCard extends ConsumerWidget {
                   ),
                 ),
                 error: (_, _) => _BadgeSummary(
+                  displayName: authProfile.displayName,
+                  avatarUrl: authProfile.avatarUrl,
                   profile: summary.profile,
                   achievements: const [],
                 ),
@@ -77,10 +81,14 @@ class GamificationCard extends ConsumerWidget {
 
 class _BadgeSummary extends StatelessWidget {
   const _BadgeSummary({
+    required this.displayName,
+    this.avatarUrl,
     required this.profile,
     required this.achievements,
   });
 
+  final String displayName;
+  final String? avatarUrl;
   final GamificationProfile profile;
   final List<UserAchievement> achievements;
 
@@ -89,8 +97,11 @@ class _BadgeSummary extends StatelessWidget {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     final dict = kAchievementDictV3(l10n);
+    final rank = profile.crownRank;
+    final rankColor = crownColorFor(rank, theme.colorScheme);
+    final bar = xpBarMetrics(profile.xp);
+    final atMax = profile.xp >= kCrownXpThresholds.last;
 
-    // Vitrin seçimi öncelikli; yoksa açılmış başarımlardan ilk 6.
     final unlockedIds = {
       for (final a in achievements)
         if (a.isUnlocked) a.achievementId,
@@ -117,19 +128,72 @@ class _BadgeSummary extends StatelessWidget {
       children: [
         Row(
           children: [
-            Icon(Icons.emoji_events_outlined, color: theme.colorScheme.primary),
-            const SizedBox(width: 8),
+            CrownedAvatar(
+              displayName: displayName,
+              avatarUrl: avatarUrl,
+              radius: 28,
+              crownRank: rank,
+            ),
+            const SizedBox(width: 12),
             Expanded(
-              child: Text(
-                l10n.profileBasarilar,
-                style: theme.textTheme.titleMedium,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                softWrap: false,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          l10n.profileBasarilar,
+                          style: theme.textTheme.titleMedium,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          softWrap: false,
+                        ),
+                      ),
+                      const Icon(Icons.chevron_right),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    crownLabel(rank, l10n),
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      color: rankColor,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ),
             ),
-            const Icon(Icons.chevron_right),
           ],
+        ),
+        const SizedBox(height: 12),
+        // WP-192: taç XP barı (level değil — bir sonraki taç eşiği)
+        Text(
+          atMax ? l10n.profileCrownMax : l10n.profileNextCrown,
+          style: theme.textTheme.labelMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: 4),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(6),
+          child: LinearProgressIndicator(
+            value: atMax ? 1 : bar.progress,
+            minHeight: 8,
+            color: rankColor,
+            backgroundColor: theme.colorScheme.surfaceContainerHighest,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          atMax
+              ? '${profile.xp} XP'
+              : '${profile.xp} / ${bar.next} XP',
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
         ),
         const SizedBox(height: 12),
         if (showcaseIds.isEmpty)

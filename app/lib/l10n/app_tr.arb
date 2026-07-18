@@ -1134,5 +1134,7 @@
   "taskListHint": "Kısa bir hedef yaz",
   "taskListDelete": "Sil",
   "taskListCompletedSemantic": "Tamamlandı",
-  "taskListIncompleteSemantic": "Tamamlanmadı"
+  "taskListIncompleteSemantic": "Tamamlanmadı",
+  "profileNextCrown": "Sonraki taç",
+  "profileCrownMax": "En yüksek taç"
 }

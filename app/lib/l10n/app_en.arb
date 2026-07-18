@@ -4805,5 +4805,13 @@
   "taskListIncompleteSemantic": "Not completed",
   "@taskListIncompleteSemantic": {
     "description": "Semantics incomplete"
+  },
+  "profileNextCrown": "Next crown",
+  "@profileNextCrown": {
+    "description": "Label for crown XP progress toward next tier"
+  },
+  "profileCrownMax": "Highest crown",
+  "@profileCrownMax": {
+    "description": "Label when crown XP is at max tier"
   }
 }
