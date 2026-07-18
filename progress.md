@@ -20,7 +20,7 @@
 - **Navigasyon hedefi:** Ana Sayfa / Saat / Gruplar / İstatistikler / Profil. Ana Sayfa günlük kullanım alanıdır; diğer alanların verisi kendi sekmelerinde eksiksiz bulunur.
 - **Release:** Stable/Beta kanalı GitHub Releases ile çalışır. **beta-v30** = `1.0.30+30` (analitik ızgara toggle, 0039–0043 RPC/gamification, WP-166–168). Onay: `docs/qa/BETA-v30-ONAY-LISTESI.md`. Play production ayrı kalite kapısından geçer.
 - **Kalite kapıları:** Her WP DoD'siz kapanmaz; stable release kalite kapısından geçer (AGENTS.md §3). Server-authoritative XP, RLS/sosyal profil, platform sınırları → `docs/KALITE-PROGRAMI.md`.
-- **Son WP numarası:** 176 (QA test onarım). **Sıradaki boş numara WP-177.**
+- **Son WP numarası:** 181 (stats cila). **Sıradaki boş numara WP-182.**
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
   - Flutter: `C:\src\flutter` · Android SDK: `C:\Android\Sdk`
@@ -79,7 +79,7 @@
 - **Dal:** main
 - **Başlangıç:** —
 - **Son güncelleme:** 2026-07-18 (Europe/Istanbul)
-- **Not:** WP-176: full `flutter test` **529 passed, 0 fail**; analyze 0. Push yok.
+- **Not:** WP-177–181 bitti (ayrı commit). Push yok.
 
 
 ---
@@ -180,6 +180,11 @@
 | WP-174 | [x] Rapor | UI sweep | `docs/qa/WP-174-UI-SWEEP.md` |
 | WP-175 | [~] Plan onay bekliyor | Klasik stats zenginleştirme PLAN | `docs/features/ISTATISTIK-ZENGINLESTIRME-PLAN.md` |
 | WP-176 | [x] Otomatik test geçti | 15 kırık test yeşil (shell scroll + notes + achievement) | full test **529** |
+| WP-177 | [~] Cihaz/SQL bekliyor | Feedback ensure 0044 + net hata | sahip SQL + beta |
+| WP-178 | [~] Test için bekliyor | StatsPeriod year/custom/kıyas | `Cihazda doğrulanmalı` |
+| WP-179 | [~] Test için bekliyor | Kişisel sabit bölümler (gauge/area/radar) | `Cihazda doğrulanmalı` |
+| WP-180 | [~] Test için bekliyor | Grup donut/seri/gauge | `Cihazda doğrulanmalı` |
+| WP-181 | [~] Test için bekliyor | Cila + ölü grid silme | `Cihazda doğrulanmalı` |
 
 > **2026-07-14 proje denetimi:** Serbest sürükle-bırak ızgara, canlı grup hedefi ve saat stilleri **zaten kodda uygulanmış** (backlog stale idi; geçici WP-72/73/75 iptal).
 >
@@ -868,13 +873,18 @@
 
 ## Test için bekleyenler
 
-### WP-176: 15 kırık test yeşile (otomatik test) ✅
-- **A:** `GroupCardShell` bounded → iç scroll; unbounded → dış liste (Groups)
-- **B:** `runAchievementSessionCompletedSync` process sonucu yan etki hatasında yutulmaz
-- **C:** `release_notes.json` v30 `titleEn` draft + notes release
-- **D:** ölü analytics layout kodu silinmedi (WP-175 için korunur; UI import yok)
-- **Kanıt:** `flutter analyze` 0 · full `flutter test` **529 passed, 0 fail**
+### WP-177–181: Feedback + stats zenginleştirme (otomatik test) 📊
+- **177:** `0044_feedback_ensure.sql` + schema/RLS/storage net mesaj · `docs/qa/WP-177-FEEDBACK-KAPANIS.md`
+- **178:** StatsPeriod year/custom + kıyas
+- **179:** Kişisel gauge/area/radar/katlı scatter/RPC geçmiş
+- **180:** Grup donut/seri/gauge
+- **181:** Ölü grid layout silindi; beta kılavuz güncellendi
+- **Kanıt:** analyze 0 · full test **526 passed, 0 fail** (layout testleri silindi)
+- **Sahip:** 0044 SQL + cihaz smoke
 - **Push yok**
+
+### WP-176: 15 kırık test yeşile (otomatik test) ✅
+- **Kanıt:** full test **529 passed** (tarihsel)
 
 ### WP-175: Klasik istatistik zenginleştirme PLAN (onay) 📊
 - **Teslim:** `docs/features/ISTATISTIK-ZENGINLESTIRME-PLAN.md`

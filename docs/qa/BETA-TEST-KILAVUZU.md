@@ -42,21 +42,24 @@
 
 ---
 
-## 1. Klasik istatistikler (WP-170)
+## 1. Klasik + zengin istatistikler (WP-170 / 178–180)
 
 ### 1.1 Kişisel ListView
 
-**Adımlar:** İstatistikler → Kişisel; kaydır.
+**Adımlar:** İstatistikler → Kişisel; kaydır (uzun ekran).
 
-**Beklenen:** `StatsPeriodBar` (Bugün/Hafta/Ay/Tümü) + sabit grafikler; **ızgara/sürükle/edit yok**.
+**Beklenen:**
+- Dönem: Bugün/Hafta/Ay/**Yıl**/Tümü/**Özel** + kıyas switch
+- Gauge hedef, area trend, radar, katlı scatter, detaylı geçmiş
+- **Izgara/sürükle yok**
 
 **Sonuç:** ☐ Geçti / ☐ Kaldı · not: ________
 
 ### 1.2 Grup ClassStatsView
 
-**Adımlar:** İstatistikler → Grup (üyeyken).
+**Adımlar:** İstatistikler → Grup (üyeyken / non-üye).
 
-**Beklenen:** Klasik grup listesi; crash yok. Zengin donut/seri → **WP-175 plan**.
+**Beklenen:** Gauge + üye katkı donut + liderlik serisi + sıralama; non-üye empty/crash yok; ham session yok.
 
 **Sonuç:** ☐ Geçti / ☐ Kaldı · not: ________
 
