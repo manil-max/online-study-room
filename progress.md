@@ -61,15 +61,15 @@
 - **Not:** Bu oturum işleri commit'lendi: grid 32-sütun `141ed2a`, core testleri `da7bdd6`, skill docs `1afba2d`. ⚠️ WP-65 karar dokümanı (`docs/AYLIK-RAPOR-KARAR.md`) önceki Claude oturumunda yazıldı ama **COMMIT'LENMEDİ** (untracked); kararı WP-69 zaten uyguladı → ürün API/DNS kararı bekliyor.
 
 ### Codex Lane
-- **Durum:** [~] Aktif
+- **Durum:** [x] Boşta
 - **Faz/WP:** WP-204 + WP-205 · stable v37 yayın hazırlığı
-- **Aşama:** Otomatik test geçti — stable yayınlanıyor
+- **Aşama:** Yayınlandı — gerçek cihaz QA / ürün kabulü bekliyor
 - **SAHİP yollar:** `app/lib/features/stats/widgets/class_stats_view.dart`, `app/lib/l10n/app_*.arb`, `app/android/app/src/main/kotlin/com/manilmax/online_study_room/timer/StudyTimerService.kt`, `app/android/app/src/main/res/layout/timer_notification.xml`, `app/pubspec.yaml`, `app/assets/release_notes.json`, `CHANGELOG.md`, `progress.md`
 - **Ortak/riskli yüzey:** `app/pubspec.yaml`, `CHANGELOG.md`, `progress.md` (Grok lane’i kullanıcının açık teyidiyle boşta kabul edildi)
 - **Dal:** main
 - **Başlangıç:** 2026-07-19 (Europe/Istanbul)
 - **Son güncelleme:** 2026-07-19 (Europe/Istanbul)
-- **Not:** Grup hedefi özet kartı ve tema-güvenli sayaç bildirimi için stable v37; cihaz QA kullanıcı testinden sonra yapılacak.
+- **Not:** stable `v37` yayınlandı (1d9db60); tüm otomatik testler, analyze ve stable Android/Kotlin derlemesi geçti. Samsung cihaz QA/kabulü kullanıcı testinden sonra yapılacak.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
