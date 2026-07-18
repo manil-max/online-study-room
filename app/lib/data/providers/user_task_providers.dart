@@ -3,6 +3,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../core/config/supabase_config.dart';
 import '../../core/prefs/app_prefs.dart';
+import '../../core/tasks/task_deadline.dart';
 import '../models/user_task.dart';
 import '../repositories/supabase/supabase_user_task_repository.dart';
 import '../repositories/user_task_repository.dart';
@@ -10,31 +11,23 @@ import 'auth_providers.dart';
 
 final userTaskRepositoryProvider = Provider<UserTaskRepository>((ref) {
   final prefs = ref.watch(sharedPreferencesProvider);
-  // v1: prefs mirror (InMemory unit testlerde override).
-  // SupabaseConfig ileride gerçek PostgREST dalı için (şimdilik aynı store).
   if (SupabaseConfig.isConfigured) {
     return SupabaseUserTaskRepository(prefs);
   }
   return SupabaseUserTaskRepository(prefs);
 });
 
-/// Prefs / bellek izolasyonu anahtarı (hesap değişince ayrı liste).
 String userTaskUserKey(Ref ref) {
   final id = ref.watch(authStateProvider).value?.id;
   return (id == null || id.isEmpty) ? 'local' : id;
 }
 
-/// Dönem listesi — okuma; mutasyonlar [userTaskActionsProvider] ile.
-final userTasksProvider =
-    FutureProvider.family<List<UserTask>, TaskScope>((ref, scope) async {
+/// Tüm görevler — dueAt sıralı (WP-197).
+final userTasksProvider = FutureProvider<List<UserTask>>((ref) async {
   ref.watch(authStateProvider);
   final repo = ref.watch(userTaskRepositoryProvider);
-  final list = await repo.load(
-    userKey: userTaskUserKey(ref),
-    scope: scope,
-    periodKey: taskPeriodKey(scope),
-  );
-  return sortUserTasks(list);
+  final list = await repo.load(userKey: userTaskUserKey(ref));
+  return sortUserTasksByDue(list);
 });
 
 final userTaskActionsProvider = Provider<UserTaskActions>((ref) {
@@ -54,44 +47,45 @@ class UserTaskActions {
     return (id == null || id.isEmpty) ? 'local' : id;
   }
 
-  Future<List<UserTask>> _load(TaskScope scope) {
-    return _repo.load(
-      userKey: _userKey,
-      scope: scope,
-      periodKey: taskPeriodKey(scope),
-    );
+  Future<List<UserTask>> _load() => _repo.load(userKey: _userKey);
+
+  Future<void> _save(List<UserTask> tasks) async {
+    await _repo.saveAll(userKey: _userKey, tasks: tasks);
+    _ref.invalidate(userTasksProvider);
   }
 
-  Future<void> _save(TaskScope scope, List<UserTask> tasks) async {
-    await _repo.saveAll(
-      userKey: _userKey,
-      scope: scope,
-      periodKey: taskPeriodKey(scope),
-      tasks: sortUserTasks(tasks),
-    );
-    _ref.invalidate(userTasksProvider(scope));
-  }
-
-  Future<UserTask?> add(TaskScope scope, String rawTitle) async {
+  Future<UserTask?> add({
+    required String rawTitle,
+    DateTime? dueAt,
+  }) async {
     final title = UserTask.normalizeTitle(rawTitle);
     if (title == null) return null;
-    final current = await _load(scope);
-    if (current.length >= UserTask.maxTasksPerPeriod) return null;
+    final current = await _load();
+    if (current.length >= UserTask.maxTasks) return null;
     final now = DateTime.now().toUtc();
     final task = UserTask(
       id: _uuid.v4(),
       title: title,
-      scope: scope,
+      dueAt: dueAt?.toUtc(),
       completed: false,
       createdAt: now,
       sortOrder: current.length,
     );
-    await _save(scope, [...current, task]);
+    await _save([...current, task]);
     return task;
   }
 
-  Future<void> toggle(TaskScope scope, String id) async {
-    final current = await _load(scope);
+  Future<void> update(UserTask task) async {
+    final current = await _load();
+    final next = [
+      for (final t in current)
+        if (t.id == task.id) task else t,
+    ];
+    await _save(next);
+  }
+
+  Future<void> toggle(String id) async {
+    final current = await _load();
     final now = DateTime.now().toUtc();
     final next = [
       for (final t in current)
@@ -104,11 +98,11 @@ class UserTaskActions {
         else
           t,
     ];
-    await _save(scope, next);
+    await _save(next);
   }
 
-  Future<void> remove(TaskScope scope, String id) async {
-    final current = await _load(scope);
-    await _save(scope, [for (final t in current) if (t.id != id) t]);
+  Future<void> remove(String id) async {
+    final current = await _load();
+    await _save([for (final t in current) if (t.id != id) t]);
   }
 }
