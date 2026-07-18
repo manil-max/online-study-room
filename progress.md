@@ -12,7 +12,7 @@
 - **Framework:** Flutter ^3.12 · Riverpod 3.3 · Supabase 2.15 · fl_chart
 - **Uygulama kökü:** `app/` — Flutter komutları yalnız burada çalışır.
 - **Repo katmanı çift:** Her arayüz `supabase/` ve `in_memory/` repository'leriyle desteklenir.
-- **Migration'lar:** `supabase/migrations/` — yerelde `0001–0045` vardır. Canlı ortamda dosyanın bulunması deploy kanıtı değildir. Özellikle feedback `0044–0045` (NOTIFY pgrst) beta projede SQL ile uygulanmalı. Yeni migration mevcut en yüksek numaradan (`0045`) devam eder.
+- **Migration'lar:** `supabase/migrations/` — yerelde `0001–0046` vardır. Canlı ortamda dosyanın bulunması deploy kanıtı değildir. Feedback: `0044–0045` + **`0046` (trigger 42704 role fix)**. Yeni migration mevcut en yüksek numaradan (`0046`) devam eder.
 - **Gün sınırı:** `Europe/Istanbul`
 - **RLS helper'ları:** `is_group_member(gid)`, `can_see_user_sessions(target)`, `is_group_admin(gid)`, `is_super_admin()`
 - **Dashboard:** 6 sütunlu 2D matris, 19 kart türü, `grid_reflow.dart` motoru.
@@ -20,8 +20,8 @@
 - **Navigasyon hedefi:** Ana Sayfa / Saat / Gruplar / İstatistikler / Profil. Ana Sayfa günlük kullanım alanıdır; diğer alanların verisi kendi sekmelerinde eksiksiz bulunur.
 - **Release:** Stable/Beta kanalı GitHub Releases ile çalışır. **beta-v30** = `1.0.30+30` (analitik ızgara toggle, 0039–0043 RPC/gamification, WP-166–168). Onay: `docs/qa/BETA-v30-ONAY-LISTESI.md`. Play production ayrı kalite kapısından geçer.
 - **Kalite kapıları:** Her WP DoD'siz kapanmaz; stable release kalite kapısından geçer (AGENTS.md §3). Server-authoritative XP, RLS/sosyal profil, platform sınırları → `docs/KALITE-PROGRAMI.md`.
-- **Son WP numarası:** 194 (beta-v33 hazırlık). **Sıradaki boş numara WP-195.**
-- **Release:** **beta-v33** = `1.0.33+33` (WP-190–193 cihaz turu-2 + test listesi). Cihaz QA: `docs/qa/BETA-v33-TEST.md`.
+- **Son WP numarası:** 195 (feedback trigger + taç). **Sıradaki boş numara WP-196.**
+- **Release:** **beta-v33** = `1.0.33+33`. Cihaz QA: `docs/qa/BETA-v33-TEST.md`. Canlıda **0046** (feedback trigger) de gerekir.
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
   - Flutter: `C:\src\flutter` · Android SDK: `C:\Android\Sdk`
@@ -80,7 +80,7 @@
 - **Dal:** — (main)
 - **Başlangıç:** —
 - **Son güncelleme:** 2026-07-18 (Europe/Istanbul)
-- **Not:** WP-194 beta-v33 hazır (1.0.33+33; analyze 0; test **+547**). Tag/CI sahip.
+- **Not:** WP-195 0046 trigger + taç %18 (analyze 0; test **+547**). Sahip: 0046 SQL.
 
 
 ---
@@ -198,6 +198,7 @@
 | WP-192 | [~] Test için bekliyor | Gerçek taç + taç XP barı | cihaz profil |
 | WP-193 | [~] Test için bekliyor | Feedback gerçek hata + dar classify | sahip SQL + cihaz Detay |
 | WP-194 | [~] Tag/beta bekliyor | beta-v33: 1.0.33+33 + BETA-v33-TEST | `docs/qa/BETA-v33-TEST.md` |
+| WP-195 | [~] Test için bekliyor | 0046 feedback trigger (42704 role) + taç %18 | sahip: 0046 SQL + cihaz |
 
 > **2026-07-14 proje denetimi:** Serbest sürükle-bırak ızgara, canlı grup hedefi ve saat stilleri **zaten kodda uygulanmış** (backlog stale idi; geçici WP-72/73/75 iptal).
 >
@@ -886,11 +887,19 @@
 
 ## Test için bekleyenler
 
+### WP-195: Feedback trigger 42704 + taç boyutu (Grok 2026-07-18) 📦
+- **195a:** `0046_fix_feedback_trigger.sql` — `notify_admins_on_feedback` role filtresi kaldırıldı (app_admins satırı = super-admin); search_path + NOTIFY
+- **Gerçek kök neden:** `42704 column "role" does not exist` (0029 trigger) — önbellek/RLS değil · `docs/qa/WP-193-FEEDBACK-DERIN.md` güncellendi
+- **195b:** `crowned_avatar.dart` taç ~%18 büyük
+- **Kanıt:** analyze 0 · full test **+547 All tests passed**
+- **Sahip:** proje `jiphfrpzvkpzubbkhrwb` üzerinde **0046 SQL** + feedback smoke
+- **Push yok**
+
 ### WP-194: beta-v33 yayın hazırlığı (docs+sürüm) 📦
 - **Sürüm:** `1.0.33+33` · release_notes v33 iki-dilli · CHANGELOG beta-v33
 - **Test listesi:** `docs/qa/BETA-v33-TEST.md` (v32 → v33 yönlendirir)
 - **Kanıt:** analyze 0 · full test **+547 All tests passed**
-- **Sahip:** canlı SQL 0044+0045 (`jiphfrpzvkpzubbkhrwb`) + `git tag beta-v33 && git push origin beta-v33` (CI APK) + cihaz listesi
+- **Sahip:** canlı SQL 0044+0045+**0046** (`jiphfrpzvkpzubbkhrwb`) + `git tag beta-v33 && git push origin beta-v33` (CI APK) + cihaz listesi
 - **Push yok** (bu commit)
 
 ### WP-190–193: Cihaz turu-2 (Grok 2026-07-18) 📦

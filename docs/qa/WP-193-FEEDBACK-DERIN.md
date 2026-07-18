@@ -1,103 +1,104 @@
-# WP-193 — Feedback hâlâ “sunucu hazır değil”: kesin teşhis
+# WP-193 / WP-195a — Feedback teşhis (GERÇEK kök neden)
 
 | Alan | Değer |
 |---|---|
-| Tarih | 2026-07-18 |
-| Aşama | Kod: hata detayı + dar sınıflandırma · **sahip SQL teyidi bekliyor** |
+| Tarih | 2026-07-18 (WP-195a güncelleme) |
 | Beta URL | `https://jiphfrpzvkpzubbkhrwb.supabase.co` |
 | Proje ref | **`jiphfrpzvkpzubbkhrwb`** |
+| Aşama | **Kök neden net** · sahip: **0046 SQL** canlıya uygula + cihaz smoke |
 
 ---
 
-## 1. En olası kök neden
+## 0. GERÇEK kök neden (cihaz kanıtı) — WP-195a
 
-SQL Editor / migration’ları **yanlış Supabase projesine** çalıştırılmış olması.
+| | |
+|---|---|
+| **Detay kodu** | **`42704` · `column "role" does not exist`** |
+| **Nereden** | AFTER INSERT trigger `on_new_feedback` → `notify_admins_on_feedback()` |
+| **Dosya (eski)** | `0029_admin_panel_fixes.sql` satır ~49: `where role = 'super_admin'` |
+| **Şema gerçeği** | `app_admins` (0018): yalnız `user_id`, `created_at` — **`role` kolonu YOK** |
+| **Etki** | Her `feedback_tickets` INSERT → trigger patlar → **transaction rollback** |
+| **Değildi** | PostgREST şema önbelleği (PGRST205), RLS 42501, yanlış proje (birincil) |
+
+**Düzeltme (repo):** `supabase/migrations/0046_fix_feedback_trigger.sql`  
+- `create or replace function notify_admins_on_feedback()` — `where role…` **kaldırıldı**  
+- `security definer` + `set search_path = public`  
+- `notify pgrst, 'reload schema'`
+
+### Sahip aksiyonu (zorunlu)
+
+1. Dashboard proje = `jiphfrpzvkpzubbkhrwb` teyit  
+2. SQL Editor’da **`0046_fix_feedback_trigger.sql`** çalıştır  
+3. Cihazda feedback gönder → başarı; **42704 yok**
+
+```sql
+-- Hızlı doğrulama: fonksiyon tanımında "role" kalmamalı
+select pg_get_functiondef('public.notify_admins_on_feedback()'::regprocedure);
+```
+
+---
+
+## 1. Eski hipotezler (ikincil / hâlâ kontrol et)
+
+| Hipotez | Ne zaman |
+|---|---|
+| Yanlış proje SQL | Tablo NULL / migration o projede yok |
+| Schema cache PGRST205 | Tablo var, REST eski — 0045 NOTIFY |
+| RLS 42501 | Oturum/policy — trigger’dan bağımsız |
+
+### 1.1 Proje ref
 
 | Kontrol | Beklenen |
 |---|---|
-| Dashboard sol üst proje ref | `jiphfrpzvkpzubbkhrwb` |
-| `app/env.json` → `SUPABASE_URL` | `https://jiphfrpzvkpzubbkhrwb.supabase.co` |
-| Farklı projeye 0044/0045 attıysan | Beta REST hâlâ tabloyu görmez → schema_missing |
+| Dashboard ref | `jiphfrpzvkpzubbkhrwb` |
+| `env.json` SUPABASE_URL | `https://jiphfrpzvkpzubbkhrwb.supabase.co` |
 
-**Yap:** Dashboard’da açık projenin ref’inin **birebir** `jiphfrpzvkpzubbkhrwb` olduğunu teyit et. Değilse doğru projeye geç.
-
----
-
-## 2. O projede SQL kontrolleri
-
-### 2.1 Tablo var mı?
+### 1.2 Tablo
 
 ```sql
 select to_regclass('public.feedback_tickets') as table_ok;
 ```
 
-| Sonuç | Anlam |
-|---|---|
-| `feedback_tickets` | Tablo var → 2.2 |
-| `NULL` | Tablo **yok** → bu projede `0044` + `0045` çalıştır |
-
-### 2.2 PostgREST önbellek
-
-Tablo varken REST hâlâ hata veriyorsa:
-
-```sql
-NOTIFY pgrst, 'reload schema';
-```
-
-veya Dashboard → Project Settings → API → restart (varsa).
-
-Dosya: `supabase/migrations/0045_feedback_reload.sql` (ensure + NOTIFY).
-
-### 2.3 Policy / grant smoke
+### 1.3 Policy smoke
 
 ```sql
 select has_table_privilege('authenticated', 'public.feedback_tickets', 'insert');
--- true beklenir
 ```
 
 ---
 
-## 3. Cihaz: gerçek hata kodunu oku (WP-193)
+## 2. Cihaz: Detay kodları (WP-193 UI)
 
-Uygulama artık snackbar’da net mesajın **altında**:
+Snackbar:
 
 ```text
 Detay: <code> <message>
 ```
 
-örnekler:
-
-| Detay | Yorum |
-|---|---|
-| `42P01 relation "feedback_tickets" does not exist` | Tablo yok — yanlış proje veya 0044 yok |
-| `PGRST205 … schema cache` | Tablo var, önbellek eski — NOTIFY / 0045 |
-| `42501` / `permission denied` / RLS | Oturum/RLS — `schema_missing` **değil** |
-
-**Sahip:** Cihazda feedback dene → snackbar **Detay** satırını bu rapora yapıştır.
+| Detay | Anlam | Aksiyon |
+|---|---|---|
+| **`42704` … `role` does not exist** | **Bozuk trigger (0029)** | **0046 uygula** |
+| `42P01` / relation does not exist | Tablo yok | 0044/0045/0046 bu projede |
+| `PGRST205` / schema cache | Önbellek | NOTIFY / 0045–0046 |
+| `42501` / permission denied / RLS | Oturum/RLS | session; policy |
 
 ---
 
-## 4. Kod değişiklikleri (WP-193)
+## 3. Kod / migration envanteri
 
 | Dosya | Ne |
 |---|---|
-| `admin_repository.dart` | `classifyFeedbackSubmitError` daraltıldı; `feedbackErrorDisplay` |
-| `supabase_admin_repository.dart` | AdminException mesajına ham code+message |
-| `report_issue_dialog.dart` | Her zaman detaylı snackbar (release dahil) |
-
-### Sınıflandırma (schema_missing yalnız)
-
-- Kod: `42P01`, `PGRST205`
-- Mesaj: `schema cache` · `could not find the table` · `relation … does not exist` + `feedback`
-
-`permission denied for relation feedback_*` → **session_or_rls** (artık schema değil).
+| `admin_repository.dart` | Dar `schema_missing`; `feedbackErrorDisplay` (WP-193) |
+| `report_issue_dialog.dart` | Detay snackbar (WP-193) |
+| `0045_feedback_reload.sql` | Ensure + NOTIFY (önbellek) |
+| **`0046_fix_feedback_trigger.sql`** | **Trigger role fix (asıl onarım)** |
 
 ---
 
-## 5. Kanıt etiketleri
+## 4. Kanıt etiketleri
 
 | İddia | Etiket |
 |---|---|
-| Detay satırı kodda | `Kodda doğrulandı` |
-| Cihazda hangi kod çıktı | `Cihazda doğrulanmalı` (sahip: Detay’ı yaz) |
-| Proje ref = jiphfrpzvkpzubbkhrwb | `Kodda doğrulandı` (env) / dashboard teyidi sahip |
+| 42704 + role trigger kodda/dokümanda | `Kodda doğrulandı` |
+| 0046 uygulandı + insert başarılı | `Cihazda doğrulanmalı` (sahip) |
+| Önceki “önbellek birincil” hipotezi | **Yanlış / ikincil** — 42704 ile çürütüldü |

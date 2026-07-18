@@ -24,6 +24,11 @@ void main() {
     expect(find.byType(CrownedAvatar), findsOneWidget);
     expect(find.byType(CustomPaint), findsWidgets);
     expect(find.byIcon(Icons.workspace_premium), findsNothing);
+    // WP-195b: taç CustomPaint boyutu ~%18 daha büyük (1.15→1.36, 0.75→0.89).
+    final paints = tester.widgetList<CustomPaint>(find.byType(CustomPaint));
+    final crown = paints.where((p) => p.painter is CrownPainter).first;
+    expect(crown.size.width, closeTo(32 * 1.36, 0.01));
+    expect(crown.size.height, closeTo(32 * 0.89, 0.01));
   });
 
   test('xpBarMetrics crown thresholds progress', () {

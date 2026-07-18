@@ -29,8 +29,8 @@ class CrownedAvatar extends StatelessWidget {
     final rank = crownRank;
     final hasCrown = rank != null && rank.isNotEmpty;
     final color = hasCrown ? crownColorFor(rank) : null;
-    // Taç halkası + ikon için ekstra pad.
-    final pad = hasCrown ? radius * 0.45 : 0.0;
+    // Taç halkası + ikon için ekstra pad (WP-195b: taç ~%18 daha büyük).
+    final pad = hasCrown ? radius * 0.52 : 0.0;
     final size = (radius + pad) * 2;
 
     Widget avatar = UserAvatar(
@@ -41,6 +41,9 @@ class CrownedAvatar extends StatelessWidget {
 
     if (hasCrown && color != null) {
       final ringSize = radius * 2 + 8;
+      // WP-195b: taç boyutu önceki 1.15×0.75 → ~%18 artış.
+      final crownW = radius * 1.36;
+      final crownH = radius * 0.89;
       avatar = SizedBox(
         width: size,
         height: size,
@@ -77,9 +80,9 @@ class CrownedAvatar extends StatelessWidget {
             ),
             // Üstte gerçek taç (CustomPainter)
             Positioned(
-              top: -radius * 0.15,
+              top: -radius * 0.22,
               child: CustomPaint(
-                size: Size(radius * 1.15, radius * 0.75),
+                size: Size(crownW, crownH),
                 painter: CrownPainter(
                   color: color,
                   outline: Colors.black.withValues(alpha: 0.35),
