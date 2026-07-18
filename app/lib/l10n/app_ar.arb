@@ -3615,6 +3615,10 @@
     "description": "Stats user-facing text. Source: Bu yıl"
   },
   "statsBugun": "اليوم",
+  "statsBugunKatilim": "نشط اليوم",
+  "statsHedefeKalan": "المتبقي للهدف",
+  "statsHedefTamam": "تم الوصول",
+  "statsBugunLider": "الأول اليوم",
   "@statsBugun": {
     "description": "Stats user-facing text. Source: Bugün"
   },

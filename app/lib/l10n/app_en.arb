@@ -3618,6 +3618,22 @@
   "@statsBugun": {
     "description": "Stats user-facing text. Source: Bugün"
   },
+  "statsBugunKatilim": "Active today",
+  "@statsBugunKatilim": {
+    "description": "Group stats: how many members studied today (WP-204)"
+  },
+  "statsHedefeKalan": "Left to goal",
+  "@statsHedefeKalan": {
+    "description": "Group stats: remaining time to the group daily goal (WP-204)"
+  },
+  "statsHedefTamam": "Reached",
+  "@statsHedefTamam": {
+    "description": "Group stats: group daily goal already reached (WP-204)"
+  },
+  "statsBugunLider": "Top today",
+  "@statsBugunLider": {
+    "description": "Group stats: top-contributing member today (WP-204)"
+  },
   "statsBugunkuGrupHedefi": "Today's group goal",
   "@statsBugunkuGrupHedefi": {
     "description": "Stats user-facing text. Source: Bugünkü grup hedefi"

@@ -255,9 +255,9 @@ class StudyTimerService : Service() {
     }
 
     /**
-     * WP-137 P2: varsayılan = standart sistem stili + usesChronometer + aksiyonlar.
-     * Expanded/custom RemoteViews yalnız `flutter.timer_panel_expanded=true` iken
-     * (feature flag, default kapalı) — regresyon izolasyonu.
+     * WP-205: varsayılan = büyük akan HH:MM:SS (custom view, dolgu metni yok) +
+     * native aksiyon butonları. Flag kapalıysa (kaçış valfi) standart sistem
+     * stili + köşe chronometer'a düşer. (WP-137'de default kapalıydı → v37 revert.)
      */
     private fun buildRunningNotification(startedAtMs: Long): Notification {
         ensureChannel()
@@ -269,8 +269,10 @@ class StudyTimerService : Service() {
             .setCategory(NotificationCompat.CATEGORY_STOPWATCH)
 
         if (useExpandedCustomPanel()) {
-            // Flag açık: One UI satır layout (v23); terfi garanti değil.
-            val custom = buildRunningRemoteViews(startedAtMs, isBreak)
+            // WP-205 (default): büyük akan HH:MM:SS (custom view) — dolgu başlık/gövde
+            // metni YOK. Renk sistem bildirim TextAppearance'ından gelir (light/dark
+            // uyumlu); aksiyonlar aşağıda native olarak eklenir.
+            val custom = buildRunningRemoteViews(startedAtMs)
             builder.setContentTitle("")
                 .setContentText("")
                 .setUsesChronometer(false)
@@ -279,7 +281,7 @@ class StudyTimerService : Service() {
                 .setCustomContentView(custom)
                 .setCustomBigContentView(custom)
         } else {
-            // P2 (default): standard ongoing + native chronometer + actions.
+            // Fallback (flag kapalı): standard ongoing + köşede native chronometer.
             builder.setContentTitle(
                 if (isBreak) getString(R.string.timer_break_title)
                 else getString(R.string.timer_focusing_title),
@@ -292,21 +294,18 @@ class StudyTimerService : Service() {
                 .setWhen(startedAtMs)
                 .setShowWhen(true)
                 .setChronometerCountDown(false)
-            if (isBreak) {
-                builder.addAction(
-                    0,
-                    getString(R.string.action_return_to_work),
-                    endBreakActionPending(),
-                )
-            } else {
-                builder.addAction(
-                    0,
-                    getString(R.string.action_break),
-                    breakActionPending(),
-                )
-            }
-            builder.addAction(0, getString(R.string.action_stop), stopActionPending())
         }
+        // Aksiyonlar iki stilde de native butonlardır → her temada görünür.
+        if (isBreak) {
+            builder.addAction(
+                0,
+                getString(R.string.action_return_to_work),
+                endBreakActionPending(),
+            )
+        } else {
+            builder.addAction(0, getString(R.string.action_break), breakActionPending())
+        }
+        builder.addAction(0, getString(R.string.action_stop), stopActionPending())
         return builder.build()
     }
 
@@ -331,19 +330,19 @@ class StudyTimerService : Service() {
         return builder.build()
     }
 
-    /** Feature flag: SharedPreferences `flutter.timer_panel_expanded` (default false). */
+    /**
+     * WP-205: büyük HH:MM:SS panel artık VARSAYILAN (default true). Bir cihazda
+     * custom view sorun çıkarırsa `flutter.timer_panel_expanded=false` ile standart
+     * stile düşülebilir (acil kaçış valfi).
+     */
     private fun useExpandedCustomPanel(): Boolean =
-        prefs().getBoolean(KEY_PANEL_EXPANDED, false)
+        prefs().getBoolean(KEY_PANEL_EXPANDED, true)
 
-    private fun buildRunningRemoteViews(startedAtMs: Long, isBreak: Boolean): RemoteViews {
+    /** WP-205: sadece akan HH:MM:SS. Başlat/Durdur native aksiyon butonlarında. */
+    private fun buildRunningRemoteViews(startedAtMs: Long): RemoteViews {
         val views = RemoteViews(packageName, R.layout.timer_notification)
         val base = SystemClock.elapsedRealtime() - (System.currentTimeMillis() - startedAtMs)
         views.setChronometer(R.id.notif_timer_elapsed, base, null, true)
-        views.setTextViewText(
-            R.id.notif_timer_action,
-            if (isBreak) getString(R.string.action_stop) else getString(R.string.action_stop),
-        )
-        views.setOnClickPendingIntent(R.id.notif_timer_action, stopActionPending())
         return views
     }
 
@@ -356,8 +355,6 @@ class StudyTimerService : Service() {
             false,
         )
         views.setTextViewText(R.id.notif_timer_elapsed, "00:00:00")
-        views.setTextViewText(R.id.notif_timer_action, getString(R.string.action_start))
-        views.setOnClickPendingIntent(R.id.notif_timer_action, startActionPending())
         return views
     }
 

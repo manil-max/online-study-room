@@ -3,6 +3,42 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.37",
+      "buildNumber": 37,
+      "channel": "stable",
+      "date": "2026-07-19",
+      "title": "v37: Grup hedefi özeti + yalın sayaç bildirimi",
+      "highlights": [
+        "Grup hedefi göstergesinin yanında bugün aktif üye sayısı, hedefe kalan süre ve günün lideri görünür.",
+        "Hedef tamamlandığında kalan süre yerine Tamamlandı gösterilir.",
+        "Sayaç bildiriminde büyük, canlı HH:MM:SS paneli varsayılan olarak geri geldi; dolgu metni kaldırıldı.",
+        "Başlat/Durdur/Mola artık tema ve cihazlarda daha güvenilir olan sistem aksiyonlarıdır."
+      ],
+      "fixes": [
+        "Açık bildirim tonlarında görünmeyen sabit beyaz özel panel renkleri kaldırıldı.",
+        "Grup hedef göstergesinin çevresindeki boş alan güncel özetle dolduruldu."
+      ],
+      "notes": [
+        "İlk cihaz testi: Samsung bildirim panelinde açık/koyu tema, Başlat/Durdur/Mola ve uygulama kapalıyken sayaç akışını kontrol et.",
+        "GitHub sideload stable APK; in-app güncelleme stable kullanıcılara gider."
+      ],
+      "titleEn": "v37: Group goal summary + clean timer notification",
+      "highlightsEn": [
+        "The group-goal gauge now shows active members today, time left, and today's top contributor beside it.",
+        "When the goal is met, the remaining-time value becomes Reached.",
+        "The large live HH:MM:SS timer panel is back by default, without filler copy.",
+        "Start/Stop/Break are now native system actions for more reliable theming across devices."
+      ],
+      "fixesEn": [
+        "Removed fixed white custom-panel colors that disappeared on light notification shades.",
+        "Filled the empty space around the group goal gauge with a current-day summary."
+      ],
+      "notesEn": [
+        "First device check: verify light/dark notification shades, Start/Stop/Break, and timer operation while the app is closed on Samsung.",
+        "GitHub sideload stable APK; in-app update goes to stable users."
+      ]
+    },
+    {
       "versionName": "1.0.36",
       "buildNumber": 36,
       "channel": "stable",

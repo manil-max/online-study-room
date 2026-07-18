@@ -4,6 +4,18 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [v37 / 1.0.37+37] - 2026-07-19
+
+> **Kararlı (stable) test sürümü.** Grup hedefi özetini görünür kılar ve sayaç bildirimini saat uygulaması gibi yalın hâline döndürür.
+
+### Öne çıkanlar
+- **Grup hedefi:** Günlük hedef göstergesinin yanında artık bugün aktif üye sayısı, hedefe kalan süre ve günün lideri görünür. Hedef tamamlandığında kalan süre yerine “Tamamlandı” gösterilir.
+- **Sayaç bildirimi:** Büyük, canlı `HH:MM:SS` paneli varsayılan olarak geri geldi; dolgu başlık/gövde metni kaldırıldı. Başlat/Durdur/Mola sistem aksiyonları olarak görünür.
+
+### Notlar
+- İlk cihaz testi için Samsung bildirim panelinde açık/koyu tema, Başlat/Durdur/Mola ve uygulama kapalıyken sayaç akışı kontrol edilmelidir.
+- GitHub sideload **stable** APK; in-app güncelleme stable kullanıcılara gider.
+
 ## [v36 / 1.0.36+36] - 2026-07-19
 
 > **Kararlı (stable) sürüm.** Manuel süre gece-yarısı düzeltmesi + istatistik ekranı sadeleştirme/yenileme. Herkese (stable kanal).

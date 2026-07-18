@@ -105,6 +105,21 @@ class ClassStatsView extends ConsumerWidget {
     final goalSeconds = groupGoalMinutes * 60;
     final groupDay = groupDayTotals(stats);
     final todayGroupTotal = groupDay[dayOf(now)] ?? 0;
+    // WP-204: gauge yanı özeti — bugünün en çok katkı veren üyesi.
+    final nameById = {for (final m in members) m.id: m.displayName};
+    MapEntry<String, int>? topTodayEntry;
+    for (final e in todayTotals.entries) {
+      if (e.value <= 0) continue;
+      if (topTodayEntry == null || e.value > topTodayEntry.value) {
+        topTodayEntry = e;
+      }
+    }
+    final topTodaySeconds = topTodayEntry?.value ?? 0;
+    final String? topTodayName = topTodayEntry == null
+        ? null
+        : ((nameById[topTodayEntry.key] ?? '').isEmpty
+              ? AppLocalizations.of(context).statsIsimsiz
+              : nameById[topTodayEntry.key]);
 
     // Tüm-zamanlar metrikleri (§WP-10) — dönem seçiminden bağımsız.
     final allTimeTotal = totalOfDayTotals(groupDay);
@@ -191,13 +206,39 @@ class ClassStatsView extends ConsumerWidget {
               profile: rows[i].member.isActive ? rows[i].member : null,
             ),
         const SizedBox(height: 16),
-        // WP-203: tek grup günlük hedef göstergesi (gauge). İkinci hedef kartı
-        // (sağdaki) kaldırıldı — mükerrerdi.
-        Center(
-          child: _GroupGaugeCard(
-            progress: goalSeconds <= 0 ? 0 : todayGroupTotal / goalSeconds,
-            todaySeconds: todayGroupTotal,
-            goalSeconds: goalSeconds,
+        // WP-204: gauge sola yaslı; sağdaki boşluğu bugüne dair kısa özet doldurur
+        // (katılım / hedefe kalan / bugünün lideri). Önceden ortalanmış tek kart
+        // iki yanda boş alan bırakıyordu.
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SizedBox(
+                width: 150,
+                child: _GroupGaugeCard(
+                  progress: goalSeconds <= 0
+                      ? 0
+                      : todayGroupTotal / goalSeconds,
+                  todaySeconds: todayGroupTotal,
+                  goalSeconds: goalSeconds,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _GroupTodaySummaryCard(
+                  participants: todayTotals.values.where((v) => v > 0).length,
+                  totalMembers: members.length,
+                  remainingSeconds: (goalSeconds - todayGroupTotal).clamp(
+                    0,
+                    1 << 30,
+                  ),
+                  goalReached:
+                      goalSeconds > 0 && todayGroupTotal >= goalSeconds,
+                  topName: topTodayName,
+                  topSeconds: topTodaySeconds,
+                ),
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 16),
@@ -332,7 +373,9 @@ class ClassStatsView extends ConsumerWidget {
               stats: stats,
               days: trendDays,
               currentUserId: currentUserId,
-              emptyLabel: AppLocalizations.of(context).statsBuDonemdeHenuzCalisma,
+              emptyLabel: AppLocalizations.of(
+                context,
+              ).statsBuDonemdeHenuzCalisma,
               namelessLabel: AppLocalizations.of(context).statsIsimsiz,
             ),
           ),
@@ -429,6 +472,7 @@ class _GroupGaugeCard extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             GaugeChart(
               progress: progress,
@@ -465,6 +509,111 @@ class _GroupGaugeCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// WP-204: gauge'un yanındaki boşluğu dolduran bugün-odaklı özet kartı.
+class _GroupTodaySummaryCard extends StatelessWidget {
+  const _GroupTodaySummaryCard({
+    required this.participants,
+    required this.totalMembers,
+    required this.remainingSeconds,
+    required this.goalReached,
+    required this.topName,
+    required this.topSeconds,
+  });
+
+  final int participants;
+  final int totalMembers;
+  final int remainingSeconds;
+  final bool goalReached;
+  final String? topName;
+  final int topSeconds;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _MiniStatRow(
+              icon: Icons.groups_outlined,
+              label: l10n.statsBugunKatilim,
+              value: '$participants/$totalMembers',
+            ),
+            const SizedBox(height: 12),
+            _MiniStatRow(
+              icon: goalReached
+                  ? Icons.check_circle_outline
+                  : Icons.flag_outlined,
+              label: l10n.statsHedefeKalan,
+              value: goalReached
+                  ? l10n.statsHedefTamam
+                  : formatHuman(remainingSeconds),
+            ),
+            const SizedBox(height: 12),
+            _MiniStatRow(
+              icon: Icons.emoji_events_outlined,
+              label: l10n.statsBugunLider,
+              value: topName == null
+                  ? '—'
+                  : '$topName · ${formatHuman(topSeconds)}',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// İkon + küçük etiket + belirgin değer (dar sütuna sığan alt-alta düzen).
+class _MiniStatRow extends StatelessWidget {
+  const _MiniStatRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: theme.colorScheme.onSurfaceVariant),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              Text(
+                value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
