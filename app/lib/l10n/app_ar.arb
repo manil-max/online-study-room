@@ -4771,7 +4771,7 @@
   "taskListDaily": "يومي",
   "taskListWeekly": "أسبوعي",
   "taskListAdd": "إضافة عنصر",
-  "taskListEmpty": "لا عناصر لهذه الفترة",
+  "taskListEmpty": "لا مهام بعد",
   "taskListHint": "اكتب هدفاً قصيراً",
   "taskListDelete": "حذف",
   "taskListCompletedSemantic": "مكتمل",

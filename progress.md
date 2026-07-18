@@ -20,7 +20,7 @@
 - **Navigasyon hedefi:** Ana Sayfa / Saat / Gruplar / İstatistikler / Profil. Ana Sayfa günlük kullanım alanıdır; diğer alanların verisi kendi sekmelerinde eksiksiz bulunur.
 - **Release:** Stable/Beta kanalı GitHub Releases ile çalışır. **beta-v30** = `1.0.30+30` (analitik ızgara toggle, 0039–0043 RPC/gamification, WP-166–168). Onay: `docs/qa/BETA-v30-ONAY-LISTESI.md`. Play production ayrı kalite kapısından geçer.
 - **Kalite kapıları:** Her WP DoD'siz kapanmaz; stable release kalite kapısından geçer (AGENTS.md §3). Server-authoritative XP, RLS/sosyal profil, platform sınırları → `docs/KALITE-PROGRAMI.md`.
-- **Son WP numarası:** 195 (feedback trigger + taç). **Sıradaki boş numara WP-196.**
+- **Son WP numarası:** 200 (Görevler deadline modeli). **Sıradaki boş numara WP-201.**
 - **Release:** **beta-v33** = `1.0.33+33`. Cihaz QA: `docs/qa/BETA-v33-TEST.md`. Canlıda **0046** (feedback trigger) de gerekir.
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
@@ -80,7 +80,7 @@
 - **Dal:** — (main)
 - **Başlangıç:** —
 - **Son güncelleme:** 2026-07-18 (Europe/Istanbul)
-- **Not:** WP-195 0046 trigger + taç %18 (analyze 0; test **+547**). Sahip: 0046 SQL.
+- **Not:** WP-196–200 Görevler deadline (analyze 0; test **+557 All tests passed**). Cihaz QA.
 
 
 ---
@@ -199,6 +199,11 @@
 | WP-193 | [~] Test için bekliyor | Feedback gerçek hata + dar classify | sahip SQL + cihaz Detay |
 | WP-194 | [~] Tag/beta bekliyor | beta-v33: 1.0.33+33 + BETA-v33-TEST | `docs/qa/BETA-v33-TEST.md` |
 | WP-195 | [~] Test için bekliyor | 0046 feedback trigger (42704 role) + taç %18 | sahip: 0046 SQL + cihaz |
+| WP-196 | [~] Test için bekliyor | Görevler deadline plan + model/repo v2 | cihaz |
+| WP-197 | [~] Test için bekliyor | dueAt + sıralama + urgency renk | — |
+| WP-198 | [~] Test için bekliyor | Araçlar + Görevler CRUD | cihaz Araçlar |
+| WP-199 | [~] Test için bekliyor | Home kartı gör/renk/tik | cihaz Home |
+| WP-200 | [~] Test için bekliyor | Görevler cila (gecikti/a11y) | cihaz |
 
 > **2026-07-14 proje denetimi:** Serbest sürükle-bırak ızgara, canlı grup hedefi ve saat stilleri **zaten kodda uygulanmış** (backlog stale idi; geçici WP-72/73/75 iptal).
 >
@@ -886,6 +891,15 @@
 > ⚠️ **Ürün kararları:** (1) WP-66 §0 retention varsayılanları, (2) legal site domain/iletişim kimliği, (3) hedef kitle 13+/16+, (4) Play Console'da alarmı core functionality olarak savunma veya safe fallback, (5) geliştirici hesap türü/tarihi. Bunlar planı engellemez; ilgili WP başlamadan kullanıcı onayı gerekir.
 
 ## Test için bekleyenler
+
+### WP-196–200: Görevler deadline modeli (Grok 2026-07-18) 📦
+- **196:** Plan + `UserTask.dueAt` + `user_tasks_v2` tek liste (`GOREVLER-DEADLINE-PLAN.md`)
+- **197:** `core/tasks/task_deadline.dart` (Istanbul gün sonu, sort, renk)
+- **198:** Alt-nav **Araçlar**; `ClockTab.tasks` + `TasksScreen` CRUD
+- **199:** Home kartı yalnız gör/renk/tik (ekleme yok)
+- **200:** Gecikti rozeti, boş metin, urgency smoke
+- **Kanıt:** analyze 0 · full test **+557 All tests passed**
+- **Push yok**
 
 ### WP-195: Feedback trigger 42704 + taç boyutu (Grok 2026-07-18) 📦
 - **195a:** `0046_fix_feedback_trigger.sql` — `notify_admins_on_feedback` role filtresi kaldırıldı (app_admins satırı = super-admin); search_path + NOTIFY

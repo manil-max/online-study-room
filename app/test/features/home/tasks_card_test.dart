@@ -40,7 +40,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Tasks'), findsOneWidget);
-    expect(find.text('No items for this period'), findsOneWidget);
+    expect(find.text('No tasks yet'), findsOneWidget);
     // Home kartında ekleme yok
     expect(find.byIcon(Icons.add), findsNothing);
 

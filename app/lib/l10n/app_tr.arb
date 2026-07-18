@@ -1130,7 +1130,7 @@
   "taskListDaily": "Günlük",
   "taskListWeekly": "Haftalık",
   "taskListAdd": "Madde ekle",
-  "taskListEmpty": "Bu dönem için madde yok",
+  "taskListEmpty": "Henüz görev yok",
   "taskListHint": "Kısa bir hedef yaz",
   "taskListDelete": "Sil",
   "taskListCompletedSemantic": "Tamamlandı",

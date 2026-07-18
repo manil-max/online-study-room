@@ -4786,7 +4786,7 @@
   "@taskListAdd": {
     "description": "Add task button"
   },
-  "taskListEmpty": "No items for this period",
+  "taskListEmpty": "No tasks yet",
   "@taskListEmpty": {
     "description": "Empty tasks state"
   },

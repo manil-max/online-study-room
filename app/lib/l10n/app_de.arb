@@ -4771,7 +4771,7 @@
   "taskListDaily": "Täglich",
   "taskListWeekly": "Wöchentlich",
   "taskListAdd": "Eintrag hinzufügen",
-  "taskListEmpty": "Keine Einträge für diesen Zeitraum",
+  "taskListEmpty": "Noch keine Aufgaben",
   "taskListHint": "Kurzes Ziel schreiben",
   "taskListDelete": "Löschen",
   "taskListCompletedSemantic": "Erledigt",
