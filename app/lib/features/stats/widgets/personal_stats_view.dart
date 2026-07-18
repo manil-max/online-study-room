@@ -36,8 +36,9 @@ class PersonalStatsView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final now = DateTime.now();
-    final period = ref.watch(statsPeriodProvider);
-    final (from, to) = period.range(now: now);
+    final sel = ref.watch(statsPeriodProvider);
+    final period = sel.period;
+    final (from, to) = sel.range(now: now);
     final periodSessions = inRange(sessions, from, to).toList();
 
     final today = secondsOnDay(sessions, now);
@@ -312,15 +313,15 @@ class _TrendCardState extends ConsumerState<_TrendCard> {
   void initState() {
     super.initState();
     // İlk açılış: mevcut master dönemle hizala.
-    _days = ref.read(statsPeriodProvider).chartDays(options: _options);
+    _days = ref.read(statsPeriodProvider).period.chartDays(options: _options);
   }
 
   @override
   Widget build(BuildContext context) {
     // Master dönem değişince yerel 7/14/30'u güncelle; kullanıcı override edebilir.
-    ref.listen<StatsPeriod>(statsPeriodProvider, (prev, next) {
-      if (prev == next) return;
-      final mapped = next.chartDays(options: _options);
+    ref.listen(statsPeriodProvider, (prev, next) {
+      if (prev?.period == next.period) return;
+      final mapped = next.period.chartDays(options: _options);
       if (_days != mapped) setState(() => _days = mapped);
     });
 

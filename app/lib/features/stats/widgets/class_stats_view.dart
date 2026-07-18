@@ -42,8 +42,9 @@ class ClassStatsView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final now = DateTime.now();
-    final period = ref.watch(statsPeriodProvider);
-    final (from, to) = period.range(now: now);
+    final sel = ref.watch(statsPeriodProvider);
+    final period = sel.period;
+    final (from, to) = sel.range(now: now);
 
     // Seçili dönem leaderboard'u: userId → saniye (per-user-per-gün toplamdan).
     final totals = userTotalsInRange(stats, from, to);
@@ -57,7 +58,11 @@ class ClassStatsView extends ConsumerWidget {
     final maxSeconds = rows.isEmpty ? 0 : rows.first.seconds;
     // Üst dönem → bar/çizgi penceresi (7 veya 30; yerelde ayrı seçici yok).
     final chartDays = period.chartDays(options: const [7, 14, 30]);
-    final trendDays = period == StatsPeriod.month || period == StatsPeriod.all
+    final trendDays =
+        period == StatsPeriod.month ||
+            period == StatsPeriod.year ||
+            period == StatsPeriod.all ||
+            period == StatsPeriod.custom
         ? 30
         : chartDays;
     // Üye başına çalışma serisi (tüm günlük toplamlardan, dönemden bağımsız).

@@ -59,14 +59,28 @@ class AnalyticsPeriod {
 
 enum AnalyticsCompare { none, previousEqualLength }
 
-/// StatsPeriod → AnalyticsPeriod köprüsü (flag geçişi).
+/// StatsPeriod → AnalyticsPeriod köprüsü.
 AnalyticsPeriod analyticsPeriodFromStats(StatsPeriod p) {
   return switch (p) {
     StatsPeriod.today => const AnalyticsPeriod(AnalyticsPeriodKind.today),
     StatsPeriod.week => const AnalyticsPeriod(AnalyticsPeriodKind.week),
     StatsPeriod.month => const AnalyticsPeriod(AnalyticsPeriodKind.month),
+    StatsPeriod.year => const AnalyticsPeriod(AnalyticsPeriodKind.year),
     StatsPeriod.all => const AnalyticsPeriod(AnalyticsPeriodKind.all),
+    StatsPeriod.custom => const AnalyticsPeriod(AnalyticsPeriodKind.custom),
   };
+}
+
+/// WP-178: StatsPeriodSelection → AnalyticsPeriod.
+AnalyticsPeriod analyticsPeriodFromSelection(StatsPeriodSelection s) {
+  return AnalyticsPeriod(
+    analyticsPeriodFromStats(s.period).kind,
+    customFrom: s.customFrom,
+    customTo: s.customTo,
+    compare: s.comparePrevious
+        ? AnalyticsCompare.previousEqualLength
+        : AnalyticsCompare.none,
+  );
 }
 
 

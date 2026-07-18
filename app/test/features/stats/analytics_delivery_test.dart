@@ -275,7 +275,7 @@ void main() {
   });
 
   group('classic stats UI (WP-170)', () {
-    testWidgets('StatsPeriodBar still builds with 4 segments', (tester) async {
+    testWidgets('StatsPeriodBar builds year/custom chips (WP-178)', (tester) async {
       SharedPreferences.setMockInitialValues({});
       final prefs = await SharedPreferences.getInstance();
       await tester.pumpWidget(
@@ -293,11 +293,12 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.byType(StatsPeriodBar), findsOneWidget);
-      // Bugün / Hafta / Ay / Tümü
       expect(find.text('Bugün'), findsOneWidget);
       expect(find.text('Hafta'), findsOneWidget);
       expect(find.text('Ay'), findsOneWidget);
       expect(find.text('Tümü'), findsOneWidget);
+      // Yıl + Özel (analyticsYear / analyticsCustomRange)
+      expect(find.byType(FilterChip), findsWidgets);
     });
 
     testWidgets('PersonalStatsView still renders empty sessions', (tester) async {

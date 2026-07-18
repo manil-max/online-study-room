@@ -6,5 +6,7 @@ String statsPeriodLabel(AppLocalizations l10n, StatsPeriod period) =>
       StatsPeriod.today => l10n.statsBugun,
       StatsPeriod.week => l10n.statsHafta,
       StatsPeriod.month => l10n.statsAy,
+      StatsPeriod.year => l10n.analyticsYear,
       StatsPeriod.all => l10n.statsTumu,
+      StatsPeriod.custom => l10n.analyticsCustomRange,
     };
