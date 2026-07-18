@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../core/stats/study_stats.dart';
 import '../../../data/models/daily_stat.dart';
 import '../../../data/models/profile.dart';
+import 'member_chart_colors.dart';
 
 /// Liderlik geçmişi: **Y ekseni = sıralama (1 en üstte), X ekseni = zaman**.
 /// Her üye bir çizgi; kümülatif (biriken) toplama göre günlük sıra — futbol
@@ -27,20 +28,6 @@ class LeaderboardRankChart extends StatelessWidget {
   final String currentUserId;
   final String emptyLabel;
   final String namelessLabel;
-
-  /// Ayırt edilebilir çizgi renkleri (>10 üyede döngüsel tekrar eder).
-  static const _palette = <Color>[
-    Color(0xFF3186E9),
-    Color(0xFF12C281),
-    Color(0xFFE69825),
-    Color(0xFFC35DD9),
-    Color(0xFFF3625D),
-    Color(0xFF4DD0E1),
-    Color(0xFFFF8A65),
-    Color(0xFF9CCC65),
-    Color(0xFF7986CB),
-    Color(0xFFF06292),
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -76,11 +63,12 @@ class LeaderboardRankChart extends StatelessWidget {
         cumulative[id] = cumulative[id]! + (perMember[id]![day] ?? 0);
       }
       if (!anyData && cumulative.values.any((v) => v > 0)) anyData = true;
-      final sorted = [...memberIds]..sort((a, b) {
-        final c = cumulative[b]!.compareTo(cumulative[a]!);
-        if (c != 0) return c;
-        return indexOf[a]!.compareTo(indexOf[b]!);
-      });
+      final sorted = [...memberIds]
+        ..sort((a, b) {
+          final c = cumulative[b]!.compareTo(cumulative[a]!);
+          if (c != 0) return c;
+          return indexOf[a]!.compareTo(indexOf[b]!);
+        });
       for (var r = 0; r < sorted.length; r++) {
         final id = sorted[r];
         // rank = r+1; plottedY: rank 1 → n (üst), rank n → 1 (alt).
@@ -92,7 +80,6 @@ class LeaderboardRankChart extends StatelessWidget {
       return _empty(theme);
     }
 
-    Color colorFor(String id) => _palette[indexOf[id]! % _palette.length];
     String nameFor(Profile m) =>
         m.displayName.isEmpty ? namelessLabel : m.displayName;
 
@@ -101,7 +88,7 @@ class LeaderboardRankChart extends StatelessWidget {
         LineChartBarData(
           spots: spotsByMember[m.id]!,
           isCurved: false,
-          color: colorFor(m.id),
+          color: memberChartColor(m.id),
           barWidth: m.id == currentUserId ? 3.5 : 2,
           dotData: FlDotData(show: window.length <= 14),
         ),
@@ -125,7 +112,7 @@ class LeaderboardRankChart extends StatelessWidget {
                     width: 10,
                     height: 3,
                     decoration: BoxDecoration(
-                      color: colorFor(m.id),
+                      color: memberChartColor(m.id),
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),

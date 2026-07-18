@@ -255,9 +255,9 @@ class StudyTimerService : Service() {
     }
 
     /**
-     * WP-205: varsayılan = büyük akan HH:MM:SS (custom view, dolgu metni yok) +
-     * native aksiyon butonları. Flag kapalıysa (kaçış valfi) standart sistem
-     * stili + köşe chronometer'a düşer. (WP-137'de default kapalıydı → v37 revert.)
+     * WP-206: varsayılan = tek satırda HH:MM:SS + doğrudan Durdur/Başlat.
+     * One UI sistem aksiyonlarını ikinci satırda çizdiği için custom panel kendi
+     * dokunulabilir pill düğmesini kullanır; fallback yalnız acil kaçış valfidir.
      */
     private fun buildRunningNotification(startedAtMs: Long): Notification {
         ensureChannel()
@@ -269,10 +269,7 @@ class StudyTimerService : Service() {
             .setCategory(NotificationCompat.CATEGORY_STOPWATCH)
 
         if (useExpandedCustomPanel()) {
-            // WP-205 (default): büyük akan HH:MM:SS (custom view) — dolgu başlık/gövde
-            // metni YOK. Renk sistem bildirim TextAppearance'ından gelir (light/dark
-            // uyumlu); aksiyonlar aşağıda native olarak eklenir.
-            val custom = buildRunningRemoteViews(startedAtMs)
+            val custom = buildRunningRemoteViews(startedAtMs, isBreak)
             builder.setContentTitle("")
                 .setContentText("")
                 .setUsesChronometer(false)
@@ -295,17 +292,17 @@ class StudyTimerService : Service() {
                 .setShowWhen(true)
                 .setChronometerCountDown(false)
         }
-        // Aksiyonlar iki stilde de native butonlardır → her temada görünür.
-        if (isBreak) {
-            builder.addAction(
-                0,
-                getString(R.string.action_return_to_work),
-                endBreakActionPending(),
-            )
-        } else {
-            builder.addAction(0, getString(R.string.action_break), breakActionPending())
+        if (!useExpandedCustomPanel()) {
+            if (isBreak) {
+                builder.addAction(
+                    0,
+                    getString(R.string.action_return_to_work),
+                    endBreakActionPending(),
+                )
+            } else {
+                builder.addAction(0, getString(R.string.action_stop), stopActionPending())
+            }
         }
-        builder.addAction(0, getString(R.string.action_stop), stopActionPending())
         return builder.build()
     }
 
@@ -319,13 +316,15 @@ class StudyTimerService : Service() {
             .setShowWhen(false)
             .setContentTitle("00:00:00")
             .setContentText(getString(R.string.timer_ready))
-            .addAction(0, getString(R.string.action_start), startActionPending())
         if (useExpandedCustomPanel()) {
             val custom = buildIdleRemoteViews()
             builder.setStyle(NotificationCompat.DecoratedCustomViewStyle())
                 .setCustomContentView(custom)
                 .setCustomBigContentView(custom)
+                .setContentTitle("")
                 .setContentText("")
+        } else {
+            builder.addAction(0, getString(R.string.action_start), startActionPending())
         }
         return builder.build()
     }
@@ -338,11 +337,22 @@ class StudyTimerService : Service() {
     private fun useExpandedCustomPanel(): Boolean =
         prefs().getBoolean(KEY_PANEL_EXPANDED, true)
 
-    /** WP-205: sadece akan HH:MM:SS. Başlat/Durdur native aksiyon butonlarında. */
-    private fun buildRunningRemoteViews(startedAtMs: Long): RemoteViews {
+    /** WP-206: tek satırda akan HH:MM:SS ve sağda doğrudan tek eylem. */
+    private fun buildRunningRemoteViews(startedAtMs: Long, isBreak: Boolean): RemoteViews {
         val views = RemoteViews(packageName, R.layout.timer_notification)
         val base = SystemClock.elapsedRealtime() - (System.currentTimeMillis() - startedAtMs)
-        views.setChronometer(R.id.notif_timer_elapsed, base, null, true)
+        // Android Chronometer ilk saatte varsayılan olarak MM:SS yazar. Öneki
+        // sabitleyerek tasarımın istediği 00:MM:SS biçimini korur.
+        views.setChronometer(R.id.notif_timer_elapsed, base, "00:%s", true)
+        views.setTextViewText(
+            R.id.notif_timer_action,
+            if (isBreak) getString(R.string.action_return_to_work)
+            else getString(R.string.action_stop),
+        )
+        views.setOnClickPendingIntent(
+            R.id.notif_timer_action,
+            if (isBreak) endBreakActionPending() else stopActionPending(),
+        )
         return views
     }
 
@@ -355,6 +365,8 @@ class StudyTimerService : Service() {
             false,
         )
         views.setTextViewText(R.id.notif_timer_elapsed, "00:00:00")
+        views.setTextViewText(R.id.notif_timer_action, getString(R.string.action_start))
+        views.setOnClickPendingIntent(R.id.notif_timer_action, startActionPending())
         return views
     }
 

@@ -61,15 +61,15 @@
 - **Not:** Bu oturum işleri commit'lendi: grid 32-sütun `141ed2a`, core testleri `da7bdd6`, skill docs `1afba2d`. ⚠️ WP-65 karar dokümanı (`docs/AYLIK-RAPOR-KARAR.md`) önceki Claude oturumunda yazıldı ama **COMMIT'LENMEDİ** (untracked); kararı WP-69 zaten uyguladı → ürün API/DNS kararı bekliyor.
 
 ### Codex Lane
-- **Durum:** [x] Boşta
-- **Faz/WP:** WP-204 + WP-205 · stable v37 yayın hazırlığı
-- **Aşama:** Yayınlandı — gerçek cihaz QA / ürün kabulü bekliyor
-- **SAHİP yollar:** `app/lib/features/stats/widgets/class_stats_view.dart`, `app/lib/l10n/app_*.arb`, `app/android/app/src/main/kotlin/com/manilmax/online_study_room/timer/StudyTimerService.kt`, `app/android/app/src/main/res/layout/timer_notification.xml`, `app/pubspec.yaml`, `app/assets/release_notes.json`, `CHANGELOG.md`, `progress.md`
-- **Ortak/riskli yüzey:** `app/pubspec.yaml`, `CHANGELOG.md`, `progress.md` (Grok lane’i kullanıcının açık teyidiyle boşta kabul edildi)
+- **Durum:** [~] Aktif
+- **Faz/WP:** WP-206 · grup grafik renk eşlemesi + sayaç bildirim düzeni
+- **Aşama:** Otomatik test geçti — gerçek cihaz QA bekliyor
+- **SAHİP yollar:** `app/lib/features/stats/widgets/class_stats_view.dart`, `app/lib/features/stats/widgets/leaderboard_rank_chart.dart`, ilgili testler, `app/android/app/src/main/kotlin/com/manilmax/online_study_room/timer/StudyTimerService.kt`, `app/android/app/src/main/res/layout/timer_notification.xml`, ilgili bildirim drawable'ları, `progress.md`
+- **Ortak/riskli yüzey:** `progress.md`
 - **Dal:** main
 - **Başlangıç:** 2026-07-19 (Europe/Istanbul)
 - **Son güncelleme:** 2026-07-19 (Europe/Istanbul)
-- **Not:** stable `v37` yayınlandı (1d9db60); tüm otomatik testler, analyze ve stable Android/Kotlin derlemesi geçti. Samsung cihaz QA/kabulü kullanıcı testinden sonra yapılacak.
+- **Not:** Katkı donut'u ve liderlik geçmişi kişi kimliğinden türetilen ortak renkleri kullanıyor. Bildirim normal akışta tek satır `00:MM:SS + Başlat/Durdur`; One UI alt Break/Stop aksiyonları kaldırıldı. `flutter analyze`, 559 test ve stable Android/Kotlin derlemesi geçti; Samsung QA bekliyor.
 
 ### Grok Lane
 - **Durum:** [x] Boşta

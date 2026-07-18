@@ -19,6 +19,7 @@ import '../analytics/analytics_period.dart';
 import '../charts/gauge_chart.dart';
 import 'daily_line_chart.dart';
 import 'leaderboard_rank_chart.dart';
+import 'member_chart_colors.dart';
 import 'stat_heat_table.dart';
 import 'subject_donut.dart';
 import '../stats_l10n.dart';
@@ -303,7 +304,7 @@ class ClassStatsView extends ConsumerWidget {
                   label: (nameOf[rows[i].userId] ?? '').isEmpty
                       ? AppLocalizations.of(context).statsIsimsiz
                       : nameOf[rows[i].userId]!,
-                  color: subjectColor('chart-${(i % 5) + 1}'),
+                  color: memberChartColor(rows[i].userId),
                   seconds: rows[i].seconds,
                 ),
             ];
