@@ -1122,5 +1122,7 @@
   "cosmeticsUnlocked": "Açık",
   "languageArabic": "Arapça",
   "languageGerman": "Almanca",
-  "rtlPreviewHint": "RTL düzen önizlemesi"
+  "rtlPreviewHint": "RTL düzen önizlemesi",
+  "analyticsGridBetaTitle": "Yeni istatistik ekranı (Beta)",
+  "analyticsGridBetaSubtitle": "Özelleştirilebilir ızgara ve yeni analitik kartlar"
 }

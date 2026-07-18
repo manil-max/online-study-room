@@ -4648,5 +4648,13 @@
   "rtlPreviewHint": "RTL layout preview",
   "@rtlPreviewHint": {
     "description": "RTL accessibility hint"
+  },
+  "analyticsGridBetaTitle": "New stats screen (Beta)",
+  "@analyticsGridBetaTitle": {
+    "description": "Settings toggle title for analytics grid v1 beta"
+  },
+  "analyticsGridBetaSubtitle": "Customizable grid and new analytics cards",
+  "@analyticsGridBetaSubtitle": {
+    "description": "Settings toggle subtitle for analytics grid beta"
   }
 }
