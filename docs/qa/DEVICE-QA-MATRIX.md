@@ -20,7 +20,7 @@
 |---|---|---|---|---|
 | A1 | Stats eski ekran | false | PeriodBar 4 segment; ListView | ⬜ |
 | A2 | Izgara düzenle sürükle | true | Reflow; overlap yok; id sabit | ⬜ |
-| A3 | Yıl / özel aralık | true | Hot window dışı veri (0042 RPC) | ⬜ |
+| A3 | Yıl / özel aralık | true | Hot window dışı veri (0041 RPC) | ⬜ |
 | A4 | Kıyas toggle | true | Toplam/delta değişir | ⬜ |
 | A5 | Üye donut / liderlik history | true | RPC; grup üyesi olmayan hata | ⬜ |
 | A6 | TalkBack 48dp | true | Düzenle/ekle etiketleri | ⬜ |

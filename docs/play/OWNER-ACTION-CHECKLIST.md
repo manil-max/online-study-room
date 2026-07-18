@@ -29,8 +29,8 @@
 
 ## SQL zinciri (sahip uygular)
 
-Sırayla (eksik olanlar): `0034`…`0038`, `0040`, `0041`, `0042`, `0043`.  
-0042: `start_time` fix. 0043: cosmetics + dict.
+Sırayla (eksik olanlar): `0034`…`0038`, `0039`, `0040`, `0041`, `0042`, `0043`.  
+0041: `start_time` fix. 0042: cosmetics + dict. 0043: cosmetics write guard.
 
 ## RLS smoke (sahip / staging)
 

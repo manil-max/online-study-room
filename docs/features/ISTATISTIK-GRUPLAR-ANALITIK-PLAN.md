@@ -201,14 +201,14 @@ compare: none | previousEqualLength
 | 1y+ histogram | — | `get_user_day_totals(p_from,p_to)` |
 | Grup günlük üye | — | **`group_daily_totals` mevcut** |
 | Grup liderlik geçmişi | zor | **yeni** `group_leaderboard_series` |
-| user_study_day | WP-149 B | 0039+ backfill |
+| user_study_day | WP-149 B | **ERTELENDİ** (gelecek migration; 0039 artık day totals) |
 
-### 4.2 Migration taslak (onay sonrası)
+### 4.2 Migration (uygulanan / renumber sonrası 0039–0041)
 
-- **0039** `user_study_day` (opsiyonel ama streak/uzun heatmap için önerilir)  
-- **0040** `get_user_day_totals` / histogram SECURITY DEFINER `search_path=public`  
-- **0041** `group_contribution_breakdown` (member seconds in range) — RLS üyelik  
-- Layout cloud sync **opsiyonel 0042** `user_ui_layouts` jsonb — v1 yalnız prefs
+- **0039** `get_user_day_totals` / histogram SECURITY DEFINER `search_path=public` (`user_study_day` tablosu ERTELENDİ)  
+- **0040** `group_contribution_breakdown` + `group_leaderboard_series` (member seconds in range) — RLS üyelik  
+- **0041** `fix_study_sessions_start_time` — `s.start` → `s.start_time` CREATE OR REPLACE  
+- Layout cloud sync **opsiyonel (ileride)** `user_ui_layouts` jsonb — v1 yalnız prefs
 
 ### 4.3 RLS / gizlilik
 
@@ -241,7 +241,7 @@ AnalyticsQueryRepository {
 | **F1** | WP-158 Analytics grid shell + layout persist (prefs) | stats_screen, new providers, grid_reflow **read-only share** | dashboard keys | `analytics_grid_v1=false` | flag off = eski ListView |
 | **F2** | WP-159 Kart kataloğu kişisel part 1 (mevcut widget sarmalayıcılar) | registry + cards | class_stats logic kopya yok — extract | flag | |
 | **F3** | WP-160 Kart kataloğu kişisel part 2 (compare, gauge, streak) | + WP-149 merge | timer | flag | |
-| **F4** | WP-161 Grup analitiği + RPC 0040/41 | migrations, supabase_study, ClassStatsView replace shell | FGS | flag | SQL rollback notu |
+| **F4** | WP-161 Grup analitiği + RPC 0039/40 | migrations, supabase_study, ClassStatsView replace shell | FGS | flag | SQL rollback notu |
 | **F5** | WP-162 Düzenle UI (ekle/çıkar/boyut) + l10n ARB | edit mode | home edit code share dikkat | flag | |
 | **F6** | WP-163 dönem year/custom + insight strip | stats_period expand | — | flag | |
 
@@ -280,7 +280,7 @@ AnalyticsQueryRepository {
 ### Karar bekliyor
 
 1. MVP 10 kart listesi onay?  
-2. `user_study_day` 0039 şart mı yoksa 90g client yeterli mi v1?  
+2. `user_study_day` (henüz yok; 0039 = `get_user_day_totals`) şart mı yoksa 90g client yeterli mi v1?  
 3. Gruplar sekmesi mi (classroom) yoksa Stats→Grup tab mı birincil ızgara?  
 4. Layout cloud sync v1? (öneri: hayır, prefs)  
 5. Insight cümleleri ürün dili kimin?
@@ -318,7 +318,7 @@ AnalyticsQueryRepository {
 | Eski | Yeni |
 |---|---|
 | WP-150 stats derinleştirme | **WP-156 planı kapsar** → uygulama F2–F3 |
-| WP-149 streak/heatmap | Kart `streakHeatmap` + opsiyonel 0039 |
+| WP-149 streak/heatmap | Kart `streakHeatmap` + opsiyonel `user_study_day` (ertelendi; 0039 = day totals) |
 
 progress: WP-150 “WP-156’ya devredildi”; WP-149 planı hâlâ referans, uygulama 156 fazına bağlı.
 

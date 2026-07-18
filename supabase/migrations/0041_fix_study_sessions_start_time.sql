@@ -1,7 +1,8 @@
--- 0042: study_sessions zaman kolonu düzeltmesi (WP-164)
+--0041_fix_study_sessions_start_time.sql
+-- study_sessions zaman kolonu düzeltmesi (WP-164)
 --
--- Sorun: 0040/0041 fonksiyonları `s.start` kullandı; gerçek şema kolonu
--- `start_time` (0001_initial_schema). Canlıda 0040/41 uygulanmış olabilir.
+-- Sorun: 0039/0040 fonksiyonları `s.start` kullandı; gerçek şema kolonu
+-- `start_time` (0001_initial_schema). Canlıda 0039/40 uygulanmış olabilir.
 --
 -- İşleyiş: CREATE OR REPLACE ile aynı imzalı fonksiyonları `start_time` ve
 -- Istanbul gün sınırı ile yeniden tanımlar. SECURITY DEFINER + search_path=public.
@@ -11,7 +12,7 @@
 --   drop function if exists public.get_user_day_totals(date, date);
 --   drop function if exists public.group_contribution_breakdown(uuid, date, date);
 --   drop function if exists public.group_leaderboard_series(uuid, date, date);
---   (gerekirse 0040/0041 içeriğini bilerek yeniden uygula — start_time ile)
+--   (gerekirse 0039/0040 içeriğini bilerek yeniden uygula — start_time ile)
 
 create or replace function public.get_user_day_totals(
   p_from date,

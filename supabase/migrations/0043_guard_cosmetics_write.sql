@@ -1,6 +1,7 @@
--- 0044: cosmetics istemci yazımını engelle (WP-166)
+--0043_guard_cosmetics_write.sql
+-- cosmetics istemci yazımını engelle (WP-166)
 --
--- Bulgu: 0043 cosmetics kolonu eklendi; _guard_gamification_xp_write yalnız
+-- Bulgu: 0042 cosmetics kolonu eklendi; _guard_gamification_xp_write yalnız
 -- xp/crown_rank koruyor. authenticated UPDATE policy user_id=auth.uid() ile
 -- cosmetics'i serbest yazabilirdi.
 --

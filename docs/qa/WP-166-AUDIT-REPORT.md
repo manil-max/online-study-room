@@ -24,7 +24,7 @@
 |---|---|---|---|
 | F1 | **Onboarding bayrağı cihaz geneli** — `onboarding_prefs.dart` eski `onboarding.completed_v1`; hesap A tamamlayınca cihazdaki hesap B atlıyordu | Per-user `onboarding.completed_v1.<userId>`; legacy global ignore + complete’te silme; auth loading’de false | `onboarding_test` (per-user keys, legacy, reset) |
 | F2 | **Export profil sızıntı riski** — seed/map içine `email`/`token` konursa JSON’a girebilirdi; yıl aralığı `startOfYear(now)` cihaz yılı | Allow-list sanitize; `startOfYear(istanbulDay(now))` | `data_export_test` strip + year |
-| F3 | **0043 cosmetics istemci yazılabilir** — `gamification_profiles` UPDATE policy `user_id=auth.uid()`; guard yalnız xp/crown | **0044** `_guard_gamification_xp_write` cosmetics koruması | SQL statik denetim; canlı SQL Editor sahip |
+| F3 | **0042 cosmetics istemci yazılabilir** — `gamification_profiles` UPDATE policy `user_id=auth.uid()`; guard yalnız xp/crown | **0043** `_guard_gamification_xp_write` cosmetics koruması | SQL statik denetim; canlı SQL Editor sahip |
 | F4 | **RTL hardcode** — `EdgeInsets.only(right:)`, `Alignment.centerLeft/Right` analytics + bildirim merkezi | `EdgeInsetsDirectional` / `AlignmentDirectional` | analyze 0; RTL birim testleri mevcut |
 | F5 | **Level formül sapması riski** — `floor(sqrt(floor(xp/50)))` | `math.sqrt(xp/50).floor()+1` dokümantasyonla uyumlu | `level_curve_test` edge/high XP |
 | N1 | AR/DE **EN baseline** (tam çeviri değil) | `docs/l10n/AR-DE-BASELINE-NOTE.md` | — |
@@ -55,7 +55,7 @@
 
 ### WP-154 Gamification
 - Client XP yazımı yok; level türetilmiş.
-- 0043 + 0044 cosmetics guard.
+- 0042 + 0043 cosmetics guard.
 - Quest UI yalnız okuma.
 
 ### WP-155 Dil/RTL
@@ -65,8 +65,8 @@
 
 ### WP-164 Analitik
 - Flag default kapalı (`analytics_grid_v1` ?? false).
-- 0042 `start_time` migration metni doğrulandı.
-- 0040–0044 sıra dosyada mevcut.
+- 0041 `start_time` migration metni doğrulandı.
+- 0039–0043 sıra dosyada mevcut.
 
 ### Play/docs
 - Sahte “deploy edildi” yok.
@@ -95,7 +95,7 @@ Beklenen blocker: keystore / signing env veya version politikası.
 
 | İş | Not |
 |---|---|
-| SQL Editor | 0042, 0043, **0044** |
+| SQL Editor | 0041, 0042, **0043** |
 | Edge/cron / HTTPS URL / Play Console | OWNER-ACTION-CHECKLIST |
 | Cihaz matrisi | DEVICE-QA-MATRIX |
 | AR/DE insan çevirisi | AR-DE-BASELINE-NOTE |

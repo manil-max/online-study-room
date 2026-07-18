@@ -1,14 +1,14 @@
 # WP-164 — Analitik RPC RLS test planı
 
 ## Kapsam
-Migration `0042_fix_study_sessions_start_time.sql` + `0040`/`0041` fonksiyonları:
+Migration `0041_fix_study_sessions_start_time.sql` + `0039`/`0040` fonksiyonları:
 - `get_user_day_totals(p_from, p_to)`
 - `group_contribution_breakdown(p_group_id, p_from, p_to)`
 - `group_leaderboard_series(p_group_id, p_from, p_to)`
 
 ## Şema doğrulaması
 - `study_sessions` zaman kolonu: **`start_time`** (0001_initial_schema).
-- 0042: `CREATE OR REPLACE` ile `s.start` → `s.start_time`.
+- 0041: `CREATE OR REPLACE` ile `s.start` → `s.start_time`.
 
 ## İki hesap senaryosu
 

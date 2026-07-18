@@ -71,15 +71,15 @@
 - **Not:** Play Store production programı WP-110–124 olarak planlandı; kanonik belgeler hizalandı. `OPTIMIZATIONS.md` kapsam dışı bırakıldı.
 
 ### Grok Lane
-- **Durum:** [x] Boşta
-- **Faz/WP:** —
-- **Aşama:** —
-- **SAHİP yollar:** —
-- **Ortak/riskli yüzey:** —
+- **Durum:** [~] Aktif
+- **Faz/WP:** ADIM 0 migration housekeep → ADIM 1 analytics toggle → WP-168 feedback → ADIM 2 beta kılavuz → WP-169 plan
+- **Aşama:** Geliştiriliyor
+- **SAHİP yollar:** `supabase/migrations/0039–0043*`, `docs/**` (migration no + beta/qa + WP-168/169 plan), `app/lib/features/settings/**`, analytics flag UI, feedback submit path, l10n arb
+- **Ortak/riskli yüzey:** `progress.md` (kendi lane), `supabase/migrations/**` (renumber), settings + l10n
 - **Dal:** main
-- **Başlangıç:** —
-- **Son güncelleme:** 2026-07-18 (Europe/Istanbul)
-- **Not:** WP-167: auth-retry Timer dispose iptali; full test 525 yeşil. Push yok.
+- **Başlangıç:** 2026-07-18 11:53 (Europe/Istanbul)
+- **Son güncelleme:** 2026-07-18 11:53 (Europe/Istanbul)
+- **Not:** Sıra: 0→1→168→2; sahip migration+beta; sonra 169 plan-only. Push yok. HER İŞ AYRI COMMIT.
 
 
 ---
@@ -157,17 +157,17 @@
 | WP-151 | [~] Test için bekliyor | Onboarding 4 adım skip/izin/grup | Cihazda doğrulanmalı |
 | WP-152 | [~] Test için bekliyor | Veri dışa aktarma JSON | Cihazda doğrulanmalı |
 | WP-153 | [~] Test için bekliyor | Akıllı hatırlatma seri/haftalık | Cihazda doğrulanmalı |
-| WP-154 | [~] Test için bekliyor | Level/quest/cosmetics + 0043 | SQL Editor + cihaz |
+| WP-154 | [~] Test için bekliyor | Level/quest/cosmetics + 0042 | SQL Editor + cihaz |
 | WP-155 | [~] Test için bekliyor | ar/de + RTL altyapı | Cihazda doğrulanmalı |
 | WP-156 | [~] Plan uygulandı (flag kapalı) | İstatistik & Gruplar analitik plan | docs/features |
 | WP-157 | [~] Test için bekliyor | Grafik primitives gauge/stacked/radar/area | `2c7bc91` |
 | WP-158 | [~] Test için bekliyor | Analytics grid shell + prefs + flag | `5f8f1d5` |
 | WP-159 | [~] Test için bekliyor | 22 kart registry (kişisel sarmalayıcılar) | `8d4fff9` |
 | WP-160 | [~] Test için bekliyor | goalGauge/streak/compare/insight | `8d4fff9` |
-| WP-161 | [~] Test için bekliyor | 0040/0041 RPC + grup kartları | SQL Editor |
+| WP-161 | [~] Test için bekliyor | 0039/0040 RPC + grup kartları | SQL Editor |
 | WP-162 | [~] Test için bekliyor | Kart ekle/çıkar + Stats flag entegrasyon | `4b4d711` |
 | WP-163 | [~] Test için bekliyor | AnalyticsPeriod year/custom/kıyas | UI bar kısmi |
-| WP-164 | [~] Test için bekliyor | Analitik teslim düzeltmesi (ızgara/reflow/veri/0042) | `Cihazda doğrulanmalı` |
+| WP-164 | [~] Test için bekliyor | Analitik teslim düzeltmesi (ızgara/reflow/veri/0041) | `Cihazda doğrulanmalı` |
 | WP-165 | [~] Ops/cihaz bekliyor | QA runbook + Play sahip checklist | Deploy yok |
 | WP-166 | [~] Test için bekliyor | Kalite denetimi + düzeltmeler | Cihazda doğrulanmalı |
 | WP-167 | [x] Otomatik test geçti | Timer FakeTimer dispose sızıntısı | kod+test |
@@ -868,10 +868,10 @@
 
 ### WP-166: Kalite denetimi + düzeltme (otomatik test) 🔎
 - **Rapor:** `docs/qa/WP-166-AUDIT-REPORT.md`
-- **Düzeltmeler:** onboarding per-user; export PII/Istanbul year; 0044 cosmetics guard; RTL directional; level sqrt
+- **Düzeltmeler:** onboarding per-user; export PII/Istanbul year; 0043 cosmetics guard; RTL directional; level sqrt
 - **Test:** analyze 0 · full suite ~524 pass · 1 pre-existing timer fail (donuk)
 - **AAB:** ANDROID_SDK yok / ortam blocker; versionCode 29 release blocker
-- **Kanıt:** `Kodda doğrulandı` · **`Cihazda doğrulanmalı`** · SQL Editor 0044
+- **Kanıt:** `Kodda doğrulandı` · **`Cihazda doğrulanmalı`** · SQL Editor 0043
 - **Push yok**
 
 ### WP-165: QA runbook + Play prep (docs) 📋
@@ -887,8 +887,8 @@
 - **Commit:** (bu)
 
 ### WP-154: Gamification genişletme (kod+test) 🏆
-- **Özet:** level=√(xp/50)+1 türetilmiş; görevler görüntü; kozmetik free L3; 0043 cosmetics+dict; client XP yazmaz.
-- **Migration:** 0043 SQL Editor
+- **Özet:** level=√(xp/50)+1 türetilmiş; görevler görüntü; kozmetik free L3; 0042 cosmetics+dict; client XP yazmaz.
+- **Migration:** 0042 SQL Editor
 - **Kanıt:** `Kodda doğrulandı` · **`Cihazda doğrulanmalı`**
 - **Commit:** (bu)
 
@@ -916,10 +916,10 @@
 > Kabul gelince kart buradan çıkar → **Tamamlanan**’a gider. Bug çıkarsa ayrı debug WP açılır.
 
 ### WP-164: Analitik teslim düzeltmesi (kod+otomatik test) 📊
-- **Özet:** Gerçek 6 sütun x/y/w/h ızgara + `grid_reflow`; düzenleme (ekle/sil/sürükle/boyut/sıfırla); dönem year/custom + kıyas toggle; placeholder yasak (subjectStacked, leaderboard history, member donut, yıl aralığı `get_user_day_totals`); çift `AnalyticsQueryRepository`; migration **0042** `start_time` düzeltmesi; flag default kapalı.
+- **Özet:** Gerçek 6 sütun x/y/w/h ızgara + `grid_reflow`; düzenleme (ekle/sil/sürükle/boyut/sıfırla); dönem year/custom + kıyas toggle; placeholder yasak (subjectStacked, leaderboard history, member donut, yıl aralığı `get_user_day_totals`); çift `AnalyticsQueryRepository`; migration **0041** `start_time` düzeltmesi; flag default kapalı.
 - **DOKUNMA:** Timer/widget/FGS, `dashboard_layout_*`, `group_daily_totals` sözleşmesi.
 - **Test:** `flutter analyze` 0 · `flutter test test/features/stats/` yeşil · reflow/period/aggregate widget testleri.
-- **Migration:** `0042_fix_study_sessions_start_time.sql` → SQL Editor (CREATE OR REPLACE). RLS plan: `docs/features/ANALYTICS-RLS-TEST-PLAN.md`.
+- **Migration:** `0041_fix_study_sessions_start_time.sql` → SQL Editor (CREATE OR REPLACE). RLS plan: `docs/features/ANALYTICS-RLS-TEST-PLAN.md`.
 - **Kanıt:** `Kodda doğrulandı` · **`Cihazda doğrulanmalı`** (flag on: ızgara sürükle-boyut, dönem/kıyas, gerçek grup kartları; flag off: eski StatsPeriodBar + Personal/Class birebir; TalkBack 48dp).
 - **Dal:** main · Push yok.
 

@@ -1,4 +1,5 @@
--- 0043: Gamification genişletme (WP-154)
+--0042_gamification_expand.sql
+-- Gamification genişletme (WP-154)
 --
 -- - cosmetics jsonb (self-read gamification_profiles üzerinden; client INSERT/UPDATE XP yok)
 -- - achievements_dict vitrin satırları (ledger process_event eşlemesi sonraki; XP client yazılmaz)

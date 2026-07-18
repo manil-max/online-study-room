@@ -1,4 +1,5 @@
--- 0040: Kişisel gün toplamları (WP-161)
+--0039_user_day_totals_rpc.sql
+-- Kişisel gün toplamları (WP-161)
 -- user_study_day tablosu ERTELENDİ; mevcut study_sessions üzerinden aggregate.
 -- SECURITY DEFINER + search_path; yalnız auth.uid() kendi verisini görür.
 -- Geri alma: drop function public.get_user_day_totals(date, date);

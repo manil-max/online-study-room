@@ -43,13 +43,13 @@ flutter test test/core/grid_reflow_test.dart --dart-define-from-file=env.json
 | `analytics_grid_v1=false` (default) | Eski PersonalStatsView + ClassStatsView + StatsPeriodBar **birebir** |
 | `analytics_grid_v1=true` | 6 sütun ızgara, reflow, dönem year/custom, kıyas, gerçek kart verisi |
 
-### SQL/RLS statik (0040–0042)
+### SQL/RLS statik (0039–0041)
 
 | Dosya | Kontrol |
 |---|---|
-| 0040 | `get_user_day_totals` — self only |
-| 0041 | contribution + leaderboard series — `is_group_member` |
-| 0042 | **`start_time`** (not `s.start`); SECURITY DEFINER; search_path=public |
+| 0039 | `get_user_day_totals` — self only |
+| 0040 | contribution + leaderboard series — `is_group_member` |
+| 0041 | **`start_time`** (not `s.start`); SECURITY DEFINER; search_path=public |
 
 Uygulama: SQL Editor (sahip). Ham session satırı dönmez.
 

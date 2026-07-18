@@ -1,4 +1,5 @@
--- 0041: Grup üye katkı payı (WP-161)
+--0040_group_contribution_breakdown.sql
+-- Grup üye katkı payı (WP-161)
 -- Yalnız aktif grup üyesi çağırabilir; ham oturum satırı döndürmez.
 -- Geri alma: drop function public.group_contribution_breakdown(uuid, date, date);
 --           drop function public.group_leaderboard_series(uuid, date, date);
