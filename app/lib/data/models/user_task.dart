@@ -1,28 +1,14 @@
 import 'package:flutter/foundation.dart';
 
-import '../../core/stats/istanbul_calendar.dart';
-import '../../core/stats/study_stats.dart';
-
-/// Günlük / haftalık kişisel görev kapsamı (WP-188).
-enum TaskScope {
-  daily,
-  weekly;
-
-  static TaskScope? tryParse(String raw) {
-    for (final v in TaskScope.values) {
-      if (v.name == raw) return v;
-    }
-    return null;
-  }
-}
-
-/// Kullanıcı tanımlı görev maddesi — XP yok (v1 checklist).
+/// Kullanıcı tanımlı görev (WP-196 deadline modeli).
+///
+/// XP yok. Tekrar (recurring) yok. `dueAt` null = süresiz.
 @immutable
 class UserTask {
   const UserTask({
     required this.id,
     required this.title,
-    required this.scope,
+    this.dueAt,
     required this.completed,
     required this.createdAt,
     this.completedAt,
@@ -31,7 +17,9 @@ class UserTask {
 
   final String id;
   final String title;
-  final TaskScope scope;
+
+  /// Bitiş anı (UTC saklanır). Null = süresiz.
+  final DateTime? dueAt;
   final bool completed;
   final DateTime createdAt;
   final DateTime? completedAt;
@@ -39,15 +27,17 @@ class UserTask {
 
   UserTask copyWith({
     String? title,
+    DateTime? dueAt,
     bool? completed,
     DateTime? completedAt,
     int? sortOrder,
+    bool clearDueAt = false,
     bool clearCompletedAt = false,
   }) {
     return UserTask(
       id: id,
       title: title ?? this.title,
-      scope: scope,
+      dueAt: clearDueAt ? null : (dueAt ?? this.dueAt),
       completed: completed ?? this.completed,
       createdAt: createdAt,
       completedAt: clearCompletedAt
@@ -60,7 +50,7 @@ class UserTask {
   Map<String, dynamic> toMap() => {
         'id': id,
         'title': title,
-        'scope': scope.name,
+        'dueAt': dueAt?.toUtc().toIso8601String(),
         'completed': completed,
         'createdAt': createdAt.toUtc().toIso8601String(),
         'completedAt': completedAt?.toUtc().toIso8601String(),
@@ -68,12 +58,12 @@ class UserTask {
       };
 
   factory UserTask.fromMap(Map<String, dynamic> map) {
-    final scope = TaskScope.tryParse(map['scope'] as String? ?? '') ??
-        TaskScope.daily;
     return UserTask(
       id: map['id'] as String? ?? '',
       title: (map['title'] as String? ?? '').trim(),
-      scope: scope,
+      dueAt: map['dueAt'] == null
+          ? null
+          : DateTime.tryParse(map['dueAt'] as String),
       completed: map['completed'] as bool? ?? false,
       createdAt: DateTime.tryParse(map['createdAt'] as String? ?? '') ??
           DateTime.now().toUtc(),
@@ -85,9 +75,8 @@ class UserTask {
   }
 
   static const int maxTitleLength = 80;
-  static const int maxTasksPerPeriod = 20;
+  static const int maxTasks = 100;
 
-  /// Başlık clamp + boş red için normalize.
   static String? normalizeTitle(String raw) {
     final t = raw.trim();
     if (t.isEmpty) return null;
@@ -96,31 +85,5 @@ class UserTask {
   }
 }
 
-/// Europe/Istanbul gün/hafta anahtarı (WP-146 ruhu).
-String taskPeriodKey(TaskScope scope, {DateTime? now}) {
-  final day = istanbulDay(now ?? DateTime.now());
-  return switch (scope) {
-    TaskScope.daily =>
-      'd:${day.year.toString().padLeft(4, '0')}-'
-          '${day.month.toString().padLeft(2, '0')}-'
-          '${day.day.toString().padLeft(2, '0')}',
-    TaskScope.weekly => () {
-        final start = startOfWeek(day);
-        return 'w:${start.year.toString().padLeft(4, '0')}-'
-            '${start.month.toString().padLeft(2, '0')}-'
-            '${start.day.toString().padLeft(2, '0')}';
-      }(),
-  };
-}
-
-/// Açık maddeler üstte, tamamlananlar altta; sortOrder ikincil.
-List<UserTask> sortUserTasks(List<UserTask> tasks) {
-  final copy = [...tasks];
-  copy.sort((a, b) {
-    if (a.completed != b.completed) return a.completed ? 1 : -1;
-    final o = a.sortOrder.compareTo(b.sortOrder);
-    if (o != 0) return o;
-    return a.createdAt.compareTo(b.createdAt);
-  });
-  return copy;
-}
+/// Prefs anahtarı (v2 tek liste; v1 period-anahtarları yoksayılır).
+String userTasksPrefsKey(String userKey) => 'user_tasks_v2.$userKey';
