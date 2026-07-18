@@ -11,7 +11,6 @@ import '../../data/providers/group_providers.dart';
 import '../admin/admin_screen.dart';
 import '../clock/clock_widgets_screen.dart';
 import '../desktop/desktop_surface.dart';
-import '../home/dashboard_providers.dart';
 import '../notifications/notification_center_screen.dart';
 import '../updater/release_notes_screen.dart';
 import '../safety/blocked_users_screen.dart';
@@ -93,8 +92,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final gridDensity = ref.watch(dashboardGridDensityProvider);
-    final gridColumns = ref.watch(dashboardGridColumnsProvider);
     final language = ref.watch(appLanguageProvider);
     final profile = ref.watch(authStateProvider).value;
     final monthlyReportOptIn =
@@ -238,40 +235,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ),
                 ),
               ),
-              SizedBox(height: 10),
-              _SettingsCard(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-                  child: DropdownButtonFormField<DashboardGridDensity>(
-                    key: ValueKey(gridDensity),
-                    initialValue: gridDensity,
-                    decoration: InputDecoration(
-                      labelText: AppLocalizations.of(
-                        context,
-                      ).profileIzgaraYogunlugu,
-                      helperText: l10n.profileBuCihazdaGridcolumnsSutun(
-                        '$gridColumns',
-                      ),
-                      prefixIcon: Icon(Icons.grid_view_outlined),
-                      border: OutlineInputBorder(),
-                    ),
-                    items: [
-                      for (final density in DashboardGridDensity.values)
-                        DropdownMenuItem(
-                          value: density,
-                          child: Text(density.label),
-                        ),
-                    ],
-                    onChanged: (value) {
-                      if (value != null) {
-                        ref
-                            .read(dashboardGridDensityProvider.notifier)
-                            .set(value);
-                      }
-                    },
-                  ),
-                ),
-              ),
+              // WP-186: ızgara yoğunluğu herkeste sabit 32 — seçici kaldırıldı.
               SizedBox(height: 10),
               _SettingsCard(
                 child: ListTile(

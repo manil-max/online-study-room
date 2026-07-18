@@ -150,7 +150,7 @@ void main() {
   });
 
   group('DashboardLayoutNotifier migration', () {
-    test('eski prefs listesini profil formatina gocurur', () async {
+    test('eski prefs listesini 32-sutun profil formatina gocurur', () async {
       SharedPreferences.setMockInitialValues({
         'dashboard_layout': ['timer:12:320', 'today:small'],
       });
@@ -161,37 +161,32 @@ void main() {
       addTearDown(container.dispose);
 
       final layout = container.read(dashboardLayoutProvider);
-
-      expect(layout, [
-        const DashboardCardConfig(
-          DashboardCardType.timer,
-          x: 0,
-          y: 0,
-          w: 6,
-          h: 4,
-        ),
-        const DashboardCardConfig(
-          DashboardCardType.today,
-          x: 0,
-          y: 4,
-          w: 3,
-          h: 2,
-        ),
-      ]);
-      // Geri alma güvenliği için eski anahtar korunur; aktif profil v2'ye yazılır.
+      // WP-186: runtime 32; legacy önce 6-sütunda decode, sonra 32'ye projekte.
+      // timer 6×4 → 32×21; today 3×2 → 16×11.
+      expect(layout.length, 2);
+      expect(layout.first.type, DashboardCardType.timer);
+      expect(layout.first.w, 32);
+      expect(layout.first.h, 21);
+      expect(layout[1].type, DashboardCardType.today);
+      expect(layout[1].w, 16);
+      for (final card in layout) {
+        expect(card.x + card.w, lessThanOrEqualTo(32));
+      }
+      // Geri alma güvenliği için eski anahtar korunur; aktif profil v2_32.
       expect(prefs.getStringList('dashboard_layout'), [
         'timer:12:320',
         'today:small',
       ]);
-      expect(prefs.getStringList('dashboard_layout_v2_6'), [
-        'timer:0:0:6:4',
-        'today:0:4:3:2',
-      ]);
+      expect(prefs.getStringList('dashboard_layout_v2_32'), isNotNull);
+      expect(prefs.getString('dashboard_grid_density'), 'columns32');
     });
 
     test('setBounds carpisan kartlari asagi iter', () async {
       SharedPreferences.setMockInitialValues({
-        'dashboard_layout': ['timer:0:0:6:2', 'today:0:2:6:2'],
+        'dashboard_layout_v2_32': [
+          'timer:0:0:32:2',
+          'today:0:2:32:2',
+        ],
       });
       final prefs = await SharedPreferences.getInstance();
       final container = ProviderContainer(
@@ -208,14 +203,14 @@ void main() {
           DashboardCardType.timer,
           x: 0,
           y: 1,
-          w: 6,
+          w: 32,
           h: 2,
         ),
         const DashboardCardConfig(
           DashboardCardType.today,
           x: 0,
           y: 3,
-          w: 6,
+          w: 32,
           h: 2,
         ),
       ]);
@@ -223,10 +218,10 @@ void main() {
 
     test('compactUp bosluklari kaldirir ve aktif profile kaydeder', () async {
       SharedPreferences.setMockInitialValues({
-        'dashboard_layout_v2_6': [
-          'timer:0:6:3:2',
-          'today:3:9:3:2',
-          'leaderboard:0:14:6:3',
+        'dashboard_layout_v2_32': [
+          'timer:0:6:16:2',
+          'today:16:9:16:2',
+          'leaderboard:0:14:32:3',
         ],
       });
       final prefs = await SharedPreferences.getInstance();
@@ -237,16 +232,16 @@ void main() {
 
       container.read(dashboardLayoutProvider.notifier).compactUp();
 
-      expect(prefs.getStringList('dashboard_layout_v2_6'), [
-        'timer:0:0:3:2',
-        'today:3:0:3:2',
-        'leaderboard:0:2:6:3',
+      expect(prefs.getStringList('dashboard_layout_v2_32'), [
+        'timer:0:0:16:2',
+        'today:16:0:16:2',
+        'leaderboard:0:2:32:3',
       ]);
     });
 
-    test('6, 12 ve 16 sutun profilleri bagimsiz saklanir', () async {
+    test('WP-186 density herkeste sabit 32; eski pref migrate', () async {
       SharedPreferences.setMockInitialValues({
-        'dashboard_layout': ['timer:0:0:6:4', 'today:0:4:3:2'],
+        'dashboard_grid_density': 'columns12',
       });
       final prefs = await SharedPreferences.getInstance();
       final container = ProviderContainer(
@@ -254,46 +249,22 @@ void main() {
       );
       addTearDown(container.dispose);
 
-      expect(container.read(dashboardLayoutProvider).first.w, 6);
+      expect(
+        container.read(dashboardGridDensityProvider),
+        DashboardGridDensity.columns32,
+      );
+      expect(container.read(dashboardGridColumnsProvider), 32);
+      expect(prefs.getString('dashboard_grid_density'), 'columns32');
 
-      container
-          .read(dashboardGridDensityProvider.notifier)
-          .set(DashboardGridDensity.columns12);
-      expect(container.read(dashboardGridColumnsProvider), 12);
-      expect(container.read(dashboardLayoutProvider).first.w, 12);
-
-      container
-          .read(dashboardLayoutProvider.notifier)
-          .setBounds(DashboardCardType.timer, w: 10);
-      final customized12 = [...container.read(dashboardLayoutProvider)];
-
-      container
-          .read(dashboardGridDensityProvider.notifier)
-          .set(DashboardGridDensity.columns16);
-      expect(container.read(dashboardGridColumnsProvider), 16);
-      expect(container.read(dashboardLayoutProvider).first.w, 13);
-      container
-          .read(dashboardLayoutProvider.notifier)
-          .setBounds(DashboardCardType.timer, w: 15);
-      final customized16 = [...container.read(dashboardLayoutProvider)];
-
+      // set() de pin eder
       container
           .read(dashboardGridDensityProvider.notifier)
           .set(DashboardGridDensity.columns6);
-      expect(container.read(dashboardLayoutProvider).first.w, 6);
-
-      container
-          .read(dashboardGridDensityProvider.notifier)
-          .set(DashboardGridDensity.columns12);
-      expect(container.read(dashboardLayoutProvider), customized12);
-      container
-          .read(dashboardGridDensityProvider.notifier)
-          .set(DashboardGridDensity.columns16);
-      expect(container.read(dashboardLayoutProvider), customized16);
-      expect(prefs.getString('dashboard_grid_density'), 'columns16');
+      expect(container.read(dashboardGridColumnsProvider), 32);
+      expect(prefs.getString('dashboard_grid_density'), 'columns32');
     });
 
-    test('eski automatic tercihi guvenli bicimde 6 sutuna duser', () async {
+    test('eski automatic tercihi 32 ye duser', () async {
       SharedPreferences.setMockInitialValues({
         'dashboard_grid_density': 'automatic',
       });
@@ -305,38 +276,53 @@ void main() {
 
       expect(
         container.read(dashboardGridDensityProvider),
-        DashboardGridDensity.columns6,
+        DashboardGridDensity.columns32,
       );
-      expect(container.read(dashboardGridColumnsProvider), 6);
-      expect(prefs.getString('dashboard_grid_density'), 'columns6');
+      expect(container.read(dashboardGridColumnsProvider), 32);
+      expect(prefs.getString('dashboard_grid_density'), 'columns32');
     });
 
-    test(
-      'columns32 yogunlugu 32 sutun/etiket verir ve duzeni olceker',
-      () async {
-        SharedPreferences.setMockInitialValues({});
-        final prefs = await SharedPreferences.getInstance();
-        final container = ProviderContainer(
-          overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
-        );
-        addTearDown(container.dispose);
+    test('varsayilan duzen 32 sutunda tasmadan olceklenir', () async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      final container = ProviderContainer(
+        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      );
+      addTearDown(container.dispose);
 
-        expect(DashboardGridDensity.columns32.columns, 32);
-        expect(DashboardGridDensity.columns32.label, '32');
+      expect(DashboardGridDensity.columns32.columns, 32);
+      expect(DashboardGridDensity.columns32.label, '32');
+      expect(container.read(dashboardGridColumnsProvider), 32);
 
-        container
-            .read(dashboardGridDensityProvider.notifier)
-            .set(DashboardGridDensity.columns32);
-        expect(container.read(dashboardGridColumnsProvider), 32);
+      final layout = container.read(dashboardLayoutProvider);
+      expect(layout.first.w, 32);
+      for (final card in layout) {
+        expect(card.x + card.w, lessThanOrEqualTo(32));
+      }
+      expect(prefs.getString('dashboard_grid_density'), 'columns32');
+    });
 
-        // Varsayilan duzen 32 sutunda tasmadan olceklenir (timer tam genislik).
-        final layout = container.read(dashboardLayoutProvider);
-        expect(layout.first.w, 32);
-        for (final card in layout) {
-          expect(card.x + card.w, lessThanOrEqualTo(32));
-        }
-        expect(prefs.getString('dashboard_grid_density'), 'columns32');
-      },
-    );
+    test('yeni kart eklerken varsayilan boyut 32-gridde kullanislidir', () async {
+      SharedPreferences.setMockInitialValues({
+        'dashboard_layout_v2_32': ['timer:0:0:32:8'],
+      });
+      final prefs = await SharedPreferences.getInstance();
+      final container = ProviderContainer(
+        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      );
+      addTearDown(container.dispose);
+
+      container
+          .read(dashboardLayoutProvider.notifier)
+          .addCard(DashboardCardType.today);
+      final added = container
+          .read(dashboardLayoutProvider)
+          .firstWhere((c) => c.type == DashboardCardType.today);
+      // 6-sütun 3×3 ölçeği → 32'de 16×16
+      expect(added.w, 16);
+      expect(added.h, 16);
+      expect(DashboardCardConfig.defaultAddWidth(32), 16);
+      expect(DashboardCardConfig.defaultAddHeight(32), 16);
+    });
   });
 }

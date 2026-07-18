@@ -10,6 +10,8 @@ const _kLastColumnsKey = 'dashboard_grid_last_columns';
 const _kDensityKey = 'dashboard_grid_density';
 const _kClassroomTimerKey = 'classroom_show_timer';
 
+/// WP-186: ızgara yoğunluğu herkeste sabit 32. Eski enum adları prefs migrate
+/// için tanınır ama runtime yalnız [columns32] döner.
 enum DashboardGridDensity {
   columns6,
   columns8,
@@ -19,39 +21,26 @@ enum DashboardGridDensity {
 }
 
 extension DashboardGridDensityX on DashboardGridDensity {
-  String get label => switch (this) {
-    DashboardGridDensity.columns6 => '6',
-    DashboardGridDensity.columns8 => '8',
-    DashboardGridDensity.columns12 => '12',
-    DashboardGridDensity.columns16 => '16',
-    DashboardGridDensity.columns32 => '32',
-  };
+  String get label => '32';
 
-  int get columns => switch (this) {
-    DashboardGridDensity.columns6 => 6,
-    DashboardGridDensity.columns8 => 8,
-    DashboardGridDensity.columns12 => 12,
-    DashboardGridDensity.columns16 => 16,
-    DashboardGridDensity.columns32 => 32,
-  };
+  int get columns => 32;
 }
 
 class DashboardGridDensityNotifier extends Notifier<DashboardGridDensity> {
   @override
   DashboardGridDensity build() {
     final prefs = ref.watch(sharedPreferencesProvider);
-    final raw = prefs.getString(_kDensityKey);
-    final stored = DashboardGridDensity.values
-        .where((value) => value.name == raw)
-        .firstOrNull;
-    if (stored != null) return stored;
-    prefs.setString(_kDensityKey, DashboardGridDensity.columns6.name);
-    return DashboardGridDensity.columns6;
+    // Eski 6/8/12/16/automatic → her zaman 32'ye yaz (bozulmadan düşer).
+    prefs.setString(_kDensityKey, DashboardGridDensity.columns32.name);
+    return DashboardGridDensity.columns32;
   }
 
+  /// WP-186: seçici kaldırıldı; çağrılar yine 32'ye pin'ler (test uyumu).
   void set(DashboardGridDensity value) {
-    state = value;
-    ref.read(sharedPreferencesProvider).setString(_kDensityKey, value.name);
+    state = DashboardGridDensity.columns32;
+    ref
+        .read(sharedPreferencesProvider)
+        .setString(_kDensityKey, DashboardGridDensity.columns32.name);
   }
 }
 
@@ -220,9 +209,19 @@ class DashboardLayoutNotifier extends Notifier<List<DashboardCardConfig>> {
   void addCard(DashboardCardType type) {
     if (_indexOf(type) >= 0) return;
     final columns = ref.read(dashboardGridColumnsProvider);
+    // WP-186: 32-grid'de h=3 minnacık kalıyordu — 6-sütun medium (3×3)
+    // oranını ölçekle (32'de ≈16×16 hücre; kullanışlı w×h).
+    final defaultW = DashboardCardConfig.defaultAddWidth(columns);
+    final defaultH = DashboardCardConfig.defaultAddHeight(columns);
     state = [
       ...state,
-      DashboardCardConfig.firstAvailable(state, type, columns: columns),
+      DashboardCardConfig.firstAvailable(
+        state,
+        type,
+        columns: columns,
+        w: defaultW,
+        h: defaultH,
+      ),
     ];
     _save();
   }

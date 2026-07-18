@@ -183,12 +183,15 @@ extension DashboardCardSizeInfo on DashboardCardSize {
 
 /// Ana Sayfa matrisinin sütun sayısı (§2.2). Yükseklik aşağı doğru sınırsız
 /// satır olarak büyür; kartlar `x,y,w,h` hücreleriyle saklanır.
+/// Serileştirme / legacy decode tabanı (6-sütun formatı). Runtime ızgara
+/// WP-186'dan beri sabittir: [kFixedGridColumns] = 32.
 const int kDefaultGridColumns = 6;
 const int kMaxGridColumns = 32;
-const List<int> kSupportedGridColumns = [6, 8, 12, 16];
+const int kFixedGridColumns = 32;
+const List<int> kSupportedGridColumns = [32];
 
 /// Eski çağrılar/testler için 6-sütun varsayılanı. Aktif render sütunu artık
-/// `dashboardGridColumnsProvider` üzerinden gelir.
+/// `dashboardGridColumnsProvider` üzerinden gelir (her zaman 32).
 const int kGridColumns = kDefaultGridColumns;
 
 const int kDefaultCardRows = 3;
@@ -296,16 +299,26 @@ class DashboardCardConfig {
     return placed;
   }
 
+  /// Yeni kart varsayılan genişliği: 6-sütun medium yarım (3) ölçeği.
+  static int defaultAddWidth(int columns) =>
+      (3 * columns / kDefaultGridColumns).round().clamp(1, columns);
+
+  /// Yeni kart varsayılan yüksekliği: 6-sütun medium (3) ölçeği — 32'de 16.
+  static int defaultAddHeight(int columns) =>
+      (3 * columns / kDefaultGridColumns).round().clamp(1, 99);
+
   static DashboardCardConfig firstAvailable(
     List<DashboardCardConfig> existing,
     DashboardCardType type, {
     int columns = kDefaultGridColumns,
     int? w,
-    int h = kDefaultCardRows,
+    int? h,
   }) {
+    final safeW = w ?? defaultAddWidth(columns);
+    final safeH = h ?? defaultAddHeight(columns);
     return _firstAvailable(
       existing,
-      _clamped(type, 0, 0, w ?? columns ~/ 2, h, columns: columns),
+      _clamped(type, 0, 0, safeW, safeH, columns: columns),
       columns: columns,
     );
   }
