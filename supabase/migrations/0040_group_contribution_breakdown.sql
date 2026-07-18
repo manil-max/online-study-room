@@ -1,5 +1,6 @@
 --0040_group_contribution_breakdown.sql
 -- Grup üye katkı payı (WP-161)
+-- Kolon: study_sessions.start_time (0001).
 -- Yalnız aktif grup üyesi çağırabilir; ham oturum satırı döndürmez.
 -- Geri alma: drop function public.group_contribution_breakdown(uuid, date, date);
 --           drop function public.group_leaderboard_series(uuid, date, date);
@@ -29,7 +30,7 @@ begin
     on gm.user_id = s.user_id
    and gm.group_id = p_group_id
    and gm.left_at is null
-  where ((s.start at time zone 'Europe/Istanbul')::date) between p_from and p_to
+  where ((s.start_time at time zone 'Europe/Istanbul')::date) between p_from and p_to
   group by s.user_id
   order by seconds desc;
 end;
@@ -57,7 +58,7 @@ begin
 
   return query
   select
-    ((s.start at time zone 'Europe/Istanbul')::date) as day,
+    ((s.start_time at time zone 'Europe/Istanbul')::date) as day,
     s.user_id,
     sum(s.duration_seconds)::int as seconds
   from public.study_sessions s
@@ -65,7 +66,7 @@ begin
     on gm.user_id = s.user_id
    and gm.group_id = p_group_id
    and gm.left_at is null
-  where ((s.start at time zone 'Europe/Istanbul')::date) between p_from and p_to
+  where ((s.start_time at time zone 'Europe/Istanbul')::date) between p_from and p_to
   group by 1, 2
   order by 1, 3 desc;
 end;
