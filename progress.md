@@ -20,7 +20,7 @@
 - **Navigasyon hedefi:** Ana Sayfa / Saat / Gruplar / İstatistikler / Profil. Ana Sayfa günlük kullanım alanıdır; diğer alanların verisi kendi sekmelerinde eksiksiz bulunur.
 - **Release:** Stable/Beta kanalı GitHub Releases ile çalışır. Yerel `v29` ve `beta-v29` tag'leri WP-104 commitini (`ff369e3`) gösterir; mevcut `main` WP-105–109'u da içerdiği halde `1.0.29+29` taşır. Bir sonraki dağıtımda versionCode mutlaka artırılır; Play production ayrı kalite kapısından geçer.
 - **Kalite kapıları:** Her WP DoD'siz kapanmaz; stable release kalite kapısından geçer (AGENTS.md §3). Server-authoritative XP, RLS/sosyal profil, platform sınırları → `docs/KALITE-PROGRAMI.md`.
-- **Son WP numarası:** 167 (timer test stabilize). **Sıradaki boş numara WP-168.**
+- **Son WP numarası:** 168 (feedback tanı). **Sıradaki boş numara WP-169.**
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
   - Flutter: `C:\src\flutter` · Android SDK: `C:\Android\Sdk`
@@ -171,6 +171,7 @@
 | WP-165 | [~] Ops/cihaz bekliyor | QA runbook + Play sahip checklist | Deploy yok |
 | WP-166 | [~] Test için bekliyor | Kalite denetimi + düzeltmeler | Cihazda doğrulanmalı |
 | WP-167 | [x] Otomatik test geçti | Timer FakeTimer dispose sızıntısı | kod+test |
+| WP-168 | [~] Test için bekliyor | Feedback gönderilemedi tanı+onarım | Cihazda doğrulanmalı |
 
 > **2026-07-14 proje denetimi:** Serbest sürükle-bırak ızgara, canlı grup hedefi ve saat stilleri **zaten kodda uygulanmış** (backlog stale idi; geçici WP-72/73/75 iptal).
 >
@@ -858,6 +859,14 @@
 > ⚠️ **Ürün kararları:** (1) WP-66 §0 retention varsayılanları, (2) legal site domain/iletişim kimliği, (3) hedef kitle 13+/16+, (4) Play Console'da alarmı core functionality olarak savunma veya safe fallback, (5) geliştirici hesap türü/tarihi. Bunlar planı engellemez; ilgili WP başlamadan kullanıcı onayı gerekir.
 
 ## Test için bekleyenler
+
+### WP-168: Feedback “gönderilemedi” (otomatik test) 🐞
+- **Rapor:** `docs/qa/WP-168-FEEDBACK-TANI.md`
+- **Kod:** kDebugMode Postgrest/Storage log; oturum ön-kontrolü; `session_required` / `session_or_rls` net UX; classify unit test
+- **Kök neden (hipotez):** RLS `user_id=auth.uid()` + süresi dolmuş/anon oturum (H1); canlı 0018/0019+GRANT teyidi sahip
+- **DOKUNMA:** timer/widget/FGS; admin feedback okuma
+- **Kanıt:** analyze 0 · `admin_repository_test` · **`Cihazda doğrulanmalı`**
+- **Push yok**
 
 ### WP-167: Timer test stabilizasyonu (otomatik test geçti) ⏱️
 - **Kök neden:** `StudyTimerNotifier.build` soğuk açılışta `Future.delayed(400ms)` auth-retry; dispose `_tick` iptal ediyor ama delayed Timer iptal edilmiyordu → widget test FakeTimer sızıntısı (`timer_mode_controls_test`).

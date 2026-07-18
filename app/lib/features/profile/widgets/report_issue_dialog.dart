@@ -1,6 +1,6 @@
 import 'package:online_study_room/l10n/app_localizations.dart';
-import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -91,9 +91,28 @@ class _ReportIssueDialogState extends ConsumerState<ReportIssueDialog> {
       ref.invalidate(adminDashboardSummaryProvider);
       ref.invalidate(adminFeedbackTicketsProvider);
       if (mounted) Navigator.of(context).pop(true);
-    } on AdminException {
-      _showError(l10n.profileGeriBildirimGonderilemedi);
-    } catch (_) {
+    } on AdminException catch (e, st) {
+      // WP-168: gerçek hata kDebugMode'da; oturum hataları net UX, diğerleri jenerik.
+      if (kDebugMode) {
+        debugPrint(
+          'ReportIssueDialog AdminException code=${e.code} message=${e.message}',
+        );
+        debugPrint('$st');
+      }
+      if (e.code == 'session_required' || e.code == 'session_or_rls') {
+        _showError(
+          e.message.isNotEmpty
+              ? e.message
+              : l10n.profileGeriBildirimGondermekIcin,
+        );
+      } else {
+        _showError(l10n.profileGeriBildirimGonderilemedi);
+      }
+    } catch (e, st) {
+      if (kDebugMode) {
+        debugPrint('ReportIssueDialog unexpected: $e');
+        debugPrint('$st');
+      }
       _showError(l10n.profileGeriBildirimGonderilemedi);
     } finally {
       if (mounted) setState(() => _isSubmitting = false);

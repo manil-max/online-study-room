@@ -11,12 +11,34 @@ const int kMaxFeedbackSubjectLength = 80;
 const int kMaxFeedbackMessageLength = 1200;
 
 class AdminException implements Exception {
-  const AdminException(this.message);
+  const AdminException(this.message, {this.code});
 
   final String message;
 
+  /// Makine kodu (UI dallanması): `session_required`, `rls_denied`, …
+  final String? code;
+
   @override
   String toString() => message;
+}
+
+/// Postgrest hata kodu/mesajından geri bildirim gönderim sınıflandırması (WP-168).
+String? classifyFeedbackSubmitError({
+  String? postgrestCode,
+  String? message,
+}) {
+  final code = (postgrestCode ?? '').toLowerCase();
+  final msg = (message ?? '').toLowerCase();
+  if (code == '42501' ||
+      msg.contains('row-level security') ||
+      msg.contains('violates row-level') ||
+      msg.contains('permission denied') ||
+      msg.contains('jwt') ||
+      msg.contains('not authenticated') ||
+      msg.contains('invalid claim')) {
+    return 'session_or_rls';
+  }
+  return null;
 }
 
 class AdminDashboardSummary {

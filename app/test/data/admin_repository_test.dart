@@ -108,4 +108,46 @@ void main() {
       throwsA(isA<AdminException>()),
     );
   });
+
+  group('classifyFeedbackSubmitError (WP-168)', () {
+    test('RLS / JWT → session_or_rls', () {
+      expect(
+        classifyFeedbackSubmitError(
+          postgrestCode: '42501',
+          message: 'new row violates row-level security policy',
+        ),
+        'session_or_rls',
+      );
+      expect(
+        classifyFeedbackSubmitError(
+          postgrestCode: 'PGRST301',
+          message: 'JWT expired',
+        ),
+        'session_or_rls',
+      );
+      expect(
+        classifyFeedbackSubmitError(
+          message: 'permission denied for table feedback_tickets',
+        ),
+        'session_or_rls',
+      );
+    });
+
+    test('diğer hatalar null (jenerik UX)', () {
+      expect(
+        classifyFeedbackSubmitError(
+          postgrestCode: '23514',
+          message: 'check constraint',
+        ),
+        isNull,
+      );
+      expect(classifyFeedbackSubmitError(message: 'network timeout'), isNull);
+    });
+
+    test('AdminException code alanı korunur', () {
+      const e = AdminException('test', code: 'session_required');
+      expect(e.code, 'session_required');
+      expect(e.message, 'test');
+    });
+  });
 }

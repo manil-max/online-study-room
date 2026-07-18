@@ -1,5 +1,4 @@
-import 'dart:typed_data';
-
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
@@ -80,6 +79,30 @@ class SupabaseAdminRepository implements AdminRepository {
     Uint8List? attachmentBytes,
     String? attachmentExt,
   }) async {
+    // WP-168: RLS `user_id = auth.uid()` — oturum yoksa/mismatch ise net hata.
+    final authUid = _client.auth.currentUser?.id;
+    final session = _client.auth.currentSession;
+    if (authUid == null || session == null) {
+      _debugLogFeedback(
+        'submitFeedback: no session '
+        '(currentUser=${authUid == null ? "null" : "set"}, '
+        'session=${session == null ? "null" : "set"})',
+      );
+      throw const AdminException(
+        'Geri bildirim göndermek için giriş yapmalısın.',
+        code: 'session_required',
+      );
+    }
+    if (authUid != userId) {
+      _debugLogFeedback(
+        'submitFeedback: userId mismatch authUid=$authUid userId=$userId',
+      );
+      throw const AdminException(
+        'Oturumun sona ermiş veya geçersiz. Tekrar giriş yapıp dene.',
+        code: 'session_required',
+      );
+    }
+
     try {
       String? attachmentPath;
       if (attachmentBytes != null && attachmentExt != null) {
@@ -112,13 +135,45 @@ class SupabaseAdminRepository implements AdminRepository {
           .select()
           .single();
       return FeedbackTicket.fromMap(row);
-    } on StorageException catch (e) {
+    } on StorageException catch (e, st) {
+      _debugLogFeedback(
+        'submitFeedback StorageException '
+        'statusCode=${e.statusCode} message=${e.message} error=${e.error}',
+        st,
+      );
       throw AdminException('Görsel yüklenemedi: ${e.message}');
-    } on PostgrestException catch (e) {
-      throw AdminException('Geri bildirim gönderilemedi: ${e.message}');
-    } catch (e) {
+    } on PostgrestException catch (e, st) {
+      _debugLogFeedback(
+        'submitFeedback PostgrestException '
+        'code=${e.code} message=${e.message} '
+        'details=${e.details} hint=${e.hint}',
+        st,
+      );
+      final classified = classifyFeedbackSubmitError(
+        postgrestCode: e.code,
+        message: e.message,
+      );
+      if (classified == 'session_or_rls') {
+        throw AdminException(
+          'Oturumun sona ermiş veya sunucu erişimi reddetti. '
+          'Tekrar giriş yapıp dene.',
+          code: 'session_or_rls',
+        );
+      }
+      throw AdminException(
+        'Geri bildirim gönderilemedi: ${e.message}',
+        code: e.code,
+      );
+    } catch (e, st) {
+      _debugLogFeedback('submitFeedback unexpected: $e', st);
       throw AdminException('Beklenmeyen bir hata oluştu: $e');
     }
+  }
+
+  void _debugLogFeedback(String message, [StackTrace? st]) {
+    if (!kDebugMode) return;
+    debugPrint(message);
+    if (st != null) debugPrint('$st');
   }
 
   @override
