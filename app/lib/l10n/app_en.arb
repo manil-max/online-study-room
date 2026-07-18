@@ -4813,5 +4813,40 @@
   "profileCrownMax": "Highest crown",
   "@profileCrownMax": {
     "description": "Label when crown XP is at max tier"
-  }
+  },
+  "navTools": "Tools",
+  "@navTools": { "description": "navTools" },
+  "taskListMore": "+{count} more",
+  "@taskListMore": {
+    "description": "taskListMore",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "taskListOverdue": "Overdue",
+  "@taskListOverdue": { "description": "taskListOverdue" },
+  "taskListNoDue": "No deadline",
+  "@taskListNoDue": { "description": "taskListNoDue" },
+  "taskListDueDate": "Due date",
+  "@taskListDueDate": { "description": "taskListDueDate" },
+  "taskListRemaining": "Time left",
+  "@taskListRemaining": { "description": "taskListRemaining" },
+  "taskListEdit": "Edit",
+  "@taskListEdit": { "description": "taskListEdit" },
+  "taskListActive": "Active",
+  "@taskListActive": { "description": "taskListActive" },
+  "taskListCompletedSection": "Completed",
+  "@taskListCompletedSection": { "description": "taskListCompletedSection" },
+  "taskListUrgent": "Urgent",
+  "@taskListUrgent": { "description": "taskListUrgent" },
+  "taskListHoursShort": "{hours}h",
+  "@taskListHoursShort": {
+    "description": "taskListHoursShort",
+    "placeholders": { "hours": { "type": "int" } }
+  },
+  "taskListDaysShort": "{days}d",
+  "@taskListDaysShort": {
+    "description": "taskListDaysShort",
+    "placeholders": { "days": { "type": "int" } }
+  },
+  "clockTasks": "Tasks",
+  "@clockTasks": { "description": "clockTasks" }
 }

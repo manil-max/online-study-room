@@ -4777,5 +4777,18 @@
   "taskListCompletedSemantic": "Erledigt",
   "taskListIncompleteSemantic": "Nicht erledigt",
   "profileNextCrown": "Nächste Krone",
-  "profileCrownMax": "Höchste Krone"
+  "profileCrownMax": "Höchste Krone",
+  "navTools": "Werkzeuge",
+  "taskListMore": "+{count} mehr",
+  "taskListOverdue": "Überfällig",
+  "taskListNoDue": "Ohne Frist",
+  "taskListDueDate": "Fälligkeitsdatum",
+  "taskListRemaining": "Verbleibende Zeit",
+  "taskListEdit": "Bearbeiten",
+  "taskListActive": "Aktiv",
+  "taskListCompletedSection": "Erledigt",
+  "taskListUrgent": "Dringend",
+  "taskListHoursShort": "{hours}h",
+  "taskListDaysShort": "{days}t",
+  "clockTasks": "Aufgaben"
 }

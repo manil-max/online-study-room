@@ -13,14 +13,15 @@ import '../../data/providers/study_providers.dart';
 import '../classroom/widgets/study_timer_card.dart';
 import 'alarms_screen.dart';
 import 'stopwatch_screen.dart';
+import 'tasks_screen.dart';
 import 'timers_screen.dart';
 import 'widgets/standby_clock_view.dart';
 import 'world_clock_screen.dart';
 
-/// Saat Merkezi sekmeleri — tek satır ikon şeridi (kaydırma yok).
-/// Sıra: Saat+Odak · Alarm · Timer · Krono · Dünya
+/// Araçlar sekmeleri — tek satır ikon şeridi (WP-198).
+/// Sıra: Saat+Odak · Alarm · Timer · Krono · Dünya · Görevler
 /// (Widget/izinler → Ayarlar · Bildirim & izinler)
-enum ClockTab { home, alarm, multiTimer, stopwatch, world }
+enum ClockTab { home, alarm, multiTimer, stopwatch, world, tasks }
 
 class ClockScreen extends ConsumerStatefulWidget {
   const ClockScreen({super.key});
@@ -283,6 +284,12 @@ class _ClockScreenState extends ConsumerState<ClockScreen> {
         AppLocalizations.of(context).clockDunya,
         Key('clock_tab_world'),
       ),
+      (
+        ClockTab.tasks,
+        Icons.checklist_outlined,
+        AppLocalizations.of(context).clockTasks,
+        Key('clock_tab_tasks'),
+      ),
     ];
 
     return Material(
@@ -317,6 +324,7 @@ class _ClockScreenState extends ConsumerState<ClockScreen> {
       ClockTab.multiTimer => const TimersScreen(embedded: true),
       ClockTab.stopwatch => const StopwatchScreen(embedded: true),
       ClockTab.world => const WorldClockScreen(embedded: true),
+      ClockTab.tasks => const TasksScreen(embedded: true),
     };
   }
 

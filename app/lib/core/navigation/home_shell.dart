@@ -92,9 +92,10 @@ class HomeShell extends ConsumerWidget {
               label: AppLocalizations.of(context).homeAnaSayfa,
             ),
             NavigationDestination(
-              icon: const Icon(Icons.access_time_outlined),
-              selectedIcon: const Icon(Icons.access_time_filled),
-              label: AppLocalizations.of(context).desktopSaat,
+              // WP-198: Saat → Araçlar (içinde saat alt-sekmesi varsayılan kalır)
+              icon: const Icon(Icons.handyman_outlined),
+              selectedIcon: const Icon(Icons.handyman),
+              label: AppLocalizations.of(context).navTools,
             ),
             NavigationDestination(
               icon: const Icon(Icons.groups_outlined),

@@ -4777,5 +4777,18 @@
   "taskListCompletedSemantic": "مكتمل",
   "taskListIncompleteSemantic": "غير مكتمل",
   "profileNextCrown": "التاج التالي",
-  "profileCrownMax": "أعلى تاج"
+  "profileCrownMax": "أعلى تاج",
+  "navTools": "أدوات",
+  "taskListMore": "+{count} المزيد",
+  "taskListOverdue": "متأخر",
+  "taskListNoDue": "بدون موعد",
+  "taskListDueDate": "تاريخ الاستحقاق",
+  "taskListRemaining": "الوقت المتبقي",
+  "taskListEdit": "تعديل",
+  "taskListActive": "نشط",
+  "taskListCompletedSection": "مكتمل",
+  "taskListUrgent": "عاجل",
+  "taskListHoursShort": "{hours}س",
+  "taskListDaysShort": "{days}ي",
+  "clockTasks": "المهام"
 }

@@ -1136,5 +1136,18 @@
   "taskListCompletedSemantic": "Tamamlandı",
   "taskListIncompleteSemantic": "Tamamlanmadı",
   "profileNextCrown": "Sonraki taç",
-  "profileCrownMax": "En yüksek taç"
+  "profileCrownMax": "En yüksek taç",
+  "navTools": "Araçlar",
+  "taskListMore": "+{count} daha",
+  "taskListOverdue": "Gecikti",
+  "taskListNoDue": "Süresiz",
+  "taskListDueDate": "Bitiş tarihi",
+  "taskListRemaining": "Kalan süre",
+  "taskListEdit": "Düzenle",
+  "taskListActive": "Aktif",
+  "taskListCompletedSection": "Tamamlananlar",
+  "taskListUrgent": "Acil",
+  "taskListHoursShort": "{hours}s",
+  "taskListDaysShort": "{days}g",
+  "clockTasks": "Görevler"
 }
