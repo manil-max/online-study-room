@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/core/prefs/app_prefs.dart';
-import 'package:online_study_room/data/models/user_task.dart';
 import 'package:online_study_room/data/providers/auth_providers.dart';
 import 'package:online_study_room/data/providers/user_task_providers.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_user_task_repository.dart';
@@ -12,7 +11,7 @@ import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  testWidgets('TasksCard empty + add toggle strikethrough', (tester) async {
+  testWidgets('TasksCard empty + toggle (no add UI)', (tester) async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
     final repo = InMemoryUserTaskRepository();
@@ -42,26 +41,25 @@ void main() {
 
     expect(find.text('Tasks'), findsOneWidget);
     expect(find.text('No items for this period'), findsOneWidget);
+    // Home kartında ekleme yok
+    expect(find.byIcon(Icons.add), findsNothing);
 
     final container = ProviderScope.containerOf(
       tester.element(find.byType(TasksCard)),
     );
-    await container.read(userTaskActionsProvider).add(TaskScope.daily, 'Read');
+    await container.read(userTaskActionsProvider).add(
+          rawTitle: 'Read',
+          dueAt: DateTime.now().add(const Duration(hours: 2)),
+        );
     await tester.pumpAndSettle();
 
     expect(find.text('Read'), findsOneWidget);
-    expect(find.byIcon(Icons.radio_button_unchecked), findsOneWidget);
-
-    final tasks =
-        await container.read(userTasksProvider(TaskScope.daily).future);
-    await container
-        .read(userTaskActionsProvider)
-        .toggle(TaskScope.daily, tasks.first.id);
+    await container.read(userTaskActionsProvider).toggle(
+          (await container.read(userTasksProvider.future)).first.id,
+        );
     await tester.pumpAndSettle();
-
-    expect(find.byIcon(Icons.check_circle), findsOneWidget);
-    final text = tester.widget<Text>(find.text('Read'));
-    expect(text.style?.decoration, TextDecoration.lineThrough);
+    // Tamamlanınca aktif listeden düşer
+    expect(find.text('Read'), findsNothing);
   });
 
   testWidgets('DashboardCardType.tasks builds TasksCard', (tester) async {
