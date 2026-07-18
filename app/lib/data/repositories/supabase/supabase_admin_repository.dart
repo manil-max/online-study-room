@@ -103,6 +103,9 @@ class SupabaseAdminRepository implements AdminRepository {
       );
     }
 
+    // WP-177: insert her zaman auth.uid() ile — profile.id sapması RLS'i kırmaz.
+    final insertUserId = authUid;
+
     try {
       String? attachmentPath;
       if (attachmentBytes != null && attachmentExt != null) {
@@ -110,22 +113,34 @@ class SupabaseAdminRepository implements AdminRepository {
             ? attachmentExt
             : '.$attachmentExt';
         final fileName = '${const Uuid().v4()}$ext';
-        final path = '$userId/$fileName';
+        final path = '$insertUserId/$fileName';
 
-        await _client.storage
-            .from('feedback_attachments')
-            .uploadBinary(
-              path,
-              attachmentBytes,
-              fileOptions: const FileOptions(upsert: true),
-            );
-        attachmentPath = path;
+        try {
+          await _client.storage
+              .from('feedback_attachments')
+              .uploadBinary(
+                path,
+                attachmentBytes,
+                fileOptions: const FileOptions(upsert: true),
+              );
+          attachmentPath = path;
+        } on StorageException catch (e, st) {
+          _debugLogFeedback(
+            'submitFeedback StorageException '
+            'statusCode=${e.statusCode} message=${e.message} error=${e.error}',
+            st,
+          );
+          throw AdminException(
+            feedbackUserMessageForCode('storage'),
+            code: 'storage',
+          );
+        }
       }
 
       final row = await _client
           .from('feedback_tickets')
           .insert({
-            'user_id': userId,
+            'user_id': insertUserId,
             'kind': kind.dbValue,
             'subject': normalizeFeedbackSubject(subject),
             'message': normalizeFeedbackMessage(message),
@@ -135,13 +150,8 @@ class SupabaseAdminRepository implements AdminRepository {
           .select()
           .single();
       return FeedbackTicket.fromMap(row);
-    } on StorageException catch (e, st) {
-      _debugLogFeedback(
-        'submitFeedback StorageException '
-        'statusCode=${e.statusCode} message=${e.message} error=${e.error}',
-        st,
-      );
-      throw AdminException('Görsel yüklenemedi: ${e.message}');
+    } on AdminException {
+      rethrow;
     } on PostgrestException catch (e, st) {
       _debugLogFeedback(
         'submitFeedback PostgrestException '
@@ -153,16 +163,12 @@ class SupabaseAdminRepository implements AdminRepository {
         postgrestCode: e.code,
         message: e.message,
       );
-      if (classified == 'session_or_rls') {
-        throw AdminException(
-          'Oturumun sona ermiş veya sunucu erişimi reddetti. '
-          'Tekrar giriş yapıp dene.',
-          code: 'session_or_rls',
-        );
-      }
       throw AdminException(
-        'Geri bildirim gönderilemedi: ${e.message}',
-        code: e.code,
+        feedbackUserMessageForCode(
+          classified,
+          fallback: 'Geri bildirim gönderilemedi.',
+        ),
+        code: classified ?? e.code,
       );
     } catch (e, st) {
       _debugLogFeedback('submitFeedback unexpected: $e', st);

@@ -92,19 +92,21 @@ class _ReportIssueDialogState extends ConsumerState<ReportIssueDialog> {
       ref.invalidate(adminFeedbackTicketsProvider);
       if (mounted) Navigator.of(context).pop(true);
     } on AdminException catch (e, st) {
-      // WP-168: gerçek hata kDebugMode'da; oturum hataları net UX, diğerleri jenerik.
+      // WP-177: net kod mesajları her zaman; kDebugMode ayrıntı loglar.
       if (kDebugMode) {
         debugPrint(
           'ReportIssueDialog AdminException code=${e.code} message=${e.message}',
         );
         debugPrint('$st');
       }
-      if (e.code == 'session_required' || e.code == 'session_or_rls') {
-        _showError(
-          e.message.isNotEmpty
-              ? e.message
-              : l10n.profileGeriBildirimGondermekIcin,
-        );
+      const netCodes = {
+        'session_required',
+        'session_or_rls',
+        'schema_missing',
+        'storage',
+      };
+      if (e.code != null && netCodes.contains(e.code) && e.message.isNotEmpty) {
+        _showError(e.message);
       } else {
         _showError(l10n.profileGeriBildirimGonderilemedi);
       }

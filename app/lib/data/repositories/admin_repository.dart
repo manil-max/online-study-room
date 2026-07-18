@@ -22,13 +22,21 @@ class AdminException implements Exception {
   String toString() => message;
 }
 
-/// Postgrest hata kodu/mesajından geri bildirim gönderim sınıflandırması (WP-168).
+/// Postgrest hata kodu/mesajından geri bildirim gönderim sınıflandırması (WP-168/177).
+/// Dönüş: `session_or_rls` | `schema_missing` | `storage` | null
 String? classifyFeedbackSubmitError({
   String? postgrestCode,
   String? message,
 }) {
   final code = (postgrestCode ?? '').toLowerCase();
   final msg = (message ?? '').toLowerCase();
+  if (code == '42p01' ||
+      msg.contains('does not exist') ||
+      msg.contains('relation') && msg.contains('feedback') ||
+      msg.contains('could not find the table') ||
+      msg.contains('schema cache')) {
+    return 'schema_missing';
+  }
   if (code == '42501' ||
       msg.contains('row-level security') ||
       msg.contains('violates row-level') ||
@@ -39,6 +47,20 @@ String? classifyFeedbackSubmitError({
     return 'session_or_rls';
   }
   return null;
+}
+
+/// Kullanıcıya gösterilecek net mesaj (release build'de de, kDebugMode bağımsız).
+String feedbackUserMessageForCode(String? code, {String? fallback}) {
+  return switch (code) {
+    'session_required' || 'session_or_rls' =>
+      'Oturumun sona ermiş veya sunucu erişimi reddetti. Tekrar giriş yapıp dene.',
+    'schema_missing' =>
+      'Geri bildirim sunucusu henüz hazır değil. Lütfen daha sonra dene '
+          '(yönetici: feedback migration/ensure SQL).',
+    'storage' =>
+      'Görsel yüklenemedi. İnternetini kontrol et veya görselsiz gönder.',
+    _ => fallback ?? 'Geri bildirim gönderilemedi.',
+  };
 }
 
 class AdminDashboardSummary {

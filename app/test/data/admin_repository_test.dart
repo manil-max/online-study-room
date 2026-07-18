@@ -109,7 +109,7 @@ void main() {
     );
   });
 
-  group('classifyFeedbackSubmitError (WP-168)', () {
+  group('classifyFeedbackSubmitError (WP-168/177)', () {
     test('RLS / JWT → session_or_rls', () {
       expect(
         classifyFeedbackSubmitError(
@@ -130,6 +130,34 @@ void main() {
           message: 'permission denied for table feedback_tickets',
         ),
         'session_or_rls',
+      );
+    });
+
+    test('tablo yok → schema_missing', () {
+      expect(
+        classifyFeedbackSubmitError(
+          postgrestCode: '42P01',
+          message: 'relation "feedback_tickets" does not exist',
+        ),
+        'schema_missing',
+      );
+      expect(
+        classifyFeedbackSubmitError(
+          message: 'Could not find the table in the schema cache',
+        ),
+        'schema_missing',
+      );
+    });
+
+    test('feedbackUserMessageForCode net ve kDebug bağımsız', () {
+      expect(
+        feedbackUserMessageForCode('schema_missing'),
+        contains('sunucusu henüz hazır değil'),
+      );
+      expect(feedbackUserMessageForCode('storage'), contains('Görsel'));
+      expect(
+        feedbackUserMessageForCode('session_or_rls'),
+        contains('giriş'),
       );
     });
 
