@@ -11,12 +11,17 @@ import '../../../core/widgets/safe_screen_padding.dart';
 import '../../../core/widgets/crowned_avatar.dart';
 import '../../../data/models/daily_stat.dart';
 import '../../../data/models/profile.dart';
+import '../../../data/providers/analytics_query_providers.dart';
 import '../../../data/providers/stats_period_provider.dart';
 import '../../classroom/widgets/class_switcher.dart';
 import '../../profile/widgets/profile_tap.dart';
+import '../analytics/analytics_period.dart';
+import '../charts/area_line_chart.dart';
+import '../charts/gauge_chart.dart';
 import 'daily_bar_chart.dart';
 import 'daily_line_chart.dart';
 import 'stat_heat_table.dart';
+import 'subject_donut.dart';
 import '../stats_l10n.dart';
 
 /// Sınıf (ortak) istatistikleri: ortak dönem + sıralama + özet.
@@ -45,6 +50,13 @@ class ClassStatsView extends ConsumerWidget {
     final sel = ref.watch(statsPeriodProvider);
     final period = sel.period;
     final (from, to) = sel.range(now: now);
+    final analyticsPeriod = analyticsPeriodFromSelection(sel);
+    final contribAsync = ref.watch(
+      analyticsGroupContributionProvider(analyticsPeriod),
+    );
+    final seriesAsync = ref.watch(
+      analyticsGroupLeaderboardSeriesProvider(analyticsPeriod),
+    );
 
     // Seçili dönem leaderboard'u: userId → saniye (per-user-per-gün toplamdan).
     final totals = userTotalsInRange(stats, from, to);
@@ -153,10 +165,31 @@ class ClassStatsView extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 12),
-        _GroupGoalCard(
-          todaySeconds: todayGroupTotal,
-          goalSeconds: goalSeconds,
-          streak: groupStreak,
+        // G1: hedef gauge + mevcut özet kart
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: GaugeChart(
+                  progress: goalSeconds <= 0
+                      ? 0
+                      : todayGroupTotal / goalSeconds,
+                  label: AppLocalizations.of(context).homeGrupHedefi,
+                  size: 100,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _GroupGoalCard(
+                todaySeconds: todayGroupTotal,
+                goalSeconds: goalSeconds,
+                streak: groupStreak,
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 16),
         Row(
@@ -177,7 +210,117 @@ class ClassStatsView extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: 16),
-        // Sıralama — ortak dönem seçimine bağlı.
+        // G2: üye katkı donut (varsayılan açık)
+        Text(
+          AppLocalizations.of(context).analyticsCardMemberDonut,
+          style: theme.textTheme.titleMedium,
+        ),
+        const SizedBox(height: 8),
+        contribAsync.when(
+          loading: () => const Card(
+            child: Padding(
+              padding: EdgeInsets.all(24),
+              child: Center(child: CircularProgressIndicator()),
+            ),
+          ),
+          error: (_, _) => Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                AppLocalizations.of(context).statsBuDonemdeHenuzCalisma,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          ),
+          data: (rows) {
+            if (rows.isEmpty) {
+              return Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(
+                    AppLocalizations.of(context).statsBuDonemdeHenuzCalisma,
+                    style: theme.textTheme.bodySmall,
+                  ),
+                ),
+              );
+            }
+            final nameOf = {for (final m in members) m.id: m.displayName};
+            final slices = [
+              for (var i = 0; i < rows.length; i++)
+                SubjectDonutSlice(
+                  label: (nameOf[rows[i].userId] ?? '').isEmpty
+                      ? AppLocalizations.of(context).statsIsimsiz
+                      : nameOf[rows[i].userId]!,
+                  color: subjectColor('chart-${(i % 5) + 1}'),
+                  seconds: rows[i].seconds,
+                ),
+            ];
+            return Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: SubjectDonut(slices: slices),
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 16),
+        // G4: liderlik zaman serisi (aggregate area)
+        Text(
+          AppLocalizations.of(context).analyticsCardLeaderboardHistory,
+          style: theme.textTheme.titleMedium,
+        ),
+        const SizedBox(height: 8),
+        seriesAsync.when(
+          loading: () => const Card(
+            child: Padding(
+              padding: EdgeInsets.all(24),
+              child: Center(child: CircularProgressIndicator()),
+            ),
+          ),
+          error: (_, _) => Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                AppLocalizations.of(context).statsBuDonemdeHenuzCalisma,
+                style: theme.textTheme.bodySmall,
+              ),
+            ),
+          ),
+          data: (points) {
+            if (points.isEmpty) {
+              return Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(
+                    AppLocalizations.of(context).statsBuDonemdeHenuzCalisma,
+                    style: theme.textTheme.bodySmall,
+                  ),
+                ),
+              );
+            }
+            // Gün toplamı (tüm üyeler) → area
+            final byDay = <DateTime, int>{};
+            for (final p in points) {
+              final d = dayOf(p.day);
+              byDay[d] = (byDay[d] ?? 0) + p.seconds;
+            }
+            final days = byDay.keys.toList()..sort();
+            final vals = [for (final d in days) (byDay[d] ?? 0) / 3600.0];
+            return Card(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: SizedBox(
+                  height: 120,
+                  child: AreaLineChart(values: vals),
+                ),
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 16),
+        // G3: Sıralama — ortak dönem seçimine bağlı.
         Text(
           AppLocalizations.of(context).statsSiralama,
           style: theme.textTheme.titleMedium,
