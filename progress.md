@@ -71,15 +71,15 @@
 - **Not:** Play Store production programı WP-110–124 olarak planlandı; kanonik belgeler hizalandı. `OPTIMIZATIONS.md` kapsam dışı bırakıldı.
 
 ### Grok Lane
-- **Durum:** [x] Boşta
-- **Faz/WP:** —
-- **Aşama:** —
-- **SAHİP yollar:** —
-- **Ortak/riskli yüzey:** —
-- **Dal:** — (main)
-- **Başlangıç:** —
-- **Son güncelleme:** 2026-07-18 (Europe/Istanbul)
-- **Not:** WP-182 kodda doğrulandı (ar/de l10n; gen-l10n + analyze 0 + test 526; rapor `docs/L10N-TAMAMLAMA-2026-07.md`). Cihazda dil değişimi QA bekler.
+- **Durum:** [~] Aktif
+- **Faz/WP:** WP-184 → WP-188 (cihaz turu düzeltmeleri)
+- **Aşama:** Geliştiriliyor
+- **SAHİP yollar:** `supabase/migrations/0045_feedback_reload.sql`, `docs/qa/WP-184-FEEDBACK-CACHE.md`, `app/lib/features/stats/widgets/stats_period_bar.dart`, `app/lib/features/home/dashboard_providers.dart`, `app/lib/features/home/dashboard_card.dart`, `app/lib/features/home/widgets/*tasks*`, `app/lib/features/profile/settings_screen.dart` (density), `app/lib/features/profile/widgets/gamification_card.dart`, `app/lib/data/models/user_task.dart`, `app/lib/data/repositories/**/user_task*`, `app/lib/data/providers/user_task*`, l10n arb (görev anahtarları), ilgili testler
+- **Ortak/riskli yüzey:** `progress.md`, `app/lib/l10n/*`, `supabase/migrations/` (0045), settings_screen density UI
+- **Dal:** — (main; AGENTS.md §1.5)
+- **Başlangıç:** 2026-07-18 20:34 (Europe/Istanbul)
+- **Son güncelleme:** 2026-07-18 20:34 (Europe/Istanbul)
+- **Not:** Cihaz turu WP-184–188. 🔴 timer/widget/FGS dokunulmaz. Push yok; her WP ayrı commit.
 
 
 ---
