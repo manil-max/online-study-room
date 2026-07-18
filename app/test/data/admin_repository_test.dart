@@ -133,7 +133,7 @@ void main() {
       );
     });
 
-    test('tablo yok → schema_missing', () {
+    test('tablo yok → schema_missing (dar kurallar WP-193)', () {
       expect(
         classifyFeedbackSubmitError(
           postgrestCode: '42P01',
@@ -143,10 +143,35 @@ void main() {
       );
       expect(
         classifyFeedbackSubmitError(
+          postgrestCode: 'PGRST205',
           message: 'Could not find the table in the schema cache',
         ),
         'schema_missing',
       );
+      expect(
+        classifyFeedbackSubmitError(
+          message: 'Could not find the table in the schema cache',
+        ),
+        'schema_missing',
+      );
+      // Geniş "relation+feedback" artık RLS'i schema sanmaz
+      expect(
+        classifyFeedbackSubmitError(
+          message: 'permission denied for relation feedback_tickets',
+        ),
+        'session_or_rls',
+      );
+    });
+
+    test('feedbackErrorDisplay ham kod ekler', () {
+      final s = feedbackErrorDisplay(
+        userMessage: 'Sunucu hazır değil',
+        postgrestCode: 'PGRST205',
+        rawMessage: 'Could not find the table',
+      );
+      expect(s, contains('Detay:'));
+      expect(s, contains('PGRST205'));
+      expect(s, contains('Could not find the table'));
     });
 
     test('feedbackUserMessageForCode net ve kDebug bağımsız', () {

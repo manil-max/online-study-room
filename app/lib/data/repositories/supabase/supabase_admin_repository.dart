@@ -163,10 +163,16 @@ class SupabaseAdminRepository implements AdminRepository {
         postgrestCode: e.code,
         message: e.message,
       );
+      // WP-193: kullanıcı mesajı + ham kod/mesaj (cihaz teşhisi).
+      final userMsg = feedbackUserMessageForCode(
+        classified,
+        fallback: 'Geri bildirim gönderilemedi.',
+      );
       throw AdminException(
-        feedbackUserMessageForCode(
-          classified,
-          fallback: 'Geri bildirim gönderilemedi.',
+        feedbackErrorDisplay(
+          userMessage: userMsg,
+          postgrestCode: e.code,
+          rawMessage: e.message,
         ),
         code: classified ?? e.code,
       );

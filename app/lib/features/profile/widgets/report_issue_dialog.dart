@@ -92,30 +92,30 @@ class _ReportIssueDialogState extends ConsumerState<ReportIssueDialog> {
       ref.invalidate(adminFeedbackTicketsProvider);
       if (mounted) Navigator.of(context).pop(true);
     } on AdminException catch (e, st) {
-      // WP-177: net kod mesajları her zaman; kDebugMode ayrıntı loglar.
+      // WP-177/193: net mesaj + ham detay her zaman (release dahil).
       if (kDebugMode) {
         debugPrint(
           'ReportIssueDialog AdminException code=${e.code} message=${e.message}',
         );
         debugPrint('$st');
       }
-      const netCodes = {
-        'session_required',
-        'session_or_rls',
-        'schema_missing',
-        'storage',
-      };
-      if (e.code != null && netCodes.contains(e.code) && e.message.isNotEmpty) {
-        _showError(e.message);
-      } else {
-        _showError(l10n.profileGeriBildirimGonderilemedi);
-      }
+      final msg = e.message.isNotEmpty
+          ? e.message
+          : l10n.profileGeriBildirimGonderilemedi;
+      // Kod message içinde yoksa ekle (eski yollar).
+      final withCode = e.code != null &&
+              e.code!.isNotEmpty &&
+              !msg.contains(e.code!)
+          ? '$msg\nDetay: ${e.code}'
+          : msg;
+      _showError(withCode);
     } catch (e, st) {
       if (kDebugMode) {
         debugPrint('ReportIssueDialog unexpected: $e');
         debugPrint('$st');
       }
-      _showError(l10n.profileGeriBildirimGonderilemedi);
+      // WP-193: beklenmeyen hatada da ham metin görünür olsun.
+      _showError('${l10n.profileGeriBildirimGonderilemedi}\nDetay: $e');
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -123,9 +123,16 @@ class _ReportIssueDialogState extends ConsumerState<ReportIssueDialog> {
 
   void _showError(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(seconds: 8),
+        action: SnackBarAction(
+          label: 'OK',
+          onPressed: () {},
+        ),
+      ),
+    );
   }
 
   @override

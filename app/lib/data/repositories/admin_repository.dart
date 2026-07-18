@@ -22,21 +22,31 @@ class AdminException implements Exception {
   String toString() => message;
 }
 
-/// Postgrest hata kodu/mesajından geri bildirim gönderim sınıflandırması (WP-168/177).
+/// Postgrest hata kodu/mesajından geri bildirim gönderim sınıflandırması
+/// (WP-168/177/193).
+///
 /// Dönüş: `session_or_rls` | `schema_missing` | `storage` | null
+///
+/// WP-193: `schema_missing` yalnız gerçek tablo/şema önbellek hatalarına.
+/// Geniş `relation`+`feedback` eşlemesi RLS/permission'ı yanlış etiketliyordu.
 String? classifyFeedbackSubmitError({
   String? postgrestCode,
   String? message,
 }) {
-  final code = (postgrestCode ?? '').toLowerCase();
+  final code = (postgrestCode ?? '').toLowerCase().trim();
   final msg = (message ?? '').toLowerCase();
-  if (code == '42p01' ||
-      msg.contains('does not exist') ||
-      msg.contains('relation') && msg.contains('feedback') ||
+
+  // Tablo yok / PostgREST şema önbelleği — dar kurallar.
+  final isSchemaCode = code == '42p01' || code == 'pgrst205';
+  final isSchemaMsg = msg.contains('schema cache') ||
       msg.contains('could not find the table') ||
-      msg.contains('schema cache')) {
+      (msg.contains('relation') &&
+          msg.contains('does not exist') &&
+          msg.contains('feedback'));
+  if (isSchemaCode || isSchemaMsg) {
     return 'schema_missing';
   }
+
   if (code == '42501' ||
       msg.contains('row-level security') ||
       msg.contains('violates row-level') ||
@@ -47,6 +57,22 @@ String? classifyFeedbackSubmitError({
     return 'session_or_rls';
   }
   return null;
+}
+
+/// Kullanıcı mesajı + ham PostgREST detayı (cihaz teşhisi, release'te de).
+String feedbackErrorDisplay({
+  required String userMessage,
+  String? postgrestCode,
+  String? rawMessage,
+}) {
+  final code = (postgrestCode ?? '').trim();
+  final raw = (rawMessage ?? '').trim();
+  if (code.isEmpty && raw.isEmpty) return userMessage;
+  final detail = [
+    if (code.isNotEmpty) code,
+    if (raw.isNotEmpty) raw,
+  ].join(' ');
+  return '$userMessage\nDetay: $detail';
 }
 
 /// Kullanıcıya gösterilecek net mesaj (release build'de de, kDebugMode bağımsız).
