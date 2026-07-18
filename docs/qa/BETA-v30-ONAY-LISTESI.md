@@ -21,29 +21,28 @@
 | 0.1 | GitHub Release `beta-v30` APK indi / yüklendi | ☐ |
 | 0.2 | Launcher: **Odak Kampı BETA** (stable ile karışmaz) | ☐ |
 | 0.3 | Giriş kalıcı (InMemory’ye düşmez) | ☐ |
-| 0.4 | Ayarlar → **Yeni istatistik ekranı (Beta)** **AÇ** | ☐ |
+| 0.4 | Ayarlar’da **“Yeni istatistik ekranı (Beta)” toggle YOK** (WP-170) | ☐ |
 
 ---
 
-## 1. Analitik ızgara (flag AÇIK)
+## 1. Klasik istatistikler (WP-170; ızgara kaldırıldı)
 
 | # | Madde | Sonuç | Not |
 |---|---|---|---|
-| 1.1 | İstatistikler ızgara render (crash yok) | ☐ | |
-| 1.2 | Kart ekle / çıkar / boyut | ☐ | |
-| 1.3 | Layout kalıcı (kill → reopen) | ☐ | |
-| 1.4 | Dönem: bugün / hafta / ay / **yıl** / **özel** | ☐ | |
-| 1.5 | “Geçen döneme göre” kıyas | ☐ | |
-| 1.6 | Flag **KAPA** → eski ListView birebir | ☐ | |
+| 1.1 | İstatistikler → Kişisel: `StatsPeriodBar` + ListView (ızgara/sürükle yok) | ☐ | |
+| 1.2 | Dönem: Bugün / Hafta / Ay / Tümü | ☐ | yıl/özel → WP-175 plan |
+| 1.3 | Grup sekmesi: ClassStatsView; crash yok | ☐ | |
+| 1.4 | Ayarlar’da analytics beta anahtarı görünmüyor | ☐ | |
 
 ---
 
-## 2. Grup analitiği (0039–0041)
+## 2. Gruplar kaydırma + profil (WP-171/172)
 
 | # | Madde | Sonuç | Not |
 |---|---|---|---|
-| 2.1 | Üye hesap: grup katkı / liderlik kartları veri | ☐ | |
-| 2.2 | Non-üye: yetkisiz/boş, crash yok | ☐ | |
+| 2.1 | Gruplar: kart üstünden akıcı dikey scroll | ☐ | WP-172 |
+| 2.2 | Home dashboard sürükle-bırak **hâlâ çalışır** | ☐ | dokunulmadı |
+| 2.3 | Profil başarımlar başlığı yatay (dikey harf yok) | ☐ | WP-171 |
 
 ---
 

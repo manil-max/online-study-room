@@ -20,7 +20,7 @@
 - **Navigasyon hedefi:** Ana Sayfa / Saat / Gruplar / İstatistikler / Profil. Ana Sayfa günlük kullanım alanıdır; diğer alanların verisi kendi sekmelerinde eksiksiz bulunur.
 - **Release:** Stable/Beta kanalı GitHub Releases ile çalışır. **beta-v30** = `1.0.30+30` (analitik ızgara toggle, 0039–0043 RPC/gamification, WP-166–168). Onay: `docs/qa/BETA-v30-ONAY-LISTESI.md`. Play production ayrı kalite kapısından geçer.
 - **Kalite kapıları:** Her WP DoD'siz kapanmaz; stable release kalite kapısından geçer (AGENTS.md §3). Server-authoritative XP, RLS/sosyal profil, platform sınırları → `docs/KALITE-PROGRAMI.md`.
-- **Son WP numarası:** 169 (görev listesi plan). **Sıradaki boş numara WP-170** (uygulama onay sonrası).
+- **Son WP numarası:** 175 (stats zenginleştirme plan). **Sıradaki boş numara WP-176.**
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
   - Flutter: `C:\src\flutter` · Android SDK: `C:\Android\Sdk`
@@ -71,15 +71,15 @@
 - **Not:** Play Store production programı WP-110–124 olarak planlandı; kanonik belgeler hizalandı. `OPTIMIZATIONS.md` kapsam dışı bırakıldı.
 
 ### Grok Lane
-- **Durum:** [~] Aktif
-- **Faz/WP:** WP-170→175 (cihaz QA onarım: stats klasik · basarim · groups scroll · l10n · sweep · plan)
-- **Aşama:** Geliştiriliyor
-- **SAHİP yollar:** `app/lib/features/stats/**`, settings toggle, gamification_card, classroom_screen, l10n arb, docs/qa+features
-- **Ortak/riskli yüzey:** progress.md (kendi), l10n · **DOKUNMA:** timer/widget/FGS, Home dashboard
+- **Durum:** [x] Boşta
+- **Faz/WP:** —
+- **Aşama:** —
+- **SAHİP yollar:** —
+- **Ortak/riskli yüzey:** —
 - **Dal:** main
-- **Başlangıç:** 2026-07-18 (Europe/Istanbul)
+- **Başlangıç:** —
 - **Son güncelleme:** 2026-07-18 (Europe/Istanbul)
-- **Not:** SIRAYLA 170–175; HER WP AYRI COMMIT; push YOK.
+- **Not:** WP-170…175 bitti (ayrı commit). Push yok. WP-175 plan onay bekler.
 
 
 ---
@@ -173,6 +173,12 @@
 | WP-167 | [x] Otomatik test geçti | Timer FakeTimer dispose sızıntısı | kod+test |
 | WP-168 | [~] Test için bekliyor | Feedback gönderilemedi tanı+onarım | Cihazda doğrulanmalı |
 | WP-169 | [~] Plan onay bekliyor | Günlük/haftalık görev listesi kartı PLAN | `docs/features/GOREV-LISTESI-KART-PLAN.md` · kod yok |
+| WP-170 | [~] Test için bekliyor | Stats klasik (ızgara kaldır) | `Cihazda doğrulanmalı` |
+| WP-171 | [~] Test için bekliyor | Başarımlar başlık taşması | `Cihazda doğrulanmalı` |
+| WP-172 | [~] Test için bekliyor | Gruplar nested scroll | `Cihazda doğrulanmalı` |
+| WP-173 | [~] Test için bekliyor | l10n Hours + de/ar (AR kısmi) | `docs/L10N-DUZELTME-2026-07.md` |
+| WP-174 | [x] Rapor | UI sweep | `docs/qa/WP-174-UI-SWEEP.md` |
+| WP-175 | [~] Plan onay bekliyor | Klasik stats zenginleştirme PLAN | `docs/features/ISTATISTIK-ZENGINLESTIRME-PLAN.md` |
 
 > **2026-07-14 proje denetimi:** Serbest sürükle-bırak ızgara, canlı grup hedefi ve saat stilleri **zaten kodda uygulanmış** (backlog stale idi; geçici WP-72/73/75 iptal).
 >
@@ -861,11 +867,26 @@
 
 ## Test için bekleyenler
 
+### WP-175: Klasik istatistik zenginleştirme PLAN (onay) 📊
+- **Teslim:** `docs/features/ISTATISTIK-ZENGINLESTIRME-PLAN.md`
+- **Kod:** yok · **Ürün kararı gerekiyor**
+- **Not:** Grid gitti (WP-170); sabit bölümler + 0039–0041
+
+### WP-174: UI sweep 🔎
+- **Rapor:** `docs/qa/WP-174-UI-SWEEP.md`
+
+### WP-170–173: Cihaz QA onarım (otomatik test) 🛠️
+- **170:** Stats klasik; grid/flag/toggle silindi · charts/RPC korundu
+- **171:** `gamification_card` başlık Wrap
+- **172:** Gruplar nested scroll kaldırıldı (Home finite scroll aynı)
+- **173:** `classroomSaat`=Hours; DE ~%94; AR ~%50 Arapça · `docs/L10N-DUZELTME-2026-07.md`
+- **Kanıt:** analyze (WP-170/171/172) · **`Cihazda doğrulanmalı`**
+- **Push yok**
+
 ### WP-169: Görev listesi kartı PLAN (onay bekliyor) 📋
 - **Teslim:** `docs/features/GOREV-LISTESI-KART-PLAN.md`
-- **Öneri:** v1 lokal prefs; `AnalyticsCardType.taskList` (flag arkası, default layout’a eklenmez); dönem hard reset; tamamlanınca strikethrough; XP/cloud v1 dışı
-- **Kod:** yok · **Ürün kararı gerekiyor** (§12 checklist)
-- **Sonraki:** onay → WP-170+ 
+- **Öneri:** v1 lokal prefs; analytics kart (flag/grid artık yok — planı Home veya klasik stats’e hizala)
+- **Kod:** yok · **Ürün kararı gerekiyor**
 
 ### WP-168: Feedback “gönderilemedi” (otomatik test) 🐞
 - **Rapor:** `docs/qa/WP-168-FEEDBACK-TANI.md`

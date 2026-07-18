@@ -12,129 +12,71 @@
 
 ---
 
-## 0. ÖN KOŞUL (migration + beta bayrağı)
+## 0. ÖN KOŞUL (migration + build)
 
-### 0.1 SQL Editor — 0039–0043 uygula
+### 0.1 SQL Editor — 0039–0043
 
-**Önkoşul:** Canlı/staging’de en az **0038** uygulanmış olmalı. **0039–0043 bu repoda henüz uygulanmadı varsayımı** (ADIM 0 renumber; eski 0040–44 adları yok).
+**Önkoşul:** Canlıda 0038+; sahip 0039–0043 uyguladıysa ✓.
 
-**Adımlar:**
-1. Supabase Dashboard → SQL Editor.
-2. Sırayla dosya içeriğini çalıştır (her biri sonrası hata yok):
-   - `supabase/migrations/0039_user_day_totals_rpc.sql`
-   - `supabase/migrations/0040_group_contribution_breakdown.sql`
-   - `supabase/migrations/0041_fix_study_sessions_start_time.sql` (start_time CREATE OR REPLACE)
-   - `supabase/migrations/0042_gamification_expand.sql` (cosmetics + dict)
-   - `supabase/migrations/0043_guard_cosmetics_write.sql` (cosmetics write guard)
-3. Opsiyonel RLS dumanı: `docs/features/ANALYTICS-RLS-TEST-PLAN.md`.
+**Adımlar:** Eksikse sırayla `0039`…`0043` SQL Editor. Not: 0039/40 `start_time` kullanır.
 
-**Beklenen:** Hata yok; `get_user_day_totals` / `group_contribution_breakdown` / `group_leaderboard_series` çağrılabilir (üye hesapla).
+**Beklenen:** RPC’ler hata vermeden create; `get_user_day_totals` vb. hazır (WP-175’te klasik ekrana bağlanacak).
 
 **Sonuç:** ☐ Geçti / ☐ Kaldı · not: ________
 
-### 0.2 Beta APK/AAB yükle ve giriş
+### 0.2 Beta APK yükle ve giriş
 
-**Önkoşul:** 0.1 tamam; test hesabı authenticated.
+**Adımlar:** beta build yükle → giriş → cold start.
 
-**Adımlar:**
-1. Beta build yükle (Play internal veya local release).
-2. Bilinen hesapla giriş yap; cold start sonrası oturum kalıcı olsun.
-
-**Beklenen:** Ana sayfa açılır; “giriş yok” / InMemory’ye düşmez (`env.json`/flavor doğru).
+**Beklenen:** Ana sayfa; InMemory düşmez.
 
 **Sonuç:** ☐ Geçti / ☐ Kaldı · not: ________
 
-### 0.3 Ayarlar → Yeni istatistik ekranı (Beta) AÇ
+### 0.3 Analytics beta toggle YOK (WP-170)
 
-**Önkoşul:** 0.2.
+**Adımlar:** Ayarlar’da “Yeni istatistik ekranı (Beta)” aranmaz / yoktur.
 
-**Adımlar:**
-1. Profil → Ayarlar.
-2. **“Yeni istatistik ekranı (Beta)”** anahtarını **AÇ**.
-3. Alt sekmelerden **İstatistikler**’e git.
-
-**Beklenen:** Eski ListView yerine ızgara; kapatınca eski StatsPeriodBar + ListView birebir.
+**Beklenen:** Toggle yok; İstatistikler her zaman klasik.
 
 **Sonuç:** ☐ Geçti / ☐ Kaldı · not: ________
 
 ---
 
-## 1. Analitik ızgara (WP-157–164)
+## 1. Klasik istatistikler (WP-170)
 
-### 1.1 22 kart render
+### 1.1 Kişisel ListView
 
-**Önkoşul:** 0.3 açık; kişisel sekme.
+**Adımlar:** İstatistikler → Kişisel; kaydır.
 
-**Adımlar:**
-1. İstatistikler → Kişisel.
-2. Kartları kaydır; boş/placeholder “yakında” metni olmamalı (yasaklı placeholder kartları yok).
-
-**Beklenen:** Varsayılan layout’ta kartlar gerçek veri veya boş durum UI ile çizilir; crash yok.
+**Beklenen:** `StatsPeriodBar` (Bugün/Hafta/Ay/Tümü) + sabit grafikler; **ızgara/sürükle/edit yok**.
 
 **Sonuç:** ☐ Geçti / ☐ Kaldı · not: ________
 
-### 1.2 Kart ekle / çıkar / boyutlandır
+### 1.2 Grup ClassStatsView
 
-**Önkoşul:** 1.1.
+**Adımlar:** İstatistikler → Grup (üyeyken).
 
-**Adımlar:**
-1. Düzenle moduna gir.
-2. Bir kart ekle → bir kart sil → bir kartı genişlet/daralt.
-3. Düzenlemeyi bitir; uygulamayı kill → yeniden aç → İstatistikler.
-
-**Beklenen:** Layout kalıcı (prefs); overlap yok; kart kimlikleri bozulmaz.
-
-**Sonuç:** ☐ Geçti / ☐ Kaldı · not: ________
-
-### 1.3 Dönem seçici + kıyas
-
-**Önkoşul:** 0.1 (yıl aralığı RPC), 0.3.
-
-**Adımlar:**
-1. Dönem: bugün / hafta / ay / **yıl** / **özel** dene.
-2. “Geçen döneme göre” (kıyas) toggle’ı aç/kapa.
-3. Yıl veya özel aralıkta toplamların 90g hot window dışı da dolabildiğini gözle (veri varsa).
-
-**Beklenen:** Dönem değişince kartlar güncellenir; kıyas açıkken delta/karşılaştırma görünür; hata snackbar spam yok.
-
-**Sonuç:** ☐ Geçti / ☐ Kaldı · not: ________
-
-### 1.4 Flag kapalı regresyon
-
-**Önkoşul:** —
-
-**Adımlar:**
-1. Ayarlar → Beta anahtarını **KAPA**.
-2. İstatistikler’e dön.
-
-**Beklenen:** Eski PersonalStatsView + ClassStatsView + StatsPeriodBar (4 segment) birebir.
+**Beklenen:** Klasik grup listesi; crash yok. Zengin donut/seri → **WP-175 plan**.
 
 **Sonuç:** ☐ Geçti / ☐ Kaldı · not: ________
 
 ---
 
-## 2. Grup analitiği (WP-161 + 0039/0040/0041)
+## 2. Gruplar sekmesi kaydırma (WP-172) + Home
 
-### 2.1 Grup kartları (üye)
+### 2.1 Gruplar scroll
 
-**Önkoşul:** 0.1; 0.3 açık; en az bir gruba **üye** hesap + grupta oturum verisi.
+**Adımlar:** Gruplar; hedef/sıralama/trend kartı **üzerinden** parmakla kaydır.
 
-**Adımlar:**
-1. İstatistikler → Grup (veya ilgili grup yüzeyi).
-2. Üye katkı / liderlik / donut benzeri grup kartlarını aç.
-
-**Beklenen:** Aggregate veriler gelir; **ham session satırı / başka kullanıcının private detayı yok**.
+**Beklenen:** Nested scroll yutmaz; akıcı dikey kaydırma.
 
 **Sonuç:** ☐ Geçti / ☐ Kaldı · not: ________
 
-### 2.2 Non-üye reddi
+### 2.2 Home dashboard
 
-**Önkoşul:** Grup G’ye üye **olmayan** ikinci hesap (veya gruptan çık).
+**Adımlar:** Ana Sayfa düzenle → kart sürükle.
 
-**Adımlar:**
-1. Aynı grup için katkı/liderlik kartını tetikle (mümkünse).
-
-**Beklenen:** Yetkisiz / boş / hata durumu; app crash yok. (SQL: `42501 not authorized` — `ANALYTICS-RLS-TEST-PLAN.md`)
+**Beklenen:** Sürükle-bırak **hâlâ çalışır** (WP-170–175 dokunmadı).
 
 **Sonuç:** ☐ Geçti / ☐ Kaldı · not: ________
 
@@ -171,15 +113,15 @@
 
 ## 4. WP-166 / 151–154 paketi
 
-### 4.1 Seviye eğrisi + görevler + kozmetik
+### 4.1 Seviye eğrisi + görevler + kozmetik + başlık (WP-171)
 
-**Önkoşul:** 0042 (+ tercihen 0043) uygulandı; oturumlarla XP birikmiş hesap.
+**Önkoşul:** 0042 (+ tercihen 0043); XP’li hesap.
 
 **Adımlar:**
-1. Profil’de seviye / görevler / çerçeve alanını aç.
-2. Seviye 3 civarı kozmetik “ücretsiz açık” davranışını kontrol et (varsa).
+1. Profil’de seviye / görevler / çerçeve.
+2. **Başarımlar** başlığı: uzun taç / textScale — **dikey harf dizilimi olmamalı** (WP-171).
 
-**Beklenen:** Seviye türetilmiş (istemci XP yazmaz); görevler salt okunur; crash yok.
+**Beklenen:** Seviye türetilmiş; başlık yatay; istemci XP yazmaz.
 
 **Sonuç:** ☐ Geçti / ☐ Kaldı · not: ________
 
