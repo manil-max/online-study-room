@@ -30,10 +30,15 @@ class TasksCard extends ConsumerWidget {
           final ultraCompact = h < 100 || w < 180;
           final compact = h < 160;
 
+          final activeCount = tasksAsync.maybeWhen(
+            data: (all) => all.where((t) => !t.completed).length,
+            orElse: () => 0,
+          );
+
           final header = Row(
             children: [
               Icon(
-                Icons.checklist_outlined,
+                Icons.checklist_rounded,
                 size: 18,
                 color: theme.colorScheme.primary,
               ),
@@ -48,23 +53,44 @@ class TasksCard extends ConsumerWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
+              if (activeCount > 0)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    '$activeCount',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
             ],
           );
 
           if (ultraCompact) {
-            return Padding(
-              padding: const EdgeInsets.all(8),
-              child: header,
-            );
+            return Padding(padding: const EdgeInsets.all(8), child: header);
           }
 
           return Padding(
-            padding: const EdgeInsets.fromLTRB(12, 8, 8, 6),
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 6),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 header,
-                const SizedBox(height: 4),
+                Divider(
+                  height: 12,
+                  thickness: 1,
+                  color: theme.colorScheme.outlineVariant.withValues(
+                    alpha: 0.5,
+                  ),
+                ),
                 Expanded(
                   child: tasksAsync.when(
                     loading: () => const Center(
@@ -74,55 +100,49 @@ class TasksCard extends ConsumerWidget {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       ),
                     ),
-                    error: (_, _) => Center(
-                      child: Text(
-                        l10n.taskListEmpty,
-                        style: theme.textTheme.bodySmall,
-                      ),
-                    ),
+                    error: (_, _) => _EmptyTasks(label: l10n.taskListEmpty),
                     data: (all) {
                       final active = sortUserTasksByDue([
                         for (final t in all)
                           if (!t.completed) t,
                       ]);
                       if (active.isEmpty) {
-                        return Center(
-                          child: Text(
-                            l10n.taskListEmpty,
-                            textAlign: TextAlign.center,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        );
+                        return _EmptyTasks(label: l10n.taskListEmpty);
                       }
                       final show = active.take(_maxVisible).toList();
                       final more = active.length - show.length;
-                      return ListView(
+                      return ListView.separated(
                         padding: EdgeInsets.zero,
-                        children: [
-                          for (final task in show)
-                            _HomeTaskTile(
-                              task: task,
-                              now: now,
-                              dense: compact,
-                              onToggle: () => ref
-                                  .read(userTaskActionsProvider)
-                                  .toggle(task.id),
-                            ),
-                          if (more > 0)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 4),
+                        itemCount: show.length + (more > 0 ? 1 : 0),
+                        separatorBuilder: (_, _) => Divider(
+                          height: 1,
+                          thickness: 1,
+                          color: theme.colorScheme.outlineVariant.withValues(
+                            alpha: 0.35,
+                          ),
+                        ),
+                        itemBuilder: (context, i) {
+                          if (i >= show.length) {
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 8),
                               child: Text(
                                 l10n.taskListMore(more),
                                 style: theme.textTheme.labelSmall?.copyWith(
                                   color: theme.colorScheme.primary,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
-                            ),
-                        ],
+                            );
+                          }
+                          return _HomeTaskTile(
+                            task: show[i],
+                            now: now,
+                            dense: compact,
+                            onToggle: () => ref
+                                .read(userTaskActionsProvider)
+                                .toggle(show[i].id),
+                          );
+                        },
                       );
                     },
                   ),
@@ -131,6 +151,39 @@ class TasksCard extends ConsumerWidget {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class _EmptyTasks extends StatelessWidget {
+  const _EmptyTasks({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.task_alt_rounded,
+            size: 30,
+            color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -156,47 +209,80 @@ class _HomeTaskTile extends StatelessWidget {
     final color = taskUrgencyColor(now, task.dueAt, theme.colorScheme);
     final kind = taskUrgencyKind(now, task.dueAt);
     final overdue = kind == TaskUrgencyKind.overdue;
-    final minTap = dense ? 40.0 : 48.0;
+    final hasDue = task.dueAt != null;
+    final remaining = taskRemainingShort(l10n, now, task.dueAt);
 
     return Semantics(
+      button: true,
       label: overdue
           ? '${l10n.taskListOverdue}: ${task.title}'
           : '${l10n.taskListIncompleteSemantic}: ${task.title}',
-      child: ListTile(
-        dense: true,
-        visualDensity: dense ? VisualDensity.compact : VisualDensity.standard,
-        contentPadding: EdgeInsets.zero,
-        minVerticalPadding: 0,
-        leading: IconButton(
-          tooltip: l10n.taskListCompletedSemantic,
-          onPressed: onToggle,
-          constraints: BoxConstraints(minWidth: minTap, minHeight: minTap),
-          icon: Icon(Icons.radio_button_unchecked, color: color),
-        ),
-        title: Text(
-          task.title,
-          maxLines: dense ? 1 : 2,
-          overflow: TextOverflow.ellipsis,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurface,
+      child: InkWell(
+        onTap: onToggle,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: EdgeInsets.symmetric(
+            vertical: dense ? 7 : 9,
+            horizontal: 2,
           ),
-        ),
-        trailing: overdue
-            ? Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8),
-                ),
+          child: Row(
+            children: [
+              Icon(Icons.radio_button_unchecked, size: 20, color: color),
+              const SizedBox(width: 10),
+              Expanded(
                 child: Text(
-                  l10n.taskListOverdue,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: color,
-                    fontWeight: FontWeight.w700,
+                  task.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurface,
                   ),
                 ),
-              )
-            : Icon(Icons.circle, size: 10, color: color),
+              ),
+              const SizedBox(width: 8),
+              _RemainingChip(
+                text: remaining,
+                color: hasDue ? color : theme.colorScheme.onSurfaceVariant,
+                filled: hasDue,
+                strong: overdue,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Sağ uçta kalan-süre rozeti. Süreli görevlerde renk-dolgulu, süresizde düz.
+class _RemainingChip extends StatelessWidget {
+  const _RemainingChip({
+    required this.text,
+    required this.color,
+    required this.filled,
+    required this.strong,
+  });
+
+  final String text;
+  final Color color;
+  final bool filled;
+  final bool strong;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: filled ? color.withValues(alpha: 0.14) : Colors.transparent,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        text,
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: color,
+          fontWeight: strong ? FontWeight.w700 : FontWeight.w600,
+        ),
       ),
     );
   }

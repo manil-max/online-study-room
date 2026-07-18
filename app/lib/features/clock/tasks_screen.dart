@@ -209,44 +209,47 @@ class _TaskListPane extends StatelessWidget {
                   : theme.colorScheme.onSurface,
             ),
           ),
-          subtitle: Row(
-            children: [
-              if (overdue) ...[
-                Icon(Icons.warning_amber_rounded, size: 14, color: color),
-                const SizedBox(width: 4),
-                Text(
-                  l10n.taskListOverdue,
+          subtitle: task.dueAt == null
+              ? Text(
+                  l10n.taskListNoDue,
                   style: theme.textTheme.labelSmall?.copyWith(
-                    color: color,
-                    fontWeight: FontWeight.w700,
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
-                ),
-                const SizedBox(width: 8),
-              ] else if (kind == TaskUrgencyKind.urgent) ...[
-                Icon(Icons.priority_high, size: 14, color: color),
-                const SizedBox(width: 4),
-                Text(
-                  l10n.taskListUrgent,
-                  style: theme.textTheme.labelSmall?.copyWith(color: color),
-                ),
-                const SizedBox(width: 8),
-              ],
-              Expanded(
-                child: Text(
-                  task.dueAt == null
-                      ? l10n.taskListNoDue
-                      : task.dueAt!.toLocal().toString().substring(0, 16),
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: task.dueAt == null
+                )
+              : Builder(
+                  builder: (context) {
+                    final subColor = completedStyle
                         ? theme.colorScheme.onSurfaceVariant
-                        : color,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                        : color;
+                    return Row(
+                      children: [
+                        Icon(
+                          overdue
+                              ? Icons.warning_amber_rounded
+                              : Icons.schedule_rounded,
+                          size: 14,
+                          color: subColor,
+                        ),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            completedStyle
+                                ? taskDueDateLabel(now, task.dueAt!)
+                                : '${taskRemainingShort(l10n, now, task.dueAt)} · ${taskDueDateLabel(now, task.dueAt!)}',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: subColor,
+                              fontWeight: overdue
+                                  ? FontWeight.w700
+                                  : FontWeight.w500,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
-              ),
-            ],
-          ),
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [

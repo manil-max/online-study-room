@@ -4790,5 +4790,6 @@
   "taskListUrgent": "عاجل",
   "taskListHoursShort": "{hours}س",
   "taskListDaysShort": "{days}ي",
+  "taskListMinutesShort": "{minutes}د",
   "clockTasks": "المهام"
 }

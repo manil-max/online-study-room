@@ -4,6 +4,24 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [v35 / 1.0.35+35] - 2026-07-18
+
+> **Kararlı (stable) sürüm.** v29'dan bu yana biriken tüm beta çalışması (v30–v34) + Görevler kartı tasarım cilası tek stable sürümde toplanır. Herkese (stable kanal) yayınlanır.
+
+### Öne çıkanlar
+- **Görevler** özelliği: Araçlar sekmesinde tam liste (tarih **veya** kalan süre), en yakın bitiş üstte, kalan süreye göre aciliyet rengi, gecikenler kırmızı “Gecikti”.
+- **Ana ekran “Görevler” kartı yenilendi**: her satırda kalan-süre rozeti (3g · 5s · 12dk · Gecikti · Süresiz), düzenli ayraçlı liste, başlıkta aktif sayaç, tüm satıra dokunup işaretleme.
+- **İstatistikler** sadeleşti: tek satır dönem seçici + kompakt kıyas; grup ekranında sıralama en üstte.
+- **Profil**: gerçek taç tasarımı (renkli halka + taç, ~%18 büyütüldü); gereksiz oyunlaştırma öğeleri temizlendi.
+- Ana ekran ızgara yoğunluğu herkeste sabit 32 (seçici kaldırıldı).
+- **Geri bildirim gönderimi onarıldı** (canlı 0046 trigger düzeltmesi).
+- Arapça/Almanca çeviriler tamamlandı; Araçlar → “kalan süre” doğru etiket.
+
+### Notlar
+- GitHub sideload **stable** kanal APK'si (`app-release.apk`); in-app güncelleme stable kullanıcılara gider.
+- Görevler cihazda `user_tasks_v2` prefs; XP bağı yok.
+- Canlı DB: 0039–0041 + 0044–0046 uygulanmış olmalı.
+
 ## [beta-v34 / 1.0.34+34] - 2026-07-18
 
 > **Beta test sürümü.** Cihaz listesi: `docs/qa/BETA-v34-TEST.md`.

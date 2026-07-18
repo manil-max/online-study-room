@@ -3,6 +3,48 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.35",
+      "buildNumber": 35,
+      "channel": "stable",
+      "date": "2026-07-18",
+      "title": "v35: Görevler + kart cilası, sadeleşen istatistik, taç, feedback onarımı",
+      "highlights": [
+        "Görevler: Araçlar sekmesinde tam liste — tarih veya kalan süre; en yakın üstte; aciliyet rengi; geciken kırmızı.",
+        "Ana ekran Görevler kartı yenilendi: kalan-süre rozeti (3g · 5s · 12dk), düzenli ayraçlı liste, başlıkta sayaç, satıra dokun-işaretle.",
+        "İstatistikler sadeleşti (tek satır dönem + kompakt kıyas); grup sıralaması üstte.",
+        "Profil: gerçek taç tasarımı (~%18 büyük); gereksiz oyunlaştırma temizlendi.",
+        "Geri bildirim gönderimi onarıldı (canlı 0046 trigger)."
+      ],
+      "fixes": [
+        "Görevler deadline modeli (günlük/haftalık kutular kaldırıldı; dueAt).",
+        "Ana ekran ızgara yoğunluğu herkeste sabit 32 (seçici kaldırıldı).",
+        "Arapça/Almanca çeviriler tamamlandı; “kalan süre” etiketi düzeltildi."
+      ],
+      "notes": [
+        "Kararlı (stable) kanal: v29'dan beri biriken beta işleri (v30–v34) + kart cilası.",
+        "GitHub sideload stable APK; in-app güncelleme stable kullanıcılara gider.",
+        "Canlı DB: 0039–0041 + 0044–0046 uygulanmış olmalı."
+      ],
+      "titleEn": "v35: Tasks + card polish, decluttered stats, crown, feedback fix",
+      "highlightsEn": [
+        "Tasks: full list under Tools — date or remaining time; nearest first; urgency colors; overdue in red.",
+        "Home Tasks card redesigned: remaining-time chip (3d · 5h · 12m), tidy separated list, header counter, tap-row to complete.",
+        "Stats decluttered (single-row period + compact compare); group ranking on top.",
+        "Profile: real crown design (~18% bigger); gamification clutter removed.",
+        "Feedback submission fixed (live 0046 trigger)."
+      ],
+      "fixesEn": [
+        "Tasks deadline model (removed daily/weekly boxes; dueAt).",
+        "Home grid density fixed at 32 for everyone (selector removed).",
+        "Arabic/German translations completed; “remaining time” label fixed."
+      ],
+      "notesEn": [
+        "Stable channel: rolls up beta work since v29 (v30–v34) + card polish.",
+        "GitHub sideload stable APK; in-app update goes to stable users.",
+        "Live DB should include 0039–0041 + 0044–0046."
+      ]
+    },
+    {
       "versionName": "1.0.34",
       "buildNumber": 34,
       "channel": "beta",

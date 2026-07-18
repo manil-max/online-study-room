@@ -4847,6 +4847,11 @@
     "description": "taskListDaysShort",
     "placeholders": { "days": { "type": "int" } }
   },
+  "taskListMinutesShort": "{minutes}m",
+  "@taskListMinutesShort": {
+    "description": "taskListMinutesShort",
+    "placeholders": { "minutes": { "type": "int" } }
+  },
   "clockTasks": "Tasks",
   "@clockTasks": { "description": "clockTasks" }
 }

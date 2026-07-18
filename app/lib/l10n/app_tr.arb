@@ -1149,5 +1149,6 @@
   "taskListUrgent": "Acil",
   "taskListHoursShort": "{hours}s",
   "taskListDaysShort": "{days}g",
+  "taskListMinutesShort": "{minutes}dk",
   "clockTasks": "Görevler"
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:timezone/timezone.dart' as tz;
 
+import 'package:online_study_room/l10n/app_localizations.dart';
+
 import '../stats/istanbul_calendar.dart';
 import '../../data/models/user_task.dart';
 
@@ -120,4 +122,33 @@ TaskUrgencyKind taskUrgencyKind(DateTime now, DateTime? dueAt) {
   if (hours >= 24) return TaskUrgencyKind.calm;
   if (hours >= 6) return TaskUrgencyKind.soon;
   return TaskUrgencyKind.urgent;
+}
+
+/// Kısa kalan-süre etiketi (chip için): `Süresiz` / `Gecikti` / `3g` / `5s`
+/// / `12dk`. Gün→saat→dakika en kaba birime yuvarlar (min 1dk).
+String taskRemainingShort(
+  AppLocalizations l10n,
+  DateTime now,
+  DateTime? dueAt,
+) {
+  if (dueAt == null) return l10n.taskListNoDue;
+  final diff = dueAt.toUtc().difference(now.toUtc());
+  if (diff.isNegative) return l10n.taskListOverdue;
+  final days = diff.inDays;
+  if (days >= 1) return l10n.taskListDaysShort(days);
+  final hours = diff.inHours;
+  if (hours >= 1) return l10n.taskListHoursShort(hours);
+  final mins = diff.inMinutes;
+  return l10n.taskListMinutesShort(mins < 1 ? 1 : mins);
+}
+
+/// İnsan-okur bitiş tarihi (yalnız gün): `28 Ağu`, yıl farklıysa `28 Ağu 2027`.
+String taskDueDateLabel(DateTime now, DateTime dueAt) {
+  final d = dueAt.toLocal();
+  const months = [
+    'Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz',
+    'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara',
+  ];
+  final base = '${d.day} ${months[d.month - 1]}';
+  return d.year == now.year ? base : '$base ${d.year}';
 }
