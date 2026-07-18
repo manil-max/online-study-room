@@ -15,7 +15,6 @@ import '../home/dashboard_providers.dart';
 import '../notifications/notification_center_screen.dart';
 import '../updater/release_notes_screen.dart';
 import '../safety/blocked_users_screen.dart';
-import '../stats/analytics/analytics_flag.dart';
 import 'account_settings_screen.dart';
 import 'appearance_screen.dart';
 import 'data_export_screen.dart';
@@ -100,7 +99,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final profile = ref.watch(authStateProvider).value;
     final monthlyReportOptIn =
         _monthlyReportOptInOverride ?? profile?.monthlyReportOptIn ?? true;
-    final analyticsGridOn = ref.watch(analyticsGridV1Provider);
     final isAdmin = ref.watch(adminIsSuperAdminProvider).value ?? false;
     final animal = profile == null
         ? null
@@ -344,27 +342,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           value,
                           profile.monthlyReportOptIn,
                         ),
-                ),
-              ),
-              SizedBox(height: 10),
-              // ADIM 1: analytics_grid_v1 flag — default kapalı; setEnabled yoksa ızgara açılamıyor
-              _SettingsCard(
-                child: Semantics(
-                  label: l10n.analyticsGridBetaTitle,
-                  toggled: analyticsGridOn,
-                  child: SwitchListTile(
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 4,
-                    ),
-                    secondary: const Icon(Icons.grid_view_rounded),
-                    title: Text(l10n.analyticsGridBetaTitle),
-                    subtitle: Text(l10n.analyticsGridBetaSubtitle),
-                    value: analyticsGridOn,
-                    onChanged: (value) => ref
-                        .read(analyticsGridV1Provider.notifier)
-                        .setEnabled(value),
-                  ),
                 ),
               ),
               SizedBox(height: 10),

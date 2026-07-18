@@ -71,15 +71,15 @@
 - **Not:** Play Store production programı WP-110–124 olarak planlandı; kanonik belgeler hizalandı. `OPTIMIZATIONS.md` kapsam dışı bırakıldı.
 
 ### Grok Lane
-- **Durum:** [x] Boşta
-- **Faz/WP:** —
-- **Aşama:** —
-- **SAHİP yollar:** —
-- **Ortak/riskli yüzey:** —
+- **Durum:** [~] Aktif
+- **Faz/WP:** WP-170→175 (cihaz QA onarım: stats klasik · basarim · groups scroll · l10n · sweep · plan)
+- **Aşama:** Geliştiriliyor
+- **SAHİP yollar:** `app/lib/features/stats/**`, settings toggle, gamification_card, classroom_screen, l10n arb, docs/qa+features
+- **Ortak/riskli yüzey:** progress.md (kendi), l10n · **DOKUNMA:** timer/widget/FGS, Home dashboard
 - **Dal:** main
-- **Başlangıç:** —
+- **Başlangıç:** 2026-07-18 (Europe/Istanbul)
 - **Son güncelleme:** 2026-07-18 (Europe/Istanbul)
-- **Not:** ADIM0 `f858f85` · ADIM1 `1ec720c` · WP-168 `24a2d91` · ADIM2 `2319bf5` · WP-169 plan (onay bekler, kod yok). Sahip: migration+beta kılavuz. Push yok.
+- **Not:** SIRAYLA 170–175; HER WP AYRI COMMIT; push YOK.
 
 
 ---

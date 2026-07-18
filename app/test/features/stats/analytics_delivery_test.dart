@@ -9,8 +9,6 @@ import 'package:online_study_room/data/repositories/in_memory/in_memory_analytic
 import 'package:online_study_room/features/stats/analytics/analytics_card_config.dart';
 import 'package:online_study_room/features/stats/analytics/analytics_card_registry.dart';
 import 'package:online_study_room/features/stats/analytics/analytics_card_type.dart';
-import 'package:online_study_room/features/stats/analytics/analytics_flag.dart';
-import 'package:online_study_room/features/stats/analytics/analytics_grid_view.dart';
 import 'package:online_study_room/features/stats/analytics/analytics_period.dart';
 import 'package:online_study_room/features/stats/widgets/personal_stats_view.dart';
 import 'package:online_study_room/features/stats/widgets/stats_period_bar.dart';
@@ -276,9 +274,9 @@ void main() {
     });
   });
 
-  group('flag off legacy UI', () {
+  group('classic stats UI (WP-170)', () {
     testWidgets('StatsPeriodBar still builds with 4 segments', (tester) async {
-      SharedPreferences.setMockInitialValues({kAnalyticsGridV1Key: false});
+      SharedPreferences.setMockInitialValues({});
       final prefs = await SharedPreferences.getInstance();
       await tester.pumpWidget(
         ProviderScope(
@@ -325,31 +323,4 @@ void main() {
     });
   });
 
-  group('flag on grid', () {
-    testWidgets('AnalyticsGridView shows edit control', (tester) async {
-      SharedPreferences.setMockInitialValues({kAnalyticsGridV1Key: true});
-      final prefs = await SharedPreferences.getInstance();
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            sharedPreferencesProvider.overrideWithValue(prefs),
-          ],
-          child: MaterialApp(
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            locale: const Locale('tr'),
-            home: const Scaffold(
-              body: AnalyticsGridView(
-                surface: AnalyticsSurface.personalStats,
-              ),
-            ),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-      expect(find.byType(AnalyticsGridView), findsOneWidget);
-      // Düzenle butonu
-      expect(find.byIcon(Icons.dashboard_customize_outlined), findsOneWidget);
-    });
-  });
 }
