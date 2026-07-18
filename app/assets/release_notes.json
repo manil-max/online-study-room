@@ -5,41 +5,43 @@
     {
       "versionName": "1.0.30",
       "buildNumber": 30,
-      "channel": "stable",
-      "date": "2026-07-17",
-      "title": "v30 (taslak): Play hazırlık, güvenlik ve sayaç yüzeyi",
+      "channel": "beta",
+      "date": "2026-07-18",
+      "title": "beta-v30: analitik ızgara, grup RPC, gamification, dil",
       "highlights": [
-        "Hesap silme: istek + 14 gün bekleme + planlı kalıcı silme (Ayarlar → Hesap).",
-        "UGC: sohbet ve profilde Bildir / Engelle; Ayarlar'da engellenen kullanıcılar listesi ve engeli kaldır.",
-        "Gizlilik ve yasal merkez: politikalar, topluluk kuralları, telemetri tercihi.",
-        "1×1 sayaç widget'ında canlı HH:MM:SS her boyutta görünür; Başlat/Durdur ile senkron.",
-        "Sayaç bildirimi (P2): akan süre + Başlat/Durdur ve Mola; widget/bildirim/uygulama aynı durumdan türer."
+        "Ayarlar’dan Yeni istatistik ekranı (Beta) aç/kapa; ızgara ve dönem yıl/özel + kıyas.",
+        "Grup katkı / liderlik RPC’leri (canlı 0039–0041).",
+        "Seviye, görev vitrini, kozmetik (0042) + istemci yazım koruması (0043).",
+        "Arapça/Almanca dil seçimi ve RTL altyapı.",
+        "Onboarding, verilerimi dışa aktar, akıllı hatırlatmalar bu beta’da."
       ],
       "fixes": [
-        "Engelleme sonrası mesaj ve kamp ateşi gizlenir; engel kalkınca geri gelir.",
-        "Sayaç durumu yazımları senkron; durdurunca 00:00:00'a sıfırlanır.",
-        "Play flavor derlemesinde sideload güncelleyici kapalı kalır (define unutulsa bile)."
+        "Analitik SQL start_time kolonu (0039/0040).",
+        "Geri bildirim: oturum/RLS için net mesaj ve debug log (WP-168).",
+        "Timer test dispose sızıntısı (WP-167); onboarding per-user; export PII strip (WP-166)."
       ],
       "notes": [
-        "Sürüm numarası 1.0.30+30 taslaktır; release kapısında kesinleşir (pubspec şu an 1.0.29+29).",
-        "Play production için 0037/0038 migration, Edge deploy ve cihaz QA hâlâ ops listesinde."
+        "Canlıda 0039–0043 uygulanmış olmalı.",
+        "İstatistik Beta bayrağı varsayılan kapalı; Ayarlar’dan aç.",
+        "Onay listesi: docs/qa/BETA-v30-ONAY-LISTESI.md"
       ],
-      "titleEn": "v30 (draft): Play prep, safety, and timer surfaces",
+      "titleEn": "beta-v30: analytics grid, group RPCs, gamification, locales",
       "highlightsEn": [
-        "Account deletion: request + 14-day grace + scheduled hard delete (Settings → Account).",
-        "UGC: Report / Block from chat and profile; blocked-users list with Unblock in Settings.",
-        "Privacy & legal center: policies, community guidelines, telemetry preference.",
-        "1×1 timer widget shows live HH:MM:SS at every size; Start/Stop stay in sync.",
-        "Timer notification (P2): running time plus Start/Stop and Break; widget, notification, and app share one state."
+        "Settings toggle for New stats screen (Beta); grid, year/custom period + compare.",
+        "Group contribution / leaderboard RPCs (live 0039–0041).",
+        "Level, quests, cosmetics (0042) + client write guard (0043).",
+        "Arabic/German language options and RTL plumbing.",
+        "Onboarding, data export, smart reminders included."
       ],
       "fixesEn": [
-        "After a block, messages and campfire presence hide; they return when unblocked.",
-        "Timer state writes are synchronous; stop resets the display to 00:00:00.",
-        "Play flavor builds keep the sideload updater off even if DISTRIBUTION_CHANNEL is omitted."
+        "Analytics SQL uses start_time (0039/0040).",
+        "Feedback: clear session/RLS messages + debug logs (WP-168).",
+        "Timer test dispose leak (WP-167); per-user onboarding; export PII strip (WP-166)."
       ],
       "notesEn": [
-        "Version 1.0.30+30 is draft; the release gate finalizes the number (pubspec is still 1.0.29+29).",
-        "Play production still needs 0037/0038 migrations, Edge deploy, and device QA on the ops list."
+        "Live DB needs migrations 0039–0043.",
+        "Stats Beta flag defaults off; enable in Settings.",
+        "Approval checklist: docs/qa/BETA-v30-ONAY-LISTESI.md"
       ]
     },
     {

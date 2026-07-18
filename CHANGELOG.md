@@ -4,25 +4,28 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
-## [v30 / 1.0.30+30 — TASLAK] - 2026-07-17
+## [beta-v30 / 1.0.30+30] - 2026-07-18
 
-> **Taslak — release kapısında numara kesinleşir.** `pubspec` şu an `1.0.29+29`.
-> İçerik: Play hazırlık, UGC güvenlik, widget/panel senkronu (WP-110–137 özeti).
+> **Beta test sürümü.** Canlıda **0039–0043** migration’ları uygulanmış olmalı.
+> Onay tick list: `docs/qa/BETA-v30-ONAY-LISTESI.md` · ayrıntılı adımlar: `docs/qa/BETA-TEST-KILAVUZU.md`.
 
 ### Highlights
-- **Hesap silme:** istek + 14 gün grace + planlı hard-delete (Ayarlar → Hesap).
-- **UGC:** Bildir / Engelle (sohbet, profil); engellenen kullanıcılar listesi.
-- **Yasal merkez:** gizlilik, topluluk kuralları, telemetri tercihi.
-- **1×1 sayaç widget:** canlı HH:MM:SS her boyutta; Başlat/Durdur senkron.
-- **Sayaç bildirimi P2:** akan süre + Başlat/Durdur + Mola; tek durum kaynağı.
+- **Yeni istatistik ekranı (Beta):** Ayarlar’dan aç/kapa; ızgara, kart ekle/çıkar/boyut, dönem yıl/özel + kıyas.
+- **Grup analitiği RPC:** üye katkı payı + liderlik serisi (`get_user_day_totals` / contribution / leaderboard).
+- **Gamification:** seviye eğrisi, görev vitrini, kozmetik + istemci yazım koruması (0042/0043).
+- **Dil:** Arapça / Almanca + RTL altyapı (baseline çeviri).
+- **Onboarding / dışa aktarma / akıllı hatırlatma** paketleri bu hatta.
 
 ### Fixes
-- Engelleme mesaj/kamp ateşini gizler; unblock sonrası geri gelir.
-- Sayaç yazımları senkron `commit`; durdurunca 00:00:00.
-- Play flavor’da sideload updater define unutulsa bile kapalı.
+- Analitik migration `start_time` (0039/0040 doğru kolon; 0041 yedek).
+- Feedback: oturum/RLS hataları debug log + net oturum mesajı (WP-168).
+- Timer test FakeTimer dispose sızıntısı (WP-167).
+- Onboarding per-user; export PII strip; RTL directional (WP-166).
 
 ### Notes
-- Sürüm no release gate’te kesinleşir. Production: 0037/0038, Edge, cihaz QA.
+- Flag **kapalı** varsayılan: eski İstatistik ListView birebir. Test için Ayarlar’dan Beta’yı aç.
+- Widget/bildirim SSOT (WP-134–137) hâlâ **cihaz onayı** bekliyor.
+- Stable v30 Play kapısı ayrı; bu tag yalnız **githubBeta** sideload APK.
 
 ## [v29 / 1.0.29+29] - 2026-07-16
 
