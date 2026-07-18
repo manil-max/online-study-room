@@ -72,15 +72,15 @@
 - **Not:** Play Store production programı WP-110–124 olarak planlandı; kanonik belgeler hizalandı. `OPTIMIZATIONS.md` kapsam dışı bırakıldı.
 
 ### Grok Lane
-- **Durum:** [x] Boşta
-- **Faz/WP:** —
-- **Aşama:** —
-- **SAHİP yollar:** —
-- **Ortak/riskli yüzey:** —
+- **Durum:** [~] Aktif
+- **Faz/WP:** WP-201 (beta-v34 yayın hazırlığı)
+- **Aşama:** Geliştiriliyor
+- **SAHİP yollar:** `app/pubspec.yaml`, `app/assets/release_notes.json`, `docs/qa/BETA-v34-TEST.md`, `docs/qa/BETA-v33-TEST.md`, `CHANGELOG.md`, `progress.md`
+- **Ortak/riskli yüzey:** `progress.md`, `app/pubspec.yaml` (yalnız version)
 - **Dal:** — (main)
-- **Başlangıç:** —
+- **Başlangıç:** 2026-07-18 (Europe/Istanbul)
 - **Son güncelleme:** 2026-07-18 (Europe/Istanbul)
-- **Not:** WP-196–200 Görevler deadline (analyze 0; test **+557 All tests passed**). Cihaz QA.
+- **Not:** 1.0.34+34 + notes + test listesi. 🔴 timer/widget/FGS/XP/dashboard motor yok. Push yok.
 
 
 ---

@@ -4,10 +4,24 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [beta-v34 / 1.0.34+34] - 2026-07-18
+
+> **Beta test sürümü.** Cihaz listesi: `docs/qa/BETA-v34-TEST.md`.
+
+### Highlights
+- Yeni: Görevler — Araçlar sekmesi (eski Saat); tarih veya kalan süre; aciliyet rengi; gecikti kırmızı.
+- Ana ekran “Görevler” kartı: renkli liste + tek dokunuşta işaretleme.
+- Taç tasarımı biraz büyütüldü.
+- Geri bildirim onarımı (canlı 0046 trigger).
+
+### Notes
+- Görevler prefs `user_tasks_v2`; XP yok.
+- Push sonrası CI: tag `beta-v34` → GitHub beta APK.
+
 ## [beta-v33 / 1.0.33+33] - 2026-07-18
 
-> **Beta test sürümü.** Cihaz listesi: `docs/qa/BETA-v33-TEST.md`.  
-> Canlı: **0039–0041** + **0044–0045** (feedback ensure + schema reload).
+> **Beta test sürümü.** Cihaz listesi: `docs/qa/BETA-v34-TEST.md` (v33 yönlendirir).  
+> Canlı: **0039–0041** + **0044–0046**.
 
 ### Highlights
 - İstatistik dönem seçici sadeleşti (tek yatay satır + kompakt kıyas).

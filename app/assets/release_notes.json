@@ -3,6 +3,46 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.34",
+      "buildNumber": 34,
+      "channel": "beta",
+      "date": "2026-07-18",
+      "title": "beta-v34: Görevler (Araçlar + Home kartı), taç büyütme",
+      "highlights": [
+        "Yeni: Görevler — Araçlar sekmesine (eski Saat) görev listesi; tarih veya kalan süre ver, kalan süreye göre renk (aciliyet), en yakın üstte, gecikti kırmızı.",
+        "Ana ekrana “Görevler” kartı: renkli liste + tek dokunuşta işaretleme.",
+        "Taç tasarımı biraz büyütüldü.",
+        "Geri bildirim onarımı (canlı trigger düzeltmesi; 0046)."
+      ],
+      "fixes": [
+        "Görevler deadline modeli (scope/günlük-haftalık kutular kaldırıldı; dueAt).",
+        "Home kartında ekleme yok — yönetim Araçlar’da (WP-198/199).",
+        "CrownedAvatar taç ~%18 büyütüldü (WP-195b)."
+      ],
+      "notes": [
+        "Cihaz testi: docs/qa/BETA-v34-TEST.md.",
+        "Feedback için canlıda 0046 (trigger role fix) uygulanmış olmalı.",
+        "Görevler prefs: user_tasks_v2 (cihazda); XP bağı yok."
+      ],
+      "titleEn": "beta-v34: Tasks (Tools + Home card), larger crown",
+      "highlightsEn": [
+        "New: Tasks — task list under Tools (former Clock tab); set a date or remaining time, urgency colors, nearest first, overdue in red.",
+        "Home “Tasks” card: colored list + one-tap complete.",
+        "Crown design slightly enlarged.",
+        "Feedback fix (live trigger repair; migration 0046)."
+      ],
+      "fixesEn": [
+        "Tasks deadline model (removed daily/weekly scope boxes; dueAt).",
+        "Home card is view/check only — full management in Tools (WP-198/199).",
+        "CrownedAvatar crown ~18% larger (WP-195b)."
+      ],
+      "notesEn": [
+        "Device QA: docs/qa/BETA-v34-TEST.md.",
+        "Live DB should include 0046 (feedback trigger role fix).",
+        "Tasks stored in prefs user_tasks_v2 (device); no XP link."
+      ]
+    },
+    {
       "versionName": "1.0.33",
       "buildNumber": 33,
       "channel": "beta",
