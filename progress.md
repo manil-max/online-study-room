@@ -12,7 +12,7 @@
 - **Framework:** Flutter ^3.12 · Riverpod 3.3 · Supabase 2.15 · fl_chart
 - **Uygulama kökü:** `app/` — Flutter komutları yalnız burada çalışır.
 - **Repo katmanı çift:** Her arayüz `supabase/` ve `in_memory/` repository'leriyle desteklenir.
-- **Migration'lar:** `supabase/migrations/` — yerelde `0001–0036` vardır. Canlı ortamda dosyanın bulunması deploy kanıtı değildir; özellikle `0034–0036` SQL + Edge secret/deploy doğrulaması bekler. Yeni migration mevcut en yüksek numaradan (`0036`) devam eder.
+- **Migration'lar:** `supabase/migrations/` — yerelde `0001–0045` vardır. Canlı ortamda dosyanın bulunması deploy kanıtı değildir. Özellikle feedback `0044–0045` (NOTIFY pgrst) beta projede SQL ile uygulanmalı. Yeni migration mevcut en yüksek numaradan (`0045`) devam eder.
 - **Gün sınırı:** `Europe/Istanbul`
 - **RLS helper'ları:** `is_group_member(gid)`, `can_see_user_sessions(target)`, `is_group_admin(gid)`, `is_super_admin()`
 - **Dashboard:** 6 sütunlu 2D matris, 19 kart türü, `grid_reflow.dart` motoru.
@@ -20,7 +20,7 @@
 - **Navigasyon hedefi:** Ana Sayfa / Saat / Gruplar / İstatistikler / Profil. Ana Sayfa günlük kullanım alanıdır; diğer alanların verisi kendi sekmelerinde eksiksiz bulunur.
 - **Release:** Stable/Beta kanalı GitHub Releases ile çalışır. **beta-v30** = `1.0.30+30` (analitik ızgara toggle, 0039–0043 RPC/gamification, WP-166–168). Onay: `docs/qa/BETA-v30-ONAY-LISTESI.md`. Play production ayrı kalite kapısından geçer.
 - **Kalite kapıları:** Her WP DoD'siz kapanmaz; stable release kalite kapısından geçer (AGENTS.md §3). Server-authoritative XP, RLS/sosyal profil, platform sınırları → `docs/KALITE-PROGRAMI.md`.
-- **Son WP numarası:** 183 (beta-v31 hazırlık). **Sıradaki boş numara WP-184.**
+- **Son WP numarası:** 188 (cihaz turu düzeltmeleri). **Sıradaki boş numara WP-189.**
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
   - Flutter: `C:\src\flutter` · Android SDK: `C:\Android\Sdk`
@@ -71,15 +71,15 @@
 - **Not:** Play Store production programı WP-110–124 olarak planlandı; kanonik belgeler hizalandı. `OPTIMIZATIONS.md` kapsam dışı bırakıldı.
 
 ### Grok Lane
-- **Durum:** [~] Aktif
-- **Faz/WP:** WP-184 → WP-188 (cihaz turu düzeltmeleri)
-- **Aşama:** Geliştiriliyor
-- **SAHİP yollar:** `supabase/migrations/0045_feedback_reload.sql`, `docs/qa/WP-184-FEEDBACK-CACHE.md`, `app/lib/features/stats/widgets/stats_period_bar.dart`, `app/lib/features/home/dashboard_providers.dart`, `app/lib/features/home/dashboard_card.dart`, `app/lib/features/home/widgets/*tasks*`, `app/lib/features/profile/settings_screen.dart` (density), `app/lib/features/profile/widgets/gamification_card.dart`, `app/lib/data/models/user_task.dart`, `app/lib/data/repositories/**/user_task*`, `app/lib/data/providers/user_task*`, l10n arb (görev anahtarları), ilgili testler
-- **Ortak/riskli yüzey:** `progress.md`, `app/lib/l10n/*`, `supabase/migrations/` (0045), settings_screen density UI
-- **Dal:** — (main; AGENTS.md §1.5)
-- **Başlangıç:** 2026-07-18 20:34 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-18 20:34 (Europe/Istanbul)
-- **Not:** Cihaz turu WP-184–188. 🔴 timer/widget/FGS dokunulmaz. Push yok; her WP ayrı commit.
+- **Durum:** [x] Boşta
+- **Faz/WP:** —
+- **Aşama:** —
+- **SAHİP yollar:** —
+- **Ortak/riskli yüzey:** —
+- **Dal:** — (main)
+- **Başlangıç:** —
+- **Son güncelleme:** 2026-07-18 (Europe/Istanbul)
+- **Not:** WP-184–188 kod+otomatik test geçti (`flutter analyze` 0; `flutter test --dart-define-from-file=env.json` **+544**). Kartlar Test için bekleyenler’de. Push yok.
 
 
 ---
@@ -186,6 +186,11 @@
 | WP-180 | [~] Test için bekliyor | Grup donut/seri/gauge | `Cihazda doğrulanmalı` |
 | WP-181 | [~] Test için bekliyor | Cila + ölü grid silme | `Cihazda doğrulanmalı` |
 | WP-183 | [~] Tag/beta bekliyor | beta-v31: 1.0.31+31 + BETA-v31-TEST | `docs/qa/BETA-v31-TEST.md` |
+| WP-184 | [~] Test için bekliyor | Feedback PostgREST schema cache (0045 + NOTIFY) | sahip: 0045 SQL `jiphfrpzvkpzubbkhrwb` |
+| WP-185 | [~] Test için bekliyor | Stats period bar declutter (6 chip + compact compare) | cihaz UI |
+| WP-186 | [~] Test için bekliyor | Home grid density sabit 32; seçici kaldır | cihaz Home |
+| WP-187 | [~] Test için bekliyor | Profil gamification declutter (rozetler kalır) | cihaz Profil |
+| WP-188 | [~] Test için bekliyor | Home Görevler kartı (günlük/haftalık) | cihaz Home ekle |
 
 > **2026-07-14 proje denetimi:** Serbest sürükle-bırak ızgara, canlı grup hedefi ve saat stilleri **zaten kodda uygulanmış** (backlog stale idi; geçici WP-72/73/75 iptal).
 >
@@ -873,6 +878,19 @@
 > ⚠️ **Ürün kararları:** (1) WP-66 §0 retention varsayılanları, (2) legal site domain/iletişim kimliği, (3) hedef kitle 13+/16+, (4) Play Console'da alarmı core functionality olarak savunma veya safe fallback, (5) geliştirici hesap türü/tarihi. Bunlar planı engellemez; ilgili WP başlamadan kullanıcı onayı gerekir.
 
 ## Test için bekleyenler
+
+### WP-184–188: Cihaz turu düzeltmeleri (Grok 2026-07-18) 📦
+- **Aşama:** Otomatik test geçti — cihaz QA + ürün kabulü bekliyor
+- **Kanıt:** `flutter analyze` **0**; `flutter test --dart-define-from-file=env.json` **+544 All tests passed**
+- **Commit’ler (main, push yok):**
+  - `8467538` WP-184 feedback 0045 + `docs/qa/WP-184-FEEDBACK-CACHE.md`
+  - `5b9353e` WP-185 stats period bar declutter
+  - `8265b47` WP-186 density sabit 32
+  - `91b5698` WP-187 profil declutter
+  - `582780a` WP-188 Home Görevler kartı
+- **Sahip aksiyonu (WP-184):** Beta `SUPABASE_URL` = `https://jiphfrpzvkpzubbkhrwb.supabase.co` ile SQL projesinin **aynı** olduğunu teyit et; `0045_feedback_reload.sql` çalıştır → feedback smoke.
+- **Cihazda doğrulanmalı:** feedback gönderim; stats üst blok yarıya yakın; Home density 32 + yeni kart boyutu; profil sade (rozetler); Görevler kartı ekle/tik/gün sınırı.
+- 🔴 timer/widget/FGS dokunulmadı.
 
 ### WP-183: beta-v31 yayın hazırlığı (docs+sürüm) 📦
 - **Sürüm:** `1.0.31+31` · release_notes v31 iki-dilli · CHANGELOG beta-v31
