@@ -1,8 +1,8 @@
 # Beta test kılavuzu (sahip — adım adım)
 
-> **Kanonik güncel liste: [`BETA-v32-TEST.md`](./BETA-v32-TEST.md)** (1.0.32+32).  
-> Bu dosya ek bağlam içindir; ızgara/toggle maddeleri **silindi** — v32 listesini kullan.  
-> Tarih: 2026-07-18 · Kaynak: `progress.md` + WP-134–137 / 184–188 / 189.
+> **Kanonik güncel liste: [`BETA-v33-TEST.md`](./BETA-v33-TEST.md)** (1.0.33+33).  
+> Bu dosya ek bağlam içindir; ızgara/toggle maddeleri **silindi** — v33 listesini kullan.  
+> Tarih: 2026-07-18 · Kaynak: `progress.md` + WP-134–137 / 184–193 / 194.
 
 | Meta | |
 |---|---|

@@ -3,6 +3,48 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.33",
+      "buildNumber": 33,
+      "channel": "beta",
+      "date": "2026-07-18",
+      "title": "beta-v33: stats satırı, grup sıralama, taç, feedback detay",
+      "highlights": [
+        "İstatistik dönem seçici sadeleşti (tek yatay satır + kompakt kıyas).",
+        "Grup istatistiği: sıralama en üstte; hedef göstergesi özetle dolduruldu.",
+        "Profil: gerçek taç tasarımı (renkli halka + taç) + taç ilerleme (XP) çubuğu.",
+        "Geri bildirim hatası artık ayrıntı (kod) gösteriyor (teşhis)."
+      ],
+      "fixes": [
+        "Dönem chip’leri Wrap yerine yatay kaydırma (WP-190).",
+        "Grup leaderboard gauge/donut öncesine alındı; gauge alt boşluk kapatıldı (WP-191).",
+        "Madalya ikonu yerine gerçek taç çizimi + kademe XP barı (WP-192).",
+        "schema_missing sınıflandırması daraltıldı; snackbar Detay: code message (WP-193)."
+      ],
+      "notes": [
+        "Beta release: canlıda 0039–0041, 0044 + 0045 (feedback ensure + schema reload) uygulanmış olmalı.",
+        "Cihaz testi: docs/qa/BETA-v33-TEST.md.",
+        "Feedback hâlâ patlarsa snackbar “Detay: kod” satırını kaydet (WP-193)."
+      ],
+      "titleEn": "beta-v33: stats row, group ranking, crown, feedback detail",
+      "highlightsEn": [
+        "Stats period picker decluttered (single horizontal row + compact compare).",
+        "Group stats: ranking on top; goal gauge card filled with summary.",
+        "Profile: real crown design (colored ring + crown) + crown progress (XP) bar.",
+        "Feedback errors now show detail (code) for diagnosis."
+      ],
+      "fixesEn": [
+        "Period chips: horizontal scroll instead of Wrap (WP-190).",
+        "Group leaderboard moved above gauge/donut; gauge dead space filled (WP-191).",
+        "Real crown painter instead of medal icon + tier XP bar (WP-192).",
+        "Narrower schema_missing classification; snackbar Detail: code message (WP-193)."
+      ],
+      "notesEn": [
+        "Beta release: live DB should have 0039–0041, 0044 + 0045 (feedback ensure + schema reload).",
+        "Device QA: docs/qa/BETA-v33-TEST.md.",
+        "If feedback still fails, copy the snackbar “Detail: code” line (WP-193)."
+      ]
+    },
+    {
       "versionName": "1.0.32",
       "buildNumber": 32,
       "channel": "beta",

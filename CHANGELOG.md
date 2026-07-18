@@ -4,9 +4,24 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [beta-v33 / 1.0.33+33] - 2026-07-18
+
+> **Beta test sürümü.** Cihaz listesi: `docs/qa/BETA-v33-TEST.md`.  
+> Canlı: **0039–0041** + **0044–0045** (feedback ensure + schema reload).
+
+### Highlights
+- İstatistik dönem seçici sadeleşti (tek yatay satır + kompakt kıyas).
+- Grup istatistiği: sıralama en üstte; hedef göstergesi özetle dolduruldu.
+- Profil: gerçek taç tasarımı (renkli halka + taç) + taç ilerleme (XP) çubuğu.
+- Geri bildirim hatası artık ayrıntı (kod) gösteriyor (teşhis).
+
+### Notes
+- Feedback hâlâ patlarsa snackbar “Detay: kod” satırını kaydet.
+- Push sonrası CI: tag `beta-v33` → GitHub beta APK.
+
 ## [beta-v32 / 1.0.32+32] - 2026-07-18
 
-> **Beta test sürümü.** Cihaz listesi: `docs/qa/BETA-v32-TEST.md`.  
+> **Beta test sürümü.** Cihaz listesi: `docs/qa/BETA-v33-TEST.md` (v32 listesi yönlendirir).  
 > Canlı: **0039–0041** (analitik RPC) + **0044–0045** (feedback ensure + PostgREST schema reload).
 
 ### Highlights
