@@ -165,21 +165,45 @@ class ClassStatsView extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 12),
-        // G1: hedef gauge + mevcut özet kart
+        // WP-191: sıralama EN ÜSTE — gauge/donut'tan önce.
+        Text(
+          AppLocalizations.of(context).statsSiralama,
+          style: theme.textTheme.titleMedium,
+        ),
+        const SizedBox(height: 4),
+        if (rows.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 24),
+            child: Center(
+              child: Text(
+                AppLocalizations.of(context).statsBuDonemdeHenuzCalisma,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          )
+        else
+          for (var i = 0; i < rows.length; i++)
+            _LeaderboardRow(
+              rank: i + 1,
+              name: rows[i].member.displayName,
+              avatarUrl: rows[i].member.avatarUrl,
+              seconds: rows[i].seconds,
+              maxSeconds: maxSeconds,
+              streak: streaks[rows[i].member.id] ?? 0,
+              isMe: rows[i].member.id == currentUserId,
+              profile: rows[i].member.isActive ? rows[i].member : null,
+            ),
+        const SizedBox(height: 16),
+        // WP-191: hedef gauge — kart boyutu gaugenin gerçek yüksekliğine + alt özet.
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: GaugeChart(
-                  progress: goalSeconds <= 0
-                      ? 0
-                      : todayGroupTotal / goalSeconds,
-                  label: AppLocalizations.of(context).homeGrupHedefi,
-                  size: 100,
-                ),
-              ),
+            _GroupGaugeCard(
+              progress: goalSeconds <= 0 ? 0 : todayGroupTotal / goalSeconds,
+              todaySeconds: todayGroupTotal,
+              goalSeconds: goalSeconds,
             ),
             const SizedBox(width: 8),
             Expanded(
@@ -210,7 +234,7 @@ class ClassStatsView extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: 16),
-        // G2: üye katkı donut (varsayılan açık)
+        // G2: üye katkı donut
         Text(
           AppLocalizations.of(context).analyticsCardMemberDonut,
           style: theme.textTheme.titleMedium,
@@ -300,7 +324,6 @@ class ClassStatsView extends ConsumerWidget {
                 ),
               );
             }
-            // Gün toplamı (tüm üyeler) → area
             final byDay = <DateTime, int>{};
             for (final p in points) {
               final d = dayOf(p.day);
@@ -319,37 +342,6 @@ class ClassStatsView extends ConsumerWidget {
             );
           },
         ),
-        const SizedBox(height: 16),
-        // G3: Sıralama — ortak dönem seçimine bağlı.
-        Text(
-          AppLocalizations.of(context).statsSiralama,
-          style: theme.textTheme.titleMedium,
-        ),
-        const SizedBox(height: 4),
-        if (rows.isEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 24),
-            child: Center(
-              child: Text(
-                AppLocalizations.of(context).statsBuDonemdeHenuzCalisma,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ),
-          )
-        else
-          for (var i = 0; i < rows.length; i++)
-            _LeaderboardRow(
-              rank: i + 1,
-              name: rows[i].member.displayName,
-              avatarUrl: rows[i].member.avatarUrl,
-              seconds: rows[i].seconds,
-              maxSeconds: maxSeconds,
-              streak: streaks[rows[i].member.id] ?? 0,
-              isMe: rows[i].member.id == currentUserId,
-              profile: rows[i].member.isActive ? rows[i].member : null,
-            ),
         const SizedBox(height: 16),
         Card(
           child: Padding(
@@ -441,6 +433,70 @@ class ClassStatsView extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// WP-191: gauge kartı — boyutu gaugenin gerçek yüksekliğine sar + alt özet.
+class _GroupGaugeCard extends StatelessWidget {
+  const _GroupGaugeCard({
+    required this.progress,
+    required this.todaySeconds,
+    required this.goalSeconds,
+  });
+
+  final double progress;
+  final int todaySeconds;
+  final int goalSeconds;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
+    final remaining = (goalSeconds - todaySeconds).clamp(0, 1 << 30);
+    final pct = (progress * 100).clamp(0, 999).round();
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            GaugeChart(
+              progress: progress,
+              label: l10n.homeGrupHedefi,
+              size: 100,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              '$pct%',
+              style: theme.textTheme.labelLarge?.copyWith(
+                fontWeight: FontWeight.w800,
+                color: theme.colorScheme.primary,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              goalSeconds <= 0
+                  ? formatHuman(todaySeconds)
+                  : '${formatHuman(todaySeconds)} / ${formatHuman(goalSeconds)}',
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            if (goalSeconds > 0 && remaining > 0) ...[
+              const SizedBox(height: 2),
+              Text(
+                '−${formatHuman(remaining)}',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }
