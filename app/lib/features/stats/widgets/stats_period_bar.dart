@@ -7,10 +7,10 @@ import '../../../core/stats/study_stats.dart';
 import '../../../data/providers/stats_period_provider.dart';
 import '../stats_l10n.dart';
 
-/// Üst dönem seçici: Bugün / Hafta / Ay / Yıl / Tümü / Özel + kompakt kıyas (WP-185).
+/// Üst dönem seçici (WP-190): GERÇEKTEN tek yatay satır.
 ///
-/// All ve Custom, Today/Week/Month/Year ile aynı Wrap satırında (6 chip).
-/// Kıyas: tam genişlik SwitchListTile yerine minik icon-toggle.
+/// Chip'ler Wrap ile kırılmaz — sığmazsa yatay kaydırılır.
+/// Kıyas: satır sonunda kompakt `compare_arrows` toggle (ayrı satır yok).
 class StatsPeriodBar extends ConsumerWidget {
   const StatsPeriodBar({super.key});
 
@@ -20,96 +20,99 @@ class StatsPeriodBar extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
 
-    // SegmentedButton 6 dilimde taşar — Wrap + FilterChip.
-    // WP-185: All (StatsPeriod.all) ve Custom aynı Wrap'te (6 chip).
-    final chips = StatsPeriod.values
-        .where((p) => p != StatsPeriod.custom)
-        .toList();
+    final periods = <StatsPeriod>[
+      ...StatsPeriod.values.where((p) => p != StatsPeriod.custom),
+    ];
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 6, 12, 2),
+      padding: const EdgeInsets.fromLTRB(8, 4, 4, 2),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            alignment: WrapAlignment.center,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              for (final p in chips)
-                FilterChip(
-                  label: Text(statsPeriodLabel(l10n, p)),
-                  selected: sel.period == p,
-                  onSelected: (_) =>
-                      ref.read(statsPeriodProvider.notifier).setPeriod(p),
-                  showCheckmark: false,
-                  visualDensity: VisualDensity.compact,
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          // Tek satır: [scroll chips…] | kıyas
+          SizedBox(
+            height: 44,
+            child: Row(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: Row(
+                      children: [
+                        for (final p in periods) ...[
+                          if (p != periods.first) const SizedBox(width: 6),
+                          _PeriodChip(
+                            label: statsPeriodLabel(l10n, p),
+                            selected: sel.period == p,
+                            onTap: () => ref
+                                .read(statsPeriodProvider.notifier)
+                                .setPeriod(p),
+                          ),
+                        ],
+                        const SizedBox(width: 6),
+                        _PeriodChip(
+                          label: l10n.analyticsCustomRange,
+                          selected: sel.period == StatsPeriod.custom,
+                          onTap: () => _pickCustom(context, ref, sel),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              FilterChip(
-                label: Text(l10n.analyticsCustomRange),
-                selected: sel.period == StatsPeriod.custom,
-                onSelected: (_) => _pickCustom(context, ref, sel),
-                showCheckmark: false,
-                visualDensity: VisualDensity.compact,
-                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-              // WP-185: kompakt kıyas kontrolü — tam satır SwitchListTile yerine.
-              Tooltip(
-                message: l10n.analyticsComparePrevious,
-                child: Semantics(
-                  button: true,
-                  toggled: sel.comparePrevious,
-                  label: l10n.analyticsComparePrevious,
-                  child: InkWell(
-                    onTap: () => ref
-                        .read(statsPeriodProvider.notifier)
-                        .setComparePrevious(!sel.comparePrevious),
-                    borderRadius: BorderRadius.circular(20),
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(
-                        minWidth: 48,
-                        minHeight: 48,
-                      ),
-                      child: Center(
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 150),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: sel.comparePrevious
-                                ? theme.colorScheme.secondaryContainer
-                                : theme.colorScheme.surfaceContainerHighest,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
+                Tooltip(
+                  message: l10n.analyticsComparePrevious,
+                  child: Semantics(
+                    button: true,
+                    toggled: sel.comparePrevious,
+                    label: l10n.analyticsComparePrevious,
+                    child: InkWell(
+                      onTap: () => ref
+                          .read(statsPeriodProvider.notifier)
+                          .setComparePrevious(!sel.comparePrevious),
+                      borderRadius: BorderRadius.circular(20),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(
+                          minWidth: 44,
+                          minHeight: 44,
+                        ),
+                        child: Center(
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 150),
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
                               color: sel.comparePrevious
-                                  ? theme.colorScheme.secondary
-                                  : theme.colorScheme.outlineVariant,
+                                  ? theme.colorScheme.primaryContainer
+                                  : theme.colorScheme.surfaceContainerHighest,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: sel.comparePrevious
+                                    ? theme.colorScheme.primary
+                                    : theme.colorScheme.outlineVariant,
+                              ),
                             ),
-                          ),
-                          child: Icon(
-                            Icons.compare_arrows,
-                            size: 18,
-                            color: sel.comparePrevious
-                                ? theme.colorScheme.onSecondaryContainer
-                                : theme.colorScheme.onSurfaceVariant,
+                            child: Icon(
+                              Icons.compare_arrows,
+                              size: 18,
+                              color: sel.comparePrevious
+                                  ? theme.colorScheme.onPrimaryContainer
+                                  : theme.colorScheme.onSurfaceVariant,
+                            ),
                           ),
                         ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           if (sel.period == StatsPeriod.custom &&
               sel.customFrom != null &&
               sel.customTo != null)
             Padding(
-              padding: const EdgeInsets.only(top: 4, bottom: 2),
+              padding: const EdgeInsets.only(top: 2, bottom: 2),
               child: Text(
                 '${dayOf(sel.customFrom!)} → ${dayOf(sel.customTo!)}',
                 textAlign: TextAlign.center,
@@ -143,5 +146,47 @@ class StatsPeriodBar extends ConsumerWidget {
           range.start,
           range.end,
         );
+  }
+}
+
+class _PeriodChip extends StatelessWidget {
+  const _PeriodChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final bg = selected
+        ? theme.colorScheme.primary
+        : theme.colorScheme.surfaceContainerHighest;
+    final fg = selected
+        ? theme.colorScheme.onPrimary
+        : theme.colorScheme.onSurface;
+
+    return Material(
+      color: bg,
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Text(
+            label,
+            style: theme.textTheme.labelLarge?.copyWith(
+              color: fg,
+              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

@@ -7,19 +7,18 @@ import 'package:online_study_room/features/stats/widgets/stats_period_bar.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// WP-185: All+Custom tek Wrap; kıyas kompakt icon-toggle; textScale 1.3 taşma yok.
+/// WP-190: tek yatay satır (scroll, Wrap yok) + kompakt kıyas; textScale 1.3.
 void main() {
   Future<void> pumpBar(
     WidgetTester tester, {
     double textScale = 1.0,
-    ProviderContainer? container,
+    double width = 360,
   }) async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
-    final c = container ??
-        ProviderContainer(
-          overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
-        );
+    final c = ProviderContainer(
+      overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+    );
     addTearDown(c.dispose);
 
     await tester.pumpWidget(
@@ -31,7 +30,9 @@ void main() {
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             locale: const Locale('en'),
-            home: const Scaffold(body: StatsPeriodBar()),
+            home: Scaffold(
+              body: SizedBox(width: width, child: const StatsPeriodBar()),
+            ),
           ),
         ),
       ),
@@ -39,20 +40,24 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('six period chips + compact compare (no SwitchListTile)',
+  testWidgets('single horizontal row: scroll not Wrap; 6 periods + compare',
       (tester) async {
-    await pumpBar(tester);
+    await pumpBar(tester, width: 280);
 
-    expect(find.byType(FilterChip), findsNWidgets(6));
+    expect(find.byType(Wrap), findsNothing);
+    expect(find.byType(SingleChildScrollView), findsOneWidget);
     expect(find.byType(SwitchListTile), findsNothing);
     expect(find.byIcon(Icons.compare_arrows), findsOneWidget);
 
-    // Dönem etiketleri (EN)
     expect(find.text('Today'), findsOneWidget);
     expect(find.text('Week'), findsOneWidget);
     expect(find.text('Month'), findsOneWidget);
     expect(find.text('Year'), findsOneWidget);
     expect(find.text('All'), findsOneWidget);
+
+    // Chip satırı + kıyas aynı yükseklik bandında (~44)
+    final bar = tester.getRect(find.byType(StatsPeriodBar));
+    expect(bar.height, lessThan(90), reason: 'header stays compact single row');
   });
 
   testWidgets('compare icon toggles comparePrevious', (tester) async {
@@ -83,8 +88,9 @@ void main() {
   });
 
   testWidgets('textScale 1.3 does not overflow', (tester) async {
-    await pumpBar(tester, textScale: 1.3);
+    await pumpBar(tester, textScale: 1.3, width: 320);
     expect(tester.takeException(), isNull);
     expect(find.byType(StatsPeriodBar), findsOneWidget);
+    expect(find.byType(Wrap), findsNothing);
   });
 }
