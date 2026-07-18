@@ -20,7 +20,7 @@
 - **Navigasyon hedefi:** Ana Sayfa / Saat / Gruplar / İstatistikler / Profil. Ana Sayfa günlük kullanım alanıdır; diğer alanların verisi kendi sekmelerinde eksiksiz bulunur.
 - **Release:** Stable/Beta kanalı GitHub Releases ile çalışır. Yerel `v29` ve `beta-v29` tag'leri WP-104 commitini (`ff369e3`) gösterir; mevcut `main` WP-105–109'u da içerdiği halde `1.0.29+29` taşır. Bir sonraki dağıtımda versionCode mutlaka artırılır; Play production ayrı kalite kapısından geçer.
 - **Kalite kapıları:** Her WP DoD'siz kapanmaz; stable release kalite kapısından geçer (AGENTS.md §3). Server-authoritative XP, RLS/sosyal profil, platform sınırları → `docs/KALITE-PROGRAMI.md`.
-- **Son WP numarası:** 168 (feedback tanı). **Sıradaki boş numara WP-169.**
+- **Son WP numarası:** 169 (görev listesi plan). **Sıradaki boş numara WP-170** (uygulama onay sonrası).
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
   - Flutter: `C:\src\flutter` · Android SDK: `C:\Android\Sdk`
@@ -71,15 +71,15 @@
 - **Not:** Play Store production programı WP-110–124 olarak planlandı; kanonik belgeler hizalandı. `OPTIMIZATIONS.md` kapsam dışı bırakıldı.
 
 ### Grok Lane
-- **Durum:** [~] Aktif
-- **Faz/WP:** ADIM 0 migration housekeep → ADIM 1 analytics toggle → WP-168 feedback → ADIM 2 beta kılavuz → WP-169 plan
-- **Aşama:** Geliştiriliyor
-- **SAHİP yollar:** `supabase/migrations/0039–0043*`, `docs/**` (migration no + beta/qa + WP-168/169 plan), `app/lib/features/settings/**`, analytics flag UI, feedback submit path, l10n arb
-- **Ortak/riskli yüzey:** `progress.md` (kendi lane), `supabase/migrations/**` (renumber), settings + l10n
+- **Durum:** [x] Boşta
+- **Faz/WP:** —
+- **Aşama:** —
+- **SAHİP yollar:** —
+- **Ortak/riskli yüzey:** —
 - **Dal:** main
-- **Başlangıç:** 2026-07-18 11:53 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-18 11:53 (Europe/Istanbul)
-- **Not:** Sıra: 0→1→168→2; sahip migration+beta; sonra 169 plan-only. Push yok. HER İŞ AYRI COMMIT.
+- **Başlangıç:** —
+- **Son güncelleme:** 2026-07-18 (Europe/Istanbul)
+- **Not:** ADIM0 `f858f85` · ADIM1 `1ec720c` · WP-168 `24a2d91` · ADIM2 `2319bf5` · WP-169 plan (onay bekler, kod yok). Sahip: migration+beta kılavuz. Push yok.
 
 
 ---
@@ -172,6 +172,7 @@
 | WP-166 | [~] Test için bekliyor | Kalite denetimi + düzeltmeler | Cihazda doğrulanmalı |
 | WP-167 | [x] Otomatik test geçti | Timer FakeTimer dispose sızıntısı | kod+test |
 | WP-168 | [~] Test için bekliyor | Feedback gönderilemedi tanı+onarım | Cihazda doğrulanmalı |
+| WP-169 | [~] Plan onay bekliyor | Günlük/haftalık görev listesi kartı PLAN | `docs/features/GOREV-LISTESI-KART-PLAN.md` · kod yok |
 
 > **2026-07-14 proje denetimi:** Serbest sürükle-bırak ızgara, canlı grup hedefi ve saat stilleri **zaten kodda uygulanmış** (backlog stale idi; geçici WP-72/73/75 iptal).
 >
@@ -859,6 +860,12 @@
 > ⚠️ **Ürün kararları:** (1) WP-66 §0 retention varsayılanları, (2) legal site domain/iletişim kimliği, (3) hedef kitle 13+/16+, (4) Play Console'da alarmı core functionality olarak savunma veya safe fallback, (5) geliştirici hesap türü/tarihi. Bunlar planı engellemez; ilgili WP başlamadan kullanıcı onayı gerekir.
 
 ## Test için bekleyenler
+
+### WP-169: Görev listesi kartı PLAN (onay bekliyor) 📋
+- **Teslim:** `docs/features/GOREV-LISTESI-KART-PLAN.md`
+- **Öneri:** v1 lokal prefs; `AnalyticsCardType.taskList` (flag arkası, default layout’a eklenmez); dönem hard reset; tamamlanınca strikethrough; XP/cloud v1 dışı
+- **Kod:** yok · **Ürün kararı gerekiyor** (§12 checklist)
+- **Sonraki:** onay → WP-170+ 
 
 ### WP-168: Feedback “gönderilemedi” (otomatik test) 🐞
 - **Rapor:** `docs/qa/WP-168-FEEDBACK-TANI.md`
