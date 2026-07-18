@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
-/// WP-171: başlık + chip satırı dar genişlikte dikey harf dizilimine düşmemeli.
+/// WP-171 + WP-187: başlık dar genişlikte tek satır; level/quest yok (declutter).
 void main() {
-  testWidgets('achievements title stays single horizontal line when chips wrap',
-      (tester) async {
+  testWidgets('achievements title stays single horizontal line', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -47,29 +46,25 @@ void main() {
                                 const Icon(Icons.chevron_right),
                               ],
                             ),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 12),
+                            // WP-187: level/quest/streak yok — yalnız rozet alanı.
                             Wrap(
-                              spacing: 8,
-                              runSpacing: 4,
-                              children: [
-                                Chip(
-                                  visualDensity: VisualDensity.compact,
-                                  label: Text(l10n.profileLevel(12)),
-                                ),
-                                Chip(
-                                  visualDensity: VisualDensity.compact,
-                                  label: ConstrainedBox(
-                                    constraints:
-                                        const BoxConstraints(maxWidth: 180),
-                                    child: const Text(
-                                      'Golden Crown Master Elite',
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      softWrap: false,
-                                    ),
+                              spacing: 10,
+                              children: List.generate(
+                                3,
+                                (_) => Container(
+                                  width: 48,
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    color: theme.colorScheme.primaryContainer,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.emoji_events,
+                                    color: theme.colorScheme.primary,
                                   ),
                                 ),
-                              ],
+                              ),
                             ),
                           ],
                         );
@@ -88,8 +83,11 @@ void main() {
     final titleFinder = find.text('Achievements');
     expect(titleFinder, findsOneWidget);
     final size = tester.getSize(titleFinder);
-    // Dikey harf dizilimi ~ karakter başına satır yüksekliği ile dar genişlik verir.
     expect(size.width, greaterThan(40), reason: 'title should not be letter-stacked');
     expect(size.height, lessThan(40), reason: 'title should be one line');
+
+    // Level/quest UI yok
+    expect(find.textContaining('Level'), findsNothing);
+    expect(find.text('Quests'), findsNothing);
   });
 }

@@ -1,0 +1,84 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:online_study_room/core/prefs/app_prefs.dart';
+import 'package:online_study_room/core/stats/gamification.dart';
+import 'package:online_study_room/data/models/gamification_profile.dart';
+import 'package:online_study_room/data/models/profile.dart';
+import 'package:online_study_room/data/providers/auth_providers.dart';
+import 'package:online_study_room/data/providers/gamification_providers.dart';
+import 'package:online_study_room/features/profile/widgets/gamification_card.dart';
+import 'package:online_study_room/l10n/app_localizations.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+/// WP-187: profil kartında level/quest/streak/freeze/total yok; başarılar başlığı var.
+void main() {
+  testWidgets('GamificationCard omits level quest streak xp chrome',
+      (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final now = DateTime.utc(2026, 7, 18);
+
+    final profile = Profile(
+      id: 'u1',
+      displayName: 'Test',
+      createdAt: now,
+    );
+    final gamification = GamificationProfile(
+      userId: 'u1',
+      streakFreezes: 2,
+      xp: 1200,
+      crownRank: 'gold_achiever',
+      selectedBadges: const [],
+      createdAt: now,
+      updatedAt: now,
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          authStateProvider.overrideWith((ref) => Stream.value(profile)),
+          gamificationSummaryProvider.overrideWith((ref) {
+            return AsyncValue.data(
+              GamificationSummary(
+                profile: gamification,
+                freezeAwareStreak: const FreezeAwareStreak(
+                  streak: 1,
+                  freezesUsed: 0,
+                  protectedDays: [],
+                ),
+                achievements: const [],
+                crownTier: CrownTier.gold,
+                totalSeconds: 3600,
+                sessionCount: 3,
+              ),
+            );
+          }),
+          userAchievementsProvider.overrideWith(
+            (ref, userId) => Stream.value(const []),
+          ),
+          gamificationProgressSyncProvider.overrideWith((ref) async {}),
+        ],
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('en'),
+          home: const Scaffold(body: GamificationCard()),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(GamificationCard), findsOneWidget);
+    expect(find.text('Achievements'), findsOneWidget);
+
+    // Kaldırılan kalabalık
+    expect(find.textContaining('Level'), findsNothing);
+    expect(find.text('Quests'), findsNothing);
+    expect(find.textContaining('day streak'), findsNothing);
+    expect(find.textContaining('streak freezes'), findsNothing);
+    expect(find.textContaining('XP'), findsNothing);
+    expect(find.byType(LinearProgressIndicator), findsNothing);
+  });
+}

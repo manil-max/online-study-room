@@ -2,17 +2,19 @@ import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/stats/level_curve.dart';
-import '../../../core/stats/progression_visuals.dart';
-import '../../../core/stats/study_stats.dart';
-import '../../../core/utils/duration_format.dart';
+import '../../../core/stats/achievement_ledger_engine.dart';
+import '../../../data/models/achievement.dart';
+import '../../../data/models/gamification_profile.dart';
 import '../../../data/providers/auth_providers.dart';
 import '../../../data/providers/gamification_providers.dart';
-import '../../../data/providers/study_providers.dart';
 import '../social_profile_screen.dart';
+import 'achievement_showcase.dart';
 
-/// Profil özeti: XP, taç, seri. Klasik başarımlar burada listelenmez —
-/// dokununca [SocialProfileScreen] vitrin/katalog.
+/// Profil özeti: yalnız başarım rozetleri (WP-187).
+///
+/// Kaldırıldı: seviye çubuğu / Level N / XP metni, quest, streak, freeze, total
+/// saat. Backend XP/ledger'a dokunulmaz — yalnız UI sadeleşti. Dokununca
+/// [SocialProfileScreen] vitrin/katalog.
 class GamificationCard extends ConsumerWidget {
   const GamificationCard({super.key});
 
@@ -21,8 +23,9 @@ class GamificationCard extends ConsumerWidget {
     // WP-56: profil açılınca sunucu ledger'ı yeniden değerlendirir.
     ref.watch(gamificationProgressSyncProvider);
     final theme = Theme.of(context);
-    final summaryAsync = ref.watch(gamificationSummaryProvider);
+    final l10n = AppLocalizations.of(context);
     final authProfile = ref.watch(authStateProvider).value;
+    final summaryAsync = ref.watch(gamificationSummaryProvider);
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -34,31 +37,35 @@ class GamificationCard extends ConsumerWidget {
           padding: const EdgeInsets.all(16),
           child: summaryAsync.when(
             data: (summary) {
-              if (summary == null) {
+              if (summary == null || authProfile == null) {
                 return Text(
-                  AppLocalizations.of(
-                    context,
-                  ).profileBasarilarGirisYaptiktanSonra,
+                  l10n.profileBasarilarGirisYaptiktanSonra,
                   style: theme.textTheme.bodyMedium,
                 );
               }
-              final sessions =
-                  ref.watch(userSessionsProvider).asData?.value ?? const [];
-              final now = DateTime.now();
-              final todaySec = secondsOnDay(sessions, now);
-              final weekSec =
-                  totalSeconds(inRange(sessions, startOfWeek(now), now));
-              return _SummaryContent(
-                summary: summary,
-                quests: buildQuestStatuses(
-                  todaySeconds: todaySec,
-                  weekSeconds: weekSec,
+              final achsAsync =
+                  ref.watch(userAchievementsProvider(authProfile.id));
+              return achsAsync.when(
+                data: (achs) => _BadgeSummary(
+                  profile: summary.profile,
+                  achievements: achs,
+                ),
+                loading: () => const Center(
+                  child: SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
+                error: (_, _) => _BadgeSummary(
+                  profile: summary.profile,
+                  achievements: const [],
                 ),
               );
             },
-            loading: () => Center(child: CircularProgressIndicator()),
+            loading: () => const Center(child: CircularProgressIndicator()),
             error: (error, stackTrace) => Text(
-              AppLocalizations.of(context).profileBasarilarYuklenemedi,
+              l10n.profileBasarilarYuklenemedi,
               style: TextStyle(color: theme.colorScheme.error),
             ),
           ),
@@ -68,28 +75,46 @@ class GamificationCard extends ConsumerWidget {
   }
 }
 
-class _SummaryContent extends StatelessWidget {
-  const _SummaryContent({required this.summary, required this.quests});
+class _BadgeSummary extends StatelessWidget {
+  const _BadgeSummary({
+    required this.profile,
+    required this.achievements,
+  });
 
-  final GamificationSummary summary;
-  final List<QuestStatus> quests;
+  final GamificationProfile profile;
+  final List<UserAchievement> achievements;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
-    final rank = summary.profile.crownRank;
-    final rankColor = crownColorFor(rank, theme.colorScheme);
-    final bar = xpBarMetrics(summary.profile.xp);
-    final lvl = levelProgress(summary.profile.xp);
-    final frameUnlocked =
-        isFrameUnlocked(xp: summary.profile.xp, requiredLevel: 3);
+    final dict = kAchievementDictV3(l10n);
+
+    // Vitrin seçimi öncelikli; yoksa açılmış başarımlardan ilk 6.
+    final unlockedIds = {
+      for (final a in achievements)
+        if (a.isUnlocked) a.achievementId,
+    };
+    final showcaseIds = <String>[
+      ...profile.selectedBadges.where(unlockedIds.contains),
+    ];
+    if (showcaseIds.isEmpty) {
+      for (final a in achievements) {
+        if (a.isUnlocked && !showcaseIds.contains(a.achievementId)) {
+          showcaseIds.add(a.achievementId);
+        }
+        if (showcaseIds.length >= 6) break;
+      }
+    }
+
+    final byId = {for (final d in dict) d.id: d};
+    final tierById = {
+      for (final a in achievements) a.achievementId: a.tier,
+    };
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // WP-171: başlık kendi satırında; chip'ler Wrap altında — uzun taç etiketi
-        // Expanded'ı ~0 yapıp başlığı dikey sarmasın.
         Row(
           children: [
             Icon(Icons.emoji_events_outlined, color: theme.colorScheme.primary),
@@ -106,166 +131,63 @@ class _SummaryContent extends StatelessWidget {
             const Icon(Icons.chevron_right),
           ],
         ),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 4,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            Chip(
-              visualDensity: VisualDensity.compact,
-              label: Text(l10n.profileLevel(lvl.level)),
+        const SizedBox(height: 12),
+        if (showcaseIds.isEmpty)
+          Text(
+            l10n.profileRozetlerinSerilerinVeIlerlemen,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
             ),
-            Chip(
-              visualDensity: VisualDensity.compact,
-              avatar: Icon(
-                Icons.workspace_premium_outlined,
-                size: 18,
-                color: rankColor,
-              ),
-              label: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 180),
-                child: Text(
-                  _crownLabel(l10n, rank),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  softWrap: false,
+          )
+        else
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              for (final id in showcaseIds.take(6))
+                _BadgeChip(
+                  iconKey: byId[id]?.iconKey ?? 'emoji_events',
+                  label: byId[id]?.name ?? id,
+                  tier: tierById[id] ?? 1,
                 ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 10),
-        // WP-154: seviye çubuğu (türetilmiş; XP server-authoritative kalır)
-        Text(
-          l10n.profileLevel(lvl.level),
-          style: theme.textTheme.labelMedium,
-        ),
-        SizedBox(height: 4),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(6),
-          child: LinearProgressIndicator(
-            value: lvl.progress,
-            minHeight: 8,
-            color: theme.colorScheme.tertiary,
-            backgroundColor: theme.colorScheme.surfaceContainerHighest,
+            ],
           ),
-        ),
-        SizedBox(height: 4),
-        Text(
-          '${summary.profile.xp} XP → ${lvl.nextXp}',
-          style: theme.textTheme.labelSmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-        ),
-        SizedBox(height: 8),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(6),
-          child: LinearProgressIndicator(
-            value: bar.progress,
-            minHeight: 6,
-            color: rankColor,
-            backgroundColor: theme.colorScheme.surfaceContainerHighest,
-          ),
-        ),
-        SizedBox(height: 4),
-        Text(
-          '${summary.profile.xp} / ${bar.next} XP',
-          style: theme.textTheme.labelSmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-        ),
-        SizedBox(height: 12),
-        Text(l10n.profileQuests, style: theme.textTheme.titleSmall),
-        SizedBox(height: 6),
-        for (final q in quests)
-          ListTile(
-            dense: true,
-            contentPadding: EdgeInsets.zero,
-            leading: Icon(
-              q.done ? Icons.check_circle : Icons.radio_button_unchecked,
-              color: q.done
-                  ? theme.colorScheme.primary
-                  : theme.colorScheme.outline,
-            ),
-            title: Text(switch (q.id) {
-              QuestId.dailyLogin => l10n.questDailyLogin,
-              QuestId.weeklyFiveHours => l10n.questWeeklyHours,
-            }),
-            trailing: Text(
-              q.done ? l10n.questClaimed : '${q.progress}/${q.target}',
-              style: theme.textTheme.labelSmall,
-            ),
-          ),
-        ListTile(
-          dense: true,
-          contentPadding: EdgeInsets.zero,
-          leading: Icon(
-            frameUnlocked ? Icons.portrait : Icons.lock_outline,
-          ),
-          title: Text(l10n.cosmeticsFrame),
-          trailing: Text(
-            frameUnlocked ? l10n.cosmeticsUnlocked : l10n.questLocked,
-            style: theme.textTheme.labelSmall,
-          ),
-        ),
-        SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            _MetricChip(
-              icon: Icons.local_fire_department_outlined,
-              label: l10n.profileSummaryfreezeawarestreakstreakGunSeri(
-                '${summary.freezeAwareStreak.streak}',
-              ),
-            ),
-            _MetricChip(
-              icon: Icons.shield_outlined,
-              label: l10n.profileSummaryprofilestreakfreezesKorumaHakki(
-                '${summary.profile.streakFreezes}',
-              ),
-            ),
-            _MetricChip(
-              icon: Icons.timer_outlined,
-              label: formatHuman(summary.totalSeconds),
-            ),
-          ],
-        ),
-        SizedBox(height: 10),
-        Text(
-          l10n.profileRozetlerinSerilerinVeIlerlemen,
-          style: theme.textTheme.labelMedium?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-        ),
       ],
     );
   }
 }
 
-String _crownLabel(AppLocalizations l10n, String rank) {
-  return switch (normalizeCrownRank(rank)) {
-    'diamond_owl' => l10n.coreElmasTac,
-    'platinum_scholar' => l10n.corePlatinTac,
-    'gold_achiever' => l10n.coreAltinTac,
-    'silver_learner' => l10n.coreGumusTac,
-    _ => l10n.coreBronzTac,
-  };
-}
+class _BadgeChip extends StatelessWidget {
+  const _BadgeChip({
+    required this.iconKey,
+    required this.label,
+    required this.tier,
+  });
 
-class _MetricChip extends StatelessWidget {
-  const _MetricChip({required this.icon, required this.label});
-
-  final IconData icon;
+  final String iconKey;
   final String label;
+  final int tier;
 
   @override
   Widget build(BuildContext context) {
-    return Chip(
-      visualDensity: VisualDensity.compact,
-      avatar: Icon(icon, size: 18),
-      label: Text(label),
+    final theme = Theme.of(context);
+    final color = tierColorFor(tier.clamp(1, 5));
+    return Semantics(
+      label: label,
+      child: Container(
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.14),
+          shape: BoxShape.circle,
+          border: Border.all(color: color.withValues(alpha: 0.45)),
+        ),
+        child: Icon(
+          achievementIconData(iconKey),
+          color: color,
+          size: 22,
+        ),
+      ),
     );
   }
 }
