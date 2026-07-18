@@ -1,47 +1,144 @@
 {
   "@@locale": "en",
   "profileBasarimKademeleriniTamamla": "Complete the levels below to earn this achievement.",
-  "@profileBasarimKademeleriniTamamla": { "description": "Achievement detail introduction." },
+  "@profileBasarimKademeleriniTamamla": {
+    "description": "Achievement detail introduction."
+  },
   "profileBasarimToplamSaatKosulu": "Study for a total of {count, plural, =1 {1 hour} other {{count} hours}}.",
-  "@profileBasarimToplamSaatKosulu": { "description": "Achievement tier condition.", "placeholders": { "count": { "type": "int" } } },
+  "@profileBasarimToplamSaatKosulu": {
+    "description": "Achievement tier condition.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "profileBasarimTekOturumKosulu": "Complete one study session lasting {count, plural, =1 {1 minute} other {{count} minutes}}.",
-  "@profileBasarimTekOturumKosulu": { "description": "Achievement tier condition.", "placeholders": { "count": { "type": "int" } } },
+  "@profileBasarimTekOturumKosulu": {
+    "description": "Achievement tier condition.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "profileBasarimGunlukSaatKosulu": "Study for {count, plural, =1 {1 hour} other {{count} hours}} in a single day.",
-  "@profileBasarimGunlukSaatKosulu": { "description": "Achievement tier condition.", "placeholders": { "count": { "type": "int" } } },
+  "@profileBasarimGunlukSaatKosulu": {
+    "description": "Achievement tier condition.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "profileBasarimSeriKosulu": "Meet your daily goal for {count, plural, =1 {1 consecutive day} other {{count} consecutive days}}.",
-  "@profileBasarimSeriKosulu": { "description": "Achievement tier condition.", "placeholders": { "count": { "type": "int" } } },
+  "@profileBasarimSeriKosulu": {
+    "description": "Achievement tier condition.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "profileBasarimHaftaSonuKosulu": "Meet your daily goal on {count, plural, =1 {1 weekend day} other {{count} weekend days}}.",
-  "@profileBasarimHaftaSonuKosulu": { "description": "Achievement tier condition.", "placeholders": { "count": { "type": "int" } } },
+  "@profileBasarimHaftaSonuKosulu": {
+    "description": "Achievement tier condition.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "profileBasarimKusursuzAyKosulu": "Complete {count, plural, =1 {1 perfect month} other {{count} perfect months}}.",
-  "@profileBasarimKusursuzAyKosulu": { "description": "Achievement tier condition.", "placeholders": { "count": { "type": "int" } } },
+  "@profileBasarimKusursuzAyKosulu": {
+    "description": "Achievement tier condition.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "profileBasarimGrupBirinciligiKosulu": "Finish first in your group on {count, plural, =1 {1 day} other {{count} days}}.",
-  "@profileBasarimGrupBirinciligiKosulu": { "description": "Achievement tier condition.", "placeholders": { "count": { "type": "int" } } },
+  "@profileBasarimGrupBirinciligiKosulu": {
+    "description": "Achievement tier condition.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "profileBasarimGrupHedefKosulu": "Contribute to your group's daily goal on {count, plural, =1 {1 day} other {{count} days}}.",
-  "@profileBasarimGrupHedefKosulu": { "description": "Achievement tier condition.", "placeholders": { "count": { "type": "int" } } },
+  "@profileBasarimGrupHedefKosulu": {
+    "description": "Achievement tier condition.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "profileBasarimKampAtesiKosulu": "Study while at least 3 group members are active for {count, plural, =1 {1 hour} other {{count} hours}}.",
-  "@profileBasarimKampAtesiKosulu": { "description": "Achievement tier condition.", "placeholders": { "count": { "type": "int" } } },
+  "@profileBasarimKampAtesiKosulu": {
+    "description": "Achievement tier condition.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "profileBasarimDurtmeKosulu": "Have {count, plural, =1 {1 member} other {{count} members}} start studying after your nudge.",
-  "@profileBasarimDurtmeKosulu": { "description": "Achievement tier condition.", "placeholders": { "count": { "type": "int" } } },
+  "@profileBasarimDurtmeKosulu": {
+    "description": "Achievement tier condition.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "profileBasarimLokomotifKosulu": "Be the first group member to start studying {count, plural, =1 {1 time} other {{count} times}}.",
-  "@profileBasarimLokomotifKosulu": { "description": "Achievement tier condition.", "placeholders": { "count": { "type": "int" } } },
+  "@profileBasarimLokomotifKosulu": {
+    "description": "Achievement tier condition.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "profileBasarimGeceKusuAciklama": "Start a study session between midnight and 4:00 AM, then study for at least 2 hours.",
-  "@profileBasarimGeceKusuAciklama": { "description": "Unlocked secret achievement condition." },
+  "@profileBasarimGeceKusuAciklama": {
+    "description": "Unlocked secret achievement condition."
+  },
   "profileBasarimGunDogumuAciklama": "Start studying between 5:00 AM and 7:00 AM, then study for at least 1 hour.",
-  "@profileBasarimGunDogumuAciklama": { "description": "Unlocked secret achievement condition." },
+  "@profileBasarimGunDogumuAciklama": {
+    "description": "Unlocked secret achievement condition."
+  },
   "profileBasarim404Aciklama": "Complete a study session lasting exactly 404 minutes.",
-  "@profileBasarim404Aciklama": { "description": "Unlocked secret achievement condition." },
+  "@profileBasarim404Aciklama": {
+    "description": "Unlocked secret achievement condition."
+  },
   "profileBasarimPiAciklama": "Complete a study session lasting exactly 194 minutes.",
-  "@profileBasarimPiAciklama": { "description": "Unlocked secret achievement condition." },
+  "@profileBasarimPiAciklama": {
+    "description": "Unlocked secret achievement condition."
+  },
   "profileBasarimSonSaniyeAciklama": "Meet your daily goal with a session that ends between 11:55 PM and 11:59 PM.",
-  "@profileBasarimSonSaniyeAciklama": { "description": "Unlocked secret achievement condition." },
+  "@profileBasarimSonSaniyeAciklama": {
+    "description": "Unlocked secret achievement condition."
+  },
   "profileBasarim1337Aciklama": "Start at 1:37 PM and study for at least 1 hour.",
-  "@profileBasarim1337Aciklama": { "description": "Unlocked secret achievement condition." },
+  "@profileBasarim1337Aciklama": {
+    "description": "Unlocked secret achievement condition."
+  },
   "profileBasarimSinirTanimazAciklama": "Reach three times your daily goal in one day.",
-  "@profileBasarimSinirTanimazAciklama": { "description": "Unlocked secret achievement condition." },
+  "@profileBasarimSinirTanimazAciklama": {
+    "description": "Unlocked secret achievement condition."
+  },
   "profileBasarimMatrixAciklama": "Complete a study session lasting exactly 111, 222, 333, or 555 minutes.",
-  "@profileBasarimMatrixAciklama": { "description": "Unlocked secret achievement condition." },
+  "@profileBasarimMatrixAciklama": {
+    "description": "Unlocked secret achievement condition."
+  },
   "profileBasarimYilbasiAciklama": "Study across midnight on New Year's Eve.",
-  "@profileBasarimYilbasiAciklama": { "description": "Unlocked secret achievement condition." },
+  "@profileBasarimYilbasiAciklama": {
+    "description": "Unlocked secret achievement condition."
+  },
   "@profileKademe": {
     "description": "Achievement tier label."
   },
@@ -571,9 +668,9 @@
   "@classroomBugunkuToplam": {
     "description": "Classroom user-facing text. Source: Bugünkü toplam"
   },
-  "classroomDakika": "Minute",
+  "classroomDakika": "Minutes",
   "@classroomDakika": {
-    "description": "Classroom user-facing text. Source: Dakika"
+    "description": "Classroom user-facing text. Source: Dakika | WP-173: duration unit (not clock device)"
   },
   "classroomDavetKodu": "Invitation code",
   "@classroomDavetKodu": {
@@ -771,9 +868,9 @@
   "@classroomRenkGecisi": {
     "description": "Classroom user-facing text. Source: Renk geçişi"
   },
-  "classroomSaat": "Clock",
+  "classroomSaat": "Hours",
   "@classroomSaat": {
-    "description": "Classroom user-facing text. Source: Saat"
+    "description": "Classroom user-facing text. Source: Saat | WP-173: duration unit (not clock device)"
   },
   "classroomSaatGorunumu": "Clock face",
   "@classroomSaatGorunumu": {
@@ -4165,15 +4262,21 @@
   "@groupDiscoveryMemberCount": {
     "description": "Visible group member count and limit",
     "placeholders": {
-      "current": { "type": "int" },
-      "limit": { "type": "int" }
+      "current": {
+        "type": "int"
+      },
+      "limit": {
+        "type": "int"
+      }
     }
   },
   "groupDiscoveryDailyGoal": "Daily goal: {minutes} min",
   "@groupDiscoveryDailyGoal": {
     "description": "Visible public group daily goal in minutes",
     "placeholders": {
-      "minutes": { "type": "int" }
+      "minutes": {
+        "type": "int"
+      }
     }
   },
   "groupDiscoveryJoined": "Joined",
@@ -4248,14 +4351,18 @@
   "@legalPolicyVersion": {
     "description": "Shows legal document version date",
     "placeholders": {
-      "version": {"type": "String"}
+      "version": {
+        "type": "String"
+      }
     }
   },
   "legalCommunityVersion": "Community guidelines version: {version}",
   "@legalCommunityVersion": {
     "description": "Shows community guidelines version",
     "placeholders": {
-      "version": {"type": "String"}
+      "version": {
+        "type": "String"
+      }
     }
   },
   "legalCopyPublicPrivacyUrl": "Copy public privacy URL",
@@ -4274,7 +4381,7 @@
   "@legalDeletionNote": {
     "description": "Honest note that deletion UX completes with later WPs"
   },
-"safetyReport": "Report",
+  "safetyReport": "Report",
   "@safetyReport": {
     "description": "Report UGC / user action label"
   },
@@ -4338,7 +4445,7 @@
   "@safetyActionFailed": {
     "description": "Generic safety action error snackbar"
   },
-"safetyBlockedUsersTitle": "Blocked users",
+  "safetyBlockedUsersTitle": "Blocked users",
   "@safetyBlockedUsersTitle": {
     "description": "Settings entry and screen title for blocked users list"
   },
@@ -4358,7 +4465,7 @@
   "@safetyBlockedUserFallbackName": {
     "description": "Fallback display name when profile cannot be resolved"
   },
-"safetyReportDetailsLabel": "Details (optional)",
+  "safetyReportDetailsLabel": "Details (optional)",
   "@safetyReportDetailsLabel": {
     "description": "Label for optional free-text report details field"
   },
@@ -4366,7 +4473,7 @@
   "@safetyReportDetailsHint": {
     "description": "Hint text for report details field"
   },
-"adminUgcNoReports": "No UGC reports",
+  "adminUgcNoReports": "No UGC reports",
   "@adminUgcNoReports": {
     "description": "Empty state for super-admin UGC moderation queue"
   },
@@ -4606,7 +4713,9 @@
   "@profileLevel": {
     "description": "Profile level label",
     "placeholders": {
-      "level": {"type": "int"}
+      "level": {
+        "type": "int"
+      }
     }
   },
   "profileQuests": "Quests",
