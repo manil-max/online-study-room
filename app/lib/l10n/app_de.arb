@@ -3782,6 +3782,7 @@
   "@statsTumu": {
     "description": "Stats user-facing text. Source: Tümü"
   },
+  "statsSaatKisa": "Std",
   "statsSaat": "Stunden",
   "@statsSaat": {
     "description": "Stats user-facing text. Source: saat"

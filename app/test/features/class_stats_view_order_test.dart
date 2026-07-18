@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/data/models/daily_stat.dart';
 import 'package:online_study_room/data/models/profile.dart';
+import 'package:online_study_room/features/stats/charts/gauge_chart.dart';
 import 'package:online_study_room/features/stats/widgets/class_stats_view.dart';
 
 Profile _profile(String id, String name) =>
@@ -51,21 +52,20 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 800));
 
-    double topOf(String text) => tester.getTopLeft(find.text(text)).dy;
+    double topOf(String text) => tester.getTopLeft(find.text(text).first).dy;
 
-    // WP-191 sıra: sıralama → hedef gauge → özet → trend → all time → heat
+    // WP-203 sıra: sıralama → hedef gauge (tek) → özet → grup eğilimi →
+    // all time → karşılaştırma. (Mükerrer hedef kartı ve bar trend kaldırıldı.)
     final ranking = topOf('Sıralama');
-    final goal = topOf('Bugünkü grup hedefi');
+    final goal = tester.getTopLeft(find.byType(GaugeChart)).dy;
     final summary = topOf('Kişi başı ort.');
-    final dailyTrend = topOf('Grup günlük trendi (son 7 gün) · 7 gün · Hafta');
     final longTrend = topOf('Grup eğilimi (son 30 gün) · 7 gün · Hafta');
     final allTime = topOf('Tüm zamanlar');
     final comparison = topOf('Karşılaştırma tablosu');
 
     expect(ranking < goal, isTrue, reason: 'sıralama hedefin üstünde');
     expect(goal < summary, isTrue, reason: 'hedef özetin üstünde');
-    expect(summary < dailyTrend, isTrue, reason: 'özet trendin üstünde');
-    expect(dailyTrend < longTrend, isTrue);
+    expect(summary < longTrend, isTrue, reason: 'özet trendin üstünde');
     expect(longTrend < allTime, isTrue);
     expect(allTime < comparison, isTrue);
 

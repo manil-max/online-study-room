@@ -6,7 +6,6 @@ import 'package:online_study_room/data/models/study_session.dart';
 import 'package:online_study_room/data/providers/study_providers.dart';
 import 'package:online_study_room/data/providers/subject_providers.dart';
 import 'package:online_study_room/features/stats/charts/area_line_chart.dart';
-import 'package:online_study_room/features/stats/charts/gauge_chart.dart';
 import 'package:online_study_room/features/stats/charts/radar_stat_chart.dart';
 import 'package:online_study_room/features/stats/widgets/personal_stats_view.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
@@ -15,7 +14,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('PersonalStatsView mounts gauge/area/radar sections (WP-179)',
+  testWidgets('PersonalStatsView mounts area/radar sections (WP-203)',
       (tester) async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
@@ -57,12 +56,11 @@ void main() {
     expect(find.byType(PersonalStatsView), findsOneWidget);
     // ListView tembel — hedefe kadar kaydır.
     await tester.scrollUntilVisible(
-      find.byType(GaugeChart),
+      find.byType(AreaLineChart),
       200,
       scrollable: find.byType(Scrollable).first,
     );
     await tester.pumpAndSettle();
-    expect(find.byType(GaugeChart), findsOneWidget);
     expect(find.byType(AreaLineChart), findsWidgets);
     await tester.scrollUntilVisible(
       find.byType(RadarStatChart),

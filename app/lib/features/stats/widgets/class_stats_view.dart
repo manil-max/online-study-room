@@ -16,10 +16,9 @@ import '../../../data/providers/stats_period_provider.dart';
 import '../../classroom/widgets/class_switcher.dart';
 import '../../profile/widgets/profile_tap.dart';
 import '../analytics/analytics_period.dart';
-import '../charts/area_line_chart.dart';
 import '../charts/gauge_chart.dart';
-import 'daily_bar_chart.dart';
 import 'daily_line_chart.dart';
+import 'leaderboard_rank_chart.dart';
 import 'stat_heat_table.dart';
 import 'subject_donut.dart';
 import '../stats_l10n.dart';
@@ -53,9 +52,6 @@ class ClassStatsView extends ConsumerWidget {
     final analyticsPeriod = analyticsPeriodFromSelection(sel);
     final contribAsync = ref.watch(
       analyticsGroupContributionProvider(analyticsPeriod),
-    );
-    final seriesAsync = ref.watch(
-      analyticsGroupLeaderboardSeriesProvider(analyticsPeriod),
     );
 
     // Seçili dönem leaderboard'u: userId → saniye (per-user-per-gün toplamdan).
@@ -109,7 +105,6 @@ class ClassStatsView extends ConsumerWidget {
     final goalSeconds = groupGoalMinutes * 60;
     final groupDay = groupDayTotals(stats);
     final todayGroupTotal = groupDay[dayOf(now)] ?? 0;
-    final groupStreak = currentStreak(const [], goalSeconds, totals: groupDay);
 
     // Tüm-zamanlar metrikleri (§WP-10) — dönem seçiminden bağımsız.
     final allTimeTotal = totalOfDayTotals(groupDay);
@@ -196,24 +191,14 @@ class ClassStatsView extends ConsumerWidget {
               profile: rows[i].member.isActive ? rows[i].member : null,
             ),
         const SizedBox(height: 16),
-        // WP-191: hedef gauge — kart boyutu gaugenin gerçek yüksekliğine + alt özet.
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _GroupGaugeCard(
-              progress: goalSeconds <= 0 ? 0 : todayGroupTotal / goalSeconds,
-              todaySeconds: todayGroupTotal,
-              goalSeconds: goalSeconds,
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _GroupGoalCard(
-                todaySeconds: todayGroupTotal,
-                goalSeconds: goalSeconds,
-                streak: groupStreak,
-              ),
-            ),
-          ],
+        // WP-203: tek grup günlük hedef göstergesi (gauge). İkinci hedef kartı
+        // (sağdaki) kaldırıldı — mükerrerdi.
+        Center(
+          child: _GroupGaugeCard(
+            progress: goalSeconds <= 0 ? 0 : todayGroupTotal / goalSeconds,
+            todaySeconds: todayGroupTotal,
+            goalSeconds: goalSeconds,
+          ),
         ),
         const SizedBox(height: 16),
         Row(
@@ -281,10 +266,53 @@ class ClassStatsView extends ConsumerWidget {
                   seconds: rows[i].seconds,
                 ),
             ];
+            final contribTotal = slices.fold<int>(0, (s, e) => s + e.seconds);
+            // WP-203: isim+renk legend — basılı tutmaya gerek yok.
             return Card(
               child: Padding(
                 padding: const EdgeInsets.all(16),
-                child: SubjectDonut(slices: slices),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    SubjectDonut(slices: slices, size: 132),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          for (final s in slices)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: Row(
+                                children: [
+                                  CircleAvatar(
+                                    radius: 5,
+                                    backgroundColor: s.color,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      s.label,
+                                      style: theme.textTheme.bodyMedium,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  Text(
+                                    contribTotal == 0
+                                        ? '—'
+                                        : '%${(s.seconds * 100 / contribTotal).round()}',
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: theme.colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             );
           },
@@ -296,76 +324,16 @@ class ClassStatsView extends ConsumerWidget {
           style: theme.textTheme.titleMedium,
         ),
         const SizedBox(height: 8),
-        seriesAsync.when(
-          loading: () => const Card(
-            child: Padding(
-              padding: EdgeInsets.all(24),
-              child: Center(child: CircularProgressIndicator()),
-            ),
-          ),
-          error: (_, _) => Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(
-                AppLocalizations.of(context).statsBuDonemdeHenuzCalisma,
-                style: theme.textTheme.bodySmall,
-              ),
-            ),
-          ),
-          data: (points) {
-            if (points.isEmpty) {
-              return Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Text(
-                    AppLocalizations.of(context).statsBuDonemdeHenuzCalisma,
-                    style: theme.textTheme.bodySmall,
-                  ),
-                ),
-              );
-            }
-            final byDay = <DateTime, int>{};
-            for (final p in points) {
-              final d = dayOf(p.day);
-              byDay[d] = (byDay[d] ?? 0) + p.seconds;
-            }
-            final days = byDay.keys.toList()..sort();
-            final vals = [for (final d in days) (byDay[d] ?? 0) / 3600.0];
-            return Card(
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: SizedBox(
-                  height: 120,
-                  child: AreaLineChart(values: vals),
-                ),
-              ),
-            );
-          },
-        ),
-        const SizedBox(height: 16),
         Card(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: Text(
-                    '${AppLocalizations.of(context).statsGrupGunlukTrendiSon} · '
-                    '${AppLocalizations.of(context).statsStreakGun(chartDays.toString())} · '
-                    '${statsPeriodLabel(AppLocalizations.of(context), period)}',
-                    style: theme.textTheme.titleSmall,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  height: 150,
-                  child: DailyBarChart(
-                    days: lastNDays(const [], chartDays, totals: groupDay),
-                  ),
-                ),
-              ],
+            padding: const EdgeInsets.all(12),
+            child: LeaderboardRankChart(
+              members: members,
+              stats: stats,
+              days: trendDays,
+              currentUserId: currentUserId,
+              emptyLabel: AppLocalizations.of(context).statsBuDonemdeHenuzCalisma,
+              namelessLabel: AppLocalizations.of(context).statsIsimsiz,
             ),
           ),
         ),
@@ -491,103 +459,6 @@ class _GroupGaugeCard extends StatelessWidget {
                 '−${formatHuman(remaining)}',
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Grup günlük hedefi kartı: bugünkü grup toplamının hedefe oranı + grup serisi.
-class _GroupGoalCard extends StatelessWidget {
-  const _GroupGoalCard({
-    required this.todaySeconds,
-    required this.goalSeconds,
-    required this.streak,
-  });
-
-  final int todaySeconds;
-  final int goalSeconds;
-  final int streak;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final pct = goalSeconds <= 0
-        ? 0.0
-        : (todaySeconds / goalSeconds).clamp(0.0, 1.0);
-    final reached = goalSeconds > 0 && todaySeconds >= goalSeconds;
-    final fire = subjectColor('chart-5');
-    final barColor = reached
-        ? subjectColor('chart-2')
-        : theme.colorScheme.primary;
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.flag_outlined, size: 20, color: barColor),
-                const SizedBox(width: 6),
-                Text(
-                  AppLocalizations.of(context).statsBugunkuGrupHedefi,
-                  style: theme.textTheme.titleMedium,
-                ),
-                const Spacer(),
-                if (streak > 0) ...[
-                  Icon(Icons.local_fire_department, size: 18, color: fire),
-                  const SizedBox(width: 2),
-                  Text(
-                    AppLocalizations.of(
-                      context,
-                    ).statsStreakGun(streak.toString()),
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      color: fire,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  '${formatHuman(todaySeconds)} / ${formatHuman(goalSeconds)}',
-                  style: theme.textTheme.bodyMedium,
-                ),
-                Text(
-                  '%${(pct * 100).round()}',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: barColor,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: pct,
-                minHeight: 10,
-                backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                valueColor: AlwaysStoppedAnimation<Color>(barColor),
-              ),
-            ),
-            if (reached) ...[
-              const SizedBox(height: 8),
-              Text(
-                AppLocalizations.of(context).statsGrupBugunkuHedefiniTuttu,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: subjectColor('chart-2'),
                 ),
               ),
             ],

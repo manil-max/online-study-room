@@ -3782,6 +3782,8 @@
   "@statsTumu": {
     "description": "Stats user-facing text. Source: Tümü"
   },
+  "statsSaatKisa": "h",
+  "@statsSaatKisa": { "description": "Short hour unit suffix for chart axis (e.g. 3h)" },
   "statsSaat": "hours",
   "@statsSaat": {
     "description": "Stats user-facing text. Source: saat"

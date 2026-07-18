@@ -18,13 +18,11 @@ import '../../../data/providers/study_providers.dart';
 import '../../../data/providers/subject_providers.dart';
 import '../analytics/analytics_period.dart';
 import '../charts/area_line_chart.dart';
-import '../charts/gauge_chart.dart';
 import '../charts/radar_stat_chart.dart';
 import 'daily_bar_chart.dart';
 import 'hour_activity_chart.dart';
 import 'session_scatter_chart.dart';
 import 'study_heatmap.dart';
-import 'study_records.dart';
 import 'subject_donut.dart';
 import 'week_hour_heatmap.dart';
 import '../stats_l10n.dart';
@@ -54,12 +52,7 @@ class PersonalStatsView extends ConsumerWidget {
     final goalSeconds = goalMinutes * 60;
 
     final today = secondsOnDay(sessions, now);
-    final thisWeek = totalSeconds(inRange(sessions, startOfWeek(now), now));
-    final thisMonth = totalSeconds(inRange(sessions, startOfMonth(now), now));
-    // Yıl ve ömür: özetten (1 yıllık satır listesi RAM'de yok).
-    final thisYear =
-        summary?.yearSeconds ??
-        totalSeconds(inRange(sessions, startOfYear(now), now));
+    // Ömür: özetten (period == all Toplam kartı için).
     final lifetime = summary?.lifetimeSeconds;
 
     // Döneme göre ortalama + hafta içi/sonu.
@@ -151,73 +144,6 @@ class PersonalStatsView extends ConsumerWidget {
         ),
         const SizedBox(height: 16),
         Text(
-          AppLocalizations.of(context).statsDonemToplamlari,
-          style: theme.textTheme.titleMedium,
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: _StatCard(
-                label: AppLocalizations.of(context).statsBugun,
-                seconds: today,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _StatCard(
-                label: AppLocalizations.of(context).statsBuHafta,
-                seconds: thisWeek,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: _StatCard(
-                label: AppLocalizations.of(context).statsBuAy,
-                seconds: thisMonth,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _StatCard(
-                label: AppLocalizations.of(context).statsBuYil,
-                seconds: thisYear,
-              ),
-            ),
-          ],
-        ),
-        if (lifetime != null) ...[
-          const SizedBox(height: 8),
-          _StatCard(
-            label: AppLocalizations.of(context).statsTumZamanlar,
-            seconds: lifetime,
-          ),
-        ],
-        const SizedBox(height: 8),
-        Text(
-          AppLocalizations.of(context).statsDonemToplamlari,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-        ),
-        const SizedBox(height: 16),
-        Text(
-          AppLocalizations.of(context).statsRekorlar,
-          style: theme.textTheme.titleMedium,
-        ),
-        const SizedBox(height: 8),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: StudyRecords(sessions: sessions, totals: dailyTotalsMap),
-          ),
-        ),
-        const SizedBox(height: 16),
-        Text(
           AppLocalizations.of(context).statsGunlukDagilim,
           style: theme.textTheme.titleMedium,
         ),
@@ -257,34 +183,6 @@ class PersonalStatsView extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 16),
-        // P6 hedef gauge
-        Text(l10n.homeGunlukHedef, style: theme.textTheme.titleMedium),
-        const SizedBox(height: 8),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                GaugeChart(
-                  progress: goalSeconds <= 0
-                      ? 0
-                      : today / goalSeconds,
-                  label: l10n.homeGunlukHedef,
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Text(
-                    goalSeconds <= 0
-                        ? '—'
-                        : '${formatHuman(today)} / ${formatHuman(goalSeconds)}',
-                    style: theme.textTheme.titleSmall,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
         // P2 area trend (dönem serisi)
         Text(
           '${l10n.homeEgilimGrafigi} · ${statsPeriodLabel(l10n, period)}',
@@ -316,6 +214,10 @@ class PersonalStatsView extends ConsumerWidget {
                     values: [
                       for (final d in series) d.seconds / 3600.0,
                     ],
+                    labels: [
+                      for (final d in series) '${d.day.day}/${d.day.month}',
+                    ],
+                    yUnit: l10n.statsSaatKisa,
                   );
                 },
               ),
@@ -443,7 +345,13 @@ class PersonalStatsView extends ConsumerWidget {
                     const SizedBox(height: 8),
                     SizedBox(
                       height: 120,
-                      child: AreaLineChart(values: vals),
+                      child: AreaLineChart(
+                        values: vals,
+                        labels: [
+                          for (final d in days) '${d.day}/${d.month}',
+                        ],
+                        yUnit: l10n.statsSaatKisa,
+                      ),
                     ),
                   ],
                 ),

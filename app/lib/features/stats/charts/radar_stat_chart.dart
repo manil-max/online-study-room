@@ -1,8 +1,6 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
-import 'series_palette.dart';
-
 /// WP-157: radar — fl_chart RadarChart (1.2+).
 class RadarStatChart extends StatelessWidget {
   const RadarStatChart({
@@ -18,7 +16,6 @@ class RadarStatChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final palette = SeriesPalette(scheme);
     if (values.isEmpty || values.length != labels.length) {
       return const SizedBox.shrink();
     }
@@ -44,10 +41,8 @@ class RadarStatChart extends StatelessWidget {
         gridBorderData: BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.5)),
         getTitle: (index, angle) {
           final i = index % labels.length;
-          return RadarChartTitle(
-            text: palette.labeled(i, labels[i]),
-            angle: angle,
-          );
+          // angle:0 → etiketler her köşede düz/okunur (ters dönmez).
+          return RadarChartTitle(text: labels[i], angle: 0);
         },
         titleTextStyle: TextStyle(color: scheme.onSurface, fontSize: 10),
       ),

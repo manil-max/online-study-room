@@ -32,20 +32,45 @@ void main() {
     expect(endIst.minute, 30);
   });
 
-  test('WP-107: süre günün geçen kısmından uzunsa 00:00 kenet', () {
-    // İstanbul 00:30'da 2 saat → start 00:00, end 02:00.
-    final fakeNowUtc = DateTime.utc(2026, 7, 16, 21, 30); // IST 00:30
+  test('WP-203: gece yarısından hemen sonra eklenen süre önceki güne sayılır', () {
+    // İstanbul 00:30'da 2 saat eklenirse: "bittiği an = şu an" → end 00:30,
+    // start 22:30 (önceki gün). Gelecek-bitiş YOK; 00:00 kenetleme YOK.
+    // Günlük toplam dayOf(start) ile → çalışmanın olduğu güne (16 Tem) sayılır.
+    final fakeNowUtc = DateTime.utc(2026, 7, 16, 21, 30); // IST 00:30 (17 Tem)
     final range = manualSessionRange(
-      DateTime(2026, 7, 17),
+      DateTime(2026, 7, 17), // bugün (İstanbul)
       2 * 3600,
       now: fakeNowUtc,
     );
     final startIst = tz.TZDateTime.from(range.start, loc);
     final endIst = tz.TZDateTime.from(range.end, loc);
-    expect(startIst.hour, 0);
-    expect(startIst.minute, 0);
-    expect(endIst.hour, 2);
-    expect(istanbulDay(range.start), DateTime(2026, 7, 17));
+    // Bitiş = gerçek şu an (00:30), gelecekte değil.
+    expect(endIst.hour, 0);
+    expect(endIst.minute, 30);
+    expect(istanbulDay(range.end), DateTime(2026, 7, 17));
+    // Başlangıç önceki gün 22:30 → süre çalışmanın olduğu güne atılır.
+    expect(startIst.hour, 22);
+    expect(startIst.minute, 30);
+    expect(istanbulDay(range.start), DateTime(2026, 7, 16));
+    expect(range.end.difference(range.start).inSeconds, 2 * 3600);
+  });
+
+  test('WP-203: geçmiş gün seçilince o günün sonuna (23:59:59) yazılır', () {
+    // 3 gün önce 2 saat → end 23:59:59, start 21:59:59; gelecek-bitiş yok.
+    final fakeNowUtc = DateTime.utc(2026, 7, 16, 21, 30);
+    final range = manualSessionRange(
+      DateTime(2026, 7, 13), // geçmiş gün
+      2 * 3600,
+      now: fakeNowUtc,
+    );
+    final startIst = tz.TZDateTime.from(range.start, loc);
+    final endIst = tz.TZDateTime.from(range.end, loc);
+    expect(endIst.hour, 23);
+    expect(endIst.minute, 59);
+    expect(istanbulDay(range.start), DateTime(2026, 7, 13));
+    expect(istanbulDay(range.end), DateTime(2026, 7, 13));
+    expect(startIst.hour, 21);
+    expect(startIst.minute, 59);
   });
 
   test('WP-107: StudySession.toMap UTC yazar', () {

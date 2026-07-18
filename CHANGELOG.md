@@ -4,6 +4,19 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [v36 / 1.0.36+36] - 2026-07-19
+
+> **Kararlı (stable) sürüm.** Manuel süre gece-yarısı düzeltmesi + istatistik ekranı sadeleştirme/yenileme. Herkese (stable kanal).
+
+### Öne çıkanlar
+- **Manuel süre gece yarısı düzeltmesi:** "Bittiği ana göre" — bugün eklerken `bitiş = şu an`, `başlangıç = şu an − süre`; artık gelecek-bitiş yok ve gece 00:0x'te eklenen süre yanlışlıkla yeni günün başına yığılmıyor, gerçekten çalışılan güne (dün akşamı) sayılıyor. Geçmiş gün seçilince o günün sonuna yazılır.
+- **İstatistik / Kişisel sadeleşti:** gereksiz "Dönem Toplamları", "Rekorlar" ve "Günlük Hedef" bölümleri kaldırıldı; trend + seçili tarih aralığı grafiklerine **eksen/ölçek** eklendi; Insight (radar) etiketleri düz/okunur.
+- **İstatistik / Gruplar yenilendi:** mükerrer ikinci hedef kartı kaldırıldı; üye katkısı donut'una **isim+renk legend**; **liderlik geçmişi artık sıralama çizgi grafiği** (Y=sıra, X=zaman, üye başına çizgi — lig sıralaması tarzı); grup trendi tek grafiğe indirildi.
+
+### Notlar
+- GitHub sideload **stable** APK; in-app güncelleme stable kullanıcılara gider.
+- Liderlik sıralama grafiği `group_daily_totals`'tan hesaplanır (ek RPC yok).
+
 ## [v35 / 1.0.35+35] - 2026-07-18
 
 > **Kararlı (stable) sürüm.** v29'dan bu yana biriken tüm beta çalışması (v30–v34) + Görevler kartı tasarım cilası tek stable sürümde toplanır. Herkese (stable kanal) yayınlanır.

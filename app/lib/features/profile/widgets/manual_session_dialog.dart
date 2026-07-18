@@ -13,12 +13,19 @@ import '../../../data/providers/auth_providers.dart';
 import '../../../data/providers/study_providers.dart';
 import '../../../data/providers/subject_providers.dart';
 
-/// Manuel oturumu "eklendiği anda bitmiş gibi" yerleştirir (WP-107).
+/// Manuel oturumu "eklendiği anda bitmiş gibi" yerleştirir (WP-107; WP-203 gece
+/// yarısı düzeltmesi).
 ///
 /// Takvim günü ve saat-dakika **Europe/Istanbul** wall-clock'undan alınır
-/// (cihaz TZ'sinden bağımsız). `end` = seçilen günde İstanbul'un şu anki saati;
-/// `start = end - süre`. Süre günün geçen kısmından uzunsa `start` İstanbul
-/// 00:00'a kenetlenir. Dönüş değerleri UTC instant'tır (DB yazımı için).
+/// (cihaz TZ'sinden bağımsız).
+/// - **Bugün** seçiliyse `end = gerçek şu an` (İstanbul), `start = end - süre`.
+///   Süre uzunsa oturum gece yarısını doğal olarak aşar; günlük toplam
+///   `dayOf(start)` ile hesaplandığından ilerleme **çoğunlukla çalışmanın olduğu
+///   güne** (ör. dün akşamı) sayılır. **00:00 kenetleme yok → gelecek-bitiş yok.**
+/// - **Geçmiş gün** seçiliyse `end = o günün 23:59:59`'u (gelecek-bitiş üretmez),
+///   `start = end - süre`.
+///
+/// Dönüş değerleri UTC instant'tır (DB yazımı için).
 ({DateTime start, DateTime end}) manualSessionRange(
   DateTime date,
   int seconds, {
@@ -30,20 +37,23 @@ import '../../../data/providers/subject_providers.dart';
       ? istanbulNow()
       : tz.TZDateTime.from(now.toUtc(), loc);
 
-  final dayStart = tz.TZDateTime(loc, date.year, date.month, date.day);
-  var end = tz.TZDateTime(
-    loc,
-    date.year,
-    date.month,
-    date.day,
-    istNow.hour,
-    istNow.minute,
-  );
-  var start = end.subtract(Duration(seconds: seconds));
-  if (start.isBefore(dayStart)) {
-    start = dayStart;
-    end = start.add(Duration(seconds: seconds));
-  }
+  final isToday =
+      date.year == istNow.year &&
+      date.month == istNow.month &&
+      date.day == istNow.day;
+
+  // Bugün → gerçek şu an (dakika hassasiyeti); geçmiş gün → o günün sonu.
+  final end = isToday
+      ? tz.TZDateTime(
+          loc,
+          istNow.year,
+          istNow.month,
+          istNow.day,
+          istNow.hour,
+          istNow.minute,
+        )
+      : tz.TZDateTime(loc, date.year, date.month, date.day, 23, 59, 59);
+  final start = end.subtract(Duration(seconds: seconds));
   return (start: start.toUtc(), end: end.toUtc());
 }
 

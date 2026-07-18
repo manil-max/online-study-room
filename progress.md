@@ -206,6 +206,7 @@
 | WP-200 | [~] Test için bekliyor | Görevler cila (gecikti/a11y) | cihaz |
 | WP-201 | [x] Yayınlandı | beta-v34: 1.0.34+34 notları + cihaz test listesi | tag `beta-v34` |
 | WP-202 | [~] Yayınlandı, cihaz bekliyor | Görevler kartı tasarım cilası (kalan-süre rozeti, ayraçlı liste, başlık sayaç) + **stable v35** rollup | tag `v35` |
+| WP-203 | [~] Yayınlandı, cihaz bekliyor | Manuel süre gece-yarısı fix (00:00 kenet kaldırıldı, gelecek-bitiş yok) + istatistik yenileme (personal declutter, eksenli grafikler, radar düz etiket; grup tek hedef, katkı legend, liderlik sıralama çizgi grafiği, tek trend) → **stable v36** | tag `v36` |
 
 > **2026-07-14 proje denetimi:** Serbest sürükle-bırak ızgara, canlı grup hedefi ve saat stilleri **zaten kodda uygulanmış** (backlog stale idi; geçici WP-72/73/75 iptal).
 >

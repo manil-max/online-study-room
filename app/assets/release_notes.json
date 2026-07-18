@@ -3,6 +3,46 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.36",
+      "buildNumber": 36,
+      "channel": "stable",
+      "date": "2026-07-19",
+      "title": "v36: Manuel süre gece-yarısı fix + istatistik yenileme",
+      "highlights": [
+        "Manuel süre gece yarısı düzeltmesi: bugün eklerken bitiş = şu an, başlangıç = şu an − süre; gelecek-bitiş yok, gece 00:0x'te eklenen süre gerçekten çalışılan güne sayılıyor.",
+        "İstatistik/Kişisel sadeleşti: Dönem Toplamları, Rekorlar, Günlük Hedef bölümleri kaldırıldı.",
+        "Trend + seçili tarih aralığı grafiklerine eksen/ölçek eklendi; radar etiketleri düz/okunur.",
+        "Gruplar: mükerrer hedef kartı kaldırıldı; üye katkısı donut'una isim+renk legend.",
+        "Liderlik geçmişi artık sıralama çizgi grafiği (Y=sıra, X=zaman); grup trendi tek grafik."
+      ],
+      "fixes": [
+        "manualSessionRange: 00:00 kenetleme kaldırıldı, gelecek-bitiş üretmez (WP-203).",
+        "Geçmiş gün manuel giriş o günün sonuna (23:59:59) yazılır.",
+        "AreaLineChart eksenli; RadarChart etiketleri angle:0."
+      ],
+      "notes": [
+        "GitHub sideload stable APK; in-app güncelleme stable kullanıcılara gider.",
+        "Liderlik sıralama grafiği group_daily_totals'tan (ek RPC yok)."
+      ],
+      "titleEn": "v36: Manual-time midnight fix + stats revamp",
+      "highlightsEn": [
+        "Manual time midnight fix: when adding for today, end = now, start = now − duration; no future end, and time added right after midnight counts for the day it was actually studied.",
+        "Personal stats decluttered: removed Period Totals, Records, Daily Goal sections.",
+        "Trend + selected-range charts now have axes/scale; radar labels upright.",
+        "Groups: removed duplicate goal card; member-contribution donut now has a name+color legend.",
+        "Leaderboard history is now a rank line chart (Y=rank, X=time); single group trend chart."
+      ],
+      "fixesEn": [
+        "manualSessionRange: removed 00:00 clamp, no future end (WP-203).",
+        "Past-day manual entry anchored to end-of-day (23:59:59).",
+        "AreaLineChart gets axes; RadarChart titles angle:0."
+      ],
+      "notesEn": [
+        "GitHub sideload stable APK; in-app update goes to stable users.",
+        "Rank chart computed from group_daily_totals (no extra RPC)."
+      ]
+    },
+    {
       "versionName": "1.0.35",
       "buildNumber": 35,
       "channel": "stable",
