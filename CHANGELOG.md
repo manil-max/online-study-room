@@ -4,6 +4,22 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [beta-v31 / 1.0.31+31] - 2026-07-18
+
+> **Beta test sürümü.** Cihaz listesi: `docs/qa/BETA-v31-TEST.md`.  
+> Canlı: **0039–0041** (analitik RPC) + **0044** (feedback ensure).
+
+### Highlights
+- Klasik istatistik ListView; sürükle-ızgara ve beta toggle kaldırıldı.
+- Sabit bölümler: gauge, area, radar, katlı scatter, detaylı geçmiş; dönem yıl/özel + kıyas.
+- Grup: katkı donut, liderlik serisi, gauge.
+- Feedback net hata mesajları + ensure migration.
+- Başarımlar başlık taşması; Gruplar nested-scroll; de/ar l10n iyileştirme.
+
+### Notes
+- Home dashboard sürükle-bırak kullanıcı tercihi olarak korundu.
+- Push sonrası CI: tag `beta-v31` → GitHub beta APK.
+
 ## [beta-v30 / 1.0.30+30] - 2026-07-18
 
 > **Beta test sürümü.** Canlıda **0039–0043** migration’ları uygulanmış olmalı.

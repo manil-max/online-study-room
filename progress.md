@@ -20,7 +20,7 @@
 - **Navigasyon hedefi:** Ana Sayfa / Saat / Gruplar / İstatistikler / Profil. Ana Sayfa günlük kullanım alanıdır; diğer alanların verisi kendi sekmelerinde eksiksiz bulunur.
 - **Release:** Stable/Beta kanalı GitHub Releases ile çalışır. **beta-v30** = `1.0.30+30` (analitik ızgara toggle, 0039–0043 RPC/gamification, WP-166–168). Onay: `docs/qa/BETA-v30-ONAY-LISTESI.md`. Play production ayrı kalite kapısından geçer.
 - **Kalite kapıları:** Her WP DoD'siz kapanmaz; stable release kalite kapısından geçer (AGENTS.md §3). Server-authoritative XP, RLS/sosyal profil, platform sınırları → `docs/KALITE-PROGRAMI.md`.
-- **Son WP numarası:** 181 (stats cila). **Sıradaki boş numara WP-182.**
+- **Son WP numarası:** 183 (beta-v31 hazırlık). **Sıradaki boş numara WP-184.**
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
   - Flutter: `C:\src\flutter` · Android SDK: `C:\Android\Sdk`
@@ -79,7 +79,7 @@
 - **Dal:** main
 - **Başlangıç:** —
 - **Son güncelleme:** 2026-07-18 (Europe/Istanbul)
-- **Not:** WP-177–181 bitti (ayrı commit). Push yok.
+- **Not:** WP-183 beta-v31: 1.0.31+31 · analyze 0 · full test **526 passed**. Push yok (tag kullanıcı).
 
 
 ---
@@ -185,6 +185,7 @@
 | WP-179 | [~] Test için bekliyor | Kişisel sabit bölümler (gauge/area/radar) | `Cihazda doğrulanmalı` |
 | WP-180 | [~] Test için bekliyor | Grup donut/seri/gauge | `Cihazda doğrulanmalı` |
 | WP-181 | [~] Test için bekliyor | Cila + ölü grid silme | `Cihazda doğrulanmalı` |
+| WP-183 | [~] Tag/beta bekliyor | beta-v31: 1.0.31+31 + BETA-v31-TEST | `docs/qa/BETA-v31-TEST.md` |
 
 > **2026-07-14 proje denetimi:** Serbest sürükle-bırak ızgara, canlı grup hedefi ve saat stilleri **zaten kodda uygulanmış** (backlog stale idi; geçici WP-72/73/75 iptal).
 >
@@ -872,6 +873,13 @@
 > ⚠️ **Ürün kararları:** (1) WP-66 §0 retention varsayılanları, (2) legal site domain/iletişim kimliği, (3) hedef kitle 13+/16+, (4) Play Console'da alarmı core functionality olarak savunma veya safe fallback, (5) geliştirici hesap türü/tarihi. Bunlar planı engellemez; ilgili WP başlamadan kullanıcı onayı gerekir.
 
 ## Test için bekleyenler
+
+### WP-183: beta-v31 yayın hazırlığı (docs+sürüm) 📦
+- **Sürüm:** `1.0.31+31` · release_notes v31 iki-dilli · CHANGELOG beta-v31
+- **Test listesi:** `docs/qa/BETA-v31-TEST.md` (grid/toggle yok)
+- **Kanıt:** analyze 0 · full test **526 passed, 0 fail**
+- **Sahip:** `git tag beta-v31 && git push origin beta-v31` (CI APK) + 0044 SQL + cihaz
+- **Push yok** (bu commit)
 
 ### WP-177–181: Feedback + stats zenginleştirme (otomatik test) 📊
 - **177:** `0044_feedback_ensure.sql` + schema/RLS/storage net mesaj · `docs/qa/WP-177-FEEDBACK-KAPANIS.md`

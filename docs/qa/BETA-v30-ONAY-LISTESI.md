@@ -1,16 +1,18 @@
 # beta-v30 — Sahip onay tick listesi
 
+> ⚠️ **GÜNCEL DEĞİL.** beta-v31 için kanonik liste: **[`BETA-v31-TEST.md`](./BETA-v31-TEST.md)**.  
+> Bu dosyadaki ızgara/toggle/22-kart maddeleri **silinen özelliklere** aittir; kullanma.
+
 | Alan | Değer |
 |---|---|
-| Tag | `beta-v30` |
+| Tag | `beta-v30` (eski) |
 | versionName / Code | `1.0.30` / **30** |
 | Kanal | GitHub **beta** (prerelease APK) |
 | Tarih | 2026-07-18 |
 | Önkoşul SQL | **0039–0043 canlıda uygulandı** (sahip ✓) |
-| Ayrıntılı adımlar | [`BETA-TEST-KILAVUZU.md`](./BETA-TEST-KILAVUZU.md) |
+| Ayrıntılı adımlar | → **[`BETA-v31-TEST.md`](./BETA-v31-TEST.md)** |
 
-> Her satırı cihazda dene → **☐** → **[x]** yap. Bloker varsa not yaz.  
-> **Stable değil** — sadece beta onayı.
+> Arşiv. Yeni test **v31** listesinden.
 
 ---
 

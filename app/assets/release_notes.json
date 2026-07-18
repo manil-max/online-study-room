@@ -3,6 +3,54 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.31",
+      "buildNumber": 31,
+      "channel": "beta",
+      "date": "2026-07-18",
+      "title": "beta-v31: klasik istatistik + sabit grafikler, feedback, kaydırma",
+      "highlights": [
+        "İstatistikler klasik ListView; sürükle-ızgara kaldırıldı (Ayarlar toggle yok).",
+        "Sabit bölümler: hedef gauge, area trend, radar, katlı scatter, detaylı geçmiş (yıl/özel).",
+        "Dönem seçici: bugün/hafta/ay/yıl/özel + önceki eşit dönemle kıyas.",
+        "Grup istatistiği: gauge, üye katkı donut, liderlik zaman serisi (RPC 0039–0041).",
+        "Geri bildirim: net hata mesajları + 0044 ensure SQL (tablo/policy/bucket).",
+        "Başarımlar kartı başlık taşması düzeltildi; Gruplar sekmesi nested-scroll onarımı.",
+        "Almanca çeviri güçlendirildi; Arapça kısmen (RTL + temel metinler)."
+      ],
+      "fixes": [
+        "Home grup boş-kart taşması (GroupCardShell bounded scroll) — dashboard sürükle-bırak korundu.",
+        "Feedback oturum/RLS/şema/storage için ayrı net mesajlar (WP-177).",
+        "15 kırık otomatik test yeşile (WP-176); release notes v30 EN alanları.",
+        "Achievement process sonucu yan etki hatasında yutulmuyordu."
+      ],
+      "notes": [
+        "Beta release: canlıda 0039–0041 (grup RPC) ve 0044 (feedback ensure) uygulanmış olmalı.",
+        "Cihaz testi: docs/qa/BETA-v31-TEST.md (eski v30 grid maddeleri geçersiz).",
+        "Home dashboard özelleştirme kullanıcı tercihi olarak kaldı."
+      ],
+      "titleEn": "beta-v31: classic stats + fixed charts, feedback, scroll fixes",
+      "highlightsEn": [
+        "Stats is classic ListView again; draggable grid removed (no Settings toggle).",
+        "Fixed sections: goal gauge, area trend, radar, collapsible scatter, detailed history (year/custom).",
+        "Period bar: today/week/month/year/custom + compare with previous equal-length period.",
+        "Group stats: gauge, member contribution donut, leaderboard time series (RPC 0039–0041).",
+        "Feedback: clear error messages + 0044 ensure SQL (table/policy/bucket).",
+        "Achievements card title overflow fixed; Groups tab nested-scroll fix.",
+        "German translation improved; Arabic partial (RTL + core strings)."
+      ],
+      "fixesEn": [
+        "Home empty group-card overflow (bounded scroll) — dashboard drag-and-drop kept.",
+        "Feedback session/RLS/schema/storage each map to clear user messages (WP-177).",
+        "Fifteen broken automated tests greened (WP-176); release notes v30 EN fields.",
+        "Achievement process result no longer swallowed by side-effect failures."
+      ],
+      "notesEn": [
+        "Beta release: live DB should have 0039–0041 (group RPCs) and 0044 (feedback ensure).",
+        "Device QA: docs/qa/BETA-v31-TEST.md (v30 grid checklist is obsolete).",
+        "Home dashboard customization remains as user preference."
+      ]
+    },
+    {
       "versionName": "1.0.30",
       "buildNumber": 30,
       "channel": "beta",
