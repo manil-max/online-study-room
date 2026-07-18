@@ -20,7 +20,7 @@
 - **Navigasyon hedefi:** Ana Sayfa / Saat / Gruplar / İstatistikler / Profil. Ana Sayfa günlük kullanım alanıdır; diğer alanların verisi kendi sekmelerinde eksiksiz bulunur.
 - **Release:** Stable/Beta kanalı GitHub Releases ile çalışır. **beta-v30** = `1.0.30+30` (analitik ızgara toggle, 0039–0043 RPC/gamification, WP-166–168). Onay: `docs/qa/BETA-v30-ONAY-LISTESI.md`. Play production ayrı kalite kapısından geçer.
 - **Kalite kapıları:** Her WP DoD'siz kapanmaz; stable release kalite kapısından geçer (AGENTS.md §3). Server-authoritative XP, RLS/sosyal profil, platform sınırları → `docs/KALITE-PROGRAMI.md`.
-- **Son WP numarası:** 175 (stats zenginleştirme plan). **Sıradaki boş numara WP-176.**
+- **Son WP numarası:** 176 (QA test onarım). **Sıradaki boş numara WP-177.**
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
   - Flutter: `C:\src\flutter` · Android SDK: `C:\Android\Sdk`
@@ -79,7 +79,7 @@
 - **Dal:** main
 - **Başlangıç:** —
 - **Son güncelleme:** 2026-07-18 (Europe/Istanbul)
-- **Not:** WP-170…175 bitti (ayrı commit). Push yok. WP-175 plan onay bekler.
+- **Not:** WP-176: full `flutter test` **529 passed, 0 fail**; analyze 0. Push yok.
 
 
 ---
@@ -179,6 +179,7 @@
 | WP-173 | [~] Test için bekliyor | l10n Hours + de/ar (AR kısmi) | `docs/L10N-DUZELTME-2026-07.md` |
 | WP-174 | [x] Rapor | UI sweep | `docs/qa/WP-174-UI-SWEEP.md` |
 | WP-175 | [~] Plan onay bekliyor | Klasik stats zenginleştirme PLAN | `docs/features/ISTATISTIK-ZENGINLESTIRME-PLAN.md` |
+| WP-176 | [x] Otomatik test geçti | 15 kırık test yeşil (shell scroll + notes + achievement) | full test **529** |
 
 > **2026-07-14 proje denetimi:** Serbest sürükle-bırak ızgara, canlı grup hedefi ve saat stilleri **zaten kodda uygulanmış** (backlog stale idi; geçici WP-72/73/75 iptal).
 >
@@ -866,6 +867,14 @@
 > ⚠️ **Ürün kararları:** (1) WP-66 §0 retention varsayılanları, (2) legal site domain/iletişim kimliği, (3) hedef kitle 13+/16+, (4) Play Console'da alarmı core functionality olarak savunma veya safe fallback, (5) geliştirici hesap türü/tarihi. Bunlar planı engellemez; ilgili WP başlamadan kullanıcı onayı gerekir.
 
 ## Test için bekleyenler
+
+### WP-176: 15 kırık test yeşile (otomatik test) ✅
+- **A:** `GroupCardShell` bounded → iç scroll; unbounded → dış liste (Groups)
+- **B:** `runAchievementSessionCompletedSync` process sonucu yan etki hatasında yutulmaz
+- **C:** `release_notes.json` v30 `titleEn` draft + notes release
+- **D:** ölü analytics layout kodu silinmedi (WP-175 için korunur; UI import yok)
+- **Kanıt:** `flutter analyze` 0 · full `flutter test` **529 passed, 0 fail**
+- **Push yok**
 
 ### WP-175: Klasik istatistik zenginleştirme PLAN (onay) 📊
 - **Teslim:** `docs/features/ISTATISTIK-ZENGINLESTIRME-PLAN.md`

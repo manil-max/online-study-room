@@ -21,11 +21,12 @@
         "Timer test dispose sızıntısı (WP-167); onboarding per-user; export PII strip (WP-166)."
       ],
       "notes": [
+        "Beta release / test: 0039–0043 canlıda olmalı; ızgara WP-170 ile kaldırıldı.",
         "Canlıda 0039–0043 uygulanmış olmalı.",
         "İstatistik Beta bayrağı varsayılan kapalı; Ayarlar’dan aç.",
         "Onay listesi: docs/qa/BETA-v30-ONAY-LISTESI.md"
       ],
-      "titleEn": "beta-v30: analytics grid, group RPCs, gamification, locales",
+      "titleEn": "beta-v30 (draft channel): analytics grid removed path, group RPCs, gamification, locales",
       "highlightsEn": [
         "Settings toggle for New stats screen (Beta); grid, year/custom period + compare.",
         "Group contribution / leaderboard RPCs (live 0039–0041).",
@@ -39,6 +40,7 @@
         "Timer test dispose leak (WP-167); per-user onboarding; export PII strip (WP-166)."
       ],
       "notesEn": [
+        "Beta release notes: apply SQL 0039–0043; stats grid removed in WP-170.",
         "Live DB needs migrations 0039–0043.",
         "Stats Beta flag defaults off; enable in Settings.",
         "Approval checklist: docs/qa/BETA-v30-ONAY-LISTESI.md"

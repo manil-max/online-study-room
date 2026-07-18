@@ -66,10 +66,18 @@ Future<AchievementEventResult?> runAchievementSessionCompletedSync(Ref ref) asyn
   final user = ref.read(authStateProvider).value;
   if (user == null) return null;
 
+  // WP-176: process başarılıysa sonucu yutma — yan etki (confetti/projeksiyon)
+  // hata verse bile event sonucu döner (test + sayaç akışı).
+  final AchievementEventResult result;
   try {
     final process = ref.read(processAchievementEventProvider);
-    final result = await process(eventType: 'session_completed');
+    result = await process(eventType: 'session_completed');
+  } catch (_) {
+    // Çevrimdışı / kimlik hazır değil: sessiz geç (sayaç akışını bozma).
+    return null;
+  }
 
+  try {
     if (result.awarded.isNotEmpty) {
       ref.read(lastAchievementAwardsProvider.notifier).setAwards(
             List.of(result.awarded),
@@ -92,11 +100,10 @@ Future<AchievementEventResult?> runAchievementSessionCompletedSync(Ref ref) asyn
             .toList(),
       );
     }
-    return result;
   } catch (_) {
-    // Çevrimdışı / kimlik hazır değil: sessiz geç (sayaç akışını bozma).
-    return null;
+    // Yan etki başarısız; process sonucu yine de geçerli.
   }
+  return result;
 }
 
 /// WP-105: HomeShell ömrü boyunca oturum listesini dinler; profil açılmadan
