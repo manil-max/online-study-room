@@ -62,14 +62,14 @@
 
 ### Codex Lane
 - **Durum:** [~] Aktif
-- **Faz/WP:** WP-206 · grup grafik renk eşlemesi + sayaç bildirim düzeni
-- **Aşama:** Otomatik test geçti — gerçek cihaz QA bekliyor
-- **SAHİP yollar:** `app/lib/features/stats/widgets/class_stats_view.dart`, `app/lib/features/stats/widgets/leaderboard_rank_chart.dart`, ilgili testler, `app/android/app/src/main/kotlin/com/manilmax/online_study_room/timer/StudyTimerService.kt`, `app/android/app/src/main/res/layout/timer_notification.xml`, ilgili bildirim drawable'ları, `progress.md`
-- **Ortak/riskli yüzey:** `progress.md`
+- **Faz/WP:** WP-206 · grup grafik renk eşlemesi + sayaç bildirim düzeni · stable v38 yayın
+- **Aşama:** Otomatik test geçti — stable yayınlanıyor
+- **SAHİP yollar:** `app/lib/features/stats/widgets/class_stats_view.dart`, `app/lib/features/stats/widgets/leaderboard_rank_chart.dart`, ilgili testler, `app/android/app/src/main/kotlin/com/manilmax/online_study_room/timer/StudyTimerService.kt`, `app/android/app/src/main/res/layout/timer_notification.xml`, ilgili bildirim drawable'ları, `app/pubspec.yaml`, `app/assets/release_notes.json`, `CHANGELOG.md`, `progress.md`
+- **Ortak/riskli yüzey:** `app/pubspec.yaml`, `CHANGELOG.md`, `progress.md`
 - **Dal:** main
 - **Başlangıç:** 2026-07-19 (Europe/Istanbul)
 - **Son güncelleme:** 2026-07-19 (Europe/Istanbul)
-- **Not:** Katkı donut'u ve liderlik geçmişi kişi kimliğinden türetilen ortak renkleri kullanıyor. Bildirim normal akışta tek satır `00:MM:SS + Başlat/Durdur`; One UI alt Break/Stop aksiyonları kaldırıldı. `flutter analyze`, 559 test ve stable Android/Kotlin derlemesi geçti; Samsung QA bekliyor.
+- **Not:** v38 Android stable: kişi renk eşlemesi + One UI tek satır `00:MM:SS + Başlat/Durdur` düzeltmesi. Kullanıcı açıkça GitHub stable yayını istedi; Samsung QA yayın sonrası yapılacak.
 
 ### Grok Lane
 - **Durum:** [x] Boşta

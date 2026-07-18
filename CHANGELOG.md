@@ -4,6 +4,18 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [v38 / 1.0.38+38] - 2026-07-19
+
+> **Kararlı (stable) test sürümü.** v37 cihaz geri bildirimiyle grup grafik renkleri hizalandı, sayaç bildirimi eski tek satır düzenine döndü.
+
+### Öne çıkanlar
+- **Grup istatistikleri:** Üye katkısı donut'u ve liderlik geçmişi artık aynı kişi için aynı rengi kullanır; sıralama değişse bile renk sabit kalır.
+- **Sayaç bildirimi:** One UI'da alta taşınan `Break / Stop` sistem aksiyonları kaldırıldı. Bildirim tekrar tek satırda solda `00:MM:SS`, sağda doğrudan **Başlat/Durdur** düğmesini gösterir.
+
+### Notlar
+- Bu sürüm Samsung bildirim panelinde gerçek cihaz testi içindir; Başlat/Durdur, uygulama kapalıyken çalışma ve 00:MM:SS görünümü doğrulanmalıdır.
+- GitHub sideload **stable** APK; in-app güncelleme stable kullanıcılara gider.
+
 ## [v37 / 1.0.37+37] - 2026-07-19
 
 > **Kararlı (stable) test sürümü.** Grup hedefi özetini görünür kılar ve sayaç bildirimini saat uygulaması gibi yalın hâline döndürür.

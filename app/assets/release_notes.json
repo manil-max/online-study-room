@@ -3,6 +3,40 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.38",
+      "buildNumber": 38,
+      "channel": "stable",
+      "date": "2026-07-19",
+      "title": "v38: Grup renk eşlemesi + tek satır sayaç bildirimi",
+      "highlights": [
+        "Üye katkısı donut'u ve liderlik geçmişi aynı kişi için aynı rengi kullanır; sıralama değişse bile renk sabit kalır.",
+        "One UI'da alta taşınan Break / Stop sistem aksiyonları kaldırıldı.",
+        "Sayaç bildirimi tekrar tek satırda solda 00:MM:SS, sağda doğrudan Başlat/Durdur düğmesini gösterir."
+      ],
+      "fixes": [
+        "Android Chronometer ilk saatte MM:SS gösterdiğinden, 0 saat öneki sabitlenerek 00:MM:SS düzeni sağlandı.",
+        "Katkı grafiğinde sıralama indeksinden gelen renk değişimi, kişi kimliğinden türetilen sabit renklerle giderildi."
+      ],
+      "notes": [
+        "Samsung bildirim panelinde Başlat/Durdur, uygulama kapalıyken çalışma ve 00:MM:SS görünümünü doğrula.",
+        "GitHub sideload stable APK; in-app güncelleme stable kullanıcılara gider."
+      ],
+      "titleEn": "v38: Matched group colors + single-line timer notification",
+      "highlightsEn": [
+        "The member-contribution donut and leaderboard history now use the same color for the same person, regardless of ranking order.",
+        "Removed the Break / Stop system actions that One UI placed on a second row.",
+        "The timer notification is back to one line: 00:MM:SS on the left and a direct Start/Stop button on the right."
+      ],
+      "fixesEn": [
+        "Added a fixed zero-hour prefix because Android Chronometer otherwise renders MM:SS during the first hour.",
+        "Replaced ranking-index colors in the contribution chart with stable member-ID colors."
+      ],
+      "notesEn": [
+        "On Samsung, verify Start/Stop, operation while the app is closed, and the 00:MM:SS notification display.",
+        "GitHub sideload stable APK; in-app update goes to stable users."
+      ]
+    },
+    {
       "versionName": "1.0.37",
       "buildNumber": 37,
       "channel": "stable",
