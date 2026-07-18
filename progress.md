@@ -61,15 +61,15 @@
 - **Not:** Bu oturum işleri commit'lendi: grid 32-sütun `141ed2a`, core testleri `da7bdd6`, skill docs `1afba2d`. ⚠️ WP-65 karar dokümanı (`docs/AYLIK-RAPOR-KARAR.md`) önceki Claude oturumunda yazıldı ama **COMMIT'LENMEDİ** (untracked); kararı WP-69 zaten uyguladı → ürün API/DNS kararı bekliyor.
 
 ### Codex Lane
-- **Durum:** [~] Aktif
+- **Durum:** [x] Boşta
 - **Faz/WP:** WP-207 · üye grafik renk çakışması düzeltmesi · stable v39 yayın
-- **Aşama:** Otomatik test geçti — stable yayınlanıyor
+- **Aşama:** Yayınlandı — gerçek cihaz QA / ürün kabulü bekliyor
 - **SAHİP yollar:** `app/lib/features/stats/widgets/member_chart_colors.dart`, `app/lib/features/stats/widgets/class_stats_view.dart`, `app/lib/features/stats/widgets/leaderboard_rank_chart.dart`, ilgili testler, `app/pubspec.yaml`, `app/assets/release_notes.json`, `CHANGELOG.md`, `progress.md`
 - **Ortak/riskli yüzey:** `app/pubspec.yaml`, `CHANGELOG.md`, `progress.md`
 - **Dal:** main
 - **Başlangıç:** 2026-07-19 (Europe/Istanbul)
 - **Son güncelleme:** 2026-07-19 (Europe/Istanbul)
-- **Not:** Hash palet çakışması dinamik, üye sayısına göre eşit aralıklı HSL renkleriyle giderildi. Kişi donut ve liderlik geçmişinde aynı, başka üyeden farklı renkte kalır. `flutter analyze` ve 559 test geçti; kullanıcı v39 yayınını açıkça istedi.
+- **Not:** Android stable `v39` yayınlandı (c6843a5); GitHub APK + SHA-256 oluşturdu. Renkler grup üye sayısına göre tekil dağıtılır; cihazda görsel kabul bekliyor.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
