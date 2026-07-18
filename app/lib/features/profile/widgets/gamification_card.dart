@@ -88,16 +88,30 @@ class _SummaryContent extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // WP-171: başlık kendi satırında; chip'ler Wrap altında — uzun taç etiketi
+        // Expanded'ı ~0 yapıp başlığı dikey sarmasın.
         Row(
           children: [
             Icon(Icons.emoji_events_outlined, color: theme.colorScheme.primary),
-            SizedBox(width: 8),
+            const SizedBox(width: 8),
             Expanded(
               child: Text(
-                AppLocalizations.of(context).profileBasarilar,
+                l10n.profileBasarilar,
                 style: theme.textTheme.titleMedium,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                softWrap: false,
               ),
             ),
+            const Icon(Icons.chevron_right),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
             Chip(
               visualDensity: VisualDensity.compact,
               label: Text(l10n.profileLevel(lvl.level)),
@@ -109,12 +123,19 @@ class _SummaryContent extends StatelessWidget {
                 size: 18,
                 color: rankColor,
               ),
-              label: Text(_crownLabel(l10n, rank)),
+              label: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 180),
+                child: Text(
+                  _crownLabel(l10n, rank),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  softWrap: false,
+                ),
+              ),
             ),
-            Icon(Icons.chevron_right),
           ],
         ),
-        SizedBox(height: 10),
+        const SizedBox(height: 10),
         // WP-154: seviye çubuğu (türetilmiş; XP server-authoritative kalır)
         Text(
           l10n.profileLevel(lvl.level),
