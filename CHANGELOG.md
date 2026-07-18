@@ -4,9 +4,25 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [beta-v32 / 1.0.32+32] - 2026-07-18
+
+> **Beta test sürümü.** Cihaz listesi: `docs/qa/BETA-v32-TEST.md`.  
+> Canlı: **0039–0041** (analitik RPC) + **0044–0045** (feedback ensure + PostgREST schema reload).
+
+### Highlights
+- Geri bildirim gönderimi onarıldı (PostgREST şema önbelleği / 0045).
+- İstatistik başlığı sadeleşti (tek satır dönem + kompakt kıyas).
+- Ana ekran ızgara yoğunluğu herkeste sabit 32 (seçici kaldırıldı).
+- Profil sadeleşti (level/quest/streak/freeze/total kaldırıldı; başarımlar kaldı).
+- Yeni: Ana ekrana Görevler kartı (günlük/haftalık, tik/üstü çizme).
+
+### Notes
+- Home dashboard kart ekleme kullanıcı tercihi; density seçeneği yok.
+- Push sonrası CI: tag `beta-v32` → GitHub beta APK.
+
 ## [beta-v31 / 1.0.31+31] - 2026-07-18
 
-> **Beta test sürümü.** Cihaz listesi: `docs/qa/BETA-v31-TEST.md`.  
+> **Beta test sürümü.** Cihaz listesi: `docs/qa/BETA-v32-TEST.md` (v31 listesi yönlendirir).  
 > Canlı: **0039–0041** (analitik RPC) + **0044** (feedback ensure).
 
 ### Highlights

@@ -3,6 +3,50 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.32",
+      "buildNumber": 32,
+      "channel": "beta",
+      "date": "2026-07-18",
+      "title": "beta-v32: feedback onarımı, sade UI, Görevler kartı",
+      "highlights": [
+        "Geri bildirim gönderimi onarıldı (PostgREST şema önbelleği / 0045).",
+        "İstatistik başlığı sadeleşti (tek satır dönem + kompakt kıyas).",
+        "Ana ekran ızgara yoğunluğu herkeste sabit 32 (seçici kaldırıldı).",
+        "Profil sadeleşti (level/quest/streak/freeze/total kaldırıldı; başarımlar kaldı).",
+        "Yeni: Ana ekrana Görevler kartı (günlük/haftalık, tik/üstü çizme)."
+      ],
+      "fixes": [
+        "Feedback schema_missing / “sunucu hazır değil” (0044 + NOTIFY pgrst reload — 0045).",
+        "İstatistik üst blok SwitchListTile yerine kompakt kıyas toggle.",
+        "Yeni eklenen Home widget’ları 32-grid’de minnacık kalmıyordu (ölçekli varsayılan boyut).",
+        "Profil oyunlaştırma kalabalığı temizlendi; XP backend’e dokunulmadı."
+      ],
+      "notes": [
+        "Beta release: canlıda 0039–0041 (grup RPC), 0044 + 0045 (feedback ensure + schema reload) uygulanmış olmalı.",
+        "Cihaz testi: docs/qa/BETA-v32-TEST.md.",
+        "Home dashboard özelleştirme (kart ekle) kullanıcı tercihi; density seçeneği yok — sabit 32."
+      ],
+      "titleEn": "beta-v32: feedback fix, decluttered UI, Tasks card",
+      "highlightsEn": [
+        "Feedback submit fixed (PostgREST schema cache / migration 0045).",
+        "Stats header decluttered (single-row period chips + compact compare toggle).",
+        "Home grid density fixed at 32 for everyone (selector removed).",
+        "Profile decluttered (level/quest/streak/freeze/total removed; achievements kept).",
+        "New: Home Tasks card (daily/weekly, check + strikethrough)."
+      ],
+      "fixesEn": [
+        "Feedback schema_missing / “server not ready” (0044 + NOTIFY pgrst reload — 0045).",
+        "Stats header: full-width SwitchListTile replaced by compact compare toggle.",
+        "Newly added Home widgets no longer tiny on 32-grid (scaled default size).",
+        "Profile gamification chrome cleaned up; XP backend untouched."
+      ],
+      "notesEn": [
+        "Beta release: live DB should have 0039–0041 (group RPCs), 0044 + 0045 (feedback ensure + schema reload).",
+        "Device QA: docs/qa/BETA-v32-TEST.md.",
+        "Home dashboard card picker remains; density option removed — fixed 32 columns."
+      ]
+    },
+    {
       "versionName": "1.0.31",
       "buildNumber": 31,
       "channel": "beta",

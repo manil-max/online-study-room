@@ -20,7 +20,8 @@
 - **Navigasyon hedefi:** Ana Sayfa / Saat / Gruplar / İstatistikler / Profil. Ana Sayfa günlük kullanım alanıdır; diğer alanların verisi kendi sekmelerinde eksiksiz bulunur.
 - **Release:** Stable/Beta kanalı GitHub Releases ile çalışır. **beta-v30** = `1.0.30+30` (analitik ızgara toggle, 0039–0043 RPC/gamification, WP-166–168). Onay: `docs/qa/BETA-v30-ONAY-LISTESI.md`. Play production ayrı kalite kapısından geçer.
 - **Kalite kapıları:** Her WP DoD'siz kapanmaz; stable release kalite kapısından geçer (AGENTS.md §3). Server-authoritative XP, RLS/sosyal profil, platform sınırları → `docs/KALITE-PROGRAMI.md`.
-- **Son WP numarası:** 188 (cihaz turu düzeltmeleri). **Sıradaki boş numara WP-189.**
+- **Son WP numarası:** 189 (beta-v32 hazırlık). **Sıradaki boş numara WP-190.**
+- **Release:** **beta-v32** = `1.0.32+32` (WP-184–188 cihaz turu + test listesi). Cihaz QA: `docs/qa/BETA-v32-TEST.md`.
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
   - Flutter: `C:\src\flutter` · Android SDK: `C:\Android\Sdk`
@@ -79,7 +80,7 @@
 - **Dal:** — (main)
 - **Başlangıç:** —
 - **Son güncelleme:** 2026-07-18 (Europe/Istanbul)
-- **Not:** WP-184–188 kod+otomatik test geçti (`flutter analyze` 0; `flutter test --dart-define-from-file=env.json` **+544**). Kartlar Test için bekleyenler’de. Push yok.
+- **Not:** WP-189 beta-v32 hazır (1.0.32+32; analyze 0; test +544). Tag/CI sahip aksiyonu.
 
 
 ---
@@ -191,6 +192,7 @@
 | WP-186 | [~] Test için bekliyor | Home grid density sabit 32; seçici kaldır | cihaz Home |
 | WP-187 | [~] Test için bekliyor | Profil gamification declutter (rozetler kalır) | cihaz Profil |
 | WP-188 | [~] Test için bekliyor | Home Görevler kartı (günlük/haftalık) | cihaz Home ekle |
+| WP-189 | [~] Tag/beta bekliyor | beta-v32: 1.0.32+32 + BETA-v32-TEST | `docs/qa/BETA-v32-TEST.md` |
 
 > **2026-07-14 proje denetimi:** Serbest sürükle-bırak ızgara, canlı grup hedefi ve saat stilleri **zaten kodda uygulanmış** (backlog stale idi; geçici WP-72/73/75 iptal).
 >
@@ -878,6 +880,13 @@
 > ⚠️ **Ürün kararları:** (1) WP-66 §0 retention varsayılanları, (2) legal site domain/iletişim kimliği, (3) hedef kitle 13+/16+, (4) Play Console'da alarmı core functionality olarak savunma veya safe fallback, (5) geliştirici hesap türü/tarihi. Bunlar planı engellemez; ilgili WP başlamadan kullanıcı onayı gerekir.
 
 ## Test için bekleyenler
+
+### WP-189: beta-v32 yayın hazırlığı (docs+sürüm) 📦
+- **Sürüm:** `1.0.32+32` · release_notes v32 iki-dilli · CHANGELOG beta-v32
+- **Test listesi:** `docs/qa/BETA-v32-TEST.md` (v31 → v32 yönlendirir)
+- **Kanıt:** analyze 0 · full test **+544 All tests passed**
+- **Sahip:** canlı SQL 0044+0045 (`jiphfrpzvkpzubbkhrwb`) + `git tag beta-v32 && git push origin beta-v32` (CI APK) + cihaz listesi
+- **Push yok** (bu commit)
 
 ### WP-184–188: Cihaz turu düzeltmeleri (Grok 2026-07-18) 📦
 - **Aşama:** Otomatik test geçti — cihaz QA + ürün kabulü bekliyor

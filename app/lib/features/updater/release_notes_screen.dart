@@ -27,20 +27,29 @@ Future<void> maybeShowWhatsNewDialog(BuildContext context) async {
   );
 }
 
-class ReleaseNotesScreen extends StatelessWidget {
+class ReleaseNotesScreen extends StatefulWidget {
   const ReleaseNotesScreen({super.key, this.service});
 
   final ReleaseNotesService? service;
 
   @override
+  State<ReleaseNotesScreen> createState() => _ReleaseNotesScreenState();
+}
+
+class _ReleaseNotesScreenState extends State<ReleaseNotesScreen> {
+  // Future build() içinde yeniden yaratılırsa CircularProgressIndicator
+  // her karede FutureBuilder'ı sıfırlar → pumpAndSettle sonsuza gider.
+  late final Future<List<ReleaseNote>> _notesFuture =
+      (widget.service ?? ReleaseNotesService()).loadBundledNotes();
+
+  @override
   Widget build(BuildContext context) {
-    final notesFuture = (service ?? ReleaseNotesService()).loadBundledNotes();
     final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.updaterGuncellemeNotlari)),
       body: FutureBuilder<List<ReleaseNote>>(
-        future: notesFuture,
+        future: _notesFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
             return const Center(child: CircularProgressIndicator());

@@ -98,7 +98,11 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Sürüm ve güncellemeler'));
-    await tester.pumpAndSettle();
+    // FutureBuilder + indeterminate progress: pumpAndSettle sonsuz animasyonda
+    // kilitlenebilir; route + asset yüklemesini sabit adımlarla bekle.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    await tester.pump(const Duration(seconds: 1));
     expect(find.byType(ReleaseNotesScreen), findsOneWidget);
 
     tester.view.resetPhysicalSize();
