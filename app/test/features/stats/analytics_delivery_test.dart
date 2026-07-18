@@ -194,8 +194,9 @@ void main() {
       expect(find.text('Hafta'), findsOneWidget);
       expect(find.text('Ay'), findsOneWidget);
       expect(find.text('Tümü'), findsOneWidget);
-      // Yıl + Özel (analyticsYear / analyticsCustomRange)
-      expect(find.byType(FilterChip), findsWidgets);
+      // WP-190: yatay scroll chip'ler (FilterChip değil)
+      expect(find.byType(SingleChildScrollView), findsOneWidget);
+      expect(find.byIcon(Icons.compare_arrows), findsOneWidget);
     });
 
     testWidgets('PersonalStatsView still renders empty sessions', (tester) async {

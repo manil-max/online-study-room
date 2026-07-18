@@ -20,7 +20,7 @@
 - **Navigasyon hedefi:** Ana Sayfa / Saat / Gruplar / İstatistikler / Profil. Ana Sayfa günlük kullanım alanıdır; diğer alanların verisi kendi sekmelerinde eksiksiz bulunur.
 - **Release:** Stable/Beta kanalı GitHub Releases ile çalışır. **beta-v30** = `1.0.30+30` (analitik ızgara toggle, 0039–0043 RPC/gamification, WP-166–168). Onay: `docs/qa/BETA-v30-ONAY-LISTESI.md`. Play production ayrı kalite kapısından geçer.
 - **Kalite kapıları:** Her WP DoD'siz kapanmaz; stable release kalite kapısından geçer (AGENTS.md §3). Server-authoritative XP, RLS/sosyal profil, platform sınırları → `docs/KALITE-PROGRAMI.md`.
-- **Son WP numarası:** 189 (beta-v32 hazırlık). **Sıradaki boş numara WP-190.**
+- **Son WP numarası:** 193 (cihaz turu-2). **Sıradaki boş numara WP-194.**
 - **Release:** **beta-v32** = `1.0.32+32` (WP-184–188 cihaz turu + test listesi). Cihaz QA: `docs/qa/BETA-v32-TEST.md`.
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
@@ -80,7 +80,7 @@
 - **Dal:** — (main)
 - **Başlangıç:** —
 - **Son güncelleme:** 2026-07-18 (Europe/Istanbul)
-- **Not:** WP-189 beta-v32 hazır (1.0.32+32; analyze 0; test +544). Tag/CI sahip aksiyonu.
+- **Not:** WP-190–193 kod+test geçti (analyze 0; test **+547**). Test için bekleyenler’de.
 
 
 ---
@@ -193,6 +193,10 @@
 | WP-187 | [~] Test için bekliyor | Profil gamification declutter (rozetler kalır) | cihaz Profil |
 | WP-188 | [~] Test için bekliyor | Home Görevler kartı (günlük/haftalık) | cihaz Home ekle |
 | WP-189 | [~] Tag/beta bekliyor | beta-v32: 1.0.32+32 + BETA-v32-TEST | `docs/qa/BETA-v32-TEST.md` |
+| WP-190 | [~] Test için bekliyor | Stats dönem tek yatay satır (scroll) | cihaz stats |
+| WP-191 | [~] Test için bekliyor | Grup sıralama üst + gauge boşluk | cihaz grup stats |
+| WP-192 | [~] Test için bekliyor | Gerçek taç + taç XP barı | cihaz profil |
+| WP-193 | [~] Test için bekliyor | Feedback gerçek hata + dar classify | sahip SQL + cihaz Detay |
 
 > **2026-07-14 proje denetimi:** Serbest sürükle-bırak ızgara, canlı grup hedefi ve saat stilleri **zaten kodda uygulanmış** (backlog stale idi; geçici WP-72/73/75 iptal).
 >
@@ -880,6 +884,17 @@
 > ⚠️ **Ürün kararları:** (1) WP-66 §0 retention varsayılanları, (2) legal site domain/iletişim kimliği, (3) hedef kitle 13+/16+, (4) Play Console'da alarmı core functionality olarak savunma veya safe fallback, (5) geliştirici hesap türü/tarihi. Bunlar planı engellemez; ilgili WP başlamadan kullanıcı onayı gerekir.
 
 ## Test için bekleyenler
+
+### WP-190–193: Cihaz turu-2 (Grok 2026-07-18) 📦
+- **Aşama:** Otomatik test geçti — cihaz QA + sahip SQL (193)
+- **Kanıt:** `flutter analyze` **0**; `flutter test --dart-define-from-file=env.json` **+547 All tests passed**
+- **Commit’ler (push yok):**
+  - `904067d` WP-190 stats tek satır scroll
+  - `14f77b2` WP-191 sıralama üst + gauge
+  - `37feee2` WP-192 taç + taç XP bar
+  - `f77ec7d` WP-193 feedback Detay + dar classify + `docs/qa/WP-193-FEEDBACK-DERIN.md`
+- **Sahip (193):** Dashboard proje ref = `jiphfrpzvkpzubbkhrwb`? `to_regclass('public.feedback_tickets')`; NOTIFY; cihazda snackbar **Detay** kodunu yaz.
+- 🔴 timer/widget/FGS/XP backend dokunulmadı.
 
 ### WP-189: beta-v32 yayın hazırlığı (docs+sürüm) 📦
 - **Sürüm:** `1.0.32+32` · release_notes v32 iki-dilli · CHANGELOG beta-v32
