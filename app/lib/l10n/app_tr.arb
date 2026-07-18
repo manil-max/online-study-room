@@ -1124,5 +1124,15 @@
   "languageGerman": "Almanca",
   "rtlPreviewHint": "RTL düzen önizlemesi",
   "analyticsGridBetaTitle": "Yeni istatistik ekranı (Beta)",
-  "analyticsGridBetaSubtitle": "Özelleştirilebilir ızgara ve yeni analitik kartlar"
+  "analyticsGridBetaSubtitle": "Özelleştirilebilir ızgara ve yeni analitik kartlar",
+  "taskListTitle": "Görevler",
+  "taskListSubtitle": "Günlük ve haftalık kişisel görev listesi",
+  "taskListDaily": "Günlük",
+  "taskListWeekly": "Haftalık",
+  "taskListAdd": "Madde ekle",
+  "taskListEmpty": "Bu dönem için madde yok",
+  "taskListHint": "Kısa bir hedef yaz",
+  "taskListDelete": "Sil",
+  "taskListCompletedSemantic": "Tamamlandı",
+  "taskListIncompleteSemantic": "Tamamlanmadı"
 }

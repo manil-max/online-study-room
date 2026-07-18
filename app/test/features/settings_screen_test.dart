@@ -66,13 +66,9 @@ void main() {
     expect(find.byType(ExpansionTile), findsNothing);
     expect(find.text('Görünüm'), findsNothing);
     expect(find.text('Ana Sayfa ızgarası'), findsNothing);
-    expect(find.text('Izgara yoğunluğu'), findsOneWidget);
+    // WP-186: ızgara yoğunluğu seçicisi kaldırıldı (sabit 32).
+    expect(find.text('Izgara yoğunluğu'), findsNothing);
     expect(find.text('Otomatik'), findsNothing);
-    await tester.tap(find.text('6'));
-    await tester.pumpAndSettle();
-    expect(find.text('16'), findsOneWidget);
-    await tester.tap(find.text('16'));
-    await tester.pumpAndSettle();
 
     expect(find.text('Kamp ateşi'), findsNothing);
     expect(find.text('Kamp hayvanın'), findsOneWidget);

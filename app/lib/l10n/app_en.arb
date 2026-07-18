@@ -4765,5 +4765,45 @@
   "analyticsGridBetaSubtitle": "Customizable grid and new analytics cards",
   "@analyticsGridBetaSubtitle": {
     "description": "Settings toggle subtitle for analytics grid beta"
+  },
+  "taskListTitle": "Tasks",
+  "@taskListTitle": {
+    "description": "Home tasks card title"
+  },
+  "taskListSubtitle": "Daily and weekly personal task list",
+  "@taskListSubtitle": {
+    "description": "Home tasks card description in picker"
+  },
+  "taskListDaily": "Daily",
+  "@taskListDaily": {
+    "description": "Daily tasks tab"
+  },
+  "taskListWeekly": "Weekly",
+  "@taskListWeekly": {
+    "description": "Weekly tasks tab"
+  },
+  "taskListAdd": "Add item",
+  "@taskListAdd": {
+    "description": "Add task button"
+  },
+  "taskListEmpty": "No items for this period",
+  "@taskListEmpty": {
+    "description": "Empty tasks state"
+  },
+  "taskListHint": "Write a short goal",
+  "@taskListHint": {
+    "description": "Task title input hint"
+  },
+  "taskListDelete": "Delete",
+  "@taskListDelete": {
+    "description": "Delete task"
+  },
+  "taskListCompletedSemantic": "Completed",
+  "@taskListCompletedSemantic": {
+    "description": "Semantics completed"
+  },
+  "taskListIncompleteSemantic": "Not completed",
+  "@taskListIncompleteSemantic": {
+    "description": "Semantics incomplete"
   }
 }

@@ -14,6 +14,7 @@ import 'widgets/period_summary_card.dart';
 import 'widgets/records_card.dart';
 import 'widgets/rhythm_card.dart';
 import 'widgets/scatter_card.dart';
+import 'widgets/tasks_card.dart';
 import 'widgets/today_summary_card.dart';
 import 'widgets/weekday_weekend_card.dart';
 import 'widgets/weekly_chart_card.dart';
@@ -37,6 +38,8 @@ enum DashboardCardType {
   groupGoal,
   groupTrend,
   activeMembers,
+  /// WP-188: günlük/haftalık görev listesi.
+  tasks,
 }
 
 extension DashboardCardInfo on DashboardCardType {
@@ -69,6 +72,7 @@ extension DashboardCardInfo on DashboardCardType {
     DashboardCardType.activeMembers => AppLocalizations.of(
       context,
     ).homeSuAnCalisanlar,
+    DashboardCardType.tasks => AppLocalizations.of(context).taskListTitle,
   };
 
   String description(BuildContext context) => switch (this) {
@@ -110,11 +114,14 @@ extension DashboardCardInfo on DashboardCardType {
     DashboardCardType.activeMembers => AppLocalizations.of(
       context,
     ).homeSuAnCalisanlar,
+    DashboardCardType.tasks => AppLocalizations.of(context).taskListSubtitle,
   };
 
   /// Ekleme menüsünde gruplama başlığı.
   String category(BuildContext context) => switch (this) {
-    DashboardCardType.timer || DashboardCardType.goal =>
+    DashboardCardType.timer ||
+    DashboardCardType.goal ||
+    DashboardCardType.tasks =>
       '${AppLocalizations.of(context).homeSayac} & '
           '${AppLocalizations.of(context).homeGunlukHedef}',
     DashboardCardType.today ||
@@ -150,6 +157,7 @@ extension DashboardCardInfo on DashboardCardType {
     DashboardCardType.groupGoal => Icons.flag_circle_outlined,
     DashboardCardType.groupTrend => Icons.insights_outlined,
     DashboardCardType.activeMembers => Icons.groups_2_outlined,
+    DashboardCardType.tasks => Icons.checklist_outlined,
   };
 }
 
@@ -484,6 +492,7 @@ Widget dashboardCardFor(
     DashboardCardType.groupGoal => GroupGoalCard(size: size),
     DashboardCardType.groupTrend => GroupTrendCard(size: size),
     DashboardCardType.activeMembers => ActiveMembersCard(size: size),
+    DashboardCardType.tasks => TasksCard(size: size),
   };
 
   // Sınırlı yükseklik ver (Row'da sınırsız kısıtı engeller). Kullanıcı serbest

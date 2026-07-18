@@ -4765,5 +4765,15 @@
   "analyticsGridBetaSubtitle": "شبكة قابلة للتخصيص وبطاقات تحليلية جديدة",
   "@analyticsGridBetaSubtitle": {
     "description": "Settings toggle subtitle for analytics grid beta"
-  }
+  },
+  "taskListTitle": "المهام",
+  "taskListSubtitle": "قائمة مهام يومية وأسبوعية",
+  "taskListDaily": "يومي",
+  "taskListWeekly": "أسبوعي",
+  "taskListAdd": "إضافة عنصر",
+  "taskListEmpty": "لا عناصر لهذه الفترة",
+  "taskListHint": "اكتب هدفاً قصيراً",
+  "taskListDelete": "حذف",
+  "taskListCompletedSemantic": "مكتمل",
+  "taskListIncompleteSemantic": "غير مكتمل"
 }

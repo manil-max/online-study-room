@@ -4765,5 +4765,15 @@
   "analyticsGridBetaSubtitle": "Anpassbares Raster und neue Analysekarten",
   "@analyticsGridBetaSubtitle": {
     "description": "Settings toggle subtitle for analytics grid beta"
-  }
+  },
+  "taskListTitle": "Aufgaben",
+  "taskListSubtitle": "Tägliche und wöchentliche persönliche Aufgaben",
+  "taskListDaily": "Täglich",
+  "taskListWeekly": "Wöchentlich",
+  "taskListAdd": "Eintrag hinzufügen",
+  "taskListEmpty": "Keine Einträge für diesen Zeitraum",
+  "taskListHint": "Kurzes Ziel schreiben",
+  "taskListDelete": "Löschen",
+  "taskListCompletedSemantic": "Erledigt",
+  "taskListIncompleteSemantic": "Nicht erledigt"
 }

@@ -170,7 +170,6 @@ class _BadgeChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final color = tierColorFor(tier.clamp(1, 5));
     return Semantics(
       label: label,
