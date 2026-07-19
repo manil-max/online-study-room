@@ -104,109 +104,10 @@
 
 ## WP Durum Dizini ve Açık Planlar
 
-> Bu tablo ajanların tek bakışta durum ve bağımlılık görmesi içindir. `[~] Test için bekliyor` satırlarının kanonik kabul kanıtı aşağıdaki **Test için bekleyenler** bölümündedir; eski ayrıntılı uygulama kartları yalnız tarihsel bağlamdır ve yeniden uygulanmaz. Yeni kod işi olarak yalnız `[ ] Bekliyor` satırları claim edilir.
+> Bu tablo yalnız **aktif planlanmış** WP'leri gösterir. Tamamlanmış/test edilmiş tarihsel WP kartları (WP-23…207) arşivde: [`docs/archive/progress-tarihsel-2026-07.md`](docs/archive/progress-tarihsel-2026-07.md) + git geçmişi. Yeni kod işi olarak yalnız `[ ] Bekliyor` satırları claim edilir.
 
 | WP | Durum | Kısa kapsam | Bağımlılık |
 |---|---|---|---|
-| WP-104 | [x] Tamamlandı | Presence bayatlama (updatedAt) + stop oturum kaydı sırası | ürün kabulü 2026-07-18 |
-| WP-105 | [x] Tamamlandı | XP oturum bitince kabuk lifecycle tetik | ürün kabulü 2026-07-18 |
-| WP-106 | [x] Tamamlandı | watchMembers Map + 0034 active index | 0034 uygulandı ✓ |
-| WP-107 | [x] Tamamlandı | Manuel oturum İstanbul gün sınırı + UTC yazım | ürün kabulü 2026-07-18 |
-| WP-108 | [~] Edge deploy bekliyor | Aylık rapor retry + cron URL (0035) | 0035 uygulandı; **Edge deploy + cron** kaldı |
-| WP-109 | [x] Tamamlandı | Güvenlik 0036 (IDOR/profiles) | 0036 uygulandı ✓ |
-| WP-110 | [x] Tamamlandı | Play flavor + installer izolasyonu | kod+test; AAB WP-122 |
-| WP-111 | [~] Console/URL bekliyor | Legal merkez + politikalar + telemetri | kod ✓; canlı gizlilik HTTPS URL host |
-| WP-112 | [x] Tamamlandı | 0037 hesap silme RPC | 0037 uygulandı ✓ |
-| WP-113 | [~] Edge deploy bekliyor | purge-accounts Edge (hesap silme worker) | 0037 ✓; **functions deploy + CRON** kaldı |
-| WP-114 | [x] Tamamlandı | Hesap silme UI + web bilgilendirme | ürün kabulü 2026-07-18 |
-| WP-115 | [x] Tamamlandı | 0038 UGC şema/RPC | 0038 uygulandı ✓ |
-| WP-116 | [x] Tamamlandı | report sheet + moderation repo | WP-125 ile bağlandı |
-| WP-117 | [x] Tamamlandı | Admin UGC kuyruk sekmesi | ürün kabulü 2026-07-18 |
-| WP-118 | [x] Tamamlandı | TimerActionReceiver exported=false | ürün kabulü 2026-07-18 |
-| WP-119 | [~] Console bekliyor | DATA-SAFETY.md | Play Console Data Safety formu |
-| WP-120 | [ ] Bekliyor | Store listing varlıkları (ekran görüntüsü vb.) | ürün/tasarım |
-| WP-121 | [~] Play ops bekliyor | PROD-DEPLOY-RUNBOOK + RLS-SMOKE | Edge deploy sonrası canlı ops |
-| WP-122 | [~] Play build bekliyor | PLAY-BUILD-RUNBOOK (AAB play flavor) | AAB üret + versionCode |
-| WP-123 | [ ] Bekliyor | Cihaz QA matrisi (P0 kanıt) | fiziksel cihaz |
-| WP-124 | [~] Play GO bekliyor | PLAY-RELEASE-GATE şablonu | son kapı: GO imzası |
-| WP-125 | [x] Tamamlandı | UGC Rapor + Engel UI giriş noktaları (sohbet/profil) | ürün kabulü 2026-07-18 |
-| WP-126 | [x] Tamamlandı | Engellenen kullanıcı mesaj/presence filtreleme | ürün kabulü 2026-07-18 |
-| WP-127 | [~] Edge deploy bekliyor | purge-accounts sonsuz retry düzeltmesi | WP-113 ile deploy |
-| WP-128 | [x] Tamamlandı | Play flavor DISTRIBUTION_CHANNEL zorlaması | kod+test; AAB smoke WP-122 |
-| WP-129 | [x] Tamamlandı | Engellenen kullanıcılar ekranı (unblock UI) | ürün kabulü 2026-07-18 |
-| WP-130 | [x] Tamamlandı | Rapor sheet detay alanı | ürün kabulü 2026-07-18 |
-| WP-131 | [x] Tamamlandı | Analyze/lint sertleştirme (0 issue) | — |
-| WP-132 | [~] Console bekliyor | DATA-SAFETY.md gerçek veri envanteri | Play Console formu |
-| WP-133 | [x] Tamamlandı | Widget & dinamik panel analizi → 134–137 | analiz uygulandı |
-| WP-134 | [~] Cihaz kontrolü bekliyor | 1×1 widget Chronometer her boyutta | telefonda widget/saat testi |
-| WP-135 | [~] Cihaz kontrolü bekliyor | Toggle commit + idle sıfırlama (TimerStateStore) | telefonda 20 tur start/stop |
-| WP-136 | [~] Cihaz kontrolü bekliyor | Reconcile SSOT / engine-scope broadcast | telefonda çift yönlü senkron |
-| WP-137 | [~] Cihaz kontrolü bekliyor | Dinamik panel P2 (usesChronometer + Mola/Durdur) | telefonda bildirim davranışı |
-| WP-138 | [x] Tamamlandı | Sürüm notları v28/v29 + taslak v30 (TR/EN) | ürün kabulü 2026-07-18 |
-| WP-139 | [x] Tamamlandı | l10n parity + hardcoded/admin + native string denetim | ürün kabulü 2026-07-18 |
-| WP-140 | [x] Tamamlandı | Erişilebilirlik (tooltip/Semantics/48dp) | ilk tur; TalkBack cihaz smoke opsiyonel |
-| WP-141 | [x] Tamamlandı | Tema-bağlama / sabit renk denetimi | ürün kabulü 2026-07-18 |
-| WP-142 | [~] Analiz teslim | Performans & başlangıç profili | docs/perf |
-| WP-143 | [~] Analiz teslim | Güvenlik derin denetim 2 | docs/security |
-| WP-144 | [~] Analiz teslim | Offline-first dayanıklılık | docs/sync |
-| WP-145 | [~] Analiz teslim | Test kapsam boşluğu | docs/test |
-| WP-146 | [~] Test için bekliyor | Istanbul/DST gün-sınırı sertleştirme | birim test |
-| WP-147 | [~] Test için bekliyor | Hata durumları + yenile (kayıt/ders/stats) | cihaz |
-| WP-148 | [~] Test için bekliyor | Regresyon süpürme raporu | docs/debug |
-| WP-149 | [~] WP-156’ya bağlandı | Streak+heatmap → analitik kart | WP-156 |
-| WP-150 | [~] WP-156’ya devredildi | Stats derinleştirme → büyük plan | WP-156 |
-| WP-151 | [~] Test için bekliyor | Onboarding 4 adım skip/izin/grup | Cihazda doğrulanmalı |
-| WP-152 | [~] Test için bekliyor | Veri dışa aktarma JSON | Cihazda doğrulanmalı |
-| WP-153 | [~] Test için bekliyor | Akıllı hatırlatma seri/haftalık | Cihazda doğrulanmalı |
-| WP-154 | [~] Test için bekliyor | Level/quest/cosmetics + 0042 | SQL Editor + cihaz |
-| WP-155 | [~] Test için bekliyor | ar/de + RTL altyapı | Cihazda doğrulanmalı |
-| WP-156 | [~] Plan uygulandı (flag kapalı) | İstatistik & Gruplar analitik plan | docs/features |
-| WP-157 | [~] Test için bekliyor | Grafik primitives gauge/stacked/radar/area | `2c7bc91` |
-| WP-158 | [~] Test için bekliyor | Analytics grid shell + prefs + flag | `5f8f1d5` |
-| WP-159 | [~] Test için bekliyor | 22 kart registry (kişisel sarmalayıcılar) | `8d4fff9` |
-| WP-160 | [~] Test için bekliyor | goalGauge/streak/compare/insight | `8d4fff9` |
-| WP-161 | [~] Test için bekliyor | 0039/0040 RPC + grup kartları | SQL Editor |
-| WP-162 | [~] Test için bekliyor | Kart ekle/çıkar + Stats flag entegrasyon | `4b4d711` |
-| WP-163 | [~] Test için bekliyor | AnalyticsPeriod year/custom/kıyas | UI bar kısmi |
-| WP-164 | [~] Test için bekliyor | Analitik teslim düzeltmesi (ızgara/reflow/veri/0041) | `Cihazda doğrulanmalı` |
-| WP-165 | [~] Ops/cihaz bekliyor | QA runbook + Play sahip checklist | Deploy yok |
-| WP-166 | [~] Test için bekliyor | Kalite denetimi + düzeltmeler | Cihazda doğrulanmalı |
-| WP-167 | [x] Otomatik test geçti | Timer FakeTimer dispose sızıntısı | kod+test |
-| WP-168 | [~] Test için bekliyor | Feedback gönderilemedi tanı+onarım | Cihazda doğrulanmalı |
-| WP-169 | [~] Plan onay bekliyor | Günlük/haftalık görev listesi kartı PLAN | `docs/features/GOREV-LISTESI-KART-PLAN.md` · kod yok |
-| WP-170 | [~] Test için bekliyor | Stats klasik (ızgara kaldır) | `Cihazda doğrulanmalı` |
-| WP-171 | [~] Test için bekliyor | Başarımlar başlık taşması | `Cihazda doğrulanmalı` |
-| WP-172 | [~] Test için bekliyor | Gruplar nested scroll | `Cihazda doğrulanmalı` |
-| WP-173 | [~] Test için bekliyor | l10n Hours + de/ar (AR kısmi) | `docs/L10N-DUZELTME-2026-07.md` |
-| WP-174 | [x] Rapor | UI sweep | `docs/qa/WP-174-UI-SWEEP.md` |
-| WP-175 | [~] Plan onay bekliyor | Klasik stats zenginleştirme PLAN | `docs/features/ISTATISTIK-ZENGINLESTIRME-PLAN.md` |
-| WP-176 | [x] Otomatik test geçti | 15 kırık test yeşil (shell scroll + notes + achievement) | full test **529** |
-| WP-177 | [~] Cihaz/SQL bekliyor | Feedback ensure 0044 + net hata | sahip SQL + beta |
-| WP-178 | [~] Test için bekliyor | StatsPeriod year/custom/kıyas | `Cihazda doğrulanmalı` |
-| WP-179 | [~] Test için bekliyor | Kişisel sabit bölümler (gauge/area/radar) | `Cihazda doğrulanmalı` |
-| WP-180 | [~] Test için bekliyor | Grup donut/seri/gauge | `Cihazda doğrulanmalı` |
-| WP-181 | [~] Test için bekliyor | Cila + ölü grid silme | `Cihazda doğrulanmalı` |
-| WP-183 | [~] Tag/beta bekliyor | beta-v31: 1.0.31+31 + BETA-v31-TEST | `docs/qa/BETA-v31-TEST.md` |
-| WP-184 | [~] Test için bekliyor | Feedback PostgREST schema cache (0045 + NOTIFY) | sahip: 0045 SQL `jiphfrpzvkpzubbkhrwb` |
-| WP-185 | [~] Test için bekliyor | Stats period bar declutter (6 chip + compact compare) | cihaz UI |
-| WP-186 | [~] Test için bekliyor | Home grid density sabit 32; seçici kaldır | cihaz Home |
-| WP-187 | [~] Test için bekliyor | Profil gamification declutter (rozetler kalır) | cihaz Profil |
-| WP-188 | [~] Test için bekliyor | Home Görevler kartı (günlük/haftalık) | cihaz Home ekle |
-| WP-189 | [~] Tag/beta bekliyor | beta-v32: 1.0.32+32 + BETA-v32-TEST | `docs/qa/BETA-v32-TEST.md` |
-| WP-190 | [~] Test için bekliyor | Stats dönem tek yatay satır (scroll) | cihaz stats |
-| WP-191 | [~] Test için bekliyor | Grup sıralama üst + gauge boşluk | cihaz grup stats |
-| WP-192 | [~] Test için bekliyor | Gerçek taç + taç XP barı | cihaz profil |
-| WP-193 | [~] Test için bekliyor | Feedback gerçek hata + dar classify | sahip SQL + cihaz Detay |
-| WP-194 | [~] Tag/beta bekliyor | beta-v33: 1.0.33+33 + BETA-v33-TEST | `docs/qa/BETA-v33-TEST.md` |
-| WP-195 | [~] Test için bekliyor | 0046 feedback trigger (42704 role) + taç %18 | sahip: 0046 SQL + cihaz |
-| WP-196 | [~] Test için bekliyor | Görevler deadline plan + model/repo v2 | cihaz |
-| WP-197 | [~] Test için bekliyor | dueAt + sıralama + urgency renk | — |
-| WP-198 | [~] Test için bekliyor | Araçlar + Görevler CRUD | cihaz Araçlar |
-| WP-199 | [~] Test için bekliyor | Home kartı gör/renk/tik | cihaz Home |
-| WP-200 | [~] Test için bekliyor | Görevler cila (gecikti/a11y) | cihaz |
-| WP-201 | [x] Yayınlandı | beta-v34: 1.0.34+34 notları + cihaz test listesi | tag `beta-v34` |
-| WP-202 | [~] Yayınlandı, cihaz bekliyor | Görevler kartı tasarım cilası (kalan-süre rozeti, ayraçlı liste, başlık sayaç) + **stable v35** rollup | tag `v35` |
-| WP-203 | [~] Yayınlandı, cihaz bekliyor | Manuel süre gece-yarısı fix (00:00 kenet kaldırıldı, gelecek-bitiş yok) + istatistik yenileme (personal declutter, eksenli grafikler, radar düz etiket; grup tek hedef, katkı legend, liderlik sıralama çizgi grafiği, tek trend) → **stable v36** | tag `v36` |
 | WP-209 | [ ] Bekliyor | **[YAYIN: 1.]** Topla-ödülü-al: ayrı `achievement_rewards` (pending/claim) + claim RPC (server 00NN) | plan v2 · **önce iner** |
 | WP-216 | [ ] Bekliyor | **[YAYIN: 2.]** Oturum bütünlüğü sıkılaştırma (sessions RLS + zaman/süre CHECK, source='live') — Codex #4 (server 00NN) | plan v2 · WP-208 ön-koşulu |
 | WP-208 | [ ] Bekliyor | **[YAYIN: 3.]** Ölü metrik retro fix (alpha_wolf/campfire/locomotive/break_enemy) + gerçek `metric_progress` sözleşmesi + team_player (server 00NN) | ← WP-209, WP-216 |
@@ -217,26 +118,16 @@
 | WP-214 | [ ] Bekliyor | Grup profil fotoğrafı (groups.avatar_url + avatar_updated_at cache-bust + bucket admin-yazma + discovery güncelle) | plan doc |
 | WP-215 | [ ] Bekliyor | Tap-to-top tüm sekmeler (Gruplar/İstatistik/Profil/Araçlar) — navReselect zaten var | plan doc |
 
-> **2026-07-14 proje denetimi:** Serbest sürükle-bırak ızgara, canlı grup hedefi ve saat stilleri **zaten kodda uygulanmış** (backlog stale idi; geçici WP-72/73/75 iptal).
->
-> **2026-07-17 ürün/cihaz QA kapanışı:** WP-76/77/78/79/80/81, WP-84–89, WP-92/93/94/95/97, WP-100, WP-103 — kullanıcı cihaz/ürün testleri bitti → **Tamamlanan**.
->
-> **Kalan gerçek açık işler:**
-> - **Ürün kararı (kod değil, senin kararın):** WP-66 hesap silme retention · WP-67 grafik türleri · WP-69 aylık rapor için DNS + Resend API key.
-> - **Yeni öncelik:** Play Store production programı **WP-110–124**. Park: WP-104–109 cihaz/canlı ops + WP-110–119/121–122/124 test/ops.
+> **Açık ops işleri (kod dışı — bu tabloda değil, kanonik takip başka dosyada):** Play production programı (NO-GO), Edge deploy'lar (hesap silme purge CRON, aylık rapor cron), Data Safety/legal URL Console adımları → [`backlog.md`](backlog.md) + [`docs/PLAY-STORE-HAZIRLIK-TARAMASI.md`](docs/PLAY-STORE-HAZIRLIK-TARAMASI.md).
+> Tarihsel `[x]`/`[~]` WP kartları (WP-104…207) ve eski dalga/çakışma notları arşive taşındı (2026-07-19 temizlik).
 
-> **Planlama notu:** WP-39 iptal; WP-48/49/50 kaldırıldı; geçici WP-72/73/74/75 (2026-07-14) zaten-yapılmış/yanlış açıldığı için iptal edildi. Sorun çıkarsa ayrı debug/release WP'si açılır.
-
-> **Küresel dil programı ortak sözleşmesi:** İngilizce şablon/varsayılan (`en`), Türkçe ikinci dil (`tr`). Yalnız sistem dil kodu `tr` ise Türkçe; diğer her locale İngilizce. Üretilen l10n kodu elle düzenlenmez/commit edilmez. Tüm WP'lerde migration/RLS etkisi yok; sır/PII çeviri dosyasına girmez; gün sınırı `Europe/Istanbul` kalır. Aynı anda en fazla iki çalışma hattı açılır.
-
-> **Çakışma matrisi:** ✅ Wave 1: WP-82 + WP-83. Wave 2: WP-84 + WP-88 (WP-83 sonrası). Wave 3: WP-85 + WP-86. Wave 4: WP-87 tek başına veya bitmiş WP-88'in ardından ikinci ayrık hat. Wave 5: WP-89 tek seri kapı. ARB dosyalarına yalnız WP-82 (seed), sonra WP-84, en son WP-89 yazar; UI worker'ları ARB'yi salt okunur kullanır.
 
 
 ---
 
 ## Test için bekleyenler (park)
 
-> Cihaz/ürün kabulü bekleyen tamamlanmış kod. **Kanonik park durumu = yukarıdaki WP Durum Dizini'ndeki `[~]` satırları.** Eski ayrıntılı park kartları (WP-134–201 vb.) arşive taşındı → [`docs/archive/progress-tarihsel-2026-07.md`](docs/archive/progress-tarihsel-2026-07.md). Planner yeni park kaydını buraya **tek satır** ekler.
+> Cihaz/ürün kabulü bekleyen tamamlanmış kod. Şu an aktif park kaydı **yok** (WP-134…207 test-bekleyen kartları arşive taşındı → [`docs/archive/progress-tarihsel-2026-07.md`](docs/archive/progress-tarihsel-2026-07.md); açık ops işleri için yukarıdaki pointer). Planner yeni park kaydını buraya **tek satır** ekler.
 
 ## Tamamlanan İş Paketleri
 
@@ -244,4 +135,4 @@
 
 ---
 
-> **📦 Arşiv (2026-07-19 token optimizasyonu):** progress.md 1599→232 satıra indirildi. Tarihsel WP kartları (Tarihsel uygulama kartları WP-103–109/WP-93, Play detay kartları WP-110–124, park detay kartları, Tamamlanan detay kartları, Son Teslim Notları) [`docs/archive/progress-tarihsel-2026-07.md`](docs/archive/progress-tarihsel-2026-07.md)'ye taşındı. **Canlı durum bu dosyadadır** (Proje Gerçekleri + Aktif Çalışma Kaydı + WP Durum Dizini). Bir WP'nin tarihsel ayrıntısı gerekirse arşivden okunur.
+> **📦 Arşiv (2026-07-19 token optimizasyonu):** progress.md 1599→~138 satıra indirildi (2. tur: tamamlanmış/test-bekleyen WP-104…207 index satırları + eski dalga/çakışma notları temizlendi). Tarihsel WP kartları + Play detayı + park/Tamamlanan detayları + Son Teslim Notları [`docs/archive/progress-tarihsel-2026-07.md`](docs/archive/progress-tarihsel-2026-07.md)'de. **Canlı durum bu dosyadadır** (Proje Gerçekleri + Aktif Çalışma Kaydı + aktif WP Durum Dizini). Bir WP'nin tarihsel ayrıntısı gerekirse arşivden okunur.
