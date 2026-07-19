@@ -194,7 +194,7 @@ class _ManualSessionDialogState extends State<_ManualSessionDialog> {
             children: [
               Expanded(
                 child: NumberStepper(
-                  label: AppLocalizations.of(context).profileSaat,
+                  label: AppLocalizations.of(context).classroomSaat,
                   value: _hours,
                   min: 0,
                   max: 23,

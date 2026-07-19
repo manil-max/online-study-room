@@ -57,7 +57,7 @@ class _GoalEditorDialogState extends State<_GoalEditorDialog> {
             children: [
               Expanded(
                 child: NumberStepper(
-                  label: l10n.profileSaat,
+                  label: l10n.classroomSaat,
                   value: _hours,
                   min: 0,
                   max: 23,
