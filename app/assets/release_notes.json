@@ -3,6 +3,42 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.40",
+      "buildNumber": 40,
+      "channel": "beta",
+      "date": "2026-07-19",
+      "title": "beta-v40: başarımlar, bulut görevler ve doğrulanmış sayaç gölgesi",
+      "highlights": [
+        "Başarımlarda gerçek ilerleme, bekleyen ödüller için Topla akışı ve bir takvim ayında 30 gün gerektiren Kusursuz Ay kuralı eklendi.",
+        "Günlük görevler bulutta saklanır, cihazlar arasında eşitlenir ve İstanbul gün sınırında yeniden açılır.",
+        "Gruplara özel avatar ve Alfa, Kamp Ateşi, Lokomotif metrik altyapısı eklendi.",
+        "Sunucu-izinli canlı oturum ve native sayaç köprüsü shadow modunda ölçülür; XP davranışı bu beta ile değişmez.",
+        "Saat, Gruplar, İstatistikler ve Profil sekmesine yeniden dokunmak listeyi başa döndürür."
+      ],
+      "fixes": [
+        "Şubat ve 29 günlük aylar Kusursuz Ay sayılmaz; geçmişte bankalanmış XP ve rozetler korunur."
+      ],
+      "notes": [
+        "Bu bir test sürümüdür. Canlı ortamda 0047–0053 migration'ları uygulanmış olmalıdır.",
+        "WP-219 etkin değildir: doğrulanmış-olmayan eski çalışma XP davranışı bu beta boyunca korunur."
+      ],
+      "titleEn": "beta-v40: achievements, cloud tasks, and verified timer shadow",
+      "highlightsEn": [
+        "Achievements now show real progress, pending reward claiming, and a Perfect Month rule requiring 30 days in one calendar month.",
+        "Daily tasks are stored in the cloud, sync across devices, and reopen at the Istanbul day boundary.",
+        "Private group avatars plus Alpha, Campfire, and Locomotive metric foundations are included.",
+        "Server-issued live sessions and the native timer bridge are measured in shadow mode; this beta does not change XP behavior.",
+        "Reselecting Clock, Groups, Stats, or Profile scrolls the current list back to the top."
+      ],
+      "fixesEn": [
+        "February and 29-day months do not count as Perfect Months; previously banked XP and badges remain."
+      ],
+      "notesEn": [
+        "This is a test build. Live environments must have migrations 0047–0053 applied.",
+        "WP-219 is not active: legacy unverified-session XP behavior remains during this beta."
+      ]
+    },
+    {
       "versionName": "1.0.39",
       "buildNumber": 39,
       "channel": "stable",

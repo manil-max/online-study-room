@@ -5,7 +5,9 @@ Bu dosya ürün tarafındaki okunur sürüm indeksidir. Ayrıntılı değişikli
 
 | Kanal | Tag | Uygulama sürümü | Durum | Kısa not |
 |---|---:|---:|---|---|
-| geliştirme | — | 1.0.29+29 | `v29` tag'inden ileride · Play NO-GO | `main`, WP-105–109'u içeriyor fakat build numarası hâlâ 29; bir sonraki dağıtımda versionCode artmalı |
+| beta | beta-v40 (hazırlanıyor) | 1.0.40+40 | Yerel imzalı APK · cihaz QA bekliyor | v39 sonrası WP-209–218/220; GitHub prerelease için `beta-v40` etiketi gerekir |
+| stable | v39 | 1.0.39+39 | Yerel Git etiketi mevcut | `c6843a5`; beta-v40'ın karşılaştırma tabanı |
+| geliştirme | — | 1.0.40+40 | `main` beta-v40 hazırlığı | WP-219 kesinlikle aktive edilmez; v40 yalnız shadow/QA dağıtımıdır |
 | stable | v29 | 1.0.29+29 | Yerel Git etiketi WP-104 commitinde | Tag `ff369e3`; mevcut `main` ile aynı kod değildir, tag taşınmaz/üzerine yazılmaz |
 | beta | beta-v29 | 1.0.29+29 | Yerel Git etiketi WP-104 commitinde | `v29` ile aynı commit; sonraki beta yeni build numarası kullanır |
 | stable | v28 | 1.0.28+28 | Git etiketi mevcut | v28 / beta-v28 sürüm numarası |

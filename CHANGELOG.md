@@ -4,6 +4,21 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [beta-v40 / 1.0.40+40] - 2026-07-19
+
+> **Beta test sürümü.** v39'dan sonraki başarımlar, günlük görevler, grup avatarları ve doğrulanmış sayaç altyapısı bu pakette ilk kez birlikte cihaz testine açılır. XP ekonomisi hâlâ shadow modundadır; WP-219 aktive edilmemiştir.
+
+### Öne çıkanlar
+- **Başarımlar ve ödüller:** Gerçek ilerleme, 30-gün Kusursuz Ay kuralı, bekleyen ödül/Topla akışı ve ödül bildirimi eklendi. Şubat ile 29 günlük aylar Kusursuz Ay sayılmaz; önceden verilmiş XP/rozet geri alınmaz.
+- **Günlük görevler:** Görevler hesaba bulutta kaydolur, cihazlar arasında eşitlenir ve İstanbul gün sınırında yeniden açılır.
+- **Gruplar:** Özel grup avatarı ve Alfa, Kamp Ateşi, Lokomotif grup metriği altyapısı eklendi.
+- **Sayaç güvenliği:** Sunucu-izinli canlı oturum ve native sayaç köprüsü shadow modunda ölçülür. Bildirim/widget'tan saf-native başlatılan çalışma istatistiğe sayılır; bu beta döneminde XP davranışı değiştirilmez.
+- **Gezinme:** Ana Sayfa dışındaki dört ana sekmeye yeniden dokunmak listeyi başa döndürür.
+
+### Test notları
+- Canlı Supabase'de `0047`–`0053` migration'ları uygulanmış olmalıdır.
+- Bu sürüm beta içindir; cihaz testi sonucunu `docs/qa/BETA-v40-TEST.md` listesine göre kaydet.
+
 ## [v39 / 1.0.39+39] - 2026-07-19
 
 > **Kararlı (stable) test sürümü.** v38’de görülen grafik renk çakışması giderildi.

@@ -69,7 +69,7 @@
 - **Dal:** — (main)
 - **Başlangıç:** —
 - **Son güncelleme:** 2026-07-19 (Europe/Istanbul)
-- **Not:** 0053 SQL Editor 42601 düzeltildi (`day`→`metric_day`); catch-up aliasları, finalize projector ve cron tekrar çalıştırılabilirliği sertleştirildi.
+- **Not:** v40 imzalı beta APK ve v39 sonrası cihaz/staging QA listesi hazır; cihaz kanıtı bekliyor. 0053 SQL Editor 42601 düzeltildi (`day`→`metric_day`); catch-up aliasları, finalize projector ve cron tekrar çalıştırılabilirliği sertleştirildi.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
