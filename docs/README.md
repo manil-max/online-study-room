@@ -37,6 +37,7 @@ durum kaynağı değildir.
 
 ## Arşiv
 
-[`archive/v8/`](archive/v8/README.md), V8 döneminin tarihsel denetim ve yayın
-kanıtlarını tutar. Bu belgeleri yeni iş paketlerinin güncel bağımlılığı veya
-release kapısı olarak kullanma.
+`archive/` tarihsel kayıtları tutar — **güncel bağımlılık/release kapısı olarak kullanma:**
+- [`archive/v8/`](archive/v8/README.md) — V8 dönemi denetim/yayın kanıtları.
+- [`archive/progress-tarihsel-2026-07.md`](archive/progress-tarihsel-2026-07.md) — progress.md'den ayrılan tamamlanmış WP kartları (Tarihsel uygulama kartları, Play detay, park/Tamamlanan detayları, Son Teslim Notları).
+- [`archive/KALITE-PROGRAMI-tarihsel.md`](archive/KALITE-PROGRAMI-tarihsel.md) — KALITE-PROGRAMI'den ayrılan tamamlanmış program kapsamları (§0/1/3/5.1/6/8.1–8.7/10/12).
