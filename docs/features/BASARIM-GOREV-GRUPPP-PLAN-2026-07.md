@@ -1,13 +1,13 @@
-# Başarım Canlı İlerleme + Topla-Ödül + Ölü Başarı Fix + Günlük Görev + Grup PP — PLAN (v3)
+# Başarım Canlı İlerleme + Topla-Ödül + Ölü Başarı Fix + Günlük Görev + Grup PP — PLAN (v3.1)
 
-> Kaynak: kullanıcı isteği 2026-07-19 (Minik Kuş). İlk plan: Claude. v2: Codex tur-1 bulguları sonrası Claude revizyonu. **v3: Codex tur-2 şema/rollout denetimi sonrası güvenlik ve yayın planı yeniden kuruldu.**
+> Kaynak: kullanıcı isteği 2026-07-19 (Minik Kuş). İlk plan: Claude. v2: Codex tur-1 bulguları sonrası Claude revizyonu. v3: Codex tur-2 şema/rollout denetimi. **v3.1: Claude tur-2 saha-riskleri sonrası verified-session client/native entegrasyonu ayrı WP'ye bölündü ve ölçümlü aktivasyon kapısı eklendi.**
 > Kanon: `.agents/AGENTS.md` + `docs/KALITE-PROGRAMI.md`; format: `.agents/skills/planner/SKILL.md`.
 > **Bu dosya yalnız plandır; kod içermez.** Worker migration numarasını claim anında `progress.md` ve `supabase/migrations/` üzerinden yeniden doğrular (şu an en yüksek `0046`).
 > Kanıt etiketleri: `Kodda doğrulandı` · `Cihazda doğrulanmalı` · `Ürün kararı gerekiyor`.
 
 ## 1. Yönetici özeti ve GO durumu
 
-V3, v2'nin doğru ana kararlarını korur: ayrı `achievement_rewards`, append-only `xp_ledger`, gerçek claim, saat başı 50 XP'nin ambient kalması, sunucu metriği, Europe/Istanbul gün sınırı, sweep-line/two-pointer, görevlerin buluta taşınması ve migration/ARB serileştirmesi.
+V3.1, v3'ün doğru ana kararlarını korur: ayrı `achievement_rewards`, append-only `xp_ledger`, gerçek claim, saat başı 50 XP'nin ambient kalması, sunucu metriği, Europe/Istanbul gün sınırı, sweep-line/two-pointer, görevlerin buluta taşınması ve migration/ARB serileştirmesi. WP-216 yalnız server/data expansion'dır; kırılgan timer/native köprüsü ve saha ölçümü yeni WP-220'de ayrı kalite kapısından geçer.
 
 V2'deki üç bloklayıcı hata v3'te yapısal olarak giderildi:
 
@@ -15,7 +15,7 @@ V2'deki üç bloklayıcı hata v3'te yapısal olarak giderildi:
 2. **`source='live'` kanıt değildir.** Eski client uyumluluğu için bu etiket bir süre yazılabilir; ancak yalnız sunucunun oluşturduğu `live_run_id` + çalışma segmentleri başarı için güvenilir kaynaktır. İstemci verified bağ üretmez.
 3. **Server-first davranış kırılması yoktur.** Reward tablosu ve claim-capable uygulama önce expansion olarak iner; otomatik ödülden pending'e geçiş en son, hesap-bazlı capability kapısıyla aktive edilir.
 
-**Plan GO:** WP'ler uygulanabilir ve sıra/rollback sınırları nettir. **Production GO değildir:** her WP'nin staging, otomatik test, gerçek cihaz QA ve ürün kabul kapısı ayrıca geçilir.
+**Plan GO:** Toplam 13 WP (WP-208–220) uygulanabilir ve sıra/rollback sınırları nettir. **Production GO değildir:** her WP'nin staging, otomatik test, gerçek cihaz QA ve ürün kabul kapısı ayrıca geçilir. WP-219, WP-220'nin gerçek saha eşiklerini en az 7 ardışık gün sağlamadan aktive edilemez.
 
 ---
 
@@ -29,6 +29,9 @@ V2'deki üç bloklayıcı hata v3'te yapısal olarak giderildi:
 - Mevcut grup istatistiği `study_sessions ⨝ group_members` ve üyelik penceresiyle türetilir (`0011:34–39`). Yeniden katılım `joined_at=now()` ile eski pencereyi ezer (`0012:117–121`). Dolayısıyla geçmiş grup bağlamı eksiksiz yeniden kurulamaz.
 - Session insert/update doğrudan kullanıcı satırına açıktır; model `source` değerini istemciden yollar. `0012`, `end_time >= start_time` ve duration üst sınırının bir kısmını `NOT VALID` constraint ile zaten eklemiştir; v3 bunu tekrar etmez, güçlendirir.
 - Timer her çalışma fazını ayrı `study_sessions` aralığı olarak kaydeder; presence içinde seçili `group_id` hâlâ vardır. Bu, ileriye dönük server-issued grup bağlamı için kullanılabilir.
+- Native `TimerStateStore` başlangıç/bitiş/konu ve pending interval saklar; server-issued run tokenı saklamaz. Uygulama/Flutter kapalıyken widget veya bildirimden native başlayan sayaç mevcut mimaride authenticated start RPC çağırıp `live_run_id` alamaz; Dart daha sonra yalnız pending interval'i normal session'a uzlaştırır. Bu yüzden bu başlangıçlar ek bir güvenli native-auth tasarımı olmadan verified sayılamaz (`TimerStateStore.kt`, `StudyTimerService.kt`, `TimerActionReceiver.kt`, `study_providers.dart:_reconcileBackgroundTimer`).
+- Android FGS'nin eski API≤13 çökme yolu mevcut kodda düzeltilmiştir: manifest/service API 29–33 için `dataSync`, API 34+ için `specialUse` kullanır ve start hataları yakalanır. WP-220 bu düzeltmeyi yeniden tasarlamaz; yeni run/outbox köprüsünün aynı regresyonu geri getirmediğini gerçek cihazda kanıtlar (`AndroidManifest.xml`, `StudyTimerService.kt`).
+- GitHub updater diyaloğu kapatılabilir ve Play kanalında updater devre dışıdır; mevcut uygulamada eski sürümü gerçekten zorlayan bir minimum-version mekanizması yoktur (`updater_service.dart`, `updater_dialog.dart`). Aktivasyon güvenliği yalnız “güncelle” mesajına bırakılamaz.
 - `nav_index.dart` yalnız `kHomeTabIndex` içerir; diğer sekme sabitleri yoktur. Tap-to-top planı bu dosyayı değiştirmeden hardcode'suz uygulanamaz.
 - Görevler prefs tabanlıdır; cloud isimli repo gerçekte prefs kullanır. Grup tablosunda avatar alanı yoktur.
 - Kök `AGENTS.md` ve `CLAUDE.md` artık ince işaretçidir; tek `main` kuralı çelişkisiz biçimde `.agents/AGENTS.md`'den gelir.
@@ -75,9 +78,10 @@ Başarı için `source='live'` yeterli değildir. Yeni doğrulanmış akış:
 - Finalize RPC, segment toplamından `study_sessions` satırı üretir ve `live_run_id` ile doğrular. Aynı run ikinci session üretemez.
 - Eski client'ın direct `source='live'` satırı geçici olarak istatistik uyumu için kabul edilebilir ama `live_run_id IS NULL` kalır ve achievement açısından unverified'dır. Direct DML için `live_run_id IS NULL` RLS/CHECK zorunludur; istemci verified bağ üretemez. Verified run/session/segment immutable'dır.
 - Timer offline başlarsa çalışma kaybolmaz, normal istatistiğe manual/unverified olarak yazılır; server tokenı olmadığı için achievement veya saatlik XP'ye girmez. UI bunu sessizce “verified live” göstermemelidir.
+- Uygulama açıkken Dart'ın başlattığı akış start RPC'den aldığı run kimliğini native state/outbox'a taşır; app-kill sonrası native Stop aynı kimlikle idempotent finalize edebilir. **Flutter kapalıyken widget/bildirimden saf-native start** ise mevcut güven sınırında sunucu tokenı alamaz ve stat-only/unverified kalır. Bu plan native katmana access token kopyalamaz, önceden dağıtılmış run tokenı uydurmaz ve native startı kanıtsız biçimde verified ilan etmez. Başlangıç kökeni saha ölçümünde ayrı raporlanır.
 - Grup başarıları yalnız verified segment + immutable group context kullanır. Gelecekte tek session'ın birden fazla gruba yazılması yoktur; seçili grup start anında sabitlenir.
 
-WP-216, WP-217/218/219 için **sert bloktur**.
+WP-216 server/data sözleşmesi, WP-217/218/220 için **sert bloktur**; WP-220 client/native saha kanıtı da WP-219 için sert bloktur.
 
 ### MK-4 — Legacy retro konservatif ve denetlenebilirdir
 
@@ -97,6 +101,7 @@ Geçmiş gerçek grup bağlamı kaybolduğu için “eksiksiz presence retro” 
 - **Lokomotif:** kullanıcının verified run başlangıç anında aynı grupta başka aktif verified work segmenti yoktur; ardından 15 dakika içinde en az 2 farklı üye verified run başlatır. Olay yalnız başlatan kullanıcıya yazılır. “Önceki N dakika” yaklaşımı yoktur; exact interval state kullanılır. Bir başlangıç en fazla bir olaydır.
 - **Mola Düşmanı:** herhangi bir kayan 5 saatte toplam verified aktif segment ≥270 dakika. Segment union + two-pointer; tek kademe.
 - **team_player:** mevcut “grup günlük hedefine katkı günü” metriği korunur, kullanıcı metni buna hizalanır.
+- **Kusursuz Ay:** `achievement_dictionary` açıklaması “30 gün” derken server evaluator (`0024:498–509`) ve Dart motoru (`achievement_ledger_engine.dart:436`) ayda ≥28 hedef günü sayar. Önerilen ürün kararı **28 gün**dür (mevcut davranışı korur, Şubat dâhil her takvim ayında erişilebilir ve “dört kusursuz hafta” olarak açıklanabilir). Evaluator+sözlük+kullanıcı metni tek karara hizalanmadan WP-210 kapanmaz. `Ürün kararı gerekiyor`.
 - Manuel/unverified oturum session-türevi achievement ve saatlik XP'ye girmez; yalnız normal çalışma istatistiğine girer. Kazanımdan sonra verified session silme/düzenleme XP iadesi doğurmaz; ledger append-only'dir.
 
 ### MK-6 — Canlılık ve performans sözleşmesi
@@ -115,17 +120,18 @@ Reward altyapısını eklemek ile otomatik banklamayı kapatmak farklı yayınla
 1. WP-209 tablo/RPC/client repository'yi ekler; mevcut auto-award devam eder.
 2. WP-208 private progress contract'ını ekler.
 3. WP-210 claim-capable UI stable olur; boş inbox desteklenir.
-4. WP-216 verified live lifecycle stable olur.
-5. WP-217/218 metrik motorları ve backfill job'ları kurulur ama production backfill koşmaz.
-6. WP-219 hesap-bazlı `reward_inbox_enabled_at` capability'si olan kullanıcıları pending modele geçirir ve kontrollü retro job'larını başlatır. Capability yoksa uygun ödül auto-award kalır; **fakat session-türevi ödül uygunluğu herkes için verified-only'dir.** Eski client istatistik kaydeder ama XP kazanmak için verified-session destekli sürüme güncellenmelidir.
+4. WP-216 verified live server/data lifecycle'ını expansion olarak kurar; mevcut session XP davranışı henüz değişmez.
+5. WP-220 Dart timer/native outbox entegrasyonunu shadow modda yayınlar. Build/capability, verified başarı/finalize hata oranı, fallback nedeni ve başlangıç kökeni en az 7 ardışık gün ölçülür; eski davranış bu ölçüm süresince devam eder.
+6. WP-217/218 metrik motorları ve backfill job'ları kurulur ama production backfill koşmaz; WP-220 ile WP-217/218, WP-216 sonrasında sahiplik izin verdiği ölçüde paralel yürüyebilir.
+7. Yalnız WP-220 saha eşikleri sağlanınca WP-219 hesap-bazlı `reward_inbox_enabled_at` capability'si olan kullanıcıları pending modele geçirir ve kontrollü retro job'larını başlatır. Capability yoksa uygun ödül auto-award kalır; **fakat session-türevi ödül uygunluğu ve ambient saat XP herkes için aynı anda verified-only olur.** Eski client istatistik kaydeder ama XP kazanmak için verified-session destekli sürüme güncellenmelidir.
 
-Bu sıra eski client'ın görünmeyen pending biriktirmesini engeller.
+**Hybrid post-cut yoktur:** aktivasyon öncesi ölçüm penceresinde legacy saat XP davranışı aynen sürer; WP-219'dan sonra “achievement yok ama unverified `source='live'` saat XP alsın” istisnası açılmaz. Böyle bir istisna, direct session fabrikasyonuyla sınırsız XP açığını geri getirir. Bu sıra hem eski client'ın görünmeyen pending biriktirmesini engeller hem güvenlik sözleşmesini tek anlamlı tutar.
 
 ---
 
 # 4. İş paketleri
 
-> **Başarım kritik sıra:** `WP-209 → WP-208 → WP-210 → WP-216 → WP-217 → WP-218 → WP-219`; WP-211, WP-210 sonrası UI cilasıdır.
+> **Gerçek DAG:** `WP-209 → WP-208`; buradan claim UI hattı `WP-210 → WP-211`, güven hattı `WP-216 → {WP-220, WP-217 → WP-218}` olarak ayrılır ve `WP-219` öncesi yeniden birleşir. WP-210 ile WP-216 birbirine bağlı değildir; sahiplik uygunsa paralel yürür.
 > **Bağımsız hatlar:** Görev `WP-212→213`; Grup PP `WP-214`; Tap-to-top `WP-211→WP-215` ve dosya çakışması nedeniyle WP-214 sonrası.
 > Aynı anda en fazla iki hat. `supabase/migrations/**` tümü sıcak; migration ekleyen hiçbir WP paralel açılmaz. ARB yazarı aynı anda yalnız bir WP'dir.
 
@@ -164,7 +170,7 @@ Bu sıra eski client'ın görünmeyen pending biriktirmesini engeller.
 - **Kapsam dışı:** Server aktivasyonu/retro; shell banner/nav badge (WP-211).
 - **SAHİP dosyalar:** `app/lib/features/profile/widgets/achievement_showcase.dart`; `app/lib/features/profile/social_profile_screen.dart`; gerekirse `app/lib/core/stats/progression_visuals.dart`; `app/lib/l10n/app_tr.arb`; `app/lib/l10n/app_en.arb`; `app/lib/l10n/app_de.arb`; `app/lib/l10n/app_ar.arb`; ilgili widget/golden testleri.
 - **DOKUNMA:** `home_shell.dart`, `nav_index.dart`, server migration'ları.
-- **Adımlar:** self metric'ten “26/30 · sonraki”; streak; pending “Topla” ve bounded “Tümünü topla”; server sonucu sonrası XP/rozet animasyonu; claim UI/repository hazır olduktan sonra idempotent `reward_inbox_v1` capability kaydı (WP-219 öncesi davranış değiştirmez); en yakın tek başarı şeridi; Kusursuz Ay=28+ gün, team_player, ambient saat-XP ve “XP için doğrulanmış kronometre çalışması gerekir” metinleri; WP-211'in “n ödül hazır · Topla” ARB anahtarlarını bu WP üretir.
+- **Adımlar:** self metric'ten “26/30 · sonraki”; streak; pending “Topla” ve bounded “Tümünü topla”; server sonucu sonrası XP/rozet animasyonu; claim UI/repository hazır olduktan sonra idempotent `reward_inbox_v1` capability kaydı (WP-219 öncesi davranış değiştirmez); en yakın tek başarı şeridi; ürün sahibinin MK-5'teki Kusursuz Ay 28/30 kararını sözlük+metne atomik uygula; team_player, ambient saat-XP ve “XP için doğrulanmış kronometre çalışması gerekir” metinleri; WP-211'in “n ödül hazır · Topla” ARB anahtarlarını bu WP üretir.
 - **Veri/Migration:** yok.
 - **RLS/Güvenlik:** claim yalnız self; başkasının profilinde buton/secret progress yok; optimistic animasyon server başarısından önce kalıcılaşmaz.
 - **Edge-case:** boş inbox, 100+ pending, offline/retry, gizli reward silüeti, metric null, reduce-motion.
@@ -185,19 +191,33 @@ Bu sıra eski client'ın görünmeyen pending biriktirmesini engeller.
 - **Kabul:** Pending ≤5 s içinde banner+badge; claim sonrası ≤5 s içinde ikisi kaybolur; nav sabitleri hardcode içermez; testler yeşil; `Cihazda doğrulanmalı`.
 - **Tuzak:** ARB'ye yazmak; badge'i banner local state'ine bağlamak; `nav_index` sıcak yüzeyini WP-215 ile paralel açmak.
 
-## WP-216 — Server-issued live session lifecycle + immutable group context 🛡️
+## WP-216 — Server-issued live session server/data expansion 🛡️
 
 - **Program/Faz:** Başarım güvenlik kapısı · **Ajan:** — · **Model:** 🔴 Opus · **Bağımlılık:** WP-208 · **Durum:** [ ] Bekliyor
 - **Problem:** Client direct DML ile `source='live'` yazabilir; bu etiket güven kanıtı değildir. Kaldırılmış `group_id` yüzünden de güvenilir grup retro/context yoktur. Yeni verified yol eski client'ın normal istatistik kaydını deploy anında kırmamalıdır.
-- **Kapsam dışı:** Başarım algoritmaları/backfill (WP-217/218); eski veriyi “temiz” ilan etmek.
-- **SAHİP dosyalar:** `supabase/migrations/00NN_verified_live_sessions.sql`; `app/lib/data/models/study_session.dart`; `app/lib/data/repositories/study_repository.dart`; `app/lib/data/repositories/supabase/supabase_study_repository.dart`; `app/lib/data/repositories/in_memory/in_memory_study_repository.dart`; `app/lib/data/providers/study_providers.dart`; ilgili timer/repository/server testleri.
-- **DOKUNMA:** Achievement metric/reward migration'ları; profil UI.
-- **Adımlar:** MK-3 tablolar/RPC; `study_sessions.live_run_id UNIQUE NULLABLE FK`; start/pause/resume/finalize lifecycle; tek aktif run/segment; start'ta membership doğrula ve tek group context sabitle; finalize idempotent session insert; direct DML'de `live_run_id IS NULL` zorunlu ve legacy source unverified; mevcut 0012 constraint'lerini denetle/güçlendir; verified satır immutability; native stop/outbox idempotency; offline-unverified kullanıcı geri bildirimi.
+- **Kapsam dışı:** Timer/provider/native entegrasyonu ve saha QA'sı (WP-220); başarım algoritmaları/backfill (WP-217/218); eski veriyi “temiz” ilan etmek.
+- **SAHİP dosyalar:** `supabase/migrations/00NN_verified_live_sessions.sql`; `app/lib/data/models/study_session.dart`; `app/lib/data/repositories/study_repository.dart`; `app/lib/data/repositories/supabase/supabase_study_repository.dart`; `app/lib/data/repositories/in_memory/in_memory_study_repository.dart`; ilgili repository/server contract testleri.
+- **DOKUNMA:** `app/lib/data/providers/study_providers.dart`; `app/lib/core/background/**`; Android native timer/widget dosyaları; achievement metric/reward migration'ları; profil UI.
+- **Adımlar:** MK-3 tablolar/RPC; `study_sessions.live_run_id UNIQUE NULLABLE FK`; start/pause/resume/finalize lifecycle; tek aktif run/segment; start'ta membership doğrula ve tek group context sabitle; finalize idempotent session insert; direct DML'de `live_run_id IS NULL` zorunlu ve legacy source unverified; mevcut 0012 constraint'lerini denetle/güçlendir; verified satır immutability; varsayılanı pasif `minimum_verified_xp_build` config'i; minimal rollout gözlemi için server-managed build/capability/fallback günlük agregası ve 30 günlük retention.
 - **Veri/Migration:** Expansion + RLS contract. `study_sessions.group_id` geri gelmez; doğrulanmış bağ yalnız `live_run_id → live_study_runs.group_id_snapshot` join'idir. Snapshot grup silinince cascade olmaz; yalnız audit/metrik kimliğidir. Existing rows legacy-unverified kalır. Rollback yalnız yeni run yoksa; sonrasında verified kayıtlar korunur, eski client compatibility yolu açık kalır.
-- **RLS/Güvenlik:** istemci server time, group membership, `live_run_id` veya segment owner yazamaz; helper/RPC grants explicit; `live_run_id IS NULL` direct satır achievement veya saatlik XP'ye girmez.
-- **Edge-case:** app kill/native Stop, ağ cevabı kaybı, offline start, grup değişimi veya grup silinmesi run ortasında, gece yarısı, pomodoro faz geçişi, iki cihazdan aktif run, clock skew.
-- **Kabul:** Direct DML ile non-null `live_run_id` reddedilir ve legacy `source=live` satır kritik XP üretmez; iki cihaz aynı anda iki run açamaz; üye olunmayan group context reddedilir; retry tek session üretir; offline/eski-client çalışma istatistiğe kaydolur ama achievement/saat XP'sine girmez; mevcut ve yeni timer yolculukları Samsung cihazda doğrulanır.
+- **RLS/Güvenlik:** istemci server time, group membership, `live_run_id` veya segment owner yazamaz; helper/RPC grants explicit. `live_run_id IS NULL` satır server açısından unverified işaretlenir; ancak mevcut XP evaluator'ı expansion sırasında değiştirilmez, küresel verified-only ekonomik kesişi yalnız WP-219'dur.
+- **Edge-case:** ağ cevabı kaybı, grup değişimi veya grup silinmesi run ortasında, gece yarısı, iki cihazdan aktif run, clock skew, forged capability/fallback telemetry.
+- **Kabul:** Direct DML ile non-null `live_run_id` reddedilir; iki cihaz aynı anda iki run açamaz; üye olunmayan group context reddedilir; retry tek session üretir; migration sonrası eski client session kaydı ve mevcut saat XP davranışı değişmez; operational tablo/RPC raw session içeriği, e-posta veya token saklamaz ve 30 günden eski satırlar temizlenir; Supabase+InMemory contract testleri yeşil.
 - **Tuzak:** Eski client'ı bir gecede direct insert reddiyle kırmak; yalnız CHECK ile güvenilirlik iddia etmek; istemci `source`una güvenmek; group_id'yi study_sessions'a geri eklemek; verified session update kaçışı.
+
+## WP-220 — Verified timer client/native köprüsü + shadow rollout 📱
+
+- **Program/Faz:** Başarım güvenlik/saha kapısı · **Ajan:** — · **Model:** 🔴 Opus · **Bağımlılık:** WP-216 · **Durum:** [ ] Bekliyor
+- **Problem:** Server sözleşmesi tek başına üretim verisi doğurmaz. Mevcut sayaç Flutter→native→outbox hattı kırılgandır; Flutter kapalıyken widget/bildirimden native start server-issued run alamaz. Verified-only XP kesişinden önce gerçek benimseme ve hata oranı bilinmelidir.
+- **Kapsam dışı:** Native katmana Supabase access token taşımak; önceden dağıtılmış/uzun ömürlü run tokenı; saf-native startı kanıtsız verified ilan etmek; XP contract aktivasyonu (WP-219); metrik algoritmaları.
+- **SAHİP dosyalar:** `app/lib/data/providers/study_providers.dart`; `app/lib/core/background/timer_foreground_service.dart`; `app/lib/core/notifications/timer_external_command_store.dart`; `app/lib/features/classroom/widgets/study_timer_card.dart`; `app/lib/features/classroom/widgets/focus_timer_screen.dart`; `app/lib/features/classroom/widgets/timer_mode_controls.dart`; `app/lib/l10n/app_tr.arb`; `app/lib/l10n/app_en.arb`; `app/lib/l10n/app_de.arb`; `app/lib/l10n/app_ar.arb`; `app/android/app/src/main/kotlin/com/manilmax/online_study_room/MainActivity.kt`; `app/android/app/src/main/kotlin/com/manilmax/online_study_room/timer/TimerStateStore.kt`; `app/android/app/src/main/kotlin/com/manilmax/online_study_room/timer/StudyTimerService.kt`; `app/android/app/src/main/kotlin/com/manilmax/online_study_room/widgets/TimerActionReceiver.kt`; `app/android/app/src/main/kotlin/com/manilmax/online_study_room/widgets/TimerWidgets.kt`; `app/android/app/src/main/res/values/strings.xml`; `app/android/app/src/main/res/values-tr/strings.xml`; ilgili Dart/Kotlin testleri.
+- **DOKUNMA:** Supabase migration'ları (WP-216 RPC'sini kullanır); achievement/reward motorları; `app/android/app/src/main/AndroidManifest.xml` (mevcut API≤13 `dataSync` / API34+ `specialUse` sözleşmesi salt doğrulanır; değişiklik gerekirse ayrı replan). WP-210/213 ile ARB yüzeyi kesin seridir.
+- **Adımlar:** Dart start RPC sonucu run kimliğini native state'e atomik aktar; pause/resume/stop/finalize retry/outbox idempotency; app-kill sonrası tokenlı native Stop'u finalize et; offline ve saf-native startı normal unverified session olarak koru; kullanıcıya “istatistiğe sayılır, XP/başarıma sayılmaz” geri bildirimi ver; pasif `minimum_verified_xp_build` config'ini okuyup sayaç-öncesi readiness/update mesajını uygula; build + `verified_session_v1` capability kaydı; start origin (`dart_app`, `native_widget`, `native_notification`), verified/fallback/finalize-failure sayaçlarını WP-216'nın minimal günlük agregasına yaz; shadow modda XP davranışını değiştirme.
+- **Veri/Migration:** yok. Server sözleşmesi WP-216'dır. Telemetry yalnız build/platform/capability, agregat başarı/hata/fallback nedeni ve başlangıç kökeni taşır; raw süre/içerik, e-posta, access/refresh token yoktur; 30 gün retention.
+- **RLS/Güvenlik:** Client telemetry güvenlik kanıtı veya XP otoritesi değildir; verifiedlik yalnız server run/segment zincirindedir. Native depoda auth token saklanmaz. Saf-native başlangıç unverified kalır.
+- **Edge-case:** Android 8–13 ve 14+, FGS start kısıtı, app kill/native Stop, widget cold-start, notification action, ağ cevabı kaybı, offline start, pomodoro work/break geçişi, force-stop/reboot, aynı hesabın iki cihazı, eski native state migration'ı.
+- **Kabul:** Dart/app start→app-kill→native Stop tek verified session üretir; duplicate/reordered command ikinci session/XP üretmez; offline ve saf-native start kaybolmaz ama unverified görünür; native start oranı ayrı raporlanır; Android ≤13'te mevcut FGS crash'i geri gelmez ve API 34+ service type uyumludur; Samsung gerçek cihaz + en az bir Android ≤13 cihazda widget/bildirim/app-kill senaryoları kanıtlanır; shadow modda mevcut XP ekonomisi değişmez; testler yeşil; `Cihazda doğrulanmalı`.
+- **Tuzak:** Android ≤13 regresyonunu yalnız emulator/test ile kapatmak; `source='live'` fallback'ini verified saymak; native'a kullanıcı oturumu/tokenı kopyalamak; telemetry opt-out'lu Sentry örneklemini rollout paydası sanmak.
 
 ## WP-217 — Mola Düşmanı motoru + bounded retro ⏱️
 
@@ -227,19 +247,20 @@ Bu sıra eski client'ın görünmeyen pending biriktirmesini engeller.
 - **Kabul:** Alpha yalnız kapalı gün ve cron kaçsa bile catch-up ile tek kez finalize; Kamp ≥3 exact; Lokomotif exact active-state+15 dk; başka üye olayı etkilenen kullanıcı progress'ine ≤5 s yansır; p95 MK-6 içinde; belirsiz legacy satır XP üretmez; testler yeşil.
 - **Tuzak:** `group_members.joined_at`'i eksiksiz tarihçe sanmak; “önceki N dk” boşluk sezgisi; auth.uid-only projector ile initiator'ı güncellememek.
 
-## WP-219 — Pending model aktivasyonu + kontrollü retro release gate 🚦
+## WP-219 — Verified-only XP + pending model aktivasyonu + kontrollü retro gate 🚦
 
-- **Program/Faz:** Başarım release/contract · **Ajan:** — · **Model:** 🔴 Opus · **Bağımlılık:** WP-209, WP-210 cihaz QA, WP-216 cihaz QA, WP-217, WP-218 · **Durum:** [ ] Bekliyor
-- **Problem:** Altyapı kurulduktan sonra yeni client'ı pending modele geçirmek ve retro ödülleri güvenle üretmek gerekir.
+- **Program/Faz:** Başarım release/contract · **Ajan:** — · **Model:** 🔴 Opus · **Bağımlılık:** WP-209, WP-210 cihaz QA, WP-217, WP-218, WP-220 cihaz+saha QA · **Durum:** [ ] Bekliyor
+- **Problem:** Altyapı kurulduktan sonra yeni client'ı pending modele geçirmek ve retro ödülleri güvenle üretmek gerekir. Verified-only XP kesişi eski sürümdeki kullanıcı için ekonomik davranış değişikliğidir; güncelleme mesajı tek başına güvenli rollout değildir.
 - **Kapsam dışı:** Yeni metrik/UI; legacy belirsiz satıra manuel XP verme.
 - **SAHİP dosyalar:** `supabase/migrations/00NN_activate_reward_inbox.sql`; staging/prod runbook ve reconciliation/backfill testleri.
 - **DOKUNMA:** Client UI; session lifecycle şeması.
-- **Adımlar:** capability'li hesapta `_record_pending_reward`, diğerinde uygun ödül için mevcut `_award_achievement_tier`; capability one-way enable; **capability'den bağımsız küresel güvenlik contract'ı olarak** tüm session-türevi achievement ve ambient saat XP'sini verified segment/watermark kaynağına çevir; verified-session destekli stable client + minimum-version/update mesajı kapısı; dry-run reward sayısı/XP toplamı; kullanıcı/batch limitli backfill; önce Mola sonra grup metrikleri; canary hesap→%10→%100 reward capability cohort; ledger/profile/reward reconciliation; kill switch pending→auto fallback (verified-only uygunluğu gevşetmez).
-- **Veri/Migration:** Contract migration. Rollback yeni pending üretimini durdurur; mevcut pending silinmez ve claim edilebilir kalır. Ledger/claimed XP geri alınmaz.
+- **Adımlar:** WP-220 shadow raporunu imzala; `minimum_verified_xp_build` server config ve desteklenen client'ta engellenemeyen sayaç-öncesi güncelleme/XP uygunluk mesajı; capability'li hesapta `_record_pending_reward`, diğerinde uygun ödül için mevcut `_award_achievement_tier`; capability one-way enable; **capability'den bağımsız küresel güvenlik contract'ı olarak** tüm session-türevi achievement ve ambient saat XP'sini verified segment/watermark kaynağına tek kesitte çevir; dry-run reward sayısı/XP toplamı; kullanıcı/batch limitli backfill; önce Mola sonra grup metrikleri; canary hesap→%10→%100 reward capability cohort; ledger/profile/reward reconciliation; kill switch pending→auto fallback (verified-only uygunluğu gevşetmez).
+- **Veri/Migration:** Contract migration. Rollback yeni pending üretimini durdurur; mevcut pending silinmez ve claim edilebilir kalır. Verified evaluator arızasında güvenli duruş unverified XP'ye dönmek değil, yeni session-türevi award'ı dondurup verified run kimliklerini replay kuyruğunda tutmaktır; düzeltme sonrası idempotent catch-up yapılır. Ledger/claimed XP geri alınmaz.
 - **RLS/Güvenlik:** capability XP uygunluk yetkisi değildir; yalnız claim UX seçer. Verified-only session uygunluğu küreseldir ve kill switch ile gevşetilmez. Retro job service role/runbook kontrollü, parametreli ve audit log'ludur.
-- **Edge-case:** old+new cihaz, yarım batch, kill switch, sözlük versiyonu, 100+ reward, deploy arası.
-- **Kabul:** Capability yokken **uygun** ödül auto-banked; capability varken uygun achievement pending ve claim öncesi XP 0 artış; her iki cohort'ta verified tam saat 50 XP'yi auto-banklar, unverified/manual tam saat XP üretmez; eski client normal istatistik kaydeder fakat session XP üretmez; claim tam bir kez banklar; canary reconciliation farkı 0; rollback pending kaybetmez; production run için açık ürün onayı ve staging kanıtı vardır.
-- **Tuzak:** global flag'i client rollout'tan önce açmak; rollback'te reward tablosunu drop etmek; dry-run olmadan retro çalıştırmak.
+- **Edge-case:** old+new cihaz, Play updater'ın olmaması, opt-out'lu telemetry, saf-native start yoğun kullanıcı, yarım batch, kill switch, sözlük versiyonu, 100+ reward, deploy arası.
+- **Kabul/aktivasyon eşikleri:** son 14 günde çalışma kaydı olan distinct kullanıcıların ≥%95'i aynı 14 günlük pencerede `verified_session_v1` capability bildirmiştir; capability cohort'unda server-derived verified odak dakikası / toplam uygun odak dakikası ≥%95 ve start→finalize teknik hata oranı <%1 değerlerini **7 ardışık gün** sağlar; `native_widget/native_notification` başlangıç payı ayrıca raporlanır; Sentry/opt-in telemetry rollout paydası değildir. Eşiklerden biri sağlanmazsa WP-219 contract aktivasyonu yapılmaz, eski XP davranışı sürer.
+- **Kabul/davranış:** Capability yokken **uygun** ödül auto-banked; capability varken uygun achievement pending ve claim öncesi XP 0 artış; her iki cohort'ta verified tam saat 50 XP'yi auto-banklar, unverified/manual tam saat XP üretmez; eski client normal istatistik kaydeder fakat session XP üretmez; claim tam bir kez banklar; canary reconciliation farkı 0; evaluator freeze→fix→replay verified XP'yi tam bir kez banklar ve unverified satır banklamaz; rollback pending kaybetmez; production run için açık ürün onayı ve staging kanıtı vardır.
+- **Tuzak:** global flag'i saha eşiğinden önce açmak; eski sürüm gerçekten zorlanabiliyormuş gibi updater mesajına güvenmek; kesim sonrasında unverified legacy saat XP istisnası açarak fabrikasyon açığını geri getirmek; rollback'te reward tablosunu drop etmek; dry-run olmadan retro çalıştırmak.
 
 ## WP-212 — Günlük görev cloud modeli + çok-cihaz senkron 🗓️
 
@@ -301,10 +322,10 @@ Bu sıra eski client'ın görünmeyen pending biriktirmesini engeller.
 
 ## 5. Çakışma ve yürütme matrisi
 
-- **Migration tek lane:** WP-209, 208, 216, 217, 218, 219, 212, 214 aynı anda açılamaz. Numara claim anında son migration+1 olarak seçilir.
-- **Başarım server zinciri:** 209→208→216→217→218→219. Client WP-210, 208+209 sonrası; WP-211, 210 sonrası.
-- **Production davranış kapısı:** WP-219, WP-210 ve WP-216 gerçek cihaz QA/ürün kabulü olmadan başlamaz.
-- **ARB:** WP-210 ve WP-213 seridir.
+- **Migration tek lane:** WP-209, 208, 216, 217, 218, 219, 212, 214 aynı anda açılamaz. WP-220 migration yazmaz. Numara claim anında son migration+1 olarak seçilir.
+- **Başarım DAG:** 209→208; sonra client claim `210→211` ile güven server'ı `216` paralel olabilir. 216 sonrasında client/native `220` ve metrik `217→218` paralel olabilir; 210+217+218+220, 219'da birleşir.
+- **Production davranış kapısı:** WP-219, WP-210 claim cihaz QA'sı, WP-220 native cihaz+saha QA'sı ve 7 günlük eşik kanıtı olmadan başlamaz.
+- **ARB/native metin:** WP-210, WP-213 ve WP-220 aynı anda l10n/native metin yüzeyi açmaz; claim sırasında kesin SAHİP dosyaları yeniden teyit edilir.
 - **Navigation:** WP-211 `core/navigation/**` tek yazarıdır; WP-215 sonra yalnız ekran dosyalarına yazar.
 - **Stats dosyası:** WP-214 ve WP-215 `class_stats_view.dart` paylaşır; kesin seri: 214→215.
 - **İkinci lane:** Başarım hattı açıkken yalnız Görev veya Grup PP/IA hattından biri açılır; aynı anda en fazla iki hat.
@@ -313,7 +334,8 @@ Bu sıra eski client'ın görünmeyen pending biriktirmesini engeller.
 ## 6. Release/rollback kapıları
 
 - Her migration staging dry-run + rollback rehearsal + RLS abuse testinden geçer.
-- Reward activation öncesi claim-capable stable client ve verified-session cihaz QA kanıtı zorunludur.
+- Reward activation öncesi claim-capable stable client, WP-220 verified-session cihaz QA'sı ve saha eşikleri zorunludur. GitHub updater'ın kapatılabilir, Play updater'ın devre dışı olduğu hesaba katılır; “minimum build” tek başına zorunlu güncelleme kanıtı değildir.
+- Güvenli geçiş penceresi WP-219'dan **öncedir**: WP-220 shadow/soak boyunca eski saat XP ekonomisi sürer. WP-219 kesişinden sonra unverified legacy saat XP için geçici istisna açılmaz.
 - Retro önce dry-run raporu üretir: kullanıcı sayısı, reward sayısı, toplam pending XP, legacy excluded/ambiguous satırlar, en büyük tek kullanıcı etkisi.
 - Claim sonrası temel invariant: `gamification_profiles.xp = SUM(xp_ledger.xp_amount)`; pending bu toplama girmez.
 - Rollback pending/reward veya cloud task/avatar datasını drop etmez. Contract geri alınır, kullanıcı verisi korunur.
@@ -335,6 +357,8 @@ Bu sıra eski client'ın görünmeyen pending biriktirmesini engeller.
 | Rejoin joined_at ezer | `0012_group_join_hardening.sql:117–121` |
 | Mevcut session constraint'leri | `0012_group_join_hardening.sql:155–168` |
 | Client source/live yazıyor | `study_session.dart:47–56`; `supabase_study_repository.dart:18–31`; `study_providers.dart:_recordSession` |
+| Saf-native start server run tokenı taşımıyor | `TimerStateStore.kt`; `StudyTimerService.kt`; `TimerActionReceiver.kt`; `study_providers.dart:_reconcileBackgroundTimer` |
+| Mevcut updater zorunlu değil | `updater_service.dart`; `updater_dialog.dart` |
 | Nav sabitleri eksik | `app/lib/core/navigation/nav_index.dart` |
 | Gerçek scroll dosyaları | `classroom_screen.dart`, `profile_screen.dart`, `clock_screen.dart`, `personal_stats_view.dart`, `class_stats_view.dart` |
 
@@ -344,10 +368,11 @@ Bu sıra eski client'ın görünmeyen pending biriktirmesini engeller.
 |---|---|
 | Canlı gerçek progress + streak + rozet | 208 + 210 + metrik 217/218 |
 | Gerçek claim, toplamazsa ilerleme sürer | 209 + 219 + UI 210/211 |
-| Saat başı 50 XP ambient, yalnız verified süre | 209/208/216/219 regresyon kriteri |
+| Saat başı 50 XP ambient, yalnız verified süre | 209/208/216/220/219 regresyon+rollout kriteri |
 | Alfa/Kamp/Lokomotif/Mola fix | 217 + 218 |
 | Konservatif retro | 208 audit + 217/218 motor + 219 kontrollü run |
-| Session fabrikasyonu kapatma | 216 |
+| Session fabrikasyonu kapatma | 216 server contract + 220 client/native köprü + 219 activation |
+| Zorunlu-güncelleme ekonomik riski / saha ölçümü | 216 minimal operational schema + 220 shadow/QA + 219 eşik kapısı |
 | Kusursuz Ay/team_player metni, az kaldı | 210 |
 | Clash banner + Brawl nav badge | 211 |
 | Günlük görev cloud/00:00/streak/undo | 212 + 213 |
@@ -357,8 +382,8 @@ Bu sıra eski client'ın görünmeyen pending biriktirmesini engeller.
 ## Plan dışı bilinçli sınırlar
 
 - Tarihsel gerçek presence veya kaybolmuş `group_id` geri üretilemez; legacy sonuç “proxy”dir.
-- Offline başlayıp hiç server tokenı almayan çalışma achievement/saatlik XP üretmez; normal çalışma istatistiğini kaybetmez.
+- Offline veya saf-native başlayıp hiç server tokenı almayan çalışma achievement/saatlik XP üretmez; normal çalışma istatistiğini kaybetmez. Native-auth/proof tasarımı ayrı gelecek kapsamdır.
 - Claim edilmiş append-only XP, sonradan session silinince geri alınmaz.
 - Rol-tabanlı çoklu grup admini, görev sayaç hedefi, push notification ve foto moderasyonu ayrı kapsamdır.
 
-Bu v3'te teknik davranış, güvenlik sınırı, rollout ve rollback varsayılanları kapalıdır. Production mutasyonu yine ilgili WP'nin staging/cihaz kanıtı ve ürün kabulünden sonra yapılır.
+Bu v3.1'de teknik davranış, güvenlik sınırı, rollout ve rollback varsayılanları kapalıdır. Açık tek ürün-semantiği Kusursuz Ay'ın 28/30 eşiğidir; bu WP-210'u bloke eder, ilk uygulanabilir paket WP-209'u bloke etmez. Production mutasyonu yine ilgili WP'nin staging/cihaz/saha kanıtı ve ürün kabulünden sonra yapılır.

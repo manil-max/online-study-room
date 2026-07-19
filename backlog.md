@@ -9,13 +9,14 @@
 
 ## 🔴 Yüksek Öncelik
 
-- [~] **Başarım canlı ilerleme + topla-ödül + ölü başarı fix + günlük görev + grup PP** — **WP-208–219 planlandı; Codex tur-2 sonrası plan v3** (2026-07-19)
+- [~] **Başarım canlı ilerleme + topla-ödül + ölü başarı fix + günlük görev + grup PP** — **WP-208–220 planlandı; Claude tur-2 saha denetimi sonrası plan v3.1** (2026-07-19)
   - Claim = ayrı `achievement_rewards`; `xp_ledger` literal append-only. Expansion önce iner, auto→pending yalnız claim-capable client + hesap capability'si sonrası WP-219'da aktive edilir; 50 XP/saat ambient kalır ama contract sonrası yalnız server-verified süre üretir.
-  - Gerçek progress self-only projection'dadır; ortak-okunur `user_achievements` secret progress taşımaz. `study_sessions.group_id` 0010'da kaldırıldığı için grup başarıları ileriye dönük server-issued live segment + immutable tek grup context ile hesaplanır (WP-216 sert blok).
+  - Gerçek progress self-only projection'dadır; ortak-okunur `user_achievements` secret progress taşımaz. `study_sessions.group_id` 0010'da kaldırıldığı için grup başarıları ileriye dönük server-issued live segment + immutable tek grup context ile hesaplanır. WP-216 server/data expansion, WP-220 timer/native köprü + shadow saha kapısıdır.
   - Alfa/Kamp/Lokomotif ve Mola Düşmanı WP-217/218; kayıp tarihsel grup bağlamı yalnız konservatif legacy proxy + audit/dry-run ile retro, belirsiz satır XP üretmez.
   - Günlük görev cloud modeli toggle/undo + tombstone + server-arrival LWW + Europe/Istanbul günüyle WP-212/213.
   - Grup avatarı private bucket + RLS + signed URL/versioned path (WP-214). Tap-to-top, WP-211 kanonik tab indeksleri ve gerçek scroll dosyalarıyla WP-215.
-  - Kanon plan v3 + WP kartları + denetçi bölümü: `docs/features/BASARIM-GOREV-GRUPPP-PLAN-2026-07.md`. Tur-1 yanıtı tarihsel referanstır: `docs/features/DENETIM-YANIT-CODEX-01.md`; tur-2 bulguları v3'e işlendi.
+  - Verified-only XP, WP-220'de ≥7 günlük ölçüm ve benimseme/başarı eşikleri sağlanmadan WP-219'da açılmaz; post-cut unverified saat-XP istisnası yoktur. Saf-native start, güvenli server tokenı yoksa stat-only kalır.
+  - Kanon plan v3.1 + WP kartları + denetçi bölümü: `docs/features/BASARIM-GOREV-GRUPPP-PLAN-2026-07.md`. Denetim yanıtları tarihsel referanstır: `docs/features/DENETIM-YANIT-CODEX-01.md`, `docs/features/DENETIM-YANIT-CODEX-02.md`.
 
 - [~] **Google Play production hazırlığı** — **WP-110–124 ayrıntılı planlandı; mevcut karar NO-GO**
   - Politika bloklayıcıları: Play/sideload kanal ayrımı, GitHub APK updater izolasyonu, gizlilik/koşullar/topluluk kuralları, uygulama içi + web hesap silme ve UGC raporla/engelle/moderasyon.

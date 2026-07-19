@@ -20,7 +20,7 @@
 - **Navigasyon hedefi:** Ana Sayfa / Saat / Gruplar / İstatistikler / Profil. Ana Sayfa günlük kullanım alanıdır; diğer alanların verisi kendi sekmelerinde eksiksiz bulunur.
 - **Release:** Stable/Beta kanalı GitHub Releases ile çalışır. **beta-v30** = `1.0.30+30` (analitik ızgara toggle, 0039–0043 RPC/gamification, WP-166–168). Onay: `docs/qa/BETA-v30-ONAY-LISTESI.md`. Play production ayrı kalite kapısından geçer.
 - **Kalite kapıları:** Her WP DoD'siz kapanmaz; stable release kalite kapısından geçer (AGENTS.md §3). Server-authoritative XP, RLS/sosyal profil, platform sınırları → `docs/KALITE-PROGRAMI.md`.
-- **Son WP numarası:** **219** (WP-208–219 planlandı, henüz uygulanmadı; son tamamlanan uygulama WP'si 207, git log doğrulandı; stable v39). **Sıradaki boş numara WP-220.**
+- **Son WP numarası:** **220** (WP-208–220 planlandı, henüz uygulanmadı; son tamamlanan uygulama WP'si 207, git log doğrulandı; stable v39). **Sıradaki boş numara WP-221.**
 - **Release:** **beta-v33** = `1.0.33+33`. Cihaz QA: `docs/qa/BETA-v33-TEST.md`. Canlıda **0046** (feedback trigger) de gerekir.
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
@@ -62,14 +62,14 @@
 
 ### Codex Lane
 - **Durum:** [x] Boşta
-- **Faz/WP:** — (bu oturum: Başarım+Görev+Grup PP planı v3 denetim revizyonu)
+- **Faz/WP:** — (bu oturum: Claude tur-2 sonrası Başarım+Görev+Grup PP planı v3.1)
 - **Aşama:** Planlandı
 - **SAHİP yollar:** —
 - **Ortak/riskli yüzey:** —
 - **Dal:** main
 - **Başlangıç:** —
 - **Son güncelleme:** 2026-07-19 (Europe/Istanbul)
-- **Not:** Plan v3 hazır: WP-208–219; kod değişikliği yok. `study_sessions.group_id` gerçeği, verified-only XP, expansion/contract claim rollout, private progress/avatar ve görev undo sözleşmesi işlendi.
+- **Not:** Plan v3.1 hazır: WP-208–220; kod değişikliği yok. WP-216 server/data, WP-220 client/native+shadow saha kapısı; WP-219 ölçümlü verified-only aktivasyondur. Kusursuz Ay 28/30 ürün kararı açık; WP-209 başlayabilir.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
@@ -108,17 +108,18 @@
 
 | WP | Durum | Kısa kapsam | Bağımlılık |
 |---|---|---|---|
-| WP-209 | [ ] Bekliyor | **[EXPAND 1]** Reward inbox şema + atomik/bounded claim; auto-award davranışı değişmez | plan v3 |
+| WP-209 | [ ] Bekliyor | **[EXPAND 1]** Reward inbox şema + atomik/bounded claim; auto-award davranışı değişmez | plan v3.1 |
 | WP-208 | [ ] Bekliyor | **[EXPAND 2]** Self-only gerçek metric progress sözleşmesi + legacy audit/job altyapısı | ← WP-209 |
 | WP-210 | [ ] Bekliyor | **[CLIENT 3]** Claim-capable UI + gerçek progress/streak + az-kaldı + tüm achievement ARB anahtarları | ← WP-208, WP-209 · ARB yazar |
 | WP-211 | [ ] Bekliyor | Reward banner/nav badge + tüm tab indekslerinin kanonik sözleşmesi | ← WP-210 · `core/navigation/**` yazarı |
-| WP-216 | [ ] Bekliyor | **[TRUST 4]** Server-issued live run/segment + immutable tek grup bağlamı; direct client verified bağ üretemez | ← WP-208 · WP-217/218/219 sert ön-koşulu |
+| WP-216 | [ ] Bekliyor | **[TRUST SERVER 4]** Server-issued live run/segment + immutable grup bağlamı + minimal rollout agregası; eski davranış değişmez | ← WP-208 · WP-217/218/220 ön-koşulu |
+| WP-220 | [ ] Bekliyor | **[TRUST CLIENT 5]** Dart timer/native outbox verified köprüsü + stat-only saf-native fallback + shadow telemetry + Android ≤13 QA | ← WP-216 · WP-219 sert ön-koşulu |
 | WP-217 | [ ] Bekliyor | Mola Düşmanı verified segment motoru + bounded konservatif legacy retro job tanımı | ← WP-216 |
 | WP-218 | [ ] Bekliyor | Alfa/Kamp/Lokomotif exact verified grup motoru + legacy proxy/dirty bucket | ← WP-216, WP-217 |
-| WP-219 | [ ] Bekliyor | **[CONTRACT/RELEASE]** Capability-bazlı pending aktivasyonu + dry-run/canary retro | ← WP-209/210/216/217/218 + cihaz QA |
-| WP-212 | [ ] Bekliyor | Günlük görev cloud model + toggle/undo + tombstone + idempotent çok-cihaz ops (server 00NN) | plan v3 |
+| WP-219 | [ ] Bekliyor | **[CONTRACT/RELEASE]** Ölçümlü verified-only XP kesişi + capability-bazlı pending + dry-run/canary retro | ← WP-209/210/217/218/220 + cihaz/saha QA |
+| WP-212 | [ ] Bekliyor | Günlük görev cloud model + toggle/undo + tombstone + idempotent çok-cihaz ops (server 00NN) | plan v3.1 |
 | WP-213 | [ ] Bekliyor | Görev UI: günlük tip ekleme + bugünün listesi + 00:00 yenileme | ← WP-212 · ARB yazar |
-| WP-214 | [ ] Bekliyor | Grup profil fotoğrafı: `avatar_path` + private bucket/signed URL + admin RLS + discovery | plan v3 |
+| WP-214 | [ ] Bekliyor | Grup profil fotoğrafı: `avatar_path` + private bucket/signed URL + admin RLS + discovery | plan v3.1 |
 | WP-215 | [ ] Bekliyor | Tap-to-top: gerçek beş scroll dosyası, WP-211 kanonik tab indeksleri | ← WP-211, WP-214 |
 
 > **Açık ops işleri (kod dışı — bu tabloda değil, kanonik takip başka dosyada):** Play production programı (NO-GO), Edge deploy'lar (hesap silme purge CRON, aylık rapor cron), Data Safety/legal URL Console adımları → [`backlog.md`](backlog.md) + [`docs/PLAY-STORE-HAZIRLIK-TARAMASI.md`](docs/PLAY-STORE-HAZIRLIK-TARAMASI.md).
