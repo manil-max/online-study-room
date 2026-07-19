@@ -8,6 +8,12 @@
 
 ## 🔴 Yüksek Öncelik
 
+- [~] **Başarım canlı ilerleme + topla-ödül + ölü başarı fix + günlük görev + grup PP** — **WP-208–214 planlandı** (kullanıcı isteği 2026-07-19)
+  - Başarı ilerlemesini canlı göster (26/30 + rozet + streak); "topla-ödülü-al" (pending + claim, battle-pass, ilerlemeyi durdurmaz); 4 ölü başarı fix (Alfa Kurt/Kamp Ateşi/Lokomotif retroaktif + Mola Düşmanı ürün kararı); açıklama netleştirme (Kusursuz Ay=28+ gün); profil dışı başarı/taç bildirimi; "az kaldı" minimal şerit.
+  - Günlük yenilenen görev tipi **buluta** taşınır (şablon + gün-damgalı tamamlama, 00:00 İstanbul yenileme, streak); mevcut görev sistemi aynı kalır.
+  - Grup profil fotoğrafı (`groups.avatar_url` + `group-avatars` bucket, admin-yazma RLS).
+  - Kanon plan + WP kartları: `docs/features/BASARIM-GOREV-GRUPPP-PLAN-2026-07.md`. Açık ürün kararları: claim XP modeli (C/B), Mola Düşmanı koşulu, retroaktif dağıtım.
+
 - [~] **Google Play production hazırlığı** — **WP-110–124 ayrıntılı planlandı; mevcut karar NO-GO**
   - Politika bloklayıcıları: Play/sideload kanal ayrımı, GitHub APK updater izolasyonu, gizlilik/koşullar/topluluk kuralları, uygulama içi + web hesap silme ve UGC raporla/engelle/moderasyon.
   - Teknik/operasyon kapıları: Android kısıtlı izin–FGS–alarm uygunluğu, Data Safety kanıt paketi, production migration/Edge/RLS doğrulaması, target API 36 imzalı AAB ve gerçek cihaz QA.
