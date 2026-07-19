@@ -268,6 +268,8 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
                       // Çalışırken faz göstergesi; dururken mod seçici + ayarlar.
                       if (timer.isRunning) ...[
                         TimerPhaseIndicator(timer: timer),
+                        const SizedBox(height: 8),
+                        TimerVerificationNotice(timer: timer),
                         if (timer.mode != TimerMode.stopwatch)
                           const SizedBox(height: 16),
                       ] else ...[

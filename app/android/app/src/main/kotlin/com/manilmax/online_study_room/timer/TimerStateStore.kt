@@ -24,6 +24,9 @@ object TimerStateStore {
     const val KEY_SUBJECT = "flutter.timer_active_subject"
     const val KEY_FG_MODE = "flutter.timer_fg_mode"
     const val KEY_PENDING_INTERVALS = "flutter.timer_pending_intervals"
+    const val KEY_LIVE_RUN_ID = "flutter.timer_active_live_run_id"
+    const val KEY_LIVE_RUN_TOKEN = "flutter.timer_active_live_run_token"
+    const val KEY_START_ORIGIN = "flutter.timer_active_start_origin"
 
     fun prefs(context: Context): SharedPreferences =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -45,6 +48,9 @@ object TimerStateStore {
         phase: String,
         cycle: Int,
         subjectId: String,
+        liveRunId: String = "",
+        liveRunToken: String = "",
+        startOrigin: String = "dart_app",
     ): Boolean {
         return p.edit()
             .putString(KEY_STARTED_AT, Instant.ofEpochMilli(startedAtMs).toString())
@@ -53,6 +59,9 @@ object TimerStateStore {
             .putString(KEY_PHASE, phase)
             .putInt(KEY_CYCLE, cycle)
             .putString(KEY_SUBJECT, subjectId)
+            .putString(KEY_LIVE_RUN_ID, liveRunId)
+            .putString(KEY_LIVE_RUN_TOKEN, liveRunToken)
+            .putString(KEY_START_ORIGIN, startOrigin)
             .putString(KEY_FG_MODE, "running")
             .commit()
     }
@@ -65,6 +74,9 @@ object TimerStateStore {
         return p.edit()
             .remove(KEY_STARTED_AT)
             .remove(KEY_STARTED_AT_MS)
+            .remove(KEY_LIVE_RUN_ID)
+            .remove(KEY_LIVE_RUN_TOKEN)
+            .remove(KEY_START_ORIGIN)
             .putString(KEY_FG_MODE, "idle")
             .commit()
     }
@@ -74,6 +86,7 @@ object TimerStateStore {
         startMs: Long,
         endMs: Long,
         subject: String,
+        origin: String = "native_notification",
     ): Boolean {
         val list = try {
             JSONArray(p.getString(KEY_PENDING_INTERVALS, "[]") ?: "[]")
@@ -84,7 +97,29 @@ object TimerStateStore {
             JSONObject()
                 .put("start", Instant.ofEpochMilli(startMs).toString())
                 .put("end", Instant.ofEpochMilli(endMs).toString())
-                .put("subject", subject),
+                .put("subject", subject)
+                .put("origin", origin),
+        )
+        return p.edit().putString(KEY_PENDING_INTERVALS, list.toString()).commit()
+    }
+
+    fun appendPendingVerifiedCommand(
+        p: SharedPreferences,
+        action: String,
+        runToken: String,
+        origin: String,
+    ): Boolean {
+        if (runToken.isBlank()) return false
+        val list = try {
+            JSONArray(p.getString(KEY_PENDING_INTERVALS, "[]") ?: "[]")
+        } catch (_: Exception) {
+            JSONArray()
+        }
+        list.put(
+            JSONObject()
+                .put("action", action)
+                .put("runToken", runToken)
+                .put("origin", origin),
         )
         return p.edit().putString(KEY_PENDING_INTERVALS, list.toString()).commit()
     }

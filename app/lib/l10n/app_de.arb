@@ -4816,5 +4816,9 @@
   "taskListDailyBadge": "Täglich",
   "taskListDailyStreakStep": "Heutige Serie +1",
   "taskListSyncError": "Aufgaben konnten nicht aktualisiert werden. Du bist möglicherweise offline.",
-  "taskListRetry": "Erneut versuchen"
+  "taskListRetry": "Erneut versuchen",
+  "timerVerifiedSession": "Verifizierte Sitzung · für XP und Erfolge geeignet",
+  "timerVerificationPending": "Sitzung wird verifiziert…",
+  "timerStatisticsOnly": "Zählt für Statistiken, aber nicht für XP oder Erfolge.",
+  "timerVerifiedUpdateRequired": "Aktualisiere die App für verifizierte XP. Diese Zeit zählt weiterhin für Statistiken."
 }

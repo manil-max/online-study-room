@@ -59,7 +59,14 @@ class StudyTimerService : Service() {
                     val phase = intent.getStringExtra(EXTRA_PHASE) ?: "work"
                     val cycle = intent.getIntExtra(EXTRA_CYCLE, 1).coerceAtLeast(1)
                     val subjectId = intent.getStringExtra(EXTRA_SUBJECT_ID).orEmpty()
-                    handleStart(startedAtMs, mode, phase, cycle, subjectId)
+                    val liveRunId = intent.getStringExtra(EXTRA_LIVE_RUN_ID).orEmpty()
+                    val liveRunToken = intent.getStringExtra(EXTRA_LIVE_RUN_TOKEN).orEmpty()
+                    val startOrigin = intent.getStringExtra(EXTRA_START_ORIGIN)
+                        ?: "native_notification"
+                    handleStart(
+                        startedAtMs, mode, phase, cycle, subjectId,
+                        liveRunId, liveRunToken, startOrigin,
+                    )
                 }
                 ACTION_STOP -> handleStop(recordInterval = true)
                 ACTION_STOP_SILENT -> handleStop(recordInterval = false)
@@ -76,6 +83,7 @@ class StudyTimerService : Service() {
                             phase = "work",
                             cycle = 1,
                             subjectId = "",
+                            startOrigin = "native_widget",
                         )
                     }
                 }
@@ -100,6 +108,9 @@ class StudyTimerService : Service() {
         phase: String,
         cycle: Int,
         subjectId: String,
+        liveRunId: String = "",
+        liveRunToken: String = "",
+        startOrigin: String = "dart_app",
     ) {
         // Eski Flutter bildirimi 7001; native panel tek otoritedir.
         notificationManager().cancel(LEGACY_FLUTTER_NOTIFICATION_ID)
@@ -111,6 +122,9 @@ class StudyTimerService : Service() {
             phase = phase,
             cycle = cycle,
             subjectId = subjectId,
+            liveRunId = liveRunId,
+            liveRunToken = liveRunToken,
+            startOrigin = startOrigin,
         )
 
         startForegroundCompat(buildRunningNotification(startedAtMs))
@@ -132,14 +146,24 @@ class StudyTimerService : Service() {
         if (currentStart <= 0L) return
 
         val nowMs = System.currentTimeMillis()
+        val liveRunToken = p.getString(TimerStateStore.KEY_LIVE_RUN_TOKEN, "").orEmpty()
+        val startOrigin = p.getString(
+            TimerStateStore.KEY_START_ORIGIN,
+            "native_notification",
+        ).orEmpty()
         startForegroundCompat(buildRunningNotification(nowMs))
 
-        if (p.getString(TimerStateStore.KEY_PHASE, "work") == "work" && currentStart < nowMs) {
+        if (liveRunToken.isNotBlank()) {
+            TimerStateStore.appendPendingVerifiedCommand(
+                p, "pause", liveRunToken, startOrigin,
+            )
+        } else if (p.getString(TimerStateStore.KEY_PHASE, "work") == "work" && currentStart < nowMs) {
             TimerStateStore.appendPendingInterval(
                 p,
                 startMs = currentStart,
                 endMs = nowMs,
                 subject = p.getString(TimerStateStore.KEY_SUBJECT, "") ?: "",
+                origin = startOrigin,
             )
         }
 
@@ -150,6 +174,9 @@ class StudyTimerService : Service() {
             phase = "rest",
             cycle = p.getInt(TimerStateStore.KEY_CYCLE, 1).coerceAtLeast(1),
             subjectId = p.getString(TimerStateStore.KEY_SUBJECT, "") ?: "",
+            liveRunId = p.getString(TimerStateStore.KEY_LIVE_RUN_ID, "").orEmpty(),
+            liveRunToken = liveRunToken,
+            startOrigin = startOrigin,
         )
 
         notificationManager().notify(
@@ -165,12 +192,25 @@ class StudyTimerService : Service() {
     private fun handleEndBreak() {
         val p = prefs()
         if (p.getString(TimerStateStore.KEY_PHASE, "") != "rest") return
+        val liveRunToken = p.getString(TimerStateStore.KEY_LIVE_RUN_TOKEN, "").orEmpty()
+        val startOrigin = p.getString(
+            TimerStateStore.KEY_START_ORIGIN,
+            "native_notification",
+        ).orEmpty()
+        if (liveRunToken.isNotBlank()) {
+            TimerStateStore.appendPendingVerifiedCommand(
+                p, "resume", liveRunToken, startOrigin,
+            )
+        }
         handleStart(
             startedAtMs = System.currentTimeMillis(),
             mode = p.getString(TimerStateStore.KEY_MODE, "stopwatch") ?: "stopwatch",
             phase = "work",
             cycle = p.getInt(TimerStateStore.KEY_CYCLE, 1).coerceAtLeast(1),
             subjectId = p.getString(TimerStateStore.KEY_SUBJECT, "") ?: "",
+            liveRunId = p.getString(TimerStateStore.KEY_LIVE_RUN_ID, "").orEmpty(),
+            liveRunToken = liveRunToken,
+            startOrigin = startOrigin,
         )
     }
 
@@ -183,13 +223,23 @@ class StudyTimerService : Service() {
             val startedAtMs = TimerStateStore.startedAtMs(p)
             val phase = p.getString(TimerStateStore.KEY_PHASE, "work") ?: "work"
             val nowMs = System.currentTimeMillis()
+            val liveRunToken = p.getString(TimerStateStore.KEY_LIVE_RUN_TOKEN, "").orEmpty()
+            val startOrigin = p.getString(
+                TimerStateStore.KEY_START_ORIGIN,
+                "native_notification",
+            ).orEmpty()
             // Yalnız çalışma fazı kaydedilir (mola sayılmaz).
-            if (startedAtMs in 1 until nowMs && phase == "work") {
+            if (liveRunToken.isNotBlank()) {
+                TimerStateStore.appendPendingVerifiedCommand(
+                    p, "finalize", liveRunToken, startOrigin,
+                )
+            } else if (startedAtMs in 1 until nowMs && phase == "work") {
                 TimerStateStore.appendPendingInterval(
                     p,
                     startMs = startedAtMs,
                     endMs = nowMs,
                     subject = p.getString(TimerStateStore.KEY_SUBJECT, "") ?: "",
+                    origin = startOrigin,
                 )
             }
         }
@@ -392,7 +442,10 @@ class StudyTimerService : Service() {
      *  `getForegroundService` (API 26+) — düz `getService` arka plan yasağına
      *  takılıp çökertiyordu. */
     private fun actionPending(action: String, requestCode: Int): PendingIntent {
-        val intent = Intent(this, StudyTimerService::class.java).apply { this.action = action }
+        val intent = Intent(this, StudyTimerService::class.java).apply {
+            this.action = action
+            if (action == ACTION_START) putExtra(EXTRA_START_ORIGIN, "native_notification")
+        }
         val flags = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             PendingIntent.getForegroundService(this, requestCode, intent, flags)
@@ -452,6 +505,9 @@ class StudyTimerService : Service() {
         const val EXTRA_PHASE = "phase"
         const val EXTRA_CYCLE = "cycle"
         const val EXTRA_SUBJECT_ID = "subjectId"
+        const val EXTRA_LIVE_RUN_ID = "liveRunId"
+        const val EXTRA_LIVE_RUN_TOKEN = "liveRunToken"
+        const val EXTRA_START_ORIGIN = "startOrigin"
 
         const val BROADCAST_STATE_CHANGED = "com.manilmax.online_study_room.timer.STATE_CHANGED"
 
@@ -470,6 +526,9 @@ class StudyTimerService : Service() {
             phase: String? = null,
             cycle: Int? = null,
             subjectId: String? = null,
+            liveRunId: String? = null,
+            liveRunToken: String? = null,
+            startOrigin: String? = null,
         ) {
             val intent = Intent(context, StudyTimerService::class.java).apply {
                 this.action = action
@@ -478,6 +537,9 @@ class StudyTimerService : Service() {
                 phase?.let { putExtra(EXTRA_PHASE, it) }
                 cycle?.let { putExtra(EXTRA_CYCLE, it) }
                 subjectId?.let { putExtra(EXTRA_SUBJECT_ID, it) }
+                liveRunId?.let { putExtra(EXTRA_LIVE_RUN_ID, it) }
+                liveRunToken?.let { putExtra(EXTRA_LIVE_RUN_TOKEN, it) }
+                startOrigin?.let { putExtra(EXTRA_START_ORIGIN, it) }
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 context.startForegroundService(intent)

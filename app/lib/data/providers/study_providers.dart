@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide Presence;
 import 'package:uuid/uuid.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -142,6 +143,14 @@ enum TimerPhase { work, rest }
 /// Bir faz tamamlandığında UI'ın (ses/titreşim/uyarı) tepki vermesi için sinyal.
 enum TimerEvent { countdownDone, workDone, breakDone, allDone }
 
+enum TimerVerification {
+  idle,
+  pending,
+  verified,
+  statisticsOnly,
+  updateRequired,
+}
+
 /// Sınırlar (dakika). UI ve mantık ortak kullanır.
 const int kMinTimerMinutes = 1;
 const int kMaxTimerMinutes = 180;
@@ -256,6 +265,9 @@ class StudyTimerState {
     this.accumulatedSeconds = 0,
     this.commandSeq = 0,
     this.lastUpdatedAt,
+    this.liveRunId,
+    this.liveRunToken,
+    this.verification = TimerVerification.idle,
   });
 
   final TimerMode mode;
@@ -287,6 +299,11 @@ class StudyTimerState {
   final int accumulatedSeconds;
   final int commandSeq;
   final DateTime? lastUpdatedAt;
+  final String? liveRunId;
+  final String? liveRunToken;
+  final TimerVerification verification;
+
+  bool get isVerifiedRun => liveRunId != null && liveRunToken != null;
 
   /// Mevcut fazın hedef süresi (saniye); kronometrede null.
   int? get phaseTargetSeconds => timerPhaseTargetSeconds(
@@ -315,6 +332,10 @@ class StudyTimerState {
     int? accumulatedSeconds,
     int? commandSeq,
     DateTime? lastUpdatedAt,
+    String? liveRunId,
+    String? liveRunToken,
+    bool clearLiveRun = false,
+    TimerVerification? verification,
   }) {
     return StudyTimerState(
       mode: mode ?? this.mode,
@@ -332,6 +353,9 @@ class StudyTimerState {
       accumulatedSeconds: accumulatedSeconds ?? this.accumulatedSeconds,
       commandSeq: commandSeq ?? this.commandSeq,
       lastUpdatedAt: lastUpdatedAt ?? this.lastUpdatedAt,
+      liveRunId: clearLiveRun ? null : (liveRunId ?? this.liveRunId),
+      liveRunToken: clearLiveRun ? null : (liveRunToken ?? this.liveRunToken),
+      verification: verification ?? this.verification,
     );
   }
 }
@@ -357,6 +381,9 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   static const _kActiveUpdatedAt = 'timer_active_updated_at';
   // Widget'ın native Chronometer'ı için güvenilir epoch-millis anahtarı.
   static const _kActiveStartedAtMs = 'timer_active_started_at_ms';
+  static const _kActiveLiveRunId = 'timer_active_live_run_id';
+  static const _kActiveLiveRunToken = 'timer_active_live_run_token';
+  static const _kActiveStartOrigin = 'timer_active_start_origin';
 
   /// Native `StudyTimerService` ile çift yönlü method channel: Dart→native
   /// (start/stop), native→Dart (`reconcile`).
@@ -366,6 +393,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
 
   Timer? _tick;
   Timer? _widgetRefreshDebounce;
+
   /// WP-167: soğuk açılış auth-retry gecikmesi; dispose'ta iptal edilmezse
   /// widget testlerinde FakeTimer sızıntısı oluşur.
   Timer? _authRetryTimer;
@@ -373,6 +401,11 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   StreamSubscription<TimerNotificationAction>? _notificationCommands;
   AppLifecycleListener? _lifecycleListener;
   bool _disposed = false;
+  Future<void>? _verifiedStartFuture;
+
+  bool get _verifiedServerAvailable =>
+      SupabaseConfig.isConfigured &&
+      ref.read(studyRepositoryProvider) is! InMemoryStudyRepository;
 
   /// Auth henüz yoksa 400ms bekler; dispose olursa Timer iptal + await serbest.
   Future<void> _awaitAuthRetryWindow() {
@@ -498,6 +531,13 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       lastUpdatedAt: DateTime.tryParse(
         prefs.getString(_kActiveUpdatedAt) ?? '',
       ),
+      liveRunId: prefs.getString(_kActiveLiveRunId),
+      liveRunToken: prefs.getString(_kActiveLiveRunToken),
+      verification: prefs.getString(_kActiveLiveRunToken) == null
+          ? (activeStartedAt == null
+                ? TimerVerification.idle
+                : TimerVerification.statisticsOnly)
+          : TimerVerification.verified,
     );
     ObservabilityService.instance.timerRestore(
       hadActiveTimer: activeStartedAt != null,
@@ -560,6 +600,26 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
           for (final entry in decoded) {
             if (_disposed) return;
             if (entry is! Map) continue;
+            final runToken = entry['runToken']?.toString();
+            final action = entry['action']?.toString();
+            if (runToken != null && runToken.isNotEmpty && action != null) {
+              try {
+                final repo = ref.read(studyRepositoryProvider);
+                switch (action) {
+                  case 'pause':
+                    await repo.pauseLiveRun(runToken);
+                  case 'resume':
+                    await repo.resumeLiveRun(runToken);
+                  case 'finalize':
+                    await _finalizeVerifiedRun(runToken);
+                  default:
+                    throw const FormatException('unknown verified command');
+                }
+              } catch (_) {
+                recordedOk = false;
+              }
+              continue;
+            }
             final start = DateTime.tryParse(entry['start']?.toString() ?? '');
             final end = DateTime.tryParse(entry['end']?.toString() ?? '');
             final subjectRaw = entry['subject']?.toString();
@@ -569,6 +629,19 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
             if (start != null && end != null && end.isAfter(start)) {
               try {
                 await _recordSession(start, end, subject);
+                final origin = entry['origin']?.toString();
+                final build = await _clientBuildNumber();
+                await ref
+                    .read(studyRepositoryProvider)
+                    .recordVerifiedSessionRollout(
+                      platform: _rolloutPlatform,
+                      clientBuild: build,
+                      capability: true,
+                      origin: origin == 'native_widget'
+                          ? LiveStartOrigin.nativeWidget
+                          : LiveStartOrigin.nativeNotification,
+                      outcome: LiveRolloutOutcome.unverifiedFallback,
+                    );
               } catch (_) {
                 recordedOk = false;
               }
@@ -612,6 +685,9 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
               phase: state.phase.name,
               cycle: state.cycle,
               subjectId: state.subjectId,
+              liveRunId: state.liveRunId,
+              liveRunToken: state.liveRunToken,
+              startOrigin: prefs.getString(_kActiveStartOrigin) ?? 'dart_app',
             ),
           );
         }
@@ -621,7 +697,8 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
 
     // running + hasActiveStart: store'dan UI/presence/widget hizala.
     final ms = prefs.getInt(_kActiveStartedAtMs) ?? 0;
-    final fgStart = DateTime.tryParse(prefs.getString(_kActiveStartedAt) ?? '') ??
+    final fgStart =
+        DateTime.tryParse(prefs.getString(_kActiveStartedAt) ?? '') ??
         (ms > 0 ? DateTime.fromMillisecondsSinceEpoch(ms) : null);
     final fgPhase = TimerPhase.values.firstWhere(
       (phase) => phase.name == prefs.getString(_kActivePhase),
@@ -631,6 +708,8 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
         .clamp(kMinPomodoroCycles, kMaxPomodoroCycles)
         .toInt();
     final fgModeName = prefs.getString(_kActiveMode);
+    final fgLiveRunId = prefs.getString(_kActiveLiveRunId);
+    final fgLiveRunToken = prefs.getString(_kActiveLiveRunToken);
     final fgTimerMode = TimerMode.values.firstWhere(
       (m) => m.name == fgModeName,
       orElse: () => state.mode,
@@ -650,6 +729,12 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
         mode: fgTimerMode,
         accumulatedSeconds: 0,
         lastUpdatedAt: DateTime.now(),
+        liveRunId: fgLiveRunId,
+        liveRunToken: fgLiveRunToken,
+        clearLiveRun: fgLiveRunToken == null,
+        verification: fgLiveRunToken == null
+            ? TimerVerification.statisticsOnly
+            : TimerVerification.verified,
       );
       _persistActiveTimer();
       _publishPresence(
@@ -744,6 +829,10 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       cycle: 1,
       accumulatedSeconds: 0,
       lastUpdatedAt: now,
+      clearLiveRun: true,
+      verification: _verifiedServerAvailable
+          ? TimerVerification.pending
+          : TimerVerification.statisticsOnly,
     );
     _persistActiveTimer();
     // Native broadcast / apply yarışında reconcile'ın idle sanmaması için
@@ -758,11 +847,120 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
         phase: state.phase.name,
         cycle: state.cycle,
         subjectId: state.subjectId,
+        startOrigin: 'dart_app',
       ),
     );
     _publishPresence(status: PresenceStatus.studying, startedAt: now);
     _startTick();
     unawaited(_showTimerSurfaces(requestPermission: true));
+    if (_verifiedServerAvailable) {
+      final requestId = _uuid.v4();
+      _verifiedStartFuture = _startVerifiedRun(requestId);
+    } else {
+      _verifiedStartFuture = null;
+    }
+  }
+
+  Future<int> _clientBuildNumber() async {
+    try {
+      return int.tryParse((await PackageInfo.fromPlatform()).buildNumber) ?? 0;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  String get _rolloutPlatform {
+    if (kIsWeb) return 'web';
+    return switch (defaultTargetPlatform) {
+      TargetPlatform.android => 'android',
+      TargetPlatform.iOS => 'ios',
+      TargetPlatform.windows => 'windows',
+      _ => 'other',
+    };
+  }
+
+  Future<void> _startVerifiedRun(String requestId) async {
+    final user = ref.read(authStateProvider).value;
+    if (user == null || !state.isRunning) return;
+    final repo = ref.read(studyRepositoryProvider);
+    final build = await _clientBuildNumber();
+    try {
+      final config = await repo.fetchVerifiedSessionConfig();
+      if (config.minimumVerifiedXpBuild case final minimum?
+          when build < minimum) {
+        if (state.isRunning) {
+          state = state.copyWith(
+            verification: TimerVerification.updateRequired,
+          );
+          _persistActiveTimer();
+        }
+        await repo.recordVerifiedSessionRollout(
+          platform: _rolloutPlatform,
+          clientBuild: build,
+          capability: true,
+          origin: LiveStartOrigin.dartApp,
+          outcome: LiveRolloutOutcome.unverifiedFallback,
+        );
+        return;
+      }
+      final groupId = ref.read(userGroupProvider).value?.id;
+      LiveStudyRun run;
+      try {
+        run = await repo.startLiveRun(
+          userId: user.id,
+          clientRequestId: requestId,
+          groupId: groupId,
+          subjectId: state.subjectId,
+          clientBuild: build,
+        );
+      } catch (_) {
+        // Ağ cevabı kaybı: aynı idempotency anahtarıyla bir kez daha sor.
+        run = await repo.startLiveRun(
+          userId: user.id,
+          clientRequestId: requestId,
+          groupId: groupId,
+          subjectId: state.subjectId,
+          clientBuild: build,
+        );
+      }
+      if (!state.isRunning || _disposed) return;
+      state = state.copyWith(
+        liveRunId: run.id,
+        liveRunToken: run.runToken,
+        verification: TimerVerification.verified,
+      );
+      _persistActiveTimer();
+      await TimerForegroundService.start(
+        startedAt: state.startedAt!,
+        mode: state.mode.name,
+        phase: state.phase.name,
+        cycle: state.cycle,
+        subjectId: state.subjectId,
+        liveRunId: run.id,
+        liveRunToken: run.runToken,
+        startOrigin: 'dart_app',
+      );
+      await repo.recordVerifiedSessionRollout(
+        platform: _rolloutPlatform,
+        clientBuild: build,
+        capability: true,
+        origin: LiveStartOrigin.dartApp,
+      );
+    } catch (_) {
+      if (state.isRunning && !_disposed) {
+        state = state.copyWith(verification: TimerVerification.statisticsOnly);
+        _persistActiveTimer();
+      }
+      await repo
+          .recordVerifiedSessionRollout(
+            platform: _rolloutPlatform,
+            clientBuild: build,
+            capability: true,
+            origin: LiveStartOrigin.dartApp,
+            outcome: LiveRolloutOutcome.unverifiedFallback,
+          )
+          .catchError((_) {});
+    }
   }
 
   /// Kullanıcı elle durdurur: çalışma fazındaysa geçen süreyi kaydet, çevrimdışına çek.
@@ -776,17 +974,21 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     final startedAt = state.startedAt;
     final subjectId = state.subjectId;
     final wasWork = state.phase == TimerPhase.work;
-    final end = (at != null &&
-            startedAt != null &&
-            at.isAfter(startedAt))
+    final end = (at != null && startedAt != null && at.isAfter(startedAt))
         ? at
         : DateTime.now();
+
+    await _verifiedStartFuture;
 
     // WP-104: oturum kaydını native FGS teardown (_finish → STOP_SILENT) öncesine
     // al. Süreç erken ölürse bile offline-first cache/outbox oturumu tutar;
     // STOP_SILENT kuyruğa interval yazmadığı için çift kayıt üretmez.
     if (wasWork && startedAt != null) {
-      await _recordSession(startedAt, end, subjectId);
+      if (state.liveRunToken case final token?) {
+        await _finalizeVerifiedRun(token);
+      } else {
+        await _recordSession(startedAt, end, subjectId);
+      }
     }
     _finish();
   }
@@ -811,6 +1013,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
 
   /// Mevcut faz hedefe ulaştı: saf karara göre kaydet/geçiş yap.
   Future<void> _completePhase(int targetSeconds) async {
+    await _verifiedStartFuture;
     final startedAt = state.startedAt;
     final subjectId = state.subjectId;
     if (startedAt == null) return;
@@ -822,6 +1025,20 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       cycle: state.cycle,
       cycles: state.cycles,
     );
+
+    if (state.liveRunToken case final token?) {
+      try {
+        if (t.finished) {
+          await _finalizeVerifiedRun(token);
+        } else if (t.nextPhase == TimerPhase.rest) {
+          await ref.read(studyRepositoryProvider).pauseLiveRun(token);
+        } else {
+          await ref.read(studyRepositoryProvider).resumeLiveRun(token);
+        }
+      } catch (_) {
+        state = state.copyWith(verification: TimerVerification.statisticsOnly);
+      }
+    }
 
     if (t.finished) {
       _finish(lastEvent: t.event);
@@ -846,8 +1063,33 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     }
 
     // Çalışma fazı hedefe ulaştıysa süreyi kaydet (mola kaydedilmez).
-    if (t.recordWork) {
+    if (t.recordWork && !state.isVerifiedRun) {
       await _recordSession(startedAt, phaseEnd, subjectId);
+    }
+  }
+
+  Future<void> _finalizeVerifiedRun(String token) async {
+    final repo = ref.read(studyRepositoryProvider);
+    final build = await _clientBuildNumber();
+    try {
+      await repo.finalizeLiveRun(token);
+      await repo.recordVerifiedSessionRollout(
+        platform: _rolloutPlatform,
+        clientBuild: build,
+        capability: true,
+        outcome: LiveRolloutOutcome.verifiedFinalize,
+      );
+      ref.invalidate(userSessionsProvider);
+    } catch (_) {
+      await repo
+          .recordVerifiedSessionRollout(
+            platform: _rolloutPlatform,
+            clientBuild: build,
+            capability: true,
+            outcome: LiveRolloutOutcome.finalizeFailure,
+          )
+          .catchError((_) {});
+      rethrow;
     }
   }
 
@@ -862,6 +1104,8 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       cycle: 1,
       eventSeq: lastEvent != null ? state.eventSeq + 1 : state.eventSeq,
       lastEvent: lastEvent,
+      clearLiveRun: true,
+      verification: TimerVerification.idle,
     );
     _clearActiveTimer();
     ref
@@ -940,6 +1184,17 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       _kActiveUpdatedAt,
       DateTime.now().toUtc().toIso8601String(),
     );
+    if (state.liveRunId != null) {
+      prefs.setString(_kActiveLiveRunId, state.liveRunId!);
+    } else {
+      prefs.remove(_kActiveLiveRunId);
+    }
+    if (state.liveRunToken != null) {
+      prefs.setString(_kActiveLiveRunToken, state.liveRunToken!);
+    } else {
+      prefs.remove(_kActiveLiveRunToken);
+    }
+    prefs.setString(_kActiveStartOrigin, 'dart_app');
   }
 
   void _clearActiveTimer() {
@@ -953,6 +1208,9 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     prefs.remove(_kActiveAccumulated);
     prefs.remove(_kActiveCommandSeq);
     prefs.remove(_kActiveUpdatedAt);
+    prefs.remove(_kActiveLiveRunId);
+    prefs.remove(_kActiveLiveRunToken);
+    prefs.remove(_kActiveStartOrigin);
   }
 
   Future<void> _showTimerSurfaces({bool requestPermission = false}) async {

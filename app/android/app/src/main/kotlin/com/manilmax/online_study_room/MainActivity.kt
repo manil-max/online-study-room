@@ -53,6 +53,9 @@ class MainActivity : FlutterActivity() {
                         val phase = call.argument<String>("phase") ?: "work"
                         val cycle = (call.argument<Number>("cycle"))?.toInt() ?: 1
                         val subjectId = call.argument<String>("subjectId")
+                        val liveRunId = call.argument<String>("liveRunId")
+                        val liveRunToken = call.argument<String>("liveRunToken")
+                        val startOrigin = call.argument<String>("startOrigin") ?: "dart_app"
                         StudyTimerService.sendCommand(
                             this,
                             StudyTimerService.ACTION_START,
@@ -61,6 +64,9 @@ class MainActivity : FlutterActivity() {
                             phase = phase,
                             cycle = cycle,
                             subjectId = subjectId,
+                            liveRunId = liveRunId,
+                            liveRunToken = liveRunToken,
+                            startOrigin = startOrigin,
                         )
                         result.success(null)
                     }

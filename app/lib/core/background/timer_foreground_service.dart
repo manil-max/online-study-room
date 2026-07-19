@@ -27,6 +27,9 @@ class TimerForegroundService {
   /// App-kapalı Durdur'ların tamamlanmış çalışma aralıkları kuyruğu (native yazar,
   /// Dart `_reconcileBackgroundTimer` okur ve oturum olarak kaydeder).
   static const pendingIntervalsKey = 'timer_pending_intervals';
+  static const activeRunIdKey = 'timer_active_live_run_id';
+  static const activeRunTokenKey = 'timer_active_live_run_token';
+  static const activeOriginKey = 'timer_active_start_origin';
 
   /// Uygulama içi Başlat: native servise akan bildirimi başlat komutu gönderir.
   static Future<void> start({
@@ -35,6 +38,9 @@ class TimerForegroundService {
     required String phase,
     required int cycle,
     String? subjectId,
+    String? liveRunId,
+    String? liveRunToken,
+    String startOrigin = 'dart_app',
   }) async {
     if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) return;
     try {
@@ -44,6 +50,9 @@ class TimerForegroundService {
         'phase': phase,
         'cycle': cycle,
         'subjectId': subjectId,
+        'liveRunId': liveRunId,
+        'liveRunToken': liveRunToken,
+        'startOrigin': startOrigin,
       });
     } catch (_) {
       // Test/web-benzeri hostlarda platform kanalı yoktur; timer state bozulmaz.

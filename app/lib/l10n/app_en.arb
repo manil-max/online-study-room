@@ -4926,5 +4926,13 @@
   "taskListSyncError": "Tasks could not be refreshed. You may be offline.",
   "@taskListSyncError": { "description": "Task list offline or synchronization error" },
   "taskListRetry": "Try again",
-  "@taskListRetry": { "description": "Retry task list synchronization" }
+  "@taskListRetry": { "description": "Retry task list synchronization" },
+  "timerVerifiedSession": "Verified session · eligible for XP and achievements",
+  "@timerVerifiedSession": { "description": "Verified timer eligibility status" },
+  "timerVerificationPending": "Verifying session…",
+  "@timerVerificationPending": { "description": "Server-issued run request in progress" },
+  "timerStatisticsOnly": "Counts toward statistics, but not XP or achievements.",
+  "@timerStatisticsOnly": { "description": "Unverified fallback eligibility notice" },
+  "timerVerifiedUpdateRequired": "Update the app for verified XP. This time still counts toward statistics.",
+  "@timerVerifiedUpdateRequired": { "description": "Minimum verified build readiness notice" }
 }

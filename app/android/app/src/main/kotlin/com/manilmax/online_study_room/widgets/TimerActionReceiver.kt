@@ -20,7 +20,11 @@ class TimerActionReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == ACTION_TOGGLE_TIMER) {
-            StudyTimerService.sendCommand(context, StudyTimerService.ACTION_TOGGLE)
+            StudyTimerService.sendCommand(
+                context,
+                StudyTimerService.ACTION_TOGGLE,
+                startOrigin = "native_widget",
+            )
         }
     }
 }

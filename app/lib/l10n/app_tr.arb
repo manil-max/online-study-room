@@ -1175,5 +1175,9 @@
   "taskListDailyBadge": "Günlük",
   "taskListDailyStreakStep": "Bugünkü seri +1",
   "taskListSyncError": "Görevler yenilenemedi. Çevrimdışı olabilirsin.",
-  "taskListRetry": "Tekrar dene"
+  "taskListRetry": "Tekrar dene",
+  "timerVerifiedSession": "Doğrulanmış oturum · XP ve başarıma uygun",
+  "timerVerificationPending": "Oturum doğrulanıyor…",
+  "timerStatisticsOnly": "İstatistiğe sayılır; XP ve başarıma sayılmaz.",
+  "timerVerifiedUpdateRequired": "Doğrulanmış XP için uygulamayı güncelle. Bu süre istatistiğe sayılır."
 }

@@ -4816,5 +4816,9 @@
   "taskListDailyBadge": "يومي",
   "taskListDailyStreakStep": "سلسلة اليوم +1",
   "taskListSyncError": "تعذر تحديث المهام. قد تكون غير متصل.",
-  "taskListRetry": "أعد المحاولة"
+  "taskListRetry": "أعد المحاولة",
+  "timerVerifiedSession": "جلسة موثّقة · مؤهلة للنقاط والإنجازات",
+  "timerVerificationPending": "جارٍ توثيق الجلسة…",
+  "timerStatisticsOnly": "تُحتسب في الإحصاءات، لكن ليس في النقاط أو الإنجازات.",
+  "timerVerifiedUpdateRequired": "حدّث التطبيق للحصول على نقاط موثّقة. سيبقى هذا الوقت محسوبًا في الإحصاءات."
 }

@@ -183,6 +183,10 @@ class _FocusTimerScreenState extends ConsumerState<FocusTimerScreen> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               subjectWidget,
+                              if (timer.isRunning) ...[
+                                const SizedBox(height: 12),
+                                TimerVerificationNotice(timer: timer),
+                              ],
                               if (timer.isRunning &&
                                   timer.mode != TimerMode.stopwatch) ...[
                                 const SizedBox(height: 12),
@@ -205,6 +209,13 @@ class _FocusTimerScreenState extends ConsumerState<FocusTimerScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       subjectWidget,
+                      if (timer.isRunning) ...[
+                        const SizedBox(height: 12),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          child: TimerVerificationNotice(timer: timer),
+                        ),
+                      ],
                       if (timer.isRunning &&
                           timer.mode != TimerMode.stopwatch) ...[
                         const SizedBox(height: 12),
