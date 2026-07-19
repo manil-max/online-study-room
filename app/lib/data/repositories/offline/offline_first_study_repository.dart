@@ -25,6 +25,52 @@ class OfflineFirstStudyRepository implements StudyRepository {
   final Map<String, StreamController<List<StudySession>>> _sessionLocalHubs =
       {};
 
+  @override
+  Future<LiveStudyRun> startLiveRun({
+    required String userId,
+    required String clientRequestId,
+    String? groupId,
+    String? subjectId,
+    int clientBuild = 0,
+  }) => _remote.startLiveRun(
+    userId: userId,
+    clientRequestId: clientRequestId,
+    groupId: groupId,
+    subjectId: subjectId,
+    clientBuild: clientBuild,
+  );
+
+  @override
+  Future<LiveStudyRun> pauseLiveRun(String runToken) =>
+      _remote.pauseLiveRun(runToken);
+
+  @override
+  Future<LiveStudyRun> resumeLiveRun(String runToken) =>
+      _remote.resumeLiveRun(runToken);
+
+  @override
+  Future<StudySession> finalizeLiveRun(String runToken) =>
+      _remote.finalizeLiveRun(runToken);
+
+  @override
+  Future<VerifiedSessionConfig> fetchVerifiedSessionConfig() =>
+      _remote.fetchVerifiedSessionConfig();
+
+  @override
+  Future<void> recordVerifiedSessionRollout({
+    required String platform,
+    required int clientBuild,
+    required bool capability,
+    LiveStartOrigin? origin,
+    LiveRolloutOutcome? outcome,
+  }) => _remote.recordVerifiedSessionRollout(
+    platform: platform,
+    clientBuild: clientBuild,
+    capability: capability,
+    origin: origin,
+    outcome: outcome,
+  );
+
   Future<void> flushPending() async {
     if (_isFlushing) return;
     _isFlushing = true;
@@ -131,36 +177,40 @@ class OfflineFirstStudyRepository implements StudyRepository {
         // zaten gitti. Eski kod await flushPending() ile yavaş ağda watch'u kilitliyordu.
         unawaited(flushPending());
         final realtimeStopwatch = Stopwatch()..start();
-        remoteSub = _remote.watchUserSessions(userId).listen(
-          (rows) async {
-            final reconciled = _hotOnly(await _reconcileRemoteSessions(rows));
-            final pendingCount =
-                (await _cache.readPendingStudyMutations()).length;
-            ObservabilityService.instance.realtimeSnapshot(
-              sessionCount: reconciled.length,
-              pendingOutboxCount: pendingCount,
-              elapsedMilliseconds: realtimeStopwatch.elapsedMilliseconds,
+        remoteSub = _remote
+            .watchUserSessions(userId)
+            .listen(
+              (rows) async {
+                final reconciled = _hotOnly(
+                  await _reconcileRemoteSessions(rows),
+                );
+                final pendingCount =
+                    (await _cache.readPendingStudyMutations()).length;
+                ObservabilityService.instance.realtimeSnapshot(
+                  sessionCount: reconciled.length,
+                  pendingOutboxCount: pendingCount,
+                  elapsedMilliseconds: realtimeStopwatch.elapsedMilliseconds,
+                );
+                realtimeStopwatch
+                  ..reset()
+                  ..start();
+                await _cache.saveUserSessions(userId, reconciled);
+                if (!controller.isClosed) controller.add(reconciled);
+                unawaited(flushPending());
+              },
+              onError: (Object error, StackTrace stackTrace) async {
+                final fallback = await _cache.readUserSessions(userId);
+                ObservabilityService.instance.realtimeFallback(
+                  hadCachedRows: fallback != null,
+                );
+                if (controller.isClosed) return;
+                if (fallback != null) {
+                  controller.add(_hotOnly(fallback));
+                } else {
+                  controller.addError(error, stackTrace);
+                }
+              },
             );
-            realtimeStopwatch
-              ..reset()
-              ..start();
-            await _cache.saveUserSessions(userId, reconciled);
-            if (!controller.isClosed) controller.add(reconciled);
-            unawaited(flushPending());
-          },
-          onError: (Object error, StackTrace stackTrace) async {
-            final fallback = await _cache.readUserSessions(userId);
-            ObservabilityService.instance.realtimeFallback(
-              hadCachedRows: fallback != null,
-            );
-            if (controller.isClosed) return;
-            if (fallback != null) {
-              controller.add(_hotOnly(fallback));
-            } else {
-              controller.addError(error, stackTrace);
-            }
-          },
-        );
       } catch (error, stackTrace) {
         final fallback = await _cache.readUserSessions(userId);
         ObservabilityService.instance.realtimeFallback(

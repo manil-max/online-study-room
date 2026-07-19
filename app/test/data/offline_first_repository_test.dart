@@ -217,10 +217,7 @@ void main() {
       await _pump();
 
       expect(events.length, greaterThan(before));
-      expect(
-        events.last.map((s) => s.id),
-        contains('local-only'),
-      );
+      expect(events.last.map((s) => s.id), contains('local-only'));
       // Remote hold: yeniden emit etmedi; local hub taşıdı.
       expect(remote.userSessionEmits, lessThanOrEqualTo(1));
     },
@@ -251,7 +248,7 @@ void main() {
 
 Future<void> _pump() => Future<void>.delayed(const Duration(milliseconds: 30));
 
-class _FakeStudyRepository implements StudyRepository {
+class _FakeStudyRepository extends StudyRepository {
   final sessions = <StudySession>[];
   var dailyStats = <DailyStat>[];
   bool failWrites = false;
@@ -295,9 +292,7 @@ class _FakeStudyRepository implements StudyRepository {
       final controller = StreamController<List<StudySession>>();
       controller.onListen = () {
         userSessionEmits++;
-        controller.add(
-          sessions.where((s) => s.userId == userId).toList(),
-        );
+        controller.add(sessions.where((s) => s.userId == userId).toList());
         // Bilerek kapatma: remote "realtime kopuk / gecikmiş" senaryosu.
       };
       return controller.stream;

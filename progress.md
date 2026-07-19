@@ -69,7 +69,7 @@
 - **Dal:** — (main)
 - **Başlangıç:** —
 - **Son güncelleme:** 2026-07-19 (Europe/Istanbul)
-- **Not:** WP-215 kod + otomatik test tamamlandı; beş sekmede gerçek cihaz offset/reselect QA parkta.
+- **Not:** WP-216 kod + otomatik test tamamlandı; migration/RLS ve iki cihaz lifecycle staging doğrulaması parkta.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
@@ -112,7 +112,7 @@
 | WP-208 | [~] Kod tamamlandı — test bekliyor | **[EXPAND 2]** Self-only gerçek metric progress + Kusursuz Ay 30-gün evaluator contract'ı + legacy audit/job altyapısı | ← WP-209 |
 | WP-210 | [~] Kod tamamlandı — test bekliyor | **[CLIENT 3]** Claim-capable UI + gerçek progress/streak + az-kaldı + tüm achievement ARB anahtarları | ← WP-208, WP-209 · ARB yazar |
 | WP-211 | [~] Kod tamamlandı — test bekliyor | Reward banner/nav badge + tüm tab indekslerinin kanonik sözleşmesi | ← WP-210 · `core/navigation/**` yazarı |
-| WP-216 | [ ] Bekliyor | **[TRUST SERVER 4]** Server-issued live run/segment + immutable grup bağlamı + minimal rollout agregası; eski davranış değişmez | ← WP-208 · WP-217/218/220 ön-koşulu |
+| WP-216 | [~] Kod tamamlandı — test bekliyor | **[TRUST SERVER 4]** Server-issued live run/segment + immutable grup bağlamı + minimal rollout agregası; eski davranış değişmez | ← WP-208 · WP-217/218/220 ön-koşulu |
 | WP-220 | [ ] Bekliyor | **[TRUST CLIENT 5]** Dart timer/native outbox verified köprüsü + stat-only saf-native fallback + shadow telemetry + Android ≤13 QA | ← WP-216 · WP-219 sert ön-koşulu |
 | WP-217 | [ ] Bekliyor | Mola Düşmanı verified segment motoru + bounded konservatif legacy retro job tanımı | ← WP-216 |
 | WP-218 | [ ] Bekliyor | Alfa/Kamp/Lokomotif exact verified grup motoru + legacy proxy/dirty bucket | ← WP-216, WP-217 |
@@ -141,6 +141,7 @@
 - **WP-211 — Reward banner/badge + kanonik tab indeksleri** · Kod + otomatik test tamamlandı (`flutter analyze`, 582 test) · Commit: bu WP commit'i · **Cihazda doğrulanmalı:** pending reward'ın ≤5 sn içinde mobil banner+Profil badge'de görünmesi ve claim sonrası kaybolması; banner kapatıldığında badge'in kalması; taç yükselişi kutlamasının tek sefer çalışması/reduce-motion; desktop banner yerleşimi; Android cihaz kısayollarının Ana Sayfa/Gruplar/İstatistik sekmelerine doğru gitmesi.
 - **WP-213 — Günlük görev UI + 00:00 yenileme** · Kod + otomatik test tamamlandı (`flutter analyze`, 586 test) · Commit: bu WP commit'i · **Cihazda doğrulanmalı:** günlük ekle→bugün tamamla/geri al→İstanbul 00:00'da yeniden aktif; uygulama arka planda geceyi geçince resume refresh; offline hata/retry ve yeniden bağlanma; iki cihaz toggle/undo görünümü; 360 px ve klavye açık editör erişilebilirliği.
 - **WP-215 — Beş ana sekmede tap-to-top** · Kod + otomatik test tamamlandı (`flutter analyze`, 587 test) · Commit: bu WP commit'i · **Cihazda doğrulanmalı:** Saat/Gruplar/Profil ve İstatistik kişisel+grup listelerinde offset>0 iken aynı taba yeniden basınca ≤300 ms'de 0; boş/build-öncesi/zaten-top no-op; Home davranışı ve nested grup kartı jestleri regresyonsuz.
+- **WP-216 — Server-issued verified live session expansion** · Kod + otomatik test tamamlandı (`flutter analyze`, 596 test) · Commit: bu WP commit'i · **Staging/cihazda doğrulanmalı:** 0051 dry-run/rollback rehearsal; direct DML ile non-null `live_run_id` ve verified update/delete reddi; iki cihaz tek aktif run; üyelik değişimi/grup silimi sonrası immutable snapshot; start/pause/resume/finalize cevap kaybı ve retry; eski client normal session + mevcut XP regresyonu; 30 günlük rollout retention/cron ve reconciliation.
 
 ## Tamamlanan İş Paketleri
 

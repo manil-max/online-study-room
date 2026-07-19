@@ -14,6 +14,98 @@ class SupabaseStudyRepository implements StudyRepository {
 
   final SupabaseClient _client;
 
+  Map<String, dynamic> _rpcMap(dynamic value) {
+    if (value is! Map) throw const FormatException('RPC map bekleniyordu');
+    return Map<String, dynamic>.from(value);
+  }
+
+  String _startOriginName(LiveStartOrigin value) => switch (value) {
+    LiveStartOrigin.dartApp => 'dart_app',
+    LiveStartOrigin.nativeWidget => 'native_widget',
+    LiveStartOrigin.nativeNotification => 'native_notification',
+  };
+
+  String _rolloutOutcomeName(LiveRolloutOutcome value) => switch (value) {
+    LiveRolloutOutcome.verifiedFinalize => 'verified_finalize',
+    LiveRolloutOutcome.unverifiedFallback => 'unverified_fallback',
+    LiveRolloutOutcome.finalizeFailure => 'finalize_failure',
+  };
+
+  @override
+  Future<LiveStudyRun> startLiveRun({
+    required String userId,
+    required String clientRequestId,
+    String? groupId,
+    String? subjectId,
+    int clientBuild = 0,
+  }) async {
+    // userId yalnız dual-repository paritesi içindir. Sunucu sahibi auth.uid()
+    // üzerinden belirler; istemciden user owner parametresi gönderilmez.
+    final raw = await _client.rpc(
+      'start_verified_live_run',
+      params: {
+        'p_client_request_id': clientRequestId,
+        'p_group_id': groupId,
+        'p_subject_id': subjectId,
+        'p_client_build': clientBuild,
+      },
+    );
+    return LiveStudyRun.fromMap(_rpcMap(raw));
+  }
+
+  @override
+  Future<LiveStudyRun> pauseLiveRun(String runToken) async {
+    final raw = await _client.rpc(
+      'pause_verified_live_run',
+      params: {'p_run_token': runToken},
+    );
+    return LiveStudyRun.fromMap(_rpcMap(raw));
+  }
+
+  @override
+  Future<LiveStudyRun> resumeLiveRun(String runToken) async {
+    final raw = await _client.rpc(
+      'resume_verified_live_run',
+      params: {'p_run_token': runToken},
+    );
+    return LiveStudyRun.fromMap(_rpcMap(raw));
+  }
+
+  @override
+  Future<StudySession> finalizeLiveRun(String runToken) async {
+    final raw = await _client.rpc(
+      'finalize_verified_live_run',
+      params: {'p_run_token': runToken},
+    );
+    return StudySession.fromMap(_rpcMap(raw));
+  }
+
+  @override
+  Future<VerifiedSessionConfig> fetchVerifiedSessionConfig() async {
+    final raw = await _client.rpc('verified_session_client_config');
+    return VerifiedSessionConfig.fromMap(_rpcMap(raw));
+  }
+
+  @override
+  Future<void> recordVerifiedSessionRollout({
+    required String platform,
+    required int clientBuild,
+    required bool capability,
+    LiveStartOrigin? origin,
+    LiveRolloutOutcome? outcome,
+  }) async {
+    await _client.rpc(
+      'record_verified_session_rollout',
+      params: {
+        'p_platform': platform,
+        'p_client_build': clientBuild,
+        'p_capability': capability,
+        'p_origin': origin == null ? null : _startOriginName(origin),
+        'p_outcome': outcome == null ? null : _rolloutOutcomeName(outcome),
+      },
+    );
+  }
+
   @override
   Future<void> addSession(StudySession session) async {
     // Oturum id'si istemcide üretilen idempotency anahtarıdır. Ağ cevabı
