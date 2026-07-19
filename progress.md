@@ -69,7 +69,7 @@
 - **Dal:** — (main)
 - **Başlangıç:** —
 - **Son güncelleme:** 2026-07-19 (Europe/Istanbul)
-- **Not:** WP-213 kod + otomatik test tamamlandı; gerçek cihaz 00:00/offline/çok-cihaz UI QA parkta.
+- **Not:** WP-215 kod + otomatik test tamamlandı; beş sekmede gerçek cihaz offset/reselect QA parkta.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
@@ -120,7 +120,7 @@
 | WP-212 | [~] Kod tamamlandı — test bekliyor | Günlük görev cloud model + toggle/undo + tombstone + idempotent çok-cihaz ops (server 00NN) | plan v3.1 |
 | WP-213 | [~] Kod tamamlandı — test bekliyor | Görev UI: günlük tip ekleme + bugünün listesi + 00:00 yenileme | ← WP-212 · ARB yazar |
 | WP-214 | [~] Kod tamamlandı — test bekliyor | Grup profil fotoğrafı: `avatar_path` + private bucket/signed URL + admin RLS + discovery | plan v3.1 |
-| WP-215 | [ ] Bekliyor | Tap-to-top: gerçek beş scroll dosyası, WP-211 kanonik tab indeksleri | ← WP-211, WP-214 |
+| WP-215 | [~] Kod tamamlandı — test bekliyor | Tap-to-top: gerçek beş scroll dosyası, WP-211 kanonik tab indeksleri | ← WP-211, WP-214 |
 
 > **Açık ops işleri (kod dışı — bu tabloda değil, kanonik takip başka dosyada):** Play production programı (NO-GO), Edge deploy'lar (hesap silme purge CRON, aylık rapor cron), Data Safety/legal URL Console adımları → [`backlog.md`](backlog.md) + [`docs/PLAY-STORE-HAZIRLIK-TARAMASI.md`](docs/PLAY-STORE-HAZIRLIK-TARAMASI.md).
 > Tarihsel `[x]`/`[~]` WP kartları (WP-104…207) ve eski dalga/çakışma notları arşive taşındı (2026-07-19 temizlik).
@@ -140,6 +140,7 @@
 - **WP-210 — Claim/progress başarım UI** · Kod + otomatik test tamamlandı (`flutter analyze`, 574 test) · Commit: bu WP commit'i · **Cihazda/staging'de doğrulanmalı:** capability kaydı sonrası injected pending ödülün ≤1 sn görünmesi; tekli/toplu claim yarışında ikinci XP artışı olmaması; server yanıtı öncesi XP/rozet animasyonu başlamaması; claim sonrası profil/reward yenilenmesi; offline retry; reduce-motion ve 360/600/1200 px gerçek cihaz görsel/erişilebilirlik kontrolü.
 - **WP-211 — Reward banner/badge + kanonik tab indeksleri** · Kod + otomatik test tamamlandı (`flutter analyze`, 582 test) · Commit: bu WP commit'i · **Cihazda doğrulanmalı:** pending reward'ın ≤5 sn içinde mobil banner+Profil badge'de görünmesi ve claim sonrası kaybolması; banner kapatıldığında badge'in kalması; taç yükselişi kutlamasının tek sefer çalışması/reduce-motion; desktop banner yerleşimi; Android cihaz kısayollarının Ana Sayfa/Gruplar/İstatistik sekmelerine doğru gitmesi.
 - **WP-213 — Günlük görev UI + 00:00 yenileme** · Kod + otomatik test tamamlandı (`flutter analyze`, 586 test) · Commit: bu WP commit'i · **Cihazda doğrulanmalı:** günlük ekle→bugün tamamla/geri al→İstanbul 00:00'da yeniden aktif; uygulama arka planda geceyi geçince resume refresh; offline hata/retry ve yeniden bağlanma; iki cihaz toggle/undo görünümü; 360 px ve klavye açık editör erişilebilirliği.
+- **WP-215 — Beş ana sekmede tap-to-top** · Kod + otomatik test tamamlandı (`flutter analyze`, 587 test) · Commit: bu WP commit'i · **Cihazda doğrulanmalı:** Saat/Gruplar/Profil ve İstatistik kişisel+grup listelerinde offset>0 iken aynı taba yeniden basınca ≤300 ms'de 0; boş/build-öncesi/zaten-top no-op; Home davranışı ve nested grup kartı jestleri regresyonsuz.
 
 ## Tamamlanan İş Paketleri
 

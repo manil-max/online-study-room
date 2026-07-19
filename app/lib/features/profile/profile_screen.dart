@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../core/desktop/desktop_window.dart';
+import '../../core/navigation/nav_index.dart';
 import '../../core/widgets/crowned_avatar.dart';
 import '../../core/widgets/safe_screen_padding.dart';
 import '../../data/providers/auth_providers.dart';
@@ -15,11 +16,37 @@ import 'widgets/gamification_card.dart';
 
 /// Profil sekmesi: foto, görünen ad, ayarlar. Grup yönetimi → Gruplar sekmesi.
 /// Bkz. project.md §3.2.
-class ProfileScreen extends ConsumerWidget {
+class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends ConsumerState<ProfileScreen> {
+  final _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    ref.listen(navReselectProvider, (previous, next) {
+      if (next.tabIndex != AppTab.profile.index ||
+          next.tick <= (previous?.tick ?? 0) ||
+          !_scrollController.hasClients ||
+          _scrollController.offset <= 0) {
+        return;
+      }
+      _scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+      );
+    });
     final theme = Theme.of(context);
     final profile = ref.watch(authStateProvider).value;
 
@@ -29,6 +56,7 @@ class ProfileScreen extends ConsumerWidget {
           ? null
           : AppBar(title: Text(AppLocalizations.of(context).profileProfil)),
       body: ListView(
+        controller: _scrollController,
         padding: getSafeVerticalPadding(context, horizontal: 24, vertical: 24),
         children: [
           DesktopReadingBody(

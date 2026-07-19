@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/desktop/desktop_window.dart';
+import '../../core/navigation/nav_index.dart';
 import '../../core/widgets/safe_screen_padding.dart';
 import '../../data/models/study_group.dart';
 import '../../data/providers/group_providers.dart';
@@ -22,15 +23,42 @@ import 'widgets/study_timer_card.dart';
 /// Sınıflar sekmesi: aktif sınıfın canlı ekranı + çoklu sınıf değiştirici.
 /// Bkz. project.md §3.0/§3.5/§3.8. Sınıf yoksa oluştur/katıl; varsa sayaç +
 /// canlı üye listesi. Başlığa (sınıf adına) dokununca sınıf değiştirici açılır.
-class ClassroomScreen extends ConsumerWidget {
+class ClassroomScreen extends ConsumerStatefulWidget {
   const ClassroomScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ClassroomScreen> createState() => _ClassroomScreenState();
+}
+
+class _ClassroomScreenState extends ConsumerState<ClassroomScreen> {
+  final _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    ref.listen(navReselectProvider, (previous, next) {
+      if (next.tabIndex != AppTab.groups.index ||
+          next.tick <= (previous?.tick ?? 0) ||
+          !_scrollController.hasClients ||
+          _scrollController.offset <= 0) {
+        return;
+      }
+      _scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+      );
+    });
     final groupAsync = ref.watch(userGroupProvider);
     final body = groupAsync.when(
-      data: (group) =>
-          group == null ? const _NoGroupView() : _GroupView(group: group),
+      data: (group) => group == null
+          ? const _NoGroupView()
+          : _GroupView(group: group, controller: _scrollController),
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (_, _) => Center(
         child: Text(AppLocalizations.of(context).authBeklenmeyenBirHataOlustu),
@@ -115,9 +143,10 @@ class _NoGroupView extends ConsumerWidget {
 /// WP-172: sabit ListView — kartlar nested scroll kullanmaz (unbounded yükseklik);
 /// Home dashboard sürükle-bırak burada YOK.
 class _GroupView extends ConsumerWidget {
-  const _GroupView({required this.group});
+  const _GroupView({required this.group, required this.controller});
 
   final StudyGroup group;
+  final ScrollController controller;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -126,6 +155,7 @@ class _GroupView extends ConsumerWidget {
 
     // Sıra (KALITE-PROGRAMI §8.3 Gruplar): kamp ateşi → hedef → sıralama → trend.
     return ListView(
+      controller: controller,
       // Kartlar üzerindeki jestler de dikey kaydırmaya gitsin.
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       padding: getSafeVerticalPadding(context, horizontal: 16, vertical: 16),

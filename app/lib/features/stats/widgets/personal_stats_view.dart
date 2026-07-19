@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/stats/session_window.dart';
+import '../../../core/navigation/nav_index.dart';
 import '../../../core/stats/stats_period.dart';
 import '../../../core/stats/study_stats.dart';
 import '../../../core/theme/subject_colors.dart';
@@ -29,14 +30,42 @@ import '../stats_l10n.dart';
 
 /// Kişisel istatistik: sabit ListView bölümleri (WP-179; sürükle-grid yok).
 /// [sessions] sıcak pencere; [summary] yıl/ömür; uzun aralık RPC.
-class PersonalStatsView extends ConsumerWidget {
+class PersonalStatsView extends ConsumerStatefulWidget {
   const PersonalStatsView({super.key, required this.sessions, this.summary});
 
   final List<StudySession> sessions;
   final UserStudySummary? summary;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PersonalStatsView> createState() => _PersonalStatsViewState();
+}
+
+class _PersonalStatsViewState extends ConsumerState<PersonalStatsView> {
+  final _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    ref.listen(navReselectProvider, (previous, next) {
+      if (next.tabIndex != AppTab.stats.index ||
+          next.tick <= (previous?.tick ?? 0) ||
+          !_scrollController.hasClients ||
+          _scrollController.offset <= 0) {
+        return;
+      }
+      _scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+      );
+    });
+    final sessions = widget.sessions;
+    final summary = widget.summary;
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     final now = DateTime.now();
@@ -91,6 +120,7 @@ class PersonalStatsView extends ConsumerWidget {
     final periodTotalSec = totalSeconds(periodSessions);
 
     return ListView(
+      controller: _scrollController,
       padding: getSafeVerticalPadding(context),
       children: [
         // Üst dönem + seçili dönem özeti
@@ -211,9 +241,7 @@ class PersonalStatsView extends ConsumerWidget {
                     );
                   }
                   return AreaLineChart(
-                    values: [
-                      for (final d in series) d.seconds / 3600.0,
-                    ],
+                    values: [for (final d in series) d.seconds / 3600.0],
                     labels: [
                       for (final d in series) '${d.day.day}/${d.day.month}',
                     ],
@@ -297,10 +325,7 @@ class PersonalStatsView extends ConsumerWidget {
         ),
         const SizedBox(height: 16),
         // P11 detaylı geçmiş (RPC / uzun aralık)
-        Text(
-          l10n.statsSeciliTarihAraligi,
-          style: theme.textTheme.titleMedium,
-        ),
+        Text(l10n.statsSeciliTarihAraligi, style: theme.textTheme.titleMedium),
         const SizedBox(height: 8),
         longTotalsAsync.when(
           loading: () => const Card(
@@ -347,9 +372,7 @@ class PersonalStatsView extends ConsumerWidget {
                       height: 120,
                       child: AreaLineChart(
                         values: vals,
-                        labels: [
-                          for (final d in days) '${d.day}/${d.month}',
-                        ],
+                        labels: [for (final d in days) '${d.day}/${d.month}'],
                         yUnit: l10n.statsSaatKisa,
                       ),
                     ),
@@ -481,9 +504,10 @@ class _PersonalRadar extends StatelessWidget {
     final durationScore = (total / (10 * 3600)).clamp(0.0, 1.0);
     final balance = total <= 0
         ? 0.5
-        : (1.0 -
-                ((split.weekday - split.weekend).abs() / total))
-            .clamp(0.0, 1.0);
+        : (1.0 - ((split.weekday - split.weekend).abs() / total)).clamp(
+            0.0,
+            1.0,
+          );
 
     return RadarStatChart(
       values: [tempo, consistency, variety, durationScore, balance],

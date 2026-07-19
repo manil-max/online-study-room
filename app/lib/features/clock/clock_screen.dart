@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/desktop/desktop_window.dart';
+import '../../core/navigation/nav_index.dart';
 import '../../core/time_engine/alarm_scheduler.dart';
 import '../../core/utils/duration_format.dart';
 import '../../data/providers/alarm_providers.dart';
@@ -33,6 +34,7 @@ class ClockScreen extends ConsumerStatefulWidget {
 class _ClockScreenState extends ConsumerState<ClockScreen> {
   ClockTab _tab = ClockTab.home;
   Timer? _timer;
+  final _scrollController = ScrollController();
   DateTime _now = DateTime.now();
 
   @override
@@ -48,6 +50,7 @@ class _ClockScreenState extends ConsumerState<ClockScreen> {
   @override
   void dispose() {
     _timer?.cancel();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -87,6 +90,7 @@ class _ClockScreenState extends ConsumerState<ClockScreen> {
         : (target - studySeconds).clamp(0, target);
 
     return ListView(
+      controller: _scrollController,
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
       children: [
         // Büyük saat
@@ -330,6 +334,19 @@ class _ClockScreenState extends ConsumerState<ClockScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(navReselectProvider, (previous, next) {
+      if (next.tabIndex != AppTab.tools.index ||
+          next.tick <= (previous?.tick ?? 0) ||
+          !_scrollController.hasClients ||
+          _scrollController.offset <= 0) {
+        return;
+      }
+      _scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+      );
+    });
     return OrientationBuilder(
       builder: (context, orientation) {
         if (!isDesktopWindow && orientation == Orientation.landscape) {

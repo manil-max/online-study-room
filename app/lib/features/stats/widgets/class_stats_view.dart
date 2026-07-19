@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/stats/stats_period.dart';
+import '../../../core/navigation/nav_index.dart';
 import '../../../core/stats/study_stats.dart';
 import '../../../core/theme/subject_colors.dart';
 import '../../../core/utils/duration_format.dart';
@@ -27,7 +28,7 @@ import '../stats_l10n.dart';
 
 /// Sınıf (ortak) istatistikleri: ortak dönem + sıralama + özet.
 /// Dönem üst [StatsPeriodBar] / [statsPeriodProvider] ile gelir; yerel seçici yok.
-class ClassStatsView extends ConsumerWidget {
+class ClassStatsView extends ConsumerStatefulWidget {
   const ClassStatsView({
     super.key,
     required this.stats,
@@ -49,7 +50,40 @@ class ClassStatsView extends ConsumerWidget {
   final DateTime? groupAvatarUpdatedAt;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ClassStatsView> createState() => _ClassStatsViewState();
+}
+
+class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
+  final _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    ref.listen(navReselectProvider, (previous, next) {
+      if (next.tabIndex != AppTab.stats.index ||
+          next.tick <= (previous?.tick ?? 0) ||
+          !_scrollController.hasClients ||
+          _scrollController.offset <= 0) {
+        return;
+      }
+      _scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+      );
+    });
+    final stats = widget.stats;
+    final members = widget.members;
+    final currentUserId = widget.currentUserId;
+    final groupName = widget.groupName;
+    final groupGoalMinutes = widget.groupGoalMinutes;
+    final groupAvatarPath = widget.groupAvatarPath;
+    final groupAvatarUpdatedAt = widget.groupAvatarUpdatedAt;
     final theme = Theme.of(context);
     final now = DateTime.now();
     final sel = ref.watch(statsPeriodProvider);
@@ -152,6 +186,7 @@ class ClassStatsView extends ConsumerWidget {
     }
 
     return ListView(
+      controller: _scrollController,
       padding: getSafeVerticalPadding(context),
       children: [
         // Grup başlığı + grup değiştirici (yalnızca geçiş, basılan yerde açılır).
