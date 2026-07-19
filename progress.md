@@ -58,7 +58,7 @@
 - **Dal:** — (main)
 - **Başlangıç:** —
 - **Son güncelleme:** 2026-07-19 (Europe/Istanbul)
-- **Not:** beta-v41 düzeltme programı. Plan: `docs/features/BETA-v41-TEKNIK-PLAN.md` (WP sırası H→I→G→J→A+B→C→D→E→F→K→L). WP-221 (avatar yükleme fix) + **WP-224** (avatar OKUMA fix) kod bitti → Test için bekleyenler'de. WP-224: `0049`'daki `group_avatars_member_read` politikası belirsiz `name` kolonu yüzünden `g.name`'e bağlanıyordu (grup adını klasör sanıyordu) → signed URL her grupta reddediliyordu; `0055` politikayı `in (...)` biçimiyle düzeltti. **Sadece DB — yeni APK gerekmez; canlıda `0055` uygulanmalı.**
+- **Not:** beta-v41 düzeltme programı. Plan: `docs/features/BETA-v41-TEKNIK-PLAN.md` (WP sırası H→I→G→J→A+B→C→D→E→F→K→L). WP-221 (avatar yükleme fix) + **WP-224** (avatar OKUMA fix) → **cihazda doğrulandı (2026-07-19)**: `0055` canlıya uygulandı, storage okuma testi `true`, uygulamada fotoğraf göründü. WP-224 kök neden: `0049`'daki `group_avatars_member_read` politikası belirsiz `name` kolonu yüzünden `g.name`'e bağlanıyordu (grup adını klasör sanıyordu) → signed URL her grupta reddediliyordu; `0055` politikayı `in (...)` biçimiyle düzeltti (sadece DB, APK gerekmedi). **Saha bulgusu #6 kapandı.**
 
 ### Codex Lane
 - **Durum:** [x] Boşta
