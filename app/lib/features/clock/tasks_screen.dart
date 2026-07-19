@@ -63,6 +63,15 @@ class _TasksScreenState extends ConsumerState<TasksScreen>
   Widget build(BuildContext context) {
     ref.watch(userTaskDayRefreshLifecycleProvider);
     final l10n = AppLocalizations.of(context);
+    // Optimistic yazma arka planda hata verirse: state geri alınır + uyarı (WP-J).
+    ref.listen(userTaskMutationErrorProvider, (prev, next) {
+      if (prev == null) return;
+      if (next <= prev || !mounted) return;
+      final messenger = ScaffoldMessenger.maybeOf(context);
+      messenger
+        ?..clearSnackBars()
+        ..showSnackBar(SnackBar(content: Text(l10n.taskListSyncError)));
+    });
     final allAsync = ref.watch(userTasksProvider);
     final now = DateTime.now();
 

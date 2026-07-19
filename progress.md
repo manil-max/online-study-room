@@ -50,15 +50,15 @@
 - **Not:** WP-83 tamamlandı, envanter ve sözlük oluşturuldu.
 
 ### Claude Lane
-- **Durum:** [x] Boşta
-- **Faz/WP:** — (beta-v41 programı sürüyor; WP-221 test için parkta)
-- **Aşama:** —
-- **SAHİP yollar:** —
-- **Ortak/riskli yüzey:** —
+- **Durum:** [~] Aktif
+- **Faz/WP:** beta-v42 ekonomi programı — kalan WP'ler (sıra: J→A+B→C→D→E→F→K→L)
+- **Aşama:** Geliştiriliyor
+- **SAHİP yollar:** görev + başarım/ekonomi yüzeyi; her WP kendi SAHİP dosyalarını plandan alır (`docs/features/BETA-v41-TEKNIK-PLAN.md`). Aktif olarak: `app/lib/core/stats/**` (progression/ledger), `supabase/migrations/0056+`, l10n arb.
+- **Ortak/riskli yüzey:** l10n arb (üretilen `app_localizations*.dart`), `achievements_dict` şeması. Diğer lane'ler boşta → çakışma yok.
 - **Dal:** — (main)
-- **Başlangıç:** —
+- **Başlangıç:** 2026-07-19 (Europe/Istanbul)
 - **Son güncelleme:** 2026-07-19 (Europe/Istanbul)
-- **Not:** beta-v41 düzeltme programı. Plan: `docs/features/BETA-v41-TEKNIK-PLAN.md` (WP sırası H→I→G→J→A+B→C→D→E→F→K→L). WP-221 (avatar yükleme fix) + **WP-224** (avatar OKUMA fix) → **cihazda doğrulandı (2026-07-19)**: `0055` canlıya uygulandı, storage okuma testi `true`, uygulamada fotoğraf göründü. WP-224 kök neden: `0049`'daki `group_avatars_member_read` politikası belirsiz `name` kolonu yüzünden `g.name`'e bağlanıyordu (grup adını klasör sanıyordu) → signed URL her grupta reddediliyordu; `0055` politikayı `in (...)` biçimiyle düzeltti (sadece DB, APK gerekmedi). **Saha bulgusu #6 kapandı.**
+- **Not:** beta-v41 turu kapandı (WP-221/222/223/224 cihazda doğrulandı). Şimdi kalan ekonomi/kademe/alpha WP'leri sırayla yürüyor (beta-v42 olacak). **WP-J** kod+test tamamlandı (görev sırası daily-üstte + optimistic UI; `sortUserTasksByDue` daily-first, `userTasksProvider` AsyncNotifier'a çevrildi, ekle/tamamla/sil optimistic, hata→geri al+snackbar). Cihazda QA: ~1.5 sn gecikme kalktı mı + 00:00 sonrası daily yenilenme gözlemi. Kullanıcı isteği: **"Sürü Lideri" → "Lider Kurt"** (WP-L; plan dokümanlarında güncellendi). Kalanlar sırayla A+B (6 kademe), C (claim inbox), D/E/F (kural/metric), K/L (alpha). Migration'lar canlıya kullanıcı tarafından uygulanacak.
 
 ### Codex Lane
 - **Durum:** [x] Boşta

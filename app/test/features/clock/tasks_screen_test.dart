@@ -111,10 +111,9 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          userTasksProvider.overrideWith((ref) async {
-            loads++;
-            return const <UserTask>[];
-          }),
+          userTasksProvider.overrideWith(
+            () => _CountingTasksNotifier(() => loads++),
+          ),
         ],
         child: MaterialApp(
           localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -138,9 +137,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          userTasksProvider.overrideWith(
-            (ref) => Future<List<UserTask>>.error('offline'),
-          ),
+          userTasksProvider.overrideWith(_ErrorTasksNotifier.new),
         ],
         child: MaterialApp(
           localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -192,4 +189,22 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.text('Täglich erneuern'), findsOneWidget);
   });
+}
+
+/// build() her çağrıldığında sayaç artıran sahte notifier (resume reload testi).
+class _CountingTasksNotifier extends UserTasksNotifier {
+  _CountingTasksNotifier(this.onBuild);
+  final VoidCallback onBuild;
+
+  @override
+  Future<List<UserTask>> build() async {
+    onBuild();
+    return const <UserTask>[];
+  }
+}
+
+/// build() hata fırlatan sahte notifier (çevrimdışı/hata testi).
+class _ErrorTasksNotifier extends UserTasksNotifier {
+  @override
+  Future<List<UserTask>> build() async => throw 'offline';
 }

@@ -213,7 +213,7 @@ migration (weekly metric + dict satırı), l10n (isim/açıklama 4 dil), badge i
 3. **Client:** yeni kademeli başarım girişi (6 kademe), badge ikonu (kurt), 6-kademe paleti.
 4. **Eşik + XP (ONAYLI):** kademe **1/4/12/26/52/104 hafta**,
    XP **2500/6000/15000/30000/60000/120000**.
-5. **İsim (ONAYLI):** **"Sürü Lideri"** (`alpha_wolf_weekly`).
+5. **İsim (ONAYLI):** **"Lider Kurt"** (`alpha_wolf_weekly`).
 6. Sıralamada gösterilmez (kullanıcı isteği); yalnız başarım olarak.
 
 ## Yayın ve test

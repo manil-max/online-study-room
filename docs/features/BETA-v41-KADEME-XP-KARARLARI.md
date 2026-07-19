@@ -125,7 +125,7 @@ Yani `kCrownXpThresholds = [0, 20000, 75000, 200000, 500000, 1000000]`. Sunucu
 `_recalc_crown_rank` / ilgili migration ile birebir aynı olmalı. Rütbe id'leri de
 6'ya çıkar (platin → elmas'a kayar, zümrüt + immortal eklenir).
 
-## 7. Yeni başarım: Sürü Lideri (`alpha_wolf_weekly`)
+## 7. Yeni başarım: Lider Kurt (`alpha_wolf_weekly`)
 ISO hafta (Istanbul) boyunca grubun en yüksek verified toplamına sahip **tek** üye o hafta 1
 kazanım alır (beraberlikte kimse almaz). Başarım = kaç hafta 1. bitirdiğin.
 

@@ -45,6 +45,7 @@ void main() {
       DateTime? due,
       bool done = false,
       int order = 0,
+      bool daily = false,
     }) =>
         UserTask(
           id: id,
@@ -53,6 +54,8 @@ void main() {
           completed: done,
           createdAt: DateTime.utc(2026, 7, 1),
           sortOrder: order,
+          recurrence:
+              daily ? UserTaskRecurrence.daily : UserTaskRecurrence.once,
         );
 
     test('nearest due first; null last; completed after active', () {
@@ -62,6 +65,20 @@ void main() {
       final d = t(id: 'done', due: DateTime.utc(2026, 7, 18), done: true);
       final sorted = sortUserTasksByDue([c, b, d, a]);
       expect(sorted.map((e) => e.id).toList(), ['soon', 'later', 'none', 'done']);
+    });
+
+    test('daily görevler süreli/tek-sefer görevlerin üstünde (WP-J)', () {
+      final timedSoon = t(id: 'timed', due: DateTime.utc(2026, 7, 19));
+      final once = t(id: 'once', due: null);
+      final dailyA = t(id: 'dailyA', daily: true, order: 1);
+      final dailyDone = t(id: 'dailyDone', daily: true, done: true, order: 0);
+      final sorted =
+          sortUserTasksByDue([timedSoon, once, dailyDone, dailyA]);
+      // Önce günlükler (aktif → tamamlanmış), sonra süreli, en sonda süresiz.
+      expect(
+        sorted.map((e) => e.id).toList(),
+        ['dailyA', 'dailyDone', 'timed', 'once'],
+      );
     });
   });
 

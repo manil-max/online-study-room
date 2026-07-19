@@ -29,11 +29,14 @@ DateTime dueAtFromRemaining(Duration remaining, {DateTime? now}) {
   return n.toUtc().add(remaining);
 }
 
-/// Aktif liste sırası: dueAt artan; null en sona; eşitlikte sortOrder/createdAt.
-/// Tamamlananlar listenin sonuna (veya ayrı listede filtrelenir).
+/// Aktif liste sırası (WP-J):
+/// 1. Günlük (daily) görevler her zaman üstte, süreli/tek-sefer altta.
+/// 2. Her grup içinde tamamlananlar sona.
+/// 3. dueAt artan; null en sona; eşitlikte sortOrder/createdAt.
 List<UserTask> sortUserTasksByDue(List<UserTask> tasks) {
   final copy = [...tasks];
   copy.sort((a, b) {
+    if (a.isDaily != b.isDaily) return a.isDaily ? -1 : 1;
     if (a.completed != b.completed) return a.completed ? 1 : -1;
     final ad = a.dueAt;
     final bd = b.dueAt;
