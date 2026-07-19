@@ -1,9 +1,14 @@
+import 'dart:async';
+
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:timezone/timezone.dart' as tz;
 import 'package:uuid/uuid.dart';
 
 import '../../core/config/supabase_config.dart';
 import '../../core/prefs/app_prefs.dart';
+import '../../core/stats/istanbul_calendar.dart';
 import '../../core/tasks/task_deadline.dart';
 import '../models/user_task.dart';
 import '../repositories/supabase/supabase_user_task_repository.dart';
@@ -36,6 +41,62 @@ final userTaskActionsProvider = Provider<UserTaskActions>((ref) {
   return UserTaskActions(ref);
 });
 
+/// Tek container-ömürlü İstanbul gün sınırı/app-resume invalidation kaynağı.
+/// Home kartı ve Araçlar ekranı aynı instance'ı izlediği için çift timer yoktur.
+final userTaskDayRefreshLifecycleProvider =
+    Provider<UserTaskDayRefreshLifecycle>((ref) {
+      final lifecycle = UserTaskDayRefreshLifecycle(ref)..start();
+      ref.onDispose(lifecycle.dispose);
+      return lifecycle;
+    });
+
+class UserTaskDayRefreshLifecycle with WidgetsBindingObserver {
+  UserTaskDayRefreshLifecycle(this._ref);
+
+  final Ref _ref;
+  Timer? _timer;
+  var _started = false;
+
+  void start() {
+    if (_started) return;
+    _started = true;
+    WidgetsBinding.instance.addObserver(this);
+    _schedule();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) return;
+    _ref.invalidate(userTasksProvider);
+    _schedule();
+  }
+
+  void _schedule() {
+    _timer?.cancel();
+    final localNow = istanbulNow();
+    final location = tz.getLocation('Europe/Istanbul');
+    final nextDay = tz.TZDateTime(
+      location,
+      localNow.year,
+      localNow.month,
+      localNow.day + 1,
+    );
+    final delay = nextDay.toUtc().difference(DateTime.now().toUtc());
+    _timer = Timer(delay + const Duration(milliseconds: 100), () {
+      _ref.invalidate(userTasksProvider);
+      _schedule();
+    });
+  }
+
+  void dispose() {
+    if (!_started) return;
+    WidgetsBinding.instance.removeObserver(this);
+    _timer?.cancel();
+    _timer = null;
+    _started = false;
+  }
+}
+
 class UserTaskActions {
   UserTaskActions(this._ref);
 
@@ -51,7 +112,11 @@ class UserTaskActions {
 
   Future<List<UserTask>> _load() => _repo.load(userKey: _userKey);
 
-  Future<UserTask?> add({required String rawTitle, DateTime? dueAt}) async {
+  Future<UserTask?> add({
+    required String rawTitle,
+    DateTime? dueAt,
+    UserTaskRecurrence recurrence = UserTaskRecurrence.once,
+  }) async {
     final title = UserTask.normalizeTitle(rawTitle);
     if (title == null) return null;
     final current = await _load();
@@ -64,6 +129,7 @@ class UserTaskActions {
       completed: false,
       createdAt: now,
       sortOrder: current.length,
+      recurrence: recurrence,
     );
     final saved = await _repo.upsert(
       userKey: _userKey,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/core/prefs/app_prefs.dart';
+import 'package:online_study_room/data/models/user_task.dart';
 import 'package:online_study_room/data/providers/auth_providers.dart';
 import 'package:online_study_room/data/providers/user_task_providers.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_user_task_repository.dart';
@@ -47,19 +48,30 @@ void main() {
     final container = ProviderScope.containerOf(
       tester.element(find.byType(TasksCard)),
     );
-    await container.read(userTaskActionsProvider).add(
+    await container
+        .read(userTaskActionsProvider)
+        .add(
           rawTitle: 'Read',
           dueAt: DateTime.now().add(const Duration(hours: 2)),
         );
     await tester.pumpAndSettle();
 
     expect(find.text('Read'), findsOneWidget);
-    await container.read(userTaskActionsProvider).toggle(
-          (await container.read(userTasksProvider.future)).first.id,
-        );
+    await container
+        .read(userTaskActionsProvider)
+        .toggle((await container.read(userTasksProvider.future)).first.id);
     await tester.pumpAndSettle();
     // Tamamlanınca aktif listeden düşer
     expect(find.text('Read'), findsNothing);
+
+    final daily = await container
+        .read(userTaskActionsProvider)
+        .add(rawTitle: 'Daily review', recurrence: UserTaskRecurrence.daily);
+    await tester.pumpAndSettle();
+    await container.read(userTaskActionsProvider).toggle(daily!.id);
+    await tester.pumpAndSettle();
+    expect(find.text('Daily review'), findsOneWidget);
+    expect(find.text('+1'), findsOneWidget);
   });
 
   testWidgets('DashboardCardType.tasks builds TasksCard', (tester) async {

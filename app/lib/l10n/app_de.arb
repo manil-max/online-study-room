@@ -4810,5 +4810,11 @@
   "profileRewardClaimed": "{xp} XP abgeholt",
   "profileRewardAlreadyClaimed": "Diese Belohnung wurde bereits abgeholt.",
   "profileRewardClaimFailed": "Die Belohnung konnte nicht abgeholt werden. Prüfe deine Verbindung und versuche es erneut.",
-  "profileRewardSecret": "Geheime Belohnung"
+  "profileRewardSecret": "Geheime Belohnung",
+  "taskListDailyRefresh": "Täglich erneuern",
+  "taskListDailyRefreshHint": "Der Abschluss gilt nur für heute; um Mitternacht in Istanbul wird die Aufgabe wieder aktiv.",
+  "taskListDailyBadge": "Täglich",
+  "taskListDailyStreakStep": "Heutige Serie +1",
+  "taskListSyncError": "Aufgaben konnten nicht aktualisiert werden. Du bist möglicherweise offline.",
+  "taskListRetry": "Erneut versuchen"
 }

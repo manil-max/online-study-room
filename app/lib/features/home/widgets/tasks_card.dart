@@ -17,6 +17,7 @@ class TasksCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(userTaskDayRefreshLifecycleProvider);
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     final tasksAsync = ref.watch(userTasksProvider);
@@ -100,16 +101,19 @@ class TasksCard extends ConsumerWidget {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       ),
                     ),
-                    error: (_, _) => _EmptyTasks(label: l10n.taskListEmpty),
+                    error: (_, _) => _EmptyTasks(
+                      label: l10n.taskListSyncError,
+                      onRetry: () => ref.invalidate(userTasksProvider),
+                    ),
                     data: (all) {
                       final active = sortUserTasksByDue([
                         for (final t in all)
-                          if (!t.completed) t,
+                          if (!t.completed || t.isDaily) t,
                       ]);
                       if (active.isEmpty) {
                         return _EmptyTasks(label: l10n.taskListEmpty);
                       }
-                      final show = active.take(_maxVisible).toList();
+                      final show = active.take(TasksCard._maxVisible).toList();
                       final more = active.length - show.length;
                       return ListView.separated(
                         padding: EdgeInsets.zero,
@@ -157,9 +161,10 @@ class TasksCard extends ConsumerWidget {
 }
 
 class _EmptyTasks extends StatelessWidget {
-  const _EmptyTasks({required this.label});
+  const _EmptyTasks({required this.label, this.onRetry});
 
   final String label;
+  final VoidCallback? onRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -183,6 +188,13 @@ class _EmptyTasks extends StatelessWidget {
               color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
+          if (onRetry != null) ...[
+            const SizedBox(height: 6),
+            TextButton(
+              onPressed: onRetry,
+              child: Text(AppLocalizations.of(context).taskListRetry),
+            ),
+          ],
         ],
       ),
     );
@@ -216,18 +228,21 @@ class _HomeTaskTile extends StatelessWidget {
       button: true,
       label: overdue
           ? '${l10n.taskListOverdue}: ${task.title}'
-          : '${l10n.taskListIncompleteSemantic}: ${task.title}',
+          : '${task.completed ? l10n.taskListCompletedSemantic : l10n.taskListIncompleteSemantic}: ${task.title}',
       child: InkWell(
         onTap: onToggle,
         borderRadius: BorderRadius.circular(8),
         child: Padding(
-          padding: EdgeInsets.symmetric(
-            vertical: dense ? 7 : 9,
-            horizontal: 2,
-          ),
+          padding: EdgeInsets.symmetric(vertical: dense ? 7 : 9, horizontal: 2),
           child: Row(
             children: [
-              Icon(Icons.radio_button_unchecked, size: 20, color: color),
+              Icon(
+                task.completed
+                    ? Icons.check_circle
+                    : Icons.radio_button_unchecked,
+                size: 20,
+                color: task.completed ? theme.colorScheme.primary : color,
+              ),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -235,10 +250,36 @@ class _HomeTaskTile extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurface,
+                    color: task.completed
+                        ? theme.colorScheme.onSurfaceVariant
+                        : theme.colorScheme.onSurface,
+                    decoration: task.completed
+                        ? TextDecoration.lineThrough
+                        : null,
                   ),
                 ),
               ),
+              if (task.isDaily) ...[
+                const SizedBox(width: 6),
+                Tooltip(
+                  message: task.completed
+                      ? l10n.taskListDailyStreakStep
+                      : l10n.taskListDailyRefresh,
+                  child: Icon(
+                    Icons.repeat,
+                    size: 17,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+                if (task.completed)
+                  Text(
+                    '+1',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+              ],
               const SizedBox(width: 8),
               _RemainingChip(
                 text: remaining,

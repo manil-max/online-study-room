@@ -4810,5 +4810,11 @@
   "profileRewardClaimed": "تم تحصيل {xp} XP",
   "profileRewardAlreadyClaimed": "تم تحصيل هذه المكافأة من قبل.",
   "profileRewardClaimFailed": "تعذر تحصيل المكافأة. تحقق من اتصالك وحاول مجددًا.",
-  "profileRewardSecret": "مكافأة سرية"
+  "profileRewardSecret": "مكافأة سرية",
+  "taskListDailyRefresh": "تتجدد يوميًا",
+  "taskListDailyRefreshHint": "يؤثر الإكمال في اليوم الحالي فقط؛ وتصبح المهمة نشطة مجددًا عند منتصف الليل في إسطنبول.",
+  "taskListDailyBadge": "يومي",
+  "taskListDailyStreakStep": "سلسلة اليوم +1",
+  "taskListSyncError": "تعذر تحديث المهام. قد تكون غير متصل.",
+  "taskListRetry": "أعد المحاولة"
 }

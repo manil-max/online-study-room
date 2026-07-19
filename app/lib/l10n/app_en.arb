@@ -4914,5 +4914,17 @@
   "profileRewardClaimFailed": "The reward could not be claimed. Check your connection and try again.",
   "@profileRewardClaimFailed": { "description": "Reward claim failure" },
   "profileRewardSecret": "Secret reward",
-  "@profileRewardSecret": { "description": "Name used for a still-secret pending reward" }
+  "@profileRewardSecret": { "description": "Name used for a still-secret pending reward" },
+  "taskListDailyRefresh": "Refresh every day",
+  "@taskListDailyRefresh": { "description": "Daily recurring task option" },
+  "taskListDailyRefreshHint": "Completing it affects today only; it becomes active again at midnight in Istanbul.",
+  "@taskListDailyRefreshHint": { "description": "Daily task recurrence explanation" },
+  "taskListDailyBadge": "Daily",
+  "@taskListDailyBadge": { "description": "Compact daily recurring task badge" },
+  "taskListDailyStreakStep": "Today's streak +1",
+  "@taskListDailyStreakStep": { "description": "Minimal daily completion streak indicator" },
+  "taskListSyncError": "Tasks could not be refreshed. You may be offline.",
+  "@taskListSyncError": { "description": "Task list offline or synchronization error" },
+  "taskListRetry": "Try again",
+  "@taskListRetry": { "description": "Retry task list synchronization" }
 }

@@ -42,12 +42,17 @@ class _TasksScreenState extends ConsumerState<TasksScreen>
     if (result == null || !mounted) return;
     final actions = ref.read(userTaskActionsProvider);
     if (existing == null) {
-      await actions.add(rawTitle: result.title, dueAt: result.dueAt);
+      await actions.add(
+        rawTitle: result.title,
+        dueAt: result.dueAt,
+        recurrence: result.recurrence,
+      );
     } else {
       await actions.update(
         existing.copyWith(
           title: result.title,
           dueAt: result.dueAt,
+          recurrence: result.recurrence,
           clearDueAt: result.dueAt == null,
         ),
       );
@@ -56,6 +61,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen>
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(userTaskDayRefreshLifecycleProvider);
     final l10n = AppLocalizations.of(context);
     final allAsync = ref.watch(userTasksProvider);
     final now = DateTime.now();
@@ -72,20 +78,23 @@ class _TasksScreenState extends ConsumerState<TasksScreen>
         Expanded(
           child: allAsync.when(
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (_, _) => Center(child: Text(l10n.taskListEmpty)),
+            error: (_, _) => _TaskSyncError(
+              onRetry: () => ref.invalidate(userTasksProvider),
+            ),
             data: (all) {
               final active = sortUserTasksByDue([
                 for (final t in all)
-                  if (!t.completed) t,
+                  if (!t.completed || t.isDaily) t,
               ]);
-              final done = [
-                for (final t in all)
-                  if (t.completed) t,
-              ]..sort((a, b) {
-                  final ac = a.completedAt ?? a.createdAt;
-                  final bc = b.completedAt ?? b.createdAt;
-                  return bc.compareTo(ac);
-                });
+              final done =
+                  [
+                    for (final t in all)
+                      if (t.completed && !t.isDaily) t,
+                  ]..sort((a, b) {
+                    final ac = a.completedAt ?? a.createdAt;
+                    final bc = b.completedAt ?? b.createdAt;
+                    return bc.compareTo(ac);
+                  });
               return TabBarView(
                 controller: _tabs,
                 children: [
@@ -194,20 +203,51 @@ class _TaskListPane extends StatelessWidget {
               task.completed
                   ? Icons.check_circle
                   : Icons.radio_button_unchecked,
-              color: task.completed
-                  ? theme.colorScheme.primary
-                  : color,
+              color: task.completed ? theme.colorScheme.primary : color,
             ),
           ),
-          title: Text(
-            task.title,
-            style: theme.textTheme.bodyLarge?.copyWith(
-              decoration:
-                  task.completed ? TextDecoration.lineThrough : null,
-              color: task.completed
-                  ? theme.colorScheme.onSurfaceVariant
-                  : theme.colorScheme.onSurface,
-            ),
+          title: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  task.title,
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    decoration: task.completed
+                        ? TextDecoration.lineThrough
+                        : null,
+                    color: task.completed
+                        ? theme.colorScheme.onSurfaceVariant
+                        : theme.colorScheme.onSurface,
+                  ),
+                ),
+              ),
+              if (task.isDaily) ...[
+                const SizedBox(width: 6),
+                Tooltip(
+                  message: task.completed
+                      ? l10n.taskListDailyStreakStep
+                      : l10n.taskListDailyRefresh,
+                  child: Semantics(
+                    label: task.completed
+                        ? l10n.taskListDailyStreakStep
+                        : l10n.taskListDailyRefresh,
+                    child: Icon(
+                      Icons.repeat,
+                      size: 17,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 3),
+                Text(
+                  task.completed ? '+1' : l10n.taskListDailyBadge,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ],
           ),
           subtitle: task.dueAt == null
               ? Text(
@@ -273,10 +313,37 @@ class _TaskListPane extends StatelessWidget {
   }
 }
 
+class _TaskSyncError extends StatelessWidget {
+  const _TaskSyncError({required this.onRetry});
+
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.cloud_off_outlined, size: 32),
+            const SizedBox(height: 8),
+            Text(l10n.taskListSyncError, textAlign: TextAlign.center),
+            const SizedBox(height: 8),
+            OutlinedButton(onPressed: onRetry, child: Text(l10n.taskListRetry)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _TaskDraft {
-  const _TaskDraft({required this.title, this.dueAt});
+  const _TaskDraft({required this.title, required this.recurrence, this.dueAt});
   final String title;
   final DateTime? dueAt;
+  final UserTaskRecurrence recurrence;
 }
 
 class _TaskEditorSheet extends StatefulWidget {
@@ -291,6 +358,7 @@ class _TaskEditorSheetState extends State<_TaskEditorSheet> {
   late final TextEditingController _title;
   late final TextEditingController _hours;
   DateTime? _pickedDate;
+  late UserTaskRecurrence _recurrence;
   var _mode = 0; // 0 none, 1 date, 2 remaining
 
   @override
@@ -299,6 +367,7 @@ class _TaskEditorSheetState extends State<_TaskEditorSheet> {
     final e = widget.existing;
     _title = TextEditingController(text: e?.title ?? '');
     _hours = TextEditingController(text: '24');
+    _recurrence = e?.recurrence ?? UserTaskRecurrence.once;
     if (e?.dueAt != null) {
       _mode = 1;
       _pickedDate = e!.dueAt!.toLocal();
@@ -337,7 +406,10 @@ class _TaskEditorSheetState extends State<_TaskEditorSheet> {
       final h = int.tryParse(_hours.text.trim()) ?? 0;
       if (h > 0) due = dueAtFromRemaining(Duration(hours: h));
     }
-    Navigator.pop(context, _TaskDraft(title: title, dueAt: due));
+    Navigator.pop(
+      context,
+      _TaskDraft(title: title, dueAt: due, recurrence: _recurrence),
+    );
   }
 
   @override
@@ -346,64 +418,77 @@ class _TaskEditorSheetState extends State<_TaskEditorSheet> {
     final bottom = MediaQuery.viewInsetsOf(context).bottom;
     return Padding(
       padding: EdgeInsets.fromLTRB(16, 8, 16, 16 + bottom),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            widget.existing == null ? l10n.taskListAdd : l10n.taskListEdit,
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _title,
-            autofocus: true,
-            maxLength: UserTask.maxTitleLength,
-            decoration: InputDecoration(
-              hintText: l10n.taskListHint,
-              border: const OutlineInputBorder(),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              widget.existing == null ? l10n.taskListAdd : l10n.taskListEdit,
+              style: Theme.of(context).textTheme.titleMedium,
             ),
-          ),
-          const SizedBox(height: 8),
-          SegmentedButton<int>(
-            segments: [
-              ButtonSegment(value: 0, label: Text(l10n.taskListNoDue)),
-              ButtonSegment(value: 1, label: Text(l10n.taskListDueDate)),
-              ButtonSegment(value: 2, label: Text(l10n.taskListRemaining)),
-            ],
-            selected: {_mode},
-            onSelectionChanged: (s) => setState(() => _mode = s.first),
-          ),
-          const SizedBox(height: 8),
-          if (_mode == 1)
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text(
-                _pickedDate == null
-                    ? l10n.taskListDueDate
-                    : '${_pickedDate!.year}-${_pickedDate!.month.toString().padLeft(2, '0')}-${_pickedDate!.day.toString().padLeft(2, '0')}',
-              ),
-              trailing: const Icon(Icons.calendar_today),
-              onTap: _pickDate,
-            ),
-          if (_mode == 2)
+            const SizedBox(height: 12),
             TextField(
-              controller: _hours,
-              keyboardType: TextInputType.number,
+              controller: _title,
+              autofocus: true,
+              maxLength: UserTask.maxTitleLength,
               decoration: InputDecoration(
-                labelText: l10n.taskListRemaining,
-                suffixText: 'h',
+                hintText: l10n.taskListHint,
                 border: const OutlineInputBorder(),
               ),
             ),
-          const SizedBox(height: 12),
-          FilledButton(
-            onPressed: _submit,
-            child: Text(
-              widget.existing == null ? l10n.taskListAdd : l10n.taskListEdit,
+            SwitchListTile.adaptive(
+              contentPadding: EdgeInsets.zero,
+              title: Text(l10n.taskListDailyRefresh),
+              subtitle: Text(l10n.taskListDailyRefreshHint),
+              value: _recurrence == UserTaskRecurrence.daily,
+              onChanged: (daily) => setState(() {
+                _recurrence = daily
+                    ? UserTaskRecurrence.daily
+                    : UserTaskRecurrence.once;
+              }),
             ),
-          ),
-        ],
+            const SizedBox(height: 8),
+            SegmentedButton<int>(
+              segments: [
+                ButtonSegment(value: 0, label: Text(l10n.taskListNoDue)),
+                ButtonSegment(value: 1, label: Text(l10n.taskListDueDate)),
+                ButtonSegment(value: 2, label: Text(l10n.taskListRemaining)),
+              ],
+              selected: {_mode},
+              onSelectionChanged: (s) => setState(() => _mode = s.first),
+            ),
+            const SizedBox(height: 8),
+            if (_mode == 1)
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(
+                  _pickedDate == null
+                      ? l10n.taskListDueDate
+                      : '${_pickedDate!.year}-${_pickedDate!.month.toString().padLeft(2, '0')}-${_pickedDate!.day.toString().padLeft(2, '0')}',
+                ),
+                trailing: const Icon(Icons.calendar_today),
+                onTap: _pickDate,
+              ),
+            if (_mode == 2)
+              TextField(
+                controller: _hours,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: l10n.taskListRemaining,
+                  suffixText: 'h',
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+            const SizedBox(height: 12),
+            FilledButton(
+              onPressed: _submit,
+              child: Text(
+                widget.existing == null ? l10n.taskListAdd : l10n.taskListEdit,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

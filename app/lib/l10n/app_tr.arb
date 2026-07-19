@@ -1169,5 +1169,11 @@
   "profileRewardClaimed": "{xp} XP toplandı",
   "profileRewardAlreadyClaimed": "Bu ödül daha önce toplanmış.",
   "profileRewardClaimFailed": "Ödül toplanamadı. Bağlantını kontrol edip yeniden dene.",
-  "profileRewardSecret": "Gizli ödül"
+  "profileRewardSecret": "Gizli ödül",
+  "taskListDailyRefresh": "Günlük yenilenen",
+  "taskListDailyRefreshHint": "Tamamlama yalnız bugünü etkiler; İstanbul'da gece yarısı yeniden aktif olur.",
+  "taskListDailyBadge": "Günlük",
+  "taskListDailyStreakStep": "Bugünkü seri +1",
+  "taskListSyncError": "Görevler yenilenemedi. Çevrimdışı olabilirsin.",
+  "taskListRetry": "Tekrar dene"
 }
