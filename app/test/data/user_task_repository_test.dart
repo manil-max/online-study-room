@@ -55,6 +55,7 @@ void main() {
       () async {
         final repo = InMemoryUserTaskRepository();
         const id = '00000000-0000-4000-8000-000000000001';
+        final now = DateTime.now().toUtc();
         final task = UserTask(
           id: id,
           title: 'Matematik',
@@ -68,7 +69,7 @@ void main() {
           userKey: 'u1',
           taskId: id,
           completed: true,
-          occurredAt: DateTime.utc(2026, 7, 19, 12),
+          occurredAt: now,
           operationId: '00000000-0000-4000-8000-000000000002',
         );
         expect((await repo.load(userKey: 'u1')).single.completed, isTrue);
@@ -76,7 +77,7 @@ void main() {
           userKey: 'u1',
           taskId: id,
           completed: false,
-          occurredAt: DateTime.utc(2026, 7, 19, 12, 1),
+          occurredAt: now.add(const Duration(minutes: 1)),
           operationId: '00000000-0000-4000-8000-000000000003',
         );
         expect((await repo.load(userKey: 'u1')).single.completed, isFalse);

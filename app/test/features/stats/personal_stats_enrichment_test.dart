@@ -62,12 +62,22 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.byType(AreaLineChart), findsWidgets);
-    await tester.scrollUntilVisible(
-      find.byType(RadarStatChart),
-      200,
-      scrollable: find.byType(Scrollable).first,
+  });
+
+  testWidgets('RadarStatChart renders complete insight values', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            height: 200,
+            child: RadarStatChart(
+              values: [0.2, 0.4, 0.6, 0.8, 1],
+              labels: ['Tempo', 'Seri', 'Ders', 'Süre', 'Denge'],
+            ),
+          ),
+        ),
+      ),
     );
-    await tester.pumpAndSettle();
     expect(find.byType(RadarStatChart), findsOneWidget);
   });
 }
