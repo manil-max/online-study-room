@@ -2,13 +2,25 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/device_integrations/samsung_modes_service.dart';
-import '../../core/navigation/home_shell.dart';
+import '../../core/navigation/nav_index.dart';
 import 'study_providers.dart';
 
-void _handleDeviceAction(Ref ref, String action) {
-  final timerNotifier = ref.read(studyTimerProvider.notifier);
-  final navNotifier = ref.read(navIndexProvider.notifier);
+@visibleForTesting
+AppTab? appTabForDeviceAction(String action) => switch (action) {
+  'com.manilmax.online_study_room.OPEN_STATS' => AppTab.stats,
+  'com.manilmax.online_study_room.OPEN_CHAT' => AppTab.groups,
+  'com.manilmax.online_study_room.OPEN_LEADERBOARD' => AppTab.home,
+  _ => null,
+};
 
+void _handleDeviceAction(Ref ref, String action) {
+  final targetTab = appTabForDeviceAction(action);
+  if (targetTab != null) {
+    ref.read(navIndexProvider.notifier).setTab(targetTab);
+    return;
+  }
+
+  final timerNotifier = ref.read(studyTimerProvider.notifier);
   switch (action) {
     case 'com.manilmax.online_study_room.START_TIMER':
       timerNotifier.start();
@@ -26,15 +38,6 @@ void _handleDeviceAction(Ref ref, String action) {
       break;
     case 'com.manilmax.online_study_room.TAKE_BREAK':
       timerNotifier.stop();
-      break;
-    case 'com.manilmax.online_study_room.OPEN_STATS':
-      navNotifier.setIndex(2);
-      break;
-    case 'com.manilmax.online_study_room.OPEN_CHAT':
-      navNotifier.setIndex(1);
-      break;
-    case 'com.manilmax.online_study_room.OPEN_LEADERBOARD':
-      navNotifier.setIndex(0);
       break;
   }
 }

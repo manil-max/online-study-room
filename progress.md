@@ -69,7 +69,7 @@
 - **Dal:** — (main)
 - **Başlangıç:** —
 - **Son güncelleme:** 2026-07-19 (Europe/Istanbul)
-- **Not:** WP-210 kod + otomatik test tamamlandı; pending claim/animasyon ve gerçek cihaz görsel QA parkta.
+- **Not:** WP-211 kod + otomatik test tamamlandı; banner/badge zamanlaması ve cihaz/masaüstü görsel QA parkta.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
@@ -111,7 +111,7 @@
 | WP-209 | [~] Kod tamamlandı — test bekliyor | **[EXPAND 1]** Reward inbox şema + atomik/bounded claim; auto-award davranışı değişmez | plan v3.1 |
 | WP-208 | [~] Kod tamamlandı — test bekliyor | **[EXPAND 2]** Self-only gerçek metric progress + Kusursuz Ay 30-gün evaluator contract'ı + legacy audit/job altyapısı | ← WP-209 |
 | WP-210 | [~] Kod tamamlandı — test bekliyor | **[CLIENT 3]** Claim-capable UI + gerçek progress/streak + az-kaldı + tüm achievement ARB anahtarları | ← WP-208, WP-209 · ARB yazar |
-| WP-211 | [ ] Bekliyor | Reward banner/nav badge + tüm tab indekslerinin kanonik sözleşmesi | ← WP-210 · `core/navigation/**` yazarı |
+| WP-211 | [~] Kod tamamlandı — test bekliyor | Reward banner/nav badge + tüm tab indekslerinin kanonik sözleşmesi | ← WP-210 · `core/navigation/**` yazarı |
 | WP-216 | [ ] Bekliyor | **[TRUST SERVER 4]** Server-issued live run/segment + immutable grup bağlamı + minimal rollout agregası; eski davranış değişmez | ← WP-208 · WP-217/218/220 ön-koşulu |
 | WP-220 | [ ] Bekliyor | **[TRUST CLIENT 5]** Dart timer/native outbox verified köprüsü + stat-only saf-native fallback + shadow telemetry + Android ≤13 QA | ← WP-216 · WP-219 sert ön-koşulu |
 | WP-217 | [ ] Bekliyor | Mola Düşmanı verified segment motoru + bounded konservatif legacy retro job tanımı | ← WP-216 |
@@ -138,6 +138,7 @@
 - **WP-214 — Private grup avatarı** · Kod + otomatik test tamamlandı (`flutter analyze`, 562 test) · Commit: bu WP commit'i · **Cihazda/staging'de doğrulanmalı:** 0049 dry-run/rollback rehearsal; private grupta üye olmayan SELECT reddi; public keşifte authenticated signed URL; admin olmayan upload/delete reddi; JPEG/PNG/WebP ve 2 MB sınırı; avatar değişiminde eski object ve grup siliminde tüm object cleanup; 360/600/1200 px ile gerçek cihaz picker/cache yenileme görünümü.
 - **WP-208 — Private başarım metriği + Kusursuz Ay 30 gün** · Kod + otomatik test tamamlandı (`flutter analyze`, 570 test) · Commit: bu WP commit'i · **Cihazda/staging'de doğrulanmalı:** 0050 dry-run/rollback rehearsal; self-RLS ile başka kullanıcının secret progress verisinin reddi ve doğrudan DML reddi; projector aynı-değer no-op/current streak düşüşü; legacy audit belirsiz/excluded sayımları; eski 28-gün claim/ledger kazanımının korunması ve XP reconciliation.
 - **WP-210 — Claim/progress başarım UI** · Kod + otomatik test tamamlandı (`flutter analyze`, 574 test) · Commit: bu WP commit'i · **Cihazda/staging'de doğrulanmalı:** capability kaydı sonrası injected pending ödülün ≤1 sn görünmesi; tekli/toplu claim yarışında ikinci XP artışı olmaması; server yanıtı öncesi XP/rozet animasyonu başlamaması; claim sonrası profil/reward yenilenmesi; offline retry; reduce-motion ve 360/600/1200 px gerçek cihaz görsel/erişilebilirlik kontrolü.
+- **WP-211 — Reward banner/badge + kanonik tab indeksleri** · Kod + otomatik test tamamlandı (`flutter analyze`, 582 test) · Commit: bu WP commit'i · **Cihazda doğrulanmalı:** pending reward'ın ≤5 sn içinde mobil banner+Profil badge'de görünmesi ve claim sonrası kaybolması; banner kapatıldığında badge'in kalması; taç yükselişi kutlamasının tek sefer çalışması/reduce-motion; desktop banner yerleşimi; Android cihaz kısayollarının Ana Sayfa/Gruplar/İstatistik sekmelerine doğru gitmesi.
 
 ## Tamamlanan İş Paketleri
 

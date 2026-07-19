@@ -1,7 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Ana Sayfa sekmesi (IndexedStack indeksi 0).
-const kHomeTabIndex = 0;
+/// Ana kabuktaki tek kanonik sekme sırası. Ekran, destination, kısayol ve
+/// tap-to-top sözleşmeleri çıplak sayı yerine bu enum'u kullanır.
+enum AppTab { home, tools, groups, stats, profile }
+
+/// Eski tap-to-top tüketicisi için geçiş alias'ı; sayı burada da yazılmaz.
+final int kHomeTabIndex = AppTab.home.index;
 
 /// Alt navigasyonda seçili sekme indeksini tutar.
 ///
@@ -9,15 +13,20 @@ const kHomeTabIndex = 0;
 /// en üste kaydır — birçok uygulamadaki “tap to top” davranışı).
 class NavIndexNotifier extends Notifier<int> {
   @override
-  int build() => 0;
+  int build() => AppTab.home.index;
 
   void setIndex(int index) {
+    if (index < 0 || index >= AppTab.values.length) {
+      throw RangeError.range(index, 0, AppTab.values.length - 1, 'index');
+    }
     if (state == index) {
       ref.read(navReselectProvider.notifier).notifyReselect(index);
       return;
     }
     state = index;
   }
+
+  void setTab(AppTab tab) => setIndex(tab.index);
 }
 
 final navIndexProvider = NotifierProvider<NavIndexNotifier, int>(
@@ -42,5 +51,6 @@ class NavReselectNotifier extends Notifier<NavReselect> {
   }
 }
 
-final navReselectProvider =
-    NotifierProvider<NavReselectNotifier, NavReselect>(NavReselectNotifier.new);
+final navReselectProvider = NotifierProvider<NavReselectNotifier, NavReselect>(
+  NavReselectNotifier.new,
+);

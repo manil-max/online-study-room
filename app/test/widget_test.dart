@@ -5,6 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:online_study_room/core/prefs/app_prefs.dart';
 import 'package:online_study_room/data/providers/auth_providers.dart';
+import 'package:online_study_room/data/models/achievement_reward.dart';
+import 'package:online_study_room/data/providers/achievement_reward_provider.dart';
 import 'package:online_study_room/data/providers/group_providers.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_auth_repository.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_group_repository.dart';
@@ -29,12 +31,19 @@ Future<InMemoryAuthRepository> _signedInRepo() async {
 
 late SharedPreferences _prefs;
 
-Widget _appWith(InMemoryAuthRepository repo) {
+Widget _appWith(
+  InMemoryAuthRepository repo, {
+  AchievementRewardSummary? rewardSummary,
+}) {
   return ProviderScope(
     overrides: [
       authRepositoryProvider.overrideWithValue(repo),
       groupRepositoryProvider.overrideWithValue(InMemoryGroupRepository()),
       sharedPreferencesProvider.overrideWithValue(_prefs),
+      if (rewardSummary != null)
+        pendingAchievementRewardSummaryProvider.overrideWith(
+          (ref) async => rewardSummary,
+        ),
     ],
     child: const OnlineStudyRoomApp(),
   );
@@ -68,7 +77,7 @@ void main() {
     expect(find.text('Email'), findsOneWidget);
   });
 
-  testWidgets('Giriş yapılınca 4 sekme görünür', (tester) async {
+  testWidgets('Giriş yapılınca 5 sekme görünür', (tester) async {
     await tester.pumpWidget(_appWith(await _signedInRepo()));
     await tester.pumpAndSettle();
 
@@ -76,6 +85,44 @@ void main() {
     expect(find.text('Groups'), findsWidgets);
     expect(find.text('Statistics'), findsWidgets);
     expect(find.text('Profile'), findsWidgets);
+  });
+
+  testWidgets('pending ödül Profil destination badge ve bannerında görünür', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _appWith(
+        await _signedInRepo(),
+        rewardSummary: const AchievementRewardSummary(
+          pendingCount: 3,
+          pendingXp: 900,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump();
+
+    expect(find.text('3 rewards ready · 900 XP'), findsOneWidget);
+    final navBar = tester.widget<NavigationBar>(find.byType(NavigationBar));
+    final profileDestination =
+        navBar.destinations.last as NavigationDestination;
+    final profileBadge = profileDestination.icon as Badge;
+    expect(profileBadge.isLabelVisible, isTrue);
+    expect((profileBadge.label as Text).data, '3');
+
+    await tester.tap(find.byIcon(Icons.close));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('3 rewards ready · 900 XP'), findsNothing);
+    final navAfterDismiss = tester.widget<NavigationBar>(
+      find.byType(NavigationBar),
+    );
+    final destinationAfterDismiss =
+        navAfterDismiss.destinations.last as NavigationDestination;
+    final badgeAfterDismiss = destinationAfterDismiss.icon as Badge;
+    expect(badgeAfterDismiss.isLabelVisible, isTrue);
+    expect((badgeAfterDismiss.label as Text).data, '3');
   });
 
   testWidgets('Sınıfı olmayan kullanıcı oluştur/katıl seçeneklerini görür', (
