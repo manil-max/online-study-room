@@ -1,6 +1,8 @@
 import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../models/profile.dart';
 import '../../models/study_group.dart';
@@ -14,6 +16,86 @@ class SupabaseGroupRepository implements GroupRepository {
   final _random = Random.secure();
 
   static const _codeAlphabet = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+  static const _avatarBucket = 'group-avatars';
+  static const _avatarMaxBytes = 2 * 1024 * 1024;
+  static const _uuid = Uuid();
+
+  @override
+  Future<StudyGroup> uploadGroupAvatar({
+    required String groupId,
+    required Uint8List bytes,
+    required String extension,
+  }) async {
+    final normalizedExtension = extension.toLowerCase().replaceAll('.', '');
+    if (bytes.isEmpty ||
+        bytes.lengthInBytes > _avatarMaxBytes ||
+        !const {'jpg', 'jpeg', 'png', 'webp'}.contains(normalizedExtension)) {
+      throw const GroupException(
+        'Fotoğraf JPEG, PNG veya WebP ve en fazla 2 MB olmalı.',
+      );
+    }
+    final contentType = switch (normalizedExtension) {
+      'png' => 'image/png',
+      'webp' => 'image/webp',
+      _ => 'image/jpeg',
+    };
+    final path = '$groupId/${_uuid.v4()}.$normalizedExtension';
+    try {
+      await _client.storage
+          .from(_avatarBucket)
+          .uploadBinary(
+            path,
+            bytes,
+            fileOptions: FileOptions(
+              cacheControl: '3600',
+              contentType: contentType,
+              upsert: false,
+            ),
+          );
+      final rows = await _client
+          .from('groups')
+          .update({
+            'avatar_path': path,
+            'avatar_updated_at': DateTime.now().toUtc().toIso8601String(),
+          })
+          .eq('id', groupId)
+          .select();
+      if (rows.isEmpty) {
+        await _removeUploadedObject(path);
+        throw const GroupException('Grup fotoğrafı güncellenemedi: yetki yok.');
+      }
+      final group = StudyGroup.fromMap(
+        Map<String, dynamic>.from(rows.first as Map),
+      );
+      return group;
+    } on StorageException catch (e) {
+      throw GroupException('Fotoğraf yüklenemedi: ${e.message}');
+    } on PostgrestException catch (e) {
+      await _removeUploadedObject(path);
+      throw GroupException('Grup fotoğrafı güncellenemedi: ${e.message}');
+    }
+  }
+
+  Future<void> _removeUploadedObject(String path) async {
+    try {
+      await _client.storage.from(_avatarBucket).remove([path]);
+    } on StorageException {
+      // Best effort: the database update remains authoritative. A failed cleanup
+      // is visible as an orphan object and can be removed by the storage audit.
+    }
+  }
+
+  @override
+  Future<String?> createGroupAvatarSignedUrl(String? avatarPath) async {
+    if (avatarPath == null || avatarPath.isEmpty) return null;
+    try {
+      return await _client.storage
+          .from(_avatarBucket)
+          .createSignedUrl(avatarPath, 3600);
+    } on StorageException {
+      return null;
+    }
+  }
 
   String _newCode() => List.generate(
     6,
@@ -149,14 +231,14 @@ class SupabaseGroupRepository implements GroupRepository {
               .select()
               .inFilter('id', ids);
           // WP-106: O(n) map; firstWhere StateError riski yok.
-          final byUser = {
-            for (final r in rows) r['user_id'] as String: r,
-          };
+          final byUser = {for (final r in rows) r['user_id'] as String: r};
           return profs.map<Profile>((pMap) {
             final profile = Profile.fromMap(pMap);
             final memberRow = byUser[profile.id];
             return profile.copyWith(
-              isActive: memberRow == null ? false : memberRow['left_at'] == null,
+              isActive: memberRow == null
+                  ? false
+                  : memberRow['left_at'] == null,
             );
           }).toList();
         });

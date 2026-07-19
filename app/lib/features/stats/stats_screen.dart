@@ -62,7 +62,10 @@ class _PersonalTab extends ConsumerWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(l10n.authBeklenmeyenBirHataOlustu, textAlign: TextAlign.center),
+              Text(
+                l10n.authBeklenmeyenBirHataOlustu,
+                textAlign: TextAlign.center,
+              ),
               const SizedBox(height: 12),
               FilledButton(
                 onPressed: () => ref.invalidate(userSessionsProvider),
@@ -115,7 +118,10 @@ class _ClassTab extends ConsumerWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(l10n.authBeklenmeyenBirHataOlustu, textAlign: TextAlign.center),
+              Text(
+                l10n.authBeklenmeyenBirHataOlustu,
+                textAlign: TextAlign.center,
+              ),
               const SizedBox(height: 12),
               FilledButton(
                 onPressed: () => ref.invalidate(groupDailyStatsProvider),
@@ -131,6 +137,8 @@ class _ClassTab extends ConsumerWidget {
         currentUserId: currentUserId,
         groupName: group.name,
         groupGoalMinutes: group.dailyGoalMinutes,
+        groupAvatarPath: group.avatarPath,
+        groupAvatarUpdatedAt: group.avatarUpdatedAt,
       ),
     );
   }

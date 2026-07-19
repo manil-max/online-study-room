@@ -2,6 +2,7 @@ import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/utils/duration_format.dart';
@@ -16,6 +17,7 @@ import '../../../data/repositories/group_repository.dart';
 import '../../../data/repositories/nudge_repository.dart';
 import '../../profile/widgets/social_profile_dialog.dart';
 import 'class_chat_card.dart';
+import 'group_avatar.dart';
 
 /// Bir sınıfın bilgi + ayarları (§3.8). Üst kısım bilgiler (davet kodu, üyeler);
 /// alt kısım ayarlar (sınıftan çık) ve admin işlemleri (ad değiştir, kod yenile,
@@ -50,6 +52,8 @@ class ClassDetailScreen extends ConsumerWidget {
           // --- Başlık / ad ---
           Row(
             children: [
+              _GroupAvatarEditor(group: group, isAdmin: isAdmin),
+              const SizedBox(width: 16),
               Expanded(
                 child: Text(group.name, style: theme.textTheme.headlineSmall),
               ),
@@ -533,6 +537,102 @@ class ClassDetailScreen extends ConsumerWidget {
 }
 
 /// Sınıf üyeleri listesi (canlı). Admin başkasını çıkarabilir (kendisi/üye hariç).
+class _GroupAvatarEditor extends ConsumerStatefulWidget {
+  const _GroupAvatarEditor({required this.group, required this.isAdmin});
+
+  final StudyGroup group;
+  final bool isAdmin;
+
+  @override
+  ConsumerState<_GroupAvatarEditor> createState() => _GroupAvatarEditorState();
+}
+
+class _GroupAvatarEditorState extends ConsumerState<_GroupAvatarEditor> {
+  late StudyGroup _group = widget.group;
+  bool _uploading = false;
+
+  Future<void> _pickAndUpload() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final genericError = AppLocalizations.of(
+      context,
+    ).authBeklenmeyenBirHataOlustu;
+    final file = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1024,
+      maxHeight: 1024,
+      imageQuality: 88,
+    );
+    if (file == null || !mounted) return;
+    final extension = file.name.contains('.')
+        ? file.name.split('.').last
+        : 'jpg';
+    setState(() => _uploading = true);
+    try {
+      final updated = await ref
+          .read(groupRepositoryProvider)
+          .uploadGroupAvatar(
+            groupId: _group.id,
+            bytes: await file.readAsBytes(),
+            extension: extension,
+          );
+      if (!mounted) return;
+      setState(() => _group = updated);
+      ref.invalidate(userGroupsProvider);
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context).profileProfilFotografiGuncellendi,
+          ),
+        ),
+      );
+    } on GroupException catch (error) {
+      if (mounted) {
+        messenger.showSnackBar(SnackBar(content: Text(error.message)));
+      }
+    } catch (_) {
+      if (mounted) {
+        messenger.showSnackBar(SnackBar(content: Text(genericError)));
+      }
+    } finally {
+      if (mounted) setState(() => _uploading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final avatar = GroupAvatar(
+      name: _group.name,
+      avatarPath: _group.avatarPath,
+      avatarUpdatedAt: _group.avatarUpdatedAt,
+      radius: 34,
+    );
+    if (!widget.isAdmin) return avatar;
+    return SizedBox.square(
+      dimension: 72,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned.fill(child: Center(child: avatar)),
+          PositionedDirectional(
+            end: -4,
+            bottom: -4,
+            child: IconButton.filled(
+              tooltip: 'Grup fotoğrafını değiştir',
+              onPressed: _uploading ? null : _pickAndUpload,
+              icon: _uploading
+                  ? const SizedBox.square(
+                      dimension: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.photo_camera_outlined, size: 18),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _MembersCard extends ConsumerWidget {
   const _MembersCard({
     required this.group,

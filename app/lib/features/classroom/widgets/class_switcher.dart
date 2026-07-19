@@ -8,6 +8,7 @@ import '../../../data/providers/auth_providers.dart';
 import '../../../data/providers/group_providers.dart';
 import '../../../data/repositories/group_repository.dart';
 import 'class_detail_screen.dart';
+import 'group_avatar.dart';
 import 'group_discovery_screen.dart';
 
 /// Sınıf değiştirici (Instagram hesap değiştirme mantığı, §3.8): katılınan
@@ -54,7 +55,10 @@ Future<void> showClassSwitcher(
         onTap: () => ref.read(activeGroupIdProvider.notifier).select(g.id),
         child: Row(
           children: [
-            CircleAvatar(
+            GroupAvatar(
+              name: g.name,
+              avatarPath: g.avatarPath,
+              avatarUpdatedAt: g.avatarUpdatedAt,
               radius: 13,
               backgroundColor: g.id == activeId
                   ? theme.colorScheme.primary
@@ -62,10 +66,6 @@ Future<void> showClassSwitcher(
               foregroundColor: g.id == activeId
                   ? theme.colorScheme.onPrimary
                   : theme.colorScheme.onSurfaceVariant,
-              child: Text(
-                g.name.isNotEmpty ? g.name.characters.first.toUpperCase() : '?',
-                style: theme.textTheme.labelMedium,
-              ),
             ),
             const SizedBox(width: 12),
             Expanded(child: Text(g.name, overflow: TextOverflow.ellipsis)),

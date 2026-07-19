@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/data/models/profile.dart';
 import 'package:online_study_room/data/models/study_group.dart';
@@ -8,6 +10,55 @@ Profile _profile(String id, String name) =>
     Profile(id: id, displayName: name, createdAt: DateTime.now());
 
 void main() {
+  test(
+    'group avatar validates format, versions path and exposes no public URL',
+    () async {
+      final repo = InMemoryGroupRepository();
+      final group = await repo.createGroup(
+        name: 'Avatar Test',
+        creator: _profile('u1', 'Ali'),
+      );
+
+      final first = await repo.uploadGroupAvatar(
+        groupId: group.id,
+        bytes: Uint8List.fromList([1, 2, 3]),
+        extension: '.PNG',
+      );
+      final second = await repo.uploadGroupAvatar(
+        groupId: group.id,
+        bytes: Uint8List.fromList([4, 5, 6]),
+        extension: 'webp',
+      );
+
+      expect(first.avatarPath, startsWith('${group.id}/'));
+      expect(first.avatarPath, endsWith('.png'));
+      expect(second.avatarPath, isNot(first.avatarPath));
+      expect(second.avatarUpdatedAt, isNotNull);
+      expect(
+        await repo.createGroupAvatarSignedUrl(second.avatarPath),
+        startsWith('data:image/webp;base64,'),
+      );
+      expect(await repo.createGroupAvatarSignedUrl(first.avatarPath), isNull);
+
+      await expectLater(
+        repo.uploadGroupAvatar(
+          groupId: group.id,
+          bytes: Uint8List.fromList([1]),
+          extension: 'gif',
+        ),
+        throwsA(isA<GroupException>()),
+      );
+      await expectLater(
+        repo.uploadGroupAvatar(
+          groupId: group.id,
+          bytes: Uint8List(2 * 1024 * 1024 + 1),
+          extension: 'jpg',
+        ),
+        throwsA(isA<GroupException>()),
+      );
+    },
+  );
+
   test(
     'createGroup 6 haneli davet kodu üretir ve oluşturanı üye yapar',
     () async {

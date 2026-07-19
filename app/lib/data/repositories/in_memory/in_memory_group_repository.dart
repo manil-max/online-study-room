@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:uuid/uuid.dart';
 
@@ -15,12 +17,55 @@ class InMemoryGroupRepository implements GroupRepository {
   final _random = Random();
 
   final Map<String, StudyGroup> _groups = {};
+  final Map<String, Uint8List> _avatarBytes = {};
   // Çoklu sınıf: bir kullanıcı birden çok sınıfa üye olabilir (katılım sırasıyla).
   final Map<String, List<String>> _userGroups = {}; // userId -> [groupId...]
   final Map<String, List<Profile>> _members = {}; // groupId -> üyeler
   final StreamController<void> _changes = StreamController<void>.broadcast();
 
   static const _codeAlphabet = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+
+  @override
+  Future<StudyGroup> uploadGroupAvatar({
+    required String groupId,
+    required Uint8List bytes,
+    required String extension,
+  }) async {
+    final group = _groups[groupId];
+    if (group == null) throw const GroupException('Grup bulunamadı.');
+    final normalizedExtension = extension.toLowerCase().replaceAll('.', '');
+    if (bytes.isEmpty ||
+        bytes.lengthInBytes > 2 * 1024 * 1024 ||
+        !const {'jpg', 'jpeg', 'png', 'webp'}.contains(normalizedExtension)) {
+      throw const GroupException(
+        'Fotoğraf JPEG, PNG veya WebP ve en fazla 2 MB olmalı.',
+      );
+    }
+    final path = '$groupId/${_uuid.v4()}.$normalizedExtension';
+    final oldPath = group.avatarPath;
+    _avatarBytes[path] = Uint8List.fromList(bytes);
+    if (oldPath != null) _avatarBytes.remove(oldPath);
+    final next = group.copyWith(
+      avatarPath: path,
+      avatarUpdatedAt: DateTime.now().toUtc(),
+    );
+    _groups[groupId] = next;
+    _changes.add(null);
+    return next;
+  }
+
+  @override
+  Future<String?> createGroupAvatarSignedUrl(String? avatarPath) async {
+    if (avatarPath == null) return null;
+    final bytes = _avatarBytes[avatarPath];
+    if (bytes == null) return null;
+    final mime = avatarPath.endsWith('.png')
+        ? 'image/png'
+        : avatarPath.endsWith('.webp')
+        ? 'image/webp'
+        : 'image/jpeg';
+    return 'data:$mime;base64,${base64Encode(bytes)}';
+  }
 
   String _generateInviteCode() {
     String code;
@@ -227,7 +272,10 @@ class InMemoryGroupRepository implements GroupRepository {
 
   @override
   Future<void> deleteGroup(String groupId) async {
-    _groups.remove(groupId);
+    final removed = _groups.remove(groupId);
+    if (removed?.avatarPath case final path?) {
+      _avatarBytes.remove(path);
+    }
     _members.remove(groupId);
     for (final ids in _userGroups.values) {
       ids.remove(groupId);

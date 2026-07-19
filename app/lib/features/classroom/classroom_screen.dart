@@ -15,6 +15,7 @@ import 'widgets/campfire_scene.dart';
 import 'widgets/class_chat_screen.dart';
 import 'widgets/class_detail_screen.dart';
 import 'widgets/group_discovery_screen.dart';
+import 'widgets/group_avatar.dart';
 import 'widgets/class_switcher.dart';
 import 'widgets/study_timer_card.dart';
 
@@ -161,6 +162,13 @@ class _CompactGroupHeader extends StatelessWidget {
     final theme = Theme.of(context);
     return Row(
       children: [
+        GroupAvatar(
+          name: group.name,
+          avatarPath: group.avatarPath,
+          avatarUpdatedAt: group.avatarUpdatedAt,
+          radius: 20,
+        ),
+        const SizedBox(width: 12),
         Expanded(
           child: Text(
             group.name,

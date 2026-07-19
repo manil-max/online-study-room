@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -19,6 +21,35 @@ final groupRepositoryProvider = Provider<GroupRepository>((ref) {
   ref.onDispose(repo.dispose);
   return repo;
 });
+
+/// Signed URL cache key. The version changes whenever a new object path is
+/// committed, so Flutter never reuses the previous group image.
+class GroupAvatarRequest {
+  const GroupAvatarRequest({required this.path, required this.updatedAt});
+
+  final String path;
+  final DateTime? updatedAt;
+
+  @override
+  bool operator ==(Object other) =>
+      other is GroupAvatarRequest &&
+      other.path == path &&
+      other.updatedAt == updatedAt;
+
+  @override
+  int get hashCode => Object.hash(path, updatedAt);
+}
+
+/// Private Storage URLs expire. Refresh an actively displayed avatar before the
+/// one-hour signed URL expires; disposed surfaces keep no background timer.
+final groupAvatarUrlProvider = FutureProvider.autoDispose
+    .family<String?, GroupAvatarRequest>((ref, request) async {
+      final refresh = Timer(const Duration(minutes: 55), ref.invalidateSelf);
+      ref.onDispose(refresh.cancel);
+      return ref
+          .watch(groupRepositoryProvider)
+          .createGroupAvatarSignedUrl(request.path);
+    });
 
 /// Giriş yapan kullanıcının üyesi olduğu TÜM sınıflar (çoklu sınıf — §3.8).
 final userGroupsProvider = StreamProvider<List<StudyGroup>>((ref) {
@@ -46,8 +77,9 @@ class ActiveGroupNotifier extends Notifier<String?> {
   }
 }
 
-final activeGroupIdProvider =
-    NotifierProvider<ActiveGroupNotifier, String?>(ActiveGroupNotifier.new);
+final activeGroupIdProvider = NotifierProvider<ActiveGroupNotifier, String?>(
+  ActiveGroupNotifier.new,
+);
 
 /// Aktif sınıf: seçili id varsa o, yoksa ilk sınıf (yoksa null).
 /// `AsyncValue` döndürür ki mevcut `.value` / `.when` kullanan ekranlar değişmesin.

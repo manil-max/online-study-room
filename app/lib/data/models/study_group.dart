@@ -32,6 +32,8 @@ class StudyGroup {
     this.dailyGoalMinutes = kDefaultGroupGoalMinutes,
     this.visibility = GroupVisibility.private,
     this.memberLimit = kDefaultGroupMemberLimit,
+    this.avatarPath,
+    this.avatarUpdatedAt,
   });
 
   final String id;
@@ -47,12 +49,19 @@ class StudyGroup {
   final GroupVisibility visibility;
   final int memberLimit;
 
+  /// Private storage nesne yolu; süreli signed URL hiçbir zaman DB'ye yazılmaz.
+  final String? avatarPath;
+  final DateTime? avatarUpdatedAt;
+
   StudyGroup copyWith({
     String? name,
     String? inviteCode,
     int? dailyGoalMinutes,
     GroupVisibility? visibility,
     int? memberLimit,
+    String? avatarPath,
+    DateTime? avatarUpdatedAt,
+    bool clearAvatar = false,
   }) {
     return StudyGroup(
       id: id,
@@ -63,6 +72,10 @@ class StudyGroup {
       dailyGoalMinutes: dailyGoalMinutes ?? this.dailyGoalMinutes,
       visibility: visibility ?? this.visibility,
       memberLimit: memberLimit ?? this.memberLimit,
+      avatarPath: clearAvatar ? null : (avatarPath ?? this.avatarPath),
+      avatarUpdatedAt: clearAvatar
+          ? null
+          : (avatarUpdatedAt ?? this.avatarUpdatedAt),
     );
   }
 
@@ -79,6 +92,10 @@ class StudyGroup {
       visibility: GroupVisibility.fromDb(map['visibility']),
       memberLimit:
           (map['member_limit'] as num?)?.toInt() ?? kDefaultGroupMemberLimit,
+      avatarPath: map['avatar_path'] as String?,
+      avatarUpdatedAt: map['avatar_updated_at'] == null
+          ? null
+          : DateTime.tryParse(map['avatar_updated_at'] as String),
     );
   }
 
@@ -92,6 +109,8 @@ class StudyGroup {
       'daily_goal_minutes': dailyGoalMinutes,
       'visibility': visibility.dbValue,
       'member_limit': memberLimit,
+      'avatar_path': avatarPath,
+      'avatar_updated_at': avatarUpdatedAt?.toUtc().toIso8601String(),
     };
   }
 
@@ -105,7 +124,9 @@ class StudyGroup {
       other.createdAt == createdAt &&
       other.dailyGoalMinutes == dailyGoalMinutes &&
       other.visibility == visibility &&
-      other.memberLimit == memberLimit;
+      other.memberLimit == memberLimit &&
+      other.avatarPath == avatarPath &&
+      other.avatarUpdatedAt == avatarUpdatedAt;
 
   @override
   int get hashCode => Object.hash(
@@ -117,6 +138,8 @@ class StudyGroup {
     dailyGoalMinutes,
     visibility,
     memberLimit,
+    avatarPath,
+    avatarUpdatedAt,
   );
 }
 
@@ -131,6 +154,8 @@ class PublicGroupSummary {
     required this.memberCount,
     required this.memberLimit,
     required this.createdAt,
+    this.avatarPath,
+    this.avatarUpdatedAt,
   });
 
   final String id;
@@ -139,6 +164,8 @@ class PublicGroupSummary {
   final int memberCount;
   final int memberLimit;
   final DateTime createdAt;
+  final String? avatarPath;
+  final DateTime? avatarUpdatedAt;
 
   factory PublicGroupSummary.fromMap(Map<String, dynamic> map) {
     return PublicGroupSummary(
@@ -148,6 +175,10 @@ class PublicGroupSummary {
       memberCount: (map['member_count'] as num).toInt(),
       memberLimit: (map['member_limit'] as num).toInt(),
       createdAt: DateTime.parse(map['created_at'] as String),
+      avatarPath: map['avatar_path'] as String?,
+      avatarUpdatedAt: map['avatar_updated_at'] == null
+          ? null
+          : DateTime.tryParse(map['avatar_updated_at'] as String),
     );
   }
 
@@ -159,7 +190,9 @@ class PublicGroupSummary {
       other.dailyGoalMinutes == dailyGoalMinutes &&
       other.memberCount == memberCount &&
       other.memberLimit == memberLimit &&
-      other.createdAt == createdAt;
+      other.createdAt == createdAt &&
+      other.avatarPath == avatarPath &&
+      other.avatarUpdatedAt == avatarUpdatedAt;
 
   @override
   int get hashCode => Object.hash(
@@ -169,5 +202,7 @@ class PublicGroupSummary {
     memberCount,
     memberLimit,
     createdAt,
+    avatarPath,
+    avatarUpdatedAt,
   );
 }

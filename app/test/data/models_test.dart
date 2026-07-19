@@ -31,6 +31,8 @@ void main() {
         inviteCode: 'ABC123',
         createdBy: 'u1',
         createdAt: DateTime.parse('2026-06-21T10:00:00.000Z'),
+        avatarPath: 'g1/11111111-1111-1111-1111-111111111111.webp',
+        avatarUpdatedAt: DateTime.parse('2026-07-19T12:00:00.000Z'),
       );
       expect(StudyGroup.fromMap(group.toMap()), group);
     });

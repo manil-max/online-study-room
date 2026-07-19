@@ -6,6 +6,7 @@ import '../../../data/models/study_group.dart';
 import '../../../data/providers/auth_providers.dart';
 import '../../../data/providers/group_providers.dart';
 import '../../../data/repositories/group_repository.dart';
+import 'group_avatar.dart';
 
 /// Yalnızca RPC'nin döndürdüğü güvenli açık-grup özetlerini gösterir. Davet
 /// kodu, yönetici/üye profili veya grup çalışma verisi bu ekrana taşınmaz.
@@ -231,6 +232,13 @@ class _PublicGroupCard extends StatelessWidget {
           children: [
             Row(
               children: [
+                GroupAvatar(
+                  name: group.name,
+                  avatarPath: group.avatarPath,
+                  avatarUpdatedAt: group.avatarUpdatedAt,
+                  radius: 22,
+                ),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     group.name,

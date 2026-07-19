@@ -14,6 +14,7 @@ import '../../../data/models/profile.dart';
 import '../../../data/providers/analytics_query_providers.dart';
 import '../../../data/providers/stats_period_provider.dart';
 import '../../classroom/widgets/class_switcher.dart';
+import '../../classroom/widgets/group_avatar.dart';
 import '../../profile/widgets/profile_tap.dart';
 import '../analytics/analytics_period.dart';
 import '../charts/gauge_chart.dart';
@@ -34,6 +35,8 @@ class ClassStatsView extends ConsumerWidget {
     required this.currentUserId,
     required this.groupName,
     required this.groupGoalMinutes,
+    this.groupAvatarPath,
+    this.groupAvatarUpdatedAt,
   });
 
   /// Sınıfın per-user-per-gün toplamları (F1: ham oturum yerine sunucu agregası).
@@ -42,6 +45,8 @@ class ClassStatsView extends ConsumerWidget {
   final String currentUserId;
   final String groupName;
   final int groupGoalMinutes;
+  final String? groupAvatarPath;
+  final DateTime? groupAvatarUpdatedAt;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -152,6 +157,13 @@ class ClassStatsView extends ConsumerWidget {
         // Grup başlığı + grup değiştirici (yalnızca geçiş, basılan yerde açılır).
         Row(
           children: [
+            GroupAvatar(
+              name: groupName,
+              avatarPath: groupAvatarPath,
+              avatarUpdatedAt: groupAvatarUpdatedAt,
+              radius: 20,
+            ),
+            const SizedBox(width: 12),
             Expanded(
               child: Text(
                 groupName,

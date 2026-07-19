@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import '../models/profile.dart';
 import '../models/study_group.dart';
 
@@ -12,6 +14,15 @@ class GroupException implements Exception {
 
 /// Sınıf/grup soyutlaması. Şimdilik bellek-içi; ileride Supabase ile değiştirilecek.
 abstract class GroupRepository {
+  /// Admin-only private avatar upload. DB'ye yalnız versioned object path yazılır.
+  Future<StudyGroup> uploadGroupAvatar({
+    required String groupId,
+    required Uint8List bytes,
+    required String extension,
+  });
+
+  Future<String?> createGroupAvatarSignedUrl(String? avatarPath);
+
   /// Yeni sınıf oluşturur; oluşturan otomatik üye olur.
   Future<StudyGroup> createGroup({
     required String name,
