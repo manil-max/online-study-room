@@ -515,11 +515,17 @@ class AchievementLedgerEngine {
         return metrics['weekend_goal_days'] as int? ?? 0;
       case 'perfect_month':
         return metrics['perfect_months'] as int? ?? 0;
+      case 'secret_break_enemy':
+        return secrets['break_enemy'] == true ? 1 : 0;
+      // WP-F: alpha_wolf / campfire_hours / locomotive **grup-verified** metriklerdir;
+      // yerel motor (solo oturumlardan) hesaplayamaz. Gerçek ilerleme sunucu
+      // `achievement_metric_progress` (group_verified_v1) projeksiyonundan gelir.
+      // Eski kod yanlışlıkla break_enemy bayrağını okuyup demo modda sahte ödül
+      // veriyordu; artık 0 döner (sunucu authoritative).
       case 'alpha_wolf':
       case 'campfire_hours':
       case 'locomotive':
-      case 'secret_break_enemy':
-        return secrets['break_enemy'] == true ? 1 : 0;
+        return 0;
       case 'team_player':
         return metrics['group_goal_contrib'] as int? ?? 0;
       case 'inspiration':
