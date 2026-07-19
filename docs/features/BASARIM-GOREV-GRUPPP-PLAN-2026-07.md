@@ -17,8 +17,8 @@
 ## Ürün kararları
 
 1. **Claim modeli — KARAR: C (gerçek toplama).** ✅ 2026-07-19 onaylandı. Eşik geçilince "pending" (XP profile'a yazılmaz); kullanıcı dokununca `claim` RPC XP'yi ledger'a bankalar (animasyonla görünür artış). İlerleme claim'den bağımsız devam eder (battle-pass). Saat başı 50 XP ambient/otomatik kalır.
-2. **`secret_break_enemy` koşulu ne olsun?** (AÇIK) — ör. "X dk molasız oturum" / "mola bildirimini Y kez görmezden gel". Tanımlanmazsa bu gizli başarı ölü kalır veya kaldırılır.
-3. **Ölü başarıların retroaktif dağıtımı:** (AÇIK, öneri: evet) geçmiş veriden hesaplanınca kullanıcılara toplu pending ödül düşer (kullanıcı 6 günlük Alfa Kurt'unu geri alır). Hayır denirse yalnız ileriye dönük.
+2. **`secret_break_enemy` (Mola Düşmanı) koşulu — KARAR: "yoğun odak penceresi".** ✅ 2026-07-19 onaylandı. **Tanım:** herhangi bir **5 saatlik kayan dilimde toplam ≥ 4 saat 30 dakika** çalışma (yani o 5 saatte ≤30 dk boşluk/mola). Tek kademe (threshold 1). **Fizibilite:** oturum aralıklarından geçmişe dönük hesaplanabilir (her oturum başlangıcından itibaren 5 saatlik pencerede süre toplamı ≥270 dk aranır) — en ağır gizli metrik ama yapılabilir. **Not:** WP-208 kapsamında; karmaşıklık WP-208'i geciktirirse gizli metrik ayrı küçük takip WP'sine ertelenebilir (grup metriklerinden bağımsız).
+3. **Ölü başarıların retroaktif dağıtımı — KARAR: EVET, geçmiş sayılır.** ✅ 2026-07-19 onaylandı. Geçmiş veriden hesaplanınca kullanıcıya toplu **pending** ödül düşer (kullanıcı 6 günlük Alfa Kurt'unu geri alır, dokununca toplar). İlk `manual_refresh`/profil açılışında tetiklenir.
 
 ---
 
@@ -42,7 +42,7 @@
   - [ ] `campfire_hours`: kullanıcının oturumu sırasında **aynı grupta ≥2 başka üyenin** oturumu zamanca çakışıyorsa (≥3 eşzamanlı), o çakışan saatler sayılır. Oturum zaman-aralığı kesişiminden türet.
   - [ ] `locomotive` (`locomotive_events`): kullanıcı bir oturum başlattıktan sonra **X dk içinde** aynı grupta ≥N üye oturum başlattıysa 1 "lokomotif olayı". X/N eşiklerini WP'de sabitle (öneri X=15dk, N=2).
   - [ ] `team_player`: mevcut `group_goal_contrib` semantiğini "grup günlük hedefine katkı sağlanan gün" olarak netleştir veya metrik adını/açıklamasını hizala (UI metni WP-210, burada yalnız server metrik doğru olsun).
-  - [ ] `secret_break_enemy`: ürün kararı gelene kadar `then 0` bırak; karar gelirse ayrı adımda ekle (bu WP'yi bloklamaz).
+  - [ ] `secret_break_enemy` (Mola Düşmanı): **KARAR verildi** → herhangi bir 5 saatlik kayan dilimde toplam ≥270 dk çalışma = 1 (tek kademe). Her oturum başlangıcını pencere başı alıp `[t, t+5h]` içindeki oturum sürelerinin kesişim-toplamını hesapla; ≥270 dk ise açılır. İstanbul TZ. Geçmişe dönük hesaplanır. **Bu adım WP-208'i geciktirirse** ayrı takip WP'sine ertelenebilir (grup metriklerinden bağımsız).
   - [ ] Idempotency: retroaktif hesap tekrar çalışınca aynı `event_key` ikinci XP vermez (0024 garantisi korunur).
   - [ ] `flutter analyze` 0; server metrik mantığının in_memory eşleniği + birim testleri yeşil.
 - **Veri/Migration etkisi:** `_achievement_metrics` + `process_achievement_event` yeniden tanımlanır (CREATE OR REPLACE). Geri alma: 0033 sürümüne dön. Kullanıcı SQL Editor'da uygular. Retroaktif ilk `manual_refresh` çağrısında geçmiş ödüller düşer.
@@ -244,3 +244,63 @@
 - 🔴 Opus: WP-208, WP-209 (server-authoritative XP + retroaktif veri).
 - 🟣 Pro: WP-210, WP-211, WP-212, WP-214.
 - 🔵 Sonnet: WP-213, WP-215.
+
+---
+
+# DENETÇİ (SENIOR) İÇİN — okuma listesi, mimari gerekçe, riskler
+
+> Bu bölüm planı **tek başına denetlenebilir** kılmak için. Denetçi bu dokümanı + aşağıdaki dosyaları okuyup planın mantıklı olup olmadığını değerlendirebilir.
+
+## 1. İddiaları doğrulamak için okunacak mevcut kod
+
+| Ne doğrulanır | Dosya |
+|---|---|
+| Ölü başarılar (`then 0`) — Alfa Kurt/Kamp Ateşi/Lokomotif/Mola Düşmanı asla kazanılamıyor | `supabase/migrations/0033_study_hour_xp_50.sql` (satır ~103), `0025_achievements_social_metrics.sql:255`, `0027_...` |
+| Server metrik + ödül motoru (retroaktif hesap buraya girer) | `supabase/migrations/0025_achievements_social_metrics.sql` (`_achievement_metrics`, `process_achievement_event`) |
+| Ledger şeması + XP otoritesi + idempotency (claim buraya `claimed_at` ekler) | `supabase/migrations/0024_achievements_ledger.sql` (`xp_ledger`, trigger, `_award_achievement_tier`) |
+| Başarı sözlüğü (eşikler, tier, XP, gizli) + istemci metrik paritesi | `app/lib/core/stats/achievement_ledger_engine.dart` (Kusursuz Ay=28 gün: satır ~436) |
+| Canlı ilerleme temel hâli ZATEN VAR (progress bar + `$progress/$need`) | `app/lib/features/profile/widgets/achievement_showcase.dart` (`_CatalogTile`, ~1030–1170) |
+| Başarı ekranı giriş noktası | `app/lib/features/profile/social_profile_screen.dart`, `achievements_screen.dart` |
+| Görevler şu an cihazda (prefs), "Tekrar yok" | `app/lib/data/models/user_task.dart` (satır 5, prefs key `user_tasks_v2`), `app/lib/data/providers/user_task_providers.dart` |
+| Görev kartı UI | `app/lib/features/home/widgets/tasks_card.dart` |
+| Grupta avatar YOK (yalnız profiles) + bucket deseni | `supabase/migrations/0001_initial_schema.sql` (`groups` satır 23; `profiles.avatar_url` satır 18), `0002_avatars_storage.sql` (bucket + RLS deseni) |
+| Tap-to-top altyapısı ZATEN VAR (yalnız Ana Sayfa dinliyor) | `app/lib/core/navigation/nav_index.dart` (`navReselectProvider`), `app/lib/features/home/home_screen.dart` (dinleyici) |
+| Proje kuralları (server-authoritative, çift repo, RLS, İstanbul, migration numaralama) | `.agents/AGENTS.md`, `AGENTS.md`, `CLAUDE.md`, `progress.md` "Proje Gerçekleri" |
+
+## 2. Mimari gerekçe (neden böyle)
+
+- **Claim modeli — `xp_ledger.claimed_at` (ayrı tablo değil):** Mevcut ledger append-only + `event_key` UNIQUE. Ayrı `pending_rewards` tablosu ikinci bir doğruluk kaynağı yaratır. Bunun yerine tek kolon `claimed_at`: eşik geçince satır `claimed_at=null` (pending) yazılır, toplayıcı trigger yalnız `claimed_at is not null` satırları sayar, `claim` RPC `claimed_at=now()` yapar. Tek tablo, append-only korunur, idempotency bozulmaz. **Göç riski:** mevcut satırlar `claimed_at=now()` ile geri-doldurulmazsa eski kullanıcılar XP kaybeder → denetçi bu göç adımını özellikle incelemeli.
+- **Retroaktif hesap oturum verisinden türer:** Alfa Kurt/Kamp Ateşi/Lokomotif için ayrı olay-günlüğü tutmaya gerek yok; `study_sessions` zaman aralıkları + `group_members` üyelik pencereleri yeter. Bu, "geçmiş sayılsın" kararını mümkün kılar. **Risk:** zaman-çakışması hesabı O(n²) olabilir → pencere/indeks ile sınırlanmalı; büyük geçmişte RPC timeout denetlenmeli.
+- **Görev 00:00 yenilemesi "kayıt silme" değil, gün-damgalı tamamlama:** `user_task_completions(day date)` ile "bugün tamamlandı mı" sorusu bugünün tarihine bakar. Böylece gece yarısı hiçbir job/silme gerekmez, streak doğal tutulur. **Risk:** İstanbul gün sınırı ile UTC karışımı (mevcut `istanbul_calendar.dart` kullanılmalı).
+- **Katman ayrımı (server→UI):** Başarım'da önce metrik+claim (WP-208/209, server-authoritative), sonra UI (WP-210/211). Bu, KALITE-PROGRAMI'nın "önce motor/veri, sonra UI" stratejisi.
+
+## 3. En büyük 5 risk (denetçi öncelikli baksın)
+
+1. **Claim göçü** (WP-209): eski ledger satırlarının `claimed_at` geri-doldurması — yanlışsa kitlesel XP kaybı. Toplayıcı trigger'ın `claimed_at` filtresi.
+2. **Retroaktif performans** (WP-208): grup zaman-çakışması + 5h kayan pencere (Mola Düşmanı) hesapları büyük geçmişte pahalı; RPC timeout / kilit.
+3. **Migration numara yarışı:** 4 WP yeni migration ekler (208/209/212/214). Paralel açılırsa numara çakışır → claim anında `progress.md`'den teyit şart.
+4. **ARB çakışması:** WP-210 (başarım) ve WP-213 (görev) ikisi de `app_*.arb` yazar; generated l10n elle düzenlenmez. Serileştirme zorunlu.
+5. **`home_shell.dart` sıcak yüzey:** WP-211 (banner+nav-nokta) ve park'taki WP-105 (XP tetiği) aynı dosya; WP-215 buraya yazmamalı (her ekran kendi dinler). Dar dokunma disiplini.
+
+## 4. Kapsam bütünlüğü — kullanıcıyla konuşulan her madde bir WP'de
+
+| Konuşulan istek | WP |
+|---|---|
+| Başarıda canlı ilerleme (26/30 + rozet) | WP-210 |
+| Canlı streak (7/10, kaçırınca 0) | WP-210 |
+| Topla-ödülü-al, gerçek toplama (C) | WP-209 (+UI WP-210) |
+| Toplamamak ilerlemeyi durdurmaz (battle-pass) | WP-209 |
+| Ölü başarı fix: Alfa Kurt/Kamp Ateşi/Lokomotif | WP-208 |
+| Mola Düşmanı tanımı (5h'te ≥4.5h) | WP-208 (karar #2) |
+| Retroaktif geçmiş sayımı | WP-208 + WP-209 (pending) |
+| team_player anlam gözden geçirme | WP-208 |
+| Açıklama netleştirme (Kusursuz Ay=28 gün vb.) | WP-210 |
+| "Az kaldı" minimal şerit | WP-210 |
+| Başarı/taç açılış bildirimi (Clash tarzı) | WP-211 |
+| Brawl Stars nav-nokta işareti | WP-211 |
+| Günlük yenilenen görev, bulut, 00:00 | WP-212 + WP-213 |
+| Görev streak korunur | WP-212 |
+| Grup profil fotoğrafı | WP-214 |
+| Tap-to-top tüm sekmeler | WP-215 |
+
+Tüm konuşulan maddeler planlandı. Açık uç kalmadı (kararlar #1–#3 çözüldü).
