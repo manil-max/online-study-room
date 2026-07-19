@@ -65,7 +65,6 @@ class HomeShell extends ConsumerWidget {
       crownRank: crownRank,
       onOpenProfile: () =>
           ref.read(navIndexProvider.notifier).setTab(AppTab.profile),
-      onRefresh: () => ref.invalidate(pendingAchievementRewardSummaryProvider),
     );
 
     // Presence heartbeat/yaşam-döngüsünü oturum boyunca diri tut (§WP-5): çalışma

@@ -20,7 +20,6 @@ import 'core/prefs/app_prefs.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_settings.dart';
 import 'core/time_engine/device_timezone.dart';
-import 'core/widgets/app_pull_to_refresh.dart';
 import 'features/auth/auth_gate.dart';
 import 'features/desktop/compact_focus_view.dart';
 import 'l10n/app_localizations.dart';
@@ -167,15 +166,15 @@ class OnlineStudyRoomApp extends ConsumerWidget {
       // builder'da ekstra sarmalama gerekmez. Icon mirroring: Icons.*_outlined
       // çoğunluk simetrik; chevron/back Navigation otomatik RTL.
       builder: (context, child) {
+        // beta-v41 WP-G: uygulama geneli aşağı-çek-yenile kaldırıldı (kullanıcı
+        // isteği). Veri realtime/provider + oturum bitince olay bazlı tazelenir;
+        // başarım sayfasında yanlışlıkla tetiklenen yenileme/scroll zıplaması biter.
         final wrapped = desktopChrome(
-          AppPullToRefresh(
-            child:
-                child ??
-                const ColoredBox(
-                  color: Color(0xFF0B1020),
-                  child: SizedBox.expand(),
-                ),
-          ),
+          child ??
+              const ColoredBox(
+                color: Color(0xFF0B1020),
+                child: SizedBox.expand(),
+              ),
           compactChild: const CompactFocusView(),
         );
         return wrapped;

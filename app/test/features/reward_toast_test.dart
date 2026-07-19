@@ -9,7 +9,6 @@ void main() {
     required int xp,
     String? rank,
     VoidCallback? onOpen,
-    VoidCallback? onRefresh,
     bool reduceMotion = false,
   }) {
     return MaterialApp(
@@ -24,7 +23,6 @@ void main() {
             pendingXp: xp,
             crownRank: rank,
             onOpenProfile: onOpen ?? () {},
-            onRefresh: onRefresh ?? () {},
           ),
         ),
       ),
@@ -35,13 +33,11 @@ void main() {
     tester,
   ) async {
     var opened = 0;
-    var refreshes = 0;
     await tester.pumpWidget(
       app(
         count: 3,
         xp: 900,
         onOpen: () => opened++,
-        onRefresh: () => refreshes++,
       ),
     );
 
@@ -53,8 +49,9 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('3 ödül hazır · 900 XP'), findsNothing);
 
+    // beta-v41 WP-G: artık periyodik poll yok; banner olay bazlı güncellenir.
+    // 4 sn beklemek herhangi bir yenileme tetiklemez (sadece timer sızıntısı yok).
     await tester.pump(const Duration(seconds: 4));
-    expect(refreshes, 1);
   });
 
   testWidgets('yeni pending imzası debounce sonrası bannerı yeniden açar', (
@@ -116,7 +113,6 @@ void main() {
             pendingCount: 101,
             pendingXp: 123456,
             onOpenProfile: () {},
-            onRefresh: () {},
           ),
         ),
       ),

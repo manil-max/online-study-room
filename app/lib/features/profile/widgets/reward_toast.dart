@@ -3,16 +3,18 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
-/// Shell-level pending reward banner. It polls through [onRefresh] every four
-/// seconds, while all data access and authorization remain in the self-only
-/// reward provider. Dismissing the banner never clears the navigation badge.
+/// Shell-level pending reward banner. Reward state is **event-driven** (beta-v41
+/// WP-G): the banner reacts to [pendingCount]/[pendingXp] which the shell watches
+/// from the self-only reward provider; that provider is invalidated when a session
+/// completes and after claim — no periodic polling. All data access and
+/// authorization remain in the reward provider. Dismissing the banner never clears
+/// the navigation badge.
 class RewardToast extends StatefulWidget {
   const RewardToast({
     super.key,
     required this.pendingCount,
     required this.pendingXp,
     required this.onOpenProfile,
-    required this.onRefresh,
     this.crownRank,
   });
 
@@ -20,17 +22,14 @@ class RewardToast extends StatefulWidget {
   final int pendingXp;
   final String? crownRank;
   final VoidCallback onOpenProfile;
-  final VoidCallback onRefresh;
 
   @override
   State<RewardToast> createState() => _RewardToastState();
 }
 
 class _RewardToastState extends State<RewardToast> {
-  static const _pollInterval = Duration(seconds: 4);
   static const _debounceDuration = Duration(milliseconds: 250);
 
-  Timer? _pollTimer;
   Timer? _debounceTimer;
   Timer? _celebrationTimer;
   late int _visibleCount;
@@ -47,7 +46,6 @@ class _RewardToastState extends State<RewardToast> {
     _visibleCount = widget.pendingCount;
     _visibleXp = widget.pendingXp;
     _lastRank = widget.crownRank;
-    _pollTimer = Timer.periodic(_pollInterval, (_) => widget.onRefresh());
   }
 
   @override
@@ -81,7 +79,6 @@ class _RewardToastState extends State<RewardToast> {
 
   @override
   void dispose() {
-    _pollTimer?.cancel();
     _debounceTimer?.cancel();
     _celebrationTimer?.cancel();
     super.dispose();

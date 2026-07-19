@@ -14,6 +14,7 @@ import '../repositories/gamification_repository.dart';
 import '../repositories/in_memory/in_memory_gamification_repository.dart';
 import '../repositories/supabase/supabase_gamification_repository.dart';
 import 'achievement_provider.dart';
+import 'achievement_reward_provider.dart';
 import 'auth_providers.dart';
 import 'study_providers.dart';
 
@@ -139,8 +140,12 @@ class AchievementProgressLifecycle {
 
   void _schedule() {
     _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 800), () {
-      unawaited(runAchievementSessionCompletedSync(_ref));
+    _debounce = Timer(const Duration(milliseconds: 800), () async {
+      await runAchievementSessionCompletedSync(_ref);
+      // Olay bazlı ödül yenileme (poll yerine, beta-v41 WP-G): oturum bitince
+      // yeni pending candidate'lar banner/badge'e yansısın; sürekli 4 sn poll yok.
+      _ref.invalidate(pendingAchievementRewardSummaryProvider);
+      _ref.invalidate(pendingAchievementRewardsProvider);
     });
   }
 
