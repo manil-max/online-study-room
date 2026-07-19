@@ -62,14 +62,14 @@
 
 ### Codex Lane
 - **Durum:** [x] Boşta
-- **Faz/WP:** — (bu oturum: Kusursuz Ay ürün kararı 30 gün olarak kilitlendi)
-- **Aşama:** Planlandı
+- **Faz/WP:** —
+- **Aşama:** —
 - **SAHİP yollar:** —
 - **Ortak/riskli yüzey:** —
 - **Dal:** main
 - **Başlangıç:** —
 - **Son güncelleme:** 2026-07-19 (Europe/Istanbul)
-- **Not:** Plan v3.1 güncel: Kusursuz Ay = ayda 30 İstanbul günü. WP-208 evaluator contract'ını uygular; önceden banklanmış XP/rozet geri alınmaz. Kod değişikliği yok; tüm WP'ler bekliyor.
+- **Not:** WP-209 kod + otomatik test tamamlandı; staging migration/RLS ve iki-cihaz claim QA'sı parkta.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
@@ -108,7 +108,7 @@
 
 | WP | Durum | Kısa kapsam | Bağımlılık |
 |---|---|---|---|
-| WP-209 | [ ] Bekliyor | **[EXPAND 1]** Reward inbox şema + atomik/bounded claim; auto-award davranışı değişmez | plan v3.1 |
+| WP-209 | [~] Kod tamamlandı — test bekliyor | **[EXPAND 1]** Reward inbox şema + atomik/bounded claim; auto-award davranışı değişmez | plan v3.1 |
 | WP-208 | [ ] Bekliyor | **[EXPAND 2]** Self-only gerçek metric progress + Kusursuz Ay 30-gün evaluator contract'ı + legacy audit/job altyapısı | ← WP-209 |
 | WP-210 | [ ] Bekliyor | **[CLIENT 3]** Claim-capable UI + gerçek progress/streak + az-kaldı + tüm achievement ARB anahtarları | ← WP-208, WP-209 · ARB yazar |
 | WP-211 | [ ] Bekliyor | Reward banner/nav badge + tüm tab indekslerinin kanonik sözleşmesi | ← WP-210 · `core/navigation/**` yazarı |
@@ -131,7 +131,9 @@
 
 ## Test için bekleyenler (park)
 
-> Cihaz/ürün kabulü bekleyen tamamlanmış kod. Şu an aktif park kaydı **yok** (WP-134…207 test-bekleyen kartları arşive taşındı → [`docs/archive/progress-tarihsel-2026-07.md`](docs/archive/progress-tarihsel-2026-07.md); açık ops işleri için yukarıdaki pointer). Planner yeni park kaydını buraya **tek satır** ekler.
+> Cihaz/ürün kabulü bekleyen tamamlanmış kod. Bu bölüm aktif çalışma değildir; başka WP'yi engellemez.
+
+- **WP-209 — Reward inbox expansion** · Kod + otomatik test tamamlandı (`flutter analyze`, 563 test) · Commit: bu WP commit'i · **Cihazda/staging'de doğrulanmalı:** 0047 dry-run/rollback rehearsal, self-RLS ve direct-DML abuse testi, iki cihaz aynı reward claim yarışı, injected pending sonrası `gamification_profiles.xp = SUM(xp_ledger.xp_amount)` reconciliation kanıtı. Auto-award ve saatlik 50 XP regresyonu staging'de ayrıca doğrulanacak.
 
 ## Tamamlanan İş Paketleri
 
