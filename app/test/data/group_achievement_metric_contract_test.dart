@@ -28,6 +28,14 @@ void main() {
     expect(sql, contains('catch_up_verified_group_days'));
     expect(sql, contains("'5 21 * * *'"));
     expect(sql, contains('on conflict do nothing'));
+    expect(sql, contains('as snapshot_group_id'));
+    expect(sql, contains('as metric_day'));
+    expect(sql, isNot(contains('::date day')));
+    expect(sql, isNot(contains('r.day')));
+    expect(sql, contains('candidate.metric_day'));
+    expect(sql, contains('live_runs_project_group_metrics'));
+    expect(sql, contains("new.status='finalized'"));
+    expect(sql, contains("jobname='verified-group-day-finalizer'"));
   });
 
   test('legacy ambiguity is reported but cannot produce candidates', () {

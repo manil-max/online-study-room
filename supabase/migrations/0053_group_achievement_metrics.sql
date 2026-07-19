@@ -91,6 +91,9 @@ begin
   update public.group_achievement_daily set finalized_at=coalesce(finalized_at,clock_timestamp())
     where group_id=p_group_id and istanbul_day=p_day;
   get diagnostics v_count=row_count;
+  -- Alpha projection yalnız finalized günleri sayar; işaretleme sonrası aynı günün
+  -- toplamını progress'e geçirmek için idempotent ikinci projection gerekir.
+  perform public.project_verified_group_day(p_group_id,p_day);
   insert into public.achievement_reward_candidates(user_id,achievement_id,tier,source_version,event_key,evidence)
   select user_id,'alpha_wolf',1,'group_verified_v1',
     user_id::text||'|alpha_wolf|day|'||p_day::text,
@@ -105,18 +108,61 @@ create or replace function public.catch_up_verified_group_days()
 returns integer language plpgsql security definer set search_path=public as $$
 declare r record; n integer:=0;
 begin
-  for r in select distinct group_id_snapshot gid,
-      (timezone('Europe/Istanbul',started_at))::date day
-    from public.live_study_runs where group_id_snapshot is not null and status='finalized'
-      and (timezone('Europe/Istanbul',started_at))::date <
-        (timezone('Europe/Istanbul',clock_timestamp()))::date
-      and not exists(select 1 from public.group_achievement_daily d
-        where d.group_id=group_id_snapshot and d.istanbul_day=(timezone('Europe/Istanbul',started_at))::date
-          and d.finalized_at is not null)
-  loop perform public.finalize_verified_group_day(r.gid,r.day); n:=n+1; end loop;
+  for r in
+    select candidate.snapshot_group_id, candidate.metric_day
+    from (
+      select distinct
+        run.group_id_snapshot as snapshot_group_id,
+        (timezone('Europe/Istanbul',run.started_at))::date as metric_day
+      from public.live_study_runs run
+      where run.group_id_snapshot is not null
+        and run.status = 'finalized'
+        and (timezone('Europe/Istanbul',run.started_at))::date <
+          (timezone('Europe/Istanbul',clock_timestamp()))::date
+    ) candidate
+    where not exists (
+      select 1
+      from public.group_achievement_daily d
+      where d.group_id = candidate.snapshot_group_id
+        and d.istanbul_day = candidate.metric_day
+        and d.finalized_at is not null
+    )
+  loop
+    perform public.finalize_verified_group_day(
+      r.snapshot_group_id,
+      r.metric_day
+    );
+    n := n + 1;
+  end loop;
   return n;
 end;
 $$;
+
+-- Segment kapanırken run henüz 'running' olabilir. Verified projector'u run
+-- finalize transition'ında tetiklemek, başka üyenin etkisini birkaç saniye
+-- içinde tüm affected-user projection'ına taşır.
+create or replace function public._verified_group_run_finalized()
+returns trigger language plpgsql security definer set search_path=public as $$
+declare metric_day date;
+begin
+  if new.group_id_snapshot is null then return new; end if;
+  for metric_day in
+    select generate_series(
+      (timezone('Europe/Istanbul',new.started_at))::date,
+      (timezone('Europe/Istanbul',new.finalized_at))::date,
+      interval '1 day'
+    )::date
+  loop
+    perform public.project_verified_group_day(new.group_id_snapshot,metric_day);
+  end loop;
+  return new;
+end;
+$$;
+drop trigger if exists live_runs_project_group_metrics on public.live_study_runs;
+create trigger live_runs_project_group_metrics after update of status
+  on public.live_study_runs for each row
+  when(old.status is distinct from new.status and new.status='finalized')
+  execute function public._verified_group_run_finalized();
 
 create or replace function public._verified_group_segment_dirty()
 returns trigger language plpgsql security definer set search_path=public as $$
@@ -149,7 +195,10 @@ where s.live_run_id is null group by s.id,s.user_id;
 revoke all on public.group_metric_legacy_proxy_audit from public,anon,authenticated;
 
 do $migration$ begin
-  if exists(select 1 from pg_namespace where nspname='cron') then
+  if exists(select 1 from pg_namespace where nspname='cron')
+     and not exists(
+       select 1 from cron.job where jobname='verified-group-day-finalizer'
+     ) then
     perform cron.schedule('verified-group-day-finalizer','5 21 * * *',
       'select public.catch_up_verified_group_days()');
   end if;
