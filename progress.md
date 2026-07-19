@@ -210,10 +210,11 @@
 | WP-208 | [ ] Bekliyor | Başarım ölü metrik fix (alpha_wolf/campfire/locomotive retroaktif) + team_player gözden geçirme (server 00NN) | `docs/features/BASARIM-GOREV-GRUPPP-PLAN-2026-07.md` |
 | WP-209 | [ ] Bekliyor | Topla-ödülü-al: pending reward + claim RPC (server 00NN) | ← WP-208 |
 | WP-210 | [ ] Bekliyor | Başarım UI: canlı ilerleme cilası + claim/topla + "az kaldı" + metin netleştirme | ← WP-209 · ARB yazar |
-| WP-211 | [ ] Bekliyor | Başarı/taç açılış bildirimi (profil dışı toplanabilir banner) | ← WP-209 |
+| WP-211 | [ ] Bekliyor | Başarı/taç bildirimi: açılış banner'ı (Clash tarzı) + Brawl Stars nav-nokta işareti | ← WP-209 |
 | WP-212 | [ ] Bekliyor | Günlük yenilenen görev: bulut model + tekrar/tamamlama (server 00NN) | plan doc |
 | WP-213 | [ ] Bekliyor | Görev UI: günlük tip ekleme + bugünün listesi + 00:00 yenileme | ← WP-212 · ARB yazar |
 | WP-214 | [ ] Bekliyor | Grup profil fotoğrafı (groups.avatar_url + group-avatars bucket admin-yazma) | plan doc |
+| WP-215 | [ ] Bekliyor | Tap-to-top tüm sekmeler (Gruplar/İstatistik/Profil/Araçlar) — navReselect zaten var | plan doc |
 
 > **2026-07-14 proje denetimi:** Serbest sürükle-bırak ızgara, canlı grup hedefi ve saat stilleri **zaten kodda uygulanmış** (backlog stale idi; geçici WP-72/73/75 iptal).
 >

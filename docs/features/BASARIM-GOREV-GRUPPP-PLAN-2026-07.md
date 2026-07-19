@@ -14,11 +14,11 @@
 - **Görevler** şu an cihazda (`SharedPreferences`, `user_tasks_v2`); model `user_task.dart` "Tekrar yok" diyor. Repo katmanı adı `SupabaseUserTaskRepository` ama prefs'e yazıyor (yanıltıcı). Bulut + günlük tekrar bunun üstüne eklenecek.
 - **Grup PP yok:** `groups` tablosunda `avatar_url` **yok** (yalnız `profiles.avatar_url` var, bucket `avatars` — `0002`). Grup için yeni kolon + bucket + admin-yazma RLS gerekir.
 
-## Açık ürün kararları (kullanıcı onayı bekliyor)
+## Ürün kararları
 
-1. **Claim modelinde XP ne zaman yazılır?** Öneri **C (hibrit):** eşik geçilince "pending" (XP profile'a yazılmaz), kullanıcı dokununca `claim` RPC XP'yi ledger'a bankalar (animasyonla görünür artış). İlerleme claim'den bağımsız devam eder (battle-pass). Saat başı 50 XP ambient/otomatik kalır. **Onay:** C mi, yoksa "XP otomatik, dokunuş yalnız kutlama" (B, daha basit) mi?
-2. **`secret_break_enemy` koşulu ne olsun?** (ör. "X dk molasız oturum" / "mola bildirimini Y kez görmezden gel"). Tanımlanmazsa bu gizli başarı ölü kalır veya kaldırılır.
-3. **Ölü başarıların retroaktif dağıtımı:** geçmiş veriden hesaplanınca kullanıcılara toplu XP + pending ödül düşecek. **Onay:** geçmiş sayılsın (kullanıcı 6 günlük Alfa Kurt'unu geri alır) — evet varsayıyoruz; hayır denirse yalnız ileriye dönük.
+1. **Claim modeli — KARAR: C (gerçek toplama).** ✅ 2026-07-19 onaylandı. Eşik geçilince "pending" (XP profile'a yazılmaz); kullanıcı dokununca `claim` RPC XP'yi ledger'a bankalar (animasyonla görünür artış). İlerleme claim'den bağımsız devam eder (battle-pass). Saat başı 50 XP ambient/otomatik kalır.
+2. **`secret_break_enemy` koşulu ne olsun?** (AÇIK) — ör. "X dk molasız oturum" / "mola bildirimini Y kez görmezden gel". Tanımlanmazsa bu gizli başarı ölü kalır veya kaldırılır.
+3. **Ölü başarıların retroaktif dağıtımı:** (AÇIK, öneri: evet) geçmiş veriden hesaplanınca kullanıcılara toplu pending ödül düşer (kullanıcı 6 günlük Alfa Kurt'unu geri alır). Hayır denirse yalnız ileriye dönük.
 
 ---
 
@@ -104,28 +104,54 @@
 - **Tuzaklar:** Claim animasyonunu server-yazımından önce oynatıp tutarsızlık (optimistic + doğrulama); ARB'ye WP-211 ile aynı anda yazıp çakışma (bu WP tek ARB yazarı — WP-211 salt-okur); sabit renk sokmak (WP-141 kuralı).
 - **Dal önerisi:** `wp210-basarim-ui-claim`
 
-## WP-211: Başarı/taç açılış bildirimi — profil dışı toplanabilir banner (CLIENT) 🔔
+## WP-211: Başarı/taç bildirimi — açılış banner'ı + Brawl Stars tarzı nav-işaret (CLIENT) 🔔
 - **Program/Faz:** Başarım · **Model:** 🟣 Pro · **Bağımlılık:** WP-209 kabul (pending stream)
 - **Durum:** [ ] Bekliyor
-- **Problem:** Kullanıcı başarı açtığında/taç yükseldiğinde haberi olmuyor (yalnız profil açarsa görüyor). İstenen: normal ekranda küçük "topla" banner'ı (Clash tarzı) belirsin, kullanıcı fark edip toplasın.
-- **Kapsam dışı:** Claim mantığı (WP-209), profil içi UI (WP-210), sistem push bildirimi (uygulama-içi banner yeterli — push ayrı iş).
+- **Problem:** Kullanıcı başarı açtığında/taç yükseldiğinde haberi olmuyor (yalnız profil açarsa görüyor). İki mekanizma isteniyor:
+  1. **Açılış banner'ı (Clash Royale tarzı):** başarı açılınca/taç yükselince normal ekranda üstte küçük "topla" bildirimi belirir.
+  2. **Kalıcı nav-işareti (Brawl Stars tarzı):** toplanmamış ödül varken ilgili menü butonunun (Profil) üstünde **minik nokta/rozet** durur; kullanıcı listede o başarıyı bulup toplayınca işaret kaybolur. Az başarı olduğundan kafası karışmaz — sadece "ne çıktı, nerede" yönlendirmesi.
+- **Kapsam dışı:** Claim mantığı (WP-209), profil içi liste/claim UI (WP-210), sistem push bildirimi (uygulama-içi yeterli — push ayrı iş).
 - **SAHİP dosyalar (yaz):**
-  - `app/lib/core/navigation/home_shell.dart` (pending ödül varsa uygulama-içi toplanabilir banner/overlay; **sıcak dosya, dar dokun**)
-  - yeni `app/lib/features/profile/widgets/reward_toast.dart` (banner bileşeni)
+  - `app/lib/core/navigation/home_shell.dart` (pending varsa açılış banner'ı + **alt nav Profil sekmesinde nokta rozeti**; **sıcak dosya, dar dokun**)
+  - yeni `app/lib/features/profile/widgets/reward_toast.dart` (banner + nav-nokta bileşeni)
   - ilgili testler
-- **DOKUNMA (oku, değiştirme):** `achievement_showcase.dart` (WP-210), ARB (WP-210 yazar; buradan salt-okur — gerekli metin WP-210'da eklenir), server dosyaları, `app_*.arb`.
+- **DOKUNMA (oku, değiştirme):** `achievement_showcase.dart` (WP-210), ARB (WP-210 yazar; buradan salt-okur), server dosyaları, `app_*.arb`, `nav_index.dart` (yalnız oku).
 - **Adımlar:**
-  - [ ] Pending ödül sayısı > 0 olunca home üstünde küçük, kapatılabilir "n ödül hazır · Topla" banner'ı; dokununca profil başarı bölümüne götürür (veya inline claim).
+  - [ ] Pending ödül sayısı > 0 olunca home üstünde küçük, kapatılabilir "n ödül hazır · Topla" banner'ı; dokununca profil başarı bölümüne götürür.
+  - [ ] Alt navigasyonda Profil sekmesi ikonunun köşesinde nokta/sayı rozeti (pending>0). Kullanıcı ödülleri toplayınca (pending=0) rozet kaybolur — reaktif, `claimableRewards` stream'inden türer.
   - [ ] Taç yükselişinde tek seferlik kutlama; tekrar göstermeme (görülen anahtarları sakla, `_seenUnlockKeys` desenine benzer).
-  - [ ] WP-105 (oturum-bitti XP tetiği, parkta) ile aynı `home_shell` yüzeyi — çakışma notuna bak; salt pending-okuma, XP tetiğine dokunma.
-  - [ ] `flutter analyze` 0; banner görünürlük/kapatma/tekrar-göstermeme testi yeşil.
+  - [ ] WP-105 (oturum-bitti XP tetiği, parkta) ile aynı `home_shell` yüzeyi — salt pending-okuma, XP tetiğine dokunma.
+  - [ ] `flutter analyze` 0; banner + nav-rozet görünürlük/temizlenme/tekrar-göstermeme testleri yeşil.
 - **Veri/Migration etkisi:** Yok.
 - **RLS/Güvenlik:** Yok.
-- **Edge-case'ler:** Uygulama açılışında birikmiş çok pending, banner spam'i (debounce/tek banner), kullanıcı kapatınca tekrar açılmaması, offline.
-- **Kabul (ölçülebilir):** Yeni pending ödül oluşunca ≤5 sn'de home banner görünür; toplayınca/kapatınca kaybolur ve tekrar açılmaz; taç yükselişi bir kez kutlanır; `flutter analyze` 0, testler yeşil; `Cihazda doğrulanmalı`.
-- **Tuzaklar:** `home_shell`'de WP-105 ile çakışmak (ayrı SAHİP mantık, dar dokun); her stream tick'inde banner yeniden tetikleme; ARB'ye yazıp WP-210 ile çakışmak.
+- **Edge-case'ler:** Açılışta birikmiş çok pending, banner spam'i (debounce/tek banner), kullanıcı banner'ı kapatınca nav-rozetin kalması (rozet pending'e bağlı, banner'a değil), offline, gizli başarı pending'i (rozet sayılır ama içerik silüet).
+- **Kabul (ölçülebilir):** Yeni pending oluşunca ≤5 sn'de banner + Profil sekmesinde nokta görünür; ödül toplanınca nokta ve banner kaybolur; taç yükselişi bir kez kutlanır; `flutter analyze` 0, testler yeşil; `Cihazda doğrulanmalı`.
+- **Tuzaklar:** `home_shell`'de WP-105 ile çakışmak (ayrı SAHİP mantık, dar dokun); nav-rozeti banner state'ine bağlayıp kapatınca yanlış temizlemek (rozet pending'e bağlı olmalı); her stream tick'inde banner yeniden tetikleme; ARB'ye yazmak (WP-210 yazar).
 - **Dal önerisi:** `wp211-basarim-bildirim`
-- **> ⚠️ Çakışma:** WP-210 & WP-211 ikisi de başarım UI + `home_shell`/showcase yakınında. ARB'yi yalnız WP-210 yazar. İkisini **serileştir** (WP-211, WP-210 kabulünden sonra) ya da SAHİP dosyalar kesişmediğinden (WP-210=showcase/social_profile, WP-211=home_shell/reward_toast) dikkatli paralel — ama ikisi de Başarım hattı olduğundan tek lane'de sıralı önerilir.
+- **> ⚠️ Çakışma:** WP-210 & WP-211 ikisi de Başarım UI hattı. ARB'yi yalnız WP-210 yazar. SAHİP dosyalar kesişmiyor (WP-210=showcase/social_profile, WP-211=home_shell/reward_toast) ama ikisi de Başarım lane'i → tek lane'de **sıralı** (WP-211, WP-210 sonrası). WP-215 de `home_shell`'e dokunabilir → aşağıdaki nota bak.
+
+## WP-215: Aktif sekmeye tekrar basınca en yukarı çık — tüm sekmeler (CLIENT) ⬆️
+- **Program/Faz:** IA/Navigasyon cilası (bağımsız, küçük, düşük risk) · **Model:** 🔵 Sonnet · **Bağımlılık:** yok
+- **Durum:** [ ] Bekliyor
+- **Problem:** "Tap-to-top" yalnız Ana Sayfa'da bağlı (`home_screen.dart` `navReselectProvider`'ı dinliyor). Gruplar, İstatistikler ve (kısa da olsa ileride uzayabilir) Profil, Araçlar sekmelerinde yok. Altyapı **zaten var** (`nav_index.dart` her sekme tekrar-basımında `navReselectProvider`'ı `(tabIndex, tick)` ile tetikliyor) — yalnız dinleyici bağlanacak.
+- **Kapsam dışı:** Yeni navigasyon mimarisi, animasyon süresi değişimi, Ana Sayfa'nın mevcut davranışı (dokunma).
+- **SAHİP dosyalar (yaz):**
+  - `app/lib/features/classroom/**` (Gruplar ana scroll — ekran kökündeki ScrollController/PrimaryScrollController)
+  - `app/lib/features/stats/**` (İstatistikler ana scroll)
+  - `app/lib/features/profile/**` (Profil ana scroll — kısa ama ekle)
+  - Araçlar sekmesi kök scroll (grep: `features/**tools**`)
+  - ilgili testler
+- **DOKUNMA (oku, değiştirme):** `nav_index.dart` (yalnız oku — desen kaynağı), `home_screen.dart` (mevcut, dokunma), `home_shell.dart` (WP-211 sahibi — buraya yazma; her sekme kendi ekranında dinler).
+- **Adımlar:**
+  - [ ] Her sekme ekranı kökünde `ref.listen(navReselectProvider, ...)`; `tabIndex == kendi indeksi` ve tick arttıysa scroll controller `animateTo(0)` (home deseninin aynısı).
+  - [ ] Her ekranın kök kaydırıcısını bul/normalize et (nested scroll varsa dış controller'a bağlan — WP-172 nested scroll dersine dikkat).
+  - [ ] `flutter analyze` 0; her sekme için "tekrar bas → offset 0" testi yeşil.
+- **Veri/Migration etkisi:** Yok.
+- **RLS/Güvenlik:** Yok.
+- **Edge-case'ler:** Nested scroll (Gruplar), zaten en üstteyken tekrar bas (no-op), liste boşken, ekran henüz build olmadan tick.
+- **Kabul (ölçülebilir):** Gruplar/İstatistik/Profil/Araçlar sekmesinde aşağı kaydırıp sekmeye tekrar basınca ≤300 ms'de en üste döner; Ana Sayfa davranışı regresyonsuz; `flutter analyze` 0, testler yeşil; `Cihazda doğrulanmalı`.
+- **Tuzaklar:** Her ekranda ayrı ScrollController tutup PrimaryScrollController ile çakışmak; nested scroll'da yanlış controller'a bağlanmak; `home_shell`'e yazıp WP-211 ile çakışmak (her ekran kendi içinde dinler, shell'e dokunma).
+- **Dal önerisi:** `wp215-tap-to-top-tum-sekmeler`
 
 ## WP-212: Günlük yenilenen görev — bulut model + tekrar/tamamlama (DATA) 🗓️
 - **Program/Faz:** Görevler (bağımsız hat) · **Model:** 🟣 Pro (veri göçü + gün sınırı) · **Bağımlılık:** yok
@@ -210,10 +236,11 @@
 - **Başarım iç sıra:** WP-208 → WP-209 → WP-210 → WP-211 (hepsi aynı RPC/UI yüzeyi; sıralı).
 - **Görev iç sıra:** WP-212 → WP-213.
 - **Grup PP:** WP-214 bağımsız; başka hatla SAHİP kesişimi yok.
-- **Hat sayısı:** Başarım büyük program = 1 lane. İkinci lane = Görev **veya** Grup PP (aynı anda en fazla iki hat). Görev ve Grup PP birbirine paralel güvenli ama ikisi + Başarım = üç hat olur → Başarım açıkken yalnız biri ikinci lane.
+- **WP-215 (tap-to-top):** `home_shell.dart`'a **yazmaz** (her ekran kendi içinde `navReselectProvider` dinler) → WP-211 ile SAHİP kesişimi yok. Gruplar/İstatistik/Profil/Araçlar ekran dosyalarına dokunur; başka aktif hat o ekranlarda yoksa paralel güvenli. Bağımsız küçük iş — herhangi bir ikinci lane boşluğunda yapılabilir.
+- **Hat sayısı:** Başarım büyük program = 1 lane. İkinci lane = Görev **veya** Grup PP **veya** WP-215 (aynı anda en fazla iki hat). Başarım açıkken yalnız biri ikinci lane.
 - **Parktakiler çakışma saymaz:** WP-105 (`home_shell`, test için bekliyor) WP-211 ile aynı dosya ama parkta → bloklamaz; WP-211 dar dokunur.
 
 ## Model önerileri özeti
 - 🔴 Opus: WP-208, WP-209 (server-authoritative XP + retroaktif veri).
 - 🟣 Pro: WP-210, WP-211, WP-212, WP-214.
-- 🔵 Sonnet: WP-213.
+- 🔵 Sonnet: WP-213, WP-215.
