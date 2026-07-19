@@ -234,7 +234,7 @@ class _BadgeChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = tierColorFor(tier.clamp(1, 5));
+    final color = tierColorFor(tier.clamp(1, 6));
     return Semantics(
       label: label,
       child: Container(

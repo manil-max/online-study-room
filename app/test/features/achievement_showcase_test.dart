@@ -368,14 +368,19 @@ void main() {
     );
   });
 
-  test('xpBarMetrics ve crownLabel 5 kademe 0/2.5k/10k/25k/75k', () {
+  test('xpBarMetrics ve crownLabel 6 kademe 0/20k/75k/200k/500k/1M', () {
     expect(crownLabel('gold_achiever', AppLocalizationsTr()), 'Altın Taç');
-    final m = xpBarMetrics(5000);
-    expect(m.floor, 2500);
-    expect(m.next, 10000);
-    expect(m.progress, closeTo(0.333, 0.01));
-    expect(crownRankForXp(2500), 'silver_learner');
+    expect(crownLabel('emerald_sage', AppLocalizationsTr()), 'Zümrüt Taç');
+    expect(crownLabel('immortal_legend', AppLocalizationsTr()), 'Ölümsüz Taç');
+    final m = xpBarMetrics(40000);
+    expect(m.floor, 20000);
+    expect(m.next, 75000);
+    expect(m.progress, closeTo(0.3636, 0.01));
     expect(crownRankForXp(0), 'bronze_beginner');
-    expect(crownRankForXp(75000), 'diamond_owl');
+    expect(crownRankForXp(20000), 'silver_learner');
+    expect(crownRankForXp(75000), 'gold_achiever');
+    expect(crownRankForXp(200000), 'diamond_owl');
+    expect(crownRankForXp(500000), 'emerald_sage');
+    expect(crownRankForXp(1000000), 'immortal_legend');
   });
 }

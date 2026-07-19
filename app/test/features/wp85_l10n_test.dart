@@ -91,7 +91,8 @@ void main() {
         expect(find.text('Kaydet'), findsOneWidget);
       } else {
         expect(find.text('Daily goal'), findsNWidgets(2));
-        expect(find.text('Clock'), findsOneWidget);
+        // WP-222: saat birimi etiketi "Clock" → "Hours" (classroomSaat).
+        expect(find.text('Hours'), findsOneWidget);
         expect(find.text('Minute'), findsOneWidget);
         expect(find.text('Save'), findsOneWidget);
       }

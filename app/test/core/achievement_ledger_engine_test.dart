@@ -22,12 +22,16 @@ StudySession _session({
 
 void main() {
   group('AchievementLedgerEngine', () {
-    test('sözlük 21 başarım içerir (çalışma+seri+grup+sosyal+gizli)', () {
+    test('sözlük 20 başarım içerir (çalışma+seri+grup+sosyal+gizli)', () {
       final dict = kAchievementDictV3();
-      expect(dict.length, 21);
-      expect(dict.where((e) => e.isSecret).length, 10);
+      expect(dict.length, 20);
+      expect(dict.where((e) => e.isSecret).length, 9);
       expect(dict.any((e) => e.id == 'marathon_total'), isTrue);
       expect(dict.any((e) => e.id == 'secret_404'), isTrue);
+      // secret_1337 (1337 Elite) beta-v42'de tamamen silindi.
+      expect(dict.any((e) => e.id == 'secret_1337'), isFalse);
+      // Kademeli başarımlar 6 kademe.
+      expect(dict.firstWhere((e) => e.id == 'marathon_total').maxTier, 6);
     });
 
     test('steel_will kademe 1: 60 dk oturum → 50 XP', () {
@@ -101,13 +105,13 @@ void main() {
       );
       expect(
         result.awarded.any(
-          (a) => a.achievementId == 'secret_404' && a.xp == 4044,
+          (a) => a.achievementId == 'secret_404' && a.xp == 5000,
         ),
         isTrue,
       );
     });
 
-    test('secret_pi: 194 dakika → 314 XP', () {
+    test('secret_pi: 194 dakika → 3147 XP', () {
       final engine = AchievementLedgerEngine();
       final result = engine.processEvent(
         userId: 'u1',
@@ -123,7 +127,7 @@ void main() {
       );
       expect(
         result.awarded.any(
-          (a) => a.achievementId == 'secret_pi' && a.xp == 314,
+          (a) => a.achievementId == 'secret_pi' && a.xp == 3147,
         ),
         isTrue,
       );
@@ -155,13 +159,14 @@ void main() {
       );
     });
 
-    test('crownRankForXp 5 kademe eşikleri 0/2.5k/10k/25k/75k', () {
+    test('crownRankForXp 6 kademe eşikleri 0/20k/75k/200k/500k/1M', () {
       expect(crownRankForXp(0), 'bronze_beginner');
-      expect(crownRankForXp(2499), 'bronze_beginner');
-      expect(crownRankForXp(2500), 'silver_learner');
-      expect(crownRankForXp(10000), 'gold_achiever');
-      expect(crownRankForXp(25000), 'platinum_scholar');
-      expect(crownRankForXp(75000), 'diamond_owl');
+      expect(crownRankForXp(19999), 'bronze_beginner');
+      expect(crownRankForXp(20000), 'silver_learner');
+      expect(crownRankForXp(75000), 'gold_achiever');
+      expect(crownRankForXp(200000), 'diamond_owl');
+      expect(crownRankForXp(500000), 'emerald_sage');
+      expect(crownRankForXp(1000000), 'immortal_legend');
     });
 
     test('her tamamlanan saat 50 XP verir ve idempotenttir', () {
@@ -268,7 +273,7 @@ void main() {
     test('processEvent idempotent ve sözlük dolu', () async {
       final repo = InMemoryAchievementRepository();
       final dict = await repo.fetchDictionary();
-      expect(dict.length, 21);
+      expect(dict.length, 20);
 
       final sessions = [
         _session(id: 's1', start: DateTime.utc(2026, 6, 1, 12, 0), minutes: 90),

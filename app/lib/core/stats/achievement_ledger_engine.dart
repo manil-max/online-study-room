@@ -50,6 +50,7 @@ List<AchievementDictEntry> kAchievementDictV3([AppLocalizations? l10n]) {
         (3, 500, 'hours', 1500),
         (4, 1000, 'hours', 5000),
         (5, 2500, 'hours', 15000),
+        (6, 5000, 'hours', 45000),
       ],
       icon: 'timer',
     ),
@@ -64,6 +65,7 @@ List<AchievementDictEntry> kAchievementDictV3([AppLocalizations? l10n]) {
         (3, 120, 'minutes', 250),
         (4, 180, 'minutes', 1000),
         (5, 300, 'minutes', 5000),
+        (6, 480, 'minutes', 15000),
       ],
       icon: 'self_improvement',
     ),
@@ -78,6 +80,7 @@ List<AchievementDictEntry> kAchievementDictV3([AppLocalizations? l10n]) {
         (3, 6, 'day_hours', 500),
         (4, 8, 'day_hours', 1500),
         (5, 10, 'day_hours', 5000),
+        (6, 12, 'day_hours', 15000),
       ],
       icon: 'directions_run',
     ),
@@ -88,10 +91,11 @@ List<AchievementDictEntry> kAchievementDictV3([AppLocalizations? l10n]) {
       (l10n?.coreGunlukHedefSerisi ?? 'coregunlukhedefserisi'),
       [
         (1, 7, 'streak_days', 100),
-        (2, 30, 'streak_days', 500),
-        (3, 150, 'streak_days', 2500),
-        (4, 365, 'streak_days', 10000),
-        (5, 730, 'streak_days', 30000),
+        (2, 30, 'streak_days', 2000),
+        (3, 150, 'streak_days', 5000),
+        (4, 365, 'streak_days', 20000),
+        (5, 730, 'streak_days', 50000),
+        (6, 1000, 'streak_days', 100000),
       ],
       icon: 'local_fire_department',
     ),
@@ -101,11 +105,12 @@ List<AchievementDictEntry> kAchievementDictV3([AppLocalizations? l10n]) {
       (l10n?.coreHaftaSonuSavascisi ?? 'corehaftasonusavascisi'),
       (l10n?.coreHsHedefGun ?? 'corehshedefgun'),
       [
-        (1, 4, 'weekend_goal_days', 50),
-        (2, 8, 'weekend_goal_days', 150),
-        (3, 20, 'weekend_goal_days', 500),
-        (4, 50, 'weekend_goal_days', 1500),
-        (5, 100, 'weekend_goal_days', 5000),
+        (1, 4, 'weekend_goal_days', 150),
+        (2, 8, 'weekend_goal_days', 450),
+        (3, 20, 'weekend_goal_days', 1000),
+        (4, 50, 'weekend_goal_days', 3000),
+        (5, 100, 'weekend_goal_days', 10000),
+        (6, 250, 'weekend_goal_days', 25000),
       ],
       icon: 'weekend',
     ),
@@ -115,11 +120,12 @@ List<AchievementDictEntry> kAchievementDictV3([AppLocalizations? l10n]) {
       (l10n?.coreKusursuzAy ?? 'corekusursuzay'),
       (l10n?.coreKusursuzAySayisi ?? 'corekusursuzaysayisi'),
       [
-        (1, 1, 'perfect_months', 300),
-        (2, 3, 'perfect_months', 1000),
-        (3, 6, 'perfect_months', 2500),
-        (4, 12, 'perfect_months', 7500),
-        (5, 24, 'perfect_months', 20000),
+        (1, 1, 'perfect_months', 2000),
+        (2, 3, 'perfect_months', 4000),
+        (3, 6, 'perfect_months', 8000),
+        (4, 12, 'perfect_months', 16000),
+        (5, 24, 'perfect_months', 32000),
+        (6, 36, 'perfect_months', 64000),
       ],
       icon: 'star',
     ),
@@ -129,11 +135,12 @@ List<AchievementDictEntry> kAchievementDictV3([AppLocalizations? l10n]) {
       (l10n?.coreAlfaKurt ?? 'corealfakurt'),
       (l10n?.coreGrupGunBirincisi ?? 'coregrupgunbirincisi'),
       [
-        (1, 5, 'group_day_first', 100),
-        (2, 10, 'group_day_first', 300),
-        (3, 20, 'group_day_first', 1000),
-        (4, 50, 'group_day_first', 3000),
-        (5, 100, 'group_day_first', 10000),
+        (1, 7, 'group_day_first', 1000),
+        (2, 30, 'group_day_first', 2500),
+        (3, 90, 'group_day_first', 7500),
+        (4, 180, 'group_day_first', 15000),
+        (5, 360, 'group_day_first', 30000),
+        (6, 720, 'group_day_first', 60000),
       ],
     ),
     e(
@@ -146,7 +153,8 @@ List<AchievementDictEntry> kAchievementDictV3([AppLocalizations? l10n]) {
         (2, 30, 'group_goal_contrib', 200),
         (3, 100, 'group_goal_contrib', 800),
         (4, 300, 'group_goal_contrib', 2500),
-        (5, 1000, 'group_goal_contrib', 8000),
+        (5, 600, 'group_goal_contrib', 8000),
+        (6, 1000, 'group_goal_contrib', 20000),
       ],
       icon: 'groups',
     ),
@@ -159,8 +167,9 @@ List<AchievementDictEntry> kAchievementDictV3([AppLocalizations? l10n]) {
         (1, 10, 'campfire_hours', 100),
         (2, 50, 'campfire_hours', 400),
         (3, 150, 'campfire_hours', 1500),
-        (4, 500, 'campfire_hours', 5000),
-        (5, 1000, 'campfire_hours', 12000),
+        (4, 300, 'campfire_hours', 5000),
+        (5, 600, 'campfire_hours', 12000),
+        (6, 1000, 'campfire_hours', 25000),
       ],
       icon: 'whatshot',
     ),
@@ -175,6 +184,7 @@ List<AchievementDictEntry> kAchievementDictV3([AppLocalizations? l10n]) {
         (3, 50, 'nudge_starts', 1200),
         (4, 150, 'nudge_starts', 4000),
         (5, 500, 'nudge_starts', 15000),
+        (6, 1000, 'nudge_starts', 30000),
       ],
       icon: 'campaign',
     ),
@@ -189,6 +199,7 @@ List<AchievementDictEntry> kAchievementDictV3([AppLocalizations? l10n]) {
         (3, 30, 'locomotive_events', 1500),
         (4, 100, 'locomotive_events', 4500),
         (5, 300, 'locomotive_events', 15000),
+        (6, 600, 'locomotive_events', 30000),
       ],
     ),
     e(
@@ -196,7 +207,7 @@ List<AchievementDictEntry> kAchievementDictV3([AppLocalizations? l10n]) {
       'secret',
       (l10n?.coreGeceKusu ?? 'coregecekusu'),
       (l10n?.profileGizliBasarim ?? 'secret'),
-      [(1, 1, 'secret_night_owl', 500)],
+      [(1, 1, 'secret_night_owl', 2000)],
       secret: true,
       icon: 'dark_mode',
     ),
@@ -205,7 +216,7 @@ List<AchievementDictEntry> kAchievementDictV3([AppLocalizations? l10n]) {
       'secret',
       (l10n?.coreGunDogumu ?? 'coregundogumu'),
       (l10n?.profileGizliBasarim ?? 'secret'),
-      [(1, 1, 'secret_dawn', 500)],
+      [(1, 1, 'secret_dawn', 2500)],
       secret: true,
       icon: 'wb_sunny',
     ),
@@ -214,7 +225,7 @@ List<AchievementDictEntry> kAchievementDictV3([AppLocalizations? l10n]) {
       'secret',
       '404',
       (l10n?.profileGizliBasarim ?? 'secret'),
-      [(1, 1, 'secret_404', 4044)],
+      [(1, 1, 'secret_404', 5000)],
       secret: true,
       icon: 'error_outline',
     ),
@@ -223,7 +234,7 @@ List<AchievementDictEntry> kAchievementDictV3([AppLocalizations? l10n]) {
       'secret',
       (l10n?.corePiSirri ?? 'corepisirri'),
       (l10n?.profileGizliBasarim ?? 'secret'),
-      [(1, 1, 'secret_pi', 314)],
+      [(1, 1, 'secret_pi', 3147)],
       secret: true,
       icon: 'functions',
     ),
@@ -232,7 +243,7 @@ List<AchievementDictEntry> kAchievementDictV3([AppLocalizations? l10n]) {
       'secret',
       (l10n?.coreMolaDusmani ?? 'coremoladusmani'),
       (l10n?.profileGizliBasarim ?? 'secret'),
-      [(1, 1, 'secret_break_enemy', 1000)],
+      [(1, 1, 'secret_break_enemy', 2500)],
       secret: true,
       icon: 'block',
     ),
@@ -246,20 +257,11 @@ List<AchievementDictEntry> kAchievementDictV3([AppLocalizations? l10n]) {
       icon: 'hourglass_bottom',
     ),
     e(
-      'secret_1337',
-      'secret',
-      '1337 Elite',
-      (l10n?.profileGizliBasarim ?? 'secret'),
-      [(1, 1, 'secret_1337', 1337)],
-      secret: true,
-      icon: 'sports_esports',
-    ),
-    e(
       'secret_no_limits',
       'secret',
       (l10n?.coreSinirTanimaz ?? 'coresinirtanimaz'),
       (l10n?.profileGizliBasarim ?? 'secret'),
-      [(1, 1, 'secret_no_limits', 3000)],
+      [(1, 1, 'secret_no_limits', 5000)],
       secret: true,
       icon: 'trending_up',
     ),
@@ -277,16 +279,23 @@ List<AchievementDictEntry> kAchievementDictV3([AppLocalizations? l10n]) {
       'secret',
       (l10n?.coreYilbasiNobeti ?? 'coreyilbasinobeti'),
       (l10n?.profileGizliBasarim ?? 'secret'),
-      [(1, 1, 'secret_nye', 5000)],
+      [(1, 1, 'secret_nye', 3000)],
       secret: true,
       icon: 'celebration',
     ),
   ];
 }
 
-/// 5 kademeli taç XP eşikleri (bronz → elmas). SQL `_recalc_crown_rank` ile aynı.
-/// 0 / 2.500 / 10.000 / 25.000 / 75.000
-const List<int> kCrownXpThresholds = <int>[0, 2500, 10000, 25000, 75000];
+/// 6 kademeli taç XP eşikleri (bronz → immortal). SQL `_recalc_crown_rank` ile aynı.
+/// 0 / 20.000 / 75.000 / 200.000 / 500.000 / 1.000.000 (yeni ekonomiye ölçekli).
+const List<int> kCrownXpThresholds = <int>[
+  0,
+  20000,
+  75000,
+  200000,
+  500000,
+  1000000,
+];
 
 /// Tamamlanan her 1 saat çalışma = 50 XP (başarım ödüllerine ek, idempotent).
 /// Sunucu: `0033_study_hour_xp_50.sql` / `process_achievement_event`.
@@ -315,7 +324,6 @@ const Map<String, String> kAchievementMetricSourceVersions = {
   'secret_pi': 'metric_v2',
   'secret_break_enemy': 'break_verified_v1',
   'secret_last_second': 'metric_v2',
-  'secret_1337': 'metric_v2',
   'secret_no_limits': 'metric_v2',
   'secret_matrix': 'metric_v2',
   'secret_nye': 'metric_v2',
@@ -323,12 +331,13 @@ const Map<String, String> kAchievementMetricSourceVersions = {
 
 const Set<String> kCurrentAchievementMetrics = {'fire_streak'};
 
-/// XP → 5 basamaklı taç rütbesi.
-/// Eski 7'li rütbeler (wood_novice, ruby_master) görselde [normalize] edilir;
-/// yeni yazımlar yalnız bu 5 id'yi üretir.
+/// XP → 6 basamaklı taç rütbesi.
+/// Eski rütbeler (wood_novice, platinum_scholar, ruby_master) görselde [normalize]
+/// edilir; yeni yazımlar yalnız bu 6 id'yi üretir.
 String crownRankForXp(int xp) {
-  if (xp >= kCrownXpThresholds[4]) return 'diamond_owl';
-  if (xp >= kCrownXpThresholds[3]) return 'platinum_scholar';
+  if (xp >= kCrownXpThresholds[5]) return 'immortal_legend';
+  if (xp >= kCrownXpThresholds[4]) return 'emerald_sage';
+  if (xp >= kCrownXpThresholds[3]) return 'diamond_owl';
   if (xp >= kCrownXpThresholds[2]) return 'gold_achiever';
   if (xp >= kCrownXpThresholds[1]) return 'silver_learner';
   return 'bronze_beginner';
@@ -381,7 +390,6 @@ class AchievementLedgerEngine {
     var secret404 = false;
     var secretPi = false;
     var secretMatrix = false;
-    var secret1337 = false;
     var secretNye = false;
     var secretLastSecond = false;
     var secretNoLimits = false;
@@ -409,9 +417,6 @@ class AchievementLedgerEngine {
       }
       if (dur >= 3600 && startLocal.hour >= 5 && startLocal.hour < 7) {
         secretDawn = true;
-      }
-      if (startLocal.hour == 13 && startLocal.minute == 37 && dur >= 3600) {
-        secret1337 = true;
       }
       final startMin = startLocal.hour * 60 + startLocal.minute;
       final endMin = endLocal.hour * 60 + endLocal.minute;
@@ -486,7 +491,6 @@ class AchievementLedgerEngine {
         'm404': secret404,
         'pi': secretPi,
         'matrix': secretMatrix,
-        'leet': secret1337,
         'nye': secretNye,
         'last_second': secretLastSecond,
         'no_limits': secretNoLimits,
@@ -529,8 +533,6 @@ class AchievementLedgerEngine {
         return (secrets['pi'] == true) ? 1 : 0;
       case 'secret_matrix':
         return (secrets['matrix'] == true) ? 1 : 0;
-      case 'secret_1337':
-        return (secrets['leet'] == true) ? 1 : 0;
       case 'secret_nye':
         return (secrets['nye'] == true) ? 1 : 0;
       case 'secret_last_second':

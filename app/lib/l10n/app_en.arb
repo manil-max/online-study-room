@@ -2221,6 +2221,18 @@
   "@coreZumrut": {
     "description": "Core user-facing text. Source: Zümrüt"
   },
+  "coreZumrutTac": "Emerald Crown",
+  "@coreZumrutTac": {
+    "description": "Core user-facing text. Source: Zümrüt Taç"
+  },
+  "coreImmortal": "Immortal",
+  "@coreImmortal": {
+    "description": "Core user-facing text. Source: Immortal"
+  },
+  "coreImmortalTac": "Immortal Crown",
+  "@coreImmortalTac": {
+    "description": "Core user-facing text. Source: Immortal Taç"
+  },
   "coreCalismaHatirlaticilari": "Study Reminders",
   "@coreCalismaHatirlaticilari": {
     "description": "Core user-facing text. Source: Çalışma Hatırlatıcıları"

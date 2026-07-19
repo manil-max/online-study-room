@@ -5,14 +5,15 @@ import 'achievement_ledger_engine.dart' show kCrownXpThresholds;
 
 export 'achievement_ledger_engine.dart' show crownRankForXp, kCrownXpThresholds;
 
-/// Başarım kademesi (1–5) ve taç rütbesi (5 basamak) ortak görsel dili.
+/// Başarım kademesi (1–6) ve taç rütbesi (6 basamak) ortak görsel dili.
 ///
-/// Kademe ve taç **aynı 5 renkte** hizalanır; gizli başarımlar bu paletin
-/// dışında mor/eflatun bir "sır" rengi kullanır.
+/// Kademe ve taç **aynı 6 renkte** hizalanır; gizli başarımlar bu paletin
+/// dışında mor/eflatun bir "sır" rengi kullanır. Platin kalktı; 4=Elmas,
+/// 5=Zümrüt (Valorant Ascendant yeşili), 6=Immortal (Valorant Immortal kırmızısı).
 
-/// Kademe 1→5 renkleri (bronz → gümüş → altın → platin → elmas).
+/// Kademe 1→6 renkleri (bronz → gümüş → altın → elmas → zümrüt → immortal).
 Color tierColorFor(int tier) {
-  switch (tier.clamp(1, 5)) {
+  switch (tier.clamp(1, 6)) {
     case 1:
       return const Color(0xFFB87333); // bronz
     case 2:
@@ -20,15 +21,17 @@ Color tierColorFor(int tier) {
     case 3:
       return const Color(0xFFEAB308); // altın
     case 4:
-      return const Color(0xFF67E8F9); // platin / buz
-    case 5:
-    default:
       return const Color(0xFF38BDF8); // elmas
+    case 5:
+      return const Color(0xFF17E4A0); // zümrüt (Valorant Ascendant yeşili)
+    case 6:
+    default:
+      return const Color(0xFFB02E42); // immortal (Valorant Immortal kırmızısı)
   }
 }
 
 String tierLabel(int tier, AppLocalizations l10n) {
-  switch (tier.clamp(1, 5)) {
+  switch (tier.clamp(1, 6)) {
     case 1:
       return l10n.coreBronz;
     case 2:
@@ -36,10 +39,12 @@ String tierLabel(int tier, AppLocalizations l10n) {
     case 3:
       return l10n.coreAltin;
     case 4:
-      return l10n.corePlatin;
-    case 5:
-    default:
       return l10n.coreElmas;
+    case 5:
+      return l10n.coreZumrut;
+    case 6:
+    default:
+      return l10n.coreImmortal;
   }
 }
 
@@ -47,16 +52,18 @@ String tierLabel(int tier, AppLocalizations l10n) {
 const Color kSecretAchievementColor = Color(0xFFA855F7);
 const Color kSecretLockedColor = Color(0xFF1F1230);
 
-/// Taç rütbe id'leri (5 basamak).
+/// Taç rütbe id'leri (6 basamak). 4=Elmas (diamond_owl), 5=Zümrüt, 6=Immortal.
 const List<String> kCrownRanks = <String>[
   'bronze_beginner',
   'silver_learner',
   'gold_achiever',
-  'platinum_scholar',
   'diamond_owl',
+  'emerald_sage',
+  'immortal_legend',
 ];
 
-/// Eski sunucu rütbelerini 5 basamağa indirger.
+/// Eski sunucu rütbelerini 6 basamağa map'ler. Platin ve eski elmas artık aynı
+/// Elmas (diamond_owl, 4.) kademeye düşer; XP korunur, taç yeniden hesaplanır.
 String normalizeCrownRank(String rank) {
   switch (rank) {
     case 'wood_novice':
@@ -68,10 +75,13 @@ String normalizeCrownRank(String rank) {
     case 'gold_achiever':
       return 'gold_achiever';
     case 'platinum_scholar':
-      return 'platinum_scholar';
     case 'ruby_master':
     case 'diamond_owl':
       return 'diamond_owl';
+    case 'emerald_sage':
+      return 'emerald_sage';
+    case 'immortal_legend':
+      return 'immortal_legend';
     default:
       return 'bronze_beginner';
   }
@@ -80,17 +90,19 @@ String normalizeCrownRank(String rank) {
 int crownTierIndex(String rank) {
   final n = normalizeCrownRank(rank);
   final i = kCrownRanks.indexOf(n);
-  return i < 0 ? 0 : i; // 0..4
+  return i < 0 ? 0 : i; // 0..5
 }
 
-int crownTierNumber(String rank) => crownTierIndex(rank) + 1; // 1..5
+int crownTierNumber(String rank) => crownTierIndex(rank) + 1; // 1..6
 
 String crownLabel(String rank, AppLocalizations l10n) {
   switch (normalizeCrownRank(rank)) {
+    case 'immortal_legend':
+      return l10n.coreImmortalTac;
+    case 'emerald_sage':
+      return l10n.coreZumrutTac;
     case 'diamond_owl':
       return l10n.coreElmasTac;
-    case 'platinum_scholar':
-      return l10n.corePlatinTac;
     case 'gold_achiever':
       return l10n.coreAltinTac;
     case 'silver_learner':

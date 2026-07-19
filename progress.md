@@ -58,7 +58,11 @@
 - **Dal:** — (main)
 - **Başlangıç:** 2026-07-19 (Europe/Istanbul)
 - **Son güncelleme:** 2026-07-19 (Europe/Istanbul)
-- **Not:** beta-v41 turu kapandı (WP-221/222/223/224 cihazda doğrulandı). Şimdi kalan ekonomi/kademe/alpha WP'leri sırayla yürüyor (beta-v42 olacak). **WP-J** kod+test tamamlandı (görev sırası daily-üstte + optimistic UI; `sortUserTasksByDue` daily-first, `userTasksProvider` AsyncNotifier'a çevrildi, ekle/tamamla/sil optimistic, hata→geri al+snackbar). Cihazda QA: ~1.5 sn gecikme kalktı mı + 00:00 sonrası daily yenilenme gözlemi. Kullanıcı isteği: **"Sürü Lideri" → "Lider Kurt"** (WP-L; plan dokümanlarında güncellendi). Kalanlar sırayla A+B (6 kademe), C (claim inbox), D/E/F (kural/metric), K/L (alpha). Migration'lar canlıya kullanıcı tarafından uygulanacak.
+- **Not:** beta-v41 turu kapandı (WP-221/222/223/224 cihazda doğrulandı). Kalan ekonomi/kademe/alpha WP'leri sırayla yürüyor (beta-v42). Bitmiş (kod+test, cihaz QA bekliyor):
+  - **WP-J** görev sırası daily-üstte + optimistic UI (`sortUserTasksByDue` daily-first, `userTasksProvider`→AsyncNotifier, ekle/tamamla/sil optimistic, hata→geri al+snackbar). Commit `54a2c84`.
+  - **WP-A+B** 6 kademeli ekonomi (eşli). Renkler: 4=Elmas `#38BDF8`, 5=Zümrüt `#17E4A0`, 6=Immortal `#B02E42` (platin kalktı). Taç 6 rütbe + eşik `[0,20k,75k,200k,500k,1M]`. Client `progression_visuals`+`achievement_ledger_engine` tüm tuple/XP; `secret_1337` tamamen silindi. l10n: `coreZumrutTac`/`coreImmortal`/`coreImmortalTac` eklendi (Immortal: EN Immortal, TR Ölümsüz, DE Unsterblich, AR الخالد). Sunucu **migration `0056_six_tier_economy.sql`**: dict tuple/max_tier=6, `_recalc_crown_rank` 6 rütbe, secret_1337 FK-temiz silme + etkilenen XP geri hesap, taç XP-korumalı hizalama. **process_achievement_event DEĞİŞMEDİ** (claim=WP-C, perfect_month=WP-D, campfire=WP-E). analyze temiz, tüm testler yeşil. **Canlıya `0056` uygulanmalı.**
+  - Yol: stale WP-222 goal-dialog testi de düzeltildi (`Clock`→`Hours`).
+  - Kalanlar: C (claim inbox), D/E/F (kural/metric), K/L (alpha). Migration'lar canlıya kullanıcı tarafından uygulanır.
 
 ### Codex Lane
 - **Durum:** [x] Boşta

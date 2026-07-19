@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:online_study_room/core/stats/progression_visuals.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
 /// Shell-level pending reward banner. Reward state is **event-driven** (beta-v41
@@ -194,15 +195,8 @@ class _CrownCelebration extends StatelessWidget {
   final String rank;
   final bool reduceMotion;
 
-  String _label(AppLocalizations l10n) {
-    return switch (rank) {
-      'diamond_owl' => l10n.coreElmasTac,
-      'platinum_scholar' => l10n.corePlatinTac,
-      'gold_achiever' => l10n.coreAltinTac,
-      'silver_learner' => l10n.coreGumusTac,
-      _ => l10n.coreBronzTac,
-    };
-  }
+  // 6 taç rütbesi tek kaynaktan (progression_visuals) — WP-A.
+  String _label(AppLocalizations l10n) => crownLabel(rank, l10n);
 
   @override
   Widget build(BuildContext context) {

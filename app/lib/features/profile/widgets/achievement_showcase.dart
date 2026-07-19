@@ -64,25 +64,10 @@ IconData achievementIconData(String iconKey) {
   }
 }
 
-String _crownLabel(AppLocalizations l10n, String rank) {
-  return switch (normalizeCrownRank(rank)) {
-    'diamond_owl' => l10n.coreElmasTac,
-    'platinum_scholar' => l10n.corePlatinTac,
-    'gold_achiever' => l10n.coreAltinTac,
-    'silver_learner' => l10n.coreGumusTac,
-    _ => l10n.coreBronzTac,
-  };
-}
+// 6 kademe/taç görsel dili tek kaynaktan (progression_visuals) gelir (WP-A).
+String _crownLabel(AppLocalizations l10n, String rank) => crownLabel(rank, l10n);
 
-String _tierLabel(AppLocalizations l10n, int tier) {
-  return switch (tier.clamp(1, 5)) {
-    1 => l10n.coreBronz,
-    2 => l10n.coreGumus,
-    3 => l10n.coreAltin,
-    4 => l10n.corePlatin,
-    _ => l10n.coreElmas,
-  };
-}
+String _tierLabel(AppLocalizations l10n, int tier) => tierLabel(tier, l10n);
 
 String categoryLabelTr(AppLocalizations l10n, String category) {
   switch (category) {
@@ -166,8 +151,6 @@ String achievementTierConditionTr(
       return l10n.profileTam194DakikaSuren;
     case 'secret_last_second':
       return l10n.profileGizliBirBasarimAcmak;
-    case 'secret_1337':
-      return l10n.profileGizliBirBasarimAcmak;
     case 'secret_no_limits':
       return l10n.profileBirGundeGunlukHedefinin;
     case 'secret_matrix':
@@ -200,7 +183,6 @@ String achievementDetailDescription(
     'secret_404' => l10n.profileBasarim404Aciklama,
     'secret_pi' => l10n.profileBasarimPiAciklama,
     'secret_last_second' => l10n.profileBasarimSonSaniyeAciklama,
-    'secret_1337' => l10n.profileBasarim1337Aciklama,
     'secret_no_limits' => l10n.profileBasarimSinirTanimazAciklama,
     'secret_matrix' => l10n.profileBasarimMatrixAciklama,
     'secret_nye' => l10n.profileBasarimYilbasiAciklama,
@@ -1537,11 +1519,11 @@ class _CatalogTile extends StatelessWidget {
                     ),
                     if (!secretLocked) ...[
                       SizedBox(height: 8),
-                      // 5 kademe renk şeridi
+                      // 6 kademe renk şeridi
                       if (!def.isSecret)
                         Row(
                           children: [
-                            for (var i = 1; i <= def.maxTier.clamp(1, 5); i++)
+                            for (var i = 1; i <= def.maxTier.clamp(1, 6); i++)
                               Expanded(
                                 child: Container(
                                   height: 5,
