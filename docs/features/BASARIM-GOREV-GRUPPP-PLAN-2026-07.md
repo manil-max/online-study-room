@@ -1,375 +1,364 @@
-# Başarım Canlı İlerleme + Topla-Ödül + Ölü Başarı Fix + Günlük Görev + Grup PP — PLAN (v2)
+# Başarım Canlı İlerleme + Topla-Ödül + Ölü Başarı Fix + Günlük Görev + Grup PP — PLAN (v3)
 
-> Kaynak: kullanıcı isteği 2026-07-19 (Minik Kuş). Planlayıcı: Claude.
-> **v2 (2026-07-19):** Codex denetimi sonrası revize. Değişen mimari kararlar ve yeni WP-216 (oturum bütünlüğü) aşağıda. Denetim yanıtı: `docs/features/DENETIM-YANIT-CODEX-01.md`.
-> Kanon kurallar `.agents/AGENTS.md`, program `docs/KALITE-PROGRAMI.md`, format `.agents/skills/planner/SKILL.md`.
-> **Kod yok — yalnız plan.** Worker'lar bu karttan claim eder. Migration numaraları claim anında `progress.md` "Proje Gerçekleri"nden **yeniden teyit edilir** (yerelde en yüksek `0046`).
+> Kaynak: kullanıcı isteği 2026-07-19 (Minik Kuş). İlk plan: Claude. v2: Codex tur-1 bulguları sonrası Claude revizyonu. **v3: Codex tur-2 şema/rollout denetimi sonrası güvenlik ve yayın planı yeniden kuruldu.**
+> Kanon: `.agents/AGENTS.md` + `docs/KALITE-PROGRAMI.md`; format: `.agents/skills/planner/SKILL.md`.
+> **Bu dosya yalnız plandır; kod içermez.** Worker migration numarasını claim anında `progress.md` ve `supabase/migrations/` üzerinden yeniden doğrular (şu an en yüksek `0046`).
+> Kanıt etiketleri: `Kodda doğrulandı` · `Cihazda doğrulanmalı` · `Ürün kararı gerekiyor`.
 
-## Bağlam ve mevcut durum (koda karşı doğrulandı)
+## 1. Yönetici özeti ve GO durumu
 
-- **Başarı motoru** server-authoritative: `_achievement_metrics` + `process_achievement_event` (son sürüm `0033`); istemci XP yazmaz, yalnız olay tetikler. Ledger `xp_ledger` append-only, `event_key` UNIQUE (idempotent), **`AFTER INSERT` trigger'ı `trg_xp_ledger_apply` satır eklenir eklenmez XP'yi profile bankalar** (`0024:210`). Bu davranış claim modelinin merkezinde — aşağıya bak.
-- **Canlı ilerleme temel hâli VAR ama BOZUK:** `achievement_showcase.dart` `_CatalogTile` kilitli/ilerleyen başarıda `LinearProgressIndicator` + `$progress / $need` gösteriyor (`~1038`). **Ancak** server `user_achievements.progress` alanına gerçek metrik değil **tier numarasını** yazıyor (`0024:194`). Yani "26/30" sosyal/server metriklerinde **güvenilir değil** — bar tier-no'yu eşiğe bölüyor. Bu bir server sözleşme boşluğu (Codex bulgu #3). Eksikler: (a) sonraki kademe netliği, (b) canlı streak, (c) ölü başarılarda progress hep 0, (d) claim/topla akışı, (e) profil dışı bildirim, (f) "az kaldı", **(g) gerçek server progress sözleşmesi.**
-- **Ölü başarılar (server'da `then 0`, asla kazanılamaz):** `alpha_wolf`, `campfire_hours`, `locomotive`, `secret_break_enemy` — `0025/0027/0033` hepsinde sabit sıfır (`process_achievement_event` içinde `when 'alpha_wolf' then 0`).
-  - **Retroaktif hesaplanabilirlik:** metrikler `study_sessions` zaman aralıkları + grup üyeliğinden türetilebilir. **DİKKAT:** `group_members.joined_at` yeniden katılımda **eziliyor** (`0012:121` `joined_at = now()`), yani üyelik penceresi tarihsel olarak güvenilir DEĞİL. Bu yüzden retro hesap **doğrudan `study_sessions.group_id` + zaman damgasından** türetilir; `group_members` yalnız "şu an üye mi" kontrolü için kullanılır, tarihsel pencere için değil.
-- **Oturum verisi güvenilmez (Codex bulgu #4 — GERÇEK):** `sessions_insert` RLS yalnız `user_id = auth.uid()` kontrol ediyor (`0001:179`) — grup üyeliği, `end>start`, süre tutarlılığı, gelecek-tarih, üst sınır **yok**. Kullanıcı doğrudan API'den sahte grup oturumu üretip Alfa Kurt/Kamp Ateşi/Lokomotif/Mola Düşmanı kazanabilir. Sosyal başarılar gerçek XP'ye bağlanınca bu bir bütünlük açığı → **WP-216 (yeni)**.
-- **Kusursuz Ay** = bir takvim ayında ≥28 hedef günü (`_achievement_metrics` `0024:509` `if r.goal_days >= 28`; sözlük metni "30 gün" diyor — çelişki). Açıklama netleştir.
-- **Görevler** şu an cihazda (`SharedPreferences`, `user_tasks_v2`); model `user_task.dart` "Tekrar yok" diyor. Repo katmanı adı `SupabaseUserTaskRepository` ama prefs'e yazıyor (yanıltıcı). Bulut + günlük tekrar bunun üstüne eklenecek.
-- **Grup PP yok:** `groups` tablosunda `avatar_url` **yok**; `is_group_admin` = **yalnız `created_by`** (`0004:19` — rol tablosu değil, tek-sahip modeli); `discover_public_groups` avatar döndürmüyor (`0032:142`).
+V3, v2'nin doğru ana kararlarını korur: ayrı `achievement_rewards`, append-only `xp_ledger`, gerçek claim, saat başı 50 XP'nin ambient kalması, sunucu metriği, Europe/Istanbul gün sınırı, sweep-line/two-pointer, görevlerin buluta taşınması ve migration/ARB serileştirmesi.
 
-## Mimari kararlar (v2 — Codex denetimi sonrası KİLİTLİ)
+V2'deki üç bloklayıcı hata v3'te yapısal olarak giderildi:
 
-**MK-1 — Claim mimarisi: ayrı `achievement_rewards` tablosu (claimed_at kolonu DEĞİL).**
-Önceki plan `xp_ledger`'a `claimed_at` kolonu ekliyordu. Codex haklı olarak üç sorun gösterdi: (a) trigger yalnız `AFTER INSERT`, claim `UPDATE` ile yapılırsa XP hiç banklanmaz; (b) `max(tier)` projeksiyonu pending satırları da sayar → tier-1 claim edilirken pending tier-5 rozeti fırlatır; (c) mutable `claimed_at` "append-only" sözleşmesini bozar; (d) tüm eski satırları `claimed_at` ile geri-doldurma riskli (kitlesel XP kaybı) ve WP sırasıyla çelişiyor.
-**Yeni tasarım — split table:**
-- Yeni `public.achievement_rewards(id, user_id, achievement_id, tier, xp_amount, status ['pending'|'claimed'], earned_at, claimed_at null, event_key UNIQUE)`. **Kazanılan ama toplanmamış** ödüllerin kişisel gelen kutusu.
-- `xp_ledger` **hiç değişmez**: literal append-only, `AFTER INSERT` = XP bankalama aynen korunur. Yalnızca **claim edilmiş** XP burada.
-- Eşik geçilince `process_achievement_event`, `_award_achievement_tier` (ledger'a yazan) yerine yeni `_record_pending_reward` çağırır → `achievement_rewards`'a `status='pending'` satır ekler (idempotent, `event_key`), **XP banklanmaz**. Ek koşul: aynı `(user,ach,tier)` `xp_ledger`'da yoksa (zaten toplanmamışsa) pending yaratılır.
-- `claim_achievement_reward(p_achievement_id, p_tier)`: atomik `update achievement_rewards set status='claimed', claimed_at=now() where user_id=auth.uid() and achievement_id=... and tier=... and status='pending' returning ...`; sonra `_award_achievement_tier` çağrılır → `xp_ledger`'a **aynı `event_key`** ile yazar → mevcut trigger XP'yi bankalar. Çifte-claim iki katmanda da idempotent (`achievement_rewards.event_key` UNIQUE + `xp_ledger.event_key` UNIQUE).
-- **Rozet tier projeksiyonu otomatik doğru:** `user_achievements.tier` yalnız `xp_ledger`'dan (claimed) türediği için pending tier rozeti fırlatmaz — Codex bulgu #2(b) **yapısal olarak çözülür**, `max(tier)` sorgusuna filtre eklemeye gerek kalmaz.
-- **Göç riski yok (Codex bulgu #1 çözülür):** mevcut `xp_ledger` satırları zaten banklanmış = "toplanmış". Onlar için pending yaratılmaz (eski kullanıcılar zaten sahip). Yalnız **yeni** eşik geçişleri (retro ölü metrikler dâhil) pending olur. `claimed_at` backfill'i, kitlesel XP kaybı riski **ortadan kalkar**.
-- **Saat başı 50 XP:** ambient/otomatik → doğrudan `xp_ledger`'a yazılır (auto-banked), reward satırı yaratmaz, tek tek toplatılmaz. Taç seviyesinin saat XP'siyle kullanıcı dokunmadan yükselmesi **bilinçli** ürün davranışıdır (UI metninde belirtilir).
-- **Toplu topla:** `claim_all_rewards()` RPC pending'leri döngüyle claim eder (her biri idempotent).
-- **RLS:** `achievement_rewards` select = `user_id = auth.uid()` (kişisel gelen kutusu, başkasının toplanmamışı görünmez); yazma yalnız SECURITY DEFINER RPC (doğrudan DML revoke). status yalnız `pending→claimed` yönünde değişebilir (RPC dışı yazım yok).
+1. **`study_sessions.group_id` yoktur.** 0010 bu kolonu ve tarihsel grup bağlamını bilinçli olarak kaldırmıştır. Grup başarımı bundan sonra doğrulanmış canlı oturumun immutable grup bağlamından hesaplanır; eski kayıtlar yalnız konservatif legacy-proxy kurallarıyla değerlendirilir.
+2. **`source='live'` kanıt değildir.** Eski client uyumluluğu için bu etiket bir süre yazılabilir; ancak yalnız sunucunun oluşturduğu `live_run_id` + çalışma segmentleri başarı için güvenilir kaynaktır. İstemci verified bağ üretmez.
+3. **Server-first davranış kırılması yoktur.** Reward tablosu ve claim-capable uygulama önce expansion olarak iner; otomatik ödülden pending'e geçiş en son, hesap-bazlı capability kapısıyla aktive edilir.
 
-**MK-2 — Gerçek server progress sözleşmesi (Codex bulgu #3).**
-`user_achievements`'a yeni `metric_progress integer` kolonu eklenir. `process_achievement_event` **her** başarı için gerçek metrik değerini (sosyal dâhil) hesaplayıp `metric_progress`'e upsert eder. UI "26/30"'u `metric_progress` / sonraki eşikten okur; `tier` yalnız rozet seviyesi için. Böylece sosyal metriklerde de gerçek ilerleme server-authoritative görünür. Bu **WP-208/210 server kapsamında**, WP-211 UI cilasına ertelenemez.
-
-**MK-3 — Oturum bütünlüğü ön-koşulu (Codex bulgu #4).**
-Sosyal başarıları gerçek XP'ye bağlamadan önce oturum fabrikasyonu kapatılmalı → **WP-216**. Not: bu açık **mevcut** (lider tablosu/kamp ateşi de aynı veriye güveniyor), yeni doğmuyor; ancak ödül bağlanınca risk yükselir. Retro hesap tarihsel veriyi temizleyemez (hardening yalnız ileriyi korur); erken/küçük kullanıcı tabanında tarihsel risk düşük kabul edilir. WP-216 **ileriye dönük güven için önerilen ön-koşul**, WP-209 retro için sert blok değil ama yayından önce inmeli.
-
-**MK-4 — Retro performans (Codex uyarısı).**
-- Kamp Ateşi çakışması: pairwise self-join (O(n²)) **değil**, interval sweep-line (O(n log n)); aynı kullanıcının çakışan oturumları önce union edilir.
-- Mola Düşmanı 5h kayan pencere: union edilmiş kullanıcı interval'lerinde iki-pointer/kayan pencere.
-- Backfill: her profil açılışında tam yeniden tarama **yok**; kullanıcı başına `backfill_checkpoint` (son işlenen zaman) + ileriye dönük artımlı projeksiyon.
-- Kabul kriteri: beklenen maks veri setiyle `EXPLAIN ANALYZE`, p95 süre bütçesi, timeout eşiği. In-memory Dart testi SQL perfını kanıtlamaz.
-
-**MK-5 — Açık mikro-kararlar (Codex "açık uç kalmadı" iddiasını haklı olarak sorguladı).**
-Aşağıdaki varsayılanlar WP'lerde uygulanır; ürün sahibi itiraz ederse değişir:
-- **Alfa Kurt beraberlik:** eşit toplamda **ikisi de** o günün birincisi sayılır. **Çoklu grup:** her grup ayrı → aynı gün 2 grupta birinci = 2 sayım. **Gün bitmeden:** yalnız **tamamlanmış geçmiş günler** (İstanbul dün ve öncesi) sayılır; bugünkü liderlik gün kapanana dek verilmez.
-- **Lokomotif "boş grup":** kullanıcı `source='live'` oturum başlattığında grupta önceki N dk içinde başka aktif live oturum yoktu **ve** ardından X=15 dk içinde ≥2 **farklı** üye live oturum başlattı → 1 olay. Tek olay/başlatma sınırı.
-- **team_player:** metrik ("grup günlük hedefine katkı günü") korunur, **açıklama metni** buna hizalanır (metrik değişimi değil metin netleştirme — daha ucuz, WP-210).
-- **Manuel oturumlar:** sosyal/odak başarıları (Alfa Kurt/Kamp/Lokomotif/Mola Düşmanı) **yalnız `source='live'`** oturumları sayar; elle girilen oturum bunlara dâhil değil.
-- **Kazanım sonrası oturum silme/düzenleme:** XP append-only → **geri alınmaz**; gaming WP-216 insert-time sıkılaştırmasıyla önlenir (silme sonrası XP iadesi yok, dokümante edilir).
-
-## Ürün kararları (önceki, korunur)
-
-1. **Claim modeli — C (gerçek toplama).** ✅ 2026-07-19. Uygulama = MK-1 (split table).
-2. **`secret_break_enemy` (Mola Düşmanı) — "yoğun odak penceresi".** ✅ Herhangi bir 5 saatlik kayan dilimde toplam ≥270 dk (≤30 dk boşluk). Tek kademe. Yalnız `source='live'`. Retro hesaplanır (MK-4 kayan pencere).
-3. **Ölü başarıların retroaktif dağıtımı — EVET.** ✅ Geçmişten hesaplanınca kullanıcıya toplu **pending** düşer (MK-1 sayesinde otomatik pending, backfill riski yok).
+**Plan GO:** WP'ler uygulanabilir ve sıra/rollback sınırları nettir. **Production GO değildir:** her WP'nin staging, otomatik test, gerçek cihaz QA ve ürün kabul kapısı ayrıca geçilir.
 
 ---
 
-# İŞ PAKETLERİ
+## 2. Kodda doğrulanan mevcut gerçekler
 
-> ⚠️ **YAYIN / BAĞIMLILIK SIRASI (numara ≠ yürütme sırası — bunu oku):**
-> `WP-209` (claim/earned altyapı) **ÖNCE** → `WP-216` (oturum bütünlüğü, önerilen ön-koşul) → `WP-208` (ölü metrik retro + gerçek progress sözleşmesi + team_player) → `WP-210` (Başarım UI). `WP-211` (bildirim) yalnız `WP-209`'a bağlı, WP-208'den bağımsız.
-> **Neden ters:** WP-208 retro metrikleri `_award_achievement_tier`'ı çağırırsa mevcut trigger XP'yi anında banklar (pending olmaz). Bu yüzden pending/earned altyapısı (WP-209) canlıda **önce** olmalı; retro en son açılır. (Codex bulgu #1.)
->
-> Bağımsız hatlar: **B)** Görev (`WP-212`→`WP-213`), **C)** Grup PP (`WP-214`), **D)** Tap-to-top (`WP-215`).
-> Aynı anda en fazla **iki hat** (KALITE-PROGRAMI çakışma kuralı). Başarım büyük program = 1 hat; ikinci hat B/C/D'den biri.
-> **Git:** `.agents/AGENTS.md §1.5` = tek `main`, branch/merge/push yok. Bu planda **dal önerisi yok**; her WP tek ayrık commit (`git add -A` yasak, yalnız SAHİP dosyalar). "wpNN-…" yalnız commit mesajı/kapsam etiketidir.
-> **Migration sıcak dosyası:** `supabase/migrations/**` tamamı sıcak → **WP-208/209/212/214/216'nın hiçbiri aynı anda açık olamaz** (yalnız numara değil, tüm yüzey). Migration ekleyen WP'ler tek tek serileştirilir; numara claim anında `progress.md`'den teyit.
-
-## WP-209: Topla-ödülü-al — earned/pending reward + claim RPC (SERVER/DATA) 🎁 ⟶ ÖNCE İNER
-- **Program/Faz:** Başarım & Sosyal Profil 3.0 · **Model:** 🔴 Opus (XP otoritesi + idempotency) · **Bağımlılık:** yok (altyapı tabanı) · **Yayın:** WP-208'den **önce**
-- **Durum:** [ ] Bekliyor
-- **Problem:** XP eşik geçilince otomatik banklanıyor; kullanıcı "başarı yaptığını" hissetmiyor. İstenen: eşik geçilince ödül **pending** olsun, dokununca görünür artışla banklansın; toplamamak ilerlemeyi durdurmaz (battle-pass).
-- **Kapsam dışı:** UI/animasyon (WP-210), bildirim (WP-211), metrik hesabı (WP-208), oturum güvenliği (WP-216).
-- **SAHİP dosyalar (yaz):**
-  - `supabase/migrations/00NN_achievement_rewards.sql` (yeni — `achievement_rewards` tablosu + RLS; `_record_pending_reward`; `claim_achievement_reward` + `claim_all_rewards` RPC; `process_achievement_event` eşik geçişini pending yazacak şekilde günceller — `_award_achievement_tier`'ı doğrudan çağırmayı bırakır, claim'e erteler; saat XP yolu doğrudan ledger'da kalır)
-  - `app/lib/data/models/achievement_reward.dart` (yeni — pending/claimed model)
-  - `app/lib/data/repositories/**/*achievement*reward*` (çift repo: pending listesi + claim çağrısı)
-  - `app/lib/data/providers/achievement_provider.dart` (claim aksiyonu + `claimableRewards` stream)
-  - ilgili testler
-- **DOKUNMA (oku, değiştirme):** `xp_ledger` tablo/trigger (0024 — **değişmez**, MK-1), profil UI, WP-208 metrik fonksiyonu.
-- **Adımlar:**
-  - [ ] `achievement_rewards` şeması (MK-1) + RLS (select self, yazma yalnız DEFINER RPC) + `event_key` UNIQUE.
-  - [ ] `_record_pending_reward(user, ach, tier, xp)`: `(user,ach,tier)` `xp_ledger`'da yoksa **ve** `achievement_rewards`'da yoksa pending ekler (çift idempotency). XP banklamaz.
-  - [ ] `process_achievement_event`: eşik geçilince `_award_achievement_tier` yerine `_record_pending_reward`. **Retro/mevcut kullanıcı guard:** zaten ledger'da olan tier için pending yaratma.
-  - [ ] `claim_achievement_reward` + `claim_all_rewards`: atomik pending→claimed, sonra `_award_achievement_tier` (ledger insert → trigger XP bankalar). İki cihazdan yarış idempotent.
-  - [ ] Saat XP: `study_hour_xp` sistem satırları doğrudan ledger (auto-claimed), reward yaratmaz.
-  - [ ] İstemci `claimableRewards` + `claim()` / `claimAll()`; offline/yeniden-deneme güvenli.
-  - [ ] Uzlaştırma testi: `gamification_profiles.xp == SUM(xp_ledger.xp_amount)` (yalnız claimed/banked); pending XP'ye dâhil değil.
-  - [ ] `flutter analyze` 0; "eşik→pending→claim→XP düşer, iki kez claim artırmaz, pending XP'ye sızmaz" testleri yeşil.
-- **Veri/Migration etkisi:** Yeni `achievement_rewards` tablosu + 3 RPC + `process_achievement_event` güncelleme. **Geri alma:** `drop table achievement_rewards` + `process_achievement_event` 0033 sürümüne dön (pending yerine doğrudan award). `xp_ledger` dokunulmadığından eski davranışa dönüş temiz. **Göç: YOK** (mevcut ledger = toplanmış; backfill gerekmez — MK-1).
-- **RLS/Güvenlik:** claim yalnız kendi pending'i; istemci XP miktarı göndermez (sözlükten okunur); idempotent.
-- **Edge-case'ler:** Aynı anda iki cihazdan claim, offline claim kuyruğu, çok sayıda pending (claim_all), gizli başarı pending'i (silüet korunur), retro ödülleriyle etkileşim (hepsi pending, kullanıcı toplu toplar).
-- **Kabul (ölçülebilir):** Eşik geçilince XP profile yazılmaz, pending listede görünür; claim sonrası XP tam ödül kadar artar, ikinci claim artırmaz; mevcut kullanıcıların XP'si göç sonrası değişmez (uzlaştırma testi eşit); `flutter analyze` 0, testler yeşil.
-- **Tuzaklar:** `process_achievement_event`'te retro/mevcut kullanıcı guard'ını unutup zaten sahip olunan tier'a pending yaratmak; saat XP'yi yanlışlıkla pending'e sokmak; claim'i atomik yapmayıp çifte bankalamak.
-
-## WP-216: Oturum bütünlüğü sıkılaştırma (session integrity) (SERVER/DATA) 🛡️ ⟶ ÖN-KOŞUL
-- **Program/Faz:** Başarım (güvenlik ön-koşulu) · **Model:** 🔴 Opus (RLS + veri bütünlüğü) · **Bağımlılık:** yok · **Yayın:** WP-208 (retro) canlıya çıkmadan önce
-- **Durum:** [ ] Bekliyor
-- **Problem:** `sessions_insert/update` yalnız `user_id=auth.uid()` kontrol ediyor (`0001:179`) — kullanıcı üye olmadığı gruba, gelecek tarihli, `end<start`, saçma süreli, sınırsız oturum yazabilir. Sosyal başarılar gerçek XP'ye bağlanınca fabrikasyonla Alfa Kurt/Kamp/Lokomotif/Mola Düşmanı kazanılır (Codex bulgu #4).
-- **Kapsam dışı:** Başarı metrik hesabı (WP-208), mevcut tarihsel verinin temizliği (hardening yalnız ileriyi korur; geçmiş tolere edilir — MK-3).
-- **SAHİP dosyalar (yaz):**
-  - `supabase/migrations/00NN_session_integrity.sql` (yeni — `study_sessions` insert/update WITH CHECK sıkılaştırma + `BEFORE` trigger veya CHECK constraint ile zaman/süre doğrulaması)
-  - ilgili server testleri (in_memory eşleniği varsa parite)
-- **DOKUNMA (oku, değiştirme):** Başarı dosyaları, diğer migration WP'leri (sıcak — serileştir).
-- **Adımlar:**
-  - [ ] `sessions_insert`/`sessions_update` WITH CHECK: `group_id is null or public.is_group_member(group_id)` (üye olmadığın gruba yazamazsın).
-  - [ ] Zaman/süre doğrulama (CHECK veya trigger): `end_time > start_time`; `duration_seconds` ≈ `(end-start)` (tolerans ±%bir eşik); `start_time <= now() + skew`; `duration_seconds <= 24h` üst sınır.
-  - [ ] `source` alanı: `'live'` yalnız gerçek-zamanlı akışta yazılabilir mi netleştir; en azından sosyal/odak başarıları **yalnız `source='live'`** oturumları sayar (WP-208 buna güvenir). İstemcinin `source`'u serbest beyan etmemesi için sunucu tarafı doğrulama/kısıt.
-  - [ ] Geriye uyum: mevcut meşru istemci akışı (kronometre/manuel giriş) kırılmamalı — mevcut insert yollarını test et.
-  - [ ] `flutter analyze` 0; "üye olmayan grup insert reddi, `end<start` reddi, gelecek tarih reddi, aşırı süre reddi, meşru oturum kabul" testleri yeşil.
-- **Veri/Migration etkisi:** RLS/constraint güncellemesi. Geri alma: eski `0001` politikalarına dön. **Mevcut kayıtlar:** yeni CHECK'ler yalnız yeni insert/update'e uygulanır (veya `NOT VALID` ile ekleyip mevcutları etkilemeden ileriyi korur).
-- **RLS/Güvenlik:** Bu WP'nin kendisi güvenlik sıkılaştırması. Meşru akışı kırmama önceliği.
-- **Edge-case'ler:** Solo (grupsuz) oturum `group_id null`, gece yarısı sınırında oturum, offline sonra senkron eski zaman damgası (geçmiş ama makul), saat dilimi/skew toleransı.
-- **Kabul (ölçülebilir):** Üye olmayan grup/`end<start`/gelecek/aşırı-süre insert **reddedilir**; mevcut kronometre ve manuel giriş akışları çalışır; `flutter analyze` 0, testler yeşil; `Cihazda doğrulanmalı`.
-- **Tuzaklar:** Toleransı çok dar koyup meşru manuel girişleri reddetmek; `NOT VALID` unutup mevcut (belki tutarsız) kayıtlarda migration'ı patlatmak; `is_group_member`'ı update'te unutmak (insert temiz, update'ten kaçış).
-
-## WP-208: Ölü metrik retro fix + gerçek progress sözleşmesi + team_player (SERVER/DATA) 🔧 ⟶ WP-209 & WP-216 SONRASI
-- **Program/Faz:** Başarım · **Model:** 🔴 Opus (server-authoritative + geçmiş veri + RLS + perf) · **Bağımlılık:** **WP-209** (pending altyapısı), **WP-216** (oturum güveni) · **Yayın:** her ikisinden sonra
-- **Durum:** [ ] Bekliyor
-- **Problem:** `alpha_wolf`/`campfire_hours`/`locomotive`/`secret_break_enemy` server'da `then 0` → kazanılamıyor. `team_player` progress "grup hedefi katkısı" değil "grupta gün sayısı" sayıyor. Ayrıca `user_achievements.progress` = tier-no (gerçek metrik değil) → canlı "26/30" bozuk (MK-2).
-- **Kapsam dışı:** Claim/pending (WP-209 — bu WP `_record_pending_reward`'ı çağırır), UI cilası (WP-210), oturum güvenliği (WP-216).
-- **SAHİP dosyalar (yaz):**
-  - `supabase/migrations/00NN_achievement_group_metrics.sql` (yeni — `_achievement_metrics` sosyal metrikleri gerçek hesaplar; `process_achievement_event` gerçek `metric_progress`'i her başarı için upsert eder + eşik geçişini WP-209'un `_record_pending_reward`'ına yönlendirir; `user_achievements.metric_progress` kolonu — MK-2)
-  - `app/lib/core/stats/achievement_ledger_engine.dart` (istemci `_progressFor` paritesi/yorum güncelleme; sosyal metrikler artık server'dan gerçek `metric_progress` ile gelir)
-  - ilgili testler (server-metrik in_memory eşleniği + `achievement_ledger_engine_test.dart`)
-- **DOKUNMA (oku, değiştirme):** `achievement_rewards` tablosu/RPC (WP-209 — çağırır, değiştirmez), `xp_ledger` (0024), profil UI.
-- **Adımlar:**
-  - [ ] `user_achievements.metric_progress integer` kolonu; `process_achievement_event` **her** başarı için gerçek metrik değerini upsert eder (MK-2). UI "26/30" buradan.
-  - [ ] `alpha_wolf`: her (grup, İstanbul-günü, **yalnız tamamlanmış geçmiş gün**) için üye toplamlarından max sahibi = birinci; beraberlikte ikisi de (MK-5). Grup üyeliği `study_sessions.group_id`'den türetilir (joined_at güvenilmez — MK-5).
-  - [ ] `campfire_hours`: `source='live'` oturumlarda aynı grupta ≥3 eşzamanlı üye çakışması; **sweep-line O(n log n)** (MK-4), aynı kullanıcının çakışan oturumları önce union.
-  - [ ] `locomotive`: MK-5 tanımı (boş grup + 15 dk içinde ≥2 farklı live üye).
-  - [ ] `secret_break_enemy`: 5h kayan pencerede ≥270 dk (`source='live'`); union interval'lerde iki-pointer (MK-4).
-  - [ ] `team_player`: metrik korunur, açıklama WP-210'da hizalanır (MK-5).
-  - [ ] Backfill checkpoint (MK-4): profil açılışında tam yeniden tarama yok; artımlı.
-  - [ ] Retro ödüller `_record_pending_reward` ile **pending** düşer (WP-209 sayesinde otomatik; XP banklanmaz).
-  - [ ] Idempotency: retro tekrar çalışınca aynı `event_key` ikinci pending/XP vermez.
-  - [ ] Perf kabul: beklenen maks veriyle `EXPLAIN ANALYZE`, p95 bütçe, timeout eşiği.
-  - [ ] `flutter analyze` 0; server-metrik + perf testleri yeşil.
-- **Veri/Migration etkisi:** `_achievement_metrics` + `process_achievement_event` yeniden tanımlanır (CREATE OR REPLACE) + `user_achievements.metric_progress`. Geri alma: 0033 + kolon drop. İlk `manual_refresh`'te retro pending düşer.
-- **RLS/Güvenlik:** SECURITY DEFINER; kullanıcı yalnız kendi metriği; grup okuması `is_group_member`/`can_see_user_sessions` sınırında; XP yalnız claim'de (WP-209).
-- **Edge-case'ler:** Gruptan ayrılmış üye, çoklu grup, aynı gün çoklu birincilik, gece yarısı sınırı, beraberlik, çok büyük geçmiş (perf/timeout — MK-4), manuel oturumların hariç tutulması (`source='live'`).
-- **Kabul (ölçülebilir):** 6 gün grup birincisi test kullanıcısı `manual_refresh` sonrası `alpha_wolf` `metric_progress` ≥6, tier-1 **pending** düşer (banklanmaz); `campfire`/`locomotive` ≥1 ilerler; aynı çağrı iki kez pending/XP vermez; `metric_progress` gerçek değeri gösterir; perf p95 bütçe içinde; `flutter analyze` 0; `Cihazda doğrulanmalı`.
-- **Tuzaklar:** Zaman-çakışması O(n²) patlaması (sweep-line kullan); İstanbul TZ/UTC karışımı; retro'nun mevcut XP'yi çifte saymaması; `joined_at`'e güvenmek (kullanma); `metric_progress` yerine tier yazmak (eski hata).
-
-## WP-210: Başarım UI — canlı ilerleme + claim akışı + "az kaldı" + metin netleştirme (CLIENT) 🎨
-- **Program/Faz:** Başarım · **Model:** 🟣 Pro · **Bağımlılık:** WP-208 (gerçek `metric_progress`) + WP-209 (claim RPC + pending stream)
-- **Durum:** [ ] Bekliyor
-- **Problem:** İlerleme temel hâli var ama sonraki kademe netliği zayıf, streak canlı değil, claim akışı + XP animasyonu yok, "az kaldı" yok, bazı açıklamalar belirsiz (Kusursuz Ay).
-- **Kapsam dışı:** Profil dışı bildirim (WP-211), server metrik/claim mantığı (WP-208/209).
-- **SAHİP dosyalar (yaz):**
-  - `app/lib/features/profile/widgets/achievement_showcase.dart` (`metric_progress`'ten "26/30 · sonraki: Gümüş", canlı streak, claim düğmesi + XP animasyonu — `progress` alanını **`metric_progress`'e taşı**, tier-no'yu bar için kullanma)
-  - `app/lib/features/profile/social_profile_screen.dart` (pending/claim bağlama + "az kaldı" minimal şerit — 1 başarı)
-  - `app/lib/core/stats/progression_visuals.dart` (gerekirse)
-  - `app/lib/l10n/app_en.arb`, `app/lib/l10n/app_tr.arb` (**ARB — bu WP tek ARB yazarı**; Kusursuz Ay="28+ gün", team_player metni hizala, claim/az-kaldı metinleri, saat-XP-otomatik açıklaması)
-  - ilgili widget testleri
-- **DOKUNMA (oku, değiştirme):** `home_shell.dart` (WP-211), server dosyaları, generated l10n.
-- **Adımlar:**
-  - [ ] "26/30 · sonraki: Gümüş" `metric_progress`'ten; tamamlanan kademe rozeti + o anki tier.
-  - [ ] Canlı streak "7/10", kaçırınca 0 davranışı görünür.
-  - [ ] Claim: pending ödülde "Topla" düğmesi/parıltısı; dokununca XP barı animasyonla artar, rozet açılır (mevcut confetti; ek paket yok). "Tümünü topla" seçeneği (claim_all).
-  - [ ] "Az kaldı": profil üstünde en yakın **1** başarı için ince şerit (minimal).
-  - [ ] Metin netleştirme: Kusursuz Ay="Bir ayda 28+ gün hedef tuttur" (sözlük "30 gün" çelişkisini düzelt), team_player açıklaması metriğe hizalı, saat-XP-otomatik notu.
-  - [ ] Tema-güvenli (token renk), WCAG AA, 360/600/1200px taşma yok.
-  - [ ] `flutter analyze` 0; showcase/claim/az-kaldı testleri yeşil.
-- **Veri/Migration etkisi:** Yok.
-- **Edge-case'ler:** Pending yokken düğme gizli, çok pending (tümünü topla), gizli başarı pending (silüet), başkasının profilinde claim gizli (`isSelf`), `metric_progress` null (fallback 0).
-- **Kabul (ölçülebilir):** Pending dokununca ≤1 sn XP barı artar + rozet açılır; "26/30 · sonraki kademe" okunur ve **gerçek metriği** yansıtır; "az kaldı" ≤1 satır; Kusursuz Ay net; `flutter analyze` 0; `Cihazda doğrulanmalı`.
-- **Tuzaklar:** Claim animasyonunu server yazımından önce oynatıp tutarsızlık (optimistic + doğrula); ARB'ye WP-213 ile aynı anda yazmak (serileştir); tier-no'yu progress bar'a sokmak (eski hata — `metric_progress` kullan); sabit renk (WP-141).
-
-## WP-211: Başarı/taç bildirimi — açılış banner'ı + Brawl Stars nav-işaret (CLIENT) 🔔
-- **Program/Faz:** Başarım · **Model:** 🟣 Pro · **Bağımlılık:** WP-209 (pending stream) — WP-208'den bağımsız
-- **Durum:** [ ] Bekliyor
-- **Problem:** Kullanıcı başarı açtığında/taç yükseldiğinde haberi olmuyor. İki mekanizma: (1) Clash tarzı açılış banner'ı; (2) Brawl Stars tarzı Profil sekmesi üstünde kalıcı nokta (pending>0), toplanınca kaybolur.
-- **Kapsam dışı:** Claim mantığı (WP-209), profil içi liste/claim UI (WP-210), sistem push (ayrı iş).
-- **SAHİP dosyalar (yaz):**
-  - `app/lib/core/navigation/home_shell.dart` (pending banner + alt nav Profil nokta rozeti; **sıcak dosya — dar dokun**)
-  - yeni `app/lib/features/profile/widgets/reward_toast.dart` (banner + nav-nokta bileşeni)
-  - ilgili testler
-- **DOKUNMA (oku, değiştirme):** `achievement_showcase.dart` (WP-210), ARB (WP-210 yazar — salt-oku), server dosyaları, `nav_index.dart` (oku).
-- **Adımlar:**
-  - [ ] Pending>0 olunca home üstünde küçük, kapatılabilir "n ödül hazır · Topla" banner'ı; dokununca profil başarı bölümüne götürür.
-  - [ ] Alt nav Profil ikonunda nokta/sayı rozeti (pending>0), `claimableRewards` stream'inden reaktif; toplanınca kaybolur.
-  - [ ] Taç yükselişinde tek seferlik kutlama (`_seenUnlockKeys` deseni).
-  - [ ] WP-105 (oturum-bitti XP tetiği, parkta) ile aynı `home_shell` yüzeyi — salt pending-okuma, XP tetiğine dokunma.
-  - [ ] `flutter analyze` 0; banner + nav-rozet görünürlük/temizlenme/tekrar-göstermeme testleri yeşil.
-- **Veri/Migration etkisi:** Yok.
-- **Edge-case'ler:** Açılışta birikmiş çok pending, banner spam'i (debounce/tek banner), banner kapanınca nav-rozet kalır (rozet pending'e bağlı), offline, gizli başarı pending'i (rozet sayılır, içerik silüet).
-- **Kabul (ölçülebilir):** Yeni pending ≤5 sn'de banner + Profil noktası; toplanınca ikisi de kaybolur; taç bir kez kutlanır; `flutter analyze` 0; `Cihazda doğrulanmalı`.
-- **Tuzaklar:** WP-105 ile `home_shell` çakışması (ayrı SAHİP mantık, dar dokun); nav-rozeti banner state'ine bağlamak (pending'e bağla); her tick'te banner tetikleme; ARB'ye yazmak.
-- **> ⚠️ Çakışma:** WP-210 & WP-211 ikisi de Başarım UI hattı → tek lane'de sıralı (WP-211, WP-209 sonrası; WP-210 ile ARB'yi yalnız WP-210 yazar). SAHİP kesişmiyor (WP-210=showcase/social_profile, WP-211=home_shell/reward_toast).
-
-## WP-212: Günlük yenilenen görev — bulut model + tekrar/tamamlama (DATA) 🗓️
-- **Program/Faz:** Görevler (bağımsız hat B) · **Model:** 🟣 Pro (veri göçü + gün sınırı + çok-cihaz) · **Bağımlılık:** yok
-- **Durum:** [ ] Bekliyor
-- **Problem:** Görevler cihazda (prefs), tekrar yok. Kullanıcı sabit günlük rutinini her gün otomatik istiyor; telefon değişince kaybolmasın; streak tutulsun. Karar: bulut.
-- **Kapsam dışı:** UI (WP-213), görev↔başarı bağlama.
-- **SAHİP dosyalar (yaz):**
-  - `supabase/migrations/00NN_user_tasks_cloud.sql` (yeni — `user_tasks` şablon + `user_task_completions` gün-damgalı; RLS own-rows)
-  - `app/lib/data/models/user_task.dart` (recurrence/target/tombstone alanları)
-  - `app/lib/data/repositories/user_task_repository.dart` + `supabase/` + `in_memory/` (gerçek bulut repo; prefs'ten göç)
-  - `app/lib/data/providers/user_task_providers.dart`
-  - ilgili testler
-- **DOKUNMA (oku, değiştirme):** `tasks_card.dart`/Araçlar UI (WP-213), başarı dosyaları, diğer migration WP'leri (sıcak).
-- **Adımlar:**
-  - [ ] Şema: `user_tasks(id, user_id, title, due_at null, is_recurring bool, recurrence text null, target_count int null, sort_order, created_at, updated_at, archived_at null)`. `user_task_completions(id, task_id, user_id, day date, completed_at, UNIQUE(task_id, day))` — **`UNIQUE(task_id, day)` idempotency** (Codex). Composite FK / kontrol: completion `user_id` = task sahibi.
-  - [ ] **Tek-seferlik görev tamamlama (Codex):** non-recurring görev de tamamlama = `user_task_completions` satırı (day = tamamlanma günü); "completed" durumu bu satırdan türetilir (ayrı `completed` bayrağı tutmak yerine tek kaynak) **veya** `user_tasks.completed_at` — WP'de tek yol seç ve tutarlı uygula (öneri: completions tek kaynak, hem tekrarlı hem tek-seferlik).
-  - [ ] RLS: her tablo own-rows (insert/select/update/delete `user_id=auth.uid()`).
-  - [ ] **Çok-cihaz senkron (Codex):** şablon düzenleme last-write-wins (`updated_at`); silme = **tombstone** (`archived_at`, hard-delete değil) → cihazlar arası silme yayılır; completions additif (union, `UNIQUE(task_id,day)` çift-yazımı engeller).
-  - [ ] Prefs→bulut tek seferlik göç: `user_tasks_v2` okunur, buluta yazılır, **göç-tamamlandı bayrağı** ile çift-yazım engellenir; yarım-göç (offline) güvenli.
-  - [ ] "Bugünün görevleri" türetimi: tekrarsız = eskisi gibi; tekrarlı = bugün completion yoksa aktif. 00:00 İstanbul = **kayıt silme yok** (gün-damgalı). Streak = ardışık gün completion.
-  - [ ] Offline: çevrimdışı işaretlemeler kuyruğa, bağlanınca senkron.
-  - [ ] `flutter analyze` 0; model/repo/gün-sınırı (TZ mock)/çok-cihaz-merge/tombstone testleri yeşil.
-- **Veri/Migration etkisi:** İki yeni tablo + RLS. Geri alma: `drop table`. Kullanıcı SQL Editor'da uygular.
-- **RLS/Güvenlik:** Own-rows zorunlu; PII yok; gün sınırı İstanbul (`istanbul_calendar.dart`).
-- **Edge-case'ler:** 23:59→00:01 geçişi, cihaz TZ ≠ İstanbul, offline işaretleme sonra senkron, göç sırasında offline, iki cihazdan aynı görev düzenleme/silme, `maxTasks` sınırı.
-- **Kabul (ölçülebilir):** Tekrarlı görev işaretlenince completed; ertesi İstanbul-günü 00:00'da tekrar aktif (kayıt silinmeden); telefon değişince rutin korunur; bir cihazda silinen görev diğerinde kaybolur (tombstone); streak doğru; `flutter analyze` 0, testler yeşil.
-- **Tuzaklar:** 00:00'ı "kayıt sıfırlama" ile yapmak; prefs göçünde çift kayıt; hard-delete ile çok-cihaz silme kaybı; TZ/UTC gün kayması; tek-seferlik görevde iki farklı "completed" kaynağı (tek kaynak seç).
-
-## WP-213: Görev UI — günlük tip ekleme + bugünün listesi + 00:00 yenileme (CLIENT) ✅
-- **Program/Faz:** Görevler · **Model:** 🔵 Sonnet · **Bağımlılık:** WP-212
-- **Durum:** [ ] Bekliyor
-- **Problem:** Kullanıcı görev ekleme akışına "günlük yenilenen" tipini seçebilmeli; işaretleyince completed, ertesi gün geri gelsin. "Gerisi aynı, sadece yeni tip."
-- **Kapsam dışı:** Bulut model/RLS (WP-212). Sayaçlı hedef ("25 paragraf" tek tek) opsiyonel — kullanıcı "üstüne basınca onaylansın" → basit onay yeterli (sayaç ayrı ürün kararı).
-- **SAHİP dosyalar (yaz):**
-  - `app/lib/features/home/widgets/tasks_card.dart` (bugünün tekrarlı görevleri)
-  - Araçlar/Görevler CRUD ekranı ("Günlük yenilenen" seçeneği — grep: `features/**tools**`/`**tasks**`)
-  - `app/lib/l10n/app_en.arb`, `app/lib/l10n/app_tr.arb` (**ARB — bu hat tek yazar**; "Günlük", "Her gün yenilenir")
-  - ilgili widget testleri
-- **DOKUNMA (oku, değiştirme):** WP-210 (başarım ARB yazarı — **aynı `app_*.arb` dosyası → Başarım ve Görev ARB'ye aynı anda yazamaz, serileştir**).
-- **Adımlar:**
-  - [ ] Ekleme akışına "Günlük yenilenen" anahtarı; kaydedince `is_recurring=true, recurrence='daily'`.
-  - [ ] Home kartı: tekrarlı görevler bugünkü durumla; işaretleyince completed, 00:00'da geri (WP-212 türetimi).
-  - [ ] Tekrarlı görevi rozet/ikonla ayırt et (🔁); streak varsa minimal gösterim (opsiyonel).
-  - [ ] `flutter analyze` 0; ekleme + bugün-işaretle + ertesi-gün (TZ mock) testleri yeşil.
-- **Veri/Migration etkisi:** Yok.
-- **Edge-case'ler:** Gece yarısı açık ekran yenilenmesi (provider invalidation + app-resume — WP-212 türetiminden oku, UI'da manuel timer zorlama), karışık liste sıralaması, boş liste.
-- **Kabul (ölçülebilir):** Günlük görev eklenir→bugün listede; işaretlenir→completed; ertesi İstanbul-günü aktif; tekrarsız eskisi gibi; `flutter analyze` 0; `Cihazda doğrulanmalı`.
-- **Tuzaklar:** ARB'ye Başarım hattıyla eşzamanlı yazmak (serileştir); 00:00'ı UI manuel timer ile zorlamak.
-
-## WP-214: Grup profil fotoğrafı (grup pp) (DATA + CLIENT) 🖼️
-- **Program/Faz:** Sosyal gruplar (bağımsız hat C) · **Model:** 🟣 Pro (storage RLS + UI) · **Bağımlılık:** yok
-- **Durum:** [ ] Bekliyor
-- **Problem:** Grupların pp'si yok; liste/kamp ateşi/istatistik jenerik. Admin grup pp koyabilsin.
-- **Kapsam dışı:** Üye avatar (var), grup banner, foto moderasyon (UGC ayrı — WP-115/125 deseni).
-- **SAHİP dosyalar (yaz):**
-  - `supabase/migrations/00NN_group_avatar.sql` (yeni — `groups.avatar_url text` + `groups.avatar_updated_at timestamptz` + `group-avatars` public bucket; yazma yalnız `is_group_admin`; okuma public; `discover_public_groups` **avatar_url dönecek şekilde güncellenir** — Codex)
-  - `app/lib/data/models/group*.dart` (`avatarUrl`, `avatarUpdatedAt`)
-  - `app/lib/data/repositories/**/*group*` (upload + url güncelle; çift repo)
-  - grup ayarları/oluşturma UI + `class_switcher.dart` + grup listesi/kamp ateşi/istatistik başlığı
-  - ilgili testler
-- **DOKUNMA (oku, değiştirme):** başarı/görev dosyaları, `profiles` avatar akışı (desen referans, dokunma), diğer migration WP'leri (sıcak).
-- **Adımlar:**
-  - [ ] Migration: `groups.avatar_url` + `avatar_updated_at` + `group-avatars` bucket; RLS insert/update/delete yalnız `is_group_admin`; okuma public. **`discover_public_groups` avatar_url ekle** (aksi halde keşifte pp görünmez — Codex).
-  - [ ] **Cache-busting (Codex):** sabit `<group_id>/avatar.jpg` yolu cache/realtime yenilemez → ya versiyonlu yol (`<group_id>/<timestamp>.jpg`) ya da `avatar_url`'e `?v=<avatar_updated_at>` query. WP'de tek yol seç.
-  - [ ] Upload: admin ayarlarda foto seç → yükle → `avatar_url`+`avatar_updated_at` güncelle (profil avatar desenini yeniden kullan; boyut/tip sınırı).
-  - [ ] Gösterim: switcher, keşif/liste, kamp ateşi başlığı, grup istatistik başlığı — `avatarUrl` varsa göster, yoksa mevcut fallback (baş harf/ikon).
-  - [ ] Erişilebilirlik + tema-güvenli; büyük görselde cache/boyut.
-  - [ ] `flutter analyze` 0; upload izin (admin/üye reddi), gösterim/fallback/cache-bust testleri yeşil.
-- **Veri/Migration etkisi:** `groups.avatar_url`+`avatar_updated_at` + bucket/policy + `discover_public_groups` güncelleme. Geri alma: kolon+bucket+RPC eski sürüm.
-- **RLS/Güvenlik:** Yazma yalnız admin (RLS + storage policy iki katman); okuma public. **Gizlilik notu (Codex):** gruplar varsayılan private ama keşif RPC'si zaten ad/üye sayısı ifşa ediyor; grup avatarı keşifte görünecek → public bucket bilinçli karar, dokümante. `is_group_admin` = **yalnız oluşturan** (tek-sahip modeli, `0004:19`) — rol tabanlı admin ileride ayrı iş. Üye admin değilse upload reddi + UI hata (WP-109 B7: sessiz başarı yok).
-- **Edge-case'ler:** Admin olmayan upload denemesi, grup silinince avatar temizliği, çok büyük dosya, eski url cache (cache-bust çözer), public bucket kötüye kullanımı (boyut/tip sınırı).
-- **Kabul (ölçülebilir):** Admin pp yükler → tüm yüzeylerde (keşif dâhil) ≤5 sn görünür; yeni yükleme eski cache'i **geçersiz kılar** (cache-bust); üye (admin değil) yükleyemez (RLS reddi + UI hata); avatar yoksa fallback bozulmaz; `flutter analyze` 0; `Cihazda doğrulanmalı`.
-- **Tuzaklar:** Storage policy'de `is_group_admin` yerine yalnız auth (herkes yazar); sabit yol → cache bayat; `discover_public_groups`'u güncellememek (keşifte pp yok); tip/boyut sınırsız.
-
-## WP-215: Aktif sekmeye tekrar basınca en yukarı çık — tüm sekmeler (CLIENT) ⬆️
-- **Program/Faz:** IA/Navigasyon cilası (bağımsız hat D, küçük, düşük risk) · **Model:** 🔵 Sonnet · **Bağımlılık:** yok · **Not:** WP-211 (`home_shell`) ile SAHİP kesişimini önlemek için **kesin ekran-kökü dosyaları** aşağıda; `core/navigation/**`'a yazmaz.
-- **Durum:** [ ] Bekliyor
-- **Problem:** "Tap-to-top" yalnız Ana Sayfa'da (`home_screen.dart` `navReselectProvider` dinliyor). Gruplar, İstatistikler, Profil, Araçlar'da yok. Altyapı **var** (`nav_index.dart` her sekme tekrar-basımında `navReselectProvider`'ı `(tabIndex, tick)` ile tetikliyor) — yalnız dinleyici bağlanacak.
-- **Kapsam dışı:** Yeni navigasyon mimarisi, animasyon süresi, Ana Sayfa mevcut davranışı, `home_shell.dart` (WP-211 sahibi — **yazma**).
-- **SAHİP dosyalar (yaz) — kesin ekran kökleri (grep ile teyit, WP-210/214 SAHİP'leriyle kesişmeyen kök scroll dosyaları):**
-  - Gruplar sekmesi kök ekranı (`features/classroom/**` ana scroll ekranı — kök ScrollController; WP-214 `class_switcher.dart`'a dokunuyor, WP-215 **switcher'a değil sekme kök scroll'una** yazar)
-  - İstatistikler sekmesi kök ekranı (`features/stats/**` ana scroll)
-  - Profil sekmesi kök ekranı (`features/profile/**` ana scroll; WP-210 `achievement_showcase`/`social_profile_screen`'e yazıyor → WP-215 **farklı kök scroll dosyasına** yazmalı; kesişirse WP-210 sonrası sıraya al)
-  - Araçlar sekmesi kök ekranı (gerçek kök: `clock_screen.dart` — grep `features/**clock**`/`**tools**` ile teyit)
-  - ilgili testler
-- **DOKUNMA (oku, değiştirme):** `nav_index.dart` (oku — desen), `home_screen.dart` (dokunma), `home_shell.dart` (WP-211).
-- **Adımlar:**
-  - [ ] Her sekme ekranı kökünde `ref.listen(navReselectProvider, ...)`; `tabIndex == kendi indeksi` ve tick arttıysa `animateTo(0)` (home deseni). **Tab indeksini hardcode etme** — `nav_index.dart` sabitlerinden oku.
-  - [ ] Her ekranın kök kaydırıcısını bul/normalize et (nested scroll varsa dış controller — WP-172 dersi).
-  - [ ] `flutter analyze` 0; her sekme "tekrar bas → offset 0" testi yeşil.
-- **Veri/Migration etkisi:** Yok.
-- **Edge-case'ler:** Nested scroll (Gruplar), zaten en üstteyken (no-op), liste boş, ekran build olmadan tick.
-- **Kabul (ölçülebilir):** Gruplar/İstatistik/Profil/Araçlar'da aşağı kaydırıp sekmeye tekrar basınca ≤300 ms'de en üste; Ana Sayfa regresyonsuz; `flutter analyze` 0; `Cihazda doğrulanmalı`.
-- **Tuzaklar:** Ayrı ScrollController tutup PrimaryScrollController ile çakışmak; nested'de yanlış controller; `home_shell`'e yazıp WP-211 çakışması; tab indeksi hardcode; WP-210/214 SAHİP dosyalarıyla kesişmek (kök scroll dosyası ayrı olmalı — kesişirse ilgili WP sonrası sıraya al).
-- **> ⚠️ SAHİP hassasiyeti (Codex):** `features/profile/**` (WP-210), `features/classroom/**` & `features/stats/**` (WP-214) hatlarıyla klasör paylaşır. Kesişim **dosya bazında** yoksa (WP-215 yalnız kök scroll dosyaları) paralel güvenli; kesişim varsa o hat sonrası sıraya al. Claim anında kesin dosya listesiyle teyit.
+- `xp_ledger` append-only'dir; `event_key` UNIQUE ve `trg_xp_ledger_apply` yalnız `AFTER INSERT` çalışarak XP'yi bankalar (`0024:55–65`, `0024:186–213`).
+- `_award_achievement_tier` ledger'a doğrudan insert eder; mevcut `process_achievement_event` eşik geçince bunu çağırır (`0024:322–350`, `:619–625`).
+- `user_achievements.progress` gerçek metrik değil tier numarasıdır; showcase bunu progress gibi gösterir (`0024:191–200`, `achievement_showcase.dart`).
+- `alpha_wolf`, `campfire_hours`, `locomotive`, `secret_break_enemy` server değerlendirmesinde sabit 0'a bağlıdır (`0025/0027/0033`).
+- `study_sessions.group_id`, `0010_drop_session_group_id.sql:31` ile kaldırılmış; 0010:29–30 tarihsel orijinal grup bilgisinin kaybolduğunu açıkça kabul etmiştir. Modelde de `groupId` yoktur.
+- Mevcut grup istatistiği `study_sessions ⨝ group_members` ve üyelik penceresiyle türetilir (`0011:34–39`). Yeniden katılım `joined_at=now()` ile eski pencereyi ezer (`0012:117–121`). Dolayısıyla geçmiş grup bağlamı eksiksiz yeniden kurulamaz.
+- Session insert/update doğrudan kullanıcı satırına açıktır; model `source` değerini istemciden yollar. `0012`, `end_time >= start_time` ve duration üst sınırının bir kısmını `NOT VALID` constraint ile zaten eklemiştir; v3 bunu tekrar etmez, güçlendirir.
+- Timer her çalışma fazını ayrı `study_sessions` aralığı olarak kaydeder; presence içinde seçili `group_id` hâlâ vardır. Bu, ileriye dönük server-issued grup bağlamı için kullanılabilir.
+- `nav_index.dart` yalnız `kHomeTabIndex` içerir; diğer sekme sabitleri yoktur. Tap-to-top planı bu dosyayı değiştirmeden hardcode'suz uygulanamaz.
+- Görevler prefs tabanlıdır; cloud isimli repo gerçekte prefs kullanır. Grup tablosunda avatar alanı yoktur.
+- Kök `AGENTS.md` ve `CLAUDE.md` artık ince işaretçidir; tek `main` kuralı çelişkisiz biçimde `.agents/AGENTS.md`'den gelir.
 
 ---
 
-## Çakışma matrisi (v2)
+## 3. Kilitli mimari kararlar
 
-- **Migration sıcak yüzey:** `supabase/migrations/**` tamamı sıcak (`AGENTS.md:83`). **WP-208/209/212/214/216'nın hiçbiri aynı anda açık olamaz** — yalnız numara değil tüm migration yüzeyi. Migration WP'leri **tek tek serileştirilir**; numara claim anında `progress.md`'den teyit (numara kontrolü TOCTOU'yu çözmez → tek-lane serileştirme çözer).
-- **Başarım iç yayın sırası:** **WP-209 → WP-216 → WP-208 → WP-210**; WP-211 yalnız WP-209'a bağlı. (Numara ≠ sıra — üstteki banner.)
-- **ARB sıcak:** WP-210 (başarım) ve WP-213 (görev) ikisi de `app_*.arb` yazar → aynı anda yazamaz; serileştir.
-- **Görev iç sıra:** WP-212 → WP-213.
-- **`core/navigation/**` sıcak:** WP-211 buraya yazar (`home_shell`); WP-215 **yazmaz** (ekran köklerine yazar) → SAHİP kesişimi yoksa paralel; yine de her ikisi navigasyon davranışına dokunduğundan claim'de kesin dosya teyidi.
-- **Grup PP:** WP-214 bağımsız; migration sıcak yüzey dışında başka hatla SAHİP kesişimi yok.
-- **Hat sayısı:** Başarım = 1 lane (kendi içinde 209→216→208→210/211 sıralı). İkinci lane = Görev **veya** Grup PP **veya** WP-215.
-- **Git:** tek `main`, branch yok (`AGENTS.md:85`). ⚠️ **CLAUDE.md** "WP başına ayrı dal aç" diyor — bu `.agents/AGENTS.md §1.5` ile **çelişiyor**; ürün sahibi hangisi kanon karar vermeli (öneri: AGENTS.md kanon, CLAUDE.md güncellensin). Bu plan AGENTS.md'yi izler: dal yok.
-- **Parktakiler:** WP-105 (`home_shell`, test bekliyor) WP-211 ile aynı dosya ama parkta → bloklamaz; WP-211 dar dokunur.
+### MK-1 — Claim ayrı `achievement_rewards` tablosudur
 
-## Model önerileri özeti
-- 🔴 Opus: WP-208, WP-209, WP-216 (server-authoritative XP + retro + RLS güvenlik).
-- 🟣 Pro: WP-210, WP-211, WP-212, WP-214.
-- 🔵 Sonnet: WP-213, WP-215.
+- `xp_ledger` şeması ve `AFTER INSERT` XP trigger'ı değişmez; ledger yalnız banklanmış XP'dir.
+- Pending ödül `achievement_rewards` içinde tutulur. Zorunlu korumalar:
+  - `UNIQUE(user_id, achievement_id, tier)` ve `UNIQUE(event_key)`;
+  - `event_key`, `(user_id, achievement_id, tier)` üçlüsünden server-generated kanonik değerdir; istemci/helper serbest metin vermez;
+  - `tier > 0`, `xp_amount > 0`;
+  - `pending ⇒ claimed_at IS NULL`, `claimed ⇒ claimed_at IS NOT NULL`;
+  - FK'ler ve server-managed `earned_at`.
+- Ödülün XP değeri **kazanıldığı anda** reward satırında sabitlenir; claim güncel sözlükten yeniden fiyatlandırmaz ve istemci XP göndermez.
+- Claim transaction'ı aynı kilit altında `pending→claimed` ve ledger insert yapar. Ledger insert/postcondition başarısızsa status update de rollback olur.
+- `_record_pending_reward` SECURITY DEFINER helper'ının `PUBLIC`, `anon`, `authenticated` execute yetkileri açıkça revoke edilir. Yalnız kontrollü server zinciri çağırır.
+- `claim_all_rewards` set-based ve bounded'dır: çağrı başına en fazla 100 satır; kalan sayı/cursor döner. Uzun, sınırsız transaction yoktur.
+- Legacy veri için “göç yok” değil, **preflight reconciliation vardır**: `user_achievements`, `selected_badges`, `gamification_profiles.xp` ve `xp_ledger` farkları raporlanır. Otomatik düzeltme ayrı onay olmadan yapılmaz.
+- Saat başı 50 XP doğrudan ledger'a auto-banked kalır; reward inbox'a girmez. **WP-219 contract aktivasyonundan sonra tüm hesaplarda yalnız server-verified segment toplamı bu XP'yi üretir.** Manual/legacy-unverified çalışma normal istatistiğe girer ama kritik XP üretmez. Bu güvenlik kuralı capability ile opt-out edilemez; capability yalnız reward'ın pending/auto sunumunu seçer.
+
+### MK-2 — Progress self-only projeksiyondur
+
+`user_achievements` ortak aktif grup üyelerince okunabildiği için kilitli/gizli başarım progress'i buraya eklenmez. Yeni self-only tablo kullanılır:
+
+`achievement_metric_progress(user_id, achievement_id, metric_value, source_version, updated_at)`
+
+- SELECT yalnız `auth.uid()`; doğrudan write yok, server projector yazar.
+- `tier`/`unlocked_at` yalnız claimed ledger projeksiyonunda kalır.
+- Kümülatif metrikler artar; streak gibi güncel metrikler düşebilir. Genel `greatest(old,new)` kuralı kullanılmaz.
+- Değer değişmediyse update yapılmaz (`IS DISTINCT FROM`) ve gereksiz realtime fırtınası oluşmaz.
+- UI gerçek değer/sonraki eşik oranını bu self-only sözleşmeden okur; çift repository paritesi zorunludur.
+
+### MK-3 — Güvenilir canlı oturum = server-issued segment
+
+Başarı için `source='live'` yeterli değildir. Yeni doğrulanmış akış:
+
+- `live_study_runs`: server başlatır; kullanıcı, seçili `group_id_snapshot` (grup sonradan silinse de audit bağını koruyan immutable UUID), server `started_at`, durum ve idempotency anahtarı. Snapshot start RPC'de mevcut grup + aktif üyelik üzerinden doğrulanır; direct DML yoktur.
+- `live_study_segments`: work başlangıç/bitiş segmentlerini server zamanıyla tutar. Start/pause/resume/finish RPC'leri tek açık segment ve tek aktif run kuralını uygular.
+- `study_sessions.live_run_id UNIQUE NULLABLE FK`, finalized session'ı `live_study_runs.group_id_snapshot` içindeki başlangıçta doğrulanmış **tek** grup bağlamına bağlar. `study_sessions` kullanıcıya ait kalır; kaldırılmış `group_id` kolonu geri getirilmez ve ayrı redundant context tablosu kurulmaz.
+- Finalize RPC, segment toplamından `study_sessions` satırı üretir ve `live_run_id` ile doğrular. Aynı run ikinci session üretemez.
+- Eski client'ın direct `source='live'` satırı geçici olarak istatistik uyumu için kabul edilebilir ama `live_run_id IS NULL` kalır ve achievement açısından unverified'dır. Direct DML için `live_run_id IS NULL` RLS/CHECK zorunludur; istemci verified bağ üretemez. Verified run/session/segment immutable'dır.
+- Timer offline başlarsa çalışma kaybolmaz, normal istatistiğe manual/unverified olarak yazılır; server tokenı olmadığı için achievement veya saatlik XP'ye girmez. UI bunu sessizce “verified live” göstermemelidir.
+- Grup başarıları yalnız verified segment + immutable group context kullanır. Gelecekte tek session'ın birden fazla gruba yazılması yoktur; seçili grup start anında sabitlenir.
+
+WP-216, WP-217/218/219 için **sert bloktur**.
+
+### MK-4 — Legacy retro konservatif ve denetlenebilirdir
+
+Geçmiş gerçek grup bağlamı kaybolduğu için “eksiksiz presence retro” iddiası yasaktır.
+
+- Legacy grup session'ı yalnız başlangıç anında **tam bir** surviving üyelik penceresiyle eşleşiyorsa proxy gruba atanır. Sıfır veya birden fazla eşleşme varsa otomatik ödülden hariç tutulur ve raporlanır.
+- Yeniden katılım öncesi kaybolan pencere geri üretilemez; bu durum false-negative doğurabilir ve raporda açıkça yazılır.
+- Legacy Mola Düşmanı yalnız `source='live'`, zaman/süre constraint'lerini sağlayan, çakışma/anomali filtresinden geçen kayıtlarla hesaplanır. Bu yine “legacy proxy”dir; verified değildir.
+- Kullanıcıya vaat edilen tanım “eldeki doğrulanabilir kayıtlara göre retro”dur. Hariç tutulan belirsiz satır otomatik XP üretmez.
+- Backfill profil açılışında çalışmaz. `achievement_backfill_jobs` tablosunda cursor, source version, durum ve hata tutulur; batch rerunnable/idempotent'tir.
+- Late-arrival/invalidation için yalnız per-user timestamp checkpoint kullanılmaz. `achievement_metric_dirty(scope_type, scope_id, istanbul_day)` bucket'ları etkilenen kullanıcı/grup/günü bounded yeniden hesaplatır.
+
+### MK-5 — Metrik tanımları
+
+- **Alfa Kurt:** yalnız tamamlanmış İstanbul günleri. Verified gelecekte seçili grup bağlamında gün toplamı en yüksek kullanıcı(lar) kazanır; eşitlikte tüm liderler sayılır. Legacy'de yalnız tekil proxy grup eşleşmesi. Aynı verified run tek gruba aittir.
+- **Kamp Ateşi:** aynı verified grup bağlamında en az 3 farklı kullanıcının aktif work segmentlerinin kesiştiği süre; kesişimde bulunan her katılımcıya aynı ortak süre yazılır. Aynı kullanıcı segmentleri önce union; sweep-line O(n log n). Metin “oturum kayıtlarına göre eşzamanlı çalışma” der, tarihsel presence iddiası kurmaz.
+- **Lokomotif:** kullanıcının verified run başlangıç anında aynı grupta başka aktif verified work segmenti yoktur; ardından 15 dakika içinde en az 2 farklı üye verified run başlatır. Olay yalnız başlatan kullanıcıya yazılır. “Önceki N dakika” yaklaşımı yoktur; exact interval state kullanılır. Bir başlangıç en fazla bir olaydır.
+- **Mola Düşmanı:** herhangi bir kayan 5 saatte toplam verified aktif segment ≥270 dakika. Segment union + two-pointer; tek kademe.
+- **team_player:** mevcut “grup günlük hedefine katkı günü” metriği korunur, kullanıcı metni buna hizalanır.
+- Manuel/unverified oturum session-türevi achievement ve saatlik XP'ye girmez; yalnız normal çalışma istatistiğine girer. Kazanımdan sonra verified session silme/düzenleme XP iadesi doğurmaz; ledger append-only'dir.
+
+### MK-6 — Canlılık ve performans sözleşmesi
+
+- Kullanıcının kendi doğrulanmış segmenti finalize olduktan sonra self progress ≤5 saniyede görünür.
+- Campfire/locomotive gibi başka üyeden etkilenen progress, finalize/start RPC'nin set-based affected-user projeksiyonuyla ≤5 saniyede görünür. Alpha gün kapanışında finalize edilir; “bugün liderim” pending ödül değildir.
+- Online evaluator testi: 50 üyeli grup, kullanıcı başına 10.000 oturum ve 2 yıllık sentetik veri; `EXPLAIN (ANALYZE, BUFFERS)` ile event-path p95 ≤750 ms, statement timeout 2 s.
+- Backfill batch'i en fazla 25 kullanıcı veya 31 grup-gün bucket işler; p95 ≤5 s. Timeout'ta transaction/batch geri alınır, cursor ilerlemez.
+- Pairwise all-history self-join ve her profil açılışında full scan kabul edilmez.
+- `0033`teki her event'te `1..total_hours` conflict döngüsü korunmaz. Server projection son banklanan verified saat watermark'ını tutar ve yalnız yeni tam saat aralığını işler; ilk büyük fark bounded batch'e devredilir.
+
+### MK-7 — Expansion/contract rollout
+
+Reward altyapısını eklemek ile otomatik banklamayı kapatmak farklı yayınlardır:
+
+1. WP-209 tablo/RPC/client repository'yi ekler; mevcut auto-award devam eder.
+2. WP-208 private progress contract'ını ekler.
+3. WP-210 claim-capable UI stable olur; boş inbox desteklenir.
+4. WP-216 verified live lifecycle stable olur.
+5. WP-217/218 metrik motorları ve backfill job'ları kurulur ama production backfill koşmaz.
+6. WP-219 hesap-bazlı `reward_inbox_enabled_at` capability'si olan kullanıcıları pending modele geçirir ve kontrollü retro job'larını başlatır. Capability yoksa uygun ödül auto-award kalır; **fakat session-türevi ödül uygunluğu herkes için verified-only'dir.** Eski client istatistik kaydeder ama XP kazanmak için verified-session destekli sürüme güncellenmelidir.
+
+Bu sıra eski client'ın görünmeyen pending biriktirmesini engeller.
 
 ---
 
-# DENETÇİ (SENIOR) İÇİN — okuma listesi, mimari gerekçe, riskler
+# 4. İş paketleri
 
-> Bu bölüm planı **tek başına denetlenebilir** kılmak için. Codex denetimi (tur 1) yanıtı: `docs/features/DENETIM-YANIT-CODEX-01.md`.
+> **Başarım kritik sıra:** `WP-209 → WP-208 → WP-210 → WP-216 → WP-217 → WP-218 → WP-219`; WP-211, WP-210 sonrası UI cilasıdır.
+> **Bağımsız hatlar:** Görev `WP-212→213`; Grup PP `WP-214`; Tap-to-top `WP-211→WP-215` ve dosya çakışması nedeniyle WP-214 sonrası.
+> Aynı anda en fazla iki hat. `supabase/migrations/**` tümü sıcak; migration ekleyen hiçbir WP paralel açılmaz. ARB yazarı aynı anda yalnız bir WP'dir.
 
-## 1. İddiaları doğrulamak için okunacak mevcut kod
+## WP-209 — Reward inbox expansion: şema + atomik claim, davranış değişmeden 🎁
 
-| Ne doğrulanır | Dosya |
+- **Program/Faz:** Başarım · **Ajan:** — · **Model:** 🔴 Opus · **Bağımlılık:** yok · **Durum:** [ ] Bekliyor
+- **Problem:** Claim altyapısı gerekir; fakat server davranışını UI'dan önce çevirmek eski client'ı kırar.
+- **Kapsam dışı:** `process_achievement_event` auto→pending aktivasyonu (WP-219), UI (WP-210), metrikler.
+- **SAHİP dosyalar:** `supabase/migrations/00NN_achievement_rewards_expand.sql`; yeni `app/lib/data/models/achievement_reward.dart`; yeni `app/lib/data/repositories/achievement_reward_repository.dart`; yeni `app/lib/data/repositories/supabase/supabase_achievement_reward_repository.dart`; yeni `app/lib/data/repositories/in_memory/in_memory_achievement_reward_repository.dart`; yeni `app/lib/data/providers/achievement_reward_provider.dart`; ilgili SQL/Dart testleri.
+- **DOKUNMA:** `xp_ledger` tablo/trigger; profil UI; metrik migration'ları.
+- **Adımlar:** MK-1 constraints/FK/RLS/revoke; trusted `xp_amount` snapshot; atomik claim; bounded claim-all; account capability kaydı; legacy reconciliation raporu; saat XP'nin bu WP'de mevcut auto-banked davranışını koruyan regresyon testi. `process_achievement_event` bu WP'de auto-award kalır.
+- **Veri/Migration:** Expansion-only. Aktivasyon öncesi rollback tabloyu yalnız boşsa kaldırabilir. Aktivasyon sonrası reward satırı drop edilmez; ters sıra WP-219→209 ve pending snapshot/drain gerekir.
+- **RLS/Güvenlik:** self select; direct insert/update/delete yok; helper execute revoke; kontrollü `search_path`; `auth.uid()` zorunlu.
+- **Edge-case:** iki cihaz claim yarışı, offline retry, 100+ reward pagination, sözlük XP değişimi, ledger/profile legacy farkı.
+- **Kabul:** Migration sonrası mevcut XP ve award davranışı değişmez; staging'de injected pending claim edilince ledger/profile tam bir kez artar; ikinci claim 0 artış; reconciliation raporu üretilir; testler yeşil.
+- **Tuzak:** Bu WP'de auto-award'ı kapatmak; claim'de güncel sözlük XP'si okumak; helper'ı authenticated'a açmak.
+
+## WP-208 — Private metric progress contract + legacy audit 📐
+
+- **Program/Faz:** Başarım · **Ajan:** — · **Model:** 🔴 Opus · **Bağımlılık:** WP-209 · **Durum:** [ ] Bekliyor
+- **Problem:** `progress=tier`; gerçek 26/30 yok ve ortak-okunur tabloda secret progress saklamak gizlilik sızıntısı yaratır. Legacy retro kalitesi bilinmiyor.
+- **Kapsam dışı:** Ölü grup metriklerinin uygulaması (WP-217/218), UI (WP-210), pending aktivasyonu (WP-219).
+- **SAHİP dosyalar:** `supabase/migrations/00NN_achievement_metric_contract.sql`; yeni `app/lib/data/models/achievement_metric_progress.dart`; `app/lib/data/repositories/achievement_repository.dart`; `app/lib/data/repositories/supabase/supabase_achievement_repository.dart`; `app/lib/data/repositories/in_memory/in_memory_achievement_repository.dart`; `app/lib/data/providers/achievement_provider.dart`; `app/lib/core/stats/achievement_ledger_engine.dart`; ilgili testler.
+- **DOKUNMA:** Reward repository/RPC; profil widget'ları; session lifecycle.
+- **Adımlar:** MK-2 self-only tablo/RLS/projector; metric dictionary/source_version; streak decrease testleri; unchanged-row no-op; `achievement_backfill_jobs` + dirty bucket şeması; read-only legacy quality/audit RPC ve rapor formatı; 0033 saat döngüsü için verified-hour watermark/bounded catch-up sözleşmesi.
+- **Veri/Migration:** Expansion-only; mevcut `user_achievements.progress` geriye uyum için durur ama yeni UI onu metrik saymaz. Rollback yeni projection tablolarını yalnız job/pending üretmeden önce kaldırabilir; audit çıktısı saklanır.
+- **RLS/Güvenlik:** secret progress yalnız self; client metric yazamaz; SECURITY DEFINER iç sorguları explicit kullanıcı/scope sınırıyla çalışır.
+- **Edge-case:** streak 7→0; locked secret; metric null; source_version değişimi; legacy multiple/no-group eşleşmesi.
+- **Kabul:** Başka grup üyesi raw API'de secret progress göremez; self gerçek değer görür; streak düşer; aynı değer tekrar yazılmaz; audit belirsiz/excluded satır sayısını verir; testler yeşil.
+- **Tuzak:** `user_achievements.metric_progress` kolonu eklemek; tüm metriklere `greatest`; per-profile full scan.
+
+## WP-210 — Claim-capable başarı UI + gerçek progress 🎨
+
+- **Program/Faz:** Başarım · **Ajan:** — · **Model:** 🟣 Pro · **Bağımlılık:** WP-208, WP-209 · **Durum:** [ ] Bekliyor
+- **Problem:** Kullanıcı gerçek metriği, sonraki kademeyi ve claim aksiyonunu göremiyor.
+- **Kapsam dışı:** Server aktivasyonu/retro; shell banner/nav badge (WP-211).
+- **SAHİP dosyalar:** `app/lib/features/profile/widgets/achievement_showcase.dart`; `app/lib/features/profile/social_profile_screen.dart`; gerekirse `app/lib/core/stats/progression_visuals.dart`; `app/lib/l10n/app_tr.arb`; `app/lib/l10n/app_en.arb`; `app/lib/l10n/app_de.arb`; `app/lib/l10n/app_ar.arb`; ilgili widget/golden testleri.
+- **DOKUNMA:** `home_shell.dart`, `nav_index.dart`, server migration'ları.
+- **Adımlar:** self metric'ten “26/30 · sonraki”; streak; pending “Topla” ve bounded “Tümünü topla”; server sonucu sonrası XP/rozet animasyonu; claim UI/repository hazır olduktan sonra idempotent `reward_inbox_v1` capability kaydı (WP-219 öncesi davranış değiştirmez); en yakın tek başarı şeridi; Kusursuz Ay=28+ gün, team_player, ambient saat-XP ve “XP için doğrulanmış kronometre çalışması gerekir” metinleri; WP-211'in “n ödül hazır · Topla” ARB anahtarlarını bu WP üretir.
+- **Veri/Migration:** yok.
+- **RLS/Güvenlik:** claim yalnız self; başkasının profilinde buton/secret progress yok; optimistic animasyon server başarısından önce kalıcılaşmaz.
+- **Edge-case:** boş inbox, 100+ pending, offline/retry, gizli reward silüeti, metric null, reduce-motion.
+- **Kabul:** Boş inbox'ta eski uygulama davranışı bozulmaz; staging pending claim sonrası UI ≤1 s güncellenir ve ikinci claim artış yapmaz; 360/600/1200 px taşma yok; WCAG AA/48dp; testler yeşil; `Cihazda doğrulanmalı`.
+- **Tuzak:** ARB'yi WP-213 ile paralel yazmak; tier'i progress sanmak; server onayından önce rozet açmak.
+
+## WP-211 — Reward bildirimi + kanonik tab indeksleri 🔔
+
+- **Program/Faz:** Başarım/IA · **Ajan:** — · **Model:** 🟣 Pro · **Bağımlılık:** WP-210 · **Durum:** [ ] Bekliyor
+- **Problem:** Pending ödül shell'de görünmüyor; `nav_index.dart` diğer tab sabitlerini taşımıyor.
+- **Kapsam dışı:** Profil claim listesi; ekran scroll controller'ları (WP-215); push notification.
+- **SAHİP dosyalar:** `app/lib/core/navigation/nav_index.dart`; `app/lib/core/navigation/home_shell.dart`; yeni `app/lib/features/profile/widgets/reward_toast.dart`; ilgili testler.
+- **DOKUNMA:** ARB (WP-210 anahtarlarını okur); profile showcase; scroll ekranları.
+- **Adımlar:** tüm tab indekslerini tek enum/sabit sözleşmeye taşı; pending banner + Profil badge; claim olunca temizlenme; taç yükselişi tek seferlik kutlama; debounce/reduce-motion.
+- **Veri/Migration:** yok.
+- **RLS/Güvenlik:** yalnız self-only reward stream okunur; shell başka kullanıcının pending sayısını sorgulamaz; client badge yetki kaynağı değildir.
+- **Edge-case:** startup'ta çok pending, offline, banner kapalıyken badge, shell restore.
+- **Kabul:** Pending ≤5 s içinde banner+badge; claim sonrası ≤5 s içinde ikisi kaybolur; nav sabitleri hardcode içermez; testler yeşil; `Cihazda doğrulanmalı`.
+- **Tuzak:** ARB'ye yazmak; badge'i banner local state'ine bağlamak; `nav_index` sıcak yüzeyini WP-215 ile paralel açmak.
+
+## WP-216 — Server-issued live session lifecycle + immutable group context 🛡️
+
+- **Program/Faz:** Başarım güvenlik kapısı · **Ajan:** — · **Model:** 🔴 Opus · **Bağımlılık:** WP-208 · **Durum:** [ ] Bekliyor
+- **Problem:** Client direct DML ile `source='live'` yazabilir; bu etiket güven kanıtı değildir. Kaldırılmış `group_id` yüzünden de güvenilir grup retro/context yoktur. Yeni verified yol eski client'ın normal istatistik kaydını deploy anında kırmamalıdır.
+- **Kapsam dışı:** Başarım algoritmaları/backfill (WP-217/218); eski veriyi “temiz” ilan etmek.
+- **SAHİP dosyalar:** `supabase/migrations/00NN_verified_live_sessions.sql`; `app/lib/data/models/study_session.dart`; `app/lib/data/repositories/study_repository.dart`; `app/lib/data/repositories/supabase/supabase_study_repository.dart`; `app/lib/data/repositories/in_memory/in_memory_study_repository.dart`; `app/lib/data/providers/study_providers.dart`; ilgili timer/repository/server testleri.
+- **DOKUNMA:** Achievement metric/reward migration'ları; profil UI.
+- **Adımlar:** MK-3 tablolar/RPC; `study_sessions.live_run_id UNIQUE NULLABLE FK`; start/pause/resume/finalize lifecycle; tek aktif run/segment; start'ta membership doğrula ve tek group context sabitle; finalize idempotent session insert; direct DML'de `live_run_id IS NULL` zorunlu ve legacy source unverified; mevcut 0012 constraint'lerini denetle/güçlendir; verified satır immutability; native stop/outbox idempotency; offline-unverified kullanıcı geri bildirimi.
+- **Veri/Migration:** Expansion + RLS contract. `study_sessions.group_id` geri gelmez; doğrulanmış bağ yalnız `live_run_id → live_study_runs.group_id_snapshot` join'idir. Snapshot grup silinince cascade olmaz; yalnız audit/metrik kimliğidir. Existing rows legacy-unverified kalır. Rollback yalnız yeni run yoksa; sonrasında verified kayıtlar korunur, eski client compatibility yolu açık kalır.
+- **RLS/Güvenlik:** istemci server time, group membership, `live_run_id` veya segment owner yazamaz; helper/RPC grants explicit; `live_run_id IS NULL` direct satır achievement veya saatlik XP'ye girmez.
+- **Edge-case:** app kill/native Stop, ağ cevabı kaybı, offline start, grup değişimi veya grup silinmesi run ortasında, gece yarısı, pomodoro faz geçişi, iki cihazdan aktif run, clock skew.
+- **Kabul:** Direct DML ile non-null `live_run_id` reddedilir ve legacy `source=live` satır kritik XP üretmez; iki cihaz aynı anda iki run açamaz; üye olunmayan group context reddedilir; retry tek session üretir; offline/eski-client çalışma istatistiğe kaydolur ama achievement/saat XP'sine girmez; mevcut ve yeni timer yolculukları Samsung cihazda doğrulanır.
+- **Tuzak:** Eski client'ı bir gecede direct insert reddiyle kırmak; yalnız CHECK ile güvenilirlik iddia etmek; istemci `source`una güvenmek; group_id'yi study_sessions'a geri eklemek; verified session update kaçışı.
+
+## WP-217 — Mola Düşmanı motoru + bounded retro ⏱️
+
+- **Program/Faz:** Başarım metrik · **Ajan:** — · **Model:** 🔴 Opus · **Bağımlılık:** WP-216 · **Durum:** [ ] Bekliyor
+- **Problem:** `secret_break_enemy` daima 0; 5 saatlik kayan pencere doğru ve hızlı hesaplanmalı.
+- **Kapsam dışı:** Grup metrikleri; production backfill çalıştırma (WP-219).
+- **SAHİP dosyalar:** `supabase/migrations/00NN_break_enemy_metric.sql`; `app/lib/core/stats/achievement_ledger_engine.dart` ilgili parite; SQL/Dart perf testleri.
+- **DOKUNMA:** Group metric migration; reward activation; UI.
+- **Adımlar:** verified segment union + two-pointer; legacy proxy filtreleri; dirty user/day invalidation; projector self progress; job tanımı fakat run yok; source_version; idempotent reward candidate üretimi.
+- **Veri/Migration:** metric function/index/job definition. Rollback projector'u önceki source_version'a döndürür; job sonuçları silinmez, inactive işaretlenir.
+- **RLS/Güvenlik:** yalnız server verified segmenti ödül adayıdır; legacy proxy ayrı audit etiketi taşır.
+- **Edge-case:** tam 270 dk, pencere sınırı, çakışan segment, gece yarısı, timeout/retry.
+- **Kabul:** sentetik sınır testleri doğru; ikinci çalıştırma duplicate candidate üretmez; event p95/backfill p95 MK-6 bütçesinde; testler yeşil.
+- **Tuzak:** pairwise interval; `duration_seconds`'ı zaman ekseninden kopuk toplamak; timeout'ta cursor ilerletmek.
+
+## WP-218 — Alfa/Kamp Ateşi/Lokomotif grup metriği + konservatif legacy proxy 🔥
+
+- **Program/Faz:** Başarım metrik · **Ajan:** — · **Model:** 🔴 Opus · **Bağımlılık:** WP-216, WP-217 · **Durum:** [ ] Bekliyor
+- **Problem:** Üç grup başarımı 0; tarihsel group context eksik; başka üyenin olayı mevcut kullanıcı progress'ini etkiler.
+- **Kapsam dışı:** Production reward aktivasyonu/backfill run (WP-219); tarihsel presence iddiası.
+- **SAHİP dosyalar:** `supabase/migrations/00NN_group_achievement_metrics.sql`; ilgili SQL perf/contract testleri.
+- **DOKUNMA:** WP-216 lifecycle; client UI; reward RPC.
+- **Adımlar:** MK-5 exact verified algoritmalar; interval union+sweep-line; affected-user set-based projector; İstanbul gün kapanışı Alpha finalizer (`pg_cron` 00:05 Europe/Istanbul karşılığı + ilk sonraki event/manual refresh idempotent catch-up); legacy tekil proxy attribution/exclusion raporu; group/day dirty bucket; job definitions; team_player metin-contract paritesi.
+- **Veri/Migration:** functions/indexes/jobs. Rollback source_version'ı kapatır; claimed ledger geri alınmaz.
+- **RLS/Güvenlik:** SECURITY DEFINER scope sınırı; caller keyfi user/group ile başkasına reward yazdıramaz; progress self-only.
+- **Edge-case:** tie, 50 üye, rejoin, zero/multiple proxy group, follower start race, segment sınırı, late arrival.
+- **Kabul:** Alpha yalnız kapalı gün ve cron kaçsa bile catch-up ile tek kez finalize; Kamp ≥3 exact; Lokomotif exact active-state+15 dk; başka üye olayı etkilenen kullanıcı progress'ine ≤5 s yansır; p95 MK-6 içinde; belirsiz legacy satır XP üretmez; testler yeşil.
+- **Tuzak:** `group_members.joined_at`'i eksiksiz tarihçe sanmak; “önceki N dk” boşluk sezgisi; auth.uid-only projector ile initiator'ı güncellememek.
+
+## WP-219 — Pending model aktivasyonu + kontrollü retro release gate 🚦
+
+- **Program/Faz:** Başarım release/contract · **Ajan:** — · **Model:** 🔴 Opus · **Bağımlılık:** WP-209, WP-210 cihaz QA, WP-216 cihaz QA, WP-217, WP-218 · **Durum:** [ ] Bekliyor
+- **Problem:** Altyapı kurulduktan sonra yeni client'ı pending modele geçirmek ve retro ödülleri güvenle üretmek gerekir.
+- **Kapsam dışı:** Yeni metrik/UI; legacy belirsiz satıra manuel XP verme.
+- **SAHİP dosyalar:** `supabase/migrations/00NN_activate_reward_inbox.sql`; staging/prod runbook ve reconciliation/backfill testleri.
+- **DOKUNMA:** Client UI; session lifecycle şeması.
+- **Adımlar:** capability'li hesapta `_record_pending_reward`, diğerinde uygun ödül için mevcut `_award_achievement_tier`; capability one-way enable; **capability'den bağımsız küresel güvenlik contract'ı olarak** tüm session-türevi achievement ve ambient saat XP'sini verified segment/watermark kaynağına çevir; verified-session destekli stable client + minimum-version/update mesajı kapısı; dry-run reward sayısı/XP toplamı; kullanıcı/batch limitli backfill; önce Mola sonra grup metrikleri; canary hesap→%10→%100 reward capability cohort; ledger/profile/reward reconciliation; kill switch pending→auto fallback (verified-only uygunluğu gevşetmez).
+- **Veri/Migration:** Contract migration. Rollback yeni pending üretimini durdurur; mevcut pending silinmez ve claim edilebilir kalır. Ledger/claimed XP geri alınmaz.
+- **RLS/Güvenlik:** capability XP uygunluk yetkisi değildir; yalnız claim UX seçer. Verified-only session uygunluğu küreseldir ve kill switch ile gevşetilmez. Retro job service role/runbook kontrollü, parametreli ve audit log'ludur.
+- **Edge-case:** old+new cihaz, yarım batch, kill switch, sözlük versiyonu, 100+ reward, deploy arası.
+- **Kabul:** Capability yokken **uygun** ödül auto-banked; capability varken uygun achievement pending ve claim öncesi XP 0 artış; her iki cohort'ta verified tam saat 50 XP'yi auto-banklar, unverified/manual tam saat XP üretmez; eski client normal istatistik kaydeder fakat session XP üretmez; claim tam bir kez banklar; canary reconciliation farkı 0; rollback pending kaybetmez; production run için açık ürün onayı ve staging kanıtı vardır.
+- **Tuzak:** global flag'i client rollout'tan önce açmak; rollback'te reward tablosunu drop etmek; dry-run olmadan retro çalıştırmak.
+
+## WP-212 — Günlük görev cloud modeli + çok-cihaz senkron 🗓️
+
+- **Program/Faz:** Görevler · **Ajan:** — · **Model:** 🟣 Pro · **Bağımlılık:** yok · **Durum:** [ ] Bekliyor
+- **Problem:** Görevler prefs'te; günlük tekrar, cihazlar arası silme/undo ve streak güvenilir değil.
+- **Kapsam dışı:** UI (WP-213), görev→XP bağlantısı.
+- **SAHİP dosyalar:** `supabase/migrations/00NN_user_tasks_cloud.sql`; `app/lib/data/models/user_task.dart`; `app/lib/data/repositories/user_task_repository.dart`; `app/lib/data/repositories/supabase/supabase_user_task_repository.dart`; `app/lib/data/repositories/in_memory/in_memory_user_task_repository.dart`; `app/lib/data/providers/user_task_providers.dart`; ilgili testler.
+- **DOKUNMA:** `tasks_card.dart`, `tasks_screen.dart`, ARB, achievement dosyaları.
+- **Adımlar:** `user_tasks` tombstone modeli; parent `UNIQUE(id,user_id)`; `user_task_completions` composite FK ve recurring/non-recurring partial unique; completion satırında `is_completed` ile undo; idempotent `client_operation_id`; server-arrival-order LWW (client clock otorite değil); offline `occurred_at` UTC'den server-side Istanbul günü ve makul skew; prefs→cloud resumable migration; midnight timer + app-resume invalidation; streak projection.
+- **Veri/Migration:** iki tablo/RLS/RPC. Rollback data oluşunca drop değildir: client eski okuma moduna alınır, cloud tabloları read-only/snapshot olarak korunur.
+- **RLS/Güvenlik:** own rows; completion user_id task sahibine composite FK; RPC auth.uid; task progress XP değildir.
+- **Edge-case:** 23:59 offline→00:01 sync, iki cihaz toggle/undo, archive/unarchive, migration yarıda ağ kesilmesi, maxTasks.
+- **Kabul:** günlük görev bugün tamamlanır, ertesi İstanbul günü silme olmadan aktif; undo diğer cihaza yayılır; tombstone silme yayılır; telefon değişince korunur; migration idempotent; testler yeşil.
+- **Tuzak:** additive union ile undo kaybetmek; client `updated_at`ına güvenmek; tek-seferlik completed için iki kaynak.
+
+## WP-213 — Günlük görev UI + 00:00 yenileme ✅
+
+- **Program/Faz:** Görevler · **Ajan:** — · **Model:** 🔵 Sonnet · **Bağımlılık:** WP-212 · **Durum:** [ ] Bekliyor
+- **Problem:** Kullanıcı günlük tipi seçip bugünkü durumunu göremiyor.
+- **Kapsam dışı:** DB/RLS; sayaçlı hedef.
+- **SAHİP dosyalar:** `app/lib/features/home/widgets/tasks_card.dart`; `app/lib/features/clock/tasks_screen.dart`; `app/lib/l10n/app_tr.arb`; `app/lib/l10n/app_en.arb`; `app/lib/l10n/app_de.arb`; `app/lib/l10n/app_ar.arb`; widget testleri.
+- **DOKUNMA:** WP-210 ARB yazarken başlamaz; task repository.
+- **Adımlar:** “Günlük yenilenen” seçim; bugün toggle/undo; 🔁 ve minimal streak; midnight/app-resume refresh; offline state/error.
+- **Veri/Migration:** yok.
+- **RLS/Güvenlik:** UI yalnız repository'nin own-row sözleşmesini kullanır; client gün/user_id türetimi yetki kaynağı değildir.
+- **Edge-case:** açık ekran gece yarısı, cihaz TZ farklı, boş liste, mixed recurring/one-time.
+- **Kabul:** ekle→bugün görünür→tamamla/geri al→ertesi gün aktif; tekrarsız regresyonsuz; 360px taşma yok; testler yeşil; `Cihazda doğrulanmalı`.
+- **Tuzak:** reset job/timer ile kayıt silmek; ARB paralel yazmak.
+
+## WP-214 — Grup profil fotoğrafı, private bucket + signed URL 🖼️
+
+- **Program/Faz:** Sosyal gruplar · **Ajan:** — · **Model:** 🟣 Pro · **Bağımlılık:** yok · **Durum:** [ ] Bekliyor
+- **Problem:** Grup avatarı yok; public bucket private grup görselini URL sızıntısına açar.
+- **Kapsam dışı:** Üye avatarı, banner, rol-tabanlı çoklu admin.
+- **SAHİP dosyalar:** `supabase/migrations/00NN_group_avatar.sql`; `app/lib/data/models/study_group.dart`; `app/lib/data/repositories/group_repository.dart`; `app/lib/data/repositories/supabase/supabase_group_repository.dart`; `app/lib/data/repositories/in_memory/in_memory_group_repository.dart`; `app/lib/data/providers/group_providers.dart`; `app/lib/features/classroom/widgets/class_switcher.dart`; `app/lib/features/classroom/widgets/class_detail_screen.dart`; `app/lib/features/classroom/widgets/group_discovery_screen.dart`; `app/lib/features/classroom/widgets/campfire_scene.dart`; `app/lib/features/stats/widgets/class_stats_view.dart`; ilgili testler.
+- **DOKUNMA:** profile avatar akışı salt referans; WP-215 stats dosyası bu WP bitmeden açılmaz; diğer migration'lar.
+- **Adımlar:** `avatar_path`+`avatar_updated_at`; private `group-avatars`; SELECT storage RLS public group veya aktif üye, write/delete yalnız `is_group_admin`; versioned `<group_id>/<uuid>.<ext>` path; signed URL; discovery RPC path/timestamp; MIME jpeg/png/webp, ≤2 MB; upload sonrası eski object cleanup; group delete cleanup; fallback/accessibility.
+- **Veri/Migration:** path saklanır, expiring signed URL DB'ye yazılmaz. Rollback kolon/object drop değildir; UI/RPC eskiye döner, data snapshot korunur.
+- **RLS/Güvenlik:** private grup avatarı public URL değildir; `is_group_admin` yalnız creator modeli; UI kontrolü kozmetik, storage+table RLS esas.
+- **Edge-case:** expired signed URL, cache refresh, admin olmayan upload, grup visibility değişimi, orphan object.
+- **Kabul:** admin upload tüm yetkili yüzeylerde ≤5 s; private grup avatarı üye olmayana storage RLS ile reddedilir; public keşif authenticated kullanıcıda görünür; yeni path cache'i kırar; testler yeşil; `Cihazda doğrulanmalı`.
+- **Tuzak:** signed URL'yi kalıcı kolon yapmak; sabit path; public bucket; eski object biriktirmek.
+
+## WP-215 — Tüm ana sekmelerde tap-to-top ⬆️
+
+- **Program/Faz:** IA · **Ajan:** — · **Model:** 🔵 Sonnet · **Bağımlılık:** WP-211, WP-214 · **Durum:** [ ] Bekliyor
+- **Problem:** Reselect yalnız Home'da çalışır; v2 hardcode yasaklayıp eksik nav sabitlerini değiştirmeyi de yasaklıyordu.
+- **Kapsam dışı:** `nav_index.dart`/`home_shell.dart` (WP-211'de tamamlanır); Home davranışı.
+- **SAHİP dosyalar:** `app/lib/features/classroom/classroom_screen.dart`; `app/lib/features/profile/profile_screen.dart`; `app/lib/features/clock/clock_screen.dart`; `app/lib/features/stats/widgets/personal_stats_view.dart`; `app/lib/features/stats/widgets/class_stats_view.dart`; ilgili testler.
+- **DOKUNMA:** `app/lib/core/navigation/**`; `class_switcher.dart`; achievement showcase.
+- **Adımlar:** WP-211 kanonik tab sabitleriyle `navReselectProvider` listen; her gerçek ListView'a controller; stats kişisel/grup iki liste; mounted/hasClients/no-op; ≤300 ms animation.
+- **Veri/Migration:** yok.
+- **RLS/Güvenlik:** veri erişimi veya yetkilendirme değişmez; yalnız yerel scroll davranışı.
+- **Edge-case:** build öncesi tick, boş liste, zaten top, stats alt-tab, nested classroom.
+- **Kabul:** Saat/Gruplar/İstatistik kişisel+grup/Profil offset>0 iken reselect ≤300 ms'de 0; Home regresyonsuz; hardcoded indeks yok; testler yeşil; `Cihazda doğrulanmalı`.
+- **Tuzak:** yanlış stats dosyasına controller eklemek; WP-214 ile `class_stats_view.dart` paralel yazmak; PrimaryScrollController çakışması.
+
+---
+
+## 5. Çakışma ve yürütme matrisi
+
+- **Migration tek lane:** WP-209, 208, 216, 217, 218, 219, 212, 214 aynı anda açılamaz. Numara claim anında son migration+1 olarak seçilir.
+- **Başarım server zinciri:** 209→208→216→217→218→219. Client WP-210, 208+209 sonrası; WP-211, 210 sonrası.
+- **Production davranış kapısı:** WP-219, WP-210 ve WP-216 gerçek cihaz QA/ürün kabulü olmadan başlamaz.
+- **ARB:** WP-210 ve WP-213 seridir.
+- **Navigation:** WP-211 `core/navigation/**` tek yazarıdır; WP-215 sonra yalnız ekran dosyalarına yazar.
+- **Stats dosyası:** WP-214 ve WP-215 `class_stats_view.dart` paylaşır; kesin seri: 214→215.
+- **İkinci lane:** Başarım hattı açıkken yalnız Görev veya Grup PP/IA hattından biri açılır; aynı anda en fazla iki hat.
+- **Git:** tek `main`; branch/merge/push yok (kullanıcı ayrıca istemedikçe); her WP tek ayrık commit, explicit stage, `git add -A` yasak.
+
+## 6. Release/rollback kapıları
+
+- Her migration staging dry-run + rollback rehearsal + RLS abuse testinden geçer.
+- Reward activation öncesi claim-capable stable client ve verified-session cihaz QA kanıtı zorunludur.
+- Retro önce dry-run raporu üretir: kullanıcı sayısı, reward sayısı, toplam pending XP, legacy excluded/ambiguous satırlar, en büyük tek kullanıcı etkisi.
+- Claim sonrası temel invariant: `gamification_profiles.xp = SUM(xp_ledger.xp_amount)`; pending bu toplama girmez.
+- Rollback pending/reward veya cloud task/avatar datasını drop etmez. Contract geri alınır, kullanıcı verisi korunur.
+- Stable release için Samsung gerçek cihaz, iki cihaz claim yarışı, offline timer, 23:59→00:01 görev ve storage RLS senaryoları kanıtlanır.
+
+---
+
+# DENETÇİ (SENIOR) İÇİN
+
+## Okuma listesi
+
+| İddia | Kaynak |
 |---|---|
-| Ölü başarılar (`then 0`) | `0033_study_hour_xp_50.sql`, `0025_achievements_social_metrics.sql:255`, `process_achievement_event` `when 'alpha_wolf' then 0` |
-| Ledger append-only + `AFTER INSERT` XP bankalama (claim mimarisi buna dayanır) | `0024_achievements_ledger.sql:210` (trigger), `:186` (max_tier projeksiyonu), `:194` (progress=tier) |
-| Server progress = tier-no (gerçek metrik değil — bulgu #3) | `0024:194` + `achievement_showcase.dart:1038` (`userAch?.progress`) |
-| Oturum fabrikasyonu açığı (bulgu #4) | `0001_initial_schema.sql:179` (`sessions_insert` yalnız `user_id=auth.uid()`) |
-| `joined_at` yeniden katılımda eziliyor (retro güvenilirliği) | `0012_group_join_hardening.sql:121` |
-| `is_group_admin` = yalnız oluşturan | `0004_group_admin.sql:19` |
-| `discover_public_groups` avatar döndürmüyor | `0032_public_group_discovery.sql:142` |
-| Kusursuz Ay = 28 gün (sözlük "30 gün" çelişki) | `0024:509`, `achievement_ledger_engine.dart:436` |
-| Görevler prefs'te, "Tekrar yok" | `user_task.dart:5`, `user_task_providers.dart` |
-| Tap-to-top altyapısı var | `nav_index.dart`, `home_screen.dart` |
-| Sıcak dosyalar + git kuralı | `.agents/AGENTS.md:83`, `:85` |
+| Ledger append-only, insert bankalar, max tier | `0024_achievements_ledger.sql:55–65, 164–213, 322–350` |
+| Progress=tier | `0024:191–200`, `achievement_showcase.dart` |
+| Ölü metrikler | `0025_achievements_social_metrics.sql`, `0033_study_hour_xp_50.sql` |
+| `group_id` kaldırıldı ve tarihsel kayıp kabul edildi | `0010_drop_session_group_id.sql:2–5, 28–31`; `study_session.dart`; `supabase_study_repository.dart:135–139` |
+| Grup stats üyelik penceresi | `0011_group_daily_totals_v2.sql:34–39` |
+| Rejoin joined_at ezer | `0012_group_join_hardening.sql:117–121` |
+| Mevcut session constraint'leri | `0012_group_join_hardening.sql:155–168` |
+| Client source/live yazıyor | `study_session.dart:47–56`; `supabase_study_repository.dart:18–31`; `study_providers.dart:_recordSession` |
+| Nav sabitleri eksik | `app/lib/core/navigation/nav_index.dart` |
+| Gerçek scroll dosyaları | `classroom_screen.dart`, `profile_screen.dart`, `clock_screen.dart`, `personal_stats_view.dart`, `class_stats_view.dart` |
 
-## 2. Mimari gerekçe (v2 — neden böyle)
+## Kapsam bütünlüğü
 
-- **Claim = ayrı `achievement_rewards` tablosu (MK-1):** `xp_ledger` literal append-only + insert-banks korunur; pending kazanımlar ayrı kişisel gelen kutusunda; claim = ledger'a aynı `event_key` ile insert (mevcut trigger bankalar). Rozet tier'ı yalnız ledger'dan (claimed) türediği için pending rozet fırlatmaz. **Codex bulgu #1 (WP sırası) ve #2 (trigger/max_tier/append-only) yapısal olarak çözülür**; kitlesel XP-kaybı riskli backfill **elenir** (mevcut ledger zaten "toplanmış").
-- **Gerçek progress (MK-2):** `user_achievements.metric_progress` kolonu; server her başarı için gerçek metriği upsert eder; UI "26/30"'u buradan okur (tier-no'yu değil).
-- **Oturum bütünlüğü (MK-3/WP-216):** sosyal başarılar gerçek XP'ye bağlanmadan fabrikasyon kapatılır; retro doğrudan `study_sessions`'tan türer (`joined_at` güvenilmez).
-- **Retro perf (MK-4):** sweep-line/iki-pointer + backfill checkpoint + `EXPLAIN ANALYZE` p95 bütçe.
-- **Görev 00:00 (değişmez):** gün-damgalı completion, silme yok, streak doğal + tombstone çok-cihaz silme.
-
-## 3. En büyük riskler (denetçi öncelikli baksın)
-
-1. **Claim mimarisi geçişi (WP-209):** `process_achievement_event`'te "zaten ledger'da olan tier'a pending yaratma" guard'ı — yanlışsa eski kullanıcıya sahte pending. Uzlaştırma testi (`profile.xp == SUM(ledger)`) şart.
-2. **Retro performans (WP-208):** sweep-line/kayan pencere + checkpoint; `EXPLAIN ANALYZE` p95/timeout kabul kriteri.
-3. **Oturum bütünlüğü (WP-216):** meşru kronometre/manuel akışı kırmadan sıkılaştırma; `NOT VALID` ile mevcut kayıtları patlatmama.
-4. **Migration serileştirme:** 5 WP migration ekler; tümü sıcak yüzey → tek-lane, numara `progress.md` teyidi.
-5. **ARB çakışması:** WP-210 & WP-213 aynı `app_*.arb`; serileştir.
-6. **`home_shell` sıcak:** WP-211 + park WP-105; WP-215 buraya yazmaz.
-
-## 4. Açık ürün/mikro kararlar (Codex haklı — "açık uç kalmadı" düzeltildi)
-
-MK-5'te varsayılanlar verildi; ürün sahibi teyidi beklenenler: Alfa Kurt beraberlik/çoklu-grup/gün-kapanışı · Lokomotif boş-grup tanımı · manuel oturum sosyal başarıya dâhil mi (öneri: hayır) · kazanım sonrası oturum silme XP iadesi (öneri: iade yok) · team_player metrik-mi-metin (öneri: metin) · toplu claim (öneri: var) · CLAUDE.md↔AGENTS.md dal çelişkisi (öneri: AGENTS.md kanon).
-
-## 5. Kapsam bütünlüğü — kullanıcıyla konuşulan her madde bir WP'de
-
-| Konuşulan istek | WP |
+| Kullanıcı isteği | WP |
 |---|---|
-| Canlı ilerleme (26/30 + rozet) — **gerçek metrik** | WP-208 (server progress) + WP-210 (UI) |
-| Canlı streak (7/10) | WP-210 |
-| Topla-ödülü-al, gerçek toplama (C) | WP-209 (+UI WP-210) |
-| Toplamamak ilerlemeyi durdurmaz (battle-pass) | WP-209 (MK-1) |
-| Ölü başarı fix: Alfa Kurt/Kamp/Lokomotif | WP-208 |
-| Mola Düşmanı (5h'te ≥4.5h) | WP-208 (karar #2) |
-| Retroaktif geçmiş sayımı | WP-208 (pending) |
-| team_player anlam | WP-208 (metrik) + WP-210 (metin) |
-| Açıklama netleştirme (Kusursuz Ay) | WP-210 |
-| "Az kaldı" minimal şerit | WP-210 |
-| Başarı/taç bildirimi (Clash) | WP-211 |
-| Brawl Stars nav-nokta | WP-211 |
-| Günlük görev, bulut, 00:00 | WP-212 + WP-213 |
-| Görev streak | WP-212 |
-| Grup pp | WP-214 |
-| Tap-to-top tüm sekmeler | WP-215 |
-| **(yeni) Oturum fabrikasyonu kapatma** | WP-216 |
+| Canlı gerçek progress + streak + rozet | 208 + 210 + metrik 217/218 |
+| Gerçek claim, toplamazsa ilerleme sürer | 209 + 219 + UI 210/211 |
+| Saat başı 50 XP ambient, yalnız verified süre | 209/208/216/219 regresyon kriteri |
+| Alfa/Kamp/Lokomotif/Mola fix | 217 + 218 |
+| Konservatif retro | 208 audit + 217/218 motor + 219 kontrollü run |
+| Session fabrikasyonu kapatma | 216 |
+| Kusursuz Ay/team_player metni, az kaldı | 210 |
+| Clash banner + Brawl nav badge | 211 |
+| Günlük görev cloud/00:00/streak/undo | 212 + 213 |
+| Grup avatarı | 214 |
+| Tap-to-top | 211 + 215 |
 
-Konuşulan tüm maddeler + Codex'in ortaya çıkardığı bütünlük/güvenlik boşlukları planlandı. Açık **mikro** kararlar MK-5'te varsayılanlarıyla listelendi (ürün sahibi itiraz edebilir).
+## Plan dışı bilinçli sınırlar
+
+- Tarihsel gerçek presence veya kaybolmuş `group_id` geri üretilemez; legacy sonuç “proxy”dir.
+- Offline başlayıp hiç server tokenı almayan çalışma achievement/saatlik XP üretmez; normal çalışma istatistiğini kaybetmez.
+- Claim edilmiş append-only XP, sonradan session silinince geri alınmaz.
+- Rol-tabanlı çoklu grup admini, görev sayaç hedefi, push notification ve foto moderasyonu ayrı kapsamdır.
+
+Bu v3'te teknik davranış, güvenlik sınırı, rollout ve rollback varsayılanları kapalıdır. Production mutasyonu yine ilgili WP'nin staging/cihaz kanıtı ve ürün kabulünden sonra yapılır.

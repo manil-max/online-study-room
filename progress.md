@@ -20,7 +20,7 @@
 - **Navigasyon hedefi:** Ana Sayfa / Saat / Gruplar / İstatistikler / Profil. Ana Sayfa günlük kullanım alanıdır; diğer alanların verisi kendi sekmelerinde eksiksiz bulunur.
 - **Release:** Stable/Beta kanalı GitHub Releases ile çalışır. **beta-v30** = `1.0.30+30` (analitik ızgara toggle, 0039–0043 RPC/gamification, WP-166–168). Onay: `docs/qa/BETA-v30-ONAY-LISTESI.md`. Play production ayrı kalite kapısından geçer.
 - **Kalite kapıları:** Her WP DoD'siz kapanmaz; stable release kalite kapısından geçer (AGENTS.md §3). Server-authoritative XP, RLS/sosyal profil, platform sınırları → `docs/KALITE-PROGRAMI.md`.
-- **Son WP numarası:** 207 (WP-204/205/206/207 grup renkleri + sayaç bildirimi, git log doğrulandı; stable v39). Başarım/görev/grup-pp programı **WP-208–216 planlandı** (plan v2). **Sıradaki boş numara WP-217.**
+- **Son WP numarası:** **219** (WP-208–219 planlandı, henüz uygulanmadı; son tamamlanan uygulama WP'si 207, git log doğrulandı; stable v39). **Sıradaki boş numara WP-220.**
 - **Release:** **beta-v33** = `1.0.33+33`. Cihaz QA: `docs/qa/BETA-v33-TEST.md`. Canlıda **0046** (feedback trigger) de gerekir.
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
@@ -62,14 +62,14 @@
 
 ### Codex Lane
 - **Durum:** [x] Boşta
-- **Faz/WP:** WP-207 · üye grafik renk çakışması düzeltmesi · stable v39 yayın
-- **Aşama:** Yayınlandı — gerçek cihaz QA / ürün kabulü bekliyor
-- **SAHİP yollar:** `app/lib/features/stats/widgets/member_chart_colors.dart`, `app/lib/features/stats/widgets/class_stats_view.dart`, `app/lib/features/stats/widgets/leaderboard_rank_chart.dart`, ilgili testler, `app/pubspec.yaml`, `app/assets/release_notes.json`, `CHANGELOG.md`, `progress.md`
-- **Ortak/riskli yüzey:** `app/pubspec.yaml`, `CHANGELOG.md`, `progress.md`
+- **Faz/WP:** — (bu oturum: Başarım+Görev+Grup PP planı v3 denetim revizyonu)
+- **Aşama:** Planlandı
+- **SAHİP yollar:** —
+- **Ortak/riskli yüzey:** —
 - **Dal:** main
-- **Başlangıç:** 2026-07-19 (Europe/Istanbul)
+- **Başlangıç:** —
 - **Son güncelleme:** 2026-07-19 (Europe/Istanbul)
-- **Not:** Android stable `v39` yayınlandı (c6843a5); GitHub APK + SHA-256 oluşturdu. Renkler grup üye sayısına göre tekil dağıtılır; cihazda görsel kabul bekliyor.
+- **Not:** Plan v3 hazır: WP-208–219; kod değişikliği yok. `study_sessions.group_id` gerçeği, verified-only XP, expansion/contract claim rollout, private progress/avatar ve görev undo sözleşmesi işlendi.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
@@ -108,15 +108,18 @@
 
 | WP | Durum | Kısa kapsam | Bağımlılık |
 |---|---|---|---|
-| WP-209 | [ ] Bekliyor | **[YAYIN: 1.]** Topla-ödülü-al: ayrı `achievement_rewards` (pending/claim) + claim RPC (server 00NN) | plan v2 · **önce iner** |
-| WP-216 | [ ] Bekliyor | **[YAYIN: 2.]** Oturum bütünlüğü sıkılaştırma (sessions RLS + zaman/süre CHECK, source='live') — Codex #4 (server 00NN) | plan v2 · WP-208 ön-koşulu |
-| WP-208 | [ ] Bekliyor | **[YAYIN: 3.]** Ölü metrik retro fix (alpha_wolf/campfire/locomotive/break_enemy) + gerçek `metric_progress` sözleşmesi + team_player (server 00NN) | ← WP-209, WP-216 |
-| WP-210 | [ ] Bekliyor | Başarım UI: canlı ilerleme (`metric_progress`) + claim/topla animasyon + "az kaldı" + metin netleştirme | ← WP-208 · ARB yazar |
-| WP-211 | [ ] Bekliyor | Başarı/taç bildirimi: açılış banner'ı (Clash tarzı) + Brawl Stars nav-nokta işareti | ← WP-209 |
-| WP-212 | [ ] Bekliyor | Günlük yenilenen görev: bulut model + tekrar/tamamlama + tombstone çok-cihaz (server 00NN) | plan doc |
+| WP-209 | [ ] Bekliyor | **[EXPAND 1]** Reward inbox şema + atomik/bounded claim; auto-award davranışı değişmez | plan v3 |
+| WP-208 | [ ] Bekliyor | **[EXPAND 2]** Self-only gerçek metric progress sözleşmesi + legacy audit/job altyapısı | ← WP-209 |
+| WP-210 | [ ] Bekliyor | **[CLIENT 3]** Claim-capable UI + gerçek progress/streak + az-kaldı + tüm achievement ARB anahtarları | ← WP-208, WP-209 · ARB yazar |
+| WP-211 | [ ] Bekliyor | Reward banner/nav badge + tüm tab indekslerinin kanonik sözleşmesi | ← WP-210 · `core/navigation/**` yazarı |
+| WP-216 | [ ] Bekliyor | **[TRUST 4]** Server-issued live run/segment + immutable tek grup bağlamı; direct client verified bağ üretemez | ← WP-208 · WP-217/218/219 sert ön-koşulu |
+| WP-217 | [ ] Bekliyor | Mola Düşmanı verified segment motoru + bounded konservatif legacy retro job tanımı | ← WP-216 |
+| WP-218 | [ ] Bekliyor | Alfa/Kamp/Lokomotif exact verified grup motoru + legacy proxy/dirty bucket | ← WP-216, WP-217 |
+| WP-219 | [ ] Bekliyor | **[CONTRACT/RELEASE]** Capability-bazlı pending aktivasyonu + dry-run/canary retro | ← WP-209/210/216/217/218 + cihaz QA |
+| WP-212 | [ ] Bekliyor | Günlük görev cloud model + toggle/undo + tombstone + idempotent çok-cihaz ops (server 00NN) | plan v3 |
 | WP-213 | [ ] Bekliyor | Görev UI: günlük tip ekleme + bugünün listesi + 00:00 yenileme | ← WP-212 · ARB yazar |
-| WP-214 | [ ] Bekliyor | Grup profil fotoğrafı (groups.avatar_url + avatar_updated_at cache-bust + bucket admin-yazma + discovery güncelle) | plan doc |
-| WP-215 | [ ] Bekliyor | Tap-to-top tüm sekmeler (Gruplar/İstatistik/Profil/Araçlar) — navReselect zaten var | plan doc |
+| WP-214 | [ ] Bekliyor | Grup profil fotoğrafı: `avatar_path` + private bucket/signed URL + admin RLS + discovery | plan v3 |
+| WP-215 | [ ] Bekliyor | Tap-to-top: gerçek beş scroll dosyası, WP-211 kanonik tab indeksleri | ← WP-211, WP-214 |
 
 > **Açık ops işleri (kod dışı — bu tabloda değil, kanonik takip başka dosyada):** Play production programı (NO-GO), Edge deploy'lar (hesap silme purge CRON, aylık rapor cron), Data Safety/legal URL Console adımları → [`backlog.md`](backlog.md) + [`docs/PLAY-STORE-HAZIRLIK-TARAMASI.md`](docs/PLAY-STORE-HAZIRLIK-TARAMASI.md).
 > Tarihsel `[x]`/`[~]` WP kartları (WP-104…207) ve eski dalga/çakışma notları arşive taşındı (2026-07-19 temizlik).
