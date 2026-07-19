@@ -1965,7 +1965,7 @@
     "description": "Core user-facing text. Source: Kamp Ateşi"
   },
   "coreKampAtesiEtrafinda": "Am Lagerfeuer",
-  "coreEnAz3KisiAktifkenCalis": "Studieren, während mindestens 3 Mitglieder aktiv sind",
+  "coreEnAz3KisiAktifkenCalis": "Lerne, während mindestens die Hälfte der an diesem Tag aktiven Mitglieder gleichzeitig online ist",
   "@coreKampAtesiEtrafinda": {
     "description": "Core user-facing text. Source: Kamp Ateşi Etrafında',"
   },

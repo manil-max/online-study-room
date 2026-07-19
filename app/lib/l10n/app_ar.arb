@@ -1965,7 +1965,7 @@
     "description": "Core user-facing text. Source: Kamp Ateşi"
   },
   "coreKampAtesiEtrafinda": "حول نار المخيم",
-  "coreEnAz3KisiAktifkenCalis": "ادرس بينما 3 أعضاء على الأقل نشطون",
+  "coreEnAz3KisiAktifkenCalis": "ادرس بينما يكون نصف الأعضاء النشطين في ذلك اليوم على الأقل متصلين في الوقت نفسه",
   "@coreKampAtesiEtrafinda": {
     "description": "Core user-facing text. Source: Kamp Ateşi Etrafında',"
   },

@@ -22,7 +22,7 @@
   "profileBasarimMatrixAciklama": "Tam 111, 222, 333 veya 555 dakika süren bir çalışma oturumu tamamla.",
   "profileBasarimYilbasiAciklama": "Yılbaşı gecesinde gece yarısını aşan bir oturumda çalış.",
   "profileKademe": "Kademe",
-  "coreEnAz3KisiAktifkenCalis": "En az 3 kişi aktifken çalış",
+  "coreEnAz3KisiAktifkenCalis": "O günkü aktif üyelerin en az yarısı aynı anda masadayken çalış",
   "@profileKademe": {
     "description": "Başarım kademe etiketi."
   },

@@ -64,7 +64,8 @@
   - Yol: stale WP-222 goal-dialog testi de düzeltildi (`Clock`→`Hours`).
   - **WP-C** claim inbox birleştirme (saha #4). Migration **`0057_route_awards_to_inbox.sql`**: `process_achievement_event` artık doğrudan `_award_achievement_tier` yerine `_create_pending_achievement_reward` çağırır → çalışma/seri/sosyal başarım kademeleri **pending inbox'a** yazılır, XP yalnız `claim_*` ile bankalanır. Çift-XP guard: zaten bankalıysa/pending varsa null (ileriye etki). Saat XP pasif kalır. İstemci claim akışı (reward_toast banner + showcase Topla/Tümünü topla + `claim_*` RPC) zaten tip-agnostik, **değişiklik yok**; in_memory demo motoru auto-award kalır. **Canlıya `0057` uygulanmalı**; staging QA §1.3–1.7 (çift-XP/XP-kaybı) kullanıcıda.
   - **WP-D** Kusursuz Ay 30→28 gün (§3 ek kural). Migration **`0058_perfect_month_28.sql`**: `_count_perfect_months_28` + `_achievement_metrics` wrapper ona bağlandı, metric sürümü `perfect_month_28_v1`, dict açıklaması güncellendi. Client `computeMetrics` ≥28 + source_version aynası + l10n açıklama 4 dil. Geçmiş aylar korunur (kümülatif greatest). **Canlıya `0058` uygulanmalı.**
-  - Kalanlar: E (campfire dinamik eşik), F (alpha hesap+projeksiyon), K/L (alpha gösterge+haftalık). Migration'lar canlıya kullanıcı tarafından uygulanır.
+  - **WP-E** Kamp Ateşi dinamik eşik. Migration **`0059_campfire_dynamic_threshold.sql`**: `project_verified_group_day` `camp` CTE'sinde sabit `active>=3` → `max(2, ceil(N/2))` (N=o gün aktif farklı üye; tablo 2→2,4→2,5→3,6→3,7→4). Dict açıklaması + l10n `coreEnAz3KisiAktifkenCalis` dinamik ifade (4 dil). Client campfire hesaplamaz (server-verified) → engine değişmez. **Canlıya `0059` uygulanmalı.**
+  - Kalanlar: F (alpha hesap düzeltme + üretim projeksiyonu), K/L (alpha gösterge+haftalık). Migration'lar canlıya kullanıcı tarafından uygulanır.
 
 ### Codex Lane
 - **Durum:** [x] Boşta

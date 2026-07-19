@@ -1965,7 +1965,7 @@
     "description": "Core user-facing text. Source: Kamp Ateşi"
   },
   "coreKampAtesiEtrafinda": "Around the Campfire",
-  "coreEnAz3KisiAktifkenCalis": "Study while at least 3 members are active",
+  "coreEnAz3KisiAktifkenCalis": "Study while at least half of the day's active members are online together",
   "@coreKampAtesiEtrafinda": {
     "description": "Core user-facing text. Source: Kamp Ateşi Etrafında',"
   },
