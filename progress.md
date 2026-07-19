@@ -50,14 +50,14 @@
 - **Not:** WP-83 tamamlandı, envanter ve sözlük oluşturuldu.
 
 ### Claude Lane
-- **Durum:** [~] Aktif
-- **Faz/WP:** beta-v42 ekonomi programı — kalan WP'ler (sıra: J→A+B→C→D→E→F→K→L)
-- **Aşama:** Geliştiriliyor
-- **SAHİP yollar:** görev + başarım/ekonomi yüzeyi; her WP kendi SAHİP dosyalarını plandan alır (`docs/features/BETA-v41-TEKNIK-PLAN.md`). Aktif olarak: `app/lib/core/stats/**` (progression/ledger), `supabase/migrations/0056+`, l10n arb.
-- **Ortak/riskli yüzey:** l10n arb (üretilen `app_localizations*.dart`), `achievements_dict` şeması. Diğer lane'ler boşta → çakışma yok.
+- **Durum:** [x] Boşta
+- **Faz/WP:** —
+- **Aşama:** —
+- **SAHİP yollar:** —
+- **Ortak/riskli yüzey:** —
 - **Dal:** — (main)
-- **Başlangıç:** 2026-07-19 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-19 (Europe/Istanbul)
+- **Başlangıç:** —
+- **Son güncelleme:** 2026-07-19 23:57 (Europe/Istanbul)
 - **Not:** beta-v41 turu kapandı (WP-221/222/223/224 cihazda doğrulandı). Kalan ekonomi/kademe/alpha WP'leri sırayla yürüyor (beta-v42). Bitmiş (kod+test, cihaz QA bekliyor):
   - **WP-J** görev sırası daily-üstte + optimistic UI (`sortUserTasksByDue` daily-first, `userTasksProvider`→AsyncNotifier, ekle/tamamla/sil optimistic, hata→geri al+snackbar). Commit `54a2c84`.
   - **WP-A+B** 6 kademeli ekonomi (eşli). Renkler: 4=Elmas `#38BDF8`, 5=Zümrüt `#17E4A0`, 6=Immortal `#B02E42` (platin kalktı). Taç 6 rütbe + eşik `[0,20k,75k,200k,500k,1M]`. Client `progression_visuals`+`achievement_ledger_engine` tüm tuple/XP; `secret_1337` tamamen silindi. l10n: `coreZumrutTac`/`coreImmortal`/`coreImmortalTac` eklendi (Immortal: EN Immortal, TR Ölümsüz, DE Unsterblich, AR الخالد). Sunucu **migration `0056_six_tier_economy.sql`**: dict tuple/max_tier=6, `_recalc_crown_rank` 6 rütbe, secret_1337 FK-temiz silme + etkilenen XP geri hesap, taç XP-korumalı hizalama. **process_achievement_event DEĞİŞMEDİ** (claim=WP-C, perfect_month=WP-D, campfire=WP-E). analyze temiz, tüm testler yeşil. **Canlıya `0056` uygulanmalı.**
@@ -69,15 +69,15 @@
   - Kalanlar: K (grup sıralamasında alpha göstergesi), L (Lider Kurt haftalık başarım). Migration'lar canlıya kullanıcı tarafından uygulanır.
 
 ### Codex Lane
-- **Durum:** [x] Boşta
-- **Faz/WP:** —
-- **Aşama:** —
-- **SAHİP yollar:** —
-- **Ortak/riskli yüzey:** —
-- **Dal:** — (main)
-- **Başlangıç:** —
-- **Son güncelleme:** 2026-07-19 (Europe/Istanbul)
-- **Not:** v40 imzalı beta APK ve v39 sonrası cihaz/staging QA listesi hazır; cihaz kanıtı bekliyor. 0053 SQL Editor 42601 düzeltildi (`day`→`metric_day`); catch-up aliasları, finalize projector ve cron tekrar çalıştırılabilirliği sertleştirildi.
+- **Durum:** [~] Aktif
+- **Faz/WP:** beta-v42 · WP-K — grup sıralamasında alpha göstergesi
+- **Aşama:** Engellendi — tam test paketi
+- **SAHİP yollar:** `app/lib/features/home/widgets/leaderboard_card.dart`, `app/lib/features/stats/widgets/class_stats_view.dart`, ilgili provider/repository/model, `supabase/migrations/0061_*`, WP-K testleri
+- **Ortak/riskli yüzey:** `supabase/migrations/**` (sıra), grup üyesi görünürlüğü/RLS, `progress.md`; l10n veya `achievement_ledger_engine.dart` yok
+- **Dal:** main
+- **Başlangıç:** 2026-07-19 23:57 (Europe/Istanbul)
+- **Son güncelleme:** 2026-07-20 00:04 (Europe/Istanbul)
+- **Not:** Kullanıcı devriyle stale Claude lane'den alındı. WP-K kodu + kendi sözleşme/repository testi + `flutter analyze` temiz. Ancak tam test paketi iki SAHİP-dışı kırık testte duruyor: `test/data/user_task_repository_test.dart:74` (toggle/undo beklenen true, actual false) ve `test/features/stats/personal_stats_enrichment_test.dart:65` (`dragUntilVisible` → `Bad state: No element`). Önce bu sahiplerden düzeltme/ayrı debug WP gerekir; WP-K/WP-L commit edilmedi.
 
 ### Grok Lane
 - **Durum:** [x] Boşta

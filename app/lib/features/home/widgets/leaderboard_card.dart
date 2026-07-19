@@ -9,6 +9,7 @@ import '../../../core/widgets/crowned_avatar.dart';
 import '../../../data/models/profile.dart';
 import '../../classroom/widgets/class_switcher.dart';
 import '../../../data/providers/auth_providers.dart';
+import '../../../data/providers/analytics_query_providers.dart';
 import '../../../data/providers/group_providers.dart';
 import '../../../data/providers/study_providers.dart';
 import '../../profile/widgets/profile_tap.dart';
@@ -38,6 +39,8 @@ class LeaderboardCard extends ConsumerWidget {
     final stats = ref.watch(groupDailyStatsProvider).value ?? const [];
     final members = ref.watch(groupMembersProvider).value ?? const <Profile>[];
     final meId = ref.watch(authStateProvider).value?.id;
+    final alphaWins =
+        ref.watch(groupAlphaScoresProvider).value ?? const <String, int>{};
 
     return Card(
       child: LayoutBuilder(
@@ -190,6 +193,7 @@ class LeaderboardCard extends ConsumerWidget {
             member: memberFor(board[i].key),
             seconds: board[i].value,
             streak: streaks[board[i].key] ?? 0,
+            alphaWins: alphaWins[board[i].key] ?? 0,
             isMe: board[i].key == meId,
             isCompact: isCompact,
           );
@@ -254,6 +258,7 @@ class _Row extends StatelessWidget {
     required this.member,
     required this.seconds,
     required this.streak,
+    required this.alphaWins,
     required this.isMe,
     this.isCompact = false,
   });
@@ -262,6 +267,7 @@ class _Row extends StatelessWidget {
   final Profile? member;
   final int seconds;
   final int streak;
+  final int alphaWins;
   final bool isMe;
   final bool isCompact;
 
@@ -282,6 +288,9 @@ class _Row extends StatelessWidget {
       brief.write(
         ' · 🔥${AppLocalizations.of(context).homeOGun(streak.toString())}',
       );
+    }
+    if (alphaWins > 0) {
+      brief.write(' · 🐺$alphaWins');
     }
     final canOpenProfile = member != null && member!.isActive;
     return Tooltip(
@@ -341,6 +350,17 @@ class _Row extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                 ],
+                if (alphaWins > 0) ...[
+                  const Text('🐺', style: TextStyle(fontSize: 12)),
+                  const SizedBox(width: 2),
+                  Text(
+                    '$alphaWins',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
                 Text(
                   formatHuman(seconds),
                   style: theme.textTheme.bodySmall?.copyWith(
@@ -355,12 +375,26 @@ class _Row extends StatelessWidget {
                     alignment: Alignment.centerRight,
                     child: FittedBox(
                       fit: BoxFit.scaleDown,
-                      child: Text(
-                        formatHuman(seconds),
-                        maxLines: 1,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (alphaWins > 0) ...[
+                            const Text('🐺', style: TextStyle(fontSize: 12)),
+                            const SizedBox(width: 2),
+                            Text(
+                              '$alphaWins',
+                              style: theme.textTheme.labelSmall,
+                            ),
+                            const SizedBox(width: 6),
+                          ],
+                          Text(
+                            formatHuman(seconds),
+                            maxLines: 1,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),

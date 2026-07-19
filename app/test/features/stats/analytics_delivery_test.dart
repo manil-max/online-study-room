@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/core/stats/study_stats.dart';
 import 'package:online_study_room/data/models/daily_stat.dart';
+import 'package:online_study_room/data/models/analytics_query_models.dart';
 import 'package:online_study_room/data/models/study_session.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_analytics_query_repository.dart';
 import 'package:online_study_room/features/stats/analytics/analytics_period.dart';
@@ -14,7 +15,6 @@ import 'package:online_study_room/core/prefs/app_prefs.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-
 
   group('period math', () {
     test('year range uses calendar year start', () {
@@ -103,7 +103,7 @@ void main() {
       expect(byDaySubject[dayOf(day1)]?['eng'], 1800);
       expect(byDaySubject[dayOf(day2)]?['math'], 5400);
       // Not 60/40 of day total.
-      expect(byDaySubject[dayOf(day1)]?['math'], isNot( (3600 + 1800) * 0.6 ));
+      expect(byDaySubject[dayOf(day1)]?['math'], isNot((3600 + 1800) * 0.6));
     });
 
     test('group contribution and leaderboard series from seed', () async {
@@ -168,18 +168,33 @@ void main() {
       final total = rows.fold<int>(0, (a, r) => a + r.seconds);
       expect(total, 3600 + 7200);
     });
+
+    test(
+      'group alpha scores require server-projected seed in demo mode',
+      () async {
+        final repo = InMemoryAnalyticsQueryRepository();
+        expect(await repo.getGroupAlphaScores(groupId: 'g1'), isEmpty);
+
+        repo.seedGroupAlphaScores('g1', const [
+          GroupAlphaScore(userId: 'b', alphaWins: 1),
+          GroupAlphaScore(userId: 'a', alphaWins: 3),
+        ]);
+        final scores = await repo.getGroupAlphaScores(groupId: 'g1');
+        expect(scores.map((score) => score.userId), ['a', 'b']);
+        expect(scores.first.alphaWins, 3);
+      },
+    );
   });
 
-
   group('classic stats UI (WP-170)', () {
-    testWidgets('StatsPeriodBar builds year/custom chips (WP-178)', (tester) async {
+    testWidgets('StatsPeriodBar builds year/custom chips (WP-178)', (
+      tester,
+    ) async {
       SharedPreferences.setMockInitialValues({});
       final prefs = await SharedPreferences.getInstance();
       await tester.pumpWidget(
         ProviderScope(
-          overrides: [
-            sharedPreferencesProvider.overrideWithValue(prefs),
-          ],
+          overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
           child: MaterialApp(
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
@@ -199,21 +214,19 @@ void main() {
       expect(find.byIcon(Icons.compare_arrows), findsOneWidget);
     });
 
-    testWidgets('PersonalStatsView still renders empty sessions', (tester) async {
+    testWidgets('PersonalStatsView still renders empty sessions', (
+      tester,
+    ) async {
       SharedPreferences.setMockInitialValues({});
       final prefs = await SharedPreferences.getInstance();
       await tester.pumpWidget(
         ProviderScope(
-          overrides: [
-            sharedPreferencesProvider.overrideWithValue(prefs),
-          ],
+          overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
           child: MaterialApp(
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             locale: const Locale('tr'),
-            home: const Scaffold(
-              body: PersonalStatsView(sessions: []),
-            ),
+            home: const Scaffold(body: PersonalStatsView(sessions: [])),
           ),
         ),
       );
@@ -221,5 +234,4 @@ void main() {
       expect(find.byType(PersonalStatsView), findsOneWidget);
     });
   });
-
 }

@@ -51,3 +51,19 @@ class GroupLeaderboardPoint {
     );
   }
 }
+
+/// Sadece sunucunun finalized verified grup-günlerinden türetilen alfa sayısı.
+/// Ham oturum veya başka grubun başarım ilerlemesi bu modelden taşınmaz.
+class GroupAlphaScore {
+  const GroupAlphaScore({required this.userId, required this.alphaWins});
+
+  final String userId;
+  final int alphaWins;
+
+  factory GroupAlphaScore.fromMap(Map<String, dynamic> map) {
+    return GroupAlphaScore(
+      userId: map['user_id'] as String,
+      alphaWins: (map['alpha_wins'] as num?)?.toInt() ?? 0,
+    );
+  }
+}

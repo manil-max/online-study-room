@@ -31,4 +31,8 @@ abstract class AnalyticsQueryRepository {
     required DateTime from,
     required DateTime to,
   });
+
+  /// Aktif grup üyelerinin yalnız o gruptaki finalized verified alfa toplamı.
+  /// İstemci, ham oturumdan alpha hesaplamaz.
+  Future<List<GroupAlphaScore>> getGroupAlphaScores({required String groupId});
 }

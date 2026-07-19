@@ -25,10 +25,7 @@ class SupabaseAnalyticsQueryRepository implements AnalyticsQueryRepository {
   }) async {
     final rows = await _client.rpc(
       'get_user_day_totals',
-      params: {
-        'p_from': _dateParam(from),
-        'p_to': _dateParam(to),
-      },
+      params: {'p_from': _dateParam(from), 'p_to': _dateParam(to)},
     );
     return [
       for (final r in (rows as List<dynamic>))
@@ -96,6 +93,20 @@ class SupabaseAnalyticsQueryRepository implements AnalyticsQueryRepository {
     return [
       for (final r in (rows as List<dynamic>))
         GroupLeaderboardPoint.fromMap(Map<String, dynamic>.from(r as Map)),
+    ];
+  }
+
+  @override
+  Future<List<GroupAlphaScore>> getGroupAlphaScores({
+    required String groupId,
+  }) async {
+    final rows = await _client.rpc(
+      'group_alpha_scores',
+      params: {'p_group_id': groupId},
+    );
+    return [
+      for (final row in (rows as List<dynamic>))
+        GroupAlphaScore.fromMap(Map<String, dynamic>.from(row as Map)),
     ];
   }
 }

@@ -93,6 +93,8 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
     final contribAsync = ref.watch(
       analyticsGroupContributionProvider(analyticsPeriod),
     );
+    final alphaWins =
+        ref.watch(groupAlphaScoresProvider).value ?? const <String, int>{};
     final memberColors = memberChartColors(members.map((member) => member.id));
 
     // Seçili dönem leaderboard'u: userId → saniye (per-user-per-gün toplamdan).
@@ -251,6 +253,7 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
               seconds: rows[i].seconds,
               maxSeconds: maxSeconds,
               streak: streaks[rows[i].member.id] ?? 0,
+              alphaWins: alphaWins[rows[i].member.id] ?? 0,
               isMe: rows[i].member.id == currentUserId,
               profile: rows[i].member.isActive ? rows[i].member : null,
             ),
@@ -888,6 +891,7 @@ class _LeaderboardRow extends StatelessWidget {
     required this.seconds,
     required this.maxSeconds,
     required this.streak,
+    required this.alphaWins,
     required this.isMe,
     this.profile,
   });
@@ -898,6 +902,7 @@ class _LeaderboardRow extends StatelessWidget {
   final int seconds;
   final int maxSeconds;
   final int streak;
+  final int alphaWins;
   final bool isMe;
   final Profile? profile;
 
@@ -961,6 +966,17 @@ class _LeaderboardRow extends StatelessWidget {
                             '$streak',
                             style: theme.textTheme.labelSmall?.copyWith(
                               color: subjectColor('chart-5'),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                        ],
+                        if (alphaWins > 0) ...[
+                          const Text('🐺', style: TextStyle(fontSize: 13)),
+                          const SizedBox(width: 2),
+                          Text(
+                            '$alphaWins',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
                             ),
                           ),
                           const SizedBox(width: 8),

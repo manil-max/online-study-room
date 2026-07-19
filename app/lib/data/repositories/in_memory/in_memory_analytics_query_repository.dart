@@ -7,10 +7,7 @@ import '../analytics_query_repository.dart';
 /// Bellek-içi analitik sorgu. Testlerde [seedSessions]/[seedGroupStats] ile
 /// doldurulur; uygulama demo modunda [sessionSource]/[groupStatsSource] bağlanır.
 class InMemoryAnalyticsQueryRepository implements AnalyticsQueryRepository {
-  InMemoryAnalyticsQueryRepository({
-    this.sessionSource,
-    this.groupStatsSource,
-  });
+  InMemoryAnalyticsQueryRepository({this.sessionSource, this.groupStatsSource});
 
   /// Canlı demo: tüm (hot window dışı dâhil) oturumları sağlar.
   final Future<List<StudySession>> Function(String userId)? sessionSource;
@@ -20,6 +17,7 @@ class InMemoryAnalyticsQueryRepository implements AnalyticsQueryRepository {
 
   final Map<String, List<StudySession>> _sessionsByUser = {};
   final Map<String, List<DailyStat>> _groupStats = {};
+  final Map<String, List<GroupAlphaScore>> _groupAlphaScores = {};
 
   void seedSessions(String userId, List<StudySession> sessions) {
     _sessionsByUser[userId] = List.of(sessions);
@@ -27,6 +25,12 @@ class InMemoryAnalyticsQueryRepository implements AnalyticsQueryRepository {
 
   void seedGroupStats(String groupId, List<DailyStat> stats) {
     _groupStats[groupId] = List.of(stats);
+  }
+
+  /// Demo/test verisi yalnız server-projected alpha toplamını taklit eder;
+  /// DailyStat üzerinden yeni bir alpha hesabı yapılmaz.
+  void seedGroupAlphaScores(String groupId, List<GroupAlphaScore> scores) {
+    _groupAlphaScores[groupId] = List.of(scores);
   }
 
   Future<List<StudySession>> _sessions(String userId) async {
@@ -104,11 +108,7 @@ class InMemoryAnalyticsQueryRepository implements AnalyticsQueryRepository {
       final d = dayOf(s.day);
       if (d.isBefore(fromD) || d.isAfter(toD)) continue;
       points.add(
-        GroupLeaderboardPoint(
-          day: d,
-          userId: s.userId,
-          seconds: s.seconds,
-        ),
+        GroupLeaderboardPoint(day: d, userId: s.userId, seconds: s.seconds),
       );
     }
     points.sort((a, b) {
@@ -117,5 +117,18 @@ class InMemoryAnalyticsQueryRepository implements AnalyticsQueryRepository {
       return b.seconds.compareTo(a.seconds);
     });
     return points;
+  }
+
+  @override
+  Future<List<GroupAlphaScore>> getGroupAlphaScores({
+    required String groupId,
+  }) async {
+    final rows =
+        List<GroupAlphaScore>.of(_groupAlphaScores[groupId] ?? const [])
+          ..sort((a, b) {
+            final byWins = b.alphaWins.compareTo(a.alphaWins);
+            return byWins != 0 ? byWins : a.userId.compareTo(b.userId);
+          });
+    return rows;
   }
 }
