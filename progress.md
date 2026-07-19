@@ -69,7 +69,7 @@
 - **Dal:** — (main)
 - **Başlangıç:** —
 - **Son güncelleme:** 2026-07-19 (Europe/Istanbul)
-- **Not:** WP-217 kod + sınır testleri tamamlandı; SQL perf/staging ve retro job çalıştırması parkta.
+- **Not:** WP-218 kod + contract testleri tamamlandı; staging SQL/perf ve grup çok-cihaz QA parkta.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
@@ -115,7 +115,7 @@
 | WP-216 | [~] Kod tamamlandı — test bekliyor | **[TRUST SERVER 4]** Server-issued live run/segment + immutable grup bağlamı + minimal rollout agregası; eski davranış değişmez | ← WP-208 · WP-217/218/220 ön-koşulu |
 | WP-220 | [~] Kod tamamlandı — test bekliyor | **[TRUST CLIENT 5]** Dart timer/native outbox verified köprüsü + stat-only saf-native fallback + shadow telemetry + Android ≤13 QA | ← WP-216 · WP-219 sert ön-koşulu |
 | WP-217 | [~] Kod tamamlandı — test bekliyor | Mola Düşmanı verified segment motoru + bounded konservatif legacy retro job tanımı | ← WP-216 |
-| WP-218 | [ ] Bekliyor | Alfa/Kamp/Lokomotif exact verified grup motoru + legacy proxy/dirty bucket | ← WP-216, WP-217 |
+| WP-218 | [~] Kod tamamlandı — test bekliyor | Alfa/Kamp/Lokomotif exact verified grup motoru + legacy proxy/dirty bucket | ← WP-216, WP-217 |
 | WP-219 | [ ] Bekliyor | **[CONTRACT/RELEASE]** Ölçümlü verified-only XP kesişi + capability-bazlı pending + dry-run/canary retro | ← WP-209/210/217/218/220 + cihaz/saha QA |
 | WP-212 | [~] Kod tamamlandı — test bekliyor | Günlük görev cloud model + toggle/undo + tombstone + idempotent çok-cihaz ops (server 00NN) | plan v3.1 |
 | WP-213 | [~] Kod tamamlandı — test bekliyor | Görev UI: günlük tip ekleme + bugünün listesi + 00:00 yenileme | ← WP-212 · ARB yazar |
