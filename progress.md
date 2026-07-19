@@ -20,7 +20,7 @@
 - **Navigasyon hedefi:** Ana Sayfa / Saat / Gruplar / İstatistikler / Profil. Ana Sayfa günlük kullanım alanıdır; diğer alanların verisi kendi sekmelerinde eksiksiz bulunur.
 - **Release:** Stable/Beta kanalı GitHub Releases ile çalışır. **beta-v30** = `1.0.30+30` (analitik ızgara toggle, 0039–0043 RPC/gamification, WP-166–168). Onay: `docs/qa/BETA-v30-ONAY-LISTESI.md`. Play production ayrı kalite kapısından geçer.
 - **Kalite kapıları:** Her WP DoD'siz kapanmaz; stable release kalite kapısından geçer (AGENTS.md §3). Server-authoritative XP, RLS/sosyal profil, platform sınırları → `docs/KALITE-PROGRAMI.md`.
-- **Son WP numarası:** 207 (WP-204/205/206/207 grup renkleri + sayaç bildirimi, git log doğrulandı; stable v39). **Sıradaki boş numara WP-208.**
+- **Son WP numarası:** 207 (WP-204/205/206/207 grup renkleri + sayaç bildirimi, git log doğrulandı; stable v39). Başarım/görev/grup-pp programı **WP-208–216 planlandı** (plan v2). **Sıradaki boş numara WP-217.**
 - **Release:** **beta-v33** = `1.0.33+33`. Cihaz QA: `docs/qa/BETA-v33-TEST.md`. Canlıda **0046** (feedback trigger) de gerekir.
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
@@ -207,13 +207,14 @@
 | WP-201 | [x] Yayınlandı | beta-v34: 1.0.34+34 notları + cihaz test listesi | tag `beta-v34` |
 | WP-202 | [~] Yayınlandı, cihaz bekliyor | Görevler kartı tasarım cilası (kalan-süre rozeti, ayraçlı liste, başlık sayaç) + **stable v35** rollup | tag `v35` |
 | WP-203 | [~] Yayınlandı, cihaz bekliyor | Manuel süre gece-yarısı fix (00:00 kenet kaldırıldı, gelecek-bitiş yok) + istatistik yenileme (personal declutter, eksenli grafikler, radar düz etiket; grup tek hedef, katkı legend, liderlik sıralama çizgi grafiği, tek trend) → **stable v36** | tag `v36` |
-| WP-208 | [ ] Bekliyor | Başarım ölü metrik fix (alpha_wolf/campfire/locomotive retroaktif) + team_player gözden geçirme (server 00NN) | `docs/features/BASARIM-GOREV-GRUPPP-PLAN-2026-07.md` |
-| WP-209 | [ ] Bekliyor | Topla-ödülü-al: pending reward + claim RPC (server 00NN) | ← WP-208 |
-| WP-210 | [ ] Bekliyor | Başarım UI: canlı ilerleme cilası + claim/topla + "az kaldı" + metin netleştirme | ← WP-209 · ARB yazar |
+| WP-209 | [ ] Bekliyor | **[YAYIN: 1.]** Topla-ödülü-al: ayrı `achievement_rewards` (pending/claim) + claim RPC (server 00NN) | plan v2 · **önce iner** |
+| WP-216 | [ ] Bekliyor | **[YAYIN: 2.]** Oturum bütünlüğü sıkılaştırma (sessions RLS + zaman/süre CHECK, source='live') — Codex #4 (server 00NN) | plan v2 · WP-208 ön-koşulu |
+| WP-208 | [ ] Bekliyor | **[YAYIN: 3.]** Ölü metrik retro fix (alpha_wolf/campfire/locomotive/break_enemy) + gerçek `metric_progress` sözleşmesi + team_player (server 00NN) | ← WP-209, WP-216 |
+| WP-210 | [ ] Bekliyor | Başarım UI: canlı ilerleme (`metric_progress`) + claim/topla animasyon + "az kaldı" + metin netleştirme | ← WP-208 · ARB yazar |
 | WP-211 | [ ] Bekliyor | Başarı/taç bildirimi: açılış banner'ı (Clash tarzı) + Brawl Stars nav-nokta işareti | ← WP-209 |
-| WP-212 | [ ] Bekliyor | Günlük yenilenen görev: bulut model + tekrar/tamamlama (server 00NN) | plan doc |
+| WP-212 | [ ] Bekliyor | Günlük yenilenen görev: bulut model + tekrar/tamamlama + tombstone çok-cihaz (server 00NN) | plan doc |
 | WP-213 | [ ] Bekliyor | Görev UI: günlük tip ekleme + bugünün listesi + 00:00 yenileme | ← WP-212 · ARB yazar |
-| WP-214 | [ ] Bekliyor | Grup profil fotoğrafı (groups.avatar_url + group-avatars bucket admin-yazma) | plan doc |
+| WP-214 | [ ] Bekliyor | Grup profil fotoğrafı (groups.avatar_url + avatar_updated_at cache-bust + bucket admin-yazma + discovery güncelle) | plan doc |
 | WP-215 | [ ] Bekliyor | Tap-to-top tüm sekmeler (Gruplar/İstatistik/Profil/Araçlar) — navReselect zaten var | plan doc |
 
 > **2026-07-14 proje denetimi:** Serbest sürükle-bırak ızgara, canlı grup hedefi ve saat stilleri **zaten kodda uygulanmış** (backlog stale idi; geçici WP-72/73/75 iptal).
