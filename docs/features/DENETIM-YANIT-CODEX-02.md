@@ -64,9 +64,9 @@ MK-3: offline başlayıp server tokenı almayan çalışma achievement/saatlik X
 
 Satır 128: `WP-209 → WP-208 → WP-210 → WP-216 → WP-217 → ...`. Ama bağımlılıklar: WP-216 **WP-208'e** bağlı (WP-210'a değil); WP-210 da 208+209'a bağlı. Yani 210 (client, migration'sız) ile 216 (server) 208'den sonra **paralel** ilerleyebilir. Bölüm 5 bunu doğru anlatıyor. Başlıktaki tek-hat gösterimi 216'yı 210'un ardına zincirliyormuş izlenimi veriyor. **Öneri:** satır 128'i "server zinciri 209→208→216→217→218→219; client 210→211 (208+209 sonrası, server zincirine paralel)" olarak netleştir. Sadece dokümantasyon; davranış değişmiyor.
 
-### K2 — Kusursuz Ay 28 vs sözlük 30: bilinçli ürün kararı olarak işaretlensin
+### K2 — Kusursuz Ay 28/30 kararı kapandı
 
-WP-210 "Kusursuz Ay = 28+ gün" diyerek metni **koda** (`0024:509 if r.goal_days >= 28`) hizalıyor; sözlük "30 gün" diyordu. Kod-metin tutarlılığı için 28 seçmek makul, ama bu bir **ürün kararı** (rozeti kolaylaştırıyor). `Ürün kararı gerekiyor` etiketiyle kullanıcı onayına bırakılsın; sessizce 28'e sabitlenmesin. Alternatif: kod 30'a çekilsin. İkisi de olur, ama seçim açık olmalı.
+Kullanıcı kararıyla Kusursuz Ay **28/30 kuralı** olarak kanonlaştırıldı: sabit eşik 28 İstanbul hedef günü; 30 günlük ayda 28/30. Kod, server evaluator ve kullanıcı metinleri bu kararla hizalanmalıdır. Önceden append-only ledger'a yazılmış kazanımlar geri alınmaz.
 
 ---
 
@@ -86,6 +86,6 @@ WP-210 "Kusursuz Ay = 28+ gün" diyerek metni **koda** (`0024:509 if r.goal_days
 
 1. **S1 geçiş penceresi:** Legacy `source='live'` için "achievement yok ama saatlik XP kademeli olarak devam eder" ara dönemini kabul ediyor musun, yoksa küresel verified-only'yi anlık-sert tutmayı mı savunuyorsun? (Güvenlik vs. saha adaptasyonu dengesi.)
 2. **S2 bölme:** WP-216'yı server (a) + client-timer (b) olarak ikiye bölmek senin çakışma/migration-tek-lane kuralına uyar mı, yoksa tek-WP tut deyip kabul kriterine native-regresyon kanıtını mı eklemeyi tercih edersin?
-3. **K2:** Kusursuz Ay 28 mi 30 mu — bunu plana "ürün kararı, kullanıcı onayı bekliyor" olarak mı bırakalım, yoksa sen kodun 28'ini kanon kabul edip metni sabitleyelim mi diyorsun?
+3. **K2:** Kapatıldı — kullanıcı 28/30 kuralını onayladı; aktif plan ve QA metinleri bu karara hizalanmalıdır.
 
 Bu üçü kapanınca v3'ü **imzalıyorum** ve worker'lar WP-209'dan başlayabilir.

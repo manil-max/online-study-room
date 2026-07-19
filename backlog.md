@@ -13,7 +13,7 @@
   - Claim = ayrı `achievement_rewards`; `xp_ledger` literal append-only. Expansion önce iner, auto→pending yalnız claim-capable client + hesap capability'si sonrası WP-219'da aktive edilir; 50 XP/saat ambient kalır ama contract sonrası yalnız server-verified süre üretir.
   - Gerçek progress self-only projection'dadır; ortak-okunur `user_achievements` secret progress taşımaz. `study_sessions.group_id` 0010'da kaldırıldığı için grup başarıları ileriye dönük server-issued live segment + immutable tek grup context ile hesaplanır. WP-216 server/data expansion, WP-220 timer/native köprü + shadow saha kapısıdır.
   - Alfa/Kamp/Lokomotif ve Mola Düşmanı WP-217/218; kayıp tarihsel grup bağlamı yalnız konservatif legacy proxy + audit/dry-run ile retro, belirsiz satır XP üretmez.
-  - **Ürün kararı kilitli:** Kusursuz Ay, bir takvim ayında 30 İstanbul günü hedefe ulaşmaktır. WP-208 server+Dart evaluator'ı 30'a hizalar; önceki append-only XP/rozet geri alınmaz.
+  - **Ürün kararı kilitli:** Kusursuz Ay **28/30** kuralıdır: takvim ayında en az 28 İstanbul günü hedefe ulaşmak gerekir (30 günlük ayda 28/30; sabit eşik 28). WP-208 server+Dart evaluator'ı bu kurala hizalar; önceki append-only XP/rozet geri alınmaz.
   - Günlük görev cloud modeli toggle/undo + tombstone + server-arrival LWW + Europe/Istanbul günüyle WP-212/213.
   - Grup avatarı private bucket + RLS + signed URL/versioned path (WP-214). Tap-to-top, WP-211 kanonik tab indeksleri ve gerçek scroll dosyalarıyla WP-215.
   - Verified-only XP, WP-220'de ≥7 günlük ölçüm ve benimseme/başarı eşikleri sağlanmadan WP-219'da açılmaz; post-cut unverified saat-XP istisnası yoktur. Saf-native start, güvenli server tokenı yoksa stat-only kalır.

@@ -103,7 +103,7 @@ Bu başarımlar 5 kategoriye ayrılmıştır. Her birinin elde edilmesi giderek 
   - Kademe 3: 20 gün (Ödül: 500 XP)
   - Kademe 4: 50 gün (Ödül: 1500 XP)
   - Kademe 5 (Efsanevi): 100 gün (Ödül: 5000 XP)
-- **Kusursuz Ay:** Bir ay (30 gün) boyunca belirlenen hedefin altına hiç düşmeme sayısı.
+- **Kusursuz Ay:** **28/30 kuralı** — takvim ayında en az 28 İstanbul gününde belirlenen hedefe ulaşma sayısı (30 günlük ayda 28/30; sabit eşik 28).
   - Kademe 1: 1 ay (Ödül: 300 XP)
   - Kademe 2: 3 ay (Ödül: 1000 XP)
   - Kademe 3: 6 ay (Ödül: 2500 XP)

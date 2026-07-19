@@ -23,7 +23,7 @@ notları ekranı bu metinle aynı kararları yansıtmalıdır.
 > **Beta test sürümü.** v39'dan sonraki başarımlar, günlük görevler, grup avatarları ve doğrulanmış sayaç altyapısı bu pakette ilk kez birlikte cihaz testine açılır. XP ekonomisi hâlâ shadow modundadır; WP-219 aktive edilmemiştir.
 
 ### Öne çıkanlar
-- **Başarımlar ve ödüller:** Gerçek ilerleme, 30-gün Kusursuz Ay kuralı, bekleyen ödül/Topla akışı ve ödül bildirimi eklendi. Şubat ile 29 günlük aylar Kusursuz Ay sayılmaz; önceden verilmiş XP/rozet geri alınmaz.
+- **Başarımlar ve ödüller:** Gerçek ilerleme, **28/30 Kusursuz Ay kuralı** (sabit eşik 28 hedef günü), bekleyen ödül/Topla akışı ve ödül bildirimi eklendi. 27 günden az hedef tamamlanan aylar Kusursuz Ay sayılmaz; önceden verilmiş XP/rozet geri alınmaz.
 - **Günlük görevler:** Görevler hesaba bulutta kaydolur, cihazlar arasında eşitlenir ve İstanbul gün sınırında yeniden açılır.
 - **Gruplar:** Özel grup avatarı ve Alfa, Kamp Ateşi, Lokomotif grup metriği altyapısı eklendi.
 - **Sayaç güvenliği:** Sunucu-izinli canlı oturum ve native sayaç köprüsü shadow modunda ölçülür. Bildirim/widget'tan saf-native başlatılan çalışma istatistiğe sayılır; bu beta döneminde XP davranışı değiştirilmez.

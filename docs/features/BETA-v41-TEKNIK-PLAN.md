@@ -101,8 +101,8 @@ riskini test ile kapat.
 `app/lib/core/stats/achievement_engine.dart` (varsa client hesap), QA 1.2 metni + l10n açıklama.
 **Bağımlılık:** yok.
 
-1. "Bir takvim ayında 30 gün" → **ay içinde ≥28 hedef-tamamlanan gün** (en fazla 2 kaçırma).
-   Şubat/29 günlük ay için de tutarlı: eşik sabit 28 gün.
+1. **28/30 kuralı:** ay içinde **≥28 hedef-tamamlanan gün** (30 günlük ayda 28/30; en fazla 2 kaçırma).
+   Şubat/29 günlük ay için de eşik sabit 28 gündür.
 2. `perfect_month` başarım **açıklama** metni güncelle (l10n, 4 dil) + `BETA-v40-TEST` 1.2 notu.
 3. Geçmiş kazanılmış perfect_month kaybolmamalı (idempotent).
 

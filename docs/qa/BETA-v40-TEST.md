@@ -26,7 +26,7 @@
 | # | Adım | Beklenen | Sonuç / kanıt |
 |---|---|---|---|
 | 1.1 | Profil → Başarımlar; ilerlemesi olan ve olmayan başarıları incele. | Kartlar gerçek sayaçla görünür (`x/y`, sonraki kademe); sahte dolu tier yok. | ☐ |
-| 1.2 | Kusursuz Ay açıklamasını ve ilerlemesini kontrol et. | Metin **bir takvim ayında 30 gün** der; Şubat/29 günlük ay Kusursuz Ay sayılmaz. Geçmiş rozet/XP kaybolmaz. | ☐ |
+| 1.2 | Kusursuz Ay açıklamasını ve ilerlemesini kontrol et. | Metin **28/30 kuralını** açıklar: takvim ayında en az 28 hedef günü; 27 gün başarım vermez. Geçmiş rozet/XP kaybolmaz. | ☐ |
 | 1.3 | Test hesabında bekleyen ödül üretildiyse Profil'den **Topla** yap. Aynı anda ikinci kez bas veya ağ dönüşünde tekrar dene. | Başarılı sonuç yalnız bir kez XP/rozet yansıtır; tekrar claim çift XP üretmez; hata varsa ödül kaybolmaz. | ☐ |
 | 1.4 | Birden fazla bekleyen ödülle **Tümünü topla** kullan; sonra profili yenile. | Sınır içindeki ödüller toplanır, kalan sayısı/badge doğru güncellenir; kısmi hata net bildirilir. | ☐ |
 | 1.5 | Ödül varken ana kabuğu ve Profil'i dolaş; banner/badge'e, sonra aksiyonuna dokun. | Doğru sayfa açılır; sayı claim sonrası kaybolur/azalır; uygulama yeniden açılınca bayat sayı geri gelmez. | ☐ |
