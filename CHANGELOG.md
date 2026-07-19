@@ -4,6 +4,20 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [beta-v41 / 1.0.41+41] - 2026-07-19
+
+> **Beta test sürümü (ara düzeltme).** beta-v40 saha testinden çıkan üç hata düzeltildi. Kademe/XP/renk ekonomisi ve Alpha Wolf revizyonu bu pakette **yoktur**; sonraki betaya bırakıldı. XP davranışı değişmez (hâlâ shadow).
+
+### Düzeltmeler
+- **Grup fotoğrafı yüklenmiyordu:** "direct deletions from storage tables is not allowed" hatası giderildi. Eski avatarı silen veritabanı trigger'ı (0049) kaldırıldı; eski nesne temizliği artık istemci tarafında Storage API ile yapılır (migration `0054`).
+- **Başarımlar sayfası her ~4 sn'de kendini yeniliyor ve ekran zıplıyordu:** Ödül banner'ının 4 sn'lik yoklama döngüsü kaldırıldı; ödül durumu artık olay bazlı (oturum bitince / topla sonrası) güncellenir. Scroll konumu korunur.
+- **Yanlışlıkla tetiklenen aşağı-çek-yenile:** Uygulama geneli pull-to-refresh jesti kaldırıldı (veri realtime/olay bazlı tazelenir).
+- **"Manuel süre ekle" ve "Günlük hedef" diyaloglarında** saat alanı İngilizce'de yanlışlıkla "Clock" yazıyordu; artık "Hours" (DE "Stunden", AR "ساعات").
+
+### Test notları
+- Grup fotoğrafı düzeltmesi için canlı Supabase'de `0054` migration'ı uygulanmalıdır (toplam `0047`–`0054`).
+- Bu bir ara beta'dır; 6-kademe (Elmas/Zümrüt/Immortal), XP dengesi, taç eşikleri ve Alpha Wolf değişiklikleri **sonraki beta**da gelecek.
+
 ## [beta-v40 / 1.0.40+40] - 2026-07-19
 
 > **Beta test sürümü.** v39'dan sonraki başarımlar, günlük görevler, grup avatarları ve doğrulanmış sayaç altyapısı bu pakette ilk kez birlikte cihaz testine açılır. XP ekonomisi hâlâ shadow modundadır; WP-219 aktive edilmemiştir.

@@ -3,6 +3,42 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.41",
+      "buildNumber": 41,
+      "channel": "beta",
+      "date": "2026-07-19",
+      "title": "beta-v41: grup fotoğrafı, başarımlar yenileme ve saat etiketi düzeltmeleri",
+      "highlights": [
+        "beta-v40 saha testinden çıkan üç hata düzeltildi; kademe/XP/renk ve Alpha Wolf revizyonu sonraki betaya kaldı.",
+        "Başarımlar sayfası artık her birkaç saniyede kendini yenileyip ekranı zıplatmıyor; ödül durumu olay bazlı güncellenir."
+      ],
+      "fixes": [
+        "Grup fotoğrafı yüklenmiyordu: 'direct deletions from storage tables is not allowed' hatası giderildi (migration 0054; eski nesne temizliği Storage API ile).",
+        "Başarımlarda 4 sn'lik yenileme/scroll zıplaması kaldırıldı; ödül banner'ı oturum bitince ve topla sonrası güncellenir.",
+        "Yanlışlıkla tetiklenen aşağı-çek-yenile jesti tüm sekmelerden kaldırıldı.",
+        "'Manuel süre ekle' ve 'Günlük hedef' diyaloglarında saat alanı İngilizce'de 'Clock' yerine 'Hours'."
+      ],
+      "notes": [
+        "Grup fotoğrafı düzeltmesi için canlı Supabase'de 0054 migration'ı uygulanmalıdır (toplam 0047–0054).",
+        "Ara beta: 6 kademe (Elmas/Zümrüt/Immortal), XP dengesi, taç eşikleri ve Alpha Wolf değişiklikleri sonraki betaya bırakıldı. XP ekonomisi değişmedi."
+      ],
+      "titleEn": "beta-v41: group photo, achievements refresh, and hours-label fixes",
+      "highlightsEn": [
+        "Three bugs from beta-v40 field testing are fixed; the tier/XP/color and Alpha Wolf revamp is deferred to the next beta.",
+        "The Achievements page no longer refreshes and jumps every few seconds; reward state updates on events instead."
+      ],
+      "fixesEn": [
+        "Group photo upload failed with 'direct deletions from storage tables is not allowed'; fixed (migration 0054; old-object cleanup via the Storage API).",
+        "Removed the 4s refresh/scroll jump on Achievements; the reward banner updates on session completion and after claiming.",
+        "Removed the accidentally triggered pull-to-refresh gesture from all tabs.",
+        "In the 'Add time manually' and 'Daily goal' dialogs the hours field now reads 'Hours' instead of 'Clock' in English."
+      ],
+      "notesEn": [
+        "Apply migration 0054 on the live Supabase for the group-photo fix (0047–0054 in total).",
+        "Interim beta: six tiers (Diamond/Emerald/Immortal), XP rebalance, crown thresholds, and Alpha Wolf changes are deferred to the next beta. XP economy is unchanged."
+      ]
+    },
+    {
       "versionName": "1.0.40",
       "buildNumber": 40,
       "channel": "beta",
