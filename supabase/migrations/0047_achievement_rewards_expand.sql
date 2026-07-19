@@ -1,4 +1,5 @@
--- 0047: Başarım ödül gelen kutusu expansion'ı (WP-209)
+-- 0047_achievement_rewards_expand.sql
+-- Başarım ödül gelen kutusu expansion'ı (WP-209)
 --
 -- Pending ödüller xp_ledger'dan ayrı tutulur. XP yalnız claim RPC'sinin
 -- append-only ledger insert'iyle bankalanır; mevcut auto-award ve saatlik 50 XP

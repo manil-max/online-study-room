@@ -1,4 +1,5 @@
--- 0050: Self-only achievement metric contract and 30-day Perfect Month
+-- 0050_achievement_metric_contract.sql
+-- Self-only achievement metric contract and 30-day Perfect Month
 --
 -- Adds a private metric projection, per-metric monotonic/current semantics,
 -- bounded backfill/dirty-bucket contracts, a verified-hour watermark contract,

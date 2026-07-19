@@ -74,7 +74,7 @@ Her WP birinci sınıf çıktı üretir. Uygularken:
 
 - `cd app`; her `run/test/build`'e `--dart-define-from-file=env.json`; `analyze` bayraksız.
 - Repository **çift**: `supabase/` + `in_memory/` birlikte.
-- Migration `NNNN_ad.sql` sıralı; RLS zorunlu; **XP/kritik ilerleme server-authoritative**; sır istemcide yok.
+- Migration `NNNN_ad.sql` sıralı; **ilk satır tam olarak `-- NNNN_ad.sql` (gerçek dosya adı)**; RLS zorunlu; **XP/kritik ilerleme server-authoritative**; sır istemcide yok.
 - Kullanıcı metni Türkçe; gün sınırı Europe/Istanbul tek yardımcıdan.
 
 ---

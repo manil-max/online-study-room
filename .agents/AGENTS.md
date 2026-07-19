@@ -115,14 +115,16 @@ CI/PR auto-merge için WP-39 iptal edilmiştir. Yerel DoD ve gerçek cihaz QA ka
 - **Gizli dosyalar asla commit edilmez:** `env.json`, `app/android/key.jks`, `app/android/key.properties`, `KEYSTORE_SECRETS.txt`, Supabase `service_role`. Commit öncesi `git status` ile doğrula.
 - **Release keystore kalıcıdır.** `key.jks` değişirse Android güncellemeleri reddeder — yeniden üretme.
 - Migration'lar **sırayla** çalışır (`NNNN_ad.sql`, son numaradan devam). Sırayı bozma, kısmen uygulama. Canlı Supabase'e SQL Editor'dan uygulanır; her WP kendi migration + geri alma notunu getirir.
-- **Migration Başlık Kuralı:** Yeni bir migration dosyası oluştururken, her zaman `supabase/migrations/` klasöründeki mevcut en yüksek numarayı kontrol et ve **1 artırarak** ilerle. Ayrıca dosyanın en üstünde açıklama, işleyiş özeti ve rollback talimatı içeren şu standart yorum bloğu mutlaka bulunmalıdır:
+- **Migration Başlık Kuralı:** Yeni bir migration dosyası oluştururken, her zaman `supabase/migrations/` klasöründeki mevcut en yüksek numarayı kontrol et ve **1 artırarak** ilerle. Migration'ın **ilk satırı, başında `-- ` olacak şekilde gerçek dosya adının tamamı olmak zorundadır**; numara veya serbest açıklama tek başına kabul edilmez (`-- 0054_ornek.sql`). Açıklama ikinci satırdan başlar. Dosyanın en üstünde işleyiş özeti ve rollback talimatı içeren şu standart yorum bloğu mutlaka bulunmalıdır:
   ```sql
-  -- NNNN: [Kısa Açıklama]
+  -- NNNN_dosya_adi.sql
+  -- [Kısa açıklama / WP]
   --
   -- [Detaylı açıklama ve notlar]
   --
   -- Geri alma (Rollback): [Geri almak için çalıştırılması gereken SQL veya notlar]
   ```
+- Commit/test öncesi **yeni veya bu işte değiştirilmiş** migration dosyalarında ilk satır denetimi yap: yorumdan `-- ` kaldırıldığında metin `Path.GetFileName(...)` ile birebir aynı olmalıdır. Daha önce uygulanmış tarihsel migration'ları sırf biçim için topluca değiştirme.
 
 ### Dil & Stil
 - Kullanıcıya görünen metin **Türkçe**; kod/teknik isim İngilizce. Gün sınırı her yerde **Europe/Istanbul** (tek yardımcıdan).

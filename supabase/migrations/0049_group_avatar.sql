@@ -1,4 +1,5 @@
--- 0049: Private group avatars with signed access
+-- 0049_group_avatar.sql
+-- Private group avatars with signed access
 --
 -- Adds versioned avatar object paths to groups, creates a private Storage bucket,
 -- and limits reads to active members or authenticated users discovering a public

@@ -1,4 +1,5 @@
--- 0048: Cloud görev modeli, İstanbul-günü completion ve çok-cihaz RPC'leri (WP-212)
+-- 0048_user_tasks_cloud.sql
+-- Cloud görev modeli, İstanbul-günü completion ve çok-cihaz RPC'leri (WP-212)
 --
 -- Görev tanımı tombstone ile korunur; completion tek kaynaktır. Günlük görev
 -- satırı ertesi İstanbul gününde silinmeden yeniden açık görünür. Tüm mutasyonlar

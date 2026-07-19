@@ -69,7 +69,7 @@
 - **Dal:** — (main)
 - **Başlangıç:** —
 - **Son güncelleme:** 2026-07-19 (Europe/Istanbul)
-- **Not:** WP-218 kod + contract testleri tamamlandı; staging SQL/perf ve grup çok-cihaz QA parkta.
+- **Not:** 0047–0053 migration ilk satırları dosya adıyla eşitlendi; kanonik ajan ve worker kuralı kalıcılaştırıldı.
 
 ### Grok Lane
 - **Durum:** [x] Boşta

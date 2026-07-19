@@ -1,3 +1,4 @@
+-- 0052_break_enemy_metric.sql
 -- WP-217: Mola Düşmanı verified interval motoru. Backfill tanımlıdır, çalışmaz.
 
 create table if not exists public.achievement_reward_candidates (

@@ -1,3 +1,4 @@
+-- 0053_group_achievement_metrics.sql
 -- WP-218: exact verified Alpha / Campfire / Locomotive group metrics.
 
 create table if not exists public.group_achievement_daily (

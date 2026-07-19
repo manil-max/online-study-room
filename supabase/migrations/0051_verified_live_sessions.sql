@@ -1,3 +1,4 @@
+-- 0051_verified_live_sessions.sql
 -- WP-216: server-issued live run/segment expansion.
 -- Expansion only: legacy session inserts and the current XP evaluator stay active.
 
