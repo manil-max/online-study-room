@@ -5,6 +5,8 @@
 > **Bu dosya yalnız plandır; kod içermez.** Worker migration numarasını claim anında `progress.md` ve `supabase/migrations/` üzerinden yeniden doğrular (şu an en yüksek `0046`).
 > Kanıt etiketleri: `Kodda doğrulandı` · `Cihazda doğrulanmalı` · `Ürün kararı gerekiyor`.
 
+> **v3.2 ürün kararı (2026-07-20):** Verified-only XP ve başarı kuralı iptal edildi. Manuel süre ekleme, uygulama içi sayaç ve native/widget sayacı aynı kazanım yolundadır. `0063_equal_study_sources.sql`, bu belgenin verified-only/7-gün/canary kısımlarını ileriye dönük olarak geçersiz kılar; eski metin karar geçmişidir.
+
 ## 1. Yönetici özeti ve GO durumu
 
 V3.1, v3'ün doğru ana kararlarını korur: ayrı `achievement_rewards`, append-only `xp_ledger`, gerçek claim, saat başı 50 XP'nin ambient kalması, sunucu metriği, Europe/Istanbul gün sınırı, sweep-line/two-pointer, görevlerin buluta taşınması ve migration/ARB serileştirmesi. WP-216 yalnız server/data expansion'dır; kırılgan timer/native köprüsü ve saha ölçümü yeni WP-220'de ayrı kalite kapısından geçer.
@@ -247,20 +249,13 @@ Reward altyapısını eklemek ile otomatik banklamayı kapatmak farklı yayınla
 - **Kabul:** Alpha yalnız kapalı gün ve cron kaçsa bile catch-up ile tek kez finalize; Kamp ≥3 exact; Lokomotif exact active-state+15 dk; başka üye olayı etkilenen kullanıcı progress'ine ≤5 s yansır; p95 MK-6 içinde; belirsiz legacy satır XP üretmez; testler yeşil.
 - **Tuzak:** `group_members.joined_at`'i eksiksiz tarihçe sanmak; “önceki N dk” boşluk sezgisi; auth.uid-only projector ile initiator'ı güncellememek.
 
-## WP-219 — Verified-only XP + pending model aktivasyonu + kontrollü retro gate 🚦
+## WP-219R — Süre kaynağı eşitliği ✅
 
-- **Program/Faz:** Başarım release/contract · **Ajan:** — · **Model:** 🔴 Opus · **Bağımlılık:** WP-209, WP-210 cihaz QA, WP-217, WP-218, WP-220 cihaz+saha QA · **Durum:** [ ] Bekliyor
-- **Problem:** Altyapı kurulduktan sonra yeni client'ı pending modele geçirmek ve retro ödülleri güvenle üretmek gerekir. Verified-only XP kesişi eski sürümdeki kullanıcı için ekonomik davranış değişikliğidir; güncelleme mesajı tek başına güvenli rollout değildir.
-- **Kapsam dışı:** Yeni metrik/UI; legacy belirsiz satıra manuel XP verme.
-- **SAHİP dosyalar:** `supabase/migrations/00NN_activate_reward_inbox.sql`; staging/prod runbook ve reconciliation/backfill testleri.
-- **DOKUNMA:** Client UI; session lifecycle şeması.
-- **Adımlar:** WP-220 shadow raporunu imzala; `minimum_verified_xp_build` server config ve desteklenen client'ta engellenemeyen sayaç-öncesi güncelleme/XP uygunluk mesajı; capability'li hesapta `_record_pending_reward`, diğerinde uygun ödül için mevcut `_award_achievement_tier`; capability one-way enable; **capability'den bağımsız küresel güvenlik contract'ı olarak** tüm session-türevi achievement ve ambient saat XP'sini verified segment/watermark kaynağına tek kesitte çevir; dry-run reward sayısı/XP toplamı; kullanıcı/batch limitli backfill; önce Mola sonra grup metrikleri; canary hesap→%10→%100 reward capability cohort; ledger/profile/reward reconciliation; kill switch pending→auto fallback (verified-only uygunluğu gevşetmez).
-- **Veri/Migration:** Contract migration. Rollback yeni pending üretimini durdurur; mevcut pending silinmez ve claim edilebilir kalır. Verified evaluator arızasında güvenli duruş unverified XP'ye dönmek değil, yeni session-türevi award'ı dondurup verified run kimliklerini replay kuyruğunda tutmaktır; düzeltme sonrası idempotent catch-up yapılır. Ledger/claimed XP geri alınmaz.
-- **RLS/Güvenlik:** capability XP uygunluk yetkisi değildir; yalnız claim UX seçer. Verified-only session uygunluğu küreseldir ve kill switch ile gevşetilmez. Retro job service role/runbook kontrollü, parametreli ve audit log'ludur.
-- **Edge-case:** old+new cihaz, Play updater'ın olmaması, opt-out'lu telemetry, saf-native start yoğun kullanıcı, yarım batch, kill switch, sözlük versiyonu, 100+ reward, deploy arası.
-- **Kabul/aktivasyon eşikleri:** son 14 günde çalışma kaydı olan distinct kullanıcıların ≥%95'i aynı 14 günlük pencerede `verified_session_v1` capability bildirmiştir; capability cohort'unda server-derived verified odak dakikası / toplam uygun odak dakikası ≥%95 ve start→finalize teknik hata oranı <%1 değerlerini **7 ardışık gün** sağlar; `native_widget/native_notification` başlangıç payı ayrıca raporlanır; Sentry/opt-in telemetry rollout paydası değildir. Eşiklerden biri sağlanmazsa WP-219 contract aktivasyonu yapılmaz, eski XP davranışı sürer.
-- **Kabul/davranış:** Capability yokken **uygun** ödül auto-banked; capability varken uygun achievement pending ve claim öncesi XP 0 artış; her iki cohort'ta verified tam saat 50 XP'yi auto-banklar, unverified/manual tam saat XP üretmez; eski client normal istatistik kaydeder fakat session XP üretmez; claim tam bir kez banklar; canary reconciliation farkı 0; evaluator freeze→fix→replay verified XP'yi tam bir kez banklar ve unverified satır banklamaz; rollback pending kaybetmez; production run için açık ürün onayı ve staging kanıtı vardır.
-- **Tuzak:** global flag'i saha eşiğinden önce açmak; eski sürüm gerçekten zorlanabiliyormuş gibi updater mesajına güvenmek; kesim sonrasında unverified legacy saat XP istisnası açarak fabrikasyon açığını geri getirmek; rollback'te reward tablosunu drop etmek; dry-run olmadan retro çalıştırmak.
+- **Program/Faz:** Başarım contract düzeltmesi · **Durum:** Kod tamamlandı — migration/staging QA bekliyor.
+- **Ürün kuralı:** Manuel süre ekleme, uygulama içi sayaç ve native/widget sayacı aynı XP, kişisel başarı ve grup başarımı yolundadır. Kullanıcıya verified/unverified ayrımı gösterilmez.
+- **Uygulama:** `0063_equal_study_sources.sql` eski live-run bağlarını oturum satırlarından ayırır; tüm grup/Mola Düşmanı/Lider Kurt projeksiyonlarını üyelik penceresindeki `study_sessions` kaynağına çevirir; eski verified cron'ları kaynak-nötr cron'larla değiştirir ve türetilmiş projeksiyonları yeniden üretir.
+- **Veri garantisi:** `study_sessions`, `xp_ledger`, rozetler ve pending ödüller silinmez. Eski live-run tabloları yalnız denetim geçmişi olarak kalır.
+- **Cihazda/staging'de doğrulanmalı:** manuel süre, uygulama sayacı ve widget/bildirim başlangıcı aynı kişisel/grup ilerlemesini üretir; tarihsel XP/rozet kaybolmaz; yeni iki cron aktiftir; RLS ile kullanıcı yalnız kendi oturumunu düzenler.
 
 ## WP-212 — Günlük görev cloud modeli + çok-cihaz senkron 🗓️
 

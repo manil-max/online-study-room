@@ -403,9 +403,11 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   bool _disposed = false;
   Future<void>? _verifiedStartFuture;
 
-  bool get _verifiedServerAvailable =>
-      SupabaseConfig.isConfigured &&
-      ref.read(studyRepositoryProvider) is! InMemoryStudyRepository;
+  // Süre kaynağı ürün açısından fark yaratmaz: manuel giriş, uygulama içi
+  // sayaç ve native sayaç aynı XP/başarım yolunu kullanır. Eski live-run
+  // altyapısı geçmiş kayıtları okuyabilmek için DB'de kalır; yeni sayaçlar
+  // artık ona başvurmaz.
+  bool get _verifiedServerAvailable => false;
 
   /// Auth henüz yoksa 400ms bekler; dispose olursa Timer iptal + await serbest.
   Future<void> _awaitAuthRetryWindow() {
@@ -830,9 +832,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       accumulatedSeconds: 0,
       lastUpdatedAt: now,
       clearLiveRun: true,
-      verification: _verifiedServerAvailable
-          ? TimerVerification.pending
-          : TimerVerification.statisticsOnly,
+      verification: TimerVerification.idle,
     );
     _persistActiveTimer();
     // Native broadcast / apply yarışında reconcile'ın idle sanmaması için

@@ -71,47 +71,10 @@ class TimerVerificationNotice extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!timer.isRunning || timer.verification == TimerVerification.idle) {
-      return const SizedBox.shrink();
-    }
-    final l10n = AppLocalizations.of(context);
-    final (icon, text) = switch (timer.verification) {
-      TimerVerification.verified => (
-        Icons.verified_user_outlined,
-        l10n.timerVerifiedSession,
-      ),
-      TimerVerification.pending => (Icons.sync, l10n.timerVerificationPending),
-      TimerVerification.updateRequired => (
-        Icons.system_update_alt,
-        l10n.timerVerifiedUpdateRequired,
-      ),
-      TimerVerification.statisticsOnly => (
-        Icons.info_outline,
-        l10n.timerStatisticsOnly,
-      ),
-      TimerVerification.idle => (Icons.info_outline, ''),
-    };
-    final colors = Theme.of(context).colorScheme;
-    return Semantics(
-      liveRegion: true,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: colors.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, size: 18, color: colors.onSurfaceVariant),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(text, style: Theme.of(context).textTheme.bodySmall),
-            ),
-          ],
-        ),
-      ),
-    );
+    // Kaynağa göre XP/başarım farkı yok; kullanıcıya teknik oturum türü
+    // gösterilmez. Eski state'ler, yarıda kalmış eski sürümlerden geri
+    // dönüldüğünde güvenle yok sayılır.
+    return const SizedBox.shrink();
   }
 }
 

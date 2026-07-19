@@ -76,8 +76,8 @@
 - **Ortak/riskli yüzey:** —
 - **Dal:** — (main)
 - **Başlangıç:** —
-- **Son güncelleme:** 2026-07-20 00:12 (Europe/Istanbul)
-- **Not:** WP-L kod+otomatik test tamamlandı; cihaz/staging QA için parka alındı. WP-219 saha ölçümü kapısı nedeniyle beta kapsamı dışındadır.
+- **Son güncelleme:** 2026-07-20 00:55 (Europe/Istanbul)
+- **Not:** WP-219R kod + otomatik test tamamlandı; `0063` staging/cihaz QA için parkta. Verified-only ürün kararı iptal edildi.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
@@ -124,7 +124,7 @@
 | WP-220 | [~] Kod tamamlandı — test bekliyor | **[TRUST CLIENT 5]** Dart timer/native outbox verified köprüsü + stat-only saf-native fallback + shadow telemetry + Android ≤13 QA | ← WP-216 · WP-219 sert ön-koşulu |
 | WP-217 | [~] Kod tamamlandı — test bekliyor | Mola Düşmanı verified segment motoru + bounded konservatif legacy retro job tanımı | ← WP-216 |
 | WP-218 | [~] Kod tamamlandı — test bekliyor | Alfa/Kamp/Lokomotif exact verified grup motoru + legacy proxy/dirty bucket | ← WP-216, WP-217 |
-| WP-219 | [ ] Bekliyor | **[CONTRACT/RELEASE]** Ölçümlü verified-only XP kesişi + capability-bazlı pending + dry-run/canary retro | ← WP-209/210/217/218/220 + cihaz/saha QA |
+| WP-219R | [~] Kod tamamlandı — test bekliyor | **[CONTRACT]** Manuel/sayaç/native süre eşitliği; verified-only kapısı iptal, tüm projeksiyonlar `study_sessions` | `0063` + staging/cihaz QA |
 | WP-212 | [~] Kod tamamlandı — test bekliyor | Günlük görev cloud model + toggle/undo + tombstone + idempotent çok-cihaz ops (server 00NN) | plan v3.1 |
 | WP-213 | [~] Kod tamamlandı — test bekliyor | Görev UI: günlük tip ekleme + bugünün listesi + 00:00 yenileme | ← WP-212 · ARB yazar |
 | WP-214 | [~] Kod tamamlandı — test bekliyor | Grup profil fotoğrafı: `avatar_path` + private bucket/signed URL + admin RLS + discovery | plan v3.1 |
@@ -141,7 +141,9 @@
 
 > Cihaz/ürün kabulü bekleyen tamamlanmış kod. Bu bölüm aktif çalışma değildir; başka WP'yi engellemez.
 
-- **WP-L — Lider Kurt haftalık başarımı (beta-v42)** · Kod + otomatik test tamamlandı (`flutter analyze`, 615 test) · Commit: bu WP commit'i · **Cihazda/staging'de doğrulanmalı:** `0062` uygulandıktan sonra yalnız kapanmış ISO hafta (Europe/Istanbul) finalize edilir; verified süre toplamında tek lider 1 win, eşitlikte hiç kimse win/ödül almaz; 1/4/12/26/52/104 haftada yalnız birer pending inbox ödülü oluşur ve claim XP'si `2500/6000/15000/30000/60000/120000` ile sözlükle aynıdır; grup üyesi olmayan haftalık tablo/RPC erişimi yoktur; `verified-group-week-finalizer` cron job aktiftir.
+- **WP-L — Lider Kurt haftalık başarımı (beta-v42)** · Kod + otomatik test tamamlandı (`flutter analyze`, 617 test) · Commit: bu WP commit'i · **Cihazda/staging'de doğrulanmalı:** `0062` + `0063` uygulandıktan sonra yalnız kapanmış ISO hafta (Europe/Istanbul) finalize edilir; tüm süre kaynaklarının toplamında tek lider 1 win, eşitlikte hiç kimse win/ödül almaz; 1/4/12/26/52/104 haftada yalnız birer pending inbox ödülü oluşur ve claim XP'si `2500/6000/15000/30000/60000/120000` ile sözlükle aynıdır; grup üyesi olmayan haftalık tablo/RPC erişimi yoktur; `group-achievement-week-finalizer` cron job aktiftir.
+
+- **WP-219R — Süre kaynağı eşitliği (beta-v42)** · Kod + otomatik test tamamlandı (`flutter analyze`, 617 test) · **Staging/cihazda doğrulanmalı:** `0063` uygulanınca mevcut `study_sessions`, `xp_ledger`, rozetler ve pending ödüller korunur; manuel giriş, uygulama sayacı ve widget/bildirim sayacı aynı kişisel/grup ilerlemesini üretir; eski `live_run_id` bağları temizlenir; kullanıcı yalnız kendi oturumunu düzenler; `group-achievement-day-finalizer` ile `group-achievement-week-finalizer` aktif ve eski `verified-*` cron'lar pasiftir.
 
 - **WP-221 — Grup avatar storage trigger fix (beta-v41 · plan WP-H)** · Kod tamamlandı (`flutter analyze` temiz) · **Cihazda/staging'de doğrulanmalı:** migration `0054` uygulandıktan sonra grup fotoğrafı ilk yükleme + değiştirme + silme hatasız (eski hata: "direct deletions from storage tables is not allowed"); eski avatar nesnesi değişimden sonra Storage API ile temizleniyor; üye-olmayan private erişim reddi ve admin-olmayan yazma reddi korunuyor (QA 3.1–3.3).
 - **WP-222 — "Clock"→"Hours" saat birimi etiketi (beta-v41 · plan WP-I)** · Kod tamamlandı (`flutter analyze` temiz) · **Cihazda doğrulanmalı:** "Manuel süre ekle" ve "Günlük hedef" diyaloglarında saat alanı EN'de "Hours" (eski: "Clock"); DE "Stunden", AR "ساعات"; alarm/saat ekranlarındaki "Clock" etiketi değişmemiş.
