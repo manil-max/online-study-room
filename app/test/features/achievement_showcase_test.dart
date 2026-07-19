@@ -3,6 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/core/stats/achievement_ledger_engine.dart';
 import 'package:online_study_room/data/models/achievement.dart';
 import 'package:online_study_room/data/models/achievement_ledger.dart';
+import 'package:online_study_room/data/models/achievement_metric_progress.dart';
+import 'package:online_study_room/data/models/achievement_reward.dart';
 import 'package:online_study_room/data/models/gamification_profile.dart';
 import 'package:online_study_room/features/profile/widgets/achievement_showcase.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
@@ -143,6 +145,140 @@ void main() {
       ),
       'Study for 6 hours in a single day.',
     );
+  });
+
+  test('Kusursuz Ay açıklaması tek takvim ayında tam 30 günü söyler', () {
+    final achievement = kAchievementDictV3().firstWhere(
+      (entry) => entry.id == 'perfect_month',
+    );
+    expect(
+      achievementDetailDescription(AppLocalizationsTr(), achievement, false),
+      'Bir takvim ayında 30 gün günlük hedefine ulaş.',
+    );
+  });
+
+  testWidgets('self katalog gerçek metriği ve en yakın başarımı gösterir', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('tr'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: AchievementShowcase(
+              gamification: profile(),
+              userAchievements: const [],
+              metricProgress: [
+                AchievementMetricProgress(
+                  userId: 'u1',
+                  achievementId: 'marathon_total',
+                  metricValue: 26,
+                  sourceVersion: 'metric_v2',
+                  updatedAt: now,
+                ),
+              ],
+              showCatalog: true,
+              isSelf: true,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('En yakın başarım'), findsOneWidget);
+    expect(find.text('26/50 · sonraki kademe'), findsNWidgets(2));
+    expect(find.textContaining('doğrulanmış kronometre'), findsOneWidget);
+  });
+
+  testWidgets('pending ödül yalnız callback çağırır ve gizli adı sızdırmaz', (
+    tester,
+  ) async {
+    var claims = 0;
+    final reward = AchievementReward(
+      id: 'r1',
+      userId: 'u1',
+      achievementId: 'secret_night_owl',
+      tier: 1,
+      xpAmount: 300,
+      status: AchievementRewardStatus.pending,
+      createdAt: now,
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('tr'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: AchievementRewardInbox(
+            rewards: [reward],
+            pendingCount: 1,
+            pendingXp: 300,
+            loading: false,
+            hasError: false,
+            claimingIds: const {},
+            claimingAll: false,
+            dictionary: kAchievementDictV3(AppLocalizationsTr()),
+            onClaimReward: (_) => claims++,
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('1 ödül hazır · 300 XP'), findsOneWidget);
+    expect(find.text('Gizli ödül'), findsOneWidget);
+    expect(find.text('Gece Kuşu'), findsNothing);
+    await tester.tap(find.text('Topla'));
+    await tester.pump();
+    expect(claims, 1);
+    expect(find.text('Gizli ödül'), findsOneWidget);
+  });
+
+  testWidgets('reward inbox 360/600/1200 genişlikte taşmaz', (tester) async {
+    final reward = AchievementReward(
+      id: 'r1',
+      userId: 'u1',
+      achievementId: 'marathon_total',
+      tier: 2,
+      xpAmount: 1000,
+      status: AchievementRewardStatus.pending,
+      createdAt: now,
+    );
+    for (final width in [360.0, 600.0, 1200.0]) {
+      tester.view.physicalSize = Size(width, 800);
+      tester.view.devicePixelRatio = 1;
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: const Locale('de'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: AchievementRewardInbox(
+                rewards: [reward],
+                pendingCount: 101,
+                pendingXp: 1000,
+                loading: false,
+                hasError: false,
+                claimingIds: const {},
+                claimingAll: false,
+                dictionary: kAchievementDictV3(),
+                onClaimReward: (_) {},
+                onClaimAll: () {},
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      expect(tester.takeException(), isNull, reason: 'width=$width');
+    }
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
   });
 
   test('tüm açık başarım kademeleri iki dilde tam cümleyle açıklanır', () {

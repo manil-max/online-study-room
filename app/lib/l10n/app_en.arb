@@ -4871,5 +4871,48 @@
     "placeholders": { "minutes": { "type": "int" } }
   },
   "clockTasks": "Tasks",
-  "@clockTasks": { "description": "clockTasks" }
+  "@clockTasks": { "description": "clockTasks" },
+  "profileAchievementNearest": "Closest achievement",
+  "@profileAchievementNearest": { "description": "Heading for the single achievement closest to its next tier" },
+  "profileAchievementProgress": "{current}/{target} · next tier",
+  "@profileAchievementProgress": {
+    "description": "Real achievement metric progress toward the next tier",
+    "placeholders": {
+      "current": { "type": "int" },
+      "target": { "type": "int" }
+    }
+  },
+  "profileAchievementProgressUnavailable": "Progress is not available yet",
+  "@profileAchievementProgressUnavailable": { "description": "Shown when no private metric projection exists yet" },
+  "profileAchievementPerfectMonth30Rule": "Reach your daily goal on 30 days within one calendar month.",
+  "@profileAchievementPerfectMonth30Rule": { "description": "Exact 30-day Perfect Month rule" },
+  "profileAchievementTeamPlayerRule": "Contribute verified study time on days your group reaches its goal.",
+  "@profileAchievementTeamPlayerRule": { "description": "Exact Team Player achievement explanation" },
+  "profileAchievementVerifiedXpNote": "XP requires a verified timer session. Every full verified hour grants 50 XP automatically.",
+  "@profileAchievementVerifiedXpNote": { "description": "Verified timer and ambient hourly XP explanation" },
+  "profileRewardReady": "{count} rewards ready · {xp} XP",
+  "@profileRewardReady": {
+    "description": "Pending achievement reward summary; also consumed by the shell banner",
+    "placeholders": {
+      "count": { "type": "int" },
+      "xp": { "type": "int" }
+    }
+  },
+  "profileRewardClaim": "Claim",
+  "@profileRewardClaim": { "description": "Claim one pending achievement reward" },
+  "profileRewardClaimAll": "Claim all",
+  "@profileRewardClaimAll": { "description": "Claim the bounded pending reward batch" },
+  "profileRewardClaiming": "Claiming…",
+  "@profileRewardClaiming": { "description": "Pending reward claim progress" },
+  "profileRewardClaimed": "Claimed {xp} XP",
+  "@profileRewardClaimed": {
+    "description": "Server-confirmed reward claim result",
+    "placeholders": { "xp": { "type": "int" } }
+  },
+  "profileRewardAlreadyClaimed": "This reward was already claimed.",
+  "@profileRewardAlreadyClaimed": { "description": "Idempotent reward retry result" },
+  "profileRewardClaimFailed": "The reward could not be claimed. Check your connection and try again.",
+  "@profileRewardClaimFailed": { "description": "Reward claim failure" },
+  "profileRewardSecret": "Secret reward",
+  "@profileRewardSecret": { "description": "Name used for a still-secret pending reward" }
 }

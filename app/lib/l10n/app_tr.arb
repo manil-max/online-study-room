@@ -1155,5 +1155,19 @@
   "taskListHoursShort": "{hours}s",
   "taskListDaysShort": "{days}g",
   "taskListMinutesShort": "{minutes}dk",
-  "clockTasks": "Görevler"
+  "clockTasks": "Görevler",
+  "profileAchievementNearest": "En yakın başarım",
+  "profileAchievementProgress": "{current}/{target} · sonraki kademe",
+  "profileAchievementProgressUnavailable": "İlerleme henüz hazır değil",
+  "profileAchievementPerfectMonth30Rule": "Bir takvim ayında 30 gün günlük hedefine ulaş.",
+  "profileAchievementTeamPlayerRule": "Grubunun hedefe ulaştığı günlerde doğrulanmış çalışma süresiyle katkı ver.",
+  "profileAchievementVerifiedXpNote": "XP için doğrulanmış kronometre çalışması gerekir. Doğrulanmış her tam saat otomatik 50 XP kazandırır.",
+  "profileRewardReady": "{count} ödül hazır · {xp} XP",
+  "profileRewardClaim": "Topla",
+  "profileRewardClaimAll": "Tümünü topla",
+  "profileRewardClaiming": "Toplanıyor…",
+  "profileRewardClaimed": "{xp} XP toplandı",
+  "profileRewardAlreadyClaimed": "Bu ödül daha önce toplanmış.",
+  "profileRewardClaimFailed": "Ödül toplanamadı. Bağlantını kontrol edip yeniden dene.",
+  "profileRewardSecret": "Gizli ödül"
 }

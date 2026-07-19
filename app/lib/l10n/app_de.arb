@@ -4796,5 +4796,19 @@
   "taskListHoursShort": "{hours}h",
   "taskListDaysShort": "{days}t",
   "taskListMinutesShort": "{minutes}min",
-  "clockTasks": "Aufgaben"
+  "clockTasks": "Aufgaben",
+  "profileAchievementNearest": "Nächster Erfolg",
+  "profileAchievementProgress": "{current}/{target} · nächste Stufe",
+  "profileAchievementProgressUnavailable": "Fortschritt ist noch nicht verfügbar",
+  "profileAchievementPerfectMonth30Rule": "Erreiche dein Tagesziel an 30 Tagen innerhalb eines Kalendermonats.",
+  "profileAchievementTeamPlayerRule": "Trage an Tagen, an denen deine Gruppe ihr Ziel erreicht, verifizierte Lernzeit bei.",
+  "profileAchievementVerifiedXpNote": "Für XP ist eine verifizierte Timer-Sitzung nötig. Jede volle verifizierte Stunde bringt automatisch 50 XP.",
+  "profileRewardReady": "{count} Belohnungen bereit · {xp} XP",
+  "profileRewardClaim": "Abholen",
+  "profileRewardClaimAll": "Alle abholen",
+  "profileRewardClaiming": "Wird abgeholt…",
+  "profileRewardClaimed": "{xp} XP abgeholt",
+  "profileRewardAlreadyClaimed": "Diese Belohnung wurde bereits abgeholt.",
+  "profileRewardClaimFailed": "Die Belohnung konnte nicht abgeholt werden. Prüfe deine Verbindung und versuche es erneut.",
+  "profileRewardSecret": "Geheime Belohnung"
 }

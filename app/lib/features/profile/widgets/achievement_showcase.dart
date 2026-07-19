@@ -8,6 +8,8 @@ import '../../../core/stats/achievement_ledger_engine.dart';
 import '../../../core/stats/progression_visuals.dart';
 import '../../../data/models/achievement.dart';
 import '../../../data/models/achievement_ledger.dart';
+import '../../../data/models/achievement_metric_progress.dart';
+import '../../../data/models/achievement_reward.dart';
 import '../../../data/models/gamification_profile.dart';
 
 export '../../../core/stats/progression_visuals.dart'
@@ -185,7 +187,11 @@ String achievementDetailDescription(
   bool unlocked,
 ) {
   if (!achievement.isSecret) {
-    return l10n.profileBasarimKademeleriniTamamla;
+    return switch (achievement.id) {
+      'perfect_month' => l10n.profileAchievementPerfectMonth30Rule,
+      'team_player' => l10n.profileAchievementTeamPlayerRule,
+      _ => l10n.profileBasarimKademeleriniTamamla,
+    };
   }
   if (!unlocked) return l10n.profileGizliBirBasarimAcmak;
   return switch (achievement.id) {
@@ -199,6 +205,17 @@ String achievementDetailDescription(
     'secret_matrix' => l10n.profileBasarimMatrixAciklama,
     'secret_nye' => l10n.profileBasarimYilbasiAciklama,
     'secret_break_enemy' => l10n.profileBuGizliBasariminKosulu,
+    _ => achievement.description,
+  };
+}
+
+String achievementCatalogDescription(
+  AppLocalizations l10n,
+  AchievementDictEntry achievement,
+) {
+  return switch (achievement.id) {
+    'perfect_month' => l10n.profileAchievementPerfectMonth30Rule,
+    'team_player' => l10n.profileAchievementTeamPlayerRule,
     _ => achievement.description,
   };
 }
@@ -218,6 +235,17 @@ class AchievementShowcase extends StatefulWidget {
     this.onToggleShowcaseBadge,
     this.forceConfettiAwards = const [],
     this.dictionary,
+    this.metricProgress = const [],
+    this.pendingRewards = const [],
+    this.pendingRewardCount = 0,
+    this.pendingRewardXp = 0,
+    this.rewardsLoading = false,
+    this.rewardError = false,
+    this.claimingRewardIds = const {},
+    this.claimingAllRewards = false,
+    this.onClaimReward,
+    this.onClaimAllRewards,
+    this.onRetryRewards,
   });
 
   final GamificationProfile gamification;
@@ -232,6 +260,17 @@ class AchievementShowcase extends StatefulWidget {
   final List<AchievementAward> forceConfettiAwards;
 
   final List<AchievementDictEntry>? dictionary;
+  final List<AchievementMetricProgress> metricProgress;
+  final List<AchievementReward> pendingRewards;
+  final int pendingRewardCount;
+  final int pendingRewardXp;
+  final bool rewardsLoading;
+  final bool rewardError;
+  final Set<String> claimingRewardIds;
+  final bool claimingAllRewards;
+  final ValueChanged<AchievementReward>? onClaimReward;
+  final VoidCallback? onClaimAllRewards;
+  final VoidCallback? onRetryRewards;
 
   @override
   State<AchievementShowcase> createState() => AchievementShowcaseState();
@@ -320,6 +359,13 @@ class AchievementShowcaseState extends State<AchievementShowcase>
     return null;
   }
 
+  int? _metricValue(String id) {
+    for (final metric in widget.metricProgress) {
+      if (metric.achievementId == id) return metric.metricValue;
+    }
+    return null;
+  }
+
   bool _isUnlocked(AchievementDictEntry def) {
     final u = _userAch(def.id);
     return u?.isUnlocked == true;
@@ -356,6 +402,37 @@ class AchievementShowcaseState extends State<AchievementShowcase>
           floor: bar.floor,
           color: rankColor,
         ),
+        if (widget.isSelf) ...[
+          SizedBox(height: 12),
+          _VerifiedXpNote(),
+          if (widget.rewardsLoading ||
+              widget.rewardError ||
+              widget.pendingRewardCount > 0 ||
+              widget.pendingRewards.isNotEmpty) ...[
+            SizedBox(height: 12),
+            AchievementRewardInbox(
+              rewards: widget.pendingRewards,
+              pendingCount: widget.pendingRewardCount,
+              pendingXp: widget.pendingRewardXp,
+              loading: widget.rewardsLoading,
+              hasError: widget.rewardError,
+              claimingIds: widget.claimingRewardIds,
+              claimingAll: widget.claimingAllRewards,
+              dictionary: _dict,
+              onClaimReward: widget.onClaimReward,
+              onClaimAll: widget.onClaimAllRewards,
+              onRetry: widget.onRetryRewards,
+            ),
+          ],
+          if (widget.metricProgress.isNotEmpty) ...[
+            SizedBox(height: 12),
+            _NearestAchievementStrip(
+              dictionary: _dict,
+              userAchievements: widget.userAchievements,
+              metricProgress: widget.metricProgress,
+            ),
+          ],
+        ],
         SizedBox(height: 16),
         _VitrinRow(
           selectedIds: widget.gamification.selectedBadges,
@@ -430,6 +507,7 @@ class AchievementShowcaseState extends State<AchievementShowcase>
           _CatalogTile(
             def: def,
             userAch: _userAch(def.id),
+            metricValue: widget.isSelf ? _metricValue(def.id) : null,
             unlocked: _isUnlocked(def),
             isSelected: widget.gamification.selectedBadges.contains(def.id),
             isSelf: widget.isSelf,
@@ -868,6 +946,342 @@ class _AchievementTierDetailRow extends StatelessWidget {
   }
 }
 
+class _VerifiedXpNote extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Semantics(
+      container: true,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.secondaryContainer.withValues(alpha: 0.45),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              Icons.verified_outlined,
+              size: 20,
+              color: theme.colorScheme.onSecondaryContainer,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                AppLocalizations.of(context).profileAchievementVerifiedXpNote,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSecondaryContainer,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _NearestAchievementStrip extends StatelessWidget {
+  const _NearestAchievementStrip({
+    required this.dictionary,
+    required this.userAchievements,
+    required this.metricProgress,
+  });
+
+  final List<AchievementDictEntry> dictionary;
+  final List<UserAchievement> userAchievements;
+  final List<AchievementMetricProgress> metricProgress;
+
+  @override
+  Widget build(BuildContext context) {
+    final metrics = {
+      for (final item in metricProgress) item.achievementId: item.metricValue,
+    };
+    final tiers = {
+      for (final item in userAchievements) item.achievementId: item.tier,
+    };
+    AchievementDictEntry? nearest;
+    AchievementTierDef? targetTier;
+    var nearestValue = 0;
+    var bestRatio = -1.0;
+    var bestRemaining = 1 << 30;
+
+    for (final def in dictionary) {
+      if (def.isSecret || def.category == 'system' || def.tiers.isEmpty) {
+        continue;
+      }
+      final value = metrics[def.id];
+      if (value == null) continue;
+      final completedTier = tiers[def.id] ?? 0;
+      if (completedTier >= def.maxTier) continue;
+      final target = def.tiers.firstWhere(
+        (tier) => tier.tier > completedTier,
+        orElse: () => def.tiers.last,
+      );
+      final ratio = (value / target.threshold).clamp(0.0, 1.0);
+      final remaining = math.max(target.threshold - value, 0);
+      if (ratio > bestRatio ||
+          (ratio == bestRatio && remaining < bestRemaining)) {
+        nearest = def;
+        targetTier = target;
+        nearestValue = value;
+        bestRatio = ratio;
+        bestRemaining = remaining;
+      }
+    }
+
+    if (nearest == null || targetTier == null) return const SizedBox.shrink();
+    final theme = Theme.of(context);
+    final color = tierColorFor(targetTier.tier);
+    return Semantics(
+      container: true,
+      label:
+          '${AppLocalizations.of(context).profileAchievementNearest}: ${nearest.name}',
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          border: Border.all(color: color.withValues(alpha: 0.35)),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(
+          children: [
+            Icon(achievementIconData(nearest.iconKey), color: color),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    AppLocalizations.of(context).profileAchievementNearest,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  Text(
+                    nearest.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  LinearProgressIndicator(
+                    value: bestRatio,
+                    color: color,
+                    backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    AppLocalizations.of(context).profileAchievementProgress(
+                      nearestValue,
+                      targetTier.threshold,
+                    ),
+                    style: theme.textTheme.labelSmall,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Self-only pending reward surface. It has no optimistic wallet state: callers
+/// remove rewards and start celebration only after a server-confirmed result.
+class AchievementRewardInbox extends StatelessWidget {
+  const AchievementRewardInbox({
+    super.key,
+    required this.rewards,
+    required this.pendingCount,
+    required this.pendingXp,
+    required this.loading,
+    required this.hasError,
+    required this.claimingIds,
+    required this.claimingAll,
+    required this.dictionary,
+    this.onClaimReward,
+    this.onClaimAll,
+    this.onRetry,
+  });
+
+  final List<AchievementReward> rewards;
+  final int pendingCount;
+  final int pendingXp;
+  final bool loading;
+  final bool hasError;
+  final Set<String> claimingIds;
+  final bool claimingAll;
+  final List<AchievementDictEntry> dictionary;
+  final ValueChanged<AchievementReward>? onClaimReward;
+  final VoidCallback? onClaimAll;
+  final VoidCallback? onRetry;
+
+  AchievementDictEntry? _definition(String id) {
+    for (final def in dictionary) {
+      if (def.id == id) return def;
+    }
+    return null;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    if (loading && rewards.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (hasError && rewards.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.errorContainer,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                AppLocalizations.of(context).profileRewardClaimFailed,
+                style: TextStyle(color: theme.colorScheme.onErrorContainer),
+              ),
+            ),
+            TextButton(
+              onPressed: onRetry,
+              child: Text(AppLocalizations.of(context).groupDiscoveryRetry),
+            ),
+          ],
+        ),
+      );
+    }
+    if (pendingCount <= 0 && rewards.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primaryContainer.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: theme.colorScheme.primary.withValues(alpha: 0.3),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.redeem, color: theme.colorScheme.primary),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  AppLocalizations.of(
+                    context,
+                  ).profileRewardReady(pendingCount, pendingXp),
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              if (pendingCount > 1)
+                TextButton(
+                  onPressed: claimingAll ? null : onClaimAll,
+                  style: TextButton.styleFrom(minimumSize: const Size(48, 48)),
+                  child: Text(
+                    claimingAll
+                        ? AppLocalizations.of(context).profileRewardClaiming
+                        : AppLocalizations.of(context).profileRewardClaimAll,
+                  ),
+                ),
+            ],
+          ),
+          for (final reward in rewards) ...[
+            const Divider(height: 16),
+            _RewardRow(
+              reward: reward,
+              definition: _definition(reward.achievementId),
+              claiming: claimingAll || claimingIds.contains(reward.id),
+              onClaim: onClaimReward == null
+                  ? null
+                  : () => onClaimReward!(reward),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _RewardRow extends StatelessWidget {
+  const _RewardRow({
+    required this.reward,
+    required this.definition,
+    required this.claiming,
+    required this.onClaim,
+  });
+
+  final AchievementReward reward;
+  final AchievementDictEntry? definition;
+  final bool claiming;
+  final VoidCallback? onClaim;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final secret = definition?.isSecret ?? false;
+    final name = secret
+        ? AppLocalizations.of(context).profileRewardSecret
+        : (definition?.name ?? reward.achievementId);
+    return Row(
+      children: [
+        CircleAvatar(
+          backgroundColor: secret
+              ? kSecretLockedColor
+              : theme.colorScheme.primary.withValues(alpha: 0.14),
+          child: Icon(
+            secret
+                ? Icons.help_outline
+                : achievementIconData(definition?.iconKey ?? 'emoji_events'),
+            color: secret ? kSecretAchievementColor : theme.colorScheme.primary,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              Text(
+                '${_tierLabel(AppLocalizations.of(context), reward.tier)} · +${reward.xpAmount} XP',
+                style: theme.textTheme.bodySmall,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 8),
+        FilledButton.tonal(
+          onPressed: claiming ? null : onClaim,
+          style: FilledButton.styleFrom(minimumSize: const Size(48, 48)),
+          child: Text(
+            claiming
+                ? AppLocalizations.of(context).profileRewardClaiming
+                : AppLocalizations.of(context).profileRewardClaim,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _EmptySlot extends StatelessWidget {
   const _EmptySlot({required this.hint});
   final String hint;
@@ -1010,6 +1424,7 @@ class _CatalogTile extends StatelessWidget {
   const _CatalogTile({
     required this.def,
     required this.userAch,
+    required this.metricValue,
     required this.unlocked,
     required this.isSelected,
     required this.isSelf,
@@ -1018,6 +1433,7 @@ class _CatalogTile extends StatelessWidget {
 
   final AchievementDictEntry def;
   final UserAchievement? userAch;
+  final int? metricValue;
   final bool unlocked;
   final bool isSelected;
   final bool isSelf;
@@ -1035,10 +1451,12 @@ class _CatalogTile extends StatelessWidget {
             (t) => t.tier == (unlocked && tier < def.maxTier ? nextTier : tier),
             orElse: () => def.tiers.first,
           );
-    final progress = userAch?.progress ?? 0;
+    final progress = metricValue;
     final need = tierDef?.threshold ?? 1;
     final pct = unlocked && tier >= def.maxTier
         ? 1.0
+        : progress == null
+        ? 0.0
         : (progress / need).clamp(0.0, 1.0);
 
     final tierColor = badgeVisualColor(
@@ -1111,7 +1529,10 @@ class _CatalogTile extends StatelessWidget {
                           ? AppLocalizations.of(
                               context,
                             ).profileBuGizliBasariminKosulu
-                          : def.description,
+                          : achievementCatalogDescription(
+                              AppLocalizations.of(context),
+                              def,
+                            ),
                       style: theme.textTheme.bodySmall,
                     ),
                     if (!secretLocked) ...[
@@ -1154,18 +1575,24 @@ class _CatalogTile extends StatelessWidget {
                       else ...[
                         SizedBox(height: 6),
                         LinearProgressIndicator(
-                          value: pct,
+                          value: progress == null ? 0 : pct,
                           color: tierColor,
                           backgroundColor:
                               theme.colorScheme.surfaceContainerHighest,
                         ),
                         SizedBox(height: 4),
                         Text(
-                          unlocked
-                              ? '$tier/${def.maxTier} (${_tierLabel(AppLocalizations.of(context), tier)}) · $need'
-                              : '$progress / $need',
+                          progress == null
+                              ? AppLocalizations.of(
+                                  context,
+                                ).profileAchievementProgressUnavailable
+                              : AppLocalizations.of(
+                                  context,
+                                ).profileAchievementProgress(progress, need),
                           style: theme.textTheme.labelSmall?.copyWith(
-                            color: unlocked ? tierColor : null,
+                            color: progress == null
+                                ? theme.colorScheme.onSurfaceVariant
+                                : tierColor,
                           ),
                         ),
                       ],

@@ -4796,5 +4796,19 @@
   "taskListHoursShort": "{hours}س",
   "taskListDaysShort": "{days}ي",
   "taskListMinutesShort": "{minutes}د",
-  "clockTasks": "المهام"
+  "clockTasks": "المهام",
+  "profileAchievementNearest": "أقرب إنجاز",
+  "profileAchievementProgress": "{current}/{target} · المستوى التالي",
+  "profileAchievementProgressUnavailable": "التقدم غير متاح بعد",
+  "profileAchievementPerfectMonth30Rule": "حقق هدفك اليومي في 30 يومًا ضمن شهر تقويمي واحد.",
+  "profileAchievementTeamPlayerRule": "ساهم بوقت دراسة موثّق في الأيام التي تحقق فيها مجموعتك هدفها.",
+  "profileAchievementVerifiedXpNote": "يتطلب كسب XP جلسة مؤقت موثّقة. تمنح كل ساعة موثّقة كاملة 50 XP تلقائيًا.",
+  "profileRewardReady": "{count} مكافآت جاهزة · {xp} XP",
+  "profileRewardClaim": "تحصيل",
+  "profileRewardClaimAll": "تحصيل الكل",
+  "profileRewardClaiming": "جارٍ التحصيل…",
+  "profileRewardClaimed": "تم تحصيل {xp} XP",
+  "profileRewardAlreadyClaimed": "تم تحصيل هذه المكافأة من قبل.",
+  "profileRewardClaimFailed": "تعذر تحصيل المكافأة. تحقق من اتصالك وحاول مجددًا.",
+  "profileRewardSecret": "مكافأة سرية"
 }
