@@ -207,7 +207,7 @@ void main() {
       );
     });
 
-    test('Kusursuz Ay 28 ve 29 hedef gününü reddeder, 30 günü kabul eder', () {
+    test('Kusursuz Ay (WP-D) 27 günü reddeder, 28/29/30 günü kabul eder', () {
       List<StudySession> monthSessions(int year, int month, int days) => [
         for (var day = 1; day <= days; day++)
           _session(
@@ -217,6 +217,11 @@ void main() {
           ),
       ];
 
+      final twentySeven = AchievementLedgerEngine().computeMetrics(
+        sessions: monthSessions(2026, 4, 27),
+        dailyGoalMinutes: 60,
+        now: DateTime.utc(2026, 5, 1),
+      );
       final february = AchievementLedgerEngine().computeMetrics(
         sessions: monthSessions(2026, 2, 28),
         dailyGoalMinutes: 60,
@@ -233,12 +238,13 @@ void main() {
         now: DateTime.utc(2026, 5, 1),
       );
 
-      expect(february['perfect_months'], 0);
-      expect(leapFebruary['perfect_months'], 0);
+      expect(twentySeven['perfect_months'], 0);
+      expect(february['perfect_months'], 1);
+      expect(leapFebruary['perfect_months'], 1);
       expect(april['perfect_months'], 1);
     });
 
-    test('legacy 28-gün Kusursuz Ay claim ve XP geri alınmaz', () {
+    test('Kusursuz Ay 28-gün eşiğinde önceki claim/XP geri alınmaz', () {
       final key = ledgerEventKey('legacy-user', 'perfect_month', 1);
       final engine = AchievementLedgerEngine(initialLedgerXp: {key: 300});
       final sessions = [
@@ -259,7 +265,8 @@ void main() {
         now: DateTime.utc(2026, 3, 1),
       );
 
-      expect(result.metrics['perfect_months'], 0);
+      // 28-kuralı: 28 gün = 1 kusursuz ay; ama kademe zaten bankalı → yeni ödül yok.
+      expect(result.metrics['perfect_months'], 1);
       expect(engine.eventKeys, contains(key));
       expect(result.totalXp, greaterThanOrEqualTo(300));
       expect(

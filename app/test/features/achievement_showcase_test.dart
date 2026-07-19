@@ -147,13 +147,13 @@ void main() {
     );
   });
 
-  test('Kusursuz Ay açıklaması tek takvim ayında tam 30 günü söyler', () {
+  test('Kusursuz Ay açıklaması takvim ayında en az 28 günü söyler (WP-D)', () {
     final achievement = kAchievementDictV3().firstWhere(
       (entry) => entry.id == 'perfect_month',
     );
     expect(
       achievementDetailDescription(AppLocalizationsTr(), achievement, false),
-      'Bir takvim ayında 30 gün günlük hedefine ulaş.',
+      'Bir takvim ayında en az 28 gün günlük hedefine ulaş (en fazla 2 gün kaçırma).',
     );
   });
 

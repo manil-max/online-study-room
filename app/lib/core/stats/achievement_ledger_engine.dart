@@ -312,7 +312,7 @@ const Map<String, String> kAchievementMetricSourceVersions = {
   'day_hero': 'metric_v2',
   'fire_streak': 'metric_v2',
   'weekend_goal_days': 'metric_v2',
-  'perfect_month': 'perfect_month_30_v1',
+  'perfect_month': 'perfect_month_28_v1',
   'alpha_wolf': 'group_verified_v1',
   'team_player': 'metric_v2',
   'campfire_hours': 'group_verified_v1',
@@ -472,7 +472,8 @@ class AchievementLedgerEngine {
       final key = '${e.key.year}-${e.key.month.toString().padLeft(2, '0')}';
       byMonth[key] = (byMonth[key] ?? 0) + 1;
     }
-    final perfectMonths = byMonth.values.where((d) => d >= 30).length;
+    // WP-D: Kusursuz Ay = takvim ayında ≥28 hedef günü (en fazla 2 kaçırma).
+    final perfectMonths = byMonth.values.where((d) => d >= 28).length;
 
     return {
       'total_hours': totalSeconds ~/ 3600,

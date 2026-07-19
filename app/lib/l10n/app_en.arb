@@ -4896,7 +4896,7 @@
   },
   "profileAchievementProgressUnavailable": "Progress is not available yet",
   "@profileAchievementProgressUnavailable": { "description": "Shown when no private metric projection exists yet" },
-  "profileAchievementPerfectMonth30Rule": "Reach your daily goal on 30 days within one calendar month.",
+  "profileAchievementPerfectMonth30Rule": "Reach your daily goal on at least 28 days within one calendar month (up to 2 misses).",
   "@profileAchievementPerfectMonth30Rule": { "description": "Exact 30-day Perfect Month rule" },
   "profileAchievementTeamPlayerRule": "Contribute verified study time on days your group reaches its goal.",
   "@profileAchievementTeamPlayerRule": { "description": "Exact Team Player achievement explanation" },

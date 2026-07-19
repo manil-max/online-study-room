@@ -4812,7 +4812,7 @@
   "profileAchievementNearest": "أقرب إنجاز",
   "profileAchievementProgress": "{current}/{target} · المستوى التالي",
   "profileAchievementProgressUnavailable": "التقدم غير متاح بعد",
-  "profileAchievementPerfectMonth30Rule": "حقق هدفك اليومي في 30 يومًا ضمن شهر تقويمي واحد.",
+  "profileAchievementPerfectMonth30Rule": "حقق هدفك اليومي في 28 يومًا على الأقل ضمن شهر تقويمي واحد (بحد أقصى يومان فائتان).",
   "profileAchievementTeamPlayerRule": "ساهم بوقت دراسة موثّق في الأيام التي تحقق فيها مجموعتك هدفها.",
   "profileAchievementVerifiedXpNote": "يتطلب كسب XP جلسة مؤقت موثّقة. تمنح كل ساعة موثّقة كاملة 50 XP تلقائيًا.",
   "profileRewardReady": "{count} مكافآت جاهزة · {xp} XP",

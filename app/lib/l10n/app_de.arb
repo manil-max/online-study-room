@@ -4812,7 +4812,7 @@
   "profileAchievementNearest": "Nächster Erfolg",
   "profileAchievementProgress": "{current}/{target} · nächste Stufe",
   "profileAchievementProgressUnavailable": "Fortschritt ist noch nicht verfügbar",
-  "profileAchievementPerfectMonth30Rule": "Erreiche dein Tagesziel an 30 Tagen innerhalb eines Kalendermonats.",
+  "profileAchievementPerfectMonth30Rule": "Erreiche dein Tagesziel an mindestens 28 Tagen innerhalb eines Kalendermonats (höchstens 2 Fehltage).",
   "profileAchievementTeamPlayerRule": "Trage an Tagen, an denen deine Gruppe ihr Ziel erreicht, verifizierte Lernzeit bei.",
   "profileAchievementVerifiedXpNote": "Für XP ist eine verifizierte Timer-Sitzung nötig. Jede volle verifizierte Stunde bringt automatisch 50 XP.",
   "profileRewardReady": "{count} Belohnungen bereit · {xp} XP",
