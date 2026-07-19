@@ -24,7 +24,7 @@ void main() {
   group('AchievementLedgerEngine', () {
     test('sözlük 20 başarım içerir (çalışma+seri+grup+sosyal+gizli)', () {
       final dict = kAchievementDictV3();
-      expect(dict.length, 20);
+      expect(dict.length, 21);
       expect(dict.where((e) => e.isSecret).length, 9);
       expect(dict.any((e) => e.id == 'marathon_total'), isTrue);
       expect(dict.any((e) => e.id == 'secret_404'), isTrue);
@@ -32,6 +32,21 @@ void main() {
       expect(dict.any((e) => e.id == 'secret_1337'), isFalse);
       // Kademeli başarımlar 6 kademe.
       expect(dict.firstWhere((e) => e.id == 'marathon_total').maxTier, 6);
+      final weeklyWolf = dict.firstWhere(
+        (entry) => entry.id == 'alpha_wolf_weekly',
+      );
+      expect(
+        weeklyWolf.tiers.map((tier) => tier.threshold),
+        [1, 4, 12, 26, 52, 104],
+      );
+      expect(
+        weeklyWolf.tiers.map((tier) => tier.xp),
+        [2500, 6000, 15000, 30000, 60000, 120000],
+      );
+      expect(
+        kAchievementMetricSourceVersions['alpha_wolf_weekly'],
+        'weekly_alpha_verified_v1',
+      );
     });
 
     test('steel_will kademe 1: 60 dk oturum → 50 XP', () {
@@ -280,7 +295,7 @@ void main() {
     test('processEvent idempotent ve sözlük dolu', () async {
       final repo = InMemoryAchievementRepository();
       final dict = await repo.fetchDictionary();
-      expect(dict.length, 20);
+      expect(dict.length, 21);
 
       final sessions = [
         _session(id: 's1', start: DateTime.utc(2026, 6, 1, 12, 0), minutes: 90),

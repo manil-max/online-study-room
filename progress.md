@@ -69,15 +69,15 @@
   - Kalanlar: K (grup sıralamasında alpha göstergesi), L (Lider Kurt haftalık başarım). Migration'lar canlıya kullanıcı tarafından uygulanır.
 
 ### Codex Lane
-- **Durum:** [~] Aktif
-- **Faz/WP:** beta-v42 · migration 0056 hotfix
-- **Aşama:** Kod tamamlandı — canlı uygulama bekliyor
-- **SAHİP yollar:** `supabase/migrations/0056_six_tier_economy.sql`, `progress.md`
-- **Ortak/riskli yüzey:** `supabase/migrations/**` (canlı sıra), `gamification_profiles` XP/taç bütünlüğü
-- **Dal:** main
-- **Başlangıç:** 2026-07-19 23:57 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-20 00:17 (Europe/Istanbul)
-- **Not:** 0056 hotfix hazır: `_recalc_crown_rank` çağrısına giden `sum(xp_amount)` sonucu açıkça `integer`'a dönüştürülüyor. SQL Editor'da 0056'nın tamamı yeniden uygulanmalı; SQL sonucu ve taç/XP smoke kontrolü bekleniyor. WP-K `ab480bb` ile commitlendi; tam paket iki SAHİP-dışı testte hâlâ kırık.
+- **Durum:** [x] Boşta
+- **Faz/WP:** —
+- **Aşama:** —
+- **SAHİP yollar:** —
+- **Ortak/riskli yüzey:** —
+- **Dal:** — (main)
+- **Başlangıç:** —
+- **Son güncelleme:** 2026-07-20 00:12 (Europe/Istanbul)
+- **Not:** WP-L kod+otomatik test tamamlandı; cihaz/staging QA için parka alındı. WP-219 saha ölçümü kapısı nedeniyle beta kapsamı dışındadır.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
@@ -140,6 +140,8 @@
 ## Test için bekleyenler (park)
 
 > Cihaz/ürün kabulü bekleyen tamamlanmış kod. Bu bölüm aktif çalışma değildir; başka WP'yi engellemez.
+
+- **WP-L — Lider Kurt haftalık başarımı (beta-v42)** · Kod + otomatik test tamamlandı (`flutter analyze`, 615 test) · Commit: bu WP commit'i · **Cihazda/staging'de doğrulanmalı:** `0062` uygulandıktan sonra yalnız kapanmış ISO hafta (Europe/Istanbul) finalize edilir; verified süre toplamında tek lider 1 win, eşitlikte hiç kimse win/ödül almaz; 1/4/12/26/52/104 haftada yalnız birer pending inbox ödülü oluşur ve claim XP'si `2500/6000/15000/30000/60000/120000` ile sözlükle aynıdır; grup üyesi olmayan haftalık tablo/RPC erişimi yoktur; `verified-group-week-finalizer` cron job aktiftir.
 
 - **WP-221 — Grup avatar storage trigger fix (beta-v41 · plan WP-H)** · Kod tamamlandı (`flutter analyze` temiz) · **Cihazda/staging'de doğrulanmalı:** migration `0054` uygulandıktan sonra grup fotoğrafı ilk yükleme + değiştirme + silme hatasız (eski hata: "direct deletions from storage tables is not allowed"); eski avatar nesnesi değişimden sonra Storage API ile temizleniyor; üye-olmayan private erişim reddi ve admin-olmayan yazma reddi korunuyor (QA 3.1–3.3).
 - **WP-222 — "Clock"→"Hours" saat birimi etiketi (beta-v41 · plan WP-I)** · Kod tamamlandı (`flutter analyze` temiz) · **Cihazda doğrulanmalı:** "Manuel süre ekle" ve "Günlük hedef" diyaloglarında saat alanı EN'de "Hours" (eski: "Clock"); DE "Stunden", AR "ساعات"; alarm/saat ekranlarındaki "Clock" etiketi değişmemiş.

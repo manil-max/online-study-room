@@ -59,6 +59,7 @@
     }
   },
   "profileBasarimGrupBirinciligiKosulu": "كن الأول في مجموعتك لمدة {count, plural, =1 {يوم واحد} other {{count} أيام}}.",
+  "profileBasarimHaftalikGrupBirinciligiKosulu": "كن الأول منفردًا في مجموعتك لمدة {count, plural, =1 {أسبوع واحد} other {{count} أسابيع}}.",
   "@profileBasarimGrupBirinciligiKosulu": {
     "description": "Achievement tier condition.",
     "placeholders": {
@@ -3972,6 +3973,8 @@
     "description": "Core user-facing text. Source: Alfa Kurt"
   },
   "coreGrupGunBirincisi": "أفضل عضو في المجموعة اليوم",
+  "coreLiderKurt": "ذئب القائد",
+  "coreHaftalikGrupBirincisi": "أفضل عضو في المجموعة هذا الأسبوع",
   "@coreGrupGunBirincisi": {
     "description": "Core user-facing text. Source: Grup gün birincisi"
   },

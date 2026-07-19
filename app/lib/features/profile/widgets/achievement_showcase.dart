@@ -31,6 +31,8 @@ IconData achievementIconData(String iconKey) {
       return Icons.star;
     case 'emoji_events':
       return Icons.emoji_events;
+    case 'pets':
+      return Icons.pets;
     case 'groups':
       return Icons.groups;
     case 'whatshot':
@@ -109,6 +111,8 @@ String achievementTierConditionTr(
       return l10n.profileBasarimKusursuzAyKosulu(value);
     case 'alpha_wolf':
       return l10n.profileBasarimGrupBirinciligiKosulu(value);
+    case 'alpha_wolf_weekly':
+      return l10n.profileBasarimHaftalikGrupBirinciligiKosulu(value);
     case 'team_player':
       return l10n.profileBasarimGrupHedefKosulu(value);
     case 'campfire_hours':

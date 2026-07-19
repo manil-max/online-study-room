@@ -59,6 +59,13 @@
     }
   },
   "profileBasarimGrupBirinciligiKosulu": "Finish first in your group on {count, plural, =1 {1 day} other {{count} days}}.",
+  "profileBasarimHaftalikGrupBirinciligiKosulu": "Finish as the sole first-place member of your group in {count, plural, =1 {1 week} other {{count} weeks}}.",
+  "@profileBasarimHaftalikGrupBirinciligiKosulu": {
+    "description": "Achievement tier condition.",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
   "@profileBasarimGrupBirinciligiKosulu": {
     "description": "Achievement tier condition.",
     "placeholders": {
@@ -3985,6 +3992,14 @@
     "description": "Core user-facing text. Source: Alfa Kurt"
   },
   "coreGrupGunBirincisi": "Top group member of the day",
+  "coreLiderKurt": "Leader Wolf",
+  "@coreLiderKurt": {
+    "description": "Core user-facing text. Source: Lider Kurt"
+  },
+  "coreHaftalikGrupBirincisi": "Top group member of the week",
+  "@coreHaftalikGrupBirincisi": {
+    "description": "Core user-facing text. Source: Haftalık grup birincisi"
+  },
   "@coreGrupGunBirincisi": {
     "description": "Core user-facing text. Source: Grup gün birincisi"
   },

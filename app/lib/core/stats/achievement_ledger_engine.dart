@@ -144,6 +144,21 @@ List<AchievementDictEntry> kAchievementDictV3([AppLocalizations? l10n]) {
       ],
     ),
     e(
+      'alpha_wolf_weekly',
+      'group',
+      (l10n?.coreLiderKurt ?? 'coreliderkurt'),
+      (l10n?.coreHaftalikGrupBirincisi ?? 'corehaftalikgrupbirincisi'),
+      [
+        (1, 1, 'weekly_alpha_wins', 2500),
+        (2, 4, 'weekly_alpha_wins', 6000),
+        (3, 12, 'weekly_alpha_wins', 15000),
+        (4, 26, 'weekly_alpha_wins', 30000),
+        (5, 52, 'weekly_alpha_wins', 60000),
+        (6, 104, 'weekly_alpha_wins', 120000),
+      ],
+      icon: 'pets',
+    ),
+    e(
       'team_player',
       'group',
       (l10n?.coreTakimOyuncusu ?? 'coretakimoyuncusu'),
@@ -314,6 +329,7 @@ const Map<String, String> kAchievementMetricSourceVersions = {
   'weekend_goal_days': 'metric_v2',
   'perfect_month': 'perfect_month_28_v1',
   'alpha_wolf': 'group_verified_v1',
+  'alpha_wolf_weekly': 'weekly_alpha_verified_v1',
   'team_player': 'metric_v2',
   'campfire_hours': 'group_verified_v1',
   'inspiration': 'metric_v2',
@@ -523,6 +539,7 @@ class AchievementLedgerEngine {
       // Eski kod yanlışlıkla break_enemy bayrağını okuyup demo modda sahte ödül
       // veriyordu; artık 0 döner (sunucu authoritative).
       case 'alpha_wolf':
+      case 'alpha_wolf_weekly':
       case 'campfire_hours':
       case 'locomotive':
         return 0;

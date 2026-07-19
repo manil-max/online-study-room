@@ -59,6 +59,7 @@
     }
   },
   "profileBasarimGrupBirinciligiKosulu": "Werde in deiner Gruppe an {count, plural, =1 {1 Tag} other {{count} Tagen}} Erster.",
+  "profileBasarimHaftalikGrupBirinciligiKosulu": "Werde in {count, plural, =1 {1 Woche} other {{count} Wochen}} alleiniger Erster deiner Gruppe.",
   "@profileBasarimGrupBirinciligiKosulu": {
     "description": "Achievement tier condition.",
     "placeholders": {
@@ -3972,6 +3973,8 @@
     "description": "Core user-facing text. Source: Alfa Kurt"
   },
   "coreGrupGunBirincisi": "Top-Gruppenmitglied des Tages",
+  "coreLiderKurt": "Leitwolf",
+  "coreHaftalikGrupBirincisi": "Top-Gruppenmitglied der Woche",
   "@coreGrupGunBirincisi": {
     "description": "Core user-facing text. Source: Grup gün birincisi"
   },
