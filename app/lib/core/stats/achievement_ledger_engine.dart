@@ -385,6 +385,7 @@ class AchievementLedgerEngine {
     var secretNye = false;
     var secretLastSecond = false;
     var secretNoLimits = false;
+    final secretBreakEnemy = hasVerifiedBreakEnemyWindow(sessions);
 
     for (final s in sessions) {
       final dur = s.durationSeconds;
@@ -489,6 +490,7 @@ class AchievementLedgerEngine {
         'nye': secretNye,
         'last_second': secretLastSecond,
         'no_limits': secretNoLimits,
+        'break_enemy': secretBreakEnemy,
       },
     };
   }
@@ -512,7 +514,7 @@ class AchievementLedgerEngine {
       case 'campfire_hours':
       case 'locomotive':
       case 'secret_break_enemy':
-        return 0;
+        return secrets['break_enemy'] == true ? 1 : 0;
       case 'team_player':
         return metrics['group_goal_contrib'] as int? ?? 0;
       case 'inspiration':
@@ -596,4 +598,54 @@ class AchievementLedgerEngine {
       metrics: metrics,
     );
   }
+}
+
+/// Verified çalışma aralıklarının birleşiminde herhangi bir 5 saatlik kayan
+/// pencere içinde en az 270 dakika odak var mı? O(n log n) sort+union ve O(n)
+/// iki-pointer; çakışan session'ları iki kez saymaz.
+bool hasVerifiedBreakEnemyWindow(
+  List<StudySession> sessions, {
+  Duration window = const Duration(hours: 5),
+  Duration threshold = const Duration(minutes: 270),
+}) {
+  final intervals =
+      sessions
+          .where(
+            (session) =>
+                session.isVerified && session.end.isAfter(session.start),
+          )
+          .map((session) => (session.start.toUtc(), session.end.toUtc()))
+          .toList()
+        ..sort((a, b) => a.$1.compareTo(b.$1));
+  if (intervals.isEmpty) return false;
+
+  final merged = <(DateTime, DateTime)>[];
+  for (final interval in intervals) {
+    if (merged.isEmpty || interval.$1.isAfter(merged.last.$2)) {
+      merged.add(interval);
+    } else if (interval.$2.isAfter(merged.last.$2)) {
+      merged[merged.length - 1] = (merged.last.$1, interval.$2);
+    }
+  }
+
+  var left = 0;
+  var coveredMicros = 0;
+  for (var right = 0; right < merged.length; right++) {
+    coveredMicros += merged[right].$2
+        .difference(merged[right].$1)
+        .inMicroseconds;
+    final windowStart = merged[right].$2.subtract(window);
+    while (left <= right && !merged[left].$2.isAfter(windowStart)) {
+      coveredMicros -= merged[left].$2
+          .difference(merged[left].$1)
+          .inMicroseconds;
+      left++;
+    }
+    var clipped = coveredMicros;
+    if (left <= right && merged[left].$1.isBefore(windowStart)) {
+      clipped -= windowStart.difference(merged[left].$1).inMicroseconds;
+    }
+    if (clipped >= threshold.inMicroseconds) return true;
+  }
+  return false;
 }
