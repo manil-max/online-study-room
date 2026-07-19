@@ -130,12 +130,12 @@ begin
   set xp = coalesce(
         (select sum(xp_amount) from public.xp_ledger l where l.user_id = g.user_id),
         0
-      ),
+      )::integer,
       crown_rank = public._recalc_crown_rank(
         coalesce(
           (select sum(xp_amount) from public.xp_ledger l where l.user_id = g.user_id),
           0
-        )
+        )::integer
       ),
       updated_at = now()
   where g.user_id in (select user_id from _s1337_users);

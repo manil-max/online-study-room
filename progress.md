@@ -70,14 +70,14 @@
 
 ### Codex Lane
 - **Durum:** [~] Aktif
-- **Faz/WP:** beta-v42 · WP-K — grup sıralamasında alpha göstergesi
-- **Aşama:** Engellendi — tam test paketi
-- **SAHİP yollar:** `app/lib/features/home/widgets/leaderboard_card.dart`, `app/lib/features/stats/widgets/class_stats_view.dart`, ilgili provider/repository/model, `supabase/migrations/0061_*`, WP-K testleri
-- **Ortak/riskli yüzey:** `supabase/migrations/**` (sıra), grup üyesi görünürlüğü/RLS, `progress.md`; l10n veya `achievement_ledger_engine.dart` yok
+- **Faz/WP:** beta-v42 · migration 0056 hotfix
+- **Aşama:** Kod tamamlandı — canlı uygulama bekliyor
+- **SAHİP yollar:** `supabase/migrations/0056_six_tier_economy.sql`, `progress.md`
+- **Ortak/riskli yüzey:** `supabase/migrations/**` (canlı sıra), `gamification_profiles` XP/taç bütünlüğü
 - **Dal:** main
 - **Başlangıç:** 2026-07-19 23:57 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-20 00:04 (Europe/Istanbul)
-- **Not:** Kullanıcı devriyle stale Claude lane'den alındı. WP-K kodu + kendi sözleşme/repository testi + `flutter analyze` temiz. Ancak tam test paketi iki SAHİP-dışı kırık testte duruyor: `test/data/user_task_repository_test.dart:74` (toggle/undo beklenen true, actual false) ve `test/features/stats/personal_stats_enrichment_test.dart:65` (`dragUntilVisible` → `Bad state: No element`). Önce bu sahiplerden düzeltme/ayrı debug WP gerekir; WP-K/WP-L commit edilmedi.
+- **Son güncelleme:** 2026-07-20 00:17 (Europe/Istanbul)
+- **Not:** 0056 hotfix hazır: `_recalc_crown_rank` çağrısına giden `sum(xp_amount)` sonucu açıkça `integer`'a dönüştürülüyor. SQL Editor'da 0056'nın tamamı yeniden uygulanmalı; SQL sonucu ve taç/XP smoke kontrolü bekleniyor. WP-K `ab480bb` ile commitlendi; tam paket iki SAHİP-dışı testte hâlâ kırık.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
