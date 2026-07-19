@@ -94,8 +94,9 @@ Her WP `progress.md` Plan Kuyruğu'na şu formatta yazılır. **Eksik alan bıra
 - **Edge-case'ler:** boş/hata/çevrimdışı/gün sınırı/çoklu cihaz.
 - **Kabul (ölçülebilir):** "X olayından sonra Y ≤ Z sn'de …", golden/test kriteri, cihaz kanıtı beklentisi.
 - **Tuzaklar:** bilinen riskler.
-- **Dal önerisi:** `wpNN-kisa-ad` (worker bu dalda çalışır — AGENTS.md §1.5).
 - **Model önerisi:** 🔵 Sonnet / 🟣 Pro / 🔴 Opus
+
+> **Not:** WP kartında "dal" alanı **yoktur** — herkes `main`'de çalışır (AGENTS.md §1.5). İstenirse `wpNN-kisa-ad` yalnız commit mesajı/kapsam etiketi olarak kullanılabilir, branch değil.
 ```
 
 ### Kalite kriteri: kabul "ölçülebilir" olmalı

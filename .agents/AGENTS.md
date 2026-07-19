@@ -47,7 +47,7 @@ Bir ajan bir Faz/WP almaya başlar başlamaz, **kod yazmadan önce** `progress.m
 - Aşama: Geliştiriliyor
 - SAHİP yollar: app/lib/features/clock/**, app/lib/core/notifications/timer_*
 - Ortak/riskli yüzey: pubspec.yaml (yeni paket), migration 0024, AndroidManifest.xml
-- Dal: wp40-timer-foreground   (veya: main — ayrık dosyalarla)
+- Dal: main   (tek dal — §1.5; çakışma ayrık SAHİP dosyalarla önlenir)
 - Başlangıç: 2026-07-12 15:40 (Europe/Istanbul)
 - Son güncelleme: 2026-07-12 15:40
 - Not: —

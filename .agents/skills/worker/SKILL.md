@@ -49,10 +49,12 @@ Kullanıcı (kısa): **"worker'ı oku ve V8-A'yı / WP-N'yi yap"** (Faz veya WP 
 
 ---
 
-## Adım 1 — CLAIM + dal aç (başlamadan önce)
+## Adım 1 — CLAIM (başlamadan önce)
 
-1. **Dal aç:** `git switch -c wpNN-kisa-ad` (AGENTS.md §1.5). Tüm commit'ler bu dala gider; `main`'e sen merge etmezsin.
-2. `progress.md` Aktif Çalışma Kaydı'nda kendi lane'ini doldur (format `AGENTS.md §1.1`): Durum `[~] Aktif`, Faz/WP, Aşama `Geliştiriliyor`, **SAHİP yollar**, **ortak/riskli yüzey**, **Dal: `wpNN-kisa-ad`**, başlangıç + son güncelleme (Europe/Istanbul), not. Güncel sürüm/faz etiketini koru; eski plan metnini geri getirme.
+> **Dal YOK.** Herkes doğrudan `main`'de çalışır; çakışma ayrık SAHİP dosyalar + Aktif Çalışma Kaydı ile önlenir (AGENTS.md §1.5). `git switch -c` / branch / merge / push yapma.
+
+1. `progress.md` Aktif Çalışma Kaydı'nda kendi lane'ini doldur (format `AGENTS.md §1.1`): Durum `[~] Aktif`, Faz/WP, Aşama `Geliştiriliyor`, **SAHİP yollar**, **ortak/riskli yüzey**, **Dal: `main`**, başlangıç + son güncelleme (Europe/Istanbul), not. Güncel sürüm/faz etiketini koru; eski plan metnini geri getirme.
+2. Claim'i yaz → kaydı **yeniden oku** (iki-aşamalı); bu sırada başkası aynı kapsamı aldıysa geri çekil ve uyar.
 
 ---
 
@@ -108,19 +110,19 @@ Hatayla **commit atma** — önce düzelt. Mümkünse gerçek cihaz kanıtı (ek
 - **Cihaz QA + ürün kabulü VARSA (tam bitti):** kartı diğer başlıklardan kaldır → `## Tamamlanan İş Paketleri` altına ekle (kapsam + değişen dosyalar/ne yapıldı/test/kanıt). Lane: `Durum: [x] Boşta`, `Aktif WP: —`. Aynı WP iki başlıkta **asla** bulunmaz.
 
 - **Kod+otomatik test bitti ama cihaz QA / ürün demosu gerekiyor (EN SIK DURUM):**
-  1. Kartı **Aktif Çalışma Kaydı'ndan çıkar** → `## Test için bekleyenler` bölümüne taşı: özet + **ne bekleniyor** (cihaz/demo) + son commit/dal + kanıt etiketi `Cihazda doğrulanmalı`. Üstteki özet tablosuna da bir satır ekle.
+  1. Kartı **Aktif Çalışma Kaydı'ndan çıkar** → `## Test için bekleyenler` bölümüne taşı: özet + **ne bekleniyor** (cihaz/demo) + son commit + kanıt etiketi `Cihazda doğrulanmalı`. Üstteki özet tablosuna da bir satır ekle.
   2. **Kendi lane'ini boşalt:** `Durum: [x] Boşta`, `Aktif WP: —`.
   3. Bu bölüm **aktif çalışma DEĞİLDİR** — kimse claim etmez, başka WP'yi engellemez. Böylece bir sonraki worker çakışma ön-kontrolünde bu WP'yi "test bekliyor" görür, üstünden geçer ve **hemen yeni işe başlar**.
   4. Kabul gelince kart **Tamamlanan**'a taşınır; cihazda bug çıkarsa **ayrı debug WP** açılır (aynı kartı diriltme).
 
 > Yani "işi bitirmek" = lane'i serbest bırakmak. Testi sen beklemezsin; parka koyar, çıkarsın.
 
-### 3. Commit (kendi dalına)
+### 3. Commit (`main`, yalnız kendi SAHİP yolların)
 ```bash
-git add -A
-git commit -m "WP-N: [kısa açıklama]"   # wpNN-kisa-ad dalında
+git add <yalnız kendi SAHİP dosyaların>   # git add -A YASAK
+git commit -m "WP-N: [kısa açıklama]"      # main üzerinde
 ```
-**Push yok** (istenmedikçe). WP başına **tek commit**. **`main`'e merge ETME** — WP "Ürün kabulü"nden geçince kullanıcı birleştirir (AGENTS.md §1.5). Kullanıcıya dal adını bildir.
+**Push yok** (istenmedikçe). WP başına **tek ayrık commit**. Branch/merge YOK — herkes `main`'de (AGENTS.md §1.5). `index.lock` görürsen başka ajan commit ediyordur; kısa bekle, yeniden dene.
 
 ### 4. Teslim özeti (kullanıcıya)
 Kısa Türkçe: ne yapıldı · değişen dosyalar · test durumu · **hangi kanıt etiketi** (Kodda doğrulandı / Cihazda doğrulanmalı) · varsa uygulanması gereken migration · açık kalan `Ürün kararı`.
