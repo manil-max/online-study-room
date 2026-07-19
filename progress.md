@@ -62,14 +62,14 @@
 
 ### Codex Lane
 - **Durum:** [x] Boşta
-- **Faz/WP:** — (bu oturum: Claude tur-2 sonrası Başarım+Görev+Grup PP planı v3.1)
+- **Faz/WP:** — (bu oturum: Kusursuz Ay ürün kararı 30 gün olarak kilitlendi)
 - **Aşama:** Planlandı
 - **SAHİP yollar:** —
 - **Ortak/riskli yüzey:** —
 - **Dal:** main
 - **Başlangıç:** —
 - **Son güncelleme:** 2026-07-19 (Europe/Istanbul)
-- **Not:** Plan v3.1 hazır: WP-208–220; kod değişikliği yok. WP-216 server/data, WP-220 client/native+shadow saha kapısı; WP-219 ölçümlü verified-only aktivasyondur. Kusursuz Ay 28/30 ürün kararı açık; WP-209 başlayabilir.
+- **Not:** Plan v3.1 güncel: Kusursuz Ay = ayda 30 İstanbul günü. WP-208 evaluator contract'ını uygular; önceden banklanmış XP/rozet geri alınmaz. Kod değişikliği yok; tüm WP'ler bekliyor.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
@@ -109,7 +109,7 @@
 | WP | Durum | Kısa kapsam | Bağımlılık |
 |---|---|---|---|
 | WP-209 | [ ] Bekliyor | **[EXPAND 1]** Reward inbox şema + atomik/bounded claim; auto-award davranışı değişmez | plan v3.1 |
-| WP-208 | [ ] Bekliyor | **[EXPAND 2]** Self-only gerçek metric progress sözleşmesi + legacy audit/job altyapısı | ← WP-209 |
+| WP-208 | [ ] Bekliyor | **[EXPAND 2]** Self-only gerçek metric progress + Kusursuz Ay 30-gün evaluator contract'ı + legacy audit/job altyapısı | ← WP-209 |
 | WP-210 | [ ] Bekliyor | **[CLIENT 3]** Claim-capable UI + gerçek progress/streak + az-kaldı + tüm achievement ARB anahtarları | ← WP-208, WP-209 · ARB yazar |
 | WP-211 | [ ] Bekliyor | Reward banner/nav badge + tüm tab indekslerinin kanonik sözleşmesi | ← WP-210 · `core/navigation/**` yazarı |
 | WP-216 | [ ] Bekliyor | **[TRUST SERVER 4]** Server-issued live run/segment + immutable grup bağlamı + minimal rollout agregası; eski davranış değişmez | ← WP-208 · WP-217/218/220 ön-koşulu |
