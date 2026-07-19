@@ -51,14 +51,14 @@
 
 ### Claude Lane
 - **Durum:** [x] Boşta
-- **Faz/WP:** — (bu oturum: 32-sütun grid + core test kapsamı + worker/planner skill güncellemesi)
+- **Faz/WP:** — (beta-v41 programı sürüyor; WP-221 test için parkta)
 - **Aşama:** —
 - **SAHİP yollar:** —
 - **Ortak/riskli yüzey:** —
 - **Dal:** — (main)
 - **Başlangıç:** —
-- **Son güncelleme:** 2026-07-14 (planner uyumlama)
-- **Not:** Bu oturum işleri commit'lendi: grid 32-sütun `141ed2a`, core testleri `da7bdd6`, skill docs `1afba2d`. ⚠️ WP-65 karar dokümanı (`docs/AYLIK-RAPOR-KARAR.md`) önceki Claude oturumunda yazıldı ama **COMMIT'LENMEDİ** (untracked); kararı WP-69 zaten uyguladı → ürün API/DNS kararı bekliyor.
+- **Son güncelleme:** 2026-07-19 (Europe/Istanbul)
+- **Not:** beta-v41 düzeltme programı. Plan: `docs/features/BETA-v41-TEKNIK-PLAN.md` (WP sırası H→I→G→J→A+B→C→D→E→F→K→L). WP-221 (avatar fix) kod bitti → Test için bekleyenler'de.
 
 ### Codex Lane
 - **Durum:** [x] Boşta
@@ -132,6 +132,8 @@
 ## Test için bekleyenler (park)
 
 > Cihaz/ürün kabulü bekleyen tamamlanmış kod. Bu bölüm aktif çalışma değildir; başka WP'yi engellemez.
+
+- **WP-221 — Grup avatar storage trigger fix (beta-v41 · plan WP-H)** · Kod tamamlandı (`flutter analyze` temiz) · **Cihazda/staging'de doğrulanmalı:** migration `0054` uygulandıktan sonra grup fotoğrafı ilk yükleme + değiştirme + silme hatasız (eski hata: "direct deletions from storage tables is not allowed"); eski avatar nesnesi değişimden sonra Storage API ile temizleniyor; üye-olmayan private erişim reddi ve admin-olmayan yazma reddi korunuyor (QA 3.1–3.3).
 
 - **WP-209 — Reward inbox expansion** · Kod + otomatik test tamamlandı (`flutter analyze`, 563 test) · Commit: bu WP commit'i · **Cihazda/staging'de doğrulanmalı:** 0047 dry-run/rollback rehearsal, self-RLS ve direct-DML abuse testi, iki cihaz aynı reward claim yarışı, injected pending sonrası `gamification_profiles.xp = SUM(xp_ledger.xp_amount)` reconciliation kanıtı. Auto-award ve saatlik 50 XP regresyonu staging'de ayrıca doğrulanacak.
 - **WP-212 — Cloud görev altyapısı** · Kod + otomatik test tamamlandı (`flutter analyze`, 561 test) · Commit: bu WP commit'i · **Cihazda/staging'de doğrulanmalı:** 0048 dry-run/rollback rehearsal, self-RLS/direct-DML abuse, iki cihazda toggle/undo LWW, 23:59→00:01 İstanbul günlük projection, prefs→cloud göçünü ağ kesintisinden sonra idempotent tekrar deneme.

@@ -40,6 +40,20 @@ class SupabaseGroupRepository implements GroupRepository {
       _ => 'image/jpeg',
     };
     final path = '$groupId/${_uuid.v4()}.$normalizedExtension';
+    // Eski nesneyi başarılı değişimden sonra Storage API ile temizleyeceğiz;
+    // DB trigger'ı artık storage.objects'ten doğrudan silmiyor (0054). Eski path'i
+    // güncellemeden önce oku (UPDATE yalnız yeni satırı döndürür).
+    String? previousPath;
+    try {
+      final current = await _client
+          .from('groups')
+          .select('avatar_path')
+          .eq('id', groupId)
+          .maybeSingle();
+      previousPath = current?['avatar_path'] as String?;
+    } on PostgrestException {
+      previousPath = null; // Okuma başarısızsa temizliği atla; yükleme engellenmez.
+    }
     try {
       await _client.storage
           .from(_avatarBucket)
@@ -63,6 +77,12 @@ class SupabaseGroupRepository implements GroupRepository {
       if (rows.isEmpty) {
         await _removeUploadedObject(path);
         throw const GroupException('Grup fotoğrafı güncellenemedi: yetki yok.');
+      }
+      // Değişim başarılı: artık yetim kalan eski nesneyi best-effort sil.
+      if (previousPath != null &&
+          previousPath.isNotEmpty &&
+          previousPath != path) {
+        await _removeUploadedObject(previousPath);
       }
       final group = StudyGroup.fromMap(
         Map<String, dynamic>.from(rows.first as Map),
