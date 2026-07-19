@@ -1,8 +1,9 @@
 import 'package:flutter/foundation.dart';
 
-/// Kullanıcı tanımlı görev (WP-196 deadline modeli).
-///
-/// XP yok. Tekrar (recurring) yok. `dueAt` null = süresiz.
+/// Kullanıcı tanımlı görev. Tamamlanma gün-damgalı completion tablosunda
+/// saklanır; [completed] yalnız bugünün/tek-seferlik görevin projection'ıdır.
+enum UserTaskRecurrence { once, daily }
+
 @immutable
 class UserTask {
   const UserTask({
@@ -13,6 +14,11 @@ class UserTask {
     required this.createdAt,
     this.completedAt,
     required this.sortOrder,
+    this.userId,
+    this.recurrence = UserTaskRecurrence.once,
+    this.archivedAt,
+    this.updatedAt,
+    this.completionDay,
   });
 
   final String id;
@@ -24,6 +30,14 @@ class UserTask {
   final DateTime createdAt;
   final DateTime? completedAt;
   final int sortOrder;
+  final String? userId;
+  final UserTaskRecurrence recurrence;
+  final DateTime? archivedAt;
+  final DateTime? updatedAt;
+  final DateTime? completionDay;
+
+  bool get isDaily => recurrence == UserTaskRecurrence.daily;
+  bool get isArchived => archivedAt != null;
 
   UserTask copyWith({
     String? title,
@@ -31,6 +45,10 @@ class UserTask {
     bool? completed,
     DateTime? completedAt,
     int? sortOrder,
+    UserTaskRecurrence? recurrence,
+    DateTime? archivedAt,
+    DateTime? updatedAt,
+    DateTime? completionDay,
     bool clearDueAt = false,
     bool clearCompletedAt = false,
   }) {
@@ -40,39 +58,69 @@ class UserTask {
       dueAt: clearDueAt ? null : (dueAt ?? this.dueAt),
       completed: completed ?? this.completed,
       createdAt: createdAt,
-      completedAt: clearCompletedAt
-          ? null
-          : (completedAt ?? this.completedAt),
+      completedAt: clearCompletedAt ? null : (completedAt ?? this.completedAt),
       sortOrder: sortOrder ?? this.sortOrder,
+      userId: userId,
+      recurrence: recurrence ?? this.recurrence,
+      archivedAt: archivedAt ?? this.archivedAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      completionDay: completionDay ?? this.completionDay,
     );
   }
 
   Map<String, dynamic> toMap() => {
-        'id': id,
-        'title': title,
-        'dueAt': dueAt?.toUtc().toIso8601String(),
-        'completed': completed,
-        'createdAt': createdAt.toUtc().toIso8601String(),
-        'completedAt': completedAt?.toUtc().toIso8601String(),
-        'sortOrder': sortOrder,
-      };
+    'id': id,
+    'title': title,
+    'dueAt': dueAt?.toUtc().toIso8601String(),
+    'completed': completed,
+    'createdAt': createdAt.toUtc().toIso8601String(),
+    'completedAt': completedAt?.toUtc().toIso8601String(),
+    'sortOrder': sortOrder,
+    'userId': userId,
+    'recurrence': recurrence.name,
+    'archivedAt': archivedAt?.toUtc().toIso8601String(),
+    'updatedAt': updatedAt?.toUtc().toIso8601String(),
+    'completionDay': completionDay?.toUtc().toIso8601String(),
+  };
 
   factory UserTask.fromMap(Map<String, dynamic> map) {
     return UserTask(
       id: map['id'] as String? ?? '',
       title: (map['title'] as String? ?? '').trim(),
-      dueAt: map['dueAt'] == null
-          ? null
-          : DateTime.tryParse(map['dueAt'] as String),
+      dueAt: _date(map['dueAt'] ?? map['due_at']),
       completed: map['completed'] as bool? ?? false,
-      createdAt: DateTime.tryParse(map['createdAt'] as String? ?? '') ??
+      createdAt:
+          _date(map['createdAt'] ?? map['created_at']) ??
           DateTime.now().toUtc(),
-      completedAt: map['completedAt'] == null
-          ? null
-          : DateTime.tryParse(map['completedAt'] as String),
-      sortOrder: map['sortOrder'] as int? ?? 0,
+      completedAt: _date(map['completedAt'] ?? map['completed_at']),
+      sortOrder: map['sortOrder'] as int? ?? map['sort_order'] as int? ?? 0,
+      userId: map['userId'] as String? ?? map['user_id'] as String?,
+      recurrence: _recurrence(map['recurrence'] as String?),
+      archivedAt: _date(map['archivedAt'] ?? map['archived_at']),
+      updatedAt: _date(map['updatedAt'] ?? map['updated_at']),
+      completionDay: _date(map['completionDay'] ?? map['completion_day']),
     );
   }
+
+  static DateTime? _date(Object? value) {
+    if (value is! String) return null;
+    return DateTime.tryParse(value);
+  }
+
+  static UserTaskRecurrence _recurrence(String? value) {
+    return value == 'daily'
+        ? UserTaskRecurrence.daily
+        : UserTaskRecurrence.once;
+  }
+
+  Map<String, dynamic> toCloudMap() => {
+    'id': id,
+    'title': title,
+    'due_at': dueAt?.toUtc().toIso8601String(),
+    'sort_order': sortOrder,
+    'recurrence': recurrence.name,
+    'archived_at': archivedAt?.toUtc().toIso8601String(),
+  };
 
   static const int maxTitleLength = 80;
   static const int maxTasks = 100;

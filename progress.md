@@ -69,7 +69,7 @@
 - **Dal:** main
 - **Başlangıç:** —
 - **Son güncelleme:** 2026-07-19 (Europe/Istanbul)
-- **Not:** WP-209 kod + otomatik test tamamlandı; staging migration/RLS ve iki-cihaz claim QA'sı parkta.
+- **Not:** WP-212 kod + otomatik test tamamlandı; staging migration/RLS ve çok-cihaz QA parkta.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
@@ -117,7 +117,7 @@
 | WP-217 | [ ] Bekliyor | Mola Düşmanı verified segment motoru + bounded konservatif legacy retro job tanımı | ← WP-216 |
 | WP-218 | [ ] Bekliyor | Alfa/Kamp/Lokomotif exact verified grup motoru + legacy proxy/dirty bucket | ← WP-216, WP-217 |
 | WP-219 | [ ] Bekliyor | **[CONTRACT/RELEASE]** Ölçümlü verified-only XP kesişi + capability-bazlı pending + dry-run/canary retro | ← WP-209/210/217/218/220 + cihaz/saha QA |
-| WP-212 | [ ] Bekliyor | Günlük görev cloud model + toggle/undo + tombstone + idempotent çok-cihaz ops (server 00NN) | plan v3.1 |
+| WP-212 | [~] Kod tamamlandı — test bekliyor | Günlük görev cloud model + toggle/undo + tombstone + idempotent çok-cihaz ops (server 00NN) | plan v3.1 |
 | WP-213 | [ ] Bekliyor | Görev UI: günlük tip ekleme + bugünün listesi + 00:00 yenileme | ← WP-212 · ARB yazar |
 | WP-214 | [ ] Bekliyor | Grup profil fotoğrafı: `avatar_path` + private bucket/signed URL + admin RLS + discovery | plan v3.1 |
 | WP-215 | [ ] Bekliyor | Tap-to-top: gerçek beş scroll dosyası, WP-211 kanonik tab indeksleri | ← WP-211, WP-214 |
@@ -134,6 +134,7 @@
 > Cihaz/ürün kabulü bekleyen tamamlanmış kod. Bu bölüm aktif çalışma değildir; başka WP'yi engellemez.
 
 - **WP-209 — Reward inbox expansion** · Kod + otomatik test tamamlandı (`flutter analyze`, 563 test) · Commit: bu WP commit'i · **Cihazda/staging'de doğrulanmalı:** 0047 dry-run/rollback rehearsal, self-RLS ve direct-DML abuse testi, iki cihaz aynı reward claim yarışı, injected pending sonrası `gamification_profiles.xp = SUM(xp_ledger.xp_amount)` reconciliation kanıtı. Auto-award ve saatlik 50 XP regresyonu staging'de ayrıca doğrulanacak.
+- **WP-212 — Cloud görev altyapısı** · Kod + otomatik test tamamlandı (`flutter analyze`, 561 test) · Commit: bu WP commit'i · **Cihazda/staging'de doğrulanmalı:** 0048 dry-run/rollback rehearsal, self-RLS/direct-DML abuse, iki cihazda toggle/undo LWW, 23:59→00:01 İstanbul günlük projection, prefs→cloud göçünü ağ kesintisinden sonra idempotent tekrar deneme.
 
 ## Tamamlanan İş Paketleri
 
