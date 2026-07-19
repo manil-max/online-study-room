@@ -5,7 +5,7 @@
 > **Bu dosya yalnız plandır; kod içermez.** Worker migration numarasını claim anında `progress.md` ve `supabase/migrations/` üzerinden yeniden doğrular (şu an en yüksek `0046`).
 > Kanıt etiketleri: `Kodda doğrulandı` · `Cihazda doğrulanmalı` · `Ürün kararı gerekiyor`.
 
-> **v3.2 ürün kararı (2026-07-20):** Verified-only XP ve başarı kuralı iptal edildi. Manuel süre ekleme, uygulama içi sayaç ve native/widget sayacı aynı kazanım yolundadır. `0063_equal_study_sources.sql`, bu belgenin verified-only/7-gün/canary kısımlarını ileriye dönük olarak geçersiz kılar; eski metin karar geçmişidir.
+> **v3.3 kurtarma kararı (2026-07-20):** Verified-only XP ve başarı kuralı iptal edildi. Manuel süre ekleme, uygulama içi sayaç ve native/widget sayacı aynı kazanım yolundadır. Mevcut `0063_equal_study_sources.sql` bu doğru hedefi güvenli biçimde kanıtlamadığı için production adayı değildir. WP-225–232 baseline→izolasyon→onarım→staging→production programı bu belgenin rollout/verified-only kısımlarını süpersede eder; eski metin karar geçmişidir.
 
 ## 1. Yönetici özeti ve GO durumu
 
@@ -249,13 +249,12 @@ Reward altyapısını eklemek ile otomatik banklamayı kapatmak farklı yayınla
 - **Kabul:** Alpha yalnız kapalı gün ve cron kaçsa bile catch-up ile tek kez finalize; Kamp ≥3 exact; Lokomotif exact active-state+15 dk; başka üye olayı etkilenen kullanıcı progress'ine ≤5 s yansır; p95 MK-6 içinde; belirsiz legacy satır XP üretmez; testler yeşil.
 - **Tuzak:** `group_members.joined_at`'i eksiksiz tarihçe sanmak; “önceki N dk” boşluk sezgisi; auth.uid-only projector ile initiator'ı güncellememek.
 
-## WP-219R — Süre kaynağı eşitliği ✅
+## WP-219R — Süre kaynağı eşitliği ⚠️ WP-229'a devredildi
 
-- **Program/Faz:** Başarım contract düzeltmesi · **Durum:** Kod tamamlandı — migration/staging QA bekliyor.
+- **Program/Faz:** Başarım contract düzeltmesi · **Durum:** Eski uygulama kabul edilmedi; ürün kuralı korunarak WP-229'da yeniden tasarlanacak.
 - **Ürün kuralı:** Manuel süre ekleme, uygulama içi sayaç ve native/widget sayacı aynı XP, kişisel başarı ve grup başarımı yolundadır. Kullanıcıya verified/unverified ayrımı gösterilmez.
-- **Uygulama:** `0063_equal_study_sources.sql` eski live-run bağlarını oturum satırlarından ayırır; tüm grup/Mola Düşmanı/Lider Kurt projeksiyonlarını üyelik penceresindeki `study_sessions` kaynağına çevirir; eski verified cron'ları kaynak-nötr cron'larla değiştirir ve türetilmiş projeksiyonları yeniden üretir.
-- **Veri garantisi:** `study_sessions`, `xp_ledger`, rozetler ve pending ödüller silinmez. Eski live-run tabloları yalnız denetim geçmişi olarak kalır.
-- **Cihazda/staging'de doğrulanmalı:** manuel süre, uygulama sayacı ve widget/bildirim başlangıcı aynı kişisel/grup ilerlemesini üretir; tarihsel XP/rozet kaybolmaz; yeni iki cron aktiftir; RLS ile kullanıcı yalnız kendi oturumunu düzenler.
+- **Eski uygulama bulgusu:** `0063` bazı derived tabloları/progress satırlarını silip yeniden üretir; günlük grup ve Mola Düşmanı candidate→pending ödül zinciri tamamlanmış değildir. Bu nedenle “veri garantisi” ve yalnız string-search otomatik testleri kabul kanıtı sayılmaz.
+- **Yeni yol:** WP-225 remote geçmişini kanıtlar. `0063` hiçbir remote'a uygulanmadıysa yayımlanmamış dosya yeniden tasarlanabilir; uygulanmışsa immutable kalır ve ileri migration yazılır. WP-229 gerçek PostgreSQL/RLS/invariant/reconciliation testleriyle eşitliği kurar; WP-232 staging/cihaz/soak sonrası production GO ister.
 
 ## WP-212 — Günlük görev cloud modeli + çok-cihaz senkron 🗓️
 

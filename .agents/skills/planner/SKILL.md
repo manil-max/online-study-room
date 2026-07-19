@@ -47,8 +47,9 @@ Kullanıcı bir cümle yazsa bile sen şunları **kendin türetirsin** (eksik ol
 3. Her WP'nin **SAHİP / DOKUNMA** dosya sınırı ne? (çakışma buradan önlenir)
 4. **Ölçülebilir kabul kriterleri** ne? (belirsiz "güzel olsun" yok)
 5. **Güvenlik/RLS/veri** etkisi var mı? (server-authoritative, migration, geri alma)
-6. **Çakışma matrisi** temiz mi? (aktif lane'lerle karşılaştır)
-7. Hangi **model** uygun? (🔵 Sonnet / 🟣 Pro / 🔴 Opus)
+6. **Ortam hedefi** ne? (varsayılan local; staging/production ayrı kapı)
+7. **Çakışma matrisi** temiz mi? (aktif lane'lerle karşılaştır)
+8. Hangi **model** uygun? (🔵 Sonnet / 🟣 Pro / 🔴 Opus)
 
 ---
 
@@ -90,6 +91,7 @@ Her WP `progress.md` Plan Kuyruğu'na şu formatta yazılır. **Eksik alan bıra
   - [ ] Adım 1 …
   - [ ] Adım 2 …
 - **Veri/Migration etkisi:** tablo/kolon/RPC + **geri alma** notu.
+- **Ortam/Deploy:** local/staging/production hedefi, dry-run/backup/terfi kapısı; production ise somut kullanıcı GO bağımlılığı.
 - **RLS/Güvenlik:** görünürlük, server-authoritative gereği, sır kontrolü.
 - **Edge-case'ler:** boş/hata/çevrimdışı/gün sınırı/çoklu cihaz.
 - **Kabul (ölçülebilir):** "X olayından sonra Y ≤ Z sn'de …", golden/test kriteri, cihaz kanıtı beklentisi.
@@ -127,6 +129,15 @@ Temizse:
 
 ### 5. Bağımlılık zinciri
 Bir WP başka WP'nin **kabul edilmiş** çıktısına dayanıyorsa bağımlılığı yaz; kabul edilmeden başlatma önermez.
+
+### 6. Ortam ve migration zinciri
+
+- Backend işi varsayılan olarak local planlanır. Staging ayrı adım/WP; production ayrı ve son terfi kapısıdır.
+- Beta→staging, stable→production eşleşmesini bozan plan yazma.
+- Aynı değişiklik için ayrı staging/production SQL dosyaları planlama; tek kanonik migration zinciri kullan.
+- Her migration WP'sine gerçek local PostgreSQL replay, RLS abuse, veri invariant, staging dry-run/post-check ve rollback ekle.
+- Production deploy'u normal implementasyon WP'sinin içine gizleme. Backup + dry-run + cihaz QA + soak + açık kullanıcı GO bağımlılığı olan release/ops WP'sine ayır.
+- Remote'a uygulanmış migration'ı düzenlemeyi planlama; her düzeltme yeni ileri migration'dır.
 
 ---
 

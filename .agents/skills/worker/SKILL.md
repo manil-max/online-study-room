@@ -26,9 +26,10 @@ Kullanıcı (kısa): **"worker'ı oku ve V8-A'yı / WP-N'yi yap"** (Faz veya WP 
 3. ÇAKIŞMA ÖN-KONTROLÜ (Adım 0) → gerekiyorsa DUR ve UYAR
 4. CLAIM et                   → Aktif Çalışma Kaydı'na kendi lane'ini yaz (iki-aşamalı)
 5. Tasarım/teknik tasarımı netleştir → belirsizlik varsa sor
-6. Adımları sırayla uygula    → yalnız SAHİP dosyalara yaz, DoD'yi izle
-7. Doğrula                    → analyze 0 uyarı + test + (mümkünse) cihaz kanıtı
-8. Kapat + LANE'İ BIRAK       → cihaz/demo gerekiyorsa kartı "Test için bekleyenler"e taşı
+6. ORTAM ÖN-KONTROLÜ          → local/staging/production hedefini doğrula; varsayılan local
+7. Adımları sırayla uygula    → yalnız SAHİP dosyalara yaz, DoD'yi izle
+8. Doğrula                    → analyze 0 uyarı + test + (mümkünse) cihaz kanıtı
+9. Kapat + LANE'İ BIRAK       → cihaz/demo gerekiyorsa kartı "Test için bekleyenler"e taşı
                                 ve lane'i boşalt; tam bittiyse Tamamlanan'a; her hâlde commit
 ```
 
@@ -76,6 +77,19 @@ Her WP birinci sınıf çıktı üretir. Uygularken:
 - Repository **çift**: `supabase/` + `in_memory/` birlikte.
 - Migration `NNNN_ad.sql` sıralı; **ilk satır tam olarak `-- NNNN_ad.sql` (gerçek dosya adı)**; RLS zorunlu; **XP/kritik ilerleme server-authoritative**; sır istemcide yok.
 - Kullanıcı metni Türkçe; gün sınırı Europe/Istanbul tek yardımcıdan.
+
+## Ortam ve remote işlem ön-kontrolü
+
+Backend, migration, Edge Function, secret veya release işi varsa `docs/ORTAM-MIGRATION-YONETISIMI.md` tamamen okunur ve hedef lane notuna yazılır.
+
+1. Kart hedef belirtmiyorsa **local** kabul et; remote'a geçme.
+2. Staging işlemi için project-ref/environment doğrula, `migration list` + dry-run kaydı al; production credential kullanma.
+3. Production işlemi için WP'nin staging/QA/backup/post-check kanıtlarını ve kullanıcının o somut deploy'a verdiği GO'yu doğrula. Biri eksikse dur.
+4. `db reset --linked`, remote truncate/drop ve uygulanmış migration'ı değiştirmek yasaktır.
+5. Local DB'de sıfırdan replay ve gerçek SQL/RLS/invariant testleri geçmeden staging push yapılmaz.
+6. Komut çıktısında token/parola/service role görünürse çıktıyı paylaşma; sırrı döndür ve olayı raporla.
+
+> Agentın amacı production'a en hızlı yazmak değil, aynı commit ve migration'ı kanıtlarla güvenli biçimde terfi ettirmektir.
 
 ---
 
@@ -146,6 +160,9 @@ Kısa Türkçe: ne yapıldı · değişen dosyalar · test durumu · **hangi kan
 | Tek repo implementasyonu güncellemek | `supabase/` + `in_memory/` birlikte |
 | XP/başarıyı istemcide yazmak | Server-authoritative; ledger + idempotent event |
 | `fromMap`'te kaldırılmış kolon | `grep -rn "kolon" app/lib` ile kalıntı ara |
-| Migration sırası | Son numarayı `supabase/migrations/` dizininden oku |
+| Migration sırası | Son numarayı dizinden oku; remote'a uygulanmış dosyayı değiştirme, ileri migration yaz |
+| Yanlış Supabase hedefi | Her remote komuttan önce ortam + project-ref doğrula; saklı `link` hedefine güvenme |
+| Production'a erken deploy | Staging+cihaz+soak+backup+dry-run+somut kullanıcı GO olmadan dur |
+| SQL dosyasını string-test etmek | Gerçek local PostgreSQL replay + davranış/RLS/invariant testi çalıştır |
 | Presence `group_id` | KORUNUYOR — dokunma |
 | Sıcak dosyaya (pubspec/theme/main) sessiz giriş | WP'de yazılı değilse dur ve sor |

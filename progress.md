@@ -1,6 +1,6 @@
 # progress.md — İlerleme Takibi
 
-> Son güncelleme: 2026-07-19 (tarihsel kartlar arşive taşındı — bkz. dosya sonu)
+> Son güncelleme: 2026-07-20 (kurtarma programı + ortam/migration yönetişimi planlandı)
 > Sistem: İş Paketi (WP) tabanlı, **Kalite Programı**. Kanonik program: `docs/KALITE-PROGRAMI.md`.
 > Planlama: `.agents/skills/planner/SKILL.md` · Uygulama: `.agents/skills/worker/SKILL.md` · Kurallar: `.agents/AGENTS.md`.
 > **"Tamamlandı" = kod DEĞİL; kullanıcı beklentisini karşılayan + cihazda güvenilir çalışan iş.** İş durum merdiveni (8 aşama) ve kanıt etiketleri (`Kodda doğrulandı` / `Cihazda doğrulanmalı` / `Ürün kararı gerekiyor`) için bkz. AGENTS.md §0.
@@ -12,16 +12,16 @@
 - **Framework:** Flutter ^3.12 · Riverpod 3.3 · Supabase 2.15 · fl_chart
 - **Uygulama kökü:** `app/` — Flutter komutları yalnız burada çalışır.
 - **Repo katmanı çift:** Her arayüz `supabase/` ve `in_memory/` repository'leriyle desteklenir.
-- **Migration'lar:** `supabase/migrations/` — yerelde `0001–0046` vardır. Canlı ortamda dosyanın bulunması deploy kanıtı değildir. Feedback: `0044–0045` + **`0046` (trigger 42704 role fix)**. Yeni migration mevcut en yüksek numaradan (`0046`) devam eder.
+- **Migration'lar:** `supabase/migrations/` — yerelde `0001–0063` vardır. Kullanıcı production'da `0062`ye kadar SQL'lerin Success döndüğünü bildirdi; CLI history/şema/cron/veri invariant kanıtı WP-225/226'da çıkarılacak. `0063` production'a uygulanmadı ve freeze altında.
 - **Gün sınırı:** `Europe/Istanbul`
 - **RLS helper'ları:** `is_group_member(gid)`, `can_see_user_sessions(target)`, `is_group_admin(gid)`, `is_super_admin()`
 - **Dashboard:** 6 sütunlu 2D matris, 19 kart türü, `grid_reflow.dart` motoru.
 - **Tema:** Hazır paletler + özel palet slotları; görünür tüm yüzeyler palette bağlanmalıdır, sabit gri renk eklenmez.
 - **Navigasyon hedefi:** Ana Sayfa / Saat / Gruplar / İstatistikler / Profil. Ana Sayfa günlük kullanım alanıdır; diğer alanların verisi kendi sekmelerinde eksiksiz bulunur.
-- **Release:** Stable/Beta kanalı GitHub Releases ile çalışır. **beta-v30** = `1.0.30+30` (analitik ızgara toggle, 0039–0043 RPC/gamification, WP-166–168). Onay: `docs/qa/BETA-v30-ONAY-LISTESI.md`. Play production ayrı kalite kapısından geçer.
+- **Release gerçeği:** Stable tag `v39` (`c6843a5`), beta tag `beta-v41` (`e6234a6`), HEAD `2d757eb`. Beta-v41 sonrası 13 yerel commit vardır; uygulama hâlâ `1.0.41+41` taşıdığı için sürüm/commit ayrımı bozuk. WP-227/230 düzeltecek.
 - **Kalite kapıları:** Her WP DoD'siz kapanmaz; stable release kalite kapısından geçer (AGENTS.md §3). Server-authoritative XP, RLS/sosyal profil, platform sınırları → `docs/KALITE-PROGRAMI.md`.
-- **Son WP numarası:** **220** (WP-208–220 planlandı, henüz uygulanmadı; son tamamlanan uygulama WP'si 207, git log doğrulandı; stable v39). **Sıradaki boş numara WP-221.**
-- **Release:** **beta-v33** = `1.0.33+33`. Cihaz QA: `docs/qa/BETA-v33-TEST.md`. Canlıda **0046** (feedback trigger) de gerekir.
+- **Son WP numarası:** **232** (WP-221–224 geçmişte kullanılmış; kurtarma WP-225–232 planlandı). **Sıradaki boş numara WP-233.**
+- **Ortam sözleşmesi:** local=Supabase CLI/Docker, beta=ayrı staging Supabase, stable=production Supabase. Ayrıntı: `docs/ORTAM-MIGRATION-YONETISIMI.md`.
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
   - Flutter: `C:\src\flutter` · Android SDK: `C:\Android\Sdk`
@@ -60,13 +60,13 @@
 - **Son güncelleme:** 2026-07-19 23:57 (Europe/Istanbul)
 - **Not:** beta-v41 turu kapandı (WP-221/222/223/224 cihazda doğrulandı). Kalan ekonomi/kademe/alpha WP'leri sırayla yürüyor (beta-v42). Bitmiş (kod+test, cihaz QA bekliyor):
   - **WP-J** görev sırası daily-üstte + optimistic UI (`sortUserTasksByDue` daily-first, `userTasksProvider`→AsyncNotifier, ekle/tamamla/sil optimistic, hata→geri al+snackbar). Commit `54a2c84`.
-  - **WP-A+B** 6 kademeli ekonomi (eşli). Renkler: 4=Elmas `#38BDF8`, 5=Zümrüt `#17E4A0`, 6=Immortal `#B02E42` (platin kalktı). Taç 6 rütbe + eşik `[0,20k,75k,200k,500k,1M]`. Client `progression_visuals`+`achievement_ledger_engine` tüm tuple/XP; `secret_1337` tamamen silindi. l10n: `coreZumrutTac`/`coreImmortal`/`coreImmortalTac` eklendi (Immortal: EN Immortal, TR Ölümsüz, DE Unsterblich, AR الخالد). Sunucu **migration `0056_six_tier_economy.sql`**: dict tuple/max_tier=6, `_recalc_crown_rank` 6 rütbe, secret_1337 FK-temiz silme + etkilenen XP geri hesap, taç XP-korumalı hizalama. **process_achievement_event DEĞİŞMEDİ** (claim=WP-C, perfect_month=WP-D, campfire=WP-E). analyze temiz, tüm testler yeşil. **Canlıya `0056` uygulanmalı.**
+  - **WP-A+B** 6 kademeli ekonomi (eşli). Renkler: 4=Elmas `#38BDF8`, 5=Zümrüt `#17E4A0`, 6=Immortal `#B02E42` (platin kalktı). Taç 6 rütbe + eşik `[0,20k,75k,200k,500k,1M]`. Client `progression_visuals`+`achievement_ledger_engine` tüm tuple/XP; `secret_1337` tamamen silindi. l10n: `coreZumrutTac`/`coreImmortal`/`coreImmortalTac` eklendi (Immortal: EN Immortal, TR Ölümsüz, DE Unsterblich, AR الخالد). Sunucu **migration `0056_six_tier_economy.sql`**: dict tuple/max_tier=6, `_recalc_crown_rank` 6 rütbe, secret_1337 FK-temiz silme + etkilenen XP geri hesap, taç XP-korumalı hizalama. **process_achievement_event DEĞİŞMEDİ** (claim=WP-C, perfect_month=WP-D, campfire=WP-E). analyze temiz, tüm testler yeşil. **Production'da uygulandığı kullanıcı tarafından bildirildi; WP-225/226 semantik audit yapacak.**
   - Yol: stale WP-222 goal-dialog testi de düzeltildi (`Clock`→`Hours`).
-  - **WP-C** claim inbox birleştirme (saha #4). Migration **`0057_route_awards_to_inbox.sql`**: `process_achievement_event` artık doğrudan `_award_achievement_tier` yerine `_create_pending_achievement_reward` çağırır → çalışma/seri/sosyal başarım kademeleri **pending inbox'a** yazılır, XP yalnız `claim_*` ile bankalanır. Çift-XP guard: zaten bankalıysa/pending varsa null (ileriye etki). Saat XP pasif kalır. İstemci claim akışı (reward_toast banner + showcase Topla/Tümünü topla + `claim_*` RPC) zaten tip-agnostik, **değişiklik yok**; in_memory demo motoru auto-award kalır. **Canlıya `0057` uygulanmalı**; staging QA §1.3–1.7 (çift-XP/XP-kaybı) kullanıcıda.
-  - **WP-D** Kusursuz Ay **28/30 kuralı** (§3 ek kural; sabit eşik 28). Migration **`0058_perfect_month_28.sql`**: `_count_perfect_months_28` + `_achievement_metrics` wrapper ona bağlandı, metric sürümü `perfect_month_28_v1`, dict açıklaması güncellendi. Client `computeMetrics` ≥28 + source_version aynası + l10n açıklama 4 dil. Geçmiş aylar korunur (kümülatif greatest). **Canlıya `0058` uygulanmalı.**
-  - **WP-E** Kamp Ateşi dinamik eşik. Migration **`0059_campfire_dynamic_threshold.sql`**: `project_verified_group_day` `camp` CTE'sinde sabit `active>=3` → `max(2, ceil(N/2))` (N=o gün aktif farklı üye; tablo 2→2,4→2,5→3,6→3,7→4). Dict açıklaması + l10n `coreEnAz3KisiAktifkenCalis` dinamik ifade (4 dil). Client campfire hesaplamaz (server-verified) → engine değişmez. **Canlıya `0059` uygulanmalı.**
-  - **WP-F** alpha hesap düzeltme + üretim projeksiyonu (saha #3/#9). Client: `progressForAchievement` alpha/campfire/locomotive artık break_enemy stub yerine **0** döndürür (demo yanlış-award düzeltildi); gerçek ilerleme sunucu `achievement_metric_progress`'ten. Migration **`0060_verified_projection_production.sql`**: pg_cron aç (guarded) + gece finalizer job + anlık catch-up → finalize üretimde çalışır, alpha_wins projekte olur (progress görünür, WP-K sıralaması). Projeksiyon `xp_ledger`'a YAZMAZ → çift-XP riski yok. **Verified metriğin XP ödülüne dönüşmesi (candidate→reward) release-gated WP-219**, beta-v42 dışı. **Canlıya `0060` uygulanmalı; pg_cron plan/izin yoksa Dashboard'dan açılmalı.**
-  - Kalanlar: K (grup sıralamasında alpha göstergesi), L (Lider Kurt haftalık başarım). Migration'lar canlıya kullanıcı tarafından uygulanır.
+  - **WP-C** claim inbox birleştirme (saha #4). Migration **`0057_route_awards_to_inbox.sql`** production'da user-reported uygulanmış; semantik/ödül zinciri kabulü yoktur ve WP-229 kapsamındadır.
+  - **WP-D** Kusursuz Ay **28/30 kuralı** (§3 ek kural; sabit eşik 28). `0058` production'da user-reported uygulanmış; WP-225/226 doğrulayacak.
+  - **WP-E** Kamp Ateşi dinamik eşik. `0059` production'da user-reported uygulanmış; WP-225/226 doğrulayacak, eşit-kaynak onarımı WP-229'da.
+  - **WP-F** alpha hesap düzeltme + üretim projeksiyonu. `0060` production'da user-reported Success döndürdü; migration kritik cron/catch-up hatalarını notice ile yutabileceği için gerçek çalışma WP-225/226'da doğrulanacak.
+  - K/L kodu repoda; kabul kanıtı yoktur. Tüm production terfisi artık `docs/ORTAM-MIGRATION-YONETISIMI.md` ve WP-225–232 kapısına tabidir.
 
 ### Codex Lane
 - **Durum:** [x] Boşta
@@ -76,8 +76,8 @@
 - **Ortak/riskli yüzey:** —
 - **Dal:** — (main)
 - **Başlangıç:** —
-- **Son güncelleme:** 2026-07-20 00:55 (Europe/Istanbul)
-- **Not:** WP-219R kod + otomatik test tamamlandı; `0063` staging/cihaz QA için parkta. Verified-only ürün kararı iptal edildi.
+- **Son güncelleme:** 2026-07-20 01:51 (Europe/Istanbul)
+- **Not:** Kurtarma programı WP-225–232 ve ortam/migration/agent güvenlik sözleşmesi planlandı; implementasyon WP-225 ile başlayacak.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
@@ -109,6 +109,7 @@
 | 8 | **Tema Stüdyosu** | Token + atmosfer aileleri | Tamamlandı | WP-54/55 + 15 aile polish |
 | 9 | **Başarım & Sosyal Profil 3.0** | Ledger + taç her yerde | Tamamlandı | 0028 = **stable tag öncesi** |
 | 10 | **Windows masaüstü** | Shell → IA → MSIX | Tamamlandı (ürün 2026-07-14) | WP-27/52/53/28/70/71 — cihaz smoke sorun→debug |
+| 11 | **Proje Kurtarma** | Ortam izolasyonu + migration güveni + süre/XP/istatistik onarımı | Açık — en yüksek öncelik | WP-225–232 · production freeze |
 
 ## WP Durum Dizini ve Açık Planlar
 
@@ -116,19 +117,191 @@
 
 | WP | Durum | Kısa kapsam | Bağımlılık |
 |---|---|---|---|
-| WP-209 | [~] Kod tamamlandı — test bekliyor | **[EXPAND 1]** Reward inbox şema + atomik/bounded claim; auto-award davranışı değişmez | plan v3.1 |
-| WP-208 | [~] Kod tamamlandı — test bekliyor | **[EXPAND 2]** Self-only gerçek metric progress + Kusursuz Ay 28/30 evaluator contract'ı + legacy audit/job altyapısı | ← WP-209 |
-| WP-210 | [~] Kod tamamlandı — test bekliyor | **[CLIENT 3]** Claim-capable UI + gerçek progress/streak + az-kaldı + tüm achievement ARB anahtarları | ← WP-208, WP-209 · ARB yazar |
-| WP-211 | [~] Kod tamamlandı — test bekliyor | Reward banner/nav badge + tüm tab indekslerinin kanonik sözleşmesi | ← WP-210 · `core/navigation/**` yazarı |
-| WP-216 | [~] Kod tamamlandı — test bekliyor | **[TRUST SERVER 4]** Server-issued live run/segment + immutable grup bağlamı + minimal rollout agregası; eski davranış değişmez | ← WP-208 · WP-217/218/220 ön-koşulu |
-| WP-220 | [~] Kod tamamlandı — test bekliyor | **[TRUST CLIENT 5]** Dart timer/native outbox verified köprüsü + stat-only saf-native fallback + shadow telemetry + Android ≤13 QA | ← WP-216 · WP-219 sert ön-koşulu |
-| WP-217 | [~] Kod tamamlandı — test bekliyor | Mola Düşmanı verified segment motoru + bounded konservatif legacy retro job tanımı | ← WP-216 |
-| WP-218 | [~] Kod tamamlandı — test bekliyor | Alfa/Kamp/Lokomotif exact verified grup motoru + legacy proxy/dirty bucket | ← WP-216, WP-217 |
-| WP-219R | [~] Kod tamamlandı — test bekliyor | **[CONTRACT]** Manuel/sayaç/native süre eşitliği; verified-only kapısı iptal, tüm projeksiyonlar `study_sessions` | `0063` + staging/cihaz QA |
-| WP-212 | [~] Kod tamamlandı — test bekliyor | Günlük görev cloud model + toggle/undo + tombstone + idempotent çok-cihaz ops (server 00NN) | plan v3.1 |
-| WP-213 | [~] Kod tamamlandı — test bekliyor | Görev UI: günlük tip ekleme + bugünün listesi + 00:00 yenileme | ← WP-212 · ARB yazar |
-| WP-214 | [~] Kod tamamlandı — test bekliyor | Grup profil fotoğrafı: `avatar_path` + private bucket/signed URL + admin RLS + discovery | plan v3.1 |
-| WP-215 | [~] Kod tamamlandı — test bekliyor | Tap-to-top: gerçek beş scroll dosyası, WP-211 kanonik tab indeksleri | ← WP-211, WP-214 |
+| WP-225 | [ ] Bekliyor | Production freeze + salt-okunur canlı veri/şema/artefakt baseline | — |
+| WP-226 | [ ] Bekliyor | Pinli Supabase CLI/local replay + manuel migration geçmişi uzlaşması | ← WP-225 |
+| WP-227 | [ ] Bekliyor | Beta/stable flavor + staging/production backend izolasyonu + fail-closed | ← WP-226 |
+| WP-228 | [ ] Bekliyor | Local/staging otomasyonu + production manual approval gate | ← WP-227 |
+| WP-229 | [ ] Bekliyor | Eşit süre kaynakları ve reward/projection zinciri için güvenli ileri migration | ← WP-226, WP-227, WP-228 |
+| WP-230 | [ ] Bekliyor | 6 kademe/20k ekonomi + XP bar/metin + sürüm manifesti istemci onarımı | ← WP-227 · WP-229 ile en fazla iki lane |
+| WP-231 | [ ] Bekliyor | İstatistik dönem semantiği + toplam/realtime refresh + grup tutarlılığı | ← WP-229, WP-230 |
+| WP-232 | [ ] Bekliyor | Staging QA/soak + backup/dry-run + kontrollü production recovery release | ← WP-225–231 |
+
+### WP-225: Production Freeze ve Adli Baseline 🔒
+- **Program/Faz:** Kurtarma Faz 0 (`KALITE-PROGRAMI §8.7`)
+- **Ajan:** — (atanınca lane doldurur)
+- **Durum:** [ ] Bekliyor
+- **Problem:** Production DB'nin gerçek migration/şema/cron/veri durumu kanıtlı değil; önceki “Success” çıktıları semantik doğrulama sayılmıyor.
+- **Kapsam dışı:** Production'a SQL yazmak, `migration repair`, `0063`, veri düzeltme/backfill.
+- **SAHİP dosyalar (yaz):** `docs/recovery/PRODUCTION-BASELINE.md`, `docs/recovery/sql/read_only_*.sql`, `progress.md` (kendi kart/lane'i).
+- **DOKUNMA (oku, değiştirme):** `supabase/migrations/**`, `app/**`, production şeması/verisi.
+- **Adımlar:**
+  - [ ] Stable/beta/HEAD commit, build, backend hedefi ve kurulu artefakt envanterini çıkar.
+  - [ ] Salt-okunur SQL ile schema/functions/policies/triggers/cron/migration-history envanteri al.
+  - [ ] `study_sessions`, duration, daily totals, XP ledger/profile, reward/achievement invariant baseline hash/özetini kaydet.
+  - [ ] Backup/PITR/export kapasitesini ve uygulanabilir recovery yolunu belgeleyip production freeze tabelasını doğrula.
+- **Veri/Migration etkisi:** Yok; salt-okunur. Geri alma gerekmez.
+- **Ortam/Deploy:** Production read-only; hiçbir remote mutation yok.
+- **RLS/Güvenlik:** Service role/token çıktıya girmez; audit sorguları kişisel ham içeriği rapora dökmez, yalnız aggregate/invariant kullanır.
+- **Edge-case'ler:** SQL Editor ile uygulanmış ama history'de olmayan migration; notice ile yutulmuş cron; değiştirilmiş migration dosyası; paused/erişilemeyen proje.
+- **Kabul (ölçülebilir):** Production'daki migration head ve her `0051–0062` kritik nesnesi kanıt statüsü alır; session/XP/reward baseline sayıları tekrar çalıştırılabilir sorgularla kayıtlıdır; hiçbir write sorgusu çalışmamıştır.
+- **Tuzaklar:** “Success” veya dosyanın repoda bulunmasını deploy kanıtı sanmak.
+- **Model önerisi:** 🔴 Opus / frontier-high
+
+### WP-226: Supabase CLI ve Migration Baseline 🧱
+- **Program/Faz:** Kurtarma Faz 1
+- **Ajan:** —
+- **Durum:** [ ] Bekliyor
+- **Problem:** Elle uygulanan migration geçmişi CLI ile senkron değil; zincir boş DB'de gerçek PostgreSQL üzerinde kanıtlanmıyor.
+- **Kapsam dışı:** Feature davranışı değiştirmek, staging/prod feature deploy'u, `0063` üretim terfisi.
+- **SAHİP dosyalar (yaz):** `package.json`/lock (pinli CLI gerekiyorsa), `supabase/config.toml`, `supabase/seed.sql`, `supabase/tests/**`, `tooling/supabase/**`, `docs/recovery/MIGRATION-BASELINE.md`, `progress.md`.
+- **DOKUNMA (oku, değiştirme):** Uygulanmış `supabase/migrations/0001_*.sql`–`0062_*.sql`; `app/**`.
+- **Adımlar:**
+  - [ ] Pinli Supabase CLI + Docker ön-koşulunu kur/doğrula.
+  - [ ] `db reset` ile `0001–0063` zincirini boş local DB'de replay et; başarısız tarihsel dosyayı değiştirmek yerine ileri-fix tasarla.
+  - [ ] SQL/RLS/invariant/cron test harness ve sentetik seed kur.
+  - [ ] WP-225 kanıtıyla production migration history farkını çıkar; önerilen `migration repair` listesini raporla.
+  - [ ] Production history repair'i ayrı somut kullanıcı GO olmadan çalıştırma.
+- **Veri/Migration etkisi:** Local reset serbest; remote şema değişikliği yok. History repair yalnız onaylı operasyon alt-adımıdır.
+- **Ortam/Deploy:** Local; production yalnız read-only comparison.
+- **RLS/Güvenlik:** Anon/authenticated/service roller için abuse testleri; secret commit yok.
+- **Edge-case'ler:** Docker yok/az RAM, migration başlık biçimi, extension/cron local farkı, manuel schema drift.
+- **Kabul:** Sıfır local DB bütün zinciri deterministik uygular; gerçek SQL davranış testleri yeşil; local/production migration farkı satır satır açıklanır; kör `db push` riski kalmaz.
+- **Tuzaklar:** `db reset --linked`; string-search testlerini yeterli saymak; uygulanmış dosyayı düzenlemek.
+- **Model önerisi:** 🔴 Opus / frontier-high
+
+### WP-227: Beta/Stable Ortam İzolasyonu 🧭
+- **Program/Faz:** Kurtarma Faz 2
+- **Ajan:** —
+- **Durum:** [ ] Bekliyor
+- **Problem:** Mevcut beta farklı tag/update kanalı olsa da stable ile aynı Supabase ve uygulama verisine bağlanıyor.
+- **Kapsam dışı:** Başarım ekonomisini düzeltmek, production migration çalıştırmak, gerçek production verisini staging'e kopyalamak.
+- **SAHİP dosyalar (yaz):** `app/android/app/build.gradle*`, flavor manifest/resource yolları, `app/lib/core/config/**`, env example şablonları, build/release scriptleri, updater kanal yapılandırması, `docs/recovery/ENVIRONMENT-MATRIX.md`, `progress.md`.
+- **DOKUNMA:** Release keystore, gerçek `env*.json`, production secret'ları, `supabase/migrations/**`.
+- **Adımlar:**
+  - [ ] Kullanıcının aynı hesabında ayrı staging Supabase projesi oluşturma/credential adımını güvenli owner checklist olarak hazırla.
+  - [ ] Beta ve stable flavor/application id/ad/icon/env ayrımını kur; mevcut updater kanalını koru.
+  - [ ] Build-time channel/backend/migration-head manifesti ve Ayarlar tanı ekranı ekle.
+  - [ ] Beta→production ve stable→staging eşleşmesini startup/build testinde fail-closed reddet.
+  - [ ] Staging'i kanonik migration+seed ile kur; production verisi kopyalama.
+- **Veri/Migration etkisi:** Yeni staging projesi kanonik zincirle kurulur; production değişmez.
+- **Ortam/Deploy:** Staging setup; production read-only.
+- **RLS/Güvenlik:** Ortam secret'ları commit edilmez; beta service role içermez; auth kullanıcıları ayrıdır.
+- **Edge-case'ler:** Aynı telefonda yan yana kurulum, deep link, widget/shared prefs/provider authority, updater'ın yanlış kanala geçmesi, staging pause.
+- **Kabul:** Beta production URL/ref ile build olamaz ve production'a tek write atamaz; stable staging ile build olamaz; iki uygulama yan yana kurulup bağımsız auth/cache/widget kullanır; ekranda channel+commit+backend görünür.
+- **Tuzaklar:** Yalnız tag ayırıp backend'i ortak bırakmak; package id değiştirirken updater/widget/deep-link kırmak.
+- **Model önerisi:** 🔴 Opus / frontier-high
+
+### WP-228: Güvenli Deploy Otomasyonu ve Agent Kapıları 🤖
+- **Program/Faz:** Kurtarma Faz 3
+- **Ajan:** —
+- **Durum:** [ ] Bekliyor
+- **Problem:** Migration ve build adımları elle/dağınık; yanlış hedef, eksik test ve gizli başarısızlık agent hatasına açık.
+- **Kapsam dışı:** PR auto-merge, onaysız production deploy, feature migration yazmak.
+- **SAHİP dosyalar (yaz):** `tooling/supabase/**`, `tooling/release/**`, uygun `.github/workflows/**`, environment example/README, `.agents/**` yalnız kartta belirtilen dar ekler, `progress.md`.
+- **DOKUNMA:** Gerçek secret/env dosyaları, release keystore, feature kodu ve migration gövdeleri.
+- **Adımlar:**
+  - [ ] Tek komut local replay+SQL/RLS/invariant test akışı oluştur.
+  - [ ] Staging migration list→dry-run→push→post-check ve beta build raporunu otomatikleştir.
+  - [ ] Production workflow'u manual environment approval + exact commit/head + backup checklist ile kilitle.
+  - [ ] Destructive command denylist, target project doğrulaması ve secret redaction ekle.
+  - [ ] Her çıktı için makine-okunur deploy manifesti ve kanıt klasörü üret.
+- **Veri/Migration etkisi:** Otomasyon değişikliği; staging push destekli, production yalnız kapılı.
+- **Ortam/Deploy:** Local+staging otomatik; production somut kullanıcı GO ile.
+- **RLS/Güvenlik:** GitHub/local secret store; least privilege; log redaction; fork/PR secret erişimi yok.
+- **Edge-case'ler:** Stale CLI link, yarım push, flaky network, migration history mismatch, workflow rerun/idempotency.
+- **Kabul:** Yanlış project-ref test fixture'ında komut başlamadan reddedilir; staging pipeline sıfırdan yeşil; production job approval olmadan çalışamaz; hiçbir secret logda görünmez.
+- **Tuzaklar:** “Tam otomasyon” adına production onayını kaldırmak; `--linked` reset.
+- **Model önerisi:** 🔴 Opus / frontier-high
+
+### WP-229: Eşit Süre Kaynakları ve Ödül Zinciri Onarımı ⚖️
+- **Program/Faz:** Kurtarma Faz 4A
+- **Ajan:** —
+- **Durum:** [ ] Bekliyor
+- **Problem:** `0051–0062` verified-only projeksiyonları manuel/sayaç/native kaynakları ayırıyor; mevcut `0063` veri yeniden hesaplama ve ödül üretiminde güvenli kabul edilemiyor.
+- **Kapsam dışı:** Taç görseli/istatistik UI, production deploy, history rewrite.
+- **SAHİP dosyalar (yaz):** Audit `0063`ün hiçbir remote'a uygulanmadığını kanıtlarsa yeniden tasarlanan `0063_*`; aksi halde yeni ileri migration (numara audit sonucu), `supabase/tests/**`, başarım/study repository server sözleşmeleri ve in_memory aynaları, `docs/recovery/EQUAL-SOURCES-RECONCILIATION.md`, `progress.md`.
+- **DOKUNMA:** Remote'a uygulanmış `0051–0062`; production; bağımsız UI/theme/navigation.
+- **Adımlar:**
+  - [ ] `0063`ü production adayı olmaktan çıkar; remote geçmişini kanıtla. Hiç uygulanmadıysa dosyayı güvenli/idempotent yeniden tasarla, uygulandıysa immutable bırakıp ileri migration yaz.
+  - [ ] Tüm geçerli `study_sessions` kaynaklarını kişisel/grup/XP/başarıma eşitle.
+  - [ ] Alfa/Kamp/Lokomotif/Lider Kurt/Mola Düşmanı progress→candidate→pending→claim zincirini tamamla.
+  - [ ] Recompute'i shadow/audit→diff→bounded apply yap; session/ledger/claimed reward silme.
+  - [ ] Cron/finalizer'ı Europe/Istanbul gün/hafta sınırlarında gerçek PostgreSQL fixture'larıyla test et.
+- **Veri/Migration etkisi:** Yeni ileri migration; append-only ledger ve session korunur. Geri alma fonksiyon/trigger yönlendirmesini önceki sürüme alır, kazanılmış ledger/claim silmez.
+- **Ortam/Deploy:** Local→staging; production WP-232'ye kadar yok.
+- **RLS/Güvenlik:** XP server-authoritative; kullanıcı yalnız kendi session DML; private progress self-only; idempotent unique keys.
+- **Edge-case'ler:** Gece yarısı, üyelik penceresi, eşit lider, çoklu grup, duplicate/retry, offline outbox, uzun geçmiş ve timeout.
+- **Kabul:** Aynı süreyi beş giriş yoluyla ekleyen fixture aynı tüm metrik/XP sonucunu verir; session/duration/ledger/claimed reward kaybı 0; ikinci projection/claim çift XP üretmez; günlük ve haftalık reward zinciri uçtan uca yeşil.
+- **Tuzaklar:** Başarı dönmüş migration içinde veri silmek; dormant candidate bırakmak; kritik exception'ı notice ile yutmak.
+- **Model önerisi:** 🔴 Opus / frontier-max
+
+### WP-230: Ekonomi, Taç ve Sürüm Gerçeği Onarımı 👑
+- **Program/Faz:** Kurtarma Faz 4B
+- **Ajan:** —
+- **Durum:** [ ] Bekliyor
+- **Problem:** Eski beta istemci 5 kademe/25k, DB 6 kademe/20k kullanıyor; XP etiketi ile bar farklı matematik gösteriyor; aynı `1.0.41+41` farklı kodları temsil ediyor.
+- **Kapsam dışı:** Yeni ekonomi tasarlamak, mevcut XP'yi yeniden fiyatlamak, production deploy.
+- **SAHİP dosyalar (yaz):** achievement/economy client katalogları, profile/gamification card-showcase, ilgili l10n ARB+generated, `app/pubspec.yaml`, release manifest/notları, contract fixture/testleri, `progress.md`.
+- **DOKUNMA:** Production DB, uygulanmış migration'lar, stats/repository akışı.
+- **Adımlar:**
+  - [ ] Onaylı bütün threshold/XP tuple'larını tek fixture üzerinden client/server testlerine bağla.
+  - [ ] Taçları `[0,20k,75k,200k,500k,1M]` ve 6 görsel kademeye hizala.
+  - [ ] Bar etiketi ve doluluk aynı paydayı/semantiği göstersin; erişilebilir açıklama ekle.
+  - [ ] Verified-only metin/ikon/not kalıntılarını ürün sözleşmesine göre temizle.
+  - [ ] Beta/stable benzersiz version/build + commit/backend/migration manifesti üret.
+- **Veri/Migration etkisi:** Yok; DB tuple doğrulaması salt-okunur/staging contract.
+- **Ortam/Deploy:** Beta staging build; production yok.
+- **RLS/Güvenlik:** XP istemciden yazılmaz; UI yalnız server profile/ledger gerçeğini gösterir.
+- **Edge-case'ler:** Eski crown rank id normalize, max rank, threshold sınırları, claim sonrası refresh, eski client uyumluluğu.
+- **Kabul:** 11 kademeli başarım + secret XP + crown fixture client/server birebir; 12.500 XP yeni eşikte %62,5 gösterir ve etiketle tutarlıdır; aynı build numarası iki artefakta çıkamaz; verified-only kullanıcı metni 0.
+- **Tuzaklar:** Barı değiştirip etiketi bırakmak; local katalogla DB dictionary'yi ayrı güncellemek.
+- **Model önerisi:** 🟣 Pro / frontier-high
+
+### WP-231: İstatistik Dönemi ve Realtime Güveni 📊
+- **Program/Faz:** Kurtarma Faz 5
+- **Ajan:** —
+- **Durum:** [ ] Bekliyor
+- **Problem:** “Hafta” son 7 gün sanılıyor; Pazartesi reseti veri kaybı gibi görünüyor. Oturum bitiminden sonra kişisel/grup toplam güncellemesi ayrıca cihazda güvenilir değil.
+- **Kapsam dışı:** Ham geçmişi değiştirmek, achievement economy, production migration.
+- **SAHİP dosyalar (yaz):** `app/lib/core/stats/**`, stats period/provider/view dosyaları, relevant study repository/cache refresh yolu, ilgili l10n/testler, `docs/recovery/STATS-CONTRACT.md`, `progress.md`.
+- **DOKUNMA:** Achievement UI, migration zinciri (gerekirse ayrı bağımlı WP aç), release config.
+- **Adımlar:**
+  - [ ] “Bu hafta (Pzt–bugün)” ile “Son 7 Gün”ü ayrı dönem yap; kişisel/grup aynı range yardımcılarını kullansın.
+  - [ ] Günlük ortalama paydasını görünür dönem sözleşmesiyle test et.
+  - [ ] Session stop/manual add sonrası cache+remote+summary invalidation yolunu tekilleştir.
+  - [ ] Pending/offline/realtime reconnect ve iki cihaz yenilenmesini test et.
+  - [ ] 20 Temmuz Pazartesi fixture'ında bugün/hafta/son7/ay sonuçlarını golden/widget testle.
+- **Veri/Migration etkisi:** Beklenmiyor; yalnız okuma/projeksiyon. Şema ihtiyacı çıkarsa durup ayrı WP planlanır.
+- **Ortam/Deploy:** Local→staging beta.
+- **RLS/Güvenlik:** Grup stats yalnız ortak aktif üyelik penceresi; cross-user raw session açılmaz.
+- **Edge-case'ler:** Pazartesi, ay/yıl başlangıcı, İstanbul DST geçmişi, cihaz TZ, 90 günlük hot window, offline cache stale snapshot.
+- **Kabul:** Oturum bitiminden sonra görünür kişisel toplam ≤1 sn, grup toplam ≤5 sn; 20 Temmuz fixture'ında bugün=34dk, takvim haftası=34dk, son7 dünkü 10 saati içerir, ay=43saat fixture sonucu; üyeler kaybolmuş gibi görünmez.
+- **Tuzaklar:** Veri kaybı sanıp session backfill yapmak; kişisel/grup farklı tarih yardımcıları.
+- **Model önerisi:** 🟣 Pro / frontier-high
+
+### WP-232: Staging Kanıtı ve Kontrollü Production Recovery 🚦
+- **Program/Faz:** Kurtarma Faz 6
+- **Ajan:** —
+- **Durum:** [ ] Bekliyor
+- **Problem:** Kod/test tamamlanması production güveni değildir; bütün zincir tek release adayı üzerinde kanıtlanmalı.
+- **Kapsam dışı:** Yeni özellik, kabul edilmemiş ekonomi/UX değişikliği, onaysız production deploy.
+- **SAHİP dosyalar (yaz):** `docs/recovery/RELEASE-GATE.md`, QA kanıt manifestleri, release notes/manifest, `progress.md`; production komutları yalnız GO sonrası.
+- **DOKUNMA:** Kabul adayı dışındaki feature kodu; uygulanan migration dosyaları.
+- **Adımlar:**
+  - [ ] Staging'i temiz kanonik zincir+seed ile kur; migration/RLS/invariant/reconciliation testlerini çalıştır.
+  - [ ] Samsung gerçek cihazda manual/kronometre/countdown/Pomodoro/native, kill/reboot/offline/iki cihaz ve claim senaryolarını kanıtla.
+  - [ ] Beta artefaktını ≥3 gün soak et; P0/P1=0, gözlemlenen veri drift=0 kapısı uygula.
+  - [ ] Production backup + exact dry-run + etki/rollback/post-check paketini kullanıcıya sun; somut GO bekle.
+  - [ ] GO sonrası migration→stable artefakt terfisi→post-check→24/72 saat gözlem; sorun halinde belgeli recovery.
+- **Veri/Migration etkisi:** Yalnız kabul edilmiş ileri migration'lar; production adımı ayrı onaylı ve denetlenebilir.
+- **Ortam/Deploy:** Staging zorunlu; production son kapı.
+- **RLS/Güvenlik:** Abuse suite yeşil; secrets redacted; release artefaktı doğru backend/channel imzalı.
+- **Edge-case'ler:** Staging pause, kısmi deploy, eski beta client, rollback sonrası yeni ledger, ağ kesintisi, cron gecikmesi.
+- **Kabul:** Tüm otomatik test+local SQL+staging RLS yeşil; gerçek cihaz matrisi kanıtlı; ≥3 gün soak; kullanıcı GO; production sonrası session/XP/reward invariant farkı 0 ve P0/P1=0.
+- **Tuzaklar:** Beta kodunu yeniden derleyip farklı commit'i stable yapmak; migration ile app'i yanlış sırada çıkarmak.
+- **Model önerisi:** 🔴 Opus / frontier-high
+
+> **Çakışma/seri yürütme:** WP-225→226→227→228 zorunlu seri. Sonra en fazla iki lane: WP-229 (server/migration) ve WP-230 (client/economy) paralel olabilir; ortak fixture/l10n/migration sahipliği önceden netleştirilir. WP-231 ikisi kabul edilince, WP-232 en son başlar. `supabase/migrations/**` aynı anda tek lane'dir.
 
 > **Açık ops işleri (kod dışı — bu tabloda değil, kanonik takip başka dosyada):** Play production programı (NO-GO), Edge deploy'lar (hesap silme purge CRON, aylık rapor cron), Data Safety/legal URL Console adımları → [`backlog.md`](backlog.md) + [`docs/PLAY-STORE-HAZIRLIK-TARAMASI.md`](docs/PLAY-STORE-HAZIRLIK-TARAMASI.md).
 > Tarihsel `[x]`/`[~]` WP kartları (WP-104…207) ve eski dalga/çakışma notları arşive taşındı (2026-07-19 temizlik).
@@ -141,9 +314,9 @@
 
 > Cihaz/ürün kabulü bekleyen tamamlanmış kod. Bu bölüm aktif çalışma değildir; başka WP'yi engellemez.
 
-- **WP-L — Lider Kurt haftalık başarımı (beta-v42)** · Kod + otomatik test tamamlandı (`flutter analyze`, 617 test) · Commit: bu WP commit'i · **Cihazda/staging'de doğrulanmalı:** `0062` + `0063` uygulandıktan sonra yalnız kapanmış ISO hafta (Europe/Istanbul) finalize edilir; tüm süre kaynaklarının toplamında tek lider 1 win, eşitlikte hiç kimse win/ödül almaz; 1/4/12/26/52/104 haftada yalnız birer pending inbox ödülü oluşur ve claim XP'si `2500/6000/15000/30000/60000/120000` ile sözlükle aynıdır; grup üyesi olmayan haftalık tablo/RPC erişimi yoktur; `group-achievement-week-finalizer` cron job aktiftir.
+- **WP-L — Lider Kurt haftalık başarımı (beta-v42)** · Kod + otomatik test tamamlandı (`flutter analyze`, 617 test). `0062` production'da user-reported uygulanmış olsa da eşit-kaynak/finalizer/reward kabulü yoktur; WP-229 staging doğrulamasına bağlandı. Eşik/XP: `1/4/12/26/52/104` ve `2500/6000/15000/30000/60000/120000`.
 
-- **WP-219R — Süre kaynağı eşitliği (beta-v42)** · Kod + otomatik test tamamlandı (`flutter analyze`, 617 test) · **Staging/cihazda doğrulanmalı:** `0063` uygulanınca mevcut `study_sessions`, `xp_ledger`, rozetler ve pending ödüller korunur; manuel giriş, uygulama sayacı ve widget/bildirim sayacı aynı kişisel/grup ilerlemesini üretir; eski `live_run_id` bağları temizlenir; kullanıcı yalnız kendi oturumunu düzenler; `group-achievement-day-finalizer` ile `group-achievement-week-finalizer` aktif ve eski `verified-*` cron'lar pasiftir.
+- **WP-219R — Süre kaynağı eşitliği (beta-v42)** · Kod + otomatik test tamamlandı (`flutter analyze`, 617 test) fakat audit `0063`ün reward/recompute güvenliğini kabul etmedi. **Production'a uygulanmaz; WP-229 tarafından yeni ileri migration olarak yeniden tasarlanacak.**
 
 - **WP-221 — Grup avatar storage trigger fix (beta-v41 · plan WP-H)** · Kod tamamlandı (`flutter analyze` temiz) · **Cihazda/staging'de doğrulanmalı:** migration `0054` uygulandıktan sonra grup fotoğrafı ilk yükleme + değiştirme + silme hatasız (eski hata: "direct deletions from storage tables is not allowed"); eski avatar nesnesi değişimden sonra Storage API ile temizleniyor; üye-olmayan private erişim reddi ve admin-olmayan yazma reddi korunuyor (QA 3.1–3.3).
 - **WP-222 — "Clock"→"Hours" saat birimi etiketi (beta-v41 · plan WP-I)** · Kod tamamlandı (`flutter analyze` temiz) · **Cihazda doğrulanmalı:** "Manuel süre ekle" ve "Günlük hedef" diyaloglarında saat alanı EN'de "Hours" (eski: "Clock"); DE "Stunden", AR "ساعات"; alarm/saat ekranlarındaki "Clock" etiketi değişmemiş.

@@ -15,6 +15,7 @@
 ## Vazgeçilmezler (özet — tam liste ve öncelik `.agents/AGENTS.md`)
 - `flutter` **`app/` içinde**; `run/test/build`'e **`--dart-define-from-file=env.json`** (yoksa sessizce InMemory'ye düşer); `analyze` bu bayrağı **almaz**.
 - **Gizli dosya commit etme** (`env.json`, `key.jks`, `key.properties`, `service_role`). **RLS zorunlu**; XP/kritik ilerleme **server-authoritative**; repository **çift** (`supabase/` + `in_memory/`).
+- **Ortamlar ayrıdır:** beta→staging, stable→production; migration local→staging→production terfi eder. Remote reset yasak, production mutasyonu somut kullanıcı GO ister (`docs/ORTAM-MIGRATION-YONETISIMI.md`).
 - Kullanıcı metni **Türkçe**; gün sınırı **Europe/Istanbul**.
 - **Tek dal `main` — branch/merge/push yok** (kullanıcı istemedikçe); her WP tek ayrık commit, `git add -A` yasak; çakışma dallarla değil **Aktif Çalışma Kaydı + ayrık SAHİP dosyalar** ile önlenir (`§1.5`). *(Eski "CI auto-merge / WP-39" planı iptal edildi.)*
 - "Tamamlandı" = kod değil; **cihazda güvenilir + kullanıcı beklentisini karşılayan** iş (DoD: `.agents/AGENTS.md §3`).

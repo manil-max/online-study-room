@@ -114,7 +114,7 @@ CI/PR auto-merge için WP-39 iptal edilmiştir. Yerel DoD ve gerçek cihaz QA ka
 - **Sosyal profil görünürlüğü:** yalnız ortak aktif grup üyesi; e-posta görünmez; adminlik erişimi otomatik genişletmez.
 - **Gizli dosyalar asla commit edilmez:** `env.json`, `app/android/key.jks`, `app/android/key.properties`, `KEYSTORE_SECRETS.txt`, Supabase `service_role`. Commit öncesi `git status` ile doğrula.
 - **Release keystore kalıcıdır.** `key.jks` değişirse Android güncellemeleri reddeder — yeniden üretme.
-- Migration'lar **sırayla** çalışır (`NNNN_ad.sql`, son numaradan devam). Sırayı bozma, kısmen uygulama. Canlı Supabase'e SQL Editor'dan uygulanır; her WP kendi migration + geri alma notunu getirir.
+- Migration'lar **sırayla** çalışır (`NNNN_ad.sql`, son numaradan devam). Sırayı bozma, kısmen uygulama. Tek kanonik zincir local → staging → production yönünde Supabase CLI ile terfi eder; normal deploy için SQL Editor kullanılmaz. Tam sözleşme: `docs/ORTAM-MIGRATION-YONETISIMI.md`.
 - **Migration Başlık Kuralı:** Yeni bir migration dosyası oluştururken, her zaman `supabase/migrations/` klasöründeki mevcut en yüksek numarayı kontrol et ve **1 artırarak** ilerle. Migration'ın **ilk satırı, başında `-- ` olacak şekilde gerçek dosya adının tamamı olmak zorundadır**; numara veya serbest açıklama tek başına kabul edilmez (`-- 0054_ornek.sql`). Açıklama ikinci satırdan başlar. Dosyanın en üstünde işleyiş özeti ve rollback talimatı içeren şu standart yorum bloğu mutlaka bulunmalıdır:
   ```sql
   -- NNNN_dosya_adi.sql
@@ -125,6 +125,20 @@ CI/PR auto-merge için WP-39 iptal edilmiştir. Yerel DoD ve gerçek cihaz QA ka
   -- Geri alma (Rollback): [Geri almak için çalıştırılması gereken SQL veya notlar]
   ```
 - Commit/test öncesi **yeni veya bu işte değiştirilmiş** migration dosyalarında ilk satır denetimi yap: yorumdan `-- ` kaldırıldığında metin `Path.GetFileName(...)` ile birebir aynı olmalıdır. Daha önce uygulanmış tarihsel migration'ları sırf biçim için topluca değiştirme.
+
+### Ortam, Supabase CLI ve production kapısı (KRİTİK)
+
+- Ortamlar kesin ayrıdır: `local` = Docker/CLI, `staging` = beta Supabase, `production` = stable Supabase. **Beta production backend'e, stable staging backend'e bağlanamaz.** Uyuşmazlık fail-closed hatadır.
+- Tek migration dizisi kullanılır. Ortama özel SQL çatalları yasaktır; staging önde, production yalnız kabul edilmiş migration head'inde olabilir.
+- Bir migration herhangi bir remote ortama uygulandıktan sonra **immutable** olur. Düzeltme yeni ileri migration ile yapılır; uygulanmış dosyayı değiştirip aynı numarayla yeniden kullanma.
+- SQL/migration testi gerçek local PostgreSQL'de çalışmalıdır. Yalnız dosya içeriğinde metin arayan contract testi migration'ın çalıştığını kanıtlamaz.
+- Remote işlemden önce hedef ortam + project-ref açıkça doğrulanır; `migration list` ve `db push --dry-run` çıktısı kayda alınır. Saklı/önceki `supabase link` hedefine güvenilmez.
+- `supabase db reset --linked` **her remote ortamda yasaktır**. Production'da truncate/drop/toplu delete/backfill ancak açık WP, backup, dry-run ve o somut işlem için kullanıcı onayıyla yapılabilir.
+- Production'a migration, Edge Function, secret, backfill, `migration repair`, stable tag/release veya push **açık deploy onayı olmadan yapılmaz**. Genel “tam yetki” gelecekteki somut production mutasyonu için onay sayılmaz.
+- Production normal akışı: local replay+test → staging dry-run/push → cihaz QA → ≥3 gün beta soak → backup → production dry-run → kullanıcı GO → production push → post-check.
+- `exception when others` ile kritik adımı yutup başarı döndüren migration kabul edilmez. Opsiyonel yetenek degrade oluyorsa post-check bunu release bloklayıcı olarak görünür kılar.
+- Migration WP'si şu invariant'ları önce/sonra raporlar: session satır/süre toplamı, XP ledger↔profil uzlaşması, duplicate reward/ledger, RLS abuse, cron/finalizer gerçek çalışması ve Europe/Istanbul sınırları.
+- Secret'lar (`SUPABASE_ACCESS_TOKEN`, DB parolası, service role, env dosyaları) repoya, test çıktısına veya kullanıcı yanıtına yazılmaz.
 
 ### Dil & Stil
 - Kullanıcıya görünen metin **Türkçe**; kod/teknik isim İngilizce. Gün sınırı her yerde **Europe/Istanbul** (tek yardımcıdan).
@@ -153,8 +167,10 @@ Bir WP "Kod tamamlandı"yı geçmek için:
 
 ## 4. Sürüm Yayınlama
 
-- v7 **zaten yayında** (özellik sürümü). İlk **kalite-kapılı** stable önerisi: **v8 "Güven Sürümü"**. Numara kalite kapısından geçmeden kesinleşmez → `Ürün kararı gerekiyor`.
-- `app/pubspec.yaml`'da `+N` artır → `git tag vN && git push origin vN`. **Etiket `vN` = build `+N`** (CI `--build-number`'a verir). Güncelleme kontrolü yalnız Android; APK'lar GitHub Releases'te.
+- Release gerçeği `progress.md` Proje Gerçekleri + artefakt manifestinden okunur; eski sabit sürüm notu kopyalanmaz.
+- Beta ve stable aynı build numarasını veya farklı kod için aynı version/build çiftini kullanamaz. Her artefakt kanal, git SHA, backend ortamı ve beklenen migration head taşır.
+- Beta tag/release yalnız staging env ile; stable tag/release yalnız production env ile oluşturulur. Build-time doğrulama yanlış eşleşmeyi reddeder.
+- Tag/push/release kullanıcı özellikle istemedikçe yapılmaz. Stable release ayrıca `docs/ORTAM-MIGRATION-YONETISIMI.md` production kapısı ve Kalite Programı DoD'sinden geçer.
 
 ---
 

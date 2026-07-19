@@ -9,15 +9,24 @@
 
 ## 🔴 Yüksek Öncelik
 
+- [~] **Proje kurtarma + stable/beta/Supabase izolasyonu — WP-225–232 (en yüksek öncelik, production freeze)**
+  - Canlı DB salt-okunur baseline ve veri invariant raporu; `0063` production'a uygulanmaz.
+  - Pinli Supabase CLI + Docker local replay; SQL Editor ile elle uygulanmış `0001–0062` geçmişi şema kanıtıyla uzlaştırılır.
+  - Beta ayrı staging Supabase/flavor/env'e, stable production'a bağlanır; ortam uyuşmazlığı fail-closed olur.
+  - Local/staging test ve deploy otomatik; production backup+dry-run+cihaz+soak+somut kullanıcı GO kapılıdır.
+  - Eşit süre kaynağı sözleşmesi, reward zinciri, 6 kademe/20k ekonomi, XP barı, istatistik refresh ve açık dönem etiketleri onarılır.
+  - Kanonik plan: `docs/KALITE-PROGRAMI.md §8.7`; operasyon sözleşmesi: `docs/ORTAM-MIGRATION-YONETISIMI.md`; WP kartları: `progress.md`.
+
 - [~] **Başarım canlı ilerleme + topla-ödül + ölü başarı fix + günlük görev + grup PP** — **WP-208–220 planlandı; Claude tur-2 saha denetimi sonrası plan v3.1** (2026-07-19)
-  - Claim = ayrı `achievement_rewards`; `xp_ledger` literal append-only. 50 XP/saat, kişisel başarımlar ve grup başarımları için **manuel giriş, uygulama içi sayaç ve native sayaç eşittir**; süre kaynağı kullanıcı kazanımını değiştirmez (`0063`).
+  - Claim = ayrı `achievement_rewards`; `xp_ledger` literal append-only. 50 XP/saat, kişisel başarımlar ve grup başarımları için **manuel giriş, uygulama içi sayaç ve native sayaç eşittir**; süre kaynağı kullanıcı kazanımını değiştirmez. Mevcut `0063` bu hedefin kabul edilmiş uygulaması değildir.
   - Gerçek progress self-only projection'dadır; ortak-okunur `user_achievements` secret progress taşımaz. `study_sessions.group_id` 0010'da kaldırıldığı için grup hesapları üyelik penceresindeki tüm `study_sessions` üzerinden yapılır; eski live-run tabloları yalnız denetim geçmişidir.
   - Alfa/Kamp/Lokomotif, Lider Kurt ve Mola Düşmanı tüm çalışma oturumlarından hesaplanır. Geçmiş çalışma satırları, ledger, rozet ve pending ödüller silinmez.
   - **Ürün kararı kilitli:** Kusursuz Ay **28/30** kuralıdır: takvim ayında en az 28 İstanbul günü hedefe ulaşmak gerekir (30 günlük ayda 28/30; sabit eşik 28). WP-208 server+Dart evaluator'ı bu kurala hizalar; önceki append-only XP/rozet geri alınmaz.
   - Günlük görev cloud modeli toggle/undo + tombstone + server-arrival LWW + Europe/Istanbul günüyle WP-212/213.
   - Grup avatarı private bucket + RLS + signed URL/versioned path (WP-214). Tap-to-top, WP-211 kanonik tab indeksleri ve gerçek scroll dosyalarıyla WP-215.
-  - Eski WP-219 verified-only XP/canary kapısı **iptal edildi**. `0063` sonrası kaynak farkı yoktur; native/widget başlangıcı da normal oturumdur.
+  - Eski WP-219 verified-only XP/canary kapısı **iptal edildi**. Kaynak eşitliği WP-229'da güvenli migration/reconciliation ile uygulanacak; native/widget başlangıcı da normal oturumdur.
   - Kanon plan v3.1 + WP kartları + denetçi bölümü: `docs/features/BASARIM-GOREV-GRUPPP-PLAN-2026-07.md`. Denetim yanıtları tarihsel referanstır: `docs/features/DENETIM-YANIT-CODEX-01.md`, `docs/features/DENETIM-YANIT-CODEX-02.md`.
+  - **Freeze:** Bu dalganın production terfisi WP-225–232 kabul edilene kadar durur; mevcut `0063` doğrudan uygulanmaz.
 
 - [~] **Google Play production hazırlığı** — **WP-110–124 ayrıntılı planlandı; mevcut karar NO-GO**
   - Politika bloklayıcıları: Play/sideload kanal ayrımı, GitHub APK updater izolasyonu, gizlilik/koşullar/topluluk kuralları, uygulama içi + web hesap silme ve UGC raporla/engelle/moderasyon.

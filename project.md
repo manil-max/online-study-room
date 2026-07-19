@@ -78,6 +78,16 @@ değildir; sadelik, güvenilirlik ve iyi kullanıcı deneyimi önceliklidir.
 - **Application/State** (Riverpod provider'ları, use-case'ler)
 - **Data** (repository'ler, Supabase client, modeller, yerel cache)
 
+### Ortam topolojisi
+
+| Kanal | Android kimliği | Backend | Veri |
+|---|---|---|---|
+| Local/debug | geliştirme kimliği | Supabase CLI + Docker | Seed/sentetik |
+| Beta | ayrı `.beta` application id + Beta adı/işareti | Ayrı staging Supabase | Test hesapları |
+| Stable | kalıcı production application id/imza | Production Supabase | Gerçek kullanıcı |
+
+Tek kaynak kod ve tek `supabase/migrations/` zinciri kullanılır. Beta/stable farkı flavor/env/release manifestinden gelir; beta hiçbir koşulda production backend'e bağlanmaz. Ayrıntı: `docs/ORTAM-MIGRATION-YONETISIMI.md`.
+
 ---
 
 ## 5. Veri Modeli
@@ -131,7 +141,9 @@ değildir; sadelik, güvenilirlik ve iyi kullanıcı deneyimi önceliklidir.
 | Kalem | Maliyet | Not |
 |---|---|---|
 | Flutter SDK | Ücretsiz | Açık kaynak |
-| Supabase Free tier | Ücretsiz | Küçük grup için yeter |
+| Supabase production | Mevcut plana bağlı | Gerçek kullanıcı ortamı |
+| Supabase staging | Free planda ikinci aktif proje kotası varsa ücretsiz; ücretli organizasyonda güncel fiyat yeniden kontrol edilir | Beta/test ortamı; inactivity pause kabul edilir |
+| Local Supabase | Ücretsiz | Docker + pinli Supabase CLI; geliştirme/reset burada |
 | Android dağıtımı | Ücretsiz | APK sideload + GitHub Releases |
 | Windows dağıtımı | Store veya imzalama maliyetine bağlı | Stable hedefi MSIX/Microsoft Store; ZIP yalnız QA/portable |
 | Otomatik güncelleme | Ücretsiz | GitHub Releases + in-app update |
@@ -175,7 +187,7 @@ değildir; sadelik, güvenilirlik ve iyi kullanıcı deneyimi önceliklidir.
 | 0035 | `cron_report_url_fix.sql` | Rapor cron URL/secret sözleşmesi |
 | 0036 | `security_hardening.sql` | Edge/RPC/profil erişimi güvenlik sertleştirmesi |
 
-> **Deploy gerçeği:** Bu tablo yerel migration envanteridir; canlı Supabase'e uygulanmış olmayı kanıtlamaz. Özellikle `0034–0036` ve ilişkili Edge Function/secret durumu WP-121 operasyon kapısında uzlaştırılır. Yeni migration numarası mevcut en yüksek yerel dosyadan sonra verilir.
+> **Deploy gerçeği (2026-07-20):** Yerelde `0001–0063` vardır. Kullanıcı production'da `0062` dahil SQL'lerin “Success” döndüğünü bildirdi; bu CLI history, fonksiyon gövdesi, cron veya veri invariant kanıtı değildir. `0063` production'a uygulanmamıştır ve kurtarma freeze'i boyunca uygulanmaz. WP-225/226, gerçek remote şema ile `supabase_migrations.schema_migrations` geçmişini uzlaştıracaktır. Yeni migration mevcut en yüksek yerel numaradan devam eder; herhangi bir remote'a uygulanmış dosya geriye dönük değiştirilmez.
 
 ---
 
@@ -183,6 +195,8 @@ değildir; sadelik, güvenilirlik ve iyi kullanıcı deneyimi önceliklidir.
 
 | Tarih | Karar |
 |---|---|
+| **Tem 20** | **Stable/beta ve backend izolasyonu.** Beta ayrı staging Supabase'e, stable production Supabase'e bağlanır; local geliştirme Docker/CLI üzerindedir. Tek migration zinciri local→staging→production terfi eder. Production deploy; staging+cihaz+soak+backup+dry-run ve somut kullanıcı GO olmadan yapılmaz. Mevcut `0063` freeze altındadır; kurtarma WP-225–232 ile yürür. |
+| **Tem 20** | **Süre kaynağı ürün sözleşmesi.** Manuel giriş, kronometre, geri sayım, Pomodoro ve native/widget sayaç istatistik/XP/başarım/grup açısından eşittir. “Bu hafta” takvim haftası olarak açık etiketlenir; ayrıca “Son 7 Gün” sağlanır. Taç eşikleri `[0,20k,75k,200k,500k,1M]` kanondur. |
 | **Tem 17** | **Google Play production programı WP-110–124 olarak planlandı.** Play build'i GitHub APK self-update/`REQUEST_INSTALL_PACKAGES` davranışından ayrılır; hesap silme, UGC güvenliği, yasal metinler, kısıtlı izin uygunluğu, Data Safety, backend deploy, target API 36 AAB ve gerçek cihaz/track kanıtları tamamlanmadan production GO verilmez. Her submission/rollout ayrıca açık kullanıcı onayı ister. |
 | Haz 20 | Proje başlatıldı. Stack: Flutter + Supabase. Giriş: e-posta/şifre. iOS kapsam dışı. |
 | Haz 21 | Avatar'lar public Supabase Storage bucket'ında. Profil çekimi başarısızsa kullanıcı dışarı atılmaz. |
