@@ -4,7 +4,7 @@
 > **Kanıt:** Veri envanteri `Kodda doğrulandı` · implementasyon WP-112+  
 > **Not:** Prod SQL uygulaması WP-121 kapısı; hard-delete Edge WP-113
 
-**Paralel ajanlar:** Claude WP-65 (`docs/AYLIK-RAPOR-KARAR.md` e-posta); Codex WP-68 widget. Bu belge yalnız retention/silme politikasıdır.
+Bu belge yalnız retention/silme politikasını tanımlar; paralel iş notları `progress.md`dedir.
 
 ---
 

@@ -31,7 +31,7 @@ notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
 ### Test notları
 - Canlı Supabase'de `0047`–`0053` migration'ları uygulanmış olmalıdır.
-- Bu sürüm beta içindir; cihaz testi sonucunu `docs/qa/BETA-v40-TEST.md` listesine göre kaydet.
+- Bu sürüm beta içindir; cihaz testi sonucunu `progress.md`deki aktif QA kaydına göre kaydet.
 
 ## [v39 / 1.0.39+39] - 2026-07-19
 

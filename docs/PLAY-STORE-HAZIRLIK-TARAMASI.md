@@ -250,9 +250,7 @@ Mümkünse private + signed URL (ileri iş).
 | Belge | Durum |
 |---|---|
 | Bu tarama | Güncel Play production NO-GO değerlendirmesi |
-| `archive/v8/V8-RELEASE-GATE.md` | Tarihsel V8 kapısı; güncel sürüm kararı için kullanılmaz |
-| `archive/v8/QA-V8-ANDROID.md` | Tarihsel V8 cihaz QA şablonu |
-| `archive/v8/V8-ROLLBACK.md` | Tarihsel V8 rollback planı |
+| Git geçmişi | V8 kapısı, cihaz QA ve rollback kayıtları; güncel sürüm kararı için kullanılmaz |
 | Otomatik test | Geniş suite; tam `flutter test` bu turda koşturulmadı |
 
 ### 6.4 Minimum cihaz matrisi (Play öncesi)

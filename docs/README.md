@@ -1,43 +1,45 @@
-# Doküman Rehberi
+# Dokümantasyon — tek giriş noktası
 
-Bu klasörün kökünde yalnız güncel çalışma belgeleri bulunur. Bir belgenin güncel
-ürün kararı sayılması için aşağıdaki **Kanonik** veya **Güncel karar ve yayın**
-gruplarında yer alması gerekir. Tarihsel dosyalar `archive/` altındadır ve güncel
-durum kaynağı değildir.
+Bu dizinde geçmiş plan/draft/ajan notu tutulmaz. Eski bir karar gerekiyorsa Git geçmişine
+bakılır; `archive/` yalnız `progress.md` tarafından bağlı tarihsel kanıttır ve **asla güncel
+karar kaynağı değildir**.
 
-## Başlangıç noktaları
+## Okuma sırası ve yetki
 
-| İhtiyaç | Kaynak |
-|---|---|
-| Aktif iş, sahiplik ve çakışma | [`../progress.md`](../progress.md) |
-| Kanonik ürün/kalite programı | [`KALITE-PROGRAMI.md`](KALITE-PROGRAMI.md) |
-| Proje çalışma kuralları | [`../.agents/AGENTS.md`](../.agents/AGENTS.md) |
-| Ajan kullanım kılavuzu | [`AJAN-KULLANIM.md`](AJAN-KULLANIM.md) |
+1. Aktif iş, sahiplik ve gerçek durum: [`../progress.md`](../progress.md)
+2. Ürün, kalite, güvenlik ve yayın kuralları: [`KALITE-PROGRAMI.md`](KALITE-PROGRAMI.md)
+3. Aktif başarımlar/görev/grup işi: [`features/BASARIM-GOREV-GRUPPP-PLAN-2026-07.md`](features/BASARIM-GOREV-GRUPPP-PLAN-2026-07.md)
+4. Çalışma kuralları: [`../.agents/AGENTS.md`](../.agents/AGENTS.md)
 
-## Güncel karar ve yayın
+Bu dört kaynak dışında bir Markdown dosyası, burada açıkça istisna olarak sayılmadıkça,
+ajan için karar veya uyarı üretmez. Kod, migration ve canlı sistem hakkındaki gerçek kaynak
+ilgili kaynak koddur; eski doküman değil.
 
-| Belge | Kullanım |
-|---|---|
-| [`PLAY-STORE-HAZIRLIK-TARAMASI.md`](PLAY-STORE-HAZIRLIK-TARAMASI.md) | Play production hazırlığı ve mevcut NO-GO riskleri |
-| [`HESAP-SILME-RETENTION-KARARI.md`](HESAP-SILME-RETENTION-KARARI.md) | Hesap silme ve saklama kararı |
-| [`AYLIK-RAPOR-KARAR.md`](AYLIK-RAPOR-KARAR.md) | Aylık rapor e-posta sağlayıcısı/teslim kararı |
-| [`VERSIONS.md`](VERSIONS.md) | Okunur sürüm indeksi |
-| [`DAGITIM.md`](DAGITIM.md) | Dağıtım ve markalama notları |
+## Kalan gerekli belgeler
 
-## Aktif mimari, ürün briefleri ve QA
+| Alan | Belge | Neden ayrı duruyor? |
+|---|---|---|
+| Play production | [`PLAY-STORE-HAZIRLIK-TARAMASI.md`](PLAY-STORE-HAZIRLIK-TARAMASI.md), [`play/OWNER-ACTION-CHECKLIST.md`](play/OWNER-ACTION-CHECKLIST.md), [`play-store/DATA-SAFETY.md`](play-store/DATA-SAFETY.md), [`play-store/PLAY-RELEASE-GATE.md`](play-store/PLAY-RELEASE-GATE.md) | Sahip aksiyonu ve Play beyanı, koddan üretilemez. Şu an durum **NO-GO**. |
+| Hesap silme | [`HESAP-SILME-RETENTION-KARARI.md`](HESAP-SILME-RETENTION-KARARI.md) | Ürün sahibinin açık kararı gereken veri/retention politikası. |
+| Hukuk | [`legal/`](legal/) | Yayınlanabilir Privacy Policy, Terms ve Community Guidelines metinleri. |
+| Kaynak-koda bağlı mimari | [`BASARIM-MIMARISI.md`](BASARIM-MIMARISI.md), [`SAAT-MIMARISI.md`](SAAT-MIMARISI.md), [`TEMA-MIMARISI.md`](TEMA-MIMARISI.md), [`CAMPFIRE-R2-TASARIM.md`](CAMPFIRE-R2-TASARIM.md) | Kod yorumları bu dosyalara doğrudan bağlanır; taşıma/silme link kırar. |
+| Windows | [`WINDOWS-URUN-PLANI.md`](WINDOWS-URUN-PLANI.md), [`WINDOWS-RELEASE-GATE.md`](WINDOWS-RELEASE-GATE.md), [`QA-WINDOWS.md`](QA-WINDOWS.md) | Windows paketleme ve cihaz kabulü için canlı çalışma listesi. |
+| Ortak cihaz kabulü | [`qa/DEVICE-QA-MATRIX.md`](qa/DEVICE-QA-MATRIX.md) | Samsung/Pixel/Android sürümü ve temel yolculuk kanıtı. |
+| Aktif RLS doğrulaması | [`features/ANALYTICS-RLS-TEST-PLAN.md`](features/ANALYTICS-RLS-TEST-PLAN.md) | Play sahip kontrol listesi bunu doğrudan kullanır. |
 
-- Mimari: `BASARIM-MIMARISI.md`, `SAAT-MIMARISI.md`, `TEMA-MIMARISI.md`
-- Ürün briefleri: `ANDROID-WIDGET-R2-BRIEF.md`, `CAMPFIRE-R2-TASARIM.md`,
-  `ISTATISTIK-R2-BRIEF.md`, `WINDOWS-DESKTOP-UI-R3.md`, `WINDOWS-URUN-PLANI.md`
-- QA ve kalite: `QA-ANDROID-WIDGETS.md`, `QA-L10N-EN-TR.md`,
-  `QA-MULTI-DEVICE-SYNC.md`, `QA-WINDOWS.md`, `WINDOWS-RELEASE-GATE.md`,
-  `WINDOWS-PERF-AUDIT.md`, `WINDOWS-PERFORMANCE-BASELINE.md`
-- Yerelleştirme: `L10N-ENVANTER.md`, `L10N-SOZLUK.md`
-- Canlı backend referansı: `BACKEND-DURUM.md`
+## Temel değişmezler
+
+- “Tamamlandı” demek için otomatik test, gerçek cihaz QA ve ürün kabulü gerekir.
+- Flutter + Riverpod + Supabase; repository hem Supabase hem InMemory uygulanır.
+- RLS gerçek yetkilendirme katmanıdır. XP ve kritik ilerleme sunucu tarafından,
+  idempotent event + append-only ledger ile yönetilir.
+- Kullanıcı metni Türkçe; gün sınırı `Europe/Istanbul`.
+- Stable yayın için migration/staging, tüm testler, Android release build, Samsung cihaz,
+  temel yolculuklar, widget/bildirim cold-start, recovery/RLS ve rollback kanıtı zorunludur.
+- Play artefaktı GitHub APK kurmaz; hesap silme hem uygulama içinden hem webden sağlanır;
+  UGC yüzeyleri raporlama/engelleme/moderasyon olmadan production'a çıkmaz.
 
 ## Arşiv
 
-`archive/` tarihsel kayıtları tutar — **güncel bağımlılık/release kapısı olarak kullanma:**
-- [`archive/v8/`](archive/v8/README.md) — V8 dönemi denetim/yayın kanıtları.
-- [`archive/progress-tarihsel-2026-07.md`](archive/progress-tarihsel-2026-07.md) — progress.md'den ayrılan tamamlanmış WP kartları (Tarihsel uygulama kartları, Play detay, park/Tamamlanan detayları, Son Teslim Notları).
-- [`archive/KALITE-PROGRAMI-tarihsel.md`](archive/KALITE-PROGRAMI-tarihsel.md) — KALITE-PROGRAMI'den ayrılan tamamlanmış program kapsamları (§0/1/3/5.1/6/8.1–8.7/10/12).
+[`archive/`](archive/) yalnız `progress.md`deki tarihsel iş kartları ve V8 kanıtları için
+korunur. Yeni bir iş bu dosyalardan claim edilmez; güncel kararla çelişen her ifade geçersizdir.
