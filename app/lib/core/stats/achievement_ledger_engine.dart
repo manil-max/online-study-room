@@ -295,6 +295,34 @@ const int kStudyHourXp = 50;
 /// Sistem ledger kimliği (rozet kataloğunda gösterilmez).
 const String kStudyHourAchievementId = 'study_hour_xp';
 
+/// Must match migration 0050. Later verified metric WPs replace only their own
+/// source version while keeping this projection contract stable.
+const Map<String, String> kAchievementMetricSourceVersions = {
+  'marathon_total': 'metric_v2',
+  'steel_will': 'metric_v2',
+  'day_hero': 'metric_v2',
+  'fire_streak': 'metric_v2',
+  'weekend_goal_days': 'metric_v2',
+  'perfect_month': 'perfect_month_30_v1',
+  'alpha_wolf': 'group_verified_v1',
+  'team_player': 'metric_v2',
+  'campfire_hours': 'group_verified_v1',
+  'inspiration': 'metric_v2',
+  'locomotive': 'group_verified_v1',
+  'secret_night_owl': 'metric_v2',
+  'secret_dawn': 'metric_v2',
+  'secret_404': 'metric_v2',
+  'secret_pi': 'metric_v2',
+  'secret_break_enemy': 'break_verified_v1',
+  'secret_last_second': 'metric_v2',
+  'secret_1337': 'metric_v2',
+  'secret_no_limits': 'metric_v2',
+  'secret_matrix': 'metric_v2',
+  'secret_nye': 'metric_v2',
+};
+
+const Set<String> kCurrentAchievementMetrics = {'fire_streak'};
+
 /// XP → 5 basamaklı taç rütbesi.
 /// Eski 7'li rütbeler (wood_novice, ruby_master) görselde [normalize] edilir;
 /// yeni yazımlar yalnız bu 5 id'yi üretir.
@@ -318,8 +346,13 @@ tz.TZDateTime _asIstanbul(DateTime instant) =>
 
 /// Saf metrik + ödül motoru (server RPC ile aynı kurallar; istemci XP yazmaz).
 class AchievementLedgerEngine {
-  AchievementLedgerEngine({List<AchievementDictEntry>? dictionary})
-    : dictionary = dictionary ?? kAchievementDictV3();
+  AchievementLedgerEngine({
+    List<AchievementDictEntry>? dictionary,
+    Map<String, int> initialLedgerXp = const {},
+  }) : dictionary = dictionary ?? kAchievementDictV3() {
+    _ledgerXp.addAll(initialLedgerXp);
+    _eventKeys.addAll(initialLedgerXp.keys);
+  }
 
   final List<AchievementDictEntry> dictionary;
 
@@ -433,7 +466,7 @@ class AchievementLedgerEngine {
       final key = '${e.key.year}-${e.key.month.toString().padLeft(2, '0')}';
       byMonth[key] = (byMonth[key] ?? 0) + 1;
     }
-    final perfectMonths = byMonth.values.where((d) => d >= 28).length;
+    final perfectMonths = byMonth.values.where((d) => d >= 30).length;
 
     return {
       'total_hours': totalSeconds ~/ 3600,
@@ -460,7 +493,7 @@ class AchievementLedgerEngine {
     };
   }
 
-  int _progressFor(String id, Map<String, dynamic> metrics) {
+  int progressForAchievement(String id, Map<String, dynamic> metrics) {
     final secrets = Map<String, dynamic>.from(metrics['secrets'] as Map? ?? {});
     switch (id) {
       case 'marathon_total':
@@ -527,7 +560,7 @@ class AchievementLedgerEngine {
       if (def.id == kStudyHourAchievementId || def.category == 'system') {
         continue;
       }
-      final progress = _progressFor(def.id, metrics);
+      final progress = progressForAchievement(def.id, metrics);
       for (final tier in def.tiers) {
         if (progress < tier.threshold) continue;
         final key = ledgerEventKey(userId, def.id, tier.tier);

@@ -201,6 +201,67 @@ void main() {
         2,
       );
     });
+
+    test('Kusursuz Ay 28 ve 29 hedef gününü reddeder, 30 günü kabul eder', () {
+      List<StudySession> monthSessions(int year, int month, int days) => [
+        for (var day = 1; day <= days; day++)
+          _session(
+            id: '$year-$month-$day',
+            start: DateTime.utc(year, month, day, 12),
+            minutes: 60,
+          ),
+      ];
+
+      final february = AchievementLedgerEngine().computeMetrics(
+        sessions: monthSessions(2026, 2, 28),
+        dailyGoalMinutes: 60,
+        now: DateTime.utc(2026, 3, 1),
+      );
+      final leapFebruary = AchievementLedgerEngine().computeMetrics(
+        sessions: monthSessions(2024, 2, 29),
+        dailyGoalMinutes: 60,
+        now: DateTime.utc(2024, 3, 1),
+      );
+      final april = AchievementLedgerEngine().computeMetrics(
+        sessions: monthSessions(2026, 4, 30),
+        dailyGoalMinutes: 60,
+        now: DateTime.utc(2026, 5, 1),
+      );
+
+      expect(february['perfect_months'], 0);
+      expect(leapFebruary['perfect_months'], 0);
+      expect(april['perfect_months'], 1);
+    });
+
+    test('legacy 28-gün Kusursuz Ay claim ve XP geri alınmaz', () {
+      final key = ledgerEventKey('legacy-user', 'perfect_month', 1);
+      final engine = AchievementLedgerEngine(initialLedgerXp: {key: 300});
+      final sessions = [
+        for (var day = 1; day <= 28; day++)
+          _session(
+            id: 'legacy-$day',
+            userId: 'legacy-user',
+            start: DateTime.utc(2026, 2, day, 12),
+            minutes: 60,
+          ),
+      ];
+
+      final result = engine.processEvent(
+        userId: 'legacy-user',
+        eventType: 'manual_refresh',
+        sessions: sessions,
+        dailyGoalMinutes: 60,
+        now: DateTime.utc(2026, 3, 1),
+      );
+
+      expect(result.metrics['perfect_months'], 0);
+      expect(engine.eventKeys, contains(key));
+      expect(result.totalXp, greaterThanOrEqualTo(300));
+      expect(
+        result.awarded.where((a) => a.achievementId == 'perfect_month'),
+        isEmpty,
+      );
+    });
   });
 
   group('InMemoryAchievementRepository', () {
@@ -210,11 +271,7 @@ void main() {
       expect(dict.length, 21);
 
       final sessions = [
-        _session(
-          id: 's1',
-          start: DateTime.utc(2026, 6, 1, 12, 0),
-          minutes: 90,
-        ),
+        _session(id: 's1', start: DateTime.utc(2026, 6, 1, 12, 0), minutes: 90),
       ];
       final a = await repo.processEvent(
         eventType: 'session_completed',

@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/config/supabase_config.dart';
 import '../models/achievement_ledger.dart';
+import '../models/achievement_metric_progress.dart';
 import '../models/study_session.dart';
 import '../repositories/achievement_repository.dart';
 import '../repositories/in_memory/in_memory_achievement_repository.dart';
@@ -15,7 +16,9 @@ final achievementRepositoryProvider = Provider<AchievementRepository>((ref) {
   if (SupabaseConfig.isConfigured) {
     return SupabaseAchievementRepository(Supabase.instance.client);
   }
-  return InMemoryAchievementRepository();
+  final repository = InMemoryAchievementRepository();
+  ref.onDispose(repository.dispose);
+  return repository;
 });
 
 /// Sözlük (seed). Supabase: `achievements_dict`; offline: yerel kopya.
@@ -24,57 +27,67 @@ final achievementDictionaryProvider =
       return ref.watch(achievementRepositoryProvider).fetchDictionary();
     });
 
+/// Private real progress for the signed-in account. Callers cannot request a
+/// social profile's secret/raw metric values.
+final achievementMetricProgressProvider =
+    StreamProvider<List<AchievementMetricProgress>>((ref) {
+      final user = ref.watch(authStateProvider).value;
+      if (user == null) return Stream.value(const []);
+      return ref
+          .watch(achievementRepositoryProvider)
+          .watchMetricProgress(user.id);
+    });
+
 /// Oturum bitti / profil açıldı / manuel yenileme sonrası sunucuya olay fırlatır.
 ///
 /// Dönüş: yeni kazanılan kademeler + güncel total_xp (ledger toplamı).
 /// Aynı event_key ikinci kez XP vermez (idempotency — sunucu/engine).
-final processAchievementEventProvider = Provider<
-  Future<AchievementEventResult> Function({
-    required String eventType,
-    Map<String, dynamic> payload,
-  })
->((ref) {
-  return ({
-    required String eventType,
-    Map<String, dynamic> payload = const {},
-  }) async {
-    final user = ref.read(authStateProvider).value;
-    final repo = ref.read(achievementRepositoryProvider);
+final processAchievementEventProvider =
+    Provider<
+      Future<AchievementEventResult> Function({
+        required String eventType,
+        Map<String, dynamic> payload,
+      })
+    >((ref) {
+      return ({
+        required String eventType,
+        Map<String, dynamic> payload = const {},
+      }) async {
+        final user = ref.read(authStateProvider).value;
+        final repo = ref.read(achievementRepositoryProvider);
 
-    List<StudySession> sessions = const [];
-    var goalMinutes = 360;
-    if (!SupabaseConfig.isConfigured) {
-      // InMemory: metrik istemci oturumlarından (demo); XP yine engine ledger'da.
-      try {
-        sessions = await ref.read(userSessionsProvider.future);
-      } catch (_) {
-        sessions = const [];
-      }
-      try {
-        goalMinutes = ref.read(dailyGoalMinutesProvider);
-      } catch (_) {
-        goalMinutes = 360;
-      }
-    }
+        List<StudySession> sessions = const [];
+        var goalMinutes = 360;
+        if (!SupabaseConfig.isConfigured) {
+          // InMemory: metrik istemci oturumlarından (demo); XP yine engine ledger'da.
+          try {
+            sessions = await ref.read(userSessionsProvider.future);
+          } catch (_) {
+            sessions = const [];
+          }
+          try {
+            goalMinutes = ref.read(dailyGoalMinutesProvider);
+          } catch (_) {
+            goalMinutes = 360;
+          }
+        }
 
-    return repo.processEvent(
-      eventType: eventType,
-      payload: payload,
-      sessions: sessions,
-      dailyGoalMinutes: goalMinutes,
-      userId: user?.id,
-    );
-  };
-});
+        return repo.processEvent(
+          eventType: eventType,
+          payload: payload,
+          sessions: sessions,
+          dailyGoalMinutes: goalMinutes,
+          userId: user?.id,
+        );
+      };
+    });
 
 /// Kolay API: oturum tamamlandı olayı.
 final notifySessionCompletedForAchievementsProvider =
-    Provider<Future<AchievementEventResult> Function()>(
-  (ref) {
-    final process = ref.watch(processAchievementEventProvider);
-    return () => process(eventType: 'session_completed');
-  },
-);
+    Provider<Future<AchievementEventResult> Function()>((ref) {
+      final process = ref.watch(processAchievementEventProvider);
+      return () => process(eventType: 'session_completed');
+    });
 
 /// Kolay API: profil / başarım ekranı açılışında yeniden değerlendirme.
 final refreshAchievementsProvider =
