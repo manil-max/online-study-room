@@ -3,6 +3,44 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.42-beta.6",
+      "buildNumber": 4206,
+      "channel": "beta",
+      "date": "2026-07-20",
+      "title": "beta-v4206: sayaç durdurma bug'ı — gerçek kök neden düzeltmesi",
+      "highlights": [
+        "Bildirimden/widget'tan başlatılan çalışma artık uygulama içi Durdur ile GERÇEKTEN duruyor.",
+        "Kronometrede Durdur'a ard arda basınca toplam sürenin birden fazla artması (çift/çoklu sayım) giderildi."
+      ],
+      "fixes": [
+        "Durdurmanın çalışmamasının GERÇEK nedeni bulundu: arka plan sayaç servisi, doğrulanmamış her çalışma için boş bir 'kimlik' yazıyordu; uygulama bunu geçerli sanıp durdurma anında sunucuya boş kimlikle istek atıyor, istek hata verince sayaç hiç durmuyordu. Artık boş kimlik yok sayılıyor ve durdurma her koşulda tamamlanıyor.",
+        "Durdur'a ard arda basıldığında aynı çalışma aralığı birden çok kez kaydedilip toplam süreyi şişiriyordu; artık devam eden bir durdurma varken tekrar kayıt yapılmıyor (tek oturum).",
+        "Bir kayıt/ağ hatası olsa bile sayaç yine de duruyor (oturum çevrimdışı kuyruğa alınıp sonra gönderiliyor); önceden tek bir hata 'durdurulamıyor'a dönüşüyordu.",
+        "Uygulama içi başlatma ile arka plan servisinin saat hassasiyeti farkı, gereksiz durum yeniden-benimsemesini tetikleyip yukarıdaki soruna zemin hazırlıyordu; bu da giderildi."
+      ],
+      "notes": [
+        "beta-v4205/4204'ten geliyorsan oturumun korunur; aynı ayrı test ortamı kullanılıyor.",
+        "Öncelikli test: (1) bildirimden/widget'tan Başlat → uygulama içi Durdur GERÇEKTEN durdurur mu; (2) kronometreyi çalıştır → Durdur'a hızlı 3-4 kez bas → toplam yalnız bir kez artar mı; (3) çalışırken app'i kapat-aç → Durdur.",
+        "Bu düzeltmeler önceki turlarda kaçırılan cihaz gerçeğini (boş kimlik) taklit eden otomatik testlerle korunuyor. Yalnız istemci beta adayı; production deploy/migration yok."
+      ],
+      "titleEn": "beta-v4206: timer stop bug — real root-cause fix",
+      "highlightsEn": [
+        "Study started from the notification/widget now REALLY stops via the in-app Stop button.",
+        "Fixed the total time increasing multiple times (double/multi counting) when tapping Stop repeatedly."
+      ],
+      "fixesEn": [
+        "Found the REAL reason Stop didn't work: the background timer service wrote an empty 'identity' for every unverified run; the app treated it as valid and, on stop, sent a server request with that empty identity — when it errored, the timer never stopped. Empty identities are now ignored and stop always completes.",
+        "Tapping Stop repeatedly recorded the same interval several times, inflating the total; a re-entrancy lock now prevents duplicate records (single session).",
+        "Even if a save/network error occurs the timer still stops (the session is queued offline and sent later); previously a single error turned into 'can't stop'.",
+        "A clock-precision mismatch between in-app start and the background service triggered needless state re-adoption that set up the above problem; fixed too."
+      ],
+      "notesEn": [
+        "If you are coming from beta-v4205/4204 your session is kept; the same separate test environment is used.",
+        "Priority test: (1) notification/widget Start then in-app Stop — does it truly stop; (2) run the stopwatch, tap Stop 3-4 times fast — does the total increase only once; (3) kill/reopen the app while running, then Stop.",
+        "These fixes are guarded by automated tests that mimic the device reality (empty identity) missed in prior rounds. Client beta candidate only; no production deploy/migration."
+      ]
+    },
+    {
       "versionName": "1.0.42-beta.5",
       "buildNumber": 4205,
       "channel": "beta",

@@ -4,6 +4,23 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [beta-v4206 / 1.0.42-beta.6+4206] - 2026-07-20
+
+> **Beta test sürümü — sayaç durdurma bug'ının GERÇEK kök nedeni.** Tam senkronizasyon tetkiki sonrası; WP-233/241/243 turları yanlış katmanı (reconcile yarışı) düzeltiyordu, asıl neden farklıydı. beta-v4205/4204'ten geliyorsan oturumun korunur.
+
+### Düzeltmeler
+
+- **Bildirimden/widget'tan başlatılan sayaç uygulama içi Durdur ile durmuyordu — GERÇEK kök neden (D1, P0).** Arka plandaki native sayaç servisi, sunucu-doğrulaması olmayan HER başlatmayı (bildirim/widget/uygulama içi) boş bir "koşu kimliği" (`liveRunToken=""`) ile kaydediyordu. Uygulama bu boş kimliği geçerli sanıp (`"" != null`) durdurma anında sunucuya boş kimlikle "finalize" isteği atıyor, istek hata verince durdurma akışı yarıda kesiliyor ve sayaç hiç durmuyordu (oturum da yazılmıyordu). Artık boş kimlik tek noktada yok sayılıyor (`_normalizeRunToken`); native ne yazarsa yazsın uygulama onu doğrulanmış sanmıyor. **Bu, stable v39'da olmayan; kurtarma sürecinde eklenen ölü "doğrulanmış oturum" özelliğinin durdurma yoluna sızmasından kaynaklanıyordu.** Önceki betaların neden farklı davrandığı da bununla açıklanıyor (v4204'ün zaman penceresi uygulama-içi başlatmayı tesadüfen koruyordu; v4205 onu kaldırınca uygulama-içi de bozuldu).
+- **Ard arda Durdur = çift/çoklu sayım (D2, P0).** Durdurma, oturumu kaydederken ağ cevabını beklerken sayaç hâlâ "çalışıyor" göründüğü için, bu pencerede her ek Durdur basışı aynı aralığı bir kez daha kaydedip toplam süreyi şişiriyordu. Artık devam eden bir durdurma varken ikinci giriş reddediliyor (tek oturum).
+- **Kayıt hatasında sayaç yine durur (D4).** Kayıt/gönderim hata verse bile sayaç durduruluyor; oturum çevrimdışı kuyruğa alınıp sonra gönderiliyor. Önceden tek bir hata "durdurulamıyor"a dönüşüyordu.
+- **Saat hassasiyeti taşıyıcısı (D3).** Uygulama içi başlatmanın mikrosaniyeli zamanı ile native servisin milisaniyeli zamanı arasındaki fark, her yankıda gereksiz "durum yeniden benimseme" tetikleyip yukarıdaki zehirin taşıyıcısı oluyordu; karşılaştırma artık milisaniye granülerliğinde.
+
+### Test notları
+
+- Öncelikli doğrulamalar: (1) bildirimden/widget'tan Başlat → uygulama içi Durdur GERÇEKTEN durduruyor mu; (2) kronometre çalışırken Durdur'a hızlı 3-4 kez bas → toplam yalnız bir kez artıyor mu; (3) çalışırken uygulamayı kapat-aç → Durdur.
+- Bu düzeltmeler, önceki turların kaçırdığı cihaz gerçeğini (native'in yazdığı boş kimlik) taklit eden deterministik regresyon testleriyle korunuyor (`timer_background_reconcile_test.dart` WP-245/246/247). Testler artık `token: ''` fikstürü kullanıyor — bu, üç betayı da CI'da yakalardı.
+- Yalnız istemci beta adayı; production deploy/migration içermez.
+
 ## [beta-v4205 / 1.0.42-beta.5+4205] - 2026-07-20
 
 > **Beta test sürümü — sayaç durdurma yarışı deterministik düzeltme.** beta-v4204/4203’ten geliyorsan oturumun korunur; aynı ayrı test ortamı kullanılıyor.
