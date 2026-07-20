@@ -50,15 +50,17 @@
 - **Not:** WP-83 tamamlandı, envanter ve sözlük oluşturuldu.
 
 ### Claude Lane
-- **Durum:** [x] Boşta
-- **Faz/WP:** —
-- **Aşama:** —
-- **SAHİP yollar:** —
-- **Ortak/riskli yüzey:** —
-- **Dal:** — (main)
-- **Başlangıç:** —
-- **Son güncelleme:** 2026-07-19 23:57 (Europe/Istanbul)
-- **Not:** beta-v41 turu kapandı (WP-221/222/223/224 cihazda doğrulandı). Kalan ekonomi/kademe/alpha WP'leri sırayla yürüyor (beta-v42). Bitmiş (kod+test, cihaz QA bekliyor):
+- **Durum:** [~] Aktif
+- **Faz/WP:** WP-229/230 staging kabul kapısı (Codex'ten devralındı)
+- **Aşama:** WP-230 beta artefaktı — kesilen build'in tamamlanması
+- **SAHİP yollar:** `tooling/release/**`, `.artifacts/deploy-evidence/**`, `docs/recovery/**`, `progress.md`
+- **Ortak/riskli yüzey:** Staging Supabase (`rskiuyjabyzelqododpa`) salt-okunur key erişimi; production mutasyonu YOK; `app/env.json` overwrite edilmez
+- **Dal:** `main`
+- **Başlangıç:** 2026-07-20 15:40 (Europe/Istanbul)
+- **Son güncelleme:** 2026-07-20 15:40 (Europe/Istanbul)
+- **Not:** Codex handoff'u devralındı; çakışma ön-kontrolü temiz (Codex lane bu işin kendisi, diğer tüm lane'ler boşta). Devralınan gerçek durum: WP-229 staging apply `8a9bc4d` başarılı (head `0064`, 80/80 PASS), reconciliation `79e6f74` 0 kayıp. WP-230 build `753a605`'te üretildi ama APK kimlik/imza doğrulaması yoktu; `bd60064` aapt badging + apksigner v2 + kanıt artefaktı adımlarını ekledi. 12:33'teki tekrar koşusu 01–04 adımlarını geçip `05-beta-apk` sırasında oturum limitinden kesildi. Kalan iş: exact HEAD `bd60064` üzerinde beta build'i baştan sona koşturmak ve release gate manifestini üretmek.
+
+- **Not (Claude arşivi — önceki tur):** beta-v41 turu kapandı (WP-221/222/223/224 cihazda doğrulandı). Kalan ekonomi/kademe/alpha WP'leri sırayla yürüyor (beta-v42). Bitmiş (kod+test, cihaz QA bekliyor):
   - **WP-J** görev sırası daily-üstte + optimistic UI (`sortUserTasksByDue` daily-first, `userTasksProvider`→AsyncNotifier, ekle/tamamla/sil optimistic, hata→geri al+snackbar). Commit `54a2c84`.
   - **WP-A+B** 6 kademeli ekonomi (eşli). Renkler: 4=Elmas `#38BDF8`, 5=Zümrüt `#17E4A0`, 6=Immortal `#B02E42` (platin kalktı). Taç 6 rütbe + eşik `[0,20k,75k,200k,500k,1M]`. Client `progression_visuals`+`achievement_ledger_engine` tüm tuple/XP; `secret_1337` tamamen silindi. l10n: `coreZumrutTac`/`coreImmortal`/`coreImmortalTac` eklendi (Immortal: EN Immortal, TR Ölümsüz, DE Unsterblich, AR الخالد). Sunucu **migration `0056_six_tier_economy.sql`**: dict tuple/max_tier=6, `_recalc_crown_rank` 6 rütbe, secret_1337 FK-temiz silme + etkilenen XP geri hesap, taç XP-korumalı hizalama. **process_achievement_event DEĞİŞMEDİ** (claim=WP-C, perfect_month=WP-D, campfire=WP-E). analyze temiz, tüm testler yeşil. **Production'da uygulandığı kullanıcı tarafından bildirildi; WP-225/226 semantik audit yapacak.**
   - Yol: stale WP-222 goal-dialog testi de düzeltildi (`Clock`→`Hours`).
@@ -69,10 +71,10 @@
   - K/L kodu repoda; kabul kanıtı yoktur. Tüm production terfisi artık `docs/ORTAM-MIGRATION-YONETISIMI.md` ve WP-225–232 kapısına tabidir.
 
 ### Codex Lane
-- **Durum:** [~] Aktif
-- **Faz/WP:** WP-229/230 staging kabul kapısı
-- **Aşama:** WP-230 gerçek staging beta artefaktı hazırlanıyor
-- **SAHİP yollar:** `supabase/migrations/0064_*`, `supabase/tests/**`, `tooling/supabase/DeployGuard.psm1`, `tooling/supabase/remote.ps1`, staging owner helper'ları, `tooling/supabase/guard.tests.ps1`, `tooling/release/deploy-contract.json`, `tooling/release/beta-build.ps1`, `tooling/release/beta-build.tests.ps1`, `tooling/release/staging-beta-owner.ps1`, `app/android/app/build.gradle.kts`, `tooling/README.md`, staging/GitHub Environment yapılandırması, `docs/recovery/EQUAL-SOURCES-RECONCILIATION.md`, `docs/recovery/ENVIRONMENT-MATRIX.md`, WP-229/230 kabul kanıtları, `progress.md`
+- **Durum:** [x] Boşta — WP-229/230 **Claude lane'ine devredildi** (2026-07-20 15:40, oturum limiti)
+- **Faz/WP:** —
+- **Aşama:** —
+- **Devir öncesi SAHİP yollar (arşiv):** `supabase/migrations/0064_*`, `supabase/tests/**`, `tooling/supabase/DeployGuard.psm1`, `tooling/supabase/remote.ps1`, staging owner helper'ları, `tooling/supabase/guard.tests.ps1`, `tooling/release/deploy-contract.json`, `tooling/release/beta-build.ps1`, `tooling/release/beta-build.tests.ps1`, `tooling/release/staging-beta-owner.ps1`, `app/android/app/build.gradle.kts`, `tooling/README.md`, staging/GitHub Environment yapılandırması, `docs/recovery/EQUAL-SOURCES-RECONCILIATION.md`, `docs/recovery/ENVIRONMENT-MATRIX.md`, WP-229/230 kabul kanıtları, `progress.md`
 - **Ortak/riskli yüzey:** Supabase CLI ile ayrı staging projesi; `0064` yalnız staging; production mutasyonu kesinlikle yok
 - **Dal:** `main`
 - **Başlangıç:** 2026-07-20 14:15 (Europe/Istanbul)
