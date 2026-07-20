@@ -18,6 +18,11 @@ build/
 **/doc/api/
 *.lock.bak
 
+# --- Repo geliştirme araçları (Supabase CLI) ---
+node_modules/
+supabase/.temp/
+supabase/.branches/
+
 # --- Android ---
 **/android/**/gradle-wrapper.jar
 **/android/.gradle/

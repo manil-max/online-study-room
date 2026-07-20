@@ -12,7 +12,7 @@
 - **Framework:** Flutter ^3.12 · Riverpod 3.3 · Supabase 2.15 · fl_chart
 - **Uygulama kökü:** `app/` — Flutter komutları yalnız burada çalışır.
 - **Repo katmanı çift:** Her arayüz `supabase/` ve `in_memory/` repository'leriyle desteklenir.
-- **Migration'lar:** `supabase/migrations/` — yerelde `0001–0063` vardır. WP-225 production audit'i `supabase_migrations.schema_migrations` tablosunun bulunmadığını, 0053 run-finalized trigger/fonksiyon drift'ini, daily/weekly cron run=0 durumunu ve 0063'ün uygulanmadığını kanıtladı. History uzlaşması WP-226; `0063` freeze altında.
+- **Migration'lar:** `supabase/migrations/` — yerelde `0001–0063` pinli CLI/Docker ile boş DB'de tekrar kuruluyor ve 34 gerçek SQL testi geçiyor (WP-226). Production'da history tablosu yok; 0051/0053/0060/0062 driftli, 0063 uygulanmamış ve freeze altında. Kör history repair listesi boştur; ayrıntı `docs/recovery/MIGRATION-BASELINE.md`.
 - **Gün sınırı:** `Europe/Istanbul`
 - **RLS helper'ları:** `is_group_member(gid)`, `can_see_user_sessions(target)`, `is_group_admin(gid)`, `is_super_admin()`
 - **Dashboard:** 6 sütunlu 2D matris, 19 kart türü, `grid_reflow.dart` motoru.
@@ -76,8 +76,8 @@
 - **Ortak/riskli yüzey:** —
 - **Dal:** — (`main`)
 - **Başlangıç:** —
-- **Son güncelleme:** 2026-07-20 12:10 (Europe/Istanbul)
-- **Not:** WP-225 tamamlandı: production salt-okunur baseline, migration/schema/function/trigger/policy/cron ve session/XP/reward aggregate kanıtı `docs/recovery/PRODUCTION-BASELINE.md`'ye işlendi. Production write yapılmadı; sıradaki seri iş WP-226.
+- **Son güncelleme:** 2026-07-20 12:16 (Europe/Istanbul)
+- **Not:** WP-226 local kapsamı tamamlandı. CLI/Docker/PG17 pinli baseline, tekrar edilebilir 0001–0063 replay ve sentetik seed hazır; 34 pgTAP + Flutter analyze 0 + 617/617 test geçti. Production write/history repair yok; stale verified-weekly lint borcu WP-229'a devredildi.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
@@ -117,35 +117,12 @@
 
 | WP | Durum | Kısa kapsam | Bağımlılık |
 |---|---|---|---|
-| WP-226 | [ ] Bekliyor | Pinli Supabase CLI/local replay + manuel migration geçmişi uzlaşması | WP-225 ✅ |
 | WP-227 | [ ] Bekliyor | Beta/stable flavor + staging/production backend izolasyonu + fail-closed | ← WP-226 |
 | WP-228 | [ ] Bekliyor | Local/staging otomasyonu + production manual approval gate | ← WP-227 |
 | WP-229 | [ ] Bekliyor | Eşit süre kaynakları ve reward/projection zinciri için güvenli ileri migration | ← WP-226, WP-227, WP-228 |
 | WP-230 | [ ] Bekliyor | 6 kademe/20k ekonomi + XP bar/metin + sürüm manifesti istemci onarımı | ← WP-227 · WP-229 ile en fazla iki lane |
 | WP-231 | [ ] Bekliyor | İstatistik dönem semantiği + toplam/realtime refresh + grup tutarlılığı | ← WP-229, WP-230 |
 | WP-232 | [ ] Bekliyor | Staging QA/soak + backup/dry-run + kontrollü production recovery release | ← WP-225–231 |
-
-### WP-226: Supabase CLI ve Migration Baseline 🧱
-- **Program/Faz:** Kurtarma Faz 1
-- **Ajan:** —
-- **Durum:** [ ] Bekliyor
-- **Problem:** Elle uygulanan migration geçmişi CLI ile senkron değil; zincir boş DB'de gerçek PostgreSQL üzerinde kanıtlanmıyor.
-- **Kapsam dışı:** Feature davranışı değiştirmek, staging/prod feature deploy'u, `0063` üretim terfisi.
-- **SAHİP dosyalar (yaz):** `package.json`/lock (pinli CLI gerekiyorsa), `supabase/config.toml`, `supabase/seed.sql`, `supabase/tests/**`, `tooling/supabase/**`, `docs/recovery/MIGRATION-BASELINE.md`, `progress.md`.
-- **DOKUNMA (oku, değiştirme):** Uygulanmış `supabase/migrations/0001_*.sql`–`0062_*.sql`; `app/**`.
-- **Adımlar:**
-  - [ ] Pinli Supabase CLI + Docker ön-koşulunu kur/doğrula.
-  - [ ] `db reset` ile `0001–0063` zincirini boş local DB'de replay et; başarısız tarihsel dosyayı değiştirmek yerine ileri-fix tasarla.
-  - [ ] SQL/RLS/invariant/cron test harness ve sentetik seed kur.
-  - [ ] WP-225 kanıtıyla production migration history farkını çıkar; önerilen `migration repair` listesini raporla.
-  - [ ] Production history repair'i ayrı somut kullanıcı GO olmadan çalıştırma.
-- **Veri/Migration etkisi:** Local reset serbest; remote şema değişikliği yok. History repair yalnız onaylı operasyon alt-adımıdır.
-- **Ortam/Deploy:** Local; production yalnız read-only comparison.
-- **RLS/Güvenlik:** Anon/authenticated/service roller için abuse testleri; secret commit yok.
-- **Edge-case'ler:** Docker yok/az RAM, migration başlık biçimi, extension/cron local farkı, manuel schema drift.
-- **Kabul:** Sıfır local DB bütün zinciri deterministik uygular; gerçek SQL davranış testleri yeşil; local/production migration farkı satır satır açıklanır; kör `db push` riski kalmaz.
-- **Tuzaklar:** `db reset --linked`; string-search testlerini yeterli saymak; uygulanmış dosyayı düzenlemek.
-- **Model önerisi:** 🔴 Opus / frontier-high
 
 ### WP-227: Beta/Stable Ortam İzolasyonu 🧭
 - **Program/Faz:** Kurtarma Faz 2
@@ -317,6 +294,7 @@
 > Ürün/cihaz kabulü almış WP'ler. Ayrıntılı tarihsel kartlar (WP-23…207) + "Son Teslim Notları" arşive taşındı → [`docs/archive/progress-tarihsel-2026-07.md`](docs/archive/progress-tarihsel-2026-07.md). Planner yeni tamamlananı buraya **tek satır** ekler.
 
 - **WP-225 — Production Freeze ve Adli Baseline** · Tamamlandı 2026-07-20 · Production write olmadan CLI + 5 salt-okunur SQL paketiyle history/schema/function/trigger/policy/cron ve session/XP/reward baseline'ı çıkarıldı. Hedef hesap session/XP kaybı 0; 0053 projection drift'i, cron run=0/retention absent, eski 25k istemci ve uygulanmamış 0063 kanıtlandı. Rapor: [`docs/recovery/PRODUCTION-BASELINE.md`](docs/recovery/PRODUCTION-BASELINE.md).
+- **WP-226 — Supabase CLI ve Migration Baseline** · Tamamlandı 2026-07-20 · Docker Desktop + pinli `supabase@2.109.1`, PG17 local config, production-parity extension/DML grant bootstrap, sentetik seed ve güvenli local wrapper kuruldu. Boş DB'de 0001–0063 tekrar replay edildi; 34 pgTAP RLS/XP/source-parity + Flutter analyze 0 + 617/617 test geçti. Production history repair listesi bilinmeyen/partial satırlar nedeniyle bilinçli olarak boş; production write yok. 0063 sonrası stale verified-weekly lint borcu WP-229'a devredildi. Rapor: [`docs/recovery/MIGRATION-BASELINE.md`](docs/recovery/MIGRATION-BASELINE.md).
 
 ---
 

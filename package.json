@@ -1,0 +1,15 @@
+{
+  "name": "online-study-room-tooling",
+  "private": true,
+  "packageManager": "pnpm@11.9.0",
+  "scripts": {
+    "db:start": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File tooling/supabase/local.ps1 start",
+    "db:stop": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File tooling/supabase/local.ps1 stop",
+    "db:reset": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File tooling/supabase/local.ps1 reset",
+    "db:test": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File tooling/supabase/local.ps1 test",
+    "db:baseline": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File tooling/supabase/local.ps1 baseline"
+  },
+  "devDependencies": {
+    "supabase": "2.109.1"
+  }
+}
