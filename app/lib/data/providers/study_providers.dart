@@ -403,6 +403,20 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   bool _disposed = false;
   Future<void>? _verifiedStartFuture;
 
+  /// WP-241: sayaç reconcile yarışı koruması.
+  /// [_localTimerMutationAt]: Dart'ın kendi start/stop'unu en son yaptığı an.
+  /// Bu pencere içinde native'in ürettiği `reconcile` broadcast'i state'i
+  /// EZMEZ (Dart zaten native'i sürdü, durum tutarlı). [_reconcileInFlight]:
+  /// eşzamanlı reconcile çağrılarını tek bir çalışmaya birleştirir (sıra-dışı
+  /// çalışıp state'i bozmasınlar).
+  DateTime? _localTimerMutationAt;
+  Future<void>? _reconcileInFlight;
+
+  /// Dart-origin start/stop sonrası native reconcile'ın state'i ezmemesi için
+  /// bastırma penceresi. Ard arda işlemi kapsayacak kadar uzun, gerçek
+  /// bildirim/widget işlemini geciktirmeyecek kadar kısa.
+  static const _localMutationGuard = Duration(milliseconds: 1500);
+
   // Süre kaynağı ürün açısından fark yaratmaz: manuel giriş, uygulama içi
   // sayaç ve native sayaç aynı XP/başarım yolunu kullanır. Eski live-run
   // altyapısı geçmiş kayıtları okuyabilmek için DB'de kalır; yeni sayaçlar
@@ -575,9 +589,33 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   /// işler. Hem soğuk açılışta hem onResume/onTaskData'da çağrılır.
   Future<void> _syncBackgroundTimerState() async {
     if (_disposed) return;
+    // WP-241: Dart kendi start/stop'unu yeni yaptıysa, native durumu Dart'la
+    // zaten tutarlı (Dart native'i sürdü). O işlemin tetiklediği native
+    // `reconcile` broadcast'i buraya düşünce state'i yeniden türetip ezmesin —
+    // ard arda başlat/durdur'da sayaç donması ve çift sayımın kök nedeni buydu.
+    // Gerçek bildirim/widget işlemi bu pencereyi set etmez → normal işlenir.
+    final mutatedAt = _localTimerMutationAt;
+    if (mutatedAt != null &&
+        DateTime.now().difference(mutatedAt) < _localMutationGuard) {
+      return;
+    }
     await _reconcileBackgroundTimer();
     if (_disposed) return;
     await _processPendingExternalCommand();
+  }
+
+  /// WP-241: eşzamanlı reconcile çağrılarını tek çalışmaya birleştirir.
+  /// Native ard arda birden çok broadcast gönderince, iç içe geçen `await`'ler
+  /// state'i sıra-dışı ezmesin diye çağıranlar aynı future'ı bekler.
+  Future<void> _reconcileBackgroundTimer() {
+    if (_disposed) return Future<void>.value();
+    final existing = _reconcileInFlight;
+    if (existing != null) return existing;
+    final future = _reconcileBackgroundTimerImpl().whenComplete(() {
+      _reconcileInFlight = null;
+    });
+    _reconcileInFlight = future;
+    return future;
   }
 
   /// FGS bildiriminden gelen app-kapalı Durdur↔Başlat toggle'ını uzlaştırır:
@@ -585,7 +623,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   /// kaydeder; (2) FGS moduna göre sayacın çalışır/durur durumunu düzeltir.
   /// Server-authoritative kayıt korunur — arka plan yalnız aralık verisini
   /// kuyruğa yazar, gerçek oturum yazımı burada (kimlik doğrulamalı) yapılır.
-  Future<void> _reconcileBackgroundTimer() async {
+  Future<void> _reconcileBackgroundTimerImpl() async {
     if (_disposed) return;
     final prefs = ref.read(sharedPreferencesProvider);
     await prefs.reload();
@@ -824,6 +862,9 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   void start() {
     if (state.isRunning) return;
     final now = DateTime.now();
+    // WP-241: Dart-origin mutation; native'in bunun ardından göndereceği
+    // reconcile broadcast'i state'i ezmesin.
+    _localTimerMutationAt = now;
     state = state.copyWith(
       isRunning: true,
       startedAt: now,
@@ -1105,6 +1146,9 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   void _finish({TimerEvent? lastEvent}) {
     _tick?.cancel();
     _tick = null;
+    // WP-241: Dart-origin durdurma; ardından gelen native STOP broadcast'inin
+    // reconcile'ı state'i tekrar "çalışıyor"a çevirmesin (durdurma yarışı).
+    _localTimerMutationAt = DateTime.now();
     state = state.copyWith(
       isRunning: false,
       clearStartedAt: true,

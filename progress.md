@@ -20,7 +20,7 @@
 - **Navigasyon hedefi:** Ana Sayfa / Saat / Gruplar / İstatistikler / Profil. Ana Sayfa günlük kullanım alanıdır; diğer alanların verisi kendi sekmelerinde eksiksiz bulunur.
 - **Release gerçeği:** Stable tag `v39` (`c6843a5`), beta tag `beta-v41` (`e6234a6`), HEAD `2d757eb`. Beta-v41 sonrası 13 yerel commit vardır; uygulama hâlâ `1.0.41+41` taşıdığı için sürüm/commit ayrımı bozuk. WP-227/230 düzeltecek.
 - **Kalite kapıları:** Her WP DoD'siz kapanmaz; stable release kalite kapısından geçer (AGENTS.md §3). Server-authoritative XP, RLS/sosyal profil, platform sınırları → `docs/KALITE-PROGRAMI.md`.
-- **Son WP numarası:** **240** (WP-240 = Faz A beta yayını `beta-v4203`) (WP-221–224 geçmişte kullanılmış; kurtarma WP-225–232 planlandı; WP-233/234 beta-v4202 saha bulguları; WP-235–239 beta-v4202 saha turu 2 — grafik/sıralama/test/sayaç). **Sıradaki boş numara WP-240.**
+- **Son WP numarası:** **241** (WP-241 = sayaç reconcile yarışı, beta-v4203 cihaz bulgusu). **Sıradaki boş numara WP-242.** (WP-221–224 geçmişte kullanılmış; kurtarma WP-225–232 planlandı; WP-233/234 beta-v4202 saha bulguları; WP-235–239 beta-v4202 saha turu 2 — grafik/sıralama/test/sayaç). **Sıradaki boş numara WP-240.**
 - **Ortam sözleşmesi:** local=Supabase CLI/Docker, beta=ayrı staging Supabase, stable=production Supabase. Ayrıntı: `docs/ORTAM-MIGRATION-YONETISIMI.md`.
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
@@ -57,9 +57,10 @@
 
 ### Claude Lane
 - **Durum:** [~] Aktif
-- **Faz/WP:** FAZ A TAMAM (WP-239 ✅ + WP-235 ✅ + WP-237 ✅). Sıradaki: cihaz QA (kullanıcı) → sonra Faz B veya stable gate.
-- **Aşama:** Faz A stable-blocker'lar kod olarak bitti. analyze temiz, 645 test yeşil, kırık test yok. Görsel + davranış cihaz doğrulaması bekliyor (WP-233/234/237/239).
-- **SAHİP yollar:** —（lane boşta, Faz A kapandı）
+- **Faz/WP:** WP-241 (sayaç reconcile YARIŞI — cihaz-kritik P1). beta-v4203 cihaz testinde WP-233 yetersiz çıktı; asıl kök neden bulundu.
+- **Aşama:** WP-241 kod tamam (analyze temiz, 645 test yeşil). beta-v4204 gerekiyor. Faz A (WP-235/237/239) ✅.
+- **SAHİP yollar:** `app/lib/data/providers/study_providers.dart`, ilgili testler, `progress.md`
+- **WP-241 kök neden:** native→Dart `reconcile` push kanalı ÇALIŞIYOR ([[native-dart-timer-sync-only-on-resume]] notu yanlıştı). Sorun: Dart start/stop native FGS'yi sürüyor → native her değişimde broadcast → reconcile ard arda/sıra-dışı çalışıp Dart state'ini eziyor (sayaç donması, durmama, çift/eksik sayım; "uygulama kapatıp açınca düzeliyor" = state yarışı imzası). Çözüm: (1) Dart-origin mutation sonrası 1.5sn reconcile bastırma penceresi (`_localTimerMutationAt`), (2) eşzamanlı reconcile coalescing (`_reconcileInFlight`).
 - **Cihaz QA listesi (stable öncesi):** ① bildirimden Başlat→uygulama içi Durdur (WP-233); ② başarım ilerleme/taç kademe (WP-234); ③ 1s kayıtlı+1s canlı→Durdur = 2s (3s değil), kapat-aç gerekmeden (WP-239); ④ grafiklerde X her gün + Y ekseni (WP-237).
 - **Dal:** `main`
 - **Başlangıç:** 2026-07-20 17:20 (Europe/Istanbul)
@@ -151,7 +152,8 @@
 | WP-237 | [x] Cihaz QA bekliyor (görsel) | Grafik ekseni cilası: x her gün etiketi + eksik Y ekseni ölçekleri | ✅ chart_axis util + 3 grafik; 645 test yeşil |
 | WP-238 | [ ] Planlandı (Faz B) | Home "Eğilim" dönem seçici → tek döngü buton (7/14/30/90/180/360, tıkla-ilerle) | stable sonrası |
 | WP-239 | [x] Cihaz QA bekliyor | Sayaç durdurma çift-sayım bug'ı (freeze yarışı) DÜZELTİLDİ; invalidation tekilleştirme → Faz B | ✅ freeze artık recorded zamanlamasından bağımsız |
-| WP-240 | [~] Yayın hazırlığı | Faz A beta yayını: `beta-v4203` = `1.0.42-beta.3+4203` (staging, prerelease) | release_notes+CHANGELOG hazır; push+tag onay bekliyor |
+| WP-240 | [x] Yayınlandı | Faz A beta yayını: `beta-v4203` = `1.0.42-beta.3+4203` (staging, prerelease) | ✅ push+tag; CI build |
+| WP-241 | [~] Cihaz QA bekliyor | 🔴 Sayaç reconcile YARIŞI: ard arda start/stop'ta native broadcast reconcile'ları sıra-dışı çalışıp state'i bozuyor (sayaç donması/çift sayım/durmama). beta-v4203 cihaz bulgusu | WP-233'ün asıl kök nedeni buymuş |
 
 ### WP-229: Eşit Süre Kaynakları ve Ödül Zinciri Onarımı ⚖️
 - **Program/Faz:** Kurtarma Faz 4A
