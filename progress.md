@@ -49,15 +49,22 @@
 - **Son güncelleme:** 2026-07-14 (Europe/Istanbul)
 - **Not:** WP-83 tamamlandı, envanter ve sözlük oluşturuldu.
 
+### STABLE YOL HARİTASI (kullanıcı kararı 2026-07-20)
+> Kullanıcı stable'ı öne çekmek istiyor: önce bug'lar, sonra geliştirme.
+> - **Faz A (stable'a girecek):** WP-239 (sayaç çift-sayım bug) → WP-235 (kırık testler) → WP-237 (grafik ekseni cilası). Ayrıca WP-233/234 cihaz QA doğrulaması stable öncesi şart.
+> - **Faz B (stable sonrası):** WP-236 (leaderboard yarışı), WP-238 (tek döngü buton), WP-231 kalan (realtime/reconnect).
+> - Stable release gate = WP-232 (staging/migration zinciri), bug'lar kapandıktan sonra.
+
 ### Claude Lane
 - **Durum:** [~] Aktif
-- **Faz/WP:** WP-233 (P1 sayaç bug) + WP-234 (başarım/taç görünüm)
-- **Aşama:** Kod tamam (analyze temiz, 636 test geçti) — cihaz doğrulaması bekleniyor
-- **SAHİP yollar:** `app/lib/data/providers/study_providers.dart`, `app/lib/features/profile/widgets/achievement_showcase.dart`, `app/lib/features/profile/widgets/gamification_card.dart`, ilgili l10n + testler, `progress.md`
-- **Ortak/riskli yüzey:** l10n ARB (yeni anahtar); sayaç SSOT — native/Dart durum senkronu
+- **Faz/WP:** WP-239 (sayaç durdurma çift-sayım bug'ı + stop/manual-add invalidation)
+- **Aşama:** Başlıyor — kök neden bulundu (study_timer_card freeze yarışı)
+- **SAHİP yollar:** `app/lib/data/providers/study_providers.dart`, `app/lib/features/classroom/widgets/study_timer_card.dart`, `app/lib/core/stats/study_stats.dart`, ilgili testler, `progress.md`
+- **Ortak/riskli yüzey:** sayaç SSOT — native/Dart durum senkronu; offline-first cache emit zamanlaması
 - **Dal:** `main`
 - **Başlangıç:** 2026-07-20 17:20 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-20 17:20 (Europe/Istanbul)
+- **Son güncelleme:** 2026-07-20 (Europe/Istanbul) — WP-233/234 kod tamam, WP-239'a geçildi
+- **WP-233/234:** Kod tamam (analyze temiz, 636 test geçti) — cihaz doğrulaması bekleniyor (stable öncesi şart).
 - **Not:** beta-v4202 cihaz QA saha bulguları. Çakışma yok (diğer tüm lane'ler boşta). WP-229/230 kartları park bölümünde, diriltilmiyor — kurallara göre cihaz bug'ı için ayrı debug WP açıldı.
 - **Önceki tur:** Codex'ten devralınan WP-229/230 staging kabul kapısı tamamlandı; iki kart da **Test için bekleyenler**e taşındı (cihaz QA bekliyor). Staging kabul adayı: git `1a46ace`, migration head `0064`, beta artefakt `1.0.42-beta.2+4202`. Production mutasyonu yok, `deploy_enabled: false` korunuyor. **WP-231 kullanıcı kabulü olmadan başlatılmadı.**
 
