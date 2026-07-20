@@ -69,15 +69,15 @@
   - K/L kodu repoda; kabul kanıtı yoktur. Tüm production terfisi artık `docs/ORTAM-MIGRATION-YONETISIMI.md` ve WP-225–232 kapısına tabidir.
 
 ### Codex Lane
-- **Durum:** [x] Boşta
-- **Faz/WP:** —
-- **Aşama:** —
-- **SAHİP yollar:** —
-- **Ortak/riskli yüzey:** —
-- **Dal:** — (`main`)
-- **Başlangıç:** —
-- **Son güncelleme:** 2026-07-20 14:05 (Europe/Istanbul)
-- **Not:** WP-229 kod + local otomatik doğrulama tamamlandı ve staging/owner QA için parka alındı. 0063 session/live_run/ledger/reward silmeden source-neutral projector + candidate→pending→claim + shadow/diff/bounded apply kuruyor; fresh 0001–0063 replay, 80/80 pgTAP, DB lint 0, Flutter contract 2/2 ve birleşik `flutter analyze` 0 geçti. Staging/production apply yok; WP-228 contract HOLD korunuyor.
+- **Durum:** [~] Aktif
+- **Faz/WP:** WP-229/230 staging kabul kapısı
+- **Aşama:** Gerçek cihaz QA hazırlanıyor
+- **SAHİP yollar:** `tooling/supabase/create-staging-owner.ps1`, `tooling/supabase/guard.tests.ps1`, `tooling/release/deploy-contract.json`, `tooling/README.md`, staging/GitHub Environment yapılandırması, `docs/recovery/EQUAL-SOURCES-RECONCILIATION.md`, `docs/recovery/ENVIRONMENT-MATRIX.md`, WP-229/230 kabul kanıtları, `progress.md`
+- **Ortak/riskli yüzey:** Supabase CLI ile ayrı staging projesi; `0063` yalnız staging; production mutasyonu kesinlikle yok
+- **Dal:** `main`
+- **Başlangıç:** 2026-07-20 14:15 (Europe/Istanbul)
+- **Son güncelleme:** 2026-07-20 14:15 (Europe/Istanbul)
+- **Not:** Kullanıcı CLI yolunu seçti. Proje parolası yalnız kullanıcı kontrollü güvenli istemde girilecek; repoya, sohbete veya kanıta yazılmayacak.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta

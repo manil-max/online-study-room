@@ -28,12 +28,13 @@ pnpm deploy:guard:test
 `tooling/release/deploy-contract.json` tek public kapıdır. Şu anda:
 
 - local head `0063`;
-- staging kabul head'i `0062`, apply/release kapalı;
+- staging kabul head'i `0063`, apply/release yalnız staging QA için açık;
 - production kabul head'i `0062`, apply/release kapalıdır.
 
-Bu bilinçli HOLD'dur: reddedilen `0063` WP-229'da güvenli hale gelmeden staging'e
-dahi immutable olarak uygulanamaz. `deploy_enabled` / `release_enabled` yalnız
-ilgili WP'nin test, cihaz ve kabul kanıtıyla değiştirilebilir.
+WP-229'un yeniden tasarlanan `0063` migration'ı fresh local replay, 80/80 pgTAP,
+RLS/invariant ve lint kapılarından geçtiği için staging terfisine açıktır. Bu izin
+production'a taşınmaz: production WP-232 staging+cihaz+soak+backup+dry-run ve
+somut GO kapısına kadar HOLD durumundadır.
 
 ## GitHub kurulumu (owner)
 

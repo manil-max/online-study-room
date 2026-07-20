@@ -24,6 +24,12 @@ $productionRef = 'bbbbbbbbbbbbbbbbbbbb'
 
 Assert-Equal (Get-LocalMigrationHead -RepoRoot $repoRoot) '0063' 'local migration head'
 Assert-Equal ((Get-DeployContract -RepoRoot $repoRoot).local_migration_head) '0063' 'contract migration head'
+$contract = Get-DeployContract -RepoRoot $repoRoot
+Assert-Equal $contract.staging.migration_head '0063' 'staging migration head'
+Assert-Equal ([bool]$contract.staging.deploy_enabled) $true 'staging deploy enabled'
+Assert-Equal ([bool]$contract.staging.release_enabled) $true 'staging release enabled'
+Assert-Equal ([bool]$contract.production.deploy_enabled) $false 'production deploy remains disabled'
+Assert-Equal ([bool]$contract.production.release_enabled) $false 'production release remains disabled'
 
 Assert-TargetContract -Environment staging -ProjectRef $stagingRef -SupabaseUrl "https://$stagingRef.supabase.co" -StagingProjectRef $stagingRef -ProductionProjectRef $productionRef -RepoRoot $repoRoot -IgnoreLinkedRef
 $passed++
