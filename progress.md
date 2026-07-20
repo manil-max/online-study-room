@@ -50,15 +50,15 @@
 - **Not:** WP-83 tamamlandı, envanter ve sözlük oluşturuldu.
 
 ### Claude Lane
-- **Durum:** [~] Aktif
-- **Faz/WP:** WP-229/230 staging kabul kapısı (Codex'ten devralındı)
-- **Aşama:** WP-230 beta artefaktı — kesilen build'in tamamlanması
-- **SAHİP yollar:** `tooling/release/**`, `.artifacts/deploy-evidence/**`, `docs/recovery/**`, `progress.md`
-- **Ortak/riskli yüzey:** Staging Supabase (`rskiuyjabyzelqododpa`) salt-okunur key erişimi; production mutasyonu YOK; `app/env.json` overwrite edilmez
-- **Dal:** `main`
-- **Başlangıç:** 2026-07-20 15:40 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-20 15:40 (Europe/Istanbul)
-- **Not:** Codex handoff'u devralındı; çakışma ön-kontrolü temiz (Codex lane bu işin kendisi, diğer tüm lane'ler boşta). Devralınan gerçek durum: WP-229 staging apply `8a9bc4d` başarılı (head `0064`, 80/80 PASS), reconciliation `79e6f74` 0 kayıp. WP-230 build `753a605`'te üretildi ama APK kimlik/imza doğrulaması yoktu; `bd60064` aapt badging + apksigner v2 + kanıt artefaktı adımlarını ekledi. 12:33'teki tekrar koşusu 01–04 adımlarını geçip `05-beta-apk` sırasında oturum limitinden kesildi. Kalan iş: exact HEAD `bd60064` üzerinde beta build'i baştan sona koşturmak ve release gate manifestini üretmek.
+- **Durum:** [x] Boşta
+- **Faz/WP:** —
+- **Aşama:** —
+- **SAHİP yollar:** —
+- **Ortak/riskli yüzey:** —
+- **Dal:** — (main)
+- **Başlangıç:** —
+- **Son güncelleme:** 2026-07-20 15:55 (Europe/Istanbul)
+- **Not:** Codex'ten devralınan WP-229/230 staging kabul kapısı tamamlandı; iki kart da **Test için bekleyenler**e taşındı (cihaz QA bekliyor). Staging kabul adayı: git `1a46ace`, migration head `0064`, beta artefakt `1.0.42-beta.2+4202`. Production mutasyonu yok, `deploy_enabled: false` korunuyor. **WP-231 kullanıcı kabulü olmadan başlatılmadı.**
 
 - **Not (Claude arşivi — önceki tur):** beta-v41 turu kapandı (WP-221/222/223/224 cihazda doğrulandı). Kalan ekonomi/kademe/alpha WP'leri sırayla yürüyor (beta-v42). Bitmiş (kod+test, cihaz QA bekliyor):
   - **WP-J** görev sırası daily-üstte + optimistic UI (`sortUserTasksByDue` daily-first, `userTasksProvider`→AsyncNotifier, ekle/tamamla/sil optimistic, hata→geri al+snackbar). Commit `54a2c84`.
@@ -132,8 +132,8 @@
 |---|---|---|---|
 | WP-227 | [~] Staging/cihaz QA | Beta/stable flavor + staging/production backend izolasyonu + fail-closed | ← WP-226 |
 | WP-228 | [~] Staging/owner QA | Local/staging otomasyonu + production manual approval gate | ← WP-227 · apply kanıtı WP-229 kabul head'i sonrası |
-| WP-229 | [~] Staging/owner QA | Eşit süre kaynakları ve reward/projection zinciri için güvenli ileri migration | ← WP-226, WP-227 · WP-228 otomasyon kodu hazır |
-| WP-230 | [~] Cihaz/staging QA | 6 kademe/20k ekonomi + XP bar/metin + sürüm manifesti istemci onarımı | ← WP-227 · WP-229 ile en fazla iki lane |
+| WP-229 | [~] Cihaz QA (staging GEÇTİ) | Eşit süre kaynakları ve reward/projection zinciri için güvenli ileri migration | ← WP-226, WP-227 · staging head `0064`, 80/80 PASS |
+| WP-230 | [~] Cihaz QA (artefakt HAZIR) | 6 kademe/20k ekonomi + XP bar/metin + sürüm manifesti istemci onarımı | ← WP-227 · beta `1.0.42-beta.2+4202` @ `1a46ace` |
 | WP-231 | [ ] Bekliyor | İstatistik dönem semantiği + toplam/realtime refresh + grup tutarlılığı | ← WP-229, WP-230 |
 | WP-232 | [ ] Bekliyor | Staging QA/soak + backup/dry-run + kontrollü production recovery release | ← WP-225–231 |
 
@@ -237,6 +237,11 @@
 ## Test için bekleyenler (park)
 
 > Cihaz/ürün kabulü bekleyen tamamlanmış kod. Bu bölüm aktif çalışma değildir; başka WP'yi engellemez.
+
+- **WP-229 — Eşit süre kaynakları ve ödül zinciri (staging kabulü GEÇTİ)** · Staging apply `8a9bc4d` başarılı: hosted staging parity onarımı (`pg_cron` önkoşulu allowlist'li bootstrap ile), `0053–0063` ardından immutable ileri `0064`; remote head `0064`, linked pgTAP/RLS/invariant **80/80 PASS**. Reconciliation `79e6f74`: staging batch 0 kullanıcı/0 diff, apply sonrası session/duration/ledger/XP/claimed delta ve XP mismatch **0**; yerel non-empty prova (2 kullanıcı/2 session) aynı kayıpsız sonucu verdi. Production'a **hiçbir yazma yapılmadı** (`deploy_enabled: false`). · **Cihazda doğrulanmalı:** beş giriş yolunun (manuel/kronometre/geri sayım/Pomodoro/native-widget) aynı süreyi aynı kişisel+grup+XP+başarım sonucuna yazması; claim zinciri çift XP üretmemesi; 23:59→00:01 İstanbul gün sınırı.
+
+- **WP-230 — Ekonomi/taç/sürüm gerçeği + staging beta artefaktı** · `flutter analyze` 0 sorun, **635/635** test yeşil, tooling testleri **39** (35 deploy guard + 4 beta build). Gerçek staging anahtarıyla beta APK üretildi ve kimliği doğrulandı: `1.0.42-beta.2+4202`, git `1a46ace`, head `0064`, backend `rskiuyjabyzelqododpa`, paket `com.manilmax.online_study_room.beta`, targetSdk 36, **APK Signature v2 doğrulandı**, sha256 `6a59769d…`. Kanıt: `.artifacts/deploy-evidence/20260720T124704399Z-staging-beta-build/`. `app/env.json` bit-aynı korundu (`local_env_preserved: true`), anahtar yalnız süreç belleğinde kaldı, kanıt log'larında sır yok, `.artifacts/` gitignore'da. · **Cihazda doğrulanmalı:** Samsung'da beta yan yana kurulum, 6 kademe/20k ekonomi + XP barı/etiketi tutarlılığı, claim sonrası refresh, cold-start widget/bildirim.
+  - ⚠️ **Sürüm gerçeği bulgusu:** `1.0.42-beta.1+4201` **iki farklı kod** için üretilmişti (`753a605` sha `d9077aef…` ve `bd60064` sha `79e6b456…`) — WP-230'un yasakladığı durumun ta kendisi. Bu yüzden kabul adayı `beta.2+4202`'ye ilerletildi; 4201 artefaktları kabul adayı **değildir**, dağıtılmamalıdır.
 
 - **WP-229 — Eşit Süre Kaynakları ve Ödül Zinciri Onarımı** · Kod + local otomatik test tamamlandı (fresh `0001–0064` replay; 80/80 pgTAP; DB lint hata 0; Flutter source-contract 2/2; birleşik `flutter analyze` 0). 0063 yalnız izole staging'e uygulanıp immutable oldu; linked suite'in bulduğu hosted cron/grant/fixture parity açığı ileri 0064 ile kapatıldı. `live_run_id`/verified immutable guard'ı koruyarak manual/kronometre/countdown/Pomodoro/native-widget session'larını aynı duration/kişisel/grup/XP/başarım zincirine alır. `duration_seconds` kanoniktir; +3 saat timestamp drift fixture'ı hayalet süre üretmez. Alfa/Kamp/Lokomotif/Lider Kurt/Mola Düşmanı candidate→pending→claim, ikinci claim/apply no-op, aktif yazıda stale reconciliation fail-closed ve session/duration/ledger/claimed kaybı 0 kanıtlandı. **Staging/owner QA'da doğrulanmalı:** 0064 protected apply; küçük prepared batch diff inceleme→bounded apply; linked pgTAP/RLS; gerçek cihazda beş giriş rotası ve claim; production WP-232 somut GO'suna kadar yok. Rapor: [`docs/recovery/EQUAL-SOURCES-RECONCILIATION.md`](docs/recovery/EQUAL-SOURCES-RECONCILIATION.md).
 
