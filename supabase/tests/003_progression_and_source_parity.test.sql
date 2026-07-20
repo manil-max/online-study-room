@@ -3,6 +3,8 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
+\ir _fixtures/base_seed.psql
+
 select plan(9);
 
 select is(

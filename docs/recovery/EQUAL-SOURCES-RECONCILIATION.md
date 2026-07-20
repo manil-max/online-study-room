@@ -1,6 +1,6 @@
 # WP-229 — Eşit Süre Kaynakları ve Güvenli Reconciliation
 
-> Durum: **Kod + local PostgreSQL kapıları geçti; staging apply/owner QA bekliyor.**
+> Durum: **0063 staging'de; hosted parity 0064 local kapıları geçti, staging apply bekliyor.**
 > Production: **NO-GO.** WP-232 backup, dry-run, staging soak ve somut kullanıcı
 > GO'su olmadan bu migration veya reconciliation production'da çalıştırılmaz.
 
@@ -9,8 +9,9 @@
 WP-225/226 adli baseline'ı production'da `group_achievement_weekly.verified_seconds`
 kolonunun bulunduğunu, `total_seconds` kolonunun ve 0063 projector sentinel'larının
 bulunmadığını kanıtladı. Dolayısıyla önceki `0063_equal_study_sources.sql` taslağı
-hiçbir remote'a uygulanmamış yayımlanmamış dosyadır ve aynı numarada yeniden
-tasarlanmıştır. Uygulanmış `0051–0062` dosyaları değiştirilmedi.
+hiçbir remote'a uygulanmamış yayımlanmamış dosyaydı ve aynı numarada yeniden
+tasarlandı. Sonrasında 0063 izole staging'e uygulandı; artık immutable'dır.
+Uygulanmış `0051–0063` dosyaları değiştirilmedi.
 
 Yeni 0063 şu korumaları taşır:
 
@@ -32,6 +33,24 @@ Yeni 0063 şu korumaları taşır:
   `NOTICE` ile yutulmaz.
 - Migration session, live-run, projection, metric progress, reward veya ledger
   satırı silmez ve otomatik toplu backfill çalıştırmaz.
+
+### Hosted staging parity ileri onarımı (0064)
+
+Fresh staging ilk apply'da tarihsel 0053'ün `cron.job` varsayımı nedeniyle
+fail-closed durdu. Hedef-ref doğrulamalı allowlist bootstrap yalnız staging'de
+`pg_cron` önkoşulunu kurdu; ardından 0053–0063 uygulandı. İlk linked suite iki
+hosted farkını görünür kıldı:
+
+- pg_cron 0051 sonrasında kurulduğu için kritik rollout-retention job'ı atlanmıştı;
+- hosted explicit function grants, 0063'ün yalnız `PUBLIC` revoke'uyla tam
+  kapanmıyordu.
+
+Yeni `0064_hosted_staging_parity.sql` eksik retention job'ını idempotent kurar ve
+internal projector/reconciliation RPC'lerini `PUBLIC`, `anon` ve `authenticated`
+rollerine explicit kapatır; service-role prepare/apply yetkisini korur.
+`monthly-report-collector` bilinçli olarak kapsam dışıdır: Edge Function/GUC owner
+ops kararı ayrı backlog kapısıdır. Linked pgTAP için eklenen sentetik fixture her
+test transaction'ında oluşur ve rollback olur; staging'de kalıcı test satırı bırakmaz.
 
 ## Shadow → diff → bounded apply
 
@@ -62,7 +81,7 @@ redacted biçimde tutulur.
 
 Pinli Supabase CLI ve PostgreSQL 17 üzerinde:
 
-- boş DB'de `0001–0063` replay + sentetik seed geçti;
+- boş DB'de `0001–0064` replay + sentetik seed geçti;
 - 4 pgTAP dosyasında **80/80** test geçti;
 - RLS abuse, internal RPC erişimi, live-run immutability sentinel'ı geçti;
 - beş giriş rotası aynı `4 saat`, aynı Break Enemy, aynı grup günlük/haftalık süre
@@ -86,16 +105,16 @@ Staging apply yalnız WP-228 protected akışıyla yapılır:
 
 1. Ayrı staging project ref ve DB secret GitHub `staging` Environment içinde
    bulunur; beta/stable hedef doğrulaması fail-closed geçer.
-2. Exact commit SHA ve migration head `0063` doğrulanır.
+2. Exact commit SHA ve migration head `0064` doğrulanır.
 3. `migration list` + dry-run temizdir; remote reset kullanılmaz.
-4. 0063 apply sonrasında linked pgTAP/RLS suite çalışır.
+4. 0064 apply sonrasında transaction-local fixture ile linked pgTAP/RLS suite çalışır.
 5. Önce küçük bir prepared batch incelenir; baseline değişmediyse bounded apply
    yapılır. Sonraki batch cursor ile hazırlanır.
 6. Aynı commit/head'e bağlı beta artefaktında beş süre rotası ve claim akışı gerçek
    cihazda doğrulanır.
 
-Staging project/GitHub Environment henüz owner tarafından kurulmadıysa WP burada
-`Staging/owner QA` durumunda park edilir; bu eksik production'a geçiş izni değildir.
+Staging projesi kurulmuştur; GitHub protected Environment ve gerçek cihaz kabulü
+hâlâ owner QA kapsamındadır. Bunların hiçbiri production'a geçiş izni değildir.
 
 ## Rollback
 

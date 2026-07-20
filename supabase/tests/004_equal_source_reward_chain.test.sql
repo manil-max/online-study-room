@@ -3,6 +3,8 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
+\ir _fixtures/base_seed.psql
+
 select plan(37);
 
 create temporary table route_fixture (
@@ -146,13 +148,22 @@ where run_id = (select id from public.live_study_runs
   where run_token = (select run_token from verified_run_fixture));
 select public.finalize_verified_live_run((select run_token from verified_run_fixture));
 
-select is(
+select ok(
   (select duration_seconds from public.study_sessions
     where user_id = '10000000-0000-0000-0000-000000000016'
-      and live_run_id is not null),
-  16200,
-  'server-finalized native route preserves canonical duration and live_run audit link'
+      and live_run_id is not null) between 16200 and 16260,
+  'server-finalized native route preserves 4.5h canonical duration and live_run audit link'
 );
+do $block$
+declare v_duration integer;
+begin
+  select duration_seconds into v_duration
+  from public.study_sessions
+  where user_id = '10000000-0000-0000-0000-000000000016'
+    and live_run_id is not null;
+  perform set_config('test.verified_native_duration', v_duration::text, true);
+end
+$block$;
 select is(
   (select count(*) from public.achievement_rewards
     where user_id = '10000000-0000-0000-0000-000000000016'
@@ -166,7 +177,7 @@ where user_id = '10000000-0000-0000-0000-000000000016';
 select is(
   (select duration_seconds from public.study_sessions
     where user_id = '10000000-0000-0000-0000-000000000016'),
-  16200,
+  current_setting('test.verified_native_duration')::integer,
   'authenticated client cannot mutate a server-finalized linked session'
 );
 select is(

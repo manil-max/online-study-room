@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "local_migration_head": "0063",
+  "local_migration_head": "0064",
   "staging": {
-    "migration_head": "0063",
+    "migration_head": "0064",
     "deploy_enabled": true,
     "release_enabled": true,
-    "hold_reason": "WP-229 local acceptance passed; staging deploy and beta release are enabled only for staging QA."
+    "hold_reason": "WP-229 hosted-staging parity forward-fix 0064 is enabled only for staging QA."
   },
   "production": {
     "migration_head": "0062",

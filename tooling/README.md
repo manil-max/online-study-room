@@ -51,14 +51,15 @@ durum sorguları temizlenmiş evidence manifestine kaydedilir.
 
 `tooling/release/deploy-contract.json` tek public kapıdır. Şu anda:
 
-- local head `0063`;
-- staging kabul head'i `0063`, apply/release yalnız staging QA için açık;
+- local head `0064`;
+- staging kabul head'i `0064`, apply/release yalnız staging QA için açık;
 - production kabul head'i `0062`, apply/release kapalıdır.
 
-WP-229'un yeniden tasarlanan `0063` migration'ı fresh local replay, 80/80 pgTAP,
-RLS/invariant ve lint kapılarından geçtiği için staging terfisine açıktır. Bu izin
-production'a taşınmaz: production WP-232 staging+cihaz+soak+backup+dry-run ve
-somut GO kapısına kadar HOLD durumundadır.
+WP-229'un `0063` eşit-kaynak migration'ı staging'e uygulandıktan sonra linked
+pgTAP'ın bulduğu fresh-hosted cron/explicit-grant parity açığı tarihsel dosyalar
+değişmeden ileri `0064` ile kapatılır. Transaction-local sentetik fixture linked
+test sonunda rollback olur. Bu izin production'a taşınmaz: production WP-232
+staging+cihaz+soak+backup+dry-run ve somut GO kapısına kadar HOLD durumundadır.
 
 ## GitHub kurulumu (owner)
 

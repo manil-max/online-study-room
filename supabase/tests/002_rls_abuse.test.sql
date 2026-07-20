@@ -3,6 +3,8 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
+\ir _fixtures/base_seed.psql
+
 insert into auth.users (id, email, raw_user_meta_data)
 values (
   '10000000-0000-0000-0000-000000000099',
