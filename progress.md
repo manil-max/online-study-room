@@ -52,7 +52,7 @@
 ### Claude Lane
 - **Durum:** [~] Aktif
 - **Faz/WP:** WP-233 (P1 sayaç bug) + WP-234 (başarım/taç görünüm)
-- **Aşama:** Geliştiriliyor
+- **Aşama:** Kod tamam (analyze temiz, 636 test geçti) — cihaz doğrulaması bekleniyor
 - **SAHİP yollar:** `app/lib/data/providers/study_providers.dart`, `app/lib/features/profile/widgets/achievement_showcase.dart`, `app/lib/features/profile/widgets/gamification_card.dart`, ilgili l10n + testler, `progress.md`
 - **Ortak/riskli yüzey:** l10n ARB (yeni anahtar); sayaç SSOT — native/Dart durum senkronu
 - **Dal:** `main`
@@ -135,8 +135,8 @@
 | WP-228 | [~] Staging/owner QA | Local/staging otomasyonu + production manual approval gate | ← WP-227 · apply kanıtı WP-229 kabul head'i sonrası |
 | WP-229 | [~] Cihaz QA (staging GEÇTİ) | Eşit süre kaynakları ve reward/projection zinciri için güvenli ileri migration | ← WP-226, WP-227 · staging head `0064`, 80/80 PASS |
 | WP-230 | [~] Cihaz QA (artefakt HAZIR) | 6 kademe/20k ekonomi + XP bar/metin + sürüm manifesti istemci onarımı | ← WP-227 · beta `1.0.42-beta.2+4202` @ `1a46ace` |
-| WP-233 | [~] Geliştiriliyor | 🔴 P1: bildirimden başlatılan sayaç uygulama içinden durdurulamıyor | beta-v4202 saha bulgusu |
-| WP-234 | [~] Geliştiriliyor | Biriken-olmayan başarımlarda yanıltıcı ilerleme + taç kademe görünürlüğü | beta-v4202 saha bulgusu |
+| WP-233 | [x] Cihaz QA bekliyor | 🔴 P1: bildirimden başlatılan sayaç uygulama içinden durdurulamıyor | beta-v4202 saha bulgusu · `stop()` native SSOT ile uzlaşıyor · regresyon testi |
+| WP-234 | [x] Cihaz QA bekliyor | Biriken-olmayan başarımlarda yanıltıcı ilerleme + taç kademe görünürlüğü | beta-v4202 saha bulgusu · kişisel rekor çubuğu kalktı + taç kademe sayfası |
 | WP-231 | [ ] Bekliyor | İstatistik dönem semantiği + toplam/realtime refresh + grup tutarlılığı | ← WP-229, WP-230 |
 | WP-232 | [ ] Bekliyor | Staging QA/soak + backup/dry-run + kontrollü production recovery release | ← WP-225–231 |
 

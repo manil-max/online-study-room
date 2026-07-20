@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/core/stats/achievement_ledger_engine.dart';
+import 'package:online_study_room/core/widgets/crown_tiers_sheet.dart';
 import 'package:online_study_room/data/models/achievement.dart';
 import 'package:online_study_room/data/models/achievement_ledger.dart';
 import 'package:online_study_room/data/models/achievement_metric_progress.dart';
@@ -191,6 +192,89 @@ void main() {
     expect(find.text('En yakın başarım'), findsOneWidget);
     expect(find.text('26/50 · sonraki kademe'), findsNWidgets(2));
     expect(find.textContaining('tam çalışma saati'), findsOneWidget);
+  });
+
+  testWidgets(
+    'WP-234: kişisel rekor başarımı ilerleme çubuğu yerine en iyi değeri gösterir',
+    (tester) async {
+      // Çelik İrade tek oturumun en uzun süresini ölçer; birikmez. Kullanıcı
+      // 60 dk'lık bir oturum yaptı (kademe 1 açık), sonraki eşik 90 dk.
+      // "60/90 · sonraki kademe" yanıltıcıydı: 30 dk daha çalışmak yetmez,
+      // tek seferde 90 dk gerekir.
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: const Locale('tr'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: AchievementShowcase(
+                gamification: profile(),
+                userAchievements: [
+                  UserAchievement(
+                    id: 'ua1',
+                    userId: 'u1',
+                    achievementId: 'steel_will',
+                    tier: 1,
+                    unlockedAt: now,
+                    createdAt: now,
+                    updatedAt: now,
+                  ),
+                ],
+                metricProgress: [
+                  AchievementMetricProgress(
+                    userId: 'u1',
+                    achievementId: 'steel_will',
+                    metricValue: 60,
+                    sourceVersion: 'metric_v2',
+                    updatedAt: now,
+                  ),
+                ],
+                showCatalog: true,
+                isSelf: true,
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('En iyi 60 · tek seferde 90 gerek'), findsOneWidget);
+      expect(find.text('60/90 · sonraki kademe'), findsNothing);
+      // Kişisel rekor başarımı "en yakın başarım" kartına da aday olmamalı.
+      expect(find.text('En yakın başarım'), findsNothing);
+    },
+  );
+
+  testWidgets('WP-234: taç kademe sayfası tüm rütbeleri ve XP eşiklerini açar', (
+    tester,
+  ) async {
+    // Bronz kullanıcı "Immortal kaç XP istiyor?" sorusunu buradan yanıtlar.
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('tr'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: Builder(
+            builder: (ctx) => ElevatedButton(
+              onPressed: () => showCrownTiers(ctx, currentXp: 5000),
+              child: const Text('ac'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('ac'));
+    await tester.pumpAndSettle();
+
+    // Altı rütbe de eşiğiyle görünür — kilitli olanlar dahil.
+    expect(find.text('Bronz Taç'), findsOneWidget);
+    expect(find.text('Ölümsüz Taç'), findsOneWidget);
+    expect(find.text('1000000 XP'), findsOneWidget);
+    expect(find.text('20000 XP'), findsOneWidget);
+    // 5000 XP → bronz erişildi, gümüş ve üstü kilitli.
+    expect(find.text('Kilitli'), findsNWidgets(5));
   });
 
   testWidgets('pending ödül yalnız callback çağırır ve gizli adı sızdırmaz', (

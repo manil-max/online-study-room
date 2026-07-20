@@ -4814,6 +4814,7 @@
   "clockTasks": "Aufgaben",
   "profileAchievementNearest": "Nächster Erfolg",
   "profileAchievementProgress": "{current}/{target} · nächste Stufe",
+  "profileAchievementPersonalBest": "Bestwert {current} · {target} am Stück nötig",
   "profileAchievementProgressUnavailable": "Fortschritt ist noch nicht verfügbar",
   "profileAchievementPerfectMonth30Rule": "Erreiche dein Tagesziel an mindestens 28 Tagen innerhalb eines Kalendermonats (höchstens 2 Fehltage).",
   "profileAchievementTeamPlayerRule": "Trage an Tagen, an denen deine Gruppe ihr Ziel erreicht, gültige Lernzeit bei.",

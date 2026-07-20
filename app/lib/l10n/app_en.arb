@@ -4909,6 +4909,14 @@
       "target": { "type": "int" }
     }
   },
+  "profileAchievementPersonalBest": "Best {current} · {target} needed in one go",
+  "@profileAchievementPersonalBest": {
+    "description": "Personal-best achievements do not accumulate; shows the record instead of a progress bar",
+    "placeholders": {
+      "current": { "type": "int" },
+      "target": { "type": "int" }
+    }
+  },
   "profileAchievementProgressUnavailable": "Progress is not available yet",
   "@profileAchievementProgressUnavailable": { "description": "Shown when no private metric projection exists yet" },
   "profileAchievementPerfectMonth30Rule": "Reach your daily goal on at least 28 days within one calendar month (up to 2 misses).",

@@ -48,6 +48,22 @@ String tierLabel(int tier, AppLocalizations l10n) {
   }
 }
 
+/// Metriği **birikmeyen** (kişisel rekor) başarımlar.
+///
+/// WP-234: `steel_will` tek oturumun en uzun süresini, `day_hero` en yoğun
+/// günün saatini ölçer. Bunlar toplanmaz — 60/90 gibi bir ilerleme çubuğu
+/// "30 dakika daha çalış" ima eder, oysa tek seferde 90 dakika gerekir.
+/// Bu yüzden UI bunlarda çubuk yerine "en iyi" değerini gösterir.
+bool isPersonalBestAchievement(String id) {
+  switch (id) {
+    case 'steel_will':
+    case 'day_hero':
+      return true;
+    default:
+      return false;
+  }
+}
+
 /// Gizli başarımlar — 5 kademe paletinden ayrı (eflatun/mor sır).
 const Color kSecretAchievementColor = Color(0xFFA855F7);
 const Color kSecretLockedColor = Color(0xFF1F1230);

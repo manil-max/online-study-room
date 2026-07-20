@@ -1164,6 +1164,7 @@
   "clockTasks": "Görevler",
   "profileAchievementNearest": "En yakın başarım",
   "profileAchievementProgress": "{current}/{target} · sonraki kademe",
+  "profileAchievementPersonalBest": "En iyi {current} · tek seferde {target} gerek",
   "profileAchievementProgressUnavailable": "İlerleme henüz hazır değil",
   "profileAchievementPerfectMonth30Rule": "Bir takvim ayında en az 28 gün günlük hedefine ulaş (en fazla 2 gün kaçırma).",
   "profileAchievementTeamPlayerRule": "Grubunun hedefe ulaştığı günlerde geçerli çalışma süresiyle katkı ver.",

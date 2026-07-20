@@ -1005,6 +1005,9 @@ class _NearestAchievementStrip extends StatelessWidget {
       if (def.isSecret || def.category == 'system' || def.tiers.isEmpty) {
         continue;
       }
+      // WP-234: kişisel rekor başarımlarında "şu kadar kaldı" anlamsız —
+      // bu kart ilerleme çubuğu çizdiği için onları hiç aday göstermez.
+      if (isPersonalBestAchievement(def.id)) continue;
       final value = metrics[def.id];
       if (value == null) continue;
       final completedTier = tiers[def.id] ?? 0;
@@ -1566,7 +1569,25 @@ class _CatalogTile extends StatelessWidget {
                             fontWeight: FontWeight.w600,
                           ),
                         )
-                      else ...[
+                      else if (isPersonalBestAchievement(def.id)) ...[
+                        // WP-234: birikmeyen (kişisel rekor) metrik — ilerleme
+                        // çubuğu yanıltıcı olur, yalnız en iyi değer gösterilir.
+                        SizedBox(height: 6),
+                        Text(
+                          progress == null
+                              ? AppLocalizations.of(
+                                  context,
+                                ).profileAchievementProgressUnavailable
+                              : AppLocalizations.of(
+                                  context,
+                                ).profileAchievementPersonalBest(progress, need),
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: progress == null
+                                ? theme.colorScheme.onSurfaceVariant
+                                : tierColor,
+                          ),
+                        ),
+                      ] else ...[
                         SizedBox(height: 6),
                         LinearProgressIndicator(
                           value: progress == null ? 0 : pct,

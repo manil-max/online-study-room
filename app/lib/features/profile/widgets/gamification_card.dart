@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/stats/achievement_ledger_engine.dart';
 import '../../../core/stats/progression_visuals.dart';
+import '../../../core/widgets/crown_tiers_sheet.dart';
 import '../../../core/widgets/crowned_avatar.dart';
 import '../../../data/models/achievement.dart';
 import '../../../data/models/gamification_profile.dart';
@@ -132,6 +133,8 @@ class _BadgeSummary extends StatelessWidget {
               avatarUrl: avatarUrl,
               radius: 28,
               crownRank: rank,
+              // WP-234: taça basınca tüm rütbeler ve XP eşikleri görünür.
+              onTap: () => showCrownTiers(context, currentXp: profile.xp),
             ),
             const SizedBox(width: 12),
             Expanded(

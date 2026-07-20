@@ -4814,6 +4814,7 @@
   "clockTasks": "المهام",
   "profileAchievementNearest": "أقرب إنجاز",
   "profileAchievementProgress": "{current}/{target} · المستوى التالي",
+  "profileAchievementPersonalBest": "الأفضل {current} · تحتاج {target} في جلسة واحدة",
   "profileAchievementProgressUnavailable": "التقدم غير متاح بعد",
   "profileAchievementPerfectMonth30Rule": "حقق هدفك اليومي في 28 يومًا على الأقل ضمن شهر تقويمي واحد (بحد أقصى يومان فائتان).",
   "profileAchievementTeamPlayerRule": "ساهم بوقت دراسة مؤهل في الأيام التي تحقق فيها مجموعتك هدفها.",
