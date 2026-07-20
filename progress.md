@@ -76,8 +76,8 @@
 - **Ortak/riskli yüzey:** Supabase CLI ile ayrı staging projesi; `0063` yalnız staging; production mutasyonu kesinlikle yok
 - **Dal:** `main`
 - **Başlangıç:** 2026-07-20 14:15 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-20 14:37 (Europe/Istanbul)
-- **Not:** Resmî handoff devralındı. Staging apply `0053`te eksik `pg_cron` önkoşulu nedeniyle fail-closed durdu; tarihsel migration değişmeden yalnız staging'e kilitli, allowlist'li bootstrap/preflight hazırlanıyor. Proje parolası yalnız kullanıcı kontrollü güvenli istemde girilecek; repoya, sohbete veya kanıta yazılmayacak.
+- **Son güncelleme:** 2026-07-20 14:47 (Europe/Istanbul)
+- **Not:** Staging prerequisite inspect `0001–0052` applied/`0053–0063` pending ve `pg_cron` absent durumunu doğruladı; staging-only bootstrap sonrası `pg_cron`/`cron.job` hazır. `0053–0063` staging'e başarıyla uygulandı ve remote head `0063`; linked pgTAP post-check yalnız Docker CLI PATH'te bulunmadığı için çalışmadı. Production mutasyonu yok. Proje parolası yalnız kullanıcı kontrollü güvenli istemde girilecek; repoya, sohbete veya kanıta yazılmayacak.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta

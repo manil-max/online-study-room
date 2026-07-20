@@ -105,8 +105,9 @@ Gerekli inputlar:
 - `deploy-contract.json` içindeki dört haneli migration head.
 
 `staging-apply` sırası: exact link → migration list → dry-run → push → migration
-list → linked pgTAP post-check → aynı commit/head ile beta build ve SHA-256
-raporu.
+list → Docker CLI/engine readiness → linked pgTAP post-check → aynı commit/head
+ile beta build ve SHA-256 raporu. Docker Desktop kurulu fakat CLI sistem PATH'inde
+değilse wrapper standart Docker Desktop kurulum yolunu güvenli biçimde çözer.
 
 `production-apply` bunlara ek olarak protected `production` Environment onayı,
 `tooling/release/production-backup-checklist.example.json` sözleşmesine uyan
