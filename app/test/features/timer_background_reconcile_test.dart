@@ -378,6 +378,61 @@ void main() {
     );
   });
 
+  group('WP-247: µs/ms hassasiyeti echo no-op (D3)', () {
+    Future<void> fireReconcile2() async {
+      const channel = MethodChannel('com.manilmax.online_study_room/timer');
+      await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .handlePlatformMessage(
+            channel.name,
+            channel.codec.encodeMethodCall(const MethodCall('reconcile')),
+            (_) {},
+          );
+    }
+
+    test(
+      'ms-eşit echo adoption tetiklemez (startedAt mikrosaniyesi korunur)',
+      () async {
+        // Dart µs hassasiyetli başlangıç; native ms'e yuvarlar. State µs tutar.
+        final baseMs = DateTime.now()
+            .subtract(const Duration(minutes: 10))
+            .millisecondsSinceEpoch;
+        final startMicro = DateTime.fromMicrosecondsSinceEpoch(
+          baseMs * 1000 + 500,
+        );
+        final (container, _, _) = await _buildContainer({
+          'timer_active_started_at': startMicro.toIso8601String(),
+          'timer_active_started_at_ms': baseMs,
+          'timer_active_mode': TimerMode.stopwatch.name,
+          'timer_active_phase': TimerPhase.work.name,
+          'timer_active_cycle': 1,
+          'timer_fg_mode': 'running',
+        });
+        final timerSub = container.listen(studyTimerProvider, (_, _) {});
+        addTearDown(timerSub.close);
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+        expect(container.read(studyTimerProvider).startedAt, startMicro);
+
+        // Native'in yazdığı ms-yuvarlanmış (µs'siz) echo gelir.
+        final prefs = container.read(sharedPreferencesProvider);
+        await prefs.setString(
+          'timer_active_started_at',
+          DateTime.fromMillisecondsSinceEpoch(baseMs).toIso8601String(),
+        );
+        await prefs.setInt('timer_active_started_at_ms', baseMs);
+        await fireReconcile2();
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+
+        // ms eşit → adoption yok → startedAt (µs dahil) DEĞİŞMEZ. Ham != ile
+        // adoption tetiklenip µs kırpılıyordu.
+        expect(
+          container.read(studyTimerProvider).startedAt,
+          startMicro,
+          reason: 'ms-eşit echo no-op olmalı, startedAt korunmalı',
+        );
+      },
+    );
+  });
+
   group('WP-243: içerik-temelli durdurma yarışı (echo bastırma)', () {
     // Native→Dart `reconcile` broadcast'ini tetikler (gerçek native yayınının
     // uygulama önplandayken yaptığı çağrının aynısı).

@@ -799,9 +799,15 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       (m) => m.name == fgModeName,
       orElse: () => state.mode,
     );
+    // WP-247 (D3): startedAt'i SSOT granülerliğinde (ms) karşılaştır. Dart
+    // `startedAt`'i mikrosaniyeli tutar; native ISO'yu milisaniyeden üretir
+    // (`TimerStateStore.writeRunning`). Ham `!=` her in-app start echo'sunda
+    // µs farkı yüzünden true dönüp gereksiz adoption tetikliyordu — bu, D1
+    // token zehirinin taşıyıcısıydı. ms eşitliği echo'yu gerçek no-op yapar.
     final stateNeedsNativeUpdate =
         !state.isRunning ||
-        state.startedAt != fgStart ||
+        state.startedAt?.millisecondsSinceEpoch !=
+            fgStart?.millisecondsSinceEpoch ||
         state.phase != fgPhase ||
         state.cycle != fgCycle ||
         state.mode != fgTimerMode;
