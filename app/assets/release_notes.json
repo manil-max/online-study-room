@@ -3,37 +3,49 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
-      "versionName": "1.0.42-beta.1",
-      "buildNumber": 4201,
+      "versionName": "1.0.42-beta.2",
+      "buildNumber": 4202,
       "channel": "beta",
       "date": "2026-07-20",
-      "title": "beta-v4201: ekonomi, taç ve sürüm gerçeği",
+      "title": "beta-v4202: ayrı test ortamı, eşit süre kaynakları ve ekonomi",
       "highlights": [
+        "Beta artık kendi ayrı test veritabanını kullanıyor; canlı kullanıcı verisine dokunamaz.",
+        "Manuel, kronometre, geri sayım, Pomodoro ve widget süresi kişisel/grup/XP/başarıma eşit sayılır.",
         "Altı başarı kademesi ve 20.000 XP'den başlayan altı taç eşiği istemciyle hizalandı.",
-        "XP çubuğunun etiketi, yüzdesi ve erişilebilirlik açıklaması artık aynı kademe-içi hesabı kullanıyor."
+        "XP çubuğunun etiketi, yüzdesi ve erişilebilirlik açıklaması aynı kademe-içi hesabı kullanıyor."
       ],
       "fixes": [
+        "Alfa, Kamp Ateşi, Lokomotif, Lider Kurt ve Mola Düşmanı ödül zinciri uçtan uca tamamlandı.",
         "12.500 XP artık 12.500 / 20.000 ve %62,5 olarak tutarlı gösterilir.",
         "Kaynağa özel doğrulama metinleri kaldırıldı; çalışma XP açıklaması kaynak bağımsız hale getirildi.",
         "Beta ve stable artefaktlarının aynı version/build kimliğini paylaşması fail-closed olarak engellendi."
       ],
       "notes": [
+        "Beta ayrı bir uygulama olarak kurulur ve kararlı sürümün üstüne yazmaz; iki ikon görmen normaldir.",
+        "Ayrı test veritabanı nedeniyle beta'da sıfırdan hesap açman gerekir. Mevcut hesabın ve verin kararlı sürümde güvende durur, silinmez.",
+        "Eski beta hâlâ canlı veritabanına yazdığı için kaldırılmalıdır.",
         "Bu kayıt yalnız istemci beta adayıdır; production deploy veya migration uygulaması içermez.",
         "Derleme tanısı sürüm/build, commit, backend ve migration head bilgilerini birlikte gösterir."
       ],
-      "titleEn": "beta-v4201: economy, crowns, and release identity",
+      "titleEn": "beta-v4202: separate test environment, equal time sources and economy",
       "highlightsEn": [
-        "The client now matches six achievement tiers and six crown thresholds starting at 20,000 XP.",
-        "The XP bar label, percentage, and accessibility value now use the same within-tier calculation."
+        "Beta now uses its own separate test database and cannot touch live user data.",
+        "Manual, stopwatch, countdown, Pomodoro and widget time count equally toward personal/group/XP/achievements.",
+        "Six achievement tiers and six crown thresholds starting at 20,000 XP are aligned with the client.",
+        "The XP bar label, percentage and accessibility description now use the same within-tier math."
       ],
       "fixesEn": [
+        "The Alpha, Campfire, Locomotive, Lead Wolf and Break Nemesis reward chain is complete end to end.",
         "12,500 XP is now shown consistently as 12,500 / 20,000 and 62.5%.",
-        "Source-specific verification copy was removed and the study XP explanation is source-neutral.",
-        "The release gate rejects beta and stable artifacts that reuse the same version/build identity."
+        "Source-specific verification wording was removed; the study XP description is now source independent.",
+        "Beta and stable artifacts sharing one version/build identity is now blocked fail-closed."
       ],
       "notesEn": [
-        "This entry describes a client beta candidate only; it does not deploy to production or apply migrations.",
-        "Build diagnostics show version/build, commit, backend, and migration head together."
+        "Beta installs as a separate app and does not overwrite the stable build; seeing two icons is expected.",
+        "Because of the separate test database you need to create a new account in beta. Your existing account and data remain safe in the stable build and are not deleted.",
+        "The old beta still writes to the live database and should be uninstalled.",
+        "This entry is a client beta candidate only; it contains no production deploy or migration application.",
+        "Build diagnostics show version/build, commit, backend and migration head together."
       ]
     },
     {

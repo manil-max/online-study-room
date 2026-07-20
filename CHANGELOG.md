@@ -4,6 +4,31 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [beta-v4202 / 1.0.42-beta.2+4202] - 2026-07-20
+
+> **Beta test sürümü — kurtarma paketi.** Bu beta iki büyük değişiklik getiriyor: (1) beta artık **kendi ayrı test veritabanına** bağlanıyor, (2) 6 kademeli ekonomi ve süre kaynağı eşitliği ilk kez birlikte test ediliyor. Aşağıdaki "Önce bunu oku" bölümünü atlama.
+
+### ⚠️ Önce bunu oku — kurulum değişti
+
+- **Beta artık ayrı bir uygulama.** Paket kimliği değişti; stable sürümün üstüne yazmaz, telefonunda **yan yana** durur. İki ikon görmen normaldir.
+- **Beta artık test veritabanına bağlanıyor.** Eskiden beta gerçek (canlı) veritabanını kullanıyordu; artık ayrı bir test ortamı kullanıyor. Bu, beta'da yapılan hiçbir denemenin gerçek kullanıcı verisine dokunamaması için yapıldı.
+- **Bu yüzden beta'da sıfırdan hesap açman gerekiyor.** Mevcut hesabın ve bütün geçmiş verin **canlı sürümde güvende duruyor**, silinmedi; beta onları göremiyor çünkü ayrı bir veritabanına bakıyor.
+- **Eski beta'yı kaldır.** Eski beta hâlâ canlı veritabanına yazıyor; yanlışlıkla açmamak için sil.
+- **Sürüm numarası biçimi değişti.** Beta numaraları artık `patch*100 + sıra` olarak yazılıyor (`beta-v4202` = 1.0.42'nin 2. betası). Bu, aynı numaranın iki farklı yapıya verilmesini engellemek için.
+
+### Öne çıkanlar
+
+- **Bütün süre kaynakları artık eşit.** Manuel giriş, uygulama kronometresi, geri sayım, Pomodoro ve bildirim/widget'tan başlatılan çalışma; kişisel istatistik, grup istatistiği, XP ve başarımlara **aynı şekilde** sayılır. Önceden bazı kaynaklar bazı hesaplamaların dışında kalıyordu.
+- **Ödül zinciri tamamlandı.** Alfa, Kamp Ateşi, Lokomotif, Lider Kurt ve Mola Düşmanı başarımlarında ilerleme → aday → bekleyen ödül → topla akışı uçtan uca çalışır.
+- **6 kademeli ekonomi.** Kademeler Elmas, Zümrüt ve Immortal ile genişledi; taç eşikleri `0 / 20.000 / 75.000 / 200.000 / 500.000 / 1.000.000` XP.
+- **XP barı artık dürüst.** Barın doluluğu ile üstündeki yazı aynı matematiği gösterir; ekran okuyucu için açıklama eklendi.
+
+### Test notları
+
+- Test veritabanı migration seviyesi: `0064`. Bu beta yalnız o seviyeyle çalışır; uyuşmazlıkta uygulama sessizce yanlış veri göstermek yerine açılışta durur.
+- Öncelikli test edilecekler: aynı süreyi beş farklı yoldan (manuel / kronometre / geri sayım / Pomodoro / widget) girip **aynı** istatistik ve XP sonucunu aldığını doğrulamak; ödül topladıktan sonra XP'nin iki kez artmadığını görmek; gece 23:59 → 00:01 geçişinde günün doğru dönmesi.
+- Bulduğun sorunu `progress.md` içindeki aktif QA kaydına yaz.
+
 ## [beta-v41 / 1.0.41+41] - 2026-07-19
 
 > **Beta test sürümü (ara düzeltme).** beta-v40 saha testinden çıkan üç hata düzeltildi. Kademe/XP/renk ekonomisi ve Alpha Wolf revizyonu bu pakette **yoktur**; sonraki betaya bırakıldı. XP davranışı değişmez (hâlâ shadow).
