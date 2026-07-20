@@ -57,10 +57,10 @@
 
 ### Claude Lane
 - **Durum:** [~] Aktif
-- **Faz/WP:** WP-239 (sayaç durdurma çift-sayım bug'ı + stop/manual-add invalidation)
-- **Aşama:** Başlıyor — kök neden bulundu (study_timer_card freeze yarışı)
-- **SAHİP yollar:** `app/lib/data/providers/study_providers.dart`, `app/lib/features/classroom/widgets/study_timer_card.dart`, `app/lib/core/stats/study_stats.dart`, ilgili testler, `progress.md`
-- **Ortak/riskli yüzey:** sayaç SSOT — native/Dart durum senkronu; offline-first cache emit zamanlaması
+- **Faz/WP:** FAZ A TAMAM (WP-239 ✅ + WP-235 ✅ + WP-237 ✅). Sıradaki: cihaz QA (kullanıcı) → sonra Faz B veya stable gate.
+- **Aşama:** Faz A stable-blocker'lar kod olarak bitti. analyze temiz, 645 test yeşil, kırık test yok. Görsel + davranış cihaz doğrulaması bekliyor (WP-233/234/237/239).
+- **SAHİP yollar:** —（lane boşta, Faz A kapandı）
+- **Cihaz QA listesi (stable öncesi):** ① bildirimden Başlat→uygulama içi Durdur (WP-233); ② başarım ilerleme/taç kademe (WP-234); ③ 1s kayıtlı+1s canlı→Durdur = 2s (3s değil), kapat-aç gerekmeden (WP-239); ④ grafiklerde X her gün + Y ekseni (WP-237).
 - **Dal:** `main`
 - **Başlangıç:** 2026-07-20 17:20 (Europe/Istanbul)
 - **Son güncelleme:** 2026-07-20 (Europe/Istanbul) — WP-233/234 kod tamam, WP-239'a geçildi
@@ -146,11 +146,11 @@
 | WP-234 | [x] Cihaz QA bekliyor | Biriken-olmayan başarımlarda yanıltıcı ilerleme + taç kademe görünürlüğü | beta-v4202 saha bulgusu · kişisel rekor çubuğu kalktı + taç kademe sayfası |
 | WP-231 | [ ] Bekliyor | İstatistik dönem semantiği + toplam/realtime refresh + grup tutarlılığı (kapsam daraldı) | ← WP-229, WP-230 · 2 madde iptal, 1 madde WP-239'a |
 | WP-232 | [ ] Bekliyor | Staging QA/soak + backup/dry-run + kontrollü production recovery release | ← WP-225–231 |
-| WP-235 | [ ] Planlandı | 2 kırık achievement_lifecycle testi — Riverpod 3 auto-dispose + WP-223 invalidate guard eksik | main'de kırık, teşhis tamam |
-| WP-236 | [ ] Planlandı | Leaderboard History: dönem-bazlı sıralama yarışı (today=günlük, week=haftalık) + canlı birinci + alpha/leader wolf takibi | beta-v4202 saha turu 2 |
-| WP-237 | [ ] Planlandı | Grafik ekseni cilası: x her gün etiketi + eksik Y ekseni ölçekleri (rank/line/bar/group trend/home eğilim); tüm grafikleri tara | beta-v4202 saha turu 2 |
-| WP-238 | [ ] Planlandı | Home "Eğilim" dönem seçici → tek döngü buton (7/14/30/90/180/360, tıkla-ilerle) | beta-v4202 saha turu 2 |
-| WP-239 | [ ] Planlandı | Sayaç durdurma çift-sayım bug'ı (freeze yarışı) + stop/manual-add invalidation tekilleştirme (WP-231'den) | beta-v4202 saha turu 2 |
+| WP-235 | [x] Cihaz QA gerekmez | 2 kırık achievement_lifecycle testi — Riverpod 3 auto-dispose + WP-223 invalidate guard | ✅ 639 test yeşil, artık kırık test yok |
+| WP-236 | [ ] Planlandı (Faz B) | Leaderboard History: dönem-bazlı sıralama yarışı (today=14g, week=8h) + canlı birinci + alpha/leader wolf | stable sonrası |
+| WP-237 | [x] Cihaz QA bekliyor (görsel) | Grafik ekseni cilası: x her gün etiketi + eksik Y ekseni ölçekleri | ✅ chart_axis util + 3 grafik; 645 test yeşil |
+| WP-238 | [ ] Planlandı (Faz B) | Home "Eğilim" dönem seçici → tek döngü buton (7/14/30/90/180/360, tıkla-ilerle) | stable sonrası |
+| WP-239 | [x] Cihaz QA bekliyor | Sayaç durdurma çift-sayım bug'ı (freeze yarışı) DÜZELTİLDİ; invalidation tekilleştirme → Faz B | ✅ freeze artık recorded zamanlamasından bağımsız |
 
 ### WP-229: Eşit Süre Kaynakları ve Ödül Zinciri Onarımı ⚖️
 - **Program/Faz:** Kurtarma Faz 4A
