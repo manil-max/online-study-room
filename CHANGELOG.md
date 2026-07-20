@@ -4,6 +4,21 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [beta-v4205 / 1.0.42-beta.5+4205] - 2026-07-20
+
+> **Beta test sürümü — sayaç durdurma yarışı deterministik düzeltme.** beta-v4204/4203’ten geliyorsan oturumun korunur; aynı ayrı test ortamı kullanılıyor.
+
+### Düzeltmeler
+
+- **Bildirimden/widget'tan başlatılan sayaç uygulama içi Durdur ile durmuyordu (P1).** Kök neden: beta-v4204'te durdurma yarışını 1.5 sn'lik bir zaman penceresiyle bastırıyorduk; bu heuristik hem bazı gerçek bildirim/widget aksiyonlarını yutuyor (durdurup hemen yeniden başlatınca sayaç dirilmiyordu) hem de "bazen çalışıyor bazen çalışmıyor" belirsizliği yaratıyordu. Artık **içerik-temelli, deterministik**: her başlatmanın benzersiz başlangıç anı (epoch-ms) ile "native durdurma diske düşmeden gelen gecikmiş yankı" ile "gerçekten yeni bir başlatma" kesin ayırt ediliyor. Zaman penceresi tamamen kaldırıldı → gerçek aksiyonlar bir daha yutulmuyor.
+- **Uzlaşma sırası.** Native durum bildirimleri tek işleme birleştiriliyor ve bir tur çalışırken yeni bildirim gelirse, tur bitince prefs taze okunup bir tur daha çalışıyor (son durum asla düşmüyor; beta-v4204 birleştirmesi bayat sonuç döndürebiliyordu).
+
+### Test notları
+
+- Öncelikli doğrulamalar: (1) bildirimden/widget'tan Başlat → uygulama içi Durdur — gerçekten duruyor mu; (2) Durdur → hemen bildirimden yeniden Başlat — yeni sayaç benimseniyor mu; (3) hızlı ard arda Başlat/Durdur.
+- Bu düzeltme artık deterministik otomatik regresyon testiyle korunuyor (`timer_background_reconcile_test.dart` WP-243 grubu): gecikmiş yankı sayacı diriltmiyor + farklı-ms yeni başlatma benimseniyor.
+- Bu kayıt yalnız istemci beta adayıdır; production deploy/migration içermez.
+
 ## [beta-v4204 / 1.0.42-beta.4+4204] - 2026-07-20
 
 > **Beta test sürümü — sayaç yarışı düzeltmesi.** beta-v4203/4202’den geliyorsan oturumun korunur; aynı ayrı test ortamı kullanılıyor.

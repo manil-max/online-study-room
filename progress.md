@@ -20,7 +20,7 @@
 - **Navigasyon hedefi:** Ana Sayfa / Saat / Gruplar / İstatistikler / Profil. Ana Sayfa günlük kullanım alanıdır; diğer alanların verisi kendi sekmelerinde eksiksiz bulunur.
 - **Release gerçeği:** Stable tag `v39` (`c6843a5`), beta tag `beta-v41` (`e6234a6`), HEAD `2d757eb`. Beta-v41 sonrası 13 yerel commit vardır; uygulama hâlâ `1.0.41+41` taşıdığı için sürüm/commit ayrımı bozuk. WP-227/230 düzeltecek.
 - **Kalite kapıları:** Her WP DoD'siz kapanmaz; stable release kalite kapısından geçer (AGENTS.md §3). Server-authoritative XP, RLS/sosyal profil, platform sınırları → `docs/KALITE-PROGRAMI.md`.
-- **Son WP numarası:** **242** (WP-242 = beta-v4204 yayını). **Sıradaki boş numara WP-243.** (WP-221–224 geçmişte kullanılmış; kurtarma WP-225–232 planlandı; WP-233/234 beta-v4202 saha bulguları; WP-235–239 beta-v4202 saha turu 2 — grafik/sıralama/test/sayaç). **Sıradaki boş numara WP-240.**
+- **Son WP numarası:** **244** (WP-243 = sayaç durdurma yarışı deterministik düzeltme; WP-244 = beta-v4205 yayını). **Sıradaki boş numara WP-245.** (WP-221–224 geçmişte kullanılmış; kurtarma WP-225–232 planlandı; WP-233/234 beta-v4202 saha bulguları; WP-235–239 beta-v4202 saha turu 2 — grafik/sıralama/test/sayaç; WP-241/242 beta-v4204; WP-243/244 beta-v4205.)
 - **Ortam sözleşmesi:** local=Supabase CLI/Docker, beta=ayrı staging Supabase, stable=production Supabase. Ayrıntı: `docs/ORTAM-MIGRATION-YONETISIMI.md`.
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
@@ -57,14 +57,14 @@
 
 ### Claude Lane
 - **Durum:** [~] Aktif
-- **Faz/WP:** WP-241 (sayaç reconcile YARIŞI — cihaz-kritik P1). beta-v4203 cihaz testinde WP-233 yetersiz çıktı; asıl kök neden bulundu.
-- **Aşama:** WP-241 kod tamam (analyze temiz, 645 test yeşil). beta-v4204 gerekiyor. Faz A (WP-235/237/239) ✅.
-- **SAHİP yollar:** `app/lib/data/providers/study_providers.dart`, ilgili testler, `progress.md`
-- **WP-241 kök neden:** native→Dart `reconcile` push kanalı ÇALIŞIYOR ([[native-dart-timer-sync-only-on-resume]] notu yanlıştı). Sorun: Dart start/stop native FGS'yi sürüyor → native her değişimde broadcast → reconcile ard arda/sıra-dışı çalışıp Dart state'ini eziyor (sayaç donması, durmama, çift/eksik sayım; "uygulama kapatıp açınca düzeliyor" = state yarışı imzası). Çözüm: (1) Dart-origin mutation sonrası 1.5sn reconcile bastırma penceresi (`_localTimerMutationAt`), (2) eşzamanlı reconcile coalescing (`_reconcileInFlight`).
+- **Faz/WP:** WP-243 (sayaç durdurma YARIŞI — deterministik düzeltme, cihaz-kritik P1) + WP-244 (beta-v4205 yayını). beta-v4204 cihaz testinde WP-241 yetersiz çıktı (bildirimden başlatılan durmuyor).
+- **Aşama:** WP-243 kod tamam (analyze temiz, 647 test yeşil — 2 yeni deterministik regresyon testi). beta-v4205 yayın kaydı hazır.
+- **SAHİP yollar:** `app/lib/data/providers/study_providers.dart`, `app/test/features/timer_background_reconcile_test.dart`, `CHANGELOG.md`, `app/assets/release_notes.json`, `progress.md`
+- **WP-243 kök neden (WP-241 neden yetersizdi):** WP-241'in 1.5sn zaman-penceresi bastırması HEURİSTİKTİ: (a) aynı pencerede gelen GERÇEK bildirim/widget aksiyonlarını da yutuyordu (durdurup hemen yeniden başlatınca sayaç dirilmiyordu — testte kanıtlandı: WP-241 baseline'da "farklı-ms yeni başlatma" testi DÜŞÜYOR), (b) coalescing stale in-flight future döndürüyordu. **Çözüm (deterministik, içerik-temelli):** (1) `_stoppedStartedAtMs` — Dart'ın en son durdurduğu çalışmanın startedAt-ms'i; native `writeIdle` diske düşmeden gelen GEÇ echo prefs'te AYNI ms ile `running` okursa yeniden benimsenmez, FARKLI ms = gerçek yeni başlatma → benimsenir; zaman penceresi tamamen kaldırıldı. (2) coalescing trailing re-run (`_reconcileAgainRequested`) — son durum asla düşmez. Regresyon: `timer_background_reconcile_test.dart` WP-243 grubu (2 test).
 - **Cihaz QA listesi (stable öncesi):** ① bildirimden Başlat→uygulama içi Durdur (WP-233); ② başarım ilerleme/taç kademe (WP-234); ③ 1s kayıtlı+1s canlı→Durdur = 2s (3s değil), kapat-aç gerekmeden (WP-239); ④ grafiklerde X her gün + Y ekseni (WP-237).
 - **Dal:** `main`
 - **Başlangıç:** 2026-07-20 17:20 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-20 (Europe/Istanbul) — WP-233/234 kod tamam, WP-239'a geçildi
+- **Son güncelleme:** 2026-07-20 (Europe/Istanbul) — WP-243 deterministik durdurma yarışı düzeltmesi + beta-v4205 (WP-244); tam senkronizasyon taraması yapıldı
 - **WP-233/234:** Kod tamam (analyze temiz, 636 test geçti) — cihaz doğrulaması bekleniyor (stable öncesi şart).
 - **Not:** beta-v4202 cihaz QA saha bulguları. Çakışma yok (diğer tüm lane'ler boşta). WP-229/230 kartları park bölümünde, diriltilmiyor — kurallara göre cihaz bug'ı için ayrı debug WP açıldı.
 - **Önceki tur:** Codex'ten devralınan WP-229/230 staging kabul kapısı tamamlandı; iki kart da **Test için bekleyenler**e taşındı (cihaz QA bekliyor). Staging kabul adayı: git `1a46ace`, migration head `0064`, beta artefakt `1.0.42-beta.2+4202`. Production mutasyonu yok, `deploy_enabled: false` korunuyor. **WP-231 kullanıcı kabulü olmadan başlatılmadı.**

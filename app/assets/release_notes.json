@@ -3,6 +3,38 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.42-beta.5",
+      "buildNumber": 4205,
+      "channel": "beta",
+      "date": "2026-07-20",
+      "title": "beta-v4205: sayaç durdurma yarışı — deterministik düzeltme",
+      "highlights": [
+        "Bildirimden/widget'tan başlatılan çalışma artık uygulama içi Durdur ile güvenilir şekilde duruyor; durdurup hemen yeniden başlatınca sayaç kayboluyordu, düzeltildi."
+      ],
+      "fixes": [
+        "Durdurma yarışı içerik-temelli, deterministik çözüldü: beta-v4204'teki zaman-penceresi yaklaşımı bazı gerçek bildirim/widget aksiyonlarını da yutuyordu (durdurup hemen yeniden başlatınca sayaç dirilmiyordu). Artık her başlatmanın kendi kimliğiyle (başlangıç anı) 'gecikmiş yankı' ile 'gerçek yeni başlatma' kesin ayırt ediliyor.",
+        "Native servisin gönderdiği durum bildirimleri sıraya alınıyor ve tur bitince taze durum bir kez daha okunuyor — son durum asla düşmüyor."
+      ],
+      "notes": [
+        "beta-v4204/4203'ten geliyorsan oturumun korunur; aynı ayrı test ortamı kullanılıyor.",
+        "Öncelikli test: bildirimden/widget'tan Başlat → uygulama içi Durdur (gerçekten duruyor mu); Durdur → hemen bildirimden yeniden Başlat (yeni sayaç benimseniyor mu); hızlı ard arda Başlat/Durdur.",
+        "Bu düzeltme artık otomatik regresyon testiyle korunuyor (WP-243). Bu kayıt yalnız istemci beta adayıdır; production deploy/migration içermez."
+      ],
+      "titleEn": "beta-v4205: timer stop race — deterministic fix",
+      "highlightsEn": [
+        "Study started from the notification/widget now reliably stops via the in-app Stop button; stopping then immediately restarting used to make the timer vanish — fixed."
+      ],
+      "fixesEn": [
+        "The stop race is now fixed deterministically by content: beta-v4204's time-window approach also swallowed some genuine notification/widget actions (stop-then-immediate-restart didn't revive the timer). Each start is now told apart from a 'late echo' vs a 'real new start' by its own identity (its start instant).",
+        "State notifications from the native service are serialized and the fresh state is re-read once after a pass completes — the final state is never dropped."
+      ],
+      "notesEn": [
+        "If you are coming from beta-v4204/4203 your session is kept; the same separate test environment is used.",
+        "Priority test: notification/widget Start then in-app Stop (does it truly stop); Stop then immediately restart from the notification (is the new timer adopted); rapid Start/Stop in a row.",
+        "This fix is now guarded by an automated regression test (WP-243). This entry is a client beta candidate only; no production deploy/migration."
+      ]
+    },
+    {
       "versionName": "1.0.42-beta.4",
       "buildNumber": 4204,
       "channel": "beta",
