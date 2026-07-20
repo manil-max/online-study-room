@@ -3800,6 +3800,7 @@
     "description": "Stats user-facing text. Source: Tümü"
   },
   "statsSaatKisa": "س",
+  "statsDakikaKisa": "د",
   "statsSaat": "ساعات",
   "@statsSaat": {
     "description": "Stats user-facing text. Source: saat"

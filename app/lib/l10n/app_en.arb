@@ -3819,6 +3819,8 @@
   },
   "statsSaatKisa": "h",
   "@statsSaatKisa": { "description": "Short hour unit suffix for chart axis (e.g. 3h)" },
+  "statsDakikaKisa": "m",
+  "@statsDakikaKisa": { "description": "Short minute unit suffix for chart axis (e.g. 30m)" },
   "statsSaat": "hours",
   "@statsSaat": {
     "description": "Stats user-facing text. Source: saat"

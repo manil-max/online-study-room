@@ -2,6 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/stats/study_stats.dart';
+import 'chart_axis.dart';
 import '../../../data/models/daily_stat.dart';
 import '../../../data/models/profile.dart';
 
@@ -134,91 +135,99 @@ class LeaderboardRankChart extends StatelessWidget {
         const SizedBox(height: 12),
         SizedBox(
           height: chartHeight,
-          child: LineChart(
-            LineChartData(
-              minY: 0.5,
-              maxY: n + 0.5,
-              lineTouchData: const LineTouchData(enabled: false),
-              gridData: FlGridData(
-                show: true,
-                drawVerticalLine: false,
-                horizontalInterval: 1,
-                getDrawingHorizontalLine: (_) => FlLine(
-                  color: scheme.outlineVariant.withValues(alpha: 0.20),
-                  strokeWidth: 1,
-                ),
-              ),
-              borderData: FlBorderData(
-                show: true,
-                border: Border(
-                  left: BorderSide(
-                    color: scheme.outlineVariant.withValues(alpha: 0.5),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              // WP-237: yer varken her günün numarası (eskiden sabit /4 adım).
+              final labelStep = axisLabelStep(
+                window.length,
+                constraints.maxWidth - 28,
+              );
+              return LineChart(
+                LineChartData(
+                  minY: 0.5,
+                  maxY: n + 0.5,
+                  lineTouchData: const LineTouchData(enabled: false),
+                  gridData: FlGridData(
+                    show: true,
+                    drawVerticalLine: false,
+                    horizontalInterval: 1,
+                    getDrawingHorizontalLine: (_) => FlLine(
+                      color: scheme.outlineVariant.withValues(alpha: 0.20),
+                      strokeWidth: 1,
+                    ),
                   ),
-                  bottom: BorderSide(
-                    color: scheme.outlineVariant.withValues(alpha: 0.5),
+                  borderData: FlBorderData(
+                    show: true,
+                    border: Border(
+                      left: BorderSide(
+                        color: scheme.outlineVariant.withValues(alpha: 0.5),
+                      ),
+                      bottom: BorderSide(
+                        color: scheme.outlineVariant.withValues(alpha: 0.5),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-              titlesData: FlTitlesData(
-                topTitles: const AxisTitles(
-                  sideTitles: SideTitles(showTitles: false),
-                ),
-                rightTitles: const AxisTitles(
-                  sideTitles: SideTitles(showTitles: false),
-                ),
-                leftTitles: AxisTitles(
-                  sideTitles: SideTitles(
-                    showTitles: true,
-                    reservedSize: 26,
-                    interval: 1,
-                    getTitlesWidget: (value, meta) {
-                      // plottedY = value → rank = n + 1 - value.
-                      final rank = n + 1 - value.round();
-                      if (rank < 1 || rank > n) {
-                        return const SizedBox.shrink();
-                      }
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 4),
-                        child: Text(
-                          '$rank.',
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: scheme.onSurfaceVariant,
-                            fontSize: 9,
-                          ),
-                        ),
-                      );
-                    },
+                  titlesData: FlTitlesData(
+                    topTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    rightTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    leftTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 26,
+                        interval: 1,
+                        getTitlesWidget: (value, meta) {
+                          // plottedY = value → rank = n + 1 - value.
+                          final rank = n + 1 - value.round();
+                          if (rank < 1 || rank > n) {
+                            return const SizedBox.shrink();
+                          }
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 4),
+                            child: Text(
+                              '$rank.',
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: scheme.onSurfaceVariant,
+                                fontSize: 9,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 18,
+                        getTitlesWidget: (value, meta) {
+                          final i = value.round();
+                          if (i < 0 || i >= window.length) {
+                            return const SizedBox.shrink();
+                          }
+                          if (i % labelStep != 0 && i != window.length - 1) {
+                            return const SizedBox.shrink();
+                          }
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Text(
+                              '${window[i].day}',
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: scheme.onSurfaceVariant,
+                                fontSize: 9,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
                   ),
+                  lineBarsData: bars,
                 ),
-                bottomTitles: AxisTitles(
-                  sideTitles: SideTitles(
-                    showTitles: true,
-                    reservedSize: 18,
-                    getTitlesWidget: (value, meta) {
-                      final i = value.round();
-                      if (i < 0 || i >= window.length) {
-                        return const SizedBox.shrink();
-                      }
-                      final step = (window.length / 4).ceil().clamp(1, 1 << 30);
-                      if (i % step != 0 && i != window.length - 1) {
-                        return const SizedBox.shrink();
-                      }
-                      return Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: Text(
-                          '${window[i].day}',
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: scheme.onSurfaceVariant,
-                            fontSize: 9,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ),
-              lineBarsData: bars,
-            ),
+              );
+            },
           ),
         ),
       ],

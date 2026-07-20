@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/stats/study_stats.dart';
 import '../../../core/utils/duration_format.dart';
+import 'chart_axis.dart';
 
 List<String> _months(BuildContext context) => [
   AppLocalizations.of(context).statsOca,
@@ -61,126 +62,140 @@ class DailyBarChart extends StatelessWidget {
       return seconds >= goalSeconds! ? reachedColor : missedColor;
     }
 
-    return BarChart(
-      BarChartData(
-        maxY: maxY,
-        alignment: BarChartAlignment.spaceBetween,
-        extraLinesData: ExtraLinesData(
-          horizontalLines: [
-            if (hasGoal)
-              HorizontalLine(
-                y: goalMin,
-                color: theme.colorScheme.secondary,
-                strokeWidth: 1.5,
-                dashArray: const [6, 4],
-                label: HorizontalLineLabel(
-                  show: true,
-                  // Sol üstte: sağdaki çubuk/etiketlerle çakışmasın.
-                  alignment: Alignment.topLeft,
-                  padding: const EdgeInsets.only(left: 2, bottom: 1),
-                  style: theme.textTheme.labelSmall?.copyWith(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // WP-237: yer varken her günün numarası (eskiden dense'te her 3 gün).
+        // Gün+ay iki satır olduğu için etiket ~26px yer kaplar.
+        final labelStep = axisLabelStep(
+          days.length,
+          constraints.maxWidth,
+          labelWidth: 26,
+        );
+        return BarChart(
+          BarChartData(
+            maxY: maxY,
+            alignment: BarChartAlignment.spaceBetween,
+            extraLinesData: ExtraLinesData(
+              horizontalLines: [
+                if (hasGoal)
+                  HorizontalLine(
+                    y: goalMin,
                     color: theme.colorScheme.secondary,
-                    fontWeight: FontWeight.w700,
-                  ),
-                  labelResolver: (_) => AppLocalizations.of(context).statsHedef,
-                ),
-              ),
-          ],
-        ),
-        barTouchData: BarTouchData(
-          enabled: true,
-          touchTooltipData: BarTouchTooltipData(
-            getTooltipColor: (_) => Colors.transparent,
-            tooltipPadding: EdgeInsets.zero,
-            tooltipMargin: 2,
-            getTooltipItem: (group, _, rod, _) {
-              final label = _short(
-                AppLocalizations.of(context),
-                days[group.x].seconds,
-              );
-              if (label.isEmpty) return null;
-              return BarTooltipItem(
-                label,
-                theme.textTheme.labelSmall!.copyWith(
-                  color: theme.colorScheme.onSurface,
-                  fontWeight: FontWeight.w700,
-                  fontSize: dense ? 9 : 11,
-                ),
-              );
-            },
-          ),
-        ),
-        titlesData: FlTitlesData(
-          leftTitles: const AxisTitles(
-            sideTitles: SideTitles(showTitles: false),
-          ),
-          rightTitles: const AxisTitles(
-            sideTitles: SideTitles(showTitles: false),
-          ),
-          topTitles: const AxisTitles(
-            sideTitles: SideTitles(showTitles: false),
-          ),
-          bottomTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              reservedSize: 40,
-              getTitlesWidget: (value, meta) {
-                final i = value.toInt();
-                if (i < 0 || i >= days.length) {
-                  return const SizedBox.shrink();
-                }
-                if (dense && i % 3 != 0) return const SizedBox.shrink();
-                final d = days[i].day;
-                return Padding(
-                  padding: const EdgeInsets.only(top: 5),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        '${d.day}',
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: theme.colorScheme.onSurface,
-                          fontWeight: FontWeight.w600,
-                          height: 1.1,
-                        ),
+                    strokeWidth: 1.5,
+                    dashArray: const [6, 4],
+                    label: HorizontalLineLabel(
+                      show: true,
+                      // Sol üstte: sağdaki çubuk/etiketlerle çakışmasın.
+                      alignment: Alignment.topLeft,
+                      padding: const EdgeInsets.only(left: 2, bottom: 1),
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.secondary,
+                        fontWeight: FontWeight.w700,
                       ),
-                      Text(
-                        months[d.month - 1],
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                          fontSize: 9,
-                          height: 1.1,
-                        ),
-                      ),
-                    ],
+                      labelResolver: (_) =>
+                          AppLocalizations.of(context).statsHedef,
+                    ),
                   ),
-                );
-              },
-            ),
-          ),
-        ),
-        gridData: const FlGridData(show: false),
-        borderData: FlBorderData(show: false),
-        barGroups: [
-          for (var i = 0; i < days.length; i++)
-            BarChartGroupData(
-              x: i,
-              showingTooltipIndicators: days[i].seconds > 0
-                  ? const [0]
-                  : const [],
-              barRods: [
-                BarChartRodData(
-                  toY: days[i].seconds / 60,
-                  color: barColor(days[i].seconds),
-                  width: dense ? 8 : 16,
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(3),
-                  ),
-                ),
               ],
             ),
-        ],
-      ),
+            barTouchData: BarTouchData(
+              enabled: true,
+              touchTooltipData: BarTouchTooltipData(
+                getTooltipColor: (_) => Colors.transparent,
+                tooltipPadding: EdgeInsets.zero,
+                tooltipMargin: 2,
+                getTooltipItem: (group, _, rod, _) {
+                  final label = _short(
+                    AppLocalizations.of(context),
+                    days[group.x].seconds,
+                  );
+                  if (label.isEmpty) return null;
+                  return BarTooltipItem(
+                    label,
+                    theme.textTheme.labelSmall!.copyWith(
+                      color: theme.colorScheme.onSurface,
+                      fontWeight: FontWeight.w700,
+                      fontSize: dense ? 9 : 11,
+                    ),
+                  );
+                },
+              ),
+            ),
+            titlesData: FlTitlesData(
+              leftTitles: const AxisTitles(
+                sideTitles: SideTitles(showTitles: false),
+              ),
+              rightTitles: const AxisTitles(
+                sideTitles: SideTitles(showTitles: false),
+              ),
+              topTitles: const AxisTitles(
+                sideTitles: SideTitles(showTitles: false),
+              ),
+              bottomTitles: AxisTitles(
+                sideTitles: SideTitles(
+                  showTitles: true,
+                  reservedSize: 40,
+                  getTitlesWidget: (value, meta) {
+                    final i = value.toInt();
+                    if (i < 0 || i >= days.length) {
+                      return const SizedBox.shrink();
+                    }
+                    if (i % labelStep != 0 && i != days.length - 1) {
+                      return const SizedBox.shrink();
+                    }
+                    final d = days[i].day;
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 5),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            '${d.day}',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: theme.colorScheme.onSurface,
+                              fontWeight: FontWeight.w600,
+                              height: 1.1,
+                            ),
+                          ),
+                          Text(
+                            months[d.month - 1],
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                              fontSize: 9,
+                              height: 1.1,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+            gridData: const FlGridData(show: false),
+            borderData: FlBorderData(show: false),
+            barGroups: [
+              for (var i = 0; i < days.length; i++)
+                BarChartGroupData(
+                  x: i,
+                  showingTooltipIndicators: days[i].seconds > 0
+                      ? const [0]
+                      : const [],
+                  barRods: [
+                    BarChartRodData(
+                      toY: days[i].seconds / 60,
+                      color: barColor(days[i].seconds),
+                      width: dense ? 8 : 16,
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(3),
+                      ),
+                    ),
+                  ],
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
