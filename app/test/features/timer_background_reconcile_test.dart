@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -278,6 +279,120 @@ void main() {
         );
         expect(container.read(studyTimerProvider).isRunning, isFalse);
         expect(prefs.getString('timer_fg_mode'), 'idle');
+      },
+    );
+  });
+
+  group('WP-243: içerik-temelli durdurma yarışı (echo bastırma)', () {
+    // Native→Dart `reconcile` broadcast'ini tetikler (gerçek native yayınının
+    // uygulama önplandayken yaptığı çağrının aynısı).
+    Future<void> fireReconcile() async {
+      const channel = MethodChannel('com.manilmax.online_study_room/timer');
+      await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .handlePlatformMessage(
+            channel.name,
+            channel.codec.encodeMethodCall(const MethodCall('reconcile')),
+            (_) {},
+          );
+    }
+
+    test(
+      'bildirimden başlatılan sayaç uygulama içi Durdur sonrası GEÇ echo ile '
+      'geri gelmez',
+      () async {
+        // Bildirimden başlatılmış çalışan sayaç (native SSOT prefs'te).
+        final nativeStart = DateTime.now().subtract(const Duration(minutes: 12));
+        final (container, studyRepo, profile) = await _buildContainer({
+          'timer_active_started_at': nativeStart.toIso8601String(),
+          'timer_active_started_at_ms': nativeStart.millisecondsSinceEpoch,
+          'timer_active_mode': TimerMode.stopwatch.name,
+          'timer_active_phase': TimerPhase.work.name,
+          'timer_active_cycle': 1,
+          'timer_fg_mode': 'running',
+          'timer_active_start_origin': 'native_notification',
+        });
+        final timerSub = container.listen(studyTimerProvider, (_, _) {});
+        addTearDown(timerSub.close);
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+        expect(container.read(studyTimerProvider).isRunning, isTrue);
+
+        // Kullanıcı uygulama içinden Durdur'a bastı → oturum yazılır, durur.
+        await container.read(studyTimerProvider.notifier).stop();
+        expect(container.read(studyTimerProvider).isRunning, isFalse);
+        final afterStop = await studyRepo.watchUserSessions(profile.id).first;
+        expect(afterStop, hasLength(1));
+
+        // GEÇ echo: native `writeIdle` diske düşmeden önceki bir `reconcile`
+        // broadcast'i gelir; prefs hâlâ AYNI startedAt-ms ile `running` okur.
+        final prefs = container.read(sharedPreferencesProvider);
+        await prefs.setString(
+          'timer_active_started_at',
+          nativeStart.toIso8601String(),
+        );
+        await prefs.setInt(
+          'timer_active_started_at_ms',
+          nativeStart.millisecondsSinceEpoch,
+        );
+        await prefs.setString('timer_fg_mode', 'running');
+        await fireReconcile();
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+
+        // Durdurma geri ALINMAMALI (fix'ten önce echo sayacı diriltiyordu) ve
+        // ikinci bir oturum YAZILMAMALI.
+        expect(
+          container.read(studyTimerProvider).isRunning,
+          isFalse,
+          reason: 'geç echo durdurulmuş sayacı yeniden benimsememeli',
+        );
+        final afterEcho = await studyRepo.watchUserSessions(profile.id).first;
+        expect(afterEcho, hasLength(1), reason: 'çift oturum yazılmamalı');
+      },
+    );
+
+    test(
+      'Durdur sonrası GERÇEKTEN yeni bir native başlatma (farklı ms) benimsenir',
+      () async {
+        // Bildirimden başlatılmış çalışan sayaç.
+        final firstStart = DateTime.now().subtract(const Duration(minutes: 12));
+        final (container, _, _) = await _buildContainer({
+          'timer_active_started_at': firstStart.toIso8601String(),
+          'timer_active_started_at_ms': firstStart.millisecondsSinceEpoch,
+          'timer_active_mode': TimerMode.stopwatch.name,
+          'timer_active_phase': TimerPhase.work.name,
+          'timer_active_cycle': 1,
+          'timer_fg_mode': 'running',
+          'timer_active_start_origin': 'native_notification',
+        });
+        final timerSub = container.listen(studyTimerProvider, (_, _) {});
+        addTearDown(timerSub.close);
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+        expect(container.read(studyTimerProvider).isRunning, isTrue);
+
+        await container.read(studyTimerProvider.notifier).stop();
+        expect(container.read(studyTimerProvider).isRunning, isFalse);
+
+        // Kullanıcı bildirimden YENİDEN Başlat'a bastı: yeni epoch (farklı ms).
+        final secondStart = DateTime.now().subtract(const Duration(minutes: 1));
+        final prefs = container.read(sharedPreferencesProvider);
+        await prefs.setString(
+          'timer_active_started_at',
+          secondStart.toIso8601String(),
+        );
+        await prefs.setInt(
+          'timer_active_started_at_ms',
+          secondStart.millisecondsSinceEpoch,
+        );
+        await prefs.setString('timer_fg_mode', 'running');
+        await fireReconcile();
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+
+        // Yeni ms echo değil → benimsenmeli (aşırı bastırma yok).
+        expect(
+          container.read(studyTimerProvider).isRunning,
+          isTrue,
+          reason: 'farklı ms gerçek yeni başlatmadır, benimsenmeli',
+        );
+        expect(container.read(studyTimerProvider).startedAt, secondStart);
       },
     );
   });

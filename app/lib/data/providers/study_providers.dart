@@ -403,19 +403,24 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   bool _disposed = false;
   Future<void>? _verifiedStartFuture;
 
-  /// WP-241: sayaç reconcile yarışı koruması.
-  /// [_localTimerMutationAt]: Dart'ın kendi start/stop'unu en son yaptığı an.
-  /// Bu pencere içinde native'in ürettiği `reconcile` broadcast'i state'i
-  /// EZMEZ (Dart zaten native'i sürdü, durum tutarlı). [_reconcileInFlight]:
-  /// eşzamanlı reconcile çağrılarını tek bir çalışmaya birleştirir (sıra-dışı
-  /// çalışıp state'i bozmasınlar).
-  DateTime? _localTimerMutationAt;
-  Future<void>? _reconcileInFlight;
+  /// WP-243: sayaç reconcile yarışı koruması — DETERMİNİSTİK (zaman penceresi
+  /// yok; WP-241'in 1.5sn heuristik bastırması "bazen çalışıyor bazen çalışmıyor"
+  /// belirsizliğinin kök nedeniydi).
+  ///
+  /// [_stoppedStartedAtMs]: Dart'ın en son DURDURDUĞU çalışmanın `startedAt`
+  /// epoch-ms'i. Her başlatmanın ms'i benzersizdir. Native `writeIdle` diske
+  /// düşmeden gelen geç/echo `reconcile`, prefs'te hâlâ AYNI ms ile `running`
+  /// okur → onu YENİDEN BENİMSEMEYİZ (durdurmayı geri almaz). FARKLI ms =
+  /// gerçekten yeni bir native başlatma → benimsenir. Böylece "bildirimden
+  /// başlatılanı uygulama içinden durduramama" yarışı içerik-temelli kapanır.
+  int? _stoppedStartedAtMs;
 
-  /// Dart-origin start/stop sonrası native reconcile'ın state'i ezmemesi için
-  /// bastırma penceresi. Ard arda işlemi kapsayacak kadar uzun, gerçek
-  /// bildirim/widget işlemini geciktirmeyecek kadar kısa.
-  static const _localMutationGuard = Duration(milliseconds: 1500);
+  /// [_reconcileInFlight]: eşzamanlı reconcile çağrılarını tek çalışmaya
+  /// birleştirir. [_reconcileAgainRequested]: çalışırken yeni bir broadcast
+  /// gelirse, mevcut tur bitince prefs'i TAZE okuyup bir tur daha çalışırız
+  /// (son durumu asla düşürme).
+  Future<void>? _reconcileInFlight;
+  bool _reconcileAgainRequested = false;
 
   // Süre kaynağı ürün açısından fark yaratmaz: manuel giriş, uygulama içi
   // sayaç ve native sayaç aynı XP/başarım yolunu kullanır. Eski live-run
@@ -589,33 +594,43 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   /// işler. Hem soğuk açılışta hem onResume/onTaskData'da çağrılır.
   Future<void> _syncBackgroundTimerState() async {
     if (_disposed) return;
-    // WP-241: Dart kendi start/stop'unu yeni yaptıysa, native durumu Dart'la
-    // zaten tutarlı (Dart native'i sürdü). O işlemin tetiklediği native
-    // `reconcile` broadcast'i buraya düşünce state'i yeniden türetip ezmesin —
-    // ard arda başlat/durdur'da sayaç donması ve çift sayımın kök nedeni buydu.
-    // Gerçek bildirim/widget işlemi bu pencereyi set etmez → normal işlenir.
-    final mutatedAt = _localTimerMutationAt;
-    if (mutatedAt != null &&
-        DateTime.now().difference(mutatedAt) < _localMutationGuard) {
-      return;
-    }
+    // WP-243: zaman-penceresi bastırması KALDIRILDI. Echo'lar artık içerik
+    // temelli kapanır: Dart-origin başlatmanın echo'su startedAt eşleştiği için
+    // zaten idempotenttir (aşağıda stateNeedsNativeUpdate=false); durdurmanın
+    // echo'su [_stoppedStartedAtMs] ile ayırt edilir. Böylece gerçek
+    // bildirim/widget aksiyonları bir daha asla yanlışlıkla yutulmaz.
     await _reconcileBackgroundTimer();
     if (_disposed) return;
     await _processPendingExternalCommand();
   }
 
-  /// WP-241: eşzamanlı reconcile çağrılarını tek çalışmaya birleştirir.
-  /// Native ard arda birden çok broadcast gönderince, iç içe geçen `await`'ler
-  /// state'i sıra-dışı ezmesin diye çağıranlar aynı future'ı bekler.
+  /// WP-241/243: eşzamanlı reconcile çağrılarını tek çalışmaya birleştirir.
+  /// Çalışırken gelen ek broadcast'ler [_reconcileAgainRequested] ile
+  /// işaretlenir ve mevcut tur bitince prefs TAZE okunarak bir tur daha
+  /// çalıştırılır — son durumu asla düşürmez (WP-241 coalescing'in stale
+  /// sonucu döndürme kusuru giderildi).
   Future<void> _reconcileBackgroundTimer() {
     if (_disposed) return Future<void>.value();
     final existing = _reconcileInFlight;
-    if (existing != null) return existing;
-    final future = _reconcileBackgroundTimerImpl().whenComplete(() {
-      _reconcileInFlight = null;
-    });
+    if (existing != null) {
+      _reconcileAgainRequested = true;
+      return existing;
+    }
+    final future = _runReconcileLoop();
     _reconcileInFlight = future;
     return future;
+  }
+
+  Future<void> _runReconcileLoop() async {
+    try {
+      do {
+        _reconcileAgainRequested = false;
+        await _reconcileBackgroundTimerImpl();
+        if (_disposed) return;
+      } while (_reconcileAgainRequested && !_disposed);
+    } finally {
+      _reconcileInFlight = null;
+    }
   }
 
   /// FGS bildiriminden gelen app-kapalı Durdur↔Başlat toggle'ını uzlaştırır:
@@ -740,6 +755,16 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     final fgStart =
         DateTime.tryParse(prefs.getString(_kActiveStartedAt) ?? '') ??
         (ms > 0 ? DateTime.fromMillisecondsSinceEpoch(ms) : null);
+    // WP-243: içerik-temelli echo bastırma. Dart bu çalışmayı zaten durdurduysa
+    // (aynı startedAt-ms), bu prefs okuması native `writeIdle` diske düşmeden
+    // gelen GEÇ echo'dur → yeniden benimseme (durdurmayı geri alma). Native
+    // durdurma zaten yolda; sıradaki tur/broadcast idle okuyup no-op olur.
+    final fgStartMs = fgStart?.millisecondsSinceEpoch;
+    if (!state.isRunning &&
+        _stoppedStartedAtMs != null &&
+        fgStartMs == _stoppedStartedAtMs) {
+      return;
+    }
     final fgPhase = TimerPhase.values.firstWhere(
       (phase) => phase.name == prefs.getString(_kActivePhase),
       orElse: () => TimerPhase.work,
@@ -862,9 +887,9 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   void start() {
     if (state.isRunning) return;
     final now = DateTime.now();
-    // WP-241: Dart-origin mutation; native'in bunun ardından göndereceği
-    // reconcile broadcast'i state'i ezmesin.
-    _localTimerMutationAt = now;
+    // WP-243: yeni çalışma başlıyor → önceki durdurma echo-koruması artık
+    // geçersiz (bu başlatmanın ms'i farklı; eski ms'i tutmaya gerek yok).
+    _stoppedStartedAtMs = null;
     state = state.copyWith(
       isRunning: true,
       startedAt: now,
@@ -1146,9 +1171,10 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   void _finish({TimerEvent? lastEvent}) {
     _tick?.cancel();
     _tick = null;
-    // WP-241: Dart-origin durdurma; ardından gelen native STOP broadcast'inin
-    // reconcile'ı state'i tekrar "çalışıyor"a çevirmesin (durdurma yarışı).
-    _localTimerMutationAt = DateTime.now();
+    // WP-243: durdurulan çalışmanın startedAt-ms'ini hatırla. Native STOP diske
+    // düşmeden gelen echo `reconcile` bu ms ile `running` okursa yeniden
+    // benimsenmez (içerik-temelli durdurma yarışı koruması).
+    _stoppedStartedAtMs = state.startedAt?.millisecondsSinceEpoch;
     state = state.copyWith(
       isRunning: false,
       clearStartedAt: true,
