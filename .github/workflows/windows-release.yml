@@ -22,12 +22,22 @@ permissions:
 jobs:
   build:
     runs-on: windows-latest
+    environment:
+      name: ${{ startsWith(github.ref_name, 'beta-') && 'staging' || 'production' }}
     defaults:
       run:
         working-directory: app
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Kanonik migration head
+        id: contract
+        shell: pwsh
+        run: |
+          $contract = Get-Content ../tooling/release/deploy-contract.json -Raw | ConvertFrom-Json
+          $environment = if ($env:GITHUB_REF_NAME.StartsWith('beta-')) { 'staging' } else { 'production' }
+          "head=$($contract.$environment.migration_head)" >> $env:GITHUB_OUTPUT
 
       - name: Kanal ve surum
         id: meta
@@ -63,6 +73,27 @@ jobs:
             echo "asset_zip=$ASSET_ZIP"
           } >> "$GITHUB_OUTPUT"
           echo "Windows release meta: tag=$TAG code=$CODE channel=$CHANNEL msix=$MSIX_VER"
+
+      - name: Protected release gate
+        shell: pwsh
+        env:
+          STAGING_SUPABASE_URL: ${{ secrets.STAGING_SUPABASE_URL }}
+          PRODUCTION_SUPABASE_URL: ${{ secrets.PRODUCTION_SUPABASE_URL }}
+          STAGING_SUPABASE_PROJECT_REF: ${{ vars.STAGING_SUPABASE_PROJECT_REF }}
+          PRODUCTION_SUPABASE_PROJECT_REF: ${{ vars.PRODUCTION_SUPABASE_PROJECT_REF }}
+        run: |
+          $channel = '${{ steps.meta.outputs.channel }}'
+          $projectRef = if ($channel -eq 'beta') { $env:STAGING_SUPABASE_PROJECT_REF } else { $env:PRODUCTION_SUPABASE_PROJECT_REF }
+          $url = if ($channel -eq 'beta') { $env:STAGING_SUPABASE_URL } else { $env:PRODUCTION_SUPABASE_URL }
+          ../tooling/release/release-gate.ps1 -Channel $channel -ProjectRef $projectRef -SupabaseUrl $url -StagingProjectRef $env:STAGING_SUPABASE_PROJECT_REF -ProductionProjectRef $env:PRODUCTION_SUPABASE_PROJECT_REF -ExpectedGitSha $env:GITHUB_SHA -ExpectedMigrationHead '${{ steps.contract.outputs.head }}'
+
+      - name: Release gate evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-release-gate-${{ github.run_id }}
+          path: .artifacts/deploy-evidence/**
+          if-no-files-found: error
 
       - uses: subosito/flutter-action@v2
         with:
@@ -107,7 +138,7 @@ jobs:
             STAGING_SUPABASE_PROJECT_REF = $env:STAGING_SUPABASE_PROJECT_REF
             PRODUCTION_SUPABASE_PROJECT_REF = $env:PRODUCTION_SUPABASE_PROJECT_REF
             GIT_COMMIT_SHA = $env:GITHUB_SHA
-            MIGRATION_HEAD = "0062"
+            MIGRATION_HEAD = "${{ steps.contract.outputs.head }}"
             DISTRIBUTION_CHANNEL = "windows"
             SENTRY_DSN = $env:SENTRY_DSN
             SENTRY_ENABLED = "false"

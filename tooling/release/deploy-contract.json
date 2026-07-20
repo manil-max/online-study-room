@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "local_migration_head": "0063",
+  "staging": {
+    "migration_head": "0062",
+    "deploy_enabled": false,
+    "release_enabled": false,
+    "hold_reason": "WP-229 has not replaced the rejected 0063 migration yet."
+  },
+  "production": {
+    "migration_head": "0062",
+    "deploy_enabled": false,
+    "release_enabled": false,
+    "hold_reason": "Production freeze remains active until WP-232 staging, device QA, soak, backup, dry-run and explicit GO."
+  }
+}

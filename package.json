@@ -7,7 +7,8 @@
     "db:stop": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File tooling/supabase/local.ps1 stop",
     "db:reset": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File tooling/supabase/local.ps1 reset",
     "db:test": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File tooling/supabase/local.ps1 test",
-    "db:baseline": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File tooling/supabase/local.ps1 baseline"
+    "db:baseline": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File tooling/supabase/local.ps1 baseline",
+    "deploy:guard:test": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File tooling/supabase/guard.tests.ps1"
   },
   "devDependencies": {
     "supabase": "2.109.1"

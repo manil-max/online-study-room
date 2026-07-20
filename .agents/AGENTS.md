@@ -139,6 +139,8 @@ CI/PR auto-merge için WP-39 iptal edilmiştir. Yerel DoD ve gerçek cihaz QA ka
 - `exception when others` ile kritik adımı yutup başarı döndüren migration kabul edilmez. Opsiyonel yetenek degrade oluyorsa post-check bunu release bloklayıcı olarak görünür kılar.
 - Migration WP'si şu invariant'ları önce/sonra raporlar: session satır/süre toplamı, XP ledger↔profil uzlaşması, duplicate reward/ledger, RLS abuse, cron/finalizer gerçek çalışması ve Europe/Istanbul sınırları.
 - Secret'lar (`SUPABASE_ACCESS_TOKEN`, DB parolası, service role, env dosyaları) repoya, test çıktısına veya kullanıcı yanıtına yazılmaz.
+- Local replay/test yalnız `tooling/supabase/local.ps1`; remote list/dry-run/push yalnız `tooling/supabase/remote.ps1` veya protected `Database Gates` workflow'u üzerinden yapılır. Doğrudan remote Supabase CLI komutu çalıştırıp hedef/kanıt kapılarını atlamak yasaktır.
+- `tooling/release/deploy-contract.json` içindeki HOLD veya `deploy_enabled` / `release_enabled` kapısı test ve kabul kanıtı olmadan değiştirilmez; workflow'u geçirmek için geçici bypass, sahte head/backup/GO girdisi yazılmaz.
 
 ### Dil & Stil
 - Kullanıcıya görünen metin **Türkçe**; kod/teknik isim İngilizce. Gün sınırı her yerde **Europe/Istanbul** (tek yardımcıdan).

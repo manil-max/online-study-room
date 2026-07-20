@@ -76,8 +76,8 @@
 - **Ortak/riskli yüzey:** —
 - **Dal:** — (`main`)
 - **Başlangıç:** —
-- **Son güncelleme:** 2026-07-20 13:01 (Europe/Istanbul)
-- **Not:** WP-227 kod + otomatik test kapsamı tamamlandı ve parka alındı. Staging proje owner kurulumu, kabul edilmiş migration head/seed ve gerçek cihaz yan-yana QA bekliyor; production write yok.
+- **Son güncelleme:** 2026-07-20 13:34 (Europe/Istanbul)
+- **Not:** WP-228 kod + otomatik test kapsamı tamamlandı ve parka alındı. Local rerun/already-running/yarım-stack recovery kanıtı geçti; gerçek staging project/GitHub Environment owner kurulumu ve WP-229 kabul head'i sonrasında protected staging apply + beta build kanıtı bekliyor. Production write yok.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
@@ -118,33 +118,11 @@
 | WP | Durum | Kısa kapsam | Bağımlılık |
 |---|---|---|---|
 | WP-227 | [~] Staging/cihaz QA | Beta/stable flavor + staging/production backend izolasyonu + fail-closed | ← WP-226 |
-| WP-228 | [ ] Bekliyor | Local/staging otomasyonu + production manual approval gate | ← WP-227 |
-| WP-229 | [ ] Bekliyor | Eşit süre kaynakları ve reward/projection zinciri için güvenli ileri migration | ← WP-226, WP-227, WP-228 |
+| WP-228 | [~] Staging/owner QA | Local/staging otomasyonu + production manual approval gate | ← WP-227 · apply kanıtı WP-229 kabul head'i sonrası |
+| WP-229 | [ ] Bekliyor | Eşit süre kaynakları ve reward/projection zinciri için güvenli ileri migration | ← WP-226, WP-227 · WP-228 otomasyon kodu hazır |
 | WP-230 | [ ] Bekliyor | 6 kademe/20k ekonomi + XP bar/metin + sürüm manifesti istemci onarımı | ← WP-227 · WP-229 ile en fazla iki lane |
 | WP-231 | [ ] Bekliyor | İstatistik dönem semantiği + toplam/realtime refresh + grup tutarlılığı | ← WP-229, WP-230 |
 | WP-232 | [ ] Bekliyor | Staging QA/soak + backup/dry-run + kontrollü production recovery release | ← WP-225–231 |
-
-### WP-228: Güvenli Deploy Otomasyonu ve Agent Kapıları 🤖
-- **Program/Faz:** Kurtarma Faz 3
-- **Ajan:** —
-- **Durum:** [ ] Bekliyor
-- **Problem:** Migration ve build adımları elle/dağınık; yanlış hedef, eksik test ve gizli başarısızlık agent hatasına açık.
-- **Kapsam dışı:** PR auto-merge, onaysız production deploy, feature migration yazmak.
-- **SAHİP dosyalar (yaz):** `tooling/supabase/**`, `tooling/release/**`, uygun `.github/workflows/**`, environment example/README, `.agents/**` yalnız kartta belirtilen dar ekler, `progress.md`.
-- **DOKUNMA:** Gerçek secret/env dosyaları, release keystore, feature kodu ve migration gövdeleri.
-- **Adımlar:**
-  - [ ] Tek komut local replay+SQL/RLS/invariant test akışı oluştur.
-  - [ ] Staging migration list→dry-run→push→post-check ve beta build raporunu otomatikleştir.
-  - [ ] Production workflow'u manual environment approval + exact commit/head + backup checklist ile kilitle.
-  - [ ] Destructive command denylist, target project doğrulaması ve secret redaction ekle.
-  - [ ] Her çıktı için makine-okunur deploy manifesti ve kanıt klasörü üret.
-- **Veri/Migration etkisi:** Otomasyon değişikliği; staging push destekli, production yalnız kapılı.
-- **Ortam/Deploy:** Local+staging otomatik; production somut kullanıcı GO ile.
-- **RLS/Güvenlik:** GitHub/local secret store; least privilege; log redaction; fork/PR secret erişimi yok.
-- **Edge-case'ler:** Stale CLI link, yarım push, flaky network, migration history mismatch, workflow rerun/idempotency.
-- **Kabul:** Yanlış project-ref test fixture'ında komut başlamadan reddedilir; staging pipeline sıfırdan yeşil; production job approval olmadan çalışamaz; hiçbir secret logda görünmez.
-- **Tuzaklar:** “Tam otomasyon” adına production onayını kaldırmak; `--linked` reset.
-- **Model önerisi:** 🔴 Opus / frontier-high
 
 ### WP-229: Eşit Süre Kaynakları ve Ödül Zinciri Onarımı ⚖️
 - **Program/Faz:** Kurtarma Faz 4A
@@ -246,6 +224,8 @@
 ## Test için bekleyenler (park)
 
 > Cihaz/ürün kabulü bekleyen tamamlanmış kod. Bu bölüm aktif çalışma değildir; başka WP'yi engellemez.
+
+- **WP-228 — Güvenli Deploy Otomasyonu ve Agent Kapıları** · Kod + otomatik test tamamlandı (`flutter analyze` 0; 632/632 Flutter; local 0001–0063 replay + 34/34 pgTAP; 18/18 deploy guard; PowerShell/YAML parse ve secret scan temiz). Tek-komut local rerun; zaten çalışan stack no-op'u ve yarım/orphan stack'in yalnız local volume temizliğiyle recovery'si kanıtlandı. Local/staging/production hedef doğrulaması, stale-link ve destructive-command reddi, exact SHA/head, protected production environment + makine-okunur backup checklist + birebir GO, merkezi deploy HOLD contract'ı ve redacted evidence manifestleri hazır. Commit: bu WP commit'i. **Staging/owner QA'da doğrulanmalı:** ayrı staging projesi ile GitHub `staging`/`production` Environment+secret/required-reviewer kurulumu; WP-229 kabul head'i sonrası `staging-apply` akışında list→dry-run→push→linked pgTAP→aynı commit/head beta APK raporu. Mevcut `0063` HOLD nedeniyle staging/production apply ve beta/stable release fail-closed kapalı; production write yok. Rehber: [`tooling/README.md`](tooling/README.md).
 
 - **WP-227 — Beta/Stable Ortam İzolasyonu** · Kod + otomatik test tamamlandı (`flutter analyze` 0; 631/631 Flutter; 34/34 hedef test; local/beta/stable Android APK + Windows beta debug build). Beta+production ve stable+staging build'leri exit 1 ile reddedildi; application id/ad/auth scheme/provider authority ayrımı APK'da doğrulandı. Commit: bu WP commit'i. **Staging/cihazda doğrulanmalı:** owner ayrı staging projesi/parolası/`STAGING_*` secret'larını kurar; `0063` HOLD nedeniyle remote migration/seed WP-228+229 sonrasına bırakılır; sonra stable+beta yan-yana auth/cache/widget/deep-link/tanı kartı QA. Production write yok. Rapor: [`docs/recovery/ENVIRONMENT-MATRIX.md`](docs/recovery/ENVIRONMENT-MATRIX.md).
 

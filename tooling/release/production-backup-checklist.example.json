@@ -1,0 +1,8 @@
+{
+  "backup_id": "REPLACE_WITH_BACKUP_OR_PITR_ID",
+  "captured_at_utc": "2026-07-20T10:00:00Z",
+  "restore_strategy": "REPLACE_WITH_VERIFIED_RESTORE_OR_PITR_PROCEDURE",
+  "session_baseline_evidence": "REPLACE_WITH_EVIDENCE_ARTIFACT_PATH_OR_ID",
+  "xp_reconciliation_evidence": "REPLACE_WITH_EVIDENCE_ARTIFACT_PATH_OR_ID",
+  "post_check_plan": "REPLACE_WITH_POST_CHECK_ARTIFACT_PATH_OR_ID"
+}

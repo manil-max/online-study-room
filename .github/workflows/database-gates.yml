@@ -1,0 +1,181 @@
+name: Database Gates
+
+on:
+  pull_request:
+    paths:
+      - 'supabase/**'
+      - 'tooling/supabase/**'
+      - 'tooling/release/**'
+      - '.github/workflows/database-gates.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/**'
+      - 'tooling/supabase/**'
+      - 'tooling/release/**'
+      - '.github/workflows/database-gates.yml'
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: Safe operation; remote apply remains contract-gated.
+        required: true
+        type: choice
+        default: validate
+        options:
+          - validate
+          - staging-dry-run
+          - staging-apply
+          - production-dry-run
+          - production-apply
+      expected_git_sha:
+        description: Exact 40-character commit SHA checked out by this run.
+        required: false
+        type: string
+      expected_migration_head:
+        description: Exact four-digit migration head from deploy-contract.json.
+        required: false
+        type: string
+      backup_evidence:
+        description: Production apply only; compact backup checklist JSON (see tooling/release example).
+        required: false
+        type: string
+      production_confirmation:
+        description: Production apply only; PRODUCTION GO:<sha>:<head>:<project-ref>
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: database-${{ github.event_name == 'workflow_dispatch' && inputs.operation || 'validate' }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Local replay, RLS and invariant gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: '11.9.0'
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Deploy guard unit tests
+        shell: pwsh
+        run: ./tooling/supabase/guard.tests.ps1
+
+      - name: Clean local replay + pgTAP RLS/invariants
+        shell: pwsh
+        run: ./tooling/supabase/local.ps1 baseline
+
+      - name: Upload sanitized local evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: local-database-evidence-${{ github.run_id }}
+          path: .artifacts/deploy-evidence/**
+          if-no-files-found: error
+
+  remote:
+    name: Protected remote gate
+    if: github.event_name == 'workflow_dispatch' && inputs.operation != 'validate'
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment:
+      name: ${{ startsWith(inputs.operation, 'production-') && 'production' || 'staging' }}
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      STAGING_SUPABASE_ANON_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
+      STAGING_SUPABASE_URL: ${{ secrets.STAGING_SUPABASE_URL }}
+      PRODUCTION_SUPABASE_URL: ${{ secrets.PRODUCTION_SUPABASE_URL }}
+      STAGING_SUPABASE_PROJECT_REF: ${{ vars.STAGING_SUPABASE_PROJECT_REF }}
+      PRODUCTION_SUPABASE_PROJECT_REF: ${{ vars.PRODUCTION_SUPABASE_PROJECT_REF }}
+      EXPECTED_GIT_SHA: ${{ inputs.expected_git_sha }}
+      EXPECTED_MIGRATION_HEAD: ${{ inputs.expected_migration_head }}
+      BACKUP_EVIDENCE: ${{ inputs.backup_evidence }}
+      PRODUCTION_CONFIRMATION: ${{ inputs.production_confirmation }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: '11.9.0'
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Resolve protected target without printing secrets
+        id: target
+        shell: pwsh
+        run: |
+          $environment = if ('${{ inputs.operation }}'.StartsWith('production-')) { 'production' } else { 'staging' }
+          $action = if ('${{ inputs.operation }}'.EndsWith('-apply')) { 'apply' } else { 'dry-run' }
+          $projectRef = if ($environment -eq 'production') { $env:PRODUCTION_SUPABASE_PROJECT_REF } else { $env:STAGING_SUPABASE_PROJECT_REF }
+          "environment=$environment" >> $env:GITHUB_OUTPUT
+          "action=$action" >> $env:GITHUB_OUTPUT
+          "project_ref=$projectRef" >> $env:GITHUB_OUTPUT
+
+      - name: List, dry-run, optional push and post-check
+        shell: pwsh
+        env:
+          DEPLOY_APPROVAL_ENVIRONMENT: ${{ steps.target.outputs.environment }}
+        run: |
+          $selectedUrl = if ('${{ steps.target.outputs.environment }}' -eq 'production') { $env:PRODUCTION_SUPABASE_URL } else { $env:STAGING_SUPABASE_URL }
+          $params = @{
+            Environment = '${{ steps.target.outputs.environment }}'
+            Action = '${{ steps.target.outputs.action }}'
+            ProjectRef = '${{ steps.target.outputs.project_ref }}'
+            SupabaseUrl = $selectedUrl
+            StagingProjectRef = $env:STAGING_SUPABASE_PROJECT_REF
+            ProductionProjectRef = $env:PRODUCTION_SUPABASE_PROJECT_REF
+            ExpectedGitSha = $env:EXPECTED_GIT_SHA
+            ExpectedMigrationHead = $env:EXPECTED_MIGRATION_HEAD
+            BackupEvidence = $env:BACKUP_EVIDENCE
+            ConfirmProductionGo = $env:PRODUCTION_CONFIRMATION
+          }
+          ./tooling/supabase/remote.ps1 @params
+
+      - name: Build and report the exact staging beta candidate
+        if: inputs.operation == 'staging-apply'
+        shell: pwsh
+        run: |
+          $params = @{
+            ProjectRef = '${{ steps.target.outputs.project_ref }}'
+            SupabaseUrl = $env:STAGING_SUPABASE_URL
+            StagingProjectRef = $env:STAGING_SUPABASE_PROJECT_REF
+            ProductionProjectRef = $env:PRODUCTION_SUPABASE_PROJECT_REF
+            ExpectedGitSha = $env:EXPECTED_GIT_SHA
+            ExpectedMigrationHead = $env:EXPECTED_MIGRATION_HEAD
+            BuildNumber = '228${{ github.run_number }}'
+          }
+          ./tooling/release/beta-build.ps1 @params
+
+      - name: Upload sanitized remote evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.target.outputs.environment }}-database-evidence-${{ github.run_id }}
+          path: .artifacts/deploy-evidence/**
+          if-no-files-found: error

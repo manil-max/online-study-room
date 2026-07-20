@@ -55,6 +55,7 @@ desktop.ini
 # --- Loglar / geçici ---
 *.log
 *.tmp
+.artifacts/
 
 # --- Tasarım referansı (kardeşin Next.js mockup'ı — koda dahil değil, sadece yerel referans) ---
 project-continuation/
