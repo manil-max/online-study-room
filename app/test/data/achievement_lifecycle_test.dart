@@ -60,6 +60,18 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 5));
     }
     expect(container.read(authStateProvider).value, isNotNull);
+    final user = container.read(authStateProvider).value!;
+
+    // WP-235: gamificationProfileProvider bir StreamProvider; Riverpod 3
+    // auto-dispose yüzünden dinleyici tutulmazsa `.future` asla çözülmez ve
+    // runAchievementSessionCompletedSync içindeki projection sonsuza dek
+    // asılı kalır (30 sn timeout). Gerçek app'te UI dinler; testte biz tutarız.
+    final profileSub = container.listen(
+      gamificationProfileProvider(user.id),
+      (_, _) {},
+      fireImmediately: true,
+    );
+    addTearDown(profileSub.close);
 
     // Ref üzerinden sync — ProviderScope/container'da FutureProvider ile sarmala.
     final syncProvider = FutureProvider<AchievementEventResult?>((ref) {
@@ -127,6 +139,16 @@ void main() {
     );
     addTearDown(sessionsSub.close);
     await container.read(userSessionsProvider.future);
+
+    // WP-235: profil StreamProvider'ını da tut — yoksa lifecycle debounce
+    // callback'i içindeki projection `.future`'da asılı kalıp teardown'da
+    // "Cannot use Ref after dispose" atardı (Riverpod 3 auto-dispose).
+    final profileSub = container.listen(
+      gamificationProfileProvider(profile.id),
+      (_, _) {},
+      fireImmediately: true,
+    );
+    addTearDown(profileSub.close);
 
     // Lifecycle provider'ı dispose olmasın diye listen.
     final lifeSub = container.listen(

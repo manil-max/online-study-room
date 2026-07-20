@@ -116,6 +116,7 @@ class AchievementProgressLifecycle {
   Timer? _debounce;
   ProviderSubscription<AsyncValue<List<StudySession>>>? _sessionsSub;
   bool _started = false;
+  bool _disposed = false;
   int? _lastCount;
   int? _lastSum;
 
@@ -141,7 +142,13 @@ class AchievementProgressLifecycle {
   void _schedule() {
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 800), () async {
+      // WP-235: debounce 800ms boyunca kullanıcı sekme değiştirir/çıkış
+      // yaparsa provider dispose olur; guard olmadan aşağıdaki `_ref` kullanımı
+      // "Cannot use Ref after dispose" zone error'u atardı. Her async gap'te
+      // yeniden kontrol et.
+      if (_disposed) return;
       await runAchievementSessionCompletedSync(_ref);
+      if (_disposed) return;
       // Olay bazlı ödül yenileme (poll yerine, beta-v41 WP-G): oturum bitince
       // yeni pending candidate'lar banner/badge'e yansısın; sürekli 4 sn poll yok.
       _ref.invalidate(pendingAchievementRewardSummaryProvider);
@@ -150,6 +157,7 @@ class AchievementProgressLifecycle {
   }
 
   void dispose() {
+    _disposed = true;
     _debounce?.cancel();
     _debounce = null;
     _sessionsSub?.close();
