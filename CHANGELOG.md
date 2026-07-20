@@ -4,6 +4,27 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [beta-v4203 / 1.0.42-beta.3+4203] - 2026-07-20
+
+> **Beta test sürümü — beta-v4202 saha bulguları düzeltmeleri.** beta-v4202’den geliyorsan oturumun korunur; aynı ayrı test ortamı kullanılıyor, yeniden hesap açman gerekmez.
+
+### Öne çıkanlar
+
+- **Bildirimden başlatılan çalışma artık uygulama içinden durdurulabiliyor.** Uygulama önplandayken bildirim panelinden başlattığın sayaç, uygulama içindeki Durdur’a basınca gerçekten duruyor (eskiden sessizce yok sayılıyordu → oturum süresi yazılmıyordu).
+- **Grafik eksenleri düzeltildi.** Trend ve grup grafiklerine Y ekseni ölçeği eklendi; alt eksende yer oldukça artık her günün numarası görünüyor (eskiden 2–3 gün atlıyordu).
+- **Taç kademeleri görünür.** Tacına dokununca tüm rütbeler ve her biri için gereken XP eşiği (Bronz → Immortal) açılıyor.
+
+### Düzeltmeler
+
+- **Sayaç çift-sayım.** Kronometreyi durdurunca bugünkü toplam bir an fazla (ör. 2 saat yerine 3 saat) görünüp sayacı kapat-aç yapınca düzeliyordu; giderildi.
+- **Yanıltıcı başarım ilerlemesi.** Çelik İrade / Günün Kahramanı gibi tek seferlik “kişisel rekor” başarımlarında birikmeyen ilerleme çubuğu kaldırıldı; yerine en iyi değer gösteriliyor.
+- **İç kararlılık.** Başarım ilerleme tetikleyicisindeki bir yarış durumu kapatıldı; iki kırık test yeşile alındı (toplam 645 test).
+
+### Test notları
+
+- Test ortamı beta-v4202 ile aynı (migration head `0064`). Öncelikli doğrulamalar: (1) bildirimden Başlat → uygulama içi Durdur; (2) 1 saat kayıtlı + 1 saat kronometre → Durdur’da tam 2 saat (3 değil), kapat-aç gerekmeden; (3) grafiklerde her günün numarası + trend grafiklerinde Y ekseni; (4) taça dokununca kademeler.
+- Bu kayıt yalnız istemci beta adayıdır; production deploy/migration içermez.
+
 ## [beta-v4202 / 1.0.42-beta.2+4202] - 2026-07-20
 
 > **Beta test sürümü — kurtarma paketi.** Bu beta iki büyük değişiklik getiriyor: (1) beta artık **kendi ayrı test veritabanına** bağlanıyor, (2) 6 kademeli ekonomi ve süre kaynağı eşitliği ilk kez birlikte test ediliyor. Aşağıdaki "Önce bunu oku" bölümünü atlama.

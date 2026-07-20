@@ -3,6 +3,42 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.42-beta.3",
+      "buildNumber": 4203,
+      "channel": "beta",
+      "date": "2026-07-20",
+      "title": "beta-v4203: sayaç, başarım ve grafik saha düzeltmeleri",
+      "highlights": [
+        "Bildirim panelinden başlattığın çalışmayı artık uygulama içinden de durdurabilirsin.",
+        "Trend ve grup grafiklerine Y ekseni ölçeği eklendi; alt eksende artık yer oldukça her günün numarası görünüyor.",
+        "Tacına dokununca tüm rütbeler ve her biri için gereken XP eşiği (Bronz’dan Immortal’a) açılıyor."
+      ],
+      "fixes": [
+        "Kronometreyi durdurunca bugünkü toplamın bir an fazla (ör. 2 saat yerine 3 saat) görünüp sayacı kapat-aç yapınca düzelmesi giderildi.",
+        "Çelik İrade ve Günün Kahramanı gibi tek seferlik “kişisel rekor” başarımlarında yanıltıcı ilerleme çubuğu kaldırıldı; yerine en iyi değerin gösteriliyor.",
+        "İç kararlılık iyileştirmeleri (başarım ilerleme tetikleyicisinde bir yarış durumu kapatıldı)."
+      ],
+      "notes": [
+        "beta-v4202’den geliyorsan oturumun korunur; aynı ayrı test ortamı kullanılıyor, yeniden hesap açman gerekmez.",
+        "Bu kayıt yalnız istemci beta adayıdır; production deploy veya migration uygulaması içermez."
+      ],
+      "titleEn": "beta-v4203: timer, achievement and chart field fixes",
+      "highlightsEn": [
+        "Study you start from the notification panel can now also be stopped from inside the app.",
+        "Trend and group charts now have a Y-axis scale, and the bottom axis shows every day number when there is room.",
+        "Tapping your crown opens all ranks and the XP threshold each one needs (Bronze to Immortal)."
+      ],
+      "fixesEn": [
+        "Fixed today’s total briefly showing too much (e.g. 3 hours instead of 2) after stopping the stopwatch, which used to require toggling the timer off and on.",
+        "Removed the misleading progress bar on one-shot “personal best” achievements like Steel Will and Hero of the Day; the best value is shown instead.",
+        "Internal stability fixes (closed a race condition in the achievement progress trigger)."
+      ],
+      "notesEn": [
+        "If you are coming from beta-v4202 your session is kept; the same separate test environment is used and no new account is needed.",
+        "This entry is a client beta candidate only; it contains no production deploy or migration."
+      ]
+    },
+    {
       "versionName": "1.0.42-beta.2",
       "buildNumber": 4202,
       "channel": "beta",
