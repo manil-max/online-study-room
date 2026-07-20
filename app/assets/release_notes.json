@@ -21,9 +21,8 @@
         "Beta ve stable artefaktlarının aynı version/build kimliğini paylaşması fail-closed olarak engellendi."
       ],
       "notes": [
-        "Beta ayrı bir uygulama olarak kurulur ve kararlı sürümün üstüne yazmaz; iki ikon görmen normaldir.",
-        "Ayrı test veritabanı nedeniyle beta'da sıfırdan hesap açman gerekir. Mevcut hesabın ve verin kararlı sürümde güvende durur, silinmez.",
-        "Eski beta hâlâ canlı veritabanına yazdığı için kaldırılmalıdır.",
+        "Telefonundaki beta kendini günceller: beta zaten kararlı sürümden ayrı bir uygulamaydı, bu sürüm onun üstüne normal güncelleme olarak iner.",
+        "Ayrı test veritabanı nedeniyle güncellemeden sonra oturumun kapanır ve sıfırdan hesap açman gerekir. Mevcut hesabın ve verin kararlı sürümde güvende durur, silinmez.",
         "Bu kayıt yalnız istemci beta adayıdır; production deploy veya migration uygulaması içermez.",
         "Derleme tanısı sürüm/build, commit, backend ve migration head bilgilerini birlikte gösterir."
       ],
@@ -41,9 +40,8 @@
         "Beta and stable artifacts sharing one version/build identity is now blocked fail-closed."
       ],
       "notesEn": [
-        "Beta installs as a separate app and does not overwrite the stable build; seeing two icons is expected.",
-        "Because of the separate test database you need to create a new account in beta. Your existing account and data remain safe in the stable build and are not deleted.",
-        "The old beta still writes to the live database and should be uninstalled.",
+        "The beta on your phone updates itself: beta was already a separate app from stable, and this release installs over it as a normal update.",
+        "Because of the separate test database you are signed out after the update and need to create a new account. Your existing account and data remain safe in the stable build and are not deleted.",
         "This entry is a client beta candidate only; it contains no production deploy or migration application.",
         "Build diagnostics show version/build, commit, backend and migration head together."
       ]

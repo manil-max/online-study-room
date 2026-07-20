@@ -174,6 +174,23 @@ Bir WP "Kod tamamlandı"yı geçmek için:
 - Beta tag/release yalnız staging env ile; stable tag/release yalnız production env ile oluşturulur. Build-time doğrulama yanlış eşleşmeyi reddeder.
 - Tag/push/release kullanıcı özellikle istemedikçe yapılmaz. Stable release ayrıca `docs/ORTAM-MIGRATION-YONETISIMI.md` production kapısı ve Kalite Programı DoD'sinden geçer.
 
+### 4.1 Tag sözleşmesi (2026-07-20'den itibaren — eski biçimi kopyalama)
+
+Yayın tamamen **tag adından** sürülür; `.github/workflows/release.yml` kanalı, backend'i ve sürüm adını tag'den türetir. Elle flavor/env seçilmez.
+
+| Tag | Üretilen sürüm | Flavor | Backend | GitHub Release | Asset |
+|---|---|---|---|---|---|
+| `beta-v<patch*100+sıra>` | `1.0.<patch>-beta.<sıra>+<kod>` | `beta` | **staging** | prerelease | `app-beta-release.apk` |
+| `v<patch>` | `1.0.<patch>+<patch>` | `stable` | **production** | normal | `app-release.apk` |
+
+- **Beta numarası `patch*100 + sıra` olarak kodlanır.** `beta-v4202` = 1.0.42'nin 2. betası. Sıra `1–99`. Bu kodlama üç yerde birden doğrulanır (workflow, `AppBuildManifest._isValidVersionBuild`, `03-build-manifest-gate` testi); uymayan tag fail-closed durur.
+- **`beta-v41` gibi eski kısa beta numaraları tarihseldir; yeni tag'de o biçim kullanılmaz.** Stable tarafı değişmedi (`v43` → `1.0.43+43`).
+- **Bir version/build çifti ikinci bir koda verilemez.** Tag atılmış bir koda düzeltme gelirse sıra artırılır (`beta-v4203`), aynı numara yeniden kullanılmaz.
+- Tag atmadan önce: `CHANGELOG.md`'de tag adını içeren `## [...]` başlığı **ve** `app/assets/release_notes.json` içinde aynı `buildNumber`/`channel` kaydı bulunmalıdır. İkincisi eksikse uygulama içi "Güncelleme notları" ekranı boş görünür (sessiz hata).
+- Tag'in gösterdiği commit push edilmiş olmalıdır; aksi halde workflow checkout edemez.
+- GitHub yapılandırması (WP-230'da kuruldu, tekrar kurulmaz): `staging`/`production` Environment'ları + environment-scoped `*_SUPABASE_URL`/`*_SUPABASE_ANON_KEY` secret'ları + repo-level `STAGING_/PRODUCTION_SUPABASE_PROJECT_REF` variable'ları. Anon/publishable anahtar istemci-güvenlidir ve APK'ya gömülür; `service_role` ve DB parolası **hiçbir app build secret'ı değildir**.
+- Beta ve stable **ayrı applicationId** kullanır (`…online_study_room.beta` / `…online_study_room`), yani yan yana kurulur ve beta güncellemesi stable'ı etkilemez. Bu ayrım `beta-v41` öncesinden beri geçerlidir; "beta ilk kez ayrı uygulama oluyor" diye yazma.
+
 ---
 
 ## 5. Önemli Konumlar

@@ -10,10 +10,9 @@ notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
 ### ⚠️ Önce bunu oku — kurulum değişti
 
-- **Beta artık ayrı bir uygulama.** Paket kimliği değişti; stable sürümün üstüne yazmaz, telefonunda **yan yana** durur. İki ikon görmen normaldir.
+- **Telefonundaki beta kendini günceller.** Beta zaten kararlı sürümden ayrı bir uygulamaydı; bu sürüm onun üstüne normal güncelleme olarak iner. Silip yeniden kurmana gerek yok, kararlı sürüme de dokunmaz.
 - **Beta artık test veritabanına bağlanıyor.** Eskiden beta gerçek (canlı) veritabanını kullanıyordu; artık ayrı bir test ortamı kullanıyor. Bu, beta'da yapılan hiçbir denemenin gerçek kullanıcı verisine dokunamaması için yapıldı.
-- **Bu yüzden beta'da sıfırdan hesap açman gerekiyor.** Mevcut hesabın ve bütün geçmiş verin **canlı sürümde güvende duruyor**, silinmedi; beta onları göremiyor çünkü ayrı bir veritabanına bakıyor.
-- **Eski beta'yı kaldır.** Eski beta hâlâ canlı veritabanına yazıyor; yanlışlıkla açmamak için sil.
+- **Güncellemeden sonra oturumun kapanır ve sıfırdan hesap açman gerekir.** Eski girişin canlı veritabanına aitti, test veritabanında geçerli değil. Mevcut hesabın ve bütün geçmiş verin **kararlı sürümde güvende duruyor**, silinmedi.
 - **Sürüm numarası biçimi değişti.** Beta numaraları artık `patch*100 + sıra` olarak yazılıyor (`beta-v4202` = 1.0.42'nin 2. betası). Bu, aynı numaranın iki farklı yapıya verilmesini engellemek için.
 
 ### Öne çıkanlar
