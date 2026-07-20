@@ -970,7 +970,15 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   /// Böylece app-kapalı durdurmada, uygulamanın açıldığı ana kadar geçen süre
   /// yanlışlıkla oturuma eklenmez.
   Future<void> stop({DateTime? at}) async {
-    if (!state.isRunning) return;
+    if (!state.isRunning) {
+      // WP-233: uygulama ÖNPLANDAYKEN bildirimden Başlat'a basılırsa resume
+      // olayı hiç tetiklenmez, dolayısıyla native SSOT bu isolate'e adopte
+      // edilmez ve state.isRunning false kalır. Eskiden burada sessizce
+      // dönerdik → kullanıcı sayacı uygulama içinden durduramıyordu.
+      // Pes etmeden önce native durumla bir kez uzlaş.
+      await _reconcileBackgroundTimer();
+      if (_disposed || !state.isRunning) return;
+    }
     final startedAt = state.startedAt;
     final subjectId = state.subjectId;
     final wasWork = state.phase == TimerPhase.work;

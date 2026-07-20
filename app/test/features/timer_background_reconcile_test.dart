@@ -226,4 +226,59 @@ void main() {
       },
     );
   });
+
+  group('WP-233: uygulama önplandayken bildirimden başlatma', () {
+    test(
+      'adopte edilmemiş native sayaç uygulama içi Durdur ile gerçekten durur',
+      () async {
+        // Uygulama açık ve sayaç durur durumda kuruldu. UI'ın notifier'ı canlı
+        // tuttuğunu taklit et: Riverpod 3'te dinleyicisiz provider dispose olur
+        // ve her read'de build() prefs'i yeniden okuyup durumu kendiliğinden
+        // adopte eder — gerçek uygulamada olmayan bir davranış.
+        final (container, studyRepo, profile) = await _buildContainer({});
+        final timerSub = container.listen(studyTimerProvider, (_, _) {});
+        addTearDown(timerSub.close);
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+        expect(container.read(studyTimerProvider).isRunning, isFalse);
+
+        // Kullanıcı bildirim panelinden Başlat'a bastı: native SSOT'a yazdı ama
+        // uygulama zaten önplanda olduğu için resume/adopt hiç tetiklenmedi.
+        final nativeStart = DateTime.now().subtract(const Duration(minutes: 25));
+        final prefs = container.read(sharedPreferencesProvider);
+        await prefs.setInt(
+          'timer_active_started_at_ms',
+          nativeStart.millisecondsSinceEpoch,
+        );
+        await prefs.setString(
+          'timer_active_started_at',
+          nativeStart.toIso8601String(),
+        );
+        await prefs.setString('timer_active_mode', TimerMode.stopwatch.name);
+        await prefs.setString('timer_active_phase', TimerPhase.work.name);
+        await prefs.setInt('timer_active_cycle', 1);
+        await prefs.setString('timer_fg_mode', 'running');
+        await prefs.setString('timer_active_start_origin', 'native_notification');
+
+        // Dart state hâlâ "durur" — regresyondan önce Durdur sessizce dönüyordu.
+        expect(container.read(studyTimerProvider).isRunning, isFalse);
+
+        await container.read(studyTimerProvider.notifier).stop();
+
+        // Durdur artık native durumu uzlaştırıp oturumu gerçekten yazmalı.
+        final sessions = await studyRepo.watchUserSessions(profile.id).first;
+        expect(
+          sessions,
+          hasLength(1),
+          reason: 'bildirimden başlatılan çalışma oturum olarak kaydedilmeli',
+        );
+        expect(
+          sessions.single.durationSeconds,
+          closeTo(25 * 60, 5),
+          reason: 'süre native başlangıç saatinden hesaplanmalı',
+        );
+        expect(container.read(studyTimerProvider).isRunning, isFalse);
+        expect(prefs.getString('timer_fg_mode'), 'idle');
+      },
+    );
+  });
 }
