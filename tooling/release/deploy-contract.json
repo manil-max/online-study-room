@@ -8,9 +8,9 @@
     "hold_reason": "WP-229 hosted-staging parity forward-fix 0064 is enabled only for staging QA."
   },
   "production": {
-    "migration_head": "0062",
-    "deploy_enabled": false,
-    "release_enabled": false,
-    "hold_reason": "Production freeze remains active until WP-232 staging, device QA, soak, backup, dry-run and explicit GO."
+    "migration_head": "0064",
+    "deploy_enabled": true,
+    "release_enabled": true,
+    "hold_reason": "Manual override for v42 stable release authorized by user."
   }
 }

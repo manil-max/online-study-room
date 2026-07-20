@@ -3,6 +3,40 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.42",
+      "buildNumber": 42,
+      "channel": "stable",
+      "date": "2026-07-20",
+      "title": "v42: sayaç durdurma bug'ının GERÇEK kök nedeni",
+      "highlights": [
+        "Bildirimden/widget'tan başlatılan çalışma artık uygulama içi Durdur ile GERÇEKTEN duruyor.",
+        "Kronometrede Durdur'a ard arda basınca toplam sürenin birden fazla artması (çift/çoklu sayım) giderildi.",
+        "Kayıt/ağ hatası olsa bile sayaç yine de duruyor (oturum çevrimdışı kuyruğa alınıp sonra gönderiliyor)."
+      ],
+      "fixes": [
+        "Durdurmanın çalışmamasının GERÇEK nedeni bulundu: arka plan sayaç servisi boş kimlik yazıyordu.",
+        "Durdur'a ard arda basıldığında re-entrancy lock ile aynı çalışma aralığının birden çok kez kaydedilmesi engellendi.",
+        "Uygulama içi başlatma ile arka plan servisinin saat hassasiyeti farkı (milisaniye) giderildi."
+      ],
+      "notes": [
+        "GitHub sideload stable APK; in-app güncelleme stable kullanıcılara gider."
+      ],
+      "titleEn": "v42: timer stop bug — real root-cause fix",
+      "highlightsEn": [
+        "Study started from the notification/widget now REALLY stops via the in-app Stop button.",
+        "Fixed the total time increasing multiple times (double/multi counting) when tapping Stop repeatedly.",
+        "Even if a save/network error occurs the timer still stops (the session is queued offline and sent later)."
+      ],
+      "fixesEn": [
+        "Found the REAL reason Stop didn't work: the background timer service wrote an empty 'identity' for every unverified run.",
+        "Tapping Stop repeatedly recorded the same interval several times; a re-entrancy lock now prevents duplicate records.",
+        "A clock-precision mismatch between in-app start and the background service was fixed."
+      ],
+      "notesEn": [
+        "GitHub sideload stable APK; in-app update goes to stable users."
+      ]
+    },
+    {
       "versionName": "1.0.42-beta.6",
       "buildNumber": 4206,
       "channel": "beta",

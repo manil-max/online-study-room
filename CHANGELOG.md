@@ -4,6 +4,19 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [v42 / 1.0.42+42] - 2026-07-20
+
+> **Kararlı (stable) sürüm.** beta-v42 serisindeki sayaç durdurma yarışları, hata yönetimi ve gerçek kök neden düzeltmeleri (boş kimlik onarımı). Herkese (stable kanal).
+
+### Öne çıkanlar
+- Bildirimden/widget'tan başlatılan sayaç uygulama içi Durdur ile GERÇEKTEN duruyor. Boş kimlik bug'ı giderildi.
+- Kronometrede Durdur'a ard arda basınca toplam sürenin birden fazla artması (çift/çoklu sayım) engellendi (tek oturum).
+- Kayıt hatasında sayaç yine durur; oturum çevrimdışı kuyruğa alınıp sonra gönderiliyor.
+
+### Notlar
+- GitHub sideload **stable** APK; in-app güncelleme stable kullanıcılara gider.
+
+
 ## [beta-v4206 / 1.0.42-beta.6+4206] - 2026-07-20
 
 > **Beta test sürümü — sayaç durdurma bug'ının GERÇEK kök nedeni.** Tam senkronizasyon tetkiki sonrası; WP-233/241/243 turları yanlış katmanı (reconcile yarışı) düzeltiyordu, asıl neden farklıydı. beta-v4205/4204'ten geliyorsan oturumun korunur.
