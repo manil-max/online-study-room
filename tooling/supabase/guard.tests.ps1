@@ -70,6 +70,22 @@ $passed++
 Assert-SafeSupabaseArguments -Arguments @('db', 'push', '--linked', '--dry-run')
 $passed++
 
+$inspectSql = Get-StagingPrerequisiteSql -Action inspect
+$bootstrapSql = Get-StagingPrerequisiteSql -Action bootstrap
+Assert-StagingPrerequisiteAction -Action inspect -Environment staging -ProjectRef $stagingRef -StagingProjectRef $stagingRef -ProductionProjectRef $productionRef -Sql $inspectSql
+$passed++
+Assert-StagingPrerequisiteAction -Action bootstrap -Environment staging -ProjectRef $stagingRef -StagingProjectRef $stagingRef -ProductionProjectRef $productionRef -Sql $bootstrapSql
+$passed++
+Assert-Throws -Name 'prerequisite production target denied' -Script {
+  Assert-StagingPrerequisiteAction -Action bootstrap -Environment production -ProjectRef $productionRef -StagingProjectRef $stagingRef -ProductionProjectRef $productionRef -Sql $bootstrapSql
+}
+Assert-Throws -Name 'arbitrary prerequisite SQL denied' -Script {
+  Assert-StagingPrerequisiteAction -Action bootstrap -Environment staging -ProjectRef $stagingRef -StagingProjectRef $stagingRef -ProductionProjectRef $productionRef -Sql 'create extension if not exists http;'
+}
+Assert-Throws -Name 'production ref masquerading as staging denied' -Script {
+  Assert-StagingPrerequisiteAction -Action bootstrap -Environment staging -ProjectRef $productionRef -StagingProjectRef $stagingRef -ProductionProjectRef $productionRef -Sql $bootstrapSql
+}
+
 $sha = '0123456789abcdef0123456789abcdef01234567'
 $confirmation = "PRODUCTION GO:$sha`:0063`:$productionRef"
 $backup = '{"backup_id":"backup-123","captured_at_utc":"2026-07-20T10:00:00Z","restore_strategy":"point-in-time recovery verified","session_baseline_evidence":"artifact/session.json","xp_reconciliation_evidence":"artifact/xp.json","post_check_plan":"artifact/post-check.json"}'

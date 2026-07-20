@@ -23,6 +23,30 @@ Guard testleri ayrıca hızlı çalıştırılabilir:
 pnpm deploy:guard:test
 ```
 
+## Fresh staging önkoşulu (`pg_cron`)
+
+Hosted staging projesi fresh olduğunda `cron` şeması bulunup `pg_cron` extension'ı
+henüz kurulu olmayabilir. Tarihsel ve remote'a uygulanmış `0053` değiştirilmez.
+Önce salt-okunur durum/migration geçmişi alınır; sonra yalnız izole staging ref'ine
+kilitli sabit allowlist sorgusu `create extension if not exists pg_cron;` çalışır.
+Wrapper serbest SQL kabul etmez ve production ref'ini reddeder:
+
+```powershell
+./tooling/supabase/staging-prerequisites-owner.ps1 `
+  -Action inspect `
+  -ExpectedGitSha '<40-char-sha>' `
+  -ExpectedMigrationHead '0063'
+
+./tooling/supabase/staging-prerequisites-owner.ps1 `
+  -Action bootstrap `
+  -ExpectedGitSha '<40-char-sha>' `
+  -ExpectedMigrationHead '0063'
+```
+
+Parola `Read-Host -AsSecureString` ile yalnız görünür terminal oturumunda alınır.
+Inspect/bootstrap için explicit staging link, migration listesi ve öncesi/sonrası
+durum sorguları temizlenmiş evidence manifestine kaydedilir.
+
 ## Deploy contract
 
 `tooling/release/deploy-contract.json` tek public kapıdır. Şu anda:

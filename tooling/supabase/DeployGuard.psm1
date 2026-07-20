@@ -100,6 +100,47 @@ function Assert-SafeSupabaseArguments {
   }
 }
 
+function Get-StagingPrerequisiteSql {
+  param([Parameter(Mandatory)][ValidateSet('inspect', 'bootstrap')][string]$Action)
+
+  if ($Action -eq 'bootstrap') {
+    return 'create extension if not exists pg_cron;'
+  }
+
+  return @'
+select json_build_object(
+  'pg_cron_available', exists(select 1 from pg_available_extensions where name = 'pg_cron'),
+  'pg_cron_installed', exists(select 1 from pg_extension where extname = 'pg_cron'),
+  'cron_job_relation', to_regclass('cron.job') is not null,
+  'migration_0052_applied', exists(select 1 from supabase_migrations.schema_migrations where version = '0052'),
+  'migration_0053_applied', exists(select 1 from supabase_migrations.schema_migrations where version = '0053')
+)::text as prerequisite_state;
+'@
+}
+
+function Assert-StagingPrerequisiteAction {
+  param(
+    [Parameter(Mandatory)][ValidateSet('inspect', 'bootstrap')][string]$Action,
+    [Parameter(Mandatory)][ValidateSet('staging', 'production')][string]$Environment,
+    [Parameter(Mandatory)][string]$ProjectRef,
+    [Parameter(Mandatory)][string]$StagingProjectRef,
+    [Parameter(Mandatory)][string]$ProductionProjectRef,
+    [Parameter(Mandatory)][string]$Sql
+  )
+
+  if ($Environment -ne 'staging') {
+    throw 'Prerequisite inspection/bootstrap is staging-only.'
+  }
+  if ($ProjectRef -ne $StagingProjectRef -or $ProjectRef -eq $ProductionProjectRef) {
+    throw 'Prerequisite target must be the isolated staging project ref.'
+  }
+
+  $allowedSql = Get-StagingPrerequisiteSql -Action $Action
+  if ($Sql -cne $allowedSql) {
+    throw 'Prerequisite SQL is not on the exact staging allowlist.'
+  }
+}
+
 function Assert-TargetContract {
   param(
     [Parameter(Mandatory)][ValidateSet('staging', 'production')][string]$Environment,
@@ -263,4 +304,4 @@ function Invoke-EvidenceCommand {
   return $safe
 }
 
-Export-ModuleMember -Function Get-RepoRoot, Get-DeployContract, Get-LocalMigrationHead, Get-GitHead, Protect-DeployText, Assert-SafeSupabaseArguments, Assert-TargetContract, Assert-ExactReleaseIdentity, Assert-ProductionApproval, New-EvidenceDirectory, Write-DeployJson, Invoke-EvidenceCommand
+Export-ModuleMember -Function Get-RepoRoot, Get-DeployContract, Get-LocalMigrationHead, Get-GitHead, Protect-DeployText, Assert-SafeSupabaseArguments, Get-StagingPrerequisiteSql, Assert-StagingPrerequisiteAction, Assert-TargetContract, Assert-ExactReleaseIdentity, Assert-ProductionApproval, New-EvidenceDirectory, Write-DeployJson, Invoke-EvidenceCommand

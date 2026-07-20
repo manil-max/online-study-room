@@ -72,12 +72,12 @@
 - **Durum:** [~] Aktif
 - **Faz/WP:** WP-229/230 staging kabul kapısı
 - **Aşama:** Gerçek cihaz QA hazırlanıyor
-- **SAHİP yollar:** `tooling/supabase/create-staging-owner.ps1`, `tooling/supabase/guard.tests.ps1`, `tooling/release/deploy-contract.json`, `tooling/README.md`, staging/GitHub Environment yapılandırması, `docs/recovery/EQUAL-SOURCES-RECONCILIATION.md`, `docs/recovery/ENVIRONMENT-MATRIX.md`, WP-229/230 kabul kanıtları, `progress.md`
+- **SAHİP yollar:** `tooling/supabase/DeployGuard.psm1`, `tooling/supabase/remote.ps1`, `tooling/supabase/create-staging-owner.ps1`, staging prerequisite helper, `tooling/supabase/guard.tests.ps1`, `tooling/release/deploy-contract.json`, `tooling/README.md`, staging/GitHub Environment yapılandırması, `docs/recovery/EQUAL-SOURCES-RECONCILIATION.md`, `docs/recovery/ENVIRONMENT-MATRIX.md`, WP-229/230 kabul kanıtları, `progress.md`
 - **Ortak/riskli yüzey:** Supabase CLI ile ayrı staging projesi; `0063` yalnız staging; production mutasyonu kesinlikle yok
 - **Dal:** `main`
 - **Başlangıç:** 2026-07-20 14:15 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-20 14:15 (Europe/Istanbul)
-- **Not:** Kullanıcı CLI yolunu seçti. Proje parolası yalnız kullanıcı kontrollü güvenli istemde girilecek; repoya, sohbete veya kanıta yazılmayacak.
+- **Son güncelleme:** 2026-07-20 14:37 (Europe/Istanbul)
+- **Not:** Resmî handoff devralındı. Staging apply `0053`te eksik `pg_cron` önkoşulu nedeniyle fail-closed durdu; tarihsel migration değişmeden yalnız staging'e kilitli, allowlist'li bootstrap/preflight hazırlanıyor. Proje parolası yalnız kullanıcı kontrollü güvenli istemde girilecek; repoya, sohbete veya kanıta yazılmayacak.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta

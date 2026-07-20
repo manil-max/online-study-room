@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
   [Parameter(Mandatory)][ValidateSet('staging', 'production')][string]$Environment,
-  [Parameter(Mandatory)][ValidateSet('preflight', 'dry-run', 'apply')][string]$Action,
+  [Parameter(Mandatory)][ValidateSet('inspect-prerequisites', 'bootstrap-prerequisites', 'preflight', 'dry-run', 'apply')][string]$Action,
   [Parameter(Mandatory)][string]$ProjectRef,
   [Parameter(Mandatory)][string]$SupabaseUrl,
   [Parameter(Mandatory)][string]$StagingProjectRef,
@@ -98,8 +98,12 @@ try {
   if ($ExpectedMigrationHead -ne $targetContract.migration_head) {
     throw "Deploy contract rejects migration head $ExpectedMigrationHead for $Environment."
   }
-  if ($Action -eq 'apply' -and -not [bool]$targetContract.deploy_enabled) {
+  if ($Action -in @('apply', 'bootstrap-prerequisites') -and -not [bool]$targetContract.deploy_enabled) {
     throw "Deploy HOLD: $($targetContract.hold_reason)"
+  }
+
+  if ($Action -in @('inspect-prerequisites', 'bootstrap-prerequisites') -and $Environment -ne 'staging') {
+    throw 'Prerequisite inspection/bootstrap is staging-only.'
   }
 
   if ($env:GITHUB_ACTIONS -eq 'true' -and [string]::IsNullOrWhiteSpace($env:SUPABASE_ACCESS_TOKEN)) {
@@ -119,14 +123,28 @@ try {
     throw 'Supabase CLI link post-check failed.'
   }
 
-  Invoke-RemoteSupabase -Arguments @('migration', 'list', '--linked') -Label '02-migration-list-before'
-  Invoke-RemoteSupabase -Arguments @('db', 'push', '--linked', '--dry-run') -Label '03-dry-run'
+  if ($Action -in @('inspect-prerequisites', 'bootstrap-prerequisites')) {
+    Invoke-RemoteSupabase -Arguments @('migration', 'list', '--linked') -Label '02-migration-list-before'
+    $inspectSql = Get-StagingPrerequisiteSql -Action inspect
+    Assert-StagingPrerequisiteAction -Action inspect -Environment $Environment -ProjectRef $ProjectRef -StagingProjectRef $StagingProjectRef -ProductionProjectRef $ProductionProjectRef -Sql $inspectSql
+    Invoke-RemoteSupabase -Arguments @('db', 'query', '--linked', $inspectSql) -Label '03-prerequisite-inspect-before'
 
-  if ($Action -eq 'apply') {
-    Invoke-RemoteSupabase -Arguments @('db', 'push', '--linked', '--yes') -Label '04-push'
-    Invoke-RemoteSupabase -Arguments @('migration', 'list', '--linked') -Label '05-migration-list-after'
-    if ($Environment -eq 'staging') {
-      Invoke-RemoteSupabase -Arguments @('test', 'db', '--linked') -Label '06-staging-post-check'
+    if ($Action -eq 'bootstrap-prerequisites') {
+      $bootstrapSql = Get-StagingPrerequisiteSql -Action bootstrap
+      Assert-StagingPrerequisiteAction -Action bootstrap -Environment $Environment -ProjectRef $ProjectRef -StagingProjectRef $StagingProjectRef -ProductionProjectRef $ProductionProjectRef -Sql $bootstrapSql
+      Invoke-RemoteSupabase -Arguments @('db', 'query', '--linked', $bootstrapSql) -Label '04-pg-cron-bootstrap'
+      Invoke-RemoteSupabase -Arguments @('db', 'query', '--linked', $inspectSql) -Label '05-prerequisite-inspect-after'
+    }
+  } else {
+    Invoke-RemoteSupabase -Arguments @('migration', 'list', '--linked') -Label '02-migration-list-before'
+    Invoke-RemoteSupabase -Arguments @('db', 'push', '--linked', '--dry-run') -Label '03-dry-run'
+
+    if ($Action -eq 'apply') {
+      Invoke-RemoteSupabase -Arguments @('db', 'push', '--linked', '--yes') -Label '04-push'
+      Invoke-RemoteSupabase -Arguments @('migration', 'list', '--linked') -Label '05-migration-list-after'
+      if ($Environment -eq 'staging') {
+        Invoke-RemoteSupabase -Arguments @('test', 'db', '--linked') -Label '06-staging-post-check'
+      }
     }
   }
 
