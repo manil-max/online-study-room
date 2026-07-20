@@ -76,8 +76,8 @@
 - **Ortak/riskli yüzey:** Supabase CLI ile ayrı staging projesi; `0064` yalnız staging; production mutasyonu kesinlikle yok
 - **Dal:** `main`
 - **Başlangıç:** 2026-07-20 14:15 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-20 14:47 (Europe/Istanbul)
-- **Not:** Staging prerequisite inspect/bootstrap sonrası `0053–0063` uygulandı. Linked pgTAP'ın bulduğu eksik 0051 retention job'ı, hosted explicit RPC grants ve local-seed bağımlılığı; immutable 0063 değişmeden ileri `0064` + transaction-local fixture ile onarıldı. Fresh local `0001–0064`, 80/80 pgTAP ve lint hata 0 geçti; staging apply bekleniyor. Production mutasyonu yok. Proje parolası yalnız kullanıcı kontrollü güvenli istemde girilecek; repoya, sohbete veya kanıta yazılmayacak.
+- **Son güncelleme:** 2026-07-20 15:14 (Europe/Istanbul)
+- **Not:** Staging prerequisite inspect/bootstrap sonrası `0053–0063`, ardından immutable ileri `0064` uygulandı. Exact `8a9bc4d6162e29d46e1c4d3ce8d7ce3c8c965d7c` apply manifesti başarılı; remote head `0064`, linked pgTAP/RLS/invariant 80/80 PASS. Küçük WP-229 prepare/apply için yalnız staging ref'ine ve sabit aggregate SQL'e izin veren wrapper hazır; local 2 kullanıcılı prova session/duration/ledger/claimed kaybı 0 ve XP mismatch 0 verdi. Sırada aynı akışın staging kanıtı, ardından gerçek staging beta build'i var. Production mutasyonu yok. Proje parolası yalnız kullanıcı kontrollü güvenli istemde girilecek; repoya, sohbete veya kanıta yazılmayacak.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta

@@ -110,6 +110,20 @@ list → Docker CLI/engine readiness → linked pgTAP post-check → aynı commi
 ile beta build ve SHA-256 raporu. Docker Desktop kurulu fakat CLI sistem PATH'inde
 değilse wrapper standart Docker Desktop kurulum yolunu güvenli biçimde çözer.
 
+WP-229 küçük reconciliation kabulü iki ayrı owner adımıdır. Her ikisi de exact
+commit/head, explicit staging link ve migration-list öncesi/sonrası kanıtı üretir;
+production ref'i ve allowlist dışı SQL fail-closed reddedilir:
+
+```powershell
+./tooling/supabase/staging-reconciliation-owner.ps1 -Action prepare -ExpectedGitSha '<40-char-sha>'
+./tooling/supabase/staging-reconciliation-owner.ps1 -Action apply -ExpectedGitSha '<40-char-sha>'
+```
+
+Prepare sabit en fazla 10 kullanıcıyı aggregate olarak raporlar. Apply yalnız tek
+bir `prepared` run varken çalışır ve session/duration/ledger/reward kayıp deltalarını
+raporlar. Parola iki adımda da görünür terminalde `SecureString` olarak alınır;
+run/kullanıcı kimlikleri ve gizli değerler evidence loglarına yazılmaz.
+
 `production-apply` bunlara ek olarak protected `production` Environment onayı,
 `tooling/release/production-backup-checklist.example.json` sözleşmesine uyan
 makine-okunur backup checklist JSON'u ve şu exact confirmation'ı ister:

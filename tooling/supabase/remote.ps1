@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
   [Parameter(Mandatory)][ValidateSet('staging', 'production')][string]$Environment,
-  [Parameter(Mandatory)][ValidateSet('inspect-prerequisites', 'bootstrap-prerequisites', 'preflight', 'dry-run', 'apply')][string]$Action,
+  [Parameter(Mandatory)][ValidateSet('inspect-prerequisites', 'bootstrap-prerequisites', 'reconcile-prepare', 'reconcile-apply', 'preflight', 'dry-run', 'apply')][string]$Action,
   [Parameter(Mandatory)][string]$ProjectRef,
   [Parameter(Mandatory)][string]$SupabaseUrl,
   [Parameter(Mandatory)][string]$StagingProjectRef,
@@ -114,12 +114,12 @@ try {
   if ($ExpectedMigrationHead -ne $targetContract.migration_head) {
     throw "Deploy contract rejects migration head $ExpectedMigrationHead for $Environment."
   }
-  if ($Action -in @('apply', 'bootstrap-prerequisites') -and -not [bool]$targetContract.deploy_enabled) {
+  if ($Action -in @('apply', 'bootstrap-prerequisites', 'reconcile-prepare', 'reconcile-apply') -and -not [bool]$targetContract.deploy_enabled) {
     throw "Deploy HOLD: $($targetContract.hold_reason)"
   }
 
-  if ($Action -in @('inspect-prerequisites', 'bootstrap-prerequisites') -and $Environment -ne 'staging') {
-    throw 'Prerequisite inspection/bootstrap is staging-only.'
+  if ($Action -in @('inspect-prerequisites', 'bootstrap-prerequisites', 'reconcile-prepare', 'reconcile-apply') -and $Environment -ne 'staging') {
+    throw 'Prerequisite and reconciliation actions are staging-only.'
   }
 
   if ($env:GITHUB_ACTIONS -eq 'true' -and [string]::IsNullOrWhiteSpace($env:SUPABASE_ACCESS_TOKEN)) {
@@ -151,6 +151,17 @@ try {
       Invoke-RemoteSupabase -Arguments @('db', 'query', '--linked', $bootstrapSql) -Label '04-pg-cron-bootstrap'
       Invoke-RemoteSupabase -Arguments @('db', 'query', '--linked', $inspectSql) -Label '05-prerequisite-inspect-after'
     }
+  } elseif ($Action -in @('reconcile-prepare', 'reconcile-apply')) {
+    Invoke-RemoteSupabase -Arguments @('migration', 'list', '--linked') -Label '02-migration-list-before'
+    $reconciliationAction = if ($Action -eq 'reconcile-prepare') { 'prepare' } else { 'apply' }
+    $reconciliationSql = Get-StagingReconciliationSql -Action $reconciliationAction
+    Assert-StagingReconciliationAction -Action $reconciliationAction -Environment $Environment -ProjectRef $ProjectRef -StagingProjectRef $StagingProjectRef -ProductionProjectRef $ProductionProjectRef -Sql $reconciliationSql
+    Invoke-RemoteSupabase -Arguments @('db', 'query', '--linked', $reconciliationSql) -Label "03-reconciliation-$reconciliationAction"
+    $reconciliationInspectAction = "$reconciliationAction-inspect"
+    $reconciliationInspectSql = Get-StagingReconciliationSql -Action $reconciliationInspectAction
+    Assert-StagingReconciliationAction -Action $reconciliationInspectAction -Environment $Environment -ProjectRef $ProjectRef -StagingProjectRef $StagingProjectRef -ProductionProjectRef $ProductionProjectRef -Sql $reconciliationInspectSql
+    Invoke-RemoteSupabase -Arguments @('db', 'query', '--linked', $reconciliationInspectSql) -Label "04-reconciliation-$reconciliationAction-summary"
+    Invoke-RemoteSupabase -Arguments @('migration', 'list', '--linked') -Label '05-migration-list-after'
   } else {
     Invoke-RemoteSupabase -Arguments @('migration', 'list', '--linked') -Label '02-migration-list-before'
     Invoke-RemoteSupabase -Arguments @('db', 'push', '--linked', '--dry-run') -Label '03-dry-run'

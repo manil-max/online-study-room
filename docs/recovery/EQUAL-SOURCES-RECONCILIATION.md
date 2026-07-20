@@ -1,6 +1,6 @@
 # WP-229 — Eşit Süre Kaynakları ve Güvenli Reconciliation
 
-> Durum: **0063 staging'de; hosted parity 0064 local kapıları geçti, staging apply bekliyor.**
+> Durum: **0064 staging'de; linked pgTAP/RLS/invariant kapısı 80/80 geçti. Küçük staging reconciliation kabulü yürütülüyor.**
 > Production: **NO-GO.** WP-232 backup, dry-run, staging soak ve somut kullanıcı
 > GO'su olmadan bu migration veya reconciliation production'da çalıştırılmaz.
 
@@ -99,6 +99,22 @@ Pinli Supabase CLI ve PostgreSQL 17 üzerinde:
 
 Evidence kökü `.artifacts/deploy-evidence/` altındadır ve git'e alınmaz.
 
+## Hosted staging kabul kanıtı
+
+- prerequisite inspect: `20260720T114317374Z-staging-inspect-prerequisites`;
+- yalnız staging `pg_cron` bootstrap: `20260720T114503160Z-staging-bootstrap-prerequisites`;
+- exact commit `8a9bc4d6162e29d46e1c4d3ce8d7ce3c8c965d7c` ile temiz apply:
+  `20260720T120427589Z-staging-apply`;
+- remote migration head `0064`, linked pgTAP/RLS/invariant **80/80 PASS**;
+- linked fixture transaction sonunda rollback oldu; staging'de kalıcı test kullanıcısı
+  veya session bırakılmadı.
+
+Küçük canlı kabul batch'i için `staging-reconciliation-owner.ps1` yalnız izole
+staging ref'ine izin verir. Prepare limiti sabit `10` kullanıcıdır. Kanıta run UUID,
+kullanıcı UUID'si veya satır dökümü değil yalnız aggregate diff/baseline yazılır.
+Apply tam bir prepared run gerektirir; son özet session, süre, ledger satırı/XP,
+claimed reward ve XP/profile uyuşmazlık deltalarını raporlar.
+
 ## Staging terfi kapısı
 
 Staging apply yalnız WP-228 protected akışıyla yapılır:
@@ -113,8 +129,9 @@ Staging apply yalnız WP-228 protected akışıyla yapılır:
 6. Aynı commit/head'e bağlı beta artefaktında beş süre rotası ve claim akışı gerçek
    cihazda doğrulanır.
 
-Staging projesi kurulmuştur; GitHub protected Environment ve gerçek cihaz kabulü
-hâlâ owner QA kapsamındadır. Bunların hiçbiri production'a geçiş izni değildir.
+Staging projesi kurulmuş ve 0064 apply/linked test kapısı geçmiştir; küçük
+reconciliation batch'i, GitHub protected Environment ve gerçek cihaz kabulü hâlâ
+owner QA kapsamındadır. Bunların hiçbiri production'a geçiş izni değildir.
 
 ## Rollback
 

@@ -86,6 +86,28 @@ Assert-Throws -Name 'production ref masquerading as staging denied' -Script {
   Assert-StagingPrerequisiteAction -Action bootstrap -Environment staging -ProjectRef $productionRef -StagingProjectRef $stagingRef -ProductionProjectRef $productionRef -Sql $bootstrapSql
 }
 
+$reconciliationPrepareSql = Get-StagingReconciliationSql -Action prepare
+$reconciliationPrepareInspectSql = Get-StagingReconciliationSql -Action prepare-inspect
+$reconciliationApplySql = Get-StagingReconciliationSql -Action apply
+$reconciliationApplyInspectSql = Get-StagingReconciliationSql -Action apply-inspect
+Assert-StagingReconciliationAction -Action prepare -Environment staging -ProjectRef $stagingRef -StagingProjectRef $stagingRef -ProductionProjectRef $productionRef -Sql $reconciliationPrepareSql
+$passed++
+Assert-StagingReconciliationAction -Action prepare-inspect -Environment staging -ProjectRef $stagingRef -StagingProjectRef $stagingRef -ProductionProjectRef $productionRef -Sql $reconciliationPrepareInspectSql
+$passed++
+Assert-StagingReconciliationAction -Action apply -Environment staging -ProjectRef $stagingRef -StagingProjectRef $stagingRef -ProductionProjectRef $productionRef -Sql $reconciliationApplySql
+$passed++
+Assert-StagingReconciliationAction -Action apply-inspect -Environment staging -ProjectRef $stagingRef -StagingProjectRef $stagingRef -ProductionProjectRef $productionRef -Sql $reconciliationApplyInspectSql
+$passed++
+Assert-Throws -Name 'reconciliation production target denied' -Script {
+  Assert-StagingReconciliationAction -Action apply -Environment production -ProjectRef $productionRef -StagingProjectRef $stagingRef -ProductionProjectRef $productionRef -Sql $reconciliationApplySql
+}
+Assert-Throws -Name 'arbitrary reconciliation SQL denied' -Script {
+  Assert-StagingReconciliationAction -Action prepare -Environment staging -ProjectRef $stagingRef -StagingProjectRef $stagingRef -ProductionProjectRef $productionRef -Sql 'select public.prepare_equal_source_reconciliation(500, null);'
+}
+Assert-Throws -Name 'production ref reconciliation masquerade denied' -Script {
+  Assert-StagingReconciliationAction -Action prepare -Environment staging -ProjectRef $productionRef -StagingProjectRef $stagingRef -ProductionProjectRef $productionRef -Sql $reconciliationPrepareSql
+}
+
 $sha = '0123456789abcdef0123456789abcdef01234567'
 $confirmation = "PRODUCTION GO:$sha`:0063`:$productionRef"
 $backup = '{"backup_id":"backup-123","captured_at_utc":"2026-07-20T10:00:00Z","restore_strategy":"point-in-time recovery verified","session_baseline_evidence":"artifact/session.json","xp_reconciliation_evidence":"artifact/xp.json","post_check_plan":"artifact/post-check.json"}'

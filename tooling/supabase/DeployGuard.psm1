@@ -141,6 +141,127 @@ function Assert-StagingPrerequisiteAction {
   }
 }
 
+function Get-StagingReconciliationSql {
+  param([Parameter(Mandatory)][ValidateSet('prepare', 'prepare-inspect', 'apply', 'apply-inspect')][string]$Action)
+
+  if ($Action -eq 'prepare') {
+    return @'
+do $$
+begin
+  if exists (
+    select 1 from public.equal_source_reconciliation_runs where status = 'prepared'
+  ) then
+    raise exception 'existing_prepared_reconciliation_run_requires_review';
+  end if;
+  perform public.prepare_equal_source_reconciliation(10, null);
+end;
+$$;
+'@
+  }
+
+  if ($Action -eq 'prepare-inspect') {
+    return @'
+select json_build_object(
+  'status', r.status,
+  'batch_limit', r.batch_limit,
+  'user_count', r.user_count,
+  'diff_count', r.diff_count,
+  'baseline_session_count', r.baseline_session_count,
+  'baseline_duration_seconds', r.baseline_duration_seconds,
+  'baseline_ledger_count', r.baseline_ledger_count,
+  'baseline_ledger_xp', r.baseline_ledger_xp,
+  'baseline_claimed_reward_count', r.baseline_claimed_reward_count,
+  'baseline_xp_mismatch_count', r.baseline_xp_mismatch_count,
+  'batch_session_count', coalesce(sum(u.session_count), 0),
+  'batch_duration_seconds', coalesce(sum(u.duration_seconds), 0),
+  'metric_diff_user_count', coalesce(sum(
+    case when u.current_break_metric is distinct from u.shadow_break_metric then 1 else 0 end
+  ), 0),
+  'affected_group_days', coalesce(sum(u.affected_group_days), 0),
+  'affected_group_weeks', coalesce(sum(u.affected_group_weeks), 0)
+)::text as reconciliation_prepare_summary
+from public.equal_source_reconciliation_runs r
+left join public.equal_source_reconciliation_users u on u.run_id = r.id
+where r.status = 'prepared'
+group by r.id
+order by r.created_at desc
+limit 1;
+'@
+  }
+
+  if ($Action -eq 'apply') {
+    return @'
+do $$
+declare
+  v_prepared_count integer;
+  v_run_id uuid;
+begin
+  select count(*), (array_agg(id order by created_at))[1]
+  into v_prepared_count, v_run_id
+  from public.equal_source_reconciliation_runs
+  where status = 'prepared';
+
+  if v_prepared_count <> 1 then
+    raise exception 'exactly_one_prepared_reconciliation_run_required';
+  end if;
+  perform public.apply_equal_source_reconciliation(v_run_id);
+end;
+$$;
+'@
+  }
+
+  return @'
+select json_build_object(
+  'status', r.status,
+  'batch_limit', r.batch_limit,
+  'user_count', r.user_count,
+  'diff_count', r.diff_count,
+  'applied_user_count', r.user_count,
+  'session_count_delta', (select count(*) from public.study_sessions) - r.baseline_session_count,
+  'duration_seconds_delta', (select coalesce(sum(duration_seconds), 0) from public.study_sessions) - r.baseline_duration_seconds,
+  'ledger_count_delta', (select count(*) from public.xp_ledger) - r.baseline_ledger_count,
+  'ledger_xp_delta', (select coalesce(sum(xp_amount), 0) from public.xp_ledger) - r.baseline_ledger_xp,
+  'claimed_reward_count_delta', (
+    select count(*) from public.achievement_rewards where status = 'claimed'
+  ) - r.baseline_claimed_reward_count,
+  'xp_mismatch_count', (
+    select count(*) from public.gamification_profiles gp
+    where gp.xp <> (
+      select coalesce(sum(xl.xp_amount), 0)::integer
+      from public.xp_ledger xl where xl.user_id = gp.user_id
+    )
+  )
+)::text as reconciliation_apply_summary
+from public.equal_source_reconciliation_runs r
+where r.status = 'applied'
+order by r.applied_at desc
+limit 1;
+'@
+}
+
+function Assert-StagingReconciliationAction {
+  param(
+    [Parameter(Mandatory)][ValidateSet('prepare', 'prepare-inspect', 'apply', 'apply-inspect')][string]$Action,
+    [Parameter(Mandatory)][ValidateSet('staging', 'production')][string]$Environment,
+    [Parameter(Mandatory)][string]$ProjectRef,
+    [Parameter(Mandatory)][string]$StagingProjectRef,
+    [Parameter(Mandatory)][string]$ProductionProjectRef,
+    [Parameter(Mandatory)][string]$Sql
+  )
+
+  if ($Environment -ne 'staging') {
+    throw 'Reconciliation acceptance is staging-only.'
+  }
+  if ($ProjectRef -ne $StagingProjectRef -or $ProjectRef -eq $ProductionProjectRef) {
+    throw 'Reconciliation target must be the isolated staging project ref.'
+  }
+
+  $allowedSql = Get-StagingReconciliationSql -Action $Action
+  if ($Sql -cne $allowedSql) {
+    throw 'Reconciliation SQL is not on the exact staging allowlist.'
+  }
+}
+
 function Assert-TargetContract {
   param(
     [Parameter(Mandatory)][ValidateSet('staging', 'production')][string]$Environment,
@@ -304,4 +425,4 @@ function Invoke-EvidenceCommand {
   return $safe
 }
 
-Export-ModuleMember -Function Get-RepoRoot, Get-DeployContract, Get-LocalMigrationHead, Get-GitHead, Protect-DeployText, Assert-SafeSupabaseArguments, Get-StagingPrerequisiteSql, Assert-StagingPrerequisiteAction, Assert-TargetContract, Assert-ExactReleaseIdentity, Assert-ProductionApproval, New-EvidenceDirectory, Write-DeployJson, Invoke-EvidenceCommand
+Export-ModuleMember -Function Get-RepoRoot, Get-DeployContract, Get-LocalMigrationHead, Get-GitHead, Protect-DeployText, Assert-SafeSupabaseArguments, Get-StagingPrerequisiteSql, Assert-StagingPrerequisiteAction, Get-StagingReconciliationSql, Assert-StagingReconciliationAction, Assert-TargetContract, Assert-ExactReleaseIdentity, Assert-ProductionApproval, New-EvidenceDirectory, Write-DeployJson, Invoke-EvidenceCommand
