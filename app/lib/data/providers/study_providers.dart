@@ -552,9 +552,10 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       lastUpdatedAt: DateTime.tryParse(
         prefs.getString(_kActiveUpdatedAt) ?? '',
       ),
-      liveRunId: prefs.getString(_kActiveLiveRunId),
-      liveRunToken: prefs.getString(_kActiveLiveRunToken),
-      verification: prefs.getString(_kActiveLiveRunToken) == null
+      liveRunId: _normalizeRunToken(prefs.getString(_kActiveLiveRunId)),
+      liveRunToken: _normalizeRunToken(prefs.getString(_kActiveLiveRunToken)),
+      verification: _normalizeRunToken(prefs.getString(_kActiveLiveRunToken)) ==
+              null
           ? (activeStartedAt == null
                 ? TimerVerification.idle
                 : TimerVerification.statisticsOnly)
@@ -587,6 +588,15 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   }
 
   Future<void> _onAppResumed() => _syncBackgroundTimerState();
+
+  /// WP-245 (D1): boş/whitespace token'ı `null` sayar. Native FGS, verified
+  /// koşusu OLMAYAN her başlatmayı prefs'e `""` ile yazar (`StudyTimerService`
+  /// handleStart `.orEmpty()` + `TimerStateStore.writeRunning`). Dart bu `""`'ı
+  /// gerçek verified token sanırsa `stop()` `finalizeLiveRun("")` çağırıp RPC
+  /// exception'ı ile kilitleniyor → `_finish()` hiç çalışmıyordu (sayaç durmaz,
+  /// oturum yazılmaz). Bu tek nokta, token okunan HER yerde `""`'ı nötrler.
+  static String? _normalizeRunToken(String? raw) =>
+      (raw == null || raw.isEmpty) ? null : raw;
 
   /// Arka plandaki (FGS) durum ile ana isolate'i uzlaştırır: önce app-kapalı
   /// Durdur/Başlat toggle'ının etkilerini ([_reconcileBackgroundTimer]), sonra
@@ -773,8 +783,11 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
         .clamp(kMinPomodoroCycles, kMaxPomodoroCycles)
         .toInt();
     final fgModeName = prefs.getString(_kActiveMode);
-    final fgLiveRunId = prefs.getString(_kActiveLiveRunId);
-    final fgLiveRunToken = prefs.getString(_kActiveLiveRunToken);
+    // WP-245 (D1): native "" token'ını gerçek verified sanma → stop() kilitlenir.
+    final fgLiveRunId = _normalizeRunToken(prefs.getString(_kActiveLiveRunId));
+    final fgLiveRunToken = _normalizeRunToken(
+      prefs.getString(_kActiveLiveRunToken),
+    );
     final fgTimerMode = TimerMode.values.firstWhere(
       (m) => m.name == fgModeName,
       orElse: () => state.mode,

@@ -283,6 +283,61 @@ void main() {
     );
   });
 
+  group('WP-245: native boş-token mayını (D1)', () {
+    test(
+      'native "" token ile başlatılan sayaç uygulama içi Durdur ile GERÇEKTEN '
+      'durur ve oturum yazılır (finalize("") kilidi yok)',
+      () async {
+        // Native FGS, verified koşusu olmayan HER başlatmayı prefs'e boş string
+        // token ile yazar (StudyTimerService `.orEmpty()`). Cihaz gerçeği budur;
+        // testler bugüne kadar bu anahtarı hiç yazmadığı için mayını kaçırdı.
+        final nativeStart = DateTime.now().subtract(const Duration(minutes: 18));
+        final (container, studyRepo, profile) = await _buildContainer({
+          'timer_active_started_at': nativeStart.toIso8601String(),
+          'timer_active_started_at_ms': nativeStart.millisecondsSinceEpoch,
+          'timer_active_mode': TimerMode.stopwatch.name,
+          'timer_active_phase': TimerPhase.work.name,
+          'timer_active_cycle': 1,
+          'timer_fg_mode': 'running',
+          'timer_active_start_origin': 'native_notification',
+          // MAYIN: native her zaman "" yazar; null DEĞİL.
+          'timer_active_live_run_id': '',
+          'timer_active_live_run_token': '',
+        });
+        final timerSub = container.listen(studyTimerProvider, (_, _) {});
+        addTearDown(timerSub.close);
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+
+        // Sayaç çalışır benimsendi; "" token verified sanılmamalı.
+        final adopted = container.read(studyTimerProvider);
+        expect(adopted.isRunning, isTrue);
+        expect(
+          adopted.liveRunToken,
+          isNull,
+          reason: '"" gerçek token değildir → verified yolu tetiklenmemeli',
+        );
+        expect(adopted.verification, TimerVerification.statisticsOnly);
+
+        // Fix'ten önce: finalize("") → StateError → _finish() hiç çalışmaz →
+        // sayaç durmaz + oturum yazılmazdı. Şimdi düzgün durmalı.
+        await container.read(studyTimerProvider.notifier).stop();
+
+        expect(
+          container.read(studyTimerProvider).isRunning,
+          isFalse,
+          reason: 'boş-token mayını nötrlendi → Durdur gerçekten durdurmalı',
+        );
+        final sessions = await studyRepo.watchUserSessions(profile.id).first;
+        expect(sessions, hasLength(1), reason: 'oturum yazılmalı');
+        expect(sessions.single.durationSeconds, closeTo(18 * 60, 5));
+        expect(
+          container.read(sharedPreferencesProvider).getString('timer_fg_mode'),
+          'idle',
+        );
+      },
+    );
+  });
+
   group('WP-243: içerik-temelli durdurma yarışı (echo bastırma)', () {
     // Native→Dart `reconcile` broadcast'ini tetikler (gerçek native yayınının
     // uygulama önplandayken yaptığı çağrının aynısı).
