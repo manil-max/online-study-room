@@ -6,6 +6,7 @@ param(
   [string]$BuildNumber = '4201',
   [string]$StagingProjectRef = 'rskiuyjabyzelqododpa',
   [string]$ProductionProjectRef = 'jiphfrpzvkpzubbkhrwb',
+  [string]$AndroidSdkPath,
   [string]$NodePath = 'C:\Users\muhlis2\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe'
 )
 
@@ -18,6 +19,10 @@ $cliEntry = Join-Path $repoRoot 'node_modules\supabase\dist\supabase.js'
 $supabaseUrl = "https://$StagingProjectRef.supabase.co"
 $rawKeys = $null
 $publicKey = $null
+$hadAndroidHome = Test-Path Env:ANDROID_HOME
+$hadAndroidSdkRoot = Test-Path Env:ANDROID_SDK_ROOT
+$previousAndroidHome = $env:ANDROID_HOME
+$previousAndroidSdkRoot = $env:ANDROID_SDK_ROOT
 
 try {
   Assert-TargetContract -Environment staging -ProjectRef $StagingProjectRef -SupabaseUrl $supabaseUrl -StagingProjectRef $StagingProjectRef -ProductionProjectRef $ProductionProjectRef -RepoRoot $repoRoot -IgnoreLinkedRef
@@ -25,6 +30,20 @@ try {
   if (-not (Test-Path -LiteralPath $NodePath) -or -not (Test-Path -LiteralPath $cliEntry)) {
     throw 'Pinned Node/Supabase CLI runtime is missing.'
   }
+
+  if ([string]::IsNullOrWhiteSpace($AndroidSdkPath)) {
+    $localProperties = Join-Path $repoRoot 'app\android\local.properties'
+    $sdkLine = Get-Content -LiteralPath $localProperties -Encoding UTF8 | Where-Object { $_ -like 'sdk.dir=*' } | Select-Object -First 1
+    if ($sdkLine) {
+      $AndroidSdkPath = $sdkLine.Substring('sdk.dir='.Length).Replace('\\', '\')
+    }
+  }
+  if ([string]::IsNullOrWhiteSpace($AndroidSdkPath) -or -not (Test-Path -LiteralPath (Join-Path $AndroidSdkPath 'platform-tools\adb.exe'))) {
+    throw 'A complete Android SDK could not be resolved for the beta build.'
+  }
+  $AndroidSdkPath = (Resolve-Path -LiteralPath $AndroidSdkPath).Path
+  $env:ANDROID_HOME = $AndroidSdkPath
+  $env:ANDROID_SDK_ROOT = $AndroidSdkPath
 
   $rawKeys = (& $NodePath $cliEntry projects api-keys --project-ref $StagingProjectRef --output json --workdir $repoRoot 2>$null | Out-String)
   if ($LASTEXITCODE -ne 0) {
@@ -55,6 +74,8 @@ try {
     -BuildNumber $BuildNumber
 } finally {
   Remove-Item Env:STAGING_SUPABASE_ANON_KEY -ErrorAction SilentlyContinue
+  if ($hadAndroidHome) { $env:ANDROID_HOME = $previousAndroidHome } else { Remove-Item Env:ANDROID_HOME -ErrorAction SilentlyContinue }
+  if ($hadAndroidSdkRoot) { $env:ANDROID_SDK_ROOT = $previousAndroidSdkRoot } else { Remove-Item Env:ANDROID_SDK_ROOT -ErrorAction SilentlyContinue }
   $publicKey = $null
   $rawKeys = $null
 }
