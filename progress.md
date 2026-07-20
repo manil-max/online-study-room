@@ -20,7 +20,7 @@
 - **Navigasyon hedefi:** Ana Sayfa / Saat / Gruplar / İstatistikler / Profil. Ana Sayfa günlük kullanım alanıdır; diğer alanların verisi kendi sekmelerinde eksiksiz bulunur.
 - **Release gerçeği:** Stable tag `v39` (`c6843a5`), beta tag `beta-v41` (`e6234a6`), HEAD `2d757eb`. Beta-v41 sonrası 13 yerel commit vardır; uygulama hâlâ `1.0.41+41` taşıdığı için sürüm/commit ayrımı bozuk. WP-227/230 düzeltecek.
 - **Kalite kapıları:** Her WP DoD'siz kapanmaz; stable release kalite kapısından geçer (AGENTS.md §3). Server-authoritative XP, RLS/sosyal profil, platform sınırları → `docs/KALITE-PROGRAMI.md`.
-- **Son WP numarası:** **241** (WP-241 = sayaç reconcile yarışı, beta-v4203 cihaz bulgusu). **Sıradaki boş numara WP-242.** (WP-221–224 geçmişte kullanılmış; kurtarma WP-225–232 planlandı; WP-233/234 beta-v4202 saha bulguları; WP-235–239 beta-v4202 saha turu 2 — grafik/sıralama/test/sayaç). **Sıradaki boş numara WP-240.**
+- **Son WP numarası:** **242** (WP-242 = beta-v4204 yayını). **Sıradaki boş numara WP-243.** (WP-221–224 geçmişte kullanılmış; kurtarma WP-225–232 planlandı; WP-233/234 beta-v4202 saha bulguları; WP-235–239 beta-v4202 saha turu 2 — grafik/sıralama/test/sayaç). **Sıradaki boş numara WP-240.**
 - **Ortam sözleşmesi:** local=Supabase CLI/Docker, beta=ayrı staging Supabase, stable=production Supabase. Ayrıntı: `docs/ORTAM-MIGRATION-YONETISIMI.md`.
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`

@@ -3,6 +3,38 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.42-beta.4",
+      "buildNumber": 4204,
+      "channel": "beta",
+      "date": "2026-07-20",
+      "title": "beta-v4204: sayaç başlat/durdur yarışı düzeltmesi",
+      "highlights": [
+        "Kronometrede ard arda Başlat/Durdur yapınca sayacın donması, saymaya devam etmesi veya süreyi çift/eksik yazması giderildi."
+      ],
+      "fixes": [
+        "Uygulama içi Başlat/Durdur ile arka plandaki sayaç servisi arasında bir yarış vardı: hızlı işlemlerde büyük sayaç bazen hiç artmıyor, durdurunca durmuyor ya da toplam süre yanlış hesaplanıyordu (uygulamayı kapatıp açınca düzeliyordu). Artık işlemler sıraya alınıp tutarlı çalışıyor.",
+        "Bildirimden başlatılan çalışma da uygulama önplandayken doğru şekilde uygulamaya yansıyor ve içeriden durdurulabiliyor."
+      ],
+      "notes": [
+        "beta-v4203/4202’den geliyorsan oturumun korunur; aynı ayrı test ortamı kullanılıyor.",
+        "Öncelikli test: hızlı ard arda Başlat/Durdur; bildirimden Başlat → uygulama içi Durdur; süre toplama doğrulukları.",
+        "Bu kayıt yalnız istemci beta adayıdır; production deploy veya migration içermez."
+      ],
+      "titleEn": "beta-v4204: timer start/stop race fix",
+      "highlightsEn": [
+        "Fixed the stopwatch freezing, not stopping, or mis-counting time (double/missing) when you press Start/Stop rapidly in a row."
+      ],
+      "fixesEn": [
+        "There was a race between the in-app Start/Stop and the background timer service: on rapid actions the big timer sometimes did not advance, did not stop, or the total time was computed wrong (fixed itself after restarting the app). Operations are now serialized and consistent.",
+        "Study started from the notification now also reflects correctly in the app while it is in the foreground and can be stopped from inside."
+      ],
+      "notesEn": [
+        "If you are coming from beta-v4203/4202 your session is kept; the same separate test environment is used.",
+        "Priority test: rapid Start/Stop in a row; notification Start then in-app Stop; total-time accuracy.",
+        "This entry is a client beta candidate only; it contains no production deploy or migration."
+      ]
+    },
+    {
       "versionName": "1.0.42-beta.3",
       "buildNumber": 4203,
       "channel": "beta",

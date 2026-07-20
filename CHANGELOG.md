@@ -4,6 +4,21 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [beta-v4204 / 1.0.42-beta.4+4204] - 2026-07-20
+
+> **Beta test sürümü — sayaç yarışı düzeltmesi.** beta-v4203/4202’den geliyorsan oturumun korunur; aynı ayrı test ortamı kullanılıyor.
+
+### Düzeltmeler
+
+- **Sayaç başlat/durdur yarışı (P1).** Uygulama içi Başlat/Durdur ile arka plandaki sayaç servisi arasında bir yarış vardı: hızlı ard arda işlemlerde büyük sayaç bazen hiç artmıyor, durdurunca durmuyor ya da toplam süre çift/eksik yazılıyordu (uygulamayı kapatıp açınca düzeliyordu). Native servisin gönderdiği "durum değişti" bildirimleri sıra-dışı işlenip Dart tarafındaki sayaç durumunu eziyordu. Artık: (1) uygulama kendi Başlat/Durdur'unu yaptıktan sonra kısa bir süre native kaynaklı yeniden-uzlaşma bastırılıyor, (2) eş zamanlı uzlaşmalar tek işleme birleştiriliyor.
+- **Bildirimden başlatma.** Bildirim panelinden başlatılan çalışma, uygulama önplandayken de doğru yansıyor ve uygulama içinden durdurulabiliyor (beta-v4203'te bu tam çözülmemişti; asıl kök neden yukarıdaki yarıştı).
+
+### Test notları
+
+- Öncelikli doğrulamalar: (1) hızlı ard arda Başlat/Durdur — büyük sayaç her seferinde düzgün başlıyor/duruyor mu; (2) bildirimden Başlat → uygulama içi Durdur; (3) 3 sn çalış → Durdur → toplam tam 3 sn artıyor mu (çift/eksik yok); (4) "uygulamayı kapatıp açınca düzeliyor" durumu artık yok.
+- Bu yarış cihaza özgü olduğundan otomatik test tam yakalayamaz; cihaz doğrulaması esastır.
+- Bu kayıt yalnız istemci beta adayıdır; production deploy/migration içermez.
+
 ## [beta-v4203 / 1.0.42-beta.3+4203] - 2026-07-20
 
 > **Beta test sürümü — beta-v4202 saha bulguları düzeltmeleri.** beta-v4202’den geliyorsan oturumun korunur; aynı ayrı test ortamı kullanılıyor, yeniden hesap açman gerekmez.
