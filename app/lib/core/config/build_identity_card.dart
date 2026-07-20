@@ -19,7 +19,7 @@ class BuildIdentityCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Icon(Icons.verified_user_outlined),
+                const Icon(Icons.fingerprint),
                 const SizedBox(width: 10),
                 Text(
                   isTurkish ? 'Derleme tanısı' : 'Build diagnostics',
@@ -38,6 +38,10 @@ class BuildIdentityCard extends StatelessWidget {
               _IdentityRow(
                 label: isTurkish ? 'Kanal' : 'Channel',
                 value: value.channelName,
+              ),
+              _IdentityRow(
+                label: isTurkish ? 'Sürüm' : 'Version',
+                value: '${value.versionName}+${value.buildNumber}',
               ),
               _IdentityRow(
                 label: 'Backend',

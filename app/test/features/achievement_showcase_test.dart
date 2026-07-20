@@ -190,7 +190,7 @@ void main() {
 
     expect(find.text('En yakın başarım'), findsOneWidget);
     expect(find.text('26/50 · sonraki kademe'), findsNWidgets(2));
-    expect(find.textContaining('doğrulanmış kronometre'), findsOneWidget);
+    expect(find.textContaining('tam çalışma saati'), findsOneWidget);
   });
 
   testWidgets('pending ödül yalnız callback çağırır ve gizli adı sızdırmaz', (
@@ -372,10 +372,12 @@ void main() {
     expect(crownLabel('gold_achiever', AppLocalizationsTr()), 'Altın Taç');
     expect(crownLabel('emerald_sage', AppLocalizationsTr()), 'Zümrüt Taç');
     expect(crownLabel('immortal_legend', AppLocalizationsTr()), 'Ölümsüz Taç');
-    final m = xpBarMetrics(40000);
-    expect(m.floor, 20000);
-    expect(m.next, 75000);
-    expect(m.progress, closeTo(0.3636, 0.01));
+    final m = xpBarMetrics(12500);
+    expect(m.floor, 0);
+    expect(m.next, 20000);
+    expect(m.earned, 12500);
+    expect(m.requiredXp, 20000);
+    expect(m.progress, 0.625);
     expect(crownRankForXp(0), 'bronze_beginner');
     expect(crownRankForXp(20000), 'silver_learner');
     expect(crownRankForXp(75000), 'gold_achiever');

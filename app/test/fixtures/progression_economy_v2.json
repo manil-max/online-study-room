@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 2,
+  "crownThresholds": [0, 20000, 75000, 200000, 500000, 1000000],
+  "coreTieredAchievementIds": [
+    "marathon_total", "steel_will", "day_hero", "fire_streak",
+    "weekend_goal_days", "perfect_month", "alpha_wolf", "team_player",
+    "campfire_hours", "inspiration", "locomotive"
+  ],
+  "extensionTieredAchievementIds": ["alpha_wolf_weekly"],
+  "achievements": {
+    "marathon_total": [[1,50,"hours",100],[2,200,"hours",500],[3,500,"hours",1500],[4,1000,"hours",5000],[5,2500,"hours",15000],[6,5000,"hours",45000]],
+    "steel_will": [[1,60,"minutes",50],[2,90,"minutes",100],[3,120,"minutes",250],[4,180,"minutes",1000],[5,300,"minutes",5000],[6,480,"minutes",15000]],
+    "day_hero": [[1,2,"day_hours",50],[2,4,"day_hours",150],[3,6,"day_hours",500],[4,8,"day_hours",1500],[5,10,"day_hours",5000],[6,12,"day_hours",15000]],
+    "fire_streak": [[1,7,"streak_days",100],[2,30,"streak_days",2000],[3,150,"streak_days",5000],[4,365,"streak_days",20000],[5,730,"streak_days",50000],[6,1000,"streak_days",100000]],
+    "weekend_goal_days": [[1,4,"weekend_goal_days",150],[2,8,"weekend_goal_days",450],[3,20,"weekend_goal_days",1000],[4,50,"weekend_goal_days",3000],[5,100,"weekend_goal_days",10000],[6,250,"weekend_goal_days",25000]],
+    "perfect_month": [[1,1,"perfect_months",2000],[2,3,"perfect_months",4000],[3,6,"perfect_months",8000],[4,12,"perfect_months",16000],[5,24,"perfect_months",32000],[6,36,"perfect_months",64000]],
+    "alpha_wolf": [[1,7,"group_day_first",1000],[2,30,"group_day_first",2500],[3,90,"group_day_first",7500],[4,180,"group_day_first",15000],[5,360,"group_day_first",30000],[6,720,"group_day_first",60000]],
+    "alpha_wolf_weekly": [[1,1,"weekly_alpha_wins",2500],[2,4,"weekly_alpha_wins",6000],[3,12,"weekly_alpha_wins",15000],[4,26,"weekly_alpha_wins",30000],[5,52,"weekly_alpha_wins",60000],[6,104,"weekly_alpha_wins",120000]],
+    "team_player": [[1,10,"group_goal_contrib",50],[2,30,"group_goal_contrib",200],[3,100,"group_goal_contrib",800],[4,300,"group_goal_contrib",2500],[5,600,"group_goal_contrib",8000],[6,1000,"group_goal_contrib",20000]],
+    "campfire_hours": [[1,10,"campfire_hours",100],[2,50,"campfire_hours",400],[3,150,"campfire_hours",1500],[4,300,"campfire_hours",5000],[5,600,"campfire_hours",12000],[6,1000,"campfire_hours",25000]],
+    "inspiration": [[1,5,"nudge_starts",100],[2,20,"nudge_starts",400],[3,50,"nudge_starts",1200],[4,150,"nudge_starts",4000],[5,500,"nudge_starts",15000],[6,1000,"nudge_starts",30000]],
+    "locomotive": [[1,5,"locomotive_events",150],[2,15,"locomotive_events",500],[3,30,"locomotive_events",1500],[4,100,"locomotive_events",4500],[5,300,"locomotive_events",15000],[6,600,"locomotive_events",30000]],
+    "secret_night_owl": [[1,1,"secret_night_owl",2000]],
+    "secret_dawn": [[1,1,"secret_dawn",2500]],
+    "secret_404": [[1,1,"secret_404",5000]],
+    "secret_pi": [[1,1,"secret_pi",3147]],
+    "secret_break_enemy": [[1,1,"secret_break_enemy",2500]],
+    "secret_last_second": [[1,1,"secret_last_second",1500]],
+    "secret_no_limits": [[1,1,"secret_no_limits",5000]],
+    "secret_matrix": [[1,1,"secret_matrix",1111]],
+    "secret_nye": [[1,1,"secret_nye",3000]]
+  },
+  "removedAchievementIds": ["secret_1337"]
+}

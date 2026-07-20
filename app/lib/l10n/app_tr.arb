@@ -1166,8 +1166,8 @@
   "profileAchievementProgress": "{current}/{target} · sonraki kademe",
   "profileAchievementProgressUnavailable": "İlerleme henüz hazır değil",
   "profileAchievementPerfectMonth30Rule": "Bir takvim ayında en az 28 gün günlük hedefine ulaş (en fazla 2 gün kaçırma).",
-  "profileAchievementTeamPlayerRule": "Grubunun hedefe ulaştığı günlerde doğrulanmış çalışma süresiyle katkı ver.",
-  "profileAchievementVerifiedXpNote": "XP için doğrulanmış kronometre çalışması gerekir. Doğrulanmış her tam saat otomatik 50 XP kazandırır.",
+  "profileAchievementTeamPlayerRule": "Grubunun hedefe ulaştığı günlerde geçerli çalışma süresiyle katkı ver.",
+  "profileStudyXpNote": "Her tam çalışma saati otomatik 50 XP kazandırır.",
   "profileRewardReady": "{count} ödül hazır · {xp} XP",
   "profileRewardClaim": "Topla",
   "profileRewardClaimAll": "Tümünü topla",
@@ -1181,9 +1181,5 @@
   "taskListDailyBadge": "Günlük",
   "taskListDailyStreakStep": "Bugünkü seri +1",
   "taskListSyncError": "Görevler yenilenemedi. Çevrimdışı olabilirsin.",
-  "taskListRetry": "Tekrar dene",
-  "timerVerifiedSession": "Doğrulanmış oturum · XP ve başarıma uygun",
-  "timerVerificationPending": "Oturum doğrulanıyor…",
-  "timerStatisticsOnly": "İstatistiğe sayılır; XP ve başarıma sayılmaz.",
-  "timerVerifiedUpdateRequired": "Doğrulanmış XP için uygulamayı güncelle. Bu süre istatistiğe sayılır."
+  "taskListRetry": "Tekrar dene"
 }

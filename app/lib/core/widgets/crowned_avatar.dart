@@ -5,7 +5,7 @@ import '../../data/providers/gamification_providers.dart';
 import '../stats/progression_visuals.dart';
 import 'user_avatar.dart';
 
-/// Profil fotoğrafı + 5 kademeli taç halkası + gerçek taç ikonu (WP-192).
+/// Profil fotoğrafı + 6 kademeli taç halkası + gerçek taç ikonu (WP-192).
 ///
 /// [crownRank] null/boş ise düz [UserAvatar] (taçsız).
 class CrownedAvatar extends StatelessWidget {
@@ -148,10 +148,7 @@ class CrownPainter extends CustomPainter {
       h * 0.92,
       const Radius.circular(2),
     );
-    canvas.drawRRect(
-      band,
-      Paint()..color = color.withValues(alpha: 0.85),
-    );
+    canvas.drawRRect(band, Paint()..color = color.withValues(alpha: 0.85));
   }
 
   @override
@@ -178,8 +175,11 @@ class LiveCrownedAvatar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final rank =
-        ref.watch(gamificationProfileProvider(userId)).asData?.value.crownRank;
+    final rank = ref
+        .watch(gamificationProfileProvider(userId))
+        .asData
+        ?.value
+        .crownRank;
     return CrownedAvatar(
       displayName: displayName,
       avatarUrl: avatarUrl,

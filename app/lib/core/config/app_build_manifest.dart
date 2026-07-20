@@ -19,6 +19,8 @@ class AppBuildManifest {
     required this.environment,
     required this.gitCommitSha,
     required this.migrationHead,
+    required this.versionName,
+    required this.buildNumber,
     required this.backendProjectRef,
     required this.usesSupabase,
     required this.flutterFlavor,
@@ -52,6 +54,14 @@ class AppBuildManifest {
     'MIGRATION_HEAD',
     defaultValue: '',
   );
+  static const String _versionName = String.fromEnvironment(
+    'APP_VERSION_NAME',
+    defaultValue: '0.0.0-local',
+  );
+  static const int _buildNumber = int.fromEnvironment(
+    'APP_BUILD_NUMBER',
+    defaultValue: 0,
+  );
   static const bool _allowInMemory = bool.fromEnvironment(
     'ALLOW_IN_MEMORY',
     defaultValue: false,
@@ -61,6 +71,8 @@ class AppBuildManifest {
   final AppEnvironment environment;
   final String gitCommitSha;
   final String migrationHead;
+  final String versionName;
+  final int buildNumber;
   final String backendProjectRef;
   final bool usesSupabase;
   final String? flutterFlavor;
@@ -91,6 +103,8 @@ class AppBuildManifest {
     productionProjectRef: _productionProjectRef,
     gitCommitSha: _gitCommitSha,
     migrationHead: _migrationHead,
+    versionName: _versionName,
+    buildNumber: _buildNumber,
     allowInMemory: _allowInMemory,
     flutterFlavor: appFlavor,
   );
@@ -116,6 +130,8 @@ class AppBuildManifest {
     required String productionProjectRef,
     required String gitCommitSha,
     required String migrationHead,
+    required String versionName,
+    required int buildNumber,
     required bool allowInMemory,
     String? flutterFlavor,
   }) {
@@ -146,6 +162,10 @@ class AppBuildManifest {
     if (!RegExp(r'^\d{4}$').hasMatch(normalizedHead)) {
       throw const BuildConfigurationException('invalid_migration_head');
     }
+    final normalizedVersion = versionName.trim().toLowerCase();
+    if (!_isValidVersionBuild(normalizedVersion, buildNumber, parsedChannel)) {
+      throw const BuildConfigurationException('invalid_version_build');
+    }
 
     final url = supabaseUrl.trim();
     final anonKey = supabaseAnonKey.trim();
@@ -163,6 +183,8 @@ class AppBuildManifest {
         environment: parsedEnvironment,
         gitCommitSha: normalizedCommit,
         migrationHead: normalizedHead,
+        versionName: normalizedVersion,
+        buildNumber: buildNumber,
         backendProjectRef: 'in-memory',
         usesSupabase: false,
         flutterFlavor: normalizedFlavor,
@@ -204,6 +226,8 @@ class AppBuildManifest {
       environment: parsedEnvironment,
       gitCommitSha: normalizedCommit,
       migrationHead: normalizedHead,
+      versionName: normalizedVersion,
+      buildNumber: buildNumber,
       backendProjectRef: selectedRef,
       usesSupabase: true,
       flutterFlavor: normalizedFlavor,
@@ -257,6 +281,25 @@ class AppBuildManifest {
           RegExp(r'^[0-9a-f]{7,40}$').hasMatch(value);
     }
     return RegExp(r'^[0-9a-f]{7,40}$').hasMatch(value);
+  }
+
+  static bool _isValidVersionBuild(
+    String version,
+    int build,
+    AppReleaseChannel channel,
+  ) {
+    if (channel == AppReleaseChannel.local) {
+      return version == '0.0.0-local' && build == 0;
+    }
+    if (channel == AppReleaseChannel.stable) {
+      final match = RegExp(r'^\d+\.\d+\.(\d+)$').firstMatch(version);
+      return match != null && build == int.parse(match.group(1)!);
+    }
+    final match = RegExp(r'^\d+\.\d+\.(\d+)-beta\.(\d+)$').firstMatch(version);
+    if (match == null) return false;
+    final patch = int.parse(match.group(1)!);
+    final sequence = int.parse(match.group(2)!);
+    return sequence >= 1 && sequence <= 99 && build == patch * 100 + sequence;
   }
 
   static bool _isHostedProjectRef(String value) =>

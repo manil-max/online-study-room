@@ -4816,8 +4816,8 @@
   "profileAchievementProgress": "{current}/{target} · nächste Stufe",
   "profileAchievementProgressUnavailable": "Fortschritt ist noch nicht verfügbar",
   "profileAchievementPerfectMonth30Rule": "Erreiche dein Tagesziel an mindestens 28 Tagen innerhalb eines Kalendermonats (höchstens 2 Fehltage).",
-  "profileAchievementTeamPlayerRule": "Trage an Tagen, an denen deine Gruppe ihr Ziel erreicht, verifizierte Lernzeit bei.",
-  "profileAchievementVerifiedXpNote": "Für XP ist eine verifizierte Timer-Sitzung nötig. Jede volle verifizierte Stunde bringt automatisch 50 XP.",
+  "profileAchievementTeamPlayerRule": "Trage an Tagen, an denen deine Gruppe ihr Ziel erreicht, gültige Lernzeit bei.",
+  "profileStudyXpNote": "Jede volle Lernstunde bringt automatisch 50 XP.",
   "profileRewardReady": "{count} Belohnungen bereit · {xp} XP",
   "profileRewardClaim": "Abholen",
   "profileRewardClaimAll": "Alle abholen",
@@ -4831,9 +4831,5 @@
   "taskListDailyBadge": "Täglich",
   "taskListDailyStreakStep": "Heutige Serie +1",
   "taskListSyncError": "Aufgaben konnten nicht aktualisiert werden. Du bist möglicherweise offline.",
-  "taskListRetry": "Erneut versuchen",
-  "timerVerifiedSession": "Verifizierte Sitzung · für XP und Erfolge geeignet",
-  "timerVerificationPending": "Sitzung wird verifiziert…",
-  "timerStatisticsOnly": "Zählt für Statistiken, aber nicht für XP oder Erfolge.",
-  "timerVerifiedUpdateRequired": "Aktualisiere die App für verifizierte XP. Diese Zeit zählt weiterhin für Statistiken."
+  "taskListRetry": "Erneut versuchen"
 }

@@ -1,8 +1,6 @@
 name: Release APK
 
-# Stable: git tag vN && git push origin vN
-# Beta:   git tag beta-vN && git push origin beta-vN
-# Tag sonundaki N hem APK versionCode hem de updater build numarasidir.
+# Stable: v42 -> 1.0.42+42. Beta: beta-v4201 -> 1.0.42-beta.1+4201.
 on:
   push:
     tags:
@@ -36,14 +34,20 @@ jobs:
         run: |
           TAG="$GITHUB_REF_NAME"
           CODE="${TAG##*v}"
+          [[ "$CODE" =~ ^[0-9]+$ ]] || { echo "Invalid release code: $CODE"; exit 1; }
           echo "code=$CODE" >> "$GITHUB_OUTPUT"
           if [[ "$TAG" == beta* ]]; then
+            PATCH=$((CODE / 100))
+            SEQ=$((CODE % 100))
+            (( PATCH > 0 && SEQ > 0 && SEQ < 100 )) || { echo "beta code must encode patch*100+sequence"; exit 1; }
+            echo "version_name=1.0.${PATCH}-beta.${SEQ}" >> "$GITHUB_OUTPUT"
             echo "flavor=beta" >> "$GITHUB_OUTPUT"
             echo "channel=beta" >> "$GITHUB_OUTPUT"
             echo "prerelease=true" >> "$GITHUB_OUTPUT"
             echo "src=app-beta-release.apk" >> "$GITHUB_OUTPUT"
             echo "asset=app-beta-release.apk" >> "$GITHUB_OUTPUT"
           else
+            echo "version_name=1.0.${CODE}" >> "$GITHUB_OUTPUT"
             echo "flavor=stable" >> "$GITHUB_OUTPUT"
             echo "channel=stable" >> "$GITHUB_OUTPUT"
             echo "prerelease=false" >> "$GITHUB_OUTPUT"
@@ -132,6 +136,8 @@ jobs:
               "PRODUCTION_SUPABASE_PROJECT_REF": os.environ["PRODUCTION_SUPABASE_PROJECT_REF"],
               "GIT_COMMIT_SHA": os.environ["GITHUB_SHA"],
               "MIGRATION_HEAD": "${{ steps.contract.outputs.head }}",
+              "APP_VERSION_NAME": "${{ steps.meta.outputs.version_name }}",
+              "APP_BUILD_NUMBER": "${{ steps.meta.outputs.code }}",
               "DISTRIBUTION_CHANNEL": os.environ["DISTRIBUTION_CHANNEL"],
           }
           with open("env.json", "w", encoding="utf-8") as handle:
@@ -151,6 +157,7 @@ jobs:
           #   --dart-define=DISTRIBUTION_CHANNEL=play --dart-define-from-file=env.json
           flutter build apk --release \
             --flavor ${{ steps.meta.outputs.flavor }} \
+            --build-name=${{ steps.meta.outputs.version_name }} \
             --build-number=${{ steps.meta.outputs.code }} \
             --dart-define-from-file=env.json
 
@@ -174,6 +181,25 @@ jobs:
             mv "${{ steps.meta.outputs.src }}" "${{ steps.meta.outputs.asset }}"
           fi
           sha256sum "${{ steps.meta.outputs.asset }}" > "${{ steps.meta.outputs.asset }}.sha256"
+          python - <<'PY'
+          import hashlib, json, pathlib
+          artifact = pathlib.Path("${{ steps.meta.outputs.asset }}")
+          manifest = {
+              "schemaVersion": 1,
+              "channel": "${{ steps.meta.outputs.channel }}",
+              "environment": "staging" if "${{ steps.meta.outputs.channel }}" == "beta" else "production",
+              "versionName": "${{ steps.meta.outputs.version_name }}",
+              "buildNumber": int("${{ steps.meta.outputs.code }}"),
+              "gitCommitSha": "${{ github.sha }}",
+              "backendProjectRef": "${{ steps.meta.outputs.channel }}" == "beta" and "${{ vars.STAGING_SUPABASE_PROJECT_REF }}" or "${{ vars.PRODUCTION_SUPABASE_PROJECT_REF }}",
+              "migrationHead": "${{ steps.contract.outputs.head }}",
+              "artifact": artifact.name,
+              "sha256": hashlib.sha256(artifact.read_bytes()).hexdigest(),
+          }
+          pathlib.Path("release-manifest.json").write_text(
+              json.dumps(manifest, indent=2) + "\n", encoding="utf-8"
+          )
+          PY
 
       - name: CHANGELOG bolumunu release body olarak hazirla
         working-directory: ${{ github.workspace }}
@@ -212,3 +238,4 @@ jobs:
           files: |
             app/build/app/outputs/flutter-apk/${{ steps.meta.outputs.asset }}
             app/build/app/outputs/flutter-apk/${{ steps.meta.outputs.asset }}.sha256
+            app/build/app/outputs/flutter-apk/release-manifest.json

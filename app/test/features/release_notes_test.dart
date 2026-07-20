@@ -176,6 +176,8 @@ void main() {
               productionProjectRef: 'bbbbbbbbbbbbbbbbbbbb',
               gitCommitSha: 'abcdef1234567890',
               migrationHead: '0062',
+              versionName: '1.0.42-beta.1',
+              buildNumber: 4201,
               allowInMemory: false,
               flutterFlavor: 'beta',
             ),

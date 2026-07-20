@@ -384,13 +384,13 @@ class AchievementShowcaseState extends State<AchievementShowcase>
         _XpBar(
           progress: bar.progress,
           xp: xp,
-          next: bar.next,
-          floor: bar.floor,
+          earned: bar.earned,
+          requiredXp: bar.requiredXp,
           color: rankColor,
         ),
         if (widget.isSelf) ...[
           SizedBox(height: 12),
-          _VerifiedXpNote(),
+          _StudyXpNote(),
           if (widget.rewardsLoading ||
               widget.rewardError ||
               widget.pendingRewardCount > 0 ||
@@ -566,15 +566,15 @@ class _XpBar extends StatelessWidget {
   const _XpBar({
     required this.progress,
     required this.xp,
-    required this.next,
-    required this.floor,
+    required this.earned,
+    required this.requiredXp,
     required this.color,
   });
 
   final double progress;
   final int xp;
-  final int next;
-  final int floor;
+  final int earned;
+  final int requiredXp;
   final Color color;
 
   @override
@@ -584,20 +584,28 @@ class _XpBar extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: LinearProgressIndicator(
-            value: atCap ? 1 : progress,
-            minHeight: 10,
-            backgroundColor: theme.colorScheme.surfaceContainerHighest,
-            color: color,
+        Semantics(
+          label: atCap
+              ? '${AppLocalizations.of(context).profileTamamland} · $xp XP'
+              : '$earned / $requiredXp XP · ${(progress * 100).round()}%',
+          value: '${(progress * 100).round()}%',
+          child: ExcludeSemantics(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: LinearProgressIndicator(
+                value: atCap ? 1 : progress,
+                minHeight: 10,
+                backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                color: color,
+              ),
+            ),
           ),
         ),
         SizedBox(height: 6),
         Text(
           atCap
               ? AppLocalizations.of(context).profileTamamland
-              : '$xp / $next XP (${(progress * 100).round()}%)',
+              : '$earned / $requiredXp XP (${(progress * 100).round()}%)',
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),
@@ -607,7 +615,7 @@ class _XpBar extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            for (var i = 1; i <= 5; i++)
+            for (var i = 1; i <= 6; i++)
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 2),
@@ -932,7 +940,7 @@ class _AchievementTierDetailRow extends StatelessWidget {
   }
 }
 
-class _VerifiedXpNote extends StatelessWidget {
+class _StudyXpNote extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -948,14 +956,14 @@ class _VerifiedXpNote extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Icon(
-              Icons.verified_outlined,
+              Icons.schedule_outlined,
               size: 20,
               color: theme.colorScheme.onSecondaryContainer,
             ),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                AppLocalizations.of(context).profileAchievementVerifiedXpNote,
+                AppLocalizations.of(context).profileStudyXpNote,
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSecondaryContainer,
                 ),

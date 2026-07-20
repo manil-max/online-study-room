@@ -43,8 +43,9 @@ class GamificationCard extends ConsumerWidget {
                   style: theme.textTheme.bodyMedium,
                 );
               }
-              final achsAsync =
-                  ref.watch(userAchievementsProvider(authProfile.id));
+              final achsAsync = ref.watch(
+                userAchievementsProvider(authProfile.id),
+              );
               return achsAsync.when(
                 data: (achs) => _BadgeSummary(
                   displayName: authProfile.displayName,
@@ -119,9 +120,7 @@ class _BadgeSummary extends StatelessWidget {
     }
 
     final byId = {for (final d in dict) d.id: d};
-    final tierById = {
-      for (final a in achievements) a.achievementId: a.tier,
-    };
+    final tierById = {for (final a in achievements) a.achievementId: a.tier};
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -177,20 +176,30 @@ class _BadgeSummary extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 4),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(6),
-          child: LinearProgressIndicator(
-            value: atMax ? 1 : bar.progress,
-            minHeight: 8,
-            color: rankColor,
-            backgroundColor: theme.colorScheme.surfaceContainerHighest,
+        Semantics(
+          label: atMax
+              ? '${profile.xp} XP · ${l10n.profileCrownMax}'
+              : '${bar.earned} / ${bar.requiredXp} XP · '
+                    '${(bar.progress * 100).round()}%',
+          value: '${(bar.progress * 100).round()}%',
+          child: ExcludeSemantics(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: LinearProgressIndicator(
+                value: atMax ? 1 : bar.progress,
+                minHeight: 8,
+                color: rankColor,
+                backgroundColor: theme.colorScheme.surfaceContainerHighest,
+              ),
+            ),
           ),
         ),
         const SizedBox(height: 4),
         Text(
           atMax
               ? '${profile.xp} XP'
-              : '${profile.xp} / ${bar.next} XP',
+              : '${bar.earned} / ${bar.requiredXp} XP '
+                    '(${(bar.progress * 100).round()}%)',
           style: theme.textTheme.labelSmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),
@@ -245,11 +254,7 @@ class _BadgeChip extends StatelessWidget {
           shape: BoxShape.circle,
           border: Border.all(color: color.withValues(alpha: 0.45)),
         ),
-        child: Icon(
-          achievementIconData(iconKey),
-          color: color,
-          size: 22,
-        ),
+        child: Icon(achievementIconData(iconKey), color: color, size: 22),
       ),
     );
   }

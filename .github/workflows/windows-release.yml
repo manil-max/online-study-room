@@ -60,6 +60,15 @@ jobs:
               PRERELEASE=false
             fi
           fi
+          [[ "$CODE" =~ ^[0-9]+$ ]] || { echo "Invalid release code: $CODE"; exit 1; }
+          if [[ "$CHANNEL" == beta ]]; then
+            PATCH=$((CODE / 100))
+            SEQ=$((CODE % 100))
+            (( PATCH > 0 && SEQ > 0 && SEQ < 100 )) || { echo "beta code must encode patch*100+sequence"; exit 1; }
+            VERSION_NAME="1.0.${PATCH}-beta.${SEQ}"
+          else
+            VERSION_NAME="1.0.${CODE}"
+          fi
           MSIX_VER="1.0.0.${CODE}"
           ASSET_MSIX="odak-kampi-windows-${CHANNEL}.msix"
           ASSET_ZIP="odak-kampi-windows-${CHANNEL}.zip"
@@ -67,6 +76,7 @@ jobs:
             echo "tag=$TAG"
             echo "code=$CODE"
             echo "channel=$CHANNEL"
+            echo "version_name=$VERSION_NAME"
             echo "prerelease=$PRERELEASE"
             echo "msix_ver=$MSIX_VER"
             echo "asset_msix=$ASSET_MSIX"
@@ -139,6 +149,8 @@ jobs:
             PRODUCTION_SUPABASE_PROJECT_REF = $env:PRODUCTION_SUPABASE_PROJECT_REF
             GIT_COMMIT_SHA = $env:GITHUB_SHA
             MIGRATION_HEAD = "${{ steps.contract.outputs.head }}"
+            APP_VERSION_NAME = "${{ steps.meta.outputs.version_name }}"
+            APP_BUILD_NUMBER = "${{ steps.meta.outputs.code }}"
             DISTRIBUTION_CHANNEL = "windows"
             SENTRY_DSN = $env:SENTRY_DSN
             SENTRY_ENABLED = "false"
@@ -162,6 +174,7 @@ jobs:
       - name: Build Windows release
         run: >
           flutter build windows --release
+          --build-name=${{ steps.meta.outputs.version_name }}
           --build-number=${{ steps.meta.outputs.code }}
           --dart-define-from-file=env.json
 
@@ -217,6 +230,19 @@ jobs:
           Compress-Archive -Path (Join-Path $release '*') -DestinationPath (Join-Path $out $zipName) -Force
           $zhash = (Get-FileHash -Algorithm SHA256 (Join-Path $out $zipName)).Hash.ToLower()
           Set-Content -Path (Join-Path $out "$zipName.sha256") -Value "$zhash  $zipName" -NoNewline
+          $manifest = @{
+            schemaVersion = 1
+            channel = "${{ steps.meta.outputs.channel }}"
+            environment = if ("${{ steps.meta.outputs.channel }}" -eq "beta") { "staging" } else { "production" }
+            versionName = "${{ steps.meta.outputs.version_name }}"
+            buildNumber = [int]"${{ steps.meta.outputs.code }}"
+            gitCommitSha = "${{ github.sha }}"
+            backendProjectRef = if ("${{ steps.meta.outputs.channel }}" -eq "beta") { "${{ vars.STAGING_SUPABASE_PROJECT_REF }}" } else { "${{ vars.PRODUCTION_SUPABASE_PROJECT_REF }}" }
+            migrationHead = "${{ steps.contract.outputs.head }}"
+            artifact = $zipName
+            sha256 = $zhash
+          }
+          $manifest | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $out "release-manifest.json") -Encoding utf8
           Get-ChildItem $out | Format-Table Name, Length
 
       - name: Upload workflow artefacts

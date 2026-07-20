@@ -148,18 +148,18 @@
 
 ### WP-230: Ekonomi, Taç ve Sürüm Gerçeği Onarımı 👑
 - **Program/Faz:** Kurtarma Faz 4B
-- **Ajan:** —
-- **Durum:** [ ] Bekliyor
+- **Ajan:** Codex-2
+- **Durum:** [~] Cihaz/staging QA
 - **Problem:** Eski beta istemci 5 kademe/25k, DB 6 kademe/20k kullanıyor; XP etiketi ile bar farklı matematik gösteriyor; aynı `1.0.41+41` farklı kodları temsil ediyor.
 - **Kapsam dışı:** Yeni ekonomi tasarlamak, mevcut XP'yi yeniden fiyatlamak, production deploy.
 - **SAHİP dosyalar (yaz):** achievement/economy client katalogları, profile/gamification card-showcase, ilgili l10n ARB+generated, `app/pubspec.yaml`, release manifest/notları, contract fixture/testleri, `progress.md`.
 - **DOKUNMA:** Production DB, uygulanmış migration'lar, stats/repository akışı.
 - **Adımlar:**
-  - [ ] Onaylı bütün threshold/XP tuple'larını tek fixture üzerinden client/server testlerine bağla.
-  - [ ] Taçları `[0,20k,75k,200k,500k,1M]` ve 6 görsel kademeye hizala.
-  - [ ] Bar etiketi ve doluluk aynı paydayı/semantiği göstersin; erişilebilir açıklama ekle.
-  - [ ] Verified-only metin/ikon/not kalıntılarını ürün sözleşmesine göre temizle.
-  - [ ] Beta/stable benzersiz version/build + commit/backend/migration manifesti üret.
+  - [x] Onaylı bütün threshold/XP tuple'larını tek fixture üzerinden client/server testlerine bağla.
+  - [x] Taçları `[0,20k,75k,200k,500k,1M]` ve 6 görsel kademeye hizala.
+  - [x] Bar etiketi ve doluluk aynı paydayı/semantiği göstersin; erişilebilir açıklama ekle.
+  - [x] Verified-only metin/ikon/not kalıntılarını ürün sözleşmesine göre temizle.
+  - [x] Beta/stable benzersiz version/build + commit/backend/migration manifesti üret.
 - **Veri/Migration etkisi:** Yok; DB tuple doğrulaması salt-okunur/staging contract.
 - **Ortam/Deploy:** Beta staging build; production yok.
 - **RLS/Güvenlik:** XP istemciden yazılmaz; UI yalnız server profile/ledger gerçeğini gösterir.
@@ -224,6 +224,8 @@
 ## Test için bekleyenler (park)
 
 > Cihaz/ürün kabulü bekleyen tamamlanmış kod. Bu bölüm aktif çalışma değildir; başka WP'yi engellemez.
+
+- **WP-230 — Ekonomi, Taç ve Sürüm Gerçeği Onarımı** · Kod + otomatik test tamamlandı (`flutter analyze` 0; tüm Flutter test paketi exit 0; hedef ekonomi/UI/manifest testleri 37/37; JSON/YAML parse temiz). Tek fixture 11 ana kademeli başarım + haftalık uzantı + gizli XP + `[0,20k,75k,200k,500k,1M]` taçlarını istemci ve uygulanmış server migration gerçeğine bağlar. 12.500 XP etiketi/barı `%62,5`; altı görsel kademe ve erişilebilir semantik hizalı; kullanıcıya görünen verified-only metin/ikon kalmadı. Beta `1.0.42-beta.1+4201`, stable `1.0.42+42`; artefakt manifesti version/build + commit/backend/migration head + SHA-256 üretir. Production/migration/remote değişikliği yok. **Cihaz/staging QA'da doğrulanmalı:** 360/600/1200 px ve ekran okuyucuda taç/XP yerleşimi; staging beta artefaktında tanı kartı+release manifest doğruluğu; stable artefakt kimliğinin beta ile çakışmadığı release dry-run. WP-229 migration kabulü bitmeden beta/stable release yapılmaz. Commit: bu WP commit'i.
 
 - **WP-228 — Güvenli Deploy Otomasyonu ve Agent Kapıları** · Kod + otomatik test tamamlandı (`flutter analyze` 0; 632/632 Flutter; local 0001–0063 replay + 34/34 pgTAP; 18/18 deploy guard; PowerShell/YAML parse ve secret scan temiz). Tek-komut local rerun; zaten çalışan stack no-op'u ve yarım/orphan stack'in yalnız local volume temizliğiyle recovery'si kanıtlandı. Local/staging/production hedef doğrulaması, stale-link ve destructive-command reddi, exact SHA/head, protected production environment + makine-okunur backup checklist + birebir GO, merkezi deploy HOLD contract'ı ve redacted evidence manifestleri hazır. Commit: bu WP commit'i. **Staging/owner QA'da doğrulanmalı:** ayrı staging projesi ile GitHub `staging`/`production` Environment+secret/required-reviewer kurulumu; WP-229 kabul head'i sonrası `staging-apply` akışında list→dry-run→push→linked pgTAP→aynı commit/head beta APK raporu. Mevcut `0063` HOLD nedeniyle staging/production apply ve beta/stable release fail-closed kapalı; production write yok. Rehber: [`tooling/README.md`](tooling/README.md).
 

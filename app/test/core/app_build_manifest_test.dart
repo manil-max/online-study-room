@@ -15,6 +15,8 @@ AppBuildManifest resolveManifest({
   String productionProjectRef = _productionRef,
   String gitCommitSha = 'abcdef1234567890',
   String migrationHead = '0062',
+  String versionName = '1.0.42-beta.1',
+  int buildNumber = 4201,
   bool allowInMemory = false,
   String? flutterFlavor = 'beta',
 }) {
@@ -28,6 +30,8 @@ AppBuildManifest resolveManifest({
     productionProjectRef: productionProjectRef,
     gitCommitSha: gitCommitSha,
     migrationHead: migrationHead,
+    versionName: versionName,
+    buildNumber: buildNumber,
     allowInMemory: allowInMemory,
     flutterFlavor: flutterFlavor,
   );
@@ -53,6 +57,8 @@ void main() {
         supabaseUrl: 'https://$_productionRef.supabase.co',
         selectedProjectRef: _productionRef,
         flutterFlavor: 'stable',
+        versionName: '1.0.42',
+        buildNumber: 42,
       );
       expect(manifest.channel, AppReleaseChannel.stable);
       expect(manifest.environment, AppEnvironment.production);
@@ -66,6 +72,8 @@ void main() {
         supabaseUrl: 'https://$_productionRef.supabase.co',
         selectedProjectRef: _productionRef,
         flutterFlavor: 'play',
+        versionName: '1.0.42',
+        buildNumber: 42,
       );
       expect(manifest.environment, AppEnvironment.production);
     });
@@ -81,6 +89,8 @@ void main() {
         productionProjectRef: '',
         gitCommitSha: 'local-dev',
         migrationHead: '0063',
+        versionName: '0.0.0-local',
+        buildNumber: 0,
         allowInMemory: true,
         flutterFlavor: 'local',
       );
@@ -113,6 +123,8 @@ void main() {
           channel: 'stable',
           environment: 'production',
           flutterFlavor: 'stable',
+          versionName: '1.0.42',
+          buildNumber: 42,
         ),
         throwsA(configurationError('backend_ref_mismatch')),
       );
@@ -161,6 +173,25 @@ void main() {
       expect(
         () => resolveManifest(migrationHead: '63'),
         throwsA(configurationError('invalid_migration_head')),
+      );
+    });
+
+    test('beta ve stable sürüm/build kimliği birbirine karışamaz', () {
+      expect(
+        () => resolveManifest(versionName: '1.0.42', buildNumber: 42),
+        throwsA(configurationError('invalid_version_build')),
+      );
+      expect(
+        () => resolveManifest(
+          channel: 'stable',
+          environment: 'production',
+          supabaseUrl: 'https://$_productionRef.supabase.co',
+          selectedProjectRef: _productionRef,
+          flutterFlavor: 'stable',
+          versionName: '1.0.42-beta.1',
+          buildNumber: 4201,
+        ),
+        throwsA(configurationError('invalid_version_build')),
       );
     });
   });

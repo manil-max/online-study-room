@@ -4913,10 +4913,10 @@
   "@profileAchievementProgressUnavailable": { "description": "Shown when no private metric projection exists yet" },
   "profileAchievementPerfectMonth30Rule": "Reach your daily goal on at least 28 days within one calendar month (up to 2 misses).",
   "@profileAchievementPerfectMonth30Rule": { "description": "Exact 30-day Perfect Month rule" },
-  "profileAchievementTeamPlayerRule": "Contribute verified study time on days your group reaches its goal.",
+  "profileAchievementTeamPlayerRule": "Contribute eligible study time on days your group reaches its goal.",
   "@profileAchievementTeamPlayerRule": { "description": "Exact Team Player achievement explanation" },
-  "profileAchievementVerifiedXpNote": "XP requires a verified timer session. Every full verified hour grants 50 XP automatically.",
-  "@profileAchievementVerifiedXpNote": { "description": "Verified timer and ambient hourly XP explanation" },
+  "profileStudyXpNote": "Every full study hour grants 50 XP automatically.",
+  "@profileStudyXpNote": { "description": "Source-neutral hourly study XP explanation" },
   "profileRewardReady": "{count} rewards ready · {xp} XP",
   "@profileRewardReady": {
     "description": "Pending achievement reward summary; also consumed by the shell banner",
@@ -4953,13 +4953,5 @@
   "taskListSyncError": "Tasks could not be refreshed. You may be offline.",
   "@taskListSyncError": { "description": "Task list offline or synchronization error" },
   "taskListRetry": "Try again",
-  "@taskListRetry": { "description": "Retry task list synchronization" },
-  "timerVerifiedSession": "Verified session · eligible for XP and achievements",
-  "@timerVerifiedSession": { "description": "Verified timer eligibility status" },
-  "timerVerificationPending": "Verifying session…",
-  "@timerVerificationPending": { "description": "Server-issued run request in progress" },
-  "timerStatisticsOnly": "Counts toward statistics, but not XP or achievements.",
-  "@timerStatisticsOnly": { "description": "Unverified fallback eligibility notice" },
-  "timerVerifiedUpdateRequired": "Update the app for verified XP. This time still counts toward statistics.",
-  "@timerVerifiedUpdateRequired": { "description": "Minimum verified build readiness notice" }
+  "@taskListRetry": { "description": "Retry task list synchronization" }
 }

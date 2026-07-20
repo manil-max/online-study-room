@@ -3,6 +3,40 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.42-beta.1",
+      "buildNumber": 4201,
+      "channel": "beta",
+      "date": "2026-07-20",
+      "title": "beta-v4201: ekonomi, taç ve sürüm gerçeği",
+      "highlights": [
+        "Altı başarı kademesi ve 20.000 XP'den başlayan altı taç eşiği istemciyle hizalandı.",
+        "XP çubuğunun etiketi, yüzdesi ve erişilebilirlik açıklaması artık aynı kademe-içi hesabı kullanıyor."
+      ],
+      "fixes": [
+        "12.500 XP artık 12.500 / 20.000 ve %62,5 olarak tutarlı gösterilir.",
+        "Kaynağa özel doğrulama metinleri kaldırıldı; çalışma XP açıklaması kaynak bağımsız hale getirildi.",
+        "Beta ve stable artefaktlarının aynı version/build kimliğini paylaşması fail-closed olarak engellendi."
+      ],
+      "notes": [
+        "Bu kayıt yalnız istemci beta adayıdır; production deploy veya migration uygulaması içermez.",
+        "Derleme tanısı sürüm/build, commit, backend ve migration head bilgilerini birlikte gösterir."
+      ],
+      "titleEn": "beta-v4201: economy, crowns, and release identity",
+      "highlightsEn": [
+        "The client now matches six achievement tiers and six crown thresholds starting at 20,000 XP.",
+        "The XP bar label, percentage, and accessibility value now use the same within-tier calculation."
+      ],
+      "fixesEn": [
+        "12,500 XP is now shown consistently as 12,500 / 20,000 and 62.5%.",
+        "Source-specific verification copy was removed and the study XP explanation is source-neutral.",
+        "The release gate rejects beta and stable artifacts that reuse the same version/build identity."
+      ],
+      "notesEn": [
+        "This entry describes a client beta candidate only; it does not deploy to production or apply migrations.",
+        "Build diagnostics show version/build, commit, backend, and migration head together."
+      ]
+    },
+    {
       "versionName": "1.0.41",
       "buildNumber": 41,
       "channel": "beta",

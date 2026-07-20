@@ -118,7 +118,11 @@ Color crownColorFor(String rank, [ColorScheme? _]) {
 }
 
 /// XP → bir sonraki taç eşiği (0..1 progress).
-({int floor, int next, double progress}) xpBarMetrics(int xp) {
+///
+/// [earned] ve [requiredXp], dolulukla aynı kademe-içi paydayı kullanır. Böylece
+/// kullanıcıya gösterilen etiket ile erişilebilirlik yüzdesi birbirinden sapmaz.
+({int floor, int next, int earned, int requiredXp, double progress})
+xpBarMetrics(int xp) {
   final thresholds = kCrownXpThresholds;
   var floor = thresholds.first;
   var next = thresholds.last;
@@ -134,10 +138,18 @@ Color crownColorFor(String rank, [ColorScheme? _]) {
     }
   }
   if (next <= floor) {
-    return (floor: floor, next: next, progress: 1.0);
+    return (floor: floor, next: next, earned: 0, requiredXp: 0, progress: 1.0);
   }
-  final progress = ((xp - floor) / (next - floor)).clamp(0.0, 1.0);
-  return (floor: floor, next: next, progress: progress);
+  final earned = (xp - floor).clamp(0, next - floor);
+  final requiredXp = next - floor;
+  final progress = (earned / requiredXp).clamp(0.0, 1.0);
+  return (
+    floor: floor,
+    next: next,
+    earned: earned,
+    requiredXp: requiredXp,
+    progress: progress,
+  );
 }
 
 /// Rozet rengi: gizli kilit → koyu mor; gizli açık → eflatun; normal → kademe.

@@ -4816,8 +4816,8 @@
   "profileAchievementProgress": "{current}/{target} · المستوى التالي",
   "profileAchievementProgressUnavailable": "التقدم غير متاح بعد",
   "profileAchievementPerfectMonth30Rule": "حقق هدفك اليومي في 28 يومًا على الأقل ضمن شهر تقويمي واحد (بحد أقصى يومان فائتان).",
-  "profileAchievementTeamPlayerRule": "ساهم بوقت دراسة موثّق في الأيام التي تحقق فيها مجموعتك هدفها.",
-  "profileAchievementVerifiedXpNote": "يتطلب كسب XP جلسة مؤقت موثّقة. تمنح كل ساعة موثّقة كاملة 50 XP تلقائيًا.",
+  "profileAchievementTeamPlayerRule": "ساهم بوقت دراسة مؤهل في الأيام التي تحقق فيها مجموعتك هدفها.",
+  "profileStudyXpNote": "تمنح كل ساعة دراسة كاملة 50 XP تلقائيًا.",
   "profileRewardReady": "{count} مكافآت جاهزة · {xp} XP",
   "profileRewardClaim": "تحصيل",
   "profileRewardClaimAll": "تحصيل الكل",
@@ -4831,9 +4831,5 @@
   "taskListDailyBadge": "يومي",
   "taskListDailyStreakStep": "سلسلة اليوم +1",
   "taskListSyncError": "تعذر تحديث المهام. قد تكون غير متصل.",
-  "taskListRetry": "أعد المحاولة",
-  "timerVerifiedSession": "جلسة موثّقة · مؤهلة للنقاط والإنجازات",
-  "timerVerificationPending": "جارٍ توثيق الجلسة…",
-  "timerStatisticsOnly": "تُحتسب في الإحصاءات، لكن ليس في النقاط أو الإنجازات.",
-  "timerVerifiedUpdateRequired": "حدّث التطبيق للحصول على نقاط موثّقة. سيبقى هذا الوقت محسوبًا في الإحصاءات."
+  "taskListRetry": "أعد المحاولة"
 }

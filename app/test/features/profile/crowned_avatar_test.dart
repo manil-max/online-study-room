@@ -4,8 +4,9 @@ import 'package:online_study_room/core/stats/progression_visuals.dart';
 import 'package:online_study_room/core/widgets/crowned_avatar.dart';
 
 void main() {
-  testWidgets('CrownedAvatar paints crown + ring, not workspace_premium',
-      (tester) async {
+  testWidgets('CrownedAvatar paints crown + ring, not workspace_premium', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       const MaterialApp(
         home: Scaffold(
@@ -33,6 +34,8 @@ void main() {
 
   test('xpBarMetrics crown thresholds progress', () {
     final m = xpBarMetrics(5000);
+    expect(m.earned, 5000);
+    expect(m.requiredXp, 20000);
     expect(m.progress, greaterThan(0));
     expect(m.progress, lessThanOrEqualTo(1));
     expect(m.next, greaterThan(m.floor));
