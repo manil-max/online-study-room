@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(18);
+select plan(24);
 
 select is(
   (select count(*)::integer from supabase_migrations.schema_migrations),
@@ -72,11 +72,49 @@ select ok(
   ),
   'verified-only group projection triggers are removed'
 );
+select ok(
+  exists(
+    select 1 from pg_trigger
+    where tgrelid = 'public.study_sessions'::regclass
+      and tgname = 'study_sessions_guard_verified_update'
+      and not tgisinternal
+  ),
+  'server-finalized study session immutability guard is preserved'
+);
+select ok(
+  to_regclass('public.equal_source_reconciliation_runs') is not null
+    and to_regclass('public.equal_source_reconciliation_users') is not null,
+  '0063 installs private shadow reconciliation tables'
+);
+select ok(
+  to_regprocedure('public.prepare_equal_source_reconciliation(integer,uuid)') is not null
+    and to_regprocedure('public.apply_equal_source_reconciliation(uuid)') is not null,
+  '0063 installs bounded prepare/apply reconciliation RPCs'
+);
+select ok(
+  to_regprocedure('public.project_verified_group_day(uuid,date)') is null
+    and to_regprocedure('public.project_verified_group_week(uuid,date)') is null,
+  'stale verified-only projectors are removed'
+);
+select ok(
+  not has_function_privilege(
+    'authenticated',
+    'public.prepare_equal_source_reconciliation(integer,uuid)',
+    'execute'
+  ),
+  'authenticated role cannot prepare reconciliation'
+);
+select ok(
+  not has_function_privilege(
+    'authenticated', 'public.apply_equal_source_reconciliation(uuid)', 'execute'
+  ),
+  'authenticated role cannot apply reconciliation'
+);
 select is(public._recalc_crown_rank(19999), 'bronze_beginner', '19,999 XP remains bronze');
 select is(public._recalc_crown_rank(20000), 'silver_learner', 'silver crown starts at 20,000 XP');
 select is(
   (select array_agg(jobname order by jobname)::text from cron.job),
-  '{group-achievement-day-finalizer,group-achievement-week-finalizer,monthly-report-collector}',
+  '{group-achievement-day-finalizer,group-achievement-week-finalizer,monthly-report-collector,verified-session-rollout-retention}',
   'expected local cron jobs are installed once'
 );
 select ok(

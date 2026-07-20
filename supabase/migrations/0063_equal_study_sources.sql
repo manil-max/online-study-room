@@ -1,46 +1,114 @@
 -- 0063_equal_study_sources.sql
--- beta-v42 · WP-219R — Manuel giriş, uygulama içi sayaç ve native sayaç için tek kazanım kuralı.
+-- WP-229 — Manuel giriş, uygulama kronometresi, geri sayım/Pomodoro ve
+-- native/widget sayacı için tek kazanım kuralı.
 --
 -- `study_sessions` uygulamanın tek çalışma gerçeğidir: source veya eski
 -- live_run bağı, XP/başarım/grup metriği bakımından fark yaratmaz. Önceden
 -- uygulanmış verified tabloları denetim geçmişi olarak tutulur; kullanıcı
 -- oturumları, XP ledger'ı, rozetler ve pending ödüller silinmez.
 --
--- Geri alma (Rollback): Bu migration veri silmez. Eski verified-only davranışa
--- dönmek istenirse ayrı bir ileri migration ile projector kaynakları ve istemci
--- akışı yeniden tanımlanır; bu migration geri çalıştırılmaz.
+-- Bu dosyanın önceki taslağı hiçbir remote'a uygulanmadı (WP-225/226 sentinel
+-- audit'i: production'da verified_seconds var, total_seconds yok). Bu nedenle
+-- yayımlanmamış 0063 aynı numarada güvenle yeniden tasarlandı. Geri alma yeni bir
+-- ileri migration ile yalnız trigger/fonksiyon/cron yönünü değiştirir; session,
+-- live_run bağı, ledger, claimed/pending reward veya kazanılmış progress silinmez.
 
 -- ---------------------------------------------------------------------------
--- 1) Eski verified ayrımını kullanıcı oturumlarından kaldır.
+-- 1) Eşit kazanım, audit bağını veya server-created satır korumasını kaldırmaz.
 -- ---------------------------------------------------------------------------
-drop trigger if exists study_sessions_guard_verified_update on public.study_sessions;
+-- 0051'in sessions_* policy'leri ve study_sessions_guard_verified_update trigger'ı
+-- bilinçli olarak korunur. Manuel/client satırları (live_run_id null) owner DML'ine
+-- açık; server-finalized satırlar immutable ve live_run_id audit bağıyla kalır.
 
-drop policy if exists sessions_insert on public.study_sessions;
-create policy sessions_insert on public.study_sessions
-  for insert to authenticated
-  with check (user_id = auth.uid());
+create or replace function public._equal_source_effective_end(
+  p_start timestamptz,
+  p_end timestamptz,
+  p_duration_seconds integer
+)
+returns timestamptz
+language sql
+immutable
+set search_path = public
+as $$
+  select case
+    when p_duration_seconds > 0 then p_start + make_interval(secs => p_duration_seconds)
+    else greatest(p_end, p_start)
+  end;
+$$;
 
-drop policy if exists sessions_update on public.study_sessions;
-create policy sessions_update on public.study_sessions
-  for update to authenticated
-  using (user_id = auth.uid())
-  with check (user_id = auth.uid());
+-- Candidate -> pending -> claim zincirinin tek server-authoritative geçidi.
+-- Canonical reward unique(user, achievement, tier) ve ledger event key'i retry'da
+-- çift XP'yi engeller. Candidate audit satırı pending/ledger mevcutsa consumed olur.
+create or replace function public._sync_equal_source_rewards(
+  p_user_id uuid,
+  p_achievement_id text,
+  p_progress bigint,
+  p_source_version text,
+  p_evidence jsonb default '{}'::jsonb
+)
+returns integer
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_tier record;
+  v_candidate_status text;
+  v_created integer := 0;
+begin
+  if p_user_id is null or p_achievement_id is null or p_progress is null then
+    raise exception 'equal_source_reward_input_required';
+  end if;
 
-drop policy if exists sessions_delete on public.study_sessions;
-create policy sessions_delete on public.study_sessions
-  for delete to authenticated
-  using (user_id = auth.uid());
+  for v_tier in
+    select (tier_def->>'tier')::integer as tier,
+      (tier_def->>'threshold')::bigint as threshold,
+      (tier_def->>'xp')::integer as xp
+    from public.achievements_dict d
+    cross join lateral jsonb_array_elements(d.tiers) tier_def
+    where d.id = p_achievement_id
+    order by (tier_def->>'tier')::integer
+  loop
+    continue when p_progress < v_tier.threshold;
 
--- Bağ yalnız eski teknik akışın iç ayrıntısıydı. Oturum satırı korunur ama
--- bundan sonra hiçbir satır kaynak ayrıcalığı taşımaz.
-update public.study_sessions
-set live_run_id = null
-where live_run_id is not null;
+    insert into public.achievement_reward_candidates(
+      user_id, achievement_id, tier, source_version, event_key, status, evidence
+    ) values (
+      p_user_id, p_achievement_id, v_tier.tier, p_source_version,
+      format('%s|%s|equal-source|tier-%s', p_user_id, p_achievement_id, v_tier.tier),
+      'ready',
+      coalesce(p_evidence, '{}'::jsonb) || jsonb_build_object(
+        'progress', p_progress, 'threshold', v_tier.threshold, 'xp', v_tier.xp
+      )
+    ) on conflict do nothing;
 
-update public.verified_session_runtime_config
-set minimum_verified_xp_build = null,
-    shadow_mode = false
-where singleton;
+    perform public._create_pending_achievement_reward(
+      p_user_id, p_achievement_id, v_tier.tier, v_tier.xp,
+      format('%s progress=%s', p_achievement_id, p_progress)
+    );
+
+    select case
+      when exists (
+        select 1 from public.achievement_rewards ar
+        where ar.user_id = p_user_id and ar.achievement_id = p_achievement_id
+          and ar.tier = v_tier.tier
+      ) or exists (
+        select 1 from public.xp_ledger xl
+        where xl.event_key = format('%s|%s|tier_%s', p_user_id, p_achievement_id, v_tier.tier)
+      ) then 'consumed' else 'ready' end
+      into v_candidate_status;
+
+    update public.achievement_reward_candidates
+    set status = v_candidate_status,
+        evidence = achievement_reward_candidates.evidence ||
+          jsonb_build_object('routed_at', clock_timestamp())
+    where user_id = p_user_id and achievement_id = p_achievement_id
+      and tier = v_tier.tier and source_version = p_source_version;
+    v_created := v_created + 1;
+  end loop;
+  return v_created;
+end;
+$$;
 
 -- ---------------------------------------------------------------------------
 -- 2) Mola Düşmanı: tüm çalışma oturumlarını aynı kaynak kabul et.
@@ -65,11 +133,17 @@ begin
   select array_agg(lower(r) order by lower(r)), array_agg(upper(r) order by lower(r))
     into v_starts, v_ends
   from unnest((
-    select range_agg(tstzrange(s.start_time, s.end_time, '[)'))
+    select range_agg(tstzrange(
+      s.start_time,
+      public._equal_source_effective_end(s.start_time, s.end_time, s.duration_seconds),
+      '[)'
+    ))
     from public.study_sessions s
     where s.user_id = p_user_id
       and s.duration_seconds > 0
-      and s.end_time > s.start_time
+      and public._equal_source_effective_end(
+        s.start_time, s.end_time, s.duration_seconds
+      ) > s.start_time
   )) as r;
 
   v_count := coalesce(array_length(v_starts, 1), 0);
@@ -104,21 +178,18 @@ begin
   insert into public.achievement_metric_progress(
     user_id, achievement_id, metric_value, source_version, updated_at
   ) values (
-    p_user_id, 'secret_break_enemy', v_metric, 'break_all_sessions_v1', clock_timestamp()
+    p_user_id, 'secret_break_enemy', v_metric, 'break_all_sessions_v2', clock_timestamp()
   ) on conflict(user_id, achievement_id) do update set
     metric_value = greatest(public.achievement_metric_progress.metric_value, excluded.metric_value),
     source_version = excluded.source_version,
     updated_at = clock_timestamp();
 
-  if v_metric >= 1 then
-    insert into public.achievement_reward_candidates(
-      user_id, achievement_id, tier, source_version, event_key, evidence
-    ) values (
-      p_user_id, 'secret_break_enemy', 1, 'break_all_sessions_v1',
-      p_user_id::text || '|secret_break_enemy|all-sessions|tier_1',
-      jsonb_build_object('all_session_sources', true, 'window_minutes', 300, 'focus_minutes', 270)
-    ) on conflict do nothing;
-  end if;
+  perform public._sync_equal_source_rewards(
+    p_user_id, 'secret_break_enemy', v_metric, 'break_all_sessions_v2',
+    jsonb_build_object(
+      'all_session_sources', true, 'window_minutes', 300, 'focus_minutes', 270
+    )
+  );
   return v_metric;
 end;
 $$;
@@ -126,10 +197,10 @@ $$;
 create or replace function public._study_session_project_break_enemy()
 returns trigger language plpgsql security definer set search_path = public as $$
 begin
-  if tg_op in ('INSERT', 'UPDATE') then
+  if tg_op <> 'DELETE' then
     perform public.project_break_enemy_metric(new.user_id);
   end if;
-  if tg_op in ('DELETE', 'UPDATE') and old.user_id is distinct from new.user_id then
+  if tg_op = 'DELETE' or (tg_op = 'UPDATE' and old.user_id is distinct from new.user_id) then
     perform public.project_break_enemy_metric(old.user_id);
   end if;
   if tg_op = 'DELETE' then return old; end if;
@@ -147,12 +218,28 @@ create trigger study_sessions_project_break_enemy
 -- 3) Grup metrikleri: üyelik penceresindeki bütün study_sessions eşittir.
 -- ---------------------------------------------------------------------------
 alter table public.group_achievement_daily
-  alter column source_version set default 'group_all_sessions_v1';
-update public.group_achievement_daily
-set source_version = 'group_all_sessions_v1';
+  alter column source_version set default 'group_all_sessions_v2';
 
-alter table public.group_achievement_weekly
-  rename column verified_seconds to total_seconds;
+update public.achievement_metric_definitions
+set source_version = 'group_all_sessions_v2', updated_at = clock_timestamp()
+where achievement_id in ('alpha_wolf', 'campfire_hours', 'locomotive', 'secret_break_enemy');
+
+do $migration$
+begin
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'group_achievement_weekly'
+      and column_name = 'verified_seconds'
+  ) and not exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'group_achievement_weekly'
+      and column_name = 'total_seconds'
+  ) then
+    alter table public.group_achievement_weekly
+      rename column verified_seconds to total_seconds;
+  end if;
+end
+$migration$;
 
 update public.achievements_dict
 set description = 'ISO haftasında grubunda toplam sürede tek başına birinci olma sayısı'
@@ -160,7 +247,7 @@ where id = 'alpha_wolf_weekly';
 
 insert into public.achievement_metric_definitions
   (achievement_id, metric_key, projection_kind, source_version)
-values ('alpha_wolf_weekly', 'weekly_alpha_wins', 'cumulative', 'weekly_alpha_all_sessions_v1')
+values ('alpha_wolf_weekly', 'weekly_alpha_wins', 'cumulative', 'weekly_alpha_all_sessions_v2')
 on conflict (achievement_id) do update set
   metric_key = excluded.metric_key,
   projection_kind = excluded.projection_kind,
@@ -169,20 +256,41 @@ on conflict (achievement_id) do update set
 
 create or replace function public.project_group_day(p_group_id uuid, p_day date)
 returns integer language plpgsql security definer set search_path = public as $$
-declare v_affected integer;
+declare v_affected integer; r record;
 begin
   with bounds as (
     select (p_day::timestamp at time zone 'Europe/Istanbul') as lo,
       ((p_day + 1)::timestamp at time zone 'Europe/Istanbul') as hi
-  ), seg as (
-    select s.user_id, greatest(s.start_time, b.lo) a, least(s.end_time, b.hi) z
+  ), raw as (
+    select s.user_id, tstzrange(
+      greatest(s.start_time, b.lo, gm.joined_at),
+      least(
+        public._equal_source_effective_end(s.start_time, s.end_time, s.duration_seconds),
+        b.hi,
+        coalesce(gm.left_at, b.hi)
+      ),
+      '[)'
+    ) as period
     from public.study_sessions s
     join public.group_members gm on gm.user_id = s.user_id
       and gm.group_id = p_group_id
-      and s.start_time >= gm.joined_at
+      and public._equal_source_effective_end(
+        s.start_time, s.end_time, s.duration_seconds
+      ) > gm.joined_at
       and (gm.left_at is null or s.start_time < gm.left_at)
     cross join bounds b
-    where s.duration_seconds > 0 and s.end_time > b.lo and s.start_time < b.hi
+    where s.duration_seconds > 0
+      and public._equal_source_effective_end(
+        s.start_time, s.end_time, s.duration_seconds
+      ) > b.lo
+      and s.start_time < b.hi
+  ), seg as (
+    select merged.user_id, lower(range_piece.period) as a, upper(range_piece.period) as z
+    from (
+      select user_id, range_agg(period) as periods
+      from raw where not isempty(period) group by user_id
+    ) merged
+    cross join lateral unnest(merged.periods) as range_piece(period)
   ), thr as (
     select greatest(2, ceil(count(distinct user_id) / 2.0))::int as t from seg
   ), events as (
@@ -213,7 +321,7 @@ begin
     group_id, istanbul_day, user_id, alpha_wins, campfire_seconds, locomotive_events,
     source_version, updated_at
   ) select p_group_id, p_day, u.user_id, coalesce(a.wins, 0), coalesce(c.seconds, 0),
-      coalesce(l.events, 0), 'group_all_sessions_v1', clock_timestamp()
+      coalesce(l.events, 0), 'group_all_sessions_v2', clock_timestamp()
     from users u left join alpha a using(user_id) left join camp c using(user_id)
       left join loco l using(user_id)
   on conflict(group_id, istanbul_day, user_id) do update set
@@ -224,8 +332,28 @@ begin
     updated_at = clock_timestamp();
   get diagnostics v_affected = row_count;
 
+  -- Silinen/düzenlenen session sonrası eski kazanan satırı hayalet kalmasın.
+  update public.group_achievement_daily d
+  set alpha_wins = 0, campfire_seconds = 0, locomotive_events = 0,
+      source_version = 'group_all_sessions_v2', updated_at = clock_timestamp()
+  where d.group_id = p_group_id and d.istanbul_day = p_day
+    and not exists (
+      select 1 from public.study_sessions s
+      join public.group_members gm on gm.user_id = s.user_id
+        and gm.group_id = p_group_id
+        and public._equal_source_effective_end(
+          s.start_time, s.end_time, s.duration_seconds
+        ) > gm.joined_at
+        and (gm.left_at is null or s.start_time < gm.left_at)
+      where s.user_id = d.user_id and s.duration_seconds > 0
+        and public._equal_source_effective_end(
+          s.start_time, s.end_time, s.duration_seconds
+        ) > (p_day::timestamp at time zone 'Europe/Istanbul')
+        and s.start_time < ((p_day + 1)::timestamp at time zone 'Europe/Istanbul')
+    );
+
   insert into public.achievement_metric_progress(user_id, achievement_id, metric_value, source_version, updated_at)
-  select user_id, metric, value, 'group_all_sessions_v1', clock_timestamp() from (
+  select user_id, metric, value, 'group_all_sessions_v2', clock_timestamp() from (
     select user_id, 'alpha_wolf' metric, sum(alpha_wins)::bigint value
       from public.group_achievement_daily where finalized_at is not null group by user_id
     union all
@@ -238,6 +366,21 @@ begin
     metric_value = excluded.metric_value,
     source_version = excluded.source_version,
     updated_at = clock_timestamp();
+  for r in
+    select p.user_id, p.achievement_id, p.metric_value
+    from public.achievement_metric_progress p
+    where p.achievement_id in ('alpha_wolf', 'campfire_hours', 'locomotive')
+      and exists (
+        select 1 from public.group_achievement_daily d
+        where d.group_id = p_group_id and d.istanbul_day = p_day
+          and d.user_id = p.user_id
+      )
+  loop
+    perform public._sync_equal_source_rewards(
+      r.user_id, r.achievement_id, r.metric_value, 'group_all_sessions_v2',
+      jsonb_build_object('group_id', p_group_id, 'istanbul_day', p_day)
+    );
+  end loop;
   return v_affected;
 end;
 $$;
@@ -267,11 +410,18 @@ begin
     select distinct gm.group_id, d.day
     from public.study_sessions s
     join public.group_members gm on gm.user_id = s.user_id
-      and s.start_time >= gm.joined_at
+      and public._equal_source_effective_end(
+        s.start_time, s.end_time, s.duration_seconds
+      ) > gm.joined_at
       and (gm.left_at is null or s.start_time < gm.left_at)
     cross join lateral generate_series(
-      (timezone('Europe/Istanbul', s.start_time))::date,
-      (timezone('Europe/Istanbul', s.end_time))::date,
+      (timezone('Europe/Istanbul', greatest(s.start_time, gm.joined_at)))::date,
+      (timezone('Europe/Istanbul', least(
+        public._equal_source_effective_end(s.start_time, s.end_time, s.duration_seconds),
+        coalesce(gm.left_at, public._equal_source_effective_end(
+          s.start_time, s.end_time, s.duration_seconds
+        ))
+      ) - interval '1 microsecond'))::date,
       interval '1 day'
     ) as d(day)
     where s.duration_seconds > 0
@@ -292,24 +442,34 @@ create or replace function public.refresh_group_metrics_for_session(
   p_end timestamptz
 )
 returns void language plpgsql security definer set search_path = public as $$
-declare r record; v_day date;
+declare r record; v_day date; v_week date;
 begin
+  if p_user_id is null or p_start is null or p_end is null or p_end <= p_start then
+    return;
+  end if;
   for r in
     select gm.group_id from public.group_members gm
     where gm.user_id = p_user_id
-      and p_start >= gm.joined_at
+      and p_end > gm.joined_at
       and (gm.left_at is null or p_start < gm.left_at)
   loop
     for v_day in select generate_series(
       (timezone('Europe/Istanbul', p_start))::date,
-      (timezone('Europe/Istanbul', p_end))::date,
+      (timezone('Europe/Istanbul', p_end - interval '1 microsecond'))::date,
       interval '1 day'
     )::date
     loop
       perform public.project_group_day(r.group_id, v_day);
-      if v_day < (timezone('Europe/Istanbul', clock_timestamp()))::date then
-        perform public.finalize_group_day(r.group_id, v_day);
-      end if;
+    end loop;
+    for v_week in select generate_series(
+      date_trunc('week', timezone('Europe/Istanbul', p_start))::date,
+      date_trunc('week', timezone(
+        'Europe/Istanbul', p_end - interval '1 microsecond'
+      ))::date,
+      interval '7 days'
+    )::date
+    loop
+      perform public.project_group_week(r.group_id, v_week);
     end loop;
   end loop;
 end;
@@ -319,10 +479,18 @@ create or replace function public._study_session_project_group_metrics()
 returns trigger language plpgsql security definer set search_path = public as $$
 begin
   if tg_op <> 'DELETE' then
-    perform public.refresh_group_metrics_for_session(new.user_id, new.start_time, new.end_time);
+    perform public.refresh_group_metrics_for_session(
+      new.user_id,
+      new.start_time,
+      public._equal_source_effective_end(new.start_time, new.end_time, new.duration_seconds)
+    );
   end if;
   if tg_op <> 'INSERT' then
-    perform public.refresh_group_metrics_for_session(old.user_id, old.start_time, old.end_time);
+    perform public.refresh_group_metrics_for_session(
+      old.user_id,
+      old.start_time,
+      public._equal_source_effective_end(old.start_time, old.end_time, old.duration_seconds)
+    );
   end if;
   if tg_op = 'DELETE' then return old; end if;
   return new;
@@ -341,7 +509,7 @@ create trigger study_sessions_project_group_metrics
 -- ---------------------------------------------------------------------------
 create or replace function public.project_group_week(p_group_id uuid, p_week_start date)
 returns integer language plpgsql security definer set search_path = public as $$
-declare v_affected integer;
+declare v_affected integer; r record;
 begin
   if extract(isodow from p_week_start) <> 1 then
     raise exception 'iso_week_start_must_be_monday';
@@ -349,16 +517,37 @@ begin
   with bounds as (
     select (p_week_start::timestamp at time zone 'Europe/Istanbul') as lo,
       ((p_week_start + 7)::timestamp at time zone 'Europe/Istanbul') as hi
-  ), sessions as (
-    select s.user_id, greatest(s.start_time, b.lo) as started_at,
-      least(s.end_time, b.hi) as ended_at
+  ), raw as (
+    select s.user_id, tstzrange(
+      greatest(s.start_time, b.lo, gm.joined_at),
+      least(
+        public._equal_source_effective_end(s.start_time, s.end_time, s.duration_seconds),
+        b.hi,
+        coalesce(gm.left_at, b.hi)
+      ),
+      '[)'
+    ) as period
     from public.study_sessions s
     join public.group_members gm on gm.user_id = s.user_id
       and gm.group_id = p_group_id
-      and s.start_time >= gm.joined_at
+      and public._equal_source_effective_end(
+        s.start_time, s.end_time, s.duration_seconds
+      ) > gm.joined_at
       and (gm.left_at is null or s.start_time < gm.left_at)
     cross join bounds b
-    where s.duration_seconds > 0 and s.end_time > b.lo and s.start_time < b.hi
+    where s.duration_seconds > 0
+      and public._equal_source_effective_end(
+        s.start_time, s.end_time, s.duration_seconds
+      ) > b.lo
+      and s.start_time < b.hi
+  ), sessions as (
+    select merged.user_id, lower(range_piece.period) as started_at,
+      upper(range_piece.period) as ended_at
+    from (
+      select user_id, range_agg(period) as periods
+      from raw where not isempty(period) group by user_id
+    ) merged
+    cross join lateral unnest(merged.periods) as range_piece(period)
   ), totals as (
     select user_id, floor(sum(extract(epoch from ended_at - started_at)))::bigint as seconds
     from sessions group by user_id
@@ -378,21 +567,56 @@ begin
     updated_at = clock_timestamp();
   get diagnostics v_affected = row_count;
 
+  update public.group_achievement_weekly w
+  set total_seconds = 0, weekly_alpha_wins = 0, updated_at = clock_timestamp()
+  where w.group_id = p_group_id and w.iso_week_start = p_week_start
+    and not exists (
+      select 1 from public.study_sessions s
+      join public.group_members gm on gm.user_id = s.user_id
+        and gm.group_id = p_group_id
+        and public._equal_source_effective_end(
+          s.start_time, s.end_time, s.duration_seconds
+        ) > gm.joined_at
+        and (gm.left_at is null or s.start_time < gm.left_at)
+      where s.user_id = w.user_id and s.duration_seconds > 0
+        and public._equal_source_effective_end(
+          s.start_time, s.end_time, s.duration_seconds
+        ) > (p_week_start::timestamp at time zone 'Europe/Istanbul')
+        and s.start_time < ((p_week_start + 7)::timestamp at time zone 'Europe/Istanbul')
+    );
+
   insert into public.achievement_metric_progress(user_id, achievement_id, metric_value, source_version, updated_at)
   select user_id, 'alpha_wolf_weekly', sum(weekly_alpha_wins)::bigint,
-    'weekly_alpha_all_sessions_v1', clock_timestamp()
+    'weekly_alpha_all_sessions_v2', clock_timestamp()
   from public.group_achievement_weekly where finalized_at is not null group by user_id
   on conflict(user_id, achievement_id) do update set
     metric_value = greatest(public.achievement_metric_progress.metric_value, excluded.metric_value),
     source_version = excluded.source_version,
     updated_at = clock_timestamp();
+
+  for r in
+    select p.user_id, p.metric_value
+    from public.achievement_metric_progress p
+    where p.achievement_id = 'alpha_wolf_weekly'
+      and exists (
+        select 1 from public.group_achievement_weekly w
+        where w.group_id = p_group_id and w.iso_week_start = p_week_start
+          and w.user_id = p.user_id
+      )
+  loop
+    perform public._sync_equal_source_rewards(
+      r.user_id, 'alpha_wolf_weekly', r.metric_value,
+      'weekly_alpha_all_sessions_v2',
+      jsonb_build_object('group_id', p_group_id, 'week_start', p_week_start)
+    );
+  end loop;
   return v_affected;
 end;
 $$;
 
 create or replace function public.finalize_group_week(p_group_id uuid, p_week_start date)
 returns integer language plpgsql security definer set search_path = public as $$
-declare r record; t record; v_count integer;
+declare v_count integer;
 begin
   if p_week_start + 7 > date_trunc('week', timezone('Europe/Istanbul', clock_timestamp()))::date then
     raise exception 'group_week_not_closed';
@@ -402,28 +626,9 @@ begin
   set finalized_at = coalesce(finalized_at, clock_timestamp())
   where group_id = p_group_id and iso_week_start = p_week_start;
   get diagnostics v_count = row_count;
+  -- İkinci proje finalized toplamı günceller ve candidate -> pending zincirini
+  -- idempotent biçimde çalıştırır.
   perform public.project_group_week(p_group_id, p_week_start);
-  for r in
-    select user_id from public.group_achievement_weekly
-    where group_id = p_group_id and iso_week_start = p_week_start and weekly_alpha_wins = 1
-  loop
-    for t in
-      select (tier_def->>'tier')::integer as tier,
-        (tier_def->>'threshold')::integer as threshold,
-        (tier_def->>'xp')::integer as xp
-      from public.achievements_dict d
-      cross join lateral jsonb_array_elements(d.tiers) tier_def
-      where d.id = 'alpha_wolf_weekly'
-    loop
-      if (select metric_value from public.achievement_metric_progress
-          where user_id = r.user_id and achievement_id = 'alpha_wolf_weekly') >= t.threshold then
-        perform public._create_pending_achievement_reward(
-          r.user_id, 'alpha_wolf_weekly', t.tier, t.xp,
-          format('Lider Kurt: %s haftalık birincilik', t.threshold)
-        );
-      end if;
-    end loop;
-  end loop;
   return v_count;
 end;
 $$;
@@ -436,11 +641,18 @@ begin
     select distinct gm.group_id, week_start::date
     from public.study_sessions s
     join public.group_members gm on gm.user_id = s.user_id
-      and s.start_time >= gm.joined_at
+      and public._equal_source_effective_end(
+        s.start_time, s.end_time, s.duration_seconds
+      ) > gm.joined_at
       and (gm.left_at is null or s.start_time < gm.left_at)
     cross join lateral generate_series(
-      date_trunc('week', timezone('Europe/Istanbul', s.start_time))::date,
-      date_trunc('week', timezone('Europe/Istanbul', s.end_time))::date,
+      date_trunc('week', timezone('Europe/Istanbul', greatest(s.start_time, gm.joined_at)))::date,
+      date_trunc('week', timezone('Europe/Istanbul', least(
+        public._equal_source_effective_end(s.start_time, s.end_time, s.duration_seconds),
+        coalesce(gm.left_at, public._equal_source_effective_end(
+          s.start_time, s.end_time, s.duration_seconds
+        ))
+      ) - interval '1 microsecond'))::date,
       interval '7 days'
     ) as weeks(week_start)
     where s.duration_seconds > 0
@@ -457,44 +669,314 @@ $$;
 do $$
 declare r record;
 begin
-  if exists (select 1 from pg_namespace where nspname = 'cron') then
-    for r in select jobid from cron.job where jobname in (
-      'verified-group-day-finalizer', 'verified-group-week-finalizer', 'verified-session-rollout-retention'
-    ) loop
-      perform cron.unschedule(r.jobid);
-    end loop;
-    if not exists (select 1 from cron.job where jobname = 'group-achievement-day-finalizer') then
-      perform cron.schedule('group-achievement-day-finalizer', '5 21 * * *',
-        'select public.catch_up_group_days()');
-    end if;
-    if not exists (select 1 from cron.job where jobname = 'group-achievement-week-finalizer') then
-      perform cron.schedule('group-achievement-week-finalizer', '10 21 * * 0',
-        'select public.catch_up_group_weeks()');
-    end if;
+  if to_regclass('cron.job') is null then
+    raise exception 'pg_cron_job_table_required';
+  end if;
+  for r in select jobid from cron.job where jobname in (
+    'verified-group-day-finalizer', 'verified-group-week-finalizer'
+  ) loop
+    perform cron.unschedule(r.jobid);
+  end loop;
+  if not exists (select 1 from cron.job where jobname = 'group-achievement-day-finalizer') then
+    perform cron.schedule('group-achievement-day-finalizer', '5 21 * * *',
+      'select public.catch_up_group_days()');
+  end if;
+  if not exists (select 1 from cron.job where jobname = 'group-achievement-week-finalizer') then
+    perform cron.schedule('group-achievement-week-finalizer', '10 21 * * 0',
+      'select public.catch_up_group_weeks()');
   end if;
 end;
 $$;
 
--- Tarihsel kullanıcı verisini silmeden yalnız türetilmiş projeksiyonları yeni
--- kuralla baştan üret. Ledger, rozet, pending reward ve study_sessions aynen kalır.
-delete from public.group_achievement_daily;
-delete from public.group_achievement_weekly;
-delete from public.achievement_metric_progress
-where achievement_id in ('alpha_wolf', 'campfire_hours', 'locomotive', 'alpha_wolf_weekly', 'secret_break_enemy');
+-- Eski verified-only giriş noktaları aktif trigger/cron'dan ayrıldıktan sonra
+-- kaldırılır. Böylece renamed verified_seconds kolonuna bağlı ölü fonksiyon kalmaz.
+drop function if exists public._verified_group_run_finalized();
+drop function if exists public._verified_group_segment_dirty();
+drop function if exists public.project_verified_group_day(uuid, date);
+drop function if exists public.finalize_verified_group_day(uuid, date);
+drop function if exists public.catch_up_verified_group_days();
+drop function if exists public.project_verified_group_week(uuid, date);
+drop function if exists public.finalize_verified_group_week(uuid, date);
+drop function if exists public.catch_up_verified_group_weeks();
+drop function if exists public._break_enemy_segment_projector();
 
-do $$
-declare r record;
+-- ---------------------------------------------------------------------------
+-- 5) Reconciliation: önce salt-okunur shadow/diff, sonra bounded apply.
+-- ---------------------------------------------------------------------------
+create table if not exists public.equal_source_reconciliation_runs (
+  id uuid primary key default gen_random_uuid(),
+  status text not null default 'preparing'
+    check (status in ('preparing', 'prepared', 'applying', 'applied', 'cancelled')),
+  after_user_id uuid,
+  batch_limit integer not null check (batch_limit between 1 and 500),
+  user_count integer not null default 0,
+  diff_count integer not null default 0,
+  baseline_session_count bigint not null,
+  baseline_duration_seconds bigint not null,
+  baseline_ledger_count bigint not null,
+  baseline_ledger_xp bigint not null,
+  baseline_claimed_reward_count bigint not null,
+  baseline_xp_mismatch_count bigint not null,
+  created_at timestamptz not null default clock_timestamp(),
+  prepared_at timestamptz,
+  applied_at timestamptz
+);
+
+create table if not exists public.equal_source_reconciliation_users (
+  run_id uuid not null references public.equal_source_reconciliation_runs(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  source_kinds integer not null,
+  session_count bigint not null,
+  duration_seconds bigint not null,
+  current_break_metric bigint not null,
+  shadow_break_metric bigint not null,
+  affected_group_days bigint not null,
+  affected_group_weeks bigint not null,
+  primary key (run_id, user_id)
+);
+
+alter table public.equal_source_reconciliation_runs enable row level security;
+alter table public.equal_source_reconciliation_users enable row level security;
+revoke all on table public.equal_source_reconciliation_runs from public, anon, authenticated;
+revoke all on table public.equal_source_reconciliation_users from public, anon, authenticated;
+
+create or replace function public.prepare_equal_source_reconciliation(
+  p_batch_limit integer default 100,
+  p_after_user_id uuid default null
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_run_id uuid;
 begin
-  for r in select distinct user_id from public.study_sessions loop
-    perform public.project_break_enemy_metric(r.user_id);
+  if current_user not in ('postgres', 'service_role') then
+    raise exception 'service_role_required';
+  end if;
+  if p_batch_limit is null or p_batch_limit not between 1 and 500 then
+    raise exception 'reconciliation_batch_limit_out_of_range';
+  end if;
+  if exists (
+    select 1 from public.gamification_profiles gp
+    where gp.xp <> (
+      select coalesce(sum(xl.xp_amount), 0)::integer
+      from public.xp_ledger xl where xl.user_id = gp.user_id
+    )
+  ) then
+    raise exception 'xp_ledger_profile_invariant_failed';
+  end if;
+
+  insert into public.equal_source_reconciliation_runs(
+    after_user_id, batch_limit,
+    baseline_session_count, baseline_duration_seconds,
+    baseline_ledger_count, baseline_ledger_xp,
+    baseline_claimed_reward_count, baseline_xp_mismatch_count
+  )
+  select p_after_user_id, p_batch_limit,
+    (select count(*) from public.study_sessions),
+    (select coalesce(sum(duration_seconds), 0) from public.study_sessions),
+    (select count(*) from public.xp_ledger),
+    (select coalesce(sum(xp_amount), 0) from public.xp_ledger),
+    (select count(*) from public.achievement_rewards where status = 'claimed'),
+    0
+  returning id into v_run_id;
+
+  insert into public.equal_source_reconciliation_users(
+    run_id, user_id, source_kinds, session_count, duration_seconds,
+    current_break_metric, shadow_break_metric,
+    affected_group_days, affected_group_weeks
+  )
+  select v_run_id, u.user_id,
+    (select count(distinct s.source)::integer from public.study_sessions s where s.user_id = u.user_id),
+    (select count(*) from public.study_sessions s where s.user_id = u.user_id),
+    (select coalesce(sum(s.duration_seconds), 0) from public.study_sessions s where s.user_id = u.user_id),
+    coalesce((select p.metric_value from public.achievement_metric_progress p
+      where p.user_id = u.user_id and p.achievement_id = 'secret_break_enemy'), 0),
+    public.break_enemy_metric(u.user_id),
+    (
+      select count(distinct (gm.group_id, d.day::date))
+      from public.study_sessions s
+      join public.group_members gm on gm.user_id = s.user_id
+        and public._equal_source_effective_end(
+          s.start_time, s.end_time, s.duration_seconds
+        ) > gm.joined_at
+        and (gm.left_at is null or s.start_time < gm.left_at)
+      cross join lateral generate_series(
+        (timezone('Europe/Istanbul', greatest(s.start_time, gm.joined_at)))::date,
+        (timezone('Europe/Istanbul', least(
+          public._equal_source_effective_end(s.start_time, s.end_time, s.duration_seconds),
+          coalesce(gm.left_at, public._equal_source_effective_end(
+            s.start_time, s.end_time, s.duration_seconds
+          ))
+        ) - interval '1 microsecond'))::date,
+        interval '1 day'
+      ) d(day)
+      where s.user_id = u.user_id and s.duration_seconds > 0
+    ),
+    (
+      select count(distinct (gm.group_id,
+        date_trunc('week', timezone('Europe/Istanbul', d.day))::date))
+      from public.study_sessions s
+      join public.group_members gm on gm.user_id = s.user_id
+        and public._equal_source_effective_end(
+          s.start_time, s.end_time, s.duration_seconds
+        ) > gm.joined_at
+        and (gm.left_at is null or s.start_time < gm.left_at)
+      cross join lateral generate_series(
+        greatest(s.start_time, gm.joined_at),
+        least(
+          public._equal_source_effective_end(s.start_time, s.end_time, s.duration_seconds),
+          coalesce(gm.left_at, public._equal_source_effective_end(
+            s.start_time, s.end_time, s.duration_seconds
+          ))
+        ) - interval '1 microsecond',
+        interval '7 days'
+      ) d(day)
+      where s.user_id = u.user_id and s.duration_seconds > 0
+    )
+  from (
+    select distinct s.user_id from public.study_sessions s
+    where p_after_user_id is null or s.user_id > p_after_user_id
+    order by s.user_id limit p_batch_limit
+  ) u;
+
+  update public.equal_source_reconciliation_runs r
+  set status = 'prepared', prepared_at = clock_timestamp(),
+      user_count = (select count(*) from public.equal_source_reconciliation_users u where u.run_id = v_run_id),
+      diff_count = (
+        select count(*) from public.equal_source_reconciliation_users u
+        where u.run_id = v_run_id
+          and (u.current_break_metric is distinct from u.shadow_break_metric
+            or u.affected_group_days > 0 or u.affected_group_weeks > 0)
+      )
+  where r.id = v_run_id;
+  return v_run_id;
+end;
+$$;
+
+create or replace function public.apply_equal_source_reconciliation(p_run_id uuid)
+returns integer
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_run public.equal_source_reconciliation_runs%rowtype;
+  u record;
+  r record;
+  v_count integer := 0;
+  v_now_day date := (timezone('Europe/Istanbul', clock_timestamp()))::date;
+  v_now_week date := date_trunc('week', timezone('Europe/Istanbul', clock_timestamp()))::date;
+begin
+  if current_user not in ('postgres', 'service_role') then
+    raise exception 'service_role_required';
+  end if;
+  select * into v_run from public.equal_source_reconciliation_runs
+  where id = p_run_id for update;
+  if not found then raise exception 'reconciliation_run_not_found'; end if;
+  if v_run.status = 'applied' then return 0; end if;
+  if v_run.status <> 'prepared' then raise exception 'reconciliation_run_not_prepared'; end if;
+
+  if v_run.baseline_session_count <> (select count(*) from public.study_sessions)
+    or v_run.baseline_duration_seconds <> (select coalesce(sum(duration_seconds), 0) from public.study_sessions)
+    or v_run.baseline_ledger_count <> (select count(*) from public.xp_ledger)
+    or v_run.baseline_ledger_xp <> (select coalesce(sum(xp_amount), 0) from public.xp_ledger)
+    or v_run.baseline_claimed_reward_count <>
+      (select count(*) from public.achievement_rewards where status = 'claimed') then
+    raise exception 'reconciliation_baseline_changed_reprepare_required';
+  end if;
+
+  update public.equal_source_reconciliation_runs set status = 'applying' where id = p_run_id;
+  for u in
+    select * from public.equal_source_reconciliation_users
+    where run_id = p_run_id order by user_id
+  loop
+    perform public.project_break_enemy_metric(u.user_id);
+    for r in
+      select distinct gm.group_id, d.day::date as period_start
+      from public.study_sessions s
+      join public.group_members gm on gm.user_id = s.user_id
+        and public._equal_source_effective_end(
+          s.start_time, s.end_time, s.duration_seconds
+        ) > gm.joined_at
+        and (gm.left_at is null or s.start_time < gm.left_at)
+      cross join lateral generate_series(
+        (timezone('Europe/Istanbul', greatest(s.start_time, gm.joined_at)))::date,
+        (timezone('Europe/Istanbul', least(
+          public._equal_source_effective_end(s.start_time, s.end_time, s.duration_seconds),
+          coalesce(gm.left_at, public._equal_source_effective_end(
+            s.start_time, s.end_time, s.duration_seconds
+          ))
+        ) - interval '1 microsecond'))::date,
+        interval '1 day'
+      ) d(day)
+      where s.user_id = u.user_id and s.duration_seconds > 0
+    loop
+      if r.period_start < v_now_day then
+        perform public.finalize_group_day(r.group_id, r.period_start);
+      else
+        perform public.project_group_day(r.group_id, r.period_start);
+      end if;
+    end loop;
+    for r in
+      select distinct gm.group_id,
+        date_trunc('week', timezone('Europe/Istanbul', d.day))::date as period_start
+      from public.study_sessions s
+      join public.group_members gm on gm.user_id = s.user_id
+        and public._equal_source_effective_end(
+          s.start_time, s.end_time, s.duration_seconds
+        ) > gm.joined_at
+        and (gm.left_at is null or s.start_time < gm.left_at)
+      cross join lateral generate_series(
+        greatest(s.start_time, gm.joined_at),
+        least(
+          public._equal_source_effective_end(s.start_time, s.end_time, s.duration_seconds),
+          coalesce(gm.left_at, public._equal_source_effective_end(
+            s.start_time, s.end_time, s.duration_seconds
+          ))
+        ) - interval '1 microsecond',
+        interval '7 days'
+      ) d(day)
+      where s.user_id = u.user_id and s.duration_seconds > 0
+    loop
+      if r.period_start < v_now_week then
+        perform public.finalize_group_week(r.group_id, r.period_start);
+      else
+        perform public.project_group_week(r.group_id, r.period_start);
+      end if;
+    end loop;
+    v_count := v_count + 1;
   end loop;
-  perform public.catch_up_group_days();
-  perform public.catch_up_group_weeks();
+
+  if v_run.baseline_session_count <> (select count(*) from public.study_sessions)
+    or v_run.baseline_duration_seconds <> (select coalesce(sum(duration_seconds), 0) from public.study_sessions)
+    or v_run.baseline_ledger_count <> (select count(*) from public.xp_ledger)
+    or v_run.baseline_ledger_xp <> (select coalesce(sum(xp_amount), 0) from public.xp_ledger)
+    or v_run.baseline_claimed_reward_count <>
+      (select count(*) from public.achievement_rewards where status = 'claimed')
+    or exists (
+      select 1 from public.gamification_profiles gp
+      where gp.xp <> (
+        select coalesce(sum(xl.xp_amount), 0)::integer
+        from public.xp_ledger xl where xl.user_id = gp.user_id
+      )
+    ) then
+    raise exception 'reconciliation_post_apply_invariant_failed';
+  end if;
+
+  update public.equal_source_reconciliation_runs
+  set status = 'applied', applied_at = clock_timestamp()
+  where id = p_run_id;
+  return v_count;
 end;
 $$;
 
 revoke all on function public.break_enemy_metric(uuid) from public;
 revoke all on function public.project_break_enemy_metric(uuid) from public;
+revoke all on function public._equal_source_effective_end(timestamptz, timestamptz, integer) from public;
+revoke all on function public._sync_equal_source_rewards(uuid, text, bigint, text, jsonb) from public;
 revoke all on function public.project_group_day(uuid, date) from public;
 revoke all on function public.finalize_group_day(uuid, date) from public;
 revoke all on function public.catch_up_group_days() from public;
@@ -502,5 +984,9 @@ revoke all on function public.refresh_group_metrics_for_session(uuid, timestampt
 revoke all on function public.project_group_week(uuid, date) from public;
 revoke all on function public.finalize_group_week(uuid, date) from public;
 revoke all on function public.catch_up_group_weeks() from public;
+revoke all on function public.prepare_equal_source_reconciliation(integer, uuid) from public;
+revoke all on function public.apply_equal_source_reconciliation(uuid) from public;
+grant execute on function public.prepare_equal_source_reconciliation(integer, uuid) to service_role;
+grant execute on function public.apply_equal_source_reconciliation(uuid) to service_role;
 
 notify pgrst, 'reload schema';

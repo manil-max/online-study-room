@@ -76,8 +76,19 @@
 - **Ortak/riskli yüzey:** —
 - **Dal:** — (`main`)
 - **Başlangıç:** —
-- **Son güncelleme:** 2026-07-20 13:34 (Europe/Istanbul)
-- **Not:** WP-228 kod + otomatik test kapsamı tamamlandı ve parka alındı. Local rerun/already-running/yarım-stack recovery kanıtı geçti; gerçek staging project/GitHub Environment owner kurulumu ve WP-229 kabul head'i sonrasında protected staging apply + beta build kanıtı bekliyor. Production write yok.
+- **Son güncelleme:** 2026-07-20 14:05 (Europe/Istanbul)
+- **Not:** WP-229 kod + local otomatik doğrulama tamamlandı ve staging/owner QA için parka alındı. 0063 session/live_run/ledger/reward silmeden source-neutral projector + candidate→pending→claim + shadow/diff/bounded apply kuruyor; fresh 0001–0063 replay, 80/80 pgTAP, DB lint 0, Flutter contract 2/2 ve birleşik `flutter analyze` 0 geçti. Staging/production apply yok; WP-228 contract HOLD korunuyor.
+
+### Codex-2 Lane
+- **Durum:** [x] Boşta
+- **Faz/WP:** —
+- **Aşama:** —
+- **SAHİP yollar:** —
+- **Ortak/riskli yüzey:** —
+- **Dal:** — (`main`)
+- **Başlangıç:** —
+- **Son güncelleme:** 2026-07-20 14:00 (Europe/Istanbul)
+- **Not:** WP-230 kod ve otomatik doğrulama tamamlandı; cihaz/staging kabulü park bölümünde.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
@@ -119,25 +130,25 @@
 |---|---|---|---|
 | WP-227 | [~] Staging/cihaz QA | Beta/stable flavor + staging/production backend izolasyonu + fail-closed | ← WP-226 |
 | WP-228 | [~] Staging/owner QA | Local/staging otomasyonu + production manual approval gate | ← WP-227 · apply kanıtı WP-229 kabul head'i sonrası |
-| WP-229 | [ ] Bekliyor | Eşit süre kaynakları ve reward/projection zinciri için güvenli ileri migration | ← WP-226, WP-227 · WP-228 otomasyon kodu hazır |
-| WP-230 | [ ] Bekliyor | 6 kademe/20k ekonomi + XP bar/metin + sürüm manifesti istemci onarımı | ← WP-227 · WP-229 ile en fazla iki lane |
+| WP-229 | [~] Staging/owner QA | Eşit süre kaynakları ve reward/projection zinciri için güvenli ileri migration | ← WP-226, WP-227 · WP-228 otomasyon kodu hazır |
+| WP-230 | [~] Cihaz/staging QA | 6 kademe/20k ekonomi + XP bar/metin + sürüm manifesti istemci onarımı | ← WP-227 · WP-229 ile en fazla iki lane |
 | WP-231 | [ ] Bekliyor | İstatistik dönem semantiği + toplam/realtime refresh + grup tutarlılığı | ← WP-229, WP-230 |
 | WP-232 | [ ] Bekliyor | Staging QA/soak + backup/dry-run + kontrollü production recovery release | ← WP-225–231 |
 
 ### WP-229: Eşit Süre Kaynakları ve Ödül Zinciri Onarımı ⚖️
 - **Program/Faz:** Kurtarma Faz 4A
-- **Ajan:** —
-- **Durum:** [ ] Bekliyor
+- **Ajan:** Codex
+- **Durum:** [~] Staging/owner QA
 - **Problem:** `0051–0062` verified-only projeksiyonları manuel/sayaç/native kaynakları ayırıyor; mevcut `0063` veri yeniden hesaplama ve ödül üretiminde güvenli kabul edilemiyor.
 - **Kapsam dışı:** Taç görseli/istatistik UI, production deploy, history rewrite.
 - **SAHİP dosyalar (yaz):** Audit `0063`ün hiçbir remote'a uygulanmadığını kanıtlarsa yeniden tasarlanan `0063_*`; aksi halde yeni ileri migration (numara audit sonucu), `supabase/tests/**`, başarım/study repository server sözleşmeleri ve in_memory aynaları, `docs/recovery/EQUAL-SOURCES-RECONCILIATION.md`, `progress.md`.
 - **DOKUNMA:** Remote'a uygulanmış `0051–0062`; production; bağımsız UI/theme/navigation.
 - **Adımlar:**
-  - [ ] `0063`ü production adayı olmaktan çıkar; remote geçmişini kanıtla. Hiç uygulanmadıysa dosyayı güvenli/idempotent yeniden tasarla, uygulandıysa immutable bırakıp ileri migration yaz.
-  - [ ] Tüm geçerli `study_sessions` kaynaklarını kişisel/grup/XP/başarıma eşitle.
-  - [ ] Alfa/Kamp/Lokomotif/Lider Kurt/Mola Düşmanı progress→candidate→pending→claim zincirini tamamla.
-  - [ ] Recompute'i shadow/audit→diff→bounded apply yap; session/ledger/claimed reward silme.
-  - [ ] Cron/finalizer'ı Europe/Istanbul gün/hafta sınırlarında gerçek PostgreSQL fixture'larıyla test et.
+  - [x] `0063`ü production adayı olmaktan çıkar; remote geçmişini kanıtla. Hiç uygulanmadıysa dosyayı güvenli/idempotent yeniden tasarla, uygulandıysa immutable bırakıp ileri migration yaz.
+  - [x] Tüm geçerli `study_sessions` kaynaklarını kişisel/grup/XP/başarıma eşitle.
+  - [x] Alfa/Kamp/Lokomotif/Lider Kurt/Mola Düşmanı progress→candidate→pending→claim zincirini tamamla.
+  - [x] Recompute'i shadow/audit→diff→bounded apply yap; session/ledger/claimed reward silme.
+  - [x] Cron/finalizer'ı Europe/Istanbul gün/hafta sınırlarında gerçek PostgreSQL fixture'larıyla test et.
 - **Veri/Migration etkisi:** Yeni ileri migration; append-only ledger ve session korunur. Geri alma fonksiyon/trigger yönlendirmesini önceki sürüme alır, kazanılmış ledger/claim silmez.
 - **Ortam/Deploy:** Local→staging; production WP-232'ye kadar yok.
 - **RLS/Güvenlik:** XP server-authoritative; kullanıcı yalnız kendi session DML; private progress self-only; idempotent unique keys.
@@ -224,6 +235,8 @@
 ## Test için bekleyenler (park)
 
 > Cihaz/ürün kabulü bekleyen tamamlanmış kod. Bu bölüm aktif çalışma değildir; başka WP'yi engellemez.
+
+- **WP-229 — Eşit Süre Kaynakları ve Ödül Zinciri Onarımı** · Kod + local otomatik test tamamlandı (fresh `0001–0063` replay; 80/80 pgTAP; DB lint hata 0; Flutter source-contract 2/2; birleşik `flutter analyze` 0). Production'da uygulanmadığı sentinel ile kanıtlı yayımlanmamış 0063; `live_run_id`/verified immutable guard'ı koruyarak manual/kronometre/countdown/Pomodoro/native-widget session'larını aynı duration/kişisel/grup/XP/başarım zincirine alır. `duration_seconds` kanoniktir; +3 saat timestamp drift fixture'ı hayalet süre üretmez. Alfa/Kamp/Lokomotif/Lider Kurt/Mola Düşmanı candidate→pending→claim, ikinci claim/apply no-op, aktif yazıda stale reconciliation fail-closed ve session/duration/ledger/claimed kaybı 0 kanıtlandı. **Staging/owner QA'da doğrulanmalı:** ayrı staging projesi+WP-228 protected apply; küçük prepared batch diff inceleme→bounded apply; linked pgTAP/RLS; gerçek cihazda beş giriş rotası ve claim; production WP-232 somut GO'suna kadar yok. Rapor: [`docs/recovery/EQUAL-SOURCES-RECONCILIATION.md`](docs/recovery/EQUAL-SOURCES-RECONCILIATION.md).
 
 - **WP-230 — Ekonomi, Taç ve Sürüm Gerçeği Onarımı** · Kod + otomatik test tamamlandı (`flutter analyze` 0; tüm Flutter test paketi exit 0; hedef ekonomi/UI/manifest testleri 37/37; JSON/YAML parse temiz). Tek fixture 11 ana kademeli başarım + haftalık uzantı + gizli XP + `[0,20k,75k,200k,500k,1M]` taçlarını istemci ve uygulanmış server migration gerçeğine bağlar. 12.500 XP etiketi/barı `%62,5`; altı görsel kademe ve erişilebilir semantik hizalı; kullanıcıya görünen verified-only metin/ikon kalmadı. Beta `1.0.42-beta.1+4201`, stable `1.0.42+42`; artefakt manifesti version/build + commit/backend/migration head + SHA-256 üretir. Production/migration/remote değişikliği yok. **Cihaz/staging QA'da doğrulanmalı:** 360/600/1200 px ve ekran okuyucuda taç/XP yerleşimi; staging beta artefaktında tanı kartı+release manifest doğruluğu; stable artefakt kimliğinin beta ile çakışmadığı release dry-run. WP-229 migration kabulü bitmeden beta/stable release yapılmaz. Commit: bu WP commit'i.
 

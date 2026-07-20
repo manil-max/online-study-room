@@ -9,7 +9,11 @@ void main() {
     ).readAsStringSync();
 
     expect(migration, startsWith('-- 0063_equal_study_sources.sql'));
-    expect(migration, contains('set live_run_id = null'));
+    expect(migration, isNot(contains('set live_run_id = null')));
+    expect(
+      migration,
+      contains('study_sessions_guard_verified_update trigger'),
+    );
     expect(
       migration,
       contains('create or replace function public.project_group_day'),
@@ -19,12 +23,28 @@ void main() {
       contains('create or replace function public.project_group_week'),
     );
     expect(migration, contains('from public.study_sessions s'));
-    expect(migration, contains("'group_all_sessions_v1'"));
-    expect(migration, contains("'weekly_alpha_all_sessions_v1'"));
-    expect(migration, contains("'break_all_sessions_v1'"));
+    expect(migration, contains("'group_all_sessions_v2'"));
+    expect(migration, contains("'weekly_alpha_all_sessions_v2'"));
+    expect(migration, contains("'break_all_sessions_v2'"));
     expect(migration, contains('group-achievement-day-finalizer'));
     expect(migration, contains('group-achievement-week-finalizer'));
-    expect(migration, contains('delete from public.group_achievement_daily'));
+    expect(
+      migration,
+      contains('prepare_equal_source_reconciliation'),
+    );
+    expect(migration, contains('apply_equal_source_reconciliation'));
+    expect(
+      migration,
+      isNot(contains('delete from public.group_achievement_daily')),
+    );
+    expect(
+      migration,
+      isNot(contains('delete from public.group_achievement_weekly')),
+    );
+    expect(
+      migration,
+      isNot(contains('delete from public.achievement_metric_progress')),
+    );
     expect(migration, isNot(contains('delete from public.study_sessions')));
     expect(migration, isNot(contains('delete from public.xp_ledger')));
   });

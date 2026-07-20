@@ -10,7 +10,7 @@ values (
   '{"display_name":"Local Outsider"}'::jsonb
 );
 
-select plan(7);
+select plan(10);
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000001', true);
@@ -57,6 +57,26 @@ select throws_ok(
   '42501',
   'permission denied for table xp_ledger',
   'authenticated client cannot mint XP directly'
+);
+select throws_ok(
+  $$select public.prepare_equal_source_reconciliation(10, null)$$,
+  '42501',
+  'permission denied for function prepare_equal_source_reconciliation',
+  'authenticated client cannot prepare a reconciliation run'
+);
+select throws_ok(
+  $$select * from public.equal_source_reconciliation_runs$$,
+  '42501',
+  'permission denied for table equal_source_reconciliation_runs',
+  'authenticated client cannot read private reconciliation audit rows'
+);
+select throws_ok(
+  $$select public.project_group_day(
+      '20000000-0000-0000-0000-000000000001', current_date
+    )$$,
+  '42501',
+  'permission denied for function project_group_day',
+  'authenticated client cannot invoke internal group projector'
 );
 
 select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000099', true);
