@@ -39,6 +39,22 @@ function Invoke-FlutterEvidence {
   Invoke-EvidenceCommand -Executable 'flutter' -Arguments $Arguments -EvidenceDirectory $evidenceDirectory -Label $Label -SensitiveValues @($anonKey) | Out-Null
 }
 
+function Resolve-AndroidBuildTool {
+  param([Parameter(Mandatory)][string]$ToolName)
+
+  foreach ($sdkRoot in @($env:ANDROID_HOME, $env:ANDROID_SDK_ROOT) | Select-Object -Unique) {
+    if ([string]::IsNullOrWhiteSpace($sdkRoot)) { continue }
+    $buildToolsRoot = Join-Path $sdkRoot 'build-tools'
+    if (-not (Test-Path -LiteralPath $buildToolsRoot)) { continue }
+    $match = Get-ChildItem -LiteralPath $buildToolsRoot -Recurse -File -ErrorAction SilentlyContinue |
+      Where-Object { $_.Name -eq $ToolName -or $_.Name -eq "$ToolName.exe" -or $_.Name -eq "$ToolName.bat" } |
+      Sort-Object FullName -Descending |
+      Select-Object -First 1
+    if ($match) { return $match.FullName }
+  }
+  throw "Android build tool was not found: $ToolName"
+}
+
 Push-Location $repoRoot
 try {
   if ([string]::IsNullOrWhiteSpace($anonKey)) {
@@ -79,10 +95,29 @@ try {
 
   $apk = Join-Path $appRoot 'build\app\outputs\flutter-apk\app-beta-release.apk'
   if (-not (Test-Path -LiteralPath $apk)) { throw 'Beta APK was not produced.' }
+  $aapt = Resolve-AndroidBuildTool -ToolName 'aapt'
+  $steps.Add('06-apk-identity')
+  $badging = Invoke-EvidenceCommand -Executable $aapt -Arguments @('dump', 'badging', $apk) -EvidenceDirectory $evidenceDirectory -Label '06-apk-identity' -SensitiveValues @($anonKey)
+  $expectedIdentity = "package: name='com.manilmax.online_study_room.beta' versionCode='$BuildNumber' versionName='$VersionName'"
+  if (-not $badging.Contains($expectedIdentity)) {
+    throw 'Beta APK package/version identity does not match the release manifest.'
+  }
+
+  $apksigner = Resolve-AndroidBuildTool -ToolName 'apksigner'
+  $steps.Add('07-apk-signature')
+  $signature = Invoke-EvidenceCommand -Executable $apksigner -Arguments @('verify', '--verbose', '--print-certs', $apk) -EvidenceDirectory $evidenceDirectory -Label '07-apk-signature' -SensitiveValues @($anonKey)
+  if (-not $signature.Contains('Verified using v2 scheme (APK Signature Scheme v2): true')) {
+    throw 'Beta APK v2 signature verification failed.'
+  }
+
+  $artifactName = "online-study-room-beta-$VersionName-build$BuildNumber.apk"
+  $evidenceApk = Join-Path $evidenceDirectory $artifactName
+  $steps.Add('08-package-evidence-artifact')
+  Copy-Item -LiteralPath $apk -Destination $evidenceApk
   $artifact = [ordered]@{
-    name = 'app-beta-release.apk'
-    bytes = (Get-Item -LiteralPath $apk).Length
-    sha256 = (Get-FileHash -LiteralPath $apk -Algorithm SHA256).Hash.ToLowerInvariant()
+    name = $artifactName
+    bytes = (Get-Item -LiteralPath $evidenceApk).Length
+    sha256 = (Get-FileHash -LiteralPath $evidenceApk -Algorithm SHA256).Hash.ToLowerInvariant()
     version_name = $VersionName
     build_number = $BuildNumber
   }

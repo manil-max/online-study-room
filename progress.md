@@ -72,7 +72,7 @@
 - **Durum:** [~] Aktif
 - **Faz/WP:** WP-229/230 staging kabul kapısı
 - **Aşama:** WP-230 gerçek staging beta artefaktı hazırlanıyor
-- **SAHİP yollar:** `supabase/migrations/0064_*`, `supabase/tests/**`, `tooling/supabase/DeployGuard.psm1`, `tooling/supabase/remote.ps1`, staging owner helper'ları, `tooling/supabase/guard.tests.ps1`, `tooling/release/deploy-contract.json`, `tooling/release/beta-build.ps1`, `tooling/release/staging-beta-owner.ps1`, `tooling/README.md`, staging/GitHub Environment yapılandırması, `docs/recovery/EQUAL-SOURCES-RECONCILIATION.md`, `docs/recovery/ENVIRONMENT-MATRIX.md`, WP-229/230 kabul kanıtları, `progress.md`
+- **SAHİP yollar:** `supabase/migrations/0064_*`, `supabase/tests/**`, `tooling/supabase/DeployGuard.psm1`, `tooling/supabase/remote.ps1`, staging owner helper'ları, `tooling/supabase/guard.tests.ps1`, `tooling/release/deploy-contract.json`, `tooling/release/beta-build.ps1`, `tooling/release/beta-build.tests.ps1`, `tooling/release/staging-beta-owner.ps1`, `app/android/app/build.gradle.kts`, `tooling/README.md`, staging/GitHub Environment yapılandırması, `docs/recovery/EQUAL-SOURCES-RECONCILIATION.md`, `docs/recovery/ENVIRONMENT-MATRIX.md`, WP-229/230 kabul kanıtları, `progress.md`
 - **Ortak/riskli yüzey:** Supabase CLI ile ayrı staging projesi; `0064` yalnız staging; production mutasyonu kesinlikle yok
 - **Dal:** `main`
 - **Başlangıç:** 2026-07-20 14:15 (Europe/Istanbul)

@@ -149,7 +149,8 @@ android {
         create("beta") {
             dimension = "channel"
             applicationIdSuffix = ".beta"
-            versionNameSuffix = "-beta"
+            // Kanalın semver ön-sürüm kimliği release manifestinden gelir
+            // (örn. 1.0.42-beta.1); ikinci bir "-beta" suffix eklenmez.
             // Dart: --dart-define=DISTRIBUTION_CHANNEL=githubBeta
             manifestPlaceholders["appName"] = "Odak Kampı BETA TEST"
             manifestPlaceholders["authCallbackScheme"] = "com.manilmax.onlinestudyroom.beta"
