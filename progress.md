@@ -20,7 +20,7 @@
 - **Navigasyon hedefi:** Ana Sayfa / Saat / Gruplar / İstatistikler / Profil. Ana Sayfa günlük kullanım alanıdır; diğer alanların verisi kendi sekmelerinde eksiksiz bulunur.
 - **Release gerçeği:** Stable tag `v39` (`c6843a5`), beta tag `beta-v41` (`e6234a6`), HEAD `2d757eb`. Beta-v41 sonrası 13 yerel commit vardır; uygulama hâlâ `1.0.41+41` taşıdığı için sürüm/commit ayrımı bozuk. WP-227/230 düzeltecek.
 - **Kalite kapıları:** Her WP DoD'siz kapanmaz; stable release kalite kapısından geçer (AGENTS.md §3). Server-authoritative XP, RLS/sosyal profil, platform sınırları → `docs/KALITE-PROGRAMI.md`.
-- **Son WP numarası:** **232** (WP-221–224 geçmişte kullanılmış; kurtarma WP-225–232 planlandı). **Sıradaki boş numara WP-233.**
+- **Son WP numarası:** **234** (WP-221–224 geçmişte kullanılmış; kurtarma WP-225–232 planlandı; WP-233/234 beta-v4202 saha bulguları). **Sıradaki boş numara WP-235.**
 - **Ortam sözleşmesi:** local=Supabase CLI/Docker, beta=ayrı staging Supabase, stable=production Supabase. Ayrıntı: `docs/ORTAM-MIGRATION-YONETISIMI.md`.
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
@@ -50,15 +50,16 @@
 - **Not:** WP-83 tamamlandı, envanter ve sözlük oluşturuldu.
 
 ### Claude Lane
-- **Durum:** [x] Boşta
-- **Faz/WP:** —
-- **Aşama:** —
-- **SAHİP yollar:** —
-- **Ortak/riskli yüzey:** —
-- **Dal:** — (main)
-- **Başlangıç:** —
-- **Son güncelleme:** 2026-07-20 15:55 (Europe/Istanbul)
-- **Not:** Codex'ten devralınan WP-229/230 staging kabul kapısı tamamlandı; iki kart da **Test için bekleyenler**e taşındı (cihaz QA bekliyor). Staging kabul adayı: git `1a46ace`, migration head `0064`, beta artefakt `1.0.42-beta.2+4202`. Production mutasyonu yok, `deploy_enabled: false` korunuyor. **WP-231 kullanıcı kabulü olmadan başlatılmadı.**
+- **Durum:** [~] Aktif
+- **Faz/WP:** WP-233 (P1 sayaç bug) + WP-234 (başarım/taç görünüm)
+- **Aşama:** Geliştiriliyor
+- **SAHİP yollar:** `app/lib/data/providers/study_providers.dart`, `app/lib/features/profile/widgets/achievement_showcase.dart`, `app/lib/features/profile/widgets/gamification_card.dart`, ilgili l10n + testler, `progress.md`
+- **Ortak/riskli yüzey:** l10n ARB (yeni anahtar); sayaç SSOT — native/Dart durum senkronu
+- **Dal:** `main`
+- **Başlangıç:** 2026-07-20 17:20 (Europe/Istanbul)
+- **Son güncelleme:** 2026-07-20 17:20 (Europe/Istanbul)
+- **Not:** beta-v4202 cihaz QA saha bulguları. Çakışma yok (diğer tüm lane'ler boşta). WP-229/230 kartları park bölümünde, diriltilmiyor — kurallara göre cihaz bug'ı için ayrı debug WP açıldı.
+- **Önceki tur:** Codex'ten devralınan WP-229/230 staging kabul kapısı tamamlandı; iki kart da **Test için bekleyenler**e taşındı (cihaz QA bekliyor). Staging kabul adayı: git `1a46ace`, migration head `0064`, beta artefakt `1.0.42-beta.2+4202`. Production mutasyonu yok, `deploy_enabled: false` korunuyor. **WP-231 kullanıcı kabulü olmadan başlatılmadı.**
 
 - **Not (Claude arşivi — önceki tur):** beta-v41 turu kapandı (WP-221/222/223/224 cihazda doğrulandı). Kalan ekonomi/kademe/alpha WP'leri sırayla yürüyor (beta-v42). Bitmiş (kod+test, cihaz QA bekliyor):
   - **WP-J** görev sırası daily-üstte + optimistic UI (`sortUserTasksByDue` daily-first, `userTasksProvider`→AsyncNotifier, ekle/tamamla/sil optimistic, hata→geri al+snackbar). Commit `54a2c84`.
@@ -134,6 +135,8 @@
 | WP-228 | [~] Staging/owner QA | Local/staging otomasyonu + production manual approval gate | ← WP-227 · apply kanıtı WP-229 kabul head'i sonrası |
 | WP-229 | [~] Cihaz QA (staging GEÇTİ) | Eşit süre kaynakları ve reward/projection zinciri için güvenli ileri migration | ← WP-226, WP-227 · staging head `0064`, 80/80 PASS |
 | WP-230 | [~] Cihaz QA (artefakt HAZIR) | 6 kademe/20k ekonomi + XP bar/metin + sürüm manifesti istemci onarımı | ← WP-227 · beta `1.0.42-beta.2+4202` @ `1a46ace` |
+| WP-233 | [~] Geliştiriliyor | 🔴 P1: bildirimden başlatılan sayaç uygulama içinden durdurulamıyor | beta-v4202 saha bulgusu |
+| WP-234 | [~] Geliştiriliyor | Biriken-olmayan başarımlarda yanıltıcı ilerleme + taç kademe görünürlüğü | beta-v4202 saha bulgusu |
 | WP-231 | [ ] Bekliyor | İstatistik dönem semantiği + toplam/realtime refresh + grup tutarlılığı | ← WP-229, WP-230 |
 | WP-232 | [ ] Bekliyor | Staging QA/soak + backup/dry-run + kontrollü production recovery release | ← WP-225–231 |
 
