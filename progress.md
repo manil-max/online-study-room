@@ -20,7 +20,7 @@
 - **Navigasyon hedefi:** Ana Sayfa / Saat / Gruplar / İstatistikler / Profil. Ana Sayfa günlük kullanım alanıdır; diğer alanların verisi kendi sekmelerinde eksiksiz bulunur.
 - **Release gerçeği:** Stable tag `v39` (`c6843a5`), beta tag `beta-v41` (`e6234a6`), HEAD `2d757eb`. Beta-v41 sonrası 13 yerel commit vardır; uygulama hâlâ `1.0.41+41` taşıdığı için sürüm/commit ayrımı bozuk. WP-227/230 düzeltecek.
 - **Kalite kapıları:** Her WP DoD'siz kapanmaz; stable release kalite kapısından geçer (AGENTS.md §3). Server-authoritative XP, RLS/sosyal profil, platform sınırları → `docs/KALITE-PROGRAMI.md`.
-- **Son WP numarası:** **234** (WP-221–224 geçmişte kullanılmış; kurtarma WP-225–232 planlandı; WP-233/234 beta-v4202 saha bulguları). **Sıradaki boş numara WP-235.**
+- **Son WP numarası:** **239** (WP-221–224 geçmişte kullanılmış; kurtarma WP-225–232 planlandı; WP-233/234 beta-v4202 saha bulguları; WP-235–239 beta-v4202 saha turu 2 — grafik/sıralama/test/sayaç). **Sıradaki boş numara WP-240.**
 - **Ortam sözleşmesi:** local=Supabase CLI/Docker, beta=ayrı staging Supabase, stable=production Supabase. Ayrıntı: `docs/ORTAM-MIGRATION-YONETISIMI.md`.
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
@@ -137,8 +137,13 @@
 | WP-230 | [~] Cihaz QA (artefakt HAZIR) | 6 kademe/20k ekonomi + XP bar/metin + sürüm manifesti istemci onarımı | ← WP-227 · beta `1.0.42-beta.2+4202` @ `1a46ace` |
 | WP-233 | [x] Cihaz QA bekliyor | 🔴 P1: bildirimden başlatılan sayaç uygulama içinden durdurulamıyor | beta-v4202 saha bulgusu · `stop()` native SSOT ile uzlaşıyor · regresyon testi |
 | WP-234 | [x] Cihaz QA bekliyor | Biriken-olmayan başarımlarda yanıltıcı ilerleme + taç kademe görünürlüğü | beta-v4202 saha bulgusu · kişisel rekor çubuğu kalktı + taç kademe sayfası |
-| WP-231 | [ ] Bekliyor | İstatistik dönem semantiği + toplam/realtime refresh + grup tutarlılığı | ← WP-229, WP-230 |
+| WP-231 | [ ] Bekliyor | İstatistik dönem semantiği + toplam/realtime refresh + grup tutarlılığı (kapsam daraldı) | ← WP-229, WP-230 · 2 madde iptal, 1 madde WP-239'a |
 | WP-232 | [ ] Bekliyor | Staging QA/soak + backup/dry-run + kontrollü production recovery release | ← WP-225–231 |
+| WP-235 | [ ] Planlandı | 2 kırık achievement_lifecycle testi — Riverpod 3 auto-dispose + WP-223 invalidate guard eksik | main'de kırık, teşhis tamam |
+| WP-236 | [ ] Planlandı | Leaderboard History: dönem-bazlı sıralama yarışı (today=günlük, week=haftalık) + canlı birinci + alpha/leader wolf takibi | beta-v4202 saha turu 2 |
+| WP-237 | [ ] Planlandı | Grafik ekseni cilası: x her gün etiketi + eksik Y ekseni ölçekleri (rank/line/bar/group trend/home eğilim); tüm grafikleri tara | beta-v4202 saha turu 2 |
+| WP-238 | [ ] Planlandı | Home "Eğilim" dönem seçici → tek döngü buton (7/14/30/90/180/360, tıkla-ilerle) | beta-v4202 saha turu 2 |
+| WP-239 | [ ] Planlandı | Sayaç durdurma çift-sayım bug'ı (freeze yarışı) + stop/manual-add invalidation tekilleştirme (WP-231'den) | beta-v4202 saha turu 2 |
 
 ### WP-229: Eşit Süre Kaynakları ve Ödül Zinciri Onarımı ⚖️
 - **Program/Faz:** Kurtarma Faz 4A
@@ -193,9 +198,9 @@
 - **SAHİP dosyalar (yaz):** `app/lib/core/stats/**`, stats period/provider/view dosyaları, relevant study repository/cache refresh yolu, ilgili l10n/testler, `docs/recovery/STATS-CONTRACT.md`, `progress.md`.
 - **DOKUNMA:** Achievement UI, migration zinciri (gerekirse ayrı bağımlı WP aç), release config.
 - **Adımlar:**
-  - [ ] “Bu hafta (Pzt–bugün)” ile “Son 7 Gün”ü ayrı dönem yap; kişisel/grup aynı range yardımcılarını kullansın.
-  - [ ] Günlük ortalama paydasını görünür dönem sözleşmesiyle test et.
-  - [ ] Session stop/manual add sonrası cache+remote+summary invalidation yolunu tekilleştir.
+  - [~] ~~“Bu hafta (Pzt–bugün)” ile “Son 7 Gün”ü ayrı dönem yap~~ → **KULLANICI İPTAL (2026-07-20)**: mevcut week UI'ı korunacak; leader wolf ile hizalı (Pazar 23:59 sonrası o haftanın birincisi). Ellenmeyecek.
+  - [~] ~~Günlük ortalama paydasını görünür dönem sözleşmesiyle test et~~ → **KULLANICI İPTAL (2026-07-20)**.
+  - [→] Session stop/manual add sonrası cache+remote+summary invalidation yolunu tekilleştir → **WP-239'a TAŞINDI** (sayaç çift-sayım bug'ıyla aynı kök).
   - [ ] Pending/offline/realtime reconnect ve iki cihaz yenilenmesini test et.
   - [ ] 20 Temmuz Pazartesi fixture'ında bugün/hafta/son7/ay sonuçlarını golden/widget testle.
 - **Veri/Migration etkisi:** Beklenmiyor; yalnız okuma/projeksiyon. Şema ihtiyacı çıkarsa durup ayrı WP planlanır.
@@ -226,6 +231,88 @@
 - **Edge-case'ler:** Staging pause, kısmi deploy, eski beta client, rollback sonrası yeni ledger, ağ kesintisi, cron gecikmesi.
 - **Kabul:** Tüm otomatik test+local SQL+staging RLS yeşil; gerçek cihaz matrisi kanıtlı; ≥3 gün soak; kullanıcı GO; production sonrası session/XP/reward invariant farkı 0 ve P0/P1=0.
 - **Tuzaklar:** Beta kodunu yeniden derleyip farklı commit'i stable yapmak; migration ile app'i yanlış sırada çıkarmak.
+- **Model önerisi:** 🔴 Opus / frontier-high
+
+### WP-235: İki Kırık achievement_lifecycle Testi 🧪
+- **Program/Faz:** Saha turu 2 (beta-v4202)
+- **Durum:** [ ] Planlandı
+- **Problem (TEŞHİS TAMAM):** `app/test/data/achievement_lifecycle_test.dart` iki testi `main`'de kırık — WP-233/234 ile ilgisiz, temiz HEAD'de de kırık.
+  - **Test 1 "runAchievementSessionCompletedSync process çağırır" → 30 sn timeout (takılıyor):** Kök neden **Riverpod 3 auto-dispose**. `runAchievementSessionCompletedSync` içinde `gamificationProfileProvider(userId).future` bekleniyor; dinleyici tutulmadığı için StreamProvider future'ı asla tamamlanmıyor. Probe testiyle kanıtlandı: `container.listen(gamificationProfileProvider(id), …)` eklenince tüm zincir çözülüyor. → **Test harness hatası** (üretim kodu doğru; app'te UI dinliyor).
+  - **Test 2 "lifecycle … debounce sonrası process tetikler" → "Cannot use Ref … after disposed":** Kök neden **WP-223 (beta-v41, commit 1831358)**. `AchievementProgressLifecycle._schedule()` debounce callback'i `async` yapıldı ve `await runAchievementSessionCompletedSync` **sonrasına** `_ref.invalidate(pendingAchievementRewardSummaryProvider/…)` eklendi. 800ms debounce ateşlerken provider/container dispose olmuşsa `_ref` kullanımı patlar. → **Kısmen gerçek üretim bug'ı**: `_schedule` guard'sız; gerçek app'te kullanıcı 800ms içinde sekme değiştirir/çıkış yaparsa aynı hata sessizce oluşur (zone error).
+- **SAHİP dosyalar:** `app/lib/data/providers/gamification_providers.dart` (guard), `app/test/data/achievement_lifecycle_test.dart` (listener), `progress.md`.
+- **Adımlar:**
+  - [ ] `AchievementProgressLifecycle`'a `_disposed`/mounted bayrağı; `_schedule` callback'inde her async gap sonrası guard (`if (_disposed) return;`) — invalidate'ten önce.
+  - [ ] Test 2'ye lifecycle debounce'u bitene kadar container'ı canlı tutan bekleme; Test 1'e `gamificationProfileProvider` listener'ı (auto-dispose tuzağı).
+  - [ ] Her iki test fix'siz kırık → fix'le yeşil olduğunu doğrula.
+- **Kabul:** `flutter test test/data/achievement_lifecycle_test.dart` yeşil; tam suite yeşil (halihazırda 636 geçiyor + bu 2).
+- **Model önerisi:** 🟣 Pro
+
+### WP-236: Leaderboard History — Dönem-Bazlı Sıralama Yarışı 🏆
+- **Program/Faz:** Saha turu 2 (beta-v4202)
+- **Durum:** [ ] Planlandı
+- **Problem:** İstatistikler/Gruplar → "Leaderboard History" grafiği (`LeaderboardRankChart`) **kümülatif** toplam sıralaması gösteriyor; bu yüzden `today` ve `week` seçenekleri **aynı** görünüyor (ikisi de `chartDays=7`, `stats_period.dart:74-75`). Kullanıcı her dönemin **kendi içinde** yarışını istiyor:
+  - `today` → her düğüm bir GÜN; o günün kendi sıralaması (ör. 13 → A B C, 14 → B A C).
+  - `week` → her düğüm bir HAFTA; o haftanın sıralaması (1. hafta → A B, 2. hafta → B A).
+  - Bu grafikten **alpha wolf** (günlük birinci) + **leader wolf** (haftalık birinci = Pazar 23:59 kesinleşen) takip edilecek.
+  - Canlı: içinde bulunulan gün/haftanın **anlık** birincisi grafikte belirtilsin; kesinleşme gün sonu 23:59 (gün) / Pazar 23:59 (hafta) — o ana kadar canlı değişebilir.
+- **Pencere (kullanıcı kararı 2026-07-20):** today → **son 14 gün**; week → **son 8 hafta** (Pzt–Paz bucket'lar).
+- **SAHİP dosyalar:** `app/lib/features/stats/widgets/leaderboard_rank_chart.dart`, `class_stats_view.dart` (trendDays→dönem tipi geçişi), `app/lib/core/stats/**` (haftalık grupla­ma yardımcıları, Europe/Istanbul + Pzt-Paz), ilgili l10n/testler.
+- **DOKUNMA:** week UI/period semantiği (WP-231 kapsamı, kullanıcı korudu), migration, achievement economy.
+- **Adımlar:**
+  - [ ] `LeaderboardRankChart`'a `bucket` modu (day|week); kümülatif yerine bucket-içi toplam → bucket sıralaması. Pencere: 14 gün / 8 hafta.
+  - [ ] Haftalık bucket = Pzt–Paz, Europe/Istanbul; leader wolf ile aynı sınır ([[group-stats-rpc-aggregation]]).
+  - [ ] Aktif (bitmemiş) bucket için "canlı birinci" işareti; kapanmış bucket sabit.
+  - [ ] X ekseni etiketi: gün no (today) / hafta etiketi (week). (WP-237 ile hizalı.)
+  - [ ] Golden/widget test: 3 üye, gün-gün ve hafta-hafta sıralama değişimi.
+- **Kabul:** today ve week görünür şekilde farklı; her bucket bağımsız sıralama; aktif bucket canlı birinci; alpha/leader wolf grafikte okunur.
+- **Model önerisi:** 🔴 Opus / frontier-high
+
+### WP-237: Grafik Ekseni Cilası 📐
+- **Program/Faz:** Saha turu 2 (beta-v4202)
+- **Durum:** [ ] Planlandı
+- **Problem:** Birden çok grafikte (a) X ekseni yer olmasına rağmen 2–3 gün atlıyor, (b) Y ekseni ölçeği hiç yok.
+  - `leaderboard_rank_chart.dart`: X `step=(window.length/4).ceil()` → 7 günde her 2. gün.
+  - `daily_line_chart.dart`: X `days.length>10 && i%3!=0` atlar; **Y ekseni kapalı** (`leftTitles showTitles:false`) — grup trend + home "Eğilim" bundan etkilenir.
+  - `daily_bar_chart.dart`: X `dense && i%3!=0`; **Y ekseni kapalı** (`leftTitles:false`) — home grup trend kartı.
+- **SAHİP dosyalar:** `app/lib/features/stats/widgets/{leaderboard_rank_chart,daily_line_chart,daily_bar_chart}.dart` + taramada çıkan diğer grafik widget'ları, ilgili testler.
+- **Adımlar:**
+  - [ ] X etiket adımı: genişliğe göre uyarlanır; yer varken **her gün**; dar seride minimum çakışmasız adım (etiket genişliği hesabıyla, sabit %25 değil).
+  - [ ] Y ekseni: eksik olan çizgi/çubuk grafiklerine sade dakika/saat ölçeği + hafif yatay grid; tema-güvenli renk.
+  - [ ] Tüm grafik widget'larını tara (stats + home + widget); eksik Y / seyrek X listesini kapat.
+  - [ ] Dar boyutlarda taşma/örtüşme yok; widget testleri.
+- **Kabul:** Yer olan her seride her günün numarası; ölçeksiz grafik kalmaz; overflow testi temiz.
+- **Model önerisi:** 🟣 Pro
+
+### WP-238: "Eğilim" Dönem Seçici → Tek Döngü Buton 🔘
+- **Program/Faz:** Saha turu 2 (beta-v4202)
+- **Durum:** [ ] Planlandı
+- **Problem:** Home "Eğilim" kartı (`line_chart_card.dart`) 14/30/90 `SegmentedButton` kullanıyor; yer sınırlı ve yalnız 3 seçenek. Kullanıcı: tek buton, her tıkta sıradaki değere döngüsel geçiş; seçenekler **7 / 14 / 30 / 90 / 180 / 360** (bu sırada).
+- **SAHİP dosyalar:** `app/lib/features/home/widgets/line_chart_card.dart`, gerekirse ortak küçük "cycle chip" widget'ı, l10n (gün etiketleri), testler.
+- **Adımlar:**
+  - [ ] Segment/dropdown yerine tek basılabilir çip; state 6 değer arasında döngü; etiket seçili günü gösterir (ör. "30 gün").
+  - [ ] `lastNDays` 180/360 için performans/doğruluk kontrolü (hot window 90 gün — [[group-stats-rpc-aggregation]] sınırı; 180/360 için veri kaynağı teyidi).
+  - [ ] Compact + geniş yerleşimde tek kontrol; a11y label.
+  - [ ] Widget testi: tıkla → sıradaki değer; 360'tan sonra 7'ye sarar.
+- **Kabul:** Tek buton, sıralı döngü, 6 seçenek; dar boyutta taşma yok.
+- **Açık nokta:** 180/360 gün verisi yalnız 90 günlük sıcak pencereden besleniyorsa eksik çizer — veri kaynağı WP sırasında netleşecek.
+- **Model önerisi:** 🟣 Pro
+
+### WP-239: Sayaç Durdurma Çift-Sayım + Invalidation Tekilleştirme ⏱️
+- **Program/Faz:** Saha turu 2 (beta-v4202)
+- **Durum:** [ ] Planlandı
+- **Problem (kök neden bulundu):** 1 saat kayıtlı + 1 saat canlı kronometre (UI 2 saat) iken **Durdur**'a basınca bir an **3 saat** gösteriyor; kronometreyi kapat-aç düzeltiyor.
+  - Kaynak: `study_timer_card.dart:125-136`. Durdurma anında `ref.listen` şunu yazıyor: `_frozenTotal = ref.read(todayRecordedSecondsProvider) + extra`. Ama `stop()` içindeki `_recordSession`/`addSession` offline-first cache'e senkron yazıp `userSessionsProvider` stream'ini state değişmeden ÖNCE emit ederse, `recorded` **zaten `extra`'yı içeriyor** → bir daha eklenince çift sayım (2s→3s). Kapat-aç `_frozenTotal`'ı sıfırladığı için düzeliyor.
+  - Yani UI, "stop sonrası recorded ne zaman güncellenir" belirsizliğini bir freeze hack'iyle tahmin ediyor ve yarışı kaybediyor. **Bu tam da WP-231'den taşınan "invalidation tekilleştir" maddesi.**
+- **"Invalidation tekilleştir" ne demek (kullanıcı sorusu):** Oturum durunca/manuel eklenince veri UI'a birden çok bağımsız yoldan yansıyor: (1) offline-first repo cache yazımı, (2) remote (Supabase) yazımı, (3) `userSessionsProvider` stream emit, (4) `userStudySummaryProvider` (lifetime/RPC özet) ayrı fetch, (5) presence.todaySeconds / gamification summary. Bunlar farklı anlarda güncelleniyor (kimi stream, kimi manuel `invalidate`, kimi hiç). Dağınıklık → "durdurdum ama toplam eski/yanlış" ve bu çift-sayım. **Tekilleştir** = stop/manual-add sonrası tüm bu tazelemeleri tek noktadan, tanımlı sırayla tetikleyen ortak bir yol; UI'ın freeze gibi tahmin hack'lerine ihtiyacı kalmaz.
+- **SAHİP dosyalar:** `app/lib/data/providers/study_providers.dart` (stop/record + ortak refresh yolu), `app/lib/features/classroom/widgets/study_timer_card.dart` (freeze mantığını sadeleştir/kaldır), `app/lib/core/stats/study_stats.dart` (resolveTodayDisplayTotal), ilgili testler.
+- **DOKUNMA:** Native FGS reconcile ([[native-dart-timer-sync-only-on-resume]]), achievement economy, migration.
+- **Adımlar:**
+  - [ ] Stop/manual-add sonrası tek "session persisted" refresh yolu; recorded/summary/presence deterministik sırayla güncellenir.
+  - [ ] Freeze hack'ini ya kaldır ya da recorded'ın canlı süreyi zaten içerdiği durumu çift saymayacak şekilde düzelt (extra'yı yalnız recorded henüz içermiyorsa ekle).
+  - [ ] Regresyon testi: 1s recorded + 1s canlı → stop → tam olarak 2s (3s asla); kapat-aç gerekmeden.
+  - [ ] Manuel ekleme sonrası da toplam ≤1 sn içinde doğru.
+- **Kabul:** Durdurmada anlık toplam doğru (çift sayım yok); kapat-aç gerektirmez; stop/manual-add refresh tek yoldan.
+- **İlişki:** WP-231'in kalan realtime/reconnect maddeleri ayrı kalır; bu WP yalnız stop/manual-add refresh + freeze bug'ı.
 - **Model önerisi:** 🔴 Opus / frontier-high
 
 > **Çakışma/seri yürütme:** WP-225→226→227→228 zorunlu seri. Sonra en fazla iki lane: WP-229 (server/migration) ve WP-230 (client/economy) paralel olabilir; ortak fixture/l10n/migration sahipliği önceden netleştirilir. WP-231 ikisi kabul edilince, WP-232 en son başlar. `supabase/migrations/**` aynı anda tek lane'dir.
