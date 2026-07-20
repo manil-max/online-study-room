@@ -44,6 +44,12 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
   int? _frozenTotal;
   DateTime? _frozenOnDay;
 
+  /// WP-239: en son build'de ekranda gösterilen bugünkü toplam (canlı süre
+  /// dahil). Durdurma anında freeze değeri buradan alınır; recorded'ın o anki
+  /// durumundan bağımsızdır, böylece canlı süre ikinci kez eklenip çift
+  /// sayım (2s→3s) oluşmaz.
+  int _lastDisplayedTotal = 0;
+
   @override
   void initState() {
     super.initState();
@@ -125,14 +131,16 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
     ref.listen<StudyTimerState>(studyTimerProvider, (prev, next) {
       if (prev == null) return;
       if (prev.isRunning && !next.isRunning && prev.startedAt != null) {
-        var extra = DateTime.now().difference(prev.startedAt!).inSeconds;
-        final prevTarget = prev.phaseTargetSeconds;
-        if (prevTarget != null) extra = extra.clamp(0, prevTarget);
-        if (prev.phase != TimerPhase.work) extra = 0; // mola toplama sayılmaz
+        // WP-239: durdurma anında EKRANDA GÖRÜNEN toplamı dondur. Eskiden
+        // `recorded + extra` yazılıyordu; ama biten oturum offline cache'e
+        // senkron yazılıp `recorded` provider'ı stop'tan ÖNCE güncellenince
+        // `extra` (canlı süre) ikinci kez eklenip toplam şişiyordu (2s→3s,
+        // kronometreyi kapat-aç ile düzeliyordu). Son gösterilen toplam zaten
+        // canlı süreyi içeriyor: recorded ne zaman güncellenirse güncellensin
+        // bu değer düşmeyi engeller ve çift saymaz.
         // Freeze anındaki Istanbul günü: gece yarısı sonrası dünün değeri sızmasın.
         _frozenOnDay = dayOf(DateTime.now());
-        _frozenTotal =
-            ref.read(todayRecordedSecondsProvider) + (extra > 0 ? extra : 0);
+        _frozenTotal = _lastDisplayedTotal;
       }
       if (next.eventSeq != prev.eventSeq && next.lastEvent != null) {
         _onTimerEvent(next.lastEvent!);
@@ -163,6 +171,8 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
       frozenOnDay: _frozenOnDay,
       today: todayKey,
     ).total;
+    // WP-239: durdurma anında dondurulacak "görünen toplam" için sakla.
+    _lastDisplayedTotal = todayTotal;
     final notifier = ref.read(studyTimerProvider.notifier);
     final subjects = ref.watch(userSubjectsProvider).value ?? const <Subject>[];
 

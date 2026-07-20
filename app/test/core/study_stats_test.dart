@@ -66,6 +66,37 @@ void main() {
     expect(caughtUp.keepFrozen, isNull);
   });
 
+  test('WP-239: freeze = görünen toplam iken recorded yetişince ŞİŞMEZ', () {
+    // Senaryo: 1s kayıtlı + 1s canlı kronometre → ekranda 2s (7200sn).
+    // Durdur'a basılınca biten oturum offline cache'e SENKRON yazılıp
+    // recorded provider'ı stop'tan ÖNCE güncellenebiliyor (recorded=7200).
+    final today = DateTime(2026, 7, 20);
+
+    // DOĞRU (WP-239): freeze = durdurma anında görünen toplam (7200).
+    // recorded sonradan 7200'e ulaşınca sonuç 7200 kalır — çift sayım yok.
+    final correct = resolveTodayDisplayTotal(
+      recordedToday: 7200, // yeni oturumu zaten içeriyor
+      liveWorkSeconds: 0, // durdu
+      frozenTotal: 7200, // = son görünen toplam
+      frozenOnDay: today,
+      today: today,
+    );
+    expect(correct.total, 7200, reason: '2 saat görünmeli, 3 saat değil');
+
+    // Eski bug: freeze = recorded(7200) + extra(3600) = 10800 hesaplanıyordu;
+    // fonksiyon frozen'ı sadık taşıdığı için ekran 3 saat (10800) gösterirdi.
+    // Bu assert, şişmenin kaynağının YANLIŞ freeze girdisi olduğunu belgeler.
+    final buggyInput = resolveTodayDisplayTotal(
+      recordedToday: 7200,
+      liveWorkSeconds: 0,
+      frozenTotal: 10800, // recorded + extra (çift)
+      frozenOnDay: today,
+      today: today,
+    );
+    expect(buggyInput.total, 10800,
+        reason: 'fonksiyon frozen\'ı taşır; kök neden widget freeze hesabında');
+  });
+
   test('StudySession.day UTC start için Istanbul günü kullanır', () {
     // UTC 21:30 → Istanbul 00:30 ertesi gün.
     final s = _s('u1', DateTime.utc(2026, 7, 15, 21, 30), 600);
