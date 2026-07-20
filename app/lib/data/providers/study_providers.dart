@@ -403,6 +403,13 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   bool _disposed = false;
   Future<void>? _verifiedStartFuture;
 
+  /// WP-246 (D2): `stop()` reentrancy kilidi. `stop()` içindeki kayıt/finalize
+  /// ağ RTT'si beklerken `state` hâlâ `running` kalır; bu pencerede her ek
+  /// Durdur basışı `stop()`'a yeniden girip AYNI aralığı tekrar kaydediyordu
+  /// (ardı ardına basınca toplam süre birden fazla artıyordu). Devam eden bir
+  /// durdurma varken ikinci giriş reddedilir.
+  bool _stopInFlight = false;
+
   /// WP-243: sayaç reconcile yarışı koruması — DETERMİNİSTİK (zaman penceresi
   /// yok; WP-241'in 1.5sn heuristik bastırması "bazen çalışıyor bazen çalışmıyor"
   /// belirsizliğinin kök nedeniydi).
@@ -1049,35 +1056,49 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   /// Böylece app-kapalı durdurmada, uygulamanın açıldığı ana kadar geçen süre
   /// yanlışlıkla oturuma eklenmez.
   Future<void> stop({DateTime? at}) async {
-    if (!state.isRunning) {
-      // WP-233: uygulama ÖNPLANDAYKEN bildirimden Başlat'a basılırsa resume
-      // olayı hiç tetiklenmez, dolayısıyla native SSOT bu isolate'e adopte
-      // edilmez ve state.isRunning false kalır. Eskiden burada sessizce
-      // dönerdik → kullanıcı sayacı uygulama içinden durduramıyordu.
-      // Pes etmeden önce native durumla bir kez uzlaş.
-      await _reconcileBackgroundTimer();
-      if (_disposed || !state.isRunning) return;
-    }
-    final startedAt = state.startedAt;
-    final subjectId = state.subjectId;
-    final wasWork = state.phase == TimerPhase.work;
-    final end = (at != null && startedAt != null && at.isAfter(startedAt))
-        ? at
-        : DateTime.now();
-
-    await _verifiedStartFuture;
-
-    // WP-104: oturum kaydını native FGS teardown (_finish → STOP_SILENT) öncesine
-    // al. Süreç erken ölürse bile offline-first cache/outbox oturumu tutar;
-    // STOP_SILENT kuyruğa interval yazmadığı için çift kayıt üretmez.
-    if (wasWork && startedAt != null) {
-      if (state.liveRunToken case final token?) {
-        await _finalizeVerifiedRun(token);
-      } else {
-        await _recordSession(startedAt, end, subjectId);
+    // WP-246 (D2): devam eden bir durdurma varken ikinci giriş, aynı aralığı
+    // tekrar kaydedip toplamı şişiriyordu → reddet.
+    if (_stopInFlight) return;
+    _stopInFlight = true;
+    try {
+      if (!state.isRunning) {
+        // WP-233: uygulama ÖNPLANDAYKEN bildirimden Başlat'a basılırsa resume
+        // olayı hiç tetiklenmez, dolayısıyla native SSOT bu isolate'e adopte
+        // edilmez ve state.isRunning false kalır. Eskiden burada sessizce
+        // dönerdik → kullanıcı sayacı uygulama içinden durduramıyordu.
+        // Pes etmeden önce native durumla bir kez uzlaş.
+        await _reconcileBackgroundTimer();
+        if (_disposed || !state.isRunning) return;
       }
+      final startedAt = state.startedAt;
+      final subjectId = state.subjectId;
+      final wasWork = state.phase == TimerPhase.work;
+      final end = (at != null && startedAt != null && at.isAfter(startedAt))
+          ? at
+          : DateTime.now();
+
+      await _verifiedStartFuture;
+
+      // WP-104: oturum kaydını native FGS teardown (_finish → STOP_SILENT)
+      // öncesine al. Süreç erken ölürse bile offline-first cache/outbox oturumu
+      // tutar; STOP_SILENT kuyruğa interval yazmadığı için çift kayıt üretmez.
+      try {
+        if (wasWork && startedAt != null) {
+          if (state.liveRunToken case final token?) {
+            await _finalizeVerifiedRun(token);
+          } else {
+            await _recordSession(startedAt, end, subjectId);
+          }
+        }
+      } finally {
+        // WP-246 (D4): kayıt/finalize hata verse bile sayaç DURMALI. Oturum
+        // offline-first cache/outbox'ta zaten güvende; aksi halde tek bir hata
+        // "sayaç durdurulamıyor"a dönüşüyordu (D1 mayınının belirtisi buydu).
+        _finish();
+      }
+    } finally {
+      _stopInFlight = false;
     }
-    _finish();
   }
 
   void _startTick() {

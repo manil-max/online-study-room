@@ -338,6 +338,46 @@ void main() {
     );
   });
 
+  group('WP-246: stop() reentrancy (D2 — çift/çoklu sayım)', () {
+    test(
+      'ardı ardına Durdur basışı tek oturum kaydeder (aynı aralık tekrar yok)',
+      () async {
+        // Geçmişte başlamış çalışan sayaç (kayıt/RTT penceresi olsun diye).
+        final start = DateTime.now().subtract(const Duration(minutes: 15));
+        final (container, studyRepo, profile) = await _buildContainer({
+          'timer_active_started_at': start.toIso8601String(),
+          'timer_active_started_at_ms': start.millisecondsSinceEpoch,
+          'timer_active_mode': TimerMode.stopwatch.name,
+          'timer_active_phase': TimerPhase.work.name,
+          'timer_active_cycle': 1,
+          'timer_fg_mode': 'running',
+        });
+        final timerSub = container.listen(studyTimerProvider, (_, _) {});
+        addTearDown(timerSub.close);
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+        expect(container.read(studyTimerProvider).isRunning, isTrue);
+
+        // Kullanıcı Durdur'a ard arda 4 kez basar; state ilk stop'un `await`'i
+        // bitene kadar `running` kaldığı için kilitsizken hepsi kayıt üretirdi.
+        final notifier = container.read(studyTimerProvider.notifier);
+        await Future.wait([
+          notifier.stop(),
+          notifier.stop(),
+          notifier.stop(),
+          notifier.stop(),
+        ]);
+
+        final sessions = await studyRepo.watchUserSessions(profile.id).first;
+        expect(
+          sessions,
+          hasLength(1),
+          reason: 'reentrancy kilidi → tek oturum, çift sayım yok',
+        );
+        expect(container.read(studyTimerProvider).isRunning, isFalse);
+      },
+    );
+  });
+
   group('WP-243: içerik-temelli durdurma yarışı (echo bastırma)', () {
     // Native→Dart `reconcile` broadcast'ini tetikler (gerçek native yayınının
     // uygulama önplandayken yaptığı çağrının aynısı).
