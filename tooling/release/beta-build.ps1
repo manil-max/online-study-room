@@ -6,6 +6,7 @@ param(
   [Parameter(Mandatory)][string]$ProductionProjectRef,
   [Parameter(Mandatory)][string]$ExpectedGitSha,
   [Parameter(Mandatory)][string]$ExpectedMigrationHead,
+  [ValidatePattern('^\d+\.\d+\.\d+-beta\.\d+$')][string]$VersionName = '1.0.42-beta.1',
   [Parameter(Mandatory)][ValidatePattern('^\d+$')][string]$BuildNumber,
   [string]$EvidenceRoot
 )
@@ -16,14 +17,21 @@ Import-Module $guardModule -Force
 
 $repoRoot = Get-RepoRoot
 $appRoot = Join-Path $repoRoot 'app'
-$envPath = Join-Path $appRoot 'env.json'
+$localEnvPath = Join-Path $appRoot 'env.json'
 $evidenceDirectory = New-EvidenceDirectory -Kind 'staging-beta-build' -EvidenceRoot $EvidenceRoot -RepoRoot $repoRoot
+$temporaryEnvDirectory = Join-Path ([IO.Path]::GetTempPath()) "online-study-room-beta-$([guid]::NewGuid().ToString('N'))"
+$temporaryEnvPath = Join-Path $temporaryEnvDirectory 'env.staging-build.json'
 $startedAt = (Get-Date).ToUniversalTime()
 $status = 'failed'
 $failure = $null
 $steps = [Collections.Generic.List[string]]::new()
 $artifact = $null
 $anonKey = $env:STAGING_SUPABASE_ANON_KEY
+$localEnvExisted = Test-Path -LiteralPath $localEnvPath
+$localEnvHashBefore = if ($localEnvExisted) {
+  (Get-FileHash -LiteralPath $localEnvPath -Algorithm SHA256).Hash.ToLowerInvariant()
+} else { $null }
+$localEnvPreserved = $false
 
 function Invoke-FlutterEvidence {
   param([string[]]$Arguments, [string]$Label)
@@ -33,9 +41,6 @@ function Invoke-FlutterEvidence {
 
 Push-Location $repoRoot
 try {
-  if (Test-Path -LiteralPath $envPath) {
-    throw 'app/env.json already exists; refusing to overwrite a real local environment file.'
-  }
   if ([string]::IsNullOrWhiteSpace($anonKey)) {
     throw 'STAGING_SUPABASE_ANON_KEY must come from the staging environment secret store.'
   }
@@ -54,16 +59,20 @@ try {
     GIT_COMMIT_SHA = $ExpectedGitSha
     MIGRATION_HEAD = $ExpectedMigrationHead
     DISTRIBUTION_CHANNEL = 'githubBeta'
+    APP_VERSION_NAME = $VersionName
+    APP_BUILD_NUMBER = $BuildNumber
   }
-  Write-DeployJson -Value $buildManifest -Path $envPath
+  [IO.Directory]::CreateDirectory($temporaryEnvDirectory) | Out-Null
+  Write-DeployJson -Value $buildManifest -Path $temporaryEnvPath
+  $defineFromFile = "--dart-define-from-file=$temporaryEnvPath"
 
   Push-Location $appRoot
   try {
     Invoke-FlutterEvidence -Arguments @('pub', 'get') -Label '01-flutter-pub-get'
     Invoke-FlutterEvidence -Arguments @('analyze') -Label '02-flutter-analyze'
-    Invoke-FlutterEvidence -Arguments @('test', 'test/core/current_build_manifest_gate_test.dart', '--dart-define-from-file=env.json', '--dart-define=ENFORCE_CURRENT_BUILD_MANIFEST=true') -Label '03-build-manifest-gate'
-    Invoke-FlutterEvidence -Arguments @('test', '--dart-define-from-file=env.json') -Label '04-flutter-test'
-    Invoke-FlutterEvidence -Arguments @('build', 'apk', '--release', '--flavor', 'beta', "--build-number=$BuildNumber", '--dart-define-from-file=env.json') -Label '05-beta-apk'
+    Invoke-FlutterEvidence -Arguments @('test', 'test/core/current_build_manifest_gate_test.dart', $defineFromFile, '--dart-define=ENFORCE_CURRENT_BUILD_MANIFEST=true') -Label '03-build-manifest-gate'
+    Invoke-FlutterEvidence -Arguments @('test', $defineFromFile) -Label '04-flutter-test'
+    Invoke-FlutterEvidence -Arguments @('build', 'apk', '--release', '--flavor', 'beta', "--build-name=$VersionName", "--build-number=$BuildNumber", $defineFromFile) -Label '05-beta-apk'
   } finally {
     Pop-Location
   }
@@ -74,6 +83,7 @@ try {
     name = 'app-beta-release.apk'
     bytes = (Get-Item -LiteralPath $apk).Length
     sha256 = (Get-FileHash -LiteralPath $apk -Algorithm SHA256).Hash.ToLowerInvariant()
+    version_name = $VersionName
     build_number = $BuildNumber
   }
   $status = 'success'
@@ -81,8 +91,20 @@ try {
   $failure = $_.Exception.Message
   throw
 } finally {
-  if (Test-Path -LiteralPath $envPath) {
-    Remove-Item -LiteralPath $envPath -Force
+  if (Test-Path -LiteralPath $temporaryEnvPath) {
+    Remove-Item -LiteralPath $temporaryEnvPath -Force
+  }
+  if (Test-Path -LiteralPath $temporaryEnvDirectory) {
+    Remove-Item -LiteralPath $temporaryEnvDirectory -Force
+  }
+  $localEnvExistsAfter = Test-Path -LiteralPath $localEnvPath
+  $localEnvHashAfter = if ($localEnvExistsAfter) {
+    (Get-FileHash -LiteralPath $localEnvPath -Algorithm SHA256).Hash.ToLowerInvariant()
+  } else { $null }
+  $localEnvPreserved = $localEnvExisted -eq $localEnvExistsAfter -and $localEnvHashBefore -eq $localEnvHashAfter
+  if (-not $localEnvPreserved) {
+    $status = 'failed'
+    $failure = 'Existing app/env.json preservation check failed.'
   }
   $manifest = [ordered]@{
     schema_version = 1
@@ -93,6 +115,9 @@ try {
     project_ref = $ProjectRef
     git_sha = $ExpectedGitSha
     migration_head = $ExpectedMigrationHead
+    version_name = $VersionName
+    build_number = $BuildNumber
+    local_env_preserved = $localEnvPreserved
     started_at_utc = $startedAt.ToString('o')
     completed_at_utc = (Get-Date).ToUniversalTime().ToString('o')
     steps = @($steps)
@@ -102,4 +127,7 @@ try {
   Write-DeployJson -Value $manifest -Path (Join-Path $evidenceDirectory 'beta-build-manifest.json')
   Write-Host "Evidence: $evidenceDirectory"
   Pop-Location
+  if (-not $localEnvPreserved) {
+    throw 'Existing app/env.json preservation check failed.'
+  }
 }

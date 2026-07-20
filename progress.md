@@ -71,13 +71,13 @@
 ### Codex Lane
 - **Durum:** [~] Aktif
 - **Faz/WP:** WP-229/230 staging kabul kapısı
-- **Aşama:** Gerçek cihaz QA hazırlanıyor
-- **SAHİP yollar:** `supabase/migrations/0064_*`, `supabase/tests/**`, `tooling/supabase/DeployGuard.psm1`, `tooling/supabase/remote.ps1`, `tooling/supabase/create-staging-owner.ps1`, staging prerequisite helper, `tooling/supabase/guard.tests.ps1`, `tooling/release/deploy-contract.json`, `tooling/README.md`, staging/GitHub Environment yapılandırması, `docs/recovery/EQUAL-SOURCES-RECONCILIATION.md`, `docs/recovery/ENVIRONMENT-MATRIX.md`, WP-229/230 kabul kanıtları, `progress.md`
+- **Aşama:** WP-230 gerçek staging beta artefaktı hazırlanıyor
+- **SAHİP yollar:** `supabase/migrations/0064_*`, `supabase/tests/**`, `tooling/supabase/DeployGuard.psm1`, `tooling/supabase/remote.ps1`, staging owner helper'ları, `tooling/supabase/guard.tests.ps1`, `tooling/release/deploy-contract.json`, `tooling/release/beta-build.ps1`, `tooling/release/staging-beta-owner.ps1`, `tooling/README.md`, staging/GitHub Environment yapılandırması, `docs/recovery/EQUAL-SOURCES-RECONCILIATION.md`, `docs/recovery/ENVIRONMENT-MATRIX.md`, WP-229/230 kabul kanıtları, `progress.md`
 - **Ortak/riskli yüzey:** Supabase CLI ile ayrı staging projesi; `0064` yalnız staging; production mutasyonu kesinlikle yok
 - **Dal:** `main`
 - **Başlangıç:** 2026-07-20 14:15 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-20 15:14 (Europe/Istanbul)
-- **Not:** Staging prerequisite inspect/bootstrap sonrası `0053–0063`, ardından immutable ileri `0064` uygulandı. Exact `8a9bc4d6162e29d46e1c4d3ce8d7ce3c8c965d7c` apply manifesti başarılı; remote head `0064`, linked pgTAP/RLS/invariant 80/80 PASS. Küçük WP-229 prepare/apply için yalnız staging ref'ine ve sabit aggregate SQL'e izin veren wrapper hazır; local 2 kullanıcılı prova session/duration/ledger/claimed kaybı 0 ve XP mismatch 0 verdi. Sırada aynı akışın staging kanıtı, ardından gerçek staging beta build'i var. Production mutasyonu yok. Proje parolası yalnız kullanıcı kontrollü güvenli istemde girilecek; repoya, sohbete veya kanıta yazılmayacak.
+- **Son güncelleme:** 2026-07-20 15:20 (Europe/Istanbul)
+- **Not:** Staging prerequisite inspect/bootstrap sonrası `0053–0063`, ardından immutable ileri `0064` uygulandı. Exact `8a9bc4d6162e29d46e1c4d3ce8d7ce3c8c965d7c` apply manifesti başarılı; remote head `0064`, linked pgTAP/RLS/invariant 80/80 PASS. WP-229 küçük staging prepare/apply `79e6f7435f10db04b88bf52be1b6e4f9c9d55edf` ile geçti: fresh staging batch'i 0 kullanıcı/0 diff, apply sonrası session/duration/ledger/XP/claimed deltaları ve XP mismatch 0. Yerel non-empty prova 2 kullanıcı/2 session ile aynı kayıpsız sonucu verdi. WP-230 için gerçek public staging key'ini yalnız CLI süreç belleğinde kullanan, mevcut `app/env.json` hash'ini koruyan geçici-manifest beta build'i hazırlanıyor. Production mutasyonu yok; hiçbir gizli değer repoya veya kanıta yazılmadı.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta

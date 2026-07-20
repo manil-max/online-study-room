@@ -1,6 +1,6 @@
 # WP-229 — Eşit Süre Kaynakları ve Güvenli Reconciliation
 
-> Durum: **0064 staging'de; linked pgTAP/RLS/invariant kapısı 80/80 geçti. Küçük staging reconciliation kabulü yürütülüyor.**
+> Durum: **0064 staging'de; linked pgTAP/RLS/invariant 80/80 ve küçük staging reconciliation kabulü geçti.**
 > Production: **NO-GO.** WP-232 backup, dry-run, staging soak ve somut kullanıcı
 > GO'su olmadan bu migration veya reconciliation production'da çalıştırılmaz.
 
@@ -108,6 +108,11 @@ Evidence kökü `.artifacts/deploy-evidence/` altındadır ve git'e alınmaz.
 - remote migration head `0064`, linked pgTAP/RLS/invariant **80/80 PASS**;
 - linked fixture transaction sonunda rollback oldu; staging'de kalıcı test kullanıcısı
   veya session bırakılmadı.
+- prepare: `20260720T121640587Z-staging-reconcile-prepare`; fresh staging boş
+  olduğundan `user_count=0`, `diff_count=0`, tüm baseline'lar `0`;
+- apply: `20260720T121735397Z-staging-reconcile-apply`; status `applied`, session,
+  duration, ledger count/XP ve claimed reward deltalarının tamamı `0`, XP/profile
+  mismatch `0`.
 
 Küçük canlı kabul batch'i için `staging-reconciliation-owner.ps1` yalnız izole
 staging ref'ine izin verir. Prepare limiti sabit `10` kullanıcıdır. Kanıta run UUID,
@@ -129,9 +134,9 @@ Staging apply yalnız WP-228 protected akışıyla yapılır:
 6. Aynı commit/head'e bağlı beta artefaktında beş süre rotası ve claim akışı gerçek
    cihazda doğrulanır.
 
-Staging projesi kurulmuş ve 0064 apply/linked test kapısı geçmiştir; küçük
-reconciliation batch'i, GitHub protected Environment ve gerçek cihaz kabulü hâlâ
-owner QA kapsamındadır. Bunların hiçbiri production'a geçiş izni değildir.
+Staging projesi kurulmuş; 0064 apply/linked test ve küçük reconciliation batch
+kapıları geçmiştir. GitHub protected Environment ve gerçek cihaz kabulü hâlâ owner
+QA kapsamındadır. Bunların hiçbiri production'a geçiş izni değildir.
 
 ## Rollback
 

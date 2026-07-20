@@ -124,6 +124,19 @@ bir `prepared` run varken çalışır ve session/duration/ledger/reward kayıp d
 raporlar. Parola iki adımda da görünür terminalde `SecureString` olarak alınır;
 run/kullanıcı kimlikleri ve gizli değerler evidence loglarına yazılmaz.
 
+Gerçek staging beta APK'sı owner CLI oturumundaki publishable/anon anahtarı ekrana
+ve loga yazılmadan seçilerek üretilir:
+
+```powershell
+./tooling/release/staging-beta-owner.ps1 -ExpectedGitSha '<40-char-sha>'
+```
+
+`beta-build.ps1` staging define manifestini sistem geçici dizininde oluşturur ve
+her sonuçta siler. Mevcut `app/env.json` okunmaz, taşınmaz veya overwrite edilmez;
+öncesi/sonrası SHA-256 eşitliği manifestte `local_env_preserved=true` olarak
+kanıtlanır. WP-230 kimliği `1.0.42-beta.1+4201`, backend staging ve migration head
+`0064` olmalıdır; artefakt manifesti APK SHA-256'sını kaydeder.
+
 `production-apply` bunlara ek olarak protected `production` Environment onayı,
 `tooling/release/production-backup-checklist.example.json` sözleşmesine uyan
 makine-okunur backup checklist JSON'u ve şu exact confirmation'ı ister:
