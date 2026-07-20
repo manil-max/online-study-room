@@ -35,8 +35,9 @@ class UpdaterService {
   /// WP-110: [DistributionConfig.releaseNotesChannel] ile hizalı.
   static String get channel => DistributionConfig.releaseNotesChannel;
 
-  static bool get _isBeta =>
-      DistributionConfig.current == DistributionChannel.githubBeta;
+  // Windows'ta DistributionChannel her iki kanal için `windows` olduğundan
+  // beta/stable seçimi açık CHANNEL manifestinden okunur (WP-227).
+  static bool get _isBeta => channel == 'beta';
 
   /// Yeni sürüm varsa bilgisini, yoksa `null` döndürür.
   /// Ağ/parse hatalarında sessizce `null` döner (uygulama açılışını bloklamaz).

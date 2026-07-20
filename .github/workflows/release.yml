@@ -64,22 +64,64 @@ jobs:
 
       - run: flutter pub get
 
+      - name: Kanal/backend manifestini env.json olarak üret
+        shell: bash
+        env:
+          STAGING_SUPABASE_URL: ${{ secrets.STAGING_SUPABASE_URL }}
+          STAGING_SUPABASE_ANON_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
+          PRODUCTION_SUPABASE_URL: ${{ secrets.PRODUCTION_SUPABASE_URL }}
+          PRODUCTION_SUPABASE_ANON_KEY: ${{ secrets.PRODUCTION_SUPABASE_ANON_KEY }}
+          STAGING_SUPABASE_PROJECT_REF: ${{ vars.STAGING_SUPABASE_PROJECT_REF }}
+          PRODUCTION_SUPABASE_PROJECT_REF: ${{ vars.PRODUCTION_SUPABASE_PROJECT_REF }}
+        run: |
+          if [ "${{ steps.meta.outputs.channel }}" = "beta" ]; then
+            export APP_ENVIRONMENT=staging
+            export SUPABASE_URL="$STAGING_SUPABASE_URL"
+            export SUPABASE_ANON_KEY="$STAGING_SUPABASE_ANON_KEY"
+            export SUPABASE_PROJECT_REF="$STAGING_SUPABASE_PROJECT_REF"
+            export DISTRIBUTION_CHANNEL=githubBeta
+          else
+            export APP_ENVIRONMENT=production
+            export SUPABASE_URL="$PRODUCTION_SUPABASE_URL"
+            export SUPABASE_ANON_KEY="$PRODUCTION_SUPABASE_ANON_KEY"
+            export SUPABASE_PROJECT_REF="$PRODUCTION_SUPABASE_PROJECT_REF"
+            export DISTRIBUTION_CHANNEL=githubStable
+          fi
+          export RELEASE_CHANNEL="${{ steps.meta.outputs.channel }}"
+          python - <<'PY'
+          import json, os
+          manifest = {
+              "CHANNEL": os.environ["RELEASE_CHANNEL"],
+              "APP_ENVIRONMENT": os.environ["APP_ENVIRONMENT"],
+              "ALLOW_IN_MEMORY": "false",
+              "SUPABASE_URL": os.environ["SUPABASE_URL"],
+              "SUPABASE_ANON_KEY": os.environ["SUPABASE_ANON_KEY"],
+              "SUPABASE_PROJECT_REF": os.environ["SUPABASE_PROJECT_REF"],
+              "STAGING_SUPABASE_PROJECT_REF": os.environ["STAGING_SUPABASE_PROJECT_REF"],
+              "PRODUCTION_SUPABASE_PROJECT_REF": os.environ["PRODUCTION_SUPABASE_PROJECT_REF"],
+              "GIT_COMMIT_SHA": os.environ["GITHUB_SHA"],
+              "MIGRATION_HEAD": "0062",
+              "DISTRIBUTION_CHANNEL": os.environ["DISTRIBUTION_CHANNEL"],
+          }
+          with open("env.json", "w", encoding="utf-8") as handle:
+              json.dump(manifest, handle)
+          PY
+
+      - name: Kanal/backend fail-closed guard
+        run: >
+          flutter test test/core/current_build_manifest_gate_test.dart
+          --dart-define-from-file=env.json
+          --dart-define=ENFORCE_CURRENT_BUILD_MANIFEST=true
+
       - name: Release APK derle (${{ steps.meta.outputs.flavor }})
         run: |
           # WP-110: GitHub sideload only (stable/beta). Play AAB ayrı komut:
           # flutter build appbundle --flavor play --release \
           #   --dart-define=DISTRIBUTION_CHANNEL=play --dart-define-from-file=env.json
-          DIST_CHANNEL=githubStable
-          if [ "${{ steps.meta.outputs.channel }}" = "beta" ]; then
-            DIST_CHANNEL=githubBeta
-          fi
           flutter build apk --release \
             --flavor ${{ steps.meta.outputs.flavor }} \
             --build-number=${{ steps.meta.outputs.code }} \
-            --dart-define=CHANNEL=${{ steps.meta.outputs.channel }} \
-            --dart-define=DISTRIBUTION_CHANNEL=$DIST_CHANNEL \
-            --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
-            --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
+            --dart-define-from-file=env.json
 
       - name: Play installer izni guard (sideload APK'de olmali)
         run: |

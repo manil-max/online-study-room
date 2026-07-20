@@ -8,6 +8,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'core/config/app_build_manifest.dart';
+import 'core/config/build_configuration_error_app.dart';
 import 'core/config/supabase_config.dart';
 import 'core/desktop/desktop_window.dart';
 import 'core/l10n/system_localizations.dart';
@@ -29,6 +31,17 @@ import 'package:online_study_room/features/android_widgets/android_widget_servic
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // WP-227: Kanal/backend kimliği bütün veri ve native servislerden önce
+  // doğrulanır. Beta→production veya stable→staging (ya da eksik release env)
+  // hiçbir Supabase/native write başlatmadan güvenli hata yüzeyine düşer.
+  final AppBuildManifest buildManifest;
+  try {
+    buildManifest = AppBuildManifest.current;
+  } on BuildConfigurationException catch (error) {
+    runApp(BuildConfigurationErrorApp(errorCode: error.code));
+    return;
+  }
 
   // BuildContext oluşmadan da sistem dil sözleşmesini koru. Bu değer yalnız
   // Windows cold-start hata yüzeyinde kullanılır.
@@ -70,9 +83,9 @@ Future<void> main() async {
   // Masaüstü: bounds hazırlanır ama pencere henüz show edilmez (beyaz HWND önlemi).
   await initDesktopWindow();
 
-  // Anahtarlar verilmişse Supabase'i başlat; verilmemişse uygulama bellek-içi
-  // modda açılır (Supabase'siz hızlı deneme için). Bkz. core/config/supabase_config.dart
-  if (SupabaseConfig.isConfigured) {
+  // InMemory yalnız açıkça local+ALLOW_IN_MEMORY=true derlemesinde mümkündür.
+  // Beta/stable için eksik anahtar veya yanlış backend yukarıdaki kapıda kapanır.
+  if (buildManifest.usesSupabase) {
     await Supabase.initialize(
       url: SupabaseConfig.url,
       // "publishable" = eski "anon public" anahtarın yeni adı (aynı anahtar).
@@ -131,7 +144,10 @@ class OnlineStudyRoomApp extends ConsumerWidget {
     // kalır.
     final locale = language == AppLanguage.system
         ? null
-        : resolvePreferredAppLocale(PlatformDispatcher.instance.locale, language);
+        : resolvePreferredAppLocale(
+            PlatformDispatcher.instance.locale,
+            language,
+          );
     final family = settings.family;
     final ThemeData lightTheme;
     final ThemeData darkTheme;

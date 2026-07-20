@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:online_study_room/core/config/app_build_manifest.dart';
 import 'package:online_study_room/features/updater/release_notes_screen.dart';
 import 'package:online_study_room/features/updater/release_notes_service.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
@@ -102,36 +103,39 @@ void main() {
       expect(en.highlights, ['A']);
     });
 
-    test('bundled asset includes v28, v29 and staged v30 with EN fields', () async {
-      // TestWidgetsFlutterBinding + rootBundle → assets/release_notes.json
-      final service = ReleaseNotesService(preferences: prefs);
-      final notes = await service.loadBundledNotes();
-      final byBuild = {for (final n in notes) n.buildNumber: n};
-      expect(byBuild.containsKey(28), isTrue);
-      expect(byBuild.containsKey(29), isTrue);
-      expect(byBuild.containsKey(30), isTrue);
+    test(
+      'bundled asset includes v28, v29 and staged v30 with EN fields',
+      () async {
+        // TestWidgetsFlutterBinding + rootBundle → assets/release_notes.json
+        final service = ReleaseNotesService(preferences: prefs);
+        final notes = await service.loadBundledNotes();
+        final byBuild = {for (final n in notes) n.buildNumber: n};
+        expect(byBuild.containsKey(28), isTrue);
+        expect(byBuild.containsKey(29), isTrue);
+        expect(byBuild.containsKey(30), isTrue);
 
-      final v29 = byBuild[29]!;
-      expect(v29.titleEn, isNotEmpty);
-      expect(v29.highlightsEn, isNotEmpty);
-      final en = v29.forLocale(const Locale('en'));
-      expect(en.title, v29.titleEn);
-      final tr = v29.forLocale(const Locale('tr'));
-      expect(tr.title, v29.title);
+        final v29 = byBuild[29]!;
+        expect(v29.titleEn, isNotEmpty);
+        expect(v29.highlightsEn, isNotEmpty);
+        final en = v29.forLocale(const Locale('en'));
+        expect(en.title, v29.titleEn);
+        final tr = v29.forLocale(const Locale('tr'));
+        expect(tr.title, v29.title);
 
-      final v30 = byBuild[30]!;
-      expect(
-        v30.notes.any(
-          (n) =>
-              n.toLowerCase().contains('taslak') ||
-              n.toLowerCase().contains('release'),
-        ),
-        isTrue,
-      );
-      expect(v30.titleEn.toLowerCase(), contains('draft'));
-      final de = v30.forLocale(const Locale('de'));
-      expect(de.title, v30.titleEn); // non-tr → EN
-    });
+        final v30 = byBuild[30]!;
+        expect(
+          v30.notes.any(
+            (n) =>
+                n.toLowerCase().contains('taslak') ||
+                n.toLowerCase().contains('release'),
+          ),
+          isTrue,
+        );
+        expect(v30.titleEn.toLowerCase(), contains('draft'));
+        final de = v30.forLocale(const Locale('de'));
+        expect(de.title, v30.titleEn); // non-tr → EN
+      },
+    );
   });
 
   group('ReleaseNotesScreen', () {
@@ -160,7 +164,22 @@ void main() {
           locale: const Locale('tr'),
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
-          home: ReleaseNotesScreen(service: service),
+          home: ReleaseNotesScreen(
+            service: service,
+            buildManifest: AppBuildManifest.resolve(
+              channel: 'beta',
+              environment: 'staging',
+              supabaseUrl: 'https://aaaaaaaaaaaaaaaaaaaa.supabase.co',
+              supabaseAnonKey: 'sb_publishable_test_key',
+              selectedProjectRef: 'aaaaaaaaaaaaaaaaaaaa',
+              stagingProjectRef: 'aaaaaaaaaaaaaaaaaaaa',
+              productionProjectRef: 'bbbbbbbbbbbbbbbbbbbb',
+              gitCommitSha: 'abcdef1234567890',
+              migrationHead: '0062',
+              allowInMemory: false,
+              flutterFlavor: 'beta',
+            ),
+          ),
         ),
       );
 
@@ -169,6 +188,9 @@ void main() {
 
       expect(find.text('Güncelleme notları'), findsOneWidget);
       expect(find.text('İlk sürüm'), findsOneWidget);
+      expect(find.text('Derleme tanısı'), findsOneWidget);
+      expect(find.text('staging · aaaaaa…aaaa'), findsOneWidget);
+      expect(find.text('abcdef12'), findsOneWidget);
     });
 
     testWidgets('English locale shows titleEn', (tester) async {

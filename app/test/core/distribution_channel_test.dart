@@ -54,17 +54,32 @@ void main() {
       expect(DistributionConfig.allowsSideloadUpdatesFor(channel), isFalse);
     });
 
-    test('yanlis githubStable define + flavor=play → yine play (sideload kapali)', () {
+    test('flavor=local release updaterini kapatir', () {
       final channel = DistributionConfig.resolve(
-        distributionDefine: 'githubStable',
-        legacyChannel: 'stable',
-        flutterAppFlavor: 'play',
+        distributionDefine: 'githubBeta',
+        legacyChannel: 'beta',
+        flutterAppFlavor: 'local',
         isWeb: false,
         platform: TargetPlatform.android,
       );
       expect(channel, DistributionChannel.play);
       expect(DistributionConfig.allowsSideloadUpdatesFor(channel), isFalse);
     });
+
+    test(
+      'yanlis githubStable define + flavor=play → yine play (sideload kapali)',
+      () {
+        final channel = DistributionConfig.resolve(
+          distributionDefine: 'githubStable',
+          legacyChannel: 'stable',
+          flutterAppFlavor: 'play',
+          isWeb: false,
+          platform: TargetPlatform.android,
+        );
+        expect(channel, DistributionChannel.play);
+        expect(DistributionConfig.allowsSideloadUpdatesFor(channel), isFalse);
+      },
+    );
 
     test('flavor=stable define yok → githubStable (android)', () {
       final channel = DistributionConfig.resolve(
@@ -99,9 +114,23 @@ void main() {
     });
 
     test('channel releaseNotesChannel ile hizali', () {
+      expect(UpdaterService.channel, DistributionConfig.releaseNotesChannel);
+    });
+
+    test('Windows dağıtımı açık CHANNEL=beta bilgisini korur', () {
       expect(
-        UpdaterService.channel,
-        DistributionConfig.releaseNotesChannel,
+        DistributionConfig.resolveReleaseNotesChannel(
+          legacyChannel: 'beta',
+          distributionChannel: DistributionChannel.windows,
+        ),
+        'beta',
+      );
+      expect(
+        DistributionConfig.resolveReleaseNotesChannel(
+          legacyChannel: 'stable',
+          distributionChannel: DistributionChannel.windows,
+        ),
+        'stable',
       );
     });
   });

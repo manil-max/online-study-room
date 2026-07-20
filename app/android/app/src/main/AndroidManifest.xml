@@ -54,10 +54,11 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <!-- 
-                  Accepts URIs that begin with "com.manilmax.onlinestudyroom://login-callback"
-                  Configure this in Supabase Dashboard -> Authentication -> URL Configuration
+                  Flavor'a özel callback scheme beta/stable auth oturumlarını
+                  aynı telefonda birbirinden ayırır. Her scheme ilgili Supabase
+                  projesinin Authentication -> URL Configuration listesine eklenir.
                 -->
-                <data android:scheme="com.manilmax.onlinestudyroom" android:host="login-callback" />
+                <data android:scheme="${authCallbackScheme}" android:host="login-callback" />
             </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.

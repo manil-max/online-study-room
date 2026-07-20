@@ -10,6 +10,8 @@ import 'package:flutter/services.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../core/config/distribution_channel.dart';
+
 /// Uygulama içi sürüm notlarının tek bundled kaynağı.
 ///
 /// GitHub Release body boş olduğunda updater bu veriyi fallback olarak kullanır.
@@ -67,10 +69,7 @@ class ReleaseNotesService {
   Future<CurrentReleaseState> currentReleaseState() async {
     final packageInfo = await _packageInfoLoader();
     final buildNumber = int.tryParse(packageInfo.buildNumber) ?? 0;
-    final channel = const String.fromEnvironment(
-      'CHANNEL',
-      defaultValue: 'stable',
-    );
+    final channel = DistributionConfig.releaseNotesChannel;
     final note = await noteForBuild(buildNumber, channel: channel);
     return CurrentReleaseState(
       buildNumber: buildNumber,

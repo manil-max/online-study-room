@@ -4,8 +4,10 @@
 *.local
 **/secrets.dart
 **/firebase_options.dart
-# Supabase anahtarları (env.example.json şablonu commit edilir, gerçek env.json edilmez)
+# Supabase anahtarları (yalnız *.example.json şablonları commit edilir)
 **/env.json
+**/env.*.json
+!**/env.*.example.json
 
 # --- Flutter / Dart ---
 .dart_tool/

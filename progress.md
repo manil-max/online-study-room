@@ -76,8 +76,8 @@
 - **Ortak/riskli yüzey:** —
 - **Dal:** — (`main`)
 - **Başlangıç:** —
-- **Son güncelleme:** 2026-07-20 12:16 (Europe/Istanbul)
-- **Not:** WP-226 local kapsamı tamamlandı. CLI/Docker/PG17 pinli baseline, tekrar edilebilir 0001–0063 replay ve sentetik seed hazır; 34 pgTAP + Flutter analyze 0 + 617/617 test geçti. Production write/history repair yok; stale verified-weekly lint borcu WP-229'a devredildi.
+- **Son güncelleme:** 2026-07-20 13:01 (Europe/Istanbul)
+- **Not:** WP-227 kod + otomatik test kapsamı tamamlandı ve parka alındı. Staging proje owner kurulumu, kabul edilmiş migration head/seed ve gerçek cihaz yan-yana QA bekliyor; production write yok.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
@@ -117,34 +117,12 @@
 
 | WP | Durum | Kısa kapsam | Bağımlılık |
 |---|---|---|---|
-| WP-227 | [ ] Bekliyor | Beta/stable flavor + staging/production backend izolasyonu + fail-closed | ← WP-226 |
+| WP-227 | [~] Staging/cihaz QA | Beta/stable flavor + staging/production backend izolasyonu + fail-closed | ← WP-226 |
 | WP-228 | [ ] Bekliyor | Local/staging otomasyonu + production manual approval gate | ← WP-227 |
 | WP-229 | [ ] Bekliyor | Eşit süre kaynakları ve reward/projection zinciri için güvenli ileri migration | ← WP-226, WP-227, WP-228 |
 | WP-230 | [ ] Bekliyor | 6 kademe/20k ekonomi + XP bar/metin + sürüm manifesti istemci onarımı | ← WP-227 · WP-229 ile en fazla iki lane |
 | WP-231 | [ ] Bekliyor | İstatistik dönem semantiği + toplam/realtime refresh + grup tutarlılığı | ← WP-229, WP-230 |
 | WP-232 | [ ] Bekliyor | Staging QA/soak + backup/dry-run + kontrollü production recovery release | ← WP-225–231 |
-
-### WP-227: Beta/Stable Ortam İzolasyonu 🧭
-- **Program/Faz:** Kurtarma Faz 2
-- **Ajan:** —
-- **Durum:** [ ] Bekliyor
-- **Problem:** Mevcut beta farklı tag/update kanalı olsa da stable ile aynı Supabase ve uygulama verisine bağlanıyor.
-- **Kapsam dışı:** Başarım ekonomisini düzeltmek, production migration çalıştırmak, gerçek production verisini staging'e kopyalamak.
-- **SAHİP dosyalar (yaz):** `app/android/app/build.gradle*`, flavor manifest/resource yolları, `app/lib/core/config/**`, env example şablonları, build/release scriptleri, updater kanal yapılandırması, `docs/recovery/ENVIRONMENT-MATRIX.md`, `progress.md`.
-- **DOKUNMA:** Release keystore, gerçek `env*.json`, production secret'ları, `supabase/migrations/**`.
-- **Adımlar:**
-  - [ ] Kullanıcının aynı hesabında ayrı staging Supabase projesi oluşturma/credential adımını güvenli owner checklist olarak hazırla.
-  - [ ] Beta ve stable flavor/application id/ad/icon/env ayrımını kur; mevcut updater kanalını koru.
-  - [ ] Build-time channel/backend/migration-head manifesti ve Ayarlar tanı ekranı ekle.
-  - [ ] Beta→production ve stable→staging eşleşmesini startup/build testinde fail-closed reddet.
-  - [ ] Staging'i kanonik migration+seed ile kur; production verisi kopyalama.
-- **Veri/Migration etkisi:** Yeni staging projesi kanonik zincirle kurulur; production değişmez.
-- **Ortam/Deploy:** Staging setup; production read-only.
-- **RLS/Güvenlik:** Ortam secret'ları commit edilmez; beta service role içermez; auth kullanıcıları ayrıdır.
-- **Edge-case'ler:** Aynı telefonda yan yana kurulum, deep link, widget/shared prefs/provider authority, updater'ın yanlış kanala geçmesi, staging pause.
-- **Kabul:** Beta production URL/ref ile build olamaz ve production'a tek write atamaz; stable staging ile build olamaz; iki uygulama yan yana kurulup bağımsız auth/cache/widget kullanır; ekranda channel+commit+backend görünür.
-- **Tuzaklar:** Yalnız tag ayırıp backend'i ortak bırakmak; package id değiştirirken updater/widget/deep-link kırmak.
-- **Model önerisi:** 🔴 Opus / frontier-high
 
 ### WP-228: Güvenli Deploy Otomasyonu ve Agent Kapıları 🤖
 - **Program/Faz:** Kurtarma Faz 3
@@ -268,6 +246,8 @@
 ## Test için bekleyenler (park)
 
 > Cihaz/ürün kabulü bekleyen tamamlanmış kod. Bu bölüm aktif çalışma değildir; başka WP'yi engellemez.
+
+- **WP-227 — Beta/Stable Ortam İzolasyonu** · Kod + otomatik test tamamlandı (`flutter analyze` 0; 631/631 Flutter; 34/34 hedef test; local/beta/stable Android APK + Windows beta debug build). Beta+production ve stable+staging build'leri exit 1 ile reddedildi; application id/ad/auth scheme/provider authority ayrımı APK'da doğrulandı. Commit: bu WP commit'i. **Staging/cihazda doğrulanmalı:** owner ayrı staging projesi/parolası/`STAGING_*` secret'larını kurar; `0063` HOLD nedeniyle remote migration/seed WP-228+229 sonrasına bırakılır; sonra stable+beta yan-yana auth/cache/widget/deep-link/tanı kartı QA. Production write yok. Rapor: [`docs/recovery/ENVIRONMENT-MATRIX.md`](docs/recovery/ENVIRONMENT-MATRIX.md).
 
 - **WP-L — Lider Kurt haftalık başarımı (beta-v42)** · Kod + otomatik test tamamlandı (`flutter analyze`, 617 test). `0062` production'da user-reported uygulanmış olsa da eşit-kaynak/finalizer/reward kabulü yoktur; WP-229 staging doğrulamasına bağlandı. Eşik/XP: `1/4/12/26/52/104` ve `2500/6000/15000/30000/60000/120000`.
 

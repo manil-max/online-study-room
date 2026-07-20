@@ -81,8 +81,9 @@ class DistributionConfig {
     TargetPlatform platform = TargetPlatform.android,
   }) {
     // WP-128: play flavor mutlak — Play politikası için sideload asla açılmaz.
+    // WP-227: local flavor release kanalı değildir; GitHub updater/ağ isteği yok.
     final flavor = flutterAppFlavor?.trim().toLowerCase();
-    if (flavor == 'play') {
+    if (flavor == 'play' || flavor == 'local') {
       return DistributionChannel.play;
     }
 
@@ -140,8 +141,22 @@ class DistributionConfig {
         current == DistributionChannel.githubBeta;
   }
 
-  /// Release notes / etiket kanalı (`stable` | `beta`) — mevcut API ile uyum.
-  static String get releaseNotesChannel {
-    return current == DistributionChannel.githubBeta ? 'beta' : 'stable';
+  /// Release notes / etiket kanalı (`stable` | `beta`).
+  ///
+  /// Windows dağıtım türü her iki release kanalında da `windows` olduğu için
+  /// yalnız [current] üzerinden beta bilgisi çıkarılamaz. Açık `CHANNEL` define'ı
+  /// Android ve Windows'ta tek release kanalı otoritesidir.
+  static String get releaseNotesChannel => resolveReleaseNotesChannel(
+    legacyChannel: _legacyChannel,
+    distributionChannel: current,
+  );
+
+  static String resolveReleaseNotesChannel({
+    required String legacyChannel,
+    required DistributionChannel distributionChannel,
+  }) {
+    if (legacyChannel.trim().toLowerCase() == 'beta') return 'beta';
+    if (distributionChannel == DistributionChannel.githubBeta) return 'beta';
+    return 'stable';
   }
 }

@@ -1,5 +1,6 @@
 import java.util.Properties
 import java.io.FileInputStream
+import java.util.Base64
 
 plugins {
     id("com.android.application")
@@ -13,6 +14,102 @@ val keystoreProperties = Properties()
 val keystorePropertiesFile = rootProject.file("key.properties")
 if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+}
+
+fun decodeDartDefines(raw: String?): Map<String, String> {
+    if (raw.isNullOrBlank()) return emptyMap()
+    return raw.split(',').associate { encoded ->
+        val decoded = try {
+            String(Base64.getDecoder().decode(encoded), Charsets.UTF_8)
+        } catch (_: IllegalArgumentException) {
+            throw GradleException("Dart define manifesti çözümlenemedi.")
+        }
+        val separator = decoded.indexOf('=')
+        if (separator <= 0) {
+            throw GradleException("Dart define manifestinde geçersiz kayıt var.")
+        }
+        decoded.substring(0, separator) to decoded.substring(separator + 1)
+    }
+}
+
+fun validateEnvironmentIdentity(flavor: String, defines: Map<String, String>) {
+    fun required(name: String): String = defines[name]?.trim().orEmpty().ifEmpty {
+        throw GradleException("$flavor artefaktı için $name zorunlu.")
+    }
+
+    val expectedChannel = when (flavor) {
+        "local" -> "local"
+        "beta" -> "beta"
+        "stable", "play" -> "stable"
+        else -> throw GradleException("Bilinmeyen Android flavor: $flavor")
+    }
+    val expectedEnvironment = when (flavor) {
+        "local" -> "local"
+        "beta" -> "staging"
+        else -> "production"
+    }
+    if (required("CHANNEL").lowercase() != expectedChannel ||
+        required("APP_ENVIRONMENT").lowercase() != expectedEnvironment
+    ) {
+        throw GradleException("$flavor kanal/backend eşleşmesi güvenli değil.")
+    }
+
+    val commit = required("GIT_COMMIT_SHA").lowercase()
+    val validCommit = if (flavor == "local") {
+        commit == "local-dev" || Regex("^[0-9a-f]{7,40}$").matches(commit)
+    } else {
+        Regex("^[0-9a-f]{7,40}$").matches(commit)
+    }
+    if (!validCommit || !Regex("^\\d{4}$").matches(required("MIGRATION_HEAD"))) {
+        throw GradleException("Build commit/migration kimliği geçersiz.")
+    }
+
+    val url = defines["SUPABASE_URL"]?.trim().orEmpty()
+    val anonKey = defines["SUPABASE_ANON_KEY"]?.trim().orEmpty()
+    if (flavor == "local" &&
+        defines["ALLOW_IN_MEMORY"]?.lowercase() == "true" &&
+        url.isEmpty() &&
+        anonKey.isEmpty()
+    ) {
+        return
+    }
+    if (url.isEmpty() || anonKey.isEmpty()) {
+        throw GradleException("$flavor artefaktı için Supabase client ayarları zorunlu.")
+    }
+    val selectedRef = required("SUPABASE_PROJECT_REF").lowercase()
+    if (anonKey.lowercase().startsWith("sb_secret_") ||
+        anonKey.lowercase().contains("service_role")
+    ) {
+        throw GradleException("İstemci build'inde service-role/secret key kullanılamaz.")
+    }
+
+    if (flavor == "local") {
+        if (selectedRef != "local" ||
+            !(url.startsWith("http://127.0.0.1:54321") ||
+                url.startsWith("http://localhost:54321"))
+        ) {
+            throw GradleException("Local flavor yalnız local Supabase'e bağlanabilir.")
+        }
+        return
+    }
+
+    val stagingRef = required("STAGING_SUPABASE_PROJECT_REF").lowercase()
+    val productionRef = required("PRODUCTION_SUPABASE_PROJECT_REF").lowercase()
+    val refPattern = Regex("^[a-z0-9]{20}$")
+    if (!refPattern.matches(stagingRef) ||
+        !refPattern.matches(productionRef) ||
+        stagingRef == productionRef
+    ) {
+        throw GradleException("Staging/production project-ref matrisi geçersiz.")
+    }
+    val expectedRef = if (flavor == "beta") stagingRef else productionRef
+    val forbiddenRef = if (flavor == "beta") productionRef else stagingRef
+    if (selectedRef != expectedRef ||
+        selectedRef == forbiddenRef ||
+        url != "https://$selectedRef.supabase.co"
+    ) {
+        throw GradleException("$flavor yanlış Supabase projesine yönlendiriliyor.")
+    }
 }
 
 android {
@@ -47,6 +144,7 @@ android {
             dimension = "channel"
             // Dart tarafı: --dart-define=DISTRIBUTION_CHANNEL=githubStable (CI release.yml)
             manifestPlaceholders["appName"] = "Odak Kampı"
+            manifestPlaceholders["authCallbackScheme"] = "com.manilmax.onlinestudyroom"
         }
         create("beta") {
             dimension = "channel"
@@ -54,6 +152,7 @@ android {
             versionNameSuffix = "-beta"
             // Dart: --dart-define=DISTRIBUTION_CHANNEL=githubBeta
             manifestPlaceholders["appName"] = "Odak Kampı BETA TEST"
+            manifestPlaceholders["authCallbackScheme"] = "com.manilmax.onlinestudyroom.beta"
         }
         create("play") {
             dimension = "channel"
@@ -62,10 +161,22 @@ android {
             // DistributionConfig flavor==play iken define unutulsa bile sideload updater kapalı.
             // --dart-define=DISTRIBUTION_CHANNEL=play hâlâ önerilir (açık niyet / CI).
             manifestPlaceholders["appName"] = "Odak Kampı"
+            manifestPlaceholders["authCallbackScheme"] = "com.manilmax.onlinestudyroom"
             manifestPlaceholders["distributionChannel"] = "play"
+        }
+        create("local") {
+            dimension = "channel"
+            applicationIdSuffix = ".local"
+            versionNameSuffix = "-local"
+            manifestPlaceholders["appName"] = "Odak Kampı LOCAL"
+            manifestPlaceholders["authCallbackScheme"] = "com.manilmax.onlinestudyroom.local"
         }
 
     }
+
+    // Local yalnız geliştirici kimliğidir; beta görsel işaretini tekrar kullanır,
+    // gerçek beta ile application id/ad/auth/cache/widget alanı yine ayrıdır.
+    sourceSets.getByName("local").res.srcDir("src/beta/res")
 
     signingConfigs {
         create("release") {
@@ -90,6 +201,25 @@ android {
                 )
             }
             signingConfig = signingConfigs.getByName("release")
+        }
+    }
+}
+
+// Flutter artefaktı üreten task'tan önce kanal/backend manifestini doğrula.
+// compileStableDebugKotlin gibi yalnız native derleme task'ları bu kapıya bağlı
+// değildir; APK/AAB üreten compileFlutterBuild* zinciri bağlıdır.
+listOf("local", "beta", "stable", "play").forEach { flavor ->
+    val capitalizedFlavor = flavor.replaceFirstChar { it.uppercase() }
+    val validationTask = tasks.register("validate${capitalizedFlavor}Environment") {
+        group = "verification"
+        doLast {
+            val defines = decodeDartDefines(project.findProperty("dart-defines")?.toString())
+            validateEnvironmentIdentity(flavor, defines)
+        }
+    }
+    tasks.configureEach {
+        if (name.startsWith("compileFlutterBuild$capitalizedFlavor")) {
+            dependsOn(validationTask)
         }
     }
 }

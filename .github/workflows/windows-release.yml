@@ -74,17 +74,45 @@ jobs:
           flutter config --enable-windows-desktop
           flutter --version
 
-      - name: env.json (secrets; commit edilmez)
-        shell: bash
+      - name: Kanal/backend manifestini env.json olarak üret
+        shell: pwsh
+        env:
+          STAGING_SUPABASE_URL: ${{ secrets.STAGING_SUPABASE_URL }}
+          STAGING_SUPABASE_ANON_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
+          PRODUCTION_SUPABASE_URL: ${{ secrets.PRODUCTION_SUPABASE_URL }}
+          PRODUCTION_SUPABASE_ANON_KEY: ${{ secrets.PRODUCTION_SUPABASE_ANON_KEY }}
+          STAGING_SUPABASE_PROJECT_REF: ${{ vars.STAGING_SUPABASE_PROJECT_REF }}
+          PRODUCTION_SUPABASE_PROJECT_REF: ${{ vars.PRODUCTION_SUPABASE_PROJECT_REF }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
         run: |
-          cat > env.json <<EOF
-          {
-            "SUPABASE_URL": "${{ secrets.SUPABASE_URL }}",
-            "SUPABASE_ANON_KEY": "${{ secrets.SUPABASE_ANON_KEY }}",
-            "SENTRY_DSN": "${{ secrets.SENTRY_DSN }}",
-            "SENTRY_ENABLED": "false"
+          $channel = "${{ steps.meta.outputs.channel }}"
+          if ($channel -eq "beta") {
+            $backendEnvironment = "staging"
+            $selectedUrl = $env:STAGING_SUPABASE_URL
+            $selectedKey = $env:STAGING_SUPABASE_ANON_KEY
+            $selectedRef = $env:STAGING_SUPABASE_PROJECT_REF
+          } else {
+            $backendEnvironment = "production"
+            $selectedUrl = $env:PRODUCTION_SUPABASE_URL
+            $selectedKey = $env:PRODUCTION_SUPABASE_ANON_KEY
+            $selectedRef = $env:PRODUCTION_SUPABASE_PROJECT_REF
           }
-          EOF
+          $manifest = @{
+            CHANNEL = $channel
+            APP_ENVIRONMENT = $backendEnvironment
+            ALLOW_IN_MEMORY = "false"
+            SUPABASE_URL = $selectedUrl
+            SUPABASE_ANON_KEY = $selectedKey
+            SUPABASE_PROJECT_REF = $selectedRef
+            STAGING_SUPABASE_PROJECT_REF = $env:STAGING_SUPABASE_PROJECT_REF
+            PRODUCTION_SUPABASE_PROJECT_REF = $env:PRODUCTION_SUPABASE_PROJECT_REF
+            GIT_COMMIT_SHA = $env:GITHUB_SHA
+            MIGRATION_HEAD = "0062"
+            DISTRIBUTION_CHANNEL = "windows"
+            SENTRY_DSN = $env:SENTRY_DSN
+            SENTRY_ENABLED = "false"
+          }
+          $manifest | ConvertTo-Json | Set-Content -LiteralPath env.json -Encoding utf8
 
       - run: flutter pub get
 
@@ -94,12 +122,17 @@ jobs:
       - name: Test
         run: flutter test --dart-define-from-file=env.json --concurrency=1
 
+      - name: Kanal/backend fail-closed guard
+        run: >
+          flutter test test/core/current_build_manifest_gate_test.dart
+          --dart-define-from-file=env.json
+          --dart-define=ENFORCE_CURRENT_BUILD_MANIFEST=true
+
       - name: Build Windows release
         run: >
           flutter build windows --release
           --build-number=${{ steps.meta.outputs.code }}
           --dart-define-from-file=env.json
-          --dart-define=CHANNEL=${{ steps.meta.outputs.channel }}
 
       - name: MSIX version in pubspec (CI)
         shell: bash

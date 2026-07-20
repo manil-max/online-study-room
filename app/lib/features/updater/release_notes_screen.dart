@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/config/app_build_manifest.dart';
+import '../../core/config/build_identity_card.dart';
 import '../../l10n/app_localizations.dart';
 import 'release_notes_service.dart';
 
@@ -28,9 +30,10 @@ Future<void> maybeShowWhatsNewDialog(BuildContext context) async {
 }
 
 class ReleaseNotesScreen extends StatefulWidget {
-  const ReleaseNotesScreen({super.key, this.service});
+  const ReleaseNotesScreen({super.key, this.service, this.buildManifest});
 
   final ReleaseNotesService? service;
+  final AppBuildManifest? buildManifest;
 
   @override
   State<ReleaseNotesScreen> createState() => _ReleaseNotesScreenState();
@@ -52,22 +55,48 @@ class _ReleaseNotesScreenState extends State<ReleaseNotesScreen> {
         future: _notesFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
-            return const Center(child: CircularProgressIndicator());
+            return ListView(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+              children: [
+                BuildIdentityCard(
+                  manifest:
+                      widget.buildManifest ?? AppBuildManifest.currentOrNull,
+                ),
+                const SizedBox(height: 32),
+                const Center(child: CircularProgressIndicator()),
+              ],
+            );
           }
 
           final notes = snapshot.data ?? const [];
           if (notes.isEmpty) {
-            return Center(child: Text(l10n.updaterHenuzGosterilecekSurumNotu));
+            return ListView(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+              children: [
+                BuildIdentityCard(
+                  manifest:
+                      widget.buildManifest ?? AppBuildManifest.currentOrNull,
+                ),
+                const SizedBox(height: 24),
+                Center(child: Text(l10n.updaterHenuzGosterilecekSurumNotu)),
+              ],
+            );
           }
 
           final locale = Localizations.localeOf(context);
           return ListView.separated(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-            itemCount: notes.length,
+            itemCount: notes.length + 1,
             separatorBuilder: (_, _) => const SizedBox(height: 10),
-            itemBuilder: (context, index) => ReleaseNoteCard(
-              note: notes[index].forLocale(locale),
-            ),
+            itemBuilder: (context, index) {
+              if (index == 0) {
+                return BuildIdentityCard(
+                  manifest:
+                      widget.buildManifest ?? AppBuildManifest.currentOrNull,
+                );
+              }
+              return ReleaseNoteCard(note: notes[index - 1].forLocale(locale));
+            },
           );
         },
       ),
