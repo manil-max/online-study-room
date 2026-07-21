@@ -57,6 +57,19 @@ class _SlowStudyRepository extends InMemoryStudyRepository {
   }
 }
 
+/// WP-251: seçilen oturum id'lerinde ağ hatası taklidi (kısmi kuyruk hatası).
+class _FlakyStudyRepository extends InMemoryStudyRepository {
+  final Set<String> failIds = <String>{};
+
+  @override
+  Future<void> addSession(StudySession session) async {
+    if (failIds.contains(session.id)) {
+      throw StateError('network_down');
+    }
+    await super.addSession(session);
+  }
+}
+
 /// Girişli auth + oturumları gözlenebilir bir in-memory study repo ile container
 /// kurar. [initialPrefs] FGS'in arka planda yazdığı durumu taklit eder.
 Future<(ProviderContainer, InMemoryStudyRepository, Profile)> _buildContainer(
@@ -693,5 +706,94 @@ void main() {
         expect(total, closeTo(30 * 60, 5));
       },
     );
+  });
+
+  group('WP-251: kuyruk kısmi başarısızlığı (çift yazım / kayıp yok)', () {
+    Future<void> fireReconcile4() async {
+      const channel = MethodChannel('com.manilmax.online_study_room/timer');
+      await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .handlePlatformMessage(
+            channel.name,
+            channel.codec.encodeMethodCall(const MethodCall('reconcile')),
+            (_) {},
+          );
+    }
+
+    test(
+      '2. aralık hata alsa da 1. tekrar yazılmaz, 2. sonra tamamlanır',
+      () async {
+        const idA = '11111111-1111-4111-8111-111111111111';
+        const idB = '22222222-2222-4222-8222-222222222222';
+        final s1 = DateTime.now().subtract(const Duration(hours: 3));
+        final e1 = s1.add(const Duration(minutes: 20));
+        final s2 = DateTime.now().subtract(const Duration(hours: 2));
+        final e2 = s2.add(const Duration(minutes: 30));
+
+        final flaky = _FlakyStudyRepository()..failIds.add(idB);
+        final (container, studyRepo, profile) = await _buildContainer({
+          'timer_fg_mode': 'idle',
+          'timer_pending_intervals':
+              '[{"id":"$idA","start":"${s1.toIso8601String()}",'
+              '"end":"${e1.toIso8601String()}","subject":""},'
+              '{"id":"$idB","start":"${s2.toIso8601String()}",'
+              '"end":"${e2.toIso8601String()}","subject":""}]',
+        }, repository: flaky);
+        final timerSub = container.listen(studyTimerProvider, (_, _) {});
+        addTearDown(timerSub.close);
+        await Future<void>.delayed(const Duration(milliseconds: 40));
+
+        // 1. tur: yalnız A yazıldı, B kuyrukta kaldı.
+        var sessions = await studyRepo.watchUserSessions(profile.id).first;
+        expect(sessions.map((s) => s.id), [idA]);
+        final prefs = container.read(sharedPreferencesProvider);
+        expect(
+          prefs.getString('timer_pending_intervals'),
+          contains(idB),
+          reason: 'başarısız kayıt kuyrukta kalmalı',
+        );
+        expect(
+          prefs.getString('timer_pending_intervals'),
+          isNot(contains(idA)),
+          reason: 'başarılı kayıt kuyruktan düşmeli (replay kaynağı buydu)',
+        );
+
+        // 2. tur: ağ düzeldi.
+        flaky.failIds.clear();
+        await fireReconcile4();
+        await Future<void>.delayed(const Duration(milliseconds: 40));
+
+        sessions = await studyRepo.watchUserSessions(profile.id).first;
+        expect(
+          sessions.map((s) => s.id).toSet(),
+          {idA, idB},
+          reason: 'iki oturum da yazılmalı',
+        );
+        expect(sessions, hasLength(2), reason: 'A ikinci kez yazılmamalı');
+        expect(prefs.getString('timer_pending_intervals'), isNull);
+      },
+    );
+
+    test('kuyruktaki id, oturum id olarak kullanılır (idempotency anahtarı)', () async {
+      const nativeId = '33333333-3333-4333-8333-333333333333';
+      final s = DateTime.now().subtract(const Duration(hours: 1));
+      final e = s.add(const Duration(minutes: 10));
+      final (container, studyRepo, profile) = await _buildContainer({
+        'timer_fg_mode': 'idle',
+        'timer_pending_intervals':
+            '[{"id":"$nativeId","start":"${s.toIso8601String()}",'
+            '"end":"${e.toIso8601String()}","subject":""}]',
+      });
+      final timerSub = container.listen(studyTimerProvider, (_, _) {});
+      addTearDown(timerSub.close);
+      await Future<void>.delayed(const Duration(milliseconds: 40));
+
+      final sessions = await studyRepo.watchUserSessions(profile.id).first;
+      expect(
+        sessions.single.id,
+        nativeId,
+        reason: 'native UUID study_sessions.id olmalı — upsert(onConflict:id) '
+            'ancak böyle tekrar yazımı aynı satıra düşürür',
+      );
+    });
   });
 }

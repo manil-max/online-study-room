@@ -6,6 +6,21 @@
 
 ---
 
+---
+
+## ⚑ DURUM (2026-07-21 — belge canlı, uygulandıkça güncellenir)
+
+| WP | Durum | Kanıt |
+|---|---|---|
+| **WP-250** | ✅ **Kod tamam** — cihaz QA bekliyor | commit `1f2bd09` (notifier) + `62bacac` (UI + reconcile serileştirme). analyze 0 issue · 657 test yeşil · kırmızı-yeşil ispatı yapıldı |
+| **WP-251** | ✅ **Kod tamam** — cihaz QA bekliyor | commit `cf57caf`. Kotlin derlemesi yerelde doğrulanamadı (gradle env kapısı) → beta build hattında bakılacak |
+| **WP-252** | ⛔ **Onay bekliyor** — başlanmadı | ürün kararı gerekiyor |
+| **WP-253** | ⛔ **Karar bekliyor** — başlanmadı | ikon kararı ürün sahibinde |
+
+**WP-250 uygulanırken plandan sapılan tek nokta (bilerek korundu):** `stop()`, kayıttan önce native durumla uzlaşır (`await _reconcileBackgroundTimer()`), ve aralığı yalnız `state.startedAt == startedAt` ise yazar. Bu, planın A10.2'deki "app-kapalı Durdur sonrası uyanma" testi için **zorunluydu** — plan metni bu adımı atlamıştı (A7.1 tek başına yetmiyor; kanıt: satır çıkarılınca test 1800 yerine 3300 veriyor). Uygulayıcı ajan bunu ilk turda serileştirilmemiş `_reconcileBackgroundTimerImpl()` ile yapmıştı; WP-241/243 yarışını geri açtığı için sarmalayıcıya çevrildi.
+
+---
+
 ## 0. BU BELGE NASIL KULLANILIR — ÖNCE BUNU OKU
 
 Bu plan, hiçbir mimari karar vermek zorunda kalmayacak şekilde yazıldı. Kararlar **zaten verildi**. Senin işin:

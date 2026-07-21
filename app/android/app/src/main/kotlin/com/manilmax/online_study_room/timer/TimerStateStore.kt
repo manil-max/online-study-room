@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import org.json.JSONArray
 import org.json.JSONObject
 import java.time.Instant
+import java.util.UUID
 
 /**
  * WP-135: Sayaç durumu için tek yazıcı (SSOT prefs).
@@ -95,6 +96,15 @@ object TimerStateStore {
         }
         list.put(
             JSONObject()
+                // WP-251: kalıcı idempotency anahtarı. Dart bunu doğrudan
+                // `study_sessions.id` olarak kullanır; kuyruk kısmen başarısız
+                // olup tekrar işlense bile upsert AYNI satıra düşer → çift
+                // oturum yazılmaz. Aynı anahtar "yalnız işlenenleri kuyruktan
+                // sil" için de kullanılır (toptan silme, reconcile sürerken
+                // eklenen yeni aralığı kaybettiriyordu).
+                // DİKKAT: değer UUID biçiminde OLMAK ZORUNDA — `study_sessions.id`
+                // uuid sütunudur; serbest metin insert'i patlatır.
+                .put("id", UUID.randomUUID().toString())
                 .put("start", Instant.ofEpochMilli(startMs).toString())
                 .put("end", Instant.ofEpochMilli(endMs).toString())
                 .put("subject", subject)
@@ -117,6 +127,9 @@ object TimerStateStore {
         }
         list.put(
             JSONObject()
+                // WP-251: bu kayıt oturum değil (komut); id yalnız kuyruktan
+                // güvenli/kısmi silme içindir, DB'ye gitmez.
+                .put("id", UUID.randomUUID().toString())
                 .put("action", action)
                 .put("runToken", runToken)
                 .put("origin", origin),

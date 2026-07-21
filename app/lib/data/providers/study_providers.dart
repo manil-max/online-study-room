@@ -715,17 +715,30 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
 
     // 1. App-kapalı Durdur'ların ürettiği tamamlanmış aralıkları oturum yaz.
     // Kimlik henüz hazır değilse kuyruğu KORU (clear yarışı yok — WP-136).
+    //
+    // WP-251: eskiden "hepsi başarılıysa anahtarı komple sil" mantığı vardı ve
+    // iki kusur üretiyordu: (a) tek kayıt hata alınca BAŞARILI olanlar da
+    // kuyrukta kalıp sonraki açılışta tekrar yazılıyordu → DB'de çift oturum
+    // (hata kalıcıysa her açılışta bir kopya daha); (b) toptan silme, biz ağ
+    // beklerken native'in eklediği YENİ aralığı da siliyordu → oturum kaybı.
+    // Artık yalnız işlenen kayıtlar, kalıcı kimlikleriyle kuyruktan düşürülür.
     final raw = prefs.getString(TimerForegroundService.pendingIntervalsKey);
     if (raw != null && ref.read(authStateProvider).value != null) {
-      var recordedOk = true;
+      final processedKeys = <String>{};
+      var queueBroken = false;
       try {
         final decoded = jsonDecode(raw);
-        if (decoded is List) {
+        if (decoded is! List) {
+          queueBroken = true;
+        } else {
           for (final entry in decoded) {
             if (_disposed) return;
             if (entry is! Map) continue;
+            final key = _pendingEntryKey(entry);
             final runToken = entry['runToken']?.toString();
             final action = entry['action']?.toString();
+
+            // (a) Verified komut kayıtları (pause/resume/finalize).
             if (runToken != null && runToken.isNotEmpty && action != null) {
               try {
                 final repo = ref.read(studyRepositoryProvider);
@@ -739,20 +752,40 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
                   default:
                     throw const FormatException('unknown verified command');
                 }
+                processedKeys.add(key);
+              } on FormatException {
+                // Tanınmayan komut sonsuza kadar kuyruğu tıkamasın.
+                processedKeys.add(key);
               } catch (_) {
-                recordedOk = false;
+                // Ağ/sunucu hatası → kuyrukta kalsın, sonra tekrar denenir.
               }
               continue;
             }
+
+            // (b) Tamamlanmış çalışma aralıkları.
             final start = DateTime.tryParse(entry['start']?.toString() ?? '');
             final end = DateTime.tryParse(entry['end']?.toString() ?? '');
             final subjectRaw = entry['subject']?.toString();
             final subject = (subjectRaw == null || subjectRaw.isEmpty)
                 ? null
                 : subjectRaw;
-            if (start != null && end != null && end.isAfter(start)) {
+            if (start == null || end == null || !end.isAfter(start)) {
+              // Anlamsız kayıt: düş, yoksa kuyruk sonsuza kadar tıkanır.
+              processedKeys.add(key);
+              continue;
+            }
+            try {
+              final rawId = entry['id']?.toString();
+              await _recordSession(
+                start,
+                end,
+                subject,
+                sessionId: (rawId != null && rawId.isNotEmpty) ? rawId : null,
+              );
+              // Oturum yazıldı → kuyruktan düşer. Telemetri hatası bunu geri
+              // almamalı (yoksa aynı oturum tekrar tekrar denenir).
+              processedKeys.add(key);
               try {
-                await _recordSession(start, end, subject);
                 final origin = entry['origin']?.toString();
                 final build = await _clientBuildNumber();
                 await ref
@@ -767,18 +800,20 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
                       outcome: LiveRolloutOutcome.unverifiedFallback,
                     );
               } catch (_) {
-                recordedOk = false;
+                // Telemetri best-effort; oturum zaten yazıldı.
               }
+            } catch (_) {
+              // Kayıt başarısız → kuyrukta kalsın.
             }
           }
         }
       } catch (_) {
-        // Bozuk kuyruk yok sayılır (aşağıda temizlenir).
-        recordedOk = true;
+        queueBroken = true;
       }
-      // WP-136: yalnız başarılı (veya bozuk) kuyruk temizlenir; partial fail korunur.
-      if (recordedOk) {
+      if (queueBroken) {
         await prefs.remove(TimerForegroundService.pendingIntervalsKey);
+      } else if (processedKeys.isNotEmpty) {
+        await _dropProcessedPendingEntries(processedKeys);
       }
     }
     if (_disposed) return;
@@ -895,6 +930,53 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       );
       _startTick();
       unawaited(_syncTimerSurfaces());
+    }
+  }
+
+  /// WP-251: kuyruk kaydının kalıcı kimliği. Native artık her kayda `id` yazar;
+  /// eski sürümlerden kalmış id'siz kayıtlar için içerikten türetilen anahtar
+  /// kullanılır (aynı kaydı iki kez işlememek için yeterli).
+  static String _pendingEntryKey(Map<dynamic, dynamic> entry) {
+    final id = entry['id']?.toString();
+    if (id != null && id.isNotEmpty) return 'id:$id';
+    return 'legacy:${entry['action']}|${entry['runToken']}|'
+        '${entry['start']}|${entry['end']}|${entry['subject']}';
+  }
+
+  /// İşlenen kayıtları kuyruktan düşürür (WP-251).
+  ///
+  /// Kuyruk TAZE okunur: biz ağ beklerken native yeni bir aralık eklemiş
+  /// olabilir. Eski davranış (anahtarı komple silme) o aralığı da siliyordu →
+  /// kullanıcının çalışması kayboluyordu.
+  Future<void> _dropProcessedPendingEntries(Set<String> processedKeys) async {
+    final prefs = ref.read(sharedPreferencesProvider);
+    await prefs.reload();
+    final raw = prefs.getString(TimerForegroundService.pendingIntervalsKey);
+    if (raw == null) return;
+    List<dynamic> decoded;
+    try {
+      final parsed = jsonDecode(raw);
+      if (parsed is! List) {
+        await prefs.remove(TimerForegroundService.pendingIntervalsKey);
+        return;
+      }
+      decoded = parsed;
+    } catch (_) {
+      await prefs.remove(TimerForegroundService.pendingIntervalsKey);
+      return;
+    }
+    final remaining = [
+      for (final entry in decoded)
+        if (entry is! Map || !processedKeys.contains(_pendingEntryKey(entry)))
+          entry,
+    ];
+    if (remaining.isEmpty) {
+      await prefs.remove(TimerForegroundService.pendingIntervalsKey);
+    } else {
+      await prefs.setString(
+        TimerForegroundService.pendingIntervalsKey,
+        jsonEncode(remaining),
+      );
     }
   }
 
@@ -1379,11 +1461,18 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   }
 
   /// Tamamlanan bir aralığı `study_sessions`'a yazar.
+  ///
+  /// WP-251: [sessionId] verilirse oturum id'si olarak KULLANILIR. Native
+  /// kuyruktan gelen aralıklar kendi kalıcı UUID'lerini taşır; aynı aralık
+  /// tekrar işlenirse repo katmanı (`upsert(onConflict: 'id')` + id ile cache
+  /// upsert) aynı satıra düşer → çift oturum oluşmaz. Verilmezse (canlı
+  /// durdurma) yeni uuid üretilir.
   Future<void> _recordSession(
     DateTime start,
     DateTime end,
-    String? subjectId,
-  ) async {
+    String? subjectId, {
+    String? sessionId,
+  }) async {
     final user = ref.read(authStateProvider).value;
     if (user == null) return;
 
@@ -1394,7 +1483,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
         .read(studyRepositoryProvider)
         .addSession(
           StudySession(
-            id: _uuid.v4(),
+            id: sessionId ?? _uuid.v4(),
             userId: user.id,
             subjectId: subjectId,
             start: start,
