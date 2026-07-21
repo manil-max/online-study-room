@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/stats/study_stats.dart';
 import '../../../core/theme/subject_colors.dart';
 import '../../../core/utils/duration_format.dart';
 import '../../../data/models/subject.dart';
@@ -75,8 +76,20 @@ class _FocusTimerScreenState extends ConsumerState<FocusTimerScreen> {
     final displaySeconds = target == null
         ? elapsed
         : (timer.isRunning ? (target - elapsed).clamp(0, target) : target);
-    final liveWork = (timer.isRunning && inWork) ? elapsed : 0;
-    final todayTotal = recorded + liveWork;
+    // WP-250: kart ile birebir aynı kural (iki ekranın farklı sayı göstermesi
+    // bug'dı). Durdurma başlayınca canlı akış kesilir; bekleyen kayıt settling*
+    // alanlarıyla taşınır.
+    final liveWork = (timer.isRunning && !timer.isStopping && inWork)
+        ? elapsed
+        : 0;
+    final todayTotal = resolveTodayDisplayTotal(
+      recordedToday: recorded,
+      liveWorkSeconds: liveWork,
+      settlingSeconds: timer.settlingSeconds,
+      settlingBaseline: timer.settlingBaseline,
+      settlingDay: timer.settlingDay,
+      today: DateTime.now(),
+    );
     final goalSeconds = ref.watch(dailyGoalMinutesProvider) * 60;
     final goalPct = goalSeconds > 0 ? todayTotal / goalSeconds : 0.0;
     final clockPct = target == null

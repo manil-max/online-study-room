@@ -1171,11 +1171,18 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
         state = state.copyWith(isStopping: true, clearSettling: true);
       }
 
-      // WP-250: native durumu doğrula (ZORUNLU - RTT öncesi senkron). EĞER native zaten
-      // durmuşsa (bildirimden vs.), bu senkronizasyon `isStopping` bayrağını
-      // görecek ve settling'i SİLECEK. Böylece ekrandaki hatalı canlı süre
-      // toplanmaz, ölü zaman üretilmez.
-      await _reconcileBackgroundTimerImpl();
+      // WP-250: kaydetmeden ÖNCE native durumla uzlaş. Kullanıcı app kapalıyken
+      // bildirimden durdurup sonra uygulama içinden tekrar Durdur'a basarsa,
+      // Dart state'i hâlâ "çalışıyor" olduğu için aradaki ölü zaman gerçek bir
+      // oturum gibi yazılıyordu (hayalet süre). Uzlaşma bunu görüp `_finish()`
+      // çağırır; aşağıdaki kimlik kontrolü de kaydı iptal eder.
+      //
+      // DİKKAT: `_reconcileBackgroundTimerImpl` DEĞİL, serileştirilmiş sarmalayıcı
+      // çağrılır. Impl'i doğrudan çağırmak WP-241/243'te kapatılan yarışı geri
+      // açar: native Durdur yayını zaten bir reconcile başlatmışsa iki gövde
+      // eşzamanlı çalışıp AYNI bekleyen kuyruğu iki kez kaydeder (DB'de çift
+      // oturum). Sarmalayıcı, devam eden turu bekler ve tek çalıştırma garanti eder.
+      await _reconcileBackgroundTimer();
 
       await _verifiedStartFuture;
 
@@ -1183,12 +1190,13 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       // öncesine al. Süreç erken ölürse bile offline-first cache/outbox oturumu
       // tutar; STOP_SILENT kuyruğa interval yazmadığı için çift kayıt üretmez.
       try {
-        // WP-250: _reconcileBackgroundTimerImpl eğer sayacın native'de ÇOKTAN
-        // durduğunu gördüyse (örneğin kullanıcı app kapalıyken durdurup app'i açtığında
-        // panikle tekrar durdurursa), _finish() çağrılmış ve state.startedAt null
-        // yapılmıştır. Bu durumda, ui'ın gördüğü (ama native'de olmayan) ölü
-        // zaman aralığını kaydetmekten vazgeç.
-        if (wasWork && startedAt != null && state.startedAt != null) {
+        // WP-250: yukarıdaki uzlaşma sayacın native'de ÇOKTAN durduğunu gördüyse
+        // `_finish()` çağrılmış ve `startedAt` null olmuştur → ölü zamanı yazma.
+        // Kimlik karşılaştırması (`==`) daha güçlüdür: uzlaşma bu arada BAŞKA bir
+        // native koşuyu benimsemiş olabilir (kullanıcı widget'tan yeni sayaç
+        // başlattıysa). O durumda elimizdeki aralık artık geçerli değildir;
+        // yazarsak yeni koşunun süresine yamanmış yanlış bir oturum üretiriz.
+        if (wasWork && startedAt != null && state.startedAt == startedAt) {
           if (state.liveRunToken case final token?) {
             await _finalizeVerifiedRun(token);
           } else {

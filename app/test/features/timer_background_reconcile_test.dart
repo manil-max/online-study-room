@@ -4,8 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:online_study_room/core/notifications/timer_notification_service.dart';
+import 'package:online_study_room/core/stats/study_stats.dart';
 import 'package:online_study_room/core/prefs/app_prefs.dart';
 import 'package:online_study_room/data/models/profile.dart';
+import 'package:online_study_room/data/models/study_session.dart';
 import 'package:online_study_room/data/providers/auth_providers.dart';
 import 'package:online_study_room/data/providers/group_providers.dart';
 import 'package:online_study_room/data/providers/study_providers.dart';
@@ -43,11 +45,24 @@ class _NoopAndroidWidgetService implements AndroidWidgetGateway {
   Future<void> seedPlaceholder() async {}
 }
 
+/// WP-250: gerçek cihazdaki yazım sırasını taklit eder — önce yerel cache'e
+/// yazılır ve `userSessions` stream'i EMIT EDER, sonra ağ RTT'si beklenir.
+/// Bu gecikme olmadan bug reprodüksiyonu imkânsızdır (test ortamı saf
+/// microtask zinciridir, araya kare/emit girmez).
+class _SlowStudyRepository extends InMemoryStudyRepository {
+  @override
+  Future<void> addSession(StudySession session) async {
+    await super.addSession(session); // yerel emit
+    await Future<void>.delayed(const Duration(milliseconds: 150)); // "ağ"
+  }
+}
+
 /// Girişli auth + oturumları gözlenebilir bir in-memory study repo ile container
 /// kurar. [initialPrefs] FGS'in arka planda yazdığı durumu taklit eder.
 Future<(ProviderContainer, InMemoryStudyRepository, Profile)> _buildContainer(
-  Map<String, Object> initialPrefs,
-) async {
+  Map<String, Object> initialPrefs, {
+  InMemoryStudyRepository? repository,
+}) async {
   SharedPreferences.setMockInitialValues(initialPrefs);
   final prefs = await SharedPreferences.getInstance();
 
@@ -57,7 +72,7 @@ Future<(ProviderContainer, InMemoryStudyRepository, Profile)> _buildContainer(
     password: '123456',
     displayName: 'Reconcile QA',
   );
-  final studyRepo = InMemoryStudyRepository();
+  final studyRepo = repository ?? InMemoryStudyRepository();
 
   final container = ProviderContainer(
     overrides: [
@@ -543,6 +558,139 @@ void main() {
           reason: 'farklı ms gerçek yeni başlatmadır, benimsenmeli',
         );
         expect(container.read(studyTimerProvider).startedAt, secondStart);
+      },
+    );
+  });
+
+  group('WP-250: durdurma çift-sayımı (settling modeli)', () {
+    test(
+      'DB yazımı (RTT) sürerken ekran toplamı ne zıplar ne düşer',
+      () async {
+        final start = DateTime.now().subtract(const Duration(minutes: 20));
+        final slowRepo = _SlowStudyRepository();
+        final (container, studyRepo, profile) = await _buildContainer({
+          'timer_active_started_at': start.toIso8601String(),
+          'timer_active_started_at_ms': start.millisecondsSinceEpoch,
+          'timer_active_mode': TimerMode.stopwatch.name,
+          'timer_active_phase': TimerPhase.work.name,
+          'timer_active_cycle': 1,
+          'timer_fg_mode': 'running',
+        }, repository: slowRepo);
+
+        // Riverpod 3: dinleyicisiz provider her read'de yeniden kurulur →
+        // stream'i canlı tutmak için ikisini de dinle (yoksa test anlamsızlaşır).
+        final timerSub = container.listen(studyTimerProvider, (_, _) {});
+        addTearDown(timerSub.close);
+        final sessionsSub = container.listen(
+          userSessionsProvider,
+          (_, _) {},
+          fireImmediately: true,
+        );
+        addTearDown(sessionsSub.close);
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+        expect(container.read(studyTimerProvider).isRunning, isTrue);
+
+        // Ekranın gösterdiği sayıyı, UI ile BİREBİR aynı kuralla hesapla.
+        int displayed() {
+          final t = container.read(studyTimerProvider);
+          final elapsed = (t.isRunning && !t.isStopping && t.startedAt != null)
+              ? DateTime.now().difference(t.startedAt!).inSeconds
+              : 0;
+          return resolveTodayDisplayTotal(
+            recordedToday: container.read(todayRecordedSecondsProvider),
+            liveWorkSeconds: t.phase == TimerPhase.work ? elapsed : 0,
+            settlingSeconds: t.settlingSeconds,
+            settlingBaseline: t.settlingBaseline,
+            settlingDay: t.settlingDay,
+            today: DateTime.now(),
+          );
+        }
+
+        final before = displayed(); // ≈ 1200 sn
+        expect(before, greaterThan(1100));
+
+        final stopFuture = container.read(studyTimerProvider.notifier).stop();
+
+        // RTT penceresi: yerel cache emit oldu, `_finish()` HENÜZ çalışmadı.
+        // Düzeltme olmadan burada toplam ~2x olur (oturum boyu kadar şişme).
+        await Future<void>.delayed(const Duration(milliseconds: 60));
+        expect(
+          container.read(studyTimerProvider).isStopping,
+          isTrue,
+          reason: 'durdurma başlar başlamaz canlı akış kesilmeli',
+        );
+        expect(
+          displayed(),
+          closeTo(before, 2),
+          reason: 'RTT penceresinde toplam şişmemeli (asıl bug)',
+        );
+
+        await stopFuture;
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+        expect(
+          displayed(),
+          closeTo(before, 2),
+          reason: 'durdurma bittikten sonra da aynı sayı',
+        );
+
+        final sessions = await studyRepo.watchUserSessions(profile.id).first;
+        expect(sessions, hasLength(1));
+      },
+    );
+
+    test(
+      'app-kapalı Durdur sonrası uyanma: ölü zaman toplama eklenmez',
+      () async {
+        // Kullanıcı 30 dk çalıştı, 25 dk önce bildirimden Durdur'a bastı,
+        // uygulamayı ŞİMDİ açıyor. Kuyrukta gerçek aralık var; state ise
+        // (arka planda uyuyan isolate gibi) hâlâ "çalışıyor".
+        final start = DateTime.now().subtract(const Duration(minutes: 55));
+        final end = DateTime.now().subtract(const Duration(minutes: 25));
+        final (container, _, _) = await _buildContainer({
+          'timer_active_started_at': start.toIso8601String(),
+          'timer_active_started_at_ms': start.millisecondsSinceEpoch,
+          'timer_active_mode': TimerMode.stopwatch.name,
+          'timer_active_phase': TimerPhase.work.name,
+          'timer_active_cycle': 1,
+          'timer_fg_mode': 'running',
+        });
+        final timerSub = container.listen(studyTimerProvider, (_, _) {});
+        addTearDown(timerSub.close);
+        final sessionsSub = container.listen(
+          userSessionsProvider,
+          (_, _) {},
+          fireImmediately: true,
+        );
+        addTearDown(sessionsSub.close);
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+
+        // Native Durdur'u taklit et: start anahtarları silinir, kuyruğa aralık.
+        final prefs = container.read(sharedPreferencesProvider);
+        await prefs.remove('timer_active_started_at');
+        await prefs.remove('timer_active_started_at_ms');
+        await prefs.setString('timer_fg_mode', 'idle');
+        await prefs.setString(
+          'timer_pending_intervals',
+          '[{"start":"${start.toIso8601String()}",'
+              '"end":"${end.toIso8601String()}","subject":""}]',
+        );
+
+        await container.read(studyTimerProvider.notifier).stop();
+        await Future<void>.delayed(const Duration(milliseconds: 40));
+
+        final t = container.read(studyTimerProvider);
+        expect(t.isRunning, isFalse);
+        final total = resolveTodayDisplayTotal(
+          recordedToday: container.read(todayRecordedSecondsProvider),
+          liveWorkSeconds: 0,
+          settlingSeconds: t.settlingSeconds,
+          settlingBaseline: t.settlingBaseline,
+          settlingDay: t.settlingDay,
+          today: DateTime.now(),
+        );
+        // Gerçekten çalışılan 30 dk kaydedilir; aradaki 25 dk ölü zaman
+        // toplama EKLENMEZ (eski hata: ~55 dk gösterip gün boyu kilitlerdi).
+        expect(total, closeTo(30 * 60, 5));
       },
     );
   });

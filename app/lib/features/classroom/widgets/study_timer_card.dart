@@ -38,18 +38,6 @@ class StudyTimerCard extends ConsumerStatefulWidget {
 class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
   Timer? _ticker;
 
-  /// Durdur/Mola anında bugünün toplamını geçici dondurur: biten oturum
-  /// veritabanına yazılıp kayıtlı toplam güncellenene kadar değer düşmesin.
-  /// Yalnız [_frozenOnDay] Istanbul günü için geçerlidir (gece yarısı sızıntısı yok).
-  int? _frozenTotal;
-  DateTime? _frozenOnDay;
-
-  /// WP-239: en son build'de ekranda gösterilen bugünkü toplam (canlı süre
-  /// dahil). Durdurma anında freeze değeri buradan alınır; recorded'ın o anki
-  /// durumundan bağımsızdır, böylece canlı süre ikinci kez eklenip çift
-  /// sayım (2s→3s) oluşmaz.
-  int _lastDisplayedTotal = 0;
-
   @override
   void initState() {
     super.initState();
@@ -127,21 +115,13 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
     final recorded = ref.watch(todayRecordedSecondsProvider);
     final todayKey = dayOf(DateTime.now());
 
-    // Durdurmada bugünün toplamını dondur + faz geçişinde ses/titreşim/uyarı (§2H).
+    // Faz geçişinde ses/titreşim/uyarı (§2H).
+    // WP-250: "durdurmada ekranı dondur" bloğu KALDIRILDI. Dondurulan değer
+    // ekranın kendi gösterdiği sayıydı ve `stop()` sırasındaki kare çiziminde
+    // zaten şişmiş olabiliyordu → hata kalıcılaşıyordu. Artık toplam, notifier'ın
+    // bildirdiği settling* alanlarından türetilir (bkz. resolveTodayDisplayTotal).
     ref.listen<StudyTimerState>(studyTimerProvider, (prev, next) {
       if (prev == null) return;
-      if (prev.isRunning && !next.isRunning && prev.startedAt != null) {
-        // WP-239: durdurma anında EKRANDA GÖRÜNEN toplamı dondur. Eskiden
-        // `recorded + extra` yazılıyordu; ama biten oturum offline cache'e
-        // senkron yazılıp `recorded` provider'ı stop'tan ÖNCE güncellenince
-        // `extra` (canlı süre) ikinci kez eklenip toplam şişiyordu (2s→3s,
-        // kronometreyi kapat-aç ile düzeliyordu). Son gösterilen toplam zaten
-        // canlı süreyi içeriyor: recorded ne zaman güncellenirse güncellensin
-        // bu değer düşmeyi engeller ve çift saymaz.
-        // Freeze anındaki Istanbul günü: gece yarısı sonrası dünün değeri sızmasın.
-        _frozenOnDay = dayOf(DateTime.now());
-        _frozenTotal = _lastDisplayedTotal;
-      }
       if (next.eventSeq != prev.eventSeq && next.lastEvent != null) {
         _onTimerEvent(next.lastEvent!);
       }
@@ -159,20 +139,19 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
         ? elapsed
         : (timer.isRunning ? (target - elapsed).clamp(0, target) : target);
     // Bugünün toplamına yalnız ÇALIŞMA fazının canlı süresi eklenir (mola hariç).
-    // Gece yarısını aşan canlı oturum: elapsed hâlâ doğru; "bugün" kaydı
-    // stream güncellenince recorded ile hizalanır (oturum start günü Istanbul).
-    final liveWork = (timer.isRunning && inWork) ? elapsed : 0;
-    // freeze alanlarını build içinde silme (setState riski yok); kural saf
-    // resolveTodayDisplayTotal içinde: farklı gün → freeze yok sayılır.
+    // WP-250: durdurma başladığı an (isStopping) canlı akış kesilir; aradaki
+    // saniyeler settling* alanlarıyla taşınır → ne zıplama ne düşme.
+    final liveWork = (timer.isRunning && !timer.isStopping && inWork)
+        ? elapsed
+        : 0;
     final todayTotal = resolveTodayDisplayTotal(
       recordedToday: recorded,
       liveWorkSeconds: liveWork,
-      frozenTotal: _frozenTotal,
-      frozenOnDay: _frozenOnDay,
+      settlingSeconds: timer.settlingSeconds,
+      settlingBaseline: timer.settlingBaseline,
+      settlingDay: timer.settlingDay,
       today: todayKey,
-    ).total;
-    // WP-239: durdurma anında dondurulacak "görünen toplam" için sakla.
-    _lastDisplayedTotal = todayTotal;
+    );
     final notifier = ref.read(studyTimerProvider.notifier);
     final subjects = ref.watch(userSubjectsProvider).value ?? const <Subject>[];
 

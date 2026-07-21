@@ -28,73 +28,83 @@ StudySession _s(String user, DateTime start, int seconds) => StudySession(
     );
 
 void main() {
-  test('resolveTodayDisplayTotal: freeze dünse gece yarısından sonra düşer', () {
-    // Dün 1s 5dk freeze; bugün kayıtlı 0 → ekran 0 (eski bug: 1s 5dk kalırdı).
-    final yesterday = DateTime(2026, 7, 15);
-    final today = DateTime(2026, 7, 16);
-    final r = resolveTodayDisplayTotal(
-      recordedToday: 0,
-      liveWorkSeconds: 0,
-      frozenTotal: 3900, // 1s 5dk
-      frozenOnDay: yesterday,
-      today: today,
-    );
-    expect(r.total, 0);
-    expect(r.keepFrozen, isNull);
-  });
+  group('WP-250: resolveTodayDisplayTotal (settling modeli)', () {
+    final today = DateTime(2026, 7, 21);
 
-  test('resolveTodayDisplayTotal: aynı günde freeze kaydı gelene kadar tutar', () {
-    final today = DateTime(2026, 7, 16);
-    final r = resolveTodayDisplayTotal(
-      recordedToday: 0,
-      liveWorkSeconds: 0,
-      frozenTotal: 3900,
-      frozenOnDay: today,
-      today: today,
-    );
-    expect(r.total, 3900);
-    expect(r.keepFrozen, 3900);
+    test('settling yokken: kayıtlı + canlı', () {
+      expect(
+        resolveTodayDisplayTotal(
+          recordedToday: 3600,
+          liveWorkSeconds: 600,
+          today: today,
+        ),
+        4200,
+      );
+    });
 
-    final caughtUp = resolveTodayDisplayTotal(
-      recordedToday: 3900,
-      liveWorkSeconds: 0,
-      frozenTotal: 3900,
-      frozenOnDay: today,
-      today: today,
-    );
-    expect(caughtUp.total, 3900);
-    expect(caughtUp.keepFrozen, isNull);
-  });
+    test('kayıt yerleşmeden ÖNCE: baseline + settling (canlı 0)', () {
+      // Durdurma anı: 1sa kayıtlı + 1sa canlı (ekran 2sa) → Durdur.
+      // recorded henüz eski (3600), settling 3600, canlı kesildi.
+      expect(
+        resolveTodayDisplayTotal(
+          recordedToday: 3600,
+          liveWorkSeconds: 0,
+          settlingSeconds: 3600,
+          settlingBaseline: 3600,
+          settlingDay: today,
+          today: today,
+        ),
+        7200,
+        reason: '2 saat görünmeli',
+      );
+    });
 
-  test('WP-239: freeze = görünen toplam iken recorded yetişince ŞİŞMEZ', () {
-    // Senaryo: 1s kayıtlı + 1s canlı kronometre → ekranda 2s (7200sn).
-    // Durdur'a basılınca biten oturum offline cache'e SENKRON yazılıp
-    // recorded provider'ı stop'tan ÖNCE güncellenebiliyor (recorded=7200).
-    final today = DateTime(2026, 7, 20);
+    test('kayıt yerleştikten SONRA: aynı sayı (zıplama yok)', () {
+      // Stream emit etti: recorded = 7200. Sonuç DEĞİŞMEMELİ.
+      expect(
+        resolveTodayDisplayTotal(
+          recordedToday: 7200,
+          liveWorkSeconds: 0,
+          settlingSeconds: 3600,
+          settlingBaseline: 3600,
+          settlingDay: today,
+          today: today,
+        ),
+        7200,
+        reason: 'eski hata burada 10800 (3 saat) üretiyordu',
+      );
+    });
 
-    // DOĞRU (WP-239): freeze = durdurma anında görünen toplam (7200).
-    // recorded sonradan 7200'e ulaşınca sonuç 7200 kalır — çift sayım yok.
-    final correct = resolveTodayDisplayTotal(
-      recordedToday: 7200, // yeni oturumu zaten içeriyor
-      liveWorkSeconds: 0, // durdu
-      frozenTotal: 7200, // = son görünen toplam
-      frozenOnDay: today,
-      today: today,
-    );
-    expect(correct.total, 7200, reason: '2 saat görünmeli, 3 saat değil');
+    test('settling başka güne aitse bugüne uygulanmaz (gece yarısı)', () {
+      expect(
+        resolveTodayDisplayTotal(
+          recordedToday: 0,
+          liveWorkSeconds: 0,
+          settlingSeconds: 3900,
+          settlingBaseline: 0,
+          settlingDay: DateTime(2026, 7, 20),
+          today: today,
+        ),
+        0,
+        reason: 'dünün süresi bugünün toplamına sızmamalı',
+      );
+    });
 
-    // Eski bug: freeze = recorded(7200) + extra(3600) = 10800 hesaplanıyordu;
-    // fonksiyon frozen'ı sadık taşıdığı için ekran 3 saat (10800) gösterirdi.
-    // Bu assert, şişmenin kaynağının YANLIŞ freeze girdisi olduğunu belgeler.
-    final buggyInput = resolveTodayDisplayTotal(
-      recordedToday: 7200,
-      liveWorkSeconds: 0,
-      frozenTotal: 10800, // recorded + extra (çift)
-      frozenOnDay: today,
-      today: today,
-    );
-    expect(buggyInput.total, 10800,
-        reason: 'fonksiyon frozen\'ı taşır; kök neden widget freeze hesabında');
+    test('araya başka bir kayıt girse de düşmez', () {
+      // Manuel ekleme vs. recorded'ı 3600 → 5400 yaptı; settling hâlâ bekliyor.
+      expect(
+        resolveTodayDisplayTotal(
+          recordedToday: 5400,
+          liveWorkSeconds: 0,
+          settlingSeconds: 3600,
+          settlingBaseline: 3600,
+          settlingDay: today,
+          today: today,
+        ),
+        7200,
+        reason: 'max() kuralı: hangisi büyükse o',
+      );
+    });
   });
 
   test('StudySession.day UTC start için Istanbul günü kullanır', () {

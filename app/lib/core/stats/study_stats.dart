@@ -52,30 +52,38 @@ int secondsOnDay(Iterable<StudySession> sessions, DateTime day) {
       .fold<int>(0, (sum, s) => sum + s.durationSeconds);
 }
 
-/// Saat kartı "bugün toplam" dondurma kuralı (saf).
+/// Saat kartı / odak ekranı "bugün toplam" hesabı (saf, TEK kaynak).
 ///
-/// Durdur anında kayıtlı toplam + oturum henüz stream'e düşmeden ekranda düşmesin
-/// diye geçici freeze kullanılır. **Freeze yalnız aynı Istanbul gününde geçerlidir**;
-/// gece yarısından sonra dünün 1s 5dk'sı bugün 0 iken ekranda kalmamalı.
-({int total, int? keepFrozen}) resolveTodayDisplayTotal({
+/// WP-250: eski `frozenTotal` mantığı KALDIRILDI. Dondurma değeri ekranın kendi
+/// gösterdiği sayıydı; `stop()` içindeki DB yazımı (ağ RTT'si) sırasında bir kare
+/// çizilirse o sayı zaten şişmiş oluyordu ve dondurma **hatayı kalıcılaştırıyordu**
+/// (1 saat çalışma → 2 saat görünüyordu). Artık notifier, DB'ye verilmiş ama henüz
+/// [recordedToday]'e yansımamış saniyeyi KESİN olarak bildirir:
+///
+/// - [settlingSeconds]  : az önce kaydedilen çalışma aralığının süresi,
+/// - [settlingBaseline] : kayıt başlarken [recordedToday] kaç idi,
+/// - [settlingDay]      : o aralığın ait olduğu Istanbul günü (gece yarısı koruması).
+///
+/// Kural: `max(recordedToday, settlingBaseline + settlingSeconds) + liveWorkSeconds`.
+/// Kayıt yerleşmeden önce `recordedToday == settlingBaseline` → sonuç
+/// `baseline + settling`; yerleştikten sonra `recordedToday` aynı değere ulaşır →
+/// **iki durumda da aynı sayı** (ne zıplama ne düşme).
+int resolveTodayDisplayTotal({
   required int recordedToday,
   required int liveWorkSeconds,
-  int? frozenTotal,
-  DateTime? frozenOnDay,
+  int settlingSeconds = 0,
+  int settlingBaseline = 0,
+  DateTime? settlingDay,
   required DateTime today,
 }) {
-  final todayKey = dayOf(today);
-  final base = recordedToday + liveWorkSeconds;
-  if (frozenTotal == null || frozenOnDay == null) {
-    return (total: base, keepFrozen: null);
-  }
-  if (!isSameDay(dayOf(frozenOnDay), todayKey)) {
-    return (total: base, keepFrozen: null);
-  }
-  if (base >= frozenTotal) {
-    return (total: base, keepFrozen: null);
-  }
-  return (total: frozenTotal, keepFrozen: frozenTotal);
+  final live = liveWorkSeconds < 0 ? 0 : liveWorkSeconds;
+  final base = recordedToday < 0 ? 0 : recordedToday;
+  if (settlingSeconds <= 0 || settlingDay == null) return base + live;
+  // Aralık başka bir Istanbul gününe aitse (gece yarısını aşan oturum) bugüne
+  // uygulanmaz — dünün süresi bugünün toplamına sızmaz.
+  if (!isSameDay(dayOf(settlingDay), dayOf(today))) return base + live;
+  final settled = settlingBaseline + settlingSeconds;
+  return (base > settled ? base : settled) + live;
 }
 
 /// Gün → toplam saniye haritası (yalnızca verisi olan günler).
