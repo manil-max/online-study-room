@@ -4,6 +4,21 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [v43 / 1.0.43+43] - 2026-07-21
+
+> **Kararlı (stable) sürüm.** beta-v4301 içeriği herkese açılıyor: sayaç toplamı (durdurma çift sayımı + ölü zaman), çevrimdışı kuyruk kopyaları, 3 saatlik saat kayması, sıralama seri rozeti, manuel ekleme çakışması ve XP yeniden fiyatlandırma.
+
+### Öne çıkanlar
+- Durdur'a bastığın an toplam artık hiç zıplamıyor; kayıt yazılırken de yazıldıktan sonra da **aynı sayı**.
+- Çalışma kayıtlarındaki ve sohbetteki saatler **3 saat geri** gösteriyordu; düzeldi.
+- Beş başarımın XP değerleri yükseltildi, düzeltme **geriye dönük** — kazanılmış kademeler de yeni değere çıkar.
+
+### Notlar
+- Sunucu tarafı `0065` migration'ı **bu sürümden önce** production'a uygulanmalıdır.
+- Tüm XP değişiklikleri artış yönündedir; kimsenin XP'si veya tacı düşmez.
+- GitHub sideload **stable** APK; in-app güncelleme stable kullanıcılara gider.
+
+
 ## [beta-v4301 / 1.0.43-beta.1+4301] - 2026-07-21
 
 > **Beta test sürümü — sayaç toplamı, saat gösterimi ve XP ekonomisi.** v42 stable'dan sonraki ilk beta. Sayaç durdurma bug'ının kalan (ekran) katmanı, çevrimdışı kuyruk kopyaları, 3 saatlik saat kayması ve beş başarımın yeniden fiyatlandırılması.

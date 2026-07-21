@@ -8,9 +8,9 @@
     "hold_reason": "WP-255 XP reprice (0065) is authorized for staging apply + beta QA only."
   },
   "production": {
-    "migration_head": "0064",
-    "deploy_enabled": false,
-    "release_enabled": false,
-    "hold_reason": "v42 stable shipped (94947fc); the manual override is closed again. WP-255 (0065) reaches production only after staging QA and an explicit new GO."
+    "migration_head": "0065",
+    "deploy_enabled": true,
+    "release_enabled": true,
+    "hold_reason": "v43 stable release: WP-250/251/253/254/255 authorized by user after beta-v4301. 0065 reprice must be applied to production BEFORE the v43 tag."
   }
 }

@@ -28,9 +28,9 @@ $contract = Get-DeployContract -RepoRoot $repoRoot
 Assert-Equal $contract.staging.migration_head '0065' 'staging migration head'
 Assert-Equal ([bool]$contract.staging.deploy_enabled) $true 'staging deploy enabled'
 Assert-Equal ([bool]$contract.staging.release_enabled) $true 'staging release enabled'
-Assert-Equal $contract.production.migration_head '0064' 'production stays one head behind until GO'
-Assert-Equal ([bool]$contract.production.deploy_enabled) $false 'production deploy remains disabled'
-Assert-Equal ([bool]$contract.production.release_enabled) $false 'production release remains disabled'
+Assert-Equal $contract.production.migration_head '0065' 'production head matches the released chain'
+Assert-Equal ([bool]$contract.production.deploy_enabled) $true 'production deploy opened for v43'
+Assert-Equal ([bool]$contract.production.release_enabled) $true 'production release opened for v43'
 
 Assert-TargetContract -Environment staging -ProjectRef $stagingRef -SupabaseUrl "https://$stagingRef.supabase.co" -StagingProjectRef $stagingRef -ProductionProjectRef $productionRef -RepoRoot $repoRoot -IgnoreLinkedRef
 $passed++

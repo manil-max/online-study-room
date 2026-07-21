@@ -3,6 +3,48 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.43",
+      "buildNumber": 43,
+      "channel": "stable",
+      "date": "2026-07-21",
+      "title": "v43: sayaç toplamı, saat gösterimi ve XP değerleri",
+      "highlights": [
+        "Durdur'a bastığın an toplam artık hiç zıplamıyor; kayıt yazılırken de yazıldıktan sonra da aynı sayı görünüyor.",
+        "Çalışma kayıtlarındaki ve sohbetteki saatler 3 saat geri gösteriyordu; düzeldi.",
+        "Beş başarımın XP değerleri yükseltildi ve düzeltme GERİYE DÖNÜK: daha önce kazandığın kademeler de yeni değere yükseliyor."
+      ],
+      "fixes": [
+        "Durdurma çift sayımı: oturum kaydedilirken geçen sürede canlı süre ikinci kez toplanıyor, 1 saatlik çalışma 2 saat görünüyordu; ekranın dondurma mekanizması da bu hatalı değeri gün boyu kilitliyordu.",
+        "Arka planda bildirimden Durdur'a basıp uygulamayı sonra açınca aradaki ölü zaman toplama ekleniyordu.",
+        "Çevrimdışı kuyruk: bir oturum gönderilemezse başarılı olanlar tekrar yazılıyordu (kopya kayıtlar); kuyruk toptan silindiği için yeni oturum kaybolabiliyordu.",
+        "Çalışma kayıtları ve sohbet saatleri UTC gösteriliyordu; oturum düzenleme ekranı gece yarısına yakın kayıtlarda yanlış günü açıyordu.",
+        "Grup sıralamasındaki üye ateş rozeti kaldırıldı (aynı ikon iki farklı seriyi anlatıyordu). Grup hedefi satırındaki ateş korundu.",
+        "Sayaç çalışırken bugüne manuel süre eklemek engellendi; geçmiş günlere ekleme serbest."
+      ],
+      "notes": [
+        "XP yükseltmesi: Maratoncu, Çelik İrade, Günün Kahramanı, Ateş Harlı ve Lokomotif. Tüm değişiklikler ARTIŞ yönünde — kimsenin XP'si veya taç kademesi düşmez.",
+        "GitHub sideload stable APK; in-app güncelleme stable kullanıcılara gider."
+      ],
+      "titleEn": "v43: timer total, clock display and XP values",
+      "highlightsEn": [
+        "The total no longer jumps when you press Stop; the same number shows while saving and after.",
+        "Times in study records and chat were 3 hours behind; fixed.",
+        "XP for five achievements was raised, retroactively: tiers you already earned are upgraded."
+      ],
+      "fixesEn": [
+        "Stop double counting: while the session was being saved the live time was added again, so one hour showed as two; the screen's freeze mechanism then locked that wrong value all day.",
+        "Pressing Stop from the background notification and opening the app later added the dead time in between.",
+        "Offline queue: if one session failed to upload the successful ones were rewritten (duplicates); wholesale clearing could lose a new session.",
+        "Study record and chat times were shown in UTC; the edit screen opened the wrong day for records near midnight.",
+        "Removed the per-member flame badge from group leaderboards (one icon meant two different streaks). The group goal flame stays.",
+        "Adding manual time for today while the timer runs is blocked; past days remain allowed."
+      ],
+      "notesEn": [
+        "XP raise: Marathoner, Steel Will, Day Hero, Blazing Fire and Locomotive. All changes are increases — nobody's XP or crown tier goes down.",
+        "GitHub sideload stable APK; in-app update goes to stable users."
+      ]
+    },
+    {
       "versionName": "1.0.43-beta.1",
       "buildNumber": 4301,
       "channel": "beta",
