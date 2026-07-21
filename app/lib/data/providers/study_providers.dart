@@ -252,6 +252,7 @@ class StudyTimerState {
   const StudyTimerState({
     this.mode = TimerMode.stopwatch,
     this.isRunning = false,
+    this.isStopping = false,
     this.startedAt,
     this.subjectId,
     this.phase = TimerPhase.work,
@@ -268,10 +269,20 @@ class StudyTimerState {
     this.liveRunId,
     this.liveRunToken,
     this.verification = TimerVerification.idle,
+    this.settlingSeconds = 0,
+    this.settlingBaseline = 0,
+    this.settlingDay,
   });
 
   final TimerMode mode;
   final bool isRunning;
+
+  /// WP-250: durdurma BAŞLADI ama henüz bitmedi (DB yazımı/ağ bekleniyor).
+  /// Bu bayrak kalktığı an UI canlı süreyi saymayı bırakır. `isRunning` hâlâ
+  /// true'dur — çünkü sayaç teknik olarak kapanmadı; ama kullanıcı açısından
+  /// süre durmuştur. Bu ayrım olmadan, DB yazımı beklenirken kayıtlı toplam
+  /// güncellenince canlı süre ikinci kez ekleniyordu (oturum boyu kadar şişme).
+  final bool isStopping;
 
   /// Çalışırken mevcut FAZ segmentinin başlangıcı (anlık süre buradan hesaplanır).
   final DateTime? startedAt;
@@ -303,6 +314,17 @@ class StudyTimerState {
   final String? liveRunToken;
   final TimerVerification verification;
 
+  /// WP-250 — "yerleşmeyi bekleyen" kayıt bilgisi. `study_sessions`'a yazılmış
+  /// ama `todayRecordedSecondsProvider`'a henüz yansımamış olabilecek aralık:
+  /// [settlingSeconds] o aralığın süresi, [settlingBaseline] yazım başlarken
+  /// kayıtlı olan bugünkü toplam, [settlingDay] aralığın Istanbul günü.
+  /// UI bu üçlüyle toplamı sabit tutar (bkz. `resolveTodayDisplayTotal`).
+  /// Kayıt yerleşince `recorded >= baseline + settling` olur ve alanlar
+  /// kendiliğinden etkisizleşir; ayrıca her yeni `start()` bunları sıfırlar.
+  final int settlingSeconds;
+  final int settlingBaseline;
+  final DateTime? settlingDay;
+
   bool get isVerifiedRun => liveRunId != null && liveRunToken != null;
 
   /// Mevcut fazın hedef süresi (saniye); kronometrede null.
@@ -317,6 +339,7 @@ class StudyTimerState {
   StudyTimerState copyWith({
     TimerMode? mode,
     bool? isRunning,
+    bool? isStopping,
     DateTime? startedAt,
     bool clearStartedAt = false,
     String? subjectId,
@@ -336,10 +359,15 @@ class StudyTimerState {
     String? liveRunToken,
     bool clearLiveRun = false,
     TimerVerification? verification,
+    int? settlingSeconds,
+    int? settlingBaseline,
+    DateTime? settlingDay,
+    bool clearSettling = false,
   }) {
     return StudyTimerState(
       mode: mode ?? this.mode,
       isRunning: isRunning ?? this.isRunning,
+      isStopping: isStopping ?? this.isStopping,
       startedAt: clearStartedAt ? null : (startedAt ?? this.startedAt),
       subjectId: clearSubject ? null : (subjectId ?? this.subjectId),
       phase: phase ?? this.phase,
@@ -356,6 +384,13 @@ class StudyTimerState {
       liveRunId: clearLiveRun ? null : (liveRunId ?? this.liveRunId),
       liveRunToken: clearLiveRun ? null : (liveRunToken ?? this.liveRunToken),
       verification: verification ?? this.verification,
+      // clearSettling her zaman kazanır (null geçilemeyen alanları sıfırlamanın
+      // tek yolu budur; `settlingDay: null` "değiştirme" anlamına gelir).
+      settlingSeconds: clearSettling ? 0 : (settlingSeconds ?? this.settlingSeconds),
+      settlingBaseline: clearSettling
+          ? 0
+          : (settlingBaseline ?? this.settlingBaseline),
+      settlingDay: clearSettling ? null : (settlingDay ?? this.settlingDay),
     );
   }
 }
@@ -661,6 +696,23 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     await prefs.reload();
     if (_disposed) return;
 
+    // WP-250: native taraf ZATEN idle ise (app-kapalı Durdur), bu tur kesinlikle
+    // `_finish()` ile bitecek. Aşağıdaki kuyruk kaydı ağ bekler; o sırada ekranın
+    // canlı süreyi saymaya devam etmesi, arka planda geçen ölü zamanı da toplama
+    // ekliyordu. Bayrağı ŞİMDİ kaldır: canlı katkı anında 0 olur.
+    // DİKKAT: bu bayrak reconcile'ın TAMAMINDA değil, yalnız bu koşulda kalkar.
+    // Reconcile uygulama önplandayken her Başlat/Durdur broadcast'inde de çalışır;
+    // koşulsuz kaldırılırsa yeni başlamış sayaç 0 saniye görünür (regresyon).
+    final nativeIdleAtEntry =
+        !((prefs.getString(_kActiveStartedAt)?.isNotEmpty ?? false) ||
+            (prefs.getInt(_kActiveStartedAtMs) ?? 0) > 0);
+    if (state.isRunning && nativeIdleAtEntry) {
+      // Kuyruk kaydı `recorded`'ı zaten güncelleyecek → settling'e gerek yok.
+      // Not: state.isStopping == true olsa bile (kullanıcı panikle Durdur'a basmışsa)
+      // canlı süre ölü zaman içerir, bu yüzden settling yinede silinmelidir.
+      state = state.copyWith(isStopping: true, clearSettling: true);
+    }
+
     // 1. App-kapalı Durdur'ların ürettiği tamamlanmış aralıkları oturum yaz.
     // Kimlik henüz hazır değilse kuyruğu KORU (clear yarışı yok — WP-136).
     final raw = prefs.getString(TimerForegroundService.pendingIntervalsKey);
@@ -748,6 +800,11 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
         _finish();
       } else if (state.isRunning && hasActiveStart && fgMode == 'idle') {
         // Nadir tutarsızlık: start keys var ama fg idle — native'i yeniden it.
+        // WP-250: sayaç YAŞAMAYA DEVAM ediyor → erken kaldırılmış olabilecek
+        // durdurma bayrağını geri al, yoksa canlı süre 0'da kilitli kalır.
+        if (state.isStopping) {
+          state = state.copyWith(isStopping: false);
+        }
         final started = state.startedAt;
         if (started != null) {
           unawaited(
@@ -814,6 +871,8 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     if (fgStart != null && stateNeedsNativeUpdate) {
       state = state.copyWith(
         isRunning: true,
+        // WP-250: native'den çalışan bir koşu benimsendi → durdurma bayrağı düşer.
+        isStopping: false,
         startedAt: fgStart,
         phase: fgPhase,
         cycle: fgCycle,
@@ -918,6 +977,8 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     _stoppedStartedAtMs = null;
     state = state.copyWith(
       isRunning: true,
+      // WP-250: yeni başlangıç (eski "durduruluyor" kalmışsa temizle)
+      isStopping: false,
       startedAt: now,
       phase: TimerPhase.work,
       cycle: 1,
@@ -925,6 +986,8 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       lastUpdatedAt: now,
       clearLiveRun: true,
       verification: TimerVerification.idle,
+      // WP-250: yeni çalışma başladı, ekranda tutulan "eski settling" temizlenir.
+      clearSettling: true,
     );
     _persistActiveTimer();
     // Native broadcast / apply yarışında reconcile'ın idle sanmaması için
@@ -1083,13 +1146,49 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
           ? at
           : DateTime.now();
 
+      // WP-250 (KRİTİK — sıra değiştirilemez): aşağıdaki `await`'lerin toplamı
+      // gerçek cihazda 100ms+ sürer (offline cache yazımı → yerel stream emit →
+      // ardından ağ RTT'si). Flutter bu boşlukta bir kare çizer. O karede
+      // `recorded` YENİ oturumu zaten içerir; sayaç hâlâ `isRunning` olduğu için
+      // canlı süre de eklenirse toplam, oturumun tamamı kadar şişer.
+      // Bu yüzden ilk await'ten ÖNCE:
+      //   (1) canlı akışı kes  → isStopping = true
+      //   (2) DB'ye verilecek saniyeyi + o anki kayıtlı toplamı yayınla
+      // Böylece UI, kayıt yerleşmeden de yerleştikten de AYNI sayıyı gösterir.
+      final recordedSeconds = (wasWork && startedAt != null)
+          ? end.difference(startedAt).inSeconds
+          : 0;
+      if (recordedSeconds > 0 && startedAt != null) {
+        state = state.copyWith(
+          isStopping: true,
+          settlingSeconds: recordedSeconds,
+          settlingBaseline: ref.read(todayRecordedSecondsProvider),
+          // Oturum `dayOf(start)` gününe yazılır; bugün değilse bugüne uygulanmaz.
+          settlingDay: dayOf(startedAt),
+        );
+      } else {
+        // Mola durduruldu ya da süre 0 → kaydedilecek bir şey yok.
+        state = state.copyWith(isStopping: true, clearSettling: true);
+      }
+
+      // WP-250: native durumu doğrula (ZORUNLU - RTT öncesi senkron). EĞER native zaten
+      // durmuşsa (bildirimden vs.), bu senkronizasyon `isStopping` bayrağını
+      // görecek ve settling'i SİLECEK. Böylece ekrandaki hatalı canlı süre
+      // toplanmaz, ölü zaman üretilmez.
+      await _reconcileBackgroundTimerImpl();
+
       await _verifiedStartFuture;
 
       // WP-104: oturum kaydını native FGS teardown (_finish → STOP_SILENT)
       // öncesine al. Süreç erken ölürse bile offline-first cache/outbox oturumu
       // tutar; STOP_SILENT kuyruğa interval yazmadığı için çift kayıt üretmez.
       try {
-        if (wasWork && startedAt != null) {
+        // WP-250: _reconcileBackgroundTimerImpl eğer sayacın native'de ÇOKTAN
+        // durduğunu gördüyse (örneğin kullanıcı app kapalıyken durdurup app'i açtığında
+        // panikle tekrar durdurursa), _finish() çağrılmış ve state.startedAt null
+        // yapılmıştır. Bu durumda, ui'ın gördüğü (ama native'de olmayan) ölü
+        // zaman aralığını kaydetmekten vazgeç.
+        if (wasWork && startedAt != null && state.startedAt != null) {
           if (state.liveRunToken case final token?) {
             await _finalizeVerifiedRun(token);
           } else {
@@ -1154,8 +1253,25 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       }
     }
 
+    // WP-250: bu geçişte `study_sessions`'a kaç saniye yazılacağını ÖNCEDEN
+    // hesapla. `state` birazdan değişeceği için `isVerifiedRun` kontrolü de
+    // burada yapılmalı — eskiden `_finish()` liveRun'ı temizledikten SONRA
+    // kontrol ediliyordu ve verified koşuda hem finalize hem ek kayıt üretme
+    // riski vardı (bugün ölü yol, yine de tutarlı hale getiriyoruz).
+    final willRecord = t.recordWork && !state.isVerifiedRun;
+    final settling = willRecord ? targetSeconds : 0;
+    final settlingBaseline = willRecord
+        ? ref.read(todayRecordedSecondsProvider)
+        : 0;
+    final settlingDay = willRecord ? dayOf(startedAt) : null;
+
     if (t.finished) {
-      _finish(lastEvent: t.event);
+      _finish(
+        lastEvent: t.event,
+        settlingSeconds: settling,
+        settlingBaseline: settlingBaseline,
+        settlingDay: settlingDay,
+      );
     } else {
       final now = DateTime.now();
       state = state.copyWith(
@@ -1164,6 +1280,10 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
         startedAt: now,
         eventSeq: state.eventSeq + 1,
         lastEvent: t.event,
+        settlingSeconds: settling,
+        settlingBaseline: settlingBaseline,
+        settlingDay: settlingDay,
+        clearSettling: !willRecord,
       );
       _publishPresence(
         status: t.nextPhase == TimerPhase.work
@@ -1177,7 +1297,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     }
 
     // Çalışma fazı hedefe ulaştıysa süreyi kaydet (mola kaydedilmez).
-    if (t.recordWork && !state.isVerifiedRun) {
+    if (willRecord) {
       await _recordSession(startedAt, phaseEnd, subjectId);
     }
   }
@@ -1208,7 +1328,17 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   }
 
   /// Sayacı durdurur (kayıt yapmadan): timer'ı iptal et, çevrimdışına çek.
-  void _finish({TimerEvent? lastEvent}) {
+  ///
+  /// WP-250: [settlingSeconds] > 0 verilirse "yerleşmeyi bekleyen kayıt" bilgisi
+  /// bu geçişte state'e yazılır (pomodoro faz sonu gibi, kaydın `_finish`'ten
+  /// SONRA yapıldığı yollar için). Verilmezse mevcut settling* değerleri
+  /// korunur — `stop()` bunları zaten kendisi yazmıştır.
+  void _finish({
+    TimerEvent? lastEvent,
+    int settlingSeconds = 0,
+    int settlingBaseline = 0,
+    DateTime? settlingDay,
+  }) {
     _tick?.cancel();
     _tick = null;
     // WP-243: durdurulan çalışmanın startedAt-ms'ini hatırla. Native STOP diske
@@ -1217,6 +1347,8 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     _stoppedStartedAtMs = state.startedAt?.millisecondsSinceEpoch;
     state = state.copyWith(
       isRunning: false,
+      // WP-250: sayaç kapandı; "durduruluyor" ara durumu da bitti.
+      isStopping: false,
       clearStartedAt: true,
       phase: TimerPhase.work,
       cycle: 1,
@@ -1224,6 +1356,9 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       lastEvent: lastEvent,
       clearLiveRun: true,
       verification: TimerVerification.idle,
+      settlingSeconds: settlingSeconds > 0 ? settlingSeconds : null,
+      settlingBaseline: settlingSeconds > 0 ? settlingBaseline : null,
+      settlingDay: settlingSeconds > 0 ? settlingDay : null,
     );
     _clearActiveTimer();
     ref
