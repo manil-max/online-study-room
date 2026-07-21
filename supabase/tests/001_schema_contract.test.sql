@@ -7,13 +7,13 @@ select plan(24);
 
 select is(
   (select count(*)::integer from supabase_migrations.schema_migrations),
-  64,
-  'all 64 migrations are recorded'
+  65,
+  'all 65 migrations are recorded'
 );
 select is(
   (select max(version) from supabase_migrations.schema_migrations),
-  '0064',
-  '0064 is the migration head'
+  '0065',
+  '0065 is the migration head'
 );
 select is(current_setting('server_version_num')::integer / 10000, 17, 'PostgreSQL major is 17');
 select ok(exists(select 1 from pg_extension where extname = 'pg_cron'), 'pg_cron prerequisite is installed');
