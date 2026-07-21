@@ -5,6 +5,7 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:uuid/uuid.dart';
 
 import '../../../core/stats/istanbul_calendar.dart';
+import '../../../core/stats/study_stats.dart';
 import '../../../core/theme/subject_colors.dart';
 import '../../../core/widgets/number_stepper.dart';
 import '../../../data/models/study_session.dart';
@@ -57,6 +58,20 @@ import '../../../data/providers/subject_providers.dart';
   return (start: start.toUtc(), end: end.toUtc());
 }
 
+/// WP-253: manuel eklemenin çalışan sayaçla çakışıp çakışmadığı (saf karar —
+/// widget'sız test edilebilsin diye ayrı).
+///
+/// Yalnız **bugün + sayaç çalışıyor** kombinasyonu engellenir; geçmiş günlerde
+/// manuel oturum o günün 23:59:59'unda biter, canlı oturumla kesişemez.
+bool isManualAddBlocked({
+  required DateTime date,
+  required bool timerRunning,
+  DateTime? now,
+}) {
+  if (!timerRunning) return false;
+  return isSameDay(dayOf(date), dayOf(now ?? DateTime.now()));
+}
+
 /// Manuel süre ekleme akışı (her ekrandan çağrılabilir): aktif kullanıcı
 /// kontrolü + ders seçimli diyalog + `study_sessions`'a yazma. Oturumu seçilen
 /// günde eklendiği andaki saatte bitmiş gibi yerleştirir ([manualSessionRange]).
@@ -72,6 +87,27 @@ Future<void> addManualSessionFlow(BuildContext context, WidgetRef ref) async {
   final subjects = ref.read(userSubjectsProvider).value ?? [];
   final result = await showManualSessionDialog(context, subjects: subjects);
   if (result == null) return;
+
+  // WP-253: bugüne manuel ekleme, çalışan sayacın aralığıyla FİZİKSEL olarak
+  // çakışır (end = şimdi, start = şimdi - süre; sayaç da şu ana kadar sayıyor)
+  // → aynı dakikalar iki kez toplanır. Geçmiş gün seçilirse `end = 23:59:59`
+  // olduğundan çakışma imkânsız, o akış serbest bırakılır (geniş yasak meşru
+  // kullanımı kırardı). Guard butona değil BU AKIŞA konur; `addManualSessionFlow`
+  // hem sayaç kartından hem oturum geçmişi ekranından çağrılıyor.
+  if (isManualAddBlocked(
+    date: result.date,
+    timerRunning: ref.read(studyTimerProvider).isRunning,
+  )) {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          AppLocalizations.of(context).profileSayacCalisirkenEklenemez,
+        ),
+      ),
+    );
+    return;
+  }
 
   final range = manualSessionRange(result.date, result.seconds);
   await ref

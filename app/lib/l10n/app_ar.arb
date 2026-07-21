@@ -3364,6 +3364,10 @@
   "@profileSureyiDuzenle": {
     "description": "Profile user-facing text. Source: Süreyi düzenle"
   },
+  "profileSayacCalisirkenEklenemez": "لا يمكن إضافة وقت يدوي لليوم أثناء تشغيل المؤقت؛ أوقف المؤقت أولاً.",
+  "@profileSayacCalisirkenEklenemez": {
+    "description": "Profile user-facing text. Source: Sayaç çalışırken bugüne manuel süre eklenemez; önce sayacı durdur."
+  },
   "profileManuelSureEkle": "إضافة وقت يدوياً",
   "@profileManuelSureEkle": {
     "description": "Profile user-facing text. Source: Manuel süre ekle"

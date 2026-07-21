@@ -789,6 +789,7 @@
   "profileSosyal": "Sosyal",
   "profileSure": "Süre",
   "profileSureyiDuzenle": "Süreyi düzenle",
+  "profileSayacCalisirkenEklenemez": "Sayaç çalışırken bugüne manuel süre eklenemez; önce sayacı durdur.",
   "profileManuelSureEkle": "Manuel süre ekle",
   "profileSurumVeGuncellemeler": "Sürüm ve güncellemeler",
   "profileTam194DakikaSuren": "Tam 194 dakika süren bir oturum tamamla",

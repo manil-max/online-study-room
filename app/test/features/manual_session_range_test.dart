@@ -11,49 +11,61 @@ void main() {
   istanbulDay(DateTime.now());
   final loc = tz.getLocation('Europe/Istanbul');
 
-  test('WP-107: manuel aralık İstanbul gününe düşer (cihaz TZ simülasyonu)', () {
-    // UTC 2026-07-16 22:30 == İstanbul 2026-07-17 01:30 (yaz saati +3).
-    final fakeNowUtc = DateTime.utc(2026, 7, 16, 22, 30);
-    final pickedDay = DateTime(2026, 7, 17); // date picker takvim günü
+  test(
+    'WP-107: manuel aralık İstanbul gününe düşer (cihaz TZ simülasyonu)',
+    () {
+      // UTC 2026-07-16 22:30 == İstanbul 2026-07-17 01:30 (yaz saati +3).
+      final fakeNowUtc = DateTime.utc(2026, 7, 16, 22, 30);
+      final pickedDay = DateTime(2026, 7, 17); // date picker takvim günü
 
-    final range = manualSessionRange(
-      pickedDay,
-      3600, // 1 saat
-      now: fakeNowUtc,
-    );
+      final range = manualSessionRange(
+        pickedDay,
+        3600, // 1 saat
+        now: fakeNowUtc,
+      );
 
-    // start/end UTC instant; day anahtarı İstanbul 17 Temmuz olmalı.
-    expect(istanbulDay(range.start), DateTime(2026, 7, 17));
-    expect(istanbulDay(range.end), DateTime(2026, 7, 17));
-    expect(range.end.difference(range.start).inSeconds, 3600);
+      // start/end UTC instant; day anahtarı İstanbul 17 Temmuz olmalı.
+      expect(istanbulDay(range.start), DateTime(2026, 7, 17));
+      expect(istanbulDay(range.end), DateTime(2026, 7, 17));
+      expect(range.end.difference(range.start).inSeconds, 3600);
 
-    final endIst = tz.TZDateTime.from(range.end, loc);
-    expect(endIst.hour, 1);
-    expect(endIst.minute, 30);
-  });
+      final endIst = tz.TZDateTime.from(range.end, loc);
+      expect(endIst.hour, 1);
+      expect(endIst.minute, 30);
+    },
+  );
 
-  test('WP-203: gece yarısından hemen sonra eklenen süre önceki güne sayılır', () {
-    // İstanbul 00:30'da 2 saat eklenirse: "bittiği an = şu an" → end 00:30,
-    // start 22:30 (önceki gün). Gelecek-bitiş YOK; 00:00 kenetleme YOK.
-    // Günlük toplam dayOf(start) ile → çalışmanın olduğu güne (16 Tem) sayılır.
-    final fakeNowUtc = DateTime.utc(2026, 7, 16, 21, 30); // IST 00:30 (17 Tem)
-    final range = manualSessionRange(
-      DateTime(2026, 7, 17), // bugün (İstanbul)
-      2 * 3600,
-      now: fakeNowUtc,
-    );
-    final startIst = tz.TZDateTime.from(range.start, loc);
-    final endIst = tz.TZDateTime.from(range.end, loc);
-    // Bitiş = gerçek şu an (00:30), gelecekte değil.
-    expect(endIst.hour, 0);
-    expect(endIst.minute, 30);
-    expect(istanbulDay(range.end), DateTime(2026, 7, 17));
-    // Başlangıç önceki gün 22:30 → süre çalışmanın olduğu güne atılır.
-    expect(startIst.hour, 22);
-    expect(startIst.minute, 30);
-    expect(istanbulDay(range.start), DateTime(2026, 7, 16));
-    expect(range.end.difference(range.start).inSeconds, 2 * 3600);
-  });
+  test(
+    'WP-203: gece yarısından hemen sonra eklenen süre önceki güne sayılır',
+    () {
+      // İstanbul 00:30'da 2 saat eklenirse: "bittiği an = şu an" → end 00:30,
+      // start 22:30 (önceki gün). Gelecek-bitiş YOK; 00:00 kenetleme YOK.
+      // Günlük toplam dayOf(start) ile → çalışmanın olduğu güne (16 Tem) sayılır.
+      final fakeNowUtc = DateTime.utc(
+        2026,
+        7,
+        16,
+        21,
+        30,
+      ); // IST 00:30 (17 Tem)
+      final range = manualSessionRange(
+        DateTime(2026, 7, 17), // bugün (İstanbul)
+        2 * 3600,
+        now: fakeNowUtc,
+      );
+      final startIst = tz.TZDateTime.from(range.start, loc);
+      final endIst = tz.TZDateTime.from(range.end, loc);
+      // Bitiş = gerçek şu an (00:30), gelecekte değil.
+      expect(endIst.hour, 0);
+      expect(endIst.minute, 30);
+      expect(istanbulDay(range.end), DateTime(2026, 7, 17));
+      // Başlangıç önceki gün 22:30 → süre çalışmanın olduğu güne atılır.
+      expect(startIst.hour, 22);
+      expect(startIst.minute, 30);
+      expect(istanbulDay(range.start), DateTime(2026, 7, 16));
+      expect(range.end.difference(range.start).inSeconds, 2 * 3600);
+    },
+  );
 
   test('WP-203: geçmiş gün seçilince o günün sonuna (23:59:59) yazılır', () {
     // 3 gün önce 2 saat → end 23:59:59, start 21:59:59; gelecek-bitiş yok.
@@ -90,5 +102,77 @@ void main() {
     final round = StudySession.fromMap(map);
     expect(round.start.toUtc(), start);
     expect(round.end.toUtc(), end);
+  });
+
+  group('WP-253: manuel ekleme / çalışan sayaç çakışma koruması', () {
+    // İstanbul 2026-07-21 14:00 (UTC 11:00).
+    final now = DateTime.utc(2026, 7, 21, 11);
+
+    test('sayaç duruyorsa bugün de serbest', () {
+      expect(
+        isManualAddBlocked(
+          date: DateTime(2026, 7, 21),
+          timerRunning: false,
+          now: now,
+        ),
+        isFalse,
+      );
+    });
+
+    test('sayaç çalışırken BUGÜNE ekleme engellenir (fiziksel çakışma)', () {
+      expect(
+        isManualAddBlocked(
+          date: DateTime(2026, 7, 21),
+          timerRunning: true,
+          now: now,
+        ),
+        isTrue,
+      );
+    });
+
+    test(
+      'sayaç çalışırken GEÇMİŞ güne ekleme serbest (end=23:59:59, kesişmez)',
+      () {
+        expect(
+          isManualAddBlocked(
+            date: DateTime(2026, 7, 20),
+            timerRunning: true,
+            now: now,
+          ),
+          isFalse,
+        );
+        // Gerçekten kesişmediğini aralıkla da doğrula: dünün oturumu bugünün
+        // 00:00'ından önce biter.
+        final range = manualSessionRange(DateTime(2026, 7, 20), 3600, now: now);
+        expect(istanbulDay(range.end), DateTime(2026, 7, 20));
+        expect(range.end.isBefore(now), isTrue);
+      },
+    );
+
+    test(
+      'gece yarısı sınırı İstanbul gününe göre: UTC günü farklıyken de doğru',
+      () {
+        // UTC 2026-07-20 22:30 == İstanbul 2026-07-21 01:30.
+        final lateNight = DateTime.utc(2026, 7, 20, 22, 30);
+        // Kullanıcının seçtiği "bugün" İstanbul'da 21 Temmuz.
+        expect(
+          isManualAddBlocked(
+            date: DateTime(2026, 7, 21),
+            timerRunning: true,
+            now: lateNight,
+          ),
+          isTrue,
+        );
+        // UTC günü (20 Tem) İstanbul'da dündür → serbest.
+        expect(
+          isManualAddBlocked(
+            date: DateTime(2026, 7, 20),
+            timerRunning: true,
+            now: lateNight,
+          ),
+          isFalse,
+        );
+      },
+    );
   });
 }

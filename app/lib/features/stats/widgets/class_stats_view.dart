@@ -116,11 +116,13 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
             period == StatsPeriod.custom
         ? 30
         : chartDays;
-    // Üye başına çalışma serisi (tüm günlük toplamlardan, dönemden bağımsız).
-    final streaks = <String, int>{
-      for (final m in members)
-        m.id: studyStreak(const [], totals: userDayTotals(stats, m.id)),
-    };
+    // WP-253: Sıralama satırından üye serisi rozeti kaldırıldı. Ateş ikonu
+    // uygulamanın her yerinde "hedef tutturma serisi" demek (sayaç kartı,
+    // grup hedefi başlığı); burada ise `studyStreak` = "üst üste en az 1 sn
+    // çalışılan gün" idi — aynı ikon iki farklı metriği anlatıyordu. Grup
+    // tarafında hedef serisi hesaplanamaz (herkesin günlük hedefi bilinmez,
+    // gerekçe `study_stats.dart:245-246`), o yüzden rozet düzeltilmedi,
+    // kaldırıldı.
     // Renk-kodlu karşılaştırma tablosu: üye × [Bugün, Hafta, Ay].
     final todayTotals = userTotalsInRange(stats, dayOf(now), now);
     final weekTotals = userTotalsInRange(stats, startOfWeek(now), now);
@@ -252,7 +254,6 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
               avatarUrl: rows[i].member.avatarUrl,
               seconds: rows[i].seconds,
               maxSeconds: maxSeconds,
-              streak: streaks[rows[i].member.id] ?? 0,
               alphaWins: alphaWins[rows[i].member.id] ?? 0,
               isMe: rows[i].member.id == currentUserId,
               profile: rows[i].member.isActive ? rows[i].member : null,
@@ -890,7 +891,6 @@ class _LeaderboardRow extends StatelessWidget {
     required this.avatarUrl,
     required this.seconds,
     required this.maxSeconds,
-    required this.streak,
     required this.alphaWins,
     required this.isMe,
     this.profile,
@@ -901,7 +901,6 @@ class _LeaderboardRow extends StatelessWidget {
   final String? avatarUrl;
   final int seconds;
   final int maxSeconds;
-  final int streak;
   final int alphaWins;
   final bool isMe;
   final Profile? profile;
@@ -955,21 +954,6 @@ class _LeaderboardRow extends StatelessWidget {
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        if (streak > 0) ...[
-                          Icon(
-                            Icons.local_fire_department,
-                            size: 14,
-                            color: subjectColor('chart-5'),
-                          ),
-                          const SizedBox(width: 2),
-                          Text(
-                            '$streak',
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              color: subjectColor('chart-5'),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                        ],
                         if (alphaWins > 0) ...[
                           const Text('🐺', style: TextStyle(fontSize: 13)),
                           const SizedBox(width: 2),

@@ -102,10 +102,9 @@ class LeaderboardCard extends ConsumerWidget {
                   .take(count)
                   .toList();
 
-          final streaks = <String, int>{
-            for (final e in board)
-              e.key: studyStreak(const [], totals: userDayTotals(stats, e.key)),
-          };
+          // WP-253: üye başına seri rozeti kaldırıldı — bkz. class_stats_view.
+          // Bu karttaki ateş ikonu artık YALNIZ grup hedef serisini
+          // (`groupStreak`) anlatıyor; iki anlam çakışması bitti.
 
           final headerChildren = <Widget>[
             Row(
@@ -192,7 +191,6 @@ class LeaderboardCard extends ConsumerWidget {
             rank: i + 1,
             member: memberFor(board[i].key),
             seconds: board[i].value,
-            streak: streaks[board[i].key] ?? 0,
             alphaWins: alphaWins[board[i].key] ?? 0,
             isMe: board[i].key == meId,
             isCompact: isCompact,
@@ -257,7 +255,6 @@ class _Row extends StatelessWidget {
     required this.rank,
     required this.member,
     required this.seconds,
-    required this.streak,
     required this.alphaWins,
     required this.isMe,
     this.isCompact = false,
@@ -266,7 +263,6 @@ class _Row extends StatelessWidget {
   final int rank;
   final Profile? member;
   final int seconds;
-  final int streak;
   final int alphaWins;
   final bool isMe;
   final bool isCompact;
@@ -284,11 +280,6 @@ class _Row extends StatelessWidget {
       '$rank. · ${AppLocalizations.of(context).homeBugun} '
       '${formatHuman(seconds)}',
     );
-    if (streak > 0) {
-      brief.write(
-        ' · 🔥${AppLocalizations.of(context).homeOGun(streak.toString())}',
-      );
-    }
     if (alphaWins > 0) {
       brief.write(' · 🐺$alphaWins');
     }
@@ -335,21 +326,6 @@ class _Row extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (streak > 0) ...[
-                  Icon(
-                    Icons.local_fire_department,
-                    size: 14,
-                    color: subjectColor('chart-5'),
-                  ),
-                  const SizedBox(width: 2),
-                  Text(
-                    '$streak',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: subjectColor('chart-5'),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                ],
                 if (alphaWins > 0) ...[
                   const Text('🐺', style: TextStyle(fontSize: 12)),
                   const SizedBox(width: 2),

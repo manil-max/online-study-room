@@ -3364,6 +3364,10 @@
   "@profileSureyiDuzenle": {
     "description": "Profile user-facing text. Source: Süreyi düzenle"
   },
+  "profileSayacCalisirkenEklenemez": "Solange der Timer läuft, kannst du für heute keine Zeit manuell hinzufügen; stoppe zuerst den Timer.",
+  "@profileSayacCalisirkenEklenemez": {
+    "description": "Profile user-facing text. Source: Sayaç çalışırken bugüne manuel süre eklenemez; önce sayacı durdur."
+  },
   "profileManuelSureEkle": "Zeit manuell hinzufügen",
   "@profileManuelSureEkle": {
     "description": "Profile user-facing text. Source: Manuel süre ekle"
