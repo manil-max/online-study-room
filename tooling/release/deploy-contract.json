@@ -1,16 +1,16 @@
 {
   "schema_version": 1,
-  "local_migration_head": "0064",
+  "local_migration_head": "0065",
   "staging": {
-    "migration_head": "0064",
+    "migration_head": "0065",
     "deploy_enabled": true,
     "release_enabled": true,
-    "hold_reason": "WP-229 hosted-staging parity forward-fix 0064 is enabled only for staging QA."
+    "hold_reason": "WP-255 XP reprice (0065) is authorized for staging apply + beta QA only."
   },
   "production": {
     "migration_head": "0064",
-    "deploy_enabled": true,
-    "release_enabled": true,
-    "hold_reason": "Manual override for v42 stable release authorized by user."
+    "deploy_enabled": false,
+    "release_enabled": false,
+    "hold_reason": "v42 stable shipped (94947fc); the manual override is closed again. WP-255 (0065) reaches production only after staging QA and an explicit new GO."
   }
 }

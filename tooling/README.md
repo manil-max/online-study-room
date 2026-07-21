@@ -51,9 +51,21 @@ durum sorguları temizlenmiş evidence manifestine kaydedilir.
 
 `tooling/release/deploy-contract.json` tek public kapıdır. Şu anda:
 
-- local head `0064`;
-- staging kabul head'i `0064`, apply/release yalnız staging QA için açık;
-- production kabul head'i `0062`, apply/release kapalıdır.
+- local head `0065`;
+- staging kabul head'i `0065`, apply/release yalnız staging QA için açık;
+- production kabul head'i `0064`, apply/release **kapalıdır**.
+
+WP-255'in `0065_reprice_core_economy.sql` migration'ı 5 çekirdek başarımın XP'sini
+yükseltir ve düzeltmeyi **geriye dönük** uygular (kazanılmış defter satırları,
+bekleyen ödüller, profil XP + taç). Tüm değişiklikler artış olduğu için hiçbir
+kullanıcı XP/taç kaybetmez. Production head'i bilerek `0064`'te bırakıldı:
+`0065` production'a ancak staging QA + beta doğrulaması sonrası, ayrı ve somut
+bir GO ile taşınır.
+
+> **Not (WP-255):** v42 stable yayını için açılmış olan production
+> `deploy_enabled`/`release_enabled` manuel override'ı **kapatıldı** — yayın
+> tamamlandı (`94947fc`) ve açık kalan kapı kazara production apply'ına izin
+> veriyordu. Bir sonraki stable için bilinçli olarak yeniden açılmalıdır.
 
 WP-229'un `0063` eşit-kaynak migration'ı staging'e uygulandıktan sonra linked
 pgTAP'ın bulduğu fresh-hosted cron/explicit-grant parity açığı tarihsel dosyalar
