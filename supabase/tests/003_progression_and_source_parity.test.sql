@@ -5,7 +5,7 @@ set local search_path = public, extensions;
 
 \ir _fixtures/base_seed.psql
 
-select plan(9);
+select plan(11);
 
 select is(
   (public._achievement_metrics('10000000-0000-0000-0000-000000000001')->>'total_hours')::integer,
@@ -71,6 +71,34 @@ select is(
   ),
   2,
   'weekly source-neutral projector writes both users'
+);
+
+-- WP-255: yeniden fiyatlandırılan çekirdek başarımlar. Sözlük yeni fiyatı
+-- taşımalı ve KAZANILMIŞ defter satırları sözlükle aynı olmalı; ikisi
+-- ayrışırsa reprice yarım uygulanmış demektir (eski kullanıcı düşük XP'de
+-- kalır, yeni kullanıcı yükseği alır).
+select is(
+  (
+    select (t->>'xp')::integer
+    from public.achievements_dict d
+    cross join lateral jsonb_array_elements(d.tiers) as t
+    where d.id = 'marathon_total' and (t->>'tier')::integer = 1
+  ),
+  1500,
+  'marathon_total tier 1 is repriced to 1500 XP'
+);
+select is(
+  (
+    select count(*)
+    from public.xp_ledger l
+    join public.achievements_dict d on d.id = l.achievement_id
+    cross join lateral jsonb_array_elements(d.tiers) as t
+    where d.id in ('marathon_total','steel_will','day_hero','fire_streak','locomotive')
+      and (t->>'tier')::integer = l.tier
+      and (t->>'xp')::integer is distinct from l.xp_amount
+  ),
+  0::bigint,
+  'no awarded ledger row disagrees with the repriced dictionary'
 );
 
 select * from finish();

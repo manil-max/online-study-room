@@ -35,21 +35,29 @@ void main() {
       final weeklyWolf = dict.firstWhere(
         (entry) => entry.id == 'alpha_wolf_weekly',
       );
-      expect(
-        weeklyWolf.tiers.map((tier) => tier.threshold),
-        [1, 4, 12, 26, 52, 104],
-      );
-      expect(
-        weeklyWolf.tiers.map((tier) => tier.xp),
-        [2500, 6000, 15000, 30000, 60000, 120000],
-      );
+      expect(weeklyWolf.tiers.map((tier) => tier.threshold), [
+        1,
+        4,
+        12,
+        26,
+        52,
+        104,
+      ]);
+      expect(weeklyWolf.tiers.map((tier) => tier.xp), [
+        2500,
+        6000,
+        15000,
+        30000,
+        60000,
+        120000,
+      ]);
       expect(
         kAchievementMetricSourceVersions['alpha_wolf_weekly'],
         'weekly_alpha_verified_v1',
       );
     });
 
-    test('steel_will kademe 1: 60 dk oturum → 50 XP', () {
+    test('steel_will kademe 1: 60 dk oturum → 500 XP (WP-255)', () {
       final engine = AchievementLedgerEngine();
       final start = DateTime.utc(2026, 6, 1, 10, 0);
       final result = engine.processEvent(
@@ -60,11 +68,11 @@ void main() {
       );
       expect(
         result.awarded.any(
-          (a) => a.achievementId == 'steel_will' && a.tier == 1 && a.xp == 50,
+          (a) => a.achievementId == 'steel_will' && a.tier == 1 && a.xp == 500,
         ),
         isTrue,
       );
-      expect(result.totalXp, greaterThanOrEqualTo(50));
+      expect(result.totalXp, greaterThanOrEqualTo(500));
     });
 
     test('aynı event_key ikinci çağrıda çift XP vermez (idempotency)', () {
@@ -168,7 +176,9 @@ void main() {
       expect(
         result.awarded.any(
           (a) =>
-              a.achievementId == 'marathon_total' && a.tier == 1 && a.xp == 100,
+              a.achievementId == 'marathon_total' &&
+              a.tier == 1 &&
+              a.xp == 1500,
         ),
         isTrue,
       );

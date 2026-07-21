@@ -40,10 +40,28 @@ void main() {
       final weeklySql = File(
         '../supabase/migrations/0062_weekly_alpha_wolf.sql',
       ).readAsStringSync();
+      // WP-255: bu 5 başarımın fiyatı 0065 ile yeniden yazıldı; tuple'ları
+      // ARTIK 0056'da değil 0065'te aranmalı. Kimliği burada tutmak, ileride
+      // yeniden fiyatlandırılan bir başarımın eski migration'daki eski
+      // değeriyle eşleşip testi sessizce geçmesini engeller.
+      final repricedSql = File(
+        '../supabase/migrations/0065_reprice_core_economy.sql',
+      ).readAsStringSync();
+      const repricedIds = {
+        'marathon_total',
+        'steel_will',
+        'day_hero',
+        'fire_streak',
+        'locomotive',
+      };
       final achievements = fixture['achievements'] as Map<String, dynamic>;
 
       for (final entry in achievements.entries) {
-        final sql = entry.key == 'alpha_wolf_weekly' ? weeklySql : economySql;
+        final sql = switch (entry.key) {
+          'alpha_wolf_weekly' => weeklySql,
+          final id when repricedIds.contains(id) => repricedSql,
+          _ => economySql,
+        };
         expect(sql, contains(entry.key), reason: '${entry.key} server id');
         for (final tuple in entry.value as List) {
           final values = tuple as List;

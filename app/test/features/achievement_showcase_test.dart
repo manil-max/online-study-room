@@ -113,8 +113,8 @@ void main() {
     expect(find.text('Tüm kademeler'), findsOneWidget);
     expect(find.text('Kademe 1 · Toplam 50 saat çalış.'), findsOneWidget);
     expect(find.text('Kademe 5 · Toplam 2500 saat çalış.'), findsOneWidget);
-    expect(find.text('+100 XP · Kilitli'), findsOneWidget);
-    expect(find.text('+15000 XP · Kilitli'), findsOneWidget);
+    expect(find.text('+1500 XP · Kilitli'), findsOneWidget);
+    expect(find.text('+75000 XP · Kilitli'), findsOneWidget);
   });
 
   test(
