@@ -8,9 +8,9 @@
     "hold_reason": "WP-255 XP reprice (0065) is authorized for staging apply + beta QA only."
   },
   "production": {
-    "migration_head": "0065",
+    "migration_head": "0064",
     "deploy_enabled": true,
     "release_enabled": true,
-    "hold_reason": "v43 stable release: WP-250/251/253/254/255 authorized by user after beta-v4301. 0065 reprice must be applied to production BEFORE the v43 tag."
+    "hold_reason": "Production has NO supabase_migrations history (PRODUCTION-BASELINE.md 63); the chain cannot be pushed until WP-232 history repair. 0065 is applied MANUALLY via docs/recovery/sql/apply_0065_production_manual.sql. release_enabled stays true for the v43 APK."
   }
 }
