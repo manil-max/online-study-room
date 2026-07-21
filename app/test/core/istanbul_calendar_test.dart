@@ -46,7 +46,10 @@ void main() {
 
   group('istanbulWeekday', () {
     test('1 Ocak 2026 Perşembe günüdür (weekday 4)', () {
-      expect(istanbulWeekday(DateTime.utc(2026, 1, 1, 12, 0)), DateTime.thursday);
+      expect(
+        istanbulWeekday(DateTime.utc(2026, 1, 1, 12, 0)),
+        DateTime.thursday,
+      );
     });
 
     test('gece yarısı sarması hafta gününü de kaydırır', () {
@@ -94,6 +97,50 @@ void main() {
       // Local DateTime with offset baked as UTC wall — still convert via TZ.
       final asLocalWall = DateTime.parse('2026-07-17T21:30:00.000Z');
       expect(istanbulDay(asLocalWall), DateTime(2026, 7, 18));
+    });
+  });
+
+  group('WP-254: istanbulHm / istanbulWallClock', () {
+    test('UTC damgasını İstanbul duvar saatine çevirir (3 saat ileri)', () {
+      // Kullanıcı 16:00'da çalıştı → DB'de 13:00Z. Ekranda 16:00 yazmalı.
+      expect(istanbulHm(DateTime.utc(2026, 7, 21, 13)), '16:00');
+    });
+
+    test(
+      'ham .hour ile arasındaki fark tam 3 saattir (regresyonun kendisi)',
+      () {
+        final instant = DateTime.utc(2026, 7, 21, 13, 5);
+        expect(instant.hour, 13); // eski (bozuk) davranış
+        expect(istanbulHm(instant), '16:05'); // yeni (doğru) davranış
+      },
+    );
+
+    test('iki haneli sıfır dolgusu', () {
+      // UTC 06:07 → İstanbul 09:07.
+      expect(istanbulHm(DateTime.utc(2026, 7, 21, 6, 7)), '09:07');
+    });
+
+    test('gün sınırını aşan an: UTC 22:30 → İstanbul ertesi gün 01:30', () {
+      final instant = DateTime.utc(2026, 7, 20, 22, 30);
+      expect(istanbulHm(instant), '01:30');
+      // Tarih seçicinin açılacağı gün de kaymamalı (session_history _edit).
+      expect(istanbulDay(instant), DateTime(2026, 7, 21));
+    });
+
+    test(
+      'yerel (isUtc=false) DateTime verilse de sonuç instant tabanlıdır',
+      () {
+        final utc = DateTime.utc(2026, 7, 21, 13);
+        expect(istanbulHm(utc.toLocal()), istanbulHm(utc));
+      },
+    );
+
+    test('istanbulWallClock saat/dakikayı korur, istanbulHour ile tutarlı', () {
+      final instant = DateTime.utc(2026, 7, 21, 13, 42);
+      final wall = istanbulWallClock(instant);
+      expect(wall.hour, 16);
+      expect(wall.minute, 42);
+      expect(wall.hour, istanbulHour(instant));
     });
   });
 }

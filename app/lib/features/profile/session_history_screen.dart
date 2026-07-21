@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/stats/istanbul_calendar.dart';
 import '../../core/stats/study_stats.dart';
 import '../../core/theme/subject_colors.dart';
 import '../../core/utils/duration_format.dart';
@@ -239,8 +240,10 @@ class _PastDayTile extends StatelessWidget {
 }
 
 /// Saat:dakika (iki haneli) — oturum saat aralığı için.
-String _hm(DateTime t) =>
-    '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+///
+/// WP-254: `session.start/end` DB'den UTC olarak parse edilir; ham `.hour`
+/// yaz saatinde 3 saat geri gösteriyordu. Artık İstanbul duvar saati.
+String _hm(DateTime t) => istanbulHm(t);
 
 /// "21 Haziran 2026 Cumartesi" — okunaklı uzun tarih.
 String _longDate(AppLocalizations l10n, DateTime d) =>
@@ -317,7 +320,9 @@ class _SessionTile extends ConsumerWidget {
     final subjects = ref.read(userSubjectsProvider).value ?? [];
     final result = await showManualSessionDialog(
       context,
-      initialDate: session.start,
+      // WP-254: UTC `start` verilirse gece yarısına yakın oturumlarda tarih
+      // seçici YANLIŞ günü açar (ör. IST 01:30 → UTC 22:30, bir önceki gün).
+      initialDate: istanbulDay(session.start),
       initialSeconds: session.durationSeconds,
       initialSubjectId: session.subjectId,
       subjects: subjects,

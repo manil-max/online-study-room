@@ -2,6 +2,7 @@ import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/stats/istanbul_calendar.dart';
 import '../../../core/widgets/crowned_avatar.dart';
 import '../../../data/models/chat_message.dart';
 import '../../../data/models/study_group.dart';
@@ -70,8 +71,8 @@ class _ClassChatCardState extends ConsumerState<ClassChatCard> {
                   final visible = blocked.isEmpty
                       ? messages
                       : messages
-                          .where((m) => !blocked.contains(m.userId))
-                          .toList(growable: false);
+                            .where((m) => !blocked.contains(m.userId))
+                            .toList(growable: false);
                   return _MessageList(
                     messages: visible,
                     currentUserId: user?.id,
@@ -224,11 +225,7 @@ class _MessageBubble extends ConsumerWidget {
     }
 
     if (selected == 'block') {
-      await confirmAndBlockUser(
-        context,
-        ref,
-        userId: message.userId,
-      );
+      await confirmAndBlockUser(context, ref, userId: message.userId);
     }
   }
 
@@ -251,10 +248,7 @@ class _MessageBubble extends ConsumerWidget {
         borderRadius: BorderRadius.circular(8),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 10,
-          vertical: 8,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -269,9 +263,7 @@ class _MessageBubble extends ConsumerWidget {
               ),
             Text(
               message.body,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: textColor,
-              ),
+              style: theme.textTheme.bodyMedium?.copyWith(color: textColor),
             ),
             const SizedBox(height: 2),
             Align(
@@ -332,7 +324,6 @@ class _MessageBubble extends ConsumerWidget {
   }
 }
 
-String _formatMessageTime(DateTime value) {
-  String two(int n) => n.toString().padLeft(2, '0');
-  return '${two(value.hour)}:${two(value.minute)}';
-}
+/// WP-254: `createdAt` DB'den UTC parse edilir; ham `.hour` mesaj saatlerini
+/// 3 saat geri gösteriyordu. İstanbul duvar saati tek doğru kaynak.
+String _formatMessageTime(DateTime value) => istanbulHm(value);
