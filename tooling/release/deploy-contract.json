@@ -8,9 +8,9 @@
     "hold_reason": "WP-255 XP reprice (0065) is authorized for staging apply + beta QA only."
   },
   "production": {
-    "migration_head": "0064",
+    "migration_head": "0065",
     "deploy_enabled": true,
     "release_enabled": true,
-    "hold_reason": "Production has NO supabase_migrations history (PRODUCTION-BASELINE.md 63); the chain cannot be pushed until WP-232 history repair. 0065 is applied MANUALLY via docs/recovery/sql/apply_0065_production_manual.sql. release_enabled stays true for the v43 APK."
+    "hold_reason": "0065 IS applied to production, but manually via docs/recovery/sql/apply_0065_production_manual.sql (verified: marathon_total tier1 = 1500 XP, 42 ledger rows repriced) because production has NO supabase_migrations history (PRODUCTION-BASELINE.md 63). Chain repair remains WP-232."
   }
 }
