@@ -3,6 +3,48 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.43-beta.1",
+      "buildNumber": 4301,
+      "channel": "beta",
+      "date": "2026-07-21",
+      "title": "beta-v4301: sayaç toplamı, saat gösterimi ve XP değerleri",
+      "highlights": [
+        "Durdur'a bastığın an toplam artık hiç zıplamıyor; kayıt sunucuya yazılırken de yazıldıktan sonra da aynı sayı görünüyor.",
+        "Çalışma kayıtlarındaki ve sohbetteki saatler 3 saat geri gösteriyordu; düzeldi.",
+        "Beş başarımın XP değerleri yükseltildi ve düzeltme GERİYE DÖNÜK: daha önce kazandığın kademeler de yeni değere yükseliyor."
+      ],
+      "fixes": [
+        "Durdurma çift sayımı: oturum veritabanına yazılırken geçen sürede canlı süre ikinci kez toplanıyor, 1 saatlik çalışma 2 saat görünüyordu. Ekranın 'gördüğü sayıyı dondurma' mekanizması da bu hatalı değeri gün boyu kilitliyordu. Ekran artık kendi gösterdiği sayıyı geri okumuyor.",
+        "Arka planda bildirimden Durdur'a basıp uygulamayı sonra açınca, aradaki ölü zaman çalışma süresine ekleniyordu.",
+        "Çevrimdışı kuyruk: bir oturum gönderilemezse başarılı olanlar da kuyrukta kalıp her açılışta yeniden yazılıyordu (kayıtların kopyalanması). Ayrıca kuyruk toptan silindiği için o sırada eklenen yeni oturum kaybolabiliyordu.",
+        "Çalışma kayıtları ve sohbet saatleri UTC gösteriliyordu (16:00 çalışma 13:00 yazıyordu). Oturum düzenleme ekranı da gece yarısına yakın kayıtlarda yanlış günü açıyordu.",
+        "Grup sıralamasındaki ateş rozeti kaldırıldı: aynı ikon sayaç kartında 'hedef serisi', sıralamada 'çalışılan gün serisi' anlamına geliyordu.",
+        "Sayaç çalışırken bugüne manuel süre eklemek engellendi (aynı dakikalar iki kez sayılıyordu). Geçmiş günlere ekleme serbest."
+      ],
+      "notes": [
+        "XP yükseltmesi: Maratoncu, Çelik İrade, Günün Kahramanı, Ateş Harlı ve Lokomotif. Tüm değişiklikler ARTIŞ yönünde — kimsenin XP'si veya taç kademesi düşmez.",
+        "Beta test sürümü (staging backend). Stable kullanıcılara gitmez."
+      ],
+      "titleEn": "beta-v4301: timer total, clock display and XP values",
+      "highlightsEn": [
+        "The total no longer jumps when you press Stop; it shows the same number while the session is being saved and after.",
+        "Times in study records and chat were 3 hours behind; fixed.",
+        "XP for five achievements was raised, and the change is RETROACTIVE: tiers you already earned are upgraded to the new value."
+      ],
+      "fixesEn": [
+        "Stop double counting: while the session was being written to the database the live time was added a second time, so one hour of work showed as two. The screen's 'freeze the number I displayed' mechanism then locked that wrong value for the rest of the day. The screen no longer reads back its own output.",
+        "Pressing Stop from the background notification and opening the app later added the dead time in between to your total.",
+        "Offline queue: if one session failed to upload, the successful ones stayed queued and were rewritten on every launch (duplicate records). The queue was also cleared wholesale, which could lose a session added meanwhile.",
+        "Study record and chat times were shown in UTC (16:00 of work read as 13:00). The session edit screen also opened the wrong day for records near midnight.",
+        "Removed the streak flame badge from group leaderboard rows: the same icon meant 'goal streak' on the timer card but 'days studied streak' in the leaderboard.",
+        "Adding manual time for today while the timer is running is now blocked (the same minutes were counted twice). Past days are still allowed."
+      ],
+      "notesEn": [
+        "XP raise: Marathoner, Steel Will, Day Hero, Blazing Fire and Locomotive. All changes are increases — nobody's XP or crown tier goes down.",
+        "Beta test build (staging backend). Not delivered to stable users."
+      ]
+    },
+    {
       "versionName": "1.0.42",
       "buildNumber": 42,
       "channel": "stable",

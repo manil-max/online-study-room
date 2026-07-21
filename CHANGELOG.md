@@ -4,6 +4,31 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [beta-v4301 / 1.0.43-beta.1+4301] - 2026-07-21
+
+> **Beta test sürümü — sayaç toplamı, saat gösterimi ve XP ekonomisi.** v42 stable'dan sonraki ilk beta. Sayaç durdurma bug'ının kalan (ekran) katmanı, çevrimdışı kuyruk kopyaları, 3 saatlik saat kayması ve beş başarımın yeniden fiyatlandırılması.
+
+### Öne çıkanlar
+- Durdur'a bastığın an toplam artık hiç zıplamıyor; kayıt sunucuya yazılırken de yazıldıktan sonra da **aynı sayı** görünüyor.
+- Çalışma kayıtlarındaki ve sohbetteki saatler **3 saat geri** gösteriyordu; düzeldi.
+- Beş başarımın XP değerleri yükseltildi ve düzeltme **geriye dönük**: daha önce kazandığın kademeler de yeni değere yükseliyor.
+
+### Düzeltmeler
+- **Durdurma çift sayımı (P0).** Oturum veritabanına yazılırken (yerel önbellek + ağ gidiş-dönüşü) geçen sürede sayaç hâlâ "çalışıyor" göründüğü için canlı süre ikinci kez toplanıyordu — 1 saatlik çalışma 2 saat görünüyordu. Ekranın "gösterdiğim sayıyı dondur" mekanizması da bu hatalı değeri yakalayıp gün boyu kilitliyordu. Ekran artık kendi gösterdiği sayıyı geri okumuyor; sayaç durumu kaydın yerleşip yerleşmediğinden bağımsız tek bir toplam üretiyor.
+- **Ölü zaman.** Arka planda bildirimden Durdur'a basıp uygulamayı 5 dakika sonra açınca, aradaki boşluk çalışma süresine ekleniyordu.
+- **Çevrimdışı kuyruk kopyaları (P1).** Bir oturum gönderilemezse başarılı olanlar da kuyrukta kalıp her açılışta yeniden yazılıyordu (her açılışta bir kopya daha). Kuyruk toptan silindiği için, gönderim sürerken eklenen yeni oturum da kaybolabiliyordu. Artık her kayıt benzersiz kimlik taşıyor ve kuyruktan yalnız gerçekten işlenenler düşürülüyor.
+- **Saat gösterimi 3 saat geri.** Veritabanı zaman damgaları UTC olarak okunup doğrudan basılıyordu; Türkiye kalıcı UTC+3 olduğu için 16:00'daki çalışma 13:00 yazıyordu. Çalışma kayıtları ve sohbet mesajları düzeldi. Oturum düzenleme ekranı da gece yarısına yakın kayıtlarda **yanlış günü** açıyordu.
+- **Sıralamadaki ateş rozeti kaldırıldı.** Aynı ikon sayaç kartında "hedef tutturma serisi", grup sıralamasında "üst üste çalışılan gün" anlamına geliyordu. Grup tarafında hedef serisi hesaplanamadığı için (herkesin günlük hedefi bilinmez) rozet düzeltilemezdi; kaldırıldı. Grup hedefi başlığındaki ateş korundu — o gerçekten hedef serisi.
+- **Manuel süre çakışması.** Sayaç çalışırken bugüne manuel süre eklemek aynı dakikaları iki kez sayıyordu; engellendi. Geçmiş günlere ekleme serbest (o kayıtlar 23:59:59'da bittiği için canlı oturumla kesişemez).
+
+### Ekonomi
+- **XP yeniden fiyatlandırma (geriye dönük).** Maratoncu, Çelik İrade, Günün Kahramanı, Ateş Harlı ve Lokomotif başarımlarının XP değerleri yükseltildi. Kazanılmış kademeler, henüz toplanmamış ödüller ve profil XP/taç kademesi birlikte güncellenir. **Tüm değişiklikler artış yönündedir — kimsenin XP'si veya tacı düşmez.**
+
+### Notlar
+- Beta test sürümü (staging backend); stable kullanıcılara gitmez.
+- Sunucu tarafı `0065` migration'ı gerektirir. Uygulama yayınlanmadan **önce** staging'e uygulanmalıdır; aksi hâlde ekranda yeni XP değeri yazıp sunucu eskisini verir.
+
+
 ## [v42 / 1.0.42+42] - 2026-07-20
 
 > **Kararlı (stable) sürüm.** beta-v42 serisindeki sayaç durdurma yarışları, hata yönetimi ve gerçek kök neden düzeltmeleri (boş kimlik onarımı). Herkese (stable kanal).
