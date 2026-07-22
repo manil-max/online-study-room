@@ -65,6 +65,9 @@ Bu belge Windows release / MSIX kanıtını standardize eder. Emulator veya yaln
 
 ## 2. Kurulum / güncelleme / kaldırma
 
+Temiz hedefte iki-sürümlü MSIX koşumu için ayrıntılı ve redacted kanıt prosedürü:
+[`WINDOWS-VM-QA.md`](WINDOWS-VM-QA.md).
+
 | ID | Senaryo | Sonuç | Kanıt |
 |---|---|---|---|
 | W-01 | Temiz Windows 11, standart kullanıcı, MSIX kur | PASS/FAIL | |

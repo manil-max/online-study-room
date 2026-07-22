@@ -94,12 +94,12 @@
 - **Durum:** [~] Aktif
 - **Faz/WP:** Windows Store ürünleştirme · WP-259 (ilk dilim: hızlı Windows smoke kontrolü)
 - **Aşama:** Otomatik test geçti (WP-259 ilk dilim)
-- **SAHİP yollar:** `scripts/windows_fast_smoke.ps1`, `scripts/windows_smoke_screenshot.ps1`, `scripts/windows_local_dev.ps1`, `docs/QA-WINDOWS.md`, `docs/WINDOWS-STORE-PLAN.md`, `progress.md`
+- **SAHİP yollar:** `scripts/windows_fast_smoke.ps1`, `scripts/windows_smoke_screenshot.ps1`, `scripts/windows_local_dev.ps1`, `docs/QA-WINDOWS.md`, `docs/WINDOWS-VM-QA.md`, `docs/WINDOWS-STORE-PLAN.md`, `progress.md`
 - **Ortak/riskli yüzey:** Yerel Windows süreç/pencere yakalama; Store, Supabase ve production mutasyonu yok
 - **Dal:** `main`
 - **Başlangıç:** 2026-07-22 (Europe/Istanbul)
 - **Son güncelleme:** 2026-07-22 (Europe/Istanbul)
-- **Not:** Güvenli pencere-yakalama ile hızlı smoke gerçek makinede ≤1 sn PASS. `windows_local_dev.ps1 -BuildOnly` local InMemory manifestiyle taze Windows Release derledi (~47 sn), önceki `env.json`u geri yükledi ve uygulama v43 yenilikler ekranını `invalid_channel` olmadan açtı. İşlevsel giriş/timer/senkron ve MSIX update QA henüz açık.
+- **Not:** Güvenli pencere-yakalama ile hızlı smoke gerçek makinede ≤1 sn PASS. `windows_local_dev.ps1 -BuildOnly` local InMemory manifestiyle taze Windows Release derledi (~47 sn), önceki `env.json`u geri yükledi ve uygulama v43 yenilikler ekranını `invalid_channel` olmadan açtı. Bu PC Windows 11 Home olduğu için Sandbox/VM kurulum-update provasına uygun değil; taşınabilir VM/ikinci-PC prosedürü hazırlanıyor.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta

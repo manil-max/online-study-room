@@ -25,7 +25,7 @@
 
 ## Canlıya çıkmadan test yolu
 
-1. **Windows Sandbox veya temiz VM:** Ana bilgisayardaki test paketini kaldırmadan, izole Windows 11 ortamında çalışılır.
+1. **Windows Sandbox veya temiz VM:** Ana bilgisayardaki test paketini kaldırmadan, izole Windows 11 ortamında çalışılır. Bu PC Windows 11 Home olduğu için Sandbox uygun değildir; koşum, ayrı VM veya ikinci PC'de [`WINDOWS-VM-QA.md`](WINDOWS-VM-QA.md) ile yapılır.
 2. **Staging manifesti:** CI'ın geçici oluşturduğu staging env düzeni kullanılır; gerçek production hesabı/verisiyle test yapılmaz. `env.json` veya secret repoya yazılmaz.
 3. **İki sürümlü paket provası:** Aynı yalnız-QA identity/publisher ile `N` ve `N+1` MSIX üretilir. Temiz kurulum → giriş → timer/senkron → `N+1` update → veri korunumu → uninstall senaryosu video/ekran kanıtıyla yürütülür.
 4. **Store private pilot:** Partner Center'da Private Audience seçilir; yalnız seçilen Microsoft hesabı e-postaları paketi ve listelemeyi görebilir. Bu paket Store sertifikasyonundan geçer ama halka görünmez.
