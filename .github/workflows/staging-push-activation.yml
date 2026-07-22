@@ -106,13 +106,19 @@ jobs:
           set -euo pipefail
           sudo apt-get update -qq
           sudo apt-get install --yes --quiet postgresql-client
+          pooler_config="$(curl --fail-with-body --silent --show-error \
+            -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            "https://api.supabase.com/v1/projects/$STAGING_SUPABASE_PROJECT_REF/config/database/pooler")"
+          pooler_host="$(printf '%s' "$pooler_config" | jq -er '[.[] | select(.pool_mode == "session")][0].db_host // .[0].db_host')"
+          pooler_port="$(printf '%s' "$pooler_config" | jq -er '[.[] | select(.pool_mode == "session")][0].db_port // .[0].db_port')"
+          pooler_user="$(printf '%s' "$pooler_config" | jq -er '[.[] | select(.pool_mode == "session")][0].db_user // .[0].db_user')"
           export PGPASSWORD="$SUPABASE_DB_PASSWORD"
           psql \
-            "host=db.$STAGING_SUPABASE_PROJECT_REF.supabase.co port=5432 dbname=postgres user=postgres sslmode=require" \
+            "host=$pooler_host port=$pooler_port dbname=postgres user=$pooler_user sslmode=require" \
             --set=ON_ERROR_STOP=1 \
             --command "ALTER DATABASE postgres SET app.settings.supabase_url TO '$STAGING_SUPABASE_URL'; ALTER DATABASE postgres SET app.settings.push_dispatch_secret TO '$PUSH_DISPATCH_SECRET';"
           psql \
-            "host=db.$STAGING_SUPABASE_PROJECT_REF.supabase.co port=5432 dbname=postgres user=postgres sslmode=require" \
+            "host=$pooler_host port=$pooler_port dbname=postgres user=$pooler_user sslmode=require" \
             --tuples-only --no-align --set=ON_ERROR_STOP=1 \
             --command "SELECT (length(current_setting('app.settings.supabase_url', true)) > 0)::text || ':' || (length(current_setting('app.settings.push_dispatch_secret', true)) > 0)::text;" \
             | grep -qx 'true:true'
