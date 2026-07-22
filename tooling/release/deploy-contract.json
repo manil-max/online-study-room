@@ -2,10 +2,10 @@
   "schema_version": 1,
   "local_migration_head": "0066",
   "staging": {
-    "migration_head": "0065",
+    "migration_head": "0066",
     "deploy_enabled": true,
     "release_enabled": true,
-    "hold_reason": "WP-255 XP reprice (0065) is authorized for staging apply + beta QA only."
+    "hold_reason": "WP-268: push delivery (0066) is authorized only for staging activation and beta-v4302 device QA."
   },
   "production": {
     "migration_head": "0065",

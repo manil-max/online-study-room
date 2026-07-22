@@ -1,6 +1,6 @@
 # progress.md — İlerleme Takibi
 
-> Son güncelleme: 2026-07-22 (bildirim güveni ve Android canlı sayaç programı eklendi)
+> Son güncelleme: 2026-07-22 (beta-v4302 staging yayın hazırlığı başlatıldı)
 > Sistem: İş Paketi (WP) tabanlı, **Kalite Programı**. Kanonik program: `docs/KALITE-PROGRAMI.md`.
 > Planlama: `.agents/skills/planner/SKILL.md` · Uygulama: `.agents/skills/worker/SKILL.md` · Kurallar: `.agents/AGENTS.md`.
 > **"Tamamlandı" = kod DEĞİL; kullanıcı beklentisini karşılayan + cihazda güvenilir çalışan iş.** İş durum merdiveni (8 aşama) ve kanıt etiketleri (`Kodda doğrulandı` / `Cihazda doğrulanmalı` / `Ürün kararı gerekiyor`) için bkz. AGENTS.md §0.
@@ -91,15 +91,15 @@
   - K/L kodu repoda; kabul kanıtı yoktur. Tüm production terfisi artık `docs/ORTAM-MIGRATION-YONETISIMI.md` ve WP-225–232 kapısına tabidir.
 
 ### Codex Lane
-- **Durum:** [x] Boşta
-- **Faz/WP:** —
-- **Aşama:** —
-- **SAHİP yollar:** —
-- **Ortak/riskli yüzey:** —
+- **Durum:** [~] Aktif
+- **Faz/WP:** WP-268 · beta-v4302 staging yayın hazırlığı
+- **Aşama:** Otomatik test geçti · staging migration/aktivasyon bekliyor
+- **SAHİP yollar:** `CHANGELOG.md`, `app/assets/release_notes.json`, `app/pubspec.yaml`, `tooling/release/deploy-contract.json`, `tooling/supabase/guard.tests.ps1`, `progress.md`
+- **Ortak/riskli yüzey:** staging migration head ve GitHub beta tag/release; production kapsam dışı
 - **Dal:** `main`
 - **Başlangıç:** 2026-07-22 (Europe/Istanbul)
 - **Son güncelleme:** 2026-07-22 (Europe/Istanbul)
-- **Not:** WP-266 `23e6426` ile kodda + yerel backend'de tamamlandı. WP-267 standard/promoted notification + cihaz içi diagnostic kodu, 682 Flutter testi ve Android APK doğrulaması tamamlandı; fiziksel Samsung/Pixel QA bekliyor. Remote/staging/production mutasyonu yapılmadı.
+- **Not:** WP-268 yayın metaverisi, manifest kapısı, deploy guard ve Flutter tam test paketi (682) geçti. Sıradaki işlem yalnız staging `0066` dry-run/apply + dispatcher/Firebase aktivasyonudur; production mutasyonu yasaktır.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
@@ -315,6 +315,20 @@
 - **Tuzaklar:** Now Bar'ı garanti etmek; görünüm değişikliğiyle FGS lifecycle'a dokunmak; yalnız Flutter testini cihaz kanıtı saymak.
 - **Kanıt (2026-07-22):** AndroidX Core 1.18.0, `POST_PROMOTED_NOTIFICATIONS`, standard native chronometer/action, monochrome ikon ve read-only health diagnostic eklendi; custom layout silindi. Analyze temiz; tüm **682** Flutter testi geçti; local debug APK/Kotlin compile geçti; APK izin+ikon içeriği doğrulandı. Bağlı Android/AVD yoktu, OEM sonucu raporda açıkça bekliyor.
 - **Model önerisi:** 🔴 Opus / frontier-high.
+
+### WP-268: beta-v4302 Staging Push Aktivasyonu ve Cihaz QA Paketi 🚀
+- **Program/Faz:** Bildirim Güven Programı · Faz 3
+- **Ajan:** Codex
+- **Durum:** [~] Otomatik test geçti · staging aktivasyonu bekliyor · **Bağımlılık:** WP-266/267 kod ve local test kanıtı ✅
+- **Problem:** Yeni FCM/outbox kodu ve Android standard canlı sayaç yerelde doğrulandı; staging henüz `0066`da değil ve beta cihaz paketi yayınlanmadı.
+- **Kapsam:** Sadece staging için deploy sözleşmesi `0066`, `beta-v4302` sürüm notları, yerel kalite kapıları, migration dry-run/apply/post-check, `dispatch-push` staging deploy, beta tag/release ve cihaz kabul listesi.
+- **Kapsam dışı:** Production migration/secret/function/tag/release; Firebase service-account veya gizli değerlerin repoya yazılması; cihaz sonucu uydurmak.
+- **SAHİP dosyalar (yaz):** `CHANGELOG.md`, `app/assets/release_notes.json`, `app/pubspec.yaml`, `tooling/release/deploy-contract.json`, `tooling/supabase/guard.tests.ps1`, `progress.md`.
+- **Veri/Migration etkisi:** Staging'e yalnız ileri `0066`; push token/outbox/delivery tabloları. Remote reset, veri silme ve backfill yok.
+- **Ortam/Deploy:** Beta → staging; release ancak Firebase public client config ve staging dispatcher secret/function hazırsa. Production'a hiçbir çağrı yapılmaz.
+- **Kabul:** `beta-v4302` (`1.0.43-beta.2+4302`) staging backend'e bağlı, imzalı GitHub prerelease APK olarak oluşur; staging `0066` post-check geçer; fiziksel cihazda remote self-test, app-closed timer ve standard notification kabul listesi görünür.
+- **Tuzaklar:** Eksik Firebase config ile etiketi atıp başarısız CI bırakmak; staging yerine production hedeflemek; local notification sonucunu gerçek FCM kanıtı saymak.
+- **Kanıt (2026-07-22):** `flutter analyze` temiz; tüm **682** Flutter testi geçti; deploy guard **36/36**; gerçek beta kanal/manifest gate ve release-note JSON sözleşmesi geçti. Staging/production'a henüz yazılmadı.
 
 ### WP-229: Eşit Süre Kaynakları ve Ödül Zinciri Onarımı ⚖️
 - **Program/Faz:** Kurtarma Faz 4A

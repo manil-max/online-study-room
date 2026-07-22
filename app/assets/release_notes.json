@@ -3,6 +3,46 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.43-beta.2",
+      "buildNumber": 4302,
+      "channel": "beta",
+      "date": "2026-07-22",
+      "title": "beta-v4302: güvenilir bildirimler ve canlı sayaç yüzeyi",
+      "highlights": [
+        "Dürtme, duyuru ve güncelleme bildirimleri için cihaz kaydı, teslim takibi ve 10 saniyelik gerçek self-test altyapısı eklendi.",
+        "Çalışma bildirimi artık standart Android ongoing bildiriminde akan süre, başlık ve Başlat/Durdur aksiyonlarıyla daha okunaklı.",
+        "Seçili gizli başarımlar kendi mor rozet rengini koruyor."
+      ],
+      "fixes": [
+        "Araçlar alanındaki kullanılmayan Dünya, Kronometre ve Saat panelleri kaldırıldı; Alarm, Timer ve Görevler yerinde.",
+        "FCM token yenilenmesi, çıkış, iki cihaz, bildirim tercihi ve sessiz saatler için güvenli kayıt/temizlik akışı kuruldu.",
+        "Uzaktan self-test yalnız sunucunun kabulünü değil, cihazın mesajı gerçekten almasını en fazla 10 saniyede doğrular.",
+        "Özel Android bildirim şablonu kaldırıldı; desteklenen cihazlarda canlı yüzey için promoted ongoing isteği yapılır. Samsung Now Bar cihaz ve firmware'e bağlıdır, garanti değildir."
+      ],
+      "notes": [
+        "Beta test sürümü staging backend kullanır; stable uygulamayla yan yana kurulur ve stable kullanıcılarına gitmez.",
+        "İlk testte Bildirim Merkezi > Bildirim Sağlığı'ndan uzaktan self-test çalıştır; foreground, arka plan ve uygulama kapalı senaryolarını ayrı dene.",
+        "Sayaç çalışırken uygulamayı kapat, bildirimden Durdur'a bas ve oturumun yalnız bir kez kaydedildiğini doğrula."
+      ],
+      "titleEn": "beta-v4302: reliable notifications and live timer surface",
+      "highlightsEn": [
+        "Device registration, delivery tracking and a real 10-second self-test were added for nudges, announcements and update notifications.",
+        "The study notification now uses a clearer standard Android ongoing notification with an elapsed timer, title and Start/Stop actions.",
+        "Selected secret achievements retain their purple badge colour."
+      ],
+      "fixesEn": [
+        "Removed unused World, Stopwatch and Clock panels from Tools; Alarm, Timer and Tasks remain.",
+        "Added secure registration and cleanup for FCM token refresh, logout, multiple devices, notification preferences and quiet hours.",
+        "The remote self-test confirms device receipt within 10 seconds, not just server acceptance.",
+        "Removed the custom Android notification template; compatible devices request promoted ongoing. Samsung Now Bar depends on the device and firmware and is not guaranteed."
+      ],
+      "notesEn": [
+        "This beta uses the staging backend, installs alongside stable, and is not delivered to stable users.",
+        "For the first test, run the remote self-test from Notification Center > Notification Health and test foreground, background and terminated states separately.",
+        "While the timer runs, close the app, tap Stop from the notification, and confirm the session is saved exactly once."
+      ]
+    },
+    {
       "versionName": "1.0.43",
       "buildNumber": 43,
       "channel": "stable",

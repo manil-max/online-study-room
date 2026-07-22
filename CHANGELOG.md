@@ -4,6 +4,26 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [beta-v4302 / 1.0.43-beta.2+4302] - 2026-07-22
+
+> **Beta test sürümü — güvenilir bildirim temeli ve Android canlı sayaç yüzeyi.** Bu sürüm yalnız staging test ortamına gider; stable kullanıcıları ve production verisi etkilenmez.
+
+### Öne çıkanlar
+- **Uygulama bildirimleri için gerçek teslim omurgası hazır.** Dürtme, duyuru ve güncelleme bildirimleri cihaz kaydı, teslim kuyruğu, tekrar engeli ve görünür sağlık/self-test adımlarıyla takip edilir.
+- **Android çalışma bildirimi sade ve sistemle uyumlu.** Akan süre, başlık ve Başlat/Durdur aksiyonları standart ongoing bildirimde kalır; uygun Android/Samsung cihazlarında canlı yüzey için promoted ongoing isteği yapılır.
+- **Profil daha tutarlı.** Seçili gizli başarımlar artık yanlış turuncu yerine kendi mor gizli rozet rengini korur.
+
+### Düzeltmeler ve değişiklikler
+- Araçlar alanından kullanılmayan **Dünya, Kronometre ve Saat** panelleri kaldırıldı. Alarm, Timer ve Görevler korunur; yatay StandBy deneyimi değişmez.
+- FCM token yenilenmesi, çıkış, iki cihaz, bildirim tercihi ve sessiz saatler için güvenli cihaz kaydı/temizliği eklendi.
+- Bildirim Merkezi'ne gerçek uzaktan self-test eklendi: yalnız sunucunun kabulünü değil, cihazın mesajı almasını en fazla 10 saniyede doğrular; aksi halde nedeni görünür kılar.
+- Özel Android bildirim şablonu kaldırıldı; eski Android sürümlerinde standart güvenli geri dönüş korunur. Samsung Now Bar görünümü cihaz/firmware iznine bağlıdır, garanti edilmez.
+
+### Test notları
+- Bu beta yalnız **staging backend** kullanır ve stable uygulamayla yan yana kurulabilir.
+- İlk kurulumda Bildirim Merkezi > Bildirim Sağlığı'ndan uzaktan self-test çalıştırılmalı; foreground, arka plan ve uygulama kapalı senaryoları ayrı ayrı denenmelidir.
+- Uygulama kapatıldıktan sonra sayaçtan Durdur'a basıp oturumun tek kez kaydedildiğini; kilit ekranında akan sürenin ve aksiyonların göründüğünü kontrol et.
+
 ## [v43 / 1.0.43+43] - 2026-07-21
 
 > **Kararlı (stable) sürüm.** beta-v4301 içeriği herkese açılıyor: sayaç toplamı (durdurma çift sayımı + ölü zaman), çevrimdışı kuyruk kopyaları, 3 saatlik saat kayması, sıralama seri rozeti, manuel ekleme çakışması ve XP yeniden fiyatlandırma.
