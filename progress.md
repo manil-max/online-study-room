@@ -99,7 +99,7 @@
 - **Dal:** `main`
 - **Başlangıç:** 2026-07-22 (Europe/Istanbul)
 - **Son güncelleme:** 2026-07-22 (Europe/Istanbul)
-- **Not:** WP-268 staging `0066` dry-run/apply ve 116/116 remote pgTAP post-check geçti. Aday build adımında Flutter kurulumu eksikti; CI forward-fix'i hazırlanıyor. Firebase/dispatcher aktivasyonu ve beta release hâlâ bekliyor; production mutasyonu yasaktır.
+- **Not:** WP-268 staging `0066` dry-run/apply ve 116/116 remote pgTAP post-check geçti. Aday build adımının Flutter CI kurulumu düzeltildi ve doğrulandı. Firebase/dispatcher aktivasyonu ve beta release hâlâ bekliyor; production mutasyonu yasaktır.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
@@ -328,7 +328,7 @@
 - **Ortam/Deploy:** Beta → staging; release ancak Firebase public client config ve staging dispatcher secret/function hazırsa. Production'a hiçbir çağrı yapılmaz.
 - **Kabul:** `beta-v4302` (`1.0.43-beta.2+4302`) staging backend'e bağlı, imzalı GitHub prerelease APK olarak oluşur; staging `0066` post-check geçer; fiziksel cihazda remote self-test, app-closed timer ve standard notification kabul listesi görünür.
 - **Tuzaklar:** Eksik Firebase config ile etiketi atıp başarısız CI bırakmak; staging yerine production hedeflemek; local notification sonucunu gerçek FCM kanıtı saymak.
-- **Kanıt (2026-07-22):** `flutter analyze` temiz; tüm **682** Flutter testi geçti; deploy guard **36/36**; gerçek beta kanal/manifest gate ve release-note JSON sözleşmesi geçti. GitHub staging dry-run [`29942214319`](https://github.com/manil-max/online-study-room/actions/runs/29942214319) başarılı. Staging apply [`29942462286`](https://github.com/manil-max/online-study-room/actions/runs/29942462286) `0066` ve remote pgTAP/RLS **116/116** geçti; yalnız aday build adımı Flutter runner kurulumu eksik olduğu için düştü (forward-fix bu WP'de). Production'a yazılmadı.
+- **Kanıt (2026-07-22):** `flutter analyze` temiz; tüm **682** Flutter testi geçti; deploy guard **36/36**; gerçek beta kanal/manifest gate ve release-note JSON sözleşmesi geçti. GitHub staging dry-run [`29942214319`](https://github.com/manil-max/online-study-room/actions/runs/29942214319) başarılı. Staging apply [`29942462286`](https://github.com/manil-max/online-study-room/actions/runs/29942462286) `0066` ve remote pgTAP/RLS **116/116** geçti; yalnız aday build adımı Flutter runner kurulumu eksik olduğu için düştü. Bu CI kurulumu ileri düzeltmesi [`29942993783`](https://github.com/manil-max/online-study-room/actions/runs/29942993783) ile doğrulandı. Production'a yazılmadı.
 
 ### WP-229: Eşit Süre Kaynakları ve Ödül Zinciri Onarımı ⚖️
 - **Program/Faz:** Kurtarma Faz 4A
