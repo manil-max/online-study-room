@@ -222,9 +222,11 @@ class _BadgeSummary extends StatelessWidget {
             children: [
               for (final id in showcaseIds.take(6))
                 _BadgeChip(
+                  badgeId: id,
                   iconKey: byId[id]?.iconKey ?? 'emoji_events',
                   label: byId[id]?.name ?? id,
                   tier: tierById[id] ?? 1,
+                  isSecret: byId[id]?.isSecret ?? false,
                 ),
             ],
           ),
@@ -235,21 +237,32 @@ class _BadgeSummary extends StatelessWidget {
 
 class _BadgeChip extends StatelessWidget {
   const _BadgeChip({
+    required this.badgeId,
     required this.iconKey,
     required this.label,
     required this.tier,
+    required this.isSecret,
   });
 
+  final String badgeId;
   final String iconKey;
   final String label;
   final int tier;
+  final bool isSecret;
 
   @override
   Widget build(BuildContext context) {
-    final color = tierColorFor(tier.clamp(1, 6));
+    final color = badgeVisualColor(
+      tier: tier.clamp(1, 6),
+      unlocked: true,
+      isSecret: isSecret,
+      secretLocked: false,
+      scheme: Theme.of(context).colorScheme,
+    );
     return Semantics(
       label: label,
       child: Container(
+        key: ValueKey('profile_badge_$badgeId'),
         width: 48,
         height: 48,
         decoration: BoxDecoration(

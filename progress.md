@@ -92,14 +92,14 @@
 
 ### Codex Lane
 - **Durum:** [x] Boşta
-- **Faz/WP:** — (WP-231 otomatik test geçti; cihazda doğrulanmalı)
+- **Faz/WP:** — (WP-263 otomatik test geçti; cihazda doğrulanmalı)
 - **Aşama:** —
 - **SAHİP yollar:** —
 - **Ortak/riskli yüzey:** —
 - **Dal:** `main`
 - **Başlangıç:** 2026-07-22 (Europe/Istanbul)
 - **Son güncelleme:** 2026-07-22 (Europe/Istanbul)
-- **Not:** WP-231 otomatik kanıtları tamamlandı ve test için bekleyenlere taşındı; remote/production mutasyonu yapılmadı. WP-259'un otomatik dilimleri `756fb10`'da tamamlandı; Windows 11 Home nedeniyle temiz VM/ikinci-PC kurulum-update kanıtı ayrıca bekliyor.
+- **Not:** WP-263 otomatik kanıtları tamamlandı ve test için bekleyenlere taşındı; remote/production mutasyonu yok. WP-231 ve WP-259 test için bekleyenlerde.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
@@ -243,6 +243,18 @@
 - **Kabul:** Seçili hesap dışı listing/indirme 0; iki Store build arasında update/veri korunumu kanıtlı; 72 saatte P0/P1=0.
 - **Tuzaklar:** Private pilotu public GO saymak veya production hesabıyla yürütmek.
 - **Model önerisi:** 🔴 Opus.
+
+### WP-263: Profil Özetinde Gizli Rozet Rengini Koru 🟣
+- **Program/Faz:** Debug · Profil vitrin güvenilirliği
+- **Ajan:** Codex
+- **Durum:** [x] Otomatik test geçti · cihazda doğrulanmalı
+- **Problem:** Profil kartındaki seçili rozetler, gizli ve açılmış rozet için kanonik mor rengi yerine yalnız kademe rengini kullanır; birinci kademe gizli rozet turuncu görünür.
+- **Kapsam:** Profil özeti `badgeVisualColor` ile tam başarımlar ekranının gizli-rozet kuralını kullanır; widget testi bu ayrımı korur.
+- **Kapsam dışı:** Başarım verisi, seçili rozet sırası, tema altyapısı, migration ve remote ortamlar.
+- **SAHİP yollar:** `app/lib/features/profile/widgets/gamification_card.dart`, `app/test/features/profile/gamification_card_declutter_test.dart`, `progress.md`
+- **Veri/Migration:** Yok.
+- **Kabul:** Seçili, açılmış gizli rozet mor; normal seçili rozet kademe rengiyle kalır; hedef widget testi ve `flutter analyze` geçer.
+- **Model önerisi:** 🟢 fast.
 
 ### WP-229: Eşit Süre Kaynakları ve Ödül Zinciri Onarımı ⚖️
 - **Program/Faz:** Kurtarma Faz 4A
@@ -426,6 +438,8 @@
 ## Test için bekleyenler (park)
 
 > Cihaz/ürün kabulü bekleyen tamamlanmış kod. Bu bölüm aktif çalışma değildir; başka WP'yi engellemez.
+
+- **WP-263 — Profil özetindeki gizli rozet rengi** · Tam başarımlar ekranıyla aynı `badgeVisualColor` kuralı profil vitrinine bağlandı; seçili, açılmış gizli rozet artık mor (`#A855F7`), normal rozet kademe renginde kalır. Hedef widget testi, `flutter analyze` ve tüm Flutter paketi **670/670 PASS**. **Cihazda doğrulanmalı:** gizli rozeti seçip Profil kartında açık/koyu temada rengini ve erişilebilir etiketini kontrol et. Remote/production mutasyonu yok.
 
 - **WP-231 — İstatistik Dönemi ve Realtime Güveni** · Grup günlük toplam akışı geçici RPC/Realtime hatasında cache'i gösterip 2 sn sonra yeniden bağlanır; yeniden gelen snapshot ikinci cihazın toplamını günceller. 20 Temmuz 2026 Pazartesi Istanbul fikstürü bugün/hafta=34 dk, son 7 gün=10 sa 34 dk, ay=43 saati kilitler. Kanıt: `wp231_stats_contract_test.dart` + offline reconnect testi; `flutter analyze` 0, tam Flutter paketi **669/669 PASS**. **Cihazda doğrulanmalı:** iki gerçek cihazla ağ kes→geri gel, bir cihazda oturum bitirirken diğerinin kişisel/grup toplamının cache'ten eski veri göstermeden güncellenmesi; grup için ≤5 sn, kişisel için ≤1 sn hedefi.
 
