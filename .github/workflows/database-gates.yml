@@ -168,6 +168,26 @@ jobs:
         with:
           channel: stable
 
+      - name: Keystore'u secrettan coz
+        if: inputs.operation == 'staging-apply'
+        working-directory: app
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/key.jks
+
+      - name: key.properties olustur
+        if: inputs.operation == 'staging-apply'
+        working-directory: app
+        env:
+          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+        run: |
+          cat > android/key.properties <<EOF
+          storePassword=$STORE_PASSWORD
+          keyPassword=$KEY_PASSWORD
+          keyAlias=$KEY_ALIAS
+          storeFile=key.jks
+          EOF
+
       - name: Build and report the exact staging beta candidate
         if: inputs.operation == 'staging-apply'
         shell: pwsh
