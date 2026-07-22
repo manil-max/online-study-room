@@ -41,9 +41,9 @@ Microsoft'un Private Audience özelliği, listemeyi ve indirmeyi yalnız seçile
 - **Durum:** [ ] Bekliyor
 - **Problem:** Mevcut CI artefakt üretir; ancak temiz Windows'ta kurulum, update ve kaldırma için doldurulmuş kanıt yoktur. Ana bilgisayarda eski test paketini bozmak güvenli değildir.
 - **Kapsam dışı:** Store hesabı açma, public Store yayınlama, üretim backend/migration değişikliği.
-- **SAHİP dosyalar (yaz):** `docs/QA-WINDOWS.md`, `scripts/windows_smoke_screenshot.ps1`, Windows odaklı test/kanıt dosyaları, `docs/WINDOWS-STORE-PLAN.md`, `progress.md`.
+- **SAHİP dosyalar (yaz):** `scripts/windows_fast_smoke.ps1`, `docs/QA-WINDOWS.md`, `scripts/windows_smoke_screenshot.ps1`, Windows odaklı test/kanıt dosyaları, `docs/WINDOWS-STORE-PLAN.md`, `progress.md`.
 - **DOKUNMA:** `app/pubspec.yaml`, `app/lib/features/updater/**`, `.github/workflows/windows-release.yml`, production secrets/migration'lar.
-- **Adımlar:** Sandbox/VM prosedürünü ve redacted kanıt şablonunu ekle; staging manifestiyle iki artan build üret; W-01…W-06, W-10…W-22'yi temiz VM'de çalıştır; ekran ölçekleri, klavye, uyku/uyanma ve aynı test hesabıyla Android+Windows senkronunu kanıtla.
+- **Adımlar:** 10 saniyelik yerel smoke aracıyla her geliştirme turunda görünür pencere + yeni screenshot kanıtı al; Sandbox/VM prosedürünü ve redacted kanıt şablonunu ekle; staging manifestiyle iki artan build üret; W-01…W-06, W-10…W-22'yi temiz VM'de çalıştır; ekran ölçekleri, klavye, uyku/uyanma ve aynı test hesabıyla Android+Windows senkronunu kanıtla.
 - **Veri/Migration etkisi:** Yok.
 - **Ortam/Deploy:** Local + staging test hesabı; public/production deploy yok.
 - **RLS/Güvenlik:** Secret, token ve gerçek kullanıcı verisi ekran kaydına/kanıta girmez; test paketi production endpoint'e bağlanmaz.

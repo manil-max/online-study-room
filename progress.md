@@ -91,15 +91,15 @@
   - K/L kodu repoda; kabul kanıtı yoktur. Tüm production terfisi artık `docs/ORTAM-MIGRATION-YONETISIMI.md` ve WP-225–232 kapısına tabidir.
 
 ### Codex Lane
-- **Durum:** [x] Boşta — WP-229/230 **Claude lane'ine devredildi** (2026-07-20 15:40, oturum limiti)
-- **Faz/WP:** —
-- **Aşama:** —
-- **Devir öncesi SAHİP yollar (arşiv):** `supabase/migrations/0064_*`, `supabase/tests/**`, `tooling/supabase/DeployGuard.psm1`, `tooling/supabase/remote.ps1`, staging owner helper'ları, `tooling/supabase/guard.tests.ps1`, `tooling/release/deploy-contract.json`, `tooling/release/beta-build.ps1`, `tooling/release/beta-build.tests.ps1`, `tooling/release/staging-beta-owner.ps1`, `app/android/app/build.gradle.kts`, `tooling/README.md`, staging/GitHub Environment yapılandırması, `docs/recovery/EQUAL-SOURCES-RECONCILIATION.md`, `docs/recovery/ENVIRONMENT-MATRIX.md`, WP-229/230 kabul kanıtları, `progress.md`
-- **Ortak/riskli yüzey:** Supabase CLI ile ayrı staging projesi; `0064` yalnız staging; production mutasyonu kesinlikle yok
+- **Durum:** [~] Aktif
+- **Faz/WP:** Windows Store ürünleştirme · WP-259 (ilk dilim: hızlı Windows smoke kontrolü)
+- **Aşama:** Otomatik test geçti (WP-259 ilk dilim)
+- **SAHİP yollar:** `scripts/windows_fast_smoke.ps1`, `scripts/windows_smoke_screenshot.ps1`, `docs/QA-WINDOWS.md`, `docs/WINDOWS-STORE-PLAN.md`, `progress.md`
+- **Ortak/riskli yüzey:** Yerel Windows süreç/pencere yakalama; Store, Supabase ve production mutasyonu yok
 - **Dal:** `main`
-- **Başlangıç:** 2026-07-20 14:15 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-20 15:20 (Europe/Istanbul)
-- **Not:** Staging prerequisite inspect/bootstrap sonrası `0053–0063`, ardından immutable ileri `0064` uygulandı. Exact `8a9bc4d6162e29d46e1c4d3ce8d7ce3c8c965d7c` apply manifesti başarılı; remote head `0064`, linked pgTAP/RLS/invariant 80/80 PASS. WP-229 küçük staging prepare/apply `79e6f7435f10db04b88bf52be1b6e4f9c9d55edf` ile geçti: fresh staging batch'i 0 kullanıcı/0 diff, apply sonrası session/duration/ledger/XP/claimed deltaları ve XP mismatch 0. Yerel non-empty prova 2 kullanıcı/2 session ile aynı kayıpsız sonucu verdi. WP-230 için gerçek public staging key'ini yalnız CLI süreç belleğinde kullanan, mevcut `app/env.json` hash'ini koruyan geçici-manifest beta build'i hazırlanıyor. Production mutasyonu yok; hiçbir gizli değer repoya veya kanıta yazılmadı.
+- **Başlangıç:** 2026-07-22 (Europe/Istanbul)
+- **Son güncelleme:** 2026-07-22 (Europe/Istanbul)
+- **Not:** Güvenli pencere-yakalama ile hızlı smoke gerçek makinede ≤1 sn PASS; taze Release derlemesinde `invalid_channel` tanı ekranı görünür bulundu. Bu, Windows kabuğunun açıldığını fakat yerel `env.json` manifestinin geliştirici kanalına uymadığını gösterir; işlevsel kullanıcı akışı henüz doğrulanmış değildir.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
@@ -178,13 +178,13 @@
 
 ### WP-259: Windows QA Temeli ve Yerel İki-Sürüm Provası 🧪
 - **Program/Faz:** Windows Store ürünleştirme · Faz 1
-- **Ajan:** —
-- **Durum:** [ ] Bekliyor
+- **Ajan:** Codex
+- **Durum:** [~] Geliştiriliyor — ilk dilim otomatik test geçti; yerel manifest/işlevsel QA açık
 - **Problem:** CI paket üretse de temiz Windows'ta kurulum→update→uninstall kanıtı doldurulmuş değildir; ana PC'deki test-imzalı paket test hedefi değildir.
 - **Kapsam dışı:** Store hesabı, public Store submission, üretim backend/migration.
-- **SAHİP dosyalar (yaz):** `docs/QA-WINDOWS.md`, `scripts/windows_smoke_screenshot.ps1`, Windows QA test/kanıt dosyaları.
+- **SAHİP dosyalar (yaz):** `scripts/windows_fast_smoke.ps1`, `docs/QA-WINDOWS.md`, `scripts/windows_smoke_screenshot.ps1`, Windows QA test/kanıt dosyaları.
 - **DOKUNMA:** `app/pubspec.yaml`, `app/lib/features/updater/**`, `.github/workflows/windows-release.yml`, `supabase/**`.
-- **Adımlar:** Windows Sandbox/temiz VM prosedürü; staging test hesabıyla iki artan QA MSIX; W-01…W-06/W-10…W-22 koşumu; redacted video/screenshot kanıtı.
+- **Adımlar:** Her geliştirme turunda ≤10 sn görünür pencere + yeni screenshot kanıtı veren smoke; Windows Sandbox/temiz VM prosedürü; staging test hesabıyla iki artan QA MSIX; W-01…W-06/W-10…W-22 koşumu; redacted video/screenshot kanıtı.
 - **Veri/Migration etkisi:** Yok.
 - **Ortam/Deploy:** Local + staging; Store/public/production deploy yok.
 - **RLS/Güvenlik:** Secret/token/gerçek kullanıcı verisi kanıta girmez; QA paketi production endpoint'e bağlanmaz.
