@@ -92,14 +92,14 @@
 
 ### Codex Lane
 - **Durum:** [x] Boşta
-- **Faz/WP:** — (WP-259 otomasyon tamam; cihaz/VM kanıtı parkta)
+- **Faz/WP:** — (WP-231 otomatik test geçti; cihazda doğrulanmalı)
 - **Aşama:** —
 - **SAHİP yollar:** —
 - **Ortak/riskli yüzey:** —
 - **Dal:** `main`
 - **Başlangıç:** 2026-07-22 (Europe/Istanbul)
 - **Son güncelleme:** 2026-07-22 (Europe/Istanbul)
-- **Not:** WP-259'un otomatik dilimleri `756fb10`'da tamamlandı ve test için bekleyenlere taşındı; bu PC Windows 11 Home olduğu için temiz VM/ikinci-PC kurulum-update kanıtı burada üretilemez.
+- **Not:** WP-231 otomatik kanıtları tamamlandı ve test için bekleyenlere taşındı; remote/production mutasyonu yapılmadı. WP-259'un otomatik dilimleri `756fb10`'da tamamlandı; Windows 11 Home nedeniyle temiz VM/ikinci-PC kurulum-update kanıtı ayrıca bekliyor.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
@@ -290,8 +290,8 @@
 
 ### WP-231: İstatistik Dönemi ve Realtime Güveni 📊
 - **Program/Faz:** Kurtarma Faz 5
-- **Ajan:** —
-- **Durum:** [ ] Bekliyor
+- **Ajan:** Codex
+- **Durum:** [~] Otomatik test geçti — cihazda doğrulanmalı
 - **Problem:** “Hafta” son 7 gün sanılıyor; Pazartesi reseti veri kaybı gibi görünüyor. Oturum bitiminden sonra kişisel/grup toplam güncellemesi ayrıca cihazda güvenilir değil.
 - **Kapsam dışı:** Ham geçmişi değiştirmek, achievement economy, production migration.
 - **SAHİP dosyalar (yaz):** `app/lib/core/stats/**`, stats period/provider/view dosyaları, relevant study repository/cache refresh yolu, ilgili l10n/testler, `docs/recovery/STATS-CONTRACT.md`, `progress.md`.
@@ -300,8 +300,8 @@
   - [~] ~~“Bu hafta (Pzt–bugün)” ile “Son 7 Gün”ü ayrı dönem yap~~ → **KULLANICI İPTAL (2026-07-20)**: mevcut week UI'ı korunacak; leader wolf ile hizalı (Pazar 23:59 sonrası o haftanın birincisi). Ellenmeyecek.
   - [~] ~~Günlük ortalama paydasını görünür dönem sözleşmesiyle test et~~ → **KULLANICI İPTAL (2026-07-20)**.
   - [→] Session stop/manual add sonrası cache+remote+summary invalidation yolunu tekilleştir → **WP-239'a TAŞINDI** (sayaç çift-sayım bug'ıyla aynı kök).
-  - [ ] Pending/offline/realtime reconnect ve iki cihaz yenilenmesini test et.
-  - [ ] 20 Temmuz Pazartesi fixture'ında bugün/hafta/son7/ay sonuçlarını golden/widget testle.
+  - [x] Pending/offline/realtime reconnect ve iki cihaz yenilenmesini test et.
+  - [x] 20 Temmuz Pazartesi fixture'ında bugün/hafta/son7/ay sonuçlarını golden/widget testle.
 - **Veri/Migration etkisi:** Beklenmiyor; yalnız okuma/projeksiyon. Şema ihtiyacı çıkarsa durup ayrı WP planlanır.
 - **Ortam/Deploy:** Local→staging beta.
 - **RLS/Güvenlik:** Grup stats yalnız ortak aktif üyelik penceresi; cross-user raw session açılmaz.
@@ -426,6 +426,8 @@
 ## Test için bekleyenler (park)
 
 > Cihaz/ürün kabulü bekleyen tamamlanmış kod. Bu bölüm aktif çalışma değildir; başka WP'yi engellemez.
+
+- **WP-231 — İstatistik Dönemi ve Realtime Güveni** · Grup günlük toplam akışı geçici RPC/Realtime hatasında cache'i gösterip 2 sn sonra yeniden bağlanır; yeniden gelen snapshot ikinci cihazın toplamını günceller. 20 Temmuz 2026 Pazartesi Istanbul fikstürü bugün/hafta=34 dk, son 7 gün=10 sa 34 dk, ay=43 saati kilitler. Kanıt: `wp231_stats_contract_test.dart` + offline reconnect testi; `flutter analyze` 0, tam Flutter paketi **669/669 PASS**. **Cihazda doğrulanmalı:** iki gerçek cihazla ağ kes→geri gel, bir cihazda oturum bitirirken diğerinin kişisel/grup toplamının cache'ten eski veri göstermeden güncellenmesi; grup için ≤5 sn, kişisel için ≤1 sn hedefi.
 
 - **WP-259 — Windows QA Temeli ve Yerel İki-Sürüm Provası** · Güvenli pencere-yakalamalı hızlı smoke gerçek makinede ≤1 sn PASS; `windows_local_dev.ps1 -BuildOnly` local InMemory manifestiyle taze Windows release derledi ve özgün `env.json`u geri yükledi; gerçek Windows hedefindeki girişli entegrasyon testi Ana Sayfa→Gruplar→Profil geçişini PASS verdi. Commit'ler: `da4830b`, `95e554c`, `bd1c221`, `e313545`, `756fb10`. **Temiz VM/ikinci PC'de doğrulanmalı:** staging QA MSIX ile N→N+1 kurulum/güncelleme, uninstall, 100/125/150% DPI ve W-01…W-06/W-10…W-22; prosedür: [`docs/WINDOWS-VM-QA.md`](docs/WINDOWS-VM-QA.md). Ana PC Windows 11 Home olduğundan Sandbox burada kullanılamaz; Store/public/production mutasyonu yapılmadı.
 

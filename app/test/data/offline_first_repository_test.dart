@@ -124,6 +124,49 @@ void main() {
     expect(offlineRows.single.seconds, 1200);
   });
 
+  test(
+    'group stats reconnect brings the second device total after cached fallback',
+    () async {
+      final cache = await _store();
+      await cache.saveGroupDailyStats('g1', [
+        DailyStat(userId: 'u1', day: DateTime(2026, 7, 11), seconds: 1200),
+      ]);
+      final recoveryGate = Completer<void>();
+      final remote = _FakeStudyRepository()
+        ..groupDailyStatStreams.addAll([
+          Stream<List<DailyStat>>.error(StateError('offline')),
+          (() async* {
+            await recoveryGate.future;
+            yield [
+              DailyStat(
+                userId: 'u1',
+                day: DateTime(2026, 7, 11),
+                seconds: 1800,
+              ),
+            ];
+          })(),
+        ]);
+      final repo = OfflineFirstStudyRepository(
+        remote: remote,
+        cache: cache,
+        groupStatsReconnectDelay: const Duration(milliseconds: 1),
+      );
+
+      final events = <List<DailyStat>>[];
+      final sub = repo.watchGroupDailyStats('g1').listen(events.add);
+      addTearDown(sub.cancel);
+
+      await _pump();
+      expect(events.last.single.seconds, 1200, reason: 'offline cache korunur');
+
+      recoveryGate.complete();
+      await _pump();
+
+      expect(remote.groupDailyStatListenCount, 2);
+      expect(events.last.single.seconds, 1800);
+    },
+  );
+
   test('repository providers now return offline-first wrappers', () async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
@@ -259,6 +302,8 @@ class _FakeStudyRepository extends StudyRepository {
   /// (local hub testleri için realtime'ı simüle eder).
   bool holdUserSessionStream = false;
   int userSessionEmits = 0;
+  final groupDailyStatStreams = <Stream<List<DailyStat>>>[];
+  int groupDailyStatListenCount = 0;
 
   @override
   Future<void> addSession(StudySession session) async {
@@ -319,6 +364,11 @@ class _FakeStudyRepository extends StudyRepository {
 
   @override
   Stream<List<DailyStat>> watchGroupDailyStats(String groupId) async* {
+    groupDailyStatListenCount++;
+    if (groupDailyStatStreams.isNotEmpty) {
+      yield* groupDailyStatStreams.removeAt(0);
+      return;
+    }
     if (failDailyStatsStream) throw StateError('offline');
     yield dailyStats;
   }

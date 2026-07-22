@@ -12,12 +12,18 @@ class OfflineFirstStudyRepository implements StudyRepository {
   OfflineFirstStudyRepository({
     required StudyRepository remote,
     required OfflineCacheStore cache,
-  }) : this._(remote, cache);
+    Duration groupStatsReconnectDelay = const Duration(seconds: 2),
+  }) : this._(remote, cache, groupStatsReconnectDelay);
 
-  OfflineFirstStudyRepository._(this._remote, this._cache);
+  OfflineFirstStudyRepository._(
+    this._remote,
+    this._cache,
+    this._groupStatsReconnectDelay,
+  );
 
   final StudyRepository _remote;
   final OfflineCacheStore _cache;
+  final Duration _groupStatsReconnectDelay;
   bool _isFlushing = false;
 
   /// Aktif [watchUserSessions] dinleyicilerine mutation sonrası anında push.
@@ -257,19 +263,26 @@ class OfflineFirstStudyRepository implements StudyRepository {
     final cached = await _cache.readGroupDailyStats(groupId);
     if (cached != null) yield cached;
 
-    try {
-      unawaited(flushPending());
-      await for (final rows in _remote.watchGroupDailyStats(groupId)) {
-        await _cache.saveGroupDailyStats(groupId, rows);
-        yield rows;
+    while (true) {
+      try {
         unawaited(flushPending());
-      }
-    } catch (error, stackTrace) {
-      final fallback = await _cache.readGroupDailyStats(groupId);
-      if (fallback != null) {
+        await for (final rows in _remote.watchGroupDailyStats(groupId)) {
+          await _cache.saveGroupDailyStats(groupId, rows);
+          yield rows;
+          unawaited(flushPending());
+        }
+        return;
+      } catch (error, stackTrace) {
+        final fallback = await _cache.readGroupDailyStats(groupId);
+        if (fallback == null) {
+          Error.throwWithStackTrace(error, stackTrace);
+        }
+        // Realtime/RPC anlık kesilirse dashboard eski ama doğru cache'i tutar.
+        // Önceki akış bu noktada bittiği için bağlantı geri geldiğinde ikinci
+        // cihazdaki yeni toplam hiç görünmüyordu. Kontrollü tekrar dinleme,
+        // cache yoksa hatayı gizlemeden yalnız güvenli fallback'te yapılır.
         yield fallback;
-      } else {
-        Error.throwWithStackTrace(error, stackTrace);
+        await Future<void>.delayed(_groupStatsReconnectDelay);
       }
     }
   }
