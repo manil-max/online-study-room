@@ -4857,5 +4857,12 @@
   "notificationsLocalTestSent": "تم عرض إشعار الاختبار على هذا الهاتف.",
   "notificationsRemoteTestSent": "اكتمل الاختبار البعيد خلال {seconds} ثانية.",
   "notificationsRemoteTestFailed": "لم يكتمل التسليم البعيد. تحقق من الحالة أعلاه وحاول مجددًا.",
-  "notificationsRefreshHealth": "تحديث الحالة"
+  "notificationsRefreshHealth": "تحديث الحالة",
+  "notificationsLiveTimerHealth": "واجهة المؤقت المباشر",
+  "notificationsLiveTimerStandard": "إشعار المؤقت القياسي",
+  "notificationsLiveTimerPromotable": "متطلبات الواجهة المباشرة",
+  "notificationsLiveTimerPending": "شغّل المؤقت ثم حدّث الحالة لإجراء القياس.",
+  "notificationsLiveTimerSystemAllowed": "يسمح النظام بالإشعارات المباشرة البارزة.",
+  "notificationsLiveTimerSystemBlocked": "لم يسمح النظام أو الجهاز بالواجهة المباشرة؛ يستمر المؤقت القياسي في العمل.",
+  "notificationsLiveTimerLegacyFallback": "يستخدم إصدار أندرويد هذا المؤقت الدائم القياسي."
 }

@@ -5007,5 +5007,19 @@
   "notificationsRemoteTestFailed": "Remote delivery did not complete. Check the status above and try again.",
   "@notificationsRemoteTestFailed": { "description": "Remote push self-test failure" },
   "notificationsRefreshHealth": "Refresh status",
-  "@notificationsRefreshHealth": { "description": "Refresh push diagnostics" }
+  "@notificationsRefreshHealth": { "description": "Refresh push diagnostics" },
+  "notificationsLiveTimerHealth": "Live timer surface",
+  "@notificationsLiveTimerHealth": { "description": "Android promoted timer diagnostics heading" },
+  "notificationsLiveTimerStandard": "Standard timer notification",
+  "@notificationsLiveTimerStandard": { "description": "Timer avoids custom notification views" },
+  "notificationsLiveTimerPromotable": "Live surface requirements",
+  "@notificationsLiveTimerPromotable": { "description": "Notification promotable characteristics status" },
+  "notificationsLiveTimerPending": "Start the timer, then refresh to measure it.",
+  "@notificationsLiveTimerPending": { "description": "Timer diagnostic has not been measured" },
+  "notificationsLiveTimerSystemAllowed": "The system allows promoted live notifications.",
+  "@notificationsLiveTimerSystemAllowed": { "description": "Android promoted notifications allowed" },
+  "notificationsLiveTimerSystemBlocked": "The system or device has not allowed the live surface; the standard timer remains active.",
+  "@notificationsLiveTimerSystemBlocked": { "description": "Android or OEM promotion is unavailable" },
+  "notificationsLiveTimerLegacyFallback": "This Android version uses the standard persistent timer.",
+  "@notificationsLiveTimerLegacyFallback": { "description": "Older Android standard timer fallback" }
 }

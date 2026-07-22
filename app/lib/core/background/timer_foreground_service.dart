@@ -1,6 +1,29 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+@immutable
+class TimerLiveNotificationDiagnostics {
+  const TimerLiveNotificationDiagnostics({
+    required this.apiLevel,
+    required this.canPostPromotedNotifications,
+    this.lastBuiltAt,
+    this.promotableCharacteristics,
+    this.promotionRequested,
+    this.usesCustomContent,
+    this.channelImportance,
+  });
+
+  final int apiLevel;
+  final DateTime? lastBuiltAt;
+  final bool? promotableCharacteristics;
+  final bool? promotionRequested;
+  final bool canPostPromotedNotifications;
+  final bool? usesCustomContent;
+  final int? channelImportance;
+
+  bool get hasMeasurement => lastBuiltAt != null;
+}
+
 /// Çalışma sayacının native foreground servisinin **Dart cephesi** (V8-A · WP-42/51).
 ///
 /// Artık bildirim/servis tamamen native Kotlin `StudyTimerService` tarafından
@@ -67,6 +90,33 @@ class TimerForegroundService {
       await _channel.invokeMethod<void>('stopTimer');
     } catch (_) {
       // Platform kanalı olmayan test hostu.
+    }
+  }
+
+  /// Son native running notification'Ä±n Live Update uygunluk teÅŸhisini okur.
+  /// SayaÃ§ henÃ¼z baÅŸlatÄ±lmadÄ±ysa Ã¶lÃ§Ã¼m alanlarÄ± null kalÄ±r.
+  static Future<TimerLiveNotificationDiagnostics?> diagnostics() async {
+    if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) return null;
+    try {
+      final raw = await _channel
+          .invokeMapMethod<String, dynamic>('getTimerNotificationDiagnostics')
+          .timeout(const Duration(seconds: 2));
+      if (raw == null) return null;
+      final builtAtMs = (raw['lastBuiltAtMs'] as num?)?.toInt();
+      return TimerLiveNotificationDiagnostics(
+        apiLevel: (raw['apiLevel'] as num?)?.toInt() ?? 0,
+        lastBuiltAt: builtAtMs == null || builtAtMs <= 0
+            ? null
+            : DateTime.fromMillisecondsSinceEpoch(builtAtMs),
+        promotableCharacteristics: raw['promotableCharacteristics'] as bool?,
+        promotionRequested: raw['promotionRequested'] as bool?,
+        canPostPromotedNotifications:
+            raw['canPostPromotedNotifications'] as bool? ?? false,
+        usesCustomContent: raw['usesCustomContent'] as bool?,
+        channelImportance: (raw['channelImportance'] as num?)?.toInt(),
+      );
+    } catch (_) {
+      return null;
     }
   }
 }

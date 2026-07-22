@@ -3,6 +3,8 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Android 13+ kalıcı sayaç bildirimi için kullanıcı izni gerekir. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Android 16+: user-initiated ongoing timer can request Live Update promotion. -->
+    <uses-permission android:name="android.permission.POST_PROMOTED_NOTIFICATIONS" />
     <!-- WP-110: REQUEST_INSTALL_PACKAGES main'de YOK.
          Yalnız GitHub sideload source set (stable/beta) ekler; play flavor almaz. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />

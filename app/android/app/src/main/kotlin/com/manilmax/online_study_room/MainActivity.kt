@@ -76,6 +76,9 @@ class MainActivity : FlutterActivity() {
                         StudyTimerService.sendCommand(this, StudyTimerService.ACTION_STOP_SILENT)
                         result.success(null)
                     }
+                    "getTimerNotificationDiagnostics" -> {
+                        result.success(StudyTimerService.notificationDiagnostics(this))
+                    }
                     else -> result.notImplemented()
                 }
             }

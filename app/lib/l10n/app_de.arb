@@ -4857,5 +4857,12 @@
   "notificationsLocalTestSent": "Die Testbenachrichtigung wurde auf diesem Telefon angezeigt.",
   "notificationsRemoteTestSent": "Der Remote-Test wurde in {seconds} Sekunden abgeschlossen.",
   "notificationsRemoteTestFailed": "Die Remote-Zustellung wurde nicht abgeschlossen. Prüfe den Status und versuche es erneut.",
-  "notificationsRefreshHealth": "Status aktualisieren"
+  "notificationsRefreshHealth": "Status aktualisieren",
+  "notificationsLiveTimerHealth": "Live-Timer-Oberfläche",
+  "notificationsLiveTimerStandard": "Standard-Timerbenachrichtigung",
+  "notificationsLiveTimerPromotable": "Voraussetzungen für die Live-Oberfläche",
+  "notificationsLiveTimerPending": "Starte den Timer und aktualisiere dann den Status.",
+  "notificationsLiveTimerSystemAllowed": "Das System erlaubt hervorgehobene Live-Benachrichtigungen.",
+  "notificationsLiveTimerSystemBlocked": "System oder Gerät erlauben die Live-Oberfläche nicht; der Standard-Timer bleibt aktiv.",
+  "notificationsLiveTimerLegacyFallback": "Diese Android-Version verwendet den standardmäßigen dauerhaften Timer."
 }

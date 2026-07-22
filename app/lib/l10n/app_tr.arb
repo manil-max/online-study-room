@@ -1204,5 +1204,12 @@
   "notificationsLocalTestSent": "Test bildirimi bu telefonda gösterildi.",
   "notificationsRemoteTestSent": "Uzak test {seconds} saniyede tamamlandı.",
   "notificationsRemoteTestFailed": "Uzak teslim tamamlanmadı. Yukarıdaki durumu kontrol edip tekrar dene.",
-  "notificationsRefreshHealth": "Durumu yenile"
+  "notificationsRefreshHealth": "Durumu yenile",
+  "notificationsLiveTimerHealth": "Canlı sayaç yüzeyi",
+  "notificationsLiveTimerStandard": "Standart sayaç bildirimi",
+  "notificationsLiveTimerPromotable": "Canlı yüzey şartları",
+  "notificationsLiveTimerPending": "Ölçmek için sayacı başlatıp durumu yenile.",
+  "notificationsLiveTimerSystemAllowed": "Sistem terfi edilmiş canlı bildirimlere izin veriyor.",
+  "notificationsLiveTimerSystemBlocked": "Sistem veya cihaz canlı yüzeye izin vermedi; standart sayaç çalışmaya devam eder.",
+  "notificationsLiveTimerLegacyFallback": "Bu Android sürümü standart kalıcı sayacı kullanır."
 }

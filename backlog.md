@@ -10,6 +10,7 @@
 ## 🔴 Yüksek Öncelik
 
 - [~] **Bildirim güveni + Android canlı sayaç — WP-265–267**
+  - **Kod durumu (2026-07-22):** WP-265 rapor, WP-266 push çekirdeği ve WP-267 standard/promoted sayaç tamamlandı. Açık kalan iş yalnız Firebase/staging aktivasyonu + gerçek remote push ve Samsung/Pixel cihaz kabulüdür; production ayrıca somut GO ister.
   - Adli inceleme kesin teşhisi: dürtme/güncelleme/duyuru için kapalı sürece ulaşan push transport yok; Android izin/yerel notification tek başına bunu sağlamaz.
   - Hedef: FCM + Supabase transactional outbox/Edge dispatcher + token yaşam döngüsü + Bildirim Sağlığı/≤10 sn remote self-test.
   - Sayaçta custom `RemoteViews` Android Live Update şartlarına aykırıdır; standard/promoted ongoing chronometer'a geçilir, Samsung Now Bar OEM best-effort kalır.

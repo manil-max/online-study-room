@@ -91,15 +91,15 @@
   - K/L kodu repoda; kabul kanıtı yoktur. Tüm production terfisi artık `docs/ORTAM-MIGRATION-YONETISIMI.md` ve WP-225–232 kapısına tabidir.
 
 ### Codex Lane
-- **Durum:** [~] Aktif
-- **Faz/WP:** Bildirim Güven Programı · WP-266 (güvenilir push çekirdeği ve self-test)
-- **Aşama:** 2/8 · uygulanıyor
-- **SAHİP yollar:** `app/pubspec.*`, `app/lib/core/notifications/**`, push config/model/repository/provider + Supabase/in_memory aynaları, `app/lib/data/repositories/supabase/supabase_auth_repository.dart` (yalnız logout token unregister), Bildirim Merkezi/l10n/testler, `supabase/migrations/0066_*`, `supabase/functions/dispatch-push/**`, `supabase/tests/**`, bildirim raporu, `progress.md`
-- **Ortak/riskli yüzey:** Yeni migration + auth yaşam döngüsü + Android plugin başlangıcı; native alarm/timer FGS dosyalarına dokunulmaz, remote/production yok
+- **Durum:** [x] Boşta
+- **Faz/WP:** —
+- **Aşama:** —
+- **SAHİP yollar:** —
+- **Ortak/riskli yüzey:** —
 - **Dal:** `main`
 - **Başlangıç:** 2026-07-22 (Europe/Istanbul)
 - **Son güncelleme:** 2026-07-22 (Europe/Istanbul)
-- **Not:** WP-265 raporu `abf031b` ile tamamlandı. WP-266 local/fake + local migration kapısında uygulanır; Firebase/Supabase staging aktivasyonu secret/GO olmadan yapılmaz.
+- **Not:** WP-266 `23e6426` ile kodda + yerel backend'de tamamlandı. WP-267 standard/promoted notification + cihaz içi diagnostic kodu, 682 Flutter testi ve Android APK doğrulaması tamamlandı; fiziksel Samsung/Pixel QA bekliyor. Remote/staging/production mutasyonu yapılmadı.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
@@ -302,8 +302,8 @@
 
 ### WP-267: Android Standard/Promoted Canlı Sayaç ⏱️
 - **Program/Faz:** Bildirim Güven Programı · Faz 2
-- **Ajan:** —
-- **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-265; seri sıra WP-266 sonrası
+- **Ajan:** Codex
+- **Durum:** [~] Kodda + gerçek Android build'de doğrulandı; fiziksel Samsung/Pixel kabulü bekliyor · **Bağımlılık:** WP-265 ✅; WP-266 kod ✅
 - **Problem:** Varsayılan custom `RemoteViews`, boş content title ve kapalı native chronometer Android Live Update şartlarını ihlal ediyor; Samsung Now Bar yalnız OEM best-effort olmasına rağmen ürün/teknik sınır ayrışmamış.
 - **Kapsam:** AndroidX promoted ongoing API; manifest izni; standard ongoing chronometer/title/actions; monochrome small icon; promotable/can-post diagnostic; custom panelden kontrollü geri dönüş; source-contract/native compile/cihaz matrisi.
 - **Kapsam dışı:** Timer state/FGS lifecycle/session/XP yeniden mimarisi, Samsung private/undocumented API, piksel-aynı OEM görünüm garantisi.
@@ -313,6 +313,7 @@
 - **Ortam/Deploy:** Local compile/build; Samsung/Pixel beta cihaz QA; public/stable release yok.
 - **Kabul:** Running notification custom content view içermez; promotable karakteristikleri sağlar; eski Android'de standard fallback ve app-closed action çalışır; 8 saat sapma ≤±1 sn; API 29–33/34+ FGS crash 0.
 - **Tuzaklar:** Now Bar'ı garanti etmek; görünüm değişikliğiyle FGS lifecycle'a dokunmak; yalnız Flutter testini cihaz kanıtı saymak.
+- **Kanıt (2026-07-22):** AndroidX Core 1.18.0, `POST_PROMOTED_NOTIFICATIONS`, standard native chronometer/action, monochrome ikon ve read-only health diagnostic eklendi; custom layout silindi. Analyze temiz; tüm **682** Flutter testi geçti; local debug APK/Kotlin compile geçti; APK izin+ikon içeriği doğrulandı. Bağlı Android/AVD yoktu, OEM sonucu raporda açıkça bekliyor.
 - **Model önerisi:** 🔴 Opus / frontier-high.
 
 ### WP-229: Eşit Süre Kaynakları ve Ödül Zinciri Onarımı ⚖️

@@ -147,7 +147,7 @@ Bulgu kanıtı: `docs/PLAY-STORE-HAZIRLIK-TARAMASI.md`; sahip aksiyonları: `doc
 
 ---
 
-## 8.9 Bildirim Güveni ve Android Canlı Sayaç (WP-265–267 · AÇIK)
+## 8.9 Bildirim Güveni ve Android Canlı Sayaç (WP-265 rapor ✅ · WP-266/267 kod ✅ · staging/cihaz kabulü AÇIK)
 
 - **WP-265:** Dürtme/güncelleme/duyuru, local notification, alarm ve FGS yüzeylerini adli olarak ayrıştır; resmî Android/Samsung/Firebase/Supabase sözleşmesiyle kök neden ve kabul matrisi çıkar.
 - **WP-266:** Android remote push'ı FCM + Supabase transactional outbox/per-device delivery/Edge dispatcher ile kur; token/preference/retry/logout/iki-cihaz yaşam döngüsünü RLS ve idempotency ile kilitle; local test ile gerçek remote self-test'i ayır ve p95 ≤10 sn sağlık yüzeyi sağla.

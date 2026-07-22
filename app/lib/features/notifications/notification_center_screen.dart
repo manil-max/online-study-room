@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/background/timer_foreground_service.dart';
 import '../../core/notifications/notification_preferences.dart';
 import '../../core/notifications/nudge_notification_service.dart';
 import '../../core/notifications/reminder_notification_service.dart';
@@ -172,6 +173,8 @@ class _PushHealthCard extends ConsumerWidget {
               label: l10n.notificationsPhoneRegistration,
               enabled: health.deviceRegistered,
             ),
+            const Divider(height: 24),
+            const _TimerLiveHealth(),
             const SizedBox(height: 8),
             Text(
               lastDelivery,
@@ -234,6 +237,103 @@ class _PushHealthCard extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _TimerLiveHealth extends StatefulWidget {
+  const _TimerLiveHealth();
+
+  @override
+  State<_TimerLiveHealth> createState() => _TimerLiveHealthState();
+}
+
+class _TimerLiveHealthState extends State<_TimerLiveHealth> {
+  late Future<TimerLiveNotificationDiagnostics?> _diagnostics;
+
+  @override
+  void initState() {
+    super.initState();
+    _diagnostics = TimerForegroundService.diagnostics();
+  }
+
+  void _refresh() {
+    setState(() {
+      _diagnostics = TimerForegroundService.diagnostics();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                l10n.notificationsLiveTimerHealth,
+                style: theme.textTheme.titleSmall,
+              ),
+            ),
+            IconButton(
+              visualDensity: VisualDensity.compact,
+              tooltip: l10n.notificationsRefreshHealth,
+              onPressed: _refresh,
+              icon: const Icon(Icons.refresh, size: 18),
+            ),
+          ],
+        ),
+        FutureBuilder<TimerLiveNotificationDiagnostics?>(
+          future: _diagnostics,
+          builder: (context, snapshot) {
+            final diagnostics = snapshot.data;
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const LinearProgressIndicator();
+            }
+            if (diagnostics == null || !diagnostics.hasMeasurement) {
+              return Text(
+                l10n.notificationsLiveTimerPending,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              );
+            }
+            final promotable =
+                diagnostics.promotableCharacteristics == true &&
+                diagnostics.promotionRequested == true &&
+                (diagnostics.channelImportance ?? 3) > 1;
+            final platformText = diagnostics.apiLevel >= 36
+                ? diagnostics.canPostPromotedNotifications
+                      ? l10n.notificationsLiveTimerSystemAllowed
+                      : l10n.notificationsLiveTimerSystemBlocked
+                : l10n.notificationsLiveTimerLegacyFallback;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _HealthRow(
+                  label: l10n.notificationsLiveTimerStandard,
+                  enabled: diagnostics.usesCustomContent == false,
+                ),
+                const SizedBox(height: 6),
+                _HealthRow(
+                  label: l10n.notificationsLiveTimerPromotable,
+                  enabled: promotable,
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  platformText,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ],
     );
   }
 }
