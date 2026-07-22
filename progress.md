@@ -94,12 +94,12 @@
 - **Durum:** [~] Aktif
 - **Faz/WP:** WP-268 · beta-v4302 staging yayın hazırlığı
 - **Aşama:** Otomatik test geçti · staging dispatcher aktivasyonu/beta release bekliyor
-- **SAHİP yollar:** `CHANGELOG.md`, `app/assets/release_notes.json`, `app/pubspec.yaml`, `tooling/release/deploy-contract.json`, `tooling/supabase/guard.tests.ps1`, `.github/workflows/database-gates.yml`, `app/android/settings.gradle.kts`, `app/android/app/build.gradle.kts`, `app/android/app/src/beta/google-services.json`, `app/android/app/src/stable/google-services.json`, `app/test/core/push_delivery_contract_test.dart`, `progress.md`
+- **SAHİP yollar:** `CHANGELOG.md`, `app/assets/release_notes.json`, `app/pubspec.yaml`, `tooling/release/deploy-contract.json`, `tooling/supabase/guard.tests.ps1`, `.github/workflows/database-gates.yml`, `.github/workflows/staging-push-activation.yml`, `app/android/settings.gradle.kts`, `app/android/app/build.gradle.kts`, `app/android/app/src/beta/google-services.json`, `app/android/app/src/stable/google-services.json`, `app/test/core/push_delivery_contract_test.dart`, `progress.md`
 - **Ortak/riskli yüzey:** staging migration head ve GitHub beta tag/release; production kapsam dışı
 - **Dal:** `main`
 - **Başlangıç:** 2026-07-22 (Europe/Istanbul)
 - **Son güncelleme:** 2026-07-22 (Europe/Istanbul)
-- **Not:** WP-268 staging `0066` dry-run/apply ve 116/116 remote pgTAP post-check geçti. Aday build adımının Flutter CI kurulumu düzeltildi ve doğrulandı. Kullanıcının aynı Firebase projesinde kaydettiği beta+stable Android uygulamaları native flavor yapılandırmasına eklendi ve yerelde doğrulandı. Staging dispatcher aktivasyonu ve beta release hâlâ bekliyor; production mutasyonu yasaktır.
+- **Not:** WP-268 staging `0066` dry-run/apply ve 116/116 remote pgTAP post-check geçti. Aday build adımının Flutter CI kurulumu düzeltildi ve doğrulandı. Kullanıcının aynı Firebase projesinde kaydettiği beta+stable Android uygulamaları native flavor yapılandırmasına eklendi ve yerelde doğrulandı. Kullanıcı staging service-account dosyasını indirdi; secret/deploy/database-setting aktivasyon workflow'u hazırlanıyor. Beta release hâlâ bekliyor; production mutasyonu yasaktır.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
