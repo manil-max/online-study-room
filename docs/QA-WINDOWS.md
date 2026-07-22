@@ -22,21 +22,31 @@ açık uygulamaya bağlanarak sürdürür.
 
 Hızlı görsel geliştirme döngüsü:
 
-1. Yerel geliştirme manifestiyle uygulamayı Windows'ta çalıştır: `cd app; flutter run -d windows --flavor local --dart-define-from-file=env.json`.
+1. Mevcut `env.json`u oturum sonunda geri yükleyen yerel çalışma aracını başlat: `powershell -ExecutionPolicy Bypass -File .\scripts\windows_local_dev.ps1`.
 2. Hot reload sonrası ikinci terminalde smoke komutunu `-NoLaunch` ile çalıştır.
 3. Yeni PNG'yi aç; PASS çıktısı olmayan değişiklik görsel olarak doğrulanmış sayılmaz.
+
+İlk Release kabuğu doğrulaması için aynı araç `-BuildOnly` ile çalıştırılır;
+ardından `windows_fast_smoke.ps1 -CloseAfter` çalışır. Araç, local InMemory
+manifestini yalnız Flutter komutu sürerken kullanır ve varsa önceki `env.json`u
+SHA-256 kontrolüyle geri yükler. Kullanıcı komut sürerken `env.json`u değiştirirse
+veri kaybı riski almadan geri yüklemeyi durdurur ve temp yedek yolunu bildirir.
 
 Bu kontrol **yalnız kabuk/başlatma kanıtıdır**: uygulama açılır, kapanmaz,
 görünür pencere verir ve yeni screenshot alınır. Giriş, timer, senkronizasyon,
 MSIX kurulum/güncelleme ve Store otomatik güncellemesi için aşağıdaki QA matrisi
 ayrıca uygulanır.
 
+Not: Flutter Windows hedefi `--flavor` kabul etmez; yerel kanal `CHANNEL=local`
+manifest değeriyle seçilir. Bu nedenle Windows komutlarına `--flavor local`
+eklenmez.
+
 `env.json` yerel kanal sözleşmesine uymuyorsa uygulama bilinçli olarak
 `invalid_channel` / ilgili tanı ekranını gösterir; bu bir test PASS'i değildir.
 InMemory ile hızlı yerel çalışma için `env.local.example.json` dosyasının güvenli
-kopyası kullanılır; staging veya production hesabına bağlı bir `env.json` bu amaçla
-değiştirilmez. Hosted backend testi ise WP-259'un Sandbox/VM + staging manifesti
-akışında yapılır.
+geçici kopyası kullanılır; staging veya production hesabına bağlı bir `env.json`
+kalıcı olarak değiştirilmez. Hosted backend testi ise WP-259'un Sandbox/VM +
+staging manifesti akışında yapılır.
 
 Bu belge Windows release / MSIX kanıtını standardize eder. Emulator veya yalnız
 `flutter run` debug kanıt sayılmaz. Test hesabı; token/e-posta ekran kaydına girmez.

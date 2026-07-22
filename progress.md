@@ -94,12 +94,12 @@
 - **Durum:** [~] Aktif
 - **Faz/WP:** Windows Store ürünleştirme · WP-259 (ilk dilim: hızlı Windows smoke kontrolü)
 - **Aşama:** Otomatik test geçti (WP-259 ilk dilim)
-- **SAHİP yollar:** `scripts/windows_fast_smoke.ps1`, `scripts/windows_smoke_screenshot.ps1`, `docs/QA-WINDOWS.md`, `docs/WINDOWS-STORE-PLAN.md`, `progress.md`
+- **SAHİP yollar:** `scripts/windows_fast_smoke.ps1`, `scripts/windows_smoke_screenshot.ps1`, `scripts/windows_local_dev.ps1`, `docs/QA-WINDOWS.md`, `docs/WINDOWS-STORE-PLAN.md`, `progress.md`
 - **Ortak/riskli yüzey:** Yerel Windows süreç/pencere yakalama; Store, Supabase ve production mutasyonu yok
 - **Dal:** `main`
 - **Başlangıç:** 2026-07-22 (Europe/Istanbul)
 - **Son güncelleme:** 2026-07-22 (Europe/Istanbul)
-- **Not:** Güvenli pencere-yakalama ile hızlı smoke gerçek makinede ≤1 sn PASS; taze Release derlemesinde `invalid_channel` tanı ekranı görünür bulundu. Bu, Windows kabuğunun açıldığını fakat yerel `env.json` manifestinin geliştirici kanalına uymadığını gösterir; işlevsel kullanıcı akışı henüz doğrulanmış değildir.
+- **Not:** Güvenli pencere-yakalama ile hızlı smoke gerçek makinede ≤1 sn PASS. `windows_local_dev.ps1 -BuildOnly` local InMemory manifestiyle taze Windows Release derledi (~47 sn), önceki `env.json`u geri yükledi ve uygulama v43 yenilikler ekranını `invalid_channel` olmadan açtı. İşlevsel giriş/timer/senkron ve MSIX update QA henüz açık.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
@@ -179,7 +179,7 @@
 ### WP-259: Windows QA Temeli ve Yerel İki-Sürüm Provası 🧪
 - **Program/Faz:** Windows Store ürünleştirme · Faz 1
 - **Ajan:** Codex
-- **Durum:** [~] Geliştiriliyor — ilk dilim otomatik test geçti; yerel manifest/işlevsel QA açık
+- **Durum:** [~] Geliştiriliyor — hızlı smoke + local başlangıç otomatik test geçti; işlevsel/VM QA açık
 - **Problem:** CI paket üretse de temiz Windows'ta kurulum→update→uninstall kanıtı doldurulmuş değildir; ana PC'deki test-imzalı paket test hedefi değildir.
 - **Kapsam dışı:** Store hesabı, public Store submission, üretim backend/migration.
 - **SAHİP dosyalar (yaz):** `scripts/windows_fast_smoke.ps1`, `docs/QA-WINDOWS.md`, `scripts/windows_smoke_screenshot.ps1`, Windows QA test/kanıt dosyaları.
