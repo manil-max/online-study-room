@@ -6,7 +6,10 @@ param(
   [int]$TimeoutSeconds = 10,
   [switch]$NoLaunch,
   [switch]$CloseAfter,
-  [switch]$NoForeground
+  [switch]$NoForeground,
+  [switch]$DismissInitialDialog,
+  [ValidateRange(0, 2000)]
+  [int]$PostInteractionDelayMs = 300
 )
 
 $ErrorActionPreference = 'Stop'
@@ -94,6 +97,16 @@ try {
     $process.Refresh()
   }
 
+  if ($DismissInitialDialog) {
+    # Yalnız yerel/InMemory ilk açılışındaki "Yenilikler" penceresi için
+    # isteğe bağlıdır. Varsayılan kapalıdır; kullanıcı akışına körlemesine
+    # müdahale etmez.
+    [System.Windows.Forms.SendKeys]::SendWait('{ENTER}')
+    if ($PostInteractionDelayMs -gt 0) {
+      Start-Sleep -Milliseconds $PostInteractionDelayMs
+    }
+  }
+
   $rect = New-Object WindowsFastSmoke+RECT
   if (-not [WindowsFastSmoke]::GetWindowRect($process.MainWindowHandle, [ref]$rect)) {
     throw 'Pencere boyutu okunamadi.'
@@ -138,6 +151,7 @@ try {
     windowTitle = $process.MainWindowTitle
     visibleWindowWithinMs = $elapsedMs
     timeoutSeconds = $TimeoutSeconds
+    dismissInitialDialogRequested = [bool]$DismissInitialDialog
     screenshot = $OutputPath
     window = "${width}x${height}"
   }

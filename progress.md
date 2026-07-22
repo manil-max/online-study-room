@@ -99,7 +99,7 @@
 - **Dal:** `main`
 - **Başlangıç:** 2026-07-22 (Europe/Istanbul)
 - **Son güncelleme:** 2026-07-22 (Europe/Istanbul)
-- **Not:** Güvenli pencere-yakalama ile hızlı smoke gerçek makinede ≤1 sn PASS. `windows_local_dev.ps1 -BuildOnly` local InMemory manifestiyle taze Windows Release derledi (~47 sn), önceki `env.json`u geri yükledi ve uygulama v43 yenilikler ekranını `invalid_channel` olmadan açtı. Bu PC Windows 11 Home olduğu için Sandbox/VM kurulum-update provasına uygun değil; taşınabilir VM/ikinci-PC prosedürü hazırlanıyor.
+- **Not:** Güvenli pencere-yakalama ile hızlı smoke gerçek makinede ≤1 sn PASS. `windows_local_dev.ps1 -BuildOnly` local InMemory manifestiyle taze Windows Release derledi (~47 sn), önceki `env.json`u geri yükledi; ilk “Yenilikler” penceresi isteğe bağlı kapatılınca gerçek giriş ekranı yakalandı. Bu PC Windows 11 Home olduğu için Sandbox/VM kurulum-update provasına uygun değil; taşınabilir VM/ikinci-PC prosedürü hazır.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta

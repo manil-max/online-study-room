@@ -20,6 +20,11 @@ başlatır. Smoke'un açtığı uygulamayı ardından kapatmak istersen `-CloseA
 eklenir. Eski `windows_smoke_screenshot.ps1` çağrısı da aynı denetimi, yalnız
 açık uygulamaya bağlanarak sürdürür.
 
+Yerel/InMemory ilk açılışındaki “Yenilikler” penceresini kapatıp ana ekranı
+yakalamak için yalnız testte `-DismissInitialDialog` eklenebilir. Bu parametre
+varsayılan olarak kapalıdır; giriş/üretim kullanıcısına ait pencerelerde otomatik
+tuş gönderilmez.
+
 Hızlı görsel geliştirme döngüsü:
 
 1. Mevcut `env.json`u oturum sonunda geri yükleyen yerel çalışma aracını başlat: `powershell -ExecutionPolicy Bypass -File .\scripts\windows_local_dev.ps1`.
