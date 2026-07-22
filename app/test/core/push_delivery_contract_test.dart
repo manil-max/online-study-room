@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -77,5 +78,41 @@ void main() {
     expect(workflow, contains('Missing required environment variable'));
     expect(workflow, contains('action:"enqueue_update"'));
     expect(workflow, contains('PUSH_DISPATCH_SECRET'));
+  });
+
+  test('Android flavors use their matching native Firebase configs', () {
+    final settings = File('android/settings.gradle.kts').readAsStringSync();
+    final appGradle = File('android/app/build.gradle.kts').readAsStringSync();
+    final beta = jsonDecode(
+      File('android/app/src/beta/google-services.json').readAsStringSync(),
+    ) as Map<String, dynamic>;
+    final stable = jsonDecode(
+      File('android/app/src/stable/google-services.json').readAsStringSync(),
+    ) as Map<String, dynamic>;
+
+    String packageFor(Map<String, dynamic> config, String appId) {
+      final clients = config['client'] as List<dynamic>;
+      final client = clients.cast<Map<String, dynamic>>().singleWhere(
+        (entry) =>
+            (entry['client_info'] as Map<String, dynamic>)[
+                'mobilesdk_app_id'] ==
+            appId,
+      );
+      return ((client['client_info'] as Map<String, dynamic>)[
+              'android_client_info'] as Map<String, dynamic>)['package_name']
+          as String;
+    }
+
+    expect(settings, contains('com.google.gms.google-services'));
+    expect(appGradle, contains('id("com.google.gms.google-services")'));
+    expect(appGradle, contains('processLocal'));
+    expect(
+      packageFor(beta, '1:422149816131:android:93ffb8db7b3bd201a8f9f6'),
+      'com.manilmax.online_study_room.beta',
+    );
+    expect(
+      packageFor(stable, '1:422149816131:android:82802517f9fa5ff9a8f9f6'),
+      'com.manilmax.online_study_room',
+    );
   });
 }

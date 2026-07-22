@@ -93,13 +93,13 @@
 ### Codex Lane
 - **Durum:** [~] Aktif
 - **Faz/WP:** WP-268 · beta-v4302 staging yayın hazırlığı
-- **Aşama:** Otomatik test geçti · staging migration/aktivasyon bekliyor
-- **SAHİP yollar:** `CHANGELOG.md`, `app/assets/release_notes.json`, `app/pubspec.yaml`, `tooling/release/deploy-contract.json`, `tooling/supabase/guard.tests.ps1`, `.github/workflows/database-gates.yml`, `progress.md`
+- **Aşama:** Otomatik test geçti · staging dispatcher aktivasyonu/beta release bekliyor
+- **SAHİP yollar:** `CHANGELOG.md`, `app/assets/release_notes.json`, `app/pubspec.yaml`, `tooling/release/deploy-contract.json`, `tooling/supabase/guard.tests.ps1`, `.github/workflows/database-gates.yml`, `app/android/settings.gradle.kts`, `app/android/app/build.gradle.kts`, `app/android/app/src/beta/google-services.json`, `app/android/app/src/stable/google-services.json`, `app/test/core/push_delivery_contract_test.dart`, `progress.md`
 - **Ortak/riskli yüzey:** staging migration head ve GitHub beta tag/release; production kapsam dışı
 - **Dal:** `main`
 - **Başlangıç:** 2026-07-22 (Europe/Istanbul)
 - **Son güncelleme:** 2026-07-22 (Europe/Istanbul)
-- **Not:** WP-268 staging `0066` dry-run/apply ve 116/116 remote pgTAP post-check geçti. Aday build adımının Flutter CI kurulumu düzeltildi ve doğrulandı. Firebase/dispatcher aktivasyonu ve beta release hâlâ bekliyor; production mutasyonu yasaktır.
+- **Not:** WP-268 staging `0066` dry-run/apply ve 116/116 remote pgTAP post-check geçti. Aday build adımının Flutter CI kurulumu düzeltildi ve doğrulandı. Kullanıcının aynı Firebase projesinde kaydettiği beta+stable Android uygulamaları native flavor yapılandırmasına eklendi ve yerelde doğrulandı. Staging dispatcher aktivasyonu ve beta release hâlâ bekliyor; production mutasyonu yasaktır.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
@@ -319,16 +319,16 @@
 ### WP-268: beta-v4302 Staging Push Aktivasyonu ve Cihaz QA Paketi 🚀
 - **Program/Faz:** Bildirim Güven Programı · Faz 3
 - **Ajan:** Codex
-- **Durum:** [~] Staging migration/post-check geçti · Firebase aktivasyonu ve beta release bekliyor · **Bağımlılık:** WP-266/267 kod ve local test kanıtı ✅
-- **Problem:** Yeni FCM/outbox kodu ve Android standard canlı sayaç yerelde doğrulandı; staging henüz `0066`da değil ve beta cihaz paketi yayınlanmadı.
+- **Durum:** [~] Staging migration/post-check geçti · native Firebase bağlandı · staging dispatcher aktivasyonu ve beta release bekliyor · **Bağımlılık:** WP-266/267 kod ve local test kanıtı ✅
+- **Problem:** Yeni FCM/outbox kodu, Android standard canlı sayaç ve beta/stable FCM native bootstrap'ı yerelde doğrulandı; staging dispatcher henüz aktive edilmedi ve beta cihaz paketi yayınlanmadı.
 - **Kapsam:** Sadece staging için deploy sözleşmesi `0066`, `beta-v4302` sürüm notları, yerel kalite kapıları, migration dry-run/apply/post-check, aday build CI kapısı, `dispatch-push` staging deploy, beta tag/release ve cihaz kabul listesi.
 - **Kapsam dışı:** Production migration/secret/function/tag/release; Firebase service-account veya gizli değerlerin repoya yazılması; cihaz sonucu uydurmak.
-- **SAHİP dosyalar (yaz):** `CHANGELOG.md`, `app/assets/release_notes.json`, `app/pubspec.yaml`, `tooling/release/deploy-contract.json`, `tooling/supabase/guard.tests.ps1`, `.github/workflows/database-gates.yml`, `progress.md`.
+- **SAHİP dosyalar (yaz):** `CHANGELOG.md`, `app/assets/release_notes.json`, `app/pubspec.yaml`, `tooling/release/deploy-contract.json`, `tooling/supabase/guard.tests.ps1`, `.github/workflows/database-gates.yml`, `app/android/settings.gradle.kts`, `app/android/app/build.gradle.kts`, flavor `google-services.json` dosyaları, `app/test/core/push_delivery_contract_test.dart`, `progress.md`.
 - **Veri/Migration etkisi:** Staging'e yalnız ileri `0066`; push token/outbox/delivery tabloları. Remote reset, veri silme ve backfill yok.
 - **Ortam/Deploy:** Beta → staging; release ancak Firebase public client config ve staging dispatcher secret/function hazırsa. Production'a hiçbir çağrı yapılmaz.
 - **Kabul:** `beta-v4302` (`1.0.43-beta.2+4302`) staging backend'e bağlı, imzalı GitHub prerelease APK olarak oluşur; staging `0066` post-check geçer; fiziksel cihazda remote self-test, app-closed timer ve standard notification kabul listesi görünür.
 - **Tuzaklar:** Eksik Firebase config ile etiketi atıp başarısız CI bırakmak; staging yerine production hedeflemek; local notification sonucunu gerçek FCM kanıtı saymak.
-- **Kanıt (2026-07-22):** `flutter analyze` temiz; tüm **682** Flutter testi geçti; deploy guard **36/36**; gerçek beta kanal/manifest gate ve release-note JSON sözleşmesi geçti. GitHub staging dry-run [`29942214319`](https://github.com/manil-max/online-study-room/actions/runs/29942214319) başarılı. Staging apply [`29942462286`](https://github.com/manil-max/online-study-room/actions/runs/29942462286) `0066` ve remote pgTAP/RLS **116/116** geçti; yalnız aday build adımı Flutter runner kurulumu eksik olduğu için düştü. Bu CI kurulumu ileri düzeltmesi [`29942993783`](https://github.com/manil-max/online-study-room/actions/runs/29942993783) ile doğrulandı. Production'a yazılmadı.
+- **Kanıt (2026-07-22):** `flutter analyze` temiz; tüm **683** Flutter testi geçti; deploy guard **36/36**; gerçek beta kanal/manifest gate ve release-note JSON sözleşmesi geçti. GitHub staging dry-run [`29942214319`](https://github.com/manil-max/online-study-room/actions/runs/29942214319) başarılı. Staging apply [`29942462286`](https://github.com/manil-max/online-study-room/actions/runs/29942462286) `0066` ve remote pgTAP/RLS **116/116** geçti; yalnız aday build adımı Flutter runner kurulumu eksik olduğu için düştü. Bu CI kurulumu ileri düzeltmesi [`29942993783`](https://github.com/manil-max/online-study-room/actions/runs/29942993783) ile doğrulandı. Kullanıcının indirdiği resmi Firebase dosyaları beta/stable flavorlarına bağlandı; `processBetaDebugGoogleServices`, `processStableDebugGoogleServices` ve `processLocalDebugGoogleServices` yerelde geçti. Production'a yazılmadı.
 
 ### WP-229: Eşit Süre Kaynakları ve Ödül Zinciri Onarımı ⚖️
 - **Program/Faz:** Kurtarma Faz 4A

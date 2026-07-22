@@ -4,6 +4,7 @@ import java.util.Base64
 
 plugins {
     id("com.android.application")
+    id("com.google.gms.google-services")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
@@ -178,6 +179,19 @@ android {
     // Local yalnız geliştirici kimliğidir; beta görsel işaretini tekrar kullanır,
     // gerçek beta ile application id/ad/auth/cache/widget alanı yine ayrıdır.
     sourceSets.getByName("local").res.srcDir("src/beta/res")
+
+    // Local is intentionally not a registered FCM application. Disable the
+    // Google Services processing task only for that developer-only flavor.
+    applicationVariants.all {
+        if (flavorName == "local") {
+            tasks.matching { task ->
+                task.name.startsWith("processLocal") &&
+                    task.name.endsWith("GoogleServices")
+            }.configureEach {
+                enabled = false
+            }
+        }
+    }
 
     signingConfigs {
         create("release") {

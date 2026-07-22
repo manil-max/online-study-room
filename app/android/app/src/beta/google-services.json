@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "422149816131",
+    "project_id": "odak-kampi",
+    "storage_bucket": "odak-kampi.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:422149816131:android:93ffb8db7b3bd201a8f9f6",
+        "android_client_info": {
+          "package_name": "com.manilmax.online_study_room.beta"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBC-bP-3Y_OR4gNlj1Odrqo6duta1_fUyI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
