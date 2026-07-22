@@ -157,6 +157,17 @@ jobs:
           }
           ./tooling/supabase/remote.ps1 @params
 
+      - uses: actions/setup-java@v4
+        if: inputs.operation == 'staging-apply'
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        if: inputs.operation == 'staging-apply'
+        with:
+          channel: stable
+
       - name: Build and report the exact staging beta candidate
         if: inputs.operation == 'staging-apply'
         shell: pwsh
