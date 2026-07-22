@@ -91,6 +91,7 @@
   - K/L kodu repoda; kabul kanıtı yoktur. Tüm production terfisi artık `docs/ORTAM-MIGRATION-YONETISIMI.md` ve WP-225–232 kapısına tabidir.
 
 ### Codex Lane
+- **Ek kapsam (2026-07-23):** Gelecek taç XP çubuğu gösterim kararının kalıcı backlog kaydı. SAHİP yol: `backlog.md` (uygulama kodu kapsam dışı).
 - **Ek kapsam (2026-07-22):** beta timer paneli regresyonu. SAHİP yollar: `app/android/app/src/main/AndroidManifest.xml`, `app/android/app/src/main/kotlin/com/manilmax/online_study_room/MainActivity.kt`, `app/android/app/src/main/kotlin/com/manilmax/online_study_room/timer/StudyTimerService.kt`, `app/android/app/src/main/res/layout/timer_notification.xml`, `app/lib/core/background/timer_foreground_service.dart`, `app/lib/features/notifications/notification_center_screen.dart`, `app/test/core/verified_timer_bridge_contract_test.dart`.
 - **Ek kapsam (2026-07-22):** FCM teslim yolunun foreground/background tutarlılığı. SAHİP yollar: `app/lib/core/notifications/app_push_notification_service.dart`, `supabase/functions/dispatch-push/index.ts`, `app/test/core/push_delivery_contract_test.dart`.
 - **Ek kapsam (2026-07-22):** Bildirim mimarisi karar kaydı ve beta-v4303 yayın metadatası. SAHİP yollar: `docs/NOTIFICATION-SYSTEM-AUDIT-2026-07.md`, `CHANGELOG.md`, `app/assets/release_notes.json`, `app/pubspec.yaml`.

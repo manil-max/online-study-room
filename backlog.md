@@ -56,6 +56,10 @@
 - [~] **Küresel l10n (en varsayılan, tr ikinci dil)** — temel (en/tr) + katalog **teslim**; kalan: WP-87/89 entegrasyon/cihaz QA ve ar/de + RTL (WP-155 park). Sözleşme: sistem dili `tr` → Türkçe, diğer her locale İngilizce; üretilen l10n elle düzenlenmez.
 - [~] **Global açık/özel gruplar (keşfet/katıl/klan)** — WP-92/93 **tamamlandı** (2026-07-17); ileri "klan" fikirleri açık kalırsa buraya yazılır.
 - [~] **Yeni grafik türleri** — WP-67 brief hazır; **implementasyon için ürün onayı bekliyor** (onay gelince kod WP'si açılır).
+- [ ] **Taç XP çubuğu — toplam eşik üzerinden gösterim**
+  - Bir sonraki taç eşiği `75k` ve kullanıcının toplam XP'si `25k` ise metin `25k / 75k XP`, doluluk da `25 / 75` olmalı. Kademe içi/kalan XP (`0 / 55k`, “55k kaldı”) temel alınmaz.
+  - Kapsam yalnız profil/başarım ekranındaki görsel ilerleme ve erişilebilirlik metnidir; XP ekonomisi, taç eşikleri ve sunucu taraflı ilerleme hesabı değişmez.
+  - Kabul: her taçta etiket, semantik açıklama ve bar aynı mutlak hedefi kullanır; son/sonsuz kademe davranışı uygulama öncesi netleştirilir.
 
 ## ❓ Açık Sorular / Ürün Kararları
 
