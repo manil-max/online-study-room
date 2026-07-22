@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/providers/auth_providers.dart';
+import '../../data/providers/push_notification_providers.dart';
 import '../../core/navigation/home_shell.dart';
 import '../../l10n/app_localizations.dart';
 import '../onboarding/onboarding_prefs.dart';
@@ -55,6 +56,9 @@ class _AuthGateState extends ConsumerState<AuthGate> {
 
   @override
   Widget build(BuildContext context) {
+    // WP-266: token kaydı HomeShell'e bağlı kalmasın; auth/onboarding boyunca
+    // kullanıcı+tercih değişimleri server device registry ile uzlaşsın.
+    ref.watch(pushLifecycleListenerProvider);
     final authState = ref.watch(authStateProvider);
     final l10n = AppLocalizations.of(context);
 

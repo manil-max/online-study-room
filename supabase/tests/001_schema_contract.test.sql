@@ -3,17 +3,127 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(24);
+select plan(36);
 
 select is(
   (select count(*)::integer from supabase_migrations.schema_migrations),
-  65,
-  'all 65 migrations are recorded'
+  66,
+  'all 66 migrations are recorded'
 );
 select is(
   (select max(version) from supabase_migrations.schema_migrations),
-  '0065',
-  '0065 is the migration head'
+  '0066',
+  '0066 is the migration head'
+);
+select ok(
+  to_regclass('public.push_devices') is not null
+    and to_regclass('public.notification_outbox') is not null
+    and to_regclass('public.notification_deliveries') is not null,
+  '0066 installs the private push registry and delivery outbox'
+);
+select is(
+  (
+    select count(*)::integer from pg_class c
+    join pg_namespace n on n.oid = c.relnamespace
+    where n.nspname = 'public'
+      and c.relname in ('push_devices', 'notification_outbox', 'notification_deliveries')
+      and c.relrowsecurity
+  ),
+  3,
+  'all push tables have RLS enabled'
+);
+select ok(
+  not has_table_privilege('authenticated', 'public.push_devices', 'select')
+    and not has_table_privilege('authenticated', 'public.notification_outbox', 'select')
+    and not has_table_privilege('authenticated', 'public.notification_deliveries', 'select'),
+  'authenticated cannot read private push tables directly'
+);
+select ok(
+  not has_table_privilege('authenticated', 'public.push_devices', 'insert')
+    and not has_table_privilege('authenticated', 'public.notification_outbox', 'insert')
+    and not has_table_privilege('authenticated', 'public.notification_deliveries', 'insert'),
+  'authenticated cannot write private push tables directly'
+);
+select ok(
+  to_regprocedure(
+    'public.register_push_device(text,text,text,text,integer,text,text,boolean,boolean,boolean,boolean,integer,integer)'
+  ) is not null
+    and to_regprocedure('public.unregister_push_device(text)') is not null,
+  '0066 installs self-scoped device lifecycle RPCs'
+);
+select ok(
+  has_function_privilege(
+    'authenticated',
+    'public.register_push_device(text,text,text,text,integer,text,text,boolean,boolean,boolean,boolean,integer,integer)',
+    'execute'
+  ),
+  'authenticated can call the guarded registration RPC'
+);
+select ok(
+  not has_function_privilege(
+    'authenticated', 'public.claim_push_deliveries(uuid,integer,integer)', 'execute'
+  )
+    and not has_function_privilege(
+      'authenticated',
+      'public.complete_push_delivery(uuid,uuid,text,text,text,integer)',
+      'execute'
+    ),
+  'authenticated cannot claim or complete provider deliveries'
+);
+select ok(
+  exists(
+    select 1 from pg_trigger
+    where tgrelid = 'public.nudges'::regclass
+      and tgname = 'nudges_enqueue_push'
+      and not tgisinternal
+  ),
+  'nudge inserts enqueue an idempotent push event'
+);
+select ok(
+  exists(
+    select 1 from pg_trigger
+    where tgrelid = 'public.announcements'::regclass
+      and tgname = 'announcements_enqueue_push'
+      and not tgisinternal
+  ),
+  'announcement inserts fan out through the push outbox'
+);
+select ok(
+  to_regprocedure(
+    'public.enqueue_update_push(text,text,text,integer,text,text)'
+  ) is not null
+    and not has_function_privilege(
+      'authenticated',
+      'public.enqueue_update_push(text,text,text,integer,text,text)',
+      'execute'
+    )
+    and to_regprocedure('public.prune_stale_push_devices(integer)') is not null,
+  'update fan-out and stale-token cleanup stay service-only'
+);
+select is(
+  (
+    select count(*)::integer from pg_trigger
+    where tgrelid = 'public.notification_outbox'::regclass
+      and tgname in ('a_push_outbox_create_deliveries', 'z_push_outbox_request_dispatch')
+      and not tgisinternal
+  ),
+  2,
+  'outbox creates device deliveries before requesting async dispatch'
+);
+select ok(
+  exists(
+    select 1 from pg_indexes
+    where schemaname = 'public'
+      and tablename = 'notification_outbox'
+      and indexdef ilike '%unique%event_key%'
+  )
+    and exists(
+      select 1 from pg_indexes
+      where schemaname = 'public'
+        and tablename = 'notification_deliveries'
+        and indexdef ilike '%unique%outbox_id%device_id%'
+    ),
+  'outbox and per-device delivery idempotency keys are unique'
 );
 select is(current_setting('server_version_num')::integer / 10000, 17, 'PostgreSQL major is 17');
 select ok(exists(select 1 from pg_extension where extname = 'pg_cron'), 'pg_cron prerequisite is installed');

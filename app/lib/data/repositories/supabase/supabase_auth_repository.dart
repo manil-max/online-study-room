@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'dart:async';
 
 import 'package:supabase_flutter/supabase_flutter.dart' as supa;
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../models/account_deletion_status.dart';
 import '../../models/profile.dart';
@@ -334,6 +335,19 @@ class SupabaseAuthRepository implements AuthRepository {
 
   @override
   Future<void> signOut() async {
+    // WP-266: token eski hesaba bağlı kalıp çıkıştan sonra özel bildirim
+    // göstermesin. Push cleanup hatası oturum kapatmayı engellemez; yeni login
+    // aynı tokenı atomik olarak yeni kullanıcıya taşır.
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final installationId = prefs.getString('push_installation_id_v1');
+      if (installationId != null && installationId.trim().isNotEmpty) {
+        await _client.rpc(
+          'unregister_push_device',
+          params: {'p_installation_id': installationId.trim()},
+        );
+      }
+    } catch (_) {}
     await _client.auth.signOut();
     _current = null;
   }

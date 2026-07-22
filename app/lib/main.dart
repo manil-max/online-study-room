@@ -15,6 +15,7 @@ import 'core/desktop/desktop_window.dart';
 import 'core/l10n/system_localizations.dart';
 import 'core/l10n/app_locale.dart';
 import 'core/notifications/alarm_notification_service.dart';
+import 'core/notifications/app_push_notification_service.dart';
 import 'core/notifications/native_alarm_bridge.dart';
 import 'core/notifications/timer_notification_service.dart';
 import 'core/observability/observability_service.dart';
@@ -96,6 +97,9 @@ Future<void> main() async {
   // Yerel kalıcı ayarlar (Ana Sayfa yerleşimi, saat stili vb. için).
   final prefs = await SharedPreferences.getInstance();
   await ObservabilityService.instance.initialize(prefs);
+  // WP-266: Yalnız Android + eksiksiz Firebase config'te FCM'i başlatır.
+  // Config yok/yarımsa uygulama açılır; Bildirim Sağlığı açık nedeni gösterir.
+  await AppPushNotificationService.instance.bootstrap(prefs);
 
   // Saat P0: cihaz TZ + alarm servisi; boot sonrası native mirror reschedule.
   await DeviceTimezone.ensureInitialized();

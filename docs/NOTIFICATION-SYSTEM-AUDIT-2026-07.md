@@ -741,3 +741,49 @@ Beta tokenı production'a, stable tokenı staging'e yazılmamalıdır. Cihaz kay
 
 Bugünkü uygulama **yerel bildirim, native alarm ve foreground sayaç** yeteneklerine sahiptir; fakat **uzak push bildirim sistemi yoktur**. Samsung canlı panel sorunu da tek bir eksik flag değil, varsayılan özel notification tasarımının resmi Live Update sözleşmesiyle uyumsuz olmasıdır. En güvenilir ve maliyetsiz yön; FCM'yi mevcut Supabase backend'e güvenli outbox/Edge Function ile bağlamak, teslimi uygulama içinden ölçülebilir yapmak ve sayaç bildirimini custom panelden standard/promoted ongoing yapısına taşımaktır.
 
+---
+
+## 18. Uygulama günlüğü — WP-266 (2026-07-22)
+
+Raporun ilk adımı kodda tamamlandı; bu bölüm analiz sonrası bulunan gerçek uygulama ayrıntılarını ve aktivasyon sınırını kaydeder.
+
+### 18.1 Kurulan istemci omurgası
+
+- Android istemcisine `firebase_core` + `firebase_messaging` eklendi. Firebase seçenekleri yalnız dört public Android istemci tanımlayıcısından ve environment manifestinden okunur; service account/özel anahtar uygulamaya girmez.
+- Config tamamen boşsa özellik fail-closed/no-op çalışır; kısmi config “hazır” sayılmaz. Windows/web ve Firebase kurulmamış local akış bozulmaz.
+- Foreground, background isolate ve terminated/opened mesaj yolları bağlandı. Aynı domain `event_id` için SharedPreferences tabanlı son-100 idempotency penceresi, açık uygulamadaki legacy Realtime dürtmesiyle FCM'nin çift bildirim üretmesini önler.
+- `social_nudges`, `announcements`, `app_updates`, `push_system_test` kanalları uygulama başlangıcında açıkça oluşturulur; FCM varsayılan kanal metadata'sı tanımlıdır.
+- FCM token + token refresh, kurulum UUID'si, beta/stable kanal, sürüm/build, dil, timezone, kullanıcı bildirim tercihleri ve sessiz saatler self-scoped RPC ile eşitlenir. Logout önce mevcut kurulumu devre dışı bırakmayı dener; ağ hatası logout'u kilitlemez.
+- Bildirim Merkezi'ne iki ayrı test kondu: local presentation testi ve gerçek remote self-test. Remote test artık yalnız “FCM kabul etti” sonucunu yeterli saymaz; aynı `outbox_id` cihaz receiver'ında görülmeden başarı göstermez ve 10 saniyede görünür hata verir.
+
+### 18.2 Kurulan backend omurgası
+
+- `0066_push_notification_delivery.sql`: private/RLS `push_devices`, transactional `notification_outbox`, per-device `notification_deliveries`, idempotency anahtarları, lease/`SKIP LOCKED`, en çok 6 deneme, retry, geçersiz/stale token disable ve self-test RPC'leri.
+- Dürtme insert'i transaction içinde outbox'a bağlandı. Duyurular hedef türüne göre yalnız kayıtlı/opt-in kullanıcılara fan-out olur. Release kanalına özel service-only update enqueue RPC'si beta/stable cihaz ayrımını korur.
+- `dispatch-push` Edge Function service account'tan kısa ömürlü OAuth token üretir ve FCM HTTP v1 kullanır. Token/credential loglamaz; 429/5xx için geri çekilme, `UNREGISTERED` için cihaz kapatma, sessiz saat ertelemesi ve TR/EN/DE/AR temel metinleri içerir.
+- GitHub Android release işi dört Firebase istemci alanı yoksa artık sessizce push'suz APK üretmez; kapıda durur. Release başarıyla oluşunca dispatcher aktive edilmişse aynı kanalın opt-in cihazlarına güncelleme push'ı otomatik kuyruğa alınır.
+
+### 18.3 Otomatik doğrulama kanıtı
+
+- `flutter analyze`: temiz.
+- Flutter: tüm **679 test** geçti; push hedef testleri config, repository mapping, receiver yaşam döngüsü, secret sızıntısı ve release sözleşmesini kapsar.
+- Android: `local` debug APK başarıyla derlendi (`app-local-debug.apk`).
+- Edge: Deno type-check temiz.
+- Supabase: boş yerel DB'de `0001→0066` zinciri başarıyla kuruldu; 5 pgTAP dosyasında **116 test** geçti. Kanıt: `.artifacts/deploy-evidence/20260722T162841498Z-local-baseline`.
+- Deploy guard: **36/36** geçti. Workflow YAML parse edildi.
+
+### 18.4 Bilinçli olarak yapılmayan aktivasyon
+
+Bu turda staging/production migration, Edge deploy, Firebase Console kaydı, Supabase secret veya database setting yazımı yapılmadı. Bunlar uzak ortam mutasyonudur; repo ortam yönetişimi ve production için açık kullanıcı GO gerektirir. Kodun gerçek cihazda push alabilmesi için sırasıyla:
+
+1. Staging Firebase Android app'i ve dört public istemci değişkeni,
+2. staging `0066` migration,
+3. `dispatch-push` deploy + `FCM_SERVICE_ACCOUNT_JSON` + `PUSH_DISPATCH_SECRET`,
+4. database dispatcher URL/secret ayarı,
+5. beta APK ile foreground/background/force-stop dışı terminated ve Samsung/Pixel test matrisi
+
+tamamlanmalıdır. Android’in kullanıcı tarafından **Force stop** uygulanmış uygulamaya yeniden açılana kadar push teslim etmemesi platform davranışıdır; bunu uygulama kodu aşamaz. Production terfisi ancak beta soak ve açık GO sonrasıdır.
+
+### 18.5 Ölçek notu
+
+Mevcut duyuru fan-out'u küçük/orta kullanıcı sayısında kayıtlı cihaz sahipleriyle sınırlıdır ve domain transaction'ında outbox satırı üretir. Çok büyük yayın hacmine geçilirse recipient expansion ayrı batch/queue worker'a taşınmalıdır; bu rapordaki “büyük broadcast sistemi kapsam dışı” sınırı korunur.

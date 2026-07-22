@@ -22,8 +22,8 @@ $repoRoot = Get-RepoRoot
 $stagingRef = 'aaaaaaaaaaaaaaaaaaaa'
 $productionRef = 'bbbbbbbbbbbbbbbbbbbb'
 
-Assert-Equal (Get-LocalMigrationHead -RepoRoot $repoRoot) '0065' 'local migration head'
-Assert-Equal ((Get-DeployContract -RepoRoot $repoRoot).local_migration_head) '0065' 'contract migration head'
+Assert-Equal (Get-LocalMigrationHead -RepoRoot $repoRoot) '0066' 'local migration head'
+Assert-Equal ((Get-DeployContract -RepoRoot $repoRoot).local_migration_head) '0066' 'contract migration head'
 $contract = Get-DeployContract -RepoRoot $repoRoot
 Assert-Equal $contract.staging.migration_head '0065' 'staging migration head'
 Assert-Equal ([bool]$contract.staging.deploy_enabled) $true 'staging deploy enabled'

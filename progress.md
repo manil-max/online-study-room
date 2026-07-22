@@ -92,14 +92,14 @@
 
 ### Codex Lane
 - **Durum:** [~] Aktif
-- **Faz/WP:** Bildirim Güven Programı · WP-265 (adli mimari inceleme ve yol haritası)
-- **Aşama:** Planlanıyor / salt-okunur inceleme
-- **SAHİP yollar:** `docs/NOTIFICATION-SYSTEM-AUDIT-2026-07.md`, `progress.md`, `backlog.md`, `project.md`
-- **Ortak/riskli yüzey:** Yalnız dokümantasyon; bildirim/push/timer kodu rapor tamamlanana kadar salt-okunur
+- **Faz/WP:** Bildirim Güven Programı · WP-266 (güvenilir push çekirdeği ve self-test)
+- **Aşama:** 2/8 · uygulanıyor
+- **SAHİP yollar:** `app/pubspec.*`, `app/lib/core/notifications/**`, push config/model/repository/provider + Supabase/in_memory aynaları, `app/lib/data/repositories/supabase/supabase_auth_repository.dart` (yalnız logout token unregister), Bildirim Merkezi/l10n/testler, `supabase/migrations/0066_*`, `supabase/functions/dispatch-push/**`, `supabase/tests/**`, bildirim raporu, `progress.md`
+- **Ortak/riskli yüzey:** Yeni migration + auth yaşam döngüsü + Android plugin başlangıcı; native alarm/timer FGS dosyalarına dokunulmaz, remote/production yok
 - **Dal:** `main`
 - **Başlangıç:** 2026-07-22 (Europe/Istanbul)
 - **Son güncelleme:** 2026-07-22 (Europe/Istanbul)
-- **Not:** Kullanıcı talimatıyla önce geçmiş+mevcut kod+resmî platform kaynakları tam incelenecek; rapor/WP planı commit edilmeden uygulama koduna dokunulmayacak.
+- **Not:** WP-265 raporu `abf031b` ile tamamlandı. WP-266 local/fake + local migration kapısında uygulanır; Firebase/Supabase staging aktivasyonu secret/GO olmadan yapılmaz.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
@@ -286,8 +286,8 @@
 
 ### WP-266: Güvenilir Push Çekirdeği ve 10 Saniyelik Self-Test 📲
 - **Program/Faz:** Bildirim Güven Programı · Faz 1
-- **Ajan:** —
-- **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-265
+- **Ajan:** Codex
+- **Durum:** [~] Kodda + yerel backend'de doğrulandı; Firebase/staging aktivasyonu ve fiziksel Android kabulü bekliyor · **Bağımlılık:** WP-265 ✅
 - **Problem:** Projede FCM SDK/token registry/server sender/outbox/delivery gözlemi yok; uygulama kapalıyken dürtme, duyuru ve güncelleme ulaşamaz.
 - **Kapsam:** Android FCM yaşam döngüsü; güvenli cihaz kaydı; transactional outbox + per-device delivery; dürtme enqueue; Supabase Edge FCM HTTP v1 dispatcher; retry/invalid-token cleanup; preference sync; Bildirim Sağlığı ve local/remote self-test; in-memory/fake karşılıkları.
 - **Kapsam dışı:** iOS/APNs, web push, pazarlama segmentasyonu, production deploy/release, Samsung canlı sayaç görünümü.
@@ -297,6 +297,7 @@
 - **Ortam/Deploy:** Önce local/fake; staging Firebase/Supabase aktivasyonu ayrı kapı; production yalnız beta soak + açık kullanıcı GO.
 - **Kabul:** Foreground/background/terminated dürtme tek teslim; duplicate 0; remote self-test p95 ≤10 sn; logout/token refresh/iki cihaz/RLS/retry senaryoları kanıtlı; config yokken app fail-closed ve regresyonsuz.
 - **Tuzaklar:** Yerel test bildirimini push kanıtı saymak; service account'ı istemciye koymak; notification+local presentation duplicate'i; beta/stable token karışması.
+- **Kanıt (2026-07-22):** Flutter analyze temiz; tüm **679** Flutter testi geçti; Android local debug APK derlendi; Edge dispatcher Deno type-check geçti; `0001→0066` sıfır kurulum + **116 pgTAP** geçti (`.artifacts/deploy-evidence/20260722T162841498Z-local-baseline`); deploy guard **36/36**. Remote/staging/production mutasyonu yapılmadı.
 - **Model önerisi:** 🔴 Opus / frontier-high.
 
 ### WP-267: Android Standard/Promoted Canlı Sayaç ⏱️

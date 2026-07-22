@@ -5,6 +5,7 @@
 list(APPEND FLUTTER_PLUGIN_LIST
   app_links
   file_selector_windows
+  firebase_core
   passkeys_windows
   screen_retriever_windows
   sentry_flutter

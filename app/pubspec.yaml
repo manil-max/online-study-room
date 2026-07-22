@@ -45,6 +45,9 @@ dependencies:
   home_widget: ^0.9.3
   flutter_local_notifications: ^22.0.1
   flutter_foreground_task: ^9.2.2
+  # WP-266: Uygulama kapalıyken de ulaşan Android remote push taşıması.
+  firebase_core: ^4.12.1
+  firebase_messaging: ^16.4.3
   sentry_flutter: ^9.0.0
 
   # In-app güncelleme (GitHub Releases üzerinden, sadece Android).

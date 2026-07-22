@@ -9,6 +9,8 @@ import '../../data/models/announcement.dart';
 import '../../data/models/study_reminder.dart';
 import '../../data/providers/auth_providers.dart';
 import '../../data/providers/notification_providers.dart';
+import '../../data/providers/push_notification_providers.dart';
+import '../../data/models/push_notification.dart';
 import '../../data/repositories/notification_repository.dart';
 import '../../l10n/app_localizations.dart';
 import '../clock/alarms_screen.dart';
@@ -51,6 +53,8 @@ class NotificationCenterScreen extends ConsumerWidget {
         children: [
           const _PermissionCard(),
           const SizedBox(height: 10),
+          const _PushHealthCard(),
+          const SizedBox(height: 10),
           _TypesCard(prefs: prefs),
           const SizedBox(height: 10),
           _QuietHoursCard(prefs: prefs),
@@ -60,6 +64,208 @@ class NotificationCenterScreen extends ConsumerWidget {
           const _AnnouncementsCard(),
         ],
       ),
+    );
+  }
+}
+
+class _PushHealthCard extends ConsumerWidget {
+  const _PushHealthCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final health = ref.watch(pushHealthProvider);
+    if (health.readiness == PushHealthReadiness.unsupported) {
+      return const SizedBox.shrink();
+    }
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final ready =
+        health.readiness == PushHealthReadiness.ready &&
+        health.deviceRegistered;
+    final statusText = switch (health.readiness) {
+      PushHealthReadiness.notConfigured =>
+        l10n.notificationsRemoteNotConfigured,
+      PushHealthReadiness.incompleteConfiguration =>
+        l10n.notificationsRemoteIncomplete,
+      PushHealthReadiness.permissionRequired =>
+        l10n.notificationsPermissionRequired,
+      PushHealthReadiness.registering => l10n.notificationsPhoneRegistering,
+      PushHealthReadiness.ready =>
+        health.deviceRegistered
+            ? l10n.notificationsPhoneReady
+            : l10n.notificationsPhoneRegistering,
+      PushHealthReadiness.error => l10n.notificationsConnectionError,
+      PushHealthReadiness.unsupported => l10n.notificationsRemoteNotConfigured,
+    };
+    final statusColor = ready
+        ? theme.colorScheme.primary
+        : health.readiness == PushHealthReadiness.error ||
+              health.readiness == PushHealthReadiness.incompleteConfiguration
+        ? theme.colorScheme.error
+        : theme.colorScheme.onSurfaceVariant;
+    final lastReceived = health.snapshot.lastReceivedAt;
+    final lastDelivery = lastReceived == null
+        ? l10n.notificationsLastDeliveryNever
+        : l10n.notificationsLastDelivery(
+            MaterialLocalizations.of(
+              context,
+            ).formatTimeOfDay(TimeOfDay.fromDateTime(lastReceived.toLocal())),
+          );
+    final selfTest = health.selfTestStatus;
+    final selfTestText =
+        selfTest?.state == PushSelfTestDeliveryState.sent &&
+            health.selfTestReceived
+        ? l10n.notificationsRemoteTestSent(
+            ((health.selfTestElapsed?.inMilliseconds ?? 0) / 1000)
+                .toStringAsFixed(1),
+          )
+        : selfTest?.terminal == true || health.errorCode == 'push_test_timeout'
+        ? l10n.notificationsRemoteTestFailed
+        : null;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.health_and_safety_outlined, color: statusColor),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.notificationsHealthTitle,
+                        style: theme.textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        l10n.notificationsHealthSubtitle,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  tooltip: l10n.notificationsRefreshHealth,
+                  onPressed: health.syncing
+                      ? null
+                      : () => ref.read(pushHealthProvider.notifier).refresh(),
+                  icon: const Icon(Icons.refresh),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(statusText, style: TextStyle(color: statusColor)),
+            const SizedBox(height: 10),
+            _HealthRow(
+              label: l10n.notificationsOsPermission,
+              enabled: health.snapshot.notificationsEnabled,
+            ),
+            const SizedBox(height: 6),
+            _HealthRow(
+              label: l10n.notificationsPhoneRegistration,
+              enabled: health.deviceRegistered,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              lastDelivery,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            if (health.localTestSucceeded) ...[
+              const SizedBox(height: 6),
+              Text(
+                l10n.notificationsLocalTestSent,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+            ],
+            if (selfTestText != null) ...[
+              const SizedBox(height: 6),
+              Text(
+                selfTestText,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color:
+                      selfTest?.state == PushSelfTestDeliveryState.sent &&
+                          health.selfTestReceived
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.error,
+                ),
+              ),
+            ],
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: health.syncing
+                      ? null
+                      : () => ref
+                            .read(pushHealthProvider.notifier)
+                            .runLocalTest(),
+                  icon: const Icon(Icons.phone_android),
+                  label: Text(l10n.notificationsLocalTest),
+                ),
+                FilledButton.tonalIcon(
+                  onPressed: ready && !health.syncing
+                      ? () => ref
+                            .read(pushHealthProvider.notifier)
+                            .runRemoteTest()
+                      : null,
+                  icon: health.syncing
+                      ? const SizedBox.square(
+                          dimension: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.cloud_done_outlined),
+                  label: Text(l10n.notificationsRemoteTest),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HealthRow extends StatelessWidget {
+  const _HealthRow({required this.label, required this.enabled});
+
+  final String label;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    return Row(
+      children: [
+        Icon(
+          enabled ? Icons.check_circle_outline : Icons.cancel_outlined,
+          size: 18,
+          color: enabled
+              ? theme.colorScheme.primary
+              : theme.colorScheme.onSurfaceVariant,
+        ),
+        const SizedBox(width: 8),
+        Expanded(child: Text(label)),
+        Text(
+          enabled
+              ? l10n.notificationsStatusOpen
+              : l10n.notificationsStatusClosed,
+          style: theme.textTheme.bodySmall,
+        ),
+      ],
     );
   }
 }
@@ -140,6 +346,9 @@ class _PermissionCard extends ConsumerWidget {
                   final granted = await ref
                       .read(reminderNotificationServiceProvider)
                       .requestPermissionIfNeeded();
+                  await ref
+                      .read(pushHealthProvider.notifier)
+                      .synchronize(force: true);
                   if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(

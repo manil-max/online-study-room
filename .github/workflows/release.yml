@@ -108,7 +108,17 @@ jobs:
           PRODUCTION_SUPABASE_ANON_KEY: ${{ secrets.PRODUCTION_SUPABASE_ANON_KEY }}
           STAGING_SUPABASE_PROJECT_REF: ${{ vars.STAGING_SUPABASE_PROJECT_REF }}
           PRODUCTION_SUPABASE_PROJECT_REF: ${{ vars.PRODUCTION_SUPABASE_PROJECT_REF }}
+          FIREBASE_PROJECT_ID: ${{ vars.FIREBASE_PROJECT_ID }}
+          FIREBASE_ANDROID_API_KEY: ${{ vars.FIREBASE_ANDROID_API_KEY }}
+          FIREBASE_ANDROID_APP_ID: ${{ vars.FIREBASE_ANDROID_APP_ID }}
+          FIREBASE_MESSAGING_SENDER_ID: ${{ vars.FIREBASE_MESSAGING_SENDER_ID }}
         run: |
+          for required in FIREBASE_PROJECT_ID FIREBASE_ANDROID_API_KEY FIREBASE_ANDROID_APP_ID FIREBASE_MESSAGING_SENDER_ID; do
+            if [ -z "${!required}" ]; then
+              echo "Missing required environment variable: $required"
+              exit 1
+            fi
+          done
           if [ "${{ steps.meta.outputs.channel }}" = "beta" ]; then
             export APP_ENVIRONMENT=staging
             export SUPABASE_URL="$STAGING_SUPABASE_URL"
@@ -139,6 +149,10 @@ jobs:
               "APP_VERSION_NAME": "${{ steps.meta.outputs.version_name }}",
               "APP_BUILD_NUMBER": "${{ steps.meta.outputs.code }}",
               "DISTRIBUTION_CHANNEL": os.environ["DISTRIBUTION_CHANNEL"],
+              "FIREBASE_PROJECT_ID": os.environ["FIREBASE_PROJECT_ID"],
+              "FIREBASE_ANDROID_API_KEY": os.environ["FIREBASE_ANDROID_API_KEY"],
+              "FIREBASE_ANDROID_APP_ID": os.environ["FIREBASE_ANDROID_APP_ID"],
+              "FIREBASE_MESSAGING_SENDER_ID": os.environ["FIREBASE_MESSAGING_SENDER_ID"],
           }
           with open("env.json", "w", encoding="utf-8") as handle:
               json.dump(manifest, handle)
@@ -239,3 +253,36 @@ jobs:
             app/build/app/outputs/flutter-apk/${{ steps.meta.outputs.asset }}
             app/build/app/outputs/flutter-apk/${{ steps.meta.outputs.asset }}.sha256
             app/build/app/outputs/flutter-apk/release-manifest.json
+
+      - name: Yeni surum push bildirimini kuyruga al
+        shell: bash
+        env:
+          STAGING_SUPABASE_URL: ${{ secrets.STAGING_SUPABASE_URL }}
+          STAGING_SUPABASE_ANON_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
+          PRODUCTION_SUPABASE_URL: ${{ secrets.PRODUCTION_SUPABASE_URL }}
+          PRODUCTION_SUPABASE_ANON_KEY: ${{ secrets.PRODUCTION_SUPABASE_ANON_KEY }}
+          PUSH_DISPATCH_SECRET: ${{ secrets.PUSH_DISPATCH_SECRET }}
+        run: |
+          if [ -z "$PUSH_DISPATCH_SECRET" ]; then
+            echo "Push dispatcher henuz aktive edilmedi; release bildirimi atlandi."
+            exit 0
+          fi
+          if [ "${{ steps.meta.outputs.channel }}" = "beta" ]; then
+            SUPABASE_URL="$STAGING_SUPABASE_URL"
+            SUPABASE_ANON_KEY="$STAGING_SUPABASE_ANON_KEY"
+          else
+            SUPABASE_URL="$PRODUCTION_SUPABASE_URL"
+            SUPABASE_ANON_KEY="$PRODUCTION_SUPABASE_ANON_KEY"
+          fi
+          PAYLOAD=$(jq -n \
+            --arg event_key "${{ github.ref_name }}" \
+            --arg channel "${{ steps.meta.outputs.channel }}" \
+            --arg version "${{ steps.meta.outputs.version_name }}" \
+            --argjson build_number "${{ steps.meta.outputs.code }}" \
+            '{action:"enqueue_update",event_key:$event_key,channel:$channel,version_name:$version,build_number:$build_number,title:"Odak Kampı güncellendi",body:("Sürüm " + $version + " indirilmeye hazır.")}')
+          curl --fail-with-body --silent --show-error \
+            -X POST "$SUPABASE_URL/functions/v1/dispatch-push" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            -H "Content-Type: application/json" \
+            -H "x-push-dispatch-secret: $PUSH_DISPATCH_SECRET" \
+            --data "$PAYLOAD"
