@@ -3,6 +3,38 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.43-beta.3",
+      "buildNumber": 4303,
+      "channel": "beta",
+      "date": "2026-07-22",
+      "title": "beta-v4303: sayaç paneli ve uzaktan bildirim düzeltmesi",
+      "highlights": [
+        "Çalışma bildirimi stable'da kabul edilen tek satır sayaç ve büyük Başlat/Durdur paneline döndü.",
+        "Uzaktan bildirimler uygulama önde, arka planda veya kapalıyken aynı uygulama bildirim yolundan gösterilir."
+      ],
+      "fixes": [
+        "Beta-v4302'nin başlıklı standart sayaç kartı ve promoted ongoing denemesi kaldırıldı.",
+        "Uzaktan self-test bekleme süresi 25 saniyeye çıkarıldı; Edge Function ve FCM ilk çağrı gecikmeleri artık erken başarısızlık olarak gösterilmez."
+      ],
+      "notes": [
+        "Bu beta staging backend kullanır; stable uygulamayla yan yana kurulur.",
+        "Bildirim Merkezi'nden açık, arka plan ve kapalı uygulama durumlarında Uzaktan test çalıştır."
+      ],
+      "titleEn": "beta-v4303: timer panel and remote notification fix",
+      "highlightsEn": [
+        "The study notification returns to the accepted one-line timer and large Start/Stop panel from stable.",
+        "Remote notifications use the same app-managed notification path in foreground, background and terminated states."
+      ],
+      "fixesEn": [
+        "Removed beta-v4302's headed standard timer card and promoted-ongoing experiment.",
+        "The remote self-test now waits 25 seconds so Edge Function and FCM cold starts are not reported as an early failure."
+      ],
+      "notesEn": [
+        "This beta uses the staging backend and installs alongside stable.",
+        "Run the remote test from Notification Center with the app open, backgrounded and closed."
+      ]
+    },
+    {
       "versionName": "1.0.43-beta.2",
       "buildNumber": 4302,
       "channel": "beta",

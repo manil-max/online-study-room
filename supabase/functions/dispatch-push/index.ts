@@ -198,7 +198,10 @@ function localizedContent(delivery: ClaimedDelivery): { title: string; body: str
   }
 }
 
-function stringData(delivery: ClaimedDelivery): Record<string, string> {
+function stringData(
+  delivery: ClaimedDelivery,
+  content: { title: string; body: string },
+): Record<string, string> {
   const output: Record<string, string> = {
     schema_version: String(delivery.payload.schema_version ?? "1"),
     notification_type: delivery.notification_type,
@@ -208,6 +211,10 @@ function stringData(delivery: ClaimedDelivery): Record<string, string> {
     if (value === null || value === undefined) continue
     output[key] = typeof value === "string" ? value : JSON.stringify(value)
   }
+  // Data-only FCM: Android arka planda da Dart background handler'ını çalıştırır.
+  // Böylece foreground ve background aynı yerel kanal/teslim kaydını kullanır.
+  output.title = content.title
+  output.body = content.body
   return output
 }
 
@@ -254,8 +261,7 @@ async function sendToFcm(
       body: JSON.stringify({
         message: {
           token: delivery.fcm_token,
-          notification: content,
-          data: stringData(delivery),
+          data: stringData(delivery, content),
           android: {
             priority: "HIGH",
             ttl: delivery.notification_type === "self_test" ? "60s" : "3600s",

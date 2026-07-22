@@ -268,7 +268,9 @@ class PushHealthController extends Notifier<PushHealthState> {
       final request = await repository.requestSelfTest();
       PushSelfTestStatus? status;
       var received = false;
-      final deadline = DateTime.now().add(const Duration(seconds: 10));
+      // DB tetikleyicisi + Edge cold-start + FCM için 10 saniye güvenilir değildi.
+      // Bu pencere yalnız test sonucunu bekler; normal bildirim teslimini geciktirmez.
+      final deadline = DateTime.now().add(const Duration(seconds: 25));
       do {
         status = await repository.fetchSelfTestStatus(request.outboxId);
         final snapshot = await _service.snapshot();

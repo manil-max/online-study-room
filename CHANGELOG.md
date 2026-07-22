@@ -4,6 +4,19 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [beta-v4303 / 1.0.43-beta.3+4303] - 2026-07-22
+
+> **Düzeltme betası — kabul edilen sayaç paneli ve güvenilir uzaktan bildirim testi.** Yalnız staging ortamını kullanır; stable uygulamayı ya da production verisini etkilemez.
+
+### Düzeltmeler
+- **Sayaç bildirimi stable tasarımına döndü.** Tek satırda akan süre ve büyük Başlat/Durdur düğmesi geri geldi; beta-v4302'de yanlışlıkla görünen başlıklı eski/standart kart ile promoted ongoing denemesi kaldırıldı.
+- **Uzaktan bildirim tek yola alındı.** FCM mesajı uygulama önde, arka planda veya kapalıyken aynı uygulama bildirimini üretir; test artık Android'in arka planda farklı davranan sistem kartına bağlı değildir.
+- **Self-test bekleme penceresi 25 saniye oldu.** Veritabanı tetikleyicisi, Edge Function ve FCM ilk çağrı gecikmelerinde sahte kırmızı sonuç verme riski azaltıldı.
+
+### Test notları
+- Bildirim Merkezi > Bildirim Sağlığı > Uzaktan test ile sırasıyla uygulama açık, arka planda ve ekrandan kaldırılmış halde dene.
+- Sayaç başlatıldığında bildirim merkezinde yalnız alttaki stable tasarımındaki saat + büyük eylem paneli görünmelidir.
+
 ## [beta-v4302 / 1.0.43-beta.2+4302] - 2026-07-22
 
 > **Beta test sürümü — güvenilir bildirim temeli ve Android canlı sayaç yüzeyi.** Bu sürüm yalnız staging test ortamına gider; stable kullanıcıları ve production verisi etkilenmez.

@@ -151,14 +151,19 @@ class AppNotificationCoordinator {
     final prefs = await SharedPreferences.getInstance();
     if (!await _markReceivedOnce(prefs, eventId: eventId, type: type)) return;
 
-    final notification = message.notification;
-    if (notification == null) return;
+    final title =
+        message.notification?.title ??
+        (message.data['title'] ?? '').toString().trim();
+    final body =
+        message.notification?.body ??
+        (message.data['body'] ?? '').toString().trim();
+    if (title.isEmpty && body.isEmpty) return;
     await initialize();
     final channel = _channelFor(type);
     await _plugin.show(
       id: eventId.hashCode & 0x7fffffff,
-      title: notification.title,
-      body: notification.body,
+      title: title,
+      body: body,
       notificationDetails: NotificationDetails(
         android: AndroidNotificationDetails(
           channel.id,
@@ -401,12 +406,7 @@ Future<void> firebasePushBackgroundHandler(RemoteMessage message) async {
   if (Firebase.apps.isEmpty && FirebasePushConfig.isConfigured) {
     await Firebase.initializeApp(options: FirebasePushConfig.androidOptions);
   }
-  final prefs = await SharedPreferences.getInstance();
-  await _markReceivedOnce(
-    prefs,
-    eventId: _eventId(message.data, fallback: message.messageId),
-    type: message.data['notification_type'] ?? 'unknown',
-  );
+  await AppNotificationCoordinator.instance.showRemote(message);
 }
 
 String _eventId(Map<String, dynamic> data, {String? fallback}) {

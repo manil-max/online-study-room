@@ -6,6 +6,8 @@
 > **Üretim etkisi:** Yok. Bu rapor hazırlanırken uygulama, Supabase, staging ve production değiştirilmedi.  
 > **Ana sonuç:** Kullanıcıdaki iki belirti de gerçektir. Uygulamada kapalı sürece ulaşabilen bir push taşıma hattı bulunmuyor; mevcut özel `RemoteViews` sayaç paneli ise Android'in Live Update terfi şartlarını ihlal ediyor.
 
+> **Karar güncellemesi — 22 Temmuz 2026:** Bu rapordaki standart/promoted sayaç denemesi beta-v4302'de gerçek cihazda ürün kabulü almadı; kullanıcı kabul ettiği stable tasarım, özel `RemoteViews` ile tek satır sayaç ve büyük doğrudan eylem panelidir. Bu nedenle beta-v4303'te standart kart ve promoted ongoing denemesi geri alınmıştır. Samsung Now Bar için ayrı, cihazda kanıtlanmış bir yüzey yoktur; bu ekran bir Now Bar vaadi olarak yeniden getirilmez. Genel push hattı ise FCM data-only mesaj + uygulamanın foreground/background aynı yerel sunumu ile güncellenmiştir.
+
 ---
 
 ## 1. Yönetici özeti

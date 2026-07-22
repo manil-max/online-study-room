@@ -11,8 +11,9 @@ import android.content.SharedPreferences
 import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
+import android.os.SystemClock
+import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
 import com.manilmax.online_study_room.MainActivity
 import com.manilmax.online_study_room.R
 import com.manilmax.online_study_room.widgets.TimerWidgets
@@ -304,8 +305,9 @@ class StudyTimerService : Service() {
     }
 
     /**
-     * WP-267: Android Live Update uygunluğu için standard notification.
-     * State/FGS/action omurgası değişmez; custom RemoteViews bilinçli olarak yoktur.
+     * Stable ile aynı One UI paneli: tek satır HH:MM:SS ve doğrudan eylem.
+     * Custom panel, promoted-standard kartın yerine kullanılır; iki farklı timer
+     * görünümünün aynı anda oluşmasına izin verilmez.
      */
     private fun buildRunningNotification(startedAtMs: Long): Notification {
         ensureChannel()
@@ -315,75 +317,74 @@ class StudyTimerService : Service() {
             .setOngoing(true)
             .setContentIntent(openAppPending())
             .setCategory(NotificationCompat.CATEGORY_STOPWATCH)
-            .setContentTitle(
-                if (isBreak) getString(R.string.timer_break_title)
-                else getString(R.string.timer_focusing_title),
-            )
-            .setContentText(
-                if (isBreak) getString(R.string.timer_break_body)
-                else getString(R.string.timer_focusing_body),
-            )
-            .setUsesChronometer(true)
-            .setWhen(startedAtMs)
-            .setShowWhen(true)
-            .setChronometerCountDown(false)
-            .setShortCriticalText(
-                if (isBreak) getString(R.string.timer_subtext_break)
-                else getString(R.string.timer_subtext_focus),
-            )
-            .setRequestPromotedOngoing(true)
-        if (isBreak) {
-            builder.addAction(
-                0,
-                getString(R.string.action_return_to_work),
-                endBreakActionPending(),
-            )
-        } else {
-            builder.addAction(0, getString(R.string.action_stop), stopActionPending())
-        }
-        val notification = builder.build()
-        recordRunningNotificationDiagnostics(notification)
-        return notification
+        val custom = buildRunningRemoteViews(startedAtMs, isBreak)
+        return builder
+            .setContentTitle("")
+            .setContentText("")
+            .setUsesChronometer(false)
+            .setShowWhen(false)
+            .setStyle(NotificationCompat.DecoratedCustomViewStyle())
+            .setCustomContentView(custom)
+            .setCustomBigContentView(custom)
+            .build()
     }
 
     private fun buildIdleNotification(): Notification {
         ensureChannel()
+        val custom = buildIdleRemoteViews()
         return baseBuilder()
             .setOngoing(false)
             .setContentIntent(openAppPending())
             .setCategory(NotificationCompat.CATEGORY_STOPWATCH)
             .setUsesChronometer(false)
             .setShowWhen(false)
-            .setContentTitle("00:00:00")
-            .setContentText(getString(R.string.timer_ready))
-            .addAction(0, getString(R.string.action_start), startActionPending())
+            .setContentTitle("")
+            .setContentText("")
+            .setStyle(NotificationCompat.DecoratedCustomViewStyle())
+            .setCustomContentView(custom)
+            .setCustomBigContentView(custom)
             .build()
+    }
+
+    private fun buildRunningRemoteViews(startedAtMs: Long, isBreak: Boolean): RemoteViews {
+        val views = RemoteViews(packageName, R.layout.timer_notification)
+        val base = SystemClock.elapsedRealtime() - (System.currentTimeMillis() - startedAtMs)
+        views.setChronometer(R.id.notif_timer_elapsed, base, "00:%s", true)
+        views.setTextViewText(
+            R.id.notif_timer_action,
+            if (isBreak) getString(R.string.action_return_to_work)
+            else getString(R.string.action_stop),
+        )
+        views.setOnClickPendingIntent(
+            R.id.notif_timer_action,
+            if (isBreak) endBreakActionPending() else stopActionPending(),
+        )
+        return views
+    }
+
+    private fun buildIdleRemoteViews(): RemoteViews {
+        val views = RemoteViews(packageName, R.layout.timer_notification)
+        views.setChronometer(
+            R.id.notif_timer_elapsed,
+            SystemClock.elapsedRealtime(),
+            "00:00:00",
+            false,
+        )
+        views.setTextViewText(R.id.notif_timer_elapsed, "00:00:00")
+        views.setTextViewText(R.id.notif_timer_action, getString(R.string.action_start))
+        views.setOnClickPendingIntent(R.id.notif_timer_action, startActionPending())
+        return views
     }
 
     private fun baseBuilder(): NotificationCompat.Builder =
         NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_stat_focus_timer)
+            .setSmallIcon(R.mipmap.ic_launcher)
             .setContentText("")
             .setOnlyAlertOnce(true)
             .setSound(null)
             .setVibrate(null)
             .setCategory(NotificationCompat.CATEGORY_STOPWATCH)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-
-    private fun recordRunningNotificationDiagnostics(notification: Notification) {
-        prefs().edit()
-            .putLong(KEY_DIAG_BUILT_AT, System.currentTimeMillis())
-            .putBoolean(
-                KEY_DIAG_PROMOTABLE,
-                NotificationCompat.hasPromotableCharacteristics(notification),
-            )
-            .putBoolean(
-                KEY_DIAG_PROMOTION_REQUESTED,
-                NotificationCompat.isRequestPromotedOngoing(notification),
-            )
-            .putBoolean(KEY_DIAG_USES_CUSTOM_CONTENT, false)
-            .commit()
-    }
 
     private fun stopActionPending(): PendingIntent = actionPending(ACTION_STOP, 1)
 
@@ -469,52 +470,6 @@ class StudyTimerService : Service() {
         private const val CHANNEL_ID = "study_timer_live_fg"
         private const val NOTIFICATION_ID = 7040
         private const val LEGACY_FLUTTER_NOTIFICATION_ID = 7001
-        private const val KEY_DIAG_BUILT_AT = "timer_notification_diag_built_at"
-        private const val KEY_DIAG_PROMOTABLE = "timer_notification_diag_promotable"
-        private const val KEY_DIAG_PROMOTION_REQUESTED =
-            "timer_notification_diag_promotion_requested"
-        private const val KEY_DIAG_USES_CUSTOM_CONTENT =
-            "timer_notification_diag_uses_custom_content"
-
-        fun notificationDiagnostics(context: Context): Map<String, Any?> {
-            val p = TimerStateStore.prefs(context)
-            val manager = context.getSystemService(
-                Context.NOTIFICATION_SERVICE,
-            ) as NotificationManager
-            val builtAt = if (p.contains(KEY_DIAG_BUILT_AT)) {
-                p.getLong(KEY_DIAG_BUILT_AT, 0L)
-            } else {
-                null
-            }
-            val channelImportance = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                manager.getNotificationChannel(CHANNEL_ID)?.importance
-            } else {
-                NotificationManager.IMPORTANCE_DEFAULT
-            }
-            return mapOf(
-                "apiLevel" to Build.VERSION.SDK_INT,
-                "lastBuiltAtMs" to builtAt,
-                "promotableCharacteristics" to if (p.contains(KEY_DIAG_PROMOTABLE)) {
-                    p.getBoolean(KEY_DIAG_PROMOTABLE, false)
-                } else {
-                    null
-                },
-                "promotionRequested" to if (p.contains(KEY_DIAG_PROMOTION_REQUESTED)) {
-                    p.getBoolean(KEY_DIAG_PROMOTION_REQUESTED, false)
-                } else {
-                    null
-                },
-                "canPostPromotedNotifications" to
-                    NotificationManagerCompat.from(context).canPostPromotedNotifications(),
-                "usesCustomContent" to if (p.contains(KEY_DIAG_USES_CUSTOM_CONTENT)) {
-                    p.getBoolean(KEY_DIAG_USES_CUSTOM_CONTENT, true)
-                } else {
-                    null
-                },
-                "channelImportance" to channelImportance,
-            )
-        }
-
         /** Servisi belirli bir komutla ayağa kaldırır (receiver/notification/Dart). */
         fun sendCommand(
             context: Context,

@@ -39,10 +39,12 @@ void main() {
 
       expect(source, contains('FCM_SERVICE_ACCOUNT_BASE64'));
       expect(source, contains('decodeBase64Utf8'));
-    expect(source, contains('claim_push_deliveries'));
-    expect(source, contains('complete_push_delivery'));
-    expect(source, contains('configure_push_dispatch'));
+      expect(source, contains('claim_push_deliveries'));
+      expect(source, contains('complete_push_delivery'));
+      expect(source, contains('configure_push_dispatch'));
       expect(source, contains('https://fcm.googleapis.com/v1/projects/'));
+      expect(source, contains('data: stringData(delivery, content)'));
+      expect(source, isNot(contains('notification: content')));
       expect(source, contains('UNREGISTERED'.toLowerCase()));
       expect(source, isNot(contains('console.log(delivery.fcm_token)')));
     },
@@ -58,6 +60,11 @@ void main() {
     expect(source, contains('getInitialMessage()'));
     expect(source, contains('FirebaseMessaging.onBackgroundMessage'));
     expect(source, contains("@pragma('vm:entry-point')"));
+    expect(
+      source,
+      contains('AppNotificationCoordinator.instance.showRemote(message)'),
+    );
+    expect(source, contains("message.data['title']"));
     expect(source, contains('_markReceivedOnce'));
     expect(source, contains("'social_nudges'"));
     expect(source, contains("'push_system_test'"));
@@ -68,6 +75,7 @@ void main() {
       healthSource,
       contains("snapshot.lastEventId == 'self_test:\${request.outboxId}'"),
     );
+    expect(healthSource, contains('const Duration(seconds: 25)'));
   });
 
   test('release build injects Firebase config and enqueues update push', () {
@@ -85,23 +93,32 @@ void main() {
   test('Android flavors use their matching native Firebase configs', () {
     final settings = File('android/settings.gradle.kts').readAsStringSync();
     final appGradle = File('android/app/build.gradle.kts').readAsStringSync();
-    final beta = jsonDecode(
-      File('android/app/src/beta/google-services.json').readAsStringSync(),
-    ) as Map<String, dynamic>;
-    final stable = jsonDecode(
-      File('android/app/src/stable/google-services.json').readAsStringSync(),
-    ) as Map<String, dynamic>;
+    final beta =
+        jsonDecode(
+              File(
+                'android/app/src/beta/google-services.json',
+              ).readAsStringSync(),
+            )
+            as Map<String, dynamic>;
+    final stable =
+        jsonDecode(
+              File(
+                'android/app/src/stable/google-services.json',
+              ).readAsStringSync(),
+            )
+            as Map<String, dynamic>;
 
     String packageFor(Map<String, dynamic> config, String appId) {
       final clients = config['client'] as List<dynamic>;
       final client = clients.cast<Map<String, dynamic>>().singleWhere(
         (entry) =>
-            (entry['client_info'] as Map<String, dynamic>)[
-                'mobilesdk_app_id'] ==
+            (entry['client_info']
+                as Map<String, dynamic>)['mobilesdk_app_id'] ==
             appId,
       );
-      return ((client['client_info'] as Map<String, dynamic>)[
-              'android_client_info'] as Map<String, dynamic>)['package_name']
+      return ((client['client_info']
+                  as Map<String, dynamic>)['android_client_info']
+              as Map<String, dynamic>)['package_name']
           as String;
     }
 

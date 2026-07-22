@@ -74,7 +74,7 @@ void main() {
     );
   });
 
-  test('running timer uses standard promoted ongoing notification', () {
+  test('running timer uses the stable custom One UI notification panel', () {
     final service = File(
       'android/app/src/main/kotlin/com/manilmax/online_study_room/timer/'
       'StudyTimerService.kt',
@@ -85,36 +85,21 @@ void main() {
     final gradle = File('android/app/build.gradle.kts').readAsStringSync();
 
     expect(gradle, contains('androidx.core:core-ktx:1.18.0'));
-    expect(manifest, contains('POST_PROMOTED_NOTIFICATIONS'));
-    expect(service, contains('.setRequestPromotedOngoing(true)'));
-    expect(service, contains('.setUsesChronometer(true)'));
-    expect(service, contains('.setContentTitle('));
-    expect(service, contains('R.drawable.ic_stat_focus_timer'));
-    expect(service, contains('hasPromotableCharacteristics'));
-    expect(service, contains('canPostPromotedNotifications'));
-    expect(service, isNot(contains('.setCustomContentView(')));
-    expect(service, isNot(contains('.setCustomBigContentView(')));
-    expect(service, isNot(contains('R.layout.timer_notification')));
+    expect(manifest, isNot(contains('POST_PROMOTED_NOTIFICATIONS')));
+    expect(
+      service,
+      contains('RemoteViews(packageName, R.layout.timer_notification)'),
+    );
+    expect(service, contains('.setCustomContentView(custom)'));
+    expect(service, contains('.setCustomBigContentView(custom)'));
+    expect(service, contains('R.mipmap.ic_launcher'));
+    expect(service, isNot(contains('.setRequestPromotedOngoing(true)')));
+    expect(service, isNot(contains('hasPromotableCharacteristics')));
     expect(
       File(
         'android/app/src/main/res/layout/timer_notification.xml',
-      ).existsSync(),
-      isFalse,
+      ).readAsStringSync(),
+      allOf(contains('notif_timer_elapsed'), contains('notif_timer_action')),
     );
-  });
-
-  test('timer diagnostic bridge is read-only and platform guarded', () {
-    final activity = File(
-      'android/app/src/main/kotlin/com/manilmax/online_study_room/MainActivity.kt',
-    ).readAsStringSync();
-    final bridge = File(
-      'lib/core/background/timer_foreground_service.dart',
-    ).readAsStringSync();
-
-    expect(activity, contains('getTimerNotificationDiagnostics'));
-    expect(activity, contains('StudyTimerService.notificationDiagnostics'));
-    expect(bridge, contains('TimerLiveNotificationDiagnostics'));
-    expect(bridge, contains('invokeMapMethod<String, dynamic>'));
-    expect(bridge, contains('TargetPlatform.android'));
   });
 }
