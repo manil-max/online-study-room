@@ -5,7 +5,7 @@
 > İlerleme takibi → `progress.md`. Ajan kuralları → `.agents/AGENTS.md`.
 > **Kalite programı (vizyon + teknik + kalite kapıları) → `docs/KALITE-PROGRAMI.md` (kanonik).**
 >
-> Son güncelleme: 2026-07-12
+> Son güncelleme: 2026-07-22
 
 ---
 
@@ -145,8 +145,8 @@ Tek kaynak kod ve tek `supabase/migrations/` zinciri kullanılır. Beta/stable f
 | Supabase staging | Free planda ikinci aktif proje kotası varsa ücretsiz; ücretli organizasyonda güncel fiyat yeniden kontrol edilir | Beta/test ortamı; inactivity pause kabul edilir |
 | Local Supabase | Ücretsiz | Docker + pinli Supabase CLI; geliştirme/reset burada |
 | Android dağıtımı | Ücretsiz | APK sideload + GitHub Releases |
-| Windows dağıtımı | Store veya imzalama maliyetine bağlı | Stable hedefi MSIX/Microsoft Store; ZIP yalnız QA/portable |
-| Otomatik güncelleme | Ücretsiz | GitHub Releases + in-app update |
+| Windows dağıtımı | Ücretsiz | Stable hedefi Microsoft Store MSIX; Store imzalama ve güncelleme dağıtımını yönetir. GitHub MSIX/ZIP yalnız QA/beta/portable'dır. |
+| Windows güncellemesi | Ücretsiz | Store stable güncellemesini yönetir; GitHub updater Store paketinde kapalı kalır. |
 
 ---
 
@@ -197,6 +197,7 @@ Tek kaynak kod ve tek `supabase/migrations/` zinciri kullanılır. Beta/stable f
 |---|---|
 | **Tem 20** | **Stable/beta ve backend izolasyonu.** Beta ayrı staging Supabase'e, stable production Supabase'e bağlanır; local geliştirme Docker/CLI üzerindedir. Tek migration zinciri local→staging→production terfi eder. Production deploy; staging+cihaz+soak+backup+dry-run ve somut kullanıcı GO olmadan yapılmaz. Mevcut `0063` freeze altındadır; kurtarma WP-225–232 ile yürür. |
 | **Tem 20** | **Süre kaynağı ürün sözleşmesi.** Manuel giriş, kronometre, geri sayım, Pomodoro ve native/widget sayaç istatistik/XP/başarım/grup açısından eşittir. “Bu hafta” takvim haftası olarak açık etiketlenir; ayrıca “Son 7 Gün” sağlanır. Taç eşikleri `[0,20k,75k,200k,500k,1M]` kanondur. |
+| **Tem 22** | **Windows stable dağıtım kararı.** Microsoft Store MSIX ana kanaldır; Store paketi Microsoft tarafından imzalanır ve güncellenir. Public Store yayını öncesinde Windows Sandbox/VM yerel QA ve seçili Microsoft hesaplarıyla Private Audience pilotu zorunludur. GitHub Releases beta/QA amacıyla korunur; public Store paketi GitHub'dan kendi kendine güncelleme denemez. |
 | **Tem 17** | **Google Play production programı WP-110–124 olarak planlandı.** Play build'i GitHub APK self-update/`REQUEST_INSTALL_PACKAGES` davranışından ayrılır; hesap silme, UGC güvenliği, yasal metinler, kısıtlı izin uygunluğu, Data Safety, backend deploy, target API 36 AAB ve gerçek cihaz/track kanıtları tamamlanmadan production GO verilmez. Her submission/rollout ayrıca açık kullanıcı onayı ister. |
 | Haz 20 | Proje başlatıldı. Stack: Flutter + Supabase. Giriş: e-posta/şifre. iOS kapsam dışı. |
 | Haz 21 | Avatar'lar public Supabase Storage bucket'ında. Profil çekimi başarısızsa kullanıcı dışarı atılmaz. |

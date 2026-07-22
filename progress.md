@@ -1,6 +1,6 @@
 # progress.md — İlerleme Takibi
 
-> Son güncelleme: 2026-07-20 (kurtarma programı + ortam/migration yönetişimi planlandı)
+> Son güncelleme: 2026-07-22 (v43 sonrası Windows Store hazırlık planı eklendi)
 > Sistem: İş Paketi (WP) tabanlı, **Kalite Programı**. Kanonik program: `docs/KALITE-PROGRAMI.md`.
 > Planlama: `.agents/skills/planner/SKILL.md` · Uygulama: `.agents/skills/worker/SKILL.md` · Kurallar: `.agents/AGENTS.md`.
 > **"Tamamlandı" = kod DEĞİL; kullanıcı beklentisini karşılayan + cihazda güvenilir çalışan iş.** İş durum merdiveni (8 aşama) ve kanıt etiketleri (`Kodda doğrulandı` / `Cihazda doğrulanmalı` / `Ürün kararı gerekiyor`) için bkz. AGENTS.md §0.
@@ -12,15 +12,15 @@
 - **Framework:** Flutter ^3.12 · Riverpod 3.3 · Supabase 2.15 · fl_chart
 - **Uygulama kökü:** `app/` — Flutter komutları yalnız burada çalışır.
 - **Repo katmanı çift:** Her arayüz `supabase/` ve `in_memory/` repository'leriyle desteklenir.
-- **Migration'lar:** `supabase/migrations/` — yerelde `0001–0064` pinli CLI/Docker ile boş DB'de tekrar kuruluyor ve 80 gerçek SQL testi geçiyor. Production'da history tablosu yok; 0051/0053/0060/0062 driftli, 0063/0064 production'a uygulanmamış ve freeze altında. Kör history repair listesi boştur; ayrıntı `docs/recovery/MIGRATION-BASELINE.md`.
+- **Migration'lar:** `supabase/migrations/` — yerelde `0001–0065` pinli CLI/Docker ile tekrar kuruluyor. Production migration history zinciri yoktur; yeni production şema işi WP-232 yönetişim kapısından geçer. Ayrıntı: `docs/recovery/MIGRATION-BASELINE.md` ve `docs/recovery/PRODUCTION-BASELINE.md`.
 - **Gün sınırı:** `Europe/Istanbul`
 - **RLS helper'ları:** `is_group_member(gid)`, `can_see_user_sessions(target)`, `is_group_admin(gid)`, `is_super_admin()`
 - **Dashboard:** 6 sütunlu 2D matris, 19 kart türü, `grid_reflow.dart` motoru.
 - **Tema:** Hazır paletler + özel palet slotları; görünür tüm yüzeyler palette bağlanmalıdır, sabit gri renk eklenmez.
 - **Navigasyon hedefi:** Ana Sayfa / Saat / Gruplar / İstatistikler / Profil. Ana Sayfa günlük kullanım alanıdır; diğer alanların verisi kendi sekmelerinde eksiksiz bulunur.
-- **Release gerçeği:** Stable tag `v39` (`c6843a5`), beta tag `beta-v41` (`e6234a6`), HEAD `2d757eb`. Beta-v41 sonrası 13 yerel commit vardır; uygulama hâlâ `1.0.41+41` taşıdığı için sürüm/commit ayrımı bozuk. WP-227/230 düzeltecek.
+- **Release gerçeği:** Stable `v43` (`1.0.43+43`, commit `fa771ce`) ve beta `beta-v4301` yayınlandı. v43 GitHub Release Android APK yanında Windows MSIX/ZIP taşır; Windows Store paketi henüz yoktur.
 - **Kalite kapıları:** Her WP DoD'siz kapanmaz; stable release kalite kapısından geçer (AGENTS.md §3). Server-authoritative XP, RLS/sosyal profil, platform sınırları → `docs/KALITE-PROGRAMI.md`.
-- **Son WP numarası:** **253** (WP-249 = v42 stable release hazırlığı `94947fc`; WP-250 = durdurma çift-sayımı settling modeli; WP-251 = native kuyruk idempotency; WP-252 = native pomodoro ExactAlarm **onay bekliyor**; WP-253 = UX sıralama seri rozeti + manuel çakışma koruması; WP-254 = saat gösterimi TZ düzeltmesi; WP-255 = XP yeniden fiyatlandırma + geriye dönük düzeltme; WP-256 = beta-v4301 yayın hazırlığı; WP-257 = beta-v4301 yayını; WP-258 = v43 stable + production 0065). **Sıradaki boş numara WP-259.** (WP-221–224 geçmişte kullanılmış; kurtarma WP-225–232; WP-233/234 beta-v4202; WP-235–239 saha turu 2; WP-241/242 beta-v4204; WP-243/244 beta-v4205; WP-245–248 beta-v4206; WP-249 v42 stable; WP-250–253 sayaç düzeltme programı → `docs/WP-250-253-SAYAC-DUZELTME-PLANI.md`.)
+- **Son WP numarası:** **262**. WP-259–262 Windows Store hazırlık, yerel QA, marka/listing ve private-flight→public GO zinciridir. **Sıradaki boş numara WP-263.**
 - **Ortam sözleşmesi:** local=Supabase CLI/Docker, beta=ayrı staging Supabase, stable=production Supabase. Ayrıntı: `docs/ORTAM-MIGRATION-YONETISIMI.md`.
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
@@ -49,17 +49,14 @@
 - **Son güncelleme:** 2026-07-14 (Europe/Istanbul)
 - **Not:** WP-83 tamamlandı, envanter ve sözlük oluşturuldu.
 
-### STABLE YOL HARİTASI (kullanıcı kararı 2026-07-20)
-> Kullanıcı stable'ı öne çekmek istiyor: önce bug'lar, sonra geliştirme.
-> - **Faz A (stable'a girecek):** WP-239 (sayaç çift-sayım bug) → WP-235 (kırık testler) → WP-237 (grafik ekseni cilası). Ayrıca WP-233/234 cihaz QA doğrulaması stable öncesi şart.
-> - **Faz B (stable sonrası):** WP-236 (leaderboard yarışı), WP-238 (tek döngü buton), WP-231 kalan (realtime/reconnect).
-> - Stable release gate = WP-232 (staging/migration zinciri), bug'lar kapandıktan sonra.
+### Stable yol haritası (tarihsel)
+> v43 2026-07-21'de yayınlandı. Yeni stable öncesi açık uygulama/ortam işleri kendi WP kartlarındaki kapılardan yürür; Windows Store public yayını WP-262'de ayrıca açık kullanıcı GO ister.
 
 ### Claude Lane
-- **Durum:** [~] Aktif
-- **Faz/WP:** WP-250/251/253 tamam ve **cihazda doğrulandı**; WP-254 (saat gösterimi TZ) kod tamam. Sıradaki: WP-255 (XP yeniden fiyatlandırma — kullanıcıdan liste bekleniyor) → beta yayını. Öncesi: WP-245/246/247 (durdurma kök neden 3'lü fix) + WP-248 (beta-v4206 yayını).
-- **Aşama:** WP-250 + WP-251 kod tamam (analyze 0 issue, **657 test yeşil**; yeni regresyon testlerinin her biri fix'siz DÜŞÜYOR — kırmızı-yeşil ispatı yapıldı). **Not:** WP-251'in Kotlin tarafı yerelde derlenemedi (gradle `validateBetaEnvironment` CHANNEL dart-define'ı ister; env.json'da yok) → Android derlemesi normal beta build hattında doğrulanmalı. beta-v4206 yayın kaydı hazır — **cihaz doğrulaması bekliyor.**
-- **SAHİP yollar:** `app/lib/core/stats/study_stats.dart`, `app/lib/data/providers/study_providers.dart`, `app/lib/features/classroom/widgets/study_timer_card.dart`, `app/lib/features/classroom/widgets/focus_timer_screen.dart`, `app/android/**/timer/TimerStateStore.kt`, `app/test/core/study_stats_test.dart`, `app/test/features/timer_background_reconcile_test.dart`, `app/test/features/classroom/study_timer_card_stop_test.dart`, `app/lib/features/stats/widgets/class_stats_view.dart`, `app/lib/features/home/widgets/leaderboard_card.dart`, `app/lib/features/profile/widgets/manual_session_dialog.dart`, `app/lib/l10n/app_*.arb`, `app/test/features/manual_session_range_test.dart`, `CHANGELOG.md`, `app/assets/release_notes.json`, `progress.md`
+- **Durum:** [x] Boşta
+- **Faz/WP:** — (WP-245–258 v43 ile yayınlandı)
+- **Aşama:** —
+- **SAHİP yollar:** —
 - **WP-250 kök neden (settling modeli):** `stop()` oturumu DB'ye yazarken (yerel cache emit + ağ RTT'si) Flutter bir kare çizer; o karede `recorded` yeni oturumu İÇERİR ama sayaç hâlâ `isRunning` olduğu için canlı süre de eklenir → toplam **oturumun tamamı kadar** şişer (1 sa → 2 sa). Kartın "dondurma" mekanizması bu zehirli sayıyı yakalayıp gün boyu kilitliyordu (WP-239 yamasının kapatamadığı delik). **Fix:** ekran artık kendi gösterdiği sayıyı geri okumaz; notifier `isStopping` + `settlingSeconds/Baseline/Day` yayınlar, UI `max(recorded, baseline+settling) + live` hesaplar → kayıt yerleşmeden de yerleştikten de AYNI sayı. `_frozenTotal/_frozenOnDay/_lastDisplayedTotal` silindi. Ek: `stop()` kayıttan önce native ile uzlaşır (bildirimden durdurup sonra uygulamadan durdurma → hayalet süre) ve aralığı yalnız `state.startedAt` hâlâ aynı koşuysa yazar. Uzlaşma **serileştirilmiş sarmalayıcıyla** çağrılır — `_reconcileBackgroundTimerImpl`'i doğrudan çağırmak WP-241/243 yarışını geri açıyordu (eşzamanlı iki tur aynı kuyruğu iki kez kaydeder).
 - **WP-251 kök neden:** bekleyen aralık kuyruğu "hepsi başarılıysa anahtarı komple sil" mantığıyla temizleniyordu → (a) tek kayıt hata alınca başarılı olanlar kuyrukta kalıp sonraki açılışta TEKRAR yazılıyordu (DB'de çift oturum, her açılışta bir kopya daha), (b) toptan silme, reconcile sürerken native'in eklediği YENİ aralığı da siliyordu (oturum kaybı). **Fix:** native her kayda UUID basar, Dart onu `study_sessions.id` olarak kullanır (repo zaten `upsert(onConflict:id)`), kuyruktan yalnız işlenen kayıtlar taze okumayla düşürülür.
 - **GERÇEK kök neden (tetkik sonucu — v39 stable karşılaştırmasıyla bulundu):** **D1 (P0):** native FGS verified koşusu olmayan HER başlatmayı `liveRunToken=""` yazar (`StudyTimerService` `.orEmpty()`); Dart adoption+restore `""`ı gerçek token sanar (`clearLiveRun: fgLiveRunToken == null` → "" null değil) → `verification=verified` → `stop()` `finalizeLiveRun("")` → RPC/repo StateError → `_finalizeVerifiedRun` rethrow → **`_finish()` HİÇ çalışmaz** (sayaç durmaz, oturum yazılmaz). Özellik zaten kapalı (`_verifiedServerAvailable=false`) ama enkazı stop yolunda canlıydı; stable v39'da bu yol YOK. **D2 (P0):** `stop()` reentrant değildi — kayıt/RTT penceresinde her ek Durdur AYNI aralığı tekrar kaydediyordu (çift/çoklu sayım). **D3 (P1):** Dart µs vs native ms `startedAt` farkı her echo'da gereksiz adoption tetikleyip D1'i taşıyordu. **Fix:** WP-245 `_normalizeRunToken` (""→null, token okunan her yer) + WP-246 `_stopInFlight` kilidi + `stop()` try/finally garantili `_finish` (D4) + WP-247 adoption `startedAt` ms karşılaştırması. **Neden testler kaçırdı:** testler `timer_active_live_run_token` anahtarını hiç yazmıyordu (null→statisticsOnly yolu); cihaz native hep "" yazar (verified yolu). Yeni testler `token: ''` fikstürü kullanıyor.
@@ -178,6 +175,74 @@
 | WP-256 | [~] Hazır — staging apply sonrası build | beta-v4301 yayın hazırlığı: `1.0.43-beta.1+4301` (CHANGELOG + release_notes + pubspec) | ⚠️ **sıra: staging `0065` apply → beta build**; ters sırada istemci yeni XP yazar, sunucu eskisini verir |
 | WP-257 | [x] Yayınlandı | beta-v4301 (`1.0.43-beta.1+4301`) — staging `0065` uygulandıktan SONRA etiketlendi; CI build 9dk43sn başarılı | staging apply: `ledger=5 pending=0 profiles=1` |
 | WP-258 | [x] **YAYINLANDI** | v43 stable (`1.0.43+43`) — Android APK + Windows MSIX/ZIP; production `0065` ELLE uygulandı ve doğrulandı | release `v43` · commit `fa771ce` · manifest migrationHead=0065, backend production · APK sha256 `da13ac57…` · production: marathon kademe1=1500 XP, **42 defter satırı** yeni fiyatta |
+
+### WP-259: Windows QA Temeli ve Yerel İki-Sürüm Provası 🧪
+- **Program/Faz:** Windows Store ürünleştirme · Faz 1
+- **Ajan:** —
+- **Durum:** [ ] Bekliyor
+- **Problem:** CI paket üretse de temiz Windows'ta kurulum→update→uninstall kanıtı doldurulmuş değildir; ana PC'deki test-imzalı paket test hedefi değildir.
+- **Kapsam dışı:** Store hesabı, public Store submission, üretim backend/migration.
+- **SAHİP dosyalar (yaz):** `docs/QA-WINDOWS.md`, `scripts/windows_smoke_screenshot.ps1`, Windows QA test/kanıt dosyaları.
+- **DOKUNMA:** `app/pubspec.yaml`, `app/lib/features/updater/**`, `.github/workflows/windows-release.yml`, `supabase/**`.
+- **Adımlar:** Windows Sandbox/temiz VM prosedürü; staging test hesabıyla iki artan QA MSIX; W-01…W-06/W-10…W-22 koşumu; redacted video/screenshot kanıtı.
+- **Veri/Migration etkisi:** Yok.
+- **Ortam/Deploy:** Local + staging; Store/public/production deploy yok.
+- **RLS/Güvenlik:** Secret/token/gerçek kullanıcı verisi kanıta girmez; QA paketi production endpoint'e bağlanmaz.
+- **Edge-case'ler:** eski test paketi, yarım update, SHA uyuşmazlığı, sleep/resume, çoklu monitör, offline→online.
+- **Kabul:** `N→N+1` update sonrası giriş/yerel tercih/oturum korunur; uninstall temiz; üç DPI matrisinde overflow 0; P0/P1 0.
+- **Tuzaklar:** Ana PC paketini kaldırmak, ZIP'i update kanıtı saymak, production hesabıyla test.
+- **Model önerisi:** 🟣 Pro.
+
+### WP-260: Store Kimliği, Paketleme ve Kanal Ayrımı 🏪
+- **Program/Faz:** Windows Store ürünleştirme · Faz 2
+- **Ajan:** —
+- **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-259 QA geçer; Partner Center hesabı ve `Odak Kampı` adı kullanıcı tarafından açılır/rezerve edilir.
+- **Problem:** Test publisher'lı MSIX Store kimliği değildir; Store stable paketinde GitHub sideload updater erişilemez olmalıdır.
+- **Kapsam dışı:** Public rollout, yeni feature, App Installer/direct-download kanalı.
+- **SAHİP dosyalar (yaz):** `app/pubspec.yaml`, `app/lib/core/config/distribution_channel.dart`, `app/lib/features/updater/**`, `.github/workflows/windows-release.yml`, Store packaging/test dosyaları, `docs/WINDOWS-RELEASE-GATE.md`.
+- **DOKUNMA:** Android flavor/manifestleri, `supabase/**`, feature/theme/navigation kodu.
+- **Adımlar:** Store identity/publisher'ı Partner Center'dan al; Store package/CI guard'ını bağla; Store build'de GitHub API/download/install yolunu unreachable test et; provenance manifesti üret.
+- **Veri/Migration etkisi:** Yok.
+- **Ortam/Deploy:** Local/CI validation; private/public Store submission yok.
+- **RLS/Güvenlik:** Partner Center anahtarları secret store'da; PFX yok; stable Store paketi yalnız production backend tuple'ıyla derlenir.
+- **Edge-case'ler:** yanlış publisher, stable↔staging veya beta↔production, Store build'de gizlenmiş ama çağrılabilir updater.
+- **Kabul:** identity/publisher birebir; Store build updater network hit=0; kanal/backend fail-closed; manifest SHA+commit+head taşır.
+- **Tuzaklar:** Test publisher'ını taşımak, Store/GitHub package'lerini aynı identityde karıştırmak.
+- **Model önerisi:** 🔴 Opus.
+
+### WP-261: Windows Marka, Kapak ve Store Listeleme Paketi 🎨
+- **Program/Faz:** Windows Store ürünleştirme · Faz 2
+- **Ajan:** —
+- **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-259 QA tabanı; WP-260 ile paralel yürüyebilir.
+- **Problem:** Eski ikon dışında Store kapak/hero, ekran görüntüsü, açıklama ve listing varlığı yoktur.
+- **Kapsam dışı:** Uygulama feature değişikliği, tema motoru, public Store yayın.
+- **SAHİP dosyalar (yaz):** `app/assets/branding/windows/**`, `app/windows/runner/resources/app_icon.ico`, yeni Store listing brief/asset dosyaları, görsel golden'lar.
+- **DOKUNMA:** `app/lib/core/theme/**`, navigation, `app/pubspec.yaml`, CI/packaging.
+- **Adımlar:** Görsel yön onayı; yeni icon/hero; 4–6 anonim Windows screenshot; TR/EN listing metni; 100–200% DPI görsel QA.
+- **Veri/Migration etkisi:** Yok.
+- **Ortam/Deploy:** Yerel render/golden; Store public yok.
+- **RLS/Güvenlik:** Screenshot'ta e-posta/token/özel grup/gerçek kullanıcı verisi 0.
+- **Edge-case'ler:** Start/Settings/Store ikon tutarsızlığı, dar ekran taşması, yalnız 1× DPI'da iyi görünen logo.
+- **Kabul:** Required asset set tamam; 4–6 screenshot anonim ve overflow 0; ürün sahibi tasarım kabulü.
+- **Tuzaklar:** Rastgele görseli application icon yapmak veya eski test build görselini Store materyali saymak.
+- **Model önerisi:** 🟣 Pro + görsel üretim.
+
+### WP-262: Private Audience Pilot ve Public Store GO Kapısı 🚦
+- **Program/Faz:** Windows Store ürünleştirme · Faz 3
+- **Ajan:** —
+- **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-259/260/261 ürün kabulü.
+- **Problem:** Public yayından önce gerçek Store imza/kurulum/update davranışı yalnız seçili hesaplarda kanıtlanmalıdır.
+- **Kapsam dışı:** Yeni feature, production DB/migration, açık kullanıcı GO olmadan public listing/rollout.
+- **SAHİP dosyalar (yaz):** `docs/QA-WINDOWS.md`, Store submission/provenance kanıtları, `docs/WINDOWS-RELEASE-GATE.md`.
+- **DOKUNMA:** Uygulama feature kodu, `supabase/**`, WP-260 kabulünden sonra sabit Store kimliği.
+- **Adımlar:** Private Audience grubu; staging test hesaplarıyla Store install/update/auto-update/cold-start QA; 72 saat pilot; public GO paketi.
+- **Veri/Migration etkisi:** Yok.
+- **Ortam/Deploy:** Store Private Audience; public Store yalnız somut kullanıcı GO sonrası.
+- **RLS/Güvenlik:** Sadece test hesapları/staging; secret/production verisi yok.
+- **Edge-case'ler:** unlisted ile private karışması, flight rollback, Store cache, eski test paketi.
+- **Kabul:** Seçili hesap dışı listing/indirme 0; iki Store build arasında update/veri korunumu kanıtlı; 72 saatte P0/P1=0.
+- **Tuzaklar:** Private pilotu public GO saymak veya production hesabıyla yürütmek.
+- **Model önerisi:** 🔴 Opus.
 
 ### WP-229: Eşit Süre Kaynakları ve Ödül Zinciri Onarımı ⚖️
 - **Program/Faz:** Kurtarma Faz 4A
