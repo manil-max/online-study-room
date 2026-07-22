@@ -7,13 +7,13 @@ select plan(38);
 
 select is(
   (select count(*)::integer from supabase_migrations.schema_migrations),
-  67,
-  'all 67 migrations are recorded'
+  68,
+  'all 68 migrations are recorded'
 );
 select is(
   (select max(version) from supabase_migrations.schema_migrations),
-  '0067',
-  '0067 is the migration head'
+  '0068',
+  '0068 is the migration head'
 );
 select ok(
   to_regclass('public.push_devices') is not null

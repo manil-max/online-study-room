@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "local_migration_head": "0067",
+  "local_migration_head": "0068",
   "staging": {
-    "migration_head": "0067",
+    "migration_head": "0068",
     "deploy_enabled": true,
     "release_enabled": true,
-    "hold_reason": "WP-268: push delivery/runtime config (0066-0067) is authorized only for staging activation and beta-v4302 device QA."
+    "hold_reason": "WP-268: push delivery/runtime config (0066-0068) is authorized only for staging activation and beta-v4302 device QA."
   },
   "production": {
     "migration_head": "0065",
