@@ -93,13 +93,13 @@
 ### Codex Lane
 - **Durum:** [~] Aktif
 - **Faz/WP:** WP-268 · beta-v4302 staging yayın hazırlığı
-- **Aşama:** Otomatik test geçti · staging `0067` terfisi/dispatcher aktivasyonu/beta release bekliyor
+- **Aşama:** Otomatik test geçti · staging `0068` terfisi tamam, dispatcher aktivasyonu/beta release bekliyor
 - **SAHİP yollar:** `CHANGELOG.md`, `app/assets/release_notes.json`, `app/pubspec.yaml`, `tooling/release/deploy-contract.json`, `tooling/supabase/guard.tests.ps1`, `.github/workflows/database-gates.yml`, `.github/workflows/staging-push-activation.yml`, `app/android/settings.gradle.kts`, `app/android/app/build.gradle.kts`, `app/android/app/src/beta/google-services.json`, `app/android/app/src/stable/google-services.json`, `app/test/core/push_delivery_contract_test.dart`, `supabase/migrations/0067_push_dispatch_runtime_config.sql`, `supabase/migrations/0068_revoke_push_dispatch_config_rpc.sql`, `supabase/functions/dispatch-push/index.ts`, `supabase/tests/001_schema_contract.test.sql`, `supabase/tests/005_push_delivery.test.sql`, `progress.md`
 - **Ortak/riskli yüzey:** staging migration head ve GitHub beta tag/release; production kapsam dışı
 - **Dal:** `main`
 - **Başlangıç:** 2026-07-22 (Europe/Istanbul)
 - **Son güncelleme:** 2026-07-22 (Europe/Istanbul)
-- **Not:** WP-268 staging `0066` dry-run/apply ve 116/116 remote pgTAP post-check geçti. Aday build adımının Flutter CI kurulumu düzeltildi ve doğrulandı. Kullanıcının aynı Firebase projesinde kaydettiği beta+stable Android uygulamaları native flavor yapılandırmasına eklendi ve yerelde doğrulandı. Staging Edge secret/function deploy edildi; `0067` private runtime config migration'ı staging'e uygulandı fakat remote pgTAP eski genel `authenticated` execute grant'ini yakaladı. Dispatcher henüz configure edilmedi; bu izni kapatan ileri `0068` düzeltmesi uygulanıyor. Beta release hâlâ bekliyor; production mutasyonu yasaktır.
+- **Not:** WP-268 staging `0066` dry-run/apply ve 116/116 remote pgTAP post-check geçti. Aday build adımının Flutter CI kurulumu düzeltildi ve doğrulandı. Kullanıcının aynı Firebase projesinde kaydettiği beta+stable Android uygulamaları native flavor yapılandırmasına eklendi ve yerelde doğrulandı. Staging Edge secret/function deploy edildi; `0067` private runtime config migration'ı staging'e uygulandı fakat remote pgTAP eski genel `authenticated` execute grant'ini yakaladı. İzni kapatan immutable ileri `0068` staging'e terfi etti; local+remote güvenlik/invariant post-check geçti. Eski staging aday build numarası artık kanonik beta sözleşmesine uymadığından CI haklı olarak reddetti; workflow pubspec'teki gerçek canonical beta sürümünü okuyan kalıcı akışa taşınıyor. Dispatcher aktivasyonu ve beta release hâlâ bekliyor; production mutasyonu yasaktır.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta

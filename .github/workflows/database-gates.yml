@@ -179,8 +179,16 @@ jobs:
             ProductionProjectRef = $env:PRODUCTION_SUPABASE_PROJECT_REF
             ExpectedGitSha = $env:EXPECTED_GIT_SHA
             ExpectedMigrationHead = $env:EXPECTED_MIGRATION_HEAD
-            BuildNumber = '228${{ github.run_number }}'
           }
+          $pubspecVersion = (
+            Select-String -LiteralPath 'app/pubspec.yaml' -Pattern '^version:\s*([^\s#]+)' |
+              Select-Object -First 1
+          ).Matches[0].Groups[1].Value
+          if ($pubspecVersion -notmatch '^(?<name>\d+\.\d+\.\d+-beta\.\d+)\+(?<number>\d+)$') {
+            throw "Staging candidate requires a canonical beta pubspec version, got '$pubspecVersion'."
+          }
+          $params.VersionName = $Matches.name
+          $params.BuildNumber = $Matches.number
           ./tooling/release/beta-build.ps1 @params
 
       - name: Upload sanitized remote evidence
