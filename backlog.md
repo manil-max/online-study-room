@@ -9,6 +9,13 @@
 
 ## 🔴 Yüksek Öncelik
 
+- [~] **Bildirim güveni + Android canlı sayaç — WP-265–267**
+  - Adli inceleme kesin teşhisi: dürtme/güncelleme/duyuru için kapalı sürece ulaşan push transport yok; Android izin/yerel notification tek başına bunu sağlamaz.
+  - Hedef: FCM + Supabase transactional outbox/Edge dispatcher + token yaşam döngüsü + Bildirim Sağlığı/≤10 sn remote self-test.
+  - Sayaçta custom `RemoteViews` Android Live Update şartlarına aykırıdır; standard/promoted ongoing chronometer'a geçilir, Samsung Now Bar OEM best-effort kalır.
+  - Production deploy/release bu işin örtük parçası değildir; local→staging→fiziksel cihaz→soak→somut kullanıcı GO kapıları korunur.
+  - Kanonik rapor ve WP'ler: [`docs/NOTIFICATION-SYSTEM-AUDIT-2026-07.md`](docs/NOTIFICATION-SYSTEM-AUDIT-2026-07.md), `progress.md` WP-265–267.
+
 - [~] **Proje kurtarma + stable/beta/Supabase izolasyonu — WP-225–232 (en yüksek öncelik, production freeze)**
   - Canlı DB salt-okunur baseline ve veri invariant raporu; `0063` production'a uygulanmaz.
   - Pinli Supabase CLI + Docker local replay; SQL Editor ile elle uygulanmış `0001–0062` geçmişi şema kanıtıyla uzlaştırılır.

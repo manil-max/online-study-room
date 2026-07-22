@@ -1,6 +1,6 @@
 # progress.md — İlerleme Takibi
 
-> Son güncelleme: 2026-07-22 (v43 sonrası Windows Store hazırlık planı eklendi)
+> Son güncelleme: 2026-07-22 (bildirim güveni ve Android canlı sayaç programı eklendi)
 > Sistem: İş Paketi (WP) tabanlı, **Kalite Programı**. Kanonik program: `docs/KALITE-PROGRAMI.md`.
 > Planlama: `.agents/skills/planner/SKILL.md` · Uygulama: `.agents/skills/worker/SKILL.md` · Kurallar: `.agents/AGENTS.md`.
 > **"Tamamlandı" = kod DEĞİL; kullanıcı beklentisini karşılayan + cihazda güvenilir çalışan iş.** İş durum merdiveni (8 aşama) ve kanıt etiketleri (`Kodda doğrulandı` / `Cihazda doğrulanmalı` / `Ürün kararı gerekiyor`) için bkz. AGENTS.md §0.
@@ -20,7 +20,7 @@
 - **Navigasyon hedefi:** Ana Sayfa / Saat / Gruplar / İstatistikler / Profil. Ana Sayfa günlük kullanım alanıdır; diğer alanların verisi kendi sekmelerinde eksiksiz bulunur.
 - **Release gerçeği:** Stable `v43` (`1.0.43+43`, commit `fa771ce`) ve beta `beta-v4301` yayınlandı. v43 GitHub Release Android APK yanında Windows MSIX/ZIP taşır; Windows Store paketi henüz yoktur.
 - **Kalite kapıları:** Her WP DoD'siz kapanmaz; stable release kalite kapısından geçer (AGENTS.md §3). Server-authoritative XP, RLS/sosyal profil, platform sınırları → `docs/KALITE-PROGRAMI.md`.
-- **Son WP numarası:** **264**. WP-263 profil gizli-rozet düzeltmesi; WP-264 Tools sadeleştirmesidir. **Sıradaki boş numara WP-265.**
+- **Son WP numarası:** **267**. WP-265 bildirim adli raporu; WP-266 güvenilir push çekirdeği; WP-267 Android canlı sayaç programıdır. **Sıradaki boş numara WP-268.**
 - **Ortam sözleşmesi:** local=Supabase CLI/Docker, beta=ayrı staging Supabase, stable=production Supabase. Ayrıntı: `docs/ORTAM-MIGRATION-YONETISIMI.md`.
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
@@ -91,15 +91,15 @@
   - K/L kodu repoda; kabul kanıtı yoktur. Tüm production terfisi artık `docs/ORTAM-MIGRATION-YONETISIMI.md` ve WP-225–232 kapısına tabidir.
 
 ### Codex Lane
-- **Durum:** [x] Boşta
-- **Faz/WP:** — (WP-264 otomatik test geçti; cihazda doğrulanmalı)
-- **Aşama:** —
-- **SAHİP yollar:** —
-- **Ortak/riskli yüzey:** —
+- **Durum:** [~] Aktif
+- **Faz/WP:** Bildirim Güven Programı · WP-265 (adli mimari inceleme ve yol haritası)
+- **Aşama:** Planlanıyor / salt-okunur inceleme
+- **SAHİP yollar:** `docs/NOTIFICATION-SYSTEM-AUDIT-2026-07.md`, `progress.md`, `backlog.md`, `project.md`
+- **Ortak/riskli yüzey:** Yalnız dokümantasyon; bildirim/push/timer kodu rapor tamamlanana kadar salt-okunur
 - **Dal:** `main`
 - **Başlangıç:** 2026-07-22 (Europe/Istanbul)
 - **Son güncelleme:** 2026-07-22 (Europe/Istanbul)
-- **Not:** WP-264 Tools sadeleştirmesi otomatik test geçti; yatay StandBy ve bildirim/sayaç motorları korunarak park edildi.
+- **Not:** Kullanıcı talimatıyla önce geçmiş+mevcut kod+resmî platform kaynakları tam incelenecek; rapor/WP planı commit edilmeden uygulama koduna dokunulmayacak.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
@@ -271,6 +271,48 @@
 - **Kabul:** Tools şeridinde yalnız Alarm/Timer/Görevler bulunur; dikey açılış Alarm'dır; mobil yatay görünüm StandBy kalır; analyze ve tam test paketi geçer.
 - **Tuzaklar:** Kronometre UI girişini kaldırırken çalışma sayacı/FGS bildirim servisini yanlışlıkla silmek.
 - **Model önerisi:** 🟢 fast.
+
+### WP-265: Bildirim Sistemi Adli İnceleme ve Kabul Sözleşmesi 🔬
+- **Program/Faz:** Bildirim Güven Programı · Faz 0
+- **Ajan:** Codex
+- **Durum:** [x] Rapor/plan tamamlandı
+- **Problem:** Dürtme/güncelleme/duyuru teslimi ile Samsung dinamik panel denemeleri parça parça değiştirilmiş; gerçek push, local notification ve foreground-service yüzeyleri aynı kavram gibi ele alınmıştır.
+- **Kapsam:** Mevcut kod, migration, geçmiş commit/rapor ve resmî Android/Samsung/Firebase/Supabase kaynaklarından kanıtlı durum analizi; kök neden, hedef mimari, test/rollback/deploy kapıları ve WP planı.
+- **Kapsam dışı:** Uygulama kodu, Firebase/Supabase kurulumu, remote migration/Edge deploy, production mutation.
+- **SAHİP dosyalar (yaz):** `docs/NOTIFICATION-SYSTEM-AUDIT-2026-07.md`, `docs/KALITE-PROGRAMI.md`, `progress.md`, `backlog.md`, `project.md`
+- **Kabul:** Push taşıma eksikliği ve custom `RemoteViews`/Live Update uyumsuzluğu kod+resmî kaynakla kanıtlanır; 10 sn self-test, cihaz matrisi ve somut aktivasyon kapıları tanımlanır.
+- **Rapor:** [`docs/NOTIFICATION-SYSTEM-AUDIT-2026-07.md`](docs/NOTIFICATION-SYSTEM-AUDIT-2026-07.md)
+- **Model önerisi:** 🔴 Opus / frontier-high.
+
+### WP-266: Güvenilir Push Çekirdeği ve 10 Saniyelik Self-Test 📲
+- **Program/Faz:** Bildirim Güven Programı · Faz 1
+- **Ajan:** —
+- **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-265
+- **Problem:** Projede FCM SDK/token registry/server sender/outbox/delivery gözlemi yok; uygulama kapalıyken dürtme, duyuru ve güncelleme ulaşamaz.
+- **Kapsam:** Android FCM yaşam döngüsü; güvenli cihaz kaydı; transactional outbox + per-device delivery; dürtme enqueue; Supabase Edge FCM HTTP v1 dispatcher; retry/invalid-token cleanup; preference sync; Bildirim Sağlığı ve local/remote self-test; in-memory/fake karşılıkları.
+- **Kapsam dışı:** iOS/APNs, web push, pazarlama segmentasyonu, production deploy/release, Samsung canlı sayaç görünümü.
+- **SAHİP dosyalar (yaz):** `app/pubspec.*`, `app/lib/core/notifications/**`, yeni push config/repository/provider/model dosyaları ve in-memory/Supabase aynaları, bildirim merkezi/l10n/testler, `supabase/migrations/0066_*`, `supabase/functions/dispatch-push/**`, `supabase/tests/**`, ilgili env/deploy sözleşmeleri, rapor ve `progress.md`.
+- **DOKUNMA:** Native alarm/timer FGS sınıfları, achievement/XP zinciri, remote'a uygulanmış migration'lar, production.
+- **Veri/Migration etkisi:** Yeni ileri migration; push tokenları client direct-DML'e kapalı, service-only teslim tablosu; domain `nudges` satırları korunur.
+- **Ortam/Deploy:** Önce local/fake; staging Firebase/Supabase aktivasyonu ayrı kapı; production yalnız beta soak + açık kullanıcı GO.
+- **Kabul:** Foreground/background/terminated dürtme tek teslim; duplicate 0; remote self-test p95 ≤10 sn; logout/token refresh/iki cihaz/RLS/retry senaryoları kanıtlı; config yokken app fail-closed ve regresyonsuz.
+- **Tuzaklar:** Yerel test bildirimini push kanıtı saymak; service account'ı istemciye koymak; notification+local presentation duplicate'i; beta/stable token karışması.
+- **Model önerisi:** 🔴 Opus / frontier-high.
+
+### WP-267: Android Standard/Promoted Canlı Sayaç ⏱️
+- **Program/Faz:** Bildirim Güven Programı · Faz 2
+- **Ajan:** —
+- **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-265; seri sıra WP-266 sonrası
+- **Problem:** Varsayılan custom `RemoteViews`, boş content title ve kapalı native chronometer Android Live Update şartlarını ihlal ediyor; Samsung Now Bar yalnız OEM best-effort olmasına rağmen ürün/teknik sınır ayrışmamış.
+- **Kapsam:** AndroidX promoted ongoing API; manifest izni; standard ongoing chronometer/title/actions; monochrome small icon; promotable/can-post diagnostic; custom panelden kontrollü geri dönüş; source-contract/native compile/cihaz matrisi.
+- **Kapsam dışı:** Timer state/FGS lifecycle/session/XP yeniden mimarisi, Samsung private/undocumented API, piksel-aynı OEM görünüm garantisi.
+- **SAHİP dosyalar (yaz):** `app/android/app/build.gradle.kts`, Android manifest, `StudyTimerService.kt`, timer notification kaynakları/ikonları/native testler, diagnostic bridge ve ilgili Flutter health UI/testleri, rapor ve `progress.md`.
+- **DOKUNMA:** `TimerStateStore` sözleşmesi, `START_NOT_STICKY`, FGS type matrisi, pending interval idempotency, Supabase/achievement zinciri.
+- **Veri/Migration etkisi:** Yok.
+- **Ortam/Deploy:** Local compile/build; Samsung/Pixel beta cihaz QA; public/stable release yok.
+- **Kabul:** Running notification custom content view içermez; promotable karakteristikleri sağlar; eski Android'de standard fallback ve app-closed action çalışır; 8 saat sapma ≤±1 sn; API 29–33/34+ FGS crash 0.
+- **Tuzaklar:** Now Bar'ı garanti etmek; görünüm değişikliğiyle FGS lifecycle'a dokunmak; yalnız Flutter testini cihaz kanıtı saymak.
+- **Model önerisi:** 🔴 Opus / frontier-high.
 
 ### WP-229: Eşit Süre Kaynakları ve Ödül Zinciri Onarımı ⚖️
 - **Program/Faz:** Kurtarma Faz 4A
