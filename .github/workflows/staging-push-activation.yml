@@ -103,13 +103,27 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          response="$(curl --fail-with-body --silent --show-error \
-            -X POST "$STAGING_SUPABASE_URL/functions/v1/dispatch-push" \
-            -H "Authorization: Bearer $STAGING_SUPABASE_ANON_KEY" \
-            -H 'Content-Type: application/json' \
-            -H "x-push-dispatch-secret: $PUSH_DISPATCH_SECRET" \
-            --data '{"action":"configure_dispatch"}')"
-          printf '%s' "$response" | jq -e '.configured == true' >/dev/null
+          # Fresh Edge deploys can briefly return 503 while the route warms up.
+          # Retry only this idempotent configuration RPC; no notification is enqueued.
+          configured=false
+          for attempt in {1..12}; do
+            if response="$(curl --fail-with-body --silent --show-error \
+              -X POST "$STAGING_SUPABASE_URL/functions/v1/dispatch-push" \
+              -H "Authorization: Bearer $STAGING_SUPABASE_ANON_KEY" \
+              -H 'Content-Type: application/json' \
+              -H "x-push-dispatch-secret: $PUSH_DISPATCH_SECRET" \
+              --data '{"action":"configure_dispatch"}')" \
+              && printf '%s' "$response" | jq -e '.configured == true' >/dev/null; then
+              configured=true
+              break
+            fi
+            echo "Dispatcher route is not ready yet (attempt $attempt/12); retrying."
+            sleep 5
+          done
+          [[ "$configured" = true ]] || {
+            echo "Dispatcher configuration did not succeed after its readiness window."
+            exit 1
+          }
 
       - name: Verify dispatcher health without enqueueing a notification
         shell: bash
