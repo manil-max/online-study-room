@@ -20,7 +20,7 @@
 - **Navigasyon hedefi:** Ana Sayfa / Saat / Gruplar / İstatistikler / Profil. Ana Sayfa günlük kullanım alanıdır; diğer alanların verisi kendi sekmelerinde eksiksiz bulunur.
 - **Release gerçeği:** Stable `v43` (`1.0.43+43`, commit `fa771ce`) ve beta `beta-v4301` yayınlandı. v43 GitHub Release Android APK yanında Windows MSIX/ZIP taşır; Windows Store paketi henüz yoktur.
 - **Kalite kapıları:** Her WP DoD'siz kapanmaz; stable release kalite kapısından geçer (AGENTS.md §3). Server-authoritative XP, RLS/sosyal profil, platform sınırları → `docs/KALITE-PROGRAMI.md`.
-- **Son WP numarası:** **262**. WP-259–262 Windows Store hazırlık, yerel QA, marka/listing ve private-flight→public GO zinciridir. **Sıradaki boş numara WP-263.**
+- **Son WP numarası:** **264**. WP-263 profil gizli-rozet düzeltmesi; WP-264 Tools sadeleştirmesidir. **Sıradaki boş numara WP-265.**
 - **Ortam sözleşmesi:** local=Supabase CLI/Docker, beta=ayrı staging Supabase, stable=production Supabase. Ayrıntı: `docs/ORTAM-MIGRATION-YONETISIMI.md`.
 - **Geliştirme ortamı:**
   - Proje: `C:\Users\muhlis2\OneDrive\Desktop\Dev\online-study-room`
@@ -92,14 +92,14 @@
 
 ### Codex Lane
 - **Durum:** [x] Boşta
-- **Faz/WP:** — (WP-263 otomatik test geçti; cihazda doğrulanmalı)
+- **Faz/WP:** — (WP-264 otomatik test geçti; cihazda doğrulanmalı)
 - **Aşama:** —
 - **SAHİP yollar:** —
 - **Ortak/riskli yüzey:** —
 - **Dal:** `main`
 - **Başlangıç:** 2026-07-22 (Europe/Istanbul)
 - **Son güncelleme:** 2026-07-22 (Europe/Istanbul)
-- **Not:** WP-263 otomatik kanıtları tamamlandı ve test için bekleyenlere taşındı; remote/production mutasyonu yok. WP-231 ve WP-259 test için bekleyenlerde.
+- **Not:** WP-264 Tools sadeleştirmesi otomatik test geçti; yatay StandBy ve bildirim/sayaç motorları korunarak park edildi.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
@@ -254,6 +254,22 @@
 - **SAHİP yollar:** `app/lib/features/profile/widgets/gamification_card.dart`, `app/test/features/profile/gamification_card_declutter_test.dart`, `progress.md`
 - **Veri/Migration:** Yok.
 - **Kabul:** Seçili, açılmış gizli rozet mor; normal seçili rozet kademe rengiyle kalır; hedef widget testi ve `flutter analyze` geçer.
+- **Model önerisi:** 🟢 fast.
+
+### WP-264: Tools Saat/Dünya/Kronometre Sadeleştirmesi 🧹
+- **Program/Faz:** Ürün sadeleştirme · Tools IA
+- **Ajan:** Codex
+- **Durum:** [x] Otomatik test geçti · cihazda doğrulanmalı
+- **Problem:** Kullanılmayan Saat, Dünya ve Kronometre pencereleri Tools şeridini kalabalıklaştırıyor.
+- **Kapsam:** Üç giriş ve karşılık gelen Tools gövdeleri kaldırılır; Tools Alarm ile açılır ve Timer/Görevler korunur.
+- **Kapsam dışı:** Yatay StandBy; sayaç, alarm, timer ve Android bildirim motorları; World/Stopwatch kaynak dosyalarının fiziksel silinmesi.
+- **SAHİP dosyalar (yaz):** `app/lib/features/clock/clock_screen.dart`, `app/lib/core/navigation/home_shell.dart` (yalnız stale yorum), `app/test/features/clock_screen_test.dart`, `app/test/features/tap_to_top_contract_test.dart`, `progress.md`
+- **DOKUNMA:** `app/lib/core/notifications/**`, `app/android/**`, `app/lib/data/providers/study_providers.dart`, `app/lib/features/clock/stopwatch_screen.dart`, `app/lib/features/clock/world_clock_screen.dart`
+- **Veri/Migration etkisi:** Yok.
+- **Ortam/Deploy:** Yalnız local; remote/production işlemi yok.
+- **RLS/Güvenlik:** Etki yok.
+- **Kabul:** Tools şeridinde yalnız Alarm/Timer/Görevler bulunur; dikey açılış Alarm'dır; mobil yatay görünüm StandBy kalır; analyze ve tam test paketi geçer.
+- **Tuzaklar:** Kronometre UI girişini kaldırırken çalışma sayacı/FGS bildirim servisini yanlışlıkla silmek.
 - **Model önerisi:** 🟢 fast.
 
 ### WP-229: Eşit Süre Kaynakları ve Ödül Zinciri Onarımı ⚖️
@@ -438,6 +454,8 @@
 ## Test için bekleyenler (park)
 
 > Cihaz/ürün kabulü bekleyen tamamlanmış kod. Bu bölüm aktif çalışma değildir; başka WP'yi engellemez.
+
+- **WP-264 — Tools Saat/Dünya/Kronometre sadeleştirmesi** · Tools şeridi Alarm/Timer/Görevler olarak sadeleştirildi ve dikey açılış Alarm'a alındı; mobil yatay StandBy ile stopwatch/world motor dosyaları ve Android sayaç/bildirim servisleri korunmuştur. Hedef testler ve `flutter analyze` temiz; tam Flutter paketi **670/670 PASS**. **Cihazda doğrulanmalı:** dikey Tools üç girişi, yatay StandBy ve çalışan sayaç bildiriminin etkilenmediği kontrol edilir.
 
 - **WP-263 — Profil özetindeki gizli rozet rengi** · Tam başarımlar ekranıyla aynı `badgeVisualColor` kuralı profil vitrinine bağlandı; seçili, açılmış gizli rozet artık mor (`#A855F7`), normal rozet kademe renginde kalır. Hedef widget testi, `flutter analyze` ve tüm Flutter paketi **670/670 PASS**. **Cihazda doğrulanmalı:** gizli rozeti seçip Profil kartında açık/koyu temada rengini ve erişilebilir etiketini kontrol et. Remote/production mutasyonu yok.
 

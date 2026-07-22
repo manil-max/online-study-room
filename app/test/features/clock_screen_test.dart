@@ -62,7 +62,7 @@ void main() {
     );
   }
 
-  testWidgets('ClockScreen shows 5 equal strip tabs without Widget tab', (
+  testWidgets('ClockScreen keeps only Alarm Timer and Tasks in Tools', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(1080, 2400);
@@ -73,16 +73,17 @@ void main() {
     await tester.pumpWidget(buildApp());
     await tester.pump();
 
-    expect(find.text('Saat Merkezi'), findsOneWidget);
-    expect(find.text('Widget'), findsNothing);
-    expect(find.byKey(const Key('clock_tab_widgets')), findsNothing);
-    expect(find.text('Saat'), findsOneWidget);
-    expect(find.text('Alarm'), findsOneWidget);
-    expect(find.text('Timer'), findsOneWidget);
-    expect(find.text('Krono'), findsOneWidget);
-    expect(find.text('Dünya'), findsOneWidget);
-    // Birleşik çalışma kartı ana Saat sekmesinde
-    expect(find.text('Çalışma oturumu'), findsOneWidget);
+    expect(find.text('Araçlar'), findsOneWidget);
+    expect(find.byKey(const Key('clock_tab_alarm')), findsOneWidget);
+    expect(find.byKey(const Key('clock_tab_timer')), findsOneWidget);
+    expect(find.byKey(const Key('clock_tab_tasks')), findsOneWidget);
+    expect(find.byKey(const Key('clock_tab_home')), findsNothing);
+    expect(find.byKey(const Key('clock_tab_stopwatch')), findsNothing);
+    expect(find.byKey(const Key('clock_tab_world')), findsNothing);
+    expect(
+      ClockTab.values,
+      equals(const [ClockTab.alarm, ClockTab.multiTimer, ClockTab.tasks]),
+    );
   });
 
   testWidgets('ClockScreen shows StandByClockView in landscape', (

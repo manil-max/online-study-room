@@ -1,269 +1,31 @@
 import 'package:online_study_room/l10n/app_localizations.dart';
-import 'dart:async';
-
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 import '../../core/desktop/desktop_window.dart';
-import '../../core/navigation/nav_index.dart';
-import '../../core/time_engine/alarm_scheduler.dart';
-import '../../core/utils/duration_format.dart';
-import '../../data/providers/alarm_providers.dart';
-import '../../data/providers/study_providers.dart';
-import '../classroom/widgets/study_timer_card.dart';
 import 'alarms_screen.dart';
-import 'stopwatch_screen.dart';
 import 'tasks_screen.dart';
 import 'timers_screen.dart';
 import 'widgets/standby_clock_view.dart';
-import 'world_clock_screen.dart';
 
-/// Araçlar sekmeleri — tek satır ikon şeridi (WP-198).
-/// Sıra: Saat+Odak · Alarm · Timer · Krono · Dünya · Görevler
-/// (Widget/izinler → Ayarlar · Bildirim & izinler)
-enum ClockTab { home, alarm, multiTimer, stopwatch, world, tasks }
+/// Araçlar sekmeleri — Alarm · Timer · Görevler (WP-264).
+/// Mobil yatay görünüm ayrı bir StandBy yüzeyi olarak korunur.
+enum ClockTab { alarm, multiTimer, tasks }
 
-class ClockScreen extends ConsumerStatefulWidget {
+class ClockScreen extends StatefulWidget {
   const ClockScreen({super.key});
 
   @override
-  ConsumerState<ClockScreen> createState() => _ClockScreenState();
+  State<ClockScreen> createState() => _ClockScreenState();
 }
 
-class _ClockScreenState extends ConsumerState<ClockScreen> {
-  ClockTab _tab = ClockTab.home;
-  Timer? _timer;
-  final _scrollController = ScrollController();
-  DateTime _now = DateTime.now();
-
-  @override
-  void initState() {
-    super.initState();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if ((_tab == ClockTab.home) && mounted) {
-        setState(() => _now = DateTime.now());
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    _scrollController.dispose();
-    super.dispose();
-  }
+class _ClockScreenState extends State<ClockScreen> {
+  ClockTab _tab = ClockTab.alarm;
 
   void _onTabChanged(ClockTab tab) => setState(() => _tab = tab);
-
-  /// Saat + çalışma sayacı birleşik ana yüzey.
-  Widget _buildHome(BuildContext context) {
-    final theme = Theme.of(context);
-    final timeStr = DateFormat.Hm().format(_now);
-    final secStr = DateFormat('ss').format(_now);
-    final dateStr = DateFormat(
-      'EEEE, d MMMM',
-      Localizations.localeOf(context).toLanguageTag(),
-    ).format(_now);
-
-    final alarms = ref.watch(alarmsProvider).asData?.value ?? const [];
-    DateTime? next;
-    String? nextLabel;
-    for (final a in alarms.where((a) => a.isActive)) {
-      final n = AlarmScheduler.nextFire(a, _now);
-      if (n == null) continue;
-      if (next == null || n.isBefore(next)) {
-        next = n;
-        nextLabel = a.label.isNotEmpty ? a.label : a.timeLabel;
-      }
-    }
-
-    final study = ref.watch(studyTimerProvider);
-    final studyRunning = study.isRunning;
-    final live = (study.isRunning && study.startedAt != null)
-        ? _now.difference(study.startedAt!).inSeconds
-        : 0;
-    final studySeconds = study.accumulatedSeconds + live;
-    final target = study.phaseTargetSeconds;
-    final studyDisplay = target == null
-        ? studySeconds
-        : (target - studySeconds).clamp(0, target);
-
-    return ListView(
-      controller: _scrollController,
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-      children: [
-        // Büyük saat
-        FittedBox(
-          fit: BoxFit.scaleDown,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                timeStr,
-                style: TextStyle(
-                  fontSize: 72,
-                  fontWeight: FontWeight.w200,
-                  color: theme.colorScheme.onSurface,
-                  height: 1.0,
-                  fontFeatures: const [FontFeature.tabularFigures()],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(top: 14, left: 4),
-                child: Text(
-                  secStr,
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w300,
-                    color: theme.colorScheme.primary,
-                    fontFeatures: const [FontFeature.tabularFigures()],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          dateStr.toUpperCase(),
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: theme.colorScheme.onSurfaceVariant,
-            letterSpacing: 1.4,
-          ),
-        ),
-        if (next != null) ...[
-          const SizedBox(height: 16),
-          Card(
-            child: ListTile(
-              leading: const Icon(Icons.alarm),
-              title: Text(
-                AppLocalizations.of(context).clockAlarmDateformathmformatnext(
-                  DateFormat.Hm().format(next),
-                ),
-              ),
-              subtitle: Text(nextLabel ?? ''),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => _onTabChanged(ClockTab.alarm),
-            ),
-          ),
-        ],
-        const SizedBox(height: 12),
-        // Çalışma sayacı — birleşik
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.local_fire_department,
-                      color: theme.colorScheme.primary,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        AppLocalizations.of(context).clockCalismaOturumu,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    Text(
-                      studyRunning
-                          ? AppLocalizations.of(context).commonCalsyor
-                          : AppLocalizations.of(context).desktopHazir,
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        color: studyRunning
-                            ? theme.colorScheme.primary
-                            : theme.colorScheme.outline,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  formatHms(studyDisplay),
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.displaySmall?.copyWith(
-                    fontWeight: FontWeight.w300,
-                    fontFeatures: const [FontFeature.tabularFigures()],
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  alignment: WrapAlignment.center,
-                  children: [
-                    FilledButton.icon(
-                      onPressed: () {
-                        final n = ref.read(studyTimerProvider.notifier);
-                        if (studyRunning) {
-                          unawaited(n.stop());
-                        } else {
-                          n.start();
-                        }
-                      },
-                      icon: Icon(studyRunning ? Icons.stop : Icons.play_arrow),
-                      label: Text(
-                        studyRunning
-                            ? AppLocalizations.of(context).profileDurdur
-                            : AppLocalizations.of(context).desktopBaslat,
-                      ),
-                    ),
-                    OutlinedButton.icon(
-                      onPressed: () {
-                        showModalBottomSheet<void>(
-                          context: context,
-                          isScrollControlled: true,
-                          useSafeArea: true,
-                          builder: (_) => const Padding(
-                            padding: EdgeInsets.all(16),
-                            child: SingleChildScrollView(
-                              child: StudyTimerCard(),
-                            ),
-                          ),
-                        );
-                      },
-                      icon: const Icon(Icons.tune),
-                      label: Text(AppLocalizations.of(context).clockModDers),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          AppLocalizations.of(context).clockWidgetVeIzinler,
-          textAlign: TextAlign.center,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.outline,
-          ),
-        ),
-      ],
-    );
-  }
 
   /// Eşit genişlikte ikon+kısa etiket — kaydırma yok, tek ekrana sığar.
   Widget _buildIconStrip() {
     final items = <(ClockTab, IconData, String, Key)>[
-      (
-        ClockTab.home,
-        Icons.schedule,
-        AppLocalizations.of(context).profileSaat,
-        Key('clock_tab_home'),
-      ),
       (
         ClockTab.alarm,
         Icons.alarm,
@@ -275,18 +37,6 @@ class _ClockScreenState extends ConsumerState<ClockScreen> {
         Icons.hourglass_empty,
         AppLocalizations.of(context).clockTimer,
         Key('clock_tab_timer'),
-      ),
-      (
-        ClockTab.stopwatch,
-        Icons.timer_outlined,
-        AppLocalizations.of(context).clockKrono,
-        Key('clock_tab_stopwatch'),
-      ),
-      (
-        ClockTab.world,
-        Icons.public,
-        AppLocalizations.of(context).clockDunya,
-        Key('clock_tab_world'),
       ),
       (
         ClockTab.tasks,
@@ -323,30 +73,14 @@ class _ClockScreenState extends ConsumerState<ClockScreen> {
 
   Widget _buildTabBody() {
     return switch (_tab) {
-      ClockTab.home => _buildHome(context),
       ClockTab.alarm => const AlarmsScreen(embedded: true),
       ClockTab.multiTimer => const TimersScreen(embedded: true),
-      ClockTab.stopwatch => const StopwatchScreen(embedded: true),
-      ClockTab.world => const WorldClockScreen(embedded: true),
       ClockTab.tasks => const TasksScreen(embedded: true),
     };
   }
 
   @override
   Widget build(BuildContext context) {
-    ref.listen(navReselectProvider, (previous, next) {
-      if (next.tabIndex != AppTab.tools.index ||
-          next.tick <= (previous?.tick ?? 0) ||
-          !_scrollController.hasClients ||
-          _scrollController.offset <= 0) {
-        return;
-      }
-      _scrollController.animateTo(
-        0,
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeOut,
-      );
-    });
     return OrientationBuilder(
       builder: (context, orientation) {
         if (!isDesktopWindow && orientation == Orientation.landscape) {
@@ -360,7 +94,7 @@ class _ClockScreenState extends ConsumerState<ClockScreen> {
           appBar: isDesktopWindow
               ? null
               : AppBar(
-                  title: Text(AppLocalizations.of(context).clockSaatMerkezi),
+                  title: Text(AppLocalizations.of(context).navTools),
                   centerTitle: true,
                 ),
           body: Column(

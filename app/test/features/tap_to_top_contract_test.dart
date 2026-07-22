@@ -4,7 +4,6 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   final contracts = <String, String>{
-    'lib/features/clock/clock_screen.dart': 'AppTab.tools.index',
     'lib/features/classroom/classroom_screen.dart': 'AppTab.groups.index',
     'lib/features/profile/profile_screen.dart': 'AppTab.profile.index',
     'lib/features/stats/widgets/personal_stats_view.dart': 'AppTab.stats.index',
@@ -12,7 +11,7 @@ void main() {
   };
 
   test(
-    'beş gerçek scroll yüzeyi kanonik tab ile 250 ms tap-to-top uygular',
+    'dört gerçek scroll yüzeyi kanonik tab ile 250 ms tap-to-top uygular',
     () {
       for (final entry in contracts.entries) {
         final source = File(entry.key).readAsStringSync();
