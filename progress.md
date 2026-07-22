@@ -91,15 +91,15 @@
   - K/L kodu repoda; kabul kanıtı yoktur. Tüm production terfisi artık `docs/ORTAM-MIGRATION-YONETISIMI.md` ve WP-225–232 kapısına tabidir.
 
 ### Codex Lane
-- **Durum:** [~] Aktif
-- **Faz/WP:** Windows Store ürünleştirme · WP-259 (ilk dilim: hızlı Windows smoke kontrolü)
-- **Aşama:** Otomatik test geçti (WP-259 yerel + Windows navigasyon dilimi)
-- **SAHİP yollar:** `scripts/windows_fast_smoke.ps1`, `scripts/windows_smoke_screenshot.ps1`, `scripts/windows_local_dev.ps1`, `app/integration_test/v8_critical_flows_test.dart`, `app/test/support/v8_test_setup.dart`, `docs/QA-WINDOWS.md`, `docs/WINDOWS-VM-QA.md`, `docs/WINDOWS-STORE-PLAN.md`, `progress.md`
-- **Ortak/riskli yüzey:** Yerel Windows süreç/pencere yakalama; Store, Supabase ve production mutasyonu yok
+- **Durum:** [x] Boşta
+- **Faz/WP:** — (WP-259 otomasyon tamam; cihaz/VM kanıtı parkta)
+- **Aşama:** —
+- **SAHİP yollar:** —
+- **Ortak/riskli yüzey:** —
 - **Dal:** `main`
 - **Başlangıç:** 2026-07-22 (Europe/Istanbul)
 - **Son güncelleme:** 2026-07-22 (Europe/Istanbul)
-- **Not:** Güvenli pencere-yakalama ile hızlı smoke gerçek makinede ≤1 sn PASS. `windows_local_dev.ps1 -BuildOnly` local InMemory manifestiyle taze Windows Release derledi (~47 sn), önceki `env.json`u geri yükledi; ilk “Yenilikler” penceresi isteğe bağlı kapatılınca gerçek giriş ekranı yakalandı. `-IntegrationTest`, gerçek Windows hedefinde girişli test kullanıcısıyla Ana Sayfa→Gruplar→Profil geçişini PASS verdi; test artık sistem dili/mobil NavigationBar varsayımına bağlı değil. Bu PC Windows 11 Home olduğu için Sandbox/VM kurulum-update provasına uygun değil; taşınabilir VM/ikinci-PC prosedürü hazır.
+- **Not:** WP-259'un otomatik dilimleri `756fb10`'da tamamlandı ve test için bekleyenlere taşındı; bu PC Windows 11 Home olduğu için temiz VM/ikinci-PC kurulum-update kanıtı burada üretilemez.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
@@ -171,15 +171,15 @@
 | WP-252 | [ ] Onay bekliyor | Pomodoro arka planda ölüyor: native ExactAlarm + otomatik faz geçişi (uygulama kapalıyken mola/bitiş) | ürün onayı şart · sahiplik kuralı (3 sn pay) zorunlu · plan hazır |
 | WP-253 | [x] Cihaz QA GEÇTİ | UX: sıralama satırlarındaki üye seri rozeti KALDIRILDI (ateş ikonu artık her yerde tek anlam = hedef serisi) + manuel eklemede "bugün & sayaç çalışıyor" koruması | tek WP-253 commit'i · 4 yeni test, kırmızı-yeşil ispatı yapıldı · analyze 0 issue · 661 test yeşil |
 | WP-254 | [x] Kod tamam — cihaz QA bekliyor | 🔴 Saat gösterimi 3 saat geri: DB damgaları UTC parse edilip ham `.hour` ile basılıyordu (oturum geçmişi + sohbet); düzenleme diyaloğu gece yarısında yanlış günü açıyordu | ✅ `istanbulHm`/`istanbulWallClock` tek kaynak; 6 yeni test, fix'siz 5'i düşüyor; 667 test yeşil |
-| WP-255 | [~] Staging kanıtı + deploy onayı bekliyor | XP yeniden fiyatlandırma (marathon_total, steel_will, day_hero, fire_streak, locomotive) + **geriye dönük** düzeltme: kazanılmış defter satırları, bekleyen ödüller ve profil XP/taç yeniden hesaplanır | `0065_reprice_core_economy.sql` · tümü ARTIŞ (taç geri gitmez) · istemci+fixture+pgTAP kilitli · 667 test yeşil |
-| WP-256 | [~] Hazır — staging apply sonrası build | beta-v4301 yayın hazırlığı: `1.0.43-beta.1+4301` (CHANGELOG + release_notes + pubspec) | ⚠️ **sıra: staging `0065` apply → beta build**; ters sırada istemci yeni XP yazar, sunucu eskisini verir |
+| WP-255 | [x] Yayınlandı | XP yeniden fiyatlandırma (marathon_total, steel_will, day_hero, fire_streak, locomotive) + **geriye dönük** düzeltme: kazanılmış defter satırları, bekleyen ödüller ve profil XP/taç yeniden hesaplanır | `0065` staging ve production'da doğrulandı; v43'te 42 defter satırı yeni fiyatla doğrulandı |
+| WP-256 | [x] Yayınlandı | beta-v4301 yayın hazırlığı: `1.0.43-beta.1+4301` (CHANGELOG + release_notes + pubspec) | Staging `0065` sonrası `beta-v4301` olarak yayınlandı; ardından v43 stable çıktı |
 | WP-257 | [x] Yayınlandı | beta-v4301 (`1.0.43-beta.1+4301`) — staging `0065` uygulandıktan SONRA etiketlendi; CI build 9dk43sn başarılı | staging apply: `ledger=5 pending=0 profiles=1` |
 | WP-258 | [x] **YAYINLANDI** | v43 stable (`1.0.43+43`) — Android APK + Windows MSIX/ZIP; production `0065` ELLE uygulandı ve doğrulandı | release `v43` · commit `fa771ce` · manifest migrationHead=0065, backend production · APK sha256 `da13ac57…` · production: marathon kademe1=1500 XP, **42 defter satırı** yeni fiyatta |
 
 ### WP-259: Windows QA Temeli ve Yerel İki-Sürüm Provası 🧪
 - **Program/Faz:** Windows Store ürünleştirme · Faz 1
 - **Ajan:** Codex
-- **Durum:** [~] Geliştiriliyor — hızlı smoke + local başlangıç + Windows navigasyon otomatik test geçti; işlevsel/VM QA açık
+- **Durum:** [~] Test için bekliyor — hızlı smoke + local başlangıç + Windows navigasyon otomatik testi geçti; temiz VM/ikinci-PC QA açık
 - **Problem:** CI paket üretse de temiz Windows'ta kurulum→update→uninstall kanıtı doldurulmuş değildir; ana PC'deki test-imzalı paket test hedefi değildir.
 - **Kapsam dışı:** Store hesabı, public Store submission, üretim backend/migration.
 - **SAHİP dosyalar (yaz):** `scripts/windows_fast_smoke.ps1`, `docs/QA-WINDOWS.md`, `scripts/windows_smoke_screenshot.ps1`, Windows QA test/kanıt dosyaları.
@@ -247,7 +247,7 @@
 ### WP-229: Eşit Süre Kaynakları ve Ödül Zinciri Onarımı ⚖️
 - **Program/Faz:** Kurtarma Faz 4A
 - **Ajan:** Codex
-- **Durum:** [~] Staging/owner QA
+- **Durum:** [x] Cihaz QA geçti
 - **Problem:** `0051–0062` verified-only projeksiyonları manuel/sayaç/native kaynakları ayırıyor; mevcut `0063` veri yeniden hesaplama ve ödül üretiminde güvenli kabul edilemiyor.
 - **Kapsam dışı:** Taç görseli/istatistik UI, production deploy, history rewrite.
 - **SAHİP dosyalar (yaz):** Audit `0063`ün hiçbir remote'a uygulanmadığını kanıtlarsa yeniden tasarlanan `0063_*`; aksi halde yeni ileri migration (numara audit sonucu), `supabase/tests/**`, başarım/study repository server sözleşmeleri ve in_memory aynaları, `docs/recovery/EQUAL-SOURCES-RECONCILIATION.md`, `progress.md`.
@@ -269,7 +269,7 @@
 ### WP-230: Ekonomi, Taç ve Sürüm Gerçeği Onarımı 👑
 - **Program/Faz:** Kurtarma Faz 4B
 - **Ajan:** Codex-2
-- **Durum:** [~] Cihaz/staging QA
+- **Durum:** [x] Cihaz QA geçti
 - **Problem:** Eski beta istemci 5 kademe/25k, DB 6 kademe/20k kullanıyor; XP etiketi ile bar farklı matematik gösteriyor; aynı `1.0.41+41` farklı kodları temsil ediyor.
 - **Kapsam dışı:** Yeni ekonomi tasarlamak, mevcut XP'yi yeniden fiyatlamak, production deploy.
 - **SAHİP dosyalar (yaz):** achievement/economy client katalogları, profile/gamification card-showcase, ilgili l10n ARB+generated, `app/pubspec.yaml`, release manifest/notları, contract fixture/testleri, `progress.md`.
@@ -426,6 +426,8 @@
 ## Test için bekleyenler (park)
 
 > Cihaz/ürün kabulü bekleyen tamamlanmış kod. Bu bölüm aktif çalışma değildir; başka WP'yi engellemez.
+
+- **WP-259 — Windows QA Temeli ve Yerel İki-Sürüm Provası** · Güvenli pencere-yakalamalı hızlı smoke gerçek makinede ≤1 sn PASS; `windows_local_dev.ps1 -BuildOnly` local InMemory manifestiyle taze Windows release derledi ve özgün `env.json`u geri yükledi; gerçek Windows hedefindeki girişli entegrasyon testi Ana Sayfa→Gruplar→Profil geçişini PASS verdi. Commit'ler: `da4830b`, `95e554c`, `bd1c221`, `e313545`, `756fb10`. **Temiz VM/ikinci PC'de doğrulanmalı:** staging QA MSIX ile N→N+1 kurulum/güncelleme, uninstall, 100/125/150% DPI ve W-01…W-06/W-10…W-22; prosedür: [`docs/WINDOWS-VM-QA.md`](docs/WINDOWS-VM-QA.md). Ana PC Windows 11 Home olduğundan Sandbox burada kullanılamaz; Store/public/production mutasyonu yapılmadı.
 
 - **WP-229 — Eşit süre kaynakları ve ödül zinciri (staging kabulü GEÇTİ)** · Staging apply `8a9bc4d` başarılı: hosted staging parity onarımı (`pg_cron` önkoşulu allowlist'li bootstrap ile), `0053–0063` ardından immutable ileri `0064`; remote head `0064`, linked pgTAP/RLS/invariant **80/80 PASS**. Reconciliation `79e6f74`: staging batch 0 kullanıcı/0 diff, apply sonrası session/duration/ledger/XP/claimed delta ve XP mismatch **0**; yerel non-empty prova (2 kullanıcı/2 session) aynı kayıpsız sonucu verdi. Production'a **hiçbir yazma yapılmadı** (`deploy_enabled: false`). · **Cihazda doğrulanmalı:** beş giriş yolunun (manuel/kronometre/geri sayım/Pomodoro/native-widget) aynı süreyi aynı kişisel+grup+XP+başarım sonucuna yazması; claim zinciri çift XP üretmemesi; 23:59→00:01 İstanbul gün sınırı.
 

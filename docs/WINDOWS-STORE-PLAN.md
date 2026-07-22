@@ -38,7 +38,7 @@ Microsoft'un Private Audience özelliği, listemeyi ve indirmeyi yalnız seçile
 ### WP-259: Windows QA Temeli ve Yerel İki-Sürüm Provası 🧪
 
 - **Program/Faz:** Windows Store ürünleştirme · Faz 1
-- **Durum:** [ ] Bekliyor
+- **Durum:** [~] Test için bekliyor — yerel hızlı smoke, temiz release build ve gerçek Windows navigasyon entegrasyon testi geçti; temiz VM/ikinci-PC iki-sürüm kanıtı açık.
 - **Problem:** Mevcut CI artefakt üretir; ancak temiz Windows'ta kurulum, update ve kaldırma için doldurulmuş kanıt yoktur. Ana bilgisayarda eski test paketini bozmak güvenli değildir.
 - **Kapsam dışı:** Store hesabı açma, public Store yayınlama, üretim backend/migration değişikliği.
 - **SAHİP dosyalar (yaz):** `scripts/windows_fast_smoke.ps1`, `scripts/windows_local_dev.ps1`, `docs/QA-WINDOWS.md`, `scripts/windows_smoke_screenshot.ps1`, Windows odaklı test/kanıt dosyaları, `docs/WINDOWS-STORE-PLAN.md`, `progress.md`.
