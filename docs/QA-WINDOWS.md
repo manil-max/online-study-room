@@ -37,6 +37,11 @@ manifestini yalnız Flutter komutu sürerken kullanır ve varsa önceki `env.jso
 SHA-256 kontrolüyle geri yükler. Kullanıcı komut sürerken `env.json`u değiştirirse
 veri kaybı riski almadan geri yüklemeyi durdurur ve temp yedek yolunu bildirir.
 
+Windows test hedefinde ana sayfa → Gruplar → Profil navigasyonunu doğrudan
+koşturmak için: `powershell -ExecutionPolicy Bypass -File .\scripts\windows_local_dev.ps1 -IntegrationTest`.
+Bu, in-memory test kullanıcısıyla gerçek Windows test bağlamında gezinmeyi
+doğrular; gerçek hesap girişi, sayaç kaydı veya sunucu senkronu yerine geçmez.
+
 Bu kontrol **yalnız kabuk/başlatma kanıtıdır**: uygulama açılır, kapanmaz,
 görünür pencere verir ve yeni screenshot alınır. Giriş, timer, senkronizasyon,
 MSIX kurulum/güncelleme ve Store otomatik güncellemesi için aşağıdaki QA matrisi

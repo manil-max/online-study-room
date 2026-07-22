@@ -1,6 +1,7 @@
 [CmdletBinding()]
 param(
-  [switch]$BuildOnly
+  [switch]$BuildOnly,
+  [switch]$IntegrationTest
 )
 
 $ErrorActionPreference = 'Stop'
@@ -22,6 +23,10 @@ $hadOriginalEnvironment = Test-Path -LiteralPath $environmentPath -PathType Leaf
 $localEnvironmentHash = $null
 $restoreRequired = $false
 
+if ($BuildOnly -and $IntegrationTest) {
+  throw '-BuildOnly ve -IntegrationTest aynı anda kullanılamaz.'
+}
+
 try {
   if ($hadOriginalEnvironment) {
     Copy-Item -LiteralPath $environmentPath -Destination $backupPath -Force
@@ -36,6 +41,9 @@ try {
     if ($BuildOnly) {
       # Windows Flutter toolchain --flavor desteklemez; kanal manifestten gelir.
       & flutter build windows --release --dart-define-from-file=env.json
+    }
+    elseif ($IntegrationTest) {
+      & flutter test -d windows integration_test\v8_critical_flows_test.dart --dart-define-from-file=env.json
     }
     else {
       & flutter run -d windows --dart-define-from-file=env.json
