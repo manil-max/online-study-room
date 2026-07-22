@@ -3,17 +3,17 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(36);
+select plan(38);
 
 select is(
   (select count(*)::integer from supabase_migrations.schema_migrations),
-  66,
-  'all 66 migrations are recorded'
+  67,
+  'all 67 migrations are recorded'
 );
 select is(
   (select max(version) from supabase_migrations.schema_migrations),
-  '0066',
-  '0066 is the migration head'
+  '0067',
+  '0067 is the migration head'
 );
 select ok(
   to_regclass('public.push_devices') is not null
@@ -124,6 +124,22 @@ select ok(
         and indexdef ilike '%unique%outbox_id%device_id%'
     ),
   'outbox and per-device delivery idempotency keys are unique'
+);
+select ok(
+  to_regclass('public.push_dispatch_runtime_config') is not null
+    and (select relrowsecurity from pg_class where oid = 'public.push_dispatch_runtime_config'::regclass)
+    and not has_table_privilege('authenticated', 'public.push_dispatch_runtime_config', 'select'),
+  '0067 keeps dispatcher runtime config private behind RLS'
+);
+select ok(
+  to_regprocedure('public.configure_push_dispatch(text,text)') is not null
+    and not has_function_privilege(
+      'authenticated', 'public.configure_push_dispatch(text,text)', 'execute'
+    )
+    and has_function_privilege(
+      'service_role', 'public.configure_push_dispatch(text,text)', 'execute'
+    ),
+  'only service role can configure the dispatcher endpoint and secret'
 );
 select is(current_setting('server_version_num')::integer / 10000, 17, 'PostgreSQL major is 17');
 select ok(exists(select 1 from pg_extension where extname = 'pg_cron'), 'pg_cron prerequisite is installed');

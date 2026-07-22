@@ -5,7 +5,7 @@ set local search_path = public, extensions;
 
 \ir _fixtures/base_seed.psql
 
-select plan(22);
+select plan(26);
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000001', true);
@@ -21,6 +21,18 @@ select throws_ok(
   '42501',
   'permission denied for function claim_push_deliveries',
   'authenticated user cannot claim provider deliveries'
+);
+select throws_ok(
+  $$select * from public.push_dispatch_runtime_config$$,
+  '42501',
+  'permission denied for table push_dispatch_runtime_config',
+  'authenticated user cannot read the dispatcher runtime config'
+);
+select throws_ok(
+  $$select public.configure_push_dispatch('https://aaaaaaaaaaaaaaaaaaaa.supabase.co', repeat('a', 48))$$,
+  '42501',
+  'permission denied for function configure_push_dispatch',
+  'authenticated user cannot configure push dispatch'
 );
 select throws_ok(
   $$select * from public.register_push_device(
@@ -42,6 +54,23 @@ select lives_ok(
 );
 
 reset role;
+set local role service_role;
+select set_config('request.jwt.claim.role', 'service_role', true);
+select lives_ok(
+  $$select public.configure_push_dispatch('https://aaaaaaaaaaaaaaaaaaaa.supabase.co', repeat('a', 48))$$,
+  'service role can configure the private dispatcher runtime'
+);
+reset role;
+select is(
+  (
+    select functions_base_url
+    from public.push_dispatch_runtime_config
+    where singleton = true
+  ),
+  'https://aaaaaaaaaaaaaaaaaaaa.supabase.co',
+  'dispatcher runtime config has one validated endpoint'
+);
+
 select is(
   (select count(*) from public.push_devices where user_id = '10000000-0000-0000-0000-000000000001'),
   1::bigint,

@@ -308,6 +308,15 @@ serve(async (request) => {
     auth: { persistSession: false, autoRefreshToken: false },
   })
   const requestBody = await request.json().catch(() => ({})) as Record<string, unknown>
+  if (requestBody.action === "configure_dispatch") {
+    const { error } = await admin.rpc("configure_push_dispatch", {
+      p_functions_base_url: supabaseUrl,
+      p_dispatch_secret: expectedSecret,
+    })
+    if (error) return json(500, { error: "configure_dispatch_failed" })
+    return json(200, { configured: true })
+  }
+
   let enqueued = 0
   if (requestBody.action === "enqueue_update") {
     const channel = String(requestBody.channel ?? "")

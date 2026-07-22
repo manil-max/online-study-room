@@ -38,8 +38,9 @@ void main() {
       ).readAsStringSync();
 
       expect(source, contains('FCM_SERVICE_ACCOUNT_JSON'));
-      expect(source, contains('claim_push_deliveries'));
-      expect(source, contains('complete_push_delivery'));
+    expect(source, contains('claim_push_deliveries'));
+    expect(source, contains('complete_push_delivery'));
+    expect(source, contains('configure_push_dispatch'));
       expect(source, contains('https://fcm.googleapis.com/v1/projects/'));
       expect(source, contains('UNREGISTERED'.toLowerCase()));
       expect(source, isNot(contains('console.log(delivery.fcm_token)')));
