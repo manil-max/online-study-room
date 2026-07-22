@@ -66,6 +66,17 @@ function pemToBytes(pem: string): Uint8Array {
   return Uint8Array.from(binary, (char) => char.charCodeAt(0))
 }
 
+function decodeBase64Utf8(value: string): string {
+  try {
+    const binary = atob(value)
+    return new TextDecoder().decode(
+      Uint8Array.from(binary, (char) => char.charCodeAt(0)),
+    )
+  } catch {
+    return ""
+  }
+}
+
 async function createAccessToken(account: ServiceAccount): Promise<string> {
   const now = Math.floor(Date.now() / 1000)
   const tokenUri = account.token_uri || "https://oauth2.googleapis.com/token"
@@ -291,7 +302,11 @@ serve(async (request) => {
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? ""
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-  const rawAccount = Deno.env.get("FCM_SERVICE_ACCOUNT_JSON") ?? ""
+  // Service-account JSON is pretty-printed/multiline. Supabase's .env parser
+  // cannot safely preserve that form, so CI transmits one Base64 value instead.
+  const rawAccount = decodeBase64Utf8(
+    Deno.env.get("FCM_SERVICE_ACCOUNT_BASE64") ?? "",
+  )
   if (!supabaseUrl || !serviceRoleKey || !rawAccount) {
     return json(503, { error: "push_not_configured" })
   }

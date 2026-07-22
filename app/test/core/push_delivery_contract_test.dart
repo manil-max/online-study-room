@@ -37,7 +37,8 @@ void main() {
         '../supabase/functions/dispatch-push/index.ts',
       ).readAsStringSync();
 
-      expect(source, contains('FCM_SERVICE_ACCOUNT_JSON'));
+      expect(source, contains('FCM_SERVICE_ACCOUNT_BASE64'));
+      expect(source, contains('decodeBase64Utf8'));
     expect(source, contains('claim_push_deliveries'));
     expect(source, contains('complete_push_delivery'));
     expect(source, contains('configure_push_dispatch'));
