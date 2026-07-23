@@ -27,6 +27,7 @@ on:
           - staging-apply
           - production-dry-run
           - production-apply
+          - production-manual-push-0066-0070
       expected_git_sha:
         description: Exact 40-character commit SHA checked out by this run.
         required: false
@@ -131,7 +132,12 @@ jobs:
         shell: pwsh
         run: |
           $environment = if ('${{ inputs.operation }}'.StartsWith('production-')) { 'production' } else { 'staging' }
-          $action = if ('${{ inputs.operation }}'.EndsWith('-apply')) { 'apply' } else { 'dry-run' }
+          $action = switch ('${{ inputs.operation }}') {
+            'production-manual-push-0066-0070' { 'manual-push-0066-0070' }
+            default {
+              if ('${{ inputs.operation }}'.EndsWith('-apply')) { 'apply' } else { 'dry-run' }
+            }
+          }
           $projectRef = if ($environment -eq 'production') { $env:PRODUCTION_SUPABASE_PROJECT_REF } else { $env:STAGING_SUPABASE_PROJECT_REF }
           "environment=$environment" >> $env:GITHUB_OUTPUT
           "action=$action" >> $env:GITHUB_OUTPUT

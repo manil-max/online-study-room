@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
   [Parameter(Mandatory)][ValidateSet('staging', 'production')][string]$Environment,
-  [Parameter(Mandatory)][ValidateSet('inspect-prerequisites', 'inspect-push-runtime', 'bootstrap-prerequisites', 'reconcile-prepare', 'reconcile-apply', 'preflight', 'dry-run', 'apply')][string]$Action,
+  [Parameter(Mandatory)][ValidateSet('inspect-prerequisites', 'inspect-push-runtime', 'bootstrap-prerequisites', 'reconcile-prepare', 'reconcile-apply', 'preflight', 'dry-run', 'apply', 'manual-push-0066-0070')][string]$Action,
   [Parameter(Mandatory)][string]$ProjectRef,
   [Parameter(Mandatory)][string]$SupabaseUrl,
   [Parameter(Mandatory)][string]$StagingProjectRef,
@@ -42,6 +42,38 @@ function Invoke-RemoteSupabase {
   $steps.Add($Label)
   $nodeArguments = @($cliEntry) + $Arguments + @('--workdir', $repoRoot)
   Invoke-EvidenceCommand -Executable $NodePath -Arguments $nodeArguments -EvidenceDirectory $evidenceDirectory -Label $Label -SensitiveValues $sensitiveValues | Out-Null
+}
+
+# Production never had Supabase CLI migration history: historic migrations were
+# applied through SQL Editor.  This deliberately narrow path applies only the
+# five reviewed push migrations, without repairing or inventing that history.
+$manualPushMigrations = [ordered]@{
+  '0066_push_notification_delivery.sql' = '97CA5B7297856F46E348433B1A2FFAB810A5C008C544ADC060B4A47F84797EBA'
+  '0067_push_dispatch_runtime_config.sql' = '4E5C7107552D283226BC848FE0B9B781848FFC5094EBC3883E89DF2C713DAC4A'
+  '0068_revoke_push_dispatch_config_rpc.sql' = '5ED4DFA982AD27B87DB16AFB48679DF270C9D98433468E2A9CCDC62CF903A03F'
+  '0069_push_dispatch_retry_health.sql' = 'BDA5C935EEBA42A1A6A727DC32A36994DBB39D904641D7D61B5263BF8568FF5C'
+  '0070_require_pg_net_for_push_dispatch.sql' = 'E8F5288468928AD4D59D429A502C6B11F952D17551D70B2DD81DAFA077EFFFE9'
+}
+
+function Invoke-ManualPushMigration {
+  param([Parameter(Mandatory)][string]$FileName)
+
+  if (-not $manualPushMigrations.Contains($FileName)) {
+    throw "Manual production migration is not allowlisted: $FileName"
+  }
+  $path = Join-Path $repoRoot "supabase/migrations/$FileName"
+  if (-not (Test-Path -LiteralPath $path)) {
+    throw "Allowlisted manual production migration is missing: $FileName"
+  }
+  $actualHash = (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToUpperInvariant()
+  if ($actualHash -cne $manualPushMigrations[$FileName]) {
+    throw "Manual production migration hash mismatch: $FileName"
+  }
+
+  $sql = "begin;`n" + (Get-Content -LiteralPath $path -Raw -Encoding UTF8) + "`ncommit;"
+  $steps.Add("manual-$FileName")
+  $nodeArguments = @($cliEntry, 'db', 'query', '--linked', $sql, '--workdir', $repoRoot)
+  Invoke-EvidenceCommand -Executable $NodePath -Arguments $nodeArguments -EvidenceDirectory $evidenceDirectory -Label "manual-$FileName" -SensitiveValues $sensitiveValues | Out-Null
 }
 
 function Write-RemoteManifest {
@@ -98,7 +130,7 @@ try {
   if ($ExpectedMigrationHead -ne $targetContract.migration_head) {
     throw "Deploy contract rejects migration head $ExpectedMigrationHead for $Environment."
   }
-  if ($Action -in @('apply', 'bootstrap-prerequisites', 'reconcile-prepare', 'reconcile-apply') -and -not [bool]$targetContract.deploy_enabled) {
+  if ($Action -in @('apply', 'manual-push-0066-0070', 'bootstrap-prerequisites', 'reconcile-prepare', 'reconcile-apply') -and -not [bool]$targetContract.deploy_enabled) {
     throw "Deploy HOLD: $($targetContract.hold_reason)"
   }
 
@@ -113,7 +145,7 @@ try {
     throw 'SUPABASE_DB_PASSWORD must come from the environment secret store.'
   }
 
-  if ($Environment -eq 'production' -and $Action -eq 'apply') {
+  if ($Environment -eq 'production' -and $Action -in @('apply', 'manual-push-0066-0070')) {
     Assert-ProductionApproval -ExpectedGitSha $ExpectedGitSha -ExpectedMigrationHead $ExpectedMigrationHead -ProjectRef $ProjectRef -BackupEvidence $BackupEvidence -Confirmation $ConfirmProductionGo -GitHubActions $env:GITHUB_ACTIONS -ApprovalEnvironment $env:DEPLOY_APPROVAL_ENVIRONMENT
   }
 
@@ -123,7 +155,38 @@ try {
     throw 'Supabase CLI link post-check failed.'
   }
 
-  if ($Action -eq 'inspect-push-runtime') {
+  if ($Action -eq 'manual-push-0066-0070') {
+    if ($Environment -ne 'production') {
+      throw 'Manual push migration path is production-only.'
+    }
+    foreach ($fileName in $manualPushMigrations.Keys) {
+      Invoke-ManualPushMigration -FileName $fileName
+    }
+    $postCheckSql = @'
+do $post_check$
+begin
+  if to_regclass('public.push_devices') is null
+     or to_regclass('public.notification_outbox') is null
+     or to_regclass('public.notification_deliveries') is null
+     or to_regclass('public.push_dispatch_runtime_config') is null then
+    raise exception 'manual_push_post_check_missing_push_relation';
+  end if;
+  if not exists (select 1 from pg_extension where extname = 'pg_cron')
+     or not exists (select 1 from pg_extension where extname = 'pg_net')
+     or not exists (select 1 from cron.job where jobname = 'push-dispatch-retry-worker') then
+    raise exception 'manual_push_post_check_missing_transport_or_worker';
+  end if;
+  if not exists (
+    select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.proname = 'get_push_dispatch_queue_health'
+  ) then
+    raise exception 'manual_push_post_check_missing_health_rpc';
+  end if;
+end
+$post_check$;
+'@
+    Invoke-RemoteSupabase -Arguments @('db', 'query', '--linked', $postCheckSql) -Label 'manual-push-post-check'
+  } elseif ($Action -eq 'inspect-push-runtime') {
     Invoke-RemoteSupabase -Arguments @('migration', 'list', '--linked') -Label '02-migration-list'
     $diagnosticSql = Get-StagingPushRuntimeDiagnosticSql
     Assert-StagingPushRuntimeDiagnostic -Environment $Environment -ProjectRef $ProjectRef -StagingProjectRef $StagingProjectRef -ProductionProjectRef $ProductionProjectRef -Sql $diagnosticSql
