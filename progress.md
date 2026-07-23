@@ -49,12 +49,12 @@
 ### Codex Lane
 - **Durum:** [~] Aktif
 - **Faz/WP:** Kurtarma · Faz 3 — WP-271 beta aday yayını
-- **Aşama:** Staging gate ve beta-v4304 hazırlanıyor
-- **SAHİP yollar:** `tooling/release/deploy-contract.json`, ilgili `tooling/release/*.tests.ps1`, `tooling/supabase/{DeployGuard.psm1,guard.tests.ps1,remote.ps1}`, `CHANGELOG.md`, `app/assets/release_notes.json`, `progress.md` (yalnız bu lane)
+- **Aşama:** Staging gate geçti; beta-v4305 hazırlanıyor
+- **SAHİP yollar:** `tooling/release/deploy-contract.json`, ilgili `tooling/release/*.tests.ps1`, `tooling/supabase/{DeployGuard.psm1,guard.tests.ps1,remote.ps1}`, `app/lib/core/notifications/app_push_notification_service.dart`, `app/test/core/app_notification_coordinator_test.dart`, `CHANGELOG.md`, `app/assets/release_notes.json`, `progress.md` (yalnız bu lane)
 - **Ortak/riskli yüzey:** Staging migration head/release metadata; yalnız staging beta. Production, stable, Store ve feature kodu kapsam dışıdır.
 - **Dal:** `main`
 - **Başlangıç / Son güncelleme:** 2026-07-23 17:06 / 2026-07-23 17:06 (Europe/Istanbul)
-- **Not:** Kullanıcı cihaz kabulü için GitHub beta yayını istedi. `0069` staging gate sonrası benzersiz `beta-v4304` prerelease hedefleniyor; production HOLD korunur.
+- **Not:** Kullanıcı cihaz kabulü için GitHub beta yayını istedi. `0069` staging gate geçti; başarısız Android test-hostu nedeniyle iptal edilen `beta-v4304` yerine benzersiz `beta-v4305` prerelease hedefleniyor; production HOLD korunur.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta

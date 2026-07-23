@@ -3,15 +3,16 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
-      "versionName": "1.0.43-beta.4",
-      "buildNumber": 4304,
+      "versionName": "1.0.43-beta.5",
+      "buildNumber": 4305,
       "channel": "beta",
       "date": "2026-07-23",
-      "title": "beta-v4304: bildirim tekrarı ve v43 sözleşmesi",
+      "title": "beta-v4305: bildirim tekrarı ve güvenli test hostu",
       "highlights": [
         "Başarısız uzaktan bildirimler otomatik yeniden denenir; kuyruk sağlığı bekleyen işleri ve hata sınıfını gösterir.",
         "Sayaç bildirimi v43 görünümünde kalır; güvenli standart fallback korunur.",
-        "Taç XP çubuğu artık mutlak toplamı gösterir: örneğin 25k / 75k."
+        "Taç XP çubuğu artık mutlak toplamı gösterir: örneğin 25k / 75k.",
+        "Android hedefli test hostunda kayıtlı olmayan yerel bildirim adaptörü uygulama açılışını artık bozmaz."
       ],
       "fixes": [
         "Araçlardan Kronometre, Dünya Saati ve yatay StandBy kaldırıldı; Alarm, Timer ve Görevler korundu.",
@@ -21,11 +22,12 @@
         "Bu beta staging backend kullanır ve 0069 migration head'ini gerektirir.",
         "Bildirim Merkezi'nden foreground, background ve uygulama kapalıyken uzaktan self-test çalıştır."
       ],
-      "titleEn": "beta-v4304: notification retry and v43 contract",
+      "titleEn": "beta-v4305: notification retry and safe test host",
       "highlightsEn": [
         "Failed remote notifications retry automatically; queue health shows pending work and error class.",
         "The timer notification keeps the v43 presentation with a safe standard fallback.",
-        "The crown XP bar now shows absolute totals, for example 25k / 75k."
+        "The crown XP bar now shows absolute totals, for example 25k / 75k.",
+        "An unregistered local-notification adapter on Android-targeted test hosts no longer breaks app startup."
       ],
       "fixesEn": [
         "Removed Stopwatch, World Clock and landscape StandBy from Tools; Alarm, Timer and Tasks remain.",

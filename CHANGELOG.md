@@ -4,15 +4,16 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
-## [beta-v4304 / 1.0.43-beta.4+4304] - 2026-07-23
+## [beta-v4305 / 1.0.43-beta.5+4305] - 2026-07-23
 
-> **Cihaz kabul betası — güvenilir bildirim tekrarı ve v43 ürün sözleşmesi.** Yalnız staging ortamını kullanır; stable uygulamayı ya da production verisini etkilemez.
+> **Cihaz kabul betası — güvenilir bildirim tekrarı, v43 ürün sözleşmesi ve güvenli test hostu.** Yalnız staging ortamını kullanır; stable uygulamayı ya da production verisini etkilemez.
 
 ### Düzeltmeler
 - **Başarısız uzaktan bildirimler otomatik yeniden denenir.** Kuyruk sağlığı artık tekrar deneme zamanı, bekleyen iş sayısı, en eski iş yaşı ve hata sınıfını gösterir.
 - **Sayaç bildirimi v43 sözleşmesinde kalır.** Desteklenmeyen yolda güvenli standart fallback korunur; Now Bar/promoted deneyi stable görünümü değiştirmez.
 - **Araçlar sade kaldı.** Alarm, Timer ve Görevler korunur; Kronometre, Dünya Saati ve yatay StandBy kaldırıldı.
 - **Taç XP çubuğu mutlak toplamı gösterir.** Örneğin `25k / 75k`; kademe içi yanıltıcı sayı göstermez.
+- **Android hedefli test hostu güvenlidir.** Kayıtlı yerel-bildirim platformu olmayan test hostu uygulama açılışını bozmaz; gerçek cihazdaki başka platform başlatma hataları gizlenmez.
 
 ### Test notları
 - Bu beta `0069` staging migration head'ini gerektirir ve stable uygulamayla yan yana kurulur.

@@ -62,7 +62,17 @@ class AppNotificationCoordinator {
     const settings = InitializationSettings(
       android: AndroidInitializationSettings('@mipmap/ic_launcher'),
     );
-    await _plugin.initialize(settings: settings);
+    try {
+      await _plugin.initialize(settings: settings);
+    } on Error catch (error) {
+      if (!error.toString().startsWith('LateInitializationError:')) {
+        rethrow;
+      }
+      // `flutter test` Android hedefini seçebilir ama platform eklentisini
+      // kaydetmez. Bu hostta local notification gösterimi yoktur; gerçek
+      // Android cihazdaki platform başlatma hatalarını ise gizlemeyiz.
+      return;
+    }
     final android = _plugin
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin
