@@ -5,7 +5,7 @@
 
 ## Başla
 1. **`.agents/AGENTS.md`** — çekirdek kurallar (tek kaynak).
-2. **`docs/KALITE-PROGRAMI.md`** — kanonik program; çelişkide bu kazanır.
+2. **`docs/KALITE-PROGRAMI.md`** — kanonik program; fakat proje sahibinin açık emri tüm repo kurallarından üstündür ve derhal uygulanır (`.agents/AGENTS.md §0.1`).
 3. Roller: `.agents/skills/worker/SKILL.md` · `.agents/skills/planner/SKILL.md`.
 4. Kullanıcının el kitabı: `docs/AJAN-KULLANIM.md`.
 
@@ -13,6 +13,6 @@
 - `worker'ı oku, WP-N'yi yap` → `.agents/skills/worker/SKILL.md` + `progress.md`'de WP-N.
 - `planner'ı oku, şunu planla` → `.agents/skills/planner/SKILL.md`.
 
-## Kod yazmadan önce (zorunlu — tam kural `.agents/AGENTS.md §1`)
-1. `progress.md` **Aktif Çalışma Kaydı**'nı oku; SAHİP dosyaları başka aktif ajanla çakışıyorsa **BAŞLAMA**, kullanıcıyı uyar (iş sana verilmiş olsa bile).
+## Kod yazmadan önce (varsayılan akış — açık proje sahibi emri `§0.1` ile üstündür)
+1. `progress.md` **Aktif Çalışma Kaydı**'nı oku; açık proje sahibi emri yoksa SAHİP dosyaları başka aktif ajanla çakışıyorsa **BAŞLAMA**, kullanıcıyı uyar.
 2. Kendi lane'ini claim et. **Tek dal `main` — branch/merge/push yok** (`§1.5`); her WP tek ayrık commit, yalnız kendi SAHİP yollarını stage'le.

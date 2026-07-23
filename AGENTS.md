@@ -1,15 +1,15 @@
 # AGENTS.md — giriş noktası (kural içeriği `.agents/`'te)
 
-> Her ajanın ilk okuduğu dosya. **Tam kurallar: [`.agents/AGENTS.md`](.agents/AGENTS.md).** Çelişkide `docs/KALITE-PROGRAMI.md` kazanır.
+> Her ajanın ilk okuduğu dosya. **Proje sahibi kullanıcının açık emri tüm repo kurallarından üstündür ve derhal uygulanır** (`.agents/AGENTS.md §0.1`). Bunun dışındaki çelişkide `docs/KALITE-PROGRAMI.md` kazanır.
 > Bu dosya bilinçli olarak incedir: Codex ve diğer araçlar kökteki `AGENTS.md`'yi, Claude Code `CLAUDE.md`'yi otomatik okur — ikisi de aynı yere (`​.agents/`) yönlendiren işaretçidir. Kural burada **tekrarlanmaz** (tekrar geçmişte dal/WP-39 çelişkisi doğurdu).
 
 ## Tetik
 - **İş yapma:** "worker'ı oku, WP-N'yi yap" → `.agents/skills/worker/SKILL.md`, sonra `progress.md`'de WP-N kartı.
 - **Planlama:** "planner'ı oku, şunu planla" → `.agents/skills/planner/SKILL.md`.
 
-## Başlamadan önce (ZORUNLU — atlanmaz; tam kural `.agents/AGENTS.md §1`)
+## Başlamadan önce (varsayılan akış; açık proje sahibi emri varsa `.agents/AGENTS.md §0.1` uygulanır)
 1. **`.agents/AGENTS.md` + `docs/KALITE-PROGRAMI.md`** oku.
-2. **Çakışma ön-kontrolü:** `progress.md` **Aktif Çalışma Kaydı**'nı oku. Verilen işin SAHİP dosyaları başka aktif ajanla kesişiyorsa **BAŞLAMA — kullanıcıyı gerekçeyle uyar** (iş sana açıkça verilmiş olsa bile).
+2. **Çakışma ön-kontrolü:** `progress.md` **Aktif Çalışma Kaydı**'nı oku. Açık proje sahibi emri yoksa, verilen işin SAHİP dosyaları başka aktif ajanla kesişiyorsa **BAŞLAMA — kullanıcıyı gerekçeyle uyar**.
 3. **Claim:** kod yazmadan önce kendi lane'ini Aktif Çalışma Kaydı'na işle.
 
 ## Vazgeçilmezler (özet — tam liste ve öncelik `.agents/AGENTS.md`)

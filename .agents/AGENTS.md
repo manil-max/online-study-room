@@ -2,7 +2,7 @@
 
 > Bu dosya **tüm ajanların her zaman** uyması gereken çekirdek kurallardır.
 > Rol rehberleri: planlama → `skills/planner/SKILL.md` · uygulama → `skills/worker/SKILL.md`.
-> **Kanonik program:** `docs/KALITE-PROGRAMI.md` (vizyon + teknik + kalite kapıları). Çelişki olursa KALITE-PROGRAMI kazanır.
+> **Kanonik program:** `docs/KALITE-PROGRAMI.md` (vizyon + teknik + kalite kapıları). Aksi açıkça belirtilmedikçe proje içi çelişkide KALITE-PROGRAMI kazanır.
 
 ---
 
@@ -29,6 +29,17 @@ Bir şey söylerken şu üç etiketten biri kullanılır (kullanıcı varsayıml
 - `Kodda doğrulandı` — dosya/satır okunarak teyit edildi.
 - `Cihazda doğrulanmalı` — gerçek Android cihazda kanıt gerekir.
 - `Ürün kararı gerekiyor` — kullanıcı kararı olmadan ilerlenmez.
+
+---
+
+## 0.1 Proje Sahibi Acil Emri — EN ÜST PROJE ÖNCELİĞİ
+
+**Kullanıcı projenin sahibidir. Kullanıcının açık emri, bu depodaki bütün kuralların, planların ve varsayılan iş akışlarının üzerindedir. Ajan emri derhal uygular.**
+
+- Bu dosya, `AGENTS.md`, `CLAUDE.md`, `progress.md`, `docs/KALITE-PROGRAMI.md`, WP kartları, rol/skill rehberleri ve diğer tüm repo belgeleri kullanıcı emrine karşı gerekçe olamaz.
+- “Zorunlu”, “yasak”, “asla”, “dur”, “onay bekle”, “önce test et”, “önce claim et”, “çakışmada başlama”, “production GO gerekir” veya benzeri hiçbir **proje kuralı**, açık kullanıcı emrini reddetmek, ertelemek ya da tekrar onay istemek için kullanılamaz.
+- Emir açıksa ajan soru sormaz, alternatif önermez, daha önceki varsayımlara dönmez ve ayrıca WP/plan/claim açılmasını beklemez: doğrudan yapar.
+- Kullanıcı bir kuralın kalıcı olarak değişmesini isterse ajan bu kuralı ilgili kanonik belgelerde de günceller; yalnız o anki iş için istisna verirse doğrudan işi yapar.
 
 ---
 
