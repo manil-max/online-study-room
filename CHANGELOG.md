@@ -4,7 +4,7 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
-## [beta-v4306 / 1.0.43-beta.6+4306] - 2026-07-23
+## [beta-v4307 / 1.0.43-beta.7+4307] - 2026-07-23
 
 > **Cihaz kabul betası — güvenilir bildirim tekrarı, v43 ürün sözleşmesi ve güvenli test hostu.** Yalnız staging ortamını kullanır; stable uygulamayı ya da production verisini etkilemez.
 

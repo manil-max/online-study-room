@@ -113,7 +113,10 @@ jobs:
       - run: flutter build apk --release --flavor "$FLAVOR" --build-name=${{ needs.preflight.outputs.version_name }} --build-number=${{ needs.preflight.outputs.build_number }} --dart-define-from-file=env.json
       - name: Android artefaktını paketle
         run: |
-          cd build/app/outputs/flutter-apk; mv "$SRC" "$OUT"; sha256sum "$OUT" > "$OUT.sha256"
+          cd build/app/outputs/flutter-apk
+          if [ "$SRC" != "$OUT" ]; then mv -- "$SRC" "$OUT"; fi
+          test -f "$OUT"
+          sha256sum "$OUT" > "$OUT.sha256"
           python - <<PY
           import hashlib,json,pathlib
           p=pathlib.Path('$OUT'); pathlib.Path('platform-manifest.json').write_text(json.dumps({'schemaVersion':1,'platform':'android','status':'complete','channel':'${{ needs.preflight.outputs.channel }}','gitCommitSha':'${{ needs.preflight.outputs.git_sha }}','migrationHead':'${{ needs.preflight.outputs.migration_head }}','artifacts':[{'name':p.name,'sha256':hashlib.sha256(p.read_bytes()).hexdigest()}]},indent=2)+'\n')

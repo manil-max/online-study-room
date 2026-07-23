@@ -45,9 +45,9 @@ Android cihaz QA'sı GitHub prerelease beta APK'sıyla yapılır. Önce mevcut a
 
 Ayrıntı: `docs/play-store/` ve `docs/play/OWNER-ACTION-CHECKLIST.md`.
 
-## E. beta-v4306 push/timer kabulü (WP-271)
+## E. beta-v4307 push/timer kabulü (WP-271)
 
-> Aday kimliği: `beta-v4306` · `1.0.43-beta.6+4306` · staging head `0070`.
+> Aday kimliği: `beta-v4307` · `1.0.43-beta.7+4307` · staging head `0070`.
 > Backend ön kabulü tamamdır; aşağıdaki satırlar fiziksel Android cihazda doldurulur.
 
 | # | Senaryo | Beklenen | Sonuç | Kanıt |

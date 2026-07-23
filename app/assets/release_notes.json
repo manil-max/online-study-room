@@ -3,11 +3,11 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
-      "versionName": "1.0.43-beta.6",
-      "buildNumber": 4306,
+      "versionName": "1.0.43-beta.7",
+      "buildNumber": 4307,
       "channel": "beta",
       "date": "2026-07-23",
-      "title": "beta-v4306: bildirim transportu ve güvenli test hostu",
+      "title": "beta-v4307: bildirim transportu ve güvenli test hostu",
       "highlights": [
         "Staging uzaktan bildirim transportu onarıldı; başarısız bildirimler otomatik yeniden denenir ve kuyruk sağlığı bekleyen işleri gösterir.",
         "Sayaç bildirimi v43 görünümünde kalır; güvenli standart fallback korunur.",
@@ -22,7 +22,7 @@
         "Bu beta staging backend kullanır ve 0070 migration head'ini gerektirir.",
         "Bildirim Merkezi'nden foreground, background ve uygulama kapalıyken uzaktan self-test çalıştır."
       ],
-      "titleEn": "beta-v4306: notification transport and safe test host",
+      "titleEn": "beta-v4307: notification transport and safe test host",
       "highlightsEn": [
         "The staging remote-notification transport is repaired; failed notifications retry automatically and queue health exposes pending work.",
         "The timer notification keeps the v43 presentation with a safe standard fallback.",

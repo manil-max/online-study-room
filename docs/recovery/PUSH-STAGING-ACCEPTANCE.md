@@ -18,11 +18,12 @@ Kanıt:
 
 ## Kalan tek yayın adımı
 
-`beta-v4304` ve `beta-v4305` tag'leri önceki başarısız denemelerde kullanıldı;
+`beta-v4304`, `beta-v4305` ve `beta-v4306` tag'leri önceki başarısız
+denemelerde kullanıldı;
 yeniden kullanılmaz. Yeni aday:
 
-- tag: `beta-v4306`
-- version: `1.0.43-beta.6+4306`
+- tag: `beta-v4307`
+- version: `1.0.43-beta.7+4307`
 - migration head: `0070`
 - commit: yayın anındaki exact `main` HEAD
 
