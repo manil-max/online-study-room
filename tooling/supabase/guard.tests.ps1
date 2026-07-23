@@ -120,7 +120,9 @@ $passed++
 foreach ($requiredMarker in @(
   'begin transaction read only',
   'cron.job_run_details',
-  'net._http_response',
+  'push_pg_net_catalog',
+  'pg_extension',
+  'pg_proc',
   'push_dispatch_runtime_config',
   'get_push_dispatch_queue_health',
   'notification_deliveries',

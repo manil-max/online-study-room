@@ -224,16 +224,37 @@ from (
 ) r;
 
 select json_build_object(
-  'kind', 'push_pg_net_responses',
+  'kind', 'push_pg_net_catalog',
   'observed_at', now(),
-  'rows', coalesce(json_agg(to_jsonb(r) order by r.created desc), '[]'::json)
+  'extension_installed', exists(
+    select 1 from pg_extension where extname = 'pg_net'
+  ),
+  'extension_version', (
+    select extversion from pg_extension where extname = 'pg_net' limit 1
+  ),
+  'net_schema_present', exists(
+    select 1 from pg_namespace where nspname = 'net'
+  ),
+  'functions', coalesce((
+    select json_agg(json_build_object(
+      'name', p.proname,
+      'arguments', pg_get_function_identity_arguments(p.oid)
+    ) order by p.proname, pg_get_function_identity_arguments(p.oid))
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'net'
+  ), '[]'::json),
+  'relations', coalesce((
+    select json_agg(json_build_object(
+      'name', c.relname,
+      'kind', c.relkind
+    ) order by c.relname)
+    from pg_class c
+    join pg_namespace n on n.oid = c.relnamespace
+    where n.nspname = 'net'
+  ), '[]'::json)
 )::text as push_diagnostic
-from (
-  select id, status_code, timed_out, left(coalesce(error_msg, ''), 500) as error_msg, created
-  from net._http_response
-  order by created desc
-  limit 20
-) r;
+;
 
 select json_build_object(
   'kind', 'push_runtime_config',

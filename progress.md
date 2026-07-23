@@ -47,14 +47,14 @@
 - **Not:** —
 
 ### Codex Lane
-- **Durum:** [x] Boşta
-- **Faz/WP:** —
-- **Aşama:** —
-- **SAHİP yollar:** —
-- **Ortak/riskli yüzey:** —
+- **Durum:** [~] Aktif
+- **Faz/WP:** Beta arıza kurtarması · Faz 3 retry worker salt-okunur teşhis
+- **Aşama:** pg_net katalog uyumluluğu düzeltildi; ikinci salt-okunur run hazırlanıyor
+- **SAHİP yollar:** `tooling/supabase/{DeployGuard.psm1,guard.tests.ps1}`, `progress.md` (yalnız bu lane)
+- **Ortak/riskli yüzey:** Staging yalnız salt-okunur workflow run; DB/Edge mutasyonu, tag/release ve production kapsam dışı.
 - **Dal:** `main`
-- **Başlangıç / Son güncelleme:** — / 2026-07-23 17:22 (Europe/Istanbul)
-- **Not:** Nihai rapor `7912673`; Faz 1–2 `7ba15d6`. Configured/unconfigured full suite ayrı ayrı 690/690 yeşil. Faz 3 salt-okunur staging diagnostic workflow/tooling yerelde hazır ve guard 50/50; uzak koşum push + manuel dispatch bekliyor. Yeni tag/release yok; production HOLD korunur.
+- **Başlangıç / Son güncelleme:** 2026-07-23 17:31 / 2026-07-23 17:32 (Europe/Istanbul)
+- **Not:** `656f352` push edildi. Run `30015833942`: remote migration `0069`; diagnostic `net._http_response` relation varsayımında düştü. Doğrudan internal relation sorgusu kaldırıldı; extension/schema/function/relation kataloğu okunacak. Guard 50/50. Production HOLD korunur.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
