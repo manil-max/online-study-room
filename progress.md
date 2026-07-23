@@ -49,12 +49,12 @@
 ### Codex Lane
 - **Durum:** [~] Aktif
 - **Faz/WP:** Beta arıza kurtarması · Faz 3 retry worker salt-okunur teşhis
-- **Aşama:** pg_net katalog uyumluluğu düzeltildi; ikinci salt-okunur run hazırlanıyor
+- **Aşama:** İkinci run queue katmanını kanıtladı; birleşik son diagnostic hazırlanıyor
 - **SAHİP yollar:** `tooling/supabase/{DeployGuard.psm1,guard.tests.ps1}`, `progress.md` (yalnız bu lane)
 - **Ortak/riskli yüzey:** Staging yalnız salt-okunur workflow run; DB/Edge mutasyonu, tag/release ve production kapsam dışı.
 - **Dal:** `main`
-- **Başlangıç / Son güncelleme:** 2026-07-23 17:31 / 2026-07-23 17:32 (Europe/Istanbul)
-- **Not:** `656f352` push edildi. Run `30015833942`: remote migration `0069`; diagnostic `net._http_response` relation varsayımında düştü. Doğrudan internal relation sorgusu kaldırıldı; extension/schema/function/relation kataloğu okunacak. Guard 50/50. Production HOLD korunur.
+- **Başlangıç / Son güncelleme:** 2026-07-23 17:31 / 2026-07-23 17:37 (Europe/Istanbul)
+- **Not:** Run `30016351335` yeşil: iki self-test delivery pending, attempts=0, available=true, cihaz aktif, tercih açık, quiet-hours kapalı. Supabase query API yalnız son result set'i döndürdüğü için cron/config/pg_net/queue tek JSON sonucunda birleştirildi; guard 50/50. Production HOLD korunur.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta

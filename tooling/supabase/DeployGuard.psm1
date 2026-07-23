@@ -190,130 +190,118 @@ function Get-StagingPushRuntimeDiagnosticSql {
 begin transaction read only;
 
 select json_build_object(
-  'kind', 'push_cron_job',
+  'kind', 'push_runtime_diagnostic',
   'observed_at', now(),
-  'rows', coalesce(json_agg(json_build_object(
-    'jobid', j.jobid,
-    'schedule', j.schedule,
-    'database', j.database,
-    'username', j.username,
-    'active', j.active
-  ) order by j.jobid), '[]'::json)
-)::text as push_diagnostic
-from cron.job j
-where j.jobname = 'push-dispatch-retry-worker';
-
-select json_build_object(
-  'kind', 'push_cron_runs',
-  'observed_at', now(),
-  'rows', coalesce(json_agg(to_jsonb(r) order by r.start_time desc), '[]'::json)
-)::text as push_diagnostic
-from (
-  select
-    d.runid,
-    d.jobid,
-    d.status,
-    left(coalesce(d.return_message, ''), 500) as return_message,
-    d.start_time,
-    d.end_time
-  from cron.job_run_details d
-  join cron.job j on j.jobid = d.jobid
-  where j.jobname = 'push-dispatch-retry-worker'
-  order by d.start_time desc
-  limit 20
-) r;
-
-select json_build_object(
-  'kind', 'push_pg_net_catalog',
-  'observed_at', now(),
-  'extension_installed', exists(
-    select 1 from pg_extension where extname = 'pg_net'
-  ),
-  'extension_version', (
-    select extversion from pg_extension where extname = 'pg_net' limit 1
-  ),
-  'net_schema_present', exists(
-    select 1 from pg_namespace where nspname = 'net'
-  ),
-  'functions', coalesce((
+  'cron_job', coalesce((
     select json_agg(json_build_object(
-      'name', p.proname,
-      'arguments', pg_get_function_identity_arguments(p.oid)
-    ) order by p.proname, pg_get_function_identity_arguments(p.oid))
-    from pg_proc p
-    join pg_namespace n on n.oid = p.pronamespace
-    where n.nspname = 'net'
+      'jobid', j.jobid,
+      'schedule', j.schedule,
+      'database', j.database,
+      'username', j.username,
+      'active', j.active
+    ) order by j.jobid)
+    from cron.job j
+    where j.jobname = 'push-dispatch-retry-worker'
   ), '[]'::json),
-  'relations', coalesce((
-    select json_agg(json_build_object(
-      'name', c.relname,
-      'kind', c.relkind
-    ) order by c.relname)
-    from pg_class c
-    join pg_namespace n on n.oid = c.relnamespace
-    where n.nspname = 'net'
+  'cron_runs', coalesce((
+    select json_agg(to_jsonb(r) order by r.start_time desc)
+    from (
+      select
+        d.runid,
+        d.jobid,
+        d.status,
+        left(coalesce(d.return_message, ''), 500) as return_message,
+        d.start_time,
+        d.end_time
+      from cron.job_run_details d
+      join cron.job j on j.jobid = d.jobid
+      where j.jobname = 'push-dispatch-retry-worker'
+      order by d.start_time desc
+      limit 20
+    ) r
+  ), '[]'::json),
+  'pg_net_catalog', json_build_object(
+    'extension_installed', exists(
+      select 1 from pg_extension where extname = 'pg_net'
+    ),
+    'extension_version', (
+      select extversion from pg_extension where extname = 'pg_net' limit 1
+    ),
+    'net_schema_present', exists(
+      select 1 from pg_namespace where nspname = 'net'
+    ),
+    'functions', coalesce((
+      select json_agg(json_build_object(
+        'name', p.proname,
+        'arguments', pg_get_function_identity_arguments(p.oid)
+      ) order by p.proname, pg_get_function_identity_arguments(p.oid))
+      from pg_proc p
+      join pg_namespace n on n.oid = p.pronamespace
+      where n.nspname = 'net'
+    ), '[]'::json),
+    'relations', coalesce((
+      select json_agg(json_build_object(
+        'name', c.relname,
+        'kind', c.relkind
+      ) order by c.relname)
+      from pg_class c
+      join pg_namespace n on n.oid = c.relnamespace
+      where n.nspname = 'net'
+    ), '[]'::json)
+  ),
+  'runtime_config', (
+    select json_build_object(
+      'row_count', count(*),
+      'base_url_present', coalesce(bool_and(char_length(functions_base_url) > 0), false),
+      'base_url_shape_valid', coalesce(bool_and(functions_base_url ~ '^https://[a-z0-9]{20}\.supabase\.co$'), false),
+      'secret_present', coalesce(bool_and(char_length(dispatch_secret) > 0), false),
+      'secret_length_valid', coalesce(bool_and(char_length(dispatch_secret) >= 48), false),
+      'configured_at', max(configured_at)
+    )
+    from public.push_dispatch_runtime_config
+  ),
+  'queue_health', coalesce((
+    select json_agg(to_jsonb(h))
+    from public.get_push_dispatch_queue_health() h
+  ), '[]'::json),
+  'active_deliveries', coalesce((
+    select json_agg(to_jsonb(q) order by q.created_at)
+    from (
+      select
+        left(md5(d.id::text), 12) as delivery_key,
+        left(md5(d.outbox_id::text), 12) as outbox_key,
+        o.notification_type,
+        o.status as outbox_status,
+        d.status as delivery_status,
+        d.attempts,
+        d.available_at,
+        d.available_at <= now() as available_now,
+        d.lease_until,
+        d.lease_until is not null and d.lease_until < now() as lease_expired,
+        d.created_at,
+        d.updated_at,
+        d.sent_at,
+        d.last_error_code,
+        pd.disabled_at is not null as device_disabled,
+        case o.notification_type
+          when 'nudge' then pd.nudge_enabled
+          when 'announcement' then pd.announcement_enabled
+          when 'update' then pd.update_enabled
+          when 'self_test' then true
+          else false
+        end as preference_enabled,
+        pd.quiet_hours_enabled,
+        pd.quiet_start_minutes,
+        pd.quiet_end_minutes
+      from public.notification_deliveries d
+      join public.notification_outbox o on o.id = d.outbox_id
+      join public.push_devices pd on pd.id = d.device_id
+      where d.status in ('pending', 'retry', 'processing')
+      order by d.created_at
+      limit 20
+    ) q
   ), '[]'::json)
-)::text as push_diagnostic
-;
-
-select json_build_object(
-  'kind', 'push_runtime_config',
-  'observed_at', now(),
-  'row_count', count(*),
-  'base_url_present', coalesce(bool_and(char_length(functions_base_url) > 0), false),
-  'base_url_shape_valid', coalesce(bool_and(functions_base_url ~ '^https://[a-z0-9]{20}\.supabase\.co$'), false),
-  'secret_present', coalesce(bool_and(char_length(dispatch_secret) > 0), false),
-  'secret_length_valid', coalesce(bool_and(char_length(dispatch_secret) >= 48), false),
-  'configured_at', max(configured_at)
-)::text as push_diagnostic
-from public.push_dispatch_runtime_config;
-
-select json_build_object(
-  'kind', 'push_queue_health',
-  'observed_at', now(),
-  'rows', coalesce(json_agg(to_jsonb(h)), '[]'::json)
-)::text as push_diagnostic
-from public.get_push_dispatch_queue_health() h;
-
-select json_build_object(
-  'kind', 'push_active_deliveries',
-  'observed_at', now(),
-  'rows', coalesce(json_agg(to_jsonb(q) order by q.created_at), '[]'::json)
-)::text as push_diagnostic
-from (
-  select
-    left(md5(d.id::text), 12) as delivery_key,
-    left(md5(d.outbox_id::text), 12) as outbox_key,
-    o.notification_type,
-    o.status as outbox_status,
-    d.status as delivery_status,
-    d.attempts,
-    d.available_at,
-    d.available_at <= now() as available_now,
-    d.lease_until,
-    d.lease_until is not null and d.lease_until < now() as lease_expired,
-    d.created_at,
-    d.updated_at,
-    d.sent_at,
-    d.last_error_code,
-    pd.disabled_at is not null as device_disabled,
-    case o.notification_type
-      when 'nudge' then pd.nudge_enabled
-      when 'announcement' then pd.announcement_enabled
-      when 'update' then pd.update_enabled
-      when 'self_test' then true
-      else false
-    end as preference_enabled,
-    pd.quiet_hours_enabled,
-    pd.quiet_start_minutes,
-    pd.quiet_end_minutes
-  from public.notification_deliveries d
-  join public.notification_outbox o on o.id = d.outbox_id
-  join public.push_devices pd on pd.id = d.device_id
-  where d.status in ('pending', 'retry', 'processing')
-  order by d.created_at
-  limit 20
-) q;
+)::text as push_diagnostic;
 
 rollback;
 '@
