@@ -96,6 +96,10 @@ void main() {
     expect(service, contains('prefs().getBoolean(KEY_PANEL_EXPANDED, true)'));
     expect(service, contains('PRESENTATION_V43_CUSTOM'));
     expect(service, contains('PRESENTATION_STANDARD_FALLBACK'));
+    expect(
+      service,
+      contains('views.setChronometer(\n            R.id.notif_timer_elapsed,\n            base,\n            null,\n            true,'),
+    );
     expect(service, contains('R.mipmap.ic_launcher'));
     expect(service, isNot(contains('.setRequestPromotedOngoing(true)')));
     expect(service, isNot(contains('hasPromotableCharacteristics')));
@@ -119,6 +123,9 @@ void main() {
     expect(fixture, contains('"defaultPresentation": "v43_custom_panel"'));
     expect(fixture, contains('"fallbackPresentation": "standard_fallback"'));
     expect(fixture, contains('"promotedNowBar": "not_requested"'));
+    expect(fixture, contains('"hourBoundaryFormat"'));
+    expect(service, isNot(contains('"00:%s"')));
+    expect(service, isNot(contains('chronometerFormatHandler')));
     expect(service, contains('.setUsesChronometer(true)'));
     expect(service, contains('.setChronometerCountDown(false)'));
     expect(service, contains('EXTRA_PROMOTED_NOW_BAR'));

@@ -407,7 +407,12 @@ class StudyTimerService : Service() {
     private fun buildRunningRemoteViews(startedAtMs: Long, isBreak: Boolean): RemoteViews {
         val views = RemoteViews(packageName, R.layout.timer_notification)
         val base = SystemClock.elapsedRealtime() - (System.currentTimeMillis() - startedAtMs)
-        views.setChronometer(R.id.notif_timer_elapsed, base, "00:%s", true)
+        views.setChronometer(
+            R.id.notif_timer_elapsed,
+            base,
+            null,
+            true,
+        )
         views.setTextViewText(
             R.id.notif_timer_action,
             if (isBreak) getString(R.string.action_return_to_work)

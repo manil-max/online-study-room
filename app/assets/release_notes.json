@@ -7,29 +7,35 @@
       "buildNumber": 4308,
       "channel": "beta",
       "date": "2026-07-23",
-      "title": "beta-v4308: bildirim cooldown tanısı",
+      "title": "beta-v4308: bildirim tanısı ve sayaç biçimi",
       "highlights": [
         "Uzak self-test için 20 saniyelik bilinçli cooldown artık teslim timeout'u gibi gösterilmez.",
-        "Aynı kişiye sık dürtme denemesinde 10 dakikalık kural açıklanır."
+        "Aynı kişiye sık dürtme denemesinde 10 dakikalık kural açıklanır.",
+        "One UI bildiriminde sayaç alt-saatte MM:SS, bir saatten sonra H:MM:SS olarak kalır."
       ],
       "fixes": [
-        "Dürtme ekranı repository'nin anlamlı cooldown mesajını artık genel hata ile değiştirmez."
+        "Dürtme ekranı repository'nin anlamlı cooldown mesajını artık genel hata ile değiştirmez.",
+        "Bir saat üstünde çift saat öneki ve dar görünümde kesilen son hane giderildi."
       ],
       "notes": [
         "Bu beta staging backend kullanır ve 0070 migration head'ini gerektirir.",
-        "Remote self-test istekleri arasında en az 20 saniye bırak; cooldown teslim başarısızlığı değildir."
+        "Remote self-test istekleri arasında en az 20 saniye bırak; cooldown teslim başarısızlığı değildir.",
+        "Sayaçta 59:55 → 1:00:05 geçişini dar ve geniş bildirim görünümünde kontrol et."
       ],
-      "titleEn": "beta-v4308: notification cooldown diagnostics",
+      "titleEn": "beta-v4308: notification diagnostics and timer format",
       "highlightsEn": [
         "The intentional 20-second remote self-test cooldown is no longer presented as a delivery timeout.",
-        "Rapid nudge attempts explain the 10-minute rule."
+        "Rapid nudge attempts explain the 10-minute rule.",
+        "The One UI timer notification uses MM:SS below one hour and H:MM:SS afterwards."
       ],
       "fixesEn": [
-        "The nudge screen no longer replaces the repository's meaningful cooldown message with a generic error."
+        "The nudge screen no longer replaces the repository's meaningful cooldown message with a generic error.",
+        "Removed the duplicated hour prefix and clipped final digit after one hour."
       ],
       "notesEn": [
         "This beta uses the staging backend and requires migration head 0070.",
-        "Leave at least 20 seconds between remote self-test requests; cooldown is not a delivery failure."
+        "Leave at least 20 seconds between remote self-test requests; cooldown is not a delivery failure.",
+        "Check the timer transition from 59:55 to 1:00:05 in compact and expanded notification views."
       ]
     },
     {

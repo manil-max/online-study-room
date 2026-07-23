@@ -58,6 +58,9 @@ Ayrıntı: `docs/play-store/` ve `docs/play/OWNER-ACTION-CHECKLIST.md`.
 | P4 | Ağ kes → self-test → ağı aç | Otomatik retry ile teslim; ikinci kullanıcı eylemi gerekmez | ⬜ | |
 | P5 | Sayaç Başlat/Duraklat/Durdur | v43 paneli; aksiyonlar uygulama kapalıyken çalışır | ⬜ | |
 | P6 | 20 ölçümlü remote self-test | duplicate=0; yanlış hedef=0; p95≤10 sn | ⬜ | |
+| P7 | Timer `59:55` → `1:00:05`, dar ve geniş One UI görünümü | Alt-saatte `MM:SS`; bir saatten itibaren `H:MM:SS`; kesilmiş/çift saat öneki yok | ⬜ | |
+
+> **Gözlem, 2026-07-23:** Kullanıcı foreground/background/normal kapatma ve ağ kes→aç smoke'unda teslimin işlevsel olduğunu; sık self-testte cooldown bilgisinin göründüğünü bildirdi. Ölçüm sayısı, duplicate ve p95 kanıtı kaydedilmediği için P1–P7 ve C1–C3 satırları bilinçli olarak açık bırakılmıştır.
 
 ### beta-v4308 cooldown tanı tekrarı (WP-284)
 

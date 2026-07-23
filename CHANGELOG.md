@@ -11,10 +11,12 @@ notları ekranı bu metinle aynı kararları yansıtmalıdır.
 ### Düzeltmeler
 - **Uzaktan self-test cooldown'ı artık hata diye gösterilmez.** Yeni test isteği sunucu tarafından bilinçli olarak 20 saniye sınırlandığında, ekran teslim timeout'u yerine bekleme bilgisini gösterir.
 - **Dürtme cooldown mesajı görünür.** Aynı kişiye tekrar dürtüldüğünde genel “beklenmeyen hata” yerine 10 dakikalık kural açıklanır.
+- **Sayaç biçimi sadeleşti.** One UI bildiriminde alt-saatte `MM:SS`, bir saatten sonra `H:MM:SS` görünür; `00:1:00:59` gibi çift saat öneki ve dar görünümde son hanenin kesilmesi olmaz.
 
 ### Test notları
 - Remote self-test istekleri arasında en az 20 saniye bırak; cooldown mesajı teslim başarısızlığı değildir.
 - P1–P6 kabulünü beta-v4307 ile aynı staging backend üzerinde sürdür; bu aday yalnız hata sınıflandırması/mesajını değiştirir.
+- Sayaçta `59:55` → `1:00:05` geçişini hem dar hem geniş bildirim görünümünde kontrol et.
 
 ## [beta-v4307 / 1.0.43-beta.7+4307] - 2026-07-23
 

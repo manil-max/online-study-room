@@ -3,6 +3,7 @@
   "defaultPresentation": "v43_custom_panel",
   "layout": "timer_notification",
   "runningHierarchy": ["elapsed_chronometer", "direct_stop_or_return_action"],
+  "hourBoundaryFormat": ["MM:SS below one hour", "H:MM:SS at and above one hour", "no clipped duplicate hour prefix"],
   "idleHierarchy": ["00:00:00", "direct_start_action"],
   "fallbackPresentation": "standard_fallback",
   "fallbackContract": ["ongoing_chronometer", "native_action", "no_custom_remote_view"],
