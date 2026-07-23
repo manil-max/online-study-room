@@ -22,10 +22,10 @@ $repoRoot = Get-RepoRoot
 $stagingRef = 'aaaaaaaaaaaaaaaaaaaa'
 $productionRef = 'bbbbbbbbbbbbbbbbbbbb'
 
-Assert-Equal (Get-LocalMigrationHead -RepoRoot $repoRoot) '0068' 'local migration head'
-Assert-Equal ((Get-DeployContract -RepoRoot $repoRoot).local_migration_head) '0068' 'contract migration head'
+Assert-Equal (Get-LocalMigrationHead -RepoRoot $repoRoot) '0069' 'local migration head'
+Assert-Equal ((Get-DeployContract -RepoRoot $repoRoot).local_migration_head) '0069' 'contract migration head'
 $contract = Get-DeployContract -RepoRoot $repoRoot
-Assert-Equal $contract.staging.migration_head '0068' 'staging migration head'
+Assert-Equal $contract.staging.migration_head '0069' 'staging migration head'
 Assert-Equal ([bool]$contract.staging.deploy_enabled) $true 'staging deploy enabled'
 Assert-Equal ([bool]$contract.staging.release_enabled) $true 'staging release enabled'
 Assert-Equal $contract.production.migration_head '0065' 'production head 0065: applied manually, chain repair is WP-232'
