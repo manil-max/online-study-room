@@ -92,6 +92,10 @@ void main() {
     );
     expect(service, contains('.setCustomContentView(custom)'));
     expect(service, contains('.setCustomBigContentView(custom)'));
+    expect(service, contains('KEY_PANEL_EXPANDED'));
+    expect(service, contains('prefs().getBoolean(KEY_PANEL_EXPANDED, true)'));
+    expect(service, contains('PRESENTATION_V43_CUSTOM'));
+    expect(service, contains('PRESENTATION_STANDARD_FALLBACK'));
     expect(service, contains('R.mipmap.ic_launcher'));
     expect(service, isNot(contains('.setRequestPromotedOngoing(true)')));
     expect(service, isNot(contains('hasPromotableCharacteristics')));
@@ -101,5 +105,23 @@ void main() {
       ).readAsStringSync(),
       allOf(contains('notif_timer_elapsed'), contains('notif_timer_action')),
     );
+  });
+
+  test('v43 fixture keeps the custom main path and standard fallback separate', () {
+    final fixture = File(
+      'test/fixtures/timer_notification_v43_contract.json',
+    ).readAsStringSync();
+    final service = File(
+      'android/app/src/main/kotlin/com/manilmax/online_study_room/timer/'
+      'StudyTimerService.kt',
+    ).readAsStringSync();
+
+    expect(fixture, contains('"defaultPresentation": "v43_custom_panel"'));
+    expect(fixture, contains('"fallbackPresentation": "standard_fallback"'));
+    expect(fixture, contains('"promotedNowBar": "not_requested"'));
+    expect(service, contains('.setUsesChronometer(true)'));
+    expect(service, contains('.setChronometerCountDown(false)'));
+    expect(service, contains('EXTRA_PROMOTED_NOW_BAR'));
+    expect(service, contains('PROMOTED_NOW_BAR_NOT_REQUESTED'));
   });
 }

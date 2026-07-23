@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "defaultPresentation": "v43_custom_panel",
+  "layout": "timer_notification",
+  "runningHierarchy": ["elapsed_chronometer", "direct_stop_or_return_action"],
+  "idleHierarchy": ["00:00:00", "direct_start_action"],
+  "fallbackPresentation": "standard_fallback",
+  "fallbackContract": ["ongoing_chronometer", "native_action", "no_custom_remote_view"],
+  "promotedNowBar": "not_requested",
+  "deviceScreenshot": "required_in_samsung_device_qa"
+}

@@ -53,8 +53,8 @@
 - **SAHİP yollar:** —
 - **Ortak/riskli yüzey:** —
 - **Dal:** `main`
-- **Başlangıç / Son güncelleme:** — / 2026-07-23 14:22 (Europe/Istanbul)
-- **Not:** WP-270 kod+otomatik test tamamlandı; staging/canlı cihaz kabulü için parka alındı. Lane boşaldı.
+- **Başlangıç / Son güncelleme:** — / 2026-07-23 (Europe/Istanbul)
+- **Not:** WP-271 ops/cihaz girdisi; WP-272 otomatik doğrulama sonrası Samsung cihaz kabulüne park edildi. Production HOLD korunur.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
@@ -84,8 +84,8 @@
 |---|---|---|---|
 | 0 | Stable/production freeze | 🔴 HOLD | WP-271 kabulü ve soak olmadan kaldırılmaz |
 | 1A | WP-269 Release kapılarını sadeleştir | ✅ Kod+test tamam → Park | CI orchestrator koşusu + owner required-reviewer kabulü bekliyor |
-| 1B | WP-270 Push retry/health motoru | [ ] Bekliyor | WP-269 ile paralel olabilir |
-| 1C | WP-272 v43 sayaç paneli sözleşmesi | [ ] Bekliyor | WP-269/270 ile paralel olabilir; en fazla iki lane kuralına uy |
+| 1B | WP-270 Push retry/health motoru | [x] Otomatik test geçti → Park | WP-271 staging/cihaz kabulünü bekliyor |
+| 1C | WP-272 v43 sayaç paneli sözleşmesi | [x] Otomatik test geçti → Park | Samsung cihaz kabulü bekliyor |
 | 2A | WP-271 Staging gerçek push kabulü | [ ] Bekliyor | WP-269 + WP-270 kabulünden sonra |
 | 2B | WP-273 Windows deterministik release | [ ] Bekliyor | WP-269'dan sonra |
 | Karar | WP-274 Tools erişim kararı | [?] Ürün kararı gerekiyor | Kullanıcı yön seçmeden worker başlamaz |
@@ -150,7 +150,7 @@
 ### WP-271: Staging Gerçek Push ve Tek-Cihaz Beta Kabulü 📱
 - **Program/Faz:** Kurtarma · Faz 3 — staging kabulü
 - **Ajan:** —
-- **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-269 + WP-270 otomatik kabulü
+- **Durum:** [?] Ops/cihaz girdisi bekliyor · **Bağımlılık:** WP-269 + WP-270 otomatik kabulü
 - **Problem:** beta-v4303 Android APK ve staging altyapısı yayımlanmış olsa da gerçek FCM teslim, retry, Samsung görünümü ve ölçümlü cihaz kabulü yoktur.
 - **Kapsam dışı:** Production migration/secret/function/stable release; yeni feature/fix. Testte bug bulunursa bu WP içinde acele fix yapılmaz, ayrı debug WP açılır.
 - **SAHİP dosyalar (yaz):** `tooling/release/deploy-contract.json` (yalnız staging head/HOLD), `docs/qa/DEVICE-QA-MATRIX.md`, `docs/recovery/PUSH-STAGING-ACCEPTANCE.md`, beta kabul kanıt manifestleri ve gerekiyorsa release metadata dosyaları.
@@ -169,23 +169,26 @@
 - **Tuzaklar:** Local notification'ı FCM kanıtı saymak; Settings “Force stop” sonrası Android'in teslim engelini ürün bug'ı diye yanlış sınıflandırmak; test sırasında production hedeflemek.
 - **Model önerisi:** 🔴 Opus / frontier-high
 
+> **Park notu (2026-07-23):** Staging erişim tokenı/DB parolası, sentetik staging hesabı ve gerçek Android cihaz mevcut ortamda yok. Bu girdiler olmadan `migration list`/dry-run/push veya 20 ölçümlü FCM kabul kanıtı üretilmez; production HOLD korunur.
+
 ### WP-272: v43 Sayaç Paneli Sözleşmesi ve Now Bar İzolasyonu ⏱️
 - **Program/Faz:** Kurtarma · Faz 2 — Android timer ürün kontratı
 - **Ajan:** —
-- **Durum:** [ ] Bekliyor
+- **Durum:** [x] Otomatik test geçti → **Park** (Samsung cihaz kabulü bekliyor)
 - **Problem:** beta-v4302 kabul edilmiş v43 custom paneli standard notification ile değiştirdi; beta-v4303 paneli büyük ölçüde geri getirdi fakat v43 fallback davranışı ve cihaz kabulü net değildir.
 - **Kapsam dışı:** Timer state/session/XP motorunu yeniden yazmak, push/outbox, Samsung private API, stable release.
 - **SAHİP dosyalar (yaz):** `app/android/app/src/main/kotlin/**/timer/StudyTimerService.kt`, `app/android/app/src/main/res/layout/timer_notification.xml`, timer notification ikon/manifest yüzeyi, `app/lib/core/background/timer_foreground_service.dart`, ilgili native/source/widget testleri ve cihaz kabul kanıtları.
 - **DOKUNMA (oku, değiştirme):** `supabase/**`, push dispatcher, release workflow'ları, timer session persistence/achievement zinciri.
 - **Adımlar:**
-  - [ ] v43 custom panelini stable ürün kontratı olarak fixture/screenshot sözleşmesine bağla.
-  - [ ] v43 fallback flag/davranışını diff ile çıkar; desteklenmeyen cihazda işlevsel standard fallback'i geri kur.
-  - [ ] Promoted/Now Bar yolunu stable paneli değiştirmeyen açık deney/diagnostic olarak ayır.
-  - [ ] Başlat/Duraklat/Durdur native action, kill/reboot ve uzun sayaç matrisini Samsung'da koş.
+  - [x] v43 custom panelini `timer_notification_v43_contract.json` fixture'ı ve kaynak sözleşme testiyle bağla.
+  - [x] v43 `flutter.timer_panel_expanded` fallback flag/davranışını geri kur; false yolunda standard chronometer + native action kalır.
+  - [x] Promoted/Now Bar'ı `not_requested` tanı extrası olarak ayır; stable custom panelde promoted API isteği yoktur.
+  - [ ] Başlat/Duraklat/Durdur native action, kill/reboot ve uzun sayaç matrisini Samsung'da koş. **Cihazda doğrulanmalı.**
 - **Veri/Migration etkisi:** Yok. Rollback v43 timer presentation commit/fixture'ına dönüştür.
 - **Ortam/Deploy:** Local Android build + beta cihaz QA; tag/stable/production yok.
 - **RLS/Güvenlik:** Etki yok; PendingIntent mutability/exported component kontrolleri korunur.
 - **Edge-case'ler:** API 29–33/34+, OEM custom-layout kısıtı, font ölçeği, dark/light, reboot, Doze, uygulama güncellemesi sırasında aktif timer.
+- **Kod kanıtı (2026-07-23):** `flutter test --dart-define-from-file=env.json test/core/verified_timer_bridge_contract_test.dart` 7/7 ve `flutter analyze --no-pub` geçti. Android SDK bu çalışma ortamında yok (`No Android SDK found`); APK/Kotlin derleme ve Samsung ekran görüntüsü/aksiyon matrisi cihaz QA'da tamamlanacak.
 - **Kabul (ölçülebilir):** Samsung'da v43 referansıyla aynı bilgi hiyerarşisi ve üç action erişilebilir; desteklenmeyen yolda fallback notification kaybolmaz; 8 saatte sapma ≤±1 sn; app-kapalı action başarı oranı 20/20; FGS crash=0. **Cihazda doğrulanmalı.**
 - **Tuzaklar:** Now Bar görünümünü garanti etmek; görünüm düzeltirken timer state motoruna dokunmak; kaynak-string testini cihaz kabulü saymak.
 - **Model önerisi:** 🔴 Opus / frontier-high

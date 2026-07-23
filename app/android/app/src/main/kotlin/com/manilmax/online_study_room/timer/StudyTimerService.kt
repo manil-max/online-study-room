@@ -12,6 +12,7 @@ import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
 import android.os.SystemClock
+import android.os.Bundle
 import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
 import com.manilmax.online_study_room.MainActivity
@@ -305,9 +306,9 @@ class StudyTimerService : Service() {
     }
 
     /**
-     * Stable ile aynı One UI paneli: tek satır HH:MM:SS ve doğrudan eylem.
-     * Custom panel, promoted-standard kartın yerine kullanılır; iki farklı timer
-     * görünümünün aynı anda oluşmasına izin verilmez.
+     * v43 ürün kontratı: One UI'da tek satır HH:MM:SS ve doğrudan eylem.
+     * `timer_panel_expanded` yalnız OEM/custom-layout sorunu için kaçış valfidir;
+     * varsayılanı değiştirmez ve timer durum motoruna dokunmaz.
      */
     private fun buildRunningNotification(startedAtMs: Long): Notification {
         ensureChannel()
@@ -317,34 +318,91 @@ class StudyTimerService : Service() {
             .setOngoing(true)
             .setContentIntent(openAppPending())
             .setCategory(NotificationCompat.CATEGORY_STOPWATCH)
-        val custom = buildRunningRemoteViews(startedAtMs, isBreak)
-        return builder
-            .setContentTitle("")
-            .setContentText("")
-            .setUsesChronometer(false)
-            .setShowWhen(false)
-            .setStyle(NotificationCompat.DecoratedCustomViewStyle())
-            .setCustomContentView(custom)
-            .setCustomBigContentView(custom)
-            .build()
+        val presentation = if (useV43CustomPanel()) {
+            val custom = buildRunningRemoteViews(startedAtMs, isBreak)
+            builder
+                .setContentTitle("")
+                .setContentText("")
+                .setUsesChronometer(false)
+                .setShowWhen(false)
+                .setStyle(NotificationCompat.DecoratedCustomViewStyle())
+                .setCustomContentView(custom)
+                .setCustomBigContentView(custom)
+            PRESENTATION_V43_CUSTOM
+        } else {
+            // v43 fallback: custom layout desteklenmeyen OEM'de sayaç ve eylem kaybolmaz.
+            builder
+                .setContentTitle(
+                    if (isBreak) getString(R.string.timer_break_title)
+                    else getString(R.string.timer_focusing_title),
+                )
+                .setContentText(
+                    if (isBreak) getString(R.string.timer_break_body)
+                    else getString(R.string.timer_focusing_body),
+                )
+                .setUsesChronometer(true)
+                .setWhen(startedAtMs)
+                .setShowWhen(true)
+                .setChronometerCountDown(false)
+                .addAction(
+                    0,
+                    if (isBreak) getString(R.string.action_return_to_work)
+                    else getString(R.string.action_stop),
+                    if (isBreak) endBreakActionPending() else stopActionPending(),
+                )
+            PRESENTATION_STANDARD_FALLBACK
+        }
+        return addPresentationDiagnostic(builder, presentation).build()
     }
 
     private fun buildIdleNotification(): Notification {
         ensureChannel()
-        val custom = buildIdleRemoteViews()
-        return baseBuilder()
+        val builder = baseBuilder()
             .setOngoing(false)
             .setContentIntent(openAppPending())
             .setCategory(NotificationCompat.CATEGORY_STOPWATCH)
-            .setUsesChronometer(false)
-            .setShowWhen(false)
-            .setContentTitle("")
-            .setContentText("")
-            .setStyle(NotificationCompat.DecoratedCustomViewStyle())
-            .setCustomContentView(custom)
-            .setCustomBigContentView(custom)
-            .build()
+        val presentation = if (useV43CustomPanel()) {
+            val custom = buildIdleRemoteViews()
+            builder
+                .setUsesChronometer(false)
+                .setShowWhen(false)
+                .setContentTitle("")
+                .setContentText("")
+                .setStyle(NotificationCompat.DecoratedCustomViewStyle())
+                .setCustomContentView(custom)
+                .setCustomBigContentView(custom)
+            PRESENTATION_V43_CUSTOM
+        } else {
+            builder
+                .setUsesChronometer(false)
+                .setShowWhen(false)
+                .setContentTitle("00:00:00")
+                .setContentText(getString(R.string.timer_ready))
+                .addAction(0, getString(R.string.action_start), startActionPending())
+            PRESENTATION_STANDARD_FALLBACK
+        }
+        return addPresentationDiagnostic(builder, presentation).build()
     }
+
+    /** v43'teki kaçış valfi: true ana ürün paneli, false işlevsel standart bildirim. */
+    private fun useV43CustomPanel(): Boolean =
+        prefs().getBoolean(KEY_PANEL_EXPANDED, true)
+
+    /**
+     * Now Bar/promoted ongoing, custom panel ile aynı bildirimde etkinleştirilmez.
+     * Bu ekstra yalnız tanı içindir: OEM sonucu bir ürün vaadi veya stable davranış
+     * değişikliği değildir. Ayrı bir deney bu değeri okuyabilir; burada promoted API
+     * çağrısı yapılmaz.
+     */
+    private fun addPresentationDiagnostic(
+        builder: NotificationCompat.Builder,
+        presentation: String,
+    ): NotificationCompat.Builder = builder.addExtras(
+        Bundle().apply {
+            putString(EXTRA_TIMER_PRESENTATION, presentation)
+            putString(EXTRA_PROMOTED_NOW_BAR, PROMOTED_NOW_BAR_NOT_REQUESTED)
+        },
+    )
 
     private fun buildRunningRemoteViews(startedAtMs: Long, isBreak: Boolean): RemoteViews {
         val views = RemoteViews(packageName, R.layout.timer_notification)
@@ -470,6 +528,13 @@ class StudyTimerService : Service() {
         private const val CHANNEL_ID = "study_timer_live_fg"
         private const val NOTIFICATION_ID = 7040
         private const val LEGACY_FLUTTER_NOTIFICATION_ID = 7001
+        /** v43 custom panel varsayılandır; false yalnız cihaz sorununda fallback'tir. */
+        private const val KEY_PANEL_EXPANDED = "flutter.timer_panel_expanded"
+        private const val EXTRA_TIMER_PRESENTATION = "timer.presentation"
+        private const val EXTRA_PROMOTED_NOW_BAR = "timer.promoted_now_bar"
+        private const val PRESENTATION_V43_CUSTOM = "v43_custom_panel"
+        private const val PRESENTATION_STANDARD_FALLBACK = "standard_fallback"
+        private const val PROMOTED_NOW_BAR_NOT_REQUESTED = "not_requested"
         /** Servisi belirli bir komutla ayağa kaldırır (receiver/notification/Dart). */
         fun sendCommand(
             context: Context,
