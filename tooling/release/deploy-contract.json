@@ -8,9 +8,9 @@
     "hold_reason": "WP-280: retry worker/runtime config and required pg_net transport (0066-0070) are authorized only for staging activation and GitHub beta device QA."
   },
   "production": {
-    "migration_head": "0065",
-    "deploy_enabled": false,
+    "migration_head": "0070",
+    "deploy_enabled": true,
     "release_enabled": false,
-    "hold_reason": "Production HOLD: deploy/release varsayılanı kapalıdır. Yalnız protected production Environment içinde exact SHA/head/project-ref ile tek kullanımlık GO ve kanıt girdisi doğrulanır; required reviewer kurulumu repo sahibi aksiyonudur."
+    "hold_reason": "Owner-directed 0066-0070 production migration promotion is in progress; release remains exact-GO gated."
   }
 }

@@ -28,8 +28,8 @@ $contract = Get-DeployContract -RepoRoot $repoRoot
 Assert-Equal $contract.staging.migration_head '0070' 'staging migration head'
 Assert-Equal ([bool]$contract.staging.deploy_enabled) $true 'staging deploy enabled'
 Assert-Equal ([bool]$contract.staging.release_enabled) $true 'staging release enabled'
-Assert-Equal $contract.production.migration_head '0065' 'production head 0065: applied manually, chain repair is WP-232'
-Assert-Equal ([bool]$contract.production.deploy_enabled) $false 'production deploy defaults to HOLD'
+Assert-Equal $contract.production.migration_head '0070' 'production head 0070: owner-directed migration promotion'
+Assert-Equal ([bool]$contract.production.deploy_enabled) $true 'production deploy enabled for owner-directed promotion'
 Assert-Equal ([bool]$contract.production.release_enabled) $false 'production release defaults to HOLD'
 
 $databaseWorkflow = Get-Content -LiteralPath (Join-Path $repoRoot '.github\workflows\database-gates.yml') -Raw -Encoding UTF8
