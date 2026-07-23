@@ -53,8 +53,8 @@
 - **SAHİP yollar:** —
 - **Ortak/riskli yüzey:** —
 - **Dal:** `main`
-- **Başlangıç / Son güncelleme:** — / 2026-07-23 14:20 (Europe/Istanbul)
-- **Not:** WP-269 kod+tooling testi tamamlandı; Codex limiti bitince Claude devraldı ve doğrulayıp parka aldı. Lane boşaldı.
+- **Başlangıç / Son güncelleme:** — / 2026-07-23 14:22 (Europe/Istanbul)
+- **Not:** WP-270 kod+otomatik test tamamlandı; staging/canlı cihaz kabulü için parka alındı. Lane boşaldı.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
@@ -125,18 +125,20 @@
 
 ### WP-270: Push Retry Worker, Salt-Okunur Health ve Kuyruk Gözlemi 📬
 - **Program/Faz:** Kurtarma · Faz 2 — bildirim güvenilirliği
-- **Ajan:** —
-- **Durum:** [ ] Bekliyor
+- **Ajan:** Codex
+- **Durum:** [x] Otomatik test geçti → **Park** (staging/cihaz kabulü bekliyor)
 - **Problem:** Outbox/retry/lease state'i var fakat zamanlanmış worker yok; geçici hata sonrası kayıt süresiz bekleyebilir. Mevcut “health” çağrısı iş claim edip gönderim yapabiliyor.
 - **Kapsam dışı:** Production deploy, beta tag/release, Android sayaç görünümü, pazarlama segmentasyonu.
 - **SAHİP dosyalar (yaz):** yeni `supabase/migrations/0069_*`, `supabase/functions/dispatch-push/**`, `supabase/tests/**`, `app/lib/core/notifications/**`, ilgili notification health UI/repository/provider testleri.
 - **DOKUNMA (oku, değiştirme):** release workflow'ları ve `tooling/release/deploy-contract.json` (WP-269/271), Android timer FGS/layout (WP-272), production.
 - **Adımlar:**
-  - [ ] Kimlik bilgisi güvenli, periyodik dispatcher tetikleyicisi kur; retry zamanı gelen işi yeniden claim et.
-  - [ ] Salt-okunur health/status yolunu work/dispatch yolundan ayır.
-  - [ ] Stuck lease recovery, queue depth/oldest age/attempt/error code ölçümlerini ekle.
-  - [ ] Self-test UI'da transport/config/timeout/server/FCM hata sınıfını görünür yap.
-  - [ ] Gerçek PostgreSQL fixture'ıyla transient hata→backoff→başarı ve invalid-token kapanışını test et.
+  - [x] Kimlik bilgisi güvenli, periyodik dispatcher tetikleyicisi kur; retry zamanı gelen işi yeniden claim et.
+  - [x] Salt-okunur health/status yolunu work/dispatch yolundan ayır.
+  - [x] Stuck lease recovery, queue depth/oldest age/attempt/error code ölçümlerini ekle.
+  - [x] Self-test UI'da transport/config/timeout/server/FCM hata sınıfını görünür yap.
+  - [x] Gerçek PostgreSQL fixture'ıyla transient hata→backoff→başarı ve invalid-token kapanışını test et.
+- **Kanıt (Kodda doğrulandı):** Local `0001→0069` replay; pgTAP 137/137; local Edge runtime `dispatch-push` smoke (beklenen `405 Method Not Allowed`); hedef Flutter testleri 10/10; `flutter analyze` 0 sorun. Yerel kanıt manifesti: `.artifacts/deploy-evidence/20260723T112626126Z-local-test/`.
+- **Açık kabul (Cihazda/staging'de doğrulanmalı):** WP-271 kapsamında staging cron/Edge ve gerçek FCM ile 20 ölçüm, terminated-app teslimi ve retry kanıtı.
 - **Veri/Migration etkisi:** Yeni ileri `0069`; remote'a uygulanmış `0066–0068` değişmez. Rollback cron/tetikleyiciyi durdurur, yeni enqueue'yu kapatır; outbox/delivery kanıt satırlarını silmez.
 - **Ortam/Deploy:** Önce local full replay + pgTAP + Edge type-check. Staging terfisi WP-271; production yok.
 - **RLS/Güvenlik:** Service-role/client'a çıkmaz; health hassas token/payload göstermez; client direct-DML reddi korunur; tetikleyici secret'ı DB log'una yazılmaz.

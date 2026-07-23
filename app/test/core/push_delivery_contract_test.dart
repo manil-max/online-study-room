@@ -42,6 +42,8 @@ void main() {
       expect(source, contains('claim_push_deliveries'));
       expect(source, contains('complete_push_delivery'));
       expect(source, contains('configure_push_dispatch'));
+      expect(source, contains('get_push_dispatch_queue_health'));
+      expect(source, contains('requestBody.action === "health"'));
       expect(source, contains('https://fcm.googleapis.com/v1/projects/'));
       expect(source, contains('data: stringData(delivery, content)'));
       expect(source, isNot(contains('notification: content')));
@@ -76,7 +78,26 @@ void main() {
       contains("snapshot.lastEventId == 'self_test:\${request.outboxId}'"),
     );
     expect(healthSource, contains('const Duration(seconds: 25)'));
+    expect(healthSource, contains('classifyPushSelfTestFailure(status)'));
   });
+
+  test(
+    'retry worker keeps its secret out of cron commands and health read-only',
+    () {
+      final sql = File(
+        '../supabase/migrations/0069_push_dispatch_retry_health.sql',
+      ).readAsStringSync();
+
+      expect(sql, contains("'push-dispatch-retry-worker'"));
+      expect(
+        sql,
+        contains("'select public._request_scheduled_push_dispatch()'"),
+      );
+      expect(sql, contains('get_push_dispatch_queue_health'));
+      expect(sql, contains('get_push_self_test_status'));
+      expect(sql, isNot(contains('BEGIN PRIVATE KEY')));
+    },
+  );
 
   test('release build injects Firebase config and enqueues update push', () {
     final workflow = File(

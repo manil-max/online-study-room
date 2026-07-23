@@ -308,12 +308,29 @@ serve(async (request) => {
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? ""
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+  if (!supabaseUrl || !serviceRoleKey) {
+    return json(503, { error: "push_not_configured" })
+  }
+  const admin = createClient(supabaseUrl, serviceRoleKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  })
+  const requestBody = await request.json().catch(() => ({})) as Record<string, unknown>
+
+  // Health çağrısı kesinlikle claim veya FCM isteği üretmez. Yalnız service-role
+  // queue özetini döndürür; token/payload/secret bu yanıta girmez.
+  if (requestBody.action === "health") {
+    const { data, error } = await admin.rpc("get_push_dispatch_queue_health")
+    if (error) return json(500, { error: "health_read_failed" })
+    const health = Array.isArray(data) ? data[0] : data
+    return json(200, { kind: "push_dispatch_health", health: health ?? {} })
+  }
+
   // Service-account JSON is pretty-printed/multiline. Supabase's .env parser
   // cannot safely preserve that form, so CI transmits one Base64 value instead.
   const rawAccount = decodeBase64Utf8(
     Deno.env.get("FCM_SERVICE_ACCOUNT_BASE64") ?? "",
   )
-  if (!supabaseUrl || !serviceRoleKey || !rawAccount) {
+  if (!rawAccount) {
     return json(503, { error: "push_not_configured" })
   }
 
@@ -325,10 +342,6 @@ serve(async (request) => {
     return json(503, { error: "invalid_service_account" })
   }
 
-  const admin = createClient(supabaseUrl, serviceRoleKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  })
-  const requestBody = await request.json().catch(() => ({})) as Record<string, unknown>
   if (requestBody.action === "configure_dispatch") {
     const { error } = await admin.rpc("configure_push_dispatch", {
       p_functions_base_url: supabaseUrl,

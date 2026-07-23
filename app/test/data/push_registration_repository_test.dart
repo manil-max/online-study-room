@@ -45,6 +45,9 @@ void main() {
       'failed_count': 0,
       'requested_at': '2026-07-22T12:00:00Z',
       'completed_at': '2026-07-22T12:00:02Z',
+      'attempt_count': 2,
+      'last_error_code': 'network_error',
+      'configuration_status': 'configured',
     });
     final queued = PushSelfTestStatus.fromMap({
       'outbox_status': 'dispatching',
@@ -57,8 +60,39 @@ void main() {
 
     expect(sent.state, PushSelfTestDeliveryState.sent);
     expect(sent.terminal, isTrue);
+    expect(sent.attemptCount, 2);
+    expect(sent.errorCode, 'network_error');
     expect(queued.state, PushSelfTestDeliveryState.dispatching);
     expect(queued.terminal, isFalse);
+  });
+
+  test('self-test failures expose a safe operational class', () {
+    final status = PushSelfTestStatus.fromMap({
+      'outbox_status': 'failed',
+      'pending_count': 0,
+      'sent_count': 0,
+      'failed_count': 1,
+      'requested_at': '2026-07-22T12:00:00Z',
+      'completed_at': '2026-07-22T12:00:02Z',
+      'last_error_code': 'unregistered',
+      'configuration_status': 'configured',
+    });
+
+    expect(classifyPushSelfTestFailure(status), 'fcm');
+    expect(
+      classifyPushSelfTestFailure(
+        PushSelfTestStatus.fromMap({
+          'outbox_status': 'dispatching',
+          'pending_count': 1,
+          'sent_count': 0,
+          'failed_count': 0,
+          'requested_at': '2026-07-22T12:00:00Z',
+          'configuration_status': 'not_configured',
+        }),
+      ),
+      'configuration',
+    );
+    expect(classifyPushSelfTestFailure(null), 'timeout');
   });
 
   test('in-memory mirror keeps registration lifecycle deterministic', () async {

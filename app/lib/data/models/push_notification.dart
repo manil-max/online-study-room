@@ -85,6 +85,10 @@ class PushSelfTestStatus {
     required this.failedCount,
     required this.requestedAt,
     this.completedAt,
+    this.attemptCount = 0,
+    this.errorCode,
+    this.nextAttemptAt,
+    this.configurationStatus = 'unknown',
   });
 
   final PushSelfTestDeliveryState state;
@@ -93,6 +97,10 @@ class PushSelfTestStatus {
   final int failedCount;
   final DateTime requestedAt;
   final DateTime? completedAt;
+  final int attemptCount;
+  final String? errorCode;
+  final DateTime? nextAttemptAt;
+  final String configurationStatus;
 
   bool get terminal => switch (state) {
     PushSelfTestDeliveryState.sent ||
@@ -120,6 +128,36 @@ class PushSelfTestStatus {
       completedAt: map['completed_at'] == null
           ? null
           : DateTime.parse(map['completed_at'] as String),
+      attemptCount: (map['attempt_count'] as num?)?.toInt() ?? 0,
+      errorCode: map['last_error_code'] as String?,
+      nextAttemptAt: map['next_attempt_at'] == null
+          ? null
+          : DateTime.parse(map['next_attempt_at'] as String),
+      configurationStatus: map['configuration_status'] as String? ?? 'unknown',
     );
   }
+}
+
+/// Kullanıcı arayüzü için provider/credential ayrıntısı sızdırmadan sınıflanır.
+/// Ham kod yalnız tanı için görünür; token veya payload hiçbir zaman taşınmaz.
+String classifyPushSelfTestFailure(PushSelfTestStatus? status) {
+  if (status?.configurationStatus == 'not_configured') return 'configuration';
+  if (status == null || !status.terminal) return 'timeout';
+  if (status.configurationStatus != 'configured') return 'configuration';
+  final code = status.errorCode?.toLowerCase() ?? '';
+  if (code.contains('timeout')) return 'timeout';
+  if (code.contains('network') || code.contains('transport')) {
+    return 'transport';
+  }
+  if (code.contains('oauth') ||
+      code.contains('service_account') ||
+      code.contains('not_configured')) {
+    return 'configuration';
+  }
+  if (code.contains('unavailable') ||
+      code.contains('internal') ||
+      code.contains('quota')) {
+    return 'server';
+  }
+  return 'fcm';
 }

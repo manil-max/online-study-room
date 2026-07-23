@@ -112,6 +112,8 @@ class _PushHealthCard extends ConsumerWidget {
             ).formatTimeOfDay(TimeOfDay.fromDateTime(lastReceived.toLocal())),
           );
     final selfTest = health.selfTestStatus;
+    final failureKind = classifyPushSelfTestFailure(selfTest);
+    final failureCode = selfTest?.errorCode ?? health.errorCode;
     final selfTestText =
         selfTest?.state == PushSelfTestDeliveryState.sent &&
             health.selfTestReceived
@@ -119,8 +121,10 @@ class _PushHealthCard extends ConsumerWidget {
             ((health.selfTestElapsed?.inMilliseconds ?? 0) / 1000)
                 .toStringAsFixed(1),
           )
-        : selfTest?.terminal == true || health.errorCode == 'push_test_timeout'
-        ? l10n.notificationsRemoteTestFailed
+        : selfTest?.terminal == true ||
+              (health.errorCode?.startsWith('push_test_') ?? false)
+        ? '${l10n.notificationsRemoteTestFailed} '
+              '[$failureKind${failureCode == null ? '' : ': $failureCode'}]'
         : null;
 
     return Card(

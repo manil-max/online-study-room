@@ -3,17 +3,17 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(38);
+select plan(42);
 
 select is(
   (select count(*)::integer from supabase_migrations.schema_migrations),
-  68,
-  'all 68 migrations are recorded'
+  69,
+  'all 69 migrations are recorded'
 );
 select is(
   (select max(version) from supabase_migrations.schema_migrations),
-  '0068',
-  '0068 is the migration head'
+  '0069',
+  '0069 is the migration head'
 );
 select ok(
   to_regclass('public.push_devices') is not null
@@ -143,6 +143,25 @@ select ok(
 );
 select is(current_setting('server_version_num')::integer / 10000, 17, 'PostgreSQL major is 17');
 select ok(exists(select 1 from pg_extension where extname = 'pg_cron'), 'pg_cron prerequisite is installed');
+select ok(
+  exists(select 1 from cron.job where jobname = 'push-dispatch-retry-worker'),
+  '0069 installs exactly named periodic push retry worker'
+);
+select ok(
+  to_regprocedure('public.get_push_dispatch_queue_health()') is not null
+    and not has_function_privilege('authenticated', 'public.get_push_dispatch_queue_health()', 'execute')
+    and has_function_privilege('service_role', 'public.get_push_dispatch_queue_health()', 'execute'),
+  'queue health is a service-only, read-only observation RPC'
+);
+select ok(
+  to_regprocedure('public.get_push_self_test_status(uuid)') is not null
+    and has_function_privilege('authenticated', 'public.get_push_self_test_status(uuid)', 'execute'),
+  'self-test status remains self-scoped client-readable health path'
+);
+select ok(
+  not has_function_privilege('authenticated', 'public._request_scheduled_push_dispatch()', 'execute'),
+  'scheduled dispatcher trigger stays outside client roles'
+);
 select ok(to_regclass('public.study_sessions') is not null, 'study_sessions exists');
 select ok(
   exists(

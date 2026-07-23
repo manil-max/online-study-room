@@ -285,6 +285,7 @@ class PushHealthController extends Notifier<PushHealthState> {
       watch.stop();
       final succeeded =
           status?.state == PushSelfTestDeliveryState.sent && received;
+      final failureKind = classifyPushSelfTestFailure(status);
       state = state.copyWith(
         syncing: false,
         selfTestStatus: status,
@@ -292,11 +293,13 @@ class PushHealthController extends Notifier<PushHealthState> {
         selfTestReceived: received,
         errorCode: succeeded
             ? null
+            : status?.configurationStatus == 'not_configured'
+            ? 'push_test_configuration'
             : status?.state == PushSelfTestDeliveryState.sent
             ? 'push_test_not_received'
             : status == null || !(status.terminal)
             ? 'push_test_timeout'
-            : 'push_test_delivery_failed',
+            : 'push_test_$failureKind',
         clearError: succeeded,
       );
       await refresh();

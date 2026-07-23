@@ -5,7 +5,7 @@ set local search_path = public, extensions;
 
 \ir _fixtures/base_seed.psql
 
-select plan(26);
+select plan(37);
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000001', true);
@@ -78,6 +78,8 @@ select is(
 );
 
 set local role authenticated;
+reset role;
+set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000001', true);
 select lives_ok(
   $$select * from public.register_push_device(
@@ -138,6 +140,70 @@ select is(
   'another user cannot read the first users self-test status'
 );
 
+reset role;
+set local role service_role;
+select set_config('request.jwt.claim.role', 'service_role', true);
+create temp table wp270_health_before as
+select
+  (select count(*) from public.notification_outbox) as outbox_count,
+  (select count(*) from public.notification_deliveries) as delivery_count;
+reset role;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000001', true);
+select * from public.get_push_self_test_status(:'alpha_test_outbox'::uuid);
+select pass('self-test health status is readable without dispatching work');
+reset role;
+set local role service_role;
+select set_config('request.jwt.claim.role', 'service_role', true);
+select is(
+  (select outbox_count from wp270_health_before),
+  (select count(*) from public.notification_outbox),
+  'health read leaves outbox rows unchanged'
+);
+select is(
+  (select delivery_count from wp270_health_before),
+  (select count(*) from public.notification_deliveries),
+  'health read leaves delivery rows unchanged'
+);
+
+select delivery_id as alpha_retry_delivery
+from public.claim_push_deliveries('90000000-0000-0000-0000-000000000001', 1, 60)
+where outbox_id = :'alpha_test_outbox'::uuid
+\gset
+select public.complete_push_delivery(
+  :'alpha_retry_delivery'::uuid,
+  '90000000-0000-0000-0000-000000000001',
+  'retry', null, 'network_error', 15
+);
+select pass('transient transport failure schedules a bounded retry');
+select is(
+  (select status from public.notification_deliveries where id = :'alpha_retry_delivery'::uuid),
+  'retry',
+  'transient delivery remains retryable rather than terminal'
+);
+update public.notification_deliveries
+set available_at = now() - interval '1 second'
+where id = :'alpha_retry_delivery'::uuid;
+select delivery_id as alpha_reclaimed_delivery
+from public.claim_push_deliveries('90000000-0000-0000-0000-000000000002', 1, 60)
+where outbox_id = :'alpha_test_outbox'::uuid
+\gset
+select public.complete_push_delivery(
+  :'alpha_reclaimed_delivery'::uuid,
+  '90000000-0000-0000-0000-000000000002',
+  'sent', 'provider-message-1', null, 60
+);
+select pass('scheduled worker can reclaim retry and complete it once');
+select is(
+  (select status from public.notification_outbox where id = :'alpha_test_outbox'::uuid),
+  'sent',
+  'successful retry closes the self-test outbox'
+);
+select * from public.get_push_dispatch_queue_health();
+select pass('service health reports queue metrics without claiming deliveries');
+
+reset role;
+set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000001', true);
 select lives_ok(
   $$select public.send_nudge(
@@ -213,6 +279,35 @@ select is(
   ),
   2::bigint,
   'update fan-out creates channel-filtered device deliveries'
+);
+
+insert into public.notification_outbox (
+  event_key, recipient_id, notification_type, payload
+) values (
+  'invalid-token-fixture', '10000000-0000-0000-0000-000000000002', 'self_test', '{}'::jsonb
+)
+returning id as invalid_token_outbox
+\gset
+update public.notification_deliveries
+set status = 'processing', attempts = 1,
+    claimed_by = '90000000-0000-0000-0000-000000000003',
+    lease_until = now() + interval '60 seconds'
+where outbox_id = :'invalid_token_outbox'::uuid;
+select public.disable_push_device(
+  (select device_id from public.notification_deliveries where outbox_id = :'invalid_token_outbox'::uuid),
+  'unregistered'
+);
+select pass('invalid FCM token disables the matching device without deleting audit state');
+select public.complete_push_delivery(
+  (select id from public.notification_deliveries where outbox_id = :'invalid_token_outbox'::uuid),
+  '90000000-0000-0000-0000-000000000003',
+  'failed_permanent', null, 'unregistered', 60
+);
+select pass('invalid-token delivery reaches permanent terminal state');
+select is(
+  (select status from public.notification_outbox where id = :'invalid_token_outbox'::uuid),
+  'failed',
+  'invalid-token outbox closes instead of retrying forever'
 );
 
 set local role authenticated;
