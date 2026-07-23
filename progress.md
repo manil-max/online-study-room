@@ -54,7 +54,7 @@
 - **Ortak/riskli yüzey:** —
 - **Dal:** `main`
 - **Başlangıç / Son güncelleme:** —
-- **Not:** WP-273 mevcut makine MSIX N→N+1 güncelleme/açılış ve portable ZIP smoke geçti; temiz VM kurulum/kaldırma kabulü bekliyor. Production HOLD korunur.
+- **Not:** `beta-v4303` APK SHA-256 doğrulandı; yerel `adb` hazır ama bağlı Android cihaz yok. WP-271 gerçek test için cihaz + staging test hesabı bekliyor. Production HOLD korunur.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
@@ -166,6 +166,7 @@
 - **RLS/Güvenlik:** Test hesabı ve redacted kanıt; payload/token/secret ekran görüntüsü/logda 0; cross-user teslim reddi kanıtlanır.
 - **Edge-case'ler:** Android “force stop” ile normal process termination ayrılır; Doze/batarya optimizasyonu; ağ kesintisi; eski beta client; iki cihaz ancak temel tek-cihaz kapısı geçtikten sonra.
 - **Kabul (ölçülebilir):** En az 20 ölçümlü gerçek remote self-testte duplicate=0, yanlış kullanıcı/cihaz teslimi=0 ve p95≤10 sn; zorlanmış transient hata otomatik retry ile teslim olur; terminated app bildirimi görünür; timer action app açmadan çalışır; P0/P1=0. **Cihazda doğrulanmalı.**
+- **Hazırlık kanıtı (2026-07-23):** GitHub `beta-v4303` prerelease aday APK'sı indirildi; `app-beta-release.apk.sha256` ile hash eşleşti. Release manifesti `beta` / commit `3bdf8bb8e25b0d303990f1e28d8ba184b4457ece` / staging head `0068` bildiriyor. Yerel Android platform-tools (`adb 37.0.0`) hazır; bu makinede bağlı cihaz yok, staging hesabı/remote test henüz koşturulmadı.
 - **Tuzaklar:** Local notification'ı FCM kanıtı saymak; Settings “Force stop” sonrası Android'in teslim engelini ürün bug'ı diye yanlış sınıflandırmak; test sırasında production hedeflemek.
 - **Model önerisi:** 🔴 Opus / frontier-high
 
