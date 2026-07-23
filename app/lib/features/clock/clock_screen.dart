@@ -5,10 +5,9 @@ import '../../core/desktop/desktop_window.dart';
 import 'alarms_screen.dart';
 import 'tasks_screen.dart';
 import 'timers_screen.dart';
-import 'widgets/standby_clock_view.dart';
 
-/// Araçlar sekmeleri — Alarm · Timer · Görevler (WP-264).
-/// Mobil yatay görünüm ayrı bir StandBy yüzeyi olarak korunur.
+/// Araçlar sekmeleri — Alarm · Timer · Görevler.
+/// Yön değişimi ürün yüzeyini değiştirmez; yatayda da aynı Araçlar akışı kalır.
 enum ClockTab { alarm, multiTimer, tasks }
 
 class ClockScreen extends StatefulWidget {
@@ -81,33 +80,25 @@ class _ClockScreenState extends State<ClockScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return OrientationBuilder(
-      builder: (context, orientation) {
-        if (!isDesktopWindow && orientation == Orientation.landscape) {
-          return const StandByClockView();
-        }
+    final content = _buildTabBody();
 
-        final content = _buildTabBody();
-
-        // Windows: AppBar/sağ panel yok — sol rail + şerit + içerik.
-        return Scaffold(
-          appBar: isDesktopWindow
-              ? null
-              : AppBar(
-                  title: Text(AppLocalizations.of(context).navTools),
-                  centerTitle: true,
-                ),
-          body: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
-                child: _buildIconStrip(),
-              ),
-              Expanded(child: content),
-            ],
+    // Windows: AppBar/sağ panel yok — sol rail + şerit + içerik.
+    return Scaffold(
+      appBar: isDesktopWindow
+          ? null
+          : AppBar(
+              title: Text(AppLocalizations.of(context).navTools),
+              centerTitle: true,
+            ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
+            child: _buildIconStrip(),
           ),
-        );
-      },
+          Expanded(child: content),
+        ],
+      ),
     );
   }
 }

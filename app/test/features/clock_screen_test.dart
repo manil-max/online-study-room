@@ -11,7 +11,6 @@ import 'package:online_study_room/data/providers/study_providers.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_auth_repository.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_study_repository.dart';
 import 'package:online_study_room/features/clock/clock_screen.dart';
-import 'package:online_study_room/features/clock/widgets/standby_clock_view.dart';
 import 'package:online_study_room/core/notifications/timer_notification_service.dart';
 
 class MockTimerNotificationService implements TimerNotificationService {
@@ -86,7 +85,7 @@ void main() {
     );
   });
 
-  testWidgets('ClockScreen shows StandByClockView in landscape', (
+  testWidgets('ClockScreen keeps the same Tools flow in landscape', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(1920, 1080);
@@ -97,6 +96,9 @@ void main() {
     await tester.pumpWidget(buildApp());
     await tester.pump();
 
-    expect(find.byType(StandByClockView), findsOneWidget);
+    expect(find.text('Araçlar'), findsOneWidget);
+    expect(find.byKey(const Key('clock_tab_alarm')), findsOneWidget);
+    expect(find.byKey(const Key('clock_tab_timer')), findsOneWidget);
+    expect(find.byKey(const Key('clock_tab_tasks')), findsOneWidget);
   });
 }

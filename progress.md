@@ -54,7 +54,7 @@
 - **Ortak/riskli yüzey:** —
 - **Dal:** `main`
 - **Başlangıç / Son güncelleme:** — / 2026-07-23 (Europe/Istanbul)
-- **Not:** WP-271 ops/cihaz girdisi; WP-272 ve WP-275 otomatik doğrulama sonrası cihaz kabulüne park edildi. WP-273 WP-269 kabulünü, WP-274 ürün kararını bekliyor; production HOLD korunur.
+- **Not:** WP-274 otomatik doğrulama sonrası cihaz kabulüne park edildi. WP-273, WP-269 kabul kapısı nedeniyle başlatılmadı; production HOLD korunur.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
@@ -88,7 +88,7 @@
 | 1C | WP-272 v43 sayaç paneli sözleşmesi | [x] Otomatik test geçti → Park | Samsung cihaz kabulü bekliyor |
 | 2A | WP-271 Staging gerçek push kabulü | [ ] Bekliyor | WP-269 + WP-270 kabulünden sonra |
 | 2B | WP-273 Windows deterministik release | [ ] Bekliyor | WP-269'dan sonra |
-| Karar | WP-274 Tools erişim kararı | [?] Ürün kararı gerekiyor | Kullanıcı yön seçmeden worker başlamaz |
+| Karar | WP-274 Tools erişim kararı | [x] Otomatik test geçti → Park | Kalıcı kaldırma seçildi; cihaz kabulü bekliyor |
 | Sonra | WP-275 Taç XP barı | [x] Otomatik test geçti → Park | Android/Windows cihaz kabulü bekliyor |
 | Sonra | WP-276/277 kabul ve ops kanıtı | [ ] Bekliyor | Kurtarma cihaz/release kapılarından sonra |
 | Karar | WP-278/279 dil ve aylık rapor | [?] Ürün kararı gerekiyor | Açık ürün/ops kararı olmadan worker başlamaz |
@@ -217,21 +217,22 @@
 ### WP-274: Tools Saat/Kronometre/Dünya Erişim Kararı 🧰
 - **Program/Faz:** Kurtarma · Faz 4 — bildirim dışı drift
 - **Ajan:** —
-- **Durum:** [?] Ürün kararı gerekiyor
+- **Durum:** [x] Otomatik test geçti → **Park** (dikey/yatay cihaz kabulü bekliyor)
 - **Problem:** WP-264 Tools girişlerini kaldırdı fakat Stopwatch/World Clock kaynakları duruyor; v43 sonrası kullanıcı görünür kapsam azaldı ve canlı dosyada bu yalnız “sadeleştirme” diye görünüyordu.
-- **Önerilen karar:** v43 davranışını koruyup Saat ana yüzeyi/Kronometre/Dünya Saatleri girişlerini geri aç; kalıcı kaldırma isteniyorsa dead dosya/testleri ayrı temizlik olarak sil.
+- **Ürün kararı (2026-07-23):** Kullanıcı **kalıcı kaldırmayı** seçti; mobil yatay StandBy davranışı da kalkacak.
 - **Kapsam dışı:** Android study timer/FGS, alarm motoru, push sistemi, navigation mimarisini yeniden tasarlamak.
 - **SAHİP dosyalar (yaz):** `app/lib/features/clock/clock_screen.dart`, gerekirse `app/lib/core/navigation/home_shell.dart`, ilgili clock/navigation testleri; kaldırma seçilirse yalnız açıkça listelenen dead Stopwatch/World Clock dosyaları.
 - **DOKUNMA (oku, değiştirme):** `app/lib/data/providers/study_providers.dart`, `app/lib/core/notifications/**`, `app/android/**`, release/migration dosyaları.
 - **Adımlar:**
-  - [ ] Kullanıcı “geri getir” veya “kalıcı kaldır” kararını kayda geçir.
-  - [ ] Geri getir seçeneğinde v43 giriş/route davranışını restore edip mobil yatay StandBy'ı koru.
-  - [ ] Kaldır seçeneğinde unreachable dosya/test/yorumları kontrollü sil; alarm/timer motoruna dokunma.
-  - [ ] Dikey/yatay ve tap-to-top/navigation regresyonlarını test et.
+  - [x] Kullanıcı “kalıcı kaldır” kararını kayda geçir.
+  - [x] Kronometre, Dünya Saati ve yatay StandBy ekran dosyalarını kaldır; alarm/timer motoruna dokunma.
+  - [x] Yatay yönü ayrı bir ekran yerine normal Araçlar akışında tut.
+  - [x] Dikey/yatay ve Araçlar sekmesi regresyonlarını otomatik testte doğrula. **Cihazda doğrulanmalı.**
 - **Veri/Migration etkisi:** Yok. Rollback tek UI/navigation commit'idir.
 - **Ortam/Deploy:** Local only; remote/tag/release yok.
 - **RLS/Güvenlik:** Etki yok.
 - **Edge-case'ler:** Stopwatch ile çalışma sayacını karıştırma, yatay StandBy, geri tuşu, seçili sekme state'i, desktop navigation.
+- **Kod kanıtı (2026-07-23):** `clock_screen_test.dart` dikey/yatay Araçlar akışını doğruluyor; erişim referansı taramasında silinen ekranlara çağrı 0. `flutter test --dart-define-from-file=env.json` ve `flutter analyze --no-pub` geçti.
 - **Kabul (ölçülebilir):** Seçilen ürün kararıyla görünür girişler ve fiziksel kaynaklar çelişmez; unreachable ürün ekranı 0; ilgili widget/navigation testleri ve `flutter analyze` yeşil; cihazda dikey+yatay kabul.
 - **Tuzaklar:** Ürün kararı almadan dosya silmek; study timer native servislerini Stopwatch sanmak.
 - **Model önerisi:** 🟣 Pro
