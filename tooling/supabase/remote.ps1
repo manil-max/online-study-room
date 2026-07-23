@@ -44,22 +44,6 @@ function Invoke-RemoteSupabase {
   Invoke-EvidenceCommand -Executable $NodePath -Arguments $nodeArguments -EvidenceDirectory $evidenceDirectory -Label $Label -SensitiveValues $sensitiveValues | Out-Null
 }
 
-function Resolve-DockerCli {
-  $dockerCommand = Get-Command docker -ErrorAction SilentlyContinue
-  if ($dockerCommand) { return $dockerCommand.Source }
-
-  $candidates = @(
-    'C:\Program Files\Docker\Docker\resources\bin\docker.exe',
-    (Join-Path $env:LOCALAPPDATA 'Docker\resources\bin\docker.exe')
-  )
-  foreach ($candidate in $candidates) {
-    if (-not [string]::IsNullOrWhiteSpace($candidate) -and (Test-Path -LiteralPath $candidate)) {
-      return $candidate
-    }
-  }
-  throw 'Docker CLI is required for linked pgTAP tests and was not found.'
-}
-
 function Write-RemoteManifest {
   $contract = Get-DeployContract -RepoRoot $repoRoot
   $targetContract = $contract.$Environment
@@ -170,14 +154,9 @@ try {
       Invoke-RemoteSupabase -Arguments @('db', 'push', '--linked', '--yes') -Label '04-push'
       Invoke-RemoteSupabase -Arguments @('migration', 'list', '--linked') -Label '05-migration-list-after'
       if ($Environment -eq 'staging') {
-        $dockerCli = Resolve-DockerCli
-        $dockerDirectory = Split-Path -Parent $dockerCli
-        if (($env:PATH -split ';') -notcontains $dockerDirectory) {
-          $env:PATH = "$dockerDirectory;$env:PATH"
-        }
-        $steps.Add('06-docker-readiness')
-        Invoke-EvidenceCommand -Executable $dockerCli -Arguments @('version', '--format', '{{.Server.Version}}') -EvidenceDirectory $evidenceDirectory -Label '06-docker-readiness' -SensitiveValues $sensitiveValues | Out-Null
-        Invoke-RemoteSupabase -Arguments @('test', 'db', '--linked') -Label '07-staging-post-check'
+        $pushDispatchPostCheckSql = Get-StagingPushDispatchPostCheckSql
+        Assert-StagingPushDispatchPostCheck -Environment $Environment -ProjectRef $ProjectRef -StagingProjectRef $StagingProjectRef -ProductionProjectRef $ProductionProjectRef -Sql $pushDispatchPostCheckSql
+        Invoke-RemoteSupabase -Arguments @('db', 'query', '--linked', $pushDispatchPostCheckSql) -Label '06-staging-push-dispatch-post-check'
       }
     }
   }

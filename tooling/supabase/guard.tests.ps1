@@ -101,6 +101,19 @@ Assert-Throws -Name 'production ref masquerading as staging denied' -Script {
   Assert-StagingPrerequisiteAction -Action bootstrap -Environment staging -ProjectRef $productionRef -StagingProjectRef $stagingRef -ProductionProjectRef $productionRef -Sql $bootstrapSql
 }
 
+$pushDispatchPostCheckSql = Get-StagingPushDispatchPostCheckSql
+Assert-StagingPushDispatchPostCheck -Environment staging -ProjectRef $stagingRef -StagingProjectRef $stagingRef -ProductionProjectRef $productionRef -Sql $pushDispatchPostCheckSql
+$passed++
+Assert-Throws -Name 'push dispatch post-check production target denied' -Script {
+  Assert-StagingPushDispatchPostCheck -Environment production -ProjectRef $productionRef -StagingProjectRef $stagingRef -ProductionProjectRef $productionRef -Sql $pushDispatchPostCheckSql
+}
+Assert-Throws -Name 'arbitrary push dispatch post-check SQL denied' -Script {
+  Assert-StagingPushDispatchPostCheck -Environment staging -ProjectRef $stagingRef -StagingProjectRef $stagingRef -ProductionProjectRef $productionRef -Sql 'select 1;'
+}
+Assert-Throws -Name 'production ref push dispatch post-check masquerade denied' -Script {
+  Assert-StagingPushDispatchPostCheck -Environment staging -ProjectRef $productionRef -StagingProjectRef $stagingRef -ProductionProjectRef $productionRef -Sql $pushDispatchPostCheckSql
+}
+
 $reconciliationPrepareSql = Get-StagingReconciliationSql -Action prepare
 $reconciliationPrepareInspectSql = Get-StagingReconciliationSql -Action prepare-inspect
 $reconciliationApplySql = Get-StagingReconciliationSql -Action apply

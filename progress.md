@@ -50,7 +50,7 @@
 - **Durum:** [~] Aktif
 - **Faz/WP:** Kurtarma · Faz 3 — WP-271 beta aday yayını
 - **Aşama:** Staging gate ve beta-v4304 hazırlanıyor
-- **SAHİP yollar:** `tooling/release/deploy-contract.json`, ilgili `tooling/release/*.tests.ps1`, `tooling/supabase/guard.tests.ps1`, `CHANGELOG.md`, `app/assets/release_notes.json`, `progress.md` (yalnız bu lane)
+- **SAHİP yollar:** `tooling/release/deploy-contract.json`, ilgili `tooling/release/*.tests.ps1`, `tooling/supabase/{DeployGuard.psm1,guard.tests.ps1,remote.ps1}`, `CHANGELOG.md`, `app/assets/release_notes.json`, `progress.md` (yalnız bu lane)
 - **Ortak/riskli yüzey:** Staging migration head/release metadata; yalnız staging beta. Production, stable, Store ve feature kodu kapsam dışıdır.
 - **Dal:** `main`
 - **Başlangıç / Son güncelleme:** 2026-07-23 17:06 / 2026-07-23 17:06 (Europe/Istanbul)

@@ -141,6 +141,50 @@ function Assert-StagingPrerequisiteAction {
   }
 }
 
+function Get-StagingPushDispatchPostCheckSql {
+  return @'
+do $$
+begin
+  if to_regclass('cron.job') is null then
+    raise exception 'push_dispatch_cron_relation_missing';
+  end if;
+  if not exists (
+    select 1 from cron.job where jobname = 'push-dispatch-retry-worker'
+  ) then
+    raise exception 'push_dispatch_retry_worker_missing';
+  end if;
+  if to_regprocedure('public.get_push_dispatch_queue_health()') is null then
+    raise exception 'push_dispatch_queue_health_missing';
+  end if;
+end;
+$$;
+
+select * from public.get_push_dispatch_queue_health();
+'@
+}
+
+function Assert-StagingPushDispatchPostCheck {
+  param(
+    [Parameter(Mandatory)][ValidateSet('staging', 'production')][string]$Environment,
+    [Parameter(Mandatory)][string]$ProjectRef,
+    [Parameter(Mandatory)][string]$StagingProjectRef,
+    [Parameter(Mandatory)][string]$ProductionProjectRef,
+    [Parameter(Mandatory)][string]$Sql
+  )
+
+  if ($Environment -ne 'staging') {
+    throw 'Push dispatch post-check is staging-only.'
+  }
+  if ($ProjectRef -ne $StagingProjectRef -or $ProjectRef -eq $ProductionProjectRef) {
+    throw 'Push dispatch post-check target must be the isolated staging project ref.'
+  }
+
+  $allowedSql = Get-StagingPushDispatchPostCheckSql
+  if ($Sql -cne $allowedSql) {
+    throw 'Push dispatch post-check SQL is not on the exact staging allowlist.'
+  }
+}
+
 function Get-StagingReconciliationSql {
   param([Parameter(Mandatory)][ValidateSet('prepare', 'prepare-inspect', 'apply', 'apply-inspect')][string]$Action)
 
@@ -425,4 +469,4 @@ function Invoke-EvidenceCommand {
   return $safe
 }
 
-Export-ModuleMember -Function Get-RepoRoot, Get-DeployContract, Get-LocalMigrationHead, Get-GitHead, Protect-DeployText, Assert-SafeSupabaseArguments, Get-StagingPrerequisiteSql, Assert-StagingPrerequisiteAction, Get-StagingReconciliationSql, Assert-StagingReconciliationAction, Assert-TargetContract, Assert-ExactReleaseIdentity, Assert-ProductionApproval, New-EvidenceDirectory, Write-DeployJson, Invoke-EvidenceCommand
+Export-ModuleMember -Function Get-RepoRoot, Get-DeployContract, Get-LocalMigrationHead, Get-GitHead, Protect-DeployText, Assert-SafeSupabaseArguments, Get-StagingPrerequisiteSql, Assert-StagingPrerequisiteAction, Get-StagingPushDispatchPostCheckSql, Assert-StagingPushDispatchPostCheck, Get-StagingReconciliationSql, Assert-StagingReconciliationAction, Assert-TargetContract, Assert-ExactReleaseIdentity, Assert-ProductionApproval, New-EvidenceDirectory, Write-DeployJson, Invoke-EvidenceCommand
