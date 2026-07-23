@@ -48,13 +48,13 @@
 
 ### Codex Lane
 - **Durum:** [~] Aktif
-- **Faz/WP:** Kurtarma · Faz 3 — WP-271 beta aday yayını
-- **Aşama:** Staging gate geçti; beta-v4305 hazırlanıyor
-- **SAHİP yollar:** `tooling/release/deploy-contract.json`, ilgili `tooling/release/*.tests.ps1`, `tooling/supabase/{DeployGuard.psm1,guard.tests.ps1,remote.ps1}`, `app/lib/core/notifications/app_push_notification_service.dart`, `app/test/core/app_notification_coordinator_test.dart`, `CHANGELOG.md`, `app/assets/release_notes.json`, `progress.md` (yalnız bu lane)
-- **Ortak/riskli yüzey:** Staging migration head/release metadata; yalnız staging beta. Production, stable, Store ve feature kodu kapsam dışıdır.
+- **Faz/WP:** Beta arıza kurtarması · Nihai rapor Faz 1–3
+- **Aşama:** Faz 1–2 otomatik test geçti; Faz 3 salt-okunur teşhis geliştiriliyor
+- **SAHİP yollar:** `app/env.ci.example.json`, `tooling/release/verify-candidate*.ps1`, `app/lib/core/notifications/**`, ilgili `app/test/core/*notification*` ve push/widget testleri, `progress.md` (yalnız bu lane)
+- **Ortak/riskli yüzey:** `progress.md`; staging cron/queue yalnız salt-okunur incelenir. Tag, release, DB apply, migration/Edge mutasyonu, production/stable ve ilgisiz feature kodu kapsam dışıdır.
 - **Dal:** `main`
-- **Başlangıç / Son güncelleme:** 2026-07-23 17:06 / 2026-07-23 17:06 (Europe/Istanbul)
-- **Not:** Kullanıcı cihaz kabulü için GitHub beta yayını istedi. `0069` staging gate geçti; başarısız Android test-hostu nedeniyle iptal edilen `beta-v4304` yerine benzersiz `beta-v4305` prerelease hedefleniyor; production HOLD korunur.
+- **Başlangıç / Son güncelleme:** 2026-07-23 17:05 / 2026-07-23 17:16 (Europe/Istanbul)
+- **Not:** `7912673` ile nihai rapor kayda alındı. Candidate contract 6/6, adapter 5/5, analyze 0; configured ve unconfigured full suite ayrı ayrı 690/690 yeşil. Faz 3 için güvenli salt-okunur diagnostic action hazırlanacak. Yeni tag/release yok; production HOLD korunur.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta

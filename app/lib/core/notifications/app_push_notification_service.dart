@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/models/nudge.dart';
 import '../config/firebase_push_config.dart';
 import '../l10n/system_localizations.dart';
+import 'flutter_test_host.dart';
 
 const _seenPushEventIdsKey = 'push_seen_event_ids_v1';
 const _lastPushEventIdKey = 'push_last_event_id';
@@ -45,38 +46,130 @@ class AppPushSnapshot {
   final String? errorCode;
 }
 
+/// Platform eklentisini uygulama mantığından ayıran local notification sınırı.
+///
+/// Gerçek Android adapter'ı plugin hatalarını olduğu gibi iletir. Flutter test
+/// hostu ise native registrant bulunmadığı için açık bir no-op adapter kullanır.
+abstract class AppLocalNotificationsAdapter {
+  Future<void> initialize();
+
+  Future<void> createChannels(List<AndroidNotificationChannel> channels);
+
+  Future<bool> notificationsEnabled();
+
+  Future<bool> requestPermission();
+
+  Future<void> show({
+    required int id,
+    required String? title,
+    required String? body,
+    required NotificationDetails notificationDetails,
+    required String? payload,
+  });
+}
+
+class _FlutterAppLocalNotificationsAdapter
+    implements AppLocalNotificationsAdapter {
+  _FlutterAppLocalNotificationsAdapter(this._plugin);
+
+  final FlutterLocalNotificationsPlugin _plugin;
+
+  AndroidFlutterLocalNotificationsPlugin? get _android => _plugin
+      .resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin
+      >();
+
+  @override
+  Future<void> initialize() => _plugin.initialize(
+    settings: const InitializationSettings(
+      android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+    ),
+  );
+
+  @override
+  Future<void> createChannels(List<AndroidNotificationChannel> channels) async {
+    final android = _android;
+    for (final channel in channels) {
+      await android?.createNotificationChannel(channel);
+    }
+  }
+
+  @override
+  Future<bool> notificationsEnabled() async =>
+      await _android?.areNotificationsEnabled() ?? false;
+
+  @override
+  Future<bool> requestPermission() async =>
+      await _android?.requestNotificationsPermission() ?? true;
+
+  @override
+  Future<void> show({
+    required int id,
+    required String? title,
+    required String? body,
+    required NotificationDetails notificationDetails,
+    required String? payload,
+  }) => _plugin.show(
+    id: id,
+    title: title,
+    body: body,
+    notificationDetails: notificationDetails,
+    payload: payload,
+  );
+}
+
+class _NoopAppLocalNotificationsAdapter
+    implements AppLocalNotificationsAdapter {
+  const _NoopAppLocalNotificationsAdapter();
+
+  @override
+  Future<void> initialize() async {}
+
+  @override
+  Future<void> createChannels(
+    List<AndroidNotificationChannel> channels,
+  ) async {}
+
+  @override
+  Future<bool> notificationsEnabled() async => false;
+
+  @override
+  Future<bool> requestPermission() async => false;
+
+  @override
+  Future<void> show({
+    required int id,
+    required String? title,
+    required String? body,
+    required NotificationDetails notificationDetails,
+    required String? payload,
+  }) async {}
+}
+
 /// Sosyal/remote bildirimlerin tek local presentation koordinatörü.
 /// Alarm full-screen ve native timer FGS bilinçli olarak ayrı kalır.
 class AppNotificationCoordinator {
-  AppNotificationCoordinator._(this._plugin);
+  AppNotificationCoordinator._(this._adapter) : _isAndroidOverride = null;
+
+  @visibleForTesting
+  AppNotificationCoordinator.forTesting(this._adapter, {bool isAndroid = true})
+    : _isAndroidOverride = isAndroid;
 
   static final instance = AppNotificationCoordinator._(
-    FlutterLocalNotificationsPlugin(),
+    isFlutterTestHost
+        ? const _NoopAppLocalNotificationsAdapter()
+        : _FlutterAppLocalNotificationsAdapter(
+            FlutterLocalNotificationsPlugin(),
+          ),
   );
 
-  final FlutterLocalNotificationsPlugin _plugin;
+  final AppLocalNotificationsAdapter _adapter;
+  final bool? _isAndroidOverride;
   bool _initialized = false;
 
   Future<void> initialize() async {
     if (_initialized || !_isAndroid) return;
-    const settings = InitializationSettings(
-      android: AndroidInitializationSettings('@mipmap/ic_launcher'),
-    );
-    try {
-      await _plugin.initialize(settings: settings);
-    } on Error catch (error) {
-      if (!error.toString().startsWith('LateInitializationError:')) {
-        rethrow;
-      }
-      // `flutter test` Android hedefini seçebilir ama platform eklentisini
-      // kaydetmez. Bu hostta local notification gösterimi yoktur; gerçek
-      // Android cihazdaki platform başlatma hatalarını ise gizlemeyiz.
-      return;
-    }
-    final android = _plugin
-        .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin
-        >();
+    await _adapter.initialize();
     final l10n = await loadSystemLocalizations();
     final channels = <AndroidNotificationChannel>[
       AndroidNotificationChannel(
@@ -104,39 +197,27 @@ class AppNotificationCoordinator {
         importance: Importance.high,
       ),
     ];
-    for (final channel in channels) {
-      await android?.createNotificationChannel(channel);
-    }
+    await _adapter.createChannels(channels);
     _initialized = true;
   }
 
   Future<bool> notificationsEnabled() async {
     if (!_isAndroid) return false;
     await initialize();
-    return await _plugin
-            .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin
-            >()
-            ?.areNotificationsEnabled() ??
-        false;
+    return _adapter.notificationsEnabled();
   }
 
   Future<bool> requestPermission() async {
     if (!_isAndroid) return false;
     await initialize();
-    return await _plugin
-            .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin
-            >()
-            ?.requestNotificationsPermission() ??
-        true;
+    return _adapter.requestPermission();
   }
 
   Future<void> showLocalTest() async {
     if (!_isAndroid) return;
     await initialize();
     final channel = _channelFor('self_test');
-    await _plugin.show(
+    await _adapter.show(
       id: 266001,
       title: 'Odak Kampı',
       body: 'Telefondaki bildirim gösterimi çalışıyor.',
@@ -170,7 +251,7 @@ class AppNotificationCoordinator {
     if (title.isEmpty && body.isEmpty) return;
     await initialize();
     final channel = _channelFor(type);
-    await _plugin.show(
+    await _adapter.show(
       id: eventId.hashCode & 0x7fffffff,
       title: title,
       body: body,
@@ -207,7 +288,7 @@ class AppNotificationCoordinator {
         ? nudge.message!.trim()
         : l10n.coreSeniCalismayaCagiriyor;
     final channel = _channelFor('nudge');
-    await _plugin.show(
+    await _adapter.show(
       id: nudge.id.hashCode & 0x7fffffff,
       title: l10n.coreSenderDurttu(sender),
       body: body,
@@ -253,15 +334,20 @@ class AppNotificationCoordinator {
   }
 
   bool get _isAndroid =>
-      !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+      _isAndroidOverride ??
+      (!kIsWeb && defaultTargetPlatform == TargetPlatform.android);
 }
 
 /// Firebase/FCM platform köprüsü. Config yoksa hiçbir plugin çağrısı yapmaz.
 class AppPushNotificationService {
-  AppPushNotificationService._();
+  AppPushNotificationService._({
+    AppNotificationCoordinator? notificationCoordinator,
+  }) : _notificationCoordinator =
+           notificationCoordinator ?? AppNotificationCoordinator.instance;
 
   static final instance = AppPushNotificationService._();
 
+  final AppNotificationCoordinator _notificationCoordinator;
   SharedPreferences? _prefs;
   FirebaseMessaging? _messaging;
   StreamSubscription<RemoteMessage>? _foregroundSub;
@@ -290,9 +376,9 @@ class AppPushNotificationService {
       FirebaseMessaging.onBackgroundMessage(firebasePushBackgroundHandler);
       _messaging = FirebaseMessaging.instance;
       await _messaging!.setAutoInitEnabled(true);
-      await AppNotificationCoordinator.instance.initialize();
+      await _notificationCoordinator.initialize();
       _foregroundSub = FirebaseMessaging.onMessage.listen(
-        AppNotificationCoordinator.instance.showRemote,
+        _notificationCoordinator.showRemote,
       );
       _openedSub = FirebaseMessaging.onMessageOpenedApp.listen(_markOpened);
       final initial = await _messaging!.getInitialMessage();
@@ -310,7 +396,7 @@ class AppPushNotificationService {
       return AppPushPermission.unsupported;
     }
     try {
-      await AppNotificationCoordinator.instance.requestPermission();
+      await _notificationCoordinator.requestPermission();
       final settings = await _messaging!.requestPermission(
         alert: true,
         badge: true,
@@ -371,13 +457,19 @@ class AppPushNotificationService {
       }
     }
     final rawReceived = prefs?.getString(_lastPushReceivedAtKey);
+    var notificationsEnabled = false;
+    try {
+      notificationsEnabled = await _notificationCoordinator
+          .notificationsEnabled();
+    } catch (_) {
+      _errorCode ??= 'local_notification_status_failed';
+    }
     return AppPushSnapshot(
       supported: true,
       configStatus: FirebasePushConfig.status,
       initialized: _initialized,
       permission: permission,
-      notificationsEnabled: await AppNotificationCoordinator.instance
-          .notificationsEnabled(),
+      notificationsEnabled: notificationsEnabled,
       hasToken: (await token())?.trim().isNotEmpty ?? false,
       lastReceivedAt: rawReceived == null
           ? null
