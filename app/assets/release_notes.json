@@ -3,6 +3,40 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.44",
+      "buildNumber": 44,
+      "channel": "stable",
+      "date": "2026-07-23",
+      "title": "v44: bildirim tanısı ve sayaç biçimi",
+      "highlights": [
+        "Uzak self-test cooldown'ı artık teslim hatası gibi gösterilmez.",
+        "Aynı kişiye sık dürtme denemesinde 10 dakikalık kural açıklanır.",
+        "One UI bildiriminde sayaç alt-saatte MM:SS, bir saatten sonra H:MM:SS olarak kalır."
+      ],
+      "fixes": [
+        "Bir saat üstünde çift saat öneki ve dar görünümde kesilen son hane giderildi.",
+        "Dürtme ekranı anlamlı cooldown mesajını artık genel hata ile değiştirmez."
+      ],
+      "notes": [
+        "Bu stable sürüm production backend ve migration head 0065 kullanır.",
+        "GitHub sideload stable APK; uygulama içi güncelleme stable kullanıcılara gider."
+      ],
+      "titleEn": "v44: notification diagnostics and timer format",
+      "highlightsEn": [
+        "The remote self-test cooldown is no longer shown as a delivery failure.",
+        "Rapid nudge attempts explain the 10-minute rule.",
+        "The One UI timer notification uses MM:SS below one hour and H:MM:SS afterwards."
+      ],
+      "fixesEn": [
+        "Removed the duplicated hour prefix and clipped final digit after one hour.",
+        "The nudge screen no longer replaces a meaningful cooldown message with a generic error."
+      ],
+      "notesEn": [
+        "This stable release uses the production backend and migration head 0065.",
+        "GitHub sideload stable APK; in-app update reaches stable users."
+      ]
+    },
+    {
       "versionName": "1.0.43-beta.8",
       "buildNumber": 4308,
       "channel": "beta",
