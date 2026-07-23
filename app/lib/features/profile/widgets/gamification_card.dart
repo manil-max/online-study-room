@@ -182,7 +182,7 @@ class _BadgeSummary extends StatelessWidget {
         Semantics(
           label: atMax
               ? '${profile.xp} XP · ${l10n.profileCrownMax}'
-              : '${bar.earned} / ${bar.requiredXp} XP · '
+              : '${bar.currentXp} / ${bar.nextThreshold} XP · '
                     '${(bar.progress * 100).round()}%',
           value: '${(bar.progress * 100).round()}%',
           child: ExcludeSemantics(
@@ -201,7 +201,7 @@ class _BadgeSummary extends StatelessWidget {
         Text(
           atMax
               ? '${profile.xp} XP'
-              : '${bar.earned} / ${bar.requiredXp} XP '
+              : '${bar.currentXp} / ${bar.nextThreshold} XP '
                     '(${(bar.progress * 100).round()}%)',
           style: theme.textTheme.labelSmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,

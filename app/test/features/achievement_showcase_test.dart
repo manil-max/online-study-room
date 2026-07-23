@@ -452,16 +452,36 @@ void main() {
     );
   });
 
-  test('xpBarMetrics ve crownLabel 6 kademe 0/20k/75k/200k/500k/1M', () {
+  test('xpBarMetrics mutlak XP / sonraki eşik sözleşmesini korur', () {
     expect(crownLabel('gold_achiever', AppLocalizationsTr()), 'Altın Taç');
     expect(crownLabel('emerald_sage', AppLocalizationsTr()), 'Zümrüt Taç');
     expect(crownLabel('immortal_legend', AppLocalizationsTr()), 'Ölümsüz Taç');
-    final m = xpBarMetrics(12500);
-    expect(m.floor, 0);
-    expect(m.next, 20000);
-    expect(m.earned, 12500);
-    expect(m.requiredXp, 20000);
-    expect(m.progress, 0.625);
+    final zero = xpBarMetrics(0);
+    expect(zero.currentXp, 0);
+    expect(zero.nextThreshold, 20000);
+    expect(zero.progress, 0);
+
+    final silver = xpBarMetrics(20000);
+    expect(silver.currentXp, 20000);
+    expect(silver.nextThreshold, 75000);
+    expect(silver.progress, closeTo(20000 / 75000, 0.0001));
+
+    final m = xpBarMetrics(25000);
+    expect(m.floor, 20000);
+    expect(m.next, 75000);
+    expect(m.currentXp, 25000);
+    expect(m.nextThreshold, 75000);
+    expect(m.progress, closeTo(25000 / 75000, 0.0001));
+
+    final gold = xpBarMetrics(75000);
+    expect(gold.currentXp, 75000);
+    expect(gold.nextThreshold, 200000);
+    expect(gold.progress, closeTo(75000 / 200000, 0.0001));
+
+    final max = xpBarMetrics(1000000);
+    expect(max.currentXp, 1000000);
+    expect(max.nextThreshold, 1000000);
+    expect(max.progress, 1);
     expect(crownRankForXp(0), 'bronze_beginner');
     expect(crownRankForXp(20000), 'silver_learner');
     expect(crownRankForXp(75000), 'gold_achiever');

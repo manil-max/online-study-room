@@ -384,8 +384,8 @@ class AchievementShowcaseState extends State<AchievementShowcase>
         _XpBar(
           progress: bar.progress,
           xp: xp,
-          earned: bar.earned,
-          requiredXp: bar.requiredXp,
+          currentXp: bar.currentXp,
+          nextThreshold: bar.nextThreshold,
           color: rankColor,
         ),
         if (widget.isSelf) ...[
@@ -566,15 +566,15 @@ class _XpBar extends StatelessWidget {
   const _XpBar({
     required this.progress,
     required this.xp,
-    required this.earned,
-    required this.requiredXp,
+    required this.currentXp,
+    required this.nextThreshold,
     required this.color,
   });
 
   final double progress;
   final int xp;
-  final int earned;
-  final int requiredXp;
+  final int currentXp;
+  final int nextThreshold;
   final Color color;
 
   @override
@@ -587,7 +587,7 @@ class _XpBar extends StatelessWidget {
         Semantics(
           label: atCap
               ? '${AppLocalizations.of(context).profileTamamland} · $xp XP'
-              : '$earned / $requiredXp XP · ${(progress * 100).round()}%',
+              : '$currentXp / $nextThreshold XP · ${(progress * 100).round()}%',
           value: '${(progress * 100).round()}%',
           child: ExcludeSemantics(
             child: ClipRRect(
@@ -605,7 +605,7 @@ class _XpBar extends StatelessWidget {
         Text(
           atCap
               ? AppLocalizations.of(context).profileTamamland
-              : '$earned / $requiredXp XP (${(progress * 100).round()}%)',
+              : '$currentXp / $nextThreshold XP (${(progress * 100).round()}%)',
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),

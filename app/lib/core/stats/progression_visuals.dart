@@ -135,9 +135,11 @@ Color crownColorFor(String rank, [ColorScheme? _]) {
 
 /// XP → bir sonraki taç eşiği (0..1 progress).
 ///
-/// [earned] ve [requiredXp], dolulukla aynı kademe-içi paydayı kullanır. Böylece
-/// kullanıcıya gösterilen etiket ile erişilebilirlik yüzdesi birbirinden sapmaz.
-({int floor, int next, int earned, int requiredXp, double progress})
+/// Kullanıcıya gösterilen değer ve çubuğun payı **mutlak** XP'dir: örneğin
+/// 25.000 XP / sonraki eşik 75.000 ise hem etiket hem de doluluk `25/75` olur.
+/// Kademe-içi `5.000/55.000` görünümü kullanıcıyı önceki eşikten habersiz
+/// bıraktığı için burada bilinçli olarak üretilmez.
+({int floor, int next, int currentXp, int nextThreshold, double progress})
 xpBarMetrics(int xp) {
   final thresholds = kCrownXpThresholds;
   var floor = thresholds.first;
@@ -154,16 +156,21 @@ xpBarMetrics(int xp) {
     }
   }
   if (next <= floor) {
-    return (floor: floor, next: next, earned: 0, requiredXp: 0, progress: 1.0);
+    return (
+      floor: floor,
+      next: next,
+      currentXp: next,
+      nextThreshold: next,
+      progress: 1.0,
+    );
   }
-  final earned = (xp - floor).clamp(0, next - floor);
-  final requiredXp = next - floor;
-  final progress = (earned / requiredXp).clamp(0.0, 1.0);
+  final currentXp = xp.clamp(0, next);
+  final progress = (currentXp / next).clamp(0.0, 1.0);
   return (
     floor: floor,
     next: next,
-    earned: earned,
-    requiredXp: requiredXp,
+    currentXp: currentXp,
+    nextThreshold: next,
     progress: progress,
   );
 }

@@ -34,8 +34,8 @@ void main() {
 
   test('xpBarMetrics crown thresholds progress', () {
     final m = xpBarMetrics(5000);
-    expect(m.earned, 5000);
-    expect(m.requiredXp, 20000);
+    expect(m.currentXp, 5000);
+    expect(m.nextThreshold, 20000);
     expect(m.progress, greaterThan(0));
     expect(m.progress, lessThanOrEqualTo(1));
     expect(m.next, greaterThan(m.floor));

@@ -54,7 +54,7 @@
 - **Ortak/riskli yüzey:** —
 - **Dal:** `main`
 - **Başlangıç / Son güncelleme:** — / 2026-07-23 (Europe/Istanbul)
-- **Not:** WP-271 ops/cihaz girdisi; WP-272 otomatik doğrulama sonrası Samsung cihaz kabulüne park edildi. Production HOLD korunur.
+- **Not:** WP-271 ops/cihaz girdisi; WP-272 ve WP-275 otomatik doğrulama sonrası cihaz kabulüne park edildi. WP-273 WP-269 kabulünü, WP-274 ürün kararını bekliyor; production HOLD korunur.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
@@ -89,7 +89,7 @@
 | 2A | WP-271 Staging gerçek push kabulü | [ ] Bekliyor | WP-269 + WP-270 kabulünden sonra |
 | 2B | WP-273 Windows deterministik release | [ ] Bekliyor | WP-269'dan sonra |
 | Karar | WP-274 Tools erişim kararı | [?] Ürün kararı gerekiyor | Kullanıcı yön seçmeden worker başlamaz |
-| Sonra | WP-275 Taç XP barı | [ ] Bekliyor | Kurtarma hattı aktif dosyalarından bağımsız; WP-269 ile paralel olabilir |
+| Sonra | WP-275 Taç XP barı | [x] Otomatik test geçti → Park | Android/Windows cihaz kabulü bekliyor |
 | Sonra | WP-276/277 kabul ve ops kanıtı | [ ] Bekliyor | Kurtarma cihaz/release kapılarından sonra |
 | Karar | WP-278/279 dil ve aylık rapor | [?] Ürün kararı gerekiyor | Açık ürün/ops kararı olmadan worker başlamaz |
 
@@ -239,20 +239,21 @@
 ### WP-275: Taç XP Barını Mutlak Hedefe Hizala 👑
 - **Program/Faz:** Ürün doğruluğu · profil/başarım görseli
 - **Ajan:** —
-- **Durum:** [ ] Bekliyor
+- **Durum:** [x] Otomatik test geçti → **Park** (Android/Windows cihaz kabulü bekliyor)
 - **Problem:** `xpBarMetrics` ve iki profil yüzeyi bugün kademe-içi değeri gösterir: örneğin 25k XP ve sonraki taç 75k iken `5k / 55k`. Ürün beklentisi mutlak toplamdır: `25k / 75k` ve doluluk `25/75`.
 - **Kapsam dışı:** XP ekonomisi, taç eşikleri, server/RPC/migration, ledger, ödül hesaplama ve yeni rozet tasarımı.
 - **SAHİP dosyalar (yaz):** `app/lib/core/stats/progression_visuals.dart`, `app/lib/features/profile/widgets/gamification_card.dart`, `app/lib/features/profile/widgets/achievement_showcase.dart`, ilgili profil/widget/unit testleri ve l10n yalnız yeni metin gerekirse.
 - **DOKUNMA (oku, değiştirme):** `supabase/**`, achievement dictionary/economy fixture'ları, `app/lib/data/providers/**`, release/workflow dosyaları.
 - **Adımlar:**
-  - [ ] Metrik sözleşmesini mutlak `currentXp / nextThreshold` ve `currentXp / nextThreshold` doluluğu olarak yeniden tanımla.
-  - [ ] Profil özeti, tam başarımlar yüzeyi ve Semantics etiketini aynı saf metrikten besle.
-  - [ ] 0, 20k, 25k, 75k ve maksimum taç sınırlarında birim/widget regresyon testleri yaz.
-  - [ ] Maksimum/sonsuz kademe metnini açıkça tamamlandı olarak koru; `0 / 0` gösterme.
+  - [x] Metrik sözleşmesini mutlak `currentXp / nextThreshold` ve aynı pay/payda doluluğu olarak yeniden tanımla.
+  - [x] Profil özeti, tam başarımlar yüzeyi ve Semantics etiketini aynı saf metrikten besle.
+  - [x] 0, 20k, 25k, 75k ve maksimum taç sınırlarında birim/widget regresyon testleri yaz.
+  - [x] Maksimum/sonsuz kademe metnini açıkça tamamlandı olarak koru; `0 / 0` gösterme.
 - **Veri/Migration etkisi:** Yok. Rollback yalnız istemci görsel metrik commit'idir.
 - **Ortam/Deploy:** Local test + Android/Windows cihaz kabulü; remote, tag ve production yok.
 - **RLS/Güvenlik:** XP istemciden yazılmaz; yüzey yalnız sunucudan gelen profil XP'sini gösterir.
 - **Edge-case'ler:** Negatif/bozuk XP, eşiğe tam eşitlik, maksimum kademe, büyük sayı formatı, screen-reader yüzdesi, dar ekran.
+- **Kod kanıtı (2026-07-23):** `flutter test --dart-define-from-file=env.json test/features/achievement_showcase_test.dart test/features/profile/crowned_avatar_test.dart test/features/profile/gamification_card_layout_test.dart` 18/18 ve `flutter analyze --no-pub` geçti.
 - **Kabul (ölçülebilir):** 25k XP / sonraki 75k eşikte iki UI ve Semantics tam `25k / 75k` gösterir, progress `25/75`; eşikte %100 sonraki hedefe geçer; maksimumda `0 / 0` yok; analyze + hedef testler yeşil. **Cihazda doğrulanmalı.**
 - **Tuzaklar:** Yalnız etiketi değiştirip barı kademe-içi bırakmak; %100'de eski taç hedefini göstermek; ekonomi kuralını UI fix'i için değiştirmek.
 - **Model önerisi:** 🟣 Pro
