@@ -22,10 +22,10 @@ $repoRoot = Get-RepoRoot
 $stagingRef = 'aaaaaaaaaaaaaaaaaaaa'
 $productionRef = 'bbbbbbbbbbbbbbbbbbbb'
 
-Assert-Equal (Get-LocalMigrationHead -RepoRoot $repoRoot) '0069' 'local migration head'
-Assert-Equal ((Get-DeployContract -RepoRoot $repoRoot).local_migration_head) '0069' 'contract migration head'
+Assert-Equal (Get-LocalMigrationHead -RepoRoot $repoRoot) '0070' 'local migration head'
+Assert-Equal ((Get-DeployContract -RepoRoot $repoRoot).local_migration_head) '0070' 'contract migration head'
 $contract = Get-DeployContract -RepoRoot $repoRoot
-Assert-Equal $contract.staging.migration_head '0069' 'staging migration head'
+Assert-Equal $contract.staging.migration_head '0070' 'staging migration head'
 Assert-Equal ([bool]$contract.staging.deploy_enabled) $true 'staging deploy enabled'
 Assert-Equal ([bool]$contract.staging.release_enabled) $true 'staging release enabled'
 Assert-Equal $contract.production.migration_head '0065' 'production head 0065: applied manually, chain repair is WP-232'
@@ -103,6 +103,12 @@ Assert-Throws -Name 'production ref masquerading as staging denied' -Script {
 
 $pushDispatchPostCheckSql = Get-StagingPushDispatchPostCheckSql
 Assert-StagingPushDispatchPostCheck -Environment staging -ProjectRef $stagingRef -StagingProjectRef $stagingRef -ProductionProjectRef $productionRef -Sql $pushDispatchPostCheckSql
+$passed++
+foreach ($requiredMarker in @('pg_net', "n.nspname = 'net'", "p.proname = 'http_post'")) {
+  if ($pushDispatchPostCheckSql -notmatch [regex]::Escape($requiredMarker)) {
+    throw "Push dispatch post-check is missing: $requiredMarker"
+  }
+}
 $passed++
 Assert-Throws -Name 'push dispatch post-check production target denied' -Script {
   Assert-StagingPushDispatchPostCheck -Environment production -ProjectRef $productionRef -StagingProjectRef $stagingRef -ProductionProjectRef $productionRef -Sql $pushDispatchPostCheckSql

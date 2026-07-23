@@ -87,6 +87,9 @@ void main() {
       final sql = File(
         '../supabase/migrations/0069_push_dispatch_retry_health.sql',
       ).readAsStringSync();
+      final transportSql = File(
+        '../supabase/migrations/0070_require_pg_net_for_push_dispatch.sql',
+      ).readAsStringSync();
 
       expect(sql, contains("'push-dispatch-retry-worker'"));
       expect(
@@ -96,6 +99,9 @@ void main() {
       expect(sql, contains('get_push_dispatch_queue_health'));
       expect(sql, contains('get_push_self_test_status'));
       expect(sql, isNot(contains('BEGIN PRIVATE KEY')));
+      expect(transportSql, contains('create extension if not exists pg_net'));
+      expect(transportSql, contains("'transport_unavailable'"));
+      expect(transportSql, contains("p.proname = 'http_post'"));
     },
   );
 

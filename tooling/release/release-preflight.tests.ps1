@@ -4,9 +4,9 @@ Import-Module (Join-Path $repoRoot 'tooling\supabase\DeployGuard.psm1') -Force
 $script = Join-Path $repoRoot 'tooling\release\release-preflight.ps1'
 $sha = Get-GitHead -RepoRoot $repoRoot
 
-& $script -Channel beta -Tag beta-v4304 -ExpectedGitSha $sha -ExpectedMigrationHead '0069' -ValidateOnly | Out-Null
+& $script -Channel beta -Tag beta-v4304 -ExpectedGitSha $sha -ExpectedMigrationHead '0070' -ValidateOnly | Out-Null
 $cases = @(
-  @{ Name = 'wrong SHA'; Channel = 'beta'; Tag = 'beta-v4304'; Sha = ('0' * 40); Head = '0069' },
+  @{ Name = 'wrong SHA'; Channel = 'beta'; Tag = 'beta-v4304'; Sha = ('0' * 40); Head = '0070' },
   @{ Name = 'wrong head'; Channel = 'beta'; Tag = 'beta-v4304'; Sha = $sha; Head = '0068' },
   @{ Name = 'wrong channel/tag'; Channel = 'stable'; Tag = 'beta-v4304'; Sha = $sha; Head = '0065' }
 )

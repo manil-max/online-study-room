@@ -3,17 +3,17 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(42);
+select plan(43);
 
 select is(
   (select count(*)::integer from supabase_migrations.schema_migrations),
-  69,
-  'all 69 migrations are recorded'
+  70,
+  'all 70 migrations are recorded'
 );
 select is(
   (select max(version) from supabase_migrations.schema_migrations),
-  '0069',
-  '0069 is the migration head'
+  '0070',
+  '0070 is the migration head'
 );
 select ok(
   to_regclass('public.push_devices') is not null
@@ -143,6 +143,16 @@ select ok(
 );
 select is(current_setting('server_version_num')::integer / 10000, 17, 'PostgreSQL major is 17');
 select ok(exists(select 1 from pg_extension where extname = 'pg_cron'), 'pg_cron prerequisite is installed');
+select ok(
+  exists(select 1 from pg_extension where extname = 'pg_net')
+    and exists(
+      select 1
+      from pg_proc p
+      join pg_namespace n on n.oid = p.pronamespace
+      where n.nspname = 'net' and p.proname = 'http_post'
+    ),
+  '0070 installs the pg_net transport required by push dispatch'
+);
 select ok(
   exists(select 1 from cron.job where jobname = 'push-dispatch-retry-worker'),
   '0069 installs exactly named periodic push retry worker'

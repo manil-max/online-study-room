@@ -16,7 +16,7 @@ notları ekranı bu metinle aynı kararları yansıtmalıdır.
 - **Android hedefli test hostu güvenlidir.** Kayıtlı yerel-bildirim platformu olmayan test hostu uygulama açılışını bozmaz; gerçek cihazdaki başka platform başlatma hataları gizlenmez.
 
 ### Test notları
-- Bu beta `0069` staging migration head'ini gerektirir ve stable uygulamayla yan yana kurulur.
+- Bu beta `0070` staging migration head'ini gerektirir ve stable uygulamayla yan yana kurulur.
 - Bildirim Merkezi > Bildirim Sağlığı'ndan foreground, background ve uygulama kapalıyken uzaktan self-test çalıştır; retry sonucu ve bildirim hata sınıfını kaydet.
 - Sayaç bildirimi Başlat/Duraklat/Durdur aksiyonlarını, yatay/dikey yönü ve uygulama kapalıyken Durdur eylemini ayrıca doğrula.
 

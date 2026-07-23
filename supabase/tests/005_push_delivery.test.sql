@@ -5,7 +5,7 @@ set local search_path = public, extensions;
 
 \ir _fixtures/base_seed.psql
 
-select plan(37);
+select plan(38);
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000001', true);
@@ -201,6 +201,11 @@ select is(
 );
 select * from public.get_push_dispatch_queue_health();
 select pass('service health reports queue metrics without claiming deliveries');
+select is(
+  (select configuration_status from public.get_push_dispatch_queue_health()),
+  'configured',
+  'health is green only when runtime config and pg_net transport are both present'
+);
 
 reset role;
 set local role authenticated;

@@ -19,7 +19,7 @@
         "Now Bar/promoted deneyi stable sayaç görünümünü değiştirmez."
       ],
       "notes": [
-        "Bu beta staging backend kullanır ve 0069 migration head'ini gerektirir.",
+        "Bu beta staging backend kullanır ve 0070 migration head'ini gerektirir.",
         "Bildirim Merkezi'nden foreground, background ve uygulama kapalıyken uzaktan self-test çalıştır."
       ],
       "titleEn": "beta-v4305: notification retry and safe test host",
@@ -34,7 +34,7 @@
         "The Now Bar/promoted experiment cannot change the stable timer presentation."
       ],
       "notesEn": [
-        "This beta uses the staging backend and requires migration head 0069.",
+        "This beta uses the staging backend and requires migration head 0070.",
         "Run the remote self-test from Notification Center in foreground, background and terminated states."
       ]
     },

@@ -145,6 +145,17 @@ function Get-StagingPushDispatchPostCheckSql {
   return @'
 do $$
 begin
+  if not exists (select 1 from pg_extension where extname = 'pg_net') then
+    raise exception 'push_dispatch_pg_net_missing';
+  end if;
+  if not exists (
+    select 1
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'net' and p.proname = 'http_post'
+  ) then
+    raise exception 'push_dispatch_http_post_missing';
+  end if;
   if to_regclass('cron.job') is null then
     raise exception 'push_dispatch_cron_relation_missing';
   end if;

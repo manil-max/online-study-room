@@ -11,12 +11,12 @@
 - **Stable gerçek:** `v43` · `1.0.43+43` · commit `fa771ce` · production backend · migration head `0065`.
 - **Beta deney gerçeği:** `beta-v4303` · `1.0.43-beta.3+4303` · commit `3bdf8bb` · staging backend · migration head `0068`.
 - **Beta artefakt durumu:** Android APK yayımlandı; beta-v4303 Windows MSIX/ZIP workflow'u iki zamanlama testinde düştüğü için release **kısmi** kaldı.
-- **Migration gerçeği:** local/staging `0068`; production `0065`. `0066–0068` production'a uygulanmadı.
+- **Migration gerçeği:** local kod/temiz replay `0070`; staging remote `0069`; production `0065`. `0066–0069` production'a uygulanmadı.
 - **Production kararı:** Yeni stable tag, production migration/Edge deploy ve production mutasyonu **HOLD**. Somut işlem için staging kabulü + soak + backup/dry-run + açık kullanıcı GO gerekir.
 - **Yönetim varsayılanı (WP-269):** `tooling/release/deploy-contract.json` production `deploy_enabled/release_enabled` artık **kapalı** (güvenli varsayılan). Stable yalnız protected `production` Environment içinde tek kullanımlık exact SHA/head/project-ref GO ile ilerler; guard testleri kapalıyı kanıtlar.
 - **Kurallar:** Kök `AGENTS.md`, `.agents/AGENTS.md`, planner ve worker kuralları v43 sonrasında silinmedi/değiştirilmedi.
 - **Git:** Tek çalışma dalı `main`; branch/merge/push kullanıcı açıkça istemedikçe yok.
-- **Son WP numarası:** **279**. Sıradaki boş numara **WP-280**.
+- **Son WP numarası:** **280**. Sıradaki boş numara **WP-281**.
 - **Kanonik olay raporu:** [`docs/KURTARMA-ON-INCELEME-RAPORU-2026-07-23.md`](docs/KURTARMA-ON-INCELEME-RAPORU-2026-07-23.md)
 - **Tarihsel kayıt:** Eski WP ayrıntıları [`docs/archive/progress-tarihsel-2026-07.md`](docs/archive/progress-tarihsel-2026-07.md) ve git geçmişindedir; canlı dosyaya geri kopyalanmaz.
 
@@ -48,13 +48,13 @@
 
 ### Codex Lane
 - **Durum:** [~] Aktif
-- **Faz/WP:** Beta arıza kurtarması · Faz 3 retry worker salt-okunur teşhis
-- **Aşama:** İkinci run queue katmanını kanıtladı; birleşik son diagnostic hazırlanıyor
-- **SAHİP yollar:** `tooling/supabase/{DeployGuard.psm1,guard.tests.ps1}`, `progress.md` (yalnız bu lane)
-- **Ortak/riskli yüzey:** Staging yalnız salt-okunur workflow run; DB/Edge mutasyonu, tag/release ve production kapsam dışı.
+- **Faz/WP:** WP-280 · Beta push transport kurtarması
+- **Aşama:** `0070` ve kapılar yerelde doğrulandı; ayrık commit/push ve protected staging apply hazırlanıyor
+- **SAHİP yollar:** yeni `supabase/migrations/0070_*`, `supabase/tests/{001_schema_contract.test.sql,005_push_delivery.test.sql}`, `tooling/{supabase,release}/**`, `app/{env.ci.example.json,assets/release_notes.json,test/core/push_delivery_contract_test.dart}`, `CHANGELOG.md`, `progress.md` (yalnız bu lane)
+- **Ortak/riskli yüzey:** Yerel kod/migration/test ve staging'e özel korumalı kapı. Tag/release, production DB/Edge ve stable kapsam dışı.
 - **Dal:** `main`
-- **Başlangıç / Son güncelleme:** 2026-07-23 17:31 / 2026-07-23 17:37 (Europe/Istanbul)
-- **Not:** Run `30016351335` yeşil: iki self-test delivery pending, attempts=0, available=true, cihaz aktif, tercih açık, quiet-hours kapalı. Supabase query API yalnız son result set'i döndürdüğü için cron/config/pg_net/queue tek JSON sonucunda birleştirildi; guard 50/50. Production HOLD korunur.
+- **Başlangıç / Son güncelleme:** 2026-07-23 17:31 / 2026-07-23 17:47 (Europe/Istanbul)
+- **Not:** Run `30016723082` kök neden kanıtı. Düzeltme kanıtı: temiz `0001→0070`, pgTAP 139/139, guard 51/51, preflight 4/4, configured/unconfigured Flutter 690/690 + 690/690, analyze 0. Production HOLD korunur.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
@@ -85,8 +85,9 @@
 | 0 | Stable/production freeze | 🔴 HOLD | WP-271 kabulü ve soak olmadan kaldırılmaz |
 | 1A | WP-269 Release kapılarını sadeleştir | ✅ Kod+test tamam → Park | CI orchestrator koşusu + owner required-reviewer kabulü bekliyor |
 | 1B | WP-270 Push retry/health motoru | [x] Otomatik test geçti → Park | WP-271 staging/cihaz kabulünü bekliyor |
-| 1C | WP-272 v43 sayaç paneli sözleşmesi | [x] Otomatik test geçti → Park | Samsung cihaz kabulü bekliyor |
-| 2A | WP-271 Staging gerçek push kabulü | [ ] Bekliyor | WP-269 + WP-270 kabulünden sonra |
+| 1C | WP-280 Push `pg_net` transport kurtarması | [~] Yerel kabul geçti | Protected staging apply + cron/queue post-check |
+| 1D | WP-272 v43 sayaç paneli sözleşmesi | [x] Otomatik test geçti → Park | Samsung cihaz kabulü bekliyor |
+| 2A | WP-271 Staging gerçek push kabulü | [ ] Bekliyor | WP-269 + WP-270 + WP-280 kabulünden sonra |
 | 2B | WP-273 Windows deterministik release | [x] Otomatik test geçti → Park | Temiz Windows VM kabulü bekliyor |
 | Karar | WP-274 Tools erişim kararı | [x] Otomatik test geçti → Park | Kalıcı kaldırma seçildi; cihaz kabulü bekliyor |
 | Sonra | WP-275 Taç XP barı | [x] Otomatik test geçti → Park | Android/Windows cihaz kabulü bekliyor |
@@ -147,10 +148,22 @@
 - **Tuzaklar:** HTTP health kontrolünü work endpoint'ine yöneltmek; her outbox satırından ayrı fan-out fırtınası; secret'ı migration literaline koymak.
 - **Model önerisi:** 🔴 Opus / frontier-high
 
+### WP-280: Push `pg_net` Transport Kurtarması 🧯
+- **Program/Faz:** Kurtarma · Faz 3 — kanıtlanmış staging arızası
+- **Ajan:** Codex
+- **Durum:** [~] Yerel kabul geçti; protected staging apply ve canlı post-check sırada
+- **Kök neden:** Salt-okunur run `30016723082`, staging'de `pg_net` extension'ı ve `net` şeması olmadığını; aktif dakikalık cron'un son 20 koşusunun HTTP isteği oluşmadan `schema "net" does not exist` ile düştüğünü kanıtladı. İki uygun self-test delivery 0 denemede pending kaldı.
+- **Düzeltme:** İleri `0070`, `pg_net` transportunu migration zincirine alır; gerekli `net.http_post` yoksa migration fail-closed olur. Queue/self-test health yalnız runtime config **ve** transport varsa `configured` döner; staging post-check de extension/fonksiyon yokluğunda kırmızı olur.
+- **Kapsam dışı:** Beta tag/release, cihaz kabulünü yapılmış saymak, production migration/Edge/stable.
+- **Kanıt (yerel):** Temiz `0001→0070` replay; pgTAP 139/139; deploy guard 51/51; release preflight 4/4; push contract 6/6; configured/unconfigured tam Flutter suite 690/690 + 690/690; `flutter analyze` 0. Manifest: `.artifacts/deploy-evidence/20260723T144351722Z-local-baseline/`.
+- **Veri/Migration etkisi:** Yeni ileri `0070`; tablo/veri silmez. `pg_net` ortak altyapı olabileceği için rollback'te extension drop edilmez; worker durdurulur ve health sözleşmesi ileri migration ile geri çevrilir.
+- **Kabul (staging):** Exact SHA/head `0070` protected apply yeşil; `pg_net` ve `net.http_post` mevcut; cron'un yeni koşusu `succeeded`; bekleyen iki delivery attempts/status ilerlemesi gösterir. Gerçek cihaz teslimi yine WP-271 kabulüdür.
+- **Güvenlik:** Migration içinde endpoint/secret/token yoktur; diagnostic ve post-check hassas payload döndürmez; production HOLD değişmez.
+
 ### WP-271: Staging Gerçek Push ve Tek-Cihaz Beta Kabulü 📱
 - **Program/Faz:** Kurtarma · Faz 3 — staging kabulü
 - **Ajan:** —
-- **Durum:** [?] Ops/cihaz girdisi bekliyor · **Bağımlılık:** WP-269 + WP-270 otomatik kabulü
+- **Durum:** [?] Ops/cihaz girdisi bekliyor · **Bağımlılık:** WP-269 + WP-270 + WP-280 staging kabulü
 - **Problem:** beta-v4303 Android APK ve staging altyapısı yayımlanmış olsa da gerçek FCM teslim, retry, Samsung görünümü ve ölçümlü cihaz kabulü yoktur.
 - **Kapsam dışı:** Production migration/secret/function/stable release; yeni feature/fix. Testte bug bulunursa bu WP içinde acele fix yapılmaz, ayrı debug WP açılır.
 - **SAHİP dosyalar (yaz):** `tooling/release/deploy-contract.json` (yalnız staging head/HOLD), `docs/qa/DEVICE-QA-MATRIX.md`, `docs/recovery/PUSH-STAGING-ACCEPTANCE.md`, beta kabul kanıt manifestleri ve gerekiyorsa release metadata dosyaları.
@@ -161,7 +174,7 @@
   - [ ] Dürtme/duyuru/güncelleme ayrımı, duplicate, token refresh/logout ve zorlanmış transient retry senaryolarını kaydet.
   - [ ] App-kapalı timer paneli/action ve bildirim merkezi hata kodunu aynı adayda doğrula.
   - [ ] Cihaz kabulünde GitHub prerelease beta adayını kullan; mevcut aday aynı SHA/head değilse normal preflight sonrası benzersiz beta tag/release çıkar. Bu kalıcı ürün politikası için tekrar onay sorma; önceki tag'i yeniden kullanma.
-- **Veri/Migration etkisi:** Kabul edilmiş `0069` yalnız staging'e ileri terfi eder; rollback tetikleyiciyi/dispatcher'ı kapatır, kanıt satırlarını korur.
+- **Veri/Migration etkisi:** Kabul edilmiş `0070` yalnız staging'e ileri terfi eder; rollback tetikleyiciyi/dispatcher'ı kapatır, kanıt satırlarını korur; ortak `pg_net` extension'ını silmez.
 - **Ortam/Deploy:** Yalnız staging/beta. Production kesinlikle yok.
 - **RLS/Güvenlik:** Test hesabı ve redacted kanıt; payload/token/secret ekran görüntüsü/logda 0; cross-user teslim reddi kanıtlanır.
 - **Edge-case'ler:** Android “force stop” ile normal process termination ayrılır; Doze/batarya optimizasyonu; ağ kesintisi; eski beta client; iki cihaz ancak temel tek-cihaz kapısı geçtikten sonra.
