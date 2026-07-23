@@ -54,7 +54,7 @@
 - **Ortak/riskli yüzey:** —
 - **Dal:** `main`
 - **Başlangıç / Son güncelleme:** —
-- **Not:** WP-273 otomatik kanıtı parka alındı; temiz Windows VM QA'sı bekliyor. Production HOLD korunur.
+- **Not:** WP-273 mevcut makine MSIX N→N+1 güncelleme/açılış ve portable ZIP smoke geçti; temiz VM kurulum/kaldırma kabulü bekliyor. Production HOLD korunur.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
@@ -212,6 +212,7 @@
 - **Edge-case'ler:** Yavaş GitHub runner, locale/TZ, yeniden koşum, aynı asset'i iki kez yükleme, yalnız Windows veya yalnız Android başarı.
 - **Kabul (ölçülebilir):** İki flaky test 20/20 ardışık yeşil; tam Windows suite + build + MSIX/ZIP dry-run yeşil; manifest SHA/commit/channel/head doğru; zorunlu bir artefakt yokken release `complete` olamaz.
 - **Kod kanıtı (2026-07-23):** hedef `timer_background_reconcile_test.dart` 20/20; `flutter test`, `flutter analyze`, `flutter build windows --release`, `dart run msix:create --build-windows false` geçti. Yerel manifest `app/build/wp273-windows-dry-run/platform-manifest.json` `local` kanalını, migration head `0069`u ve MSIX/ZIP SHA-256 değerlerini kaydetti; tag/push/release yok.
+- **Mevcut makine smoke (2026-07-23):** Kurulu `OdakKampi.App` `1.0.0.0→1.0.0.8` MSIX güncellemesi, paketli uygulama açılışı ve portable ZIP açılışı geçti. Bu makine temiz VM değildir; kullanıcı verisini silmemek için uninstall koşturulmadı.
 - **Açık kabul (Cihazda doğrulanmalı):** Temiz Windows VM'de MSIX kurulum, N→N+1 güncelleme ve kaldırma; yayın/Store işlemi yapılmadı.
 - **Tuzaklar:** Sadece timeout büyütmek; üretim kodunu test flake'i için değiştirmek; Android yayımlandıktan sonra Windows'u belirsiz saatlerde eklemek.
 - **Model önerisi:** 🟣 Pro / frontier-high

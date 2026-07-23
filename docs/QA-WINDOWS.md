@@ -68,6 +68,13 @@ Bu belge Windows release / MSIX kanıtını standardize eder. Emulator veya yaln
 - Yerel MSIX + portable ZIP, SHA-256 manifestiyle `app/build/wp273-windows-dry-run/` altında üretildi. Bu bir yayın değildir.
 - Temiz VM kurulum/güncelleme/kaldırma senaryoları gerçek Windows cihazında ayrıca doğrulanmalıdır.
 
+### WP-273 mevcut makine paket smoke (2026-07-23)
+
+- Önceden kurulu `OdakKampi.App` `1.0.0.0`, imzası geçerli yerel MSIX ile `1.0.0.8`e yükseltildi; paket durumu `Ok` oldu.
+- Paketli uygulama AppUserModelId üzerinden açıldı ve süreç çalışır durumda doğrulandı.
+- Portable ZIP geçici bir klasöre açıldı; `online_study_room.exe` bulundu ve başlatıldı.
+- Bu makine temiz VM değildir; mevcut kullanıcı verisini silmemek için kaldırma adımı koşturulmadı. Bu nedenle W-01/W-04 ve temiz-VM kabulü hâlâ açıktır.
+
 ## 1. Artefakt kimliği
 
 | Alan | Değer |
