@@ -9,8 +9,8 @@
   },
   "production": {
     "migration_head": "0065",
-    "deploy_enabled": true,
-    "release_enabled": true,
-    "hold_reason": "0065 IS applied to production, but manually via docs/recovery/sql/apply_0065_production_manual.sql (verified: marathon_total tier1 = 1500 XP, 42 ledger rows repriced) because production has NO supabase_migrations history (PRODUCTION-BASELINE.md 63). Chain repair remains WP-232."
+    "deploy_enabled": false,
+    "release_enabled": false,
+    "hold_reason": "Production HOLD: deploy/release varsayılanı kapalıdır. Yalnız protected production Environment içinde exact SHA/head/project-ref ile tek kullanımlık GO ve kanıt girdisi doğrulanır; required reviewer kurulumu repo sahibi aksiyonudur."
   }
 }

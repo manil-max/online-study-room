@@ -29,8 +29,22 @@ Assert-Equal $contract.staging.migration_head '0068' 'staging migration head'
 Assert-Equal ([bool]$contract.staging.deploy_enabled) $true 'staging deploy enabled'
 Assert-Equal ([bool]$contract.staging.release_enabled) $true 'staging release enabled'
 Assert-Equal $contract.production.migration_head '0065' 'production head 0065: applied manually, chain repair is WP-232'
-Assert-Equal ([bool]$contract.production.deploy_enabled) $true 'production deploy opened for v43'
-Assert-Equal ([bool]$contract.production.release_enabled) $true 'production release opened for v43'
+Assert-Equal ([bool]$contract.production.deploy_enabled) $false 'production deploy defaults to HOLD'
+Assert-Equal ([bool]$contract.production.release_enabled) $false 'production release defaults to HOLD'
+
+$databaseWorkflow = Get-Content -LiteralPath (Join-Path $repoRoot '.github\workflows\database-gates.yml') -Raw -Encoding UTF8
+$releaseWorkflow = Get-Content -LiteralPath (Join-Path $repoRoot '.github\workflows\release.yml') -Raw -Encoding UTF8
+$windowsWorkflow = Get-Content -LiteralPath (Join-Path $repoRoot '.github\workflows\windows-release.yml') -Raw -Encoding UTF8
+if ($databaseWorkflow -match '(?im)flutter|beta-build\.ps1|KEYSTORE_BASE64') {
+  throw 'Database Gates must not build Flutter/APK candidates.'
+}
+if ($releaseWorkflow -notmatch 'release-status-manifest' -or $releaseWorkflow -notmatch 'needs: \[preflight, android, windows\]') {
+  throw 'Release orchestration must expose a single aggregate status manifest and wait for both platforms.'
+}
+if ($windowsWorkflow -match 'action-gh-release' -or $windowsWorkflow -notmatch 'workflow_call:') {
+  throw 'Windows workflow must be reusable and cannot finalize a GitHub Release independently.'
+}
+$passed += 3
 
 Assert-TargetContract -Environment staging -ProjectRef $stagingRef -SupabaseUrl "https://$stagingRef.supabase.co" -StagingProjectRef $stagingRef -ProductionProjectRef $productionRef -RepoRoot $repoRoot -IgnoreLinkedRef
 $passed++

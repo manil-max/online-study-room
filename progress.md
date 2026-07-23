@@ -13,7 +13,7 @@
 - **Beta artefakt durumu:** Android APK yayımlandı; beta-v4303 Windows MSIX/ZIP workflow'u iki zamanlama testinde düştüğü için release **kısmi** kaldı.
 - **Migration gerçeği:** local/staging `0068`; production `0065`. `0066–0068` production'a uygulanmadı.
 - **Production kararı:** Yeni stable tag, production migration/Edge deploy ve production mutasyonu **HOLD**. Somut işlem için staging kabulü + soak + backup/dry-run + açık kullanıcı GO gerekir.
-- **Açık yönetim çelişkisi:** `tooling/release/deploy-contract.json` production `deploy_enabled/release_enabled` değerleri bugün açık; bu güvenli varsayılan değildir ve WP-269'da kapatılacaktır.
+- **Yönetim varsayılanı (WP-269):** `tooling/release/deploy-contract.json` production `deploy_enabled/release_enabled` artık **kapalı** (güvenli varsayılan). Stable yalnız protected `production` Environment içinde tek kullanımlık exact SHA/head/project-ref GO ile ilerler; guard testleri kapalıyı kanıtlar.
 - **Kurallar:** Kök `AGENTS.md`, `.agents/AGENTS.md`, planner ve worker kuralları v43 sonrasında silinmedi/değiştirilmedi.
 - **Git:** Tek çalışma dalı `main`; branch/merge/push kullanıcı açıkça istemedikçe yok.
 - **Son WP numarası:** **279**. Sıradaki boş numara **WP-280**.
@@ -47,14 +47,14 @@
 - **Not:** —
 
 ### Codex Lane
-- **Durum:** [~] Aktif
-- **Faz/WP:** Kurtarma · WP-269
-- **Aşama:** Geliştiriliyor
-- **SAHİP yollar:** `.github/workflows/database-gates.yml`, `.github/workflows/release.yml`, `.github/workflows/windows-release.yml`, `tooling/release/**`, `tooling/supabase/guard.tests.ps1`, `docs/recovery/RELEASE-GATE.md`
-- **Ortak/riskli yüzey:** `progress.md` (yalnız bu lane + WP-269 kartı); release/deploy sözleşmeleri
+- **Durum:** [x] Boşta
+- **Faz/WP:** —
+- **Aşama:** —
+- **SAHİP yollar:** —
+- **Ortak/riskli yüzey:** —
 - **Dal:** `main`
-- **Başlangıç / Son güncelleme:** 2026-07-23 13:53 / 2026-07-23 13:53 (Europe/Istanbul)
-- **Not:** Local + CI dry-run; remote apply, tag, yayın ve production mutasyonu yok.
+- **Başlangıç / Son güncelleme:** — / 2026-07-23 14:20 (Europe/Istanbul)
+- **Not:** WP-269 kod+tooling testi tamamlandı; Codex limiti bitince Claude devraldı ve doğrulayıp parka aldı. Lane boşaldı.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
@@ -83,7 +83,7 @@
 | Sıra | İş | Durum | Başlatma kuralı |
 |---|---|---|---|
 | 0 | Stable/production freeze | 🔴 HOLD | WP-271 kabulü ve soak olmadan kaldırılmaz |
-| 1A | WP-269 Release kapılarını sadeleştir | [~] Aktif | Codex lane claim etti; başka ajan dokunmaz |
+| 1A | WP-269 Release kapılarını sadeleştir | ✅ Kod+test tamam → Park | CI orchestrator koşusu + owner required-reviewer kabulü bekliyor |
 | 1B | WP-270 Push retry/health motoru | [ ] Bekliyor | WP-269 ile paralel olabilir |
 | 1C | WP-272 v43 sayaç paneli sözleşmesi | [ ] Bekliyor | WP-269/270 ile paralel olabilir; en fazla iki lane kuralına uy |
 | 2A | WP-271 Staging gerçek push kabulü | [ ] Bekliyor | WP-269 + WP-270 kabulünden sonra |
@@ -101,18 +101,20 @@
 
 ### WP-269: Release ve Database Gates Sadeleştirmesi 🧭
 - **Program/Faz:** Kurtarma · Faz 1 — release yönetişimi
-- **Ajan:** —
-- **Durum:** [ ] Bekliyor
+- **Ajan:** Codex (uygulama) → Claude (devir + doğrulama)
+- **Durum:** [x] Kod+tooling testi tamamlandı → **Park** (CI koşusu + owner reviewer kabulü bekliyor)
 - **Problem:** Database apply, tam Flutter test/build ve beta aday APK aynı zincire bağlanmış; production bayrakları açık kalmış; Android/Windows release kısmi tamamlanabiliyor.
 - **Kapsam dışı:** Feature kodu, yeni migration, staging/production apply, tag/push/release, GitHub production secret'larını okuma.
 - **SAHİP dosyalar (yaz):** `.github/workflows/database-gates.yml`, `.github/workflows/release.yml`, `.github/workflows/windows-release.yml`, `tooling/release/**`, `tooling/supabase/guard.tests.ps1`, `docs/recovery/RELEASE-GATE.md`.
 - **DOKUNMA (oku, değiştirme):** `app/lib/**`, `app/android/**`, `supabase/migrations/**`, `supabase/functions/**`, Firebase dosyaları.
 - **Adımlar:**
-  - [ ] Database Gates'i list→dry-run→apply→pgTAP/post-check ile sınırla; Flutter/APK aday build'ini ayır.
-  - [ ] Production deploy/release varsayılanını kapat; kalıcı açık flag yerine tek kullanımlık exact SHA/head/GO doğrulaması tasarla.
-  - [ ] “beta preflight” ve “stable preflight” için tek giriş noktası ve kısa kanıt özeti üret.
-  - [ ] Android/Windows artefakt durumunu `partial|complete|failed` olarak tek manifestte göster; release'i ancak zorunlu artefaktlar tamamlanınca finalize et.
-  - [ ] Repo dışı sahip aksiyonu olarak GitHub `production` Environment required reviewer kurulumunu açık checklist'e yaz.
+  - [x] Database Gates'i list→dry-run→apply→pgTAP/post-check ile sınırla; Flutter/APK aday build'ini ayır. (Flutter/keystore adımları workflow'dan çıktı; guard testi `flutter|beta-build.ps1|KEYSTORE_BASE64` yokluğunu zorluyor.)
+  - [x] Production deploy/release varsayılanını kapat; kalıcı açık flag yerine tek kullanımlık exact SHA/head/GO doğrulaması tasarla. (`deploy_enabled/release_enabled=false`; `release-gate.ps1` yalnız CI+protected `production` env + exact `PRODUCTION RELEASE GO:<sha>:<head>:<ref>` + kanıt ile geçer.)
+  - [x] “beta preflight” ve “stable preflight” için tek giriş noktası ve kısa kanıt özeti üret. (`tooling/release/release-preflight.ps1` + testleri.)
+  - [x] Android/Windows artefakt durumunu `partial|complete|failed` olarak tek manifestte göster; release'i ancak zorunlu artefaktlar tamamlanınca finalize et. (`release_status` job `release-status-manifest.json`; `finalize` yalnız android+windows `success` ise koşar.)
+  - [x] Repo dışı sahip aksiyonu olarak GitHub `production` Environment required reviewer kurulumunu açık checklist'e yaz. (`docs/recovery/RELEASE-GATE.md` owner checklist.)
+- **Kanıt (Kodda doğrulandı):** `guard.tests.ps1` 39/39, `release-preflight.tests.ps1` 4/4, `beta-build.tests.ps1` 4/4 yeşil; üç workflow YAML geçerli.
+- **Açık kabul (Cihazda/CI'da doğrulanmalı):** Gerçek beta orchestrator koşusunda iki zorunlu artefakt `complete`; owner `production` Environment required-reviewer kurulumu.
 - **Veri/Migration etkisi:** Yok. Rollback, yalnız workflow/tooling commit'ini geri almaktır.
 - **Ortam/Deploy:** Local + CI dry-run; remote apply, tag ve yayın yok. Production HOLD korunur.
 - **RLS/Güvenlik:** Secret çıktısı 0; environment/channel/SHA/head fail-closed; required-reviewer eksikliği görünür blokerdir.
@@ -340,6 +342,7 @@
 
 | WP | Kanıtlı durum | Açık kabul / karar |
 |---|---|---|
+| WP-269 | Kod+tooling testi geçti (guard 39, preflight 4, beta-build 4; 3 workflow YAML geçerli) | Gerçek beta orchestrator koşusunda iki zorunlu artefakt `complete`; owner `production` Environment required-reviewer kurulumu |
 | WP-231 | Otomatik test geçti | İki cihazda kişisel ≤1 sn, grup ≤5 sn reconnect/refresh QA |
 | WP-254 | Kodlandı ve v43 içinde yayımlandı | İstanbul saat gösterimi gerçek cihaz kabul kaydı eksik |
 | WP-259 | Yerel Windows smoke/build/navigation geçti | Temiz VM'de N→N+1 MSIX, uninstall ve DPI matrisi |

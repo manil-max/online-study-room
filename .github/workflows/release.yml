@@ -1,105 +1,89 @@
-name: Release APK
+name: Release Orchestrator
 
-# Stable: v42 -> 1.0.42+42. Beta: beta-v4201 -> 1.0.42-beta.1+4201.
 on:
   push:
-    tags:
-      - 'v*'
-      - 'beta-v*'
+    tags: ['beta-v*']
+  workflow_dispatch:
+    inputs:
+      tag: { description: 'Mevcut beta-vNNNN veya vNN tag', required: true, type: string }
+      channel: { description: 'Tag ile aynı kanal', required: true, type: choice, options: [beta, stable] }
+      expected_git_sha: { description: 'Tam 40 karakter SHA', required: true, type: string }
+      expected_migration_head: { description: 'Tam dört haneli migration head', required: true, type: string }
+      production_confirmation: { description: 'Stable: PRODUCTION RELEASE GO:<sha>:<head>:<project-ref>', required: false, type: string }
+      production_evidence: { description: 'Stable: staging/QA/soak/rollback kanıt konumu', required: false, type: string }
 
 permissions:
   contents: write
 
+concurrency:
+  group: release-${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
 jobs:
-  build:
+  preflight:
     runs-on: ubuntu-latest
-    environment:
-      name: ${{ startsWith(github.ref_name, 'beta-') && 'staging' || 'production' }}
-    defaults:
-      run:
-        working-directory: app
+    environment: ${{ github.event_name == 'workflow_dispatch' && inputs.channel == 'stable' && 'production' || 'staging' }}
+    outputs:
+      channel: ${{ steps.meta.outputs.channel }}
+      tag: ${{ steps.meta.outputs.tag }}
+      git_sha: ${{ steps.meta.outputs.git_sha }}
+      migration_head: ${{ steps.meta.outputs.migration_head }}
+      version_name: ${{ steps.meta.outputs.version_name }}
+      build_number: ${{ steps.meta.outputs.build_number }}
+      environment: ${{ steps.meta.outputs.environment }}
     steps:
       - uses: actions/checkout@v4
-
-      - name: Kanonik migration head
-        id: contract
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}
+          fetch-depth: 0
+      - id: meta
         shell: pwsh
         run: |
-          $contract = Get-Content ../tooling/release/deploy-contract.json -Raw | ConvertFrom-Json
-          $environment = if ($env:GITHUB_REF_NAME.StartsWith('beta-')) { 'staging' } else { 'production' }
-          "head=$($contract.$environment.migration_head)" >> $env:GITHUB_OUTPUT
-
-      - name: Kanal ve surum bilgisini cikar
-        id: meta
-        run: |
-          TAG="$GITHUB_REF_NAME"
-          CODE="${TAG##*v}"
-          [[ "$CODE" =~ ^[0-9]+$ ]] || { echo "Invalid release code: $CODE"; exit 1; }
-          echo "code=$CODE" >> "$GITHUB_OUTPUT"
-          if [[ "$TAG" == beta* ]]; then
-            PATCH=$((CODE / 100))
-            SEQ=$((CODE % 100))
-            (( PATCH > 0 && SEQ > 0 && SEQ < 100 )) || { echo "beta code must encode patch*100+sequence"; exit 1; }
-            echo "version_name=1.0.${PATCH}-beta.${SEQ}" >> "$GITHUB_OUTPUT"
-            echo "flavor=beta" >> "$GITHUB_OUTPUT"
-            echo "channel=beta" >> "$GITHUB_OUTPUT"
-            echo "prerelease=true" >> "$GITHUB_OUTPUT"
-            echo "src=app-beta-release.apk" >> "$GITHUB_OUTPUT"
-            echo "asset=app-beta-release.apk" >> "$GITHUB_OUTPUT"
-          else
-            echo "version_name=1.0.${CODE}" >> "$GITHUB_OUTPUT"
-            echo "flavor=stable" >> "$GITHUB_OUTPUT"
-            echo "channel=stable" >> "$GITHUB_OUTPUT"
-            echo "prerelease=false" >> "$GITHUB_OUTPUT"
-            echo "src=app-stable-release.apk" >> "$GITHUB_OUTPUT"
-            echo "asset=app-release.apk" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Protected release gate
+          $tag = if ('${{ github.event_name }}' -eq 'workflow_dispatch') { '${{ inputs.tag }}' } else { $env:GITHUB_REF_NAME }
+          $channel = if ($tag.StartsWith('beta-v')) { 'beta' } elseif ($tag -match '^v\d+$') { 'stable' } else { throw "Geçersiz release tag: $tag" }
+          if ('${{ github.event_name }}' -eq 'workflow_dispatch' -and $channel -ne '${{ inputs.channel }}') { throw 'Seçilen kanal tag ile uyuşmuyor.' }
+          $sha = (git rev-parse HEAD).Trim()
+          $contract = Get-Content tooling/release/deploy-contract.json -Raw | ConvertFrom-Json
+          $head = if ('${{ github.event_name }}' -eq 'workflow_dispatch') { '${{ inputs.expected_migration_head }}' } else { $contract.staging.migration_head }
+          $expectedSha = if ('${{ github.event_name }}' -eq 'workflow_dispatch') { '${{ inputs.expected_git_sha }}' } else { $sha }
+          $code = [int]($tag -replace '^beta-v|^v', '')
+          $version = if ($channel -eq 'beta') { "1.0.$([math]::Floor($code / 100))-beta.$($code % 100)" } else { "1.0.$code" }
+          "tag=$tag" >> $env:GITHUB_OUTPUT; "channel=$channel" >> $env:GITHUB_OUTPUT; "git_sha=$expectedSha" >> $env:GITHUB_OUTPUT
+          "migration_head=$head" >> $env:GITHUB_OUTPUT; "version_name=$version" >> $env:GITHUB_OUTPUT; "build_number=$code" >> $env:GITHUB_OUTPUT
+          "environment=$(if ($channel -eq 'beta') { 'staging' } else { 'production' })" >> $env:GITHUB_OUTPUT
+      - name: Tek girişli release preflight
         shell: pwsh
         env:
           STAGING_SUPABASE_URL: ${{ secrets.STAGING_SUPABASE_URL }}
           PRODUCTION_SUPABASE_URL: ${{ secrets.PRODUCTION_SUPABASE_URL }}
           STAGING_SUPABASE_PROJECT_REF: ${{ vars.STAGING_SUPABASE_PROJECT_REF }}
           PRODUCTION_SUPABASE_PROJECT_REF: ${{ vars.PRODUCTION_SUPABASE_PROJECT_REF }}
+          DEPLOY_APPROVAL_ENVIRONMENT: ${{ steps.meta.outputs.environment }}
         run: |
-          $channel = '${{ steps.meta.outputs.channel }}'
-          $projectRef = if ($channel -eq 'beta') { $env:STAGING_SUPABASE_PROJECT_REF } else { $env:PRODUCTION_SUPABASE_PROJECT_REF }
-          $url = if ($channel -eq 'beta') { $env:STAGING_SUPABASE_URL } else { $env:PRODUCTION_SUPABASE_URL }
-          ../tooling/release/release-gate.ps1 -Channel $channel -ProjectRef $projectRef -SupabaseUrl $url -StagingProjectRef $env:STAGING_SUPABASE_PROJECT_REF -ProductionProjectRef $env:PRODUCTION_SUPABASE_PROJECT_REF -ExpectedGitSha $env:GITHUB_SHA -ExpectedMigrationHead '${{ steps.contract.outputs.head }}'
+          $channel = '${{ steps.meta.outputs.channel }}'; $isBeta = $channel -eq 'beta'
+          ./tooling/release/release-preflight.ps1 -Channel $channel -Tag '${{ steps.meta.outputs.tag }}' -ExpectedGitSha '${{ steps.meta.outputs.git_sha }}' -ExpectedMigrationHead '${{ steps.meta.outputs.migration_head }}' -ProjectRef $(if ($isBeta) { $env:STAGING_SUPABASE_PROJECT_REF } else { $env:PRODUCTION_SUPABASE_PROJECT_REF }) -SupabaseUrl $(if ($isBeta) { $env:STAGING_SUPABASE_URL } else { $env:PRODUCTION_SUPABASE_URL }) -StagingProjectRef $env:STAGING_SUPABASE_PROJECT_REF -ProductionProjectRef $env:PRODUCTION_SUPABASE_PROJECT_REF -ProductionConfirmation '${{ inputs.production_confirmation }}' -ProductionEvidence '${{ inputs.production_evidence }}'
 
-      - name: Release gate evidence
-        if: always()
-        uses: actions/upload-artifact@v4
+  android:
+    needs: preflight
+    runs-on: ubuntu-latest
+    environment: ${{ needs.preflight.outputs.environment }}
+    defaults: { run: { working-directory: app } }
+    steps:
+      - uses: actions/checkout@v4
         with:
-          name: android-release-gate-${{ github.run_id }}
-          path: .artifacts/deploy-evidence/**
-          if-no-files-found: error
-
+          ref: ${{ needs.preflight.outputs.git_sha }}
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
-
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
-
-      - name: Keystore'u secrettan coz
-        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/key.jks
-
-      - name: key.properties olustur
+      - name: İmzalama anahtarını hazırla
         run: |
-          cat > android/key.properties <<EOF
-          storePassword=${{ secrets.STORE_PASSWORD }}
-          keyPassword=${{ secrets.KEY_PASSWORD }}
-          keyAlias=${{ secrets.KEY_ALIAS }}
-          storeFile=key.jks
-          EOF
-
-      - run: flutter pub get
-
-      - name: Kanal/backend manifestini env.json olarak üret
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/key.jks
+          printf 'storePassword=%s\nkeyPassword=%s\nkeyAlias=%s\nstoreFile=key.jks\n' '${{ secrets.STORE_PASSWORD }}' '${{ secrets.KEY_PASSWORD }}' '${{ secrets.KEY_ALIAS }}' > android/key.properties
+      - name: Kanal/backend manifestini üret
         shell: bash
         env:
           STAGING_SUPABASE_URL: ${{ secrets.STAGING_SUPABASE_URL }}
@@ -113,148 +97,91 @@ jobs:
           FIREBASE_ANDROID_APP_ID: ${{ vars.FIREBASE_ANDROID_APP_ID }}
           FIREBASE_MESSAGING_SENDER_ID: ${{ vars.FIREBASE_MESSAGING_SENDER_ID }}
         run: |
+          if [ '${{ needs.preflight.outputs.channel }}' = beta ]; then ENV=staging; URL="$STAGING_SUPABASE_URL"; KEY="$STAGING_SUPABASE_ANON_KEY"; REF="$STAGING_SUPABASE_PROJECT_REF"; FLAVOR=beta; SRC=app-beta-release.apk; OUT=app-beta-release.apk; else ENV=production; URL="$PRODUCTION_SUPABASE_URL"; KEY="$PRODUCTION_SUPABASE_ANON_KEY"; REF="$PRODUCTION_SUPABASE_PROJECT_REF"; FLAVOR=stable; SRC=app-stable-release.apk; OUT=app-release.apk; fi
           for required in FIREBASE_PROJECT_ID FIREBASE_ANDROID_API_KEY FIREBASE_ANDROID_APP_ID FIREBASE_MESSAGING_SENDER_ID; do
-            if [ -z "${!required}" ]; then
-              echo "Missing required environment variable: $required"
-              exit 1
-            fi
+            if [ -z "${!required}" ]; then echo "Missing required environment variable: $required"; exit 1; fi
           done
-          if [ "${{ steps.meta.outputs.channel }}" = "beta" ]; then
-            export APP_ENVIRONMENT=staging
-            export SUPABASE_URL="$STAGING_SUPABASE_URL"
-            export SUPABASE_ANON_KEY="$STAGING_SUPABASE_ANON_KEY"
-            export SUPABASE_PROJECT_REF="$STAGING_SUPABASE_PROJECT_REF"
-            export DISTRIBUTION_CHANNEL=githubBeta
-          else
-            export APP_ENVIRONMENT=production
-            export SUPABASE_URL="$PRODUCTION_SUPABASE_URL"
-            export SUPABASE_ANON_KEY="$PRODUCTION_SUPABASE_ANON_KEY"
-            export SUPABASE_PROJECT_REF="$PRODUCTION_SUPABASE_PROJECT_REF"
-            export DISTRIBUTION_CHANNEL=githubStable
-          fi
-          export RELEASE_CHANNEL="${{ steps.meta.outputs.channel }}"
-          python - <<'PY'
-          import json, os
-          manifest = {
-              "CHANNEL": os.environ["RELEASE_CHANNEL"],
-              "APP_ENVIRONMENT": os.environ["APP_ENVIRONMENT"],
-              "ALLOW_IN_MEMORY": "false",
-              "SUPABASE_URL": os.environ["SUPABASE_URL"],
-              "SUPABASE_ANON_KEY": os.environ["SUPABASE_ANON_KEY"],
-              "SUPABASE_PROJECT_REF": os.environ["SUPABASE_PROJECT_REF"],
-              "STAGING_SUPABASE_PROJECT_REF": os.environ["STAGING_SUPABASE_PROJECT_REF"],
-              "PRODUCTION_SUPABASE_PROJECT_REF": os.environ["PRODUCTION_SUPABASE_PROJECT_REF"],
-              "GIT_COMMIT_SHA": os.environ["GITHUB_SHA"],
-              "MIGRATION_HEAD": "${{ steps.contract.outputs.head }}",
-              "APP_VERSION_NAME": "${{ steps.meta.outputs.version_name }}",
-              "APP_BUILD_NUMBER": "${{ steps.meta.outputs.code }}",
-              "DISTRIBUTION_CHANNEL": os.environ["DISTRIBUTION_CHANNEL"],
-              "FIREBASE_PROJECT_ID": os.environ["FIREBASE_PROJECT_ID"],
-              "FIREBASE_ANDROID_API_KEY": os.environ["FIREBASE_ANDROID_API_KEY"],
-              "FIREBASE_ANDROID_APP_ID": os.environ["FIREBASE_ANDROID_APP_ID"],
-              "FIREBASE_MESSAGING_SENDER_ID": os.environ["FIREBASE_MESSAGING_SENDER_ID"],
-          }
-          with open("env.json", "w", encoding="utf-8") as handle:
-              json.dump(manifest, handle)
+          python - <<PY
+          import json
+          json.dump({'CHANNEL':'${{ needs.preflight.outputs.channel }}','APP_ENVIRONMENT':'$ENV','ALLOW_IN_MEMORY':'false','SUPABASE_URL':'$URL','SUPABASE_ANON_KEY':'$KEY','SUPABASE_PROJECT_REF':'$REF','STAGING_SUPABASE_PROJECT_REF':'$STAGING_SUPABASE_PROJECT_REF','PRODUCTION_SUPABASE_PROJECT_REF':'$PRODUCTION_SUPABASE_PROJECT_REF','GIT_COMMIT_SHA':'${{ needs.preflight.outputs.git_sha }}','MIGRATION_HEAD':'${{ needs.preflight.outputs.migration_head }}','APP_VERSION_NAME':'${{ needs.preflight.outputs.version_name }}','APP_BUILD_NUMBER':'${{ needs.preflight.outputs.build_number }}','DISTRIBUTION_CHANNEL':'github','FIREBASE_PROJECT_ID':'$FIREBASE_PROJECT_ID','FIREBASE_ANDROID_API_KEY':'$FIREBASE_ANDROID_API_KEY','FIREBASE_ANDROID_APP_ID':'$FIREBASE_ANDROID_APP_ID','FIREBASE_MESSAGING_SENDER_ID':'$FIREBASE_MESSAGING_SENDER_ID'}, open('env.json','w'))
           PY
-
-      - name: Kanal/backend fail-closed guard
-        run: >
-          flutter test test/core/current_build_manifest_gate_test.dart
-          --dart-define-from-file=env.json
-          --dart-define=ENFORCE_CURRENT_BUILD_MANIFEST=true
-
-      - name: Release APK derle (${{ steps.meta.outputs.flavor }})
+          echo "FLAVOR=$FLAVOR" >> $GITHUB_ENV; echo "SRC=$SRC" >> $GITHUB_ENV; echo "OUT=$OUT" >> $GITHUB_ENV
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test --dart-define-from-file=env.json
+      - run: flutter test test/core/current_build_manifest_gate_test.dart --dart-define-from-file=env.json --dart-define=ENFORCE_CURRENT_BUILD_MANIFEST=true
+      - run: flutter build apk --release --flavor "$FLAVOR" --build-name=${{ needs.preflight.outputs.version_name }} --build-number=${{ needs.preflight.outputs.build_number }} --dart-define-from-file=env.json
+      - name: Android artefaktını paketle
         run: |
-          # WP-110: GitHub sideload only (stable/beta). Play AAB ayrı komut:
-          # flutter build appbundle --flavor play --release \
-          #   --dart-define=DISTRIBUTION_CHANNEL=play --dart-define-from-file=env.json
-          flutter build apk --release \
-            --flavor ${{ steps.meta.outputs.flavor }} \
-            --build-name=${{ steps.meta.outputs.version_name }} \
-            --build-number=${{ steps.meta.outputs.code }} \
-            --dart-define-from-file=env.json
-
-      - name: Play installer izni guard (sideload APK'de olmali)
-        run: |
-          # stable/beta APK REQUEST_INSTALL_PACKAGES içermeli (sideload).
-          APK="build/app/outputs/flutter-apk/${{ steps.meta.outputs.src }}"
-          if ! command -v aapt2 >/dev/null 2>&1; then
-            echo "aapt2 yok; permission guard atlandi"
-            exit 0
-          fi
-          PERMS=$(aapt2 dump permissions "$APK" 2>/dev/null || true)
-          echo "$PERMS"
-          echo "$PERMS" | grep -q "android.permission.REQUEST_INSTALL_PACKAGES" \
-            || { echo "sideload APK installer izni eksik"; exit 1; }
-
-      - name: APK dosyasini adlandir ve SHA-256 uret
-        working-directory: app/build/app/outputs/flutter-apk
-        run: |
-          if [ "${{ steps.meta.outputs.src }}" != "${{ steps.meta.outputs.asset }}" ]; then
-            mv "${{ steps.meta.outputs.src }}" "${{ steps.meta.outputs.asset }}"
-          fi
-          sha256sum "${{ steps.meta.outputs.asset }}" > "${{ steps.meta.outputs.asset }}.sha256"
-          python - <<'PY'
-          import hashlib, json, pathlib
-          artifact = pathlib.Path("${{ steps.meta.outputs.asset }}")
-          manifest = {
-              "schemaVersion": 1,
-              "channel": "${{ steps.meta.outputs.channel }}",
-              "environment": "staging" if "${{ steps.meta.outputs.channel }}" == "beta" else "production",
-              "versionName": "${{ steps.meta.outputs.version_name }}",
-              "buildNumber": int("${{ steps.meta.outputs.code }}"),
-              "gitCommitSha": "${{ github.sha }}",
-              "backendProjectRef": "${{ steps.meta.outputs.channel }}" == "beta" and "${{ vars.STAGING_SUPABASE_PROJECT_REF }}" or "${{ vars.PRODUCTION_SUPABASE_PROJECT_REF }}",
-              "migrationHead": "${{ steps.contract.outputs.head }}",
-              "artifact": artifact.name,
-              "sha256": hashlib.sha256(artifact.read_bytes()).hexdigest(),
-          }
-          pathlib.Path("release-manifest.json").write_text(
-              json.dumps(manifest, indent=2) + "\n", encoding="utf-8"
-          )
+          cd build/app/outputs/flutter-apk; mv "$SRC" "$OUT"; sha256sum "$OUT" > "$OUT.sha256"
+          python - <<PY
+          import hashlib,json,pathlib
+          p=pathlib.Path('$OUT'); pathlib.Path('platform-manifest.json').write_text(json.dumps({'schemaVersion':1,'platform':'android','status':'complete','channel':'${{ needs.preflight.outputs.channel }}','gitCommitSha':'${{ needs.preflight.outputs.git_sha }}','migrationHead':'${{ needs.preflight.outputs.migration_head }}','artifacts':[{'name':p.name,'sha256':hashlib.sha256(p.read_bytes()).hexdigest()}]},indent=2)+'\n')
           PY
-
-      - name: CHANGELOG bolumunu release body olarak hazirla
-        working-directory: ${{ github.workspace }}
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-
-          tag = "${{ github.ref_name }}".lower()
-          changelog = Path("CHANGELOG.md")
-          output = Path("release_body.md")
-          if not changelog.exists():
-              output.write_text(f"# {tag}\n\nRelease notu CHANGELOG.md icinde bulunamadi.\n", encoding="utf-8")
-              raise SystemExit(0)
-
-          lines = changelog.read_text(encoding="utf-8").splitlines()
-          starts = [i for i, line in enumerate(lines) if line.startswith("## ")]
-          selected = None
-          for index, start in enumerate(starts):
-              heading = lines[start].lower()
-              if tag in heading:
-                  end = starts[index + 1] if index + 1 < len(starts) else len(lines)
-                  selected = "\n".join(lines[start:end]).strip()
-                  break
-
-          if selected is None:
-              selected = f"# {tag}\n\nBu tag icin CHANGELOG.md bolumu bulunamadi; release body'yi elle kontrol et."
-
-          output.write_text(selected + "\n", encoding="utf-8")
-          PY
-
-      - name: GitHub Release'e APK ve checksum yukle
-        uses: softprops/action-gh-release@v2
+      - uses: actions/upload-artifact@v4
         with:
-          prerelease: ${{ steps.meta.outputs.prerelease }}
-          body_path: release_body.md
-          files: |
-            app/build/app/outputs/flutter-apk/${{ steps.meta.outputs.asset }}
-            app/build/app/outputs/flutter-apk/${{ steps.meta.outputs.asset }}.sha256
-            app/build/app/outputs/flutter-apk/release-manifest.json
+          name: android-release
+          path: app/build/app/outputs/flutter-apk/*
+          if-no-files-found: error
 
-      - name: Yeni surum push bildirimini kuyruga al
+  windows:
+    needs: preflight
+    uses: ./.github/workflows/windows-release.yml
+    with:
+      git_sha: ${{ needs.preflight.outputs.git_sha }}
+      channel: ${{ needs.preflight.outputs.channel }}
+      version_name: ${{ needs.preflight.outputs.version_name }}
+      build_number: ${{ needs.preflight.outputs.build_number }}
+      migration_head: ${{ needs.preflight.outputs.migration_head }}
+    secrets: inherit
+
+  release_status:
+    if: always()
+    needs: [preflight, android, windows]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Tek artefakt durum manifestini yaz
+        shell: bash
+        run: |
+          a='${{ needs.android.result }}'; w='${{ needs.windows.result }}'; p='${{ needs.preflight.result }}'
+          if [ "$a" = success ] && [ "$w" = success ] && [ "$p" = success ]; then status=complete; elif [ "$a" = success ] || [ "$w" = success ]; then status=partial; else status=failed; fi
+          printf '{"schemaVersion":1,"status":"%s","preflight":"%s","android":"%s","windows":"%s"}\n' "$status" "$p" "$a" "$w" > release-status-manifest.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-status-manifest
+          path: release-status-manifest.json
+          if-no-files-found: error
+
+  finalize:
+    needs: [preflight, android, windows]
+    if: needs.preflight.result == 'success' && needs.android.result == 'success' && needs.windows.result == 'success'
+    runs-on: ubuntu-latest
+    environment: ${{ needs.preflight.outputs.environment }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: android-release
+          path: release-assets/android
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-release
+          path: release-assets/windows
+      - name: Complete manifest oluştur
+        run: |
+          python - <<'PY'
+          import json, pathlib
+          manifests=[]
+          for p in pathlib.Path('release-assets').rglob('platform-manifest.json'): manifests.append(json.loads(p.read_text()))
+          assert {m['platform'] for m in manifests} == {'android','windows'}
+          pathlib.Path('release-assets/release-manifest.json').write_text(json.dumps({'schemaVersion':1,'status':'complete','channel':'${{ needs.preflight.outputs.channel }}','gitCommitSha':'${{ needs.preflight.outputs.git_sha }}','migrationHead':'${{ needs.preflight.outputs.migration_head }}','platforms':manifests},indent=2)+'\n')
+          PY
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.preflight.outputs.tag }}
+          prerelease: ${{ needs.preflight.outputs.channel == 'beta' }}
+          generate_release_notes: true
+          files: release-assets/**
+      - name: Tamamlanan sürüm bildirimini kuyruğa al
         shell: bash
         env:
           STAGING_SUPABASE_URL: ${{ secrets.STAGING_SUPABASE_URL }}
@@ -263,26 +190,7 @@ jobs:
           PRODUCTION_SUPABASE_ANON_KEY: ${{ secrets.PRODUCTION_SUPABASE_ANON_KEY }}
           PUSH_DISPATCH_SECRET: ${{ secrets.PUSH_DISPATCH_SECRET }}
         run: |
-          if [ -z "$PUSH_DISPATCH_SECRET" ]; then
-            echo "Push dispatcher henuz aktive edilmedi; release bildirimi atlandi."
-            exit 0
-          fi
-          if [ "${{ steps.meta.outputs.channel }}" = "beta" ]; then
-            SUPABASE_URL="$STAGING_SUPABASE_URL"
-            SUPABASE_ANON_KEY="$STAGING_SUPABASE_ANON_KEY"
-          else
-            SUPABASE_URL="$PRODUCTION_SUPABASE_URL"
-            SUPABASE_ANON_KEY="$PRODUCTION_SUPABASE_ANON_KEY"
-          fi
-          PAYLOAD=$(jq -n \
-            --arg event_key "${{ github.ref_name }}" \
-            --arg channel "${{ steps.meta.outputs.channel }}" \
-            --arg version "${{ steps.meta.outputs.version_name }}" \
-            --argjson build_number "${{ steps.meta.outputs.code }}" \
-            '{action:"enqueue_update",event_key:$event_key,channel:$channel,version_name:$version,build_number:$build_number,title:"Odak Kampı güncellendi",body:("Sürüm " + $version + " indirilmeye hazır.")}')
-          curl --fail-with-body --silent --show-error \
-            -X POST "$SUPABASE_URL/functions/v1/dispatch-push" \
-            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
-            -H "Content-Type: application/json" \
-            -H "x-push-dispatch-secret: $PUSH_DISPATCH_SECRET" \
-            --data "$PAYLOAD"
+          [ -n "$PUSH_DISPATCH_SECRET" ] || { echo 'Push dispatcher yapılandırılmadı; bildirim atlandı.'; exit 0; }
+          if [ '${{ needs.preflight.outputs.channel }}' = beta ]; then URL="$STAGING_SUPABASE_URL"; KEY="$STAGING_SUPABASE_ANON_KEY"; else URL="$PRODUCTION_SUPABASE_URL"; KEY="$PRODUCTION_SUPABASE_ANON_KEY"; fi
+          PAYLOAD=$(jq -n --arg event_key '${{ needs.preflight.outputs.tag }}' --arg channel '${{ needs.preflight.outputs.channel }}' --arg version '${{ needs.preflight.outputs.version_name }}' --argjson build_number '${{ needs.preflight.outputs.build_number }}' '{action:"enqueue_update",event_key:$event_key,channel:$channel,version_name:$version,build_number:$build_number,title:"Odak Kampı güncellendi",body:"Yeni sürüm indirilmeye hazır."}')
+          curl --fail-with-body --silent --show-error -X POST "$URL/functions/v1/dispatch-push" -H "Authorization: Bearer $KEY" -H 'Content-Type: application/json' -H "x-push-dispatch-secret: $PUSH_DISPATCH_SECRET" --data "$PAYLOAD"

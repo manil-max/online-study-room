@@ -1,121 +1,35 @@
-name: Windows Release
-
-# Stable: git tag vN && git push origin vN
-# Beta:   git tag beta-vN && git push origin beta-vN
-# Manual: workflow_dispatch
-#
-# N = build number (Android release.yml ile hizalı).
-# Artefakt: odak-kampi-windows-{stable|beta}.msix + .zip + .sha256
-# İmza: secret yoksa self-signed (QA). PFX repoya/log'a GİRMEZ.
-# Store MSIX ayrı kanal (publisher identity kalıcı) — docs/WINDOWS-RELEASE-GATE.md
+name: Windows Release Artifact
 
 on:
-  push:
-    tags:
-      - 'v*'
-      - 'beta-v*'
-  workflow_dispatch:
+  workflow_call:
+    inputs:
+      git_sha: { required: true, type: string }
+      channel: { required: true, type: string }
+      version_name: { required: true, type: string }
+      build_number: { required: true, type: string }
+      migration_head: { required: true, type: string }
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build:
     runs-on: windows-latest
-    environment:
-      name: ${{ startsWith(github.ref_name, 'beta-') && 'staging' || 'production' }}
+    environment: ${{ inputs.channel == 'beta' && 'staging' || 'production' }}
     defaults:
       run:
         working-directory: app
-
     steps:
       - uses: actions/checkout@v4
-
-      - name: Kanonik migration head
-        id: contract
-        shell: pwsh
-        run: |
-          $contract = Get-Content ../tooling/release/deploy-contract.json -Raw | ConvertFrom-Json
-          $environment = if ($env:GITHUB_REF_NAME.StartsWith('beta-')) { 'staging' } else { 'production' }
-          "head=$($contract.$environment.migration_head)" >> $env:GITHUB_OUTPUT
-
-      - name: Kanal ve surum
-        id: meta
-        shell: bash
-        run: |
-          set -e
-          TAG="${GITHUB_REF_NAME}"
-          if [[ "$GITHUB_REF" != refs/tags/* ]]; then
-            CODE=$(grep -E '^version:' pubspec.yaml | head -1 | sed -E 's/.*\+([0-9]+).*/\1/')
-            TAG="manual-v${CODE}"
-            CHANNEL=stable
-            PRERELEASE=false
-          else
-            CODE="${TAG##*v}"
-            if [[ "$TAG" == beta* ]]; then
-              CHANNEL=beta
-              PRERELEASE=true
-            else
-              CHANNEL=stable
-              PRERELEASE=false
-            fi
-          fi
-          [[ "$CODE" =~ ^[0-9]+$ ]] || { echo "Invalid release code: $CODE"; exit 1; }
-          if [[ "$CHANNEL" == beta ]]; then
-            PATCH=$((CODE / 100))
-            SEQ=$((CODE % 100))
-            (( PATCH > 0 && SEQ > 0 && SEQ < 100 )) || { echo "beta code must encode patch*100+sequence"; exit 1; }
-            VERSION_NAME="1.0.${PATCH}-beta.${SEQ}"
-          else
-            VERSION_NAME="1.0.${CODE}"
-          fi
-          MSIX_VER="1.0.0.${CODE}"
-          ASSET_MSIX="odak-kampi-windows-${CHANNEL}.msix"
-          ASSET_ZIP="odak-kampi-windows-${CHANNEL}.zip"
-          {
-            echo "tag=$TAG"
-            echo "code=$CODE"
-            echo "channel=$CHANNEL"
-            echo "version_name=$VERSION_NAME"
-            echo "prerelease=$PRERELEASE"
-            echo "msix_ver=$MSIX_VER"
-            echo "asset_msix=$ASSET_MSIX"
-            echo "asset_zip=$ASSET_ZIP"
-          } >> "$GITHUB_OUTPUT"
-          echo "Windows release meta: tag=$TAG code=$CODE channel=$CHANNEL msix=$MSIX_VER"
-
-      - name: Protected release gate
-        shell: pwsh
-        env:
-          STAGING_SUPABASE_URL: ${{ secrets.STAGING_SUPABASE_URL }}
-          PRODUCTION_SUPABASE_URL: ${{ secrets.PRODUCTION_SUPABASE_URL }}
-          STAGING_SUPABASE_PROJECT_REF: ${{ vars.STAGING_SUPABASE_PROJECT_REF }}
-          PRODUCTION_SUPABASE_PROJECT_REF: ${{ vars.PRODUCTION_SUPABASE_PROJECT_REF }}
-        run: |
-          $channel = '${{ steps.meta.outputs.channel }}'
-          $projectRef = if ($channel -eq 'beta') { $env:STAGING_SUPABASE_PROJECT_REF } else { $env:PRODUCTION_SUPABASE_PROJECT_REF }
-          $url = if ($channel -eq 'beta') { $env:STAGING_SUPABASE_URL } else { $env:PRODUCTION_SUPABASE_URL }
-          ../tooling/release/release-gate.ps1 -Channel $channel -ProjectRef $projectRef -SupabaseUrl $url -StagingProjectRef $env:STAGING_SUPABASE_PROJECT_REF -ProductionProjectRef $env:PRODUCTION_SUPABASE_PROJECT_REF -ExpectedGitSha $env:GITHUB_SHA -ExpectedMigrationHead '${{ steps.contract.outputs.head }}'
-
-      - name: Release gate evidence
-        if: always()
-        uses: actions/upload-artifact@v4
         with:
-          name: windows-release-gate-${{ github.run_id }}
-          path: .artifacts/deploy-evidence/**
-          if-no-files-found: error
+          ref: ${{ inputs.git_sha }}
 
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
           cache: true
 
-      - name: Flutter Windows desktop
-        run: |
-          flutter config --enable-windows-desktop
-          flutter --version
-
-      - name: Kanal/backend manifestini env.json olarak üret
+      - name: Kanal/backend manifestini üret
         shell: pwsh
         env:
           STAGING_SUPABASE_URL: ${{ secrets.STAGING_SUPABASE_URL }}
@@ -124,140 +38,61 @@ jobs:
           PRODUCTION_SUPABASE_ANON_KEY: ${{ secrets.PRODUCTION_SUPABASE_ANON_KEY }}
           STAGING_SUPABASE_PROJECT_REF: ${{ vars.STAGING_SUPABASE_PROJECT_REF }}
           PRODUCTION_SUPABASE_PROJECT_REF: ${{ vars.PRODUCTION_SUPABASE_PROJECT_REF }}
-          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
         run: |
-          $channel = "${{ steps.meta.outputs.channel }}"
-          if ($channel -eq "beta") {
-            $backendEnvironment = "staging"
-            $selectedUrl = $env:STAGING_SUPABASE_URL
-            $selectedKey = $env:STAGING_SUPABASE_ANON_KEY
-            $selectedRef = $env:STAGING_SUPABASE_PROJECT_REF
-          } else {
-            $backendEnvironment = "production"
-            $selectedUrl = $env:PRODUCTION_SUPABASE_URL
-            $selectedKey = $env:PRODUCTION_SUPABASE_ANON_KEY
-            $selectedRef = $env:PRODUCTION_SUPABASE_PROJECT_REF
-          }
+          $isBeta = '${{ inputs.channel }}' -eq 'beta'
           $manifest = @{
-            CHANNEL = $channel
-            APP_ENVIRONMENT = $backendEnvironment
-            ALLOW_IN_MEMORY = "false"
-            SUPABASE_URL = $selectedUrl
-            SUPABASE_ANON_KEY = $selectedKey
-            SUPABASE_PROJECT_REF = $selectedRef
+            CHANNEL = '${{ inputs.channel }}'
+            APP_ENVIRONMENT = if ($isBeta) { 'staging' } else { 'production' }
+            ALLOW_IN_MEMORY = 'false'
+            SUPABASE_URL = if ($isBeta) { $env:STAGING_SUPABASE_URL } else { $env:PRODUCTION_SUPABASE_URL }
+            SUPABASE_ANON_KEY = if ($isBeta) { $env:STAGING_SUPABASE_ANON_KEY } else { $env:PRODUCTION_SUPABASE_ANON_KEY }
+            SUPABASE_PROJECT_REF = if ($isBeta) { $env:STAGING_SUPABASE_PROJECT_REF } else { $env:PRODUCTION_SUPABASE_PROJECT_REF }
             STAGING_SUPABASE_PROJECT_REF = $env:STAGING_SUPABASE_PROJECT_REF
             PRODUCTION_SUPABASE_PROJECT_REF = $env:PRODUCTION_SUPABASE_PROJECT_REF
-            GIT_COMMIT_SHA = $env:GITHUB_SHA
-            MIGRATION_HEAD = "${{ steps.contract.outputs.head }}"
-            APP_VERSION_NAME = "${{ steps.meta.outputs.version_name }}"
-            APP_BUILD_NUMBER = "${{ steps.meta.outputs.code }}"
-            DISTRIBUTION_CHANNEL = "windows"
-            SENTRY_DSN = $env:SENTRY_DSN
-            SENTRY_ENABLED = "false"
+            GIT_COMMIT_SHA = '${{ inputs.git_sha }}'
+            MIGRATION_HEAD = '${{ inputs.migration_head }}'
+            APP_VERSION_NAME = '${{ inputs.version_name }}'
+            APP_BUILD_NUMBER = '${{ inputs.build_number }}'
+            DISTRIBUTION_CHANNEL = 'windows'
           }
           $manifest | ConvertTo-Json | Set-Content -LiteralPath env.json -Encoding utf8
 
       - run: flutter pub get
-
-      - name: Analyze
-        run: flutter analyze
-
-      - name: Test
-        run: flutter test --dart-define-from-file=env.json --concurrency=1
-
+      - run: flutter analyze
+      - run: flutter test --dart-define-from-file=env.json --concurrency=1
       - name: Kanal/backend fail-closed guard
-        run: >
-          flutter test test/core/current_build_manifest_gate_test.dart
-          --dart-define-from-file=env.json
-          --dart-define=ENFORCE_CURRENT_BUILD_MANIFEST=true
+        run: flutter test test/core/current_build_manifest_gate_test.dart --dart-define-from-file=env.json --dart-define=ENFORCE_CURRENT_BUILD_MANIFEST=true
+      - run: flutter build windows --release --build-name=${{ inputs.version_name }} --build-number=${{ inputs.build_number }} --dart-define-from-file=env.json
 
-      - name: Build Windows release
-        run: >
-          flutter build windows --release
-          --build-name=${{ steps.meta.outputs.version_name }}
-          --build-number=${{ steps.meta.outputs.code }}
-          --dart-define-from-file=env.json
-
-      - name: MSIX version in pubspec (CI)
-        shell: bash
-        run: |
-          # msix_config.msix_version = 1.0.0.N
-          python - <<'PY'
-          from pathlib import Path
-          import re, os
-          p = Path("pubspec.yaml")
-          text = p.read_text(encoding="utf-8")
-          ver = os.environ["MSIX_VER"]
-          text2, n = re.subn(
-              r"(msix_version:\s*)[\d.]+",
-              r"\g<1>" + ver,
-              text,
-              count=1,
-          )
-          if n != 1:
-              raise SystemExit(f"msix_version replace failed n={n}")
-          p.write_text(text2, encoding="utf-8")
-          print("msix_version ->", ver)
-          PY
-        env:
-          MSIX_VER: ${{ steps.meta.outputs.msix_ver }}
-
-      - name: Create MSIX (self-signed; install_certificate false)
-        run: dart run msix:create --build-windows false
-
-      - name: Collect artefacts + SHA-256
+      - name: MSIX oluştur
         shell: pwsh
         run: |
-          $ErrorActionPreference = "Stop"
-          $out = "build/windows-dist"
-          New-Item -ItemType Directory -Force -Path $out | Out-Null
-          $release = "build/windows/x64/runner/Release"
-          if (-not (Test-Path $release)) { throw "Release dir missing: $release" }
+          $pubspec = Get-Content pubspec.yaml -Raw
+          $updated = $pubspec -replace '(msix_version:\s*)[\d.]+', ('${1}1.0.0.${{ inputs.build_number }}')
+          if ($updated -eq $pubspec) { throw 'msix_version bulunamadı.' }
+          Set-Content pubspec.yaml -Value $updated -Encoding utf8
+          dart run msix:create --build-windows false
 
-          $msixName = "${{ steps.meta.outputs.asset_msix }}"
-          $zipName = "${{ steps.meta.outputs.asset_zip }}"
-
-          $found = Get-ChildItem -Path $release -Filter *.msix -ErrorAction SilentlyContinue | Select-Object -First 1
-          if ($found) {
-            Copy-Item $found.FullName (Join-Path $out $msixName) -Force
-            $hash = (Get-FileHash -Algorithm SHA256 (Join-Path $out $msixName)).Hash.ToLower()
-            Set-Content -Path (Join-Path $out "$msixName.sha256") -Value "$hash  $msixName" -NoNewline
-            Write-Host "MSIX sha256=$hash"
-          } else {
-            Write-Warning "No .msix under $release"
+      - name: Zorunlu Windows artefaktlarını paketle
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $out = 'build/windows-dist'; New-Item -ItemType Directory -Force -Path $out | Out-Null
+          $release = 'build/windows/x64/runner/Release'
+          $msix = Get-ChildItem -Path $release -Filter *.msix -File | Select-Object -First 1
+          if (-not $msix) { throw 'Zorunlu MSIX artefaktı üretilemedi.' }
+          $prefix = "odak-kampi-windows-${{ inputs.channel }}"
+          $msixOut = Join-Path $out "$prefix.msix"; Copy-Item $msix.FullName $msixOut
+          $zipOut = Join-Path $out "$prefix.zip"; Compress-Archive -Path (Join-Path $release '*') -DestinationPath $zipOut -Force
+          $items = @($msixOut, $zipOut) | ForEach-Object {
+            $name = Split-Path $_ -Leaf; $hash = (Get-FileHash $_ -Algorithm SHA256).Hash.ToLower()
+            Set-Content "$_.sha256" -Value "$hash  $name" -NoNewline
+            @{ name = $name; sha256 = $hash }
           }
+          @{ schemaVersion = 1; platform = 'windows'; status = 'complete'; channel = '${{ inputs.channel }}'; gitCommitSha = '${{ inputs.git_sha }}'; migrationHead = '${{ inputs.migration_head }}'; artifacts = $items } | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $out 'platform-manifest.json') -Encoding utf8
 
-          Compress-Archive -Path (Join-Path $release '*') -DestinationPath (Join-Path $out $zipName) -Force
-          $zhash = (Get-FileHash -Algorithm SHA256 (Join-Path $out $zipName)).Hash.ToLower()
-          Set-Content -Path (Join-Path $out "$zipName.sha256") -Value "$zhash  $zipName" -NoNewline
-          $manifest = @{
-            schemaVersion = 1
-            channel = "${{ steps.meta.outputs.channel }}"
-            environment = if ("${{ steps.meta.outputs.channel }}" -eq "beta") { "staging" } else { "production" }
-            versionName = "${{ steps.meta.outputs.version_name }}"
-            buildNumber = [int]"${{ steps.meta.outputs.code }}"
-            gitCommitSha = "${{ github.sha }}"
-            backendProjectRef = if ("${{ steps.meta.outputs.channel }}" -eq "beta") { "${{ vars.STAGING_SUPABASE_PROJECT_REF }}" } else { "${{ vars.PRODUCTION_SUPABASE_PROJECT_REF }}" }
-            migrationHead = "${{ steps.contract.outputs.head }}"
-            artifact = $zipName
-            sha256 = $zhash
-          }
-          $manifest | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $out "release-manifest.json") -Encoding utf8
-          Get-ChildItem $out | Format-Table Name, Length
-
-      - name: Upload workflow artefacts
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
-          name: OdakKampi-Windows-${{ steps.meta.outputs.channel }}-b${{ steps.meta.outputs.code }}
+          name: windows-release
           path: app/build/windows-dist/*
           if-no-files-found: error
-
-      - name: Attach to GitHub Release
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v2
-        with:
-          files: app/build/windows-dist/*
-          prerelease: ${{ steps.meta.outputs.prerelease == 'true' }}
-          generate_release_notes: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
