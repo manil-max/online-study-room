@@ -114,6 +114,52 @@ Assert-Throws -Name 'production ref push dispatch post-check masquerade denied' 
   Assert-StagingPushDispatchPostCheck -Environment staging -ProjectRef $productionRef -StagingProjectRef $stagingRef -ProductionProjectRef $productionRef -Sql $pushDispatchPostCheckSql
 }
 
+$pushRuntimeDiagnosticSql = Get-StagingPushRuntimeDiagnosticSql
+Assert-StagingPushRuntimeDiagnostic -Environment staging -ProjectRef $stagingRef -StagingProjectRef $stagingRef -ProductionProjectRef $productionRef -Sql $pushRuntimeDiagnosticSql
+$passed++
+foreach ($requiredMarker in @(
+  'begin transaction read only',
+  'cron.job_run_details',
+  'net._http_response',
+  'push_dispatch_runtime_config',
+  'get_push_dispatch_queue_health',
+  'notification_deliveries',
+  'available_now',
+  'device_disabled',
+  'preference_enabled',
+  'rollback'
+)) {
+  if ($pushRuntimeDiagnosticSql -notmatch [regex]::Escape($requiredMarker)) {
+    throw "Push runtime diagnostic is missing: $requiredMarker"
+  }
+}
+$passed++
+foreach ($forbiddenOutput in @('fcm_token', 'payload', 'provider_message_id', 'recipient_id', 'installation_id')) {
+  if ($pushRuntimeDiagnosticSql -match "\b$forbiddenOutput\b") {
+    throw "Push runtime diagnostic exposes a sensitive field: $forbiddenOutput"
+  }
+}
+$passed++
+Assert-Throws -Name 'push runtime diagnostic production target denied' -Script {
+  Assert-StagingPushRuntimeDiagnostic -Environment production -ProjectRef $productionRef -StagingProjectRef $stagingRef -ProductionProjectRef $productionRef -Sql $pushRuntimeDiagnosticSql
+}
+Assert-Throws -Name 'push runtime diagnostic arbitrary SQL denied' -Script {
+  Assert-StagingPushRuntimeDiagnostic -Environment staging -ProjectRef $stagingRef -StagingProjectRef $stagingRef -ProductionProjectRef $productionRef -Sql 'select * from public.push_dispatch_runtime_config;'
+}
+Assert-Throws -Name 'push runtime diagnostic production ref masquerade denied' -Script {
+  Assert-StagingPushRuntimeDiagnostic -Environment staging -ProjectRef $productionRef -StagingProjectRef $stagingRef -ProductionProjectRef $productionRef -Sql $pushRuntimeDiagnosticSql
+}
+
+$pushDiagnosticWorkflowPath = Join-Path $repoRoot '.github\workflows\staging-push-diagnostics.yml'
+$pushDiagnosticWorkflow = Get-Content -LiteralPath $pushDiagnosticWorkflowPath -Raw -Encoding UTF8
+if ($pushDiagnosticWorkflow -notmatch '(?m)^\s*workflow_dispatch:\s*$' -or
+    $pushDiagnosticWorkflow -match '(?m)^\s*push:\s*$' -or
+    $pushDiagnosticWorkflow -notmatch 'Action\s*=\s*''inspect-push-runtime''' -or
+    $pushDiagnosticWorkflow -match 'staging-apply|production-apply|Action\s*=\s*''apply''|db push') {
+  throw 'Staging push diagnostics workflow must remain manual and read-only.'
+}
+$passed++
+
 $reconciliationPrepareSql = Get-StagingReconciliationSql -Action prepare
 $reconciliationPrepareInspectSql = Get-StagingReconciliationSql -Action prepare-inspect
 $reconciliationApplySql = Get-StagingReconciliationSql -Action apply

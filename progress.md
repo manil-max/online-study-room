@@ -47,14 +47,14 @@
 - **Not:** —
 
 ### Codex Lane
-- **Durum:** [~] Aktif
-- **Faz/WP:** Beta arıza kurtarması · Nihai rapor Faz 1–3
-- **Aşama:** Faz 1–2 otomatik test geçti; Faz 3 salt-okunur teşhis geliştiriliyor
-- **SAHİP yollar:** `app/env.ci.example.json`, `tooling/release/verify-candidate*.ps1`, `app/lib/core/notifications/**`, ilgili `app/test/core/*notification*` ve push/widget testleri, `progress.md` (yalnız bu lane)
-- **Ortak/riskli yüzey:** `progress.md`; staging cron/queue yalnız salt-okunur incelenir. Tag, release, DB apply, migration/Edge mutasyonu, production/stable ve ilgisiz feature kodu kapsam dışıdır.
+- **Durum:** [x] Boşta
+- **Faz/WP:** —
+- **Aşama:** —
+- **SAHİP yollar:** —
+- **Ortak/riskli yüzey:** —
 - **Dal:** `main`
-- **Başlangıç / Son güncelleme:** 2026-07-23 17:05 / 2026-07-23 17:16 (Europe/Istanbul)
-- **Not:** `7912673` ile nihai rapor kayda alındı. Candidate contract 6/6, adapter 5/5, analyze 0; configured ve unconfigured full suite ayrı ayrı 690/690 yeşil. Faz 3 için güvenli salt-okunur diagnostic action hazırlanacak. Yeni tag/release yok; production HOLD korunur.
+- **Başlangıç / Son güncelleme:** — / 2026-07-23 17:22 (Europe/Istanbul)
+- **Not:** Nihai rapor `7912673`; Faz 1–2 `7ba15d6`. Configured/unconfigured full suite ayrı ayrı 690/690 yeşil. Faz 3 salt-okunur staging diagnostic workflow/tooling yerelde hazır ve guard 50/50; uzak koşum push + manuel dispatch bekliyor. Yeni tag/release yok; production HOLD korunur.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta

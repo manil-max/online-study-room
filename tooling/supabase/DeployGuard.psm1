@@ -185,6 +185,143 @@ function Assert-StagingPushDispatchPostCheck {
   }
 }
 
+function Get-StagingPushRuntimeDiagnosticSql {
+  return @'
+begin transaction read only;
+
+select json_build_object(
+  'kind', 'push_cron_job',
+  'observed_at', now(),
+  'rows', coalesce(json_agg(json_build_object(
+    'jobid', j.jobid,
+    'schedule', j.schedule,
+    'database', j.database,
+    'username', j.username,
+    'active', j.active
+  ) order by j.jobid), '[]'::json)
+)::text as push_diagnostic
+from cron.job j
+where j.jobname = 'push-dispatch-retry-worker';
+
+select json_build_object(
+  'kind', 'push_cron_runs',
+  'observed_at', now(),
+  'rows', coalesce(json_agg(to_jsonb(r) order by r.start_time desc), '[]'::json)
+)::text as push_diagnostic
+from (
+  select
+    d.runid,
+    d.jobid,
+    d.status,
+    left(coalesce(d.return_message, ''), 500) as return_message,
+    d.start_time,
+    d.end_time
+  from cron.job_run_details d
+  join cron.job j on j.jobid = d.jobid
+  where j.jobname = 'push-dispatch-retry-worker'
+  order by d.start_time desc
+  limit 20
+) r;
+
+select json_build_object(
+  'kind', 'push_pg_net_responses',
+  'observed_at', now(),
+  'rows', coalesce(json_agg(to_jsonb(r) order by r.created desc), '[]'::json)
+)::text as push_diagnostic
+from (
+  select id, status_code, timed_out, left(coalesce(error_msg, ''), 500) as error_msg, created
+  from net._http_response
+  order by created desc
+  limit 20
+) r;
+
+select json_build_object(
+  'kind', 'push_runtime_config',
+  'observed_at', now(),
+  'row_count', count(*),
+  'base_url_present', coalesce(bool_and(char_length(functions_base_url) > 0), false),
+  'base_url_shape_valid', coalesce(bool_and(functions_base_url ~ '^https://[a-z0-9]{20}\.supabase\.co$'), false),
+  'secret_present', coalesce(bool_and(char_length(dispatch_secret) > 0), false),
+  'secret_length_valid', coalesce(bool_and(char_length(dispatch_secret) >= 48), false),
+  'configured_at', max(configured_at)
+)::text as push_diagnostic
+from public.push_dispatch_runtime_config;
+
+select json_build_object(
+  'kind', 'push_queue_health',
+  'observed_at', now(),
+  'rows', coalesce(json_agg(to_jsonb(h)), '[]'::json)
+)::text as push_diagnostic
+from public.get_push_dispatch_queue_health() h;
+
+select json_build_object(
+  'kind', 'push_active_deliveries',
+  'observed_at', now(),
+  'rows', coalesce(json_agg(to_jsonb(q) order by q.created_at), '[]'::json)
+)::text as push_diagnostic
+from (
+  select
+    left(md5(d.id::text), 12) as delivery_key,
+    left(md5(d.outbox_id::text), 12) as outbox_key,
+    o.notification_type,
+    o.status as outbox_status,
+    d.status as delivery_status,
+    d.attempts,
+    d.available_at,
+    d.available_at <= now() as available_now,
+    d.lease_until,
+    d.lease_until is not null and d.lease_until < now() as lease_expired,
+    d.created_at,
+    d.updated_at,
+    d.sent_at,
+    d.last_error_code,
+    pd.disabled_at is not null as device_disabled,
+    case o.notification_type
+      when 'nudge' then pd.nudge_enabled
+      when 'announcement' then pd.announcement_enabled
+      when 'update' then pd.update_enabled
+      when 'self_test' then true
+      else false
+    end as preference_enabled,
+    pd.quiet_hours_enabled,
+    pd.quiet_start_minutes,
+    pd.quiet_end_minutes
+  from public.notification_deliveries d
+  join public.notification_outbox o on o.id = d.outbox_id
+  join public.push_devices pd on pd.id = d.device_id
+  where d.status in ('pending', 'retry', 'processing')
+  order by d.created_at
+  limit 20
+) q;
+
+rollback;
+'@
+}
+
+function Assert-StagingPushRuntimeDiagnostic {
+  param(
+    [Parameter(Mandatory)][ValidateSet('staging', 'production')][string]$Environment,
+    [Parameter(Mandatory)][string]$ProjectRef,
+    [Parameter(Mandatory)][string]$StagingProjectRef,
+    [Parameter(Mandatory)][string]$ProductionProjectRef,
+    [Parameter(Mandatory)][string]$Sql
+  )
+
+  if ($Environment -ne 'staging') {
+    throw 'Push runtime diagnostic is staging-only.'
+  }
+  if ($ProjectRef -ne $StagingProjectRef -or $ProjectRef -eq $ProductionProjectRef) {
+    throw 'Push runtime diagnostic target must be the isolated staging project ref.'
+  }
+  if ($Sql -cne (Get-StagingPushRuntimeDiagnosticSql)) {
+    throw 'Push runtime diagnostic SQL is not on the exact read-only allowlist.'
+  }
+  if ($Sql -notmatch '(?im)^\s*begin transaction read only;\s*$' -or
+      $Sql -notmatch '(?im)^\s*rollback;\s*$') {
+    throw 'Push runtime diagnostic must be enclosed in a read-only transaction.'
+  }
+}
+
 function Get-StagingReconciliationSql {
   param([Parameter(Mandatory)][ValidateSet('prepare', 'prepare-inspect', 'apply', 'apply-inspect')][string]$Action)
 
@@ -469,4 +606,4 @@ function Invoke-EvidenceCommand {
   return $safe
 }
 
-Export-ModuleMember -Function Get-RepoRoot, Get-DeployContract, Get-LocalMigrationHead, Get-GitHead, Protect-DeployText, Assert-SafeSupabaseArguments, Get-StagingPrerequisiteSql, Assert-StagingPrerequisiteAction, Get-StagingPushDispatchPostCheckSql, Assert-StagingPushDispatchPostCheck, Get-StagingReconciliationSql, Assert-StagingReconciliationAction, Assert-TargetContract, Assert-ExactReleaseIdentity, Assert-ProductionApproval, New-EvidenceDirectory, Write-DeployJson, Invoke-EvidenceCommand
+Export-ModuleMember -Function Get-RepoRoot, Get-DeployContract, Get-LocalMigrationHead, Get-GitHead, Protect-DeployText, Assert-SafeSupabaseArguments, Get-StagingPrerequisiteSql, Assert-StagingPrerequisiteAction, Get-StagingPushDispatchPostCheckSql, Assert-StagingPushDispatchPostCheck, Get-StagingPushRuntimeDiagnosticSql, Assert-StagingPushRuntimeDiagnostic, Get-StagingReconciliationSql, Assert-StagingReconciliationAction, Assert-TargetContract, Assert-ExactReleaseIdentity, Assert-ProductionApproval, New-EvidenceDirectory, Write-DeployJson, Invoke-EvidenceCommand

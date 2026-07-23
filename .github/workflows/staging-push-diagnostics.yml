@@ -1,0 +1,78 @@
+name: Staging Push Diagnostics
+
+on:
+  workflow_dispatch:
+    inputs:
+      expected_git_sha:
+        description: Exact 40-character commit SHA to inspect.
+        required: true
+        type: string
+      expected_migration_head:
+        description: Exact four-digit staging migration head.
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: staging-push-diagnostics
+  cancel-in-progress: false
+
+jobs:
+  inspect:
+    name: Read-only staging push runtime
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: staging
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      STAGING_SUPABASE_URL: ${{ secrets.STAGING_SUPABASE_URL }}
+      STAGING_SUPABASE_PROJECT_REF: ${{ vars.STAGING_SUPABASE_PROJECT_REF }}
+      PRODUCTION_SUPABASE_PROJECT_REF: ${{ vars.PRODUCTION_SUPABASE_PROJECT_REF }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.expected_git_sha }}
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: '11.9.0'
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Read-only guard contract
+        shell: pwsh
+        run: ./tooling/supabase/guard.tests.ps1
+
+      - name: Inspect cron, pg_net, config and active queue
+        shell: pwsh
+        run: |
+          $params = @{
+            Environment = 'staging'
+            Action = 'inspect-push-runtime'
+            ProjectRef = $env:STAGING_SUPABASE_PROJECT_REF
+            SupabaseUrl = $env:STAGING_SUPABASE_URL
+            StagingProjectRef = $env:STAGING_SUPABASE_PROJECT_REF
+            ProductionProjectRef = $env:PRODUCTION_SUPABASE_PROJECT_REF
+            ExpectedGitSha = '${{ inputs.expected_git_sha }}'
+            ExpectedMigrationHead = '${{ inputs.expected_migration_head }}'
+          }
+          ./tooling/supabase/remote.ps1 @params
+
+      - name: Upload sanitized diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: staging-push-diagnostics-${{ github.run_id }}
+          path: .artifacts/deploy-evidence/**
+          if-no-files-found: error

@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
   [Parameter(Mandatory)][ValidateSet('staging', 'production')][string]$Environment,
-  [Parameter(Mandatory)][ValidateSet('inspect-prerequisites', 'bootstrap-prerequisites', 'reconcile-prepare', 'reconcile-apply', 'preflight', 'dry-run', 'apply')][string]$Action,
+  [Parameter(Mandatory)][ValidateSet('inspect-prerequisites', 'inspect-push-runtime', 'bootstrap-prerequisites', 'reconcile-prepare', 'reconcile-apply', 'preflight', 'dry-run', 'apply')][string]$Action,
   [Parameter(Mandatory)][string]$ProjectRef,
   [Parameter(Mandatory)][string]$SupabaseUrl,
   [Parameter(Mandatory)][string]$StagingProjectRef,
@@ -102,7 +102,7 @@ try {
     throw "Deploy HOLD: $($targetContract.hold_reason)"
   }
 
-  if ($Action -in @('inspect-prerequisites', 'bootstrap-prerequisites', 'reconcile-prepare', 'reconcile-apply') -and $Environment -ne 'staging') {
+  if ($Action -in @('inspect-prerequisites', 'inspect-push-runtime', 'bootstrap-prerequisites', 'reconcile-prepare', 'reconcile-apply') -and $Environment -ne 'staging') {
     throw 'Prerequisite and reconciliation actions are staging-only.'
   }
 
@@ -123,7 +123,12 @@ try {
     throw 'Supabase CLI link post-check failed.'
   }
 
-  if ($Action -in @('inspect-prerequisites', 'bootstrap-prerequisites')) {
+  if ($Action -eq 'inspect-push-runtime') {
+    Invoke-RemoteSupabase -Arguments @('migration', 'list', '--linked') -Label '02-migration-list'
+    $diagnosticSql = Get-StagingPushRuntimeDiagnosticSql
+    Assert-StagingPushRuntimeDiagnostic -Environment $Environment -ProjectRef $ProjectRef -StagingProjectRef $StagingProjectRef -ProductionProjectRef $ProductionProjectRef -Sql $diagnosticSql
+    Invoke-RemoteSupabase -Arguments @('db', 'query', '--linked', $diagnosticSql) -Label '03-push-runtime-diagnostic'
+  } elseif ($Action -in @('inspect-prerequisites', 'bootstrap-prerequisites')) {
     Invoke-RemoteSupabase -Arguments @('migration', 'list', '--linked') -Label '02-migration-list-before'
     $inspectSql = Get-StagingPrerequisiteSql -Action inspect
     Assert-StagingPrerequisiteAction -Action inspect -Environment $Environment -ProjectRef $ProjectRef -StagingProjectRef $StagingProjectRef -ProductionProjectRef $ProductionProjectRef -Sql $inspectSql
