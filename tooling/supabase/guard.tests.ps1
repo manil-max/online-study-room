@@ -39,11 +39,11 @@ if ($databaseWorkflow -match '(?im)flutter|beta-build\.ps1|KEYSTORE_BASE64') {
   throw 'Database Gates must not build Flutter/APK candidates.'
 }
 if ($releaseWorkflow -notmatch 'release-status-manifest' -or
-    $releaseWorkflow -notmatch 'finalize_beta_android:' -or
+    $releaseWorkflow -notmatch 'finalize_android:' -or
     $releaseWorkflow -notmatch 'needs: \[preflight, android\]' -or
     $releaseWorkflow -notmatch 'finalize_complete:' -or
     $releaseWorkflow -notmatch 'needs: \[preflight, android, windows\]') {
-  throw 'Release orchestration must publish Android-first beta and keep the complete two-platform path.'
+  throw 'Release orchestration must publish Android-first channels and keep the complete two-platform attachment path.'
 }
 if ($windowsWorkflow -match 'action-gh-release' -or $windowsWorkflow -notmatch 'workflow_call:') {
   throw 'Windows workflow must be reusable and cannot finalize a GitHub Release independently.'

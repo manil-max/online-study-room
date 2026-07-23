@@ -16,7 +16,7 @@
 - **Yönetim varsayılanı (WP-269):** `tooling/release/deploy-contract.json` production `deploy_enabled/release_enabled` artık **kapalı** (güvenli varsayılan). Stable yalnız protected `production` Environment içinde tek kullanımlık exact SHA/head/project-ref GO ile ilerler; guard testleri kapalıyı kanıtlar.
 - **Kurallar:** Kök `AGENTS.md`, `.agents/AGENTS.md`, planner ve worker kuralları v43 sonrasında silinmedi/değiştirilmedi.
 - **Git:** Tek çalışma dalı `main`; branch/merge/push kullanıcı açıkça istemedikçe yok.
-- **Son WP numarası:** **282**. Sıradaki boş numara **WP-283**.
+- **Son WP numarası:** **283**. Sıradaki boş numara **WP-284**.
 - **Kanonik olay raporu:** [`docs/KURTARMA-ON-INCELEME-RAPORU-2026-07-23.md`](docs/KURTARMA-ON-INCELEME-RAPORU-2026-07-23.md)
 - **Tarihsel kayıt:** Eski WP ayrıntıları [`docs/archive/progress-tarihsel-2026-07.md`](docs/archive/progress-tarihsel-2026-07.md) ve git geçmişindedir; canlı dosyaya geri kopyalanmaz.
 
@@ -53,8 +53,8 @@
 - **SAHİP yollar:** —
 - **Ortak/riskli yüzey:** —
 - **Dal:** `main`
-- **Başlangıç / Son güncelleme:** — / 2026-07-23 19:01 (Europe/Istanbul)
-- **Not:** beta-v4307 yayımlandı ve kullanıcı artefaktları/complete manifest doğrulandı. WP-282 Android-first beta akışı kod+test tamam; sonraki beta canlı kabulü bekler. Production HOLD.
+- **Başlangıç / Son güncelleme:** — / 2026-07-23 19:08 (Europe/Istanbul)
+- **Not:** WP-283 kod+tooling testi tamam. Beta-v4307 yayımlandı; fiziksel cihaz kabulü kaldı. Stable Android-first politika gelecek yetkili stable çalışmasında canlı kabul görecek; production HOLD korunur.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
@@ -88,7 +88,8 @@
 | 1C | WP-280 Push `pg_net` transport kurtarması | [x] Staging backend kabulü geçti | WP-271 beta/cihaz kabulüne devredildi |
 | 1D | WP-281 Android artefakt paketleme | [x] beta-v4307 APK/release doğrulandı | Cihaz kabulüne devredildi |
 | 1E | WP-282 Android-first beta finalization | [x] Kod+test tamam → Park | Sonraki beta canlı workflow kabulü |
-| 1F | WP-272 v43 sayaç paneli sözleşmesi | [x] Otomatik test geçti → Park | Samsung cihaz kabulü bekliyor |
+| 1F | WP-283 Android-first stable finalization | [x] Kod+test tamam → Park | Sonraki yetkili stable canlı workflow kabulü |
+| 1G | WP-272 v43 sayaç paneli sözleşmesi | [x] Otomatik test geçti → Park | Samsung cihaz kabulü bekliyor |
 | 2A | WP-271 Staging gerçek push kabulü | [ ] Bekliyor | WP-269 + WP-270 + WP-280 kabulünden sonra |
 | 2B | WP-273 Windows deterministik release | [x] Otomatik test geçti → Park | Temiz Windows VM kabulü bekliyor |
 | Karar | WP-274 Tools erişim kararı | [x] Otomatik test geçti → Park | Kalıcı kaldırma seçildi; cihaz kabulü bekliyor |
@@ -114,7 +115,7 @@
   - [x] Database Gates'i list→dry-run→apply→pgTAP/post-check ile sınırla; Flutter/APK aday build'ini ayır. (Flutter/keystore adımları workflow'dan çıktı; guard testi `flutter|beta-build.ps1|KEYSTORE_BASE64` yokluğunu zorluyor.)
   - [x] Production deploy/release varsayılanını kapat; kalıcı açık flag yerine tek kullanımlık exact SHA/head/GO doğrulaması tasarla. (`deploy_enabled/release_enabled=false`; `release-gate.ps1` yalnız CI+protected `production` env + exact `PRODUCTION RELEASE GO:<sha>:<head>:<ref>` + kanıt ile geçer.)
   - [x] “beta preflight” ve “stable preflight” için tek giriş noktası ve kısa kanıt özeti üret. (`tooling/release/release-preflight.ps1` + testleri.)
-  - [x] Android/Windows artefakt durumunu tek manifestte göster. **WP-282 güncel politikası:** beta için Android zorunlu ve hemen finalize edilir; Windows başarılı olursa aynı release'e eklenir. Stable iki platformu birlikte zorunlu tutar.
+  - [x] Android/Windows artefakt durumunu tek manifestte göster. **WP-282/283 güncel politikası:** Android zorunlu ve hemen finalize edilir; Windows başarılı olursa aynı release'e eklenir. Beta/stable ayrımı yalnız prerelease ve production GO koşullarındadır.
   - [x] Repo dışı sahip aksiyonu olarak GitHub `production` Environment required reviewer kurulumunu açık checklist'e yaz. (`docs/recovery/RELEASE-GATE.md` owner checklist.)
 - **Kanıt (Kodda doğrulandı):** `guard.tests.ps1` 39/39, `release-preflight.tests.ps1` 4/4, `beta-build.tests.ps1` 4/4 yeşil; üç workflow YAML geçerli.
 - **Açık kabul (Cihazda/CI'da doğrulanmalı):** Gerçek beta orchestrator koşusunda iki zorunlu artefakt `complete`; owner `production` Environment required-reviewer kurulumu.
@@ -178,8 +179,18 @@
 - **Durum:** [x] Kod+test tamam → **Park** (sonraki beta canlı workflow kabulü)
 - **Problem:** Android cihaz betası, bağımsız Windows build/test/cleanup sonucunu bekliyor; Windows hatası Android prerelease'i gereksiz yere engelliyor.
 - **Karar:** Beta kanalında preflight+Android başarıyla bittiği anda APK prerelease yayımlanır ve güncelleme bildirimi bir kez kuyruğa alınır. Windows bağımsız devam eder; başarılı olursa MSIX/ZIP ve complete iki-platform manifesti aynı release'e eklenir. Windows hatası beta APK'yı geri çekmez.
-- **Stable:** Stable release iki platform başarı kapısını korur; production güvenlik/GO sözleşmesi değişmez.
+- **Stable:** Bu kararı WP-283 genişletir; production güvenlik/GO sözleşmesi değişmeden Android finalization Windows'tan ayrılır.
 - **Kabul:** Kaynak sözleşme testleri Android-first beta job'ını ve explicit asset listelerini zorlar; aynı adlı iç platform manifestleri release asset'i olarak yüklenmez; beta Android başarısında Windows sonucu ne olursa olsun prerelease vardır.
+
+### WP-283: Android-First Stable Finalization 📱
+- **Program/Faz:** Kurtarma · Faz 4 — release akış sadeleştirmesi
+- **Ajan:** Codex
+- **Durum:** [x] Kod+tooling testi tamam → **Park** (sonraki stable canlı workflow kabulü)
+- **Problem:** Stable Android güncellemesi, Android cihaz ürünüyle ilgisiz Windows build/test sonucunu bekliyordu; tek Windows hatası yayınlanabilir Android sürümünü gereksiz bloke ediyordu.
+- **Karar:** Stable kanalda da ancak tüm production preflight/Environment/exact GO koşulları geçtikten ve Android build başarılı olduktan sonra Android release hemen yayımlanır. Windows bağımsız sürer; başarılı olursa MSIX/ZIP ve complete iki-platform manifesti aynı release'e eklenir. Windows hatası yayımlanmış Android stable sürümünü geri çekmez.
+- **Korunan kapılar:** Protected `production` Environment, exact SHA/head/project-ref GO, staging kabulü, soak ve backup/rollback kanıtı Android release öncesinde zorunludur. Bu WP production deploy veya stable tag/release oluşturmaz.
+- **Kanıt:** `tooling/release/release-preflight.tests.ps1` 7/7; `tooling/supabase/guard.tests.ps1` 51/51; `.github/workflows/release.yml` YAML parse yeşil.
+- **Kabul:** Gelecek yetkili stable release'te Android başarıyla yayınlanırsa Windows job sonucu beklenmez; Windows daha sonra başarılı olursa aynı tag'e eklenir. Production canlı kabulü kullanıcı GO'su olmadan çalıştırılmaz.
 
 ### WP-271: Staging Gerçek Push ve Tek-Cihaz Beta Kabulü 📱
 - **Program/Faz:** Kurtarma · Faz 3 — staging kabulü

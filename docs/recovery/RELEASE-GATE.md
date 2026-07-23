@@ -1,4 +1,4 @@
-# Release Gate (WP-269 + WP-282)
+# Release Gate (WP-269 + WP-282 + WP-283)
 
 ## Güvenli varsayılan
 
@@ -30,13 +30,14 @@ Release orchestrator Android ve Windows üretimlerini ayrı job'larda toplar.
 `release-status-manifest.json` her çalışmada `partial`, `complete` veya `failed`
 durumunu ve iki job sonucunu yazar.
 
-- **Beta:** Android cihaz güncellemesi ana üründür. Preflight+Android başarılı
-  olduğunda prerelease, APK, hash ve Android manifesti hemen yayımlanır; Windows
-  job'ı beklenmez. Windows başarılı olursa MSIX/ZIP ve iki-platform complete
-  manifesti aynı prerelease'e sonradan eklenir. Windows hatası yayımlanmış beta
-  APK'yı geri çekmez.
-- **Stable:** Android ve Windows zorunludur; iki platform da `success` olmadan
-  stable release finalize edilmez.
+- **Beta ve stable:** Android cihaz güncellemesi ana üründür. Kanalın tüm
+  preflight/ortam kapıları ve Android build'i başarılı olduğunda APK, hash ve
+  Android manifesti hemen yayımlanır; Windows job'ı beklenmez. Windows başarılı
+  olursa MSIX/ZIP ve iki-platform complete manifesti aynı release'e sonradan
+  eklenir. Windows hatası yayımlanmış Android sürümünü geri çekmez.
+- **Stable güvenliği:** Production exact GO, protected `production`
+  Environment, staging kabulü, soak ve backup/rollback kanıtı Android release
+  öncesinde zorunludur; Windows ayrışması bunları zayıflatmaz.
 
 Release asset listesi explicit tutulur; iki platformun aynı adlı iç
 `platform-manifest.json` dosyaları doğrudan yüklenmez. Kullanıcıya açık birleşik

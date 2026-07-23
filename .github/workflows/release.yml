@@ -138,17 +138,17 @@ jobs:
       migration_head: ${{ needs.preflight.outputs.migration_head }}
     secrets: inherit
 
-  finalize_beta_android:
+  finalize_android:
     needs: [preflight, android]
-    if: needs.preflight.result == 'success' && needs.android.result == 'success' && needs.preflight.outputs.channel == 'beta'
+    if: needs.preflight.result == 'success' && needs.android.result == 'success'
     runs-on: ubuntu-latest
-    environment: staging
+    environment: ${{ needs.preflight.outputs.environment }}
     steps:
       - uses: actions/download-artifact@v4
         with:
           name: android-release
           path: release-assets/android
-      - name: Android-first beta manifesti oluştur
+      - name: Android-first channel manifesti oluştur
         run: |
           python - <<'PY'
           import json, pathlib
@@ -157,7 +157,7 @@ jobs:
           manifest={
             'schemaVersion': 1,
             'status': 'complete',
-            'channel': 'beta',
+            'channel': '${{ needs.preflight.outputs.channel }}',
             'gitCommitSha': '${{ needs.preflight.outputs.git_sha }}',
             'migrationHead': '${{ needs.preflight.outputs.migration_head }}',
             'requiredPlatforms': ['android'],
@@ -169,23 +169,26 @@ jobs:
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.preflight.outputs.tag }}
-          prerelease: true
+          prerelease: ${{ needs.preflight.outputs.channel == 'beta' }}
           generate_release_notes: true
           files: |
             release-assets/android/*.apk
             release-assets/android/*.sha1
             release-assets/android/*.sha256
             release-assets/release-manifest.json
-      - name: Tamamlanan beta bildirimini kuyruğa al
+      - name: Tamamlanan Android sürüm bildirimini kuyruğa al
         shell: bash
         env:
           STAGING_SUPABASE_URL: ${{ secrets.STAGING_SUPABASE_URL }}
           STAGING_SUPABASE_ANON_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
+          PRODUCTION_SUPABASE_URL: ${{ secrets.PRODUCTION_SUPABASE_URL }}
+          PRODUCTION_SUPABASE_ANON_KEY: ${{ secrets.PRODUCTION_SUPABASE_ANON_KEY }}
           PUSH_DISPATCH_SECRET: ${{ secrets.PUSH_DISPATCH_SECRET }}
         run: |
           [ -n "$PUSH_DISPATCH_SECRET" ] || { echo 'Push dispatcher yapılandırılmadı; bildirim atlandı.'; exit 0; }
-          PAYLOAD=$(jq -n --arg event_key '${{ needs.preflight.outputs.tag }}' --arg version '${{ needs.preflight.outputs.version_name }}' --argjson build_number '${{ needs.preflight.outputs.build_number }}' '{action:"enqueue_update",event_key:$event_key,channel:"beta",version_name:$version,build_number:$build_number,title:"Odak Kampı güncellendi",body:"Yeni beta sürümü indirilmeye hazır."}')
-          curl --fail-with-body --silent --show-error -X POST "$STAGING_SUPABASE_URL/functions/v1/dispatch-push" -H "Authorization: Bearer $STAGING_SUPABASE_ANON_KEY" -H 'Content-Type: application/json' -H "x-push-dispatch-secret: $PUSH_DISPATCH_SECRET" --data "$PAYLOAD"
+          if [ '${{ needs.preflight.outputs.channel }}' = beta ]; then URL="$STAGING_SUPABASE_URL"; KEY="$STAGING_SUPABASE_ANON_KEY"; BODY='Yeni beta sürümü indirilmeye hazır.'; else URL="$PRODUCTION_SUPABASE_URL"; KEY="$PRODUCTION_SUPABASE_ANON_KEY"; BODY='Yeni sürüm indirilmeye hazır.'; fi
+          PAYLOAD=$(jq -n --arg event_key '${{ needs.preflight.outputs.tag }}' --arg channel '${{ needs.preflight.outputs.channel }}' --arg version '${{ needs.preflight.outputs.version_name }}' --argjson build_number '${{ needs.preflight.outputs.build_number }}' --arg body "$BODY" '{action:"enqueue_update",event_key:$event_key,channel:$channel,version_name:$version,build_number:$build_number,title:"Odak Kampı güncellendi",body:$body}')
+          curl --fail-with-body --silent --show-error -X POST "$URL/functions/v1/dispatch-push" -H "Authorization: Bearer $KEY" -H 'Content-Type: application/json' -H "x-push-dispatch-secret: $PUSH_DISPATCH_SECRET" --data "$PAYLOAD"
 
   release_status:
     if: always()
@@ -196,7 +199,7 @@ jobs:
         shell: bash
         run: |
           a='${{ needs.android.result }}'; w='${{ needs.windows.result }}'; p='${{ needs.preflight.result }}'; c='${{ needs.preflight.outputs.channel }}'
-          if [ "$p" != success ]; then status=failed; elif [ "$c" = beta ] && [ "$a" = success ]; then status=complete; elif [ "$c" = stable ] && [ "$a" = success ] && [ "$w" = success ]; then status=complete; elif [ "$a" = success ] || [ "$w" = success ]; then status=partial; else status=failed; fi
+          if [ "$p" != success ]; then status=failed; elif [ "$a" = success ]; then status=complete; elif [ "$w" = success ]; then status=partial; else status=failed; fi
           printf '{"schemaVersion":1,"status":"%s","preflight":"%s","android":"%s","windows":"%s"}\n' "$status" "$p" "$a" "$w" > release-status-manifest.json
       - uses: actions/upload-artifact@v4
         with:
@@ -240,17 +243,3 @@ jobs:
             release-assets/windows/*.zip
             release-assets/windows/*.sha256
             release-assets/release-manifest.json
-      - name: Tamamlanan sürüm bildirimini kuyruğa al
-        if: needs.preflight.outputs.channel == 'stable'
-        shell: bash
-        env:
-          STAGING_SUPABASE_URL: ${{ secrets.STAGING_SUPABASE_URL }}
-          STAGING_SUPABASE_ANON_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
-          PRODUCTION_SUPABASE_URL: ${{ secrets.PRODUCTION_SUPABASE_URL }}
-          PRODUCTION_SUPABASE_ANON_KEY: ${{ secrets.PRODUCTION_SUPABASE_ANON_KEY }}
-          PUSH_DISPATCH_SECRET: ${{ secrets.PUSH_DISPATCH_SECRET }}
-        run: |
-          [ -n "$PUSH_DISPATCH_SECRET" ] || { echo 'Push dispatcher yapılandırılmadı; bildirim atlandı.'; exit 0; }
-          if [ '${{ needs.preflight.outputs.channel }}' = beta ]; then URL="$STAGING_SUPABASE_URL"; KEY="$STAGING_SUPABASE_ANON_KEY"; else URL="$PRODUCTION_SUPABASE_URL"; KEY="$PRODUCTION_SUPABASE_ANON_KEY"; fi
-          PAYLOAD=$(jq -n --arg event_key '${{ needs.preflight.outputs.tag }}' --arg channel '${{ needs.preflight.outputs.channel }}' --arg version '${{ needs.preflight.outputs.version_name }}' --argjson build_number '${{ needs.preflight.outputs.build_number }}' '{action:"enqueue_update",event_key:$event_key,channel:$channel,version_name:$version,build_number:$build_number,title:"Odak Kampı güncellendi",body:"Yeni sürüm indirilmeye hazır."}')
-          curl --fail-with-body --silent --show-error -X POST "$URL/functions/v1/dispatch-push" -H "Authorization: Bearer $KEY" -H 'Content-Type: application/json' -H "x-push-dispatch-secret: $PUSH_DISPATCH_SECRET" --data "$PAYLOAD"
