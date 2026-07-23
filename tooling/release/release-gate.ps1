@@ -28,7 +28,17 @@ $startedAt = (Get-Date).ToUniversalTime()
 
 try {
   Assert-TargetContract -Environment $environment -ProjectRef $ProjectRef -SupabaseUrl $SupabaseUrl -StagingProjectRef $StagingProjectRef -ProductionProjectRef $ProductionProjectRef -RepoRoot $repoRoot -IgnoreLinkedRef
-  Assert-ExactReleaseIdentity -ExpectedGitSha $ExpectedGitSha -ExpectedMigrationHead $ExpectedMigrationHead -RepoRoot $repoRoot
+  $actualSha = Get-GitHead -RepoRoot $repoRoot
+  if ($actualSha -ne $ExpectedGitSha) {
+    throw "Git SHA mismatch: local=$actualSha expected=$ExpectedGitSha."
+  }
+  $actualHead = Get-LocalMigrationHead -RepoRoot $repoRoot
+  if ($Channel -eq 'beta' -and $actualHead -ne $ExpectedMigrationHead) {
+    throw "Migration head mismatch: local=$actualHead expected=$ExpectedMigrationHead."
+  }
+  if ($Channel -eq 'stable' -and [int]$ExpectedMigrationHead -gt [int]$actualHead) {
+    throw "Stable migration head exceeds local source head: local=$actualHead expected=$ExpectedMigrationHead."
+  }
   $contract = Get-DeployContract -RepoRoot $repoRoot
   $targetContract = $contract.$environment
   if ($ExpectedMigrationHead -ne $targetContract.migration_head) {

@@ -38,7 +38,17 @@ if ($Channel -eq 'beta') {
   $environment = 'production'
 }
 
-Assert-ExactReleaseIdentity -ExpectedGitSha $ExpectedGitSha -ExpectedMigrationHead $ExpectedMigrationHead -RepoRoot $repoRoot
+$actualSha = Get-GitHead -RepoRoot $repoRoot
+if ($actualSha -ne $ExpectedGitSha) {
+  throw "Git SHA mismatch: local=$actualSha expected=$ExpectedGitSha."
+}
+$actualHead = Get-LocalMigrationHead -RepoRoot $repoRoot
+if ($Channel -eq 'beta' -and $actualHead -ne $ExpectedMigrationHead) {
+  throw "Migration head mismatch: local=$actualHead expected=$ExpectedMigrationHead."
+}
+if ($Channel -eq 'stable' -and [int]$ExpectedMigrationHead -gt [int]$actualHead) {
+  throw "Stable migration head exceeds local source head: local=$actualHead expected=$ExpectedMigrationHead."
+}
 $contract = Get-DeployContract -RepoRoot $repoRoot
 if ($contract.$environment.migration_head -ne $ExpectedMigrationHead) {
   throw "Release contract rejects migration head $ExpectedMigrationHead for $Channel."

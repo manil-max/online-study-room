@@ -4,6 +4,19 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [v45 / 1.0.45+45] - 2026-07-23
+
+> **Kararlı sürüm.** v44 adayındaki bildirim tanısı ve One UI sayaç biçimi production sözleşmesiyle yayımlanır.
+
+### Düzeltmeler
+- Uzak self-testin bilinçli 20 saniyelik cooldown'ı artık teslim hatası gibi gösterilmez.
+- Aynı kişiye sık dürtme denemesinde 10 dakikalık kural görünür.
+- Sayaç bildirimi bir saatin altında `MM:SS`, bir saatten sonra `H:MM:SS` kullanır; çift saat öneki ve dar görünümde kesilen son hane giderildi.
+
+### Notlar
+- Bu sürüm production backend ve mevcut production migration head'i (`0065`) ile çalışır.
+- GitHub sideload stable APK; uygulama içi güncelleme stable kullanıcılara gider.
+
 ## [v44 / 1.0.44+44] - 2026-07-23
 
 > **Kararlı sürüm.** Bildirim tanısı ve One UI sayaç biçimi stable kullanıcılara açılır.
