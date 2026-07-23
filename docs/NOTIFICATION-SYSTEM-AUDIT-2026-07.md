@@ -1,5 +1,7 @@
 # Odak Kampı Bildirim Sistemi ve Android Canlı Sayaç — Adli İnceleme, Hedef Mimari ve Yol Haritası
 
+> **Güncel durum notu — 23 Temmuz 2026:** Bu dosya WP-265'in karar anındaki inceleme ve uygulama günlüğüdür; post-v43 canlı plan değildir. beta-v4302/4303, staging `0066–0068`, retry-worker açığı, release kapısı ve v43 timer paneli kararının güncel adli değerlendirmesi [`KURTARMA-ON-INCELEME-RAPORU-2026-07-23.md`](KURTARMA-ON-INCELEME-RAPORU-2026-07-23.md)'dedir. Uygulanabilir kalan işler `progress.md` WP-269–274'tür; bu dosyadaki eski “önerilen nihai durum” paragrafları worker talimatı olarak kullanılmaz.
+
 > **Tarih:** 22 Temmuz 2026  
 > **Durum:** WP-265 salt-okunur inceleme raporu  
 > **Kapsam:** Android genel bildirim teslimi, dürtme/güncelleme/duyuru/hatırlatıcı ayrımı, Samsung Now Bar beklentisi, Android Live Updates ve native sayaç bildirimi  

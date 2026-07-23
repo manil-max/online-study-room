@@ -9,21 +9,21 @@
 
 ## 🔴 Yüksek Öncelik
 
-- [~] **Bildirim güveni + Android canlı sayaç — WP-265–267**
-  - **Kod durumu (2026-07-22):** WP-265 rapor, WP-266 push çekirdeği ve WP-267 standard/promoted sayaç tamamlandı. Açık kalan iş yalnız Firebase/staging aktivasyonu + gerçek remote push ve Samsung/Pixel cihaz kabulüdür; production ayrıca somut GO ister.
-  - Adli inceleme kesin teşhisi: dürtme/güncelleme/duyuru için kapalı sürece ulaşan push transport yok; Android izin/yerel notification tek başına bunu sağlamaz.
-  - Hedef: FCM + Supabase transactional outbox/Edge dispatcher + token yaşam döngüsü + Bildirim Sağlığı/≤10 sn remote self-test.
-  - Sayaçta custom `RemoteViews` Android Live Update şartlarına aykırıdır; standard/promoted ongoing chronometer'a geçilir, Samsung Now Bar OEM best-effort kalır.
-  - Production deploy/release bu işin örtük parçası değildir; local→staging→fiziksel cihaz→soak→somut kullanıcı GO kapıları korunur.
-  - Kanonik rapor ve WP'ler: [`docs/NOTIFICATION-SYSTEM-AUDIT-2026-07.md`](docs/NOTIFICATION-SYSTEM-AUDIT-2026-07.md), `progress.md` WP-265–267.
+- [~] **Post-v43 kurtarma: release sadeleştirme + bildirim güveni + sayaç kontratı — WP-269–273**
+  - **Gerçek durum (2026-07-23):** Stable `v43/fa771ce` production `0065`te korunur. Beta deney tabanı `beta-v4303/3bdf8bb`, staging `0068`dir; Android APK yayımlandı, Windows artefaktı eksiktir.
+  - WP-266/267/268'in kod, staging ve beta yayın adımları yapılmıştır; ancak zamanlanmış retry worker, salt-okunur health, gerçek FCM cihaz kabulü ve sayaç paneli ürün kabulü eksiktir. Bu yüzden bu WP'ler “tamamlandı” sayılmaz ve yeniden claim edilmez.
+  - Sıra: WP-269 release/Database Gates sadeleştirme + WP-270 retry/health → WP-271 tek cihaz staging kabulü; WP-272 v43 custom panel/fallback kontratı paralel native lane; WP-273 Windows deterministik release.
+  - Production deploy/release bu işin örtük parçası değildir; HOLD ancak staging kabulü + soak + backup/dry-run + somut kullanıcı GO ile kalkar.
+  - Kanonik güncel rapor ve WP'ler: [`docs/KURTARMA-ON-INCELEME-RAPORU-2026-07-23.md`](docs/KURTARMA-ON-INCELEME-RAPORU-2026-07-23.md), `progress.md` WP-269–273.
 
-- [~] **Proje kurtarma + stable/beta/Supabase izolasyonu — WP-225–232 (en yüksek öncelik, production freeze)**
+- [~] **Proje kurtarma + stable/beta/Supabase izolasyonu — WP-225–232 (baseline tamam, production zincir onarımı açık)**
   - Canlı DB salt-okunur baseline ve veri invariant raporu; `0063` production'a uygulanmaz.
   - Pinli Supabase CLI + Docker local replay; SQL Editor ile elle uygulanmış `0001–0062` geçmişi şema kanıtıyla uzlaştırılır.
   - Beta ayrı staging Supabase/flavor/env'e, stable production'a bağlanır; ortam uyuşmazlığı fail-closed olur.
   - Local/staging test ve deploy otomatik; production backup+dry-run+cihaz+soak+somut kullanıcı GO kapılıdır.
   - Eşit süre kaynağı sözleşmesi, reward zinciri, 6 kademe/20k ekonomi, XP barı, istatistik refresh ve açık dönem etiketleri onarılır.
-  - Kanonik plan: `docs/KALITE-PROGRAMI.md §8.7`; operasyon sözleşmesi: `docs/ORTAM-MIGRATION-YONETISIMI.md`; WP kartları: `progress.md`.
+  - WP-225–230 ve v43 teslimi tarihsel kanıttır; eski WP-232 kartı yeni post-v43 release riskleri için yeniden kullanılmaz. Production zincir onarımı WP-269/271 kapılarından yürür.
+  - Kanonik plan: `docs/KALITE-PROGRAMI.md §8.7`; operasyon sözleşmesi: `docs/ORTAM-MIGRATION-YONETISIMI.md`; canlı WP kartları: `progress.md`.
 
 - [~] **Başarım canlı ilerleme + topla-ödül + ölü başarı fix + günlük görev + grup PP** — **WP-208–220 planlandı; Claude tur-2 saha denetimi sonrası plan v3.1** (2026-07-19)
   - Claim = ayrı `achievement_rewards`; `xp_ledger` literal append-only. 50 XP/saat, kişisel başarımlar ve grup başarımları için **manuel giriş, uygulama içi sayaç ve native sayaç eşittir**; süre kaynağı kullanıcı kazanımını değiştirmez. Mevcut `0063` bu hedefin kabul edilmiş uygulaması değildir.
