@@ -16,7 +16,7 @@
 - **Açık yönetim çelişkisi:** `tooling/release/deploy-contract.json` production `deploy_enabled/release_enabled` değerleri bugün açık; bu güvenli varsayılan değildir ve WP-269'da kapatılacaktır.
 - **Kurallar:** Kök `AGENTS.md`, `.agents/AGENTS.md`, planner ve worker kuralları v43 sonrasında silinmedi/değiştirilmedi.
 - **Git:** Tek çalışma dalı `main`; branch/merge/push kullanıcı açıkça istemedikçe yok.
-- **Son WP numarası:** **274**. Sıradaki boş numara **WP-275**.
+- **Son WP numarası:** **279**. Sıradaki boş numara **WP-280**.
 - **Kanonik olay raporu:** [`docs/KURTARMA-ON-INCELEME-RAPORU-2026-07-23.md`](docs/KURTARMA-ON-INCELEME-RAPORU-2026-07-23.md)
 - **Tarihsel kayıt:** Eski WP ayrıntıları [`docs/archive/progress-tarihsel-2026-07.md`](docs/archive/progress-tarihsel-2026-07.md) ve git geçmişindedir; canlı dosyaya geri kopyalanmaz.
 
@@ -47,14 +47,14 @@
 - **Not:** —
 
 ### Codex Lane
-- **Durum:** [x] Boşta
-- **Faz/WP:** —
-- **Aşama:** —
-- **SAHİP yollar:** —
-- **Ortak/riskli yüzey:** —
+- **Durum:** [~] Aktif
+- **Faz/WP:** Kurtarma · WP-269
+- **Aşama:** Geliştiriliyor
+- **SAHİP yollar:** `.github/workflows/database-gates.yml`, `.github/workflows/release.yml`, `.github/workflows/windows-release.yml`, `tooling/release/**`, `tooling/supabase/guard.tests.ps1`, `docs/recovery/RELEASE-GATE.md`
+- **Ortak/riskli yüzey:** `progress.md` (yalnız bu lane + WP-269 kartı); release/deploy sözleşmeleri
 - **Dal:** `main`
-- **Başlangıç / Son güncelleme:** — / 2026-07-23 (Europe/Istanbul)
-- **Not:** Post-v43 kayıt hijyeni ve WP-269–274 planı tamamlandı.
+- **Başlangıç / Son güncelleme:** 2026-07-23 13:53 / 2026-07-23 13:53 (Europe/Istanbul)
+- **Not:** Local + CI dry-run; remote apply, tag, yayın ve production mutasyonu yok.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
@@ -63,8 +63,8 @@
 - **SAHİP yollar:** —
 - **Ortak/riskli yüzey:** —
 - **Dal:** `main`
-- **Başlangıç / Son güncelleme:** —
-- **Not:** —
+- **Başlangıç / Son güncelleme:** — / 2026-07-23 (Europe/Istanbul)
+- **Not:** Backlog uyumlama ve WP-275–279 planı tamamlandı; WP-269 lane'ine dokunulmadı.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
@@ -83,12 +83,15 @@
 | Sıra | İş | Durum | Başlatma kuralı |
 |---|---|---|---|
 | 0 | Stable/production freeze | 🔴 HOLD | WP-271 kabulü ve soak olmadan kaldırılmaz |
-| 1A | WP-269 Release kapılarını sadeleştir | [ ] Bekliyor | Hemen claim edilebilir |
+| 1A | WP-269 Release kapılarını sadeleştir | [~] Aktif | Codex lane claim etti; başka ajan dokunmaz |
 | 1B | WP-270 Push retry/health motoru | [ ] Bekliyor | WP-269 ile paralel olabilir |
 | 1C | WP-272 v43 sayaç paneli sözleşmesi | [ ] Bekliyor | WP-269/270 ile paralel olabilir; en fazla iki lane kuralına uy |
 | 2A | WP-271 Staging gerçek push kabulü | [ ] Bekliyor | WP-269 + WP-270 kabulünden sonra |
 | 2B | WP-273 Windows deterministik release | [ ] Bekliyor | WP-269'dan sonra |
 | Karar | WP-274 Tools erişim kararı | [?] Ürün kararı gerekiyor | Kullanıcı yön seçmeden worker başlamaz |
+| Sonra | WP-275 Taç XP barı | [ ] Bekliyor | Kurtarma hattı aktif dosyalarından bağımsız; WP-269 ile paralel olabilir |
+| Sonra | WP-276/277 kabul ve ops kanıtı | [ ] Bekliyor | Kurtarma cihaz/release kapılarından sonra |
+| Karar | WP-278/279 dil ve aylık rapor | [?] Ürün kararı gerekiyor | Açık ürün/ops kararı olmadan worker başlamaz |
 
 > **Çakışma matrisi:** WP-269 workflow/tooling, WP-270 Supabase+push, WP-272 Android native sayaç yüzeyindedir; SAHİP dosyaları kesişmez. WP-271, WP-269/270 çıktısını staging'e taşıdığı için seridir. WP-273, `.github/workflows/windows-release.yml` nedeniyle WP-269 sonrasıdır. Aynı anda en fazla iki lane açılır.
 
@@ -226,6 +229,109 @@
 - **Tuzaklar:** Ürün kararı almadan dosya silmek; study timer native servislerini Stopwatch sanmak.
 - **Model önerisi:** 🟣 Pro
 
+### WP-275: Taç XP Barını Mutlak Hedefe Hizala 👑
+- **Program/Faz:** Ürün doğruluğu · profil/başarım görseli
+- **Ajan:** —
+- **Durum:** [ ] Bekliyor
+- **Problem:** `xpBarMetrics` ve iki profil yüzeyi bugün kademe-içi değeri gösterir: örneğin 25k XP ve sonraki taç 75k iken `5k / 55k`. Ürün beklentisi mutlak toplamdır: `25k / 75k` ve doluluk `25/75`.
+- **Kapsam dışı:** XP ekonomisi, taç eşikleri, server/RPC/migration, ledger, ödül hesaplama ve yeni rozet tasarımı.
+- **SAHİP dosyalar (yaz):** `app/lib/core/stats/progression_visuals.dart`, `app/lib/features/profile/widgets/gamification_card.dart`, `app/lib/features/profile/widgets/achievement_showcase.dart`, ilgili profil/widget/unit testleri ve l10n yalnız yeni metin gerekirse.
+- **DOKUNMA (oku, değiştirme):** `supabase/**`, achievement dictionary/economy fixture'ları, `app/lib/data/providers/**`, release/workflow dosyaları.
+- **Adımlar:**
+  - [ ] Metrik sözleşmesini mutlak `currentXp / nextThreshold` ve `currentXp / nextThreshold` doluluğu olarak yeniden tanımla.
+  - [ ] Profil özeti, tam başarımlar yüzeyi ve Semantics etiketini aynı saf metrikten besle.
+  - [ ] 0, 20k, 25k, 75k ve maksimum taç sınırlarında birim/widget regresyon testleri yaz.
+  - [ ] Maksimum/sonsuz kademe metnini açıkça tamamlandı olarak koru; `0 / 0` gösterme.
+- **Veri/Migration etkisi:** Yok. Rollback yalnız istemci görsel metrik commit'idir.
+- **Ortam/Deploy:** Local test + Android/Windows cihaz kabulü; remote, tag ve production yok.
+- **RLS/Güvenlik:** XP istemciden yazılmaz; yüzey yalnız sunucudan gelen profil XP'sini gösterir.
+- **Edge-case'ler:** Negatif/bozuk XP, eşiğe tam eşitlik, maksimum kademe, büyük sayı formatı, screen-reader yüzdesi, dar ekran.
+- **Kabul (ölçülebilir):** 25k XP / sonraki 75k eşikte iki UI ve Semantics tam `25k / 75k` gösterir, progress `25/75`; eşikte %100 sonraki hedefe geçer; maksimumda `0 / 0` yok; analyze + hedef testler yeşil. **Cihazda doğrulanmalı.**
+- **Tuzaklar:** Yalnız etiketi değiştirip barı kademe-içi bırakmak; %100'de eski taç hedefini göstermek; ekonomi kuralını UI fix'i için değiştirmek.
+- **Model önerisi:** 🟣 Pro
+
+### WP-276: Hesap Silme Pipeline'ı Staging Ops ve Kabul Kanıtı 🗑️
+- **Program/Faz:** Play/hesap yaşam döngüsü · staging operasyon kabulü
+- **Ajan:** —
+- **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-269 release kapısı; production için ayrıca somut kullanıcı GO gerekir
+- **Problem:** `0037`, `purge-accounts` Edge, retry mantığı ve uygulama UI'ı kodda vardır; ancak staging Edge/cron zinciri ve gerçek talep→iptal→purge davranışı kanıtlanmış değildir.
+- **Kapsam dışı:** Production purge, gerçek kullanıcı hesabı silme, retention politikasını değiştirme, yeni migration/feature kodu. Bulunan hata için ayrı debug WP açılır.
+- **SAHİP dosyalar (yaz):** `docs/qa/ACCOUNT-DELETION-STAGING.md`, `docs/play-store/PLAY-RELEASE-GATE.md`, redacted staging kanıt manifestleri; yalnız zorunlu düzeltme kanıtı için ilgili test dosyaları.
+- **DOKUNMA (oku, değiştirme):** `supabase/migrations/0037_*`, production contract/head, kullanıcı verisi, `purge-accounts` kodu (defect yoksa).
+- **Adımlar:**
+  - [ ] Staging project-ref ile migration/function/secret/cron önkoşullarını list+dry-run ile doğrula.
+  - [ ] Sentetik staging hesapta istek, 14 gün grace simülasyonu, iptal, idempotent tekrar ve yetkisiz çağrı senaryolarını koş.
+  - [ ] Avatar/storage, grup sahipliği, sohbet scrub ve Auth silme sırasını redacted post-check ile kanıtla.
+  - [ ] Retry `<5` ve terminal `failed` yolunu zorlanmış hata ile ölç; geri alma/cron durdurma runbook'unu yaz.
+- **Veri/Migration etkisi:** Yeni migration yok. Staging test verisi kontrollü purge edilir; production'a hiçbir yazma yok. Rollback cron/fonksiyon tetiklenmesini kapatır, kanıtı silmez.
+- **Ortam/Deploy:** Local→staging; production yalnız backup+dry-run+cihaz/ops kanıtı ve somut kullanıcı GO ile ayrı WP'de.
+- **RLS/Güvenlik:** Service role istemciye/loga girmez; kullanıcı yalnız kendi talebini görür/iptal eder; test hesabı dışında veri 0; PII redacted.
+- **Edge-case'ler:** Response kaybı, iki cihazdan istek/iptal yarışı, storage erişim kaybı, cron gecikmesi, beşinci retry, grup sahibi silinmesi.
+- **Kabul (ölçülebilir):** Sentetik hesapta request/cancel/purge akışları idempotent; yetkisiz çağrı 401/403; avatar+Auth+bağlı veri sonucu runbook'la tutarlı; retry terminali beş denemede doğru; staging kanıtı ve rollback rehearsal tamam. **Cihazda/staging'de doğrulanmalı.**
+- **Tuzaklar:** Test için gerçek hesabı silmek; Auth'u storage temizliğinden önce silmek; cron secret'ını kanıta yazmak; staging sonucunu production kabulü saymak.
+- **Model önerisi:** 🔴 Opus / frontier-high
+
+### WP-277: Başarım, Görev ve Grup İlerlemesi Kabul Matrisi 🎯
+- **Program/Faz:** Başarım/Sosyal Profil 3.2 · kabul ve drift denetimi
+- **Ajan:** —
+- **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-271 cihaz/release güveni ve WP-276 ile aynı anda backend ops çalıştırılmaz
+- **Problem:** WP-208–220'nin önemli kod/migration parçaları tarihsel olarak uygulanmış, fakat süre kaynakları, pending reward/claim, görev ve grup görünürlüğü için tek güncel cihaz/staging kabul paketi yoktur.
+- **Kapsam dışı:** Yeni başarı kuralı/XP fiyatı, tarihsel veri rewrite/backfill, production migration/claim, kabul sırasında plansız feature geliştirme.
+- **SAHİP dosyalar (yaz):** `docs/qa/ACHIEVEMENT-TASK-GROUP-ACCEPTANCE.md`, ilgili mevcut test fixture/QA manifestleri ve yalnız kabul açığını kanıtlayan testler.
+- **DOKUNMA (oku, değiştirme):** `supabase/migrations/**`, economy dictionary/threshold, timer/push/release kodu; bulunan hata ayrı debug WP'sine ayrılır.
+- **Adımlar:**
+  - [ ] Manuel, uygulama sayaç, geri sayım/Pomodoro ve native timer için aynı süre→istatistik/XP/başarım/grup sonuç matrisini çıkar.
+  - [ ] Pending reward→claim, ikinci claim no-op, iki cihaz görünürlüğü ve 23:59→00:01 İstanbul sınırını staging fixture ile doğrula.
+  - [ ] Günlük görev toggle/undo, private grup avatar/erişim ve block/UGC görünürlüğü için mevcut sözleşme testlerini koş.
+  - [ ] Başarısız kanıtı P0/P1/ürün kararı olarak sınıflandır; bu WP içinde kod fix'i yapma.
+- **Veri/Migration etkisi:** Yok; sentetik/staging fixture kullanılır. Production veri/ledger değişmez.
+- **Ortam/Deploy:** Local + staging cihaz QA; production/tag/release yok.
+- **RLS/Güvenlik:** Cross-user progress/claim/direct-DML abuse reddi; group/private avatar ve block testlerinde gerçek kullanıcı verisi kullanılmaz.
+- **Edge-case'ler:** Offline/retry, duplicate claim, iki cihaz, üyelik değişimi, gece yarısı, eski beta client, stale cache.
+- **Kabul (ölçülebilir):** Matrisin her satırı kanıtlı veya açık bug/karar olarak sınıflı; duplicate XP=0, unauthorized progress/claim=0, beş süre kaynağında sonuç farkı=0; cihaz/staging kanıt manifesti tamam. **Cihazda/staging'de doğrulanmalı.**
+- **Tuzaklar:** Tarihsel kodu tekrar yazmak; fixture sonucunu gerçek kullanıcı kabulü saymak; kabul WP'sinde migration/backfill yapmak.
+- **Model önerisi:** 🔴 Opus / frontier-high
+
+### WP-278: AR/DE Dil Desteği ve RTL Ürün Kararı 🌐
+- **Program/Faz:** Uluslararasılaştırma · ürün kapsam kararı
+- **Ajan:** —
+- **Durum:** [?] Ürün kararı gerekiyor
+- **Problem:** EN/TR l10n cihaz/ürün kabulü almış; AR/DE kod/ARB tabanı vardır fakat insan çevirisi ve RTL cihaz kabulü ürün kapsamına alınmamıştır.
+- **Kapsam dışı:** EN/TR metinlerini yeniden çevirmek, generated l10n'i elle düzenlemek, yeni dil eklemek.
+- **SAHİP dosyalar (yaz):** `docs/L10N-SOZLUK.md`, AR/DE ARB kaynakları ve yalnız karar sonrası ilgili RTL/widget testleri.
+- **DOKUNMA (oku, değiştirme):** EN/TR katalogları, Android native EN/TR kaynakları, feature/migration/release dosyaları.
+- **Adımlar:**
+  - [ ] Kullanıcı AR/DE'nin gerçekten ürün dili olup olmayacağını ve çeviri sahibini karara bağlar.
+  - [ ] Evet ise insan çevirisi, RTL layout matrisi ve gerçek Android/Windows kabulünü ayrı uygulanabilir alt-WP'lere böl.
+  - [ ] Hayır ise dil seçeneğini EN/TR ile sınırla ve AR/DE'nin deneysel/tarihsel durumunu dürüstçe belgeleyip UI'da yanıltıcı seçenek bırakma.
+- **Veri/Migration etkisi:** Yok.
+- **Ortam/Deploy:** Local + cihaz QA; remote/production yok.
+- **RLS/Güvenlik:** Etki yok.
+- **Edge-case'ler:** RTL icon yönü, sayı/tarih formatı, uzun Almanca metin, fallback EN, cihaz dil değişimi.
+- **Kabul (ölçülebilir):** Seçilen kapsam ve UI seçenekleri birebir; AR seçilirse kritik akışlarda RTL overflow=0 ve insan çevirisi onaylı; kapsam dışıysa kullanıcıya sunulmaz.
+- **Tuzaklar:** EN metnini “çeviri” saymak; generated dosyayı elle değiştirmek; cihaz QA olmadan RTL kapatmak/açmak.
+- **Model önerisi:** 🟣 Pro + insan çeviri sahibi
+
+### WP-279: Aylık Rapor Canlı Ops Kararı ve Staging Provası 📧
+- **Program/Faz:** Operasyonel özellik · e-posta raporları
+- **Ajan:** —
+- **Durum:** [?] Ürün kararı gerekiyor
+- **Problem:** WP-69/108 kodu cron/retry ve ayar anahtarını içerir, ancak DNS/Resend sağlayıcısı, gönderici kimliği ve canlı e-posta maliyet/retention kararı yoktur; bu nedenle özellik kullanıcıya güvenilir vaat edilemez.
+- **Kapsam dışı:** Gizli anahtar eklemek, production Edge/cron deploy etmek, kullanıcıya e-posta göndermek.
+- **SAHİP dosyalar (yaz):** `docs/ops/MONTHLY-REPORT-DECISION.md` (yeni), `docs/play-store/DATA-SAFETY.md` ilgili satırları ve karar sonrası staging QA manifesti.
+- **DOKUNMA (oku, değiştirme):** `supabase/functions/send-report/**`, cron migration'ları, production secrets, profil tercih kodu.
+- **Adımlar:**
+  - [ ] Kullanıcı DNS domaini, gönderici adı/adresi, Resend/alternatif sağlayıcı, aylık maliyet limiti ve opt-in metnini karara bağlar.
+  - [ ] Evet ise ayrı uygulama WP'si için staging secret/cron dry-run, unsubscribe/deletion/purge ve retry kabulünü planla.
+  - [ ] Hayır ise UI tercihinin deneysel/kapalı durumu ve Data Safety anlatımıyla tutarlılığı belgeleyip canlı vaat bırakma.
+- **Veri/Migration etkisi:** Yok; karar sonrası olası remote ops ayrı WP'dir.
+- **Ortam/Deploy:** Karar dokümanı local; staging/production e-posta yok.
+- **RLS/Güvenlik:** E-posta/secret loglanmaz; opt-in ve hesap silme/purge uyumu zorunlu.
+- **Edge-case'ler:** Bounce, unsubscribe, silme grace, duplicate cron, sağlayıcı kesintisi, yanlış sender domaini.
+- **Kabul (ölçülebilir):** Yazılı GO/NO-GO ve sahip bilgisi; GO ise ayrı staging uygulama WP'sinin önkoşulları eksiksiz, NO-GO ise UI/Docs canlı gönderim iddiası taşımıyor.
+- **Tuzaklar:** DNS/API key olmadan cron açmak; opt-in'i açık rıza sanmak; silinen kullanıcıya rapor göndermek.
+- **Model önerisi:** 🟣 Pro / ops sahibi
+
 ---
 
 ## Test / Ürün Kabulü İçin Bekleyenler (Park)
@@ -252,8 +358,8 @@
 
 - **WP-236:** Dönem-bazlı leaderboard history; kurtarma ve stable güveni bitmeden başlanmaz.
 - **WP-238:** Eğilim kartı 7/14/30/90/180/360 döngü seçici; 180/360 veri kaynağı kararı gerekir.
-- **WP-260–262:** Windows Store kimliği/listing/private pilot; önce WP-259 ve WP-273 kabulü gerekir. Public Store için ayrıca açık kullanıcı GO zorunludur.
-- **WP-110–124:** Google Play production programı NO-GO; kanonik ayrıntı `docs/KALITE-PROGRAMI.md §8.8`.
+- **WP-259–262:** Windows Store kartları `docs/WINDOWS-STORE-PLAN.md` içinde kanoniktir; önce WP-259 temiz VM QA ve WP-273 gerekir. Public Store için ayrıca açık kullanıcı GO zorunludur.
+- **WP-110–124:** Google Play production programı NO-GO; ayrıntılı kartlar `docs/archive/progress-tarihsel-2026-07.md` ve kanonik sıra `docs/KALITE-PROGRAMI.md §8.8`dedir. Play programı açıkça başlatılmadan bu kartlar claim edilmez.
 
 ---
 
