@@ -4,6 +4,21 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [beta-v4304 / 1.0.43-beta.4+4304] - 2026-07-23
+
+> **Cihaz kabul betası — güvenilir bildirim tekrarı ve v43 ürün sözleşmesi.** Yalnız staging ortamını kullanır; stable uygulamayı ya da production verisini etkilemez.
+
+### Düzeltmeler
+- **Başarısız uzaktan bildirimler otomatik yeniden denenir.** Kuyruk sağlığı artık tekrar deneme zamanı, bekleyen iş sayısı, en eski iş yaşı ve hata sınıfını gösterir.
+- **Sayaç bildirimi v43 sözleşmesinde kalır.** Desteklenmeyen yolda güvenli standart fallback korunur; Now Bar/promoted deneyi stable görünümü değiştirmez.
+- **Araçlar sade kaldı.** Alarm, Timer ve Görevler korunur; Kronometre, Dünya Saati ve yatay StandBy kaldırıldı.
+- **Taç XP çubuğu mutlak toplamı gösterir.** Örneğin `25k / 75k`; kademe içi yanıltıcı sayı göstermez.
+
+### Test notları
+- Bu beta `0069` staging migration head'ini gerektirir ve stable uygulamayla yan yana kurulur.
+- Bildirim Merkezi > Bildirim Sağlığı'ndan foreground, background ve uygulama kapalıyken uzaktan self-test çalıştır; retry sonucu ve bildirim hata sınıfını kaydet.
+- Sayaç bildirimi Başlat/Duraklat/Durdur aksiyonlarını, yatay/dikey yönü ve uygulama kapalıyken Durdur eylemini ayrıca doğrula.
+
 ## [beta-v4303 / 1.0.43-beta.3+4303] - 2026-07-22
 
 > **Düzeltme betası — kabul edilen sayaç paneli ve güvenilir uzaktan bildirim testi.** Yalnız staging ortamını kullanır; stable uygulamayı ya da production verisini etkilemez.
