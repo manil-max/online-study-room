@@ -38,6 +38,13 @@ Problem tanımı · kullanıcı senaryoları · kapsam dışı · tasarım/proto
 
 Aşağıdakilerden biri sağlanmıyorsa **stable release çıkmaz:** kritik/ağır bug 0 · migration dry-run başarılı · Supabase staging başarılı · tüm otomatik testler başarılı · Android release build başarılı · gerçek Samsung cihaz testi başarılı · temel kullanıcı yolculukları başarılı · widget/bildirim cold-start başarılı · recovery/admin/RLS testleri başarılı · beta soak ≥ 3 gün · rollback planı hazır.
 
+### 4.3.1 Cihaz kabul adayı politikası
+
+- Android gerçek-cihaz kabulünün varsayılan adayı, **GitHub prerelease olarak yayımlanmış benzersiz beta APK**dır; beta yalnız staging backend'e bağlanır.
+- Worker önce adayın tag/SHA/migration head/asset SHA-256 değerlerini doğrular. Aynı aday uygunsa GitHub'dan indirip doğrudan cihaza kurar; aday yoksa veya kod değiştiyse normal preflight sonrası yeni, tekrar kullanılmayan `beta-v<patch*100+sıra>` tag'i ve prerelease oluşturur.
+- Bu cihaz-kabul akışında ayrıca “beta yayını çıkarılsın mı?” ürün onayı istenmez; bu politika kalıcı kullanıcı kararıdır. Yine de production/stable tag, production migration/Edge deploy ve Store yayını için somut ayrı GO zorunluluğu aynen korunur.
+- Her koşumda beta tag'i, commit SHA, staging migration head, APK SHA-256, cihaz/model/API ve ölçüm sonuçları redacted kabul kaydına yazılır. Başarısızlık yeni bir debug WP'sidir; aynı beta tag'i yeniden kullanılmaz.
+
 ### 4.4 Ölçülebilir kabul kriterleri (örnekler)
 
 "Apple seviyesinde" tek başına kriter değildir; ölçülebilir karşılığı:

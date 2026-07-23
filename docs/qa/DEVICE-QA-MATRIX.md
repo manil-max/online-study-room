@@ -2,6 +2,10 @@
 
 > Fiziksel cihaz kanıtı olmadan **kapatma**. Her satır için: tarih · cihaz · sonuç · not.
 
+## Cihaz kabul adayı (kalıcı politika)
+
+Android cihaz QA'sı GitHub prerelease beta APK'sıyla yapılır. Önce mevcut adayın tag/SHA/migration head/APK SHA-256 değeri doğrulanır; aday güncel değilse yeni benzersiz beta tag'i ve prerelease normal preflight sonrasında çıkarılır. Bu akış için yeniden ürün onayı sorulmaz. Stable/production/Store yayını bu politikaya dahil değildir ve ayrı GO gerektirir.
+
 ## A. Timer / widget / FGS (WP-134–137) — DONUK
 
 | # | Senaryo | Beklenen | Sonuç | Kanıt |

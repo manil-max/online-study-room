@@ -54,7 +54,7 @@
 - **Ortak/riskli yüzey:** —
 - **Dal:** `main`
 - **Başlangıç / Son güncelleme:** —
-- **Not:** `beta-v4303` APK SHA-256 doğrulandı; yerel `adb` hazır ama bağlı Android cihaz yok. WP-271 gerçek test için cihaz + staging test hesabı bekliyor. Production HOLD korunur.
+- **Not:** Kalıcı cihaz-kabul politikası yazıldı: GitHub prerelease beta varsayılan adaydır; beta aday onayı tekrar sorulmaz. Stable/production HOLD ve ayrı GO kuralı korunur.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
@@ -160,7 +160,7 @@
   - [ ] Tek staging hesabı/tek Android cihazla foreground, background ve process-terminated remote self-test koş.
   - [ ] Dürtme/duyuru/güncelleme ayrımı, duplicate, token refresh/logout ve zorlanmış transient retry senaryolarını kaydet.
   - [ ] App-kapalı timer paneli/action ve bildirim merkezi hata kodunu aynı adayda doğrula.
-  - [ ] Aday gerekiyorsa kullanıcı açıkça istediğinde benzersiz beta tag/release çıkar; önceki tag'i yeniden kullanma.
+  - [ ] Cihaz kabulünde GitHub prerelease beta adayını kullan; mevcut aday aynı SHA/head değilse normal preflight sonrası benzersiz beta tag/release çıkar. Bu kalıcı ürün politikası için tekrar onay sorma; önceki tag'i yeniden kullanma.
 - **Veri/Migration etkisi:** Kabul edilmiş `0069` yalnız staging'e ileri terfi eder; rollback tetikleyiciyi/dispatcher'ı kapatır, kanıt satırlarını korur.
 - **Ortam/Deploy:** Yalnız staging/beta. Production kesinlikle yok.
 - **RLS/Güvenlik:** Test hesabı ve redacted kanıt; payload/token/secret ekran görüntüsü/logda 0; cross-user teslim reddi kanıtlanır.
