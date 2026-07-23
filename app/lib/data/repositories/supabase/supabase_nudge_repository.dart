@@ -78,7 +78,7 @@ class SupabaseNudgeRepository implements NudgeRepository {
 
   String _friendlyMessage(String message) {
     if (message.contains('nudge_cooldown')) {
-      return 'Aynı kişiyi tekrar dürtmek için biraz bekle.';
+      return 'Aynı kişiye 10 dakikada bir dürtme gönderebilirsin.';
     }
     if (message.contains('cannot_nudge_self')) {
       return 'Kendine dürtme gönderemezsin.';

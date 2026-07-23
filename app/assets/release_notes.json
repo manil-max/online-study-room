@@ -3,6 +3,36 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.43-beta.8",
+      "buildNumber": 4308,
+      "channel": "beta",
+      "date": "2026-07-23",
+      "title": "beta-v4308: bildirim cooldown tanısı",
+      "highlights": [
+        "Uzak self-test için 20 saniyelik bilinçli cooldown artık teslim timeout'u gibi gösterilmez.",
+        "Aynı kişiye sık dürtme denemesinde 10 dakikalık kural açıklanır."
+      ],
+      "fixes": [
+        "Dürtme ekranı repository'nin anlamlı cooldown mesajını artık genel hata ile değiştirmez."
+      ],
+      "notes": [
+        "Bu beta staging backend kullanır ve 0070 migration head'ini gerektirir.",
+        "Remote self-test istekleri arasında en az 20 saniye bırak; cooldown teslim başarısızlığı değildir."
+      ],
+      "titleEn": "beta-v4308: notification cooldown diagnostics",
+      "highlightsEn": [
+        "The intentional 20-second remote self-test cooldown is no longer presented as a delivery timeout.",
+        "Rapid nudge attempts explain the 10-minute rule."
+      ],
+      "fixesEn": [
+        "The nudge screen no longer replaces the repository's meaningful cooldown message with a generic error."
+      ],
+      "notesEn": [
+        "This beta uses the staging backend and requires migration head 0070.",
+        "Leave at least 20 seconds between remote self-test requests; cooldown is not a delivery failure."
+      ]
+    },
+    {
       "versionName": "1.0.43-beta.7",
       "buildNumber": 4307,
       "channel": "beta",

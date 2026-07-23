@@ -79,6 +79,14 @@ void main() {
     );
     expect(healthSource, contains('const Duration(seconds: 25)'));
     expect(healthSource, contains('classifyPushSelfTestFailure(status)'));
+    final notificationScreen = File(
+      'lib/features/notifications/notification_center_screen.dart',
+    ).readAsStringSync();
+    expect(
+      notificationScreen,
+      contains("health.errorCode == 'push_test_cooldown'"),
+    );
+    expect(notificationScreen, contains('notificationsRemoteTestCooldown'));
   });
 
   test(

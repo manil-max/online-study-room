@@ -4,6 +4,18 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [beta-v4308 / 1.0.43-beta.8+4308] - 2026-07-23
+
+> **Tanı netliği betası.** Staging ortamındadır; stable uygulamayı ve production verisini etkilemez.
+
+### Düzeltmeler
+- **Uzaktan self-test cooldown'ı artık hata diye gösterilmez.** Yeni test isteği sunucu tarafından bilinçli olarak 20 saniye sınırlandığında, ekran teslim timeout'u yerine bekleme bilgisini gösterir.
+- **Dürtme cooldown mesajı görünür.** Aynı kişiye tekrar dürtüldüğünde genel “beklenmeyen hata” yerine 10 dakikalık kural açıklanır.
+
+### Test notları
+- Remote self-test istekleri arasında en az 20 saniye bırak; cooldown mesajı teslim başarısızlığı değildir.
+- P1–P6 kabulünü beta-v4307 ile aynı staging backend üzerinde sürdür; bu aday yalnız hata sınıflandırması/mesajını değiştirir.
+
 ## [beta-v4307 / 1.0.43-beta.7+4307] - 2026-07-23
 
 > **Cihaz kabul betası — güvenilir bildirim tekrarı, v43 ürün sözleşmesi ve güvenli test hostu.** Yalnız staging ortamını kullanır; stable uygulamayı ya da production verisini etkilemez.

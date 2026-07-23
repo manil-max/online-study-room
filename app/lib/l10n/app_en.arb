@@ -5006,6 +5006,8 @@
   "@notificationsRemoteTestSent": { "description": "Remote push self-test success", "placeholders": { "seconds": { "type": "String" } } },
   "notificationsRemoteTestFailed": "Remote delivery did not complete. Check the status above and try again.",
   "@notificationsRemoteTestFailed": { "description": "Remote push self-test failure" },
+  "notificationsRemoteTestCooldown": "Wait 20 seconds before starting another remote test.",
+  "@notificationsRemoteTestCooldown": { "description": "Remote push self-test rate limit" },
   "notificationsRefreshHealth": "Refresh status",
   "@notificationsRefreshHealth": { "description": "Refresh push diagnostics" },
   "notificationsLiveTimerHealth": "Live timer surface",

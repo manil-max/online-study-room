@@ -37,7 +37,13 @@ void main() {
     await repo.sendNudge(groupId: 'g1', sender: ada, recipient: ece);
     expect(
       () => repo.sendNudge(groupId: 'g1', sender: ada, recipient: ece),
-      throwsA(isA<NudgeException>()),
+      throwsA(
+        isA<NudgeException>().having(
+          (error) => error.message,
+          'message',
+          'Aynı kişiye 10 dakikada bir dürtme gönderebilirsin.',
+        ),
+      ),
     );
   });
 

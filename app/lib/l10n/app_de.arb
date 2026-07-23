@@ -4857,6 +4857,7 @@
   "notificationsLocalTestSent": "Die Testbenachrichtigung wurde auf diesem Telefon angezeigt.",
   "notificationsRemoteTestSent": "Der Remote-Test wurde in {seconds} Sekunden abgeschlossen.",
   "notificationsRemoteTestFailed": "Die Remote-Zustellung wurde nicht abgeschlossen. Prüfe den Status und versuche es erneut.",
+  "notificationsRemoteTestCooldown": "Warte 20 Sekunden, bevor du einen weiteren Remote-Test startest.",
   "notificationsRefreshHealth": "Status aktualisieren",
   "notificationsLiveTimerHealth": "Live-Timer-Oberfläche",
   "notificationsLiveTimerStandard": "Standard-Timerbenachrichtigung",

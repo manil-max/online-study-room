@@ -16,7 +16,7 @@
 - **Yönetim varsayılanı (WP-269):** `tooling/release/deploy-contract.json` production `deploy_enabled/release_enabled` artık **kapalı** (güvenli varsayılan). Stable yalnız protected `production` Environment içinde tek kullanımlık exact SHA/head/project-ref GO ile ilerler; guard testleri kapalıyı kanıtlar.
 - **Kurallar:** Kök `AGENTS.md`, `.agents/AGENTS.md`, planner ve worker kuralları v43 sonrasında silinmedi/değiştirilmedi.
 - **Git:** Tek çalışma dalı `main`; branch/merge/push kullanıcı açıkça istemedikçe yok.
-- **Son WP numarası:** **283**. Sıradaki boş numara **WP-284**.
+- **Son WP numarası:** **284**. Sıradaki boş numara **WP-285**.
 - **Kanonik olay raporu:** [`docs/KURTARMA-ON-INCELEME-RAPORU-2026-07-23.md`](docs/KURTARMA-ON-INCELEME-RAPORU-2026-07-23.md)
 - **Tarihsel kayıt:** Eski WP ayrıntıları [`docs/archive/progress-tarihsel-2026-07.md`](docs/archive/progress-tarihsel-2026-07.md) ve git geçmişindedir; canlı dosyaya geri kopyalanmaz.
 
@@ -53,8 +53,8 @@
 - **SAHİP yollar:** —
 - **Ortak/riskli yüzey:** —
 - **Dal:** `main`
-- **Başlangıç / Son güncelleme:** — / 2026-07-23 19:08 (Europe/Istanbul)
-- **Not:** WP-283 kod+tooling testi tamam. Beta-v4307 yayımlandı; fiziksel cihaz kabulü kaldı. Stable Android-first politika gelecek yetkili stable çalışmasında canlı kabul görecek; production HOLD korunur.
+- **Başlangıç / Son güncelleme:** — / 2026-07-23 19:32 (Europe/Istanbul)
+- **Not:** WP-284 kod+otomatik test tamam; beta-v4308 cihaz kabulü bekler. Yeni timer format bulgusu için WP-285 claim edilmeden kod değişikliği yapılmayacak. Production HOLD korunur.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
@@ -90,6 +90,7 @@
 | 1E | WP-282 Android-first beta finalization | [x] Kod+test tamam → Park | Sonraki beta canlı workflow kabulü |
 | 1F | WP-283 Android-first stable finalization | [x] Kod+test tamam → Park | Sonraki yetkili stable canlı workflow kabulü |
 | 1G | WP-272 v43 sayaç paneli sözleşmesi | [x] Otomatik test geçti → Park | Samsung cihaz kabulü bekliyor |
+| 1H | WP-284 Cooldown tanı metinleri | [x] Kod+test tamam → Park | Beta-v4308 cihaz kabulü |
 | 2A | WP-271 Staging gerçek push kabulü | [ ] Bekliyor | WP-269 + WP-270 + WP-280 kabulünden sonra |
 | 2B | WP-273 Windows deterministik release | [x] Otomatik test geçti → Park | Temiz Windows VM kabulü bekliyor |
 | Karar | WP-274 Tools erişim kararı | [x] Otomatik test geçti → Park | Kalıcı kaldırma seçildi; cihaz kabulü bekliyor |
@@ -191,6 +192,15 @@
 - **Korunan kapılar:** Protected `production` Environment, exact SHA/head/project-ref GO, staging kabulü, soak ve backup/rollback kanıtı Android release öncesinde zorunludur. Bu WP production deploy veya stable tag/release oluşturmaz.
 - **Kanıt:** `tooling/release/release-preflight.tests.ps1` 7/7; `tooling/supabase/guard.tests.ps1` 51/51; `.github/workflows/release.yml` YAML parse yeşil.
 - **Kabul:** Gelecek yetkili stable release'te Android başarıyla yayınlanırsa Windows job sonucu beklenmez; Windows daha sonra başarılı olursa aynı tag'e eklenir. Production canlı kabulü kullanıcı GO'su olmadan çalıştırılmaz.
+
+### WP-284: Cooldown Tanı Metinleri ⏳
+- **Program/Faz:** Kurtarma · Faz 3/4 — cihaz kabulü teşhis doğruluğu
+- **Ajan:** Codex
+- **Durum:** [x] Kod+otomatik test geçti → **Park** (beta-v4308 cihaz kabulü)
+- **Kök neden:** `push_test_cooldown` sunucunun bilinçli 20 saniyelik rate-limit cevabıdır; istemci bunu `timeout` hata sınıfıyla birlikte gösteriyordu. Dürtme repository'si anlamlı cooldown mesajı üretse de sınıf ekranı bu mesajı genel hata ile değiştiriyordu.
+- **Düzeltme:** Remote self-test cooldown'ı hata renginde olmayan açık bekleme metniyle gösterilir. Dürtme ekranı `NudgeException.message` metnini gösterir; iki repository 10 dakikalık kuralı aynı söyler.
+- **Kanıt:** `flutter analyze` 0 uyarı; ilgili contract/repository testleri yeşil; tam Flutter suite 690/690 yeşil.
+- **Kabul:** C1–C3 cihazda beta-v4308 ile doğrulanır. Bu WP backend, migration veya production mutasyonu yapmaz.
 
 ### WP-271: Staging Gerçek Push ve Tek-Cihaz Beta Kabulü 📱
 - **Program/Faz:** Kurtarma · Faz 3 — staging kabulü

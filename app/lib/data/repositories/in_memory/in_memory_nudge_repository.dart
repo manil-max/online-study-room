@@ -39,7 +39,7 @@ class InMemoryNudgeRepository implements NudgeRepository {
     );
     if (recent) {
       throw const NudgeException(
-        'Aynı kişiyi tekrar dürtmek için biraz bekle.',
+        'Aynı kişiye 10 dakikada bir dürtme gönderebilirsin.',
       );
     }
 

@@ -114,9 +114,11 @@ class _PushHealthCard extends ConsumerWidget {
     final selfTest = health.selfTestStatus;
     final failureKind = classifyPushSelfTestFailure(selfTest);
     final failureCode = selfTest?.errorCode ?? health.errorCode;
-    final selfTestText =
-        selfTest?.state == PushSelfTestDeliveryState.sent &&
-            health.selfTestReceived
+    final selfTestCoolingDown = health.errorCode == 'push_test_cooldown';
+    final selfTestText = selfTestCoolingDown
+        ? l10n.notificationsRemoteTestCooldown
+        : selfTest?.state == PushSelfTestDeliveryState.sent &&
+              health.selfTestReceived
         ? l10n.notificationsRemoteTestSent(
             ((health.selfTestElapsed?.inMilliseconds ?? 0) / 1000)
                 .toStringAsFixed(1),
@@ -196,9 +198,10 @@ class _PushHealthCard extends ConsumerWidget {
               Text(
                 selfTestText,
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color:
-                      selfTest?.state == PushSelfTestDeliveryState.sent &&
-                          health.selfTestReceived
+                  color: selfTestCoolingDown
+                      ? theme.colorScheme.onSurfaceVariant
+                      : selfTest?.state == PushSelfTestDeliveryState.sent &&
+                            health.selfTestReceived
                       ? theme.colorScheme.primary
                       : theme.colorScheme.error,
                 ),

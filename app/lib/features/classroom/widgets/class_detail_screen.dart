@@ -753,9 +753,6 @@ class _MembersCard extends ConsumerWidget {
     Profile recipient,
   ) async {
     final messenger = ScaffoldMessenger.of(context);
-    final genericError = AppLocalizations.of(
-      context,
-    ).authBeklenmeyenBirHataOlustu;
     final l10n = AppLocalizations.of(context);
     try {
       await ref
@@ -768,8 +765,8 @@ class _MembersCard extends ConsumerWidget {
           ),
         ),
       );
-    } on NudgeException {
-      messenger.showSnackBar(SnackBar(content: Text(genericError)));
+    } on NudgeException catch (error) {
+      messenger.showSnackBar(SnackBar(content: Text(error.message)));
     }
   }
 }

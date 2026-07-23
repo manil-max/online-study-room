@@ -1204,6 +1204,7 @@
   "notificationsLocalTestSent": "Test bildirimi bu telefonda gösterildi.",
   "notificationsRemoteTestSent": "Uzak test {seconds} saniyede tamamlandı.",
   "notificationsRemoteTestFailed": "Uzak teslim tamamlanmadı. Yukarıdaki durumu kontrol edip tekrar dene.",
+  "notificationsRemoteTestCooldown": "Yeni uzak test için 20 saniye bekle.",
   "notificationsRefreshHealth": "Durumu yenile",
   "notificationsLiveTimerHealth": "Canlı sayaç yüzeyi",
   "notificationsLiveTimerStandard": "Standart sayaç bildirimi",

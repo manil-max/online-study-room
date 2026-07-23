@@ -4857,6 +4857,7 @@
   "notificationsLocalTestSent": "تم عرض إشعار الاختبار على هذا الهاتف.",
   "notificationsRemoteTestSent": "اكتمل الاختبار البعيد خلال {seconds} ثانية.",
   "notificationsRemoteTestFailed": "لم يكتمل التسليم البعيد. تحقق من الحالة أعلاه وحاول مجددًا.",
+  "notificationsRemoteTestCooldown": "انتظر 20 ثانية قبل بدء اختبار بعيد آخر.",
   "notificationsRefreshHealth": "تحديث الحالة",
   "notificationsLiveTimerHealth": "واجهة المؤقت المباشر",
   "notificationsLiveTimerStandard": "إشعار المؤقت القياسي",

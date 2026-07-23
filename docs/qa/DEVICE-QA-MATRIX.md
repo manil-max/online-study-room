@@ -58,3 +58,13 @@ Ayrıntı: `docs/play-store/` ve `docs/play/OWNER-ACTION-CHECKLIST.md`.
 | P4 | Ağ kes → self-test → ağı aç | Otomatik retry ile teslim; ikinci kullanıcı eylemi gerekmez | ⬜ | |
 | P5 | Sayaç Başlat/Duraklat/Durdur | v43 paneli; aksiyonlar uygulama kapalıyken çalışır | ⬜ | |
 | P6 | 20 ölçümlü remote self-test | duplicate=0; yanlış hedef=0; p95≤10 sn | ⬜ | |
+
+### beta-v4308 cooldown tanı tekrarı (WP-284)
+
+> Bu adayın backend/migration değişikliği yoktur; yalnız kullanıcıya görünen hata sınıflandırmasını düzeltir.
+
+| # | Senaryo | Beklenen | Sonuç | Kanıt |
+|---|---|---|---|---|
+| C1 | Remote self-test'i ikinci kez 20 sn dolmadan başlat | Teslim timeout'u değil, 20 sn bekleme bilgisi; yeni outbox isteği yok | ⬜ | |
+| C2 | Aynı kişiye ikinci dürtmeyi 10 dk dolmadan gönder | Genel hata değil, 10 dakikalık kural görünür; ikinci dürtme oluşmaz | ⬜ | |
+| C3 | Cooldown bittikten sonra remote self-test/dürtme | Normal başarılı yol değişmeden çalışır | ⬜ | |
