@@ -5,11 +5,12 @@ $script = Join-Path $repoRoot 'tooling\release\release-preflight.ps1'
 $sha = Get-GitHead -RepoRoot $repoRoot
 
 & $script -Channel beta -Tag beta-v4307 -ExpectedGitSha $sha -ExpectedMigrationHead '0070' -ValidateOnly | Out-Null
-& $script -Channel stable -Tag v45 -ExpectedGitSha $sha -ExpectedMigrationHead '0065' -ValidateOnly | Out-Null
+& $script -Channel stable -Tag v45 -ExpectedGitSha $sha -ExpectedMigrationHead '0070' -ValidateOnly | Out-Null
 $cases = @(
   @{ Name = 'wrong SHA'; Channel = 'beta'; Tag = 'beta-v4307'; Sha = ('0' * 40); Head = '0070' },
   @{ Name = 'wrong head'; Channel = 'beta'; Tag = 'beta-v4307'; Sha = $sha; Head = '0068' },
   @{ Name = 'stable head ahead of local'; Channel = 'stable'; Tag = 'v45'; Sha = $sha; Head = '0071' },
+  @{ Name = 'stable head behind source (v45 loophole)'; Channel = 'stable'; Tag = 'v45'; Sha = $sha; Head = '0065' },
   @{ Name = 'wrong channel/tag'; Channel = 'stable'; Tag = 'beta-v4307'; Sha = $sha; Head = '0065' }
 )
 foreach ($case in $cases) {
@@ -42,4 +43,4 @@ if ($releaseWorkflow -match 'files:\s*release-assets/\*\*') {
   throw 'Release upload must use explicit public assets; recursive upload reintroduces duplicate platform manifest names.'
 }
 
-Write-Host 'Release preflight tests: 7 passed.'
+Write-Host 'Release preflight tests: 8 passed.'
