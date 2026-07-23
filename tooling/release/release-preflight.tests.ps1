@@ -23,5 +23,21 @@ if ($releaseWorkflow -notmatch 'if \[ "\$SRC" != "\$OUT" \]; then mv -- "\$SRC" 
     $releaseWorkflow -notmatch 'test -f "\$OUT"') {
   throw 'Android artifact packaging must tolerate identical source/output names and verify the output.'
 }
+foreach ($requiredMarker in @(
+  'finalize_beta_android:',
+  'needs: [preflight, android]',
+  "needs.preflight.outputs.channel == 'beta'",
+  "'requiredPlatforms': ['android']",
+  "'optionalPlatforms': [{'platform': 'windows', 'status': 'building'}]",
+  'finalize_complete:',
+  "if: needs.preflight.outputs.channel == 'stable'"
+)) {
+  if ($releaseWorkflow -notmatch [regex]::Escape($requiredMarker)) {
+    throw "Release workflow is missing Android-first beta contract: $requiredMarker"
+  }
+}
+if ($releaseWorkflow -match 'files:\s*release-assets/\*\*') {
+  throw 'Release upload must use explicit public assets; recursive upload reintroduces duplicate platform manifest names.'
+}
 
-Write-Host 'Release preflight tests: 5 passed.'
+Write-Host 'Release preflight tests: 7 passed.'

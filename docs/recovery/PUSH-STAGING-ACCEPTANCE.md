@@ -16,19 +16,16 @@ Kanıt:
 - Ardışık cron ve boş kuyruk tanısı: run `30018384155`.
 - Yerel replay: `.artifacts/deploy-evidence/20260723T144351722Z-local-baseline/`.
 
-## Kalan tek yayın adımı
+## Yayın gerçeği
 
-`beta-v4304`, `beta-v4305` ve `beta-v4306` tag'leri önceki başarısız
-denemelerde kullanıldı;
-yeniden kullanılmaz. Yeni aday:
+Yayın tamamlandı:
 
 - tag: `beta-v4307`
 - version: `1.0.43-beta.7+4307`
 - migration head: `0070`
-- commit: yayın anındaki exact `main` HEAD
-
-Normal Release Orchestrator tag tetikleyicisi kullanılmalıdır. Workflow, Android
-ve Windows zorunlu artefaktları tamamlanmadan prerelease'i finalize etmez.
+- commit: `397753efd70f283468ae9117ef02d973e74aee72`
+- release: `https://github.com/manil-max/online-study-room/releases/tag/beta-v4307`
+- APK SHA-256: `74a5095260bcee04f094191d03a52add924983189edbe1e889764e0b6311fecf`
 
 ## Fiziksel cihaz kabulü
 

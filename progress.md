@@ -9,14 +9,14 @@
 ## Proje Gerçekleri
 
 - **Stable gerçek:** `v43` · `1.0.43+43` · commit `fa771ce` · production backend · migration head `0065`.
-- **Beta deney gerçeği:** `beta-v4303` · `1.0.43-beta.3+4303` · commit `3bdf8bb` · staging backend · migration head `0068`.
-- **Beta artefakt durumu:** Android APK yayımlandı; beta-v4303 Windows MSIX/ZIP workflow'u iki zamanlama testinde düştüğü için release **kısmi** kaldı.
+- **Beta deney gerçeği:** `beta-v4307` · `1.0.43-beta.7+4307` · commit `397753e` · staging backend · migration head `0070`.
+- **Beta artefakt durumu:** GitHub prerelease yayımlandı; Android APK + SHA-256 ve Windows MSIX/ZIP + SHA-256 mevcut. Birleşik `release-manifest.json` Android/Windows `complete` ve exact SHA/head doğruluyor.
 - **Migration gerçeği:** local kod/temiz replay ve staging remote `0070`; production `0065`. `0066–0070` production'a uygulanmadı.
 - **Production kararı:** Yeni stable tag, production migration/Edge deploy ve production mutasyonu **HOLD**. Somut işlem için staging kabulü + soak + backup/dry-run + açık kullanıcı GO gerekir.
 - **Yönetim varsayılanı (WP-269):** `tooling/release/deploy-contract.json` production `deploy_enabled/release_enabled` artık **kapalı** (güvenli varsayılan). Stable yalnız protected `production` Environment içinde tek kullanımlık exact SHA/head/project-ref GO ile ilerler; guard testleri kapalıyı kanıtlar.
 - **Kurallar:** Kök `AGENTS.md`, `.agents/AGENTS.md`, planner ve worker kuralları v43 sonrasında silinmedi/değiştirilmedi.
 - **Git:** Tek çalışma dalı `main`; branch/merge/push kullanıcı açıkça istemedikçe yok.
-- **Son WP numarası:** **281**. Sıradaki boş numara **WP-282**.
+- **Son WP numarası:** **282**. Sıradaki boş numara **WP-283**.
 - **Kanonik olay raporu:** [`docs/KURTARMA-ON-INCELEME-RAPORU-2026-07-23.md`](docs/KURTARMA-ON-INCELEME-RAPORU-2026-07-23.md)
 - **Tarihsel kayıt:** Eski WP ayrıntıları [`docs/archive/progress-tarihsel-2026-07.md`](docs/archive/progress-tarihsel-2026-07.md) ve git geçmişindedir; canlı dosyaya geri kopyalanmaz.
 
@@ -47,14 +47,14 @@
 - **Not:** —
 
 ### Codex Lane
-- **Durum:** [~] Aktif
-- **Faz/WP:** WP-281 · Beta Android artefakt paketleme kurtarması
-- **Aşama:** beta-v4306 Android build sonrası aynı-dosya `mv` hatası kanıtlandı; idempotent paketleme fix/test uygulanıyor
-- **SAHİP yollar:** `.github/workflows/release.yml`, `tooling/release/**`, `app/{pubspec.yaml,assets/release_notes.json}`, `CHANGELOG.md`, `docs/recovery/PUSH-STAGING-ACCEPTANCE.md`, `progress.md`
-- **Ortak/riskli yüzey:** Yalnız beta release workflow ve yeni benzersiz beta tag'i. Production/stable/migration kapsam dışı.
+- **Durum:** [x] Boşta
+- **Faz/WP:** —
+- **Aşama:** —
+- **SAHİP yollar:** —
+- **Ortak/riskli yüzey:** —
 - **Dal:** `main`
-- **Başlangıç / Son güncelleme:** 2026-07-23 18:27 / 2026-07-23 18:27 (Europe/Istanbul)
-- **Not:** Run `30019484256`: APK 76.1 MB başarıyla üretildi; yalnız `mv app-beta-release.apk app-beta-release.apk` exit 1 ile paketleme düştü. beta-v4306 tag'i taşınmayacak; fix sonrası beta-v4307 kullanılacak.
+- **Başlangıç / Son güncelleme:** — / 2026-07-23 19:01 (Europe/Istanbul)
+- **Not:** beta-v4307 yayımlandı ve kullanıcı artefaktları/complete manifest doğrulandı. WP-282 Android-first beta akışı kod+test tamam; sonraki beta canlı kabulü bekler. Production HOLD.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
@@ -86,8 +86,9 @@
 | 1A | WP-269 Release kapılarını sadeleştir | ✅ Kod+test tamam → Park | CI orchestrator koşusu + owner required-reviewer kabulü bekliyor |
 | 1B | WP-270 Push retry/health motoru | [x] Otomatik test geçti → Park | WP-271 staging/cihaz kabulünü bekliyor |
 | 1C | WP-280 Push `pg_net` transport kurtarması | [x] Staging backend kabulü geçti | WP-271 beta/cihaz kabulüne devredildi |
-| 1D | WP-281 Android artefakt paketleme | [~] Fix/test sürüyor | Yeni benzersiz beta-v4307 release koşusu |
-| 1E | WP-272 v43 sayaç paneli sözleşmesi | [x] Otomatik test geçti → Park | Samsung cihaz kabulü bekliyor |
+| 1D | WP-281 Android artefakt paketleme | [x] beta-v4307 APK/release doğrulandı | Cihaz kabulüne devredildi |
+| 1E | WP-282 Android-first beta finalization | [x] Kod+test tamam → Park | Sonraki beta canlı workflow kabulü |
+| 1F | WP-272 v43 sayaç paneli sözleşmesi | [x] Otomatik test geçti → Park | Samsung cihaz kabulü bekliyor |
 | 2A | WP-271 Staging gerçek push kabulü | [ ] Bekliyor | WP-269 + WP-270 + WP-280 kabulünden sonra |
 | 2B | WP-273 Windows deterministik release | [x] Otomatik test geçti → Park | Temiz Windows VM kabulü bekliyor |
 | Karar | WP-274 Tools erişim kararı | [x] Otomatik test geçti → Park | Kalıcı kaldırma seçildi; cihaz kabulü bekliyor |
@@ -113,7 +114,7 @@
   - [x] Database Gates'i list→dry-run→apply→pgTAP/post-check ile sınırla; Flutter/APK aday build'ini ayır. (Flutter/keystore adımları workflow'dan çıktı; guard testi `flutter|beta-build.ps1|KEYSTORE_BASE64` yokluğunu zorluyor.)
   - [x] Production deploy/release varsayılanını kapat; kalıcı açık flag yerine tek kullanımlık exact SHA/head/GO doğrulaması tasarla. (`deploy_enabled/release_enabled=false`; `release-gate.ps1` yalnız CI+protected `production` env + exact `PRODUCTION RELEASE GO:<sha>:<head>:<ref>` + kanıt ile geçer.)
   - [x] “beta preflight” ve “stable preflight” için tek giriş noktası ve kısa kanıt özeti üret. (`tooling/release/release-preflight.ps1` + testleri.)
-  - [x] Android/Windows artefakt durumunu `partial|complete|failed` olarak tek manifestte göster; release'i ancak zorunlu artefaktlar tamamlanınca finalize et. (`release_status` job `release-status-manifest.json`; `finalize` yalnız android+windows `success` ise koşar.)
+  - [x] Android/Windows artefakt durumunu tek manifestte göster. **WP-282 güncel politikası:** beta için Android zorunlu ve hemen finalize edilir; Windows başarılı olursa aynı release'e eklenir. Stable iki platformu birlikte zorunlu tutar.
   - [x] Repo dışı sahip aksiyonu olarak GitHub `production` Environment required reviewer kurulumunu açık checklist'e yaz. (`docs/recovery/RELEASE-GATE.md` owner checklist.)
 - **Kanıt (Kodda doğrulandı):** `guard.tests.ps1` 39/39, `release-preflight.tests.ps1` 4/4, `beta-build.tests.ps1` 4/4 yeşil; üç workflow YAML geçerli.
 - **Açık kabul (Cihazda/CI'da doğrulanmalı):** Gerçek beta orchestrator koşusunda iki zorunlu artefakt `complete`; owner `production` Environment required-reviewer kurulumu.
@@ -164,17 +165,26 @@
 ### WP-281: Android Artefakt Paketleme Kurtarması 📦
 - **Program/Faz:** Kurtarma · Faz 4 — beta release
 - **Ajan:** Codex
-- **Durum:** [~] beta-v4306 arızası kanıtlandı; fix/test ve beta-v4307 release sürüyor
+- **Durum:** [x] beta-v4307 APK ve prerelease yayınlandı
 - **Kök neden:** Run `30019484256` Android APK'yı başarıyla üretti; beta kanalında `SRC` ve `OUT` ikisi de `app-beta-release.apk` olduğu için paketleme adımındaki `mv` aynı dosyaya uygulandı ve exit 1 verdi.
 - **Düzeltme:** Kaynak/hedef adı farklıysa taşı; aynıysa no-op yap; her iki yolda da hedef dosyanın varlığını zorunlu doğrula. Workflow kaynak testi bu sözleşmeyi kilitler.
 - **Kapsam dışı:** Uygulama davranışı, migration/Edge, production/stable.
 - **Kabul:** Preflight + Android + Windows + aggregate/finalize yeşil; prerelease içinde APK, APK SHA-256, MSIX, ZIP, iki Windows hash'i ve release manifesti bulunur.
 - **Tag politikası:** `beta-v4306` taşınmaz/silinmez/yeniden kullanılmaz; fix commit'i benzersiz `beta-v4307` ile çıkar.
 
+### WP-282: Android-First Beta Finalization 🤖
+- **Program/Faz:** Kurtarma · Faz 4 — release akış sadeleştirmesi
+- **Ajan:** Codex
+- **Durum:** [x] Kod+test tamam → **Park** (sonraki beta canlı workflow kabulü)
+- **Problem:** Android cihaz betası, bağımsız Windows build/test/cleanup sonucunu bekliyor; Windows hatası Android prerelease'i gereksiz yere engelliyor.
+- **Karar:** Beta kanalında preflight+Android başarıyla bittiği anda APK prerelease yayımlanır ve güncelleme bildirimi bir kez kuyruğa alınır. Windows bağımsız devam eder; başarılı olursa MSIX/ZIP ve complete iki-platform manifesti aynı release'e eklenir. Windows hatası beta APK'yı geri çekmez.
+- **Stable:** Stable release iki platform başarı kapısını korur; production güvenlik/GO sözleşmesi değişmez.
+- **Kabul:** Kaynak sözleşme testleri Android-first beta job'ını ve explicit asset listelerini zorlar; aynı adlı iç platform manifestleri release asset'i olarak yüklenmez; beta Android başarısında Windows sonucu ne olursa olsun prerelease vardır.
+
 ### WP-271: Staging Gerçek Push ve Tek-Cihaz Beta Kabulü 📱
 - **Program/Faz:** Kurtarma · Faz 3 — staging kabulü
 - **Ajan:** —
-- **Durum:** [~] Backend hazır; beta-v4307 yayınlama + fiziksel cihaz kabulü kaldı
+- **Durum:** [~] Backend ve beta-v4307 hazır; yalnız fiziksel cihaz kabulü kaldı
 - **Problem:** beta-v4303 Android APK ve staging altyapısı yayımlanmış olsa da gerçek FCM teslim, retry, Samsung görünümü ve ölçümlü cihaz kabulü yoktur.
 - **Kapsam dışı:** Production migration/secret/function/stable release; yeni feature/fix. Testte bug bulunursa bu WP içinde acele fix yapılmaz, ayrı debug WP açılır.
 - **SAHİP dosyalar (yaz):** `tooling/release/deploy-contract.json` (yalnız staging head/HOLD), `docs/qa/DEVICE-QA-MATRIX.md`, `docs/recovery/PUSH-STAGING-ACCEPTANCE.md`, beta kabul kanıt manifestleri ve gerekiyorsa release metadata dosyaları.
@@ -190,11 +200,11 @@
 - **RLS/Güvenlik:** Test hesabı ve redacted kanıt; payload/token/secret ekran görüntüsü/logda 0; cross-user teslim reddi kanıtlanır.
 - **Edge-case'ler:** Android “force stop” ile normal process termination ayrılır; Doze/batarya optimizasyonu; ağ kesintisi; eski beta client; iki cihaz ancak temel tek-cihaz kapısı geçtikten sonra.
 - **Kabul (ölçülebilir):** En az 20 ölçümlü gerçek remote self-testte duplicate=0, yanlış kullanıcı/cihaz teslimi=0 ve p95≤10 sn; zorlanmış transient hata otomatik retry ile teslim olur; terminated app bildirimi görünür; timer action app açmadan çalışır; P0/P1=0. **Cihazda doğrulanmalı.**
-- **Hazırlık kanıtı (2026-07-23):** `beta-v4304`, `beta-v4305` ve `beta-v4306` tag'leri başarısız denemelerde kullanıldı fakat release oluşmadı; sıradaki benzersiz aday `beta-v4307` / `1.0.43-beta.7+4307` / staging head `0070` olmalıdır. `beta-v4306` APK build'i başarıyla üretildi, yalnız aynı kaynak/hedef dosya adına uygulanan `mv` paketleme adımı düştü; WP-281 bunu idempotent hale getirir. Backend ve uzaktan self-test kuyruğu hazır; yerel Android platform-tools (`adb 37.0.0`) hazır, bu makinede bağlı cihaz yok.
+- **Hazırlık kanıtı (2026-07-23):** `beta-v4307` / `1.0.43-beta.7+4307` / SHA `397753efd70f283468ae9117ef02d973e74aee72` / head `0070` prerelease yayımlandı. APK 76,126,211 bayt ve SHA-256 `74a5095260bcee04f094191d03a52add924983189edbe1e889764e0b6311fecf`; Windows MSIX/ZIP ve hashleri de mevcut. Backend/remote queue hazır; yerel `adb 37.0.0` hazır, bu makinede bağlı cihaz yok.
 - **Tuzaklar:** Local notification'ı FCM kanıtı saymak; Settings “Force stop” sonrası Android'in teslim engelini ürün bug'ı diye yanlış sınıflandırmak; test sırasında production hedeflemek.
 - **Model önerisi:** 🔴 Opus / frontier-high
 
-> **Devir notu (2026-07-23):** Staging apply ve backend post-check tamamlandı. Kalan tek dış bağımlılık yeni `beta-v4307` prerelease artefaktı ve fiziksel Android cihaz kabulüdür; production HOLD korunur.
+> **Devir notu (2026-07-23):** Staging apply, backend post-check ve beta-v4307 prerelease tamamlandı. Kalan tek dış bağımlılık fiziksel Android cihaz kabulüdür; production HOLD korunur.
 
 ### WP-272: v43 Sayaç Paneli Sözleşmesi ve Now Bar İzolasyonu ⏱️
 - **Program/Faz:** Kurtarma · Faz 2 — Android timer ürün kontratı
@@ -230,7 +240,7 @@
   - [x] Gerçek zaman/scheduler yarışını timeout uzatmadan, yerel-emission ve ağ-tamamlanma kapılarıyla deterministik yap.
   - [x] Hedef timer reconcile grubu ardışık 20 kez ve tam Flutter suite'i çalıştır.
   - [x] Tag atmadan yerel Windows release EXE ile MSIX+ZIP dry-run üret; SHA-256/provenance/manifest kontrol et.
-  - [x] Android+Windows zorunlu artefaktlarının release finalize öncesi birlikte hazır olmasını WP-269 workflow sözleşmesinde doğrula.
+  - [x] Windows MSIX/ZIP'i bağımsız üret ve başarılı olduğunda beta release'e ekle; stable finalize öncesi Android+Windows birlikteliğini koru (WP-282 güncel sözleşmesi).
 - **Veri/Migration etkisi:** Yok. Rollback test harness/workflow commit'idir.
 - **Ortam/Deploy:** Local Windows + CI dry-run; Store/tag/release yok.
 - **RLS/Güvenlik:** Paket production secret'ı/log'u sızdırmaz; kanal/backend manifesti fail-closed.
@@ -239,7 +249,7 @@
 - **Kod kanıtı (2026-07-23):** hedef `timer_background_reconcile_test.dart` 20/20; `flutter test`, `flutter analyze`, `flutter build windows --release`, `dart run msix:create --build-windows false` geçti. Yerel manifest `app/build/wp273-windows-dry-run/platform-manifest.json` `local` kanalını, migration head `0069`u ve MSIX/ZIP SHA-256 değerlerini kaydetti; tag/push/release yok.
 - **Mevcut makine smoke (2026-07-23):** Kurulu `OdakKampi.App` `1.0.0.0→1.0.0.8` MSIX güncellemesi, paketli uygulama açılışı ve portable ZIP açılışı geçti. Bu makine temiz VM değildir; kullanıcı verisini silmemek için uninstall koşturulmadı.
 - **Açık kabul (Cihazda doğrulanmalı):** Temiz Windows VM'de MSIX kurulum, N→N+1 güncelleme ve kaldırma; yayın/Store işlemi yapılmadı.
-- **Tuzaklar:** Sadece timeout büyütmek; üretim kodunu test flake'i için değiştirmek; Android yayımlandıktan sonra Windows'u belirsiz saatlerde eklemek.
+- **Tuzaklar:** Sadece timeout büyütmek; üretim kodunu test flake'i için değiştirmek; Windows sonucunu/manifestini belirsiz bırakmak veya Windows hatasını Android beta blocker'ına çevirmek.
 - **Model önerisi:** 🟣 Pro / frontier-high
 
 ### WP-274: Tools Saat/Kronometre/Dünya Erişim Kararı 🧰
