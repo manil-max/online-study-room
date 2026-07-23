@@ -48,13 +48,13 @@
 
 ### Codex Lane
 - **Durum:** [x] Boşta
-- **Faz/WP:** —
+- **Aktif WP:** —
 - **Aşama:** —
 - **SAHİP yollar:** —
 - **Ortak/riskli yüzey:** —
 - **Dal:** `main`
-- **Başlangıç / Son güncelleme:** — / 2026-07-23 (Europe/Istanbul)
-- **Not:** WP-274 otomatik doğrulama sonrası cihaz kabulüne park edildi. WP-273, WP-269 kabul kapısı nedeniyle başlatılmadı; production HOLD korunur.
+- **Başlangıç / Son güncelleme:** —
+- **Not:** WP-273 otomatik kanıtı parka alındı; temiz Windows VM QA'sı bekliyor. Production HOLD korunur.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
@@ -87,7 +87,7 @@
 | 1B | WP-270 Push retry/health motoru | [x] Otomatik test geçti → Park | WP-271 staging/cihaz kabulünü bekliyor |
 | 1C | WP-272 v43 sayaç paneli sözleşmesi | [x] Otomatik test geçti → Park | Samsung cihaz kabulü bekliyor |
 | 2A | WP-271 Staging gerçek push kabulü | [ ] Bekliyor | WP-269 + WP-270 kabulünden sonra |
-| 2B | WP-273 Windows deterministik release | [ ] Bekliyor | WP-269'dan sonra |
+| 2B | WP-273 Windows deterministik release | [x] Otomatik test geçti → Park | Temiz Windows VM kabulü bekliyor |
 | Karar | WP-274 Tools erişim kararı | [x] Otomatik test geçti → Park | Kalıcı kaldırma seçildi; cihaz kabulü bekliyor |
 | Sonra | WP-275 Taç XP barı | [x] Otomatik test geçti → Park | Android/Windows cihaz kabulü bekliyor |
 | Sonra | WP-276/277 kabul ve ops kanıtı | [ ] Bekliyor | Kurtarma cihaz/release kapılarından sonra |
@@ -196,21 +196,23 @@
 ### WP-273: Windows Deterministik Test ve Tam Artefakt Release'i 🪟
 - **Program/Faz:** Kurtarma · Faz 4 — Windows release güveni
 - **Ajan:** —
-- **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-269
+- **Durum:** [x] Otomatik test geçti → **Park** (temiz Windows VM kabulü bekliyor) · **Bağımlılık:** WP-269 kod/tooling çıktısı sağlandı
 - **Problem:** beta-v4303 Windows workflow'u iki timer zamanlama testinde flaky düştü; Android release önce görünür olduğu için release kısmi kaldı.
 - **Kapsam dışı:** Store public submission, yeni Windows feature/marka, Android build, production backend/migration.
-- **SAHİP dosyalar (yaz):** `app/test/data/timer_background_reconcile_test.dart` ve yalnız ilgili fake-clock/test harness dosyaları, Windows paketleme testleri, `docs/QA-WINDOWS.md`, WP-269 sonrası gerekli dar `.github/workflows/windows-release.yml` düzeltmesi.
+- **SAHİP dosyalar (yaz):** `app/test/features/timer_background_reconcile_test.dart` ve yalnız ilgili fake-clock/test harness dosyaları, Windows paketleme testleri, `docs/QA-WINDOWS.md`, WP-269 sonrası gerekli dar `.github/workflows/windows-release.yml` düzeltmesi.
 - **DOKUNMA (oku, değiştirme):** Timer üretim davranışı (test gerçek bug kanıtlamadıkça), Supabase, Android native, Store identity/asset dosyaları.
 - **Adımlar:**
-  - [ ] Gerçek zaman/scheduler yarışını fake clock/fake async ile deterministik yap; timeout uzatarak gizleme.
-  - [ ] İki hedef testi ardışık en az 20 kez ve tam Windows suite'i çalıştır.
-  - [ ] Tag atmadan aynı SHA'dan MSIX+ZIP dry-run üret; SHA/provenance/manifest kontrol et.
-  - [ ] Android+Windows zorunlu artefaktlarının release finalize öncesi birlikte hazır olmasını doğrula.
+  - [x] Gerçek zaman/scheduler yarışını timeout uzatmadan, yerel-emission ve ağ-tamamlanma kapılarıyla deterministik yap.
+  - [x] Hedef timer reconcile grubu ardışık 20 kez ve tam Flutter suite'i çalıştır.
+  - [x] Tag atmadan yerel Windows release EXE ile MSIX+ZIP dry-run üret; SHA-256/provenance/manifest kontrol et.
+  - [x] Android+Windows zorunlu artefaktlarının release finalize öncesi birlikte hazır olmasını WP-269 workflow sözleşmesinde doğrula.
 - **Veri/Migration etkisi:** Yok. Rollback test harness/workflow commit'idir.
 - **Ortam/Deploy:** Local Windows + CI dry-run; Store/tag/release yok.
 - **RLS/Güvenlik:** Paket production secret'ı/log'u sızdırmaz; kanal/backend manifesti fail-closed.
 - **Edge-case'ler:** Yavaş GitHub runner, locale/TZ, yeniden koşum, aynı asset'i iki kez yükleme, yalnız Windows veya yalnız Android başarı.
 - **Kabul (ölçülebilir):** İki flaky test 20/20 ardışık yeşil; tam Windows suite + build + MSIX/ZIP dry-run yeşil; manifest SHA/commit/channel/head doğru; zorunlu bir artefakt yokken release `complete` olamaz.
+- **Kod kanıtı (2026-07-23):** hedef `timer_background_reconcile_test.dart` 20/20; `flutter test`, `flutter analyze`, `flutter build windows --release`, `dart run msix:create --build-windows false` geçti. Yerel manifest `app/build/wp273-windows-dry-run/platform-manifest.json` `local` kanalını, migration head `0069`u ve MSIX/ZIP SHA-256 değerlerini kaydetti; tag/push/release yok.
+- **Açık kabul (Cihazda doğrulanmalı):** Temiz Windows VM'de MSIX kurulum, N→N+1 güncelleme ve kaldırma; yayın/Store işlemi yapılmadı.
 - **Tuzaklar:** Sadece timeout büyütmek; üretim kodunu test flake'i için değiştirmek; Android yayımlandıktan sonra Windows'u belirsiz saatlerde eklemek.
 - **Model önerisi:** 🟣 Pro / frontier-high
 
@@ -350,6 +352,7 @@
 | WP | Kanıtlı durum | Açık kabul / karar |
 |---|---|---|
 | WP-269 | Kod+tooling testi geçti (guard 39, preflight 4, beta-build 4; 3 workflow YAML geçerli) | Gerçek beta orchestrator koşusunda iki zorunlu artefakt `complete`; owner `production` Environment required-reviewer kurulumu |
+| WP-273 | Hedef timer reconcile 20/20; tam Flutter test 685/685, analiz, Windows release EXE ve yerel MSIX/ZIP dry-run geçti | Temiz Windows VM'de MSIX kurulum, N→N+1 güncelleme ve kaldırma |
 | WP-231 | Otomatik test geçti | İki cihazda kişisel ≤1 sn, grup ≤5 sn reconnect/refresh QA |
 | WP-254 | Kodlandı ve v43 içinde yayımlandı | İstanbul saat gösterimi gerçek cihaz kabul kaydı eksik |
 | WP-259 | Yerel Windows smoke/build/navigation geçti | Temiz VM'de N→N+1 MSIX, uninstall ve DPI matrisi |

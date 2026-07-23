@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -45,15 +47,24 @@ class _NoopAndroidWidgetService implements AndroidWidgetGateway {
   Future<void> seedPlaceholder() async {}
 }
 
-/// WP-250: gerçek cihazdaki yazım sırasını taklit eder — önce yerel cache'e
-/// yazılır ve `userSessions` stream'i EMIT EDER, sonra ağ RTT'si beklenir.
-/// Bu gecikme olmadan bug reprodüksiyonu imkânsızdır (test ortamı saf
-/// microtask zinciridir, araya kare/emit girmez).
-class _SlowStudyRepository extends InMemoryStudyRepository {
+/// WP-273: RTT penceresini duvar saatiyle beklemek yerine iki açık kapıyla
+/// kurar. Önce yerel cache emit olur, test yalnız bu noktada devam eder; ağın
+/// tamamlanması da testin çağırdığı [releaseNetwork] ile belirlenir.
+class _ControlledStudyRepository extends InMemoryStudyRepository {
+  final _localWriteEmitted = Completer<void>();
+  final _networkRelease = Completer<void>();
+
   @override
   Future<void> addSession(StudySession session) async {
     await super.addSession(session); // yerel emit
-    await Future<void>.delayed(const Duration(milliseconds: 150)); // "ağ"
+    if (!_localWriteEmitted.isCompleted) _localWriteEmitted.complete();
+    await _networkRelease.future;
+  }
+
+  Future<void> get localWriteEmitted => _localWriteEmitted.future;
+
+  void releaseNetwork() {
+    if (!_networkRelease.isCompleted) _networkRelease.complete();
   }
 }
 
@@ -112,9 +123,7 @@ Future<(ProviderContainer, InMemoryStudyRepository, Profile)> _buildContainer(
     fireImmediately: true,
   );
   addTearDown(authSub.close);
-  for (var i = 0; i < 100 && !container.read(authStateProvider).hasValue; i++) {
-    await Future<void>.delayed(const Duration(milliseconds: 5));
-  }
+  await pumpEventQueue(times: 20);
   final profile = container.read(authStateProvider).value;
   expect(profile, isNotNull, reason: 'auth hazır olmalı');
   return (container, studyRepo, profile!);
@@ -580,7 +589,7 @@ void main() {
       'DB yazımı (RTT) sürerken ekran toplamı ne zıplar ne düşer',
       () async {
         final start = DateTime.now().subtract(const Duration(minutes: 20));
-        final slowRepo = _SlowStudyRepository();
+        final slowRepo = _ControlledStudyRepository();
         final (container, studyRepo, profile) = await _buildContainer({
           'timer_active_started_at': start.toIso8601String(),
           'timer_active_started_at_ms': start.millisecondsSinceEpoch,
@@ -600,7 +609,7 @@ void main() {
           fireImmediately: true,
         );
         addTearDown(sessionsSub.close);
-        await Future<void>.delayed(const Duration(milliseconds: 20));
+        await pumpEventQueue(times: 20);
         expect(container.read(studyTimerProvider).isRunning, isTrue);
 
         // Ekranın gösterdiği sayıyı, UI ile BİREBİR aynı kuralla hesapla.
@@ -626,7 +635,7 @@ void main() {
 
         // RTT penceresi: yerel cache emit oldu, `_finish()` HENÜZ çalışmadı.
         // Düzeltme olmadan burada toplam ~2x olur (oturum boyu kadar şişme).
-        await Future<void>.delayed(const Duration(milliseconds: 60));
+        await slowRepo.localWriteEmitted;
         expect(
           container.read(studyTimerProvider).isStopping,
           isTrue,
@@ -638,8 +647,9 @@ void main() {
           reason: 'RTT penceresinde toplam şişmemeli (asıl bug)',
         );
 
+        slowRepo.releaseNetwork();
         await stopFuture;
-        await Future<void>.delayed(const Duration(milliseconds: 20));
+        await pumpEventQueue(times: 20);
         expect(
           displayed(),
           closeTo(before, 2),

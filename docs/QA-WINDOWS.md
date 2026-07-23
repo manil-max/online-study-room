@@ -61,6 +61,13 @@ staging manifesti akışında yapılır.
 Bu belge Windows release / MSIX kanıtını standardize eder. Emulator veya yalnız
 `flutter run` debug kanıt sayılmaz. Test hesabı; token/e-posta ekran kaydına girmez.
 
+### WP-273 yerel otomatik kanıtı (2026-07-23)
+
+- `timer_background_reconcile_test.dart` içindeki RTT yarışı, duvar saatiyle beklemek yerine yerel-emission ve ağ-tamamlanma kapılarıyla sürülür; hedef grup 20 ardışık koşumda geçti.
+- Tam Flutter paketi, analiz ve yerel Windows release EXE derlemesi geçti.
+- Yerel MSIX + portable ZIP, SHA-256 manifestiyle `app/build/wp273-windows-dry-run/` altında üretildi. Bu bir yayın değildir.
+- Temiz VM kurulum/güncelleme/kaldırma senaryoları gerçek Windows cihazında ayrıca doğrulanmalıdır.
+
 ## 1. Artefakt kimliği
 
 | Alan | Değer |
