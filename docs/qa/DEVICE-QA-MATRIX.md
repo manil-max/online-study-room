@@ -44,3 +44,17 @@ Android cihaz QA'sı GitHub prerelease beta APK'sıyla yapılır. Önce mevcut a
 ## D. Play pre-launch (WP-123)
 
 Ayrıntı: `docs/play-store/` ve `docs/play/OWNER-ACTION-CHECKLIST.md`.
+
+## E. beta-v4306 push/timer kabulü (WP-271)
+
+> Aday kimliği: `beta-v4306` · `1.0.43-beta.6+4306` · staging head `0070`.
+> Backend ön kabulü tamamdır; aşağıdaki satırlar fiziksel Android cihazda doldurulur.
+
+| # | Senaryo | Beklenen | Sonuç | Kanıt |
+|---|---|---|---|---|
+| P1 | Bildirim Sağlığı → remote self-test, foreground | Tek bildirim; UI `sent`; duplicate 0 | ⬜ | |
+| P2 | Remote self-test, background | Tek bildirim ≤10 sn; doğru hesap/cihaz | ⬜ | |
+| P3 | Remote self-test, process terminated | Bildirim görünür; dokununca doğru ekran açılır | ⬜ | |
+| P4 | Ağ kes → self-test → ağı aç | Otomatik retry ile teslim; ikinci kullanıcı eylemi gerekmez | ⬜ | |
+| P5 | Sayaç Başlat/Duraklat/Durdur | v43 paneli; aksiyonlar uygulama kapalıyken çalışır | ⬜ | |
+| P6 | 20 ölçümlü remote self-test | duplicate=0; yanlış hedef=0; p95≤10 sn | ⬜ | |

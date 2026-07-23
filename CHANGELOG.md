@@ -4,11 +4,12 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
-## [beta-v4305 / 1.0.43-beta.5+4305] - 2026-07-23
+## [beta-v4306 / 1.0.43-beta.6+4306] - 2026-07-23
 
 > **Cihaz kabul betası — güvenilir bildirim tekrarı, v43 ürün sözleşmesi ve güvenli test hostu.** Yalnız staging ortamını kullanır; stable uygulamayı ya da production verisini etkilemez.
 
 ### Düzeltmeler
+- **Staging uzaktan bildirim transportu onarıldı.** Retry worker'ın gerektirdiği `pg_net` artık `0070` migration zincirinin parçasıdır; eksik transport health/post-check tarafından yeşil gösterilmez.
 - **Başarısız uzaktan bildirimler otomatik yeniden denenir.** Kuyruk sağlığı artık tekrar deneme zamanı, bekleyen iş sayısı, en eski iş yaşı ve hata sınıfını gösterir.
 - **Sayaç bildirimi v43 sözleşmesinde kalır.** Desteklenmeyen yolda güvenli standart fallback korunur; Now Bar/promoted deneyi stable görünümü değiştirmez.
 - **Araçlar sade kaldı.** Alarm, Timer ve Görevler korunur; Kronometre, Dünya Saati ve yatay StandBy kaldırıldı.
