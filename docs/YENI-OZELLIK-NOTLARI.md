@@ -23,7 +23,8 @@ Proje sahibinin gündeme getirdiği 6 madde. Sırası öncelik sırası değil, 
 | F-03 | Şifremi unuttum → e-postadaki link açılmıyor | **Hata** | Tekrar üretilecek |
 | F-04 | Görünüm & atmosfer temaları tamamen yenilenecek | Büyük özellik | Konuşuluyor |
 | F-05 | Ana sayfa kart düzenleme: boyut aracı sabit/yüzen olsun | UX düzenleme | Seçenek C seçildi |
-| F-06 | Windows sürümünü arkadaşlara test için dağıtmak | Dağıtım | F-01…F-05 sonrası yapılacak |
+| F-06 | Windows sürümünü arkadaşlara dağıtmak (production) | Dağıtım | F-01…F-05 sonrası yapılacak |
+| F-07 | Play Store + Microsoft Store hazırlık süreci | Yol haritası | Genel plana dahil edilecek |
 
 ---
 
@@ -303,13 +304,78 @@ Yalnız `isDesktopWindow` bayrağıyla yer yer yerleşim farkı var (kenar boşl
 
 **Sıralama kararı (sahip):** Önce F-01…F-05 kodlanacak, **sonra** Windows dağıtımı yapılacak.
 
+**KARAR (6. tur):** Arkadaşlar **production** backend'e bağlanacak. Yani bu bir "sentetik test" değil,
+gerçek kullanım olacak; açtıkları hesaplar gerçek hesaptır. (S-23 kapandı.)
+*Claude notu: bu bilinçli bir karar; staging önerilmişti, sahip production dedi. Sonuç olarak arkadaşların
+verisi gerçek veridir — test amaçlı çöp veri üretmemeleri iyi olur, ama teknik engel yoktur.*
+
+### Güncelleme nasıl gidiyor? (sahibin sorusu, 6. tur — Claude kodda doğruladı)
+
+**Kısa cevap: push bildirimi GELMİYOR. Uygulamayı açtıklarında ekranda bir güncelleme penceresi çıkıyor.**
+
+Akış (`features/updater/updater_service.dart` + `updater_dialog.dart` + `auth_gate.dart`):
+1. Kullanıcı uygulamayı açar → `auth_gate.dart` `maybeShowUpdateDialog` çağırır.
+2. Uygulama GitHub Releases'e bakar, kendi sürümünden yenisi var mı diye kontrol eder.
+3. Varsa **uygulama içi güncelleme penceresi** açılır (ertelenebilir).
+4. İndirir, **SHA-256 doğrular** (bozuk/eksik dosya kurulmaz), sonra dosyayı açar:
+   - Android → APK kurulum ekranı (`app-release.apk` / beta'da `app-beta-release.apk`)
+   - Windows → **MSIX** kurulum ekranı (`odak-kampi-windows-stable.msix` / `...-beta.msix`)
+     `updater_service.dart:124-125`
+
+**ÖNEMLİ TUZAK (Claude'un fark ettiği, sahibin bilmesi gereken):**
+Güncelleyici Windows'ta **yalnız MSIX** indiriyor. Yani arkadaşlar **ZIP portable** sürümü kullanırsa:
+- Uygulama yine "güncelleme var" der ve MSIX indirir,
+- ama MSIX kurulunca **portable klasörün yanına ayrı bir kurulu uygulama** gelir → iki kopya, kafa karışıklığı.
+→ **Sonuç: "kolay kurulum" (ZIP) ile "çalışan otomatik güncelleme" (MSIX) aynı anda olmuyor.**
+
+| | ZIP portable | MSIX kurulum |
+|---|---|---|
+| Kurulum kolaylığı | Çok kolay — çıkart, çalıştır | Sertifikaya güvenmek gerekir (test publisher) |
+| Uygulama içi güncelleme | **Düzgün çalışmaz** (yanına ikinci kopya kurar) | Çalışır — üstüne günceller |
+| Arkadaşa anlatma yükü | Yok | Bir kerelik "sertifikaya güven" adımı |
+
+**Claude'un önerisi:** Arkadaşlar production'da gerçek kullanıcı olacaksa ve sürekli güncelleme
+alacaklarsa → **MSIX** doğru seçim; sertifika adımı bir kerelik. ZIP'i yalnız "bir bakıp kapatacak"
+kişiye ver. Kalıcı çözüm zaten Microsoft Store (aşağıda F-07) — Store kurulumunda sertifika derdi de,
+elle güncelleme derdi de biter.
+
 **Açık sorular:**
-- (S-21) Arkadaş testi için hangi yol: **ZIP portable** (en kolay, kurulum yok) mu, yoksa
-  **MSIX + sertifika talimatı** mı? (Claude ZIP öneriyor.)
-- (S-22) Dağıtım kanalı: mevcut **GitHub Release beta** linki mi yeter, yoksa arkadaşlara doğrudan
-  dosya mı göndereceksin?
-- (S-23) Arkadaşlar hangi backend'e bağlansın — **staging** (beta, gerçek veriye dokunmaz) mı,
-  production mı? (Claude staging öneriyor; production'a test kullanıcısı sokmak veri kirletir.)
+- (S-21) Yukarıdaki tabloya göre: **MSIX** (güncelleme çalışsın) mı, **ZIP** (kurulum kolay olsun) mu?
+- (S-22) Dağıtım kanalı: mevcut **GitHub Release** linki mi yeter, yoksa dosyayı doğrudan mı göndereceksin?
+- (S-24) Güncelleme çıktığında arkadaşlara **push bildirimi** gitsin ister misin? Şu an yok; uygulamayı
+  açınca görüyorlar. İstenirse ayrı bir özellik olur (duyuru/push altyapısı zaten var).
+
+---
+
+## F-07 — Play Store ve Microsoft Store hazırlık süreci
+
+**Sahibin ifadesi (6. tur):** "Genel planlama kısmına Play Store ve Microsoft Store'a hazırlık sürecini
+de ekle, oradan da dağıtım yapsak güzel olur gibi."
+
+**Durum:** Bu iki mağaza için repoda **zaten hazırlık dokümanı var**, sıfırdan başlanmıyor:
+- Microsoft Store → [`docs/WINDOWS-STORE-PLAN.md`](WINDOWS-STORE-PLAN.md)
+  (WP-259 yerel QA, WP-260 Store kimliği/paketleme, WP-261 marka/listeleme, WP-262 private pilot)
+- Play Store → [`docs/PLAY-STORE-HAZIRLIK-TARAMASI.md`](PLAY-STORE-HAZIRLIK-TARAMASI.md) ve
+  `docs/play-store/PLAY-RELEASE-GATE.md`
+
+**Bu turda yapılacak:** Bu iki süreci **genel yol haritasına dahil etmek** — yani F-01…F-06'dan sonra
+gelen resmî bir faz olarak yazmak, dağınık doküman hâlinde bırakmamak.
+
+**Bilinen büyük engeller (bunlar konuşulacak, bugün karar yok):**
+- **Para/hesap:** Play Console tek seferlik ücret, Microsoft Partner Center hesabı — ikisi de sahip
+  tarafından açılır, Claude açamaz.
+- **Kimlik:** Microsoft Store'da mevcut test publisher (`CN=Msix Testing`) geçersiz; kalıcı Store
+  identity alınmalı (WP-260).
+- **Görsel paket:** Her iki mağaza da ikon, ekran görüntüleri, açıklama metni istiyor (WP-261).
+- **Yasal:** Gizlilik politikası + destek adresi + veri güvenliği formu (Play tarafında zorunlu).
+- **Hesap silme:** Play, uygulama içi hesap silme yolu şart koşuyor → WP-276 buraya bağlanıyor.
+
+**Açık sorular:**
+- (S-25) Hangisi önce — **Play Store** mu, **Microsoft Store** mu? (Claude: kullanıcıların çoğu Android
+  ise Play önce; Windows zaten GitHub'dan dağıtılabiliyor.)
+- (S-26) Mağaza hesapları (ücret dahil) ne zaman açılacak? Bu, planın başlayabileceği tarihi belirler.
+- (S-27) Uygulama mağazada **ücretsiz** mi olacak? Reklam/satın alma düşünülüyor mu? (Bu, mağaza
+  formlarını ve gizlilik beyanını doğrudan değiştirir.)
 
 ## 6. Açık soru listesi (toplu)
 
