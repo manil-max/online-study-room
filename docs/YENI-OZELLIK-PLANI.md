@@ -17,13 +17,19 @@ Aşama A, yedi iş paketinden oluşur. Hiçbiri sunucu şeması değiştirmez, h
 
 | WP | İş | Boyut | Bağımlılık |
 |---|---|---|---|
-| 286 | Ayarlar: ölü kartı sil + bildirim/izin/rapor birleştir | S | — |
-| 287 | Şifre sıfırlama derin bağlantı hatası (**canlı hata**) | S–M | — |
-| 288 | Tema modeli genişletmesi + yerel saklama v2 + göç | M | — |
-| 289 | Animasyon/"his" araştırma turu ve katalog | S (doküman) | — |
-| 290 | "Kendi Temanı Oluştur" sihirbazı + görünüm ekranı | **L** | 288, 289 |
+| **293** | **Gate 0:** ortam/migration gerçeğini uzlaştır (canlı head doğrula, 3 belgeyi tek gerçeğe getir) | S | — · **her şeyden önce** |
+| 286 | Ayarlar: ölü kartı sil + bölüm bileşenlerini ayıkla + bildirim/izin/rapor birleştir | M | 293 |
+| 287 | Şifre sıfırlama: `redirectTo` + OTP yolu + e-posta şablonu (**canlı hata**) | M | 293 |
+| 289 | Animasyon/"his" araştırma turu ve **`AppFeel` şema kararı** | S (doküman) | — |
+| 288 | Tema modeli (light+dark varyant) + yerel saklama v2 + göç | **L** | **289** |
+| 290 | "Kendi Temanı Oluştur" sihirbazı + görünüm ekranı | **L** | 288 |
 | 291 | Ana sayfa kart boyut paneli → sabit alt panel | M | — |
-| 292 | Kozmetik: taç görseli + kamp ateşi | M | 290 + sahiple konuşma |
+| 292 | Kozmetik: **taç görseli** | S | 290 |
+| **294** | l10n borcu: sabit Türkçe metinleri ayıkla + audit CI kapısı | M | — |
+| **295** | Kozmetik: **kamp ateşi animasyonları** | M | sahiple konuşma + asset kararı |
+
+> ⚠️ **Bu tablo 2. revizyondur.** Senior teknik değerlendirmesi (2026-07-24) sonrası
+> WP-293/294/295 eklendi, 288↔289 sırası ters çevrildi, 292 ikiye bölündü. Gerekçeler §9'da.
 
 ### 0.1 Kapsam değişiklik günlüğü (bu planın 2. sürümü)
 
@@ -239,12 +245,36 @@ Düzen motoru: `features/home/dashboard_providers.dart` — `setBounds`, `persis
 
 ## 2. Mimari kararlar (ADR)
 
-### ADR-1 — Özel tema = kullanıcının yazdığı `ThemePreset`
-**Karar:** Yeni bir tema render yolu yazılmaz. `CustomTheme` modeli `ThemePreset`'e **birebir çevrilebilir**
-olacak ve `AppTheme.fromPreset` (`app_theme.dart:233`) ile render edilecek.
-**Gerekçe:** `ThemePreset` zaten brightness + 4 token katmanı + tipografi bayraklarını taşıyor.
-Paralel bir yol açmak, tema uygulanan ~%95 yüzeyde iki farklı davranış riski üretir.
-**Sonuç:** `main.dart` karar akışı iki yollu yerine **üç yollu** olur (aşağıda ADR-3).
+### ADR-1 — Özel tema: iki varyant + `fromCustomTokens` yolu  🔄 *(rev. 2)*
+
+> **1. sürümdeki karar geri alındı.** İlk plan "özel tema = tek `ThemePreset`" diyordu.
+> Senior incelemesi bunun **açık/koyu şartını karşılayamadığını** gösterdi; kodda doğrulandı.
+
+**Neden tek preset yetmiyor** (`Kodda doğrulandı`):
+`AppTheme.fromFamily` (`app_theme.dart:197-228`) karşı parlaklığı **türetiyor**: preset'in
+`primary`/`accent`'ini koruyup `ColorScheme.fromSeed` ile yeni yüzeyler üretiyor, ve
+`AppColors.fromScheme(scheme)` çağırdığı için **`textPrimary`, `textSecondary`, `border`
+kullanıcının seçimi değil, tohumdan türetilmiş değerler** oluyor.
+→ Kullanıcı 13 rengi tek tek seçtiği anda, karşı modda bu seçimlerin bir kısmı sessizce çöpe gider.
+Bu, "kullanıcı arka planı ve yazı rengini kendi seçsin" gereksinimiyle doğrudan çelişir.
+
+**Karar:**
+1. `CustomTheme` **iki renk varyantı** taşır: `lightColors` ve `darkColors` (ikisi de tam `AppColors`).
+   Ortak alanlar (tipografi, şekil, atmosfer, his) tek kopya.
+2. Kullanıcı sihirbazda **bir** varyantı elle kurar; diğeri **deterministik türetme** ile üretilir ve
+   **düzenlenebilir olarak sunulur** ("koyu modu da ayarla" adımı). Türetme algoritması
+   `core/theme/brightness_derivation.dart` içinde **saf fonksiyon** olarak yazılır ve test edilir.
+3. Render için `AppTheme.fromCustomTokens({colors, typography, shapes, atmosphere, feel, brightness})`
+   eklenir. Bu, mevcut `_buildFromTokens` (`app_theme.dart:297`) üzerine ince bir sarmalayıcıdır —
+   yeni render motoru değil, mevcut motora **doğrudan token girişi**.
+
+**Neden `fromPreset` değil:** `ThemePreset` (`theme_presets.dart:8-31`) tipografiyi yalnız iki bool ile
+taşıyor (`serifTitles`, `monospaceClock`). Özel font ailesi, ağırlık, harf aralığı ve ölçek sözleşmesini
+taşıyamaz. `ThemePreset`'i genişletmek 90 satırlık hazır preset listesini (`kThemePresets:90`) de
+değiştirmek demektir — gereksiz kırılganlık. `fromCustomTokens` mevcut preset yolunu **hiç ellemeden**
+ilerlemeyi sağlar.
+
+**Sonuç:** `main.dart` karar akışı üç yollu olur (ADR-3); hazır preset/palet yolları **değişmez**.
 
 ### ADR-2 — Saklama: cihaz-yerel, şema versiyonlu, 3 sabit yuva
 **Karar:** `SharedPreferences`; **yeni anahtar** `custom_themes_v2` (JSON liste, `schemaVersion` alanlı).
@@ -260,8 +290,8 @@ paletlerini kaybetmez; (c) `schemaVersion` ileride alan eklenince göç yazılab
 // Öncelik: özel tema > palet > aile.  (Yalnız bu üç yol vardır.)
 final custom = settings.activeCustomTheme;        // null olabilir
 if (custom != null) {
-  lightTheme = AppTheme.fromPreset(custom.toPreset(Brightness.light));
-  darkTheme  = AppTheme.fromPreset(custom.toPreset(Brightness.dark));
+  lightTheme = AppTheme.fromCustomTokens(custom, Brightness.light);  // lightColors
+  darkTheme  = AppTheme.fromCustomTokens(custom, Brightness.dark);   // darkColors
 } else if (settings.usePaletteColors) {
   lightTheme = AppTheme.light(settings.palette);
   darkTheme  = AppTheme.dark(settings.palette);
@@ -307,12 +337,42 @@ MSIX'e protokol eklenebilir ama (a) yalnız kurulu MSIX'te çalışır, portable
 her dağıtım biçiminde çalışır ve tek ekran ekler.
 **Not:** Bu, Android akışını **değiştirmez**; Android'de link tıklanınca eskisi gibi uygulama açılır.
 
-### ADR-6 — F-02 birleştirme: yeniden yazma değil, çatı birleştirme
-**Karar:** `NotificationCenterScreen` (896 satır) ve `ClockWidgetsScreen` (340 satır) içindeki kart
-widget'ları **olduğu gibi** yeniden kullanılır; yalnız `Scaffold`/`AppBar` kabuğu tek ekrana indirilir.
-**Gerekçe:** 1236 satırlık çalışan, cihazda kabul görmüş bildirim/izin kodunu yeniden yazmak,
-kazanılan IA iyileştirmesine kıyasla çok yüksek regresyon riski taşır (push sağlığı, sessiz saatler,
-hatırlatıcılar, izin snapshot'ı — hepsi cihaz davranışına bağlı).
+### ADR-6 — F-02 birleştirme: **bileşen ayıklama** (yeniden yazma da değil, import da değil)  🔄 *(rev. 2)*
+
+> **1. sürümdeki ifade teknik olarak uygulanamazdı.** "Kart widget'ları olduğu gibi yeniden kullanılır"
+> demiştim; ama `_TypesCard`, `_PushHealthCard`, `_QuietHoursCard`, `_RemindersCard`,
+> `_AnnouncementsCard`, `_PermTile`, `_WidgetCard`, `_PermissionRevocationGuide` hepsi **`_` önekli**,
+> yani Dart'ta **library-private**. Başka bir dosyadan import edilemezler. Senior bulgusu doğru.
+
+**Karar — üç adımlı, regresyonu ölçülebilir yol:**
+1. **Önce characterization testi.** Mevcut iki ekranın bugünkü davranışı testle sabitlenir
+   (ne yaptığını değil, **ne yaptığını olduğu gibi** kaydeden testler). Refactor'un güvenlik ağı budur.
+2. **Sonra public bileşen ayıklama.** `_` önekli kartlar iki yeni public dosyaya taşınır:
+   - `features/notifications/sections/notification_preference_sections.dart`
+   - `features/notifications/sections/clock_permission_sections.dart`
+   Taşıma sırasında **davranış değişmez**; yalnız görünürlük ve dosya konumu değişir.
+3. **En son birleşik ekran.** Yeni ekran bu public bileşenleri dizer.
+
+**Neden bu yol:** 1236 satırlık, cihazda kabul görmüş bildirim/izin kodunu yeniden yazmak yüksek
+regresyon riski taşır (push sağlığı, sessiz saatler, hatırlatıcılar, izin snapshot'ı — hepsi cihaz
+davranışına bağlı). Ayıklama, davranışı koruyup yeniden kullanımı **gerçekten** mümkün kılar.
+**Sınır:** Yeni birleşik ekran tek parça 1000+ satırlık dosyaya dönüşmez; bölüm dosyaları ayrı kalır.
+
+### ADR-7 — Kayıt işlemleri `Future<Result>`, `void` değil  🆕 *(rev. 2)*
+**Karar:** `saveCustomTheme` / `deleteCustomTheme` / `setActiveCustomTheme` **`Future<ThemeSaveResult>`**
+döner; UI sonucu bekler ve hatada kullanıcıya söyler.
+**Gerekçe (`Kodda doğrulandı`):** Bugünkü `saveCustomPalette` (`theme_settings.dart:127-145`)
+`prefs.setStringList(...)` çağrısını **`await` etmeden** yapıyor ve `void` dönüyor. Disk dolu veya
+platform hatası durumunda kullanıcı "kaydedildi" görür, tema sessizce kaybolur. Yeni modelde tema
+çok daha pahalı bir kullanıcı emeği (7 adımlık sihirbaz) → sessiz kayıp kabul edilemez.
+
+### ADR-8 — İleri `schemaVersion` = salt-okunur, asla sessiz yeniden yazma  🆕 *(rev. 2)*
+**Karar:** Okunan `custom_themes_v2` kaydının `schemaVersion`'ı uygulamanın bildiğinden **büyükse**,
+o tema **salt-okunur** işaretlenir: uygulanabilir ama **üzerine yazılamaz**; UI net söyler
+("bu tema daha yeni bir sürümde oluşturuldu").
+**Gerekçe:** Kullanıcı beta→stable arasında gidip gelebiliyor (iki uygulama yan yana kurulu,
+`AGENTS.md §4.1`). Eski sürüm yeni şemayı okuyup `toMap()` ile geri yazarsa, tanımadığı alanları
+**siler** — kullanıcı beta'ya döndüğünde teması bozulmuş olur. Sessiz veri kaybı.
 
 ---
 
@@ -378,10 +438,36 @@ düğme eksik olan **ilk** iznin sistem ekranını açar (`requestNotifications`
 gereksiz `SizedBox`/başlık yığmadan; gruplar arası **ince ayraç** yeterlidir.
 
 **Edge case'ler**
+#### 🔴 İzin snapshot'ı bugün **fail-open** — durum özeti bu API ile yalan söyler
+
+`Kodda doğrulandı` (senior bulgusu) — `core/time_engine/clock_permissions.dart:69-78`:
+```dart
+Future<ClockPermissionSnapshot> snapshot() async {
+  if (!_android) return ClockPermissionSnapshot.ok;      // ← Windows/web: "her şey yolunda"
+  try {
+    final raw = await _channel.invokeMethod<...>('getPermissionSnapshot');
+    if (raw != null) return ClockPermissionSnapshot.fromMap(raw);
+  } catch (_) {}                                          // ← native hata yutuluyor
+  return ClockPermissionSnapshot.ok;                      // ← hata da "ok" dönüyor
+}
+```
+Üç farklı gerçek (**gerçekten izinli** / **platform desteklemiyor** / **okuma başarısız**) tek
+`ok` değerine çöküyor. Planın "durum okunamadı" göstergesi bu API ile **üretilemez**.
+Daha kötüsü: native kanalın bozuk olduğu bir cihazda uygulama kullanıcıya "her şey hazır" der,
+bildirimler ise hiç gelmez — sessiz hata.
+
+**Karar:** WP-286 kapsamına snapshot sonucunun **üç durumlu** hale getirilmesi eklenir:
+`granted` / `unsupported` / `unknown` (okuma başarısız). Özet satırı bu üçünü ayırt eder;
+`unknown` durumunda **"hazır" iddiası yapılmaz**.
+**Sınır:** Bu değişiklik izin *isteme* davranışını değiştirmez, yalnız *raporlamayı* dürüstleştirir.
+Mevcut çağıranlar (`clock_widgets_screen.dart:42`) geriye uyumlu kalır.
+
+**Edge case'ler**
 | Durum | Beklenen |
 |---|---|
 | Kullanıcı sistem ayarına gidip izin verip dönüyor | `WidgetsBindingObserver.didChangeAppLifecycleState` → `resume`'da snapshot yenilenir (desen `clock_widgets_screen.dart`'ta zaten var) |
-| Snapshot hata veriyor | Ekran çökmez; özet "durum okunamadı" der, kartlar çalışır |
+| Snapshot okunamıyor (`unknown`) | Özet "durum okunamadı" der; **"her şey hazır" demez** |
+| Windows/masaüstü (`unsupported`) | İzin bölümü Android'e özgü olduğunu söyler, sahte yeşil göstermez |
 | Çevrimdışı | `_PushHealthCard` mevcut hata durumunu korur |
 | Aylık rapor yazma hatası | Mevcut `_setMonthlyReportPreference` hata davranışı korunur |
 | Admin olmayan kullanıcı | Admin'e özel bir şey bu ekranda yok |
@@ -425,8 +511,24 @@ Kod tek başına yetmez. Her iki projede (staging **ve** production):
    - `com.manilmax.onlinestudyroom://login-callback` (stable/play)
    - `com.manilmax.onlinestudyroom.beta://login-callback` (beta)
 2. **Site URL** `localhost:3000` ise gerçek bir değere çekilir.
+3. 🆕 **Recovery e-posta şablonuna `{{ .Token }}` eklenir** (ADR-5 kod yolu için — aşağıda).
 > `supabase/config.toml:43-44` **yalnız local**'i etkiler; hosted projeyi değiştirmez.
 > Bu bir **production auth yapılandırması**dır → WP'de ayrı ops adımı olarak yazılır, runbook'a girer.
+
+#### 🔴 OTP yolu tek başına istemci işi değil — şablon şart *(rev. 2, senior bulgusu)*
+
+ADR-5'te "e-postadaki kodu gir" yolunu seçtim ama 1. sürümde **yalnız istemci tarafını** kapsama aldım.
+Eksik: Supabase'in gönderdiği recovery e-postası varsayılan olarak **yalnız bağlantı** içerir;
+6 haneli kodun görünmesi için **e-posta şablonunda `{{ .Token }}` alanı bulunmalıdır**.
+İstemci tarafında da çağrı `verifyOTP(type: recovery)` olur.
+
+**Sonuç — WP-287 kapsamına eklenenler:**
+- Staging **ve** production recovery şablonu değişikliği (ops adımı, sahip yapar).
+- `verifyOTP(..., type: OtpType.recovery)` istemci çağrısı + kod giriş ekranı.
+- **Yeniden gönder + hız sınırı** davranışı (art arda istekte kullanıcıya bekleme süresi söylenir).
+- 🔒 **Kullanıcı varlığını açığa vurmama:** "bu e-posta kayıtlı değil" **denmez**; kayıtlı olsa da
+  olmasa da aynı nötr mesaj döner (hesap numaralandırma / user-enumeration koruması).
+  Bu, mevcut `sendPasswordResetEmail` davranışı için de test edilir.
 
 #### (c) Güvenlik notu
 Redirect allowlist'e **yalnız** uygulama scheme'leri eklenir. Genel joker (`*`) veya
@@ -483,6 +585,41 @@ class CustomTheme {
   factory CustomTheme.emptySlot(int index);
 }
 ```
+
+#### 🔴 TextTheme kapsama açığı — "%95 yüzey" kriteri bugün **matematiksel olarak imkânsız**
+
+`Kodda doğrulandı` (senior bulgusu, ölçüldü):
+`_buildFromTokens` (`app_theme.dart:414-418`) `TextTheme`'in yalnız **4 slotunu** dolduruyor:
+`displayLarge`, `titleLarge`, `bodyMedium`, `labelMedium`.
+
+Uygulamanın gerçek `textTheme.*` kullanımı (`grep` sayımı, 375 çağrı):
+
+| Slot | Kullanım | Tema kontrolünde mi? |
+|---|---|---|
+| `titleMedium` | **85** | ❌ hayır |
+| `bodySmall` | **71** | ❌ hayır |
+| `labelSmall` | **58** | ❌ hayır |
+| `bodyMedium` | 50 | ✅ evet |
+| `titleSmall` | **35** | ❌ hayır |
+| `labelMedium` | 23 | ✅ evet |
+| `titleLarge` | 17 | ✅ evet |
+| `labelLarge` | **17** | ❌ hayır |
+| `headlineSmall` | **10** | ❌ hayır |
+| `bodyLarge` | **5** | ❌ hayır |
+| `displaySmall`/`headlineMedium`/`displayMedium` | **4** | ❌ hayır |
+
+**Tema kontrolünde: 90 / 375 = %24.** Kalan **%76** Material varsayılanlarına düşüyor.
+→ Kullanıcı font seçse bile ekranların çoğunda **hiçbir şey değişmez**. Bu, planın
+"≥ %95 yüzeyde token'dan uygulanır" kabul kriterini ölçülemez kılar ve daha kötüsü,
+özelliği kullanıcı gözünde **çalışmıyor** gösterir.
+
+**Karar:** WP-288 kapsamına **`TextTheme`'in 13 slotunun tamamını token'lardan üretmek** eklenir.
+Üretim tek bir saf fonksiyonda toplanır (`buildTextTheme(AppTypography, AppColors)`), ölçek/ağırlık
+oranları oradan türetilir.
+**Ölçülebilir kabul:** `textTheme` slot kapsaması **13/13**; "font değişti → ekranda değişti"
+regresyon testi (bir başlık, bir gövde, bir etiket stilinin gerçekten değiştiğini doğrulayan).
+⚠️ Bu değişiklik **tüm uygulamanın tipografisine** dokunur → hazır preset/palet yollarının
+görüntüsü kaymamalı; mevcut golden'lar bu WP'nin güvenlik ağıdır.
 
 **`AppTypography` genişletmesi** (`theme_tokens.dart:110`) — bugün yalnız iki bool var
 (`useSerifTitles`, `useMonospaceClock`). Gereken:
@@ -745,6 +882,60 @@ ikinci bir kopya kurar. Store'a geçiş bu sorunu tamamen ortadan kaldırır.
 
 ---
 
+---
+
+### Gate 0 — Ortam/migration gerçeğini uzlaştır → **WP-293** *(rev. 2, senior bulgusu)*
+
+**Sorun:** Aynı soruya üç belge üç farklı cevap veriyor (`Kodda doğrulandı`):
+
+| Kaynak | Ne diyor |
+|---|---|
+| `progress.md:9` | Stable **v45**, production migration head **`0065`**, staging `0070` |
+| `tooling/release/deploy-contract.json:2-16` | production `migration_head` **`0070`**, `deploy_enabled: true`, `release_enabled: false` |
+| `docs/KALITE-PROGRAMI.md:108` (kanonik) | **v43**, WP-269–274 "production HOLD, en yüksek öncelik" |
+
+Git geçmişi deploy contract'ı destekliyor: `8b53290 chore: authorize production migration 0070`
+(2026-07-23) contract'ı `0070`'e çekmiş. Yani **`progress.md`'deki `0065` büyük olasılıkla bayat.**
+
+**Bunun neden P1 olduğu:** Production'a yazan yollar exact-SHA, protected environment, project-ref ve
+backup kanıtı istiyor (`AGENTS.md §2`), yani yanlış belge tek başına yıkıcı bir işlem tetikleyemez.
+Ama **yanlış belgeye bakan bir ajan yanlış operasyon kararı verir** — örneğin "production `0065`'te,
+`0071`'i güvenle ekleyebilirim" diye düşünür.
+
+**Kapsam:** Canlı production/staging migration head'i **salt-okunur** doğrulanır
+(`tooling/supabase/remote.ps1` list / protected `Database Gates` workflow'u —
+doğrudan remote CLI komutu **yasak**, `AGENTS.md §2`). Sonra `progress.md`, `docs/KALITE-PROGRAMI.md`,
+`project.md` ve `deploy-contract.json` **tek gerçeğe** getirilir.
+**Kapsam dışı:** Migration uygulamak, contract kapısı açmak, release tetiklemek. Bu WP **yalnız okur ve belgeyi düzeltir.**
+
+**Sorumluluk notu:** `progress.md:9`'daki bayat `0065` bu oturumdaki temizlikte **fark edilmeden
+korundu**. Planner kuralı (`planner/SKILL.md` Adım 0) yalnız Aktif Çalışma Kaydı'nı değil, ortam
+gerçeğini de uzlaştırmayı gerektiriyordu; bu adım eksik yapıldı. WP-293 o borcu kapatır.
+
+---
+
+### l10n borcu ve CI kapısı → **WP-294** *(rev. 2, senior bulgusu)*
+
+**Doğrulandı:** `scripts/l10n_audit.py` **mevcut** ve çalıştırıldığında gerçek bulgular veriyor —
+`account_settings_screen.dart:257,264,272,318,347,482,484,493`,
+`app_push_notification_service.dart:325,326,331`, `task_deadline.dart:152,153`,
+`achievement_reward_provider.dart:50,68` … hepsinde **koda gömülü Türkçe metin**.
+Ayrıca denetim **normal CI akışında çalışmıyor** (yalnız release zamanı kontroller var).
+
+**Sonuç:** Aşama A'nın her WP'sindeki "4 dilde anahtar tam" maddesi, **mevcut borç** yüzünden
+uygulama genelinde zaten sağlanmıyor. Bu, yeni WP'lerin suçu değil ama kabul kriterini yanıltıcı kılıyor.
+
+**Karar — kriteri ikiye ayır (dürüstlük için):**
+- **Her özellik WP'sinde:** "*bu WP'nin dokunduğu yüzeyde* yeni sabit metin **eklenmedi** ve
+  yeni anahtarlar 4 dilde tam" → ölçülebilir, o WP'nin kontrolünde.
+- **WP-294'te:** mevcut borç ayıklanır + `l10n_audit.py` **CI kapısı** yapılır (yeni sabit metin
+  eklenmesini engeller). ⚠️ Script Windows'ta `cp1254` altında `UnicodeEncodeError` ile çöküyor —
+  CI'a bağlanmadan önce **UTF-8 çıktı** düzeltmesi gerekir.
+- Yasal metinlerin kod içinde dev sabitler halinde durması ayrı bir konudur; WP-294'te
+  **not edilir**, çözümü ayrı WP'ye bırakılır (kapsam şişmesin).
+
+---
+
 ## 4. Risk kaydı
 
 | # | Risk | Etki | Önlem | Sahip WP |
@@ -763,6 +954,15 @@ ikinci bir kopya kurar. Store'a geçiş bu sorunu tamamen ortadan kaldırır.
 | R12 | Taç görseli değişirken kademe eşiği kayar | Yüksek | `crownRankForXp` dokunulmaz + aynı XP → aynı kademe regresyon testi | 292 |
 | R13 | Riverpod 3 auto-dispose: dinleyicisiz provider her `read`'de yeniden build olur → regresyon testi sessizce etkisiz kalır | Orta | Testlerde `container.listen(...)` ile abonelik açılır | 288/290 |
 | R14 | Panel yüzünden son kart erişilemez kalır | Orta | Grid altına panel yüksekliği kadar boşluk + widget testi | 291 |
+| **R15** 🆕 | Üç belge farklı production head söylüyor → ajan yanlış operasyon kararı verir | Yüksek | Gate 0 uzlaştırma, hiçbir özellik WP'si öncesinde | **293** |
+| **R16** 🆕 | Tek renk seti ile açık/koyu üretilemez; kullanıcının metin/kenarlık seçimi karşı modda çöpe gider | Yüksek | İki varyant + deterministik türetme + düzenlenebilir karşı mod (ADR-1) | 288 |
+| **R17** 🆕 | `TextTheme` 13 slottan yalnız 4'ünü dolduruyor → font seçimi yüzeylerin %76'sında etkisiz | Yüksek | 13/13 slot token'dan üretilir; "font değişti → ekran değişti" regresyon testi | 288 |
+| **R18** 🆕 | `_` önekli kartlar başka dosyadan import edilemez → ADR-6'nın ilk hali uygulanamazdı | Orta | Characterization testi → public bileşen ayıklama → birleştirme (ADR-6 rev.2) | 286 |
+| **R19** 🆕 | İzin snapshot'ı hata/desteklenmiyor durumunu `ok` sayıyor (fail-open) → özet yalan söyler | Yüksek | `granted`/`unsupported`/`unknown` üç durumu; `unknown`'da "hazır" iddiası yok | 286 |
+| **R20** 🆕 | OTP e-posta şablonuna `{{ .Token }}` eklenmezse kod yolu hiç çalışmaz | Yüksek | Şablon değişikliği WP-287 ops adımında; kabul kriteri buna bağlı | 287 |
+| **R21** 🆕 | Kayıt `void` + `await`siz → disk/platform hatasında tema sessizce kaybolur | Orta | `Future<ThemeSaveResult>` + UI hata gösterimi (ADR-7) | 288 |
+| **R22** 🆕 | Eski sürüm yeni şemayı okuyup geri yazarsa tanımadığı alanları siler (beta↔stable geçişi) | Orta | İleri `schemaVersion` = salt-okunur (ADR-8) | 288 |
+| **R23** 🆕 | Mevcut l10n borcu "4 dilde tam" kriterini yanıltıcı kılıyor | Orta | Kriter ikiye ayrıldı; borç WP-294'e, audit CI kapısına | 294 |
 
 ---
 
@@ -770,17 +970,27 @@ ikinci bir kopya kurar. Store'a geçiş bu sorunu tamamen ortadan kaldırır.
 
 > Son WP numarası `progress.md` "Proje Gerçekleri"nden okunur. Bu turun WP'leri **286–292**.
 
-### 5.1 Önerilen sıra
+### 5.1 Önerilen sıra *(rev. 2 — dalga modeli, aynı anda en fazla 2 lane)*
 
 ```
-1) WP-286   Ayarlar IA          — küçük, bağımsız, hemen görünür kazanım
-2) WP-287   Şifre sıfırlama     — CANLI HATA, kullanıcıyı bugün etkiliyor
-3) WP-291   Boyut paneli        — bağımsız, sahibi her gün rahatsız eden UX sorunu
-4) WP-288   Tema modeli/saklama — core/theme + main.dart; tek başına çalışır
-5) WP-289   His araştırması     — doküman; 288 sürerken paralel gidebilir
-6) WP-290   Tema sihirbazı      — 288 kabul + 289 katalog şart
-7) WP-292   Kozmetik            — 290 sonrası + sahiple kamp ateşi konuşması
+GATE 0   WP-293  Ortam/migration uzlaştırma      ← HER ŞEYDEN ÖNCE, tek başına
+─────────────────────────────────────────────────────────────────────
+DALGA 1  WP-287  Şifre sıfırlama (CANLI HATA)  ‖  WP-286  Ayarlar IA + bileşen ayıklama
+DALGA 2  WP-291  Boyut paneli                  ‖  WP-289  His araştırması + AppFeel şeması
+DALGA 3  WP-288  Tema modeli (289'a bağımlı)   ‖  WP-294  l10n borcu + audit CI kapısı
+DALGA 4  WP-290  Tema sihirbazı                   (tek başına — core/theme + pubspec)
+DALGA 5  WP-292  Taç görseli                   ‖  WP-295  Kamp ateşi (sahip kararı sonrası)
+─────────────────────────────────────────────────────────────────────
+RELEASE  DB replay · analyze · format · tam test · 4 dil audit · env'li APK+Windows build
+         · gerçek cihaz matrisi · beta soak ≥ 3 gün
 ```
+
+**1. sürümden iki kritik sıra değişikliği:**
+1. **289 artık 288'den ÖNCE.** İlk planda 288 "AppFeel katmanı iskeleti"ni içeriyordu ama
+   `AppFeel`'in alanlarını 289'un kataloğu belirliyor → **döngüsel bağımlılık**. Şema kararı
+   araştırmadan çıkmalı, sonra model yazılmalı. (Senior bulgusu; doğru.)
+2. **293 (Gate 0) her şeyden önce.** Ortam gerçeği yanlışken plan yapmak, planner kuralının
+   (`planner/SKILL.md` Adım 0) doğrudan ihlali.
 
 ### 5.2 Çakışma matrisi
 
@@ -792,7 +1002,10 @@ ikinci bir kopya kurar. Store'a geçiş bu sorunu tamamen ortadan kaldırır.
 | 289 | yalnız `docs/**` | — | yok (kod yazmaz) |
 | 290 | `features/profile/**`, `core/theme/theme_tokens.dart`, `pubspec.yaml`, `assets/fonts/**` | `core/theme/**`, `pubspec.yaml`, l10n | **288 ile seri**, 286 ile l10n'de seri |
 | 291 | `features/home/home_screen.dart` (+ `features/home/widgets/**`) | — | yok |
-| 292 | `core/widgets/crowned_avatar.dart`, `features/classroom/widgets/campfire*` | — | yok |
+| 292 | `core/widgets/crowned_avatar.dart` | — | yok |
+| **293** | `progress.md`, `docs/KALITE-PROGRAMI.md`, `project.md`, `tooling/release/deploy-contract.json` | `progress.md` | **hepsiyle** — tek başına çalışır, kısa sürer |
+| **294** | uygulama geneli l10n + `scripts/l10n_audit.py` + CI workflow | l10n | **286 ve 290 ile çakışır** → farklı dalgada |
+| **295** | `features/classroom/widgets/campfire*`, `camp_critter.dart` | — | yok |
 
 > ✅ **WP-286 / 287 / 291 paralel çalışabilir** — ortak SAHİP dosyası yok.
 > (Not: 286 l10n'e girer; 290 da girer → bu ikisi l10n'de aynı anda olmamalı, ama 290 zaten sonra.)
@@ -811,7 +1024,9 @@ ikinci bir kopya kurar. Store'a geçiş bu sorunu tamamen ortadan kaldırır.
 - [ ] RLS/güvenlik değerlendirmesi yapıldı; sır istemcide yok
 - [ ] Migration + geri alma (bu turda yalnız gerekirse — Aşama A'da şema değişikliği **yok**)
 - [ ] Erişilebilirlik: WCAG AA kontrast, 48 dp dokunma, açık/koyu
-- [ ] **4 dilde l10n anahtarı tam** (`tr`, `en`, `de`, `ar`)
+- [ ] **l10n (rev. 2 — ikiye ayrıldı):** bu WP'nin dokunduğu yüzeyde **yeni sabit metin eklenmedi**
+      ve eklenen yeni anahtarlar 4 dilde (`tr`,`en`,`de`,`ar`) tam. *Uygulama genelindeki mevcut borç
+      WP-294'ün konusudur, bu WP'nin kabulünü bloklamaz.*
 - [ ] Tek ayrık commit, **yalnız kendi SAHİP yolları** (`git add -A` yasak)
 
 ---
@@ -820,7 +1035,10 @@ ikinci bir kopya kurar. Store'a geçiş bu sorunu tamamen ortadan kaldırır.
 
 Aşama A "bitti" denebilmesi için:
 1. WP-286…292 hepsi en az **"Otomatik test geçti"** seviyesinde,
-2. bir beta (`beta-v44xx`) yayımlanmış ve **gerçek cihazda sahip tarafından kabul edilmiş**,
+2. bir beta yayımlanmış ve **gerçek cihazda sahip tarafından kabul edilmiş**
+   — ⚠️ *rev. 2:* 1. sürümdeki `beta-v44xx` ifadesi **geçersizdi**; stable zaten `v45`, `1.0.44` yayımlanmış.
+   Tag adı release anında `AGENTS.md §4.1` kodlamasına göre (`patch*100 + sıra`) **o günün bir sonraki
+   boş patch/sırasından** belirlenir; plana sabit tag yazılmaz,
 3. şifre sıfırlama uçtan uca cihazda doğrulanmış (**Supabase panel adımı dahil**),
 4. tema göçü gerçek bir hesapta doğrulanmış (güncelleme sonrası kullanıcının teması bozulmadı),
 5. stable sürüm normal release kapısından geçmiş (`AGENTS.md §3` release kalite kapısı:
@@ -835,8 +1053,9 @@ Aşama A "bitti" denebilmesi için:
 | K-1 | Font kaynağı | ✅ **Karar verildi (ADR-4):** fontlar paketlenir, `google_fonts` kullanılmaz. Sahip "font kısmını halledersin" dedi. |
 | K-2 | Windows'ta şifre sıfırlama | ✅ **Karar verildi (ADR-5):** Android deep link + her platformda çalışan e-posta kodu yolu. |
 | K-3 | Hangi "his" seçenekleri girecek | ⏳ **WP-289 çıktısı** — katalog hazır olunca sahiple birlikte kısa listeden seçilir. |
-| K-4 | Supabase panel adımı | ⏳ **Sahip yapacak** — WP-287 kodu hazır olunca staging + production panelinde Redirect URL + Site URL. Claude panele erişemez. |
-| K-5 | Kamp ateşi tasarımı | ⏳ **Sahiple konuşma** — WP-292 öncesi ayrı tur. |
+| K-4 | Supabase panel adımı | ⏳ **Sahip yapacak** — WP-287 kodu hazır olunca staging + production panelinde Redirect URL + Site URL **+ recovery şablonuna `{{ .Token }}`**. Claude panele erişemez. |
+| K-5 | Kamp ateşi tasarımı | ⏳ **Sahiple konuşma** — WP-295 öncesi ayrı tur. |
+| **K-6** 🆕 | Canlı production migration head'i gerçekte `0065` mi `0070` mi | ⏳ **WP-293 (Gate 0)** salt-okunur doğrulayacak; belgeler ona göre uzlaştırılacak |
 
 ---
 
@@ -848,3 +1067,39 @@ Aşama A "bitti" denebilmesi için:
 - §4 Risk kaydı: her risk bir WP'ye atanmış.
 - Cihaz davranışı gerektiren kabuller: **`Cihazda doğrulanmalı`**.
 - WP-289 kataloğu: **henüz üretilmedi**.
+- Canlı DB durumu: **doğrulanmadı** — bu taramada `pnpm db:test` çalıştırılmadı (Docker gerektirir).
+
+---
+
+## 9. Revizyon günlüğü
+
+### rev. 2 — 2026-07-24, senior teknik değerlendirmesi sonrası
+
+Beş P1 bulgunun tamamı **kodda bağımsız olarak doğrulandı ve kabul edildi**. Yapılan değişiklikler:
+
+| Bulgu | Doğrulama | Plana etkisi |
+|---|---|---|
+| Deployment sözleşmesi çelişkisi | ✅ `progress.md:9` = `0065`, `deploy-contract.json` = `0070`, `KALITE-PROGRAMI.md:108` = v43/HOLD. `8b53290` contract'ı 0070'e çekmiş | **WP-293 (Gate 0)** eklendi, her şeyden önce · R15 |
+| Tema modeli açık/koyu şartını karşılamıyor | ✅ `fromFamily:197-228` karşı modda `AppColors.fromScheme` ile metin/kenarlığı **türetiyor**, kullanıcı seçimi kayboluyor | **ADR-1 yeniden yazıldı**: iki varyant + `fromCustomTokens` · R16 |
+| ↳ TextTheme kapsaması | ✅ Ölçüldü: tema 4 slot dolduruyor, uygulama 13 slot kullanıyor → **90/375 = %24** | 13/13 slot WP-288 kapsamına · R17 |
+| ↳ Kayıt `void` + `await`siz | ✅ `theme_settings.dart:144` fire-and-forget | **ADR-7** · R21 |
+| ↳ İleri `schemaVersion` sessiz yeniden yazma | ✅ Beta↔stable yan yana kurulu (`AGENTS.md §4.1`) | **ADR-8** · R22 |
+| ↳ 289 → 288 sıra | ✅ 288 `AppFeel` iskeleti içeriyordu, alanlarını 289 belirliyor → döngü | **Sıra ters çevrildi** |
+| Parola kurtarma Windows eksik | ✅ OTP için şablonda `{{ .Token }}` şart; 1. sürüm yalnız istemciyi kapsıyordu | WP-287'ye şablon + `verifyOTP` + resend/rate-limit + **user-enumeration koruması** · R20 |
+| Private widget'lar import edilemez | ✅ `_TypesCard`, `_PermTile` vb. library-private | **ADR-6 yeniden yazıldı**: characterization testi → public ayıklama → birleştirme · R18 |
+| ↳ İzin snapshot fail-open | ✅ `clock_permissions.dart:69-78` hata ve desteklenmeyen platformda `ok` dönüyor | Üç durumlu snapshot WP-286 kapsamına · R19 |
+| Dört dil kriteri geçmiyor | ✅ `scripts/l10n_audit.py` mevcut, gerçek bulgular veriyor; CI'da çalışmıyor; Windows'ta encoding hatası | **WP-294** eklendi; DoD l10n maddesi ikiye ayrıldı · R23 |
+| `beta-v44xx` bayat | ✅ stable zaten v45 | Sabit tag kaldırıldı, §6'da kural yazıldı |
+| WP-292 çok geniş | — | **292 (taç)** ve **295 (kamp ateşi)** olarak ayrıldı |
+
+**Kabul edilen ama bu turda kapsama alınmayanlar** (gerekçe: kapsam şişmesi, ayrı WP'ye layık):
+- `dart format` ~78 dosyada sapma → ayrı temizlik WP'si; özellik WP'lerine karıştırılmaz.
+- `main` push'larında genel analyze/test CI kapısı yok → WP-294'ün CI işiyle birlikte ele alınabilir,
+  ama **kapsamı ayrı tutulur**.
+- 24 bağımlılık güncellemesi → ayrı uyumluluk WP'si.
+- 1000–1700 satırlık dosyalar (`study_providers.dart`, `home_screen.dart` …) → WP-286 ve WP-291
+  kendi dokundukları yüzeyde ayrıştırma yapar; genel refactor ayrı iştir.
+- Yasal metinlerin koda gömülü olması → WP-294'te **not edilir**, çözümü ayrı WP.
+
+**Sonuç:** Plan iptal edilmedi, **revize edildi**. Bulguların hiçbiri planın yönünü değiştirmedi;
+üçü (ADR-1, ADR-6, sıra) tasarım hatasıydı ve düzeltildi, ikisi (Gate 0, l10n) eksik kapsamdı ve eklendi.
