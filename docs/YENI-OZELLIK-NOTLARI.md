@@ -339,11 +339,18 @@ alacaklarsa → **MSIX** doğru seçim; sertifika adımı bir kerelik. ZIP'i yal
 kişiye ver. Kalıcı çözüm zaten Microsoft Store (aşağıda F-07) — Store kurulumunda sertifika derdi de,
 elle güncelleme derdi de biter.
 
-**Açık sorular:**
-- (S-21) Yukarıdaki tabloya göre: **MSIX** (güncelleme çalışsın) mı, **ZIP** (kurulum kolay olsun) mu?
-- (S-22) Dağıtım kanalı: mevcut **GitHub Release** linki mi yeter, yoksa dosyayı doğrudan mı göndereceksin?
-- (S-24) Güncelleme çıktığında arkadaşlara **push bildirimi** gitsin ister misin? Şu an yok; uygulamayı
-  açınca görüyorlar. İstenirse ayrı bir özellik olur (duyuru/push altyapısı zaten var).
+**KARARLAR (7. tur):**
+- **Elle dosya dağıtımı (ZIP/MSIX sideload) tercih edilmiyor.** Sahip: "en iyisi kolaysa Microsoft
+  Store'da çıkarıp öyle atmak insanlara." → F-06, F-07'nin Microsoft Store ayağına bağlandı.
+  (S-21/S-22 kapandı: cevap "hiçbiri, Store'dan dağıtacağız".)
+- **Güncelleme push bildirimi İSTENMİYOR** — Store zaten güncellemeyi kendi yönetiyor. (S-24 kapandı.)
+
+**Claude'un uyarısı (karar sahibin, ama zamanlama bilinsin):**
+Store yolu "bugün atarım" değildir — Partner Center hesabı açma + kalıcı Store identity (WP-260) +
+görsel/listeleme paketi (WP-261) + sertifikasyon süreci demektir. Üstelik sahip **önce mobil (Play),
+sonra Windows** dedi. İkisi birleşince: **arkadaşlar Windows sürümünü bir süre alamayacak.**
+Eğer arkadaşların yakında denemesi isteniyorsa, ara çözüm olarak MSIX sideload hâlâ mümkün
+(Store beklerken). Bu ayrı bir karar; şu an planlanan yol Store.
 
 ---
 
@@ -370,12 +377,33 @@ gelen resmî bir faz olarak yazmak, dağınık doküman hâlinde bırakmamak.
 - **Yasal:** Gizlilik politikası + destek adresi + veri güvenliği formu (Play tarafında zorunlu).
 - **Hesap silme:** Play, uygulama içi hesap silme yolu şart koşuyor → WP-276 buraya bağlanıyor.
 
-**Açık sorular:**
-- (S-25) Hangisi önce — **Play Store** mu, **Microsoft Store** mu? (Claude: kullanıcıların çoğu Android
-  ise Play önce; Windows zaten GitHub'dan dağıtılabiliyor.)
-- (S-26) Mağaza hesapları (ücret dahil) ne zaman açılacak? Bu, planın başlayabileceği tarihi belirler.
-- (S-27) Uygulama mağazada **ücretsiz** mi olacak? Reklam/satın alma düşünülüyor mu? (Bu, mağaza
-  formlarını ve gizlilik beyanını doğrudan değiştirir.)
+**KARARLAR (7. tur):**
+- **Sıra: önce Play Store (mobil), sonra Microsoft Store (Windows).** (S-25 kapandı.)
+- **Uygulama ücretsiz olacak.** Reklam/satın alma şimdilik planlanmadı. (S-27 kısmen kapandı.)
+
+### Para modeli — sonradan değiştirilebilir mi? (sahibin sorusu, 7. tur)
+
+Sahip sordu: "ileride reklam falan bilmiyorum, hiç planlamadım; farkları ne, sonradan karar veremiyor mu?"
+
+**Genel cevap: evet, büyük ölçüde sonradan karar verilebilir. Ama bir tanesi tek yönlü.**
+
+| Konu | Sonradan eklenebilir mi? | Not |
+|---|---|---|
+| Reklam eklemek | **Evet** | Gizlilik politikası + Play "Veri güvenliği" formu güncellenir; Android'de reklam kimliği (AD_ID) izni beyan edilir |
+| Uygulama içi satın alma / abonelik | **Evet** | Ücretsiz uygulamaya sonradan eklenebilir; en yaygın model budur |
+| Ücretsiz → **ücretli** yapmak | **HAYIR (Play'de tek yönlü)** | Play'de ücretsiz yayımlanan uygulama sonradan ücretliye çevrilemez. Para kazanmak istenirse yol: **uygulama içi satın alma / abonelik**. Ücretli→ücretsiz yönü serbesttir |
+
+**Pratik sonuç:** Bugün ücretsiz başlamak doğru ve riski düşük; ileride para kazanmak istenirse
+reklam veya abonelik/IAP ile yapılır — ücretli uygulamaya çevirmek Play'de mümkün olmadığı için
+o kapı zaten baştan kapalı sayılmalı.
+
+**Reklam eklenirse ek yük (bilgi olsun diye, karar değil):**
+gizlilik politikası güncellemesi, Veri güvenliği formu, reklam SDK'sı, öğrenci/çocuk kitlesi varsa
+Play'in Aileler politikası. Yani "sonra eklerim" mümkün ama bedava değil — birkaç günlük iş.
+
+**Açık soru:**
+- (S-26) Play Console hesabı ne zaman açılacak? (tek seferlik kayıt ücreti var; güncel tutarı kayıt
+  ekranında görürsün) Bu, mağaza planının başlayabileceği tarihi belirler ve **yalnız sahip yapabilir**.
 
 ## 6. Açık soru listesi (toplu)
 
@@ -392,3 +420,11 @@ Yukarıdaki S-01…S-17. Sıradaki konuşma turunda bunlar tek tek kapatılacak.
 - Akış: önce konuşma → sonra plan → sonra WP → sonra uygulama.
 - Aşama 1'de kod yazılmaz, WP açılmaz, tahmin/efor verilmez.
 - F-03 (şifre sıfırlama linki) bir **hata**dır, özellik değil; ayrı ele alınır.
+
+**Genel yürütme sırası (7. tur, sahip kararı):**
+1. F-01…F-05 kodlanır (ayarlar temizliği, birleştirme, şifre linki hatası, tema yenilemesi, boyut paneli).
+   Tek kod tabanı olduğu için bunlar Windows'a da otomatik gelir.
+2. **Play Store** hazırlığı ve yayını (mobil önce).
+3. **Microsoft Store** hazırlığı ve yayını; Windows dağıtımı arkadaşlara oradan yapılır.
+- Uygulama **ücretsiz**; reklam/IAP şimdilik yok, sonradan eklenebilir (ücretliye çevirmek hariç).
+- Güncelleme için push bildirimi yapılmayacak.
