@@ -22,7 +22,8 @@ Proje sahibinin gündeme getirdiği 6 madde. Sırası öncelik sırası değil, 
 | F-02 | Ayarlar: bildirim/izin/rapor kartlarını tek yerde birleştir | UX düzenleme | Yön net, detay konuşulacak |
 | F-03 | Şifremi unuttum → e-postadaki link açılmıyor | **Hata** | Tekrar üretilecek |
 | F-04 | Görünüm & atmosfer temaları tamamen yenilenecek | Büyük özellik | Konuşuluyor |
-| F-05 | Ana ekran widget düzenleme: boyut aracı sabit/yüzen olsun | UX düzenleme | Anlaşıldı, seçenek soruldu |
+| F-05 | Ana sayfa kart düzenleme: boyut aracı sabit/yüzen olsun | UX düzenleme | Seçenek C seçildi |
+| F-06 | Windows sürümünü arkadaşlara test için dağıtmak | Dağıtım | F-01…F-05 sonrası yapılacak |
 
 ---
 
@@ -268,10 +269,47 @@ kalıyor → sahip sürekli aşağı yukarı kaydırmak zorunda kalıyor. Şikay
   genişlik/yükseklik `−/+` düğmeleri var; saydamlık hiç yok. Claude'un mockup'ında örnek olsun diye
   görünmüştü, gerçekte yok. **O kadar detaya gerek yok** kararı verildi. (S-16 kapandı: panelde sadece boyut.)
 
-**Açık sorular:**
-- (S-17) Aynı sorun Windows/masaüstü tarafında da var mı, yoksa sadece telefonda mı?
+**WINDOWS SORUSU KAPANDI (5. tur):** Sahip Windows'u da kullanıyor ama seyrek; boyut panelini orada
+denememiş. **Claude kodda baktı: ayrı Windows kodu yok.** `home_screen.dart` tek dosya, hem telefon hem
+Windows onu kullanıyor; sadece `isDesktopWindow` ile birkaç yerde kenar boşluğu/yerleşim dallanıyor
+(`home_screen.dart:91` ve `:160`). Yani `_SizePanel` sorunu **her iki platformda da aynı koddan geliyor**
+ve düzeltme ikisini birden düzeltir. Ayrıca yapılacak bir Windows işi yok. (S-17 kapandı.)
 
 ---
+
+---
+
+## F-06 — Windows sürümünü arkadaşlara test için dağıtmak
+
+**Sahibin ifadesi (5. tur):** "Windows ve mobil kısmında tamamen farklı kodları mı var, birinde olan
+diğerinde olmuyor mu? Önce bu dediklerimi Windows'a da kod olarak uygulayıp sonrasında oranın dağıtım
+işini yapmak istiyorum, onu da arkadaşlarıma atmam lazım test için."
+
+**Cevap 1 — tek kod tabanı:** Ayrı Windows kodu **yok**. Proje Flutter; ekranların tamamı ortak.
+Yalnız `isDesktopWindow` bayrağıyla yer yer yerleşim farkı var (kenar boşluğu, gezinme paneli,
+`features/desktop/**` kabuk dosyaları). Yani **F-01…F-05'in hepsi Windows'a da otomatik gelir**;
+"Windows'a ayrıca uygulamak" diye ek bir iş yok. İstisna: bir şey `isDesktopWindow` dalında farklı
+çiziliyorsa orada ayrıca bakılır (tema ekranı ve boyut paneli bu gruba giriyor, ikisi de zaten kapsamda).
+
+**Cevap 2 — dağıtım altyapısı zaten var (kodda doğrulandı):**
+- `.github/workflows/windows-release.yml` her sürümde **hem `.msix` hem `.zip`** üretip release'e ekliyor
+  (`windows-release.yml:82-87`).
+- **MSIX**: kurulum paketi, ama şu an `CN=Msix Testing` test publisher'ı ile imzalı → arkadaşların
+  kurabilmesi için sertifika güvenmesi/geliştirici modu gerekir. Sürtünmeli.
+- **ZIP**: release klasörünün portable hâli → indir, çıkart, `.exe`'ye çift tıkla. Kurulum yok,
+  sertifika yok. **Arkadaş testi için en kolay yol bu.**
+- Ayrıntılı Store planı: [`docs/WINDOWS-STORE-PLAN.md`](WINDOWS-STORE-PLAN.md) (WP-259/260/261 —
+  Store kimliği, private audience vb. bunlar bu turun konusu değil).
+
+**Sıralama kararı (sahip):** Önce F-01…F-05 kodlanacak, **sonra** Windows dağıtımı yapılacak.
+
+**Açık sorular:**
+- (S-21) Arkadaş testi için hangi yol: **ZIP portable** (en kolay, kurulum yok) mu, yoksa
+  **MSIX + sertifika talimatı** mı? (Claude ZIP öneriyor.)
+- (S-22) Dağıtım kanalı: mevcut **GitHub Release beta** linki mi yeter, yoksa arkadaşlara doğrudan
+  dosya mı göndereceksin?
+- (S-23) Arkadaşlar hangi backend'e bağlansın — **staging** (beta, gerçek veriye dokunmaz) mı,
+  production mı? (Claude staging öneriyor; production'a test kullanıcısı sokmak veri kirletir.)
 
 ## 6. Açık soru listesi (toplu)
 
