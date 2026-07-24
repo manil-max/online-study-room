@@ -401,9 +401,9 @@ o kapı zaten baştan kapalı sayılmalı.
 gizlilik politikası güncellemesi, Veri güvenliği formu, reklam SDK'sı, öğrenci/çocuk kitlesi varsa
 Play'in Aileler politikası. Yani "sonra eklerim" mümkün ama bedava değil — birkaç günlük iş.
 
-**Açık soru:**
-- (S-26) Play Console hesabı ne zaman açılacak? (tek seferlik kayıt ücreti var; güncel tutarı kayıt
-  ekranında görürsün) Bu, mağaza planının başlayabileceği tarihi belirler ve **yalnız sahip yapabilir**.
+**KARAR (8. tur):** Mağaza hesapları **sonra** açılacak; sahip "hesabı falan açarım da önce kod kısmı var"
+dedi. Yani hesap açma bir engel değil, sadece 2. ve 3. fazın başında yapılacak bir adım.
+Mağaza işleri **planın son iki aşaması** olarak konumlandırıldı. (S-26 kapandı.)
 
 ## 6. Açık soru listesi (toplu)
 
@@ -421,10 +421,18 @@ Yukarıdaki S-01…S-17. Sıradaki konuşma turunda bunlar tek tek kapatılacak.
 - Aşama 1'de kod yazılmaz, WP açılmaz, tahmin/efor verilmez.
 - F-03 (şifre sıfırlama linki) bir **hata**dır, özellik değil; ayrı ele alınır.
 
-**Genel yürütme sırası (7. tur, sahip kararı):**
-1. F-01…F-05 kodlanır (ayarlar temizliği, birleştirme, şifre linki hatası, tema yenilemesi, boyut paneli).
-   Tek kod tabanı olduğu için bunlar Windows'a da otomatik gelir.
-2. **Play Store** hazırlığı ve yayını (mobil önce).
-3. **Microsoft Store** hazırlığı ve yayını; Windows dağıtımı arkadaşlara oradan yapılır.
+**Genel yürütme sırası (7.–8. tur, sahip kararı) — ÜÇ AŞAMA:**
+
+**Aşama A — Kod (önce bu bitecek).** F-01…F-05:
+ayarlar temizliği, bildirim/izin/rapor birleştirmesi, şifre sıfırlama linki hatası, tema bölümünün
+yenilenmesi, kart boyut panelinin alta sabitlenmesi. Tek kod tabanı olduğu için hepsi Windows'a da gelir.
+
+**Aşama B — Play Store.** Hesap açma, listeleme paketi, yasal/veri formu, hesap silme (WP-276), yayın.
+
+**Aşama C — Microsoft Store.** Store identity (WP-260), marka/listeleme (WP-261), private pilot (WP-262),
+yayın. Arkadaşlara Windows dağıtımı buradan yapılır.
+
+*Sahibin ifadesi: "hesabı falan açarım da önce kod kısmı var, onları yapalım; en son 2 aşama plan olarak
+Play Store ve Windows kısmı."*
 - Uygulama **ücretsiz**; reklam/IAP şimdilik yok, sonradan eklenebilir (ücretliye çevirmek hariç).
 - Güncelleme için push bildirimi yapılmayacak.
