@@ -8,7 +8,7 @@
 > Şu an: **Aşama 1 — konuşma**. Plan aşamasına geçilene kadar buraya sadece not eklenir; kod yazılmaz.
 
 - **Başlangıç:** 2026-07-24
-- **Son güncelleme:** 2026-07-24 (1. konuşma turu)
+- **Son güncelleme:** 2026-07-24 (3. konuşma turu)
 
 ---
 
@@ -39,9 +39,8 @@ Direkt ayarlardan bunu sil, gereksiz yer kaplıyor."
 
 **Karar:** Kart ayarlardan tamamen kaldırılacak. Kullanılmayan l10n anahtarı da temizlenir.
 
-**Açık soru:**
-- (S-01) Bu özellik ileride *gerçekten* gelecek mi (kısayol/rutin tanımlama), yoksa fikir tamamen rafa mı kalkıyor?
-  Gelecekse "şimdilik sil, sonra gerçek haliyle geri gelir" diye not düşeriz.
+**KARAR (3. tur):** Kısayol/rutin özelliği **gelmeyecek**. Kart tamamen silinir, geri dönüş notu tutulmaz.
+İlgili l10n anahtarı da temizlenir. (S-01 kapandı.)
 
 ---
 
@@ -96,6 +95,11 @@ denedim ama o kısımda sorun var."
   "check your internet connection" diye gösterir. → Semptom birebir bu.
 - Uygulama tarafı zaten deep link'e hazır görünüyor: `authRepository.passwordRecoveryEvents` stream'i +
   `features/auth/recovery_screen.dart` var, `auth_gate.dart` bunu dinliyor. Yani eksik olan **link hedefi**.
+
+**KÖK NEDEN DOĞRULANDI (3. tur):** Sahip maildeki linkin **`localhost:3000`** açtığını teyit etti.
+Yani yukarıdaki tahmin doğru: `redirectTo` verilmediği için link, Supabase projesinin Site URL'ine
+(`localhost:3000`) gidiyor; telefonda o adreste bir şey olmadığı için tarayıcı bağlantı hatası veriyor.
+**Bu artık teşhis edilmiş bir hatadır, araştırma gerektirmez — doğrudan düzeltme WP'sine gider.**
 
 **Çözüm yönü (planlanınca kesinleşecek):**
 `resetPasswordForEmail`'e ortam başına doğru `redirectTo` vermek (uygulama deep link'i veya gerçek bir web
@@ -158,6 +162,12 @@ Ayarlar/görünüm ekranının **en üstünde** büyük giriş kartı olarak dur
 6. **Animasyon/his** — geçiş hızı ve karakteri (aşağıya bak)
 7. **Özet + isim ver + kaydet**
 
+**ARAŞTIRMA GÖREVİ (sahip kararı, 3. tur):** "Kutular eskimiş gibi" ve genel animasyon/efekt seti için
+sahip net bir tarif vermek yerine **araştırma istedi**: "oyunlarda ve uygulamalarda çok güzel temalar var,
+onlardan animasyon/efekt vs. bakıp örnek almak lazım."
+→ Plan aşamasından **önce** ayrı bir görsel referans/araştırma turu yapılacak; bulunanlar buraya ekran
+görüntüsü/isim listesi olarak düşülecek, sonra hangilerinin uygulanacağı seçilecek. (S-13 araştırmaya döndü.)
+
 **Animasyon/"his" fikirleri (ham liste, araştırma sonrası budanacak):**
 - *Modern / minimal* — hızlı, yumuşak fade+slide, az hareket
 - *Vintage / retro* — hafif grenli doku, sararmış kâğıt tonu, yazı makinesi tarzı yazı belirmesi
@@ -179,12 +189,24 @@ Ayarlar/görünüm ekranının **en üstünde** büyük giriş kartı olarak dur
 - **Kapsam:** **Şimdilik yalnız uygulama içi.** Ana ekran widget'ı ve bildirim paneli bu turda
   kapsam dışı. (S-14 kapandı.)
 
+**KARARLAR (3. tur):**
+- **Sınır yok** — kullanıcı istediği kadar özel tema oluşturabilir. (S-18 kapandı.)
+- **Ekran düzeni:** en üstte **"Kendi Temanı Oluştur"** girişi, onun **altında hazır temalar** listesi.
+  Yeni oluşturulan tema aynı listeye eklenir.
+- **Yeni tema listenin en üstüne zıplamasın** — sahip bunu açıkça istedi ("en güzeli yeni ekleyince
+  otomatik üste geçmesin"). Yani sıralama sabit/öngörülebilir kalacak, liste kullanıcının altından kaymayacak.
+- **Fikir (kesin değil):** hazır temaların yanında **3 tane boş "kişiselleştirilecek yuva"** durabilir —
+  kullanıcı doluk/boş yuvaları görüp oraya kendi temasını koyar.
+
 **Açık sorular:**
+- (S-19) Özel temalar hazır temalarla **aynı listede mi** karışsın, yoksa "Benim temalarım" diye
+  **ayrı bir başlık** altında mı toplansın? (Claude ayrı başlık öneriyor: kendi yaptığın hemen görünür,
+  hazır temalar altında durur, hiçbir şey yerinden zıplamaz.)
+- (S-20) "3 boş yuva" fikri: gerçekten sabit 3 yuva mı olsun, yoksa sınırsız olduğu için sadece
+  "boş liste + oluştur daveti" mi yeter?
 - (S-10) Tema **paylaşma/kod ile içe aktarma** olsun mu (arkadaşına tema gönderme)? İleriye mi bırakalım?
 - (S-11) Ödül/kilit bağı olacak mı — bazı temalar XP/seviye ile mi açılsın, hepsi serbest mi?
 - (S-12) Mevcut WP-55 tema stüdyosu **korunacak mı**, yoksa yeni akış tamamen yerine mi geçecek?
-- (S-13) "Kutular eskimiş gibi" derken kastedilen görsel his: gren/doku mu, düzensiz kenar mı, ikisi de mi?
-- (S-18) Kaç özel tema sınırı olsun (ör. 10)? Sınırsız mı?
 
 ---
 
@@ -225,9 +247,22 @@ tema gibi diğer widget ayarları da çıkar. Aşağı itersen tekrar ince şeri
 Yani: **kapalı = A** (sadece boyut, az yer), **açık = tam ayar paneli**. Telefonlarda müzik çalarların alttaki
 mini çubuğu gibi — küçükken tek satır, yukarı çekince tam ekran kontrol.
 
+**KAPSAM NETLEŞTİ (3. tur — Claude kodda buldu):**
+Bu, **Android ana ekran widget'ı değil**; uygulamanın **kendi ana sayfasındaki kart düzeni**.
+İlgili kod: `app/lib/features/home/home_screen.dart:815` → `_SizePanel`.
+Panel, **seçili kartın hemen altına akış içinde** çiziliyor. Kart sayfanın aşağısındaysa panel de aşağıda
+kalıyor → sahip sürekli aşağı yukarı kaydırmak zorunda kalıyor. Şikayet birebir bu.
+
+**KARARLAR (3. tur):**
+- **Seçenek C** (çekilebilir alt panel) seçildi. *Sahip notu: "eğer zor olmaz diyorsan C olsun".*
+  → Claude'un teknik değerlendirmesi: **zor değil**. Flutter'da hazır mekanizması var
+  (`Scaffold.bottomSheet` / `DraggableScrollableSheet`); mevcut `_SizePanel` içeriği neredeyse aynen taşınır,
+  değişen şey nereye yerleştirildiği. Riskli/geniş bir iş değil.
+- **Saydamlık ayarı YOK ve eklenmeyecek.** Sahip sordu, Claude koda baktı: `_SizePanel` içinde yalnızca
+  genişlik/yükseklik `−/+` düğmeleri var; saydamlık hiç yok. Claude'un mockup'ında örnek olsun diye
+  görünmüştü, gerçekte yok. **O kadar detaya gerek yok** kararı verildi. (S-16 kapandı: panelde sadece boyut.)
+
 **Açık sorular:**
-- (S-15) A / B / C hangisi? (Claude C'yi öneriyor — *2. turda görsel gösterildi, cevap bekleniyor*)
-- (S-16) Bu araçta sadece **boyut** mu olacak, yoksa hizalama/şeffaflık gibi sık kullanılanlar da mı?
 - (S-17) Aynı sorun Windows/masaüstü tarafında da var mı, yoksa sadece telefonda mı?
 
 ---
@@ -238,7 +273,9 @@ Yukarıdaki S-01…S-17. Sıradaki konuşma turunda bunlar tek tek kapatılacak.
 
 ## 7. Kapsam dışı olduğu konuşulanlar
 
-- (henüz yok)
+- **Kısayol/rutin özelliği** — hiç gelmeyecek (F-01).
+- **Widget saydamlık ayarı** — gereksiz detay, eklenmeyecek (F-05).
+- **Tema kapsamının ana ekran widget'ı ve bildirim paneline uzanması** — bu turda kapsam dışı (F-04).
 
 ## 8. Karar verilenler
 
