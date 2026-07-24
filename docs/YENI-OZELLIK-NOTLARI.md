@@ -5,7 +5,12 @@
 > Claude'un anladığı ve üzerinde anlaşılan şeyler yazılır.
 >
 > **Akış:** 1) Konuşma (bu dosya) → 2) Plan → 3) WP paketleme → 4) Uygulama.
-> Şu an: **Aşama 1 — konuşma**. Plan aşamasına geçilene kadar buraya sadece not eklenir; kod yazılmaz.
+>
+> ## 🔒 KONUŞMA FAZI KAPANDI — 2026-07-24, 9. tur
+> Sahip: *"şimdi bunları da kaydet, sonrasında konuşma fazı bitti."*
+> Bu dosya artık **girdi belgesidir**; kararlar burada dondu. Sonraki adım detaylı teknik plan:
+> [`docs/YENI-OZELLIK-PLANI.md`](YENI-OZELLIK-PLANI.md).
+> Yeni bir istek çıkarsa buraya yeni tur olarak eklenir ve plan güncellenir.
 
 - **Başlangıç:** 2026-07-24
 - **Son güncelleme:** 2026-07-24 (3. konuşma turu)
@@ -24,7 +29,8 @@ Proje sahibinin gündeme getirdiği 6 madde. Sırası öncelik sırası değil, 
 | F-04 | Görünüm & atmosfer temaları tamamen yenilenecek | Büyük özellik | Konuşuluyor |
 | F-05 | Ana sayfa kart düzenleme: boyut aracı sabit/yüzen olsun | UX düzenleme | Seçenek C seçildi |
 | F-06 | Windows sürümünü arkadaşlara dağıtmak (production) | Dağıtım | F-01…F-05 sonrası yapılacak |
-| F-07 | Play Store + Microsoft Store hazırlık süreci | Yol haritası | Genel plana dahil edilecek |
+| F-07 | Play Store + Microsoft Store hazırlık süreci | Yol haritası | Aşama B ve C |
+| F-08 | Kozmetik: campfire animasyonları, taç, ek animasyonlar | Kozmetik | Aşama A'nın sonunda |
 
 ---
 
@@ -67,10 +73,11 @@ Tek giriş: **"Bildirimler ve izinler"**. İçeride 3 bölüm:
   **"şu an kapalı/açık" durumu** + tek dokunuşla düzeltme
 - *E-posta* — aylık çalışma raporu opt-in
 
-**Açık sorular:**
-- (S-02) Üst başlığın adı: "Bildirimler ve izinler" mi, "Bildirim merkezi" mi, başka bir şey mi?
-- (S-03) İlk kullanıcı için: en üstte tek satırlık bir **durum özeti** ("2 izin eksik — düzelt") ister misin?
-- (S-04) Aylık rapor switch'i ayarlar ana listesinden tamamen çıkıp içeri mi girsin (evet gibi anlaşıldı, teyit)?
+**KARARLAR (9. tur — hepsi kapandı):**
+- **Üst başlık adı: "Bildirimler ve izinler".** (S-02 kapandı.)
+- **Durum özeti olacak** — en üstte tek satır, eksik izinleri gösterip tek dokunuşla düzeltme.
+  (S-03 kapandı.)
+- Aylık rapor switch'i ayarlar ana listesinden çıkıp bu ekranın içine girer. (S-04 kapandı.)
 
 ---
 
@@ -212,9 +219,11 @@ görüntüsü/isim listesi olarak düşülecek, sonra hangilerinin uygulanacağ�
 3. **İnce ayraç çizgi** (başlık metni yok)
 4. Hazır temalar
 
-**Açık sorular:**
-- (S-10) Tema **paylaşma/kod ile içe aktarma** olsun mu (arkadaşına tema gönderme)? İleriye mi bırakalım?
-- (S-11) Ödül/kilit bağı olacak mı — bazı temalar XP/seviye ile mi açılsın, hepsi serbest mi?
+**KARARLAR (9. tur — hepsi kapandı):**
+- **Tema paylaşma / kod ile gönderme: bu turda YOK.** "Boşver şimdi." (S-10 kapandı → kapsam dışı.)
+- **XP/seviye ile tema kilidi: bu turda YOK, sonra yapılır.** (S-11 kapandı → ertelendi.)
+- **Animasyon araştırması: detaylı planın tema kısmı yazılmadan HEMEN ÖNCE yapılacak.**
+  Yani plan aşamasının içinde, ayrı bir adım olarak. (Zamanlama kapandı.)
 
 ---
 
@@ -404,6 +413,30 @@ Play'in Aileler politikası. Yani "sonra eklerim" mümkün ama bedava değil —
 **KARAR (8. tur):** Mağaza hesapları **sonra** açılacak; sahip "hesabı falan açarım da önce kod kısmı var"
 dedi. Yani hesap açma bir engel değil, sadece 2. ve 3. fazın başında yapılacak bir adım.
 Mağaza işleri **planın son iki aşaması** olarak konumlandırıldı. (S-26 kapandı.)
+
+---
+
+## F-08 — Kozmetik / animasyon işleri (kod aşamasının SONUNA)
+
+**Sahibin ifadesi (9. tur):** "Sadece o değil; hem campfire animasyonları yenilenecek, orasını benle
+konuşarak yapacaksın, onu da zamanı gelince yaparız. Bir de pp üstündeki taç çok kötü duruyor şu an,
+ona güzel şeyler eklenebilir. Ek olarak animasyonlarda eklemeni isteyeceğim yerler olacak; bunu da kod
+kısmında sonralara koy, kozmetik işler bunlar."
+
+**Kapsam (hepsi kozmetik, Aşama A'nın SONUNDA yapılacak):**
+1. **Kamp ateşi (campfire) animasyonlarının yenilenmesi** — ilgili kod: `features/classroom/widgets/campfire_scene.dart`,
+   `features/classroom/widgets/campfire/layered_campfire_fire.dart`, `features/classroom/widgets/camp_critter.dart`.
+   **Sahip şartı: bu iş SAHİPLE KONUŞARAK yapılacak**, tek başına tasarlanmayacak. Zamanı gelince
+   ayrı bir konuşma turu açılır.
+2. **Profil fotoğrafı üstündeki taç** — şu an kötü duruyor, yenilenecek/zenginleştirilecek.
+3. **Sahibin sonradan göstereceği diğer animasyon noktaları** — henüz belirsiz, iş sırası geldiğinde
+   sahip yerleri işaret edecek.
+
+**Konumlandırma kararı:** Bunlar **kozmetik**tir. Aşama A'nın sonunda, F-01…F-05 bittikten sonra yapılır.
+İşlevsel işleri geciktirmez.
+
+**Not:** Taç şu an mevcut XP/seviye sisteminin görsel karşılığı; değiştirirken seviye göstergesi
+işlevinin bozulmamasına dikkat edilecek.
 
 ## 6. Açık soru listesi (toplu)
 
