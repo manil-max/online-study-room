@@ -193,20 +193,26 @@ görüntüsü/isim listesi olarak düşülecek, sonra hangilerinin uygulanacağ�
 - **Sınır yok** — kullanıcı istediği kadar özel tema oluşturabilir. (S-18 kapandı.)
 - **Ekran düzeni:** en üstte **"Kendi Temanı Oluştur"** girişi, onun **altında hazır temalar** listesi.
   Yeni oluşturulan tema aynı listeye eklenir.
-- **Yeni tema listenin en üstüne zıplamasın** — sahip bunu açıkça istedi ("en güzeli yeni ekleyince
-  otomatik üste geçmesin"). Yani sıralama sabit/öngörülebilir kalacak, liste kullanıcının altından kaymayacak.
-- **Fikir (kesin değil):** hazır temaların yanında **3 tane boş "kişiselleştirilecek yuva"** durabilir —
-  kullanıcı doluk/boş yuvaları görüp oraya kendi temasını koyar.
+- **DÜZELTME (4. tur):** 3. turdaki "üste geçmesin" ifadesi **yanlış yazılmış**. Sahibin gerçek isteği:
+  **yeni oluşturulan tema listenin en üstüne geçsin.** En son yapılan en üstte durur. (S-19 kapandı.)
+- **Başlık kullanılmayacak — sadeleştirme kuralı (4. tur):** Mobilde ekran küçük olduğu için
+  "Benim temalarım" / "Hazır temalar" gibi **metin başlıkları konmayacak**; iki grup arasında
+  **ince/minik bir ayraç çizgi** olacak. Daha sade, daha az dikey yer.
+  → *Bu, bu turun genel kuralı sayılır: yeni tema ekranında gereksiz başlık/boşluk yaratılmayacak.*
+- **"3 boş yuva" fikri düştü** — sınırsız tema olduğu için sabit yuva göstermek yanıltıcı olur.
+  Hiç tema yokken sade bir "oluştur" daveti yeter. (S-20 kapandı.)
+- **Mevcut WP-55 Tema Stüdyosu ekranı: yeni akış onun YERİNE geçecek.** İki ayrı tema ekranı olmayacak.
+  (S-12 kapandı.)
+
+**Sonuçta ekran düzeni:**
+1. En üstte **"Kendi Temanı Oluştur"** girişi
+2. Kullanıcının kendi temaları — **en yeni en üstte**
+3. **İnce ayraç çizgi** (başlık metni yok)
+4. Hazır temalar
 
 **Açık sorular:**
-- (S-19) Özel temalar hazır temalarla **aynı listede mi** karışsın, yoksa "Benim temalarım" diye
-  **ayrı bir başlık** altında mı toplansın? (Claude ayrı başlık öneriyor: kendi yaptığın hemen görünür,
-  hazır temalar altında durur, hiçbir şey yerinden zıplamaz.)
-- (S-20) "3 boş yuva" fikri: gerçekten sabit 3 yuva mı olsun, yoksa sınırsız olduğu için sadece
-  "boş liste + oluştur daveti" mi yeter?
 - (S-10) Tema **paylaşma/kod ile içe aktarma** olsun mu (arkadaşına tema gönderme)? İleriye mi bırakalım?
 - (S-11) Ödül/kilit bağı olacak mı — bazı temalar XP/seviye ile mi açılsın, hepsi serbest mi?
-- (S-12) Mevcut WP-55 tema stüdyosu **korunacak mı**, yoksa yeni akış tamamen yerine mi geçecek?
 
 ---
 
