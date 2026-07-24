@@ -57,7 +57,7 @@
 |---|---|---|---|
 | **0** | **WP-293 Gate 0 — ortam uzlaştırma** | [x] **Kod/doküman tamam** | Altı gerçek belgelendi, kapı kilitlendi, guard 51/51 · commit'lendi |
 | 0b | Production backend değişikliği | 🔴 Kapalı | `deploy_enabled: false` (WP-293 ile yeniden kilitlendi); yeni terfi backup+dry-run+somut GO ister |
-| 1 | WP-287 şifre sıfırlama · WP-286 ayarlar IA | [ ] Bekliyor | **Canlı hata** + bileşen ayıklama; paralel |
+| 1 | WP-287 şifre sıfırlama · WP-286 ayarlar IA | 287 [x] kod/test · 286 [ ] | 287: sahip panel + cihaz QA bekliyor · 286 sırada |
 | 2 | WP-291 boyut paneli · WP-289 his araştırması | [ ] Bekliyor | Bağımsız, paralel |
 | 3 | WP-288 tema modeli · WP-294 l10n borcu | [ ] Bekliyor | 288 **289'a bağımlı**; 294 l10n sıcak yüzey |
 | 4 | WP-290 tema sihirbazı | [ ] Bekliyor | Tek başına; `core/theme/**` + `pubspec.yaml` |
@@ -177,9 +177,9 @@ DALGA 5  WP-292  Taç              ‖  WP-295  Kamp ateşi (sahip kararı sonra
 - **Tuzaklar:** `_` önekli widget'ları başka dosyadan import etmeye çalışmak (**derlenmez**) · 1236 satırı sıfırdan yazmaya kalkmak (yüksek regresyon riski) · characterization testi yazmadan refactor'a girmek · birleşik ekranı tek dev dosya yapmak · l10n anahtarını generated dosyadan temizlemeyi unutmak.
 - **Model önerisi:** 🟣 Pro *(rev.2: ayıklama + üç durumlu snapshot eklendiği için Sonnet'ten yükseltildi)*
 
-### WP-287: Şifre sıfırlama derin bağlantı düzeltmesi 🔑
-- **Program/Faz:** Yeni Özellik Turu · Aşama A · (plan §3 F-03) · **canlı hata**
-- **Ajan:** — · **Durum:** [ ] Bekliyor
+### WP-287: Şifre sıfırlama derin bağlantı düzeltmesi 🔑 ✅ KOD/TEST TAMAM
+- **Program/Faz:** Yeni Özellik Turu · Aşama A · (plan §3 F-03, ADR-5) · **canlı hata**
+- **Ajan:** Claude · **Durum:** [x] Kod/test tamam (2026-07-24) — `redirectTo` + OTP yolu + user-enumeration koruması. `analyze` 0, **700/700 test yeşil** (10 yeni). **Bekleyen:** (1) sahip staging Supabase paneli (Redirect URL + Site URL + şablon `{{ .Token }}` — runbook `docs/SIFRE-SIFIRLAMA-PANEL-RUNBOOK.md`); (2) cihaz QA `Cihazda doğrulanmalı`. Production paneli **ayrı kapı** (K-6). Değişen: `core/config/auth_redirect_config.dart` (yeni), auth repo ×3, `auth_providers.dart`, `reset_with_code_screen.dart` (yeni), `auth_screen.dart`, l10n ×4 (+7), test ×2, runbook.
 - **Problem:** `supabase_auth_repository.dart:185` `resetPasswordForEmail`'i **`redirectTo` olmadan** çağırıyor. Supabase linki Site URL'e (`localhost:3000`) yönlendiriyor; kullanıcı "check your internet connection" hatası alıyor ve şifresini sıfırlayamıyor. Sahip stable'da doğruladı.
 - **Kapsam dışı:** Yeni auth yöntemi, OAuth, e-posta şablonu tasarımı, hesap silme.
 - **SAHİP dosyalar (yaz):** `app/lib/data/repositories/supabase/supabase_auth_repository.dart`, `app/lib/data/repositories/in_memory/in_memory_auth_repository.dart`, `app/lib/data/repositories/auth_repository.dart`, `app/lib/core/config/**` (redirect çözümleyici), `app/lib/features/auth/**`, ilgili testler, `docs/` runbook.

@@ -105,6 +105,30 @@ class InMemoryAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<void> resetPasswordWithCode({
+    required String email,
+    required String code,
+    required String newPassword,
+  }) async {
+    final key = email.trim().toLowerCase();
+    if (key.isEmpty || !key.contains('@')) {
+      throw const AuthException('Geçerli bir e-posta girin.');
+    }
+    if (code.trim().isEmpty) {
+      throw const AuthException('Kodu gir.');
+    }
+    if (newPassword.length < 6) {
+      throw const AuthException('Şifre en az 6 karakter olmalı.');
+    }
+    // Demo/offline mod: gerçek OTP yoktur. Hesap varsa şifreyi güncelle; yoksa
+    // hesap var/yok bilgisini sızdırmadan sessizce başarılı dön.
+    final account = _accounts[key];
+    if (account != null) {
+      _accounts[key] = _Account(newPassword, account.profile);
+    }
+  }
+
+  @override
   Future<void> updatePassword(String newPassword) async {
     final cur = _current;
     if (cur == null) return;

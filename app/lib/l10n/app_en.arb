@@ -607,6 +607,34 @@
   "@authSifremiUnuttum": {
     "description": "Auth user-facing text. Source: Şifremi unuttum"
   },
+  "authKoduGir": "Enter the code instead",
+  "@authKoduGir": {
+    "description": "Auth: opens the reset-with-code flow. Source: Bunun yerine kodu gir"
+  },
+  "authKodIleSifirlaBaslik": "Reset with code",
+  "@authKodIleSifirlaBaslik": {
+    "description": "Auth: title of the reset-with-code screen. Source: Kod ile sıfırla"
+  },
+  "authEpostadakiKoduVeYeniSifre": "Enter the 6-digit code from your email and your new password.",
+  "@authEpostadakiKoduVeYeniSifre": {
+    "description": "Auth: helper for reset-with-code. Source: E-postana gelen 6 haneli kodu ve yeni şifreni gir."
+  },
+  "authSifreSifirlamaKodu": "Reset code",
+  "@authSifreSifirlamaKodu": {
+    "description": "Auth: label for the reset code field. Source: Sıfırlama kodu"
+  },
+  "authKoduDogrulaVeSifirla": "Verify and reset password",
+  "@authKoduDogrulaVeSifirla": {
+    "description": "Auth: submit button for reset-with-code. Source: Doğrula ve Şifreyi Sıfırla"
+  },
+  "authKoduGirUyari": "Enter the code from your email",
+  "@authKoduGirUyari": {
+    "description": "Auth: validation when the code field is empty. Source: E-postadaki kodu gir"
+  },
+  "authKodGonderildiKoduGir": "If an account exists, a reset code was sent. Enter it below.",
+  "@authKodGonderildiKoduGir": {
+    "description": "Auth: neutral message after sending the reset code (no account enumeration). Source: Hesap varsa sıfırlama kodu gönderildi. Aşağıya gir."
+  },
   "authSifrenizBasariylaSifirlandi": "Your password has been successfully reset.",
   "@authSifrenizBasariylaSifirlandi": {
     "description": "Auth user-facing text. Source: Şifreniz başarıyla sıfırlandı."

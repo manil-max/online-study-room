@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/providers/auth_providers.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../l10n/app_localizations.dart';
+import 'reset_with_code_screen.dart';
 
 /// Giriş ve kayıt ekranı (e-posta + şifre). Tek ekranda iki mod arası geçiş yapılır.
 class AuthScreen extends ConsumerStatefulWidget {
@@ -205,12 +206,27 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                             ),
                     ),
                     const SizedBox(height: 8),
-                    if (!_isRegister)
+                    if (!_isRegister) ...[
                       TextButton.icon(
                         onPressed: _loading ? null : _sendPasswordReset,
                         icon: const Icon(Icons.mark_email_read_outlined),
                         label: Text(l10n.authSifremiUnuttum),
                       ),
+                      TextButton.icon(
+                        onPressed: _loading
+                            ? null
+                            : () => Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => ResetWithCodeScreen(
+                                      initialEmail:
+                                          _emailController.text.trim(),
+                                    ),
+                                  ),
+                                ),
+                        icon: const Icon(Icons.password_outlined),
+                        label: Text(l10n.authKoduGir),
+                      ),
+                    ],
                     TextButton(
                       onPressed: _loading
                           ? null

@@ -32,9 +32,19 @@ abstract class AuthRepository {
 
   Future<Profile> signIn({required String email, required String password});
 
-  /// E-postaya şifre sıfırlama bağlantısı gönderir. Güvenlik için e-posta
-  /// kayıtlı değilse bile kullanıcıya hesap var/yok bilgisi sızdırılmamalıdır.
+  /// E-postaya şifre sıfırlama bağlantısı (ve şablonda `{{ .Token }}` varsa 6
+  /// haneli kod) gönderir. Güvenlik için e-posta kayıtlı değilse bile kullanıcıya
+  /// hesap var/yok bilgisi sızdırılmamalıdır (user-enumeration koruması).
   Future<void> sendPasswordResetEmail(String email);
+
+  /// WP-287: E-postadaki 6 haneli recovery kodu ile şifreyi sıfırlar.
+  /// Derin bağlantının olmadığı platformlarda (Windows/masaüstü) ve link'in
+  /// açılmadığı durumlarda tek çalışan yol budur; her platformda geçerlidir.
+  Future<void> resetPasswordWithCode({
+    required String email,
+    required String code,
+    required String newPassword,
+  });
 
   /// Giriş yapan kullanıcının şifresini günceller.
   Future<void> updatePassword(String newPassword);

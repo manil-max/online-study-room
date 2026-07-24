@@ -598,6 +598,13 @@
     "description": "Auth user-facing text. Source: Şifre sıfırlama bağlantısı e-postana gönderildi. Gelen kutunu kontrol et."
   },
   "authSifremiUnuttum": "نسيت كلمة المرور",
+  "authKoduGir": "أدخل الرمز بدلاً من ذلك",
+  "authKodIleSifirlaBaslik": "إعادة التعيين بالرمز",
+  "authEpostadakiKoduVeYeniSifre": "أدخل الرمز المكوّن من 6 أرقام من بريدك وكلمة المرور الجديدة.",
+  "authSifreSifirlamaKodu": "رمز إعادة التعيين",
+  "authKoduDogrulaVeSifirla": "تحقق وأعد تعيين كلمة المرور",
+  "authKoduGirUyari": "أدخل الرمز من بريدك",
+  "authKodGonderildiKoduGir": "إذا كان هناك حساب، فقد أُرسل رمز إعادة التعيين. أدخله أدناه.",
   "@authSifremiUnuttum": {
     "description": "Auth user-facing text. Source: Şifremi unuttum"
   },

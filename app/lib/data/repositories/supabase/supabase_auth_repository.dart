@@ -9,11 +9,23 @@ import '../../models/account_deletion_status.dart';
 import '../../models/profile.dart';
 import '../auth_repository.dart';
 
+/// WP-287: Şifre sıfırlama e-postasının derin bağlantı hedefini üretir.
+/// Test edilebilirlik için enjekte edilebilir; varsayılan gerçek platform
+/// implementasyonu `auth_recovery_redirect.dart`'tadır.
+typedef RecoveryRedirectResolver = Future<String?> Function();
+
 /// Supabase tabanlı kimlik doğrulama. UI hiç değişmeden bellek-içi yerine geçer.
 class SupabaseAuthRepository implements AuthRepository {
-  SupabaseAuthRepository(this._client);
+  SupabaseAuthRepository(
+    this._client, {
+    RecoveryRedirectResolver? recoveryRedirect,
+  }) : _recoveryRedirect = recoveryRedirect ?? (() async => null);
 
   final supa.SupabaseClient _client;
+
+  /// Şifre sıfırlama bağlantısının döneceği derin bağlantı (Android) veya null
+  /// (Windows/masaüstü → kullanıcı OTP kodu yolunu kullanır).
+  final RecoveryRedirectResolver _recoveryRedirect;
   Profile? _current;
   final _recoveryController = StreamController<void>.broadcast();
 
@@ -182,9 +194,44 @@ class SupabaseAuthRepository implements AuthRepository {
       throw const AuthException('Geçerli bir e-posta girin.');
     }
     try {
-      await _client.auth.resetPasswordForEmail(safe);
+      // WP-287: redirectTo verilmezse Supabase linki Site URL'e (localhost)
+      // yönlendiriyordu → "check your internet connection". Android'de derin
+      // bağlantıya yönlendir; Windows/masaüstünde null döner ve kullanıcı
+      // e-postadaki kodu (OTP) kullanır. Hesap var/yok bilgisi sızdırılmaz.
+      final redirectTo = await _recoveryRedirect();
+      await _client.auth.resetPasswordForEmail(safe, redirectTo: redirectTo);
     } on supa.AuthException catch (e) {
-      throw AuthException(_translate(e.message));
+      throw AuthException(_translateRecovery(e.message));
+    }
+  }
+
+  @override
+  Future<void> resetPasswordWithCode({
+    required String email,
+    required String code,
+    required String newPassword,
+  }) async {
+    final safeEmail = email.trim();
+    final safeCode = code.trim();
+    if (safeEmail.isEmpty || !safeEmail.contains('@')) {
+      throw const AuthException('Geçerli bir e-posta girin.');
+    }
+    if (safeCode.isEmpty) {
+      throw const AuthException('Kodu gir.');
+    }
+    if (newPassword.length < 6) {
+      throw const AuthException('Şifre en az 6 karakter olmalı.');
+    }
+    try {
+      // Kod recovery oturumu kurar, ardından yeni şifre yazılır.
+      await _client.auth.verifyOTP(
+        email: safeEmail,
+        token: safeCode,
+        type: supa.OtpType.recovery,
+      );
+      await _client.auth.updateUser(supa.UserAttributes(password: newPassword));
+    } on supa.AuthException catch (e) {
+      throw AuthException(_translateRecovery(e.message));
     }
   }
 
@@ -366,5 +413,22 @@ class SupabaseAuthRepository implements AuthRepository {
       return 'E-posta doğrulaması gerekiyor.';
     }
     return message;
+  }
+
+  /// Recovery/OTP akışına özel hata çevirisi (kod süresi + hız sınırı).
+  String _translateRecovery(String message) {
+    final m = message.toLowerCase();
+    if (m.contains('expired') ||
+        m.contains('invalid') ||
+        m.contains('token has')) {
+      return 'Kod geçersiz veya süresi dolmuş. Yeni kod iste.';
+    }
+    if (m.contains('security purposes') ||
+        m.contains('rate limit') ||
+        m.contains('too many') ||
+        m.contains('only request')) {
+      return 'Çok sık denedin. Biraz bekleyip tekrar dene.';
+    }
+    return _translate(message);
   }
 }

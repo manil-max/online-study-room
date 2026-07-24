@@ -598,6 +598,13 @@
     "description": "Auth user-facing text. Source: Şifre sıfırlama bağlantısı e-postana gönderildi. Gelen kutunu kontrol et."
   },
   "authSifremiUnuttum": "Passwort vergessen",
+  "authKoduGir": "Stattdessen Code eingeben",
+  "authKodIleSifirlaBaslik": "Mit Code zurücksetzen",
+  "authEpostadakiKoduVeYeniSifre": "Gib den 6-stelligen Code aus deiner E-Mail und dein neues Passwort ein.",
+  "authSifreSifirlamaKodu": "Zurücksetzungscode",
+  "authKoduDogrulaVeSifirla": "Bestätigen und Passwort zurücksetzen",
+  "authKoduGirUyari": "Gib den Code aus deiner E-Mail ein",
+  "authKodGonderildiKoduGir": "Falls ein Konto existiert, wurde ein Code gesendet. Gib ihn unten ein.",
   "@authSifremiUnuttum": {
     "description": "Auth user-facing text. Source: Şifremi unuttum"
   },
