@@ -311,8 +311,16 @@ class TypographyStep extends StatelessWidget {
       switch (family) {
         kFontFamilySerif => l10n.profileFontTirnakli,
         kFontFamilyMono => l10n.profileFontEsAralikli,
+        // WP-297: gömülü aileler kendi adlarıyla gösterilir — kullanıcı "Inter"
+        // seçtiğinde her cihazda aynı fontu göreceğini bilsin.
+        kFontFamilyInter => kFontFamilyInter,
+        kFontFamilyLiterata => kFontFamilyLiterata,
+        kFontFamilyJetBrainsMono => kFontFamilyJetBrainsMono,
         _ => l10n.profileFontDuz,
       };
+
+  /// Gömülü aileler "cihazdan bağımsız" grubunda; platform aileleri sistemin.
+  static bool _isBundled(String family) => isBundledFontFamily(family);
 
   Widget _familyPicker(
     BuildContext context,
@@ -330,13 +338,22 @@ class TypographyStep extends StatelessWidget {
           const SizedBox(height: 6),
           Wrap(
             spacing: 8,
+            runSpacing: 8,
             children: [
               for (final family in DraftTypography.kFamilies)
                 ChoiceChip(
                   label: Text(
                     _familyLabel(l10n, family),
-                    style: TextStyle(fontFamily: family),
+                    // Çip kendi fontuyla yazılır: seçmeden önce görünür.
+                    style: TextStyle(
+                      fontFamily: family,
+                      fontFamilyFallback: fallbackFor(family),
+                    ),
                   ),
+                  // Gömülü aile → küçük bir işaret; "her cihazda aynı" ipucu.
+                  avatar: _isBundled(family)
+                      ? const Icon(Icons.download_done, size: 16)
+                      : null,
                   selected: value == family,
                   onSelected: (_) => onPick(family),
                 ),

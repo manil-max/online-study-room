@@ -361,6 +361,12 @@ class AppTheme {
       if (token.fontFamily == null) return base;
       return base.copyWith(
         fontFamily: token.fontFamily,
+        // 🔴 WP-297: fallback zinciri de taşınmalı. Aksi hâlde gömülü (Latin)
+        // bir aile seçildiğinde `displayLarge` dışındaki TÜM slotlar zincirsiz
+        // kalır ve Arapça/eksik glifler (ör. JetBrains Mono'da `₺`) kutu
+        // karakter olarak çizilir — token'da zincir doğru kurulmuş olsa bile.
+        fontFamilyFallback:
+            token.fontFamilyFallback ?? base.fontFamilyFallback,
         fontWeight: token.fontWeight,
         letterSpacing: token.letterSpacing ?? base.letterSpacing,
         color: token.color ?? colors.textPrimary,

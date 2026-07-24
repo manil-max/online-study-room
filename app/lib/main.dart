@@ -25,6 +25,7 @@ import 'core/theme/theme_settings.dart';
 import 'core/time_engine/device_timezone.dart';
 import 'features/auth/auth_gate.dart';
 import 'features/desktop/compact_focus_view.dart';
+import 'features/profile/theme_builder/bundled_font_licenses.dart';
 import 'features/profile/theme_builder/feel_overlay.dart';
 import 'l10n/app_localizations.dart';
 
@@ -33,6 +34,12 @@ import 'package:online_study_room/features/android_widgets/android_widget_servic
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // WP-297 (ADR-4): gömülü fontların SIL OFL 1.1 metinleri Flutter'ın lisans
+  // kaydına eklenir. OFL, yazılımla dağıtılan fontun lisans metninin de
+  // dağıtılmasını şart koşar. `Stream` tembel: dosyalar yalnız lisans sayfası
+  // açıldığında okunur, açılışta maliyeti yoktur.
+  registerBundledFontLicenses();
 
   // WP-227: Kanal/backend kimliği bütün veri ve native servislerden önce
   // doğrulanır. Beta→production veya stable→staging (ya da eksik release env)

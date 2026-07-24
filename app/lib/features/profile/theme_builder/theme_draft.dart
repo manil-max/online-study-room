@@ -21,14 +21,21 @@ class DraftTypography {
     this.letterSpacing = 0.0,
   });
 
-  /// Genel yazı tipi seçenekleri — platformun kendi aileleri.
+  /// Yazı tipi seçenekleri: ilk üçü **platformun** kendi aileleri, son üçü
+  /// WP-297'de **uygulamayla paketlenen** aileler (ADR-4).
   ///
-  /// ADR-4'ün paketlenmiş font asset'leri bu WP'de **eklenmedi** (bkz. teslim
-  /// notu); sözleşme `fontFamily` string'i olduğu için sonradan paketlenmiş bir
-  /// aile eklemek yalnız bu listeye + `pubspec.yaml`'a satır eklemektir.
-  /// Genel aileler Android/Windows'ta sistem fontuna çözülür; eksik glif
-  /// olmadığı için AR/RTL'de kutu karakter riski yoktur.
-  static const kFamilies = [kFontFamilySans, kFontFamilySerif, kFontFamilyMono];
+  /// Platform aileleri kaldırılmadı — kayıtlı temalar onları taşıyor ve cihaza
+  /// göre değişen görünüm bazı kullanıcıların tercihi olabilir. Gömülü aileler
+  /// ise her cihazda **aynı** görünür; farkları `pubspec.yaml`'daki ölçülmüş
+  /// `wght` eksenleri sayesinde ağırlık kaydırıcısına da yansır.
+  static const kFamilies = [
+    kFontFamilySans,
+    kFontFamilySerif,
+    kFontFamilyMono,
+    kFontFamilyInter,
+    kFontFamilyLiterata,
+    kFontFamilyJetBrainsMono,
+  ];
 
   final String titleFamily;
   final String bodyFamily;
@@ -84,16 +91,22 @@ class DraftTypography {
       0,
       _bodyWeights.length - 1,
     )];
+    // WP-297: eş aralıklı davranış artık iki aileden gelebilir — platformun
+    // `monospace`'i ve gömülü JetBrains Mono. Rakam hizası ikisinde de var.
+    final monoClock =
+        clockFamily == kFontFamilyMono || clockFamily == kFontFamilyJetBrainsMono;
     return AppTypography(
       displayClock: TextStyle(
         fontFamily: clockFamily,
+        fontFamilyFallback: fallbackFor(clockFamily),
         fontSize: 48 * scale,
         fontWeight: FontWeight.w600,
         color: textPrimary,
-        letterSpacing: letterSpacing + (clockFamily == kFontFamilyMono ? 1.2 : 0),
+        letterSpacing: letterSpacing + (monoClock ? 1.2 : 0),
       ),
       title: TextStyle(
         fontFamily: titleFamily,
+        fontFamilyFallback: fallbackFor(titleFamily),
         fontSize: _kBaseTitleSize * scale,
         fontWeight: titleWeight,
         color: textPrimary,
@@ -101,6 +114,7 @@ class DraftTypography {
       ),
       body: TextStyle(
         fontFamily: bodyFamily,
+        fontFamilyFallback: fallbackFor(bodyFamily),
         fontSize: 15 * scale,
         fontWeight: bodyWeight,
         color: textPrimary,
@@ -109,13 +123,15 @@ class DraftTypography {
       ),
       label: TextStyle(
         fontFamily: bodyFamily,
+        fontFamilyFallback: fallbackFor(bodyFamily),
         fontSize: 12 * scale,
         fontWeight: bodyWeight,
         color: textPrimary,
         letterSpacing: letterSpacing,
       ),
-      useSerifTitles: titleFamily == kFontFamilySerif,
-      useMonospaceClock: clockFamily == kFontFamilyMono,
+      useSerifTitles:
+          titleFamily == kFontFamilySerif || titleFamily == kFontFamilyLiterata,
+      useMonospaceClock: monoClock,
     );
   }
 
@@ -143,6 +159,35 @@ class DraftTypography {
 const String kFontFamilySans = 'sans-serif';
 const String kFontFamilySerif = 'serif';
 const String kFontFamilyMono = 'monospace';
+
+/// WP-297 (ADR-4): uygulamayla gelen aileler. Adlar `pubspec.yaml`'daki
+/// `family:` değerleriyle **birebir** aynı olmalıdır; farklıysa Flutter aileyi
+/// bulamaz ve sessizce sistem fontuna düşer (ölü anahtar).
+const String kFontFamilyInter = 'Inter';
+const String kFontFamilyLiterata = 'Literata';
+const String kFontFamilyJetBrainsMono = 'JetBrains Mono';
+
+/// Gömülü ailelerin glif zinciri.
+///
+/// 🔴 Zorunlu (R7): üç gömülü aile Latin/Kiril/Yunan taşır ama **Arapça ve
+/// diğer alfabeleri taşımaz**; zincir olmadan o dillerde □□□ görünür.
+/// JetBrains Mono'da `₺` (U+20BA) da yok — o karakter de buradan gelir.
+/// Sıra önemli: önce platformun genel aileleri, sonra sistem varsayılanı.
+const List<String> kBundledFontFallback = <String>[
+  kFontFamilySans,
+  kFontFamilySerif,
+  kFontFamilyMono,
+];
+
+/// Bu aile uygulamayla mı geliyor (fallback zinciri gerekiyor mu)?
+bool isBundledFontFamily(String family) =>
+    family == kFontFamilyInter ||
+    family == kFontFamilyLiterata ||
+    family == kFontFamilyJetBrainsMono;
+
+/// Genel ailelerde zincire gerek yok: sistem fontu zaten tüm alfabeleri taşır.
+List<String>? fallbackFor(String family) =>
+    isBundledFontFamily(family) ? kBundledFontFallback : null;
 
 const double kMinTypographyScale = 0.85;
 const double kMaxTypographyScale = 1.3;

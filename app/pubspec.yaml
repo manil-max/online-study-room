@@ -100,6 +100,10 @@ flutter:
     # WP-61: kamp ateşi R2 katman PNG seti (1.0x + 2.0x resolution-aware)
     - assets/campfire/
     - assets/campfire/2.0x/
+    # WP-297: OFL 1.1 lisans metinleri uygulamayla birlikte dağıtılır (lisans
+    # şartı). `LicenseRegistry`'ye main.dart'ta kaydedilir; tembel okunur,
+    # açılış maliyeti yoktur.
+    - assets/fonts/LICENSES/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
@@ -107,11 +111,34 @@ flutter:
   # For details regarding adding assets from package dependencies, see
   # https://flutter.dev/to/asset-from-package
 
-  # To add custom fonts to your application, add a fonts section here,
-  # in this "flutter" section. Each entry in this list should have a
-  # "family" key with the font family name, and a "fonts" key with a
-  # list giving the asset and other descriptors for the font. For
-  # example:
+  # WP-297 (ADR-4): gömülü font aileleri. `google_fonts` paketi KULLANILMAZ —
+  # o paket fontu çalışma anında ağdan indirir; burada dosyalar uygulamayla
+  # gelir. Üçü de SIL OFL 1.1 (lisans metinleri assets/fonts/LICENSES/).
+  #
+  # 🔴 Üçü de VARIABLE font: tek dosya tüm ağırlık eksenini (`wght`) taşır, bu
+  # yüzden `weight:` anahtarı YAZILMAZ — Flutter `TextStyle.fontWeight`'i
+  # doğrudan eksene çevirir. Statik dosya paketlemek 3 aile × 7 ağırlık = 21
+  # dosya demek olurdu; ayrıca sihirbazın ağırlık kaydırıcısı ancak eksenin
+  # tamamı varsa gerçek fark üretir.
+  #
+  # Ölçülen eksen aralıkları (`fvar` tablosundan okundu, tahmin değil):
+  #   Inter      wght 100–900  ✓ tüm kademeler · ₺ dahil Türkçe tam
+  #   Literata   wght 200–900  ✓ tüm kademeler · ₺ dahil Türkçe tam
+  #   JetBrainsMono wght 100–800 · w900 800'e kırpılır · ₺ YOK → fallback verir
+  # Lora bu yüzden ELENDİ: eksen yalnız 400–700, w300/w800/w900 sessizce
+  # kırpılırdı ve ağırlık kaydırıcısının 4 kademesinden 3'ü ölü anahtar olurdu.
+  fonts:
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-Variable.ttf
+    - family: Literata
+      fonts:
+        - asset: assets/fonts/Literata-Variable.ttf
+    - family: JetBrains Mono
+      fonts:
+        - asset: assets/fonts/JetBrainsMono-Variable.ttf
+
+  # Flutter'ın örnek font bloğu (referans):
   # fonts:
   #   - family: Schyler
   #     fonts:
