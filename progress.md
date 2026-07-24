@@ -33,10 +33,10 @@
 - **SAHİP yollar:** —
 
 ### Claude Lane
-- **Durum:** [x] Boşta
-- **Faz/WP:** —
-- **SAHİP yollar:** —
-- **Son not:** WP-290 kod/test tamam ve commit'lendi (2026-07-25) → QA kuyruğunda. Sıradaki uygulanabilir iş **WP-296** (3 kırmızı test); WP-292 WP-290 kabulüne, WP-294 K-7'ye bağlı.
+- **Durum:** [ ] **ÇALIŞIYOR — WP-296** (claim 2026-07-25)
+- **Faz/WP:** Aşama A · WP-296 — `main`'de kırmızı 3 testi yeşile al
+- **SAHİP yollar:** `app/test/features/alarms_screen_test.dart`, `app/test/features/classroom/study_timer_card_stop_test.dart`, `app/test/features/clock_widgets_screen_test.dart`, tanı sonrası kök nedeni barındıran uygulama dosyası, gerekirse `app/lib/l10n/app_*.arb`, `progress.md`
+- **Son not:** WP-290 kod/test tamam → QA kuyruğunda. WP-296 tanısı başlıyor.
 
 ### Codex Lane
 - **Durum:** [x] Boşta
