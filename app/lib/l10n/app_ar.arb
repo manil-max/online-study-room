@@ -3428,10 +3428,6 @@
   "@profileUygula": {
     "description": "Profile user-facing text. Source: Uygula"
   },
-  "profileUygulamaKisayollariRutinler": "اختصارات التطبيق (الروتينات)",
-  "@profileUygulamaKisayollariRutinler": {
-    "description": "Profile user-facing text. Source: Uygulama Kısayolları (Rutinler)"
-  },
   "profileVazgec": "إلغاء",
   "@profileVazgec": {
     "description": "Profile user-facing text. Source: Vazgeç"

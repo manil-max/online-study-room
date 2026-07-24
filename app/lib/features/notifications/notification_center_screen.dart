@@ -34,7 +34,14 @@ String _formatMinutes(int minutes) {
 /// Bildirim Merkezi (§WP-36): dürtme, hatırlatıcı, alarm/zamanlayıcı, duyuru,
 /// güncelleme ve sessiz saatlerin tek yerden yönetildiği ekran.
 class NotificationCenterScreen extends ConsumerWidget {
-  const NotificationCenterScreen({super.key});
+  const NotificationCenterScreen({
+    super.key,
+    this.embedded = false,
+    this.footer,
+  });
+
+  final bool embedded;
+  final Widget? footer;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -43,27 +50,30 @@ class NotificationCenterScreen extends ConsumerWidget {
     final prefs = ref.watch(notificationPreferencesProvider);
     final l10n = AppLocalizations.of(context);
 
+    final body = ListView(
+      padding: getSafePadding(
+        context,
+        const EdgeInsets.fromLTRB(16, 12, 16, 28),
+      ),
+      children: [
+        const _PermissionCard(),
+        const SizedBox(height: 10),
+        const _PushHealthCard(),
+        const SizedBox(height: 10),
+        _TypesCard(prefs: prefs),
+        const SizedBox(height: 10),
+        _QuietHoursCard(prefs: prefs),
+        const SizedBox(height: 10),
+        _RemindersCard(prefs: prefs),
+        const SizedBox(height: 10),
+        const _AnnouncementsCard(),
+        if (footer != null) ...[const SizedBox(height: 10), footer!],
+      ],
+    );
+    if (embedded) return body;
     return Scaffold(
       appBar: AppBar(title: Text(l10n.notificationsBildirimMerkezi)),
-      body: ListView(
-        padding: getSafePadding(
-          context,
-          const EdgeInsets.fromLTRB(16, 12, 16, 28),
-        ),
-        children: [
-          const _PermissionCard(),
-          const SizedBox(height: 10),
-          const _PushHealthCard(),
-          const SizedBox(height: 10),
-          _TypesCard(prefs: prefs),
-          const SizedBox(height: 10),
-          _QuietHoursCard(prefs: prefs),
-          const SizedBox(height: 10),
-          _RemindersCard(prefs: prefs),
-          const SizedBox(height: 10),
-          const _AnnouncementsCard(),
-        ],
-      ),
+      body: body,
     );
   }
 }

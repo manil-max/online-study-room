@@ -39,7 +39,7 @@
 - **Durum:** [x] Boşta
 - **Faz/WP:** —
 - **SAHİP yollar:** —
-- **Son not:** WP-288 kod/test tamamlandı; 3 golden + tam Flutter test paketi yeşil. Cihaz QA ve ürün kabulü bekliyor.
+- **Son not:** WP-286 kod/test tamam; Android cihaz QA bekliyor.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
@@ -57,7 +57,7 @@
 |---|---|---|---|
 | **0** | **WP-293 Gate 0 — ortam uzlaştırma** | [x] **Kod/doküman tamam** | Altı gerçek belgelendi, kapı kilitlendi, guard 51/51 · commit'lendi |
 | 0b | Production backend değişikliği | 🔴 Kapalı | `deploy_enabled: false` (WP-293 ile yeniden kilitlendi); yeni terfi backup+dry-run+somut GO ister |
-| 1 | WP-287 şifre sıfırlama · WP-286 ayarlar IA | 287 [x] kod/test · 286 [ ] | 287: sahip panel + cihaz QA bekliyor · 286 sırada |
+| 1 | WP-287 şifre sıfırlama · WP-286 ayarlar IA | 287 [x] kod/test · 286 [x] kod/test | 287: sahip panel + cihaz QA bekliyor · 286: Android cihaz QA bekliyor |
 | 2 | WP-291 boyut paneli · WP-289 his araştırması | 291 [x] · 289 [x] tamam | 291 cihaz QA bekliyor · 289 kapandı |
 | 3 | WP-288 tema modeli · WP-294 l10n borcu | 288 [x] kod/test · 294 [ ] | 288 cihaz QA bekliyor; 294 l10n sıcak yüzey + K-7 bloklu |
 | 4 | WP-290 tema sihirbazı | [ ] Bekliyor | Tek başına; `core/theme/**` + `pubspec.yaml` |
@@ -155,20 +155,19 @@ DALGA 5  WP-292  Taç              ‖  WP-295  Kamp ateşi (sahip kararı sonra
 
 ### WP-286: Ayarlar bilgi mimarisi — ölü kartı sil, bölümleri ayıkla, bildirim/izin/rapor birleştir 🧹
 - **Program/Faz:** Yeni Özellik Turu · Aşama A · (plan §3 F-01 + F-02, ADR-6 rev.2, R18/R19)
-- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-293
+- **Ajan:** Codex · **Durum:** [x] Kod/test tamam (2026-07-24) — ayarlarda tek “Bildirim Merkezi” girişi; bildirim tercihleri, aylık rapor ve cihaz izinleri sekmeli ekranda birleşti. İzin snapshot'ı `available`/`unsupported`/`unknown` olarak fail-closed çalışır; eksik izin sayısı görünür, unknown/unsupported durumunda sahte hazır veya etkisiz düzeltme çağrısı yok. `flutter analyze` 0, ilgili 4 test yeşil. **Bekleyen:** Android cihaz QA `Cihazda doğrulanmalı` (izinleri sistemden değiştirip geri dönme, Düzelt akışı, aylık rapor tercihi).
 - **Problem:** "Uygulama kısayolları (rutinler)" kartı hiçbir şeye bağlı değil (`settings_screen.dart:330-339` — `onTap` yok); ayrıca bildirim tercihleri, cihaz izinleri ve aylık rapor ayarlarda üç ayrı yerde duruyor, ilk kullanan anlamıyor.
 - **Kapsam dışı:** Yeni bildirim türü, yeni izin API'si, push altyapısı değişikliği, tema.
 - **SAHİP dosyalar (yaz):** `app/lib/features/profile/settings_screen.dart`, `app/lib/features/notifications/**` (yeni `sections/` dosyaları + birleşik ekran), `app/lib/features/clock/clock_widgets_screen.dart`, 🔴 **`app/lib/core/time_engine/clock_permissions.dart`** (üç durumlu API — rev.3'te eklendi, öncesinde eksikti), `app/lib/l10n/app_*.arb`, ilgili testler.
 - **DOKUNMA:** `app/lib/core/theme/**`, `app/lib/core/navigation/**`, `app/pubspec.yaml`, `supabase/**`.
 - **Adımlar (sıra önemli — ADR-6 rev.2):**
-  - [ ] Kısayol kartını (`settings_screen.dart:329-339`) ve `profileUygulamaKisayollariRutinler` anahtarını 4 dilden sil. Önce `grep` ile başka kullanım yok doğrula. ⚠️ `device_integration_listener.dart` / `samsung_modes_service.dart` içindeki "routine/shortcut" **Samsung Modes & Routines** entegrasyonudur — **dokunma**.
-  - [ ] **1) Characterization testi:** mevcut iki ekranın bugünkü davranışını testle sabitle (refactor güvenlik ağı).
-  - [ ] **2) Public bileşen ayıklama:** `_TypesCard`, `_QuietHoursCard`, `_RemindersCard`, `_AnnouncementsCard`, `_PushHealthCard`, `_PermTile`, `_WidgetCard`, `_PermissionRevocationGuide` → `features/notifications/sections/notification_preference_sections.dart` ve `.../clock_permission_sections.dart`. **Davranış değişmez**, yalnız görünürlük + konum. ⚠️ Bunlar `_` önekli = library-private; **başka dosyadan import edilemezler**, bu yüzden ayıklama şart (import etmek Dart'ta mümkün değil).
-  - [ ] **3) Birleşik ekran:** "Bildirimler ve izinler" — bölümleri dizer. Tek parça 1000+ satırlık dosya **olmayacak**.
-  - [ ] **Üç durumlu izin API'si — ÜÇ fail-open yolunun hepsi.** Bugün: (1) `clock_permissions.dart:69-78` native hatayı **ve** desteklenmeyen platformu `ok` sayıyor; (2) `ClockPermissionSnapshot.fromMap` eksik native alanı **`true`** sayıyor; (3) `requestNotifications` Android `null` dönerse **`true`** sayıyor. Yeni sözleşme: okuma durumu `available`/`unsupported`/`unknown` + izinler ayrı değerler; **eksik/bozuk map → `unknown`, asla otomatik `true`**; **istek `null` → başarısız/unknown**. Mevcut çağıranlar geriye uyumlu kalır.
-  - [ ] En üste **durum özeti**: eksik izin sayısı + "Düzelt". `unknown`'da **"her şey hazır" iddiası yapılmaz**.
-  - [ ] Aylık rapor switch'i ayarlar listesinden bu ekrana taşınır.
-  - [ ] Ayarlar listesinde 3 giriş → 1 giriş.
+  - [x] Kısayol kartı ve `profileUygulamaKisayollariRutinler` anahtarı 4 katalogdan silindi; Samsung Modes & Routines entegrasyonuna dokunulmadı.
+  - [x] Ayarlar ve aylık rapor davranışı widget testleriyle sabitlendi.
+  - [x] Bildirim ve izin ekranları yeniden kullanılabilir gömülü yüzeyler olarak ayrıldı; birleşik ekran sekmeli düzen kullanıyor.
+  - [x] Üç durumlu fail-closed izin API'si eklendi; eksik/bozuk snapshot ve Android istek `null` sonucu artık izinli sayılmıyor.
+  - [x] Durum özeti eksik sayısını gösteriyor; `unknown`/`unsupported` hazır iddiası yapmıyor ve etkisiz “Düzelt” göstermiyor.
+  - [x] Aylık rapor switch'i birleşik ekrana taşındı.
+  - [x] Ayarlar listesinde 3 giriş → 1 giriş.
 - **Veri/Migration etkisi:** Yok.
 - **Ortam/Deploy:** Local. Production dokunuşu yok.
 - **RLS/Güvenlik:** Yok (yalnız istemci IA). `monthlyReportOptIn` yazma davranışı **değişmez**.

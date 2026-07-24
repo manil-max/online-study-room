@@ -9,9 +9,8 @@ import '../../data/providers/auth_providers.dart';
 import '../../data/providers/admin_providers.dart';
 import '../../data/providers/group_providers.dart';
 import '../admin/admin_screen.dart';
-import '../clock/clock_widgets_screen.dart';
 import '../desktop/desktop_surface.dart';
-import '../notifications/notification_center_screen.dart';
+import '../notifications/notification_permissions_screen.dart';
 import '../updater/release_notes_screen.dart';
 import '../safety/blocked_users_screen.dart';
 import 'account_settings_screen.dart';
@@ -35,29 +34,6 @@ class SettingsScreen extends ConsumerStatefulWidget {
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   /// Seçim anında (realtime beklemeden) tile'ı güncellemek için optimistik id.
   String? _animalOverride;
-  bool? _monthlyReportOptInOverride;
-  bool _isSavingMonthlyReportPreference = false;
-
-  Future<void> _setMonthlyReportOptIn(bool value, bool previousValue) async {
-    setState(() {
-      _monthlyReportOptInOverride = value;
-      _isSavingMonthlyReportPreference = true;
-    });
-    try {
-      await ref.read(authRepositoryProvider).updateMonthlyReportOptIn(value);
-      // Supabase stream'i profil satırı güncellemesinde olay üretmez; yeni değeri
-      // sunucudan yeniden okuyup kalıcı tercihi doğrula.
-      ref.invalidate(authStateProvider);
-    } catch (_) {
-      if (mounted) {
-        setState(() => _monthlyReportOptInOverride = previousValue);
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isSavingMonthlyReportPreference = false);
-      }
-    }
-  }
 
   Future<void> _pickAnimal() async {
     final profile = ref.read(authStateProvider).value;
@@ -94,8 +70,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final l10n = AppLocalizations.of(context);
     final language = ref.watch(appLanguageProvider);
     final profile = ref.watch(authStateProvider).value;
-    final monthlyReportOptIn =
-        _monthlyReportOptInOverride ?? profile?.monthlyReportOptIn ?? true;
     final isAdmin = ref.watch(adminIsSuperAdminProvider).value ?? false;
     final animal = profile == null
         ? null
@@ -270,42 +244,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   trailing: Icon(Icons.chevron_right),
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (_) => NotificationCenterScreen(),
+                      builder: (_) => const NotificationPermissionsScreen(),
                     ),
                   ),
-                ),
-              ),
-              SizedBox(height: 10),
-              _SettingsCard(
-                child: ListTile(
-                  leading: Icon(Icons.widgets_outlined),
-                  title: Text(
-                    AppLocalizations.of(context).profileWidgetVeAlarmIzinleri,
-                  ),
-                  subtitle: Text(l10n.notificationsCihazIzinleri),
-                  trailing: Icon(Icons.chevron_right),
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => ClockWidgetsScreen()),
-                  ),
-                ),
-              ),
-              SizedBox(height: 10),
-              _SettingsCard(
-                child: SwitchListTile(
-                  secondary: Icon(Icons.mark_email_unread_outlined),
-                  title: Text(
-                    AppLocalizations.of(
-                      context,
-                    ).profileAylikCalismaRaporuEposta,
-                  ),
-                  subtitle: Text(l10n.profileOzetlerVeKullaniciRaporlari),
-                  value: monthlyReportOptIn,
-                  onChanged: profile == null || _isSavingMonthlyReportPreference
-                      ? null
-                      : (value) => _setMonthlyReportOptIn(
-                          value,
-                          profile.monthlyReportOptIn,
-                        ),
                 ),
               ),
               SizedBox(height: 10),
@@ -323,17 +264,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   trailing: Icon(Icons.chevron_right),
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute(builder: (_) => ReleaseNotesScreen()),
-                  ),
-                ),
-              ),
-              SizedBox(height: 10),
-              _SettingsCard(
-                child: ListTile(
-                  leading: Icon(Icons.shortcut_outlined),
-                  title: Text(
-                    AppLocalizations.of(
-                      context,
-                    ).profileUygulamaKisayollariRutinler,
                   ),
                 ),
               ),

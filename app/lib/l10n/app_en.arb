@@ -3455,10 +3455,6 @@
   "@profileUygula": {
     "description": "Profile user-facing text. Source: Uygula"
   },
-  "profileUygulamaKisayollariRutinler": "Application Shortcuts (Routines)",
-  "@profileUygulamaKisayollariRutinler": {
-    "description": "Profile user-facing text. Source: Uygulama Kısayolları (Rutinler)"
-  },
   "profileVazgec": "Cancel",
   "@profileVazgec": {
     "description": "Profile user-facing text. Source: Vazgeç"

@@ -113,6 +113,8 @@ class _ClockWidgetsScreenState extends ConsumerState<ClockWidgetsScreen>
         if (_loading)
           const Center(child: CircularProgressIndicator())
         else ...[
+          _PermissionStatusSummary(snapshot: _perms),
+          const SizedBox(height: 8),
           _PermTile(
             title: AppLocalizations.of(context).clockBildirimler,
             ok: _perms.notifications,
@@ -156,7 +158,8 @@ class _ClockWidgetsScreenState extends ConsumerState<ClockWidgetsScreen>
             },
           ),
           const _PermissionRevocationGuide(),
-          if (!_perms.allOk) ...[
+          if (_perms.availability == ClockPermissionAvailability.available &&
+              !_perms.allOk) ...[
             const SizedBox(height: 12),
             FilledButton.icon(
               onPressed: () async {
@@ -175,7 +178,7 @@ class _ClockWidgetsScreenState extends ConsumerState<ClockWidgetsScreen>
               icon: const Icon(Icons.security),
               label: Text(AppLocalizations.of(context).clockEksikIzinleriAc),
             ),
-          ] else
+          ] else if (_perms.allOk)
             Card(
               color: theme.colorScheme.primaryContainer,
               child: ListTile(
@@ -202,6 +205,52 @@ class _ClockWidgetsScreenState extends ConsumerState<ClockWidgetsScreen>
         title: Text(AppLocalizations.of(context).clockWidgetVeIzinler),
       ),
       body: body,
+    );
+  }
+}
+
+class _PermissionStatusSummary extends StatelessWidget {
+  const _PermissionStatusSummary({required this.snapshot});
+
+  final ClockPermissionSnapshot snapshot;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final isAvailable =
+        snapshot.availability == ClockPermissionAvailability.available;
+    final isUnknown =
+        snapshot.availability == ClockPermissionAvailability.unknown;
+    final allOk = snapshot.allOk;
+    final color = allOk
+        ? theme.colorScheme.primaryContainer
+        : isUnknown
+        ? theme.colorScheme.tertiaryContainer
+        : theme.colorScheme.errorContainer;
+    final title = allOk
+        ? l10n.clockTumIzinlerTamam
+        : isUnknown
+        ? l10n.clockIzinleriYenile
+        : '${snapshot.missingCount} ${l10n.clockEksikIzinleriAc}';
+    final subtitle = allOk
+        ? l10n.clockAppKapaliAlarmIcin
+        : isAvailable
+        ? l10n.clockEksikIzinleriAc
+        : l10n.clockIzinlerGuvenlikNedeniyleYalniz;
+    return Card(
+      color: color,
+      child: ListTile(
+        leading: Icon(
+          allOk
+              ? Icons.check_circle
+              : isUnknown
+              ? Icons.help_outline
+              : Icons.warning_amber_rounded,
+        ),
+        title: Text(title),
+        subtitle: Text(subtitle),
+      ),
     );
   }
 }
