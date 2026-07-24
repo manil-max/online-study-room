@@ -18,9 +18,10 @@
 - **Stable/production:** v45 yayında, etkin şema `0070`. Yeni production migration, Edge deploy veya stable tag/release yalnız ayrı, somut kullanıcı GO + backup + dry-run ile yapılır; deploy kapısı kilitli.
 - **Beta/staging:** beta-v4308 staging `0070` üzerinde yayında. Proje sahibi 2026-07-24'te stable+beta yayınını ve bildirim/sayaç davranışını cihazda test etti; genel sorun yok, **önceki turun** (WP-269–285) bekleyen cihaz kabulleri kapatıldı. ⚠️ Aşama A'nın yeni kabulleri **henüz yayınlanmış bir artefakta girmedi** — QA kuyruğu yeni beta build gerektiriyor.
 - **Release ilkesi:** Android beta/stable artefaktı Android işi başarılı olunca yayımlanır. Windows bağımsız sürer ve başarılı olursa aynı release'e eklenir; Windows hatası Android güncellemesini geri çekmez.
+- 🔴 **BETA KARARI (sahip, 2026-07-25):** **Aşama A'nın TÜM WP'leri bitmeden beta çıkmaz — tek beta turu yapılacak.** Gerekçe: beta koşumu ~3 saat sürüyor, iki tur yapılmıyor. **Sonuçları:** (1) "önce X'in cihaz kabulü" yazan yazılı kapılar bu tur için **geçersiz** — cihaz QA'sı fiziken mümkün değil, kod/test kapısı esas alınır (`.agents/AGENTS.md §0.1`); (2) QA kuyruğundaki 6 iş **aynı beta'da** test edilir; (3) bir sorun görülürse hangi WP'den geldiği belirsiz olacağı için her WP **ayrı commit** + `analyze` 0 + testler yeşil şartı **daha da kritik**.
 - **Yönetim varsayılanı:** Production `deploy_enabled/release_enabled` kapalıdır. Stable yalnız protected `production` Environment, exact SHA/head/project-ref GO ve reviewer kanıtıyla ilerler.
 - **Kurallar:** Kök `AGENTS.md`, `.agents/AGENTS.md` ve `docs/KALITE-PROGRAMI.md` geçerlidir. Tek çalışma dalı `main`; her WP ayrı commit; production varsayılmaz.
-- **Son WP:** **296** · Sıradaki boş numara: **297**. Aşama A'da kod/test tamamlanan: 286, 287, 288, 289, 290, 291, 293 — **kartları arşive taşındı** ([arşiv](docs/archive/progress-tarihsel-2026-07.md)), kalan işleri aşağıdaki QA kuyruğunda.
+- **Son WP:** **297** · Sıradaki boş numara: **298**. Aşama A'da kod/test tamamlanan: 286, 287, 288, 289, 290, 291, 293 — **kartları arşive taşındı** ([arşiv](docs/archive/progress-tarihsel-2026-07.md)), kalan işleri aşağıdaki QA kuyruğunda.
 - **Aktif tur:** Yeni Özellik Turu **Aşama A** — plan **rev. 3** kanonik. 7 WP'nin kodu bitti; **kodlanmayı bekleyen 4 iş kaldı** (296, 292, 295, 294). Kanonik plan: [`docs/YENI-OZELLIK-PLANI.md`](docs/YENI-OZELLIK-PLANI.md).
 - ✅ **Ortam gerçeği uzlaştırıldı (WP-293, 2026-07-24):** yukarıdaki altı gerçekli durum modeli kanoniktir; production deploy kapısı yeniden kilitlendi. `deploy-contract.json`, `KALITE-PROGRAMI.md`, `project.md`, `backlog.md`, `tooling/README.md` aynı gerçeğe getirildi.
 
@@ -58,6 +59,11 @@
 > **Bu tablodaki işlerin kodu bitti; ajan tarafında yapılacak iş yok.** Kalan tek adım proje
 > sahibinin cihazda/panelde doğrulaması. Kart ayrıntıları [arşivde](docs/archive/progress-tarihsel-2026-07.md).
 > QA sırasında bulunan hata **yeni WP** olur, eski kart yeniden açılmaz.
+>
+> 🔴 **Beta kararı gereği bu kuyruk TEK beta turunda test edilecek** — yani `Kalan Kod İşi` bitmeden
+> QA başlamıyor. Sıra: kalan 5 WP → beta build → aşağıdaki 5 + WP-297 aynı turda cihazda test.
+> ⚠️ Bu yüzden bir hata görüldüğünde kaynağı belirsiz olabilir; ilk bakılacak yer o yüzeye
+> dokunan **son commit**'tir (her WP ayrı commit).
 
 | WP | Kod bitiş | Cihazda/panelde doğrulanacak | Tür |
 |---|---|---|---|
@@ -71,26 +77,35 @@
 
 ## 🛠️ Kalan Kod İşi — ne kodlanacak
 
-> **Aşama A'da kodlanacak yalnız 4 iş kaldı.** Sıra: hazır olan → bağımlı olan → bloklu olan.
+> **Beta kararı gereği bu 5 işin HEPSİ bitmeden beta çıkmaz.** Sıra: hazır olan → sahip girdisi bekleyen.
 
 | # | İş | Kod durumu | Başlamaya hazır mı? |
 |---|---|---|---|
-| **1** | **WP-296** — `main`'de kırmızı 3 test | [ ] **Kodlanacak** | ✅ **HAZIR** — bağımlılık yok, tek uygulanabilir iş |
-| 2 | **WP-292** — taç görseli | [ ] Kodlanacak | ⏸️ WP-290 **cihaz kabulü** sonrası (aynı tema/görsel yüzeyi) |
-| 3 | **WP-295** — kamp ateşi animasyonları | [ ] Kodlanacak | ⏸️ **Önce sahiple tasarım konuşması** (açık şart) + asset kararı |
-| 4 | **WP-294** — l10n borcu + audit CI kapısı | [ ] Kodlanacak | 🔴 **BLOKLU** — K-7 (AR/DE ürün kararı = WP-278) kapanmadan başlamaz |
-| — | WP-276 / WP-277 — staging ops kabul kanıtı | [ ] Kod azı, ops çoğu | ⏸️ Sentetik staging kanıtı + WP-276 Play Store için gerekli |
+| **1** | **WP-296** — `main`'de kırmızı 3 test | [ ] **Kodlanacak** | ✅ **HAZIR** — bağımlılık yok |
+| **2** | **WP-297** — gömülü fontlar (Inter · Lora · JetBrains Mono) | [ ] **Kodlanacak** | ✅ **HAZIR** — sahip onayı verildi (2026-07-25); font indirmesi onaylı |
+| **3** | **WP-292** — taç görseli | [ ] **Kodlanacak** | ✅ **HAZIR** — "önce WP-290 cihaz kabulü" kapısı **beta kararıyla düştü** (§0.1); kod/test kapısı esas |
+| **4** | **WP-294** — l10n borcu + audit CI kapısı | [ ] Kodlanacak | 🟡 **Kısmen** — audit genişletme + UTF-8 + CI kapısı **bugünkü 4 dil gerçeğiyle** yapılabilir; yalnız "EN/TR'ye daraltma" dalı K-7'ye bağlı |
+| **5** | **WP-295** — kamp ateşi animasyonları | [ ] Kodlanacak | 🔴 **TEK GERÇEK BLOKAJ** — sahiple tasarım konuşması yapılmadan başlamaz (kartın açık şartı, aşılmaz) |
+| — | WP-276 / WP-277 — staging ops kabul kanıtı | [ ] Kod azı, ops çoğu | ⏸️ Beta dışı; sentetik staging kanıtı + WP-276 Play Store için gerekli |
 | — | WP-278 / WP-279 | [?] **Ürün/ops kararı** | 🔴 Sahip kararı olmadan kod yazılmaz |
 | — | Production backend değişikliği | 🔴 Kapalı | `deploy_enabled: false`; yeni terfi backup + dry-run + somut GO ister |
 
-### Tema programından devreden borç (henüz WP'si yok)
+**Beta çıkabilmesi için kalan:** 296 → 297 → 292 → 294 → 295 (295 sahiple konuşmayı bekler; diğer dördü ajan işi).
 
-WP-290 kapsam dışı bıraktı, planda vardı — **sahip kararı gerektiriyor, kendiliğinden WP açılmadı:**
+### Tema programından devreden borç — durumları
 
-1. **ADR-4 paketlenmiş font asset'leri** — sihirbaz şimdi platform ailelerini (`sans-serif`/`serif`/`monospace`) sunuyor; `pubspec.yaml`/`assets/fonts/**` hiç değişmedi. OFL/Apache font ikililerini repoya almak lisans doğrulaması + boyut bütçesi kararı. **Ürün kararı gerekiyor:** gömülü font isteniyor mu? (İstenmezse bu borç kapanır ve AR/RTL kutu karakter riski R7 de kapalı kalır.)
-2. **APK boyut ölçümü** (`≤ 2.5 MB` kriteri) — kartın komutu `--flavor stable` istiyor, stable production backend olduğu için fail-closed duruyor; `local` flavor ölçümü bayat `libapp.so` yüzünden geçersiz çıktı. **Temiz baseline ile ayrı ölçüm gerekiyor.**
-3. **`AppFeel.edgeIrregularity`** — his değerlerinde taşınıyor, çizilmiyor (her karta özel `ShapeBorder` gerekir). Sihirbazda kullanıcı kontrolü **yok** → ölü anahtar değil.
-4. **`AppMotion` süreleri** — hâlâ hiçbir animasyon tüketmiyor (WP-288'den devraldı). His seçimi doku/şekil/atmosfer üzerinden gerçek etki üretiyor; hareket karakteri bağlanmadı.
+1. ✅ **ADR-4 gömülü fontlar → KARAR VERİLDİ (sahip, 2026-07-25): eklenecek. WP-297 açıldı.** 3 aile: gövde **Inter**, başlık **Lora**, saat **JetBrains Mono** (başlıkta Playfair Display alternatifi elendi — Lora her puntoda daha güvenli). Font indirmesi sahip tarafından onaylandı.
+2. 🟡 **APK boyut ölçümü** — font eklendiği için artık **anlamlı** ve **WP-297'nin kabul kriteri**. Ölçüm `local` flavor + `flutter clean` ile temiz baseline üzerinden yapılır (`stable` flavor production backend'e bağlı olduğu için kullanılamaz — kartın rev.3 komutu bu yüzden koşulamıyor).
+3. ⏸️ **`AppFeel.edgeIrregularity`** — his değerlerinde taşınıyor, çizilmiyor (her karta özel `ShapeBorder` gerekir). Sihirbazda kullanıcı kontrolü **yok** → ölü anahtar değil. **Sahip 2026-07-25'te "sorun değil" dedi; WP açılmadı.**
+4. ⏸️ **`AppMotion` süreleri** — hâlâ hiçbir animasyon tüketmiyor (WP-288'den devraldı). Sihirbazda kullanıcı kontrolü yok → ölü anahtar değil. **Sahip 2026-07-25'te "sorun değil" dedi; WP açılmadı.**
+
+### Sahip kararları (2026-07-25 turu)
+
+- **Gömülü font:** ✅ evet, 3 aile · başlık fontu **Lora** · indirme onaylı → WP-297.
+- **AR/RTL:** "şimdilik dert etmiyoruz" — **K-7 kararı hâlâ açık.** WP-297 yine de `fontFamilyFallback` kurar (maliyeti yok, AR sonradan kalırsa kutu karakter doğmaz).
+- **Bildirim/widget'ın sistem fontunda kalması:** kabul edildi (native taraf Flutter fontuna erişemez).
+- **Hazır temaların gövde fontu:** hata değil, tasarım — hazır temaların şemasında gövde ailesi yok. WP-297'de hazır temalara da gövde ailesi verilip verilmeyeceği kart içinde kararlaştırılır.
+- **Tek beta:** yukarıdaki 🔴 BETA KARARI.
 
 ## Yeni Özellik Turu — Aşama A (Plan Kuyruğu)
 
@@ -105,22 +120,49 @@ Sıra: **Aşama A (kod) → Aşama B (Play Store) → Aşama C (Microsoft Store)
 
 **⚠️ Plan rev. 3 (2026-07-24, senior 2. incelemesi sonrası).** rev.2 yamalarla üretildiği için kendi içinde çelişiyordu; plan **baştan yazıldı**. Başlıca düzeltmeler: WP-293 "altı ayrı ortam gerçeği + production kapısını yeniden kilitleme" olarak yeniden modellendi · tema göçü **etkin ThemeData snapshot'ına** bağlandı (açık/koyu farklı tabanlardan geliyor) · **golden baseline** WP-288'in ilk adımı oldu (projede golden test yok) · `clock_permissions.dart` WP-286 SAHİP listesine eklendi · WP-287 production paneli **ayrı kapıya** taşındı · yanlış Riverpod uyarısı kaldırıldı · ADR-8 gerekçesi düzeltildi. Tam liste: plan §9.
 
-**Dalga modeli (aynı anda en fazla 2 lane) — kalan yalnız DALGA 5 + kırmızı test borcu:**
+**Dalga modeli (aynı anda en fazla 2 lane) — kalan: 296 → 297 → 292 → 294, sonra 295:**
 ```
 GATE 0   WP-293  Ortam/migration uzlaştırma      ✅ kod/doküman tamam
 DALGA 1  WP-287  Şifre sıfırlama  ‖  WP-286  Ayarlar IA      ✅ kod/test tamam → QA
 DALGA 2  WP-291  Boyut paneli ✅ → QA  ‖  WP-289  His araştırması ✅ tümüyle kapandı
-DALGA 3  WP-288  Tema modeli      ✅ kod/test tamam → QA  ‖  WP-294  l10n  🔴 K-7 bloklu
+DALGA 3  WP-288  Tema modeli      ✅ kod/test tamam → QA  ‖  WP-294  l10n  🟡 kısmen açık
 DALGA 4  WP-290  Tema sihirbazı   ✅ kod/test tamam → QA
-DALGA 5  WP-292  Taç (290 kabulü) ‖  WP-295  Kamp ateşi (sahip konuşması)   ← KALAN
-ARADA    WP-296  main'de 3 kırmızı test                                     ← HAZIR
+DALGA 5  WP-296  3 kırmızı test → WP-297  Fontlar → WP-292  Taç  (SERİ, golden yüzeyi)  ← KALAN
+DALGA 6  WP-294  l10n borcu  ‖  WP-295  Kamp ateşi (sahiple konuşma sonrası)
+──────── TEK BETA BURADA ÇIKAR (hepsi bitince) ────────
 ```
 
-> 🔴 **WP-294, K-7 (AR/DE ürün kararı = WP-278) kapanmadan başlamaz.**
-> ⚠️ **WP-292, WP-290 cihaz kabulünden önce başlamaz** — aynı görsel/tema yüzeyi.
-> ⚠️ **WP-295 için sahiple tasarım konuşması açık şart** (tek başına tasarlanmaz).
+> 🔴 **WP-295, sahiple tasarım konuşması yapılmadan başlamaz** — bu tur kalan **tek gerçek blokaj**.
+> 🟡 **WP-294'ün K-7'ye bağlı kısmı yalnız "EN/TR'ye daraltma" dalı;** audit genişletme + UTF-8 + CI kapısı bugünkü 4 dil gerçeğiyle yapılabilir.
+> ⚠️ **296 → 297 → 292 SERİ koşar** — 297 ve 292 aynı golden yüzeyine giriyor, paralel çakışır.
+> ⚠️ **"Önce X'in cihaz kabulü" kapıları bu tur geçersiz** (tek beta kararı, `§0.1`) — kod/test kapısı esas.
 > ⚠️ Tema programı açıkken **Saat ve Başarım programları açılmaz** (`.agents/AGENTS.md §1.2`).
 > ℹ️ Kapanmış kapılar (WP-293 Gate 0, golden baseline, 288↔289 sırası) arşiv kartlarında; burada tekrarlanmaz.
+
+### WP-297: Gömülü font aileleri (ADR-4) 🔤
+- **Program/Faz:** Yeni Özellik Turu · Aşama A · Tema programı · (plan §3 F-04-B, ADR-4 — WP-290'dan devredildi)
+- **Ajan:** — · **Durum:** [ ] **Kodlanacak — HAZIR** (sahip onayı 2026-07-25) · **Model önerisi:** 🟣 Pro
+- **Problem:** Sihirbaz ve hazır temalar bugün yalnız **platformun genel ailelerini** kullanıyor (`sans-serif`/`serif`/`monospace` — [`theme_tokens.dart:132`](app/lib/core/theme/theme_tokens.dart:132), [`theme_draft.dart:31`](app/lib/features/profile/theme_builder/theme_draft.dart:31)). Bunlar cihaza göre değişiyor: Samsung'un "serif"i ile Xiaomi'nin "serif"i aynı değil, Windows'ta üçüncü bir şey. Kullanıcı karakteri seçmiş oluyor ama **görünümü telefon belirliyor**. Gömülü font = her cihazda aynı ve seçilen görünüm.
+- **Sahip kararı:** 3 aile · gövde **Inter** · başlık **Lora** · saat/sayaç **JetBrains Mono** · font indirmesi onaylı · Playfair Display elendi.
+- **Kapsam dışı:** `google_fonts` paketi (**kullanılmaz** — ağdan indirme, ADR-4), 4'ten fazla aile, native bildirim/widget tipografisi (**erişilemez**, sistem fontunda kalır — sahip kabul etti), yeni tema token'ı, AR insan çevirisi.
+- **SAHİP dosyalar (yaz):** `app/assets/fonts/**` (yeni), `app/assets/fonts/LICENSES/**` (yeni), `app/pubspec.yaml` (`fonts:` bloğu), `app/lib/features/profile/theme_builder/theme_draft.dart` (`kFamilies` + aile adları), `app/lib/core/theme/theme_tokens.dart` (fallback zinciri; hazır tema gövdesi kararı), `app/lib/l10n/app_*.arb` (aile adları), golden testler + `app/test/**`.
+- **DOKUNMA:** `supabase/**` · `app/lib/features/profile/theme_builder/feel_overlay.dart` · bildirim/timer kodu · `app/android/**` native.
+- **Adımlar:**
+  - [ ] Fontları indir: **Inter** (Regular/Bold ya da variable), **Lora** (Regular/Bold), **JetBrains Mono** (Regular). Kaynak Google Fonts resmî deposu. **Lisans metinleri (`OFL.txt` / `LICENSE-2.0.txt`) `assets/fonts/LICENSES/` altına konur** — Play Store beyanı için de gerekli.
+  - [ ] 🔴 **Subset: Latin + Latin Extended-A.** Türkçe glyph'leri (`ı İ ş Ş ğ Ğ ç Ç ö Ö ü Ü`) **tek tek doğrulanır** — eksikse kutu karakter çıkar. Subset aracı repoya girmez (yalnız sonuç dosyaları).
+  - [ ] 🔴 **`fontFamilyFallback` zorunlu.** Gömülü aile Latin-only; zincir kurulmazsa AR/başka alfabede □□□ görünür (R7). AR ürün kararı (K-7) açık olsa da fallback **şimdi** kurulur, maliyeti yok.
+  - [ ] ⚠️ **Ağırlık kademeleri:** sihirbaz başlıkta `w400/w700/w800/w900`, gövdede `w300/w400/w500/w600` istiyor ([`theme_draft.dart:123-134`](app/lib/features/profile/theme_builder/theme_draft.dart:123)). Statik 400+700 paketlersek **ara kademeler en yakınına düşer → ağırlık kaydırıcısı gömülü fontta sessizce etkisizleşir (ölü anahtar!)**. İki çözüm: (a) **variable font** (tek dosya, tüm eksen — önerilen, ama Flutter'ın `fontWeight` → `wght` eşlemesi **cihazda doğrulanmalı**), (b) gerekli ağırlıkları statik paketle (dosya sayısı ve boyut artar). Karar kartta gerekçelenir; hangisi olursa olsun **"ağırlık gerçekten değişiyor" testi** yazılır.
+  - [ ] `kFamilies` listesine 3 aile eklenir; sihirbazda **6 seçenek** olur (3 platform + 3 gömülü). Platform aileleri **kaldırılmaz** (mevcut temalar bozulmasın).
+  - [ ] Hazır temaların gövde ailesi: bugün `AppTypography.standard` gövdeye **hiç `fontFamily` yazmıyor** ([`theme_tokens.dart:148`](app/lib/core/theme/theme_tokens.dart:148)) — bu **hata değil, şemada gövde ailesi yok**. Hazır temalara Inter verilecek mi **kart içinde karar**; verilirse golden'lar buna göre yenilenir.
+  - [ ] Golden testler yenilenir (`--update-goldens`) ve **fark gözle incelenir** — "yeşile döndü" yeterli değil.
+  - [ ] 🔴 **Taşma taraması:** font metrikleri Roboto'dan farklı; dar ekranda (≤ 360 dp genişlik) ve **en büyük ölçek + en kalın ağırlıkta** başlık/etiket taşması aranır.
+  - [ ] **APK boyut ölçümü:** `flutter clean` + `local` flavor ile **öncesi/sonrası** ölçülür ve sayı karta yazılır. (`stable` flavor production backend'e bağlı, kullanılamaz.)
+- **Veri/Migration etkisi:** **Yok** — `fontFamily` zaten string olarak saklanıyor, `CustomTheme` şeması değişmez. ⚠️ Kaydedilmiş temalarda `sans-serif` yazan alanlar **olduğu gibi kalır**; eski temalar gömülü fonta **zorla geçirilmez**.
+- **Ortam/Deploy:** Local. Production/staging dokunuşu yok.
+- **RLS/Güvenlik:** Sunucuya veri gitmez. 🔴 **Lisanslar tek tek doğrulanır** (yalnız SIL OFL / Apache-2.0); lisans metni olmadan font commit edilmez.
+- **Edge-case'ler:** Türkçe glyph eksikliği · AR/başka alfabe (fallback) · variable font desteklenmeyen platform (Windows masaüstü **ayrıca** kontrol) · font yüklenemedi → sistem fontuna düşüş · uzun metnin taşması · `useSerifTitles` bayraklı eski hazır temalar · reduce-motion ile ilgisi yok.
+- **Kabul (ölçülebilir):** Seçilen her aile **başlık + gövde + etiket + saat** yüzeylerinde gerçekten uygulanıyor · **ağırlık kaydırıcısı gömülü fontta da görünür fark üretiyor** (ölü anahtar yok) · Türkçe karakterlerin hiçbiri kutu değil · fallback zinciri kurulu · lisans metinleri repoda · golden'lar yenilenmiş ve gözle onaylanmış · ≤ 360 dp'de taşma yok · **APK artışı ölçülmüş ve sayı yazılmış (hedef ≤ 2.5 MB)** · `flutter analyze` 0, testler yeşil.
+- **Tuzaklar:** `google_fonts` paketine sapmak (ağdan indirir, ADR-4 yasak) · lisans metnini atlamak · subset'te Türkçe glyph'i düşürmek · fallback zincirini atlamak · **statik 2 ağırlık paketleyip ağırlık kaydırıcısını sessizce öldürmek** · golden'ları bakmadan `--update-goldens` ile ezmek · boyut ölçümünü `flutter clean` olmadan yapmak (bayat `libapp.so` → yalancı sonuç, WP-290'da tam bu oldu).
 
 ### WP-296: `main`'de kırmızı 3 testi yeşile al 🔴→🟢
 - **Program/Faz:** Yeni Özellik Turu · Aşama A · **kalite borcu** (dalga dışı, tek başına koşar)
@@ -165,7 +207,7 @@ ARADA    WP-296  main'de 3 kırmızı test                                     �
 
 ### WP-292: Kozmetik — taç görseli ✨
 - **Program/Faz:** Yeni Özellik Turu · Aşama A (son) · (plan §3 F-08) · *rev.2: kamp ateşi WP-295'e ayrıldı*
-- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-290 kabul (kod/test 2026-07-25'te tamamlandı, cihaz QA bekliyor)
+- **Ajan:** — · **Durum:** [ ] **Kodlanacak — HAZIR.** *Eski "WP-290 cihaz kabulü" kapısı **tek beta kararıyla düştü** (2026-07-25, `§0.1`): kabul beta'dan önce fiziken alınamıyor. Kapı yerine şart: WP-290/297 commit'lenmiş ve testler yeşil olmalı; **297 ile paralel koşulmaz** (golden yüzeyi).*
 - **Problem:** Profil fotoğrafı üstündeki taç sahibe göre kötü duruyor; görsel yenilenecek.
 - **Kapsam dışı:** **XP/kademe mantığı**, başarım motoru, tema motoru, yeni ekonomi kuralı, kamp ateşi (WP-295).
 - **SAHİP dosyalar (yaz):** `app/lib/core/widgets/crowned_avatar.dart`, `app/lib/core/widgets/crown_tiers_sheet.dart`, ilgili golden testler.
@@ -181,7 +223,7 @@ ARADA    WP-296  main'de 3 kırmızı test                                     �
 
 ### WP-294: l10n borcu ayıklama + audit CI kapısı 🌍
 - **Program/Faz:** Yeni Özellik Turu · Aşama A · (plan §3 l10n borcu, R23)
-- **Ajan:** — · **Durum:** [ ] Bekliyor · 🔴 **Bağımlılık: K-7 (AR/DE ürün kararı) ÖNCE kapanmalı**
+- **Ajan:** — · **Durum:** [ ] Kodlanacak · 🟡 **Kısmen açık (2026-07-25 uzlaştırıldı):** audit'i 4 katalog + sabit EN/TR literal + native yüzeye genişletme, UTF-8 düzeltmesi, bulguların sınıflandırılması ve CI kapısı **bugünkü 4 dil gerçeğiyle yapılabilir**. 🔴 **Yalnız "AR/DE'yi üründen çıkarıp EN/TR'ye daraltma" dalı K-7'ye bağlıdır** — o dal K-7 kapanmadan uygulanmaz. Sahip 2026-07-25'te "Arapça'yı şimdilik dert etmiyoruz" dedi; bu **K-7 kararı değildir**, dil setine dokunulmaz.
 - **Problem:** Üç katmanlı borç. **(a)** `l10n_audit.py` UTF-8'de **38 bulguyla kırmızı**: `account_settings_screen.dart:257,264,272,318,347,482,484,493`, `app_push_notification_service.dart:325,326,331`, `task_deadline.dart:152,153`, `achievement_reward_provider.dart:50,68` — koda gömülü Türkçe metinler. **(b)** Audit **yalnız EN/TR** yüklüyor (`:23-24`) → **DE/AR denetlenmiyor**; ayrıca sabit **İngilizce** kullanıcı metnini yakalamıyor → sahte güven üretiyor. **(c)** Denetim CI'da çalışmıyor, yeni borç engellenmiyor.
 - 🔴 **Yönetişim çelişkisi:** `progress.md` WP-278 AR/DE'nin üründe kalıp kalmayacağını **hâlâ ürün kararı olarak açık** bırakıyor; plan ise dört dili zorunlu sayıyor. **K-7 kapanmadan bu WP ve font/RTL işi başlamaz.**
 - **Kapsam dışı:** Yeni özellik, tema, yasal metinlerin mimari olarak dışarı taşınması (**not edilir, ayrı WP**), genel analyze/test CI kapısı kurulumu.
@@ -235,13 +277,14 @@ ARADA    WP-296  main'de 3 kırmızı test                                     �
 
 ## Worker'a Verilecek Kısa Komutlar
 
-Şu an verilebilecek **tek** komut:
-- ✅ `worker'ı oku ve WP-296'yı yap` — `main`'deki 3 kırmızı testi yeşile al (bağımlılığı yok)
+**Beta'ya kadar sırayla verilecek komutlar** (hepsi bitmeden beta çıkmaz):
+- ✅ `worker'ı oku ve WP-296'yı yap` — `main`'deki 3 kırmızı test
+- ✅ `worker'ı oku ve WP-297'yi yap` — gömülü fontlar (sahip onayı var)
+- ✅ `worker'ı oku ve WP-292'yi yap` — taç görseli (cihaz kapısı beta kararıyla düştü)
+- 🟡 `worker'ı oku ve WP-294'ü yap` — bugünkü 4 dil gerçeğiyle; "EN/TR'ye daraltma" dalı K-7 bekler
+- 🔴 WP-295 → **worker komutu değil:** önce sahiple kamp ateşi tasarım konuşması
 
-Kilidi açılınca verilebilecekler:
-- `worker'ı oku ve WP-292'yi yap` — **önce WP-290 cihaz QA kabulü**
-- WP-295 → **önce sahiple kamp ateşi tasarım konuşması** (worker komutu değil, konuşma turu)
-- `worker'ı oku ve WP-294'ü yap` — **önce K-7 / WP-278 (AR/DE) ürün kararı**
+⚠️ **297 ile 292 aynı anda koşulmaz** — ikisi de golden test yüzeyine giriyor.
 
 Kod/test'i bitmiş WP'ler (286, 287, 288, 289, 290, 291, 293) için **worker komutu verilmez** — sıra sahipte (cihaz QA + WP-287 staging paneli).
 
