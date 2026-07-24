@@ -23,10 +23,17 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _editing = false;
 
+  /// WP-291: Boyut panelinin bağlı olduğu seçili kart. Grid tıklamayla bildirir,
+  /// sabit alt yaprak (bottomSheet) dinler.
+  DashboardCardType? _selectedCard;
+
   // Görünüm <-> düzenleme geçişinde kaydırma konumunu korur (§2F).
   final ScrollController _scroll = ScrollController();
 
-  void _setEditing(bool value) => setState(() => _editing = value);
+  void _setEditing(bool value) => setState(() {
+    _editing = value;
+    if (!value) _selectedCard = null;
+  });
 
   Future<void> _confirmResetDashboard() async {
     final ok = await showDialog<bool>(
@@ -112,6 +119,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       layout: layout,
                       columns: columns,
                       editing: _editing,
+                      selectedType: _selectedCard,
+                      onSelectCard: (type) =>
+                          setState(() => _selectedCard = type),
                       onLongPressCard: () => _setEditing(true),
                       onMoveCard: (type, x, y) => ref
                           .read(dashboardLayoutProvider.notifier)
@@ -148,12 +158,36 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             .read(classroomShowTimerProvider.notifier)
                             .set,
                       ),
+                      // WP-291: sabit alt panelin altında kart kalmasın diye
+                      // panel yüksekliği kadar boşluk.
+                      const SizedBox(height: 96),
                     ],
                   ],
                 ),
               ),
             ),
           );
+
+    // WP-291: Boyut paneli sabit alt yaprak olarak her iki Scaffold'a bağlanır;
+    // yalnız düzenleme modunda ve seçili kart varken görünür.
+    final selectedConfig =
+        effectiveSelectedConfig(layout, _selectedCard);
+    final Widget? sizeSheet = (_editing && selectedConfig != null)
+        ? _StickySizePanel(
+            config: selectedConfig,
+            columns: columns,
+            onResize: (w, h) => ref
+                .read(dashboardLayoutProvider.notifier)
+                .setBounds(
+                  selectedConfig.type,
+                  x: selectedConfig.x,
+                  y: selectedConfig.y,
+                  w: w,
+                  h: h,
+                  persist: true,
+                ),
+          )
+        : null;
 
     // Windows: üst dev başlık / sağ ipucu paneli yok — küçük pencerede
     // sol rail + içerik yeterli (kullanıcı geri bildirimi).
@@ -204,6 +238,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             Expanded(child: body),
           ],
         ),
+        bottomSheet: sizeSheet,
       );
     }
 
@@ -247,17 +282,36 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ],
       ),
       body: body,
+      bottomSheet: sizeSheet,
     );
   }
 }
 
 const double _kGap = 8.0;
 
+/// WP-291: Düzen boşsa null; seçili kart silinmişse ilk karta düş. Boyut paneli
+/// artık HomeScreen'in sabit alt yaprağında (bottomSheet) durduğu için bu mantık
+/// hem grid vurgusu hem panel tarafından paylaşılır — tek kaynak.
+DashboardCardConfig? effectiveSelectedConfig(
+  List<DashboardCardConfig> layout,
+  DashboardCardType? selected,
+) {
+  if (layout.isEmpty) return null;
+  if (selected != null) {
+    for (final c in layout) {
+      if (c.type == selected) return c;
+    }
+  }
+  return layout.first;
+}
+
 class _MatrixGrid extends StatefulWidget {
   const _MatrixGrid({
     required this.layout,
     required this.columns,
     required this.editing,
+    required this.selectedType,
+    required this.onSelectCard,
     required this.onLongPressCard,
     required this.onMoveCard,
     required this.onResizeCard,
@@ -268,6 +322,10 @@ class _MatrixGrid extends StatefulWidget {
   final List<DashboardCardConfig> layout;
   final int columns;
   final bool editing;
+
+  /// WP-291: Seçili kart (HomeScreen sahiplenir; panel bottomSheet'te).
+  final DashboardCardType? selectedType;
+  final ValueChanged<DashboardCardType> onSelectCard;
   final VoidCallback onLongPressCard;
   final void Function(DashboardCardType type, int x, int y) onMoveCard;
   final void Function(
@@ -297,24 +355,9 @@ class _DragTargetCell {
 class _MatrixGridState extends State<_MatrixGrid> {
   final GlobalKey _gridKey = GlobalKey();
   _DragTargetCell? _target;
-  DashboardCardType? _selected;
 
   void _clearTarget() {
     if (_target != null) setState(() => _target = null);
-  }
-
-  void _selectCard(DashboardCardType type) {
-    if (_selected != type) setState(() => _selected = type);
-  }
-
-  /// Panelin bağlanacağı kart: kullanıcı seçtiyse o, seçmediyse (ya da seçtiği
-  /// kart silindiyse) ilk kart. Düzen boşsa `null`.
-  DashboardCardType? _effectiveSelected() {
-    final layout = widget.layout;
-    if (layout.isEmpty) return null;
-    final chosen = _selected;
-    if (chosen != null && layout.any((c) => c.type == chosen)) return chosen;
-    return layout.first.type;
   }
 
   @override
@@ -337,7 +380,9 @@ class _MatrixGridState extends State<_MatrixGrid> {
                   ? baseRows
                   : _target!.y + draggedConfig.h);
         final height = totalRows * cell + (totalRows - 1) * _kGap;
-        final selectedType = _effectiveSelected();
+        final selectedType = widget.editing
+            ? effectiveSelectedConfig(widget.layout, widget.selectedType)?.type
+            : null;
 
         double leftOf(DashboardCardConfig c) => c.x * (cell + _kGap);
         double topOf(DashboardCardConfig c) => c.y * (cell + _kGap);
@@ -430,7 +475,7 @@ class _MatrixGridState extends State<_MatrixGrid> {
                             height: heightOf(c),
                             editing: widget.editing,
                             selected: widget.editing && selectedType == c.type,
-                            onSelect: () => _selectCard(c.type),
+                            onSelect: () => widget.onSelectCard(c.type),
                             onLongPressCard: widget.onLongPressCard,
                             onResize: (x, y, w, h, persist) => widget
                                 .onResizeCard(c.type, x, y, w, h, persist),
@@ -455,7 +500,7 @@ class _MatrixGridState extends State<_MatrixGrid> {
                             height: heightOf(c),
                             editing: widget.editing,
                             selected: selectedType == c.type,
-                            onSelect: () => _selectCard(c.type),
+                            onSelect: () => widget.onSelectCard(c.type),
                             onLongPressCard: widget.onLongPressCard,
                             onResize: (x, y, w, h, persist) => widget
                                 .onResizeCard(c.type, x, y, w, h, persist),
@@ -470,35 +515,10 @@ class _MatrixGridState extends State<_MatrixGrid> {
           },
         );
 
-        if (!widget.editing) return grid;
-
-        final selectedConfig = selectedType == null
-            ? null
-            : widget.layout.where((c) => c.type == selectedType).firstOrNull;
-
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            grid,
-            if (selectedConfig != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: _SizePanel(
-                  config: selectedConfig,
-                  columns: widget.columns,
-                  onResize: (w, h) => widget.onResizeCard(
-                    selectedConfig.type,
-                    selectedConfig.x,
-                    selectedConfig.y,
-                    w,
-                    h,
-                    true,
-                  ),
-                ),
-              ),
-          ],
-        );
+        // WP-291: Boyut paneli artık grid'in altında akış içinde değil,
+        // HomeScreen'in sabit alt yaprağında (bottomSheet) — sayfa kaydırılsa
+        // bile ekranda kalır. Grid doğrudan döner.
+        return grid;
       },
     );
   }
@@ -812,9 +832,56 @@ class _MatrixCardState extends State<_MatrixCard> {
   }
 }
 
-/// Seçili kartın altındaki dokunmatik dostu boyut paneli: köşeden sürüklemek
-/// yerine büyük −/+ düğmeleriyle genişlik/yükseklik ayarlanır (uzun-basma ile
-/// taşıma çakışması olmadan). Sürükleme yolu da ayrıca korunur.
+/// WP-291: Boyut panelini ekranın altına yapışık (sabit) tutan sarmalayıcı.
+/// `Scaffold.bottomSheet` olarak bağlanır; sayfa kaydırılsa bile görünür kalır.
+/// Masaüstünde tüm genişliği kaplamaz, okuma genişliğiyle sınırlanır.
+class _StickySizePanel extends StatelessWidget {
+  const _StickySizePanel({
+    required this.config,
+    required this.columns,
+    required this.onResize,
+  });
+
+  final DashboardCardConfig config;
+  final int columns;
+  final void Function(int w, int h) onResize;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Material(
+      color: theme.colorScheme.surface,
+      elevation: 8,
+      child: SafeArea(
+        top: false,
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border(
+              top: BorderSide(color: theme.colorScheme.outlineVariant),
+            ),
+          ),
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxWidth: DesktopBreakpoints.maxContentWidth,
+              ),
+              child: _SizePanel(
+                config: config,
+                columns: columns,
+                onResize: onResize,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Dokunmatik dostu boyut paneli: köşeden sürüklemek yerine büyük −/+
+/// düğmeleriyle genişlik/yükseklik ayarlanır (uzun-basma ile taşıma çakışması
+/// olmadan). Sürükleme yolu da ayrıca korunur.
 class _SizePanel extends StatelessWidget {
   const _SizePanel({
     required this.config,
@@ -888,7 +955,7 @@ class _SizePanel extends StatelessWidget {
   }
 }
 
-/// [−] [yön ikonu] [+] üçlüsü; her buton 40px dokunma hedefi (parmak için).
+/// [−] [yön ikonu] [+] üçlüsü; her buton 48 dp dokunma hedefi (parmak için).
 class _SizeStepper extends StatelessWidget {
   const _SizeStepper({
     required this.icon,
@@ -933,10 +1000,11 @@ class _StepButton extends StatelessWidget {
     final enabled = onTap != null;
     return InkResponse(
       onTap: onTap,
-      radius: 22,
+      radius: 26,
       child: SizedBox(
-        width: 40,
-        height: 40,
+        // WP-291: erişilebilir dokunma hedefi (≥ 48 dp).
+        width: 48,
+        height: 48,
         child: Icon(
           icon,
           size: 20,

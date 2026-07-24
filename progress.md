@@ -58,7 +58,7 @@
 | **0** | **WP-293 Gate 0 — ortam uzlaştırma** | [x] **Kod/doküman tamam** | Altı gerçek belgelendi, kapı kilitlendi, guard 51/51 · commit'lendi |
 | 0b | Production backend değişikliği | 🔴 Kapalı | `deploy_enabled: false` (WP-293 ile yeniden kilitlendi); yeni terfi backup+dry-run+somut GO ister |
 | 1 | WP-287 şifre sıfırlama · WP-286 ayarlar IA | 287 [x] kod/test · 286 [ ] | 287: sahip panel + cihaz QA bekliyor · 286 sırada |
-| 2 | WP-291 boyut paneli · WP-289 his araştırması | [ ] Bekliyor | Bağımsız, paralel |
+| 2 | WP-291 boyut paneli · WP-289 his araştırması | 291 [x] kod/test · 289 [ ] | 291 cihaz QA bekliyor · 289 sırada |
 | 3 | WP-288 tema modeli · WP-294 l10n borcu | [ ] Bekliyor | 288 **289'a bağımlı**; 294 l10n sıcak yüzey |
 | 4 | WP-290 tema sihirbazı | [ ] Bekliyor | Tek başına; `core/theme/**` + `pubspec.yaml` |
 | 5 | WP-292 taç · WP-295 kamp ateşi | [ ] Bekliyor | 295 sahiple konuşma ister |
@@ -274,9 +274,9 @@ DALGA 5  WP-292  Taç              ‖  WP-295  Kamp ateşi (sahip kararı sonra
 - **Tuzaklar:** Sihirbazı ekran başlıklarıyla şişirmek (sahip **sade** istedi) · `pubspec.yaml` ve `core/theme/**` sıcak dosya — aynı anda başka WP girmemeli · font paket boyutunu kontrolsüz büyütmek · AR fallback zincirini atlamak · eski kullanıcının seçili temasını bozmak.
 - **Model önerisi:** 🔴 Opus
 
-### WP-291: Ana sayfa kart boyut paneli → sabit alt panel 📐
+### WP-291: Ana sayfa kart boyut paneli → sabit alt panel 📐 ✅ KOD/TEST TAMAM
 - **Program/Faz:** Yeni Özellik Turu · Aşama A · (plan §3 F-05)
-- **Ajan:** — · **Durum:** [ ] Bekliyor
+- **Ajan:** Claude · **Durum:** [x] Kod/test tamam (2026-07-24) — `_SizePanel` grid akışından çıkıp `Scaffold.bottomSheet`'e taşındı (her iki dal); seçim state'i `HomeScreen`'e yükseltildi (`effectiveSelectedConfig` saf fonksiyon); `_StepButton` 40→48 dp; grid altına 96 dp boşluk. `analyze` 0, **704/704 test yeşil** (4 yeni). **Bekleyen:** cihaz QA `Cihazda doğrulanmalı`. Not: saydamlık eklenmedi (kapsam dışı); yalnız boyut kontrolü olduğu için Seçenek C'nin "genişleyen" katmanı yerine sabit bar uygulandı — ekstra kontrol gelince genişletilebilir.
 - **Problem:** `_SizePanel` (`home_screen.dart:818`) grid'in altına akış içinde çiziliyor (`:487`) ve tüm gövde tek `SingleChildScrollView` içinde (`:87`). Kart aşağıdaysa panel ekrandan çıkıyor; kullanıcı sürekli aşağı yukarı kaydırmak zorunda kalıyor.
 - **Kapsam dışı:** Saydamlık ayarı (**eklenmeyecek**), yeni kart türü, ızgara motoru değişikliği, tema.
 - **SAHİP dosyalar (yaz):** `app/lib/features/home/home_screen.dart`, gerekiyorsa `app/lib/features/home/widgets/**` yeni panel dosyası, ilgili widget testleri.
