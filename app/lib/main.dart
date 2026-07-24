@@ -25,6 +25,7 @@ import 'core/theme/theme_settings.dart';
 import 'core/time_engine/device_timezone.dart';
 import 'features/auth/auth_gate.dart';
 import 'features/desktop/compact_focus_view.dart';
+import 'features/profile/theme_builder/feel_overlay.dart';
 import 'l10n/app_localizations.dart';
 
 import 'package:home_widget/home_widget.dart';
@@ -215,7 +216,11 @@ class OnlineStudyRoomApp extends ConsumerWidget {
               ),
           compactChild: const CompactFocusView(),
         );
-        return wrapped;
+        // WP-290: `AppFeel` + `AppAtmosphere` token'larının tek render noktası.
+        // Efekt yoksa (Modern/Düz his) child'ı olduğu gibi döner — ek widget,
+        // ek çizim yok. Bu sarmalayıcı olmadan sihirbazın atmosfer ve his
+        // adımları ölü anahtar olurdu.
+        return FeelOverlay(child: wrapped);
       },
       home: const AuthGate(),
     );

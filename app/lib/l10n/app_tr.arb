@@ -686,16 +686,11 @@
   "notificationsSimdilikDuyuruYok": "Şimdilik duyuru yok.",
   "profileSummaryfreezeawarestreakstreakGunSeri": "{streak} gün seri",
   "profileSummaryprofilestreakfreezesKorumaHakki": "{streakfreezes} koruma hakkı",
-  "profileValue1AtmosferSec": "1 · Atmosfer seç",
-  "profileValue2Mood": "2 · Mood",
-  "profileValue4OzetVeUygula": "4 · Özet ve uygula",
   "profileAdiDuzenle": "Adı düzenle",
   "profileAnaRenk": "Ana Renk",
-  "profileAnindaOnizlenir": "Anında önizlenir.",
   "profileAyarlar": "Ayarlar",
   "profileAylikCalismaRaporuEposta": "Aylık çalışma raporu (E-posta)",
   "profileAcik": "Açık",
-  "profileBalon": "Balon",
   "profileBasariYolculugum": "Başarı Yolculuğum 🏆",
   "profileBasarYolculugum": "Başarı Yolculuğum",
   "profileSosyalProfil": "Sosyal profil",
@@ -772,7 +767,6 @@
   "profileKaydiSil": "Kaydı sil",
   "profileKayitEklemekIcinOnce": "Kayıt eklemek için önce bir gruba katıl veya grup oluştur.",
   "profileKayitlarYuklenemediE": "Kayıtlar yüklenemedi: {e}",
-  "profileKeskin": "Keskin",
   "profileKilitli": "Kilitli",
   "profileKonu": "Konu",
   "profileKoyu": "Koyu",
@@ -781,7 +775,6 @@
   "profileMesaj": "Mesaj",
   "profileMesajGerekli": "Mesaj gerekli",
   "profileMisafir": "Misafir",
-  "profilePaletAdi": "Palet Adı",
   "profileProfil": "Profil",
   "profileProfilFotografiGuncellendi": "Profil fotoğrafı güncellendi",
   "profileRenk": "Renk",
@@ -804,12 +797,8 @@
   "profileTamProfil": "Tam profil",
   "profileTamamland": "Tamamlandı",
   "profileTarih": "Tarih",
-  "profileTemaStudyosu": "Tema Stüdyosu",
   "profileTemaModu": "Tema modu",
-  "profileTemaUygulandiYenidenBaslatma": "Tema uygulandı — yeniden başlatma gerekmez.",
-  "profileTemayiUygula": "Temayı uygula",
   "profileTumKademeler": "Tüm kademeler",
-  "profileUygula": "Uygula",
   "profileVazgec": "Vazgeç",
   "profileVitrin": "Vitrin",
   "profileVitrindenKaldir": "Vitrinden kaldır",
@@ -820,7 +809,6 @@
   "profileYeniEposta": "Yeni E-posta",
   "profileYeniSifre": "Yeni Şifre",
   "profileYenilikleriVeGecmisSurum": "Yenilikleri ve geçmiş sürüm notlarını oku",
-  "profileYuvarlak": "Yuvarlak",
   "profileYonetim": "Yönetim",
   "profileCalisma": "Çalışma",
   "profileCalismaKayitlarim": "Çalışma kayıtlarım",
@@ -830,12 +818,9 @@
   "profileOnceGirisYap": "Önce giriş yap.",
   "profileOneri": "Öneri",
   "profileOzelPalet": "Özel Palet",
-  "profileOzelPaletI1": "Özel Palet {index} Düzenle",
-  "profileOzelPaletler": "Özel Paletler",
   "profileOzetlerVeKullaniciRaporlari": "Özetler ve kullanıcı raporları",
   "profileIleri": "İleri",
   "profileIptal": "İptal",
-  "profileSekilSecimiOnizlemedeYansir": "Şekil seçimi önizlemede yansır. Kalıcı şekil motoru WP-55 gelişmiş",
   "profileSifre": "Şifre",
   "profileSifreDegistir": "Şifre Değiştir",
   "profileSifreBasariylaGuncellendi": "Şifre başarıyla güncellendi.",
@@ -977,9 +962,6 @@
   "profileCuma": "Cuma",
   "profileCumartesi": "Cumartesi",
   "profilePazar": "Pazar",
-  "profileTema": "Tema",
-  "profileMood": "Mood",
-  "profileSekil": "Şekil",
   "profileTemmuz": "Temmuz",
   "profileAgustos": "Ağustos",
   "profileEylul": "Eylül",
@@ -1036,20 +1018,24 @@
   "legalPolicyVersion": "Politika sürümü: {version}",
   "@legalPolicyVersion": {
     "placeholders": {
-      "version": {"type": "String"}
+      "version": {
+        "type": "String"
+      }
     }
   },
   "legalCommunityVersion": "Topluluk kuralları sürümü: {version}",
   "@legalCommunityVersion": {
     "placeholders": {
-      "version": {"type": "String"}
+      "version": {
+        "type": "String"
+      }
     }
   },
   "legalCopyPublicPrivacyUrl": "Herkese açık gizlilik URL’sini kopyala",
   "legalPublicUrlNotConfigured": "Canlı HTTPS URL henüz yapılandırılmadı (LEGAL_BASE_URL). Metin uygulama içinde okunabilir.",
   "legalPublicUrlCopied": "Bağlantı panoya kopyalandı.",
   "legalDeletionNote": "Hesap silme: istek + geri alma penceresi + planlı kalıcı silme. Sunucu boru hattı tamamlandıkça Ayarlar → Hesap altında net adımlar görünür.",
-"safetyReport": "Bildir",
+  "safetyReport": "Bildir",
   "safetyBlock": "Engelle",
   "safetyBlockConfirmTitle": "Bu kullanıcı engellensin mi?",
   "safetyBlockConfirmBody": "Mesajlarını ve kamp ateşi görünürlüğünü artık görmezsin. İleride ayarlardan engeli kaldırabilirsin (varsa).",
@@ -1065,14 +1051,14 @@
   "safetyReasonIllegal": "Yasa dışı",
   "safetyReasonOther": "Diğer",
   "safetyActionFailed": "İşlem başarısız. Tekrar dene.",
-"safetyBlockedUsersTitle": "Engellenen kullanıcılar",
+  "safetyBlockedUsersTitle": "Engellenen kullanıcılar",
   "safetyUnblock": "Engeli kaldır",
   "safetyUnblocked": "Engel kaldırıldı.",
   "safetyNoBlockedUsers": "Engellenen kullanıcı yok.",
   "safetyBlockedUserFallbackName": "Engellenen kullanıcı",
-"safetyReportDetailsLabel": "Açıklama (isteğe bağlı)",
+  "safetyReportDetailsLabel": "Açıklama (isteğe bağlı)",
   "safetyReportDetailsHint": "Moderatörler için ek bağlam ekle (en fazla 500 karakter).",
-"adminUgcNoReports": "UGC raporu yok",
+  "adminUgcNoReports": "UGC raporu yok",
   "adminUgcStatusInReview": "İnceleniyor",
   "adminUgcStatusResolved": "Çözüldü",
   "adminUgcStatusRejected": "Reddedildi",
@@ -1218,5 +1204,333 @@
   "notificationsLiveTimerPending": "Ölçmek için sayacı başlatıp durumu yenile.",
   "notificationsLiveTimerSystemAllowed": "Sistem terfi edilmiş canlı bildirimlere izin veriyor.",
   "notificationsLiveTimerSystemBlocked": "Sistem veya cihaz canlı yüzeye izin vermedi; standart sayaç çalışmaya devam eder.",
-  "notificationsLiveTimerLegacyFallback": "Bu Android sürümü standart kalıcı sayacı kullanır."
+  "notificationsLiveTimerLegacyFallback": "Bu Android sürümü standart kalıcı sayacı kullanır.",
+  "profileKendiTemaniOlustur": "Kendi Temanı Oluştur",
+  "@profileKendiTemaniOlustur": {
+    "description": "Appearance: entry point for the theme builder wizard."
+  },
+  "profileKendiTemaniOlusturAlt": "Renk, yazı, biçim, atmosfer ve his — canlı önizlemeyle",
+  "@profileKendiTemaniOlusturAlt": {
+    "description": "Appearance: subtitle of the theme builder entry."
+  },
+  "profileHazirTemalar": "Hazır temalar",
+  "@profileHazirTemalar": {
+    "description": "Appearance: section title for built-in themes."
+  },
+  "profileTemaSlotlariDolu": "Üç tema yuvasının hepsi dolu. Yer açmak için birini sil veya düzenle.",
+  "@profileTemaSlotlariDolu": {
+    "description": "Appearance: all three custom theme slots are in use."
+  },
+  "profileTemayiSilOnay": "“{name}” silinsin mi? Bu işlem geri alınamaz.",
+  "@profileTemayiSilOnay": {
+    "description": "Appearance: delete confirmation for a saved custom theme.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "profileTemaSilindi": "Tema silindi.",
+  "@profileTemaSilindi": {
+    "description": "Appearance: custom theme deleted confirmation."
+  },
+  "profileTemaSaltOkunur": "Daha yeni bir sürümde oluşturuldu — salt okunur",
+  "@profileTemaSaltOkunur": {
+    "description": "Appearance: theme was written by a newer app version."
+  },
+  "profileAdimZemin": "Zemin",
+  "@profileAdimZemin": {
+    "description": "Theme builder: step name."
+  },
+  "profileAdimRenkler": "Renkler",
+  "@profileAdimRenkler": {
+    "description": "Theme builder: step name."
+  },
+  "profileAdimYazilar": "Yazılar",
+  "@profileAdimYazilar": {
+    "description": "Theme builder: step name."
+  },
+  "profileAdimBicim": "Biçim",
+  "@profileAdimBicim": {
+    "description": "Theme builder: step name."
+  },
+  "profileAdimAtmosfer": "Atmosfer",
+  "@profileAdimAtmosfer": {
+    "description": "Theme builder: step name."
+  },
+  "profileAdimHis": "His",
+  "@profileAdimHis": {
+    "description": "Theme builder: step name."
+  },
+  "profileAdimKarsiMod": "Karşı mod",
+  "@profileAdimKarsiMod": {
+    "description": "Theme builder: step name for the opposite brightness variant."
+  },
+  "profileAdimOzet": "Özet",
+  "@profileAdimOzet": {
+    "description": "Theme builder: step name."
+  },
+  "profileZeminAciklama": "Bir başlangıç noktası seç. Sonraki adımlarda her şeyi değiştirebilirsin.",
+  "@profileZeminAciklama": {
+    "description": "Theme builder: base step help text."
+  },
+  "profileDuzenlenenVaryant": "Düzenlenen varyant",
+  "@profileDuzenlenenVaryant": {
+    "description": "Theme builder: which brightness variant is being edited."
+  },
+  "profileRenkZemin": "Zemin",
+  "@profileRenkZemin": {
+    "description": "Theme builder: scaffold colour."
+  },
+  "profileRenkYuzey": "Yüzey",
+  "@profileRenkYuzey": {
+    "description": "Theme builder: surface colour."
+  },
+  "profileRenkYuzeyYuksek": "Yüksek yüzey",
+  "@profileRenkYuzeyYuksek": {
+    "description": "Theme builder: raised surface colour."
+  },
+  "profileRenkMetin": "Metin",
+  "@profileRenkMetin": {
+    "description": "Theme builder: primary text colour."
+  },
+  "profileRenkIkincilMetin": "İkincil metin",
+  "@profileRenkIkincilMetin": {
+    "description": "Theme builder: secondary text colour."
+  },
+  "profileRenkKenarlik": "Kenarlık",
+  "@profileRenkKenarlik": {
+    "description": "Theme builder: border colour."
+  },
+  "profileKontrastUyarisi": "Kontrast düşük ({ratio}:1) — WCAG AA'nın altında.",
+  "@profileKontrastUyarisi": {
+    "description": "Theme builder: WCAG AA contrast warning with the measured ratio.",
+    "placeholders": {
+      "ratio": {
+        "type": "String"
+      }
+    }
+  },
+  "profileKontrastDuzelt": "Düzelt",
+  "@profileKontrastDuzelt": {
+    "description": "Theme builder: one-tap contrast fix action."
+  },
+  "profileYaziBaslikFontu": "Başlık yazı tipi",
+  "@profileYaziBaslikFontu": {
+    "description": "Theme builder: title font family selector."
+  },
+  "profileYaziGovdeFontu": "Gövde yazı tipi",
+  "@profileYaziGovdeFontu": {
+    "description": "Theme builder: body font family selector."
+  },
+  "profileYaziSayacFontu": "Sayaç yazı tipi",
+  "@profileYaziSayacFontu": {
+    "description": "Theme builder: timer font family selector."
+  },
+  "profileYaziKalinlik": "Kalınlık",
+  "@profileYaziKalinlik": {
+    "description": "Theme builder: font weight slider."
+  },
+  "profileYaziOlcek": "Ölçek",
+  "@profileYaziOlcek": {
+    "description": "Theme builder: font scale slider."
+  },
+  "profileYaziHarfAraligi": "Harf aralığı",
+  "@profileYaziHarfAraligi": {
+    "description": "Theme builder: letter spacing slider."
+  },
+  "profileFontDuz": "Düz",
+  "@profileFontDuz": {
+    "description": "Theme builder: sans-serif font option."
+  },
+  "profileFontTirnakli": "Tırnaklı",
+  "@profileFontTirnakli": {
+    "description": "Theme builder: serif font option."
+  },
+  "profileFontEsAralikli": "Eş aralıklı",
+  "@profileFontEsAralikli": {
+    "description": "Theme builder: monospace font option."
+  },
+  "profileBicimKucukYaricap": "Küçük yarıçap",
+  "@profileBicimKucukYaricap": {
+    "description": "Theme builder: small corner radius slider."
+  },
+  "profileBicimKoseYaricapi": "Köşe yarıçapı",
+  "@profileBicimKoseYaricapi": {
+    "description": "Theme builder: card corner radius slider."
+  },
+  "profileBicimBuyukYaricap": "Büyük yarıçap",
+  "@profileBicimBuyukYaricap": {
+    "description": "Theme builder: large corner radius slider."
+  },
+  "profileBicimGolge": "Gölge",
+  "@profileBicimGolge": {
+    "description": "Theme builder: card elevation slider."
+  },
+  "profileBicimKenarKalinligi": "Kenar kalınlığı",
+  "@profileBicimKenarKalinligi": {
+    "description": "Theme builder: border width slider."
+  },
+  "profileBicimKeskin": "Keskin köşeler",
+  "@profileBicimKeskin": {
+    "description": "Theme builder: sharp corners switch."
+  },
+  "profileAtmosferAciklama": "Atmosfer, uygulamanın tamamına ince bir renk ve parıltı olarak uygulanır.",
+  "@profileAtmosferAciklama": {
+    "description": "Theme builder: atmosphere step help text."
+  },
+  "profileAtmosferDegradeBasi": "Degrade başlangıcı",
+  "@profileAtmosferDegradeBasi": {
+    "description": "Theme builder: gradient start colour."
+  },
+  "profileAtmosferDegradeSonu": "Degrade sonu",
+  "@profileAtmosferDegradeSonu": {
+    "description": "Theme builder: gradient end colour."
+  },
+  "profileAtmosferParilti": "Parıltı rengi",
+  "@profileAtmosferParilti": {
+    "description": "Theme builder: glow colour."
+  },
+  "profileAtmosferPariltiGucu": "Parıltı gücü",
+  "@profileAtmosferPariltiGucu": {
+    "description": "Theme builder: glow strength slider."
+  },
+  "profileAtmosferPariltiYumusakligi": "Parıltı yumuşaklığı",
+  "@profileAtmosferPariltiYumusakligi": {
+    "description": "Theme builder: glow softness slider."
+  },
+  "profileAtmosferCamlik": "Camlık",
+  "@profileAtmosferCamlik": {
+    "description": "Theme builder: glass sheen slider."
+  },
+  "profileHisAciklama": "His; doku, şekil ve atmosferi birlikte ayarlar. Ağır olanlar düşük donanımda kare düşürebilir.",
+  "@profileHisAciklama": {
+    "description": "Theme builder: feel step help text."
+  },
+  "profileHisModern": "Modern",
+  "@profileHisModern": {
+    "description": "Theme feel name."
+  },
+  "profileHisZen": "Zen",
+  "@profileHisZen": {
+    "description": "Theme feel name."
+  },
+  "profileHisNeon": "Neon",
+  "@profileHisNeon": {
+    "description": "Theme feel name."
+  },
+  "profileHisVintage": "Vintage",
+  "@profileHisVintage": {
+    "description": "Theme feel name."
+  },
+  "profileHisKarton": "Eskimiş karton",
+  "@profileHisKarton": {
+    "description": "Theme feel name."
+  },
+  "profileHisKagit": "Kâğıt",
+  "@profileHisKagit": {
+    "description": "Theme feel name."
+  },
+  "profileHisCam": "Cam",
+  "@profileHisCam": {
+    "description": "Theme feel name."
+  },
+  "profileHisDuz": "Düz",
+  "@profileHisDuz": {
+    "description": "Theme feel name."
+  },
+  "profileHisMaliyetYok": "Ek çizim yok",
+  "@profileHisMaliyetYok": {
+    "description": "Theme feel performance cost label."
+  },
+  "profileHisMaliyetDusuk": "Düşük maliyet",
+  "@profileHisMaliyetDusuk": {
+    "description": "Theme feel performance cost label."
+  },
+  "profileHisMaliyetOrta": "Orta maliyet",
+  "@profileHisMaliyetOrta": {
+    "description": "Theme feel performance cost label."
+  },
+  "profileHisMaliyetYuksek": "Yüksek maliyet — düşük donanımda kare düşebilir",
+  "@profileHisMaliyetYuksek": {
+    "description": "Theme feel performance cost label."
+  },
+  "profileKarsiModKoyuAciklama": "Bu, koyu varyant. Otomatik hâli istediğin gibi değilse buradan düzenle.",
+  "@profileKarsiModKoyuAciklama": {
+    "description": "Theme builder: derived dark variant help text."
+  },
+  "profileKarsiModAcikAciklama": "Bu, açık varyant. Otomatik hâli istediğin gibi değilse buradan düzenle.",
+  "@profileKarsiModAcikAciklama": {
+    "description": "Theme builder: derived light variant help text."
+  },
+  "profileKarsiModTuretildi": "Otomatik türetildi",
+  "@profileKarsiModTuretildi": {
+    "description": "Theme builder: the counterpart variant is auto derived."
+  },
+  "profileKarsiModYenidenTuret": "Yeniden türet",
+  "@profileKarsiModYenidenTuret": {
+    "description": "Theme builder: re-derive the counterpart variant."
+  },
+  "profileOzetTemaAdi": "Tema adı",
+  "@profileOzetTemaAdi": {
+    "description": "Theme builder: theme name field label."
+  },
+  "profileTemaAdiBos": "Temaya bir ad ver.",
+  "@profileTemaAdiBos": {
+    "description": "Theme builder: empty theme name validation."
+  },
+  "profileOzetYuva": "Yuva",
+  "@profileOzetYuva": {
+    "description": "Theme builder: slot picker label."
+  },
+  "profileYuvaBos": "Yuva {slot} · boş",
+  "@profileYuvaBos": {
+    "description": "Theme builder: empty slot chip label.",
+    "placeholders": {
+      "slot": {
+        "type": "String"
+      }
+    }
+  },
+  "profileYuvaDolu": "Yuva {slot} · üzerine yazılır",
+  "@profileYuvaDolu": {
+    "description": "Theme builder: occupied slot chip label.",
+    "placeholders": {
+      "slot": {
+        "type": "String"
+      }
+    }
+  },
+  "profileKaydetVeUygula": "Kaydet ve uygula",
+  "@profileKaydetVeUygula": {
+    "description": "Theme builder: save and apply action."
+  },
+  "profileTemaKaydedildi": "Tema kaydedildi ve uygulandı.",
+  "@profileTemaKaydedildi": {
+    "description": "Theme builder: save success message."
+  },
+  "profileTemaKaydedilemedi": "Tema kaydedilemedi. Cihaz depolaması yanıt vermedi.",
+  "@profileTemaKaydedilemedi": {
+    "description": "Theme builder: save failure message (device storage refused)."
+  },
+  "profileKaydedilmemisDegisiklik": "Kaydedilmemiş değişiklikler var. Yine de çıkılsın mı?",
+  "@profileKaydedilmemisDegisiklik": {
+    "description": "Theme builder: unsaved changes warning."
+  },
+  "profileCik": "Çık",
+  "@profileCik": {
+    "description": "Theme builder: leave without saving."
+  },
+  "profileDevamEt": "Devam et",
+  "@profileDevamEt": {
+    "description": "Theme builder: keep editing."
+  },
+  "profileOnizlemeBaslikOrnegi": "Bugünün odağı",
+  "@profileOnizlemeBaslikOrnegi": {
+    "description": "Theme preview: sample title line."
+  },
+  "profileOnizlemeGovdeOrnegi": "Kısa bir çalışma oturumu planla.",
+  "@profileOnizlemeGovdeOrnegi": {
+    "description": "Theme preview: sample body line."
+  }
 }

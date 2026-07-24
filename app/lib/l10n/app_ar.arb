@@ -2916,18 +2916,6 @@
       }
     }
   },
-  "profileValue1AtmosferSec": "1 · اختر الأجواء",
-  "@profileValue1AtmosferSec": {
-    "description": "Profile user-facing text. Source: 1 · Atmosfer seç"
-  },
-  "profileValue2Mood": "2 · المزاج",
-  "@profileValue2Mood": {
-    "description": "Profile user-facing text. Source: 2 · Mood"
-  },
-  "profileValue4OzetVeUygula": "4 · الملخص والتطبيق",
-  "@profileValue4OzetVeUygula": {
-    "description": "Profile user-facing text. Source: 4 · Özet ve uygula"
-  },
   "profileAdiDuzenle": "تعديل الاسم",
   "@profileAdiDuzenle": {
     "description": "Profile user-facing text. Source: Adı düzenle"
@@ -2935,10 +2923,6 @@
   "profileAnaRenk": "اللون الأساسي",
   "@profileAnaRenk": {
     "description": "Profile user-facing text. Source: Ana Renk"
-  },
-  "profileAnindaOnizlenir": "معاينة فورية.",
-  "@profileAnindaOnizlenir": {
-    "description": "Profile user-facing text. Source: Anında önizlenir."
   },
   "profileAyarlar": "الإعدادات",
   "@profileAyarlar": {
@@ -2951,10 +2935,6 @@
   "profileAcik": "تشغيل",
   "@profileAcik": {
     "description": "Profile user-facing text. Source: Açık"
-  },
-  "profileBalon": "بالون",
-  "@profileBalon": {
-    "description": "Profile user-facing text. Source: Balon"
   },
   "profileBasariYolculugum": "رحلة إنجازاتي 🏆",
   "@profileBasariYolculugum": {
@@ -3275,10 +3255,6 @@
       }
     }
   },
-  "profileKeskin": "حاد",
-  "@profileKeskin": {
-    "description": "Profile user-facing text. Source: Keskin"
-  },
   "profileKilitli": "مقفل",
   "@profileKilitli": {
     "description": "Profile user-facing text. Source: Kilitli"
@@ -3310,10 +3286,6 @@
   "profileMisafir": "ضيف",
   "@profileMisafir": {
     "description": "Profile user-facing text. Source: Misafir"
-  },
-  "profilePaletAdi": "اسم اللوحة",
-  "@profilePaletAdi": {
-    "description": "Profile user-facing text. Source: Palet Adı"
   },
   "profileProfil": "الملف الشخصي",
   "@profileProfil": {
@@ -3403,30 +3375,14 @@
   "@profileTarih": {
     "description": "Profile user-facing text. Source: Tarih"
   },
-  "profileTemaStudyosu": "استوديو السمة",
-  "@profileTemaStudyosu": {
-    "description": "Profile user-facing text. Source: Tema Stüdyosu"
-  },
   "profileTemaModu": "وضع السمة",
   "@profileTemaModu": {
     "description": "Profile user-facing text. Source: Tema modu"
-  },
-  "profileTemaUygulandiYenidenBaslatma": "طُبّقت السمة — لا حاجة لإعادة التشغيل.",
-  "@profileTemaUygulandiYenidenBaslatma": {
-    "description": "Profile user-facing text. Source: Tema uygulandı — yeniden başlatma gerekmez."
-  },
-  "profileTemayiUygula": "تطبيق السمة",
-  "@profileTemayiUygula": {
-    "description": "Profile user-facing text. Source: Temayı uygula"
   },
   "profileTumKademeler": "كل المستويات",
   "profileKademe": "المستوى",
   "@profileTumKademeler": {
     "description": "Profile user-facing text. Source: Tüm kademeler"
-  },
-  "profileUygula": "تطبيق",
-  "@profileUygula": {
-    "description": "Profile user-facing text. Source: Uygula"
   },
   "profileVazgec": "إلغاء",
   "@profileVazgec": {
@@ -3468,10 +3424,6 @@
   "@profileYenilikleriVeGecmisSurum": {
     "description": "Profile user-facing text. Source: Yenilikleri ve geçmiş sürüm notlarını oku"
   },
-  "profileYuvarlak": "مستدير",
-  "@profileYuvarlak": {
-    "description": "Profile user-facing text. Source: Yuvarlak"
-  },
   "profileYonetim": "الإدارة",
   "@profileYonetim": {
     "description": "Profile user-facing text. Source: Yönetim"
@@ -3508,19 +3460,6 @@
   "@profileOzelPalet": {
     "description": "Profile user-facing text. Source: Özel Palet"
   },
-  "profileOzelPaletI1": "تعديل اللوحة المخصصة {index}",
-  "@profileOzelPaletI1": {
-    "description": "Profile user-facing text. Source: Özel Palet ${i + 1} Düzenle",
-    "placeholders": {
-      "index": {
-        "type": "String"
-      }
-    }
-  },
-  "profileOzelPaletler": "لوحات مخصصة",
-  "@profileOzelPaletler": {
-    "description": "Profile user-facing text. Source: Özel Paletler"
-  },
   "profileOzetlerVeKullaniciRaporlari": "الملخصات وتقارير المستخدم",
   "@profileOzetlerVeKullaniciRaporlari": {
     "description": "Profile user-facing text. Source: Özetler ve kullanıcı raporları"
@@ -3532,10 +3471,6 @@
   "profileIptal": "إلغاء",
   "@profileIptal": {
     "description": "Profile user-facing text. Source: İptal"
-  },
-  "profileSekilSecimiOnizlemedeYansir": "يظهر اختيار الشكل في المعاينة. محرك الشكل الدائم المتقدم WP-55",
-  "@profileSekilSecimiOnizlemedeYansir": {
-    "description": "Profile user-facing text. Source: Şekil seçimi önizlemede yansır. Kalıcı şekil motoru WP-55 gelişmiş"
   },
   "profileSifre": "كلمة المرور",
   "@profileSifre": {
@@ -4137,18 +4072,6 @@
   "profilePazar": "الأحد",
   "@profilePazar": {
     "description": "Profile user-facing text. Source: Pazar"
-  },
-  "profileTema": "السمة",
-  "@profileTema": {
-    "description": "Profile user-facing text. Source: Tema"
-  },
-  "profileMood": "المزاج",
-  "@profileMood": {
-    "description": "Profile user-facing text. Source: Mood"
-  },
-  "profileSekil": "الشكل",
-  "@profileSekil": {
-    "description": "Profile user-facing text. Source: Şekil"
   },
   "profileTemmuz": "يوليو",
   "@profileTemmuz": {
@@ -4868,5 +4791,333 @@
   "notificationsLiveTimerPending": "شغّل المؤقت ثم حدّث الحالة لإجراء القياس.",
   "notificationsLiveTimerSystemAllowed": "يسمح النظام بالإشعارات المباشرة البارزة.",
   "notificationsLiveTimerSystemBlocked": "لم يسمح النظام أو الجهاز بالواجهة المباشرة؛ يستمر المؤقت القياسي في العمل.",
-  "notificationsLiveTimerLegacyFallback": "يستخدم إصدار أندرويد هذا المؤقت الدائم القياسي."
+  "notificationsLiveTimerLegacyFallback": "يستخدم إصدار أندرويد هذا المؤقت الدائم القياسي.",
+  "profileKendiTemaniOlustur": "أنشئ سمتك الخاصة",
+  "@profileKendiTemaniOlustur": {
+    "description": "Appearance: entry point for the theme builder wizard."
+  },
+  "profileKendiTemaniOlusturAlt": "الألوان والخطوط والأشكال والأجواء والإحساس — مع معاينة حية",
+  "@profileKendiTemaniOlusturAlt": {
+    "description": "Appearance: subtitle of the theme builder entry."
+  },
+  "profileHazirTemalar": "السمات الجاهزة",
+  "@profileHazirTemalar": {
+    "description": "Appearance: section title for built-in themes."
+  },
+  "profileTemaSlotlariDolu": "جميع خانات السمات الثلاث ممتلئة. احذف أو عدّل واحدة لإفساح المجال.",
+  "@profileTemaSlotlariDolu": {
+    "description": "Appearance: all three custom theme slots are in use."
+  },
+  "profileTemayiSilOnay": "هل تريد حذف “{name}”؟ لا يمكن التراجع عن هذا الإجراء.",
+  "@profileTemayiSilOnay": {
+    "description": "Appearance: delete confirmation for a saved custom theme.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "profileTemaSilindi": "تم حذف السمة.",
+  "@profileTemaSilindi": {
+    "description": "Appearance: custom theme deleted confirmation."
+  },
+  "profileTemaSaltOkunur": "أُنشئت بإصدار أحدث — للقراءة فقط",
+  "@profileTemaSaltOkunur": {
+    "description": "Appearance: theme was written by a newer app version."
+  },
+  "profileAdimZemin": "الأساس",
+  "@profileAdimZemin": {
+    "description": "Theme builder: step name."
+  },
+  "profileAdimRenkler": "الألوان",
+  "@profileAdimRenkler": {
+    "description": "Theme builder: step name."
+  },
+  "profileAdimYazilar": "الخطوط",
+  "@profileAdimYazilar": {
+    "description": "Theme builder: step name."
+  },
+  "profileAdimBicim": "الشكل",
+  "@profileAdimBicim": {
+    "description": "Theme builder: step name."
+  },
+  "profileAdimAtmosfer": "الأجواء",
+  "@profileAdimAtmosfer": {
+    "description": "Theme builder: step name."
+  },
+  "profileAdimHis": "الإحساس",
+  "@profileAdimHis": {
+    "description": "Theme builder: step name."
+  },
+  "profileAdimKarsiMod": "الوضع المقابل",
+  "@profileAdimKarsiMod": {
+    "description": "Theme builder: step name for the opposite brightness variant."
+  },
+  "profileAdimOzet": "الملخّص",
+  "@profileAdimOzet": {
+    "description": "Theme builder: step name."
+  },
+  "profileZeminAciklama": "اختر نقطة بداية. يمكنك تغيير كل شيء في الخطوات التالية.",
+  "@profileZeminAciklama": {
+    "description": "Theme builder: base step help text."
+  },
+  "profileDuzenlenenVaryant": "النسخة قيد التحرير",
+  "@profileDuzenlenenVaryant": {
+    "description": "Theme builder: which brightness variant is being edited."
+  },
+  "profileRenkZemin": "الخلفية",
+  "@profileRenkZemin": {
+    "description": "Theme builder: scaffold colour."
+  },
+  "profileRenkYuzey": "السطح",
+  "@profileRenkYuzey": {
+    "description": "Theme builder: surface colour."
+  },
+  "profileRenkYuzeyYuksek": "سطح مرتفع",
+  "@profileRenkYuzeyYuksek": {
+    "description": "Theme builder: raised surface colour."
+  },
+  "profileRenkMetin": "النص",
+  "@profileRenkMetin": {
+    "description": "Theme builder: primary text colour."
+  },
+  "profileRenkIkincilMetin": "نص ثانوي",
+  "@profileRenkIkincilMetin": {
+    "description": "Theme builder: secondary text colour."
+  },
+  "profileRenkKenarlik": "الحدود",
+  "@profileRenkKenarlik": {
+    "description": "Theme builder: border colour."
+  },
+  "profileKontrastUyarisi": "تباين منخفض ({ratio}:1) — أقل من WCAG AA.",
+  "@profileKontrastUyarisi": {
+    "description": "Theme builder: WCAG AA contrast warning with the measured ratio.",
+    "placeholders": {
+      "ratio": {
+        "type": "String"
+      }
+    }
+  },
+  "profileKontrastDuzelt": "إصلاح",
+  "@profileKontrastDuzelt": {
+    "description": "Theme builder: one-tap contrast fix action."
+  },
+  "profileYaziBaslikFontu": "خط العناوين",
+  "@profileYaziBaslikFontu": {
+    "description": "Theme builder: title font family selector."
+  },
+  "profileYaziGovdeFontu": "خط النص",
+  "@profileYaziGovdeFontu": {
+    "description": "Theme builder: body font family selector."
+  },
+  "profileYaziSayacFontu": "خط المؤقّت",
+  "@profileYaziSayacFontu": {
+    "description": "Theme builder: timer font family selector."
+  },
+  "profileYaziKalinlik": "السماكة",
+  "@profileYaziKalinlik": {
+    "description": "Theme builder: font weight slider."
+  },
+  "profileYaziOlcek": "الحجم",
+  "@profileYaziOlcek": {
+    "description": "Theme builder: font scale slider."
+  },
+  "profileYaziHarfAraligi": "تباعد الأحرف",
+  "@profileYaziHarfAraligi": {
+    "description": "Theme builder: letter spacing slider."
+  },
+  "profileFontDuz": "بدون زوائد",
+  "@profileFontDuz": {
+    "description": "Theme builder: sans-serif font option."
+  },
+  "profileFontTirnakli": "بزوائد",
+  "@profileFontTirnakli": {
+    "description": "Theme builder: serif font option."
+  },
+  "profileFontEsAralikli": "ثابت العرض",
+  "@profileFontEsAralikli": {
+    "description": "Theme builder: monospace font option."
+  },
+  "profileBicimKucukYaricap": "نصف قطر صغير",
+  "@profileBicimKucukYaricap": {
+    "description": "Theme builder: small corner radius slider."
+  },
+  "profileBicimKoseYaricapi": "نصف قطر الزوايا",
+  "@profileBicimKoseYaricapi": {
+    "description": "Theme builder: card corner radius slider."
+  },
+  "profileBicimBuyukYaricap": "نصف قطر كبير",
+  "@profileBicimBuyukYaricap": {
+    "description": "Theme builder: large corner radius slider."
+  },
+  "profileBicimGolge": "الظل",
+  "@profileBicimGolge": {
+    "description": "Theme builder: card elevation slider."
+  },
+  "profileBicimKenarKalinligi": "سماكة الحدود",
+  "@profileBicimKenarKalinligi": {
+    "description": "Theme builder: border width slider."
+  },
+  "profileBicimKeskin": "زوايا حادة",
+  "@profileBicimKeskin": {
+    "description": "Theme builder: sharp corners switch."
+  },
+  "profileAtmosferAciklama": "تُطبَّق الأجواء على التطبيق كله كطبقة لون وتوهّج خفيفة.",
+  "@profileAtmosferAciklama": {
+    "description": "Theme builder: atmosphere step help text."
+  },
+  "profileAtmosferDegradeBasi": "بداية التدرّج",
+  "@profileAtmosferDegradeBasi": {
+    "description": "Theme builder: gradient start colour."
+  },
+  "profileAtmosferDegradeSonu": "نهاية التدرّج",
+  "@profileAtmosferDegradeSonu": {
+    "description": "Theme builder: gradient end colour."
+  },
+  "profileAtmosferParilti": "لون التوهّج",
+  "@profileAtmosferParilti": {
+    "description": "Theme builder: glow colour."
+  },
+  "profileAtmosferPariltiGucu": "قوة التوهّج",
+  "@profileAtmosferPariltiGucu": {
+    "description": "Theme builder: glow strength slider."
+  },
+  "profileAtmosferPariltiYumusakligi": "نعومة التوهّج",
+  "@profileAtmosferPariltiYumusakligi": {
+    "description": "Theme builder: glow softness slider."
+  },
+  "profileAtmosferCamlik": "لمعة زجاجية",
+  "@profileAtmosferCamlik": {
+    "description": "Theme builder: glass sheen slider."
+  },
+  "profileHisAciklama": "يضبط الإحساس الملمس والشكل والأجواء معًا. الخيارات الثقيلة قد تُبطئ الأجهزة الضعيفة.",
+  "@profileHisAciklama": {
+    "description": "Theme builder: feel step help text."
+  },
+  "profileHisModern": "عصري",
+  "@profileHisModern": {
+    "description": "Theme feel name."
+  },
+  "profileHisZen": "هادئ",
+  "@profileHisZen": {
+    "description": "Theme feel name."
+  },
+  "profileHisNeon": "نيون",
+  "@profileHisNeon": {
+    "description": "Theme feel name."
+  },
+  "profileHisVintage": "كلاسيكي",
+  "@profileHisVintage": {
+    "description": "Theme feel name."
+  },
+  "profileHisKarton": "كرتون مهترئ",
+  "@profileHisKarton": {
+    "description": "Theme feel name."
+  },
+  "profileHisKagit": "ورق",
+  "@profileHisKagit": {
+    "description": "Theme feel name."
+  },
+  "profileHisCam": "زجاج",
+  "@profileHisCam": {
+    "description": "Theme feel name."
+  },
+  "profileHisDuz": "مسطّح",
+  "@profileHisDuz": {
+    "description": "Theme feel name."
+  },
+  "profileHisMaliyetYok": "بدون رسم إضافي",
+  "@profileHisMaliyetYok": {
+    "description": "Theme feel performance cost label."
+  },
+  "profileHisMaliyetDusuk": "تكلفة منخفضة",
+  "@profileHisMaliyetDusuk": {
+    "description": "Theme feel performance cost label."
+  },
+  "profileHisMaliyetOrta": "تكلفة متوسطة",
+  "@profileHisMaliyetOrta": {
+    "description": "Theme feel performance cost label."
+  },
+  "profileHisMaliyetYuksek": "تكلفة عالية — قد تنخفض سلاسة العرض على الأجهزة الضعيفة",
+  "@profileHisMaliyetYuksek": {
+    "description": "Theme feel performance cost label."
+  },
+  "profileKarsiModKoyuAciklama": "هذه النسخة الداكنة. عدّلها هنا إذا لم تناسبك النسخة التلقائية.",
+  "@profileKarsiModKoyuAciklama": {
+    "description": "Theme builder: derived dark variant help text."
+  },
+  "profileKarsiModAcikAciklama": "هذه النسخة الفاتحة. عدّلها هنا إذا لم تناسبك النسخة التلقائية.",
+  "@profileKarsiModAcikAciklama": {
+    "description": "Theme builder: derived light variant help text."
+  },
+  "profileKarsiModTuretildi": "مُشتقّة تلقائيًا",
+  "@profileKarsiModTuretildi": {
+    "description": "Theme builder: the counterpart variant is auto derived."
+  },
+  "profileKarsiModYenidenTuret": "اشتقاق من جديد",
+  "@profileKarsiModYenidenTuret": {
+    "description": "Theme builder: re-derive the counterpart variant."
+  },
+  "profileOzetTemaAdi": "اسم السمة",
+  "@profileOzetTemaAdi": {
+    "description": "Theme builder: theme name field label."
+  },
+  "profileTemaAdiBos": "أعطِ السمة اسمًا.",
+  "@profileTemaAdiBos": {
+    "description": "Theme builder: empty theme name validation."
+  },
+  "profileOzetYuva": "الخانة",
+  "@profileOzetYuva": {
+    "description": "Theme builder: slot picker label."
+  },
+  "profileYuvaBos": "الخانة {slot} · فارغة",
+  "@profileYuvaBos": {
+    "description": "Theme builder: empty slot chip label.",
+    "placeholders": {
+      "slot": {
+        "type": "String"
+      }
+    }
+  },
+  "profileYuvaDolu": "الخانة {slot} · سيُستبدل محتواها",
+  "@profileYuvaDolu": {
+    "description": "Theme builder: occupied slot chip label.",
+    "placeholders": {
+      "slot": {
+        "type": "String"
+      }
+    }
+  },
+  "profileKaydetVeUygula": "احفظ وطبّق",
+  "@profileKaydetVeUygula": {
+    "description": "Theme builder: save and apply action."
+  },
+  "profileTemaKaydedildi": "تم حفظ السمة وتطبيقها.",
+  "@profileTemaKaydedildi": {
+    "description": "Theme builder: save success message."
+  },
+  "profileTemaKaydedilemedi": "تعذّر حفظ السمة. لم تستجب ذاكرة الجهاز.",
+  "@profileTemaKaydedilemedi": {
+    "description": "Theme builder: save failure message (device storage refused)."
+  },
+  "profileKaydedilmemisDegisiklik": "لديك تغييرات غير محفوظة. هل تريد الخروج؟",
+  "@profileKaydedilmemisDegisiklik": {
+    "description": "Theme builder: unsaved changes warning."
+  },
+  "profileCik": "خروج",
+  "@profileCik": {
+    "description": "Theme builder: leave without saving."
+  },
+  "profileDevamEt": "متابعة التحرير",
+  "@profileDevamEt": {
+    "description": "Theme builder: keep editing."
+  },
+  "profileOnizlemeBaslikOrnegi": "تركيز اليوم",
+  "@profileOnizlemeBaslikOrnegi": {
+    "description": "Theme preview: sample title line."
+  },
+  "profileOnizlemeGovdeOrnegi": "خطّط لجلسة دراسة قصيرة.",
+  "@profileOnizlemeGovdeOrnegi": {
+    "description": "Theme preview: sample body line."
+  }
 }

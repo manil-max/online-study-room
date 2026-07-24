@@ -18,7 +18,7 @@
 - **Release ilkesi:** Android beta/stable artefaktı Android işi başarılı olunca yayımlanır. Windows bağımsız sürer ve başarılı olursa aynı release'e eklenir; Windows hatası Android güncellemesini geri çekmez.
 - **Yönetim varsayılanı:** Production `deploy_enabled/release_enabled` kapalıdır. Stable yalnız protected `production` Environment, exact SHA/head/project-ref GO ve reviewer kanıtıyla ilerler.
 - **Kurallar:** Kök `AGENTS.md`, `.agents/AGENTS.md` ve `docs/KALITE-PROGRAMI.md` geçerlidir. Tek çalışma dalı `main`; her WP ayrı commit; production varsayılmaz.
-- **Son WP:** **295** (286–295 planlandı, uygulanmadı) · Sıradaki boş numara: **296**.
+- **Son WP:** **295** · Sıradaki boş numara: **296**. Aşama A'da kod/test tamamlanan: 286, 287, 288, 289, 290, 291, 293.
 - **Aktif tur:** Yeni Özellik Turu **Aşama A** — plan **rev. 2** hazır, uygulama bekliyor. Kanonik plan: [`docs/YENI-OZELLIK-PLANI.md`](docs/YENI-OZELLIK-PLANI.md).
 - ✅ **Ortam gerçeği uzlaştırıldı (WP-293, 2026-07-24):** yukarıdaki altı gerçekli durum modeli kanoniktir; production deploy kapısı yeniden kilitlendi. `deploy-contract.json`, `KALITE-PROGRAMI.md`, `project.md`, `backlog.md`, `tooling/README.md` aynı gerçeğe getirildi.
 
@@ -33,7 +33,7 @@
 - **Durum:** [x] Boşta
 - **Faz/WP:** —
 - **SAHİP yollar:** —
-- **Son not:** WP-293 (Gate 0) kod/doküman tamam ve commit'lendi. Sıradaki: WP-287 (şifre sıfırlama) veya WP-286 (ayarlar IA).
+- **Son not:** WP-290 kod/test tamam ve commit'lendi (2026-07-25). Cihaz QA bekliyor. Sıradaki uygulanabilir iş: WP-292 (taç) — WP-290 kabulüne bağlı; WP-294 hâlâ K-7 ile bloklu.
 
 ### Codex Lane
 - **Durum:** [x] Boşta
@@ -60,7 +60,7 @@
 | 1 | WP-287 şifre sıfırlama · WP-286 ayarlar IA | 287 [x] kod/test · 286 [x] kod/test | 287: sahip panel + cihaz QA bekliyor · 286: Android cihaz QA bekliyor |
 | 2 | WP-291 boyut paneli · WP-289 his araştırması | 291 [x] · 289 [x] tamam | 291 cihaz QA bekliyor · 289 kapandı |
 | 3 | WP-288 tema modeli · WP-294 l10n borcu | 288 [x] kod/test · 294 [ ] | 288 cihaz QA bekliyor; 294 l10n sıcak yüzey + K-7 bloklu |
-| 4 | WP-290 tema sihirbazı | [ ] Bekliyor | Tek başına; `core/theme/**` + `pubspec.yaml` |
+| 4 | WP-290 tema sihirbazı | [x] **Kod/test tamam** | Cihaz QA bekliyor · ADR-4 font paketleme ve APK boyut ölçümü kapsam dışı kaldı (kart notu) |
 | 5 | WP-292 taç · WP-295 kamp ateşi | [ ] Bekliyor | 295 sahiple konuşma ister |
 | Sonra | WP-276/277 ops kabulü | [ ] Bekliyor | Sentetik staging ops kanıtı; WP-276 Play Store için de gerekli |
 | Karar | WP-278/279 | [?] Ürün/ops kararı | Açık sahip ve kapsam kararı olmadan başlanmaz |
@@ -248,12 +248,20 @@ DALGA 5  WP-292  Taç              ‖  WP-295  Kamp ateşi (sahip kararı sonra
 - **Tuzaklar:** Telif korumalı görsel/asset kopyalamak — **yalnız fikir/teknik desen alınır**, varlık kopyalanmaz.
 - **Model önerisi:** 🔵 Sonnet
 
-### WP-290: "Kendi Temanı Oluştur" sihirbazı ve görünüm ekranı yeniden düzeni 🎨
+### WP-290: "Kendi Temanı Oluştur" sihirbazı ve görünüm ekranı yeniden düzeni 🎨 ✅ KOD/TEST TAMAM
 - **Program/Faz:** Yeni Özellik Turu · Aşama A · Tema programı · (plan §3 F-04-B)
-- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-288 kabul (289 zaten 288'in girdisi)
+- **Ajan:** Claude · **Durum:** [x] Kod/test tamam (2026-07-25) — 8 adımlı sihirbaz (zemin → renkler → yazılar → biçim → atmosfer → his → karşı mod → özet), her adımda **gerçek `ThemeData` ile** canlı önizleme; görünüm ekranı yeniden düzenlendi (oluşturucu girişi → temalarım `updatedAt` desc → ince ayraç → tema modu → hazır temalar → hazır paletler). `ThemeStudioScreen` ve `custom_palette_editor.dart` kaldırıldı. `flutter analyze` **0**, **755 test yeşil** (30 yeni: 6 golden + 24 birim/widget). **Bekleyen:** cihaz QA `Cihazda doğrulanmalı`.
+- 🔴 **Ölü anahtar bulgusu ve düzeltmesi (kart kapsamına eklendi):** WP-288 `AppAtmosphere`/`AppFeel`/`AppShapes`/`AppMotion` katmanlarını modelledi ama uygulamada **tek tüketicisi yoktu** (`context.appShapes/appMotion/appFeel` → tanım dışında 0 çağrı; atmosfer yalnız silinen stüdyo önizlemesinde). Sihirbazın atmosfer ve his adımları bu hâliyle DoD'yi ihlal ederdi. Plan §3 F-04-C render katmanını zaten WP-290'ın 6. adımı sayıyor → yeni `theme_builder/feel_overlay.dart` (statik gren + parıltı/degrade tint + cam sızıntısı) yazıldı ve **`app/lib/main.dart` `MaterialApp.builder`'ına** bağlandı (kart SAHİP listesinde yoktu, gerekçeli eklendi; o an başka lane tutmuyordu). Hiçbir efekt açık değilse child olduğu gibi döner — Modern/Düz hislerde ek widget/çizim yok, testle sabitlendi.
+- ⚠️ **Kapsam dışı bırakılanlar (açıkça):**
+  1. **ADR-4 paketlenmiş font asset'leri YAPILMADI.** Sihirbaz yazı adımı platformun genel ailelerini (`sans-serif`/`serif`/`monospace`) + ağırlık + ölçek + harf aralığı sunuyor; hepsi gerçek etki üretiyor, `pubspec.yaml`/`assets/fonts/**` **hiç değişmedi**. Gerekçe: OFL/Apache font ikililerinin repoya indirilmesi ayrı bir karar (lisans doğrulaması + boyut bütçesi); sözleşme `fontFamily` string'i olduğu için sonradan aile eklemek yalnız `DraftTypography.kFamilies` + `pubspec.yaml` satırıdır. **Yan etki:** gömülü subset font olmadığı için AR/RTL'de kutu karakter riski de doğmuyor (R7 bu hâliyle kapalı).
+  2. **`APK boyut artışı ≤ 2.5 MB` ÖLÇÜLEMEDİ.** Kartın komutu `--flavor stable` istiyor; stable = **production backend** ve build `stable artefaktı için CHANNEL zorunlu` diye fail-closed duruyor (doğru davranış, GO yok). `local` flavor ile alınan artımlı ölçüm ise Gradle'ın önceki çok-ABI build'inden kalan `libapp.so`'yu paketlediği için geçersiz çıktı (iki APK'da `libapp.so` bayt bayt aynı). **Asset eklenmediği için artış yalnız Dart kodu kadardır** ama ölçülmüş bir sayı iddia edilmiyor; temiz baseline ölçümü cihaz QA turunda ya da ayrı bir WP'de alınmalı.
+  3. **`AppFeel.edgeIrregularity`** hazır his değerlerinde taşınıyor ama uygulama genelinde çizilmiyor (her karta özel `ShapeBorder` gerektirir). Sihirbazda **kullanıcı kontrolü yok**, yani ölü anahtar değil; tamamlanması ayrı iş.
+  4. **`AppMotion` süreleri** hâlâ hiçbir animasyon tarafından tüketilmiyor (WP-288'den devraldığı durum). His seçimi doku/şekil/atmosfer üzerinden gerçek etki üretiyor; hareket karakterini bağlamak ayrı iş.
+- ℹ️ **Not:** `main`'de bu WP'den **önce** kırmızı olan 3 test var (`alarms_screen_test.dart`, `classroom/study_timer_card_stop_test.dart`, `clock_widgets_screen_test.dart`). Temiz HEAD'de doğrulandı — WP-290 kaynaklı değil, ayrı debug WP'si gerekiyor.
 - **Problem:** Görünüm ekranı bugün "renk seçimi" gibi duruyor; kullanıcı arka plan/yazı/font/şekil/atmosferi tek tek seçemiyor. Sahip adım adım, canlı önizlemeli bir oluşturucu istiyor. Ayrıca **3 yuva için düzenleme ve silme** UI'ı gerekiyor (10. tur).
 - **Kapsam dışı:** Tema paylaşma/kod ile aktarma, XP ile kilit, widget/bildirim teması, yeni ekonomi kuralı, sunucu senkronu (iptal).
-- **SAHİP dosyalar (yaz):** `app/lib/features/profile/appearance_screen.dart`, `app/lib/features/profile/theme_studio_screen.dart` (**kaldırılacak**), yeni sihirbaz dosyaları `app/lib/features/profile/theme_builder/**`, `app/lib/core/theme/theme_tokens.dart` (tipografi/his genişletmesi), `app/pubspec.yaml` (font asset'leri), `app/assets/fonts/**`, `app/lib/l10n/app_*.arb`, golden + widget testleri.
+- **SAHİP dosyalar (yaz):** `app/lib/features/profile/appearance_screen.dart`, `app/lib/features/profile/theme_studio_screen.dart` (**kaldırılacak**), yeni sihirbaz dosyaları `app/lib/features/profile/theme_builder/**`, `app/lib/core/theme/theme_tokens.dart` (tipografi/his genişletmesi), `app/pubspec.yaml` (font asset'leri), `app/assets/fonts/**`, `app/lib/l10n/app_*.arb`, golden + widget testleri. 🔴 **Uygulamada eklenen:** `app/lib/main.dart` (yalnız `builder` içinde `FeelOverlay` sarmalaması). **Dokunulmayan:** `theme_tokens.dart`, `pubspec.yaml`, `assets/fonts/**` (gerek kalmadı — model WP-288'de yeterliydi, font paketlenmedi).
+- **Değişen dosyalar:** yeni `theme_builder/` (8 dosya: `theme_draft.dart`, `theme_contrast.dart`, `theme_feel_catalog.dart`, `feel_overlay.dart`, `theme_preview.dart`, `theme_builder_screen.dart`, `theme_builder_steps.dart`, `theme_builder_widgets.dart`) · `appearance_screen.dart` (yeniden yazıldı) · `main.dart` (+1 sarmalama) · l10n ×4 (**+77 anahtar, −18 yetim anahtar**) · silinen: `theme_studio_screen.dart`, `widgets/custom_palette_editor.dart`, `test/features/theme_studio_test.dart` · yeni test ×5 + 6 golden PNG.
 - **DOKUNMA:** `supabase/migrations/**`, `app/lib/core/navigation/**`, bildirim/timer kodu.
 - **Adımlar:**
   - [ ] Ekran düzeni: en üstte **"Kendi Temanı Oluştur"** girişi → kullanıcının temaları (**en yeni en üstte**, `updatedAt` desc) → **ince ayraç çizgi (başlık metni yok)** → hazır temalar.
@@ -296,7 +304,7 @@ DALGA 5  WP-292  Taç              ‖  WP-295  Kamp ateşi (sahip kararı sonra
 
 ### WP-292: Kozmetik — taç görseli ✨
 - **Program/Faz:** Yeni Özellik Turu · Aşama A (son) · (plan §3 F-08) · *rev.2: kamp ateşi WP-295'e ayrıldı*
-- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-290 kabul
+- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-290 kabul (kod/test 2026-07-25'te tamamlandı, cihaz QA bekliyor)
 - **Problem:** Profil fotoğrafı üstündeki taç sahibe göre kötü duruyor; görsel yenilenecek.
 - **Kapsam dışı:** **XP/kademe mantığı**, başarım motoru, tema motoru, yeni ekonomi kuralı, kamp ateşi (WP-295).
 - **SAHİP dosyalar (yaz):** `app/lib/core/widgets/crowned_avatar.dart`, `app/lib/core/widgets/crown_tiers_sheet.dart`, ilgili golden testler.

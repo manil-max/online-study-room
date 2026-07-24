@@ -2916,18 +2916,6 @@
       }
     }
   },
-  "profileValue1AtmosferSec": "1 · Wählen Sie die Atmosphäre",
-  "@profileValue1AtmosferSec": {
-    "description": "Profile user-facing text. Source: 1 · Atmosfer seç"
-  },
-  "profileValue2Mood": "2 · Stimmung",
-  "@profileValue2Mood": {
-    "description": "Profile user-facing text. Source: 2 · Mood"
-  },
-  "profileValue4OzetVeUygula": "4 · Zusammenfassung und Anwendung",
-  "@profileValue4OzetVeUygula": {
-    "description": "Profile user-facing text. Source: 4 · Özet ve uygula"
-  },
   "profileAdiDuzenle": "Name bearbeiten",
   "@profileAdiDuzenle": {
     "description": "Profile user-facing text. Source: Adı düzenle"
@@ -2935,10 +2923,6 @@
   "profileAnaRenk": "Primär Farbe",
   "@profileAnaRenk": {
     "description": "Profile user-facing text. Source: Ana Renk"
-  },
-  "profileAnindaOnizlenir": "Sofortige Vorschau.",
-  "@profileAnindaOnizlenir": {
-    "description": "Profile user-facing text. Source: Anında önizlenir."
   },
   "profileAyarlar": "Einstellungen",
   "@profileAyarlar": {
@@ -2951,10 +2935,6 @@
   "profileAcik": "Ein",
   "@profileAcik": {
     "description": "Profile user-facing text. Source: Açık"
-  },
-  "profileBalon": "Ballon ",
-  "@profileBalon": {
-    "description": "Profile user-facing text. Source: Balon"
   },
   "profileBasariYolculugum": "Meine Erfolgsreise 🏆",
   "@profileBasariYolculugum": {
@@ -3275,10 +3255,6 @@
       }
     }
   },
-  "profileKeskin": "Die sch?",
-  "@profileKeskin": {
-    "description": "Profile user-facing text. Source: Keskin"
-  },
   "profileKilitli": "Gesperrt",
   "@profileKilitli": {
     "description": "Profile user-facing text. Source: Kilitli"
@@ -3310,10 +3286,6 @@
   "profileMisafir": "Gast",
   "@profileMisafir": {
     "description": "Profile user-facing text. Source: Misafir"
-  },
-  "profilePaletAdi": "Palettenname",
-  "@profilePaletAdi": {
-    "description": "Profile user-facing text. Source: Palet Adı"
   },
   "profileProfil": "Profil",
   "@profileProfil": {
@@ -3403,30 +3375,14 @@
   "@profileTarih": {
     "description": "Profile user-facing text. Source: Tarih"
   },
-  "profileTemaStudyosu": "Weiterlesen",
-  "@profileTemaStudyosu": {
-    "description": "Profile user-facing text. Source: Tema Stüdyosu"
-  },
   "profileTemaModu": "Theme-Modus",
   "@profileTemaModu": {
     "description": "Profile user-facing text. Source: Tema modu"
-  },
-  "profileTemaUygulandiYenidenBaslatma": "Theme angewendet — kein Neustart erforderlich.",
-  "@profileTemaUygulandiYenidenBaslatma": {
-    "description": "Profile user-facing text. Source: Tema uygulandı — yeniden başlatma gerekmez."
-  },
-  "profileTemayiUygula": "Theme hinzufügen",
-  "@profileTemayiUygula": {
-    "description": "Profile user-facing text. Source: Temayı uygula"
   },
   "profileTumKademeler": "Alle Level",
   "profileKademe": "Füllstand",
   "@profileTumKademeler": {
     "description": "Profile user-facing text. Source: Tüm kademeler"
-  },
-  "profileUygula": "Anwenden",
-  "@profileUygula": {
-    "description": "Profile user-facing text. Source: Uygula"
   },
   "profileVazgec": "Abbrechen",
   "@profileVazgec": {
@@ -3468,10 +3424,6 @@
   "@profileYenilikleriVeGecmisSurum": {
     "description": "Profile user-facing text. Source: Yenilikleri ve geçmiş sürüm notlarını oku"
   },
-  "profileYuvarlak": "Rund",
-  "@profileYuvarlak": {
-    "description": "Profile user-facing text. Source: Yuvarlak"
-  },
   "profileYonetim": "Verwaltung",
   "@profileYonetim": {
     "description": "Profile user-facing text. Source: Yönetim"
@@ -3508,19 +3460,6 @@
   "@profileOzelPalet": {
     "description": "Profile user-facing text. Source: Özel Palet"
   },
-  "profileOzelPaletI1": "Benutzerdefinierte Palette {index} Bearbeiten",
-  "@profileOzelPaletI1": {
-    "description": "Profile user-facing text. Source: Özel Palet ${i + 1} Düzenle",
-    "placeholders": {
-      "index": {
-        "type": "String"
-      }
-    }
-  },
-  "profileOzelPaletler": "Benutzerdefinierte Paletten",
-  "@profileOzelPaletler": {
-    "description": "Profile user-facing text. Source: Özel Paletler"
-  },
   "profileOzetlerVeKullaniciRaporlari": "Zusammenfassungen und Anwenderberichte",
   "@profileOzetlerVeKullaniciRaporlari": {
     "description": "Profile user-facing text. Source: Özetler ve kullanıcı raporları"
@@ -3532,10 +3471,6 @@
   "profileIptal": "Abbrechen",
   "@profileIptal": {
     "description": "Profile user-facing text. Source: İptal"
-  },
-  "profileSekilSecimiOnizlemedeYansir": "Die Formauswahl wird in der Vorschau angezeigt. Fortschrittlicher Permanentformmotor WP-55",
-  "@profileSekilSecimiOnizlemedeYansir": {
-    "description": "Profile user-facing text. Source: Şekil seçimi önizlemede yansır. Kalıcı şekil motoru WP-55 gelişmiş"
   },
   "profileSifre": "Passwort",
   "@profileSifre": {
@@ -4137,18 +4072,6 @@
   "profilePazar": "Sonntag",
   "@profilePazar": {
     "description": "Profile user-facing text. Source: Pazar"
-  },
-  "profileTema": "Thema",
-  "@profileTema": {
-    "description": "Profile user-facing text. Source: Tema"
-  },
-  "profileMood": "Stimmung",
-  "@profileMood": {
-    "description": "Profile user-facing text. Source: Mood"
-  },
-  "profileSekil": "Form",
-  "@profileSekil": {
-    "description": "Profile user-facing text. Source: Şekil"
   },
   "profileTemmuz": "Juli",
   "@profileTemmuz": {
@@ -4868,5 +4791,333 @@
   "notificationsLiveTimerPending": "Starte den Timer und aktualisiere dann den Status.",
   "notificationsLiveTimerSystemAllowed": "Das System erlaubt hervorgehobene Live-Benachrichtigungen.",
   "notificationsLiveTimerSystemBlocked": "System oder Gerät erlauben die Live-Oberfläche nicht; der Standard-Timer bleibt aktiv.",
-  "notificationsLiveTimerLegacyFallback": "Diese Android-Version verwendet den standardmäßigen dauerhaften Timer."
+  "notificationsLiveTimerLegacyFallback": "Diese Android-Version verwendet den standardmäßigen dauerhaften Timer.",
+  "profileKendiTemaniOlustur": "Eigenes Design erstellen",
+  "@profileKendiTemaniOlustur": {
+    "description": "Appearance: entry point for the theme builder wizard."
+  },
+  "profileKendiTemaniOlusturAlt": "Farben, Schrift, Form, Atmosphäre und Gefühl – mit Live-Vorschau",
+  "@profileKendiTemaniOlusturAlt": {
+    "description": "Appearance: subtitle of the theme builder entry."
+  },
+  "profileHazirTemalar": "Vorgefertigte Designs",
+  "@profileHazirTemalar": {
+    "description": "Appearance: section title for built-in themes."
+  },
+  "profileTemaSlotlariDolu": "Alle drei Design-Plätze sind belegt. Lösche oder bearbeite eines, um Platz zu schaffen.",
+  "@profileTemaSlotlariDolu": {
+    "description": "Appearance: all three custom theme slots are in use."
+  },
+  "profileTemayiSilOnay": "„{name}“ löschen? Das kann nicht rückgängig gemacht werden.",
+  "@profileTemayiSilOnay": {
+    "description": "Appearance: delete confirmation for a saved custom theme.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "profileTemaSilindi": "Design gelöscht.",
+  "@profileTemaSilindi": {
+    "description": "Appearance: custom theme deleted confirmation."
+  },
+  "profileTemaSaltOkunur": "Mit einer neueren Version erstellt – schreibgeschützt",
+  "@profileTemaSaltOkunur": {
+    "description": "Appearance: theme was written by a newer app version."
+  },
+  "profileAdimZemin": "Basis",
+  "@profileAdimZemin": {
+    "description": "Theme builder: step name."
+  },
+  "profileAdimRenkler": "Farben",
+  "@profileAdimRenkler": {
+    "description": "Theme builder: step name."
+  },
+  "profileAdimYazilar": "Schrift",
+  "@profileAdimYazilar": {
+    "description": "Theme builder: step name."
+  },
+  "profileAdimBicim": "Form",
+  "@profileAdimBicim": {
+    "description": "Theme builder: step name."
+  },
+  "profileAdimAtmosfer": "Atmosphäre",
+  "@profileAdimAtmosfer": {
+    "description": "Theme builder: step name."
+  },
+  "profileAdimHis": "Gefühl",
+  "@profileAdimHis": {
+    "description": "Theme builder: step name."
+  },
+  "profileAdimKarsiMod": "Gegenmodus",
+  "@profileAdimKarsiMod": {
+    "description": "Theme builder: step name for the opposite brightness variant."
+  },
+  "profileAdimOzet": "Zusammenfassung",
+  "@profileAdimOzet": {
+    "description": "Theme builder: step name."
+  },
+  "profileZeminAciklama": "Wähle einen Ausgangspunkt. In den nächsten Schritten kannst du alles ändern.",
+  "@profileZeminAciklama": {
+    "description": "Theme builder: base step help text."
+  },
+  "profileDuzenlenenVaryant": "Bearbeitete Variante",
+  "@profileDuzenlenenVaryant": {
+    "description": "Theme builder: which brightness variant is being edited."
+  },
+  "profileRenkZemin": "Hintergrund",
+  "@profileRenkZemin": {
+    "description": "Theme builder: scaffold colour."
+  },
+  "profileRenkYuzey": "Oberfläche",
+  "@profileRenkYuzey": {
+    "description": "Theme builder: surface colour."
+  },
+  "profileRenkYuzeyYuksek": "Erhöhte Oberfläche",
+  "@profileRenkYuzeyYuksek": {
+    "description": "Theme builder: raised surface colour."
+  },
+  "profileRenkMetin": "Text",
+  "@profileRenkMetin": {
+    "description": "Theme builder: primary text colour."
+  },
+  "profileRenkIkincilMetin": "Sekundärer Text",
+  "@profileRenkIkincilMetin": {
+    "description": "Theme builder: secondary text colour."
+  },
+  "profileRenkKenarlik": "Rahmen",
+  "@profileRenkKenarlik": {
+    "description": "Theme builder: border colour."
+  },
+  "profileKontrastUyarisi": "Geringer Kontrast ({ratio}:1) – unter WCAG AA.",
+  "@profileKontrastUyarisi": {
+    "description": "Theme builder: WCAG AA contrast warning with the measured ratio.",
+    "placeholders": {
+      "ratio": {
+        "type": "String"
+      }
+    }
+  },
+  "profileKontrastDuzelt": "Beheben",
+  "@profileKontrastDuzelt": {
+    "description": "Theme builder: one-tap contrast fix action."
+  },
+  "profileYaziBaslikFontu": "Titelschrift",
+  "@profileYaziBaslikFontu": {
+    "description": "Theme builder: title font family selector."
+  },
+  "profileYaziGovdeFontu": "Fließtextschrift",
+  "@profileYaziGovdeFontu": {
+    "description": "Theme builder: body font family selector."
+  },
+  "profileYaziSayacFontu": "Timer-Schrift",
+  "@profileYaziSayacFontu": {
+    "description": "Theme builder: timer font family selector."
+  },
+  "profileYaziKalinlik": "Stärke",
+  "@profileYaziKalinlik": {
+    "description": "Theme builder: font weight slider."
+  },
+  "profileYaziOlcek": "Skalierung",
+  "@profileYaziOlcek": {
+    "description": "Theme builder: font scale slider."
+  },
+  "profileYaziHarfAraligi": "Buchstabenabstand",
+  "@profileYaziHarfAraligi": {
+    "description": "Theme builder: letter spacing slider."
+  },
+  "profileFontDuz": "Serifenlos",
+  "@profileFontDuz": {
+    "description": "Theme builder: sans-serif font option."
+  },
+  "profileFontTirnakli": "Serif",
+  "@profileFontTirnakli": {
+    "description": "Theme builder: serif font option."
+  },
+  "profileFontEsAralikli": "Monospace",
+  "@profileFontEsAralikli": {
+    "description": "Theme builder: monospace font option."
+  },
+  "profileBicimKucukYaricap": "Kleiner Radius",
+  "@profileBicimKucukYaricap": {
+    "description": "Theme builder: small corner radius slider."
+  },
+  "profileBicimKoseYaricapi": "Eckenradius",
+  "@profileBicimKoseYaricapi": {
+    "description": "Theme builder: card corner radius slider."
+  },
+  "profileBicimBuyukYaricap": "Großer Radius",
+  "@profileBicimBuyukYaricap": {
+    "description": "Theme builder: large corner radius slider."
+  },
+  "profileBicimGolge": "Schatten",
+  "@profileBicimGolge": {
+    "description": "Theme builder: card elevation slider."
+  },
+  "profileBicimKenarKalinligi": "Rahmenbreite",
+  "@profileBicimKenarKalinligi": {
+    "description": "Theme builder: border width slider."
+  },
+  "profileBicimKeskin": "Scharfe Ecken",
+  "@profileBicimKeskin": {
+    "description": "Theme builder: sharp corners switch."
+  },
+  "profileAtmosferAciklama": "Die Atmosphäre wird als sanfter Farbton und Schein über die ganze App gelegt.",
+  "@profileAtmosferAciklama": {
+    "description": "Theme builder: atmosphere step help text."
+  },
+  "profileAtmosferDegradeBasi": "Verlaufsbeginn",
+  "@profileAtmosferDegradeBasi": {
+    "description": "Theme builder: gradient start colour."
+  },
+  "profileAtmosferDegradeSonu": "Verlaufsende",
+  "@profileAtmosferDegradeSonu": {
+    "description": "Theme builder: gradient end colour."
+  },
+  "profileAtmosferParilti": "Leuchtfarbe",
+  "@profileAtmosferParilti": {
+    "description": "Theme builder: glow colour."
+  },
+  "profileAtmosferPariltiGucu": "Leuchtstärke",
+  "@profileAtmosferPariltiGucu": {
+    "description": "Theme builder: glow strength slider."
+  },
+  "profileAtmosferPariltiYumusakligi": "Weichheit des Leuchtens",
+  "@profileAtmosferPariltiYumusakligi": {
+    "description": "Theme builder: glow softness slider."
+  },
+  "profileAtmosferCamlik": "Glasschimmer",
+  "@profileAtmosferCamlik": {
+    "description": "Theme builder: glass sheen slider."
+  },
+  "profileHisAciklama": "Ein Gefühl setzt Textur, Form und Atmosphäre gemeinsam. Schwere Varianten können auf schwachen Geräten ruckeln.",
+  "@profileHisAciklama": {
+    "description": "Theme builder: feel step help text."
+  },
+  "profileHisModern": "Modern",
+  "@profileHisModern": {
+    "description": "Theme feel name."
+  },
+  "profileHisZen": "Zen",
+  "@profileHisZen": {
+    "description": "Theme feel name."
+  },
+  "profileHisNeon": "Neon",
+  "@profileHisNeon": {
+    "description": "Theme feel name."
+  },
+  "profileHisVintage": "Vintage",
+  "@profileHisVintage": {
+    "description": "Theme feel name."
+  },
+  "profileHisKarton": "Abgenutzter Karton",
+  "@profileHisKarton": {
+    "description": "Theme feel name."
+  },
+  "profileHisKagit": "Papier",
+  "@profileHisKagit": {
+    "description": "Theme feel name."
+  },
+  "profileHisCam": "Glas",
+  "@profileHisCam": {
+    "description": "Theme feel name."
+  },
+  "profileHisDuz": "Flach",
+  "@profileHisDuz": {
+    "description": "Theme feel name."
+  },
+  "profileHisMaliyetYok": "Kein Zusatzaufwand",
+  "@profileHisMaliyetYok": {
+    "description": "Theme feel performance cost label."
+  },
+  "profileHisMaliyetDusuk": "Geringe Last",
+  "@profileHisMaliyetDusuk": {
+    "description": "Theme feel performance cost label."
+  },
+  "profileHisMaliyetOrta": "Mittlere Last",
+  "@profileHisMaliyetOrta": {
+    "description": "Theme feel performance cost label."
+  },
+  "profileHisMaliyetYuksek": "Hohe Last – kann auf schwachen Geräten ruckeln",
+  "@profileHisMaliyetYuksek": {
+    "description": "Theme feel performance cost label."
+  },
+  "profileKarsiModKoyuAciklama": "Das ist die dunkle Variante. Bearbeite sie hier, wenn die automatische nicht passt.",
+  "@profileKarsiModKoyuAciklama": {
+    "description": "Theme builder: derived dark variant help text."
+  },
+  "profileKarsiModAcikAciklama": "Das ist die helle Variante. Bearbeite sie hier, wenn die automatische nicht passt.",
+  "@profileKarsiModAcikAciklama": {
+    "description": "Theme builder: derived light variant help text."
+  },
+  "profileKarsiModTuretildi": "Automatisch abgeleitet",
+  "@profileKarsiModTuretildi": {
+    "description": "Theme builder: the counterpart variant is auto derived."
+  },
+  "profileKarsiModYenidenTuret": "Neu ableiten",
+  "@profileKarsiModYenidenTuret": {
+    "description": "Theme builder: re-derive the counterpart variant."
+  },
+  "profileOzetTemaAdi": "Designname",
+  "@profileOzetTemaAdi": {
+    "description": "Theme builder: theme name field label."
+  },
+  "profileTemaAdiBos": "Gib dem Design einen Namen.",
+  "@profileTemaAdiBos": {
+    "description": "Theme builder: empty theme name validation."
+  },
+  "profileOzetYuva": "Platz",
+  "@profileOzetYuva": {
+    "description": "Theme builder: slot picker label."
+  },
+  "profileYuvaBos": "Platz {slot} · leer",
+  "@profileYuvaBos": {
+    "description": "Theme builder: empty slot chip label.",
+    "placeholders": {
+      "slot": {
+        "type": "String"
+      }
+    }
+  },
+  "profileYuvaDolu": "Platz {slot} · wird überschrieben",
+  "@profileYuvaDolu": {
+    "description": "Theme builder: occupied slot chip label.",
+    "placeholders": {
+      "slot": {
+        "type": "String"
+      }
+    }
+  },
+  "profileKaydetVeUygula": "Speichern und anwenden",
+  "@profileKaydetVeUygula": {
+    "description": "Theme builder: save and apply action."
+  },
+  "profileTemaKaydedildi": "Design gespeichert und angewendet.",
+  "@profileTemaKaydedildi": {
+    "description": "Theme builder: save success message."
+  },
+  "profileTemaKaydedilemedi": "Design konnte nicht gespeichert werden. Der Gerätespeicher hat nicht reagiert.",
+  "@profileTemaKaydedilemedi": {
+    "description": "Theme builder: save failure message (device storage refused)."
+  },
+  "profileKaydedilmemisDegisiklik": "Es gibt ungespeicherte Änderungen. Trotzdem verlassen?",
+  "@profileKaydedilmemisDegisiklik": {
+    "description": "Theme builder: unsaved changes warning."
+  },
+  "profileCik": "Verlassen",
+  "@profileCik": {
+    "description": "Theme builder: leave without saving."
+  },
+  "profileDevamEt": "Weiter bearbeiten",
+  "@profileDevamEt": {
+    "description": "Theme builder: keep editing."
+  },
+  "profileOnizlemeBaslikOrnegi": "Fokus des Tages",
+  "@profileOnizlemeBaslikOrnegi": {
+    "description": "Theme preview: sample title line."
+  },
+  "profileOnizlemeGovdeOrnegi": "Plane eine kurze Lerneinheit.",
+  "@profileOnizlemeGovdeOrnegi": {
+    "description": "Theme preview: sample body line."
+  }
 }

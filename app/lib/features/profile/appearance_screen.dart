@@ -4,15 +4,90 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/desktop/desktop_window.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/custom_theme.dart';
 import '../../core/theme/theme_settings.dart';
 import '../desktop/desktop_surface.dart';
-import 'theme_studio_screen.dart';
-import 'widgets/custom_palette_editor.dart';
+import 'theme_builder/theme_builder_screen.dart';
 
-/// Görünüm: atmosfer temaları + palet + açık/koyu/sistem.
-/// Masaüstünde okuma genişliği + çok sütunlu palet ızgarası.
+/// Görünüm: kendi temaların (3 yuva) + hazır temalar + açık/koyu/sistem.
+///
+/// WP-290 düzeni: en üstte **Kendi Temanı Oluştur**, altında kullanıcının
+/// temaları (en yeni en üstte), ince ayraç (başlık metni yok), sonra hazır
+/// temalar. Boş yuvalar liste olarak **gösterilmez** (sahip kararı).
 class AppearanceScreen extends ConsumerWidget {
   const AppearanceScreen({super.key});
+
+  /// En yeni en üstte; `updatedAt` yoksa en sona.
+  static List<CustomTheme> visibleThemes(List<CustomTheme> themes) {
+    final defined = themes.where((theme) => theme.isDefined).toList()
+      ..sort((a, b) {
+        final at = a.updatedAt;
+        final bt = b.updatedAt;
+        if (at == null && bt == null) return a.id.compareTo(b.id);
+        if (at == null) return 1;
+        if (bt == null) return -1;
+        return bt.compareTo(at);
+      });
+    return defined;
+  }
+
+  Future<void> _openBuilder(
+    BuildContext context,
+    WidgetRef ref, {
+    CustomTheme? initial,
+  }) async {
+    final settings = ref.read(themeSettingsProvider);
+    final full = settings.customThemes.every((theme) => theme.isDefined);
+    if (initial == null && full) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context).profileTemaSlotlariDolu),
+        ),
+      );
+      return;
+    }
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => ThemeBuilderScreen(initial: initial)),
+    );
+  }
+
+  Future<void> _delete(
+    BuildContext context,
+    WidgetRef ref,
+    CustomTheme theme,
+  ) async {
+    final l10n = AppLocalizations.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        content: Text(l10n.profileTemayiSilOnay(theme.name)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(l10n.profileIptal),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(l10n.profileSil),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final result = await ref
+        .read(themeSettingsProvider.notifier)
+        .deleteCustomTheme(theme.id);
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          result == ThemeSaveResult.saved
+              ? l10n.profileTemaSilindi
+              : l10n.profileTemaKaydedilemedi,
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -20,13 +95,11 @@ class AppearanceScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final settings = ref.watch(themeSettingsProvider);
     final notifier = ref.read(themeSettingsProvider.notifier);
-    final family = settings.family;
     final desktop = isDesktopWindow;
+    final myThemes = visibleThemes(settings.customThemes);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(AppLocalizations.of(context).profileGorunumVeAtmosfer),
-      ),
+      appBar: AppBar(title: Text(l10n.profileGorunumVeAtmosfer)),
       body: LayoutBuilder(
         builder: (context, constraints) {
           final cols = desktopGridColumns(
@@ -52,31 +125,33 @@ class AppearanceScreen extends ConsumerWidget {
                     Card(
                       child: ListTile(
                         leading: Icon(
-                          Icons.palette_outlined,
+                          Icons.auto_awesome_outlined,
                           color: theme.colorScheme.primary,
                         ),
-                        title: Text(
-                          AppLocalizations.of(context).profileTemaStudyosu,
-                        ),
-                        subtitle: Text(
-                          '${family.localizedName(l10n)} · ${l10n.profileCanliOnizleme}',
-                        ),
-                        trailing: Icon(Icons.chevron_right),
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => ThemeStudioScreen(),
-                            ),
-                          );
-                        },
+                        title: Text(l10n.profileKendiTemaniOlustur),
+                        subtitle: Text(l10n.profileKendiTemaniOlusturAlt),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => _openBuilder(context, ref),
                       ),
                     ),
-                    SizedBox(height: 20),
+                    for (final custom in myThemes)
+                      _CustomThemeTile(
+                        theme: custom,
+                        selected: settings.activeCustomThemeId == custom.id,
+                        onTap: () => notifier.setActiveCustomTheme(custom.id),
+                        onEdit: () =>
+                            _openBuilder(context, ref, initial: custom),
+                        onDelete: () => _delete(context, ref, custom),
+                      ),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 16),
+                      child: Divider(height: 1),
+                    ),
                     Text(
                       l10n.profileTemaModu,
                       style: theme.textTheme.titleMedium,
                     ),
-                    SizedBox(height: 8),
+                    const SizedBox(height: 8),
                     Align(
                       alignment: Alignment.centerLeft,
                       child: ConstrainedBox(
@@ -87,17 +162,17 @@ class AppearanceScreen extends ConsumerWidget {
                           segments: [
                             ButtonSegment(
                               value: ThemeMode.dark,
-                              icon: Icon(Icons.dark_mode_outlined),
+                              icon: const Icon(Icons.dark_mode_outlined),
                               label: Text(l10n.profileKoyu),
                             ),
                             ButtonSegment(
                               value: ThemeMode.light,
-                              icon: Icon(Icons.light_mode_outlined),
+                              icon: const Icon(Icons.light_mode_outlined),
                               label: Text(l10n.profileAcik),
                             ),
                             ButtonSegment(
                               value: ThemeMode.system,
-                              icon: Icon(Icons.brightness_auto_outlined),
+                              icon: const Icon(Icons.brightness_auto_outlined),
                               label: Text(l10n.profileSistem),
                             ),
                           ],
@@ -107,15 +182,48 @@ class AppearanceScreen extends ConsumerWidget {
                         ),
                       ),
                     ),
-                    SizedBox(height: 24),
+                    const SizedBox(height: 20),
                     Text(
-                      AppLocalizations.of(context).profileHazirPaletler,
+                      l10n.profileHazirTemalar,
                       style: theme.textTheme.titleMedium,
                     ),
-                    SizedBox(height: 8),
+                    const SizedBox(height: 8),
                     GridView.builder(
                       shrinkWrap: true,
-                      physics: NeverScrollableScrollPhysics(),
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: cols,
+                        mainAxisSpacing: 10,
+                        crossAxisSpacing: 10,
+                        childAspectRatio: desktop ? 2.4 : 2.2,
+                      ),
+                      itemCount: kThemePresets.length,
+                      itemBuilder: (context, i) {
+                        final preset = kThemePresets[i];
+                        return _PresetCard(
+                          preset: preset,
+                          selected:
+                              settings.activeCustomThemeId == null &&
+                              !settings.usePaletteColors &&
+                              preset.id == settings.familyId,
+                          onTap: () async {
+                            // Özel tema aktifken hazır tema seçimi ölü kalır —
+                            // `main.dart` sırası: özel tema > palet > aile.
+                            await notifier.setActiveCustomTheme(null);
+                            notifier.setFamily(preset.id);
+                          },
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      l10n.profileHazirPaletler,
+                      style: theme.textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: cols,
                         mainAxisSpacing: 10,
@@ -127,46 +235,175 @@ class AppearanceScreen extends ConsumerWidget {
                         final p = kAppPalettes[i];
                         return _PaletteCard(
                           palette: p,
-                          selected: p.id == settings.paletteId,
-                          onTap: () => notifier.setPalette(p.id),
+                          selected:
+                              settings.activeCustomThemeId == null &&
+                              settings.usePaletteColors &&
+                              p.id == settings.paletteId,
+                          onTap: () async {
+                            await notifier.setActiveCustomTheme(null);
+                            notifier.setPalette(p.id);
+                          },
                         );
                       },
                     ),
-                    SizedBox(height: 24),
-                    Text(
-                      AppLocalizations.of(context).profileOzelPaletler,
-                      style: theme.textTheme.titleMedium,
-                    ),
-                    SizedBox(height: 8),
-                    for (int i = 0; i < settings.customPalettes.length; i++)
-                      _CustomPaletteTile(
-                        palette: settings.customPalettes[i],
-                        selected:
-                            settings.paletteId == settings.customPalettes[i].id,
-                        onTap: () =>
-                            notifier.setPalette(settings.customPalettes[i].id),
-                        onEdit: () async {
-                          final result = await showDialog<AppPalette>(
-                            context: context,
-                            builder: (ctx) => CustomPaletteEditor(
-                              title: l10n.profileOzelPaletI1('${i + 1}'),
-                              initialPalette: settings.customPalettes[i],
-                            ),
-                          );
-                          if (result != null) {
-                            notifier.saveCustomPalette(i, result);
-                            if (settings.paletteId != result.id) {
-                              notifier.setPalette(result.id);
-                            }
-                          }
-                        },
-                      ),
                   ],
                 ),
               ),
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+class _CustomThemeTile extends StatelessWidget {
+  const _CustomThemeTile({
+    required this.theme,
+    required this.selected,
+    required this.onTap,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  final CustomTheme theme;
+  final bool selected;
+  final VoidCallback onTap;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    return Card(
+      margin: const EdgeInsets.only(top: 10),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: selected ? scheme.primary : scheme.outlineVariant,
+          width: selected ? 2 : 1,
+        ),
+      ),
+      child: ListTile(
+        onTap: onTap,
+        leading: _ThemeSwatch(colors: theme.darkColors),
+        title: Text(theme.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+        subtitle: theme.isReadOnly
+            ? Text(l10n.profileTemaSaltOkunur)
+            : null,
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (selected)
+              Icon(Icons.check_circle, color: scheme.primary, size: 20),
+            IconButton(
+              icon: const Icon(Icons.edit_outlined),
+              tooltip: l10n.profileDuzenle,
+              onPressed: theme.isReadOnly ? null : onEdit,
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete_outline),
+              tooltip: l10n.profileSil,
+              onPressed: theme.isReadOnly ? null : onDelete,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ThemeSwatch extends StatelessWidget {
+  const _ThemeSwatch({required this.colors});
+
+  final AppColors colors;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 36,
+      height: 36,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Column(
+          children: [
+            Expanded(child: ColoredBox(color: colors.scaffold)),
+            Expanded(
+              child: Row(
+                children: [
+                  Expanded(child: ColoredBox(color: colors.primary)),
+                  Expanded(child: ColoredBox(color: colors.accent)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PresetCard extends StatelessWidget {
+  const _PresetCard({
+    required this.preset,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final ThemePreset preset;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected
+              ? preset.colors.primary.withValues(alpha: 0.1)
+              : theme.colorScheme.surfaceContainer,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: selected
+                ? preset.colors.primary
+                : theme.colorScheme.outlineVariant,
+            width: selected ? 2 : 1,
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                _Swatch(color: preset.colors.primary),
+                const SizedBox(width: 4),
+                _Swatch(color: preset.colors.accent),
+                const Spacer(),
+                if (selected)
+                  Icon(
+                    Icons.check_circle,
+                    color: preset.colors.primary,
+                    size: 18,
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              preset.localizedName(AppLocalizations.of(context)),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -197,9 +434,7 @@ class _PaletteCard extends StatelessWidget {
               : theme.colorScheme.surfaceContainer,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: selected
-                ? palette.primary
-                : theme.colorScheme.outlineVariant,
+            color: selected ? palette.primary : theme.colorScheme.outlineVariant,
             width: selected ? 2 : 1,
           ),
         ),
@@ -210,14 +445,14 @@ class _PaletteCard extends StatelessWidget {
             Row(
               children: [
                 _Swatch(color: palette.primary),
-                SizedBox(width: 4),
+                const SizedBox(width: 4),
                 _Swatch(color: palette.accent),
-                Spacer(),
+                const Spacer(),
                 if (selected)
                   Icon(Icons.check_circle, color: palette.primary, size: 18),
               ],
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(
               palette.localizedName(AppLocalizations.of(context)),
               style: theme.textTheme.bodyMedium?.copyWith(
@@ -226,58 +461,6 @@ class _PaletteCard extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _CustomPaletteTile extends StatelessWidget {
-  const _CustomPaletteTile({
-    required this.palette,
-    required this.selected,
-    required this.onTap,
-    required this.onEdit,
-  });
-
-  final AppPalette palette;
-  final bool selected;
-  final VoidCallback onTap;
-  final VoidCallback onEdit;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Card(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-        side: BorderSide(
-          color: selected ? palette.primary : theme.colorScheme.outlineVariant,
-          width: selected ? 2 : 1,
-        ),
-      ),
-      margin: const EdgeInsets.only(bottom: 10),
-      child: ListTile(
-        onTap: onTap,
-        leading: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _Swatch(color: palette.primary),
-            SizedBox(width: 4),
-            _Swatch(color: palette.accent),
-          ],
-        ),
-        title: Text(palette.localizedName(AppLocalizations.of(context))),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IconButton(
-              icon: Icon(Icons.edit_outlined),
-              onPressed: onEdit,
-              tooltip: AppLocalizations.of(context).profileDuzenle,
-            ),
-            if (selected) Icon(Icons.check_circle, color: palette.primary),
           ],
         ),
       ),

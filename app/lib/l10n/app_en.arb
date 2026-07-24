@@ -63,7 +63,9 @@
   "@profileBasarimHaftalikGrupBirinciligiKosulu": {
     "description": "Achievement tier condition.",
     "placeholders": {
-      "count": { "type": "int" }
+      "count": {
+        "type": "int"
+      }
     }
   },
   "@profileBasarimGrupBirinciligiKosulu": {
@@ -2943,18 +2945,6 @@
       }
     }
   },
-  "profileValue1AtmosferSec": "1 · Select atmosphere",
-  "@profileValue1AtmosferSec": {
-    "description": "Profile user-facing text. Source: 1 · Atmosfer seç"
-  },
-  "profileValue2Mood": "2 · Mood",
-  "@profileValue2Mood": {
-    "description": "Profile user-facing text. Source: 2 · Mood"
-  },
-  "profileValue4OzetVeUygula": "4 · Summary and apply",
-  "@profileValue4OzetVeUygula": {
-    "description": "Profile user-facing text. Source: 4 · Özet ve uygula"
-  },
   "profileAdiDuzenle": "Edit name",
   "@profileAdiDuzenle": {
     "description": "Profile user-facing text. Source: Adı düzenle"
@@ -2962,10 +2952,6 @@
   "profileAnaRenk": "Primary color",
   "@profileAnaRenk": {
     "description": "Profile user-facing text. Source: Ana Renk"
-  },
-  "profileAnindaOnizlenir": "Previewed instantly.",
-  "@profileAnindaOnizlenir": {
-    "description": "Profile user-facing text. Source: Anında önizlenir."
   },
   "profileAyarlar": "Settings",
   "@profileAyarlar": {
@@ -2978,10 +2964,6 @@
   "profileAcik": "On",
   "@profileAcik": {
     "description": "Profile user-facing text. Source: Açık"
-  },
-  "profileBalon": "Balloon",
-  "@profileBalon": {
-    "description": "Profile user-facing text. Source: Balon"
   },
   "profileBasariYolculugum": "My Achievement Journey 🏆",
   "@profileBasariYolculugum": {
@@ -3302,10 +3284,6 @@
       }
     }
   },
-  "profileKeskin": "Sharp",
-  "@profileKeskin": {
-    "description": "Profile user-facing text. Source: Keskin"
-  },
   "profileKilitli": "Locked",
   "@profileKilitli": {
     "description": "Profile user-facing text. Source: Kilitli"
@@ -3337,10 +3315,6 @@
   "profileMisafir": "Guest",
   "@profileMisafir": {
     "description": "Profile user-facing text. Source: Misafir"
-  },
-  "profilePaletAdi": "Palette Name",
-  "@profilePaletAdi": {
-    "description": "Profile user-facing text. Source: Palet Adı"
   },
   "profileProfil": "Profile",
   "@profileProfil": {
@@ -3430,30 +3404,14 @@
   "@profileTarih": {
     "description": "Profile user-facing text. Source: Tarih"
   },
-  "profileTemaStudyosu": "Theme Studio",
-  "@profileTemaStudyosu": {
-    "description": "Profile user-facing text. Source: Tema Stüdyosu"
-  },
   "profileTemaModu": "Theme mode",
   "@profileTemaModu": {
     "description": "Profile user-facing text. Source: Tema modu"
-  },
-  "profileTemaUygulandiYenidenBaslatma": "Theme applied — no reboot required.",
-  "@profileTemaUygulandiYenidenBaslatma": {
-    "description": "Profile user-facing text. Source: Tema uygulandı — yeniden başlatma gerekmez."
-  },
-  "profileTemayiUygula": "Apply theme",
-  "@profileTemayiUygula": {
-    "description": "Profile user-facing text. Source: Temayı uygula"
   },
   "profileTumKademeler": "All levels",
   "profileKademe": "Level",
   "@profileTumKademeler": {
     "description": "Profile user-facing text. Source: Tüm kademeler"
-  },
-  "profileUygula": "Apply",
-  "@profileUygula": {
-    "description": "Profile user-facing text. Source: Uygula"
   },
   "profileVazgec": "Cancel",
   "@profileVazgec": {
@@ -3495,10 +3453,6 @@
   "@profileYenilikleriVeGecmisSurum": {
     "description": "Profile user-facing text. Source: Yenilikleri ve geçmiş sürüm notlarını oku"
   },
-  "profileYuvarlak": "Round",
-  "@profileYuvarlak": {
-    "description": "Profile user-facing text. Source: Yuvarlak"
-  },
   "profileYonetim": "Administration",
   "@profileYonetim": {
     "description": "Profile user-facing text. Source: Yönetim"
@@ -3535,19 +3489,6 @@
   "@profileOzelPalet": {
     "description": "Profile user-facing text. Source: Özel Palet"
   },
-  "profileOzelPaletI1": "Custom Palette {index} Edit",
-  "@profileOzelPaletI1": {
-    "description": "Profile user-facing text. Source: Özel Palet ${i + 1} Düzenle",
-    "placeholders": {
-      "index": {
-        "type": "String"
-      }
-    }
-  },
-  "profileOzelPaletler": "Custom Palettes",
-  "@profileOzelPaletler": {
-    "description": "Profile user-facing text. Source: Özel Paletler"
-  },
   "profileOzetlerVeKullaniciRaporlari": "Summaries and user reports",
   "@profileOzetlerVeKullaniciRaporlari": {
     "description": "Profile user-facing text. Source: Özetler ve kullanıcı raporları"
@@ -3559,10 +3500,6 @@
   "profileIptal": "Cancel",
   "@profileIptal": {
     "description": "Profile user-facing text. Source: İptal"
-  },
-  "profileSekilSecimiOnizlemedeYansir": "The shape selection is reflected in the preview. Advanced permanent shape engine WP-55",
-  "@profileSekilSecimiOnizlemedeYansir": {
-    "description": "Profile user-facing text. Source: Şekil seçimi önizlemede yansır. Kalıcı şekil motoru WP-55 gelişmiş"
   },
   "profileSifre": "Password",
   "@profileSifre": {
@@ -3846,9 +3783,13 @@
     "description": "Stats user-facing text. Source: Tümü"
   },
   "statsSaatKisa": "h",
-  "@statsSaatKisa": { "description": "Short hour unit suffix for chart axis (e.g. 3h)" },
+  "@statsSaatKisa": {
+    "description": "Short hour unit suffix for chart axis (e.g. 3h)"
+  },
   "statsDakikaKisa": "m",
-  "@statsDakikaKisa": { "description": "Short minute unit suffix for chart axis (e.g. 30m)" },
+  "@statsDakikaKisa": {
+    "description": "Short minute unit suffix for chart axis (e.g. 30m)"
+  },
   "statsSaat": "hours",
   "@statsSaat": {
     "description": "Stats user-facing text. Source: saat"
@@ -4184,18 +4125,6 @@
   "profilePazar": "Sunday",
   "@profilePazar": {
     "description": "Profile user-facing text. Source: Pazar"
-  },
-  "profileTema": "Theme",
-  "@profileTema": {
-    "description": "Profile user-facing text. Source: Tema"
-  },
-  "profileMood": "Mood",
-  "@profileMood": {
-    "description": "Profile user-facing text. Source: Mood"
-  },
-  "profileSekil": "Shape",
-  "@profileSekil": {
-    "description": "Profile user-facing text. Source: Şekil"
   },
   "profileTemmuz": "July",
   "@profileTemmuz": {
@@ -4890,162 +4819,642 @@
     "description": "Label when crown XP is at max tier"
   },
   "navTools": "Tools",
-  "@navTools": { "description": "navTools" },
+  "@navTools": {
+    "description": "navTools"
+  },
   "taskListMore": "+{count} more",
   "@taskListMore": {
     "description": "taskListMore",
-    "placeholders": { "count": { "type": "int" } }
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   },
   "taskListOverdue": "Overdue",
-  "@taskListOverdue": { "description": "taskListOverdue" },
+  "@taskListOverdue": {
+    "description": "taskListOverdue"
+  },
   "taskListNoDue": "No deadline",
-  "@taskListNoDue": { "description": "taskListNoDue" },
+  "@taskListNoDue": {
+    "description": "taskListNoDue"
+  },
   "taskListDueDate": "Due date",
-  "@taskListDueDate": { "description": "taskListDueDate" },
+  "@taskListDueDate": {
+    "description": "taskListDueDate"
+  },
   "taskListRemaining": "Time left",
-  "@taskListRemaining": { "description": "taskListRemaining" },
+  "@taskListRemaining": {
+    "description": "taskListRemaining"
+  },
   "taskListEdit": "Edit",
-  "@taskListEdit": { "description": "taskListEdit" },
+  "@taskListEdit": {
+    "description": "taskListEdit"
+  },
   "taskListActive": "Active",
-  "@taskListActive": { "description": "taskListActive" },
+  "@taskListActive": {
+    "description": "taskListActive"
+  },
   "taskListCompletedSection": "Completed",
-  "@taskListCompletedSection": { "description": "taskListCompletedSection" },
+  "@taskListCompletedSection": {
+    "description": "taskListCompletedSection"
+  },
   "taskListUrgent": "Urgent",
-  "@taskListUrgent": { "description": "taskListUrgent" },
+  "@taskListUrgent": {
+    "description": "taskListUrgent"
+  },
   "taskListHoursShort": "{hours}h",
   "@taskListHoursShort": {
     "description": "taskListHoursShort",
-    "placeholders": { "hours": { "type": "int" } }
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
   },
   "taskListDaysShort": "{days}d",
   "@taskListDaysShort": {
     "description": "taskListDaysShort",
-    "placeholders": { "days": { "type": "int" } }
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
   },
   "taskListMinutesShort": "{minutes}m",
   "@taskListMinutesShort": {
     "description": "taskListMinutesShort",
-    "placeholders": { "minutes": { "type": "int" } }
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
   },
   "clockTasks": "Tasks",
-  "@clockTasks": { "description": "clockTasks" },
+  "@clockTasks": {
+    "description": "clockTasks"
+  },
   "profileAchievementNearest": "Closest achievement",
-  "@profileAchievementNearest": { "description": "Heading for the single achievement closest to its next tier" },
+  "@profileAchievementNearest": {
+    "description": "Heading for the single achievement closest to its next tier"
+  },
   "profileAchievementProgress": "{current}/{target} · next tier",
   "@profileAchievementProgress": {
     "description": "Real achievement metric progress toward the next tier",
     "placeholders": {
-      "current": { "type": "int" },
-      "target": { "type": "int" }
+      "current": {
+        "type": "int"
+      },
+      "target": {
+        "type": "int"
+      }
     }
   },
   "profileAchievementPersonalBest": "Best {current} · {target} needed in one go",
   "@profileAchievementPersonalBest": {
     "description": "Personal-best achievements do not accumulate; shows the record instead of a progress bar",
     "placeholders": {
-      "current": { "type": "int" },
-      "target": { "type": "int" }
+      "current": {
+        "type": "int"
+      },
+      "target": {
+        "type": "int"
+      }
     }
   },
   "profileAchievementProgressUnavailable": "Progress is not available yet",
-  "@profileAchievementProgressUnavailable": { "description": "Shown when no private metric projection exists yet" },
+  "@profileAchievementProgressUnavailable": {
+    "description": "Shown when no private metric projection exists yet"
+  },
   "profileAchievementPerfectMonth30Rule": "Reach your daily goal on at least 28 days within one calendar month (up to 2 misses).",
-  "@profileAchievementPerfectMonth30Rule": { "description": "Exact 30-day Perfect Month rule" },
+  "@profileAchievementPerfectMonth30Rule": {
+    "description": "Exact 30-day Perfect Month rule"
+  },
   "profileAchievementTeamPlayerRule": "Contribute eligible study time on days your group reaches its goal.",
-  "@profileAchievementTeamPlayerRule": { "description": "Exact Team Player achievement explanation" },
+  "@profileAchievementTeamPlayerRule": {
+    "description": "Exact Team Player achievement explanation"
+  },
   "profileStudyXpNote": "Every full study hour grants 50 XP automatically.",
-  "@profileStudyXpNote": { "description": "Source-neutral hourly study XP explanation" },
+  "@profileStudyXpNote": {
+    "description": "Source-neutral hourly study XP explanation"
+  },
   "profileRewardReady": "{count} rewards ready · {xp} XP",
   "@profileRewardReady": {
     "description": "Pending achievement reward summary; also consumed by the shell banner",
     "placeholders": {
-      "count": { "type": "int" },
-      "xp": { "type": "int" }
+      "count": {
+        "type": "int"
+      },
+      "xp": {
+        "type": "int"
+      }
     }
   },
   "profileRewardClaim": "Claim",
-  "@profileRewardClaim": { "description": "Claim one pending achievement reward" },
+  "@profileRewardClaim": {
+    "description": "Claim one pending achievement reward"
+  },
   "profileRewardClaimAll": "Claim all",
-  "@profileRewardClaimAll": { "description": "Claim the bounded pending reward batch" },
+  "@profileRewardClaimAll": {
+    "description": "Claim the bounded pending reward batch"
+  },
   "profileRewardClaiming": "Claiming…",
-  "@profileRewardClaiming": { "description": "Pending reward claim progress" },
+  "@profileRewardClaiming": {
+    "description": "Pending reward claim progress"
+  },
   "profileRewardClaimed": "Claimed {xp} XP",
   "@profileRewardClaimed": {
     "description": "Server-confirmed reward claim result",
-    "placeholders": { "xp": { "type": "int" } }
+    "placeholders": {
+      "xp": {
+        "type": "int"
+      }
+    }
   },
   "profileRewardAlreadyClaimed": "This reward was already claimed.",
-  "@profileRewardAlreadyClaimed": { "description": "Idempotent reward retry result" },
+  "@profileRewardAlreadyClaimed": {
+    "description": "Idempotent reward retry result"
+  },
   "profileRewardClaimFailed": "The reward could not be claimed. Check your connection and try again.",
-  "@profileRewardClaimFailed": { "description": "Reward claim failure" },
+  "@profileRewardClaimFailed": {
+    "description": "Reward claim failure"
+  },
   "profileRewardSecret": "Secret reward",
-  "@profileRewardSecret": { "description": "Name used for a still-secret pending reward" },
+  "@profileRewardSecret": {
+    "description": "Name used for a still-secret pending reward"
+  },
   "taskListDailyRefresh": "Refresh every day",
-  "@taskListDailyRefresh": { "description": "Daily recurring task option" },
+  "@taskListDailyRefresh": {
+    "description": "Daily recurring task option"
+  },
   "taskListDailyRefreshHint": "Completing it affects today only; it becomes active again at midnight in Istanbul.",
-  "@taskListDailyRefreshHint": { "description": "Daily task recurrence explanation" },
+  "@taskListDailyRefreshHint": {
+    "description": "Daily task recurrence explanation"
+  },
   "taskListDailyBadge": "Daily",
-  "@taskListDailyBadge": { "description": "Compact daily recurring task badge" },
+  "@taskListDailyBadge": {
+    "description": "Compact daily recurring task badge"
+  },
   "taskListDailyStreakStep": "Today's streak +1",
-  "@taskListDailyStreakStep": { "description": "Minimal daily completion streak indicator" },
+  "@taskListDailyStreakStep": {
+    "description": "Minimal daily completion streak indicator"
+  },
   "taskListSyncError": "Tasks could not be refreshed. You may be offline.",
-  "@taskListSyncError": { "description": "Task list offline or synchronization error" },
+  "@taskListSyncError": {
+    "description": "Task list offline or synchronization error"
+  },
   "taskListRetry": "Try again",
-  "@taskListRetry": { "description": "Retry task list synchronization" },
+  "@taskListRetry": {
+    "description": "Retry task list synchronization"
+  },
   "notificationsHealthTitle": "Notification health",
-  "@notificationsHealthTitle": { "description": "Push notification diagnostics card title" },
+  "@notificationsHealthTitle": {
+    "description": "Push notification diagnostics card title"
+  },
   "notificationsHealthSubtitle": "See where delivery is blocked and test it without publishing a release.",
-  "@notificationsHealthSubtitle": { "description": "Push diagnostics card explanation" },
+  "@notificationsHealthSubtitle": {
+    "description": "Push diagnostics card explanation"
+  },
   "notificationsRemoteNotConfigured": "Remote notifications have not been set up yet.",
-  "@notificationsRemoteNotConfigured": { "description": "Firebase push is absent" },
+  "@notificationsRemoteNotConfigured": {
+    "description": "Firebase push is absent"
+  },
   "notificationsRemoteIncomplete": "Remote notification settings are incomplete.",
-  "@notificationsRemoteIncomplete": { "description": "Firebase push config is partial" },
+  "@notificationsRemoteIncomplete": {
+    "description": "Firebase push config is partial"
+  },
   "notificationsPermissionRequired": "Notification permission is required.",
-  "@notificationsPermissionRequired": { "description": "OS notification permission is missing" },
+  "@notificationsPermissionRequired": {
+    "description": "OS notification permission is missing"
+  },
   "notificationsPhoneRegistering": "Registering this phone…",
-  "@notificationsPhoneRegistering": { "description": "Push token registration progress" },
+  "@notificationsPhoneRegistering": {
+    "description": "Push token registration progress"
+  },
   "notificationsPhoneReady": "This phone is ready for remote notifications.",
-  "@notificationsPhoneReady": { "description": "Push device registration succeeded" },
+  "@notificationsPhoneReady": {
+    "description": "Push device registration succeeded"
+  },
   "notificationsConnectionError": "The connection could not be completed. You can try again.",
-  "@notificationsConnectionError": { "description": "Safe push registration error" },
+  "@notificationsConnectionError": {
+    "description": "Safe push registration error"
+  },
   "notificationsOsPermission": "Device permission",
-  "@notificationsOsPermission": { "description": "Notification health OS permission row" },
+  "@notificationsOsPermission": {
+    "description": "Notification health OS permission row"
+  },
   "notificationsPhoneRegistration": "Phone registration",
-  "@notificationsPhoneRegistration": { "description": "Notification health device registration row" },
+  "@notificationsPhoneRegistration": {
+    "description": "Notification health device registration row"
+  },
   "notificationsStatusOpen": "On",
-  "@notificationsStatusOpen": { "description": "Health check enabled status" },
+  "@notificationsStatusOpen": {
+    "description": "Health check enabled status"
+  },
   "notificationsStatusClosed": "Off",
-  "@notificationsStatusClosed": { "description": "Health check disabled status" },
+  "@notificationsStatusClosed": {
+    "description": "Health check disabled status"
+  },
   "notificationsLastDeliveryNever": "No remote notification has reached this phone yet.",
-  "@notificationsLastDeliveryNever": { "description": "No push receipt recorded" },
+  "@notificationsLastDeliveryNever": {
+    "description": "No push receipt recorded"
+  },
   "notificationsLastDelivery": "Last delivery: {time}",
-  "@notificationsLastDelivery": { "description": "Last push receipt time", "placeholders": { "time": { "type": "String" } } },
+  "@notificationsLastDelivery": {
+    "description": "Last push receipt time",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "notificationsLocalTest": "Test on phone",
-  "@notificationsLocalTest": { "description": "Show a local notification test" },
+  "@notificationsLocalTest": {
+    "description": "Show a local notification test"
+  },
   "notificationsRemoteTest": "Test remote delivery",
-  "@notificationsRemoteTest": { "description": "Run end-to-end remote push self-test" },
+  "@notificationsRemoteTest": {
+    "description": "Run end-to-end remote push self-test"
+  },
   "notificationsLocalTestSent": "The test notification was shown on this phone.",
-  "@notificationsLocalTestSent": { "description": "Local notification test success" },
+  "@notificationsLocalTestSent": {
+    "description": "Local notification test success"
+  },
   "notificationsRemoteTestSent": "Remote test completed in {seconds} seconds.",
-  "@notificationsRemoteTestSent": { "description": "Remote push self-test success", "placeholders": { "seconds": { "type": "String" } } },
+  "@notificationsRemoteTestSent": {
+    "description": "Remote push self-test success",
+    "placeholders": {
+      "seconds": {
+        "type": "String"
+      }
+    }
+  },
   "notificationsRemoteTestFailed": "Remote delivery did not complete. Check the status above and try again.",
-  "@notificationsRemoteTestFailed": { "description": "Remote push self-test failure" },
+  "@notificationsRemoteTestFailed": {
+    "description": "Remote push self-test failure"
+  },
   "notificationsRemoteTestCooldown": "Wait 20 seconds before starting another remote test.",
-  "@notificationsRemoteTestCooldown": { "description": "Remote push self-test rate limit" },
+  "@notificationsRemoteTestCooldown": {
+    "description": "Remote push self-test rate limit"
+  },
   "notificationsRefreshHealth": "Refresh status",
-  "@notificationsRefreshHealth": { "description": "Refresh push diagnostics" },
+  "@notificationsRefreshHealth": {
+    "description": "Refresh push diagnostics"
+  },
   "notificationsLiveTimerHealth": "Live timer surface",
-  "@notificationsLiveTimerHealth": { "description": "Android promoted timer diagnostics heading" },
+  "@notificationsLiveTimerHealth": {
+    "description": "Android promoted timer diagnostics heading"
+  },
   "notificationsLiveTimerStandard": "Standard timer notification",
-  "@notificationsLiveTimerStandard": { "description": "Timer avoids custom notification views" },
+  "@notificationsLiveTimerStandard": {
+    "description": "Timer avoids custom notification views"
+  },
   "notificationsLiveTimerPromotable": "Live surface requirements",
-  "@notificationsLiveTimerPromotable": { "description": "Notification promotable characteristics status" },
+  "@notificationsLiveTimerPromotable": {
+    "description": "Notification promotable characteristics status"
+  },
   "notificationsLiveTimerPending": "Start the timer, then refresh to measure it.",
-  "@notificationsLiveTimerPending": { "description": "Timer diagnostic has not been measured" },
+  "@notificationsLiveTimerPending": {
+    "description": "Timer diagnostic has not been measured"
+  },
   "notificationsLiveTimerSystemAllowed": "The system allows promoted live notifications.",
-  "@notificationsLiveTimerSystemAllowed": { "description": "Android promoted notifications allowed" },
+  "@notificationsLiveTimerSystemAllowed": {
+    "description": "Android promoted notifications allowed"
+  },
   "notificationsLiveTimerSystemBlocked": "The system or device has not allowed the live surface; the standard timer remains active.",
-  "@notificationsLiveTimerSystemBlocked": { "description": "Android or OEM promotion is unavailable" },
+  "@notificationsLiveTimerSystemBlocked": {
+    "description": "Android or OEM promotion is unavailable"
+  },
   "notificationsLiveTimerLegacyFallback": "This Android version uses the standard persistent timer.",
-  "@notificationsLiveTimerLegacyFallback": { "description": "Older Android standard timer fallback" }
+  "@notificationsLiveTimerLegacyFallback": {
+    "description": "Older Android standard timer fallback"
+  },
+  "profileKendiTemaniOlustur": "Build Your Own Theme",
+  "@profileKendiTemaniOlustur": {
+    "description": "Appearance: entry point for the theme builder wizard."
+  },
+  "profileKendiTemaniOlusturAlt": "Colours, type, shape, atmosphere and feel — with live preview",
+  "@profileKendiTemaniOlusturAlt": {
+    "description": "Appearance: subtitle of the theme builder entry."
+  },
+  "profileHazirTemalar": "Built-in themes",
+  "@profileHazirTemalar": {
+    "description": "Appearance: section title for built-in themes."
+  },
+  "profileTemaSlotlariDolu": "All three theme slots are full. Delete or edit one to make room.",
+  "@profileTemaSlotlariDolu": {
+    "description": "Appearance: all three custom theme slots are in use."
+  },
+  "profileTemayiSilOnay": "Delete “{name}”? This cannot be undone.",
+  "@profileTemayiSilOnay": {
+    "description": "Appearance: delete confirmation for a saved custom theme.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "profileTemaSilindi": "Theme deleted.",
+  "@profileTemaSilindi": {
+    "description": "Appearance: custom theme deleted confirmation."
+  },
+  "profileTemaSaltOkunur": "Created by a newer version — read only",
+  "@profileTemaSaltOkunur": {
+    "description": "Appearance: theme was written by a newer app version."
+  },
+  "profileAdimZemin": "Base",
+  "@profileAdimZemin": {
+    "description": "Theme builder: step name."
+  },
+  "profileAdimRenkler": "Colours",
+  "@profileAdimRenkler": {
+    "description": "Theme builder: step name."
+  },
+  "profileAdimYazilar": "Type",
+  "@profileAdimYazilar": {
+    "description": "Theme builder: step name."
+  },
+  "profileAdimBicim": "Shape",
+  "@profileAdimBicim": {
+    "description": "Theme builder: step name."
+  },
+  "profileAdimAtmosfer": "Atmosphere",
+  "@profileAdimAtmosfer": {
+    "description": "Theme builder: step name."
+  },
+  "profileAdimHis": "Feel",
+  "@profileAdimHis": {
+    "description": "Theme builder: step name."
+  },
+  "profileAdimKarsiMod": "Opposite mode",
+  "@profileAdimKarsiMod": {
+    "description": "Theme builder: step name for the opposite brightness variant."
+  },
+  "profileAdimOzet": "Summary",
+  "@profileAdimOzet": {
+    "description": "Theme builder: step name."
+  },
+  "profileZeminAciklama": "Pick a starting point. You can change everything in the next steps.",
+  "@profileZeminAciklama": {
+    "description": "Theme builder: base step help text."
+  },
+  "profileDuzenlenenVaryant": "Variant being edited",
+  "@profileDuzenlenenVaryant": {
+    "description": "Theme builder: which brightness variant is being edited."
+  },
+  "profileRenkZemin": "Background",
+  "@profileRenkZemin": {
+    "description": "Theme builder: scaffold colour."
+  },
+  "profileRenkYuzey": "Surface",
+  "@profileRenkYuzey": {
+    "description": "Theme builder: surface colour."
+  },
+  "profileRenkYuzeyYuksek": "Raised surface",
+  "@profileRenkYuzeyYuksek": {
+    "description": "Theme builder: raised surface colour."
+  },
+  "profileRenkMetin": "Text",
+  "@profileRenkMetin": {
+    "description": "Theme builder: primary text colour."
+  },
+  "profileRenkIkincilMetin": "Secondary text",
+  "@profileRenkIkincilMetin": {
+    "description": "Theme builder: secondary text colour."
+  },
+  "profileRenkKenarlik": "Border",
+  "@profileRenkKenarlik": {
+    "description": "Theme builder: border colour."
+  },
+  "profileKontrastUyarisi": "Low contrast ({ratio}:1) — below WCAG AA.",
+  "@profileKontrastUyarisi": {
+    "description": "Theme builder: WCAG AA contrast warning with the measured ratio.",
+    "placeholders": {
+      "ratio": {
+        "type": "String"
+      }
+    }
+  },
+  "profileKontrastDuzelt": "Fix",
+  "@profileKontrastDuzelt": {
+    "description": "Theme builder: one-tap contrast fix action."
+  },
+  "profileYaziBaslikFontu": "Title font",
+  "@profileYaziBaslikFontu": {
+    "description": "Theme builder: title font family selector."
+  },
+  "profileYaziGovdeFontu": "Body font",
+  "@profileYaziGovdeFontu": {
+    "description": "Theme builder: body font family selector."
+  },
+  "profileYaziSayacFontu": "Timer font",
+  "@profileYaziSayacFontu": {
+    "description": "Theme builder: timer font family selector."
+  },
+  "profileYaziKalinlik": "Weight",
+  "@profileYaziKalinlik": {
+    "description": "Theme builder: font weight slider."
+  },
+  "profileYaziOlcek": "Scale",
+  "@profileYaziOlcek": {
+    "description": "Theme builder: font scale slider."
+  },
+  "profileYaziHarfAraligi": "Letter spacing",
+  "@profileYaziHarfAraligi": {
+    "description": "Theme builder: letter spacing slider."
+  },
+  "profileFontDuz": "Sans",
+  "@profileFontDuz": {
+    "description": "Theme builder: sans-serif font option."
+  },
+  "profileFontTirnakli": "Serif",
+  "@profileFontTirnakli": {
+    "description": "Theme builder: serif font option."
+  },
+  "profileFontEsAralikli": "Mono",
+  "@profileFontEsAralikli": {
+    "description": "Theme builder: monospace font option."
+  },
+  "profileBicimKucukYaricap": "Small radius",
+  "@profileBicimKucukYaricap": {
+    "description": "Theme builder: small corner radius slider."
+  },
+  "profileBicimKoseYaricapi": "Corner radius",
+  "@profileBicimKoseYaricapi": {
+    "description": "Theme builder: card corner radius slider."
+  },
+  "profileBicimBuyukYaricap": "Large radius",
+  "@profileBicimBuyukYaricap": {
+    "description": "Theme builder: large corner radius slider."
+  },
+  "profileBicimGolge": "Shadow",
+  "@profileBicimGolge": {
+    "description": "Theme builder: card elevation slider."
+  },
+  "profileBicimKenarKalinligi": "Border width",
+  "@profileBicimKenarKalinligi": {
+    "description": "Theme builder: border width slider."
+  },
+  "profileBicimKeskin": "Sharp corners",
+  "@profileBicimKeskin": {
+    "description": "Theme builder: sharp corners switch."
+  },
+  "profileAtmosferAciklama": "The atmosphere is painted over the whole app as a soft tint and glow.",
+  "@profileAtmosferAciklama": {
+    "description": "Theme builder: atmosphere step help text."
+  },
+  "profileAtmosferDegradeBasi": "Gradient start",
+  "@profileAtmosferDegradeBasi": {
+    "description": "Theme builder: gradient start colour."
+  },
+  "profileAtmosferDegradeSonu": "Gradient end",
+  "@profileAtmosferDegradeSonu": {
+    "description": "Theme builder: gradient end colour."
+  },
+  "profileAtmosferParilti": "Glow colour",
+  "@profileAtmosferParilti": {
+    "description": "Theme builder: glow colour."
+  },
+  "profileAtmosferPariltiGucu": "Glow strength",
+  "@profileAtmosferPariltiGucu": {
+    "description": "Theme builder: glow strength slider."
+  },
+  "profileAtmosferPariltiYumusakligi": "Glow softness",
+  "@profileAtmosferPariltiYumusakligi": {
+    "description": "Theme builder: glow softness slider."
+  },
+  "profileAtmosferCamlik": "Glass sheen",
+  "@profileAtmosferCamlik": {
+    "description": "Theme builder: glass sheen slider."
+  },
+  "profileHisAciklama": "A feel sets texture, shape and atmosphere together. Heavier ones can drop frames on low-end devices.",
+  "@profileHisAciklama": {
+    "description": "Theme builder: feel step help text."
+  },
+  "profileHisModern": "Modern",
+  "@profileHisModern": {
+    "description": "Theme feel name."
+  },
+  "profileHisZen": "Zen",
+  "@profileHisZen": {
+    "description": "Theme feel name."
+  },
+  "profileHisNeon": "Neon",
+  "@profileHisNeon": {
+    "description": "Theme feel name."
+  },
+  "profileHisVintage": "Vintage",
+  "@profileHisVintage": {
+    "description": "Theme feel name."
+  },
+  "profileHisKarton": "Worn carton",
+  "@profileHisKarton": {
+    "description": "Theme feel name."
+  },
+  "profileHisKagit": "Paper",
+  "@profileHisKagit": {
+    "description": "Theme feel name."
+  },
+  "profileHisCam": "Glass",
+  "@profileHisCam": {
+    "description": "Theme feel name."
+  },
+  "profileHisDuz": "Flat",
+  "@profileHisDuz": {
+    "description": "Theme feel name."
+  },
+  "profileHisMaliyetYok": "No extra drawing",
+  "@profileHisMaliyetYok": {
+    "description": "Theme feel performance cost label."
+  },
+  "profileHisMaliyetDusuk": "Low cost",
+  "@profileHisMaliyetDusuk": {
+    "description": "Theme feel performance cost label."
+  },
+  "profileHisMaliyetOrta": "Medium cost",
+  "@profileHisMaliyetOrta": {
+    "description": "Theme feel performance cost label."
+  },
+  "profileHisMaliyetYuksek": "High cost — may drop frames on low-end devices",
+  "@profileHisMaliyetYuksek": {
+    "description": "Theme feel performance cost label."
+  },
+  "profileKarsiModKoyuAciklama": "This is the dark variant. Edit it here if the automatic version is not what you want.",
+  "@profileKarsiModKoyuAciklama": {
+    "description": "Theme builder: derived dark variant help text."
+  },
+  "profileKarsiModAcikAciklama": "This is the light variant. Edit it here if the automatic version is not what you want.",
+  "@profileKarsiModAcikAciklama": {
+    "description": "Theme builder: derived light variant help text."
+  },
+  "profileKarsiModTuretildi": "Derived automatically",
+  "@profileKarsiModTuretildi": {
+    "description": "Theme builder: the counterpart variant is auto derived."
+  },
+  "profileKarsiModYenidenTuret": "Derive again",
+  "@profileKarsiModYenidenTuret": {
+    "description": "Theme builder: re-derive the counterpart variant."
+  },
+  "profileOzetTemaAdi": "Theme name",
+  "@profileOzetTemaAdi": {
+    "description": "Theme builder: theme name field label."
+  },
+  "profileTemaAdiBos": "Give the theme a name.",
+  "@profileTemaAdiBos": {
+    "description": "Theme builder: empty theme name validation."
+  },
+  "profileOzetYuva": "Slot",
+  "@profileOzetYuva": {
+    "description": "Theme builder: slot picker label."
+  },
+  "profileYuvaBos": "Slot {slot} · empty",
+  "@profileYuvaBos": {
+    "description": "Theme builder: empty slot chip label.",
+    "placeholders": {
+      "slot": {
+        "type": "String"
+      }
+    }
+  },
+  "profileYuvaDolu": "Slot {slot} · will be replaced",
+  "@profileYuvaDolu": {
+    "description": "Theme builder: occupied slot chip label.",
+    "placeholders": {
+      "slot": {
+        "type": "String"
+      }
+    }
+  },
+  "profileKaydetVeUygula": "Save and apply",
+  "@profileKaydetVeUygula": {
+    "description": "Theme builder: save and apply action."
+  },
+  "profileTemaKaydedildi": "Theme saved and applied.",
+  "@profileTemaKaydedildi": {
+    "description": "Theme builder: save success message."
+  },
+  "profileTemaKaydedilemedi": "Could not save the theme. Device storage did not respond.",
+  "@profileTemaKaydedilemedi": {
+    "description": "Theme builder: save failure message (device storage refused)."
+  },
+  "profileKaydedilmemisDegisiklik": "You have unsaved changes. Leave anyway?",
+  "@profileKaydedilmemisDegisiklik": {
+    "description": "Theme builder: unsaved changes warning."
+  },
+  "profileCik": "Leave",
+  "@profileCik": {
+    "description": "Theme builder: leave without saving."
+  },
+  "profileDevamEt": "Keep editing",
+  "@profileDevamEt": {
+    "description": "Theme builder: keep editing."
+  },
+  "profileOnizlemeBaslikOrnegi": "Today's focus",
+  "@profileOnizlemeBaslikOrnegi": {
+    "description": "Theme preview: sample title line."
+  },
+  "profileOnizlemeGovdeOrnegi": "Plan a short study session.",
+  "@profileOnizlemeGovdeOrnegi": {
+    "description": "Theme preview: sample body line."
+  }
 }
