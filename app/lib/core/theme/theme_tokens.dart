@@ -36,20 +36,20 @@ class AppColors extends ThemeExtension<AppColors> {
   final Color onError;
 
   factory AppColors.fromScheme(ColorScheme s) => AppColors(
-        surface1: s.surface,
-        surface2: s.surfaceContainerHigh,
-        scaffold: s.surfaceContainerLowest,
-        primary: s.primary,
-        onPrimary: s.onPrimary,
-        accent: s.secondary,
-        onAccent: s.onSecondary,
-        textPrimary: s.onSurface,
-        textSecondary: s.onSurfaceVariant,
-        border: s.outlineVariant,
-        success: const Color(0xFF22C55E),
-        error: s.error,
-        onError: s.onError,
-      );
+    surface1: s.surface,
+    surface2: s.surfaceContainerHigh,
+    scaffold: s.surfaceContainerLowest,
+    primary: s.primary,
+    onPrimary: s.onPrimary,
+    accent: s.secondary,
+    onAccent: s.onSecondary,
+    textPrimary: s.onSurface,
+    textSecondary: s.onSurfaceVariant,
+    border: s.outlineVariant,
+    success: const Color(0xFF22C55E),
+    error: s.error,
+    onError: s.onError,
+  );
 
   @override
   AppColors copyWith({
@@ -238,8 +238,7 @@ class AppShapes extends ThemeExtension<AppShapes> {
     sharp: true,
   );
 
-  BorderRadius get cardRadius =>
-      BorderRadius.circular(sharp ? 0 : radiusMd);
+  BorderRadius get cardRadius => BorderRadius.circular(sharp ? 0 : radiusMd);
 
   @override
   AppShapes copyWith({
@@ -294,10 +293,10 @@ class AppAtmosphere extends ThemeExtension<AppAtmosphere> {
   final double glassOpacity;
 
   LinearGradient get scaffoldGradient => LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [gradientStart, gradientEnd],
-      );
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [gradientStart, gradientEnd],
+  );
 
   @override
   AppAtmosphere copyWith({
@@ -386,8 +385,67 @@ class AppMotion extends ThemeExtension<AppMotion> {
       fast: t < 0.5 ? fast : other.fast,
       normal: t < 0.5 ? normal : other.normal,
       slow: t < 0.5 ? slow : other.slow,
-      respectReduceMotion:
-          t < 0.5 ? respectReduceMotion : other.respectReduceMotion,
+      respectReduceMotion: t < 0.5
+          ? respectReduceMotion
+          : other.respectReduceMotion,
+    );
+  }
+}
+
+/// 6) Tema hissi. Hareket için ikinci bir kaynak oluşturmaz: [motion],
+/// ThemeData'ya eklenen AppMotion ile aynı nesnedir.
+@immutable
+class AppFeel extends ThemeExtension<AppFeel> {
+  const AppFeel({
+    required this.feelId,
+    required this.grainStrength,
+    required this.grainKind,
+    required this.edgeIrregularity,
+    required this.motion,
+  });
+
+  final String feelId;
+  final double grainStrength;
+  final String grainKind;
+  final double edgeIrregularity;
+  final AppMotion motion;
+
+  static const modern = AppFeel(
+    feelId: 'modern',
+    grainStrength: 0,
+    grainKind: 'none',
+    edgeIrregularity: 0,
+    motion: AppMotion.snappy,
+  );
+
+  @override
+  AppFeel copyWith({
+    String? feelId,
+    double? grainStrength,
+    String? grainKind,
+    double? edgeIrregularity,
+    AppMotion? motion,
+  }) => AppFeel(
+    feelId: feelId ?? this.feelId,
+    grainStrength: grainStrength ?? this.grainStrength,
+    grainKind: grainKind ?? this.grainKind,
+    edgeIrregularity: edgeIrregularity ?? this.edgeIrregularity,
+    motion: motion ?? this.motion,
+  );
+
+  @override
+  AppFeel lerp(ThemeExtension<AppFeel>? other, double t) {
+    if (other is! AppFeel) return this;
+    return AppFeel(
+      feelId: t < .5 ? feelId : other.feelId,
+      grainStrength: lerpDouble(grainStrength, other.grainStrength, t)!,
+      grainKind: t < .5 ? grainKind : other.grainKind,
+      edgeIrregularity: lerpDouble(
+        edgeIrregularity,
+        other.edgeIrregularity,
+        t,
+      )!,
+      motion: motion.lerp(other.motion, t),
     );
   }
 }
@@ -426,4 +484,6 @@ extension AppThemeTokensX on BuildContext {
 
   AppMotion get appMotion =>
       Theme.of(this).extension<AppMotion>() ?? AppMotion.fallback;
+
+  AppFeel get appFeel => Theme.of(this).extension<AppFeel>() ?? AppFeel.modern;
 }

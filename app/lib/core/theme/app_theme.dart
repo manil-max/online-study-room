@@ -294,11 +294,30 @@ class AppTheme {
     );
   }
 
+  /// WP-288: Yerel özel tema, hazır preset'e dönmeden tam token setinden kurulur.
+  static ThemeData fromCustomTokens({
+    required AppColors colors,
+    required AppTypography typography,
+    required AppShapes shapes,
+    required AppAtmosphere atmosphere,
+    required AppFeel feel,
+    required Brightness brightness,
+  }) => _buildFromTokens(
+    colors: colors,
+    shapes: shapes,
+    atmosphere: atmosphere,
+    motion: feel.motion,
+    feel: feel,
+    typography: typography,
+    brightness: brightness,
+  );
+
   static ThemeData _buildFromTokens({
     required AppColors colors,
     required AppShapes shapes,
     required AppAtmosphere atmosphere,
     required AppMotion motion,
+    AppFeel? feel,
     required AppTypography typography,
     required Brightness brightness,
   }) {
@@ -330,6 +349,45 @@ class AppTheme {
     final radius = shapes.cardRadius;
     final rSm = BorderRadius.circular(shapes.sharp ? 0 : shapes.radiusSm);
 
+    final resolvedFeel = feel ?? AppFeel.modern.copyWith(motion: motion);
+    final defaultTextTheme = ThemeData(
+      useMaterial3: true,
+      brightness: brightness,
+    ).textTheme;
+    TextStyle themed(TextStyle base, TextStyle token) {
+      // Hazır/eski temalar yalnız dört slotu özelleştiriyordu. Aile verilmemiş
+      // ek slotları Material varsayılanında bırakarak migration görünümünü koru;
+      // özel font seçildiğinde ise token tüm ilgili yüzeylere uygulanır.
+      if (token.fontFamily == null) return base;
+      return base.copyWith(
+        fontFamily: token.fontFamily,
+        fontWeight: token.fontWeight,
+        letterSpacing: token.letterSpacing ?? base.letterSpacing,
+        color: token.color ?? colors.textPrimary,
+      );
+    }
+
+    final textTheme = TextTheme(
+      displayLarge: typography.displayClock,
+      displayMedium: themed(defaultTextTheme.displayMedium!, typography.title),
+      displaySmall: themed(defaultTextTheme.displaySmall!, typography.title),
+      headlineLarge: themed(defaultTextTheme.headlineLarge!, typography.title),
+      headlineMedium: themed(
+        defaultTextTheme.headlineMedium!,
+        typography.title,
+      ),
+      headlineSmall: themed(defaultTextTheme.headlineSmall!, typography.title),
+      titleLarge: typography.title,
+      titleMedium: themed(defaultTextTheme.titleMedium!, typography.title),
+      titleSmall: themed(defaultTextTheme.titleSmall!, typography.title),
+      bodyLarge: themed(defaultTextTheme.bodyLarge!, typography.body),
+      bodyMedium: typography.body,
+      bodySmall: themed(defaultTextTheme.bodySmall!, typography.body),
+      labelLarge: themed(defaultTextTheme.labelLarge!, typography.label),
+      labelMedium: typography.label,
+      labelSmall: themed(defaultTextTheme.labelSmall!, typography.label),
+    );
+
     return ThemeData(
       useMaterial3: true,
       brightness: brightness,
@@ -340,7 +398,8 @@ class AppTheme {
         typography,
         shapes,
         atmosphere,
-        motion,
+        resolvedFeel.motion,
+        resolvedFeel,
       ],
       cardTheme: CardThemeData(
         color: colors.surface1,
@@ -411,12 +470,7 @@ class AppTheme {
           borderSide: BorderSide(color: colors.border),
         ),
       ),
-      textTheme: TextTheme(
-        displayLarge: typography.displayClock,
-        titleLarge: typography.title,
-        bodyMedium: typography.body,
-        labelMedium: typography.label,
-      ),
+      textTheme: textTheme,
     );
   }
 }

@@ -39,7 +39,7 @@
 - **Durum:** [x] Boşta
 - **Faz/WP:** —
 - **SAHİP yollar:** —
-- **Son not:** WP-285 kod/test tamam; beta-v4308'de yayımlandı ve sahip 2026-07-24'te cihazda kabul etti (bkz. Proje Gerçekleri). Timer state motoru, migration, backend ve production değişmedi.
+- **Son not:** WP-288 kod/test tamamlandı; 3 golden + tam Flutter test paketi yeşil. Cihaz QA ve ürün kabulü bekliyor.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
@@ -59,7 +59,7 @@
 | 0b | Production backend değişikliği | 🔴 Kapalı | `deploy_enabled: false` (WP-293 ile yeniden kilitlendi); yeni terfi backup+dry-run+somut GO ister |
 | 1 | WP-287 şifre sıfırlama · WP-286 ayarlar IA | 287 [x] kod/test · 286 [ ] | 287: sahip panel + cihaz QA bekliyor · 286 sırada |
 | 2 | WP-291 boyut paneli · WP-289 his araştırması | 291 [x] · 289 [x] tamam | 291 cihaz QA bekliyor · 289 kapandı |
-| 3 | WP-288 tema modeli · WP-294 l10n borcu | [ ] Bekliyor | 288 **289'a bağımlı**; 294 l10n sıcak yüzey |
+| 3 | WP-288 tema modeli · WP-294 l10n borcu | 288 [x] kod/test · 294 [ ] | 288 cihaz QA bekliyor; 294 l10n sıcak yüzey + K-7 bloklu |
 | 4 | WP-290 tema sihirbazı | [ ] Bekliyor | Tek başına; `core/theme/**` + `pubspec.yaml` |
 | 5 | WP-292 taç · WP-295 kamp ateşi | [ ] Bekliyor | 295 sahiple konuşma ister |
 | Sonra | WP-276/277 ops kabulü | [ ] Bekliyor | Sentetik staging ops kanıtı; WP-276 Play Store için de gerekli |
@@ -201,9 +201,9 @@ DALGA 5  WP-292  Taç              ‖  WP-295  Kamp ateşi (sahip kararı sonra
 - **Tuzaklar:** Scheme'i sabit yazıp beta/stable'ı karıştırmak · yalnız kodu düzeltip staging panel adımını atlamak · **şablona `{{ .Token }}` eklemeden OTP'yi "bitti" saymak** · **production panelini bu WP'de değiştirmek** (ayrı kapı) · `config.toml`'u değiştirip hosted projeyi düzelttiğini sanmak · hata mesajında hesabın varlığını sızdırmak.
 - **Model önerisi:** 🟣 Pro
 
-### WP-288: Tema modeli genişletmesi, yerel saklama v2 ve göç 🗄️
+### WP-288: Tema modeli genişletmesi, yerel saklama v2 ve göç 🗄️ ✅ KOD/TEST TAMAM
 - **Program/Faz:** Yeni Özellik Turu · Aşama A · Tema programı · (plan §3 F-04-A, ADR-1 rev.2/2/3/7/8)
-- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** 🔄 **WP-289** (`AppFeel` alanlarını 289'un kataloğu belirler — rev.2'de sıra ters çevrildi)
+- **Ajan:** Codex · **Durum:** [x] Kod/test tamam (2026-07-24) — tam `TextTheme`, `AppFeel`, üç sabit yuvalı `CustomTheme` v2 saklama ve eski palet göçü eklendi. Açık/koyu/sistem goldenları + göç/silme/ileri-şema testleri + tam Flutter paketi yeşil. **Bekleyen:** `Cihazda doğrulanmalı` (eski özel paletli gerçek cihazda ilk açılış/göç, aktif tema, silme ve sistem modu).
 - **Problem:** Özel tema bugün yalnız **4 renk** tutuyor (`AppPalette` — `app_theme.dart:22-27`) ve **silme yok**. Sahip: 3 yuva, her yuvada tam tema (renk+yazı+biçim+atmosfer+his), **düzenleme ve silme**. Saklama **cihazda kalacak** (10. tur kararı — sunucu senkronu iptal).
 - **Kapsam dışı:** Sihirbaz UI (WP-290), sunucu tablosu/migration/RLS (**iptal edildi**), cihazlar arası senkron, tema paylaşma, XP ile kilitleme, widget/bildirim teması.
 - **SAHİP dosyalar (yaz):** `app/lib/core/theme/custom_theme.dart` (yeni), `app/lib/core/theme/theme_settings.dart`, `app/lib/core/theme/theme_tokens.dart`, `app/lib/core/theme/app_theme.dart` (`extensions:` listesi), `app/lib/main.dart` (tema karar akışı), ilgili testler.
