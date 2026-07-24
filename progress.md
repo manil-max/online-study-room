@@ -99,7 +99,7 @@ Sıra: **Aşama A (kod) → Aşama B (Play Store) → Aşama C (Microsoft Store)
 - **Adımlar:**
   - [ ] Ortama göre `redirectTo` çözümleyici: scheme = applicationId (`build.gradle.kts:148-174` ile birebir), host `login-callback`. Sabit yazma.
   - [ ] `resetPasswordForEmail(safe, redirectTo: …)`; in_memory implementasyonu arayüzle uyumlu kalsın.
-  - [ ] **K-2 kararı** uygulanır: Windows için OTP/kod yolu (önerilen) veya protokol kaydı.
+  - [ ] **ADR-5:** Android deep link + **her platformda çalışan e-posta kodu yolu** (Windows'ta protokol kaydı yok, portable ZIP'te de çalışması gerekiyor). Android akışı değişmez.
   - [ ] Ops runbook: staging + production Supabase panelinde Redirect URL allowlist ve Site URL adımları yazılır (**sahip uygulayacak**).
   - [ ] Kırmızı-yeşil test: `redirectTo` olmadan çağrıyı yakalayan regresyon testi.
 - **Veri/Migration etkisi:** Yok. **Supabase panel yapılandırması var** (kod dışı).
@@ -110,27 +110,28 @@ Sıra: **Aşama A (kod) → Aşama B (Play Store) → Aşama C (Microsoft Store)
 - **Tuzaklar:** Scheme'i sabit yazıp beta/stable'ı karıştırmak · yalnız kodu düzeltip panel adımını atlamak (kullanıcı için düzelmez) · `config.toml`'u değiştirip hosted projeyi düzelttiğini sanmak.
 - **Model önerisi:** 🟣 Pro
 
-### WP-288: Tema veri modeli, `0071` migration ve hesap senkronu 🗄️
-- **Program/Faz:** Yeni Özellik Turu · Aşama A · Tema programı · (plan §3 F-04-A)
+### WP-288: Tema modeli genişletmesi, yerel saklama v2 ve göç 🗄️
+- **Program/Faz:** Yeni Özellik Turu · Aşama A · Tema programı · (plan §3 F-04-A, ADR-1/2/3)
 - **Ajan:** — · **Durum:** [ ] Bekliyor
-- **Problem:** Tema tercihleri bugün yalnız `SharedPreferences`'ta, **3 sabit yuvada** ve **4 renkte** (`theme_settings.dart:104`). Sahip: sınırsız tema, hesaba kayıtlı, aktif seçim cihaz başına serbest. Mevcut model bunu taşıyamaz.
-- **Kapsam dışı:** Sihirbaz UI (WP-290), tema paylaşma, XP ile kilitleme, widget/bildirim teması.
-- **SAHİP dosyalar (yaz):** `supabase/migrations/0071_user_custom_themes.sql` (yeni), `app/lib/core/theme/custom_theme.dart` (yeni), `app/lib/core/theme/theme_settings.dart`, `app/lib/data/repositories/custom_theme_repository.dart` (yeni) + `supabase/` ve `in_memory/` implementasyonları, ilgili testler.
-- **DOKUNMA:** `app/lib/features/profile/**` (UI WP-290'ın), `app/pubspec.yaml`, `AndroidManifest.xml`.
+- **Problem:** Özel tema bugün yalnız **4 renk** tutuyor (`AppPalette` — `app_theme.dart:22-27`) ve **silme yok**. Sahip: 3 yuva, her yuvada tam tema (renk+yazı+biçim+atmosfer+his), **düzenleme ve silme**. Saklama **cihazda kalacak** (10. tur kararı — sunucu senkronu iptal).
+- **Kapsam dışı:** Sihirbaz UI (WP-290), sunucu tablosu/migration/RLS (**iptal edildi**), cihazlar arası senkron, tema paylaşma, XP ile kilitleme, widget/bildirim teması.
+- **SAHİP dosyalar (yaz):** `app/lib/core/theme/custom_theme.dart` (yeni), `app/lib/core/theme/theme_settings.dart`, `app/lib/core/theme/theme_tokens.dart`, `app/lib/core/theme/app_theme.dart` (`extensions:` listesi), `app/lib/main.dart` (tema karar akışı), ilgili testler.
+- **DOKUNMA:** `app/lib/features/profile/**` (UI WP-290'ın), `app/pubspec.yaml` (font WP-290'ın), `supabase/**` (bu WP'nin sunucu işi YOK), `AndroidManifest.xml`.
 - **Adımlar:**
-  - [ ] `public.user_themes` tablosu: `id uuid`, `user_id`, `name`, `payload jsonb`, `schema_version`, zaman damgaları. Migration başlık + rollback bloğu zorunlu (`AGENTS.md §2`).
-  - [ ] RLS: `user_id = auth.uid()` (select/insert/update/delete). Abuse testi ile kanıtla.
-  - [ ] `payload` boyut kısıtı ve kullanıcı başına makul üst sınır (DoS koruması; kullanıcıya sınır hissettirmez).
-  - [ ] `CustomTheme` modeli: 5 katmanın serileştirmesi, `schema_version`, eksik alanda güvenli varsayılan.
-  - [ ] Repo katmanı **çift implementasyon** (supabase + in_memory).
-  - [ ] **Göç:** yerel `custom_palettes` → sunucu, idempotent, tek yönlü, yerel kayıt silinmez, `custom_N → uuid` eşlemesi yerelde saklanır.
-  - [ ] `activeThemeId` **yalnız yerelde** — sunucuya asla yazılmaz.
-- **Veri/Migration etkisi:** Yeni tablo `user_themes`. **Geri alma:** `drop table public.user_themes;` (migration başlığında yazılı). Mevcut tabloya dokunulmaz.
-- **Ortam/Deploy:** Local replay + test → staging dry-run/push. **Production terfi bu WP'nin parçası DEĞİL** — ayrı GO ister (`AGENTS.md §2`).
-- **RLS/Güvenlik:** Başka kullanıcının teması okunamaz/yazılamaz (abuse testi zorunlu). `payload` istemciden gelir → boyut/şema doğrulaması sunucuda.
-- **Edge-case'ler:** Çevrimdışı açılış (son bilinen tema ile açılır, çökmez) · göç iki kez çalışırsa mükerrer tema olmaz · aynı hesap iki cihazda · sunucu boş, yerel dolu · yerel boş, sunucu dolu · bozuk `payload` (varsayılana düşer, çökmez).
-- **Kabul (ölçülebilir):** İki cihazda liste aynı, **aktif seçim birbirini etkilemez** · göç idempotent · RLS abuse testi kırmızıdan yeşile · çevrimdışı açılış çökme 0 · `flutter analyze` 0, testler yeşil · gerçek local PostgreSQL replay başarılı.
-- **Tuzaklar:** `activeThemeId`'yi sunucuya yazmak (R3) · index tabanlı `custom_N` kimliği taşımak (R2) · göç yazmadan modeli değiştirip kullanıcıların temasını silmek (R1) · uygulanmış migration'ı düzenlemek.
+  - [ ] `CustomTheme` modeli: `id` (custom_1/2/3 — **index sabit**), `name`, `isDefined`, `updatedAt`, `brightness` + 5 katman. `toMap`/`fromMap` + `schemaVersion` + eksik alanda güvenli varsayılan.
+  - [ ] `toPreset(Brightness)` → **ADR-1:** özel tema `AppTheme.fromPreset` (`app_theme.dart:233`) ile render edilir; yeni render yolu yazılmaz.
+  - [ ] `AppTypography` genişlet: font aileleri (başlık/gövde/sayaç), ağırlıklar, harf aralığı, ölçek. **`copyWith` ve `lerp` mutlaka güncellenir** (R4).
+  - [ ] `AppFeel` katmanı iskeleti + **`app_theme.dart:338` `extensions:` listesine ekle** (R3 — eklenmezse seçim ölü anahtar olur).
+  - [ ] Saklama: yeni anahtar `custom_themes_v2`, `active_custom_theme_id`, `custom_themes_migrated_v1`. Eski `custom_palettes` **okunur, silinmez, yazılmaz**.
+  - [ ] `saveCustomTheme(slot, theme)` · `deleteCustomTheme(slot)` (**index kaydırmaz**, yuvayı boşaltır) · `setActiveCustomTheme(id?)`.
+  - [ ] `main.dart:160-166` üç yollu olur: **özel tema > palet > aile** (ADR-3).
+  - [ ] **Göç:** eski 4 renk aynı index'e taşınır; kalan alanlar **o an seçili preset'ten devralınır** (kullanıcının gördüğü görüntü değişmesin). İdempotent, bayraklı.
+- **Veri/Migration etkisi:** **Yok** — sunucu şeması değişmiyor. Yalnız yerel `SharedPreferences` şeması v2. Geri alma: yeni anahtarlar silinir, eski `custom_palettes` yerinde olduğu için kullanıcı eski durumuna döner.
+- **Ortam/Deploy:** Local. Production/staging dokunuşu **yok**.
+- **RLS/Güvenlik:** Yok (sunucuya veri gitmiyor). Sır/token yok.
+- **Edge-case'ler:** Bozuk JSON (o yuva boş olur, çökmez) · gelecekten `schemaVersion` · 3 yuva dolu · aktif tema silinmiş (palet/aile yoluna güvenli dönüş) · yeni kurulum (3 boş yuva) · göç iki kez çalışıyor.
+- **Kabul (ölçülebilir):** Göç sonrası kullanıcının gördüğü tema **değişmez** (golden) · göç idempotent · silme index kaydırmaz · aktif silinince çökme 0 · 3'ten fazla tema oluşturulamaz · bozuk veride açılış çökmesi 0 · her yeni token seçimi **gerçek etki üretir** (ölü anahtar yok) · `flutter analyze` 0, testler yeşil.
+- **Tuzaklar:** `extensions:` listesine yeni katmanı eklememek (R3) · `copyWith`/`lerp`'i güncellememek (R4) · göç yazmadan modeli değiştirmek (R1) · silmede index kaydırmak (R2) · **Riverpod 3:** dinleyicisiz provider her `read`'de yeniden build olur → testte `container.listen(...)` açılmazsa regresyon testi sessizce etkisiz kalır (R13) · `main.dart` sıcak dosya, aynı anda başka WP girmemeli.
 - **Model önerisi:** 🔴 Opus
 
 ### WP-289: Animasyon/his araştırma turu ve katalog 🔍
@@ -154,23 +155,24 @@ Sıra: **Aşama A (kod) → Aşama B (Play Store) → Aşama C (Microsoft Store)
 ### WP-290: "Kendi Temanı Oluştur" sihirbazı ve görünüm ekranı yeniden düzeni 🎨
 - **Program/Faz:** Yeni Özellik Turu · Aşama A · Tema programı · (plan §3 F-04-B)
 - **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-288 kabul + WP-289 kataloğu
-- **Problem:** Görünüm ekranı bugün "renk seçimi" gibi duruyor; kullanıcı arka plan/yazı/font/şekil/atmosferi tek tek seçemiyor. Sahip adım adım, canlı önizlemeli bir oluşturucu istiyor.
-- **Kapsam dışı:** Tema paylaşma/kod ile aktarma, XP ile kilit, widget/bildirim teması, yeni ekonomi kuralı.
+- **Problem:** Görünüm ekranı bugün "renk seçimi" gibi duruyor; kullanıcı arka plan/yazı/font/şekil/atmosferi tek tek seçemiyor. Sahip adım adım, canlı önizlemeli bir oluşturucu istiyor. Ayrıca **3 yuva için düzenleme ve silme** UI'ı gerekiyor (10. tur).
+- **Kapsam dışı:** Tema paylaşma/kod ile aktarma, XP ile kilit, widget/bildirim teması, yeni ekonomi kuralı, sunucu senkronu (iptal).
 - **SAHİP dosyalar (yaz):** `app/lib/features/profile/appearance_screen.dart`, `app/lib/features/profile/theme_studio_screen.dart` (**kaldırılacak**), yeni sihirbaz dosyaları `app/lib/features/profile/theme_builder/**`, `app/lib/core/theme/theme_tokens.dart` (tipografi/his genişletmesi), `app/pubspec.yaml` (font asset'leri), `app/assets/fonts/**`, `app/lib/l10n/app_*.arb`, golden + widget testleri.
 - **DOKUNMA:** `supabase/migrations/**`, `app/lib/core/navigation/**`, bildirim/timer kodu.
 - **Adımlar:**
-  - [ ] Ekran düzeni: en üstte **"Kendi Temanı Oluştur"** girişi → kullanıcının temaları (**en yeni en üstte**) → **ince ayraç çizgi (başlık metni yok)** → hazır temalar.
+  - [ ] Ekran düzeni: en üstte **"Kendi Temanı Oluştur"** girişi → kullanıcının temaları (**en yeni en üstte**, `updatedAt` desc) → **ince ayraç çizgi (başlık metni yok)** → hazır temalar.
+  - [ ] Her tema satırında **düzenle (✎)** ve **sil (🗑)**; silme **onay dialogu** ister. 3 yuva doluysa "oluştur" yerine net mesaj.
   - [ ] 7 adımlı sihirbaz: zemin → renkler → yazılar → biçim → atmosfer → his → özet/ad ver.
-  - [ ] Her adımda **canlı önizleme** (mevcut `_LivePreview` taşınıp genişletilir, sıfırdan yazılmaz).
+  - [ ] Her adımda **canlı önizleme** (mevcut `_LivePreview` — `theme_studio_screen.dart:482` — taşınıp genişletilir, sıfırdan yazılmaz).
   - [ ] Kontrast koruması: AA altı seçimde uyarı + tek dokunuşla düzeltme (kaydetmeyi engelleme).
-  - [ ] **K-1 kararına göre** font kaynağı (asset paketleme önerilir; yalnız SIL OFL / Apache-2.0).
-  - [ ] Eski `ThemeStudioScreen` kaldırılır; işe yarar parçalar taşınır. Eski `family`/`palette` seçimleri kırılmaz.
-- **Veri/Migration etkisi:** Yok (şema WP-288'de). Yeni alanlar `payload`'a eklenir, `schema_version` korunur.
-- **Ortam/Deploy:** Local. Production yok.
-- **RLS/Güvenlik:** İstemci yalnız kendi temasını yazar (WP-288 politikası). Font asset lisansları doğrulanır.
-- **Edge-case'ler:** Hiç tema yokken boş durum daveti · çok uzun tema adı · kullanıcı okunamaz renk seçerse · açık/koyu geçişi · masaüstünde geniş ekran yerleşimi · RTL (AR dili) · "hareketi azalt" açıkken his efektleri.
-- **Kabul (ölçülebilir):** Her adımda değişiklik önizlemede ≤ 1 kare içinde görünür · kaydedilen tema uygulamanın ≥ %95 yüzeyinde token'dan uygulanır · AA altı kontrastta uyarı çıkar · yeni tema listenin en üstünde · 3 temsili tema × açık/koyu golden testi yeşil · 4 dilde anahtar tam.
-- **Tuzaklar:** Sihirbazı ekran başlıklarıyla şişirmek (sahip **sade** istedi) · `pubspec.yaml` sıcak dosya — aynı anda başka WP girmemeli · font paket boyutunu kontrolsüz büyütmek · eski kullanıcının seçili temasını bozmak.
+  - [ ] **ADR-4:** fontlar `app/assets/fonts/**` altına paketlenir (`google_fonts` **kullanılmaz**). Yalnız SIL OFL / Apache-2.0; lisans metinleri `assets/fonts/LICENSES/`. Subset: Latin + Latin-Ext (Türkçe dahil). **`fontFamilyFallback` zorunlu** — AR locale'de kutu karakter olmasın (R7).
+  - [ ] Eski `ThemeStudioScreen` **kaldırılır**; işe yarar parçalar taşınır. `custom_palette_editor.dart` gereksizleşir → kaldırılır. Eski `family`/`palette` seçimleri kırılmaz.
+- **Veri/Migration etkisi:** Yok (model ve saklama WP-288'de). Yeni alan eklenirse `schemaVersion` korunur.
+- **Ortam/Deploy:** Local. Sunucu/production dokunuşu yok.
+- **RLS/Güvenlik:** Sunucuya veri gitmiyor. **Font asset lisansları tek tek doğrulanır.**
+- **Edge-case'ler:** Hiç tema yokken sade boş durum daveti (3 boş yuva **gösterilmez** — 4. turda düşürüldü) · çok uzun tema adı (≤ 24 karakter) · okunamaz renk seçimi · sihirbaz yarıda bırakılıyor (kaydedilmemiş değişiklik uyarısı) · açık/koyu geçişi · masaüstünde sol kontrol + sağ sabit önizleme · RTL (AR) · "hareketi azalt" açıkken his efektleri durur · font yüklenemedi (fallback).
+- **Kabul (ölçülebilir):** Her adımda değişiklik önizlemede ≤ 1 kare içinde görünür · kaydedilen tema uygulamanın ≥ %95 yüzeyinde token'dan uygulanır · AA altı kontrastta uyarı çıkar · kaydedilen/düzenlenen tema listenin en üstünde · silme onay ister ve sonrası çökme 0 · 3 temsili tema × açık/koyu = 6 golden yeşil · **APK boyut artışı ≤ 2.5 MB** (`--analyze-size` kanıtı) · 4 dilde anahtar tam, AR'de kutu karakter yok.
+- **Tuzaklar:** Sihirbazı ekran başlıklarıyla şişirmek (sahip **sade** istedi) · `pubspec.yaml` ve `core/theme/**` sıcak dosya — aynı anda başka WP girmemeli · font paket boyutunu kontrolsüz büyütmek · AR fallback zincirini atlamak · eski kullanıcının seçili temasını bozmak.
 - **Model önerisi:** 🔴 Opus
 
 ### WP-291: Ana sayfa kart boyut paneli → sabit alt panel 📐

@@ -190,16 +190,24 @@ görüntüsü/isim listesi olarak düşülecek, sonra hangilerinin uygulanacağ�
 
 **KARARLAR (2. tur — sahip cevapladı):**
 - **İsim:** **"Kendi Temanı Oluştur"**. (S-01 kapandı.)
-- **Adet:** **Birkaç özel tema kaydedilebilecek** — tek slot değil, isimli birden fazla. (S-08 kapandı.)
-- **Senkron:** Özel temalar **hesaba kaydedilecek**, yani tüm cihazlarda listede görünür.
-  **Ama hangi temanın aktif olduğu cihaz başına serbest** — kullanıcı telefonda A temasını,
-  Windows'ta B temasını seçebilir. (S-09 kapandı.)
-  → *Teknik sonuç: tema tanımı sunucuda ortak, "aktif tema seçimi" cihaz yerel.*
 - **Kapsam:** **Şimdilik yalnız uygulama içi.** Ana ekran widget'ı ve bildirim paneli bu turda
   kapsam dışı. (S-14 kapandı.)
 
+> ⚠️ **2. turdaki senkron ve adet kararları 10. turda DEĞİŞTİ.** Geçerli olan aşağıdaki 10. tur bloğudur:
+> tema **cihazda** kalır, **en fazla 3** tema, **düzenleme + silme** olacak. Sunucu senkronu iptal.
+
+**KARARLAR (10. tur — kapsam daraltıldı, GEÇERLİ OLAN BU):**
+- **Saklama: CİHAZDA.** Hesaba kaydetme, sunucu tablosu ve cihazlar-arası senkron **iptal**.
+  *Sahibin ifadesi: "cihazda kalsın… beğenen kişi gider Windows ya da diğer mobil cihazında
+  aynı temayı oluşturur."*
+- **Adet: en fazla 3.** (Önceki "sınırsız" kararı iptal — S-18 yeniden cevaplandı.)
+- **Düzenleme ve silme olacak.** *"3 tane sınır koyduğumuz için tema düzenleme ve silme özelliği de olsun."*
+- **Teknik sonuç:** migration `0071`, RLS politikası, çift repo implementasyonu ve senkron **tamamen düştü**.
+  Mevcut 3 yuvalı `SharedPreferences` yapısı korunup zenginleştirilecek. Detay:
+  [`docs/YENI-OZELLIK-PLANI.md`](YENI-OZELLIK-PLANI.md) §0.1 ve ADR-2.
+
 **KARARLAR (3. tur):**
-- **Sınır yok** — kullanıcı istediği kadar özel tema oluşturabilir. (S-18 kapandı.)
+- ~~**Sınır yok** — kullanıcı istediği kadar özel tema oluşturabilir.~~ → **10. turda değişti: en fazla 3.**
 - **Ekran düzeni:** en üstte **"Kendi Temanı Oluştur"** girişi, onun **altında hazır temalar** listesi.
   Yeni oluşturulan tema aynı listeye eklenir.
 - **DÜZELTME (4. tur):** 3. turdaki "üste geçmesin" ifadesi **yanlış yazılmış**. Sahibin gerçek isteği:
