@@ -80,14 +80,27 @@ denedim ama o kısımda sorun var."
 
 **Not:** Bu bir yeni özellik değil, **canlı hata**. Diğer maddelerden ayrı tutulacak ve muhtemelen önce çözülecek.
 
-**Bilinmesi gerekenler (henüz sorulmadı/ölçülmedi):**
-- (S-05) Hangi sürümde denendi — stable v45 mi, beta-v4308 mi? (stable/beta ayrı backend'e bağlı)
-- (S-06) Linke basınca ne oluyor: hiç açılmıyor mu, tarayıcı açılıp hata mı veriyor, uygulama mı açılıp
-  boş kalıyor? Ekranda bir yazı çıkıyor mu ("link expired", "invalid", 404 vb.)?
-- (S-07) E-postadaki linkin adresi neye benziyor (alan adı kısmı yeter, token gerekmez)?
+**Sahibin ek bilgisi (2. tur):**
+- Sayfa hiç yüklenmiyor. Tarayıcı hata sayfası çıkıyor; "Details"a basınca
+  **"check your internet connection"** diyor. Ama internet çalışıyor.
+- **stable** sürümde denendi.
 
-**Muhtemel yönler (henüz teşhis değil, sadece bakılacak yerler):**
-Supabase redirect URL yapılandırması, deep link / app link kaydı, ortam başına farklı site URL'i.
+**Claude'un kodda bulduğu güçlü aday kök neden (henüz kanıtlanmadı, ama semptomla birebir örtüşüyor):**
+- `app/lib/data/repositories/supabase/supabase_auth_repository.dart:185` →
+  `await _client.auth.resetPasswordForEmail(safe);`
+  **`redirectTo` parametresi verilmiyor.**
+- `redirectTo` verilmeyince Supabase, e-postadaki linki projenin **Site URL** ayarına yönlendirir.
+- `supabase/config.toml:43` → `site_url = "http://127.0.0.1:3000"` (yerel geliştirme varsayılanı).
+  Hosted production projesinde de Site URL hâlâ `localhost`/`127.0.0.1` ise, e-postadaki link telefonun
+  kendi 3000 portuna gider; orada bir şey olmadığı için tarayıcı **bağlantı hatası** verir ve Chrome bunu
+  "check your internet connection" diye gösterir. → Semptom birebir bu.
+- Uygulama tarafı zaten deep link'e hazır görünüyor: `authRepository.passwordRecoveryEvents` stream'i +
+  `features/auth/recovery_screen.dart` var, `auth_gate.dart` bunu dinliyor. Yani eksik olan **link hedefi**.
+
+**Çözüm yönü (planlanınca kesinleşecek):**
+`resetPasswordForEmail`'e ortam başına doğru `redirectTo` vermek (uygulama deep link'i veya gerçek bir web
+sayfası) + Supabase panelinde Site URL ve Redirect allowlist'i düzeltmek + Android intent-filter'ı doğrulamak.
+**Not:** Supabase panel ayarı production'ı etkiler → ayrı GO kuralına tabi.
 
 ---
 
@@ -131,9 +144,8 @@ Supabase redirect URL yapılandırması, deep link / app link kaydı, ortam baş
 | D | **Sıfırdan tasarla** | Design from scratch |
 | E | **Özel tema oluştur** | Custom theme |
 
-Claude'un önerisi: üstteki büyük giriş kartı **"Kendi temanı yarat / Create your own"** (net, davetkâr),
-açılan ekranın başlığı ise **"Tema Atölyesi"**. "Stüdyo" adı zaten WP-55'te kullanıldığı için, yeni akış
-onun yerini alırsa isim çakışması olmaz.
+**SEÇİLEN AD (sahip kararı, 2. tur): "Kendi Temanı Oluştur"** — EN karşılığı "Create your own theme".
+Ayarlar/görünüm ekranının **en üstünde** büyük giriş kartı olarak duracak.
 
 **Claude'un adım taslağı (tartışmaya açık, sıra değişebilir):**
 1. **Zemin** — açık/koyu/sistem + arka plan rengi (düz / degrade / dokulu)
@@ -157,14 +169,22 @@ onun yerini alırsa isim çakışması olmaz.
 - *Bezelsiz düz (flat)* — gölgesiz, kenarlıkla ayrılan yüzeyler
 - **Erişilebilirlik notu:** "hareketi azalt" sistem ayarına saygı + uygulama içi kapatma şart.
 
+**KARARLAR (2. tur — sahip cevapladı):**
+- **İsim:** **"Kendi Temanı Oluştur"**. (S-01 kapandı.)
+- **Adet:** **Birkaç özel tema kaydedilebilecek** — tek slot değil, isimli birden fazla. (S-08 kapandı.)
+- **Senkron:** Özel temalar **hesaba kaydedilecek**, yani tüm cihazlarda listede görünür.
+  **Ama hangi temanın aktif olduğu cihaz başına serbest** — kullanıcı telefonda A temasını,
+  Windows'ta B temasını seçebilir. (S-09 kapandı.)
+  → *Teknik sonuç: tema tanımı sunucuda ortak, "aktif tema seçimi" cihaz yerel.*
+- **Kapsam:** **Şimdilik yalnız uygulama içi.** Ana ekran widget'ı ve bildirim paneli bu turda
+  kapsam dışı. (S-14 kapandı.)
+
 **Açık sorular:**
-- (S-08) Özel tema **kaç tane** kaydedilebilsin? Tek mi, birkaç tane isimli mi?
-- (S-09) Özel temalar cihazda mı kalsın, hesaba mı kaydedilsin (telefon + Windows aynı tema)?
 - (S-10) Tema **paylaşma/kod ile içe aktarma** olsun mu (arkadaşına tema gönderme)? İleriye mi bırakalım?
 - (S-11) Ödül/kilit bağı olacak mı — bazı temalar XP/seviye ile mi açılsın, hepsi serbest mi?
 - (S-12) Mevcut WP-55 tema stüdyosu **korunacak mı**, yoksa yeni akış tamamen yerine mi geçecek?
 - (S-13) "Kutular eskimiş gibi" derken kastedilen görsel his: gren/doku mu, düzensiz kenar mı, ikisi de mi?
-- (S-14) Tema yalnız uygulama içini mi kapsıyor, ana ekran **widget'ını ve bildirim panelini** de mi?
+- (S-18) Kaç özel tema sınırı olsun (ör. 10)? Sınırsız mı?
 
 ---
 
@@ -197,8 +217,16 @@ denir. "Yüzen baloncuk" tarifi ise **FAB (floating action button)** veya **kal�
   kaydırıcı görünür), yukarı çekilince tüm boyut/hizalama seçenekleri açılan panel. **Claude'un önerisi:**
   A'nın "hep elimin altında" avantajını B'nin "yer kaplamama" avantajıyla birleştiriyor.
 
+**C'nin uzun anlatımı (sahip "anlamadım" dedi — 2. turda görselle de gösterildi):**
+C aslında **A'nın büyüyebilen hâli**. Normalde ekranın altında A gibi ince bir şerit durur; içinde sadece
+boyut kaydırıcısı vardır ve sayfayı kaydırsan da yerinden kıpırdamaz. Farkı şu: şeridin üstünde küçük bir
+**tutamak** (kısa çizgi) olur; parmağınla onu **yukarı çekersen** panel büyür ve içinden hizalama, saydamlık,
+tema gibi diğer widget ayarları da çıkar. Aşağı itersen tekrar ince şeride döner.
+Yani: **kapalı = A** (sadece boyut, az yer), **açık = tam ayar paneli**. Telefonlarda müzik çalarların alttaki
+mini çubuğu gibi — küçükken tek satır, yukarı çekince tam ekran kontrol.
+
 **Açık sorular:**
-- (S-15) A / B / C hangisi? (Claude C'yi öneriyor)
+- (S-15) A / B / C hangisi? (Claude C'yi öneriyor — *2. turda görsel gösterildi, cevap bekleniyor*)
 - (S-16) Bu araçta sadece **boyut** mu olacak, yoksa hizalama/şeffaflık gibi sık kullanılanlar da mı?
 - (S-17) Aynı sorun Windows/masaüstü tarafında da var mı, yoksa sadece telefonda mı?
 
