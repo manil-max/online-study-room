@@ -1,5 +1,9 @@
 {
   "@@locale": "en",
+  "clockIzinlerYalnizAndroid": "These permissions apply on Android only",
+  "@clockIzinlerYalnizAndroid": {
+    "description": "Clock user-facing text. Source: Bu izinler yalniz Android'de gecerli"
+  },
   "profileBasarimKademeleriniTamamla": "Complete the levels below to earn this achievement.",
   "@profileBasarimKademeleriniTamamla": {
     "description": "Achievement detail introduction."

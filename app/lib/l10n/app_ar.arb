@@ -1,5 +1,9 @@
 {
   "@@locale": "ar",
+  "clockIzinlerYalnizAndroid": "هذه الأذونات تنطبق على أندرويد فقط",
+  "@clockIzinlerYalnizAndroid": {
+    "description": "Clock user-facing text. Source: Bu izinler yalniz Android'de gecerli"
+  },
   "profileBasarimKademeleriniTamamla": "أكمل المستويات أدناه للحصول على هذا الإنجاز.",
   "@profileBasarimKademeleriniTamamla": {
     "description": "Achievement detail introduction."

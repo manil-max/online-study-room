@@ -1,5 +1,6 @@
 {
   "@@locale": "tr",
+  "clockIzinlerYalnizAndroid": "Bu izinler yalnız Android'de geçerli",
   "profileBasarimKademeleriniTamamla": "Bu başarımı kazanmak için aşağıdaki kademeleri tamamla.",
   "profileBasarimToplamSaatKosulu": "Toplam {count} saat çalış.",
   "profileBasarimTekOturumKosulu": "En az {count} dakika süren tek bir çalışma oturumu tamamla.",

@@ -222,19 +222,33 @@ class _PermissionStatusSummary extends StatelessWidget {
         snapshot.availability == ClockPermissionAvailability.available;
     final isUnknown =
         snapshot.availability == ClockPermissionAvailability.unknown;
+    // WP-296: `unsupported` (masaüstü/web) kendi dalını alır. Öncesinde bu durum
+    // "eksik izin" dalına düşüyordu: Windows'ta kart kırmızı görünüp "4 Eksik
+    // izinleri aç" diyordu — o platformda var olmayan izinler için yanlış bir
+    // iddia. Alt satır da ekranın başlığındaki cümleyi (`:107`) aynen tekrar
+    // ediyordu. Aynı dosyadaki "eksikleri aç" düğmesi (`:161`) zaten yalnız
+    // `available` durumunda çiziliyor; kart artık onunla tutarlı.
+    final isUnsupported =
+        snapshot.availability == ClockPermissionAvailability.unsupported;
     final allOk = snapshot.allOk;
     final color = allOk
         ? theme.colorScheme.primaryContainer
+        : isUnsupported
+        ? theme.colorScheme.surfaceContainerHighest
         : isUnknown
         ? theme.colorScheme.tertiaryContainer
         : theme.colorScheme.errorContainer;
     final title = allOk
         ? l10n.clockTumIzinlerTamam
+        : isUnsupported
+        ? l10n.clockIzinlerYalnizAndroid
         : isUnknown
         ? l10n.clockIzinleriYenile
         : '${snapshot.missingCount} ${l10n.clockEksikIzinleriAc}';
-    final subtitle = allOk
+    final String? subtitle = allOk
         ? l10n.clockAppKapaliAlarmIcin
+        : isUnsupported
+        ? null
         : isAvailable
         ? l10n.clockEksikIzinleriAc
         : l10n.clockIzinlerGuvenlikNedeniyleYalniz;
@@ -244,12 +258,14 @@ class _PermissionStatusSummary extends StatelessWidget {
         leading: Icon(
           allOk
               ? Icons.check_circle
+              : isUnsupported
+              ? Icons.info_outline
               : isUnknown
               ? Icons.help_outline
               : Icons.warning_amber_rounded,
         ),
         title: Text(title),
-        subtitle: Text(subtitle),
+        subtitle: subtitle == null ? null : Text(subtitle),
       ),
     );
   }

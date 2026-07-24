@@ -21,8 +21,8 @@
 - 🔴 **BETA KARARI (sahip, 2026-07-25):** **Aşama A'nın TÜM WP'leri bitmeden beta çıkmaz — tek beta turu yapılacak.** Gerekçe: beta koşumu ~3 saat sürüyor, iki tur yapılmıyor. **Sonuçları:** (1) "önce X'in cihaz kabulü" yazan yazılı kapılar bu tur için **geçersiz** — cihaz QA'sı fiziken mümkün değil, kod/test kapısı esas alınır (`.agents/AGENTS.md §0.1`); (2) QA kuyruğundaki 6 iş **aynı beta'da** test edilir; (3) bir sorun görülürse hangi WP'den geldiği belirsiz olacağı için her WP **ayrı commit** + `analyze` 0 + testler yeşil şartı **daha da kritik**.
 - **Yönetim varsayılanı:** Production `deploy_enabled/release_enabled` kapalıdır. Stable yalnız protected `production` Environment, exact SHA/head/project-ref GO ve reviewer kanıtıyla ilerler.
 - **Kurallar:** Kök `AGENTS.md`, `.agents/AGENTS.md` ve `docs/KALITE-PROGRAMI.md` geçerlidir. Tek çalışma dalı `main`; her WP ayrı commit; production varsayılmaz.
-- **Son WP:** **297** · Sıradaki boş numara: **298**. Aşama A'da kod/test tamamlanan: 286, 287, 288, 289, 290, 291, 293 — **kartları arşive taşındı** ([arşiv](docs/archive/progress-tarihsel-2026-07.md)), kalan işleri aşağıdaki QA kuyruğunda.
-- **Aktif tur:** Yeni Özellik Turu **Aşama A** — plan **rev. 3** kanonik. 7 WP'nin kodu bitti; **kodlanmayı bekleyen 4 iş kaldı** (296, 292, 295, 294). Kanonik plan: [`docs/YENI-OZELLIK-PLANI.md`](docs/YENI-OZELLIK-PLANI.md).
+- **Son WP:** **297** · Sıradaki boş numara: **298**. WP-296 kapandı (759 test yeşil, 0 kırmızı). Aşama A'da kod/test tamamlanan: 286, 287, 288, 289, 290, 291, 293 — **kartları arşive taşındı** ([arşiv](docs/archive/progress-tarihsel-2026-07.md)), kalan işleri aşağıdaki QA kuyruğunda.
+- **Aktif tur:** Yeni Özellik Turu **Aşama A** — plan **rev. 3** kanonik. 8 WP'nin kodu bitti (296 dahil); **kodlanmayı bekleyen 4 iş kaldı** (297, 292, 294, 295). Kanonik plan: [`docs/YENI-OZELLIK-PLANI.md`](docs/YENI-OZELLIK-PLANI.md).
 - ✅ **Ortam gerçeği uzlaştırıldı (WP-293, 2026-07-24):** yukarıdaki altı gerçekli durum modeli kanoniktir; production deploy kapısı yeniden kilitlendi. `deploy-contract.json`, `KALITE-PROGRAMI.md`, `project.md`, `backlog.md`, `tooling/README.md` aynı gerçeğe getirildi.
 
 ## ⚡ Aktif Çalışma Kaydı
@@ -33,10 +33,10 @@
 - **SAHİP yollar:** —
 
 ### Claude Lane
-- **Durum:** [ ] **ÇALIŞIYOR — WP-296** (claim 2026-07-25)
-- **Faz/WP:** Aşama A · WP-296 — `main`'de kırmızı 3 testi yeşile al
-- **SAHİP yollar:** `app/test/features/alarms_screen_test.dart`, `app/test/features/classroom/study_timer_card_stop_test.dart`, `app/test/features/clock_widgets_screen_test.dart`, tanı sonrası kök nedeni barındıran uygulama dosyası, gerekirse `app/lib/l10n/app_*.arb`, `progress.md`
-- **Son not:** WP-290 kod/test tamam → QA kuyruğunda. WP-296 tanısı başlıyor.
+- **Durum:** [x] Boşta
+- **Faz/WP:** —
+- **SAHİP yollar:** —
+- **Son not:** WP-296 tamam (2026-07-25) — **tam paket 759 yeşil, 0 kırmızı**. İkisi ürün hatasıydı (masaüstünde yanlış izin iddiası), biri saate bağımlı testti. Sıradaki: WP-297 (fontlar).
 
 ### Codex Lane
 - **Durum:** [x] Boşta
@@ -61,7 +61,8 @@
 > QA sırasında bulunan hata **yeni WP** olur, eski kart yeniden açılmaz.
 >
 > 🔴 **Beta kararı gereği bu kuyruk TEK beta turunda test edilecek** — yani `Kalan Kod İşi` bitmeden
-> QA başlamıyor. Sıra: kalan 5 WP → beta build → aşağıdaki 5 + WP-297 aynı turda cihazda test.
+> QA başlamıyor. Sıra: kalan 4 WP (297 → 292 → 294 → 295) → beta build → aşağıdaki 5 + 297/292 aynı turda cihazda test.
+> ℹ️ **WP-296 ayrıca cihaz QA istemiyor** ama Windows yüzeyine dokundu: masaüstünde alarm eklemenin dialogsuz açılması ve izin kartının nötr görünmesi aynı turda bakılmalı.
 > ⚠️ Bu yüzden bir hata görüldüğünde kaynağı belirsiz olabilir; ilk bakılacak yer o yüzeye
 > dokunan **son commit**'tir (her WP ayrı commit).
 
@@ -77,20 +78,21 @@
 
 ## 🛠️ Kalan Kod İşi — ne kodlanacak
 
-> **Beta kararı gereği bu 5 işin HEPSİ bitmeden beta çıkmaz.** Sıra: hazır olan → sahip girdisi bekleyen.
+> **Beta kararı gereği bu işlerin HEPSİ bitmeden beta çıkmaz.** Sıra: hazır olan → sahip girdisi bekleyen.
+> **Kalan 4 iş** (296 kapandı).
 
 | # | İş | Kod durumu | Başlamaya hazır mı? |
 |---|---|---|---|
-| **1** | **WP-296** — `main`'de kırmızı 3 test | [ ] **Kodlanacak** | ✅ **HAZIR** — bağımlılık yok |
-| **2** | **WP-297** — gömülü fontlar (Inter · Lora · JetBrains Mono) | [ ] **Kodlanacak** | ✅ **HAZIR** — sahip onayı verildi (2026-07-25); font indirmesi onaylı |
-| **3** | **WP-292** — taç görseli | [ ] **Kodlanacak** | ✅ **HAZIR** — "önce WP-290 cihaz kabulü" kapısı **beta kararıyla düştü** (§0.1); kod/test kapısı esas |
-| **4** | **WP-294** — l10n borcu + audit CI kapısı | [ ] Kodlanacak | 🟡 **Kısmen** — audit genişletme + UTF-8 + CI kapısı **bugünkü 4 dil gerçeğiyle** yapılabilir; yalnız "EN/TR'ye daraltma" dalı K-7'ye bağlı |
-| **5** | **WP-295** — kamp ateşi animasyonları | [ ] Kodlanacak | 🔴 **TEK GERÇEK BLOKAJ** — sahiple tasarım konuşması yapılmadan başlamaz (kartın açık şartı, aşılmaz) |
+| ~~1~~ | **WP-296** — `main`'de kırmızı 3 test | [x] **TAMAM** (2026-07-25) | ✅ Bitti — 759 yeşil / 0 kırmızı; 2 ürün hatası + 1 saate bağımlı test |
+| **1** | **WP-297** — gömülü fontlar (Inter · Lora · JetBrains Mono) | [ ] **Kodlanacak** | ✅ **SIRADAKİ** — sahip onayı verildi (2026-07-25); font indirmesi onaylı |
+| **2** | **WP-292** — taç görseli | [ ] **Kodlanacak** | ✅ **HAZIR** — "önce WP-290 cihaz kabulü" kapısı **beta kararıyla düştü** (§0.1); kod/test kapısı esas |
+| **3** | **WP-294** — l10n borcu + audit CI kapısı | [ ] Kodlanacak | 🟡 **Kısmen** — audit genişletme + UTF-8 + CI kapısı **bugünkü 4 dil gerçeğiyle** yapılabilir; yalnız "EN/TR'ye daraltma" dalı K-7'ye bağlı |
+| **4** | **WP-295** — kamp ateşi animasyonları | [ ] Kodlanacak | 🔴 **TEK GERÇEK BLOKAJ** — sahiple tasarım konuşması yapılmadan başlamaz (kartın açık şartı, aşılmaz) |
 | — | WP-276 / WP-277 — staging ops kabul kanıtı | [ ] Kod azı, ops çoğu | ⏸️ Beta dışı; sentetik staging kanıtı + WP-276 Play Store için gerekli |
 | — | WP-278 / WP-279 | [?] **Ürün/ops kararı** | 🔴 Sahip kararı olmadan kod yazılmaz |
 | — | Production backend değişikliği | 🔴 Kapalı | `deploy_enabled: false`; yeni terfi backup + dry-run + somut GO ister |
 
-**Beta çıkabilmesi için kalan:** 296 → 297 → 292 → 294 → 295 (295 sahiple konuşmayı bekler; diğer dördü ajan işi).
+**Beta çıkabilmesi için kalan:** ~~296~~ → **297** → 292 → 294 → 295 (295 sahiple konuşmayı bekler; diğer üçü ajan işi).
 
 ### Tema programından devreden borç — durumları
 
@@ -127,7 +129,7 @@ DALGA 1  WP-287  Şifre sıfırlama  ‖  WP-286  Ayarlar IA      ✅ kod/test t
 DALGA 2  WP-291  Boyut paneli ✅ → QA  ‖  WP-289  His araştırması ✅ tümüyle kapandı
 DALGA 3  WP-288  Tema modeli      ✅ kod/test tamam → QA  ‖  WP-294  l10n  🟡 kısmen açık
 DALGA 4  WP-290  Tema sihirbazı   ✅ kod/test tamam → QA
-DALGA 5  WP-296  3 kırmızı test → WP-297  Fontlar → WP-292  Taç  (SERİ, golden yüzeyi)  ← KALAN
+DALGA 5  WP-296 ✅ tamam → WP-297  Fontlar → WP-292  Taç   (SERİ, golden yüzeyi)  ← KALAN
 DALGA 6  WP-294  l10n borcu  ‖  WP-295  Kamp ateşi (sahiple konuşma sonrası)
 ──────── TEK BETA BURADA ÇIKAR (hepsi bitince) ────────
 ```
@@ -164,9 +166,18 @@ DALGA 6  WP-294  l10n borcu  ‖  WP-295  Kamp ateşi (sahiple konuşma sonrası
 - **Kabul (ölçülebilir):** Seçilen her aile **başlık + gövde + etiket + saat** yüzeylerinde gerçekten uygulanıyor · **ağırlık kaydırıcısı gömülü fontta da görünür fark üretiyor** (ölü anahtar yok) · Türkçe karakterlerin hiçbiri kutu değil · fallback zinciri kurulu · lisans metinleri repoda · golden'lar yenilenmiş ve gözle onaylanmış · ≤ 360 dp'de taşma yok · **APK artışı ölçülmüş ve sayı yazılmış (hedef ≤ 2.5 MB)** · `flutter analyze` 0, testler yeşil.
 - **Tuzaklar:** `google_fonts` paketine sapmak (ağdan indirir, ADR-4 yasak) · lisans metnini atlamak · subset'te Türkçe glyph'i düşürmek · fallback zincirini atlamak · **statik 2 ağırlık paketleyip ağırlık kaydırıcısını sessizce öldürmek** · golden'ları bakmadan `--update-goldens` ile ezmek · boyut ölçümünü `flutter clean` olmadan yapmak (bayat `libapp.so` → yalancı sonuç, WP-290'da tam bu oldu).
 
-### WP-296: `main`'de kırmızı 3 testi yeşile al 🔴→🟢
-- **Program/Faz:** Yeni Özellik Turu · Aşama A · **kalite borcu** (dalga dışı, tek başına koşar)
-- **Ajan:** — · **Durum:** [ ] **Kodlanacak — HAZIR, bağımlılık yok** · **Model önerisi:** 🔵 Sonnet
+### WP-296: `main`'de kırmızı 3 testi yeşile al ✅ KOD/TEST TAMAM
+- **Program/Faz:** Yeni Özellik Turu · Aşama A · **kalite borcu** (dalga dışı, tek başına koştu)
+- **Ajan:** Claude · **Durum:** [x] **Tamam (2026-07-25)** — `flutter analyze` **0**, tam paket **759 yeşil / 0 kırmızı** (öncesi 755+3 kırmızı; +1 yeni regresyon testi).
+- 🔴 **Tanı sonucu: 2'si ÜRÜN HATASI, 1'i saate bağımlı test.** Üçünün kök nedeni ayrıydı, tahmin edildiği gibi tek sebep değildi.
+  1. **Ürün hatası (masaüstü) — `alarms_screen.dart:150`.** WP-286 izin API'sini üç duruma (`available`/`unsupported`/`unknown`) çevirdiğinde masaüstü/web `unsupported` → `allOk == false` dalına düştü. Sonuç: **Windows'ta alarm eklemeye basınca "4 izin eksik, Android ayarlarını aç" diyen, kullanıcının düzeltmesi imkânsız bir dialog** açılıyordu. Düzeltme: dialog yalnız `unsupported` **değilken** çıkar; `unknown` fail-closed olarak uyarıda kalır.
+  2. **Ürün hatası (masaüstü) — `clock_widgets_screen.dart:212` `_PermissionStatusSummary`.** Aynı kök: `unsupported` "eksik izin" dalına düşüyor, kart **kırmızı** ve **"4 Eksik izinleri aç"** diyordu (o platformda var olmayan izinler için yanlış iddia); alt satır da ekranın başlığındaki cümleyi (`:107`) **aynen tekrar** ediyordu — testin `findsOneWidget` beklentisi bu yüzden 2 buluyordu. Düzeltme: `unsupported` kendi nötr dalını aldı (bilgi ikonu, "Bu izinler yalnız Android'de geçerli", alt satır yok). Aynı dosyadaki "eksikleri aç" düğmesi (`:161`) zaten yalnız `available` durumunda çiziliyordu — kart artık onunla tutarlı.
+  3. **Test hatası (ürün doğru) — `study_timer_card_stop_test.dart`.** Fikstür `now - 3h` kullanıyordu; test **00:00–03:00 arasında** koşarsa o oturum dünkü güne düşüyor, `dailyTotals` bugüne 0 yazıyor, toplam 2 saat yerine 1 saat görünüyordu. **Saate bağımlı testti** (bu yüzden gündüz yeşil, gece kırmızıydı — WP kartlarının "testler yeşil" demesi de bundan). Fikstür günün başına sabitlendi; **WP-250 regresyon iddiasının kendisine dokunulmadı**, tüm `expect`'ler aynı kaldı.
+- 🔴 **Kök kök neden:** WP-286'nın üç durumlu API'sinin `available` dalı **test edilemiyordu** — `snapshot()` masaüstünde `Platform.isAndroid == false` olduğu için `MethodChannel`'a hiç gitmiyor, kanal mock'lamak yetmiyor. Bu yüzden `available` davranışını doğrulayan testler sessizce `unsupported` yolunu ölçüyordu. `ClockPermissions.debugSnapshotOverride` (`@visibleForTesting`, repoda yerleşik desen) eklendi; testler artık izin durumunu **açıkça** kuruyor.
+- ⚠️ **Kapsam dışı bırakılan bulgu (WP-286 QA'sına not):** `unknown` durumunda alarm dialogu `missingLabels()` ile **dört izni de "eksik" olarak listeliyor** — oysa `unknown` "okuyamadım" demek. Yanıltıcı ama bu WP'nin kırmızısı değil ve düzeltmesi yeni kullanıcı metni gerektiriyor. Ayrıca masaüstünde 4 `_PermTile` hâlâ uyarı ikonu gösteriyor (yüksek sesli yanlış iddia olan kart düzeltildi).
+- **Değişen dosyalar:** `app/lib/features/clock/alarms_screen.dart` · `app/lib/features/clock/clock_widgets_screen.dart` · `app/lib/core/time_engine/clock_permissions.dart` (test dikişi) · `app/lib/l10n/app_*.arb` (+1 anahtar ×4: `clockIzinlerYalnizAndroid`) · `app/test/features/clock_widgets_screen_test.dart` (yeniden yazıldı, +1 test) · `app/test/features/classroom/study_timer_card_stop_test.dart` (fikstür). `alarms_screen_test.dart` **hiç değişmedi** — ürün düzeltildiği için kendiliğinden yeşile döndü, yani regresyon bekçisi olarak duruyor.
+- **Kanıt etiketi:** `Kodda doğrulandı`. **Cihaz QA:** ayrı gerekmiyor; Android davranışı değişmedi (yalnız `unsupported` dalı düzeldi). ⚠️ **Windows** yüzeyi değiştiği için tek beta turunda masaüstünde de bakılmalı: alarm ekleme dialogsuz açılıyor mu, saat widget'ları ekranındaki izin kartı nötr mü.
+- **Model önerisi:** 🔵 Sonnet
 - **Problem:** `main`'de (commit `0781d05`) tam paket **755 yeşil + 3 kırmızı**. Üçü WP-290'dan **önce** de kırmızıydı (`git stash` ile temiz HEAD'de doğrulandı; 2026-07-25'te üç dosya tek tek yeniden koşuldu). Ortak kaynak **varsayılmamalı** — `git log` üç ayrı tabloya işaret ediyor. WP kartları "testler yeşil" diyordu → **kanıt ile kayıt çelişiyor**, bu çelişki kapatılmalı.
   1. `test/features/alarms_screen_test.dart:127` — "AlarmsScreen opens editor sheet": `+` ikonuna dokunulduktan sonra `find.text('Yeni alarm')` **0 sonuç** (sheet açılmıyor ya da başlık metni/l10n anahtarı değişti).
   2. `test/features/classroom/study_timer_card_stop_test.dart:99` — "WP-250: Durdur sırasında 'Bugün' toplamı zıplamaz": `find.text(formatHumanSeconds(7200))` (`2h 0m 0s`) **0 sonuç** → kartın süre biçimi ya da "Bugün" toplamının kaynağı değişmiş. 🔴 **Bu test bir regresyon bekçisi** (WP-250 sayaç zıplaması); kırmızı kaldığı sürece o hata korumasız.

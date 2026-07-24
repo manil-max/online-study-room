@@ -148,7 +148,15 @@ class AlarmsScreen extends ConsumerWidget {
   }) async {
     // App-kapalı çalma için izinleri hatırlat / iste
     final perms = await ClockPermissions.instance.ensureForAlarm();
-    if (!perms.allOk && context.mounted) {
+    // WP-296: `unsupported` (masaüstü/web) durumunda bu izinler platformda HİÇ
+    // YOK. WP-286 üç durumlu API'ye geçtiğinde bu dal `allOk == false` tarafına
+    // düştü ve Windows'ta "4 izin eksik, Android ayarlarını aç" diyen, kullanıcının
+    // düzeltmesi imkânsız bir dialog çıkmaya başladı. Yalnız izin durumu gerçekten
+    // anlamlı olduğunda uyarılır; `unknown` fail-closed olarak uyarıda kalır.
+    final promptForPermissions =
+        perms.availability != ClockPermissionAvailability.unsupported &&
+        !perms.allOk;
+    if (promptForPermissions && context.mounted) {
       final go = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(

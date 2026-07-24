@@ -38,12 +38,19 @@ void main() {
 
       final now = DateTime.now();
       final startedAt = now.subtract(const Duration(hours: 1));
+      // WP-296: kayıtlı oturum GÜNÜN BAŞINA sabitlendi. Önceden `now - 3h`
+      // kullanılıyordu; test 00:00–03:00 arasında koşarsa o an dünkü güne
+      // düşüyor, `dailyTotals` bugüne 0 yazıyor ve toplam 2 saat yerine 1 saat
+      // görünüyordu — testi saate bağımlı hale getiren tek satır buydu.
+      // `dailyTotals` yalnız `start` gününü ve `durationSeconds`'ı kullandığı
+      // için gün başlangıcı her koşumda güvenli.
+      final todayStart = DateTime(now.year, now.month, now.day);
       // Bugün zaten kayıtlı 1 saat.
       final recordedSession = StudySession(
         id: 'rec-1',
         userId: 'u1',
-        start: now.subtract(const Duration(hours: 3)),
-        end: now.subtract(const Duration(hours: 2)),
+        start: todayStart,
+        end: todayStart.add(const Duration(hours: 1)),
         durationSeconds: 3600,
         source: StudySource.live,
       );

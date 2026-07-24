@@ -111,7 +111,19 @@ class ClockPermissions {
 
   bool get _android => !kIsWeb && Platform.isAndroid;
 
+  /// Yalnız test: platform sorgusunu atlayıp sabit bir anlık görüntü döndürür.
+  ///
+  /// WP-296: `snapshot()` masaüstünde `Platform.isAndroid == false` olduğu için
+  /// **her zaman** `unsupported` döner ve `MethodChannel`'a hiç gitmez — yani
+  /// kanalı mock'lamak `available` dallarını test etmeye yetmez. WP-286'nın üç
+  /// durumlu API'si bu yüzden test edilemez kalmış, `available` davranışını
+  /// doğrulayan testler de sessizce `unsupported` yolunu ölçüyordu.
+  @visibleForTesting
+  static ClockPermissionSnapshot? debugSnapshotOverride;
+
   Future<ClockPermissionSnapshot> snapshot() async {
+    final override = debugSnapshotOverride;
+    if (override != null) return override;
     if (!_android) return ClockPermissionSnapshot.unsupported;
     try {
       final raw = await _channel.invokeMethod<Map<Object?, Object?>>(
