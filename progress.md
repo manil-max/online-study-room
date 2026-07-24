@@ -58,7 +58,7 @@
 | **0** | **WP-293 Gate 0 — ortam uzlaştırma** | [x] **Kod/doküman tamam** | Altı gerçek belgelendi, kapı kilitlendi, guard 51/51 · commit'lendi |
 | 0b | Production backend değişikliği | 🔴 Kapalı | `deploy_enabled: false` (WP-293 ile yeniden kilitlendi); yeni terfi backup+dry-run+somut GO ister |
 | 1 | WP-287 şifre sıfırlama · WP-286 ayarlar IA | 287 [x] kod/test · 286 [ ] | 287: sahip panel + cihaz QA bekliyor · 286 sırada |
-| 2 | WP-291 boyut paneli · WP-289 his araştırması | 291 [x] kod/test · 289 [ ] | 291 cihaz QA bekliyor · 289 sırada |
+| 2 | WP-291 boyut paneli · WP-289 his araştırması | 291 [x] · 289 [x] tamam | 291 cihaz QA bekliyor · 289 kapandı |
 | 3 | WP-288 tema modeli · WP-294 l10n borcu | [ ] Bekliyor | 288 **289'a bağımlı**; 294 l10n sıcak yüzey |
 | 4 | WP-290 tema sihirbazı | [ ] Bekliyor | Tek başına; `core/theme/**` + `pubspec.yaml` |
 | 5 | WP-292 taç · WP-295 kamp ateşi | [ ] Bekliyor | 295 sahiple konuşma ister |
@@ -230,9 +230,9 @@ DALGA 5  WP-292  Taç              ‖  WP-295  Kamp ateşi (sahip kararı sonra
 - ℹ️ **rev.2'deki Riverpod uyarısı KALDIRILDI.** `themeSettingsProvider` (`theme_settings.dart:182`) auto-dispose **değildir**; `theme_settings_test.dart` dinleyicisiz `read → mutate → read` yapıyor ve state korunuyor. `container.listen` bu provider için gerekli **değil**. (Auto-dispose bir provider *eklenirse* uyarı yeniden geçerli olur.)
 - **Model önerisi:** 🔴 Opus
 
-### WP-289: Animasyon/his araştırma turu, katalog ve `AppFeel` şema kararı 🔍
+### WP-289: Animasyon/his araştırma turu, katalog ve `AppFeel` şema kararı 🔍 ✅ TAMAM
 - **Program/Faz:** Yeni Özellik Turu · Aşama A · (plan §3 F-04-C)
-- **Ajan:** — · **Durum:** [ ] Bekliyor · 🔄 **WP-288'DEN ÖNCE** (rev.2)
+- **Ajan:** Claude · **Durum:** [x] Tamam (2026-07-24) — [`docs/TEMA-HIS-KATALOGU.md`](docs/TEMA-HIS-KATALOGU.md): 8 his ailesi (token karşılığı + Flutter yolu + maliyet + reduce-motion + koyu/açık) + **`AppFeel` şeması kesinleşti** (feelId, grainStrength, grainKind, edgeIrregularity, motion). **WP-288 artık başlayabilir.** K-3 (hangi hisler ürüne girecek) hâlâ sahip kararı — şema listeden bağımsız. Doküman, kod dokunuşu yok.
 - **Problem:** Sahip tema "hissi" için oyun/uygulama örneklerinden ilham istedi ama hangi efektlerin gireceği belirsiz. **Daha kritiği:** `AppFeel` katmanının **alanlarını** bu katalog belirler — 288 bu şemayı yazacağı için 289 **önce** bitmeli. (İlk planda 288 → 289 sırası vardı, döngüsel bağımlılıktı; rev.2'de düzeltildi.)
 - **Kapsam dışı:** Kod yazma, asset üretme, tema motoru.
 - **SAHİP dosyalar (yaz):** `docs/TEMA-HIS-KATALOGU.md` (yeni), `docs/YENI-OZELLIK-PLANI.md` §3 F-04-C güncellemesi.
