@@ -41,6 +41,8 @@ yasal metinlerin mimari olarak dışarı taşınması.
 
 ## 1. Ortam durum modeli (WP-293'ün temeli)
 
+> ✅ **WP-293 uygulandı (2026-07-24).** Altı gerçek `progress.md` Proje Gerçekleri'ne kanonik olarak yazıldı; production `deploy_enabled` yeniden `false` kilitlendi; guard testleri 51/51 yeşil. Aşağıdaki bölüm bu WP'nin gerekçesi ve durum modelinin referansı olarak kalır.
+
 > **rev.3 düzeltmesi.** rev.2 "dört belge aynı head'i söylesin" diyordu. **Bu yanlıştı** —
 > altı ayrı gerçek var ve bunları tek sayıya indirmek operasyon bilgisini yok eder.
 
@@ -63,14 +65,14 @@ Production'da normal migration history tablosu bulunmadığı için standart `db
 belgelemek**. "Production `0070`" demek yeterli değil; "etkin şema `0070`, CLI history uzlaştırılmamış,
 v45 manifesti tarihsel `0065`" demek gerekiyor.
 
-### 1.1 Açık operasyon borcu — production deploy kapısı hâlâ açık
+### 1.1 Operasyon borcu — production deploy kapısı ✅ yeniden kilitlendi (WP-293)
 
-`Kodda doğrulandı` — `tooling/release/deploy-contract.json`:
+`Kodda doğrulandı` — `tooling/release/deploy-contract.json` (WP-293 sonrası):
 ```json
-"production": { "migration_head": "0070", "deploy_enabled": true, "release_enabled": false }
+"production": { "migration_head": "0070", "deploy_enabled": false, "release_enabled": false }
 ```
 `deploy_enabled: true`, tek seferlik sahip-yönlendirmeli `0066–0070` terfisi için açılmıştı
-(`8b53290`). **Terfi bitti, kapı kapanmadı.**
+(`8b53290`). Terfi bitti, kapı açık kalmıştı → **WP-293 `false`'a kilitledi**, `guard.tests.ps1` buna çekildi.
 
 `remote.ps1:133` bu bayrağı `apply` / `manual-push-*` / `bootstrap-*` / `reconcile-*` action'larının
 ön koşulu olarak okuyor. Yani kapı açık kaldıkça bu yollar teknik olarak çalıştırılabilir durumda.

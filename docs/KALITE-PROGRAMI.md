@@ -104,8 +104,8 @@ Aşağıdakilerden biri sağlanmıyorsa **stable release çıkmaz:** kritik/ağ�
 | Global açık/özel gruplar (WP-92/93) | ✅ Tamamlandı |
 | **Google Play production (WP-110–124)** | 🔴 **Açık — NO-GO** (bkz. §8.8) |
 | Başarım+Görev+Grup PP (WP-208–220) | 🟡 **v3.2 geçişi sürüyor** (`docs/features/BASARIM-GOREV-GRUPPP-PLAN-2026-07.md`); manuel/sayaç/native süre eşitliği ürün kanonu, mevcut `0063` kabul edilmedi |
-| **Kurtarma ve ortam izolasyonu (WP-225–232)** | 🟡 Baseline/izolasyon/v43 teslimi yapıldı; production migration-history zincir onarımı ve yeni soak/GO kapısı açık |
-| **Post-v43 release + bildirim kurtarması (WP-269–274)** | 🔴 **En yüksek öncelik / production HOLD**; release sadeleştirme, push retry/health, gerçek staging kabulü, v43 sayaç paneli ve Windows determinism |
+| **Kurtarma ve ortam izolasyonu (WP-225–232)** | 🟢 Baseline/izolasyon teslim edildi; `0066–0070` production'a terfi etti (etkin şema `0070`). **Production CLI migration-history zincir onarımı hâlâ açık** (etkin şema doğru ama history uzlaştırılmamış — `docs/recovery/PRODUCTION-BASELINE.md`) |
+| **Post-v43 release + bildirim kurtarması (WP-269–285)** | ✅ **Kapandı (2026-07-24).** Stable **v45** yayında (etkin şema `0070`), beta-v4308 staging'de; sahip cihaz kabulünü verdi. Production deploy kapısı yeniden kilitli. Açık ops kabulü: WP-276 (hesap silme), WP-277 (matris). Ortam durum modeli: `progress.md` Proje Gerçekleri |
 
 > Tamamlanmış programların ayrıntılı kapsamı: `archive/KALITE-PROGRAMI-tarihsel.md §8.1–8.7`. AI katmanı (gelecek): aynı arşiv §6.
 

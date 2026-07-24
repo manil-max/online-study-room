@@ -9,12 +9,11 @@
 
 ## 🔴 Yüksek Öncelik
 
-- [~] **Post-v43 kurtarma: release sadeleştirme + bildirim güveni + sayaç kontratı — WP-269–273**
-  - **Gerçek durum (2026-07-23):** Stable `v43/fa771ce` production `0065`te korunur. Beta deney tabanı `beta-v4303/3bdf8bb`, staging `0068`dir; Android APK yayımlandı, Windows artefaktı eksiktir.
-  - WP-266/267/268'in kod, staging ve beta yayın adımları yapılmıştır; ancak zamanlanmış retry worker, salt-okunur health, gerçek FCM cihaz kabulü ve sayaç paneli ürün kabulü eksiktir. Bu yüzden bu WP'ler “tamamlandı” sayılmaz ve yeniden claim edilmez.
-  - Sıra: WP-269 release/Database Gates sadeleştirme + WP-270 retry/health → WP-271 tek cihaz staging kabulü; WP-272 v43 custom panel/fallback kontratı paralel native lane; WP-273 Windows deterministik release.
-  - Production deploy/release bu işin örtük parçası değildir; HOLD ancak staging kabulü + soak + backup/dry-run + somut kullanıcı GO ile kalkar.
-  - Kanonik güncel rapor ve WP'ler: [`docs/KURTARMA-ON-INCELEME-RAPORU-2026-07-23.md`](docs/KURTARMA-ON-INCELEME-RAPORU-2026-07-23.md), `progress.md` WP-269–273.
+- [x] **Post-v43 kurtarma: release sadeleştirme + bildirim güveni + sayaç kontratı — WP-269–285 (KAPANDI 2026-07-24)**
+  - **Güncel gerçek (2026-07-24, WP-293):** Stable **v45** yayında, production etkin şema `0070`; staging `0070`, beta-v4308 yayında. Sahip 2026-07-24'te stable+beta yayınını ve bildirim/sayaç davranışını cihazda kabul etti; bekleyen cihaz kabulleri kapandı.
+  - WP-266–285'in kod/staging/yayın işi tamamlandı ve cihazda doğrulandı. `0066–0070` production'a terfi etti; production `deploy_enabled` yeniden `false` kilitlendi.
+  - Açık kalan ops kabulü ayrı maddelerde: hesap silme staging (WP-276), başarım/görev/grup matrisi (WP-277).
+  - Tarihsel adli rapor: [`docs/KURTARMA-ON-INCELEME-RAPORU-2026-07-23.md`](docs/KURTARMA-ON-INCELEME-RAPORU-2026-07-23.md); güncel ortam durum modeli: `progress.md` Proje Gerçekleri.
 
 - [~] **Başarım, görev ve grup ilerlemesi — kod/migration tarihsel, güncel kabul borcu WP-277**
   - Append-only ledger, pending reward/claim, görev, grup avatarı ve süre kaynağı eşitliği için tarihsel implementasyonlar vardır; bunlar yeniden geliştirme kuyruğu değildir.

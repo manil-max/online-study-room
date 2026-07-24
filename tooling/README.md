@@ -49,23 +49,24 @@ durum sorguları temizlenmiş evidence manifestine kaydedilir.
 
 ## Deploy contract
 
-`tooling/release/deploy-contract.json` tek public kapıdır. Şu anda:
+`tooling/release/deploy-contract.json` tek public kapıdır. Şu anda (2026-07-24, WP-293):
 
-- local head `0065`;
-- staging kabul head'i `0065`, apply/release yalnız staging QA için açık;
-- production kabul head'i `0064`, apply/release **kapalıdır**.
+- local head `0070`;
+- staging kabul head'i `0070`, apply/release staging QA için açık;
+- production kabul head'i `0070` (**etkin şema**), apply/release **kapalıdır** (`deploy_enabled: false`).
 
-WP-255'in `0065_reprice_core_economy.sql` migration'ı 5 çekirdek başarımın XP'sini
-yükseltir ve düzeltmeyi **geriye dönük** uygular (kazanılmış defter satırları,
-bekleyen ödüller, profil XP + taç). Tüm değişiklikler artış olduğu için hiçbir
-kullanıcı XP/taç kaybetmez. Production head'i bilerek `0064`'te bırakıldı:
-`0065` production'a ancak staging QA + beta doğrulaması sonrası, ayrı ve somut
-bir GO ile taşınır.
+`0066–0070` migration'ları production'a manuel yolla (allowlist/hash korumalı
+`remote.ps1 manual-push-0066-0070`) uygulandı; Database Gates ve Production Push
+Activation koşumları 2026-07-23'te başarılı oldu. Production **etkin şeması `0070`**,
+ancak CLI migration history uzlaştırılmamış olarak kalır
+(`docs/recovery/PRODUCTION-BASELINE.md` §3 — `supabase_migrations.schema_migrations`
+production'da yok).
 
-> **Not (WP-255):** v42 stable yayını için açılmış olan production
-> `deploy_enabled`/`release_enabled` manuel override'ı **kapatıldı** — yayın
-> tamamlandı (`94947fc`) ve açık kalan kapı kazara production apply'ına izin
-> veriyordu. Bir sonraki stable için bilinçli olarak yeniden açılmalıdır.
+> **Not (WP-293, 2026-07-24):** `0066–0070` terfisi için açılmış olan production
+> `deploy_enabled` **kapatıldı** (`true → false`) — terfi tamamlandı ve açık kalan
+> kapı kazara production apply'ına izin veriyordu (aynı desen WP-255'te v42 için de
+> yaşandı). Bir sonraki production mutasyonu için bilinçli olarak, backup+dry-run+
+> somut kullanıcı GO ile yeniden açılmalıdır. `guard.tests.ps1` bu beklentiye çekildi.
 
 WP-229'un `0063` eşit-kaynak migration'ı staging'e uygulandıktan sonra linked
 pgTAP'ın bulduğu fresh-hosted cron/explicit-grant parity açığı tarihsel dosyalar

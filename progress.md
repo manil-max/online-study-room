@@ -6,14 +6,21 @@
 
 ## Proje Gerçekleri
 
-- **Stable/production:** v45 yayında. Production migration head `0065`; staging `0070`. Yeni production migration, Edge deploy veya stable tag/release yalnız ayrı, somut kullanıcı GO ile yapılır.
+- **Ortam durum modeli (WP-293, 2026-07-24 uzlaştırıldı) — altı ayrı gerçek, tek sayıya indirilmez:**
+  1. Repo/local migration zinciri: **`0070`** (`supabase/migrations/` son dosya).
+  2. Staging uygulanmış head: **`0070`**.
+  3. Production **etkin şema**: **`0070`** — `0066–0070` manuel uygulandı; Database Gates + Production Push Activation koşumları başarılı (2026-07-23).
+  4. Production **CLI migration history**: **legacy / uzlaştırılmamış** — `supabase_migrations.schema_migrations` relation'ı production'da yok ([`docs/recovery/PRODUCTION-BASELINE.md`](docs/recovery/PRODUCTION-BASELINE.md) §3).
+  5. Deploy contract hedef/izin head: **`0070`**; production `deploy_enabled` terfi tamamlandığı için **yeniden `false`** kilitlendi.
+  6. Stable **v45** artefakt manifesti: tarihsel **`0065`** (production sonradan `0070`e yükseldi).
+- **Stable/production:** v45 yayında, etkin şema `0070`. Yeni production migration, Edge deploy veya stable tag/release yalnız ayrı, somut kullanıcı GO + backup + dry-run ile yapılır; deploy kapısı kilitli.
 - **Beta/staging:** beta-v4308 staging `0070` üzerinde yayında. Proje sahibi 2026-07-24'te stable+beta yayınını ve bildirim/sayaç davranışını cihazda test etti; genel sorun yok, bekleyen cihaz kabulleri kapatıldı.
 - **Release ilkesi:** Android beta/stable artefaktı Android işi başarılı olunca yayımlanır. Windows bağımsız sürer ve başarılı olursa aynı release'e eklenir; Windows hatası Android güncellemesini geri çekmez.
 - **Yönetim varsayılanı:** Production `deploy_enabled/release_enabled` kapalıdır. Stable yalnız protected `production` Environment, exact SHA/head/project-ref GO ve reviewer kanıtıyla ilerler.
 - **Kurallar:** Kök `AGENTS.md`, `.agents/AGENTS.md` ve `docs/KALITE-PROGRAMI.md` geçerlidir. Tek çalışma dalı `main`; her WP ayrı commit; production varsayılmaz.
 - **Son WP:** **295** (286–295 planlandı, uygulanmadı) · Sıradaki boş numara: **296**.
 - **Aktif tur:** Yeni Özellik Turu **Aşama A** — plan **rev. 2** hazır, uygulama bekliyor. Kanonik plan: [`docs/YENI-OZELLIK-PLANI.md`](docs/YENI-OZELLIK-PLANI.md).
-- ⚠️ **Ortam gerçeği çelişkili:** aşağıdaki `0065` ile `tooling/release/deploy-contract.json` (`0070`) ve `docs/KALITE-PROGRAMI.md:108` (v43/HOLD) uyuşmuyor. **WP-293 (Gate 0)** bunu salt-okunur doğrulayıp uzlaştıracak; o bitene kadar bu satıra operasyon kararı için güvenilmez.
+- ✅ **Ortam gerçeği uzlaştırıldı (WP-293, 2026-07-24):** yukarıdaki altı gerçekli durum modeli kanoniktir; production deploy kapısı yeniden kilitlendi. `deploy-contract.json`, `KALITE-PROGRAMI.md`, `project.md`, `backlog.md`, `tooling/README.md` aynı gerçeğe getirildi.
 
 ## ⚡ Aktif Çalışma Kaydı
 
@@ -26,12 +33,13 @@
 - **Durum:** [x] Boşta
 - **Faz/WP:** —
 - **SAHİP yollar:** —
+- **Son not:** WP-293 (Gate 0) kod/doküman tamam ve commit'lendi. Sıradaki: WP-287 (şifre sıfırlama) veya WP-286 (ayarlar IA).
 
 ### Codex Lane
 - **Durum:** [x] Boşta
 - **Faz/WP:** —
 - **SAHİP yollar:** —
-- **Son not:** WP-285 kod/test tamam; beta-v4308 P7 cihaz kabulü bekler. Timer state motoru, migration, backend ve production değişmedi.
+- **Son not:** WP-285 kod/test tamam; beta-v4308'de yayımlandı ve sahip 2026-07-24'te cihazda kabul etti (bkz. Proje Gerçekleri). Timer state motoru, migration, backend ve production değişmedi.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
@@ -47,8 +55,8 @@
 
 | Öncelik | İş | Durum | Kalan gerçek iş |
 |---|---|---|---|
-| **0** | **WP-293 Gate 0 — ortam uzlaştırma** | [ ] Bekliyor | 🔴 **Diğer tüm WP'ler buna bağlı**; salt-okunur doğrulama + 4 belge |
-| 0b | Production backend değişikliği | 🔴 Kapalı | Yeni migration/Edge deploy/secret yalnız backup+dry-run ve somut GO ile |
+| **0** | **WP-293 Gate 0 — ortam uzlaştırma** | [x] **Kod/doküman tamam** | Altı gerçek belgelendi, kapı kilitlendi, guard 51/51 · commit'lendi |
+| 0b | Production backend değişikliği | 🔴 Kapalı | `deploy_enabled: false` (WP-293 ile yeniden kilitlendi); yeni terfi backup+dry-run+somut GO ister |
 | 1 | WP-287 şifre sıfırlama · WP-286 ayarlar IA | [ ] Bekliyor | **Canlı hata** + bileşen ayıklama; paralel |
 | 2 | WP-291 boyut paneli · WP-289 his araştırması | [ ] Bekliyor | Bağımsız, paralel |
 | 3 | WP-288 tema modeli · WP-294 l10n borcu | [ ] Bekliyor | 288 **289'a bağımlı**; 294 l10n sıcak yüzey |
@@ -85,9 +93,9 @@ DALGA 5  WP-292  Taç              ‖  WP-295  Kamp ateşi (sahip kararı sonra
 > ⚠️ **294 (l10n) ile 286/290 aynı dalgada olmaz** — l10n sıcak yüzey.
 > ⚠️ Tema programı açıkken **Saat ve Başarım programları açılmaz** (`.agents/AGENTS.md §1.2`).
 
-### WP-293: Gate 0 — ortam/migration gerçeğini uzlaştır 🧭
+### WP-293: Gate 0 — ortam/migration gerçeğini uzlaştır 🧭 ✅ KOD/DOKÜMAN TAMAM
 - **Program/Faz:** Yeni Özellik Turu · **Gate 0** · (plan §3 Gate 0, R15)
-- **Ajan:** — · **Durum:** [ ] Bekliyor · **Diğer tüm WP'ler buna bağlı**
+- **Ajan:** Claude · **Durum:** [x] Kod/doküman tamam (2026-07-24) — altı gerçek belgelendi, production `deploy_enabled: false` kilitlendi, `guard.tests.ps1` **51/51** yeşil. Yeni remote işlem yapılmadı; mevcut GitHub kanıtı tüketildi.
 - **Problem:** İki ayrı borç var. **(a)** Canlı belgeler bayat ve çelişkili: `progress.md:9` production head `0065`; `deploy-contract.json` `0070`; `KALITE-PROGRAMI.md:108` hâlâ v43/HOLD; `backlog.md:12-15` ve `tooling/README.md:54-55` de bayat. **(b)** `0066–0070` production terfisi için tek seferlik açılan `deploy_enabled: true` (commit `8b53290`) **iş bittiği hâlde kapanmadı**; `remote.ps1:133` bu bayrağı `apply`/`manual-push-*` ön koşulu olarak okuyor.
 - **Kapsam dışı:** Migration uygulamak, **kapıyı gevşetmek**, release tetiklemek, yeni remote işlem başlatmak, özellik kodu.
 - **SAHİP dosyalar (yaz):** `progress.md`, `docs/KALITE-PROGRAMI.md`, `project.md`, `backlog.md`, `tooling/README.md`, `docs/YENI-OZELLIK-PLANI.md`, `tooling/release/deploy-contract.json`, `tooling/supabase/guard.tests.ps1`.

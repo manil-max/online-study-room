@@ -9,8 +9,8 @@
   },
   "production": {
     "migration_head": "0070",
-    "deploy_enabled": true,
+    "deploy_enabled": false,
     "release_enabled": false,
-    "hold_reason": "Owner-directed 0066-0070 production migration promotion is in progress; release remains exact-GO gated."
+    "hold_reason": "WP-293: owner-directed 0066-0070 production promotion is COMPLETE (Database Gates + Production Push Activation runs succeeded 2026-07-23); the one-time deploy gate is re-locked. Effective production schema is 0070, but CLI migration history remains unreconciled (docs/recovery/PRODUCTION-BASELINE.md). Any next production apply/release requires a fresh, explicit owner GO with backup + dry-run evidence."
   }
 }
