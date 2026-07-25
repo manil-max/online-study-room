@@ -1,6 +1,7 @@
 import 'dart:async';
-import 'dart:typed_data';
 
+// `Uint8List` ve `FlutterError` ikisi de foundation'dan geliyor; ayrıca
+// `dart:typed_data` almak `unnecessary_import` uyarısı üretir.
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 
