@@ -103,13 +103,10 @@ jobs:
 
           # {{ .Token }} olmadan Windows/masaüstündeki 6 haneli kod yolu hiç çalışmaz:
           # kod kullanıcıya e-postayla hiç gitmez.
-          recovery_template=$(cat <<'HTML'
-<h2>Şifre sıfırlama</h2>
-<p>Şifreni sıfırlamak için kodun: <strong>{{ .Token }}</strong></p>
-<p>Telefondaysan bu bağlantıya dokunman yeterli: <a href="{{ .ConfirmationURL }}">Şifremi sıfırla</a></p>
-<p>Bu isteği sen yapmadıysan bu e-postayı yok sayabilirsin.</p>
-HTML
-          )
+          recovery_template='<h2>Şifre sıfırlama</h2>
+          <p>Şifreni sıfırlamak için kodun: <strong>{{ .Token }}</strong></p>
+          <p>Telefondaysan bu bağlantıya dokunman yeterli: <a href="{{ .ConfirmationURL }}">Şifremi sıfırla</a></p>
+          <p>Bu isteği sen yapmadıysan bu e-postayı yok sayabilirsin.</p>'
 
           jq -n \
             --arg site_url "$site_url" \
