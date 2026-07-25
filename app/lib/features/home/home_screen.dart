@@ -158,9 +158,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             .read(classroomShowTimerProvider.notifier)
                             .set,
                       ),
-                      // WP-291: sabit alt panelin altında kart kalmasın diye
-                      // panel yüksekliği kadar boşluk.
-                      const SizedBox(height: 96),
                     ],
                   ],
                 ),
@@ -168,12 +165,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           );
 
-    // WP-291: Boyut paneli sabit alt yaprak olarak her iki Scaffold'a bağlanır;
-    // yalnız düzenleme modunda ve seçili kart varken görünür.
+    // WP-291: Boyut paneli düzenleme modunda ekranın altına yapışır.
+    // WP-305: Artık `Scaffold.bottomSheet` DEĞİL — bkz. [stickyPanelBelow].
     final selectedConfig =
         effectiveSelectedConfig(layout, _selectedCard);
     final Widget? sizeSheet = (_editing && selectedConfig != null)
         ? _StickySizePanel(
+            key: const Key('home-sticky-size-panel'),
             config: selectedConfig,
             columns: columns,
             onResize: (w, h) => ref
@@ -235,10 +233,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
               ),
             ),
-            Expanded(child: body),
+            Expanded(child: stickyPanelBelow(body, sizeSheet)),
           ],
         ),
-        bottomSheet: sizeSheet,
       );
     }
 
@@ -281,13 +278,31 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
         ],
       ),
-      body: body,
-      bottomSheet: sizeSheet,
+      body: stickyPanelBelow(body, sizeSheet),
     );
   }
 }
 
 const double _kGap = 8.0;
+
+/// WP-305: Boyut panelini gövdenin **altına** sabitler.
+///
+/// Beta 1'de panel `Scaffold.bottomSheet` yuvasındaydı ve cihazda düzenleme
+/// ekranı bomboş açılıyordu. Sebep: `bottomSheet` masum bir "alt şerit" yuvası
+/// değil — Flutter onu *kalıcı alt yaprak* makinesine sokar (kendi
+/// `AnimationController`'ı, `ModalRoute`/`LocalHistoryEntry` bağı ve gövdeyi
+/// örtebilen `_ScaffoldSlot.bodyScrim` katmanı). Üstelik yuva gövdeye yer
+/// ayırmaz; o yüzden akışa 96 dp'lik sihirli boşluk eklemek gerekmişti.
+///
+/// Düz `Column` + `Expanded` hem yeri kendiliğinden ayırır hem de panel
+/// kaydırmadan etkilenmez — istenen davranış buydu (§WP-291).
+Widget stickyPanelBelow(Widget body, Widget? panel) {
+  if (panel == null) return body;
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [Expanded(child: body), panel],
+  );
+}
 
 /// WP-291: Düzen boşsa null; seçili kart silinmişse ilk karta düş. Boyut paneli
 /// artık HomeScreen'in sabit alt yaprağında (bottomSheet) durduğu için bu mantık
@@ -837,6 +852,7 @@ class _MatrixCardState extends State<_MatrixCard> {
 /// Masaüstünde tüm genişliği kaplamaz, okuma genişliğiyle sınırlanır.
 class _StickySizePanel extends StatelessWidget {
   const _StickySizePanel({
+    super.key,
     required this.config,
     required this.columns,
     required this.onResize,
