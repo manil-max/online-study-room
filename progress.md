@@ -33,11 +33,11 @@
 - **SAHİP yollar:** —
 
 ### Claude Lane
-- **Durum:** [x] Boşta
-- **Faz/WP:** —
-- **SAHİP yollar:** —
-- **Son not:** 2026-07-25 turunda **WP-296, WP-297, WP-292 ve WP-298** tamam — `analyze` 0, **784 test yeşil**. Taç geometrisi sahip onayıyla sabitlendi (**5 uç · span 50° · tip 1.63 · inci 0.10 · kavis 0.50**), aura kademeye göre ölçekli. **Sıradaki: WP-294** (ajan işi) — WP-295 sahiple konuşmayı bekliyor. `app_theme.dart`, `main.dart`, taç/aura dosyaları serbest.
-- ⚠️ **Sahibe sorulacak tek şey:** WP-298'de "altından itibaren" **altın kademe (3.)** olarak uygulandı — bronz ve gümüşte aura yok. "Alttan itibaren, bronzdan" demek istendiyse `avatar_aura.dart` `auraIntensityForTier` tablosunda tek satır değişir.
+- **Durum:** [ ] Çalışıyor
+- **Faz/WP:** **WP-294** — l10n borcu ayıklama + audit CI kapısı
+- **SAHİP yollar:** `scripts/l10n_audit.py`, `.github/workflows/**` (yalnız yeni l10n kapısı), `app/lib/l10n/app_*.arb`, audit'in bulduğu sabit metinlerin bulunduğu ürün dosyaları
+- **Son not:** 2026-07-25 turunda **WP-296, WP-297, WP-292 ve WP-298** tamam — `analyze` 0, **784 test yeşil**. Taç geometrisi sahip onayıyla sabitlendi (**5 uç · span 50° · tip 1.63 · inci 0.10 · kavis 0.50**), aura kademeye göre ölçekli. WP-295 hâlâ sahiple konuşmayı bekliyor.
+- ✅ **WP-298 açık sorusu kapandı (sahip, 2026-07-25):** "altından itibaren" = **altın kademe (3.)**. Kod doğru; bronz/gümüşte aura yok, değişiklik yapılmadı.
 
 ### Codex Lane
 - **Durum:** [x] Boşta
@@ -76,7 +76,7 @@
 | **WP-291** Kart boyut paneli | 2026-07-24 (Claude) | Düzenleme modunda en alta kaydırınca panel ekranda kalıyor · boyut değişimi anında · sürükle-bırak/compactUp/sıfırlama bozulmamış · dokunma hedefleri ≥ 48 dp | Android cihaz |
 | **WP-297** Gömülü fontlar | 2026-07-25 (Claude) | Sihirbazda Inter/Literata/JetBrains Mono seçilebiliyor · seçilen font **gerçekten** değişiyor · ağırlık kaydırıcısı 4 kademede farklı görünüyor · Türkçe karakterler kutu değil · kayıtlı eski temaların görünümü aynı | Android cihaz |
 | **WP-292** Taç görseli | 2026-07-25 (Claude) | 🔴 **Sahip beğenisi** (asıl kabul) · liderlik/sohbet/ısı tablosu gibi **küçük avatarlarda** taç okunuyor mu · liste satırları küçük avatarlarda ~2–4 px uzadı, göze batıyor mu · taçsız kullanıcı düz avatar · **p95 kare ≤ 16.7 ms / jank ≤ %1** (`--profile` + timeline; animasyon eklenmediği için risk düşük ama ölçüm cihazsız yapılamadı) | Android cihaz |
-| **WP-298** Avatar aura efekti | 2026-07-25 (Claude) | 🔴 **Sahip beğenisi** · **"altından itibaren"** doğru okundu mu (bronz/gümüşte aura YOK — yanlışsa tek satır) · profil ve sosyal profilde görünüyor, **listelerde görünmüyor** · aura yanlara taşıyor, kesilmiyor · fotoğraf değiştir düğmesi yerinde · **hareketi azalt** açıkken donuyor · 🔴 **p95 ≤ 16.7 ms / jank ≤ %1** — WP-298 **animasyon ekleyen tek iş**, bu ölçüm asıl burada gerekli (profil ekranı, `--profile` + timeline) | Android cihaz |
+| **WP-298** Avatar aura efekti | 2026-07-25 (Claude) | 🔴 **Sahip beğenisi** · ✅ kademe okuması doğrulandı (altın = 3., bronz/gümüşte aura YOK) · profil ve sosyal profilde görünüyor, **listelerde görünmüyor** · aura yanlara taşıyor, kesilmiyor · fotoğraf değiştir düğmesi yerinde · **hareketi azalt** açıkken donuyor · 🔴 **p95 ≤ 16.7 ms / jank ≤ %1** — WP-298 **animasyon ekleyen tek iş**, bu ölçüm asıl burada gerekli (profil ekranı, `--profile` + timeline) | Android cihaz |
 
 **WP-289** (his araştırması) tamamen kapandı — doküman WP'si, QA gerektirmez.
 
@@ -114,7 +114,8 @@
 - **Hazır temaların gövde fontu:** hata değil, tasarım — hazır temaların şemasında gövde ailesi yok. WP-297'de hazır temalara da gövde ailesi verilip verilmeyeceği kart içinde kararlaştırılır.
 - **Tek beta:** yukarıdaki 🔴 BETA KARARI.
 - **Taç geometrisi (WP-292):** canlı önizlemeden seçildi — **5 uç · span 50° · tip 1.63 · inci 0.10 · kavis 0.50**. Sahip "önce tasarımı göster, sonra kodla" dedi; akış böyle yürütüldü ve sayılar koda birebir geçti.
-- **Avatar aura efekti (WP-298):** sahip üç kapsam sorusunu da yanıtladı — **(a) yalnız profil + sosyal profil** (listeler durağan kalır), **(b) altın kademede başlar, yukarı doğru kademeli artar**, **(c) parıltı o kademenin rengi**. Kodlandı; ✅ ⚠️ **"altından itibaren" = altın kademe (3.)** olarak okundu. "Alttan itibaren, yani bronzdan" demek istendiyse `auraIntensityForTier` tablosunda **tek satır** değişir.
+- **Avatar aura efekti (WP-298):** sahip üç kapsam sorusunu da yanıtladı — **(a) yalnız profil + sosyal profil** (listeler durağan kalır), **(b) altın kademede başlar, yukarı doğru kademeli artar**, **(c) parıltı o kademenin rengi**. ✅ **Doğrulandı (sahip, 2026-07-25): "altından itibaren" = altın kademe (3.)** — kod olduğu gibi doğru, bronz/gümüşte aura yok.
+- **Aura efekti başarım rozetlerine taşınsın mı? → HAYIR (sahip, 2026-07-25).** Sahip sordu, değerlendirildi, **vazgeçildi** — WP açılmadı. Gerekçe kayda geçiyor ki bir daha araştırılmasın: (a) katalog listesi tembel değil ([`achievement_showcase.dart:439`](app/lib/features/profile/widgets/achievement_showcase.dart:439) `..._buildCatalog(theme)` tüm kartları `Column`'a serpiyor), yani ~24 rozetin hepsi aynı anda ağaçta → 24 ticker, WP-298'de listeler için bilinçle reddedilen şeyin aynısı; (b) katalog satırında rozetle metin arası **12 px** ([satır 1489](app/lib/features/profile/widgets/achievement_showcase.dart:1489)), `1.5×` aura başarım adının altına giriyor; (c) vitrindeki 3 rozet `spaceEvenly` duruyor, auralar birbirine değip kartın kenarlığından sızıyor; (d) `_BadgeCircle` açık rozetlerde **zaten** statik `boxShadow` parıltısı taşıyor. Mor gerekmiyordu zaten: `kSecretAchievementColor` + `badgeVisualColor` gizli+açık rozeti şimdiden mora yönlendiriyor.
 
 ## Yeni Özellik Turu — Aşama A (Plan Kuyruğu)
 
@@ -284,7 +285,7 @@ DALGA 6  WP-294  l10n borcu  ‖  WP-295  Kamp ateşi (sahiple konuşma sonrası
 - **Problem:** Sahip PUBG'deki profil fotoğrafı arkası "büyülü renkli sis/parıltı" efektini istedi.
 - **Sahip kararı (3 soru, 3 cevap):**
   1. **Kapsam:** yalnız **profil + sosyal profil** ekranı. Listeler (liderlik r14, sohbet r14, aktif üyeler r16, ısı tablosu r12) **durağan kalır**. Gerekçe teknik ve sahip kabul etti: bir listede 10–20 avatar var, her birine ticker takmak `p95 ≤ 16.7 ms` bütçesini gerçekten tehdit eder; profilde tek örnek var.
-  2. **Kademe ayrımı:** aura **altın kademede başlar**, yukarı doğru kademeli artar (`0 · 0 · 0.45 · 0.62 · 0.80 · 1.0`). Bronz ve gümüşte hiç çizilmez. ⚠️ **"altından itibaren" = altın (3. kademe)** olarak okundu; "alttan itibaren, bronzdan" demek istendiyse `auraIntensityForTier` tablosunda **tek satır** değişir. Bu ayrım **görsel**dir; XP eşikleri ve kademe→renk eşlemesi değişmedi.
+  2. **Kademe ayrımı:** aura **altın kademede başlar**, yukarı doğru kademeli artar (`0 · 0 · 0.45 · 0.62 · 0.80 · 1.0`). Bronz ve gümüşte hiç çizilmez. ✅ **Sahip 2026-07-25'te doğruladı: "altından itibaren" = altın (3. kademe)** — okuma doğru, değişiklik yapılmadı. Bu ayrım **görsel**dir; XP eşikleri ve kademe→renk eşlemesi değişmedi.
   3. **Renk:** o kademenin rengi (`crownColorFor`) — ayrı bir aura paleti yok.
 - ⚠️ **Kutu bilerek büyütülmedi — gerçek bir tuzak vardı.** Profil ekranındaki "fotoğraf değiştir" düğmesi avatar kutusunun köşesine `Positioned(right: 0, bottom: 0)` ile bağlı ([`profile_screen.dart:87`](app/lib/features/profile/profile_screen.dart:87)). Aura için kutuyu büyütmek düğmeyi avatardan koparırdı. Çözüm: aura kutunun **dışına** taşarak çiziliyor (`Stack(clipBehavior: Clip.none)`), yerleşim hiç değişmiyor.
 - 🔴 **Auranın yarıçapı (`1.5 × taban`) tahminle değil kısıtla seçildi.** İki ekranda da avatar bir `ListView` içinde ve **`ListView` dikeyde kırpar**. Taç uçları merkezden `1.73 × taban` yukarıda olduğu için `1.5` seçilince aura **dikeyde kutunun içinde kalıyor**, yalnız yanlara taşıyor — yani listenin tepesinde kesilme riski yok. Bu kısıt teste bağlandı (`kAuraOuterRadius < tipRadius + pearlRadius`), ileride biri aurayı büyütürse test kırmızıya döner.
