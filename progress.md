@@ -34,9 +34,10 @@
 - **SAHİP yollar:** —
 
 ### Claude Lane
-- **Durum:** [x] **Meşgul** — beta 1 (`beta-v4309`) hazırlığı
-- **Faz/WP:** Beta 1 yayını (WP değil, ops) · sonra DALGA 7: WP-295 → 299 → 300
-- **SAHİP yollar:** `app/pubspec.yaml`, `app/assets/release_notes.json`, `progress.md`, `docs/YENI-OZELLIK-NOTLARI.md`
+- **Durum:** [x] Boşta
+- **Faz/WP:** — · **Sıradaki:** DALGA 7 → WP-295 (ilk çıktı: parametrik önizleme)
+- **SAHİP yollar:** —
+- ✅ **BETA 1 YAYINDA — `beta-v4309`, 2026-07-25 15:30 UTC.** Release Orchestrator run `30163316180`: preflight · android · windows/build · finalize_android · release_status · finalize_complete **hepsi success**. Varlıklar: `app-beta-release.apk` (77.8 MB) + sha1/sha256 · `odak-kampi-windows-beta.msix` (23.3 MB) · `odak-kampi-windows-beta.zip` (42.4 MB) + sha256'lar · `release-manifest.json`. Sürüm `1.0.43-beta.9+4309`, staging backend, migration head `0070`. **Android + Windows ikisi de çıktı.**
 - **Son not:** 2026-07-25 turunda **WP-296, WP-297, WP-292, WP-298 ve WP-294** tamam — `analyze` 0, **793 test yeşil**. Taç geometrisi sahip onayıyla sabitlendi (**5 uç · span 50° · tip 1.63 · inci 0.10 · kavis 0.50**), aura kademeye göre ölçekli.
 - ✅ **WP-298 açık sorusu kapandı (sahip, 2026-07-25):** "altından itibaren" = **altın kademe (3.)**. Kod doğru; bronz/gümüşte aura yok, değişiklik yapılmadı.
 - ✅ **WP-295 sahip konuşması YAPILDI (2026-07-25) — blokaj kalktı.** Kararlar: [notlar F-09](docs/YENI-OZELLIK-NOTLARI.md). Tasarımcıya para verilmiyor (hayvanlar vektör kalıyor); istek üçe bölündü → **WP-295** (oturma yayları + 2 poz) · **WP-299** (gündüz/gece gökyüzü + gece uyuma) · **WP-300** (`groups.location`). Ayrıca 🔴 **WP-301** açıldı: günlük metrik gün sınırı sunucuda `Europe/Istanbul`'a sabitli ([0053:87](supabase/migrations/0053_group_achievement_metrics.sql:87)) — kamp ateşinden ayrı yürür.
