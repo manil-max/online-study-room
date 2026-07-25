@@ -3198,10 +3198,6 @@
   "@profileHataVeyaOneriniBize": {
     "description": "Profile user-facing text. Source: Hata veya önerini bize ilet"
   },
-  "profileHazirPaletler": "Voreingestellte Paletten",
-  "@profileHazirPaletler": {
-    "description": "Profile user-facing text. Source: Hazır Paletler"
-  },
   "profileHenuzDersinYok": "Du hast noch keine Themen.",
   "@profileHenuzDersinYok": {
     "description": "Profile user-facing text. Source: Henüz dersin yok."

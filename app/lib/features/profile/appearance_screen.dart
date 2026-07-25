@@ -215,37 +215,15 @@ class AppearanceScreen extends ConsumerWidget {
                         );
                       },
                     ),
-                    const SizedBox(height: 24),
-                    Text(
-                      l10n.profileHazirPaletler,
-                      style: theme.textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 8),
-                    GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: cols,
-                        mainAxisSpacing: 10,
-                        crossAxisSpacing: 10,
-                        childAspectRatio: desktop ? 2.4 : 2.2,
-                      ),
-                      itemCount: kAppPalettes.length,
-                      itemBuilder: (context, i) {
-                        final p = kAppPalettes[i];
-                        return _PaletteCard(
-                          palette: p,
-                          selected:
-                              settings.activeCustomThemeId == null &&
-                              settings.usePaletteColors &&
-                              p.id == settings.paletteId,
-                          onTap: () async {
-                            await notifier.setActiveCustomTheme(null);
-                            notifier.setPalette(p.id);
-                          },
-                        );
-                      },
-                    ),
+                    // WP-302: "Hazır Paletler" bölümü kaldırıldı. Palet yalnız
+                    // iki rengi (primary/accent) değiştiren eski modeldi;
+                    // hazır temalar ise tipografi, biçim, atmosfer ve hisle
+                    // birlikte tam bir görünüm veriyor — yani paletin yaptığı
+                    // her şeyi zaten kapsıyor. İki liste yan yana durunca
+                    // hangisinin ne yaptığı anlaşılmıyordu (sahip raporu).
+                    // Palet motoru kodda kalır: eski kurulumların görünümü
+                    // `_migrateLegacyPaletteToFamily` ile en yakın hazır
+                    // temaya taşınana kadar bozulmasın.
                   ],
                 ),
               ),
@@ -396,65 +374,6 @@ class _PresetCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               preset.localizedName(AppLocalizations.of(context)),
-              style: theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: selected ? FontWeight.bold : FontWeight.normal,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _PaletteCard extends StatelessWidget {
-  const _PaletteCard({
-    required this.palette,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final AppPalette palette;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: selected
-              ? palette.primary.withValues(alpha: 0.1)
-              : theme.colorScheme.surfaceContainer,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: selected ? palette.primary : theme.colorScheme.outlineVariant,
-            width: selected ? 2 : 1,
-          ),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                _Swatch(color: palette.primary),
-                const SizedBox(width: 4),
-                _Swatch(color: palette.accent),
-                const Spacer(),
-                if (selected)
-                  Icon(Icons.check_circle, color: palette.primary, size: 18),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              palette.localizedName(AppLocalizations.of(context)),
               style: theme.textTheme.bodyMedium?.copyWith(
                 fontWeight: selected ? FontWeight.bold : FontWeight.normal,
               ),

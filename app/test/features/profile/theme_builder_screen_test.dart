@@ -191,6 +191,40 @@ void main() {
     );
   });
 
+  testWidgets('WP-302: seçenekleri kaydırınca canlı önizleme ekranda kalır', (
+    tester,
+  ) async {
+    final container = await _container();
+    addTearDown(container.dispose);
+    // Telefon yüzeyi: önizleme sabit, seçenek listesi kendi içinde kayar.
+    await tester.binding.setSurfaceSize(const Size(400, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(
+          locale: Locale('tr'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: ThemeBuilderScreen(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final preview = find.byType(ThemePreviewCard);
+    final topBefore = tester.getTopLeft(preview).dy;
+
+    // Zemin adımının seçenek listesini sonuna kadar kaydır.
+    await tester.drag(find.byType(ListView).last, const Offset(0, -600));
+    await tester.pumpAndSettle();
+
+    // Eskiden önizleme listenin ilk çocuğuydu; bu kaydırmada ekrandan
+    // tamamen çıkıyordu — yani kullanıcı denediği rengi göremiyordu.
+    expect(preview, findsOneWidget);
+    expect(tester.getTopLeft(preview).dy, topBefore);
+  });
+
   testWidgets('kaydedilmemiş değişiklikle çıkışta uyarı gösterilir', (
     tester,
   ) async {

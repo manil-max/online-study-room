@@ -3198,10 +3198,6 @@
   "@profileHataVeyaOneriniBize": {
     "description": "Profile user-facing text. Source: Hata veya önerini bize ilet"
   },
-  "profileHazirPaletler": "لوحات ألوان جاهزة",
-  "@profileHazirPaletler": {
-    "description": "Profile user-facing text. Source: Hazır Paletler"
-  },
   "profileHenuzDersinYok": "ليس لديك مواد بعد.",
   "@profileHenuzDersinYok": {
     "description": "Profile user-facing text. Source: Henüz dersin yok."

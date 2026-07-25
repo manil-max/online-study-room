@@ -3227,10 +3227,6 @@
   "@profileHataVeyaOneriniBize": {
     "description": "Profile user-facing text. Source: Hata veya önerini bize ilet"
   },
-  "profileHazirPaletler": "Preset palettes",
-  "@profileHazirPaletler": {
-    "description": "Profile user-facing text. Source: Hazır Paletler"
-  },
   "profileHenuzDersinYok": "You don't have any subjects yet.",
   "@profileHenuzDersinYok": {
     "description": "Profile user-facing text. Source: Henüz dersin yok."

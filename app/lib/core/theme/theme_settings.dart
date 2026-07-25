@@ -93,6 +93,7 @@ class ThemeSettingsNotifier extends Notifier<ThemeSettings> {
   static const _kCustomThemes = 'custom_themes_v2';
   static const _kActiveCustomTheme = 'active_custom_theme_id';
   static const _kCustomThemesMigrated = 'custom_themes_migrated_v1';
+  static const _kPaletteSourceMigrated = 'palette_source_migrated_v1';
 
   @override
   ThemeSettings build() {
@@ -108,7 +109,7 @@ class ThemeSettingsNotifier extends Notifier<ThemeSettings> {
     };
 
     final storedSource = prefs.getString(_kColorSource);
-    final colorSource = switch (storedSource) {
+    var colorSource = switch (storedSource) {
       'palette' => ThemeColorSource.palette,
       'family' => ThemeColorSource.family,
       // Eski kurulum: family yoksa veya yalnızca palet kaydı varsa palet renkleri.
@@ -117,6 +118,20 @@ class ThemeSettingsNotifier extends Notifier<ThemeSettings> {
             ? ThemeColorSource.palette
             : ThemeColorSource.family,
     };
+
+    // WP-302: "Hazır Paletler" listesi arayüzden kaldırıldı. Yerleşik bir
+    // palete bağlı kalan kurulumlar aileye taşınır; yoksa Görünüm ekranında
+    // hiçbir kart seçili görünmez ve kullanıcı seçimini geri alamaz.
+    // ⚠️ `custom_*` paletlere DOKUNULMAZ: onlar WP-288 göçüyle özel temaya
+    // dönüşür, buradan geçerlerse iki göç birbirini ezer.
+    if (colorSource == ThemeColorSource.palette &&
+        !paletteId.startsWith('custom_') &&
+        prefs.getBool(_kPaletteSourceMigrated) != true) {
+      colorSource = ThemeColorSource.family;
+      // Aile kaydı varsa kullanıcının kendi seçimi korunur; yoksa yukarıda
+      // `migratePaletteIdToPreset` zaten en yakın hazır temayı vermişti.
+      unawaited(_persistPaletteSourceMigration(prefs));
+    }
 
     List<AppPalette> customPalettes = [];
     final customList = prefs.getStringList(_kCustomPalettes);
@@ -232,6 +247,11 @@ class ThemeSettingsNotifier extends Notifier<ThemeSettings> {
       atmosphere: base.extension<AppAtmosphere>()!,
       feel: base.extension<AppFeel>()!,
     );
+  }
+
+  Future<void> _persistPaletteSourceMigration(SharedPreferences prefs) async {
+    await prefs.setString(_kColorSource, 'family');
+    await prefs.setBool(_kPaletteSourceMigrated, true);
   }
 
   Future<void> _persistMigration(

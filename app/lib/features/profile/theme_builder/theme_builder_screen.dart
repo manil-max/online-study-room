@@ -215,13 +215,46 @@ class _ThemeBuilderScreenState extends ConsumerState<ThemeBuilderScreen> {
             final content = _stepContent(columns);
 
             if (!sideBySide) {
-              return ListView(
-                padding: getSafeVerticalPadding(
-                  context,
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                children: [preview, const SizedBox(height: 16), content],
+              final padding = getSafeVerticalPadding(
+                context,
+                horizontal: 16,
+                vertical: 12,
+              );
+              // WP-302: önizleme sabit kalır. Eskiden listenin ilk çocuğuydu;
+              // seçenekleri denemek için aşağı kaydırınca ekrandan çıkıyor,
+              // yani kullanıcı **tam da değiştirdiği şeyi** göremiyordu.
+              // Yatay/kısa ekranlarda (klavye açık, landscape) sabit önizleme
+              // içeriğe yer bırakmaz; orada eski kaydırmalı düzene dönülür.
+              if (constraints.maxHeight < 480) {
+                return ListView(
+                  padding: padding,
+                  children: [preview, const SizedBox(height: 16), content],
+                );
+              }
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      padding.left,
+                      padding.top,
+                      padding.right,
+                      12,
+                    ),
+                    child: preview,
+                  ),
+                  Expanded(
+                    child: ListView(
+                      padding: EdgeInsets.fromLTRB(
+                        padding.left,
+                        0,
+                        padding.right,
+                        padding.bottom,
+                      ),
+                      children: [content],
+                    ),
+                  ),
+                ],
               );
             }
             return Padding(

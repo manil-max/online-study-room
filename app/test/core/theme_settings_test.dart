@@ -75,6 +75,51 @@ void main() {
     expect(settings.palette.primary, paletteById('navy').primary);
   });
 
+  test('WP-302: yerleşik palete bağlı kurulum aileye taşınır', () async {
+    SharedPreferences.setMockInitialValues({
+      'theme_family': 'deep_amoled',
+      'theme_palette': 'emerald',
+      'theme_color_source': 'palette',
+    });
+    final prefs = await SharedPreferences.getInstance();
+    final container = ProviderContainer(
+      overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+    );
+    addTearDown(container.dispose);
+
+    final settings = container.read(themeSettingsProvider);
+    // "Hazır Paletler" listesi kaldırıldı; palet kaynağında kalan kurulumda
+    // Görünüm ekranında hiçbir kart seçili görünmezdi.
+    expect(settings.colorSource, ThemeColorSource.family);
+    expect(settings.usePaletteColors, isFalse);
+    // Kullanıcının kendi seçtiği aile korunur, palet eşlemesi ezmez.
+    expect(settings.familyId, 'deep_amoled');
+    // Kalıcı yazma `build()`'i bloklamasın diye unawaited; kuyruğu boşalt.
+    for (var i = 0; i < 5; i++) {
+      await Future<void>.delayed(Duration.zero);
+    }
+    expect(prefs.getString('theme_color_source'), 'family');
+    expect(prefs.getBool('palette_source_migrated_v1'), isTrue);
+  });
+
+  test('WP-302: custom_* palet göçü bu yoldan geçmez', () async {
+    SharedPreferences.setMockInitialValues({
+      'theme_palette': 'custom_1',
+      'theme_color_source': 'palette',
+    });
+    final prefs = await SharedPreferences.getInstance();
+    final container = ProviderContainer(
+      overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+    );
+    addTearDown(container.dispose);
+
+    final settings = container.read(themeSettingsProvider);
+    // Özel paletler WP-288 göçüyle özel temaya dönüşür; iki göç birbirini
+    // ezerse kullanıcının kendi teması kaybolur.
+    expect(settings.colorSource, ThemeColorSource.palette);
+    expect(prefs.getBool('palette_source_migrated_v1'), isNot(true));
+  });
+
   test('setFamily switches to atmosphere family colors', () async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
