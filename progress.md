@@ -129,6 +129,7 @@
 | ~~D~~ | **WP-310** — font adımında düğmeler zıplıyor | [x] **TAMAM** (2026-07-25, v48) | `showCheckmark: false` + sabit kenarlık; çip dikdörtgenleri seçimden bağımsız |
 | ~~D~~ | **WP-311** — canlı önizleme değişimi göstermiyor | [x] **TAMAM** (2026-07-25, v48) | `ThemePreviewFocus.typography` — yazı adımında etiketli örneklik. His adımı odağı WP-312'ye bağlı |
 | ~~E~~ | **WP-309** — renk seçici: hazır palet + spektrum düğmesi | [x] **TAMAM** (2026-07-25, v48) | Izgaranın son hücresi gökkuşağı düğmesi → HSV spektrum + hex |
+| ~~F~~ | **WP-314** — his seçimi önizlemede görünmüyor (WP-307 yan etkisi) | [x] **TAMAM** (2026-07-25, v49) | Her hissin atmosferden bağımsız kendi imzası + "biçim/atmosferi de hizala" düğmesi |
 | **?** | **WP-312** — 🔴 sihirbazın kavramsal sadeleştirmesi | [ ] Kodlanacak | 🔴 **Sahip kararı bekliyor:** adımlar birleşsin mi, yoksa her role açıklama + önizleme vurgusu mu |
 | — | WP-276 / WP-277 — staging ops kabul kanıtı | [ ] Kod azı, ops çoğu | ⏸️ Beta dışı; sentetik staging kanıtı + WP-276 Play Store için gerekli |
 | — | WP-278 / WP-279 | [?] **Ürün/ops kararı** | 🔴 Sahip kararı olmadan kod yazılmaz |

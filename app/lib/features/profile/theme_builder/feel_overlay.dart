@@ -27,6 +27,7 @@ class FeelOverlay extends StatelessWidget {
     if (feel == null || atmosphere == null) return child;
 
     final spec = FeelOverlaySpec(
+      feelId: feel.feelId,
       grainStrength: feel.grainStrength,
       grainKind: feel.grainKind,
       gradientStart: atmosphere.gradientStart,
@@ -62,6 +63,7 @@ class FeelOverlay extends StatelessWidget {
 @immutable
 class FeelOverlaySpec {
   const FeelOverlaySpec({
+    required this.feelId,
     required this.grainStrength,
     required this.grainKind,
     required this.gradientStart,
@@ -71,6 +73,14 @@ class FeelOverlaySpec {
     required this.blurSigma,
     required this.glassOpacity,
   });
+
+  /// WP-314: hissin **kendi** imzası. Eskiden çizim yalnız gren + atmosfer
+  /// alanlarına bakıyordu; zen/neon/cam/düz hislerinin gren gücü 0 olduğu için
+  /// bu dördü ancak atmosferi de ezerse görünüyordu. WP-307 o ezmeyi
+  /// kapatınca his seçimi önizlemede hiçbir şey değiştirmez oldu (sahip:
+  /// "feels kısmı önizlemede hiçbir şey değiştirmiyor"). Artık her hissin
+  /// atmosferden bağımsız kendi çizimi var.
+  final String feelId;
 
   final double grainStrength;
   final String grainKind;
@@ -84,11 +94,21 @@ class FeelOverlaySpec {
   bool get paintsGrain => grainStrength > 0 && grainKind != 'none';
   bool get paintsGlow => glowStrength > 0;
   bool get paintsGlass => glassOpacity > 0;
-  bool get paintsAnything => paintsGrain || paintsGlow || paintsGlass;
+
+  /// Hissin atmosferden bağımsız imzası. `modern` ve `flat` bilerek boştur —
+  /// "efekt yok" onların kimliği (ikisi hâlâ köşe/hareket karakteriyle ayrılır).
+  bool get paintsSignature => switch (feelId) {
+    'neon' || 'glass' || 'zen' || 'vintage' => true,
+    _ => false,
+  };
+
+  bool get paintsAnything =>
+      paintsGrain || paintsGlow || paintsGlass || paintsSignature;
 
   @override
   bool operator ==(Object other) =>
       other is FeelOverlaySpec &&
+      other.feelId == feelId &&
       other.grainStrength == grainStrength &&
       other.grainKind == grainKind &&
       other.gradientStart == gradientStart &&
@@ -100,6 +120,7 @@ class FeelOverlaySpec {
 
   @override
   int get hashCode => Object.hash(
+    feelId,
     grainStrength,
     grainKind,
     gradientStart,
@@ -126,6 +147,84 @@ class FeelOverlayPainter extends CustomPainter {
     if (spec.paintsGlow) _paintGlow(canvas, size);
     if (spec.paintsGlass) _paintGlass(canvas, size);
     if (spec.paintsGrain) _paintGrain(canvas, size);
+    if (spec.paintsSignature) _paintSignature(canvas, size);
+  }
+
+  /// WP-314: hissin kendi imzası — atmosfer kaydırıcıları sıfır olsa da çizilir.
+  void _paintSignature(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    switch (spec.feelId) {
+      case 'neon':
+        // Kenarlardan içeri sızan çift renkli halo: "tüp ışık" karakteri.
+        for (final (alignment, color) in [
+          (Alignment.topLeft, spec.glowColor),
+          (Alignment.bottomRight, spec.gradientEnd),
+        ]) {
+          canvas.drawRect(
+            rect,
+            Paint()
+              ..shader = RadialGradient(
+                center: alignment,
+                radius: 0.9,
+                colors: [
+                  color.withValues(alpha: 0.30),
+                  color.withValues(alpha: 0),
+                ],
+              ).createShader(rect),
+          );
+        }
+        // İnce iç çerçeve — neon şeridin kendisi.
+        canvas.drawRect(
+          rect.deflate(1),
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.5
+            ..color = spec.glowColor.withValues(alpha: 0.45),
+        );
+      case 'glass':
+        // Çapraz ışık bandı: buzlu cam üzerindeki yansıma.
+        canvas.drawRect(
+          rect,
+          Paint()
+            ..shader = LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              stops: const [0.0, 0.38, 0.52, 1.0],
+              colors: [
+                const Color(0xFFFFFFFF).withValues(alpha: 0.16),
+                const Color(0xFFFFFFFF).withValues(alpha: 0.02),
+                const Color(0xFFFFFFFF).withValues(alpha: 0.20),
+                const Color(0xFFFFFFFF).withValues(alpha: 0.0),
+              ],
+            ).createShader(rect),
+        );
+      case 'zen':
+        // Yumuşak vinyet: kenarlar geri çekilir, göz ortaya toplanır.
+        canvas.drawRect(
+          rect,
+          Paint()
+            ..shader = RadialGradient(
+              radius: 0.85,
+              colors: [
+                const Color(0x00000000),
+                const Color(0xFF000000).withValues(alpha: 0.18),
+              ],
+            ).createShader(rect),
+        );
+      case 'vintage':
+        // Sıcak solma + ağır vinyet: eski baskı hissi.
+        canvas.drawRect(
+          rect,
+          Paint()
+            ..shader = RadialGradient(
+              radius: 0.9,
+              colors: [
+                const Color(0x14D9A441),
+                const Color(0xFF2B1A05).withValues(alpha: 0.26),
+              ],
+            ).createShader(rect),
+        );
+    }
   }
 
   void _paintGlow(Canvas canvas, Size size) {

@@ -88,8 +88,64 @@ void main() {
     );
   });
 
+  testWidgets('WP-314: atmosfer kapalıyken bile his kendi imzasını çizer', (
+    tester,
+  ) async {
+    // Sahip: "6/8'deki feels kısmı önizlemede hiçbir şey değiştirmiyor."
+    // Sebep: WP-307'den sonra his artık kullanıcının atmosferini ezmiyor;
+    // zen/neon/cam'ın gren gücü de 0 olduğu için çizecek bir şey kalmıyordu.
+    final base = ThemeDraft.fromPreset(
+      slotId: 'custom_1',
+      name: 'T',
+      preset: themePresetById('campfire_night'),
+    ).withAtmosphere(
+      const AppAtmosphere(
+        gradientStart: Color(0xFF101010),
+        gradientEnd: Color(0xFF202020),
+        glowColor: Color(0xFF3186E9),
+        glowStrength: 0,
+        blurSigma: 0,
+        glassOpacity: 0,
+      ),
+    );
+
+    for (final feelId in ['zen', 'neon', 'glass', 'vintage']) {
+      await _pump(
+        tester,
+        base.withFeel(feelOptionById(feelId).feel).themeFor(Brightness.dark),
+      );
+      final painter = find.byWidgetPredicate(
+        (widget) =>
+            widget is CustomPaint && widget.painter is FeelOverlayPainter,
+      );
+      expect(painter, findsOneWidget, reason: '$feelId hiçbir şey çizmiyor');
+      final spec =
+          (tester.widget<CustomPaint>(painter).painter! as FeelOverlayPainter)
+              .spec;
+      expect(spec.feelId, feelId);
+      expect(spec.paintsSignature, isTrue);
+    }
+
+    // Kimliği "efekt yok" olan hisler bilerek boş kalır.
+    for (final feelId in ['modern', 'flat']) {
+      await _pump(
+        tester,
+        base.withFeel(feelOptionById(feelId).feel).themeFor(Brightness.dark),
+      );
+      expect(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is CustomPaint && widget.painter is FeelOverlayPainter,
+        ),
+        findsNothing,
+        reason: '$feelId efektsiz olmalı',
+      );
+    }
+  });
+
   test('spec eşitliği gereksiz yeniden çizimi engeller', () {
     const a = FeelOverlaySpec(
+      feelId: 'vintage',
       grainStrength: 0.5,
       grainKind: 'film',
       gradientStart: Color(0xFF000000),
@@ -100,6 +156,7 @@ void main() {
       glassOpacity: 0,
     );
     const b = FeelOverlaySpec(
+      feelId: 'vintage',
       grainStrength: 0.5,
       grainKind: 'film',
       gradientStart: Color(0xFF000000),
@@ -114,6 +171,7 @@ void main() {
       const FeelOverlayPainter(a).shouldRepaint(
         const FeelOverlayPainter(
           FeelOverlaySpec(
+            feelId: 'vintage',
             grainStrength: 0.9,
             grainKind: 'film',
             gradientStart: Color(0xFF000000),

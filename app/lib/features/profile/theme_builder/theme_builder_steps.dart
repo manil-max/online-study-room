@@ -638,6 +638,20 @@ class FeelStep extends StatelessWidget {
             subtitle: Text(option.localizedCost(l10n)),
             onTap: () => onChanged(draft.withFeel(option.feel)),
           ),
+        // WP-314: his artık elle yapılmış biçim/atmosfer ayarını sessizce
+        // ezmiyor (WP-307). Ama kullanıcı hissin **tam bileşimini** isterse
+        // bu yolu açık bırakmak gerekiyor — aksi hâlde seçim yalnız doku ve
+        // hareket değiştirir, "hiçbir şey olmuyor" gibi görünür.
+        if (draft.shapesEdited || draft.atmosphereEdited)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: OutlinedButton.icon(
+              key: const Key('feelApplyComposition'),
+              onPressed: () => onChanged(draft.withFeelComposition(draft.feel)),
+              icon: const Icon(Icons.auto_fix_high, size: 18),
+              label: Text(l10n.profileHisBicimAtmosferHizala),
+            ),
+          ),
       ],
     );
   }

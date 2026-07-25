@@ -333,6 +333,20 @@ class ThemeDraft {
         : atmosphereForFeel(next.feelId, atmosphere),
   );
 
+  /// WP-314: hissin **tam bileşimini** açıkça uygula — biçim ve atmosfer dahil.
+  ///
+  /// WP-307 sessiz ezmeyi kapattı; bu da doğruydu ama elle ayar yapmış
+  /// kullanıcıda his seçimi neredeyse görünmez kaldı. Bu yol kullanıcının
+  /// *isteyerek* bastığı düğmedir: bileşim uygulanır ve "elle düzenlendi"
+  /// bayrakları sıfırlanır, böylece sonraki his denemeleri de hizalanır.
+  ThemeDraft withFeelComposition(AppFeel next) => copyWith(
+    feel: next,
+    shapes: shapesForFeel(next.feelId, shapes),
+    atmosphere: atmosphereForFeel(next.feelId, atmosphere),
+    shapesEdited: false,
+    atmosphereEdited: false,
+  );
+
   ThemeData themeFor(Brightness brightness) => AppTheme.fromCustomTokens(
     colors: colorsFor(brightness),
     typography: typographyFor(brightness),

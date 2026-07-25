@@ -4814,6 +4814,10 @@
   "@profileKontrastDuzelt": {
     "description": "Theme builder: one-tap contrast fix action."
   },
+  "profileHisBicimAtmosferHizala": "واءم الشكل والأجواء مع هذا الإحساس أيضًا",
+  "@profileHisBicimAtmosferHizala": {
+    "description": "Theme builder feel step: opt-in to apply the feel's full composition."
+  },
   "profileRenkSpektrum": "الطيف",
   "@profileRenkSpektrum": {
     "description": "Theme builder color picker: open full spectrum mode."

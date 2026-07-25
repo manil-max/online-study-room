@@ -184,6 +184,33 @@ genişliği varsayımı 26 → 14 px'e indi, 7/14 günlük seride adım 1 oldu. 
 satır her zaman çizilir (gerekmediğinde boş metin) ki taban hizası bozulmasın.
 Test: `app/test/features/stats/daily_bar_chart_labels_test.dart`.
 
+## WP-314 — His seçimi önizlemede hiçbir şey değiştirmiyor ✅ ÇÖZÜLDÜ (v49)
+
+**Sahip (v48 sonrası):** "6/8'deki feels kısmı önizlemede hiçbir şey
+değiştirmiyor, onu anlamadım."
+
+**Kök neden — ikisi birden:**
+1. `FeelOverlay` çizimi **yalnız** gren + atmosfer alanlarına bakıyordu.
+   Katalogdaki 8 histen 5'inin (`modern`, `zen`, `neon`, `flat`, `glass`) gren
+   gücü 0; yani bu hisler ancak **atmosferi ezerek** görünüyordu.
+2. WP-307 o sessiz ezmeyi (doğru biçimde) kapattı. Sonuç: elle atmosfer
+   ayarlamış kullanıcıda his seçimi görünür hiçbir şey değiştirmez oldu.
+   Yani WP-307'nin doğrudan yan etkisi.
+
+**Çözüm — iki katman:**
+- `FeelOverlaySpec.feelId` eklendi; her hissin **atmosferden bağımsız kendi
+  imzası** var: `neon` çift renkli halo + ince iç çerçeve, `glass` çapraz ışık
+  bandı, `zen` yumuşak vinyet, `vintage` sıcak solma + ağır vinyet. `paper` ve
+  `carton` zaten gren taşıyordu. `modern` ve `flat` **bilerek boş** — "efekt
+  yok" onların kimliği (ikisi köşe/hareket karakteriyle ayrılır).
+- His adımına, kullanıcı biçim/atmosfere elle dokunduysa görünen açık bir
+  düğme: **"Biçim ve atmosferi de bu hisle hizala"** (`withFeelComposition`).
+  Sessiz veri kaybı yok, ama tam bileşim isteyen kullanıcı için yol açık.
+
+Testler: `feel_overlay_test.dart` (atmosfer kapalıyken bile dört his çiziyor;
+modern/flat çizmiyor) + `theme_draft_test.dart` (açık bileşim uygulanıyor).
+Neon golden'ları yeni imzayla tazelendi.
+
 ---
 
 ## Durum (v48)
@@ -198,6 +225,7 @@ Test: `app/test/features/stats/daily_bar_chart_labels_test.dart`.
 | WP-311 önizleme odağı | ✅ v48 (yazı adımı) |
 | WP-312 kavramsal sadeleştirme | 🔴 sahip kararı bekliyor |
 | WP-313 grafik tarihleri | ✅ v48 |
+| WP-314 his önizlemede görünmüyor | ✅ v49 |
 
 **Kalan tek iş WP-312.** Seçenekler:
 1. Adım sayısını 8 → 5'e indir (Zemin+Renk, Yazı, Biçim+Atmosfer, His, Özet).

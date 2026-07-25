@@ -153,6 +153,19 @@ void main() {
       expect(saved.withFeel(feelOptionById('zen').feel).shapes.radiusMd, 27);
     });
 
+    test('WP-314: tam bileşim açıkça istendiğinde uygulanır', () {
+      final tuned = _draft().withShapes(
+        _draft().shapes.copyWith(radiusMd: 33),
+      );
+      // Sessiz yol korur…
+      expect(tuned.withFeel(feelOptionById('zen').feel).shapes.radiusMd, 33);
+      // …açık düğme uygular ve bayrakları sıfırlar.
+      final aligned = tuned.withFeelComposition(feelOptionById('zen').feel);
+      expect(aligned.shapes.radiusMd, isNot(33));
+      expect(aligned.shapesEdited, isFalse);
+      expect(aligned.atmosphereEdited, isFalse);
+    });
+
     test('doku isteyen hisler gren gücü taşır', () {
       expect(feelOptionById('vintage').feel.grainStrength, greaterThan(0));
       expect(feelOptionById('carton').feel.grainKind, 'carton');
