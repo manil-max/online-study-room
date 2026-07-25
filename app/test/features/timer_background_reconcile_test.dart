@@ -18,6 +18,9 @@ import 'package:online_study_room/data/repositories/in_memory/in_memory_group_re
 import 'package:online_study_room/data/repositories/in_memory/in_memory_study_repository.dart';
 import 'package:online_study_room/features/android_widgets/android_widget_service.dart';
 
+import '../support/async_wait.dart';
+import '../support/istanbul_fixture.dart';
+
 class _NoopTimerNotificationService implements TimerNotificationGateway {
   const _NoopTimerNotificationService();
 
@@ -123,7 +126,16 @@ Future<(ProviderContainer, InMemoryStudyRepository, Profile)> _buildContainer(
     fireImmediately: true,
   );
   addTearDown(authSub.close);
+  // ⚠️ Bu 20 tur bir "bekleme" değil, senaryonun **kurulumu**: sağlayıcı
+  // zinciri (auth → oturumlar → sayaç) bu turlarda ayağa kalkıyor. Koşul
+  // beklemesiyle değiştirmek testleri bozar — koşul sağlandığında zincirin
+  // geri kalanı henüz kurulmamış oluyor. Yavaş koşucu payı için turların
+  // ardına ayrıca koşul beklemesi eklendi.
   await pumpEventQueue(times: 20);
+  await waitUntil(
+    () => container.read(authStateProvider).value != null,
+    reason: 'auth hazır olmalı',
+  );
   final profile = container.read(authStateProvider).value;
   expect(profile, isNotNull, reason: 'auth hazır olmalı');
   return (container, studyRepo, profile!);
@@ -588,7 +600,10 @@ void main() {
     test(
       'DB yazımı (RTT) sürerken ekran toplamı ne zıplar ne düşer',
       () async {
-        final start = DateTime.now().subtract(const Duration(minutes: 20));
+        // Gece yarısı güvenli: 00:00–00:20 arasında koşarsa `now - 20dk` düne
+        // düşer ve "bugünün toplamı" beklenenden küçük çıkar.
+        final runFor = backWithinIstanbulToday(const Duration(minutes: 20));
+        final start = DateTime.now().subtract(runFor);
         final slowRepo = _ControlledStudyRepository();
         final (container, studyRepo, profile) = await _buildContainer({
           'timer_active_started_at': start.toIso8601String(),
@@ -609,8 +624,11 @@ void main() {
           fireImmediately: true,
         );
         addTearDown(sessionsSub.close);
-        await pumpEventQueue(times: 20);
-        expect(container.read(studyTimerProvider).isRunning, isTrue);
+        // Sabit tur sayısı yerine koşul: yavaş koşucuda 20 tur yetmiyordu.
+        await waitUntil(
+          () => container.read(studyTimerProvider).isRunning,
+          reason: 'kayıtlı başlangıçtan sayaç çalışır duruma geçmeli',
+        );
 
         // Ekranın gösterdiği sayıyı, UI ile BİREBİR aynı kuralla hesapla.
         int displayed() {
@@ -628,8 +646,8 @@ void main() {
           );
         }
 
-        final before = displayed(); // ≈ 1200 sn
-        expect(before, greaterThan(1100));
+        final before = displayed(); // ≈ çalışılan süre
+        expect(before, closeTo(runFor.inSeconds.toDouble(), 5));
 
         final stopFuture = container.read(studyTimerProvider.notifier).stop();
 
@@ -649,7 +667,10 @@ void main() {
 
         slowRepo.releaseNetwork();
         await stopFuture;
-        await pumpEventQueue(times: 20);
+        await waitUntil(
+          () => !container.read(studyTimerProvider).isStopping,
+          reason: 'durdurma tamamlanmalı',
+        );
         expect(
           displayed(),
           closeTo(before, 2),
@@ -667,8 +688,15 @@ void main() {
         // Kullanıcı 30 dk çalıştı, 25 dk önce bildirimden Durdur'a bastı,
         // uygulamayı ŞİMDİ açıyor. Kuyrukta gerçek aralık var; state ise
         // (arka planda uyuyan isolate gibi) hâlâ "çalışıyor".
-        final start = DateTime.now().subtract(const Duration(minutes: 55));
-        final end = DateTime.now().subtract(const Duration(minutes: 25));
+        //
+        // ⚠️ Aralık **bugünün İstanbul günü** içinde kalmalı: koşum 00:00–01:00
+        // arasına denk gelirse `now - 55dk` düne düşer, bugünün toplamı 0 olur
+        // ve test hatasız kodu suçlar (v49 sürümünü kıran tam buydu).
+        final window = backWithinIstanbulToday(const Duration(minutes: 55));
+        final deadTime = Duration(seconds: window.inSeconds * 25 ~/ 55);
+        final workTime = window - deadTime;
+        final start = DateTime.now().subtract(window);
+        final end = start.add(workTime);
         final (container, _, _) = await _buildContainer({
           'timer_active_started_at': start.toIso8601String(),
           'timer_active_started_at_ms': start.millisecondsSinceEpoch,
@@ -685,6 +713,10 @@ void main() {
           fireImmediately: true,
         );
         addTearDown(sessionsSub.close);
+        // ⚠️ Burada bilerek **koşul beklenmiyor**: olay kuyruğunu sonuna kadar
+        // döndürmek uzlaştırmayı erken çalıştırır ve aşağıda kurulacak
+        // "app-kapalı Durdur" senaryosunu bozar (kuyruk daha yazılmadan
+        // temizlenir). Kısa bir tur yeterli; asıl bekleme durdurmadan sonra.
         await Future<void>.delayed(const Duration(milliseconds: 20));
 
         // Native Durdur'u taklit et: start anahtarları silinir, kuyruğa aralık.
@@ -699,21 +731,46 @@ void main() {
         );
 
         await container.read(studyTimerProvider.notifier).stop();
-        await Future<void>.delayed(const Duration(milliseconds: 40));
+        // Sayacın durması yetmez: WP-250 modelinde süre önce **settling**
+        // alanlarına yazılır, DB kaydı sonra düşer. Yalnız `isRunning`
+        // beklenirse ikisi de henüz boşken devam edilir ve toplam 0 görünür.
+        //
+        // ⚠️ `todayRecordedSecondsProvider` dinleyicisiz okunursa her `read`
+        // sıfırdan kurulur ve 0 döner (Riverpod 3 auto-dispose tuzağı); bu
+        // yüzden yoklamadan önce dinleniyor.
+        final recordedSub = container.listen(
+          todayRecordedSecondsProvider,
+          (_, _) {},
+          fireImmediately: true,
+        );
+        addTearDown(recordedSub.close);
+        await waitUntil(
+          () {
+            final timer = container.read(studyTimerProvider);
+            return !timer.isRunning &&
+                (timer.settlingSeconds > 0 || recordedSub.read() > 0);
+          },
+          reason: 'kuyruk işlenip süre bir kaynağa yazılmalı',
+        );
 
         final t = container.read(studyTimerProvider);
         expect(t.isRunning, isFalse);
         final total = resolveTodayDisplayTotal(
-          recordedToday: container.read(todayRecordedSecondsProvider),
+          recordedToday: recordedSub.read(),
           liveWorkSeconds: 0,
           settlingSeconds: t.settlingSeconds,
           settlingBaseline: t.settlingBaseline,
           settlingDay: t.settlingDay,
           today: DateTime.now(),
         );
-        // Gerçekten çalışılan 30 dk kaydedilir; aradaki 25 dk ölü zaman
-        // toplama EKLENMEZ (eski hata: ~55 dk gösterip gün boyu kilitlerdi).
-        expect(total, closeTo(30 * 60, 5));
+        // Gerçekten çalışılan süre kaydedilir; aradaki ölü zaman toplama
+        // EKLENMEZ (eski hata: pencerenin tamamını gösterip gün boyu kilitlerdi).
+        expect(total, closeTo(workTime.inSeconds.toDouble(), 5));
+        expect(
+          total,
+          lessThan(window.inSeconds),
+          reason: 'ölü zaman toplama sızmamalı',
+        );
       },
     );
   });

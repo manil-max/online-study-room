@@ -16,6 +16,11 @@ import 'package:online_study_room/data/providers/subject_providers.dart';
 import 'package:online_study_room/features/classroom/widgets/study_timer_card.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
+import 'package:online_study_room/core/stats/istanbul_calendar.dart';
+
+import '../../support/async_wait.dart';
+import '../../support/istanbul_fixture.dart';
+
 /// Gerçek notifier'ın (kanal/dinleyici kurulumu olan) build()'ini atlayan sahte.
 /// Testte state'i biz elle sürüyoruz; amaç UI'ın hesabını doğrulamak.
 class _FakeTimerNotifier extends StudyTimerNotifier {
@@ -37,30 +42,35 @@ void main() {
       final prefs = await SharedPreferences.getInstance();
 
       final now = DateTime.now();
-      final startedAt = now.subtract(const Duration(hours: 1));
-      // WP-296: kayıtlı oturum GÜNÜN BAŞINA sabitlendi. Önceden `now - 3h`
-      // kullanılıyordu; test 00:00–03:00 arasında koşarsa o an dünkü güne
-      // düşüyor, `dailyTotals` bugüne 0 yazıyor ve toplam 2 saat yerine 1 saat
-      // görünüyordu — testi saate bağımlı hale getiren tek satır buydu.
-      // `dailyTotals` yalnız `start` gününü ve `durationSeconds`'ı kullandığı
-      // için gün başlangıcı her koşumda güvenli.
-      final todayStart = DateTime(now.year, now.month, now.day);
-      // Bugün zaten kayıtlı 1 saat.
+      // WP-296 bu testi bir kez saatten kurtarmaya çalıştı ama gün başlangıcını
+      // **yerel** takvimle aldı; ürünün gün sınırı ise `Europe/Istanbul`. UTC
+      // koşucuda 21:00 = İstanbul 00:00 olduğu için kayıt düne düşüyor,
+      // `dailyTotals` bugüne 0 yazıyor ve toplam 2 saat yerine 1 saat çıkıyordu
+      // — v49 sürümünü kıran hata buydu. Artık geriye gidiş **İstanbul günü**
+      // içinde tutuluyor: gün başından beri 1 saat geçmemişse pencere kısalır,
+      // beklenen toplam da ona göre hesaplanır.
+      final liveWindow = backWithinIstanbulToday(const Duration(hours: 1));
+      final liveSeconds = liveWindow.inSeconds;
+      final startedAt = now.subtract(liveWindow);
+      const recordedSeconds = 3600;
+      final expectedTotal = recordedSeconds + liveSeconds;
+
+      // Bugün zaten kayıtlı bir saat.
       final recordedSession = StudySession(
         id: 'rec-1',
         userId: 'u1',
-        start: todayStart,
-        end: todayStart.add(const Duration(hours: 1)),
-        durationSeconds: 3600,
+        start: startedAt,
+        end: startedAt.add(const Duration(seconds: recordedSeconds)),
+        durationSeconds: recordedSeconds,
         source: StudySource.live,
       );
-      // Durdurulan 1 saatlik oturum DB'ye düştüğünde eklenecek satır.
+      // Durdurulan oturum DB'ye düştüğünde eklenecek satır.
       final stoppedSession = StudySession(
         id: 'rec-2',
         userId: 'u1',
         start: startedAt,
         end: now,
-        durationSeconds: 3600,
+        durationSeconds: liveSeconds,
         source: StudySource.live,
       );
 
@@ -100,23 +110,29 @@ void main() {
       );
 
       sessions.add([recordedSession]);
-      await tester.pump();
+      // Akış olayı + yeniden çizim iki ayrı tura düşebilir; tek `pump()`
+      // hızlı makinede yetiyor ama CI koşucusunda yetmiyordu (v49 kırılması).
+      await pumpUntilFound(
+        tester,
+        find.text(formatHumanSeconds(expectedTotal)),
+        reason: 'kayıtlı + canlı toplamı ekranda görünmeli',
+      );
 
-      // 1 saat kayıtlı + 1 saat canlı = 2 saat.
-      expect(find.text(formatHumanSeconds(7200)), findsWidgets);
+      // Kayıtlı süre + canlı süre.
+      expect(find.text(formatHumanSeconds(expectedTotal)), findsWidgets);
 
       // --- Durdur'a basıldı: notifier ilk await'ten önce bunu yayınlar. ---
       fake.push(
         running.copyWith(
           isStopping: true,
-          settlingSeconds: 3600,
-          settlingBaseline: 3600,
-          settlingDay: DateTime(now.year, now.month, now.day),
+          settlingSeconds: liveSeconds,
+          settlingBaseline: recordedSeconds,
+          settlingDay: istanbulDay(now),
         ),
       );
       await tester.pump();
       expect(
-        find.text(formatHumanSeconds(7200)),
+        find.text(formatHumanSeconds(expectedTotal)),
         findsWidgets,
         reason: 'durdurma anında toplam değişmemeli',
       );
@@ -124,24 +140,26 @@ void main() {
       // --- RTT penceresi: kayıt yerel cache'e düştü, stream emit etti,
       //     ama `_finish()` HENÜZ çalışmadı (isRunning hâlâ true). ---
       sessions.add([recordedSession, stoppedSession]);
-      await tester.pump();
+      // Olumsuz iddia: sayı **değişmemeli**. Tek `pump()` ile yetinilseydi
+      // olay henüz işlenmemiş olabilir ve test hatayı kaçırıp boş yere geçerdi.
+      await pumpFrames(tester);
       expect(
-        find.text(formatHumanSeconds(7200)),
+        find.text(formatHumanSeconds(expectedTotal)),
         findsWidgets,
-        reason: 'ASIL BUG: burada 3 saat görünüyordu',
+        reason: 'ASIL BUG: burada canlı süre iki kez sayılıyordu',
       );
-      expect(find.text(formatHumanSeconds(10800)), findsNothing);
+      expect(find.text(formatHumanSeconds(expectedTotal + liveSeconds)), findsNothing);
 
       // --- `_finish()` çalıştı. ---
       fake.push(
         const StudyTimerState().copyWith(
-          settlingSeconds: 3600,
-          settlingBaseline: 3600,
-          settlingDay: DateTime(now.year, now.month, now.day),
+          settlingSeconds: liveSeconds,
+          settlingBaseline: recordedSeconds,
+          settlingDay: istanbulDay(now),
         ),
       );
       await tester.pump();
-      expect(find.text(formatHumanSeconds(7200)), findsWidgets);
+      expect(find.text(formatHumanSeconds(expectedTotal)), findsWidgets);
     },
   );
 }
