@@ -18,7 +18,8 @@
 - **Stable/production:** v45 yayında, etkin şema `0070`. Yeni production migration, Edge deploy veya stable tag/release yalnız ayrı, somut kullanıcı GO + backup + dry-run ile yapılır; deploy kapısı kilitli.
 - **Beta/staging:** beta-v4308 staging `0070` üzerinde yayında. Proje sahibi 2026-07-24'te stable+beta yayınını ve bildirim/sayaç davranışını cihazda test etti; genel sorun yok, **önceki turun** (WP-269–285) bekleyen cihaz kabulleri kapatıldı. ⚠️ Aşama A'nın yeni kabulleri **henüz yayınlanmış bir artefakta girmedi** — QA kuyruğu yeni beta build gerektiriyor.
 - **Release ilkesi:** Android beta/stable artefaktı Android işi başarılı olunca yayımlanır. Windows bağımsız sürer ve başarılı olursa aynı release'e eklenir; Windows hatası Android güncellemesini geri çekmez.
-- 🔴 **BETA KARARI (sahip, 2026-07-25):** **Aşama A'nın TÜM WP'leri bitmeden beta çıkmaz — tek beta turu yapılacak.** Gerekçe: beta koşumu ~3 saat sürüyor, iki tur yapılmıyor. **Sonuçları:** (1) "önce X'in cihaz kabulü" yazan yazılı kapılar bu tur için **geçersiz** — cihaz QA'sı fiziken mümkün değil, kod/test kapısı esas alınır (`.agents/AGENTS.md §0.1`); (2) QA kuyruğundaki 6 iş **aynı beta'da** test edilir; (3) bir sorun görülürse hangi WP'den geldiği belirsiz olacağı için her WP **ayrı commit** + `analyze` 0 + testler yeşil şartı **daha da kritik**.
+- 🔴 **BETA KARARI **GÜNCELLENDİ** (sahip, 2026-07-25, aynı gün ikinci karar — `§0.1`): **İKİ beta olacak.** **Beta 1 = kapanmış 9 WP, hemen** (WP-295 beklenmez); beta 1 test edilirken WP-295+299+300 kodlanır → **beta 2** (admin işleri orada) → stable. Sahip kamp ateşi isteğinin sandığından büyük olduğunu görünce sırayı kendisi değiştirdi. Ek gerekçe: kamp ateşinin `p95 ≤ 16.7 ms` bütçesi beta 1 cihaz turu olmadan **ölçülemiyordu.** Aşağıdaki "tek beta" ifadeleri **tarihsel**; bir sonraki maddedeki sonuçlar (kod/test kapısı esas, her WP ayrı commit) aynen geçerli.
+- 🕰️ *Tarihsel — üstteki karar bunu değiştirdi:* **Aşama A'nın TÜM WP'leri bitmeden beta çıkmaz — tek beta turu yapılacak.** Gerekçe: beta koşumu ~3 saat sürüyor, iki tur yapılmıyor. **Sonuçları:** (1) "önce X'in cihaz kabulü" yazan yazılı kapılar bu tur için **geçersiz** — cihaz QA'sı fiziken mümkün değil, kod/test kapısı esas alınır (`.agents/AGENTS.md §0.1`); (2) QA kuyruğundaki 6 iş **aynı beta'da** test edilir; (3) bir sorun görülürse hangi WP'den geldiği belirsiz olacağı için her WP **ayrı commit** + `analyze` 0 + testler yeşil şartı **daha da kritik**.
 - **Yönetim varsayılanı:** Production `deploy_enabled/release_enabled` kapalıdır. Stable yalnız protected `production` Environment, exact SHA/head/project-ref GO ve reviewer kanıtıyla ilerler.
 - **Kurallar:** Kök `AGENTS.md`, `.agents/AGENTS.md` ve `docs/KALITE-PROGRAMI.md` geçerlidir. Tek çalışma dalı `main`; her WP ayrı commit; production varsayılmaz.
 - **Son WP:** **298** · Sıradaki boş numara: **299**. Aşama A'da kod/test tamamlanan: 286, 287, 288, 289, 290, 291, 293 — **kartları arşive taşındı** ([arşiv](docs/archive/progress-tarihsel-2026-07.md)); 296, 297, 292, 298 kartları hâlâ burada, kalan işleri aşağıdaki QA kuyruğunda.
@@ -33,11 +34,15 @@
 - **SAHİP yollar:** —
 
 ### Claude Lane
-- **Durum:** [x] Boşta
-- **Faz/WP:** —
-- **SAHİP yollar:** —
-- **Son not:** 2026-07-25 turunda **WP-296, WP-297, WP-292, WP-298 ve WP-294** tamam — `analyze` 0, **793 test yeşil**. Taç geometrisi sahip onayıyla sabitlendi (**5 uç · span 50° · tip 1.63 · inci 0.10 · kavis 0.50**), aura kademeye göre ölçekli. **Kalan tek iş WP-295** ve o sahiple tasarım konuşmasını bekliyor — ajan tarafında başlayacak iş yok.
+- **Durum:** [x] **Meşgul** — beta 1 (`beta-v4309`) hazırlığı
+- **Faz/WP:** Beta 1 yayını (WP değil, ops) · sonra DALGA 7: WP-295 → 299 → 300
+- **SAHİP yollar:** `app/pubspec.yaml`, `app/assets/release_notes.json`, `progress.md`, `docs/YENI-OZELLIK-NOTLARI.md`
+- **Son not:** 2026-07-25 turunda **WP-296, WP-297, WP-292, WP-298 ve WP-294** tamam — `analyze` 0, **793 test yeşil**. Taç geometrisi sahip onayıyla sabitlendi (**5 uç · span 50° · tip 1.63 · inci 0.10 · kavis 0.50**), aura kademeye göre ölçekli.
 - ✅ **WP-298 açık sorusu kapandı (sahip, 2026-07-25):** "altından itibaren" = **altın kademe (3.)**. Kod doğru; bronz/gümüşte aura yok, değişiklik yapılmadı.
+- ✅ **WP-295 sahip konuşması YAPILDI (2026-07-25) — blokaj kalktı.** Kararlar: [notlar F-09](docs/YENI-OZELLIK-NOTLARI.md). Tasarımcıya para verilmiyor (hayvanlar vektör kalıyor); istek üçe bölündü → **WP-295** (oturma yayları + 2 poz) · **WP-299** (gündüz/gece gökyüzü + gece uyuma) · **WP-300** (`groups.location`). Ayrıca 🔴 **WP-301** açıldı: günlük metrik gün sınırı sunucuda `Europe/Istanbul`'a sabitli ([0053:87](supabase/migrations/0053_group_achievement_metrics.sql:87)) — kamp ateşinden ayrı yürür.
+- 🔴 **Yürütme sırası (sahip kararı, 2026-07-25):** **beta 1 ŞİMDİ** (kapanmış 9 WP cihazda test edilsin) → beta 1 test edilirken **WP-295 + 299 + 300** kodlanır → **beta 2** (admin işleri de burada) → sorun çıkmazsa **stable**. Kamp ateşinin `p95 ≤ 16.7 ms` bütçesi beta 1 cihaz turunda ölçülür; o ölçüm olmadan gökyüzü + sürekli marşmelov körlemesine yazılırdı.
+- ✅ **Sahip yetkisi (2026-07-25):** "migration'ları sen yapabilirsin, benlik ne var" → migration **yazma ve uygulama** (staging + production) Claude'da; `Database Gates` repo secret'larıyla koşuyor, GitHub environment'larında zorunlu onaylayıcı yok. Production'da yine **dry-run + backup** koşulur ve **satır sayılarıyla raporlanır** (`§0.1` soru sormamaya izin verdi, kanıt üretmemeye değil).
+- ⚠️ **Claude'un fiziksel olarak yapamadığı tek iş:** WP-287 staging Supabase **panel** adımı ([runbook](docs/SIFRE-SIFIRLAMA-PANEL-RUNBOOK.md)) — bu makinede Supabase CLI kurulu değil, `SUPABASE_ACCESS_TOKEN` yerelde yok (yalnız GitHub secret). Panel adımı atılmazsa WP-287 beta 1'de test edilemez.
 
 ### Codex Lane
 - **Durum:** [x] Boşta
@@ -61,8 +66,11 @@
 > sahibinin cihazda/panelde doğrulaması. Kart ayrıntıları [arşivde](docs/archive/progress-tarihsel-2026-07.md).
 > QA sırasında bulunan hata **yeni WP** olur, eski kart yeniden açılmaz.
 >
-> 🔴 **Beta kararı gereği bu kuyruk TEK beta turunda test edilecek** — yani `Kalan Kod İşi` bitmeden
-> QA başlamıyor. Sıra: kalan 2 WP (294 → 295) → beta build → aşağıdaki tablo aynı turda cihazda test.
+> ✅ **Bu kuyruğun TAMAMI beta 1'de (`beta-v4309`, 2026-07-25) test edilecek** — kod tarafı bitti,
+> WP-295 artık beklenmiyor (beta kararı iki betaya çevrildi, `§0.1`).
+> 🔴 **Beta 1 QA'sında ayrıca ölçülecek — WP-295/299 buna bağlı:** kamp ateşi ekranında
+> `flutter run --profile` + timeline ile **p95 kare süresi** ve **jank oranı**. Bu sayı olmadan
+> beta 2'nin gökyüzü + sürekli marşmelov işi körlemesine yazılır.
 > ℹ️ **WP-296 ayrıca cihaz QA istemiyor** ama Windows yüzeyine dokundu: masaüstünde alarm eklemenin dialogsuz açılması ve izin kartının nötr görünmesi aynı turda bakılmalı.
 > ⚠️ Bu yüzden bir hata görüldüğünde kaynağı belirsiz olabilir; ilk bakılacak yer o yüzeye
 > dokunan **son commit**'tir (her WP ayrı commit).
@@ -84,8 +92,10 @@
 
 ## 🛠️ Kalan Kod İşi — ne kodlanacak
 
-> **Beta kararı gereği bu işlerin HEPSİ bitmeden beta çıkmaz.** Sıra: hazır olan → sahip girdisi bekleyen.
-> **Kalan 2 iş** (296, 297 ve 292 kapandı).
+> 🔴 **"Tek beta" kararı 2026-07-25'te sahip tarafından DEĞİŞTİRİLDİ (`§0.1`): iki beta olacak.**
+> **Beta 1 = kapanmış 9 WP, hemen çıkar** (295 beklenmez). Beta 1 test edilirken **WP-295 + 299 + 300**
+> kodlanır → **beta 2** (admin işleri de orada) → stable. Gerekçe [notlar F-09](docs/YENI-OZELLIK-NOTLARI.md);
+> kamp ateşinin `p95 ≤ 16.7 ms` bütçesi beta 1 cihaz turu olmadan ölçülemiyordu.
 
 | # | İş | Kod durumu | Başlamaya hazır mı? |
 |---|---|---|---|
@@ -93,13 +103,17 @@
 | ~~1~~ | **WP-297** — gömülü fontlar (Inter · **Literata** · JetBrains Mono) | [x] **TAMAM** (2026-07-25) | ✅ Bitti — 767 yeşil; Lora ölçüm sonucu elendi (eksen 400–700) |
 | ~~1~~ | **WP-292** — taç görseli | [x] **TAMAM** (2026-07-25) | ✅ Bitti — 776 yeşil; sahip onaylı geometri + 2 golden. Kalan tek şey **sahip beğenisi** (QA kuyruğunda) |
 | ~~1~~ | **WP-294** — l10n borcu + audit CI kapısı | [x] **TAMAM** (2026-07-25) | ✅ Bitti — 793 yeşil; 40 bulgu → 0, 26 yeni anahtar × 4 dil, CI kapısı kırmızı-yeşil kanıtlı. "EN/TR'ye daraltma" dalına **dokunulmadı** (K-7 açık, dil seti aynı) |
-| **1** | **WP-295** — kamp ateşi animasyonları | [ ] Kodlanacak | 🔴 **TEK GERÇEK BLOKAJ** — sahiple tasarım konuşması yapılmadan başlamaz (kartın açık şartı, aşılmaz) |
+| **1** | **WP-295** — kamp ateşi: oturma yayları + 2 poz | [ ] Kodlanacak | ✅ **Blokaj kalktı** (sahip konuşması 2026-07-25) — **beta 2 kapsamı.** İlk çıktı kod değil, parametrik önizleme |
+| **2** | **WP-299** — gündüz/gece gökyüzü + gece uyuma | [ ] Kodlanacak | ⏸️ WP-295 ile **aynı dosyalar → seri koşar.** Beta 2 kapsamı |
+| **3** | **WP-300** — `groups.location` (enlem/boylam + tz) | [ ] Kodlanacak | ⏸️ WP-299'un çıpa seam'inden sonra. 🟡 Migration (additive/nullable). Beta 2 kapsamı |
+| **?** | **WP-301** — 🔴 sunucu gün sınırı `Europe/Istanbul` + `metric_day` backfill | [ ] Kodlanacak | 🔴 **Sahip kapsam kararı bekliyor:** beta 2 mi, sonraya mı? Geri alınamaz veri işi, kamp ateşinden ayrı |
 | ~~—~~ | **WP-298** — avatar aura efekti (PUBG tarzı sis/parıltı) | [x] **TAMAM** (2026-07-25) | ✅ Bitti — 784 yeşil; sahip üç kapsam sorusunu da yanıtladı (profil+sosyal profil · altından itibaren kademeli · kademe rengi) |
 | — | WP-276 / WP-277 — staging ops kabul kanıtı | [ ] Kod azı, ops çoğu | ⏸️ Beta dışı; sentetik staging kanıtı + WP-276 Play Store için gerekli |
 | — | WP-278 / WP-279 | [?] **Ürün/ops kararı** | 🔴 Sahip kararı olmadan kod yazılmaz |
 | — | Production backend değişikliği | 🔴 Kapalı | `deploy_enabled: false`; yeni terfi backup + dry-run + somut GO ister |
 
-**Beta çıkabilmesi için kalan:** ~~296~~ → ~~297~~ → ~~292~~ → ~~298~~ → ~~294~~ → **295** — ve 295 sahiple tasarım konuşmasını bekliyor. **Ajan tarafında kodlanacak iş kalmadı.**
+**Beta 1 için kalan:** ~~296~~ → ~~297~~ → ~~292~~ → ~~298~~ → ~~294~~ → ✅ **hepsi bitti, beta 1 çıkıyor.**
+**Beta 2 için kalan:** **WP-295 → WP-299 → WP-300** (bu sırayla, seri) + admin işleri (kapsam sahipten bekleniyor) + WP-301 (kapsam kararı bekleniyor).
 
 ### Tema programından devreden borç — durumları
 
@@ -114,15 +128,17 @@
 - **AR/RTL:** "şimdilik dert etmiyoruz" — **K-7 kararı hâlâ açık.** WP-297 yine de `fontFamilyFallback` kurar (maliyeti yok, AR sonradan kalırsa kutu karakter doğmaz).
 - **Bildirim/widget'ın sistem fontunda kalması:** kabul edildi (native taraf Flutter fontuna erişemez).
 - **Hazır temaların gövde fontu:** hata değil, tasarım — hazır temaların şemasında gövde ailesi yok. WP-297'de hazır temalara da gövde ailesi verilip verilmeyeceği kart içinde kararlaştırılır.
-- **Tek beta:** yukarıdaki 🔴 BETA KARARI.
+- **Beta sayısı:** yukarıdaki 🔴 BETA KARARI — *aynı gün güncellendi: tek beta → **iki beta**.*
+- **Kamp ateşi (WP-295) konuşması yapıldı, kararlar [notlar F-09](docs/YENI-OZELLIK-NOTLARI.md):** tasarımcıya para verilmiyor (~10.000 TL reddedildi), hayvanlar **vektör kalıyor**, PNG/Rive hattı betadan sonraya. İstek üçe bölündü (295 oturma+2 poz · 299 gökyüzü · 300 konum) + 🔴 301 (sunucu gün sınırı) açıldı.
+- **Migration yetkisi (sahip):** "migration'ları sen yapabilirsin, benlik ne var" → yazma **ve uygulama** Claude'da; production'da dry-run + backup koşulur ve satır sayılarıyla raporlanır.
 - **Taç geometrisi (WP-292):** canlı önizlemeden seçildi — **5 uç · span 50° · tip 1.63 · inci 0.10 · kavis 0.50**. Sahip "önce tasarımı göster, sonra kodla" dedi; akış böyle yürütüldü ve sayılar koda birebir geçti.
 - **Avatar aura efekti (WP-298):** sahip üç kapsam sorusunu da yanıtladı — **(a) yalnız profil + sosyal profil** (listeler durağan kalır), **(b) altın kademede başlar, yukarı doğru kademeli artar**, **(c) parıltı o kademenin rengi**. ✅ **Doğrulandı (sahip, 2026-07-25): "altından itibaren" = altın kademe (3.)** — kod olduğu gibi doğru, bronz/gümüşte aura yok.
 - **Aura efekti başarım rozetlerine taşınsın mı? → HAYIR (sahip, 2026-07-25).** Sahip sordu, değerlendirildi, **vazgeçildi** — WP açılmadı. Gerekçe kayda geçiyor ki bir daha araştırılmasın: (a) katalog listesi tembel değil ([`achievement_showcase.dart:439`](app/lib/features/profile/widgets/achievement_showcase.dart:439) `..._buildCatalog(theme)` tüm kartları `Column`'a serpiyor), yani ~24 rozetin hepsi aynı anda ağaçta → 24 ticker, WP-298'de listeler için bilinçle reddedilen şeyin aynısı; (b) katalog satırında rozetle metin arası **12 px** ([satır 1489](app/lib/features/profile/widgets/achievement_showcase.dart:1489)), `1.5×` aura başarım adının altına giriyor; (c) vitrindeki 3 rozet `spaceEvenly` duruyor, auralar birbirine değip kartın kenarlığından sızıyor; (d) `_BadgeCircle` açık rozetlerde **zaten** statik `boxShadow` parıltısı taşıyor. Mor gerekmiyordu zaten: `kSecretAchievementColor` + `badgeVisualColor` gizli+açık rozeti şimdiden mora yönlendiriyor.
 
 ## Yeni Özellik Turu — Aşama A (Plan Kuyruğu)
 
-> **Burada yalnız KODLANMAYI BEKLEYEN kartlar var** (WP-296, 295, 292, 294 — bu sırayla).
-> Kod/test'i bitmiş 7 WP'nin kartı [arşivde](docs/archive/progress-tarihsel-2026-07.md); kalan işleri yukarıdaki QA kuyruğunda.
+> **Burada yalnız KODLANMAYI BEKLEYEN kartlar var** — beta 2 kapsamı: **WP-295 → WP-299 → WP-300** (bu sırayla, seri) + kapsam kararı bekleyen **WP-301**.
+> Kod/test'i bitmiş WP'lerin kartı [arşivde](docs/archive/progress-tarihsel-2026-07.md); kalan işleri yukarıdaki QA kuyruğunda.
 
 Konuşma fazı kapandı (9 tur). Kanonik belgeler:
 - Konuşma kaydı: [`docs/YENI-OZELLIK-NOTLARI.md`](docs/YENI-OZELLIK-NOTLARI.md)
@@ -140,11 +156,15 @@ DALGA 2  WP-291  Boyut paneli ✅ → QA  ‖  WP-289  His araştırması ✅ t�
 DALGA 3  WP-288  Tema modeli      ✅ kod/test tamam → QA  ‖  WP-294  l10n  🟡 kısmen açık
 DALGA 4  WP-290  Tema sihirbazı   ✅ kod/test tamam → QA
 DALGA 5  WP-296 ✅ → WP-297 ✅ → WP-292 ✅ Taç → WP-298 ✅ Aura   kod/test tamam
-DALGA 6  WP-294 ✅ l10n borcu + CI kapısı  ‖  WP-295  Kamp ateşi  ← TEK KALAN (sahiple konuşma)
-──────── TEK BETA BURADA ÇIKAR (hepsi bitince) ────────
+DALGA 6  WP-294 ✅ l10n borcu + CI kapısı
+──────── BETA 1 BURADA ÇIKAR (2026-07-25, beta-v4309) ────────
+DALGA 7  WP-295 Oturma+2 poz → WP-299 Gökyüzü → WP-300 Konum   (SERİ, aynı dosyalar)
+         ‖  Admin işleri (kapsam sahipten)   ‖  WP-301? (kapsam kararı)
+──────── BETA 2 ────────  →  stable
 ```
 
-> 🔴 **WP-295, sahiple tasarım konuşması yapılmadan başlamaz** — bu tur kalan **tek gerçek blokaj**.
+> ✅ **WP-295 blokajı KALKTI** (sahip konuşması 2026-07-25, [notlar F-09](docs/YENI-OZELLIK-NOTLARI.md)). İstek üçe bölündü; **DALGA 7 seri koşar** — 295/299 aynı sahne dosyalarına yazıyor, paralel çakışır.
+> 🔴 **WP-295'in ilk çıktısı kod değil, parametrik canlı önizlemedir** (taç akışı). Sahip sayıyı seçer, sayı hem koda hem teste girer.
 > 🟡 **WP-294'ün K-7'ye bağlı kısmı yalnız "EN/TR'ye daraltma" dalı;** audit genişletme + UTF-8 + CI kapısı bugünkü 4 dil gerçeğiyle yapılabilir.
 > ⚠️ **296 → 297 → 292 SERİ koşar** — 297 ve 292 aynı golden yüzeyine giriyor, paralel çakışır.
 > ⚠️ **"Önce X'in cihaz kabulü" kapıları bu tur geçersiz** (tek beta kararı, `§0.1`) — kod/test kapısı esas.
@@ -234,21 +254,79 @@ DALGA 6  WP-294 ✅ l10n borcu + CI kapısı  ‖  WP-295  Kamp ateşi  ← TEK 
 - **Kabul (ölçülebilir):** `flutter analyze` 0 · `flutter test` **0 kırmızı** · her üç test için "test bayattı" / "ürün bozuktu" kararı gerekçeli yazılmış · hiçbir test silinmemiş/`skip` edilmemiş · WP-250 regresyon iddiası hâlâ gerçek bir şeyi koruyor.
 - **Tuzaklar:** Testi `skip` edip "yeşil" demek · `findsOneWidget` → `findsWidgets` gevşetip çift çizimi gizlemek · üç kırmızıyı tek varsayımla açıklamak · düzeltmeyi tema yüzeyine sıçratmak.
 
-### WP-295: Kozmetik — kamp ateşi animasyonları 🔥
-- **Program/Faz:** Yeni Özellik Turu · Aşama A (son) · (plan §3 F-08)
-- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** **Sahiple ayrı konuşma turu** + asset kararı
-- **Problem:** Kamp ateşi animasyonları yenilenecek. Sahip bu tasarımı **birlikte konuşarak** yapmak istiyor; tek başına tasarlanmayacak.
-- **Kapsam dışı:** Taç (WP-292), tema motoru, sunucu, XP/başarım mantığı.
-- **SAHİP dosyalar (yaz):** `app/lib/features/classroom/widgets/campfire_scene.dart`, `app/lib/features/classroom/widgets/campfire/**`, `app/lib/features/classroom/widgets/camp_critter.dart`, ilgili golden testler.
-- **DOKUNMA:** `app/lib/core/stats/**`, `app/lib/core/widgets/crowned_avatar.dart` (WP-292'nin), tema motoru.
+### WP-295: Kozmetik — kamp ateşi oturma düzeni + iki poz 🔥 *(rev. 2026-07-25)*
+- **Program/Faz:** Yeni Özellik Turu · Aşama A (son) · (plan §3 F-08 → notlar **F-09**)
+- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** ✅ **Sahip konuşması yapıldı (2026-07-25)** — şart kapandı. **Asset kararı: tasarımcıya para verilmiyor, hayvanlar vektör kalıyor.**
+- **Problem (sahip maddeleri 1 ve 2):** (a) `angle = π/2 + 2πi/n` ([campfire_scene.dart:264](app/lib/features/classroom/widgets/campfire_scene.dart:264)) **her n için** birini ateşin tam önüne (`sin=1`, ateşin üstünü kapatıyor), birini tam arkasına (`sin=-1`, `scale 0.6`, alevin içinde) koyuyor — sahip "önündeki ve arkasındaki görünmüyor" dedi, render bunu doğruladı. (b) Poz sayısı 4; sahip **2** istiyor: çalışmıyorken solgun boşta, çalışırken marşmelov.
+- **Kapsam dışı:** 🔴 Gökyüzü/gündüz-gece (**WP-299**) · `groups.location` (**WP-300**) · sunucu gün sınırı (**WP-301**) · taç (WP-292) · tema motoru · XP/başarım mantığı · **PNG/Rive asset hattı** (betadan sonraki ayrı program).
+- **SAHİP dosyalar (yaz):** `app/lib/features/classroom/widgets/campfire_scene.dart`, `app/lib/features/classroom/widgets/camp_critter.dart`, ilgili testler.
+- **DOKUNMA:** `app/lib/core/stats/**`, `app/lib/core/widgets/crowned_avatar.dart` (WP-292'nin), tema motoru, `campfire/layered_campfire_fire.dart` gökyüzü tarafı (WP-299'un).
 - **Adımlar:**
-  - [ ] **Önce sahiple konuşma turu** — kararlar `docs/YENI-OZELLIK-NOTLARI.md`'ye yazılır.
-  - [ ] Hayvanlar şu an vektör fallback; tasarımcı asset'i gelecek mi karar ver (`references/campfire/TASARIMCI_BRIEF.md`).
-  - [ ] Animasyonları uygula; golden ve performans kontrolü.
+  - [ ] **Önce parametrik canlı önizleme** (halka yarıçapı · ölü bölge genişliği · ateş boyutu/yüksekliği · marşmelov döngüsü) — sahip sayıları seçer, seçilen sayı **hem koda hem teste** birebir girer. *(WP-292 taç akışının aynısı.)*
+  - [ ] Oturma: kutuplarda **ölü bölge**, üyeler sol + sağ yaya dağıtılır. **Tek üye kutba düşmemeli** (yana oturur). Halka yarıçapı daraltılır (`rx = min(w*0.40, 232)` 4 üyede kenarlara savuruyor).
+  - [ ] Pozlar 2'ye indirilir: `working`(laptop) ve `sleepy` atılır. Çalışan = marşmelov, çalışmayan = solgun boşta. **Molada = solgun, çevrimdışı = daha solgun + daha saydam** (mola/çevrimdışı bilgisi kaybolmasın).
+  - [ ] 🔴 **Marşmelov pişme döngüsü:** `doneness = elapsed/(40*60)` clamp'li ([camp_critter.dart:414](app/lib/features/classroom/widgets/camp_critter.dart:414)) — kalıcı pozda 40 dk sonra ekranda **sabit koyu kahve leke** kalır. ~10 dk'lık **yiyip yenisini takma** döngüsüne çevrilir.
+  - [ ] Eşzamanlı kızartma: 6 çalışan üye = 6 dal. Dal açısı/salınımı mevcut `phase`'den türetilir (kilitli hareket olmasın).
+  - [ ] `_kPoseCycleSeconds`/`_kRoastStartSeconds` (170/135) kalkar — marşmelovun **%20 görünürlük** sebebi buydu.
 - **Veri/Migration etkisi:** Yok. **Ortam/Deploy:** Local. **RLS/Güvenlik:** Yok.
-- **Edge-case'ler:** "Hareketi azalt" açık · düşük donanımda kare düşmesi · koyu/açık tema · asset gelmezse vektör fallback korunur.
-- **Kabul (ölçülebilir):** Sahip kabulü · golden yeşil · "hareketi azalt" açıkken animasyon durur · 🔴 **performans bütçesi:** orta seviye Android cihazda ilgili ekranda **p95 kare süresi ≤ 16.7 ms** ve animasyon boyunca **jank kare oranı ≤ %1** (`flutter run --profile` + timeline). *rev.2'deki "kare düşmesi ölçüldü" ifadesi sayısızdı, kabul değil.*
-- **Tuzaklar:** Sahiple konuşmadan tasarıma başlamak (açık şart) · ağır efektle performans düşürmek.
+- **Edge-case'ler:** n=1 (kutba düşmemeli) · n=2 · büyük n'de yaylara sığma · "hareketi azalt" açık · koyu/açık tema · 40 dk+ oturum (marşmelov yanmamalı).
+- **Kabul (ölçülebilir):** Sahip kabulü · **hiçbir üye kutup ölü bölgesine düşmüyor** (testle: her yerleşimin `|sin(angle)|` değeri eşiğin altında) · `CritterPose` yalnız 2 değer · 40 dk+ oturumda marşmelov rengi `deep`e sabitlenmiyor · "hareketi azalt" açıkken animasyon durur · 🔴 **performans bütçesi:** orta seviye Android'de **p95 kare süresi ≤ 16.7 ms**, **jank ≤ %1** (`flutter run --profile` + timeline) — **beta 1 cihaz turunda ölçülür.**
+- **Tuzaklar:** Sayıları önizlemeden geçirmeden koda gömmek · ölü bölgeyi n=1'de unutmak · marşmelov döngüsünü atlayıp "poz kalıcı oldu" demek · gökyüzünü buraya sızdırmak (WP-299).
+- **Model önerisi:** 🟣 Pro
+
+### WP-299: Kozmetik — gündüz/gece gökyüzü + gece uyuma pozu 🌅 *(yeni, 2026-07-25)*
+- **Program/Faz:** Yeni Özellik Turu · Aşama A · (notlar **F-09 madde 3**)
+- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-295 (aynı sahne dosyaları — **seri koşar, paralel değil**)
+- **Problem:** Sahne her zaman gece; ay ve yıldızlar sabit ([`ForestBackdropPainter`](app/lib/features/classroom/widgets/camp_critter.dart:14), `_SceneFrame` sabit gradyan). Sahip gerçek saate göre **kademeli** (anlık değil) hava değişimi istiyor.
+- **Kapsam dışı:** 🔴 `groups.location` (**WP-300**) · sunucu gün sınırı (**WP-301**) · oturma düzeni ve pozlar (WP-295).
+- **SAHİP dosyalar (yaz):** `app/lib/features/classroom/widgets/campfire_scene.dart` (`_SceneFrame`), `app/lib/features/classroom/widgets/camp_critter.dart` (`ForestBackdropPainter`), yeni `app/lib/core/time_engine/sky_phase.dart` + testi.
+- **DOKUNMA:** `app/lib/core/stats/**`, sunucu, tema motoru, `groups` şeması.
+- **Adımlar:**
+  - [ ] **Saf fonksiyon önce:** `skyPhase(DateTime local, SkyAnchors anchors) → 0..1 + faz` — deterministik, cihaz saatinden bağımsız test edilir.
+  - [ ] 🔴 **Çıpa kaynağı seam'i:** dört sivil çıpa (şafak · gündoğumu · günbatımı · akşam) **başta sabit saatlerden** gelir. WP-300 bitince aynı imza gerçek gündoğumu/batışını alır — **gökyüzü kodu değişmez.** Bu ayrım kartın varlık sebebi; birleştirilmez.
+  - [ ] Gradyan + ay/yıldız sönümlemesi + gündüz güneşi. Geçiş **saatlik yumuşak**, ani kesme yok.
+  - [ ] **Gece uyuma pozu** (sahibin opsiyonel isteği): gece fazında çalışmayan üye yan yatar. 🔴 **Gökyüzüyle AYNI saati kullanır** — ayrı saat kullanılırsa gökyüzü gündüzken hayvan uyur. *(WP-295'te atılan `sleepy` pozundan farklı bir şey: bu gökyüzüne bağlı.)*
+- **Veri/Migration etkisi:** Yok. **Ortam/Deploy:** Local. **RLS/Güvenlik:** Yok.
+- **Edge-case'ler:** gece yarısı sarması (23:59→00:01) · kutup bölgesi/olmayan gündoğumu (WP-300 sonrası) · yaz saati · "hareketi azalt" açık · cihaz saati elle değiştirilmiş · gündüz fazında ateşin glow'u okunur kalmalı (gündüz gökyüzü açık, alev kontrastı düşer).
+- **Kabul (ölçülebilir):** `skyPhase` **saf ve testli** (sabit girdi → sabit çıktı, `DateTime.now()` okumaz) · 24 saatin her saati için faz testi · gece yarısı sarması testli · gündüz/gece/geçiş için 3 golden · çıpa kaynağı **tek yerden** geliyor (WP-300 tek satırla bağlanabiliyor) · gündüz fazında alev/glow görünür kalıyor.
+- **Tuzaklar:** Faz fonksiyonuna `DateTime.now()` gömüp test edilemez hâle getirmek · geçişi ani yapmak · gece yarısı sarmasını atlamak · gündüzü sadece "gradyanı açtım" sanıp alevi görünmez bırakmak · WP-300'ü beklemek (beklemeye gerek yok, seam var).
+- **Model önerisi:** 🟣 Pro
+
+### WP-300: `groups.location` — grup konumu (enlem/boylam + IANA tz) 🌍 *(yeni, 2026-07-25)*
+- **Program/Faz:** Yeni Özellik Turu · Aşama A · (notlar **F-09 madde 3**)
+- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-299 (çıpa seam'i hazır olmalı ki bağlanacak yer belli olsun)
+- **Problem:** Grubun konumu yok. Sahip gökyüzünün **grubun şehrinin** gerçek gündoğumu/batışını izlemesini istiyor. `kWorldCityCatalog` ([world_clock_math.dart:73](app/lib/core/time_engine/world_clock_math.dart:73)) yalnız `label` + `tz` taşıyor — **koordinat yok.**
+- **Kapsam dışı:** 🔴 **Günlük sıralama/metrik gün sınırı — WP-301.** Bu kart yalnız konumu **saklar ve gökyüzüne verir**; hiçbir istatistik semantiğine dokunmaz.
+- **SAHİP dosyalar (yaz):** yeni `supabase/migrations/00NN_group_location.sql`, `app/lib/data/models/group*.dart`, grup oluştur/düzenle ekranları, `app/lib/core/time_engine/solar_position.dart` (yeni), ilgili testler + pgTAP.
+- **DOKUNMA:** 🔴 `0053`/`0063`/`0064` metrik fonksiyonları ve `metric_day` (WP-301'in) · XP/başarım motoru · uygulanmış migration dosyaları (asla düzenlenmez, yeni dosya yazılır).
+- **Adımlar:**
+  - [ ] Migration: `groups` tablosuna **nullable** `latitude`/`longitude`/`timezone` (nullable = geri dönüşü kolay, mevcut gruplar bozulmaz). RLS: konum grup üyelerine okunur, yalnız yöneticisi yazar.
+  - [ ] Gündoğumu/batış hesabı **yerelde, ağsız** (NOAA güneş konumu, ~80 satır, deterministik → testli). Yeni paket bağımlılığı yok.
+  - [ ] WP-299'un çıpa kaynağını gerçek gündoğumu/batışa bağla (tek satır). **Konum yoksa sivil çıpalara düşer** — özellik kaybı değil, sessiz fallback.
+  - [ ] Grup oluştur/düzenle UI + l10n (4 dil, `scripts/l10n_audit.py` kapısı geçmeli).
+  - [ ] `kWorldCityCatalog`'a koordinat alanı.
+- **Veri/Migration etkisi:** 🟡 **Var — additive, nullable, geri alınabilir.** **Ortam/Deploy:** staging → production (`Database Gates` iş akışı; dry-run + backup adımları koşulur, sonuç satır sayılarıyla raporlanır). **RLS/Güvenlik:** yeni sütunlar için politika + pgTAP şart.
+- **Edge-case'ler:** konumu olmayan eski gruplar (fallback) · kutup bölgesinde gündoğumu **hiç olmayabilir** (matematik `null` dönebilir → çökmemeli) · yaz saati · geçersiz/uydurma koordinat · konum değişince gökyüzü anında tutarlı olmalı.
+- **Kabul (ölçülebilir):** Migration local replay + pgTAP yeşil · konumsuz grup **fallback ile çalışıyor** (testli) · kutup bölgesi (örn. lat 78) çökmüyor · gündoğumu hesabı bilinen bir şehir/tarih için ±2 dk doğrulukta (testli) · `flutter analyze` 0 · tam paket yeşil · l10n kapısı yeşil.
+- **Tuzaklar:** Sütunu `not null` yapıp mevcut grupları kırmak · gündoğumunu ağdan çekmek · kutup bölgesinde `null`'ı unutmak · **WP-301'i buraya sızdırmak** (en büyük tuzak — sahip ikisini aynı istekte söyledi ama boyutları farklı).
+- **Model önerisi:** 🟣 Pro
+
+### WP-301: 🔴 Sunucu — günlük metrik gün sınırı `Europe/Istanbul`'a sabitli *(yeni, 2026-07-25)*
+- **Program/Faz:** Ayrı yürür — **kamp ateşinin parçası DEĞİL** · (notlar **F-09**)
+- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** 🔴 **Sahip kapsam kararı** (beta 2 mi, sonraya mı) + WP-300 (konum olmadan doğru gün hesaplanamaz)
+- **Problem:** Günlük metrik günü sunucuda **sabit yazılı**: `if p_day >= (timezone('Europe/Istanbul', clock_timestamp()))::date` ([0053_group_achievement_metrics.sql:87](supabase/migrations/0053_group_achievement_metrics.sql:87)); aynı sabit `metric_day` üretiminde de var (satır 116/120/151/174) ve 0063/0064 RPC'lerine akıyor. **Los Angeles'taki kullanıcının "günü" kendi saatiyle 15:00'te dönüyor.** Sahibin sezgisi doğruydu; bu kozmetik değil, var olan bir veri hatası.
+- **Kapsam dışı:** Kamp ateşi görselleri (WP-295/299), XP eşikleri, taç kademeleri.
+- **SAHİP dosyalar (yaz):** yeni `supabase/migrations/00NN_*.sql`, `supabase/tests/**`, `docs/recovery/MIGRATION-BASELINE.md`.
+- **DOKUNMA:** 🔴 Uygulanmış migration'lar **düzenlenmez** · `crownRankForXp` / `kCrownXpThresholds` · uygulama tarafı gösterim mantığı (bu bir veri katmanı işi).
+- **Adımlar:**
+  - [ ] Etki ölçümü: kaç satır `metric_day` kayacak? **Önce sayıyı çıkar** (dry-run/read-only sorgu), sonra tasarım.
+  - [ ] Karar: gün sınırı **grup konumuna** mı bağlanacak, **kullanıcıya** mı? (Grup sıralaması grup, kişisel istatistik kullanıcı olabilir — ikisi farklı cevap verebilir.)
+  - [ ] Geriye dönük `metric_day` backfill + doğrulama; eski/yeni toplamların **tutarlılık karşılaştırması**.
+  - [ ] pgTAP: birden fazla tz'de gün sınırı testi.
+- **Veri/Migration etkisi:** 🔴 **Var ve GERİ ALINAMAZ** — mevcut geçmiş satırlar yeniden yazılır. **Ortam/Deploy:** staging'de tam prova → production. Production'da **backup + dry-run zorunlu**, sonuç **satır sayılarıyla raporlanır**. **RLS/Güvenlik:** mevcut politikalar korunur.
+- **Edge-case'ler:** yaz saati geçişinde gün 23/25 saat olabilir · konumu olmayan grup · aynı oturum iki güne yayılıyor · sıralama liderinin geçmişe dönük değişmesi (kullanıcı gözünde "XP'm değişti" algısı) · streak/seri hesapları gün sınırına bağlıysa onlar da kayar.
+- **Kabul (ölçülebilir):** Etkilenen satır sayısı **önce** raporlandı · staging'de eski/yeni toplam karşılaştırması yapıldı ve sapma açıklandı · pgTAP en az 3 farklı tz için yeşil · streak/seri hesaplarının etkilenip etkilenmediği **yazılı olarak** cevaplandı · production backup kimliği kayda geçti.
+- **Tuzaklar:** WP-300 ile birleştirmek · backfill'i ölçmeden koşmak · "kimse fark etmez" varsayımı (sıralama kullanıcı gözünde değişir) · streak'i unutmak.
 - **Model önerisi:** 🟣 Pro
 
 ### WP-292: Kozmetik — taç görseli ✨ ✅ KOD/TEST TAMAM
@@ -375,11 +453,13 @@ DALGA 6  WP-294 ✅ l10n borcu + CI kapısı  ‖  WP-295  Kamp ateşi  ← TEK 
 
 ## Worker'a Verilecek Kısa Komutlar
 
-**Beta'ya kadar sırayla verilecek komutlar** (hepsi bitmeden beta çıkmaz):
-- 🟡 `worker'ı oku ve WP-294'ü yap` — **sıradaki**; bugünkü 4 dil gerçeğiyle, "EN/TR'ye daraltma" dalı K-7 bekler
-- 🔴 WP-295 → **worker komutu değil:** önce sahiple kamp ateşi tasarım konuşması
+**Beta 2'ye kadar sırayla verilecek komutlar** (DALGA 7 seri koşar, aynı sahne dosyaları):
+- `worker'ı oku ve WP-295'i yap` — **sıradaki.** ⚠️ İlk çıktı kod değil: **parametrik canlı önizleme**, sahip sayıyı seçer
+- `worker'ı oku ve WP-299'u yap` — 295 bitince
+- `worker'ı oku ve WP-300'ü yap` — 299'un çıpa seam'i hazır olunca
+- 🔴 WP-301 → **worker komutu değil:** önce sahip kapsam kararı (beta 2 mi, sonraya mı)
 
-Kod/test'i bitmiş WP'ler (286, 287, 288, 289, 290, 291, 293) için **worker komutu verilmez** — sıra sahipte (cihaz QA + WP-287 staging paneli).
+Kod/test'i bitmiş WP'ler (286, 287, 288, 289, 290, 291, 292, 293, 294, 296, 297, 298) için **worker komutu verilmez** — sıra sahipte (beta 1 cihaz QA + WP-287 staging paneli).
 
 Önceki tur:
 - `worker'ı oku ve WP-276'yı yap` · `worker'ı oku ve WP-277'yi yap`

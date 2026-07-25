@@ -446,6 +446,139 @@ kısmında sonralara koy, kozmetik işler bunlar."
 **Not:** Taç şu an mevcut XP/seviye sisteminin görsel karşılığı; değiştirirken seviye göstergesi
 işlevinin bozulmamasına dikkat edilecek.
 
+## F-09 — Kamp ateşi revizesi (F-08'in şartı olan sahip konuşması, **2026-07-25**)
+
+F-08 "bu iş sahiple konuşularak yapılacak" diyordu. Konuşma bu turda yapıldı; şart **kapandı**.
+Aşağısı sahibin kendi maddelemesi + Claude'un kod üzerinde doğruladığı bulgular. Uygulama
+WP-295 / WP-299 / WP-300 / WP-301 kartlarına bölündü (`progress.md`).
+
+### Konuşmanın açılışı: sahne gerçekten render edildi
+
+Tasarım tartışmasına girmeden önce sahnenin **şu anki hâli** kodun kendi painter'larıyla PNG'ye
+döküldü (geçici test, sonra silindi). Bu olmadan konuşma iki tarafın hafızası üzerinden yürüyecekti.
+Render'ın gösterdiği şey, tartışmayı baştan değiştirdi: **kusur hayvanların çiziminde değil,
+kompozisyonda.** Bu yüzden asset satın alma masasından kalktık.
+
+### Sahibin kararı: tasarımcıya para verilmiyor
+
+Sahip tasarımcı fiyatı sordu (~10.000 TL) ve **vazgeçti.** Bu tur asset alınmıyor, PNG hattı
+kurulmuyor; hayvanlar **vektör kalıyor**. Büyük görsel yenileme (PNG/Rive) betadan sonra ayrı bir
+programa bırakıldı.
+
+Karar kayda geçiyor ki bir daha araştırılmasın:
+
+- **Basitleştirilmiş AI brief'i zaten yazılmış:** [`references/campfire/AI_PROMPT_SETI.md`](../references/campfire/AI_PROMPT_SETI.md)
+  (commit `18133df`) — master prompt + 3 poz (biri marşmelov), 12 hayvan, dosya adları, "önce tek
+  ayı dene" adımı. Yeniden yazılmasına gerek yok.
+- ⚠️ **O dosyadaki "D) Dosya isimleri (kod bunu bekliyor)" ifadesi YANLIŞ.** `assets/critters/`
+  yok, pubspec girdisi yok, PNG yükleyen kod yok. Hayvanlar %100 vektör
+  ([`camp_critter.dart`](../app/lib/features/classroom/widgets/camp_critter.dart), 1155 satır).
+  PNG'ye geçmek gerçek bir kod işidir; asset'i klasöre atmak yetmez.
+- ⚠️ **PNG'ye geçmenin görülmeyen bedeli:** mevcut vektör hayvanlar ateşten gelen sıcak
+  kenar-ışığını alıyor. Düz bir PNG bunu alamaz → iyi çizilmiş olsa bile karanlık sahnede yassı
+  bir çıkartma gibi durabilir, yani **şu ankinden kötü**. Ancak ekranda görülerek karara bağlanır.
+- **Elde var olan Gemini çıktıları neden tutmadı:** sahip katalog istemiş, model **kontak sayfası**
+  üretmiş — Panda iki kez, Kirpi üç kez, bazı satırlar bulanık, etiketler bozuk ("Ttavuk
+  Atıştırma"). Doğru yol brief'te yazılı: tek hayvan, tek poz, referans görseli her istekte ekle.
+
+### 1. Oturma düzeni — ateşin tam önü ve tam arkası boş kalacak
+
+**Sahibin ifadesi:** "hayvanların durduğu yerler değişmesi lazım, şu anki düzende kamp ateşinin
+önündeki ve arkasındaki görünmüyor." Sahip düzeni paint'te çizerek gösterdi: hayvanlar iki yandaki
+yaylara diziliyor, kutuplar boş.
+
+**Kod bulgusu (doğrulandı):** [`campfire_scene.dart:264`](../app/lib/features/classroom/widgets/campfire_scene.dart:264)
+`angle = π/2 + 2πi/n` **her n için** birini tam öne (`sin=1` → ateşin üstünü kapatıyor), birini tam
+arkaya (`sin=-1` → `scale 0.6`, alevin içinde) koyuyor. 2 üyeli render'da alev ayının pençeleri
+arasından çıkıyordu; marşmelov uzatmıyor, kendi yanıyor gibi görünüyordu.
+
+**Karar:** kutuplarda **ölü bölge**; üyeler sol ve sağ yaya dağıtılır. Tek üyede yana oturur,
+kutba düşmez. Halka yarıçapı da daraltılır — şu anda 4 üyede kenarlara savrulup ateşin ışığının
+dışında kalıyorlar (`rx = min(w*0.40, 232)`).
+
+### 2. Yalnız iki poz: solgun boşta · marşmelov
+
+**Sahibin ifadesi:** "sadece 2 animasyon olacak: ders çalışmıyorken duracak solgun bir şekilde boş
+boş, çalışmaya başlayınca da marşmelov olacak." Laptop ve uyuma pozu **atılıyor.**
+
+Bu karar mevcut bir hatayı da kökten siliyor: marşmelov **zaten kodda** (`CritterPose.roasting` +
+`MarshmallowPainter` + `MarshStick`, kademeli pişme dahil) ama
+[`campfire_scene.dart:133`](../app/lib/features/classroom/widgets/campfire_scene.dart:133)
+`_kPoseCycleSeconds = 170` / `_kRoastStartSeconds = 135` yüzünden ilk marşmelov **2 dk 15 sn**'de
+çıkıyor ve zamanın yalnız **%20**'sinde görünüyor. Sahne 30 saniye izleyen biri onu **hiç
+göremiyordu** — sahibin "yok" sanmasının sebebi bu. Asset değil, sayı sorunuydu.
+
+**Kalıcı poz olmanın üç yan etkisi ve çözümleri (Claude buldu, sahip revizeye dahil etti):**
+
+1. 🔴 **Marşmelov 40 dakikada kömürleşip öyle kalıyor.** `doneness = elapsed / (40*60)`, clamp'li
+   ([`camp_critter.dart:414`](../app/lib/features/classroom/widgets/camp_critter.dart:414)). 35
+   saniyelik pozda sorun değildi; kalıcı pozda 3 saatlik oturumda ekranda koyu kahve bir leke
+   duruyor. **Çözüm: ~10 dakikalık "yiyip yenisini takma" döngüsü** — yanmaz, sahne canlanır,
+   kademeli pişme güzelliği korunur.
+2. **Herkes aynı anda kızartıyor** → 6 çalışan üyede 6 dal ateşe yönelir. Mevcut `phase` alanı üye
+   başına farklı; dal açısı ve salınım ondan türetilir, kilitli hareket olmaz.
+3. **Mola ile çevrimdışı ayrımı kaybolmasın.** İkisi de "solgun boşta" olursa bilgi kaybolur.
+   **Çözüm: molada = solgun, çevrimdışı = daha solgun + daha saydam.** Poz sayısı yine 2.
+
+### 3. Gündüz/gece geçişi + konum
+
+**Sahibin ifadesi:** "normal gün gibi havanın kapanıp açılmasını istiyorum… direkt gündüz/gece
+yerine canlı değişen (anlık değil, saatlik olabilir), hatta zor olmazsa o şehrin gün doğum ve batış
+saatleri olsa güzel olur. (bunun için gruplar kısmına location eklenmeli, zaten mantıken günlük
+sıralama için her grubun bir konumu olması lazım — dünyanın her yerinden insan kullanabilir.)"
+
+**Opsiyonel istek:** 00:00–08:00 arası çalışmayanlar yan yatıp uyusun.
+
+**Karar — istek İKİYE bölündü, çünkü ikinci yarısı kozmetik değil:**
+
+- **Gökyüzü (WP-299):** güneş yüksekliğine göre gradyan, ay/yıldız sönümlemesi, gündüz güneşi.
+  Saf matematik, şemaya dokunmaz, deterministik → test edilebilir. **Konum beklemez:** dört sivil
+  çıpa (şafak · gündoğumu · günbatımı · akşam) cihaz saatinden kurulur. Konum gelince aynı kod o
+  dört çıpayı gerçek gündoğumu/batışından alır — **gökyüzü kodu değişmez, yalnız çıpanın kaynağı
+  değişir.** Bu seam sayesinde gökyüzü konumu beklemeden görülebilir.
+- **Gece uyuma pozu WP-299'a konuldu, WP-295'e değil.** Sebep: "hangi saate göre" sorusu gökyüzüyle
+  **aynı saati** paylaşmak zorunda; ayrı saatler kullanılırsa gökyüzü gündüz olurken hayvanlar
+  uyur. (2. maddede uyuma pozu atıldı; buradaki gece uyuması ondan ayrı bir şey — gökyüzüne bağlı.)
+- **`groups.location` (WP-300):** enlem/boylam + IANA tz, grup oluştur/düzenle, RLS. Migration
+  içerir. `kWorldCityCatalog` yalnız `label` + `tz` taşıyor, **koordinat yok** — eklenecek.
+
+### 🔴 Konuşmada çıkan sunucu bulgusu: gün sınırı `Europe/Istanbul`'a sabitli (WP-301)
+
+Sahibin "günlük sıralama için konum lazım" sezgisi **doğruydu, ama sorun kozmetik değil, zaten var
+olan bir veri hatası.** Günlük metrik günü sunucuda sabit yazılı:
+
+```sql
+-- 0053_group_achievement_metrics.sql:87
+if p_day >= (timezone('Europe/Istanbul', clock_timestamp()))::date then
+```
+
+Aynı sabit `metric_day` üretiminde de var (satır 116/120/151/174) ve 0063/0064 RPC'lerine akıyor.
+Sonuç: Los Angeles'taki bir kullanıcının "günü" kendi saatiyle **15:00'te** dönüyor.
+
+**Neden ayrı WP:** düzeltmek `metric_day`'in **geçmişe dönük backfill'ini** gerektirir; XP/istatistik
+sunucu-yetkilidir (`AGENTS.md §2`). Gökyüzü rengi uğruna bu semantiğe dokunmak yasak. **WP-301
+kamp ateşinden tamamen ayrı yürür.**
+
+### Yürütme sırası (sahip kararı)
+
+1. **Beta 1 şimdi** — kapanmış 9 WP (`beta-v4308`'den beri 38 commit) cihazda test edilsin.
+   Ek gerekçe (Claude): kamp ateşinin kendi kabul kriteri cihaz istiyor (**p95 ≤ 16.7 ms, jank ≤ %1**);
+   o ölçüm elde olmadan gökyüzü + sürekli marşmelov çizmek körlemesine olurdu.
+2. Beta 1 test edilirken **WP-295 + 299 + 300** kodlanır → **beta 2**. Admin işleri de beta 2'de.
+3. Sorun çıkmazsa **stable**.
+
+**Sahip yetkisi (2026-07-25):** "migration'ları sen yapabilirsin, benlik ne var" — migration yazma
+**ve uygulama** (staging + production) Claude'da; `Database Gates` iş akışı zaten repo secret'larıyla
+koşuyor ve GitHub environment'larında zorunlu onaylayıcı yok. Kural gereği production'da yine
+**dry-run + backup** adımları koşulur ve sonuç satır sayılarıyla raporlanır (`§0.1` ile izin
+verilen şey soru sormamak; kanıt üretmemek değil).
+
+⚠️ **Claude'un fiziksel olarak yapamadığı tek şey:** WP-287'nin **staging Supabase panel adımı**
+(Site URL · Redirect URL · recovery şablonunda `{{ .Token }}` —
+[runbook](SIFRE-SIFIRLAMA-PANEL-RUNBOOK.md)). Bu makinede Supabase CLI kurulu **değil** ve
+`SUPABASE_ACCESS_TOKEN` yerelde **yok** (yalnız GitHub secret olarak var). Panel adımı atılmazsa
+WP-287 beta 1'de test edilemez.
+
 ## 6. Açık soru listesi (toplu)
 
 Yukarıdaki S-01…S-17. Sıradaki konuşma turunda bunlar tek tek kapatılacak.
