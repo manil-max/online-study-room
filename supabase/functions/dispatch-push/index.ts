@@ -242,14 +242,6 @@ async function sendToFcm(
   }
 
   const content = localizedContent(delivery)
-  const channelId = delivery.notification_type === "nudge"
-    ? "social_nudges"
-    : delivery.notification_type === "self_test"
-    ? "push_system_test"
-    : delivery.notification_type === "update"
-    ? "app_updates"
-    : "announcements"
-  const eventId = String(delivery.payload.event_id ?? delivery.outbox_id)
   const response = await fetch(
     `https://fcm.googleapis.com/v1/projects/${encodeURIComponent(projectId)}/messages:send`,
     {
@@ -262,16 +254,16 @@ async function sendToFcm(
         message: {
           token: delivery.fcm_token,
           data: stringData(delivery, content),
+          // 🔴 Burada `android.notification` OLMAMALI. Varlığı mesajı FCM
+          // gözünde "notification message" yapar: Android SDK'sı mesajı kendisi
+          // de gösterir. Blok title/body taşımadığı için o sistem bildirimi
+          // BOŞ görünür ve Dart tarafının gösterdiği gerçek bildirimin yanına
+          // ikinci, içeriksiz bir satır olarak düşer (beta 1 raporu, WP-303).
+          // Kanal/görünürlük/öncelik zaten yerel bildirimde ayarlanıyor
+          // (`AppNotificationCoordinator.showRemote`).
           android: {
             priority: "HIGH",
             ttl: delivery.notification_type === "self_test" ? "60s" : "3600s",
-            notification: {
-              channel_id: channelId,
-              tag: `${delivery.notification_type}:${eventId}`,
-              visibility: "PUBLIC",
-              notification_priority: "PRIORITY_HIGH",
-              default_sound: true,
-            },
           },
         },
       }),

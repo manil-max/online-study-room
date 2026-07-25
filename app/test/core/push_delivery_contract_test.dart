@@ -47,6 +47,14 @@ void main() {
       expect(source, contains('https://fcm.googleapis.com/v1/projects/'));
       expect(source, contains('data: stringData(delivery, content)'));
       expect(source, isNot(contains('notification: content')));
+      // WP-303: mesaj data-only kalmalı. `android.notification` blokunun
+      // varlığı — title/body taşımasa bile — FCM SDK'sına bildirimi kendisi
+      // göstertir; blok içeriksiz olduğu için kullanıcıya BOŞ bir bildirim
+      // düşer ve Dart'ın gösterdiği gerçek bildirimin yanında ikinci satır
+      // olarak görünür. Beta 1'de bildirilen hata tam olarak buydu.
+      expect(source, isNot(matches(RegExp(r'notification:\s*\{'))));
+      expect(source, isNot(contains('notification_priority')));
+      expect(source, isNot(contains('channel_id:')));
       expect(source, contains('UNREGISTERED'.toLowerCase()));
       expect(source, isNot(contains('console.log(delivery.fcm_token)')));
     },
