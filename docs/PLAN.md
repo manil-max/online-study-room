@@ -33,6 +33,13 @@
 | Gün sınırı | ✅ **Kesin yapılacak** (`Europe/Istanbul`), planlı ve provalı şekilde → Faz E |
 | Aylık e-posta raporu | ✅ **İptal.** Kod dursun, kurulum yapılmayacak (bkz. §Ek A) |
 | Tema sihirbazı sadeleştirmesi | ✅ **Gerek yok.** Tek gerçek sorun his adımıydı, v49'da çözüldü (doğrulanacak) |
+| **K1** Yanıt kanalı | ✅ **Çift yönlü** — kullanıcı admin yanıtına geri yazabilecek |
+| **K2** Şifre değiştirme | ✅ Klasik üç alan + "Şifremi unuttum". **Google/passkey girişi zaten yok** (`passkeys` paketi kurulu ama kullanılmıyor — ölü bağımlılık). Herkesin şifresi var, dolayısıyla "mevcut şifre" alanı gerçekten doğrulanabilir |
+| **K3** Tanıtım turu | ✅ Yalnız **ilk açılışta**, ekrana basınca sonraki balona geçer. Ekran başına az sayıda balon; hızlı geçmek isteyen üst üste basar |
+| **K4** Gün sınırı backfill | ✅ **Geçmişe dokunma** — sadece bundan sonrası düzelsin. Gerekçe: kullanıcı sayısı çok az, risk almaya değmez |
+| **K5** Çoklu grup | ✅ **Birincil grup** — kullanıcı seçer; görev/hedef/başarım onu sayar |
+| **K6** İsim + logo | ⏸️ Faz B sırasında konuşulacak |
+| **K7** Gizlilik URL'i | ⏸️ Sahip deneyimi yok → öneri bekliyor (bkz. §Ek C) |
 
 ---
 
@@ -296,6 +303,34 @@ gönderim limiti ve maliyet takibi, opt-in/opt-out yönetimi. Teknik iş yaklaş
 bir gün; asıl yük domain doğrulaması ve teslimat itibarı.
 **Karar: şimdilik iptal.** Kod repoda kalıyor, hiçbir secret/cron kurulmuyor.
 Mağazadan sonra istenirse yarım günde açılır.
+
+## Ek C — K7 önerisi: gizlilik metinleri nerede yayınlansın?
+
+Motto: *"basit durmayan ama bizi uğraştırmayan."* Önerim **GitHub Pages**:
+bedava, HTTPS hazır, repoda zaten duran `docs/legal/*.md` dosyalarından
+otomatik yayınlanır, ayrı sunucu/domain/ödeme yok. Adres
+`https://<kullanıcı>.github.io/<repo>/privacy` gibi olur — mağaza formları
+bunu kabul eder. İleride alan adı alınırsa aynı sayfaya yönlendirilir,
+mağazadaki bağlantı değişmez. Kurulum yarım saatlik iş; sahip tarafında
+yapılacak tek şey repo ayarlarından Pages'i açmak.
+
+## Ek D — Faz A bulguları (cihaz QA öncesi, koddan çıkanlar)
+
+- 🔴 **Gece yarısı test tuzağı (kapatıldı, 2026-07-26).** `v49` sürümü koddaki
+  bir hatadan değil, **koşum saatinden** kırıldı: üç sayaç testi geçmişi
+  `now − N dakika` ile kuruyor, ürünün gün sınırı ise `Europe/Istanbul`.
+  Koşum 00:00–01:00 arasına denk gelince oturum düne düşüyor ve test hatasız
+  kodu suçluyor. `test/support/istanbul_fixture.dart` ile kapatıldı.
+  ⚠️ **Kalan risk:** tam suitte aynı test bir koşumda düştü, ikincide geçti —
+  kararsızlık tümüyle kapanmadı, sürüm öncesi tekrar bakılacak.
+- 🟡 **`passkeys` paketi kurulu ama hiç kullanılmıyor** — ölü bağımlılık;
+  APK boyutunu ve izin yüzeyini gereksiz büyütüyor. Kaldırılmalı.
+- 🟡 **`pubspec.yaml` sürümü `1.0.43-beta.9+4309`** ama yayınlanan etiketler
+  v46–v49. Mağaza paketleri bu numarayı okur; hizalanmalı.
+- 🟡 **Windows MSIX kendi kendine güncelleme açık.** Microsoft Store sürümünde
+  bu kapatılmalı (Android'de Play kanalı için zaten kapalı).
+- 🟡 Depoda yanlışlıkla izlenen 24 MB bozuk `test.zip` takipten çıkarıldı;
+  git geçmişinden temizlemek ayrı bir iş (geçmiş yeniden yazılır).
 
 ## Ek B — Arşivlenen belgeler
 
