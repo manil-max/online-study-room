@@ -60,7 +60,6 @@ Future<void> refreshAppData(WidgetRef ref) async {
 
   // İkincil: arka planda taze iste; spinner beklemez (desktop invalidate deseni).
   ref.invalidate(userSubjectsProvider);
-  ref.invalidate(myRemindersProvider);
   ref.invalidate(myAnnouncementsProvider);
   ref.invalidate(readAnnouncementIdsProvider);
   ref.invalidate(achievementDictionaryProvider);

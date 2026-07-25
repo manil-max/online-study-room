@@ -8,8 +8,10 @@ import '../../core/widgets/safe_screen_padding.dart';
 import '../../data/providers/auth_providers.dart';
 import '../../data/providers/admin_providers.dart';
 import '../../data/providers/group_providers.dart';
+import '../../data/providers/notification_providers.dart';
 import '../admin/admin_screen.dart';
 import '../desktop/desktop_surface.dart';
+import '../notifications/announcements_screen.dart';
 import '../notifications/notification_permissions_screen.dart';
 import '../updater/release_notes_screen.dart';
 import '../safety/blocked_users_screen.dart';
@@ -71,6 +73,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final language = ref.watch(appLanguageProvider);
     final profile = ref.watch(authStateProvider).value;
     final isAdmin = ref.watch(adminIsSuperAdminProvider).value ?? false;
+    final unreadAnnouncements = ref.watch(unreadAnnouncementCountProvider);
     final animal = profile == null
         ? null
         : campAnimalFor(
@@ -250,6 +253,35 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ),
               ),
               SizedBox(height: 10),
+              // WP-304: duyurular Bildirim Merkezi'nden buraya taşındı.
+              // Merkez bir ayar ekranı (neyi ne zaman alacağım), duyuru ise
+              // içerik; aynı listede durunca yeni duyuru fark edilmiyordu.
+              _SettingsCard(
+                child: ListTile(
+                  leading: const Icon(Icons.campaign_outlined),
+                  title: Text(l10n.notificationsDuyurular),
+                  subtitle: Text(l10n.notificationsUygulamaVeGrubunaOzel),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (unreadAnnouncements > 0) ...[
+                        _UnreadDot(
+                          key: const Key('announcements-unread-dot'),
+                          count: unreadAnnouncements,
+                        ),
+                        const SizedBox(width: 8),
+                      ],
+                      const Icon(Icons.chevron_right),
+                    ],
+                  ),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const AnnouncementsScreen(),
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(height: 10),
               _SettingsCard(
                 child: ListTile(
                   leading: Icon(Icons.new_releases_outlined),
@@ -309,6 +341,28 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     return Scaffold(
       appBar: AppBar(title: Text(l10n.profileAyarlar)),
       body: list,
+    );
+  }
+}
+
+/// Okunmamış duyuru göstergesi — başarım rozetiyle aynı dil: küçük dolu nokta.
+class _UnreadDot extends StatelessWidget {
+  const _UnreadDot({super.key, required this.count});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Semantics(
+      // Ekran okuyucu için nokta tek başına anlamsız; sayıyı sesli ver.
+      label: AppLocalizations.of(context).notificationsDuyurular,
+      value: '$count',
+      child: Container(
+        width: 10,
+        height: 10,
+        decoration: BoxDecoration(color: scheme.primary, shape: BoxShape.circle),
+      ),
     );
   }
 }

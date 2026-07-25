@@ -37,7 +37,6 @@ class SmartReminderScheduler {
     DateTime? now,
   }) async {
     await cancelAll();
-    if (!prefs.remindersEnabled) return;
 
     final details = NotificationDetails(
       android: AndroidNotificationDetails(

@@ -1,9 +1,7 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
-import 'package:timezone/timezone.dart' as tz;
 
-import '../../data/models/study_reminder.dart';
 import '../l10n/system_localizations.dart';
 import 'notification_preferences.dart';
 import 'smart_reminder_scheduler.dart';
@@ -13,19 +11,19 @@ final reminderNotificationServiceProvider =
       return ReminderNotificationService.instance;
     });
 
-/// Kişisel çalışma hatırlatıcılarını yerel bildirim olarak planlar (§WP-36).
+/// Akıllı hatırlatmaları (seri + haftalık özet) yerel bildirim olarak planlar.
 ///
-/// Alarm/timer servisinden ayrıdır; kendi kanalını kullanır. Tekrarlı
-/// hatırlatıcılar için her gün ayrı bir bildirim id'si planlanır. Sessiz
-/// saatlerde çalacak hatırlatıcılar bilinçli olarak planlanmaz.
+/// Alarm/timer servisinden ayrıdır; kendi kanalını kullanır.
+///
+/// WP-304: kişisel çalışma hatırlatıcıları (`StudyReminder`) kaldırıldı —
+/// alarm aynı işi sesli, tam ekran ve ertelemeli yapıyordu, iki kavram tek
+/// işi anlatıyordu. Geriye yalnız WP-153'ün akıllı hatırlatmaları kaldı.
 class ReminderNotificationService {
   ReminderNotificationService._(this._plugin);
 
   static final instance = ReminderNotificationService._(
     FlutterLocalNotificationsPlugin(),
   );
-
-  static const String _channelId = 'study_reminders';
 
   final FlutterLocalNotificationsPlugin _plugin;
   bool _initialized = false;
@@ -48,25 +46,9 @@ class ReminderNotificationService {
     return await android?.requestNotificationsPermission() ?? true;
   }
 
-  /// Tüm hatırlatıcıları verilen tercihlere göre yeniden planlar. Önce hepsi
-  /// iptal edilir, sonra uygun olanlar tekrar kurulur — böylece silme/kapatma
-  /// da yansır.
-  Future<void> syncAll(
-    List<StudyReminder> reminders,
-    NotificationPreferences prefs,
-  ) async {
+  /// Akıllı hatırlatmaları tercihlere göre yeniden planlar.
+  Future<void> syncSmartReminders(NotificationPreferences prefs) async {
     await initialize();
-    for (final reminder in reminders) {
-      await cancel(reminder);
-    }
-    if (!prefs.remindersEnabled) {
-      await SmartReminderScheduler(_plugin).cancelAll();
-      return;
-    }
-    for (final reminder in reminders) {
-      await schedule(reminder, prefs);
-    }
-    // WP-153: akıllı hatırlatmalar (aynı plugin/channel; FGS yok).
     final l10n = await loadSystemLocalizations();
     await SmartReminderScheduler(_plugin).sync(
       prefs: prefs,
@@ -77,96 +59,5 @@ class ReminderNotificationService {
       channelName: l10n.coreCalismaHatirlaticilari,
       channelDescription: l10n.corePlanlanmisCalismaHatirlaticilari,
     );
-  }
-
-  Future<void> schedule(
-    StudyReminder reminder,
-    NotificationPreferences prefs,
-  ) async {
-    await initialize();
-    await cancel(reminder);
-    if (!reminder.enabled || !prefs.remindersEnabled) return;
-    final l10n = await loadSystemLocalizations();
-
-    // Sessiz saatlere denk gelen hatırlatıcıyı planlama (bilinçli kısıt).
-    final probe = DateTime(2000, 1, 1, reminder.hour, reminder.minute);
-    if (prefs.isWithinQuietHours(probe)) return;
-
-    final details = NotificationDetails(
-      android: AndroidNotificationDetails(
-        _channelId,
-        l10n.coreCalismaHatirlaticilari,
-        channelDescription: l10n.corePlanlanmisCalismaHatirlaticilari,
-        importance: Importance.high,
-        priority: Priority.high,
-      ),
-    );
-
-    final body = (reminder.body == null || reminder.body!.trim().isEmpty)
-        ? l10n.coreCalismaZamani
-        : reminder.body!;
-
-    if (!reminder.repeats) {
-      await _plugin.zonedSchedule(
-        id: reminder.id.hashCode,
-        title: reminder.title,
-        body: body,
-        scheduledDate: _nextDailyTime(reminder.hour, reminder.minute),
-        notificationDetails: details,
-        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-        matchDateTimeComponents: DateTimeComponents.time,
-      );
-      return;
-    }
-
-    for (final weekday in reminder.weekdays) {
-      await _plugin.zonedSchedule(
-        id: _weekdayId(reminder.id, weekday),
-        title: reminder.title,
-        body: body,
-        scheduledDate: _nextWeekdayTime(
-          weekday,
-          reminder.hour,
-          reminder.minute,
-        ),
-        notificationDetails: details,
-        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-        matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
-      );
-    }
-  }
-
-  Future<void> cancel(StudyReminder reminder) async {
-    await _plugin.cancel(id: reminder.id.hashCode);
-    for (var weekday = 1; weekday <= 7; weekday++) {
-      await _plugin.cancel(id: _weekdayId(reminder.id, weekday));
-    }
-  }
-
-  int _weekdayId(String id, int weekday) =>
-      Object.hash(id, weekday) & 0x7fffffff;
-
-  tz.TZDateTime _nextDailyTime(int hour, int minute) {
-    final now = tz.TZDateTime.now(tz.local);
-    var scheduled = tz.TZDateTime(
-      tz.local,
-      now.year,
-      now.month,
-      now.day,
-      hour,
-      minute,
-    );
-    if (!scheduled.isAfter(now)) {
-      scheduled = scheduled.add(const Duration(days: 1));
-    }
-    return scheduled;
-  }
-
-  tz.TZDateTime _nextWeekdayTime(int weekday, int hour, int minute) {
-    var scheduled = _nextDailyTime(hour, minute);
-    while (scheduled.weekday != weekday) {
-      scheduled = scheduled.add(const Duration(days: 1));
-    }
-    return scheduled;
   }
 }

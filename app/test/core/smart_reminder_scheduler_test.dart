@@ -37,7 +37,6 @@ void main() {
   test('quiet hours blocks scheduling decision', () {
     const prefs = NotificationPreferences(
       nudgeNotificationsEnabled: true,
-      remindersEnabled: true,
       announcementsEnabled: true,
       updatesEnabled: true,
       quietHoursEnabled: true,
@@ -53,7 +52,6 @@ void main() {
   test('opt-out defaults for smart flags', () {
     const prefs = NotificationPreferences(
       nudgeNotificationsEnabled: true,
-      remindersEnabled: true,
       announcementsEnabled: true,
       updatesEnabled: true,
       quietHoursEnabled: false,

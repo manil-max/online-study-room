@@ -8,7 +8,6 @@ NotificationPreferences prefs({
 }) {
   return NotificationPreferences(
     nudgeNotificationsEnabled: true,
-    remindersEnabled: true,
     announcementsEnabled: true,
     updatesEnabled: true,
     quietHoursEnabled: quietEnabled,

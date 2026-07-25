@@ -1,59 +1,12 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../models/announcement.dart';
-import '../../models/study_reminder.dart';
 import '../notification_repository.dart';
 
 class SupabaseNotificationRepository implements NotificationRepository {
   SupabaseNotificationRepository(this._client);
 
   final SupabaseClient _client;
-
-  @override
-  Future<List<StudyReminder>> fetchReminders(String userId) async {
-    try {
-      final rows = await _client
-          .from('study_reminders')
-          .select()
-          .eq('user_id', userId)
-          .order('created_at', ascending: true);
-      return rows.map((e) => StudyReminder.fromMap(e)).toList();
-    } catch (e) {
-      throw NotificationException('Hatırlatıcılar alınamadı: $e');
-    }
-  }
-
-  @override
-  Future<StudyReminder> upsertReminder(StudyReminder reminder) async {
-    try {
-      if (reminder.isNew) {
-        final row = await _client
-            .from('study_reminders')
-            .insert(reminder.toWriteMap())
-            .select()
-            .single();
-        return StudyReminder.fromMap(row);
-      }
-      final row = await _client
-          .from('study_reminders')
-          .update(reminder.toWriteMap())
-          .eq('id', reminder.id)
-          .select()
-          .single();
-      return StudyReminder.fromMap(row);
-    } catch (e) {
-      throw NotificationException('Hatırlatıcı kaydedilemedi: $e');
-    }
-  }
-
-  @override
-  Future<void> deleteReminder(String reminderId) async {
-    try {
-      await _client.from('study_reminders').delete().eq('id', reminderId);
-    } catch (e) {
-      throw NotificationException('Hatırlatıcı silinemedi: $e');
-    }
-  }
 
   @override
   Future<List<Announcement>> fetchMyAnnouncements(String userId) async {

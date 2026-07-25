@@ -7,7 +7,6 @@ import '../prefs/app_prefs.dart';
 class NotificationPreferences {
   const NotificationPreferences({
     required this.nudgeNotificationsEnabled,
-    required this.remindersEnabled,
     required this.announcementsEnabled,
     required this.updatesEnabled,
     required this.quietHoursEnabled,
@@ -18,7 +17,6 @@ class NotificationPreferences {
   });
 
   final bool nudgeNotificationsEnabled;
-  final bool remindersEnabled;
   final bool announcementsEnabled;
   final bool updatesEnabled;
   final bool quietHoursEnabled;
@@ -48,7 +46,6 @@ class NotificationPreferences {
 
   NotificationPreferences copyWith({
     bool? nudgeNotificationsEnabled,
-    bool? remindersEnabled,
     bool? announcementsEnabled,
     bool? updatesEnabled,
     bool? quietHoursEnabled,
@@ -60,7 +57,6 @@ class NotificationPreferences {
     return NotificationPreferences(
       nudgeNotificationsEnabled:
           nudgeNotificationsEnabled ?? this.nudgeNotificationsEnabled,
-      remindersEnabled: remindersEnabled ?? this.remindersEnabled,
       announcementsEnabled: announcementsEnabled ?? this.announcementsEnabled,
       updatesEnabled: updatesEnabled ?? this.updatesEnabled,
       quietHoursEnabled: quietHoursEnabled ?? this.quietHoursEnabled,
@@ -77,7 +73,6 @@ class NotificationPreferences {
 class NotificationPreferencesNotifier
     extends Notifier<NotificationPreferences> {
   static const kNudgeNotifications = 'notification_nudges_enabled';
-  static const kReminders = 'notification_reminders_enabled';
   static const kAnnouncements = 'notification_announcements_enabled';
   static const kUpdates = 'notification_updates_enabled';
   static const kQuietEnabled = 'notification_quiet_enabled';
@@ -94,7 +89,6 @@ class NotificationPreferencesNotifier
     final prefs = ref.watch(sharedPreferencesProvider);
     return NotificationPreferences(
       nudgeNotificationsEnabled: prefs.getBool(kNudgeNotifications) ?? true,
-      remindersEnabled: prefs.getBool(kReminders) ?? true,
       announcementsEnabled: prefs.getBool(kAnnouncements) ?? true,
       updatesEnabled: prefs.getBool(kUpdates) ?? true,
       quietHoursEnabled: prefs.getBool(kQuietEnabled) ?? false,
@@ -109,9 +103,6 @@ class NotificationPreferencesNotifier
   Future<void> setNudgeNotificationsEnabled(bool value) =>
       _setBool(kNudgeNotifications, value,
           () => state = state.copyWith(nudgeNotificationsEnabled: value));
-
-  Future<void> setRemindersEnabled(bool value) => _setBool(kReminders, value,
-      () => state = state.copyWith(remindersEnabled: value));
 
   Future<void> setAnnouncementsEnabled(bool value) => _setBool(
       kAnnouncements, value,

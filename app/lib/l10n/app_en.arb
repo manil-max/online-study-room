@@ -2737,21 +2737,9 @@
       }
     }
   },
-  "notificationsAlarmVeZamanlayici": "Alarm and timer",
-  "@notificationsAlarmVeZamanlayici": {
-    "description": "Notifications user-facing text. Source: Alarm ve zamanlayıcı"
-  },
   "notificationsBaslangic": "Start",
   "@notificationsBaslangic": {
     "description": "Notifications user-facing text. Source: Başlangıç"
-  },
-  "notificationsBaslik": "Title",
-  "@notificationsBaslik": {
-    "description": "Notifications user-facing text. Source: Başlık"
-  },
-  "notificationsBelirliSaatlerdeCalismaHatirlaticisi": "Set a study reminder at certain hours",
-  "@notificationsBelirliSaatlerdeCalismaHatirlaticisi": {
-    "description": "Notifications user-facing text. Source: Belirli saatlerde çalışma hatırlatıcısı kur"
   },
   "notificationsBildirimMerkezi": "Notification Center",
   "@notificationsBildirimMerkezi": {
@@ -2789,14 +2777,6 @@
   "@notificationsCihazIzinleri": {
     "description": "Notifications user-facing text. Source: Cihaz izinleri"
   },
-  "notificationsCmt": "Sat",
-  "@notificationsCmt": {
-    "description": "Notifications user-facing text. Source: Cmt"
-  },
-  "notificationsCum": "Fri",
-  "@notificationsCum": {
-    "description": "Notifications user-facing text. Source: Cum"
-  },
   "notificationsDuyurular": "Announcements",
   "@notificationsDuyurular": {
     "description": "Notifications user-facing text. Source: Duyurular"
@@ -2818,21 +2798,9 @@
   "@notificationsGuncellemeBildirimleri": {
     "description": "Notifications user-facing text. Source: Güncelleme bildirimleri"
   },
-  "notificationsGunlerBosHerGun": "Days (blank = every day)",
-  "@notificationsGunlerBosHerGun": {
-    "description": "Notifications user-facing text. Source: Günler (boş = her gün)"
-  },
   "notificationsHangiBildirimleriAlmakIstedigini": "Choose which notifications you want to receive",
   "@notificationsHangiBildirimleriAlmakIstedigini": {
     "description": "Notifications user-facing text. Source: Hangi bildirimleri almak istediğini seç"
-  },
-  "notificationsHatirlaticiEkle": "Add reminder",
-  "@notificationsHatirlaticiEkle": {
-    "description": "Notifications user-facing text. Source: Hatırlatıcı ekle"
-  },
-  "notificationsHatirlaticilar": "Reminders",
-  "@notificationsHatirlaticilar": {
-    "description": "Notifications user-facing text. Source: Hatırlatıcılar"
   },
   "notificationsHatirlaticilarYuklenemediE": "Failed to load reminders: {e}",
   "@notificationsHatirlaticilarYuklenemediE": {
@@ -2843,45 +2811,9 @@
       }
     }
   },
-  "notificationsHenuzHatirlaticinYokAsagidan": "You don't have a reminder yet. You can add one below.",
-  "@notificationsHenuzHatirlaticinYokAsagidan": {
-    "description": "Notifications user-facing text. Source: Henüz hatırlatıcın yok. Aşağıdan bir tane ekleyebilirsin."
-  },
   "notificationsHerGun": "Every day",
   "@notificationsHerGun": {
     "description": "Notifications user-facing text. Source: Her gün"
-  },
-  "notificationsKaydet": "Save",
-  "@notificationsKaydet": {
-    "description": "Notifications user-facing text. Source: Kaydet"
-  },
-  "notificationsPaz": "Sun",
-  "@notificationsPaz": {
-    "description": "Notifications user-facing text. Source: Paz"
-  },
-  "notificationsPer": "Thu",
-  "@notificationsPer": {
-    "description": "Notifications user-facing text. Source: Per"
-  },
-  "notificationsPlanladiginHatirlaticilariYerelBildirimle": "Get your scheduled reminders with local notification",
-  "@notificationsPlanladiginHatirlaticilariYerelBildirimle": {
-    "description": "Notifications user-facing text. Source: Planladığın hatırlatıcıları yerel bildirimle al"
-  },
-  "notificationsPzt": "Mon",
-  "@notificationsPzt": {
-    "description": "Notifications user-facing text. Source: Pzt"
-  },
-  "notificationsSaat": "Clock",
-  "@notificationsSaat": {
-    "description": "Notifications user-facing text. Source: Saat"
-  },
-  "notificationsSaatSekmesindenYonetilir": "Managed from the Clock tab",
-  "@notificationsSaatSekmesindenYonetilir": {
-    "description": "Notifications user-facing text. Source: Saat sekmesinden yönetilir"
-  },
-  "notificationsSal": "Tue",
-  "@notificationsSal": {
-    "description": "Notifications user-facing text. Source: Sal"
   },
   "notificationsSessizSaatler": "Quiet hours",
   "@notificationsSessizSaatler": {
@@ -2903,29 +2835,9 @@
   "@notificationsUygulamaVeGrupDuyurularini": {
     "description": "Notifications user-facing text. Source: Uygulama ve grup duyurularını göster"
   },
-  "notificationsVazgec": "Cancel",
-  "@notificationsVazgec": {
-    "description": "Notifications user-facing text. Source: Vazgeç"
-  },
-  "notificationsYeniHatirlatici": "New reminder",
-  "@notificationsYeniHatirlatici": {
-    "description": "Notifications user-facing text. Source: Yeni hatırlatıcı"
-  },
   "notificationsYeniSurumCikincaHaber": "Notify me when a new version is released",
   "@notificationsYeniSurumCikincaHaber": {
     "description": "Notifications user-facing text. Source: Yeni sürüm çıkınca haber ver"
-  },
-  "notificationsCalismaHatirlaticilari": "Study reminders",
-  "@notificationsCalismaHatirlaticilari": {
-    "description": "Notifications user-facing text. Source: Çalışma hatırlatıcıları"
-  },
-  "notificationsCalismaZamani": "Study time",
-  "@notificationsCalismaZamani": {
-    "description": "Notifications user-facing text. Source: Çalışma zamanı"
-  },
-  "notificationsCar": "Wed",
-  "@notificationsCar": {
-    "description": "Notifications user-facing text. Source: Çar"
   },
   "notificationsSimdilikDuyuruYok": "No announcements for now.",
   "@notificationsSimdilikDuyuruYok": {
