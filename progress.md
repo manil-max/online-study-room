@@ -21,8 +21,8 @@
 - 🔴 **BETA KARARI (sahip, 2026-07-25):** **Aşama A'nın TÜM WP'leri bitmeden beta çıkmaz — tek beta turu yapılacak.** Gerekçe: beta koşumu ~3 saat sürüyor, iki tur yapılmıyor. **Sonuçları:** (1) "önce X'in cihaz kabulü" yazan yazılı kapılar bu tur için **geçersiz** — cihaz QA'sı fiziken mümkün değil, kod/test kapısı esas alınır (`.agents/AGENTS.md §0.1`); (2) QA kuyruğundaki 6 iş **aynı beta'da** test edilir; (3) bir sorun görülürse hangi WP'den geldiği belirsiz olacağı için her WP **ayrı commit** + `analyze` 0 + testler yeşil şartı **daha da kritik**.
 - **Yönetim varsayılanı:** Production `deploy_enabled/release_enabled` kapalıdır. Stable yalnız protected `production` Environment, exact SHA/head/project-ref GO ve reviewer kanıtıyla ilerler.
 - **Kurallar:** Kök `AGENTS.md`, `.agents/AGENTS.md` ve `docs/KALITE-PROGRAMI.md` geçerlidir. Tek çalışma dalı `main`; her WP ayrı commit; production varsayılmaz.
-- **Son WP:** **297** · Sıradaki boş numara: **298**. WP-296 kapandı (759 test yeşil, 0 kırmızı). Aşama A'da kod/test tamamlanan: 286, 287, 288, 289, 290, 291, 293 — **kartları arşive taşındı** ([arşiv](docs/archive/progress-tarihsel-2026-07.md)), kalan işleri aşağıdaki QA kuyruğunda.
-- **Aktif tur:** Yeni Özellik Turu **Aşama A** — plan **rev. 3** kanonik. 9 WP'nin kodu bitti (296, 297 dahil); **kodlanmayı bekleyen 3 iş kaldı** (292, 294, 295). Kanonik plan: [`docs/YENI-OZELLIK-PLANI.md`](docs/YENI-OZELLIK-PLANI.md).
+- **Son WP:** **297** · Sıradaki boş numara: **298**. Aşama A'da kod/test tamamlanan: 286, 287, 288, 289, 290, 291, 293 — **kartları arşive taşındı** ([arşiv](docs/archive/progress-tarihsel-2026-07.md)); 296, 297, 292 kartları hâlâ burada, kalan işleri aşağıdaki QA kuyruğunda.
+- **Aktif tur:** Yeni Özellik Turu **Aşama A** — plan **rev. 3** kanonik. 10 WP'nin kodu bitti (296, 297, 292 dahil); **kodlanmayı bekleyen 2 iş kaldı** (294, 295) + sahip kararı bekleyen aura efekti. Kanonik plan: [`docs/YENI-OZELLIK-PLANI.md`](docs/YENI-OZELLIK-PLANI.md).
 - ✅ **Ortam gerçeği uzlaştırıldı (WP-293, 2026-07-24):** yukarıdaki altı gerçekli durum modeli kanoniktir; production deploy kapısı yeniden kilitlendi. `deploy-contract.json`, `KALITE-PROGRAMI.md`, `project.md`, `backlog.md`, `tooling/README.md` aynı gerçeğe getirildi.
 
 ## ⚡ Aktif Çalışma Kaydı
@@ -33,11 +33,11 @@
 - **SAHİP yollar:** —
 
 ### Claude Lane
-- **Durum:** [ ] Çalışıyor
-- **Faz/WP:** **WP-292** — taç görseli (sahip tasarım onayı alındı 2026-07-25)
-- **SAHİP yollar:** `app/lib/core/widgets/crowned_avatar.dart`, `app/lib/core/widgets/crown_tiers_sheet.dart`, `app/test/features/profile/crowned_avatar_test.dart`, yeni taç golden testi + golden dosyaları
-- **Son not:** 2026-07-25 turunda WP-296 ve WP-297 tamam — `analyze` 0, **767 test yeşil**, APK artışı **+1.02 MB** ölçüldü. `app_theme.dart` ve `main.dart` serbest.
-- **Sahip onayı (2026-07-25):** taç geometrisi **5 uç · span 50° · tip 1.63 · inci 0.10 · kavis 0.50**. Ayrıca sahip "PUBG tarzı avatar arkası aura/sis efekti" sordu → **WP-292 kapsamı DIŞI**, ayrı iş olarak değerlendirilecek.
+- **Durum:** [x] Boşta
+- **Faz/WP:** —
+- **SAHİP yollar:** —
+- **Son not:** 2026-07-25 turunda **WP-296, WP-297 ve WP-292** tamam — `analyze` 0, **776 test yeşil**. Taç geometrisi sahip onayıyla sabitlendi (**5 uç · span 50° · tip 1.63 · inci 0.10 · kavis 0.50**) ve golden'a alındı. **Sıradaki: WP-294** (ajan işi) — WP-295 sahiple konuşmayı bekliyor. `app_theme.dart`, `main.dart`, taç dosyaları serbest.
+- **Açık sahip sorusu:** "PUBG tarzı avatar arkası aura/sis efekti" — **WP-292 kapsamı dışında bırakıldı**, aşağıda `Kalan Kod İşi`'nde karar bekleyen madde olarak duruyor.
 
 ### Codex Lane
 - **Durum:** [x] Boşta
@@ -62,7 +62,7 @@
 > QA sırasında bulunan hata **yeni WP** olur, eski kart yeniden açılmaz.
 >
 > 🔴 **Beta kararı gereği bu kuyruk TEK beta turunda test edilecek** — yani `Kalan Kod İşi` bitmeden
-> QA başlamıyor. Sıra: kalan 4 WP (297 → 292 → 294 → 295) → beta build → aşağıdaki 5 + 297/292 aynı turda cihazda test.
+> QA başlamıyor. Sıra: kalan 2 WP (294 → 295) → beta build → aşağıdaki tablo aynı turda cihazda test.
 > ℹ️ **WP-296 ayrıca cihaz QA istemiyor** ama Windows yüzeyine dokundu: masaüstünde alarm eklemenin dialogsuz açılması ve izin kartının nötr görünmesi aynı turda bakılmalı.
 > ⚠️ Bu yüzden bir hata görüldüğünde kaynağı belirsiz olabilir; ilk bakılacak yer o yüzeye
 > dokunan **son commit**'tir (her WP ayrı commit).
@@ -74,26 +74,29 @@
 | **WP-288** Tema modeli v2 + göç | 2026-07-24 (Codex) | 🔴 **Eski özel paletli gerçek cihazda** ilk açılış → **görünüm değişmemeli** (göç) · aktif tema korunuyor · silme yuvayı boşaltıyor, index kaydırmıyor · açık/koyu/sistem modu | Android cihaz (yükseltme) |
 | **WP-290** Tema sihirbazı + görünüm ekranı | 2026-07-25 (Claude) | 8 adımın önizlemesi anında güncelleniyor · kaydedilen tema tüm ekranlarda geçerli · his efektleri (gren/parıltı) **gerçekten görünüyor** · AA uyarısı + Düzelt · düzenle/sil/3 yuva dolu mesajı · "hareketi azalt" · RTL (AR) | Android cihaz |
 | **WP-291** Kart boyut paneli | 2026-07-24 (Claude) | Düzenleme modunda en alta kaydırınca panel ekranda kalıyor · boyut değişimi anında · sürükle-bırak/compactUp/sıfırlama bozulmamış · dokunma hedefleri ≥ 48 dp | Android cihaz |
+| **WP-297** Gömülü fontlar | 2026-07-25 (Claude) | Sihirbazda Inter/Literata/JetBrains Mono seçilebiliyor · seçilen font **gerçekten** değişiyor · ağırlık kaydırıcısı 4 kademede farklı görünüyor · Türkçe karakterler kutu değil · kayıtlı eski temaların görünümü aynı | Android cihaz |
+| **WP-292** Taç görseli | 2026-07-25 (Claude) | 🔴 **Sahip beğenisi** (asıl kabul) · liderlik/sohbet/ısı tablosu gibi **küçük avatarlarda** taç okunuyor mu · liste satırları küçük avatarlarda ~2–4 px uzadı, göze batıyor mu · taçsız kullanıcı düz avatar · **p95 kare ≤ 16.7 ms / jank ≤ %1** (`--profile` + timeline; animasyon eklenmediği için risk düşük ama ölçüm cihazsız yapılamadı) | Android cihaz |
 
 **WP-289** (his araştırması) tamamen kapandı — doküman WP'si, QA gerektirmez.
 
 ## 🛠️ Kalan Kod İşi — ne kodlanacak
 
 > **Beta kararı gereği bu işlerin HEPSİ bitmeden beta çıkmaz.** Sıra: hazır olan → sahip girdisi bekleyen.
-> **Kalan 3 iş** (296 ve 297 kapandı).
+> **Kalan 2 iş** (296, 297 ve 292 kapandı).
 
 | # | İş | Kod durumu | Başlamaya hazır mı? |
 |---|---|---|---|
 | ~~1~~ | **WP-296** — `main`'de kırmızı 3 test | [x] **TAMAM** (2026-07-25) | ✅ Bitti — 759 yeşil / 0 kırmızı; 2 ürün hatası + 1 saate bağımlı test |
 | ~~1~~ | **WP-297** — gömülü fontlar (Inter · **Literata** · JetBrains Mono) | [x] **TAMAM** (2026-07-25) | ✅ Bitti — 767 yeşil; Lora ölçüm sonucu elendi (eksen 400–700) |
-| **1** | **WP-292** — taç görseli | [ ] **Kodlanacak** | ✅ **HAZIR** — "önce WP-290 cihaz kabulü" kapısı **beta kararıyla düştü** (§0.1); kod/test kapısı esas |
-| **2** | **WP-294** — l10n borcu + audit CI kapısı | [ ] Kodlanacak | 🟡 **Kısmen** — audit genişletme + UTF-8 + CI kapısı **bugünkü 4 dil gerçeğiyle** yapılabilir; yalnız "EN/TR'ye daraltma" dalı K-7'ye bağlı |
-| **3** | **WP-295** — kamp ateşi animasyonları | [ ] Kodlanacak | 🔴 **TEK GERÇEK BLOKAJ** — sahiple tasarım konuşması yapılmadan başlamaz (kartın açık şartı, aşılmaz) |
+| ~~1~~ | **WP-292** — taç görseli | [x] **TAMAM** (2026-07-25) | ✅ Bitti — 776 yeşil; sahip onaylı geometri + 2 golden. Kalan tek şey **sahip beğenisi** (QA kuyruğunda) |
+| **1** | **WP-294** — l10n borcu + audit CI kapısı | [ ] Kodlanacak | 🟡 **Kısmen** — audit genişletme + UTF-8 + CI kapısı **bugünkü 4 dil gerçeğiyle** yapılabilir; yalnız "EN/TR'ye daraltma" dalı K-7'ye bağlı |
+| **2** | **WP-295** — kamp ateşi animasyonları | [ ] Kodlanacak | 🔴 **TEK GERÇEK BLOKAJ** — sahiple tasarım konuşması yapılmadan başlamaz (kartın açık şartı, aşılmaz) |
+| **?** | **Avatar aura efekti** (PUBG tarzı sis/parıltı) — sahip 2026-07-25'te sordu | [?] **Karar bekliyor** | 🟡 Teknik olarak yapılabilir ama **kapsamı sahip belirlemeli**: (a) yalnız profil ekranındaki büyük avatar mı (1 ticker, güvenli) yoksa listeler de mi (10–20 ticker → `p95 ≤ 16.7 ms` bütçesi gerçek risk); (b) **her kademe mi yoksa yalnız üst kademeler mi** — sadece üst kademe derse bu **kademe→görsel eşlemesini bilinçli olarak değiştirmek** olur, ayrı karar; (c) "hareketi azalt" açıkken durağan hâle düşmesi zorunlu. **Tek beta kararı gereği bu beta'da isteniyorsa 294/295'ten önce WP açılmalı.** |
 | — | WP-276 / WP-277 — staging ops kabul kanıtı | [ ] Kod azı, ops çoğu | ⏸️ Beta dışı; sentetik staging kanıtı + WP-276 Play Store için gerekli |
 | — | WP-278 / WP-279 | [?] **Ürün/ops kararı** | 🔴 Sahip kararı olmadan kod yazılmaz |
 | — | Production backend değişikliği | 🔴 Kapalı | `deploy_enabled: false`; yeni terfi backup + dry-run + somut GO ister |
 
-**Beta çıkabilmesi için kalan:** ~~296~~ → ~~297~~ → **292** → 294 → 295 (295 sahiple konuşmayı bekler; diğer ikisi ajan işi).
+**Beta çıkabilmesi için kalan:** ~~296~~ → ~~297~~ → ~~292~~ → **294** → 295 (295 sahiple konuşmayı bekler; 294 ajan işi). Aura istenirse araya girer.
 
 ### Tema programından devreden borç — durumları
 
@@ -109,6 +112,8 @@
 - **Bildirim/widget'ın sistem fontunda kalması:** kabul edildi (native taraf Flutter fontuna erişemez).
 - **Hazır temaların gövde fontu:** hata değil, tasarım — hazır temaların şemasında gövde ailesi yok. WP-297'de hazır temalara da gövde ailesi verilip verilmeyeceği kart içinde kararlaştırılır.
 - **Tek beta:** yukarıdaki 🔴 BETA KARARI.
+- **Taç geometrisi (WP-292):** canlı önizlemeden seçildi — **5 uç · span 50° · tip 1.63 · inci 0.10 · kavis 0.50**. Sahip "önce tasarımı göster, sonra kodla" dedi; akış böyle yürütüldü ve sayılar koda birebir geçti.
+- **Avatar aura efekti:** sahip PUBG tarzı "arka sis/parıltı" sordu → **karar bekliyor**, `Kalan Kod İşi` tablosunda üç şıkkı yazılı (kapsam, kademe ayrımı, hareketi-azalt).
 
 ## Yeni Özellik Turu — Aşama A (Plan Kuyruğu)
 
@@ -130,8 +135,8 @@ DALGA 1  WP-287  Şifre sıfırlama  ‖  WP-286  Ayarlar IA      ✅ kod/test t
 DALGA 2  WP-291  Boyut paneli ✅ → QA  ‖  WP-289  His araştırması ✅ tümüyle kapandı
 DALGA 3  WP-288  Tema modeli      ✅ kod/test tamam → QA  ‖  WP-294  l10n  🟡 kısmen açık
 DALGA 4  WP-290  Tema sihirbazı   ✅ kod/test tamam → QA
-DALGA 5  WP-296 ✅ → WP-297 ✅ → WP-292  Taç                            ← SIRADAKİ
-DALGA 6  WP-294  l10n borcu  ‖  WP-295  Kamp ateşi (sahiple konuşma sonrası)
+DALGA 5  WP-296 ✅ → WP-297 ✅ → WP-292 ✅  Taç                    kod/test tamam
+DALGA 6  WP-294  l10n borcu  ‖  WP-295  Kamp ateşi (sahiple konuşma sonrası)  ← SIRADAKİ
 ──────── TEK BETA BURADA ÇIKAR (hepsi bitince) ────────
 ```
 
@@ -242,21 +247,35 @@ DALGA 6  WP-294  l10n borcu  ‖  WP-295  Kamp ateşi (sahiple konuşma sonrası
 - **Tuzaklar:** Sahiple konuşmadan tasarıma başlamak (açık şart) · ağır efektle performans düşürmek.
 - **Model önerisi:** 🟣 Pro
 
-### WP-292: Kozmetik — taç görseli ✨
+### WP-292: Kozmetik — taç görseli ✨ ✅ KOD/TEST TAMAM
 - **Program/Faz:** Yeni Özellik Turu · Aşama A (son) · (plan §3 F-08) · *rev.2: kamp ateşi WP-295'e ayrıldı*
-- **Ajan:** — · **Durum:** [ ] **Kodlanacak — HAZIR.** *Eski "WP-290 cihaz kabulü" kapısı **tek beta kararıyla düştü** (2026-07-25, `§0.1`): kabul beta'dan önce fiziken alınamıyor. Kapı yerine şart: WP-290/297 commit'lenmiş ve testler yeşil olmalı; **297 ile paralel koşulmaz** (golden yüzeyi).*
+- **Ajan:** Claude · **Durum:** [x] **Kod/test tamam (2026-07-25)** — ayrıntı aşağıdaki sonuç kaydında. *Eski "WP-290 cihaz kabulü" kapısı tek beta kararıyla düşmüştü (`§0.1`); 297'den sonra seri koştu.*
 - **Problem:** Profil fotoğrafı üstündeki taç sahibe göre kötü duruyor; görsel yenilenecek.
 - **Kapsam dışı:** **XP/kademe mantığı**, başarım motoru, tema motoru, yeni ekonomi kuralı, kamp ateşi (WP-295).
 - **SAHİP dosyalar (yaz):** `app/lib/core/widgets/crowned_avatar.dart`, `app/lib/core/widgets/crown_tiers_sheet.dart`, ilgili golden testler.
 - **DOKUNMA:** 🔴 `app/lib/core/stats/achievement_ledger_engine.dart` — **`crownRankForXp:358` ve `kCrownXpThresholds` DEĞİŞTİRİLMEZ**; taç XP'den türer ve XP server-authoritative'dir (`AGENTS.md §2`). Eşiğe dokunmak kullanıcıların görünen kademesini sessizce kaydırır. Ayrıca: sunucu tarafı, tema motoru, `campfire*` (WP-295'in).
 - **Adımlar:**
-  - [ ] Taç çizim katmanı yenilenir; **kademe→görsel eşlemesi birebir korunur**.
-  - [ ] Golden testler güncellenir; performans bütçesi ölçülür.
+  - [x] Taç çizim katmanı yenilendi; **kademe→görsel eşlemesi birebir korundu** (6 rütbe + eski `platinum_scholar` için renk testi).
+  - [x] Golden baseline kuruldu (2 golden); performans bütçesi **cihazsız ölçülemedi**, aşağıda gerekçesiyle QA'ya devredildi.
 - **Veri/Migration etkisi:** Yok. **Ortam/Deploy:** Local. **RLS/Güvenlik:** Yok.
-- **Edge-case'ler:** Taçsız kullanıcı (rank null/boş — `crowned_avatar.dart:29`) · en yüksek kademe · küçük avatar boyutları · "hareketi azalt" açık · düşük donanım.
+- **Edge-case'ler:** Taçsız kullanıcı (rank null/boş) · en yüksek kademe · küçük avatar boyutları · "hareketi azalt" açık · düşük donanım.
 - **Kabul (ölçülebilir):** **Aynı XP → aynı kademe** (regresyon testi yeşil) · taçsız durumda düz avatar · golden yeşil · "hareketi azalt" açıkken animasyon durur · 🔴 **p95 kare süresi ≤ 16.7 ms, jank ≤ %1** (`flutter run --profile` + timeline).
 - **Tuzaklar:** Görsel değişiklik sırasında kademe eşiğini kaydırmak (kullanıcıların tacı sessizce değişir) · ağır efektle kare düşürmek.
 - **Model önerisi:** 🟣 Pro
+
+#### WP-292 sonuç kaydı (2026-07-25)
+
+- **Durum:** [x] **Kod/test tamam** — `flutter analyze` **0**, tam paket **776 yeşil / 0 kırmızı** (öncesi 767; +7 birim testi, +2 golden). **Bekleyen:** sahip beğenisi + cihaz QA (tek beta turunda).
+- 🔴 **Kök neden (tahmin değil, kodda okundu):** eski taç iki hata taşıyordu. (1) Bant `RRect` olarak çiziliyordu ([eski `crowned_avatar.dart:144`](app/lib/core/widgets/crowned_avatar.dart:144)) — **düz bir dikdörtgenin daireye teğet olabileceği tek nokta tepe noktasıdır**, iki uç zorunlu olarak havada kalıyordu. (2) Taç `Positioned(top: -radius * 0.22)` ile sabit bir kutuya çiziliyordu ve **çizim kodu avatarın yarıçapını hiç bilmiyordu**, dolayısıyla kavis üretmesi mümkün değildi. Sahibin "doğal durmuyor" dediği şey buydu.
+- **Çözüm:** geometri **kutupsal** hâle getirildi (`CrownGeometry`): her nokta avatar merkezine göre *açı + yarıçap çarpanı*. Bandın alt kenarı avatarla **eş merkezli bir yay** (`Path.arcToPoint`), yani her açıda teğet. Testte hem teğetlik hem "kafanın içine girmeme" beş ayrı açıda doğrulanıyor.
+- **Sahip onaylı geometri (canlı önizlemeden seçildi):** `5 uç · span 50° · tip 1.63 · inci 0.10 · kavis 0.50`. Sayılar `CrownGeometry.standard`'da ve testte sabitlendi — biri değişirse test kırmızıya döner.
+- ⚠️ **Golden'a bakarak iki düzeltme yapıldı (yeşile dönmesi yeterli sayılmadı):**
+  1. Küçük avatarlar için ilk yazılan "tok" varyant tacı **kısaltıyordu**; golden'da r = 12'de taç okunaksız bir tümseğe indi (24 px'lik avatarda taca ~7 px kalıyor). Doğru yön tersiydi: tok varyantta uçlar **uzatıldı** (`tipRadius 1.74`), inci kapatıldı (çapı ~2 px'e düşüp lekeye dönüşüyordu), kavis azaltıldı (uçlar 2 px'lik tarak olmasın).
+  2. Kademe listesindeki `workspace_premium` madalyasını gerçek taçla değiştirmek denendi ve **geri alındı**: taç tabanı avatar yayı olduğu için altında kafa olmadan "kanat" gibi okunuyor. Düzgün liste ikonu **düz tabanlı** ikinci bir geometri ister (vadi yarıçapı da uç yüksekliğiyle oranlanmalı) — sahip onayıyla ayrı iş, gerekçe kodda yorum olarak duruyor.
+- ✅ **Halka da oranlandı:** eskiden sabit 3 px'ti; r = 12'de 24 px'lik avatarın çeyreğini yiyor, r = 48'de ince kalıyordu. Artık `max(2, radius * 0.075)`. Glow blur'u da sabit 12 px yerine `radius * 0.3` — **küçük avatarlarda çizim maliyeti düştü**, artmadı.
+- ⚠️ **Kutu boyutu değişti, ölçüldü:** genişlik **her boyutta daraldı** (eski kutu kareydi ve altta boş yer bırakıyordu), yükseklik r ≥ 28'de düştü ama **küçük avatarlarda ~2–4 px arttı** (tok varyant tacı uzattığı için). Liste satırları o kadar uzuyor. Test bu sınırı 8 gerçek yarıçapta bağlıyor, ileride taç uzatılırsa satırların sessizce şişmesi yakalanır. Göze batıp batmadığı **QA maddesi**.
+- 🔴 **Performans bütçesi ölçülemedi — dürüst kayıt.** `p95 ≤ 16.7 ms / jank ≤ %1` cihaz + `--profile` timeline ister; tek beta kararı gereği elde cihaz koşumu yok. **Yerine ne biliniyor:** animasyon **eklenmedi** (statik `CustomPaint`, ticker yok), dolayısıyla "hareketi azalt" kabulü kendiliğinden sağlanıyor; boxShadow blur'u küçüldü ve widget ağacı sadeleşti (eski kod her çağrıda bir `UserAvatar`'ı boşa kuruyordu). Yani değişiklik öncesinden **kesin olarak daha pahalı değil**. Ölçüm QA kuyruğuna yazıldı.
+- **Değişen dosyalar:** `app/lib/core/widgets/crowned_avatar.dart` (yeniden yazıldı: `CrownGeometry` + `CrownVertex` + `crownRingWidth` + yeni `CrownPainter`) · `app/lib/core/widgets/crown_tiers_sheet.dart` (yalnız yorum — denenip geri alınan ikon değişikliğinin gerekçesi) · `app/test/features/profile/crowned_avatar_test.dart` (2 → 9 test) · yeni `app/test/features/profile/crown_golden_test.dart` + `goldens/crown_tiers_r44.png`, `goldens/crown_sizes.png`. **`achievement_ledger_engine.dart`'a dokunulmadı** — `crownRankForXp` ve `kCrownXpThresholds` bit bit aynı, testte de sabitlendi.
 
 ### WP-294: l10n borcu ayıklama + audit CI kapısı 🌍
 - **Program/Faz:** Yeni Özellik Turu · Aşama A · (plan §3 l10n borcu, R23)
@@ -315,11 +334,9 @@ DALGA 6  WP-294  l10n borcu  ‖  WP-295  Kamp ateşi (sahiple konuşma sonrası
 ## Worker'a Verilecek Kısa Komutlar
 
 **Beta'ya kadar sırayla verilecek komutlar** (hepsi bitmeden beta çıkmaz):
-- ✅ `worker'ı oku ve WP-292'yi yap` — taç görseli (**sıradaki**; sahip tasarım referansı arayacak)
-- 🟡 `worker'ı oku ve WP-294'ü yap` — bugünkü 4 dil gerçeğiyle; "EN/TR'ye daraltma" dalı K-7 bekler
+- 🟡 `worker'ı oku ve WP-294'ü yap` — **sıradaki**; bugünkü 4 dil gerçeğiyle, "EN/TR'ye daraltma" dalı K-7 bekler
 - 🔴 WP-295 → **worker komutu değil:** önce sahiple kamp ateşi tasarım konuşması
-
-⚠️ **297 ile 292 aynı anda koşulmaz** — ikisi de golden test yüzeyine giriyor.
+- ❓ Avatar aura efekti → **worker komutu değil:** önce sahip kapsam kararı (profil-only mu, kademeye göre mi)
 
 Kod/test'i bitmiş WP'ler (286, 287, 288, 289, 290, 291, 293) için **worker komutu verilmez** — sıra sahipte (cihaz QA + WP-287 staging paneli).
 

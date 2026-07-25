@@ -101,11 +101,15 @@ class _CrownTierRow extends StatelessWidget {
         ),
         child: Row(
           children: [
+            // WP-292 notu: buraya gerçek tacın ikon hâlini koymak denendi ve
+            // geri alındı. Taç siluetinin tabanı avatarla eş merkezli bir yay;
+            // altında kafa olmadan bu yay "kanat" gibi okunuyor. Düzgün bir
+            // liste ikonu için **düz tabanlı** ikinci bir geometri gerekiyor
+            // (vadi yarıçapı da uç yüksekliğiyle oranlanmalı) — sahip onayıyla
+            // ayrı iş. Madalya o yüzden yerinde bırakıldı.
             Icon(
               reached ? Icons.workspace_premium : Icons.lock_outline,
-              color: reached
-                  ? color
-                  : color.withValues(alpha: 0.45),
+              color: reached ? color : color.withValues(alpha: 0.45),
             ),
             const SizedBox(width: 10),
             Expanded(
