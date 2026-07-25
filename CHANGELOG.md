@@ -4,6 +4,32 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [beta-v4309 / 1.0.43-beta.9+4309] - 2026-07-25
+
+> **Beta aday.** Yeni Özellik Turu Aşama A'nın kapanan dokuz iş paketi tek turda cihaz testine gidiyor.
+> Kamp ateşi sahnesinin yenilenmesi bu sürümde **yok** — bir sonraki betaya kaldı (bkz. `docs/YENI-OZELLIK-NOTLARI.md` F-09).
+
+### Yenilikler
+- **Kendi temanı oluştur sihirbazı:** renk, tipografi, biçim, atmosfer ve his adım adım seçiliyor; cihaza kayıtlı üç özel tema yuvası var.
+- **Görünüm ekranı yeniden düzenlendi.**
+- **Profil tacı yeniden çizildi** (sahip onaylı geometri: 5 uç · span 50° · tip 1.63 · inci 0.10 · kavis 0.50) ve **altın kademeden itibaren** avatarın çevresinde kademe rengiyle ölçekli bir aura görünüyor.
+- **Bildirim, izin ve rapor ayarları tek yerde toplandı.**
+- **Kart boyutu paneli** ekranın altına sabitlendi; düzenlerken kaybolmuyor.
+- **Yazı tipleri uygulamanın içinde geliyor** (Inter · Literata · JetBrains Mono, ADR-4); APK'ya +1.02 MB ekledi, görünüm cihaz fontuna bağlı değil.
+
+### Düzeltmeler
+- Şifremi unuttum bağlantısı Android'de açılıyor; Windows için kod ile doğrulama yolu eklendi.
+- Almanca ve Arapça seçiliyken İngilizce/Türkçe kalan ekranlar çevrildi: hesap silme, güncelleme, bildirim kanalları, yapılandırma tanısı, ana ekran kart ipucu, en verimli saat.
+- Görev bitiş tarihindeki ay adı artık uygulamanın dilinden geliyor (sabit Türkçe ay listesi kaldırıldı).
+- Bildirim kanallarının sistem ayarlarında görünen açıklaması artık kanal adının kopyası değil.
+- Windows'ta alarm ekleme ekranı gereksiz uyarı penceresi açmıyor.
+
+### Notlar
+- Bu beta **staging** backend ve migration head **0070** ile çalışır (`tooling/release/deploy-contract.json`).
+- Bu turda **iki beta** kararı yürürlüktedir: beta 1 = bu sürüm; beta 2 = kamp ateşi (WP-295/299/300) + admin işleri.
+- 🔴 **Test sırasında kamp ateşi ekranında takılma olup olmadığına özellikle bakılmalı** — WP-295/299'un `p95 ≤ 16.7 ms` / jank ≤ %1 bütçesi bu turda ölçülüyor.
+- ⚠️ Şifre sıfırlama akışının test edilebilmesi için önce **staging Supabase panel adımı** gerekir (`docs/SIFRE-SIFIRLAMA-PANEL-RUNBOOK.md`).
+
 ## [v45 / 1.0.45+45] - 2026-07-23
 
 > **Kararlı sürüm.** v44 adayındaki bildirim tanısı ve One UI sayaç biçimi production sözleşmesiyle yayımlanır.

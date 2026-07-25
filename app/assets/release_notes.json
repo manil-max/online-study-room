@@ -3,6 +3,54 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.43-beta.9",
+      "buildNumber": 4309,
+      "channel": "beta",
+      "date": "2026-07-25",
+      "title": "beta-v4309: tema stüdyosu, taç, aura ve dört dil",
+      "highlights": [
+        "Kendi temanı oluştur sihirbazı geldi: renk, tipografi, biçim, atmosfer ve his adım adım seçiliyor.",
+        "Görünüm ekranı yeniden düzenlendi; cihaza kayıtlı üç özel tema yuvası var.",
+        "Profil fotoğrafındaki taç yeniden çizildi; altın kademeden itibaren avatarın çevresinde kademe rengiyle parlayan bir aura görünüyor.",
+        "Bildirim, izin ve rapor ayarları tek bir yerde toplandı.",
+        "Kart boyutu paneli ekranın altına sabitlendi; düzenlerken kaybolmuyor.",
+        "Yazı tipleri artık uygulamanın içinde geliyor (Inter · Literata · JetBrains Mono); görünüm cihazın fontuna göre değişmiyor."
+      ],
+      "fixes": [
+        "Şifremi unuttum bağlantısı Android'de açılıyor; Windows için kod ile doğrulama yolu eklendi.",
+        "Almanca ve Arapça seçiliyken İngilizce veya Türkçe kalan ekranlar çevrildi: hesap silme, güncelleme, bildirim kanalları, yapılandırma tanısı, ana ekran kart ipucu, en verimli saat.",
+        "Görev bitiş tarihindeki ay adı artık uygulamanın dilinden geliyor.",
+        "Bildirim kanallarının sistem ayarlarında görünen açıklaması artık kanal adının kopyası değil.",
+        "Windows'ta alarm ekleme ekranı gereksiz uyarı penceresi açmıyor."
+      ],
+      "notes": [
+        "Bu beta staging backend ve migration head 0070 ile çalışır.",
+        "Kamp ateşi sahnesinin yenilenmesi (oturma düzeni, marşmelov, gündüz/gece) bu sürümde YOK — bir sonraki betaya kaldı.",
+        "Test ederken kamp ateşi ekranında takılma olup olmadığına özellikle bakın: sonraki sürümün animasyon bütçesi bu turda ölçülüyor."
+      ],
+      "titleEn": "beta-v4309: theme studio, crown, aura and four languages",
+      "highlightsEn": [
+        "A build-your-own-theme wizard: colour, typography, shape, atmosphere and feel are chosen step by step.",
+        "The appearance screen was reorganised and keeps three device-local custom theme slots.",
+        "The profile crown was redrawn; from the gold tier upward the avatar carries an aura in that tier's colour.",
+        "Notification, permission and report settings now live in one place.",
+        "The card size panel is pinned to the bottom of the screen and no longer disappears while editing.",
+        "Fonts now ship inside the app (Inter · Literata · JetBrains Mono), so the look no longer depends on the device font."
+      ],
+      "fixesEn": [
+        "The password reset link opens on Android, and Windows gained a code-based verification path.",
+        "Screens that stayed English or Turkish under German and Arabic were translated: account deletion, updates, notification channels, configuration diagnostics, the home card hint and the most productive hour.",
+        "The month name on a task due date now follows the app language.",
+        "Notification channel descriptions in system settings are no longer a copy of the channel name.",
+        "Adding an alarm on Windows no longer opens an unnecessary warning dialog."
+      ],
+      "notesEn": [
+        "This beta runs against the staging backend and migration head 0070.",
+        "The campfire scene rework (seating, marshmallow, day/night) is NOT in this build; it lands in the next beta.",
+        "While testing, watch the campfire screen for stutter: the next release's animation budget is measured in this round."
+      ]
+    },
+    {
       "versionName": "1.0.45",
       "buildNumber": 45,
       "channel": "stable",

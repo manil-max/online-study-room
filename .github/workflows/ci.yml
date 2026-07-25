@@ -1,0 +1,63 @@
+name: CI
+
+# 🔴 Bu iş akışının varlık sebebi: `docs/BETA-YAYIN-ARIZA-NIHAI-RAPORU-2026-07-23.md`.
+# `beta-v4304` ve `beta-v4305` **APK derlemesi başlamadan**, release job'ının içindeki
+# tam test paketinde düştü. Sebep sınıfı: test paketi **yalnız release job'ında**
+# koşuyordu, yani `main`'e giren bir kırmızı ancak tag atıldığında görülüyordu —
+# sahibin zamanı boşa giden bir yayın turuyla.
+#
+# Bu kapı aynı komutları (`flutter analyze` + tam `flutter test`) **aynı runner
+# ailesinde (ubuntu)** her push'ta koşar. Böylece release job'ı sürpriz görmez.
+#
+# ℹ️ Golden testler Windows'ta üretildi ve bu iş akışından önce **hiç Linux'ta
+# koşmadı** (goldenlar 2026-07-24/25'te eklendi, son başarılı release 07-23).
+# Platformlar arası raster farkı goldenları kırabilir; kırarsa doğru çözüm
+# goldenları üretildikleri platforma sabitlemek, sayıyı gevşetmek değil.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze-and-test:
+    name: analyze + full test suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults: { run: { working-directory: app } }
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - run: flutter pub get
+
+      # Testler ağa çıkmaz; `--dart-define-from-file` yalnız dosyanın var olmasını
+      # ve iki anahtarı ister. Bu yüzden burada **secret kullanılmıyor** — sahte
+      # değerler yeterli, kanal/backend doğrulaması ayrı kapının işi
+      # (`current_build_manifest_gate_test.dart`, release job'ında koşar).
+      - name: Sahte env.json (secret gerekmez)
+        run: |
+          cat > env.json <<'JSON'
+          {
+            "SUPABASE_URL": "http://127.0.0.1:54321",
+            "SUPABASE_ANON_KEY": "ci-placeholder-anon-key"
+          }
+          JSON
+
+      # ⚠️ `flutter analyze` `--dart-define-from-file` bayrağını KABUL ETMEZ
+      # (yalnız run/test/build alır). Buraya eklenirse iş akışı anlamsız bir
+      # argüman hatasıyla düşer.
+      - run: flutter analyze
+
+      - run: flutter test --dart-define-from-file=env.json
