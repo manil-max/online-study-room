@@ -1,47 +1,141 @@
 #!/usr/bin/env python3
-"""WP-89: EN/TR catalog and visible-Flutter-literal audit.
+"""WP-294: l10n kapısı — dört katalog + gömülü EN/TR metin + native yüzeyler.
 
 Usage (repo root):
   python scripts/l10n_audit.py
 
-The audit deliberately excludes generated l10n output, comments, tests, and
-repository exception taxonomy. Repository strings are internal error-classifier
-input; user-facing widgets must map them through AppLocalizations instead.
+Tarih: WP-89'da **yalnız EN/TR** katalog denetimi olarak doğdu. O hâliyle sahte
+güven üretiyordu: DE/AR katalogları hiç yüklenmiyordu ve **gömülü İngilizce**
+kullanıcı metni yakalanmıyordu (yalnız Türkçe karakter arıyordu). WP-294 üç şeyi
+düzeltti:
+
+1. **Dört katalog** (`en`, `tr`, `de`, `ar`) — anahtar eşliği + placeholder eşliği
+   **her dil için** denetlenir. Şablon `en`.
+2. **Gömülü prose metin** — Türkçe karakter içermeyen Türkçe cümleler (`Boyut …
+   dokun ve ayarla`) ve gömülü İngilizce cümleler de yakalanır. Tarama
+   **kullanıcıya görünen widget yuvalarıyla** sınırlı (`Text(`, `title:`,
+   `tooltip:` …); aksi hâlde yanlış pozitif oranı denetimi kullanılamaz kılıyor.
+3. **UTF-8 çıktı** — Windows `cp1254` konsolunda bulguları yazdırırken çöküyordu
+   (`UnicodeEncodeError`), yani denetim raporunu **hiç göstermeden** düşüyordu.
+
+Denetim bilinçli olarak üretilen l10n çıktısını, yorumları ve testleri dışlar.
+Muafiyetler `INTERNAL_PREFIXES` / `LITERAL_EXEMPTIONS` / `UI_PROSE_EXEMPTIONS`
+altında **gerekçesiyle** durur; gerekçesiz muafiyet eklenmez.
 """
 
 from __future__ import annotations
 
 import json
+import os
 import re
 import subprocess
 import sys
 from pathlib import Path
 
 
+# Windows konsolu cp1254; bulgular Türkçe/Almanca/Arapça metin içeriyor.
+# Bu satır olmadan denetim raporu yazdırırken çöküyordu (WP-294 bulgu (a)).
+for stream in (sys.stdout, sys.stderr):
+    if hasattr(stream, "reconfigure"):
+        stream.reconfigure(encoding="utf-8", errors="replace")
+
 ROOT = Path(__file__).resolve().parents[1]
 APP = ROOT / "app"
-ARB_EN = APP / "lib/l10n/app_en.arb"
-ARB_TR = APP / "lib/l10n/app_tr.arb"
 DART_ROOT = APP / "lib"
 NATIVE_AUDIT = ROOT / "scripts/l10n_android_audit.py"
+
+# Şablon dil `en`; diğerleri ona göre denetlenir.
+TEMPLATE_LOCALE = "en"
+LOCALES = ("en", "tr", "de", "ar")
+
+
+def arb_path(locale: str) -> Path:
+    return APP / f"lib/l10n/app_{locale}.arb"
+
 
 TURKISH_CHAR_RE = re.compile(r"[ÇĞİÖŞÜçğıöşü]")
 LINE_COMMENT_RE = re.compile(r"//.*?$", re.MULTILINE)
 BLOCK_COMMENT_RE = re.compile(r"/\*.*?\*/", re.DOTALL)
-STRING_RE = re.compile(
-    r"'(?:\\.|[^'\\])*'|\"(?:\\.|[^\"\\])*\"", re.DOTALL
+STRING_RE = re.compile(r"'(?:\\.|[^'\\])*'|\"(?:\\.|[^\"\\])*\"", re.DOTALL)
+
+# Kullanıcıya görünen widget yuvaları. Prose taraması **yalnız** burada çalışır:
+# tüm literal'lere bakmak teknik sabitler yüzünden kullanılamaz bir gürültü
+# üretiyor (rota adları, pref anahtarları, SQL, asset yolları…).
+UI_SLOT = (
+    r"(?:(?:Text|SelectableText|Tooltip)\(\s*"
+    r"|(?:title|subtitle|label|labelText|hintText|helperText|errorText|tooltip"
+    r"|content|semanticsLabel|message|dialogTitle|confirmLabel)\s*:\s*)"
+)
+UI_LITERAL_RE = re.compile(
+    UI_SLOT + r"'((?:\\.|[^'\\])*)'|" + UI_SLOT + r'"((?:\\.|[^"\\])*)"',
+    re.DOTALL,
 )
 
-# These paths carry non-UI exception taxonomy. They are intentionally not
-# translated at the repository boundary: presentation code maps the category to
-# the active AppLocalizations catalog and never displays the raw message.
-INTERNAL_PREFIXES = (
-    "app/lib/data/repositories/",
+# "Cümle gibi duruyor": büyük harfle başlıyor ve içinde boşluk var.
+PROSE_RE = re.compile(r"^[A-ZÇĞİÖŞÜ][^\n]*\s")
+# Teknik sabit kalıpları — çeviri gerektirmez.
+TECHNICAL_RE = re.compile(
+    r"://"  # URL
+    r"|^[a-z0-9_.]+$"  # snake/dotted id
+    r"|^[A-Z0-9_]+$"  # SCREAMING_CASE sabit
+    r"|^\$"  # tamamı interpolasyon
+    r"|^@"  # asset/annotation
+    r"|^\d"  # sayıyla başlayan biçim
+    r"|^[a-z]+[A-Z]"  # camelCase id
 )
-INTERNAL_LITERAL_FILES = {
-    "app/lib/core/observability/observability_service.dart",
-    "app/lib/core/prefs/app_prefs.dart",
-    "app/lib/features/auth/auth_screen.dart",
+
+# (1) Depo/istisna taksonomisi: bunlar iç sınıflandırıcı girdisidir. Sunum kodu
+# kategoriyi aktif AppLocalizations kataloğuna eşler, ham mesajı **göstermez**.
+INTERNAL_PREFIXES = ("app/lib/data/repositories/",)
+
+# (2) Dosya bazlı muafiyetler — Türkçe literal taraması. Her satır bir gerekçe
+# taşır; gerekçesi yazılamayan dosya muaf edilmez.
+LITERAL_EXEMPTIONS: dict[str, str] = {
+    "app/lib/core/observability/observability_service.dart": (
+        "Sentry etiketleri ve breadcrumb metinleri — telemetri alanı, kullanıcıya "
+        "gösterilmez."
+    ),
+    "app/lib/core/prefs/app_prefs.dart": (
+        "SharedPreferences anahtarları — kalıcı depolama sözleşmesi, çevrilirse "
+        "kullanıcı verisi kaybolur."
+    ),
+    "app/lib/features/auth/auth_screen.dart": (
+        "Supabase hata kodu eşlemesi; kullanıcıya gösterilen metin katalogdan "
+        "geliyor."
+    ),
+    "app/lib/features/profile/legal_documents.dart": (
+        "Yasal metinler (gizlilik, koşullar, topluluk kuralları) kodda TR+EN "
+        "olarak gömülü. 🔴 Bilinen borç: bu metinlerin katalog/asset mimarisine "
+        "taşınması WP-294 kapsamı DIŞINDA, ayrı WP. Katalogla değiştirilmesi "
+        "yasal sürüm takibini (policyVersion) da etkiler."
+    ),
+    "app/lib/features/profile/theme_builder/bundled_font_licenses.dart": (
+        "`debugPrint` geliştirici günlüğü (WP-297 lisans yükleme hatası) — "
+        "kullanıcı arayüzünde görünmez."
+    ),
+}
+
+# (3) Prose taraması muafiyetleri — çevrilmemesi **doğru** olan metinler.
+UI_PROSE_EXEMPTIONS: dict[str, str] = {
+    "app/lib/core/stats/achievement_engine.dart": (
+        "Motor içi başarım tanımları (`kAllAchievements`, yalnız `:194`'te "
+        "tüketiliyor). Kullanıcıya görünen başarım metni sunucu sözlüğünden "
+        "(`achievementDictionaryProvider`) gelir."
+    ),
+    "app/lib/core/stats/gamification.dart": (
+        "`AchievementStatus.title` hiçbir widget'ta çizilmiyor; liste yalnız "
+        "`crownTierFor` tarafından okunuyor."
+    ),
+    "app/lib/core/time_engine/world_clock_math.dart": (
+        "IANA şehir adları (New York, São Paulo) — özel isim, çevrilmez."
+    ),
+    "app/lib/data/providers/alarm_providers.dart": (
+        "Varsayılan dünya saati şehir adı — özel isim, çevrilmez."
+    ),
+    "app/lib/features/desktop/desktop_navigation_pane.dart": (
+        "Klavye kısayolu ipucu (`Ctrl+1…5`): tuş adları platform sabiti, "
+        "çevrilebilir kısım zaten `AppLocalizations` üzerinden geliyor."
+    ),
 }
 
 
@@ -57,39 +151,87 @@ def strip_comments(source: str) -> str:
     return LINE_COMMENT_RE.sub("", BLOCK_COMMENT_RE.sub("", source))
 
 
-def flutter_literal_violations() -> list[str]:
-    violations: list[str] = []
-    for path in DART_ROOT.rglob("*.dart"):
+def dart_sources() -> list[tuple[str, str]]:
+    """(repo-relative path, yorumları çıkarılmış kaynak) çiftleri."""
+    sources: list[tuple[str, str]] = []
+    for path in sorted(DART_ROOT.rglob("*.dart")):
         relative = path.relative_to(ROOT).as_posix()
+        if relative.startswith("app/lib/l10n/"):
+            continue
+        sources.append(
+            (relative, strip_comments(path.read_text(encoding="utf-8")))
+        )
+    return sources
+
+
+def line_of(source: str, index: int) -> int:
+    return source.count("\n", 0, index) + 1
+
+
+def turkish_literal_violations(sources: list[tuple[str, str]]) -> list[str]:
+    violations: list[str] = []
+    for relative, source in sources:
         if (
-            relative.startswith("app/lib/l10n/")
-            or relative.startswith(INTERNAL_PREFIXES)
-            or relative in INTERNAL_LITERAL_FILES
+            relative.startswith(INTERNAL_PREFIXES)
+            or relative in LITERAL_EXEMPTIONS
         ):
             continue
-        source = strip_comments(path.read_text(encoding="utf-8"))
         for match in STRING_RE.finditer(source):
             literal = match.group(0)[1:-1]
             if TURKISH_CHAR_RE.search(literal):
-                line = source.count("\n", 0, match.start()) + 1
+                line = line_of(source, match.start())
                 violations.append(f"{relative}:{line}: {literal!r}")
     return violations
 
 
-def main() -> int:
+def looks_like_prose(text: str) -> bool:
+    stripped = text.strip()
+    if len(stripped) < 4 or TECHNICAL_RE.search(stripped):
+        return False
+    return bool(PROSE_RE.match(stripped))
+
+
+def ui_prose_violations(sources: list[tuple[str, str]]) -> list[str]:
+    """Kullanıcı yuvasına doğrudan yazılmış cümleler (dil ne olursa olsun).
+
+    Türkçe taramanın kaçırdığı iki sınıfı yakalar: (a) Türkçe'ye özel karakter
+    içermeyen Türkçe cümleler, (b) gömülü İngilizce cümleler.
+    """
+    violations: list[str] = []
+    for relative, source in sources:
+        if (
+            relative.startswith(INTERNAL_PREFIXES)
+            or relative in UI_PROSE_EXEMPTIONS
+        ):
+            continue
+        for match in UI_LITERAL_RE.finditer(source):
+            literal = match.group(1)
+            if literal is None:
+                literal = match.group(2)
+            if literal is not None and looks_like_prose(literal):
+                line = line_of(source, match.start())
+                violations.append(f"{relative}:{line}: {literal!r}")
+    return violations
+
+
+def catalog_errors() -> tuple[list[str], int]:
+    """Dört katalogda anahtar + placeholder eşliği. (hatalar, şablon anahtar sayısı)"""
     errors: list[str] = []
-    en = catalog(ARB_EN)
-    tr = catalog(ARB_TR)
-    en_keys = source_keys(en)
-    tr_keys = source_keys(tr)
+    catalogs = {locale: catalog(arb_path(locale)) for locale in LOCALES}
+    keys = {locale: source_keys(data) for locale, data in catalogs.items()}
+    template = catalogs[TEMPLATE_LOCALE]
+    template_keys = keys[TEMPLATE_LOCALE]
 
-    if only_en := sorted(en_keys - tr_keys):
-        errors.append(f"ARB keys only in EN: {only_en}")
-    if only_tr := sorted(tr_keys - en_keys):
-        errors.append(f"ARB keys only in TR: {only_tr}")
+    for locale in LOCALES:
+        if locale == TEMPLATE_LOCALE:
+            continue
+        if missing := sorted(template_keys - keys[locale]):
+            errors.append(f"ARB keys missing in {locale.upper()}: {missing}")
+        if extra := sorted(keys[locale] - template_keys):
+            errors.append(f"ARB keys only in {locale.upper()}: {extra}")
 
-    for key in sorted(en_keys & tr_keys):
-        metadata = en.get(f"@{key}")
+    for key in sorted(template_keys):
+        metadata = template.get(f"@{key}")
         if not isinstance(metadata, dict):
             errors.append(f"missing template metadata for {key}")
             continue
@@ -97,23 +239,57 @@ def main() -> int:
         if not isinstance(placeholders, dict):
             errors.append(f"invalid template placeholder metadata for {key}")
             continue
-        localized = tr[key]
-        for placeholder in placeholders:
-            if not isinstance(localized, str) or f"{{{placeholder}" not in localized:
-                errors.append(f"TR value for {key} does not reference {{{placeholder}}}")
+        if not placeholders:
+            continue
+        # Placeholder eşliği **her dilde** denetlenir; eskiden yalnız TR'de
+        # bakılıyordu, DE/AR'de eksik placeholder sessizce geçiyordu.
+        for locale in LOCALES:
+            if locale == TEMPLATE_LOCALE or key not in keys[locale]:
+                continue
+            localized = catalogs[locale][key]
+            for placeholder in placeholders:
+                if (
+                    not isinstance(localized, str)
+                    or f"{{{placeholder}" not in localized
+                ):
+                    errors.append(
+                        f"{locale.upper()} value for {key} does not reference "
+                        f"{{{placeholder}}}"
+                    )
+    return errors, len(template_keys)
 
-    for violation in flutter_literal_violations():
-        errors.append(f"visible Flutter TR literal: {violation}")
 
+def native_errors() -> tuple[list[str], str]:
+    env = dict(os.environ, PYTHONIOENCODING="utf-8")
     native = subprocess.run(
         [sys.executable, str(NATIVE_AUDIT)],
         cwd=ROOT,
         check=False,
         text=True,
+        encoding="utf-8",
+        errors="replace",
         capture_output=True,
+        env=env,
     )
     if native.returncode:
-        errors.append("native Android audit failed:\n" + native.stdout + native.stderr)
+        return (
+            ["native Android audit failed:\n" + native.stdout + native.stderr],
+            "",
+        )
+    return [], (native.stdout or "").strip()
+
+
+def main() -> int:
+    errors, template_key_count = catalog_errors()
+    sources = dart_sources()
+
+    for violation in turkish_literal_violations(sources):
+        errors.append(f"hardcoded TR literal: {violation}")
+    for violation in ui_prose_violations(sources):
+        errors.append(f"hardcoded UI prose: {violation}")
+
+    native_failures, native_summary = native_errors()
+    errors.extend(native_failures)
 
     if errors:
         print(f"FAIL ({len(errors)}):")
@@ -122,9 +298,9 @@ def main() -> int:
         return 1
 
     print(
-        f"OK: {len(en_keys)} Flutter EN/TR keys with matching placeholders; "
-        "no visible Flutter Turkish literal; "
-        + native.stdout.strip()
+        f"OK: {template_key_count} Flutter keys across "
+        f"{'/'.join(locale.upper() for locale in LOCALES)} with matching "
+        "placeholders; no hardcoded user-facing literal; " + native_summary
     )
     return 0
 

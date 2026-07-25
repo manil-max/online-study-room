@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:online_study_room/l10n/app_localizations.dart';
 
 import '../../../data/providers/group_providers.dart';
 
@@ -49,7 +50,7 @@ class GroupAvatar extends ConsumerWidget {
 
     return Semantics(
       image: path != null,
-      label: '$name grup fotoğrafı',
+      label: AppLocalizations.of(context).classroomGrupFotografiSemantik(name),
       child: url.when(
         data: (signedUrl) {
           if (signedUrl == null || signedUrl.isEmpty) return fallback;

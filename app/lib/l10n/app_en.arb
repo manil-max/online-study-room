@@ -5460,5 +5460,145 @@
   "profileOnizlemeGovdeOrnegi": "Plan a short study session.",
   "@profileOnizlemeGovdeOrnegi": {
     "description": "Theme preview: sample body line."
+  },
+  "accountHesabiSil": "Delete account",
+  "@accountHesabiSil": {
+    "description": "Account settings: delete-account action. Source: Hesabi sil"
+  },
+  "accountSilmeOnayGovdesi": "Your account will be scheduled for permanent deletion in 14 days. You can cancel during that window. Enter your password to continue.",
+  "@accountSilmeOnayGovdesi": {
+    "description": "Account settings: delete-account confirmation body."
+  },
+  "accountSilmeyiPlanla": "Schedule deletion",
+  "@accountSilmeyiPlanla": {
+    "description": "Account settings: confirm button of the delete-account dialog."
+  },
+  "accountSilmePlanlandiTarih": "Deletion scheduled. Deadline: {deadline}",
+  "@accountSilmePlanlandiTarih": {
+    "description": "Account settings: snackbar after a deletion request is accepted.",
+    "placeholders": {
+      "deadline": {
+        "type": "String"
+      }
+    }
+  },
+  "accountSilmeIptalEdildi": "Deletion request canceled.",
+  "@accountSilmeIptalEdildi": {
+    "description": "Account settings: snackbar after a deletion request is canceled."
+  },
+  "accountSilmePlanlandiIptalEt": "Deletion scheduled — cancel",
+  "@accountSilmePlanlandiIptalEt": {
+    "description": "Account settings: tile title while a deletion is pending."
+  },
+  "accountSilmeSonTarih": "Deadline: {deadline}",
+  "@accountSilmeSonTarih": {
+    "description": "Account settings: tile subtitle while a deletion is pending.",
+    "placeholders": {
+      "deadline": {
+        "type": "String"
+      }
+    }
+  },
+  "accountSilmeGeriAlmaPenceresi": "14-day cooling-off, then permanent delete",
+  "@accountSilmeGeriAlmaPenceresi": {
+    "description": "Account settings: tile subtitle explaining the cooling-off window."
+  },
+  "updaterMagazaUzerindenYonetilir": "Updates are managed by the store.",
+  "@updaterMagazaUzerindenYonetilir": {
+    "description": "Updater: sideload disabled on store builds (fail-closed message)."
+  },
+  "classroomGrupFotografiniDegistir": "Change group photo",
+  "@classroomGrupFotografiniDegistir": {
+    "description": "Class detail: tooltip of the group photo upload button."
+  },
+  "classroomGrupFotografiSemantik": "{name} group photo",
+  "@classroomGrupFotografiSemantik": {
+    "description": "Group avatar: semantics label read by screen readers.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationsYerelTestGovdesi": "Notification display on this phone works.",
+  "@notificationsYerelTestGovdesi": {
+    "description": "Notification self-test: body of the locally shown test notification."
+  },
+  "notificationsDurtmeKanaliAciklamasi": "Study nudges from your friends",
+  "@notificationsDurtmeKanaliAciklamasi": {
+    "description": "Android channel description: social nudges."
+  },
+  "notificationsTestKanaliAciklamasi": "Remote notification connectivity tests",
+  "@notificationsTestKanaliAciklamasi": {
+    "description": "Android channel description: push connectivity self-test."
+  },
+  "notificationsGuncellemeKanaliAciklamasi": "New version notifications",
+  "@notificationsGuncellemeKanaliAciklamasi": {
+    "description": "Android channel description: app updates."
+  },
+  "notificationsDuyuruKanaliAciklamasi": "Focus Camp and group announcements",
+  "@notificationsDuyuruKanaliAciklamasi": {
+    "description": "Android channel description: announcements."
+  },
+  "buildTaniBasligi": "Build diagnostics",
+  "@buildTaniBasligi": {
+    "description": "Build diagnostics card: title."
+  },
+  "buildTaniTanimsiz": "Channel/backend identity is not defined in this test build.",
+  "@buildTaniTanimsiz": {
+    "description": "Build diagnostics card: shown when the build manifest is absent."
+  },
+  "buildTaniKanal": "Channel",
+  "@buildTaniKanal": {
+    "description": "Build diagnostics card: channel row label."
+  },
+  "buildTaniSurum": "Version",
+  "@buildTaniSurum": {
+    "description": "Build diagnostics card: version row label."
+  },
+  "buildTaniMigrationBasi": "Migration head",
+  "@buildTaniMigrationBasi": {
+    "description": "Build diagnostics card: migration head row label."
+  },
+  "buildYapilandirmaHatasiBasligi": "Secure configuration could not be verified",
+  "@buildYapilandirmaHatasiBasligi": {
+    "description": "Fail-closed build configuration screen: title."
+  },
+  "buildYapilandirmaHatasiGovdesi": "The connection was closed to avoid writing data to the wrong environment. Rebuild the app with the correct channel and backend settings.",
+  "@buildYapilandirmaHatasiGovdesi": {
+    "description": "Fail-closed build configuration screen: body."
+  },
+  "buildYapilandirmaHatasiKodu": "Diagnostic code: {code}",
+  "@buildYapilandirmaHatasiKodu": {
+    "description": "Fail-closed build configuration screen: diagnostic code (never a secret).",
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "homeKartBoyutIpucu": "Size {width}×{height} • tap to adjust",
+  "@homeKartBoyutIpucu": {
+    "description": "Home edit mode: card size hint under the card title.",
+    "placeholders": {
+      "width": {
+        "type": "int"
+      },
+      "height": {
+        "type": "int"
+      }
+    }
+  },
+  "statsEnVerimliSaat": "Peak hour: {hour}:00 ({duration})",
+  "@statsEnVerimliSaat": {
+    "description": "Hour activity chart: peak hour summary line.",
+    "placeholders": {
+      "hour": {
+        "type": "String"
+      },
+      "duration": {
+        "type": "String"
+      }
+    }
   }
 }

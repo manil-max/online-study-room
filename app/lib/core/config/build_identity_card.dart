@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:online_study_room/l10n/app_localizations.dart';
 
 import 'app_build_manifest.dart';
 
@@ -9,7 +10,9 @@ class BuildIdentityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isTurkish = Localizations.localeOf(context).languageCode == 'tr';
+    // WP-294: burada da elle `languageCode == 'tr'` üçlemesi vardı; DE/AR
+    // kullanıcısı İngilizce görüyordu. Metinler artık katalogdan geliyor.
+    final l10n = AppLocalizations.of(context);
     final value = manifest;
     return Card(
       child: Padding(
@@ -22,25 +25,21 @@ class BuildIdentityCard extends StatelessWidget {
                 const Icon(Icons.fingerprint),
                 const SizedBox(width: 10),
                 Text(
-                  isTurkish ? 'Derleme tanısı' : 'Build diagnostics',
+                  l10n.buildTaniBasligi,
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
               ],
             ),
             const SizedBox(height: 12),
             if (value == null)
-              Text(
-                isTurkish
-                    ? 'Kanal/backend kimliği bu test derlemesinde tanımlı değil.'
-                    : 'Channel/backend identity is not defined in this test build.',
-              )
+              Text(l10n.buildTaniTanimsiz)
             else ...[
               _IdentityRow(
-                label: isTurkish ? 'Kanal' : 'Channel',
+                label: l10n.buildTaniKanal,
                 value: value.channelName,
               ),
               _IdentityRow(
-                label: isTurkish ? 'Sürüm' : 'Version',
+                label: l10n.buildTaniSurum,
                 value: '${value.versionName}+${value.buildNumber}',
               ),
               _IdentityRow(
@@ -49,7 +48,7 @@ class BuildIdentityCard extends StatelessWidget {
               ),
               _IdentityRow(label: 'Commit', value: value.shortCommit),
               _IdentityRow(
-                label: isTurkish ? 'Migration başı' : 'Migration head',
+                label: l10n.buildTaniMigrationBasi,
                 value: value.migrationHead,
               ),
             ],

@@ -617,7 +617,9 @@ class _GroupAvatarEditorState extends ConsumerState<_GroupAvatarEditor> {
             end: -4,
             bottom: -4,
             child: IconButton.filled(
-              tooltip: 'Grup fotoğrafını değiştir',
+              tooltip: AppLocalizations.of(
+                context,
+              ).classroomGrupFotografiniDegistir,
               onPressed: _uploading ? null : _pickAndUpload,
               icon: _uploading
                   ? const SizedBox.square(

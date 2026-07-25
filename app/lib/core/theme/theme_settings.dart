@@ -218,7 +218,11 @@ class ThemeSettingsNotifier extends Notifier<ThemeSettings> {
     final base = AppTheme.light(kAppPalettes.first);
     return CustomTheme(
       id: 'custom_$slot',
-      name: 'Özel Tema $slot',
+      // Boş yuvanın adı hiçbir yerde çizilmiyor: `AppearanceScreen` yalnız
+      // `isDefined` temaları listeler ve sihirbaz tanımsız yuvada `name: ''`
+      // kullanır. Buraya gömülü Türkçe bir ad koymak (eski hâli) yuva bir gün
+      // gösterilirse dili kaçıran sessiz bir sızıntıydı (WP-294).
+      name: '',
       isDefined: false,
       updatedAt: null,
       lightColors: base.extension<AppColors>()!,

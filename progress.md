@@ -33,10 +33,10 @@
 - **SAHİP yollar:** —
 
 ### Claude Lane
-- **Durum:** [ ] Çalışıyor
-- **Faz/WP:** **WP-294** — l10n borcu ayıklama + audit CI kapısı
-- **SAHİP yollar:** `scripts/l10n_audit.py`, `.github/workflows/**` (yalnız yeni l10n kapısı), `app/lib/l10n/app_*.arb`, audit'in bulduğu sabit metinlerin bulunduğu ürün dosyaları
-- **Son not:** 2026-07-25 turunda **WP-296, WP-297, WP-292 ve WP-298** tamam — `analyze` 0, **784 test yeşil**. Taç geometrisi sahip onayıyla sabitlendi (**5 uç · span 50° · tip 1.63 · inci 0.10 · kavis 0.50**), aura kademeye göre ölçekli. WP-295 hâlâ sahiple konuşmayı bekliyor.
+- **Durum:** [x] Boşta
+- **Faz/WP:** —
+- **SAHİP yollar:** —
+- **Son not:** 2026-07-25 turunda **WP-296, WP-297, WP-292, WP-298 ve WP-294** tamam — `analyze` 0, **793 test yeşil**. Taç geometrisi sahip onayıyla sabitlendi (**5 uç · span 50° · tip 1.63 · inci 0.10 · kavis 0.50**), aura kademeye göre ölçekli. **Kalan tek iş WP-295** ve o sahiple tasarım konuşmasını bekliyor — ajan tarafında başlayacak iş yok.
 - ✅ **WP-298 açık sorusu kapandı (sahip, 2026-07-25):** "altından itibaren" = **altın kademe (3.)**. Kod doğru; bronz/gümüşte aura yok, değişiklik yapılmadı.
 
 ### Codex Lane
@@ -78,6 +78,8 @@
 | **WP-292** Taç görseli | 2026-07-25 (Claude) | 🔴 **Sahip beğenisi** (asıl kabul) · liderlik/sohbet/ısı tablosu gibi **küçük avatarlarda** taç okunuyor mu · liste satırları küçük avatarlarda ~2–4 px uzadı, göze batıyor mu · taçsız kullanıcı düz avatar · **p95 kare ≤ 16.7 ms / jank ≤ %1** (`--profile` + timeline; animasyon eklenmediği için risk düşük ama ölçüm cihazsız yapılamadı) | Android cihaz |
 | **WP-298** Avatar aura efekti | 2026-07-25 (Claude) | 🔴 **Sahip beğenisi** · ✅ kademe okuması doğrulandı (altın = 3., bronz/gümüşte aura YOK) · profil ve sosyal profilde görünüyor, **listelerde görünmüyor** · aura yanlara taşıyor, kesilmiyor · fotoğraf değiştir düğmesi yerinde · **hareketi azalt** açıkken donuyor · 🔴 **p95 ≤ 16.7 ms / jank ≤ %1** — WP-298 **animasyon ekleyen tek iş**, bu ölçüm asıl burada gerekli (profil ekranı, `--profile` + timeline) | Android cihaz |
 
+| **WP-294** l10n borcu + CI kapısı | 2026-07-25 (Claude) | Hesap silme akışı (dialog · şifre alanı · iki snackbar · kart alt metni) **cihaz dilinde** okunuyor · görev listesinde bitiş tarihi etiketi doğru ay adını veriyor (TR `28 Ağu`, EN `Aug 28`) ve **çökmüyor** · ana ekran düzenleme modunda "Boyut …" ipucu · istatistikte "En verimli saat" satırı · Android **bildirim ayarlarında** 4 kanalın adı *ve açıklaması* ayrı görünüyor · yeni/uzun metinler 360 px'te taşmıyor | Android cihaz |
+
 **WP-289** (his araştırması) tamamen kapandı — doküman WP'si, QA gerektirmez.
 
 ## 🛠️ Kalan Kod İşi — ne kodlanacak
@@ -90,14 +92,14 @@
 | ~~1~~ | **WP-296** — `main`'de kırmızı 3 test | [x] **TAMAM** (2026-07-25) | ✅ Bitti — 759 yeşil / 0 kırmızı; 2 ürün hatası + 1 saate bağımlı test |
 | ~~1~~ | **WP-297** — gömülü fontlar (Inter · **Literata** · JetBrains Mono) | [x] **TAMAM** (2026-07-25) | ✅ Bitti — 767 yeşil; Lora ölçüm sonucu elendi (eksen 400–700) |
 | ~~1~~ | **WP-292** — taç görseli | [x] **TAMAM** (2026-07-25) | ✅ Bitti — 776 yeşil; sahip onaylı geometri + 2 golden. Kalan tek şey **sahip beğenisi** (QA kuyruğunda) |
-| **1** | **WP-294** — l10n borcu + audit CI kapısı | [ ] Kodlanacak | 🟡 **Kısmen** — audit genişletme + UTF-8 + CI kapısı **bugünkü 4 dil gerçeğiyle** yapılabilir; yalnız "EN/TR'ye daraltma" dalı K-7'ye bağlı |
-| **2** | **WP-295** — kamp ateşi animasyonları | [ ] Kodlanacak | 🔴 **TEK GERÇEK BLOKAJ** — sahiple tasarım konuşması yapılmadan başlamaz (kartın açık şartı, aşılmaz) |
+| ~~1~~ | **WP-294** — l10n borcu + audit CI kapısı | [x] **TAMAM** (2026-07-25) | ✅ Bitti — 793 yeşil; 40 bulgu → 0, 26 yeni anahtar × 4 dil, CI kapısı kırmızı-yeşil kanıtlı. "EN/TR'ye daraltma" dalına **dokunulmadı** (K-7 açık, dil seti aynı) |
+| **1** | **WP-295** — kamp ateşi animasyonları | [ ] Kodlanacak | 🔴 **TEK GERÇEK BLOKAJ** — sahiple tasarım konuşması yapılmadan başlamaz (kartın açık şartı, aşılmaz) |
 | ~~—~~ | **WP-298** — avatar aura efekti (PUBG tarzı sis/parıltı) | [x] **TAMAM** (2026-07-25) | ✅ Bitti — 784 yeşil; sahip üç kapsam sorusunu da yanıtladı (profil+sosyal profil · altından itibaren kademeli · kademe rengi) |
 | — | WP-276 / WP-277 — staging ops kabul kanıtı | [ ] Kod azı, ops çoğu | ⏸️ Beta dışı; sentetik staging kanıtı + WP-276 Play Store için gerekli |
 | — | WP-278 / WP-279 | [?] **Ürün/ops kararı** | 🔴 Sahip kararı olmadan kod yazılmaz |
 | — | Production backend değişikliği | 🔴 Kapalı | `deploy_enabled: false`; yeni terfi backup + dry-run + somut GO ister |
 
-**Beta çıkabilmesi için kalan:** ~~296~~ → ~~297~~ → ~~292~~ → ~~298~~ → **294** → 295 (295 sahiple konuşmayı bekler; 294 ajan işi).
+**Beta çıkabilmesi için kalan:** ~~296~~ → ~~297~~ → ~~292~~ → ~~298~~ → ~~294~~ → **295** — ve 295 sahiple tasarım konuşmasını bekliyor. **Ajan tarafında kodlanacak iş kalmadı.**
 
 ### Tema programından devreden borç — durumları
 
@@ -138,7 +140,7 @@ DALGA 2  WP-291  Boyut paneli ✅ → QA  ‖  WP-289  His araştırması ✅ t�
 DALGA 3  WP-288  Tema modeli      ✅ kod/test tamam → QA  ‖  WP-294  l10n  🟡 kısmen açık
 DALGA 4  WP-290  Tema sihirbazı   ✅ kod/test tamam → QA
 DALGA 5  WP-296 ✅ → WP-297 ✅ → WP-292 ✅ Taç → WP-298 ✅ Aura   kod/test tamam
-DALGA 6  WP-294  l10n borcu  ‖  WP-295  Kamp ateşi (sahiple konuşma sonrası)  ← SIRADAKİ
+DALGA 6  WP-294 ✅ l10n borcu + CI kapısı  ‖  WP-295  Kamp ateşi  ← TEK KALAN (sahiple konuşma)
 ──────── TEK BETA BURADA ÇIKAR (hepsi bitince) ────────
 ```
 
@@ -299,9 +301,9 @@ DALGA 6  WP-294  l10n borcu  ‖  WP-295  Kamp ateşi (sahiple konuşma sonrası
 - **Tuzaklar:** Aurayı bir listeye açmak (kare bütçesi gider) · kutuyu büyütüp fotoğraf düğmesini koparmak · auranın dikeyde taşıp `ListView` tepesinde kesilmesi · kuşak hızlarını birbirinin katı yapmak (tek halka gibi döner) · `pumpAndSettle` ile kilitlenen test yazmak.
 - **Model önerisi:** 🟣 Pro
 
-### WP-294: l10n borcu ayıklama + audit CI kapısı 🌍
+### WP-294: l10n borcu ayıklama + audit CI kapısı 🌍 ✅ KOD/TEST TAMAM
 - **Program/Faz:** Yeni Özellik Turu · Aşama A · (plan §3 l10n borcu, R23)
-- **Ajan:** — · **Durum:** [ ] Kodlanacak · 🟡 **Kısmen açık (2026-07-25 uzlaştırıldı):** audit'i 4 katalog + sabit EN/TR literal + native yüzeye genişletme, UTF-8 düzeltmesi, bulguların sınıflandırılması ve CI kapısı **bugünkü 4 dil gerçeğiyle yapılabilir**. 🔴 **Yalnız "AR/DE'yi üründen çıkarıp EN/TR'ye daraltma" dalı K-7'ye bağlıdır** — o dal K-7 kapanmadan uygulanmaz. Sahip 2026-07-25'te "Arapça'yı şimdilik dert etmiyoruz" dedi; bu **K-7 kararı değildir**, dil setine dokunulmaz.
+- **Ajan:** Claude · **Durum:** [x] **Kod/test tamam (2026-07-25)** — ayrıntı aşağıdaki sonuç kaydında. Eski durum notu tarihsel olarak duruyor: 🟡 **Kısmen açık (2026-07-25 uzlaştırıldı):** audit'i 4 katalog + sabit EN/TR literal + native yüzeye genişletme, UTF-8 düzeltmesi, bulguların sınıflandırılması ve CI kapısı **bugünkü 4 dil gerçeğiyle yapılabilir**. 🔴 **Yalnız "AR/DE'yi üründen çıkarıp EN/TR'ye daraltma" dalı K-7'ye bağlıdır** — o dal K-7 kapanmadan uygulanmaz. Sahip 2026-07-25'te "Arapça'yı şimdilik dert etmiyoruz" dedi; bu **K-7 kararı değildir**, dil setine dokunulmaz.
 - **Problem:** Üç katmanlı borç. **(a)** `l10n_audit.py` UTF-8'de **38 bulguyla kırmızı**: `account_settings_screen.dart:257,264,272,318,347,482,484,493`, `app_push_notification_service.dart:325,326,331`, `task_deadline.dart:152,153`, `achievement_reward_provider.dart:50,68` — koda gömülü Türkçe metinler. **(b)** Audit **yalnız EN/TR** yüklüyor (`:23-24`) → **DE/AR denetlenmiyor**; ayrıca sabit **İngilizce** kullanıcı metnini yakalamıyor → sahte güven üretiyor. **(c)** Denetim CI'da çalışmıyor, yeni borç engellenmiyor.
 - 🔴 **Yönetişim çelişkisi:** `progress.md` WP-278 AR/DE'nin üründe kalıp kalmayacağını **hâlâ ürün kararı olarak açık** bırakıyor; plan ise dört dili zorunlu sayıyor. **K-7 kapanmadan bu WP ve font/RTL işi başlamaz.**
 - **Kapsam dışı:** Yeni özellik, tema, yasal metinlerin mimari olarak dışarı taşınması (**not edilir, ayrı WP**), genel analyze/test CI kapısı kurulumu.
@@ -320,6 +322,24 @@ DALGA 6  WP-294  l10n borcu  ‖  WP-295  Kamp ateşi (sahiple konuşma sonrası
 - **Kabul (ölçülebilir):** Audit **dört katalog + sabit EN/TR literal + native yüzeyleri** kapsıyor · UTF-8'de çökmüyor · CI kapısı yeni sabit metni **reddediyor** (kırmızı-yeşil ispatı) · kullanıcıya görünen sabit metin sayısı ölçülüp düşürüldü · **K-7 kararına uygun dil seti** ile build yeşil.
 - **Tuzaklar:** Yanlış pozitifleri körü körüne çevirmek · yasal metin refactor'ına girip kapsamı patlatmak · 286/290 ile aynı anda l10n'e girmek.
 - **Model önerisi:** 🔵 Sonnet
+
+#### WP-294 sonuç kaydı (2026-07-25)
+
+- **Durum:** [x] **Kod/test tamam** — `flutter analyze` **0**, tam paket **793 yeşil / 0 kırmızı** (öncesi 784; +9 test). **Ölçüm:** denetim `FAIL (40)` → `OK`. Kataloglar 1263 → **1289 anahtar × 4 dil**.
+- ✅ **(a) UTF-8 çöküşü düzeldi.** Denetim Windows'ta bulguları *yazdırırken* `UnicodeEncodeError` ile düşüyordu, yani raporu **hiç göstermeden** ölüyordu (`→` karakteri `cp1254`'te yok). İki script de artık `sys.stdout.reconfigure(encoding="utf-8")` yapıyor. Ubuntu CI'da görünmeyen bir hataydı; Windows release runner'ı için bloklayıcıydı.
+- ✅ **(b) Denetim dört kataloğu kapsıyor.** Eskiden `:23-24` yalnız EN/TR yüklüyordu → **DE/AR hiç denetlenmiyordu**. Artık anahtar eşliği *ve* placeholder eşliği her dil için bakılıyor (eskiden placeholder yalnız TR'de bakılıyordu; DE/AR'de eksik placeholder sessizce geçiyordu). Kırmızı-yeşil doğrulandı: DE'den bir anahtar silinince ve bir placeholder bozulunca denetim iki bulguyla kırmızıya döndü.
+- 🔴 **(c) Gömülü metin taraması genişledi ve iki gerçek hata buldu.** Eski tarama yalnız *Türkçe karakter* arıyordu; Türkçe'ye özgü harf içermeyen Türkçe cümleleri ve gömülü İngilizceyi görmüyordu. Yeni prose taraması (`Text(`, `title:`, `tooltip:` … yuvalarıyla sınırlı) şunları yakaladı: [`home_screen.dart:923`](app/lib/features/home/home_screen.dart:923) `'Boyut … dokun ve ayarla'` ve [`hour_activity_chart.dart:70`](app/lib/features/stats/widgets/hour_activity_chart.dart:70) `'En verimli saat: …'` — ikisi de kullanıcının gördüğü, **hiçbir denetimin fark etmediği** metinlerdi.
+- 🔴 **En büyük borç `languageCode == 'tr'` üçlemesiydi.** [`account_settings_screen.dart`](app/lib/features/profile/account_settings_screen.dart) ve [`build_identity_card.dart`](app/lib/core/config/build_identity_card.dart) katalogu **tamamen atlayıp** iki dili elle tutuyordu → **DE/AR kullanıcısı İngilizce görüyordu** ve eski denetim İngilizce dalı hiç göremiyordu. İkisi de katalog altına alındı; kalıbın geri gelmesi teste bağlandı. (`release_notes_service.dart`'taki aynı kalıp **bilinçli bırakıldı**: orada seçilen şey UI metni değil, sürüm notu varlığının TR/EN alanları.)
+- ✅ **Ham istisna metni gösterimi kaldırıldı:** hesap silme akışında iki yerde `Text(e.toString())` vardı — yerelleştirilemez *ve* sunucu/istisna metnini kullanıcıya sızdırıyordu. Yerine katalogdaki genel hata mesajı geldi.
+- 🔴 **Bildirim kanallarında gerçek bir çift-tanım hatası bulundu.** Kanal adı/açıklaması **iki yerde** tanımlıydı: `initialize()` katalogdan kuruyor, `_channelFor` ise Türkçe sabit taşıyordu; üstelik `description` alanı adın **kopyasıydı**. Kanal adı Android sistem ayarlarında görünür, yani gerçek kullanıcı yüzeyi. Artık tek kaynak `_channelFor(type, l10n)` ve tür listesi `kNotificationChannelTypes`; her kanalın kendi açıklaması var. Kanal **kimlikleri değişmedi** (değişse kullanıcının kanal ayarları sıfırlanırdı) — mevcut testler bunu zaten bağlıyor.
+- ✅ **Ay adları katalog yerine `intl`'e bağlandı.** `taskDueDateLabel` 12 Türkçe ay kısaltmasını sabit taşıyordu. Katalog anahtarı **açılmadı**: `DateFormat.MMMd(locale)` aynı veriyi CLDR'den veriyor ve yerelin gün/ay **sırasını** da düzeltiyor (Arapça'da sıra farklı). ⚠️ Bu değişiklik `main()`'e `initializeDateFormatting()` eklemeyi zorunlu kıldı — **testim olmasa runtime'da `LocaleDataException` ile çökecekti**; bugün o etiketi çizen tek test yoktu.
+- ✅ **Yeni CI kapısı:** [`.github/workflows/l10n-gate.yml`](.github/workflows/l10n-gate.yml). 🔴 **Kırmızı-yeşil ispatı kapının içinde:** ikinci adım geçici olarak gömülü **İngilizce** bir `Text(...)` ekliyor, denetimin kırmızıya döndüğünü doğruluyor, sondayı siliyor. İngilizce seçildi çünkü Türkçe tarama WP-89'dan beri vardı; kanıtlanması gereken şey WP-294'ün eklediği taramadır. Yerelde de koşturuldu: sonda varken `FAIL (1)`, silinince `OK`.
+- ✅ **Muafiyetler artık gerekçeli.** `INTERNAL_PREFIXES` / `LITERAL_EXEMPTIONS` / `UI_PROSE_EXEMPTIONS` her dosya için **neden** muaf olduğunu yazıyor (Sentry etiketi, SharedPreferences anahtarı, IANA şehir adı, motor içi başarım verisi, `debugPrint` günlüğü…). Gerekçesi yazılamayan dosya muaf edilmiyor.
+- ℹ️ **Native audit zaten çağrılıyordu** (`subprocess` ile `l10n_android_audit.py`) — rev.2'nin "native audit ayrı" ifadesi yanlıştı, doğrusu script başlığına yazıldı. Native tarafta bir gerçek bulgu vardı: `timer_notification.xml` düzeninde `android:text="Durdur"` gömülüydü; `@string/action_stop` zaten mevcuttu, ona bağlandı.
+- 🔴 **K-7'ye DOKUNULMADI.** Dil seti aynı (EN/TR/DE/AR); "AR/DE'yi çıkarıp EN/TR'ye daraltma" dalı **hiç açılmadı**. Sahip "Arapça'yı şimdilik dert etmiyoruz" dedi ama bu K-7 kararı değil. Karar geldiğinde daraltma ayrı iş.
+- 🔴 **Bilinen borç, kapsam dışı bırakıldı (kart böyle diyordu):** yasal metinler (`legal_documents.dart`) kodda TR+EN gömülü duruyor. Katalog/asset mimarisine taşınması `policyVersion` sürüm takibini de etkiler → **ayrı WP**. Gerekçe denetimin muafiyet listesinde de yazılı, yani "unutulmuş" görünmüyor.
+- **Değişen dosyalar:** `scripts/l10n_audit.py` (yeniden yazıldı) · `scripts/l10n_android_audit.py` (UTF-8) · yeni `.github/workflows/l10n-gate.yml` · `app/lib/l10n/app_{en,tr,de,ar}.arb` (+26 anahtar) · `app/lib/main.dart` (`initializeDateFormatting`) · `account_settings_screen.dart` · `build_identity_card.dart` · `build_configuration_error_app.dart` (kendi l10n delegate'lerini bağlıyor) · `app_push_notification_service.dart` · `task_deadline.dart` + `tasks_screen.dart` · `theme_settings.dart` · `achievement_reward_provider.dart` · `class_detail_screen.dart` · `group_avatar.dart` · `home_screen.dart` · `hour_activity_chart.dart` · `updater_dialog.dart` · `timer_notification.xml` · yeni `app/test/l10n/wp294_l10n_debt_test.dart` (9 test).
+- **Cihaz QA'sı gerekiyor mu?** Küçük ama evet — QA kuyruğuna eklendi (metin uzunlukları + görev tarihi etiketi).
 
 ## Bekleyen Uygulanabilir WP'ler
 

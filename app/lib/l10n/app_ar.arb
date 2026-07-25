@@ -5123,5 +5123,31 @@
   "profileOnizlemeGovdeOrnegi": "خطّط لجلسة دراسة قصيرة.",
   "@profileOnizlemeGovdeOrnegi": {
     "description": "Theme preview: sample body line."
-  }
+  },
+  "accountHesabiSil": "حذف الحساب",
+  "accountSilmeOnayGovdesi": "سيتم جدولة حسابك للحذف النهائي بعد 14 يومًا. يمكنك الإلغاء خلال هذه الفترة. أدخل كلمة المرور للمتابعة.",
+  "accountSilmeyiPlanla": "جدولة الحذف",
+  "accountSilmePlanlandiTarih": "تم جدولة الحذف. الموعد النهائي: {deadline}",
+  "accountSilmeIptalEdildi": "تم إلغاء طلب الحذف.",
+  "accountSilmePlanlandiIptalEt": "الحذف مجدول — إلغاء",
+  "accountSilmeSonTarih": "الموعد النهائي: {deadline}",
+  "accountSilmeGeriAlmaPenceresi": "مهلة 14 يومًا، ثم حذف نهائي",
+  "updaterMagazaUzerindenYonetilir": "تُدار التحديثات عبر المتجر.",
+  "classroomGrupFotografiniDegistir": "تغيير صورة المجموعة",
+  "classroomGrupFotografiSemantik": "صورة مجموعة {name}",
+  "notificationsYerelTestGovdesi": "عرض الإشعارات على هذا الهاتف يعمل.",
+  "notificationsDurtmeKanaliAciklamasi": "تنبيهات الدراسة من أصدقائك",
+  "notificationsTestKanaliAciklamasi": "اختبارات اتصال الإشعارات البعيدة",
+  "notificationsGuncellemeKanaliAciklamasi": "إشعارات الإصدارات الجديدة",
+  "notificationsDuyuruKanaliAciklamasi": "إعلانات Focus Camp والمجموعات",
+  "buildTaniBasligi": "تشخيص الإصدار",
+  "buildTaniTanimsiz": "لم يتم تعريف هوية القناة/الخدمة في إصدار الاختبار هذا.",
+  "buildTaniKanal": "القناة",
+  "buildTaniSurum": "الإصدار",
+  "buildTaniMigrationBasi": "رأس الترحيل",
+  "buildYapilandirmaHatasiBasligi": "لا يمكن التحقق من التكوين الآمن",
+  "buildYapilandirmaHatasiGovdesi": "تم إغلاق الاتصال لتجنب كتابة البيانات في البيئة الخطأ. أعد بناء التطبيق بإعدادات القناة والخدمة الصحيحة.",
+  "buildYapilandirmaHatasiKodu": "رمز التشخيص: {code}",
+  "homeKartBoyutIpucu": "الحجم {width}×{height} • اضغط للتعديل",
+  "statsEnVerimliSaat": "أكثر ساعة إنتاجية: {hour}:00 ({duration})"
 }

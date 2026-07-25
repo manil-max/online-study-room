@@ -5,12 +5,22 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../data/models/nudge.dart';
 import '../config/firebase_push_config.dart';
 import '../l10n/system_localizations.dart';
 import 'flutter_test_host.dart';
+
+/// `initialize()`'ın kuracağı kanal türleri. `_channelFor` bu türleri kanal
+/// kimliği + görünen ad/açıklamaya çevirir; liste ile eşleme tek yerde durur.
+const kNotificationChannelTypes = <String>[
+  'nudge',
+  'self_test',
+  'update',
+  'announcement',
+];
 
 const _seenPushEventIdsKey = 'push_seen_event_ids_v1';
 const _lastPushEventIdKey = 'push_last_event_id';
@@ -172,30 +182,8 @@ class AppNotificationCoordinator {
     await _adapter.initialize();
     final l10n = await loadSystemLocalizations();
     final channels = <AndroidNotificationChannel>[
-      AndroidNotificationChannel(
-        'social_nudges',
-        l10n.coreDurtmeler,
-        description: l10n.coreDurtmeler,
-        importance: Importance.high,
-      ),
-      AndroidNotificationChannel(
-        'push_system_test',
-        l10n.notificationsHealthTitle,
-        description: l10n.notificationsHealthTitle,
-        importance: Importance.high,
-      ),
-      AndroidNotificationChannel(
-        'app_updates',
-        l10n.notificationsGuncellemeBildirimleri,
-        description: l10n.notificationsGuncellemeBildirimleri,
-        importance: Importance.high,
-      ),
-      AndroidNotificationChannel(
-        'announcements',
-        l10n.notificationsDuyurular,
-        description: l10n.notificationsDuyurular,
-        importance: Importance.high,
-      ),
+      for (final type in kNotificationChannelTypes)
+        _androidChannel(_channelFor(type, l10n)),
     ];
     await _adapter.createChannels(channels);
     _initialized = true;
@@ -216,11 +204,12 @@ class AppNotificationCoordinator {
   Future<void> showLocalTest() async {
     if (!_isAndroid) return;
     await initialize();
-    final channel = _channelFor('self_test');
+    final l10n = await loadSystemLocalizations();
+    final channel = _channelFor('self_test', l10n);
     await _adapter.show(
       id: 266001,
-      title: 'Odak Kampı',
-      body: 'Telefondaki bildirim gösterimi çalışıyor.',
+      title: l10n.appTitle,
+      body: l10n.notificationsYerelTestGovdesi,
       notificationDetails: NotificationDetails(
         android: AndroidNotificationDetails(
           channel.id,
@@ -250,7 +239,7 @@ class AppNotificationCoordinator {
         (message.data['body'] ?? '').toString().trim();
     if (title.isEmpty && body.isEmpty) return;
     await initialize();
-    final channel = _channelFor(type);
+    final channel = _channelFor(type, await loadSystemLocalizations());
     await _adapter.show(
       id: eventId.hashCode & 0x7fffffff,
       title: title,
@@ -287,7 +276,7 @@ class AppNotificationCoordinator {
     final body = nudge.message?.trim().isNotEmpty == true
         ? nudge.message!.trim()
         : l10n.coreSeniCalismayaCagiriyor;
-    final channel = _channelFor('nudge');
+    final channel = _channelFor('nudge', l10n);
     await _adapter.show(
       id: nudge.id.hashCode & 0x7fffffff,
       title: l10n.coreSenderDurttu(sender),
@@ -295,8 +284,8 @@ class AppNotificationCoordinator {
       notificationDetails: NotificationDetails(
         android: AndroidNotificationDetails(
           channel.id,
-          l10n.coreDurtmeler,
-          channelDescription: l10n.coreDurtmeler,
+          channel.name,
+          channelDescription: channel.description,
           importance: Importance.high,
           priority: Priority.high,
           category: AndroidNotificationCategory.message,
@@ -308,29 +297,49 @@ class AppNotificationCoordinator {
     );
   }
 
-  ({String id, String name, String description}) _channelFor(String type) {
+  /// Kanal kimliği + Android ayarlarında **görünen** ad/açıklama, tek yerde.
+  ///
+  /// 🔴 WP-294: eskiden iki ayrı tanım vardı ve ayrışmıştı. `initialize()`
+  /// kanalları katalogdan kuruyor, `_channelFor` ise **Türkçe sabit** taşıyordu;
+  /// üstelik `description` alanı adın kopyasıydı. Kanal adı/açıklaması Android'de
+  /// sistem ayarlarında görünür, yani gerçek bir kullanıcı yüzeyidir.
+  ({String id, String name, String description}) _channelFor(
+    String type,
+    AppLocalizations l10n,
+  ) {
     return switch (type) {
       'nudge' => (
         id: 'social_nudges',
-        name: 'Dürtmeler',
-        description: 'Arkadaşlarından gelen çalışma dürtmeleri',
+        name: l10n.coreDurtmeler,
+        description: l10n.notificationsDurtmeKanaliAciklamasi,
       ),
       'self_test' => (
         id: 'push_system_test',
-        name: 'Bildirim testi',
-        description: 'Uzak bildirim bağlantısı testleri',
+        name: l10n.notificationsHealthTitle,
+        description: l10n.notificationsTestKanaliAciklamasi,
       ),
       'update' => (
         id: 'app_updates',
-        name: 'Uygulama güncellemeleri',
-        description: 'Yeni sürüm bildirimleri',
+        name: l10n.notificationsGuncellemeBildirimleri,
+        description: l10n.notificationsGuncellemeKanaliAciklamasi,
       ),
       _ => (
         id: 'announcements',
-        name: 'Duyurular',
-        description: 'Odak Kampı ve grup duyuruları',
+        name: l10n.notificationsDuyurular,
+        description: l10n.notificationsDuyuruKanaliAciklamasi,
       ),
     };
+  }
+
+  AndroidNotificationChannel _androidChannel(
+    ({String id, String name, String description}) channel,
+  ) {
+    return AndroidNotificationChannel(
+      channel.id,
+      channel.name,
+      description: channel.description,
+      importance: Importance.high,
+    );
   }
 
   bool get _isAndroid =>

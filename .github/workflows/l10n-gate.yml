@@ -1,0 +1,78 @@
+name: l10n Gate
+
+# WP-294: denetim vardı ama CI'da koşmuyordu, yani yeni gömülü metin engellenmiyordu.
+# Bu kapı `scripts/l10n_audit.py`'yi zorunlu hâle getirir:
+#   - dört katalog (EN/TR/DE/AR) anahtar + placeholder eşliği,
+#   - kullanıcı yuvalarına gömülü TR/EN metin,
+#   - native Android strings/layout yüzeyi (`scripts/l10n_android_audit.py`).
+#
+# ℹ️ Ubuntu runner UTF-8 olduğu için cp1254 çökmesi burada görünmüyordu; kapı
+# yine de `PYTHONIOENCODING` ile açık şekilde UTF-8'e sabitlenir ki Windows
+# release runner'ına bağlanırsa davranış değişmesin.
+
+on:
+  pull_request:
+    paths:
+      - 'app/lib/**'
+      - 'app/android/app/src/main/res/**'
+      - 'scripts/l10n_audit.py'
+      - 'scripts/l10n_android_audit.py'
+      - '.github/workflows/l10n-gate.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'app/lib/**'
+      - 'app/android/app/src/main/res/**'
+      - 'scripts/l10n_audit.py'
+      - 'scripts/l10n_android_audit.py'
+      - '.github/workflows/l10n-gate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: l10n-gate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    name: Catalog parity and hardcoded-string gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      PYTHONIOENCODING: utf-8
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: l10n audit (four catalogs + hardcoded strings + native)
+        run: python scripts/l10n_audit.py
+
+      - name: Prove the gate actually rejects a new hardcoded string
+        # 🔴 Yeşil bir denetim, denetimin çalıştığını kanıtlamaz. Bu adım geçici
+        # olarak gömülü bir kullanıcı metni ekler, denetimin **kırmızıya
+        # döndüğünü** doğrular ve dosyayı geri alır. Kapı sessizce etkisiz hâle
+        # gelirse (regex bozulur, muafiyet fazla genişler) bu adım düşer.
+        #
+        # Sonda **İngilizce** metin var, Türkçe değil: Türkçe karakter taraması
+        # WP-89'dan beri vardı. Kırmızıya dönmesi gereken şey WP-294'te eklenen
+        # prose taramasıdır — gömülü İngilizce eskiden sessizce geçiyordu.
+        run: |
+          set -e
+          probe=app/lib/core/l10n/_gate_probe.dart
+          cleanup() { rm -f "$probe"; }
+          trap cleanup EXIT
+          cat > "$probe" <<'DART'
+          import 'package:flutter/material.dart';
+
+          Widget gateProbe() => const Text('This label must not ship hardcoded');
+          DART
+          if python scripts/l10n_audit.py; then
+            echo "::error::l10n gate did not reject a hardcoded user-facing string"
+            exit 1
+          fi
+          echo "Gate rejected the probe as expected."

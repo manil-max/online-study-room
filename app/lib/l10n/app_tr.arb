@@ -1533,5 +1533,31 @@
   "profileOnizlemeGovdeOrnegi": "Kısa bir çalışma oturumu planla.",
   "@profileOnizlemeGovdeOrnegi": {
     "description": "Theme preview: sample body line."
-  }
+  },
+  "accountHesabiSil": "Hesabı sil",
+  "accountSilmeOnayGovdesi": "Hesabın 14 gün içinde kalıcı silinmek üzere planlanır. Bu süre içinde iptal edebilirsin. Devam için şifreni gir.",
+  "accountSilmeyiPlanla": "Silmeyi planla",
+  "accountSilmePlanlandiTarih": "Silme planlandı. Son tarih: {deadline}",
+  "accountSilmeIptalEdildi": "Silme isteği iptal edildi.",
+  "accountSilmePlanlandiIptalEt": "Silme planlandı — iptal et",
+  "accountSilmeSonTarih": "Son tarih: {deadline}",
+  "accountSilmeGeriAlmaPenceresi": "14 gün geri alma; ardından kalıcı silme",
+  "updaterMagazaUzerindenYonetilir": "Güncelleme mağaza üzerinden yönetilir.",
+  "classroomGrupFotografiniDegistir": "Grup fotoğrafını değiştir",
+  "classroomGrupFotografiSemantik": "{name} grup fotoğrafı",
+  "notificationsYerelTestGovdesi": "Telefondaki bildirim gösterimi çalışıyor.",
+  "notificationsDurtmeKanaliAciklamasi": "Arkadaşlarından gelen çalışma dürtmeleri",
+  "notificationsTestKanaliAciklamasi": "Uzak bildirim bağlantısı testleri",
+  "notificationsGuncellemeKanaliAciklamasi": "Yeni sürüm bildirimleri",
+  "notificationsDuyuruKanaliAciklamasi": "Odak Kampı ve grup duyuruları",
+  "buildTaniBasligi": "Derleme tanısı",
+  "buildTaniTanimsiz": "Kanal/backend kimliği bu test derlemesinde tanımlı değil.",
+  "buildTaniKanal": "Kanal",
+  "buildTaniSurum": "Sürüm",
+  "buildTaniMigrationBasi": "Migration başı",
+  "buildYapilandirmaHatasiBasligi": "Güvenli yapılandırma doğrulanamadı",
+  "buildYapilandirmaHatasiGovdesi": "Yanlış ortama veri yazmamak için bağlantı kapatıldı. Uygulamayı doğru kanal ve backend ayarlarıyla yeniden derleyin.",
+  "buildYapilandirmaHatasiKodu": "Tanı kodu: {code}",
+  "homeKartBoyutIpucu": "Boyut {width}×{height} • dokun ve ayarla",
+  "statsEnVerimliSaat": "En verimli saat: {hour}:00 ({duration})"
 }

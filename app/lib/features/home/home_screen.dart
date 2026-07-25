@@ -921,7 +921,9 @@ class _SizePanel extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  'Boyut ${config.w}×${config.h} • dokun ve ayarla',
+                  AppLocalizations.of(
+                    context,
+                  ).homeKartBoyutIpucu(config.w, config.h),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.labelSmall?.copyWith(

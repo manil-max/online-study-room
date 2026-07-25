@@ -283,8 +283,8 @@ class _TaskListPane extends StatelessWidget {
                         Flexible(
                           child: Text(
                             completedStyle
-                                ? taskDueDateLabel(now, task.dueAt!)
-                                : '${taskRemainingShort(l10n, now, task.dueAt)} · ${taskDueDateLabel(now, task.dueAt!)}',
+                                ? taskDueDateLabel(now, task.dueAt!, l10n.localeName)
+                                : '${taskRemainingShort(l10n, now, task.dueAt)} · ${taskDueDateLabel(now, task.dueAt!, l10n.localeName)}',
                             style: theme.textTheme.labelSmall?.copyWith(
                               color: subColor,
                               fontWeight: overdue

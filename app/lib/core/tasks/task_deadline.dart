@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:timezone/timezone.dart' as tz;
 
 import 'package:online_study_room/l10n/app_localizations.dart';
@@ -146,12 +147,17 @@ String taskRemainingShort(
 }
 
 /// İnsan-okur bitiş tarihi (yalnız gün): `28 Ağu`, yıl farklıysa `28 Ağu 2027`.
-String taskDueDateLabel(DateTime now, DateTime dueAt) {
+///
+/// 🔴 WP-294: ay kısaltmaları eskiden Türkçe sabit bir listeydi — DE/AR/EN
+/// kullanıcısı Türkçe ay görüyordu. Katalog anahtarı **açılmadı**: bu 12 değer
+/// `intl`'in kendi CLDR verisinde zaten var ve `DateFormat` yerelin gün/ay
+/// sırasını da doğru kurar (Arapça'da sıra farklı). `locale` bilinçli olarak
+/// zorunlu parametre: varsayılan bırakılırsa çağıran yeri geçmeyi unutur ve hata
+/// sessizce geri döner.
+String taskDueDateLabel(DateTime now, DateTime dueAt, String locale) {
   final d = dueAt.toLocal();
-  const months = [
-    'Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz',
-    'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara',
-  ];
-  final base = '${d.day} ${months[d.month - 1]}';
-  return d.year == now.year ? base : '$base ${d.year}';
+  final pattern = d.year == now.year
+      ? DateFormat.MMMd(locale)
+      : DateFormat.yMMMd(locale);
+  return pattern.format(d);
 }

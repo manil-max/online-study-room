@@ -68,8 +68,10 @@ class HourActivityChart extends StatelessWidget {
                   const SizedBox(width: 4),
                   Flexible(
                     child: Text(
-                      'En verimli saat: ${peak.toString().padLeft(2, '0')}:00 '
-                      '(${formatHuman(hourly[peak])})',
+                      AppLocalizations.of(context).statsEnVerimliSaat(
+                        peak.toString().padLeft(2, '0'),
+                        formatHuman(hourly[peak]),
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.bodySmall?.copyWith(

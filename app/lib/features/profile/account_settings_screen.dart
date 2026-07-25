@@ -247,44 +247,42 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
   }
 
   /// WP-114: silme isteği — şifre yeniden doğrulama + 14 gün grace (sunucu).
+  ///
+  /// 🔴 WP-294: bu ekran eskiden `languageCode == 'tr'` üçlemesiyle elle iki dil
+  /// tutuyordu; katalogu tamamen atlıyordu, yani **DE/AR kullanıcısı İngilizce
+  /// görüyordu**. Artık tüm metinler `AppLocalizations` üzerinden geliyor.
   Future<void> _requestAccountDeletion() async {
-    final tr = Localizations.localeOf(context).languageCode == 'tr';
+    final l10n = AppLocalizations.of(context);
     final passwordController = TextEditingController();
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) {
         return AlertDialog(
-          title: Text(tr ? 'Hesabı sil' : 'Delete account'),
+          title: Text(l10n.accountHesabiSil),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                tr
-                    ? 'Hesabın 14 gün içinde kalıcı silinmek üzere planlanır. Bu süre içinde iptal edebilirsin. Devam için şifreni gir.'
-                    : 'Your account will be scheduled for permanent deletion in 14 days. You can cancel during that window. Enter your password to continue.',
-              ),
+              Text(l10n.accountSilmeOnayGovdesi),
               const SizedBox(height: 12),
               TextField(
                 controller: passwordController,
                 obscureText: true,
-                decoration: InputDecoration(
-                  labelText: tr ? 'Şifre' : 'Password',
-                ),
+                decoration: InputDecoration(labelText: l10n.authSifre),
               ),
             ],
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: Text(AppLocalizations.of(context).profileIptal),
+              child: Text(l10n.profileIptal),
             ),
             FilledButton(
               style: FilledButton.styleFrom(
                 backgroundColor: Theme.of(context).colorScheme.error,
               ),
               onPressed: () => Navigator.pop(ctx, true),
-              child: Text(tr ? 'Silmeyi planla' : 'Schedule deletion'),
+              child: Text(l10n.accountSilmeyiPlanla),
             ),
           ],
         );
@@ -312,20 +310,16 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
       if (!mounted) return;
       final until = status.purgeAfter?.toLocal().toString() ?? '';
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            tr
-                ? 'Silme planlandı. Son tarih: $until'
-                : 'Deletion scheduled. Deadline: $until',
-          ),
-        ),
+        SnackBar(content: Text(l10n.accountSilmePlanlandiTarih(until))),
       );
       setState(() {});
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(e.toString()),
+            // Ham `e.toString()` gösterilmiyordu: içeriği yerelleştirilemez ve
+            // sunucu/istisna metnini kullanıcıya sızdırıyor (WP-294).
+            content: Text(l10n.authBeklenmeyenBirHataOlustu),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -340,11 +334,10 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
     try {
       await ref.read(authRepositoryProvider).cancelAccountDeletion();
       if (mounted) {
-        final tr = Localizations.localeOf(context).languageCode == 'tr';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              tr ? 'Silme isteği iptal edildi.' : 'Deletion request canceled.',
+              AppLocalizations.of(context).accountSilmeIptalEdildi,
             ),
           ),
         );
@@ -354,7 +347,9 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(e.toString()),
+            content: Text(
+              AppLocalizations.of(context).authBeklenmeyenBirHataOlustu,
+            ),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -463,8 +458,7 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
                       .read(authRepositoryProvider)
                       .fetchAccountDeletionStatus(),
                   builder: (context, snap) {
-                    final tr =
-                        Localizations.localeOf(context).languageCode == 'tr';
+                    final l10n = AppLocalizations.of(context);
                     final active = snap.data?.active == true;
                     return Card(
                       elevation: 0,
@@ -478,20 +472,16 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
                         ),
                         title: Text(
                           active
-                              ? (tr
-                                    ? 'Silme planlandı — iptal et'
-                                    : 'Deletion scheduled — cancel')
-                              : (tr ? 'Hesabı sil' : 'Delete account'),
+                              ? l10n.accountSilmePlanlandiIptalEt
+                              : l10n.accountHesabiSil,
                           style: TextStyle(color: theme.colorScheme.error),
                         ),
                         subtitle: Text(
                           active
-                              ? (tr
-                                    ? 'Son tarih: ${snap.data?.purgeAfter?.toLocal()}'
-                                    : 'Deadline: ${snap.data?.purgeAfter?.toLocal()}')
-                              : (tr
-                                    ? '14 gün geri alma; ardından kalıcı silme'
-                                    : '14-day cooling-off, then permanent delete'),
+                              ? l10n.accountSilmeSonTarih(
+                                  '${snap.data?.purgeAfter?.toLocal()}',
+                                )
+                              : l10n.accountSilmeGeriAlmaPenceresi,
                         ),
                         onTap: active
                             ? _cancelAccountDeletion

@@ -46,8 +46,12 @@ final claimAchievementRewardProvider =
       return (rewardId) async {
         final user = ref.read(authStateProvider).value;
         if (user == null) {
+          // İç istisna kodu — kullanıcıya gösterilmez. Sunum katmanı
+          // `catch (_)` ile yakalayıp katalogdaki mesajı gösteriyor
+          // (`profileRewardClaimFailed`). Türkçe prose taşımasının anlamı yoktu
+          // ve denetimde gömülü metin olarak sayılıyordu (WP-294).
           throw const AchievementRewardException(
-            'Ödül toplamak için giriş yapmalısın.',
+            'reward_claim_requires_auth',
           );
         }
         final result = await ref
@@ -64,8 +68,12 @@ final claimAllAchievementRewardsProvider =
       return ({int limit = kDefaultAchievementRewardPageSize}) async {
         final user = ref.read(authStateProvider).value;
         if (user == null) {
+          // İç istisna kodu — kullanıcıya gösterilmez. Sunum katmanı
+          // `catch (_)` ile yakalayıp katalogdaki mesajı gösteriyor
+          // (`profileRewardClaimFailed`). Türkçe prose taşımasının anlamı yoktu
+          // ve denetimde gömülü metin olarak sayılıyordu (WP-294).
           throw const AchievementRewardException(
-            'Ödül toplamak için giriş yapmalısın.',
+            'reward_claim_requires_auth',
           );
         }
         final result = await ref

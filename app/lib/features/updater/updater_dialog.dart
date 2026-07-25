@@ -83,8 +83,11 @@ class _UpdaterDialogState extends State<UpdaterDialog> {
     // WP-110: Play build'de dialog açılmamalı; yine de fail-closed.
     if (!DistributionConfig.allowsSideloadUpdates) {
       if (mounted) {
+        final storeMessage = AppLocalizations.of(
+          context,
+        ).updaterMagazaUzerindenYonetilir;
         setState(() {
-          _error = 'Güncelleme mağaza üzerinden yönetilir.';
+          _error = storeMessage;
         });
       }
       return;

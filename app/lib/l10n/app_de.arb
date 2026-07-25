@@ -5123,5 +5123,31 @@
   "profileOnizlemeGovdeOrnegi": "Plane eine kurze Lerneinheit.",
   "@profileOnizlemeGovdeOrnegi": {
     "description": "Theme preview: sample body line."
-  }
+  },
+  "accountHesabiSil": "Konto löschen",
+  "accountSilmeOnayGovdesi": "Dein Konto wird zur endgültigen Löschung in 14 Tagen vorgemerkt. Du kannst in diesem Zeitraum abbrechen. Gib zum Fortfahren dein Passwort ein.",
+  "accountSilmeyiPlanla": "Löschung planen",
+  "accountSilmePlanlandiTarih": "Löschung geplant. Frist: {deadline}",
+  "accountSilmeIptalEdildi": "Löschanfrage abgebrochen.",
+  "accountSilmePlanlandiIptalEt": "Löschung geplant — abbrechen",
+  "accountSilmeSonTarih": "Frist: {deadline}",
+  "accountSilmeGeriAlmaPenceresi": "14 Tage Widerrufsfrist, dann endgültige Löschung",
+  "updaterMagazaUzerindenYonetilir": "Updates werden über den Store verwaltet.",
+  "classroomGrupFotografiniDegistir": "Gruppenfoto ändern",
+  "classroomGrupFotografiSemantik": "Gruppenfoto von {name}",
+  "notificationsYerelTestGovdesi": "Die Benachrichtigungsanzeige auf diesem Telefon funktioniert.",
+  "notificationsDurtmeKanaliAciklamasi": "Lern-Anstöße von deinen Freunden",
+  "notificationsTestKanaliAciklamasi": "Tests der Verbindung für Remote-Benachrichtigungen",
+  "notificationsGuncellemeKanaliAciklamasi": "Benachrichtigungen über neue Versionen",
+  "notificationsDuyuruKanaliAciklamasi": "Focus Camp- und Gruppenankündigungen",
+  "buildTaniBasligi": "Build-Diagnose",
+  "buildTaniTanimsiz": "Kanal-/Backend-Identität ist in diesem Test-Build nicht definiert.",
+  "buildTaniKanal": "Kanal",
+  "buildTaniSurum": "Version",
+  "buildTaniMigrationBasi": "Migrations-Head",
+  "buildYapilandirmaHatasiBasligi": "Sichere Konfiguration konnte nicht überprüft werden",
+  "buildYapilandirmaHatasiGovdesi": "Die Verbindung wurde geschlossen, um Schreibzugriffe auf die falsche Umgebung zu vermeiden. Baue die App mit den richtigen Kanal- und Backend-Einstellungen neu.",
+  "buildYapilandirmaHatasiKodu": "Diagnosecode: {code}",
+  "homeKartBoyutIpucu": "Größe {width}×{height} • zum Anpassen tippen",
+  "statsEnVerimliSaat": "Produktivste Stunde: {hour}:00 ({duration})"
 }

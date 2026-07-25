@@ -27,6 +27,8 @@ import 'features/auth/auth_gate.dart';
 import 'features/desktop/compact_focus_view.dart';
 import 'features/profile/theme_builder/bundled_font_licenses.dart';
 import 'features/profile/theme_builder/feel_overlay.dart';
+import 'package:intl/date_symbol_data_local.dart';
+
 import 'l10n/app_localizations.dart';
 
 import 'package:home_widget/home_widget.dart';
@@ -34,6 +36,12 @@ import 'package:online_study_room/features/android_widgets/android_widget_servic
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // WP-294: `intl` tarih/ay adlarını **yerel verisi kaydedilmeden** üretemez;
+  // kaydedilmezse `DateFormat` çağrısı `LocaleDataException` ile çöker (görev
+  // listesinde bitiş tarihi etiketi). Yapılandırma doğrulamasından önce
+  // çağrılıyor: hata yüzeyi de tarih biçimlendirebilsin.
+  initializeDateFormatting();
 
   // WP-297 (ADR-4): gömülü fontların SIL OFL 1.1 metinleri Flutter'ın lisans
   // kaydına eklenir. OFL, yazılımla dağıtılan fontun lisans metninin de
