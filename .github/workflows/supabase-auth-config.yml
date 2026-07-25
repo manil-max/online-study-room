@@ -119,7 +119,12 @@ jobs:
             -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
             -H 'Content-Type: application/json' \
             --data @"$RUNNER_TEMP/patch.json" \
-            > /dev/null
+            --output "$RUNNER_TEMP/patch-response.json" || {
+              # Management API doğrulama hatalarını görünür kıl; gövde token içermez.
+              echo "Management API rejected the patch:"
+              cat "$RUNNER_TEMP/patch-response.json" || true
+              exit 1
+            }
 
           echo "Patch applied to $TARGET."
 
