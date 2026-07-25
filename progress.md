@@ -33,10 +33,11 @@
 - **SAHİP yollar:** —
 
 ### Claude Lane
-- **Durum:** [x] Boşta
-- **Faz/WP:** —
-- **SAHİP yollar:** —
-- **Son not:** 2026-07-25 turunda WP-296 ve WP-297 tamam — `analyze` 0, **767 test yeşil**, APK artışı **+1.02 MB** ölçüldü. **Sıradaki: WP-292 (taç)** — sahip tasarım referansı arıyor, beklemede. `app_theme.dart` ve `main.dart` serbest.
+- **Durum:** [ ] Çalışıyor
+- **Faz/WP:** **WP-292** — taç görseli (sahip tasarım onayı alındı 2026-07-25)
+- **SAHİP yollar:** `app/lib/core/widgets/crowned_avatar.dart`, `app/lib/core/widgets/crown_tiers_sheet.dart`, `app/test/features/profile/crowned_avatar_test.dart`, yeni taç golden testi + golden dosyaları
+- **Son not:** 2026-07-25 turunda WP-296 ve WP-297 tamam — `analyze` 0, **767 test yeşil**, APK artışı **+1.02 MB** ölçüldü. `app_theme.dart` ve `main.dart` serbest.
+- **Sahip onayı (2026-07-25):** taç geometrisi **5 uç · span 50° · tip 1.63 · inci 0.10 · kavis 0.50**. Ayrıca sahip "PUBG tarzı avatar arkası aura/sis efekti" sordu → **WP-292 kapsamı DIŞI**, ayrı iş olarak değerlendirilecek.
 
 ### Codex Lane
 - **Durum:** [x] Boşta
