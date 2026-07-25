@@ -101,17 +101,9 @@ jobs:
           # redirectTo geçmeyen istemciler de localhost'a değil uygulamaya düşsün.
           site_url='com.manilmax.onlinestudyroom://login-callback'
 
-          # {{ .Token }} olmadan Windows/masaüstündeki 6 haneli kod yolu hiç çalışmaz:
-          # kod kullanıcıya e-postayla hiç gitmez.
-          recovery_template='<h2>Şifre sıfırlama</h2>
-          <p>Şifreni sıfırlamak için kodun: <strong>{{ .Token }}</strong></p>
-          <p>Telefondaysan bu bağlantıya dokunman yeterli: <a href="{{ .ConfirmationURL }}">Şifremi sıfırla</a></p>
-          <p>Bu isteği sen yapmadıysan bu e-postayı yok sayabilirsin.</p>'
-
           jq -n \
             --arg site_url "$site_url" \
             --arg uri_allow_list "$allow_list" \
-            --arg mailer_templates_recovery_content "$recovery_template" \
             '$ARGS.named' > "$RUNNER_TEMP/patch.json"
 
           curl --fail-with-body --silent --show-error \
@@ -126,7 +118,47 @@ jobs:
               exit 1
             }
 
-          echo "Patch applied to $TARGET."
+          echo "Deep link routing patched on $TARGET."
+
+      - name: Patch recovery email template (needs paid plan or custom SMTP)
+        if: ${{ inputs.dry_run == false }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # {{ .Token }} olmadan Windows/masaüstündeki 6 haneli kod yolu çalışmaz:
+          # kod kullanıcıya e-postayla hiç gitmez. Ama Supabase, varsayılan e-posta
+          # sağlayıcısını kullanan ÜCRETSİZ projelerde şablon değişikliğini reddeder
+          # (panelden de reddeder). O durumda adım uyarıyla geçilir: Android derin
+          # bağlantı yolu yine de çalışır, yalnız masaüstü OTP yedeği devre dışı kalır.
+          recovery_template='<h2>Şifre sıfırlama</h2>
+          <p>Şifreni sıfırlamak için kodun: <strong>{{ .Token }}</strong></p>
+          <p>Telefondaysan bu bağlantıya dokunman yeterli: <a href="{{ .ConfirmationURL }}">Şifremi sıfırla</a></p>
+          <p>Bu isteği sen yapmadıysan bu e-postayı yok sayabilirsin.</p>'
+
+          jq -n \
+            --arg mailer_templates_recovery_content "$recovery_template" \
+            '$ARGS.named' > "$RUNNER_TEMP/template.json"
+
+          if curl --fail-with-body --silent --show-error \
+            -X PATCH "https://api.supabase.com/v1/projects/$PROJECT_REF/config/auth" \
+            -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            -H 'Content-Type: application/json' \
+            --data @"$RUNNER_TEMP/template.json" \
+            --output "$RUNNER_TEMP/template-response.json"; then
+            echo "Recovery email template patched on $TARGET."
+            exit 0
+          fi
+
+          message="$(jq -r '.message // ""' "$RUNNER_TEMP/template-response.json" 2>/dev/null || true)"
+          if [[ "$message" == *"free tier"* || "$message" == *"custom SMTP"* ]]; then
+            echo "::warning::$TARGET serves email from the free-tier default provider, so the recovery template cannot carry {{ .Token }}. Android deep-link reset works; the desktop 6-digit code path stays unavailable until a custom SMTP provider is configured."
+            exit 0
+          fi
+
+          echo "Management API rejected the template patch:"
+          cat "$RUNNER_TEMP/template-response.json" || true
+          exit 1
 
       - name: Verify applied auth config
         if: ${{ inputs.dry_run == false }}
@@ -145,12 +177,18 @@ jobs:
                      ((.mailer_templates_recovery_content // "") | contains("{{ .ConfirmationURL }}"))}' \
             | tee "$RUNNER_TEMP/after.json"
 
+          # Sert kapı yalnız yönlendirme tarafı: şablon, ücretsiz projelerde
+          # değiştirilemediği için kabul kriteri değil (üstteki adım uyarır).
           printf '%s' "$after" | jq -e '
             (.site_url | contains("localhost") or contains("127.0.0.1") | not) and
             (.uri_allow_list | contains("com.manilmax.onlinestudyroom.beta://login-callback")) and
-            (.uri_allow_list | contains("*") | not) and
-            (.mailer_templates_recovery_content | contains("{{ .Token }}")) and
-            (.mailer_templates_recovery_content | contains("{{ .ConfirmationURL }}"))
+            (.uri_allow_list | contains("*") | not)
           ' > /dev/null
 
-          echo "Verified: $TARGET auth config now serves the reset flow."
+          if printf '%s' "$after" | jq -e '
+            (.mailer_templates_recovery_content // "") | contains("{{ .Token }}")
+          ' > /dev/null; then
+            echo "Verified: $TARGET serves both the deep-link and the 6-digit code reset paths."
+          else
+            echo "::warning::$TARGET deep-link reset is live, but the recovery email carries no {{ .Token }}, so the desktop code path cannot work yet."
+          fi
