@@ -247,31 +247,40 @@ class StepDots extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        for (var i = 0; i < count; i++)
-          InkWell(
-            onTap: () => onSelect(i),
-            customBorder: const CircleBorder(),
-            child: SizedBox(
-              width: 48,
-              height: 48,
-              child: Center(
-                child: Container(
-                  width: i == current ? 22 : 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: i == current
-                        ? theme.colorScheme.primary
-                        : theme.colorScheme.outlineVariant,
-                    borderRadius: BorderRadius.circular(4),
+    // WP-306: 8 adım × 48 dp = 384 dp; 360 dp'lik telefonda satır taşıyordu.
+    // Yer varken 48 dp dokunma hedefi korunur, dar ekranda eşit bölüşülür.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final slot = constraints.maxWidth.isFinite
+            ? (constraints.maxWidth / count).clamp(0.0, 48.0)
+            : 48.0;
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            for (var i = 0; i < count; i++)
+              InkWell(
+                onTap: () => onSelect(i),
+                customBorder: const CircleBorder(),
+                child: SizedBox(
+                  width: slot,
+                  height: 48,
+                  child: Center(
+                    child: Container(
+                      width: i == current ? 22 : 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: i == current
+                            ? theme.colorScheme.primary
+                            : theme.colorScheme.outlineVariant,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
-          ),
-      ],
+          ],
+        );
+      },
     );
   }
 }

@@ -171,6 +171,10 @@ class _ThemeBuilderScreenState extends ConsumerState<ThemeBuilderScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final desktop = isDesktopWindow;
+    // WP-306: klavye yüksekliği **Scaffold'un üstünden** okunur. Gövdenin
+    // içinde `resizeToAvoidBottomInset` bu değeri sildiği için orada hep 0
+    // görünür ve klavye açık mı kapalı mı ayırt edilemez.
+    final keyboard = MediaQuery.viewInsetsOf(context).bottom;
     final preview = ThemePreviewCard(
       theme: _draft.themeFor(_previewBrightness),
       label: _previewBrightness == Brightness.dark
@@ -223,9 +227,17 @@ class _ThemeBuilderScreenState extends ConsumerState<ThemeBuilderScreen> {
               // WP-302: önizleme sabit kalır. Eskiden listenin ilk çocuğuydu;
               // seçenekleri denemek için aşağı kaydırınca ekrandan çıkıyor,
               // yani kullanıcı **tam da değiştirdiği şeyi** göremiyordu.
-              // Yatay/kısa ekranlarda (klavye açık, landscape) sabit önizleme
-              // içeriğe yer bırakmaz; orada eski kaydırmalı düzene dönülür.
-              if (constraints.maxHeight < 480) {
+              // Yatay/kısa ekranlarda sabit önizleme içeriğe yer bırakmaz;
+              // orada eski kaydırmalı düzene dönülür.
+              //
+              // WP-306: karar **klavyeden bağımsız** yükseklikle verilir.
+              // Ölçüt doğrudan `constraints.maxHeight` iken klavye açılınca
+              // gövde küçülüyor, düzen Column→ListView'a atlıyor, ağaç şekli
+              // değiştiği için `TextField` sıfırdan kuruluyor ve odağı
+              // düşürüyordu: klavye açılıp hemen kapanıyor, ad yazılamıyordu.
+              // (Yatayda yükseklik zaten eşiğin altında olduğu için dal
+              // değişmiyor — sahibin "yana çevirince yazabildim" gözlemi.)
+              if (constraints.maxHeight + keyboard < 480) {
                 return ListView(
                   padding: padding,
                   children: [preview, const SizedBox(height: 16), content],
@@ -234,15 +246,22 @@ class _ThemeBuilderScreenState extends ConsumerState<ThemeBuilderScreen> {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Padding(
-                    padding: EdgeInsets.fromLTRB(
-                      padding.left,
-                      padding.top,
-                      padding.right,
-                      12,
+                  // WP-306: klavye açıkken önizleme gizlenir — ad alanına yer
+                  // kalsın. Yerine `SizedBox.shrink()` konur ki Column'un çocuk
+                  // sayısı sabit kalsın: aşağıdaki liste hep 1. sırada durur,
+                  // elemanı korunur ve odak düşmez.
+                  if (keyboard > 0)
+                    const SizedBox.shrink()
+                  else
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        padding.left,
+                        padding.top,
+                        padding.right,
+                        12,
+                      ),
+                      child: preview,
                     ),
-                    child: preview,
-                  ),
                   Expanded(
                     child: ListView(
                       padding: EdgeInsets.fromLTRB(

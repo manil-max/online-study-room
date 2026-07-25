@@ -121,7 +121,7 @@
 | **3** | **WP-300** — `groups.location` (enlem/boylam + tz) | [ ] Kodlanacak | ⏸️ WP-299'un çıpa seam'inden sonra. 🟡 Migration (additive/nullable). Beta 2 kapsamı |
 | **?** | **WP-301** — 🔴 sunucu gün sınırı `Europe/Istanbul` + `metric_day` backfill | [ ] Kodlanacak | 🔴 **Sahip kapsam kararı bekliyor:** beta 2 mi, sonraya mı? Geri alınamaz veri işi, kamp ateşinden ayrı |
 | ~~—~~ | **WP-298** — avatar aura efekti (PUBG tarzı sis/parıltı) | [x] **TAMAM** (2026-07-25) | ✅ Bitti — 784 yeşil; sahip üç kapsam sorusunu da yanıtladı (profil+sosyal profil · altından itibaren kademeli · kademe rengi) |
-| **A** | **WP-306** — 🔴 tema adı alanında klavye açılıp kapanıyor (dikeyde yazılamıyor) | [ ] Kodlanacak | v46 sahip geri bildirimi — [ayrıntı](docs/V46-SAHIP-GERI-BILDIRIMI.md#wp-306--tema-adı-alanında-klavye-açılıp-kapanıyor-) |
+| ~~A~~ | **WP-306** — tema adı alanında klavye açılıp kapanıyor | [x] **TAMAM** (2026-07-25, v47) | v46 sahip geri bildirimi — [ayrıntı](docs/V46-SAHIP-GERI-BILDIRIMI.md#wp-306--tema-adı-alanında-klavye-açılıp-kapanıyor-) |
 | **A** | **WP-313** — grafikte her sütunun altında tarih | [ ] Kodlanacak | Kök neden bulundu: `daily_bar_chart.dart:69` iki satırlık etiket → `labelWidth: 26` → adım 2 |
 | **B** | **WP-307** — 🔴 His adımı önceki ayarları siliyor | [ ] Kodlanacak | Veri kaybı; ilk bakılacak `theme_feel_catalog` / `feel_overlay` / `theme_draft` |
 | **C** | **WP-308** — 🔴 özel temada bazı metinler okunmuyor | [ ] Kodlanacak | Başlıklar kullanıcı metin rengini izlemiyor; tema motoruna dokunur, en riskli iş |

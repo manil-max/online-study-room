@@ -4,7 +4,7 @@
 > yüzeyinde. Kartlar: **WP-306 … WP-313**. Sıra ve kapsam sahibe ait.
 > Bu dosya kaydın kendisidir — kart özetleri `progress.md`'de, ayrıntı burada.
 
-## WP-306 — Tema adı alanında klavye açılıp kapanıyor 🔴
+## WP-306 — Tema adı alanında klavye açılıp kapanıyor ✅ ÇÖZÜLDÜ (v47)
 
 **Sahip:** "tema oluşturduktan sonra isim yazma yerine gelince tıklıyorum üstüne
 klavye açılıp kapanıyor. telefonu yana çevirince yazabildim ismi."
@@ -20,8 +20,16 @@ tetiklenmiyor.
 WP-302'de mobil dal `Column + Expanded(ListView)` olarak değişti) ve ad alanının
 yaşadığı adım (`theme_builder_steps.dart`).
 
-**Kabul:** dikey ekranda ada dokun → klavye açık kalıyor, yazılabiliyor;
-ekran döndürülünce yazılan ad kaybolmuyor.
+**Kök neden (bulundu):** WP-302 sabit önizleme dalı kararını doğrudan
+`constraints.maxHeight` ile veriyordu. Klavye gövdeyi küçültünce ölçüt 480 dp
+eşiğinin altına düşüyor, düzen `Column` → `ListView`'a atlıyor, ağaç şekli
+değiştiği için `TextField` sıfırdan kuruluyor ve odağı düşürüyordu. Yatayda
+yükseklik zaten eşiğin altında olduğundan dal değişmiyor — sahibin gözlemi.
+
+**Çözüm:** karar klavyeden bağımsız yükseklikle verilir; klavye açıkken
+önizleme gizlenir (Column'un çocuk sayısı sabit kalacak şekilde). Ayrıca aynı
+ekranda `StepDots` 8×48 dp ile 360 dp telefonda taşıyordu — dar ekranda eşit
+bölüşür oldu. Test: `app/test/features/profile/theme_builder_name_focus_test.dart`.
 
 ## WP-307 — 7. adım (His) önceki ayarları siliyor 🔴
 
