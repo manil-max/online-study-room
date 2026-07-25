@@ -159,6 +159,7 @@ class _SocialProfileScreenState extends ConsumerState<SocialProfileScreen> {
                       avatarUrl: widget.profile.avatarUrl,
                       radius: 44,
                       crownRank: gamification.crownRank,
+                      showAura: true,
                     ),
                     SizedBox(height: 24),
                     Center(child: CircularProgressIndicator()),
@@ -176,6 +177,8 @@ class _SocialProfileScreenState extends ConsumerState<SocialProfileScreen> {
                         avatarUrl: widget.profile.avatarUrl,
                         radius: 44,
                         crownRank: gamification.crownRank,
+                        // WP-298: aura yalnız bu iki profil yüzeyinde açık.
+                        showAura: true,
                       ),
                       SizedBox(height: 16),
                       AchievementShowcase(

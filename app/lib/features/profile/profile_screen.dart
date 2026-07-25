@@ -75,6 +75,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           displayName: profile.displayName,
                           avatarUrl: profile.avatarUrl,
                           radius: 48,
+                          // WP-298: aura yalnız bu iki profil yüzeyinde açık.
+                          showAura: true,
                         )
                       else
                         CrownedAvatar(

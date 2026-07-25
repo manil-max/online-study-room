@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/providers/gamification_providers.dart';
 import '../stats/progression_visuals.dart';
+import 'avatar_aura.dart';
 import 'user_avatar.dart';
 
 /// Bu boyutun altındaki avatarlar tacın **tok** varyantını kullanır.
@@ -230,6 +231,7 @@ class CrownedAvatar extends StatelessWidget {
     this.radius = 20,
     this.crownRank,
     this.onTap,
+    this.showAura = false,
   });
 
   final String displayName;
@@ -237,6 +239,13 @@ class CrownedAvatar extends StatelessWidget {
   final double radius;
   final String? crownRank;
   final VoidCallback? onTap;
+
+  /// Arkada dönen kademe renginde aura (WP-298).
+  ///
+  /// **Varsayılan kapalı ve öyle kalmalı.** Sahip kararı: yalnız profil ve
+  /// sosyal profil ekranı açar. Bir listeye açılırsa ekranda onlarca ticker
+  /// oluşur ve kare bütçesi gider.
+  final bool showAura;
 
   @override
   Widget build(BuildContext context) {
@@ -253,6 +262,9 @@ class CrownedAvatar extends StatelessWidget {
     );
 
     if (hasCrown && color != null) {
+      // Aura yoğunluğu kademeden türer; altın altındaki kademelerde 0 olduğu
+      // için `showAura` açık olsa da hiçbir şey çizilmez.
+      final auraIntensity = auraIntensityForTier(crownTierNumber(rank));
       final geometry = CrownGeometry.forRadius(radius);
       final ring = crownRingWidth(radius);
       final base = radius + ring;
@@ -271,6 +283,20 @@ class CrownedAvatar extends StatelessWidget {
         child: Stack(
           clipBehavior: Clip.none,
           children: [
+            // Aura en altta: avatarın ve tacın arkasından taşar. Kutu bilerek
+            // büyütülmedi — profil ekranındaki fotoğraf değiştir düğmesi bu
+            // kutunun köşesine `Positioned` ile bağlı, kutu büyürse düğme
+            // avatardan kopar. Aura dikeyde kutunun içinde kalıyor, yalnız
+            // yanlara taşıyor (bkz. `kAuraOuterRadius`).
+            if (showAura && auraIntensity > 0)
+              Positioned.fill(
+                child: AvatarAuraLayer(
+                  color: color,
+                  intensity: auraIntensity,
+                  base: base,
+                  center: center,
+                ),
+              ),
             Positioned(
               left: center.dx - base,
               top: center.dy - base,
@@ -416,6 +442,7 @@ class LiveCrownedAvatar extends ConsumerWidget {
     this.avatarUrl,
     this.radius = 20,
     this.onTap,
+    this.showAura = false,
   });
 
   final String userId;
@@ -423,6 +450,9 @@ class LiveCrownedAvatar extends ConsumerWidget {
   final String? avatarUrl;
   final double radius;
   final VoidCallback? onTap;
+
+  /// Bkz. [CrownedAvatar.showAura] — listelerde açılmaz.
+  final bool showAura;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -437,6 +467,7 @@ class LiveCrownedAvatar extends ConsumerWidget {
       radius: radius,
       crownRank: rank,
       onTap: onTap,
+      showAura: showAura,
     );
   }
 }
