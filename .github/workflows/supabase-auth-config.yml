@@ -1,0 +1,154 @@
+name: Supabase Auth Config
+
+# WP-287 panel adımlarının otomasyonu.
+#
+# Supabase CLI'nin `config push` komutu TÜM supabase/config.toml'u gönderir; o dosya
+# yerel geliştirme için yazılmıştır (site_url = 127.0.0.1:3000) ve uzak projeye
+# basılırsa şifre sıfırlamayı düzeltmek yerine tamamen kırar. Bu yüzden burada
+# Management API ile YALNIZ üç alan yamalanır:
+#   site_url, uri_allow_list, mailer_templates_recovery_content
+# Başka hiçbir auth ayarına dokunulmaz.
+#
+# Redirect scheme'leri app/lib/core/config/auth_redirect_config.dart ile birebir
+# aynıdır (alt çizgisiz taban + flavor suffix'i).
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Hangi Supabase projesi yamalanacak.
+        required: true
+        default: staging
+        type: choice
+        options:
+          - staging
+          - production
+      confirm_production:
+        description: >-
+          Yalnız target=production için: tam olarak PRODUCTION yaz. Production auth
+          yapılandırması ayrı bir ops kapısıdır (.agents/AGENTS.md §2).
+        required: false
+        default: ''
+        type: string
+      dry_run:
+        description: Yalnız mevcut ayarı oku ve göster, hiçbir şeyi değiştirme.
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supabase-auth-config-${{ inputs.target }}
+  cancel-in-progress: false
+
+jobs:
+  patch:
+    name: Patch ${{ inputs.target }} auth config
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: ${{ inputs.target }}
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      PROJECT_REF: ${{ inputs.target == 'production' && vars.PRODUCTION_SUPABASE_PROJECT_REF || vars.STAGING_SUPABASE_PROJECT_REF }}
+      EXPECTED_URL: ${{ inputs.target == 'production' && secrets.PRODUCTION_SUPABASE_URL || secrets.STAGING_SUPABASE_URL }}
+      TARGET: ${{ inputs.target }}
+      CONFIRM_PRODUCTION: ${{ inputs.confirm_production }}
+      DRY_RUN: ${{ inputs.dry_run }}
+    steps:
+      - name: Verify target contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$TARGET" = "production" && "$CONFIRM_PRODUCTION" != "PRODUCTION" ]]; then
+            echo "Production auth config needs confirm_production=PRODUCTION."
+            exit 1
+          fi
+          for value in SUPABASE_ACCESS_TOKEN PROJECT_REF EXPECTED_URL; do
+            [[ -n "${!value}" ]] || { echo "Missing required configuration: $value"; exit 1; }
+          done
+          [[ "$PROJECT_REF" =~ ^[a-z0-9]{20}$ ]] || { echo "Invalid project ref"; exit 1; }
+          [[ "$EXPECTED_URL" = "https://$PROJECT_REF.supabase.co" ]] || {
+            echo "URL/project ref mismatch for $TARGET"
+            exit 1
+          }
+          echo "Target verified: $TARGET ($PROJECT_REF)"
+
+      - name: Read current auth config
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail-with-body --silent --show-error \
+            "https://api.supabase.com/v1/projects/$PROJECT_REF/config/auth" \
+            -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            | jq '{site_url, uri_allow_list, mailer_otp_length,
+                   recovery_template_has_token:
+                     ((.mailer_templates_recovery_content // "") | contains("{{ .Token }}"))}' \
+            | tee "$RUNNER_TEMP/before.json"
+
+      - name: Patch site_url, redirect allowlist and recovery template
+        if: ${{ inputs.dry_run == false }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # Tek kaynak: auth_redirect_config.dart. Joker (*) veya üçüncü taraf domain
+          # ASLA eklenmez — open-redirect riski.
+          allow_list='com.manilmax.onlinestudyroom://login-callback,com.manilmax.onlinestudyroom.beta://login-callback,com.manilmax.onlinestudyroom.local://login-callback'
+
+          # Web karşılama sayfası yok; Site URL'i stable derin bağlantısına çekiyoruz ki
+          # redirectTo geçmeyen istemciler de localhost'a değil uygulamaya düşsün.
+          site_url='com.manilmax.onlinestudyroom://login-callback'
+
+          # {{ .Token }} olmadan Windows/masaüstündeki 6 haneli kod yolu hiç çalışmaz:
+          # kod kullanıcıya e-postayla hiç gitmez.
+          recovery_template=$(cat <<'HTML'
+<h2>Şifre sıfırlama</h2>
+<p>Şifreni sıfırlamak için kodun: <strong>{{ .Token }}</strong></p>
+<p>Telefondaysan bu bağlantıya dokunman yeterli: <a href="{{ .ConfirmationURL }}">Şifremi sıfırla</a></p>
+<p>Bu isteği sen yapmadıysan bu e-postayı yok sayabilirsin.</p>
+HTML
+          )
+
+          jq -n \
+            --arg site_url "$site_url" \
+            --arg uri_allow_list "$allow_list" \
+            --arg mailer_templates_recovery_content "$recovery_template" \
+            '$ARGS.named' > "$RUNNER_TEMP/patch.json"
+
+          curl --fail-with-body --silent --show-error \
+            -X PATCH "https://api.supabase.com/v1/projects/$PROJECT_REF/config/auth" \
+            -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            -H 'Content-Type: application/json' \
+            --data @"$RUNNER_TEMP/patch.json" \
+            > /dev/null
+
+          echo "Patch applied to $TARGET."
+
+      - name: Verify applied auth config
+        if: ${{ inputs.dry_run == false }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          after="$(curl --fail-with-body --silent --show-error \
+            "https://api.supabase.com/v1/projects/$PROJECT_REF/config/auth" \
+            -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN")"
+
+          printf '%s' "$after" \
+            | jq '{site_url, uri_allow_list,
+                   recovery_template_has_token:
+                     ((.mailer_templates_recovery_content // "") | contains("{{ .Token }}")),
+                   recovery_template_has_link:
+                     ((.mailer_templates_recovery_content // "") | contains("{{ .ConfirmationURL }}"))}' \
+            | tee "$RUNNER_TEMP/after.json"
+
+          printf '%s' "$after" | jq -e '
+            (.site_url | contains("localhost") or contains("127.0.0.1") | not) and
+            (.uri_allow_list | contains("com.manilmax.onlinestudyroom.beta://login-callback")) and
+            (.uri_allow_list | contains("*") | not) and
+            (.mailer_templates_recovery_content | contains("{{ .Token }}")) and
+            (.mailer_templates_recovery_content | contains("{{ .ConfirmationURL }}"))
+          ' > /dev/null
+
+          echo "Verified: $TARGET auth config now serves the reset flow."
