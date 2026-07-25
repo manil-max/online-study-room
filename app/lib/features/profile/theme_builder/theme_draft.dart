@@ -209,6 +209,8 @@ class ThemeDraft {
     required this.feel,
     this.editing = Brightness.dark,
     this.counterpartEdited = false,
+    this.shapesEdited = false,
+    this.atmosphereEdited = false,
   });
 
   final String slotId;
@@ -226,6 +228,13 @@ class ThemeDraft {
   /// Karşı varyant kullanıcı tarafından elle değiştirildi mi? (true ise
   /// otomatik türetme onu artık ezmez.)
   final bool counterpartEdited;
+
+  /// WP-307: Biçim adımına kullanıcı elle dokundu mu? True ise his seçimi
+  /// şekilleri artık ezmez.
+  final bool shapesEdited;
+
+  /// WP-307: Atmosfer adımına kullanıcı elle dokundu mu?
+  final bool atmosphereEdited;
 
   Brightness get counterpart =>
       editing == Brightness.light ? Brightness.dark : Brightness.light;
@@ -247,6 +256,8 @@ class ThemeDraft {
     AppFeel? feel,
     Brightness? editing,
     bool? counterpartEdited,
+    bool? shapesEdited,
+    bool? atmosphereEdited,
   }) => ThemeDraft(
     slotId: slotId ?? this.slotId,
     name: name ?? this.name,
@@ -258,7 +269,18 @@ class ThemeDraft {
     feel: feel ?? this.feel,
     editing: editing ?? this.editing,
     counterpartEdited: counterpartEdited ?? this.counterpartEdited,
+    shapesEdited: shapesEdited ?? this.shapesEdited,
+    atmosphereEdited: atmosphereEdited ?? this.atmosphereEdited,
   );
+
+  /// WP-307: Biçim adımının tek girişi. Elle düzenlemeyi işaretler ki his
+  /// seçimi kullanıcının yarıçap/gölge/kenar ayarlarını silmesin.
+  ThemeDraft withShapes(AppShapes next) =>
+      copyWith(shapes: next, shapesEdited: true);
+
+  /// WP-307: Atmosfer adımının tek girişi (aynı gerekçe).
+  ThemeDraft withAtmosphere(AppAtmosphere next) =>
+      copyWith(atmosphere: next, atmosphereEdited: true);
 
   /// Düzenlenen varyantın renklerini değiştir ve karşı varyantı **elle
   /// düzenlenmediyse** yeniden türet (ADR-1: iki tam renk seti).
@@ -296,11 +318,19 @@ class ThemeDraft {
     );
   }
 
-  /// His seçimi şekil ve atmosfer karakterini birlikte ayarlar.
+  /// His seçimi şekil ve atmosfer karakterini birlikte ayarlar — **ama yalnız
+  /// kullanıcının kendi elleriyle ayarlamadığı katmanlarda**.
+  ///
+  /// WP-307: eskiden koşulsuzdu; sihirbaz sırası Biçim → Atmosfer → His olduğu
+  /// için his seçmek bir önceki iki adımda yapılan her şeyi siliyordu (sahip:
+  /// "7. kademede feels kısmında bir şeye basınca önceden ayarladıklarımız
+  /// gidiyor"). Dokunulmamış katmanda his hâlâ makul bir zemin verir.
   ThemeDraft withFeel(AppFeel next) => copyWith(
     feel: next,
-    shapes: shapesForFeel(next.feelId, shapes),
-    atmosphere: atmosphereForFeel(next.feelId, atmosphere),
+    shapes: shapesEdited ? shapes : shapesForFeel(next.feelId, shapes),
+    atmosphere: atmosphereEdited
+        ? atmosphere
+        : atmosphereForFeel(next.feelId, atmosphere),
   );
 
   ThemeData themeFor(Brightness brightness) => AppTheme.fromCustomTokens(
@@ -339,6 +369,10 @@ class ThemeDraft {
     editing: Brightness.dark,
     // Kayıtlı temada iki varyant da gerçek; türetme onları ezmemeli.
     counterpartEdited: true,
+    // WP-307: kayıtlı temanın biçim/atmosferi de gerçek kullanıcı çıktısı —
+    // düzenlemede his seçmek onları silmemeli.
+    shapesEdited: true,
+    atmosphereEdited: true,
   );
 
   /// Yeni tema: seçilen hazır aile "zemin" olarak alınır.

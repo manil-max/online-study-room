@@ -122,6 +122,37 @@ void main() {
       expect(zen.feel.feelId, 'zen');
     });
 
+    test('WP-307: elle ayarlanan biçim ve atmosferi silmez', () {
+      // Sahip: "7. kademede feels kısmında bir şeye basınca önceden
+      // ayarladıklarımız gidiyor." Sihirbaz sırası Biçim → Atmosfer → His
+      // olduğu için his seçimi bir önceki iki adımı ezip veri kaybettiriyordu.
+      final tuned = _draft()
+          .withShapes(
+            _draft().shapes.copyWith(radiusMd: 33, cardElevation: 5),
+          )
+          .withAtmosphere(
+            _draft().atmosphere.copyWith(glowStrength: 0.75, blurSigma: 18),
+          );
+
+      final next = tuned.withFeel(feelOptionById('neon').feel);
+
+      expect(next.feel.feelId, 'neon');
+      expect(next.shapes.radiusMd, 33);
+      expect(next.shapes.cardElevation, 5);
+      expect(next.atmosphere.glowStrength, 0.75);
+      expect(next.atmosphere.blurSigma, 18);
+    });
+
+    test('WP-307: kayıtlı temayı düzenlerken de ezmez', () {
+      final saved = ThemeDraft.fromCustomTheme(
+        _draft()
+            .withShapes(_draft().shapes.copyWith(radiusMd: 27))
+            .copyWith(name: 'Kayitli')
+            .toCustomTheme(),
+      );
+      expect(saved.withFeel(feelOptionById('zen').feel).shapes.radiusMd, 27);
+    });
+
     test('doku isteyen hisler gren gücü taşır', () {
       expect(feelOptionById('vintage').feel.grainStrength, greaterThan(0));
       expect(feelOptionById('carton').feel.grainKind, 'carton');

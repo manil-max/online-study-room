@@ -64,12 +64,15 @@ class DailyBarChart extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        // WP-237: yer varken her günün numarası (eskiden dense'te her 3 gün).
-        // Gün+ay iki satır olduğu için etiket ~26px yer kaplar.
+        // WP-313: gün numarası **her sütunda** yazılır; ay adı yalnız ay
+        // değiştiğinde (ve ilk sütunda) görünür. Eskiden ay adı her etikette
+        // olduğu için ~26 px yer varsayılıyor, 14 günlük seride adım 2'ye
+        // çıkıyor ve tarihler gün aşırı yazılıyordu. Tek satır gün numarası
+        // ~14 px'e sığar → 7/14 günde adım 1.
         final labelStep = axisLabelStep(
           days.length,
           constraints.maxWidth,
-          labelWidth: 26,
+          labelWidth: 14,
         );
         return BarChart(
           BarChartData(
@@ -144,6 +147,10 @@ class DailyBarChart extends StatelessWidget {
                       return const SizedBox.shrink();
                     }
                     final d = days[i].day;
+                    // Ay adı yalnız ilk sütunda ve ay değiştiğinde. İkinci
+                    // satır her zaman **çizilir** (gerekmediğinde boş metin)
+                    // ki etiketlerin taban hizası bozulmasın.
+                    final showMonth = i == 0 || days[i - 1].day.month != d.month;
                     return Padding(
                       padding: const EdgeInsets.only(top: 5),
                       child: Column(
@@ -158,7 +165,7 @@ class DailyBarChart extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            months[d.month - 1],
+                            showMonth ? months[d.month - 1] : '',
                             style: theme.textTheme.labelSmall?.copyWith(
                               color: theme.colorScheme.onSurfaceVariant,
                               fontSize: 9,

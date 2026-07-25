@@ -72,7 +72,8 @@ void main() {
 
     await _goToStep(tester, 2);
     expect(find.textContaining('3/8'), findsOneWidget);
-    expect(find.text('Başlık yazı tipi'), findsOneWidget);
+    // WP-311: etiket artık hem adımda hem önizleme örnekliğinde görünür.
+    expect(find.text('Başlık yazı tipi'), findsNWidgets(2));
   });
 
   testWidgets('zemin seçimi önizlemeyi anında değiştirir', (tester) async {

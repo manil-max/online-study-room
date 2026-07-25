@@ -10,13 +10,28 @@ import 'feel_overlay.dart';
 /// Fark: artık sahte renklerle değil, **gerçek `ThemeData`** ile çiziliyor.
 /// Böylece tipografi, kart yarıçapı/kenarlığı, buton biçimi ve `FeelOverlay`
 /// (atmosfer + his) uygulamada görüneceği gibi görünür.
+/// WP-311: önizlemenin **o adımda değişen şeyi** öne çıkarması için odak.
+///
+/// Sahip: "fontlarda bazı ayarı değiştiriyoruz neye etki ediyor görünmüyor."
+/// Yazı adımında iki mini kart yerine etiketli yazı örnekleri gösterilir;
+/// hangi seçimin başlığa, gövdeye ve sayaca dokunduğu doğrudan okunur.
+enum ThemePreviewFocus { none, typography }
+
 class ThemePreviewCard extends StatelessWidget {
-  const ThemePreviewCard({super.key, required this.theme, this.label});
+  const ThemePreviewCard({
+    super.key,
+    required this.theme,
+    this.label,
+    this.focus = ThemePreviewFocus.none,
+  });
 
   final ThemeData theme;
 
   /// Üst köşede gösterilen bağlam etiketi (ör. "Koyu").
   final String? label;
+
+  /// O anki sihirbaz adımının vurgusu.
+  final ThemePreviewFocus focus;
 
   @override
   Widget build(BuildContext context) {
@@ -70,18 +85,21 @@ class ThemePreviewCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    // Yükseklik ListView içinde sınırsız; iki kartı eşitlemek
-                    // için içsel yükseklik gerekiyor.
-                    IntrinsicHeight(
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Expanded(child: _TodayCard(colors: colors)),
-                          const SizedBox(width: 10),
-                          Expanded(child: _TimerCard(colors: colors)),
-                        ],
+                    if (focus == ThemePreviewFocus.typography)
+                      _TypographySpecimen(colors: colors)
+                    else
+                      // Yükseklik ListView içinde sınırsız; iki kartı eşitlemek
+                      // için içsel yükseklik gerekiyor.
+                      IntrinsicHeight(
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Expanded(child: _TodayCard(colors: colors)),
+                            const SizedBox(width: 10),
+                            Expanded(child: _TimerCard(colors: colors)),
+                          ],
+                        ),
                       ),
-                    ),
                   ],
                 ),
               ),
@@ -89,6 +107,73 @@ class ThemePreviewCard extends StatelessWidget {
           );
         },
       ),
+    );
+  }
+}
+
+/// WP-311: yazı adımının örnekliği — hangi seçim nereye dokunuyor?
+///
+/// Üç satır, üç font seçicisinin birebir karşılığı: başlık, gövde, sayaç.
+/// Kalınlık/ölçek/harf aralığı kaydırıcıları da aynı üç örnekte görünür.
+class _TypographySpecimen extends StatelessWidget {
+  const _TypographySpecimen({required this.colors});
+
+  final AppColors colors;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final text = Theme.of(context).textTheme;
+    final typography = context.appTypography;
+
+    Widget row(String caption, Widget sample) => Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            caption,
+            style: text.labelSmall?.copyWith(color: colors.textSecondary),
+          ),
+          const SizedBox(height: 2),
+          sample,
+        ],
+      ),
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        row(
+          l10n.profileYaziBaslikFontu,
+          Text(
+            l10n.profileOnizlemeBaslikOrnegi,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: text.titleLarge,
+          ),
+        ),
+        row(
+          l10n.profileYaziGovdeFontu,
+          Text(
+            l10n.profileOnizlemeGovdeOrnegi,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: text.bodyMedium,
+          ),
+        ),
+        row(
+          l10n.profileYaziSayacFontu,
+          Text(
+            '00:42:18',
+            style: typography.displayClock.copyWith(
+              fontSize: 26,
+              color: colors.primary,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

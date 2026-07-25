@@ -1293,6 +1293,30 @@
   "@profileKontrastDuzelt": {
     "description": "Theme builder: one-tap contrast fix action."
   },
+  "profileRenkSpektrum": "Spektrum",
+  "@profileRenkSpektrum": {
+    "description": "Theme builder color picker: open full spectrum mode."
+  },
+  "profileRenkHazirRenkler": "Hazır renkler",
+  "@profileRenkHazirRenkler": {
+    "description": "Theme builder color picker: back to preset swatches."
+  },
+  "profileRenkTon": "Ton",
+  "@profileRenkTon": {
+    "description": "Theme builder color picker: hue slider label."
+  },
+  "profileRenkDoygunluk": "Doygunluk",
+  "@profileRenkDoygunluk": {
+    "description": "Theme builder color picker: saturation slider label."
+  },
+  "profileRenkParlaklik": "Parlaklık",
+  "@profileRenkParlaklik": {
+    "description": "Theme builder color picker: brightness slider label."
+  },
+  "profileRenkUygula": "Bu rengi kullan",
+  "@profileRenkUygula": {
+    "description": "Theme builder color picker: confirm spectrum selection."
+  },
   "profileYaziBaslikFontu": "Başlık yazı tipi",
   "@profileYaziBaslikFontu": {
     "description": "Theme builder: title font family selector."

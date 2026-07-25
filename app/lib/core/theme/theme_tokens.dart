@@ -161,6 +161,19 @@ class AppTypography extends ThemeExtension<AppTypography> {
     );
   }
 
+  /// WP-308: token setini verilen metin rengiyle tazele.
+  ///
+  /// Kayıtlı özel tema tipografiyi **tek** kopya olarak saklar ve içine o anki
+  /// metin rengi pişer. Aynı kopya hem açık hem koyu `ThemeData`'ya gittiği
+  /// için, tazelenmezse bir varyantta metinler karşı varyantın rengiyle çizilir
+  /// (sahip: "bazı yazılar okunmuyor… metin açık ayarlı ama zemine gömülü").
+  AppTypography recolored(Color textPrimary) => copyWith(
+    displayClock: displayClock.copyWith(color: textPrimary),
+    title: title.copyWith(color: textPrimary),
+    body: body.copyWith(color: textPrimary),
+    label: label.copyWith(color: textPrimary),
+  );
+
   @override
   AppTypography copyWith({
     TextStyle? displayClock,

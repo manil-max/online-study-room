@@ -180,6 +180,9 @@ class _ThemeBuilderScreenState extends ConsumerState<ThemeBuilderScreen> {
       label: _previewBrightness == Brightness.dark
           ? l10n.profileKoyu
           : l10n.profileAcik,
+      // WP-311: yazı adımında önizleme mini kartlar yerine etiketli yazı
+      // örnekleri gösterir — hangi seçim başlığa/gövdeye/sayaca dokunuyor.
+      focus: _step == 2 ? ThemePreviewFocus.typography : ThemePreviewFocus.none,
     );
 
     return PopScope(

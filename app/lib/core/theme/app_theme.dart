@@ -190,7 +190,7 @@ class AppTheme {
         shapes: family.shapes,
         atmosphere: family.atmosphere.copyWith(glowColor: scheme.primary),
         motion: family.motion,
-        typography: family.typography(),
+        rawTypography: family.typography(),
         brightness: brightness,
       );
     }
@@ -220,7 +220,7 @@ class AppTheme {
         gradientEnd: colors.surface1,
       ),
       motion: family.motion,
-      typography: AppTypography.standard(
+      rawTypography: AppTypography.standard(
         textPrimary: colors.textPrimary,
         serif: family.serifTitles,
         monoClock: family.monospaceClock,
@@ -248,7 +248,7 @@ class AppTheme {
       shapes: preset.shapes,
       atmosphere: preset.atmosphere,
       motion: preset.motion,
-      typography: preset.typography(),
+      rawTypography: preset.typography(),
       brightness: preset.brightness,
     );
   }
@@ -271,7 +271,7 @@ class AppTheme {
         gradientEnd: colors.surface1,
       ),
       motion: base.motion,
-      typography: AppTypography.standard(textPrimary: colors.textPrimary),
+      rawTypography: AppTypography.standard(textPrimary: colors.textPrimary),
       brightness: Brightness.dark,
     );
   }
@@ -289,7 +289,7 @@ class AppTheme {
       shapes: nordic.shapes,
       atmosphere: nordic.atmosphere.copyWith(glowColor: palette.primary),
       motion: nordic.motion,
-      typography: AppTypography.standard(textPrimary: colors.textPrimary),
+      rawTypography: AppTypography.standard(textPrimary: colors.textPrimary),
       brightness: Brightness.light,
     );
   }
@@ -308,7 +308,7 @@ class AppTheme {
     atmosphere: atmosphere,
     motion: feel.motion,
     feel: feel,
-    typography: typography,
+    rawTypography: typography,
     brightness: brightness,
   );
 
@@ -318,9 +318,16 @@ class AppTheme {
     required AppAtmosphere atmosphere,
     required AppMotion motion,
     AppFeel? feel,
-    required AppTypography typography,
+    required AppTypography rawTypography,
     required Brightness brightness,
   }) {
+    // 🔴 WP-308: tipografi **her zaman** aktif varyantın metin rengiyle
+    // tazelenir. `CustomTheme` tipografiyi tek kopya saklar (açık varyantın
+    // metin rengi pişmiş hâlde) ve `main.dart` aynı kopyayı hem açık hem koyu
+    // `ThemeData`'ya verir. Tazelenmezse koyu modda başlık/gövde/etiket açık
+    // varyantın **koyu** metin rengiyle çizilir: kullanıcı metni açık seçmiş
+    // olsa bile yazılar zemine gömülür ("bazı yazılar okunmuyor").
+    final typography = rawTypography.recolored(colors.textPrimary);
     final scheme = ColorScheme(
       brightness: brightness,
       primary: colors.primary,

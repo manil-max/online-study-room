@@ -354,6 +354,20 @@ class TypographyStep extends StatelessWidget {
                   avatar: _isBundled(family)
                       ? const Icon(Icons.download_done, size: 16)
                       : null,
+                  // WP-310: onay tiki **kapalı**. Açıkken seçilen çip ~24 dp
+                  // genişliyor, `Wrap` satırları yeniden diziliyor ve sahibin
+                  // dediği gibi "bastıkça düğmeler yer değiştiriyor". Seçim
+                  // artık yalnız renk + kenarlıkla anlatılır; ikisi de çipin
+                  // ölçüsünü değiştirmez.
+                  showCheckmark: false,
+                  // Kenarlık **kalınlığı** da sabit: chip ölçüsüne giriyor,
+                  // seçimle değişirse çip 2 dp oynar ve satır yeniden dizilir.
+                  side: BorderSide(
+                    color: value == family
+                        ? Theme.of(context).colorScheme.primary
+                        : Theme.of(context).colorScheme.outlineVariant,
+                    width: 1.5,
+                  ),
                   selected: value == family,
                   onSelected: (_) => onPick(family),
                 ),
@@ -458,7 +472,7 @@ class ShapeStep extends StatelessWidget {
           divisions: 24,
           valueLabel: shapes.radiusSm.toStringAsFixed(0),
           onChanged: (value) =>
-              onChanged(draft.copyWith(shapes: shapes.copyWith(radiusSm: value))),
+              onChanged(draft.withShapes(shapes.copyWith(radiusSm: value))),
         ),
         SliderRow(
           label: l10n.profileBicimKoseYaricapi,
@@ -468,7 +482,7 @@ class ShapeStep extends StatelessWidget {
           divisions: 40,
           valueLabel: shapes.radiusMd.toStringAsFixed(0),
           onChanged: (value) =>
-              onChanged(draft.copyWith(shapes: shapes.copyWith(radiusMd: value))),
+              onChanged(draft.withShapes(shapes.copyWith(radiusMd: value))),
         ),
         SliderRow(
           label: l10n.profileBicimBuyukYaricap,
@@ -478,7 +492,7 @@ class ShapeStep extends StatelessWidget {
           divisions: 56,
           valueLabel: shapes.radiusLg.toStringAsFixed(0),
           onChanged: (value) =>
-              onChanged(draft.copyWith(shapes: shapes.copyWith(radiusLg: value))),
+              onChanged(draft.withShapes(shapes.copyWith(radiusLg: value))),
         ),
         SliderRow(
           label: l10n.profileBicimGolge,
@@ -488,7 +502,7 @@ class ShapeStep extends StatelessWidget {
           divisions: 8,
           valueLabel: shapes.cardElevation.toStringAsFixed(0),
           onChanged: (value) => onChanged(
-            draft.copyWith(shapes: shapes.copyWith(cardElevation: value)),
+            draft.withShapes(shapes.copyWith(cardElevation: value)),
           ),
         ),
         SliderRow(
@@ -498,7 +512,7 @@ class ShapeStep extends StatelessWidget {
           max: 3,
           divisions: 6,
           onChanged: (value) => onChanged(
-            draft.copyWith(shapes: shapes.copyWith(borderWidth: value)),
+            draft.withShapes(shapes.copyWith(borderWidth: value)),
           ),
         ),
         SwitchListTile(
@@ -506,7 +520,7 @@ class ShapeStep extends StatelessWidget {
           title: Text(l10n.profileBicimKeskin),
           value: shapes.sharp,
           onChanged: (value) =>
-              onChanged(draft.copyWith(shapes: shapes.copyWith(sharp: value))),
+              onChanged(draft.withShapes(shapes.copyWith(sharp: value))),
         ),
       ],
     );
@@ -540,21 +554,21 @@ class AtmosphereStep extends StatelessWidget {
           label: l10n.profileAtmosferDegradeBasi,
           color: atmosphere.gradientStart,
           onChanged: (value) => onChanged(
-            draft.copyWith(atmosphere: atmosphere.copyWith(gradientStart: value)),
+            draft.withAtmosphere(atmosphere.copyWith(gradientStart: value)),
           ),
         ),
         ColorField(
           label: l10n.profileAtmosferDegradeSonu,
           color: atmosphere.gradientEnd,
           onChanged: (value) => onChanged(
-            draft.copyWith(atmosphere: atmosphere.copyWith(gradientEnd: value)),
+            draft.withAtmosphere(atmosphere.copyWith(gradientEnd: value)),
           ),
         ),
         ColorField(
           label: l10n.profileAtmosferParilti,
           color: atmosphere.glowColor,
           onChanged: (value) => onChanged(
-            draft.copyWith(atmosphere: atmosphere.copyWith(glowColor: value)),
+            draft.withAtmosphere(atmosphere.copyWith(glowColor: value)),
           ),
         ),
         SliderRow(
@@ -565,7 +579,7 @@ class AtmosphereStep extends StatelessWidget {
           divisions: 10,
           valueLabel: '%${(atmosphere.glowStrength * 100).round()}',
           onChanged: (value) => onChanged(
-            draft.copyWith(atmosphere: atmosphere.copyWith(glowStrength: value)),
+            draft.withAtmosphere(atmosphere.copyWith(glowStrength: value)),
           ),
         ),
         SliderRow(
@@ -576,7 +590,7 @@ class AtmosphereStep extends StatelessWidget {
           divisions: 12,
           valueLabel: atmosphere.blurSigma.toStringAsFixed(0),
           onChanged: (value) => onChanged(
-            draft.copyWith(atmosphere: atmosphere.copyWith(blurSigma: value)),
+            draft.withAtmosphere(atmosphere.copyWith(blurSigma: value)),
           ),
         ),
         SliderRow(
@@ -587,7 +601,7 @@ class AtmosphereStep extends StatelessWidget {
           divisions: 10,
           valueLabel: '%${(atmosphere.glassOpacity * 100).round()}',
           onChanged: (value) => onChanged(
-            draft.copyWith(atmosphere: atmosphere.copyWith(glassOpacity: value)),
+            draft.withAtmosphere(atmosphere.copyWith(glassOpacity: value)),
           ),
         ),
       ],

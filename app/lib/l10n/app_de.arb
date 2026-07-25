@@ -4814,6 +4814,30 @@
   "@profileKontrastDuzelt": {
     "description": "Theme builder: one-tap contrast fix action."
   },
+  "profileRenkSpektrum": "Spektrum",
+  "@profileRenkSpektrum": {
+    "description": "Theme builder color picker: open full spectrum mode."
+  },
+  "profileRenkHazirRenkler": "Vorgabefarben",
+  "@profileRenkHazirRenkler": {
+    "description": "Theme builder color picker: back to preset swatches."
+  },
+  "profileRenkTon": "Farbton",
+  "@profileRenkTon": {
+    "description": "Theme builder color picker: hue slider label."
+  },
+  "profileRenkDoygunluk": "Sättigung",
+  "@profileRenkDoygunluk": {
+    "description": "Theme builder color picker: saturation slider label."
+  },
+  "profileRenkParlaklik": "Helligkeit",
+  "@profileRenkParlaklik": {
+    "description": "Theme builder color picker: brightness slider label."
+  },
+  "profileRenkUygula": "Diese Farbe verwenden",
+  "@profileRenkUygula": {
+    "description": "Theme builder color picker: confirm spectrum selection."
+  },
   "profileYaziBaslikFontu": "Titelschrift",
   "@profileYaziBaslikFontu": {
     "description": "Theme builder: title font family selector."

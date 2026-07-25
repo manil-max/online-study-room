@@ -31,7 +31,7 @@ yükseklik zaten eşiğin altında olduğundan dal değişmiyor — sahibin göz
 ekranda `StepDots` 8×48 dp ile 360 dp telefonda taşıyordu — dar ekranda eşit
 bölüşür oldu. Test: `app/test/features/profile/theme_builder_name_focus_test.dart`.
 
-## WP-307 — 7. adım (His) önceki ayarları siliyor 🔴
+## WP-307 — 7. adım (His) önceki ayarları siliyor ✅ ÇÖZÜLDÜ (v48)
 
 **Sahip:** "7. kademede feels kısmında bir şeye basınca önceden ayarladıklarımız
 gidiyor."
@@ -46,7 +46,18 @@ tipografi / köşe vb.) taslaktan düşürüyor. Muhtemel sebep: his ön ayarı
 **Kabul:** his ön ayarı seçmek yalnız his alanlarını değiştirir; 1–6. adımların
 çıktısı aynen kalır. Regresyon testi: draft kur → his seç → önceki alanlar eşit.
 
-## WP-308 — Okunmayan metin: kullanıcı teması bazı yüzeylerde tutmuyor 🔴
+**Kök neden (bulundu):** `ThemeDraft.withFeel` şekil ve atmosferi **koşulsuz**
+hisle hizalıyordu (`shapesForFeel` / `atmosphereForFeel`). Sihirbaz sırası
+Biçim → Atmosfer → His olduğu için his seçmek bir önceki iki adımda yapılan
+her şeyi siliyordu.
+
+**Çözüm:** taslak artık "kullanıcı bu katmana elle dokundu mu" bilgisini tutar
+(`shapesEdited` / `atmosphereEdited`); Biçim ve Atmosfer adımları
+`withShapes` / `withAtmosphere` üzerinden yazar. Dokunulmuş katman his
+seçiminde korunur, dokunulmamış katmanda his hâlâ makul bir zemin verir.
+Kayıtlı temayı düzenlemede iki bayrak da baştan açıktır.
+
+## WP-308 — Okunmayan metin: kullanıcı teması bazı yüzeylerde tutmuyor ✅ ÇÖZÜLDÜ (v48)
 
 **Sahip:** "bazı yazılar bu ayarlarda okunmuyor mesela profil sekmesinde isim
 kısmı. koyu renkte siyaha yakın tonda ama görselde metin ve metin 2 de açık
@@ -67,7 +78,21 @@ kurtarmıyor.
 türer; AA altına düşen kombinasyon **otomatik düzeltilir** ya da kaydetmeden önce
 somut olarak engellenir. En az bir golden: koyu zemin + açık metin.
 
-## WP-309 — Renk seçici: hazır renk + spektrum (Samsung Notes deseni)
+**Kök neden (bulundu):** `CustomTheme` tipografiyi **tek** kopya saklıyor ve o
+kopyaya kaydetme anındaki metin rengi pişiyor (`toCustomTheme()` →
+`typographyFor(Brightness.light)`). `main.dart` aynı kopyayı hem açık hem koyu
+`ThemeData`'ya veriyor; `_buildFromTokens` ise `color: token.color ?? …`
+diyerek pişmiş rengi olduğu gibi kullanıyordu. Sonuç: koyu modda tüm
+`textTheme` slotları **açık varyantın koyu metnini** taşıyor — kullanıcı metni
+açık seçse bile başlıklar zemine gömülüyor. `colorScheme.onSurface` kullanan
+yüzeyler doğru göründüğü için hata "bazı yazılar" gibi görünüyordu.
+
+**Çözüm:** `AppTypography.recolored()` eklendi; `_buildFromTokens` tipografiyi
+**her zaman** aktif varyantın `colors.textPrimary` değeriyle tazeliyor.
+Test: `app/test/core/custom_theme_text_contrast_test.dart` (iki varyantta da
+başlık AA eşiğini geçiyor).
+
+## WP-309 — Renk seçici: hazır renk + spektrum (Samsung Notes deseni) ✅ ÇÖZÜLDÜ (v48)
 
 **Sahip:** "renk seçme için hazır renkler vermek yerine spektrumlu hazır renkler
 daha güzel olur… hazır renkler var birde en sağda kine basınca spektrum açılıyor
@@ -80,7 +105,13 @@ seçici (ton/doygunluk/parlaklık + hex).
 görünür; sağdaki düğme spektrumu açar; seçilen renk canlı önizlemeye anında
 yansır.
 
-## WP-310 — Font adımında düğmeler yerinde durmuyor
+**Çözüm:** renk yaprağı artık iki modlu. Hazır ızgaranın **son hücresi**
+gökkuşağı düğmesi (başlıkta da "Spektrum" bağlantısı var — ızgara uzunsa
+kaydırmaya gerek kalmasın). Spektrum modu HSV kaydırıcıları (ton/doygunluk/
+parlaklık), kendi zemininde renkli şeritler, canlı örnek ve hex kodu gösterir.
+Test: `app/test/features/profile/theme_color_spectrum_test.dart`.
+
+## WP-310 — Font adımında düğmeler yerinde durmuyor ✅ ÇÖZÜLDÜ (v48)
 
 **Sahip:** "font seçme kısmında fontlar seçenek butonları sabit olsun bastıkça
 yer değiştiriyor ekran kayıyor vs kafa karışıyor… sürekli her değişiklikte
@@ -92,7 +123,16 @@ etiket genişliği değişiyor) ve düğmeler zıplıyor.
 **Kabul:** seçim değişince hiçbir düğme yer değiştirmez, kaydırma konumu sabit
 kalır. Test: iki farklı seçim sonrası düğme dikdörtgenleri eşit.
 
-## WP-311 — Canlı önizleme neyin değiştiğini göstermiyor
+**Kök neden (bulundu):** `ChoiceChip` varsayılan olarak seçilince **onay tiki**
+çiziyor (~24 dp genişleme) — `Wrap` satırları yeniden diziliyor ve düğmeler
+zıplıyordu. Kenarlık kalınlığını seçime bağlamak da 2 dp kaydırıyor (test bunu
+yakaladı).
+
+**Çözüm:** `showCheckmark: false`, kenarlık kalınlığı sabit 1.5 dp; seçim yalnız
+renkle anlatılıyor. Test: `theme_builder_typography_step_test.dart` iki ardışık
+seçimden sonra tüm çip dikdörtgenlerini karşılaştırıyor.
+
+## WP-311 — Canlı önizleme neyin değiştiğini göstermiyor ✅ ÇÖZÜLDÜ (v48)
 
 **Sahip:** "fontlarda da bazı ayarı değiştiriyoruz neye etki ediyor görünmüyor
 canlı önizlemeyi ona göre revize etmek lazım."
@@ -104,6 +144,13 @@ göstermiyor: başlık/gövde/rakam/etiket hiyerarşisi ve ağırlık farkı gö
 başlık + gövde + rakam + küçük etiket bir arada; his adımında efekt gerçekten
 görünür.
 
+**Çözüm (yazı adımı):** `ThemePreviewFocus` eklendi. Yazı adımında önizleme iki
+mini kart yerine **etiketli örneklik** gösteriyor: "Başlık yazı tipi",
+"Gövde yazı tipi", "Sayaç yazı tipi" başlıkları altında gerçek örnekler —
+hangi seçicinin neye dokunduğu doğrudan okunuyor. Kalınlık/ölçek/harf aralığı
+aynı üç örnekte görünür. His adımı için ayrı odak henüz yok (WP-312 kararına
+bağlı).
+
 ## WP-312 — Kavramsal sadeleştirme: "kaç kere renk ayarlıyoruz?"
 
 **Sahip:** "tam anlamadım kaç kere renk ayarlıyoruz sistem garip biraz bazı
@@ -114,7 +161,7 @@ katmanı + koyu/açık varyant) ve hangi ayarın nereye dokunduğu belirsiz.
 🔴 **Bu kart sahip kararı ister** — çözüm ya adımları birleştirmek ya her role
 "bu neyi değiştirir" tek satır açıklama + önizlemede vurgulamak.
 
-## WP-313 — Grafikte her sütunun altında tarih
+## WP-313 — Grafikte her sütunun altında tarih ✅ ÇÖZÜLDÜ (v48)
 
 **Sahip:** "tarihler 2 günde bir yazılıyor ama ben her sütunun altında olsun
 istiyorum." (4. ekran görüntüsü, 14 gün)
@@ -132,13 +179,28 @@ kalır.
 **Kabul:** 7 ve 14 günde her sütunun altında tarih var; 30 günde okunabilirlik
 bozulmuyor. `chart_axis.dart` yardımcı fonksiyonunun testi güncellenir.
 
+**Çözüm:** ay adı yalnız ilk sütunda ve **ay değiştiğinde** yazılır; etiket
+genişliği varsayımı 26 → 14 px'e indi, 7/14 günlük seride adım 1 oldu. İkinci
+satır her zaman çizilir (gerekmediğinde boş metin) ki taban hizası bozulmasın.
+Test: `app/test/features/stats/daily_bar_chart_labels_test.dart`.
+
 ---
 
-## Sıra önerisi
+## Durum (v48)
 
-1. **WP-306** (klavye) ve **WP-313** (tarih ekseni) — küçük, net, tek dosyalık.
-2. **WP-307** (ayar sıfırlanması) — veri kaybı, en can yakıcı hata.
-3. **WP-308** (okunmayan metin) — tema motoruna dokunur, en riskli iş.
-4. **WP-310 / WP-311** (font adımı yerleşimi + önizleme).
-5. **WP-309** (spektrum seçici) — yeni yüzey.
-6. **WP-312** — 🔴 önce sahip kararı.
+| Kart | Durum |
+| --- | --- |
+| WP-306 klavye | ✅ v47 |
+| WP-307 his ayarları siliyor | ✅ v48 |
+| WP-308 okunmayan metin | ✅ v48 |
+| WP-309 spektrum seçici | ✅ v48 |
+| WP-310 font düğmeleri zıplıyor | ✅ v48 |
+| WP-311 önizleme odağı | ✅ v48 (yazı adımı) |
+| WP-312 kavramsal sadeleştirme | 🔴 sahip kararı bekliyor |
+| WP-313 grafik tarihleri | ✅ v48 |
+
+**Kalan tek iş WP-312.** Seçenekler:
+1. Adım sayısını 8 → 5'e indir (Zemin+Renk, Yazı, Biçim+Atmosfer, His, Özet).
+2. Adımları koru, her renk rolüne "bu neyi değiştirir" tek satır açıklama ekle
+   ve önizlemede o rolü vurgula (WP-311'in renk adımına genişletilmesi).
+3. Karma: rolleri "temel / ileri" diye ikiye ayır, ileri olanlar katlanmış dursun.

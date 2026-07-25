@@ -108,11 +108,23 @@ class _Swatch extends StatelessWidget {
   }
 }
 
-class _ColorPickerSheet extends StatelessWidget {
+class _ColorPickerSheet extends StatefulWidget {
   const _ColorPickerSheet({required this.title, required this.selected});
 
   final String title;
   final Color selected;
+
+  @override
+  State<_ColorPickerSheet> createState() => _ColorPickerSheetState();
+
+}
+
+/// WP-309: hazır renkler + **en sağda spektrum düğmesi** (sahibin örneği:
+/// Samsung Notes). Hazır palet hızlı yol; spektrum ise HSV kaydırıcılarıyla
+/// istenen tam rengi verir — 32 hazır renge sıkışmak yok.
+class _ColorPickerSheetState extends State<_ColorPickerSheet> {
+  late HSVColor _hsv = HSVColor.fromColor(widget.selected);
+  var _spectrum = false;
 
   /// Seçim hedefi sabit renkler (tema token'ı değil) — eski
   /// `custom_palette_editor.dart` ızgarasından taşındı ve nötr tonlarla
@@ -128,53 +140,196 @@ class _ColorPickerSheet extends StatelessWidget {
     Color(0xFFD4A373), Color(0xFF8B5E34), Color(0xFF00E5FF), Color(0xFFFF007F),
   ];
 
+  /// Izgaranın son hücresi: spektrumu açan gökkuşağı düğmesi.
+  Widget _spectrumButton(ThemeData theme) => InkWell(
+    key: const Key('themeColorSpectrumButton'),
+    onTap: () => setState(() => _spectrum = true),
+    customBorder: const CircleBorder(),
+    child: Container(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: theme.colorScheme.outlineVariant),
+        gradient: const SweepGradient(
+          colors: [
+            Color(0xFFFF0000),
+            Color(0xFFFFFF00),
+            Color(0xFF00FF00),
+            Color(0xFF00FFFF),
+            Color(0xFF0000FF),
+            Color(0xFFFF00FF),
+            Color(0xFFFF0000),
+          ],
+        ),
+      ),
+      child: const Icon(Icons.colorize, size: 18, color: Colors.white),
+    ),
+  );
+
+  Widget _swatchGrid(ThemeData theme) => GridView.builder(
+    shrinkWrap: true,
+    physics: const NeverScrollableScrollPhysics(),
+    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+      crossAxisCount: 6,
+      crossAxisSpacing: 10,
+      mainAxisSpacing: 10,
+    ),
+    // Son hücre spektrum düğmesi — sahibin istediği "en sağdaki".
+    itemCount: _options.length + 1,
+    itemBuilder: (context, index) {
+      if (index == _options.length) return _spectrumButton(theme);
+      final option = _options[index];
+      final isSelected = option.toARGB32() == widget.selected.toARGB32();
+      return InkWell(
+        key: ValueKey('themeColor_${option.toARGB32()}'),
+        onTap: () => Navigator.of(context).pop(option),
+        customBorder: const CircleBorder(),
+        child: Container(
+          decoration: BoxDecoration(
+            color: option,
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: isSelected
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.outlineVariant,
+              width: isSelected ? 3 : 1,
+            ),
+          ),
+          child: isSelected
+              ? Icon(Icons.check, size: 18, color: readableOn(option))
+              : null,
+        ),
+      );
+    },
+  );
+
+  Widget _spectrumPanel(ThemeData theme, AppLocalizations l10n) {
+    final color = _hsv.toColor();
+    // Ton şeridi: kaydırıcı hangi rengi verdiğini kendi zemininde gösterir.
+    const hueStops = [
+      Color(0xFFFF0000),
+      Color(0xFFFFFF00),
+      Color(0xFF00FF00),
+      Color(0xFF00FFFF),
+      Color(0xFF0000FF),
+      Color(0xFFFF00FF),
+      Color(0xFFFF0000),
+    ];
+    Widget band(List<Color> colors, Widget slider) => Stack(
+      alignment: Alignment.center,
+      children: [
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 12),
+          height: 10,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(5),
+            gradient: LinearGradient(colors: colors),
+          ),
+        ),
+        slider,
+      ],
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          height: 64,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: theme.colorScheme.outlineVariant),
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            '#${color.toARGB32().toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}',
+            style: theme.textTheme.labelLarge?.copyWith(color: readableOn(color)),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Text(l10n.profileRenkTon, style: theme.textTheme.bodyMedium),
+        band(
+          hueStops,
+          Slider(
+            value: _hsv.hue,
+            max: 360,
+            onChanged: (value) =>
+                setState(() => _hsv = _hsv.withHue(value)),
+          ),
+        ),
+        Text(l10n.profileRenkDoygunluk, style: theme.textTheme.bodyMedium),
+        band(
+          [
+            HSVColor.fromAHSV(1, _hsv.hue, 0, _hsv.value).toColor(),
+            HSVColor.fromAHSV(1, _hsv.hue, 1, _hsv.value).toColor(),
+          ],
+          Slider(
+            value: _hsv.saturation,
+            onChanged: (value) =>
+                setState(() => _hsv = _hsv.withSaturation(value)),
+          ),
+        ),
+        Text(l10n.profileRenkParlaklik, style: theme.textTheme.bodyMedium),
+        band(
+          [
+            Colors.black,
+            HSVColor.fromAHSV(1, _hsv.hue, _hsv.saturation, 1).toColor(),
+          ],
+          Slider(
+            value: _hsv.value,
+            onChanged: (value) =>
+                setState(() => _hsv = _hsv.withValue(value)),
+          ),
+        ),
+        const SizedBox(height: 8),
+        FilledButton(
+          key: const Key('themeColorSpectrumApply'),
+          onPressed: () => Navigator.of(context).pop(color),
+          child: Text(l10n.profileRenkUygula),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title, style: theme.textTheme.titleMedium),
-            const SizedBox(height: 12),
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 6,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
-              ),
-              itemCount: _options.length,
-              itemBuilder: (context, index) {
-                final option = _options[index];
-                final isSelected = option.toARGB32() == selected.toARGB32();
-                return InkWell(
-                  key: ValueKey('themeColor_${option.toARGB32()}'),
-                  onTap: () => Navigator.of(context).pop(option),
-                  customBorder: const CircleBorder(),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: option,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: isSelected
-                            ? theme.colorScheme.primary
-                            : theme.colorScheme.outlineVariant,
-                        width: isSelected ? 3 : 1,
-                      ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      widget.title,
+                      style: theme.textTheme.titleMedium,
                     ),
-                    child: isSelected
-                        ? Icon(Icons.check, size: 18, color: readableOn(option))
-                        : null,
                   ),
-                );
-              },
-            ),
-          ],
+                  if (_spectrum)
+                    TextButton(
+                      onPressed: () => setState(() => _spectrum = false),
+                      child: Text(l10n.profileRenkHazirRenkler),
+                    )
+                  else
+                    TextButton(
+                      onPressed: () => setState(() => _spectrum = true),
+                      child: Text(l10n.profileRenkSpektrum),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              if (_spectrum)
+                _spectrumPanel(theme, l10n)
+              else
+                _swatchGrid(theme),
+            ],
+          ),
         ),
       ),
     );
