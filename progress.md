@@ -72,8 +72,11 @@
 > sahibinin cihazda/panelde doğrulaması. Kart ayrıntıları [arşivde](docs/archive/progress-tarihsel-2026-07.md).
 > QA sırasında bulunan hata **yeni WP** olur, eski kart yeniden açılmaz.
 >
-> ✅ **Bu kuyruğun TAMAMI beta 1'de (`beta-v4309`, 2026-07-25) test edilecek** — kod tarafı bitti,
-> WP-295 artık beklenmiyor (beta kararı iki betaya çevrildi, `§0.1`).
+> ✅ **Bu kuyruğun TAMAMI artık `v46` STABLE'da (2026-07-25) test ediliyor** — sahip kararı (`§0.1`):
+> beta 1 (`beta-v4309`) düzeltmeleri alındıktan sonra doğrudan stable'a çıkıldı, QA orada yapılıyor.
+> Kod tarafı bitti; WP-295 artık beklenmiyor (beta kararı iki betaya çevrildi).
+> 🔁 **Geri dönüş:** hata ağırsa `v45` yeniden "Latest" yapılır; şema değişmediği (head 0070) için
+> migration geri alımı gerekmez.
 > 🔴 **Beta 1 QA'sında ayrıca ölçülecek — WP-295/299 buna bağlı:** kamp ateşi ekranında
 > `flutter run --profile` + timeline ile **p95 kare süresi** ve **jank oranı**. Bu sayı olmadan
 > beta 2'nin gökyüzü + sürekli marşmelov işi körlemesine yazılır.
