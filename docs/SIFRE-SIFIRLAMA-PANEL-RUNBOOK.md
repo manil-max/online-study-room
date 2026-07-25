@@ -1,7 +1,23 @@
 # Şifre Sıfırlama — Supabase Panel Runbook (WP-287)
 
-> Kod tarafı tamamlandı; bu adımlar **sahip tarafından Supabase panelinden** yapılır.
+> **Durum (2026-07-25): staging otomatik olarak yapılandırıldı.** Elle panel adımı
+> gerekmiyor; `.github/workflows/supabase-auth-config.yml` Management API ile yalnız
+> `site_url` + `uri_allow_list` alanlarını yamalıyor (run 30164160511). Aşağıdaki panel
+> adımları referans/production içindir.
+>
+> ⚠️ **Free tier sınırı:** varsayılan e-posta sağlayıcısını kullanan ücretsiz projelerde
+> Supabase, kurtarma **e-posta şablonunun değiştirilmesini hem API'den hem panelden
+> reddediyor** ("Email template modification is not available for free tier projects").
+> Yani `{{ .Token }}` eklenemiyor → **Windows/masaüstündeki 6 haneli kod yolu, özel bir
+> SMTP sağlayıcısı (veya ücretli plan) bağlanana kadar çalışmaz.** Android derin bağlantı
+> yolu çalışır. Şablon adımı workflow'da otomatik denenir, bu hatada uyarıyla geçilir.
+>
+> Kod tarafı tamamlandı; aşağıdaki adımlar **Supabase panelinden** de yapılabilir.
 > Kod bu adımlar olmadan da merge edilir ama **kullanıcı için düzelmiş olmaz.**
+>
+> `supabase config push` **kullanılmaz**: repodaki `supabase/config.toml` yerel
+> geliştirmeye göre yazılmıştır (`site_url = http://127.0.0.1:3000`) ve uzak projeye
+> basılırsa Site URL'i localhost'a çevirip redirect listesini siler.
 >
 > 🔴 **Bu WP yalnız STAGING panelini kapsar.** Production panel değişikliği ayrı bir
 > ops/release kapısıdır ve somut GO ister (`.agents/AGENTS.md §2`, plan ADR-5 / K-6).
