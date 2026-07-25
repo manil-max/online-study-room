@@ -65,3 +65,6 @@ project-continuation/
 **/KEYSTORE_SECRETS.txt
 
 app/test/**/failures/
+
+test.zip
+flutter_run_*.log

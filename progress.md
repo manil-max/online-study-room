@@ -1,6 +1,13 @@
 # progress.md — Canlı Durum
 
-> Son güncelleme: **2026-07-25** · Saat dilimi: **Europe/Istanbul**
+> Son güncelleme: **2026-07-26** · Saat dilimi: **Europe/Istanbul**
+>
+> 🧭 **Yol haritası artık [`docs/PLAN.md`](docs/PLAN.md)'de.** "Sırada ne var, hangi
+> fazdayız, hangi karar bekliyor" oradan okunur. Bu dosya günlük çalışma kaydı olarak
+> kalır: kim neyi claim etti, ne test edilecek, ne kodlanacak.
+>
+> 🔴 **Sürüm politikası (2026-07-26):** tag oluşturma ve release tetikleme **sahip
+> onayına bağlıdır**. Commit/push serbest; düzeltmeler biriktirilip tek sürümde çıkar.
 >
 > Bu dosya yalnız aktif iş, açık kabul ve ürün kararlarını taşır. Tamamlanmış WP'lerin ayrıntısı git geçmişi, [`docs/archive/progress-tarihsel-2026-07.md`](docs/archive/progress-tarihsel-2026-07.md) ve kanonik raporlardadır; burada tekrar edilmez.
 >

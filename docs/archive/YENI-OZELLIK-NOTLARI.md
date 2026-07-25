@@ -1,0 +1,612 @@
+# Yeni Özellik Notları — konuşma kaydı (Aşama 1)
+
+> Bu dosya **düz not defteridir**. Amaç: yeni özellikleri önce konuşmak, konuşulanı kaybetmeden yazmak.
+> Burada kesinleşmiş plan, mimari karar, tahmin ya da WP **yoktur**. Sadece proje sahibinin söylediği,
+> Claude'un anladığı ve üzerinde anlaşılan şeyler yazılır.
+>
+> **Akış:** 1) Konuşma (bu dosya) → 2) Plan → 3) WP paketleme → 4) Uygulama.
+>
+> ## 🔒 KONUŞMA FAZI KAPANDI — 2026-07-24, 9. tur
+> Sahip: *"şimdi bunları da kaydet, sonrasında konuşma fazı bitti."*
+> Bu dosya artık **girdi belgesidir**; kararlar burada dondu. Sonraki adım detaylı teknik plan:
+> [`docs/YENI-OZELLIK-PLANI.md`](YENI-OZELLIK-PLANI.md).
+> Yeni bir istek çıkarsa buraya yeni tur olarak eklenir ve plan güncellenir.
+
+- **Başlangıç:** 2026-07-24
+- **Son güncelleme:** 2026-07-24 (3. konuşma turu)
+
+---
+
+## 0. Tur özeti — 2026-07-24, 1. konuşma
+
+Proje sahibinin gündeme getirdiği 6 madde. Sırası öncelik sırası değil, konuşma sırasıdır.
+
+| # | Başlık | Tür | Durum |
+|---|---|---|---|
+| F-01 | Ayarlar: "Uygulama kısayolları (rutinler)" kartını sil | Temizlik | Karar net |
+| F-02 | Ayarlar: bildirim/izin/rapor kartlarını tek yerde birleştir | UX düzenleme | Yön net, detay konuşulacak |
+| F-03 | Şifremi unuttum → e-postadaki link açılmıyor | **Hata** | Tekrar üretilecek |
+| F-04 | Görünüm & atmosfer temaları tamamen yenilenecek | Büyük özellik | Konuşuluyor |
+| F-05 | Ana sayfa kart düzenleme: boyut aracı sabit/yüzen olsun | UX düzenleme | Seçenek C seçildi |
+| F-06 | Windows sürümünü arkadaşlara dağıtmak (production) | Dağıtım | F-01…F-05 sonrası yapılacak |
+| F-07 | Play Store + Microsoft Store hazırlık süreci | Yol haritası | Aşama B ve C |
+| F-08 | Kozmetik: campfire animasyonları, taç, ek animasyonlar | Kozmetik | Aşama A'nın sonunda |
+
+---
+
+## F-01 — Ayarlar: "Uygulama kısayolları (rutinler)" kartı silinecek
+
+**Sahibin ifadesi:** "Ayarlar kısmında 'Application shortcuts (routines)' kısmına basınca bir şey olmuyor.
+Direkt ayarlardan bunu sil, gereksiz yer kaplıyor."
+
+**Claude'un kodda gördüğü (doğrulama):**
+- Kart `app/lib/features/profile/settings_screen.dart` içinde, ~330–339. satırlar.
+- `ListTile`'ın **`onTap`'i yok, `subtitle`'ı yok, `trailing` oku yok** → gerçekten ölü bir plasebo satır.
+  Yani "bir şey olmuyor" gözlemi kod tarafından birebir doğrulanıyor; bozulan bir şey değil, hiç bağlanmamış.
+- Metin anahtarı: `profileUygulamaKisayollariRutinler` (l10n: TR/EN/DE/AR).
+
+**Karar:** Kart ayarlardan tamamen kaldırılacak. Kullanılmayan l10n anahtarı da temizlenir.
+
+**KARAR (3. tur):** Kısayol/rutin özelliği **gelmeyecek**. Kart tamamen silinir, geri dönüş notu tutulmaz.
+İlgili l10n anahtarı da temizlenir. (S-01 kapandı.)
+
+---
+
+## F-02 — Ayarlar: bildirim + izin + rapor kartları tek yerde birleşecek
+
+**Sahibin ifadesi:** "Ayarlarda 'notification center' ve 'widget and alarm permission' var, bu ikisini tek bir
+yerde birleştir ve biraz daha düzenle; ilk defa kullananlar daha rahat anlasın. Yine ayarlarda 'monthly study
+reports' var, bunu da öncekilerle birleştirelim."
+
+**Bugün ayarlarda ayrı ayrı duran üç şey:**
+1. **Bildirim merkezi** → `NotificationCenterScreen` (dürtme, hatırlatıcı, duyuru vs.)
+2. **Widget ve alarm izinleri** → `ClockWidgetsScreen` (cihaz izinleri)
+3. **Aylık çalışma raporu e-postası** → ayarlar listesinde doğrudan duran bir **switch** (opt-in)
+
+**Anlaşılan hedef:** Üçü tek bir üst başlık altında toplanacak; içeride mantıklı gruplara ayrılacak.
+İlk kez açan biri "hangisi neydi" diye düşünmeyecek.
+
+**Claude'un ilk taslağı (tartışmaya açık):**
+Tek giriş: **"Bildirimler ve izinler"**. İçeride 3 bölüm:
+- *Bana ne gelsin* — dürtme, hatırlatıcı, duyuru, grup bildirimleri (uygulama içi tercihler)
+- *Cihaz izinleri* — bildirim izni, alarm/tam zamanlı alarm, widget, pil optimizasyonu; her satırda
+  **"şu an kapalı/açık" durumu** + tek dokunuşla düzeltme
+- *E-posta* — aylık çalışma raporu opt-in
+
+**KARARLAR (9. tur — hepsi kapandı):**
+- **Üst başlık adı: "Bildirimler ve izinler".** (S-02 kapandı.)
+- **Durum özeti olacak** — en üstte tek satır, eksik izinleri gösterip tek dokunuşla düzeltme.
+  (S-03 kapandı.)
+- Aylık rapor switch'i ayarlar ana listesinden çıkıp bu ekranın içine girer. (S-04 kapandı.)
+
+---
+
+## F-03 — HATA: Şifremi unuttum akışında link açılmıyor
+
+**Sahibin ifadesi:** "Şifremi unuttuma bastım, mail geldi, tıkladım ama site açılmadı. Tekrar tekrar
+denedim ama o kısımda sorun var."
+
+**Not:** Bu bir yeni özellik değil, **canlı hata**. Diğer maddelerden ayrı tutulacak ve muhtemelen önce çözülecek.
+
+**Sahibin ek bilgisi (2. tur):**
+- Sayfa hiç yüklenmiyor. Tarayıcı hata sayfası çıkıyor; "Details"a basınca
+  **"check your internet connection"** diyor. Ama internet çalışıyor.
+- **stable** sürümde denendi.
+
+**Claude'un kodda bulduğu güçlü aday kök neden (henüz kanıtlanmadı, ama semptomla birebir örtüşüyor):**
+- `app/lib/data/repositories/supabase/supabase_auth_repository.dart:185` →
+  `await _client.auth.resetPasswordForEmail(safe);`
+  **`redirectTo` parametresi verilmiyor.**
+- `redirectTo` verilmeyince Supabase, e-postadaki linki projenin **Site URL** ayarına yönlendirir.
+- `supabase/config.toml:43` → `site_url = "http://127.0.0.1:3000"` (yerel geliştirme varsayılanı).
+  Hosted production projesinde de Site URL hâlâ `localhost`/`127.0.0.1` ise, e-postadaki link telefonun
+  kendi 3000 portuna gider; orada bir şey olmadığı için tarayıcı **bağlantı hatası** verir ve Chrome bunu
+  "check your internet connection" diye gösterir. → Semptom birebir bu.
+- Uygulama tarafı zaten deep link'e hazır görünüyor: `authRepository.passwordRecoveryEvents` stream'i +
+  `features/auth/recovery_screen.dart` var, `auth_gate.dart` bunu dinliyor. Yani eksik olan **link hedefi**.
+
+**KÖK NEDEN DOĞRULANDI (3. tur):** Sahip maildeki linkin **`localhost:3000`** açtığını teyit etti.
+Yani yukarıdaki tahmin doğru: `redirectTo` verilmediği için link, Supabase projesinin Site URL'ine
+(`localhost:3000`) gidiyor; telefonda o adreste bir şey olmadığı için tarayıcı bağlantı hatası veriyor.
+**Bu artık teşhis edilmiş bir hatadır, araştırma gerektirmez — doğrudan düzeltme WP'sine gider.**
+
+**Çözüm yönü (planlanınca kesinleşecek):**
+`resetPasswordForEmail`'e ortam başına doğru `redirectTo` vermek (uygulama deep link'i veya gerçek bir web
+sayfası) + Supabase panelinde Site URL ve Redirect allowlist'i düzeltmek + Android intent-filter'ı doğrulamak.
+**Not:** Supabase panel ayarı production'ı etkiler → ayrı GO kuralına tabi.
+
+---
+
+## F-04 — "Görünüm ve atmosfer temaları" tamamen yenilenecek
+
+**Sahibin ifadesi (özet):**
+- Bu bölüm **tamamen yenilenecek**.
+- **Altta hazır temalar** olacak (şu anki hâli sadece renk seçimi gibi duruyor).
+- **En üstte "create your own" gibi bir seçenek** olacak — adını sahip tam bulamadı, Claude önerecek.
+- Bu bölümde her şey **tek tek, aşama aşama** seçilecek:
+  - **Renk:** tek paket hâlinde değil — arka plan, yazı rengi, yazı arkası/yüzey rengi vs. ayrı ayrı.
+    Her aşamada **canlı önizleme** olacak.
+  - **Yazılar:** yazı tipi (font), yazı kalınlığı… "bu tür şeyleri zenginleştir".
+  - **Animasyonlar:** modern, vintage, "kutular eskimiş gibi" vb. Genel tema uygulamalarında ne varsa
+    araştırılıp uygulamanın **havasını değiştirecek** şeyler konacak.
+  - **Keskinlik:** şu anki idare eder ama biraz daha seçenek eklenebilir.
+  - Gerisi Claude'un hayal gücüne bırakıldı.
+- En altta bunlardan **mix edilmiş birkaç hazır tema** olacak.
+
+**Claude'un kodda gördüğü mevcut durum (sıfırdan başlanmıyor, üstüne inşa edilecek):**
+- `features/profile/appearance_screen.dart` — atmosfer temaları + palet + açık/koyu/sistem (309 satır)
+- `features/profile/theme_studio_screen.dart` — WP-55 "Katmanlı Tema Stüdyosu": aile → mood → şekil hissi →
+  önizleme özeti, canlı önizlemeli 4 adım (616 satır). **Yani adım adım akışın iskeleti zaten var**,
+  ama seçimler paket hâlinde (aile/mood), tek tek değil.
+- `core/theme/theme_tokens.dart` — tema zaten 4 katmana ayrılmış durumda:
+  - `AppColors`: surface1, surface2, scaffold, primary, accent, textPrimary, textSecondary, border, success, error…
+  - `AppTypography`: displayClock, title, body, label + `useSerifTitles`, `useMonospaceClock`
+  - `AppShapes`: radiusSm/Md/Lg, cardElevation, borderWidth, `sharp`
+  - `AppAtmosphere`: gradientStart, gradientEnd, glowColor, glowStrength, blurSigma
+- `core/theme/theme_presets.dart` — hazır preset'ler (534 satır)
+
+  → **Önemli:** İstenen "tek tek seçim" için gereken alanların çoğu token katmanında zaten var.
+  Asıl eksik: bu alanları kullanıcıya tek tek açan arayüz + kaydetme/paylaşma.
+
+**İsim önerileri ("create your own" için):**
+| Öneri | TR | EN |
+|---|---|---|
+| A | **Kendi temanı yarat** | Create your own |
+| B | **Tema atölyesi** | Theme Workshop |
+| C | **Tema stüdyosu** (mevcut ad, WP-55) | Theme Studio |
+| D | **Sıfırdan tasarla** | Design from scratch |
+| E | **Özel tema oluştur** | Custom theme |
+
+**SEÇİLEN AD (sahip kararı, 2. tur): "Kendi Temanı Oluştur"** — EN karşılığı "Create your own theme".
+Ayarlar/görünüm ekranının **en üstünde** büyük giriş kartı olarak duracak.
+
+**Claude'un adım taslağı (tartışmaya açık, sıra değişebilir):**
+1. **Zemin** — açık/koyu/sistem + arka plan rengi (düz / degrade / dokulu)
+2. **Renkler** — tek tek: arka plan, kart/yüzey, vurgu (primary), ikincil vurgu (accent), yazı rengi
+   (başlık/gövde ayrı), kenarlık. Her seçimde canlı önizleme.
+3. **Yazılar** — font ailesi, başlık fontu ayrı, sayaç fontu ayrı (mono/serif), kalınlık, harf aralığı,
+   satır yüksekliği, yazı boyu ölçeği
+4. **Biçim/keskinlik** — köşe yuvarlaklığı, kenarlık kalınlığı, gölge/yükseklik, boşluk yoğunluğu
+5. **Atmosfer** — degrade, parıltı (glow) gücü, bulanıklık (blur), doku/gren
+6. **Animasyon/his** — geçiş hızı ve karakteri (aşağıya bak)
+7. **Özet + isim ver + kaydet**
+
+**ARAŞTIRMA GÖREVİ (sahip kararı, 3. tur):** "Kutular eskimiş gibi" ve genel animasyon/efekt seti için
+sahip net bir tarif vermek yerine **araştırma istedi**: "oyunlarda ve uygulamalarda çok güzel temalar var,
+onlardan animasyon/efekt vs. bakıp örnek almak lazım."
+→ Plan aşamasından **önce** ayrı bir görsel referans/araştırma turu yapılacak; bulunanlar buraya ekran
+görüntüsü/isim listesi olarak düşülecek, sonra hangilerinin uygulanacağı seçilecek. (S-13 araştırmaya döndü.)
+
+**Animasyon/"his" fikirleri (ham liste, araştırma sonrası budanacak):**
+- *Modern / minimal* — hızlı, yumuşak fade+slide, az hareket
+- *Vintage / retro* — hafif grenli doku, sararmış kâğıt tonu, yazı makinesi tarzı yazı belirmesi
+- *Eskimiş kutular* — kenarları hafif düzensiz, kâğıt/karton dokusu, gölgesi sert
+- *Neon / cyber* — glow yüksek, koyu zemin, keskin köşe, titreşen vurgu
+- *Kâğıt / defter* — çizgili zemin, mürekkep hissi, sayfa çevirme geçişi
+- *Yumuşak / sakin (zen)* — yavaş geçiş, düşük kontrast, yuvarlak köşe, nefes alan boşluk
+- *Cam (glassmorphism)* — bulanık şeffaf yüzey, ince parlak kenarlık
+- *Bezelsiz düz (flat)* — gölgesiz, kenarlıkla ayrılan yüzeyler
+- **Erişilebilirlik notu:** "hareketi azalt" sistem ayarına saygı + uygulama içi kapatma şart.
+
+**KARARLAR (2. tur — sahip cevapladı):**
+- **İsim:** **"Kendi Temanı Oluştur"**. (S-01 kapandı.)
+- **Kapsam:** **Şimdilik yalnız uygulama içi.** Ana ekran widget'ı ve bildirim paneli bu turda
+  kapsam dışı. (S-14 kapandı.)
+
+> ⚠️ **2. turdaki senkron ve adet kararları 10. turda DEĞİŞTİ.** Geçerli olan aşağıdaki 10. tur bloğudur:
+> tema **cihazda** kalır, **en fazla 3** tema, **düzenleme + silme** olacak. Sunucu senkronu iptal.
+
+**KARARLAR (10. tur — kapsam daraltıldı, GEÇERLİ OLAN BU):**
+- **Saklama: CİHAZDA.** Hesaba kaydetme, sunucu tablosu ve cihazlar-arası senkron **iptal**.
+  *Sahibin ifadesi: "cihazda kalsın… beğenen kişi gider Windows ya da diğer mobil cihazında
+  aynı temayı oluşturur."*
+- **Adet: en fazla 3.** (Önceki "sınırsız" kararı iptal — S-18 yeniden cevaplandı.)
+- **Düzenleme ve silme olacak.** *"3 tane sınır koyduğumuz için tema düzenleme ve silme özelliği de olsun."*
+- **Teknik sonuç:** migration `0071`, RLS politikası, çift repo implementasyonu ve senkron **tamamen düştü**.
+  Mevcut 3 yuvalı `SharedPreferences` yapısı korunup zenginleştirilecek. Detay:
+  [`docs/YENI-OZELLIK-PLANI.md`](YENI-OZELLIK-PLANI.md) §0.1 ve ADR-2.
+
+**KARARLAR (3. tur):**
+- ~~**Sınır yok** — kullanıcı istediği kadar özel tema oluşturabilir.~~ → **10. turda değişti: en fazla 3.**
+- **Ekran düzeni:** en üstte **"Kendi Temanı Oluştur"** girişi, onun **altında hazır temalar** listesi.
+  Yeni oluşturulan tema aynı listeye eklenir.
+- **DÜZELTME (4. tur):** 3. turdaki "üste geçmesin" ifadesi **yanlış yazılmış**. Sahibin gerçek isteği:
+  **yeni oluşturulan tema listenin en üstüne geçsin.** En son yapılan en üstte durur. (S-19 kapandı.)
+- **Başlık kullanılmayacak — sadeleştirme kuralı (4. tur):** Mobilde ekran küçük olduğu için
+  "Benim temalarım" / "Hazır temalar" gibi **metin başlıkları konmayacak**; iki grup arasında
+  **ince/minik bir ayraç çizgi** olacak. Daha sade, daha az dikey yer.
+  → *Bu, bu turun genel kuralı sayılır: yeni tema ekranında gereksiz başlık/boşluk yaratılmayacak.*
+- **"3 boş yuva" fikri düştü** — sınırsız tema olduğu için sabit yuva göstermek yanıltıcı olur.
+  Hiç tema yokken sade bir "oluştur" daveti yeter. (S-20 kapandı.)
+- **Mevcut WP-55 Tema Stüdyosu ekranı: yeni akış onun YERİNE geçecek.** İki ayrı tema ekranı olmayacak.
+  (S-12 kapandı.)
+
+**Sonuçta ekran düzeni:**
+1. En üstte **"Kendi Temanı Oluştur"** girişi
+2. Kullanıcının kendi temaları — **en yeni en üstte**
+3. **İnce ayraç çizgi** (başlık metni yok)
+4. Hazır temalar
+
+**KARARLAR (9. tur — hepsi kapandı):**
+- **Tema paylaşma / kod ile gönderme: bu turda YOK.** "Boşver şimdi." (S-10 kapandı → kapsam dışı.)
+- **XP/seviye ile tema kilidi: bu turda YOK, sonra yapılır.** (S-11 kapandı → ertelendi.)
+- **Animasyon araştırması: detaylı planın tema kısmı yazılmadan HEMEN ÖNCE yapılacak.**
+  Yani plan aşamasının içinde, ayrı bir adım olarak. (Zamanlama kapandı.)
+
+---
+
+## F-05 — Ana ekran widget'ı düzenlerken boyut aracı sabit dursun
+
+**Sahibin ifadesi:** "Ana ekran widget'ı düzenlerken widget boyutunu ayarlama tool'u en altta kalıyor ve
+sürekli yukarı aşağı inip çıkmak gerekiyor. Aklımda bir şey var, teknik olarak nasıl tarif ediyorlar
+bilmiyorum: mesela yüzen bir baloncuk gibi altta dursa; ben ekranda yukarı aşağı hareket etsem de o sabit
+olarak aşağıda dursun. En üstteki `+` tuşu, okey tuşu, yukarı al tuşu hep orada duruyor ya — bu da onun gibi,
+altta sabit dursa, sürekli aşağı yukarı kaydırmak zorunda kalmasak güzel olur."
+
+**Claude'un anladığı (sahibin isteği: yanlışsa düzeltilecek):**
+Boyut aracı şu an sayfanın **akışın içinde**, en altta duruyor; içerik uzun olduğu için ekrandan çıkıyor.
+İstenen: araç **sayfayla birlikte kaymasın**, ekranın altına **yapışık/sabit** kalsın — tıpkı üstteki
+`+` / onay / yukarı-al düğme çubuğunun hep görünür kalması gibi. Kullanıcı listeyi kaydırırken bile
+boyutu anında değiştirip sonucu yukarıda canlı görebilsin.
+
+Teknik adı (sahibin sorduğu): buna genelde **"sabit alt araç çubuğu" (sticky / persistent bottom bar)**
+denir. "Yüzen baloncuk" tarifi ise **FAB (floating action button)** veya **kalıcı alt panel
+(persistent bottom sheet)** kavramına denk gelir.
+
+**Üç seçenek (sahip seçecek):**
+- **A — Sabit alt çubuk (sticky bottom bar):** Ekranın altına yapışık ince bir şerit; içinde boyut
+  kaydırıcısı/ölçü seçenekleri. Hep görünür. En basit ve en tahmin edilebilir.
+  *Eksi:* ekranın altından sabit bir yer yer (küçük telefonlarda alan daralır).
+- **B — Yüzen baloncuk (FAB):** Altta küçük bir yuvarlak düğme durur; basınca boyut kontrolleri açılır,
+  tekrar basınca kapanır. Sahibin "baloncuk" tarifine en yakın olan bu.
+  *Eksi:* boyutu değiştirmek için önce bir dokunuş gerekiyor.
+- **C — Çekilebilir alt panel (persistent bottom sheet):** Altta hep duran, kapalıyken ince (sadece
+  kaydırıcı görünür), yukarı çekilince tüm boyut/hizalama seçenekleri açılan panel. **Claude'un önerisi:**
+  A'nın "hep elimin altında" avantajını B'nin "yer kaplamama" avantajıyla birleştiriyor.
+
+**C'nin uzun anlatımı (sahip "anlamadım" dedi — 2. turda görselle de gösterildi):**
+C aslında **A'nın büyüyebilen hâli**. Normalde ekranın altında A gibi ince bir şerit durur; içinde sadece
+boyut kaydırıcısı vardır ve sayfayı kaydırsan da yerinden kıpırdamaz. Farkı şu: şeridin üstünde küçük bir
+**tutamak** (kısa çizgi) olur; parmağınla onu **yukarı çekersen** panel büyür ve içinden hizalama, saydamlık,
+tema gibi diğer widget ayarları da çıkar. Aşağı itersen tekrar ince şeride döner.
+Yani: **kapalı = A** (sadece boyut, az yer), **açık = tam ayar paneli**. Telefonlarda müzik çalarların alttaki
+mini çubuğu gibi — küçükken tek satır, yukarı çekince tam ekran kontrol.
+
+**KAPSAM NETLEŞTİ (3. tur — Claude kodda buldu):**
+Bu, **Android ana ekran widget'ı değil**; uygulamanın **kendi ana sayfasındaki kart düzeni**.
+İlgili kod: `app/lib/features/home/home_screen.dart:815` → `_SizePanel`.
+Panel, **seçili kartın hemen altına akış içinde** çiziliyor. Kart sayfanın aşağısındaysa panel de aşağıda
+kalıyor → sahip sürekli aşağı yukarı kaydırmak zorunda kalıyor. Şikayet birebir bu.
+
+**KARARLAR (3. tur):**
+- **Seçenek C** (çekilebilir alt panel) seçildi. *Sahip notu: "eğer zor olmaz diyorsan C olsun".*
+  → Claude'un teknik değerlendirmesi: **zor değil**. Flutter'da hazır mekanizması var
+  (`Scaffold.bottomSheet` / `DraggableScrollableSheet`); mevcut `_SizePanel` içeriği neredeyse aynen taşınır,
+  değişen şey nereye yerleştirildiği. Riskli/geniş bir iş değil.
+- **Saydamlık ayarı YOK ve eklenmeyecek.** Sahip sordu, Claude koda baktı: `_SizePanel` içinde yalnızca
+  genişlik/yükseklik `−/+` düğmeleri var; saydamlık hiç yok. Claude'un mockup'ında örnek olsun diye
+  görünmüştü, gerçekte yok. **O kadar detaya gerek yok** kararı verildi. (S-16 kapandı: panelde sadece boyut.)
+
+**WINDOWS SORUSU KAPANDI (5. tur):** Sahip Windows'u da kullanıyor ama seyrek; boyut panelini orada
+denememiş. **Claude kodda baktı: ayrı Windows kodu yok.** `home_screen.dart` tek dosya, hem telefon hem
+Windows onu kullanıyor; sadece `isDesktopWindow` ile birkaç yerde kenar boşluğu/yerleşim dallanıyor
+(`home_screen.dart:91` ve `:160`). Yani `_SizePanel` sorunu **her iki platformda da aynı koddan geliyor**
+ve düzeltme ikisini birden düzeltir. Ayrıca yapılacak bir Windows işi yok. (S-17 kapandı.)
+
+---
+
+---
+
+## F-06 — Windows sürümünü arkadaşlara test için dağıtmak
+
+**Sahibin ifadesi (5. tur):** "Windows ve mobil kısmında tamamen farklı kodları mı var, birinde olan
+diğerinde olmuyor mu? Önce bu dediklerimi Windows'a da kod olarak uygulayıp sonrasında oranın dağıtım
+işini yapmak istiyorum, onu da arkadaşlarıma atmam lazım test için."
+
+**Cevap 1 — tek kod tabanı:** Ayrı Windows kodu **yok**. Proje Flutter; ekranların tamamı ortak.
+Yalnız `isDesktopWindow` bayrağıyla yer yer yerleşim farkı var (kenar boşluğu, gezinme paneli,
+`features/desktop/**` kabuk dosyaları). Yani **F-01…F-05'in hepsi Windows'a da otomatik gelir**;
+"Windows'a ayrıca uygulamak" diye ek bir iş yok. İstisna: bir şey `isDesktopWindow` dalında farklı
+çiziliyorsa orada ayrıca bakılır (tema ekranı ve boyut paneli bu gruba giriyor, ikisi de zaten kapsamda).
+
+**Cevap 2 — dağıtım altyapısı zaten var (kodda doğrulandı):**
+- `.github/workflows/windows-release.yml` her sürümde **hem `.msix` hem `.zip`** üretip release'e ekliyor
+  (`windows-release.yml:82-87`).
+- **MSIX**: kurulum paketi, ama şu an `CN=Msix Testing` test publisher'ı ile imzalı → arkadaşların
+  kurabilmesi için sertifika güvenmesi/geliştirici modu gerekir. Sürtünmeli.
+- **ZIP**: release klasörünün portable hâli → indir, çıkart, `.exe`'ye çift tıkla. Kurulum yok,
+  sertifika yok. **Arkadaş testi için en kolay yol bu.**
+- Ayrıntılı Store planı: [`docs/WINDOWS-STORE-PLAN.md`](WINDOWS-STORE-PLAN.md) (WP-259/260/261 —
+  Store kimliği, private audience vb. bunlar bu turun konusu değil).
+
+**Sıralama kararı (sahip):** Önce F-01…F-05 kodlanacak, **sonra** Windows dağıtımı yapılacak.
+
+**KARAR (6. tur):** Arkadaşlar **production** backend'e bağlanacak. Yani bu bir "sentetik test" değil,
+gerçek kullanım olacak; açtıkları hesaplar gerçek hesaptır. (S-23 kapandı.)
+*Claude notu: bu bilinçli bir karar; staging önerilmişti, sahip production dedi. Sonuç olarak arkadaşların
+verisi gerçek veridir — test amaçlı çöp veri üretmemeleri iyi olur, ama teknik engel yoktur.*
+
+### Güncelleme nasıl gidiyor? (sahibin sorusu, 6. tur — Claude kodda doğruladı)
+
+**Kısa cevap: push bildirimi GELMİYOR. Uygulamayı açtıklarında ekranda bir güncelleme penceresi çıkıyor.**
+
+Akış (`features/updater/updater_service.dart` + `updater_dialog.dart` + `auth_gate.dart`):
+1. Kullanıcı uygulamayı açar → `auth_gate.dart` `maybeShowUpdateDialog` çağırır.
+2. Uygulama GitHub Releases'e bakar, kendi sürümünden yenisi var mı diye kontrol eder.
+3. Varsa **uygulama içi güncelleme penceresi** açılır (ertelenebilir).
+4. İndirir, **SHA-256 doğrular** (bozuk/eksik dosya kurulmaz), sonra dosyayı açar:
+   - Android → APK kurulum ekranı (`app-release.apk` / beta'da `app-beta-release.apk`)
+   - Windows → **MSIX** kurulum ekranı (`odak-kampi-windows-stable.msix` / `...-beta.msix`)
+     `updater_service.dart:124-125`
+
+**ÖNEMLİ TUZAK (Claude'un fark ettiği, sahibin bilmesi gereken):**
+Güncelleyici Windows'ta **yalnız MSIX** indiriyor. Yani arkadaşlar **ZIP portable** sürümü kullanırsa:
+- Uygulama yine "güncelleme var" der ve MSIX indirir,
+- ama MSIX kurulunca **portable klasörün yanına ayrı bir kurulu uygulama** gelir → iki kopya, kafa karışıklığı.
+→ **Sonuç: "kolay kurulum" (ZIP) ile "çalışan otomatik güncelleme" (MSIX) aynı anda olmuyor.**
+
+| | ZIP portable | MSIX kurulum |
+|---|---|---|
+| Kurulum kolaylığı | Çok kolay — çıkart, çalıştır | Sertifikaya güvenmek gerekir (test publisher) |
+| Uygulama içi güncelleme | **Düzgün çalışmaz** (yanına ikinci kopya kurar) | Çalışır — üstüne günceller |
+| Arkadaşa anlatma yükü | Yok | Bir kerelik "sertifikaya güven" adımı |
+
+**Claude'un önerisi:** Arkadaşlar production'da gerçek kullanıcı olacaksa ve sürekli güncelleme
+alacaklarsa → **MSIX** doğru seçim; sertifika adımı bir kerelik. ZIP'i yalnız "bir bakıp kapatacak"
+kişiye ver. Kalıcı çözüm zaten Microsoft Store (aşağıda F-07) — Store kurulumunda sertifika derdi de,
+elle güncelleme derdi de biter.
+
+**KARARLAR (7. tur):**
+- **Elle dosya dağıtımı (ZIP/MSIX sideload) tercih edilmiyor.** Sahip: "en iyisi kolaysa Microsoft
+  Store'da çıkarıp öyle atmak insanlara." → F-06, F-07'nin Microsoft Store ayağına bağlandı.
+  (S-21/S-22 kapandı: cevap "hiçbiri, Store'dan dağıtacağız".)
+- **Güncelleme push bildirimi İSTENMİYOR** — Store zaten güncellemeyi kendi yönetiyor. (S-24 kapandı.)
+
+**Claude'un uyarısı (karar sahibin, ama zamanlama bilinsin):**
+Store yolu "bugün atarım" değildir — Partner Center hesabı açma + kalıcı Store identity (WP-260) +
+görsel/listeleme paketi (WP-261) + sertifikasyon süreci demektir. Üstelik sahip **önce mobil (Play),
+sonra Windows** dedi. İkisi birleşince: **arkadaşlar Windows sürümünü bir süre alamayacak.**
+Eğer arkadaşların yakında denemesi isteniyorsa, ara çözüm olarak MSIX sideload hâlâ mümkün
+(Store beklerken). Bu ayrı bir karar; şu an planlanan yol Store.
+
+---
+
+## F-07 — Play Store ve Microsoft Store hazırlık süreci
+
+**Sahibin ifadesi (6. tur):** "Genel planlama kısmına Play Store ve Microsoft Store'a hazırlık sürecini
+de ekle, oradan da dağıtım yapsak güzel olur gibi."
+
+**Durum:** Bu iki mağaza için repoda **zaten hazırlık dokümanı var**, sıfırdan başlanmıyor:
+- Microsoft Store → [`docs/WINDOWS-STORE-PLAN.md`](WINDOWS-STORE-PLAN.md)
+  (WP-259 yerel QA, WP-260 Store kimliği/paketleme, WP-261 marka/listeleme, WP-262 private pilot)
+- Play Store → [`docs/PLAY-STORE-HAZIRLIK-TARAMASI.md`](PLAY-STORE-HAZIRLIK-TARAMASI.md) ve
+  `docs/play-store/PLAY-RELEASE-GATE.md`
+
+**Bu turda yapılacak:** Bu iki süreci **genel yol haritasına dahil etmek** — yani F-01…F-06'dan sonra
+gelen resmî bir faz olarak yazmak, dağınık doküman hâlinde bırakmamak.
+
+**Bilinen büyük engeller (bunlar konuşulacak, bugün karar yok):**
+- **Para/hesap:** Play Console tek seferlik ücret, Microsoft Partner Center hesabı — ikisi de sahip
+  tarafından açılır, Claude açamaz.
+- **Kimlik:** Microsoft Store'da mevcut test publisher (`CN=Msix Testing`) geçersiz; kalıcı Store
+  identity alınmalı (WP-260).
+- **Görsel paket:** Her iki mağaza da ikon, ekran görüntüleri, açıklama metni istiyor (WP-261).
+- **Yasal:** Gizlilik politikası + destek adresi + veri güvenliği formu (Play tarafında zorunlu).
+- **Hesap silme:** Play, uygulama içi hesap silme yolu şart koşuyor → WP-276 buraya bağlanıyor.
+
+**KARARLAR (7. tur):**
+- **Sıra: önce Play Store (mobil), sonra Microsoft Store (Windows).** (S-25 kapandı.)
+- **Uygulama ücretsiz olacak.** Reklam/satın alma şimdilik planlanmadı. (S-27 kısmen kapandı.)
+
+### Para modeli — sonradan değiştirilebilir mi? (sahibin sorusu, 7. tur)
+
+Sahip sordu: "ileride reklam falan bilmiyorum, hiç planlamadım; farkları ne, sonradan karar veremiyor mu?"
+
+**Genel cevap: evet, büyük ölçüde sonradan karar verilebilir. Ama bir tanesi tek yönlü.**
+
+| Konu | Sonradan eklenebilir mi? | Not |
+|---|---|---|
+| Reklam eklemek | **Evet** | Gizlilik politikası + Play "Veri güvenliği" formu güncellenir; Android'de reklam kimliği (AD_ID) izni beyan edilir |
+| Uygulama içi satın alma / abonelik | **Evet** | Ücretsiz uygulamaya sonradan eklenebilir; en yaygın model budur |
+| Ücretsiz → **ücretli** yapmak | **HAYIR (Play'de tek yönlü)** | Play'de ücretsiz yayımlanan uygulama sonradan ücretliye çevrilemez. Para kazanmak istenirse yol: **uygulama içi satın alma / abonelik**. Ücretli→ücretsiz yönü serbesttir |
+
+**Pratik sonuç:** Bugün ücretsiz başlamak doğru ve riski düşük; ileride para kazanmak istenirse
+reklam veya abonelik/IAP ile yapılır — ücretli uygulamaya çevirmek Play'de mümkün olmadığı için
+o kapı zaten baştan kapalı sayılmalı.
+
+**Reklam eklenirse ek yük (bilgi olsun diye, karar değil):**
+gizlilik politikası güncellemesi, Veri güvenliği formu, reklam SDK'sı, öğrenci/çocuk kitlesi varsa
+Play'in Aileler politikası. Yani "sonra eklerim" mümkün ama bedava değil — birkaç günlük iş.
+
+**KARAR (8. tur):** Mağaza hesapları **sonra** açılacak; sahip "hesabı falan açarım da önce kod kısmı var"
+dedi. Yani hesap açma bir engel değil, sadece 2. ve 3. fazın başında yapılacak bir adım.
+Mağaza işleri **planın son iki aşaması** olarak konumlandırıldı. (S-26 kapandı.)
+
+---
+
+## F-08 — Kozmetik / animasyon işleri (kod aşamasının SONUNA)
+
+**Sahibin ifadesi (9. tur):** "Sadece o değil; hem campfire animasyonları yenilenecek, orasını benle
+konuşarak yapacaksın, onu da zamanı gelince yaparız. Bir de pp üstündeki taç çok kötü duruyor şu an,
+ona güzel şeyler eklenebilir. Ek olarak animasyonlarda eklemeni isteyeceğim yerler olacak; bunu da kod
+kısmında sonralara koy, kozmetik işler bunlar."
+
+**Kapsam (hepsi kozmetik, Aşama A'nın SONUNDA yapılacak):**
+1. **Kamp ateşi (campfire) animasyonlarının yenilenmesi** — ilgili kod: `features/classroom/widgets/campfire_scene.dart`,
+   `features/classroom/widgets/campfire/layered_campfire_fire.dart`, `features/classroom/widgets/camp_critter.dart`.
+   **Sahip şartı: bu iş SAHİPLE KONUŞARAK yapılacak**, tek başına tasarlanmayacak. Zamanı gelince
+   ayrı bir konuşma turu açılır.
+2. **Profil fotoğrafı üstündeki taç** — şu an kötü duruyor, yenilenecek/zenginleştirilecek.
+3. **Sahibin sonradan göstereceği diğer animasyon noktaları** — henüz belirsiz, iş sırası geldiğinde
+   sahip yerleri işaret edecek.
+
+**Konumlandırma kararı:** Bunlar **kozmetik**tir. Aşama A'nın sonunda, F-01…F-05 bittikten sonra yapılır.
+İşlevsel işleri geciktirmez.
+
+**Not:** Taç şu an mevcut XP/seviye sisteminin görsel karşılığı; değiştirirken seviye göstergesi
+işlevinin bozulmamasına dikkat edilecek.
+
+## F-09 — Kamp ateşi revizesi (F-08'in şartı olan sahip konuşması, **2026-07-25**)
+
+F-08 "bu iş sahiple konuşularak yapılacak" diyordu. Konuşma bu turda yapıldı; şart **kapandı**.
+Aşağısı sahibin kendi maddelemesi + Claude'un kod üzerinde doğruladığı bulgular. Uygulama
+WP-295 / WP-299 / WP-300 / WP-301 kartlarına bölündü (`progress.md`).
+
+### Konuşmanın açılışı: sahne gerçekten render edildi
+
+Tasarım tartışmasına girmeden önce sahnenin **şu anki hâli** kodun kendi painter'larıyla PNG'ye
+döküldü (geçici test, sonra silindi). Bu olmadan konuşma iki tarafın hafızası üzerinden yürüyecekti.
+Render'ın gösterdiği şey, tartışmayı baştan değiştirdi: **kusur hayvanların çiziminde değil,
+kompozisyonda.** Bu yüzden asset satın alma masasından kalktık.
+
+### Sahibin kararı: tasarımcıya para verilmiyor
+
+Sahip tasarımcı fiyatı sordu (~10.000 TL) ve **vazgeçti.** Bu tur asset alınmıyor, PNG hattı
+kurulmuyor; hayvanlar **vektör kalıyor**. Büyük görsel yenileme (PNG/Rive) betadan sonra ayrı bir
+programa bırakıldı.
+
+Karar kayda geçiyor ki bir daha araştırılmasın:
+
+- **Basitleştirilmiş AI brief'i zaten yazılmış:** [`references/campfire/AI_PROMPT_SETI.md`](../references/campfire/AI_PROMPT_SETI.md)
+  (commit `18133df`) — master prompt + 3 poz (biri marşmelov), 12 hayvan, dosya adları, "önce tek
+  ayı dene" adımı. Yeniden yazılmasına gerek yok.
+- ⚠️ **O dosyadaki "D) Dosya isimleri (kod bunu bekliyor)" ifadesi YANLIŞ.** `assets/critters/`
+  yok, pubspec girdisi yok, PNG yükleyen kod yok. Hayvanlar %100 vektör
+  ([`camp_critter.dart`](../app/lib/features/classroom/widgets/camp_critter.dart), 1155 satır).
+  PNG'ye geçmek gerçek bir kod işidir; asset'i klasöre atmak yetmez.
+- ⚠️ **PNG'ye geçmenin görülmeyen bedeli:** mevcut vektör hayvanlar ateşten gelen sıcak
+  kenar-ışığını alıyor. Düz bir PNG bunu alamaz → iyi çizilmiş olsa bile karanlık sahnede yassı
+  bir çıkartma gibi durabilir, yani **şu ankinden kötü**. Ancak ekranda görülerek karara bağlanır.
+- **Elde var olan Gemini çıktıları neden tutmadı:** sahip katalog istemiş, model **kontak sayfası**
+  üretmiş — Panda iki kez, Kirpi üç kez, bazı satırlar bulanık, etiketler bozuk ("Ttavuk
+  Atıştırma"). Doğru yol brief'te yazılı: tek hayvan, tek poz, referans görseli her istekte ekle.
+
+### 1. Oturma düzeni — ateşin tam önü ve tam arkası boş kalacak
+
+**Sahibin ifadesi:** "hayvanların durduğu yerler değişmesi lazım, şu anki düzende kamp ateşinin
+önündeki ve arkasındaki görünmüyor." Sahip düzeni paint'te çizerek gösterdi: hayvanlar iki yandaki
+yaylara diziliyor, kutuplar boş.
+
+**Kod bulgusu (doğrulandı):** [`campfire_scene.dart:264`](../app/lib/features/classroom/widgets/campfire_scene.dart:264)
+`angle = π/2 + 2πi/n` **her n için** birini tam öne (`sin=1` → ateşin üstünü kapatıyor), birini tam
+arkaya (`sin=-1` → `scale 0.6`, alevin içinde) koyuyor. 2 üyeli render'da alev ayının pençeleri
+arasından çıkıyordu; marşmelov uzatmıyor, kendi yanıyor gibi görünüyordu.
+
+**Karar:** kutuplarda **ölü bölge**; üyeler sol ve sağ yaya dağıtılır. Tek üyede yana oturur,
+kutba düşmez. Halka yarıçapı da daraltılır — şu anda 4 üyede kenarlara savrulup ateşin ışığının
+dışında kalıyorlar (`rx = min(w*0.40, 232)`).
+
+### 2. Yalnız iki poz: solgun boşta · marşmelov
+
+**Sahibin ifadesi:** "sadece 2 animasyon olacak: ders çalışmıyorken duracak solgun bir şekilde boş
+boş, çalışmaya başlayınca da marşmelov olacak." Laptop ve uyuma pozu **atılıyor.**
+
+Bu karar mevcut bir hatayı da kökten siliyor: marşmelov **zaten kodda** (`CritterPose.roasting` +
+`MarshmallowPainter` + `MarshStick`, kademeli pişme dahil) ama
+[`campfire_scene.dart:133`](../app/lib/features/classroom/widgets/campfire_scene.dart:133)
+`_kPoseCycleSeconds = 170` / `_kRoastStartSeconds = 135` yüzünden ilk marşmelov **2 dk 15 sn**'de
+çıkıyor ve zamanın yalnız **%20**'sinde görünüyor. Sahne 30 saniye izleyen biri onu **hiç
+göremiyordu** — sahibin "yok" sanmasının sebebi bu. Asset değil, sayı sorunuydu.
+
+**Kalıcı poz olmanın üç yan etkisi ve çözümleri (Claude buldu, sahip revizeye dahil etti):**
+
+1. 🔴 **Marşmelov 40 dakikada kömürleşip öyle kalıyor.** `doneness = elapsed / (40*60)`, clamp'li
+   ([`camp_critter.dart:414`](../app/lib/features/classroom/widgets/camp_critter.dart:414)). 35
+   saniyelik pozda sorun değildi; kalıcı pozda 3 saatlik oturumda ekranda koyu kahve bir leke
+   duruyor. **Çözüm: ~10 dakikalık "yiyip yenisini takma" döngüsü** — yanmaz, sahne canlanır,
+   kademeli pişme güzelliği korunur.
+2. **Herkes aynı anda kızartıyor** → 6 çalışan üyede 6 dal ateşe yönelir. Mevcut `phase` alanı üye
+   başına farklı; dal açısı ve salınım ondan türetilir, kilitli hareket olmaz.
+3. **Mola ile çevrimdışı ayrımı kaybolmasın.** İkisi de "solgun boşta" olursa bilgi kaybolur.
+   **Çözüm: molada = solgun, çevrimdışı = daha solgun + daha saydam.** Poz sayısı yine 2.
+
+### 3. Gündüz/gece geçişi + konum
+
+**Sahibin ifadesi:** "normal gün gibi havanın kapanıp açılmasını istiyorum… direkt gündüz/gece
+yerine canlı değişen (anlık değil, saatlik olabilir), hatta zor olmazsa o şehrin gün doğum ve batış
+saatleri olsa güzel olur. (bunun için gruplar kısmına location eklenmeli, zaten mantıken günlük
+sıralama için her grubun bir konumu olması lazım — dünyanın her yerinden insan kullanabilir.)"
+
+**Opsiyonel istek:** 00:00–08:00 arası çalışmayanlar yan yatıp uyusun.
+
+**Karar — istek İKİYE bölündü, çünkü ikinci yarısı kozmetik değil:**
+
+- **Gökyüzü (WP-299):** güneş yüksekliğine göre gradyan, ay/yıldız sönümlemesi, gündüz güneşi.
+  Saf matematik, şemaya dokunmaz, deterministik → test edilebilir. **Konum beklemez:** dört sivil
+  çıpa (şafak · gündoğumu · günbatımı · akşam) cihaz saatinden kurulur. Konum gelince aynı kod o
+  dört çıpayı gerçek gündoğumu/batışından alır — **gökyüzü kodu değişmez, yalnız çıpanın kaynağı
+  değişir.** Bu seam sayesinde gökyüzü konumu beklemeden görülebilir.
+- **Gece uyuma pozu WP-299'a konuldu, WP-295'e değil.** Sebep: "hangi saate göre" sorusu gökyüzüyle
+  **aynı saati** paylaşmak zorunda; ayrı saatler kullanılırsa gökyüzü gündüz olurken hayvanlar
+  uyur. (2. maddede uyuma pozu atıldı; buradaki gece uyuması ondan ayrı bir şey — gökyüzüne bağlı.)
+- **`groups.location` (WP-300):** enlem/boylam + IANA tz, grup oluştur/düzenle, RLS. Migration
+  içerir. `kWorldCityCatalog` yalnız `label` + `tz` taşıyor, **koordinat yok** — eklenecek.
+
+### 🔴 Konuşmada çıkan sunucu bulgusu: gün sınırı `Europe/Istanbul`'a sabitli (WP-301)
+
+Sahibin "günlük sıralama için konum lazım" sezgisi **doğruydu, ama sorun kozmetik değil, zaten var
+olan bir veri hatası.** Günlük metrik günü sunucuda sabit yazılı:
+
+```sql
+-- 0053_group_achievement_metrics.sql:87
+if p_day >= (timezone('Europe/Istanbul', clock_timestamp()))::date then
+```
+
+Aynı sabit `metric_day` üretiminde de var (satır 116/120/151/174) ve 0063/0064 RPC'lerine akıyor.
+Sonuç: Los Angeles'taki bir kullanıcının "günü" kendi saatiyle **15:00'te** dönüyor.
+
+**Neden ayrı WP:** düzeltmek `metric_day`'in **geçmişe dönük backfill'ini** gerektirir; XP/istatistik
+sunucu-yetkilidir (`AGENTS.md §2`). Gökyüzü rengi uğruna bu semantiğe dokunmak yasak. **WP-301
+kamp ateşinden tamamen ayrı yürür.**
+
+### Yürütme sırası (sahip kararı)
+
+1. **Beta 1 şimdi** — kapanmış 9 WP (`beta-v4308`'den beri 38 commit) cihazda test edilsin.
+   Ek gerekçe (Claude): kamp ateşinin kendi kabul kriteri cihaz istiyor (**p95 ≤ 16.7 ms, jank ≤ %1**);
+   o ölçüm elde olmadan gökyüzü + sürekli marşmelov çizmek körlemesine olurdu.
+2. Beta 1 test edilirken **WP-295 + 299 + 300** kodlanır → **beta 2**. Admin işleri de beta 2'de.
+3. Sorun çıkmazsa **stable**.
+
+**Sahip yetkisi (2026-07-25):** "migration'ları sen yapabilirsin, benlik ne var" — migration yazma
+**ve uygulama** (staging + production) Claude'da; `Database Gates` iş akışı zaten repo secret'larıyla
+koşuyor ve GitHub environment'larında zorunlu onaylayıcı yok. Kural gereği production'da yine
+**dry-run + backup** adımları koşulur ve sonuç satır sayılarıyla raporlanır (`§0.1` ile izin
+verilen şey soru sormamak; kanıt üretmemek değil).
+
+⚠️ **Claude'un fiziksel olarak yapamadığı tek şey:** WP-287'nin **staging Supabase panel adımı**
+(Site URL · Redirect URL · recovery şablonunda `{{ .Token }}` —
+[runbook](SIFRE-SIFIRLAMA-PANEL-RUNBOOK.md)). Bu makinede Supabase CLI kurulu **değil** ve
+`SUPABASE_ACCESS_TOKEN` yerelde **yok** (yalnız GitHub secret olarak var). Panel adımı atılmazsa
+WP-287 beta 1'de test edilemez.
+
+## 6. Açık soru listesi (toplu)
+
+Yukarıdaki S-01…S-17. Sıradaki konuşma turunda bunlar tek tek kapatılacak.
+
+## 7. Kapsam dışı olduğu konuşulanlar
+
+- **Kısayol/rutin özelliği** — hiç gelmeyecek (F-01).
+- **Widget saydamlık ayarı** — gereksiz detay, eklenmeyecek (F-05).
+- **Tema kapsamının ana ekran widget'ı ve bildirim paneline uzanması** — bu turda kapsam dışı (F-04).
+
+## 8. Karar verilenler
+
+- Akış: önce konuşma → sonra plan → sonra WP → sonra uygulama.
+- Aşama 1'de kod yazılmaz, WP açılmaz, tahmin/efor verilmez.
+- F-03 (şifre sıfırlama linki) bir **hata**dır, özellik değil; ayrı ele alınır.
+
+**Genel yürütme sırası (7.–8. tur, sahip kararı) — ÜÇ AŞAMA:**
+
+**Aşama A — Kod (önce bu bitecek).** F-01…F-05:
+ayarlar temizliği, bildirim/izin/rapor birleştirmesi, şifre sıfırlama linki hatası, tema bölümünün
+yenilenmesi, kart boyut panelinin alta sabitlenmesi. Tek kod tabanı olduğu için hepsi Windows'a da gelir.
+
+**Aşama B — Play Store.** Hesap açma, listeleme paketi, yasal/veri formu, hesap silme (WP-276), yayın.
+
+**Aşama C — Microsoft Store.** Store identity (WP-260), marka/listeleme (WP-261), private pilot (WP-262),
+yayın. Arkadaşlara Windows dağıtımı buradan yapılır.
+
+*Sahibin ifadesi: "hesabı falan açarım da önce kod kısmı var, onları yapalım; en son 2 aşama plan olarak
+Play Store ve Windows kısmı."*
+- Uygulama **ücretsiz**; reklam/IAP şimdilik yok, sonradan eklenebilir (ücretliye çevirmek hariç).
+- Güncelleme için push bildirimi yapılmayacak.
