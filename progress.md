@@ -928,6 +928,65 @@ ile git geçmişindedir. Canlı dosyada tekrar tutulmaz.
 - **WP-301** eski `metric_day` backfill yaklaşımı iptal edildi; yerini kayıt anı damgası **WP-325** aldı.
 - Eski iki-beta/dalga sırası tarihsel kayıttır; güncel sıra Yol Haritası + Aktif Çalışma Kaydı'dır.
 
+## 🔧 v49 Sonrası Seri Fix Kuyruğu
+
+> **Sahip kararı (2026-07-27):** Bu kuyruk **v49 stable yayımlandıktan sonra**
+> açılır; v49 kapsamına hiçbir madde eklenmez. Numaralandırma ayrı bir
+> `Hotfix WP-n` serisidir. Kart işe alındığında kanonik `WP-<n>` numarasını da
+> alır; şu an WP-351 üzerinde iki lane sıcak olduğu için `Son WP numarası`
+> bilerek ilerletilmedi.
+
+### Hotfix WP-1 — Birincil grup seçilmemişse görünür uyarı 🏠
+- **Program/Faz:** Faz F2 devamı · WP-329/WP-336/WP-348 ürün açığı
+- **Ajan:** —
+- **Durum:** [ ] Bekliyor · v49 stable yayımına kadar açılmaz
+- **Bağımlılık:** v49 stable yayımı. WP-348 birincil grup kartı yerinde
+  (`social_profile_screen.dart` kendi-profil/Başarımlar görünümü).
+- **Problem (2026-07-27 sahip gözlemi + kod doğrulaması):** Çoklu üyelikte açık
+  seçim yoksa `reconcile_user_primary_group` bilinçli olarak
+  `primary_group_id = NULL` bırakıyor
+  ([`0079_primary_group_preference.sql:126-128`](supabase/migrations/0079_primary_group_preference.sql:126)).
+  Cutover sonrası her oturuma `group_id = NULL` attribution satırı yazılıyor
+  ([`0080_session_group_attribution.sql:50-84`](supabase/migrations/0080_session_group_attribution.sql:50))
+  ve `groups_for_session_progression` `a.group_id is not null` filtresi yüzünden
+  **hiçbir grup döndürmüyor** ([`0080:127-155`](supabase/migrations/0080_session_group_attribution.sql:127)).
+  Sonuç: grup başarımı, grup görev/hedef ve grup gün-hafta ilerlemesi sessizce
+  durur. Grup liderlik tablosu ham `study_sessions` topladığı için
+  ([`0040_group_contribution_breakdown.sql:8`](supabase/migrations/0040_group_contribution_breakdown.sql:8))
+  kullanıcı **UI'da normal görünür** — kaybın hiçbir işareti yok.
+  `PrimaryGroupSelectorCard` bugün hiç uyarı göstermiyor; `primaryGroupNotSelected`,
+  `primaryGroupCurrent` ve `primaryGroupOther` l10n anahtarları **hiçbir kod
+  yolundan çağrılmıyor** (ölü string).
+- **Etki alanı:** Yalnız 0079 kurulurken zaten 2+ grupta olan hesaplar (bugün
+  sahip + bir hesap). Yeni kullanıcı ilk gruba katıldığında `automatic_single`
+  ile otomatik atanır ve ikinci gruba katılmak mevcut birincili bozmaz
+  ([`0079:122-124`](supabase/migrations/0079_primary_group_preference.sql:122)).
+  Ayrıca 3+ gruptayken birincil gruptan ayrılmak veya birincil grubun silinmesi
+  aynı NULL durumuna düşürür — uyarı bu yolları da kapsar.
+- **Kapsam:**
+  - `PrimaryGroupSelectorCard` içinde `primaryGroupId == null` ve aktif üyelik
+    sayısı ≥ 1 iken **error/warning renginde** uyarı bloğu; metin mevcut
+    `primaryGroupNotSelected` anahtarından okunur, yeni string yazılmaz.
+  - Uyarı, kullanıcı kartı hiç açmasa da fark edilsin diye Başarımlar giriş
+    noktasında bir **nokta/badge** ile işaretlenir (mobil + masaüstü kabuk).
+  - Widget testi: (a) birincil seçili → uyarı yok, badge yok; (b) 2 grup +
+    seçim yok → uyarı var, badge var; (c) grup yok → uyarı yok, mevcut
+    `primaryGroupEmpty` durumu korunur.
+- **Kapsam dışı:** Migration, RPC, cooldown kuralı, otomatik birincil atama,
+  yeni l10n anahtarı. **Yetim oturumların telafisi de kapsam dışıdır:**
+  attribution `after insert` + `on conflict (session_id) do nothing` olduğu için
+  ([`0080:86-89`](supabase/migrations/0080_session_group_attribution.sql:86))
+  NULL'ken yazılmış oturumlar seçim sonrası da hiçbir gruba yazılmaz. Server
+  tarafı telafi ayrı bir kart ister ve sahip kararı bekliyor.
+- **Sahip yollar:** `app/lib/features/profile/widgets/primary_group_selector_card.dart`,
+  `app/lib/core/navigation/home_shell.dart`, `app/lib/features/desktop/desktop_home_shell.dart`,
+  ilgili widget testi, `progress.md` (yalnız bu kart).
+- **Ortak/riskli yüzey:** İki kabuk dosyası da paylaşılan gezinti yüzeyidir;
+  badge dışında hiçbir gezinti davranışı değiştirilmez.
+- **Kabul (DoD):** Üç widget test senaryosu yeşil; `flutter analyze` temiz; ölü
+  l10n anahtarı kalmadı; cihazda 2 gruplu hesapta uyarı + badge görülüyor ve
+  seçim sonrası ikisi de kayboluyor.
+
 ## Bekleyen Uygulanabilir WP'ler
 
 ### WP-276 — Hesap silme staging ops ve kabul kanıtı
