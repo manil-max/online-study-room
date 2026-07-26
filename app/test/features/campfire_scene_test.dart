@@ -20,8 +20,12 @@ Widget _harness({
   required List<Presence> presence,
   required Map<String, int> today,
   bool reduceMotion = false,
+  DateTime? localNow,
 }) {
-  const scene = Scaffold(body: SizedBox(width: 400, child: CampfireScene()));
+  final fixedNow = localNow ?? DateTime(2026, 7, 26, 12);
+  final scene = Scaffold(
+    body: SizedBox(width: 400, child: CampfireScene(clock: () => fixedNow)),
+  );
   return ProviderScope(
     overrides: [
       groupMembersProvider.overrideWith((ref) => Stream.value(members)),
@@ -151,6 +155,108 @@ void main() {
 
     expect(find.text('Henüz grup yok'), findsOneWidget);
     expect(find.text('Çalışmaya başla'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets(
+    'gece gökyüzü ve çalışmayan hayvan aynı saatten uyku fazına geçer',
+    (tester) async {
+      await tester.pumpWidget(
+        _harness(
+          members: [_profile('u1', 'Ada'), _profile('u2', 'Bora')],
+          presence: [
+            Presence(
+              userId: 'u1',
+              status: PresenceStatus.offline,
+              todaySeconds: 0,
+            ),
+            Presence(
+              userId: 'u2',
+              status: PresenceStatus.onBreak,
+              todaySeconds: 0,
+            ),
+          ],
+          today: {'u1': 0, 'u2': 0},
+          localNow: DateTime(2026, 7, 26, 23),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+
+      final forest =
+          tester
+                  .widget<CustomPaint>(
+                    find.byWidgetPredicate(
+                      (widget) =>
+                          widget is CustomPaint &&
+                          widget.painter is GroundedForestPainter,
+                    ),
+                  )
+                  .painter!
+              as GroundedForestPainter;
+      final poses = tester
+          .widgetList<CustomPaint>(
+            find.byWidgetPredicate(
+              (widget) =>
+                  widget is CustomPaint && widget.painter is CritterPainter,
+            ),
+          )
+          .map((paint) => (paint.painter! as CritterPainter).pose);
+
+      expect(forest.daylight, 0);
+      expect(poses, everyElement(CritterPose.sleepy));
+
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
+
+  testWidgets('şafakta gökyüzü kademeli aydınlanır ve hayvan uyanıktır', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _harness(
+        members: [_profile('u1', 'Ada')],
+        presence: [
+          Presence(
+            userId: 'u1',
+            status: PresenceStatus.onBreak,
+            todaySeconds: 0,
+          ),
+        ],
+        today: {'u1': 0},
+        localNow: DateTime(2026, 7, 26, 6),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    final forest =
+        tester
+                .widget<CustomPaint>(
+                  find.byWidgetPredicate(
+                    (widget) =>
+                        widget is CustomPaint &&
+                        widget.painter is GroundedForestPainter,
+                  ),
+                )
+                .painter!
+            as GroundedForestPainter;
+    final pose =
+        tester
+                .widget<CustomPaint>(
+                  find.byWidgetPredicate(
+                    (widget) =>
+                        widget is CustomPaint &&
+                        widget.painter is CritterPainter,
+                  ),
+                )
+                .painter!
+            as CritterPainter;
+
+    expect(forest.daylight, closeTo(0.5, 0.0001));
+    expect(forest.warmth, closeTo(1, 0.0001));
+    expect(pose.pose, CritterPose.idle);
 
     await tester.pumpWidget(const SizedBox());
   });

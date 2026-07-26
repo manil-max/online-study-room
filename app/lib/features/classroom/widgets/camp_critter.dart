@@ -134,14 +134,22 @@ class ForestBackdropPainter extends CustomPainter {
 /// WP-295 perspektif zemini: ağaç kökleri ufkun altındaki araziye oturur ve
 /// kampın merkezinde hayvanların arkasını kesen ağaç bulunmaz.
 class GroundedForestPainter extends CustomPainter {
-  const GroundedForestPainter({required this.horizonY});
+  const GroundedForestPainter({
+    required this.horizonY,
+    required this.daylight,
+    required this.sunProgress,
+    required this.warmth,
+  });
 
   final double horizonY;
+  final double daylight;
+  final double sunProgress;
+  final double warmth;
 
   @override
   void paint(Canvas canvas, Size size) {
     final random = math.Random(295);
-    final starPaint = Paint()..color = const Color(0xFFBFD4C8);
+    final nightOpacity = 1 - daylight;
 
     for (var i = 0; i < 34; i++) {
       final radius = 0.35 + random.nextDouble() * 0.85;
@@ -151,13 +159,26 @@ class GroundedForestPainter extends CustomPainter {
           random.nextDouble() * horizonY * 0.78,
         ),
         radius,
-        starPaint
-          ..color = starPaint.color.withValues(
-            alpha: 0.18 + random.nextDouble() * 0.38,
+        Paint()
+          ..color = const Color(0xFFDBE9E1).withValues(
+            alpha:
+                nightOpacity * (0.18 + random.nextDouble() * 0.38),
           ),
       );
     }
 
+    _celestialBodies(canvas, size, nightOpacity);
+
+    var ridgeColor = Color.lerp(
+      const Color(0xFF132419),
+      const Color(0xFF52754E),
+      daylight,
+    )!;
+    ridgeColor = Color.lerp(
+      ridgeColor,
+      const Color(0xFF67523B),
+      warmth * 0.30,
+    )!;
     final distantRidge = Path()
       ..moveTo(0, horizonY + 18)
       ..quadraticBezierTo(
@@ -177,9 +198,24 @@ class GroundedForestPainter extends CustomPainter {
       ..close();
     canvas.drawPath(
       distantRidge,
-      Paint()..color = const Color(0xFF132419),
+      Paint()..color = ridgeColor,
     );
 
+    final groundTop = Color.lerp(
+      const Color(0xFF16251A),
+      const Color(0xFF41643B),
+      daylight,
+    )!;
+    final groundMiddle = Color.lerp(
+      const Color(0xFF101910),
+      const Color(0xFF29462A),
+      daylight,
+    )!;
+    final groundBottom = Color.lerp(
+      const Color(0xFF0A100A),
+      const Color(0xFF152A18),
+      daylight,
+    )!;
     final ground = Path()
       ..moveTo(0, horizonY)
       ..quadraticBezierTo(
@@ -194,13 +230,13 @@ class GroundedForestPainter extends CustomPainter {
     canvas.drawPath(
       ground,
       Paint()
-        ..shader = const LinearGradient(
+        ..shader = LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            Color(0xFF16251A),
-            Color(0xFF101910),
-            Color(0xFF0A100A),
+            groundTop,
+            groundMiddle,
+            groundBottom,
           ],
         ).createShader(
           Rect.fromLTRB(0, horizonY - 12, size.width, size.height),
@@ -215,7 +251,11 @@ class GroundedForestPainter extends CustomPainter {
         canvas,
         Offset(x, horizonY + 7 + random.nextDouble() * 8),
         32 + random.nextDouble() * 34,
-        const Color(0xFF183322),
+        Color.lerp(
+          const Color(0xFF183322),
+          const Color(0xFF35603C),
+          daylight,
+        )!,
       );
     }
 
@@ -229,7 +269,67 @@ class GroundedForestPainter extends CustomPainter {
           horizonY + 50 + edgeDistance * 9,
         ),
         72.0 - edgeDistance * 10,
-        const Color(0xFF0B1A10),
+        Color.lerp(
+          const Color(0xFF0B1A10),
+          const Color(0xFF1D3C24),
+          daylight,
+        )!,
+      );
+    }
+  }
+
+  void _celestialBodies(Canvas canvas, Size size, double nightOpacity) {
+    if (nightOpacity > 0.01) {
+      final moon = Offset(size.width * 0.82, horizonY * 0.24);
+      canvas.drawCircle(
+        moon,
+        34,
+        Paint()
+          ..shader = RadialGradient(
+            colors: [
+              const Color(0xFFF7EFD1).withValues(
+                alpha: nightOpacity * 0.25,
+              ),
+              const Color(0x00F7EFD1),
+            ],
+          ).createShader(Rect.fromCircle(center: moon, radius: 34)),
+      );
+      canvas.drawCircle(
+        moon,
+        11,
+        Paint()
+          ..color = const Color(0xFFF2E9C8).withValues(
+            alpha: nightOpacity * 0.92,
+          ),
+      );
+    }
+
+    if (daylight > 0.01) {
+      final arc = math.sin(math.pi * sunProgress);
+      final sun = Offset(
+        size.width * (0.12 + 0.76 * sunProgress),
+        horizonY * (0.55 - 0.30 * arc),
+      );
+      final sunColor = Color.lerp(
+        const Color(0xFFFFC066),
+        const Color(0xFFFFF0A8),
+        daylight,
+      )!;
+      canvas.drawCircle(
+        sun,
+        42,
+        Paint()
+          ..shader = RadialGradient(
+            colors: [
+              sunColor.withValues(alpha: daylight * 0.30),
+              sunColor.withValues(alpha: 0),
+            ],
+          ).createShader(Rect.fromCircle(center: sun, radius: 42)),
+      );
+      canvas.drawCircle(
+        sun,
+        12,
+        Paint()..color = sunColor.withValues(alpha: daylight),
       );
     }
   }
@@ -262,7 +362,10 @@ class GroundedForestPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(GroundedForestPainter oldDelegate) =>
-      oldDelegate.horizonY != horizonY;
+      oldDelegate.horizonY != horizonY ||
+      oldDelegate.daylight != daylight ||
+      oldDelegate.sunProgress != sunProgress ||
+      oldDelegate.warmth != warmth;
 }
 
 /// Ateş etrafındaki toprak açıklık (hayvanların oturduğu zemin). Elips; ortası
@@ -908,6 +1011,16 @@ class CritterPainter extends CustomPainter {
     // — Kütük (hayvanın oturduğu) —
     _log(canvas, bodyCx, logY);
 
+    canvas.save();
+    if (_asleep) {
+      // Kütük sabit kalırken gövde yana yaslanır; gece uyuması oturan kapalı
+      // gözlerden belirgin biçimde ayrılır.
+      canvas.translate(bodyCx, bodyCy + 5);
+      canvas.rotate(-0.28);
+      canvas.scale(1.02, 0.90);
+      canvas.translate(-bodyCx, -(bodyCy + 5));
+    }
+
     // — Kuyruk (gövdenin arkasında) —
     if (species.tail) _tail(canvas, bodyCx, bodyCy);
 
@@ -966,6 +1079,7 @@ class CritterPainter extends CustomPainter {
 
     // — Yüz —
     _face(canvas, bodyCx, bodyCy - 4);
+    canvas.restore();
   }
 
   /// Ateş yönünden (alt-ön) gelen sıcak parıltı — gövdeye yumuşak hacim katar.

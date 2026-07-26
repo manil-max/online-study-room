@@ -1,11 +1,13 @@
-import 'package:online_study_room/l10n/app_localizations.dart';
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:online_study_room/l10n/app_localizations.dart';
 
 import '../../../core/animals/camp_animal.dart';
 import '../../../core/theme/subject_colors.dart';
+import '../../../core/time_engine/sky_phase.dart';
 import '../../../core/utils/duration_format.dart';
 import '../../../core/widgets/second_ticker.dart';
 import '../../../data/models/presence.dart';
@@ -23,16 +25,47 @@ double _lerp(double a, double b, double t) => a + (b - a) * t;
 
 /// Kamp ateşi canlı sahnesi (§2G — ormanda taşlı kamp ateşi).
 ///
-/// Gece ormanında taş halkalı bir kamp ateşi; **tüm** grup üyeleri ateş çevresinde
-/// eşit açıyla kendi **kütüğünde** oturur ve seçtiği **tombul hayvanla** temsil
-/// edilir (elle çizim, tam vücut). **Çalışan** üye gerçekçi bir **dalda marşmelov**
-/// kızartır — marşmelov çalışma süresine göre kademe kademe pişer; adı üstünde,
-/// süresi altında yeşille yazar. **Mola/çevrimdışı** üye soluklaşır ve uyur (💤).
-class CampfireScene extends ConsumerWidget {
-  const CampfireScene({super.key});
+/// Yerel saate göre yumuşakça aydınlanan ormanda taş halkalı bir kamp ateşi.
+///
+/// [anchors], WP-300'ün gerçek güneş saatlerini tek noktadan bağlayacağı seam'dir.
+/// [clock] testlerde deterministik sahne üretir; üretimde cihazın yerel saatidir.
+class CampfireScene extends ConsumerStatefulWidget {
+  const CampfireScene({
+    super.key,
+    this.anchors = kDefaultSkyAnchors,
+    this.clock,
+  });
+
+  final SkyAnchors anchors;
+  final DateTime Function()? clock;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CampfireScene> createState() => _CampfireSceneState();
+}
+
+class _CampfireSceneState extends ConsumerState<CampfireScene> {
+  Timer? _skyTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.clock == null) {
+      _skyTimer = Timer.periodic(const Duration(minutes: 1), (_) {
+        if (mounted) setState(() {});
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _skyTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final now = widget.clock?.call() ?? DateTime.now();
+    final sky = skyPhase(now, widget.anchors);
     final membersAsync = ref.watch(groupMembersProvider);
     final presenceList = ref.watch(groupPresenceProvider).value ?? const [];
     final todayByUser = ref.watch(groupTodaySecondsProvider);
@@ -40,9 +73,12 @@ class CampfireScene extends ConsumerWidget {
     final blocked = ref.watch(blockedUserIdsProvider).value ?? const {};
 
     return membersAsync.when(
-      loading: () =>
-          const _SceneFrame(child: Center(child: CircularProgressIndicator())),
+      loading: () => _SceneFrame(
+        sky: sky,
+        child: const Center(child: CircularProgressIndicator()),
+      ),
       error: (_, _) => _SceneFrame(
+        sky: sky,
         child: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -80,7 +116,12 @@ class CampfireScene extends ConsumerWidget {
         final studyingCount = campers.where((c) => c.studying).length;
 
         return _SceneFrame(
-          child: _SceneLayout(campers: campers, studyingCount: studyingCount),
+          sky: sky,
+          child: _SceneLayout(
+            campers: campers,
+            studyingCount: studyingCount,
+            sky: sky,
+          ),
         );
       },
     );
@@ -112,27 +153,40 @@ class _Camper {
     return diff > 0 ? diff : 0;
   }
 
-  /// WP-295 iki-duruş sözleşmesi: çalışan marşmelov kızartır; diğer herkes
-  /// aynı sakin oturuştadır. Çevrimdışı ayrımı pozla değil opaklıkla verilir.
-  CritterPose poseAt(DateTime now) {
-    return studying ? CritterPose.roasting : CritterPose.idle;
-  }
+  /// Çalışan her fazda kızartır; çalışmayan yalnız gerçek gece fazında uyur.
+  CritterPose poseAt({required bool isNight}) => studying
+      ? CritterPose.roasting
+      : isNight
+      ? CritterPose.sleepy
+      : CritterPose.idle;
 
-  bool roastingAt(DateTime now) => studying;
+  bool get roasting => studying;
 }
 
-/// Sahnenin gece atmosferli dış çerçevesi (koyu gökyüzü gradyanı + yuvarlak köşe).
+/// Sahnenin sivil gökyüzü fazına göre renklenen dış çerçevesi.
 class _SceneFrame extends StatelessWidget {
-  const _SceneFrame({required this.child});
+  const _SceneFrame({required this.sky, required this.child});
 
+  final SkyPhaseResult sky;
   final Widget child;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    // Derin gece mavisi gökyüzü (temaya hafif bağlı, ormana uygun koyu).
-    final top = Color.lerp(const Color(0xFF0B1020), scheme.surface, 0.12)!;
-    final bottom = Color.lerp(const Color(0xFF161C12), scheme.surface, 0.10)!;
+    final daylight = sky.value;
+    var top = Color.lerp(
+      const Color(0xFF07111F),
+      const Color(0xFF70B9E7),
+      daylight,
+    )!;
+    var bottom = Color.lerp(
+      const Color(0xFF17231B),
+      const Color(0xFFD7E7C1),
+      daylight,
+    )!;
+    top = Color.lerp(top, const Color(0xFF706A9A), sky.warmth * 0.26)!;
+    bottom = Color.lerp(bottom, const Color(0xFFFFA45B), sky.warmth * 0.72)!;
+    top = Color.lerp(top, scheme.surface, sky.isNight ? 0.06 : 0.015)!;
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
@@ -162,10 +216,15 @@ class _SceneFrame extends StatelessWidget {
 /// Sahnenin asıl yerleşimi. Tek animasyon denetleyicisi hem alevi, hem hayvanların
 /// nefesini, hem marşmelov kızarmasını besler.
 class _SceneLayout extends StatefulWidget {
-  const _SceneLayout({required this.campers, required this.studyingCount});
+  const _SceneLayout({
+    required this.campers,
+    required this.studyingCount,
+    required this.sky,
+  });
 
   final List<_Camper> campers;
   final int studyingCount;
+  final SkyPhaseResult sky;
 
   @override
   State<_SceneLayout> createState() => _SceneLayoutState();
@@ -283,6 +342,7 @@ class _SceneLayoutState extends State<_SceneLayout>
               scale: p.scale,
               back: p.back,
               phase: p.phase,
+              isNight: widget.sky.isNight,
               controller: _controller,
             ),
           ),
@@ -300,6 +360,9 @@ class _SceneLayoutState extends State<_SceneLayout>
                     child: CustomPaint(
                       painter: GroundedForestPainter(
                         horizonY: ringCy - ry * 0.82,
+                        daylight: widget.sky.value,
+                        sunProgress: widget.sky.sunProgress,
+                        warmth: widget.sky.warmth,
                       ),
                     ),
                   ),
@@ -369,8 +432,7 @@ class _SceneLayoutState extends State<_SceneLayout>
                             for (final p
                                 in placements
                                     .where(
-                                      (placement) => placement.camper
-                                          .roastingAt(DateTime.now()),
+                                      (placement) => placement.camper.roasting,
                                     )
                                     .take(6))
                               MarshStick(
@@ -511,6 +573,7 @@ class _CritterBody extends StatelessWidget {
     required this.scale,
     required this.back,
     required this.phase,
+    required this.isNight,
     required this.controller,
   });
 
@@ -519,6 +582,7 @@ class _CritterBody extends StatelessWidget {
   final double scale;
   final bool back;
   final double phase;
+  final bool isNight;
   final Animation<double> controller;
 
   static const double _base = 72;
@@ -564,7 +628,7 @@ class _CritterBody extends StatelessWidget {
                 animation: controller,
                 builder: (context, _) {
                   final t = controller.value;
-                  final pose = camper.poseAt(DateTime.now());
+                  final pose = camper.poseAt(isNight: isNight);
                   final breath = math.sin(
                     (t * (studying ? 1.6 : 1.0) + phase) * 2 * math.pi,
                   );

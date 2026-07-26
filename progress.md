@@ -71,15 +71,10 @@
 - 🔴 **BETA 1 GERİ BİLDİRİMİ (sahip, 2026-07-25) → WP-302/303/304 açıldı ve ÜÇÜ DE KOD/TEST TAMAM.** `analyze` 0, **795 test yeşil**, l10n audit temiz. Sahip sırası: bu üçü stable'a → sonra kalan kod işleri → beta 2 → stable.
 
 ### Codex Lane
-- **Durum:** [~] Kod/test tamam — Windows görsel kabulü + Android profil ölçümü bekleniyor
-- **Faz/WP:** Yeni Özellik Turu · WP-295
-- **Aşama:** Sahibin 1–8 kişi için seçtiği profiller üretime ve regresyon testlerine birebir sabitlendi
-- **SAHİP yollar:** `app/lib/features/classroom/widgets/campfire_scene.dart` · `app/lib/features/classroom/widgets/camp_critter.dart` · yalnız WP-295 ilgili testler/önizleme dosyaları
-- **Ortak/riskli yüzey:** `progress.md` (yalnız Codex lane + WP-295 kartı). Admin/auth/settings/l10n/migration/tooling yüzeylerine girilmez.
-- **Dal:** `main`
-- **Başlangıç:** 2026-07-26 12:33 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-26
-- **Not:** Claude WP-329 grup yüzeyinde; kesişim yok. Sahibin ayrı 1/3/5/7 konumları ve simetrik 2/4/6/8 çiftleri `CampfireCountLayout.saved` içinde üretime alındı. Hedef analyze **0**, hedef testler **18/18**, tam analyze **0**, tam suit **864/864**, Windows build başarılı; gerçek uygulama açıldı. Orta seviye Android `p95/jank` ölçümü beta cihaz turunda kalıyor.
+- **Durum:** [x] Boşta
+- **Faz/WP:** —
+- **SAHİP yollar:** —
+- **Son not:** WP-299 kod + otomatik test tamamlandı; gerçek cihaz/ürün kabulü için `Test için bekleyenler`e taşındı. WP-327/334 yüzeyleriyle kesişme olmadı.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
@@ -671,6 +666,12 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 
 ## Test için bekleyenler
 
+### WP-299 — gündüz/gece gökyüzü + gece uyuma pozu
+
+- **Durum:** Kod/test tamam · **Cihazda doğrulanmalı**
+- **Kanıt:** saf `skyPhase` 7/7 · WP-299 + WP-295 hedef testleri 27/27 · tam `flutter analyze` 0 · tam suit 876/876 · Windows release build başarılı · gündüz/geçiş/gece golden 3/3 ve görsel inceleme geçti.
+- **Bekleyen:** Açık Windows uygulamasında mevcut yerel saat görünümünün ürün kabulü; Android'de gündüz/şafak/akşam/gece saat değişiminde gradyan, güneş/ay/yıldız sönümü, çalışmayan üyenin yalnız geceleri uyuması ve gündüz alev kontrastı. WP-295 ile ortak Android p95/jank ölçümü beta cihaz turunda alınır.
+
 ### WP-318 — Bilet arşivi
 
 - **Durum:** Kod/test tamam · **Beta ortamında doğrulanmalı**
@@ -930,16 +931,16 @@ DALGA 7  WP-295 Oturma+2 poz → WP-299 Gökyüzü → WP-300 Konum   (SERİ, ay
 
 ### WP-299: Kozmetik — gündüz/gece gökyüzü + gece uyuma pozu 🌅 *(yeni, 2026-07-25)*
 - **Program/Faz:** Yeni Özellik Turu · Aşama A · (notlar **F-09 madde 3**)
-- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-295 (aynı sahne dosyaları — **seri koşar, paralel değil**)
+- **Ajan:** Codex · **Durum:** [~] Kod/test tamam — cihaz/ürün kabulü bekliyor · **Bağımlılık:** WP-295 (aynı sahne dosyaları — **seri koşar, paralel değil**; kod/test commit `464056f`)
 - **Problem:** Sahne her zaman gece; ay ve yıldızlar sabit ([`ForestBackdropPainter`](app/lib/features/classroom/widgets/camp_critter.dart:14), `_SceneFrame` sabit gradyan). Sahip gerçek saate göre **kademeli** (anlık değil) hava değişimi istiyor.
 - **Kapsam dışı:** 🔴 `groups.location` (**WP-300**) · sunucu gün sınırı (**WP-301**) · oturma düzeni ve pozlar (WP-295).
 - **SAHİP dosyalar (yaz):** `app/lib/features/classroom/widgets/campfire_scene.dart` (`_SceneFrame`), `app/lib/features/classroom/widgets/camp_critter.dart` (`ForestBackdropPainter`), yeni `app/lib/core/time_engine/sky_phase.dart` + testi.
 - **DOKUNMA:** `app/lib/core/stats/**`, sunucu, tema motoru, `groups` şeması.
 - **Adımlar:**
-  - [ ] **Saf fonksiyon önce:** `skyPhase(DateTime local, SkyAnchors anchors) → 0..1 + faz` — deterministik, cihaz saatinden bağımsız test edilir.
-  - [ ] 🔴 **Çıpa kaynağı seam'i:** dört sivil çıpa (şafak · gündoğumu · günbatımı · akşam) **başta sabit saatlerden** gelir. WP-300 bitince aynı imza gerçek gündoğumu/batışını alır — **gökyüzü kodu değişmez.** Bu ayrım kartın varlık sebebi; birleştirilmez.
-  - [ ] Gradyan + ay/yıldız sönümlemesi + gündüz güneşi. Geçiş **saatlik yumuşak**, ani kesme yok.
-  - [ ] **Gece uyuma pozu** (sahibin opsiyonel isteği): gece fazında çalışmayan üye yan yatar. 🔴 **Gökyüzüyle AYNI saati kullanır** — ayrı saat kullanılırsa gökyüzü gündüzken hayvan uyur. *(WP-295'te atılan `sleepy` pozundan farklı bir şey: bu gökyüzüne bağlı.)*
+  - [x] **Saf fonksiyon önce:** `skyPhase(DateTime local, SkyAnchors anchors) → 0..1 + faz` — deterministik; 24 saat, sınırlar, smoothstep ve gece yarısı testli.
+  - [x] 🔴 **Çıpa kaynağı seam'i:** dört sivil çıpa tek `kDefaultSkyAnchors` sabitinden gelir; `CampfireScene.anchors` ile WP-300 aynı imzaya bağlanabilir.
+  - [x] Gradyan + ay/yıldız sönümlemesi + gündüz güneşi + saate göre aydınlanan arazi. Dakika yenilemesiyle geçiş **saatlik yumuşak**, ani kesme yok.
+  - [x] **Gece uyuma pozu:** gece fazında çalışmayan üye yana yaslanır; çalışan kızartmaya devam eder. Gökyüzü ve poz aynı `SkyPhaseResult` nesnesini kullanır.
 - **Veri/Migration etkisi:** Yok. **Ortam/Deploy:** Local. **RLS/Güvenlik:** Yok.
 - **Edge-case'ler:** gece yarısı sarması (23:59→00:01) · kutup bölgesi/olmayan gündoğumu (WP-300 sonrası) · yaz saati · "hareketi azalt" açık · cihaz saati elle değiştirilmiş · gündüz fazında ateşin glow'u okunur kalmalı (gündüz gökyüzü açık, alev kontrastı düşer).
 - **Kabul (ölçülebilir):** `skyPhase` **saf ve testli** (sabit girdi → sabit çıktı, `DateTime.now()` okumaz) · 24 saatin her saati için faz testi · gece yarısı sarması testli · gündüz/gece/geçiş için 3 golden · çıpa kaynağı **tek yerden** geliyor (WP-300 tek satırla bağlanabiliyor) · gündüz fazında alev/glow görünür kalıyor.
