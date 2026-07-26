@@ -29,6 +29,7 @@ import '../models/profile.dart';
 import '../models/study_session.dart';
 import '../models/user_study_summary.dart';
 import '../repositories/study_repository.dart';
+import '../repositories/presence_repository.dart';
 import '../repositories/offline/offline_first_study_repository.dart';
 import '../repositories/in_memory/in_memory_study_repository.dart';
 import '../repositories/supabase/supabase_study_repository.dart';
@@ -389,7 +390,9 @@ class StudyTimerState {
       verification: verification ?? this.verification,
       // clearSettling her zaman kazanır (null geçilemeyen alanları sıfırlamanın
       // tek yolu budur; `settlingDay: null` "değiştirme" anlamına gelir).
-      settlingSeconds: clearSettling ? 0 : (settlingSeconds ?? this.settlingSeconds),
+      settlingSeconds: clearSettling
+          ? 0
+          : (settlingSeconds ?? this.settlingSeconds),
       settlingBaseline: clearSettling
           ? 0
           : (settlingBaseline ?? this.settlingBaseline),
@@ -599,8 +602,8 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       ),
       liveRunId: _normalizeRunToken(prefs.getString(_kActiveLiveRunId)),
       liveRunToken: _normalizeRunToken(prefs.getString(_kActiveLiveRunToken)),
-      verification: _normalizeRunToken(prefs.getString(_kActiveLiveRunToken)) ==
-              null
+      verification:
+          _normalizeRunToken(prefs.getString(_kActiveLiveRunToken)) == null
           ? (activeStartedAt == null
                 ? TimerVerification.idle
                 : TimerVerification.statisticsOnly)
@@ -1540,12 +1543,15 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     required DateTime? startedAt,
   }) {
     final user = ref.read(authStateProvider).value;
-    final group = ref.read(userGroupProvider).value;
-    if (user == null || group == null) return;
+    if (user == null) return;
+    final presenceMode = ref.read(presenceProjectionModeProvider);
+    final legacyGroupId = presenceMode == PresenceProjectionMode.projection
+        ? null
+        : ref.read(userGroupProvider).value?.id;
 
     final presence = Presence(
       userId: user.id,
-      groupId: group.id,
+      groupId: legacyGroupId,
       status: status,
       startedAt: startedAt,
       todaySeconds: ref.read(todayRecordedSecondsProvider),

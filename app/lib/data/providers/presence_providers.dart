@@ -12,6 +12,15 @@ import '../repositories/supabase/supabase_presence_repository.dart';
 import 'offline_providers.dart';
 import 'group_providers.dart';
 
+/// Staging/cihaz kabulü tamamlanana kadar legacy fallback varsayılandır.
+///
+/// [PresenceProjectionMode.shadow] iki kaynaktan okuyup server-derived yazımı
+/// gözlemler; [projection] rollout'ta açık read switch'tir. Provider override
+/// edilebildiği için kill switch uygulamayı veya timer sıcak yolunu değiştirmez.
+final presenceProjectionModeProvider = Provider<PresenceProjectionMode>(
+  (ref) => PresenceProjectionMode.legacy,
+);
+
 SupabaseClient? _supabaseClientOrNull() {
   if (!SupabaseConfig.isConfigured) return null;
   try {
@@ -34,16 +43,23 @@ const Duration kPresenceStaleThreshold = Duration(seconds: 70);
 /// ikisinin üstüne offline-first cache sarılır.
 final presenceRepositoryProvider = Provider<PresenceRepository>((ref) {
   final cache = ref.watch(offlineCacheStoreProvider);
+  final mode = ref.watch(presenceProjectionModeProvider);
   final client = _supabaseClientOrNull();
   if (client != null) {
     return OfflineFirstPresenceRepository(
-      remote: SupabasePresenceRepository(client),
+      remote: SupabasePresenceRepository(client, mode: mode),
       cache: cache,
     );
   }
   final remote = InMemoryPresenceRepository();
   ref.onDispose(remote.dispose);
   return OfflineFirstPresenceRepository(remote: remote, cache: cache);
+});
+
+/// Kuyruk yaşını/son hatayı UI ve destek tanıları için görünür yapar. Timer
+/// kontrol akışı bu provider'ı beklemez.
+final presenceSyncStatusProvider = FutureProvider<PresenceSyncStatus>((ref) {
+  return ref.watch(presenceRepositoryProvider).readSyncStatus();
 });
 
 /// Bayat presence satırlarını çevrimdışına çeker (§WP-5 çevrimdışı tespiti).
@@ -65,6 +81,10 @@ List<Presence> applyPresenceStaleness(
     for (final p in rows)
       if (p.status == PresenceStatus.offline)
         p
+      else if (p.leaseExpiresAt != null)
+        now.isBefore(p.leaseExpiresAt!)
+            ? p
+            : p.copyWith(status: PresenceStatus.offline)
       else if (p.updatedAt == null)
         // Eski null cache: aktif durumu kilitleme — offline göster.
         p.copyWith(status: PresenceStatus.offline)

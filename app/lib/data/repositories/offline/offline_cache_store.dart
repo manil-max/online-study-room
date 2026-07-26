@@ -213,6 +213,7 @@ class OfflineCacheStore {
       'today_seconds': presence.todaySeconds,
       'subject_id': presence.subjectId,
       'updated_at': updated.toUtc().toIso8601String(),
+      'lease_expires_at': presence.leaseExpiresAt?.toUtc().toIso8601String(),
     };
   }
 

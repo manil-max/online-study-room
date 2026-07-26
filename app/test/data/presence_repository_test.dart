@@ -3,17 +3,15 @@ import 'package:online_study_room/data/models/presence.dart';
 import 'package:online_study_room/data/providers/presence_providers.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_presence_repository.dart';
 
-Presence _presence(
-  String userId,
-  String groupId,
-  PresenceStatus status,
-) {
+Presence _presence(String userId, String groupId, PresenceStatus status) {
   return Presence(
     userId: userId,
     groupId: groupId,
     status: status,
     todaySeconds: 0,
-    startedAt: status == PresenceStatus.studying ? DateTime(2026, 6, 21, 9) : null,
+    startedAt: status == PresenceStatus.studying
+        ? DateTime(2026, 6, 21, 9)
+        : null,
   );
 }
 
@@ -54,16 +52,18 @@ void main() {
     final now = DateTime(2026, 7, 10, 12, 0, 0);
 
     Presence studying(String id, {DateTime? updatedAt}) => Presence(
-          userId: id,
-          groupId: 'g1',
-          status: PresenceStatus.studying,
-          todaySeconds: 0,
-          startedAt: now.subtract(const Duration(minutes: 30)),
-          updatedAt: updatedAt,
-        );
+      userId: id,
+      groupId: 'g1',
+      status: PresenceStatus.studying,
+      todaySeconds: 0,
+      startedAt: now.subtract(const Duration(minutes: 30)),
+      updatedAt: updatedAt,
+    );
 
     test('taze satır çalışıyor kalır', () {
-      final rows = [studying('u1', updatedAt: now.subtract(const Duration(seconds: 10)))];
+      final rows = [
+        studying('u1', updatedAt: now.subtract(const Duration(seconds: 10))),
+      ];
       final result = applyPresenceStaleness(rows, now: now);
       expect(result.single.status, PresenceStatus.studying);
     });
@@ -87,7 +87,9 @@ void main() {
     });
 
     test('eşik sınırındaki satır hâlâ canlı sayılır', () {
-      final rows = [studying('u1', updatedAt: now.subtract(kPresenceStaleThreshold))];
+      final rows = [
+        studying('u1', updatedAt: now.subtract(kPresenceStaleThreshold)),
+      ];
       final result = applyPresenceStaleness(rows, now: now);
       expect(result.single.status, PresenceStatus.studying);
     });
@@ -104,6 +106,25 @@ void main() {
       ];
       final result = applyPresenceStaleness(rows, now: now);
       expect(result.single.status, PresenceStatus.offline);
+    });
+
+    test('V3 lease süresi dolunca projection çevrimdışına çekilir', () {
+      final live = studying(
+        'u1',
+        updatedAt: null,
+      ).copyWith(leaseExpiresAt: now.add(const Duration(seconds: 5)));
+      final expired = live.copyWith(
+        leaseExpiresAt: now.subtract(const Duration(seconds: 1)),
+      );
+
+      expect(
+        applyPresenceStaleness([live], now: now).single.status,
+        PresenceStatus.studying,
+      );
+      expect(
+        applyPresenceStaleness([expired], now: now).single.status,
+        PresenceStatus.offline,
+      );
     });
   });
 }

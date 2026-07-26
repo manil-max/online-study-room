@@ -15,6 +15,7 @@ class Presence {
     this.startedAt,
     this.subjectId,
     this.updatedAt,
+    this.leaseExpiresAt,
   });
 
   final String userId;
@@ -37,6 +38,10 @@ class Presence {
   /// çevrimdışı tespiti (§WP-5) bunu kullanır. Bellek-içi/eski satırlarda `null`.
   final DateTime? updatedAt;
 
+  /// V3 projection'ın kanonik lease bitişi. Heartbeat projection satırını
+  /// yazmadığından, aktiflik bu alandan türetilir.
+  final DateTime? leaseExpiresAt;
+
   bool get isStudying => status == PresenceStatus.studying;
 
   Presence copyWith({
@@ -46,6 +51,7 @@ class Presence {
     int? todaySeconds,
     String? subjectId,
     DateTime? updatedAt,
+    DateTime? leaseExpiresAt,
   }) {
     return Presence(
       userId: userId,
@@ -55,12 +61,14 @@ class Presence {
       todaySeconds: todaySeconds ?? this.todaySeconds,
       subjectId: subjectId ?? this.subjectId,
       updatedAt: updatedAt ?? this.updatedAt,
+      leaseExpiresAt: leaseExpiresAt ?? this.leaseExpiresAt,
     );
   }
 
   factory Presence.fromMap(Map<String, dynamic> map) {
     final started = map['started_at'] as String?;
     final updated = map['updated_at'] as String?;
+    final leaseExpires = map['lease_expires_at'] as String?;
     return Presence(
       userId: map['user_id'] as String,
       groupId: map['group_id'] as String?,
@@ -69,6 +77,9 @@ class Presence {
       todaySeconds: (map['today_seconds'] as int?) ?? 0,
       subjectId: map['subject_id'] as String?,
       updatedAt: updated == null ? null : DateTime.parse(updated),
+      leaseExpiresAt: leaseExpires == null
+          ? null
+          : DateTime.parse(leaseExpires),
     );
   }
 
@@ -83,6 +94,7 @@ class Presence {
       'today_seconds': todaySeconds,
       'subject_id': subjectId,
       'updated_at': DateTime.now().toUtc().toIso8601String(),
+      'lease_expires_at': leaseExpiresAt?.toUtc().toIso8601String(),
     };
   }
 
@@ -95,9 +107,18 @@ class Presence {
       other.startedAt == startedAt &&
       other.todaySeconds == todaySeconds &&
       other.subjectId == subjectId &&
-      other.updatedAt == updatedAt;
+      other.updatedAt == updatedAt &&
+      other.leaseExpiresAt == leaseExpiresAt;
 
   @override
   int get hashCode => Object.hash(
-      userId, groupId, status, startedAt, todaySeconds, subjectId, updatedAt);
+    userId,
+    groupId,
+    status,
+    startedAt,
+    todaySeconds,
+    subjectId,
+    updatedAt,
+    leaseExpiresAt,
+  );
 }

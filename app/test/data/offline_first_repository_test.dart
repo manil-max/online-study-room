@@ -211,6 +211,22 @@ void main() {
     },
   );
 
+  test(
+    'presence heartbeat failure kuyruk yaşını ve hatayı görünür yapar',
+    () async {
+      final cache = await _store();
+      final remote = _FakePresenceRepository()..failWrites = true;
+      final repo = OfflineFirstPresenceRepository(remote: remote, cache: cache);
+
+      await repo.heartbeatPresence(_presence(PresenceStatus.studying));
+
+      final status = await repo.readSyncStatus();
+      expect(status.pendingCount, 1);
+      expect(status.oldestPendingAt, isNotNull);
+      expect(status.lastError, isNotNull);
+    },
+  );
+
   test('WP-104: null updatedAt presence cache damgası alır', () async {
     final cache = await _store();
     final withoutStamp = Presence(
@@ -226,6 +242,20 @@ void main() {
     expect(stored.updatedAt, isNotNull);
     expect(stored.status, PresenceStatus.studying);
   });
+
+  test(
+    'V3 projection lease bilgisi offline cache round-tripte korunur',
+    () async {
+      final cache = await _store();
+      final lease = DateTime.utc(2026, 7, 11, 10, 1, 10);
+      await cache.saveGroupPresence('g1', [
+        _presence(PresenceStatus.studying).copyWith(leaseExpiresAt: lease),
+      ]);
+
+      final stored = (await cache.readGroupPresence('g1'))!.single;
+      expect(stored.leaseExpiresAt!.isAtSameMomentAs(lease), isTrue);
+    },
+  );
 
   test(
     'presence stream falls back to cached group rows after remote error',
@@ -388,6 +418,9 @@ class _FakePresenceRepository implements PresenceRepository {
   }
 
   @override
+  Future<void> heartbeatPresence(Presence presence) => setPresence(presence);
+
+  @override
   Stream<List<Presence>> watchGroupPresence(String groupId) {
     if (failStream) {
       return Stream.error(StateError('offline'));
@@ -401,4 +434,8 @@ class _FakePresenceRepository implements PresenceRepository {
     }
     return Stream.value(rows.where((p) => p.groupId == groupId).toList());
   }
+
+  @override
+  Future<PresenceSyncStatus> readSyncStatus() async =>
+      const PresenceSyncStatus.idle();
 }

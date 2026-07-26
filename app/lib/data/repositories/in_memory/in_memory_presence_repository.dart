@@ -11,8 +11,9 @@ class InMemoryPresenceRepository implements PresenceRepository {
   final StreamController<void> _changes = StreamController<void>.broadcast();
 
   List<Presence> _forGroup(String groupId) {
-    final list =
-        _byUser.values.where((p) => p.groupId == groupId).toList(growable: false);
+    final list = _byUser.values
+        .where((p) => p.groupId == groupId)
+        .toList(growable: false);
     return List.unmodifiable(list);
   }
 
@@ -23,12 +24,19 @@ class InMemoryPresenceRepository implements PresenceRepository {
   }
 
   @override
+  Future<void> heartbeatPresence(Presence presence) => setPresence(presence);
+
+  @override
   Stream<List<Presence>> watchGroupPresence(String groupId) async* {
     yield _forGroup(groupId);
     await for (final _ in _changes.stream) {
       yield _forGroup(groupId);
     }
   }
+
+  @override
+  Future<PresenceSyncStatus> readSyncStatus() async =>
+      const PresenceSyncStatus.idle();
 
   void dispose() => _changes.close();
 }

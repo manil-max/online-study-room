@@ -48,7 +48,7 @@
 - **Durum:** [x] Boşta
 - **Faz/WP:** —
 - **SAHİP yollar:** —
-- **Son not:** WP-338 `0081` local replay, 218 pgTAP ve uygulama kalite kapılarıyla kod/test tamamlandı; WP-339 sunucu sözleşmesini tüketebilir. Staging/cihaz kabulü V3 zincirinin ortak QA turunda yapılacak.
+- **Son not:** WP-339 kod/test tamamlandı; V3 projection/legacy-shadow/kill-switch modları, group-parametresiz state/heartbeat, lease-aware read, offline queue yaşı/hatası ve dar adapter uygulandı. `flutter analyze` ile ilgili test paketi geçti; tam paket koşumu tek bir worker'da ilerlemesiz kaldığı için sonlandırıldı. Staging/cihaz kabulü V3 zincirinin ortak QA turunda yapılacak.
 
 ### Codex-2 Lane
 - **Durum:** [~] Aktif
@@ -294,7 +294,7 @@ Böylece kişisel ve grup istatistiği **asla çelişmez**.
 - **Model önerisi:** 🔴 Opus
 
 #### WP-339: Presence client cutover ve seçili-grup bağını kaldırma 🔄
-- **Program/Faz:** Faz E2 · Delivery A client · **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-338
+- **Program/Faz:** Faz E2 · Delivery A client · **Ajan:** Codex · **Durum:** [~] Kod/test tamam; staging/cihaz kabulü bekliyor · **Bağımlılık:** WP-338
 - **Problem:** Publish/watch `userGroupProvider` ve tek `group_id`ye bağlı; auth/grup hazır değilse start presence kayboluyor.
 - **Kapsam dışı:** Native outbox · global mirror · push · timer UI refactor.
 - **SAHİP dosyalar (yaz):** presence repository interface + Supabase/InMemory/Offline çiftleri · `presence_providers.dart` · `presence_lifecycle.dart` · dar `study_providers.dart` adapter'ı · testler

@@ -15,6 +15,7 @@ class OfflineFirstPresenceRepository implements PresenceRepository {
   final PresenceRepository _remote;
   final OfflineCacheStore _cache;
   bool _isFlushing = false;
+  Object? _lastError;
 
   /// Aktif [watchGroupPresence] dinleyicilerine setPresence sonrası anında push.
   final Map<String, StreamController<List<Presence>>> _presenceLocalHubs = {};
@@ -52,9 +53,40 @@ class OfflineFirstPresenceRepository implements PresenceRepository {
     try {
       await flushPending();
       await _remote.setPresence(presence);
-    } catch (_) {
+    } catch (error) {
+      _lastError = error;
       await _cache.queuePresence(presence);
     }
+  }
+
+  @override
+  Future<void> heartbeatPresence(Presence presence) async {
+    try {
+      await flushPending();
+      await _remote.heartbeatPresence(presence);
+    } catch (error) {
+      _lastError = error;
+      // State kaydı henüz ulaşmadıysa heartbeat'i kaybetme: aynı payload
+      // sonraki flush'ta kanonik apply çağrısına dönüşür.
+      await _cache.queuePresence(presence);
+    }
+  }
+
+  @override
+  Future<PresenceSyncStatus> readSyncStatus() async {
+    final pending = await _cache.readPendingPresence();
+    DateTime? oldest;
+    for (final item in pending) {
+      final updated = item.updatedAt;
+      if (updated != null && (oldest == null || updated.isBefore(oldest))) {
+        oldest = updated;
+      }
+    }
+    return PresenceSyncStatus(
+      pendingCount: pending.length,
+      oldestPendingAt: oldest,
+      lastError: _lastError,
+    );
   }
 
   @override
@@ -82,22 +114,24 @@ class OfflineFirstPresenceRepository implements PresenceRepository {
 
       try {
         unawaited(flushPending());
-        remoteSub = _remote.watchGroupPresence(groupId).listen(
-          (rows) async {
-            await _cache.saveGroupPresence(groupId, rows);
-            if (!controller.isClosed) controller.add(rows);
-            unawaited(flushPending());
-          },
-          onError: (Object error, StackTrace stackTrace) async {
-            final fallback = await _cache.readGroupPresence(groupId);
-            if (controller.isClosed) return;
-            if (fallback != null) {
-              controller.add(fallback);
-            } else {
-              controller.addError(error, stackTrace);
-            }
-          },
-        );
+        remoteSub = _remote
+            .watchGroupPresence(groupId)
+            .listen(
+              (rows) async {
+                await _cache.saveGroupPresence(groupId, rows);
+                if (!controller.isClosed) controller.add(rows);
+                unawaited(flushPending());
+              },
+              onError: (Object error, StackTrace stackTrace) async {
+                final fallback = await _cache.readGroupPresence(groupId);
+                if (controller.isClosed) return;
+                if (fallback != null) {
+                  controller.add(fallback);
+                } else {
+                  controller.addError(error, stackTrace);
+                }
+              },
+            );
       } catch (error, stackTrace) {
         final fallback = await _cache.readGroupPresence(groupId);
         if (controller.isClosed) return;
