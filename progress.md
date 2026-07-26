@@ -71,15 +71,15 @@
 - 🔴 **BETA 1 GERİ BİLDİRİMİ (sahip, 2026-07-25) → WP-302/303/304 açıldı ve ÜÇÜ DE KOD/TEST TAMAM.** `analyze` 0, **795 test yeşil**, l10n audit temiz. Sahip sırası: bu üçü stable'a → sonra kalan kod işleri → beta 2 → stable.
 
 ### Codex Lane
-- **Durum:** [!] Park — sahip parametre seçimi bekleniyor
+- **Durum:** [~] Kod/test tamam — Windows görsel kabulü + Android profil ölçümü bekleniyor
 - **Faz/WP:** Yeni Özellik Turu · WP-295
-- **Aşama:** Parametrik canlı önizleme hazır; üretim değerleri henüz sabitlenmedi
+- **Aşama:** Sahibin 1–8 kişi için seçtiği profiller üretime ve regresyon testlerine birebir sabitlendi
 - **SAHİP yollar:** `app/lib/features/classroom/widgets/campfire_scene.dart` · `app/lib/features/classroom/widgets/camp_critter.dart` · yalnız WP-295 ilgili testler/önizleme dosyaları
 - **Ortak/riskli yüzey:** `progress.md` (yalnız Codex lane + WP-295 kartı). Admin/auth/settings/l10n/migration/tooling yüzeylerine girilmez.
 - **Dal:** `main`
 - **Başlangıç:** 2026-07-26 12:33 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-26 12:57
-- **Not:** Claude WP-319 auth/account/l10n yüzeyinde; kesişim yok. `lib/wp295_preview.dart` Windows canlı önizlemesi derlendi ve açıldı. Saf yerleşim + preview widget testleri **5/5**, yalnız WP-295 dosyalarının `dart analyze` sonucu **0**. Tam analyze, Claude'un ARB→generated ara durumu nedeniyle geçici kırmızı. Sağ paneldeki ayar satırı sahipçe seçilince aynı değerler üretim kodu + teste geçirilecek.
+- **Son güncelleme:** 2026-07-26
+- **Not:** Claude WP-329 grup yüzeyinde; kesişim yok. Sahibin ayrı 1/3/5/7 konumları ve simetrik 2/4/6/8 çiftleri `CampfireCountLayout.saved` içinde üretime alındı. Hedef analyze **0**, hedef testler **18/18**, tam analyze **0**, tam suit **864/864**, Windows build başarılı; gerçek uygulama açıldı. Orta seviye Android `p95/jank` ölçümü beta cihaz turunda kalıyor.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
@@ -910,18 +910,18 @@ DALGA 7  WP-295 Oturma+2 poz → WP-299 Gökyüzü → WP-300 Konum   (SERİ, ay
 
 ### WP-295: Kozmetik — kamp ateşi oturma düzeni + iki poz 🔥 *(rev. 2026-07-25)*
 - **Program/Faz:** Yeni Özellik Turu · Aşama A (son) · (plan §3 F-08 → notlar **F-09**)
-- **Ajan:** Codex · **Durum:** [~] Parametrik önizleme hazırlanıyor · **Bağımlılık:** ✅ **Sahip konuşması yapıldı (2026-07-25)** — şart kapandı. **Asset kararı: tasarımcıya para verilmiyor, hayvanlar vektör kalıyor.**
+- **Ajan:** Codex · **Durum:** [~] Kod/test tamam; Windows görsel kabulü + Android profil ölçümü bekliyor · **Bağımlılık:** ✅ **Sahip konuşması yapıldı (2026-07-25)** — şart kapandı. **Asset kararı: tasarımcıya para verilmiyor, hayvanlar vektör kalıyor.**
 - **Problem (sahip maddeleri 1 ve 2):** (a) `angle = π/2 + 2πi/n` ([campfire_scene.dart:264](app/lib/features/classroom/widgets/campfire_scene.dart:264)) **her n için** birini ateşin tam önüne (`sin=1`, ateşin üstünü kapatıyor), birini tam arkasına (`sin=-1`, `scale 0.6`, alevin içinde) koyuyor — sahip "önündeki ve arkasındaki görünmüyor" dedi, render bunu doğruladı. (b) Poz sayısı 4; sahip **2** istiyor: çalışmıyorken solgun boşta, çalışırken marşmelov.
 - **Kapsam dışı:** 🔴 Gökyüzü/gündüz-gece (**WP-299**) · `groups.location` (**WP-300**) · sunucu gün sınırı (**WP-301**) · taç (WP-292) · tema motoru · XP/başarım mantığı · **PNG/Rive asset hattı** (betadan sonraki ayrı program).
 - **SAHİP dosyalar (yaz):** `app/lib/features/classroom/widgets/campfire_scene.dart`, `app/lib/features/classroom/widgets/camp_critter.dart`, ilgili testler.
 - **DOKUNMA:** `app/lib/core/stats/**`, `app/lib/core/widgets/crowned_avatar.dart` (WP-292'nin), tema motoru, `campfire/layered_campfire_fire.dart` gökyüzü tarafı (WP-299'un).
 - **Adımlar:**
-  - [~] **Önce parametrik canlı önizleme** (halka yarıçapı · ölü bölge genişliği · ateş boyutu/yüksekliği · marşmelov döngüsü) — Windows önizlemesi hazır/açık, testler **5/5**; sahip sağ paneldeki sayı satırını seçip bildirecek, seçilen sayı **hem koda hem teste** birebir girer. *(WP-292 taç akışının aynısı.)*
-  - [ ] Oturma: kutuplarda **ölü bölge**, üyeler sol + sağ yaya dağıtılır. **Tek üye kutba düşmemeli** (yana oturur). Halka yarıçapı daraltılır (`rx = min(w*0.40, 232)` 4 üyede kenarlara savuruyor).
-  - [ ] Pozlar 2'ye indirilir: `working`(laptop) ve `sleepy` atılır. Çalışan = marşmelov, çalışmayan = solgun boşta. **Molada = solgun, çevrimdışı = daha solgun + daha saydam** (mola/çevrimdışı bilgisi kaybolmasın).
-  - [ ] 🔴 **Marşmelov pişme döngüsü:** `doneness = elapsed/(40*60)` clamp'li ([camp_critter.dart:414](app/lib/features/classroom/widgets/camp_critter.dart:414)) — kalıcı pozda 40 dk sonra ekranda **sabit koyu kahve leke** kalır. ~10 dk'lık **yiyip yenisini takma** döngüsüne çevrilir.
-  - [ ] Eşzamanlı kızartma: 6 çalışan üye = 6 dal. Dal açısı/salınımı mevcut `phase`'den türetilir (kilitli hareket olmasın).
-  - [ ] `_kPoseCycleSeconds`/`_kRoastStartSeconds` (170/135) kalkar — marşmelovun **%20 görünürlük** sebebi buydu.
+  - [x] **Önce parametrik canlı önizleme** (kişi sayısına özel halka · bağımsız çift/tek konumları · ateş boyutu/yüksekliği · dal erişimi · marşmelov döngüsü) — sahibin seçtiği sekiz profil **hem koda hem teste** birebir girdi. *(WP-292 taç akışının aynısı.)*
+  - [x] Oturma: 1/3/5/7 kişi için her hayvan bağımsız; 2/4/6/8 kişi için her yeni çift kendi `(radius,y)` değeriyle dikey eksene göre tam simetrik. Tek üye ateşin önüne değil yana oturuyor.
+  - [x] Üretimde iki görünür poz: çalışan = sürekli marşmelov, çalışmayan = boşta. **Molada = solgun, çevrimdışı = daha solgun + daha saydam** (mola/çevrimdışı bilgisi kaybolmuyor).
+  - [x] 🔴 **Marşmelov pişme döngüsü:** sahibin seçtiği **12 dk** sonunda yenisine geçiyor; 40 dk+ oturumda koyu kahveye kilitlenmiyor.
+  - [x] Eşzamanlı kızartma: en çok 6 çalışan üye = 6 dal. Dal açısı/salınımı mevcut `phase`'den türüyor (kilitli hareket yok).
+  - [x] `_kPoseCycleSeconds`/`_kRoastStartSeconds` (170/135) kalktı — çalışan üyenin marşmelovu sürekli görünür.
 - **Veri/Migration etkisi:** Yok. **Ortam/Deploy:** Local. **RLS/Güvenlik:** Yok.
 - **Edge-case'ler:** n=1 (kutba düşmemeli) · n=2 · büyük n'de yaylara sığma · "hareketi azalt" açık · koyu/açık tema · 40 dk+ oturum (marşmelov yanmamalı).
 - **Kabul (ölçülebilir):** Sahip kabulü · **hiçbir üye kutup ölü bölgesine düşmüyor** (testle: her yerleşimin `|sin(angle)|` değeri eşiğin altında) · `CritterPose` yalnız 2 değer · 40 dk+ oturumda marşmelov rengi `deep`e sabitlenmiyor · "hareketi azalt" açıkken animasyon durur · 🔴 **performans bütçesi:** orta seviye Android'de **p95 kare süresi ≤ 16.7 ms**, **jank ≤ %1** (`flutter run --profile` + timeline) — **beta 1 cihaz turunda ölçülür.**

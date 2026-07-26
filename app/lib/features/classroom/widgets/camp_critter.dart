@@ -131,6 +131,140 @@ class ForestBackdropPainter extends CustomPainter {
   bool shouldRepaint(ForestBackdropPainter oldDelegate) => false;
 }
 
+/// WP-295 perspektif zemini: ağaç kökleri ufkun altındaki araziye oturur ve
+/// kampın merkezinde hayvanların arkasını kesen ağaç bulunmaz.
+class GroundedForestPainter extends CustomPainter {
+  const GroundedForestPainter({required this.horizonY});
+
+  final double horizonY;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final random = math.Random(295);
+    final starPaint = Paint()..color = const Color(0xFFBFD4C8);
+
+    for (var i = 0; i < 34; i++) {
+      final radius = 0.35 + random.nextDouble() * 0.85;
+      canvas.drawCircle(
+        Offset(
+          random.nextDouble() * size.width,
+          random.nextDouble() * horizonY * 0.78,
+        ),
+        radius,
+        starPaint
+          ..color = starPaint.color.withValues(
+            alpha: 0.18 + random.nextDouble() * 0.38,
+          ),
+      );
+    }
+
+    final distantRidge = Path()
+      ..moveTo(0, horizonY + 18)
+      ..quadraticBezierTo(
+        size.width * 0.22,
+        horizonY - 26,
+        size.width * 0.43,
+        horizonY + 4,
+      )
+      ..quadraticBezierTo(
+        size.width * 0.68,
+        horizonY - 34,
+        size.width,
+        horizonY + 14,
+      )
+      ..lineTo(size.width, size.height)
+      ..lineTo(0, size.height)
+      ..close();
+    canvas.drawPath(
+      distantRidge,
+      Paint()..color = const Color(0xFF132419),
+    );
+
+    final ground = Path()
+      ..moveTo(0, horizonY)
+      ..quadraticBezierTo(
+        size.width * 0.5,
+        horizonY - 12,
+        size.width,
+        horizonY,
+      )
+      ..lineTo(size.width, size.height)
+      ..lineTo(0, size.height)
+      ..close();
+    canvas.drawPath(
+      ground,
+      Paint()
+        ..shader = const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Color(0xFF16251A),
+            Color(0xFF101910),
+            Color(0xFF0A100A),
+          ],
+        ).createShader(
+          Rect.fromLTRB(0, horizonY - 12, size.width, size.height),
+        ),
+    );
+
+    for (var i = 0; i < 18; i++) {
+      final x = i * size.width / 17;
+      final normalizedX = x / size.width;
+      if (normalizedX > 0.20 && normalizedX < 0.80) continue;
+      _pine(
+        canvas,
+        Offset(x, horizonY + 7 + random.nextDouble() * 8),
+        32 + random.nextDouble() * 34,
+        const Color(0xFF183322),
+      );
+    }
+
+    const sidePositions = [0.01, 0.07, 0.14, 0.86, 0.93, 0.99];
+    for (var i = 0; i < sidePositions.length; i++) {
+      final edgeDistance = i % 3;
+      _pine(
+        canvas,
+        Offset(
+          size.width * sidePositions[i],
+          horizonY + 50 + edgeDistance * 9,
+        ),
+        72.0 - edgeDistance * 10,
+        const Color(0xFF0B1A10),
+      );
+    }
+  }
+
+  void _pine(Canvas canvas, Offset base, double height, Color color) {
+    canvas.drawRect(
+      Rect.fromLTWH(
+        base.dx - height * 0.035,
+        base.dy - height * 0.25,
+        height * 0.07,
+        height * 0.28,
+      ),
+      Paint()..color = const Color(0xFF11130C),
+    );
+    final foliage = Paint()..color = color;
+    for (var layer = 0; layer < 3; layer++) {
+      final layerTop = base.dy - height * (0.48 + layer * 0.19);
+      final layerBottom = base.dy - height * (0.10 + layer * 0.16);
+      final halfWidth = height * (0.28 - layer * 0.045);
+      canvas.drawPath(
+        Path()
+          ..moveTo(base.dx, layerTop)
+          ..lineTo(base.dx - halfWidth, layerBottom)
+          ..lineTo(base.dx + halfWidth, layerBottom)
+          ..close(),
+        foliage,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(GroundedForestPainter oldDelegate) =>
+      oldDelegate.horizonY != horizonY;
+}
+
 /// Ateş etrafındaki toprak açıklık (hayvanların oturduğu zemin). Elips; ortası
 /// ateş ışığıyla sıcak, kenarları koyu — 45° bakış hissini pekiştirir.
 class ClearingPainter extends CustomPainter {
@@ -403,16 +537,28 @@ class MarshmallowPainter extends CustomPainter {
     required this.t,
     required this.fireX,
     required this.fireY,
+    required this.reachFactor,
+    required this.cycleMinutes,
     required this.sticks,
-  });
+  })  : assert(reachFactor > 0 && reachFactor < 1),
+        assert(cycleMinutes > 0);
 
   final double t;
   final double fireX;
   final double fireY;
+  final double reachFactor;
+  final int cycleMinutes;
   final List<MarshStick> sticks;
 
-  /// Oturum saniyesi → pişme oranı (0..1). ~40 dk'da tam kızarır.
-  static double doneness(int seconds) => (seconds / (40 * 60)).clamp(0.0, 1.0);
+  /// Oturum saniyesi → mevcut pişirme döngüsündeki oran (0..1).
+  static double doneness(
+    int seconds, {
+    required int cycleMinutes,
+  }) {
+    if (seconds <= 0 || cycleMinutes <= 0) return 0;
+    final cycleSeconds = cycleMinutes * 60;
+    return (seconds % cycleSeconds) / cycleSeconds;
+  }
 
   static Color _cookColor(double d) {
     const raw = Color(0xFFFFF7EC);
@@ -438,8 +584,8 @@ class MarshmallowPainter extends CustomPainter {
       final perp = Offset(-unit.dy, unit.dx);
       final wobble = math.sin((t + s.phase) * 2 * math.pi) * 3;
 
-      // Marşmelov ucu ateşe ~%64 mesafede; hafif salınır.
-      final tip = from + unit * (dist * 0.64) + perp * wobble;
+      // Marşmelov ucu ayarlanan erişim oranında; hafif salınır.
+      final tip = from + unit * (dist * reachFactor) + perp * wobble;
       final handStart = from + unit * 6;
 
       // — Gerçekçi dal: hafif kırıklı, ucu inceleyen + küçük sürgünler —
@@ -449,7 +595,7 @@ class MarshmallowPainter extends CustomPainter {
       final elapsed = s.startedAt == null
           ? 0
           : now.difference(s.startedAt!).inSeconds;
-      final d = doneness(elapsed);
+      final d = doneness(elapsed, cycleMinutes: cycleMinutes);
       _marshmallow(canvas, tip, unit, perp, d);
     }
   }
@@ -552,7 +698,10 @@ class MarshmallowPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(MarshmallowPainter old) =>
-      old.t != t || old.sticks.length != sticks.length;
+      old.t != t ||
+      old.reachFactor != reachFactor ||
+      old.cycleMinutes != cycleMinutes ||
+      old.sticks.length != sticks.length;
 }
 
 // ————————————————————————— Tombul hayvan —————————————————————————

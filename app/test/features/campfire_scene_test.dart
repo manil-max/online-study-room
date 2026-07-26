@@ -9,6 +9,7 @@ import 'package:online_study_room/data/providers/group_providers.dart';
 import 'package:online_study_room/data/providers/presence_providers.dart';
 import 'package:online_study_room/data/providers/study_providers.dart';
 import 'package:online_study_room/features/classroom/widgets/campfire/layered_campfire_fire.dart';
+import 'package:online_study_room/features/classroom/widgets/camp_critter.dart';
 import 'package:online_study_room/features/classroom/widgets/campfire_scene.dart';
 
 Profile _profile(String id, String name) =>
@@ -92,6 +93,38 @@ void main() {
       expect(find.text('Bora'), findsOneWidget);
       expect(find.text('Cem'), findsOneWidget);
 
+      final marshmallowPaint =
+          tester
+                  .widget<CustomPaint>(
+                    find.byWidgetPredicate(
+                      (widget) =>
+                          widget is CustomPaint &&
+                          widget.painter is MarshmallowPainter,
+                    ),
+                  )
+                  .painter!
+              as MarshmallowPainter;
+      expect(marshmallowPaint.reachFactor, 0.73);
+      expect(marshmallowPaint.cycleMinutes, 12);
+      expect(marshmallowPaint.sticks, hasLength(1));
+
+      final critterPoses = tester
+          .widgetList<CustomPaint>(
+            find.byWidgetPredicate(
+              (widget) =>
+                  widget is CustomPaint && widget.painter is CritterPainter,
+            ),
+          )
+          .map((paint) => (paint.painter! as CritterPainter).pose)
+          .toList();
+      expect(critterPoses, contains(CritterPose.roasting));
+      expect(
+        critterPoses.where((pose) => pose == CritterPose.idle),
+        hasLength(2),
+      );
+      expect(critterPoses, isNot(contains(CritterPose.working)));
+      expect(critterPoses, isNot(contains(CritterPose.sleepy)));
+
       // Çalışan üyenin SecondTicker timer'ını temizlemek için ağacı kaldır.
       await tester.pumpWidget(const SizedBox());
     },
@@ -118,6 +151,48 @@ void main() {
 
     expect(find.text('Henüz grup yok'), findsOneWidget);
     expect(find.text('Çalışmaya başla'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('sekiz çalışan üyede aynı anda en fazla altı dal gösterir', (
+    tester,
+  ) async {
+    final started = DateTime.now().subtract(const Duration(minutes: 3));
+    final members = [
+      for (var index = 0; index < 8; index++) _profile('u$index', 'Üye $index'),
+    ];
+    await tester.pumpWidget(
+      _harness(
+        members: members,
+        presence: [
+          for (var index = 0; index < 8; index++)
+            Presence(
+              userId: 'u$index',
+              status: PresenceStatus.studying,
+              todaySeconds: 180,
+              startedAt: started,
+            ),
+        ],
+        today: {for (var index = 0; index < 8; index++) 'u$index': 180},
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    final marshmallowPaint =
+        tester
+                .widget<CustomPaint>(
+                  find.byWidgetPredicate(
+                    (widget) =>
+                        widget is CustomPaint &&
+                        widget.painter is MarshmallowPainter,
+                  ),
+                )
+                .painter!
+            as MarshmallowPainter;
+    expect(marshmallowPaint.sticks, hasLength(6));
+    expect(find.text('8 · Çalışıyor'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox());
   });

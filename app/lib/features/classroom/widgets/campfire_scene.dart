@@ -17,6 +17,7 @@ import '../../../data/providers/study_providers.dart';
 import '../../profile/widgets/social_profile_dialog.dart';
 import 'camp_critter.dart';
 import 'campfire/layered_campfire_fire.dart';
+import 'campfire_layout.dart';
 
 double _lerp(double a, double b, double t) => a + (b - a) * t;
 
@@ -111,30 +112,14 @@ class _Camper {
     return diff > 0 ? diff : 0;
   }
 
-  /// Üyenin o andaki duruşu. Çevrimdışı → uyur, molada → boşta; çalışan üye
-  /// çoğunlukla laptopla çalışır ama her döngünün sonunda kısa süre ateşte
-  /// marşmelov kızartır (üyeden üyeye kayık, sahne canlansın diye).
+  /// WP-295 iki-duruş sözleşmesi: çalışan marşmelov kızartır; diğer herkes
+  /// aynı sakin oturuştadır. Çevrimdışı ayrımı pozla değil opaklıkla verilir.
   CritterPose poseAt(DateTime now) {
-    switch (status) {
-      case PresenceStatus.offline:
-        return CritterPose.sleepy;
-      case PresenceStatus.onBreak:
-        return CritterPose.idle;
-      case PresenceStatus.studying:
-        final inCycle = liveExtra(now) % _kPoseCycleSeconds;
-        return inCycle >= _kRoastStartSeconds
-            ? CritterPose.roasting
-            : CritterPose.working;
-    }
+    return studying ? CritterPose.roasting : CritterPose.idle;
   }
 
-  bool roastingAt(DateTime now) => poseAt(now) == CritterPose.roasting;
+  bool roastingAt(DateTime now) => studying;
 }
-
-/// Poz döngüsü: çalışan üye her [_kPoseCycleSeconds] sn'de bir, son
-/// (döngü − [_kRoastStartSeconds]) sn boyunca marşmelov kızartır; gerisinde laptop.
-const int _kPoseCycleSeconds = 170;
-const int _kRoastStartSeconds = 135;
 
 /// Sahnenin gece atmosferli dış çerçevesi (koyu gökyüzü gradyanı + yuvarlak köşe).
 class _SceneFrame extends StatelessWidget {
@@ -253,28 +238,28 @@ class _SceneLayoutState extends State<_SceneLayout>
         final w = constraints.maxWidth;
         final h = constraints.maxHeight;
         final cx = w / 2;
-        final fireY = h * 0.44;
+        final layout = CampfireCountLayout.saved(n.clamp(1, 8));
+        final fireY = h * layout.groundYFactor;
         final ringCy = fireY + 18; // hayvanların oturduğu halka merkezi
 
-        // 45° bakış: yatayda geniş, dikeyde basık elips (foreshortening).
-        final rx = math.min(w * 0.40, 232).clamp(140, 260).toDouble();
-        final ry = rx * 0.46;
+        final rx = w * layout.ringWidthFactor;
+        final ry = h * 0.15;
+        final seats = n == 0 ? const <CampfireSeat>[] : campfireSeats(layout);
 
         final placements = <_Placement>[];
         for (var i = 0; i < n; i++) {
-          final angle = math.pi / 2 + (n == 0 ? 0 : 2 * math.pi * i / n);
-          final sin = math.sin(angle);
-          final mx = cx + rx * math.cos(angle);
-          final my = ringCy + ry * sin;
-          final depth = (sin + 1) / 2; // 0 arka, 1 ön
+          final seat = seats[i];
+          final mx = cx + rx * seat.x;
+          final my = ringCy + ry * seat.y;
+          final depth = seat.depth;
           placements.add(
             _Placement(
               camper: widget.campers[i],
               x: mx,
               y: my,
               depth: depth,
-              scale: _lerp(0.6, 1.16, depth),
-              back: sin < -0.2, // üst yay → ateşin arkasında
+              scale: _lerp(0.72, 1.06, depth),
+              back: seat.y < 0,
               phase: i / (n == 0 ? 1 : n),
             ),
           );
@@ -309,10 +294,14 @@ class _SceneLayoutState extends State<_SceneLayout>
             clipBehavior: Clip.none,
             children: [
               // — Orman arka plan (statik) —
-              const Positioned.fill(
+              Positioned.fill(
                 child: IgnorePointer(
                   child: RepaintBoundary(
-                    child: CustomPaint(painter: ForestBackdropPainter()),
+                    child: CustomPaint(
+                      painter: GroundedForestPainter(
+                        horizonY: ringCy - ry * 0.82,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -325,7 +314,7 @@ class _SceneLayoutState extends State<_SceneLayout>
                       painter: ClearingPainter(
                         cx: cx,
                         cy: ringCy + ry * 0.35,
-                        rx: rx,
+                        rx: w * 0.30,
                         ry: ry,
                       ),
                     ),
@@ -342,13 +331,21 @@ class _SceneLayoutState extends State<_SceneLayout>
                   child: RepaintBoundary(
                     child: AnimatedBuilder(
                       animation: _controller,
-                      builder: (context, _) => LayeredCampfireFire(
-                        t: _controller.value,
-                        studyingCount: widget.studyingCount,
-                        embers: _embers,
-                        cx: cx,
-                        fireY: fireY,
-                        reduceMotion: reduceMotion,
+                      builder: (context, _) => Transform(
+                        alignment: FractionalOffset(cx / w, fireY / h),
+                        transform: Matrix4.diagonal3Values(
+                          layout.fireScale,
+                          layout.fireScale,
+                          1,
+                        ),
+                        child: LayeredCampfireFire(
+                          t: _controller.value,
+                          studyingCount: widget.studyingCount,
+                          embers: _embers,
+                          cx: cx,
+                          fireY: fireY,
+                          reduceMotion: reduceMotion,
+                        ),
                       ),
                     ),
                   ),
@@ -366,15 +363,22 @@ class _SceneLayoutState extends State<_SceneLayout>
                           t: _controller.value,
                           fireX: cx,
                           fireY: fireY,
+                          reachFactor: layout.stickReachFactor,
+                          cycleMinutes: layout.roastCycleMinutes.round(),
                           sticks: [
-                            for (final p in placements)
-                              if (p.camper.roastingAt(DateTime.now()))
-                                MarshStick(
-                                  x: p.x,
-                                  y: p.y - _CritterBody.boxFor(p.scale) * 0.42,
-                                  phase: p.phase,
-                                  startedAt: p.camper.startedAt,
-                                ),
+                            for (final p
+                                in placements
+                                    .where(
+                                      (placement) => placement.camper
+                                          .roastingAt(DateTime.now()),
+                                    )
+                                    .take(6))
+                              MarshStick(
+                                x: p.x,
+                                y: p.y - _CritterBody.boxFor(p.scale) * 0.42,
+                                phase: p.phase,
+                                startedAt: p.camper.startedAt,
+                              ),
                           ],
                         ),
                       ),
@@ -498,8 +502,8 @@ class _StudyingBadge extends StatelessWidget {
 }
 
 /// Kütüğünde oturan tombul hayvan (gövde). İsim/süre ayrı katmanda ([_MemberLabel])
-/// üstte çizilir ki ateşin arkasındaki üyede bile okunur kalsın. Nefes alma
-/// animasyonu; çalışan kolunu kaldırır (marşmelov overlay'de), dinlenen uyur.
+/// üstte çizilir ki ateşin arkasındaki üyede bile okunur kalsın. Çalışan
+/// marşmelov pozunda, diğer üyeler sakin oturuştadır.
 class _CritterBody extends StatelessWidget {
   const _CritterBody({
     required this.camper,
@@ -533,9 +537,7 @@ class _CritterBody extends StatelessWidget {
     final box = boxFor(scale);
     final species = speciesFor(camper.animal.id);
 
-    final baseOpacity = studying
-        ? (back ? 0.86 : 1.0)
-        : (offline ? (back ? 0.34 : 0.42) : (back ? 0.46 : 0.6));
+    final baseOpacity = studying ? 1.0 : (offline ? 0.36 : 0.58);
 
     return SizedBox(
       width: box,
@@ -543,33 +545,49 @@ class _CritterBody extends StatelessWidget {
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: () => _showCamperDetails(context, camper),
-        child: AnimatedBuilder(
-          animation: controller,
-          builder: (context, _) {
-            final t = controller.value;
-            // Duruş zamana göre hesaplanır (laptop ↔ marşmelov dönüşümü);
-            // painter yalnız duruş değişince yeniden çizer.
-            final pose = camper.poseAt(DateTime.now());
-            final breath = math.sin(
-              (t * (studying ? 1.6 : 1.0) + phase) * 2 * math.pi,
-            );
-            final sy = 1 + breath * (studying ? 0.035 : 0.02);
-            final dy = -breath.abs() * (studying ? 2.0 : 0.8);
-            return Transform.translate(
-              offset: Offset(0, dy),
-              child: Transform.scale(
-                scaleY: sy,
-                scaleX: 2 - sy,
-                child: Opacity(
-                  opacity: baseOpacity,
-                  child: CustomPaint(
-                    size: Size(box, box),
-                    painter: CritterPainter(species: species, pose: pose),
-                  ),
+        child: Stack(
+          children: [
+            Positioned(
+              left: box * 0.16,
+              right: box * 0.16,
+              bottom: box * 0.015,
+              height: box * 0.12,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.28),
+                  borderRadius: BorderRadius.circular(box),
                 ),
               ),
-            );
-          },
+            ),
+            Positioned.fill(
+              child: AnimatedBuilder(
+                animation: controller,
+                builder: (context, _) {
+                  final t = controller.value;
+                  final pose = camper.poseAt(DateTime.now());
+                  final breath = math.sin(
+                    (t * (studying ? 1.6 : 1.0) + phase) * 2 * math.pi,
+                  );
+                  final sy = 1 + breath * (studying ? 0.035 : 0.02);
+                  final dy = -breath.abs() * (studying ? 2.0 : 0.8);
+                  return Transform.translate(
+                    offset: Offset(0, dy),
+                    child: Transform.scale(
+                      scaleY: sy,
+                      scaleX: 2 - sy,
+                      child: Opacity(
+                        opacity: baseOpacity,
+                        child: CustomPaint(
+                          size: Size(box, box),
+                          painter: CritterPainter(species: species, pose: pose),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );
