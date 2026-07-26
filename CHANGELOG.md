@@ -4,6 +4,27 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [beta-v4401 / 1.0.44-beta.1+4401] - 2026-07-26
+
+> **Beta aday.** Çoklu grup presence, birincil grup attribution ve çoklu cihaz
+> global timer altyapısı staging'e taşındı. Yeni V3 yolları bu ilk adayda
+> kapalıdır; mevcut sayaç, bildirim ve widget akışı regresyon matrisiyle korunur.
+
+### Yenilikler
+- Kullanıcının canlı presence'i aktif olduğu bütün gruplara server-derived projection olarak yansıyabilecek altyapı eklendi.
+- Birincil grup seçimi, session/progression attribution'ını tek gruba sabitleyecek server sözleşmesine bağlandı.
+- Aynı hesabın telefon/tablet cihazları için global timer command, snapshot, revision ve timer-sync sinyal altyapısı eklendi.
+
+### Güvenlik ve güvenilirlik
+- Grup attribution cutover yapılandırması RLS arkasına alındı; istemcinin doğrudan erişimi kapalıdır.
+- Staging ve production legacy run envanterinde açık `running`/`paused` çalışma bulunmadığı doğrulandı.
+- Timer-sync, presence projection ve global timer rollout flag'leri varsayılan olarak kapalıdır; mevcut bildirim/widget/sayaç sıcak yolu değişmeden kalır.
+
+### Notlar
+- Bu beta **staging** backend ve migration head **0084** ile çalışır.
+- İlk kabul turunda bildirimden/widget'tan cold start, uygulama kapalıyken stop, 8 saat drift ve iki cihaz senaryoları özellikle test edilecek.
+- Production'a migration, flag veya stable yayın yapılmadı.
+
 ## [beta-v4309 / 1.0.43-beta.9+4309] - 2026-07-25
 
 > **Beta aday.** Yeni Özellik Turu Aşama A'nın kapanan dokuz iş paketi tek turda cihaz testine gidiyor.

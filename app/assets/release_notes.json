@@ -3,6 +3,42 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.44-beta.1",
+      "buildNumber": 4401,
+      "channel": "beta",
+      "date": "2026-07-26",
+      "title": "beta-v4401: çoklu cihaz timer altyapısı",
+      "highlights": [
+        "Canlı presence'in aktif olunan bütün gruplara server-derived projection olarak yansıması için altyapı eklendi.",
+        "Birincil grup seçimi, yeni session ve progression attribution'ını tek gruba sabitleyen server sözleşmesine bağlandı.",
+        "Aynı hesapta telefon ve tablet için global timer command, snapshot, revision ve timer-sync sinyal altyapısı eklendi."
+      ],
+      "fixes": [
+        "Grup attribution cutover yapılandırması RLS arkasına alındı; istemcinin doğrudan erişimi kapalı.",
+        "Staging ve production legacy run envanterinde açık running veya paused çalışma olmadığı doğrulandı."
+      ],
+      "notes": [
+        "Bu beta staging backend ve migration head 0084 ile çalışır.",
+        "Yeni V3 rollout flag'leri bu ilk adayda kapalıdır; mevcut sayaç, bildirim ve widget akışı korunur.",
+        "Cold start, widget/bildirim stop, 8 saat drift ve iki cihaz senaryoları bu turda özellikle test edilecek."
+      ],
+      "titleEn": "beta-v4401: multi-device timer foundations",
+      "highlightsEn": [
+        "Infrastructure was added for server-derived presence projections across every active group.",
+        "Primary-group selection now anchors new session and progression attribution to exactly one group.",
+        "Global timer command, snapshot, revision and timer-sync foundations were added for phone and tablet on the same account."
+      ],
+      "fixesEn": [
+        "The group-attribution cutover configuration is now behind RLS with no direct client access.",
+        "The staging and production legacy-run inventories confirmed no open running or paused runs."
+      ],
+      "notesEn": [
+        "This beta runs against the staging backend and migration head 0084.",
+        "New V3 rollout flags remain off in this first candidate; the existing timer, notification and widget flows are preserved.",
+        "Cold start, widget/notification stop, eight-hour drift and two-device scenarios are the focus of this round."
+      ]
+    },
+    {
       "versionName": "1.0.43-beta.9",
       "buildNumber": 4309,
       "channel": "beta",

@@ -18,12 +18,12 @@
 
 ## Proje Gerçekleri
 
-- **Migration gerçeği:** repo/local **`0084`** · staging **`0072`** · production
+- **Migration gerçeği:** repo/local **`0084`** · staging **`0084`** · production
   etkin şema **`0070`**. Production CLI geçmişi legacy/uzlaştırılmamış;
   ayrıntı [`docs/recovery/PRODUCTION-BASELINE.md`](docs/recovery/PRODUCTION-BASELINE.md).
   Deploy contract aynı üç head'i taşır ve production `deploy_enabled: false` kilitlidir.
 - **Stable/production:** **v48** yayında, etkin şema `0070`. Yeni production migration, Edge deploy veya stable tag/release yalnız ayrı, somut kullanıcı GO + backup + dry-run ile yapılır; deploy kapısı kilitli.
-- **Beta/staging:** **beta-v4309** artefaktı `0070` ile çıktı; staging veritabanı sonradan `0072`ye yükseldi. V3 `0073–0084` zinciri için WP-337 aggregate kapısı PASS; sıradaki adım staging dry-run/apply ve ortak beta turudur.
+- **Beta/staging:** **beta-v4401** adayına hazırlanıyor; staging veritabanı `0084`te. V3 `0073–0084` zinciri dry-run/apply/post-check PASS; sıradaki adım benzersiz staging beta APK ve ortak cihaz turudur.
 - **Release ilkesi:** Android beta/stable artefaktı Android işi başarılı olunca yayımlanır. Windows bağımsız sürer ve başarılı olursa aynı release'e eklenir; Windows hatası Android güncellemesini geri çekmez.
 - **Sürüm sırası:** kod/testi biten işler tek QA kuyruğunda birikir; yeni beta/stable yalnız sahip onayıyla çıkar. Eski beta dalga kararları tarihsel arşivdedir.
 - **Yönetim varsayılanı:** Production `deploy_enabled/release_enabled` kapalıdır. Stable yalnız protected `production` Environment, exact SHA/head/project-ref GO ve reviewer kanıtıyla ilerler.
@@ -426,13 +426,13 @@ Böylece kişisel ve grup istatistiği **asla çelişmez**.
 - **Model önerisi:** 🔴 Opus
 
 #### WP-347: Grup attribution yapılandırması RLS güvenlik düzeltmesi 🔒
-- **Program/Faz:** Faz E2 · release-blocking debug · **Ajan:** Codex · **Durum:** [~] Geliştiriliyor · **Bağımlılık:** WP-336
+- **Program/Faz:** Faz E2 · release-blocking debug · **Ajan:** Codex · **Durum:** [x] Kod/test + staging terfisi tamam · **Bağımlılık:** WP-336
 - **Problem:** `group_progression_attribution_config` doğrudan client yetkileri geri alınmış olsa da RLS kapalı oluşturulmuş; güvenlik denetimi bunu kritik bulgu olarak raporluyor.
 - **SAHİP dosyalar (yaz):** `supabase/migrations/0084_group_progression_attribution_config_rls.sql` · `supabase/tests/011_session_group_attribution.test.sql` · `tooling/release/deploy-contract.json` · bu WP kartı.
 - **Kapsam dışı:** `0080`i değiştirmek · client policy vermek · timer/notification/widget kodu · production deploy.
 - **Kabul:** RLS açık; `anon/authenticated` doğrudan select/insert/update/delete yapamaz; mevcut SECURITY DEFINER trigger/resolver zinciri attribution testinde çalışır; local replay/pgTAP yeşil.
 - **Geri alma:** Veri silmeden yeni ileri migration ile yalnız policy/RLS davranışı düzeltilir; `0084` uygulanmışsa geriye dosya değiştirilmez.
-- **Not:** Staging `0073→0084` terfisinden ve beta üretiminden önce kapanmalıdır.
+- **Kanıt:** Local `0084` replay/246 pgTAP PASS · deploy guard 56 PASS · Database Gates [30211582040](https://github.com/manil-max/online-study-room/actions/runs/30211582040) staging `0073→0084` apply, migration-list ve push post-check PASS. **Kodda ve staging'de doğrulandı; cihazda doğrulanmalı.**
 
 #### V3 paralel çalışma ve migration sırası
 
