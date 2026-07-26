@@ -49,7 +49,7 @@
 - **Durum:** [x] Boşta
 - **Faz/WP:** —
 - **SAHİP yollar:** —
-- **Son not:** WP-349 kod/test tamam: `flutter analyze` 0 uyarı; tema kapak widget testi ve Windows golden PASS. Gerçek Android/Windows cihaz kabulü bekliyor (2026-07-26 23:48 Europe/Istanbul).
+- **Son not:** WP-350 kod/test tamam: `flutter analyze` 0 uyarı; sahne testi ile masaüstü + Android telefon 1/4/8 golden'ları PASS. Gerçek Android/Windows cihaz kabulü bekliyor (2026-07-26 23:57 Europe/Istanbul).
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
@@ -633,8 +633,8 @@ Kod/test tamam; mağaza çıkışını **bloklamaz**. Kalan kabul tek QA kuyruğ
 
 #### WP-350: Telefon için kamp ateşi kompozisyon revizyonu 🔥
 - **Program/Faz:** Kamp ateşi · Faz F2 mobil görsel revizyon
-- **Ajan:** — (WP-349 kabulünden sonra)
-- **Durum:** [ ] Bekliyor
+- **Ajan:** —
+- **Durum:** [~] Kod/test tamamlandı; cihaz kabulü bekliyor
 - **Bağımlılık:** WP-349 seri/golden kapısı.
 - **Problem:** Masaüstü için ayarlanan perspektif telefonda aynı sabitlerle
   çalışınca ateş fazla yukarıda, hayvanlar büyük ve ateşe yapışık, 8 kişilik arka
@@ -664,17 +664,17 @@ Kod/test tamam; mağaza çıkışını **bloklamaz**. Kalan kabul tek QA kuyruğ
   - `app/android/**` bildirim/widget/timer kaynakları
   - kamp ateşi PNG assetleri ve `app/pubspec.yaml`
 - **Adımlar:**
-  - [ ] Platform + logical shortest-side tabanlı test edilebilir telefon viewport
+  - [x] Platform + logical shortest-side tabanlı test edilebilir telefon viewport
     sınıfı çıkar; dar Windows penceresini yanlışlıkla mobil kompozisyona sokma.
-  - [ ] Telefon geometri profilinde fire baseline'ı aşağı taşı, ring `rx/ry`
+  - [x] Telefon geometri profilinde fire baseline'ı aşağı taşı, ring `rx/ry`
     değerlerini güvenli sınıra kadar büyüt ve critter scale aralığını küçült.
-  - [ ] 1–8 yerleşimde arka sıranın zemin/ufuk ilişkisini koru; isim/süre
+  - [x] 1–8 yerleşimde arka sıranın zemin/ufuk ilişkisini koru; isim/süre
     etiketlerini sahne sınırında clamp et.
-  - [ ] `GroundedForestPainter`a telefon için ağaçları kapatan açık parametre ekle;
+  - [x] `GroundedForestPainter`a telefon için ağaçları kapatan açık parametre ekle;
     desktop default'u değişmesin.
-  - [ ] Glow radius/alpha'yı viewport profiline bağla; alev/kor/taş okunurluğu
+  - [x] Glow radius/alpha'yı viewport profiline bağla; alev/kor/taş okunurluğu
     kaybolmadan alt lekeyi küçült.
-  - [ ] Sıfır çalışan durumundaki metni ve test beklentisini kaldır; çalışan
+  - [x] Sıfır çalışan durumundaki metni ve test beklentisini kaldır; çalışan
     sayısı rozeti kalır.
 - **Veri/Migration etkisi:** Yok. Geri alma adaptif profil/golden commit'inin
   geri çevrilmesidir.
@@ -884,6 +884,7 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 | --- | --- | --- |
 | **WP-295** Kamp ateşi oturma/poz | Windows + Android profile | Seçilen 1–8 kişi yerleşimleri ve marshmallow erişimi görsel olarak doğru; Android profile'da `p95 ≤ 16.7 ms`, jank `≤ %1` |
 | **WP-349** Forest Cabin tema kapağı | Windows + Android | Hazır tema kartı baskın scaffold/surface paletini doğru yansıtıyor; açık/koyu preset seçimi, 360 dp iki sütun ve 48 dp dokunma hedefi gerçek cihazda doğrulanmalı. **Cihazda doğrulanmalı.** |
+| **WP-350** Telefon kamp ateşi | Android + Windows | Telefonda 1/4/8 kişi, düşük ateş, geniş halka, küçük hayvanlar/etiketler, ağaçsız arka plan ve küçük glow; masaüstü kompozisyonu korunuyor. Android profile `p95 ≤16.7 ms`, jank `≤%1` cihazda doğrulanmalı. **Cihazda doğrulanmalı.** |
 | **WP-335** l10n hijyeni | Android + Windows | TR/EN WP-295 önizlemesinde başlık, durum çipi, denetimler ve tooltip'ler doğal; 360 px'te sahne + kaydırılabilir kontrol alanı taşmasız. **Cihazda doğrulanmalı.** |
 | **WP-299** Gündüz/gece gökyüzü | Android + Windows | Yerel saate göre geçişler, zemin/gökyüzü birleşimi ve gece uyuma pozu gerçek cihazda doğal görünüyor |
 | **WP-315** Grup üye sınırı 8 | Staging + beta | Grup kurma/katılma akışında 8 sınırı çalışıyor; dokuzuncu üye sunucuda reddediliyor |

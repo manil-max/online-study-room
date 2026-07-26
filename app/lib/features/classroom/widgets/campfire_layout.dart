@@ -1,5 +1,62 @@
 import 'dart:math' as math;
 
+import 'package:flutter/material.dart';
+
+/// Sahnenin masaüstü ve telefon kompozisyonlarını ayıran test edilebilir profil.
+///
+/// Sadece Android/iOS ve telefon kısa kenarı birlikte sağlanırsa telefon düzeni
+/// seçilir. Böylece daraltılmış bir Windows penceresi masaüstü kompozisyonunu
+/// korur.
+class CampfireViewportProfile {
+  const CampfireViewportProfile._({
+    required this.isPhone,
+    required this.ringWidthMultiplier,
+    required this.critterScaleMultiplier,
+    required this.fireYOffset,
+    required this.fireVisualScale,
+    required this.showTrees,
+  });
+
+  const CampfireViewportProfile.desktop()
+    : this._(
+        isPhone: false,
+        ringWidthMultiplier: 1,
+        critterScaleMultiplier: 1,
+        fireYOffset: 0,
+        fireVisualScale: 1,
+        showTrees: true,
+      );
+
+  const CampfireViewportProfile.phone()
+    : this._(
+        isPhone: true,
+        ringWidthMultiplier: 1.2,
+        critterScaleMultiplier: 0.76,
+        fireYOffset: 0.09,
+        fireVisualScale: 0.78,
+        showTrees: false,
+      );
+
+  factory CampfireViewportProfile.fromConstraints({
+    required BoxConstraints constraints,
+    required TargetPlatform platform,
+  }) {
+    final shortestSide = math.min(constraints.maxWidth, constraints.maxHeight);
+    final phonePlatform =
+        platform == TargetPlatform.android || platform == TargetPlatform.iOS;
+    return phonePlatform && shortestSide < 600
+        ? const CampfireViewportProfile.phone()
+        : const CampfireViewportProfile.desktop();
+  }
+
+  final bool isPhone;
+  final double ringWidthMultiplier;
+  final double critterScaleMultiplier;
+  final double fireYOffset;
+  final double fireVisualScale;
+  final bool showTrees;
+}
+
 /// Dikey eksene göre aynalanan bir sol-sağ çiftin normalize konumu.
 class CampfirePairPlacement {
   const CampfirePairPlacement({

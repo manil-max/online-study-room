@@ -2,10 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-Color _darken(Color c, double amount) =>
-    Color.lerp(c, Colors.black, amount)!;
-Color _lighten(Color c, double amount) =>
-    Color.lerp(c, Colors.white, amount)!;
+Color _darken(Color c, double amount) => Color.lerp(c, Colors.black, amount)!;
+Color _lighten(Color c, double amount) => Color.lerp(c, Colors.white, amount)!;
 
 // ————————————————————————— Orman arka plan —————————————————————————
 
@@ -34,10 +32,16 @@ class ForestBackdropPainter extends CustomPainter {
         ).createShader(Rect.fromCircle(center: moon, radius: 42)),
     );
     canvas.drawCircle(moon, 16, Paint()..color = const Color(0xFFF3ECCB));
-    canvas.drawCircle(Offset(moon.dx - 5, moon.dy - 4), 3.5,
-        Paint()..color = const Color(0xFFE4DCB4));
-    canvas.drawCircle(Offset(moon.dx + 4, moon.dy + 5), 2.4,
-        Paint()..color = const Color(0xFFE4DCB4));
+    canvas.drawCircle(
+      Offset(moon.dx - 5, moon.dy - 4),
+      3.5,
+      Paint()..color = const Color(0xFFE4DCB4),
+    );
+    canvas.drawCircle(
+      Offset(moon.dx + 4, moon.dy + 5),
+      2.4,
+      Paint()..color = const Color(0xFFE4DCB4),
+    );
 
     // — Yıldızlar (üst yarı) —
     for (var i = 0; i < 54; i++) {
@@ -47,18 +51,24 @@ class ForestBackdropPainter extends CustomPainter {
         Offset(x, y),
         rnd.nextDouble() * 0.9 + 0.3,
         Paint()
-          ..color = Colors.white.withValues(alpha: rnd.nextDouble() * 0.5 + 0.15),
+          ..color = Colors.white.withValues(
+            alpha: rnd.nextDouble() * 0.5 + 0.15,
+          ),
       );
     }
 
     // — Uzak ağaç sırası (soluk, alçak) —
-    _treeRow(canvas, w, h,
-        baseY: h * 0.66,
-        color: const Color(0xFF14251C).withValues(alpha: 0.85),
-        count: 22,
-        minH: 26,
-        maxH: 46,
-        rnd: rnd);
+    _treeRow(
+      canvas,
+      w,
+      h,
+      baseY: h * 0.66,
+      color: const Color(0xFF14251C).withValues(alpha: 0.85),
+      count: 22,
+      minH: 26,
+      maxH: 46,
+      rnd: rnd,
+    );
 
     // — Yakın ağaç sırası (koyu, uzun; kenarlarda daha yoğun) —
     _nearTrees(canvas, w, h, rnd);
@@ -73,13 +83,17 @@ class ForestBackdropPainter extends CustomPainter {
     canvas.drawPath(ground, Paint()..color = const Color(0xFF10160E));
   }
 
-  void _treeRow(Canvas canvas, double w, double h,
-      {required double baseY,
-      required Color color,
-      required int count,
-      required double minH,
-      required double maxH,
-      required math.Random rnd}) {
+  void _treeRow(
+    Canvas canvas,
+    double w,
+    double h, {
+    required double baseY,
+    required Color color,
+    required int count,
+    required double minH,
+    required double maxH,
+    required math.Random rnd,
+  }) {
     final paint = Paint()..color = color;
     for (var i = 0; i < count; i++) {
       final x = (i / (count - 1)) * w + (rnd.nextDouble() * 12 - 6);
@@ -107,13 +121,15 @@ class ForestBackdropPainter extends CustomPainter {
   }
 
   /// Üst üste 3 üçgenli köknar silüeti + kısa gövde.
-  void _pine(Canvas canvas, Offset base, double height, double width,
-      Paint paint) {
+  void _pine(
+    Canvas canvas,
+    Offset base,
+    double height,
+    double width,
+    Paint paint,
+  ) {
     final trunk = Paint()..color = const Color(0xFF0A120C);
-    canvas.drawRect(
-      Rect.fromLTWH(base.dx - 1.5, base.dy - 3, 3, 5),
-      trunk,
-    );
+    canvas.drawRect(Rect.fromLTWH(base.dx - 1.5, base.dy - 3, 3, 5), trunk);
     for (var layer = 0; layer < 3; layer++) {
       final ly = base.dy - 2 - layer * (height * 0.28);
       final lw = width * (1 - layer * 0.22);
@@ -139,12 +155,14 @@ class GroundedForestPainter extends CustomPainter {
     required this.daylight,
     required this.sunProgress,
     required this.warmth,
+    this.showTrees = true,
   });
 
   final double horizonY;
   final double daylight;
   final double sunProgress;
   final double warmth;
+  final bool showTrees;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -161,8 +179,7 @@ class GroundedForestPainter extends CustomPainter {
         radius,
         Paint()
           ..color = const Color(0xFFDBE9E1).withValues(
-            alpha:
-                nightOpacity * (0.18 + random.nextDouble() * 0.38),
+            alpha: nightOpacity * (0.18 + random.nextDouble() * 0.38),
           ),
       );
     }
@@ -196,10 +213,7 @@ class GroundedForestPainter extends CustomPainter {
       ..lineTo(size.width, size.height)
       ..lineTo(0, size.height)
       ..close();
-    canvas.drawPath(
-      distantRidge,
-      Paint()..color = ridgeColor,
-    );
+    canvas.drawPath(distantRidge, Paint()..color = ridgeColor);
 
     final groundTop = Color.lerp(
       const Color(0xFF16251A),
@@ -218,63 +232,57 @@ class GroundedForestPainter extends CustomPainter {
     )!;
     final ground = Path()
       ..moveTo(0, horizonY)
-      ..quadraticBezierTo(
-        size.width * 0.5,
-        horizonY - 12,
-        size.width,
-        horizonY,
-      )
+      ..quadraticBezierTo(size.width * 0.5, horizonY - 12, size.width, horizonY)
       ..lineTo(size.width, size.height)
       ..lineTo(0, size.height)
       ..close();
     canvas.drawPath(
       ground,
       Paint()
-        ..shader = LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            groundTop,
-            groundMiddle,
-            groundBottom,
-          ],
-        ).createShader(
-          Rect.fromLTRB(0, horizonY - 12, size.width, size.height),
-        ),
+        ..shader =
+            LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [groundTop, groundMiddle, groundBottom],
+            ).createShader(
+              Rect.fromLTRB(0, horizonY - 12, size.width, size.height),
+            ),
     );
 
-    for (var i = 0; i < 18; i++) {
-      final x = i * size.width / 17;
-      final normalizedX = x / size.width;
-      if (normalizedX > 0.20 && normalizedX < 0.80) continue;
-      _pine(
-        canvas,
-        Offset(x, horizonY + 7 + random.nextDouble() * 8),
-        32 + random.nextDouble() * 34,
-        Color.lerp(
-          const Color(0xFF183322),
-          const Color(0xFF35603C),
-          daylight,
-        )!,
-      );
-    }
+    if (showTrees) {
+      for (var i = 0; i < 18; i++) {
+        final x = i * size.width / 17;
+        final normalizedX = x / size.width;
+        if (normalizedX > 0.20 && normalizedX < 0.80) continue;
+        _pine(
+          canvas,
+          Offset(x, horizonY + 7 + random.nextDouble() * 8),
+          32 + random.nextDouble() * 34,
+          Color.lerp(
+            const Color(0xFF183322),
+            const Color(0xFF35603C),
+            daylight,
+          )!,
+        );
+      }
 
-    const sidePositions = [0.01, 0.07, 0.14, 0.86, 0.93, 0.99];
-    for (var i = 0; i < sidePositions.length; i++) {
-      final edgeDistance = i % 3;
-      _pine(
-        canvas,
-        Offset(
-          size.width * sidePositions[i],
-          horizonY + 50 + edgeDistance * 9,
-        ),
-        72.0 - edgeDistance * 10,
-        Color.lerp(
-          const Color(0xFF0B1A10),
-          const Color(0xFF1D3C24),
-          daylight,
-        )!,
-      );
+      const sidePositions = [0.01, 0.07, 0.14, 0.86, 0.93, 0.99];
+      for (var i = 0; i < sidePositions.length; i++) {
+        final edgeDistance = i % 3;
+        _pine(
+          canvas,
+          Offset(
+            size.width * sidePositions[i],
+            horizonY + 50 + edgeDistance * 9,
+          ),
+          72.0 - edgeDistance * 10,
+          Color.lerp(
+            const Color(0xFF0B1A10),
+            const Color(0xFF1D3C24),
+            daylight,
+          )!,
+        );
+      }
     }
   }
 
@@ -287,9 +295,7 @@ class GroundedForestPainter extends CustomPainter {
         Paint()
           ..shader = RadialGradient(
             colors: [
-              const Color(0xFFF7EFD1).withValues(
-                alpha: nightOpacity * 0.25,
-              ),
+              const Color(0xFFF7EFD1).withValues(alpha: nightOpacity * 0.25),
               const Color(0x00F7EFD1),
             ],
           ).createShader(Rect.fromCircle(center: moon, radius: 34)),
@@ -298,9 +304,9 @@ class GroundedForestPainter extends CustomPainter {
         moon,
         11,
         Paint()
-          ..color = const Color(0xFFF2E9C8).withValues(
-            alpha: nightOpacity * 0.92,
-          ),
+          ..color = const Color(
+            0xFFF2E9C8,
+          ).withValues(alpha: nightOpacity * 0.92),
       );
     }
 
@@ -365,7 +371,8 @@ class GroundedForestPainter extends CustomPainter {
       oldDelegate.horizonY != horizonY ||
       oldDelegate.daylight != daylight ||
       oldDelegate.sunProgress != sunProgress ||
-      oldDelegate.warmth != warmth;
+      oldDelegate.warmth != warmth ||
+      oldDelegate.showTrees != showTrees;
 }
 
 /// Ateş etrafındaki toprak açıklık (hayvanların oturduğu zemin). Elips; ortası
@@ -386,7 +393,10 @@ class ClearingPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final rect = Rect.fromCenter(
-        center: Offset(cx, cy), width: rx * 2.5, height: ry * 2.5);
+      center: Offset(cx, cy),
+      width: rx * 2.5,
+      height: ry * 2.5,
+    );
     // Toprak zemin (sıcak merkez → koyu kenar).
     canvas.drawOval(
       rect,
@@ -403,7 +413,10 @@ class ClearingPainter extends CustomPainter {
     // Çok hafif aşınma halkası (patika izi — göze batmasın).
     canvas.drawOval(
       Rect.fromCenter(
-          center: Offset(cx, cy), width: rx * 1.7, height: ry * 1.7),
+        center: Offset(cx, cy),
+        width: rx * 1.7,
+        height: ry * 1.7,
+      ),
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 6
@@ -470,16 +483,18 @@ class StoneFirePainter extends CustomPainter {
       Offset(cx, baseY - 26),
       glowR,
       Paint()
-        ..shader = RadialGradient(
-          colors: [
-            _inner.withValues(alpha: 0.30 * intensity),
-            _mid.withValues(alpha: 0.18 * intensity),
-            _outer.withValues(alpha: 0.08 * intensity),
-            _outer.withValues(alpha: 0),
-          ],
-          stops: const [0, 0.35, 0.65, 1],
-        ).createShader(
-            Rect.fromCircle(center: Offset(cx, baseY - 26), radius: glowR)),
+        ..shader =
+            RadialGradient(
+              colors: [
+                _inner.withValues(alpha: 0.30 * intensity),
+                _mid.withValues(alpha: 0.18 * intensity),
+                _outer.withValues(alpha: 0.08 * intensity),
+                _outer.withValues(alpha: 0),
+              ],
+              stops: const [0, 0.35, 0.65, 1],
+            ).createShader(
+              Rect.fromCircle(center: Offset(cx, baseY - 26), radius: glowR),
+            ),
     );
 
     // — Taş halka (arka taşlar) —
@@ -490,14 +505,26 @@ class StoneFirePainter extends CustomPainter {
     _coals(canvas, cx, baseY, flick3);
     // — Alevler —
     final scale = 0.66 + intensity * 0.5;
-    _flame(canvas, cx + flick * 3, baseY, 78 * scale, 104 * scale, flick,
-        [_outer.withValues(alpha: 0), _outer, const Color(0xFFC7361A)]);
-    _flame(canvas, cx - flick2 * 3, baseY - 2, 56 * scale, 84 * scale, flick2,
-        [_mid.withValues(alpha: 0.1), _mid, _outer]);
-    _flame(canvas, cx + flick2 * 2, baseY - 4, 36 * scale, 60 * scale, flick,
-        [_inner.withValues(alpha: 0.2), _inner, _mid]);
-    _flame(canvas, cx, baseY - 6, 18 * scale, 38 * scale, flick2,
-        [_core.withValues(alpha: 0.4), _core, _inner]);
+    _flame(canvas, cx + flick * 3, baseY, 78 * scale, 104 * scale, flick, [
+      _outer.withValues(alpha: 0),
+      _outer,
+      const Color(0xFFC7361A),
+    ]);
+    _flame(canvas, cx - flick2 * 3, baseY - 2, 56 * scale, 84 * scale, flick2, [
+      _mid.withValues(alpha: 0.1),
+      _mid,
+      _outer,
+    ]);
+    _flame(canvas, cx + flick2 * 2, baseY - 4, 36 * scale, 60 * scale, flick, [
+      _inner.withValues(alpha: 0.2),
+      _inner,
+      _mid,
+    ]);
+    _flame(canvas, cx, baseY - 6, 18 * scale, 38 * scale, flick2, [
+      _core.withValues(alpha: 0.4),
+      _core,
+      _inner,
+    ]);
     // — Ön taşlar (alevin önünde) —
     _stones(canvas, cx, baseY, back: false);
     // — Kıvılcımlar —
@@ -517,8 +544,9 @@ class StoneFirePainter extends CustomPainter {
       final rw = 11.0 - sy.abs() * 2;
       final rh = 8.0 - sy.abs() * 1.5;
       final base = HSVColor.fromColor(const Color(0xFF6E6A66));
-      final shade =
-          base.withValue((0.42 + ((i * 37) % 100) / 100 * 0.18)).toColor();
+      final shade = base
+          .withValue((0.42 + ((i * 37) % 100) / 100 * 0.18))
+          .toColor();
       // Gövde
       canvas.drawOval(
         Rect.fromCenter(center: Offset(x, y), width: rw * 2, height: rh * 2),
@@ -527,10 +555,15 @@ class StoneFirePainter extends CustomPainter {
       // Üst highlight (ateşten sıcak yansıma)
       canvas.drawOval(
         Rect.fromCenter(
-            center: Offset(x, y - rh * 0.4), width: rw * 1.2, height: rh * 0.8),
+          center: Offset(x, y - rh * 0.4),
+          width: rw * 1.2,
+          height: rh * 0.8,
+        ),
         Paint()
-          ..color = _lighten(shade, 0.18)
-              .withValues(alpha: back ? 0.5 : 0.7 * intensity + 0.3),
+          ..color = _lighten(
+            shade,
+            0.18,
+          ).withValues(alpha: back ? 0.5 : 0.7 * intensity + 0.3),
       );
     }
   }
@@ -542,13 +575,20 @@ class StoneFirePainter extends CustomPainter {
       canvas.rotate(angle);
       final rect = const Rect.fromLTWH(-34, -5.5, 68, 11);
       canvas.drawRRect(
-          RRect.fromRectAndRadius(rect, const Radius.circular(5.5)),
-          Paint()..color = c);
+        RRect.fromRectAndRadius(rect, const Radius.circular(5.5)),
+        Paint()..color = c,
+      );
       // Uç halka (kesik odun).
-      canvas.drawCircle(const Offset(-34, 0), 5.5,
-          Paint()..color = _lighten(c, 0.12));
-      canvas.drawCircle(const Offset(-34, 0), 2.4,
-          Paint()..color = _darken(c, 0.2));
+      canvas.drawCircle(
+        const Offset(-34, 0),
+        5.5,
+        Paint()..color = _lighten(c, 0.12),
+      );
+      canvas.drawCircle(
+        const Offset(-34, 0),
+        2.4,
+        Paint()..color = _darken(c, 0.2),
+      );
       canvas.restore();
     }
 
@@ -564,24 +604,42 @@ class StoneFirePainter extends CustomPainter {
         Offset(cx + i * 9.0, baseY + 2),
         r,
         Paint()
-          ..color = Color.lerp(_outer, _inner, glow)!
-              .withValues(alpha: (0.65 * intensity + 0.2).clamp(0.0, 1.0)),
+          ..color = Color.lerp(
+            _outer,
+            _inner,
+            glow,
+          )!.withValues(alpha: (0.65 * intensity + 0.2).clamp(0.0, 1.0)),
       );
     }
   }
 
-  void _flame(Canvas canvas, double cx, double baseY, double w, double hh,
-      double flick, List<Color> colors) {
+  void _flame(
+    Canvas canvas,
+    double cx,
+    double baseY,
+    double w,
+    double hh,
+    double flick,
+    List<Color> colors,
+  ) {
     final fh = hh * (0.92 + flick * 0.12);
     final sway = flick * w * 0.18;
     final tipX = cx + sway;
     final path = Path()
       ..moveTo(cx, baseY)
       ..quadraticBezierTo(
-          cx - w / 2, baseY - fh * 0.42, cx - w * 0.16, baseY - fh * 0.72)
+        cx - w / 2,
+        baseY - fh * 0.42,
+        cx - w * 0.16,
+        baseY - fh * 0.72,
+      )
       ..quadraticBezierTo(tipX - w * 0.08, baseY - fh, tipX, baseY - fh)
       ..quadraticBezierTo(
-          tipX + w * 0.08, baseY - fh, cx + w * 0.16, baseY - fh * 0.72)
+        tipX + w * 0.08,
+        baseY - fh,
+        cx + w * 0.16,
+        baseY - fh * 0.72,
+      )
       ..quadraticBezierTo(cx + w / 2, baseY - fh * 0.42, cx, baseY)
       ..close();
     final rect = Rect.fromLTRB(cx - w / 2, baseY - fh, cx + w / 2, baseY);
@@ -606,8 +664,11 @@ class StoneFirePainter extends CustomPainter {
       final swayX = math.sin(prog * math.pi * 3 + e.phase * 6) * 14 * e.sway;
       final x = cx + e.xOffset * 22 + swayX;
       final alpha = ((1 - prog) * intensity).clamp(0.0, 1.0);
-      canvas.drawCircle(Offset(x, y), e.size * (1 - prog * 0.5),
-          Paint()..color = _inner.withValues(alpha: alpha * 0.9));
+      canvas.drawCircle(
+        Offset(x, y),
+        e.size * (1 - prog * 0.5),
+        Paint()..color = _inner.withValues(alpha: alpha * 0.9),
+      );
     }
   }
 
@@ -643,8 +704,8 @@ class MarshmallowPainter extends CustomPainter {
     required this.reachFactor,
     required this.cycleMinutes,
     required this.sticks,
-  })  : assert(reachFactor > 0 && reachFactor < 1),
-        assert(cycleMinutes > 0);
+  }) : assert(reachFactor > 0 && reachFactor < 1),
+       assert(cycleMinutes > 0);
 
   final double t;
   final double fireX;
@@ -654,10 +715,7 @@ class MarshmallowPainter extends CustomPainter {
   final List<MarshStick> sticks;
 
   /// Oturum saniyesi → mevcut pişirme döngüsündeki oran (0..1).
-  static double doneness(
-    int seconds, {
-    required int cycleMinutes,
-  }) {
+  static double doneness(int seconds, {required int cycleMinutes}) {
     if (seconds <= 0 || cycleMinutes <= 0) return 0;
     final cycleSeconds = cycleMinutes * 60;
     return (seconds % cycleSeconds) / cycleSeconds;
@@ -737,7 +795,12 @@ class MarshmallowPainter extends CustomPainter {
   }
 
   void _marshmallow(
-      Canvas canvas, Offset c, Offset unit, Offset perp, double d) {
+    Canvas canvas,
+    Offset c,
+    Offset unit,
+    Offset perp,
+    double d,
+  ) {
     final color = _cookColor(d);
     // Silindirik marşmelov: dala dik, yumuşak köşeli.
     canvas.save();
@@ -749,8 +812,10 @@ class MarshmallowPainter extends CustomPainter {
     final rect = Rect.fromCenter(center: Offset.zero, width: w, height: hgt);
     // Gölge
     canvas.drawRRect(
-      RRect.fromRectAndRadius(rect.shift(const Offset(0.5, 1.2)),
-          const Radius.circular(4.5)),
+      RRect.fromRectAndRadius(
+        rect.shift(const Offset(0.5, 1.2)),
+        const Radius.circular(4.5),
+      ),
       Paint()
         ..color = Colors.black.withValues(alpha: 0.22)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.5),
@@ -768,8 +833,9 @@ class MarshmallowPainter extends CustomPainter {
     // Üst highlight
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-          Rect.fromLTWH(-w / 2 + 1.5, -hgt / 2 + 1.2, w - 3, 3),
-          const Radius.circular(2)),
+        Rect.fromLTWH(-w / 2 + 1.5, -hgt / 2 + 1.2, w - 3, 3),
+        const Radius.circular(2),
+      ),
       Paint()..color = Colors.white.withValues(alpha: 0.35 * (1 - d)),
     );
     // Kömürleşme lekeleri (ileri pişmede)
@@ -787,7 +853,12 @@ class MarshmallowPainter extends CustomPainter {
       final sway = math.sin(t * 2 * math.pi * 1.3 + c.dx) * 3;
       final p = Path()
         ..moveTo(c.dx, c.dy - 7)
-        ..quadraticBezierTo(c.dx + sway, c.dy - 14, c.dx - sway * 0.6, c.dy - 22);
+        ..quadraticBezierTo(
+          c.dx + sway,
+          c.dy - 14,
+          c.dx - sway * 0.6,
+          c.dy - 22,
+        );
       canvas.drawPath(
         p,
         Paint()
@@ -972,10 +1043,7 @@ enum CritterPose { working, roasting, idle, sleepy }
 /// Kütüğünde oturan tombul hayvan (Party Animals ruhu, elle çizim). Duruş
 /// [pose] ile belirlenir; ateş yönünden gelen sıcak kenar-ışığı hacim katar.
 class CritterPainter extends CustomPainter {
-  CritterPainter({
-    required this.species,
-    required this.pose,
-  });
+  CritterPainter({required this.species, required this.pose});
 
   final CritterSpecies species;
   final CritterPose pose;
@@ -1003,8 +1071,7 @@ class CritterPainter extends CustomPainter {
 
     // — Zemin gölgesi —
     canvas.drawOval(
-      Rect.fromCenter(
-          center: Offset(bodyCx, logY + 4), width: 44, height: 9),
+      Rect.fromCenter(center: Offset(bodyCx, logY + 4), width: 44, height: 9),
       Paint()..color = Colors.black.withValues(alpha: 0.28),
     );
 
@@ -1026,22 +1093,31 @@ class CritterPainter extends CustomPainter {
 
     // — Gövde —
     final bodyRect = Rect.fromCenter(
-        center: Offset(bodyCx, bodyCy), width: bodyW, height: bodyH);
+      center: Offset(bodyCx, bodyCy),
+      width: bodyW,
+      height: bodyH,
+    );
     final bodyPath = Path()
-      ..addRRect(RRect.fromRectAndCorners(
-        bodyRect,
-        topLeft: const Radius.circular(20),
-        topRight: const Radius.circular(20),
-        bottomLeft: const Radius.circular(16),
-        bottomRight: const Radius.circular(16),
-      ));
+      ..addRRect(
+        RRect.fromRectAndCorners(
+          bodyRect,
+          topLeft: const Radius.circular(20),
+          topRight: const Radius.circular(20),
+          bottomLeft: const Radius.circular(16),
+          bottomRight: const Radius.circular(16),
+        ),
+      );
     canvas.drawPath(
       bodyPath,
       Paint()
         ..shader = RadialGradient(
           center: const Alignment(-0.4, -0.5),
           radius: 1.1,
-          colors: [_lighten(species.body, 0.16), species.body, _darken(species.body, 0.26)],
+          colors: [
+            _lighten(species.body, 0.16),
+            species.body,
+            _darken(species.body, 0.26),
+          ],
           stops: const [0, 0.55, 1],
         ).createShader(bodyRect),
     );
@@ -1051,9 +1127,10 @@ class CritterPainter extends CustomPainter {
     for (final dx in [-11.0, 11.0]) {
       canvas.drawOval(
         Rect.fromCenter(
-            center: Offset(bodyCx + dx, bodyCy + bodyH / 2 - 3),
-            width: 12,
-            height: 9),
+          center: Offset(bodyCx + dx, bodyCy + bodyH / 2 - 3),
+          width: 12,
+          height: 9,
+        ),
         Paint()..color = feetColor,
       );
     }
@@ -1061,7 +1138,10 @@ class CritterPainter extends CustomPainter {
     // — Göbek —
     canvas.drawOval(
       Rect.fromCenter(
-          center: Offset(bodyCx, bodyCy + 6), width: 24, height: 26),
+        center: Offset(bodyCx, bodyCy + 6),
+        width: 24,
+        height: 26,
+      ),
       Paint()..color = species.belly,
     );
 
@@ -1118,13 +1198,19 @@ class CritterPainter extends CustomPainter {
       Rect.fromCenter(center: const Offset(0, -3), width: 30, height: 22),
       Paint()
         ..blendMode = BlendMode.plus
-        ..shader = RadialGradient(
-          colors: [
-            const Color(0xFF9AD6FF).withValues(alpha: 0.28),
-            const Color(0x009AD6FF),
-          ],
-        ).createShader(
-            Rect.fromCenter(center: const Offset(0, -3), width: 30, height: 22)),
+        ..shader =
+            RadialGradient(
+              colors: [
+                const Color(0xFF9AD6FF).withValues(alpha: 0.28),
+                const Color(0x009AD6FF),
+              ],
+            ).createShader(
+              Rect.fromCenter(
+                center: const Offset(0, -3),
+                width: 30,
+                height: 22,
+              ),
+            ),
     );
 
     // Taban (klavye) — hafif perspektif yamuk.
@@ -1145,11 +1231,15 @@ class CritterPainter extends CustomPainter {
 
     // Ekran gövdesi + cam.
     final shell = RRect.fromRectAndRadius(
-        const Rect.fromLTWH(-11, -9.5, 22, 14.5), const Radius.circular(2.4));
+      const Rect.fromLTWH(-11, -9.5, 22, 14.5),
+      const Radius.circular(2.4),
+    );
     canvas.drawRRect(shell, Paint()..color = const Color(0xFF23272E));
     final glassRect = const Rect.fromLTWH(-9, -8, 18, 11.5);
-    final glass =
-        RRect.fromRectAndRadius(glassRect, const Radius.circular(1.6));
+    final glass = RRect.fromRectAndRadius(
+      glassRect,
+      const Radius.circular(1.6),
+    );
     canvas.drawRRect(
       glass,
       Paint()
@@ -1183,9 +1273,21 @@ class CritterPainter extends CustomPainter {
     );
     // Uç halkaları (kesik odun).
     for (final ex in [cx - 25.0, cx + 25.0]) {
-      canvas.drawCircle(Offset(ex, y), 7, Paint()..color = const Color(0xFF8A6440));
-      canvas.drawCircle(Offset(ex, y), 4, Paint()..color = const Color(0xFF6B4A2C));
-      canvas.drawCircle(Offset(ex, y), 1.6, Paint()..color = const Color(0xFF553A22));
+      canvas.drawCircle(
+        Offset(ex, y),
+        7,
+        Paint()..color = const Color(0xFF8A6440),
+      );
+      canvas.drawCircle(
+        Offset(ex, y),
+        4,
+        Paint()..color = const Color(0xFF6B4A2C),
+      );
+      canvas.drawCircle(
+        Offset(ex, y),
+        1.6,
+        Paint()..color = const Color(0xFF553A22),
+      );
     }
   }
 
@@ -1198,7 +1300,10 @@ class CritterPainter extends CustomPainter {
     if (species.tailTip != null) {
       canvas.drawOval(
         Rect.fromCenter(
-            center: Offset(base.dx + 3, base.dy - 6), width: 11, height: 12),
+          center: Offset(base.dx + 3, base.dy - 6),
+          width: 11,
+          height: 12,
+        ),
         Paint()..color = species.tailTip!,
       );
     }
@@ -1216,7 +1321,9 @@ class CritterPainter extends CustomPainter {
         canvas.rotate(side * 0.5);
         canvas.drawRRect(
           RRect.fromRectAndRadius(
-              const Rect.fromLTWH(-4, -2, 8, 16), const Radius.circular(4)),
+            const Rect.fromLTWH(-4, -2, 8, 16),
+            const Radius.circular(4),
+          ),
           Paint()..color = armColor,
         );
         canvas.restore();
@@ -1225,7 +1332,10 @@ class CritterPainter extends CustomPainter {
       for (final dx in [-6.0, 6.0]) {
         canvas.drawOval(
           Rect.fromCenter(
-              center: Offset(cx + dx, cy + 13), width: 7, height: 5),
+            center: Offset(cx + dx, cy + 13),
+            width: 7,
+            height: 5,
+          ),
           Paint()..color = pawColor,
         );
       }
@@ -1235,7 +1345,10 @@ class CritterPainter extends CustomPainter {
     // Sol kol (aşağı; gövdeye yaslı).
     canvas.drawOval(
       Rect.fromCenter(
-          center: Offset(cx - bodyW / 2 + 3, cy + 4), width: 9, height: 15),
+        center: Offset(cx - bodyW / 2 + 3, cy + 4),
+        width: 9,
+        height: 15,
+      ),
       Paint()..color = armColor,
     );
     if (_roasting) {
@@ -1245,7 +1358,9 @@ class CritterPainter extends CustomPainter {
       canvas.rotate(-0.9);
       canvas.drawRRect(
         RRect.fromRectAndRadius(
-            const Rect.fromLTWH(-4.5, -14, 9, 18), const Radius.circular(4.5)),
+          const Rect.fromLTWH(-4.5, -14, 9, 18),
+          const Radius.circular(4.5),
+        ),
         Paint()..color = armColor,
       );
       canvas.drawCircle(const Offset(0, -13), 4, Paint()..color = pawColor);
@@ -1254,7 +1369,10 @@ class CritterPainter extends CustomPainter {
       // Boşta/uyurken sağ kol da aşağı.
       canvas.drawOval(
         Rect.fromCenter(
-            center: Offset(cx + bodyW / 2 - 3, cy + 4), width: 9, height: 15),
+          center: Offset(cx + bodyW / 2 - 3, cy + 4),
+          width: 9,
+          height: 15,
+        ),
         Paint()..color = armColor,
       );
     }
@@ -1284,11 +1402,13 @@ class CritterPainter extends CustomPainter {
           break;
         case EarType.long:
           canvas.drawOval(
-              Rect.fromCenter(center: Offset.zero, width: 9, height: 24),
-              Paint()..color = c);
+            Rect.fromCenter(center: Offset.zero, width: 9, height: 24),
+            Paint()..color = c,
+          );
           canvas.drawOval(
-              Rect.fromCenter(center: Offset.zero, width: 4, height: 16),
-              Paint()..color = inner);
+            Rect.fromCenter(center: Offset.zero, width: 4, height: 16),
+            Paint()..color = inner,
+          );
           break;
         case EarType.round:
           canvas.drawCircle(Offset.zero, 8, Paint()..color = c);
@@ -1331,7 +1451,10 @@ class CritterPainter extends CustomPainter {
       for (final dx in [-7.0, 7.0]) {
         canvas.drawOval(
           Rect.fromCenter(
-              center: Offset(cx + dx, cy - 2), width: 10, height: 12),
+            center: Offset(cx + dx, cy - 2),
+            width: 10,
+            height: 12,
+          ),
           Paint()..color = species.patch,
         );
       }
@@ -1371,17 +1494,26 @@ class CritterPainter extends CustomPainter {
       }
     } else {
       for (final dx in [-6.0, 6.0]) {
-        canvas.drawCircle(Offset(cx + dx, eyeY), 3.2,
-            Paint()..color = const Color(0xFF241C18));
-        canvas.drawCircle(Offset(cx + dx - 1, eyeY - 1), 1.1,
-            Paint()..color = Colors.white.withValues(alpha: 0.9));
+        canvas.drawCircle(
+          Offset(cx + dx, eyeY),
+          3.2,
+          Paint()..color = const Color(0xFF241C18),
+        );
+        canvas.drawCircle(
+          Offset(cx + dx - 1, eyeY - 1),
+          1.1,
+          Paint()..color = Colors.white.withValues(alpha: 0.9),
+        );
       }
     }
 
     // Yanak (hafif pembe).
     for (final dx in [-10.0, 10.0]) {
-      canvas.drawCircle(Offset(cx + dx, cy + 4), 2.6,
-          Paint()..color = const Color(0xFFE79AA4).withValues(alpha: 0.35));
+      canvas.drawCircle(
+        Offset(cx + dx, cy + 4),
+        2.6,
+        Paint()..color = const Color(0xFFE79AA4).withValues(alpha: 0.35),
+      );
     }
 
     // Burun / gaga.

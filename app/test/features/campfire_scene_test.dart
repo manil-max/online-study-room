@@ -10,6 +10,7 @@ import 'package:online_study_room/data/providers/presence_providers.dart';
 import 'package:online_study_room/data/providers/study_providers.dart';
 import 'package:online_study_room/features/classroom/widgets/campfire/layered_campfire_fire.dart';
 import 'package:online_study_room/features/classroom/widgets/camp_critter.dart';
+import 'package:online_study_room/features/classroom/widgets/campfire_layout.dart';
 import 'package:online_study_room/features/classroom/widgets/campfire_scene.dart';
 
 Profile _profile(String id, String name) =>
@@ -21,10 +22,15 @@ Widget _harness({
   required Map<String, int> today,
   bool reduceMotion = false,
   DateTime? localNow,
+  double width = 400,
+  TargetPlatform platform = TargetPlatform.windows,
 }) {
   final fixedNow = localNow ?? DateTime(2026, 7, 26, 12);
   final scene = Scaffold(
-    body: SizedBox(width: 400, child: CampfireScene(clock: () => fixedNow)),
+    body: SizedBox(
+      width: width,
+      child: CampfireScene(clock: () => fixedNow),
+    ),
   );
   return ProviderScope(
     overrides: [
@@ -33,6 +39,7 @@ Widget _harness({
       groupTodaySecondsProvider.overrideWithValue(today),
     ],
     child: MaterialApp(
+      theme: ThemeData(platform: platform),
       locale: const Locale('tr'),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
@@ -154,7 +161,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
 
     expect(find.text('Henüz grup yok'), findsOneWidget);
-    expect(find.text('Çalışmaya başla'), findsOneWidget);
+    expect(find.text('Çalışmaya başla'), findsNothing);
 
     await tester.pumpWidget(const SizedBox());
   });
@@ -210,6 +217,90 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     },
   );
+
+  test(
+    'telefon viewport profili yalnız mobil platformdaki kısa kenarda açılır',
+    () {
+      final phone = CampfireViewportProfile.fromConstraints(
+        constraints: const BoxConstraints.tightFor(width: 360, height: 640),
+        platform: TargetPlatform.android,
+      );
+      final narrowWindows = CampfireViewportProfile.fromConstraints(
+        constraints: const BoxConstraints.tightFor(width: 360, height: 640),
+        platform: TargetPlatform.windows,
+      );
+
+      expect(phone.isPhone, isTrue);
+      expect(phone.ringWidthMultiplier, 1.2);
+      expect(phone.critterScaleMultiplier, 0.76);
+      expect(phone.fireYOffset, 0.09);
+      expect(phone.showTrees, isFalse);
+      expect(narrowWindows.isPhone, isFalse);
+      expect(narrowWindows.showTrees, isTrue);
+    },
+  );
+
+  for (final memberCount in [1, 4, 8]) {
+    testWidgets(
+      'WP-350: telefon $memberCount kişide hayvan ve etiketleri sahne içinde tutar',
+      (tester) async {
+        final members = [
+          for (var index = 0; index < memberCount; index++)
+            _profile('u$index', 'Uzun isimli üye $index'),
+        ];
+        await tester.pumpWidget(
+          _harness(
+            width: 360,
+            platform: TargetPlatform.android,
+            members: members,
+            presence: [
+              for (final member in members)
+                Presence(
+                  userId: member.id,
+                  status: PresenceStatus.offline,
+                  todaySeconds: 0,
+                ),
+            ],
+            today: {for (final member in members) member.id: 0},
+          ),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 50));
+
+        final sceneRect = tester.getRect(find.byType(CampfireScene));
+        final safeScene = sceneRect.deflate(8);
+        for (var index = 0; index < memberCount; index++) {
+          final body = tester.getRect(find.byKey(ValueKey('b-u$index')));
+          final label = tester.getRect(find.byKey(ValueKey('l-u$index')));
+          expect(safeScene.contains(body.topLeft), isTrue);
+          expect(safeScene.contains(body.bottomRight), isTrue);
+          expect(safeScene.contains(label.topLeft), isTrue);
+          expect(safeScene.contains(label.bottomRight), isTrue);
+        }
+
+        final forest =
+            tester
+                    .widget<CustomPaint>(
+                      find.byWidgetPredicate(
+                        (widget) =>
+                            widget is CustomPaint &&
+                            widget.painter is GroundedForestPainter,
+                      ),
+                    )
+                    .painter!
+                as GroundedForestPainter;
+        final fire = tester.widget<LayeredCampfireFire>(
+          find.byType(LayeredCampfireFire),
+        );
+        expect(forest.showTrees, isFalse);
+        expect(fire.visualScale, 0.78);
+        expect(find.text('Çalışmaya başla'), findsNothing);
+        expect(tester.takeException(), isNull);
+
+        await tester.pumpWidget(const SizedBox());
+      },
+    );
+  }
 
   testWidgets('şafakta gökyüzü kademeli aydınlanır ve hayvan uyanıktır', (
     tester,

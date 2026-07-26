@@ -20,6 +20,7 @@ class LayeredCampfireFire extends StatelessWidget {
     required this.cx,
     required this.fireY,
     required this.reduceMotion,
+    this.visualScale = 1,
   });
 
   final double t;
@@ -28,6 +29,7 @@ class LayeredCampfireFire extends StatelessWidget {
   final double cx;
   final double fireY;
   final bool reduceMotion;
+  final double visualScale;
 
   @override
   Widget build(BuildContext context) {
@@ -37,8 +39,11 @@ class LayeredCampfireFire extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final side =
-            (math.min(constraints.maxWidth, constraints.maxHeight) * 0.42)
-                .clamp(120.0, 220.0);
+            ((math.min(constraints.maxWidth, constraints.maxHeight) *
+                        0.42 *
+                        visualScale)
+                    .clamp(96.0, 220.0))
+                .toDouble();
         final left = cx - side / 2;
         final top = fireY - side * 0.52;
 

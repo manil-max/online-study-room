@@ -281,7 +281,6 @@ class _SceneLayoutState extends State<_SceneLayout>
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     final n = widget.campers.length;
 
     // Yerleşim süresi: normalde kısa ve snappy (≤ 700 ms tam yerleşim hedefi),
@@ -297,11 +296,15 @@ class _SceneLayoutState extends State<_SceneLayout>
         final w = constraints.maxWidth;
         final h = constraints.maxHeight;
         final cx = w / 2;
+        final profile = CampfireViewportProfile.fromConstraints(
+          constraints: constraints,
+          platform: Theme.of(context).platform,
+        );
         final layout = CampfireCountLayout.saved(n.clamp(1, 8));
-        final fireY = h * layout.groundYFactor;
+        final fireY = h * (layout.groundYFactor + profile.fireYOffset);
         final ringCy = fireY + 18; // hayvanların oturduğu halka merkezi
 
-        final rx = w * layout.ringWidthFactor;
+        final rx = w * layout.ringWidthFactor * profile.ringWidthMultiplier;
         final ry = h * 0.15;
         final seats = n == 0 ? const <CampfireSeat>[] : campfireSeats(layout);
 
@@ -311,13 +314,16 @@ class _SceneLayoutState extends State<_SceneLayout>
           final mx = cx + rx * seat.x;
           final my = ringCy + ry * seat.y;
           final depth = seat.depth;
+          final scale =
+              _lerp(0.72, 1.06, depth) * profile.critterScaleMultiplier;
+          final box = _CritterBody.boxFor(scale);
           placements.add(
             _Placement(
               camper: widget.campers[i],
-              x: mx,
-              y: my,
+              x: mx.clamp(8 + box / 2, w - 8 - box / 2).toDouble(),
+              y: my.clamp(8 + box * _CritterBody.anchor, h - 8).toDouble(),
               depth: depth,
-              scale: _lerp(0.72, 1.06, depth),
+              scale: scale,
               back: seat.y < 0,
               phase: i / (n == 0 ? 1 : n),
             ),
@@ -363,6 +369,7 @@ class _SceneLayoutState extends State<_SceneLayout>
                         daylight: widget.sky.value,
                         sunProgress: widget.sky.sunProgress,
                         warmth: widget.sky.warmth,
+                        showTrees: profile.showTrees,
                       ),
                     ),
                   ),
@@ -408,6 +415,7 @@ class _SceneLayoutState extends State<_SceneLayout>
                           cx: cx,
                           fireY: fireY,
                           reduceMotion: reduceMotion,
+                          visualScale: profile.fireVisualScale,
                         ),
                       ),
                     ),
@@ -458,11 +466,14 @@ class _SceneLayoutState extends State<_SceneLayout>
                   key: ValueKey('l-${p.camper.member.id}'),
                   duration: settle,
                   curve: Curves.easeOutCubic,
-                  left: p.x - 55,
+                  left: (p.x - 55).clamp(8, w - 118).toDouble(),
                   top:
-                      p.y -
-                      _CritterBody.boxFor(p.scale) * _CritterBody.anchor -
-                      (p.camper.studying ? 34 : 18),
+                      (p.y -
+                              _CritterBody.boxFor(p.scale) *
+                                  _CritterBody.anchor -
+                              (p.camper.studying ? 34 : 18))
+                          .clamp(8, h - 32)
+                          .toDouble(),
                   width: 110,
                   child: _MemberLabel(camper: p.camper, back: p.back),
                 ),
@@ -472,32 +483,6 @@ class _SceneLayoutState extends State<_SceneLayout>
                 top: 12,
                 child: _StudyingBadge(count: widget.studyingCount),
               ),
-
-              if (widget.studyingCount == 0)
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  top: fireY - 8,
-                  child: Center(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.32),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        AppLocalizations.of(context).classroomCalismayaBasla,
-                        style: TextStyle(
-                          color: scheme.onSurfaceVariant.withValues(alpha: 0.9),
-                          fontSize: 12.5,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
             ],
           ),
         );
