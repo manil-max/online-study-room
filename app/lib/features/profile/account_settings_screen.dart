@@ -129,11 +129,22 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
       return;
     }
 
+    // WP-319-G: "şifre güncellendi" tek başına eksik bir cümle — kullanıcının
+    // asıl sorduğu şey diğer cihazların hâlâ içeride olup olmadığı. İptal
+    // başarısızsa bunu **söylüyoruz**; sessizce başarı göstermek, şifre
+    // değiştirmenin koruduğu izlenimini verir ki tam da bu WP'nin kapattığı
+    // yanlış güvence desenidir.
+    final l10n = AppLocalizations.of(context);
+    final kept = outcome == _PasswordDialogOutcome.changedOtherSessionsKept;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          AppLocalizations.of(context).profileSifreBasariylaGuncellendi,
+          kept
+              ? l10n.profileDigerCihazlarKapatilamadi
+              : l10n.profileDigerCihazlarKapatildi,
         ),
+        duration: kept ? const Duration(seconds: 8) : const Duration(seconds: 4),
+        backgroundColor: kept ? Theme.of(context).colorScheme.error : null,
       ),
     );
   }
@@ -487,7 +498,16 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
 
 /// Diyalogdan çıkan sonuç: şifre değişti mi, yoksa kullanıcı "şifremi unuttum"
 /// yoluna mı geçti?
-enum _PasswordDialogOutcome { changed, forgot }
+enum _PasswordDialogOutcome {
+  /// Şifre değişti ve diğer cihazların oturumu kapatıldı (WP-319-G).
+  changed,
+
+  /// Şifre değişti ama diğer oturumlar kapatılamadı — kullanıcıya **söylenir**.
+  changedOtherSessionsKept,
+
+  /// Kullanıcı "şifremi unuttum" yoluna geçti.
+  forgot,
+}
 
 /// WP-319: üç alanlı şifre değiştirme diyaloğu.
 ///
@@ -540,13 +560,20 @@ class _ChangePasswordDialogState extends ConsumerState<_ChangePasswordDialog> {
       _error = null;
     });
     try {
-      await ref
+      final outcome = await ref
           .read(authRepositoryProvider)
           .changePassword(
             currentPassword: _currentController.text,
             newPassword: _newController.text,
           );
-      if (mounted) Navigator.pop(context, _PasswordDialogOutcome.changed);
+      if (mounted) {
+        Navigator.pop(
+          context,
+          outcome == PasswordChangeOutcome.done
+              ? _PasswordDialogOutcome.changed
+              : _PasswordDialogOutcome.changedOtherSessionsKept,
+        );
+      }
     } catch (e) {
       if (mounted) {
         setState(() {

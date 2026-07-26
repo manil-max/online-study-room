@@ -5576,5 +5576,13 @@
   "profileOturumBulunamadiGirisYap": "Session not found. Please sign in again.",
   "@profileOturumBulunamadiGirisYap": {
     "description": "Profile user-facing text. Source: Oturum bulunamadı. Yeniden giriş yap."
+  },
+  "profileDigerCihazlarKapatildi": "Your password has changed. Sessions on your other devices were signed out.",
+  "@profileDigerCihazlarKapatildi": {
+    "description": "Profile user-facing text. Source: Şifren değişti. Diğer cihazlardaki oturumlar kapatıldı."
+  },
+  "profileDigerCihazlarKapatilamadi": "Your password has changed, but the sessions on your other devices could not be signed out. Check your connection and try again.",
+  "@profileDigerCihazlarKapatilamadi": {
+    "description": "Profile user-facing text. Source: Şifren değişti, ama diğer cihazların oturumu kapatılamadı. Bağlantını kontrol edip tekrar dene."
   }
 }

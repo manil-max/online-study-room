@@ -11,19 +11,28 @@ import 'package:online_study_room/l10n/app_localizations.dart';
 /// Çağrıları sayan repository. "Ekran doğrulamayı atlıyor mu?" sorusunun
 /// cevabı ancak **kaç kez ve hangi argümanla** çağrıldığına bakılarak verilir.
 class _RecordingAuthRepository extends InMemoryAuthRepository {
+  _RecordingAuthRepository({this.outcome = PasswordChangeOutcome.done});
+
+  /// WP-319-G: diğer oturumların kapatılamadığı hâli kurmak için. Bellek-içi
+  /// repository'nin çok cihazlı oturum kavramı yok; gerçek iptal Supabase
+  /// tarafındadır (bkz. `auth_session_revocation_contract_test.dart`). Burada
+  /// sınanan şey **ekranın sonuca ne yaptığı**.
+  final PasswordChangeOutcome outcome;
+
   final List<String> resetEmails = <String>[];
   int changeCalls = 0;
 
   @override
-  Future<void> changePassword({
+  Future<PasswordChangeOutcome> changePassword({
     required String currentPassword,
     required String newPassword,
-  }) {
+  }) async {
     changeCalls++;
-    return super.changePassword(
+    await super.changePassword(
       currentPassword: currentPassword,
       newPassword: newPassword,
     );
+    return outcome;
   }
 
   @override
@@ -33,8 +42,11 @@ class _RecordingAuthRepository extends InMemoryAuthRepository {
   }
 }
 
-Future<_RecordingAuthRepository> _pumpScreen(WidgetTester tester) async {
-  final repo = _RecordingAuthRepository();
+Future<_RecordingAuthRepository> _pumpScreen(
+  WidgetTester tester, {
+  PasswordChangeOutcome outcome = PasswordChangeOutcome.done,
+}) async {
+  final repo = _RecordingAuthRepository(outcome: outcome);
   await repo.signUp(email: 'a@b.com', password: 'eski123', displayName: 'Ali');
 
   await tester.pumpWidget(
@@ -142,12 +154,61 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byKey(const Key('changePasswordCurrent')), findsNothing);
-      expect(find.text('Şifre başarıyla güncellendi.'), findsOneWidget);
+      expect(
+        find.text('Şifren değişti. Diğer cihazlardaki oturumlar kapatıldı.'),
+        findsOneWidget,
+        reason:
+            'WP-319-G: kullanıcının asıl sorusu "diğer cihazlar çıktı mı?" — '
+            'yalnız "güncellendi" demek bu soruyu cevapsız bırakır',
+      );
 
       await repo.signOut();
       final profile = await repo.signIn(email: 'a@b.com', password: 'yeni123');
       expect(profile.displayName, 'Ali');
     });
+
+    // WP-319-G: iptal başarısızsa iki yanlış yapılabilir — sessizce başarı
+    // göstermek (yanlış güvence, bu WP'nin kapattığı desenin ta kendisi) ya da
+    // istisna atmak (kullanıcı işlem olmadı sanır ve artık geçersiz olan eski
+    // şifreyi tekrar girer). Test ikisini birden dışlar.
+    testWidgets(
+      '🔴 diğer oturumlar kapatılamazsa: şifre DEĞİŞMİŞTİR ama kullanıcı uyarılır',
+      (tester) async {
+        final repo = await _pumpScreen(
+          tester,
+          outcome: PasswordChangeOutcome.otherSessionsKept,
+        );
+        await _openDialog(tester);
+        await _fill(tester, current: 'eski123', next: 'yeni123');
+
+        await tester.tap(find.byKey(const Key('changePasswordSubmit')));
+        await tester.pumpAndSettle();
+
+        expect(
+          find.textContaining('diğer cihazların oturumu kapatılamadı'),
+          findsOneWidget,
+          reason: 'sessizce başarı gösterilmemeli',
+        );
+        expect(
+          find.text('Şifren değişti. Diğer cihazlardaki oturumlar kapatıldı.'),
+          findsNothing,
+          reason: 'kapatılmadığı hâlde kapatıldı denmemeli',
+        );
+        expect(
+          find.byKey(const Key('changePasswordCurrent')),
+          findsNothing,
+          reason:
+              'şifre yazıldı; diyalog açık kalırsa kullanıcı artık geçersiz '
+              'olan eski şifreyle tekrar denemeye çalışır',
+        );
+
+        // Ve şifre gerçekten değişmiş olmalı: uyarı, işlemin başarısız olduğu
+        // anlamına gelmez.
+        await repo.signOut();
+        final profile = await repo.signIn(email: 'a@b.com', password: 'yeni123');
+        expect(profile.displayName, 'Ali');
+      },
+    );
 
     testWidgets('tekrar alanı uyuşmazsa istek sunucuya HİÇ gitmez', (
       tester,

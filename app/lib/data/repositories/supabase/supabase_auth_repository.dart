@@ -253,8 +253,10 @@ class SupabaseAuthRepository implements AuthRepository {
   /// yeniden kimlik doğrulamak. Bu çağrı başarılı olursa aynı kullanıcı için
   /// yeni bir oturum kurulur (kullanıcı değişmez, dışarı atılmaz); başarısızsa
   /// `updateUser`'a **hiç gelinmez**.
+  ///
+  /// WP-319-G: yazma başarılı olunca **diğer tüm oturumlar** kapatılır.
   @override
-  Future<void> changePassword({
+  Future<PasswordChangeOutcome> changePassword({
     required String currentPassword,
     required String newPassword,
   }) async {
@@ -299,6 +301,27 @@ class SupabaseAuthRepository implements AuthRepository {
         _translate(e.message),
         code: _isRateLimit(e.message) ? AuthErrorCode.rateLimited : null,
       );
+    }
+
+    // Buradan sonra şifre **değişmiştir**. Diğer cihazların oturumu kapatılamazsa
+    // atılacak bir istisna kullanıcıya "işlem olmadı" dedirtir ve artık geçersiz
+    // olan eski şifreyle tekrar denetir; bu yüzden hata değil **sonuç** dönülür.
+    return await _revokeOtherSessions()
+        ? PasswordChangeOutcome.done
+        : PasswordChangeOutcome.otherSessionsKept;
+  }
+
+  /// WP-319-G: bu cihaz hariç tüm oturumları sonlandırır (`SignOutScope.others`).
+  ///
+  /// `others` kapsamı yerel oturuma dokunmaz ve `signedOut` olayı **yayınlamaz**
+  /// (gotrue `signOut`), yani kullanıcı kendi cihazında giriş ekranına düşmez —
+  /// düşseydi bu özellik cezaya dönerdi ve kullanılmazdı.
+  Future<bool> _revokeOtherSessions() async {
+    try {
+      await _client.auth.signOut(scope: supa.SignOutScope.others);
+      return true;
+    } catch (_) {
+      return false;
     }
   }
 

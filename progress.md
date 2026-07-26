@@ -44,14 +44,10 @@
 - **SAHİP yollar:** —
 
 ### Claude Lane
-- **Durum:** [~] Aktif
-- **Faz/WP:** Faz C · **WP-319-G** (WP-319 eki — sahip kararı: **global sign-out olsun**)
-- **Aşama:** Şifre değişince diğer cihazların oturumu kapatılıyor
-- **SAHİP yollar:** `app/lib/data/repositories/auth_repository.dart` · `app/lib/data/repositories/supabase/supabase_auth_repository.dart` · `app/lib/data/repositories/in_memory/in_memory_auth_repository.dart` · `app/lib/features/profile/account_settings_screen.dart` · `app/lib/l10n/*.arb` · `app/test/data/auth_repository_test.dart` · `app/test/features/profile/change_password_test.dart` · `app/test/data/auth_session_revocation_contract_test.dart` (yeni)
-- **Ortak/riskli yüzey:** `progress.md` (yalnız Claude lane + WP-319 kartı). Kamp ateşi (`campfire_*`, `camp_critter.dart`), admin, migration ve tooling yüzeylerine **girilmez**.
-- **Dal:** `main`
-- **Başlangıç:** 2026-07-26 (Europe/Istanbul)
-- **Çakışma kontrolü:** Codex WP-295'te (`campfire_scene.dart`, `camp_critter.dart` + WP-295 testleri/önizlemesi). Kesişen tek dosya yok; `progress.md`'de yalnız kendi lane'im ve WP-319 kartı düzenlenir.
+- **Durum:** [x] Boşta
+- **Faz/WP:** — · **Son iş:** **WP-319-G** ✅ kod/test tamam (2026-07-26)
+- **SAHİP yollar:** —
+- ✅ **WP-319-G (2026-07-26, sahip kararı "global signout olsun")** — şifre değişince **bu cihaz hariç tüm oturumlar** kapanıyor (`SignOutScope.others`; `global` bilerek **değil** — kullanıcıyı kendi cihazından atardı). İptal doğrulama gibi **sözleşmede**. İptal edilemezse şifre yine de değişmiştir: hata atılmıyor, yutulmuyor — kullanıcı "şifren değişti **ama** diğer oturumlar kapatılamadı" uyarısını görüyor. `analyze` temiz · **842 test yeşil** (5 yeni) · **üç ayrı sabotajla kırmızı-yeşil kanıt**. Codex WP-295 (kamp ateşi) ile **kesişme olmadı**.
 - ✅ **WP-319 (2026-07-26)** — 🔴 **Kartın problem cümlesi yanlıştı, ama gerçek daha kötüydü:** şifre değiştirme vardı ve **mevcut şifreyi hiç doğrulamıyordu**. Yani kartın "en kötü ihtimal" diye uyardığı ölü anahtar **üretimdeydi**: açık bir oturumu eline geçiren biri şifreyi tek diyalogda değiştirebiliyordu. Doğrulama artık repository sözleşmesinde (`changePassword`), ekran atlayamaz. `analyze` temiz · **836 test yeşil** (12 yeni) · **iki katmanlı kırmızı-yeşil kanıt**. Faz B (Codex, admin) ve kamp ateşi önizleme dosyalarıyla **kesişme olmadı**.
 - 🟡 **WP-319'dan çıkan sahip sorusu:** şifre değişince **diğer cihazların oturumu** açık kalıyor (Supabase varsayılanı). Global sign-out eklensin mi? Kullanıcının kendi diğer cihazlarını da atar. Ayrıntı WP-319 kartında.
 - ✅ **WP-322 (2026-07-26)** — Faz B ile paralel koştu, Codex WP-316 ile **kesişim olmadı** (`pubspec.yaml`'a hiç girilmedi, `supabase/migrations/**`'e dokunulmadı). `flutter analyze` temiz · **10 ardışık tam suit koşumu 10/10 yeşil, her turda 820 test** · kararsızlık için kırmızı-yeşil kanıt alındı. Kartın passkeys ve sürüm maddeleri **konusuz** çıktı (gerekçe kartta).
@@ -73,14 +69,15 @@
 - 🔴 **BETA 1 GERİ BİLDİRİMİ (sahip, 2026-07-25) → WP-302/303/304 açıldı ve ÜÇÜ DE KOD/TEST TAMAM.** `analyze` 0, **795 test yeşil**, l10n audit temiz. Sahip sırası: bu üçü stable'a → sonra kalan kod işleri → beta 2 → stable.
 
 ### Codex Lane
-- **Durum:** [~] Aktif
+- **Durum:** [!] Park — sahip parametre seçimi bekleniyor
 - **Faz/WP:** Yeni Özellik Turu · WP-295
-- **Aşama:** Parametrik canlı önizleme + geometri/poz ön-teşhisi
+- **Aşama:** Parametrik canlı önizleme hazır; üretim değerleri henüz sabitlenmedi
 - **SAHİP yollar:** `app/lib/features/classroom/widgets/campfire_scene.dart` · `app/lib/features/classroom/widgets/camp_critter.dart` · yalnız WP-295 ilgili testler/önizleme dosyaları
 - **Ortak/riskli yüzey:** `progress.md` (yalnız Codex lane + WP-295 kartı). Admin/auth/settings/l10n/migration/tooling yüzeylerine girilmez.
 - **Dal:** `main`
 - **Başlangıç:** 2026-07-26 12:33 (Europe/Istanbul)
-- **Not:** Claude yeni işe başladığını henüz lane'e yazmadı. WP-295, mevcut kartta admin/auth/settings/migration yüzeylerinden ayrık olduğu için claim edildi; Claude claim'i görünür olunca kesişim tekrar kontrol edilecek.
+- **Son güncelleme:** 2026-07-26 12:57
+- **Not:** Claude WP-319 auth/account/l10n yüzeyinde; kesişim yok. `lib/wp295_preview.dart` Windows canlı önizlemesi derlendi ve açıldı. Saf yerleşim + preview widget testleri **5/5**, yalnız WP-295 dosyalarının `dart analyze` sonucu **0**. Tam analyze, Claude'un ARB→generated ara durumu nedeniyle geçici kırmızı. Sağ paneldeki ayar satırı sahipçe seçilince aynı değerler üretim kodu + teste geçirilecek.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
@@ -241,7 +238,7 @@ göremiyoruz, cevap yazamıyoruz, liste temizlenmiyor.
 - **Veri/Migration etkisi:** Yok (Auth API).
 - **Ortam/Deploy:** local + staging. Staging Site URL/allowlist ayarı otomatik: [`supabase-auth-config.yml`](.github/workflows/supabase-auth-config.yml).
 - **RLS/Güvenlik:** 🔴 Kullanıcı **yalnız kendi** şifresini değiştirir. Şifreler log'a/analitiğe **yazılmaz**. Başarısız denemeler oran sınırına takılmalı.
-- **Edge-case'ler:** çevrimdışı · oturum süresi dolmuş · e-posta doğrulanmamış hesap · 🟡 **şifre değişince diğer cihazların oturumu** — aşağıya taşındı, sahip kararı bekliyor.
+- **Edge-case'ler:** çevrimdışı · oturum süresi dolmuş · e-posta doğrulanmamış hesap · ✅ **şifre değişince diğer cihazların oturumu kapanır** (sahip kararı 2026-07-26 — WP-319-G eki, aşağıda).
 - **Kabul (ölçülebilir):** ✅ Yanlış mevcut şifreyle işlem **reddediliyor ve şifre değişmiyor** — test yalnız "hata attı mı"ya bakmıyor, reddedilen istekten sonra **eski şifreyle giriş hâlâ çalışıyor mu** diye kontrol ediyor (doğrulamayı yapıp yine de yazan implementasyonu yakalar) · ✅ doğru şifreyle değişiyor, eski şifre geçersiz kılınıyor · ✅ tekrar alanı uyuşmazsa ağ isteği **hiç açılmıyor** (`changeCalls == 0`) · 🕰️ "Şifremi unuttum" akışının Android uçtan uca kanıtı **cihaz turunda** alınacak · ✅ şifre hiçbir log satırına yazılmıyor (kod yolunda `print`/log yok).
 - **Tuzaklar:** 🔴 **Ölü anahtar riski buranın tam merkezinde.** "Mevcut şifre" alanı doğrulama yapmıyorsa kullanıcı korunduğunu sanır — bu, alanın hiç olmamasından **kötüdür**.
   🔴 **Devralınan engel:** Supabase free tier, varsayılan e-posta sağlayıcısıyla kurtarma şablonunu hem API'den hem panelden kilitliyor → `{{ .Token }}` eklenemiyor → **Windows/masaüstündeki 6 haneli kod yolu, özel SMTP (veya ücretli plan) bağlanana kadar çalışmaz.** Android derin bağlantı yolu çalışır. Sahip: "şifreyi de sonra test ederiz" — değiştirme ve sıfırlama **aynı turda** test edilecek.
@@ -258,12 +255,48 @@ göremiyoruz, cevap yazamıyoruz, liste temizlenmiyor.
 
 İkisi de sonda geri alındı; `analyze` temiz, **836 test yeşil**.
 
-🟡 **Sahip kararı bekleyen tek konu — şifre değişince diğer cihazların oturumu.**
-Bugünkü davranış: diğer cihazlar **açık kalır** (Supabase varsayılanı; `updateUser`
-oturumları geçersiz kılmaz). "Şifremi değiştirdim" diyen bir kullanıcı genelde
-*"o kişi artık giremesin"* ister — istenirse global sign-out eklenebilir, ama
-kullanıcının kendi diğer cihazlarını da atar. Ayrı ve küçük bir iş; bilerek
-**yapılmadı**, çünkü karar ürün tarafında.
+##### WP-319-G ek: global sign-out ✅ (sahip kararı, 2026-07-26)
+
+**Sahip:** *"global signout olsun."* → Uygulandı. Şifre değişince **bu cihaz
+hariç tüm oturumlar kapanır** (`SignOutScope.others`).
+
+- **Nerede:** iptal, doğrulama gibi **sözleşmede** — `changePassword` şifreyi
+  yazdıktan sonra çağırıyor, çağıran atlayamaz. Ekrana bırakılsaydı WP-319'un
+  kapattığı deseni yeniden açardı.
+- 🔴 **Kapsam neden `others`, `global` değil:** `global` bu cihazın oturumunu da
+  kapatır — kullanıcı şifresini değiştirir değiştirmez giriş ekranına düşer.
+  Özellik cezaya dönüşür. `others` yerel oturuma dokunmaz ve `signedOut` olayı
+  yayınlamaz (gotrue `signOut`), yani kullanıcı yerinde kalır.
+- 🟡 **Sonuç `void` değil, `PasswordChangeOutcome` taşınıyor.** İptal adımı şifre
+  **yazıldıktan sonra** çalışır. Orada hata atmak kullanıcıya "işlem olmadı"
+  dedirtip artık geçersiz olan eski şifreyi girdirir; hatayı yutmak ise
+  "diğer cihazlar çıkarıldı" diye **yanlış güvence** verir — WP-319'un kapattığı
+  desenin aynısı. İkisi de yapılmadı: kullanıcı "şifren değişti **ama** diğer
+  oturumlar kapatılamadı" uyarısını görüyor.
+- **Kapsam dışı (bilerek):** kurtarma yolları (`updatePassword` /
+  `resetPasswordWithCode`) hâlâ diğer oturumları kapatmıyor. Aynı iptal oraya da
+  konabilir; ayrı iş olarak duruyor, çünkü o akışın masaüstü ucu free tier
+  şablonu yüzünden zaten kapalı ve uyarıyı gösterecek bir yüzeyi yok.
+- **Kanıt:** `flutter analyze` **temiz** · tam suit **842 test yeşil** (bu turda
+  **5 yeni**: 4 kaynak sözleşmesi + 1 widget; kalan fark başka ajanın izlenmeyen
+  WP-295 testlerinden) · l10n audit'te **bu turdan tek bulgu yok** (15 FAIL'in
+  hepsi WP-295'in commit edilmemiş dosyalarından).
+
+**Kırmızı-yeşil (üç ayrı sabotaj, hepsi geri alındı):**
+
+| Deney | Ne yapıldı | Sonuç |
+| --- | --- | --- |
+| A | `changePassword`'dan iptal çağrısı silindi | Sözleşme testi **düştü**: `does not contain '_revokeOtherSessions()'` |
+| B | Kapsam `others` → `global` | Sözleşme testi **düştü**: `does not contain 'supa.SignOutScope.others'` |
+| C | Ekran sonucu yok saydı (hep "kapatıldı" dedi) | Widget testi **düştü**: `Found 0 widgets with text containing diğer cihazların oturumu` — 6 testten **yalnız** o düştü |
+
+⚠️ **Sözleşme testi neden kaynak okuyor:** iptal `SupabaseClient.auth` üzerinden
+yapılıyor, repoda sahtesi yok; bellek-içi repository'nin ise çok cihazlı oturum
+kavramı yok — orada "kapandı" demek gerçeği taklit etmek olurdu. Repoda bu tür
+yüzeyler için yerleşik desen kaynak sözleşmesi testidir
+([push_delivery_contract_test](app/test/core/push_delivery_contract_test.dart)).
+🕰️ **Cihaz kabulü:** iki cihazda giriş → birinde şifre değiştir → diğerinin
+oturumunun düştüğü görülmeli.
 
 #### WP-320: Ayarlar bilgi mimarisi 🧭
 - **Program/Faz:** Faz C · Ayarlar hijyeni
@@ -851,7 +884,7 @@ DALGA 7  WP-295 Oturma+2 poz → WP-299 Gökyüzü → WP-300 Konum   (SERİ, ay
 - **SAHİP dosyalar (yaz):** `app/lib/features/classroom/widgets/campfire_scene.dart`, `app/lib/features/classroom/widgets/camp_critter.dart`, ilgili testler.
 - **DOKUNMA:** `app/lib/core/stats/**`, `app/lib/core/widgets/crowned_avatar.dart` (WP-292'nin), tema motoru, `campfire/layered_campfire_fire.dart` gökyüzü tarafı (WP-299'un).
 - **Adımlar:**
-  - [ ] **Önce parametrik canlı önizleme** (halka yarıçapı · ölü bölge genişliği · ateş boyutu/yüksekliği · marşmelov döngüsü) — sahip sayıları seçer, seçilen sayı **hem koda hem teste** birebir girer. *(WP-292 taç akışının aynısı.)*
+  - [~] **Önce parametrik canlı önizleme** (halka yarıçapı · ölü bölge genişliği · ateş boyutu/yüksekliği · marşmelov döngüsü) — Windows önizlemesi hazır/açık, testler **5/5**; sahip sağ paneldeki sayı satırını seçip bildirecek, seçilen sayı **hem koda hem teste** birebir girer. *(WP-292 taç akışının aynısı.)*
   - [ ] Oturma: kutuplarda **ölü bölge**, üyeler sol + sağ yaya dağıtılır. **Tek üye kutba düşmemeli** (yana oturur). Halka yarıçapı daraltılır (`rx = min(w*0.40, 232)` 4 üyede kenarlara savuruyor).
   - [ ] Pozlar 2'ye indirilir: `working`(laptop) ve `sleepy` atılır. Çalışan = marşmelov, çalışmayan = solgun boşta. **Molada = solgun, çevrimdışı = daha solgun + daha saydam** (mola/çevrimdışı bilgisi kaybolmasın).
   - [ ] 🔴 **Marşmelov pişme döngüsü:** `doneness = elapsed/(40*60)` clamp'li ([camp_critter.dart:414](app/lib/features/classroom/widgets/camp_critter.dart:414)) — kalıcı pozda 40 dk sonra ekranda **sabit koyu kahve leke** kalır. ~10 dk'lık **yiyip yenisini takma** döngüsüne çevrilir.

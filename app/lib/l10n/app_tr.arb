@@ -1574,5 +1574,7 @@
   "profileSifremiUnuttum": "Şifremi unuttum",
   "profileSifreSifirlamaGonderildi": "Şifre sıfırlama bağlantısı e-postana gönderildi.",
   "profileMevcutSifreniGir": "Mevcut şifreni gir.",
-  "profileOturumBulunamadiGirisYap": "Oturum bulunamadı. Yeniden giriş yap."
+  "profileOturumBulunamadiGirisYap": "Oturum bulunamadı. Yeniden giriş yap.",
+  "profileDigerCihazlarKapatildi": "Şifren değişti. Diğer cihazlardaki oturumlar kapatıldı.",
+  "profileDigerCihazlarKapatilamadi": "Şifren değişti, ama diğer cihazların oturumu kapatılamadı. Bağlantını kontrol edip tekrar dene."
 }

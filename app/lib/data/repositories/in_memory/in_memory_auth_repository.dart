@@ -145,8 +145,14 @@ class InMemoryAuthRepository implements AuthRepository {
 
   /// WP-319: mevcut şifre doğrulanmadan hiçbir şey yazılmaz — Supabase
   /// implementasyonuyla **aynı sözleşme**, testin dayandığı davranış budur.
+  ///
+  /// WP-319-G: bu implementasyonun **çok cihazlı oturum kavramı yok** (tek
+  /// süreç, tek `_current`), bu yüzden kapatılacak başka oturum da yok ve sonuç
+  /// her zaman [PasswordChangeOutcome.done]. Gerçek iptal Supabase
+  /// implementasyonundadır ve `auth_session_revocation_contract_test.dart` ile
+  /// korunur — burada `done` dönmek gerçeği taklit etmez, **yokluğu** bildirir.
   @override
-  Future<void> changePassword({
+  Future<PasswordChangeOutcome> changePassword({
     required String currentPassword,
     required String newPassword,
   }) async {
@@ -185,6 +191,7 @@ class InMemoryAuthRepository implements AuthRepository {
       );
     }
     _accounts[key!] = _Account(newPassword, account.profile);
+    return PasswordChangeOutcome.done;
   }
 
   @override

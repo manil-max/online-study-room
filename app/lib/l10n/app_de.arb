@@ -5125,5 +5125,13 @@
   "profileOturumBulunamadiGirisYap": "Sitzung nicht gefunden. Bitte melde dich erneut an.",
   "@profileOturumBulunamadiGirisYap": {
     "description": "Profile user-facing text. Source: Oturum bulunamadı. Yeniden giriş yap."
+  },
+  "profileDigerCihazlarKapatildi": "Dein Passwort wurde geändert. Sitzungen auf deinen anderen Geräten wurden beendet.",
+  "@profileDigerCihazlarKapatildi": {
+    "description": "Profile user-facing text. Source: Şifren değişti. Diğer cihazlardaki oturumlar kapatıldı."
+  },
+  "profileDigerCihazlarKapatilamadi": "Dein Passwort wurde geändert, aber die Sitzungen auf deinen anderen Geräten konnten nicht beendet werden. Prüfe deine Verbindung und versuche es erneut.",
+  "@profileDigerCihazlarKapatilamadi": {
+    "description": "Profile user-facing text. Source: Şifren değişti, ama diğer cihazların oturumu kapatılamadı. Bağlantını kontrol edip tekrar dene."
   }
 }

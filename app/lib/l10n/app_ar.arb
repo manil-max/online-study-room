@@ -5125,5 +5125,13 @@
   "profileOturumBulunamadiGirisYap": "لم يتم العثور على الجلسة. سجّل الدخول مرة أخرى.",
   "@profileOturumBulunamadiGirisYap": {
     "description": "Profile user-facing text. Source: Oturum bulunamadı. Yeniden giriş yap."
+  },
+  "profileDigerCihazlarKapatildi": "تم تغيير كلمة المرور. تم إنهاء الجلسات على أجهزتك الأخرى.",
+  "@profileDigerCihazlarKapatildi": {
+    "description": "Profile user-facing text. Source: Şifren değişti. Diğer cihazlardaki oturumlar kapatıldı."
+  },
+  "profileDigerCihazlarKapatilamadi": "تم تغيير كلمة المرور، لكن تعذّر إنهاء الجلسات على أجهزتك الأخرى. تحقّق من اتصالك وحاول مرة أخرى.",
+  "@profileDigerCihazlarKapatilamadi": {
+    "description": "Profile user-facing text. Source: Şifren değişti, ama diğer cihazların oturumu kapatılamadı. Bağlantını kontrol edip tekrar dene."
   }
 }

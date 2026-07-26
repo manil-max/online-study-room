@@ -29,6 +29,22 @@ class AuthErrorCode {
   static const String noSession = 'no_session';
 }
 
+/// WP-319-G: [AuthRepository.changePassword] sonucu.
+///
+/// Neden `void` değil: şifre yazıldıktan **sonra** diğer cihazların oturumu
+/// kapatılır. O adım başarısız olursa şifre **değişmiştir** — istisna atmak
+/// kullanıcıya "olmadı, tekrar dene" dedirtir (ve artık geçersiz olan eski
+/// şifreyi girdirir), hatayı yutmak ise "diğer cihazlar çıkarıldı" diye yanlış
+/// güvence verir. İkisi de yanlış; sonuç bu yüzden **taşınır**.
+enum PasswordChangeOutcome {
+  /// Şifre değişti **ve** diğer oturumlar kapatıldı.
+  done,
+
+  /// Şifre değişti, ama diğer cihazların oturumu kapatılamadı (ağ/sunucu).
+  /// Kullanıcıya açıkça söylenir; sessizce başarı sayılmaz.
+  otherSessionsKept,
+}
+
 /// Kimlik doğrulama hatası (kullanıcıya gösterilebilir Türkçe mesaj taşır).
 class AuthException implements Exception {
   const AuthException(this.message, {this.code});
@@ -94,7 +110,13 @@ abstract class AuthRepository {
   ///
   /// Doğrulama başarısızsa hiçbir şey yazılmaz ve
   /// [AuthErrorCode.invalidCurrentPassword] kodlu [AuthException] atılır.
-  Future<void> changePassword({
+  ///
+  /// WP-319-G (sahip kararı, 2026-07-26): şifre değiştikten sonra **diğer tüm
+  /// oturumlar kapatılır**, bu cihazınki açık kalır. "Şifremi değiştirdim"
+  /// diyen kullanıcı *"o kişi artık giremesin"* demek ister; oturumlar açık
+  /// kalırsa şifre değişikliği saldırganı **dışarı atmaz** ve kullanıcı
+  /// korunduğunu sanır. Bu da doğrulama gibi ekrana bırakılmaz — sözleşmede.
+  Future<PasswordChangeOutcome> changePassword({
     required String currentPassword,
     required String newPassword,
   });

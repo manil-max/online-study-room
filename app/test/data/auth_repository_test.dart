@@ -133,10 +133,15 @@ void main() {
     test('doğru mevcut şifreyle değişir; eski şifre artık geçmez', () async {
       final repo = await signedIn();
 
-      await repo.changePassword(
+      final outcome = await repo.changePassword(
         currentPassword: 'eski123',
         newPassword: 'yeni123',
       );
+
+      // WP-319-G: bellek-içi repository'nin çok cihazlı oturum kavramı yok,
+      // kapatılacak başka oturum da yok. Gerçek iptal Supabase tarafındadır ve
+      // `auth_session_revocation_contract_test.dart` ile korunur.
+      expect(outcome, PasswordChangeOutcome.done);
 
       await repo.signOut();
       final profile = await repo.signIn(email: 'a@b.com', password: 'yeni123');
