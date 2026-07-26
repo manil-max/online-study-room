@@ -931,18 +931,19 @@ ile git geçmişindedir. Canlı dosyada tekrar tutulmaz.
 - **WP-301** eski `metric_day` backfill yaklaşımı iptal edildi; yerini kayıt anı damgası **WP-325** aldı.
 - Eski iki-beta/dalga sırası tarihsel kayıttır; güncel sıra Yol Haritası + Aktif Çalışma Kaydı'dır.
 
-## 🔧 v49 Sonrası Seri Fix Kuyruğu
+## 🔧 Seri Fix Kuyruğu
 
-> **Sahip kararı (2026-07-27):** Bu kuyruk **v49 stable yayımlandıktan sonra**
-> açılır; v49 kapsamına hiçbir madde eklenmez. `Hotfix WP-n` etiketi kuyruk
-> sırasıdır, kanonik numara her zaman yanında verilir ve `Son WP numarası`
-> ile birlikte ilerler.
+> **Sahip kararı (2026-07-27, revize):** Kuyruk v49 *sonrasına* bırakılmıyor.
+> v49 henüz yayımlanmadığı için **Hotfix WP-1 · WP-352 v49 kapsamına alındı** —
+> sonradan ayrı hotfix turu açmamak için. Sıradaki maddeler v49 çıktıktan sonra
+> değerlendirilir. `Hotfix WP-n` etiketi kuyruk sırasıdır, kanonik numara her
+> zaman yanında verilir ve `Son WP numarası` ile birlikte ilerler.
 
 ### Hotfix WP-1 · WP-352 — Birincil grup seçilmemişse görünür uyarı 🏠
 - **Program/Faz:** Faz F2 devamı · WP-329/WP-336/WP-348 ürün açığı
-- **Ajan:** —
-- **Durum:** [ ] Bekliyor · v49 stable yayımına kadar açılmaz
-- **Bağımlılık:** v49 stable yayımı. WP-348 birincil grup kartı yerinde
+- **Ajan:** Claude
+- **Durum:** [~] Kod/test tamamlandı; v49 kapsamında, cihaz kabulü bekliyor
+- **Bağımlılık:** Yok. WP-348 birincil grup kartı yerinde
   (`social_profile_screen.dart` kendi-profil/Başarımlar görünümü).
 - **Problem (2026-07-27 sahip gözlemi + kod doğrulaması):** Çoklu üyelikte açık
   seçim yoksa `reconcile_user_primary_group` bilinçli olarak
@@ -965,17 +966,26 @@ ile git geçmişindedir. Canlı dosyada tekrar tutulmaz.
   ([`0079:122-124`](supabase/migrations/0079_primary_group_preference.sql:122)).
   Ayrıca 3+ gruptayken birincil gruptan ayrılmak veya birincil grubun silinmesi
   aynı NULL durumuna düşürür — uyarı bu yolları da kapsar.
-- **Kapsam:**
-  - `PrimaryGroupSelectorCard` içinde `primaryGroupId == null` ve aktif üyelik
-    sayısı ≥ 1 iken **error/warning renginde** uyarı bloğu; metin mevcut
-    `primaryGroupNotSelected` anahtarından okunur, yeni string yazılmaz.
-  - Uyarı, kullanıcı kartı hiç açmasa da fark edilsin diye Başarımlar giriş
-    noktasında bir **nokta/badge** ile işaretlenir (mobil + masaüstü kabuk).
-  - Widget testi: (a) birincil seçili → uyarı yok, badge yok; (b) 2 grup +
-    seçim yok → uyarı var, badge var; (c) grup yok → uyarı yok, mevcut
-    `primaryGroupEmpty` durumu korunur.
+- **Yapılan:**
+  - `primaryGroupSelectionMissingProvider` (`group_providers.dart`): üyelik var
+    + `primaryGroupId == null` → `true`. Yükleme/hata durumunda `false`; olmayan
+    bir kayıp ilan edilmez.
+  - `PrimaryGroupSelectorCard` içinde `errorContainer` renkli uyarı bloğu
+    (`ValueKey('primary-group-missing-warning')`). Metin mevcut
+    `primaryGroupNotSelected` anahtarından okunur — **yeni string yazılmadı**,
+    WP-348'den kalan ölü anahtar bağlandı. Uyarı seçimi engellemez.
+  - Mobil kabukta Profil sekmesine nokta (`home_shell.dart`
+    `_profileTabIcon`). Bekleyen ödül sayısı varsa mevcut sayı rozeti korunur;
+    iki sinyal aynı sekmede yarışmaz.
+  - `app/test/features/profile/primary_group_missing_warning_test.dart`:
+    3 widget + 4 provider senaryosu.
 - **Kapsam dışı:** Migration, RPC, cooldown kuralı, otomatik birincil atama,
   yeni l10n anahtarı.
+- **Bilerek yapılmadı — masaüstü nokta.** `DesktopNavigationPane` bugün hiç
+  badge altyapısı taşımıyor (`DesktopNavItem` yalnız `IconData`); bekleyen ödül
+  rozeti de masaüstünde yok. Rozet eklemek paylaşılan gezinti widget'ının
+  sözleşmesini değiştirir ve v49 teslimi için gereksiz risktir. Masaüstünde
+  uyarı yüzeyi kartın kendisidir. Rozet istenirse ayrı kart açılır.
 - 🔴 **Kapanan karar (sahip, 2026-07-27): geçmiş yetim oturumlar telafi
   edilmeyecek.** Attribution `after insert` + `on conflict (session_id) do
   nothing` olduğu için
@@ -984,12 +994,17 @@ ile git geçmişindedir. Canlı dosyada tekrar tutulmaz.
   projeksiyonuna girmez. Bu kabul edildi; backfill/yeniden atama WP'si
   **açılmayacak**. Bu kart yalnız bundan sonrasını korur.
 - **Sahip yollar:** `app/lib/features/profile/widgets/primary_group_selector_card.dart`,
-  `app/lib/core/navigation/home_shell.dart`, `app/lib/features/desktop/desktop_home_shell.dart`,
-  ilgili widget testi, `progress.md` (yalnız bu kart).
-- **Ortak/riskli yüzey:** İki kabuk dosyası da paylaşılan gezinti yüzeyidir;
-  badge dışında hiçbir gezinti davranışı değiştirilmez.
-- **Kabul (DoD):** Üç widget test senaryosu yeşil; `flutter analyze` temiz; ölü
-  l10n anahtarı kalmadı; cihazda 2 gruplu hesapta uyarı + badge görülüyor ve
+  `app/lib/data/providers/group_providers.dart`,
+  `app/lib/core/navigation/home_shell.dart`,
+  `app/test/features/profile/primary_group_missing_warning_test.dart`,
+  `progress.md` (yalnız bu kart).
+- **Ortak/riskli yüzey:** `home_shell.dart` paylaşılan gezinti yüzeyidir; nokta
+  dışında hiçbir gezinti davranışı değiştirilmedi. Mevcut bekleyen-ödül rozeti
+  regresyon testi (`widget_test.dart`) yeşil kaldı.
+- **Kabul (DoD):** ✅ 7/7 yeni test yeşil · ✅ `flutter analyze` temiz (0 sorun) ·
+  ✅ tam paket 926 test, tek hata `campfire_sky_golden_test.dart` "kamp telefonu
+  golden · 8 kişi" ve o **temiz HEAD'de de patlıyor** (bu WP'den bağımsız,
+  mevcut sorun) · ⏳ cihaz kabulü: 2 gruplu hesapta uyarı + nokta görülüyor,
   seçim sonrası ikisi de kayboluyor.
 
 ## Bekleyen Uygulanabilir WP'ler

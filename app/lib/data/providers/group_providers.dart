@@ -74,6 +74,20 @@ final primaryGroupPreferenceProvider = StreamProvider<PrimaryGroupPreference>((
       .watchPrimaryGroupPreference(user.id);
 });
 
+/// WP-352: Üyeliği olup birincil grubu olmayan hesapta grup ilerlemesi HİÇBİR
+/// gruba yazılmaz — `groups_for_session_progression` boş küme döner
+/// (`0080_session_group_attribution.sql`). Kayıp sessizdir: grup liderlik
+/// tablosu ham oturumları topladığı için kullanıcı orada normal görünür. Bu
+/// yüzden durum kullanıcıya görünür kılınmalıdır.
+///
+/// Yükleme/hata sırasında `false` döner; olmayan bir kaybı ilan etmeyiz.
+final primaryGroupSelectionMissingProvider = Provider<bool>((ref) {
+  final groups = ref.watch(userGroupsProvider).value;
+  final preference = ref.watch(primaryGroupPreferenceProvider).value;
+  if (groups == null || preference == null) return false;
+  return groups.isNotEmpty && preference.primaryGroupId == null;
+});
+
 final primaryGroupProvider = Provider<AsyncValue<StudyGroup?>>((ref) {
   final groupsAsync = ref.watch(userGroupsProvider);
   final preferenceAsync = ref.watch(primaryGroupPreferenceProvider);

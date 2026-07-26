@@ -39,6 +39,22 @@ class HomeShell extends ConsumerWidget {
     ProfileScreen(),
   ];
 
+  /// Bekleyen ödül sayısı varsa sayı rozeti korunur; yoksa eksik birincil grup
+  /// için sayısız nokta gösterilir. İki sinyal aynı sekmede yarışmaz.
+  static Widget _profileTabIcon({
+    required IconData icon,
+    required int pendingRewardCount,
+    required bool missingPrimaryGroup,
+  }) {
+    if (pendingRewardCount > 0) {
+      return Badge.count(count: pendingRewardCount, child: Icon(icon));
+    }
+    return Badge(
+      isLabelVisible: missingPrimaryGroup,
+      child: Icon(icon),
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final index = ref.watch(navIndexProvider);
@@ -51,6 +67,10 @@ class HomeShell extends ConsumerWidget {
         ?.value;
     final pendingRewardCount = rewardSummary?.pendingCount ?? 0;
     final pendingRewardXp = rewardSummary?.pendingXp ?? 0;
+    // WP-352: birincil grup seçilmemişse grup ilerlemesi sessizce durur. Seçim
+    // Profil→Başarımlar altındaki kartta olduğu için sekmede nokta gösterilir;
+    // yoksa kullanıcı kartı hiç açmadan kaybı fark etmez.
+    final missingPrimaryGroup = ref.watch(primaryGroupSelectionMissingProvider);
     final selfId = ref.watch(authStateProvider).asData?.value?.id;
     final crownRank = selfId == null
         ? null
@@ -149,15 +169,15 @@ class HomeShell extends ConsumerWidget {
               label: AppLocalizations.of(context).statsIstatistik,
             ),
             NavigationDestination(
-              icon: Badge.count(
-                count: pendingRewardCount,
-                isLabelVisible: pendingRewardCount > 0,
-                child: const Icon(Icons.person_outline),
+              icon: _profileTabIcon(
+                icon: Icons.person_outline,
+                pendingRewardCount: pendingRewardCount,
+                missingPrimaryGroup: missingPrimaryGroup,
               ),
-              selectedIcon: Badge.count(
-                count: pendingRewardCount,
-                isLabelVisible: pendingRewardCount > 0,
-                child: const Icon(Icons.person),
+              selectedIcon: _profileTabIcon(
+                icon: Icons.person,
+                pendingRewardCount: pendingRewardCount,
+                missingPrimaryGroup: missingPrimaryGroup,
               ),
               label: AppLocalizations.of(context).profileProfil,
             ),

@@ -94,8 +94,13 @@ class _PrimaryGroupSelectorCardState
     final now = DateTime.now();
     final nextAllowed = preference.nextChangeAllowedAt?.toLocal();
     final locked = nextAllowed != null && now.isBefore(nextAllowed);
+    // WP-352: seçim yoksa grup ilerlemesi hiçbir gruba yazılmaz. Liderlik
+    // tablosu ham oturumları topladığı için kayıp başka hiçbir yüzeyde
+    // görünmez; uyarı seçim eyleminin yanında durmak zorundadır.
+    final missing = preference.primaryGroupId == null;
     return Column(
       children: [
+        if (missing) const _MissingPrimaryGroupWarning(),
         if (locked)
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
@@ -180,6 +185,48 @@ class _PrimaryGroupSelectorCardState
   void _retry() {
     ref.invalidate(userGroupsProvider);
     ref.invalidate(primaryGroupPreferenceProvider);
+  }
+}
+
+/// WP-352: seçim yapılmadığı sürece grup başarımı/görevi/gün-hafta ilerlemesi
+/// birikmez. Metin WP-348 ile eklenen `primaryGroupNotSelected` anahtarındandır.
+class _MissingPrimaryGroupWarning extends StatelessWidget {
+  const _MissingPrimaryGroupWarning();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+      child: Container(
+        key: const ValueKey('primary-group-missing-warning'),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: scheme.errorContainer,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              Icons.warning_amber_rounded,
+              size: 20,
+              color: scheme.onErrorContainer,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                AppLocalizations.of(context).primaryGroupNotSelected,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: scheme.onErrorContainer,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
