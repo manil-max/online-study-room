@@ -2,21 +2,24 @@
 
 > Son güncelleme: **2026-07-26** · Saat dilimi: **Europe/Istanbul**
 >
-> 🧭 **Yol haritası artık [`docs/PLAN.md`](docs/PLAN.md)'de.** "Sırada ne var, hangi
-> fazdayız, hangi karar bekliyor" oradan okunur. Bu dosya günlük çalışma kaydı olarak
-> kalır: kim neyi claim etti, ne test edilecek, ne kodlanacak.
+> 🧭 **BU DOSYA TEK GÜNCEL KAYNAKTIR** (sahip kararı, 2026-07-26). Yol haritası,
+> açık kararlar, QA kuyruğu ve aktif iş — hepsi burada. `docs/PLAN.md` artık
+> yalnız buraya işaret eden bir sapıdır; iki dosyada iki farklı gerçek olmaz.
 >
 > 🔴 **Sürüm politikası (2026-07-26):** tag oluşturma ve release tetikleme **sahip
 > onayına bağlıdır**. Commit/push serbest; düzeltmeler biriktirilip tek sürümde çıkar.
 >
-> Bu dosya yalnız aktif iş, açık kabul ve ürün kararlarını taşır. Tamamlanmış WP'lerin ayrıntısı git geçmişi, [`docs/archive/progress-tarihsel-2026-07.md`](docs/archive/progress-tarihsel-2026-07.md) ve kanonik raporlardadır; burada tekrar edilmez.
+> 🔴 **WP modeli emekliye ayrıldı (sahip kararı, 2026-07-26).** İş artık **fazlarla**
+> yürür (aşağıdaki *Yol Haritası*). Eski WP kartları dosyanın altında **tarihsel
+> kayıt** olarak durur — yeni iş için oradan sıra alınmaz.
 >
-> **Okuma sırası:** `⚡ Aktif Çalışma Kaydı` → `🧪 Cihaz QA Kuyruğu` (kodu bitmiş, **test** bekleyen işler) → `🛠️ Kalan Kod İşi` (**kodlanacak** işler) → yalnız kodlanmayı bekleyen WP kartları.
+> **Okuma sırası:** `⚡ Aktif Çalışma Kaydı` → `🗺️ Yol Haritası` (sırada ne var) →
+> `✅ Kapanan Kararlar` → `🧪 Cihaz QA Kuyruğu` → (altı: tarihsel WP kayıtları).
 
 ## Proje Gerçekleri
 
 - **Ortam durum modeli (WP-293, 2026-07-24 uzlaştırıldı) — altı ayrı gerçek, tek sayıya indirilmez:**
-  1. Repo/local migration zinciri: **`0070`** (`supabase/migrations/` son dosya).
+  1. Repo/local migration zinciri: **`0071`** (`supabase/migrations/` son dosya) — 🔴 **0071 hiçbir ortama uygulanmadı** (grup üye sınırı 8).
   2. Staging uygulanmış head: **`0070`**.
   3. Production **etkin şema**: **`0070`** — `0066–0070` manuel uygulandı; Database Gates + Production Push Activation koşumları başarılı (2026-07-23).
   4. Production **CLI migration history**: **legacy / uzlaştırılmamış** — `supabase_migrations.schema_migrations` relation'ı production'da yok ([`docs/recovery/PRODUCTION-BASELINE.md`](docs/recovery/PRODUCTION-BASELINE.md) §3).
@@ -29,8 +32,8 @@
 - 🕰️ *Tarihsel — üstteki karar bunu değiştirdi:* **Aşama A'nın TÜM WP'leri bitmeden beta çıkmaz — tek beta turu yapılacak.** Gerekçe: beta koşumu ~3 saat sürüyor, iki tur yapılmıyor. **Sonuçları:** (1) "önce X'in cihaz kabulü" yazan yazılı kapılar bu tur için **geçersiz** — cihaz QA'sı fiziken mümkün değil, kod/test kapısı esas alınır (`.agents/AGENTS.md §0.1`); (2) QA kuyruğundaki 6 iş **aynı beta'da** test edilir; (3) bir sorun görülürse hangi WP'den geldiği belirsiz olacağı için her WP **ayrı commit** + `analyze` 0 + testler yeşil şartı **daha da kritik**.
 - **Yönetim varsayılanı:** Production `deploy_enabled/release_enabled` kapalıdır. Stable yalnız protected `production` Environment, exact SHA/head/project-ref GO ve reviewer kanıtıyla ilerler.
 - **Kurallar:** Kök `AGENTS.md`, `.agents/AGENTS.md` ve `docs/KALITE-PROGRAMI.md` geçerlidir. Tek çalışma dalı `main`; her WP ayrı commit; production varsayılmaz.
-- **Son WP:** **298** · Sıradaki boş numara: **299**. Aşama A'da kod/test tamamlanan: 286, 287, 288, 289, 290, 291, 293 — **kartları arşive taşındı** ([arşiv](docs/archive/progress-tarihsel-2026-07.md)); 296, 297, 292, 298 kartları hâlâ burada, kalan işleri aşağıdaki QA kuyruğunda.
-- **Aktif tur:** Yeni Özellik Turu **Aşama A** — plan **rev. 3** kanonik. 11 WP'nin kodu bitti (296, 297, 292, 298 dahil); **kodlanmayı bekleyen 2 iş kaldı** (294, 295). Kanonik plan: [`docs/YENI-OZELLIK-PLANI.md`](docs/YENI-OZELLIK-PLANI.md).
+- 🔴 **WP numarası artık kullanılmıyor** (sahip kararı, 2026-07-26). Son kullanılan: **314**. İş fazlarla yürür; eski kartlar dosyanın altında tarihsel kayıttır.
+- **Aktif tur:** **Faz B** (admin & geri bildirim döngüsü) sıradaki iş. Yol haritası bu dosyanın *Yol Haritası* bölümündedir.
 - ✅ **Ortam gerçeği uzlaştırıldı (WP-293, 2026-07-24):** yukarıdaki altı gerçekli durum modeli kanoniktir; production deploy kapısı yeniden kilitlendi. `deploy-contract.json`, `KALITE-PROGRAMI.md`, `project.md`, `backlog.md`, `tooling/README.md` aynı gerçeğe getirildi.
 
 ## ⚡ Aktif Çalışma Kaydı
@@ -42,8 +45,10 @@
 
 ### Claude Lane
 - **Durum:** [x] Boşta
-- **Faz/WP:** — · **Sıradaki:** DALGA 7 → WP-295 (ilk çıktı: parametrik önizleme)
+- **Faz/WP:** — · **Sıradaki:** **Faz B** (admin & geri bildirim döngüsü)
 - **SAHİP yollar:** —
+- ✅ **2026-07-26:** grup üye sınırı **8** kodlandı (`0071_group_member_limit_8.sql` + Dart sabitleri + 4 test). `analyze` temiz, 815 test yeşil, 51 deploy guard testi yeşil. 🔴 **Migration hiçbir ortama uygulanmadı.**
+- ✅ **2026-07-26:** yol haritası `docs/PLAN.md`'den **bu dosyaya** taşındı (sahip kararı: tek güncel kaynak). PLAN.md sapa indirildi.
 - ✅ **BETA 1 YAYINDA — `beta-v4309`, 2026-07-25 15:30 UTC.** Release Orchestrator run `30163316180`: preflight · android · windows/build · finalize_android · release_status · finalize_complete **hepsi success**. Varlıklar: `app-beta-release.apk` (77.8 MB) + sha1/sha256 · `odak-kampi-windows-beta.msix` (23.3 MB) · `odak-kampi-windows-beta.zip` (42.4 MB) + sha256'lar · `release-manifest.json`. Sürüm `1.0.43-beta.9+4309`, staging backend, migration head `0070`. **Android + Windows ikisi de çıktı.**
 - **Son not:** 2026-07-25 turunda **WP-296, WP-297, WP-292, WP-298 ve WP-294** tamam — `analyze` 0, **793 test yeşil**. Taç geometrisi sahip onayıyla sabitlendi (**5 uç · span 50° · tip 1.63 · inci 0.10 · kavis 0.50**), aura kademeye göre ölçekli.
 - ✅ **WP-298 açık sorusu kapandı (sahip, 2026-07-25):** "altından itibaren" = **altın kademe (3.)**. Kod doğru; bronz/gümüşte aura yok, değişiklik yapılmadı.
@@ -73,23 +78,297 @@
 - **Faz/WP:** —
 - **SAHİP yollar:** —
 
+## 🗺️ Yol Haritası — sırada ne var
+
+> **İki plan, sırayla: PLAN 1 (Ürün & Kod, Faz A–F) → PLAN 2 (Mağaza, Faz G–J).**
+> Tek istisna: **isim + logo kararı** Plan 2'ye ait ama Plan 1 bitmeden verilmeli —
+> mağaza görselleri, MSIX kimliği ve uygulama içi marka ona bağlı.
+
+### Şu anki gerçek durum
+
+| Konu | Durum |
+| --- | --- |
+| Sürüm | `v49` stable. Android APK + Windows MSIX/ZIP GitHub Releases'ta |
+| Sürüm politikası | 🔴 Sahip onayı olmadan yeni sürüm çıkmaz |
+| Test | 815 test yeşil, `flutter analyze` temiz, l10n audit temiz |
+| Migration | Repo head **`0071`**; staging ve production **`0070`** — 0071 hiçbir ortama uygulanmadı |
+| Play Console | Hesap açıldı, doğrulama sürüyor. Hiçbir form doldurulmadı |
+| Microsoft Partner Center | Hesap açıldı. Hiçbir hazırlık yapılmadı |
+
+---
+
+## PLAN 1 — ÜRÜN & KOD
+
+### Faz A — Doğrulama borcu 🟡 *büyük kısmı kapandı, 3 madde açık*
+
+Sahip v48'i cihazda test etti: **özel tema okunabilirliği · spektrum renk seçici ·
+font düğmelerinin sabitliği · grafikteki gün etiketleri — hepsi çalışıyor.** Diğer
+QA maddeleri de v46–v48 turlarında test edildi (sahip beyanı, 2026-07-26).
+
+**Açık kalan 3 madde** — hiçbiri sahibin tek başına kapatabileceği iş değil:
+
+| # | Madde | Neden hâlâ açık |
+| --- | --- | --- |
+| **A1** | Şifre sıfırlama (eski WP-287) | Windows/masaüstündeki 6 haneli kod yolu **Supabase free tier duvarına** takılı: kurtarma e-posta şablonuna `{{ .Token }}` eklenemiyor. Özel SMTP bağlanmadan bu yol çalışmaz. Android derin bağlantı yolu test edilebilir |
+| **A2** | Boş ikinci bildirim (eski WP-303) | Önce **staging'e edge deploy** şart. Deploy olmadan cihazda hiçbir şey değişmez |
+| **A3** | Taç + aura kare bütçesi (eski WP-292/298) | Kabul kriteri `p95 ≤ 16.7 ms · jank ≤ %1`. Bu göz kararı değil, `flutter run --profile` + timeline ölçümü. **Aura, animasyon ekleyen tek iş** — ölçüm asıl orada gerekli. Sahip görsel olarak beğendiyse kartın estetik tarafı kapalı, kalan yalnız sayı |
+
+**Faz A'dan çıkan kod bulguları → Faz C5.**
+
+---
+
+### Faz B — Admin & geri bildirim döngüsü ⬅️ *sıradaki iş*
+
+Şu an kullanıcıdan geri bildirim alıyoruz ama **kapatamıyoruz**: fotoğrafı
+göremiyoruz, cevap yazamıyoruz, liste temizlenmiyor.
+
+**B1. Geri bildirim ekran görüntüleri görünmüyor.** 🔴
+Kod yolu var: `feedback_attachments` bucket'ına imzalı URL üretiliyor
+(`supabase_admin_repository.dart` · `getFeedbackAttachmentUrl`), admin ekranında
+"Ekran görüntüsü" çipi var. Yani sorun **kodda değil, ortamda**. Sırayla:
+1. `0019_feedback_attachments` production'da gerçekten uygulandı mı (bucket + iki storage policy)?
+2. `public.is_super_admin()` production'da sahip hesabı için `true` dönüyor mu?
+3. Kullanıcı tarafı yüklemeyi yapıyor mu, `attachment_path` doluyor mu — yoksa yükleme sessizce mi düşüyor?
+4. Bucket private, imzalı URL 1 saat geçerli. Süresi dolmuş URL cache'lenmiş olabilir.
+**Kabul:** ekli geri bildirimde çipe basınca görsel açılıyor · ek yoksa çip yok ·
+yükleme hatası kullanıcıya sessiz kalmıyor.
+
+**B2. Kullanıcıya cevap yazma — çift yönlü.**
+Altyapı hazır: `announcements` tablosu `target_type = 'user'` + `target_id`
+destekliyor, kullanıcı tarafında Duyurular ekranı (`notification_center_screen.dart`)
+bunu okuyor. Yapılacak: geri bildirim kartına "Yanıtla" → hedefi o kullanıcı olan
+duyuru → push bildirimi → bilet durumu otomatik ilerler → **kullanıcı geri yazabilir**.
+**Kabul:** yanıt kullanıcının Duyurular'ında görünüyor · bildirim düşüyor · yazışma
+biletin altında iz bırakıyor (kim ne demiş).
+
+**B3. Bilet arşivi.** Şu an `open / in_progress / closed` ve hepsi listede duruyor.
+Eklenecek: **"Tamamlandı → listeden kaldır"**. `archived_at` alanı — satır
+**silinmez** (kanıt + istatistik lazım); varsayılan liste arşivlenmemişleri
+gösterir, "Arşivi göster" filtresiyle geri gelinir.
+**Kabul:** biriken liste temizleniyor, hiçbir kayıt kaybolmuyor.
+
+**B4. İsim + logo konuşması (K6).** Faz B sırasında yapılacak — bkz. Faz G.
+
+---
+
+### Faz C — Hesap, güvenlik, ayarlar hijyeni
+
+**C1. Şifre değiştirme.** 🔴 Şu anda **hiç yok** — `account_settings_screen.dart`
+sadece hesap silmeyi taşıyor. Klasik yapı: *mevcut şifre · yeni şifre · yeni şifre
+tekrar* + aynı ekranda **"Şifremi unuttum"**.
+⚠️ Supabase `updateUser(password:)` **eski şifreyi doğrulamaz**. "Mevcut şifre"
+alanının gerçekten işe yaraması için önce o şifreyle yeniden kimlik doğrulaması
+yapılmalı; yoksa alan dekoratif olur (**ölü anahtar**).
+
+**C2. "Verilerimi dışa aktar" taşınıyor.** `data_export_screen.dart` ayarların
+ortasında duruyor → **Hesabımı yönet** başlığı altına, hesap silmenin yanına.
+(Mağaza veri beyanları da bu ikisini bir arada arıyor.)
+
+**C3. Ayarların sırası.** Konvansiyona göre yeniden dizilecek: *Hesap →
+Bildirimler → Görünüm → Çalışma tercihleri → Gizlilik & güvenlik → Hakkında/Yasal*.
+Gizlilik politikası ve yasal metinler **en alta**. Öneri önce sahibe gider.
+
+**C4. TR + EN'e in.** Dil listesinden DE/AR kalkar (`.arb` dosyaları repoda kalır),
+l10n kapısı iki dil parity'si kontrol eder, Arapça RTL QA borcu ve gömülü fontların
+Arapça glif zinciri gereksinimi düşer.
+⚠️ **Davranış değişikliği:** cihaz dili Almanca olan mevcut kullanıcı İngilizce'ye
+düşer. Kabul edilebilir ama bilinerek yapılmalı.
+
+**C5. Teknik borç temizliği** — mağazaya çıkmadan kapanmalı:
+- `passkeys` paketini kaldır (kurulu ama hiç kullanılmıyor; APK boyutu + izin yüzeyi)
+- `pubspec.yaml` sürümünü (`1.0.43-beta.9+4309`) yayınlanan etiketlerle hizala — mağaza paketleri bu numarayı okur
+- Windows MSIX kendi kendine güncellemeyi Store yapısında kapat (**Faz H'nin ön şartı**)
+- Kalan test kararsızlığı: `study_timer_card_stop_test.dart` tam suitte bir koşumda düştü, ikincide geçti. **Sürüm çıkmadan önce çözülmüş olmalı**
+
+---
+
+### Faz D — Yeni kullanıcı deneyimi (tanıtım turu)
+
+Şu an sadece açılışta tek bir `onboarding_screen` var; uygulama içinde hiçbir
+yerde rehberlik yok.
+
+**D1. Bölüm bazlı tanıtım.** Kullanıcı bir sekmeye **ilk kez** girdiğinde oradaki
+öğeler kısa balonlarla tanıtılır: Ana Sayfa, Sayaç, Kamp Ateşi, Gruplar,
+İstatistik, Profil. **Yalnız ilk açılışta**; ekrana basınca sonraki balona geçer;
+hızlı geçmek isteyen üst üste basar. "Atla" her zaman var.
+
+Tasarım kararları:
+- Her ekranın **kendi** "görüldü" anahtarı olur; hepsi tek bayrağa bağlanmaz.
+- Anahtarlar **sürümlenir** (`home.v1`, `home.v2`) — ekran ciddi değişince tur yeniden gösterilebilsin ama her güncellemede herkese açılmasın.
+- Ayarlarda **"Tanıtım turlarını sıfırla"**.
+- Windows'ta da çalışmalı (fare/klavye; balon konumları farklı).
+- Tur; izin diyalogları ve güncelleme bildirimiyle çakışmamalı.
+
+---
+
+### Faz E — Veri doğruluğu ve grup semantiği
+
+**E1. Gün sınırı — yurtdışı kullanıcı.**
+
+⚠️ **Eski plandaki iddia yanlıştı.** "Gün toplamı UTC'ye göre" **değil**: sunucu
+tarafı baştan sona `Europe/Istanbul` (`0007`, `0011`, `0024`, `0039`, `0051`,
+`0053`, `0062`, `0063` … 60'tan fazla yerde), istemci de `istanbulDay`. "İstanbul'a
+çevirme" işi **çoktan yapılmış**.
+
+⚠️ **Backfill diye bir iş de yok.** Gün toplamları hiçbir tabloda saklanmıyor;
+`get_user_day_totals` her çağrıda ham `study_sessions` satırlarından hesaplıyor.
+
+**Gerçek açık:** herkesin günü İstanbul yarısında sıfırlanıyor.
+
+| Kullanıcı | Gün ne zaman sıfırlanıyor | Sonuç |
+| --- | --- | --- |
+| Türkiye (UTC+3) | 00:00 | doğru |
+| Sydney (UTC+11) | 08:00 | sabah çalışması düne yazılır |
+| New York (UTC−5) | 16:00 | 🔴 akşam çalışması yarına yazılır |
+
+**Çözüm (K8):** gün sınırı **birincil grubun bölgesinden** gelir →
+grubu yoksa **cihazın** saat dilimi → o da yoksa `Europe/Istanbul`.
+Böylece kişisel ve grup istatistiği **asla çelişmez**.
+
+**E2. Geçmiş donar — gün, kayıt anında damgalanır.** 🔴 *(sahip talebi)*
+Gün şu an her sorguda yeniden hesaplandığı için bölge değişince **geçmiş de
+kayıyor**. Çözüm: oturum kaydedilirken o anki gün sınırına göre hesaplanan gün
+`study_sessions` satırına **yazılır ve bir daha dokunulmaz**. Grup/bölge değişse
+bile geçmiş sabit kalır, sadece yeni kayıtlar yeni bölgeye göre işler.
+- Mevcut satırlar İstanbul günüyle doldurulur → **ekranda hiçbir şey değişmez**.
+- Gün alanı indekslenebilir; tekrarlanan saat dilimi hesabı da kalkar.
+- Elle oturum ekleme/düzenleme akışında gün **yeniden** hesaplanmalı.
+
+**E3. Grup bölgesi, üye sınırı ve keşif** *(sahip talebi, 2026-07-26)*
+
+- **E3.1 Grup bölgesi.** `groups.time_zone` (IANA, varsayılan `Europe/Istanbul`).
+  E1'in gün sınırı buradan beslenir. Grup kurarken ve ayarlarında seçilir.
+  ⚠️ **Konum izni istenmez, enlem/boylam sorulmaz** — sadece bölge seçtirilir.
+  Gerçek konum istemek Play Data Safety'de yeni veri kategorisi ve Android'de
+  konum izni açar. *(Bu, eski WP-300'ün `groups.location` enlem/boylam
+  yaklaşımının yerini alır.)*
+- **E3.2 Grup bilgilerinde bölge.** Açık grup kartında ve grup bilgi ekranında
+  bölge adı yazar; **basınca kullanıcıya göre saat farkı**: *"Türkiye (senden +8 saat)"*.
+  ⚠️ Fark **anlık hesaplanır, saklanmaz** — yaz saati yüzünden aynı grup yazın −7,
+  kışın −8 olabilir. Sabit sayı yazmak sessiz hatadır.
+- **E3.3 Üye sınırı 8.** ✅ **YAPILDI** (2026-07-26, `0071_group_member_limit_8.sql`).
+  🔴 **Uygulanmadı:** migration hiçbir ortamda koşmadı; staging apply gerekiyor.
+- **E3.4 Keşifte saat dilimi yakınlığı.** Açık grup önerileri kullanıcının saat
+  dilimine **en yakından en uzağa** sıralanır. Anahtar: iki bölgenin **o andaki**
+  UTC farkının mutlak değeri; eşitlikte `created_at desc`.
+  ⚠️ `idx_groups_public_discovery` `created_at desc` üzerine kurulu — sıralama
+  değişince bu indeks sorguyu karşılamaz; sayfalama + performans birlikte gözden geçirilmeli.
+- **E3.5 Grup arama/filtre.** İsim araması + bölge filtresi + **"boş kontenjanı
+  var"** filtresi (sınır 8 olunca gruplar çabuk dolar).
+
+**E4. Birden fazla gruptaki kullanıcı → birincil grup.**
+Kullanıcı bir **birincil grup** seçer; **görev · hedef · başarım · bildirim** onu
+sayar. Diğer gruplar üyelikte kalır ama sayaç tutmaz.
+⚠️ **Birincil grup değişirse gün sınırı da değişir.** E2'deki damgalama sayesinde
+geçmiş donar, ama **bundan sonrası** yeni bölgeye göre işler — kullanıcı grup
+değiştirme ekranında bir kez uyarılmalı.
+
+---
+
+### Faz F — Kamp ateşi ve görsel işler
+
+Mağaza çıkışını **bloklamaz**. Faz A–E'den sonra.
+
+- **F1.** Kamp ateşi: oturma yayları + 2 poz *(eski WP-295)*
+- **F2.** Gündüz/gece gökyüzü, gece uyuma animasyonu *(eski WP-299)*
+- **F3.** Gökyüzü hesabı için grup bölgesi — E3.1'in saat dilimi alanına dayanır.
+  Enlem/boylam gerekirse **ayrıca** konuşulur (konum izni açar)
+- **F4.** Faz A'dan çıkan kozmetik bulgular
+
+⚠️ **Kural (sahip talebi):** görsel işlerde **ilk çıktı kod değil** — parametrik
+önizleme gelir, sahip sayıyı/pozu seçer, seçilen değer teste bağlanır.
+
+---
+
+## PLAN 2 — MAĞAZA HAZIRLIĞI
+
+### Faz G — Kimlik: isim ve logo 🔴 *erken karar, geç uygulama*
+
+Sahip: *"logo ve isim tekrar düşünülmeli, hem TR hem English."* Bu karar **her
+mağaza görselini, mağaza kaydını ve MSIX kimliğini** etkiler.
+
+- **Değişebilir:** görünen uygulama adı, logo, mağaza başlığı, uygulama içi marka
+- **Değişmesi pahalı:** Android `applicationId` — değişirse **yeni uygulama** olur, mevcut kullanıcılar güncelleme alamaz
+- **Değişmesi pahalı:** MSIX `Identity Name` — Partner Center'da rezerve edilen adla **birebir** eşleşmeli, sonradan değişmez
+
+### Faz H — Microsoft Store (önce burası)
+
+Play doğrulaması sürerken buraya çıkmak mantıklı: Windows sürümü zaten üretiliyor
+ve Microsoft'un incelemesi genelde daha hızlı.
+
+- **H1.** Partner Center'da uygulama adını rezerve et (Faz G'den sonra)
+- **H2.** MSIX kimliğini Store'un verdiği `Identity Name`/`Publisher` ile hizala — şu anki paket kendi imzamızla üretiliyor, Store'a öyle gitmez
+- **H3.** Yaş derecelendirme anketi · kategori · gizlilik politikası URL'i
+- **H4.** Mağaza görselleri: ekran görüntüleri (TR + EN) · açıklama · tanıtım videosu
+- **H5.** Windows cihaz QA'sı (`docs/QA-WINDOWS.md`, `docs/WINDOWS-VM-QA.md`)
+- **H6.** İlk gönderim → geri bildirim → düzeltme turu
+
+### Faz I — Google Play
+
+- **I1.** 🔴 **AAB.** Play `.apk` kabul etmiyor. Release hattı sadece APK üretiyor — bundle çıktısı eklenecek
+- **I2.** 🔴 **Hesap silme kanıtı.** Akış uygulama içinden **ve** webden erişilebilir olmalı, uçtan uca kanıtlanmalı (istek → 14 gün → kalıcı silme → yetkisiz çağrı reddi → rollback). Kodu var, kanıtı yok
+- **I3.** **Gizlilik politikası + Kullanım şartları canlı HTTPS adreste** → **GitHub Pages** (K7). Metinler `docs/legal/` içinde hazır, hiçbir yerde yayınlanmıyor. Data Safety formu bunsuz doldurulamaz
+- **I4.** **Data Safety formu** — envanter `docs/play-store/DATA-SAFETY.md`'de satır satır hazır
+- **I5.** İçerik derecelendirme anketi + mağaza görselleri (TR + EN)
+- **I6.** Kullanıcı içeriği beyanı (raporlama/engelleme/moderasyon) cihaz smoke testi
+- **I7.** İmzalama anahtarı yedeği + rollback planı yazılı olarak
+- **I8.** Kademeli yayın: %10 → %25 → %50 → %100 (her kademe ≥ 24 saat)
+
+Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-RELEASE-GATE.md)
+
+### Faz J — Yayın sonrası
+
+- Çökme/hata takibi (Sentry var), ilk 72 saat gözlem
+- Mağaza yorumlarına yanıt akışı — Faz B'deki döngüyle birleşir
+- İlk güncelleme turu
+
+---
+
+## ✅ Kapanan Kararlar
+
+| Karar | Sonuç |
+| --- | --- |
+| Diller | **Sadece TR + EN.** DE/AR dil seçeneğinden kalkar, `.arb` dosyaları kalır |
+| Aylık e-posta raporu | **İptal.** Kod dursun, kurulum yapılmayacak (domain + SPF/DKIM + sağlayıcı gerekiyordu) |
+| Tema sihirbazı sadeleştirmesi | **Gerek yok.** Tek gerçek sorun his adımıydı, v49'da çözüldü |
+| **K1** Yanıt kanalı | **Çift yönlü** — kullanıcı admin yanıtına geri yazabilir |
+| **K2** Şifre değiştirme | Klasik üç alan + "Şifremi unuttum"; mevcut şifre **gerçekten** doğrulanır. Google/passkey girişi zaten yok (`passkeys` ölü bağımlılık) → özel durum ekranı gerekmiyor |
+| **K3** Tanıtım turu | Yalnız **ilk açılışta**, ekrana basınca sonraki balona geçer |
+| **K4** Gün sınırı backfill | **Konusuz kaldı** — gün toplamları saklanmıyor, her sorguda hesaplanıyor |
+| **K5** Çoklu grup | **Birincil grup** — kullanıcı seçer; görev/hedef/başarım/bildirim onu sayar |
+| **K6** İsim + logo | ⏸️ **Faz B'de konuşulacak** — tek açık karar |
+| **K7** Gizlilik URL'i | **GitHub Pages** — bedava, HTTPS hazır, `docs/legal/*.md`'den yayınlanır |
+| **K8** Yurtdışı gün sınırı | **Birincil grubun bölgesi** belirler; grubu olmayan cihaz saat dilimini kullanır. Gruplara bölge alanı + üye sınırı 8 + keşifte yakınlık sıralaması |
+| Üye sınırı | **8 kişi** — kod yazıldı (`0071`), migration **uygulanmadı** |
+
+---
+
+## ⚠️ Risk ve Tuzak Notları
+
+- **Sürüm disiplini.** Sürüm sahibin onayıyla çıkar; düzeltmeler birikir, tek sürümde çıkar.
+- **Migration drift.** Repo `0071`, ortamlar `0070`. Sürümden önce staging apply şart.
+- **Geri alınamaz işler.** Hesap silme purge'ü bu sınıfta — yedek + staging provası + rollback betiği olmadan production'a dokunulmaz. *Gün sınırı artık bu sınıfta değil* (toplamlar saklanmıyor).
+- **Ölü anahtar riski.** "Mevcut şifre" gibi görünen ama hiçbir şey doğrulamayan arayüzler en kötü hata türü — kullanıcı korunduğunu sanır. Faz C'de özellikle kontrol edilecek.
+- **MSIX kimliği** Partner Center'da rezerve edilen adla eşleşmezse paket reddedilir; sonradan düzeltmek yeni uygulama demektir.
+- **Saat dilimi offset olarak saklanmaz** — hep IANA adı (`America/New_York`). Türkiye'de yaz saati olmadığı için bu hata bugüne kadar hiç görünmedi.
+
+---
+
 ## 🧪 Cihaz QA Kuyruğu — kod bitti, cihaz testi bekliyor
 
-> **Bu tablodaki işlerin kodu bitti; ajan tarafında yapılacak iş yok.** Kalan tek adım proje
-> sahibinin cihazda/panelde doğrulaması. Kart ayrıntıları [arşivde](docs/archive/progress-tarihsel-2026-07.md).
-> QA sırasında bulunan hata **yeni WP** olur, eski kart yeniden açılmaz.
+> ✅ **Bu kuyruğun büyük kısmı KAPANDI (sahip, 2026-07-26):** v46–v48 turlarında
+> cihazda test edildi. Sahip isim isim doğruladı: özel tema okunabilirliği ·
+> spektrum renk seçici · font düğmelerinin sabitliği · grafikteki gün etiketleri.
 >
-> ✅ **Bu kuyruğun TAMAMI artık `v46` STABLE'da (2026-07-25) test ediliyor** — sahip kararı (`§0.1`):
-> beta 1 (`beta-v4309`) düzeltmeleri alındıktan sonra doğrudan stable'a çıkıldı, QA orada yapılıyor.
-> Kod tarafı bitti; WP-295 artık beklenmiyor (beta kararı iki betaya çevrildi).
-> 🔁 **Geri dönüş:** hata ağırsa `v45` yeniden "Latest" yapılır; şema değişmediği (head 0070) için
-> migration geri alımı gerekmez.
-> 🔴 **Beta 1 QA'sında ayrıca ölçülecek — WP-295/299 buna bağlı:** kamp ateşi ekranında
-> `flutter run --profile` + timeline ile **p95 kare süresi** ve **jank oranı**. Bu sayı olmadan
-> beta 2'nin gökyüzü + sürekli marşmelov işi körlemesine yazılır.
-> ℹ️ **WP-296 ayrıca cihaz QA istemiyor** ama Windows yüzeyine dokundu: masaüstünde alarm eklemenin dialogsuz açılması ve izin kartının nötr görünmesi aynı turda bakılmalı.
-> ⚠️ Bu yüzden bir hata görüldüğünde kaynağı belirsiz olabilir; ilk bakılacak yer o yüzeye
-> dokunan **son commit**'tir (her WP ayrı commit).
+> 🟡 **Açık kalan 3 madde yukarıdaki Faz A'da** (A1 şifre sıfırlama · A2 boş ikinci
+> bildirim · A3 kare bütçesi ölçümü) — üçü de önce bir ops adımı ya da ölçüm
+> istiyor, sahibin tek başına kapatabileceği iş değil.
+>
+> 🟡 **v49'un his adımı** (tema sihirbazı 6/8) cihazda doğrulanmadı. Sahip
+> "acelesi yok" dedi — sonraki sürümle birlikte bakılacak.
+>
+> ℹ️ Aşağıdaki tablo **tarihsel kayıt** olarak duruyor: hangi işin neyi
+> doğrulaması gerektiği yazılı kalsın diye. Yeni iş buradan sıra almaz.
 
 | WP | Kod bitiş | Cihazda/panelde doğrulanacak | Tür |
 |---|---|---|---|
@@ -111,12 +390,18 @@
 
 **WP-289** (his araştırması) tamamen kapandı — doküman WP'si, QA gerektirmez.
 
-## 🛠️ Kalan Kod İşi — ne kodlanacak
+## 🗄️ TARİHSEL — WP kayıtları (buradan yeni iş alınmaz)
 
-> 🔴 **"Tek beta" kararı 2026-07-25'te sahip tarafından DEĞİŞTİRİLDİ (`§0.1`): iki beta olacak.**
-> **Beta 1 = kapanmış 9 WP, hemen çıkar** (295 beklenmez). Beta 1 test edilirken **WP-295 + 299 + 300**
-> kodlanır → **beta 2** (admin işleri de orada) → stable. Gerekçe [notlar F-09](docs/YENI-OZELLIK-NOTLARI.md);
-> kamp ateşinin `p95 ≤ 16.7 ms` bütçesi beta 1 cihaz turu olmadan ölçülemiyordu.
+> 🔴 **Bu bölümün tamamı geçmiş kayıttır.** WP modeli 2026-07-26'da emekliye
+> ayrıldı; sırada ne olduğu **yukarıdaki Yol Haritası**'nda yazar.
+>
+> ⚠️ **Aşağıdaki iki kart yol haritasıyla ÇELİŞİR, uygulanmaz:**
+> - **WP-300** `groups.location` (enlem/boylam + tz) → yerini **E3.1** aldı:
+>   enlem/boylam **yok**, sadece saat dilimi (konum izni açmamak için).
+> - **WP-301** sunucu gün sınırı + `metric_day` backfill → **konusuz**: sunucu
+>   zaten `Europe/Istanbul` ve gün toplamları saklanmıyor. Yerini **E1 + E2** aldı.
+>
+> 🕰️ "Beta 1 / beta 2" modeli de tarihseldir — artık faz + sahip onaylı tek sürüm.
 
 | # | İş | Kod durumu | Başlamaya hazır mı? |
 |---|---|---|---|
