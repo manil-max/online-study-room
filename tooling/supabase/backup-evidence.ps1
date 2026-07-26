@@ -25,8 +25,25 @@ $response = Invoke-RestMethod -Method Get `
   -Headers @{ Authorization = "Bearer $($env:SUPABASE_ACCESS_TOKEN)" } `
   -ErrorAction Stop
 
-$evidence = New-ProductionBackupEvidence -BackupApiResponse $response -ProjectRef $ProjectRef `
-  -ExpectedGitSha $ExpectedGitSha -ExpectedMigrationHead $ExpectedMigrationHead
+# Kanıt üretilemezse neden fail-closed durduğumuz teşhis edilebilir olmalı:
+# yalnız sır içermeyen alanlar özetlenir.
+try {
+  $evidence = New-ProductionBackupEvidence -BackupApiResponse $response -ProjectRef $ProjectRef `
+    -ExpectedGitSha $ExpectedGitSha -ExpectedMigrationHead $ExpectedMigrationHead
+} catch {
+  $summary = [ordered]@{
+    pitr_enabled = [bool]$response.pitr_enabled
+    walg_enabled = [bool]$response.walg_enabled
+    region = [string]$response.region
+    backup_count = @($response.backups).Count
+    backups = @(@($response.backups) | ForEach-Object {
+      [ordered]@{ status = [string]$_.status; inserted_at = [string]$_.inserted_at; is_physical = [bool]$_.is_physical_backup }
+    })
+    physical_backup_data = $response.physical_backup_data
+  }
+  Write-Host "Backup API summary: $($summary | ConvertTo-Json -Depth 6 -Compress)"
+  throw
+}
 
 $json = ($evidence | ConvertTo-Json -Depth 6 -Compress)
 if (-not [string]::IsNullOrWhiteSpace($OutputPath)) {
