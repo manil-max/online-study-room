@@ -22,7 +22,7 @@
   - **V49-5 · Tanıtım turları (onboarding/coach marks) revizyonu.** Mantık doğru, uygulama kötü — hedef/konum/sıra ayarları tutmuyor. Baştan gözden geçirilecek.
 
 - [x] **Post-v43 kurtarma: release sadeleştirme + bildirim güveni + sayaç kontratı — WP-269–285 (KAPANDI 2026-07-24)**
-  - **Güncel gerçek (2026-07-24, WP-293):** Stable **v45** yayında, production etkin şema `0070`; staging `0070`, beta-v4308 yayında. Sahip 2026-07-24'te stable+beta yayınını ve bildirim/sayaç davranışını cihazda kabul etti; bekleyen cihaz kabulleri kapandı.
+  - Sahip 2026-07-24'te (o günkü stable v45 üzerinde) bildirim/sayaç davranışını cihazda kabul etti; bekleyen cihaz kabulleri kapandı. **Güncel ortam durumu bu maddede değil, `progress.md` Proje Gerçekleri'ndedir.**
   - WP-266–285'in kod/staging/yayın işi tamamlandı ve cihazda doğrulandı. `0066–0070` production'a terfi etti; production `deploy_enabled` yeniden `false` kilitlendi.
   - Açık kalan ops kabulü ayrı maddelerde: hesap silme staging (WP-276), başarım/görev/grup matrisi (WP-277).
   - Tarihsel adli rapor git geçmişindedir; güncel ortam durum modeli: `progress.md` Proje Gerçekleri.
@@ -32,20 +32,21 @@
   - Hedef: çalışma bütün aktif gruplarda görünür; görev/hedef/grup progression yalnız başlangıçtaki primary gruba yazılır; aynı hesap telefon/tablette tek global çalışma durumunu görür ve başka cihazdan durdurabilir.
   - Mevcut native kronometre, bildirim, widget ve `ACTION_STOP_SILENT` sıcak yolu korunur. Global katman additive envelope, ayrı V2 DTO, shadow ölçüm, hesap-bağlı idempotency, `run_revision` + kullanıcı-geneli `state_version` ve feature flag'lerle açılır.
   - Migration hattı **WP-329 → WP-336 → WP-338 → WP-341 → WP-344** seridir. Server finalizer, gün sınırı yeniden yazımı, history retro-attribution ve Pomodoro phase ledger bu programın kapsamı değildir.
+  - **Durum 2026-07-27:** migration zinciri üç ortamda da `0085`te; kod yazıldı, **rollout flag'leri kapalı**, cihaz kabulü hiç yapılmadı. Sahip v49'da tam da bu yüzeyde bulgu bildirdi (V49-1) — programın bir sonraki adımı yeni kod değil, flag'li gerçek iki-cihaz testidir.
 
 - [~] **Başarım, görev ve grup ilerlemesi — kod/migration tarihsel, güncel kabul borcu WP-277**
   - Append-only ledger, pending reward/claim, görev, grup avatarı ve süre kaynağı eşitliği için tarihsel implementasyonlar vardır; bunlar yeniden geliştirme kuyruğu değildir.
   - Açık gerçek iş: beş süre kaynağı, iki cihaz, pending claim, görev toggle/undo, private grup/RLS ve İstanbul gün sınırını tek staging+cihaz matrisinde kanıtlamak. Bu WP-277'dir; bug bulunursa ayrı debug WP açılır.
-  - Production terfisi HOLD'dur; eski `0063` doğrudan uygulanmaz.
+  - Şema tarafı kapandı: production `0085`te. Kalan borç **kod değil kabul** — yeni production migration yine ayrı sahip GO'su ister (`deploy_enabled` varsayılan kapalı).
 
 - [ ] **Google Play production hazırlığı — NO-GO / bilinçli park**
   - Play flavor/updater izolasyonu ve bazı hesap/UGC kodları repoda bulunur; bunları “yapılmadı” diye yeniden claim etmek yanlıştır. Eksikler canlı HTTPS legal kimliği, Console/Data Safety, production Edge/cron kanıtı, izin matrisi, AAB/cihaz/closed-test ve açık GO'dur.
   - Program yalnız kullanıcı Play girişimini açıkça başlattığında canlanır. Kanonik sıra: `docs/KALITE-PROGRAMI.md §8.8`; mağaza kapısı: `docs/play-store/PLAY-RELEASE-GATE.md`.
-  - Stable/production HOLD altında Play submission/rollout yapılmaz.
+  - Ek engel: production'da **yedek/PITR yok** (sahip kararıyla muaf). Mağaza kullanıcısı gelmeden önce bu risk ayrıca konuşulmalı — GitHub dağıtımındaki 5 kişilik ekiple mağaza kitlesi aynı risk sınıfı değildir.
 
 - [~] **Hesap silme ve veri saklama — staging ops kabulü WP-276**
   - `0037` RPC'leri, Flutter istek/iptal UI'ı, `purge-accounts` Edge ve retry terminal mantığı kodda var. Eksik olan staging Edge/cron/secret zinciri ile sentetik hesap üzerinden gerçek request→cancel→purge kanıtıdır.
-  - Retention kararı: `docs/HESAP-SILME-RETENTION-KARARI.md`. Production purge ayrı backup/dry-run + somut kullanıcı GO gerektirir.
+  - Retention kararı: `docs/HESAP-SILME-RETENTION-KARARI.md`. Production purge geri alınamaz ve **yedek yoktur** — staging provası + somut sahip GO'su olmadan production'da çalıştırılmaz.
 
 ## 🟡 Orta / Kalan uçlar
 

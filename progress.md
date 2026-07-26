@@ -18,19 +18,25 @@
 
 ## Proje Gerçekleri
 
-- **Migration gerçeği:** repo/local **`0084`** · staging **`0084`** · production
-  etkin şema **`0070`**. Production CLI geçmişi legacy/uzlaştırılmamış;
-  ayrıntı [`docs/recovery/PRODUCTION-BASELINE.md`](docs/recovery/PRODUCTION-BASELINE.md).
-  Deploy contract aynı üç head'i taşır ve production `deploy_enabled: false` kilitlidir.
-- **Stable/production:** **v48** yayında, etkin şema `0070`. Yeni production migration, Edge deploy veya stable tag/release yalnız ayrı, somut kullanıcı GO + backup + dry-run ile yapılır; deploy kapısı kilitli.
-- **Beta/staging:** `beta-v4401` APK'sız tarihsel başarısız adaydır. **`beta-v4402` yayımlandı**: Android APK + Windows MSIX/ZIP mevcut, release run `30212796092` bütünüyle PASS. Staging veritabanı `0084`te; V3 `0073–0084` zinciri dry-run/apply/post-check PASS. Fiziksel cihaz bağlı olmadığı için cihaz kabulü yapılmadı; V3 rollout flag'leri kapalıdır.
+- **Migration gerçeği (2026-07-27):** repo/local **`0085`** · staging **`0085`** ·
+  production **`0085`**. Üç ortam ilk kez hizalı. Production'ın Supabase CLI
+  geçmişi WP-351'de `repair-baseline-0070` ile dolduruldu (yalnız `applied`
+  işaretleme, sıfır DDL); ayrıntı
+  [`docs/recovery/PRODUCTION-BASELINE.md`](docs/recovery/PRODUCTION-BASELINE.md).
+  Deploy contract aynı üç head'i taşır ve production `deploy_enabled` terfi
+  bitince **yeniden `false` kilitlendi**.
+- **Stable/production:** **v49** yayında (`2e19cfb`), etkin şema `0085`.
+  Yedek/PITR **yok** — sahip kararıyla `backup_requirement: "waived"`; bu bir
+  muafiyet kaydıdır, duran bir apply izni değildir. Yeni production migration,
+  Edge deploy veya stable tag/release yalnız ayrı ve somut sahip GO'su ile yapılır.
+- **Beta/staging:** **`beta-v4402`** son beta; Android APK + Windows MSIX/ZIP mevcut, release run `30212796092` bütünüyle PASS. Staging veritabanı `0085`te. Fiziksel cihaz bağlı olmadığı için beta cihaz kabulü yapılmadı; **V3 rollout flag'leri kapalıdır** — v49'da bildirilen çoklu cihaz senkron bulgusu (V49-1) önce bu flag durumuna karşı ayrılmalı.
 - **Release ilkesi:** Android beta/stable artefaktı Android işi başarılı olunca yayımlanır. Windows bağımsız sürer ve başarılı olursa aynı release'e eklenir; Windows hatası Android güncellemesini geri çekmez.
-- **Sürüm sırası:** kod/testi biten işler tek QA kuyruğunda birikir; yeni beta/stable yalnız sahip onayıyla çıkar. Eski beta dalga kararları tarihsel arşivdedir.
-- **Yönetim varsayılanı:** Production `deploy_enabled/release_enabled` kapalıdır. Stable yalnız protected `production` Environment, exact SHA/head/project-ref GO ve reviewer kanıtıyla ilerler.
+- **Sürüm sırası:** kod/testi biten işler tek QA kuyruğunda birikir; yeni beta/stable yalnız sahip onayıyla çıkar. Eski beta dalga kararları git geçmişindedir.
+- **Yönetim varsayılanı:** Production `deploy_enabled/release_enabled` kapalıdır ve her terfiden sonra yeniden kapatılır. Stable yalnız protected `production` Environment, exact SHA/head/project-ref GO ve reviewer kanıtıyla ilerler.
 - **Kurallar:** Kök `AGENTS.md`, `.agents/AGENTS.md` ve `docs/KALITE-PROGRAMI.md` geçerlidir. Tek çalışma dalı `main`; her WP ayrı commit; production varsayılmaz.
-- **Aktif tur:** **Stable öncesi seri ürün revizyonu: WP-348 → WP-349 → WP-350 → WP-351.** Birincil grup IA/24 saat kuralı, tema kapağı, mobil kamp ateşi ve kontrollü stable teslimi bu sırada ilerler.
-- **Son WP numarası:** **WP-352** (v49 sonrası seri fix kuyruğu · Hotfix WP-1).
-- ✅ **Ortam gerçeği uzlaştırıldı (WP-293):** production deploy kapısı kilitli; ortam head'leri tek sayıya indirgenmez.
+- **Aktif tur:** **v49 sonrası cihaz geri bildirimi turu.** WP-348 → WP-351 zinciri kapandı (stable v49 çıktı). Sıradaki iş sahibin cihazda bulduğu beş madde: `backlog.md` V49-1…V49-5. Henüz WP'ye bölünmedi.
+- **Son WP numarası:** **WP-352** (v49 öncesi son hotfix). V49-* maddeleri WP-353'ten devam edecek.
+- ✅ **Ortam gerçeği uzlaştırıldı (WP-351, 2026-07-27):** üç ortam da `0085`; production CLI geçmişi artık gerçek. Deploy kapısı yeniden kilitli.
 
 ## ⚡ Aktif Çalışma Kaydı
 
@@ -49,20 +55,15 @@
   - **Yedek:** sahip kararı ile muaf (`production.backup_requirement: "waived"`). Free plan projesinde PITR/backup yok, geri dönüş yolu olmadan uygulandı. Bir daha backup sorulmayacak. Repo PUBLIC olduğu için CI'da `db dump` alıp artifact'a koymak asla seçenek değil.
   - **Kanıt:** baseline repair [30222267119](https://github.com/manil-max/online-study-room/actions/runs/30222267119) · apply + post-check head 0085 [30222414307](https://github.com/manil-max/online-study-room/actions/runs/30222414307) · release [30222542841](https://github.com/manil-max/online-study-room/actions/runs/30222542841) (android+windows+finalize hepsi yeşil).
   - **Sürüm:** `v49` → `2e19cfb` (WP-352 fix dahil). APK SHA-256 `0628cff960430fb9850eb90f276ce9c6a274d68b96159ef64b15a384de65c935`.
-  - **Açık risk:** sahadaki kullanıcılar hâlâ v48 iken production şeması 0085'e çıktı. Eski istemcinin yeni şemayla çökmediği cihazda doğrulanmadı — kabul listesinin ilk maddesi bu.
+  - **Açık risk:** production şeması `0085`e çıktı ama 5 kişilik ekipteki herkes v49'a güncellemedi. Sahip kendi cihazında v49'u denedi ve çökme bildirmedi; **v48 istemcisinin `0085` şemasıyla davranışı hâlâ doğrulanmadı**. Ekipten biri eski sürümde kalıyorsa önce onu güncelle.
 - **v49 cihaz geri bildirimi alındı (2026-07-27):** sahip beş bulgu bildirdi (çoklu cihaz sayaç senkronu, Achievement Journey primary-group bloğu, kamp ateşi 2. revizyon, tablet yatay düzeni, tanıtım turları). Ham not `backlog.md` 🔴 Yüksek Öncelik başındadır; WP'ye bölünmesi sahiple birlikte yapılacak.
 - **Doküman temizliği (2026-07-27, sahip emri):** `docs/archive/` dizini, üç senior review turu, v46 sahip geri bildirimi ve kapanmış iki recovery kabul notu repodan kaldırıldı (13 dosya, ~11k satır). Evrensel saat işinde **yalnız nihai plan + C0 uyumluluk kanıtı** kaldı. Hepsi git geçmişinde; kalan md'lerde kırık iç bağlantı yok.
 
 ### Codex Lane
-- **Durum:** [~] Aktif
-- **Faz/WP:** Faz F2 · WP-351
-- **Aşama:** Stable APK aday derlemesi
-- **SAHİP yollar:** `.github/workflows/stable-candidate.yml`, `progress.md` (yalnız Codex lane + WP-351 kartı)
-- **Ortak/riskli yüzey:** protected `production` CI environment, Android signing ve production build manifesti
-- **Dal:** main
-- **Başlangıç:** 2026-07-27 00:40 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-27 00:40 (Europe/Istanbul)
-- **Not:** Kullanıcı, backup/PITR doğrulaması sürerken imzalı stable APK adayının paralel derlenmesini istedi. Public release ve update bildirimi bu jobun kapsamı dışındadır.
+- **Durum:** [x] Boşta
+- **Faz/WP:** —
+- **SAHİP yollar:** —
+- **Son not:** `stable-candidate.yml` (imzalı stable APK aday derlemesi) eklendi ve `3bf7714` ile düzeltilip yeşile geçti. WP-351 sonrasında lane kapatıldı — v49 zaten normal release hattından çıktı.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
@@ -91,13 +92,14 @@
 
 | Konu | Durum |
 | --- | --- |
-| Sürüm | **`v48` yayında (Latest).** Android APK + Windows MSIX/ZIP GitHub Releases'ta |
-| `v49` | **Çıkmadı.** Başarısız koşumun release'i oluşmadı; yerel ve uzak `v49` tag'i sahip emriyle silindi |
+| Sürüm | **`v49` yayında (Latest, `2e19cfb`).** Android APK + Windows MSIX/ZIP GitHub Releases'ta; APK SHA-256 `0628cff9…de65c935` |
+| Cihaz kabulü | 🔴 **Açık.** Sahip v49'u denedi, **beş bulgu** bildirdi → `backlog.md` V49-1…V49-5 |
 | Sürüm politikası | 🔴 Sahip onayı olmadan yeni sürüm çıkmaz |
-| Otomatik doğrulama | `2800484` için CI + Database Gates PASS; yerelde tam paket **910 test**, Windows golden paketi **16 test**, `flutter analyze` temiz |
+| Otomatik doğrulama | `2e19cfb` release koşumu (`30222542841`) preflight/android/windows/finalize tümü PASS |
 | l10n audit | **0 bulgu**: WP-335, WP-295 önizleme metinlerini katalogladı; 7 kullanıcı-dışı invariant mesajı dar ve gerekçeli muafiyetle ayrıldı |
-| Migration | Repo/local **`0084`** · staging **`0084`** · production etkin şema **`0070`** |
-| Beta | **`beta-v4402` yayımlandı**; Android APK + Windows MSIX/ZIP hazır, V3 flag'leri kapalı |
+| Migration | Repo/local **`0085`** · staging **`0085`** · production **`0085`** — üç ortam hizalı |
+| Yedek | 🔴 **Yok.** Free plan; PITR ve günlük yedek kapalı. Sahip kararıyla muaf; geri dönüş yolu yok |
+| Beta | **`beta-v4402`** son beta; Android APK + Windows MSIX/ZIP hazır, V3 flag'leri kapalı |
 | Play Console | Hesap açıldı, doğrulama sürüyor. Hiçbir form doldurulmadı |
 | Microsoft Partner Center | Hesap açıldı. Hiçbir hazırlık yapılmadı |
 
@@ -715,8 +717,8 @@ Kod/test tamam; mağaza çıkışını **bloklamaz**. Kalan kabul tek QA kuyruğ
 
 #### WP-351: Production migration terfisi + doğrudan stable teslim 🚀
 - **Program/Faz:** Release/Ops · Faz F2 kapanış
-- **Ajan:** Codex (2026-07-27 preflight)
-- **Durum:** [~] Bloklu — staging `0085` apply ve production `0085` dry-run PASS; doğrulanmış production backup/PITR kaydı olmadan apply/release yapılmaz
+- **Ajan:** Codex (preflight) → Claude (apply + release)
+- **Durum:** [x] **KAPANDI 2026-07-27.** Baseline `0070`e onarıldı, `0071→0085` uygulandı, post-check head `0085` verdi, `v49` stable yayınlandı. Yedek sahip kararıyla muaf. Kanıt ve kök neden analizi Aktif Çalışma Kaydı → Claude Lane son notundadır. Kalan iş sahipte: cihaz kabulü (bulgular `backlog.md` V49-1…V49-5).
 - **Bağımlılık:** WP-348 → WP-349 → WP-350; clean `main`; staging `0085`.
 - **Problem:** Son stable'dan beri grup/keşif/primary/V3 altyapısı ve görsel
   revizyonlar birikti. Proje sahibi mağaza öncesi 5 kişilik ekipte testi stable
@@ -877,8 +879,10 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 ## ⚠️ Risk ve Tuzak Notları
 
 - **Sürüm disiplini.** Sürüm sahibin onayıyla çıkar; düzeltmeler birikir, tek sürümde çıkar.
-- **Migration drift.** Repo/local/staging `0084`, production etkin şema `0070`. WP-348 yeni `0085`i local→staging'e taşır; WP-351 production `0070→0085` terfisini backup + protected dry-run + post-check ile yapar.
-- **V3 migration sırası.** WP-328 → WP-329 → WP-336 → WP-338 → WP-341 → WP-344 zinciri local/staging `0084`te tamamlandı. Yeni tek migration WP-348'in `0085`idir; production terfisi WP-351 dışında yapılmaz.
+- **Migration drift kapandı.** Repo/local, staging ve production `0085`te hizalı (WP-351, 2026-07-27). Drift'in gerçek sebebi head farkı değil, production'ın **boş CLI migration geçmişiydi** — şema doğruyken `db push` 0001'den başlıyordu. Yeni bir ortam eklenirse ilk iş `migration list`in Remote sütununu okumaktır; boşsa push denenmez.
+- **Yedeksiz production.** PITR ve günlük yedek **yok** (Free plan). Sahip bunu kalıcı olarak kabul etti; `deploy-contract.json` içinde `backup_requirement: "waived"` olarak kayıtlı. Sonucu: production'da geri alma yolu yoktur, yalnız ileri migration ile düzeltilir. Repo **PUBLIC** olduğu için CI'da `db dump` alıp artifact'a koymak asla seçenek değildir.
+- **Geri kilitleme kuralı.** Terfi biten her production apply'dan sonra `deploy_enabled` yeniden `false` yapılır. Sözleşmede `true` bulmak, açık bir GO'nun sürdüğü anlamına gelir — bulursan doğrula.
+- **V3 rollout flag'leri kapalı.** WP-328…WP-346 zinciri kodda ve `0085`te var ama varsayılan kapalı. v49'daki çoklu cihaz senkron bulgusu (V49-1) önce buna karşı ayrılmalı: flag kapalı olduğu için mi çalışmıyor, yoksa açıkken de mi bozuk.
 - **Sayaç sıcak yolu donuktur.** WP-340–345 normal local start/stop sırasını, notification ID/channel/layout/PendingIntent'leri, widget görünümünü ve `ACTION_STOP_SILENT` davranışını yeniden tasarlamaz. Global senkron additive envelope + shadow + feature flag ile gelir; WP-346 gerçek cihaz regresyon kapısı geçmeden varsayılan açılmaz.
 - **l10n kapısı temiz.** WP-335, 24 gerçek WP-295 kullanıcı metnini kataloğa taşıdı; 7 kullanıcı-dışı invariant mesajını dar ve gerekçeli muafiyetle ayırdı. Yeni UI metni ekleyen WP'ler audit sıfır-bulgu kuralını korumalıdır.
 - **Geri alınamaz işler.** Hesap silme purge'ü bu sınıfta — yedek + staging provası + rollback betiği olmadan production'a dokunulmaz. *Gün sınırı artık bu sınıfta değil* (toplamlar saklanmıyor).
@@ -917,9 +921,9 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 | **WP-343** Foreground mirror + remote stop | Staging + iki Android cihaz | Aynı hesapta foreground start/stop p95≤2 sn; ek session/XP 0; eski stop yeni yerel run'ı kesmez; bildirim/widget regresyonu 0. **Cihazda doğrulanmalı.** |
 | **WP-345** Timer-sync signal + app-open reconcile | Staging FCM + Android lifecycle | Data-only sinyal p95≤10 sn; açılış reconcile p95≤2 sn; terminated/doze/logout/force-stop sonrasında payload state uygulamaz, snapshot doğru state'i getirir. **Cihazda doğrulanmalı.** |
 
-**Ortam sırası:** staging `0084`tedir. WP-348 `0085`i önce local, sonra
-staging'e taşır. Production `0070→0085` terfisi yalnız WP-351'in backup,
-protected dry-run, exact SHA/head GO ve post-check adımlarıyla yapılır.
+**Ortam sırası:** tamamlandı — local, staging ve production `0085`te (WP-348 →
+WP-351, 2026-07-27). Yukarıdaki kartların hepsinde şema borcu kapandı; kalan
+tek borç **gerçek cihaz kabulü**. V3 rollout flag'leri hâlâ kapalıdır.
 
 ## 🗄️ Tarihsel kayıt
 

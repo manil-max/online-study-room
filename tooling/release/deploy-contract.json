@@ -5,11 +5,11 @@
     "migration_head": "0085",
     "deploy_enabled": true,
     "release_enabled": true,
-    "hold_reason": "WP-348 staging acceptance: 0073-0085, including server-authoritative primary-group cooldown, await sequential staging dry-run/apply, post-check and beta device evidence."
+    "hold_reason": "Staging is at 0085 (WP-348 apply and post-check passed). Beta device acceptance for the V3 chain is still open; rollout flags stay off."
   },
   "production": {
     "migration_head": "0085",
-    "deploy_enabled": true,
+    "deploy_enabled": false,
     "release_enabled": false,
     "backup_requirement": "waived",
     "backup_waiver": {
@@ -18,6 +18,6 @@
       "reason": "Free plan project has no daily backup and no PITR; owner accepted production apply with no rollback path.",
       "rollback_path": "none"
     },
-    "hold_reason": "WP-351: production 0085 apply is unblocked - staging 0085 apply/post-check and the protected production dry-run passed, and backup/PITR evidence is now derived in CI from the Supabase backups API (fail-closed). Public stable release stays HOLD until the production post-check reports head 0085."
+    "hold_reason": "WP-351 closed 2026-07-27: baseline repaired to 0070, 0071-0085 applied, post-check reported head 0085 and v49 stable shipped. Deploy is re-locked to the default HOLD; the next production migration needs its own explicit owner GO. The backup waiver stays recorded because the project has no PITR or daily backup - it is not a standing approval to apply."
   }
 }

@@ -31,8 +31,8 @@ $contract = Get-DeployContract -RepoRoot $repoRoot
 Assert-Equal $contract.staging.migration_head '0085' 'staging migration head'
 Assert-Equal ([bool]$contract.staging.deploy_enabled) $true 'staging deploy enabled'
 Assert-Equal ([bool]$contract.staging.release_enabled) $true 'staging release enabled'
-Assert-Equal $contract.production.migration_head '0085' 'production head 0085: WP-351 hedefi dry-run için hazırlanmış'
-Assert-Equal ([bool]$contract.production.deploy_enabled) $true 'production deploy açık: backup kanıtı CI türetimli, exact GO hâlâ zorunlu'
+Assert-Equal $contract.production.migration_head '0085' 'production head 0085: WP-351 ile uygulandı ve post-check ile doğrulandı'
+Assert-Equal ([bool]$contract.production.deploy_enabled) $false 'production deploy varsayılan HOLD: terfi bitince yeniden kilitlenir'
 Assert-Equal ([bool]$contract.production.release_enabled) $false 'production release defaults to HOLD'
 
 $databaseWorkflow = Get-Content -LiteralPath (Join-Path $repoRoot '.github\workflows\database-gates.yml') -Raw -Encoding UTF8
