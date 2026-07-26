@@ -44,9 +44,15 @@
 - **SAHİP yollar:** —
 
 ### Claude Lane
-- **Durum:** [x] Boşta
-- **Faz/WP:** — · **Son iş:** **WP-319-G** ✅ kod/test tamam (2026-07-26)
-- **SAHİP yollar:** —
+- **Durum:** [~] Aktif
+- **Faz/WP:** Faz D · **WP-323** (tanıtım turu **motoru**)
+- **Aşama:** Balon/overlay + sürümlü, kullanıcıya özel "görüldü" anahtarları + kuyruk
+- **SAHİP yollar:** `app/lib/core/tour/**` (yeni) · `app/lib/features/profile/settings_screen.dart` (yalnız "turları sıfırla" satırı) · `app/test/core/tour/**` (yeni) · `app/lib/l10n/*.arb` (yalnız motor metinleri: "Atla", "Turları sıfırla")
+- **Ortak/riskli yüzey:** `progress.md` (yalnız Claude lane + WP-323 kartı). ⚠️ `settings_screen.dart` ileride **WP-320**'nin (ayarlar bilgi mimarisi) yüzeyi — WP-320 henüz kimsede değil; başlarsa tek satırlık ekleme taşınır.
+- **DOKUNMA:** feature ekranları (tur **içerikleri** WP-324) · kamp ateşi dosyaları (Codex WP-295) · `main.dart` · admin · migration
+- **Dal:** `main`
+- **Başlangıç:** 2026-07-26 (Europe/Istanbul)
+- **Çakışma kontrolü:** Codex WP-295'te (`campfire_scene.dart`, `camp_critter.dart`, `campfire_layout.dart`, `wp295_preview.dart` + kendi testleri). Kesişen tek dosya yok.
 - ✅ **WP-319-G (2026-07-26, sahip kararı "global signout olsun")** — şifre değişince **bu cihaz hariç tüm oturumlar** kapanıyor (`SignOutScope.others`; `global` bilerek **değil** — kullanıcıyı kendi cihazından atardı). İptal doğrulama gibi **sözleşmede**. İptal edilemezse şifre yine de değişmiştir: hata atılmıyor, yutulmuyor — kullanıcı "şifren değişti **ama** diğer oturumlar kapatılamadı" uyarısını görüyor. `analyze` temiz · **842 test yeşil** (5 yeni) · **üç ayrı sabotajla kırmızı-yeşil kanıt**. Codex WP-295 (kamp ateşi) ile **kesişme olmadı**.
 - ✅ **WP-319 (2026-07-26)** — 🔴 **Kartın problem cümlesi yanlıştı, ama gerçek daha kötüydü:** şifre değiştirme vardı ve **mevcut şifreyi hiç doğrulamıyordu**. Yani kartın "en kötü ihtimal" diye uyardığı ölü anahtar **üretimdeydi**: açık bir oturumu eline geçiren biri şifreyi tek diyalogda değiştirebiliyordu. Doğrulama artık repository sözleşmesinde (`changePassword`), ekran atlayamaz. `analyze` temiz · **836 test yeşil** (12 yeni) · **iki katmanlı kırmızı-yeşil kanıt**. Faz B (Codex, admin) ve kamp ateşi önizleme dosyalarıyla **kesişme olmadı**.
 - 🟡 **WP-319'dan çıkan sahip sorusu:** şifre değişince **diğer cihazların oturumu** açık kalıyor (Supabase varsayılanı). Global sign-out eklensin mi? Kullanıcının kendi diğer cihazlarını da atar. Ayrıntı WP-319 kartında.
