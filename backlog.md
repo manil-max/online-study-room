@@ -15,6 +15,12 @@
   - Açık kalan ops kabulü ayrı maddelerde: hesap silme staging (WP-276), başarım/görev/grup matrisi (WP-277).
   - Tarihsel adli rapor: [`docs/KURTARMA-ON-INCELEME-RAPORU-2026-07-23.md`](docs/KURTARMA-ON-INCELEME-RAPORU-2026-07-23.md); güncel ortam durum modeli: `progress.md` Proje Gerçekleri.
 
+- [~] **Global timer + çoklu grup presence + çoklu cihaz senkronu V3 — WP-336–346**
+  - Kanonik teknik plan: [`docs/GLOBAL-TIMER-PRESENCE-MULTI-DEVICE-ARCHITECTURE-PLAN.md`](docs/GLOBAL-TIMER-PRESENCE-MULTI-DEVICE-ARCHITECTURE-PLAN.md). İlk güvenli paralel dalga WP-328 + salt-okunur WP-337'dir.
+  - Hedef: çalışma bütün aktif gruplarda görünür; görev/hedef/grup progression yalnız başlangıçtaki primary gruba yazılır; aynı hesap telefon/tablette tek global çalışma durumunu görür ve başka cihazdan durdurabilir.
+  - Mevcut native kronometre, bildirim, widget ve `ACTION_STOP_SILENT` sıcak yolu korunur. Global katman additive envelope, ayrı V2 DTO, shadow ölçüm, hesap-bağlı idempotency, `run_revision` + kullanıcı-geneli `state_version` ve feature flag'lerle açılır.
+  - Migration hattı **WP-329 → WP-336 → WP-338 → WP-341 → WP-344** seridir. Server finalizer, gün sınırı yeniden yazımı, history retro-attribution ve Pomodoro phase ledger bu programın kapsamı değildir.
+
 - [~] **Başarım, görev ve grup ilerlemesi — kod/migration tarihsel, güncel kabul borcu WP-277**
   - Append-only ledger, pending reward/claim, görev, grup avatarı ve süre kaynağı eşitliği için tarihsel implementasyonlar vardır; bunlar yeniden geliştirme kuyruğu değildir.
   - Açık gerçek iş: beş süre kaynağı, iki cihaz, pending claim, görev toggle/undo, private grup/RLS ve İstanbul gün sınırını tek staging+cihaz matrisinde kanıtlamak. Bu WP-277'dir; bug bulunursa ayrı debug WP açılır.

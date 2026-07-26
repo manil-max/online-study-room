@@ -101,10 +101,19 @@ Tek kaynak kod ve tek `supabase/migrations/` zinciri kullanılır. Beta/stable f
 - **subjects** (ders) — `id`, `user_id`, `name`, `color`
 - **study_sessions** — `id`, `user_id`, `subject_id?`, `start_time`, `end_time`,
   `duration_seconds`, `source` (`live`|`manual`), `date`
-  > ⚠️ `group_id` **kaldırıldı** (migration 0010). Grup istatistiği `study_sessions ⨝ group_members` join'iyle hesaplanır.
-- **presence** (Realtime) — `user_id`, `group_id`, `status` (`studying`/`break`/`offline`),
-  `current_subject_id?`, `started_at`
-  > ⚠️ Presence'taki `group_id` **korunuyor** — dokunma.
+  > ⚠️ `group_id` **kaldırıldı** (migration 0010) ve geri getirilmeyecek. V3 hedefinde grup progression, immutable `study_session_group_attribution` ile başlangıçtaki primary gruba bağlanır; session'ın kendisi kullanıcıya ait kalır.
+- **presence** (Realtime, legacy fallback) — bugünkü `user_id`, `group_id`, `status`,
+  `current_subject_id?`, `started_at` yüzeyi V3 cutover tamamlanana kadar korunur.
+- **user_live_presence_state / group_live_presence_projection** (V3 planı) — kullanıcı başına
+  kanonik çalışma lease'i ve bütün aktif üyeliklere server-derived `(group_id, user_id)`
+  görünürlük projeksiyonu. Client projection grubunu seçemez veya doğrudan yazamaz.
+- **user_group_preferences / preference_history** (V3 planı) — hesap-geneli primary grup
+  tercihi ve append-only değişim geçmişi. Direct grup bildirimlerini veya presence görünürlüğünü
+  filtrelemez; yalnız görev/hedef/grup progression muhasebesine girdi olur.
+- **live_study_runs / user_timer_state / timer command-device kayıtları** (V3 planı) —
+  legacy run tablosunun additive protocol-v2 evrimi, kullanıcı-geneli `state_version`,
+  run-başına `run_revision` ve hesap-bağlı idempotent komut sonucu. Legacy DTO ve RPC'ler
+  compatibility gate geçilene kadar donuktur.
 - **feedback_tickets** — `id`, `user_id`, `kind`, `subject`, `message`, `status`, zaman damgaları;
   WP-32 ile isteğe bağlı `attachment_path` eklenmesi planlandı. Ekler public URL değil,
   private `feedback-attachments` Storage bucket'ındaki dosya yoluyla ilişkilendirilir.
@@ -187,7 +196,7 @@ Tek kaynak kod ve tek `supabase/migrations/` zinciri kullanılır. Beta/stable f
 | 0035 | `cron_report_url_fix.sql` | Rapor cron URL/secret sözleşmesi |
 | 0036 | `security_hardening.sql` | Edge/RPC/profil erişimi güvenlik sertleştirmesi |
 
-> **Deploy gerçeği (2026-07-24, WP-293 ile uzlaştırıldı):** Local/staging migration head `0070`; production **etkin şeması da `0070`** (`0066–0070` manuel uygulandı, Database Gates + Production Push Activation koşumları 2026-07-23'te başarılı). **Ancak production CLI migration history hâlâ uzlaştırılmamıştır** — `supabase_migrations.schema_migrations` relation'ı production'da yoktur (`docs/recovery/PRODUCTION-BASELINE.md` §3). Deploy contract production `deploy_enabled` terfi tamamlandığı için yeniden `false` kilitlendi; yeni stable/production mutasyonu backup+dry-run+somut GO ister. Yeni migration mevcut en yüksek yerel numaradan (`0070`) devam eder; remote'a uygulanmış dosya geriye dönük değiştirilmez. Tam altı gerçekli durum modeli: `progress.md` Proje Gerçekleri.
+> **Deploy gerçeği (2026-07-26):** Repo/local migration head `0077`, staging `0072`, production **etkin şeması `0070`**. Production CLI migration history hâlâ uzlaştırılmamıştır (`docs/recovery/PRODUCTION-BASELINE.md` §3). Deploy contract production `deploy_enabled: false` kilidindedir; yeni stable/production mutasyonu backup+dry-run+somut GO ister. Yeni migration mevcut en yüksek yerel numaradan (`0077`) devam eder; remote'a uygulanmış dosya geriye dönük değiştirilmez. Tam durum modeli: `progress.md` Proje Gerçekleri.
 
 ---
 
@@ -195,6 +204,7 @@ Tek kaynak kod ve tek `supabase/migrations/` zinciri kullanılır. Beta/stable f
 
 | Tarih | Karar |
 |---|---|
+| **Tem 26** | **Global Timer/Presence/Multi-device V3 planı kesinleşti (WP-336–346).** Presence bütün aktif grup üyeliklerine server-derived fan-out edilir; primary grup yalnız görev/hedef/grup progression attribution'ını belirler, direct grup bildirimlerini veya timer-sync sinyalini filtrelemez. Global timer, legacy `live_study_runs` yüzeyini yıkmadan additive protocol-v2 ile evrilir; legacy ve V2 aynı kullanıcı advisory lock'unu ve birleşik tek-aktif-study-run invariant'ını paylaşır. Sıralama iki ayrı sayaçtır: run-başına `run_revision`, kullanıcı-geneli `state_version`. Native kronometre/bildirim/widget sıcak yolu donuktur; rollout shadow + feature flag + gerçek telefon/tablet QA ile ilerler. Server finalizer, gün sınırı yeniden yazımı, tarihsel retro-attribution ve Pomodoro phase ledger kapsam dışıdır. Kanonik plan: `docs/GLOBAL-TIMER-PRESENCE-MULTI-DEVICE-ARCHITECTURE-PLAN.md`. |
 | **Tem 24** | **Ortam durum modeli uzlaştırıldı ve production kapısı yeniden kilitlendi (WP-293).** Deploy gerçeği artık altı ayrı gerçek olarak tutulur (repo/staging/production-etkin/production-CLI-history/contract/v45-manifest) ve tek sayıya indirilmez. `0066–0070` production terfisi tamamlandı (Database Gates + Production Push Activation, Tem 23); tek seferlik `deploy_enabled` kapısı `false`'a kilitlendi ki kazara production apply olmasın. Production etkin şeması `0070`, ama CLI history uzlaştırılmamış olarak kalır. Stable v45 yayında; sahip Tem 24'te cihaz kabulünü verdi. Bu kayıt önceki Tem 23 girdisindeki `0065/0068` sayılarını **güncellemez, üzerine yeni gerçek olarak eklenir** (tarihsel kayıt korunur). |
 | **Tem 23** | **Post-v43 kurtarma ve ürün kontratı.** Stable taban `v43/fa771ce` + production `0065`; beta deney tabanı `beta-v4303/3bdf8bb` + staging `0068`dir. WP-266/267/268'in yapılan kod/staging/yayın işi korunur fakat retry worker ve cihaz kabulü olmadan tamamlandı sayılmaz. Database Gates DB işiyle sınırlandırılacak, production varsayılanı kapatılacak ve Android/Windows release bütünlüğü tek manifestte gösterilecektir. Kullanıcının kabul ettiği v43 custom timer paneli ana ürün kontratıdır; promoted/Now Bar ayrı best-effort deneydir ve stable paneli değiştiremez. Canlı sıra `progress.md` WP-269–274; adli kanıt `docs/KURTARMA-ON-INCELEME-RAPORU-2026-07-23.md`. |
 | **Tem 22** | **Bildirim güveni ve canlı sayaç yönü.** Dürtme/güncelleme/duyuru için Supabase Realtime veya app-açılış kontrolü remote push sayılmaz; Android hedefi FCM + Supabase transactional outbox/per-device delivery/Edge dispatcher'dır. Bildirim Merkezi local test ile gerçek ≤10 sn remote self-test'i ayırır. Native sayaç custom `RemoteViews` yerine Android standard/promoted ongoing notification kullanır; Samsung Now Bar OEM ve kullanıcı ayarına bağlı best-effort'tur, işlevsel standard notification fallback her cihazda korunur. **Kod durumu:** WP-266/267 yerel kalite kapılarında tamamlandı; Firebase/staging/physical-device aktivasyonu açık, production mutasyonu yok. Kanonik analiz ve uygulama günlüğü: `docs/NOTIFICATION-SYSTEM-AUDIT-2026-07.md`. |

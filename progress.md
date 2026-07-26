@@ -28,7 +28,7 @@
 - **Sürüm sırası:** kod/testi biten işler tek QA kuyruğunda birikir; yeni beta/stable yalnız sahip onayıyla çıkar. Eski beta dalga kararları tarihsel arşivdedir.
 - **Yönetim varsayılanı:** Production `deploy_enabled/release_enabled` kapalıdır. Stable yalnız protected `production` Environment, exact SHA/head/project-ref GO ve reviewer kanıtıyla ilerler.
 - **Kurallar:** Kök `AGENTS.md`, `.agents/AGENTS.md` ve `docs/KALITE-PROGRAMI.md` geçerlidir. Tek çalışma dalı `main`; her WP ayrı commit; production varsayılmaz.
-- **Aktif tur:** **Faz E**. WP-327 kod/test tamam; sıradaki uygulanabilir kartlar **WP-328** ve **WP-329**.
+- **Aktif tur:** **Faz E + Global Timer/Presence V3**. İlk paralel dalga: **WP-328** (grup keşfi) + **WP-337** (salt-okunur legacy compatibility gate). Sonrasında migration hattı WP-329 → WP-336 → WP-338 → WP-341 → WP-344 olarak seridir.
 - ✅ **Ortam gerçeği uzlaştırıldı (WP-293):** production deploy kapısı kilitli; ortam head'leri tek sayıya indirgenmez.
 
 ## ⚡ Aktif Çalışma Kaydı
@@ -229,23 +229,216 @@ Böylece kişisel ve grup istatistiği **asla çelişmez**.
 - **Model önerisi:** 🟣 Pro
 
 #### WP-329: Birincil grup 🏠
-- **Program/Faz:** Faz E · Grup semantiği · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-326
-- **Problem:** Kullanıcı birden çok gruba üye olabiliyor ama "grup görevi hangi grubun?", "grup hedefi hangisi?", "başarım hangi grubu sayıyor?", "üç gruptan üç dürtme mi gelir?" soruları **cevapsız**.
-- **Kapsam dışı:** Çoklu grup desteğini kaldırmak (üyelik çoklu kalır), grup arası veri taşıma.
-- **SAHİP dosyalar (yaz):** `supabase/migrations/00NN_primary_group.sql` · `group_providers.dart` · grup seçim UI'ı · görev/hedef/başarım okuma yolları
-- **DOKUNMA:** `groups.time_zone` (WP-326) · keşif (WP-328)
+- **Program/Faz:** Faz E · Grup semantiği · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-326 + WP-328
+- **Problem:** Kullanıcı birden çok gruba üye olabiliyor; UI'da seçili grup ile görev/hedef/grup progression muhasebesini alan birincil grup aynı kavram sanılıyor. Tercih cihazlar arasında ortak ve server-authoritative değil.
+- **Kapsam dışı:** Çoklu grup üyeliğini kaldırmak · presence'ı yalnız primary gruba indirmek · direct grup bildirimlerini primary ile filtrelemek · geçmiş session'ları yeniden atfetmek · gün-sınırı algoritmasını değiştirmek.
+- **SAHİP dosyalar (yaz):** `supabase/migrations/00NN_primary_group_preference.sql` · `app/lib/data/providers/group_providers.dart` · ilgili group repository interface + Supabase/InMemory çiftleri · birincil grup seçim UI'ı ve testleri
+- **DOKUNMA:** `groups.time_zone` (WP-326) · keşif (WP-328) · `study_sessions`/`project_group_day`/başarım projeksiyonları (WP-336) · presence/timer kodu (WP-338+) · push dispatcher
 - **Adımlar:**
-  - [ ] Kullanıcı bir **birincil grup** seçer (K5)
-  - [ ] **Görev · hedef · başarım · bildirim** birincil grubu sayar
-  - [ ] Diğer gruplar üyelikte kalır ama sayaç tutmaz
-  - [ ] 🔴 Grup değiştirme ekranında **bir kez uyarı**: gün sınırı değişebilir
-- **Veri/Migration etkisi:** Yeni alan + mevcut kullanıcılara varsayılan atama (tek grubu olan → o grup). Geri alma: kolon düşürülür.
+  - [ ] Private `user_group_preferences` + append-only preference history kur; mutation yalnız security-definer RPC.
+  - [ ] Kullanıcı yalnız aktif üyesi olduğu grubu primary seçebilsin; iki cihaz seçimi kullanıcı lock'u + selection revision ile sıralansın.
+  - [ ] Tek aktif grubu olan kullanıcı otomatik primary olsun; hiç grubu yoksa null; çok grubu olup seçimi yoksa rastgele atama yapılmasın.
+  - [ ] Aktif timer varken primary değişimi timer/bildirim/widget'ı restart etmesin; yeni seçim sonraki çalışma/session için geçerli olsun.
+  - [ ] UI'daki seçili/gezilen grup cihaz-yerel kalırken primary hesap-geneli gösterilsin.
+  - [ ] Direct grup duyurusu/dürtmesi bütün ilgili üyeliklerde sürsün; yalnız duplicate event idempotency uygulansın.
+- **Veri/Migration etkisi:** Yeni preference + history tabloları/RPC. Tek grubu olanlara deterministic backfill; çok gruplular seçim bekler. Remote'a uygulanınca down migration yerine flag kapatma + ileri düzeltme. `study_sessions.day` değişmez.
 - **Ortam/Deploy:** local → staging → production ayrı GO.
-- **RLS/Güvenlik:** Kullanıcı yalnız **üye olduğu** bir grubu birincil seçebilir — sunucuda doğrulanır.
-- **Edge-case'ler:** hiç grubu yok · birincil gruptan **çıkarılmış** · birincil grup silinmiş · tek grubu var (otomatik birincil olmalı, seçim sorulmamalı)
-- **Kabul (ölçülebilir):** Üç gruptaki kullanıcıya **tek** grup görevi listesi geliyor · dürtme bildirimi **bir kez** düşüyor · birincil grup değişince gün sınırı yeni bölgeye geçiyor ama **geçmiş gün toplamları değişmiyor** (WP-325 damgası sayesinde) · birincil grup silinince kullanıcı boşta kalmıyor (yeniden seçim istenir).
-- **Tuzaklar:** Grup değişince gün sınırı da değişir; kullanıcının serisi bir gün kayabilir — **uyarı şart**, sessiz yapılırsa "serim neden kırıldı" şikâyeti gelir.
+- **RLS/Güvenlik:** Preference/history public profile'a sızmaz; client primary revision veya history zamanı seçemez; membership leave/delete ile preference aynı kullanıcı lock sınırında uzlaştırılır.
+- **Edge-case'ler:** hiç grup yok · tek grup · çok grup/seçim yok · iki cihaz eşzamanlı seçim · primary üyeliği bitmiş · grup silinmiş · aktif timer sırasında seçim · offline cihazda stale preference.
+- **Kabul (ölçülebilir):** Telefon ve tablette aynı primary görünür · stale selection revision güncel tercihi geri alamaz · üye olunmayan grup RPC'de reddedilir · tek grup otomatik seçilir · primary silinince güvenli null/yeniden seçim oluşur · timer/bildirim/widget primary değişiminde sıfırlanmaz · secondary gruptan geçerli direct bildirim primary filtresiyle kaybolmaz.
+- **Tuzaklar:** `active_group_id/userGroupProvider` primary otoritesi yapılmaz; current preference geçmiş session'a uygulanmaz; “bildirimler yalnız primary” eski kart ifadesi geçersizdir.
 - **Model önerisi:** 🔴 Opus
+
+### Faz E2 — Global Timer, Çoklu Grup Presence ve Çoklu Cihaz V3
+
+> Kanonik teknik plan: `docs/GLOBAL-TIMER-PRESENCE-MULTI-DEVICE-ARCHITECTURE-PLAN.md` V3.
+>
+> Delivery A/B uygulanabilir; Delivery C migration'ı WP-337 compatibility gate geçmeden yazılmaz. Gün sınırı, server finalizer, Pomodoro global fazı ve background native auto-start bu fazın dışındadır.
+
+#### WP-336: Tek-grup session attribution ve progression filtresi 🎯
+- **Program/Faz:** Faz E2 · WP-329 entegrasyonu · **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-329
+- **Problem:** `project_group_day/week` session'ı üye olunan bütün gruplara yazıyor; primary UI seçimi grup hedefi/başarımı/leaderboard çift sayımını durdurmaz.
+- **Kapsam dışı:** Gün/timezone algoritması · geçmiş XP'yi geri almak · presence'ı primary gruba indirmek · server timer finalizer.
+- **SAHİP dosyalar (yaz):** yeni `supabase/migrations/00NN_session_group_attribution.sql` · ilgili `supabase/tests/*.test.sql` · grup metric contract testleri
+- **DOKUNMA:** WP-329 preference UI/provider · native timer/bildirim/widget · push · uygulanmış `0010/0053/0063`
+- **Adımlar:** one-to-zero/one `study_session_group_attribution` kur · başlangıç anındaki primary'yi preference history'den server-side çöz · cutover öncesini `legacy_multi_group`, sonrasını fail-closed `primary_v1` ayır · yeni ileri migration ile day/week/trigger/cron/catch-up yollarını attribution-aware yap · `raw→seg→camp/alpha/loco` zincirini yalnız attribution grubuyla kur.
+- **Veri/Migration etkisi:** Additive ilişki + cutover config + fonksiyon replace; eski session/ödül korunur. Geri alma: flag kapatma + ileri düzeltme, veri silme yok.
+- **Ortam/Deploy:** Local replay/pgTAP → staging; production yalnız backup/dry-run/soak ve somut GO.
+- **RLS/Güvenlik:** Client attribution seçemez; session/preference history server doğrular; silinen grup için audit snapshot'ı korunur.
+- **Edge-case'ler:** offline geç session · çalışma sırasında primary değişimi · cutover sınırı · cron eski günü recompute · grup silinmesi.
+- **Kabul (ölçülebilir):** Cutover sonrası bir session en fazla bir gruba gider · secondary day/week/achievement katkısı 0 · cron secondary veriyi geri getirmez · kişisel süre/XP mevcut tek writer ile değişmez · geçmiş ödül geri alınmaz.
+- **Tuzaklar:** `counts_for_group_progression` canlı read-model alanıdır; tarihsel recompute otoritesi değildir. Eski `0063` düzenlenmez.
+- **Model önerisi:** 🔴 Opus
+
+#### WP-337: V3 legacy compatibility ve donuk kontrat kapısı 🔬
+- **Program/Faz:** Faz E2 · Delivery C0 · **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** Yok
+- **Problem:** `live_study_runs` index/CHECK/NOT NULL, legacy RPC, Dart enum ve iki native queue sınırı kanıtlanmadan migration yazılırsa ghost lock veya parse hatası oluşur.
+- **Kapsam dışı:** Migration/feature/deploy · timer UX refactor · remote mutasyon.
+- **SAHİP dosyalar (yaz):** `docs/GLOBAL-TIMER-V3-COMPATIBILITY-EVIDENCE.md` · `app/test/data/global_timer_v3_legacy_contract_test.dart`
+- **DOKUNMA:** `supabase/migrations/**` · `study_providers.dart` · Android native kaynaklar · `LiveStudyRun`
+- **Adımlar:** 0051 invariant envanteri · local/staging/production salt-okunur `running/paused` count + index/CHECK kanıtı · birleşik active-study index testi · ortak advisory-lock kararı · legacy DTO/InMemory/Supabase yüzeyi · `commandSeq` ile `pendingIntervals` ayrımı · V2 flag/DTO kararları.
+- **Veri/Migration etkisi:** Yok; çıktı WP-341'in GO/NO-GO girdisidir.
+- **Ortam/Deploy:** Local + redacted salt-okunur staging/production; deploy yok.
+- **RLS/Güvenlik:** Yalnız aggregate/schema metadata; UUID/token/secret kanıta girmez.
+- **Edge-case'ler:** açık/paused legacy run · eksik CLI history · V2 terminal status'un legacy DTO'ya düşmesi · iki protocol start yarışı.
+- **Kabul (ölçülebilir):** G1–G6/H1–H4 PASS/FAIL · ortam başına açık legacy sayısı · hedef tek active index · V2 DTO/flag/lock kararı · migration GO/NO-GO.
+- **Tuzaklar:** “Muhtemelen açık run yok” kanıt değildir; remote satır değiştirme yetkisi yoktur.
+- **Model önerisi:** 🔴 Opus
+
+#### WP-338: Server-derived çoklu grup presence çekirdeği 👥
+- **Program/Faz:** Faz E2 · Delivery A backend · **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-329; migration sırası WP-328/WP-329 sonrası
+- **Problem:** `presence(user_id PK, group_id)` kullanıcıyı yalnız seçili grupta gösterebilir; Flutter heartbeat ölünce görünürlük kaybolur.
+- **Kapsam dışı:** Global run · push · session/XP finalizer · gün sınırı · native uplink.
+- **SAHİP dosyalar (yaz):** yeni `supabase/migrations/00NN_multi_group_presence_projection.sql` · ilgili pgTAP/RLS testleri
+- **DOKUNMA:** client provider/repository (WP-339) · native timer · push · session projectionları (WP-336)
+- **Adımlar:** kullanıcı başına `user_live_presence_state` kanonik state/lease · `(group_id,user_id)` projection · start/stop'ta üyelik fan-out · heartbeat yalnız kanonik lease · join/leave/ban cleanup · primary progression flag · kullanıcı-lock'lu idempotent sweeper · eski presence fallback.
+- **Veri/Migration etkisi:** Additive tablolar/RPC/RLS/Realtime; rollback new-read flag kapatma, eski tablo korunur.
+- **Ortam/Deploy:** Local replay/pgTAP → staging; production ayrı GO.
+- **RLS/Güvenlik:** Client projection DML yapamaz; yalnız kendi state RPC'si; aktif aynı grup üyeliği yoksa read yok.
+- **Edge-case'ler:** 0/1/2/10 grup · join/leave/ban · primary null · iki heartbeat/sweeper · stale stop.
+- **Kabul (ölçülebilir):** Bütün aktif gruplarda tek satır · heartbeat başına projection write 0 · leave/ban read 0 · secondary flag false · iki sweeper tek transition · çapraz grup sızıntısı 0.
+- **Tuzaklar:** Yalnız server'ın bildiği state fan-out edilir; Flutter hiç uyanmazsa native start henüz bilinmez.
+- **Model önerisi:** 🔴 Opus
+
+#### WP-339: Presence client cutover ve seçili-grup bağını kaldırma 🔄
+- **Program/Faz:** Faz E2 · Delivery A client · **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-338
+- **Problem:** Publish/watch `userGroupProvider` ve tek `group_id`ye bağlı; auth/grup hazır değilse start presence kayboluyor.
+- **Kapsam dışı:** Native outbox · global mirror · push · timer UI refactor.
+- **SAHİP dosyalar (yaz):** presence repository interface + Supabase/InMemory/Offline çiftleri · `presence_providers.dart` · `presence_lifecycle.dart` · dar `study_providers.dart` adapter'ı · testler
+- **DOKUNMA:** Android notification/widget action/layout · `TimerStateStore` · global coordinator · discovery/primary UI
+- **Adımlar:** group parametresiz state/heartbeat API · grup projection subscription · auth-ready pending publish · old/new dual-read telemetry/flags · repository parity · sessiz hata yerine queue-age/error gözlemi.
+- **Veri/Migration etkisi:** Yok; WP-338 şeması.
+- **Ortam/Deploy:** Local → staging beta; production read switch ayrı kabul.
+- **RLS/Güvenlik:** Client fan-out gruplarını seçmez; account switch pending publish'i başka hesaba göndermez.
+- **Edge-case'ler:** cold-start auth · cihazlarda farklı selected group · primary üçüncü grup · offline/reconnect · eski client.
+- **Kabul (ölçülebilir):** App start bütün gruplarda · selected group projection ownership'i değiştirmez · auth gecikmesinde event kaybı 0 · ağ hatası timer yüzeylerini bozmaz · kill switch çalışır.
+- **Tuzaklar:** Sıcak timer yolunda network await yok; notification/widget kodu temizlenmez.
+- **Model önerisi:** 🟣 Pro
+
+#### WP-340: Native V2 durable command envelope ve cold-start flush 📦
+- **Program/Faz:** Faz E2 · Delivery B · **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-337
+- **Problem:** External-command köprüsü ve interval kuyruğu global start/stop intent'ini hesap-bağlı, retry edilebilir command olarak temsil etmiyor.
+- **Kapsam dışı:** Native network/credential uplink · server apply · notification/widget UI · remote start.
+- **SAHİP dosyalar (yaz):** `TimerStateStore.kt` · `StudyTimerService.kt` yalnız envelope enqueue noktaları · Dart parser/flush adapter · Android/Dart contract testleri
+- **DOKUNMA:** notification ID/channel/layout/PendingIntent · `ACTION_STOP_SILENT` · server migration · `TimerExternalCommandStore` yerel köprü semantiği
+- **Adımlar:** V2 `kind/schema_version/command_id/account_id/installation_id/action/client_occurred_at/origin/run_id?/expected_run_revision?` · legacy parser uyumu · Android'de tek native envelope üreticisi · Flutter command ID aktarımı/native UUID · unbound account karantinası · UUID kısmi ack · shadow flag.
+- **Veri/Migration etkisi:** Yalnız SharedPreferences format evrimi; DB yok.
+- **Ortam/Deploy:** Local/unit/instrumentation; remote yok.
+- **RLS/Güvenlik:** Secret/token yok; account mismatch fail-closed; action allowlist.
+- **Edge-case'ler:** process kill · start-stop-start · logout/account switch · bozuk JSON · legacy+V2 karışık array · disk failure · duplicate.
+- **Kabul (ölçülebilir):** Eylem başına tek command ID · legacy interval kaybı/çift session 0 · yanlış hesap gönderimi 0 · widget ≤500 ms ve 8 saat drift baseline değişmez.
+- **Tuzaklar:** `commandSeq` distributed sürüm değildir; start'a sahte `runToken` yazılmaz; üçüncü queue açılmaz.
+- **Model önerisi:** 🔴 Opus
+
+#### WP-341: Global timer V2 server çekirdeği ve compatibility migration 🧠
+- **Program/Faz:** Faz E2 · Delivery C backend · **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-337 GO + WP-338; migration hattında WP-336/WP-338 sonrası
+- **Problem:** Aynı hesabın cihazları arasında kanonik run, kullanıcı-geneli state version ve idempotent command otoritesi yok.
+- **Kapsam dışı:** Client native apply · push · server session/XP finalizer · pause/Pomodoro/countdown · production deploy.
+- **SAHİP dosyalar (yaz):** yeni `supabase/migrations/00NN_global_timer_v2.sql` · ilgili pgTAP/RLS/concurrency testleri
+- **DOKUNMA:** uygulanmış `0051` · legacy Dart model/repository · client/native · push
+- **Adımlar:** `live_study_runs` additive V2 alanları/backfill · `status` CHECK genişletme, ikinci state yok · eski index'i birleşik study index ile aynı transaction'da değiştir · `user_timer_state`/command/device tabloları · `command_id→client_request_id` · ortak lock · start/stop/heartbeat/snapshot/ack · run/state version · abandoned/sweeper · presence transaction · V2 flag false.
+- **Veri/Migration etkisi:** Additive + tek index replacement + CHECK genişletme; delete yok. Rollback flag kapatma + ileri migration.
+- **Ortam/Deploy:** Local full replay/concurrency; staging WP-346; production yok.
+- **RLS/Güvenlik:** auth.uid owner · device revoke · direct DML kapalı · result snapshot hesap izolasyonu · rate limit.
+- **Edge-case'ler:** legacy açık run · iki protocol yarışı · yeni run rev1/eski rev11 · stale stop · iki sweeper · ghost · aynı command ID iki hesap.
+- **Kabul (ölçülebilir):** Bütün protocol'lerde aktif study ≤1 · new-run rev1 kabul · abandoned bloklamaz · hesaplar arası snapshot sızıntısı 0 · heartbeat projection write 0 · iki sweeper tek abandoned/state version.
+- **Tuzaklar:** V2-only index yasak; legacy DTO'ya terminal V2 status dönmez; V1 `finalized` üretmez; `_verifiedServerAvailable` açılmaz.
+- **Model önerisi:** 🔴 Opus
+
+#### WP-342: Flutter global coordinator ve shadow publish 🛰️
+- **Program/Faz:** Faz E2 · Delivery C shadow · **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-340 + WP-341
+- **Problem:** Server çekirdeği ile local/native timer arasında versioned snapshot, outbox flush ve reconcile katmanı yok.
+- **Kapsam dışı:** Native remote apply · push · timer UI · session finalizer.
+- **SAHİP dosyalar (yaz):** yeni global timer model/repository/coordinator · Supabase/InMemory çiftleri · WP-340 flush entegrasyonu · testler
+- **DOKUNMA:** legacy `LiveStudyRun/LiveRunStatus` ve verified repository · Android notification/widget görünümü
+- **Adımlar:** ayrı `GlobalTimerSnapshot` DTO · state/run CAS · auth/account-bound flush · login/cold-start/foreground/network/realtime coordinator · shadow-only divergence · InMemory parity · support telemetry.
+- **Veri/Migration etkisi:** Yok; WP-341 RPC.
+- **Ortam/Deploy:** Local → staging shadow; native apply kapalı.
+- **RLS/Güvenlik:** Account switch isolation; başka hesap snapshot'ı apply edilmez; secret loglanmaz.
+- **Edge-case'ler:** commit/response loss · duplicate retry · auth refresh · offline iki start · existing run · local newer start.
+- **Kabul (ölçülebilir):** Retry aynı sonuç · snapshot rollback 0 · process-death queue korunur · local start p95 baseline aynı · divergence ölçülebilir.
+- **Tuzaklar:** Android Flutter ikinci command producer olmaz; legacy verified yolu açılmaz.
+- **Model önerisi:** 🟣 Pro
+
+#### WP-343: Foreground çoklu cihaz mirror ve güvenli remote stop 📱↔️📱
+- **Program/Faz:** Faz E2 · Delivery C apply · **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-342 shadow kabulü
+- **Problem:** İki foreground cihaz aynı global çalışmayı göstermiyor; başka cihaz stop'u native yüzeylere güvenle uygulanmıyor.
+- **Kapsam dışı:** Background auto-start · FCM · finalizer · Pomodoro/countdown mirror.
+- **SAHİP dosyalar (yaz):** coordinator foreground apply · dar Android remote-apply metadata/action alanları · ack/UX · testler
+- **DOKUNMA:** normal local start/stop sırası · notification/widget layout · session/XP · push
+- **Adımlar:** Realtime→auth snapshot · CAS/account/run doğrulama · foreground start mirror · `ACTION_STOP_SILENT` remote stop · echo suppression · device ack/opt-out · stale stop guard.
+- **Veri/Migration etkisi:** Yok.
+- **Ortam/Deploy:** Local iki client → staging iki Android; production yok.
+- **RLS/Güvenlik:** Aynı auth + kayıtlı device; doğrulanmamış payload native apply edilmez.
+- **Edge-case'ler:** aynı anda start · başka cihaz stop · echo · eski stop · opt-out · logout · local start yarışı.
+- **Kabul (ölçülebilir):** Foreground start/stop p95≤2 sn · ek session/XP 0 · eski stop yeni run'ı kesmez · notification/widget regression 0.
+- **Tuzaklar:** Remote apply sanal kullanıcı tıklaması değildir; silent stop değiştirilmez.
+- **Model önerisi:** 🔴 Opus
+
+#### WP-344: Timer-sync push transport sınıfı 📬
+- **Program/Faz:** Faz E2 · Delivery D backend · **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-341
+- **Problem:** Mevcut push allowlist/preference/quiet-hours/TTL hattı `timer_sync`i sessizce yutar veya yanlış policy uygular.
+- **Kapsam dışı:** Client auto-start · remote truth · genel bildirim refactor · production Edge deploy.
+- **SAHİP dosyalar (yaz):** yeni push-policy migration · `supabase/functions/dispatch-push/index.ts` timer handler · contract testleri
+- **DOKUNMA:** nudge/announcement/update davranışı · Android timer service · client apply
+- **Adımlar:** type CHECK + `_push_type_enabled` · unknown-type hata · quiet-hours/cooldown bypass · kısa TTL/high priority/collapse/`exclude_device_id` · minimal payload · retry/expiry telemetry.
+- **Veri/Migration etkisi:** Additive policy/outbox alanları; rollback timer push flag.
+- **Ortam/Deploy:** Local function test → staging; production ayrı GO.
+- **RLS/Güvenlik:** Token yalnız delivery; minimal payload; başka kullanıcı installation'ına fan-out yok.
+- **Edge-case'ler:** quiet hours · duplicate/reverse · expired event · token rotate/revoke · unknown type · origin exclusion.
+- **Kabul (ölçülebilir):** Delivery satırı oluşur · unknown silent success 0 · origin delivery 0 · TTL/collapse testleri · push fail global commit'i bozmaz.
+- **Tuzaklar:** Timer policy normal kullanıcı bildirimi değildir.
+- **Model önerisi:** 🟣 Pro
+
+#### WP-345: Background timer sinyali ve app-open reconcile 🔔
+- **Program/Faz:** Faz E2 · Delivery D client · **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-343 + WP-344
+- **Problem:** Background/terminated cihaz için timer-sync deferred UX/ack ve güvenli snapshot reconcile yok.
+- **Kapsam dışı:** Kotlin auto-FGS · native authenticated uplink · force-stop anlık garantisi.
+- **SAHİP dosyalar (yaz):** Flutter FCM timer routing · coordinator tetikleri · deferred notification/ack UX · testler
+- **DOKUNMA:** Android normal timer action/layout · server push handler · hot-path başlangıç
+- **Adımlar:** payload schema/state version doğrulama · truth olarak uygulamadan signal · app-open auth snapshot + CAS · seen/deferred/failed ack · token/account cleanup · push-yok reconcile.
+- **Veri/Migration etkisi:** Yok.
+- **Ortam/Deploy:** Staging gerçek FCM + Android lifecycle; production yok.
+- **RLS/Güvenlik:** Payload token/private subject yok; auth olmadan state apply yok.
+- **Edge-case'ler:** terminated/force-stop/doze · duplicate/reverse · logout · token rotate · FGS restriction.
+- **Kabul (ölçülebilir):** Foreground p95≤2 sn · teslim edilen background signal p95≤10 sn · app-open reconcile p95≤2 sn · rollback 0 · force-stop sonrası açılış doğru.
+- **Tuzaklar:** FCM server→device'dır; native start uplink'i değildir.
+- **Model önerisi:** 🟣 Pro
+
+#### WP-346: V3 staging, çoklu cihaz kabulü ve rollout kapıları 🧪
+- **Program/Faz:** Faz E2 · QA/rollout · **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-336 + WP-339 + WP-343 + WP-345
+- **Problem:** Global/native değişiklikler gerçek Samsung/Pixel/tablet lifecycle ve migration terfisiyle kanıtlanmadan güvenli sayılamaz.
+- **Kapsam dışı:** Production/stable · background auto-start · finalizer; bug düzeltmek (ayrı debug WP).
+- **SAHİP dosyalar (yaz):** `docs/qa/DEVICE-QA-MATRIX.md` V3 satırları · staging acceptance raporu · gerekli kanıt/manifest
+- **DOKUNMA:** Feature kodu
+- **Adımlar:** local replay + staging dry-run · flag sıralı açılış · telefon/tablet, Pixel/Samsung, API33–36 · app/widget/notification/lifecycle/offline/auth yarışları · drift/session/RLS/lease/push/batarya ölçümü · rollback tatbikatı · ≥3 gün beta soak.
+- **Veri/Migration etkisi:** Yalnız staging terfisi/kanıt; production yok.
+- **Ortam/Deploy:** Local → staging → benzersiz beta; production ayrı somut GO.
+- **RLS/Güvenlik:** Cross-account command/result/presence abuse matrisi; redacted kanıt.
+- **Edge-case'ler:** OEM pil · force-stop · iki hesap · stale push · lease · join/leave · primary değişimi · eski client.
+- **Kabul (ölçülebilir):** Timer/widget/notification regresyon 0 · 8 saat ≤±1 sn · ek session/XP 0 · visibility %100 · secondary progression 0 · foreground p95≤2 sn · teslim edilen push p95≤10 sn · P0/P1 0 · soak≥3 gün.
+- **Tuzaklar:** Test bug'ı bu WP'de yamalanmaz; yeni debug WP/beta gerekir. Production GO türetilmez.
+- **Model önerisi:** 🔴 Opus
+
+#### V3 paralel çalışma ve migration sırası
+
+```text
+Migration hattı:
+WP-328 → WP-329 → WP-336 → WP-338 → WP-341 → WP-344
+
+Kanıt/client/native hattı:
+WP-337 → WP-340
+WP-338 → WP-339
+WP-340 + WP-341 → WP-342 → WP-343
+WP-343 + WP-344 → WP-345
+hepsi → WP-346
+```
+
+> ✅ İlk güvenli paralel dalga: WP-328 + WP-337.
+>
+> ⚠️ Migration kullanan WP-328/329/336/338/341/344 paralel başlamaz.
+>
+> ⚠️ `study_providers.dart`/native timer yüzeyindeki WP-339/340/342/343 sahip sınırı teyit edilmeden paralel başlamaz.
 
 ---
 
@@ -345,7 +538,7 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 | **K2** Şifre değiştirme | Klasik üç alan + "Şifremi unuttum"; mevcut şifre **gerçekten** doğrulanır. Google/passkey girişi zaten yok (`passkeys` ölü bağımlılık) → özel durum ekranı gerekmiyor |
 | **K3** Tanıtım turu | Yalnız **ilk açılışta**, ekrana basınca sonraki balona geçer |
 | **K4** Gün sınırı backfill | **Konusuz kaldı** — gün toplamları saklanmıyor, her sorguda hesaplanıyor |
-| **K5** Çoklu grup | **Birincil grup** — kullanıcı seçer; görev/hedef/başarım/bildirim onu sayar |
+| **K5** Çoklu grup | **Birincil grup** — kullanıcı seçer; görev/hedef/grup progression yalnız onu sayar. Canlı presence bütün aktif üyeliklerde görünür; direct grup bildirimleri ve timer-sync sinyalleri primary ile filtrelenmez |
 | **K6** İsim + logo | ⏸️ Plan 2 başlamadan konuşulacak |
 | **K7** Gizlilik URL'i | **GitHub Pages** — bedava, HTTPS hazır, `docs/legal/*.md`'den yayınlanır |
 | **K8** Yurtdışı gün sınırı | **Birincil grubun bölgesi** belirler; grubu olmayan cihaz saat dilimini kullanır. Gruplara bölge alanı + üye sınırı 8 + keşifte yakınlık sıralaması |
@@ -357,6 +550,8 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 
 - **Sürüm disiplini.** Sürüm sahibin onayıyla çıkar; düzeltmeler birikir, tek sürümde çıkar.
 - **Migration drift.** Repo/local `0077`, staging `0072`, production `0070`. `0073–0077` seri dry-run + post-check olmadan staging'e uygulanmaz.
+- **V3 migration sırası.** WP-328 → WP-329 → WP-336 → WP-338 → WP-341 → WP-344 tek migration hattıdır; aynı anda iki migration worker'ı açılmaz. Her adım local replay, şema post-check ve önceki head kanıtı ister.
+- **Sayaç sıcak yolu donuktur.** WP-340–345 normal local start/stop sırasını, notification ID/channel/layout/PendingIntent'leri, widget görünümünü ve `ACTION_STOP_SILENT` davranışını yeniden tasarlamaz. Global senkron additive envelope + shadow + feature flag ile gelir; WP-346 gerçek cihaz regresyon kapısı geçmeden varsayılan açılmaz.
 - **l10n kapısı temiz.** WP-335, 24 gerçek WP-295 kullanıcı metnini kataloğa taşıdı; 7 kullanıcı-dışı invariant mesajını dar ve gerekçeli muafiyetle ayırdı. Yeni UI metni ekleyen WP'ler audit sıfır-bulgu kuralını korumalıdır.
 - **Geri alınamaz işler.** Hesap silme purge'ü bu sınıfta — yedek + staging provası + rollback betiği olmadan production'a dokunulmaz. *Gün sınırı artık bu sınıfta değil* (toplamlar saklanmıyor).
 - **Ölü anahtar riski.** WP-319'daki sahte “mevcut şifre” koruması düzeltildi; benzer ayarlar yeni işlerde sözleşme testiyle engellenmeli.
@@ -431,9 +626,11 @@ ile git geçmişindedir. Canlı dosyada tekrar tutulmaz.
 Yalnız **Bekleyen Uygulanabilir WP'ler** ve Yol Haritası'nda `[ ] Bekliyor` olan
 kartlar worker'a verilir. Güncel ürün sırası:
 
-1. **WP-328** — keşif sıralaması + arama/filtre.
-2. **WP-329** — birincil grup; migration sıcak yüzeyi nedeniyle 328 ile seri planlanır.
-3. **WP-276 / WP-277** — staging ops kanıtı; ürün UI işlerinden bağımsız planlanır.
+1. İlk güvenli paralel dalga: **WP-328** (keşif) + **WP-337** (salt-okunur V3 compatibility gate).
+2. Migration hattı: **WP-329 → WP-336 → WP-338 → WP-341 → WP-344**. Bunlar seri claim edilir.
+3. Client/native hattı: **WP-337 → WP-340**; **WP-338 → WP-339**; ardından **WP-340 + WP-341 → WP-342 → WP-343** ve **WP-343 + WP-344 → WP-345**.
+4. Bütün V3 yolları **WP-346** staging + çoklu cihaz + rollback kabulünde birleşir.
+5. **WP-276 / WP-277**, SAHİP dosya ve ortam çakışması yoksa V3 dışındaki ops kanıtı olarak ayrıca planlanabilir.
 
 `Test için bekleyenler` tablosundaki hiçbir kayıt yeniden worker'a verilmez.
 

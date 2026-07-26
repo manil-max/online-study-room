@@ -106,6 +106,7 @@ Aşağıdakilerden biri sağlanmıyorsa **stable release çıkmaz:** kritik/ağ�
 | Başarım+Görev+Grup PP (WP-208–220) | 🟡 Tarihsel uygulama kapandı; kalan kabul kanıtı `progress.md` içindeki WP-277'dir. Manuel/sayaç/native süre eşitliği ürün kanonudur; `0063` kabul edilmedi |
 | **Kurtarma ve ortam izolasyonu (WP-225–232)** | 🟢 Baseline/izolasyon teslim edildi; `0066–0070` production'a terfi etti (etkin şema `0070`). **Production CLI migration-history zincir onarımı hâlâ açık** (etkin şema doğru ama history uzlaştırılmamış — `docs/recovery/PRODUCTION-BASELINE.md`) |
 | **Post-v43 release + bildirim kurtarması (WP-269–285)** | ✅ **Kapandı (2026-07-24).** Stable **v45** yayında (etkin şema `0070`), beta-v4308 staging'de; sahip cihaz kabulünü verdi. Production deploy kapısı yeniden kilitli. Açık ops kabulü: WP-276 (hesap silme), WP-277 (matris). Ortam durum modeli: `progress.md` Proje Gerçekleri |
+| **Global Timer + çoklu grup presence V3 (WP-336–346)** | 🟡 **Planlandı.** Delivery A/B mimari kararı kesin; Delivery C, WP-337 compatibility evidence gate sonrası uygulanır. İlk paralel dalga WP-328 + WP-337; migration hattı WP-329 → 336 → 338 → 341 → 344 seridir |
 
 > Tamamlanmış programların ayrıntısı Git geçmişindedir; güncel iş talimatı değildir.
 
@@ -168,6 +169,16 @@ Canlı mağaza beyanı ve kapısı: `docs/play-store/DATA-SAFETY.md` ve `docs/pl
 - **Seri/paralel sıra:** WP-269 ve WP-270 paralel olabilir; WP-272 ayrı native lane olabilir fakat toplam iki lane sınırı korunur. WP-271, WP-269+270 sonrası; WP-273, WP-269 sonrası başlar.
 - **Release kapısı:** Gerçek FCM, retry, timer action, Samsung cihaz kabulü, Windows artefaktı ve beta soak olmadan stable çıkmaz. Production migration/Edge/release ayrıca backup+dry-run ve somut kullanıcı GO ister.
 - **Kanonik güncel durum:** `progress.md` Proje Gerçekleri ve QA kuyruğu.
+
+## 8.10 Global Timer, Çoklu Grup Presence ve Çoklu Cihaz V3 (WP-336–346 · PLANLANDI)
+
+- **Ürün semantiği:** Aktif çalışma bütün aktif grup üyeliklerinde görünür. Primary grup yalnız görev/hedef/grup progression attribution'ını belirler; direct grup bildirimleri ve timer-sync sinyalleri primary ile filtrelenmez.
+- **Otorite modeli:** Yerel native timer anında ve çevrimdışı çalışmaya devam eder. Sunucu hesap-geneli uzlaştırma otoritesidir; run-başına `run_revision` ile kullanıcı-geneli `state_version` ayrı tutulur.
+- **Uyumluluk:** Mevcut notification/widget/PendingIntent görünümü, normal local start/stop sırası ve `ACTION_STOP_SILENT` korunur. Legacy `LiveStudyRun/LiveRunStatus` V2 terminal statülerini parse etmez; ayrı DTO/RPC kullanılır.
+- **Veri bütünlüğü:** Legacy ve V2 study run'ları aynı advisory lock ve birleşik tek-aktif-run invariant'ını paylaşır. Komut idempotency'si hesap kapsamındadır; session attribution presence projection'ından türetilmez.
+- **Rollout:** Additive migration → dual/shadow write → divergence telemetry → foreground mirror → timer-sync signal → iki cihaz/staging/rollback provası. WP-346 kapısı geçmeden varsayılan açılmaz.
+- **Kapsam dışı:** Server session finalizer, gün-sınırı algoritmasının yeniden yazılması, geçmiş session'ların eksiksiz retro-attribution'ı ve mutable Pomodoro phase ledger.
+- **Kanonik ayrıntı:** `docs/GLOBAL-TIMER-PRESENCE-MULTI-DEVICE-ARCHITECTURE-PLAN.md`; yürütme kartları ve sahip sınırları `progress.md`.
 
 ## 9. Cihaz QA Matrisi ve Test Senaryoları (CANLI)
 
