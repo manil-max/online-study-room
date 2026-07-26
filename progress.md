@@ -40,18 +40,16 @@
 - **SAHİP yollar:** —
 
 ### Claude Lane
-- **Durum:** [~] Aktif
-- **Faz/WP:** Faz F2 · WP-351
-- **Aşama:** Production 0085 apply (backup kanıtı otomasyonu)
-- **SAHİP yollar:** `tooling/supabase/DeployGuard.psm1`, `tooling/supabase/backup-evidence.ps1`, `tooling/supabase/guard.tests.ps1`, `tooling/release/deploy-contract.json`, `.github/workflows/database-gates.yml`, `progress.md` (yalnız Claude lane)
-- **Ortak/riskli yüzey:** protected `production` CI environment, production Supabase migration push
-- **Dal:** main
-- **Başlangıç:** 2026-07-27 00:55 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-27 01:00 (Europe/Istanbul)
-- **Durum notu:** BLOKE — sahip kararı bekliyor.
-- **Not:** Sahip emri: production apply insan adımı beklemeden repodan yürütülecek. Backup/PITR kanıtı artık elle girilmiyor; `backup-evidence.ps1` Supabase Management API'sinden gerçek kaydı okuyup türetiyor, kayıt yoksa apply fail-closed duruyor. Exact SHA/head GO hâlâ zorunlu. Public stable release `release_enabled=false` ile HOLD'da.
-- **Bulgu (run 30221661250):** production projesi `jiphfrpzvkpzubbkhrwb` için Supabase backups API'si `pitr_enabled=false`, `backup_count=0` döndürüyor. Yani geri dönülebilir hiçbir kayıt yok; apply `db push` çalışmadan önce reddedildi, remote mutasyon olmadı. Repo PUBLIC olduğu için CI'da `db dump` alıp artifact'a koymak da seçenek değil (production kullanıcı verisi herkese açık indirilebilir olurdu).
-- **Bağımlılık:** production DB hâlâ 0070'te; v49 uygulaması `MIGRATION_HEAD=0085` ile derleniyor. Apply yapılmadan stable release yayınlamak, kullanıcıları 15 migration eksik şemaya bağlar. Bu yüzden release apply'a bağlı.
+- **Durum:** [x] Boşta
+- **Faz/WP:** —
+- **SAHİP yollar:** —
+- **Son not (2026-07-27 02:20):** WP-351 production 0085 apply + v49 stable release tamamlandı, lane bırakıldı. Kalan iş sahipte: cihaz kabulü.
+  - **Kök neden:** production'ın Supabase CLI migration geçmişi boştu (tarihsel migration'lar SQL Editor'den uygulanmış), bu yüzden `db push` 0001'den başlayıp 0010'da düşürülen `study_sessions.group_id` üzerinde patlıyordu. Şema sağlamdı, yalnız geçmiş tablosu boştu.
+  - **Çözüm:** dar `repair-baseline-0070` yolu — 0001-0070'i yalnız `applied` işaretler, şemaya DDL göndermez. `migration repair` repo genelinde yasak kalır; sadece bu yol `AllowBaselineRepair` + production + CI + allowlist'li sürüm kapılarından geçer.
+  - **Yedek:** sahip kararı ile muaf (`production.backup_requirement: "waived"`). Free plan projesinde PITR/backup yok, geri dönüş yolu olmadan uygulandı. Bir daha backup sorulmayacak. Repo PUBLIC olduğu için CI'da `db dump` alıp artifact'a koymak asla seçenek değil.
+  - **Kanıt:** baseline repair [30222267119](https://github.com/manil-max/online-study-room/actions/runs/30222267119) · apply + post-check head 0085 [30222414307](https://github.com/manil-max/online-study-room/actions/runs/30222414307) · release [30222542841](https://github.com/manil-max/online-study-room/actions/runs/30222542841) (android+windows+finalize hepsi yeşil).
+  - **Sürüm:** `v49` → `2e19cfb` (WP-352 fix dahil). APK SHA-256 `0628cff960430fb9850eb90f276ce9c6a274d68b96159ef64b15a384de65c935`.
+  - **Açık risk:** sahadaki kullanıcılar hâlâ v48 iken production şeması 0085'e çıktı. Eski istemcinin yeni şemayla çökmediği cihazda doğrulanmadı — kabul listesinin ilk maddesi bu.
 
 ### Codex Lane
 - **Durum:** [~] Aktif
