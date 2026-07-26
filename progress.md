@@ -18,12 +18,12 @@
 
 ## Proje Gerçekleri
 
-- **Migration gerçeği:** repo/local **`0083`** · staging **`0072`** · production
+- **Migration gerçeği:** repo/local **`0084`** · staging **`0072`** · production
   etkin şema **`0070`**. Production CLI geçmişi legacy/uzlaştırılmamış;
   ayrıntı [`docs/recovery/PRODUCTION-BASELINE.md`](docs/recovery/PRODUCTION-BASELINE.md).
   Deploy contract aynı üç head'i taşır ve production `deploy_enabled: false` kilitlidir.
 - **Stable/production:** **v48** yayında, etkin şema `0070`. Yeni production migration, Edge deploy veya stable tag/release yalnız ayrı, somut kullanıcı GO + backup + dry-run ile yapılır; deploy kapısı kilitli.
-- **Beta/staging:** **beta-v4309** artefaktı `0070` ile çıktı; staging veritabanı sonradan `0072`ye yükseldi. Yeni kabul kuyruğu `0073–0078` staging terfisinden sonra ortak beta turunda doğrulanır.
+- **Beta/staging:** **beta-v4309** artefaktı `0070` ile çıktı; staging veritabanı sonradan `0072`ye yükseldi. V3 `0073–0084` zinciri için WP-337 aggregate kapısı PASS; sıradaki adım staging dry-run/apply ve ortak beta turudur.
 - **Release ilkesi:** Android beta/stable artefaktı Android işi başarılı olunca yayımlanır. Windows bağımsız sürer ve başarılı olursa aynı release'e eklenir; Windows hatası Android güncellemesini geri çekmez.
 - **Sürüm sırası:** kod/testi biten işler tek QA kuyruğunda birikir; yeni beta/stable yalnız sahip onayıyla çıkar. Eski beta dalga kararları tarihsel arşivdedir.
 - **Yönetim varsayılanı:** Production `deploy_enabled/release_enabled` kapalıdır. Stable yalnız protected `production` Environment, exact SHA/head/project-ref GO ve reviewer kanıtıyla ilerler.
@@ -267,7 +267,7 @@ Böylece kişisel ve grup istatistiği **asla çelişmez**.
 - **Model önerisi:** 🔴 Opus
 
 #### WP-337: V3 legacy compatibility ve donuk kontrat kapısı 🔬
-- **Program/Faz:** Faz E2 · Delivery C0 · **Ajan:** Codex-2 · **Durum:** [~] Kod/test tamam — güncel ortam aggregate kanıtı bekliyor (NO-GO) · **Bağımlılık:** Yok
+- **Program/Faz:** Faz E2 · Delivery C0 · **Ajan:** Codex · **Durum:** [x] Kod/test + aggregate kanıtı tamam (staging GO) · **Bağımlılık:** Yok
 - **Problem:** `live_study_runs` index/CHECK/NOT NULL, legacy RPC, Dart enum ve iki native queue sınırı kanıtlanmadan migration yazılırsa ghost lock veya parse hatası oluşur.
 - **Kapsam dışı:** Migration/feature/deploy · timer UX refactor · remote mutasyon.
 - **SAHİP dosyalar (yaz):** `docs/GLOBAL-TIMER-V3-COMPATIBILITY-EVIDENCE.md` · `app/test/data/global_timer_v3_legacy_contract_test.dart`
@@ -278,8 +278,8 @@ Böylece kişisel ve grup istatistiği **asla çelişmez**.
 - **RLS/Güvenlik:** Yalnız aggregate/schema metadata; UUID/token/secret kanıta girmez.
 - **Edge-case'ler:** açık/paused legacy run · eksik CLI history · V2 terminal status'un legacy DTO'ya düşmesi · iki protocol start yarışı.
 - **Kabul (ölçülebilir):** G1–G6/H1–H4 PASS/FAIL · ortam başına açık legacy sayısı · hedef tek active index · V2 DTO/flag/lock kararı · migration GO/NO-GO.
-- **Kanıt:** `docs/GLOBAL-TIMER-V3-COMPATIBILITY-EVIDENCE.md` ve `app/test/data/global_timer_v3_legacy_contract_test.dart`; G1–G6/H1–H4 PASS, local/staging/production güncel `running/paused` aggregate eksik olduğu için WP-341 **NO-GO**. `flutter analyze` temiz, tam `flutter test` 893 test yeşil (2026-07-26). **Kodda doğrulandı.**
-- **Tuzaklar:** “Muhtemelen açık run yok” kanıt değildir; remote satır değiştirme yetkisi yoktur.
+- **Kanıt:** `docs/GLOBAL-TIMER-V3-COMPATIBILITY-EVIDENCE.md`; G1–G6/H1–H4 PASS, local/staging/production aggregate `running=0`, `paused=0`; Database Gates `30211293548`/`30211294358` salt-okunur PASS. `flutter analyze` temiz, tam `flutter test` 910 test yeşil (2026-07-26). **Kodda ve remote aggregate'de doğrulandı.**
+- **Tuzaklar:** GO yalnız staging V3 terfisi içindir; production migration/flag/stable GO türetmez.
 - **Model önerisi:** 🔴 Opus
 
 #### WP-338: Server-derived çoklu grup presence çekirdeği 👥

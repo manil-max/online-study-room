@@ -1,19 +1,17 @@
 # WP-337 — V3 legacy compatibility ve donuk kontrat kanıtı
 
-> Tarih: 2026-07-26 · Hedef: Delivery C0 · Karar: **NO-GO**
+> Tarih: 2026-07-26 · Hedef: Delivery C0 · Karar: **GO (yalnız staging V3 terfisi için)**
 >
 > Kapsam yalnız salt-okunur envanter ve kontrat testidir. Migration, feature,
 > deploy veya remote veri mutasyonu yapılmadı.
 
 ## Hüküm
 
-WP-341 migration'ı **yazılmamalı**. Yerel kaynak/plan kontratları G1–G6 ve
-H1–H4 kararlarını kapatıyor; ancak zorunlu `running`/`paused` satır sayısı
-local, staging ve production için bu turda güvenilir biçimde ölçülemedi.
-Özellikle staging için hiç güncel aggregate kanıtı yoktur. Production'da
-2026-07-20 salt-okunur baseline, 0051 çekirdeğinin varlığını doğruladı fakat
-açık legacy run sayılarını rapora kaydetmedi; eski bir schema hash'i güncel
-satır sayısı yerine geçmez.
+Yerel kaynak/plan kontratları G1–G6 ve H1–H4 kararlarını kapatıyordu; eksik
+kalan `running`/`paused` aggregate'i 2026-07-26'da korumalı, tek-statement
+salt-okunur denetim ile tamamlandı. Staging ve production'ın mevcut legacy
+şemalarında açık run yoktur. Bu, V3 zincirinin **staging** dry-run/apply'ına
+izin verir; production'a migration veya feature rollout izni vermez.
 
 Yeni migration ancak her ortamda, hedef kimliği doğrulanmış salt-okunur
 transaction içinde aşağıdaki aggregate kaydedildikten sonra GO alabilir:
@@ -33,14 +31,15 @@ production freeze bozulmadan yürütülmelidir.
 
 | Ortam | Durum | Kanıt | Sonuç |
 | --- | --- | --- | --- |
-| Local | Ölçülemedi | `tooling/supabase/local.ps1 status` 2026-07-26'da local servislerin durduğunu gösterdi; reset başlatılmadı. | FAIL — güncel count yok |
-| Staging | Ölçülemedi | Migration head `0072`; WP-337 için kabul edilmiş salt-okunur aggregate artefaktı bulunmadı. | FAIL — güncel count yok |
-| Production | Kısmi/tarihsel | `docs/recovery/PRODUCTION-BASELINE.md` (2026-07-20) 0051 dosya hash'ini ve salt-okunur baseline'ı doğrular; açık run aggregate'ı rapora yazılmamış. | FAIL — güncel count yok |
+| Local | `running=0`, `paused=0` | `tooling/supabase/local.ps1 baseline` (`20260726T164142412Z`) sonrası `0084` schema üzerinde allowlist query. Bu post-V2 test ortamıdır; legacy preflight hükmü için remote legacy ortamlar aşağıdaki kayıttır. | PASS — V2 index/constraint + boş açık run |
+| Staging | `running=0`, `paused=0` | Database Gates [30211293548](https://github.com/manil-max/online-study-room/actions/runs/30211293548), 2026-07-26 16:52 UTC. Hedef `rskiuyjabyzelqododpa`, migration head `0072`; yalnız aggregate, active-index ve status-CHECK metadata döndü. | PASS — legacy unique index/constraint + boş açık run |
+| Production | `running=0`, `paused=0` | Database Gates [30211294358](https://github.com/manil-max/online-study-room/actions/runs/30211294358), 2026-07-26 16:52 UTC. Hedef `jiphfrpzvkpzubbkhrwb`, effective head `0070`; yalnız aggregate, active-index ve status-CHECK metadata döndü. | PASS — legacy unique index/constraint + boş açık run |
 
-Bu FAIL'ler bir veri arızası iddiası değildir; migration öncesi gereken bilginin
-eksik olduğunu belirtir. Remote betik yalnız tanımlı korumalı operasyonları
-çalıştırabildiğinden, bu WP kendi sahibinin dışında yeni remote sorgu yolu
-eklemedi.
+Remote denetim `tooling/supabase/remote.ps1 inspect-v3-compatibility` içinde
+tek, sabit `SELECT` allowlist'iyle çalışır; run UUID'si, kullanıcı kimliği,
+token veya payload kayda girmez. CLI'nin prepared-statement sınırı nedeniyle
+çoklu `BEGIN/ROLLBACK` paketi kullanılamaz; allowlist salt-okunur tek sorgu
+olacak şekilde fail-closed doğrulanır.
 
 ## G kapıları — legacy/V2 uyumluluk kararı
 
@@ -94,7 +93,7 @@ sözleşmeyi doğrular:
 
 ## Sonraki güvenli adım
 
-WP-341 sahibine, önce ilgili korumalı remote operasyon yoluna yalnız bu aggregate
-ve index/CHECK metadata'sını üreten redakte edilmiş salt-okunur kanıt ekleme
-yetkisi verilmelidir. Üç ortam sonucu bu dosyaya kaydedilip **GO** olmadan
-`008x_global_timer_v2.sql` oluşturulamaz.
+1. Aynı kaynak SHA/head ile staging `0073→0084` dry-run, apply ve post-check.
+2. Flag'ler kapalıyken staging beta APK ve WP-346 cihaz matrisi.
+3. Flag açma sırası ve ≥3 gün soak yalnız staging kabulünden sonra.
+4. Production migration/flag/stable için ayrı backup + dry-run + somut sahip GO.
