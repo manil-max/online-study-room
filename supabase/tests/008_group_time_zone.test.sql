@@ -5,7 +5,7 @@ set local search_path = public, extensions;
 
 \ir _fixtures/base_seed.psql
 
-select plan(8);
+select plan(10);
 
 select is(
   (select time_zone from public.groups where id = '20000000-0000-0000-0000-000000000001'),
@@ -77,6 +77,26 @@ select is(
     at time zone 'America/New_York')::date),
   date '2026-06-30',
   'New York day boundary uses daylight-saving-aware IANA conversion'
+);
+
+update public.groups
+set visibility = 'public'
+where id = '20000000-0000-0000-0000-000000000001';
+
+select is(
+  (select time_zone from public.discover_public_groups('', 0, 20)
+    where id = '20000000-0000-0000-0000-000000000001'),
+  'America/New_York',
+  'public discovery safely exposes the group IANA time zone'
+);
+
+select ok(
+  not exists (
+    select 1
+    from public.discover_public_groups('', 0, 20) summary
+    where to_jsonb(summary) ? 'invite_code'
+  ),
+  'public discovery still never exposes invite codes'
 );
 
 select * from finish();

@@ -194,6 +194,7 @@ class PublicGroupSummary {
     required this.memberCount,
     required this.memberLimit,
     required this.createdAt,
+    required this.timeZone,
     this.avatarPath,
     this.avatarUpdatedAt,
   });
@@ -204,6 +205,9 @@ class PublicGroupSummary {
   final int memberCount;
   final int memberLimit;
   final DateTime createdAt;
+
+  /// Keşif kartında gösterilebilen, hassas olmayan IANA bölgesi.
+  final String timeZone;
   final String? avatarPath;
   final DateTime? avatarUpdatedAt;
 
@@ -215,6 +219,7 @@ class PublicGroupSummary {
       memberCount: (map['member_count'] as num).toInt(),
       memberLimit: (map['member_limit'] as num).toInt(),
       createdAt: DateTime.parse(map['created_at'] as String),
+      timeZone: (map['time_zone'] as String?) ?? kDefaultGroupTimeZone,
       avatarPath: map['avatar_path'] as String?,
       avatarUpdatedAt: map['avatar_updated_at'] == null
           ? null
@@ -231,6 +236,7 @@ class PublicGroupSummary {
       other.memberCount == memberCount &&
       other.memberLimit == memberLimit &&
       other.createdAt == createdAt &&
+      other.timeZone == timeZone &&
       other.avatarPath == avatarPath &&
       other.avatarUpdatedAt == avatarUpdatedAt;
 
@@ -242,6 +248,7 @@ class PublicGroupSummary {
     memberCount,
     memberLimit,
     createdAt,
+    timeZone,
     avatarPath,
     avatarUpdatedAt,
   );

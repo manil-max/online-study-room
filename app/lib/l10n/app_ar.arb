@@ -5158,5 +5158,13 @@
   "groupTimeZone": "المنطقة الزمنية للمجموعة",
   "groupTimeZoneDescription": "تتجدد الأهداف اليومية وإحصاءات المجموعة عند منتصف الليل في هذه المنطقة الزمنية.",
   "groupTimeZoneChoose": "اختر المنطقة الزمنية",
-  "groupTimeZoneUpdated": "تم تحديث المنطقة الزمنية للمجموعة."
+  "groupTimeZoneUpdated": "تم تحديث المنطقة الزمنية للمجموعة.",
+  "groupTimeZoneRelative": "{city} (فرق {offset} ساعة عنك)",
+  "@groupTimeZoneRelative": {
+    "description": "فرق المنطقة الزمنية للمجموعة عن جهاز المستخدم في الوقت الحالي.",
+    "placeholders": {
+      "city": {},
+      "offset": {}
+    }
+  }
 }

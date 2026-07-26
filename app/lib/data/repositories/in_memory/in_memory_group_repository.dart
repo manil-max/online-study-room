@@ -165,6 +165,7 @@ class InMemoryGroupRepository implements GroupRepository {
             memberCount: _members[group.id]?.length ?? 0,
             memberLimit: group.memberLimit,
             createdAt: group.createdAt,
+            timeZone: group.timeZone,
           ),
         )
         .toList(growable: false);

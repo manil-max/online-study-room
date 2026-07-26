@@ -102,6 +102,7 @@ void main() {
         name: 'Global Focus',
         creator: _profile('u2', 'Veli'),
         visibility: GroupVisibility.public,
+        timeZone: 'Asia/Kolkata',
       );
 
       final results = await repo.discoverPublicGroups(query: 'focus');
@@ -111,6 +112,7 @@ void main() {
       expect(results.single.name, 'Global Focus');
       expect(results.single.memberCount, 1);
       expect(results.single.memberLimit, kDefaultGroupMemberLimit);
+      expect(results.single.timeZone, 'Asia/Kolkata');
       expect(results.single.toString(), isNot(contains(public.inviteCode)));
     },
   );

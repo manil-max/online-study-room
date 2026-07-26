@@ -47,7 +47,7 @@
 - **Durum:** [x] Boşta
 - **Faz/WP:** —
 - **SAHİP yollar:** —
-- **Son not:** WP-326 kod/test tamamlandı; IANA grup bölgesi, DST-güvenli gün hesabı ve zincir yerelde doğrulandı. Sahip kararıyla cihaz/beta kabulü sonraki ortak tura bırakıldı (2026-07-26).
+- **Son not:** WP-327 kod/test tamamlandı; güvenli keşif özeti için 0077 local replay ile doğrulandı. Staging/beta kabulü sonraki ortak turda (2026-07-26).
 - ✅ **WP-325 (2026-07-26, kod/test):** `study_sessions.day` sunucuda `start_time`dan damgalanıyor; eski satırlar İstanbul günüyle partiler halinde doldurulup `NOT NULL` oldu. İstemci `day` yazmıyor, sahte/doğrudan değer trigger ile eziliyor; elle tarih düzenlemesi günü yeniden hesaplıyor. Kişisel gün toplamı ve oturum aralığı saklı kolonu, `(user_id, day)` indeksiyle kullanıyor. Local replay + 7 SQL dosyasında 155 pgTAP testi geçti; `EXPLAIN` index scan kanıtı aldı. **Staging/production’a hiçbir işlem yapılmadı.**
 - ✅ **WP-319-G (2026-07-26, sahip kararı "global signout olsun")** — şifre değişince **bu cihaz hariç tüm oturumlar** kapanıyor (`SignOutScope.others`; `global` bilerek **değil** — kullanıcıyı kendi cihazından atardı). İptal doğrulama gibi **sözleşmede**. İptal edilemezse şifre yine de değişmiştir: hata atılmıyor, yutulmuyor — kullanıcı "şifren değişti **ama** diğer oturumlar kapatılamadı" uyarısını görüyor. `analyze` temiz · **842 test yeşil** (5 yeni) · **üç ayrı sabotajla kırmızı-yeşil kanıt**. Codex WP-295 (kamp ateşi) ile **kesişme olmadı**.
 - ✅ **WP-319 (2026-07-26)** — 🔴 **Kartın problem cümlesi yanlıştı, ama gerçek daha kötüydü:** şifre değiştirme vardı ve **mevcut şifreyi hiç doğrulamıyordu**. Yani kartın "en kötü ihtimal" diye uyardığı ölü anahtar **üretimdeydi**: açık bir oturumu eline geçiren biri şifreyi tek diyalogda değiştirebiliyordu. Doğrulama artık repository sözleşmesinde (`changePassword`), ekran atlayamaz. `analyze` temiz · **836 test yeşil** (12 yeni) · **iki katmanlı kırmızı-yeşil kanıt**. Faz B (Codex, admin) ve kamp ateşi önizleme dosyalarıyla **kesişme olmadı**.
@@ -507,18 +507,19 @@ Böylece kişisel ve grup istatistiği **asla çelişmez**.
 - **Kanıt:** `flutter analyze` temiz · tam Flutter paketi **864 yeşil** · local migration replay + **183 pgTAP** · deploy guard **51/51**. `America/New_York` yaz/kış dönüşümü ve geçersiz `-5` offset reddi regresyonla kapsandı. **Staging/production/canlı cihaz işlemi yapılmadı.**
 
 #### WP-327: Grup bilgilerinde bölge + saat farkı 🕐
-- **Program/Faz:** Faz E · Grup UI · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-326
+- **Program/Faz:** Faz E · Grup UI · **Ajan:** Claude · **Durum:** [~] Kod/test tamam — staging/beta kabulü bekliyor (2026-07-26) · **Bağımlılık:** WP-326 (kod/test tamam)
 - **Problem:** Kullanıcı bir gruba girerken o grubun hangi saate göre çalıştığını bilmiyor.
 - **Kapsam dışı:** Keşif sıralaması (WP-328).
 - **SAHİP dosyalar (yaz):** `app/lib/features/classroom/widgets/class_detail_screen.dart` · `group_discovery_screen.dart` (yalnız kart üzerindeki bölge satırı) · l10n
 - **DOKUNMA:** keşif **sorgusu** (WP-328) · `groups` migration'ı (WP-326)
 - **Adımlar:**
-  - [ ] Açık grup kartında ve grup bilgi ekranında bölge adı
-  - [ ] Bölgeye basınca kullanıcıya göre fark: *"Türkiye (senden +8 saat)"*
-- **Veri/Migration etkisi:** Yok. · **Ortam/Deploy:** local.
+  - [x] Açık grup kartında ve grup bilgi ekranında bölge adı
+  - [x] Bölgeye basınca kullanıcıya göre fark: *"Türkiye (senden +8 saat)"*
+- **Veri/Migration etkisi:** `0077_public_group_time_zone_summary.sql` yalnız mevcut güvenli keşif RPC'sine hassas olmayan `time_zone` alanını ekler; tablo/RLS genişlemez, `invite_code` dönmez. Geri alma: önceki RPC gövdesi. · **Ortam/Deploy:** local.
 - **RLS/Güvenlik:** Yok.
 - **Edge-case'ler:** kullanıcı ve grup **aynı** bölgede (fark satırı gösterilmemeli) · yarım saatlik ofsetler (Hindistan +5:30) · yaz saati geçiş günü
 - **Kabul (ölçülebilir):** 🔴 Fark **anlık hesaplanıyor, saklanmıyor** — yaz saati testinde aynı grup için yazın −7, kışın −8 üretiliyor · aynı bölgede fark satırı çıkmıyor · +5:30 gibi yarım saatlik ofset doğru yazılıyor.
+- **Kodda doğrulandı:** 0077 yalnız güvenli `discover_public_groups` özetine `time_zone` ekler; `invite_code` dönüşü pgTAP'le reddedildi. DST farkı (New York yaz −7/kış −8), aynı bölge ve +5:30 saf testle; kart ve diyalog widget testiyle kapsandı. `flutter analyze` 0 · tam Flutter paketi 881 yeşil · local replay + 9 SQL dosyasında 185 pgTAP · deploy guard 51/51. L10n denetimindeki 31 bulgu yalnız aktif WP-299 kamp ateşi dosyalarında, WP-327 yolunda yok.
 - **Tuzaklar:** Farkı bir kez hesaplayıp veritabanına yazmak yılda iki kez sessizce yanlış olur — klasik **ölü anahtar** deseni.
 - **Model önerisi:** 🔵 Sonnet
 
@@ -665,6 +666,12 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 ---
 
 ## Test için bekleyenler
+
+### WP-327 — Grup bölgesi + anlık saat farkı
+
+- **Durum:** Kod/test tamam · **Staging/beta ortamında doğrulanmalı**
+- **Kanıt:** `0077_public_group_time_zone_summary.sql` local replay + 9 SQL dosyasında 185 pgTAP · `flutter analyze` 0 · tam Flutter paketi 881 yeşil · DST/same-zone/+5:30 ve kart-diyalog testleri yeşil.
+- **Bekleyen:** staging migration dry-run/apply (0073–0077 seri) ardından New York ve İstanbul bölgeli açık grup kartı/bilgi ekranında anlık farkı ve aynı bölgedeki fark satırının yokluğunu beta cihazda doğrulama. Remote işlem yapılmadı.
 
 ### WP-299 — gündüz/gece gökyüzü + gece uyuma pozu
 

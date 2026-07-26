@@ -169,4 +169,38 @@ void main() {
     await tester.tap(find.text('Cancel'));
     await tester.pump();
   });
+
+  testWidgets('public card shows its zone and opens the live difference', (
+    tester,
+  ) async {
+    final repository = InMemoryGroupRepository();
+    await repository.createGroup(
+      name: 'New York Focus',
+      creator: owner,
+      visibility: GroupVisibility.public,
+      timeZone: 'America/New_York',
+    );
+
+    await tester.pumpWidget(
+      await buildScope(
+        repository: repository,
+        user: member,
+        child: const MaterialApp(
+          locale: Locale('en'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: GroupDiscoveryScreen(),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('New York'), findsOneWidget);
+    await tester.tap(find.text('New York'));
+    await tester.pump();
+
+    expect(find.text('Group time zone'), findsOneWidget);
+    expect(find.textContaining('from you'), findsWidgets);
+  });
 }

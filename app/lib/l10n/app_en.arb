@@ -5632,6 +5632,14 @@
   "groupTimeZoneDescription": "Daily goals and group statistics reset at midnight in this time zone.",
   "groupTimeZoneChoose": "Choose time zone",
   "groupTimeZoneUpdated": "Group time zone updated.",
+  "groupTimeZoneRelative": "{city} ({offset} h from you)",
+  "@groupTimeZoneRelative": {
+    "description": "Live group time-zone offset relative to the user's device.",
+    "placeholders": {
+      "city": {},
+      "offset": {}
+    }
+  },
   "@settingsSectionAccount": {
     "description": "Settings information architecture section heading for account actions."
   },

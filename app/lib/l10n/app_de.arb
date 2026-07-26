@@ -5158,5 +5158,13 @@
   "groupTimeZone": "Gruppenzeitzone",
   "groupTimeZoneDescription": "Tagesziele und Gruppenstatistiken werden um Mitternacht dieser Zeitzone zurückgesetzt.",
   "groupTimeZoneChoose": "Zeitzone auswählen",
-  "groupTimeZoneUpdated": "Gruppenzeitzone aktualisiert."
+  "groupTimeZoneUpdated": "Gruppenzeitzone aktualisiert.",
+  "groupTimeZoneRelative": "{city} ({offset} Std. von dir)",
+  "@groupTimeZoneRelative": {
+    "description": "Aktueller Unterschied der Gruppenzeitzone zum Gerät des Nutzers.",
+    "placeholders": {
+      "city": {},
+      "offset": {}
+    }
+  }
 }

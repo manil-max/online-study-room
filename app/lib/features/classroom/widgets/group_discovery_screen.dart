@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
+import '../../../core/time_engine/group_time_zone_label.dart';
+import '../../../core/time_engine/world_clock_math.dart';
 import '../../../data/models/study_group.dart';
 import '../../../data/providers/auth_providers.dart';
 import '../../../data/providers/group_providers.dart';
@@ -224,6 +226,10 @@ class _PublicGroupCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final isFull = group.memberCount >= group.memberLimit;
     final theme = Theme.of(context);
+    final relative = groupTimeZoneRelativeLabel(
+      groupTimeZone: group.timeZone,
+      l10n: l10n,
+    );
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -262,6 +268,39 @@ class _PublicGroupCard extends StatelessWidget {
               ),
             ),
             Text(l10n.groupDiscoveryDailyGoal(group.dailyGoalMinutes)),
+            const SizedBox(height: 4),
+            InkWell(
+              onTap: () => showGroupTimeZoneInfoDialog(
+                context,
+                groupTimeZone: group.timeZone,
+              ),
+              borderRadius: BorderRadius.circular(8),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  children: [
+                    const Icon(Icons.public_outlined, size: 16),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            localizedWorldCityLabel(
+                              group.timeZone,
+                              l10n,
+                              fallback: group.timeZone,
+                            ),
+                          ),
+                          if (relative != null)
+                            Text(relative, style: theme.textTheme.bodySmall),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
             const SizedBox(height: 12),
             Align(
               alignment: Alignment.centerRight,

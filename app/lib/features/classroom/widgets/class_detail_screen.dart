@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/utils/duration_format.dart';
+import '../../../core/time_engine/group_time_zone_label.dart';
 import '../../../core/time_engine/world_clock_math.dart';
 import '../../../core/widgets/number_stepper.dart';
 import '../../../core/widgets/crowned_avatar.dart';
@@ -183,13 +184,7 @@ class ClassDetailScreen extends ConsumerWidget {
                 ListTile(
                   leading: const Icon(Icons.public_outlined),
                   title: Text(AppLocalizations.of(context).groupTimeZone),
-                  subtitle: Text(
-                    localizedWorldCityLabel(
-                      group.timeZone,
-                      AppLocalizations.of(context),
-                      fallback: group.timeZone,
-                    ),
-                  ),
+                  subtitle: _TimeZoneSubtitle(timeZone: group.timeZone),
                   trailing: isAdmin
                       ? IconButton(
                           tooltip: AppLocalizations.of(
@@ -199,9 +194,10 @@ class ClassDetailScreen extends ConsumerWidget {
                           onPressed: () => _editTimeZoneDialog(context, ref),
                         )
                       : null,
-                  onTap: isAdmin
-                      ? () => _editTimeZoneDialog(context, ref)
-                      : null,
+                  onTap: () => showGroupTimeZoneInfoDialog(
+                    context,
+                    groupTimeZone: group.timeZone,
+                  ),
                 ),
                 ListTile(
                   leading: const Icon(Icons.event_outlined),
@@ -618,6 +614,28 @@ class ClassDetailScreen extends ConsumerWidget {
     } on GroupException {
       messenger.showSnackBar(SnackBar(content: Text(genericError)));
     }
+  }
+}
+
+class _TimeZoneSubtitle extends StatelessWidget {
+  const _TimeZoneSubtitle({required this.timeZone});
+
+  final String timeZone;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final relative = groupTimeZoneRelativeLabel(
+      groupTimeZone: timeZone,
+      l10n: l10n,
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(localizedWorldCityLabel(timeZone, l10n, fallback: timeZone)),
+        if (relative != null) Text(relative),
+      ],
+    );
   }
 }
 
