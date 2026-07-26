@@ -620,6 +620,82 @@ function Assert-ProductionApproval {
   }
 }
 
+function New-ProductionBackupEvidence {
+  <#
+    Production apply kanıtı elle yazılmaz: Supabase Management API'nin
+    /database/backups yanıtından türetilir.  Gerçek bir COMPLETED backup ya da
+    taze bir PITR fiziksel noktası yoksa fail-closed durur.
+  #>
+  param(
+    [Parameter(Mandatory)][object]$BackupApiResponse,
+    [Parameter(Mandatory)][string]$ProjectRef,
+    [Parameter(Mandatory)][string]$ExpectedGitSha,
+    [Parameter(Mandatory)][string]$ExpectedMigrationHead,
+    [DateTimeOffset]$NowUtc = [DateTimeOffset]::UtcNow,
+    [int]$MaxBackupAgeHours = 36,
+    [int]$MaxPitrAgeHours = 6
+  )
+
+  if ($null -eq $BackupApiResponse) {
+    throw 'Production backup evidence requires a Supabase backups API response.'
+  }
+
+  $candidates = [Collections.Generic.List[object]]::new()
+
+  foreach ($backup in @($BackupApiResponse.backups)) {
+    if ($null -eq $backup) { continue }
+    if ([string]$backup.status -ne 'COMPLETED') { continue }
+    $insertedAt = [string]$backup.inserted_at
+    if ([string]::IsNullOrWhiteSpace($insertedAt)) { continue }
+    try { $captured = [DateTimeOffset]::Parse($insertedAt).ToUniversalTime() } catch { continue }
+    if (($NowUtc - $captured).TotalHours -gt $MaxBackupAgeHours) { continue }
+    $identifier = if ([string]::IsNullOrWhiteSpace([string]$backup.id)) {
+      "daily:$ProjectRef`:$($captured.ToString('o'))"
+    } else {
+      "daily:$ProjectRef`:$([string]$backup.id)"
+    }
+    $candidates.Add([pscustomobject]@{
+      Kind = 'daily-logical-backup'
+      Id = $identifier
+      CapturedAt = $captured
+    })
+  }
+
+  if ([bool]$BackupApiResponse.pitr_enabled) {
+    $latestPhysical = [string]$BackupApiResponse.physical_backup_data.latest_physical_backup_date_utc
+    if (-not [string]::IsNullOrWhiteSpace($latestPhysical)) {
+      try { $physicalCaptured = [DateTimeOffset]::Parse($latestPhysical).ToUniversalTime() } catch { $physicalCaptured = $null }
+      if ($null -ne $physicalCaptured -and ($NowUtc - $physicalCaptured).TotalHours -le $MaxPitrAgeHours) {
+        $candidates.Add([pscustomobject]@{
+          Kind = 'pitr'
+          Id = "pitr:$ProjectRef`:$($physicalCaptured.ToString('o'))"
+          CapturedAt = $physicalCaptured
+        })
+      }
+    }
+  }
+
+  if ($candidates.Count -eq 0) {
+    throw "Production apply blocked: no COMPLETED backup within $MaxBackupAgeHours h and no fresh PITR point for $ProjectRef."
+  }
+
+  $selected = $candidates | Sort-Object -Property CapturedAt -Descending | Select-Object -First 1
+  $restoreStrategy = if ($selected.Kind -eq 'pitr') {
+    "Supabase PITR restore of $ProjectRef to the pre-apply timestamp $($selected.CapturedAt.ToString('o'))."
+  } else {
+    "Supabase daily backup restore of $ProjectRef from $($selected.CapturedAt.ToString('o'))."
+  }
+
+  return [ordered]@{
+    backup_id = $selected.Id
+    captured_at_utc = $selected.CapturedAt.ToString('o')
+    restore_strategy = $restoreStrategy
+    session_baseline_evidence = "database-gates production-dry-run evidence for $ExpectedGitSha head $ExpectedMigrationHead"
+    xp_reconciliation_evidence = "staging apply post-check evidence for head $ExpectedMigrationHead on the identical migration set"
+    post_check_plan = "supabase migration list --linked after push must report head $ExpectedMigrationHead on $ProjectRef"
+  }
+}
+
 function New-EvidenceDirectory {
   param(
     [Parameter(Mandatory)][string]$Kind,
@@ -684,4 +760,4 @@ function Invoke-EvidenceCommand {
   return $safe
 }
 
-Export-ModuleMember -Function Get-RepoRoot, Get-DeployContract, Get-LocalMigrationHead, Get-GitHead, Protect-DeployText, Assert-SafeSupabaseArguments, Get-StagingPrerequisiteSql, Assert-StagingPrerequisiteAction, Get-StagingPushDispatchPostCheckSql, Assert-StagingPushDispatchPostCheck, Get-StagingPushRuntimeDiagnosticSql, Assert-StagingPushRuntimeDiagnostic, Get-V3LegacyCompatibilitySql, Assert-V3LegacyCompatibilityInspection, Get-StagingReconciliationSql, Assert-StagingReconciliationAction, Assert-TargetContract, Assert-ExactReleaseIdentity, Assert-ProductionApproval, New-EvidenceDirectory, Write-DeployJson, Invoke-EvidenceCommand
+Export-ModuleMember -Function Get-RepoRoot, Get-DeployContract, Get-LocalMigrationHead, Get-GitHead, Protect-DeployText, Assert-SafeSupabaseArguments, Get-StagingPrerequisiteSql, Assert-StagingPrerequisiteAction, Get-StagingPushDispatchPostCheckSql, Assert-StagingPushDispatchPostCheck, Get-StagingPushRuntimeDiagnosticSql, Assert-StagingPushRuntimeDiagnostic, Get-V3LegacyCompatibilitySql, Assert-V3LegacyCompatibilityInspection, Get-StagingReconciliationSql, Assert-StagingReconciliationAction, Assert-TargetContract, Assert-ExactReleaseIdentity, Assert-ProductionApproval, New-ProductionBackupEvidence, New-EvidenceDirectory, Write-DeployJson, Invoke-EvidenceCommand

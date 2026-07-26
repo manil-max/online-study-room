@@ -40,10 +40,15 @@
 - **SAHİP yollar:** —
 
 ### Claude Lane
-- **Durum:** [x] Boşta
-- **Faz/WP:** —
-- **SAHİP yollar:** —
-- **Son not:** WP-327 kod/test tamamlandı; güvenli keşif özeti için 0077 local replay ile doğrulandı. Staging/beta kabulü sonraki ortak turda (2026-07-26).
+- **Durum:** [~] Aktif
+- **Faz/WP:** Faz F2 · WP-351
+- **Aşama:** Production 0085 apply (backup kanıtı otomasyonu)
+- **SAHİP yollar:** `tooling/supabase/DeployGuard.psm1`, `tooling/supabase/backup-evidence.ps1`, `tooling/supabase/guard.tests.ps1`, `tooling/release/deploy-contract.json`, `.github/workflows/database-gates.yml`, `progress.md` (yalnız Claude lane)
+- **Ortak/riskli yüzey:** protected `production` CI environment, production Supabase migration push
+- **Dal:** main
+- **Başlangıç:** 2026-07-27 00:55 (Europe/Istanbul)
+- **Son güncelleme:** 2026-07-27 00:55 (Europe/Istanbul)
+- **Not:** Sahip emri: production apply insan adımı beklemeden repodan yürütülecek. Backup/PITR kanıtı artık elle girilmiyor; `backup-evidence.ps1` Supabase Management API'sinden gerçek kaydı okuyup türetiyor, kayıt yoksa apply fail-closed duruyor. Exact SHA/head GO hâlâ zorunlu. Public stable release `release_enabled=false` ile HOLD'da.
 
 ### Codex Lane
 - **Durum:** [~] Aktif

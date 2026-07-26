@@ -9,8 +9,8 @@
   },
   "production": {
     "migration_head": "0085",
-    "deploy_enabled": false,
+    "deploy_enabled": true,
     "release_enabled": false,
-    "hold_reason": "WP-351: owner GO received and staging 0085 promotion passed. Production 0085 remains deploy/release HOLD until a protected production dry-run, verified backup/PITR record and exact SHA/head confirmation are recorded."
+    "hold_reason": "WP-351: production 0085 apply is unblocked - staging 0085 apply/post-check and the protected production dry-run passed, and backup/PITR evidence is now derived in CI from the Supabase backups API (fail-closed). Public stable release stays HOLD until the production post-check reports head 0085."
   }
 }

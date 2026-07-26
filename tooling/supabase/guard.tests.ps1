@@ -25,13 +25,14 @@ $productionRef = 'bbbbbbbbbbbbbbbbbbbb'
 Assert-Equal (Get-LocalMigrationHead -RepoRoot $repoRoot) '0085' 'local migration head'
 Assert-Equal ((Get-DeployContract -RepoRoot $repoRoot).local_migration_head) '0085' 'contract migration head'
 $contract = Get-DeployContract -RepoRoot $repoRoot
-# WP-351 staging 0085 terfisi tamamlandı; production 0085 hedefi hâlâ
-# backup/dry-run/exact-GO tamamlanana kadar fail-closed HOLD'dadır.
+# WP-351 staging 0085 terfisi tamamlandı; production 0085 apply artık açık
+# (backup kanıtı CI'da Supabase API'sinden fail-closed türetiliyor), fakat
+# public stable release production post-check'e kadar HOLD'da kalır.
 Assert-Equal $contract.staging.migration_head '0085' 'staging migration head'
 Assert-Equal ([bool]$contract.staging.deploy_enabled) $true 'staging deploy enabled'
 Assert-Equal ([bool]$contract.staging.release_enabled) $true 'staging release enabled'
 Assert-Equal $contract.production.migration_head '0085' 'production head 0085: WP-351 hedefi dry-run için hazırlanmış'
-Assert-Equal ([bool]$contract.production.deploy_enabled) $false 'production deploy backup ve exact GO tamamlanana kadar HOLD'
+Assert-Equal ([bool]$contract.production.deploy_enabled) $true 'production deploy açık: backup kanıtı CI türetimli, exact GO hâlâ zorunlu'
 Assert-Equal ([bool]$contract.production.release_enabled) $false 'production release defaults to HOLD'
 
 $databaseWorkflow = Get-Content -LiteralPath (Join-Path $repoRoot '.github\workflows\database-gates.yml') -Raw -Encoding UTF8
@@ -227,6 +228,37 @@ Assert-Throws -Name 'exact production GO required' -Script {
   Assert-ProductionApproval -ExpectedGitSha $sha -ExpectedMigrationHead '0063' -ProjectRef $productionRef -BackupEvidence $backup -Confirmation 'PRODUCTION GO' -GitHubActions 'true' -ApprovalEnvironment 'production'
 }
 Assert-ProductionApproval -ExpectedGitSha $sha -ExpectedMigrationHead '0063' -ProjectRef $productionRef -BackupEvidence $backup -Confirmation $confirmation -GitHubActions 'true' -ApprovalEnvironment 'production'
+$passed++
+
+# Backup kanıtı artık API yanıtından türetilir; kanıt yoksa apply açılmaz.
+$now = [DateTimeOffset]::Parse('2026-07-27T00:00:00Z')
+Assert-Throws -Name 'backup evidence requires a real recovery point' -Script {
+  New-ProductionBackupEvidence -BackupApiResponse ([pscustomobject]@{ pitr_enabled = $false; backups = @() }) `
+    -ProjectRef $productionRef -ExpectedGitSha $sha -ExpectedMigrationHead '0085' -NowUtc $now
+}
+Assert-Throws -Name 'stale backup rejected' -Script {
+  New-ProductionBackupEvidence -BackupApiResponse ([pscustomobject]@{ pitr_enabled = $false; backups = @(
+    [pscustomobject]@{ status = 'COMPLETED'; inserted_at = '2026-07-20T00:00:00Z' }) }) `
+    -ProjectRef $productionRef -ExpectedGitSha $sha -ExpectedMigrationHead '0085' -NowUtc $now
+}
+Assert-Throws -Name 'incomplete backup rejected' -Script {
+  New-ProductionBackupEvidence -BackupApiResponse ([pscustomobject]@{ pitr_enabled = $false; backups = @(
+    [pscustomobject]@{ status = 'PENDING'; inserted_at = '2026-07-26T22:00:00Z' }) }) `
+    -ProjectRef $productionRef -ExpectedGitSha $sha -ExpectedMigrationHead '0085' -NowUtc $now
+}
+$freshBackup = New-ProductionBackupEvidence -BackupApiResponse ([pscustomobject]@{ pitr_enabled = $false; backups = @(
+  [pscustomobject]@{ status = 'COMPLETED'; inserted_at = '2026-07-26T20:00:00Z'; id = 'bkp-77' }) }) `
+  -ProjectRef $productionRef -ExpectedGitSha $sha -ExpectedMigrationHead '0085' -NowUtc $now
+Assert-Equal $freshBackup.backup_id "daily:$productionRef`:bkp-77" 'fresh daily backup id'
+# Türetilen kanıt, production onay kapısını olduğu gibi geçmelidir.
+$derivedConfirmation = "PRODUCTION GO:$sha`:0085`:$productionRef"
+Assert-ProductionApproval -ExpectedGitSha $sha -ExpectedMigrationHead '0085' -ProjectRef $productionRef `
+  -BackupEvidence ($freshBackup | ConvertTo-Json -Depth 6 -Compress) -Confirmation $derivedConfirmation `
+  -GitHubActions 'true' -ApprovalEnvironment 'production'
+$passed++
+if ($databaseWorkflow -notmatch 'backup-evidence\.ps1' -or $databaseWorkflow -notmatch 'RESOLVED_BACKUP_EVIDENCE') {
+  throw 'Database Gates must resolve production backup evidence from Supabase.'
+}
 $passed++
 
 $secret = 'sb_secret_should_never_leak'

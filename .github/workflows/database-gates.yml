@@ -147,12 +147,25 @@ jobs:
           "action=$action" >> $env:GITHUB_OUTPUT
           "project_ref=$projectRef" >> $env:GITHUB_OUTPUT
 
+      - name: Resolve production backup evidence from Supabase
+        if: inputs.operation == 'production-apply' && inputs.backup_evidence == ''
+        shell: pwsh
+        run: |
+          $json = (& ./tooling/supabase/backup-evidence.ps1 `
+            -Environment production `
+            -ProjectRef '${{ steps.target.outputs.project_ref }}' `
+            -ExpectedGitSha $env:EXPECTED_GIT_SHA `
+            -ExpectedMigrationHead $env:EXPECTED_MIGRATION_HEAD) | Select-Object -Last 1
+          if ([string]::IsNullOrWhiteSpace($json)) { throw 'Backup evidence resolution produced no checklist.' }
+          "RESOLVED_BACKUP_EVIDENCE=$json" >> $env:GITHUB_ENV
+
       - name: List, dry-run, optional push and post-check
         shell: pwsh
         env:
           DEPLOY_APPROVAL_ENVIRONMENT: ${{ steps.target.outputs.environment }}
         run: |
           $selectedUrl = if ('${{ steps.target.outputs.environment }}' -eq 'production') { $env:PRODUCTION_SUPABASE_URL } else { $env:STAGING_SUPABASE_URL }
+          $backupEvidence = if ([string]::IsNullOrWhiteSpace($env:BACKUP_EVIDENCE)) { $env:RESOLVED_BACKUP_EVIDENCE } else { $env:BACKUP_EVIDENCE }
           $params = @{
             Environment = '${{ steps.target.outputs.environment }}'
             Action = '${{ steps.target.outputs.action }}'
@@ -162,7 +175,7 @@ jobs:
             ProductionProjectRef = $env:PRODUCTION_SUPABASE_PROJECT_REF
             ExpectedGitSha = $env:EXPECTED_GIT_SHA
             ExpectedMigrationHead = $env:EXPECTED_MIGRATION_HEAD
-            BackupEvidence = $env:BACKUP_EVIDENCE
+            BackupEvidence = $backupEvidence
             ConfirmProductionGo = $env:PRODUCTION_CONFIRMATION
           }
           ./tooling/supabase/remote.ps1 @params
