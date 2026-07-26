@@ -47,7 +47,7 @@
 - **Durum:** [x] Boşta
 - **Faz/WP:** —
 - **SAHİP yollar:** —
-- **Son not:** WP-318 kod/test tamamlandı ve beta kabulü için test kuyruğuna taşındı (2026-07-26).
+- **Son not:** WP-321 kod/test tamamlandı; DE/AR kayıtlı tercihi EN'e düşer (2026-07-26).
 - ✅ **WP-325 (2026-07-26, kod/test):** `study_sessions.day` sunucuda `start_time`dan damgalanıyor; eski satırlar İstanbul günüyle partiler halinde doldurulup `NOT NULL` oldu. İstemci `day` yazmıyor, sahte/doğrudan değer trigger ile eziliyor; elle tarih düzenlemesi günü yeniden hesaplıyor. Kişisel gün toplamı ve oturum aralığı saklı kolonu, `(user_id, day)` indeksiyle kullanıyor. Local replay + 7 SQL dosyasında 155 pgTAP testi geçti; `EXPLAIN` index scan kanıtı aldı. **Staging/production’a hiçbir işlem yapılmadı.**
 - ✅ **WP-319-G (2026-07-26, sahip kararı "global signout olsun")** — şifre değişince **bu cihaz hariç tüm oturumlar** kapanıyor (`SignOutScope.others`; `global` bilerek **değil** — kullanıcıyı kendi cihazından atardı). İptal doğrulama gibi **sözleşmede**. İptal edilemezse şifre yine de değişmiştir: hata atılmıyor, yutulmuyor — kullanıcı "şifren değişti **ama** diğer oturumlar kapatılamadı" uyarısını görüyor. `analyze` temiz · **842 test yeşil** (5 yeni) · **üç ayrı sabotajla kırmızı-yeşil kanıt**. Codex WP-295 (kamp ateşi) ile **kesişme olmadı**.
 - ✅ **WP-319 (2026-07-26)** — 🔴 **Kartın problem cümlesi yanlıştı, ama gerçek daha kötüydü:** şifre değiştirme vardı ve **mevcut şifreyi hiç doğrulamıyordu**. Yani kartın "en kötü ihtimal" diye uyardığı ölü anahtar **üretimdeydi**: açık bir oturumu eline geçiren biri şifreyi tek diyalogda değiştirebiliyordu. Doğrulama artık repository sözleşmesinde (`changePassword`), ekran atlayamaz. `analyze` temiz · **836 test yeşil** (12 yeni) · **iki katmanlı kırmızı-yeşil kanıt**. Faz B (Codex, admin) ve kamp ateşi önizleme dosyalarıyla **kesişme olmadı**.
@@ -322,7 +322,7 @@ oturumunun düştüğü görülmeli.
 
 #### WP-321: TR + EN'e in 🌍
 - **Program/Faz:** Faz C · l10n
-- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-320 (aynı l10n yüzeyi — seri)
+- **Ajan:** Claude · **Durum:** [x] Kod/test tamam (2026-07-26) · **Bağımlılık notu:** sahip emriyle WP-320 cihaz kabulü beta turuna bırakıldı
 - **Problem:** 4 dil taşınıyor ama AR/DE hiç test edilmiyor; RTL QA borcu ve Arapça glif zinciri bedava değil.
 - **Kapsam dışı:** `.arb` dosyalarını **silmek** (repoda kalacak), çeviri kalitesi iyileştirme.
 - **SAHİP dosyalar (yaz):** `app/lib/l10n/**` (supportedLocales) · `scripts/l10n_audit.py` · `.github/workflows/l10n-gate.yml`

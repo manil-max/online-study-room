@@ -5,19 +5,18 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../prefs/app_prefs.dart';
 
-/// WP-155: sistem + EN/TR + AR (RTL) + DE dil paketleri.
-enum AppLanguage { system, english, turkish, arabic, german }
+/// WP-321: sistem + EN/TR. Eski DE/AR tercihi güvenli biçimde EN'e düşer.
+enum AppLanguage { system, english, turkish }
 
 const _appLanguagePreferenceKey = 'app_language_preference';
 
-const kSupportedLanguageCodes = {'en', 'tr', 'ar', 'de'};
+const kSupportedLanguageCodes = {'en', 'tr'};
 
 AppLanguage appLanguageFromPreferences(SharedPreferences prefs) {
   return switch (prefs.getString(_appLanguagePreferenceKey)) {
     'english' => AppLanguage.english,
     'turkish' => AppLanguage.turkish,
-    'arabic' => AppLanguage.arabic,
-    'german' => AppLanguage.german,
+    'arabic' || 'german' => AppLanguage.english,
     _ => AppLanguage.system,
   };
 }
@@ -27,8 +26,6 @@ Locale resolvePreferredAppLocale(Locale? systemLocale, AppLanguage preference) {
   return switch (preference) {
     AppLanguage.english => const Locale('en'),
     AppLanguage.turkish => const Locale('tr'),
-    AppLanguage.arabic => const Locale('ar'),
-    AppLanguage.german => const Locale('de'),
     AppLanguage.system => _fromSystem(systemLocale),
   };
 }
@@ -42,9 +39,7 @@ Locale _fromSystem(Locale? systemLocale) {
   return const Locale('en');
 }
 
-/// RTL diller (şimdilik Arapça).
-bool isRtlLocale(Locale locale) =>
-    locale.languageCode.toLowerCase() == 'ar';
+bool isRtlLocale(Locale locale) => false;
 
 TextDirection textDirectionForLocale(Locale locale) =>
     isRtlLocale(locale) ? TextDirection.rtl : TextDirection.ltr;

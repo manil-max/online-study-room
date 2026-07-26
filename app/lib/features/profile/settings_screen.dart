@@ -233,14 +233,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             value: AppLanguage.english,
                             child: Text(l10n.profileDilIngilizce),
                           ),
-                          DropdownMenuItem(
-                            value: AppLanguage.arabic,
-                            child: Text(l10n.languageArabic),
-                          ),
-                          DropdownMenuItem(
-                            value: AppLanguage.german,
-                            child: Text(l10n.languageGerman),
-                          ),
                         ],
                         onChanged: (value) {
                           if (value != null) {

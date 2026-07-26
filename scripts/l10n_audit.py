@@ -46,7 +46,7 @@ NATIVE_AUDIT = ROOT / "scripts/l10n_android_audit.py"
 
 # Şablon dil `en`; diğerleri ona göre denetlenir.
 TEMPLATE_LOCALE = "en"
-LOCALES = ("en", "tr", "de", "ar")
+LOCALES = ("en", "tr")
 
 
 def arb_path(locale: str) -> Path:

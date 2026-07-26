@@ -5,8 +5,6 @@ output-class: AppLocalizations
 preferred-supported-locales:
   - en
   - tr
-  - ar
-  - de
 nullable-getter: false
 required-resource-attributes: true
 format: true
