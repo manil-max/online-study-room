@@ -46,10 +46,15 @@
 - **Son not:** WP-327 kod/test tamamlandı; güvenli keşif özeti için 0077 local replay ile doğrulandı. Staging/beta kabulü sonraki ortak turda (2026-07-26).
 
 ### Codex Lane
-- **Durum:** [x] Boşta
-- **Faz/WP:** —
-- **SAHİP yollar:** —
-- **Son not:** WP-351: staging `0085` apply/post-check (Database Gates `30220668874`) ve production `0085` dry-run (Database Gates `30220883672`) PASS. Apply/release, doğrulanmış backup/PITR kaydı için Supabase dashboard oturumu bekliyor (2026-07-27 00:36 Europe/Istanbul).
+- **Durum:** [~] Aktif
+- **Faz/WP:** Faz F2 · WP-351
+- **Aşama:** Stable APK aday derlemesi
+- **SAHİP yollar:** `.github/workflows/stable-candidate.yml`, `progress.md` (yalnız Codex lane + WP-351 kartı)
+- **Ortak/riskli yüzey:** protected `production` CI environment, Android signing ve production build manifesti
+- **Dal:** main
+- **Başlangıç:** 2026-07-27 00:40 (Europe/Istanbul)
+- **Son güncelleme:** 2026-07-27 00:40 (Europe/Istanbul)
+- **Not:** Kullanıcı, backup/PITR doğrulaması sürerken imzalı stable APK adayının paralel derlenmesini istedi. Public release ve update bildirimi bu jobun kapsamı dışındadır.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
