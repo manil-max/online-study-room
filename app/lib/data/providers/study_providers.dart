@@ -37,6 +37,7 @@ import 'offline_providers.dart';
 import 'auth_providers.dart';
 import 'group_providers.dart';
 import 'presence_providers.dart';
+import 'global_timer_providers.dart';
 
 SupabaseClient? _supabaseClientOrNull() {
   if (!SupabaseConfig.isConfigured) return null;
@@ -660,6 +661,10 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     await _reconcileBackgroundTimer();
     if (_disposed) return;
     await _processPendingExternalCommand();
+    if (_disposed) return;
+    // WP-342: yalnız rollout açıldığında V2 envelope shadow RPC'ye gider.
+    // Bu çağrı legacy timer durumunu veya native action akışını değiştirmez.
+    await ref.read(globalTimerCoordinatorProvider).flushShadow();
   }
 
   /// WP-241/243: eşzamanlı reconcile çağrılarını tek çalışmaya birleştirir.

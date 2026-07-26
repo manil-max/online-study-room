@@ -12,8 +12,9 @@ class InMemoryPushRegistrationRepository implements PushRegistrationRepository {
   final Map<String, PushSelfTestStatus> _tests = {};
 
   @override
-  Future<void> registerDevice(PushDeviceRegistration registration) async {
+  Future<String?> registerDevice(PushDeviceRegistration registration) async {
     lastRegistration = registration;
+    return const Uuid().v4();
   }
 
   @override

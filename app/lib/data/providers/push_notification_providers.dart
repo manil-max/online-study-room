@@ -19,6 +19,7 @@ import '../repositories/in_memory/in_memory_push_registration_repository.dart';
 import '../repositories/push_registration_repository.dart';
 import '../repositories/supabase/supabase_push_registration_repository.dart';
 import 'auth_providers.dart';
+import 'global_timer_providers.dart';
 
 const _pushInstallationIdKey = 'push_installation_id_v1';
 
@@ -216,9 +217,12 @@ class PushHealthController extends Notifier<PushHealthState> {
     }
 
     try {
-      await ref
+      final deviceId = await ref
           .read(pushRegistrationRepositoryProvider)
           .registerDevice(registration);
+      if (deviceId != null && deviceId.isNotEmpty) {
+        await prefs.setString(globalTimerDeviceIdKey, deviceId);
+      }
       _lastFingerprint = fingerprint;
       state = state.copyWith(
         readiness: PushHealthReadiness.ready,

@@ -48,7 +48,7 @@
 - **Durum:** [x] Boşta
 - **Faz/WP:** —
 - **SAHİP yollar:** —
-- **Son not:** WP-339 kod/test tamamlandı; V3 projection/legacy-shadow/kill-switch modları, group-parametresiz state/heartbeat, lease-aware read, offline queue yaşı/hatası ve dar adapter uygulandı. `flutter analyze` ile ilgili test paketi geçti; tam paket koşumu tek bir worker'da ilerlemesiz kaldığı için sonlandırıldı. Staging/cihaz kabulü V3 zincirinin ortak QA turunda yapılacak.
+- **Son not:** WP-342 kod/test tamamlandı; V2 snapshot/repository, server kayıtlı cihaz UUID’si, account-bound idempotent shadow flush ve InMemory parity eklendi. Rollout varsayılanı kapalı; legacy timer/native yüzey değişmedi.
 
 ### Codex-2 Lane
 - **Durum:** [~] Aktif
@@ -341,7 +341,7 @@ Böylece kişisel ve grup istatistiği **asla çelişmez**.
 - **Model önerisi:** 🔴 Opus
 
 #### WP-342: Flutter global coordinator ve shadow publish 🛰️
-- **Program/Faz:** Faz E2 · Delivery C shadow · **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-340 + WP-341
+- **Program/Faz:** Faz E2 · Delivery C shadow · **Ajan:** Codex · **Durum:** [~] Kod/test tamam; staging/cihaz kabulü bekliyor · **Bağımlılık:** WP-340 + WP-341
 - **Problem:** Server çekirdeği ile local/native timer arasında versioned snapshot, outbox flush ve reconcile katmanı yok.
 - **Kapsam dışı:** Native remote apply · push · timer UI · session finalizer.
 - **SAHİP dosyalar (yaz):** yeni global timer model/repository/coordinator · Supabase/InMemory çiftleri · WP-340 flush entegrasyonu · testler
@@ -353,6 +353,7 @@ Böylece kişisel ve grup istatistiği **asla çelişmez**.
 - **Edge-case'ler:** commit/response loss · duplicate retry · auth refresh · offline iki start · existing run · local newer start.
 - **Kabul (ölçülebilir):** Retry aynı sonuç · snapshot rollback 0 · process-death queue korunur · local start p95 baseline aynı · divergence ölçülebilir.
 - **Tuzaklar:** Android Flutter ikinci command producer olmaz; legacy verified yolu açılmaz.
+- **Kanıt:** `flutter analyze` temiz · V2 snapshot/idempotency ve push-device contract testleri yeşil. Rollout varsayılanı `disabled`; staging/cihaz kabulü WP-346 ortak turunda. **Kodda doğrulandı; cihazda doğrulanmalı.**
 - **Model önerisi:** 🟣 Pro
 
 #### WP-343: Foreground çoklu cihaz mirror ve güvenli remote stop 📱↔️📱

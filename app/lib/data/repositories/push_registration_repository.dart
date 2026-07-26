@@ -10,7 +10,8 @@ class PushRegistrationException implements Exception {
 }
 
 abstract interface class PushRegistrationRepository {
-  Future<void> registerDevice(PushDeviceRegistration registration);
+  /// Server device UUID'si V2 timer RPC'lerinde account-bound capability'dir.
+  Future<String?> registerDevice(PushDeviceRegistration registration);
 
   Future<void> unregisterDevice(String installationId);
 

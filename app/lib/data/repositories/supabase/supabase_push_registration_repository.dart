@@ -9,12 +9,15 @@ class SupabasePushRegistrationRepository implements PushRegistrationRepository {
   final SupabaseClient _client;
 
   @override
-  Future<void> registerDevice(PushDeviceRegistration registration) async {
+  Future<String?> registerDevice(PushDeviceRegistration registration) async {
     try {
-      await _client.rpc(
+      final raw = await _client.rpc(
         'register_push_device',
         params: registration.toRpcParams(),
       );
+      final rows = raw as List;
+      if (rows.isEmpty) return null;
+      return (rows.single as Map)['device_id']?.toString();
     } catch (_) {
       // FCM tokenı veya backend ayrıntısı exception metniyle üst katmana taşınmaz.
       throw const PushRegistrationException('device_registration_failed');
