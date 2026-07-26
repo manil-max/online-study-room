@@ -21,7 +21,7 @@
 | Sürüm politikası | 🔴 **Sahip onayı olmadan yeni sürüm çıkmaz** (2026-07-26 kararı) |
 | Test | 811 test yeşil, `flutter analyze` temiz, l10n audit temiz |
 | Migration head | `0070` (local = staging = production, `docs/recovery/MIGRATION-BASELINE.md`) |
-| Cihaz QA | 🔴 **Büyük borç:** v46–v49 arası işlerin çoğu hiç cihazda doğrulanmadı |
+| Cihaz QA | ✅ Sahip v48'de test etti: özel tema okunabilirliği, spektrum seçici, font düğmeleri, grafik tarihleri **çalışıyor**. Kalan tek madde: v49'daki his adımı (acele değil) |
 | Play Console | Hesap açıldı, doğrulama sürüyor. Hiçbir form doldurulmadı |
 | Microsoft Partner Center | Hesap açıldı. Hiçbir hazırlık yapılmadı |
 
@@ -36,33 +36,26 @@
 | **K1** Yanıt kanalı | ✅ **Çift yönlü** — kullanıcı admin yanıtına geri yazabilecek |
 | **K2** Şifre değiştirme | ✅ Klasik üç alan + "Şifremi unuttum". **Google/passkey girişi zaten yok** (`passkeys` paketi kurulu ama kullanılmıyor — ölü bağımlılık). Herkesin şifresi var, dolayısıyla "mevcut şifre" alanı gerçekten doğrulanabilir |
 | **K3** Tanıtım turu | ✅ Yalnız **ilk açılışta**, ekrana basınca sonraki balona geçer. Ekran başına az sayıda balon; hızlı geçmek isteyen üst üste basar |
-| **K4** Gün sınırı backfill | ✅ **Geçmişe dokunma** — sadece bundan sonrası düzelsin. Gerekçe: kullanıcı sayısı çok az, risk almaya değmez |
+| **K4** Gün sınırı backfill | ✅ **Konusuz kaldı.** Sahip "hangisi kolaysa" dedi; incelemede gün toplamlarının **hiç saklanmadığı**, her sorguda ham oturumlardan hesaplandığı görüldü → backfill diye bir iş yok |
 | **K5** Çoklu grup | ✅ **Birincil grup** — kullanıcı seçer; görev/hedef/başarım onu sayar |
-| **K6** İsim + logo | ⏸️ Faz B sırasında konuşulacak |
-| **K7** Gizlilik URL'i | ⏸️ Sahip deneyimi yok → öneri bekliyor (bkz. §Ek C) |
+| **K6** İsim + logo | ⏸️ **Faz B sırasında** konuşulacak (sahip onayı 2026-07-26) |
+| **K7** Gizlilik URL'i | ✅ **GitHub Pages** — ücretsiz ve yeterli olduğu için onaylandı (bkz. §Ek C) |
 
 ---
 
 # PLAN 1 — ÜRÜN & KOD
 
-## Faz A — Doğrulama borcunu kapat 🔴 *önce bu*
+## Faz A — Doğrulama borcu ✅ *kapandı (2026-07-26)*
 
-Hiçbir yeni iş, elimizde ne olduğunu bilmeden başlamamalı. v46–v49 arasında
-çok sayıda değişiklik cihaza hiç değmedi.
+Sahip v48 üzerinde cihaz testini kendisi yaptı. **Özel tema okunabilirliği,
+spektrum renk seçici, font düğmelerinin sabitliği, grafikteki gün etiketleri —
+hepsi çalışıyor.** Diğer birikmiş QA maddeleri de v46–v48 turlarında test
+edilmiş durumda.
 
-**A1. v49 kabulü.** Tema sihirbazı: his adımı artık görünür efekt veriyor mu ·
-özel temada okunmayan yazı kalmadı mı (koyu **ve** açık modda) · spektrum renk
-seçici · font düğmeleri sabit mi · grafikte her sütunun altında tarih var mı.
+**Kalan tek madde:** v49'daki his adımı (tema sihirbazı 6/8) cihazda
+doğrulanmadı — ama v49 sürümü acele değil, sonraki sürümle birlikte bakılacak.
 
-**A2. Birikmiş QA kuyruğu.** `progress.md` → *Cihaz QA Kuyruğu*: ayarlar IA,
-şifre sıfırlama, tema göçü, gömülü fontlar, taç/aura görselleri, l10n borcu,
-boş ikinci bildirim, ana ekran düzenleme paneli. Windows tarafı da var.
-
-**A3. Bulunan her hata** buraya "Faz A bulguları" olarak yazılır; kritik
-olanlar Faz B'den önce düzeltilir, kozmetik olanlar Faz F'ye ertelenir.
-
-**Çıktı:** hangi ekranın gerçekten çalıştığını bilen bir liste. Play'in
-"P0 hata = 0" kapısı da bunu istiyor.
+Bu faz artık **iş kuyruğunda değil**. Buradan çıkan kod bulguları §Ek D'de.
 
 ---
 
@@ -94,7 +87,7 @@ Yapılacak: geri bildirim kartına "Yanıtla" eylemi → hedefi o kullanıcı ol
 duyuru oluştur → push bildirimi gönder → bilet durumunu otomatik ilerlet.
 **Kabul:** admin yanıtı kullanıcının Duyurular'ında görünüyor · bildirim
 düşüyor · yanıt biletin altında da görünüyor (kim ne demiş, iz kalıyor).
-🔴 *Karar gerekiyor — K1 (aşağıda).*
+✅ *K1 kapandı: çift yönlü — kullanıcı admin yanıtına geri yazabilir.*
 
 **B3. Bilet arşivi.** Şu an sadece `open / in_progress / closed` var ve hepsi
 listede duruyor. Eklenecek: **"Tamamlandı → listeden kaldır"**.
@@ -115,7 +108,9 @@ yeni şifre tekrar*, ve aynı ekranda **"Şifremi unuttum"** yolu.
 ⚠️ Teknik tuzak: Supabase `updateUser(password:)` **eski şifreyi doğrulamaz**.
 "Mevcut şifre" alanının gerçekten işe yaraması için önce o şifreyle yeniden
 kimlik doğrulaması yapılmalı; yoksa alan dekoratif olur (= ölü anahtar).
-🔴 *Karar gerekiyor — K2.*
+✅ *K2 kapandı: mevcut şifre gerçekten doğrulanacak. Google/passkey girişi
+zaten yok (`passkeys` paketi kurulu ama kullanılmıyor), yani herkesin şifresi
+var — özel durum ekranı gerekmiyor.*
 
 **C2. "Verilerimi dışa aktar" taşınıyor.** `data_export_screen.dart` şu an
 ayarların ortasında duruyor. **Hesabımı yönet** başlığı altına, hesap silmenin
@@ -132,6 +127,15 @@ kontrol eder, Arapça RTL cihaz QA borcu düşer, gömülü fontların Arapça g
 zinciri gereksinimi ortadan kalkar.
 ⚠️ Bu bir **davranış değişikliği**: cihaz dili Almanca olan mevcut kullanıcı
 İngilizce'ye düşer. Kabul edilebilir, ama bilinerek yapılmalı.
+
+**C5. Teknik borç temizliği.** §Ek D'den çıkan, sahibi olmayan küçük maddeler
+burada toplanır — hepsi mağazaya çıkmadan kapanmalı:
+- `passkeys` paketini kaldır (kurulu ama hiç kullanılmıyor; APK boyutu + izin yüzeyi)
+- `pubspec.yaml` sürümünü (`1.0.43-beta.9+4309`) yayınlanan etiketlerle hizala —
+  mağaza paketleri bu numarayı okur
+- Windows MSIX kendi kendine güncellemeyi Store yapısında kapat (Faz H'nin ön şartı)
+- Kalan test kararsızlığını kapat: `study_timer_card_stop_test.dart` tam suitte
+  bir koşumda düştü, ikincide geçti. **Sürüm çıkmadan önce çözülmüş olmalı.**
 
 ---
 
@@ -151,7 +155,8 @@ Sayaç, Kamp Ateşi, Gruplar, İstatistik, Profil. "Atla" her zaman var.
 - Ayarlarda **"Tanıtım turlarını sıfırla"** olur.
 - Windows'ta da çalışmalı (fare/klavye; balon konumları farklı).
 - Tur, izin isteme diyalogları ve güncelleme bildirimiyle çakışmamalı.
-🔴 *Karar gerekiyor — K3.*
+✅ *K3 kapandı: yalnız ilk açılışta, ekrana basınca sonraki balona geçer.
+Ekran başına az sayıda balon; hızlı geçmek isteyen üst üste basar.*
 
 ---
 
@@ -160,13 +165,46 @@ Sayaç, Kamp Ateşi, Gruplar, İstatistik, Profil. "Atla" her zaman var.
 Bu fazın iki işi de **geri alınamaz veri** ile ilgili: yedek, staging provası ve
 rollback planı olmadan production'a dokunulmaz.
 
-**E1. Gün sınırı `Europe/Istanbul`.** ✅ *Karar verildi, yapılacak.*
-Şu an günlük toplam/seri hesabı UTC'ye göre; gece 02:00'de çalışan kullanıcının
-süresi ertesi güne yazılıyor, serisi haksız yere kırılıyor.
-Sıra: (1) sunucu fonksiyonlarını İstanbul gününe çevir → (2) staging'de
-sentetik veriyle prova → (3) production yedeği → (4) geçmiş veriyi yeniden
-hesapla (backfill) → (5) rollback betiği hazır beklet.
-🔴 *Karar gerekiyor — K4 (geçmişin ne kadarı düzeltilecek?).*
+**E1. Gün sınırı — yurtdışı kullanıcı.** *Kapsam 2026-07-26'da yeniden yazıldı.*
+
+⚠️ **Eski plan yanlıştı.** "Günlük toplam UTC'ye göre" diye yazıyordu; **değil**.
+Sunucu tarafı zaten baştan sona `Europe/Istanbul` (`0007`, `0011`, `0024`,
+`0039`, `0051`, `0053`, `0062`, `0063` … 60'tan fazla yerde), istemci tarafı da
+`istanbulDay`. Yani "İstanbul'a çevirme" işi **çoktan yapılmış**.
+
+⚠️ **Backfill diye bir iş de yok.** Gün toplamları hiçbir tabloda saklanmıyor;
+`get_user_day_totals` her çağrıda ham `study_sessions` satırlarından hesaplıyor.
+Gün sınırı ifadesi değişirse geçmiş kendiliğinden yeniden hesaplanır. (K4 bu
+yüzden konusuz kaldı.)
+
+**Gerçek açık:** herkesin günü İstanbul yarısında sıfırlanıyor. Yurtdışında bu
+bozuluyor:
+
+| Kullanıcı | Günü ne zaman sıfırlanıyor | Sonuç |
+| --- | --- | --- |
+| Türkiye (UTC+3) | 00:00 | doğru |
+| Sydney (UTC+11) | 08:00 | sabah çalışması düne yazılır |
+| New York (UTC−5) | 16:00 | 🔴 akşam çalışması yarına yazılır — asıl çalışma saati kayboluyor |
+
+**Önerilen kapsam — ikiye bölme:**
+- **Kişisel** (bugünün toplamı, seri, ısı haritası) → kullanıcının **kendi**
+  saat dilimi. Dokunulacak fonksiyon az (3–5), veri göçü yok.
+- **Grup / liderlik / başarım** → tek sabit "lig saati" (TR). Herkes aynı gün
+  sınırında yarışır; 60 fonksiyona dokunmaya gerek kalmaz. Arayüzde açıkça
+  *"Grup günü — TR saati"* yazılır.
+
+**Elimizde hazır olan:** cihazın saat dilimi adı zaten toplanıyor —
+`0066_push_notification_delivery.sql` push zamanlaması için `time_zone text`
+saklıyor. Kişisel tarafa bağlanacak kaynak bu.
+
+⚠️ Saat dilimi **IANA adı** olarak saklanır (`America/New_York`), offset (`-5`)
+olarak değil — yoksa yaz saati geçişinde kayar. Türkiye'de yaz saati olmadığı
+için bu hata bugüne kadar hiç görünmedi.
+
+⚠️ Kabul edilen bedel: yurtdışındaki kullanıcı "kişisel bugün" ile "grup
+bugün"ü farklı görebilir. Arayüzde etiketlenerek şeffaf hale getirilir.
+
+🔴 *Karar gerekiyor — K8 (aşağıda).*
 
 **E2. Birden fazla gruptaki kullanıcı.** 🔴 Sahibin yakaladığı gerçek boşluk.
 Bugün bir kullanıcı birden çok gruba üye olabiliyor ama şu sorular
@@ -178,7 +216,8 @@ cevapsız:
 - **Bildirimler:** üç gruptan üç ayrı dürtme mi gelir?
 Cevapsız kalırsa kullanıcı "neden ilerlemiyor / neden üç kere geldi" diye
 şikâyet eder ve düzeltmesi veri göçü gerektirir.
-🔴 *Karar gerekiyor — K5.*
+✅ *K5 kapandı: **birincil grup** — kullanıcı seçer, görev/hedef/başarım/bildirim
+onu sayar. Diğer gruplar üyelikte kalır ama sayaç tutmaz.*
 
 ---
 
@@ -263,15 +302,13 @@ Kapı listesi: `docs/play-store/PLAY-RELEASE-GATE.md`
 
 # AÇIK KARARLAR — cevabını bekliyorum
 
+> **K1–K5 ve K7 kapandı** (2026-07-26). Cevapları yukarıdaki *"Kapanan
+> kararlar"* tablosunda. Bu bölümde yalnız **hâlâ açık** olanlar durur.
+
 | # | Konu | Soru |
 | --- | --- | --- |
-| **K1** | Yanıt kanalı | Admin yanıtı **tek yönlü duyuru** mu olsun, yoksa kullanıcı **geri yazabilsin** mi (gerçek yazışma)? Tek yön basit ve hızlı; çift yön daha iyi ama moderasyon/bildirim yükü getirir |
-| **K2** | Şifre değiştirme | "Mevcut şifre" alanı **gerçekten doğrulansın** mı (kullanıcı şifresiyle yeniden giriş yapılır, güvenli ama bir adım fazla), yoksa Supabase'in varsayılanı gibi **sadece yeni şifre** mi sorulsun? Ayrıca: hiç şifresi olmayan (Google/passkey ile giren) kullanıcıya bu ekran ne göstersin? |
-| **K3** | Tanıtım turu | Tur **zorunlu mu** (ilk girişte otomatik açılır) yoksa **isteğe bağlı mı** ("?" düğmesi ile açılır)? Kaç balon fazla — ekran başına 3–4 mü, her öğe için mi? |
-| **K4** | Gün sınırı backfill | Geçmiş veri **ne kadar geriye** düzeltilsin — hepsi mi, son 90 gün mü, yoksa sadece bugünden sonrası mı? (Hepsi = en doğru ama en riskli) |
-| **K5** | Çoklu grup | Kullanıcı birden fazla gruptaysa: **(a)** hepsi aynı anda aktif · **(b)** bir tanesi "birincil grup" seçilir, görev/hedef/başarım onu sayar · **(c)** kullanıcı aynı anda **tek** gruba üye olabilir (en basit, ama mevcut çoklu üyelikler göç ister) |
-| **K6** | İsim + logo | Değişecek mi? Değişecekse **ne zaman** — Faz A–C sürerken karar verip mağaza işlerine hazır girelim mi? TR ve EN'de aynı isim mi kullanılacak? |
-| **K7** | Gizlilik URL'i | Politika metinleri nerede yayınlanacak? (GitHub Pages ücretsiz ve hızlı · kendi domainin varsa oraya · her ikisi de olur) |
+| **K6** | İsim + logo | ⏸️ **Faz B'de konuşulacak** (sahip kararı). Sorular o zaman: değişecek mi · TR ve EN'de aynı isim mi · Android `applicationId` ve MSIX `Identity Name` sabit kalabilir mi |
+| **K8** | Yurtdışı gün sınırı | Kişisel istatistikler kullanıcının **kendi saat dilimine** geçsin, grup/başarım tarafı sabit **TR lig saati**nde kalsın mı? (bkz. Faz E1) Alternatifler: **(a)** her şey İstanbul'da kalsın — ABD'de bozuk · **(b)** önerilen bölme · **(c)** her şey kullanıcının saat dilimine geçsin — 60+ fonksiyon, göç riski, grup yarışı adaletsizleşir |
 
 ---
 
@@ -279,11 +316,12 @@ Kapı listesi: `docs/play-store/PLAY-RELEASE-GATE.md`
 
 - **Sürüm disiplini.** Artık sürüm sahibin onayıyla çıkar. Düzeltmeler birikir,
   tek sürümde çıkar. (2026-07-26 kararı)
-- **Cihaz QA borcu birikiyor.** Her yeni faz bu borcu büyütür; Faz A'nın önce
-  gelmesinin sebebi bu.
-- **Geri alınamaz işler.** Gün sınırı backfill'i ve hesap silme purge'ü bu
-  sınıfta. Yedek + staging provası + rollback betiği olmadan production'a
-  dokunulmaz (`.agents/AGENTS.md` ve `docs/recovery/` kuralı).
+- **Cihaz QA borcu.** v48 turunda kapatıldı (Faz A). Her yeni faz bu borcu
+  yeniden büyütür — faz sonlarında cihaz turu atlanmamalı.
+- **Geri alınamaz işler.** Hesap silme purge'ü bu sınıfta. Yedek + staging
+  provası + rollback betiği olmadan production'a dokunulmaz
+  (`.agents/AGENTS.md` ve `docs/recovery/` kuralı). *Gün sınırı artık bu
+  sınıfta değil: toplamlar saklanmıyor, her sorguda hesaplanıyor.*
 - **Ölü anahtar riski.** "Mevcut şifre" alanı gibi görünen ama hiçbir şey
   doğrulamayan arayüzler en kötü hata türü — kullanıcı korunduğunu sanır.
   Faz C'de bu özellikle kontrol edilecek.
@@ -304,7 +342,7 @@ bir gün; asıl yük domain doğrulaması ve teslimat itibarı.
 **Karar: şimdilik iptal.** Kod repoda kalıyor, hiçbir secret/cron kurulmuyor.
 Mağazadan sonra istenirse yarım günde açılır.
 
-## Ek C — K7 önerisi: gizlilik metinleri nerede yayınlansın?
+## Ek C — K7 ✅ onaylandı: gizlilik metinleri GitHub Pages'te
 
 Motto: *"basit durmayan ama bizi uğraştırmayan."* Önerim **GitHub Pages**:
 bedava, HTTPS hazır, repoda zaten duran `docs/legal/*.md` dosyalarından
@@ -314,7 +352,10 @@ bunu kabul eder. İleride alan adı alınırsa aynı sayfaya yönlendirilir,
 mağazadaki bağlantı değişmez. Kurulum yarım saatlik iş; sahip tarafında
 yapılacak tek şey repo ayarlarından Pages'i açmak.
 
-## Ek D — Faz A bulguları (cihaz QA öncesi, koddan çıkanlar)
+## Ek D — Faz A bulguları (koddan çıkanlar)
+
+> Aşağıdaki 🟡 maddelerin tamamı artık **Faz C5**'e bağlıdır; başıboş not
+> değildir. 🔴 madde kapandı, kalan riski C5 takip eder.
 
 - 🔴 **Gece yarısı test tuzağı (kapatıldı, 2026-07-26).** `v49` sürümü koddaki
   bir hatadan değil, **koşum saatinden** kırıldı: üç sayaç testi geçmişi
