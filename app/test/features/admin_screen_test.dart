@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -5,8 +7,10 @@ import 'package:online_study_room/data/models/feedback_ticket.dart';
 import 'package:online_study_room/data/models/profile.dart';
 import 'package:online_study_room/data/providers/admin_providers.dart';
 import 'package:online_study_room/data/providers/auth_providers.dart';
+import 'package:online_study_room/data/repositories/admin_repository.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_admin_repository.dart';
 import 'package:online_study_room/features/admin/admin_screen.dart';
+import 'package:online_study_room/features/admin/tabs/admin_reports_tab.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
 void main() {
@@ -60,6 +64,7 @@ void main() {
     );
     expect(find.text('Bildirim aksiyonu'), findsOneWidget);
     expect(find.text('Açık'), findsOneWidget);
+    expect(find.text('Ekran Görüntüsü'), findsNothing);
   });
 
   testWidgets('AdminScreen admin olmayan kullanıcıyı engeller', (tester) async {
@@ -93,4 +98,74 @@ void main() {
     expect(find.text('Bu alan yalnızca süper-admin içindir.'), findsOneWidget);
     expect(find.text('Kullanıcılar'), findsNothing);
   });
+
+  testWidgets(
+    'ekli rapor görsel bağlantısı kurulamazsa hata ve yeniden dene gösterir',
+    (tester) async {
+      final repo = _FailingAttachmentRepository();
+      addTearDown(repo.dispose);
+      final ticket = await repo.submitFeedback(
+        userId: 'u1',
+        kind: FeedbackTicketKind.bug,
+        subject: 'Görselli hata',
+        message: 'Ekran görüntüsü ektedir.',
+        attachmentBytes: Uint8List.fromList([1, 2, 3]),
+        attachmentExt: 'png',
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            authStateProvider.overrideWith(
+              (ref) => Stream.value(
+                Profile(
+                  id: 'admin',
+                  displayName: 'Admin',
+                  createdAt: DateTime(2026),
+                ),
+              ),
+            ),
+            adminRepositoryProvider.overrideWithValue(repo),
+            adminFeedbackTicketsProvider.overrideWith(
+              (ref) => Future.value([ticket]),
+            ),
+          ],
+          child: const MaterialApp(
+            locale: Locale('tr'),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(body: AdminReportsTab()),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Ekran Görüntüsü'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Görsel yüklenemedi.'), findsOneWidget);
+      expect(find.byTooltip('Tekrar dene'), findsOneWidget);
+
+      await tester.tap(find.byTooltip('Tekrar dene'));
+      await tester.pumpAndSettle();
+
+      expect(repo.attachmentUrlRequestCount, 2);
+      expect(find.text('Görsel yüklenemedi.'), findsOneWidget);
+    },
+  );
+}
+
+class _FailingAttachmentRepository extends InMemoryAdminRepository {
+  _FailingAttachmentRepository() : super(superAdminUserIds: const {'admin'});
+
+  int attachmentUrlRequestCount = 0;
+
+  @override
+  Future<String?> getFeedbackAttachmentUrl(String path) {
+    attachmentUrlRequestCount++;
+    throw const AdminException(
+      'Görsel bağlantısı oluşturulamadı.',
+      code: 'attachment_signed_url',
+    );
+  }
 }

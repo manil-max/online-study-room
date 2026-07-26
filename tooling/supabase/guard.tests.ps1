@@ -22,10 +22,11 @@ $repoRoot = Get-RepoRoot
 $stagingRef = 'aaaaaaaaaaaaaaaaaaaa'
 $productionRef = 'bbbbbbbbbbbbbbbbbbbb'
 
-Assert-Equal (Get-LocalMigrationHead -RepoRoot $repoRoot) '0071' 'local migration head'
-Assert-Equal ((Get-DeployContract -RepoRoot $repoRoot).local_migration_head) '0071' 'contract migration head'
+Assert-Equal (Get-LocalMigrationHead -RepoRoot $repoRoot) '0072' 'local migration head'
+Assert-Equal ((Get-DeployContract -RepoRoot $repoRoot).local_migration_head) '0072' 'contract migration head'
 $contract = Get-DeployContract -RepoRoot $repoRoot
-# 0071 (grup üye sınırı 8) yazıldı ama HİÇBİR ortama uygulanmadı; bu yüzden
+# 0071 (grup üye sınırı 8) ve 0072 (geri bildirim eki Storage/RLS onarımı)
+# yazıldı ama HİÇBİR ortama uygulanmadı; bu yüzden
 # staging/production hâlâ 0070. Sürüm öncesi staging apply şart.
 Assert-Equal $contract.staging.migration_head '0070' 'staging migration head'
 Assert-Equal ([bool]$contract.staging.deploy_enabled) $true 'staging deploy enabled'

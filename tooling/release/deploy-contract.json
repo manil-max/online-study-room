@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "local_migration_head": "0071",
+  "local_migration_head": "0072",
   "staging": {
     "migration_head": "0070",
     "deploy_enabled": true,
     "release_enabled": true,
-    "hold_reason": "WP-280: retry worker/runtime config and required pg_net transport (0066-0070) are authorized only for staging activation and GitHub beta device QA. PENDING: 0071 (group member limit 8) is written but NOT applied to any environment yet; staging apply must run before it can ship."
+    "hold_reason": "WP-280: retry worker/runtime config and required pg_net transport (0066-0070) are authorized only for staging activation and GitHub beta device QA. PENDING: 0071 (group member limit 8) and 0072 (private feedback attachment bucket/RLS repair) are written but NOT applied to any environment yet; staging apply must run before they can ship."
   },
   "production": {
     "migration_head": "0070",

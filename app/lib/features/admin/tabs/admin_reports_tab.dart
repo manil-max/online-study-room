@@ -198,15 +198,54 @@ class _AttachmentPreviewDialogState
   }
 
   Future<void> _loadUrl() async {
-    final url = await ref
-        .read(adminRepositoryProvider)
-        .getFeedbackAttachmentUrl(widget.path);
     if (mounted) {
+      setState(() {
+        _loading = true;
+        _url = null;
+      });
+    }
+    try {
+      final url = await ref
+          .read(adminRepositoryProvider)
+          .getFeedbackAttachmentUrl(widget.path);
+      if (!mounted) return;
       setState(() {
         _url = url;
         _loading = false;
       });
+    } on AdminException {
+      if (!mounted) return;
+      setState(() {
+        _url = null;
+        _loading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _url = null;
+        _loading = false;
+      });
     }
+  }
+
+  Widget _loadFailure(AppLocalizations l10n) {
+    return SizedBox(
+      height: 200,
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(l10n.adminGorselYuklenemedi),
+            const SizedBox(height: 8),
+            IconButton(
+              tooltip: l10n.updaterTekrarDene,
+              icon: const Icon(Icons.refresh),
+              onPressed: _loadUrl,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -223,12 +262,16 @@ class _AttachmentPreviewDialogState
               child: Center(child: CircularProgressIndicator()),
             )
           else if (_url == null)
-            SizedBox(
-              height: 200,
-              child: Center(child: Text(l10n.adminGorselYuklenemedi)),
-            )
+            _loadFailure(l10n)
           else
-            InteractiveViewer(child: Image.network(_url!, fit: BoxFit.contain)),
+            InteractiveViewer(
+              child: Image.network(
+                _url!,
+                key: ValueKey(_url),
+                fit: BoxFit.contain,
+                errorBuilder: (_, _, _) => _loadFailure(l10n),
+              ),
+            ),
           Container(
             margin: const EdgeInsets.all(8),
             decoration: BoxDecoration(

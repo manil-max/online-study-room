@@ -206,12 +206,46 @@ class SupabaseAdminRepository implements AdminRepository {
 
   @override
   Future<String?> getFeedbackAttachmentUrl(String path) async {
+    final generatedAt = DateTime.now().toUtc().toIso8601String();
     try {
-      return await _client.storage
+      final url = await _client.storage
           .from('feedback_attachments')
           .createSignedUrl(path, 3600);
+      if (url.trim().isEmpty) {
+        _debugLogFeedback(
+          'feedback_attachment_signed_url status=empty '
+          'generated_at_utc=$generatedAt',
+        );
+        throw const AdminException(
+          'Görsel bağlantısı oluşturulamadı.',
+          code: 'attachment_signed_url',
+        );
+      }
+      _debugLogFeedback(
+        'feedback_attachment_signed_url status=success '
+        'generated_at_utc=$generatedAt',
+      );
+      return url;
+    } on StorageException catch (e) {
+      _debugLogFeedback(
+        'feedback_attachment_signed_url status=storage_error '
+        'generated_at_utc=$generatedAt status_code=${e.statusCode}',
+      );
+      throw const AdminException(
+        'Görsel bağlantısı oluşturulamadı.',
+        code: 'attachment_signed_url',
+      );
+    } on AdminException {
+      rethrow;
     } catch (_) {
-      return null;
+      _debugLogFeedback(
+        'feedback_attachment_signed_url status=unexpected_error '
+        'generated_at_utc=$generatedAt',
+      );
+      throw const AdminException(
+        'Görsel bağlantısı oluşturulamadı.',
+        code: 'attachment_signed_url',
+      );
     }
   }
 

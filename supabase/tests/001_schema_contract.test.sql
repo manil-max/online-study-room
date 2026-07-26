@@ -3,17 +3,51 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(43);
+select plan(46);
 
 select is(
   (select count(*)::integer from supabase_migrations.schema_migrations),
-  70,
-  'all 70 migrations are recorded'
+  72,
+  'all 72 migrations are recorded'
 );
 select is(
   (select max(version) from supabase_migrations.schema_migrations),
-  '0070',
-  '0070 is the migration head'
+  '0072',
+  '0072 is the migration head'
+);
+select ok(
+  exists(
+    select 1
+    from storage.buckets
+    where id = 'feedback_attachments'
+      and name = 'feedback_attachments'
+      and public = false
+  ),
+  '0072 installs the private feedback attachment bucket'
+);
+select ok(
+  exists(
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'feedback_tickets'
+      and column_name = 'attachment_path'
+  ),
+  'feedback tickets retain the attachment path'
+);
+select is(
+  (
+    select count(*)::integer
+    from pg_policies
+    where schemaname = 'storage'
+      and tablename = 'objects'
+      and policyname in (
+        'kullanici_kendi_ekini_yukleyebilir',
+        'kullanici_ve_admin_ekleri_okuyabilir'
+      )
+  ),
+  2,
+  '0072 installs exactly the upload and private read policies'
 );
 select ok(
   to_regclass('public.push_devices') is not null

@@ -70,15 +70,9 @@
 - 🔴 **BETA 1 GERİ BİLDİRİMİ (sahip, 2026-07-25) → WP-302/303/304 açıldı ve ÜÇÜ DE KOD/TEST TAMAM.** `analyze` 0, **795 test yeşil**, l10n audit temiz. Sahip sırası: bu üçü stable'a → sonra kalan kod işleri → beta 2 → stable.
 
 ### Codex Lane
-- **Durum:** [~] Aktif
-- **Faz/WP:** Faz B · WP-316
-- **Aşama:** Geliştiriliyor
-- **SAHİP yollar:** `app/lib/data/repositories/supabase/supabase_admin_repository.dart` · `app/lib/features/admin/**` · `app/test/features/admin_screen_test.dart` · `supabase/migrations/0072_feedback_attachment_storage_fix.sql` · `supabase/tests/001_schema_contract.test.sql` · `supabase/tests/006_feedback_attachments.test.sql`
-- **Ortak/riskli yüzey:** `progress.md` (yalnız Codex lane + WP-316 kartı) · private Storage/RLS teşhisi · production salt-okunur audit · migration head sözleşmesi (Claude WP-322 `tooling/**` lane'i bitince güncellenecek)
-- **Dal:** `main`
-- **Başlangıç:** 2026-07-26 11:41 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-26 12:07
-- **Not:** Production salt-okunur probu: `attachment_path` ve `is_super_admin()` RPC `200`, private `feedback_attachments` bucket `400 Bucket not found` → kök neden ortam eksikliği. 0072 ileri migration yazıldı. Hedef widget testi **3/3**, `flutter analyze` **0**; hata sonrası yeniden deneme ve eksiz bilete çip göstermeme regresyonları kapsanıyor. Claude WP-322 şu an `tooling/**` sahibi; çakışmamak için `deploy-contract.json` + guard beklentisi lane boşalana kadar bekliyor. WP-317/318, WP-316 kabul edilmeden claim edilmez.
+- **Durum:** [x] Boşta
+- **Faz/WP:** —
+- **SAHİP yollar:** —
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
@@ -141,7 +135,7 @@ göremiyoruz, cevap yazamıyoruz, liste temizlenmiyor.
 
 #### WP-316: Geri bildirim eki görünmüyor 🖼️
 - **Program/Faz:** Faz B · Admin & geri bildirim
-- **Ajan:** Codex · **Durum:** [~] Geliştiriliyor
+- **Ajan:** Codex · **Durum:** [x] **Kod/test tamam (2026-07-26)** — staging apply + cihaz kabulü bekliyor
 - **Problem:** Kullanıcı geri bildirime ekran görüntüsü ekliyor, admin panelinde görünmüyor. Sahip biletleri **kör** değerlendiriyor.
 - **Kapsam dışı:** Yeni ek türü (video/ses), çoklu ek, ek düzenleme. Yalnız **mevcut tek görsel** yolunun çalışması.
 - **SAHİP dosyalar (yaz):**
@@ -154,9 +148,9 @@ göremiyoruz, cevap yazamıyoruz, liste temizlenmiyor.
   - [x] `public.is_super_admin()` production'da mevcut/çağrılabilir mi? → RPC salt-okunur anon probunda `200`; sahip hesabının `true` sonucu cihazda admin oturumuyla doğrulanmalı
   - [x] Kullanıcı yükleme yolu salt-okunur denetlendi: dosya önce private bucket'a yükleniyor, yalnız başarıdan sonra `attachment_path` insert ediliyor; bucket hatası `storage` kodlu `AdminException` olup mevcut dialog'da 8 sn snackbar ile görünür. Mevcut production satırında yolun doluluğu RLS nedeniyle ancak kullanıcı/admin cihaz oturumunda doğrulanabilir
   - [x] İmzalı URL 1 saat geçerli; süresi dolmuş URL cache'lenmiş olabilir → üretim anını ek yolu olmadan logla
-  - [~] Bulunan katmanı onar + yükleme hatasını kullanıcıya **görünür** yap → kod/widget testi yeşil; 0072 local replay/RLS kapısı bekliyor
+  - [x] Bulunan katmanı onar + yükleme hatasını kullanıcıya **görünür** yap → hedef widget testi **3/3**, tam Flutter paketi **820/820**, `flutter analyze` **0**, deploy guard **51/51**, temiz local baseline **72 migration + 147 pgTAP** yeşil
 - **Veri/Migration etkisi:** `0072_feedback_attachment_storage_fix.sql` — additive/idempotent private bucket + iki Storage RLS policy; geri alma: iki policy `drop`, bucket/veri silinmez.
-- **Ortam/Deploy:** Teşhis production **okuma**; onarım local → staging → (gerekirse) production terfi kapısı.
+- **Ortam/Deploy:** Production teşhisi yalnız **okuma**; onarım local baseline'da geçti. `0071` + `0072` henüz staging/production'a uygulanmadı; sıradaki kapı staging apply, production ayrıca somut sahip GO'su ister.
 - **RLS/Güvenlik:** Bucket **private kalmalı**; imzalı URL süresi uzatılmaz. `is_super_admin()` dışında kimse ek göremez. Ek yolu log'a **yazılmaz**.
 - **Edge-case'ler:** ek yok · ek var ama dosya silinmiş · URL süresi dolmuş · çevrimdışı · aynı bilette birden çok ek (bugün desteklenmiyorsa açıkça yaz)
 - **Kabul (ölçülebilir):** Ekli bir geri bildirimde çipe basınca görsel **≤ 3 sn**'de açılıyor · ek yoksa çip **görünmüyor** · yükleme hatasında kullanıcı snackbar görüyor (sessiz düşme yok) · teşhis sonucu hangi katmanın bozuk olduğu **yazılı** kanıtla raporlanıyor.
