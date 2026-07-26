@@ -48,7 +48,7 @@
 - **Durum:** [x] Boşta
 - **Faz/WP:** —
 - **SAHİP yollar:** —
-- **Son not:** WP-342 kod/test tamamlandı; V2 snapshot/repository, server kayıtlı cihaz UUID’si, account-bound idempotent shadow flush ve InMemory parity eklendi. Rollout varsayılanı kapalı; legacy timer/native yüzey değişmedi.
+- **Son not:** WP-343 ve WP-345 kod/test tamamlandı; timer-sync rollout kapalıdır. İki Android cihaz + staging FCM/lifecycle kabulü WP-346 ortak turunda yapılacak.
 
 ### Codex-2 Lane
 - **Durum:** [~] Aktif
@@ -214,12 +214,13 @@ Böylece kişisel ve grup istatistiği **asla çelişmez**.
 | **WP-326** Grup bölgesi ve gün sınırı zinciri | Kod/test tamam; `0076` local | Staging + beta saat dilimi kabulü |
 | **WP-327** Grup bölgesi ve anlık saat farkı | Kod/test tamam; `0077` local | Staging + beta kart/diyalog kabulü |
 | **WP-328** Keşif sıralaması + arama/filtre | Kod/test tamam; `0078` local | Staging dry-run + Android/Windows filtre kabulü |
+| **WP-329** Birincil grup | Kod/test tamam; `0079` local | Staging dry-run + iki cihaz primary kabulü |
 
-> Migration sırası korunur: staging'deki `0072` ardından **`0073` → `0078`**.
+> Migration sırası korunur: staging'deki `0072` ardından **`0073` → `0079`**.
 > Bu beş WP yeniden claim edilmez; test sonucu hata çıkarsa yeni WP açılır.
 
 #### WP-329: Birincil grup 🏠
-- **Program/Faz:** Faz E · Grup semantiği · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-326 + WP-328
+- **Program/Faz:** Faz E · Grup semantiği · **Durum:** [~] Kod/test tamam; staging/cihaz kabulü bekliyor · **Bağımlılık:** WP-326 + WP-328
 - **Problem:** Kullanıcı birden çok gruba üye olabiliyor; UI'da seçili grup ile görev/hedef/grup progression muhasebesini alan birincil grup aynı kavram sanılıyor. Tercih cihazlar arasında ortak ve server-authoritative değil.
 - **Kapsam dışı:** Çoklu grup üyeliğini kaldırmak · presence'ı yalnız primary gruba indirmek · direct grup bildirimlerini primary ile filtrelemek · geçmiş session'ları yeniden atfetmek · gün-sınırı algoritmasını değiştirmek.
 - **SAHİP dosyalar (yaz):** `supabase/migrations/00NN_primary_group_preference.sql` · `app/lib/data/providers/group_providers.dart` · ilgili group repository interface + Supabase/InMemory çiftleri · birincil grup seçim UI'ı ve testleri
@@ -305,6 +306,7 @@ Böylece kişisel ve grup istatistiği **asla çelişmez**.
 - **RLS/Güvenlik:** Client fan-out gruplarını seçmez; account switch pending publish'i başka hesaba göndermez.
 - **Edge-case'ler:** cold-start auth · cihazlarda farklı selected group · primary üçüncü grup · offline/reconnect · eski client.
 - **Kabul (ölçülebilir):** App start bütün gruplarda · selected group projection ownership'i değiştirmez · auth gecikmesinde event kaybı 0 · ağ hatası timer yüzeylerini bozmaz · kill switch çalışır.
+- **Kanıt:** `flutter analyze` temiz · V3 lease/fallback/offline kuyruk/contract testleri yeşil. Tam `flutter test` koşumu tek worker'da ilerlemesiz kaldığı için sonlandırıldı; staging + çoklu cihaz kabulü WP-346 ortak QA turunda. **Kodda doğrulandı; cihazda doğrulanmalı.**
 - **Tuzaklar:** Sıcak timer yolunda network await yok; notification/widget kodu temizlenmez.
 - **Model önerisi:** 🟣 Pro
 
@@ -357,7 +359,7 @@ Böylece kişisel ve grup istatistiği **asla çelişmez**.
 - **Model önerisi:** 🟣 Pro
 
 #### WP-343: Foreground çoklu cihaz mirror ve güvenli remote stop 📱↔️📱
-- **Program/Faz:** Faz E2 · Delivery C apply · **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-342 shadow kabulü
+- **Program/Faz:** Faz E2 · Delivery C apply · **Ajan:** Codex · **Durum:** [~] Kod/test tamam; staging/cihaz kabulü bekliyor · **Bağımlılık:** WP-342 shadow kabulü
 - **Problem:** İki foreground cihaz aynı global çalışmayı göstermiyor; başka cihaz stop'u native yüzeylere güvenle uygulanmıyor.
 - **Kapsam dışı:** Background auto-start · FCM · finalizer · Pomodoro/countdown mirror.
 - **SAHİP dosyalar (yaz):** coordinator foreground apply · dar Android remote-apply metadata/action alanları · ack/UX · testler
@@ -369,6 +371,7 @@ Böylece kişisel ve grup istatistiği **asla çelişmez**.
 - **Edge-case'ler:** aynı anda start · başka cihaz stop · echo · eski stop · opt-out · logout · local start yarışı.
 - **Kabul (ölçülebilir):** Foreground start/stop p95≤2 sn · ek session/XP 0 · eski stop yeni run'ı kesmez · notification/widget regression 0.
 - **Tuzaklar:** Remote apply sanal kullanıcı tıklaması değildir; silent stop değiştirilmez.
+- **Kanıt:** Doğrulanmış V2 snapshot'tan mirror-start/deferred/aynı-run stop kararı; account+device scoped seen/ack; mirror kaynaklı native V2 echo bastırması ve session/XP yazmayan silent stop kod/test ile kapsandı. `flutter analyze` temiz · tam `flutter test --dart-define-from-file=env.json` PASS. **Kodda doğrulandı; staging/cihazda doğrulanmalı.**
 - **Model önerisi:** 🔴 Opus
 
 #### WP-344: Timer-sync push transport sınıfı 📬
@@ -388,7 +391,7 @@ Böylece kişisel ve grup istatistiği **asla çelişmez**.
 - **Model önerisi:** 🟣 Pro
 
 #### WP-345: Background timer sinyali ve app-open reconcile 🔔
-- **Program/Faz:** Faz E2 · Delivery D client · **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-343 + WP-344
+- **Program/Faz:** Faz E2 · Delivery D client · **Ajan:** Codex · **Durum:** [~] Kod/test tamam; staging/cihaz kabulü bekliyor · **Bağımlılık:** WP-343 + WP-344
 - **Problem:** Background/terminated cihaz için timer-sync deferred UX/ack ve güvenli snapshot reconcile yok.
 - **Kapsam dışı:** Kotlin auto-FGS · native authenticated uplink · force-stop anlık garantisi.
 - **SAHİP dosyalar (yaz):** Flutter FCM timer routing · coordinator tetikleri · deferred notification/ack UX · testler
@@ -400,6 +403,7 @@ Böylece kişisel ve grup istatistiği **asla çelişmez**.
 - **Edge-case'ler:** terminated/force-stop/doze · duplicate/reverse · logout · token rotate · FGS restriction.
 - **Kabul (ölçülebilir):** Foreground p95≤2 sn · teslim edilen background signal p95≤10 sn · app-open reconcile p95≤2 sn · rollback 0 · force-stop sonrası açılış doğru.
 - **Tuzaklar:** FCM server→device'dır; native start uplink'i değildir.
+- **Kanıt:** Yalnız minimal v1 `timer_sync` payload'ı kabul edilir; sinyal SharedPreferences'ta defer edilir ve foreground/app-open'ta auth snapshot reconcile'ını tetikler; payload asla state apply etmez, logout'ta silinir. `flutter analyze` temiz · tam `flutter test --dart-define-from-file=env.json` PASS. **Kodda doğrulandı; staging/cihazda doğrulanmalı.**
 - **Model önerisi:** 🟣 Pro
 
 #### WP-346: V3 staging, çoklu cihaz kabulü ve rollout kapıları 🧪
@@ -579,8 +583,12 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 | **WP-326** Grup saat dilimi | Staging + beta | `0076`; IANA adı, New York yerel gece yarısı, cihaz fallback'i ve DST davranışı doğru |
 | **WP-327** Grup bölgesi + saat farkı | Staging + beta | `0077`; açık grup kartı/bilgi ekranı, aynı bölgede farkın gizlenmesi, New York ve +5:30 farklarının doğruluğu |
 | **WP-328** Keşif sıralaması + arama/filtre | Staging + Android + Windows | `0078` önce `0073→0078` seri dry-run/apply ile terfi etmeli; ardından kullanıcı bölgesine göre sıralama, bölge filtresi, boş kontenjan filtresi ve sayfalama gerçek cihazda doğrulanmalı. **Cihazda doğrulanmalı.** |
+| **WP-329** Birincil grup | Staging + iki Android cihaz | `0079`, `0073→0079` seri dry-run/apply ile terfi etmeli; tek grup otomatik seçim, iki cihaz stale-revision reddi, üyelikten çıkış/silmede güvenli uzlaşma ve timer/bildirim/widget regresyonu doğrulanmalı. **Cihazda doğrulanmalı.** |
+| **WP-336** Tek-grup session attribution | Staging + iki Android cihaz | `0080`, `0073→0080` seri dry-run/apply sonrasında yeni session yalnız başlangıçtaki primary gruba yazılır; secondary day/week/achievement katkısı ve cron geri yazımı 0, kişisel süre/XP korunur. **Cihazda doğrulanmalı.** |
+| **WP-343** Foreground mirror + remote stop | Staging + iki Android cihaz | Aynı hesapta foreground start/stop p95≤2 sn; ek session/XP 0; eski stop yeni yerel run'ı kesmez; bildirim/widget regresyonu 0. **Cihazda doğrulanmalı.** |
+| **WP-345** Timer-sync signal + app-open reconcile | Staging FCM + Android lifecycle | Data-only sinyal p95≤10 sn; açılış reconcile p95≤2 sn; terminated/doze/logout/force-stop sonrasında payload state uygulamaz, snapshot doğru state'i getirir. **Cihazda doğrulanmalı.** |
 
-**Ortam sırası:** staging şu anda `0072`; veri/grup zinciri **`0073` → `0078`**
+**Ortam sırası:** staging şu anda `0072`; veri/grup zinciri **`0073` → `0080`**
 olarak dry-run ve post-check ile seri ilerler. Production bu kuyruğun parçası değildir ve
 ayrı somut sahip GO'su olmadan değişmez.
 

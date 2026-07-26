@@ -17,6 +17,7 @@ import '../../core/background/timer_v2_command_outbox.dart';
 import '../../core/l10n/system_localizations.dart';
 import '../../core/notifications/timer_external_command_store.dart';
 import '../../core/notifications/timer_notification_service.dart';
+import '../../core/notifications/timer_sync_signal.dart';
 import '../../core/observability/observability_service.dart';
 import '../../core/prefs/app_prefs.dart';
 import '../../core/stats/canonical_stats_projection.dart';
@@ -466,6 +467,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   Timer? _authRetryTimer;
   Completer<void>? _authRetryCompleter;
   StreamSubscription<TimerNotificationAction>? _notificationCommands;
+  StreamSubscription<TimerSyncSignal>? _timerSyncSignals;
   AppLifecycleListener? _lifecycleListener;
   bool _disposed = false;
   Future<void>? _verifiedStartFuture;
@@ -555,6 +557,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       _widgetRefreshDebounce?.cancel();
       _cancelAuthRetryWindow();
       _notificationCommands?.cancel();
+      _timerSyncSignals?.cancel();
       _lifecycleListener?.dispose();
       try {
         _timerChannel.setMethodCallHandler(null);
@@ -587,6 +590,12 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
           startedAt: state.startedAt,
         );
       }
+    });
+    ref.listen(authStateProvider, (_, next) {
+      if (next.value == null) unawaited(TimerSyncSignal.clear());
+    });
+    _timerSyncSignals = TimerSyncSignal.stream.listen((_) {
+      if (!_disposed) unawaited(_syncBackgroundTimerState());
     });
     final prefs = ref.read(sharedPreferencesProvider);
     final modeName = prefs.getString(_kMode);
@@ -702,6 +711,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     );
     if (_disposed || directive == null) return;
     await _applyGlobalTimerForegroundDirective(directive);
+    await TimerSyncSignal.clear();
   }
 
   Future<void> _applyGlobalTimerForegroundDirective(

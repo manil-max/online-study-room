@@ -12,6 +12,7 @@ import '../../data/models/nudge.dart';
 import '../config/firebase_push_config.dart';
 import '../l10n/system_localizations.dart';
 import 'flutter_test_host.dart';
+import 'timer_sync_signal.dart';
 
 /// `initialize()`'ın kuracağı kanal türleri. `_channelFor` bu türleri kanal
 /// kimliği + görünen ad/açıklamaya çevirir; liste ile eşleme tek yerde durur.
@@ -228,6 +229,12 @@ class AppNotificationCoordinator {
     if (!_isAndroid) return;
     final eventId = _eventId(message.data, fallback: message.messageId);
     final type = (message.data['notification_type'] ?? 'announcement').trim();
+    if (type == 'timer_sync') {
+      // Data-only timer sinyali görünür bildirim değildir; state asla payload'dan
+      // uygulanmaz. Sadece foreground/app-open reconcile'ı uyandırır.
+      await TimerSyncSignal.record(message.data, eventId: eventId);
+      return;
+    }
     final prefs = await SharedPreferences.getInstance();
     if (!await _markReceivedOnce(prefs, eventId: eventId, type: type)) return;
 
