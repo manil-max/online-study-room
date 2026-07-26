@@ -2,7 +2,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 \ir _fixtures/base_seed.psql
-select plan(5);
+select plan(6);
 
 select ok(
   to_regclass('public.study_session_group_attribution') is not null
@@ -12,6 +12,14 @@ select ok(
 select ok(
   not has_table_privilege('authenticated', 'public.study_session_group_attribution', 'insert'),
   'client cannot choose a session attribution directly'
+);
+select ok(
+  (select relrowsecurity from pg_class
+    where oid = 'public.group_progression_attribution_config'::regclass)
+    and not has_table_privilege('anon', 'public.group_progression_attribution_config', 'select')
+    and not has_table_privilege('authenticated', 'public.group_progression_attribution_config', 'select')
+    and not has_table_privilege('authenticated', 'public.group_progression_attribution_config', 'update'),
+  'attribution cutover config is RLS-protected and private from clients'
 );
 
 insert into public.groups (id, name, invite_code, created_by, created_at)

@@ -342,6 +342,64 @@ function Assert-StagingPushRuntimeDiagnostic {
   }
 }
 
+function Get-V3LegacyCompatibilitySql {
+  return @'
+select json_build_object(
+  'kind', 'v3_legacy_compatibility',
+  'observed_at', now(),
+  'open_run_counts', json_build_object(
+    'running', count(*) filter (where status = 'running'),
+    'paused', count(*) filter (where status = 'paused'),
+    'total', count(*) filter (where status in ('running', 'paused'))
+  ),
+  'active_run_indexes', coalesce((
+    select json_agg(json_build_object(
+      'name', i.relname,
+      'definition', pg_get_indexdef(x.indexrelid)
+    ) order by i.relname)
+    from pg_index x
+    join pg_class i on i.oid = x.indexrelid
+    where x.indrelid = 'public.live_study_runs'::regclass
+      and x.indisunique
+      and coalesce(pg_get_expr(x.indpred, x.indrelid), '') ~ '(running|paused)'
+  ), '[]'::json),
+  'status_constraints', coalesce((
+    select json_agg(json_build_object(
+      'name', c.conname,
+      'definition', pg_get_constraintdef(c.oid)
+    ) order by c.conname)
+    from pg_constraint c
+    where c.conrelid = 'public.live_study_runs'::regclass
+      and c.contype = 'c'
+      and pg_get_constraintdef(c.oid) ~ 'status'
+  ), '[]'::json)
+)::text as v3_compatibility
+from public.live_study_runs;
+'@
+}
+
+function Assert-V3LegacyCompatibilityInspection {
+  param(
+    [Parameter(Mandatory)][ValidateSet('staging', 'production')][string]$Environment,
+    [Parameter(Mandatory)][string]$ProjectRef,
+    [Parameter(Mandatory)][string]$StagingProjectRef,
+    [Parameter(Mandatory)][string]$ProductionProjectRef,
+    [Parameter(Mandatory)][string]$Sql
+  )
+
+  $expectedRef = if ($Environment -eq 'staging') { $StagingProjectRef } else { $ProductionProjectRef }
+  if ($ProjectRef -ne $expectedRef -or $StagingProjectRef -eq $ProductionProjectRef) {
+    throw 'V3 compatibility inspection target does not match its isolated environment ref.'
+  }
+  if ($Sql -cne (Get-V3LegacyCompatibilitySql)) {
+    throw 'V3 compatibility inspection SQL is not on the exact read-only allowlist.'
+  }
+  if ($Sql -notmatch '(?is)^\s*select\s+' -or
+      $Sql -match '(?i)\b(insert|update|delete|merge|alter|create|drop|grant|revoke|call|do|copy)\b') {
+    throw 'V3 compatibility inspection must be one static read-only SELECT.'
+  }
+}
+
 function Get-StagingReconciliationSql {
   param([Parameter(Mandatory)][ValidateSet('prepare', 'prepare-inspect', 'apply', 'apply-inspect')][string]$Action)
 
@@ -626,4 +684,4 @@ function Invoke-EvidenceCommand {
   return $safe
 }
 
-Export-ModuleMember -Function Get-RepoRoot, Get-DeployContract, Get-LocalMigrationHead, Get-GitHead, Protect-DeployText, Assert-SafeSupabaseArguments, Get-StagingPrerequisiteSql, Assert-StagingPrerequisiteAction, Get-StagingPushDispatchPostCheckSql, Assert-StagingPushDispatchPostCheck, Get-StagingPushRuntimeDiagnosticSql, Assert-StagingPushRuntimeDiagnostic, Get-StagingReconciliationSql, Assert-StagingReconciliationAction, Assert-TargetContract, Assert-ExactReleaseIdentity, Assert-ProductionApproval, New-EvidenceDirectory, Write-DeployJson, Invoke-EvidenceCommand
+Export-ModuleMember -Function Get-RepoRoot, Get-DeployContract, Get-LocalMigrationHead, Get-GitHead, Protect-DeployText, Assert-SafeSupabaseArguments, Get-StagingPrerequisiteSql, Assert-StagingPrerequisiteAction, Get-StagingPushDispatchPostCheckSql, Assert-StagingPushDispatchPostCheck, Get-StagingPushRuntimeDiagnosticSql, Assert-StagingPushRuntimeDiagnostic, Get-V3LegacyCompatibilitySql, Assert-V3LegacyCompatibilityInspection, Get-StagingReconciliationSql, Assert-StagingReconciliationAction, Assert-TargetContract, Assert-ExactReleaseIdentity, Assert-ProductionApproval, New-EvidenceDirectory, Write-DeployJson, Invoke-EvidenceCommand

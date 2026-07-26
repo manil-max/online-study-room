@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "local_migration_head": "0083",
+  "local_migration_head": "0084",
   "staging": {
-    "migration_head": "0072",
+    "migration_head": "0084",
     "deploy_enabled": true,
     "release_enabled": true,
-    "hold_reason": "WP-316: staging rollout target 0072 is applied and post-checked by Database Gates run 30196412999 (2026-07-26). Migrations 0073 (session day stamp), 0074 (feedback conversations), 0075 (feedback archive), 0076 (group time zone), and 0077 (public group time-zone summary) remain local until their staging dry-run and promotion evidence is recorded."
+    "hold_reason": "V3 staging acceptance: 0073-0084, including WP-347 attribution-config RLS remediation, await sequential staging dry-run/apply, post-check and beta device evidence."
   },
   "production": {
     "migration_head": "0070",

@@ -28,6 +28,8 @@ on:
           - production-dry-run
           - production-apply
           - production-manual-push-0066-0070
+          - staging-v3-compatibility
+          - production-v3-compatibility
       expected_git_sha:
         description: Exact 40-character commit SHA checked out by this run.
         required: false
@@ -134,6 +136,8 @@ jobs:
           $environment = if ('${{ inputs.operation }}'.StartsWith('production-')) { 'production' } else { 'staging' }
           $action = switch ('${{ inputs.operation }}') {
             'production-manual-push-0066-0070' { 'manual-push-0066-0070' }
+            'staging-v3-compatibility' { 'inspect-v3-compatibility' }
+            'production-v3-compatibility' { 'inspect-v3-compatibility' }
             default {
               if ('${{ inputs.operation }}'.EndsWith('-apply')) { 'apply' } else { 'dry-run' }
             }

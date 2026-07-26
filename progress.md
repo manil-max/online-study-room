@@ -45,10 +45,14 @@
 - **Son not:** WP-327 kod/test tamamlandı; güvenli keşif özeti için 0077 local replay ile doğrulandı. Staging/beta kabulü sonraki ortak turda (2026-07-26).
 
 ### Codex Lane
-- **Durum:** [x] Boşta
-- **Faz/WP:** —
-- **SAHİP yollar:** —
-- **Son not:** WP-343 ve WP-345 kod/test tamamlandı; timer-sync rollout kapalıdır. İki Android cihaz + staging FCM/lifecycle kabulü WP-346 ortak turunda yapılacak.
+- **Durum:** [~] Aktif
+- **Faz/WP:** Faz E2 · WP-337 kapı kapanışı + WP-346 staging/çoklu cihaz kabulü
+- **Aşama:** Local replay → salt-okunur compatibility kanıtı → staging terfisi → beta/cihaz QA
+- **SAHİP yollar:** `docs/GLOBAL-TIMER-V3-COMPATIBILITY-EVIDENCE.md` · `docs/qa/DEVICE-QA-MATRIX.md` · staging acceptance kanıtı · `.artifacts/deploy-evidence/**`
+- **Ortak/riskli yüzey:** Staging migration/flag sırası; timer notification/widget hot path'a kod değişikliği yok. Production/stable kapsam dışı.
+- **Dal:** `main`
+- **Başlangıç/Son güncelleme:** 2026-07-26 22:10 (Europe/Istanbul)
+- **Not:** Sahip talimatıyla V3 kabul turu başlatıldı. Önce WP-337 aggregate kanıtı, sonra staging `0073→0083`, benzersiz beta APK ve fiziksel cihaz matrisi; bağlı cihaz olmadan cihaz sonucu yazılmaz.
 
 ### Codex-2 Lane
 - **Durum:** [~] Aktif
@@ -420,6 +424,15 @@ Böylece kişisel ve grup istatistiği **asla çelişmez**.
 - **Kabul (ölçülebilir):** Timer/widget/notification regresyon 0 · 8 saat ≤±1 sn · ek session/XP 0 · visibility %100 · secondary progression 0 · foreground p95≤2 sn · teslim edilen push p95≤10 sn · P0/P1 0 · soak≥3 gün.
 - **Tuzaklar:** Test bug'ı bu WP'de yamalanmaz; yeni debug WP/beta gerekir. Production GO türetilmez.
 - **Model önerisi:** 🔴 Opus
+
+#### WP-347: Grup attribution yapılandırması RLS güvenlik düzeltmesi 🔒
+- **Program/Faz:** Faz E2 · release-blocking debug · **Ajan:** Codex · **Durum:** [~] Geliştiriliyor · **Bağımlılık:** WP-336
+- **Problem:** `group_progression_attribution_config` doğrudan client yetkileri geri alınmış olsa da RLS kapalı oluşturulmuş; güvenlik denetimi bunu kritik bulgu olarak raporluyor.
+- **SAHİP dosyalar (yaz):** `supabase/migrations/0084_group_progression_attribution_config_rls.sql` · `supabase/tests/011_session_group_attribution.test.sql` · `tooling/release/deploy-contract.json` · bu WP kartı.
+- **Kapsam dışı:** `0080`i değiştirmek · client policy vermek · timer/notification/widget kodu · production deploy.
+- **Kabul:** RLS açık; `anon/authenticated` doğrudan select/insert/update/delete yapamaz; mevcut SECURITY DEFINER trigger/resolver zinciri attribution testinde çalışır; local replay/pgTAP yeşil.
+- **Geri alma:** Veri silmeden yeni ileri migration ile yalnız policy/RLS davranışı düzeltilir; `0084` uygulanmışsa geriye dosya değiştirilmez.
+- **Not:** Staging `0073→0084` terfisinden ve beta üretiminden önce kapanmalıdır.
 
 #### V3 paralel çalışma ve migration sırası
 

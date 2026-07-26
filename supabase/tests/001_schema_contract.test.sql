@@ -3,17 +3,22 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(54);
+select plan(55);
 
 select is(
   (select count(*)::integer from supabase_migrations.schema_migrations),
-  83,
-  'all 83 migrations are recorded'
+  84,
+  'all 84 migrations are recorded'
 );
 select is(
   (select max(version) from supabase_migrations.schema_migrations),
-  '0083',
-  '0083 is the migration head'
+  '0084',
+  '0084 is the migration head'
+);
+select ok(
+  (select relrowsecurity from pg_class
+    where oid = 'public.group_progression_attribution_config'::regclass),
+  '0084 keeps group attribution configuration behind RLS'
 );
 select ok(
   exists(

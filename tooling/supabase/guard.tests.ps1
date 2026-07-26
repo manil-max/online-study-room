@@ -22,12 +22,12 @@ $repoRoot = Get-RepoRoot
 $stagingRef = 'aaaaaaaaaaaaaaaaaaaa'
 $productionRef = 'bbbbbbbbbbbbbbbbbbbb'
 
-Assert-Equal (Get-LocalMigrationHead -RepoRoot $repoRoot) '0083' 'local migration head'
-Assert-Equal ((Get-DeployContract -RepoRoot $repoRoot).local_migration_head) '0083' 'contract migration head'
+Assert-Equal (Get-LocalMigrationHead -RepoRoot $repoRoot) '0084' 'local migration head'
+Assert-Equal ((Get-DeployContract -RepoRoot $repoRoot).local_migration_head) '0084' 'contract migration head'
 $contract = Get-DeployContract -RepoRoot $repoRoot
-# 0071 (grup üye sınırı 8) ve 0072 (geri bildirim eki Storage/RLS onarımı)
-# staging rollout hedefidir; production 0070'da kilitli kalır.
-Assert-Equal $contract.staging.migration_head '0072' 'staging migration head'
+# V3 staging rollout'u 0073-0084 zincirini, attribution yapılandırmasının
+# fail-closed RLS düzeltmesiyle birlikte taşır; production 0070'da kilitli kalır.
+Assert-Equal $contract.staging.migration_head '0084' 'staging migration head'
 Assert-Equal ([bool]$contract.staging.deploy_enabled) $true 'staging deploy enabled'
 Assert-Equal ([bool]$contract.staging.release_enabled) $true 'staging release enabled'
 Assert-Equal $contract.production.migration_head '0070' 'production head 0070: effective schema after completed owner-directed promotion'
@@ -162,6 +162,24 @@ Assert-Throws -Name 'push runtime diagnostic arbitrary SQL denied' -Script {
 }
 Assert-Throws -Name 'push runtime diagnostic production ref masquerade denied' -Script {
   Assert-StagingPushRuntimeDiagnostic -Environment staging -ProjectRef $productionRef -StagingProjectRef $stagingRef -ProductionProjectRef $productionRef -Sql $pushRuntimeDiagnosticSql
+}
+
+$v3CompatibilitySql = Get-V3LegacyCompatibilitySql
+Assert-V3LegacyCompatibilityInspection -Environment staging -ProjectRef $stagingRef -StagingProjectRef $stagingRef -ProductionProjectRef $productionRef -Sql $v3CompatibilitySql
+$passed++
+Assert-V3LegacyCompatibilityInspection -Environment production -ProjectRef $productionRef -StagingProjectRef $stagingRef -ProductionProjectRef $productionRef -Sql $v3CompatibilitySql
+$passed++
+foreach ($requiredMarker in @('select json_build_object', 'live_study_runs', 'open_run_counts', 'active_run_indexes', 'status_constraints')) {
+  if ($v3CompatibilitySql -notmatch [regex]::Escape($requiredMarker)) {
+    throw "V3 compatibility inspection is missing: $requiredMarker"
+  }
+}
+$passed++
+Assert-Throws -Name 'v3 compatibility arbitrary SQL denied' -Script {
+  Assert-V3LegacyCompatibilityInspection -Environment staging -ProjectRef $stagingRef -StagingProjectRef $stagingRef -ProductionProjectRef $productionRef -Sql 'select * from public.live_study_runs;'
+}
+Assert-Throws -Name 'v3 compatibility production ref masquerade denied' -Script {
+  Assert-V3LegacyCompatibilityInspection -Environment staging -ProjectRef $productionRef -StagingProjectRef $stagingRef -ProductionProjectRef $productionRef -Sql $v3CompatibilitySql
 }
 
 $pushDiagnosticWorkflowPath = Join-Path $repoRoot '.github\workflows\staging-push-diagnostics.yml'

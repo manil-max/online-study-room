@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
   [Parameter(Mandatory)][ValidateSet('staging', 'production')][string]$Environment,
-  [Parameter(Mandatory)][ValidateSet('inspect-prerequisites', 'inspect-push-runtime', 'bootstrap-prerequisites', 'reconcile-prepare', 'reconcile-apply', 'preflight', 'dry-run', 'apply', 'manual-push-0066-0070')][string]$Action,
+  [Parameter(Mandatory)][ValidateSet('inspect-prerequisites', 'inspect-push-runtime', 'inspect-v3-compatibility', 'bootstrap-prerequisites', 'reconcile-prepare', 'reconcile-apply', 'preflight', 'dry-run', 'apply', 'manual-push-0066-0070')][string]$Action,
   [Parameter(Mandatory)][string]$ProjectRef,
   [Parameter(Mandatory)][string]$SupabaseUrl,
   [Parameter(Mandatory)][string]$StagingProjectRef,
@@ -112,7 +112,13 @@ function Write-RemoteManifest {
 Push-Location $repoRoot
 try {
   Assert-TargetContract -Environment $Environment -ProjectRef $ProjectRef -SupabaseUrl $SupabaseUrl -StagingProjectRef $StagingProjectRef -ProductionProjectRef $ProductionProjectRef -RepoRoot $repoRoot
-  Assert-ExactReleaseIdentity -ExpectedGitSha $ExpectedGitSha -ExpectedMigrationHead $ExpectedMigrationHead -RepoRoot $repoRoot
+  if ($Action -eq 'inspect-v3-compatibility') {
+    if ((Get-GitHead -RepoRoot $repoRoot) -cne $ExpectedGitSha) {
+      throw 'V3 compatibility inspection requires the exact checked-out git SHA.'
+    }
+  } else {
+    Assert-ExactReleaseIdentity -ExpectedGitSha $ExpectedGitSha -ExpectedMigrationHead $ExpectedMigrationHead -RepoRoot $repoRoot
+  }
 
   if (-not (Test-Path -LiteralPath $cliEntry)) {
     throw 'Pinned Supabase CLI is missing. Run pnpm install --frozen-lockfile.'
@@ -186,6 +192,11 @@ end
 $post_check$;
 '@
     Invoke-RemoteSupabase -Arguments @('db', 'query', '--linked', $postCheckSql) -Label 'manual-push-post-check'
+  } elseif ($Action -eq 'inspect-v3-compatibility') {
+    Invoke-RemoteSupabase -Arguments @('migration', 'list', '--linked') -Label '02-migration-list'
+    $compatibilitySql = Get-V3LegacyCompatibilitySql
+    Assert-V3LegacyCompatibilityInspection -Environment $Environment -ProjectRef $ProjectRef -StagingProjectRef $StagingProjectRef -ProductionProjectRef $ProductionProjectRef -Sql $compatibilitySql
+    Invoke-RemoteSupabase -Arguments @('db', 'query', '--linked', $compatibilitySql) -Label '03-v3-compatibility-inspect'
   } elseif ($Action -eq 'inspect-push-runtime') {
     Invoke-RemoteSupabase -Arguments @('migration', 'list', '--linked') -Label '02-migration-list'
     $diagnosticSql = Get-StagingPushRuntimeDiagnosticSql
