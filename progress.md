@@ -44,9 +44,14 @@
 - **SAHİP yollar:** —
 
 ### Claude Lane
-- **Durum:** [x] Boşta
-- **Faz/WP:** — · **Son iş:** **WP-319** ✅ kod/test tamam (2026-07-26)
-- **SAHİP yollar:** —
+- **Durum:** [~] Aktif
+- **Faz/WP:** Faz C · **WP-319-G** (WP-319 eki — sahip kararı: **global sign-out olsun**)
+- **Aşama:** Şifre değişince diğer cihazların oturumu kapatılıyor
+- **SAHİP yollar:** `app/lib/data/repositories/auth_repository.dart` · `app/lib/data/repositories/supabase/supabase_auth_repository.dart` · `app/lib/data/repositories/in_memory/in_memory_auth_repository.dart` · `app/lib/features/profile/account_settings_screen.dart` · `app/lib/l10n/*.arb` · `app/test/data/auth_repository_test.dart` · `app/test/features/profile/change_password_test.dart` · `app/test/data/auth_session_revocation_contract_test.dart` (yeni)
+- **Ortak/riskli yüzey:** `progress.md` (yalnız Claude lane + WP-319 kartı). Kamp ateşi (`campfire_*`, `camp_critter.dart`), admin, migration ve tooling yüzeylerine **girilmez**.
+- **Dal:** `main`
+- **Başlangıç:** 2026-07-26 (Europe/Istanbul)
+- **Çakışma kontrolü:** Codex WP-295'te (`campfire_scene.dart`, `camp_critter.dart` + WP-295 testleri/önizlemesi). Kesişen tek dosya yok; `progress.md`'de yalnız kendi lane'im ve WP-319 kartı düzenlenir.
 - ✅ **WP-319 (2026-07-26)** — 🔴 **Kartın problem cümlesi yanlıştı, ama gerçek daha kötüydü:** şifre değiştirme vardı ve **mevcut şifreyi hiç doğrulamıyordu**. Yani kartın "en kötü ihtimal" diye uyardığı ölü anahtar **üretimdeydi**: açık bir oturumu eline geçiren biri şifreyi tek diyalogda değiştirebiliyordu. Doğrulama artık repository sözleşmesinde (`changePassword`), ekran atlayamaz. `analyze` temiz · **836 test yeşil** (12 yeni) · **iki katmanlı kırmızı-yeşil kanıt**. Faz B (Codex, admin) ve kamp ateşi önizleme dosyalarıyla **kesişme olmadı**.
 - 🟡 **WP-319'dan çıkan sahip sorusu:** şifre değişince **diğer cihazların oturumu** açık kalıyor (Supabase varsayılanı). Global sign-out eklensin mi? Kullanıcının kendi diğer cihazlarını da atar. Ayrıntı WP-319 kartında.
 - ✅ **WP-322 (2026-07-26)** — Faz B ile paralel koştu, Codex WP-316 ile **kesişim olmadı** (`pubspec.yaml`'a hiç girilmedi, `supabase/migrations/**`'e dokunulmadı). `flutter analyze` temiz · **10 ardışık tam suit koşumu 10/10 yeşil, her turda 820 test** · kararsızlık için kırmızı-yeşil kanıt alındı. Kartın passkeys ve sürüm maddeleri **konusuz** çıktı (gerekçe kartta).
