@@ -18,7 +18,7 @@
 
 ## Proje Gerçekleri
 
-- **Migration gerçeği:** repo/local **`0082`** · staging **`0072`** · production
+- **Migration gerçeği:** repo/local **`0083`** · staging **`0072`** · production
   etkin şema **`0070`**. Production CLI geçmişi legacy/uzlaştırılmamış;
   ayrıntı [`docs/recovery/PRODUCTION-BASELINE.md`](docs/recovery/PRODUCTION-BASELINE.md).
   Deploy contract aynı üç head'i taşır ve production `deploy_enabled: false` kilitlidir.
@@ -64,7 +64,7 @@
 - **Durum:** [x] Boşta
 - **Faz/WP:** —
 - **SAHİP yollar:** —
-- **Son not:** WP-341 `0082` local şemada uygulandı; V2 flag kapalıdır. 236 pgTAP, deploy guard ve Flutter kalite kapıları geçti. Staging/cihaz kabulü V3 zincirinin ortak QA turunda yapılacak.
+- **Son not:** WP-344 `0083` local replay, 244 pgTAP ve uygulama kalite kapılarıyla kod/test tamamlandı; timer-sync rollout flag kapalıdır. Staging/cihaz kabulü V3 zincirinin ortak QA turunda yapılacak.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
@@ -371,7 +371,7 @@ Böylece kişisel ve grup istatistiği **asla çelişmez**.
 - **Model önerisi:** 🔴 Opus
 
 #### WP-344: Timer-sync push transport sınıfı 📬
-- **Program/Faz:** Faz E2 · Delivery D backend · **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-341
+- **Program/Faz:** Faz E2 · Delivery D backend · **Ajan:** Codex-3 · **Durum:** [~] Kod/test tamam; staging/cihaz kabulü bekliyor · **Bağımlılık:** WP-341
 - **Problem:** Mevcut push allowlist/preference/quiet-hours/TTL hattı `timer_sync`i sessizce yutar veya yanlış policy uygular.
 - **Kapsam dışı:** Client auto-start · remote truth · genel bildirim refactor · production Edge deploy.
 - **SAHİP dosyalar (yaz):** yeni push-policy migration · `supabase/functions/dispatch-push/index.ts` timer handler · contract testleri
@@ -383,6 +383,7 @@ Böylece kişisel ve grup istatistiği **asla çelişmez**.
 - **Edge-case'ler:** quiet hours · duplicate/reverse · expired event · token rotate/revoke · unknown type · origin exclusion.
 - **Kabul (ölçülebilir):** Delivery satırı oluşur · unknown silent success 0 · origin delivery 0 · TTL/collapse testleri · push fail global commit'i bozmaz.
 - **Tuzaklar:** Timer policy normal kullanıcı bildirimi değildir.
+- **Kanıt:** Local `0083` replay ve 244 pgTAP PASS · deploy guard 51 PASS · `flutter analyze` temiz · `flutter test --dart-define-from-file=env.json` PASS. Timer-sync rollout flag kapalı. **Kodda doğrulandı; staging/cihazda doğrulanmalı.**
 - **Model önerisi:** 🟣 Pro
 
 #### WP-345: Background timer sinyali ve app-open reconcile 🔔
@@ -544,7 +545,7 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 ## ⚠️ Risk ve Tuzak Notları
 
 - **Sürüm disiplini.** Sürüm sahibin onayıyla çıkar; düzeltmeler birikir, tek sürümde çıkar.
-- **Migration drift.** Repo/local `0082`, staging `0072`, production `0070`. `0073–0082` seri dry-run + post-check olmadan staging'e uygulanmaz.
+- **Migration drift.** Repo/local `0083`, staging `0072`, production `0070`. `0073–0083` seri dry-run + post-check olmadan staging'e uygulanmaz.
 - **V3 migration sırası.** WP-328 → WP-329 → WP-336 → WP-338 → WP-341 → WP-344 tek migration hattıdır; aynı anda iki migration worker'ı açılmaz. Her adım local replay, şema post-check ve önceki head kanıtı ister.
 - **Sayaç sıcak yolu donuktur.** WP-340–345 normal local start/stop sırasını, notification ID/channel/layout/PendingIntent'leri, widget görünümünü ve `ACTION_STOP_SILENT` davranışını yeniden tasarlamaz. Global senkron additive envelope + shadow + feature flag ile gelir; WP-346 gerçek cihaz regresyon kapısı geçmeden varsayılan açılmaz.
 - **l10n kapısı temiz.** WP-335, 24 gerçek WP-295 kullanıcı metnini kataloğa taşıdı; 7 kullanıcı-dışı invariant mesajını dar ve gerekçeli muafiyetle ayırdı. Yeni UI metni ekleyen WP'ler audit sıfır-bulgu kuralını korumalıdır.

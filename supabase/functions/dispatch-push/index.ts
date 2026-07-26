@@ -13,7 +13,7 @@ type ClaimedDelivery = {
   outbox_id: string
   device_id: string
   fcm_token: string
-  notification_type: "nudge" | "announcement" | "update" | "self_test"
+  notification_type: "nudge" | "announcement" | "update" | "self_test" | "timer_sync"
   payload: Record<string, unknown>
   locale: string
   time_zone: string
@@ -158,6 +158,8 @@ function localizedContent(delivery: ClaimedDelivery): { title: string; body: str
   const sender = String(payload.sender_display_name ?? "").trim()
   const message = String(payload.message ?? "").trim()
 
+  if (delivery.notification_type === "timer_sync") return { title: "", body: "" }
+
   if (delivery.notification_type === "self_test") {
     if (language === "tr") return { title: "Odak Kampı", body: "Uzak bildirim testi başarıyla ulaştı." }
     if (language === "de") return { title: "Fokuscamp", body: "Der Remote-Benachrichtigungstest ist angekommen." }
@@ -211,6 +213,7 @@ function stringData(
     if (value === null || value === undefined) continue
     output[key] = typeof value === "string" ? value : JSON.stringify(value)
   }
+  if (delivery.notification_type === "timer_sync") return output
   // Data-only FCM: Android arka planda da Dart background handler'ını çalıştırır.
   // Böylece foreground ve background aynı yerel kanal/teslim kaydını kullanır.
   output.title = content.title
@@ -237,7 +240,7 @@ async function sendToFcm(
   accessToken: string,
 ): Promise<DeliveryResult> {
   const quietSeconds = quietRetrySeconds(delivery)
-  if (quietSeconds !== null && delivery.notification_type !== "self_test") {
+  if (quietSeconds !== null && !["self_test", "timer_sync"].includes(delivery.notification_type)) {
     return { result: "retry", errorCode: "quiet_hours", retryAfterSeconds: quietSeconds }
   }
 
@@ -263,7 +266,10 @@ async function sendToFcm(
           // (`AppNotificationCoordinator.showRemote`).
           android: {
             priority: "HIGH",
-            ttl: delivery.notification_type === "self_test" ? "60s" : "3600s",
+            ttl: ["self_test", "timer_sync"].includes(delivery.notification_type) ? "60s" : "3600s",
+            ...(delivery.notification_type === "timer_sync"
+              ? { collapse_key: `timer_sync:${String(delivery.payload.run_id ?? delivery.outbox_id)}` }
+              : {}),
           },
         },
       }),
