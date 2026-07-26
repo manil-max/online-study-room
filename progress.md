@@ -18,7 +18,7 @@
 
 ## Proje Gerçekleri
 
-- **Migration gerçeği:** repo/local **`0081`** · staging **`0072`** · production
+- **Migration gerçeği:** repo/local **`0082`** · staging **`0072`** · production
   etkin şema **`0070`**. Production CLI geçmişi legacy/uzlaştırılmamış;
   ayrıntı [`docs/recovery/PRODUCTION-BASELINE.md`](docs/recovery/PRODUCTION-BASELINE.md).
   Deploy contract aynı üç head'i taşır ve production `deploy_enabled: false` kilitlidir.
@@ -59,6 +59,12 @@
 - **Dal:** `main`
 - **Başlangıç/Son güncelleme:** 2026-07-26 18:23 (Europe/Istanbul)
 - **Not:** WP-340 tamamlandı; V2 envelope additive olarak mevcut native queue'ya eklendi, account mismatch fail-closed karantinada ve flush shadow-only. `TimerExternalCommandStore`, bildirim/widget yüzeyleri ve `ACTION_STOP_SILENT` korunuyor. WP-338 tamamlanana kadar WP-339'a geçilmeyecek; remote, beta ve cihaz kabulü zincirin sonundaki ortak QA turunda.
+
+### Codex-3 Lane
+- **Durum:** [x] Boşta
+- **Faz/WP:** —
+- **SAHİP yollar:** —
+- **Son not:** WP-341 `0082` local şemada uygulandı; V2 flag kapalıdır. 236 pgTAP, deploy guard ve Flutter kalite kapıları geçti. Staging/cihaz kabulü V3 zincirinin ortak QA turunda yapılacak.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
@@ -319,7 +325,7 @@ Böylece kişisel ve grup istatistiği **asla çelişmez**.
 - **Model önerisi:** 🔴 Opus
 
 #### WP-341: Global timer V2 server çekirdeği ve compatibility migration 🧠
-- **Program/Faz:** Faz E2 · Delivery C backend · **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-337 GO + WP-338; migration hattında WP-336/WP-338 sonrası
+- **Program/Faz:** Faz E2 · Delivery C backend · **Ajan:** Codex-3 · **Durum:** [~] Kod/test tamam; staging/cihaz kabulü bekliyor · **Bağımlılık:** WP-337 GO + WP-338; migration hattında WP-336/WP-338 sonrası
 - **Problem:** Aynı hesabın cihazları arasında kanonik run, kullanıcı-geneli state version ve idempotent command otoritesi yok.
 - **Kapsam dışı:** Client native apply · push · server session/XP finalizer · pause/Pomodoro/countdown · production deploy.
 - **SAHİP dosyalar (yaz):** yeni `supabase/migrations/00NN_global_timer_v2.sql` · ilgili pgTAP/RLS/concurrency testleri
@@ -331,6 +337,7 @@ Böylece kişisel ve grup istatistiği **asla çelişmez**.
 - **Edge-case'ler:** legacy açık run · iki protocol yarışı · yeni run rev1/eski rev11 · stale stop · iki sweeper · ghost · aynı command ID iki hesap.
 - **Kabul (ölçülebilir):** Bütün protocol'lerde aktif study ≤1 · new-run rev1 kabul · abandoned bloklamaz · hesaplar arası snapshot sızıntısı 0 · heartbeat projection write 0 · iki sweeper tek abandoned/state version.
 - **Tuzaklar:** V2-only index yasak; legacy DTO'ya terminal V2 status dönmez; V1 `finalized` üretmez; `_verifiedServerAvailable` açılmaz.
+- **Kanıt:** `0082` local şemada uygulandı; 236 pgTAP PASS · deploy guard 51 PASS · `flutter analyze` temiz · `flutter test --dart-define-from-file=env.json` PASS. V2 runtime flag kapalı. **Kodda doğrulandı; staging/cihazda doğrulanmalı.**
 - **Model önerisi:** 🔴 Opus
 
 #### WP-342: Flutter global coordinator ve shadow publish 🛰️
@@ -537,7 +544,7 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 ## ⚠️ Risk ve Tuzak Notları
 
 - **Sürüm disiplini.** Sürüm sahibin onayıyla çıkar; düzeltmeler birikir, tek sürümde çıkar.
-- **Migration drift.** Repo/local `0081`, staging `0072`, production `0070`. `0073–0081` seri dry-run + post-check olmadan staging'e uygulanmaz.
+- **Migration drift.** Repo/local `0082`, staging `0072`, production `0070`. `0073–0082` seri dry-run + post-check olmadan staging'e uygulanmaz.
 - **V3 migration sırası.** WP-328 → WP-329 → WP-336 → WP-338 → WP-341 → WP-344 tek migration hattıdır; aynı anda iki migration worker'ı açılmaz. Her adım local replay, şema post-check ve önceki head kanıtı ister.
 - **Sayaç sıcak yolu donuktur.** WP-340–345 normal local start/stop sırasını, notification ID/channel/layout/PendingIntent'leri, widget görünümünü ve `ACTION_STOP_SILENT` davranışını yeniden tasarlamaz. Global senkron additive envelope + shadow + feature flag ile gelir; WP-346 gerçek cihaz regresyon kapısı geçmeden varsayılan açılmaz.
 - **l10n kapısı temiz.** WP-335, 24 gerçek WP-295 kullanıcı metnini kataloğa taşıdı; 7 kullanıcı-dışı invariant mesajını dar ve gerekçeli muafiyetle ayırdı. Yeni UI metni ekleyen WP'ler audit sıfır-bulgu kuralını korumalıdır.
