@@ -66,12 +66,9 @@
 - 🔴 **BETA 1 GERİ BİLDİRİMİ (sahip, 2026-07-25) → WP-302/303/304 açıldı ve ÜÇÜ DE KOD/TEST TAMAM.** `analyze` 0, **795 test yeşil**, l10n audit temiz. Sahip sırası: bu üçü stable'a → sonra kalan kod işleri → beta 2 → stable.
 
 ### Codex Lane
-- **Durum:** [~] Aktif
-- **Faz/WP:** Faz B · WP-316 staging apply sözleşme düzeltmesi
-- **Aşama:** Remote fail-closed sonrası hedef head hizalama
-- **SAHİP yollar:** `tooling/release/deploy-contract.json` · `tooling/supabase/guard.tests.ps1` · `progress.md` (yalnız Codex lane + WP-316 kartı)
-- **Başlangıç:** 2026-07-26 12:24 (Europe/Istanbul)
-- **Not:** Staging run `30196253848` local/CI replay'i geçti; remote apply başlamadan `staging.migration_head=0070` nedeniyle fail-closed durdu. Hedef `0072` sözleşmeye alınarak yeniden koşulacak.
+- **Durum:** [x] Boşta
+- **Faz/WP:** —
+- **SAHİP yollar:** —
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
@@ -134,7 +131,7 @@ göremiyoruz, cevap yazamıyoruz, liste temizlenmiyor.
 
 #### WP-316: Geri bildirim eki görünmüyor 🖼️
 - **Program/Faz:** Faz B · Admin & geri bildirim
-- **Ajan:** Codex · **Durum:** [x] **Kod/test tamam (2026-07-26)** — staging apply + cihaz kabulü bekliyor
+- **Ajan:** Codex · **Durum:** [x] **Kod/test + staging tamam (2026-07-26)** — cihaz kabulü bekliyor
 - **Problem:** Kullanıcı geri bildirime ekran görüntüsü ekliyor, admin panelinde görünmüyor. Sahip biletleri **kör** değerlendiriyor.
 - **Kapsam dışı:** Yeni ek türü (video/ses), çoklu ek, ek düzenleme. Yalnız **mevcut tek görsel** yolunun çalışması.
 - **SAHİP dosyalar (yaz):**
@@ -149,7 +146,7 @@ göremiyoruz, cevap yazamıyoruz, liste temizlenmiyor.
   - [x] İmzalı URL 1 saat geçerli; süresi dolmuş URL cache'lenmiş olabilir → üretim anını ek yolu olmadan logla
   - [x] Bulunan katmanı onar + yükleme hatasını kullanıcıya **görünür** yap → hedef widget testi **3/3**, tam Flutter paketi **820/820**, `flutter analyze` **0**, deploy guard **51/51**, temiz local baseline **72 migration + 147 pgTAP** yeşil
 - **Veri/Migration etkisi:** `0072_feedback_attachment_storage_fix.sql` — additive/idempotent private bucket + iki Storage RLS policy; geri alma: iki policy `drop`, bucket/veri silinmez.
-- **Ortam/Deploy:** Production teşhisi yalnız **okuma**; onarım local baseline'da geçti. `0071` + `0072` henüz staging/production'a uygulanmadı; sıradaki kapı staging apply, production ayrıca somut sahip GO'su ister.
+- **Ortam/Deploy:** Production teşhisi yalnız **okuma**. `0071` + `0072` staging'e Database Gates run `30196412999` ile uygulandı; dry-run, push, migration-list ve linked post-check yeşil, staging head `0072`. Production `0070`'da kilitli; ayrıca somut sahip GO'su ister. Kalan WP-316 kabulü: staging bağlı gerçek cihazda ekli biletin ≤3 sn'de açılması.
 - **RLS/Güvenlik:** Bucket **private kalmalı**; imzalı URL süresi uzatılmaz. `is_super_admin()` dışında kimse ek göremez. Ek yolu log'a **yazılmaz**.
 - **Edge-case'ler:** ek yok · ek var ama dosya silinmiş · URL süresi dolmuş · çevrimdışı · aynı bilette birden çok ek (bugün desteklenmiyorsa açıkça yaz)
 - **Kabul (ölçülebilir):** Ekli bir geri bildirimde çipe basınca görsel **≤ 3 sn**'de açılıyor · ek yoksa çip **görünmüyor** · yükleme hatasında kullanıcı snackbar görüyor (sessiz düşme yok) · teşhis sonucu hangi katmanın bozuk olduğu **yazılı** kanıtla raporlanıyor.

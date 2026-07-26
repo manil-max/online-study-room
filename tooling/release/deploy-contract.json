@@ -5,7 +5,7 @@
     "migration_head": "0072",
     "deploy_enabled": true,
     "release_enabled": true,
-    "hold_reason": "WP-316: staging rollout target is 0072. Migrations 0071 (group member limit 8) and 0072 (private feedback attachment bucket/RLS repair) require the contract-gated staging apply and post-check before beta QA."
+    "hold_reason": "WP-316: staging rollout target 0072 is applied and post-checked by Database Gates run 30196412999 (2026-07-26). Migrations 0071 and 0072 are ready for staging-backed beta/device QA."
   },
   "production": {
     "migration_head": "0070",
