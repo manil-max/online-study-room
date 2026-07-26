@@ -4,7 +4,7 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
-## [beta-v4401 / 1.0.44-beta.1+4401] - 2026-07-26
+## [beta-v4402 / 1.0.44-beta.2+4402] - 2026-07-26
 
 > **Beta aday.** Çoklu grup presence, birincil grup attribution ve çoklu cihaz
 > global timer altyapısı staging'e taşındı. Yeni V3 yolları bu ilk adayda
@@ -24,6 +24,8 @@ notları ekranı bu metinle aynı kararları yansıtmalıdır.
 - Bu beta **staging** backend ve migration head **0084** ile çalışır.
 - İlk kabul turunda bildirimden/widget'tan cold start, uygulama kapalıyken stop, 8 saat drift ve iki cihaz senaryoları özellikle test edilecek.
 - Production'a migration, flag veya stable yayın yapılmadı.
+- Golden görsel testleri baseline'larının üretildiği Windows runner'ında tutulur;
+  Android yayın hattı platformdan bağımsız tam fonksiyonel testi çalıştırır.
 
 ## [beta-v4309 / 1.0.43-beta.9+4309] - 2026-07-25
 

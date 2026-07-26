@@ -60,4 +60,26 @@ jobs:
       # argüman hatasıyla düşer.
       - run: flutter analyze
 
-      - run: flutter test --dart-define-from-file=env.json
+      # Golden baseline'ları Windows'ta üretildi. Linux raster çıktısı ile
+      # karşılaştırmak platform farkını ürün regresyonu diye raporlar.
+      - run: flutter test --exclude-tags=golden --dart-define-from-file=env.json
+
+  golden-tests:
+    name: Windows golden baselines
+    runs-on: windows-latest
+    timeout-minutes: 20
+    defaults: { run: { working-directory: app } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter pub get
+      - name: Sahte env.json (secret gerekmez)
+        shell: pwsh
+        run: |
+          @{
+            SUPABASE_URL = 'http://127.0.0.1:54321'
+            SUPABASE_ANON_KEY = 'ci-placeholder-anon-key'
+          } | ConvertTo-Json | Set-Content -LiteralPath env.json -Encoding utf8
+      - run: flutter test --tags=golden --dart-define-from-file=env.json --concurrency=1

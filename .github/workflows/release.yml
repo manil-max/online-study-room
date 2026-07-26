@@ -108,7 +108,9 @@ jobs:
           echo "FLAVOR=$FLAVOR" >> $GITHUB_ENV; echo "SRC=$SRC" >> $GITHUB_ENV; echo "OUT=$OUT" >> $GITHUB_ENV
       - run: flutter pub get
       - run: flutter analyze
-      - run: flutter test --dart-define-from-file=env.json
+      # Golden baseline'ları Windows'ta üretildi; Android runner yalnızca
+      # platformdan bağımsız fonksiyonel paketi çalıştırır.
+      - run: flutter test --exclude-tags=golden --dart-define-from-file=env.json
       - run: flutter test test/core/current_build_manifest_gate_test.dart --dart-define-from-file=env.json --dart-define=ENFORCE_CURRENT_BUILD_MANIFEST=true
       - run: flutter build apk --release --flavor "$FLAVOR" --build-name=${{ needs.preflight.outputs.version_name }} --build-number=${{ needs.preflight.outputs.build_number }} --dart-define-from-file=env.json
       - name: Android artefaktını paketle

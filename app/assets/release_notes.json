@@ -3,11 +3,11 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
-      "versionName": "1.0.44-beta.1",
-      "buildNumber": 4401,
+      "versionName": "1.0.44-beta.2",
+      "buildNumber": 4402,
       "channel": "beta",
       "date": "2026-07-26",
-      "title": "beta-v4401: çoklu cihaz timer altyapısı",
+      "title": "beta-v4402: çoklu cihaz timer altyapısı",
       "highlights": [
         "Canlı presence'in aktif olunan bütün gruplara server-derived projection olarak yansıması için altyapı eklendi.",
         "Birincil grup seçimi, yeni session ve progression attribution'ını tek gruba sabitleyen server sözleşmesine bağlandı.",
@@ -22,7 +22,7 @@
         "Yeni V3 rollout flag'leri bu ilk adayda kapalıdır; mevcut sayaç, bildirim ve widget akışı korunur.",
         "Cold start, widget/bildirim stop, 8 saat drift ve iki cihaz senaryoları bu turda özellikle test edilecek."
       ],
-      "titleEn": "beta-v4401: multi-device timer foundations",
+      "titleEn": "beta-v4402: multi-device timer foundations",
       "highlightsEn": [
         "Infrastructure was added for server-derived presence projections across every active group.",
         "Primary-group selection now anchors new session and progression attribution to exactly one group.",

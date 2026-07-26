@@ -23,7 +23,7 @@
   ayrıntı [`docs/recovery/PRODUCTION-BASELINE.md`](docs/recovery/PRODUCTION-BASELINE.md).
   Deploy contract aynı üç head'i taşır ve production `deploy_enabled: false` kilitlidir.
 - **Stable/production:** **v48** yayında, etkin şema `0070`. Yeni production migration, Edge deploy veya stable tag/release yalnız ayrı, somut kullanıcı GO + backup + dry-run ile yapılır; deploy kapısı kilitli.
-- **Beta/staging:** **beta-v4401** adayına hazırlanıyor; staging veritabanı `0084`te. V3 `0073–0084` zinciri dry-run/apply/post-check PASS; sıradaki adım benzersiz staging beta APK ve ortak cihaz turudur.
+- **Beta/staging:** `beta-v4401` CI'ın Linux/Windows golden raster farkında durdurduğu, APK'sız tarihsel adaydır; sıradaki benzersiz aday **beta-v4402**. Staging veritabanı `0084`te; V3 `0073–0084` zinciri dry-run/apply/post-check PASS; sıradaki adım beta APK ve ortak cihaz turudur.
 - **Release ilkesi:** Android beta/stable artefaktı Android işi başarılı olunca yayımlanır. Windows bağımsız sürer ve başarılı olursa aynı release'e eklenir; Windows hatası Android güncellemesini geri çekmez.
 - **Sürüm sırası:** kod/testi biten işler tek QA kuyruğunda birikir; yeni beta/stable yalnız sahip onayıyla çıkar. Eski beta dalga kararları tarihsel arşivdedir.
 - **Yönetim varsayılanı:** Production `deploy_enabled/release_enabled` kapalıdır. Stable yalnız protected `production` Environment, exact SHA/head/project-ref GO ve reviewer kanıtıyla ilerler.
