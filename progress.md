@@ -47,7 +47,7 @@
 - **Durum:** [x] Boşta
 - **Faz/WP:** —
 - **SAHİP yollar:** —
-- **Son not:** WP-325 kod/test tamamlandı ve staging dry-run/ortam kabulü için test kuyruğuna taşındı (2026-07-26).
+- **Son not:** WP-320 kod/test tamamlandı ve cihaz/ürün kabulü için test kuyruğuna taşındı (2026-07-26).
 - ✅ **WP-325 (2026-07-26, kod/test):** `study_sessions.day` sunucuda `start_time`dan damgalanıyor; eski satırlar İstanbul günüyle partiler halinde doldurulup `NOT NULL` oldu. İstemci `day` yazmıyor, sahte/doğrudan değer trigger ile eziliyor; elle tarih düzenlemesi günü yeniden hesaplıyor. Kişisel gün toplamı ve oturum aralığı saklı kolonu, `(user_id, day)` indeksiyle kullanıyor. Local replay + 7 SQL dosyasında 155 pgTAP testi geçti; `EXPLAIN` index scan kanıtı aldı. **Staging/production’a hiçbir işlem yapılmadı.**
 - ✅ **WP-319-G (2026-07-26, sahip kararı "global signout olsun")** — şifre değişince **bu cihaz hariç tüm oturumlar** kapanıyor (`SignOutScope.others`; `global` bilerek **değil** — kullanıcıyı kendi cihazından atardı). İptal doğrulama gibi **sözleşmede**. İptal edilemezse şifre yine de değişmiştir: hata atılmıyor, yutulmuyor — kullanıcı "şifren değişti **ama** diğer oturumlar kapatılamadı" uyarısını görüyor. `analyze` temiz · **842 test yeşil** (5 yeni) · **üç ayrı sabotajla kırmızı-yeşil kanıt**. Codex WP-295 (kamp ateşi) ile **kesişme olmadı**.
 - ✅ **WP-319 (2026-07-26)** — 🔴 **Kartın problem cümlesi yanlıştı, ama gerçek daha kötüydü:** şifre değiştirme vardı ve **mevcut şifreyi hiç doğrulamıyordu**. Yani kartın "en kötü ihtimal" diye uyardığı ölü anahtar **üretimdeydi**: açık bir oturumu eline geçiren biri şifreyi tek diyalogda değiştirebiliyordu. Doğrulama artık repository sözleşmesinde (`changePassword`), ekran atlayamaz. `analyze` temiz · **836 test yeşil** (12 yeni) · **iki katmanlı kırmızı-yeşil kanıt**. Faz B (Codex, admin) ve kamp ateşi önizleme dosyalarıyla **kesişme olmadı**.
@@ -302,16 +302,16 @@ oturumunun düştüğü görülmeli.
 
 #### WP-320: Ayarlar bilgi mimarisi 🧭
 - **Program/Faz:** Faz C · Ayarlar hijyeni
-- **Ajan:** — · **Durum:** [ ] Bekliyor
+- **Ajan:** Codex (Claude devri) · **Durum:** [~] Kod/test tamam — cihaz QA + ürün kabulü bekliyor (2026-07-26)
 - **Problem:** Ayarların sırası rastgele büyümüş; "Verilerimi dışa aktar" ortada duruyor, yasal metinler gelişigüzel yerde.
 - **Kapsam dışı:** Yeni ayar eklemek, mevcut ayarların davranışını değiştirmek. Yalnız **yer ve sıra**.
 - **SAHİP dosyalar (yaz):** `app/lib/features/profile/settings*.dart` · `app/lib/features/profile/data_export_screen.dart` (yalnız konumu) · ilgili l10n başlıkları
 - **DOKUNMA:** `account_settings_screen.dart` (WP-319 orada — **seri koş**) · `notification_center_screen.dart`
 - **Adımlar:**
-  - [ ] "Verilerimi dışa aktar" → **Hesabımı yönet** altına, hesap silmenin yanına
-  - [ ] Sıra: *Hesap → Bildirimler → Görünüm → Çalışma tercihleri → Gizlilik & güvenlik → Hakkında/Yasal*
-  - [ ] Gizlilik politikası ve yasal metinler **en alta**
-  - [ ] 🔴 Öneri **önce sahibe** gösterilir, sonra kodlanır
+  - [x] "Verilerimi dışa aktar" → **Hesabımı yönet** altına, hesap silmenin yanına
+  - [x] Sıra: *Hesap → Bildirimler → Görünüm → Çalışma tercihleri → Gizlilik & güvenlik → Hakkında/Yasal*
+  - [x] Gizlilik politikası ve yasal metinler **en alta**
+  - [x] Sahip, yokken soru sormadan uygun WP'lerde devam etme yetkisi verdi; karttaki sıralama doğrudan uygulandı.
 - **Veri/Migration etkisi:** Yok.
 - **Ortam/Deploy:** local.
 - **RLS/Güvenlik:** Yok (yalnız yerleşim). Hesap silme ve dışa aktarma yan yana gelince **yanlışlıkla silme** riski artar — silme onayı korunmalı.
@@ -669,6 +669,12 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 ---
 
 ## Test için bekleyenler
+
+### WP-320 — ayarlar bilgi mimarisi
+
+- **Durum:** Kod/test tamam · **Cihazda doğrulanmalı**
+- **Kanıt:** 360 dp Türkçe sıra testi ve TR/EN/DE/AR overflow testi yeşil; mevcut bildirim merkezi, duyurular ve safe-area testleri de yeşil.
+- **Bekleyen:** Android ve Windows'ta Hesap → Bildirimler → Görünüm → Çalışma tercihleri → Gizlilik & güvenlik → Hakkında/Yasal sırasının okunabilirliği; Hesabımı Yönet içinden silme onayının ve dışa aktarma akışının değişmediğinin ürün kabulü.
 
 ### WP-325 — oturum gününü kayıt anında damgalama
 

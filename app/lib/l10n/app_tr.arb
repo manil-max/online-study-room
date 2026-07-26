@@ -1582,5 +1582,11 @@
   "tourAdim": "{total} adımın {current}. adımı",
   "profileTanitimTurlariniSifirla": "Tanıtım turlarını sıfırla",
   "profileTanitimTurlariAciklama": "Her ekrandaki tanıtımı yeniden göster",
-  "profileTanitimTurlariSifirlandi": "Tanıtım turları sıfırlandı."
+  "profileTanitimTurlariSifirlandi": "Tanıtım turları sıfırlandı.",
+  "settingsSectionAccount": "Hesap",
+  "settingsSectionNotifications": "Bildirimler",
+  "settingsSectionAppearance": "Görünüm",
+  "settingsSectionStudyPreferences": "Çalışma tercihleri",
+  "settingsSectionPrivacySecurity": "Gizlilik ve güvenlik",
+  "settingsSectionAboutLegal": "Hakkında ve yasal"
 }

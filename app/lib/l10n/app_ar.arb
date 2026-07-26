@@ -5139,5 +5139,11 @@
   "tourAdim": "الخطوة {current} من {total}",
   "profileTanitimTurlariniSifirla": "إعادة تعيين الجولات التعريفية",
   "profileTanitimTurlariAciklama": "إظهار التعريفات على كل شاشة مرة أخرى",
-  "profileTanitimTurlariSifirlandi": "تمت إعادة تعيين الجولات التعريفية."
+  "profileTanitimTurlariSifirlandi": "تمت إعادة تعيين الجولات التعريفية.",
+  "settingsSectionAccount": "الحساب",
+  "settingsSectionNotifications": "الإشعارات",
+  "settingsSectionAppearance": "المظهر",
+  "settingsSectionStudyPreferences": "تفضيلات الدراسة",
+  "settingsSectionPrivacySecurity": "الخصوصية والأمان",
+  "settingsSectionAboutLegal": "حول والجوانب القانونية"
 }

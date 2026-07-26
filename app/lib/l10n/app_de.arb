@@ -5139,5 +5139,11 @@
   "tourAdim": "Schritt {current} von {total}",
   "profileTanitimTurlariniSifirla": "Einführungstouren zurücksetzen",
   "profileTanitimTurlariAciklama": "Einführungen auf jedem Bildschirm erneut anzeigen",
-  "profileTanitimTurlariSifirlandi": "Einführungstouren wurden zurückgesetzt."
+  "profileTanitimTurlariSifirlandi": "Einführungstouren wurden zurückgesetzt.",
+  "settingsSectionAccount": "Konto",
+  "settingsSectionNotifications": "Benachrichtigungen",
+  "settingsSectionAppearance": "Darstellung",
+  "settingsSectionStudyPreferences": "Lernpräferenzen",
+  "settingsSectionPrivacySecurity": "Datenschutz und Sicherheit",
+  "settingsSectionAboutLegal": "Info und Rechtliches"
 }

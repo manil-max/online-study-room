@@ -5612,5 +5612,29 @@
   "profileTanitimTurlariSifirlandi": "Introduction tours were reset.",
   "@profileTanitimTurlariSifirlandi": {
     "description": "Settings confirmation after introduction tours are reset."
+  },
+  "settingsSectionAccount": "Account",
+  "settingsSectionNotifications": "Notifications",
+  "settingsSectionAppearance": "Appearance",
+  "settingsSectionStudyPreferences": "Study preferences",
+  "settingsSectionPrivacySecurity": "Privacy & security",
+  "settingsSectionAboutLegal": "About & legal",
+  "@settingsSectionAccount": {
+    "description": "Settings information architecture section heading for account actions."
+  },
+  "@settingsSectionNotifications": {
+    "description": "Settings information architecture section heading for notifications."
+  },
+  "@settingsSectionAppearance": {
+    "description": "Settings information architecture section heading for appearance options."
+  },
+  "@settingsSectionStudyPreferences": {
+    "description": "Settings information architecture section heading for study preferences."
+  },
+  "@settingsSectionPrivacySecurity": {
+    "description": "Settings information architecture section heading for privacy and security."
+  },
+  "@settingsSectionAboutLegal": {
+    "description": "Settings information architecture section heading for about and legal content."
   }
 }

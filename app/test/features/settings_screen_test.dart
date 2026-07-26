@@ -63,7 +63,6 @@ void main() {
     expect(details.map((d) => d.exceptionAsString()), isEmpty);
 
     expect(find.byType(ExpansionTile), findsNothing);
-    expect(find.text('Görünüm'), findsNothing);
     expect(find.text('Ana Sayfa ızgarası'), findsNothing);
     // WP-186: ızgara yoğunluğu seçicisi kaldırıldı (sabit 32).
     expect(find.text('Izgara yoğunluğu'), findsNothing);
@@ -82,6 +81,35 @@ void main() {
     expect(find.text('Uygulama Kısayolları (Rutinler)'), findsNothing);
     expect(find.text('Geri bildirim gönder'), findsOneWidget);
     expect(find.text('Yönetim'), findsNothing);
+
+    // WP-320: 1080 fiziksel px / 3x DPR = 360dp dar ekranda da bilgi
+    // mimarisi sabit kalır; hesap silme ekranına giden giriş ile dışa aktarma
+    // aynı "Hesap" bölümündedir, yasal merkez en son bölümdedir.
+    final sections = [
+      find.text('Hesap'),
+      find.text('Bildirimler'),
+      find.text('Görünüm'),
+      find.text('Çalışma tercihleri'),
+      find.text('Gizlilik ve güvenlik'),
+      find.text('Hakkında ve yasal'),
+    ];
+    for (final section in sections) {
+      expect(section, findsOneWidget);
+    }
+    for (var index = 1; index < sections.length; index++) {
+      expect(
+        tester.getTopLeft(sections[index - 1]).dy,
+        lessThan(tester.getTopLeft(sections[index]).dy),
+      );
+    }
+    expect(
+      tester.getTopLeft(find.text('Hesabımı Yönet')).dy,
+      greaterThan(tester.getTopLeft(find.text('Hesap')).dy),
+    );
+    expect(
+      tester.getTopLeft(find.text('Verilerimi dışa aktar')).dy,
+      lessThan(tester.getTopLeft(find.text('Bildirimler')).dy),
+    );
 
     await tester.tap(find.text('Bildirim Merkezi'));
     await tester.pumpAndSettle();
@@ -147,4 +175,64 @@ void main() {
     tester.view.resetPhysicalSize();
     tester.view.resetDevicePixelRatio();
   });
+
+  testWidgets(
+    'WP-320 bölüm başlıkları 360dp ve tüm desteklenen dillerde taşmaz',
+    (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      final adminRepo = InMemoryAdminRepository();
+      addTearDown(adminRepo.dispose);
+      tester.view.physicalSize = const Size(1080, 12000);
+      tester.view.devicePixelRatio = 3.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      for (final locale in const [
+        Locale('tr'),
+        Locale('en'),
+        Locale('de'),
+        Locale('ar'),
+      ]) {
+        final details = <FlutterErrorDetails>[];
+        final previousOnError = FlutterError.onError;
+        FlutterError.onError = details.add;
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              sharedPreferencesProvider.overrideWithValue(prefs),
+              authStateProvider.overrideWith(
+                (ref) => Stream.value(
+                  Profile(
+                    id: 'u1',
+                    displayName: 'Ben',
+                    createdAt: DateTime.now(),
+                  ),
+                ),
+              ),
+              adminRepositoryProvider.overrideWithValue(adminRepo),
+              notificationPreferencesProvider.overrideWith(
+                () => NotificationPreferencesNotifier(),
+              ),
+            ],
+            child: MaterialApp(
+              locale: locale,
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              home: const SettingsScreen(),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        FlutterError.onError = previousOnError;
+        expect(
+          details.map((detail) => detail.exceptionAsString()),
+          isEmpty,
+          reason: '${locale.languageCode} yerleşim hatası üretmemeli',
+        );
+      }
+    },
+  );
 }
