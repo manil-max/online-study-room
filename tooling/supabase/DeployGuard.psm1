@@ -627,14 +627,34 @@ function New-ProductionBackupEvidence {
     taze bir PITR fiziksel noktası yoksa fail-closed durur.
   #>
   param(
-    [Parameter(Mandatory)][object]$BackupApiResponse,
+    [AllowNull()][object]$BackupApiResponse,
     [Parameter(Mandatory)][string]$ProjectRef,
     [Parameter(Mandatory)][string]$ExpectedGitSha,
     [Parameter(Mandatory)][string]$ExpectedMigrationHead,
     [DateTimeOffset]$NowUtc = [DateTimeOffset]::UtcNow,
     [int]$MaxBackupAgeHours = 36,
-    [int]$MaxPitrAgeHours = 6
+    [int]$MaxPitrAgeHours = 6,
+    [object]$BackupWaiver
   )
+
+  # Sahip kararı (2026-07-27): Free plan projesinde geri dönüş kaydı yok ve
+  # apply yedeksiz yapılacak.  Muafiyet sözleşmede kayıtlıdır; kanıt bunu
+  # gizlemez, "rollback yok" olarak açıkça yazar.
+  if ($null -ne $BackupWaiver) {
+    foreach ($field in @('decided_by', 'decided_at_utc', 'reason')) {
+      if ([string]::IsNullOrWhiteSpace([string]$BackupWaiver.$field)) {
+        throw "Production backup waiver is incomplete: $field"
+      }
+    }
+    return [ordered]@{
+      backup_id = "owner-waived:$ProjectRef`:$([string]$BackupWaiver.decided_at_utc)"
+      captured_at_utc = [DateTimeOffset]::Parse([string]$BackupWaiver.decided_at_utc).ToUniversalTime().ToString('o')
+      restore_strategy = "NONE - owner waived the backup requirement: $([string]$BackupWaiver.reason)"
+      session_baseline_evidence = "database-gates production-dry-run evidence for $ExpectedGitSha head $ExpectedMigrationHead"
+      xp_reconciliation_evidence = "staging apply post-check evidence for head $ExpectedMigrationHead on the identical migration set"
+      post_check_plan = "supabase migration list --linked after push must report head $ExpectedMigrationHead on $ProjectRef"
+    }
+  }
 
   if ($null -eq $BackupApiResponse) {
     throw 'Production backup evidence requires a Supabase backups API response.'

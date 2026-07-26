@@ -20,6 +20,20 @@ if ([string]::IsNullOrWhiteSpace($env:SUPABASE_ACCESS_TOKEN)) {
   throw 'Backup evidence requires SUPABASE_ACCESS_TOKEN from the protected environment secret store.'
 }
 
+$contract = Get-DeployContract -RepoRoot (Get-RepoRoot)
+$waiver = $null
+if ([string]$contract.production.backup_requirement -eq 'waived') {
+  $waiver = $contract.production.backup_waiver
+  $evidence = New-ProductionBackupEvidence -BackupApiResponse $null -ProjectRef $ProjectRef `
+    -ExpectedGitSha $ExpectedGitSha -ExpectedMigrationHead $ExpectedMigrationHead -BackupWaiver $waiver
+  $json = ($evidence | ConvertTo-Json -Depth 6 -Compress)
+  if (-not [string]::IsNullOrWhiteSpace($OutputPath)) {
+    [IO.File]::WriteAllText($OutputPath, $json + [Environment]::NewLine, [Text.UTF8Encoding]::new($false))
+  }
+  Write-Host "Backup requirement WAIVED by owner: no rollback path for $ProjectRef."
+  return $json
+}
+
 $response = Invoke-RestMethod -Method Get `
   -Uri "https://api.supabase.com/v1/projects/$ProjectRef/database/backups" `
   -Headers @{ Authorization = "Bearer $($env:SUPABASE_ACCESS_TOKEN)" } `

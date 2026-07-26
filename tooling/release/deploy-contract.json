@@ -11,6 +11,13 @@
     "migration_head": "0085",
     "deploy_enabled": true,
     "release_enabled": false,
+    "backup_requirement": "waived",
+    "backup_waiver": {
+      "decided_by": "owner",
+      "decided_at_utc": "2026-07-27T00:00:00Z",
+      "reason": "Free plan project has no daily backup and no PITR; owner accepted production apply with no rollback path.",
+      "rollback_path": "none"
+    },
     "hold_reason": "WP-351: production 0085 apply is unblocked - staging 0085 apply/post-check and the protected production dry-run passed, and backup/PITR evidence is now derived in CI from the Supabase backups API (fail-closed). Public stable release stays HOLD until the production post-check reports head 0085."
   }
 }

@@ -246,6 +246,15 @@ Assert-Throws -Name 'incomplete backup rejected' -Script {
     [pscustomobject]@{ status = 'PENDING'; inserted_at = '2026-07-26T22:00:00Z' }) }) `
     -ProjectRef $productionRef -ExpectedGitSha $sha -ExpectedMigrationHead '0085' -NowUtc $now
 }
+Assert-Equal ([string]$contract.production.backup_requirement) 'waived' 'sahip kararı: production yedeksiz apply'
+Assert-Throws -Name 'incomplete waiver rejected' -Script {
+  New-ProductionBackupEvidence -BackupApiResponse $null -ProjectRef $productionRef -ExpectedGitSha $sha `
+    -ExpectedMigrationHead '0085' -BackupWaiver ([pscustomobject]@{ decided_by = 'owner'; reason = '' })
+}
+$waived = New-ProductionBackupEvidence -BackupApiResponse $null -ProjectRef $productionRef -ExpectedGitSha $sha `
+  -ExpectedMigrationHead '0085' -BackupWaiver $contract.production.backup_waiver
+if ($waived.restore_strategy -notlike 'NONE - owner waived*') { throw 'Waived evidence must state that no rollback exists.' }
+$passed++
 $freshBackup = New-ProductionBackupEvidence -BackupApiResponse ([pscustomobject]@{ pitr_enabled = $false; backups = @(
   [pscustomobject]@{ status = 'COMPLETED'; inserted_at = '2026-07-26T20:00:00Z'; id = 'bkp-77' }) }) `
   -ProjectRef $productionRef -ExpectedGitSha $sha -ExpectedMigrationHead '0085' -NowUtc $now
