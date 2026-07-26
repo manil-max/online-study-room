@@ -47,7 +47,8 @@
 - **Durum:** [x] Boşta
 - **Faz/WP:** —
 - **SAHİP yollar:** —
-- **Son not:** WP-323, Claude'un limitinden sonra Codex tarafından devralındı ve kod/test tamamlandı (2026-07-26). Cihaz QA + ürün kabulü yeni beta artefaktında bekliyor; lane serbest.
+- **Son not:** WP-325 kod/test tamamlandı ve staging dry-run/ortam kabulü için test kuyruğuna taşındı (2026-07-26).
+- ✅ **WP-325 (2026-07-26, kod/test):** `study_sessions.day` sunucuda `start_time`dan damgalanıyor; eski satırlar İstanbul günüyle partiler halinde doldurulup `NOT NULL` oldu. İstemci `day` yazmıyor, sahte/doğrudan değer trigger ile eziliyor; elle tarih düzenlemesi günü yeniden hesaplıyor. Kişisel gün toplamı ve oturum aralığı saklı kolonu, `(user_id, day)` indeksiyle kullanıyor. Local replay + 7 SQL dosyasında 155 pgTAP testi geçti; `EXPLAIN` index scan kanıtı aldı. **Staging/production’a hiçbir işlem yapılmadı.**
 - ✅ **WP-319-G (2026-07-26, sahip kararı "global signout olsun")** — şifre değişince **bu cihaz hariç tüm oturumlar** kapanıyor (`SignOutScope.others`; `global` bilerek **değil** — kullanıcıyı kendi cihazından atardı). İptal doğrulama gibi **sözleşmede**. İptal edilemezse şifre yine de değişmiştir: hata atılmıyor, yutulmuyor — kullanıcı "şifren değişti **ama** diğer oturumlar kapatılamadı" uyarısını görüyor. `analyze` temiz · **842 test yeşil** (5 yeni) · **üç ayrı sabotajla kırmızı-yeşil kanıt**. Codex WP-295 (kamp ateşi) ile **kesişme olmadı**.
 - ✅ **WP-319 (2026-07-26)** — 🔴 **Kartın problem cümlesi yanlıştı, ama gerçek daha kötüydü:** şifre değiştirme vardı ve **mevcut şifreyi hiç doğrulamıyordu**. Yani kartın "en kötü ihtimal" diye uyardığı ölü anahtar **üretimdeydi**: açık bir oturumu eline geçiren biri şifreyi tek diyalogda değiştirebiliyordu. Doğrulama artık repository sözleşmesinde (`changePassword`), ekran atlayamaz. `analyze` temiz · **836 test yeşil** (12 yeni) · **iki katmanlı kırmızı-yeşil kanıt**. Faz B (Codex, admin) ve kamp ateşi önizleme dosyalarıyla **kesişme olmadı**.
 - 🟡 **WP-319'dan çıkan sahip sorusu:** şifre değişince **diğer cihazların oturumu** açık kalıyor (Supabase varsayılanı). Global sign-out eklensin mi? Kullanıcının kendi diğer cihazlarını da atar. Ayrıntı WP-319 kartında.
@@ -465,7 +466,7 @@ Böylece kişisel ve grup istatistiği **asla çelişmez**.
 
 #### WP-325: Gün, kayıt anında damgalanır 📌
 - **Program/Faz:** Faz E · Veri doğruluğu · *(eski WP-301'in yerine — o kart iptal)*
-- **Ajan:** — · **Durum:** [ ] Bekliyor
+- **Ajan:** Codex (Claude devri) · **Durum:** [~] Kod/test tamam — staging dry-run ve ortam kabulü bekliyor (2026-07-26)
 - **Problem:** Gün her sorguda `start_time`'dan yeniden hesaplanıyor. Bölge değişirse **geçmiş de kayıyor**: kullanıcı grup değiştirince eski günleri oynar, serisi kırılır. Sahip talebi: *"hep sonrasını etkileyecek şekilde"*.
 - **Kapsam dışı:** Bölge seçimi (WP-326) · birincil grup (WP-329) · görsel değişiklik.
 - **SAHİP dosyalar (yaz):**
@@ -666,6 +667,15 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 - **Saat dilimi offset olarak saklanmaz** — hep IANA adı (`America/New_York`). Türkiye'de yaz saati olmadığı için bu hata bugüne kadar hiç görünmedi.
 
 ---
+
+## Test için bekleyenler
+
+### WP-325 — oturum gününü kayıt anında damgalama
+
+- **Durum:** Kod/test tamam · **Cihazda/ortamda doğrulanmalı**
+- **Son commit:** `0592305`
+- **Kanıt:** temiz local replay · 7 dosyada 155 pgTAP testi · hedef Dart analyze/test yeşil · `(user_id, day)` için `EXPLAIN` index scan.
+- **Bekleyen:** staging migration list + dry-run, sentetik veriyle eski `start_time` toplamı ile saklı `day` toplamının birebir karşılaştırması, ardından staging uygulama ve beta ortam kabulü. Production için ayrı backup/dry-run/somut GO gerekir.
 
 ## 🧪 Cihaz QA Kuyruğu — kod bitti, cihaz testi bekliyor
 

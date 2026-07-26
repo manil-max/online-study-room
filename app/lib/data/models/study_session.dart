@@ -93,6 +93,7 @@ class StudySession {
     required this.source,
     this.subjectId,
     this.liveRunId,
+    this.recordedDay,
   });
 
   final String id;
@@ -104,11 +105,17 @@ class StudySession {
   final StudySource source;
   final String? liveRunId;
 
+  /// Sunucunun kayıt anında damgaladığı takvim günü. Yeni/çevrimdışı istemci
+  /// kayıtlarında henüz dönmemiş olabilir; o durumda eski Istanbul türetimi
+  /// yalnızca yerel geçiş uyumluluğu için kullanılır.
+  final DateTime? recordedDay;
+
   bool get isVerified => liveRunId != null;
 
-  /// Oturumun ait olduğu takvim günü (Europe/Istanbul, saat sıfır).
-  /// UTC `start` parse edilse bile `dailyTotals` / `dayOf` ile aynı anahtarı üretir.
-  DateTime get day => istanbulDay(start);
+  /// Oturumun ait olduğu, sunucuda sabitlenmiş takvim günü (saat sıfır).
+  /// Eski/yerel satırda damga yoksa geçiş uyumluluğu için Istanbul türetimi
+  /// kullanılır.
+  DateTime get day => recordedDay ?? istanbulDay(start);
 
   factory StudySession.fromMap(Map<String, dynamic> map) {
     return StudySession(
@@ -120,7 +127,14 @@ class StudySession {
       durationSeconds: map['duration_seconds'] as int,
       source: StudySource.values.byName(map['source'] as String),
       liveRunId: map['live_run_id'] as String?,
+      recordedDay: _readDay(map['day']),
     );
+  }
+
+  static DateTime? _readDay(Object? value) {
+    if (value == null) return null;
+    final parsed = value is DateTime ? value : DateTime.parse(value as String);
+    return DateTime(parsed.year, parsed.month, parsed.day);
   }
 
   Map<String, dynamic> toMap() {
@@ -147,7 +161,8 @@ class StudySession {
       other.end == end &&
       other.durationSeconds == durationSeconds &&
       other.source == source &&
-      other.liveRunId == liveRunId;
+      other.liveRunId == liveRunId &&
+      other.recordedDay == recordedDay;
 
   @override
   int get hashCode => Object.hash(
@@ -159,5 +174,6 @@ class StudySession {
     durationSeconds,
     source,
     liveRunId,
+    recordedDay,
   );
 }

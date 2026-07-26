@@ -39,20 +39,19 @@ class SupabaseAnalyticsQueryRepository implements AnalyticsQueryRepository {
     required DateTime from,
     required DateTime to,
   }) async {
-    // Inclusive Istanbul day range → UTC bounds (generous).
-    final fromDay = dayOf(from);
-    final toDay = dayOf(to).add(const Duration(days: 1));
+    // WP-325: gün aralığı, start_time yeniden yorumlanarak değil sunucunun
+    // kayda damgaladığı day sütunuyla seçilir.
     final rows = await _client
         .from('study_sessions')
         .select()
         .eq('user_id', userId)
-        .gte('start_time', fromDay.toUtc().toIso8601String())
-        .lt('start_time', toDay.toUtc().toIso8601String())
+        .gte('day', _dateParam(from))
+        .lte('day', _dateParam(to))
         .order('start_time', ascending: true);
     final sessions = (rows as List<dynamic>)
         .map((r) => StudySession.fromMap(Map<String, dynamic>.from(r as Map)))
         .toList();
-    // Client-side Istanbul filter for edge TZ days.
+    // Recorded day filteriyle aynı sözleşmeyi koruyan son savunma katmanı.
     return inRange(sessions, from, to).toList();
   }
 

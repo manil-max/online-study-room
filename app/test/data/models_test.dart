@@ -80,5 +80,24 @@ void main() {
       expect(StudySession.fromMap(session.toMap()), session);
       expect(session.day, DateTime(2026, 6, 21));
     });
+
+    test('sunucu damgası start zamanından bağımsız tarih anahtarı olur', () {
+      final session = StudySession.fromMap({
+        'id': 's-stamped',
+        'user_id': 'u1',
+        'start_time': '2026-06-21T21:30:00.000Z',
+        'end_time': '2026-06-21T22:00:00.000Z',
+        'duration_seconds': 1800,
+        'source': 'manual',
+        'day': '2026-06-21',
+      });
+
+      expect(session.day, DateTime(2026, 6, 21));
+      expect(
+        session.toMap().containsKey('day'),
+        isFalse,
+        reason: 'istemci sunucunun sahip olduğu gün damgasını yazamaz',
+      );
+    });
   });
 }
