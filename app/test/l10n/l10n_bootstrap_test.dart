@@ -30,15 +30,13 @@ void main() {
       }
     });
 
-    test('maps supported system locales de and ar', () {
-      expect(
-        resolveAppLocale(const Locale('de', 'DE'), supported),
-        const Locale('de'),
-      );
-      expect(
-        resolveAppLocale(const Locale('ar', 'SA'), supported),
-        const Locale('ar'),
-      );
+    test('maps formerly supported DE and AR system locales to English', () {
+      for (final locale in <Locale>[
+        const Locale('de', 'DE'),
+        const Locale('ar', 'SA'),
+      ]) {
+        expect(resolveAppLocale(locale, supported), const Locale('en'));
+      }
     });
   });
 
@@ -86,12 +84,12 @@ void main() {
 
     addTearDown(tester.binding.platformDispatcher.clearLocalesTestValue);
 
-    // WP-155: Almanca sistem dili artık de (EN baseline ARB), fr → en.
+    // WP-321: ürün dili yalnız EN/TR; Almanca sistem dili EN'e düşer.
     await pumpWithSystemLocale(const Locale('fr', 'FR'));
     expect(find.text('en'), findsOneWidget);
 
     await pumpWithSystemLocale(const Locale('de', 'DE'));
-    expect(find.text('de'), findsOneWidget);
+    expect(find.text('en'), findsOneWidget);
 
     await pumpWithSystemLocale(const Locale('tr', 'TR'));
     expect(find.text('tr'), findsOneWidget);
