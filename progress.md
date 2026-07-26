@@ -44,15 +44,11 @@
 - **SAHİP yollar:** —
 
 ### Claude Lane
-- **Durum:** [~] Aktif
-- **Faz/WP:** Faz C · **WP-322** (teknik borç temizliği) — *Faz B ile **paralel**; kart "bağımsız" işaretli*
-- **Aşama:** Geliştiriliyor
-- **SAHİP yollar:** `app/lib/core/config/distribution_channel.dart` · `app/test/core/distribution_channel_test.dart` · `app/test/features/classroom/study_timer_card_stop_test.dart`
-- **Ortak/riskli yüzey:** `progress.md` (yalnız Claude lane + WP-322 kartı). `pubspec.yaml`'a **hiç girilmedi** — passkeys ve sürüm maddeleri konusuz çıktı, dolayısıyla `pub get` çözümü değişmedi ve Codex'in test koşumu etkilenmedi.
-- **Dal:** `main`
-- **Başlangıç:** 2026-07-26 11:49 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-26 11:49
-- **Çakışma ön-kontrolü (Adım 0):** Codex WP-316'nın SAHİP yüzeyi `supabase_admin_repository.dart` + `app/lib/features/admin/**` + olası `supabase/migrations/00NN_*`. **Kesişim yok** — WP-322 feature koduna ve `supabase/migrations/**`'e girmiyor (kartın DOKUNMA satırı zaten yasaklıyor).
+- **Durum:** [x] Boşta
+- **Faz/WP:** — · **Son iş:** **WP-322** ✅ kod/test tamam (commit `3e607a7`, 2026-07-26)
+- **SAHİP yollar:** —
+- ✅ **WP-322 (2026-07-26)** — Faz B ile paralel koştu, Codex WP-316 ile **kesişim olmadı** (`pubspec.yaml`'a hiç girilmedi, `supabase/migrations/**`'e dokunulmadı). `flutter analyze` temiz · **10 ardışık tam suit koşumu 10/10 yeşil, her turda 820 test** · kararsızlık için kırmızı-yeşil kanıt alındı. Kartın passkeys ve sürüm maddeleri **konusuz** çıktı (gerekçe kartta).
+- 🟡 **Sahibe açık kalan tek soru:** `pubspec.yaml`'daki `version: 1.0.43-beta.9+4309` yayınlanan etiketlerle uyumsuz ama **hiçbir mağaza paketine ulaşmıyor** (sürüm etiketten türetiliyor). Kozmetik hijyen olarak hizalansın mı, yoksa öyle mi kalsın? Sürüm politikası "onaysız dokunma" dediği için **bekletildi**.
 - ✅ **v49 git tag'i silindi (2026-07-26 11:49, sahip emri):** uzak (`origin`) + yerel. Karşılığında release yoktu; sıradaki sürüm o numarayı temiz kullanabilir.
 - ✅ **2026-07-26:** grup üye sınırı **8** kodlandı (`0071_group_member_limit_8.sql` + Dart sabitleri + 4 test). `analyze` temiz, 815 test yeşil, 51 deploy guard testi yeşil. 🔴 **Migration hiçbir ortama uygulanmadı.**
 - ✅ **2026-07-26:** yol haritası `docs/PLAN.md`'den **bu dosyaya** taşındı (sahip kararı: tek güncel kaynak). PLAN.md sapa indirildi.
@@ -279,7 +275,8 @@ göremiyoruz, cevap yazamıyoruz, liste temizlenmiyor.
 
 #### WP-322: Teknik borç temizliği 🧹
 - **Program/Faz:** Faz C · mağaza ön şartı
-- **Ajan:** **Claude** · **Durum:** [~] Aktif (2026-07-26) · **Bağımsız — Faz B ile paralel koşuyor**
+- **Ajan:** **Claude** · **Durum:** ✅ **KOD/TEST TAMAM** (2026-07-26, commit `3e607a7`) · Faz B ile paralel koştu, çakışma olmadı
+- **Kanıt:** `flutter analyze` **temiz** · **10 ardışık tam suit koşumu 10/10 yeşil** (her turda 820 test) · kararsızlık için **kırmızı-yeşil kanıt** alındı · kanıt etiketi **Kodda doğrulandı** (cihaz QA'sı yok — `microsoftStore` kanalı ancak **Faz H**'de gerçek bir Store paketiyle görülebilir).
 - **Problem:** Dört ayrı küçük borç mağaza çıkışını riske atıyor. 🔴 **Kartın ilk iki maddesi yanlış varsayıma dayanıyormuş** — kod okunduğunda ikisi de düştü, bulgular aşağıda.
 - **Kapsam dışı:** Genel bağımlılık yükseltmesi, `test.zip`'i git geçmişinden silmek (geçmiş yeniden yazılır — ayrı ve riskli iş). Store CI job'ını kurmak (**Faz H**).
 - **SAHİP dosyalar (yaz):** `app/pubspec.yaml` (yalnız `version:` + `msix_config`) · `app/lib/core/config/distribution_channel.dart` · `app/test/core/distribution_channel_test.dart` · `app/test/features/classroom/study_timer_card_stop_test.dart` · `tooling/**`
