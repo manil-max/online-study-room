@@ -369,7 +369,7 @@ Aktif ajan değişiklikleri nedeniyle satır numaraları sabit kabul edilmemelid
 
 ### 3.10 Arşiv timer raporlarından devralınan riskler
 
-`docs/archive/TIMER_ARCHITECTURE_REPORT.md` tarihsel bir rapordur.
+Tarihsel timer mimarisi raporu repodan kaldırıldı; içeriği git geçmişindedir.
 
 Raporda global sync tasarımının ayrıca koruması gereken dört önemli risk anlatılmıştır:
 
@@ -433,7 +433,7 @@ Karar:
 
 ### 3.11 Arşiv bildirim audit'iyle uyum
 
-`docs/archive/NOTIFICATION-SYSTEM-AUDIT-2026-07.md` de tarihsel karar ve uygulama günlüğüdür; güncel worker talimatı değildir.
+Tarihsel bildirim audit'i de repodan kaldırıldı (git geçmişinde); zaten güncel worker talimatı değildi.
 
 Bu RFC açısından kalıcı dersler:
 
@@ -3809,8 +3809,6 @@ Bu sıra, kullanıcının çok emek verdiği kronometre + bildirim + widget büt
 - `docs/KALITE-PROGRAMI.md`
 - `docs/ORTAM-MIGRATION-YONETISIMI.md`
 - `docs/qa/DEVICE-QA-MATRIX.md`
-- `docs/archive/TIMER_ARCHITECTURE_REPORT.md`
-- `docs/archive/NOTIFICATION-SYSTEM-AUDIT-2026-07.md`
 - `docs/recovery/STATS-CONTRACT.md`
 - `app/test/core/stats/wp231_stats_contract_test.dart`
 - `project.md`

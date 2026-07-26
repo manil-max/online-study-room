@@ -1,7 +1,7 @@
 # Dokümantasyon — tek giriş noktası
 
-Bu dizinde geçmiş plan/draft/ajan notu tutulmaz. Eski bir karar gerekiyorsa Git geçmişine
-bakılır; `archive/` yalnız tarihsel kanıttır ve **asla güncel karar kaynağı değildir**.
+Bu dizinde geçmiş plan/draft/ajan notu tutulmaz. Eski bir karar gerekiyorsa **yalnız Git
+geçmişine** bakılır — repoda arşiv dizini yoktur (2026-07-27'de kaldırıldı).
 
 ## Okuma sırası ve yetki
 
@@ -18,10 +18,10 @@ koddur; eski doküman değil.
 
 | Alan | Belge | Neden ayrı duruyor? |
 |---|---|---|
-| Sahip geri bildirimi | [`V46-SAHIP-GERI-BILDIRIMI.md`](V46-SAHIP-GERI-BILDIRIMI.md) | v46–v49 turunun kök neden kaydı; cihaz QA'sı bitince arşivlenir |
 | Mağaza beyanı | [`play-store/DATA-SAFETY.md`](play-store/DATA-SAFETY.md), [`play-store/PLAY-RELEASE-GATE.md`](play-store/PLAY-RELEASE-GATE.md) | Sahip aksiyonu ve mağaza beyanı, koddan üretilemez |
 | Hesap silme | [`HESAP-SILME-RETENTION-KARARI.md`](HESAP-SILME-RETENTION-KARARI.md) | Ürün sahibinin açık kararı gereken veri/retention politikası |
 | Hukuk | [`legal/`](legal/) | Yayınlanabilir Privacy Policy, Terms ve Community Guidelines metinleri |
+| Evrensel saat (V3) | [`GLOBAL-TIMER-PRESENCE-MULTI-DEVICE-ARCHITECTURE-PLAN.md`](GLOBAL-TIMER-PRESENCE-MULTI-DEVICE-ARCHITECTURE-PLAN.md), [`GLOBAL-TIMER-V3-COMPATIBILITY-EVIDENCE.md`](GLOBAL-TIMER-V3-COMPATIBILITY-EVIDENCE.md) | Nihai uygulama planı ve C0 uyumluluk kanıtı; senior review turları git geçmişinde |
 | Kaynak-koda bağlı mimari | [`BASARIM-MIMARISI.md`](BASARIM-MIMARISI.md), [`SAAT-MIMARISI.md`](SAAT-MIMARISI.md), [`TEMA-MIMARISI.md`](TEMA-MIMARISI.md), [`TEMA-HIS-KATALOGU.md`](TEMA-HIS-KATALOGU.md), [`CAMPFIRE-R2-TASARIM.md`](CAMPFIRE-R2-TASARIM.md) | Kod yorumları bu dosyalara doğrudan bağlanır; taşıma/silme link kırar |
 | Ortam ve migration | [`ORTAM-MIGRATION-YONETISIMI.md`](ORTAM-MIGRATION-YONETISIMI.md), [`recovery/`](recovery/) | Canlı ortamların kanonik durumu ve geri alma yolları |
 | Windows | [`WINDOWS-RELEASE-GATE.md`](WINDOWS-RELEASE-GATE.md), [`QA-WINDOWS.md`](QA-WINDOWS.md), [`WINDOWS-VM-QA.md`](WINDOWS-VM-QA.md) | Windows paketleme ve cihaz kabulü için canlı çalışma listesi |
@@ -45,5 +45,5 @@ koddur; eski doküman değil.
 
 ## Arşiv
 
-[`archive/`](archive/) tarihsel kanıt içindir. Yeni bir iş buradan claim edilmez;
-güncel kararla çelişen her ifade geçersizdir.
+Repoda arşiv dizini tutulmaz. Tarihsel plan, adli rapor ve kapanmış WP kartları
+`git log`/`git show` ile okunur; hiçbiri güncel karar kaynağı değildir.

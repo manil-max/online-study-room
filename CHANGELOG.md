@@ -51,7 +51,7 @@ notları ekranı bu metinle aynı kararları yansıtmalıdır.
 ## [beta-v4309 / 1.0.43-beta.9+4309] - 2026-07-25
 
 > **Beta aday.** Yeni Özellik Turu Aşama A'nın kapanan dokuz iş paketi tek turda cihaz testine gidiyor.
-> Kamp ateşi sahnesinin yenilenmesi bu sürümde **yok** — bir sonraki betaya kaldı (bkz. `docs/YENI-OZELLIK-NOTLARI.md` F-09).
+> Kamp ateşi sahnesinin yenilenmesi bu sürümde **yok** — bir sonraki betaya kaldı (F-09).
 
 ### Yenilikler
 - **Kendi temanı oluştur sihirbazı:** renk, tipografi, biçim, atmosfer ve his adım adım seçiliyor; cihaza kayıtlı üç özel tema yuvası var.

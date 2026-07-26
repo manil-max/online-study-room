@@ -11,7 +11,7 @@
 > **K-3 (hangi hisler ürüne girecek) hâlâ ürün kararıdır** — aşağıdaki kısa liste
 > sahiple birlikte budanır. Bu belge şemayı ve seçenek havuzunu sağlar.
 >
-> Tarih: 2026-07-24 · Girdi: `docs/YENI-OZELLIK-PLANI.md` §4.4
+> Tarih: 2026-07-24 · Girdi: Yeni Özellik Turu Aşama A planı §4.4 (git geçmişinde)
 
 ---
 

@@ -13,7 +13,7 @@
   - **Güncel gerçek (2026-07-24, WP-293):** Stable **v45** yayında, production etkin şema `0070`; staging `0070`, beta-v4308 yayında. Sahip 2026-07-24'te stable+beta yayınını ve bildirim/sayaç davranışını cihazda kabul etti; bekleyen cihaz kabulleri kapandı.
   - WP-266–285'in kod/staging/yayın işi tamamlandı ve cihazda doğrulandı. `0066–0070` production'a terfi etti; production `deploy_enabled` yeniden `false` kilitlendi.
   - Açık kalan ops kabulü ayrı maddelerde: hesap silme staging (WP-276), başarım/görev/grup matrisi (WP-277).
-  - Tarihsel adli rapor: [`docs/KURTARMA-ON-INCELEME-RAPORU-2026-07-23.md`](docs/KURTARMA-ON-INCELEME-RAPORU-2026-07-23.md); güncel ortam durum modeli: `progress.md` Proje Gerçekleri.
+  - Tarihsel adli rapor git geçmişindedir; güncel ortam durum modeli: `progress.md` Proje Gerçekleri.
 
 - [~] **Global timer + çoklu grup presence + çoklu cihaz senkronu V3 — WP-336–346**
   - Kanonik teknik plan: [`docs/GLOBAL-TIMER-PRESENCE-MULTI-DEVICE-ARCHITECTURE-PLAN.md`](docs/GLOBAL-TIMER-PRESENCE-MULTI-DEVICE-ARCHITECTURE-PLAN.md). İlk güvenli paralel dalga WP-328 + salt-okunur WP-337'dir.
