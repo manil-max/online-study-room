@@ -46,10 +46,15 @@
 - **Son not:** WP-327 kod/test tamamlandı; güvenli keşif özeti için 0077 local replay ile doğrulandı. Staging/beta kabulü sonraki ortak turda (2026-07-26).
 
 ### Codex Lane
-- **Durum:** [x] Boşta
-- **Faz/WP:** —
-- **SAHİP yollar:** —
-- **Son not:** WP-351 yerel preflight yeniden doğrulandı: release-preflight 8/8, deploy guard 56/56 ve stable `0085` preflight'ı production sözleşme head'i `0070` olduğu için fail-closed. Üç project-ref, Supabase CLI/token, backup/dry-run kanıtı ve exact production GO yok; remote/stable mutasyonu yapılmadı (2026-07-27 00:06 Europe/Istanbul).
+- **Durum:** [~] Aktif
+- **Faz/WP:** Faz F2 · WP-351
+- **Aşama:** Kullanıcı GO'suyla staging → production → stable release
+- **SAHİP yollar:** `progress.md` (yalnız Codex lane + WP-351 kartı), `CHANGELOG.md`, `app/assets/release_notes.json`, `app/pubspec.yaml`, `tooling/release/deploy-contract.json`, redacted release kanıtları
+- **Ortak/riskli yüzey:** production/stable release kapıları, `supabase/migrations/**`, `.github/workflows/**`
+- **Dal:** main
+- **Başlangıç:** 2026-07-27 00:15 (Europe/Istanbul)
+- **Son güncelleme:** 2026-07-27 00:28 (Europe/Istanbul)
+- **Not:** Sahip 2026-07-27'de WP-351 için açık GO verdi. Staging `0085` protected apply + post-check, Database Gates `30220668874` ile PASS; production dry-run/backup kanıtı hazırlanıyor.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
@@ -728,7 +733,7 @@ Kod/test tamam; mağaza çıkışını **bloklamaz**. Kalan kabul tek QA kuyruğ
     bir daha kullanılmamış next stable version/build kimliğini doğrula.
   - [ ] `flutter analyze`, non-golden tam test, Windows strict golden, release
     manifest gate, local full migration replay/pgTAP/RLS/deploy guard çalıştır.
-  - [ ] Staging'i `0084→0085` protected dry-run/apply/post-check ile terfi et;
+  - [x] Staging'i `0084→0085` protected dry-run/apply/post-check ile terfi et;
     primary cooldown/iki hesap/RLS smoke kanıtını al.
   - [ ] Production `0070→0085` zinciri için hedef project-ref, migration-list,
     salt-okunur session/XP/reward/RLS/cron baseline, backup ve protected dry-run

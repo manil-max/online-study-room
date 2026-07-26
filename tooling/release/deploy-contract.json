@@ -8,9 +8,9 @@
     "hold_reason": "WP-348 staging acceptance: 0073-0085, including server-authoritative primary-group cooldown, await sequential staging dry-run/apply, post-check and beta device evidence."
   },
   "production": {
-    "migration_head": "0070",
+    "migration_head": "0085",
     "deploy_enabled": false,
     "release_enabled": false,
-    "hold_reason": "WP-293: owner-directed 0066-0070 production promotion is COMPLETE (Database Gates + Production Push Activation runs succeeded 2026-07-23); the one-time deploy gate is re-locked. Effective production schema is 0070, but CLI migration history remains unreconciled (docs/recovery/PRODUCTION-BASELINE.md). Any next production apply/release requires a fresh, explicit owner GO with backup + dry-run evidence."
+    "hold_reason": "WP-351: owner GO received and staging 0085 promotion passed. Production 0085 remains deploy/release HOLD until a protected production dry-run, verified backup/PITR record and exact SHA/head confirmation are recorded."
   }
 }

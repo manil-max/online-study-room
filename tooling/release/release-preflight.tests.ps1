@@ -8,7 +8,7 @@ $sha = Get-GitHead -RepoRoot $repoRoot
 $cases = @(
   @{ Name = 'wrong SHA'; Channel = 'beta'; Tag = 'beta-v4402'; Sha = ('0' * 40); Head = '0085' },
   @{ Name = 'wrong head'; Channel = 'beta'; Tag = 'beta-v4402'; Sha = $sha; Head = '0068' },
-  @{ Name = 'stable contract is behind current source'; Channel = 'stable'; Tag = 'v45'; Sha = $sha; Head = '0085' },
+  @{ Name = 'stable contract rejects old production head'; Channel = 'stable'; Tag = 'v45'; Sha = $sha; Head = '0070' },
   @{ Name = 'stable head behind source (v45 loophole)'; Channel = 'stable'; Tag = 'v45'; Sha = $sha; Head = '0065' },
   @{ Name = 'wrong channel/tag'; Channel = 'stable'; Tag = 'beta-v4402'; Sha = $sha; Head = '0065' }
 )

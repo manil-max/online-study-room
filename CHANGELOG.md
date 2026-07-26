@@ -4,6 +4,27 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [v49 / 1.0.49+49] - 2026-07-27
+
+> **Kararlı aday.** Birincil grup sözleşmesi, Forest Cabin tema kapağı ve
+> telefon kamp ateşi kompozisyonu production `0085` terfisiyle birlikte gelir.
+> V3 global timer/presence/timer-sync rollout flag'leri bu sürümde kapalıdır.
+
+### Yenilikler
+- Birincil grup seçimi hesap genelinde korunur; yeni oturum ve grup ilerlemesi yalnız başlangıçtaki primary gruba yazılır.
+- Forest Cabin tema kartı, seçilen açık/koyu paletin baskın scaffold ve surface renklerini doğrudan gösterir.
+- Telefon kamp ateşi sahnesinde düşük ateş, geniş oturma halkası, küçük/uzak hayvanlar ve ağaçsız arka plan kullanılır.
+
+### Güvenlik ve güvenilirlik
+- Primary seçim cooldown'ı ve stale-revision reddi sunucu tarafında uygulanır; preference geçmişi istemci tarafından yazılamaz.
+- Production migration zinciri additive kalır; rollback şema düşürme yerine flag-off ve ileri düzeltmeyle yapılır.
+- Mevcut sayaç, bildirim ve widget sıcak yolu değiştirilmez.
+
+### Notlar
+- Bu stable aday production backend ve migration head **0085** gerektirir.
+- V3 global timer, presence projection ve timer-sync rollout flag'leri kapalı kalır.
+- Fiziksel Android/Windows kabulü ve 5 hesaplık senaryolar yayın sonrasında gerçek cihazda doğrulanmalıdır.
+
 ## [beta-v4402 / 1.0.44-beta.2+4402] - 2026-07-26
 
 > **Beta aday.** Çoklu grup presence, birincil grup attribution ve çoklu cihaz

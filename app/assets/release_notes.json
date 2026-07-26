@@ -3,6 +3,42 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.49",
+      "buildNumber": 49,
+      "channel": "stable",
+      "date": "2026-07-27",
+      "title": "v49: birincil grup ve mobil kamp ateşi",
+      "highlights": [
+        "Birincil grup seçimi hesap genelinde korunur; yeni oturum ve grup ilerlemesi yalnız başlangıçtaki primary gruba yazılır.",
+        "Forest Cabin kartı seçilen açık veya koyu paletin gerçek yüzey renklerini önizler.",
+        "Telefon kamp ateşi sahnesi düşük ateş, geniş halka ve küçük/uzak hayvanlarla yeniden düzenlendi."
+      ],
+      "fixes": [
+        "Primary seçim cooldown'ı ve stale-revision reddi sunucu tarafında uygulanır; preference geçmişi istemci tarafından yazılamaz.",
+        "Mevcut sayaç, bildirim ve widget sıcak yolu değiştirilmeden korunur."
+      ],
+      "notes": [
+        "Bu stable sürüm production backend ve migration head 0085 gerektirir.",
+        "V3 global timer, presence projection ve timer-sync rollout flag'leri kapalı kalır.",
+        "Fiziksel Android/Windows kabulü ve 5 hesaplık senaryolar gerçek cihazda doğrulanmalıdır."
+      ],
+      "titleEn": "v49: primary group and mobile campfire",
+      "highlightsEn": [
+        "Primary-group selection is account-wide; each new session and group progression is credited only to the primary group at its start.",
+        "The Forest Cabin card previews the true surface palette for the selected light or dark theme.",
+        "The phone campfire scene now uses a low fire, a wide ring and small distant animals."
+      ],
+      "fixesEn": [
+        "Primary-selection cooldown and stale-revision rejection run on the server; clients cannot write preference history.",
+        "The existing timer, notification and widget hot path remains unchanged."
+      ],
+      "notesEn": [
+        "This stable release requires the production backend and migration head 0085.",
+        "V3 global timer, presence projection and timer-sync rollout flags remain off.",
+        "Physical Android/Windows acceptance and the five-account scenarios still require real-device verification."
+      ]
+    },
+    {
       "versionName": "1.0.44-beta.2",
       "buildNumber": 4402,
       "channel": "beta",

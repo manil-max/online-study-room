@@ -25,13 +25,13 @@ $productionRef = 'bbbbbbbbbbbbbbbbbbbb'
 Assert-Equal (Get-LocalMigrationHead -RepoRoot $repoRoot) '0085' 'local migration head'
 Assert-Equal ((Get-DeployContract -RepoRoot $repoRoot).local_migration_head) '0085' 'contract migration head'
 $contract = Get-DeployContract -RepoRoot $repoRoot
-# V3 staging rollout'u 0073-0084 zincirini, attribution yapılandırmasının
-# fail-closed RLS düzeltmesiyle birlikte taşır; production 0070'da kilitli kalır.
+# WP-351 staging 0085 terfisi tamamlandı; production 0085 hedefi hâlâ
+# backup/dry-run/exact-GO tamamlanana kadar fail-closed HOLD'dadır.
 Assert-Equal $contract.staging.migration_head '0085' 'staging migration head'
 Assert-Equal ([bool]$contract.staging.deploy_enabled) $true 'staging deploy enabled'
 Assert-Equal ([bool]$contract.staging.release_enabled) $true 'staging release enabled'
-Assert-Equal $contract.production.migration_head '0070' 'production head 0070: effective schema after completed owner-directed promotion'
-Assert-Equal ([bool]$contract.production.deploy_enabled) $false 'production deploy re-locked after promotion complete (WP-293)'
+Assert-Equal $contract.production.migration_head '0085' 'production head 0085: WP-351 hedefi dry-run için hazırlanmış'
+Assert-Equal ([bool]$contract.production.deploy_enabled) $false 'production deploy backup ve exact GO tamamlanana kadar HOLD'
 Assert-Equal ([bool]$contract.production.release_enabled) $false 'production release defaults to HOLD'
 
 $databaseWorkflow = Get-Content -LiteralPath (Join-Path $repoRoot '.github\workflows\database-gates.yml') -Raw -Encoding UTF8
