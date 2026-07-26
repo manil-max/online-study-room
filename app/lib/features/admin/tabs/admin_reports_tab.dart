@@ -9,33 +9,87 @@ import 'package:online_study_room/data/repositories/admin_repository.dart';
 import 'package:online_study_room/features/profile/feedback_tickets_screen.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
-class AdminReportsTab extends ConsumerWidget {
+class AdminReportsTab extends ConsumerStatefulWidget {
   const AdminReportsTab({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final tickets = ref.watch(adminFeedbackTicketsProvider);
+  ConsumerState<AdminReportsTab> createState() => _AdminReportsTabState();
+}
+
+class _AdminReportsTabState extends ConsumerState<AdminReportsTab> {
+  var _showArchive = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final tickets = ref.watch(
+      _showArchive
+          ? adminArchivedFeedbackTicketsProvider
+          : adminFeedbackTicketsProvider,
+    );
     final l10n = AppLocalizations.of(context);
 
     return RefreshIndicator(
       onRefresh: () async {
         ref.invalidate(adminFeedbackTicketsProvider);
-        await ref.read(adminFeedbackTicketsProvider.future);
+        ref.invalidate(adminArchivedFeedbackTicketsProvider);
+        await ref.read(
+          (_showArchive
+                  ? adminArchivedFeedbackTicketsProvider
+                  : adminFeedbackTicketsProvider)
+              .future,
+        );
       },
       child: tickets.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) =>
             Center(child: Text(l10n.authBeklenmeyenBirHataOlustu)),
         data: (items) {
-          if (items.isEmpty) {
-            return Center(child: Text(l10n.adminHenuzRaporYok));
+          final visibleItems = _showArchive
+              ? items.where((ticket) => ticket.archivedAt != null).toList()
+              : items;
+          if (visibleItems.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(l10n.adminHenuzRaporYok),
+                  IconButton.outlined(
+                    icon: Icon(
+                      _showArchive
+                          ? Icons.inventory_2
+                          : Icons.inventory_2_outlined,
+                    ),
+                    onPressed: () =>
+                        setState(() => _showArchive = !_showArchive),
+                  ),
+                ],
+              ),
+            );
           }
           return ListView.separated(
+            physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(16),
-            itemCount: items.length,
+            itemCount: visibleItems.length + 1,
             separatorBuilder: (_, _) => const SizedBox(height: 8),
             itemBuilder: (context, index) {
-              return _TicketCard(ticket: items[index]);
+              if (index == 0) {
+                return Align(
+                  alignment: Alignment.centerRight,
+                  child: IconButton.outlined(
+                    icon: Icon(
+                      _showArchive
+                          ? Icons.inventory_2
+                          : Icons.inventory_2_outlined,
+                    ),
+                    onPressed: () =>
+                        setState(() => _showArchive = !_showArchive),
+                  ),
+                );
+              }
+              return _TicketCard(
+                ticket: visibleItems[index - 1],
+                showArchived: _showArchive,
+              );
             },
           );
         },
@@ -45,9 +99,10 @@ class AdminReportsTab extends ConsumerWidget {
 }
 
 class _TicketCard extends ConsumerWidget {
-  const _TicketCard({required this.ticket});
+  const _TicketCard({required this.ticket, required this.showArchived});
 
   final FeedbackTicket ticket;
+  final bool showArchived;
 
   void _showNotesDialog(BuildContext context, WidgetRef ref) {
     showDialog(
@@ -122,6 +177,29 @@ class _TicketCard extends ConsumerWidget {
                   avatar: const Icon(Icons.note_alt_outlined, size: 18),
                   label: Text(l10n.adminIcNotlar),
                   onPressed: () => _showNotesDialog(context, ref),
+                ),
+                ActionChip(
+                  visualDensity: VisualDensity.compact,
+                  avatar: Icon(
+                    showArchived
+                        ? Icons.unarchive_outlined
+                        : Icons.archive_outlined,
+                    size: 18,
+                  ),
+                  label: Text(l10n.profileTamamland),
+                  onPressed: () async {
+                    final profile = ref.read(authStateProvider).value;
+                    if (profile == null) return;
+                    await ref
+                        .read(adminRepositoryProvider)
+                        .setFeedbackArchived(
+                          userId: profile.id,
+                          ticketId: ticket.id,
+                          archived: !showArchived,
+                        );
+                    ref.invalidate(adminFeedbackTicketsProvider);
+                    ref.invalidate(adminArchivedFeedbackTicketsProvider);
+                  },
                 ),
                 ActionChip(
                   key: Key('feedback-reply-${ticket.id}'),

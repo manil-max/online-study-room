@@ -170,6 +170,39 @@ void main() {
     },
   );
 
+  test(
+    'admin archives a ticket without deleting it and can restore it',
+    () async {
+      final repo = InMemoryAdminRepository(superAdminUserIds: {'admin'});
+      addTearDown(repo.dispose);
+      final ticket = await repo.submitFeedback(
+        userId: 'u1',
+        kind: FeedbackTicketKind.feedback,
+        subject: 'Archive',
+        message: 'Must not be deleted.',
+      );
+      await repo.setFeedbackArchived(
+        userId: 'admin',
+        ticketId: ticket.id,
+        archived: true,
+      );
+      expect(await repo.fetchFeedbackTickets('admin'), isEmpty);
+      expect(
+        (await repo.fetchFeedbackTickets(
+          'admin',
+          includeArchived: true,
+        )).single.archivedAt,
+        isNotNull,
+      );
+      await repo.setFeedbackArchived(
+        userId: 'admin',
+        ticketId: ticket.id,
+        archived: false,
+      );
+      expect((await repo.fetchFeedbackTickets('admin')).single.id, ticket.id);
+    },
+  );
+
   group('classifyFeedbackSubmitError (WP-168/177)', () {
     test('RLS / JWT → session_or_rls', () {
       expect(

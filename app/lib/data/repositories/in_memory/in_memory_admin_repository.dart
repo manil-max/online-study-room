@@ -44,14 +44,42 @@ class InMemoryAdminRepository implements AdminRepository {
   Future<List<FeedbackTicket>> fetchFeedbackTickets(
     String userId, {
     FeedbackTicketStatus? status,
+    bool includeArchived = false,
   }) async {
     _requireAdmin(userId);
     final rows =
         _tickets
             .where((ticket) => status == null || ticket.status == status)
+            .where((ticket) => includeArchived || ticket.archivedAt == null)
             .toList()
           ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
     return List.unmodifiable(rows);
+  }
+
+  @override
+  Future<void> setFeedbackArchived({
+    required String userId,
+    required String ticketId,
+    required bool archived,
+  }) async {
+    _requireAdmin(userId);
+    final index = _tickets.indexWhere((ticket) => ticket.id == ticketId);
+    if (index < 0) return;
+    final ticket = _tickets[index];
+    _tickets[index] = FeedbackTicket(
+      id: ticket.id,
+      userId: ticket.userId,
+      kind: ticket.kind,
+      subject: ticket.subject,
+      message: ticket.message,
+      status: ticket.status,
+      createdAt: ticket.createdAt,
+      updatedAt: DateTime.now(),
+      reporterDisplayName: ticket.reporterDisplayName,
+      attachmentPath: ticket.attachmentPath,
+      archivedAt: archived ? DateTime.now() : null,
+    );
+    _changes.add(null);
   }
 
   @override

@@ -42,12 +42,16 @@ class SupabaseAdminRepository implements AdminRepository {
   Future<List<FeedbackTicket>> fetchFeedbackTickets(
     String userId, {
     FeedbackTicketStatus? status,
+    bool includeArchived = false,
   }) async {
     try {
       final rows =
           await _client.rpc(
                 'admin_feedback_tickets',
-                params: {'p_status': status?.dbValue},
+                params: {
+                  'p_status': status?.dbValue,
+                  'p_include_archived': includeArchived,
+                },
               )
               as List<dynamic>;
       return rows
@@ -56,6 +60,22 @@ class SupabaseAdminRepository implements AdminRepository {
                 FeedbackTicket.fromMap(Map<String, dynamic>.from(row as Map)),
           )
           .toList();
+    } on PostgrestException catch (e) {
+      throw AdminException(_friendlyMessage(e.message));
+    }
+  }
+
+  @override
+  Future<void> setFeedbackArchived({
+    required String userId,
+    required String ticketId,
+    required bool archived,
+  }) async {
+    try {
+      await _client.rpc(
+        'admin_set_feedback_archived',
+        params: {'p_ticket_id': ticketId, 'p_archived': archived},
+      );
     } on PostgrestException catch (e) {
       throw AdminException(_friendlyMessage(e.message));
     }

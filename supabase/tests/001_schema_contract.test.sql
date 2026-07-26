@@ -3,17 +3,32 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(49);
+select plan(51);
 
 select is(
   (select count(*)::integer from supabase_migrations.schema_migrations),
-  74,
-  'all 74 migrations are recorded'
+  75,
+  'all 75 migrations are recorded'
 );
 select is(
   (select max(version) from supabase_migrations.schema_migrations),
-  '0074',
-  '0074 is the migration head'
+  '0075',
+  '0075 is the migration head'
+);
+select ok(
+  exists(
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'feedback_tickets'
+      and column_name = 'archived_at'
+  ),
+  '0075 preserves tickets and adds an archival timestamp'
+);
+select ok(
+  to_regprocedure('public.admin_set_feedback_archived(uuid,boolean)') is not null
+    and has_function_privilege(
+      'authenticated', 'public.admin_set_feedback_archived(uuid,boolean)', 'execute'
+    ),
+  '0075 installs the guarded admin archive RPC'
 );
 select ok(
   to_regclass('public.feedback_ticket_messages') is not null

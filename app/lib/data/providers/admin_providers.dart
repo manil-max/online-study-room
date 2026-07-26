@@ -49,6 +49,17 @@ final adminFeedbackTicketsProvider = FutureProvider<List<FeedbackTicket>>((
   return ref.watch(adminRepositoryProvider).fetchFeedbackTickets(profile.id);
 });
 
+final adminArchivedFeedbackTicketsProvider =
+    FutureProvider<List<FeedbackTicket>>((ref) async {
+      final profile = ref.watch(authStateProvider).value;
+      if (profile == null) return const [];
+      final isAdmin = await ref.watch(adminIsSuperAdminProvider.future);
+      if (!isAdmin) return const [];
+      return ref
+          .watch(adminRepositoryProvider)
+          .fetchFeedbackTickets(profile.id, includeArchived: true);
+    });
+
 final myFeedbackTicketsProvider = FutureProvider<List<FeedbackTicket>>((
   ref,
 ) async {
@@ -57,25 +68,32 @@ final myFeedbackTicketsProvider = FutureProvider<List<FeedbackTicket>>((
   return ref.watch(adminRepositoryProvider).fetchMyFeedbackTickets(profile.id);
 });
 
-final adminUsersProvider = FutureProvider.autoDispose<List<AdminUserDto>>((ref) async {
+final adminUsersProvider = FutureProvider.autoDispose<List<AdminUserDto>>((
+  ref,
+) async {
   final isAdmin = await ref.watch(adminIsSuperAdminProvider.future);
   if (!isAdmin) return const [];
   return ref.watch(adminRepositoryProvider).fetchUsers();
 });
 
-final adminGroupsProvider = FutureProvider.autoDispose<List<StudyGroup>>((ref) async {
+final adminGroupsProvider = FutureProvider.autoDispose<List<StudyGroup>>((
+  ref,
+) async {
   final isAdmin = await ref.watch(adminIsSuperAdminProvider.future);
   if (!isAdmin) return const [];
   return ref.watch(adminRepositoryProvider).fetchGroups();
 });
 
-final adminAnnouncementsProvider = FutureProvider.autoDispose<List<Announcement>>((ref) async {
-  final isAdmin = await ref.watch(adminIsSuperAdminProvider.future);
-  if (!isAdmin) return const [];
-  return ref.watch(adminRepositoryProvider).fetchAnnouncements();
-});
+final adminAnnouncementsProvider =
+    FutureProvider.autoDispose<List<Announcement>>((ref) async {
+      final isAdmin = await ref.watch(adminIsSuperAdminProvider.future);
+      if (!isAdmin) return const [];
+      return ref.watch(adminRepositoryProvider).fetchAnnouncements();
+    });
 
-final adminAuditLogsProvider = FutureProvider.autoDispose<List<AdminAuditLog>>((ref) async {
+final adminAuditLogsProvider = FutureProvider.autoDispose<List<AdminAuditLog>>((
+  ref,
+) async {
   final isAdmin = await ref.watch(adminIsSuperAdminProvider.future);
   if (!isAdmin) return const [];
   return ref.watch(adminRepositoryProvider).fetchAuditLogs();

@@ -22,8 +22,8 @@ $repoRoot = Get-RepoRoot
 $stagingRef = 'aaaaaaaaaaaaaaaaaaaa'
 $productionRef = 'bbbbbbbbbbbbbbbbbbbb'
 
-Assert-Equal (Get-LocalMigrationHead -RepoRoot $repoRoot) '0074' 'local migration head'
-Assert-Equal ((Get-DeployContract -RepoRoot $repoRoot).local_migration_head) '0074' 'contract migration head'
+Assert-Equal (Get-LocalMigrationHead -RepoRoot $repoRoot) '0075' 'local migration head'
+Assert-Equal ((Get-DeployContract -RepoRoot $repoRoot).local_migration_head) '0075' 'contract migration head'
 $contract = Get-DeployContract -RepoRoot $repoRoot
 # 0071 (grup üye sınırı 8) ve 0072 (geri bildirim eki Storage/RLS onarımı)
 # staging rollout hedefidir; production 0070'da kilitli kalır.

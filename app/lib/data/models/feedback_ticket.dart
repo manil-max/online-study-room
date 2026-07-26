@@ -46,6 +46,7 @@ class FeedbackTicket {
     required this.updatedAt,
     this.reporterDisplayName,
     this.attachmentPath,
+    this.archivedAt,
   });
 
   final String id;
@@ -58,12 +59,14 @@ class FeedbackTicket {
   final DateTime updatedAt;
   final String? reporterDisplayName;
   final String? attachmentPath;
+  final DateTime? archivedAt;
 
   FeedbackTicket copyWith({
     FeedbackTicketStatus? status,
     DateTime? updatedAt,
     String? reporterDisplayName,
     String? attachmentPath,
+    DateTime? archivedAt,
   }) {
     return FeedbackTicket(
       id: id,
@@ -76,6 +79,7 @@ class FeedbackTicket {
       updatedAt: updatedAt ?? this.updatedAt,
       reporterDisplayName: reporterDisplayName ?? this.reporterDisplayName,
       attachmentPath: attachmentPath ?? this.attachmentPath,
+      archivedAt: archivedAt ?? this.archivedAt,
     );
   }
 
@@ -91,6 +95,9 @@ class FeedbackTicket {
       updatedAt: DateTime.parse(map['updated_at'] as String),
       reporterDisplayName: map['reporter_display_name'] as String?,
       attachmentPath: map['attachment_path'] as String?,
+      archivedAt: map['archived_at'] == null
+          ? null
+          : DateTime.parse(map['archived_at'] as String),
     );
   }
 
@@ -106,6 +113,7 @@ class FeedbackTicket {
       'updated_at': updatedAt.toIso8601String(),
       'reporter_display_name': reporterDisplayName,
       if (attachmentPath != null) 'attachment_path': attachmentPath,
+      if (archivedAt != null) 'archived_at': archivedAt!.toIso8601String(),
     };
   }
 }

@@ -47,7 +47,7 @@
 - **Durum:** [x] Boşta
 - **Faz/WP:** —
 - **SAHİP yollar:** —
-- **Son not:** WP-317 kod/test tamamlandı ve beta kabulü için test kuyruğuna taşındı (2026-07-26).
+- **Son not:** WP-318 kod/test tamamlandı ve beta kabulü için test kuyruğuna taşındı (2026-07-26).
 - ✅ **WP-325 (2026-07-26, kod/test):** `study_sessions.day` sunucuda `start_time`dan damgalanıyor; eski satırlar İstanbul günüyle partiler halinde doldurulup `NOT NULL` oldu. İstemci `day` yazmıyor, sahte/doğrudan değer trigger ile eziliyor; elle tarih düzenlemesi günü yeniden hesaplıyor. Kişisel gün toplamı ve oturum aralığı saklı kolonu, `(user_id, day)` indeksiyle kullanıyor. Local replay + 7 SQL dosyasında 155 pgTAP testi geçti; `EXPLAIN` index scan kanıtı aldı. **Staging/production’a hiçbir işlem yapılmadı.**
 - ✅ **WP-319-G (2026-07-26, sahip kararı "global signout olsun")** — şifre değişince **bu cihaz hariç tüm oturumlar** kapanıyor (`SignOutScope.others`; `global` bilerek **değil** — kullanıcıyı kendi cihazından atardı). İptal doğrulama gibi **sözleşmede**. İptal edilemezse şifre yine de değişmiştir: hata atılmıyor, yutulmuyor — kullanıcı "şifren değişti **ama** diğer oturumlar kapatılamadı" uyarısını görüyor. `analyze` temiz · **842 test yeşil** (5 yeni) · **üç ayrı sabotajla kırmızı-yeşil kanıt**. Codex WP-295 (kamp ateşi) ile **kesişme olmadı**.
 - ✅ **WP-319 (2026-07-26)** — 🔴 **Kartın problem cümlesi yanlıştı, ama gerçek daha kötüydü:** şifre değiştirme vardı ve **mevcut şifreyi hiç doğrulamıyordu**. Yani kartın "en kötü ihtimal" diye uyardığı ölü anahtar **üretimdeydi**: açık bir oturumu eline geçiren biri şifreyi tek diyalogda değiştirebiliyordu. Doğrulama artık repository sözleşmesinde (`changePassword`), ekran atlayamaz. `analyze` temiz · **836 test yeşil** (12 yeni) · **iki katmanlı kırmızı-yeşil kanıt**. Faz B (Codex, admin) ve kamp ateşi önizleme dosyalarıyla **kesişme olmadı**.
@@ -190,7 +190,7 @@ göremiyoruz, cevap yazamıyoruz, liste temizlenmiyor.
 
 #### WP-318: Bilet arşivi 🗃️
 - **Program/Faz:** Faz B · Admin & geri bildirim
-- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-317 (migration sırası)
+- **Ajan:** Claude · **Durum:** [~] Kod/test tamam — beta kabulü bekliyor (2026-07-26) · **Bağımlılık notu:** WP-317 ardından seri migration tamamlandı
 - **Problem:** Sadece `open / in_progress / closed` var ve hepsi listede duruyor; liste birikip kullanılmaz hale geliyor.
 - **Kapsam dışı:** Bilet silme, otomatik arşivleme, arşiv temizleme cron'u.
 - **SAHİP dosyalar (yaz):**
@@ -199,10 +199,10 @@ göremiyoruz, cevap yazamıyoruz, liste temizlenmiyor.
   - `supabase/migrations/00NN_feedback_archive.sql` (yeni)
 - **DOKUNMA:** WP-317'nin yazışma tabloları (**okunur**)
 - **Adımlar:**
-  - [ ] `archived_at timestamptz` alanı (nullable) — 🔴 **satır silinmez**
-  - [ ] Varsayılan liste arşivlenmemişleri gösterir
-  - [ ] "Arşivi göster" filtresi
-  - [ ] "Tamamlandı → listeden kaldır" eylemi (geri alınabilir)
+- [x] `archived_at timestamptz` alanı (nullable) — 🔴 **satır silinmez**
+- [x] Varsayılan liste arşivlenmemişleri gösterir
+- [x] Arşiv görünümü filtresi
+- [x] "Tamamlandı → listeden kaldır" eylemi (geri alınabilir)
 - **Veri/Migration etkisi:** Additive nullable kolon. Geri alma: `alter table ... drop column archived_at`. **Veri kaybı yok** — arşiv bir bayraktır, silme değildir.
 - **Ortam/Deploy:** local → staging → production ayrı GO.
 - **RLS/Güvenlik:** Arşivleme yetkisi yalnız `is_super_admin()`. Arşivlenmiş bilet kullanıcıdan **gizlenmez** (kendi biletini görmeye devam eder).
@@ -669,6 +669,12 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 ---
 
 ## Test için bekleyenler
+
+### WP-318 — Bilet arşivi
+
+- **Durum:** Kod/test tamam · **Beta ortamında doğrulanmalı**
+- **Kanıt:** temiz local replay · 8 SQL dosyasında 172 pgTAP testi · arşivle/gizle/geri aç InMemory repository testi · hedef Dart analyze/test yeşil.
+- **Bekleyen:** staging dry-run/apply (0073–0075 sıralı) ardından admin hesabında bilet arşivle → varsayılan listeden kalktığını, arşiv görünümünde durduğunu ve geri açılabildiğini doğrulama; hiçbir noktada satır silinmediğinin SQL kanıtı.
 
 ### WP-317 — Admin ↔ kullanıcı yazışması
 

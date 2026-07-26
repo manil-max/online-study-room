@@ -117,6 +117,13 @@ abstract class AdminRepository {
   Future<List<FeedbackTicket>> fetchFeedbackTickets(
     String userId, {
     FeedbackTicketStatus? status,
+    bool includeArchived = false,
+  });
+
+  Future<void> setFeedbackArchived({
+    required String userId,
+    required String ticketId,
+    required bool archived,
   });
 
   Future<List<FeedbackTicket>> fetchMyFeedbackTickets(String userId);
