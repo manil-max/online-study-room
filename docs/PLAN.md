@@ -40,6 +40,7 @@
 | **K5** Çoklu grup | ✅ **Birincil grup** — kullanıcı seçer; görev/hedef/başarım onu sayar |
 | **K6** İsim + logo | ⏸️ **Faz B sırasında** konuşulacak (sahip onayı 2026-07-26) |
 | **K7** Gizlilik URL'i | ✅ **GitHub Pages** — ücretsiz ve yeterli olduğu için onaylandı (bkz. §Ek C) |
+| **K8** Yurtdışı gün sınırı | ✅ **Birincil grubun bölgesi** gün sınırını belirler; grubu olmayan cihaz saat dilimini kullanır. Ayrıca gruplara bölge alanı, üye sınırı **8**, keşifte saat dilimi yakınlığına göre sıralama ve arama filtresi (bkz. Faz E1/E3) |
 
 ---
 
@@ -186,25 +187,37 @@ bozuluyor:
 | Sydney (UTC+11) | 08:00 | sabah çalışması düne yazılır |
 | New York (UTC−5) | 16:00 | 🔴 akşam çalışması yarına yazılır — asıl çalışma saati kayboluyor |
 
-**Önerilen kapsam — ikiye bölme:**
-- **Kişisel** (bugünün toplamı, seri, ısı haritası) → kullanıcının **kendi**
-  saat dilimi. Dokunulacak fonksiyon az (3–5), veri göçü yok.
-- **Grup / liderlik / başarım** → tek sabit "lig saati" (TR). Herkes aynı gün
-  sınırında yarışır; 60 fonksiyona dokunmaya gerek kalmaz. Arayüzde açıkça
-  *"Grup günü — TR saati"* yazılır.
+**✅ K8 kararı (2026-07-26): gün sınırı = birincil grubun bölgesi.**
+
+Sahip "sadece grup tarafına ekleyelim" dedi ve bu, önce önerilen *kişisel/grup
+ikiye bölme*den **daha iyi** çıktı. Gerekçe: iki ayrı saat tutulsaydı kullanıcı
+"kişisel bugün 3 saat, grup bugün 1 saat" gibi bir çelişki görecekti. Tek saat
+olunca o sorun **hiç doğmuyor**.
+
+Kural zinciri:
+1. Kullanıcının **birincil grubu** varsa (K5) → o grubun bölgesi gün sınırıdır.
+2. Hiç grubu yoksa → **cihazın** saat dilimi.
+3. Cihaz saat dilimi okunamazsa → `Europe/Istanbul` (bugünkü davranış).
+
+Böylece kişisel istatistik ile grup istatistiği **her zaman aynı günde** olur.
 
 **Elimizde hazır olan:** cihazın saat dilimi adı zaten toplanıyor —
 `0066_push_notification_delivery.sql` push zamanlaması için `time_zone text`
-saklıyor. Kişisel tarafa bağlanacak kaynak bu.
+saklıyor. 3. adımın kaynağı bu.
 
 ⚠️ Saat dilimi **IANA adı** olarak saklanır (`America/New_York`), offset (`-5`)
 olarak değil — yoksa yaz saati geçişinde kayar. Türkiye'de yaz saati olmadığı
 için bu hata bugüne kadar hiç görünmedi.
 
-⚠️ Kabul edilen bedel: yurtdışındaki kullanıcı "kişisel bugün" ile "grup
-bugün"ü farklı görebilir. Arayüzde etiketlenerek şeffaf hale getirilir.
+⚠️ **Kabul edilen bedel:** ABD'deki bir kullanıcı TR grubuna girerse günü yine
+TR saatine göre işler. Ama artık bu **görünür** bir tercihtir — grup bilgisinde
+bölge ve saat farkı yazıyor, ayrıca keşif listesi yakın saat dilimlerini üste
+alıyor (E3). Gizli bir bozukluk değil, bilinçli bir seçim.
 
-🔴 *Karar gerekiyor — K8 (aşağıda).*
+⚠️ **Birincil grup değişirse gün sınırı da değişir.** Kullanıcı TR grubundan
+ABD grubuna geçtiğinde geçmiş günler yeni sınıra göre yeniden hesaplanır
+(toplamlar saklanmadığı için bu kendiliğinden olur). Serisi bir gün kayabilir.
+Grup değiştirme ekranında bir kez uyarılmalı.
 
 **E2. Birden fazla gruptaki kullanıcı.** 🔴 Sahibin yakaladığı gerçek boşluk.
 Bugün bir kullanıcı birden çok gruba üye olabiliyor ama şu sorular
@@ -218,6 +231,45 @@ Cevapsız kalırsa kullanıcı "neden ilerlemiyor / neden üç kere geldi" diye
 şikâyet eder ve düzeltmesi veri göçü gerektirir.
 ✅ *K5 kapandı: **birincil grup** — kullanıcı seçer, görev/hedef/başarım/bildirim
 onu sayar. Diğer gruplar üyelikte kalır ama sayaç tutmaz.*
+
+**E3. Grup bölgesi, üye sınırı ve keşif.** *(sahip talebi, 2026-07-26)*
+
+**E3.1 — Grup bölgesi.** Gruplara IANA saat dilimi alanı eklenir
+(`groups.time_zone`, varsayılan `Europe/Istanbul`). E1'in gün sınırı buradan
+beslenir. Grup oluştururken ve ayarlarında seçilir.
+⚠️ **Konum izni istenmez, enlem/boylam sorulmaz** — sadece bölge/saat dilimi
+seçtirilir. Gerçek konum istemek Play Data Safety'de yeni bir veri kategorisi
+ve Android'de konum izni açar; buna hiç girmeye gerek yok. (Faz F3'ün gökyüzü
+hesabı ayrı bir iş; saat dilimi yaklaşık boylam verir, gerekirse orada
+konuşulur.)
+
+**E3.2 — Grup bilgilerinde bölge.** Herkese açık grup kartında ve grup bilgi
+ekranında bölge adı yazar. **Bölgeye basınca kullanıcıya göre saat farkı**
+görünür: *"Türkiye (senden +8 saat)"*.
+⚠️ Fark **anlık hesaplanır, saklanmaz** — yaz saati yüzünden aynı grup yazın
+−7, kışın −8 olabilir. Sabit sayı yazmak sessiz bir hatadır.
+
+**E3.3 — Üye sınırı 8.** Bugün `member_limit` **varsayılan 50**, kısıt `2..100`
+(`0032_public_group_discovery.sql`). Sahip kararı: **8**.
+Yapılacak: varsayılan 8, kısıt `2..8`, `create_group_with_access` varsayılanı 8,
+istemcideki seçici 2–8 aralığına iner.
+⚠️ **Göç ön şartı:** `member_limit` kısıtı daraltılmadan önce production'da
+8'den fazla **aktif** üyesi olan grup olmadığı doğrulanmalı; varsa kısıt
+uygulanamaz (`guard_group_member_limit` zaten sınırı aktif üye sayısının altına
+indirmeyi engelliyor). Mevcut kullanıcı sayısıyla sorun beklenmiyor ama
+**kontrol edilmeden migration çalıştırılmaz**.
+
+**E3.4 — Keşifte saat dilimi yakınlığı.** Herkese açık grup önerileri
+kullanıcının saat dilimine **en yakından en uzağa** sıralanır. Sıralama
+anahtarı: iki bölgenin **o andaki** UTC farkının mutlak değeri. Eşitlikte
+mevcut sıra (`created_at desc`) korunur.
+⚠️ `idx_groups_public_discovery` şu an `created_at desc` üzerine kurulu;
+sıralama değişince bu indeks sorguyu artık karşılamaz — sayfalama ve
+performans birlikte gözden geçirilmeli.
+
+**E3.5 — Grup arama/filtre.** İsim araması + bölge filtresi. Sınır 8'e indiği
+için **"boş kontenjanı var"** filtresi de eklenir; yoksa kullanıcı sürekli dolu
+gruplara tıklar.
 
 ---
 
@@ -308,7 +360,8 @@ Kapı listesi: `docs/play-store/PLAY-RELEASE-GATE.md`
 | # | Konu | Soru |
 | --- | --- | --- |
 | **K6** | İsim + logo | ⏸️ **Faz B'de konuşulacak** (sahip kararı). Sorular o zaman: değişecek mi · TR ve EN'de aynı isim mi · Android `applicationId` ve MSIX `Identity Name` sabit kalabilir mi |
-| **K8** | Yurtdışı gün sınırı | Kişisel istatistikler kullanıcının **kendi saat dilimine** geçsin, grup/başarım tarafı sabit **TR lig saati**nde kalsın mı? (bkz. Faz E1) Alternatifler: **(a)** her şey İstanbul'da kalsın — ABD'de bozuk · **(b)** önerilen bölme · **(c)** her şey kullanıcının saat dilimine geçsin — 60+ fonksiyon, göç riski, grup yarışı adaletsizleşir |
+
+*K8 kapandı: gün sınırı birincil grubun bölgesinden gelir (bkz. Faz E1/E3).*
 
 ---
 
