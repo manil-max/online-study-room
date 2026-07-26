@@ -11,6 +11,31 @@ const int kMinGroupMemberLimit = 2;
 const int kMaxGroupMemberLimit = 8;
 const int kDefaultGroupMemberLimit = kMaxGroupMemberLimit;
 
+/// Grup gününün takvim sınırı. Bu bir UTC offset'i değil, yaz saati geçişlerini
+/// doğru taşıyan IANA bölge adıdır.
+const String kDefaultGroupTimeZone = 'Europe/Istanbul';
+
+/// Grup kurma ve ayarlarda sunulan kısa, anlaşılır IANA seçim kümesi. Sunucu
+/// yalnız bununla sınırlı değildir; geçerli IANA adlarını korur.
+const kGroupTimeZoneChoices = <String>[
+  'Europe/Istanbul',
+  'Europe/London',
+  'Europe/Berlin',
+  'Europe/Paris',
+  'Asia/Dubai',
+  'Asia/Kolkata',
+  'Asia/Singapore',
+  'Asia/Tokyo',
+  'Australia/Sydney',
+  'Pacific/Auckland',
+  'America/New_York',
+  'America/Chicago',
+  'America/Denver',
+  'America/Los_Angeles',
+  'America/Sao_Paulo',
+  'UTC',
+];
+
 /// Grubun katılım modeli. Yeni gruplar geriye uyumluluk ve veri gizliliği için
 /// kapalı başlar; açık gruplar yalnız güvenli keşif özetiyle listelenir.
 enum GroupVisibility {
@@ -39,6 +64,7 @@ class StudyGroup {
     this.dailyGoalMinutes = kDefaultGroupGoalMinutes,
     this.visibility = GroupVisibility.private,
     this.memberLimit = kDefaultGroupMemberLimit,
+    this.timeZone = kDefaultGroupTimeZone,
     this.avatarPath,
     this.avatarUpdatedAt,
   });
@@ -55,6 +81,7 @@ class StudyGroup {
 
   final GroupVisibility visibility;
   final int memberLimit;
+  final String timeZone;
 
   /// Private storage nesne yolu; süreli signed URL hiçbir zaman DB'ye yazılmaz.
   final String? avatarPath;
@@ -66,6 +93,7 @@ class StudyGroup {
     int? dailyGoalMinutes,
     GroupVisibility? visibility,
     int? memberLimit,
+    String? timeZone,
     String? avatarPath,
     DateTime? avatarUpdatedAt,
     bool clearAvatar = false,
@@ -79,6 +107,7 @@ class StudyGroup {
       dailyGoalMinutes: dailyGoalMinutes ?? this.dailyGoalMinutes,
       visibility: visibility ?? this.visibility,
       memberLimit: memberLimit ?? this.memberLimit,
+      timeZone: timeZone ?? this.timeZone,
       avatarPath: clearAvatar ? null : (avatarPath ?? this.avatarPath),
       avatarUpdatedAt: clearAvatar
           ? null
@@ -99,6 +128,7 @@ class StudyGroup {
       visibility: GroupVisibility.fromDb(map['visibility']),
       memberLimit:
           (map['member_limit'] as num?)?.toInt() ?? kDefaultGroupMemberLimit,
+      timeZone: (map['time_zone'] as String?) ?? kDefaultGroupTimeZone,
       avatarPath: map['avatar_path'] as String?,
       avatarUpdatedAt: map['avatar_updated_at'] == null
           ? null
@@ -116,6 +146,7 @@ class StudyGroup {
       'daily_goal_minutes': dailyGoalMinutes,
       'visibility': visibility.dbValue,
       'member_limit': memberLimit,
+      'time_zone': timeZone,
       'avatar_path': avatarPath,
       'avatar_updated_at': avatarUpdatedAt?.toUtc().toIso8601String(),
     };
@@ -132,6 +163,7 @@ class StudyGroup {
       other.dailyGoalMinutes == dailyGoalMinutes &&
       other.visibility == visibility &&
       other.memberLimit == memberLimit &&
+      other.timeZone == timeZone &&
       other.avatarPath == avatarPath &&
       other.avatarUpdatedAt == avatarUpdatedAt;
 
@@ -145,6 +177,7 @@ class StudyGroup {
     dailyGoalMinutes,
     visibility,
     memberLimit,
+    timeZone,
     avatarPath,
     avatarUpdatedAt,
   );

@@ -66,6 +66,51 @@ void main() {
     });
   });
 
+  group('WP-326 group day-boundary chain', () {
+    test('New York gününü gerçek IANA yaz saati ile hesaplar', () {
+      // 2026-07-01 03:30 UTC, New York'ta önceki gün 23:30'dur (EDT).
+      expect(
+        calendarDayInTimeZone(
+          DateTime.utc(2026, 7, 1, 3, 30),
+          'America/New_York',
+        ),
+        DateTime(2026, 6, 30),
+      );
+      // Aynı UTC saati kışta EST olduğunda yine yerel günün içindedir.
+      expect(
+        calendarDayInTimeZone(
+          DateTime.utc(2026, 1, 1, 4, 30),
+          'America/New_York',
+        ),
+        DateTime(2025, 12, 31),
+      );
+    });
+
+    test(
+      'birincil grup önce gelir; geçersiz değerler güvenli sıradaki kaynağa düşer',
+      () {
+        expect(
+          resolveStudyDayTimeZone(
+            primaryGroupTimeZone: 'America/New_York',
+            deviceTimeZone: 'Asia/Tokyo',
+          ),
+          'America/New_York',
+        );
+        expect(
+          resolveStudyDayTimeZone(
+            primaryGroupTimeZone: 'not-an-iana-zone',
+            deviceTimeZone: 'Asia/Kolkata',
+          ),
+          'Asia/Kolkata',
+        );
+        expect(
+          resolveStudyDayTimeZone(deviceTimeZone: 'bad'),
+          'Europe/Istanbul',
+        );
+      },
+    );
+  });
+
   // WP-146: 2016 sonrası TR kalıcı UTC+3 — eski DST tarihleri de +3 kalır.
   group('WP-146 day boundary and permanent +3', () {
     test('İstanbul gece yarısı ±1 sn aynı/sonraki gün', () {

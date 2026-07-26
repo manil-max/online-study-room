@@ -29,6 +29,7 @@ abstract class GroupRepository {
     required Profile creator,
     GroupVisibility visibility = GroupVisibility.private,
     int memberLimit = kDefaultGroupMemberLimit,
+    String timeZone = kDefaultGroupTimeZone,
   });
 
   /// Davet koduyla sınıfa katılır.
@@ -65,6 +66,10 @@ abstract class GroupRepository {
   /// Grubun günlük hedefini (dakika) değiştirir (admin). 1..24*60 aralığına
   /// sıkıştırılır.
   Future<void> updateGroupGoal(String groupId, int minutes);
+
+  /// Grubun IANA saat dilimini değiştirir (admin). Bu sadece gelecekteki grup
+  /// gün sınırlarını etkiler; damgalanmış geçmiş oturumları yeniden yazmaz.
+  Future<void> updateGroupTimeZone(String groupId, String timeZone);
 
   /// Adminin grubun katılım görünürlüğünü ve üye sınırını değiştirmesi.
   Future<void> updateGroupAccess(

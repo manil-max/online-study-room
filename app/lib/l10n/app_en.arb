@@ -5628,6 +5628,10 @@
   "feedbackYou": "You",
   "feedbackUser": "User",
   "feedbackNoReplies": "There are no replies yet.",
+  "groupTimeZone": "Group time zone",
+  "groupTimeZoneDescription": "Daily goals and group statistics reset at midnight in this time zone.",
+  "groupTimeZoneChoose": "Choose time zone",
+  "groupTimeZoneUpdated": "Group time zone updated.",
   "@settingsSectionAccount": {
     "description": "Settings information architecture section heading for account actions."
   },
@@ -5672,5 +5676,17 @@
   },
   "@feedbackNoReplies": {
     "description": "Empty state for a feedback conversation without messages."
+  },
+  "@groupTimeZone": {
+    "description": "Label for the IANA time zone used by a study group."
+  },
+  "@groupTimeZoneDescription": {
+    "description": "Explains that group day boundaries follow the selected time zone."
+  },
+  "@groupTimeZoneChoose": {
+    "description": "Action for choosing a study group's time zone."
+  },
+  "@groupTimeZoneUpdated": {
+    "description": "Confirmation after changing a study group's time zone."
   }
 }

@@ -47,7 +47,7 @@
 - **Durum:** [x] Boşta
 - **Faz/WP:** —
 - **SAHİP yollar:** —
-- **Son not:** WP-321 kod/test tamamlandı; DE/AR kayıtlı tercihi EN'e düşer (2026-07-26).
+- **Son not:** WP-326 kod/test tamamlandı; IANA grup bölgesi, DST-güvenli gün hesabı ve zincir yerelde doğrulandı. Sahip kararıyla cihaz/beta kabulü sonraki ortak tura bırakıldı (2026-07-26).
 - ✅ **WP-325 (2026-07-26, kod/test):** `study_sessions.day` sunucuda `start_time`dan damgalanıyor; eski satırlar İstanbul günüyle partiler halinde doldurulup `NOT NULL` oldu. İstemci `day` yazmıyor, sahte/doğrudan değer trigger ile eziliyor; elle tarih düzenlemesi günü yeniden hesaplıyor. Kişisel gün toplamı ve oturum aralığı saklı kolonu, `(user_id, day)` indeksiyle kullanıyor. Local replay + 7 SQL dosyasında 155 pgTAP testi geçti; `EXPLAIN` index scan kanıtı aldı. **Staging/production’a hiçbir işlem yapılmadı.**
 - ✅ **WP-319-G (2026-07-26, sahip kararı "global signout olsun")** — şifre değişince **bu cihaz hariç tüm oturumlar** kapanıyor (`SignOutScope.others`; `global` bilerek **değil** — kullanıcıyı kendi cihazından atardı). İptal doğrulama gibi **sözleşmede**. İptal edilemezse şifre yine de değişmiştir: hata atılmıyor, yutulmuyor — kullanıcı "şifren değişti **ama** diğer oturumlar kapatılamadı" uyarısını görüyor. `analyze` temiz · **842 test yeşil** (5 yeni) · **üç ayrı sabotajla kırmızı-yeşil kanıt**. Codex WP-295 (kamp ateşi) ile **kesişme olmadı**.
 - ✅ **WP-319 (2026-07-26)** — 🔴 **Kartın problem cümlesi yanlıştı, ama gerçek daha kötüydü:** şifre değiştirme vardı ve **mevcut şifreyi hiç doğrulamıyordu**. Yani kartın "en kötü ihtimal" diye uyardığı ölü anahtar **üretimdeydi**: açık bir oturumu eline geçiren biri şifreyi tek diyalogda değiştirebiliyordu. Doğrulama artık repository sözleşmesinde (`changePassword`), ekran atlayamaz. `analyze` temiz · **836 test yeşil** (12 yeni) · **iki katmanlı kırmızı-yeşil kanıt**. Faz B (Codex, admin) ve kamp ateşi önizleme dosyalarıyla **kesişme olmadı**.
@@ -489,7 +489,7 @@ Böylece kişisel ve grup istatistiği **asla çelişmez**.
 
 #### WP-326: Grup bölgesi + gün sınırı zinciri 🌍
 - **Program/Faz:** Faz E · Grup semantiği · *(eski WP-300'ün yerine — enlem/boylam **iptal**)*
-- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-325 kabulü
+- **Ajan:** Claude · **Durum:** [x] Kod/test tamam (2026-07-26) · **Bağımlılık notu:** sahip kararıyla WP-325/326 cihaz kabulü ortak beta turuna bırakıldı
 - **Problem:** Herkesin günü İstanbul yarısında sıfırlanıyor. New York'ta bu **16:00**'ya denk geliyor — akşam çalışması yarına yazılıyor.
 - **Kapsam dışı:** 🔴 **Konum izni, enlem/boylam** — istenmeyecek. Gerçek konum, Play Data Safety'de yeni veri kategorisi ve Android'de konum izni açar. Gökyüzü hesabı ayrı iş (Faz F).
 - **SAHİP dosyalar (yaz):**
@@ -498,10 +498,10 @@ Böylece kişisel ve grup istatistiği **asla çelişmez**.
   - `app/lib/core/stats/istanbul_calendar.dart` → gün sınırı zinciri
 - **DOKUNMA:** `study_sessions` yazma yolu (WP-325) · keşif ekranı (WP-327/328)
 - **Adımlar:**
-  - [ ] `groups.time_zone text not null default 'Europe/Istanbul'` (IANA adı)
-  - [ ] Grup kurarken ve grup ayarlarında bölge seçici
-  - [ ] Gün sınırı zinciri: **birincil grubun bölgesi → cihazın saat dilimi → `Europe/Istanbul`**
-  - [ ] Cihaz saat dilimi kaynağı: `0066_push_notification_delivery.sql`'deki `time_zone` **zaten toplanıyor**
+  - [x] `groups.time_zone text not null default 'Europe/Istanbul'` (IANA adı); sunucu trigger'ı geçersiz ad/offset'i reddeder
+  - [x] Grup kurarken ve admin grup ayarlarında bölge seçici; yazma RPC'leri admin/RLS sınırını korur
+  - [x] Gün sınırı zinciri: **birincil grubun bölgesi → cihazın saat dilimi → `Europe/Istanbul`** için DST-güvenli saf çekirdek kuruldu; birincil grup bağlama WP-329'da
+  - [x] Cihaz saat dilimi zincire alındı; `0066_push_notification_delivery.sql`'deki `time_zone` daha önce de toplanıyordu
 - **Veri/Migration etkisi:** Additive, varsayılanlı → mevcut davranış **değişmez**. Geri alma: `drop column time_zone`.
 - **Ortam/Deploy:** local → staging → production ayrı GO.
 - **RLS/Güvenlik:** Bölge, grup üyesi olmayanlara da görünür (keşif kartında) — **hassas veri değil**, konum değil.
@@ -509,6 +509,7 @@ Böylece kişisel ve grup istatistiği **asla çelişmez**.
 - **Kabul (ölçülebilir):** 🔴 Saat dilimi **IANA adı** olarak saklanıyor (`America/New_York`), offset (`-5`) **değil** — bunun testi yazılı · New York bölgeli grupta gün **yerel 00:00**'da sıfırlanıyor · grubu olmayan kullanıcı cihaz saat dilimini kullanıyor · varsayılan davranış (TR grubu) **hiç değişmiyor**.
 - **Tuzaklar:** 🔴 Offset saklamak yaz saatinde sessizce kayar. Türkiye'de yaz saati olmadığı için bu hata bugüne kadar **hiç görünmedi** — kod tabanı bu konuda test edilmemiş.
 - **Model önerisi:** 🔴 Opus
+- **Kanıt:** `flutter analyze` temiz · tam Flutter paketi **864 yeşil** · local migration replay + **183 pgTAP** · deploy guard **51/51**. `America/New_York` yaz/kış dönüşümü ve geçersiz `-5` offset reddi regresyonla kapsandı. **Staging/production/canlı cihaz işlemi yapılmadı.**
 
 #### WP-327: Grup bilgilerinde bölge + saat farkı 🕐
 - **Program/Faz:** Faz E · Grup UI · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-326

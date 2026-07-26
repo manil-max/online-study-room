@@ -91,6 +91,7 @@ class InMemoryGroupRepository implements GroupRepository {
     required Profile creator,
     GroupVisibility visibility = GroupVisibility.private,
     int memberLimit = kDefaultGroupMemberLimit,
+    String timeZone = kDefaultGroupTimeZone,
   }) async {
     final normalizedName = name.trim();
     if (normalizedName.isEmpty || normalizedName.length > 64) {
@@ -108,6 +109,9 @@ class InMemoryGroupRepository implements GroupRepository {
       createdAt: DateTime.now(),
       visibility: visibility,
       memberLimit: memberLimit,
+      timeZone: timeZone.trim().isEmpty
+          ? kDefaultGroupTimeZone
+          : timeZone.trim(),
     );
     _groups[group.id] = group;
     _members[group.id] = [creator];
@@ -223,6 +227,18 @@ class InMemoryGroupRepository implements GroupRepository {
     final g = _groups[groupId];
     if (g == null) return;
     _groups[groupId] = g.copyWith(dailyGoalMinutes: minutes.clamp(1, 24 * 60));
+    _changes.add(null);
+  }
+
+  @override
+  Future<void> updateGroupTimeZone(String groupId, String timeZone) async {
+    final group = _groups[groupId];
+    final normalized = timeZone.trim();
+    if (group == null) throw const GroupException('Grup bulunamadı.');
+    if (normalized.isEmpty) {
+      throw const GroupException('Geçerli bir zaman dilimi seçin.');
+    }
+    _groups[groupId] = group.copyWith(timeZone: normalized);
     _changes.add(null);
   }
 

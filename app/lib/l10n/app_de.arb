@@ -5154,5 +5154,9 @@
   "feedbackAdmin": "Verwaltung",
   "feedbackYou": "Du",
   "feedbackUser": "Nutzer",
-  "feedbackNoReplies": "Noch keine Antworten."
+  "feedbackNoReplies": "Noch keine Antworten.",
+  "groupTimeZone": "Gruppenzeitzone",
+  "groupTimeZoneDescription": "Tagesziele und Gruppenstatistiken werden um Mitternacht dieser Zeitzone zurückgesetzt.",
+  "groupTimeZoneChoose": "Zeitzone auswählen",
+  "groupTimeZoneUpdated": "Gruppenzeitzone aktualisiert."
 }

@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/utils/duration_format.dart';
+import '../../../core/time_engine/world_clock_math.dart';
 import '../../../core/widgets/number_stepper.dart';
 import '../../../core/widgets/crowned_avatar.dart';
 import '../../../data/models/profile.dart';
@@ -178,6 +179,29 @@ class ClassDetailScreen extends ConsumerWidget {
                         )
                       : null,
                   onTap: isAdmin ? () => _editAccessDialog(context, ref) : null,
+                ),
+                ListTile(
+                  leading: const Icon(Icons.public_outlined),
+                  title: Text(AppLocalizations.of(context).groupTimeZone),
+                  subtitle: Text(
+                    localizedWorldCityLabel(
+                      group.timeZone,
+                      AppLocalizations.of(context),
+                      fallback: group.timeZone,
+                    ),
+                  ),
+                  trailing: isAdmin
+                      ? IconButton(
+                          tooltip: AppLocalizations.of(
+                            context,
+                          ).groupTimeZoneChoose,
+                          icon: const Icon(Icons.edit, size: 20),
+                          onPressed: () => _editTimeZoneDialog(context, ref),
+                        )
+                      : null,
+                  onTap: isAdmin
+                      ? () => _editTimeZoneDialog(context, ref)
+                      : null,
                 ),
                 ListTile(
                   leading: const Icon(Icons.event_outlined),
@@ -439,6 +463,67 @@ class ClassDetailScreen extends ConsumerWidget {
       navigator.pop();
       messenger.showSnackBar(
         SnackBar(content: Text(l10n.groupDiscoveryPrivacyUpdated)),
+      );
+    } on GroupException {
+      messenger.showSnackBar(SnackBar(content: Text(genericError)));
+    }
+  }
+
+  Future<void> _editTimeZoneDialog(BuildContext context, WidgetRef ref) async {
+    final choices = <String>{...kGroupTimeZoneChoices, group.timeZone}.toList();
+    final picked = await showDialog<String>(
+      context: context,
+      builder: (ctx) {
+        var timeZone = group.timeZone;
+        final l10n = AppLocalizations.of(ctx);
+        return StatefulBuilder(
+          builder: (ctx, setState) => AlertDialog(
+            title: Text(l10n.groupTimeZoneChoose),
+            content: DropdownButtonFormField<String>(
+              initialValue: timeZone,
+              isExpanded: true,
+              decoration: InputDecoration(labelText: l10n.groupTimeZone),
+              items: choices
+                  .map(
+                    (zone) => DropdownMenuItem(
+                      value: zone,
+                      child: Text(
+                        localizedWorldCityLabel(zone, l10n, fallback: zone),
+                      ),
+                    ),
+                  )
+                  .toList(growable: false),
+              onChanged: (value) => setState(() => timeZone = value!),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text(l10n.classroomVazgec),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(ctx, timeZone),
+                child: Text(l10n.classroomKaydet),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+    if (picked == null || picked == group.timeZone || !context.mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final genericError = AppLocalizations.of(
+      context,
+    ).authBeklenmeyenBirHataOlustu;
+    final l10n = AppLocalizations.of(context);
+    final navigator = Navigator.of(context);
+    try {
+      await ref
+          .read(groupRepositoryProvider)
+          .updateGroupTimeZone(group.id, picked);
+      ref.invalidate(userGroupsProvider);
+      navigator.pop();
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.groupTimeZoneUpdated)),
       );
     } on GroupException {
       messenger.showSnackBar(SnackBar(content: Text(genericError)));

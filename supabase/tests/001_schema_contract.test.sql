@@ -3,17 +3,38 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(51);
+select plan(54);
 
 select is(
   (select count(*)::integer from supabase_migrations.schema_migrations),
-  75,
-  'all 75 migrations are recorded'
+  76,
+  'all 76 migrations are recorded'
 );
 select is(
   (select max(version) from supabase_migrations.schema_migrations),
-  '0075',
-  '0075 is the migration head'
+  '0076',
+  '0076 is the migration head'
+);
+select ok(
+  exists(
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'groups'
+      and column_name = 'time_zone' and is_nullable = 'NO'
+  ),
+  '0076 adds a non-null group IANA time zone'
+);
+select ok(
+  to_regprocedure('public.create_group_with_access(text,text,integer,text)') is not null
+    and to_regprocedure('public.update_group_time_zone(uuid,text)') is not null,
+  '0076 exposes guarded group time-zone RPCs'
+);
+select ok(
+  exists(
+    select 1 from pg_trigger
+    where tgrelid = 'public.groups'::regclass
+      and tgname = 'groups_time_zone_guard' and not tgisinternal
+  ),
+  '0076 validates direct group time-zone writes server-side'
 );
 select ok(
   exists(

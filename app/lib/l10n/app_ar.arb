@@ -5154,5 +5154,9 @@
   "feedbackAdmin": "الإدارة",
   "feedbackYou": "أنت",
   "feedbackUser": "المستخدم",
-  "feedbackNoReplies": "لا توجد ردود بعد."
+  "feedbackNoReplies": "لا توجد ردود بعد.",
+  "groupTimeZone": "المنطقة الزمنية للمجموعة",
+  "groupTimeZoneDescription": "تتجدد الأهداف اليومية وإحصاءات المجموعة عند منتصف الليل في هذه المنطقة الزمنية.",
+  "groupTimeZoneChoose": "اختر المنطقة الزمنية",
+  "groupTimeZoneUpdated": "تم تحديث المنطقة الزمنية للمجموعة."
 }

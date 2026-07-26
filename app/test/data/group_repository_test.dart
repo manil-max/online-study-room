@@ -392,4 +392,26 @@ void main() {
       );
     });
   });
+
+  test('grup IANA zaman dilimini saklar ve admin akışı günceller', () async {
+    final repo = InMemoryGroupRepository();
+    final group = await repo.createGroup(
+      name: 'Dünya Çapında',
+      creator: _profile('u1', 'Ali'),
+      timeZone: 'America/New_York',
+    );
+    expect(group.timeZone, 'America/New_York');
+
+    await repo.updateGroupTimeZone(group.id, 'Asia/Kolkata');
+    expect(
+      (await repo.watchUserGroups('u1').first).single.timeZone,
+      'Asia/Kolkata',
+    );
+
+    final defaultGroup = await repo.createGroup(
+      name: 'Varsayılan',
+      creator: _profile('u2', 'Veli'),
+    );
+    expect(defaultGroup.timeZone, kDefaultGroupTimeZone);
+  });
 }

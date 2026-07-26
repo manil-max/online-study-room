@@ -2,6 +2,8 @@ import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/time_engine/device_timezone.dart';
+import '../../../core/time_engine/world_clock_math.dart';
 import '../../../core/widgets/anchored_menu.dart';
 import '../../../data/models/study_group.dart';
 import '../../../data/providers/auth_providers.dart';
@@ -166,6 +168,7 @@ Future<bool> createGroupFlow(BuildContext context, WidgetRef ref) async {
           name: draft.name,
           creator: user,
           visibility: draft.visibility,
+          timeZone: draft.timeZone,
         );
     ref.read(activeGroupIdProvider.notifier).select(group.id);
     return true;
@@ -176,10 +179,15 @@ Future<bool> createGroupFlow(BuildContext context, WidgetRef ref) async {
 }
 
 class _CreateGroupDraft {
-  const _CreateGroupDraft({required this.name, required this.visibility});
+  const _CreateGroupDraft({
+    required this.name,
+    required this.visibility,
+    required this.timeZone,
+  });
 
   final String name;
   final GroupVisibility visibility;
+  final String timeZone;
 }
 
 Future<_CreateGroupDraft?> _promptCreateGroup(BuildContext context) {
@@ -188,6 +196,10 @@ Future<_CreateGroupDraft?> _promptCreateGroup(BuildContext context) {
     context: context,
     builder: (ctx) {
       var visibility = GroupVisibility.private;
+      var timeZone = DeviceTimezone.lastId ?? kDefaultGroupTimeZone;
+      if (!kGroupTimeZoneChoices.contains(timeZone)) {
+        timeZone = kDefaultGroupTimeZone;
+      }
       final l10n = AppLocalizations.of(ctx);
       return StatefulBuilder(
         builder: (ctx, setState) => AlertDialog(
@@ -230,6 +242,28 @@ Future<_CreateGroupDraft?> _promptCreateGroup(BuildContext context) {
                     ],
                   ),
                 ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  initialValue: timeZone,
+                  isExpanded: true,
+                  decoration: InputDecoration(labelText: l10n.groupTimeZone),
+                  items: kGroupTimeZoneChoices
+                      .map(
+                        (zone) => DropdownMenuItem(
+                          value: zone,
+                          child: Text(
+                            localizedWorldCityLabel(zone, l10n, fallback: zone),
+                          ),
+                        ),
+                      )
+                      .toList(growable: false),
+                  onChanged: (value) => setState(() => timeZone = value!),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  l10n.groupTimeZoneDescription,
+                  style: Theme.of(ctx).textTheme.bodySmall,
+                ),
               ],
             ),
           ),
@@ -244,6 +278,7 @@ Future<_CreateGroupDraft?> _promptCreateGroup(BuildContext context) {
                 _CreateGroupDraft(
                   name: controller.text,
                   visibility: visibility,
+                  timeZone: timeZone,
                 ),
               ),
               child: Text(l10n.classroomOlustur),

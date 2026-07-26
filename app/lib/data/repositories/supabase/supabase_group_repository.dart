@@ -52,7 +52,8 @@ class SupabaseGroupRepository implements GroupRepository {
           .maybeSingle();
       previousPath = current?['avatar_path'] as String?;
     } on PostgrestException {
-      previousPath = null; // Okuma başarısızsa temizliği atla; yükleme engellenmez.
+      previousPath =
+          null; // Okuma başarısızsa temizliği atla; yükleme engellenmez.
     }
     try {
       await _client.storage
@@ -128,6 +129,7 @@ class SupabaseGroupRepository implements GroupRepository {
     required Profile creator,
     GroupVisibility visibility = GroupVisibility.private,
     int memberLimit = kDefaultGroupMemberLimit,
+    String timeZone = kDefaultGroupTimeZone,
   }) async {
     if (name.trim().isEmpty) {
       throw const GroupException('Grup adı boş olamaz.');
@@ -141,6 +143,7 @@ class SupabaseGroupRepository implements GroupRepository {
           'p_name': name.trim(),
           'p_visibility': visibility.dbValue,
           'p_member_limit': memberLimit,
+          'p_time_zone': timeZone,
         },
       );
       if (row == null) {
@@ -304,6 +307,18 @@ class SupabaseGroupRepository implements GroupRepository {
       rethrow;
     } on PostgrestException catch (e) {
       throw GroupException('Grup hedefi değiştirilemedi: ${e.message}');
+    }
+  }
+
+  @override
+  Future<void> updateGroupTimeZone(String groupId, String timeZone) async {
+    try {
+      await _client.rpc(
+        'update_group_time_zone',
+        params: {'p_group_id': groupId, 'p_time_zone': timeZone.trim()},
+      );
+    } on PostgrestException catch (e) {
+      throw GroupException('Grup zaman dilimi değiştirilemedi: ${e.message}');
     }
   }
 
