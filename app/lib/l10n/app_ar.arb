@@ -5133,5 +5133,11 @@
   "profileDigerCihazlarKapatilamadi": "تم تغيير كلمة المرور، لكن تعذّر إنهاء الجلسات على أجهزتك الأخرى. تحقّق من اتصالك وحاول مرة أخرى.",
   "@profileDigerCihazlarKapatilamadi": {
     "description": "Profile user-facing text. Source: Şifren değişti, ama diğer cihazların oturumu kapatılamadı. Bağlantını kontrol edip tekrar dene."
-  }
+  },
+  "tourAtla": "تخطَّ",
+  "tourDevam": "التالي",
+  "tourAdim": "الخطوة {current} من {total}",
+  "profileTanitimTurlariniSifirla": "إعادة تعيين الجولات التعريفية",
+  "profileTanitimTurlariAciklama": "إظهار التعريفات على كل شاشة مرة أخرى",
+  "profileTanitimTurlariSifirlandi": "تمت إعادة تعيين الجولات التعريفية."
 }

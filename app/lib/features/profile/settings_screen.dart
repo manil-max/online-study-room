@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/animals/camp_animal.dart';
 import '../../core/l10n/app_locale.dart';
+import '../../core/tour/tour_controller.dart';
 import '../../core/widgets/safe_screen_padding.dart';
 import '../../data/providers/auth_providers.dart';
 import '../../data/providers/admin_providers.dart';
@@ -62,6 +63,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       SnackBar(
         content: Text(
           AppLocalizations.of(context).profileGeriBildiriminGonderildi,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _resetTours() async {
+    await ref.read(tourControllerProvider.notifier).resetAll();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          AppLocalizations.of(context).profileTanitimTurlariSifirlandi,
         ),
       ),
     );
@@ -313,6 +326,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   onTap: profile == null ? null : _openReportDialog,
                 ),
               ),
+              SizedBox(height: 10),
+              _SettingsCard(
+                child: ListTile(
+                  key: const Key('reset-introduction-tours'),
+                  leading: const Icon(Icons.restart_alt_outlined),
+                  title: Text(l10n.profileTanitimTurlariniSifirla),
+                  subtitle: Text(l10n.profileTanitimTurlariAciklama),
+                  onTap: profile == null ? null : _resetTours,
+                ),
+              ),
               if (isAdmin) ...[
                 SizedBox(height: 10),
                 _SettingsCard(
@@ -361,7 +384,10 @@ class _UnreadDot extends StatelessWidget {
       child: Container(
         width: 10,
         height: 10,
-        decoration: BoxDecoration(color: scheme.primary, shape: BoxShape.circle),
+        decoration: BoxDecoration(
+          color: scheme.primary,
+          shape: BoxShape.circle,
+        ),
       ),
     );
   }

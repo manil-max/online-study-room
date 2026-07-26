@@ -44,15 +44,10 @@
 - **SAHİP yollar:** —
 
 ### Claude Lane
-- **Durum:** [~] Aktif
-- **Faz/WP:** Faz D · **WP-323** (tanıtım turu **motoru**)
-- **Aşama:** Balon/overlay + sürümlü, kullanıcıya özel "görüldü" anahtarları + kuyruk
-- **SAHİP yollar:** `app/lib/core/tour/**` (yeni) · `app/lib/features/profile/settings_screen.dart` (yalnız "turları sıfırla" satırı) · `app/test/core/tour/**` (yeni) · `app/lib/l10n/*.arb` (yalnız motor metinleri: "Atla", "Turları sıfırla")
-- **Ortak/riskli yüzey:** `progress.md` (yalnız Claude lane + WP-323 kartı). ⚠️ `settings_screen.dart` ileride **WP-320**'nin (ayarlar bilgi mimarisi) yüzeyi — WP-320 henüz kimsede değil; başlarsa tek satırlık ekleme taşınır.
-- **DOKUNMA:** feature ekranları (tur **içerikleri** WP-324) · kamp ateşi dosyaları (Codex WP-295) · `main.dart` · admin · migration
-- **Dal:** `main`
-- **Başlangıç:** 2026-07-26 (Europe/Istanbul)
-- **Çakışma kontrolü:** Codex WP-295'te (`campfire_scene.dart`, `camp_critter.dart`, `campfire_layout.dart`, `wp295_preview.dart` + kendi testleri). Kesişen tek dosya yok.
+- **Durum:** [x] Boşta
+- **Faz/WP:** —
+- **SAHİP yollar:** —
+- **Son not:** WP-323, Claude'un limitinden sonra Codex tarafından devralındı ve kod/test tamamlandı (2026-07-26). Cihaz QA + ürün kabulü yeni beta artefaktında bekliyor; lane serbest.
 - ✅ **WP-319-G (2026-07-26, sahip kararı "global signout olsun")** — şifre değişince **bu cihaz hariç tüm oturumlar** kapanıyor (`SignOutScope.others`; `global` bilerek **değil** — kullanıcıyı kendi cihazından atardı). İptal doğrulama gibi **sözleşmede**. İptal edilemezse şifre yine de değişmiştir: hata atılmıyor, yutulmuyor — kullanıcı "şifren değişti **ama** diğer oturumlar kapatılamadı" uyarısını görüyor. `analyze` temiz · **842 test yeşil** (5 yeni) · **üç ayrı sabotajla kırmızı-yeşil kanıt**. Codex WP-295 (kamp ateşi) ile **kesişme olmadı**.
 - ✅ **WP-319 (2026-07-26)** — 🔴 **Kartın problem cümlesi yanlıştı, ama gerçek daha kötüydü:** şifre değiştirme vardı ve **mevcut şifreyi hiç doğrulamıyordu**. Yani kartın "en kötü ihtimal" diye uyardığı ölü anahtar **üretimdeydi**: açık bir oturumu eline geçiren biri şifreyi tek diyalogda değiştirebiliyordu. Doğrulama artık repository sözleşmesinde (`changePassword`), ekran atlayamaz. `analyze` temiz · **836 test yeşil** (12 yeni) · **iki katmanlı kırmızı-yeşil kanıt**. Faz B (Codex, admin) ve kamp ateşi önizleme dosyalarıyla **kesişme olmadı**.
 - 🟡 **WP-319'dan çıkan sahip sorusu:** şifre değişince **diğer cihazların oturumu** açık kalıyor (Supabase varsayılanı). Global sign-out eklensin mi? Kullanıcının kendi diğer cihazlarını da atar. Ayrıntı WP-319 kartında.
@@ -393,23 +388,25 @@ yerde rehberlik yok.
 
 #### WP-323: Tanıtım turu motoru 🎈
 - **Program/Faz:** Faz D · Yeni kullanıcı deneyimi
-- **Ajan:** — · **Durum:** [ ] Bekliyor
+- **Ajan:** Codex (Claude devri) · **Durum:** [~] Kod/test tamam — cihaz QA + ürün kabulü bekliyor (2026-07-26)
 - **Problem:** Uygulama içinde hiçbir rehberlik yok; yalnız açılışta tek bir `onboarding_screen` var. Yeni kullanıcı ekranlarda kayboluyor.
 - **Kapsam dışı:** Balon **metinleri** ve ekran içerikleri (WP-324) · video/animasyonlu tanıtım · yardım merkezi.
 - **SAHİP dosyalar (yaz):** `app/lib/core/tour/**` (yeni) · `app/lib/core/prefs/app_prefs.dart` (anahtarlar) · ayarlarda "sıfırla" satırı
 - **DOKUNMA:** feature ekranları (WP-324 orada) · `app/lib/core/theme/**` · `main.dart` (yalnız gerekli tek kanca)
 - **Adımlar:**
-  - [ ] Balon/overlay bileşeni: hedef öğeyi işaret eder, **ekrana basınca sonraki balona geçer** (K3)
-  - [ ] "Atla" her zaman görünür
-  - [ ] Her ekranın **kendi** "görüldü" anahtarı — hepsi tek bayrağa bağlanmaz
-  - [ ] Anahtarlar **sürümlenir** (`home.v1`, `home.v2`): ekran ciddi değişince tur yeniden gösterilebilsin, ama her güncellemede herkese açılmasın
-  - [ ] Ayarlarda **"Tanıtım turlarını sıfırla"**
-  - [ ] Kuyruk yönetimi: tur; izin diyalogları ve güncelleme bildirimiyle **çakışmaz**
+  - [x] Balon/overlay bileşeni: hedef öğeyi işaret eder, **ekrana basınca sonraki balona geçer** (K3)
+  - [x] "Atla" her zaman görünür
+  - [x] Her ekranın **kendi** "görüldü" anahtarı — hepsi tek bayrağa bağlanmaz
+  - [x] Anahtarlar **sürümlenir** (`home.v1`, `home.v2`): ekran ciddi değişince tur yeniden gösterilebilsin, ama her güncellemede herkese açılmasın
+  - [x] Ayarlarda **"Tanıtım turlarını sıfırla"**
+  - [x] Kuyruk yönetimi: tur; izin diyalogları ve güncelleme bildirimiyle **çakışmaz**
 - **Veri/Migration etkisi:** Yok (yerel tercihler).
 - **Ortam/Deploy:** local.
 - **RLS/Güvenlik:** Yok.
 - **Edge-case'ler:** hedef öğe ekranda yok (kaydırma gerekiyor) · ekran döndürme · küçük ekranda balon taşması · Windows'ta fare/klavye · "hareketi azalt" açık · tur ortasında ekrandan çıkma
 - **Kabul (ölçülebilir):** Yeni kurulumda tur **yalnız ilk açılışta** başlıyor · ekrana ardışık basınca balonlar sırayla geçiyor ve **takılmıyor** · "Atla" turu bitiriyor ve bir daha açılmıyor · sıfırlama sonrası yeniden başlıyor · izin diyaloğu açıkken tur **başlamıyor** · 360 px'te balon ekran dışına taşmıyor.
+- **Kodda doğrulandı:** `flutter analyze` 0 uyarı · `flutter test --dart-define-from-file=env.json` **849 test yeşil**. Yeni testler: kullanıcı/sürüm/ekran anahtarı ayrımı, başka kullanıcının turlarını koruyan sıfırlama, kuyruk engeli, bitirme kalıcılığı ve 360 px balon sınırı.
+- **Cihazda doğrulanmalı:** Android ve Windows'ta gerçek izin/güncelleme diyaloğu üstündeyken erteleme; ayarlardan sıfırlama ardından ilgili ekranın ilk açılışı.
 - **Tuzaklar:** Tek bayrak kullanmak (bir ekranı gören hepsini görmüş sayılır) klasik hata. Sürümlemesiz anahtar, her güncellemede herkese tur açtırır.
 - **Model önerisi:** 🔴 Opus (overlay + kuyruk + platform farkı)
 

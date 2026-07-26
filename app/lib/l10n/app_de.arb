@@ -5133,5 +5133,11 @@
   "profileDigerCihazlarKapatilamadi": "Dein Passwort wurde geändert, aber die Sitzungen auf deinen anderen Geräten konnten nicht beendet werden. Prüfe deine Verbindung und versuche es erneut.",
   "@profileDigerCihazlarKapatilamadi": {
     "description": "Profile user-facing text. Source: Şifren değişti, ama diğer cihazların oturumu kapatılamadı. Bağlantını kontrol edip tekrar dene."
-  }
+  },
+  "tourAtla": "Überspringen",
+  "tourDevam": "Weiter",
+  "tourAdim": "Schritt {current} von {total}",
+  "profileTanitimTurlariniSifirla": "Einführungstouren zurücksetzen",
+  "profileTanitimTurlariAciklama": "Einführungen auf jedem Bildschirm erneut anzeigen",
+  "profileTanitimTurlariSifirlandi": "Einführungstouren wurden zurückgesetzt."
 }

@@ -1576,5 +1576,11 @@
   "profileMevcutSifreniGir": "Mevcut şifreni gir.",
   "profileOturumBulunamadiGirisYap": "Oturum bulunamadı. Yeniden giriş yap.",
   "profileDigerCihazlarKapatildi": "Şifren değişti. Diğer cihazlardaki oturumlar kapatıldı.",
-  "profileDigerCihazlarKapatilamadi": "Şifren değişti, ama diğer cihazların oturumu kapatılamadı. Bağlantını kontrol edip tekrar dene."
+  "profileDigerCihazlarKapatilamadi": "Şifren değişti, ama diğer cihazların oturumu kapatılamadı. Bağlantını kontrol edip tekrar dene.",
+  "tourAtla": "Atla",
+  "tourDevam": "Devam",
+  "tourAdim": "{total} adımın {current}. adımı",
+  "profileTanitimTurlariniSifirla": "Tanıtım turlarını sıfırla",
+  "profileTanitimTurlariAciklama": "Her ekrandaki tanıtımı yeniden göster",
+  "profileTanitimTurlariSifirlandi": "Tanıtım turları sıfırlandı."
 }
