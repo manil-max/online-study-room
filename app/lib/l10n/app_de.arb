@@ -5145,5 +5145,14 @@
   "settingsSectionAppearance": "Darstellung",
   "settingsSectionStudyPreferences": "Lernpräferenzen",
   "settingsSectionPrivacySecurity": "Datenschutz und Sicherheit",
-  "settingsSectionAboutLegal": "Info und Rechtliches"
+  "settingsSectionAboutLegal": "Info und Rechtliches",
+  "feedbackMyTickets": "Meine Rückmeldungen",
+  "feedbackConversation": "Unterhaltung",
+  "feedbackNoTickets": "Du hast noch keine Rückmeldung gesendet.",
+  "feedbackWriteReply": "Antwort schreiben",
+  "feedbackReplyHint": "Schreibe deine Antwort",
+  "feedbackAdmin": "Verwaltung",
+  "feedbackYou": "Du",
+  "feedbackUser": "Nutzer",
+  "feedbackNoReplies": "Noch keine Antworten."
 }

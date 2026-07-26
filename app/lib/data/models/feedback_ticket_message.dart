@@ -1,0 +1,52 @@
+import 'package:flutter/foundation.dart';
+
+enum FeedbackTicketSenderRole {
+  admin('admin'),
+  user('user');
+
+  const FeedbackTicketSenderRole(this.dbValue);
+
+  final String dbValue;
+
+  static FeedbackTicketSenderRole fromDb(String value) {
+    return FeedbackTicketSenderRole.values.firstWhere(
+      (role) => role.dbValue == value,
+      orElse: () => FeedbackTicketSenderRole.user,
+    );
+  }
+}
+
+@immutable
+class FeedbackTicketMessage {
+  const FeedbackTicketMessage({
+    required this.id,
+    required this.ticketId,
+    required this.senderId,
+    required this.senderRole,
+    required this.message,
+    required this.createdAt,
+    this.readAt,
+  });
+
+  final String id;
+  final String ticketId;
+  final String senderId;
+  final FeedbackTicketSenderRole senderRole;
+  final String message;
+  final DateTime createdAt;
+  final DateTime? readAt;
+
+  factory FeedbackTicketMessage.fromMap(Map<String, dynamic> map) {
+    return FeedbackTicketMessage(
+      id: map['id'] as String,
+      ticketId: map['ticket_id'] as String,
+      senderId: map['sender_id'] as String,
+      senderRole: FeedbackTicketSenderRole.fromDb(map['sender_role'] as String),
+      message: map['message'] as String,
+      createdAt: DateTime.parse(map['created_at'] as String),
+      readAt: map['read_at'] == null
+          ? null
+          : DateTime.parse(map['read_at'] as String),
+    );
+  }
+}

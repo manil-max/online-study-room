@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "local_migration_head": "0073",
+  "local_migration_head": "0074",
   "staging": {
     "migration_head": "0072",
     "deploy_enabled": true,
     "release_enabled": true,
-    "hold_reason": "WP-316: staging rollout target 0072 is applied and post-checked by Database Gates run 30196412999 (2026-07-26). Migrations 0071 and 0072 are ready for staging-backed beta/device QA."
+    "hold_reason": "WP-316: staging rollout target 0072 is applied and post-checked by Database Gates run 30196412999 (2026-07-26). Migrations 0073 (session day stamp) and 0074 (feedback conversations) remain local until their staging dry-run and promotion evidence is recorded."
   },
   "production": {
     "migration_head": "0070",

@@ -5619,6 +5619,15 @@
   "settingsSectionStudyPreferences": "Study preferences",
   "settingsSectionPrivacySecurity": "Privacy & security",
   "settingsSectionAboutLegal": "About & legal",
+  "feedbackMyTickets": "My feedback",
+  "feedbackConversation": "Conversation",
+  "feedbackNoTickets": "You have not sent any feedback yet.",
+  "feedbackWriteReply": "Write a reply",
+  "feedbackReplyHint": "Write your reply",
+  "feedbackAdmin": "Team",
+  "feedbackYou": "You",
+  "feedbackUser": "User",
+  "feedbackNoReplies": "There are no replies yet.",
   "@settingsSectionAccount": {
     "description": "Settings information architecture section heading for account actions."
   },
@@ -5636,5 +5645,32 @@
   },
   "@settingsSectionAboutLegal": {
     "description": "Settings information architecture section heading for about and legal content."
+  },
+  "@feedbackMyTickets": {
+    "description": "Entry point for a signed-in user's feedback tickets."
+  },
+  "@feedbackConversation": {
+    "description": "Title for a feedback ticket conversation."
+  },
+  "@feedbackNoTickets": {
+    "description": "Empty state when a user has not submitted feedback."
+  },
+  "@feedbackWriteReply": {
+    "description": "Action for opening the feedback reply composer."
+  },
+  "@feedbackReplyHint": {
+    "description": "Hint text for the feedback reply composer."
+  },
+  "@feedbackAdmin": {
+    "description": "Label for a message sent by the app administration team."
+  },
+  "@feedbackYou": {
+    "description": "Label for a message sent by the current user."
+  },
+  "@feedbackUser": {
+    "description": "Label for a feedback ticket's reporting user."
+  },
+  "@feedbackNoReplies": {
+    "description": "Empty state for a feedback conversation without messages."
   }
 }

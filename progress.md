@@ -47,7 +47,7 @@
 - **Durum:** [x] Boşta
 - **Faz/WP:** —
 - **SAHİP yollar:** —
-- **Son not:** WP-320 kod/test tamamlandı ve cihaz/ürün kabulü için test kuyruğuna taşındı (2026-07-26).
+- **Son not:** WP-317 kod/test tamamlandı ve beta kabulü için test kuyruğuna taşındı (2026-07-26).
 - ✅ **WP-325 (2026-07-26, kod/test):** `study_sessions.day` sunucuda `start_time`dan damgalanıyor; eski satırlar İstanbul günüyle partiler halinde doldurulup `NOT NULL` oldu. İstemci `day` yazmıyor, sahte/doğrudan değer trigger ile eziliyor; elle tarih düzenlemesi günü yeniden hesaplıyor. Kişisel gün toplamı ve oturum aralığı saklı kolonu, `(user_id, day)` indeksiyle kullanıyor. Local replay + 7 SQL dosyasında 155 pgTAP testi geçti; `EXPLAIN` index scan kanıtı aldı. **Staging/production’a hiçbir işlem yapılmadı.**
 - ✅ **WP-319-G (2026-07-26, sahip kararı "global signout olsun")** — şifre değişince **bu cihaz hariç tüm oturumlar** kapanıyor (`SignOutScope.others`; `global` bilerek **değil** — kullanıcıyı kendi cihazından atardı). İptal doğrulama gibi **sözleşmede**. İptal edilemezse şifre yine de değişmiştir: hata atılmıyor, yutulmuyor — kullanıcı "şifren değişti **ama** diğer oturumlar kapatılamadı" uyarısını görüyor. `analyze` temiz · **842 test yeşil** (5 yeni) · **üç ayrı sabotajla kırmızı-yeşil kanıt**. Codex WP-295 (kamp ateşi) ile **kesişme olmadı**.
 - ✅ **WP-319 (2026-07-26)** — 🔴 **Kartın problem cümlesi yanlıştı, ama gerçek daha kötüydü:** şifre değiştirme vardı ve **mevcut şifreyi hiç doğrulamıyordu**. Yani kartın "en kötü ihtimal" diye uyardığı ölü anahtar **üretimdeydi**: açık bir oturumu eline geçiren biri şifreyi tek diyalogda değiştirebiliyordu. Doğrulama artık repository sözleşmesinde (`changePassword`), ekran atlayamaz. `analyze` temiz · **836 test yeşil** (12 yeni) · **iki katmanlı kırmızı-yeşil kanıt**. Faz B (Codex, admin) ve kamp ateşi önizleme dosyalarıyla **kesişme olmadı**.
@@ -166,7 +166,7 @@ göremiyoruz, cevap yazamıyoruz, liste temizlenmiyor.
 
 #### WP-317: Admin ↔ kullanıcı yazışması 💬
 - **Program/Faz:** Faz B · Admin & geri bildirim
-- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-316 kabulünden sonra
+- **Ajan:** Claude · **Durum:** [~] Kod/test tamam — beta kabulü bekliyor (2026-07-26) · **Bağımlılık notu:** sahip emriyle WP-316 cihaz kabulü beta turuna bırakıldı
 - **Problem:** Admin bileti okuyor ama kullanıcıya **cevap yazamıyor**. Kullanıcı sorununun ne olduğunu asla öğrenemiyor.
 - **Kapsam dışı:** Gerçek zamanlı sohbet, dosya eki ile yanıt, toplu yanıt şablonları.
 - **SAHİP dosyalar (yaz):**
@@ -175,11 +175,11 @@ göremiyoruz, cevap yazamıyoruz, liste temizlenmiyor.
   - `supabase/migrations/00NN_feedback_replies.sql` (yeni)
 - **DOKUNMA:** `notification_center_screen.dart` (**okunur**, yapısı bozulmaz) · push edge fonksiyonları · `app/lib/core/theme/**`
 - **Adımlar:**
-  - [ ] Yazışma modeli: bilete bağlı mesajlar, gönderen rolü (admin/kullanıcı), okundu bilgisi
-  - [ ] Admin kartına "Yanıtla" → hedefi o kullanıcı olan duyuru (`announcements.target_type='user'` + `target_id` **zaten var**)
-  - [ ] Push bildirimi tetikle
-  - [ ] **Kullanıcı geri yazabilsin** (K1: çift yönlü) — kullanıcı tarafında yanıt alanı
-  - [ ] Bilet durumu otomatik ilerlesin (yanıtlanınca `in_progress`)
+- [x] Yazışma modeli: bilete bağlı mesajlar, gönderen rolü (admin/kullanıcı), okundu bilgisi
+- [x] Admin kartına "Yanıtla" → hedefi o kullanıcı olan duyuru (`announcements.target_type='user'` + `target_id`)
+- [x] Push bildirimi mevcut duyuru outbox'ından tetiklenir; payload ilgili bilet kimliğini taşır
+- [x] **Kullanıcı geri yazabilir** (K1: çift yönlü) — geri bildirim listesindeki yazışma alanı
+- [x] Bilet durumu yanıtlanınca otomatik `in_progress` olur
 - **Veri/Migration etkisi:** Yeni yazışma tablosu + RLS. Geri alma: `drop table` (yeni tablo, veri kaybı riski yok).
 - **Ortam/Deploy:** local → staging dry-run → production ayrı GO.
 - **RLS/Güvenlik:** 🔴 Kullanıcı **yalnız kendi biletinin** yazışmasını okur/yazar; admin hepsini. Yazma yetkisi **server-authoritative** — istemci `sender_role` göndermez, sunucu `auth.uid()`'den türetir.
@@ -669,6 +669,12 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 ---
 
 ## Test için bekleyenler
+
+### WP-317 — Admin ↔ kullanıcı yazışması
+
+- **Durum:** Kod/test tamam · **Beta ortamında doğrulanmalı**
+- **Kanıt:** local replay · 8 SQL dosyasında 170 pgTAP testi · RLS saldırı senaryoları (başka kullanıcı okuma/yazma ve gönderen rolü sahteciliği) kırmızı · hedef Dart analyze/test yeşil.
+- **Bekleyen:** staging dry-run/apply (0073 + 0074 sıralı) ardından beta hesabında admin yanıtı → yalnız hedef kullanıcıya duyuru/push → bilet listesinden kullanıcı yanıtı → adminde okunma/durum kanıtı.
 
 ### WP-320 — ayarlar bilgi mimarisi
 

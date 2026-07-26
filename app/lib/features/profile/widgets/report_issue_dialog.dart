@@ -9,6 +9,7 @@ import '../../../data/models/feedback_ticket.dart';
 import '../../../data/providers/admin_providers.dart';
 import '../../../data/providers/auth_providers.dart';
 import '../../../data/repositories/admin_repository.dart';
+import '../feedback_tickets_screen.dart';
 
 class ReportIssueDialog extends ConsumerStatefulWidget {
   const ReportIssueDialog({super.key});
@@ -103,9 +104,8 @@ class _ReportIssueDialogState extends ConsumerState<ReportIssueDialog> {
           ? e.message
           : l10n.profileGeriBildirimGonderilemedi;
       // Kod message içinde yoksa ekle (eski yollar).
-      final withCode = e.code != null &&
-              e.code!.isNotEmpty &&
-              !msg.contains(e.code!)
+      final withCode =
+          e.code != null && e.code!.isNotEmpty && !msg.contains(e.code!)
           ? '$msg\nDetay: ${e.code}'
           : msg;
       _showError(withCode);
@@ -127,10 +127,7 @@ class _ReportIssueDialogState extends ConsumerState<ReportIssueDialog> {
       SnackBar(
         content: Text(message),
         duration: const Duration(seconds: 8),
-        action: SnackBarAction(
-          label: 'OK',
-          onPressed: () {},
-        ),
+        action: SnackBarAction(label: 'OK', onPressed: () {}),
       ),
     );
   }
@@ -253,6 +250,20 @@ class _ReportIssueDialogState extends ConsumerState<ReportIssueDialog> {
         ),
       ),
       actions: [
+        TextButton(
+          onPressed: _isSubmitting
+              ? null
+              : () {
+                  final navigator = Navigator.of(context);
+                  navigator.pop();
+                  navigator.push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const FeedbackTicketsScreen(),
+                    ),
+                  );
+                },
+          child: Text(AppLocalizations.of(context).feedbackMyTickets),
+        ),
         TextButton(
           onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(),
           child: Text(AppLocalizations.of(context).profileIptal),

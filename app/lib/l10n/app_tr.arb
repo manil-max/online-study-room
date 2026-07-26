@@ -1588,5 +1588,14 @@
   "settingsSectionAppearance": "Görünüm",
   "settingsSectionStudyPreferences": "Çalışma tercihleri",
   "settingsSectionPrivacySecurity": "Gizlilik ve güvenlik",
-  "settingsSectionAboutLegal": "Hakkında ve yasal"
+  "settingsSectionAboutLegal": "Hakkında ve yasal",
+  "feedbackMyTickets": "Geri bildirimlerim",
+  "feedbackConversation": "Yazışma",
+  "feedbackNoTickets": "Henüz geri bildirimin yok.",
+  "feedbackWriteReply": "Yanıt yaz",
+  "feedbackReplyHint": "Yanıtını yaz",
+  "feedbackAdmin": "Yönetim",
+  "feedbackYou": "Sen",
+  "feedbackUser": "Kullanıcı",
+  "feedbackNoReplies": "Henüz yanıt yok."
 }

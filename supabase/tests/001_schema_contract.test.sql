@@ -3,17 +3,39 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(46);
+select plan(49);
 
 select is(
   (select count(*)::integer from supabase_migrations.schema_migrations),
-  73,
-  'all 73 migrations are recorded'
+  74,
+  'all 74 migrations are recorded'
 );
 select is(
   (select max(version) from supabase_migrations.schema_migrations),
-  '0073',
-  '0073 is the migration head'
+  '0074',
+  '0074 is the migration head'
+);
+select ok(
+  to_regclass('public.feedback_ticket_messages') is not null
+    and to_regprocedure('public.send_feedback_ticket_message(uuid,text)') is not null
+    and to_regprocedure('public.mark_feedback_ticket_messages_read(uuid)') is not null,
+  '0074 installs the server-authoritative feedback conversation contract'
+);
+select ok(
+  exists(
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'announcements'
+      and column_name = 'related_feedback_ticket_id'
+  ),
+  '0074 links a reply notification to its feedback ticket'
+);
+select ok(
+  (select relrowsecurity from pg_class where oid = 'public.feedback_ticket_messages'::regclass)
+    and has_function_privilege(
+      'authenticated', 'public.send_feedback_ticket_message(uuid,text)', 'execute'
+    )
+    and not has_table_privilege('authenticated', 'public.feedback_ticket_messages', 'insert'),
+  'message table stays RLS-protected and clients send only through the guarded RPC'
 );
 select ok(
   exists(

@@ -6,6 +6,7 @@ import 'package:online_study_room/data/models/feedback_ticket_note.dart';
 import 'package:online_study_room/data/providers/admin_providers.dart';
 import 'package:online_study_room/data/providers/auth_providers.dart';
 import 'package:online_study_room/data/repositories/admin_repository.dart';
+import 'package:online_study_room/features/profile/feedback_tickets_screen.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
 class AdminReportsTab extends ConsumerWidget {
@@ -121,6 +122,16 @@ class _TicketCard extends ConsumerWidget {
                   avatar: const Icon(Icons.note_alt_outlined, size: 18),
                   label: Text(l10n.adminIcNotlar),
                   onPressed: () => _showNotesDialog(context, ref),
+                ),
+                ActionChip(
+                  key: Key('feedback-reply-${ticket.id}'),
+                  visualDensity: VisualDensity.compact,
+                  avatar: const Icon(Icons.reply_outlined, size: 18),
+                  label: Text(l10n.feedbackWriteReply),
+                  onPressed: () => showFeedbackTicketConversation(
+                    context: context,
+                    ticket: ticket,
+                  ),
                 ),
               ],
             ),

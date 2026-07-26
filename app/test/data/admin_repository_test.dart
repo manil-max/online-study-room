@@ -109,6 +109,67 @@ void main() {
     );
   });
 
+  test(
+    'bilet yazışması iki yönlü, yetkili ve okunma bilgili çalışır',
+    () async {
+      final repo = InMemoryAdminRepository(superAdminUserIds: {'admin'});
+      addTearDown(repo.dispose);
+      final ticket = await repo.submitFeedback(
+        userId: 'u1',
+        kind: FeedbackTicketKind.feedback,
+        subject: 'Yazışma',
+        message: 'İlk mesaj',
+      );
+
+      final userMessage = await repo.sendTicketMessage(
+        userId: 'u1',
+        ticketId: ticket.id,
+        message: '  Ek bilgi  ',
+      );
+      expect(userMessage.message, 'Ek bilgi');
+      expect(userMessage.senderRole.dbValue, 'user');
+      expect(
+        (await repo.fetchMyFeedbackTickets('u1')).single.status,
+        FeedbackTicketStatus.inProgress,
+      );
+      expect(
+        () => repo.fetchTicketMessages(userId: 'outsider', ticketId: ticket.id),
+        throwsA(isA<AdminException>()),
+      );
+
+      final adminMessage = await repo.sendTicketMessage(
+        userId: 'admin',
+        ticketId: ticket.id,
+        message: 'İnceliyoruz.',
+      );
+      expect(adminMessage.senderRole.dbValue, 'admin');
+      expect(
+        (await repo.fetchTicketMessages(
+          userId: 'u1',
+          ticketId: ticket.id,
+        )).map((message) => message.senderRole.dbValue),
+        ['user', 'admin'],
+      );
+
+      await repo.markTicketMessagesRead(userId: 'u1', ticketId: ticket.id);
+      expect(
+        (await repo.fetchTicketMessages(
+          userId: 'u1',
+          ticketId: ticket.id,
+        )).last.readAt,
+        isNotNull,
+      );
+      await repo.markTicketMessagesRead(userId: 'admin', ticketId: ticket.id);
+      expect(
+        (await repo.fetchTicketMessages(
+          userId: 'admin',
+          ticketId: ticket.id,
+        )).first.readAt,
+        isNotNull,
+      );
+    },
+  );
+
   group('classifyFeedbackSubmitError (WP-168/177)', () {
     test('RLS / JWT → session_or_rls', () {
       expect(
@@ -180,10 +241,7 @@ void main() {
         contains('sunucusu henüz hazır değil'),
       );
       expect(feedbackUserMessageForCode('storage'), contains('Görsel'));
-      expect(
-        feedbackUserMessageForCode('session_or_rls'),
-        contains('giriş'),
-      );
+      expect(feedbackUserMessageForCode('session_or_rls'), contains('giriş'));
     });
 
     test('diğer hatalar null (jenerik UX)', () {

@@ -8,6 +8,7 @@ import '../../models/admin_user_dto.dart';
 import '../../models/announcement.dart';
 import '../../models/feedback_ticket.dart';
 import '../../models/feedback_ticket_note.dart';
+import '../../models/feedback_ticket_message.dart';
 import '../../models/study_group.dart';
 import '../admin_repository.dart';
 
@@ -18,6 +19,7 @@ class InMemoryAdminRepository implements AdminRepository {
   final _uuid = const Uuid();
   final Set<String> _superAdminUserIds;
   final List<FeedbackTicket> _tickets = [];
+  final List<FeedbackTicketMessage> _ticketMessages = [];
   final StreamController<void> _changes = StreamController<void>.broadcast();
 
   @override
@@ -78,7 +80,9 @@ class InMemoryAdminRepository implements AdminRepository {
       status: FeedbackTicketStatus.open,
       createdAt: now,
       updatedAt: now,
-      attachmentPath: attachmentBytes != null ? 'dummy/path.$attachmentExt' : null,
+      attachmentPath: attachmentBytes != null
+          ? 'dummy/path.$attachmentExt'
+          : null,
     );
     _tickets.add(ticket);
     _changes.add(null);
@@ -209,6 +213,76 @@ class InMemoryAdminRepository implements AdminRepository {
   }
 
   @override
+  Future<List<FeedbackTicketMessage>> fetchTicketMessages({
+    required String userId,
+    required String ticketId,
+  }) async {
+    _requireTicketParticipant(userId, ticketId);
+    final rows =
+        _ticketMessages
+            .where((message) => message.ticketId == ticketId)
+            .toList()
+          ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+    return List.unmodifiable(rows);
+  }
+
+  @override
+  Future<FeedbackTicketMessage> sendTicketMessage({
+    required String userId,
+    required String ticketId,
+    required String message,
+  }) async {
+    final ticketIndex = _requireTicketParticipant(userId, ticketId);
+    final senderRole = _superAdminUserIds.contains(userId)
+        ? FeedbackTicketSenderRole.admin
+        : FeedbackTicketSenderRole.user;
+    final now = DateTime.now();
+    final item = FeedbackTicketMessage(
+      id: _uuid.v4(),
+      ticketId: ticketId,
+      senderId: userId,
+      senderRole: senderRole,
+      message: normalizeFeedbackTicketReply(message),
+      createdAt: now,
+    );
+    _ticketMessages.add(item);
+    _tickets[ticketIndex] = _tickets[ticketIndex].copyWith(
+      status: FeedbackTicketStatus.inProgress,
+      updatedAt: now,
+    );
+    _changes.add(null);
+    return item;
+  }
+
+  @override
+  Future<void> markTicketMessagesRead({
+    required String userId,
+    required String ticketId,
+  }) async {
+    _requireTicketParticipant(userId, ticketId);
+    final readerRole = _superAdminUserIds.contains(userId)
+        ? FeedbackTicketSenderRole.admin
+        : FeedbackTicketSenderRole.user;
+    final now = DateTime.now();
+    for (var index = 0; index < _ticketMessages.length; index++) {
+      final item = _ticketMessages[index];
+      if (item.ticketId == ticketId &&
+          item.senderRole != readerRole &&
+          item.readAt == null) {
+        _ticketMessages[index] = FeedbackTicketMessage(
+          id: item.id,
+          ticketId: item.ticketId,
+          senderId: item.senderId,
+          senderRole: item.senderRole,
+          message: item.message,
+          createdAt: item.createdAt,
+          readAt: now,
+        );
+      }
+    }
+  }
+
+  @override
   Future<List<AdminAuditLog>> fetchAuditLogs() async {
     return [
       AdminAuditLog(
@@ -226,6 +300,18 @@ class InMemoryAdminRepository implements AdminRepository {
     if (!_superAdminUserIds.contains(userId)) {
       throw const AdminException('Bu işlem için admin yetkisi gerekiyor.');
     }
+  }
+
+  int _requireTicketParticipant(String userId, String ticketId) {
+    final index = _tickets.indexWhere((ticket) => ticket.id == ticketId);
+    if (index < 0) {
+      throw const AdminException('Geri bildirim bulunamadı.');
+    }
+    if (_tickets[index].userId != userId &&
+        !_superAdminUserIds.contains(userId)) {
+      throw const AdminException('Bu yazışmaya erişim iznin yok.');
+    }
+    return index;
   }
 
   void dispose() => _changes.close();

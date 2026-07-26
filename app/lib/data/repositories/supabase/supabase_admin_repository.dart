@@ -7,6 +7,7 @@ import '../../models/admin_user_dto.dart';
 import '../../models/announcement.dart';
 import '../../models/feedback_ticket.dart';
 import '../../models/feedback_ticket_note.dart';
+import '../../models/feedback_ticket_message.dart';
 import '../../models/study_group.dart';
 import '../admin_repository.dart';
 
@@ -406,6 +407,65 @@ class SupabaseAdminRepository implements AdminRepository {
       });
     } catch (e) {
       throw AdminException('Not eklenemedi: $e');
+    }
+  }
+
+  @override
+  Future<List<FeedbackTicketMessage>> fetchTicketMessages({
+    required String userId,
+    required String ticketId,
+  }) async {
+    try {
+      final rows = await _client
+          .from('feedback_ticket_messages')
+          .select()
+          .eq('ticket_id', ticketId)
+          .order('created_at');
+      return rows
+          .map(
+            (row) =>
+                FeedbackTicketMessage.fromMap(Map<String, dynamic>.from(row)),
+          )
+          .toList();
+    } on PostgrestException catch (e) {
+      throw AdminException(_friendlyMessage(e.message));
+    }
+  }
+
+  @override
+  Future<FeedbackTicketMessage> sendTicketMessage({
+    required String userId,
+    required String ticketId,
+    required String message,
+  }) async {
+    try {
+      final row = await _client.rpc(
+        'send_feedback_ticket_message',
+        params: {
+          'p_ticket_id': ticketId,
+          'p_message': normalizeFeedbackTicketReply(message),
+        },
+      );
+      return FeedbackTicketMessage.fromMap(
+        Map<String, dynamic>.from(row as Map),
+      );
+    } on PostgrestException catch (e) {
+      throw AdminException(_friendlyMessage(e.message));
+    }
+  }
+
+  @override
+  Future<void> markTicketMessagesRead({
+    required String userId,
+    required String ticketId,
+  }) async {
+    try {
+      await _client.rpc(
+        'mark_feedback_ticket_messages_read',
+        params: {'p_ticket_id': ticketId},
+      );
+    } on PostgrestException catch (e) {
+      throw AdminException(_friendlyMessage(e.message));
     }
   }
 

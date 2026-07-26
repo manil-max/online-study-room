@@ -5,10 +5,12 @@ import '../models/admin_user_dto.dart';
 import '../models/announcement.dart';
 import '../models/feedback_ticket.dart';
 import '../models/feedback_ticket_note.dart';
+import '../models/feedback_ticket_message.dart';
 import '../models/study_group.dart';
 
 const int kMaxFeedbackSubjectLength = 80;
 const int kMaxFeedbackMessageLength = 1200;
+const int kMaxFeedbackTicketReplyLength = 1200;
 
 class AdminException implements Exception {
   const AdminException(this.message, {this.code});
@@ -29,16 +31,14 @@ class AdminException implements Exception {
 ///
 /// WP-193: `schema_missing` yalnız gerçek tablo/şema önbellek hatalarına.
 /// Geniş `relation`+`feedback` eşlemesi RLS/permission'ı yanlış etiketliyordu.
-String? classifyFeedbackSubmitError({
-  String? postgrestCode,
-  String? message,
-}) {
+String? classifyFeedbackSubmitError({String? postgrestCode, String? message}) {
   final code = (postgrestCode ?? '').toLowerCase().trim();
   final msg = (message ?? '').toLowerCase();
 
   // Tablo yok / PostgREST şema önbelleği — dar kurallar.
   final isSchemaCode = code == '42p01' || code == 'pgrst205';
-  final isSchemaMsg = msg.contains('schema cache') ||
+  final isSchemaMsg =
+      msg.contains('schema cache') ||
       msg.contains('could not find the table') ||
       (msg.contains('relation') &&
           msg.contains('does not exist') &&
@@ -68,10 +68,7 @@ String feedbackErrorDisplay({
   final code = (postgrestCode ?? '').trim();
   final raw = (rawMessage ?? '').trim();
   if (code.isEmpty && raw.isEmpty) return userMessage;
-  final detail = [
-    if (code.isNotEmpty) code,
-    if (raw.isNotEmpty) raw,
-  ].join(' ');
+  final detail = [if (code.isNotEmpty) code, if (raw.isNotEmpty) raw].join(' ');
   return '$userMessage\nDetay: $detail';
 }
 
@@ -178,6 +175,22 @@ abstract class AdminRepository {
     required String adminId,
   });
 
+  Future<List<FeedbackTicketMessage>> fetchTicketMessages({
+    required String userId,
+    required String ticketId,
+  });
+
+  Future<FeedbackTicketMessage> sendTicketMessage({
+    required String userId,
+    required String ticketId,
+    required String message,
+  });
+
+  Future<void> markTicketMessagesRead({
+    required String userId,
+    required String ticketId,
+  });
+
   Future<List<AdminAuditLog>> fetchAuditLogs();
 }
 
@@ -199,6 +212,17 @@ String normalizeFeedbackMessage(String message) {
   }
   if (normalized.length > kMaxFeedbackMessageLength) {
     throw const AdminException('Mesaj en fazla 1200 karakter olabilir.');
+  }
+  return normalized;
+}
+
+String normalizeFeedbackTicketReply(String message) {
+  final normalized = message.trim();
+  if (normalized.isEmpty) {
+    throw const AdminException('Yanıt boş olamaz.');
+  }
+  if (normalized.length > kMaxFeedbackTicketReplyLength) {
+    throw const AdminException('Yanıt en fazla 1200 karakter olabilir.');
   }
   return normalized;
 }

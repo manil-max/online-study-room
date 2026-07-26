@@ -8,6 +8,7 @@ class Announcement {
     required this.message,
     required this.targetType,
     this.targetId,
+    this.relatedFeedbackTicketId,
     required this.createdAt,
     required this.createdBy,
   });
@@ -17,6 +18,7 @@ class Announcement {
   final String message;
   final String targetType; // 'all', 'group', 'user'
   final String? targetId;
+  final String? relatedFeedbackTicketId;
   final DateTime createdAt;
   final String createdBy;
 
@@ -27,6 +29,7 @@ class Announcement {
       message: map['message'] as String,
       targetType: map['target_type'] as String,
       targetId: map['target_id'] as String?,
+      relatedFeedbackTicketId: map['related_feedback_ticket_id'] as String?,
       createdAt: DateTime.parse(map['created_at'] as String),
       createdBy: map['created_by'] as String,
     );
@@ -38,6 +41,8 @@ class Announcement {
       'message': message,
       'target_type': targetType,
       if (targetId != null) 'target_id': targetId,
+      if (relatedFeedbackTicketId != null)
+        'related_feedback_ticket_id': relatedFeedbackTicketId,
       'created_by': createdBy,
     };
   }

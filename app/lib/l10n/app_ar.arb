@@ -5145,5 +5145,14 @@
   "settingsSectionAppearance": "المظهر",
   "settingsSectionStudyPreferences": "تفضيلات الدراسة",
   "settingsSectionPrivacySecurity": "الخصوصية والأمان",
-  "settingsSectionAboutLegal": "حول والجوانب القانونية"
+  "settingsSectionAboutLegal": "حول والجوانب القانونية",
+  "feedbackMyTickets": "ملاحظاتي",
+  "feedbackConversation": "المراسلة",
+  "feedbackNoTickets": "لم ترسل أي ملاحظة بعد.",
+  "feedbackWriteReply": "اكتب ردًا",
+  "feedbackReplyHint": "اكتب ردك",
+  "feedbackAdmin": "الإدارة",
+  "feedbackYou": "أنت",
+  "feedbackUser": "المستخدم",
+  "feedbackNoReplies": "لا توجد ردود بعد."
 }

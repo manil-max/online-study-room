@@ -6,6 +6,7 @@ import '../../core/widgets/safe_screen_padding.dart';
 import '../../data/models/announcement.dart';
 import '../../data/providers/auth_providers.dart';
 import '../../data/providers/notification_providers.dart';
+import '../profile/feedback_tickets_screen.dart';
 import '../../l10n/app_localizations.dart';
 
 /// Duyurular — WP-304'te Bildirim Merkezi'nden çıkarılıp Ayarlar'a taşındı.
@@ -108,17 +109,27 @@ class _AnnouncementTile extends ConsumerWidget {
       ),
       subtitle: Text(announcement.message),
       isThreeLine: true,
-      onTap: unread
+      onTap: unread || announcement.relatedFeedbackTicketId != null
           ? () async {
               final user = ref.read(authStateProvider).value;
               if (user == null) return;
-              await ref
-                  .read(notificationRepositoryProvider)
-                  .markAnnouncementRead(
-                    userId: user.id,
-                    announcementId: announcement.id,
-                  );
-              ref.invalidate(readAnnouncementIdsProvider);
+              if (unread) {
+                await ref
+                    .read(notificationRepositoryProvider)
+                    .markAnnouncementRead(
+                      userId: user.id,
+                      announcementId: announcement.id,
+                    );
+                ref.invalidate(readAnnouncementIdsProvider);
+              }
+              if (announcement.relatedFeedbackTicketId != null &&
+                  context.mounted) {
+                await Navigator.of(context).push<void>(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const FeedbackTicketsScreen(),
+                  ),
+                );
+              }
             }
           : null,
     );
