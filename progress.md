@@ -58,6 +58,7 @@
 - **Durum:** [x] Boşta
 - **Faz/WP:** —
 - **SAHİP yollar:** —
+- **Son not:** WP-337 kod/test tamam; güncel local/staging/production açık legacy-run aggregate'ı olmadığı için WP-341 için NO-GO kanıtı kaydedildi (2026-07-26).
 
 ### Grok Lane
 - **Durum:** [x] Boşta
@@ -254,7 +255,7 @@ Böylece kişisel ve grup istatistiği **asla çelişmez**.
 - **Model önerisi:** 🔴 Opus
 
 #### WP-337: V3 legacy compatibility ve donuk kontrat kapısı 🔬
-- **Program/Faz:** Faz E2 · Delivery C0 · **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** Yok
+- **Program/Faz:** Faz E2 · Delivery C0 · **Ajan:** Codex-2 · **Durum:** [~] Kod/test tamam — güncel ortam aggregate kanıtı bekliyor (NO-GO) · **Bağımlılık:** Yok
 - **Problem:** `live_study_runs` index/CHECK/NOT NULL, legacy RPC, Dart enum ve iki native queue sınırı kanıtlanmadan migration yazılırsa ghost lock veya parse hatası oluşur.
 - **Kapsam dışı:** Migration/feature/deploy · timer UX refactor · remote mutasyon.
 - **SAHİP dosyalar (yaz):** `docs/GLOBAL-TIMER-V3-COMPATIBILITY-EVIDENCE.md` · `app/test/data/global_timer_v3_legacy_contract_test.dart`
@@ -265,6 +266,7 @@ Böylece kişisel ve grup istatistiği **asla çelişmez**.
 - **RLS/Güvenlik:** Yalnız aggregate/schema metadata; UUID/token/secret kanıta girmez.
 - **Edge-case'ler:** açık/paused legacy run · eksik CLI history · V2 terminal status'un legacy DTO'ya düşmesi · iki protocol start yarışı.
 - **Kabul (ölçülebilir):** G1–G6/H1–H4 PASS/FAIL · ortam başına açık legacy sayısı · hedef tek active index · V2 DTO/flag/lock kararı · migration GO/NO-GO.
+- **Kanıt:** `docs/GLOBAL-TIMER-V3-COMPATIBILITY-EVIDENCE.md` ve `app/test/data/global_timer_v3_legacy_contract_test.dart`; G1–G6/H1–H4 PASS, local/staging/production güncel `running/paused` aggregate eksik olduğu için WP-341 **NO-GO**. `flutter analyze` temiz, tam `flutter test` 893 test yeşil (2026-07-26). **Kodda doğrulandı.**
 - **Tuzaklar:** “Muhtemelen açık run yok” kanıt değildir; remote satır değiştirme yetkisi yoktur.
 - **Model önerisi:** 🔴 Opus
 
