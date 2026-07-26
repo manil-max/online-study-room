@@ -5166,5 +5166,18 @@
       "city": {},
       "offset": {}
     }
-  }
+  },
+  "tourHomeOverview": "Deine wichtigsten Karten und Lernübersichten findest du hier an einem Ort.",
+  "tourHomeEdit": "Über „Karten bearbeiten“ kannst du Karten hinzufügen, verschieben, skalieren oder entfernen.",
+  "tourTimerOverview": "Wähle ein Fach und einen Timer-Modus und starte; abgeschlossene Fokuszeit wird gespeichert.",
+  "tourTimerMissing": "Füge die Timer-Karte über „Karten bearbeiten“ zur Startseite hinzu.",
+  "tourGroupsOverview": "Lagerfeuer, gemeinsames Ziel, Rangliste und Gruppenaktivität sind hier gebündelt.",
+  "tourGroupsEmpty": "Erstelle eine Gruppe, tritt mit einem Code bei oder entdecke eine offene Gruppe.",
+  "tourGroupsSwitch": "Wechsle hier zu einer anderen Gruppe, der du angehörst.",
+  "tourCampfireOverview": "Die Camper zeigen, wer gerade lernt; der Himmel folgt deiner Ortszeit.",
+  "tourCampfireEmpty": "Tritt einer Gruppe bei, um deine Mitlernenden am Lagerfeuer zu treffen.",
+  "tourStatsOverview": "Ändere den Zeitraum, um deinen Fortschritt oder deine Gruppe zu vergleichen.",
+  "tourStatsEmpty": "Schließe deine erste Fokus-Sitzung ab; danach erscheint dein Fortschritt hier.",
+  "tourProfileOverview": "Dein Avatar, Rang, deine Erfolge und deine Camp-Identität sind hier.",
+  "tourProfileActions": "Öffne den Lernverlauf für frühere Sitzungen oder die Einstellungen zur Personalisierung."
 }

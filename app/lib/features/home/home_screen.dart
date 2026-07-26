@@ -5,7 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/desktop/desktop_layout.dart';
 import '../../core/desktop/desktop_window.dart';
 import '../../core/navigation/nav_index.dart';
+import '../../core/tour/tour_controller.dart';
+import '../../core/tour/tour_host.dart';
 import '../../core/widgets/safe_screen_padding.dart';
+import '../tours/app_tours.dart';
 import 'dashboard_card.dart';
 import 'dashboard_providers.dart';
 import 'widgets/card_picker.dart';
@@ -22,6 +25,8 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _editing = false;
+  final _dashboardTourAnchor = GlobalKey();
+  final _editTourAnchor = GlobalKey();
 
   /// WP-291: Boyut panelinin bağlı olduğu seçili kart. Grid tıklamayla bildirir,
   /// sabit alt yaprak (bottomSheet) dinler.
@@ -78,6 +83,42 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
+  Widget _withIntroductionTours(
+    BuildContext context,
+    List<DashboardCardConfig> layout,
+    Widget child,
+  ) {
+    if (ref.watch(navIndexProvider) != AppTab.home.index) return child;
+
+    // Tur bitince controller state'i değişir; Home → Sayaç sırasını yeniden
+    // hesaplamak için state'i izlemek gerekir.
+    ref.watch(tourControllerProvider);
+    final controller = ref.read(tourControllerProvider.notifier);
+    final l10n = AppLocalizations.of(context);
+    final home = AppTours.home(
+      l10n,
+      dashboardAnchor: _dashboardTourAnchor,
+      editAnchor: _editTourAnchor,
+      isEmpty: layout.isEmpty,
+    );
+    final definition = controller.seen(home)
+        ? AppTours.timer(
+            l10n,
+            dashboardAnchor: _dashboardTourAnchor,
+            editAnchor: _editTourAnchor,
+            isAvailable: layout.any(
+              (card) => card.type == DashboardCardType.timer,
+            ),
+          )
+        : home;
+
+    return TourHost(
+      key: ValueKey(definition.storageId),
+      definition: definition,
+      child: child,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     // Alt menüde Ana Sayfa’ya zaten oradayken bas → en üste kay.
@@ -115,33 +156,36 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                       const SizedBox(height: 10),
                     ],
-                    _MatrixGrid(
-                      layout: layout,
-                      columns: columns,
-                      editing: _editing,
-                      selectedType: _selectedCard,
-                      onSelectCard: (type) =>
-                          setState(() => _selectedCard = type),
-                      onLongPressCard: () => _setEditing(true),
-                      onMoveCard: (type, x, y) => ref
-                          .read(dashboardLayoutProvider.notifier)
-                          .setBounds(type, x: x, y: y),
-                      onResizeCard: (type, x, y, w, h, persist) => ref
-                          .read(dashboardLayoutProvider.notifier)
-                          .setBounds(
-                            type,
-                            x: x,
-                            y: y,
-                            w: w,
-                            h: h,
-                            persist: persist,
-                          ),
-                      onCommit: ref
-                          .read(dashboardLayoutProvider.notifier)
-                          .persist,
-                      onRemove: ref
-                          .read(dashboardLayoutProvider.notifier)
-                          .removeCard,
+                    KeyedSubtree(
+                      key: _dashboardTourAnchor,
+                      child: _MatrixGrid(
+                        layout: layout,
+                        columns: columns,
+                        editing: _editing,
+                        selectedType: _selectedCard,
+                        onSelectCard: (type) =>
+                            setState(() => _selectedCard = type),
+                        onLongPressCard: () => _setEditing(true),
+                        onMoveCard: (type, x, y) => ref
+                            .read(dashboardLayoutProvider.notifier)
+                            .setBounds(type, x: x, y: y),
+                        onResizeCard: (type, x, y, w, h, persist) => ref
+                            .read(dashboardLayoutProvider.notifier)
+                            .setBounds(
+                              type,
+                              x: x,
+                              y: y,
+                              w: w,
+                              h: h,
+                              persist: persist,
+                            ),
+                        onCommit: ref
+                            .read(dashboardLayoutProvider.notifier)
+                            .persist,
+                        onRemove: ref
+                            .read(dashboardLayoutProvider.notifier)
+                            .removeCard,
+                      ),
                     ),
                     if (_editing) ...[
                       const Divider(height: 24),
@@ -167,8 +211,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     // WP-291: Boyut paneli düzenleme modunda ekranın altına yapışır.
     // WP-305: Artık `Scaffold.bottomSheet` DEĞİL — bkz. [stickyPanelBelow].
-    final selectedConfig =
-        effectiveSelectedConfig(layout, _selectedCard);
+    final selectedConfig = effectiveSelectedConfig(layout, _selectedCard);
     final Widget? sizeSheet = (_editing && selectedConfig != null)
         ? _StickySizePanel(
             key: const Key('home-sticky-size-panel'),
@@ -190,95 +233,110 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // Windows: üst dev başlık / sağ ipucu paneli yok — küçük pencerede
     // sol rail + içerik yeterli (kullanıcı geri bildirimi).
     if (isDesktopWindow) {
-      return Scaffold(
-        body: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Material(
-              color: Theme.of(context).colorScheme.surface,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                child: Row(
-                  children: [
-                    if (_editing) ...[
-                      TextButton(
-                        onPressed: () => _setEditing(false),
-                        child: Text(AppLocalizations.of(context).homeBitti),
-                      ),
-                      IconButton(
-                        tooltip: AppLocalizations.of(context).homeYukariTopla,
-                        onPressed: ref
-                            .read(dashboardLayoutProvider.notifier)
-                            .compactUp,
-                        icon: const Icon(Icons.vertical_align_top),
-                      ),
-                      IconButton(
-                        tooltip: AppLocalizations.of(context).homeSifirla,
-                        onPressed: _confirmResetDashboard,
-                        icon: const Icon(Icons.restart_alt),
-                      ),
-                      IconButton(
-                        tooltip: AppLocalizations.of(context).homeKartEkle,
-                        onPressed: () => showCardPicker(context),
-                        icon: const Icon(Icons.add),
-                      ),
-                    ] else
-                      IconButton(
-                        tooltip: AppLocalizations.of(context).homePanoyuDuzenle,
-                        onPressed: () => _setEditing(true),
-                        icon: const Icon(Icons.dashboard_customize_outlined),
-                      ),
-                    const Spacer(),
-                  ],
+      return _withIntroductionTours(
+        context,
+        layout,
+        Scaffold(
+          body: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Material(
+                color: Theme.of(context).colorScheme.surface,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  child: Row(
+                    children: [
+                      if (_editing) ...[
+                        TextButton(
+                          onPressed: () => _setEditing(false),
+                          child: Text(AppLocalizations.of(context).homeBitti),
+                        ),
+                        IconButton(
+                          tooltip: AppLocalizations.of(context).homeYukariTopla,
+                          onPressed: ref
+                              .read(dashboardLayoutProvider.notifier)
+                              .compactUp,
+                          icon: const Icon(Icons.vertical_align_top),
+                        ),
+                        IconButton(
+                          tooltip: AppLocalizations.of(context).homeSifirla,
+                          onPressed: _confirmResetDashboard,
+                          icon: const Icon(Icons.restart_alt),
+                        ),
+                        IconButton(
+                          tooltip: AppLocalizations.of(context).homeKartEkle,
+                          onPressed: () => showCardPicker(context),
+                          icon: const Icon(Icons.add),
+                        ),
+                      ] else
+                        IconButton(
+                          key: _editTourAnchor,
+                          tooltip: AppLocalizations.of(
+                            context,
+                          ).homePanoyuDuzenle,
+                          onPressed: () => _setEditing(true),
+                          icon: const Icon(Icons.dashboard_customize_outlined),
+                        ),
+                      const Spacer(),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            Expanded(child: stickyPanelBelow(body, sizeSheet)),
-          ],
+              Expanded(child: stickyPanelBelow(body, sizeSheet)),
+            ],
+          ),
         ),
       );
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          _editing
-              ? AppLocalizations.of(context).homeKartlariDuzenle
-              : AppLocalizations.of(context).homeAnaSayfa,
+    return _withIntroductionTours(
+      context,
+      layout,
+      Scaffold(
+        appBar: AppBar(
+          title: Text(
+            _editing
+                ? AppLocalizations.of(context).homeKartlariDuzenle
+                : AppLocalizations.of(context).homeAnaSayfa,
+          ),
+          leading: _editing
+              ? IconButton(
+                  tooltip: AppLocalizations.of(context).homeBitti,
+                  icon: const Icon(Icons.check),
+                  onPressed: () => _setEditing(false),
+                )
+              : null,
+          actions: [
+            if (_editing) ...[
+              IconButton(
+                tooltip: AppLocalizations.of(context).homeBosluklariYukariTopla,
+                icon: const Icon(Icons.vertical_align_top),
+                onPressed: ref.read(dashboardLayoutProvider.notifier).compactUp,
+              ),
+              IconButton(
+                tooltip: AppLocalizations.of(context).homeAnaSayfayiSifirla,
+                icon: const Icon(Icons.restart_alt),
+                onPressed: _confirmResetDashboard,
+              ),
+              IconButton(
+                tooltip: AppLocalizations.of(context).homeKartEkle,
+                icon: const Icon(Icons.add),
+                onPressed: () => showCardPicker(context),
+              ),
+            ] else
+              IconButton(
+                key: _editTourAnchor,
+                tooltip: AppLocalizations.of(context).homeKartlariDuzenle,
+                icon: const Icon(Icons.dashboard_customize_outlined),
+                onPressed: () => _setEditing(true),
+              ),
+          ],
         ),
-        leading: _editing
-            ? IconButton(
-                tooltip: AppLocalizations.of(context).homeBitti,
-                icon: const Icon(Icons.check),
-                onPressed: () => _setEditing(false),
-              )
-            : null,
-        actions: [
-          if (_editing) ...[
-            IconButton(
-              tooltip: AppLocalizations.of(context).homeBosluklariYukariTopla,
-              icon: const Icon(Icons.vertical_align_top),
-              onPressed: ref.read(dashboardLayoutProvider.notifier).compactUp,
-            ),
-            IconButton(
-              tooltip: AppLocalizations.of(context).homeAnaSayfayiSifirla,
-              icon: const Icon(Icons.restart_alt),
-              onPressed: _confirmResetDashboard,
-            ),
-            IconButton(
-              tooltip: AppLocalizations.of(context).homeKartEkle,
-              icon: const Icon(Icons.add),
-              onPressed: () => showCardPicker(context),
-            ),
-          ] else
-            IconButton(
-              tooltip: AppLocalizations.of(context).homeKartlariDuzenle,
-              icon: const Icon(Icons.dashboard_customize_outlined),
-              onPressed: () => _setEditing(true),
-            ),
-        ],
+        body: stickyPanelBelow(body, sizeSheet),
       ),
-      body: stickyPanelBelow(body, sizeSheet),
     );
   }
 }
@@ -300,7 +358,10 @@ Widget stickyPanelBelow(Widget body, Widget? panel) {
   if (panel == null) return body;
   return Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [Expanded(child: body), panel],
+    children: [
+      Expanded(child: body),
+      panel,
+    ],
   );
 }
 

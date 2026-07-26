@@ -48,7 +48,7 @@
 - **Durum:** [x] Boşta
 - **Faz/WP:** —
 - **SAHİP yollar:** —
-- **Son not:** WP-299 kod + otomatik test tamamlandı; gerçek cihaz/ürün kabulü için `Test için bekleyenler`e taşındı. WP-327/334 yüzeyleriyle kesişme olmadı.
+- **Son not:** WP-324 kod/test tamamlandı; proje sahibinin açık yetkisiyle WP-323 cihaz kabulü ön koşulu ve bu WP için cihaz kabulü atlandı (2026-07-26).
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
@@ -73,7 +73,7 @@
 | Sürüm | **`v48` yayında (Latest).** Android APK + Windows MSIX/ZIP GitHub Releases'ta |
 | `v49` | **Çıkmadı.** Başarısız koşumun release'i oluşmadı; yerel ve uzak `v49` tag'i sahip emriyle silindi |
 | Sürüm politikası | 🔴 Sahip onayı olmadan yeni sürüm çıkmaz |
-| Otomatik doğrulama | Son tamamlanan taban: **881 test yeşil**, `flutter analyze` temiz |
+| Otomatik doğrulama | Son tamamlanan taban: **885 test yeşil**, `flutter analyze` temiz |
 | l10n audit | **31 bilinen bulgu**: WP-295 parametrik önizleme metinleri + iç doğrulama mesajları; temiz değil, ayrı hijyen işi |
 | Migration | Repo/local **`0077`** · staging **`0072`** · production **`0070`** |
 | Play Console | Hesap açıldı, doğrulama sürüyor. Hiçbir form doldurulmadı |
@@ -136,8 +136,8 @@ paketi kontrolü kaldı.
 Şu an sadece açılışta tek bir `onboarding_screen` var; uygulama içinde hiçbir
 yerde rehberlik yok.
 
-> ⚠️ **WP-323 → WP-324 seri koşar.** 324, 323'ün kabul edilmiş motoruna yazar;
-> motor oturmadan içerik yazmak iki kez iş demektir.
+> **WP-323 → WP-324 zinciri tamamlandı.** Proje sahibi WP-324 için WP-323 cihaz
+> kabulü ön koşulunu ve ayrıca cihaz kabulünü açıkça atladı (2026-07-26).
 
 #### WP-323: Tanıtım turu motoru 🎈
 
@@ -148,19 +148,21 @@ yerde rehberlik yok.
 
 #### WP-324: Tanıtım turu içerikleri ✍️
 - **Program/Faz:** Faz D · Yeni kullanıcı deneyimi
-- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-323 **kabulünden** sonra
+- **Ajan:** Codex · **Durum:** [x] Tamamlandı · **Bağımlılık:** WP-323 motoru
 - **Problem:** Motor tek başına bir şey anlatmaz; her ekranın kendi kısa tanıtımı gerekir.
 - **Kapsam dışı:** Motor davranışı, yeni ekran tasarımı.
 - **SAHİP dosyalar (yaz):** Ana Sayfa · Sayaç · Kamp Ateşi · Gruplar · İstatistik · Profil ekranlarının tur tanımları · `app/lib/l10n/*.arb`
 - **DOKUNMA:** `app/lib/core/tour/**` (WP-323'ün motoru — **okunur**)
 - **Adımlar:**
-  - [ ] Her ekran için **az sayıda** balon (sahip: "her ekrana 15 tane koyacak halimiz yok")
-  - [ ] Metinler TR + EN
-  - [ ] Hızlı geçmek isteyen üst üste basıp geçebilsin
+  - [x] Ana Sayfa, Sayaç, Gruplar, Kamp Ateşi, İstatistik ve Profil için en fazla 2 balon
+  - [x] Metinler TR + EN; DE/AR geri dönüş dosyaları da üretim paritesi için güncellendi
+  - [x] Hızlı geçiş WP-323 motoruyla korunuyor; boş veri durumları ayrı ve var olmayan hedefe bağlanmıyor
 - **Veri/Migration etkisi:** Yok. · **Ortam/Deploy:** local. · **RLS/Güvenlik:** Yok.
 - **Edge-case'ler:** kullanıcının henüz grubu yok (grup turu ne diyecek) · istatistik boşken · kamp ateşi kilitliyken
 - **Kabul (ölçülebilir):** Her ekranda balon sayısı **≤ 4** · her balon **≤ 2 satır** · veri boşken tur anlamlı metin gösteriyor (boş ekranı işaret etmiyor) · TR ve EN'de taşma yok.
 - **Tuzaklar:** Boş durumda "şurada süren görünür" demek, hiçbir şey görünmeyen bir alanı işaret eder — boş hâl metinleri ayrı yazılmalı.
+- **Kanıt:** `flutter analyze` temiz · tam paket **885 test yeşil** · WP-324 içerik/360 px testleri **4/4** · l10n audit yeni bulgu eklemedi (**31 bilinen taban**).
+- **Kabul notu:** Proje sahibinin açık yetkisiyle cihaz kabulü atlandı; QA kuyruğuna eklenmedi.
 - **Model önerisi:** 🔵 Sonnet
 
 ---
@@ -406,8 +408,7 @@ kartlar worker'a verilir. Güncel ürün sırası:
 
 1. **WP-328** — keşif sıralaması + arama/filtre.
 2. **WP-329** — birincil grup; migration sıcak yüzeyi nedeniyle 328 ile seri planlanır.
-3. **WP-324** — WP-323 cihaz kabulünden sonra tanıtım turu içerikleri.
-4. **WP-276 / WP-277** — staging ops kanıtı; ürün UI işlerinden bağımsız planlanır.
+3. **WP-276 / WP-277** — staging ops kanıtı; ürün UI işlerinden bağımsız planlanır.
 
 `Test için bekleyenler` tablosundaki hiçbir kayıt yeniden worker'a verilmez.
 

@@ -5,11 +5,14 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../core/desktop/desktop_window.dart';
 import '../../core/navigation/nav_index.dart';
+import '../../core/tour/tour_controller.dart';
+import '../../core/tour/tour_host.dart';
 import '../../core/widgets/crowned_avatar.dart';
 import '../../core/widgets/safe_screen_padding.dart';
 import '../../data/providers/auth_providers.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../desktop/desktop_surface.dart';
+import '../tours/app_tours.dart';
 import 'session_history_screen.dart';
 import 'settings_screen.dart';
 import 'widgets/gamification_card.dart';
@@ -25,6 +28,8 @@ class ProfileScreen extends ConsumerStatefulWidget {
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   final _scrollController = ScrollController();
+  final _identityTourAnchor = GlobalKey();
+  final _actionsTourAnchor = GlobalKey();
 
   @override
   void dispose() {
@@ -51,7 +56,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final profile = ref.watch(authStateProvider).value;
 
     // Windows: içerik okuma genişliğinde ortalanır (full-bleed mobil liste değil).
-    return Scaffold(
+    final page = Scaffold(
       appBar: isDesktopWindow
           ? null
           : AppBar(title: Text(AppLocalizations.of(context).profileProfil)),
@@ -66,6 +71,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Center(
+                  key: _identityTourAnchor,
                   child: Stack(
                     clipBehavior: Clip.none,
                     children: [
@@ -135,6 +141,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 GamificationCard(),
                 SizedBox(height: 16),
                 Card(
+                  key: _actionsTourAnchor,
                   child: Column(
                     children: [
                       ListTile(
@@ -185,6 +192,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ],
       ),
     );
+
+    if (ref.watch(navIndexProvider) != AppTab.profile.index) return page;
+
+    ref.watch(tourControllerProvider);
+    final definition = AppTours.profile(
+      AppLocalizations.of(context),
+      identityAnchor: _identityTourAnchor,
+      actionsAnchor: _actionsTourAnchor,
+    );
+    return TourHost(definition: definition, child: page);
   }
 }
 

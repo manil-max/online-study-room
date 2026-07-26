@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/desktop/desktop_window.dart';
 import '../../core/navigation/nav_index.dart';
+import '../../core/tour/tour_controller.dart';
+import '../../core/tour/tour_host.dart';
 import '../../core/widgets/safe_screen_padding.dart';
 import '../../data/models/study_group.dart';
 import '../../data/providers/group_providers.dart';
@@ -12,6 +14,7 @@ import '../home/dashboard_providers.dart';
 import '../home/widgets/group_goal_card.dart';
 import '../home/widgets/group_trend_card.dart';
 import '../home/widgets/leaderboard_card.dart';
+import '../tours/app_tours.dart';
 import 'widgets/campfire_scene.dart';
 import 'widgets/class_chat_screen.dart';
 import 'widgets/class_detail_screen.dart';
@@ -32,11 +35,49 @@ class ClassroomScreen extends ConsumerStatefulWidget {
 
 class _ClassroomScreenState extends ConsumerState<ClassroomScreen> {
   final _scrollController = ScrollController();
+  final _groupsTourAnchor = GlobalKey();
+  final _groupSwitcherTourAnchor = GlobalKey();
+  final _campfireTourAnchor = GlobalKey();
 
   @override
   void dispose() {
     _scrollController.dispose();
     super.dispose();
+  }
+
+  Widget _withIntroductionTours(
+    BuildContext context,
+    AsyncValue<StudyGroup?> groupAsync,
+    Widget child,
+  ) {
+    if (ref.watch(navIndexProvider) != AppTab.groups.index ||
+        groupAsync.asData == null) {
+      return child;
+    }
+
+    ref.watch(tourControllerProvider);
+    final controller = ref.read(tourControllerProvider.notifier);
+    final group = groupAsync.asData?.value;
+    final l10n = AppLocalizations.of(context);
+    final groups = AppTours.groups(
+      l10n,
+      contentAnchor: _groupsTourAnchor,
+      switcherAnchor: _groupSwitcherTourAnchor,
+      hasGroup: group != null,
+    );
+    final definition = controller.seen(groups)
+        ? AppTours.campfire(
+            l10n,
+            campfireAnchor: group == null ? null : _campfireTourAnchor,
+            hasGroup: group != null,
+          )
+        : groups;
+
+    return TourHost(
+      key: ValueKey(definition.storageId),
+      definition: definition,
+      child: child,
+    );
   }
 
   @override
@@ -58,7 +99,11 @@ class _ClassroomScreenState extends ConsumerState<ClassroomScreen> {
     final body = groupAsync.when(
       data: (group) => group == null
           ? const _NoGroupView()
-          : _GroupView(group: group, controller: _scrollController),
+          : _GroupView(
+              group: group,
+              controller: _scrollController,
+              campfireKey: _campfireTourAnchor,
+            ),
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (_, _) => Center(
         child: Text(AppLocalizations.of(context).authBeklenmeyenBirHataOlustu),
@@ -66,13 +111,14 @@ class _ClassroomScreenState extends ConsumerState<ClassroomScreen> {
     );
 
     // Windows: sol rail yeter; büyük başlık/sağ panel yok.
-    return Scaffold(
+    final page = Scaffold(
       appBar: AppBar(
         toolbarHeight: isDesktopWindow ? 48 : kToolbarHeight,
         title: isDesktopWindow ? null : null,
         actions: [
           Builder(
             builder: (iconContext) => IconButton(
+              key: _groupSwitcherTourAnchor,
               tooltip: AppLocalizations.of(context).classroomGrupDegistir,
               icon: const Icon(Icons.swap_horiz),
               onPressed: () => showClassSwitcher(iconContext, ref),
@@ -80,8 +126,9 @@ class _ClassroomScreenState extends ConsumerState<ClassroomScreen> {
           ),
         ],
       ),
-      body: body,
+      body: KeyedSubtree(key: _groupsTourAnchor, child: body),
     );
+    return _withIntroductionTours(context, groupAsync, page);
   }
 }
 
@@ -143,10 +190,15 @@ class _NoGroupView extends ConsumerWidget {
 /// WP-172: sabit ListView — kartlar nested scroll kullanmaz (unbounded yükseklik);
 /// Home dashboard sürükle-bırak burada YOK.
 class _GroupView extends ConsumerWidget {
-  const _GroupView({required this.group, required this.controller});
+  const _GroupView({
+    required this.group,
+    required this.controller,
+    required this.campfireKey,
+  });
 
   final StudyGroup group;
   final ScrollController controller;
+  final Key campfireKey;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -163,7 +215,7 @@ class _GroupView extends ConsumerWidget {
         if (showTimer) ...[const StudyTimerCard(), const SizedBox(height: 8)],
         _CompactGroupHeader(group: group),
         const SizedBox(height: 8),
-        const CampfireScene(),
+        CampfireScene(key: campfireKey),
         const SizedBox(height: 16),
         const GroupGoalCard(),
         const SizedBox(height: 16),
