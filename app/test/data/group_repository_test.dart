@@ -160,6 +160,41 @@ void main() {
   );
 
   test(
+    'birincil grup hesap-genelidir, stale seçimi reddeder ve üyelikte uzlaşır',
+    () async {
+      final repo = InMemoryGroupRepository();
+      final user = _profile('u1', 'Ali');
+      final first = await repo.createGroup(name: 'İlk', creator: user);
+      final second = await repo.createGroup(name: 'İkinci', creator: user);
+
+      final initial = await repo.watchPrimaryGroupPreference(user.id).first;
+      expect(initial.primaryGroupId, first.id);
+      expect(initial.selectionRevision, 1);
+
+      final selected = await repo.setPrimaryGroup(
+        userId: user.id,
+        groupId: second.id,
+        expectedRevision: initial.selectionRevision,
+      );
+      expect(selected.primaryGroupId, second.id);
+      expect(selected.selectionRevision, 2);
+      await expectLater(
+        repo.setPrimaryGroup(
+          userId: user.id,
+          groupId: first.id,
+          expectedRevision: initial.selectionRevision,
+        ),
+        throwsA(isA<GroupException>()),
+      );
+
+      await repo.leaveGroup(second.id, user.id);
+      final reconciled = await repo.watchPrimaryGroupPreference(user.id).first;
+      expect(reconciled.primaryGroupId, first.id);
+      expect(reconciled.selectionRevision, 3);
+    },
+  );
+
+  test(
     'public katılım grubu üyeye ekler ve private grup RPC ile katılamaz',
     () async {
       final repo = InMemoryGroupRepository();

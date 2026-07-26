@@ -35,6 +35,8 @@ class ClassDetailScreen extends ConsumerWidget {
     final userId = ref.watch(authStateProvider).value?.id;
     final isAdmin = userId != null && group.createdBy == userId;
     final repo = ref.read(groupRepositoryProvider);
+    final primaryPreference = ref.watch(primaryGroupPreferenceProvider);
+    final isPrimary = primaryPreference.value?.primaryGroupId == group.id;
 
     return Scaffold(
       appBar: AppBar(
@@ -209,6 +211,40 @@ class ClassDetailScreen extends ConsumerWidget {
                       AppLocalizations.of(context).localeName,
                     ).format(group.createdAt),
                   ),
+                ),
+                ListTile(
+                  leading: Icon(isPrimary ? Icons.home : Icons.home_outlined),
+                  title: Text(AppLocalizations.of(context).primaryGroupTitle),
+                  subtitle: Text(
+                    isPrimary
+                        ? AppLocalizations.of(context).primaryGroupCurrent
+                        : primaryPreference.value?.primaryGroupId == null
+                        ? AppLocalizations.of(context).primaryGroupNotSelected
+                        : AppLocalizations.of(context).primaryGroupOther,
+                  ),
+                  trailing: primaryPreference.isLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : isPrimary
+                      ? const Icon(Icons.check_circle_outline)
+                      : TextButton(
+                          onPressed: userId == null
+                              ? null
+                              : () => _makePrimaryGroup(
+                                  context,
+                                  ref,
+                                  repo,
+                                  userId,
+                                  primaryPreference.value?.selectionRevision ??
+                                      0,
+                                ),
+                          child: Text(
+                            AppLocalizations.of(context).primaryGroupSet,
+                          ),
+                        ),
                 ),
               ],
             ),
@@ -523,6 +559,36 @@ class ClassDetailScreen extends ConsumerWidget {
       );
     } on GroupException {
       messenger.showSnackBar(SnackBar(content: Text(genericError)));
+    }
+  }
+
+  Future<void> _makePrimaryGroup(
+    BuildContext context,
+    WidgetRef ref,
+    GroupRepository repo,
+    String userId,
+    int expectedRevision,
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = AppLocalizations.of(context);
+    try {
+      await repo.setPrimaryGroup(
+        userId: userId,
+        groupId: group.id,
+        expectedRevision: expectedRevision,
+      );
+      ref.invalidate(primaryGroupPreferenceProvider);
+      if (context.mounted) {
+        messenger.showSnackBar(
+          SnackBar(content: Text(l10n.primaryGroupUpdated)),
+        );
+      }
+    } on GroupException {
+      if (context.mounted) {
+        messenger.showSnackBar(
+          SnackBar(content: Text(l10n.authBeklenmeyenBirHataOlustu)),
+        );
+      }
     }
   }
 

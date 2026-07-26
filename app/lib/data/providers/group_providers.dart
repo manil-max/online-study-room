@@ -58,6 +58,35 @@ final userGroupsProvider = StreamProvider<List<StudyGroup>>((ref) {
   return ref.watch(groupRepositoryProvider).watchUserGroups(user.id);
 });
 
+/// Sunucunun sıraladığı hesap-geneli primary tercih. Cihazdaki class switcher
+/// seçimiyle ayrı tutulur; timer/presence bu provider'ı izlememelidir.
+final primaryGroupPreferenceProvider = StreamProvider<PrimaryGroupPreference>((
+  ref,
+) {
+  final user = ref.watch(authStateProvider).value;
+  if (user == null) {
+    return Stream.value(
+      const PrimaryGroupPreference(primaryGroupId: null, selectionRevision: 0),
+    );
+  }
+  return ref
+      .watch(groupRepositoryProvider)
+      .watchPrimaryGroupPreference(user.id);
+});
+
+final primaryGroupProvider = Provider<AsyncValue<StudyGroup?>>((ref) {
+  final groupsAsync = ref.watch(userGroupsProvider);
+  final preferenceAsync = ref.watch(primaryGroupPreferenceProvider);
+  return groupsAsync.whenData((groups) {
+    final primaryId = preferenceAsync.value?.primaryGroupId;
+    if (primaryId == null) return null;
+    for (final group in groups) {
+      if (group.id == primaryId) return group;
+    }
+    return null;
+  });
+});
+
 /// Aktif (görüntülenen) sınıfın id'si. Sınıf değiştirici buradan değiştirir.
 /// Cihazda kalıcı (uygulama yeniden açılınca son aktif sınıf hatırlanır).
 class ActiveGroupNotifier extends Notifier<String?> {

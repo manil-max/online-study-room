@@ -5213,5 +5213,17 @@
   "wp295PreviewHorizontalPosition": "Horizontal position (left − / right +)",
   "wp295PreviewVerticalDepth": "Vertical position (back − / front +)",
   "wp295PreviewDecrease": "Decrease {label} by {amount}",
+  "primaryGroupTitle": "المجموعة الأساسية",
+  "@primaryGroupTitle": {"description": "إعداد المجموعة الأساسية على مستوى الحساب."},
+  "primaryGroupCurrent": "هذه هي مجموعتك الأساسية على مستوى الحساب.",
+  "@primaryGroupCurrent": {"description": "يظهر للمجموعة الأساسية المحددة."},
+  "primaryGroupNotSelected": "اختر مجموعة للأهداف والتقدم على مستوى الحساب.",
+  "@primaryGroupNotSelected": {"description": "يظهر عند تعدد المجموعات من دون اختيار."},
+  "primaryGroupOther": "مجموعة أخرى هي الأساسية لهذا الحساب حاليًا.",
+  "@primaryGroupOther": {"description": "يظهر عندما تكون مجموعة أخرى أساسية."},
+  "primaryGroupSet": "تعيين كأساسية",
+  "@primaryGroupSet": {"description": "زر لتعيين المجموعة المعروضة كأساسية."},
+  "primaryGroupUpdated": "تم تحديث المجموعة الأساسية.",
+  "@primaryGroupUpdated": {"description": "تأكيد بعد الحفظ."},
   "wp295PreviewIncrease": "Increase {label} by {amount}"
 }

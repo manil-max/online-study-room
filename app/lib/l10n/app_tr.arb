@@ -1647,5 +1647,17 @@
   "wp295PreviewHorizontalPosition": "Yatay konum (sol − / sağ +)",
   "wp295PreviewVerticalDepth": "Dikey konum (arka − / ön +)",
   "wp295PreviewDecrease": "{label} değerini {amount} azalt",
+  "primaryGroupTitle": "Birincil grup",
+  "@primaryGroupTitle": {"description": "Hesap genelindeki birincil grup ayarı."},
+  "primaryGroupCurrent": "Bu grup hesabındaki birincil gruptur.",
+  "@primaryGroupCurrent": {"description": "Seçili birincil grup için gösterilir."},
+  "primaryGroupNotSelected": "Hesap genelindeki hedef ve ilerleme için bir grup seçin.",
+  "@primaryGroupNotSelected": {"description": "Birden çok grup varken seçim yoksa gösterilir."},
+  "primaryGroupOther": "Bu hesap için şu anda başka bir grup birincil.",
+  "@primaryGroupOther": {"description": "Başka bir grup birincilse gösterilir."},
+  "primaryGroupSet": "Birincil yap",
+  "@primaryGroupSet": {"description": "Görüntülenen grubu birincil yapan düğme."},
+  "primaryGroupUpdated": "Birincil grup güncellendi.",
+  "@primaryGroupUpdated": {"description": "Birincil grup kaydedilince gösterilen onay."},
   "wp295PreviewIncrease": "{label} değerini {amount} artır"
 }

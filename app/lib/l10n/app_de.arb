@@ -5213,5 +5213,17 @@
   "wp295PreviewHorizontalPosition": "Horizontal position (left − / right +)",
   "wp295PreviewVerticalDepth": "Vertical position (back − / front +)",
   "wp295PreviewDecrease": "Decrease {label} by {amount}",
+  "primaryGroupTitle": "Primäre Gruppe",
+  "@primaryGroupTitle": {"description": "Kontoweite primäre Gruppeneinstellung."},
+  "primaryGroupCurrent": "Dies ist deine kontoweite primäre Gruppe.",
+  "@primaryGroupCurrent": {"description": "Für die ausgewählte primäre Gruppe."},
+  "primaryGroupNotSelected": "Wähle eine Gruppe für kontoweite Ziele und Fortschritt.",
+  "@primaryGroupNotSelected": {"description": "Wenn bei mehreren Gruppen keine Auswahl besteht."},
+  "primaryGroupOther": "Eine andere Gruppe ist derzeit für dieses Konto primär.",
+  "@primaryGroupOther": {"description": "Wenn eine andere Gruppe primär ist."},
+  "primaryGroupSet": "Als primär festlegen",
+  "@primaryGroupSet": {"description": "Schaltfläche zum Setzen der angezeigten Gruppe als primär."},
+  "primaryGroupUpdated": "Primäre Gruppe aktualisiert.",
+  "@primaryGroupUpdated": {"description": "Bestätigung nach dem Speichern."},
   "wp295PreviewIncrease": "Increase {label} by {amount}"
 }

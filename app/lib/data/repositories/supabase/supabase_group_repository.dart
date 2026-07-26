@@ -247,6 +247,53 @@ class SupabaseGroupRepository implements GroupRepository {
   }
 
   @override
+  Stream<PrimaryGroupPreference> watchPrimaryGroupPreference(String userId) {
+    return _client
+        .from('user_group_preferences')
+        .stream(primaryKey: ['user_id'])
+        .eq('user_id', userId)
+        .map((rows) {
+          if (rows.isEmpty) {
+            return const PrimaryGroupPreference(
+              primaryGroupId: null,
+              selectionRevision: 0,
+            );
+          }
+          return PrimaryGroupPreference.fromMap(
+            Map<String, dynamic>.from(rows.single),
+          );
+        });
+  }
+
+  @override
+  Future<PrimaryGroupPreference> setPrimaryGroup({
+    required String userId,
+    required String groupId,
+    required int expectedRevision,
+  }) async {
+    try {
+      final row = await _client.rpc(
+        'set_primary_group',
+        params: {
+          'p_group_id': groupId,
+          'p_expected_revision': expectedRevision,
+        },
+      );
+      if (row == null) {
+        throw const GroupException('Birincil grup güncellenemedi.');
+      }
+      final result = row is List ? row.single : row;
+      return PrimaryGroupPreference.fromMap(
+        Map<String, dynamic>.from(result as Map),
+      );
+    } on GroupException {
+      rethrow;
+    } on PostgrestException catch (e) {
+      throw GroupException('Birincil grup güncellenemedi: ${e.message}');
+    }
+  }
+
+  @override
   Stream<List<Profile>> watchMembers(String groupId) {
     return _client
         .from('group_members')

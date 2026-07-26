@@ -12,6 +12,24 @@ class GroupException implements Exception {
   String toString() => message;
 }
 
+/// Hesap-geneli birincil grup tercihi. `selectionRevision` yalnız sunucunun
+/// sıraladığı değişimlerde artar; cihazdaki gezinti seçimi değildir.
+class PrimaryGroupPreference {
+  const PrimaryGroupPreference({
+    required this.primaryGroupId,
+    required this.selectionRevision,
+  });
+
+  final String? primaryGroupId;
+  final int selectionRevision;
+
+  factory PrimaryGroupPreference.fromMap(Map<String, dynamic> map) =>
+      PrimaryGroupPreference(
+        primaryGroupId: map['primary_group_id'] as String?,
+        selectionRevision: (map['selection_revision'] as num?)?.toInt() ?? 0,
+      );
+}
+
 /// Sınıf/grup soyutlaması. Şimdilik bellek-içi; ileride Supabase ile değiştirilecek.
 abstract class GroupRepository {
   /// Admin-only private avatar upload. DB'ye yalnız versioned object path yazılır.
@@ -57,6 +75,17 @@ abstract class GroupRepository {
   /// Kullanıcının üyesi olduğu TÜM sınıfları (eski → yeni) canlı izler.
   /// Çoklu sınıf desteği (project.md §3.8); boşsa boş liste.
   Stream<List<StudyGroup>> watchUserGroups(String userId);
+
+  /// Hesap-geneli primary tercihini izler. Bu akış hiçbir zaman aktif/gezilen
+  /// grup provider'ını veya timer durumunu değiştirmez.
+  Stream<PrimaryGroupPreference> watchPrimaryGroupPreference(String userId);
+
+  /// Kullanıcının aktif üyesi olduğu grubu CAS revision ile birincil yapar.
+  Future<PrimaryGroupPreference> setPrimaryGroup({
+    required String userId,
+    required String groupId,
+    required int expectedRevision,
+  });
 
   /// Bir sınıfın üyelerini canlı izler.
   Stream<List<Profile>> watchMembers(String groupId);

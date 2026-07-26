@@ -24,6 +24,7 @@ class InMemoryGroupRepository implements GroupRepository {
   // Çoklu sınıf: bir kullanıcı birden çok sınıfa üye olabilir (katılım sırasıyla).
   final Map<String, List<String>> _userGroups = {}; // userId -> [groupId...]
   final Map<String, List<Profile>> _members = {}; // groupId -> üyeler
+  final Map<String, PrimaryGroupPreference> _primaryPreferences = {};
   final StreamController<void> _changes = StreamController<void>.broadcast();
 
   static const _codeAlphabet = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
@@ -88,6 +89,24 @@ class InMemoryGroupRepository implements GroupRepository {
     return List.unmodifiable(list);
   }
 
+  void _reconcilePrimaryGroup(String userId) {
+    final groups = _groupsForUser(userId);
+    final current = _primaryPreferences[userId];
+    String? desired;
+    if (groups.length == 1) {
+      desired = groups.single.id;
+    } else if (groups.length > 1 &&
+        groups.any((group) => group.id == current?.primaryGroupId)) {
+      desired = current?.primaryGroupId;
+    }
+    if (current?.primaryGroupId != desired) {
+      _primaryPreferences[userId] = PrimaryGroupPreference(
+        primaryGroupId: desired,
+        selectionRevision: (current?.selectionRevision ?? 0) + 1,
+      );
+    }
+  }
+
   @override
   Future<StudyGroup> createGroup({
     required String name,
@@ -119,6 +138,7 @@ class InMemoryGroupRepository implements GroupRepository {
     _groups[group.id] = group;
     _members[group.id] = [creator];
     _userGroups.putIfAbsent(creator.id, () => []).add(group.id);
+    _reconcilePrimaryGroup(creator.id);
     _changes.add(null);
     return group;
   }
@@ -233,6 +253,7 @@ class InMemoryGroupRepository implements GroupRepository {
     if (!isAlreadyMember) members.add(member);
     final mine = _userGroups.putIfAbsent(member.id, () => []);
     if (!mine.contains(group.id)) mine.add(group.id);
+    _reconcilePrimaryGroup(member.id);
     _changes.add(null);
     return group;
   }
@@ -243,6 +264,54 @@ class InMemoryGroupRepository implements GroupRepository {
     await for (final _ in _changes.stream) {
       yield _groupsForUser(userId);
     }
+  }
+
+  @override
+  Stream<PrimaryGroupPreference> watchPrimaryGroupPreference(
+    String userId,
+  ) async* {
+    yield _primaryPreferences[userId] ??
+        const PrimaryGroupPreference(
+          primaryGroupId: null,
+          selectionRevision: 0,
+        );
+    await for (final _ in _changes.stream) {
+      yield _primaryPreferences[userId] ??
+          const PrimaryGroupPreference(
+            primaryGroupId: null,
+            selectionRevision: 0,
+          );
+    }
+  }
+
+  @override
+  Future<PrimaryGroupPreference> setPrimaryGroup({
+    required String userId,
+    required String groupId,
+    required int expectedRevision,
+  }) async {
+    _reconcilePrimaryGroup(userId);
+    final current =
+        _primaryPreferences[userId] ??
+        const PrimaryGroupPreference(
+          primaryGroupId: null,
+          selectionRevision: 0,
+        );
+    if (current.selectionRevision != expectedRevision) {
+      throw const GroupException('Birincil grup seçimi güncel değil.');
+    }
+    if (!_groupsForUser(userId).any((group) => group.id == groupId)) {
+      throw const GroupException('Bu grubun aktif üyesi değilsiniz.');
+    }
+    final next = PrimaryGroupPreference(
+      primaryGroupId: groupId,
+      selectionRevision: current.primaryGroupId == groupId
+          ? current.selectionRevision
+          : current.selectionRevision + 1,
+    );
+    _primaryPreferences[userId] = next;
+    _changes.add(null);
+    return next;
   }
 
   @override
@@ -323,6 +392,7 @@ class InMemoryGroupRepository implements GroupRepository {
   Future<void> removeMember(String groupId, String userId) async {
     _members[groupId]?.removeWhere((m) => m.id == userId);
     _userGroups[userId]?.remove(groupId);
+    _reconcilePrimaryGroup(userId);
     _changes.add(null);
   }
 
@@ -336,9 +406,14 @@ class InMemoryGroupRepository implements GroupRepository {
     if (removed?.avatarPath case final path?) {
       _avatarBytes.remove(path);
     }
+    final affectedUserIds =
+        _members[groupId]?.map((member) => member.id).toSet() ?? <String>{};
     _members.remove(groupId);
     for (final ids in _userGroups.values) {
       ids.remove(groupId);
+    }
+    for (final userId in affectedUserIds) {
+      _reconcilePrimaryGroup(userId);
     }
     _changes.add(null);
   }

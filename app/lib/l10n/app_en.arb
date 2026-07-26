@@ -5824,6 +5824,18 @@
     "description": "Accessible tooltip for decreasing a preview control.",
     "placeholders": {"label": {}, "amount": {}}
   },
+  "primaryGroupTitle": "Primary group",
+  "@primaryGroupTitle": {"description": "Account-wide primary group setting."},
+  "primaryGroupCurrent": "This is your account-wide primary group.",
+  "@primaryGroupCurrent": {"description": "Shown for the selected primary group."},
+  "primaryGroupNotSelected": "Choose a group for account-wide goals and progress.",
+  "@primaryGroupNotSelected": {"description": "Shown when multiple groups have no primary choice."},
+  "primaryGroupOther": "Another group is currently primary for this account.",
+  "@primaryGroupOther": {"description": "Shown when a different group is primary."},
+  "primaryGroupSet": "Make primary",
+  "@primaryGroupSet": {"description": "Button to set the displayed group as primary."},
+  "primaryGroupUpdated": "Primary group updated.",
+  "@primaryGroupUpdated": {"description": "Confirmation after saving the primary group."},
   "wp295PreviewIncrease": "Increase {label} by {amount}",
   "@wp295PreviewIncrease": {
     "description": "Accessible tooltip for increasing a preview control.",
