@@ -130,7 +130,10 @@ class StudyTimerService : Service() {
         // V1 global coordination yalnız stopwatch work start/stop'u kapsar.
         // Countdown/Pomodoro için global phase komutu üretmeyiz; mevcut local
         // davranış ve legacy verified queue değişmeden kalır.
-        if (mode == "stopwatch" && phase == "work") {
+        // WP-343 remote mirror, doğrulanmış sunucu snapshot'ını yalnız yerel
+        // yüzeylere uygular. Onu yeni bir native producer gibi kuyruğa yazmak
+        // echo/tekrar start üretirdi; normal local start yolları değişmez.
+        if (mode == "stopwatch" && phase == "work" && startOrigin != "global_timer_mirror") {
             TimerStateStore.appendV2Command(prefs(), "start", startOrigin)
         }
 

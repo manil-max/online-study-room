@@ -16,7 +16,7 @@ import 'auth_providers.dart';
 
 const globalTimerDeviceIdKey = 'global_timer_v2_device_id';
 
-enum GlobalTimerMode { disabled, shadow }
+enum GlobalTimerMode { disabled, shadow, foregroundMirror }
 
 final globalTimerModeProvider = Provider<GlobalTimerMode>(
   (_) => GlobalTimerMode.disabled,
@@ -43,7 +43,7 @@ class GlobalTimerCoordinator {
   }
 
   Future<void> _flush() async {
-    if (_ref.read(globalTimerModeProvider) != GlobalTimerMode.shadow) return;
+    if (_ref.read(globalTimerModeProvider) == GlobalTimerMode.disabled) return;
     final user = _ref.read(authStateProvider).value;
     final prefs = _ref.read(sharedPreferencesProvider);
     final deviceId = prefs.getString(globalTimerDeviceIdKey)?.trim();
@@ -87,6 +87,68 @@ class GlobalTimerCoordinator {
     await prefs.setString(
       TimerForegroundService.pendingIntervalsKey,
       jsonEncode(retained),
+    );
+  }
+
+  /// WP-343: foreground uygulamasına yalnız doğrulanmış sunucu snapshot'ından
+  /// bir talimat üretir. Uygulama işlemi StudyTimerNotifier'da yapılır; böylece
+  /// bu katman normal timer state'ini ya da native görünümü doğrudan değiştirmez.
+  Future<GlobalTimerForegroundDirective?> reconcileForeground({
+    required bool localRunning,
+    required bool localIsMirror,
+    required String? localMirrorRunId,
+  }) async {
+    if (_ref.read(globalTimerModeProvider) !=
+        GlobalTimerMode.foregroundMirror) {
+      return null;
+    }
+    final prefs = _ref.read(sharedPreferencesProvider);
+    final deviceId = prefs.getString(globalTimerDeviceIdKey)?.trim();
+    final user = _ref.read(authStateProvider).value;
+    if (user == null || deviceId == null || deviceId.isEmpty) return null;
+    try {
+      final snapshot = await _ref
+          .read(globalTimerRepositoryProvider)
+          .fetchSnapshot(deviceId: deviceId);
+      if (snapshot.userId != null && snapshot.userId != user.id) return null;
+      final seenKey = 'global_timer_v2_seen_${user.id}_$deviceId';
+      final seen = prefs.getInt(seenKey) ?? 0;
+      if (snapshot.stateVersion <= seen) return null;
+      return planGlobalTimerForegroundApply(
+        snapshot: snapshot,
+        localRunning: localRunning,
+        localIsMirror: localIsMirror,
+        localMirrorRunId: localMirrorRunId,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> acknowledgeForeground(
+    GlobalTimerForegroundDirective directive, {
+    required String status,
+    String? runId,
+    int? runRevision,
+    String? errorCode,
+  }) async {
+    final prefs = _ref.read(sharedPreferencesProvider);
+    final deviceId = prefs.getString(globalTimerDeviceIdKey)?.trim();
+    final user = _ref.read(authStateProvider).value;
+    if (user == null || deviceId == null || deviceId.isEmpty) return;
+    await _ref
+        .read(globalTimerRepositoryProvider)
+        .acknowledge(
+          deviceId: deviceId,
+          stateVersion: directive.snapshot.stateVersion,
+          status: status,
+          runId: runId,
+          runRevision: runRevision,
+          errorCode: errorCode,
+        );
+    await prefs.setInt(
+      'global_timer_v2_seen_${user.id}_$deviceId',
+      directive.snapshot.stateVersion,
     );
   }
 }

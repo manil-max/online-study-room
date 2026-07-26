@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:online_study_room/data/models/global_timer.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_global_timer_repository.dart';
 
 void main() {
@@ -35,5 +36,40 @@ void main() {
     );
     expect(stopped.run, isNull);
     expect(stopped.stateVersion, 2);
+  });
+
+  test(
+    'foreground planner mirrors only a complete remote running snapshot',
+    () {
+      final directive = planGlobalTimerForegroundApply(
+        snapshot: GlobalTimerSnapshot(
+          stateVersion: 4,
+          serverTime: DateTime.utc(2026, 7, 26),
+          run: GlobalTimerRun(
+            id: 'run-1',
+            status: 'running',
+            revision: 2,
+            effectiveStartedAt: DateTime.utc(2026, 7, 26),
+          ),
+        ),
+        localRunning: false,
+        localIsMirror: false,
+        localMirrorRunId: null,
+      );
+      expect(directive.kind, GlobalTimerForegroundDirectiveKind.mirrorStart);
+    },
+  );
+
+  test('remote stop cannot close a normal local timer', () {
+    final directive = planGlobalTimerForegroundApply(
+      snapshot: GlobalTimerSnapshot(
+        stateVersion: 5,
+        serverTime: DateTime.utc(2026, 7, 26),
+      ),
+      localRunning: true,
+      localIsMirror: false,
+      localMirrorRunId: null,
+    );
+    expect(directive.kind, GlobalTimerForegroundDirectiveKind.deferred);
   });
 }

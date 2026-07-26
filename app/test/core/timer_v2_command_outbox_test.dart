@@ -99,6 +99,7 @@ void main() {
         expect(store, contains('"schema_version", 2'));
         expect(store, contains('KEY_PENDING_INTERVALS'));
         expect(service, contains('mode == "stopwatch" && phase == "work"'));
+        expect(service, contains('startOrigin != "global_timer_mirror"'));
         expect(
           service,
           contains('appendV2Command(prefs(), "start", startOrigin)'),

@@ -24,6 +24,7 @@ import '../../core/stats/study_stats.dart';
 import '../../core/utils/duration_format.dart';
 import '../../features/android_widgets/android_widget_service.dart';
 import '../models/daily_stat.dart';
+import '../models/global_timer.dart';
 import '../models/presence.dart';
 import '../models/profile.dart';
 import '../models/study_session.dart';
@@ -273,6 +274,9 @@ class StudyTimerState {
     this.lastUpdatedAt,
     this.liveRunId,
     this.liveRunToken,
+    this.isGlobalTimerMirror = false,
+    this.globalTimerRunId,
+    this.globalTimerRunRevision,
     this.verification = TimerVerification.idle,
     this.settlingSeconds = 0,
     this.settlingBaseline = 0,
@@ -317,6 +321,12 @@ class StudyTimerState {
   final DateTime? lastUpdatedAt;
   final String? liveRunId;
   final String? liveRunToken;
+
+  /// WP-343: başka cihazdaki V2 run'ın salt-görünüm mirror'ı. Bu koşu yerel
+  /// session/XP üretmez; yalnız aynı remote run'ın stop'u kapatabilir.
+  final bool isGlobalTimerMirror;
+  final String? globalTimerRunId;
+  final int? globalTimerRunRevision;
   final TimerVerification verification;
 
   /// WP-250 — "yerleşmeyi bekleyen" kayıt bilgisi. `study_sessions`'a yazılmış
@@ -363,6 +373,10 @@ class StudyTimerState {
     String? liveRunId,
     String? liveRunToken,
     bool clearLiveRun = false,
+    bool? isGlobalTimerMirror,
+    String? globalTimerRunId,
+    int? globalTimerRunRevision,
+    bool clearGlobalTimerMirror = false,
     TimerVerification? verification,
     int? settlingSeconds,
     int? settlingBaseline,
@@ -388,6 +402,15 @@ class StudyTimerState {
       lastUpdatedAt: lastUpdatedAt ?? this.lastUpdatedAt,
       liveRunId: clearLiveRun ? null : (liveRunId ?? this.liveRunId),
       liveRunToken: clearLiveRun ? null : (liveRunToken ?? this.liveRunToken),
+      isGlobalTimerMirror: clearGlobalTimerMirror
+          ? false
+          : (isGlobalTimerMirror ?? this.isGlobalTimerMirror),
+      globalTimerRunId: clearGlobalTimerMirror
+          ? null
+          : (globalTimerRunId ?? this.globalTimerRunId),
+      globalTimerRunRevision: clearGlobalTimerMirror
+          ? null
+          : (globalTimerRunRevision ?? this.globalTimerRunRevision),
       verification: verification ?? this.verification,
       // clearSettling her zaman kazanır (null geçilemeyen alanları sıfırlamanın
       // tek yolu budur; `settlingDay: null` "değiştirme" anlamına gelir).
@@ -426,6 +449,8 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   static const _kActiveLiveRunId = 'timer_active_live_run_id';
   static const _kActiveLiveRunToken = 'timer_active_live_run_token';
   static const _kActiveStartOrigin = 'timer_active_start_origin';
+  static const _kGlobalMirrorRunId = 'timer_global_mirror_run_id';
+  static const _kGlobalMirrorRunRevision = 'timer_global_mirror_run_revision';
 
   /// Native `StudyTimerService` ile çift yönlü method channel: Dart→native
   /// (start/stop), native→Dart (`reconcile`).
@@ -603,6 +628,9 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       ),
       liveRunId: _normalizeRunToken(prefs.getString(_kActiveLiveRunId)),
       liveRunToken: _normalizeRunToken(prefs.getString(_kActiveLiveRunToken)),
+      isGlobalTimerMirror: prefs.getString(_kGlobalMirrorRunId) != null,
+      globalTimerRunId: prefs.getString(_kGlobalMirrorRunId),
+      globalTimerRunRevision: prefs.getInt(_kGlobalMirrorRunRevision),
       verification:
           _normalizeRunToken(prefs.getString(_kActiveLiveRunToken)) == null
           ? (activeStartedAt == null
@@ -665,6 +693,94 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     // WP-342: yalnız rollout açıldığında V2 envelope shadow RPC'ye gider.
     // Bu çağrı legacy timer durumunu veya native action akışını değiştirmez.
     await ref.read(globalTimerCoordinatorProvider).flushShadow();
+    if (_disposed) return;
+    final coordinator = ref.read(globalTimerCoordinatorProvider);
+    final directive = await coordinator.reconcileForeground(
+      localRunning: state.isRunning,
+      localIsMirror: state.isGlobalTimerMirror,
+      localMirrorRunId: state.globalTimerRunId,
+    );
+    if (_disposed || directive == null) return;
+    await _applyGlobalTimerForegroundDirective(directive);
+  }
+
+  Future<void> _applyGlobalTimerForegroundDirective(
+    GlobalTimerForegroundDirective directive,
+  ) async {
+    final coordinator = ref.read(globalTimerCoordinatorProvider);
+    final run = directive.snapshot.run;
+    try {
+      switch (directive.kind) {
+        case GlobalTimerForegroundDirectiveKind.mirrorStart:
+          final remoteStartedAt = run?.effectiveStartedAt;
+          if (run == null || remoteStartedAt == null || state.isRunning) {
+            await coordinator.acknowledgeForeground(
+              directive,
+              status: 'deferred',
+            );
+            return;
+          }
+          state = state.copyWith(
+            isRunning: true,
+            isStopping: false,
+            startedAt: remoteStartedAt,
+            phase: TimerPhase.work,
+            cycle: 1,
+            accumulatedSeconds: 0,
+            lastUpdatedAt: DateTime.now(),
+            clearLiveRun: true,
+            isGlobalTimerMirror: true,
+            globalTimerRunId: run.id,
+            globalTimerRunRevision: run.revision,
+            verification: TimerVerification.statisticsOnly,
+            clearSettling: true,
+          );
+          _persistActiveTimer();
+          await TimerForegroundService.start(
+            startedAt: remoteStartedAt,
+            mode: state.mode.name,
+            phase: state.phase.name,
+            cycle: state.cycle,
+            startOrigin: 'global_timer_mirror',
+          );
+          _startTick();
+          unawaited(_syncTimerSurfaces());
+          await coordinator.acknowledgeForeground(
+            directive,
+            status: 'native_applied',
+            runId: run.id,
+            runRevision: run.revision,
+          );
+        case GlobalTimerForegroundDirectiveKind.mirrorStop:
+          if (!state.isRunning || !state.isGlobalTimerMirror) {
+            await coordinator.acknowledgeForeground(
+              directive,
+              status: 'deferred',
+            );
+            return;
+          }
+          _finish();
+          await coordinator.acknowledgeForeground(
+            directive,
+            status: 'native_applied',
+          );
+        case GlobalTimerForegroundDirectiveKind.deferred:
+          await coordinator.acknowledgeForeground(
+            directive,
+            status: 'deferred',
+            runId: run?.id,
+            runRevision: run?.revision,
+          );
+      }
+    } catch (_) {
+      await coordinator
+          .acknowledgeForeground(
+            directive,
+            status: 'failed',
+            errorCode: 'apply_failed',
+          )
+          .catchError((_) {});
+    }
   }
 
   /// WP-241/243: eşzamanlı reconcile çağrılarını tek çalışmaya birleştirir.
@@ -1106,6 +1222,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       accumulatedSeconds: 0,
       lastUpdatedAt: now,
       clearLiveRun: true,
+      clearGlobalTimerMirror: true,
       verification: TimerVerification.idle,
       // WP-250: yeni çalışma başladı, ekranda tutulan "eski settling" temizlenir.
       clearSettling: true,
@@ -1268,6 +1385,12 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
         // Pes etmeden önce native durumla bir kez uzlaş.
         await _reconcileBackgroundTimer();
         if (_disposed || !state.isRunning) return;
+      }
+      // WP-343 mirror yalnız başka cihazın sunucu-gerçeğini gösterir. Bu
+      // cihazda session/finalize üretmek ek XP ve çift oturum demektir.
+      if (state.isGlobalTimerMirror) {
+        _finish();
+        return;
       }
       final startedAt = state.startedAt;
       final subjectId = state.subjectId;
@@ -1493,6 +1616,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       eventSeq: lastEvent != null ? state.eventSeq + 1 : state.eventSeq,
       lastEvent: lastEvent,
       clearLiveRun: true,
+      clearGlobalTimerMirror: true,
       verification: TimerVerification.idle,
       settlingSeconds: settlingSeconds > 0 ? settlingSeconds : null,
       settlingBaseline: settlingSeconds > 0 ? settlingBaseline : null,
@@ -1595,6 +1719,15 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     } else {
       prefs.remove(_kActiveLiveRunToken);
     }
+    if (state.isGlobalTimerMirror && state.globalTimerRunId != null) {
+      prefs.setString(_kGlobalMirrorRunId, state.globalTimerRunId!);
+      if (state.globalTimerRunRevision != null) {
+        prefs.setInt(_kGlobalMirrorRunRevision, state.globalTimerRunRevision!);
+      }
+    } else {
+      prefs.remove(_kGlobalMirrorRunId);
+      prefs.remove(_kGlobalMirrorRunRevision);
+    }
     prefs.setString(_kActiveStartOrigin, 'dart_app');
   }
 
@@ -1612,6 +1745,8 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     prefs.remove(_kActiveLiveRunId);
     prefs.remove(_kActiveLiveRunToken);
     prefs.remove(_kActiveStartOrigin);
+    prefs.remove(_kGlobalMirrorRunId);
+    prefs.remove(_kGlobalMirrorRunRevision);
   }
 
   Future<void> _showTimerSurfaces({bool requestPermission = false}) async {
