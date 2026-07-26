@@ -9,6 +9,18 @@
 
 ## 🔴 Yüksek Öncelik
 
+- [ ] **v49 stable — sahip cihaz geri bildirimi (2026-07-27, ham not; WP'ye bölünmedi)**
+  - **V49-1 · Çoklu cihaz sayaç senkronu çalışmıyor.** Tablette sayaç başlatıldı, telefonda başlamadı. Bu, V3 global timer programının (WP-336–346) tam da çözmeyi hedeflediği davranıştır — flag'ler kapalı olduğu için mi böyle, yoksa açık bir hata mı var, **önce bu ayrılacak**. Cihazda tekrar üretilebilir; sahip iki cihaza sahip.
+  - **V49-2 · `My Achievement Journey` üstündeki "Primary group" bloğu görüntü kirliliği.** (bkz. ekran görüntüsü 2) Kocaman kart olarak durmayacak; sağ üst köşeye ayar/ikon olarak taşınacak.
+    - Grup seçili değilken kullanıcının fark etmesi için **kırmızı rozet** üç yerde birden görünecek: Profil sekmesi (bugün zaten var), Achievement Journey ve ayarların kendisi + ayar ikonunun üstünde.
+    - 🔴 **Açık tasarım sorusu:** "kırmızı" kırmızı ağırlıklı temayı seçen kullanıcıda kaybolur. Rozet rengi tema paletinden bağımsız bir uyarı token'ına bağlanmalı; çözüm tema motoruyla birlikte kararlaştırılacak.
+  - **V49-3 · Kamp ateşi sahnesi ikinci revizyon.** (bkz. ekran görüntüsü 1) Daha iyi ama bitmedi:
+    - Telefonda figürler ateşten **birazcık daha** uzaklaşabilir (küçük artış, abartılmayacak).
+    - Gökyüzü çok uzun ve boş — üstten kırpılacak; kart da böylece kısalıp daha az yer kaplar.
+    - Yeşil zemin yüksekliği azıcık artacak. 4 kişide sorun yok ama **8 kişide** en üstteki sıranın ucu gökyüzünde kalıyor; kalabalık düzeni bu yükseklikle birlikte kontrol edilecek.
+  - **V49-4 · Tablet yatay düzeni.** Tablet kullanıcıları çoğunlukla yatay tutuyor; yatayda kartlar aşırı genişleyip bozuluyor. Tablet/geniş ekran algısı var mı önce tespit edilecek, sonra tablete özel yerleşim konuşulacak. **Sahiple konuşulmadan koda geçilmez.**
+  - **V49-5 · Tanıtım turları (onboarding/coach marks) revizyonu.** Mantık doğru, uygulama kötü — hedef/konum/sıra ayarları tutmuyor. Baştan gözden geçirilecek.
+
 - [x] **Post-v43 kurtarma: release sadeleştirme + bildirim güveni + sayaç kontratı — WP-269–285 (KAPANDI 2026-07-24)**
   - **Güncel gerçek (2026-07-24, WP-293):** Stable **v45** yayında, production etkin şema `0070`; staging `0070`, beta-v4308 yayında. Sahip 2026-07-24'te stable+beta yayınını ve bildirim/sayaç davranışını cihazda kabul etti; bekleyen cihaz kabulleri kapandı.
   - WP-266–285'in kod/staging/yayın işi tamamlandı ve cihazda doğrulandı. `0066–0070` production'a terfi etti; production `deploy_enabled` yeniden `false` kilitlendi.

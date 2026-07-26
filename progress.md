@@ -50,6 +50,7 @@
   - **Kanıt:** baseline repair [30222267119](https://github.com/manil-max/online-study-room/actions/runs/30222267119) · apply + post-check head 0085 [30222414307](https://github.com/manil-max/online-study-room/actions/runs/30222414307) · release [30222542841](https://github.com/manil-max/online-study-room/actions/runs/30222542841) (android+windows+finalize hepsi yeşil).
   - **Sürüm:** `v49` → `2e19cfb` (WP-352 fix dahil). APK SHA-256 `0628cff960430fb9850eb90f276ce9c6a274d68b96159ef64b15a384de65c935`.
   - **Açık risk:** sahadaki kullanıcılar hâlâ v48 iken production şeması 0085'e çıktı. Eski istemcinin yeni şemayla çökmediği cihazda doğrulanmadı — kabul listesinin ilk maddesi bu.
+- **v49 cihaz geri bildirimi alındı (2026-07-27):** sahip beş bulgu bildirdi (çoklu cihaz sayaç senkronu, Achievement Journey primary-group bloğu, kamp ateşi 2. revizyon, tablet yatay düzeni, tanıtım turları). Ham not `backlog.md` 🔴 Yüksek Öncelik başındadır; WP'ye bölünmesi sahiple birlikte yapılacak.
 - **Doküman temizliği (2026-07-27, sahip emri):** `docs/archive/` dizini, üç senior review turu, v46 sahip geri bildirimi ve kapanmış iki recovery kabul notu repodan kaldırıldı (13 dosya, ~11k satır). Evrensel saat işinde **yalnız nihai plan + C0 uyumluluk kanıtı** kaldı. Hepsi git geçmişinde; kalan md'lerde kırık iç bağlantı yok.
 
 ### Codex Lane
