@@ -13,6 +13,7 @@ import 'package:online_study_room/l10n/app_localizations.dart';
 
 import '../../core/config/supabase_config.dart';
 import '../../core/background/timer_foreground_service.dart';
+import '../../core/background/timer_v2_command_outbox.dart';
 import '../../core/l10n/system_localizations.dart';
 import '../../core/notifications/timer_external_command_store.dart';
 import '../../core/notifications/timer_notification_service.dart';
@@ -44,6 +45,8 @@ SupabaseClient? _supabaseClientOrNull() {
     return null;
   }
 }
+
+const _timerV2CommandFlushAdapter = TimerV2CommandFlushAdapter();
 
 /// Aktif StudyRepository. Remote katman Supabase veya bellek-içi olabilir;
 /// ikisinin üstüne offline-first cache sarılır.
@@ -695,6 +698,12 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     final prefs = ref.read(sharedPreferencesProvider);
     await prefs.reload();
     if (_disposed) return;
+    final authenticatedUser = ref.read(authStateProvider).value;
+    await _timerV2CommandFlushAdapter.bindActiveAccount(
+      prefs,
+      authenticatedUser?.id,
+    );
+    if (_disposed) return;
 
     // WP-250: native taraf ZATEN idle ise (app-kapalı Durdur), bu tur kesinlikle
     // `_finish()` ile bitecek. Aşağıdaki kuyruk kaydı ağ bekler; o sırada ekranın
@@ -723,7 +732,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     // beklerken native'in eklediği YENİ aralığı da siliyordu → oturum kaybı.
     // Artık yalnız işlenen kayıtlar, kalıcı kimlikleriyle kuyruktan düşürülür.
     final raw = prefs.getString(TimerForegroundService.pendingIntervalsKey);
-    if (raw != null && ref.read(authStateProvider).value != null) {
+    if (raw != null && authenticatedUser != null) {
       final processedKeys = <String>{};
       var queueBroken = false;
       try {
@@ -735,6 +744,28 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
             if (_disposed) return;
             if (entry is! Map) continue;
             final key = _pendingEntryKey(entry);
+            final v2Disposition = _timerV2CommandFlushAdapter.inspect(
+              entry,
+              authenticatedAccountId: authenticatedUser.id,
+            );
+            switch (v2Disposition) {
+              case TimerV2CommandDisposition.discard:
+                // Bozuk V2 kaydı legacy interval olarak yorumlanmaz; aksi halde
+                // eksik alanlı komut sonsuza kadar kuyruğu tıkayabilir.
+                processedKeys.add(key);
+                break;
+              case TimerV2CommandDisposition.quarantine:
+                // Hesabı belirsiz/uyuşmayan envelope saklanır. Server apply
+                // gelmeden önce başka hesaba gönderme veya sessiz silme yoktur.
+                break;
+              case TimerV2CommandDisposition.deferred:
+                // WP-340 shadow mod: Delivery C RPC'si gelene kadar V2 komutu
+                // yalnız doğrulanır ve kuyrukta kalır.
+                break;
+              case TimerV2CommandDisposition.notV2:
+                break;
+            }
+            if (v2Disposition != TimerV2CommandDisposition.notV2) continue;
             final runToken = entry['runToken']?.toString();
             final action = entry['action']?.toString();
 
@@ -1072,6 +1103,15 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       clearSettling: true,
     );
     _persistActiveTimer();
+    // Native V2 writer credential taşımaz; yalnız auth kapsamını yazar. Bu
+    // yazım FGS start'ına yetişmezse native kayıt unbound kalır ve adapter onu
+    // karantinaya alır; yanlış hesabın command'ı olamaz.
+    unawaited(
+      _timerV2CommandFlushAdapter.bindActiveAccount(
+        ref.read(sharedPreferencesProvider),
+        ref.read(authStateProvider).value?.id,
+      ),
+    );
     // Native broadcast / apply yarışında reconcile'ın idle sanmaması için
     // fg_mode'u Dart tarafında da hemen running yaz.
     ref

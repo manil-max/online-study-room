@@ -55,10 +55,14 @@
 - **Not:** WP-328 kod/test tamam; local `0078` replay + 192 pgTAP, `flutter analyze`, 893 Flutter test ve l10n audit geçti. Staging/cihaz kabulü QA kuyruğunda.
 
 ### Codex-2 Lane
-- **Durum:** [x] Boşta
-- **Faz/WP:** —
-- **SAHİP yollar:** —
-- **Son not:** WP-337 kod/test tamam; güncel local/staging/production açık legacy-run aggregate'ı olmadığı için WP-341 için NO-GO kanıtı kaydedildi (2026-07-26).
+- **Durum:** [~] Aktif
+- **Faz/WP:** Faz E2 · WP-340
+- **Aşama:** Geliştiriliyor
+- **SAHİP yollar:** `app/android/app/src/main/kotlin/com/manilmax/online_study_room/timer/TimerStateStore.kt` · `app/android/app/src/main/kotlin/com/manilmax/online_study_room/timer/StudyTimerService.kt` (yalnız envelope enqueue) · Dart parser/flush adapter · ilgili Android/Dart contract testleri
+- **Ortak/riskli yüzey:** Native timer/SharedPreferences queue; `TimerExternalCommandStore` semantiği, notification ID/channel/layout/PendingIntent ve `ACTION_STOP_SILENT` değişmez.
+- **Dal:** `main`
+- **Başlangıç/Son güncelleme:** 2026-07-26 18:23 (Europe/Istanbul)
+- **Not:** WP-340 tamamlandı; V2 envelope additive olarak mevcut native queue'ya eklendi, account mismatch fail-closed karantinada ve flush shadow-only. `TimerExternalCommandStore`, bildirim/widget yüzeyleri ve `ACTION_STOP_SILENT` korunuyor. WP-338 tamamlanana kadar WP-339'a geçilmeyecek; remote, beta ve cihaz kabulü zincirin sonundaki ortak QA turunda.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
@@ -301,7 +305,7 @@ Böylece kişisel ve grup istatistiği **asla çelişmez**.
 - **Model önerisi:** 🟣 Pro
 
 #### WP-340: Native V2 durable command envelope ve cold-start flush 📦
-- **Program/Faz:** Faz E2 · Delivery B · **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-337
+- **Program/Faz:** Faz E2 · Delivery B · **Ajan:** Codex-2 · **Durum:** [x] Kod/test tamam · **Bağımlılık:** WP-337
 - **Problem:** External-command köprüsü ve interval kuyruğu global start/stop intent'ini hesap-bağlı, retry edilebilir command olarak temsil etmiyor.
 - **Kapsam dışı:** Native network/credential uplink · server apply · notification/widget UI · remote start.
 - **SAHİP dosyalar (yaz):** `TimerStateStore.kt` · `StudyTimerService.kt` yalnız envelope enqueue noktaları · Dart parser/flush adapter · Android/Dart contract testleri
@@ -313,6 +317,7 @@ Böylece kişisel ve grup istatistiği **asla çelişmez**.
 - **Edge-case'ler:** process kill · start-stop-start · logout/account switch · bozuk JSON · legacy+V2 karışık array · disk failure · duplicate.
 - **Kabul (ölçülebilir):** Eylem başına tek command ID · legacy interval kaybı/çift session 0 · yanlış hesap gönderimi 0 · widget ≤500 ms ve 8 saat drift baseline değişmez.
 - **Tuzaklar:** `commandSeq` distributed sürüm değildir; start'a sahte `runToken` yazılmaz; üçüncü queue açılmaz.
+- **Kanıt:** `flutter analyze` temiz; `flutter test --dart-define-from-file=env.json -r compact` 899 test geçti. Hedefsiz Gradle Kotlin çağrısı varyant/ortam validasyonunda kesildi; beta artefakt/cihaz doğrulaması kullanıcı sırasına göre WP-345 sonrasındaki ortak QA turunda, `env.json` ile yapılacak.
 - **Model önerisi:** 🔴 Opus
 
 #### WP-341: Global timer V2 server çekirdeği ve compatibility migration 🧠

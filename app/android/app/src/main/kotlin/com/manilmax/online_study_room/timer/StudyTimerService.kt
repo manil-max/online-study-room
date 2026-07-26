@@ -127,6 +127,12 @@ class StudyTimerService : Service() {
             liveRunToken = liveRunToken,
             startOrigin = startOrigin,
         )
+        // V1 global coordination yalnız stopwatch work start/stop'u kapsar.
+        // Countdown/Pomodoro için global phase komutu üretmeyiz; mevcut local
+        // davranış ve legacy verified queue değişmeden kalır.
+        if (mode == "stopwatch" && phase == "work") {
+            TimerStateStore.appendV2Command(prefs(), "start", startOrigin)
+        }
 
         startForegroundCompat(buildRunningNotification(startedAtMs))
         notificationManager().notify(
@@ -223,6 +229,7 @@ class StudyTimerService : Service() {
         if (recordInterval) {
             val startedAtMs = TimerStateStore.startedAtMs(p)
             val phase = p.getString(TimerStateStore.KEY_PHASE, "work") ?: "work"
+            val mode = p.getString(TimerStateStore.KEY_MODE, "stopwatch") ?: "stopwatch"
             val nowMs = System.currentTimeMillis()
             val liveRunToken = p.getString(TimerStateStore.KEY_LIVE_RUN_TOKEN, "").orEmpty()
             val startOrigin = p.getString(
@@ -241,6 +248,14 @@ class StudyTimerService : Service() {
                     endMs = nowMs,
                     subject = p.getString(TimerStateStore.KEY_SUBJECT, "") ?: "",
                     origin = startOrigin,
+                )
+            }
+            if (mode == "stopwatch" && phase == "work") {
+                TimerStateStore.appendV2Command(
+                    p,
+                    action = "stop",
+                    origin = startOrigin,
+                    runId = p.getString(TimerStateStore.KEY_LIVE_RUN_ID, null),
                 )
             }
         }

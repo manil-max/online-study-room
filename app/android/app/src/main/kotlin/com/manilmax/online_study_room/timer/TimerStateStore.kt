@@ -28,6 +28,8 @@ object TimerStateStore {
     const val KEY_LIVE_RUN_ID = "flutter.timer_active_live_run_id"
     const val KEY_LIVE_RUN_TOKEN = "flutter.timer_active_live_run_token"
     const val KEY_START_ORIGIN = "flutter.timer_active_start_origin"
+    const val KEY_V2_ACTIVE_ACCOUNT_ID = "flutter.timer_v2_active_account_id"
+    const val KEY_V2_INSTALLATION_ID = "flutter.timer_v2_installation_id"
 
     fun prefs(context: Context): SharedPreferences =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -135,5 +137,50 @@ object TimerStateStore {
                 .put("origin", origin),
         )
         return p.edit().putString(KEY_PENDING_INTERVALS, list.toString()).commit()
+    }
+
+    /**
+     * V2 global-timer niyeti için tek native producer.
+     *
+     * Account bağlanmadıysa kayıt yine kalıcı yazılır; Dart flush adapter bu
+     * envelope'u karantinada bırakır. Bu, logout/account-switch sonrasında eski
+     * komutun yeni hesap adına gönderilmesini engeller.
+     */
+    fun appendV2Command(
+        p: SharedPreferences,
+        action: String,
+        origin: String,
+        runId: String? = null,
+        expectedRunRevision: Long? = null,
+    ): Boolean {
+        if (action != "start" && action != "stop") return false
+        val list = try {
+            JSONArray(p.getString(KEY_PENDING_INTERVALS, "[]") ?: "[]")
+        } catch (_: Exception) {
+            JSONArray()
+        }
+        val installationId = p.getString(KEY_V2_INSTALLATION_ID, null)
+            ?.takeIf { it.isNotBlank() }
+            ?: UUID.randomUUID().toString()
+        val envelope = JSONObject()
+            .put("id", UUID.randomUUID().toString())
+            .put("kind", "global_timer_command")
+            .put("schema_version", 2)
+            .put("command_id", UUID.randomUUID().toString())
+            .put("account_id", p.getString(KEY_V2_ACTIVE_ACCOUNT_ID, "").orEmpty())
+            .put("installation_id", installationId)
+            .put("action", action)
+            .put("client_occurred_at", Instant.now().toString())
+            .put("origin", origin)
+            .put("state", "pending")
+        if (!runId.isNullOrBlank()) envelope.put("run_id", runId)
+        if (expectedRunRevision != null && expectedRunRevision > 0L) {
+            envelope.put("expected_run_revision", expectedRunRevision)
+        }
+        list.put(envelope)
+        return p.edit()
+            .putString(KEY_V2_INSTALLATION_ID, installationId)
+            .putString(KEY_PENDING_INTERVALS, list.toString())
+            .commit()
     }
 }
