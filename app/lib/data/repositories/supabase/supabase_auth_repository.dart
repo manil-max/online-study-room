@@ -247,6 +247,61 @@ class SupabaseAuthRepository implements AuthRepository {
     }
   }
 
+  /// WP-319: mevcut şifre **gerçekten** doğrulanır, sonra yenisi yazılır.
+  ///
+  /// Supabase'de eski şifreyi doğrulayan bir API yok; tek yol aynı şifreyle
+  /// yeniden kimlik doğrulamak. Bu çağrı başarılı olursa aynı kullanıcı için
+  /// yeni bir oturum kurulur (kullanıcı değişmez, dışarı atılmaz); başarısızsa
+  /// `updateUser`'a **hiç gelinmez**.
+  @override
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final email = _client.auth.currentUser?.email;
+    if (email == null || email.isEmpty) {
+      throw const AuthException(
+        'Oturum bulunamadı. Yeniden giriş yap.',
+        code: AuthErrorCode.noSession,
+      );
+    }
+    if (newPassword.length < 6) {
+      throw const AuthException(
+        'Şifre en az 6 karakter olmalı.',
+        code: AuthErrorCode.weakPassword,
+      );
+    }
+    if (newPassword == currentPassword) {
+      throw const AuthException(
+        'Yeni şifre mevcut şifreyle aynı olamaz.',
+        code: AuthErrorCode.samePassword,
+      );
+    }
+
+    try {
+      await _client.auth.signInWithPassword(
+        email: email,
+        password: currentPassword,
+      );
+    } on supa.AuthException catch (e) {
+      throw AuthException(
+        _reauthMessage(e.message),
+        code: _isRateLimit(e.message)
+            ? AuthErrorCode.rateLimited
+            : AuthErrorCode.invalidCurrentPassword,
+      );
+    }
+
+    try {
+      await _client.auth.updateUser(supa.UserAttributes(password: newPassword));
+    } on supa.AuthException catch (e) {
+      throw AuthException(
+        _translate(e.message),
+        code: _isRateLimit(e.message) ? AuthErrorCode.rateLimited : null,
+      );
+    }
+  }
+
   @override
   Future<void> updateEmail(String newEmail) async {
     final key = newEmail.trim().toLowerCase();
@@ -413,6 +468,26 @@ class SupabaseAuthRepository implements AuthRepository {
       return 'E-posta doğrulaması gerekiyor.';
     }
     return message;
+  }
+
+  /// WP-319: hız sınırı mı, yoksa yanlış şifre mi? İkisi kullanıcıya **farklı**
+  /// şey söyler: biri "yanlış yazdın", diğeri "biraz bekle".
+  bool _isRateLimit(String message) {
+    final m = message.toLowerCase();
+    return m.contains('security purposes') ||
+        m.contains('rate limit') ||
+        m.contains('too many') ||
+        m.contains('only request');
+  }
+
+  /// Yeniden kimlik doğrulama hatası. Buraya yalnız "mevcut şifre" denemesi
+  /// düşer, giriş ekranı değil — bu yüzden mesaj "e-posta veya şifre hatalı"
+  /// değil, doğrudan **mevcut şifre** hakkındadır.
+  String _reauthMessage(String message) {
+    if (_isRateLimit(message)) {
+      return 'Çok sık denedin. Biraz bekleyip tekrar dene.';
+    }
+    return 'Mevcut şifre hatalı.';
   }
 
   /// Recovery/OTP akışına özel hata çevirisi (kod süresi + hız sınırı).

@@ -1564,5 +1564,15 @@
   "buildYapilandirmaHatasiGovdesi": "Yanlış ortama veri yazmamak için bağlantı kapatıldı. Uygulamayı doğru kanal ve backend ayarlarıyla yeniden derleyin.",
   "buildYapilandirmaHatasiKodu": "Tanı kodu: {code}",
   "homeKartBoyutIpucu": "Boyut {width}×{height} • dokun ve ayarla",
-  "statsEnVerimliSaat": "En verimli saat: {hour}:00 ({duration})"
+  "statsEnVerimliSaat": "En verimli saat: {hour}:00 ({duration})",
+  "profileMevcutSifre": "Mevcut şifre",
+  "profileYeniSifreTekrar": "Yeni şifre (tekrar)",
+  "profileSifrelerEslesmiyor": "Şifreler eşleşmiyor.",
+  "profileMevcutSifreHatali": "Mevcut şifre hatalı.",
+  "profileYeniSifreEskisiyleAyni": "Yeni şifre mevcut şifreyle aynı olamaz.",
+  "profileCokFazlaDeneme": "Çok sık denedin. Biraz bekleyip tekrar dene.",
+  "profileSifremiUnuttum": "Şifremi unuttum",
+  "profileSifreSifirlamaGonderildi": "Şifre sıfırlama bağlantısı e-postana gönderildi.",
+  "profileMevcutSifreniGir": "Mevcut şifreni gir.",
+  "profileOturumBulunamadiGirisYap": "Oturum bulunamadı. Yeniden giriş yap."
 }

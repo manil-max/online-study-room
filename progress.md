@@ -44,15 +44,11 @@
 - **SAHİP yollar:** —
 
 ### Claude Lane
-- **Durum:** [~] Aktif · **Aşama:** Geliştiriliyor · **Dal:** `main`
-- **Faz/WP:** **WP-319** — Şifre değiştirme + sıfırlama (Faz C) · **Başlangıç:** 2026-07-26 (Europe/Istanbul) · **Son güncelleme:** 2026-07-26
-- **SAHİP yollar:**
-  - `app/lib/features/profile/account_settings_screen.dart`
-  - `app/lib/data/repositories/auth_repository.dart` · `app/lib/data/repositories/supabase/supabase_auth_repository.dart` · `app/lib/data/repositories/in_memory/in_memory_auth_repository.dart`
-  - `app/lib/l10n/app_{en,tr,de,ar}.arb` + üretilen `app_localizations*.dart`
-  - `app/test/data/auth_repository_test.dart` · `app/test/features/profile/change_password_test.dart` (yeni)
-- **Ortak/riskli yüzey:** 🟡 **yalnız `app/lib/l10n/*.arb`.** WP-317'nin SAHİP listesinde l10n **yok** ama admin yanıt UI'ı metin isteyecektir. Codex arb'ye girecekse **haber versin, seri koşarız**; arb düzenlemem eklemeli ve tek turda yapılıyor. Kesişmeyen yüzeyler: `app/lib/features/admin/**`, `supabase_admin_repository.dart`, `supabase/migrations/**`, `supabase/tests/**` — **hiçbirine girilmiyor**.
-- **Not:** Kartın "şifre değiştirme hiç yok" iddiası **yanlış** — var ([account_settings_screen.dart:113](app/lib/features/profile/account_settings_screen.dart:113)) ama yalnız "yeni şifre" soruyor, mevcut şifreyi **hiç doğrulamıyor**. Yani kartın kendi uyardığı **ölü anahtar** zaten üretimde. Gerçek iş: doğrulamayı eklemek.
+- **Durum:** [x] Boşta
+- **Faz/WP:** — · **Son iş:** **WP-319** ✅ kod/test tamam (2026-07-26)
+- **SAHİP yollar:** —
+- ✅ **WP-319 (2026-07-26)** — 🔴 **Kartın problem cümlesi yanlıştı, ama gerçek daha kötüydü:** şifre değiştirme vardı ve **mevcut şifreyi hiç doğrulamıyordu**. Yani kartın "en kötü ihtimal" diye uyardığı ölü anahtar **üretimdeydi**: açık bir oturumu eline geçiren biri şifreyi tek diyalogda değiştirebiliyordu. Doğrulama artık repository sözleşmesinde (`changePassword`), ekran atlayamaz. `analyze` temiz · **836 test yeşil** (12 yeni) · **iki katmanlı kırmızı-yeşil kanıt**. Faz B (Codex, admin) ve kamp ateşi önizleme dosyalarıyla **kesişme olmadı**.
+- 🟡 **WP-319'dan çıkan sahip sorusu:** şifre değişince **diğer cihazların oturumu** açık kalıyor (Supabase varsayılanı). Global sign-out eklensin mi? Kullanıcının kendi diğer cihazlarını da atar. Ayrıntı WP-319 kartında.
 - ✅ **WP-322 (2026-07-26)** — Faz B ile paralel koştu, Codex WP-316 ile **kesişim olmadı** (`pubspec.yaml`'a hiç girilmedi, `supabase/migrations/**`'e dokunulmadı). `flutter analyze` temiz · **10 ardışık tam suit koşumu 10/10 yeşil, her turda 820 test** · kararsızlık için kırmızı-yeşil kanıt alındı. Kartın passkeys ve sürüm maddeleri **konusuz** çıktı (gerekçe kartta).
 - 🟡 **Sahibe açık kalan tek soru:** `pubspec.yaml`'daki `version: 1.0.43-beta.9+4309` yayınlanan etiketlerle uyumsuz ama **hiçbir mağaza paketine ulaşmıyor** (sürüm etiketten türetiliyor). Kozmetik hijyen olarak hizalansın mı, yoksa öyle mi kalsın? Sürüm politikası "onaysız dokunma" dediği için **bekletildi**.
 - ✅ **v49 git tag'i silindi (2026-07-26 11:49, sahip emri):** uzak (`origin`) + yerel. Karşılığında release yoktu; sıradaki sürüm o numarayı temiz kullanabilir.
@@ -72,9 +68,14 @@
 - 🔴 **BETA 1 GERİ BİLDİRİMİ (sahip, 2026-07-25) → WP-302/303/304 açıldı ve ÜÇÜ DE KOD/TEST TAMAM.** `analyze` 0, **795 test yeşil**, l10n audit temiz. Sahip sırası: bu üçü stable'a → sonra kalan kod işleri → beta 2 → stable.
 
 ### Codex Lane
-- **Durum:** [x] Boşta
-- **Faz/WP:** —
-- **SAHİP yollar:** —
+- **Durum:** [~] Aktif
+- **Faz/WP:** Yeni Özellik Turu · WP-295
+- **Aşama:** Parametrik canlı önizleme + geometri/poz ön-teşhisi
+- **SAHİP yollar:** `app/lib/features/classroom/widgets/campfire_scene.dart` · `app/lib/features/classroom/widgets/camp_critter.dart` · yalnız WP-295 ilgili testler/önizleme dosyaları
+- **Ortak/riskli yüzey:** `progress.md` (yalnız Codex lane + WP-295 kartı). Admin/auth/settings/l10n/migration/tooling yüzeylerine girilmez.
+- **Dal:** `main`
+- **Başlangıç:** 2026-07-26 12:33 (Europe/Istanbul)
+- **Not:** Claude yeni işe başladığını henüz lane'e yazmadı. WP-295, mevcut kartta admin/auth/settings/migration yüzeylerinden ayrık olduğu için claim edildi; Claude claim'i görünür olunca kesişim tekrar kontrol edilecek.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
@@ -216,8 +217,9 @@ göremiyoruz, cevap yazamıyoruz, liste temizlenmiyor.
 
 #### WP-319: Şifre değiştirme + sıfırlama 🔑
 - **Program/Faz:** Faz C · Hesap & güvenlik · *(eski WP-287'nin kalan işini devralır)*
-- **Ajan:** — · **Durum:** [ ] Bekliyor
-- **Problem:** Şifre değiştirme **hiç yok** — `account_settings_screen.dart` yalnız hesap silmeyi taşıyor. Mağazaya "temel şeyleri eksik" bir uygulama çıkamaz.
+- **Ajan:** **Claude** · **Durum:** ✅ **KOD/TEST TAMAM** (2026-07-26) · Faz B/F ile paralel koştu, çakışma olmadı
+- **Kanıt:** `flutter analyze` **temiz** · **836 test yeşil** (12 yeni: 6 repository + 6 widget) · ölü anahtar için **iki katmanlı kırmızı-yeşil kanıt** alındı · kanıt etiketi **Kodda doğrulandı** (cihaz QA'sı bekliyor: "Şifremi unuttum" e-postasının Android derin bağlantısı).
+- **Problem:** 🔴 **Kartın problem cümlesi yanlıştı.** Şifre değiştirme **vardı** ([account_settings_screen.dart:113](app/lib/features/profile/account_settings_screen.dart:113)) — ama yalnız "yeni şifre" soruyor ve doğrudan `updatePassword` çağırıyordu. Supabase `updateUser(password:)` eski şifreyi doğrulamadığı için bu, **kartın kendi uyardığı ölü anahtarın ta kendisiydi ve üretimdeydi**: açık bırakılmış bir oturumu eline geçiren biri şifreyi tek diyalogda değiştirebiliyordu. Yani iş "eksik özelliği eklemek" değil, **açık bir güvenlik gerilemesini kapatmak**tı.
 - **Kapsam dışı:** Sosyal giriş (Google/Apple) eklemek, iki adımlı doğrulama, oturum yönetimi ekranı.
 - **SAHİP dosyalar (yaz):**
   - `app/lib/features/profile/account_settings_screen.dart`
@@ -225,19 +227,38 @@ göremiyoruz, cevap yazamıyoruz, liste temizlenmiyor.
   - `app/lib/l10n/*.arb` (yeni anahtarlar)
 - **DOKUNMA:** `app/lib/core/navigation/**` · `main.dart` · diğer ayar ekranları (WP-320 orada)
 - **Adımlar:**
-  - [ ] Üç alan: *mevcut şifre · yeni şifre · yeni şifre tekrar*
-  - [ ] 🔴 **Mevcut şifreyi gerçekten doğrula** — Supabase `updateUser(password:)` eski şifreyi **doğrulamaz**; önce o şifreyle yeniden kimlik doğrulaması yapılmalı
-  - [ ] Aynı ekranda **"Şifremi unuttum"** yolu
-  - [ ] Hata durumları: yanlış mevcut şifre · zayıf yeni şifre · iki alan uyuşmuyor
-  - [ ] 4 dilde metin (TR/EN zorunlu; DE/AR WP-321'de düşecek)
+  - [x] ✅ Üç alan: *mevcut şifre · yeni şifre · yeni şifre tekrar* — `_ChangePasswordDialog`, alanlar `Key`'li (test dile bağlı değil)
+  - [x] ✅ 🔴 **Mevcut şifre gerçekten doğrulanıyor.** Doğrulama ekrana değil **repository sözleşmesine** kondu: yeni `AuthRepository.changePassword({currentPassword, newPassword})`. Supabase implementasyonu önce aynı şifreyle `signInWithPassword` yapar; başarısızsa `updateUser`'a **hiç gelinmez**. Böylece bu metodu çağıran doğrulamayı **atlayamaz** — eski tasarımda ekran unutabilirdi ve unutmuştu. `updatePassword` recovery (OTP/derin bağlantı) yolu için **duruyor**; orada kimlik zaten kanıtlı, testle korundu.
+  - [x] ✅ Aynı ekranda **"Şifremi unuttum"** — oturumdaki adrese sıfırlama e-postası. ⚠️ Bilerek **kod girme ekranına yönlendirmiyor**: free tier şablonunda `{{ .Token }}` yok, e-postada kod yok; kod alanı açmak bu WP'nin kapattığı ölü anahtar deseninin aynısı olurdu.
+  - [x] ✅ Hata durumları ayrı ayrı: yanlış mevcut şifre · zayıf · iki alan uyuşmuyor · yeni=mevcut · hız sınırı · oturum yok. Hata **diyaloğun içinde** görünüyor (snackbar değil) — kullanıcı üç alanı yeniden yazmıyor.
+  - [x] ✅ 4 dilde metin (10 yeni anahtar × en/tr/de/ar) — l10n audit'te **eşlik hatası yok**.
+  - [x] ✅ **Hata nedeni artık kod taşıyor** (`AuthErrorCode`). Mevcut ekranlar nedeni Türkçe mesaja `contains` uygulayarak ayırıyordu ([auth_screen.dart:254](app/lib/features/auth/auth_screen.dart:254)); mesaj bir gün düzenlenince dal sessizce "beklenmeyen hata"ya düşerdi. Yeni yol koda bakar. Eski çağrı yerleri **değişmedi** (`code` isteğe bağlı).
 - **Veri/Migration etkisi:** Yok (Auth API).
 - **Ortam/Deploy:** local + staging. Staging Site URL/allowlist ayarı otomatik: [`supabase-auth-config.yml`](.github/workflows/supabase-auth-config.yml).
 - **RLS/Güvenlik:** 🔴 Kullanıcı **yalnız kendi** şifresini değiştirir. Şifreler log'a/analitiğe **yazılmaz**. Başarısız denemeler oran sınırına takılmalı.
-- **Edge-case'ler:** çevrimdışı · oturum süresi dolmuş · e-posta doğrulanmamış hesap · şifre değişince diğer cihazların oturumu ne olacak (karara bağlanmalı)
-- **Kabul (ölçülebilir):** Yanlış mevcut şifreyle işlem **reddediliyor** (alan dekoratif değil — bu test yazılı olacak) · doğru şifreyle değişiyor ve yeni şifreyle giriş yapılabiliyor · "Şifremi unuttum" akışı Android'de uçtan uca çalışıyor · şifre hiçbir log satırında görünmüyor.
+- **Edge-case'ler:** çevrimdışı · oturum süresi dolmuş · e-posta doğrulanmamış hesap · 🟡 **şifre değişince diğer cihazların oturumu** — aşağıya taşındı, sahip kararı bekliyor.
+- **Kabul (ölçülebilir):** ✅ Yanlış mevcut şifreyle işlem **reddediliyor ve şifre değişmiyor** — test yalnız "hata attı mı"ya bakmıyor, reddedilen istekten sonra **eski şifreyle giriş hâlâ çalışıyor mu** diye kontrol ediyor (doğrulamayı yapıp yine de yazan implementasyonu yakalar) · ✅ doğru şifreyle değişiyor, eski şifre geçersiz kılınıyor · ✅ tekrar alanı uyuşmazsa ağ isteği **hiç açılmıyor** (`changeCalls == 0`) · 🕰️ "Şifremi unuttum" akışının Android uçtan uca kanıtı **cihaz turunda** alınacak · ✅ şifre hiçbir log satırına yazılmıyor (kod yolunda `print`/log yok).
 - **Tuzaklar:** 🔴 **Ölü anahtar riski buranın tam merkezinde.** "Mevcut şifre" alanı doğrulama yapmıyorsa kullanıcı korunduğunu sanır — bu, alanın hiç olmamasından **kötüdür**.
   🔴 **Devralınan engel:** Supabase free tier, varsayılan e-posta sağlayıcısıyla kurtarma şablonunu hem API'den hem panelden kilitliyor → `{{ .Token }}` eklenemiyor → **Windows/masaüstündeki 6 haneli kod yolu, özel SMTP (veya ücretli plan) bağlanana kadar çalışmaz.** Android derin bağlantı yolu çalışır. Sahip: "şifreyi de sonra test ederiz" — değiştirme ve sıfırlama **aynı turda** test edilecek.
 - **Model önerisi:** 🔴 Opus (güvenlik yüzeyi)
+
+##### WP-319 kırmızı-yeşil kanıtı (2026-07-26)
+
+Ölü anahtar testinin gerçekten koruduğunu görmek için savunma **iki katmanda ayrı ayrı** söküldü:
+
+| Deney | Ne yapıldı | Sonuç |
+| --- | --- | --- |
+| A — ekran katmanı | `_submit` eski hâline döndürüldü (`updatePassword(yeni)`), yani doğrulama atlandı | Widget testi **düştü**: `Found 0 widgets with text "Mevcut şifre hatalı."` — 6 testten yalnız ölü anahtarı bekleyen düştü, yani iddia **dar ve isabetli** |
+| B — repository katmanı | `account.password != currentPassword` kontrolü kaldırıldı | Repository testi **düştü**: beklenen `invalid_current_password` yerine istek başarıyla döndü |
+
+İkisi de sonda geri alındı; `analyze` temiz, **836 test yeşil**.
+
+🟡 **Sahip kararı bekleyen tek konu — şifre değişince diğer cihazların oturumu.**
+Bugünkü davranış: diğer cihazlar **açık kalır** (Supabase varsayılanı; `updateUser`
+oturumları geçersiz kılmaz). "Şifremi değiştirdim" diyen bir kullanıcı genelde
+*"o kişi artık giremesin"* ister — istenirse global sign-out eklenebilir, ama
+kullanıcının kendi diğer cihazlarını da atar. Ayrı ve küçük bir iş; bilerek
+**yapılmadı**, çünkü karar ürün tarafında.
 
 #### WP-320: Ayarlar bilgi mimarisi 🧭
 - **Program/Faz:** Faz C · Ayarlar hijyeni
@@ -819,7 +840,7 @@ DALGA 7  WP-295 Oturma+2 poz → WP-299 Gökyüzü → WP-300 Konum   (SERİ, ay
 
 ### WP-295: Kozmetik — kamp ateşi oturma düzeni + iki poz 🔥 *(rev. 2026-07-25)*
 - **Program/Faz:** Yeni Özellik Turu · Aşama A (son) · (plan §3 F-08 → notlar **F-09**)
-- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** ✅ **Sahip konuşması yapıldı (2026-07-25)** — şart kapandı. **Asset kararı: tasarımcıya para verilmiyor, hayvanlar vektör kalıyor.**
+- **Ajan:** Codex · **Durum:** [~] Parametrik önizleme hazırlanıyor · **Bağımlılık:** ✅ **Sahip konuşması yapıldı (2026-07-25)** — şart kapandı. **Asset kararı: tasarımcıya para verilmiyor, hayvanlar vektör kalıyor.**
 - **Problem (sahip maddeleri 1 ve 2):** (a) `angle = π/2 + 2πi/n` ([campfire_scene.dart:264](app/lib/features/classroom/widgets/campfire_scene.dart:264)) **her n için** birini ateşin tam önüne (`sin=1`, ateşin üstünü kapatıyor), birini tam arkasına (`sin=-1`, `scale 0.6`, alevin içinde) koyuyor — sahip "önündeki ve arkasındaki görünmüyor" dedi, render bunu doğruladı. (b) Poz sayısı 4; sahip **2** istiyor: çalışmıyorken solgun boşta, çalışırken marşmelov.
 - **Kapsam dışı:** 🔴 Gökyüzü/gündüz-gece (**WP-299**) · `groups.location` (**WP-300**) · sunucu gün sınırı (**WP-301**) · taç (WP-292) · tema motoru · XP/başarım mantığı · **PNG/Rive asset hattı** (betadan sonraki ayrı program).
 - **SAHİP dosyalar (yaz):** `app/lib/features/classroom/widgets/campfire_scene.dart`, `app/lib/features/classroom/widgets/camp_critter.dart`, ilgili testler.

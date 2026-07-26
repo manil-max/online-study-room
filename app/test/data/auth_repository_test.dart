@@ -112,4 +112,130 @@ void main() {
       throwsA(isA<AuthException>()),
     );
   });
+
+  // WP-319: şifre değiştirmede mevcut şifre **gerçekten** doğrulanır.
+  //
+  // Buranın asıl derdi "hata fırlatıyor mu" değil, **şifre değişmemiş olması**.
+  // Yalnız `throwsA` iddiası, doğrulamayı yapıp yine de yeni şifreyi yazan bir
+  // implementasyonu yakalayamaz — o yüzden her olumsuz durumdan sonra eski
+  // şifreyle giriş **hâlâ çalışıyor mu** diye bakılıyor.
+  group('WP-319 changePassword — mevcut şifre doğrulaması', () {
+    Future<InMemoryAuthRepository> signedIn() async {
+      final repo = InMemoryAuthRepository();
+      await repo.signUp(
+        email: 'a@b.com',
+        password: 'eski123',
+        displayName: 'Ali',
+      );
+      return repo;
+    }
+
+    test('doğru mevcut şifreyle değişir; eski şifre artık geçmez', () async {
+      final repo = await signedIn();
+
+      await repo.changePassword(
+        currentPassword: 'eski123',
+        newPassword: 'yeni123',
+      );
+
+      await repo.signOut();
+      final profile = await repo.signIn(email: 'a@b.com', password: 'yeni123');
+      expect(profile.displayName, 'Ali');
+      await repo.signOut();
+      expect(
+        () => repo.signIn(email: 'a@b.com', password: 'eski123'),
+        throwsA(isA<AuthException>()),
+        reason: 'eski şifre geçersiz kılınmalı',
+      );
+    });
+
+    test('🔴 yanlış mevcut şifre reddedilir ve şifre DEĞİŞMEZ', () async {
+      final repo = await signedIn();
+
+      await expectLater(
+        repo.changePassword(
+          currentPassword: 'yanlis99',
+          newPassword: 'yeni123',
+        ),
+        throwsA(
+          isA<AuthException>().having(
+            (e) => e.code,
+            'code',
+            AuthErrorCode.invalidCurrentPassword,
+          ),
+        ),
+      );
+
+      await repo.signOut();
+      // Asıl kanıt: yazma HİÇ olmamalı.
+      expect(
+        () => repo.signIn(email: 'a@b.com', password: 'yeni123'),
+        throwsA(isA<AuthException>()),
+        reason: 'reddedilen istek yeni şifreyi yazmış olamaz',
+      );
+      final profile = await repo.signIn(email: 'a@b.com', password: 'eski123');
+      expect(profile.displayName, 'Ali', reason: 'eski şifre korunmalı');
+    });
+
+    test('kısa yeni şifre reddedilir (kod: weak_password)', () async {
+      final repo = await signedIn();
+
+      await expectLater(
+        repo.changePassword(currentPassword: 'eski123', newPassword: '123'),
+        throwsA(
+          isA<AuthException>().having(
+            (e) => e.code,
+            'code',
+            AuthErrorCode.weakPassword,
+          ),
+        ),
+      );
+    });
+
+    test('yeni şifre mevcutla aynı olamaz (kod: same_password)', () async {
+      final repo = await signedIn();
+
+      await expectLater(
+        repo.changePassword(currentPassword: 'eski123', newPassword: 'eski123'),
+        throwsA(
+          isA<AuthException>().having(
+            (e) => e.code,
+            'code',
+            AuthErrorCode.samePassword,
+          ),
+        ),
+      );
+    });
+
+    test('oturum yokken reddedilir (kod: no_session)', () async {
+      final repo = InMemoryAuthRepository();
+
+      await expectLater(
+        repo.changePassword(
+          currentPassword: 'eski123',
+          newPassword: 'yeni123',
+        ),
+        throwsA(
+          isA<AuthException>().having(
+            (e) => e.code,
+            'code',
+            AuthErrorCode.noSession,
+          ),
+        ),
+      );
+    });
+
+    // Recovery (OTP/derin bağlantı) yolunun mevcut şifreye ihtiyacı YOKTUR;
+    // kimlik zaten kanıtlanmıştır. `updatePassword` bu yüzden duruyor —
+    // yanlışlıkla silinirse şifre sıfırlama akışı çöker.
+    test('updatePassword recovery yolu için mevcut şifre istemez', () async {
+      final repo = await signedIn();
+
+      await repo.updatePassword('yeni123');
+
+      await repo.signOut();
+      final profile = await repo.signIn(email: 'a@b.com', password: 'yeni123');
+      expect(profile.displayName, 'Ali');
+    });
+  });
 }

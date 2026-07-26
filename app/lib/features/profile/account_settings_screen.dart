@@ -110,73 +110,60 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
     }
   }
 
+  /// WP-319: şifre değiştirme.
+  ///
+  /// 🔴 **Önceki hâli ölü anahtardı:** diyalog yalnız "yeni şifre" soruyor,
+  /// doğrudan `updatePassword` çağırıyordu — Supabase `updateUser(password:)`
+  /// eski şifreyi **doğrulamaz**. Yani açık bırakılmış bir oturumu eline geçiren
+  /// biri şifreyi tek ekranda değiştirebiliyordu. Artık doğrulama repository
+  /// sözleşmesinde ([AuthRepository.changePassword]); bu ekran onu atlayamaz.
   Future<void> _changePassword() async {
-    final controller = TextEditingController();
-    final formKey = GlobalKey<FormState>();
-
-    final newPassword = await showDialog<String>(
+    final outcome = await showDialog<_PasswordDialogOutcome>(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text(AppLocalizations.of(context).profileSifreDegistir),
-          content: Form(
-            key: formKey,
-            child: TextFormField(
-              controller: controller,
-              decoration: InputDecoration(
-                labelText: AppLocalizations.of(context).profileYeniSifre,
-                border: OutlineInputBorder(),
-              ),
-              obscureText: true,
-              validator: (val) {
-                if (val == null || val.length < 6) {
-                  return AppLocalizations.of(context).profileSifreEnAz6;
-                }
-                return null;
-              },
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(AppLocalizations.of(context).profileIptal),
-            ),
-            FilledButton(
-              onPressed: () {
-                if (formKey.currentState?.validate() == true) {
-                  Navigator.pop(context, controller.text);
-                }
-              },
-              child: Text(AppLocalizations.of(context).profileKaydet),
-            ),
-          ],
-        );
-      },
+      builder: (_) => const _ChangePasswordDialog(),
     );
+    if (!mounted || outcome == null) return;
 
-    if (newPassword == null || newPassword.isEmpty) return;
+    if (outcome == _PasswordDialogOutcome.forgot) {
+      await _sendPasswordReset();
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          AppLocalizations.of(context).profileSifreBasariylaGuncellendi,
+        ),
+      ),
+    );
+  }
+
+  /// "Şifremi unuttum" — oturumdaki adrese sıfırlama e-postası gönderir.
+  ///
+  /// Bilerek **kod girme ekranına yönlendirmiyor**: Supabase free tier
+  /// varsayılan e-posta sağlayıcısıyla kurtarma şablonunu kilitliyor, şablona
+  /// `{{ .Token }}` eklenemiyor, yani e-postada 6 haneli kod **yok**. Kod alanı
+  /// açmak tam da bu WP'nin kapattığı ölü anahtar deseni olurdu. Özel SMTP
+  /// bağlanınca buraya kod yolu eklenebilir.
+  Future<void> _sendPasswordReset() async {
+    final l10n = AppLocalizations.of(context);
+    final email = ref.read(authRepositoryProvider).currentUserEmail;
+    if (email == null || email.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(l10n.profileOturumBulunamadiGirisYap),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+      return;
+    }
 
     setState(() => _isLoading = true);
     try {
-      await ref.read(authRepositoryProvider).updatePassword(newPassword);
+      await ref.read(authRepositoryProvider).sendPasswordResetEmail(email);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              AppLocalizations.of(context).profileSifreBasariylaGuncellendi,
-            ),
-          ),
-        );
-      }
-    } on AuthException {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              AppLocalizations.of(context).profileBeklenmeyenBirHataOlustu,
-            ),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
+          SnackBar(content: Text(l10n.profileSifreSifirlamaGonderildi)),
         );
       }
     } catch (e) {
@@ -184,7 +171,9 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              AppLocalizations.of(context).profileBeklenmeyenBirHataOlustu,
+              e is AuthException && e.code == AuthErrorCode.rateLimited
+                  ? l10n.profileCokFazlaDeneme
+                  : l10n.profileBeklenmeyenBirHataOlustu,
             ),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
@@ -492,6 +481,191 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
                 ),
               ],
             ),
+    );
+  }
+}
+
+/// Diyalogdan çıkan sonuç: şifre değişti mi, yoksa kullanıcı "şifremi unuttum"
+/// yoluna mı geçti?
+enum _PasswordDialogOutcome { changed, forgot }
+
+/// WP-319: üç alanlı şifre değiştirme diyaloğu.
+///
+/// Hata **diyaloğun içinde** gösterilir, snackbar'da değil: yanlış mevcut şifre
+/// en olası sonuç ve kullanıcının diğer iki alanı yeniden yazması gerekmemeli.
+class _ChangePasswordDialog extends ConsumerStatefulWidget {
+  const _ChangePasswordDialog();
+
+  @override
+  ConsumerState<_ChangePasswordDialog> createState() =>
+      _ChangePasswordDialogState();
+}
+
+class _ChangePasswordDialogState extends ConsumerState<_ChangePasswordDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final _currentController = TextEditingController();
+  final _newController = TextEditingController();
+  final _confirmController = TextEditingController();
+  bool _busy = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _currentController.dispose();
+    _newController.dispose();
+    _confirmController.dispose();
+    super.dispose();
+  }
+
+  /// Sunucudan gelen nedeni yerelleştirir. Mesaj metnine bakmak yerine
+  /// [AuthErrorCode] kullanılır — mesaj düzenlenince dal sessizce kaymasın.
+  String _messageFor(AppLocalizations l10n, Object error) {
+    if (error is! AuthException) return l10n.profileBeklenmeyenBirHataOlustu;
+    return switch (error.code) {
+      AuthErrorCode.invalidCurrentPassword => l10n.profileMevcutSifreHatali,
+      AuthErrorCode.weakPassword => l10n.profileSifreEnAz6,
+      AuthErrorCode.samePassword => l10n.profileYeniSifreEskisiyleAyni,
+      AuthErrorCode.rateLimited => l10n.profileCokFazlaDeneme,
+      AuthErrorCode.noSession => l10n.profileOturumBulunamadiGirisYap,
+      _ => l10n.profileBeklenmeyenBirHataOlustu,
+    };
+  }
+
+  Future<void> _submit() async {
+    if (_busy) return;
+    if (_formKey.currentState?.validate() != true) return;
+    final l10n = AppLocalizations.of(context);
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      await ref
+          .read(authRepositoryProvider)
+          .changePassword(
+            currentPassword: _currentController.text,
+            newPassword: _newController.text,
+          );
+      if (mounted) Navigator.pop(context, _PasswordDialogOutcome.changed);
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _busy = false;
+          _error = _messageFor(l10n, e);
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
+
+    return AlertDialog(
+      title: Text(l10n.profileSifreDegistir),
+      content: SingleChildScrollView(
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (_error != null) ...[
+                Text(
+                  _error!,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.error,
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+              TextFormField(
+                key: const Key('changePasswordCurrent'),
+                controller: _currentController,
+                obscureText: true,
+                autofillHints: const [AutofillHints.password],
+                decoration: InputDecoration(
+                  labelText: l10n.profileMevcutSifre,
+                  border: const OutlineInputBorder(),
+                ),
+                validator: (val) {
+                  if (val == null || val.isEmpty) {
+                    return l10n.profileMevcutSifreniGir;
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                key: const Key('changePasswordNew'),
+                controller: _newController,
+                obscureText: true,
+                autofillHints: const [AutofillHints.newPassword],
+                decoration: InputDecoration(
+                  labelText: l10n.profileYeniSifre,
+                  border: const OutlineInputBorder(),
+                ),
+                validator: (val) {
+                  if (val == null || val.length < 6) {
+                    return l10n.profileSifreEnAz6;
+                  }
+                  if (val == _currentController.text) {
+                    return l10n.profileYeniSifreEskisiyleAyni;
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                key: const Key('changePasswordConfirm'),
+                controller: _confirmController,
+                obscureText: true,
+                autofillHints: const [AutofillHints.newPassword],
+                decoration: InputDecoration(
+                  labelText: l10n.profileYeniSifreTekrar,
+                  border: const OutlineInputBorder(),
+                ),
+                validator: (val) {
+                  if (val != _newController.text) {
+                    return l10n.profileSifrelerEslesmiyor;
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 4),
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: TextButton(
+                  key: const Key('changePasswordForgot'),
+                  onPressed: _busy
+                      ? null
+                      : () =>
+                            Navigator.pop(context, _PasswordDialogOutcome.forgot),
+                  child: Text(l10n.profileSifremiUnuttum),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _busy ? null : () => Navigator.pop(context),
+          child: Text(l10n.profileIptal),
+        ),
+        FilledButton(
+          key: const Key('changePasswordSubmit'),
+          onPressed: _busy ? null : _submit,
+          child: _busy
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Text(l10n.profileKaydet),
+        ),
+      ],
     );
   }
 }

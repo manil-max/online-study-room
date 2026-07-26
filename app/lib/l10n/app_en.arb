@@ -5536,5 +5536,45 @@
         "type": "String"
       }
     }
+  },
+  "profileMevcutSifre": "Current password",
+  "@profileMevcutSifre": {
+    "description": "Profile user-facing text. Source: Mevcut şifre"
+  },
+  "profileYeniSifreTekrar": "New password (again)",
+  "@profileYeniSifreTekrar": {
+    "description": "Profile user-facing text. Source: Yeni şifre (tekrar)"
+  },
+  "profileSifrelerEslesmiyor": "Passwords do not match.",
+  "@profileSifrelerEslesmiyor": {
+    "description": "Profile user-facing text. Source: Şifreler eşleşmiyor."
+  },
+  "profileMevcutSifreHatali": "Current password is incorrect.",
+  "@profileMevcutSifreHatali": {
+    "description": "Profile user-facing text. Source: Mevcut şifre hatalı."
+  },
+  "profileYeniSifreEskisiyleAyni": "The new password cannot be the same as the current one.",
+  "@profileYeniSifreEskisiyleAyni": {
+    "description": "Profile user-facing text. Source: Yeni şifre mevcut şifreyle aynı olamaz."
+  },
+  "profileCokFazlaDeneme": "Too many attempts. Wait a moment and try again.",
+  "@profileCokFazlaDeneme": {
+    "description": "Profile user-facing text. Source: Çok sık denedin. Biraz bekleyip tekrar dene."
+  },
+  "profileSifremiUnuttum": "Forgot my password",
+  "@profileSifremiUnuttum": {
+    "description": "Profile user-facing text. Source: Şifremi unuttum"
+  },
+  "profileSifreSifirlamaGonderildi": "A password reset link has been sent to your email.",
+  "@profileSifreSifirlamaGonderildi": {
+    "description": "Profile user-facing text. Source: Şifre sıfırlama bağlantısı e-postana gönderildi."
+  },
+  "profileMevcutSifreniGir": "Enter your current password.",
+  "@profileMevcutSifreniGir": {
+    "description": "Profile user-facing text. Source: Mevcut şifreni gir."
+  },
+  "profileOturumBulunamadiGirisYap": "Session not found. Please sign in again.",
+  "@profileOturumBulunamadiGirisYap": {
+    "description": "Profile user-facing text. Source: Oturum bulunamadı. Yeniden giriş yap."
   }
 }

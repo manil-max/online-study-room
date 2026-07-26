@@ -143,6 +143,50 @@ class InMemoryAuthRepository implements AuthRepository {
     }
   }
 
+  /// WP-319: mevcut şifre doğrulanmadan hiçbir şey yazılmaz — Supabase
+  /// implementasyonuyla **aynı sözleşme**, testin dayandığı davranış budur.
+  @override
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final cur = _current;
+    if (cur == null) {
+      throw const AuthException(
+        'Oturum bulunamadı. Yeniden giriş yap.',
+        code: AuthErrorCode.noSession,
+      );
+    }
+    if (newPassword.length < 6) {
+      throw const AuthException(
+        'Şifre en az 6 karakter olmalı.',
+        code: AuthErrorCode.weakPassword,
+      );
+    }
+    if (newPassword == currentPassword) {
+      throw const AuthException(
+        'Yeni şifre mevcut şifreyle aynı olamaz.',
+        code: AuthErrorCode.samePassword,
+      );
+    }
+
+    String? key;
+    for (final k in _accounts.keys) {
+      if (_accounts[k]!.profile.id == cur.id) {
+        key = k;
+        break;
+      }
+    }
+    final account = key == null ? null : _accounts[key];
+    if (account == null || account.password != currentPassword) {
+      throw const AuthException(
+        'Mevcut şifre hatalı.',
+        code: AuthErrorCode.invalidCurrentPassword,
+      );
+    }
+    _accounts[key!] = _Account(newPassword, account.profile);
+  }
+
   @override
   Future<void> updateEmail(String newEmail) async {
     final cur = _current;

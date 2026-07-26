@@ -5085,5 +5085,45 @@
   "buildYapilandirmaHatasiGovdesi": "Die Verbindung wurde geschlossen, um Schreibzugriffe auf die falsche Umgebung zu vermeiden. Baue die App mit den richtigen Kanal- und Backend-Einstellungen neu.",
   "buildYapilandirmaHatasiKodu": "Diagnosecode: {code}",
   "homeKartBoyutIpucu": "Größe {width}×{height} • zum Anpassen tippen",
-  "statsEnVerimliSaat": "Produktivste Stunde: {hour}:00 ({duration})"
+  "statsEnVerimliSaat": "Produktivste Stunde: {hour}:00 ({duration})",
+  "profileMevcutSifre": "Aktuelles Passwort",
+  "@profileMevcutSifre": {
+    "description": "Profile user-facing text. Source: Mevcut şifre"
+  },
+  "profileYeniSifreTekrar": "Neues Passwort (wiederholen)",
+  "@profileYeniSifreTekrar": {
+    "description": "Profile user-facing text. Source: Yeni şifre (tekrar)"
+  },
+  "profileSifrelerEslesmiyor": "Die Passwörter stimmen nicht überein.",
+  "@profileSifrelerEslesmiyor": {
+    "description": "Profile user-facing text. Source: Şifreler eşleşmiyor."
+  },
+  "profileMevcutSifreHatali": "Das aktuelle Passwort ist falsch.",
+  "@profileMevcutSifreHatali": {
+    "description": "Profile user-facing text. Source: Mevcut şifre hatalı."
+  },
+  "profileYeniSifreEskisiyleAyni": "Das neue Passwort darf nicht mit dem aktuellen übereinstimmen.",
+  "@profileYeniSifreEskisiyleAyni": {
+    "description": "Profile user-facing text. Source: Yeni şifre mevcut şifreyle aynı olamaz."
+  },
+  "profileCokFazlaDeneme": "Zu viele Versuche. Warte einen Moment und versuche es erneut.",
+  "@profileCokFazlaDeneme": {
+    "description": "Profile user-facing text. Source: Çok sık denedin. Biraz bekleyip tekrar dene."
+  },
+  "profileSifremiUnuttum": "Passwort vergessen",
+  "@profileSifremiUnuttum": {
+    "description": "Profile user-facing text. Source: Şifremi unuttum"
+  },
+  "profileSifreSifirlamaGonderildi": "Ein Link zum Zurücksetzen des Passworts wurde an deine E-Mail gesendet.",
+  "@profileSifreSifirlamaGonderildi": {
+    "description": "Profile user-facing text. Source: Şifre sıfırlama bağlantısı e-postana gönderildi."
+  },
+  "profileMevcutSifreniGir": "Gib dein aktuelles Passwort ein.",
+  "@profileMevcutSifreniGir": {
+    "description": "Profile user-facing text. Source: Mevcut şifreni gir."
+  },
+  "profileOturumBulunamadiGirisYap": "Sitzung nicht gefunden. Bitte melde dich erneut an.",
+  "@profileOturumBulunamadiGirisYap": {
+    "description": "Profile user-facing text. Source: Oturum bulunamadı. Yeniden giriş yap."
+  }
 }

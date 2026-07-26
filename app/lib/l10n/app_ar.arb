@@ -5085,5 +5085,45 @@
   "buildYapilandirmaHatasiGovdesi": "تم إغلاق الاتصال لتجنب كتابة البيانات في البيئة الخطأ. أعد بناء التطبيق بإعدادات القناة والخدمة الصحيحة.",
   "buildYapilandirmaHatasiKodu": "رمز التشخيص: {code}",
   "homeKartBoyutIpucu": "الحجم {width}×{height} • اضغط للتعديل",
-  "statsEnVerimliSaat": "أكثر ساعة إنتاجية: {hour}:00 ({duration})"
+  "statsEnVerimliSaat": "أكثر ساعة إنتاجية: {hour}:00 ({duration})",
+  "profileMevcutSifre": "كلمة المرور الحالية",
+  "@profileMevcutSifre": {
+    "description": "Profile user-facing text. Source: Mevcut şifre"
+  },
+  "profileYeniSifreTekrar": "كلمة المرور الجديدة (مرة أخرى)",
+  "@profileYeniSifreTekrar": {
+    "description": "Profile user-facing text. Source: Yeni şifre (tekrar)"
+  },
+  "profileSifrelerEslesmiyor": "كلمتا المرور غير متطابقتين.",
+  "@profileSifrelerEslesmiyor": {
+    "description": "Profile user-facing text. Source: Şifreler eşleşmiyor."
+  },
+  "profileMevcutSifreHatali": "كلمة المرور الحالية غير صحيحة.",
+  "@profileMevcutSifreHatali": {
+    "description": "Profile user-facing text. Source: Mevcut şifre hatalı."
+  },
+  "profileYeniSifreEskisiyleAyni": "لا يمكن أن تكون كلمة المرور الجديدة مطابقة للحالية.",
+  "@profileYeniSifreEskisiyleAyni": {
+    "description": "Profile user-facing text. Source: Yeni şifre mevcut şifreyle aynı olamaz."
+  },
+  "profileCokFazlaDeneme": "محاولات كثيرة جدًا. انتظر قليلًا ثم حاول مرة أخرى.",
+  "@profileCokFazlaDeneme": {
+    "description": "Profile user-facing text. Source: Çok sık denedin. Biraz bekleyip tekrar dene."
+  },
+  "profileSifremiUnuttum": "نسيت كلمة المرور",
+  "@profileSifremiUnuttum": {
+    "description": "Profile user-facing text. Source: Şifremi unuttum"
+  },
+  "profileSifreSifirlamaGonderildi": "تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني.",
+  "@profileSifreSifirlamaGonderildi": {
+    "description": "Profile user-facing text. Source: Şifre sıfırlama bağlantısı e-postana gönderildi."
+  },
+  "profileMevcutSifreniGir": "أدخل كلمة المرور الحالية.",
+  "@profileMevcutSifreniGir": {
+    "description": "Profile user-facing text. Source: Mevcut şifreni gir."
+  },
+  "profileOturumBulunamadiGirisYap": "لم يتم العثور على الجلسة. سجّل الدخول مرة أخرى.",
+  "@profileOturumBulunamadiGirisYap": {
+    "description": "Profile user-facing text. Source: Oturum bulunamadı. Yeniden giriş yap."
+  }
 }

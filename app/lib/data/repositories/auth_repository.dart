@@ -3,10 +3,39 @@ import 'dart:typed_data';
 import '../models/account_deletion_status.dart';
 import '../models/profile.dart';
 
+/// WP-319: Hatanın **nedeni** için makine-okunur kod.
+///
+/// Mevcut ekranlar hatayı Türkçe mesaj metnine `contains` uygulayarak ayırıyor
+/// ([auth_screen.dart:254](../../features/auth/auth_screen.dart)); bu kırılgan —
+/// mesaj bir gün düzenlenirse dal sessizce yanlış tarafa düşer ve kullanıcı
+/// "beklenmeyen hata" görür. Yeni yollar nedeni kodla taşır, UI kodu
+/// yerelleştirir. Eski çağrı yerleri değişmedi: `code` isteğe bağlıdır.
+class AuthErrorCode {
+  const AuthErrorCode._();
+
+  /// Mevcut şifre yanlış — **işlem yapılmadı**.
+  static const String invalidCurrentPassword = 'invalid_current_password';
+
+  /// Yeni şifre kural sınırının altında.
+  static const String weakPassword = 'weak_password';
+
+  /// Yeni şifre mevcut şifreyle aynı.
+  static const String samePassword = 'same_password';
+
+  /// Sunucu hız sınırı: art arda çok fazla deneme.
+  static const String rateLimited = 'rate_limited';
+
+  /// Oturum yok/süresi dolmuş.
+  static const String noSession = 'no_session';
+}
+
 /// Kimlik doğrulama hatası (kullanıcıya gösterilebilir Türkçe mesaj taşır).
 class AuthException implements Exception {
-  const AuthException(this.message);
+  const AuthException(this.message, {this.code});
   final String message;
+
+  /// Varsa [AuthErrorCode] sabitlerinden biri; UI bunu yerelleştirir.
+  final String? code;
 
   @override
   String toString() => message;
@@ -47,7 +76,28 @@ abstract class AuthRepository {
   });
 
   /// Giriş yapan kullanıcının şifresini günceller.
+  ///
+  /// 🔴 **Mevcut şifreyi doğrulamaz.** Yalnız kimliğin **zaten** kanıtlandığı
+  /// yerde kullanılır: recovery (OTP/derin bağlantı) oturumu. Ayarlar
+  /// ekranından çağrılmaz — orası [changePassword] kullanır.
   Future<void> updatePassword(String newPassword);
+
+  /// WP-319: Giriş yapan kullanıcının şifresini **mevcut şifresini doğrulayarak**
+  /// değiştirir.
+  ///
+  /// Neden ayrı metot: Supabase `updateUser(password:)` eski şifreyi **kontrol
+  /// etmez** — oturumu ele geçiren biri şifreyi sessizce değiştirebilir ve
+  /// kullanıcı "mevcut şifre" alanını doldurduğu için korunduğunu sanır. Bu,
+  /// alanın hiç olmamasından kötüdür. Doğrulama sorumluluğunu ekrana bırakmak
+  /// yerine tek yere, repository sözleşmesine koyuyoruz: bu metodu çağıran
+  /// doğrulamayı **atlayamaz**.
+  ///
+  /// Doğrulama başarısızsa hiçbir şey yazılmaz ve
+  /// [AuthErrorCode.invalidCurrentPassword] kodlu [AuthException] atılır.
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  });
 
   /// Giriş yapan kullanıcının e-postasını günceller.
   Future<void> updateEmail(String newEmail);
