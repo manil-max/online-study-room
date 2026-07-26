@@ -49,7 +49,7 @@
 - **Durum:** [x] Boşta
 - **Faz/WP:** —
 - **SAHİP yollar:** —
-- **Son not:** WP-350 kod/test tamam: `flutter analyze` 0 uyarı; sahne testi ile masaüstü + Android telefon 1/4/8 golden'ları PASS. Gerçek Android/Windows cihaz kabulü bekliyor (2026-07-26 23:57 Europe/Istanbul).
+- **Son not:** WP-351 yerel preflight yeniden doğrulandı: release-preflight 8/8, deploy guard 56/56 ve stable `0085` preflight'ı production sözleşme head'i `0070` olduğu için fail-closed. Üç project-ref, Supabase CLI/token, backup/dry-run kanıtı ve exact production GO yok; remote/stable mutasyonu yapılmadı (2026-07-27 00:06 Europe/Istanbul).
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
@@ -702,8 +702,8 @@ Kod/test tamam; mağaza çıkışını **bloklamaz**. Kalan kabul tek QA kuyruğ
 
 #### WP-351: Production migration terfisi + doğrudan stable teslim 🚀
 - **Program/Faz:** Release/Ops · Faz F2 kapanış
-- **Ajan:** — (WP-348, WP-349 ve WP-350 ayrı commit/test ile kapandıktan sonra)
-- **Durum:** [ ] Bekliyor
+- **Ajan:** Codex (2026-07-27 preflight)
+- **Durum:** [~] Bloklu — local `0085` / production sözleşmesi `0070`; remote hedef/credential, backup/dry-run kanıtı ve exact production GO yok
 - **Bağımlılık:** WP-348 → WP-349 → WP-350; clean `main`; staging `0085`.
 - **Problem:** Son stable'dan beri grup/keşif/primary/V3 altyapısı ve görsel
   revizyonlar birikti. Proje sahibi mağaza öncesi 5 kişilik ekipte testi stable
