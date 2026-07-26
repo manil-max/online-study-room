@@ -3,17 +3,32 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(55);
+select plan(57);
 
 select is(
   (select count(*)::integer from supabase_migrations.schema_migrations),
-  84,
-  'all 84 migrations are recorded'
+  85,
+  'all 85 migrations are recorded'
 );
 select is(
   (select max(version) from supabase_migrations.schema_migrations),
-  '0084',
-  '0084 is the migration head'
+  '0085',
+  '0085 is the migration head'
+);
+select ok(
+  exists(
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'user_group_preferences'
+      and column_name = 'next_change_allowed_at'
+  ),
+  '0085 exposes the server-owned primary group cooldown read-model'
+);
+select ok(
+  to_regprocedure('public.set_primary_group(uuid,bigint)') is not null
+    and has_function_privilege(
+      'authenticated', 'public.set_primary_group(uuid,bigint)', 'execute'
+    ),
+  '0085 preserves the guarded primary group RPC'
 );
 select ok(
   (select relrowsecurity from pg_class

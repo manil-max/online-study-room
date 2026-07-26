@@ -14,10 +14,12 @@ import '../group_repository.dart';
 
 /// Bellek-içi (kalıcı olmayan) sınıf deposu. Supabase entegrasyonuna kadar geçicidir.
 class InMemoryGroupRepository implements GroupRepository {
-  InMemoryGroupRepository();
+  InMemoryGroupRepository({DateTime Function()? now})
+    : _now = now ?? DateTime.now;
 
   final _uuid = const Uuid();
   final _random = Random();
+  final DateTime Function() _now;
 
   final Map<String, StudyGroup> _groups = {};
   final Map<String, Uint8List> _avatarBytes = {};
@@ -103,6 +105,7 @@ class InMemoryGroupRepository implements GroupRepository {
       _primaryPreferences[userId] = PrimaryGroupPreference(
         primaryGroupId: desired,
         selectionRevision: (current?.selectionRevision ?? 0) + 1,
+        nextChangeAllowedAt: current?.nextChangeAllowedAt,
       );
     }
   }
@@ -308,7 +311,17 @@ class InMemoryGroupRepository implements GroupRepository {
       selectionRevision: current.primaryGroupId == groupId
           ? current.selectionRevision
           : current.selectionRevision + 1,
+      nextChangeAllowedAt: current.primaryGroupId == groupId
+          ? current.nextChangeAllowedAt
+          : _now().toUtc().add(const Duration(hours: 24)),
     );
+    if (current.primaryGroupId != groupId &&
+        current.nextChangeAllowedAt != null &&
+        _now().toUtc().isBefore(current.nextChangeAllowedAt!)) {
+      throw const GroupException(
+        'Birincil grup değişikliği için 24 saat beklemelisiniz.',
+      );
+    }
     _primaryPreferences[userId] = next;
     _changes.add(null);
     return next;

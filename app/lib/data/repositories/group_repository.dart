@@ -18,15 +18,23 @@ class PrimaryGroupPreference {
   const PrimaryGroupPreference({
     required this.primaryGroupId,
     required this.selectionRevision,
+    this.nextChangeAllowedAt,
   });
 
   final String? primaryGroupId;
   final int selectionRevision;
 
+  /// Server time derived cooldown. A null value means that no explicit change
+  /// has started a cooldown yet; clients must never derive this from device time.
+  final DateTime? nextChangeAllowedAt;
+
   factory PrimaryGroupPreference.fromMap(Map<String, dynamic> map) =>
       PrimaryGroupPreference(
         primaryGroupId: map['primary_group_id'] as String?,
         selectionRevision: (map['selection_revision'] as num?)?.toInt() ?? 0,
+        nextChangeAllowedAt: map['next_change_allowed_at'] == null
+            ? null
+            : DateTime.tryParse(map['next_change_allowed_at'] as String),
       );
 }
 

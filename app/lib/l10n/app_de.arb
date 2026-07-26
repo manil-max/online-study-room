@@ -5225,5 +5225,21 @@
   "@primaryGroupSet": {"description": "Schaltfläche zum Setzen der angezeigten Gruppe als primär."},
   "primaryGroupUpdated": "Primäre Gruppe aktualisiert.",
   "@primaryGroupUpdated": {"description": "Bestätigung nach dem Speichern."},
-  "wp295PreviewIncrease": "Increase {label} by {amount}"
+  "wp295PreviewIncrease": "Increase {label} by {amount}",
+  "primaryGroupHelp": "Gruppen-Ziele, Gruppen-Erfolge und Gruppentage werden dieser Gruppe zugeordnet.",
+  "@primaryGroupHelp": {"description": "Short explanation below the primary group setting."},
+  "primaryGroupEmpty": "Tritt einer Gruppe bei, um eine primäre Gruppe auszuwählen.",
+  "@primaryGroupEmpty": {"description": "Empty state for the primary group selector."},
+  "primaryGroupLoadFailed": "Deine Gruppen konnten nicht geladen werden. Versuche es erneut.",
+  "@primaryGroupLoadFailed": {"description": "Error state for the primary group selector."},
+  "primaryGroupLockedUntil": "Du kannst deine primäre Gruppe nach {dateTime} ändern.",
+  "@primaryGroupLockedUntil": {"description": "Server-provided cooldown end time.", "placeholders": {"dateTime": {}}},
+  "primaryGroupConfirmTitle": "Primäre Gruppe ändern?",
+  "@primaryGroupConfirmTitle": {"description": "Confirmation dialog title for a primary group change."},
+  "primaryGroupConfirmBody": "Neue Lern-Sitzungen zählen für {groupName}. Diese Auswahl kann nach 24 Stunden erneut geändert werden.",
+  "@primaryGroupConfirmBody": {"description": "Confirmation dialog body for a primary group change.", "placeholders": {"groupName": {}}},
+  "primaryGroupConfirmAction": "Gruppe auswählen",
+  "@primaryGroupConfirmAction": {"description": "Confirmation action for a primary group change."},
+  "primaryGroupChangeFailed": "Deine primäre Gruppe konnte nicht geändert werden. Aktualisiere und versuche es erneut.",
+  "@primaryGroupChangeFailed": {"description": "Error after a stale or rejected primary group change."}
 }

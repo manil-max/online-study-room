@@ -1659,5 +1659,21 @@
   "@primaryGroupSet": {"description": "Görüntülenen grubu birincil yapan düğme."},
   "primaryGroupUpdated": "Birincil grup güncellendi.",
   "@primaryGroupUpdated": {"description": "Birincil grup kaydedilince gösterilen onay."},
-  "wp295PreviewIncrease": "{label} değerini {amount} artır"
+  "wp295PreviewIncrease": "{label} değerini {amount} artır",
+  "primaryGroupHelp": "Grup hedeflerin, grup başarımların ve grup günün bu gruba yazılır.",
+  "@primaryGroupHelp": {"description": "Birincil grup ayarının altındaki kısa açıklama."},
+  "primaryGroupEmpty": "Birincil grup seçmek için bir gruba katılın.",
+  "@primaryGroupEmpty": {"description": "Birincil grup seçicisinin boş durumu."},
+  "primaryGroupLoadFailed": "Grupların yüklenemedi. Yeniden dene.",
+  "@primaryGroupLoadFailed": {"description": "Birincil grup seçicisinin hata durumu."},
+  "primaryGroupLockedUntil": "Birincil grubunu {dateTime} sonrasında değiştirebilirsin.",
+  "@primaryGroupLockedUntil": {"description": "Sunucunun döndürdüğü cooldown bitiş zamanı.", "placeholders": {"dateTime": {}}},
+  "primaryGroupConfirmTitle": "Birincil grup değişsin mi?",
+  "@primaryGroupConfirmTitle": {"description": "Birincil grup değişikliği onay başlığı."},
+  "primaryGroupConfirmBody": "Yeni çalışma oturumların {groupName} grubuna yazılır. Bu seçimi 24 saat sonra yeniden değiştirebilirsin.",
+  "@primaryGroupConfirmBody": {"description": "Birincil grup değişikliği onay açıklaması.", "placeholders": {"groupName": {}}},
+  "primaryGroupConfirmAction": "Grubu seç",
+  "@primaryGroupConfirmAction": {"description": "Birincil grup değişikliği onay eylemi."},
+  "primaryGroupChangeFailed": "Birincil grubun değiştirilemedi. Yenileyip tekrar dene.",
+  "@primaryGroupChangeFailed": {"description": "Eski seçim veya ret sonrası gösterilen hata."}
 }

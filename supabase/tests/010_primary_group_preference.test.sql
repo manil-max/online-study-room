@@ -5,7 +5,7 @@ set local search_path = public, extensions;
 
 \ir _fixtures/base_seed.psql
 
-select plan(9);
+select plan(14);
 
 select ok(
   to_regprocedure('public.set_primary_group(uuid,bigint)') is not null
@@ -71,14 +71,70 @@ select is(
   'server owns and increments the selection revision'
 );
 
+select is(
+  (
+    select selection_revision
+    from public.set_primary_group(
+      '20000000-0000-0000-0000-000000000009', 2
+    )
+  ),
+  2::bigint,
+  'selecting the current primary is an idempotent no-op'
+);
+
+select ok(
+  (
+    select next_change_allowed_at > now()
+    from public.user_group_preferences
+    where user_id = auth.uid()
+  ),
+  'the server returns a persisted next explicit change time'
+);
+
 select throws_ok(
-  $$ select public.set_primary_group('20000000-0000-0000-0000-000000000001', 1) $$,
+  $$ select public.set_primary_group('20000000-0000-0000-0000-000000000001', 2) $$,
+  'primary_group_change_cooldown',
+  'a different primary is rejected by the server before the rolling 24 hours ends'
+);
+
+reset role;
+select set_config('app.primary_group_change_reason', 'membership_reconcile', true);
+update public.user_group_preferences
+set last_explicit_change_at = now() - interval '24 hours',
+    next_change_allowed_at = now() - interval '1 second'
+where user_id = '10000000-0000-0000-0000-000000000001';
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000001', true);
+
+select is(
+  (
+    select primary_group_id
+    from public.set_primary_group(
+      '20000000-0000-0000-0000-000000000001', 2
+    )
+  ),
+  '20000000-0000-0000-0000-000000000001'::uuid,
+  'a different primary is accepted after the server cooldown expires'
+);
+
+select is(
+  (
+    select selection_revision
+    from public.user_group_preferences
+    where user_id = auth.uid()
+  ),
+  3::bigint,
+  'only a changed explicit target advances the revision'
+);
+
+select throws_ok(
+  $$ select public.set_primary_group('20000000-0000-0000-0000-000000000009', 2) $$,
   'primary_group_stale_selection',
   'a stale device selection cannot overwrite the current primary group'
 );
 
 select throws_ok(
-  $$ select public.set_primary_group('20000000-0000-0000-0000-000000000099', 2) $$,
+  $$ select public.set_primary_group('20000000-0000-0000-0000-000000000099', 3) $$,
   'primary_group_not_active_member',
   'a user cannot select a group without an active membership'
 );

@@ -49,7 +49,7 @@
 - **Durum:** [x] Boşta
 - **Faz/WP:** —
 - **SAHİP yollar:** —
-- **Son not:** WP-337/WP-347, staging `0084` terfisi ve `beta-v4402` Android+Windows release tamamlandı. ADB cihazı bulunmadığı için fiziksel kabul sonucu yazılmadı; V3 flag'leri kapalı kaldı.
+- **Son not:** WP-348: local `0084→0085` replay + 253 pgTAP, `flutter analyze`, 911 Flutter test, l10n ve deploy gate PASS. Staging config (`STAGING_SUPABASE_PROJECT_REF`) terminalde yok; remote dry-run/apply yapılmadı. Cihaz kabulü bekliyor.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
@@ -507,8 +507,8 @@ Kod/test tamam; mağaza çıkışını **bloklamaz**. Kalan kabul tek QA kuyruğ
 
 #### WP-348: Başarımlar içinde tek birincil grup + kayan 24 saat kuralı 🏠
 - **Program/Faz:** Faz E/F2 · WP-329/WP-336 ürün revizyonu
-- **Ajan:** — (atanınca lane doldurur)
-- **Durum:** [ ] Bekliyor
+- **Ajan:** —
+- **Durum:** [~] Kod/test tamamlandı; staging yapılandırması ve cihaz kabulü bekliyor
 - **Bağımlılık:** WP-329 + WP-336; staging head `0084`.
 - **Problem:** Birincil grup seçimi bugün grup detayında dağınık bir eylemdir;
   kullanıcı katıldığı grupları tek yerde kıyaslayamaz. Mevcut server sözleşmesi
@@ -546,20 +546,20 @@ Kod/test tamam; mağaza çıkışını **bloklamaz**. Kalan kabul tek QA kuyruğ
   - achievement evaluator/XP ledger · presence/global timer/push kodu
   - `study_providers.dart` · Android native timer · bildirim/widget kaynakları
 - **Adımlar:**
-  - [ ] `0085` ile server-authoritative cooldown read-modelini ekle; ilk açık
+  - [x] `0085` ile server-authoritative cooldown read-modelini ekle; ilk açık
     seçim serbest, farklı hedefe sonraki açık seçim `last_explicit_change_at +
     interval '24 hours'` öncesinde reddedilsin.
-  - [ ] Aynı grubu yeniden seçmeyi idempotent no-op yap; cooldown/revision
+  - [x] Aynı grubu yeniden seçmeyi idempotent no-op yap; cooldown/revision
     tüketmesin. `automatic_single` ve `membership_reconcile` kullanıcı cooldown'ı
     başlatmasın.
-  - [ ] RPC aynı kullanıcı advisory lock'u, üyelik doğrulaması ve expected
+  - [x] RPC aynı kullanıcı advisory lock'u, üyelik doğrulaması ve expected
     revision altında `next_change_allowed_at` döndürsün; istemci saati karar
     vermesin.
-  - [ ] DTO/repository/provider çiftlerini yeni zamana taşı; Supabase ve
+  - [x] DTO/repository/provider çiftlerini yeni zamana taşı; Supabase ve
     InMemory davranışı aynı olsun, eski/null kayıtlar güvenli parse edilsin.
-  - [ ] Başarımlar kartını empty/loading/error/offline/stale-revision ve 1–8
+  - [x] Başarımlar kartını empty/loading/error/offline/stale-revision ve 1–8
     grup durumlarıyla uygula; seçim öncesi etkiyi açıklayan kısa onay göster.
-  - [ ] Grup detayındaki mutasyon CTA'sını kaldır; aktif timer sırasında seçim
+  - [x] Grup detayındaki mutasyon CTA'sını kaldır; aktif timer sırasında seçim
     yerel timer/bildirim/widget'ı restart etmesin, yeni tercih yalnız sonraki
     session attribution'ına girsin.
 - **Veri/Migration etkisi:** `0085` yalnız ileri/additive migration'dır; `0079`
@@ -897,7 +897,7 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 | **WP-326** Grup saat dilimi | Staging `0084` + beta | IANA adı, New York yerel gece yarısı, cihaz fallback'i ve DST davranışı doğru |
 | **WP-327** Grup bölgesi + saat farkı | Staging `0084` + beta | Açık grup kartı/bilgi ekranı, aynı bölgede farkın gizlenmesi, New York ve +5:30 farklarının doğruluğu |
 | **WP-328** Keşif sıralaması + arama/filtre | Staging `0084` + Android + Windows | Kullanıcı bölgesine göre sıralama, bölge filtresi, boş kontenjan filtresi ve sayfalama gerçek cihazda doğrulanmalı. **Cihazda doğrulanmalı.** |
-| **WP-329/348** Birincil grup | Staging + iki Android cihaz | Başarımlar içindeki tek seçim, kayan 24 saat server kuralı, iki cihaz stale-revision reddi, üyelikten çıkış/silmede uzlaşma ve timer/bildirim/widget regresyonu doğrulanmalı. **Cihazda doğrulanmalı.** |
+| **WP-329/348** Birincil grup | Staging + iki Android cihaz | WP-348 kod/test tamam; staging terminal yapılandırması eksik olduğundan remote dry-run/apply bekliyor. Ardından tek seçim, kayan 24 saat server kuralı, iki cihaz stale-revision reddi, üyelikten çıkış/silmede uzlaşma ve timer/bildirim/widget regresyonu doğrulanmalı. **Cihazda doğrulanmalı.** |
 | **WP-336** Tek-grup session attribution | Staging `0084` + iki Android cihaz | Yeni session yalnız başlangıçtaki primary gruba yazılır; secondary day/week/achievement katkısı ve cron geri yazımı 0, kişisel süre/XP korunur. **Cihazda doğrulanmalı.** |
 | **WP-343** Foreground mirror + remote stop | Staging + iki Android cihaz | Aynı hesapta foreground start/stop p95≤2 sn; ek session/XP 0; eski stop yeni yerel run'ı kesmez; bildirim/widget regresyonu 0. **Cihazda doğrulanmalı.** |
 | **WP-345** Timer-sync signal + app-open reconcile | Staging FCM + Android lifecycle | Data-only sinyal p95≤10 sn; açılış reconcile p95≤2 sn; terminated/doze/logout/force-stop sonrasında payload state uygulamaz, snapshot doğru state'i getirir. **Cihazda doğrulanmalı.** |

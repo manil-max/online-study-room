@@ -5840,5 +5840,21 @@
   "@wp295PreviewIncrease": {
     "description": "Accessible tooltip for increasing a preview control.",
     "placeholders": {"label": {}, "amount": {}}
-  }
+  },
+  "primaryGroupHelp": "Your group goals, group achievements and group day are recorded in this group.",
+  "@primaryGroupHelp": {"description": "Short explanation below the primary group setting."},
+  "primaryGroupEmpty": "Join a group to choose a primary group.",
+  "@primaryGroupEmpty": {"description": "Empty state for the primary group selector."},
+  "primaryGroupLoadFailed": "Your groups could not be loaded. Try again.",
+  "@primaryGroupLoadFailed": {"description": "Error state for the primary group selector."},
+  "primaryGroupLockedUntil": "You can change your primary group after {dateTime}.",
+  "@primaryGroupLockedUntil": {"description": "Server-provided cooldown end time.", "placeholders": {"dateTime": {}}},
+  "primaryGroupConfirmTitle": "Change primary group?",
+  "@primaryGroupConfirmTitle": {"description": "Confirmation dialog title for a primary group change."},
+  "primaryGroupConfirmBody": "New study sessions will count toward {groupName}. This choice can be changed again after 24 hours.",
+  "@primaryGroupConfirmBody": {"description": "Confirmation dialog body for a primary group change.", "placeholders": {"groupName": {}}},
+  "primaryGroupConfirmAction": "Choose group",
+  "@primaryGroupConfirmAction": {"description": "Confirmation action for a primary group change."},
+  "primaryGroupChangeFailed": "Your primary group could not be changed. Refresh and try again.",
+  "@primaryGroupChangeFailed": {"description": "Error after a stale or rejected primary group change."}
 }

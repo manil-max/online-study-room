@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "local_migration_head": "0084",
+  "local_migration_head": "0085",
   "staging": {
-    "migration_head": "0084",
+    "migration_head": "0085",
     "deploy_enabled": true,
     "release_enabled": true,
-    "hold_reason": "V3 staging acceptance: 0073-0084, including WP-347 attribution-config RLS remediation, await sequential staging dry-run/apply, post-check and beta device evidence."
+    "hold_reason": "WP-348 staging acceptance: 0073-0085, including server-authoritative primary-group cooldown, await sequential staging dry-run/apply, post-check and beta device evidence."
   },
   "production": {
     "migration_head": "0070",

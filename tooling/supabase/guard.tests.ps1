@@ -22,12 +22,12 @@ $repoRoot = Get-RepoRoot
 $stagingRef = 'aaaaaaaaaaaaaaaaaaaa'
 $productionRef = 'bbbbbbbbbbbbbbbbbbbb'
 
-Assert-Equal (Get-LocalMigrationHead -RepoRoot $repoRoot) '0084' 'local migration head'
-Assert-Equal ((Get-DeployContract -RepoRoot $repoRoot).local_migration_head) '0084' 'contract migration head'
+Assert-Equal (Get-LocalMigrationHead -RepoRoot $repoRoot) '0085' 'local migration head'
+Assert-Equal ((Get-DeployContract -RepoRoot $repoRoot).local_migration_head) '0085' 'contract migration head'
 $contract = Get-DeployContract -RepoRoot $repoRoot
 # V3 staging rollout'u 0073-0084 zincirini, attribution yapılandırmasının
 # fail-closed RLS düzeltmesiyle birlikte taşır; production 0070'da kilitli kalır.
-Assert-Equal $contract.staging.migration_head '0084' 'staging migration head'
+Assert-Equal $contract.staging.migration_head '0085' 'staging migration head'
 Assert-Equal ([bool]$contract.staging.deploy_enabled) $true 'staging deploy enabled'
 Assert-Equal ([bool]$contract.staging.release_enabled) $true 'staging release enabled'
 Assert-Equal $contract.production.migration_head '0070' 'production head 0070: effective schema after completed owner-directed promotion'

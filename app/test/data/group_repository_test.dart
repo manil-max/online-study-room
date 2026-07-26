@@ -195,6 +195,54 @@ void main() {
   );
 
   test(
+    'birincil grup cooldownı yalnız açık hedef değişiminde başlar ve no-op tüketmez',
+    () async {
+      var clock = DateTime.utc(2026, 7, 26, 12);
+      final repo = InMemoryGroupRepository(now: () => clock);
+      final user = _profile('u1', 'Ali');
+      final first = await repo.createGroup(name: 'İlk', creator: user);
+      final second = await repo.createGroup(name: 'İkinci', creator: user);
+      final initial = await repo.watchPrimaryGroupPreference(user.id).first;
+
+      final firstExplicit = await repo.setPrimaryGroup(
+        userId: user.id,
+        groupId: second.id,
+        expectedRevision: initial.selectionRevision,
+      );
+      expect(
+        firstExplicit.nextChangeAllowedAt,
+        clock.add(const Duration(hours: 24)),
+      );
+
+      await expectLater(
+        repo.setPrimaryGroup(
+          userId: user.id,
+          groupId: first.id,
+          expectedRevision: firstExplicit.selectionRevision,
+        ),
+        throwsA(isA<GroupException>()),
+      );
+
+      final noOp = await repo.setPrimaryGroup(
+        userId: user.id,
+        groupId: second.id,
+        expectedRevision: firstExplicit.selectionRevision,
+      );
+      expect(noOp.selectionRevision, firstExplicit.selectionRevision);
+      expect(noOp.nextChangeAllowedAt, firstExplicit.nextChangeAllowedAt);
+
+      clock = clock.add(const Duration(hours: 24, seconds: 1));
+      final changed = await repo.setPrimaryGroup(
+        userId: user.id,
+        groupId: first.id,
+        expectedRevision: noOp.selectionRevision,
+      );
+      expect(changed.primaryGroupId, first.id);
+      expect(changed.selectionRevision, noOp.selectionRevision + 1);
+    },
+  );
+
+  test(
     'public katılım grubu üyeye ekler ve private grup RPC ile katılamaz',
     () async {
       final repo = InMemoryGroupRepository();

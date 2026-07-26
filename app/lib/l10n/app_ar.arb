@@ -5225,5 +5225,21 @@
   "@primaryGroupSet": {"description": "زر لتعيين المجموعة المعروضة كأساسية."},
   "primaryGroupUpdated": "تم تحديث المجموعة الأساسية.",
   "@primaryGroupUpdated": {"description": "تأكيد بعد الحفظ."},
-  "wp295PreviewIncrease": "Increase {label} by {amount}"
+  "wp295PreviewIncrease": "Increase {label} by {amount}",
+  "primaryGroupHelp": "تُسجَّل أهداف مجموعتك وإنجازات المجموعة ويوم المجموعة لهذه المجموعة.",
+  "@primaryGroupHelp": {"description": "Short explanation below the primary group setting."},
+  "primaryGroupEmpty": "انضم إلى مجموعة لاختيار مجموعتك الأساسية.",
+  "@primaryGroupEmpty": {"description": "Empty state for the primary group selector."},
+  "primaryGroupLoadFailed": "تعذر تحميل مجموعاتك. حاول مرة أخرى.",
+  "@primaryGroupLoadFailed": {"description": "Error state for the primary group selector."},
+  "primaryGroupLockedUntil": "يمكنك تغيير مجموعتك الأساسية بعد {dateTime}.",
+  "@primaryGroupLockedUntil": {"description": "Server-provided cooldown end time.", "placeholders": {"dateTime": {}}},
+  "primaryGroupConfirmTitle": "تغيير المجموعة الأساسية؟",
+  "@primaryGroupConfirmTitle": {"description": "Confirmation dialog title for a primary group change."},
+  "primaryGroupConfirmBody": "ستُحتسب جلسات الدراسة الجديدة ضمن {groupName}. يمكن تغيير هذا الاختيار مرة أخرى بعد 24 ساعة.",
+  "@primaryGroupConfirmBody": {"description": "Confirmation dialog body for a primary group change.", "placeholders": {"groupName": {}}},
+  "primaryGroupConfirmAction": "اختيار المجموعة",
+  "@primaryGroupConfirmAction": {"description": "Confirmation action for a primary group change."},
+  "primaryGroupChangeFailed": "تعذر تغيير مجموعتك الأساسية. حدّث الصفحة وحاول مرة أخرى.",
+  "@primaryGroupChangeFailed": {"description": "Error after a stale or rejected primary group change."}
 }
