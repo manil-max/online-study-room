@@ -46,15 +46,10 @@
 - **Son not:** WP-327 kod/test tamamlandı; güvenli keşif özeti için 0077 local replay ile doğrulandı. Staging/beta kabulü sonraki ortak turda (2026-07-26).
 
 ### Codex Lane
-- **Durum:** [~] Aktif
-- **Faz/WP:** Faz F2 · WP-351
-- **Aşama:** Kullanıcı GO'suyla staging → production → stable release
-- **SAHİP yollar:** `progress.md` (yalnız Codex lane + WP-351 kartı), `CHANGELOG.md`, `app/assets/release_notes.json`, `app/pubspec.yaml`, `tooling/release/deploy-contract.json`, redacted release kanıtları
-- **Ortak/riskli yüzey:** production/stable release kapıları, `supabase/migrations/**`, `.github/workflows/**`
-- **Dal:** main
-- **Başlangıç:** 2026-07-27 00:15 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-27 00:28 (Europe/Istanbul)
-- **Not:** Sahip 2026-07-27'de WP-351 için açık GO verdi. Staging `0085` protected apply + post-check, Database Gates `30220668874` ile PASS; production dry-run/backup kanıtı hazırlanıyor.
+- **Durum:** [x] Boşta
+- **Faz/WP:** —
+- **SAHİP yollar:** —
+- **Son not:** WP-351: staging `0085` apply/post-check (Database Gates `30220668874`) ve production `0085` dry-run (Database Gates `30220883672`) PASS. Apply/release, doğrulanmış backup/PITR kaydı için Supabase dashboard oturumu bekliyor (2026-07-27 00:36 Europe/Istanbul).
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
@@ -708,7 +703,7 @@ Kod/test tamam; mağaza çıkışını **bloklamaz**. Kalan kabul tek QA kuyruğ
 #### WP-351: Production migration terfisi + doğrudan stable teslim 🚀
 - **Program/Faz:** Release/Ops · Faz F2 kapanış
 - **Ajan:** Codex (2026-07-27 preflight)
-- **Durum:** [~] Bloklu — local `0085` / production sözleşmesi `0070`; remote hedef/credential, backup/dry-run kanıtı ve exact production GO yok
+- **Durum:** [~] Bloklu — staging `0085` apply ve production `0085` dry-run PASS; doğrulanmış production backup/PITR kaydı olmadan apply/release yapılmaz
 - **Bağımlılık:** WP-348 → WP-349 → WP-350; clean `main`; staging `0085`.
 - **Problem:** Son stable'dan beri grup/keşif/primary/V3 altyapısı ve görsel
   revizyonlar birikti. Proje sahibi mağaza öncesi 5 kişilik ekipte testi stable
