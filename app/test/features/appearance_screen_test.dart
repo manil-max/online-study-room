@@ -159,6 +159,78 @@ void main() {
     expect(settings.familyId, 'nordic_snow');
   });
 
+  testWidgets(
+    'WP-349: hazır tema kapakları semantik paleti gösterir ve seçim görünürdür',
+    (tester) async {
+      tester.view.physicalSize = const Size(360, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final container = await _container();
+      addTearDown(container.dispose);
+      await _pumpScreen(tester, container);
+
+      for (final preset in kThemePresets) {
+        final id = preset.id;
+        expect(
+          tester
+              .widget<ColoredBox>(
+                find.byKey(ValueKey('theme-preset-scaffold-$id')),
+              )
+              .color,
+          preset.colors.scaffold,
+          reason: '$id scaffold kapakta görünmeli',
+        );
+        expect(
+          tester
+              .widget<ColoredBox>(
+                find.byKey(ValueKey('theme-preset-surface-$id')),
+              )
+              .color,
+          preset.colors.surface1,
+          reason: '$id surface kapakta görünmeli',
+        );
+        expect(
+          tester
+              .widget<ColoredBox>(
+                find.descendant(
+                  of: find.byKey(ValueKey('theme-preset-primary-$id')),
+                  matching: find.byType(ColoredBox),
+                ),
+              )
+              .color,
+          preset.colors.primary,
+          reason: '$id primary yalnız vurgu olarak görünmeli',
+        );
+        expect(
+          tester
+              .widget<ColoredBox>(
+                find.descendant(
+                  of: find.byKey(ValueKey('theme-preset-accent-$id')),
+                  matching: find.byType(ColoredBox),
+                ),
+              )
+              .color,
+          preset.colors.accent,
+          reason: '$id accent yalnız vurgu olarak görünmeli',
+        );
+      }
+
+      final forest = themePresetById('forest_study');
+      expect(forest.colors.scaffold.g, greaterThan(forest.colors.scaffold.r));
+      expect(forest.colors.surface1.g, greaterThan(forest.colors.surface1.r));
+
+      await tester.tap(find.text('Orman Kabini'));
+      await tester.pumpAndSettle();
+
+      final selectedIcon = tester.widget<Icon>(find.byIcon(Icons.check_circle));
+      final context = tester.element(find.byType(AppearanceScreen));
+      expect(selectedIcon.color, Theme.of(context).colorScheme.primary);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   test('visibleThemes yalnız tanımlı temaları en yeni en üstte sıralar', () {
     final themes = [
       _theme('custom_1', 'A', updatedAt: DateTime(2026, 1, 1)),

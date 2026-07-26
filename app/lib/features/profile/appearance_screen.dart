@@ -195,7 +195,7 @@ class AppearanceScreen extends ConsumerWidget {
                         crossAxisCount: cols,
                         mainAxisSpacing: 10,
                         crossAxisSpacing: 10,
-                        childAspectRatio: desktop ? 2.4 : 2.2,
+                        childAspectRatio: desktop ? 2.15 : 1.75,
                       ),
                       itemCount: kThemePresets.length,
                       itemBuilder: (context, i) {
@@ -357,28 +357,31 @@ class _PresetCard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            _PresetPalettePreview(preset: preset),
+            const SizedBox(height: 6),
             Row(
               children: [
-                _Swatch(color: preset.colors.primary),
-                const SizedBox(width: 4),
-                _Swatch(color: preset.colors.accent),
-                const Spacer(),
-                if (selected)
+                Expanded(
+                  child: Text(
+                    preset.localizedName(AppLocalizations.of(context)),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: selected
+                          ? FontWeight.bold
+                          : FontWeight.normal,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                if (selected) ...[
+                  const SizedBox(width: 4),
                   Icon(
                     Icons.check_circle,
-                    color: preset.colors.primary,
+                    color: theme.colorScheme.primary,
                     size: 18,
                   ),
+                ],
               ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              preset.localizedName(AppLocalizations.of(context)),
-              style: theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: selected ? FontWeight.bold : FontWeight.normal,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
@@ -387,25 +390,77 @@ class _PresetCard extends StatelessWidget {
   }
 }
 
-class _Swatch extends StatelessWidget {
-  const _Swatch({required this.color});
+/// Hazır tema kapağı, çalışma anındaki semantik renkleri küçük ölçekte gösterir.
+///
+/// Büyük alanlar uygulamanın gerçek scaffold ve yüzey hiyerarşisidir; primary ve
+/// accent yalnız kontrol/vurgu olarak kalır. Böylece kapak tema kimliğini iki
+/// küçük renk noktasına indirgemez.
+class _PresetPalettePreview extends StatelessWidget {
+  const _PresetPalettePreview({required this.preset});
 
-  final Color color;
+  final ThemePreset preset;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 22,
-      height: 22,
-      decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: Theme.of(
-            context,
-          ).colorScheme.onPrimary.withValues(alpha: 0.24),
+    final colors = preset.colors;
+    return Semantics(
+      excludeSemantics: true,
+      child: SizedBox(
+        key: ValueKey('theme-preset-preview-${preset.id}'),
+        height: 38,
+        width: double.infinity,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(6),
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: ColoredBox(
+                  key: ValueKey('theme-preset-scaffold-${preset.id}'),
+                  color: colors.scaffold,
+                ),
+              ),
+              Positioned.fill(
+                left: 4,
+                top: 4,
+                right: 4,
+                bottom: 4,
+                child: ColoredBox(
+                  key: ValueKey('theme-preset-surface-${preset.id}'),
+                  color: colors.surface1,
+                ),
+              ),
+              Positioned(
+                right: 7,
+                bottom: 7,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _PreviewAccent(
+                      key: ValueKey('theme-preset-primary-${preset.id}'),
+                      color: colors.primary,
+                    ),
+                    const SizedBox(width: 3),
+                    _PreviewAccent(
+                      key: ValueKey('theme-preset-accent-${preset.id}'),
+                      color: colors.accent,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
+}
+
+class _PreviewAccent extends StatelessWidget {
+  const _PreviewAccent({super.key, required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) =>
+      SizedBox(width: 12, height: 6, child: ColoredBox(color: color));
 }

@@ -49,7 +49,7 @@
 - **Durum:** [x] Boşta
 - **Faz/WP:** —
 - **SAHİP yollar:** —
-- **Son not:** WP-348: local `0084→0085` replay + 253 pgTAP, `flutter analyze`, 911 Flutter test, l10n ve deploy gate PASS. Staging config (`STAGING_SUPABASE_PROJECT_REF`) terminalde yok; remote dry-run/apply yapılmadı. Cihaz kabulü bekliyor.
+- **Son not:** WP-349 kod/test tamam: `flutter analyze` 0 uyarı; tema kapak widget testi ve Windows golden PASS. Gerçek Android/Windows cihaz kabulü bekliyor (2026-07-26 23:48 Europe/Istanbul).
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
@@ -595,8 +595,8 @@ Kod/test tamam; mağaza çıkışını **bloklamaz**. Kalan kabul tek QA kuyruğ
 
 #### WP-349: Forest Cabin tema kapağını gerçek paletle hizala 🎨
 - **Program/Faz:** Tema · Faz F2 görsel doğruluk
-- **Ajan:** — (WP-348 kabulünden sonra)
-- **Durum:** [ ] Bekliyor
+- **Ajan:** —
+- **Durum:** [~] Kod/test tamamlandı; cihaz kabulü bekliyor
 - **Bağımlılık:** WP-348 seri kapısı; teknik olarak bağımsızdır.
 - **Problem:** `forest_study` temasının gerçek baskın scaffold/surface rengi
   yeşildir; hazır tema kartı yalnız kahverengi `primary` ve sarı `accent`
@@ -610,11 +610,11 @@ Kod/test tamam; mağaza çıkışını **bloklamaz**. Kalan kabul tek QA kuyruğ
   - `app/lib/core/theme/theme_presets.dart` içindeki `forest_study` runtime token'ları
   - `app/lib/core/theme/app_theme.dart` · `theme_settings.dart` · l10n
 - **Adımlar:**
-  - [ ] Hazır tema kapağını yalnız primary/accent çifti yerine gerçek
+  - [x] Hazır tema kapağını yalnız primary/accent çifti yerine gerçek
     scaffold/surface alanı baskın, primary/accent küçük vurgu olacak biçimde çiz.
-  - [ ] Çözümü bütün `ThemePreset` kartlarına semantik tokenlardan uygula;
+  - [x] Çözümü bütün `ThemePreset` kartlarına semantik tokenlardan uygula;
     `forest_study` için ID'ye özel hard-code ekleme.
-  - [ ] Selected border/check kontrastını hem açık hem koyu presetlerde doğrula.
+  - [x] Selected border/check kontrastını hem açık hem koyu presetlerde doğrula.
 - **Veri/Migration etkisi:** Yok. Geri alma tek widget/golden geri dönüşüdür.
 - **Ortam/Deploy:** Local; WP-351 stable artefaktına girer.
 - **RLS/Güvenlik:** Yok.
@@ -883,6 +883,7 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 | WP | Ortam | Bekleyen kabul |
 | --- | --- | --- |
 | **WP-295** Kamp ateşi oturma/poz | Windows + Android profile | Seçilen 1–8 kişi yerleşimleri ve marshmallow erişimi görsel olarak doğru; Android profile'da `p95 ≤ 16.7 ms`, jank `≤ %1` |
+| **WP-349** Forest Cabin tema kapağı | Windows + Android | Hazır tema kartı baskın scaffold/surface paletini doğru yansıtıyor; açık/koyu preset seçimi, 360 dp iki sütun ve 48 dp dokunma hedefi gerçek cihazda doğrulanmalı. **Cihazda doğrulanmalı.** |
 | **WP-335** l10n hijyeni | Android + Windows | TR/EN WP-295 önizlemesinde başlık, durum çipi, denetimler ve tooltip'ler doğal; 360 px'te sahne + kaydırılabilir kontrol alanı taşmasız. **Cihazda doğrulanmalı.** |
 | **WP-299** Gündüz/gece gökyüzü | Android + Windows | Yerel saate göre geçişler, zemin/gökyüzü birleşimi ve gece uyuma pozu gerçek cihazda doğal görünüyor |
 | **WP-315** Grup üye sınırı 8 | Staging + beta | Grup kurma/katılma akışında 8 sınırı çalışıyor; dokuzuncu üye sunucuda reddediliyor |
