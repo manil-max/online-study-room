@@ -44,9 +44,15 @@
 - **SAHİP yollar:** —
 
 ### Claude Lane
-- **Durum:** [x] Boşta
-- **Faz/WP:** — · **Son iş:** **WP-322** ✅ kod/test tamam (commit `3e607a7`, 2026-07-26)
-- **SAHİP yollar:** —
+- **Durum:** [~] Aktif · **Aşama:** Geliştiriliyor · **Dal:** `main`
+- **Faz/WP:** **WP-319** — Şifre değiştirme + sıfırlama (Faz C) · **Başlangıç:** 2026-07-26 (Europe/Istanbul) · **Son güncelleme:** 2026-07-26
+- **SAHİP yollar:**
+  - `app/lib/features/profile/account_settings_screen.dart`
+  - `app/lib/data/repositories/auth_repository.dart` · `app/lib/data/repositories/supabase/supabase_auth_repository.dart` · `app/lib/data/repositories/in_memory/in_memory_auth_repository.dart`
+  - `app/lib/l10n/app_{en,tr,de,ar}.arb` + üretilen `app_localizations*.dart`
+  - `app/test/data/auth_repository_test.dart` · `app/test/features/profile/change_password_test.dart` (yeni)
+- **Ortak/riskli yüzey:** 🟡 **yalnız `app/lib/l10n/*.arb`.** WP-317'nin SAHİP listesinde l10n **yok** ama admin yanıt UI'ı metin isteyecektir. Codex arb'ye girecekse **haber versin, seri koşarız**; arb düzenlemem eklemeli ve tek turda yapılıyor. Kesişmeyen yüzeyler: `app/lib/features/admin/**`, `supabase_admin_repository.dart`, `supabase/migrations/**`, `supabase/tests/**` — **hiçbirine girilmiyor**.
+- **Not:** Kartın "şifre değiştirme hiç yok" iddiası **yanlış** — var ([account_settings_screen.dart:113](app/lib/features/profile/account_settings_screen.dart:113)) ama yalnız "yeni şifre" soruyor, mevcut şifreyi **hiç doğrulamıyor**. Yani kartın kendi uyardığı **ölü anahtar** zaten üretimde. Gerçek iş: doğrulamayı eklemek.
 - ✅ **WP-322 (2026-07-26)** — Faz B ile paralel koştu, Codex WP-316 ile **kesişim olmadı** (`pubspec.yaml`'a hiç girilmedi, `supabase/migrations/**`'e dokunulmadı). `flutter analyze` temiz · **10 ardışık tam suit koşumu 10/10 yeşil, her turda 820 test** · kararsızlık için kırmızı-yeşil kanıt alındı. Kartın passkeys ve sürüm maddeleri **konusuz** çıktı (gerekçe kartta).
 - 🟡 **Sahibe açık kalan tek soru:** `pubspec.yaml`'daki `version: 1.0.43-beta.9+4309` yayınlanan etiketlerle uyumsuz ama **hiçbir mağaza paketine ulaşmıyor** (sürüm etiketten türetiliyor). Kozmetik hijyen olarak hizalansın mı, yoksa öyle mi kalsın? Sürüm politikası "onaysız dokunma" dediği için **bekletildi**.
 - ✅ **v49 git tag'i silindi (2026-07-26 11:49, sahip emri):** uzak (`origin`) + yerel. Karşılığında release yoktu; sıradaki sürüm o numarayı temiz kullanabilir.
