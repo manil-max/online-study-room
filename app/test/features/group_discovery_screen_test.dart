@@ -203,4 +203,60 @@ void main() {
     expect(find.text('Group time zone'), findsOneWidget);
     expect(find.textContaining('from you'), findsWidgets);
   });
+
+  testWidgets('discovery filters hide full groups and narrow by region', (
+    tester,
+  ) async {
+    final repository = InMemoryGroupRepository();
+    final full = await repository.createGroup(
+      name: 'Full New York',
+      creator: owner,
+      visibility: GroupVisibility.public,
+      memberLimit: 2,
+      timeZone: 'America/New_York',
+    );
+    await repository.joinPublicGroup(groupId: full.id, member: member);
+    await repository.createGroup(
+      name: 'Open Tokyo',
+      creator: Profile(
+        id: 'owner-2',
+        displayName: 'Other',
+        createdAt: DateTime(2026),
+      ),
+      visibility: GroupVisibility.public,
+      timeZone: 'Asia/Tokyo',
+    );
+
+    await tester.pumpWidget(
+      await buildScope(
+        repository: repository,
+        user: Profile(
+          id: 'viewer',
+          displayName: 'Viewer',
+          createdAt: DateTime(2026),
+        ),
+        child: const MaterialApp(
+          locale: Locale('en'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: GroupDiscoveryScreen(),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    await tester.tap(find.text('Has open seats'));
+    await tester.pump();
+    await tester.pump();
+    expect(find.text('Full New York'), findsNothing);
+    expect(find.text('Open Tokyo'), findsOneWidget);
+
+    await tester.tap(find.byType(DropdownButtonFormField<String>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Tokyo').last);
+    await tester.pump();
+    await tester.pump();
+    expect(find.text('Open Tokyo'), findsOneWidget);
+  });
 }

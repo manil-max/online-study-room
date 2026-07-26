@@ -118,6 +118,48 @@ void main() {
   );
 
   test(
+    'public keşif bölge, kontenjan ve anlık saat farkına göre filtreler',
+    () async {
+      final repo = InMemoryGroupRepository();
+      final newYork = await repo.createGroup(
+        name: 'New York Focus',
+        creator: _profile('u1', 'Ali'),
+        visibility: GroupVisibility.public,
+        timeZone: 'America/New_York',
+      );
+      await repo.createGroup(
+        name: 'Tokyo Focus',
+        creator: _profile('u2', 'Veli'),
+        visibility: GroupVisibility.public,
+        timeZone: 'Asia/Tokyo',
+      );
+      final full = await repo.createGroup(
+        name: 'Full New York',
+        creator: _profile('u3', 'Deniz'),
+        visibility: GroupVisibility.public,
+        memberLimit: 2,
+        timeZone: 'America/New_York',
+      );
+      await repo.joinPublicGroup(
+        groupId: full.id,
+        member: _profile('u4', 'Ece'),
+      );
+
+      final ordered = await repo.discoverPublicGroups(
+        userTimeZone: 'America/New_York',
+      );
+      expect(ordered.first.timeZone, newYork.timeZone);
+
+      final regional = await repo.discoverPublicGroups(
+        userTimeZone: 'America/New_York',
+        timeZone: 'America/New_York',
+        onlyWithCapacity: true,
+      );
+      expect(regional.map((group) => group.id), [newYork.id]);
+    },
+  );
+
+  test(
     'public katılım grubu üyeye ekler ve private grup RPC ile katılamaz',
     () async {
       final repo = InMemoryGroupRepository();

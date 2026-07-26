@@ -41,6 +41,9 @@ abstract class GroupRepository {
   /// Açık grupların güvenli, davet kodu içermeyen keşif özeti.
   Future<List<PublicGroupSummary>> discoverPublicGroups({
     String query = '',
+    String? timeZone,
+    String userTimeZone = kDefaultGroupTimeZone,
+    bool onlyWithCapacity = false,
     int offset = 0,
     int limit = 20,
   });

@@ -178,6 +178,9 @@ class SupabaseGroupRepository implements GroupRepository {
   @override
   Future<List<PublicGroupSummary>> discoverPublicGroups({
     String query = '',
+    String? timeZone,
+    String userTimeZone = kDefaultGroupTimeZone,
+    bool onlyWithCapacity = false,
     int offset = 0,
     int limit = 20,
   }) async {
@@ -187,6 +190,9 @@ class SupabaseGroupRepository implements GroupRepository {
                 'discover_public_groups',
                 params: {
                   'p_query': query.trim(),
+                  'p_time_zone': timeZone?.trim(),
+                  'p_user_time_zone': userTimeZone.trim(),
+                  'p_only_with_capacity': onlyWithCapacity,
                   'p_offset': offset < 0 ? 0 : offset,
                   'p_limit': limit.clamp(1, 50).toInt(),
                 },

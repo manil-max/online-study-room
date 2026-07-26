@@ -4097,6 +4097,18 @@
   "@groupDiscoverySearchHint": {
     "description": "Public group discovery search field hint"
   },
+  "groupDiscoveryRegionFilter": "Region",
+  "@groupDiscoveryRegionFilter": {
+    "description": "Label for the public group time-zone filter"
+  },
+  "groupDiscoveryAllRegions": "Alle Regionen",
+  "@groupDiscoveryAllRegions": {
+    "description": "No time-zone filter for public group discovery"
+  },
+  "groupDiscoveryOpenSeatsOnly": "Freie Plätze verfügbar",
+  "@groupDiscoveryOpenSeatsOnly": {
+    "description": "Filters public groups to those below their member limit"
+  },
   "groupDiscoveryPrivacyTitle": "Salon-Regeln",
   "@groupDiscoveryPrivacyTitle": {
     "description": "Label for the group privacy setting"

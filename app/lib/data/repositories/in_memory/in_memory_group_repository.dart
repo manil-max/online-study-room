@@ -3,6 +3,9 @@ import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:timezone/data/latest_all.dart' as tzdata;
+import 'package:timezone/timezone.dart' as tz;
+
 import 'package:uuid/uuid.dart';
 
 import '../../models/profile.dart';
@@ -137,12 +140,18 @@ class InMemoryGroupRepository implements GroupRepository {
   @override
   Future<List<PublicGroupSummary>> discoverPublicGroups({
     String query = '',
+    String? timeZone,
+    String userTimeZone = kDefaultGroupTimeZone,
+    bool onlyWithCapacity = false,
     int offset = 0,
     int limit = 20,
   }) async {
     final normalized = query.trim().toLowerCase();
+    final normalizedTimeZone = timeZone?.trim();
     final safeOffset = offset < 0 ? 0 : offset;
     final safeLimit = limit.clamp(1, 50).toInt();
+    final now = DateTime.now().toUtc();
+    final userOffset = _timeZoneOffsetMinutes(userTimeZone, now);
     final visible =
         _groups.values
             .where((group) => group.visibility == GroupVisibility.public)
@@ -151,8 +160,28 @@ class InMemoryGroupRepository implements GroupRepository {
                   normalized.isEmpty ||
                   group.name.toLowerCase().contains(normalized),
             )
+            .where(
+              (group) =>
+                  normalizedTimeZone == null ||
+                  normalizedTimeZone.isEmpty ||
+                  group.timeZone == normalizedTimeZone,
+            )
+            .where(
+              (group) =>
+                  !onlyWithCapacity ||
+                  (_members[group.id]?.length ?? 0) < group.memberLimit,
+            )
             .toList()
-          ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          ..sort((a, b) {
+            final aDistance =
+                (_timeZoneOffsetMinutes(a.timeZone, now) - userOffset).abs();
+            final bDistance =
+                (_timeZoneOffsetMinutes(b.timeZone, now) - userOffset).abs();
+            final byDistance = aDistance.compareTo(bDistance);
+            if (byDistance != 0) return byDistance;
+            final byCreatedAt = b.createdAt.compareTo(a.createdAt);
+            return byCreatedAt != 0 ? byCreatedAt : a.id.compareTo(b.id);
+          });
 
     return visible
         .skip(safeOffset)
@@ -169,6 +198,18 @@ class InMemoryGroupRepository implements GroupRepository {
           ),
         )
         .toList(growable: false);
+  }
+
+  int _timeZoneOffsetMinutes(String timeZone, DateTime now) {
+    try {
+      tzdata.initializeTimeZones();
+      return tz.TZDateTime.from(
+        now,
+        tz.getLocation(timeZone),
+      ).timeZoneOffset.inMinutes;
+    } catch (_) {
+      return 0;
+    }
   }
 
   @override

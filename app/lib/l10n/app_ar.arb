@@ -4097,6 +4097,18 @@
   "@groupDiscoverySearchHint": {
     "description": "Public group discovery search field hint"
   },
+  "groupDiscoveryRegionFilter": "المنطقة",
+  "@groupDiscoveryRegionFilter": {
+    "description": "Label for the public group time-zone filter"
+  },
+  "groupDiscoveryAllRegions": "كل المناطق",
+  "@groupDiscoveryAllRegions": {
+    "description": "No time-zone filter for public group discovery"
+  },
+  "groupDiscoveryOpenSeatsOnly": "توجد أماكن شاغرة",
+  "@groupDiscoveryOpenSeatsOnly": {
+    "description": "Filters public groups to those below their member limit"
+  },
   "groupDiscoveryPrivacyTitle": "مجموعة الخصوصية",
   "@groupDiscoveryPrivacyTitle": {
     "description": "Label for the group privacy setting"

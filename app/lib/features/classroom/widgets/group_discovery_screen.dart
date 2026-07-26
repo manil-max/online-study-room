@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
 import '../../../core/time_engine/group_time_zone_label.dart';
+import '../../../core/time_engine/device_timezone.dart';
 import '../../../core/time_engine/world_clock_math.dart';
 import '../../../data/models/study_group.dart';
 import '../../../data/providers/auth_providers.dart';
@@ -30,6 +31,8 @@ class _GroupDiscoveryScreenState extends ConsumerState<GroupDiscoveryScreen> {
   var _loading = true;
   var _loadingMore = false;
   var _hasMore = false;
+  String? _timeZoneFilter;
+  var _onlyWithCapacity = false;
   Object? _error;
   int _requestVersion = 0;
 
@@ -56,10 +59,14 @@ class _GroupDiscoveryScreenState extends ConsumerState<GroupDiscoveryScreen> {
       }
     });
     try {
+      await DeviceTimezone.ensureInitialized();
       final page = await ref
           .read(groupRepositoryProvider)
           .discoverPublicGroups(
             query: _searchController.text.trim(),
+            timeZone: _timeZoneFilter,
+            userTimeZone: DeviceTimezone.lastId ?? kDefaultGroupTimeZone,
+            onlyWithCapacity: _onlyWithCapacity,
             offset: reset ? 0 : _groups.length,
             limit: _pageSize,
           );
@@ -140,6 +147,60 @@ class _GroupDiscoveryScreenState extends ConsumerState<GroupDiscoveryScreen> {
                   ),
                   border: const OutlineInputBorder(),
                 ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Wrap(
+                spacing: 12,
+                runSpacing: 8,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 220,
+                    child: DropdownButtonFormField<String>(
+                      initialValue: _timeZoneFilter ?? '',
+                      isExpanded: true,
+                      decoration: InputDecoration(
+                        labelText: l10n.groupDiscoveryRegionFilter,
+                        border: const OutlineInputBorder(),
+                      ),
+                      items: [
+                        DropdownMenuItem(
+                          value: '',
+                          child: Text(l10n.groupDiscoveryAllRegions),
+                        ),
+                        for (final timeZone in kGroupTimeZoneChoices)
+                          DropdownMenuItem(
+                            value: timeZone,
+                            child: Text(
+                              localizedWorldCityLabel(
+                                timeZone,
+                                l10n,
+                                fallback: timeZone,
+                              ),
+                            ),
+                          ),
+                      ],
+                      onChanged: (value) {
+                        setState(() {
+                          _timeZoneFilter = value == null || value.isEmpty
+                              ? null
+                              : value;
+                        });
+                        _load();
+                      },
+                    ),
+                  ),
+                  FilterChip(
+                    label: Text(l10n.groupDiscoveryOpenSeatsOnly),
+                    selected: _onlyWithCapacity,
+                    onSelected: (selected) {
+                      setState(() => _onlyWithCapacity = selected);
+                      _load();
+                    },
+                  ),
+                ],
               ),
             ),
             Expanded(child: _buildBody(l10n, memberIds)),

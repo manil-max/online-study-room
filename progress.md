@@ -18,12 +18,12 @@
 
 ## Proje Gerçekleri
 
-- **Migration gerçeği:** repo/local **`0077`** · staging **`0072`** · production
+- **Migration gerçeği:** repo/local **`0078`** · staging **`0072`** · production
   etkin şema **`0070`**. Production CLI geçmişi legacy/uzlaştırılmamış;
   ayrıntı [`docs/recovery/PRODUCTION-BASELINE.md`](docs/recovery/PRODUCTION-BASELINE.md).
   Deploy contract aynı üç head'i taşır ve production `deploy_enabled: false` kilitlidir.
 - **Stable/production:** **v48** yayında, etkin şema `0070`. Yeni production migration, Edge deploy veya stable tag/release yalnız ayrı, somut kullanıcı GO + backup + dry-run ile yapılır; deploy kapısı kilitli.
-- **Beta/staging:** **beta-v4309** artefaktı `0070` ile çıktı; staging veritabanı sonradan `0072`ye yükseldi. Yeni kabul kuyruğu `0073–0077` staging terfisinden sonra ortak beta turunda doğrulanır.
+- **Beta/staging:** **beta-v4309** artefaktı `0070` ile çıktı; staging veritabanı sonradan `0072`ye yükseldi. Yeni kabul kuyruğu `0073–0078` staging terfisinden sonra ortak beta turunda doğrulanır.
 - **Release ilkesi:** Android beta/stable artefaktı Android işi başarılı olunca yayımlanır. Windows bağımsız sürer ve başarılı olursa aynı release'e eklenir; Windows hatası Android güncellemesini geri çekmez.
 - **Sürüm sırası:** kod/testi biten işler tek QA kuyruğunda birikir; yeni beta/stable yalnız sahip onayıyla çıkar. Eski beta dalga kararları tarihsel arşivdedir.
 - **Yönetim varsayılanı:** Production `deploy_enabled/release_enabled` kapalıdır. Stable yalnız protected `production` Environment, exact SHA/head/project-ref GO ve reviewer kanıtıyla ilerler.
@@ -51,8 +51,8 @@
 - **SAHİP yollar:** —
 - **Ortak/riskli yüzey:** —
 - **Dal:** `main`
-- **Başlangıç/Son güncelleme:** 2026-07-26 16:06–16:20 (Europe/Istanbul)
-- **Not:** WP-335 kod/test tamam; TR/EN 360 px önizleme için cihaz kabulü QA kuyruğunda.
+- **Başlangıç/Son güncelleme:** 2026-07-26 17:29–17:42 (Europe/Istanbul)
+- **Not:** WP-328 kod/test tamam; local `0078` replay + 192 pgTAP, `flutter analyze`, 893 Flutter test ve l10n audit geçti. Staging/cihaz kabulü QA kuyruğunda.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
@@ -206,27 +206,10 @@ Böylece kişisel ve grup istatistiği **asla çelişmez**.
 | **WP-325** Oturum gününü kayıt anında damgalama | Kod/test tamam; `0073` local | Staging dry-run + veri eşliği |
 | **WP-326** Grup bölgesi ve gün sınırı zinciri | Kod/test tamam; `0076` local | Staging + beta saat dilimi kabulü |
 | **WP-327** Grup bölgesi ve anlık saat farkı | Kod/test tamam; `0077` local | Staging + beta kart/diyalog kabulü |
+| **WP-328** Keşif sıralaması + arama/filtre | Kod/test tamam; `0078` local | Staging dry-run + Android/Windows filtre kabulü |
 
-> Migration sırası korunur: staging'deki `0072` ardından **`0073` → `0077`**.
-> Bu dört WP yeniden claim edilmez; test sonucu hata çıkarsa yeni WP açılır.
-
-#### WP-328: Keşif sıralaması + arama/filtre 🔎
-- **Program/Faz:** Faz E · Grup keşfi · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-326
-- **Problem:** Açık gruplar `created_at desc` sıralanıyor; kullanıcı kendi saatine uygun grubu bulamıyor. Sınır 8'e indiği için dolu gruplara tıklayıp duruyor.
-- **Kapsam dışı:** Grup önerisi algoritması (ilgi alanı, hedef benzerliği), sıralama kişiselleştirme.
-- **SAHİP dosyalar (yaz):** `supabase/migrations/00NN_discover_groups_by_tz.sql` · `group_discovery_screen.dart` · `supabase_group_repository.dart`
-- **DOKUNMA:** grup bilgi ekranı (WP-327)
-- **Adımlar:**
-  - [ ] Sıralama: iki bölgenin **o andaki** UTC farkının mutlak değeri; eşitlikte `created_at desc`
-  - [ ] İsim araması + **bölge filtresi**
-  - [ ] **"Boş kontenjanı var"** filtresi
-- **Veri/Migration etkisi:** RPC değişikliği. Geri alma: önceki `discover_public_groups` gövdesi.
-- **Ortam/Deploy:** local → staging → production ayrı GO.
-- **RLS/Güvenlik:** 🔴 `discover_public_groups` yalnız **güvenli özet** alanlarını döndürür — `invite_code` sızmaz. Mevcut sözleşme korunur (test var).
-- **Edge-case'ler:** 🔴 `idx_groups_public_discovery` `created_at desc` üzerine kurulu — **yeni sıralama bu indeksi kullanamaz**; sayfalama tutarlılığı ve performans birlikte gözden geçirilecek · kullanıcının saat dilimi bilinmiyorsa · tüm gruplar dolu
-- **Kabul (ölçülebilir):** Farklı bölgelerden 10 grupla, kullanıcının bölgesine en yakın grup **ilk sırada** · "boş kontenjanı var" filtresi dolu grupları gizliyor · `invite_code` yanıtta **yok** (mevcut sözleşme testi yeşil) · sayfalama tekrar/atlama üretmiyor.
-- **Tuzaklar:** Ofset farkını istemcide hesaplayıp sunucuya sıralama diye göndermek sayfalamayı bozar; sıralama **sunucuda** olmalı.
-- **Model önerisi:** 🟣 Pro
+> Migration sırası korunur: staging'deki `0072` ardından **`0073` → `0078`**.
+> Bu beş WP yeniden claim edilmez; test sonucu hata çıkarsa yeni WP açılır.
 
 #### WP-329: Birincil grup 🏠
 - **Program/Faz:** Faz E · Grup semantiği · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-326 + WP-328
@@ -549,7 +532,7 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 ## ⚠️ Risk ve Tuzak Notları
 
 - **Sürüm disiplini.** Sürüm sahibin onayıyla çıkar; düzeltmeler birikir, tek sürümde çıkar.
-- **Migration drift.** Repo/local `0077`, staging `0072`, production `0070`. `0073–0077` seri dry-run + post-check olmadan staging'e uygulanmaz.
+- **Migration drift.** Repo/local `0078`, staging `0072`, production `0070`. `0073–0078` seri dry-run + post-check olmadan staging'e uygulanmaz.
 - **V3 migration sırası.** WP-328 → WP-329 → WP-336 → WP-338 → WP-341 → WP-344 tek migration hattıdır; aynı anda iki migration worker'ı açılmaz. Her adım local replay, şema post-check ve önceki head kanıtı ister.
 - **Sayaç sıcak yolu donuktur.** WP-340–345 normal local start/stop sırasını, notification ID/channel/layout/PendingIntent'leri, widget görünümünü ve `ACTION_STOP_SILENT` davranışını yeniden tasarlamaz. Global senkron additive envelope + shadow + feature flag ile gelir; WP-346 gerçek cihaz regresyon kapısı geçmeden varsayılan açılmaz.
 - **l10n kapısı temiz.** WP-335, 24 gerçek WP-295 kullanıcı metnini kataloğa taşıdı; 7 kullanıcı-dışı invariant mesajını dar ve gerekçeli muafiyetle ayırdı. Yeni UI metni ekleyen WP'ler audit sıfır-bulgu kuralını korumalıdır.
@@ -581,8 +564,9 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 | **WP-325** Oturum günü damgası | Staging | `0073` dry-run/apply; öncesi/sonrası gün toplamı birebir; bölge değişimi geçmişi oynatmıyor; indeks planı kanıtlı |
 | **WP-326** Grup saat dilimi | Staging + beta | `0076`; IANA adı, New York yerel gece yarısı, cihaz fallback'i ve DST davranışı doğru |
 | **WP-327** Grup bölgesi + saat farkı | Staging + beta | `0077`; açık grup kartı/bilgi ekranı, aynı bölgede farkın gizlenmesi, New York ve +5:30 farklarının doğruluğu |
+| **WP-328** Keşif sıralaması + arama/filtre | Staging + Android + Windows | `0078` önce `0073→0078` seri dry-run/apply ile terfi etmeli; ardından kullanıcı bölgesine göre sıralama, bölge filtresi, boş kontenjan filtresi ve sayfalama gerçek cihazda doğrulanmalı. **Cihazda doğrulanmalı.** |
 
-**Ortam sırası:** staging şu anda `0072`; veri/grup zinciri **`0073` → `0077`**
+**Ortam sırası:** staging şu anda `0072`; veri/grup zinciri **`0073` → `0078`**
 olarak dry-run ve post-check ile seri ilerler. Production bu kuyruğun parçası değildir ve
 ayrı somut sahip GO'su olmadan değişmez.
 
