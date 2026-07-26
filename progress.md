@@ -23,12 +23,13 @@
   ayrıntı [`docs/recovery/PRODUCTION-BASELINE.md`](docs/recovery/PRODUCTION-BASELINE.md).
   Deploy contract aynı üç head'i taşır ve production `deploy_enabled: false` kilitlidir.
 - **Stable/production:** **v48** yayında, etkin şema `0070`. Yeni production migration, Edge deploy veya stable tag/release yalnız ayrı, somut kullanıcı GO + backup + dry-run ile yapılır; deploy kapısı kilitli.
-- **Beta/staging:** `beta-v4401` CI'ın Linux/Windows golden raster farkında durdurduğu, APK'sız tarihsel adaydır; sıradaki benzersiz aday **beta-v4402**. Staging veritabanı `0084`te; V3 `0073–0084` zinciri dry-run/apply/post-check PASS; sıradaki adım beta APK ve ortak cihaz turudur.
+- **Beta/staging:** `beta-v4401` APK'sız tarihsel başarısız adaydır. **`beta-v4402` yayımlandı**: Android APK + Windows MSIX/ZIP mevcut, release run `30212796092` bütünüyle PASS. Staging veritabanı `0084`te; V3 `0073–0084` zinciri dry-run/apply/post-check PASS. Fiziksel cihaz bağlı olmadığı için cihaz kabulü yapılmadı; V3 rollout flag'leri kapalıdır.
 - **Release ilkesi:** Android beta/stable artefaktı Android işi başarılı olunca yayımlanır. Windows bağımsız sürer ve başarılı olursa aynı release'e eklenir; Windows hatası Android güncellemesini geri çekmez.
 - **Sürüm sırası:** kod/testi biten işler tek QA kuyruğunda birikir; yeni beta/stable yalnız sahip onayıyla çıkar. Eski beta dalga kararları tarihsel arşivdedir.
 - **Yönetim varsayılanı:** Production `deploy_enabled/release_enabled` kapalıdır. Stable yalnız protected `production` Environment, exact SHA/head/project-ref GO ve reviewer kanıtıyla ilerler.
 - **Kurallar:** Kök `AGENTS.md`, `.agents/AGENTS.md` ve `docs/KALITE-PROGRAMI.md` geçerlidir. Tek çalışma dalı `main`; her WP ayrı commit; production varsayılmaz.
-- **Aktif tur:** **Faz E + Global Timer/Presence V3**. İlk paralel dalga: **WP-328** (grup keşfi) + **WP-337** (salt-okunur legacy compatibility gate). Sonrasında migration hattı WP-329 → WP-336 → WP-338 → WP-341 → WP-344 olarak seridir.
+- **Aktif tur:** **Stable öncesi seri ürün revizyonu: WP-348 → WP-349 → WP-350 → WP-351.** Birincil grup IA/24 saat kuralı, tema kapağı, mobil kamp ateşi ve kontrollü stable teslimi bu sırada ilerler.
+- **Son WP numarası:** **WP-351**.
 - ✅ **Ortam gerçeği uzlaştırıldı (WP-293):** production deploy kapısı kilitli; ortam head'leri tek sayıya indirgenmez.
 
 ## ⚡ Aktif Çalışma Kaydı
@@ -45,24 +46,16 @@
 - **Son not:** WP-327 kod/test tamamlandı; güvenli keşif özeti için 0077 local replay ile doğrulandı. Staging/beta kabulü sonraki ortak turda (2026-07-26).
 
 ### Codex Lane
-- **Durum:** [~] Aktif
-- **Faz/WP:** Faz E2 · WP-337 kapı kapanışı + WP-346 staging/çoklu cihaz kabulü
-- **Aşama:** Local replay → salt-okunur compatibility kanıtı → staging terfisi → beta/cihaz QA
-- **SAHİP yollar:** `docs/GLOBAL-TIMER-V3-COMPATIBILITY-EVIDENCE.md` · `docs/qa/DEVICE-QA-MATRIX.md` · staging acceptance kanıtı · `.artifacts/deploy-evidence/**`
-- **Ortak/riskli yüzey:** Staging migration/flag sırası; timer notification/widget hot path'a kod değişikliği yok. Production/stable kapsam dışı.
-- **Dal:** `main`
-- **Başlangıç/Son güncelleme:** 2026-07-26 22:10 (Europe/Istanbul)
-- **Not:** Sahip talimatıyla V3 kabul turu başlatıldı. Önce WP-337 aggregate kanıtı, sonra staging `0073→0083`, benzersiz beta APK ve fiziksel cihaz matrisi; bağlı cihaz olmadan cihaz sonucu yazılmaz.
+- **Durum:** [x] Boşta
+- **Faz/WP:** —
+- **SAHİP yollar:** —
+- **Son not:** WP-337/WP-347, staging `0084` terfisi ve `beta-v4402` Android+Windows release tamamlandı. ADB cihazı bulunmadığı için fiziksel kabul sonucu yazılmadı; V3 flag'leri kapalı kaldı.
 
 ### Codex-2 Lane
-- **Durum:** [~] Aktif
-- **Faz/WP:** Faz E2 · WP-340
-- **Aşama:** Geliştiriliyor
-- **SAHİP yollar:** `app/android/app/src/main/kotlin/com/manilmax/online_study_room/timer/TimerStateStore.kt` · `app/android/app/src/main/kotlin/com/manilmax/online_study_room/timer/StudyTimerService.kt` (yalnız envelope enqueue) · Dart parser/flush adapter · ilgili Android/Dart contract testleri
-- **Ortak/riskli yüzey:** Native timer/SharedPreferences queue; `TimerExternalCommandStore` semantiği, notification ID/channel/layout/PendingIntent ve `ACTION_STOP_SILENT` değişmez.
-- **Dal:** `main`
-- **Başlangıç/Son güncelleme:** 2026-07-26 18:23 (Europe/Istanbul)
-- **Not:** WP-340 tamamlandı; V2 envelope additive olarak mevcut native queue'ya eklendi, account mismatch fail-closed karantinada ve flush shadow-only. `TimerExternalCommandStore`, bildirim/widget yüzeyleri ve `ACTION_STOP_SILENT` korunuyor. WP-338 tamamlanana kadar WP-339'a geçilmeyecek; remote, beta ve cihaz kabulü zincirin sonundaki ortak QA turunda.
+- **Durum:** [x] Boşta
+- **Faz/WP:** —
+- **SAHİP yollar:** —
+- **Son not:** WP-340 commit/test ile tamamlandı; fiziksel cihaz regresyonu ortak QA kuyruğunda.
 
 ### Codex-3 Lane
 - **Durum:** [x] Boşta
@@ -88,9 +81,10 @@
 | Sürüm | **`v48` yayında (Latest).** Android APK + Windows MSIX/ZIP GitHub Releases'ta |
 | `v49` | **Çıkmadı.** Başarısız koşumun release'i oluşmadı; yerel ve uzak `v49` tag'i sahip emriyle silindi |
 | Sürüm politikası | 🔴 Sahip onayı olmadan yeni sürüm çıkmaz |
-| Otomatik doğrulama | Son tamamlanan taban: **886 test yeşil**, `flutter analyze` temiz |
+| Otomatik doğrulama | `2800484` için CI + Database Gates PASS; yerelde tam paket **910 test**, Windows golden paketi **16 test**, `flutter analyze` temiz |
 | l10n audit | **0 bulgu**: WP-335, WP-295 önizleme metinlerini katalogladı; 7 kullanıcı-dışı invariant mesajı dar ve gerekçeli muafiyetle ayrıldı |
-| Migration | Repo/local **`0077`** · staging **`0072`** · production **`0070`** |
+| Migration | Repo/local **`0084`** · staging **`0084`** · production etkin şema **`0070`** |
+| Beta | **`beta-v4402` yayımlandı**; Android APK + Windows MSIX/ZIP hazır, V3 flag'leri kapalı |
 | Play Console | Hesap açıldı, doğrulama sürüyor. Hiçbir form doldurulmadı |
 | Microsoft Partner Center | Hesap açıldı. Hiçbir hazırlık yapılmadı |
 
@@ -214,17 +208,17 @@ Böylece kişisel ve grup istatistiği **asla çelişmez**.
 | WP | Kod durumu | Kalan kapı |
 | --- | --- | --- |
 | **WP-315** Grup üye sınırı 8 | Kod/test tamam; `0071` staging'e uygulandı | Beta cihazda 8 sınırı |
-| **WP-325** Oturum gününü kayıt anında damgalama | Kod/test tamam; `0073` local | Staging dry-run + veri eşliği |
-| **WP-326** Grup bölgesi ve gün sınırı zinciri | Kod/test tamam; `0076` local | Staging + beta saat dilimi kabulü |
-| **WP-327** Grup bölgesi ve anlık saat farkı | Kod/test tamam; `0077` local | Staging + beta kart/diyalog kabulü |
-| **WP-328** Keşif sıralaması + arama/filtre | Kod/test tamam; `0078` local | Staging dry-run + Android/Windows filtre kabulü |
-| **WP-329** Birincil grup | Kod/test tamam; `0079` local | Staging dry-run + iki cihaz primary kabulü |
+| **WP-325** Oturum gününü kayıt anında damgalama | Kod/test + staging tamam | Cihaz/veri eşliği kabulü |
+| **WP-326** Grup bölgesi ve gün sınırı zinciri | Kod/test + staging tamam | Beta saat dilimi kabulü |
+| **WP-327** Grup bölgesi ve anlık saat farkı | Kod/test + staging tamam | Beta kart/diyalog kabulü |
+| **WP-328** Keşif sıralaması + arama/filtre | Kod/test + staging tamam | Android/Windows filtre kabulü |
+| **WP-329** Birincil grup | Kod/test + staging tamam | WP-348 revizyonu + iki cihaz primary kabulü |
 
-> Migration sırası korunur: staging'deki `0072` ardından **`0073` → `0079`**.
-> Bu beş WP yeniden claim edilmez; test sonucu hata çıkarsa yeni WP açılır.
+> `0073→0084` zinciri staging'e terfi etti. Bu kartlar yeniden claim edilmez;
+> birincil grubun yeni IA/cooldown talebi ileri migration kullanan **WP-348**'dir.
 
 #### WP-329: Birincil grup 🏠
-- **Program/Faz:** Faz E · Grup semantiği · **Durum:** [~] Kod/test tamam; staging/cihaz kabulü bekliyor · **Bağımlılık:** WP-326 + WP-328
+- **Program/Faz:** Faz E · Grup semantiği · **Durum:** [~] Kod/test + staging tamam; WP-348 revizyonu/cihaz kabulü bekliyor · **Bağımlılık:** WP-326 + WP-328
 - **Problem:** Kullanıcı birden çok gruba üye olabiliyor; UI'da seçili grup ile görev/hedef/grup progression muhasebesini alan birincil grup aynı kavram sanılıyor. Tercih cihazlar arasında ortak ve server-authoritative değil.
 - **Kapsam dışı:** Çoklu grup üyeliğini kaldırmak · presence'ı yalnız primary gruba indirmek · direct grup bildirimlerini primary ile filtrelemek · geçmiş session'ları yeniden atfetmek · gün-sınırı algoritmasını değiştirmek.
 - **SAHİP dosyalar (yaz):** `supabase/migrations/00NN_primary_group_preference.sql` · `app/lib/data/providers/group_providers.dart` · ilgili group repository interface + Supabase/InMemory çiftleri · birincil grup seçim UI'ı ve testleri
@@ -251,7 +245,7 @@ Böylece kişisel ve grup istatistiği **asla çelişmez**.
 > Delivery A/B uygulanabilir; Delivery C migration'ı WP-337 compatibility gate geçmeden yazılmaz. Gün sınırı, server finalizer, Pomodoro global fazı ve background native auto-start bu fazın dışındadır.
 
 #### WP-336: Tek-grup session attribution ve progression filtresi 🎯
-- **Program/Faz:** Faz E2 · WP-329 entegrasyonu · **Ajan:** Codex · **Durum:** [~] Kod/test tamam — staging/cihaz kabulü bekliyor · **Bağımlılık:** WP-329
+- **Program/Faz:** Faz E2 · WP-329 entegrasyonu · **Ajan:** Codex · **Durum:** [~] Kod/test + staging tamam — cihaz kabulü bekliyor · **Bağımlılık:** WP-329
 - **Problem:** `project_group_day/week` session'ı üye olunan bütün gruplara yazıyor; primary UI seçimi grup hedefi/başarımı/leaderboard çift sayımını durdurmaz.
 - **Kapsam dışı:** Gün/timezone algoritması · geçmiş XP'yi geri almak · presence'ı primary gruba indirmek · server timer finalizer.
 - **SAHİP dosyalar (yaz):** yeni `supabase/migrations/00NN_session_group_attribution.sql` · ilgili `supabase/tests/*.test.sql` · grup metric contract testleri
@@ -283,7 +277,7 @@ Böylece kişisel ve grup istatistiği **asla çelişmez**.
 - **Model önerisi:** 🔴 Opus
 
 #### WP-338: Server-derived çoklu grup presence çekirdeği 👥
-- **Program/Faz:** Faz E2 · Delivery A backend · **Ajan:** Codex · **Durum:** [~] Kod/test tamam; staging/cihaz kabulü bekliyor · **Bağımlılık:** WP-329; migration sırası WP-328/WP-329 sonrası
+- **Program/Faz:** Faz E2 · Delivery A backend · **Ajan:** Codex · **Durum:** [~] Kod/test + staging tamam; flag/cihaz kabulü bekliyor · **Bağımlılık:** WP-329; migration sırası WP-328/WP-329 sonrası
 - **Problem:** `presence(user_id PK, group_id)` kullanıcıyı yalnız seçili grupta gösterebilir; Flutter heartbeat ölünce görünürlük kaybolur.
 - **Kapsam dışı:** Global run · push · session/XP finalizer · gün sınırı · native uplink.
 - **SAHİP dosyalar (yaz):** yeni `supabase/migrations/00NN_multi_group_presence_projection.sql` · ilgili pgTAP/RLS testleri
@@ -331,7 +325,7 @@ Böylece kişisel ve grup istatistiği **asla çelişmez**.
 - **Model önerisi:** 🔴 Opus
 
 #### WP-341: Global timer V2 server çekirdeği ve compatibility migration 🧠
-- **Program/Faz:** Faz E2 · Delivery C backend · **Ajan:** Codex-3 · **Durum:** [~] Kod/test tamam; staging/cihaz kabulü bekliyor · **Bağımlılık:** WP-337 GO + WP-338; migration hattında WP-336/WP-338 sonrası
+- **Program/Faz:** Faz E2 · Delivery C backend · **Ajan:** Codex-3 · **Durum:** [~] Kod/test + staging tamam; flag/cihaz kabulü bekliyor · **Bağımlılık:** WP-337 GO + WP-338; migration hattında WP-336/WP-338 sonrası
 - **Problem:** Aynı hesabın cihazları arasında kanonik run, kullanıcı-geneli state version ve idempotent command otoritesi yok.
 - **Kapsam dışı:** Client native apply · push · server session/XP finalizer · pause/Pomodoro/countdown · production deploy.
 - **SAHİP dosyalar (yaz):** yeni `supabase/migrations/00NN_global_timer_v2.sql` · ilgili pgTAP/RLS/concurrency testleri
@@ -379,7 +373,7 @@ Böylece kişisel ve grup istatistiği **asla çelişmez**.
 - **Model önerisi:** 🔴 Opus
 
 #### WP-344: Timer-sync push transport sınıfı 📬
-- **Program/Faz:** Faz E2 · Delivery D backend · **Ajan:** Codex-3 · **Durum:** [~] Kod/test tamam; staging/cihaz kabulü bekliyor · **Bağımlılık:** WP-341
+- **Program/Faz:** Faz E2 · Delivery D backend · **Ajan:** Codex-3 · **Durum:** [~] Kod/test + staging tamam; flag/FCM cihaz kabulü bekliyor · **Bağımlılık:** WP-341
 - **Problem:** Mevcut push allowlist/preference/quiet-hours/TTL hattı `timer_sync`i sessizce yutar veya yanlış policy uygular.
 - **Kapsam dışı:** Client auto-start · remote truth · genel bildirim refactor · production Edge deploy.
 - **SAHİP dosyalar (yaz):** yeni push-policy migration · `supabase/functions/dispatch-push/index.ts` timer handler · contract testleri
@@ -411,7 +405,7 @@ Böylece kişisel ve grup istatistiği **asla çelişmez**.
 - **Model önerisi:** 🟣 Pro
 
 #### WP-346: V3 staging, çoklu cihaz kabulü ve rollout kapıları 🧪
-- **Program/Faz:** Faz E2 · QA/rollout · **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-336 + WP-339 + WP-343 + WP-345
+- **Program/Faz:** Faz E2 · QA/rollout · **Ajan:** — · **Durum:** [~] Staging + beta artefaktı tamam; fiziksel çoklu cihaz/flag rollout bekliyor · **Bağımlılık:** WP-336 + WP-339 + WP-343 + WP-345
 - **Problem:** Global/native değişiklikler gerçek Samsung/Pixel/tablet lifecycle ve migration terfisiyle kanıtlanmadan güvenli sayılamaz.
 - **Kapsam dışı:** Production/stable · background auto-start · finalizer; bug düzeltmek (ayrı debug WP).
 - **SAHİP dosyalar (yaz):** `docs/qa/DEVICE-QA-MATRIX.md` V3 satırları · staging acceptance raporu · gerekli kanıt/manifest
@@ -422,6 +416,7 @@ Böylece kişisel ve grup istatistiği **asla çelişmez**.
 - **RLS/Güvenlik:** Cross-account command/result/presence abuse matrisi; redacted kanıt.
 - **Edge-case'ler:** OEM pil · force-stop · iki hesap · stale push · lease · join/leave · primary değişimi · eski client.
 - **Kabul (ölçülebilir):** Timer/widget/notification regresyon 0 · 8 saat ≤±1 sn · ek session/XP 0 · visibility %100 · secondary progression 0 · foreground p95≤2 sn · teslim edilen push p95≤10 sn · P0/P1 0 · soak≥3 gün.
+- **Kanıt/durum:** Staging `0084`, `beta-v4402` Android+Windows release ve otomatik kapılar PASS. ADB listesi boş olduğu için cihaz sonucu yok; V3 flag'leri kapalı tutuldu. **Cihazda doğrulanmalı.**
 - **Tuzaklar:** Test bug'ı bu WP'de yamalanmaz; yeni debug WP/beta gerekir. Production GO türetilmez.
 - **Model önerisi:** 🔴 Opus
 
@@ -491,9 +486,315 @@ Kod/test tamam; mağaza çıkışını **bloklamaz**. Kalan kabul tek QA kuyruğ
 
 ---
 
+### Faz F2 — Stable öncesi seri ürün revizyonu
+
+> **Ürün kararı (2026-07-26):**
+>
+> - Hesap başına aynı anda **tam olarak bir** birincil grup seçilebilir. Çoklu
+>   seçim hiçbir UI/repository/RPC yolunda mümkün değildir.
+> - Birincil grup seçimi **Başarımlar** ekranında, kullanıcının katıldığı bütün
+>   grupları gösteren tek-seçimli karttan yönetilir.
+> - Farklı bir birincil gruba geçiş, son başarılı **açık kullanıcı seçiminden
+>   itibaren kayan 24 saat** sonra mümkündür. Takvimde “sonraki 00.00” kuralı
+>   kullanılmaz; cihaz saati değil sunucu `now()` değeri otoritedir.
+> - Birincil grup; grup görev/hedef/gün-hafta ilerlemesi, grup başarımı ve grup
+>   gün sınırı saat dilimini etkiler. **Kişisel XP/kişisel başarımlar, bütün
+>   gruplardaki canlı presence, direct grup bildirimleri ve timer-sync sinyali
+>   bundan filtrelenmez.**
+> - Seri sıra zorunludur: **WP-348 → WP-349 → WP-350 → WP-351**. Aynı anda iki
+>   worker açılmaz; `progress.md`, l10n/generated, golden/release metadata ve
+>   migration yüzeyleri sıcak olduğu için paralellik kazanım değil risk üretir.
+
+#### WP-348: Başarımlar içinde tek birincil grup + kayan 24 saat kuralı 🏠
+- **Program/Faz:** Faz E/F2 · WP-329/WP-336 ürün revizyonu
+- **Ajan:** — (atanınca lane doldurur)
+- **Durum:** [ ] Bekliyor
+- **Bağımlılık:** WP-329 + WP-336; staging head `0084`.
+- **Problem:** Birincil grup seçimi bugün grup detayında dağınık bir eylemdir;
+  kullanıcı katıldığı grupları tek yerde kıyaslayamaz. Mevcut server sözleşmesi
+  revision yarışı çözüyor ancak seçimler arasında 24 saatlik ürün kuralı yoktur.
+  “Birden fazla grupta birincil” ifadesi ayrıca yanlış anlaşılmaya açıktır.
+- **Ürün/tasarım sözleşmesi:**
+  - Başarımlar ekranının kendi-profil görünümünde, taç/başarım kataloğundan önce
+    **“Birincil grup”** kartı yer alır.
+  - Kart bütün aktif üyelikleri avatar/ad/bölge ile listeler; radio/check
+    davranışıyla yalnız bir satır seçilebilir. Mevcut birincil açıkça işaretlenir.
+  - Yardım metni kısa ve dürüsttür: “Grup hedeflerin, grup başarımların ve grup
+    günün bu gruba yazılır.” Kişisel XP/başarı/presence için yanlış vaat yoktur.
+  - Grup detayındaki **“Birincil yap”** yazma eylemi kaldırılır; aynı tercihi
+    değiştiren ikinci bir yüzey bırakılmaz.
+  - Kilitliyken diğer gruplar disabled olur; kalan süre ve kesin açılma zamanı
+    gösterilir. İlk seçim, aynı grubu yeniden seçme ve otomatik tek-grup
+    uzlaştırması ayrı davranır.
+- **Kapsam dışı:** Çoklu primary · kişisel başarı motoru/XP ekonomisi · geçmiş
+  session retro-attribution · presence/push filtresi · timer UX/refactor ·
+  notification/widget/PendingIntent değişikliği.
+- **SAHİP dosyalar (yaz):**
+  - yeni `supabase/migrations/0085_primary_group_change_cooldown.sql`
+  - `supabase/tests/010_primary_group_preference.test.sql` ve deploy/contract testleri
+  - `app/lib/data/repositories/group_repository.dart`
+  - `app/lib/data/repositories/supabase/supabase_group_repository.dart`
+  - `app/lib/data/repositories/in_memory/in_memory_group_repository.dart`
+  - `app/lib/data/providers/group_providers.dart`
+  - `app/lib/features/profile/achievements_screen.dart`
+  - `app/lib/features/profile/social_profile_screen.dart`
+  - yeni `app/lib/features/profile/widgets/primary_group_selector_card.dart`
+  - `app/lib/features/classroom/widgets/class_detail_screen.dart` (yalnız eski seçim CTA'sını kaldırma)
+  - `app/lib/l10n/app_{en,tr,de,ar}.arb`, üretilen l10n ve ilgili Dart/widget testleri
+- **DOKUNMA (oku, değiştirme):**
+  - uygulanmış `0079_primary_group_preference.sql` ve `0080_session_group_attribution.sql`
+  - achievement evaluator/XP ledger · presence/global timer/push kodu
+  - `study_providers.dart` · Android native timer · bildirim/widget kaynakları
+- **Adımlar:**
+  - [ ] `0085` ile server-authoritative cooldown read-modelini ekle; ilk açık
+    seçim serbest, farklı hedefe sonraki açık seçim `last_explicit_change_at +
+    interval '24 hours'` öncesinde reddedilsin.
+  - [ ] Aynı grubu yeniden seçmeyi idempotent no-op yap; cooldown/revision
+    tüketmesin. `automatic_single` ve `membership_reconcile` kullanıcı cooldown'ı
+    başlatmasın.
+  - [ ] RPC aynı kullanıcı advisory lock'u, üyelik doğrulaması ve expected
+    revision altında `next_change_allowed_at` döndürsün; istemci saati karar
+    vermesin.
+  - [ ] DTO/repository/provider çiftlerini yeni zamana taşı; Supabase ve
+    InMemory davranışı aynı olsun, eski/null kayıtlar güvenli parse edilsin.
+  - [ ] Başarımlar kartını empty/loading/error/offline/stale-revision ve 1–8
+    grup durumlarıyla uygula; seçim öncesi etkiyi açıklayan kısa onay göster.
+  - [ ] Grup detayındaki mutasyon CTA'sını kaldır; aktif timer sırasında seçim
+    yerel timer/bildirim/widget'ı restart etmesin, yeni tercih yalnız sonraki
+    session attribution'ına girsin.
+- **Veri/Migration etkisi:** `0085` yalnız ileri/additive migration'dır; `0079`
+  değiştirilmez. Son açık seçim zamanı mevcut append-only history'den
+  deterministik backfill edilir; otomatik nedenler cooldown sayılmaz. Geri alma:
+  veri silmeden RPC policy'sini ileri migration ile gevşetmek ve istemcide kartı
+  salt-okunur yapmak.
+- **Ortam/Deploy:** Local full replay + pgTAP/RLS abuse → staging `0084→0085`;
+  production terfisi yalnız WP-351'de.
+- **RLS/Güvenlik:** Preference/history yalnız hesap sahibi tarafından okunur;
+  client zaman/revision/reason yazamaz. Üye olunmayan grup ve başka kullanıcı
+  tercihi RPC/RLS ile reddedilir.
+- **Edge-case'ler:** 0 grup · tek grup otomatik primary · çok grup/seçim yok ·
+  ilk açık seçim · aynı gruba no-op · 23:59/00:00 · DST/saat dilimi değişimi ·
+  cihaz saatini ileri alma · iki cihaz eşzamanlı seçim · offline stale ekran ·
+  primary gruptan çıkma/silinme · cooldown sırasında zorunlu uzlaşma · aktif timer.
+- **Kabul (ölçülebilir):**
+  - DB'de kullanıcı başına primary satırı **≤1**, UI'da seçili grup **≤1**.
+  - İlk açık seçim başarılı; farklı ikinci seçim `<24 saat`te server tarafından
+    reddedilir, `≥24 saat`te başarılıdır; 00.00 geçmek tek başına kilidi açmaz.
+  - Aynı hedef no-op'tur; revision/history/cooldown artışı **0**.
+  - İki cihaz yarışında yalnız geçerli revision kazanır; eski cihaz güncel
+    tercihi geri alamaz ve her iki cihaz Realtime/refresh sonrası aynı grubu gösterir.
+  - Primary değişiminde çalışan kronometre, bildirim ve widget süre kaybı/reset
+    olmadan devam eder; kapanan session başlangıç anındaki primary'ye, sonraki
+    session yeni primary'ye yazılır.
+  - 360 dp Android ve Windows'ta 1–8 grup listesi taşmasız; satır dokunma hedefi
+    ≥48 dp, kritik metin kontrastı WCAG AA.
+- **Tuzaklar:** Cooldown'ı yalnız Flutter'da kontrol etmek kolay aşılır; `changed_at`
+  yerine cihaz zamanı kullanmak saat manipülasyonu üretir; otomatik membership
+  reconciliation'ı açık seçim sanmak kullanıcıyı haksız kilitler.
+- **Model önerisi:** 🔴 Opus
+
+#### WP-349: Forest Cabin tema kapağını gerçek paletle hizala 🎨
+- **Program/Faz:** Tema · Faz F2 görsel doğruluk
+- **Ajan:** — (WP-348 kabulünden sonra)
+- **Durum:** [ ] Bekliyor
+- **Bağımlılık:** WP-348 seri kapısı; teknik olarak bağımsızdır.
+- **Problem:** `forest_study` temasının gerçek baskın scaffold/surface rengi
+  yeşildir; hazır tema kartı yalnız kahverengi `primary` ve sarı `accent`
+  noktalarını gösterdiği için seçilince bambaşka tema açılmış gibi görünür.
+- **Kapsam dışı:** Forest Cabin'in çalışan tema renklerini değiştirmek · tema
+  motoru/kalıcılık · özel tema sihirbazı · yeni tema eklemek.
+- **SAHİP dosyalar (yaz):**
+  - `app/lib/features/profile/appearance_screen.dart`
+  - hazır tema kartı/swatch widget testleri ve gerekli Windows golden baseline'ı
+- **DOKUNMA (oku, değiştirme):**
+  - `app/lib/core/theme/theme_presets.dart` içindeki `forest_study` runtime token'ları
+  - `app/lib/core/theme/app_theme.dart` · `theme_settings.dart` · l10n
+- **Adımlar:**
+  - [ ] Hazır tema kapağını yalnız primary/accent çifti yerine gerçek
+    scaffold/surface alanı baskın, primary/accent küçük vurgu olacak biçimde çiz.
+  - [ ] Çözümü bütün `ThemePreset` kartlarına semantik tokenlardan uygula;
+    `forest_study` için ID'ye özel hard-code ekleme.
+  - [ ] Selected border/check kontrastını hem açık hem koyu presetlerde doğrula.
+- **Veri/Migration etkisi:** Yok. Geri alma tek widget/golden geri dönüşüdür.
+- **Ortam/Deploy:** Local; WP-351 stable artefaktına girer.
+- **RLS/Güvenlik:** Yok.
+- **Edge-case'ler:** açık/koyu tema · çok yakın scaffold/surface tonları · 360 dp
+  iki sütun · uzun TR/EN tema adı · seçili/seçili değil · high contrast.
+- **Kabul (ölçülebilir):**
+  - Forest Cabin kartında yeşil scaffold/surface görsel alanın çoğunluğunu,
+    kahverengi ve sarı vurgu alanını oluşturur; tıklandığında açılan temanın
+    baskın rengi kapakla eşleşir.
+  - Diğer 14 preset aynı token tabanlı önizleme sözleşmesini kullanır.
+  - Tema seçme/kalıcılık davranışı değişmez; 360 dp'te overflow 0, kart dokunma
+    hedefi ≥48 dp; Windows golden testi birebir geçer.
+- **Tuzaklar:** Primary rengini yeşile çevirerek problemi “çözmek” çalışan temayı
+  değiştirir; istenen kapak doğruluğudur.
+- **Model önerisi:** 🔵 Sonnet
+
+#### WP-350: Telefon için kamp ateşi kompozisyon revizyonu 🔥
+- **Program/Faz:** Kamp ateşi · Faz F2 mobil görsel revizyon
+- **Ajan:** — (WP-349 kabulünden sonra)
+- **Durum:** [ ] Bekliyor
+- **Bağımlılık:** WP-349 seri/golden kapısı.
+- **Problem:** Masaüstü için ayarlanan perspektif telefonda aynı sabitlerle
+  çalışınca ateş fazla yukarıda, hayvanlar büyük ve ateşe yapışık, 8 kişilik arka
+  sıra havada, orman ağaçları kalabalık ve alt ışık lekesi geniş görünüyor.
+- **Tasarım sözleşmesi:**
+  - “Start studying / Çalışmaya başla” sahne üstü metni tamamen kaldırılır.
+  - Yalnız telefon sınıfında ateş aşağı alınır, oturma halkası genişletilir,
+    hayvan/etiket ölçeği küçültülür ve ön/arka derinlik korunur.
+  - Telefon sınıfında arka plan ağaç katmanı geçici olarak çizilmez; gökyüzü,
+    ay/güneş, yıldızlar, zemin/açıklık korunur.
+  - Ateşin alt sıcak aydınlatma/glow yarıçapı ve opaklığı telefonda azaltılır.
+  - Windows/masaüstü kompozisyonu ve mevcut native timer/bildirim/widget
+    davranışı birebir korunur.
+- **Kapsam dışı:** Yeni hayvan/poz/asset üretmek · presence semantiği · kamp
+  ateşinden timer başlatmak · masaüstü yerleşimini yeniden tasarlamak ·
+  notification/widget/native timer.
+- **SAHİP dosyalar (yaz):**
+  - `app/lib/features/classroom/widgets/campfire_scene.dart`
+  - `app/lib/features/classroom/widgets/camp_critter.dart`
+  - gerekirse yalnız adaptif geometri için `app/lib/features/classroom/widgets/campfire_layout.dart`
+  - `app/test/features/campfire_scene_test.dart`
+  - `app/test/features/campfire_sky_golden_test.dart` ve yeni mobil 1/4/8 kişi golden'ları
+- **DOKUNMA (oku, değiştirme):**
+  - `app/lib/data/providers/study_providers.dart`
+  - presence/global timer repository/provider'ları
+  - `app/lib/core/notifications/**`
+  - `app/android/**` bildirim/widget/timer kaynakları
+  - kamp ateşi PNG assetleri ve `app/pubspec.yaml`
+- **Adımlar:**
+  - [ ] Platform + logical shortest-side tabanlı test edilebilir telefon viewport
+    sınıfı çıkar; dar Windows penceresini yanlışlıkla mobil kompozisyona sokma.
+  - [ ] Telefon geometri profilinde fire baseline'ı aşağı taşı, ring `rx/ry`
+    değerlerini güvenli sınıra kadar büyüt ve critter scale aralığını küçült.
+  - [ ] 1–8 yerleşimde arka sıranın zemin/ufuk ilişkisini koru; isim/süre
+    etiketlerini sahne sınırında clamp et.
+  - [ ] `GroundedForestPainter`a telefon için ağaçları kapatan açık parametre ekle;
+    desktop default'u değişmesin.
+  - [ ] Glow radius/alpha'yı viewport profiline bağla; alev/kor/taş okunurluğu
+    kaybolmadan alt lekeyi küçült.
+  - [ ] Sıfır çalışan durumundaki metni ve test beklentisini kaldır; çalışan
+    sayısı rozeti kalır.
+- **Veri/Migration etkisi:** Yok. Geri alma adaptif profil/golden commit'inin
+  geri çevrilmesidir.
+- **Ortam/Deploy:** Local widget/golden/profile → WP-351 stable.
+- **RLS/Güvenlik:** Yok; kullanıcı verisi veya görünürlük kuralı değişmez.
+- **Edge-case'ler:** 0/1/4/8 üye · hepsi çalışan/hepsi offline · çok uzun ad ·
+  360×640 telefon · büyük yazı ölçeği · landscape telefon · Android tablet ·
+  dar Windows pencere · reduce-motion · gündüz/geçiş/gece.
+- **Kabul (ölçülebilir):**
+  - Telefon 360×640 golden'larında 1/4/8 hayvan ve etiket sahne sınırından en az
+    8 dp içeride; havada kalan/ateşle fiziksel çakışan gövde **0**.
+  - Telefon profilinde critter kutuları mevcut tabana göre yaklaşık %20–30 daha
+    küçük; halka yatay açıklığı yaklaşık %15–25 daha geniş ve ateş merkezi
+    sahnenin alt yarısına taşınmış görünür.
+  - Telefon ağaç çizimi **0**; “Çalışmaya başla/Start studying” metni **0**;
+    glow sahne kısa kenarının yaklaşık %22'sini aşmaz.
+  - Masaüstü day/transition/night golden'ları istenmeyen piksel farkı olmadan
+    korunur; yeni Android mobil golden'ları strict geçer.
+  - Android profile sahnede `p95 ≤16.7 ms`, jank `≤%1`; reduce-motion'da
+    sonsuz dekoratif animasyon çalışmaz.
+- **Tuzaklar:** Yalnız `scale` küçültmek label/marshmallow anchor'larını bozar;
+  width tabanlı breakpoint dar Windows'u etkiler; ağaçları tüm platformlardan
+  kaldırmak kabul edilen PC görünümünü bozar.
+- **Model önerisi:** 🟣 Pro
+
+#### WP-351: Production migration terfisi + doğrudan stable teslim 🚀
+- **Program/Faz:** Release/Ops · Faz F2 kapanış
+- **Ajan:** — (WP-348, WP-349 ve WP-350 ayrı commit/test ile kapandıktan sonra)
+- **Durum:** [ ] Bekliyor
+- **Bağımlılık:** WP-348 → WP-349 → WP-350; clean `main`; staging `0085`.
+- **Problem:** Son stable'dan beri grup/keşif/primary/V3 altyapısı ve görsel
+  revizyonlar birikti. Proje sahibi mağaza öncesi 5 kişilik ekipte testi stable
+  kanalında yapmak ve sorun çıkarsa benzersiz hotfix çıkarmak istiyor.
+- **Sahip risk kabulü:** Proje sahibi **2026-07-26** tarihinde bu somut teslim
+  için beta soak/önce cihaz kabulü kapısını atlayıp doğrudan stable istemiştir.
+  Bu istisna otomatik test, staging migration, production backup/dry-run,
+  post-check, kanal/backend fail-closed ve rollback hazırlığını kaldırmaz.
+- **Kapsam dışı:** Bu WP içinde feature bug'ı düzeltmek · Play/Store submission ·
+  V3 global timer flag'lerini açmak · mevcut tag/build kimliğini yeniden kullanmak.
+- **SAHİP dosyalar (yaz):**
+  - `CHANGELOG.md`
+  - `app/assets/release_notes.json`
+  - `app/pubspec.yaml`
+  - `tooling/release/deploy-contract.json` (yalnız korumalı exact head/SHA penceresi)
+  - release preflight/manifest ve redacted deploy/acceptance kanıtları
+  - `progress.md` içindeki yalnız WP-351/release gerçeği
+- **DOKUNMA (oku, değiştirme):** WP-348/349/350 feature kodu · uygulanmış
+  migration'lar · Android signing key · notification/widget/native timer kodu.
+- **Adımlar:**
+  - [ ] Üç WP'nin ayrık commitlerini, temiz worktree'yi, secret dışı diff'i ve
+    bir daha kullanılmamış next stable version/build kimliğini doğrula.
+  - [ ] `flutter analyze`, non-golden tam test, Windows strict golden, release
+    manifest gate, local full migration replay/pgTAP/RLS/deploy guard çalıştır.
+  - [ ] Staging'i `0084→0085` protected dry-run/apply/post-check ile terfi et;
+    primary cooldown/iki hesap/RLS smoke kanıtını al.
+  - [ ] Production `0070→0085` zinciri için hedef project-ref, migration-list,
+    salt-okunur session/XP/reward/RLS/cron baseline, backup ve protected dry-run
+    kanıtını üret; exact SHA/head GO penceresi dışında apply etme.
+  - [ ] Production terfisinden sonra aynı invariantları post-check et. V3
+    presence/global timer/timer-sync rollout flag'lerini **kapalı** tut; mevcut
+    kronometre/bildirim/widget sıcak yolunu stable'da değiştirme.
+  - [ ] Android stable APK + Windows stable MSIX/ZIP artefaktlarını production
+    backend manifestiyle üret, benzersiz stable tag/release yayımla ve SHA-256
+    değerlerini kaydet.
+  - [ ] ADB'de yetkili cihaz varsa veriyi silmeden `install -r` ile güncelle;
+    cihaz yoksa kurulum/testi yapılmış gibi yazma, kullanıcıya APK bağlantısı ve
+    aşağıdaki 5 hesaplık kabul listesini ver.
+  - [ ] Yayın sonrası hata P0/P1 ise rollout/flag kapalı kalır; aynı tag
+    değiştirilmez, ayrı debug WP + bir sonraki benzersiz stable hotfix açılır.
+- **Veri/Migration etkisi:** Staging `0085`; production tek kanonik zincirle
+  `0070→0085`. Remote migration immutable. Rollback şema düşürme değil:
+  rollout flag kapalı, additive tablolar korunur, gerekirse ileri migration +
+  benzersiz hotfix istemci.
+- **Ortam/Deploy:** Local → staging → production stable. Kullanıcının bu karttaki
+  açık doğrudan-stable emri somut GO kaydıdır; hedef/SHA/head uyuşmazlığında
+  fail-closed durulur.
+- **RLS/Güvenlik:** Cross-account primary/preference/history, discovery,
+  presence/command/result ve attribution abuse testleri PASS; kanıtta secret,
+  UUID/e-posta veya service-role yok.
+- **Stable sonrası 5 hesaplık kabul listesi:**
+  - [ ] Başarımlar ekranında 0/1/çok grup durumu; yalnız tek primary seçimi.
+  - [ ] İlk seçim, aynı gruba no-op, `<24 saat` red ve iki cihaz aynı tercih.
+  - [ ] Primary değişirken çalışan timer + bildirim + ana ekran widget sürekliliği.
+  - [ ] Yeni session yalnız başlangıçtaki primary grup ilerlemesine yazılır;
+    secondary katkı 0, kişisel XP/süre korunur.
+  - [ ] Forest Cabin kapağı yeşil ağırlıklı; seçilen tema kapakla eşleşir.
+  - [ ] Telefon kamp ateşinde 1/4/8 kişi; metin yok, ateş aşağıda, hayvanlar
+    küçük/uzak, halka geniş, ağaç yok, glow küçük.
+  - [ ] Grup konumu/saat farkı, keşif arama+bölge+boş kontenjan ve 8 kişi sınırı.
+  - [ ] App/widget/bildirimden start-stop, app kapalı/yeniden açılış ve 8 saat
+    drift regresyonu.
+- **Kabul (ölçülebilir):** Production post-check invariant kaybı 0 · Android ve
+  Windows artefaktları aynı stable tag/SHA/backend/head'i taşır · channel/backend
+  mismatch 0 · migration head `0085` · release assetleri ve digestleri mevcut ·
+  timer/widget/notification otomatik regresyonu 0 · fiziksel test sonucu yalnız
+  gerçek cihaz kanıtıyla PASS olarak yazılır.
+- **Tuzaklar:** 5 kişilik/pre-market olmak veri kaybı veya timer regresyonunu
+  zararsız yapmaz; bu yüzden soak atlanabilse de backup/dry-run/post-check ve
+  V3 flag-off kalkanı atlanmaz.
+- **Model önerisi:** 🔴 Opus
+
+#### Seri yürütme ve çakışma kararı
+
+```text
+WP-348 (migration + Başarımlar primary IA)
+  → WP-349 (tema kapağı)
+    → WP-350 (mobil kamp ateşi)
+      → WP-351 (staging/production/stable)
+```
+
+> ⚠️ **Paralel worker açma.** WP-348 migration+l10n/profile, WP-349 theme
+> golden, WP-350 campfire golden ve WP-351 release metadata/progress sıcak
+> yüzeylerini paylaşıyor. Her WP ayrı commit + yeşil kapı ile sıradakine devreder.
+
+---
+
 ## PLAN 2 — MAĞAZA HAZIRLIĞI
 
-> 🧾 **WP kartları bu fazlar başlarken açılır** (numaralar 330'dan devam eder).
+> 🧾 **WP kartları bu fazlar başlarken açılır** (güncel son numara WP-351;
+> yeni kartlar WP-352'den devam eder).
 > Sebep: mağaza işlerinin çoğu **ops**, kod değil; SAHİP dosya sınırı ve kabul
 > kriteri ancak hesap doğrulaması ve Faz G kararı netleşince yazılabilir.
 > Bugünden geçerli iki eski kart: **WP-276** (hesap silme kanıtı → Faz I2) ve
@@ -563,8 +864,8 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 ## ⚠️ Risk ve Tuzak Notları
 
 - **Sürüm disiplini.** Sürüm sahibin onayıyla çıkar; düzeltmeler birikir, tek sürümde çıkar.
-- **Migration drift.** Repo/local `0083`, staging `0072`, production `0070`. `0073–0083` seri dry-run + post-check olmadan staging'e uygulanmaz.
-- **V3 migration sırası.** WP-328 → WP-329 → WP-336 → WP-338 → WP-341 → WP-344 tek migration hattıdır; aynı anda iki migration worker'ı açılmaz. Her adım local replay, şema post-check ve önceki head kanıtı ister.
+- **Migration drift.** Repo/local/staging `0084`, production etkin şema `0070`. WP-348 yeni `0085`i local→staging'e taşır; WP-351 production `0070→0085` terfisini backup + protected dry-run + post-check ile yapar.
+- **V3 migration sırası.** WP-328 → WP-329 → WP-336 → WP-338 → WP-341 → WP-344 zinciri local/staging `0084`te tamamlandı. Yeni tek migration WP-348'in `0085`idir; production terfisi WP-351 dışında yapılmaz.
 - **Sayaç sıcak yolu donuktur.** WP-340–345 normal local start/stop sırasını, notification ID/channel/layout/PendingIntent'leri, widget görünümünü ve `ACTION_STOP_SILENT` davranışını yeniden tasarlamaz. Global senkron additive envelope + shadow + feature flag ile gelir; WP-346 gerçek cihaz regresyon kapısı geçmeden varsayılan açılmaz.
 - **l10n kapısı temiz.** WP-335, 24 gerçek WP-295 kullanıcı metnini kataloğa taşıdı; 7 kullanıcı-dışı invariant mesajını dar ve gerekçeli muafiyetle ayırdı. Yeni UI metni ekleyen WP'ler audit sıfır-bulgu kuralını korumalıdır.
 - **Geri alınamaz işler.** Hesap silme purge'ü bu sınıfta — yedek + staging provası + rollback betiği olmadan production'a dokunulmaz. *Gün sınırı artık bu sınıfta değil* (toplamlar saklanmıyor).
@@ -592,18 +893,18 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 | **WP-320** Ayarlar IA | Android + Windows | Hesap/dışa aktarma/silme aynı grupta, yasal metinler sonda; 360 px'te taşma yok |
 | **WP-321** Yalnız TR + EN | Android + Windows | Listede iki dil; cihaz dili DE iken güvenli EN fallback ve kayıtlı eski tercihte çökme yok |
 | **WP-323** Tanıtım turu motoru | Android + Windows | İlk açılış, atla, sıfırla ve izin/güncelleme diyaloğu varken erteleme gerçek cihazda çalışıyor |
-| **WP-325** Oturum günü damgası | Staging | `0073` dry-run/apply; öncesi/sonrası gün toplamı birebir; bölge değişimi geçmişi oynatmıyor; indeks planı kanıtlı |
-| **WP-326** Grup saat dilimi | Staging + beta | `0076`; IANA adı, New York yerel gece yarısı, cihaz fallback'i ve DST davranışı doğru |
-| **WP-327** Grup bölgesi + saat farkı | Staging + beta | `0077`; açık grup kartı/bilgi ekranı, aynı bölgede farkın gizlenmesi, New York ve +5:30 farklarının doğruluğu |
-| **WP-328** Keşif sıralaması + arama/filtre | Staging + Android + Windows | `0078` önce `0073→0078` seri dry-run/apply ile terfi etmeli; ardından kullanıcı bölgesine göre sıralama, bölge filtresi, boş kontenjan filtresi ve sayfalama gerçek cihazda doğrulanmalı. **Cihazda doğrulanmalı.** |
-| **WP-329** Birincil grup | Staging + iki Android cihaz | `0079`, `0073→0079` seri dry-run/apply ile terfi etmeli; tek grup otomatik seçim, iki cihaz stale-revision reddi, üyelikten çıkış/silmede güvenli uzlaşma ve timer/bildirim/widget regresyonu doğrulanmalı. **Cihazda doğrulanmalı.** |
-| **WP-336** Tek-grup session attribution | Staging + iki Android cihaz | `0080`, `0073→0080` seri dry-run/apply sonrasında yeni session yalnız başlangıçtaki primary gruba yazılır; secondary day/week/achievement katkısı ve cron geri yazımı 0, kişisel süre/XP korunur. **Cihazda doğrulanmalı.** |
+| **WP-325** Oturum günü damgası | Staging `0084` | Öncesi/sonrası gün toplamı birebir; bölge değişimi geçmişi oynatmıyor; indeks planı kanıtlı |
+| **WP-326** Grup saat dilimi | Staging `0084` + beta | IANA adı, New York yerel gece yarısı, cihaz fallback'i ve DST davranışı doğru |
+| **WP-327** Grup bölgesi + saat farkı | Staging `0084` + beta | Açık grup kartı/bilgi ekranı, aynı bölgede farkın gizlenmesi, New York ve +5:30 farklarının doğruluğu |
+| **WP-328** Keşif sıralaması + arama/filtre | Staging `0084` + Android + Windows | Kullanıcı bölgesine göre sıralama, bölge filtresi, boş kontenjan filtresi ve sayfalama gerçek cihazda doğrulanmalı. **Cihazda doğrulanmalı.** |
+| **WP-329/348** Birincil grup | Staging + iki Android cihaz | Başarımlar içindeki tek seçim, kayan 24 saat server kuralı, iki cihaz stale-revision reddi, üyelikten çıkış/silmede uzlaşma ve timer/bildirim/widget regresyonu doğrulanmalı. **Cihazda doğrulanmalı.** |
+| **WP-336** Tek-grup session attribution | Staging `0084` + iki Android cihaz | Yeni session yalnız başlangıçtaki primary gruba yazılır; secondary day/week/achievement katkısı ve cron geri yazımı 0, kişisel süre/XP korunur. **Cihazda doğrulanmalı.** |
 | **WP-343** Foreground mirror + remote stop | Staging + iki Android cihaz | Aynı hesapta foreground start/stop p95≤2 sn; ek session/XP 0; eski stop yeni yerel run'ı kesmez; bildirim/widget regresyonu 0. **Cihazda doğrulanmalı.** |
 | **WP-345** Timer-sync signal + app-open reconcile | Staging FCM + Android lifecycle | Data-only sinyal p95≤10 sn; açılış reconcile p95≤2 sn; terminated/doze/logout/force-stop sonrasında payload state uygulamaz, snapshot doğru state'i getirir. **Cihazda doğrulanmalı.** |
 
-**Ortam sırası:** staging şu anda `0072`; veri/grup zinciri **`0073` → `0080`**
-olarak dry-run ve post-check ile seri ilerler. Production bu kuyruğun parçası değildir ve
-ayrı somut sahip GO'su olmadan değişmez.
+**Ortam sırası:** staging `0084`tedir. WP-348 `0085`i önce local, sonra
+staging'e taşır. Production `0070→0085` terfisi yalnız WP-351'in backup,
+protected dry-run, exact SHA/head GO ve post-check adımlarıyla yapılır.
 
 ## 🗄️ Tarihsel kayıt
 
@@ -645,11 +946,14 @@ ile git geçmişindedir. Canlı dosyada tekrar tutulmaz.
 Yalnız **Bekleyen Uygulanabilir WP'ler** ve Yol Haritası'nda `[ ] Bekliyor` olan
 kartlar worker'a verilir. Güncel ürün sırası:
 
-1. İlk güvenli paralel dalga: **WP-328** (keşif) + **WP-337** (salt-okunur V3 compatibility gate).
-2. Migration hattı: **WP-329 → WP-336 → WP-338 → WP-341 → WP-344**. Bunlar seri claim edilir.
-3. Client/native hattı: **WP-337 → WP-340**; **WP-338 → WP-339**; ardından **WP-340 + WP-341 → WP-342 → WP-343** ve **WP-343 + WP-344 → WP-345**.
-4. Bütün V3 yolları **WP-346** staging + çoklu cihaz + rollback kabulünde birleşir.
-5. **WP-276 / WP-277**, SAHİP dosya ve ortam çakışması yoksa V3 dışındaki ops kanıtı olarak ayrıca planlanabilir.
+1. **WP-348** — Başarımlar içinde tek primary + server-authoritative kayan 24 saat.
+2. **WP-349** — Forest Cabin tema kapağı gerçek palet önizlemesi.
+3. **WP-350** — Telefon kamp ateşi kompozisyonu.
+4. **WP-351** — production `0070→0085` + doğrudan stable release.
+
+Bu dört WP **yalnız seri** verilir; bir worker commit/test/lanesini kapatmadan
+sonraki başlamaz. WP-346 fiziksel V3 çoklu cihaz/flag rollout kabulü olarak parkta
+kalır; stable WP-351 V3 flag'lerini açmaz.
 
 `Test için bekleyenler` tablosundaki hiçbir kayıt yeniden worker'a verilmez.
 
