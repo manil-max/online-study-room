@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
   [Parameter(Mandatory)][ValidateSet('staging', 'production')][string]$Environment,
-  [Parameter(Mandatory)][ValidateSet('inspect-prerequisites', 'inspect-push-runtime', 'inspect-v3-compatibility', 'bootstrap-prerequisites', 'reconcile-prepare', 'reconcile-apply', 'preflight', 'dry-run', 'apply', 'manual-push-0066-0070')][string]$Action,
+  [Parameter(Mandatory)][ValidateSet('inspect-prerequisites', 'inspect-push-runtime', 'inspect-v3-compatibility', 'bootstrap-prerequisites', 'reconcile-prepare', 'reconcile-apply', 'preflight', 'dry-run', 'apply', 'manual-push-0066-0070', 'repair-baseline-0070')][string]$Action,
   [Parameter(Mandatory)][string]$ProjectRef,
   [Parameter(Mandatory)][string]$SupabaseUrl,
   [Parameter(Mandatory)][string]$StagingProjectRef,
@@ -136,7 +136,7 @@ try {
   if ($ExpectedMigrationHead -ne $targetContract.migration_head) {
     throw "Deploy contract rejects migration head $ExpectedMigrationHead for $Environment."
   }
-  if ($Action -in @('apply', 'manual-push-0066-0070', 'bootstrap-prerequisites', 'reconcile-prepare', 'reconcile-apply') -and -not [bool]$targetContract.deploy_enabled) {
+  if ($Action -in @('apply', 'manual-push-0066-0070', 'repair-baseline-0070', 'bootstrap-prerequisites', 'reconcile-prepare', 'reconcile-apply') -and -not [bool]$targetContract.deploy_enabled) {
     throw "Deploy HOLD: $($targetContract.hold_reason)"
   }
 
@@ -161,7 +161,18 @@ try {
     throw 'Supabase CLI link post-check failed.'
   }
 
-  if ($Action -eq 'manual-push-0066-0070') {
+  if ($Action -eq 'repair-baseline-0070') {
+    $repairArguments = Get-ProductionBaselineRepairArguments -BaselineHead '0070' -RepoRoot $repoRoot
+    Assert-ProductionBaselineRepair -Environment $Environment -ProjectRef $ProjectRef `
+      -ProductionProjectRef $ProductionProjectRef -Arguments $repairArguments -BaselineHead '0070' `
+      -GitHubActions $env:GITHUB_ACTIONS -ApprovalEnvironment $env:DEPLOY_APPROVAL_ENVIRONMENT
+    Invoke-RemoteSupabase -Arguments @('migration', 'list', '--linked') -Label '02-migration-list-before'
+    Assert-SafeSupabaseArguments -Arguments $repairArguments -AllowBaselineRepair
+    $steps.Add('03-baseline-repair')
+    Invoke-EvidenceCommand -Executable $NodePath -Arguments (@($cliEntry) + $repairArguments + @('--workdir', $repoRoot)) `
+      -EvidenceDirectory $evidenceDirectory -Label '03-baseline-repair' -SensitiveValues $sensitiveValues | Out-Null
+    Invoke-RemoteSupabase -Arguments @('migration', 'list', '--linked') -Label '04-migration-list-after'
+  } elseif ($Action -eq 'manual-push-0066-0070') {
     if ($Environment -ne 'production') {
       throw 'Manual push migration path is production-only.'
     }

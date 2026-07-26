@@ -82,13 +82,18 @@ function Protect-DeployText {
 }
 
 function Assert-SafeSupabaseArguments {
-  param([Parameter(Mandatory)][string[]]$Arguments)
+  param(
+    [Parameter(Mandatory)][string[]]$Arguments,
+    # Yalnız baseline onarım yolu bu anahtarı kullanır; başka her yerde
+    # `migration repair` yasaktır çünkü gerçek şema sapmasını gizleyebilir.
+    [switch]$AllowBaselineRepair
+  )
 
   $joined = ($Arguments -join ' ').ToLowerInvariant()
   $denied = @(
     '^db\s+reset.*--linked',
     '^db\s+reset.*--db-url',
-    '^migration\s+repair',
+    $(if (-not $AllowBaselineRepair) { '^migration\s+repair' } else { 'never^match' }),
     '\btruncate\b',
     '\bdrop\b',
     '\bdelete\b'
@@ -620,6 +625,67 @@ function Assert-ProductionApproval {
   }
 }
 
+function Get-ProductionBaselineRepairArguments {
+  <#
+    Production'da tarihsel migration'lar SQL Editor'den uygulandığı için
+    supabase_migrations geçmişi boştur ve `db push` 0001'den başlamaya
+    çalışır.  Bu yol yalnız 0001-0070 aralığını "applied" olarak işaretler:
+    şemaya tek bir DDL bile göndermez, yeni migration uygulamaz.
+  #>
+  param(
+    [Parameter(Mandatory)][string]$BaselineHead,
+    [string]$RepoRoot = (Get-RepoRoot)
+  )
+
+  if ($BaselineHead -notmatch '^[0-9]{4}$') {
+    throw 'Baseline repair requires a four-digit baseline head.'
+  }
+
+  $versions = @(
+    Get-ChildItem -LiteralPath (Join-Path $RepoRoot 'supabase\migrations') -Filter '*.sql' -File |
+      ForEach-Object { ($_.Name -split '_')[0] } |
+      Where-Object { $_ -match '^[0-9]{4}$' -and $_ -le $BaselineHead } |
+      Sort-Object -Unique
+  )
+
+  if ($versions.Count -eq 0) {
+    throw "Baseline repair found no migration versions up to $BaselineHead."
+  }
+  if ($versions[-1] -ne $BaselineHead) {
+    throw "Baseline repair expects $BaselineHead to be the highest baseline version, got $($versions[-1])."
+  }
+
+  return @('migration', 'repair', '--linked', '--status', 'applied') + $versions
+}
+
+function Assert-ProductionBaselineRepair {
+  param(
+    [Parameter(Mandatory)][ValidateSet('staging', 'production')][string]$Environment,
+    [Parameter(Mandatory)][string]$ProjectRef,
+    [Parameter(Mandatory)][string]$ProductionProjectRef,
+    [Parameter(Mandatory)][string[]]$Arguments,
+    [Parameter(Mandatory)][string]$BaselineHead,
+    [AllowEmptyString()][string]$GitHubActions,
+    [AllowEmptyString()][string]$ApprovalEnvironment
+  )
+
+  if ($Environment -ne 'production' -or $ProjectRef -cne $ProductionProjectRef) {
+    throw 'Baseline repair is production-only and must target the production project ref.'
+  }
+  if ($GitHubActions -ne 'true' -or $ApprovalEnvironment -ne 'production') {
+    throw 'Baseline repair is CI-only and requires the protected production environment.'
+  }
+  $allowedFlags = @('migration', 'repair', '--linked', '--status', 'applied')
+  foreach ($argument in $Arguments) {
+    if ($allowedFlags -contains $argument) { continue }
+    if ($argument -match '^[0-9]{4}$' -and $argument -le $BaselineHead) { continue }
+    throw "Baseline repair argument is not allowlisted: $argument"
+  }
+  if ($Arguments -notcontains 'applied') {
+    throw 'Baseline repair may only mark migrations as applied.'
+  }
+}
+
 function New-ProductionBackupEvidence {
   <#
     Production apply kanıtı elle yazılmaz: Supabase Management API'nin
@@ -780,4 +846,4 @@ function Invoke-EvidenceCommand {
   return $safe
 }
 
-Export-ModuleMember -Function Get-RepoRoot, Get-DeployContract, Get-LocalMigrationHead, Get-GitHead, Protect-DeployText, Assert-SafeSupabaseArguments, Get-StagingPrerequisiteSql, Assert-StagingPrerequisiteAction, Get-StagingPushDispatchPostCheckSql, Assert-StagingPushDispatchPostCheck, Get-StagingPushRuntimeDiagnosticSql, Assert-StagingPushRuntimeDiagnostic, Get-V3LegacyCompatibilitySql, Assert-V3LegacyCompatibilityInspection, Get-StagingReconciliationSql, Assert-StagingReconciliationAction, Assert-TargetContract, Assert-ExactReleaseIdentity, Assert-ProductionApproval, New-ProductionBackupEvidence, New-EvidenceDirectory, Write-DeployJson, Invoke-EvidenceCommand
+Export-ModuleMember -Function Get-RepoRoot, Get-DeployContract, Get-LocalMigrationHead, Get-GitHead, Protect-DeployText, Assert-SafeSupabaseArguments, Get-StagingPrerequisiteSql, Assert-StagingPrerequisiteAction, Get-StagingPushDispatchPostCheckSql, Assert-StagingPushDispatchPostCheck, Get-StagingPushRuntimeDiagnosticSql, Assert-StagingPushRuntimeDiagnostic, Get-V3LegacyCompatibilitySql, Assert-V3LegacyCompatibilityInspection, Get-StagingReconciliationSql, Assert-StagingReconciliationAction, Assert-TargetContract, Assert-ExactReleaseIdentity, Assert-ProductionApproval, Get-ProductionBaselineRepairArguments, Assert-ProductionBaselineRepair, New-ProductionBackupEvidence, New-EvidenceDirectory, Write-DeployJson, Invoke-EvidenceCommand

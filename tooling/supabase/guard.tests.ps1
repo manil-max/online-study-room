@@ -246,6 +246,40 @@ Assert-Throws -Name 'incomplete backup rejected' -Script {
     [pscustomobject]@{ status = 'PENDING'; inserted_at = '2026-07-26T22:00:00Z' }) }) `
     -ProjectRef $productionRef -ExpectedGitSha $sha -ExpectedMigrationHead '0085' -NowUtc $now
 }
+# Baseline onarımı: yalnız 0001-0070'i applied işaretler, şemaya DDL göndermez.
+$repairArguments = Get-ProductionBaselineRepairArguments -BaselineHead '0070' -RepoRoot $repoRoot
+Assert-Equal $repairArguments[0] 'migration' 'baseline repair komutu'
+Assert-Equal ($repairArguments -contains '0070') $true 'baseline 0070 dahil'
+Assert-Equal ($repairArguments -contains '0071') $false 'baseline 0071 haric'
+Assert-Equal ($repairArguments -contains '0085') $false 'baseline 0085 haric'
+Assert-Throws -Name 'baseline repair blocked outside production' -Script {
+  Assert-ProductionBaselineRepair -Environment staging -ProjectRef $stagingRef -ProductionProjectRef $productionRef `
+    -Arguments $repairArguments -BaselineHead '0070' -GitHubActions 'true' -ApprovalEnvironment 'production'
+}
+Assert-Throws -Name 'baseline repair blocked outside CI' -Script {
+  Assert-ProductionBaselineRepair -Environment production -ProjectRef $productionRef -ProductionProjectRef $productionRef `
+    -Arguments $repairArguments -BaselineHead '0070' -GitHubActions 'false' -ApprovalEnvironment 'production'
+}
+Assert-Throws -Name 'baseline repair rejects newer versions' -Script {
+  Assert-ProductionBaselineRepair -Environment production -ProjectRef $productionRef -ProductionProjectRef $productionRef `
+    -Arguments (@('migration', 'repair', '--linked', '--status', 'applied', '0085')) -BaselineHead '0070' `
+    -GitHubActions 'true' -ApprovalEnvironment 'production'
+}
+Assert-Throws -Name 'baseline repair rejects reverted status' -Script {
+  Assert-ProductionBaselineRepair -Environment production -ProjectRef $productionRef -ProductionProjectRef $productionRef `
+    -Arguments (@('migration', 'repair', '--linked', '--status', 'reverted', '0070')) -BaselineHead '0070' `
+    -GitHubActions 'true' -ApprovalEnvironment 'production'
+}
+Assert-ProductionBaselineRepair -Environment production -ProjectRef $productionRef -ProductionProjectRef $productionRef `
+  -Arguments $repairArguments -BaselineHead '0070' -GitHubActions 'true' -ApprovalEnvironment 'production'
+$passed++
+# `migration repair` yalnız bu dar yolda serbesttir.
+Assert-Throws -Name 'migration repair denied by default' -Script {
+  Assert-SafeSupabaseArguments -Arguments $repairArguments
+}
+Assert-SafeSupabaseArguments -Arguments $repairArguments -AllowBaselineRepair
+$passed++
+
 Assert-Equal ([string]$contract.production.backup_requirement) 'waived' 'sahip kararı: production yedeksiz apply'
 Assert-Throws -Name 'incomplete waiver rejected' -Script {
   New-ProductionBackupEvidence -BackupApiResponse $null -ProjectRef $productionRef -ExpectedGitSha $sha `
