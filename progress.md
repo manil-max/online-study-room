@@ -88,7 +88,8 @@
 
 | Konu | Durum |
 | --- | --- |
-| Sürüm | `v49` stable. Android APK + Windows MSIX/ZIP GitHub Releases'ta |
+| Sürüm | **`v48` yayında (Latest).** Android APK + Windows MSIX/ZIP GitHub Releases'ta |
+| `v49` | 🔴 **ÇIKMADI.** Koşum `30174581718` **başarısız** (gece yarısı test tuzağı) → release oluşmadı, cihaza hiçbir şey gitmedi. Sahip kararı: **v49 gönderilmeyecek**, düzeltmeler bir sonraki sürümde toplanır. ⚠️ `v49` **git tag'i uzakta duruyor** ama karşılığında release yok — bkz. Risk notları |
 | Sürüm politikası | 🔴 Sahip onayı olmadan yeni sürüm çıkmaz |
 | Test | 815 test yeşil, `flutter analyze` temiz, l10n audit temiz |
 | Migration | Repo head **`0071`**; staging ve production **`0070`** — 0071 hiçbir ortama uygulanmadı |
@@ -99,19 +100,17 @@
 
 ## PLAN 1 — ÜRÜN & KOD
 
-### Faz A — Doğrulama borcu 🟡 *büyük kısmı kapandı, 3 madde açık*
+### Faz A — Doğrulama borcu ✅ *KAPANDI (sahip, 2026-07-26)*
 
-Sahip v48'i cihazda test etti: **özel tema okunabilirliği · spektrum renk seçici ·
-font düğmelerinin sabitliği · grafikteki gün etiketleri — hepsi çalışıyor.** Diğer
-QA maddeleri de v46–v48 turlarında test edildi (sahip beyanı, 2026-07-26).
+Sahip v46–v48 turlarında cihazda test etti ve tek tek doğruladı: **özel tema
+okunabilirliği · spektrum renk seçici · font düğmelerinin sabitliği · grafikteki
+gün etiketleri · boş ikinci bildirim · taç ve aura** — hepsinde sorun yok.
 
-**Açık kalan 3 madde** — hiçbiri sahibin tek başına kapatabileceği iş değil:
-
-| # | Madde | Neden hâlâ açık |
-| --- | --- | --- |
-| **A1** | Şifre sıfırlama (eski WP-287) | Windows/masaüstündeki 6 haneli kod yolu **Supabase free tier duvarına** takılı: kurtarma e-posta şablonuna `{{ .Token }}` eklenemiyor. Özel SMTP bağlanmadan bu yol çalışmaz. Android derin bağlantı yolu test edilebilir |
-| **A2** | Boş ikinci bildirim (eski WP-303) | Önce **staging'e edge deploy** şart. Deploy olmadan cihazda hiçbir şey değişmez |
-| **A3** | Taç + aura kare bütçesi (eski WP-292/298) | Kabul kriteri `p95 ≤ 16.7 ms · jank ≤ %1`. Bu göz kararı değil, `flutter run --profile` + timeline ölçümü. **Aura, animasyon ekleyen tek iş** — ölçüm asıl orada gerekli. Sahip görsel olarak beğendiyse kartın estetik tarafı kapalı, kalan yalnız sayı |
+- **Şifre sıfırlama** ayrı bir madde olarak tutulmuyor; şifre işinin tamamı
+  **Faz C1**'de birlikte yapılıp orada test edilecek (sahip: "şifreyi de sonra
+  test ederiz").
+- **v49'un his adımı** cihazda görülmedi ama v49 zaten yayınlanmadı; bir sonraki
+  sürümün QA'sında bakılır.
 
 **Faz A'dan çıkan kod bulguları → Faz C5.**
 
@@ -153,12 +152,20 @@ gösterir, "Arşivi göster" filtresiyle geri gelinir.
 
 ### Faz C — Hesap, güvenlik, ayarlar hijyeni
 
-**C1. Şifre değiştirme.** 🔴 Şu anda **hiç yok** — `account_settings_screen.dart`
-sadece hesap silmeyi taşıyor. Klasik yapı: *mevcut şifre · yeni şifre · yeni şifre
-tekrar* + aynı ekranda **"Şifremi unuttum"**.
+**C1. Şifre değiştirme + sıfırlama (tek iş).** 🔴 Değiştirme şu anda **hiç yok** —
+`account_settings_screen.dart` sadece hesap silmeyi taşıyor. Klasik yapı: *mevcut
+şifre · yeni şifre · yeni şifre tekrar* + aynı ekranda **"Şifremi unuttum"**.
 ⚠️ Supabase `updateUser(password:)` **eski şifreyi doğrulamaz**. "Mevcut şifre"
 alanının gerçekten işe yaraması için önce o şifreyle yeniden kimlik doğrulaması
 yapılmalı; yoksa alan dekoratif olur (**ölü anahtar**).
+
+🔴 **Devralınan engel — şifre SIFIRLAMA (eski WP-287).** Supabase free tier,
+varsayılan e-posta sağlayıcısıyla kurtarma şablonunu **hem API'den hem panelden**
+kilitliyor → şablona `{{ .Token }}` eklenemiyor → **Windows/masaüstündeki 6 haneli
+kod yolu, özel SMTP (veya ücretli plan) bağlanana kadar çalışmaz.** Android derin
+bağlantı yolu çalışır. Sahip kararı: değiştirme kodlanırken sıfırlama da aynı
+turda ele alınır ve **ikisi birlikte test edilir**.
+Staging Site URL + allowlist ayarı otomatik: [`supabase-auth-config.yml`](.github/workflows/supabase-auth-config.yml).
 
 **C2. "Verilerimi dışa aktar" taşınıyor.** `data_export_screen.dart` ayarların
 ortasında duruyor → **Hesabımı yönet** başlığı altına, hesap silmenin yanına.
@@ -346,6 +353,7 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 ## ⚠️ Risk ve Tuzak Notları
 
 - **Sürüm disiplini.** Sürüm sahibin onayıyla çıkar; düzeltmeler birikir, tek sürümde çıkar.
+- 🔴 **Sahipsiz `v49` tag'i.** Koşum düştüğü için release oluşmadı ama **tag uzakta kaldı** (`4964188`). İki riski var: (a) tag listesine bakan "v49 çıkmış" sanır; (b) aynı numarayla yeniden denenirse tag çakışır. **Öneri: uzaktaki `v49` tag'i silinsin**, sıradaki sürüm `v49` numarasını temiz kullansın. *Uzak tag silmek dışa dönük bir iş — sahip onayı bekliyor.*
 - **Migration drift.** Repo `0071`, ortamlar `0070`. Sürümden önce staging apply şart.
 - **Geri alınamaz işler.** Hesap silme purge'ü bu sınıfta — yedek + staging provası + rollback betiği olmadan production'a dokunulmaz. *Gün sınırı artık bu sınıfta değil* (toplamlar saklanmıyor).
 - **Ölü anahtar riski.** "Mevcut şifre" gibi görünen ama hiçbir şey doğrulamayan arayüzler en kötü hata türü — kullanıcı korunduğunu sanır. Faz C'de özellikle kontrol edilecek.
@@ -356,16 +364,9 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 
 ## 🧪 Cihaz QA Kuyruğu — kod bitti, cihaz testi bekliyor
 
-> ✅ **Bu kuyruğun büyük kısmı KAPANDI (sahip, 2026-07-26):** v46–v48 turlarında
-> cihazda test edildi. Sahip isim isim doğruladı: özel tema okunabilirliği ·
-> spektrum renk seçici · font düğmelerinin sabitliği · grafikteki gün etiketleri.
->
-> 🟡 **Açık kalan 3 madde yukarıdaki Faz A'da** (A1 şifre sıfırlama · A2 boş ikinci
-> bildirim · A3 kare bütçesi ölçümü) — üçü de önce bir ops adımı ya da ölçüm
-> istiyor, sahibin tek başına kapatabileceği iş değil.
->
-> 🟡 **v49'un his adımı** (tema sihirbazı 6/8) cihazda doğrulanmadı. Sahip
-> "acelesi yok" dedi — sonraki sürümle birlikte bakılacak.
+> ✅ **BU KUYRUK KAPANDI (sahip, 2026-07-26).** v46–v48 turlarında cihazda test
+> edildi; boş ikinci bildirim ve taç/aura dahil hiçbirinde sorun çıkmadı.
+> Şifre işi ayrı madde değil — **Faz C1**'de kodlanıp orada test edilecek.
 >
 > ℹ️ Aşağıdaki tablo **tarihsel kayıt** olarak duruyor: hangi işin neyi
 > doğrulaması gerektiği yazılı kalsın diye. Yeni iş buradan sıra almaz.
