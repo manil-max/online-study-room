@@ -29,7 +29,7 @@
 - **Yönetim varsayılanı:** Production `deploy_enabled/release_enabled` kapalıdır. Stable yalnız protected `production` Environment, exact SHA/head/project-ref GO ve reviewer kanıtıyla ilerler.
 - **Kurallar:** Kök `AGENTS.md`, `.agents/AGENTS.md` ve `docs/KALITE-PROGRAMI.md` geçerlidir. Tek çalışma dalı `main`; her WP ayrı commit; production varsayılmaz.
 - **Aktif tur:** **Stable öncesi seri ürün revizyonu: WP-348 → WP-349 → WP-350 → WP-351.** Birincil grup IA/24 saat kuralı, tema kapağı, mobil kamp ateşi ve kontrollü stable teslimi bu sırada ilerler.
-- **Son WP numarası:** **WP-351**.
+- **Son WP numarası:** **WP-352** (v49 sonrası seri fix kuyruğu · Hotfix WP-1).
 - ✅ **Ortam gerçeği uzlaştırıldı (WP-293):** production deploy kapısı kilitli; ortam head'leri tek sayıya indirgenmez.
 
 ## ⚡ Aktif Çalışma Kaydı
@@ -47,8 +47,11 @@
 - **Ortak/riskli yüzey:** protected `production` CI environment, production Supabase migration push
 - **Dal:** main
 - **Başlangıç:** 2026-07-27 00:55 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-27 00:55 (Europe/Istanbul)
+- **Son güncelleme:** 2026-07-27 01:00 (Europe/Istanbul)
+- **Durum notu:** BLOKE — sahip kararı bekliyor.
 - **Not:** Sahip emri: production apply insan adımı beklemeden repodan yürütülecek. Backup/PITR kanıtı artık elle girilmiyor; `backup-evidence.ps1` Supabase Management API'sinden gerçek kaydı okuyup türetiyor, kayıt yoksa apply fail-closed duruyor. Exact SHA/head GO hâlâ zorunlu. Public stable release `release_enabled=false` ile HOLD'da.
+- **Bulgu (run 30221661250):** production projesi `jiphfrpzvkpzubbkhrwb` için Supabase backups API'si `pitr_enabled=false`, `backup_count=0` döndürüyor. Yani geri dönülebilir hiçbir kayıt yok; apply `db push` çalışmadan önce reddedildi, remote mutasyon olmadı. Repo PUBLIC olduğu için CI'da `db dump` alıp artifact'a koymak da seçenek değil (production kullanıcı verisi herkese açık indirilebilir olurdu).
+- **Bağımlılık:** production DB hâlâ 0070'te; v49 uygulaması `MIGRATION_HEAD=0085` ile derleniyor. Apply yapılmadan stable release yayınlamak, kullanıcıları 15 migration eksik şemaya bağlar. Bu yüzden release apply'a bağlı.
 
 ### Codex Lane
 - **Durum:** [~] Aktif
@@ -931,12 +934,11 @@ ile git geçmişindedir. Canlı dosyada tekrar tutulmaz.
 ## 🔧 v49 Sonrası Seri Fix Kuyruğu
 
 > **Sahip kararı (2026-07-27):** Bu kuyruk **v49 stable yayımlandıktan sonra**
-> açılır; v49 kapsamına hiçbir madde eklenmez. Numaralandırma ayrı bir
-> `Hotfix WP-n` serisidir. Kart işe alındığında kanonik `WP-<n>` numarasını da
-> alır; şu an WP-351 üzerinde iki lane sıcak olduğu için `Son WP numarası`
-> bilerek ilerletilmedi.
+> açılır; v49 kapsamına hiçbir madde eklenmez. `Hotfix WP-n` etiketi kuyruk
+> sırasıdır, kanonik numara her zaman yanında verilir ve `Son WP numarası`
+> ile birlikte ilerler.
 
-### Hotfix WP-1 — Birincil grup seçilmemişse görünür uyarı 🏠
+### Hotfix WP-1 · WP-352 — Birincil grup seçilmemişse görünür uyarı 🏠
 - **Program/Faz:** Faz F2 devamı · WP-329/WP-336/WP-348 ürün açığı
 - **Ajan:** —
 - **Durum:** [ ] Bekliyor · v49 stable yayımına kadar açılmaz
@@ -973,11 +975,14 @@ ile git geçmişindedir. Canlı dosyada tekrar tutulmaz.
     seçim yok → uyarı var, badge var; (c) grup yok → uyarı yok, mevcut
     `primaryGroupEmpty` durumu korunur.
 - **Kapsam dışı:** Migration, RPC, cooldown kuralı, otomatik birincil atama,
-  yeni l10n anahtarı. **Yetim oturumların telafisi de kapsam dışıdır:**
-  attribution `after insert` + `on conflict (session_id) do nothing` olduğu için
+  yeni l10n anahtarı.
+- 🔴 **Kapanan karar (sahip, 2026-07-27): geçmiş yetim oturumlar telafi
+  edilmeyecek.** Attribution `after insert` + `on conflict (session_id) do
+  nothing` olduğu için
   ([`0080:86-89`](supabase/migrations/0080_session_group_attribution.sql:86))
-  NULL'ken yazılmış oturumlar seçim sonrası da hiçbir gruba yazılmaz. Server
-  tarafı telafi ayrı bir kart ister ve sahip kararı bekliyor.
+  `primary_group_id` NULL'ken yazılmış oturumlar seçim sonrası da hiçbir grup
+  projeksiyonuna girmez. Bu kabul edildi; backfill/yeniden atama WP'si
+  **açılmayacak**. Bu kart yalnız bundan sonrasını korur.
 - **Sahip yollar:** `app/lib/features/profile/widgets/primary_group_selector_card.dart`,
   `app/lib/core/navigation/home_shell.dart`, `app/lib/features/desktop/desktop_home_shell.dart`,
   ilgili widget testi, `progress.md` (yalnız bu kart).
