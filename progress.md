@@ -66,9 +66,12 @@
 - 🔴 **BETA 1 GERİ BİLDİRİMİ (sahip, 2026-07-25) → WP-302/303/304 açıldı ve ÜÇÜ DE KOD/TEST TAMAM.** `analyze` 0, **795 test yeşil**, l10n audit temiz. Sahip sırası: bu üçü stable'a → sonra kalan kod işleri → beta 2 → stable.
 
 ### Codex Lane
-- **Durum:** [x] Boşta
-- **Faz/WP:** —
-- **SAHİP yollar:** —
+- **Durum:** [~] Aktif
+- **Faz/WP:** Faz B · WP-316 staging apply sözleşme düzeltmesi
+- **Aşama:** Remote fail-closed sonrası hedef head hizalama
+- **SAHİP yollar:** `tooling/release/deploy-contract.json` · `tooling/supabase/guard.tests.ps1` · `progress.md` (yalnız Codex lane + WP-316 kartı)
+- **Başlangıç:** 2026-07-26 12:24 (Europe/Istanbul)
+- **Not:** Staging run `30196253848` local/CI replay'i geçti; remote apply başlamadan `staging.migration_head=0070` nedeniyle fail-closed durdu. Hedef `0072` sözleşmeye alınarak yeniden koşulacak.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
