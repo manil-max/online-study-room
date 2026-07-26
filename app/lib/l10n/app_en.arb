@@ -5748,5 +5748,73 @@
   "tourProfileActions": "Open History or Settings.",
   "@tourProfileActions": {
     "description": "Profile introduction tour history and settings guidance."
+  },
+  "wp295PreviewTitle": "WP-295 · Campfire parametric preview",
+  "@wp295PreviewTitle": {
+    "description": "Title of the internal campfire layout preview."
+  },
+  "wp295PreviewStatus": "{members} members · {working} working · {minutes} min cycle",
+  "@wp295PreviewStatus": {
+    "description": "Status summary shown above the campfire preview.",
+    "placeholders": {
+      "members": {"type": "int"},
+      "working": {"type": "int"},
+      "minutes": {"type": "int"}
+    }
+  },
+  "wp295PreviewMemberCount": "People to adjust",
+  "@wp295PreviewMemberCount": {"description": "Label for the preview member-count selector."},
+  "wp295PreviewWorkingMember": "Working member",
+  "@wp295PreviewWorkingMember": {"description": "Label for the preview working-member selector."},
+  "wp295PreviewRingWidth": "Horizontal fire distance",
+  "@wp295PreviewRingWidth": {"description": "Label for the horizontal campfire distance control."},
+  "wp295PreviewRingHelp": "This changes every animal's horizontal distance from the fire. Controls below adjust only the selected position.",
+  "@wp295PreviewRingHelp": {"description": "Explains the global horizontal-distance control."},
+  "wp295PreviewGroundY": "Fire and ground vertical position",
+  "@wp295PreviewGroundY": {"description": "Label for the fire and ground vertical-position control."},
+  "wp295PreviewFireScale": "Fire size",
+  "@wp295PreviewFireScale": {"description": "Label for the fire scale control."},
+  "wp295PreviewMarshmallowReach": "Marshmallow proximity to fire",
+  "@wp295PreviewMarshmallowReach": {"description": "Label for the marshmallow reach control."},
+  "wp295PreviewRoastCycle": "Marshmallow cycle",
+  "@wp295PreviewRoastCycle": {"description": "Label for the marshmallow cycle control."},
+  "wp295PreviewMinutesSuffix": " min",
+  "@wp295PreviewMinutesSuffix": {"description": "Short unit suffix for preview minutes."},
+  "wp295PreviewSinglePair": "Single pair",
+  "@wp295PreviewSinglePair": {"description": "Title for the only symmetric pair in a layout."},
+  "wp295PreviewBackPair": "Pair 1 (back)",
+  "@wp295PreviewBackPair": {"description": "Title for the backmost symmetric pair."},
+  "wp295PreviewFrontPair": "Pair {index} (front)",
+  "@wp295PreviewFrontPair": {
+    "description": "Title for the frontmost symmetric pair.",
+    "placeholders": {"index": {"type": "int"}}
+  },
+  "wp295PreviewPair": "Pair {index}",
+  "@wp295PreviewPair": {
+    "description": "Title for an intermediate symmetric pair.",
+    "placeholders": {"index": {"type": "int"}}
+  },
+  "wp295PreviewHorizontalSpread": "Horizontal spread",
+  "@wp295PreviewHorizontalSpread": {"description": "Label for pair horizontal spread."},
+  "wp295PreviewVerticalPosition": "Vertical position",
+  "@wp295PreviewVerticalPosition": {"description": "Label for a generic vertical position."},
+  "wp295PreviewAnimal": "Animal {index}",
+  "@wp295PreviewAnimal": {
+    "description": "Title for a separately positioned animal.",
+    "placeholders": {"index": {"type": "int"}}
+  },
+  "wp295PreviewHorizontalPosition": "Horizontal position (left − / right +)",
+  "@wp295PreviewHorizontalPosition": {"description": "Label for an individual animal horizontal position."},
+  "wp295PreviewVerticalDepth": "Vertical position (back − / front +)",
+  "@wp295PreviewVerticalDepth": {"description": "Label for an individual animal depth position."},
+  "wp295PreviewDecrease": "Decrease {label} by {amount}",
+  "@wp295PreviewDecrease": {
+    "description": "Accessible tooltip for decreasing a preview control.",
+    "placeholders": {"label": {}, "amount": {}}
+  },
+  "wp295PreviewIncrease": "Increase {label} by {amount}",
+  "@wp295PreviewIncrease": {
+    "description": "Accessible tooltip for increasing a preview control.",
+    "placeholders": {"label": {}, "amount": {}}
   }
 }

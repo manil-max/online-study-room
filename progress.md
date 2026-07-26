@@ -47,8 +47,12 @@
 ### Codex Lane
 - **Durum:** [x] Boşta
 - **Faz/WP:** —
+- **Aşama:** —
 - **SAHİP yollar:** —
-- **Son not:** WP-324 kod/test tamamlandı; proje sahibinin açık yetkisiyle WP-323 cihaz kabulü ön koşulu ve bu WP için cihaz kabulü atlandı (2026-07-26).
+- **Ortak/riskli yüzey:** —
+- **Dal:** `main`
+- **Başlangıç/Son güncelleme:** 2026-07-26 16:06–16:20 (Europe/Istanbul)
+- **Not:** WP-335 kod/test tamam; TR/EN 360 px önizleme için cihaz kabulü QA kuyruğunda.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
@@ -73,8 +77,8 @@
 | Sürüm | **`v48` yayında (Latest).** Android APK + Windows MSIX/ZIP GitHub Releases'ta |
 | `v49` | **Çıkmadı.** Başarısız koşumun release'i oluşmadı; yerel ve uzak `v49` tag'i sahip emriyle silindi |
 | Sürüm politikası | 🔴 Sahip onayı olmadan yeni sürüm çıkmaz |
-| Otomatik doğrulama | Son tamamlanan taban: **885 test yeşil**, `flutter analyze` temiz |
-| l10n audit | **31 bilinen bulgu**: WP-335 planlandı; WP-295 önizleme metinleri + kullanıcıya çıkmayan 7 invariant mesajı |
+| Otomatik doğrulama | Son tamamlanan taban: **886 test yeşil**, `flutter analyze` temiz |
+| l10n audit | **0 bulgu**: WP-335, WP-295 önizleme metinlerini katalogladı; 7 kullanıcı-dışı invariant mesajı dar ve gerekçeli muafiyetle ayrıldı |
 | Migration | Repo/local **`0077`** · staging **`0072`** · production **`0070`** |
 | Play Console | Hesap açıldı, doğrulama sürüyor. Hiçbir form doldurulmadı |
 | Microsoft Partner Center | Hesap açıldı. Hiçbir hazırlık yapılmadı |
@@ -260,21 +264,22 @@ Kod/test tamam; mağaza çıkışını **bloklamaz**. Kalan kabul tek QA kuyruğ
 
 #### WP-335: l10n hijyeni ve audit kapısı 🧹
 - **Program/Faz:** Faz F · kalite kapısı
-- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** Yok
+- **Ajan:** Codex · **Durum:** [~] Kod/test tamam — cihaz kabulü bekliyor · **Bağımlılık:** Yok
 - **Problem:** `python scripts/l10n_audit.py` 31 bulguyla kırmızı. Bunların 24'ü WP-295 parametrik önizlemede kullanıcıya görünen sabit metin; 7'si ise kullanıcıya hiç gösterilmeyen gökyüzü/yerleşim invariant hata mesajı.
 - **Kapsam dışı:** AR/DE ürünleştirmesi veya RTL (WP-278 ürün kararı) · yasal metin mimarisi · l10n denetimini gevşetmek/genel muafiyet eklemek · kamp ateşi yerleşim davranışını değiştirmek.
 - **SAHİP dosyalar (yaz):** `app/lib/wp295_preview.dart` · `app/lib/l10n/app_{en,tr,de,ar}.arb` · `scripts/l10n_audit.py` · `app/test/features/wp295_preview_test.dart` · WP-335 l10n testleri.
 - **DOKUNMA (oku, değiştirme):** `app/lib/features/classroom/widgets/campfire_scene.dart` · `app/lib/core/tour/**` · dil seçimi/supported locale politikası (WP-321).
 - **Adımlar:**
-  - [ ] WP-295 önizlemesinin AppBar, chip, denetim etiketi, açıklama ve tooltip metinlerini ARB anahtarlarına taşı; değer ve interpolasyonlar her iki görünür dilde doğru olsun.
-  - [ ] `sky_phase.dart` ve `campfire_layout.dart`daki yalnız geliştirici/invariant `ArgumentError` mesajlarını, nedenleri yazılı iki **dosya-bazlı** audit muafiyetine al; genel regex veya UI yuvası muafiyeti ekleme.
-  - [ ] TR + EN önizleme widget testini ve audit sıfır-bulgu kapısını çalıştır; dört katalog anahtar eşliğini koru.
+  - [x] WP-295 önizlemesinin AppBar, chip, denetim etiketi, açıklama ve tooltip metinlerini ARB anahtarlarına taşı; değer ve interpolasyonlar her iki görünür dilde doğru olsun.
+  - [x] `sky_phase.dart` ve `campfire_layout.dart`daki yalnız geliştirici/invariant `ArgumentError` mesajlarını, nedenleri yazılı iki **dosya-bazlı** audit muafiyetine al; genel regex veya UI yuvası muafiyeti ekleme.
+  - [x] TR + EN önizleme widget testini ve audit sıfır-bulgu kapısını çalıştır; dört katalog anahtar eşliğini koru.
 - **Veri/Migration etkisi:** Yok. Geri alma: eklenen ARB anahtarları ve dar muafiyet kayıtları geri alınır; şema/uzak ortam değişmez.
 - **Ortam/Deploy:** Yalnız local; release, tag veya remote mutasyon yok.
 - **RLS/Güvenlik:** Yok. Ham invariant hata metni kullanıcıya gösterilmez; muafiyet bunu belgelemek içindir.
 - **Edge-case'ler:** sayı/değer interpolasyonu · TR/EN uzun metin · 360 px önizleme · geliştirici dışa-aktarım metninin kullanıcı etiketi sayılmaması · DE/AR katalog eşliği.
 - **Kabul (ölçülebilir):** `python scripts/l10n_audit.py` **0** ile çıkar · dört ARB katalog anahtar/placeholder eşliği korunur · WP-295 önizlemesi TR ve EN'de başlık, chip ve tüm erişilebilir tooltip'lerle render olur · `flutter analyze` 0 uyarı ve ilgili testler yeşil.
 - **Tuzaklar:** İnvariant mesajlarını kataloglamak gereksiz kullanıcı metni üretir; buna karşılık tüm dosyayı muaf tutmak gelecekte gerçek UI metni kaçırır. Yalnız iki dosya, gerekçeli ve dar muaf tutulur.
+- **Kanıt:** `python scripts/l10n_audit.py` **0 bulgu** · `flutter analyze` temiz · tam paket **886 test yeşil** · TR+EN widget testinde 360 px mobil yerleşim ve tüm denetim etkileşimleri kapsandı. **Cihazda doğrulanmalı.**
 - **Model önerisi:** 🔵 Sonnet
 
 ---
@@ -352,7 +357,7 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 
 - **Sürüm disiplini.** Sürüm sahibin onayıyla çıkar; düzeltmeler birikir, tek sürümde çıkar.
 - **Migration drift.** Repo/local `0077`, staging `0072`, production `0070`. `0073–0077` seri dry-run + post-check olmadan staging'e uygulanmaz.
-- **l10n kapısı kırmızı.** WP-335, 24 gerçek WP-295 kullanıcı metnini kataloğa taşıyacak; 7 kullanıcı-dışı invariant mesajını dar ve gerekçeli muafiyetle ayıracak. Audit sıfıra inmeden yayın kapısı temiz sayılmaz.
+- **l10n kapısı temiz.** WP-335, 24 gerçek WP-295 kullanıcı metnini kataloğa taşıdı; 7 kullanıcı-dışı invariant mesajını dar ve gerekçeli muafiyetle ayırdı. Yeni UI metni ekleyen WP'ler audit sıfır-bulgu kuralını korumalıdır.
 - **Geri alınamaz işler.** Hesap silme purge'ü bu sınıfta — yedek + staging provası + rollback betiği olmadan production'a dokunulmaz. *Gün sınırı artık bu sınıfta değil* (toplamlar saklanmıyor).
 - **Ölü anahtar riski.** WP-319'daki sahte “mevcut şifre” koruması düzeltildi; benzer ayarlar yeni işlerde sözleşme testiyle engellenmeli.
 - **MSIX kimliği** Partner Center'da rezerve edilen adla eşleşmezse paket reddedilir; sonradan düzeltmek yeni uygulama demektir.
@@ -368,6 +373,7 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 | WP | Ortam | Bekleyen kabul |
 | --- | --- | --- |
 | **WP-295** Kamp ateşi oturma/poz | Windows + Android profile | Seçilen 1–8 kişi yerleşimleri ve marshmallow erişimi görsel olarak doğru; Android profile'da `p95 ≤ 16.7 ms`, jank `≤ %1` |
+| **WP-335** l10n hijyeni | Android + Windows | TR/EN WP-295 önizlemesinde başlık, durum çipi, denetimler ve tooltip'ler doğal; 360 px'te sahne + kaydırılabilir kontrol alanı taşmasız. **Cihazda doğrulanmalı.** |
 | **WP-299** Gündüz/gece gökyüzü | Android + Windows | Yerel saate göre geçişler, zemin/gökyüzü birleşimi ve gece uyuma pozu gerçek cihazda doğal görünüyor |
 | **WP-315** Grup üye sınırı 8 | Staging + beta | Grup kurma/katılma akışında 8 sınırı çalışıyor; dokuzuncu üye sunucuda reddediliyor |
 | **WP-316** Geri bildirim eki | Staging cihaz | Ekli bilet görseli `≤ 3 sn` açılıyor; eksiz bilette çip yok, yükleme hatası görünür |
@@ -427,8 +433,7 @@ kartlar worker'a verilir. Güncel ürün sırası:
 
 1. **WP-328** — keşif sıralaması + arama/filtre.
 2. **WP-329** — birincil grup; migration sıcak yüzeyi nedeniyle 328 ile seri planlanır.
-3. **WP-335** — l10n hijyeni ve audit kapısı; 328/329'un migration yüzeyiyle çakışmaz.
-4. **WP-276 / WP-277** — staging ops kanıtı; ürün UI işlerinden bağımsız planlanır.
+3. **WP-276 / WP-277** — staging ops kanıtı; ürün UI işlerinden bağımsız planlanır.
 
 `Test için bekleyenler` tablosundaki hiçbir kayıt yeniden worker'a verilmez.
 

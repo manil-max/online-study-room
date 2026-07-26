@@ -1,19 +1,29 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:online_study_room/l10n/app_localizations.dart';
 
 import 'features/classroom/widgets/camp_critter.dart';
 import 'features/classroom/widgets/campfire_layout.dart';
 
-void main() => runApp(const _Wp295PreviewApp());
+void main() => runApp(buildWp295PreviewApp());
+
+/// Test ve geliştirici önizlemesi için yerel seçimi açık uygulama kabuğu.
+Widget buildWp295PreviewApp({Locale? locale}) =>
+    _Wp295PreviewApp(locale: locale);
 
 class _Wp295PreviewApp extends StatelessWidget {
-  const _Wp295PreviewApp();
+  const _Wp295PreviewApp({this.locale});
+
+  final Locale? locale;
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      locale: locale,
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
       theme: ThemeData.dark(useMaterial3: true),
       home: const _PreviewScreen(),
     );
@@ -55,6 +65,7 @@ class _PreviewScreenState extends State<_PreviewScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final selectedLayout = _layouts[_memberCount]!;
     final controls = _Controls(
       layout: selectedLayout,
@@ -71,9 +82,7 @@ class _PreviewScreenState extends State<_PreviewScreen>
     );
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('WP-295 · Kamp ateşi parametrik önizleme'),
-      ),
+      appBar: AppBar(title: Text(l10n.wp295PreviewTitle)),
       body: LayoutBuilder(
         builder: (context, constraints) {
           final preview = Padding(
@@ -85,10 +94,11 @@ class _PreviewScreenState extends State<_PreviewScreen>
             ),
           );
           if (constraints.maxWidth < 850) {
-            return ListView(
+            final previewHeight = math.min(430.0, constraints.maxHeight * 0.55);
+            return Column(
               children: [
-                SizedBox(height: 430, child: preview),
-                controls,
+                SizedBox(height: previewHeight, child: preview),
+                Expanded(child: controls),
               ],
             );
           }
@@ -128,6 +138,7 @@ class _PreviewScene extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final seats = campfireSeats(layout);
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -229,8 +240,11 @@ class _PreviewScene extends StatelessWidget {
                   top: 14,
                   child: Chip(
                     label: Text(
-                      '${layout.memberCount} üye · $workingCount çalışıyor · '
-                      '${layout.roastCycleMinutes.toStringAsFixed(0)} dk döngü',
+                      l10n.wp295PreviewStatus(
+                        layout.memberCount,
+                        workingCount,
+                        layout.roastCycleMinutes.round(),
+                      ),
                     ),
                   ),
                 ),
@@ -512,10 +526,11 @@ class _Controls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 8, 24, 24),
       children: [
-        const Text('Düzenlenecek kişi sayısı'),
+        Text(l10n.wp295PreviewMemberCount),
         Padding(
           padding: const EdgeInsets.only(top: 8, bottom: 16),
           child: Wrap(
@@ -533,7 +548,7 @@ class _Controls extends StatelessWidget {
           ),
         ),
         _slider(
-          'Çalışan üye',
+          l10n.wp295PreviewWorkingMember,
           workingCount.toDouble(),
           0,
           memberCount.toDouble(),
@@ -541,19 +556,17 @@ class _Controls extends StatelessWidget {
           divisions: memberCount,
         ),
         _stepper(
-          'Yerleşimin ateşe yatay uzaklığı',
+          l10n,
+          l10n.wp295PreviewRingWidth,
           layout.ringWidthFactor,
           0.20,
           0.38,
           (value) => onLayout(layout.copyWith(ringWidthFactor: value)),
           keyPrefix: 'ring',
         ),
-        const Padding(
-          padding: EdgeInsets.only(bottom: 12),
-          child: Text(
-            'Bu ayar bütün hayvanları yalnız yatayda ateşe yaklaştırır veya uzaklaştırır. '
-            'Aşağıdaki kontroller yalnız seçili konumu değiştirir.',
-          ),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Text(l10n.wp295PreviewRingHelp),
         ),
         for (var pairIndex = 0; pairIndex < layout.pairs.length; pairIndex++)
           _pairCard(context, pairIndex),
@@ -565,33 +578,33 @@ class _Controls extends StatelessWidget {
           _singleCard(context, singleIndex),
         const Divider(height: 32),
         _slider(
-          'Ateş + zemin dikey konumu',
+          l10n.wp295PreviewGroundY,
           layout.groundYFactor,
           0.46,
           0.66,
           (value) => onLayout(layout.copyWith(groundYFactor: value)),
         ),
         _slider(
-          'Ateş boyutu',
+          l10n.wp295PreviewFireScale,
           layout.fireScale,
           0.80,
           1.25,
           (value) => onLayout(layout.copyWith(fireScale: value)),
         ),
         _slider(
-          'Marşmelov ateşe yaklaşma',
+          l10n.wp295PreviewMarshmallowReach,
           layout.stickReachFactor,
           0.40,
           0.78,
           (value) => onLayout(layout.copyWith(stickReachFactor: value)),
         ),
         _slider(
-          'Marşmelov döngüsü',
+          l10n.wp295PreviewRoastCycle,
           layout.roastCycleMinutes,
           8,
           12,
           (value) => onLayout(layout.copyWith(roastCycleMinutes: value)),
-          suffix: ' dk',
+          suffix: l10n.wp295PreviewMinutesSuffix,
           divisions: 4,
         ),
         const Divider(height: 32),
@@ -612,15 +625,16 @@ class _Controls extends StatelessWidget {
   }
 
   Widget _pairCard(BuildContext context, int pairIndex) {
+    final l10n = AppLocalizations.of(context);
     final pair = layout.pairs[pairIndex];
     final lastIndex = layout.pairs.length - 1;
     final label = layout.pairs.length == 1
-        ? 'Tek çift'
+        ? l10n.wp295PreviewSinglePair
         : pairIndex == 0
-        ? '1. çift (en arka)'
+        ? l10n.wp295PreviewBackPair
         : pairIndex == lastIndex
-        ? '${pairIndex + 1}. çift (en ön)'
-        : '${pairIndex + 1}. çift';
+        ? l10n.wp295PreviewFrontPair(pairIndex + 1)
+        : l10n.wp295PreviewPair(pairIndex + 1);
     final minVertical = pairIndex == 0
         ? -1.0
         : layout.pairs[pairIndex - 1].verticalFactor + 0.08;
@@ -637,7 +651,8 @@ class _Controls extends StatelessWidget {
           children: [
             Text(label, style: Theme.of(context).textTheme.titleSmall),
             _stepper(
-              'Yatay açıklık',
+              l10n,
+              l10n.wp295PreviewHorizontalSpread,
               pair.horizontalFactor,
               0.25,
               1.15,
@@ -648,7 +663,8 @@ class _Controls extends StatelessWidget {
               keyPrefix: 'pair-$pairIndex-horizontal',
             ),
             _stepper(
-              'Dikey konum',
+              l10n,
+              l10n.wp295PreviewVerticalPosition,
               pair.verticalFactor,
               minVertical,
               maxVertical,
@@ -663,6 +679,7 @@ class _Controls extends StatelessWidget {
   }
 
   Widget _singleCard(BuildContext context, int singleIndex) {
+    final l10n = AppLocalizations.of(context);
     final single = layout.singles[singleIndex];
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -672,11 +689,12 @@ class _Controls extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '${singleIndex + 1}. hayvan',
+              l10n.wp295PreviewAnimal(singleIndex + 1),
               style: Theme.of(context).textTheme.titleSmall,
             ),
             _stepper(
-              'Yatay konum (sol − / sağ +)',
+              l10n,
+              l10n.wp295PreviewHorizontalPosition,
               single.horizontalFactor,
               -1.15,
               1.15,
@@ -687,7 +705,8 @@ class _Controls extends StatelessWidget {
               keyPrefix: 'single-$singleIndex-horizontal',
             ),
             _stepper(
-              'Dikey konum (arka − / ön +)',
+              l10n,
+              l10n.wp295PreviewVerticalDepth,
               single.verticalFactor,
               -1,
               1,
@@ -716,6 +735,7 @@ class _Controls extends StatelessWidget {
   }
 
   Widget _stepper(
+    AppLocalizations l10n,
     String label,
     double value,
     double min,
@@ -740,13 +760,13 @@ class _Controls extends StatelessWidget {
             children: [
               IconButton(
                 key: ValueKey('$keyPrefix-decrease-large'),
-                tooltip: '$label 0.05 azalt',
+                tooltip: l10n.wp295PreviewDecrease(label, '0.05'),
                 onPressed: normalizedValue <= min ? null : () => change(-0.05),
                 icon: const Text('−.05'),
               ),
               IconButton(
                 key: ValueKey('$keyPrefix-decrease'),
-                tooltip: '$label 0.01 azalt',
+                tooltip: l10n.wp295PreviewDecrease(label, '0.01'),
                 onPressed: normalizedValue <= min ? null : () => change(-0.01),
                 icon: const Icon(Icons.remove),
               ),
@@ -758,13 +778,13 @@ class _Controls extends StatelessWidget {
               ),
               IconButton(
                 key: ValueKey('$keyPrefix-increase'),
-                tooltip: '$label 0.01 artır',
+                tooltip: l10n.wp295PreviewIncrease(label, '0.01'),
                 onPressed: normalizedValue >= max ? null : () => change(0.01),
                 icon: const Icon(Icons.add),
               ),
               IconButton(
                 key: ValueKey('$keyPrefix-increase-large'),
-                tooltip: '$label 0.05 artır',
+                tooltip: l10n.wp295PreviewIncrease(label, '0.05'),
                 onPressed: normalizedValue >= max ? null : () => change(0.05),
                 icon: const Text('+.05'),
               ),

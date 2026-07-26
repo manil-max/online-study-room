@@ -91,6 +91,14 @@ INTERNAL_PREFIXES = ("app/lib/data/repositories/",)
 # (2) Dosya bazlı muafiyetler — Türkçe literal taraması. Her satır bir gerekçe
 # taşır; gerekçesi yazılamayan dosya muaf edilmez.
 LITERAL_EXEMPTIONS: dict[str, str] = {
+    "app/lib/core/time_engine/sky_phase.dart": (
+        "Yalnız statik gökyüzü anchor invariantı bozulduğunda geliştiriciye atılan "
+        "ArgumentError; kullanıcı yüzeyine taşınmaz."
+    ),
+    "app/lib/features/classroom/widgets/campfire_layout.dart": (
+        "Yalnız yerleşim profilinin derleme/önizleme invariantı bozulduğunda "
+        "geliştiriciye atılan ArgumentError'lar; kullanıcı yüzeyine taşınmaz."
+    ),
     "app/lib/core/observability/observability_service.dart": (
         "Sentry etiketleri ve breadcrumb metinleri — telemetri alanı, kullanıcıya "
         "gösterilmez."
