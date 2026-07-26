@@ -43,7 +43,7 @@ Android cihaz QA'sı GitHub prerelease beta APK'sıyla yapılır. Önce mevcut a
 
 ## D. Play pre-launch (WP-123)
 
-Ayrıntı: `docs/play-store/` ve `docs/play/OWNER-ACTION-CHECKLIST.md`.
+Ayrıntı: `docs/play-store/DATA-SAFETY.md` ve `docs/play-store/PLAY-RELEASE-GATE.md`.
 
 ## E. beta-v4307 push/timer kabulü (WP-271)
 

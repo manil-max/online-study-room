@@ -1,7 +1,7 @@
 # Odak Kampı — Kalite Programı ve Ürün Yol Haritası (Master Plan)
 
 > **Başlangıç:** 2026-07-12 · **Bu dosya tek kanonik yönetişim kaynağıdır.**
-> **Sadeleştirme (2026-07-19):** Tamamlanmış program dilimlerinin tarihsel kapsam/tanı detayı (§0/1/3/5.1/6/8.1–8.7/10/12) `archive/KALITE-PROGRAMI-tarihsel.md`'ye taşındı. Burada **canlı yönetişim** kaldı: çalışma sistemi, kalite kapıları, eşzamanlılık kuralı, platform/güvenlik ilkeleri, açık Play programı, cihaz QA, açık kararlar.
+> **Sadeleştirme (2026-07-19):** Tamamlanmış programların tarihsel kapsam ve tanı ayrıntısı Git geçmişindedir. Burada **canlı yönetişim** kaldı: çalışma sistemi, kalite kapıları, eşzamanlılık kuralı, platform/güvenlik ilkeleri, açık Play programı, cihaz QA, açık kararlar.
 
 ## Kanıt etiketleri (her iddiada kullanılır)
 
@@ -61,7 +61,7 @@ Aşağıdakilerden biri sağlanmıyorsa **stable release çıkmaz:** kritik/ağ�
 
 ## 5. Altyapı İlkeleri (CANLI)
 
-> Yığın denetimi (tut/ekle/değiştir) tarihsel karar tablosu → `archive/KALITE-PROGRAMI-tarihsel.md §5.1`. Çekirdek: Flutter + Riverpod 3 + Supabase + çift repository + RLS + offline-first; felsefe "yıkma, güçlendir".
+> Çekirdek: Flutter + Riverpod 3 + Supabase + çift repository + RLS + offline-first; felsefe "yıkma, güçlendir". Tarihsel karar ayrıntısı Git geçmişindedir.
 
 ### 5.2 Android native platform sınırları (`Cihazda doğrulanmalı`)
 
@@ -103,11 +103,11 @@ Aşağıdakilerden biri sağlanmıyorsa **stable release çıkmaz:** kritik/ağ�
 | Windows masaüstü (WP-27/52/53/28/70/71) | ✅ Masaüstü ürün temeli tamamlandı; **Store ürünleştirmesi WP-259–262 açık** |
 | Global açık/özel gruplar (WP-92/93) | ✅ Tamamlandı |
 | **Google Play production (WP-110–124)** | 🔴 **Açık — NO-GO** (bkz. §8.8) |
-| Başarım+Görev+Grup PP (WP-208–220) | 🟡 **v3.2 geçişi sürüyor** (`docs/features/BASARIM-GOREV-GRUPPP-PLAN-2026-07.md`); manuel/sayaç/native süre eşitliği ürün kanonu, mevcut `0063` kabul edilmedi |
+| Başarım+Görev+Grup PP (WP-208–220) | 🟡 Tarihsel uygulama kapandı; kalan kabul kanıtı `progress.md` içindeki WP-277'dir. Manuel/sayaç/native süre eşitliği ürün kanonudur; `0063` kabul edilmedi |
 | **Kurtarma ve ortam izolasyonu (WP-225–232)** | 🟢 Baseline/izolasyon teslim edildi; `0066–0070` production'a terfi etti (etkin şema `0070`). **Production CLI migration-history zincir onarımı hâlâ açık** (etkin şema doğru ama history uzlaştırılmamış — `docs/recovery/PRODUCTION-BASELINE.md`) |
 | **Post-v43 release + bildirim kurtarması (WP-269–285)** | ✅ **Kapandı (2026-07-24).** Stable **v45** yayında (etkin şema `0070`), beta-v4308 staging'de; sahip cihaz kabulünü verdi. Production deploy kapısı yeniden kilitli. Açık ops kabulü: WP-276 (hesap silme), WP-277 (matris). Ortam durum modeli: `progress.md` Proje Gerçekleri |
 
-> Tamamlanmış programların ayrıntılı kapsamı: `archive/KALITE-PROGRAMI-tarihsel.md §8.1–8.7`. AI katmanı (gelecek): aynı arşiv §6.
+> Tamamlanmış programların ayrıntısı Git geçmişindedir; güncel iş talimatı değildir.
 
 ---
 
@@ -151,7 +151,7 @@ Amaç yalnız AAB üretmek değil; Play politikası, veri yaşam döngüsü, UGC
 
 Zorunlu politika ilkeleri: uygulama içi **ve** web'den hesap silme (yalnız "devre dışı" değil) · Play artefaktı GitHub APK kurmaz, `REQUEST_INSTALL_PACKAGES` istemez · UGC yüzeyleri koşul kabulü + raporlama + engelleme + moderasyon olmadan çıkmaz · kısıtlı izinler gerçek cihazda fallback ile kanıtlanır · effective target API 36 (31 Ağustos 2026 takvimi; submit anında yeniden kontrol) · yeni kişisel hesapta closed-test (≥12 tester, 14 gün kesintisiz) kanıtlanır.
 
-Bulgu kanıtı: `docs/PLAY-STORE-HAZIRLIK-TARAMASI.md`; sahip aksiyonları: `docs/play/OWNER-ACTION-CHECKLIST.md`.
+Canlı mağaza beyanı ve kapısı: `docs/play-store/DATA-SAFETY.md` ve `docs/play-store/PLAY-RELEASE-GATE.md`.
 
 ---
 
@@ -167,7 +167,7 @@ Bulgu kanıtı: `docs/PLAY-STORE-HAZIRLIK-TARAMASI.md`; sahip aksiyonları: `doc
 - **WP-274:** Tools Saat/Kronometre/Dünya erişimi için ürün kararı; öneri v43 girişlerini geri getirmektir.
 - **Seri/paralel sıra:** WP-269 ve WP-270 paralel olabilir; WP-272 ayrı native lane olabilir fakat toplam iki lane sınırı korunur. WP-271, WP-269+270 sonrası; WP-273, WP-269 sonrası başlar.
 - **Release kapısı:** Gerçek FCM, retry, timer action, Samsung cihaz kabulü, Windows artefaktı ve beta soak olmadan stable çıkmaz. Production migration/Edge/release ayrıca backup+dry-run ve somut kullanıcı GO ister.
-- **Kanonik güncel rapor:** [`KURTARMA-ON-INCELEME-RAPORU-2026-07-23.md`](KURTARMA-ON-INCELEME-RAPORU-2026-07-23.md)
+- **Kanonik güncel durum:** `progress.md` Proje Gerçekleri ve QA kuyruğu.
 
 ## 9. Cihaz QA Matrisi ve Test Senaryoları (CANLI)
 

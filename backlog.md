@@ -2,8 +2,8 @@
 
 > Üstteki en öncelikli. Yeni fikir en alta eklenir, birlikte sıralanır.
 > Bir işe başlayınca buradan alınır → `progress.md`'ye WP olarak geçer.
-> **Öncelik `docs/KALITE-PROGRAMI.md` faz sırasına tabidir.** Kaynak: KALITE-PROGRAMI + `progress.md` + `project.md` açık sorular.
-> **Yalnız açık (`[~]`/`[ ]`) maddeler burada.** Tamamlanmış (`[x]`) tarihsel backlog git geçmişinde + `progress.md` arşivinde (`docs/archive/progress-tarihsel-2026-07.md`). 2026-07-19'da sadeleştirildi.
+> **Öncelik `docs/KALITE-PROGRAMI.md` faz sırasına tabidir.** Kaynak: KALITE-PROGRAMI + `progress.md` açık sorular.
+> **Yalnız açık (`[~]`/`[ ]`) maddeler burada.** Tamamlanmış (`[x]`) işlerin ayrıntısı Git geçmişindedir.
 
 ---
 
@@ -22,7 +22,7 @@
 
 - [ ] **Google Play production hazırlığı — NO-GO / bilinçli park**
   - Play flavor/updater izolasyonu ve bazı hesap/UGC kodları repoda bulunur; bunları “yapılmadı” diye yeniden claim etmek yanlıştır. Eksikler canlı HTTPS legal kimliği, Console/Data Safety, production Edge/cron kanıtı, izin matrisi, AAB/cihaz/closed-test ve açık GO'dur.
-  - Program yalnız kullanıcı Play girişimini açıkça başlattığında canlanır. Ayrıntılı WP-110–124 kartları: `docs/archive/progress-tarihsel-2026-07.md`; kanonik sıra: `docs/KALITE-PROGRAMI.md §8.8`; sahip aksiyonları: `docs/play/OWNER-ACTION-CHECKLIST.md`.
+  - Program yalnız kullanıcı Play girişimini açıkça başlattığında canlanır. Kanonik sıra: `docs/KALITE-PROGRAMI.md §8.8`; mağaza kapısı: `docs/play-store/PLAY-RELEASE-GATE.md`.
   - Stable/production HOLD altında Play submission/rollout yapılmaz.
 
 - [~] **Hesap silme ve veri saklama — staging ops kabulü WP-276**
@@ -40,7 +40,7 @@
   - Önce Windows Sandbox/VM'de staging test hesabıyla temiz kurulum → iki sürüm arası update → uninstall; mevcut test-imzalı yerel paket korunur, test ortamı izoledir.
   - Sonra Store'da Private Audience ile yalnız seçilen Microsoft hesaplarına görünür pilot; public listing/rollout yalnız WP-262 kanıtları ve somut kullanıcı GO sonrası.
   - WP-259 yerel smoke kanıtı aldı ama temiz VM/ikinci PC kabulü açık; WP-260–262 Partner Center/Private Audience ve kullanıcı GO bekler.
-  - Ayrıntılı sıra ve kabul kapıları: `docs/WINDOWS-STORE-PLAN.md`; Windows release flake'i önce WP-273 ile kapanır.
+  - Kabul kapıları: `docs/WINDOWS-RELEASE-GATE.md`, `docs/QA-WINDOWS.md` ve `docs/WINDOWS-VM-QA.md`; Windows release flake'i önce WP-273 ile kapanır.
 
 - [ ] **AR/DE dil desteği ve RTL** — WP-278 ürün kararı gerekir
   - EN/TR l10n WP-87/89 ile cihaz/ürün kabulü aldı; AR/DE tabanı vardır ancak insan çevirisi/RTL cihaz kapsamı onaylanmış ürün işi değildir.

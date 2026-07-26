@@ -77,7 +77,7 @@ Android APK: `.github/workflows/release.yml` (ayrı).
 
 - Kapı: `docs/WINDOWS-RELEASE-GATE.md`  
 - Matris: `docs/QA-WINDOWS.md`  
-- Ürün planı: `docs/WINDOWS-URUN-PLANI.md`  
+- Cihaz kabulü: `docs/QA-WINDOWS.md` · yayın kapısı: `docs/WINDOWS-RELEASE-GATE.md`
 
 ## Mini pencere
 
