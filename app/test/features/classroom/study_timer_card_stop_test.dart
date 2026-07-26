@@ -34,6 +34,63 @@ class _FakeTimerNotifier extends StudyTimerNotifier {
   void push(StudyTimerState next) => state = next;
 }
 
+/// Testin kurulumu ile kartın ilk çizimi arasında geçen gerçek zaman payı.
+///
+/// Yakalanmak istenen hata `liveSeconds` (≈1 saat) kadarlık bir zıplama, yani
+/// bu pay gerçek hatanın **otuzda biri**nden küçük — hassasiyeti düşürmüyor.
+/// ⚠️ Düşen bir testi yeşile almak için yükseltilmez.
+const int _driftSlackSeconds = 120;
+
+/// Metni ayrıştırmak yerine **aralıktaki her saniyeyi biçimlendirip** ekranda
+/// arar. Böylece dil ekleri (`sn`/`s`) ve `activeAppLocale` genel durumu testin
+/// derdi olmaktan çıkar — kartla birebir aynı biçimlendirici kullanılır.
+int? _findVisibleSecondsInRange(WidgetTester tester, int atLeast, int atMost) {
+  final byText = <String, int>{
+    for (var s = atLeast; s <= atMost; s++) formatHumanSeconds(s): s,
+  };
+  int? best;
+  for (final widget in tester.widgetList<Text>(find.byType(Text))) {
+    final seconds = byText[widget.data];
+    if (seconds == null) continue;
+    if (best == null || seconds > best) best = seconds;
+  }
+  return best;
+}
+
+List<String> _visibleTexts(WidgetTester tester) => [
+  for (final widget in tester.widgetList<Text>(find.byType(Text)))
+    if (widget.data != null) widget.data!,
+];
+
+/// Ekranda `[atLeast, atMost]` aralığına düşen bir süre metni belirene kadar
+/// kareleri ilerletir ve **görülen** değeri döndürür.
+///
+/// Tam eşleşme beklemek burada kararsızlığın ta kendisiydi: kart canlı süreyi
+/// gerçek saatten okuduğu için beklenen sayı, test kurulumu 1 saniyeyi aşar
+/// aşmaz kaçırılıyor ve bir daha yakalanamıyordu.
+Future<int> waitForTodayTotal(
+  WidgetTester tester, {
+  required int atLeast,
+  required int atMost,
+  Duration timeout = const Duration(seconds: 10),
+  String? reason,
+}) async {
+  final deadline = DateTime.now().add(timeout);
+  while (true) {
+    final found = _findVisibleSecondsInRange(tester, atLeast, atMost);
+    if (found != null) return found;
+    if (DateTime.now().isAfter(deadline)) {
+      fail(
+        'waitForTodayTotal zaman aşımına uğradı (${timeout.inSeconds} sn): '
+        '[$atLeast, $atMost] aralığında süre yok. '
+        'Ekrandaki metinler: ${_visibleTexts(tester)}'
+        '${reason == null ? '' : ' — $reason'}',
+      );
+    }
+    await tester.pump(const Duration(milliseconds: 16));
+  }
+}
+
 void main() {
   testWidgets(
     'WP-250: Durdur sırasında "Bugün" toplamı zıplamaz',
@@ -112,14 +169,32 @@ void main() {
       sessions.add([recordedSession]);
       // Akış olayı + yeniden çizim iki ayrı tura düşebilir; tek `pump()`
       // hızlı makinede yetiyor ama CI koşucusunda yetmiyordu (v49 kırılması).
-      await pumpUntilFound(
+      //
+      // 🔴 WP-322 — kalan kararsızlığın KÖK NEDENİ buradaydı.
+      // Kart canlı süreyi HER karede gerçek saatten hesaplar
+      // (`study_timer_card.dart:130-132` → `DateTime.now().difference(startedAt)`).
+      // Yukarıdaki `now` yakalandıktan sonra `pumpWidget` + prefs kurulumu
+      // **1 saniyeden uzun sürerse** ekrandaki toplam `expectedTotal + 1` olur
+      // ve saat ileri aktığı için bir daha ASLA `expectedTotal`e dönmez →
+      // tam eşleşme bekleyen `pumpUntilFound` 10 sn dönüp düşerdi. Geliştirici
+      // makinesinde kurulum < 1 sn olduğu için geçiyor, tam suit yükü altında
+      // düşüyordu: "bir koşumda düştü, ikincide geçti" tam olarak buydu.
+      //
+      // Çözüm süreyi dondurmak değil — testin **iddiası** zaten mutlak sayı
+      // değil: yakalamak istediği hata `liveSeconds` (≈3600 sn) kadarlık bir
+      // ZIPLAMA. Birkaç saniyelik koşum sapmasına tolerans vermek bu
+      // hassasiyeti azaltmaz; aşağıdaki olumsuz iddia payın 30 katı uzakta.
+      final observedTotal = await waitForTodayTotal(
         tester,
-        find.text(formatHumanSeconds(expectedTotal)),
+        atLeast: expectedTotal,
+        atMost: expectedTotal + _driftSlackSeconds,
         reason: 'kayıtlı + canlı toplamı ekranda görünmeli',
       );
-
-      // Kayıtlı süre + canlı süre.
-      expect(find.text(formatHumanSeconds(expectedTotal)), findsWidgets);
+      expect(
+        observedTotal,
+        lessThan(expectedTotal + liveSeconds),
+        reason: 'canlı süre daha ilk çizimde iki kez sayılmamalı',
+      );
 
       // --- Durdur'a basıldı: notifier ilk await'ten önce bunu yayınlar. ---
       fake.push(
@@ -134,6 +209,8 @@ void main() {
       expect(
         find.text(formatHumanSeconds(expectedTotal)),
         findsWidgets,
+        // Not: settling* alanlarını test verdiği için buradan sonrası
+        // gerçek saatten bağımsız ve **tam belirlenimli**dir.
         reason: 'durdurma anında toplam değişmemeli',
       );
 

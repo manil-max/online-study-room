@@ -106,6 +106,68 @@ void main() {
     });
   });
 
+  group('WP-322 Microsoft Store kanalı (Faz H ön şartı)', () {
+    test('define=microsoftStore → sideload updater KAPALI', () {
+      final channel = DistributionConfig.resolve(
+        distributionDefine: 'microsoftStore',
+        legacyChannel: 'stable',
+        flutterAppFlavor: null,
+        isWeb: false,
+        platform: TargetPlatform.windows,
+      );
+      expect(channel, DistributionChannel.microsoftStore);
+      expect(DistributionConfig.allowsSideloadUpdatesFor(channel), isFalse);
+    });
+
+    test('unutulmuş CHANNEL=beta Store paketini beta yapamaz', () {
+      final channel = DistributionConfig.resolve(
+        distributionDefine: 'microsoftStore',
+        legacyChannel: 'beta',
+        flutterAppFlavor: null,
+        isWeb: false,
+        platform: TargetPlatform.windows,
+      );
+      expect(channel, DistributionChannel.microsoftStore);
+      expect(DistributionConfig.allowsSideloadUpdatesFor(channel), isFalse);
+      expect(
+        DistributionConfig.resolveReleaseNotesChannel(
+          legacyChannel: 'beta',
+          distributionChannel: DistributionChannel.microsoftStore,
+        ),
+        'stable',
+      );
+    });
+
+    test('🔴 define unutulursa Windows KAPALI kanala düşmez — Faz H kapısı', () {
+      // Android'deki `--flavor play` zorlamasının Windows karşılığı yoktur.
+      // Bu test o boşluğu belgeler: define yoksa updater AÇIK kalır, yani
+      // Store build'i CI'da define'ı set etmek zorundadır.
+      final channel = DistributionConfig.resolve(
+        distributionDefine: '',
+        legacyChannel: 'stable',
+        flutterAppFlavor: null,
+        isWeb: false,
+        platform: TargetPlatform.windows,
+      );
+      expect(channel, DistributionChannel.windows);
+      expect(DistributionConfig.allowsSideloadUpdatesFor(channel), isTrue);
+    });
+
+    test('mağaza kanallarının hiçbirinde sideload açılmaz', () {
+      const storeChannels = <DistributionChannel>[
+        DistributionChannel.play,
+        DistributionChannel.microsoftStore,
+      ];
+      for (final channel in storeChannels) {
+        expect(
+          DistributionConfig.allowsSideloadUpdatesFor(channel),
+          isFalse,
+          reason: '$channel mağaza kanalı — mağaza dışı güncelleme yasak',
+        );
+      }
+    });
+  });
+
   group('UpdaterService', () {
     test('parseVersionCode etiketlerden build numarasi cikarir', () {
       expect(UpdaterService.parseVersionCodeForTest('v29'), 29);

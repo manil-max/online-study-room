@@ -24,7 +24,18 @@ import 'package:flutter/services.dart' show appFlavor;
 ///   --dart-define=CHANNEL=stable \
 ///   --dart-define=DISTRIBUTION_CHANNEL=githubStable \
 ///   --dart-define-from-file=env.json
+///
+/// # Microsoft Store MSIX (Faz H) — updater kapalı
+/// flutter build windows --release \
+///   --dart-define=DISTRIBUTION_CHANNEL=microsoftStore \
+///   --dart-define-from-file=env.json
 /// ```
+///
+/// **WP-322 uyarısı:** Windows'ta Android'in `--flavor` zorlaması yoktur, yani
+/// `microsoftStore` kanalını **yalnız define** seçer. Store işi (Faz H) bu
+/// define'ı CI'da set etmek ve `msix_config.store: true` ile paketlemekle
+/// yükümlüdür; define unutulursa Windows varsayımı [windows] olur ve updater
+/// açık kalır. Bu yüzden Faz H'de build öncesi bir kapı testi şarttır.
 enum DistributionChannel {
   /// Play Store — harici APK/updater yok.
   play,
@@ -37,6 +48,14 @@ enum DistributionChannel {
 
   /// Windows MSIX (GitHub / portable).
   windows,
+
+  /// Microsoft Store MSIX — mağaza dışı güncelleme **yasak**.
+  ///
+  /// WP-322: Store politikası, paketin kendini mağaza dışından güncellemesine
+  /// izin vermez. [windows] kanalı GitHub Releases'tan MSIX indirir; Store
+  /// paketi aynı kodla çıkarsa politika ihlali olur. Bu yüzden ayrı kanal:
+  /// `allowsSideloadUpdates` burada **asla** true olmaz.
+  microsoftStore,
 }
 
 /// `DISTRIBUTION_CHANNEL` dart-define + flavor + platform / eski `CHANNEL`.
@@ -106,6 +125,7 @@ class DistributionConfig {
       'githubStable' => DistributionChannel.githubStable,
       'githubBeta' => DistributionChannel.githubBeta,
       'windows' => DistributionChannel.windows,
+      'microsoftStore' => DistributionChannel.microsoftStore,
       _ => null,
     };
   }
@@ -132,6 +152,7 @@ class DistributionConfig {
       DistributionChannel.githubStable => true,
       DistributionChannel.githubBeta => true,
       DistributionChannel.windows => true,
+      DistributionChannel.microsoftStore => false,
     };
   }
 
@@ -155,6 +176,11 @@ class DistributionConfig {
     required String legacyChannel,
     required DistributionChannel distributionChannel,
   }) {
+    // WP-322: Store paketi her zaman stable'dır. Unutulmuş bir `CHANNEL=beta`
+    // define'ı Store build'ine beta sürüm notlarını gösteremez.
+    if (distributionChannel == DistributionChannel.microsoftStore) {
+      return 'stable';
+    }
     if (legacyChannel.trim().toLowerCase() == 'beta') return 'beta';
     if (distributionChannel == DistributionChannel.githubBeta) return 'beta';
     return 'stable';

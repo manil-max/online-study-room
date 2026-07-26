@@ -44,9 +44,16 @@
 - **SAHİP yollar:** —
 
 ### Claude Lane
-- **Durum:** [x] Boşta
-- **Faz/WP:** — · **Sıradaki:** **Faz B** (admin & geri bildirim döngüsü)
-- **SAHİP yollar:** —
+- **Durum:** [~] Aktif
+- **Faz/WP:** Faz C · **WP-322** (teknik borç temizliği) — *Faz B ile **paralel**; kart "bağımsız" işaretli*
+- **Aşama:** Geliştiriliyor
+- **SAHİP yollar:** `app/lib/core/config/distribution_channel.dart` · `app/test/core/distribution_channel_test.dart` · `app/test/features/classroom/study_timer_card_stop_test.dart`
+- **Ortak/riskli yüzey:** `progress.md` (yalnız Claude lane + WP-322 kartı). `pubspec.yaml`'a **hiç girilmedi** — passkeys ve sürüm maddeleri konusuz çıktı, dolayısıyla `pub get` çözümü değişmedi ve Codex'in test koşumu etkilenmedi.
+- **Dal:** `main`
+- **Başlangıç:** 2026-07-26 11:49 (Europe/Istanbul)
+- **Son güncelleme:** 2026-07-26 11:49
+- **Çakışma ön-kontrolü (Adım 0):** Codex WP-316'nın SAHİP yüzeyi `supabase_admin_repository.dart` + `app/lib/features/admin/**` + olası `supabase/migrations/00NN_*`. **Kesişim yok** — WP-322 feature koduna ve `supabase/migrations/**`'e girmiyor (kartın DOKUNMA satırı zaten yasaklıyor).
+- ✅ **v49 git tag'i silindi (2026-07-26 11:49, sahip emri):** uzak (`origin`) + yerel. Karşılığında release yoktu; sıradaki sürüm o numarayı temiz kullanabilir.
 - ✅ **2026-07-26:** grup üye sınırı **8** kodlandı (`0071_group_member_limit_8.sql` + Dart sabitleri + 4 test). `analyze` temiz, 815 test yeşil, 51 deploy guard testi yeşil. 🔴 **Migration hiçbir ortama uygulanmadı.**
 - ✅ **2026-07-26:** yol haritası `docs/PLAN.md`'den **bu dosyaya** taşındı (sahip kararı: tek güncel kaynak). PLAN.md sapa indirildi.
 - ✅ **BETA 1 YAYINDA — `beta-v4309`, 2026-07-25 15:30 UTC.** Release Orchestrator run `30163316180`: preflight · android · windows/build · finalize_android · release_status · finalize_complete **hepsi success**. Varlıklar: `app-beta-release.apk` (77.8 MB) + sha1/sha256 · `odak-kampi-windows-beta.msix` (23.3 MB) · `odak-kampi-windows-beta.zip` (42.4 MB) + sha256'lar · `release-manifest.json`. Sürüm `1.0.43-beta.9+4309`, staging backend, migration head `0070`. **Android + Windows ikisi de çıktı.**
@@ -66,12 +73,12 @@
 - **Durum:** [~] Aktif
 - **Faz/WP:** Faz B · WP-316
 - **Aşama:** Geliştiriliyor
-- **SAHİP yollar:** `app/lib/data/repositories/supabase/supabase_admin_repository.dart` · `app/lib/features/admin/**` · yalnız teşhis gerektirirse yeni `supabase/migrations/00NN_feedback_attachment_fix.sql`
-- **Ortak/riskli yüzey:** `progress.md` (yalnız Codex lane + WP-316 kartı) · private Storage/RLS teşhisi · production salt-okunur audit
+- **SAHİP yollar:** `app/lib/data/repositories/supabase/supabase_admin_repository.dart` · `app/lib/features/admin/**` · `app/test/features/admin_screen_test.dart` · `supabase/migrations/0072_feedback_attachment_storage_fix.sql` · `supabase/tests/001_schema_contract.test.sql` · `supabase/tests/006_feedback_attachments.test.sql`
+- **Ortak/riskli yüzey:** `progress.md` (yalnız Codex lane + WP-316 kartı) · private Storage/RLS teşhisi · production salt-okunur audit · migration head sözleşmesi (Claude WP-322 `tooling/**` lane'i bitince güncellenecek)
 - **Dal:** `main`
 - **Başlangıç:** 2026-07-26 11:41 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-26 11:41
-- **Not:** Opus planner olarak aynı repoda aktif; WP-317/318 seri bağımlı ve ortak dosyalı olduğundan WP-316 kabul edilmeden claim edilmez.
+- **Son güncelleme:** 2026-07-26 12:07
+- **Not:** Production salt-okunur probu: `attachment_path` ve `is_super_admin()` RPC `200`, private `feedback_attachments` bucket `400 Bucket not found` → kök neden ortam eksikliği. 0072 ileri migration yazıldı. Hedef widget testi **3/3**, `flutter analyze` **0**; hata sonrası yeniden deneme ve eksiz bilete çip göstermeme regresyonları kapsanıyor. Claude WP-322 şu an `tooling/**` sahibi; çakışmamak için `deploy-contract.json` + guard beklentisi lane boşalana kadar bekliyor. WP-317/318, WP-316 kabul edilmeden claim edilmez.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
@@ -143,12 +150,12 @@ göremiyoruz, cevap yazamıyoruz, liste temizlenmiyor.
   - `supabase/migrations/00NN_feedback_attachment_fix.sql` *(yalnız teşhis 1 çıkarsa)*
 - **DOKUNMA (oku, değiştirme):** `app/lib/core/theme/**` · `app/pubspec.yaml` · diğer repository'ler
 - **Adımlar (teşhis önce, kod sonra — sorun büyük olasılıkla ortamda):**
-  - [ ] `0019_feedback_attachments` production'da gerçekten uygulandı mı? (bucket + iki storage policy)
-  - [ ] `public.is_super_admin()` production'da sahip hesabı için `true` dönüyor mu?
-  - [ ] Kullanıcı tarafı yükleme gerçekten oluyor mu — `attachment_path` doluyor mu, yoksa yükleme **sessizce** mi düşüyor?
-  - [ ] İmzalı URL 1 saat geçerli; süresi dolmuş URL cache'lenmiş olabilir → üretim anını logla
-  - [ ] Bulunan katmanı onar + yükleme hatasını kullanıcıya **görünür** yap
-- **Veri/Migration etkisi:** Muhtemelen **yok**. Teşhis 1 çıkarsa storage policy migration'ı — additive, geri alma: `drop policy`.
+  - [x] `0019_feedback_attachments` production'da gerçekten uygulandı mı? → **Hayır/eksik:** `attachment_path` var, private bucket yok (`400 Bucket not found`); policy'ler bucket olmadan işlevsiz
+  - [x] `public.is_super_admin()` production'da mevcut/çağrılabilir mi? → RPC salt-okunur anon probunda `200`; sahip hesabının `true` sonucu cihazda admin oturumuyla doğrulanmalı
+  - [x] Kullanıcı yükleme yolu salt-okunur denetlendi: dosya önce private bucket'a yükleniyor, yalnız başarıdan sonra `attachment_path` insert ediliyor; bucket hatası `storage` kodlu `AdminException` olup mevcut dialog'da 8 sn snackbar ile görünür. Mevcut production satırında yolun doluluğu RLS nedeniyle ancak kullanıcı/admin cihaz oturumunda doğrulanabilir
+  - [x] İmzalı URL 1 saat geçerli; süresi dolmuş URL cache'lenmiş olabilir → üretim anını ek yolu olmadan logla
+  - [~] Bulunan katmanı onar + yükleme hatasını kullanıcıya **görünür** yap → kod/widget testi yeşil; 0072 local replay/RLS kapısı bekliyor
+- **Veri/Migration etkisi:** `0072_feedback_attachment_storage_fix.sql` — additive/idempotent private bucket + iki Storage RLS policy; geri alma: iki policy `drop`, bucket/veri silinmez.
 - **Ortam/Deploy:** Teşhis production **okuma**; onarım local → staging → (gerekirse) production terfi kapısı.
 - **RLS/Güvenlik:** Bucket **private kalmalı**; imzalı URL süresi uzatılmaz. `is_super_admin()` dışında kimse ek göremez. Ek yolu log'a **yazılmaz**.
 - **Edge-case'ler:** ek yok · ek var ama dosya silinmiş · URL süresi dolmuş · çevrimdışı · aynı bilette birden çok ek (bugün desteklenmiyorsa açıkça yaz)
@@ -278,23 +285,39 @@ göremiyoruz, cevap yazamıyoruz, liste temizlenmiyor.
 
 #### WP-322: Teknik borç temizliği 🧹
 - **Program/Faz:** Faz C · mağaza ön şartı
-- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımsız — paralel koşabilir**
-- **Problem:** Dört ayrı küçük borç mağaza çıkışını riske atıyor.
-- **Kapsam dışı:** Genel bağımlılık yükseltmesi, `test.zip`'i git geçmişinden silmek (geçmiş yeniden yazılır — ayrı ve riskli iş).
-- **SAHİP dosyalar (yaz):** `app/pubspec.yaml` · `app/test/features/classroom/study_timer_card_stop_test.dart` · Windows MSIX yapılandırması · `tooling/**` (sürüm hizalama)
-- **DOKUNMA:** `supabase/migrations/**` · feature kodu
+- **Ajan:** **Claude** · **Durum:** [~] Aktif (2026-07-26) · **Bağımsız — Faz B ile paralel koşuyor**
+- **Problem:** Dört ayrı küçük borç mağaza çıkışını riske atıyor. 🔴 **Kartın ilk iki maddesi yanlış varsayıma dayanıyormuş** — kod okunduğunda ikisi de düştü, bulgular aşağıda.
+- **Kapsam dışı:** Genel bağımlılık yükseltmesi, `test.zip`'i git geçmişinden silmek (geçmiş yeniden yazılır — ayrı ve riskli iş). Store CI job'ını kurmak (**Faz H**).
+- **SAHİP dosyalar (yaz):** `app/pubspec.yaml` (yalnız `version:` + `msix_config`) · `app/lib/core/config/distribution_channel.dart` · `app/test/core/distribution_channel_test.dart` · `app/test/features/classroom/study_timer_card_stop_test.dart` · `tooling/**`
+- **DOKUNMA:** `supabase/migrations/**` · feature kodu · `app/lib/features/admin/**` (Codex WP-316)
 - **Adımlar:**
-  - [ ] `passkeys` paketini kaldır — kurulu ama **hiç kullanılmıyor**; APK boyutu + izin yüzeyi
-  - [ ] `pubspec.yaml` sürümünü (`1.0.43-beta.9+4309`) yayınlanan etiketlerle hizala — **mağaza paketleri bu numarayı okur**
-  - [ ] Windows MSIX kendi kendine güncellemeyi Store yapısında kapat (**Faz H'nin ön şartı**)
-  - [ ] 🔴 Kalan test kararsızlığı: `study_timer_card_stop_test.dart` tam suitte bir koşumda düştü, ikincide geçti
+  - [x] ❌ **`passkeys` KALDIRILAMAZ — madde geçersiz.** `pubspec.yaml`'da doğrudan bağımlılık **değil**; `supabase_flutter 2.15.0`'ın **zorunlu** bağımlılığı (`flutter pub deps`: `supabase_flutter → passkeys 2.20.0 → passkeys_android/darwin/web/windows`). Kaldırmanın tek yolu `supabase_flutter`'ı bırakmak. "Kurulu ama hiç kullanılmıyor" doğru ama **bizim seçimimiz değil**. APK boyutu/izin kazancı bu turda **yok**.
+  - [x] ❌ **Sürüm hizalama madde gerekçesi yanlış — "mağaza paketleri bu numarayı okur" DOĞRU DEĞİL.** Release hattı sürümü **etiketten** türetiyor ([release.yml:49-50](.github/workflows/release.yml:49)) ve `--build-name`/`--build-number` ile geçiriyor; MSIX sürümü de build sırasında **üzerine yazılıyor** ([windows-release.yml:71](.github/workflows/windows-release.yml:71)). Yani `pubspec.yaml`'daki `version:` hiçbir yayın artefaktına ulaşmıyor — yalnız argümansız yerel `flutter build`'i etkiler. Hizalama **kozmetik hijyen**, mağaza riski değil. Sürüm politikası gereği (sahip onayı olmadan sürüm yok) bu satıra **dokunulmadı**.
+  - [x] ✅ **Store self-update kapısı — asıl iş buymuş ve yazılandan büyük.** `microsoftStore` diye bir dağıtım kanalı **yoktu**: Windows build'i `DISTRIBUTION_CHANNEL=windows` alıyor ([windows-release.yml:56](.github/workflows/windows-release.yml:56)) ve o kanalda `allowsSideloadUpdates = true`. Store paketi bugünkü kodla çıkarsa **GitHub'dan kendini güncellemeye çalışır** — Store politikası bunu yasaklar. Eklendi: `microsoftStore` kanalı, sideload **kapalı**, unutulmuş `CHANNEL=beta` define'ı Store paketini beta yapamıyor.
+  - [x] ✅ **Kararsız testin kök nedeni bulundu ve giderildi** (aşağıda ayrı madde).
 - **Veri/Migration etkisi:** Yok.
-- **Ortam/Deploy:** local; MSIX değişikliği Windows yapısında doğrulanır.
-- **RLS/Güvenlik:** `passkeys` kalkınca izin yüzeyi **daralır** (iyileşme).
-- **Edge-case'ler:** Sürüm numarası değişince in-app güncelleme karşılaştırması ne olur — mevcut kullanıcı "güncelleme var" görmemeli
-- **Kabul (ölçülebilir):** `passkeys` `pubspec.yaml`'da yok ve `flutter analyze` temiz · APK boyutu **azalıyor** (ölçüm raporlanır) · sürüm numarası son etiketle **aynı** · MSIX Store yapısında self-update **kapalı** · `study_timer_card_stop_test.dart` **10 ardışık tam suit** koşumunda yeşil.
-- **Tuzaklar:** Sürüm numarasını **düşürme** — in-app güncelleme mantığı bozulur. Kararsız testi "yeniden koş geçti" diye kapatma; 10 koşumluk kanıt şart.
+- **Ortam/Deploy:** local. Store define'ını CI'da set etmek **Faz H**'ye ait.
+- **RLS/Güvenlik:** `microsoftStore` kanalında uzaktan APK/MSIX indirme yolu tamamen kapalı (izin yüzeyi daralır). `passkeys` kalkmadığı için oradan kazanç yok.
+- **Edge-case'ler:** 🔴 Android'deki `--flavor play` zorlamasının Windows karşılığı **yok** — `microsoftStore`'u yalnız define seçiyor. Define unutulursa kanal `windows`'a düşer ve updater açık kalır. Bu boşluk testle **belgelendi**; Faz H build öncesi kapı koymak zorunda.
+- **Kabul (ölçülebilir):** `flutter analyze` temiz · `microsoftStore` kanalında `allowsSideloadUpdates == false` ve `releaseNotesChannel == 'stable'` (4 test) · `study_timer_card_stop_test.dart` **10 ardışık tam suit** koşumunda yeşil · kararsızlık için **kırmızı-yeşil kanıtı** var. ⚠️ passkeys ve sürüm maddeleri kabul kriterinden **düşürüldü** (konusuz).
+- **Tuzaklar:** Sürüm numarasını **düşürme** — in-app güncelleme mantığı bozulur. Kararsız testi "yeniden koş geçti" diye kapatma; kök neden + 10 koşumluk kanıt şart.
 - **Model önerisi:** 🟣 Pro
+
+##### WP-322 bulgu: kararsız testin kök nedeni (2026-07-26)
+
+`study_timer_card_stop_test.dart` **saat yarışıydı**, sıra/paylaşılan durum sorunu değil.
+
+- Kart canlı süreyi **her karede** gerçek saatten hesaplıyor:
+  `elapsed = DateTime.now().difference(startedAt).inSeconds` ([study_timer_card.dart:130](app/lib/features/classroom/widgets/study_timer_card.dart:130)).
+- Test ise beklenen toplamı çok önce yakalanan bir `now`'dan türetip **tam metin eşleşmesi** bekliyordu.
+- `now` ile ilk çizim arasında **1 saniye** geçerse ekrandaki sayı `expectedTotal + 1` oluyor ve saat ileri aktığı için **bir daha asla** beklenen değere dönmüyor → `pumpUntilFound` 10 sn dönüp düşüyor.
+- Geliştirici makinesinde kurulum < 1 sn olduğu için geçiyordu; **tam suit yükü altında** düşüyordu. "Bir koşumda düştü, ikincide geçti" tam olarak buydu.
+
+**Çözüm:** saati dondurmak değil — testin iddiası zaten mutlak sayı değil, `liveSeconds` (≈3600 sn) kadarlık bir **zıplama**. Bekleme, `[expectedTotal, expectedTotal + 120]` aralığına düşen bir süre metnini arıyor; olumsuz iddia payın **30 katı** uzakta duruyor. Durdurmadan sonrası zaten `settling*` alanlarıyla **tam belirlenimli**, orada değişiklik yok.
+
+**Kırmızı-yeşil kanıtı:** `isStopping: true` → `false` yapılarak WP-250 öncesi çift sayma geri getirildi → test **düştü** (`Found 0 widgets with text "2h 0m 0s"`). Geri alındı, yeşil. Yani tolerans gerçek hatayı gizlemiyor.
+
+**Yan bulgu (kovalandı, ÜRÜN HATASI DEĞİL):** kırmızı koşumda süreler `locale: Locale('tr')` verilmesine rağmen **İngilizce** çıktı (`2h 0m 0s`). Sebep: `formatHumanSeconds` global `activeAppLocale`'i okuyor; onu gerçek uygulamada [`main.dart:211`](app/lib/main.dart:211) `localeResolutionCallback` içinde ve dil notifier'ı ayarlıyor. Test çıplak bir `MaterialApp` kurduğu için o yol hiç çalışmıyor ve global test hostunun dili (`en`) olarak kalıyor. **Üründe böyle bir kaçak yok** — yeni bekleme yardımcısı yine de dilden bağımsız yazıldı, aynı tuzağa düşen bir sonraki test için.
 
 ---
 
