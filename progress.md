@@ -9,11 +9,11 @@
 > 🔴 **Sürüm politikası (2026-07-26):** tag oluşturma ve release tetikleme **sahip
 > onayına bağlıdır**. Commit/push serbest; düzeltmeler biriktirilip tek sürümde çıkar.
 >
-> 🔴 **WP modeli emekliye ayrıldı (sahip kararı, 2026-07-26).** İş artık **fazlarla**
-> yürür (aşağıdaki *Yol Haritası*). Eski WP kartları dosyanın altında **tarihsel
-> kayıt** olarak durur — yeni iş için oradan sıra alınmaz.
+> 🧱 **Yapı:** iş **fazlara** bölünür, her fazın altında **WP kartları** durur
+> (`.agents/skills/planner/SKILL.md` sözleşmesi). Faz = "neredeyiz", WP = "kim
+> neyi yazacak, nereye dokunmayacak, kabul ne".
 >
-> **Okuma sırası:** `⚡ Aktif Çalışma Kaydı` → `🗺️ Yol Haritası` (sırada ne var) →
+> **Okuma sırası:** `⚡ Aktif Çalışma Kaydı` → `🗺️ Yol Haritası` (fazlar + WP'ler) →
 > `✅ Kapanan Kararlar` → `🧪 Cihaz QA Kuyruğu` → (altı: tarihsel WP kayıtları).
 
 ## Proje Gerçekleri
@@ -32,8 +32,8 @@
 - 🕰️ *Tarihsel — üstteki karar bunu değiştirdi:* **Aşama A'nın TÜM WP'leri bitmeden beta çıkmaz — tek beta turu yapılacak.** Gerekçe: beta koşumu ~3 saat sürüyor, iki tur yapılmıyor. **Sonuçları:** (1) "önce X'in cihaz kabulü" yazan yazılı kapılar bu tur için **geçersiz** — cihaz QA'sı fiziken mümkün değil, kod/test kapısı esas alınır (`.agents/AGENTS.md §0.1`); (2) QA kuyruğundaki 6 iş **aynı beta'da** test edilir; (3) bir sorun görülürse hangi WP'den geldiği belirsiz olacağı için her WP **ayrı commit** + `analyze` 0 + testler yeşil şartı **daha da kritik**.
 - **Yönetim varsayılanı:** Production `deploy_enabled/release_enabled` kapalıdır. Stable yalnız protected `production` Environment, exact SHA/head/project-ref GO ve reviewer kanıtıyla ilerler.
 - **Kurallar:** Kök `AGENTS.md`, `.agents/AGENTS.md` ve `docs/KALITE-PROGRAMI.md` geçerlidir. Tek çalışma dalı `main`; her WP ayrı commit; production varsayılmaz.
-- 🔴 **WP numarası artık kullanılmıyor** (sahip kararı, 2026-07-26). Son kullanılan: **314**. İş fazlarla yürür; eski kartlar dosyanın altında tarihsel kayıttır.
-- **Aktif tur:** **Faz B** (admin & geri bildirim döngüsü) sıradaki iş. Yol haritası bu dosyanın *Yol Haritası* bölümündedir.
+- **Son WP numarası:** **329** · Sıradaki boş numara: **330**. (315 kullanıldı ve kapandı; 316–329 yol haritasında kart olarak açık. Faz F için eski **WP-295** ve **WP-299** kartları geçerliliğini koruyor; **WP-300** ve **WP-301** iptal edildi — gerekçe aşağıda.)
+- **Aktif tur:** **Faz B** (admin & geri bildirim döngüsü) — WP-316 · WP-317 · WP-318.
 - ✅ **Ortam gerçeği uzlaştırıldı (WP-293, 2026-07-24):** yukarıdaki altı gerçekli durum modeli kanoniktir; production deploy kapısı yeniden kilitlendi. `deploy-contract.json`, `KALITE-PROGRAMI.md`, `project.md`, `backlog.md`, `tooling/README.md` aynı gerçeğe getirildi.
 
 ## ⚡ Aktif Çalışma Kaydı
@@ -63,10 +63,15 @@
 - 🔴 **BETA 1 GERİ BİLDİRİMİ (sahip, 2026-07-25) → WP-302/303/304 açıldı ve ÜÇÜ DE KOD/TEST TAMAM.** `analyze` 0, **795 test yeşil**, l10n audit temiz. Sahip sırası: bu üçü stable'a → sonra kalan kod işleri → beta 2 → stable.
 
 ### Codex Lane
-- **Durum:** [x] Boşta
-- **Faz/WP:** —
-- **SAHİP yollar:** —
-- **Son not:** WP-286 ve WP-288 kod/test tamam → QA kuyruğunda.
+- **Durum:** [~] Aktif
+- **Faz/WP:** Faz B · WP-316
+- **Aşama:** Geliştiriliyor
+- **SAHİP yollar:** `app/lib/data/repositories/supabase/supabase_admin_repository.dart` · `app/lib/features/admin/**` · yalnız teşhis gerektirirse yeni `supabase/migrations/00NN_feedback_attachment_fix.sql`
+- **Ortak/riskli yüzey:** `progress.md` (yalnız Codex lane + WP-316 kartı) · private Storage/RLS teşhisi · production salt-okunur audit
+- **Dal:** `main`
+- **Başlangıç:** 2026-07-26 11:41 (Europe/Istanbul)
+- **Son güncelleme:** 2026-07-26 11:41
+- **Not:** Opus planner olarak aynı repoda aktif; WP-317/318 seri bağımlı ve ortak dosyalı olduğundan WP-316 kabul edilmeden claim edilmez.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
@@ -121,71 +126,175 @@ gün etiketleri · boş ikinci bildirim · taç ve aura** — hepsinde sorun yok
 Şu an kullanıcıdan geri bildirim alıyoruz ama **kapatamıyoruz**: fotoğrafı
 göremiyoruz, cevap yazamıyoruz, liste temizlenmiyor.
 
-**B1. Geri bildirim ekran görüntüleri görünmüyor.** 🔴
-Kod yolu var: `feedback_attachments` bucket'ına imzalı URL üretiliyor
-(`supabase_admin_repository.dart` · `getFeedbackAttachmentUrl`), admin ekranında
-"Ekran görüntüsü" çipi var. Yani sorun **kodda değil, ortamda**. Sırayla:
-1. `0019_feedback_attachments` production'da gerçekten uygulandı mı (bucket + iki storage policy)?
-2. `public.is_super_admin()` production'da sahip hesabı için `true` dönüyor mu?
-3. Kullanıcı tarafı yüklemeyi yapıyor mu, `attachment_path` doluyor mu — yoksa yükleme sessizce mi düşüyor?
-4. Bucket private, imzalı URL 1 saat geçerli. Süresi dolmuş URL cache'lenmiş olabilir.
-**Kabul:** ekli geri bildirimde çipe basınca görsel açılıyor · ek yoksa çip yok ·
-yükleme hatası kullanıcıya sessiz kalmıyor.
+> ✅ **Çakışma yok:** tüm lane'ler boşta. WP-316 → WP-317 → WP-318 **seri** koşar —
+> üçü de `admin_*` ekranlarına ve `supabase_admin_repository.dart`'a giriyor.
+> **Sıcak dosya uyarısı:** WP-317 ve WP-318 ikisi de `supabase/migrations/**`'e
+> giriyor; migration numarası çakışmasın diye 317 önce biter, sonra 318 başlar.
+> 🔴 **Faz B sırasında yapılacak sahip konuşması: isim + logo (K6)** — bkz. Faz G.
 
-**B2. Kullanıcıya cevap yazma — çift yönlü.**
-Altyapı hazır: `announcements` tablosu `target_type = 'user'` + `target_id`
-destekliyor, kullanıcı tarafında Duyurular ekranı (`notification_center_screen.dart`)
-bunu okuyor. Yapılacak: geri bildirim kartına "Yanıtla" → hedefi o kullanıcı olan
-duyuru → push bildirimi → bilet durumu otomatik ilerler → **kullanıcı geri yazabilir**.
-**Kabul:** yanıt kullanıcının Duyurular'ında görünüyor · bildirim düşüyor · yazışma
-biletin altında iz bırakıyor (kim ne demiş).
+#### WP-316: Geri bildirim eki görünmüyor 🖼️
+- **Program/Faz:** Faz B · Admin & geri bildirim
+- **Ajan:** Codex · **Durum:** [~] Geliştiriliyor
+- **Problem:** Kullanıcı geri bildirime ekran görüntüsü ekliyor, admin panelinde görünmüyor. Sahip biletleri **kör** değerlendiriyor.
+- **Kapsam dışı:** Yeni ek türü (video/ses), çoklu ek, ek düzenleme. Yalnız **mevcut tek görsel** yolunun çalışması.
+- **SAHİP dosyalar (yaz):**
+  - `app/lib/data/repositories/supabase/supabase_admin_repository.dart`
+  - `app/lib/features/admin/**` (ek gösteren kart/çip)
+  - `supabase/migrations/00NN_feedback_attachment_fix.sql` *(yalnız teşhis 1 çıkarsa)*
+- **DOKUNMA (oku, değiştirme):** `app/lib/core/theme/**` · `app/pubspec.yaml` · diğer repository'ler
+- **Adımlar (teşhis önce, kod sonra — sorun büyük olasılıkla ortamda):**
+  - [ ] `0019_feedback_attachments` production'da gerçekten uygulandı mı? (bucket + iki storage policy)
+  - [ ] `public.is_super_admin()` production'da sahip hesabı için `true` dönüyor mu?
+  - [ ] Kullanıcı tarafı yükleme gerçekten oluyor mu — `attachment_path` doluyor mu, yoksa yükleme **sessizce** mi düşüyor?
+  - [ ] İmzalı URL 1 saat geçerli; süresi dolmuş URL cache'lenmiş olabilir → üretim anını logla
+  - [ ] Bulunan katmanı onar + yükleme hatasını kullanıcıya **görünür** yap
+- **Veri/Migration etkisi:** Muhtemelen **yok**. Teşhis 1 çıkarsa storage policy migration'ı — additive, geri alma: `drop policy`.
+- **Ortam/Deploy:** Teşhis production **okuma**; onarım local → staging → (gerekirse) production terfi kapısı.
+- **RLS/Güvenlik:** Bucket **private kalmalı**; imzalı URL süresi uzatılmaz. `is_super_admin()` dışında kimse ek göremez. Ek yolu log'a **yazılmaz**.
+- **Edge-case'ler:** ek yok · ek var ama dosya silinmiş · URL süresi dolmuş · çevrimdışı · aynı bilette birden çok ek (bugün desteklenmiyorsa açıkça yaz)
+- **Kabul (ölçülebilir):** Ekli bir geri bildirimde çipe basınca görsel **≤ 3 sn**'de açılıyor · ek yoksa çip **görünmüyor** · yükleme hatasında kullanıcı snackbar görüyor (sessiz düşme yok) · teşhis sonucu hangi katmanın bozuk olduğu **yazılı** kanıtla raporlanıyor.
+- **Tuzaklar:** "Kodda hata yok" diye kapatma — sorun büyük olasılıkla migration/policy tarafında. Bucket'ı public yapmak **çözüm değil**, güvenlik gerilemesidir.
+- **Model önerisi:** 🟣 Pro
 
-**B3. Bilet arşivi.** Şu an `open / in_progress / closed` ve hepsi listede duruyor.
-Eklenecek: **"Tamamlandı → listeden kaldır"**. `archived_at` alanı — satır
-**silinmez** (kanıt + istatistik lazım); varsayılan liste arşivlenmemişleri
-gösterir, "Arşivi göster" filtresiyle geri gelinir.
-**Kabul:** biriken liste temizleniyor, hiçbir kayıt kaybolmuyor.
+#### WP-317: Admin ↔ kullanıcı yazışması 💬
+- **Program/Faz:** Faz B · Admin & geri bildirim
+- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-316 kabulünden sonra
+- **Problem:** Admin bileti okuyor ama kullanıcıya **cevap yazamıyor**. Kullanıcı sorununun ne olduğunu asla öğrenemiyor.
+- **Kapsam dışı:** Gerçek zamanlı sohbet, dosya eki ile yanıt, toplu yanıt şablonları.
+- **SAHİP dosyalar (yaz):**
+  - `app/lib/features/admin/**` (Yanıtla eylemi + yazışma listesi)
+  - `app/lib/data/repositories/supabase/supabase_admin_repository.dart`
+  - `supabase/migrations/00NN_feedback_replies.sql` (yeni)
+- **DOKUNMA:** `notification_center_screen.dart` (**okunur**, yapısı bozulmaz) · push edge fonksiyonları · `app/lib/core/theme/**`
+- **Adımlar:**
+  - [ ] Yazışma modeli: bilete bağlı mesajlar, gönderen rolü (admin/kullanıcı), okundu bilgisi
+  - [ ] Admin kartına "Yanıtla" → hedefi o kullanıcı olan duyuru (`announcements.target_type='user'` + `target_id` **zaten var**)
+  - [ ] Push bildirimi tetikle
+  - [ ] **Kullanıcı geri yazabilsin** (K1: çift yönlü) — kullanıcı tarafında yanıt alanı
+  - [ ] Bilet durumu otomatik ilerlesin (yanıtlanınca `in_progress`)
+- **Veri/Migration etkisi:** Yeni yazışma tablosu + RLS. Geri alma: `drop table` (yeni tablo, veri kaybı riski yok).
+- **Ortam/Deploy:** local → staging dry-run → production ayrı GO.
+- **RLS/Güvenlik:** 🔴 Kullanıcı **yalnız kendi biletinin** yazışmasını okur/yazar; admin hepsini. Yazma yetkisi **server-authoritative** — istemci `sender_role` göndermez, sunucu `auth.uid()`'den türetir.
+- **Edge-case'ler:** kullanıcı hesabını silmiş · bilet arşivlenmiş (yanıt hâlâ okunabilmeli) · push izni kapalı (mesaj yine Duyurular'da görünmeli) · çok uzun mesaj · art arda yanıt
+- **Kabul (ölçülebilir):** Admin yanıtı kullanıcının Duyurular'ında **≤ 5 sn**'de görünüyor · push düşüyor · kullanıcı geri yazınca admin panelinde görünüyor · yazışma biletin altında **kim ne demiş** iziyle duruyor · başka kullanıcının bileti RLS testinde **okunamıyor**.
+- **Tuzaklar:** `android.notification` bloğu data-only mesajı bozar ve yanına **boş ikinci bildirim** düşürür (daha önce yaşandı). Push gönderimi mevcut data-only sözleşmesine uymalı.
+- **Model önerisi:** 🔴 Opus (RLS + push + iki taraflı akış)
 
-**B4. İsim + logo konuşması (K6).** Faz B sırasında yapılacak — bkz. Faz G.
+#### WP-318: Bilet arşivi 🗃️
+- **Program/Faz:** Faz B · Admin & geri bildirim
+- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-317 (migration sırası)
+- **Problem:** Sadece `open / in_progress / closed` var ve hepsi listede duruyor; liste birikip kullanılmaz hale geliyor.
+- **Kapsam dışı:** Bilet silme, otomatik arşivleme, arşiv temizleme cron'u.
+- **SAHİP dosyalar (yaz):**
+  - `app/lib/features/admin/**` (liste filtresi + "Tamamlandı" eylemi)
+  - `app/lib/data/repositories/supabase/supabase_admin_repository.dart`
+  - `supabase/migrations/00NN_feedback_archive.sql` (yeni)
+- **DOKUNMA:** WP-317'nin yazışma tabloları (**okunur**)
+- **Adımlar:**
+  - [ ] `archived_at timestamptz` alanı (nullable) — 🔴 **satır silinmez**
+  - [ ] Varsayılan liste arşivlenmemişleri gösterir
+  - [ ] "Arşivi göster" filtresi
+  - [ ] "Tamamlandı → listeden kaldır" eylemi (geri alınabilir)
+- **Veri/Migration etkisi:** Additive nullable kolon. Geri alma: `alter table ... drop column archived_at`. **Veri kaybı yok** — arşiv bir bayraktır, silme değildir.
+- **Ortam/Deploy:** local → staging → production ayrı GO.
+- **RLS/Güvenlik:** Arşivleme yetkisi yalnız `is_super_admin()`. Arşivlenmiş bilet kullanıcıdan **gizlenmez** (kendi biletini görmeye devam eder).
+- **Edge-case'ler:** arşivlenmiş bilete yeni yanıt gelirse ne olur (öneri: listeye geri döner) · toplu arşivleme · arşivden çıkarma
+- **Kabul (ölçülebilir):** 20+ biletlik listede arşivleme sonrası varsayılan görünüm **yalnız aktif** biletleri gösteriyor · "Arşivi göster" ile arşivlenen bilet **eksiksiz** geri geliyor · veritabanında satır sayısı **azalmıyor** (silme olmadığının kanıtı).
+- **Tuzaklar:** `closed` ile `archived` **aynı şey değil** — kapalı bilet hâlâ listede görünebilir, arşivlenen görünmez. İkisini tek alana indirme.
+- **Model önerisi:** 🔵 Sonnet
 
 ---
 
 ### Faz C — Hesap, güvenlik, ayarlar hijyeni
 
-**C1. Şifre değiştirme + sıfırlama (tek iş).** 🔴 Değiştirme şu anda **hiç yok** —
-`account_settings_screen.dart` sadece hesap silmeyi taşıyor. Klasik yapı: *mevcut
-şifre · yeni şifre · yeni şifre tekrar* + aynı ekranda **"Şifremi unuttum"**.
-⚠️ Supabase `updateUser(password:)` **eski şifreyi doğrulamaz**. "Mevcut şifre"
-alanının gerçekten işe yaraması için önce o şifreyle yeniden kimlik doğrulaması
-yapılmalı; yoksa alan dekoratif olur (**ölü anahtar**).
+> ✅ **Çakışma yok** (Faz B kabulünden sonra başlar). ⚠️ **WP-320 ve WP-321 seri
+> koşar** — ikisi de ayarlar ağacına ve l10n/generated'a giriyor. WP-319 ve
+> WP-322 bağımsız, paralel koşabilir.
 
-🔴 **Devralınan engel — şifre SIFIRLAMA (eski WP-287).** Supabase free tier,
-varsayılan e-posta sağlayıcısıyla kurtarma şablonunu **hem API'den hem panelden**
-kilitliyor → şablona `{{ .Token }}` eklenemiyor → **Windows/masaüstündeki 6 haneli
-kod yolu, özel SMTP (veya ücretli plan) bağlanana kadar çalışmaz.** Android derin
-bağlantı yolu çalışır. Sahip kararı: değiştirme kodlanırken sıfırlama da aynı
-turda ele alınır ve **ikisi birlikte test edilir**.
-Staging Site URL + allowlist ayarı otomatik: [`supabase-auth-config.yml`](.github/workflows/supabase-auth-config.yml).
+#### WP-319: Şifre değiştirme + sıfırlama 🔑
+- **Program/Faz:** Faz C · Hesap & güvenlik · *(eski WP-287'nin kalan işini devralır)*
+- **Ajan:** — · **Durum:** [ ] Bekliyor
+- **Problem:** Şifre değiştirme **hiç yok** — `account_settings_screen.dart` yalnız hesap silmeyi taşıyor. Mağazaya "temel şeyleri eksik" bir uygulama çıkamaz.
+- **Kapsam dışı:** Sosyal giriş (Google/Apple) eklemek, iki adımlı doğrulama, oturum yönetimi ekranı.
+- **SAHİP dosyalar (yaz):**
+  - `app/lib/features/profile/account_settings_screen.dart`
+  - `app/lib/data/repositories/**/auth_repository*.dart`
+  - `app/lib/l10n/*.arb` (yeni anahtarlar)
+- **DOKUNMA:** `app/lib/core/navigation/**` · `main.dart` · diğer ayar ekranları (WP-320 orada)
+- **Adımlar:**
+  - [ ] Üç alan: *mevcut şifre · yeni şifre · yeni şifre tekrar*
+  - [ ] 🔴 **Mevcut şifreyi gerçekten doğrula** — Supabase `updateUser(password:)` eski şifreyi **doğrulamaz**; önce o şifreyle yeniden kimlik doğrulaması yapılmalı
+  - [ ] Aynı ekranda **"Şifremi unuttum"** yolu
+  - [ ] Hata durumları: yanlış mevcut şifre · zayıf yeni şifre · iki alan uyuşmuyor
+  - [ ] 4 dilde metin (TR/EN zorunlu; DE/AR WP-321'de düşecek)
+- **Veri/Migration etkisi:** Yok (Auth API).
+- **Ortam/Deploy:** local + staging. Staging Site URL/allowlist ayarı otomatik: [`supabase-auth-config.yml`](.github/workflows/supabase-auth-config.yml).
+- **RLS/Güvenlik:** 🔴 Kullanıcı **yalnız kendi** şifresini değiştirir. Şifreler log'a/analitiğe **yazılmaz**. Başarısız denemeler oran sınırına takılmalı.
+- **Edge-case'ler:** çevrimdışı · oturum süresi dolmuş · e-posta doğrulanmamış hesap · şifre değişince diğer cihazların oturumu ne olacak (karara bağlanmalı)
+- **Kabul (ölçülebilir):** Yanlış mevcut şifreyle işlem **reddediliyor** (alan dekoratif değil — bu test yazılı olacak) · doğru şifreyle değişiyor ve yeni şifreyle giriş yapılabiliyor · "Şifremi unuttum" akışı Android'de uçtan uca çalışıyor · şifre hiçbir log satırında görünmüyor.
+- **Tuzaklar:** 🔴 **Ölü anahtar riski buranın tam merkezinde.** "Mevcut şifre" alanı doğrulama yapmıyorsa kullanıcı korunduğunu sanır — bu, alanın hiç olmamasından **kötüdür**.
+  🔴 **Devralınan engel:** Supabase free tier, varsayılan e-posta sağlayıcısıyla kurtarma şablonunu hem API'den hem panelden kilitliyor → `{{ .Token }}` eklenemiyor → **Windows/masaüstündeki 6 haneli kod yolu, özel SMTP (veya ücretli plan) bağlanana kadar çalışmaz.** Android derin bağlantı yolu çalışır. Sahip: "şifreyi de sonra test ederiz" — değiştirme ve sıfırlama **aynı turda** test edilecek.
+- **Model önerisi:** 🔴 Opus (güvenlik yüzeyi)
 
-**C2. "Verilerimi dışa aktar" taşınıyor.** `data_export_screen.dart` ayarların
-ortasında duruyor → **Hesabımı yönet** başlığı altına, hesap silmenin yanına.
-(Mağaza veri beyanları da bu ikisini bir arada arıyor.)
+#### WP-320: Ayarlar bilgi mimarisi 🧭
+- **Program/Faz:** Faz C · Ayarlar hijyeni
+- **Ajan:** — · **Durum:** [ ] Bekliyor
+- **Problem:** Ayarların sırası rastgele büyümüş; "Verilerimi dışa aktar" ortada duruyor, yasal metinler gelişigüzel yerde.
+- **Kapsam dışı:** Yeni ayar eklemek, mevcut ayarların davranışını değiştirmek. Yalnız **yer ve sıra**.
+- **SAHİP dosyalar (yaz):** `app/lib/features/profile/settings*.dart` · `app/lib/features/profile/data_export_screen.dart` (yalnız konumu) · ilgili l10n başlıkları
+- **DOKUNMA:** `account_settings_screen.dart` (WP-319 orada — **seri koş**) · `notification_center_screen.dart`
+- **Adımlar:**
+  - [ ] "Verilerimi dışa aktar" → **Hesabımı yönet** altına, hesap silmenin yanına
+  - [ ] Sıra: *Hesap → Bildirimler → Görünüm → Çalışma tercihleri → Gizlilik & güvenlik → Hakkında/Yasal*
+  - [ ] Gizlilik politikası ve yasal metinler **en alta**
+  - [ ] 🔴 Öneri **önce sahibe** gösterilir, sonra kodlanır
+- **Veri/Migration etkisi:** Yok.
+- **Ortam/Deploy:** local.
+- **RLS/Güvenlik:** Yok (yalnız yerleşim). Hesap silme ve dışa aktarma yan yana gelince **yanlışlıkla silme** riski artar — silme onayı korunmalı.
+- **Edge-case'ler:** 360 px genişlikte başlık taşması · uzun çeviriler · Windows'ta aynı ağaç
+- **Kabul (ölçülebilir):** Dışa aktarma ve hesap silme **aynı başlık altında** · yasal metinler listenin **son** grubunda · 360 px'te hiçbir başlık taşmıyor · mevcut ayar testleri yeşil kalıyor.
+- **Tuzaklar:** Mağaza veri beyanları dışa aktarma + silmeyi **bir arada** arıyor; ikisini ayırma.
+- **Model önerisi:** 🔵 Sonnet
 
-**C3. Ayarların sırası.** Konvansiyona göre yeniden dizilecek: *Hesap →
-Bildirimler → Görünüm → Çalışma tercihleri → Gizlilik & güvenlik → Hakkında/Yasal*.
-Gizlilik politikası ve yasal metinler **en alta**. Öneri önce sahibe gider.
+#### WP-321: TR + EN'e in 🌍
+- **Program/Faz:** Faz C · l10n
+- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-320 (aynı l10n yüzeyi — seri)
+- **Problem:** 4 dil taşınıyor ama AR/DE hiç test edilmiyor; RTL QA borcu ve Arapça glif zinciri bedava değil.
+- **Kapsam dışı:** `.arb` dosyalarını **silmek** (repoda kalacak), çeviri kalitesi iyileştirme.
+- **SAHİP dosyalar (yaz):** `app/lib/l10n/**` (supportedLocales) · `scripts/l10n_audit.py` · `.github/workflows/l10n-gate.yml`
+- **DOKUNMA:** ayar ekranları (WP-320)
+- **Adımlar:**
+  - [ ] `supportedLocales` → yalnız TR + EN
+  - [ ] `.arb` dosyaları **kalır** (DE/AR ileride geri açılabilsin)
+  - [ ] l10n kapısı iki dil parity'si kontrol etsin
+  - [ ] RTL'e özel kodun ölü kalıp kalmadığını kontrol et
+- **Veri/Migration etkisi:** Yok.
+- **Ortam/Deploy:** local.
+- **RLS/Güvenlik:** Yok.
+- **Edge-case'ler:** 🔴 **Davranış değişikliği** — cihaz dili Almanca olan mevcut kullanıcı İngilizce'ye düşer. Kabul edilebilir ama **bilinerek** yapılıyor. Ayrıca: kullanıcı elle DE seçmişse kayıtlı tercih ne olacak?
+- **Kabul (ölçülebilir):** Dil listesinde 2 seçenek · l10n audit **0 bulgu** · cihaz dili DE olan emülatörde uygulama **İngilizce** açılıyor ve çökmüyor · gömülü font Arapça glif zinciri gereksinimi kalkmış olarak belgeleniyor.
+- **Tuzaklar:** `.arb` silmek geri dönüşü zorlaştırır; yalnız `supportedLocales` daraltılır.
+- **Model önerisi:** 🔵 Sonnet
 
-**C4. TR + EN'e in.** Dil listesinden DE/AR kalkar (`.arb` dosyaları repoda kalır),
-l10n kapısı iki dil parity'si kontrol eder, Arapça RTL QA borcu ve gömülü fontların
-Arapça glif zinciri gereksinimi düşer.
-⚠️ **Davranış değişikliği:** cihaz dili Almanca olan mevcut kullanıcı İngilizce'ye
-düşer. Kabul edilebilir ama bilinerek yapılmalı.
-
-**C5. Teknik borç temizliği** — mağazaya çıkmadan kapanmalı:
-- `passkeys` paketini kaldır (kurulu ama hiç kullanılmıyor; APK boyutu + izin yüzeyi)
-- `pubspec.yaml` sürümünü (`1.0.43-beta.9+4309`) yayınlanan etiketlerle hizala — mağaza paketleri bu numarayı okur
-- Windows MSIX kendi kendine güncellemeyi Store yapısında kapat (**Faz H'nin ön şartı**)
-- Kalan test kararsızlığı: `study_timer_card_stop_test.dart` tam suitte bir koşumda düştü, ikincide geçti. **Sürüm çıkmadan önce çözülmüş olmalı**
+#### WP-322: Teknik borç temizliği 🧹
+- **Program/Faz:** Faz C · mağaza ön şartı
+- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımsız — paralel koşabilir**
+- **Problem:** Dört ayrı küçük borç mağaza çıkışını riske atıyor.
+- **Kapsam dışı:** Genel bağımlılık yükseltmesi, `test.zip`'i git geçmişinden silmek (geçmiş yeniden yazılır — ayrı ve riskli iş).
+- **SAHİP dosyalar (yaz):** `app/pubspec.yaml` · `app/test/features/classroom/study_timer_card_stop_test.dart` · Windows MSIX yapılandırması · `tooling/**` (sürüm hizalama)
+- **DOKUNMA:** `supabase/migrations/**` · feature kodu
+- **Adımlar:**
+  - [ ] `passkeys` paketini kaldır — kurulu ama **hiç kullanılmıyor**; APK boyutu + izin yüzeyi
+  - [ ] `pubspec.yaml` sürümünü (`1.0.43-beta.9+4309`) yayınlanan etiketlerle hizala — **mağaza paketleri bu numarayı okur**
+  - [ ] Windows MSIX kendi kendine güncellemeyi Store yapısında kapat (**Faz H'nin ön şartı**)
+  - [ ] 🔴 Kalan test kararsızlığı: `study_timer_card_stop_test.dart` tam suitte bir koşumda düştü, ikincide geçti
+- **Veri/Migration etkisi:** Yok.
+- **Ortam/Deploy:** local; MSIX değişikliği Windows yapısında doğrulanır.
+- **RLS/Güvenlik:** `passkeys` kalkınca izin yüzeyi **daralır** (iyileşme).
+- **Edge-case'ler:** Sürüm numarası değişince in-app güncelleme karşılaştırması ne olur — mevcut kullanıcı "güncelleme var" görmemeli
+- **Kabul (ölçülebilir):** `passkeys` `pubspec.yaml`'da yok ve `flutter analyze` temiz · APK boyutu **azalıyor** (ölçüm raporlanır) · sürüm numarası son etiketle **aynı** · MSIX Store yapısında self-update **kapalı** · `study_timer_card_stop_test.dart` **10 ardışık tam suit** koşumunda yeşil.
+- **Tuzaklar:** Sürüm numarasını **düşürme** — in-app güncelleme mantığı bozulur. Kararsız testi "yeniden koş geçti" diye kapatma; 10 koşumluk kanıt şart.
+- **Model önerisi:** 🟣 Pro
 
 ---
 
@@ -194,17 +303,47 @@ düşer. Kabul edilebilir ama bilinerek yapılmalı.
 Şu an sadece açılışta tek bir `onboarding_screen` var; uygulama içinde hiçbir
 yerde rehberlik yok.
 
-**D1. Bölüm bazlı tanıtım.** Kullanıcı bir sekmeye **ilk kez** girdiğinde oradaki
-öğeler kısa balonlarla tanıtılır: Ana Sayfa, Sayaç, Kamp Ateşi, Gruplar,
-İstatistik, Profil. **Yalnız ilk açılışta**; ekrana basınca sonraki balona geçer;
-hızlı geçmek isteyen üst üste basar. "Atla" her zaman var.
+> ⚠️ **WP-323 → WP-324 seri koşar.** 324, 323'ün kabul edilmiş motoruna yazar;
+> motor oturmadan içerik yazmak iki kez iş demektir.
 
-Tasarım kararları:
-- Her ekranın **kendi** "görüldü" anahtarı olur; hepsi tek bayrağa bağlanmaz.
-- Anahtarlar **sürümlenir** (`home.v1`, `home.v2`) — ekran ciddi değişince tur yeniden gösterilebilsin ama her güncellemede herkese açılmasın.
-- Ayarlarda **"Tanıtım turlarını sıfırla"**.
-- Windows'ta da çalışmalı (fare/klavye; balon konumları farklı).
-- Tur; izin diyalogları ve güncelleme bildirimiyle çakışmamalı.
+#### WP-323: Tanıtım turu motoru 🎈
+- **Program/Faz:** Faz D · Yeni kullanıcı deneyimi
+- **Ajan:** — · **Durum:** [ ] Bekliyor
+- **Problem:** Uygulama içinde hiçbir rehberlik yok; yalnız açılışta tek bir `onboarding_screen` var. Yeni kullanıcı ekranlarda kayboluyor.
+- **Kapsam dışı:** Balon **metinleri** ve ekran içerikleri (WP-324) · video/animasyonlu tanıtım · yardım merkezi.
+- **SAHİP dosyalar (yaz):** `app/lib/core/tour/**` (yeni) · `app/lib/core/prefs/app_prefs.dart` (anahtarlar) · ayarlarda "sıfırla" satırı
+- **DOKUNMA:** feature ekranları (WP-324 orada) · `app/lib/core/theme/**` · `main.dart` (yalnız gerekli tek kanca)
+- **Adımlar:**
+  - [ ] Balon/overlay bileşeni: hedef öğeyi işaret eder, **ekrana basınca sonraki balona geçer** (K3)
+  - [ ] "Atla" her zaman görünür
+  - [ ] Her ekranın **kendi** "görüldü" anahtarı — hepsi tek bayrağa bağlanmaz
+  - [ ] Anahtarlar **sürümlenir** (`home.v1`, `home.v2`): ekran ciddi değişince tur yeniden gösterilebilsin, ama her güncellemede herkese açılmasın
+  - [ ] Ayarlarda **"Tanıtım turlarını sıfırla"**
+  - [ ] Kuyruk yönetimi: tur; izin diyalogları ve güncelleme bildirimiyle **çakışmaz**
+- **Veri/Migration etkisi:** Yok (yerel tercihler).
+- **Ortam/Deploy:** local.
+- **RLS/Güvenlik:** Yok.
+- **Edge-case'ler:** hedef öğe ekranda yok (kaydırma gerekiyor) · ekran döndürme · küçük ekranda balon taşması · Windows'ta fare/klavye · "hareketi azalt" açık · tur ortasında ekrandan çıkma
+- **Kabul (ölçülebilir):** Yeni kurulumda tur **yalnız ilk açılışta** başlıyor · ekrana ardışık basınca balonlar sırayla geçiyor ve **takılmıyor** · "Atla" turu bitiriyor ve bir daha açılmıyor · sıfırlama sonrası yeniden başlıyor · izin diyaloğu açıkken tur **başlamıyor** · 360 px'te balon ekran dışına taşmıyor.
+- **Tuzaklar:** Tek bayrak kullanmak (bir ekranı gören hepsini görmüş sayılır) klasik hata. Sürümlemesiz anahtar, her güncellemede herkese tur açtırır.
+- **Model önerisi:** 🔴 Opus (overlay + kuyruk + platform farkı)
+
+#### WP-324: Tanıtım turu içerikleri ✍️
+- **Program/Faz:** Faz D · Yeni kullanıcı deneyimi
+- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-323 **kabulünden** sonra
+- **Problem:** Motor tek başına bir şey anlatmaz; her ekranın kendi kısa tanıtımı gerekir.
+- **Kapsam dışı:** Motor davranışı, yeni ekran tasarımı.
+- **SAHİP dosyalar (yaz):** Ana Sayfa · Sayaç · Kamp Ateşi · Gruplar · İstatistik · Profil ekranlarının tur tanımları · `app/lib/l10n/*.arb`
+- **DOKUNMA:** `app/lib/core/tour/**` (WP-323'ün motoru — **okunur**)
+- **Adımlar:**
+  - [ ] Her ekran için **az sayıda** balon (sahip: "her ekrana 15 tane koyacak halimiz yok")
+  - [ ] Metinler TR + EN
+  - [ ] Hızlı geçmek isteyen üst üste basıp geçebilsin
+- **Veri/Migration etkisi:** Yok. · **Ortam/Deploy:** local. · **RLS/Güvenlik:** Yok.
+- **Edge-case'ler:** kullanıcının henüz grubu yok (grup turu ne diyecek) · istatistik boşken · kamp ateşi kilitliyken
+- **Kabul (ölçülebilir):** Her ekranda balon sayısı **≤ 4** · her balon **≤ 2 satır** · veri boşken tur anlamlı metin gösteriyor (boş ekranı işaret etmiyor) · TR ve EN'de taşma yok.
+- **Tuzaklar:** Boş durumda "şurada süren görünür" demek, hiçbir şey görünmeyen bir alanı işaret eder — boş hâl metinleri ayrı yazılmalı.
+- **Model önerisi:** 🔵 Sonnet
 
 ---
 
@@ -232,43 +371,114 @@ tarafı baştan sona `Europe/Istanbul` (`0007`, `0011`, `0024`, `0039`, `0051`,
 grubu yoksa **cihazın** saat dilimi → o da yoksa `Europe/Istanbul`.
 Böylece kişisel ve grup istatistiği **asla çelişmez**.
 
-**E2. Geçmiş donar — gün, kayıt anında damgalanır.** 🔴 *(sahip talebi)*
-Gün şu an her sorguda yeniden hesaplandığı için bölge değişince **geçmiş de
-kayıyor**. Çözüm: oturum kaydedilirken o anki gün sınırına göre hesaplanan gün
-`study_sessions` satırına **yazılır ve bir daha dokunulmaz**. Grup/bölge değişse
-bile geçmiş sabit kalır, sadece yeni kayıtlar yeni bölgeye göre işler.
-- Mevcut satırlar İstanbul günüyle doldurulur → **ekranda hiçbir şey değişmez**.
-- Gün alanı indekslenebilir; tekrarlanan saat dilimi hesabı da kalkar.
-- Elle oturum ekleme/düzenleme akışında gün **yeniden** hesaplanmalı.
+> 🔴 **Bu fazın tamamı `supabase/migrations/**` sıcak dosyasına giriyor → hepsi
+> SERİ koşar.** Sıra: **WP-325 → WP-326 → WP-329 → WP-327 → WP-328.**
+> Gerekçe: 326 (bölge) olmadan 329 (birincil grup) gün sınırını besleyemez;
+> 325 (damgalama) olmadan 326 geçmişi kaydırır.
 
-**E3. Grup bölgesi, üye sınırı ve keşif** *(sahip talebi, 2026-07-26)*
+#### WP-315: Grup üye sınırı 8 ✅ TAMAM
+- **Program/Faz:** Faz E · Grup semantiği · **Durum:** [x] Kod/test tamam (2026-07-26)
+- **Yapılan:** Varsayılan 50 → **8**, kısıt `2..100` → `2..8`, `create_group_with_access` varsayılanı 8, Dart sabitleri (`kMinGroupMemberLimit`/`kMaxGroupMemberLimit`). 4 yeni test. Migration `0071_group_member_limit_8.sql`, güvenlik ön kontrolüyle (8'den fazla aktif üyeli grup varsa **adıyla** durur).
+- 🔴 **Kalan:** migration **hiçbir ortamda koşmadı**. Staging apply gerekiyor.
 
-- **E3.1 Grup bölgesi.** `groups.time_zone` (IANA, varsayılan `Europe/Istanbul`).
-  E1'in gün sınırı buradan beslenir. Grup kurarken ve ayarlarında seçilir.
-  ⚠️ **Konum izni istenmez, enlem/boylam sorulmaz** — sadece bölge seçtirilir.
-  Gerçek konum istemek Play Data Safety'de yeni veri kategorisi ve Android'de
-  konum izni açar. *(Bu, eski WP-300'ün `groups.location` enlem/boylam
-  yaklaşımının yerini alır.)*
-- **E3.2 Grup bilgilerinde bölge.** Açık grup kartında ve grup bilgi ekranında
-  bölge adı yazar; **basınca kullanıcıya göre saat farkı**: *"Türkiye (senden +8 saat)"*.
-  ⚠️ Fark **anlık hesaplanır, saklanmaz** — yaz saati yüzünden aynı grup yazın −7,
-  kışın −8 olabilir. Sabit sayı yazmak sessiz hatadır.
-- **E3.3 Üye sınırı 8.** ✅ **YAPILDI** (2026-07-26, `0071_group_member_limit_8.sql`).
-  🔴 **Uygulanmadı:** migration hiçbir ortamda koşmadı; staging apply gerekiyor.
-- **E3.4 Keşifte saat dilimi yakınlığı.** Açık grup önerileri kullanıcının saat
-  dilimine **en yakından en uzağa** sıralanır. Anahtar: iki bölgenin **o andaki**
-  UTC farkının mutlak değeri; eşitlikte `created_at desc`.
-  ⚠️ `idx_groups_public_discovery` `created_at desc` üzerine kurulu — sıralama
-  değişince bu indeks sorguyu karşılamaz; sayfalama + performans birlikte gözden geçirilmeli.
-- **E3.5 Grup arama/filtre.** İsim araması + bölge filtresi + **"boş kontenjanı
-  var"** filtresi (sınır 8 olunca gruplar çabuk dolar).
+#### WP-325: Gün, kayıt anında damgalanır 📌
+- **Program/Faz:** Faz E · Veri doğruluğu · *(eski WP-301'in yerine — o kart iptal)*
+- **Ajan:** — · **Durum:** [ ] Bekliyor
+- **Problem:** Gün her sorguda `start_time`'dan yeniden hesaplanıyor. Bölge değişirse **geçmiş de kayıyor**: kullanıcı grup değiştirince eski günleri oynar, serisi kırılır. Sahip talebi: *"hep sonrasını etkileyecek şekilde"*.
+- **Kapsam dışı:** Bölge seçimi (WP-326) · birincil grup (WP-329) · görsel değişiklik.
+- **SAHİP dosyalar (yaz):**
+  - `supabase/migrations/00NN_session_day_stamp.sql` (yeni)
+  - `app/lib/core/stats/**` · `app/lib/data/repositories/**/study_repository*.dart`
+- **DOKUNMA:** `groups` ile ilgili her şey (WP-326) · başarım fonksiyonları (ayrı tur)
+- **Adımlar:**
+  - [ ] `study_sessions.day date` (nullable → doldur → not null)
+  - [ ] Mevcut satırları **İstanbul günüyle** doldur → 🔴 **ekranda hiçbir şey değişmez** (bugünkü davranışın aynısı)
+  - [ ] Yazma yolunda gün damgalanır ve **bir daha dokunulmaz**
+  - [ ] Gün bucket'lı sorgular saklanan kolona geçer; kolon **indekslenir**
+  - [ ] Elle oturum ekleme/düzenleme akışında gün **yeniden** hesaplanır
+- **Veri/Migration etkisi:** 🔴 Yeni kolon + **geri doldurma**. Geri alma: `drop column day` (türetilmiş veri, kayıp yok — ham `start_time` duruyor). Doldurma **idempotent** yazılır.
+- **Ortam/Deploy:** local replay → staging dry-run + satır sayısı raporu → production **ayrı GO + backup**.
+- **RLS/Güvenlik:** Mevcut `auth.uid()` kısıtları korunur; `get_user_day_totals` sözleşmesi **değişmez**.
+- **Edge-case'ler:** gece yarısını aşan oturum (gün = **başlangıç** günü, yazılı karar) · elle eklenen geçmiş oturum · saat dilimi geçersiz/boş · çevrimdışı kaydedilip sonra senkronlanan oturum
+- **Kabul (ölçülebilir):** Geri doldurmadan **önce ve sonra** `get_user_day_totals` çıktısı **birebir aynı** (staging'de sentetik veriyle kanıtlanır) · bölge değiştirildiğinde geçmiş gün toplamları **değişmiyor**, yalnız yeni kayıtlar yeni bölgeye düşüyor · gün kolonu üzerinde indeks kullanılıyor (`explain`).
+- **Tuzaklar:** Damgalamayı yalnız istemciye bırakma — çevrimdışı/eski sürüm istemciler yanlış gün yazar; **sunucu son sözü söylemeli**. Geri doldurmayı tek dev `update` ile yapma (kilit); parçalı koş.
+- **Model önerisi:** 🔴 Opus (geri alınamaz veri)
 
-**E4. Birden fazla gruptaki kullanıcı → birincil grup.**
-Kullanıcı bir **birincil grup** seçer; **görev · hedef · başarım · bildirim** onu
-sayar. Diğer gruplar üyelikte kalır ama sayaç tutmaz.
-⚠️ **Birincil grup değişirse gün sınırı da değişir.** E2'deki damgalama sayesinde
-geçmiş donar, ama **bundan sonrası** yeni bölgeye göre işler — kullanıcı grup
-değiştirme ekranında bir kez uyarılmalı.
+#### WP-326: Grup bölgesi + gün sınırı zinciri 🌍
+- **Program/Faz:** Faz E · Grup semantiği · *(eski WP-300'ün yerine — enlem/boylam **iptal**)*
+- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-325 kabulü
+- **Problem:** Herkesin günü İstanbul yarısında sıfırlanıyor. New York'ta bu **16:00**'ya denk geliyor — akşam çalışması yarına yazılıyor.
+- **Kapsam dışı:** 🔴 **Konum izni, enlem/boylam** — istenmeyecek. Gerçek konum, Play Data Safety'de yeni veri kategorisi ve Android'de konum izni açar. Gökyüzü hesabı ayrı iş (Faz F).
+- **SAHİP dosyalar (yaz):**
+  - `supabase/migrations/00NN_group_time_zone.sql` (yeni)
+  - `app/lib/data/models/study_group.dart` · grup kurma/ayar ekranları
+  - `app/lib/core/stats/istanbul_calendar.dart` → gün sınırı zinciri
+- **DOKUNMA:** `study_sessions` yazma yolu (WP-325) · keşif ekranı (WP-327/328)
+- **Adımlar:**
+  - [ ] `groups.time_zone text not null default 'Europe/Istanbul'` (IANA adı)
+  - [ ] Grup kurarken ve grup ayarlarında bölge seçici
+  - [ ] Gün sınırı zinciri: **birincil grubun bölgesi → cihazın saat dilimi → `Europe/Istanbul`**
+  - [ ] Cihaz saat dilimi kaynağı: `0066_push_notification_delivery.sql`'deki `time_zone` **zaten toplanıyor**
+- **Veri/Migration etkisi:** Additive, varsayılanlı → mevcut davranış **değişmez**. Geri alma: `drop column time_zone`.
+- **Ortam/Deploy:** local → staging → production ayrı GO.
+- **RLS/Güvenlik:** Bölge, grup üyesi olmayanlara da görünür (keşif kartında) — **hassas veri değil**, konum değil.
+- **Edge-case'ler:** geçersiz IANA adı (kısıt + doğrulama) · kaldırılmış saat dilimi adı · grup bölgesi değişince ne olur (WP-329'daki uyarı) · yaz saati geçişi
+- **Kabul (ölçülebilir):** 🔴 Saat dilimi **IANA adı** olarak saklanıyor (`America/New_York`), offset (`-5`) **değil** — bunun testi yazılı · New York bölgeli grupta gün **yerel 00:00**'da sıfırlanıyor · grubu olmayan kullanıcı cihaz saat dilimini kullanıyor · varsayılan davranış (TR grubu) **hiç değişmiyor**.
+- **Tuzaklar:** 🔴 Offset saklamak yaz saatinde sessizce kayar. Türkiye'de yaz saati olmadığı için bu hata bugüne kadar **hiç görünmedi** — kod tabanı bu konuda test edilmemiş.
+- **Model önerisi:** 🔴 Opus
+
+#### WP-327: Grup bilgilerinde bölge + saat farkı 🕐
+- **Program/Faz:** Faz E · Grup UI · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-326
+- **Problem:** Kullanıcı bir gruba girerken o grubun hangi saate göre çalıştığını bilmiyor.
+- **Kapsam dışı:** Keşif sıralaması (WP-328).
+- **SAHİP dosyalar (yaz):** `app/lib/features/classroom/widgets/class_detail_screen.dart` · `group_discovery_screen.dart` (yalnız kart üzerindeki bölge satırı) · l10n
+- **DOKUNMA:** keşif **sorgusu** (WP-328) · `groups` migration'ı (WP-326)
+- **Adımlar:**
+  - [ ] Açık grup kartında ve grup bilgi ekranında bölge adı
+  - [ ] Bölgeye basınca kullanıcıya göre fark: *"Türkiye (senden +8 saat)"*
+- **Veri/Migration etkisi:** Yok. · **Ortam/Deploy:** local.
+- **RLS/Güvenlik:** Yok.
+- **Edge-case'ler:** kullanıcı ve grup **aynı** bölgede (fark satırı gösterilmemeli) · yarım saatlik ofsetler (Hindistan +5:30) · yaz saati geçiş günü
+- **Kabul (ölçülebilir):** 🔴 Fark **anlık hesaplanıyor, saklanmıyor** — yaz saati testinde aynı grup için yazın −7, kışın −8 üretiliyor · aynı bölgede fark satırı çıkmıyor · +5:30 gibi yarım saatlik ofset doğru yazılıyor.
+- **Tuzaklar:** Farkı bir kez hesaplayıp veritabanına yazmak yılda iki kez sessizce yanlış olur — klasik **ölü anahtar** deseni.
+- **Model önerisi:** 🔵 Sonnet
+
+#### WP-328: Keşif sıralaması + arama/filtre 🔎
+- **Program/Faz:** Faz E · Grup keşfi · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-326
+- **Problem:** Açık gruplar `created_at desc` sıralanıyor; kullanıcı kendi saatine uygun grubu bulamıyor. Sınır 8'e indiği için dolu gruplara tıklayıp duruyor.
+- **Kapsam dışı:** Grup önerisi algoritması (ilgi alanı, hedef benzerliği), sıralama kişiselleştirme.
+- **SAHİP dosyalar (yaz):** `supabase/migrations/00NN_discover_groups_by_tz.sql` · `group_discovery_screen.dart` · `supabase_group_repository.dart`
+- **DOKUNMA:** grup bilgi ekranı (WP-327)
+- **Adımlar:**
+  - [ ] Sıralama: iki bölgenin **o andaki** UTC farkının mutlak değeri; eşitlikte `created_at desc`
+  - [ ] İsim araması + **bölge filtresi**
+  - [ ] **"Boş kontenjanı var"** filtresi
+- **Veri/Migration etkisi:** RPC değişikliği. Geri alma: önceki `discover_public_groups` gövdesi.
+- **Ortam/Deploy:** local → staging → production ayrı GO.
+- **RLS/Güvenlik:** 🔴 `discover_public_groups` yalnız **güvenli özet** alanlarını döndürür — `invite_code` sızmaz. Mevcut sözleşme korunur (test var).
+- **Edge-case'ler:** 🔴 `idx_groups_public_discovery` `created_at desc` üzerine kurulu — **yeni sıralama bu indeksi kullanamaz**; sayfalama tutarlılığı ve performans birlikte gözden geçirilecek · kullanıcının saat dilimi bilinmiyorsa · tüm gruplar dolu
+- **Kabul (ölçülebilir):** Farklı bölgelerden 10 grupla, kullanıcının bölgesine en yakın grup **ilk sırada** · "boş kontenjanı var" filtresi dolu grupları gizliyor · `invite_code` yanıtta **yok** (mevcut sözleşme testi yeşil) · sayfalama tekrar/atlama üretmiyor.
+- **Tuzaklar:** Ofset farkını istemcide hesaplayıp sunucuya sıralama diye göndermek sayfalamayı bozar; sıralama **sunucuda** olmalı.
+- **Model önerisi:** 🟣 Pro
+
+#### WP-329: Birincil grup 🏠
+- **Program/Faz:** Faz E · Grup semantiği · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-326
+- **Problem:** Kullanıcı birden çok gruba üye olabiliyor ama "grup görevi hangi grubun?", "grup hedefi hangisi?", "başarım hangi grubu sayıyor?", "üç gruptan üç dürtme mi gelir?" soruları **cevapsız**.
+- **Kapsam dışı:** Çoklu grup desteğini kaldırmak (üyelik çoklu kalır), grup arası veri taşıma.
+- **SAHİP dosyalar (yaz):** `supabase/migrations/00NN_primary_group.sql` · `group_providers.dart` · grup seçim UI'ı · görev/hedef/başarım okuma yolları
+- **DOKUNMA:** `groups.time_zone` (WP-326) · keşif (WP-328)
+- **Adımlar:**
+  - [ ] Kullanıcı bir **birincil grup** seçer (K5)
+  - [ ] **Görev · hedef · başarım · bildirim** birincil grubu sayar
+  - [ ] Diğer gruplar üyelikte kalır ama sayaç tutmaz
+  - [ ] 🔴 Grup değiştirme ekranında **bir kez uyarı**: gün sınırı değişebilir
+- **Veri/Migration etkisi:** Yeni alan + mevcut kullanıcılara varsayılan atama (tek grubu olan → o grup). Geri alma: kolon düşürülür.
+- **Ortam/Deploy:** local → staging → production ayrı GO.
+- **RLS/Güvenlik:** Kullanıcı yalnız **üye olduğu** bir grubu birincil seçebilir — sunucuda doğrulanır.
+- **Edge-case'ler:** hiç grubu yok · birincil gruptan **çıkarılmış** · birincil grup silinmiş · tek grubu var (otomatik birincil olmalı, seçim sorulmamalı)
+- **Kabul (ölçülebilir):** Üç gruptaki kullanıcıya **tek** grup görevi listesi geliyor · dürtme bildirimi **bir kez** düşüyor · birincil grup değişince gün sınırı yeni bölgeye geçiyor ama **geçmiş gün toplamları değişmiyor** (WP-325 damgası sayesinde) · birincil grup silinince kullanıcı boşta kalmıyor (yeniden seçim istenir).
+- **Tuzaklar:** Grup değişince gün sınırı da değişir; kullanıcının serisi bir gün kayabilir — **uyarı şart**, sessiz yapılırsa "serim neden kırıldı" şikâyeti gelir.
+- **Model önerisi:** 🔴 Opus
 
 ---
 
@@ -276,18 +486,31 @@ değiştirme ekranında bir kez uyarılmalı.
 
 Mağaza çıkışını **bloklamaz**. Faz A–E'den sonra.
 
-- **F1.** Kamp ateşi: oturma yayları + 2 poz *(eski WP-295)*
-- **F2.** Gündüz/gece gökyüzü, gece uyuma animasyonu *(eski WP-299)*
-- **F3.** Gökyüzü hesabı için grup bölgesi — E3.1'in saat dilimi alanına dayanır.
-  Enlem/boylam gerekirse **ayrıca** konuşulur (konum izni açar)
-- **F4.** Faz A'dan çıkan kozmetik bulgular
+| WP | İş | Durum | Not |
+| --- | --- | --- | --- |
+| **WP-295** | Kamp ateşi: oturma yayları + 2 poz | [ ] Bekliyor | Kart aşağıdaki tarihsel bölümde **geçerli** duruyor. İlk çıktı kod değil, **parametrik önizleme** |
+| **WP-299** | Gündüz/gece gökyüzü + gece uyuma | [ ] Bekliyor | WP-295 ile **aynı sahne dosyaları → seri koşar** |
+| — | Gökyüzü için grup bölgesi | — | **WP-326**'nın saat dilimi alanına dayanır. Enlem/boylam gerekirse **ayrıca** konuşulur (konum izni açar) |
 
 ⚠️ **Kural (sahip talebi):** görsel işlerde **ilk çıktı kod değil** — parametrik
 önizleme gelir, sahip sayıyı/pozu seçer, seçilen değer teste bağlanır.
 
+⚠️ **Kare bütçesi:** kamp ateşi sahnesinde `p95 ≤ 16.7 ms · jank ≤ %1`
+(`flutter run --profile` + timeline). Bu ölçüm WP-299 başlamadan **WP-295'in
+kabulünde** yapılmalı; yoksa gökyüzü körlemesine yazılır.
+
+> ⚠️ **Faz F, Faz E ile çakışmaz** (farklı dosyalar) ama `.agents/AGENTS.md §1.2`
+> gereği aynı anda en fazla iki çalışma hattı açılır.
+
 ---
 
 ## PLAN 2 — MAĞAZA HAZIRLIĞI
+
+> 🧾 **WP kartları bu fazlar başlarken açılır** (numaralar 330'dan devam eder).
+> Sebep: mağaza işlerinin çoğu **ops**, kod değil; SAHİP dosya sınırı ve kabul
+> kriteri ancak hesap doğrulaması ve Faz G kararı netleşince yazılabilir.
+> Bugünden geçerli iki eski kart: **WP-276** (hesap silme kanıtı → Faz I2) ve
+> **WP-277** (staging ops kabul kanıtı).
 
 ### Faz G — Kimlik: isim ve logo 🔴 *erken karar, geç uygulama*
 
@@ -393,14 +616,18 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 
 ## 🗄️ TARİHSEL — WP kayıtları (buradan yeni iş alınmaz)
 
-> 🔴 **Bu bölümün tamamı geçmiş kayıttır.** WP modeli 2026-07-26'da emekliye
-> ayrıldı; sırada ne olduğu **yukarıdaki Yol Haritası**'nda yazar.
+> 🔴 **Bu bölüm geçmiş kayıttır** — sırada ne olduğu **yukarıdaki Yol
+> Haritası**'nda, faz + WP olarak yazar.
 >
-> ⚠️ **Aşağıdaki iki kart yol haritasıyla ÇELİŞİR, uygulanmaz:**
-> - **WP-300** `groups.location` (enlem/boylam + tz) → yerini **E3.1** aldı:
+> ✅ **Hâlâ geçerli iki kart:** **WP-295** (kamp ateşi oturma + 2 poz) ve
+> **WP-299** (gökyüzü). İkisi de **Faz F**'e bağlandı, kartları aşağıda duruyor.
+>
+> ❌ **İPTAL — yol haritasıyla çelişir, uygulanmaz:**
+> - **WP-300** `groups.location` (enlem/boylam + tz) → yerini **WP-326** aldı:
 >   enlem/boylam **yok**, sadece saat dilimi (konum izni açmamak için).
 > - **WP-301** sunucu gün sınırı + `metric_day` backfill → **konusuz**: sunucu
->   zaten `Europe/Istanbul` ve gün toplamları saklanmıyor. Yerini **E1 + E2** aldı.
+>   zaten `Europe/Istanbul` ve gün toplamları hiçbir tabloda saklanmıyor.
+>   Yerini **WP-325** (kayıt anında damgalama) aldı.
 >
 > 🕰️ "Beta 1 / beta 2" modeli de tarihseldir — artık faz + sahip onaylı tek sürüm.
 
