@@ -18,7 +18,7 @@
 
 ## Proje Gerçekleri
 
-- **Migration gerçeği:** repo/local **`0080`** · staging **`0072`** · production
+- **Migration gerçeği:** repo/local **`0081`** · staging **`0072`** · production
   etkin şema **`0070`**. Production CLI geçmişi legacy/uzlaştırılmamış;
   ayrıntı [`docs/recovery/PRODUCTION-BASELINE.md`](docs/recovery/PRODUCTION-BASELINE.md).
   Deploy contract aynı üç head'i taşır ve production `deploy_enabled: false` kilitlidir.
@@ -48,7 +48,7 @@
 - **Durum:** [x] Boşta
 - **Faz/WP:** —
 - **SAHİP yollar:** —
-- **Son not:** WP-336 local replay, 206 pgTAP ve uygulama kalite kapılarıyla kod/test tamamlandı; `0080` staging/cihaz kabulü V3 zincirinin ortak QA turunda yapılacak.
+- **Son not:** WP-338 `0081` local replay, 218 pgTAP ve uygulama kalite kapılarıyla kod/test tamamlandı; WP-339 sunucu sözleşmesini tüketebilir. Staging/cihaz kabulü V3 zincirinin ortak QA turunda yapılacak.
 
 ### Codex-2 Lane
 - **Durum:** [~] Aktif
@@ -272,7 +272,7 @@ Böylece kişisel ve grup istatistiği **asla çelişmez**.
 - **Model önerisi:** 🔴 Opus
 
 #### WP-338: Server-derived çoklu grup presence çekirdeği 👥
-- **Program/Faz:** Faz E2 · Delivery A backend · **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-329; migration sırası WP-328/WP-329 sonrası
+- **Program/Faz:** Faz E2 · Delivery A backend · **Ajan:** Codex · **Durum:** [~] Kod/test tamam; staging/cihaz kabulü bekliyor · **Bağımlılık:** WP-329; migration sırası WP-328/WP-329 sonrası
 - **Problem:** `presence(user_id PK, group_id)` kullanıcıyı yalnız seçili grupta gösterebilir; Flutter heartbeat ölünce görünürlük kaybolur.
 - **Kapsam dışı:** Global run · push · session/XP finalizer · gün sınırı · native uplink.
 - **SAHİP dosyalar (yaz):** yeni `supabase/migrations/00NN_multi_group_presence_projection.sql` · ilgili pgTAP/RLS testleri
@@ -284,6 +284,7 @@ Böylece kişisel ve grup istatistiği **asla çelişmez**.
 - **Edge-case'ler:** 0/1/2/10 grup · join/leave/ban · primary null · iki heartbeat/sweeper · stale stop.
 - **Kabul (ölçülebilir):** Bütün aktif gruplarda tek satır · heartbeat başına projection write 0 · leave/ban read 0 · secondary flag false · iki sweeper tek transition · çapraz grup sızıntısı 0.
 - **Tuzaklar:** Yalnız server'ın bildiği state fan-out edilir; Flutter hiç uyanmazsa native start henüz bilinmez.
+- **Kanıt:** Local `0081` replay ve 218 pgTAP PASS · deploy guard 51 PASS · `flutter analyze` temiz · `flutter test --dart-define-from-file=env.json` PASS. **Kodda doğrulandı; staging/cihazda doğrulanmalı.**
 - **Model önerisi:** 🔴 Opus
 
 #### WP-339: Presence client cutover ve seçili-grup bağını kaldırma 🔄
@@ -536,7 +537,7 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 ## ⚠️ Risk ve Tuzak Notları
 
 - **Sürüm disiplini.** Sürüm sahibin onayıyla çıkar; düzeltmeler birikir, tek sürümde çıkar.
-- **Migration drift.** Repo/local `0080`, staging `0072`, production `0070`. `0073–0080` seri dry-run + post-check olmadan staging'e uygulanmaz.
+- **Migration drift.** Repo/local `0081`, staging `0072`, production `0070`. `0073–0081` seri dry-run + post-check olmadan staging'e uygulanmaz.
 - **V3 migration sırası.** WP-328 → WP-329 → WP-336 → WP-338 → WP-341 → WP-344 tek migration hattıdır; aynı anda iki migration worker'ı açılmaz. Her adım local replay, şema post-check ve önceki head kanıtı ister.
 - **Sayaç sıcak yolu donuktur.** WP-340–345 normal local start/stop sırasını, notification ID/channel/layout/PendingIntent'leri, widget görünümünü ve `ACTION_STOP_SILENT` davranışını yeniden tasarlamaz. Global senkron additive envelope + shadow + feature flag ile gelir; WP-346 gerçek cihaz regresyon kapısı geçmeden varsayılan açılmaz.
 - **l10n kapısı temiz.** WP-335, 24 gerçek WP-295 kullanıcı metnini kataloğa taşıdı; 7 kullanıcı-dışı invariant mesajını dar ve gerekçeli muafiyetle ayırdı. Yeni UI metni ekleyen WP'ler audit sıfır-bulgu kuralını korumalıdır.
