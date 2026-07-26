@@ -110,7 +110,7 @@ void main() {
       expect(results.single.id, public.id);
       expect(results.single.name, 'Global Focus');
       expect(results.single.memberCount, 1);
-      expect(results.single.memberLimit, 50);
+      expect(results.single.memberLimit, kDefaultGroupMemberLimit);
       expect(results.single.toString(), isNot(contains(public.inviteCode)));
     },
   );
@@ -322,4 +322,74 @@ void main() {
       expect(others.map((g) => g.id).toList(), [g3.id]);
     },
   );
+
+  group('grup üye sınırı 8 (sahip kararı 2026-07-26)', () {
+    // Bu sayılar `0071_group_member_limit_8.sql` ile **birebir** aynı olmalı.
+    // Ayrışırsa istemci, sunucunun reddedeceği bir grubu kurulmuş sayar ve
+    // hata ancak ağ katmanında görünür — bu test o ayrışmayı erken yakalar.
+    test('varsayılan ve üst sınır 8', () {
+      expect(kDefaultGroupMemberLimit, 8);
+      expect(kMaxGroupMemberLimit, 8);
+      expect(kMinGroupMemberLimit, 2);
+    });
+
+    test('yeni grup 8 sınırıyla açılır', () async {
+      final repo = InMemoryGroupRepository();
+      final group = await repo.createGroup(
+        name: 'Sekizlik',
+        creator: _profile('u1', 'Ali'),
+      );
+      expect(group.memberLimit, 8);
+    });
+
+    test('8 üstü sınır reddedilir', () async {
+      final repo = InMemoryGroupRepository();
+      await expectLater(
+        repo.createGroup(
+          name: 'Kalabalık',
+          creator: _profile('u1', 'Ali'),
+          memberLimit: 9,
+        ),
+        throwsA(isA<GroupException>()),
+      );
+
+      final group = await repo.createGroup(
+        name: 'Normal',
+        creator: _profile('u2', 'Veli'),
+      );
+      await expectLater(
+        repo.updateGroupAccess(
+          group.id,
+          visibility: GroupVisibility.public,
+          memberLimit: 9,
+        ),
+        throwsA(isA<GroupException>()),
+      );
+    });
+
+    test('9. üye gruba giremez', () async {
+      final repo = InMemoryGroupRepository();
+      final group = await repo.createGroup(
+        name: 'Dolan Grup',
+        creator: _profile('u0', 'Kurucu'),
+        visibility: GroupVisibility.public,
+      );
+
+      // Kurucu dahil 8 kişi.
+      for (var i = 1; i < 8; i++) {
+        await repo.joinPublicGroup(
+          groupId: group.id,
+          member: _profile('u$i', 'Üye $i'),
+        );
+      }
+
+      await expectLater(
+        repo.joinPublicGroup(
+          groupId: group.id,
+          member: _profile('u8', 'Dokuzuncu'),
+        ),
+        throwsA(isA<GroupException>()),
+      );
+    });
+  });
 }

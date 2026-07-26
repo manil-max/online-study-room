@@ -2,7 +2,14 @@ import 'package:flutter/foundation.dart';
 
 /// Grubun varsayılan günlük hedefi (dakika). DB sütunu yokken/boşken kullanılır.
 const int kDefaultGroupGoalMinutes = 360;
-const int kDefaultGroupMemberLimit = 50;
+
+/// Grup üye sınırı. Sahip kararı (2026-07-26): **8 kişi**, fazlası kalabalık
+/// geliyor. Sunucu tarafındaki kısıt `0071_group_member_limit_8.sql`; buradaki
+/// sayılar onunla **birebir** aynı kalmalı, yoksa istemci sunucunun reddedeceği
+/// bir değeri kabul etmiş gibi görünür.
+const int kMinGroupMemberLimit = 2;
+const int kMaxGroupMemberLimit = 8;
+const int kDefaultGroupMemberLimit = kMaxGroupMemberLimit;
 
 /// Grubun katılım modeli. Yeni gruplar geriye uyumluluk ve veri gizliliği için
 /// kapalı başlar; açık gruplar yalnız güvenli keşif özetiyle listelenir.

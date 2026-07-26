@@ -37,7 +37,7 @@ void main() {
       expect(StudyGroup.fromMap(group.toMap()), group);
     });
 
-    test('varsayılan erişim private ve 50 kişilik limittir', () {
+    test('varsayılan erişim private ve 8 kişilik limittir', () {
       final group = StudyGroup(
         id: 'g1',
         name: 'Aile Sınıfı',
@@ -59,11 +59,11 @@ void main() {
         'created_at': '2026-06-21T10:00:00.000Z',
         'daily_goal_minutes': 480,
         'visibility': 'public',
-        'member_limit': 50,
+        'member_limit': 6,
       });
 
       expect(group.visibility, GroupVisibility.public);
-      expect(group.memberLimit, 50);
+      expect(group.memberLimit, 6);
     });
   });
 

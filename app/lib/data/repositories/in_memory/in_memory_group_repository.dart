@@ -96,8 +96,9 @@ class InMemoryGroupRepository implements GroupRepository {
     if (normalizedName.isEmpty || normalizedName.length > 64) {
       throw const GroupException('Grup adı 1 ile 64 karakter arasında olmalı.');
     }
-    if (memberLimit < 2 || memberLimit > 100) {
-      throw const GroupException('Üye sınırı 2 ile 100 arasında olmalı.');
+    if (memberLimit < kMinGroupMemberLimit ||
+        memberLimit > kMaxGroupMemberLimit) {
+      throw const GroupException('Üye sınırı 2 ile 8 arasında olmalı.');
     }
     final group = StudyGroup(
       id: _uuid.v4(),
@@ -233,8 +234,9 @@ class InMemoryGroupRepository implements GroupRepository {
   }) async {
     final group = _groups[groupId];
     if (group == null) throw const GroupException('Grup bulunamadı.');
-    if (memberLimit < 2 || memberLimit > 100) {
-      throw const GroupException('Üye sınırı 2 ile 100 arasında olmalı.');
+    if (memberLimit < kMinGroupMemberLimit ||
+        memberLimit > kMaxGroupMemberLimit) {
+      throw const GroupException('Üye sınırı 2 ile 8 arasında olmalı.');
     }
     final memberCount = _members[groupId]?.length ?? 0;
     if (memberLimit < memberCount) {
