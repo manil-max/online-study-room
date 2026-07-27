@@ -69,7 +69,7 @@
 
 ### Claude Lane
 - **Durum:** [~] Aktif
-- **Faz/WP:** Faz F5 · **WP-372** — çoklu cihaz sayaç senkronu: istemci↔sunucu komut sözleşmesi
+- **Faz/WP:** Faz F5 · **WP-373** — çoklu cihaz sayaç senkronu: istemci↔sunucu komut sözleşmesi
 - **Aşama:** Geliştiriliyor
 - **SAHİP yollar:** `app/android/app/src/main/kotlin/**/timer/**`,
   `app/lib/core/background/timer_v2_command_outbox.dart`,
@@ -1952,6 +1952,98 @@ Seri kilitler:
 - **Kabul:** preflight/gate PASS · üç ortam `0088` · Android + Windows artefaktı
   yayında · production kapısı apply ve release sonrası yeniden `false`
   kilitlendi (76 guard testi yeşil).
+
+#### WP-373: Çoklu cihaz sayaç senkronu — istemci↔sunucu komut sözleşmesi 📱↔️📱
+- **Durum:** [~] Kod tamamlandı — **staging apply + gerçek cihaz kabulü bekliyor.**
+- **SAHİP:** `app/android/.../timer/TimerStateStore.kt` ·
+  `app/android/.../timer/StudyTimerService.kt` ·
+  `app/lib/core/background/timer_v2_command_outbox.dart` ·
+  `app/lib/data/providers/global_timer_providers.dart` ·
+  `app/lib/data/providers/study_providers.dart` ·
+  `supabase/migrations/0089_global_timer_lease_sweeper.sql` ·
+  `supabase/tests/018_global_timer_command_contract.test.sql` ·
+  `app/test/core/timer_v2_origin_contract_test.dart` ·
+  `app/test/core/timer_v2_command_outbox_test.dart` · `tooling/release/**` ·
+  `tooling/supabase/guard.tests.ps1`
+
+- **Teşhis (sahip production sorgusuyla mühürlendi, 2026-07-27):**
+  `select result_code, count(*) from public.global_timer_commands group by 1`
+  → **0 satır.** `notification_outbox where notification_type='timer_sync'`
+  → **0 satır.** Yani WP-341'den beri **tek bir komut bile** sunucuya ulaşmadı;
+  RPC exception atınca transaction geri sardığı için audit satırı bile yazılmadı.
+  Bu, "v52/v53 bozdu" değil — özellik **hiç çalışmamış**.
+
+- **🔴 Kök neden 1 — `origin` sözlüğü uyuşmuyor (her `start` reddediliyordu).**
+  Sunucu `('app','widget','notification','recovery')` bekliyor
+  (`0082:277-280`), istemci ham `dart_app` / `native_widget` /
+  `native_notification` gönderiyordu. Aradaki çeviri repoda **hiç yoktu**;
+  `global_timer_providers.dart:72` değeri olduğu gibi payload'a koyuyordu.
+  Sonuç: `invalid_global_timer_origin`, `catch (_)` ile yutuluyor, zarf kuyrukta
+  kalıyor ve her turda yeniden patlıyordu (kuyruk sonsuza kadar büyüyordu).
+- **🔴 Kök neden 2 — durdurma hiç yayınlanmıyordu.** Uygulama içi Durdur
+  `ACTION_STOP_SILENT` → `handleStop(recordInterval = false)` yolunu kullanır;
+  V2 zarfı o bloğun **içindeydi**, yani en sık kullanılan durdurma hiçbir zaman
+  sinyal üretmiyordu. Bildirim/widget Durdur'u zarf üretiyordu ama
+  `expected_run_revision` **hep null**'dı (native hiç göndermiyordu) → sunucu
+  `stop_run_revision_required` atıyordu.
+- **🔴 Kök neden 3 — kira ne yenileniyor ne süpürülüyordu.** Hiçbir istemci
+  `heartbeat` göndermiyordu ve `expire_global_timer_v2_leases` (0082'de yazılı)
+  hiçbir cron'a bağlı değildi. Koşu sonsuza dek `running` kalıyor, ayna cihaz
+  ölü bir koşuyu gösteriyordu.
+
+- **Neden 955 test yeşilken bu kaçtı:** pgTAP sunucuyu **kendi uydurduğu**
+  `'app'` değeriyle çağırıyordu (`013:55`, `017:37`); Dart testleri
+  `flushShadow()`'u komple stub'lıyordu
+  (`global_timer_command_publish_test.dart:41`); InMemory repo payload'ı hiç
+  doğrulamıyordu. Her uç kendi içinde tutarlıydı, **aralarını tutan tek bir
+  iddia yoktu.** Dahası `timer_v2_command_outbox_test.dart` arızayı "excludes
+  silent stop" başlığıyla **doğru davranış diye kayda geçirmişti.**
+
+- **Yapılan (istemci):**
+  - `TimerStateStore.canonicalV2Origin` — tek çeviri noktası, tanınmayan origin
+    `null` döner ve komut üretilmez (fail-closed). `global_timer_mirror` böylece
+    kendiliğinden dışarıda kalır (echo start yok).
+  - Zarf şeması **2 → 3**. Cihazlarda birikmiş `dart_app` taşıyan eski kayıtlar
+    `discard` olup kuyruktan düşer; uygulanamayacak komut sonsuza dek denenmez.
+  - V2 stop zarfı `recordInterval`'dan **ayrıldı**; `run_id` +
+    `expected_run_revision` yeni `KEY_V2_RUN_ID` / `KEY_V2_RUN_REVISION`
+    köprüsünden okunur (Dart, apply başarılı olunca yazar; `writeIdle` siler).
+    Kimlik yoksa zarf hiç yazılmaz.
+  - `flushShadow` artık `prefs.reload()` yapar. **WP-368'in "başlatma anında
+    yayınla" düzeltmesi bu eksik yüzünden fiilen no-op'tu** — kuyruğu native
+    yazar, Dart'ın prefs'i önbelleklidir; yayını yalnız broadcast yolu
+    kurtarıyordu.
+  - 60 sn'lik `heartbeat` turu (yaşam döngüsüne bağlı **değil** — ekran
+    kapalıyken de kirayı tazelemeli). 60 istek/saat = snapshot turunun 1/12'si.
+- **Yapılan (sunucu):** `0089` — `expire_global_timer_v2_leases(200)` dakikalık
+  pg_cron job'ı. Şema/kolon/politika/grant değişmez, satır eklenmez.
+  Geri alma: tek `cron.unschedule`.
+
+- **Kanıt:** `flutter analyze` **0 uyarı** · tam Flutter süiti yeşil ·
+  local `db reset` + **tam pgTAP replay** `0089` ile yeşil (yeni `018` dahil) ·
+  76 deploy guard + 8 release preflight testi yeşil ·
+  **regresyon kapanı kanıtlandı:** `canonicalV2Origin`'deki `dart_app -> app`
+  çevirisi geri alınınca `timer_v2_origin_contract_test.dart` kırmızıya döndü
+  (`Expected: contains 'dart_app' / Actual: Set:['app','widget',...]`).
+- **Sözleşme kapanı:** `timer_v2_origin_contract_test.dart` üç ucu (Kotlin
+  üretici · Dart sabit · migration allowlist) **birbirine karşı** ölçer;
+  `018_global_timer_command_contract.test.sql` sunucu ucunda eski istemci
+  sözlüğünün reddedildiğini kayda geçirir.
+
+- **Bilinen sınırlar (kapsam dışı, bilerek):**
+  - Senkron yalnız **Android + kronometre/çalışma fazı**. Pomodoro, geri sayım
+    ve Windows V2 komutu üretmez (Windows'ta push cihaz kaydı da yok).
+  - Ayna cihaz koşuyu **yerel olarak** durdurur, sunucudaki koşuyu kapatmaz;
+    koşunun sahibi başlatan cihazdır (`docs/…PLAN.md §16.4`).
+  - Aynalama yalnız **Flutter tarafı ayakta iken** uygulanır. Uygulama arka
+    plandayken gelen FCM ayrı isolate'e düşer ve `TimerSyncSignal.pendingKey`
+    hiçbir yerde okunmaz → cihaz açılana kadar bildirim/widget'ta sayaç
+    başlamaz. "Cihaz uykudayken de başlasın" ayrı bir iş (native FCM → FGS
+    köprüsü); sahibe soruldu, Tur 1 kabulünden sonra karar verilecek.
+- **Kabul:** analyze temiz · tam süit yeşil · local pgTAP replay yeşil ·
+  düzeltme geri alınınca sözleşme testi kırmızı. **Cihaz kabulü sahipte:**
+  iki cihazda da bu sürüm + staging/production apply şart.
+
 
 ---
 

@@ -57,6 +57,15 @@ const _timerV2CommandFlushAdapter = TimerV2CommandFlushAdapter();
 /// server-authoritative timer state'inde birleşmesini sağlar.
 const kGlobalTimerForegroundReconcileInterval = Duration(seconds: 5);
 
+/// WP-373: koşu kirası sunucuda 150 sn'dir; 60 sn'lik tur, tek bir kaçırılan
+/// turda bile kiranın dolmamasını garanti eder.
+///
+/// Snapshot turunun aksine bu tur **arka planda da çalışır** ve çalışmalıdır:
+/// amacı ekranı güncellemek değil, sayaç koşarken sunucudaki koşunun süpürücü
+/// tarafından ölü sanılıp kapatılmasını önlemektir. Maliyeti saatte 60 istek —
+/// 5 sn'lik snapshot turunun (720/saat) on ikide biri.
+const kGlobalTimerHeartbeatInterval = Duration(seconds: 60);
+
 /// Aktif StudyRepository. Remote katman Supabase veya bellek-içi olabilir;
 /// ikisinin üstüne offline-first cache sarılır.
 final studyRepositoryProvider = Provider<StudyRepository>((ref) {
@@ -471,6 +480,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   /// widget testlerinde FakeTimer sızıntısı oluşur.
   Timer? _authRetryTimer;
   Timer? _globalTimerForegroundRefresh;
+  Timer? _globalTimerHeartbeat;
   Completer<void>? _authRetryCompleter;
   StreamSubscription<TimerNotificationAction>? _notificationCommands;
   StreamSubscription<TimerSyncSignal>? _timerSyncSignals;
@@ -572,6 +582,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       _tick?.cancel();
       _widgetRefreshDebounce?.cancel();
       _globalTimerForegroundRefresh?.cancel();
+      _globalTimerHeartbeat?.cancel();
       _cancelAuthRetryWindow();
       _notificationCommands?.cancel();
       _timerSyncSignals?.cancel();
@@ -615,6 +626,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       if (!_disposed) unawaited(_syncBackgroundTimerState());
     });
     _startGlobalTimerForegroundRefresh();
+    _startGlobalTimerHeartbeat();
     final prefs = ref.read(sharedPreferencesProvider);
     final modeName = prefs.getString(_kMode);
     final mode = TimerMode.values.firstWhere(
@@ -708,6 +720,24 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   void _stopGlobalTimerForegroundRefresh() {
     _globalTimerForegroundRefresh?.cancel();
     _globalTimerForegroundRefresh = null;
+  }
+
+  /// WP-373: kira tazeleme turu. Snapshot turundan farklı olarak yaşam
+  /// döngüsüne **bağlanmaz** — ekran kapalıyken de çalışması gerekir, yoksa
+  /// süpürücü koşan sayacı ölü sanıp kapatır ve karşı cihaz durur.
+  ///
+  /// Koşullar her turda taze okunur (sahip cihaz + çalışan sayaç); boştayken
+  /// tur ağa çıkmaz, yalnız iki alan kontrol eder.
+  void _startGlobalTimerHeartbeat() {
+    if (_disposed) return;
+    if (ref.read(globalTimerModeProvider) != GlobalTimerMode.foregroundMirror) {
+      return;
+    }
+    _globalTimerHeartbeat?.cancel();
+    _globalTimerHeartbeat = Timer.periodic(kGlobalTimerHeartbeatInterval, (_) {
+      if (_disposed || !state.isRunning || state.isGlobalTimerMirror) return;
+      unawaited(ref.read(globalTimerCoordinatorProvider).heartbeat());
+    });
   }
 
   /// WP-368 (V51-2): başlatma zincirini **sırayla** yürütür ve komut kuyruğunu

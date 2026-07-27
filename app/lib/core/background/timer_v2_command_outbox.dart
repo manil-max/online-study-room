@@ -21,8 +21,33 @@ class TimerV2CommandEnvelope {
   });
 
   static const kind = 'global_timer_command';
-  static const schemaVersion = 2;
+
+  /// WP-373: 2 → 3. `origin` sözlüğü değişti (bkz. [canonicalOrigins]); eski
+  /// şemayla yazılmış zarflar sunucuda **hiçbir zaman** uygulanamaz, bu yüzden
+  /// [tryParse] onları reddeder ve kuyruk temizleyici `discard` ile düşürür.
+  static const schemaVersion = 3;
   static const accountIdKey = 'timer_v2_active_account_id';
+
+  /// 🔴 **Sunucu allowlist'inin istemci aynası.** `apply_global_timer_command`
+  /// bu kümenin dışındaki her değeri `invalid_global_timer_origin` ile reddeder
+  /// (`supabase/migrations/0082_global_timer_v2.sql`). Kümeler ayrışırsa çoklu
+  /// cihaz senkronu **sessizce** ölür — WP-373'ye kadar tam olarak bu oldu.
+  ///
+  /// Sözleşme `test/core/timer_v2_origin_contract_test.dart` ile üç uçtan
+  /// (Kotlin üretici · bu sabit · migration) birlikte kilitlidir.
+  static const canonicalOrigins = <String>{
+    'app',
+    'widget',
+    'notification',
+    'recovery',
+  };
+
+  /// Sunucunun kabul ettiği koşu kimliği. Dart yazar (apply başarılı olunca),
+  /// native `stop` zarfını kurarken okur. Revision da **String** tutulur:
+  /// Flutter `setInt` Android'de `putLong` üretir, native `getInt` ile okumak
+  /// ClassCastException verir.
+  static const runIdKey = 'timer_v2_run_id';
+  static const runRevisionKey = 'timer_v2_run_revision';
 
   final String commandId;
   final String accountId;
@@ -56,6 +81,12 @@ class TimerV2CommandEnvelope {
       return null;
     }
 
+    // WP-373: sunucunun tanımadığı origin taşıyan zarf geçerli sayılmaz.
+    // Böyle bir kayıt gönderilse exception alır ve kuyrukta kalıcı zehir olur;
+    // `null` dönerek `discard` edilmesini ve kuyruktan düşmesini sağlıyoruz.
+    if (!canonicalOrigins.contains(origin)) return null;
+
+    final runId = value('run_id');
     final revision = raw['expected_run_revision'];
     final expectedRunRevision = switch (revision) {
       int value when value > 0 => value,
@@ -63,6 +94,11 @@ class TimerV2CommandEnvelope {
         value.toInt(),
       _ => null,
     };
+    // WP-373: sunucu `stop` için ikisini de zorunlu tutar. Eksikse zarf en
+    // baştan geçersizdir — denenip her turda patlamasındansa düşsün.
+    if (action == 'stop' && (runId == null || expectedRunRevision == null)) {
+      return null;
+    }
     return TimerV2CommandEnvelope(
       commandId: commandId,
       accountId: accountId,
@@ -70,7 +106,7 @@ class TimerV2CommandEnvelope {
       action: action!,
       clientOccurredAt: occurredAt.toUtc(),
       origin: origin,
-      runId: value('run_id'),
+      runId: runId,
       expectedRunRevision: expectedRunRevision,
     );
   }

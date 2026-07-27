@@ -229,16 +229,17 @@ class StudyTimerService : Service() {
         startForegroundCompat(buildIdleNotification())
 
         val p = prefs()
+        val phase = p.getString(TimerStateStore.KEY_PHASE, "work") ?: "work"
+        val mode = p.getString(TimerStateStore.KEY_MODE, "stopwatch") ?: "stopwatch"
+        val startOrigin = p.getString(
+            TimerStateStore.KEY_START_ORIGIN,
+            "native_notification",
+        ).orEmpty()
+
         if (recordInterval) {
             val startedAtMs = TimerStateStore.startedAtMs(p)
-            val phase = p.getString(TimerStateStore.KEY_PHASE, "work") ?: "work"
-            val mode = p.getString(TimerStateStore.KEY_MODE, "stopwatch") ?: "stopwatch"
             val nowMs = System.currentTimeMillis()
             val liveRunToken = p.getString(TimerStateStore.KEY_LIVE_RUN_TOKEN, "").orEmpty()
-            val startOrigin = p.getString(
-                TimerStateStore.KEY_START_ORIGIN,
-                "native_notification",
-            ).orEmpty()
             // Yalnız çalışma fazı kaydedilir (mola sayılmaz).
             if (liveRunToken.isNotBlank()) {
                 TimerStateStore.appendPendingVerifiedCommand(
@@ -253,14 +254,30 @@ class StudyTimerService : Service() {
                     origin = startOrigin,
                 )
             }
-            if (mode == "stopwatch" && phase == "work") {
-                TimerStateStore.appendV2Command(
-                    p,
-                    action = "stop",
-                    origin = startOrigin,
-                    runId = p.getString(TimerStateStore.KEY_LIVE_RUN_ID, null),
-                )
-            }
+        }
+
+        // WP-373 (KÖK NEDEN 2): V2 senkron zarfı oturum muhasebesinden BAĞIMSIZDIR.
+        //
+        // 🔴 Eskiden bu blok `recordInterval` koşulunun İÇİNDEYDİ. Uygulama içi
+        // Durdur `ACTION_STOP_SILENT` → `handleStop(recordInterval = false)`
+        // yolunu kullanır (oturumu Dart yazar, çift kayıt olmasın diye), yani
+        // **en sık kullanılan durdurma** hiçbir zaman durdurma sinyali
+        // üretmiyordu; diğer cihazda aynalanan sayaç koşmaya devam ediyordu.
+        //
+        // `recordInterval` "oturumu kim yazacak" sorusunun cevabıdır; "kullanıcı
+        // sayacı durdurdu mu" sorusunun değil. İkisi ayrıldı.
+        //
+        // Ayna cihazında zarf üretilmez: `startOrigin == "global_timer_mirror"`
+        // için `canonicalV2Origin` null döner (koşunun sahibi karşı cihazdır).
+        if (mode == "stopwatch" && phase == "work") {
+            TimerStateStore.appendV2Command(
+                p,
+                action = "stop",
+                startOrigin = startOrigin,
+                runId = p.getString(TimerStateStore.KEY_V2_RUN_ID, null),
+                expectedRunRevision = p.getString(TimerStateStore.KEY_V2_RUN_REVISION, null)
+                    ?.toLongOrNull(),
+            )
         }
 
         // WP-135: idle + sıfır — senkron commit (apply asimetri kapatıldı).

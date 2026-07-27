@@ -31,6 +31,37 @@ object TimerStateStore {
     const val KEY_V2_ACTIVE_ACCOUNT_ID = "flutter.timer_v2_active_account_id"
     const val KEY_V2_INSTALLATION_ID = "flutter.timer_v2_installation_id"
 
+    /**
+     * WP-373: sunucunun kabul ettiği V2 koşu kimliği. Dart, `apply_global_timer_command`
+     * BAŞARILI döndüğünde yazar; native `stop` zarfını kurarken buradan okur.
+     *
+     * Değerler **String** tutulur (revision dahil). Flutter `setInt` Android tarafında
+     * `putLong` üretir; native `getInt` ile okumak ClassCastException verirdi.
+     */
+    const val KEY_V2_RUN_ID = "flutter.timer_v2_run_id"
+    const val KEY_V2_RUN_REVISION = "flutter.timer_v2_run_revision"
+
+    /**
+     * WP-373 (KÖK NEDEN): V2 protokolünün `origin` sözlüğü, native'in yerel
+     * `startOrigin` sözlüğünden **farklıdır** ve sunucu allowlist'iyle birebir
+     * olmak zorundadır (`0082:277-280` → `app|widget|notification|recovery`).
+     *
+     * 🔴 Eskiden çeviri hiç yoktu: zarf ham `dart_app` / `native_widget` /
+     * `native_notification` taşıyordu, sunucu her `start` komutunu
+     * `invalid_global_timer_origin` ile reddediyordu ve hata istemcide
+     * yutulduğu için çoklu cihaz senkronu **hiç çalışmadı**.
+     *
+     * Tanınmayan origin `null` döner ve komut ÜRETİLMEZ (fail-closed). Bu,
+     * `global_timer_mirror` başlatmalarını da kendiliğinden dışarıda bırakır:
+     * ayna, yeni bir kullanıcı niyeti değil, uzak gerçeğin gösterimidir.
+     */
+    fun canonicalV2Origin(startOrigin: String): String? = when (startOrigin) {
+        "dart_app" -> "app"
+        "native_widget" -> "widget"
+        "native_notification" -> "notification"
+        else -> null
+    }
+
     fun prefs(context: Context): SharedPreferences =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
@@ -80,6 +111,10 @@ object TimerStateStore {
             .remove(KEY_LIVE_RUN_ID)
             .remove(KEY_LIVE_RUN_TOKEN)
             .remove(KEY_START_ORIGIN)
+            // WP-373: koşu kimliği bu koşuya aitti; kalırsa sonraki durdurma
+            // ölü bir run'a `stale` stop gönderir. Zarf zaten kuruldu.
+            .remove(KEY_V2_RUN_ID)
+            .remove(KEY_V2_RUN_REVISION)
             .putString(KEY_FG_MODE, "idle")
             .commit()
     }
@@ -149,11 +184,22 @@ object TimerStateStore {
     fun appendV2Command(
         p: SharedPreferences,
         action: String,
-        origin: String,
+        startOrigin: String,
         runId: String? = null,
         expectedRunRevision: Long? = null,
     ): Boolean {
         if (action != "start" && action != "stop") return false
+        // WP-373: protokol sözlüğüne çevrilemeyen origin komut üretmez.
+        val origin = canonicalV2Origin(startOrigin) ?: return false
+        // WP-373: sunucu `stop` için run kimliği + revision ZORUNLU tutar
+        // (`0082:303-305` → `stop_run_revision_required`). Eksik gönderilen zarf
+        // her turda exception alıp kuyrukta kalıcı zehir oluyordu; artık hiç
+        // yazılmaz. Kimlik yoksa zaten sunucuda durdurulacak bir koşu da yoktur.
+        if (action == "stop" &&
+            (runId.isNullOrBlank() || expectedRunRevision == null || expectedRunRevision <= 0L)
+        ) {
+            return false
+        }
         val list = try {
             JSONArray(p.getString(KEY_PENDING_INTERVALS, "[]") ?: "[]")
         } catch (_: Exception) {
@@ -165,7 +211,10 @@ object TimerStateStore {
         val envelope = JSONObject()
             .put("id", UUID.randomUUID().toString())
             .put("kind", "global_timer_command")
-            .put("schema_version", 2)
+            // WP-373: sözlük değiştiği için şema sürümü 2 → 3. Cihazlarda birikmiş
+            // `dart_app` taşıyan v2 zarfları böylece `discard` olur ve kuyruktan
+            // düşer; hiçbir zaman uygulanamayacak kayıtlar sonsuza dek denenmez.
+            .put("schema_version", 3)
             .put("command_id", UUID.randomUUID().toString())
             .put("account_id", p.getString(KEY_V2_ACTIVE_ACCOUNT_ID, "").orEmpty())
             .put("installation_id", installationId)

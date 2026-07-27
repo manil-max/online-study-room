@@ -22,18 +22,17 @@ $repoRoot = Get-RepoRoot
 $stagingRef = 'aaaaaaaaaaaaaaaaaaaa'
 $productionRef = 'bbbbbbbbbbbbbbbbbbbb'
 
-Assert-Equal (Get-LocalMigrationHead -RepoRoot $repoRoot) '0088' 'local migration head'
-Assert-Equal ((Get-DeployContract -RepoRoot $repoRoot).local_migration_head) '0088' 'contract migration head'
+Assert-Equal (Get-LocalMigrationHead -RepoRoot $repoRoot) '0089' 'local migration head'
+Assert-Equal ((Get-DeployContract -RepoRoot $repoRoot).local_migration_head) '0089' 'contract migration head'
 $contract = Get-DeployContract -RepoRoot $repoRoot
-# WP-370/371 kapandı: 0088 production'a uygulandı (post-check head 0088, run
-# 30297435093) ve v53 stable çıktı (run 30297781192). Kapı yeniden varsayılan
-# HOLD'da; sonraki production migration'ı veya stable release'i kendi açık
-# sahip GO'sunu ister.
-Assert-Equal $contract.staging.migration_head '0088' 'staging migration head'
+# WP-373: local head 0089'a ilerledi (lease sweeper cron'u). Uzak ortamlar
+# hâlâ 0088'dedir; 0089 hiçbir yere uygulanmadı. Production kapısı varsayılan
+# HOLD'da kalır ve kendi açık sahip GO'sunu ister.
+Assert-Equal $contract.staging.migration_head '0089' 'staging migration head: WP-373 sirada'
 Assert-Equal ([bool]$contract.staging.deploy_enabled) $true 'staging deploy enabled'
 Assert-Equal ([bool]$contract.staging.release_enabled) $true 'staging release enabled'
-Assert-Equal $contract.production.migration_head '0088' 'production head 0088: WP-370 ile uygulandı ve post-check ile doğrulandı'
-Assert-Equal ([bool]$contract.production.deploy_enabled) $false 'production deploy varsayılan HOLD: WP-370 apply sonrası yeniden kilitlendi'
+Assert-Equal $contract.production.migration_head '0088' 'production head 0088: 0089 henüz uygulanmadı'
+Assert-Equal ([bool]$contract.production.deploy_enabled) $false 'production deploy varsayılan HOLD: WP-373 kendi GO''sunu bekliyor'
 Assert-Equal ([bool]$contract.production.release_enabled) $false 'production release defaults to HOLD'
 
 $databaseWorkflow = Get-Content -LiteralPath (Join-Path $repoRoot '.github\workflows\database-gates.yml') -Raw -Encoding UTF8

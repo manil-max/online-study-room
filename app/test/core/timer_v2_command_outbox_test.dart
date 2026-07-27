@@ -4,15 +4,19 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/core/background/timer_v2_command_outbox.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// WP-373: şema 2 → 3 ve `origin` artık **protokol** sözlüğündedir
+/// (`widget`), native'in yerel `startOrigin` sözlüğü (`native_widget`) değil.
+/// Ayrışmanın kendisi WP-373'nin kök nedeniydi; sözleşme kapanı
+/// `timer_v2_origin_contract_test.dart` içindedir.
 Map<String, Object?> _command({String accountId = 'account-a'}) => {
   'kind': 'global_timer_command',
-  'schema_version': 2,
+  'schema_version': TimerV2CommandEnvelope.schemaVersion,
   'command_id': 'command-1',
   'account_id': accountId,
   'installation_id': 'installation-1',
   'action': 'start',
   'client_occurred_at': '2026-07-26T14:51:00.000Z',
-  'origin': 'native_widget',
+  'origin': 'widget',
 };
 
 void main() {
@@ -85,7 +89,7 @@ void main() {
     );
 
     test(
-      'native producer keeps V2 in the existing queue and excludes silent stop',
+      'native producer keeps V2 in the existing queue and covers every stop',
       () {
         final store = File(
           'android/app/src/main/kotlin/com/manilmax/online_study_room/timer/TimerStateStore.kt',
@@ -96,7 +100,6 @@ void main() {
 
         expect(store, contains('fun appendV2Command'));
         expect(store, contains('"kind", "global_timer_command"'));
-        expect(store, contains('"schema_version", 2'));
         expect(store, contains('KEY_PENDING_INTERVALS'));
         expect(service, contains('mode == "stopwatch" && phase == "work"'));
         expect(service, contains('startOrigin != "global_timer_mirror"'));
@@ -105,10 +108,15 @@ void main() {
           contains('appendV2Command(prefs(), "start", startOrigin)'),
         );
         expect(service, contains('action = "stop"'));
+        // 🔴 WP-373: bu testin eski hâli arızayı DOĞRU davranış diye kayda
+        // geçiriyordu ("excludes silent stop"). STOP_SILENT uygulama içi
+        // Durdur'dur; senkron sinyali üretmemesi tam olarak karşı cihazın
+        // durmamasının sebebiydi. Zarf artık `recordInterval`'dan bağımsızdır.
         expect(
           service,
           contains('ACTION_STOP_SILENT -> handleStop(recordInterval = false)'),
         );
+        expect(service, contains('KEY_V2_RUN_ID'));
       },
     );
   });

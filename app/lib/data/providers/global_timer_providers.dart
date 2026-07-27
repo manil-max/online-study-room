@@ -2,7 +2,9 @@ import 'dart:convert';
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../core/background/timer_foreground_service.dart';
 import '../../core/background/timer_v2_command_outbox.dart';
@@ -49,6 +51,12 @@ class GlobalTimerCoordinator {
     if (_ref.read(globalTimerModeProvider) == GlobalTimerMode.disabled) return;
     final user = _ref.read(authStateProvider).value;
     final prefs = _ref.read(sharedPreferencesProvider);
+    // WP-373: kuyruğun YAZICISI native'dir; Dart'ın SharedPreferences'ı ise
+    // bellekte önbelleklidir. `reload()` olmadan buradaki okuma, native az önce
+    // yazmış olsa bile ESKİ içeriği görür. WP-368'in "başlatma anında yayınla"
+    // düzeltmesi tam da bu yüzden fiilen no-op'tu; yayını yalnız broadcast
+    // yolundaki `_reconcileBackgroundTimer` (kendi `reload()`'u ile) kurtarıyordu.
+    await prefs.reload();
     final deviceId = prefs.getString(globalTimerDeviceIdKey)?.trim();
     if (user == null || deviceId == null || deviceId.isEmpty) return;
     final raw = prefs.getString(TimerForegroundService.pendingIntervalsKey);
@@ -62,7 +70,7 @@ class GlobalTimerCoordinator {
       final command = TimerV2CommandEnvelope.tryParse(item);
       if (command == null || command.accountId != user.id) continue;
       try {
-        await repo.applyCommand(
+        final snapshot = await repo.applyCommand(
           commandId: command.commandId,
           deviceId: deviceId,
           action: command.action,
@@ -72,6 +80,11 @@ class GlobalTimerCoordinator {
           payload: {'origin': command.origin},
         );
         completed.add(command.commandId);
+        // WP-373: sunucunun kabul ettiği koşu kimliğini native'e geri yaz.
+        // Durdurma zarfını native kurar ve `run_id` + `expected_run_revision`
+        // olmadan sunucu `stop_run_revision_required` atar; bu köprü olmadan
+        // durdurma sinyali hiçbir zaman üretilemez.
+        await _persistRunIdentity(prefs, snapshot);
       } catch (_) {
         // Runtime flag/RLS/ağ hatası legacy timer'ı veya kuyruktaki diğer kaydı bozmaz.
       }
@@ -90,6 +103,27 @@ class GlobalTimerCoordinator {
     await prefs.setString(
       TimerForegroundService.pendingIntervalsKey,
       jsonEncode(retained),
+    );
+  }
+
+  /// Sunucunun döndürdüğü koşu kimliğini native durdurma zarfı için saklar.
+  ///
+  /// Koşu artık çalışmıyorsa anahtarlar SİLİNİR: bayat bir kimlik, sonraki
+  /// durdurmada ölü bir koşuya `stale` stop göndermeye yol açardı.
+  static Future<void> _persistRunIdentity(
+    SharedPreferences prefs,
+    GlobalTimerSnapshot snapshot,
+  ) async {
+    final run = snapshot.run;
+    if (run == null || run.status != 'running') {
+      await prefs.remove(TimerV2CommandEnvelope.runIdKey);
+      await prefs.remove(TimerV2CommandEnvelope.runRevisionKey);
+      return;
+    }
+    await prefs.setString(TimerV2CommandEnvelope.runIdKey, run.id);
+    await prefs.setString(
+      TimerV2CommandEnvelope.runRevisionKey,
+      run.revision.toString(),
     );
   }
 
@@ -125,6 +159,49 @@ class GlobalTimerCoordinator {
       );
     } catch (_) {
       return null;
+    }
+  }
+
+  /// WP-373: çalışan koşunun sunucudaki kirasını tazeler.
+  ///
+  /// Kira 150 sn'dir (`0082:296`) ve **hiç kimse yenilemiyordu**; süpürücü de
+  /// hiçbir cron'a bağlı değildi. İkisi birlikte şu anlama geliyordu: koşu
+  /// sonsuza dek `running` kalır, karşı cihaz ölü bir koşuyu aynalar. Artık
+  /// sahip cihaz kirayı tazeler, süpürücü de ölen cihazın koşusunu kapatır
+  /// (`0089_global_timer_lease_sweeper.sql`).
+  ///
+  /// Yalnız koşunun SAHİBİ cihaz çağırır; ayna cihazın kira üzerinde söz hakkı
+  /// yoktur ([TimerV2CommandEnvelope.runIdKey] onda yazılı değildir).
+  Future<void> heartbeat() async {
+    if (_ref.read(globalTimerModeProvider) !=
+        GlobalTimerMode.foregroundMirror) {
+      return;
+    }
+    final prefs = _ref.read(sharedPreferencesProvider);
+    final deviceId = prefs.getString(globalTimerDeviceIdKey)?.trim();
+    final user = _ref.read(authStateProvider).value;
+    final runId = prefs.getString(TimerV2CommandEnvelope.runIdKey)?.trim();
+    if (user == null ||
+        deviceId == null ||
+        deviceId.isEmpty ||
+        runId == null ||
+        runId.isEmpty) {
+      return;
+    }
+    try {
+      final snapshot = await _ref
+          .read(globalTimerRepositoryProvider)
+          .applyCommand(
+            commandId: const Uuid().v4(),
+            deviceId: deviceId,
+            action: 'heartbeat',
+            runId: runId,
+            clientOccurredAt: DateTime.now().toUtc(),
+          );
+      await _persistRunIdentity(prefs, snapshot);
+    } catch (_) {
+      // Koşu sunucuda kapanmışsa `global_timer_run_not_active` gelir; kira
+      // yenilemek zaten anlamsızdır ve sıradaki reconcile durumu düzeltir.
     }
   }
 
