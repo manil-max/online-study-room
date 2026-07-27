@@ -1450,7 +1450,9 @@ WP-348 (migration + Başarımlar primary IA)
 
 #### WP-360: Kamp ateşi 2. revizyon — mesafe, gökyüzü, zemin, 8 kişi 🔥
 - **Program/Faz:** Faz F3 · Kamp ateşi · Kaynak: **V49-3**
-- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** **WP-356** (aynı dosyalar — seri)
+- **Ajan:** — · **Durum:** [x] **YERİNE GEÇİLDİ → WP-377** (2026-07-28). Sahip
+  parametrik önizlemeden halka `1.50` ve gökyüzü `85 px` kırpma seçti; kart
+  tarihsel referans olarak duruyor.
 - **Problem:** WP-350 sonrası sahne daha iyi ama bitmedi. Sahibin dört maddesi:
   (1) telefonda figürler ateşten **birazcık daha** uzaklaşsın (küçük artış,
   abartılmasın), (2) gökyüzü çok uzun ve boş — üstten kırpılsın, kart da kısalsın,

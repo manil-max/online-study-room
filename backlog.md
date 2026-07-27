@@ -9,7 +9,10 @@
 
 ## 🔴 Yüksek Öncelik
 
-- [ ] **v51 stable — sahip cihaz geri bildirimi (2026-07-27, ham not; WP'ye bölünmedi)**
+- [x] **v51 stable — sahip cihaz geri bildirimi (2026-07-27) — DÖRDÜ DE KAPANDI**
+  (V51-1 → WP-367 · V51-2 → WP-368/370/371 ve nihayet **WP-373** · V51-3 ve
+  V51-4 → **WP-374**. Ham notlar ve kök neden analizleri aşağıda kaynak olarak
+  duruyor.)
   - 🟢 **Önce ne DÜZELDİ (sahip cihazda doğruladı):** Bir cihazda sayaç başlatılınca
     kullanıcı artık **hem kendi cihazında hem diğer cihazında hem de başka
     kullanıcılarda** "aktif çalışanlar" listesinde ve kamp ateşinde görünüyor.
@@ -193,7 +196,10 @@
 
 ## 🟡 Orta / Kalan uçlar
 
-- [~] **l10n hijyeni ve audit kapısı — WP-335**
+- [x] **l10n hijyeni ve audit kapısı — WP-335** (2026-07-28'de doğrulandı:
+  `scripts/l10n_audit.py` ve `scripts/l10n_android_audit.py` ikisi de **OK** —
+  1364 Flutter anahtarı EN/TR eşli, sabit kullanıcı metni yok; 66 Android
+  anahtarı eşli. Madde bayattı.)
   - WP-295 parametrik önizlemesindeki kullanıcı metinleri EN/TR ARB'ye taşınacak; dört katalog eşliği korunacak.
   - Kullanıcıya çıkmayan `ArgumentError` invariantları yalnız dosya-bazlı, gerekçeli audit muafiyetine alınacak; denetim genel olarak gevşetilmeyecek.
 

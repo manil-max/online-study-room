@@ -3,6 +3,66 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.54",
+      "buildNumber": 54,
+      "channel": "stable",
+      "date": "2026-07-28",
+      "title": "v54: çoklu cihaz sayaç senkronu gerçekten çalışıyor",
+      "highlights": [
+        "Bir cihazda başlattığın çalışma diğer cihazda da başlıyor; birinden durdurmak diğerini durduruyor.",
+        "Kamp ateşindeki gece/gündüz artık mevsime göre kayıyor — yazın akşam 19:30'da ortalık kararmıyor.",
+        "Kamp ateşi sahnesi derli toplu: gökyüzü kısaldı, halka genişledi, kalabalıkta isimler üst üste binmiyor.",
+        "Yeni bir duyuru geldiğinde Profil sekmesinde ve Ayarlar satırında da işaret çıkıyor.",
+        "Tanıtım turu artık gerçekten gösterdiği şeyi işaret ediyor."
+      ],
+      "fixes": [
+        "🔴 Sayaç senkronu v52 ve v53'te de çalışmıyordu ve o sürümlerin notları bunu yanlış vaat etti. Gerçek sebep bulundu: uygulama sunucunun tanımadığı bir kaynak adı gönderiyordu, bu yüzden WP-341'den beri tek bir başlatma komutu bile sunucuya ulaşmamıştı. Hata sessizce yutulduğu için hiçbir yerde iz bırakmıyordu. Ayrıca uygulama içindeki Durdur düğmesi hiç sinyal üretmiyordu.",
+        "Kamp ateşinin gündüz/gece saatleri yıl boyu sabitti ve gerçek güneşten 2,5 saate kadar sapıyordu; artık güne göre hesaplanıyor.",
+        "Marşmelov çubuğu genişleyen halkada ateşe yetişemiyordu; boyu halkayla birlikte ayarlanıyor.",
+        "Geri bildirim yazışmasında liste en eski mesajda takılı kalıyordu; artık açılışta ve her yeni mesajda sona kayıyor.",
+        "Yönetici tarafında 'İç Notlar' bir sohbet gibi görünüyordu; kullanıcıya yazma yolu ayrıldı ve öne alındı.",
+        "Tanıtım turu hedefi ekran dışındaysa boş bir yeri işaret ediyordu; artık hedefe kaydırıyor ve bulunamayan adımı atlıyor.",
+        "Başarımlar ekranındaki büyük birincil grup bloğu sağ üstteki tek ikona taşındı; seçim yokken uyarı üç yerde birden görünüyor."
+      ],
+      "notes": [
+        "Bu sürüm migration taşır; production şeması 0088'den 0089'a taşındı.",
+        "🔴 Eşitleme için her iki cihazda da v54 kurulu olmalı ve bildirim kaydı yapılmış olmalı. Eski sürümdeki cihaz senkron olmaz.",
+        "Sayaç senkronu şimdilik Android ve kronometre modunu kapsar; Pomodoro, geri sayım ve Windows dahil değildir.",
+        "Cihaz uykudayken bildirim/widget üzerinde sayaç kendiliğinden başlamaz; uygulama açılınca durum sunucudan eşitlenir.",
+        "Ayna cihazdan durdurmak koşuyu yerel olarak durdurur; koşunun sahibi başlatan cihazdır.",
+        "Kamp ateşi gündüz/gece hesabı konum izni istemez, bu yüzden Türkiye enlemine göre yaklaşıktır.",
+        "Tablet yatay yerleşimi bu sürümde ele alınmadı.",
+        "Masaüstünde 6 haneli kod ile şifre sıfırlama hâlâ çalışmıyor."
+      ],
+      "titleEn": "v54: multi-device timer sync actually works now",
+      "highlightsEn": [
+        "A run started on one device now starts on the other; stopping from either one stops both.",
+        "Campfire day and night now follow the season - it no longer goes dark at 19:30 in summer.",
+        "The campfire scene is tighter: shorter sky, wider ring, no overlapping names in a crowd.",
+        "A new announcement now shows a mark on the Profile tab and the Settings row too.",
+        "The intro tour now actually points at what it is describing."
+      ],
+      "fixesEn": [
+        "Timer sync was broken in v52 and v53 as well, and those release notes promised otherwise. The real cause: the app sent an origin value the server does not accept, so not one start command had reached the server since WP-341. The error was swallowed silently, leaving no trace anywhere. The in-app Stop button also never emitted a signal.",
+        "Campfire daylight hours were fixed all year and drifted up to 2.5 hours from the real sun; they are now computed per day.",
+        "The marshmallow stick could not reach the fire once the ring widened; its length now scales with the ring.",
+        "Feedback conversations stayed stuck at the oldest message; the view now jumps to the end on open and after each new message.",
+        "On the admin side, 'Internal Notes' looked like a chat; the path that writes to the user is now separate and comes first.",
+        "The intro tour pointed at empty space when its target was off-screen; it now scrolls to the target and skips steps whose target is missing.",
+        "The large primary-group block on the achievements screen moved to a single icon in the top right; when no group is selected the warning shows in three places."
+      ],
+      "notesEn": [
+        "This release ships migrations; the production schema moves from 0088 to 0089.",
+        "Sync requires v54 on both devices and a completed push registration. A device left on an older build will not sync.",
+        "Timer sync covers Android and stopwatch mode only; Pomodoro, countdown and Windows are not included.",
+        "While a device is asleep the timer does not start on its notification or widget; state is reconciled from the server when the app opens.",
+        "Stopping from a mirroring device stops the run locally; the originating device owns the run.",
+        "Campfire daylight needs no location permission, so it is an approximation tuned to Turkey's latitude.",
+        "Tablet landscape layout was not addressed in this release.",
+        "Password reset with a 6-digit code on desktop still does not work."
+      ]
+    },
+    {
       "versionName": "1.0.53",
       "buildNumber": 53,
       "channel": "stable",

@@ -4,6 +4,36 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [v54 / 1.0.54+54] - 2026-07-28
+
+> 🔴 **Sayaç eşitlemesi v52 ve v53'te de çalışmıyordu; o sürümlerin notları
+> bunu yanlış vaat etti.** Bu turda kök neden sonunda bulundu ve kanıtlandı:
+> uygulama, sunucunun tanımadığı bir "kaynak" adı gönderiyordu; bu yüzden
+> özellik ilk yazıldığından beri **tek bir başlatma komutu bile** sunucuya
+> ulaşmamıştı. Hata sessizce yutulduğu ve işlem geri sarıldığı için sunucuda
+> iz bile bırakmıyordu — aylardır görünmez kalmasının sebebi buydu. Ayrıca
+> uygulama içindeki Durdur düğmesi hiçbir zaman sinyal üretmiyordu. Production
+> şeması `0089`a taşındı.
+
+### Düzeltmeler
+- **Çoklu cihaz sayaç senkronu artık gerçekten çalışıyor.** İstemci ile sunucunun kaynak sözlüğü ayrışmıştı ve aradaki çeviri kodda hiç yazılmamıştı; her başlatma komutu sunucu tarafından reddediliyordu. Çeviri eklendi, uygulama içi Durdur da artık sinyal üretiyor ve koşu kimliğini taşıyor. Üç ucu (native üretici, uygulama sabiti, sunucu listesi) birbirine karşı ölçen bir test eklendi ki bir daha sessizce ayrışmasın.
+- **Kamp ateşinde gündüz/gece saatleri düzeldi.** Gündoğumu ve günbatımı yıl boyu sabitti (06:30 / 18:30) ve gerçek güneşten **2,5 saate kadar** sapıyordu: yazın ortalık aydınlıkken sahne geceye geçiyor, kışın güneş battıktan sonra bir saat daha gündüz kalıyordu. Artık her gün için hesaplanıyor; sapma ±13 dakika.
+- **Kamp ateşi kompozisyonu.** Gökyüzü üstten kırpıldı, kart kısaldı; oturma halkası genişledi, böylece kalabalıkta isimler üst üste binmiyor. Marşmelov çubuğu genişleyen halkada ateşe yetişemiyordu, boyu halkayla birlikte ayarlanıyor.
+- **Yeni duyuru artık fark ediliyor.** İşaret yalnız Ayarlar'ın *içindeki* Duyurular satırında duruyordu; Ayarlar'ı açmayan kullanıcı duyuruyu hiç görmüyordu. Profil sekmesinde ve Profil'deki Ayarlar satırında da görünüyor.
+- **Geri bildirim yazışması.** Liste en eski mesajda takılı kalıyordu; artık açılışta ve her yeni mesajda sona kayıyor. Yönetici tarafında "İç Notlar" bir sohbet gibi göründüğü için kullanıcıya yazıldığı sanılıyordu; kullanıcıya giden yol ayrıldı, öne alındı ve iç notlar kapalı bir yüzey olduğunu açıkça yazıyor.
+- **Tanıtım turu onarıldı.** Hedef ekran dışındaysa tur boş bir yeri işaret ediyordu; artık hedefi görünür alana kaydırıyor, kaydırdıkça takip ediyor ve hedefi bulunamayan adımı sessizce ortalamak yerine atlıyor.
+- **Başarımlar ekranı sadeleşti.** Büyük birincil grup bloğu sağ üstteki tek ikona taşındı. Grup seçilmemişse uyarı üç yerde birden görünüyor ve seçim yapılınca üçü de kayboluyor.
+
+### Notlar
+- Bu sürüm migration taşır; production şeması `0088` → `0089` (ölen cihazın koşusunu kapatan süpürücü). Şema değişmedi, yalnız dakikalık bir zamanlanmış görev eklendi.
+- 🔴 Eşitleme için **her iki cihazda da v54** ve bildirim kaydının yapılmış olması gerekir. Eski sürümde kalan cihaz senkron olmaz.
+- Sayaç senkronu şimdilik **Android** ve **kronometre** modunu kapsar; Pomodoro, geri sayım ve Windows dahil değildir.
+- Cihaz uykudayken bildirim/widget üzerinde sayaç kendiliğinden başlamaz; uygulama açılınca durum sunucudan eşitlenir.
+- Ayna cihazdan durdurmak koşuyu yerel olarak durdurur; koşunun sahibi başlatan cihazdır.
+- Kamp ateşi gündüz/gece hesabı **konum izni istemez**, bu yüzden Türkiye enlemine göre yaklaşıktır.
+- Tablet yatay yerleşimi bu sürümde ele alınmadı (bilinçli).
+- Masaüstünde 6 haneli kod ile şifre sıfırlama hâlâ çalışmıyor.
+
 ## [v53 / 1.0.53+53] - 2026-07-27
 
 > **Sayaç eşitlemesi tamamlandı.** v52 komutun cihazdan sunucuya gitmesini
