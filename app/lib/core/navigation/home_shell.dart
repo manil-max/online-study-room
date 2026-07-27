@@ -21,6 +21,7 @@ import '../../features/profile/profile_screen.dart';
 import '../../features/profile/widgets/reward_toast.dart';
 import '../../features/stats/stats_screen.dart';
 import '../desktop/desktop_window.dart';
+import '../theme/warning_tokens.dart';
 import 'nav_index.dart';
 
 export 'nav_index.dart';
@@ -45,12 +46,17 @@ class HomeShell extends ConsumerWidget {
     required IconData icon,
     required int pendingRewardCount,
     required bool missingPrimaryGroup,
+    required Color warningColor,
   }) {
     if (pendingRewardCount > 0) {
       return Badge.count(count: pendingRewardCount, child: Icon(icon));
     }
+    // WP-358: nokta varsayılan olarak `colorScheme.error`den besleniyordu ve
+    // kırmızı ağırlıklı temada sekme zeminine gömülüyordu (V49-2). Renk artık
+    // zeminden türetiliyor; bekleyen ödül sayısı rozeti kendi rengini korur.
     return Badge(
       isLabelVisible: missingPrimaryGroup,
+      backgroundColor: warningColor,
       child: Icon(icon),
     );
   }
@@ -71,6 +77,10 @@ class HomeShell extends ConsumerWidget {
     // Profil→Başarımlar altındaki kartta olduğu için sekmede nokta gösterilir;
     // yoksa kullanıcı kartı hiç açmadan kaybı fark etmez.
     final missingPrimaryGroup = ref.watch(primaryGroupSelectionMissingProvider);
+    // WP-358: uyarı noktası tema paletinden değil, sekme zemininden türetilir.
+    final warningDotColor = warningColorsOn(
+      Theme.of(context).colorScheme.surface,
+    ).container;
     final selfId = ref.watch(authStateProvider).asData?.value?.id;
     final crownRank = selfId == null
         ? null
@@ -173,11 +183,13 @@ class HomeShell extends ConsumerWidget {
                 icon: Icons.person_outline,
                 pendingRewardCount: pendingRewardCount,
                 missingPrimaryGroup: missingPrimaryGroup,
+                warningColor: warningDotColor,
               ),
               selectedIcon: _profileTabIcon(
                 icon: Icons.person,
                 pendingRewardCount: pendingRewardCount,
                 missingPrimaryGroup: missingPrimaryGroup,
+                warningColor: warningDotColor,
               ),
               label: AppLocalizations.of(context).profileProfil,
             ),

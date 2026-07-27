@@ -5,6 +5,7 @@ import '../../../data/models/study_group.dart';
 import '../../../data/providers/auth_providers.dart';
 import '../../../data/providers/group_providers.dart';
 import '../../../data/repositories/group_repository.dart';
+import '../../../core/theme/warning_tokens.dart';
 import '../../../l10n/app_localizations.dart';
 
 /// The only mutation surface for the account-wide primary group preference.
@@ -196,15 +197,20 @@ class _MissingPrimaryGroupWarning extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
+    // WP-358: renk paletten değil, üstünde durduğu yüzeyden türetilir.
+    // `errorContainer` kullanmak kırmızı ağırlıklı temada uyarıyı görünmez
+    // yapıyordu (V49-2). Uyarı ayrıca renge tek başına yaslanmaz: ikon + metin
+    // taşır, yani renk körlüğünde de okunur.
+    final warning = warningColorsOn(theme.colorScheme.surface);
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
       child: Container(
         key: const ValueKey('primary-group-missing-warning'),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: scheme.errorContainer,
+          color: warning.container,
           borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: warning.border),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -212,14 +218,14 @@ class _MissingPrimaryGroupWarning extends StatelessWidget {
             Icon(
               Icons.warning_amber_rounded,
               size: 20,
-              color: scheme.onErrorContainer,
+              color: warning.onContainer,
             ),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
                 AppLocalizations.of(context).primaryGroupNotSelected,
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: scheme.onErrorContainer,
+                  color: warning.onContainer,
                 ),
               ),
             ),
