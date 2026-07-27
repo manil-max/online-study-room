@@ -14,8 +14,11 @@ abstract final class CampfireAssets {
   static const emberSheet = '$base/ember_sheet.png';
 
   /// Z-order alttan üste (parçacıklar hariç).
+  ///
+  /// WP-356: `ground` bu listede **yoktur** — sahnenin kendi zemini varken
+  /// ayrıca koyu bir zemin lekesi çizmek kir izi gibi görünüyordu (V49-7).
+  /// Sabit ve dosya duruyor; yalnız çizilmiyor.
   static const stackOrder = <String>[
-    ground,
     glow,
     stones,
     wood,

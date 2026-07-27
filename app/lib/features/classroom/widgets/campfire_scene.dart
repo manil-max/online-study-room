@@ -376,21 +376,11 @@ class _SceneLayoutState extends State<_SceneLayout>
                 ),
               ),
 
-              // — Toprak açıklık —
-              Positioned.fill(
-                child: IgnorePointer(
-                  child: RepaintBoundary(
-                    child: CustomPaint(
-                      painter: ClearingPainter(
-                        cx: cx,
-                        cy: ringCy + ry * 0.35,
-                        rx: w * 0.30,
-                        ry: ry,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+              // WP-356: "Toprak açıklık" katmanı kaldırıldı (V49-7). Yeşil
+              // zeminin üstüne çizilen koyu kahve radyal elips, sahibin cihazda
+              // "ateşin altındaki gri efekt" diye bildirdiği lekenin kaynağıydı.
+              // Ateş artık doğrudan çimenin üstünde duruyor; taşların zemine
+              // oturması taş halkası + sıcak glow ile sağlanıyor.
 
               // — Arka üyeler (ateşin ARKASINDA) —
               for (final p in layer(true)) body(p),

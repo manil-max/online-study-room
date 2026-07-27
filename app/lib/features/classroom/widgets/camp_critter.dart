@@ -375,60 +375,6 @@ class GroundedForestPainter extends CustomPainter {
       oldDelegate.showTrees != showTrees;
 }
 
-/// Ateş etrafındaki toprak açıklık (hayvanların oturduğu zemin). Elips; ortası
-/// ateş ışığıyla sıcak, kenarları koyu — 45° bakış hissini pekiştirir.
-class ClearingPainter extends CustomPainter {
-  const ClearingPainter({
-    required this.cx,
-    required this.cy,
-    required this.rx,
-    required this.ry,
-  });
-
-  final double cx;
-  final double cy;
-  final double rx;
-  final double ry;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final rect = Rect.fromCenter(
-      center: Offset(cx, cy),
-      width: rx * 2.5,
-      height: ry * 2.5,
-    );
-    // Toprak zemin (sıcak merkez → koyu kenar).
-    canvas.drawOval(
-      rect,
-      Paint()
-        ..shader = RadialGradient(
-          colors: const [
-            Color(0xFF3A2E22),
-            Color(0xFF241C15),
-            Color(0x00120D0A),
-          ],
-          stops: const [0, 0.6, 1],
-        ).createShader(rect),
-    );
-    // Çok hafif aşınma halkası (patika izi — göze batmasın).
-    canvas.drawOval(
-      Rect.fromCenter(
-        center: Offset(cx, cy),
-        width: rx * 1.7,
-        height: ry * 1.7,
-      ),
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 6
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5)
-        ..color = const Color(0xFF4A3B2A).withValues(alpha: 0.14),
-    );
-  }
-
-  @override
-  bool shouldRepaint(ClearingPainter old) =>
-      old.cx != cx || old.cy != cy || old.rx != rx || old.ry != ry;
-}
 
 // ————————————————————————— Taşlı kamp ateşi —————————————————————————
 

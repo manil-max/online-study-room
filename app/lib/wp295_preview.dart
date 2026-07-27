@@ -182,18 +182,8 @@ class _PreviewScene extends StatelessWidget {
                     ),
                   ),
                 ),
-                Positioned.fill(
-                  child: RepaintBoundary(
-                    child: CustomPaint(
-                      painter: ClearingPainter(
-                        cx: cx,
-                        cy: ringCy + ry * 0.35,
-                        rx: w * 0.30,
-                        ry: ry,
-                      ),
-                    ),
-                  ),
-                ),
+                // WP-356: gerçek sahnede "Toprak açıklık" katmanı kaldırıldı
+                // (V49-7); önizleme uygulamayı yansıtsın diye burada da yok.
                 for (final placement in placements.where(
                   (item) => item.seat.y < 0,
                 ))

@@ -151,7 +151,12 @@ class _LayerStackState extends State<_LayerStack> {
     return Stack(
       fit: StackFit.expand,
       children: [
-        _png(CampfireAssets.ground, 1),
+        // WP-356: `ground.png` (koyu kahve-gri, bulanık elips) tam opaklıkla
+        // çizildiğinde sahnenin yeşil zemininin üstünde kir lekesi gibi
+        // duruyordu — sahip cihazda bunu bildirdi (V49-7). Katman artık
+        // çizilmiyor; taşların/odunun zemine oturması alttaki sahne zemini ve
+        // `glow` ile sağlanır. Asset ve `CampfireAssets.ground` sabiti repoda
+        // kalır (envanter sözleşmesi ve olası geri dönüş için).
         _png(CampfireAssets.glow, glowOp),
         _png(CampfireAssets.stones, 1),
         _png(CampfireAssets.wood, 1),
