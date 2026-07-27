@@ -464,6 +464,10 @@
   "@adminIcNotlar": {
     "description": "Admin user-facing text. Source: İç Notlar"
   },
+  "adminIcNotlarGizli": "Only admins see these notes. Use \"Write a reply\" to answer the user.",
+  "@adminIcNotlarGizli": {
+    "description": "Admin-only hint shown at the top of the internal notes dialog."
+  },
   "adminIslemBasarili": "Operation completed successfully.",
   "@adminIslemBasarili": {
     "description": "Admin user-facing text. Source: İşlem başarılı."

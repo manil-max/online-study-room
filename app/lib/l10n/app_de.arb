@@ -453,6 +453,7 @@
     "description": "Admin user-facing text. Source: İptal"
   },
   "adminIcNotlar": "Interne Notizen",
+  "adminIcNotlarGizli": "Diese Notizen sehen nur Admins. Nutze \"Antwort schreiben\", um dem Nutzer zu antworten.",
   "@adminIcNotlar": {
     "description": "Admin user-facing text. Source: İç Notlar"
   },

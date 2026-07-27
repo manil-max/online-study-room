@@ -69,7 +69,9 @@
 
 ### Claude Lane
 - **Durum:** [~] Aktif
-- **Faz/WP:** Faz F5 · **WP-373** — çoklu cihaz sayaç senkronu: istemci↔sunucu komut sözleşmesi
+- **Faz/WP:** Faz F5 · **WP-373 (kod tamam, staging uygulandı)** → birikmiş
+  düzeltme turu **WP-374 · WP-375 · WP-376** (sahip emri 2026-07-27: "sürüm
+  çıkarmadan önce birikmiş WP'leri de yap")
 - **Aşama:** Geliştiriliyor
 - **SAHİP yollar:** `app/android/app/src/main/kotlin/**/timer/**`,
   `app/lib/core/background/timer_v2_command_outbox.dart`,
@@ -2043,6 +2045,55 @@ Seri kilitler:
 - **Kabul:** analyze temiz · tam süit yeşil · local pgTAP replay yeşil ·
   düzeltme geri alınınca sözleşme testi kırmızı. **Cihaz kabulü sahipte:**
   iki cihazda da bu sürüm + staging/production apply şart.
+
+
+#### WP-374: Geri bildirim yazışması — sohbet düzeni ve yöneticinin kullanıcıya giden yolu 💬
+- **Durum:** [x] Kod/test tamam — cihaz kabulü bekliyor. Kaynak: **V51-3 + V51-4**
+- **SAHİP:** `app/lib/features/profile/feedback_tickets_screen.dart` ·
+  `app/lib/features/admin/tabs/admin_reports_tab.dart` ·
+  `app/lib/l10n/app_{en,tr,de,ar}.arb` ·
+  `app/test/features/feedback_conversation_wp374_test.dart`
+
+- 🔴 **backlog.md'deki V51-4 kök nedeni YANLIŞTI — koddan çürütüldü.**
+  Kart "admin panelinde yazışma ekranı hiç yok" diyordu. Oysa `Yanıt yaz`
+  eylemi **WP-317/318'den beri var** (`admin_reports_tab.dart:209`,
+  `showFeedbackTicketConversation`), sohbet diyaloğu admin-farkında yazılmış
+  (`feedback_tickets_screen.dart:176` `adminIsSuperAdminProvider`), RPC admin
+  rolünü `is_super_admin()`'den türetiyor ve RLS süper-admin'e tüm mesajları
+  açıyor (`0074:41-53`). Sunucu ve istemci tarafı eksiksizdi.
+- **Gerçek mekanizma:** bilet kartında iki eylem yan yanaydı — `İç Notlar` ve
+  `Yanıt yaz`. `İç Notlar` diyaloğu bir metin kutusu + gönder düğmesiyle **tıpkı
+  bir sohbet gibi** görünüyor ama `feedback_ticket_notes`'a yazıyor; o tablo
+  yalnız yöneticinindir. Yönetici oraya yazıp kendi notlarını okuyunca
+  "sadece kendi mesajlarım görünüyor" tablosu birebir oluşuyor. Bu bir RLS ya
+  da sorgu hatası değil, **ayırt edilemeyen iki yüzey**.
+- **V51-3 (sohbet sırası) gerçek ve düzeltildi.** Veri sırası zaten doğruydu
+  (`order('created_at')` artan), eksik olan sunumdu: diyalogda hiçbir
+  `ScrollController` yoktu, görünen pencere en eskide takılı kalıyordu — sahibin
+  "yeni mesaj üste ekleniyor" dediği görüntü tam olarak budur.
+
+- **Yapılan:**
+  - Yazışma diyaloğuna `ScrollController` + `_scrollToBottom()`: ilk yüklemede
+    animasyonsuz, yeni mesaj gönderilince animasyonlu sona kaydırma. Diyalog
+    hem kullanıcı hem yönetici tarafında **aynı** olduğu için tek düzeltme iki
+    yüzeyi birden kapatır.
+  - Yönetici bilet kartında `Yanıt yaz` **iç notların önüne** alındı ve
+    `primaryContainer` ile vurgulandı; ikonu `forum_outlined` oldu. `İç Notlar`
+    ikonu `lock_outline` ile kapalı bir yüzey olduğunu gösteriyor.
+  - İç not diyaloğunun başına yeni `adminIcNotlarGizli` metni eklendi:
+    "Bu notları yalnız yöneticiler görür. Kullanıcıya yazmak için Yanıt yaz
+    kullanın." Dört katalog (EN/TR/DE/AR) eşlendi.
+
+- **Kanıt:** `flutter analyze` **0 uyarı** · 4 yeni test + mevcut geri bildirim
+  ve admin testleri yeşil · **regresyon kapanı kanıtlandı:** `_scrollToBottom`
+  çağrısı kaldırılınca test kırmızıya döndü
+  (`Found 0 widgets with text "Mesaj 30"`), geri konunca yeşil.
+- **Veri/Migration etkisi:** Yok. Sunucu tarafı hiç değişmedi.
+- **Kabul:** 30 mesajlık yazışma açılınca **en yeni** balon görünür, en eski
+  görünmez · gönderilen mesaj görünür alanda kalır · yönetici kartında
+  `Yanıt yaz` iç notlardan önce · iç not diyaloğu gizliliğini yazar.
+- **Cihaz kabulü sahipte:** yönetici hesabıyla bir bilete `Yanıt yaz`'dan
+  yazıp kullanıcı hesabında görünmesini doğrula.
 
 
 ---

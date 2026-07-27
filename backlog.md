@@ -85,8 +85,21 @@
       okuduğundan onlar çalışıyor. Yani bu bir bozulma değil, **hiç yapılmamış
       bir ekran** — düzeltme değil yapım işi.
   - **Durum (2026-07-27, sahip emri):** V51-1 ve V51-2 → `progress.md` **Faz F5**
-    (WP-367 · WP-368 · WP-369/v52). **V51-3 ve V51-4 sahip kararıyla beklemede**
-    ("admin tarafı kalsın"); kök nedenleri yukarıda kayıtlı, karta bağlanmadı.
+    (WP-367 · WP-368 · WP-369/v52). V51-3 ve V51-4 bir süre beklemedeydi
+    ("admin tarafı kalsın"); sahip 2026-07-27'de birikmiş işlerin de yapılmasını
+    isteyince **WP-374**'e bağlandı ve kapandı.
+  - ✅ **V51-3 düzeltildi (WP-374).** Sohbet diyaloğunda hiç `ScrollController`
+    yoktu; görünen pencere en eskide takılı kalıyordu. Artık açılışta ve her yeni
+    mesajda sona kayar.
+  - 🔴 **V51-4'ün yukarıdaki kök nedeni YANLIŞTI — WP-374'te koddan
+    çürütüldü.** "Admin panelinde yazışma ekranı hiç yok" iddiası doğru değil:
+    `Yanıt yaz` eylemi WP-317/318'den beri `admin_reports_tab.dart`te duruyor ve
+    aynı admin-farkında sohbet diyaloğunu açıyor; RPC admin rolünü
+    `is_super_admin()`'den türetiyor, RLS süper-admin'e tüm mesajları açıyor.
+    Gerçek mekanizma: `İç Notlar` diyaloğu metin kutusu + gönder düğmesiyle bir
+    sohbet gibi görünüyor ama yöneticinin özel notlarına yazıyor — yönetici
+    oraya yazınca "sadece kendi mesajlarım" tablosu birebir oluşuyor. WP-374
+    iki yüzeyi ayırdı.
   - ✅ **V51-1 düzeltmesi production'da (2026-07-27).** `0086` üç ortamda da
     uygulandı (apply run `30288908244`, post-check head `0087`). Sunucu taraflı
     olduğu için **v51 istemcisinde de geçerli** — sahip güncelleme beklemeden

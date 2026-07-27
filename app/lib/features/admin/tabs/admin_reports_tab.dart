@@ -173,8 +173,27 @@ class _TicketCard extends ConsumerWidget {
                     },
                   ),
                 ActionChip(
+                  key: Key('feedback-reply-${ticket.id}'),
                   visualDensity: VisualDensity.compact,
-                  avatar: const Icon(Icons.note_alt_outlined, size: 18),
+                  backgroundColor: theme.colorScheme.primaryContainer,
+                  avatar: Icon(
+                    Icons.forum_outlined,
+                    size: 18,
+                    color: theme.colorScheme.onPrimaryContainer,
+                  ),
+                  label: Text(
+                    l10n.feedbackWriteReply,
+                    style: TextStyle(color: theme.colorScheme.onPrimaryContainer),
+                  ),
+                  onPressed: () => showFeedbackTicketConversation(
+                    context: context,
+                    ticket: ticket,
+                  ),
+                ),
+                ActionChip(
+                  key: Key('feedback-notes-${ticket.id}'),
+                  visualDensity: VisualDensity.compact,
+                  avatar: const Icon(Icons.lock_outline, size: 18),
                   label: Text(l10n.adminIcNotlar),
                   onPressed: () => _showNotesDialog(context, ref),
                 ),
@@ -200,16 +219,6 @@ class _TicketCard extends ConsumerWidget {
                     ref.invalidate(adminFeedbackTicketsProvider);
                     ref.invalidate(adminArchivedFeedbackTicketsProvider);
                   },
-                ),
-                ActionChip(
-                  key: Key('feedback-reply-${ticket.id}'),
-                  visualDensity: VisualDensity.compact,
-                  avatar: const Icon(Icons.reply_outlined, size: 18),
-                  label: Text(l10n.feedbackWriteReply),
-                  onPressed: () => showFeedbackTicketConversation(
-                    context: context,
-                    ticket: ticket,
-                  ),
                 ),
               ],
             ),
@@ -481,6 +490,15 @@ class _TicketNotesDialogState extends ConsumerState<_TicketNotesDialog> {
                   onPressed: () => Navigator.of(context).pop(),
                 ),
               ],
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 4, bottom: 4),
+              child: Text(
+                l10n.adminIcNotlarGizli,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
             ),
             const Divider(),
             if (_loading)

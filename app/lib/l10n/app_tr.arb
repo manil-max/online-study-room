@@ -95,6 +95,7 @@
   "adminInceleniyor": "İnceleniyor",
   "adminIptal": "İptal",
   "adminIcNotlar": "İç Notlar",
+  "adminIcNotlarGizli": "Bu notları yalnız yöneticiler görür. Kullanıcıya yazmak için \"Yanıt yaz\" kullanın.",
   "adminIslemBasarili": "İşlem başarılı.",
   "adminSifreSifirla": "Şifre Sıfırla",
   "adminSifreSifirlamaEpostasiGonder": "Şifre Sıfırlama E-postası Gönder",

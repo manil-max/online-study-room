@@ -453,6 +453,7 @@
     "description": "Admin user-facing text. Source: İptal"
   },
   "adminIcNotlar": "ملاحظات داخلية",
+  "adminIcNotlarGizli": "هذه الملاحظات يراها المشرفون فقط. استخدم \"كتابة رد\" للرد على المستخدم.",
   "@adminIcNotlar": {
     "description": "Admin user-facing text. Source: İç Notlar"
   },

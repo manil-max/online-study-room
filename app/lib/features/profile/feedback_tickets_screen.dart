@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -82,6 +84,10 @@ class _FeedbackTicketConversationDialog extends ConsumerStatefulWidget {
 class _FeedbackTicketConversationDialogState
     extends ConsumerState<_FeedbackTicketConversationDialog> {
   final _controller = TextEditingController();
+  // WP-374 (V51-3): sohbet dizilimi -- yeni mesaj altta, gorunum sona kayar.
+  // Liste sirasi zaten artan (`order('created_at')`); eksik olan yalnizca
+  // gorunen pencerenin en eskide takili kalmasiydi.
+  final _scrollController = ScrollController();
   List<FeedbackTicketMessage>? _messages;
   bool _loading = true;
   bool _sending = false;
@@ -95,7 +101,28 @@ class _FeedbackTicketConversationDialogState
   @override
   void dispose() {
     _controller.dispose();
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  /// Listeyi sona kaydirir. Ilk yuklemede animasyonsuz (kullanici zaten sonu
+  /// gormeli), yeni mesaj gonderilince animasyonlu.
+  void _scrollToBottom({required bool animated}) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_scrollController.hasClients) return;
+      final target = _scrollController.position.maxScrollExtent;
+      if (animated) {
+        unawaited(
+          _scrollController.animateTo(
+            target,
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOut,
+          ),
+        );
+      } else {
+        _scrollController.jumpTo(target);
+      }
+    });
   }
 
   Future<void> _load() async {
@@ -117,6 +144,7 @@ class _FeedbackTicketConversationDialogState
         _messages = messages;
         _loading = false;
       });
+      _scrollToBottom(animated: false);
     } on AdminException {
       if (!mounted) return;
       setState(() => _loading = false);
@@ -140,6 +168,7 @@ class _FeedbackTicketConversationDialogState
       ref.invalidate(myFeedbackTicketsProvider);
       ref.invalidate(adminFeedbackTicketsProvider);
       await _load();
+      _scrollToBottom(animated: true);
     } on AdminException {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -193,6 +222,7 @@ class _FeedbackTicketConversationDialogState
                   : _messages == null || _messages!.isEmpty
                   ? Center(child: Text(l10n.feedbackNoReplies))
                   : ListView.separated(
+                      controller: _scrollController,
                       itemCount: _messages!.length,
                       separatorBuilder: (_, _) => const SizedBox(height: 8),
                       itemBuilder: (context, index) {
