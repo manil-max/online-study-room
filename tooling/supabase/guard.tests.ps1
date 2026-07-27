@@ -25,16 +25,16 @@ $productionRef = 'bbbbbbbbbbbbbbbbbbbb'
 Assert-Equal (Get-LocalMigrationHead -RepoRoot $repoRoot) '0089' 'local migration head'
 Assert-Equal ((Get-DeployContract -RepoRoot $repoRoot).local_migration_head) '0089' 'contract migration head'
 $contract = Get-DeployContract -RepoRoot $repoRoot
-# WP-373: local head 0089'a ilerledi (lease sweeper cron'u). Staging 0089'u
-# uyguladı (run 30303743005). Production apply penceresi sahip yetkisiyle
-# AÇIK; apply biter bitmez kapı yeniden kilitlenir ve bu iddia $false'a döner.
-# 🔴 Kontrat, bu dosya ve release-preflight.tests.ps1 birlikte güncellenir —
-# üçünden biri unutulursa CI tam buradan kırmızı düşer.
+# WP-373: 0089 (lease sweeper cron'u) üç ortamda da uygulandı — staging run
+# 30303743005, production run 30307084863, ikisinde de post-check head 0089.
+# Production kapısı politika gereği yeniden HOLD'a alındı.
+# 🔴 Head ve kapı durumu ÜÇ yerde pinli: kontrat, bu dosya ve
+# release-preflight.tests.ps1. Biri unutulursa CI tam buradan kırmızı düşer.
 Assert-Equal $contract.staging.migration_head '0089' 'staging migration head: WP-373 sirada'
 Assert-Equal ([bool]$contract.staging.deploy_enabled) $true 'staging deploy enabled'
 Assert-Equal ([bool]$contract.staging.release_enabled) $true 'staging release enabled'
 Assert-Equal $contract.production.migration_head '0089' 'production hedef head 0089 (WP-373 lease sweeper)'
-Assert-Equal ([bool]$contract.production.deploy_enabled) $true 'production deploy penceresi WP-373/0089 apply icin acik'
+Assert-Equal ([bool]$contract.production.deploy_enabled) $false 'production deploy varsayilan HOLD'
 Assert-Equal ([bool]$contract.production.release_enabled) $false 'production release defaults to HOLD'
 
 $databaseWorkflow = Get-Content -LiteralPath (Join-Path $repoRoot '.github\workflows\database-gates.yml') -Raw -Encoding UTF8

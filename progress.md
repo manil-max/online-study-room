@@ -18,8 +18,17 @@
 
 ## Proje Gerçekleri
 
-- **Migration gerçeği (2026-07-27, WP-370 sonrası):** repo/local **`0088`** ·
-  staging **`0088`** · production **`0088`**. `0088` (V2 start/stop artık
+- **Migration gerçeği (2026-07-28, WP-373 sonrası):** repo/local **`0089`** ·
+  staging **`0089`** · production **`0089`**. `0089` yalnız `0082`'de tanımlanıp
+  hiçbir cron'a bağlanmamış olan `expire_global_timer_v2_leases(200)` süpürücüsünü
+  dakikalık pg_cron job'ına bağlar; tablo/kolon/indeks/politika/grant değişmez,
+  satır eklenmez, geri alma tek `cron.unschedule`'dır. Sırayla staging'e
+  (run `30303743005`) ve production'a (run `30307084863`) uygulandı; ikisinde de
+  post-check head `0089` bildirdi. Production kapısı apply biter bitmez yeniden
+  **HOLD**'a alındı. 🔴 **Asıl düzeltme istemcidedir** — çoklu cihaz senkronu için
+  iki cihazda da yeni sürüm şart; `0089` yalnız çöken cihazın koşusunu kapatan
+  güvenlik ağıdır.
+- **Önceki migration gerçeği (2026-07-27, WP-370):** üç ortam da **`0088`**. `0088` (V2 start/stop artık
   origin cihazı dışlayan timer-sync outbox olayı üretir; timer-sync rollout
   bayrağı açık) sırayla staging'e (run `30296764464`) ve production'a
   (run `30297435093`) uygulandı; ikisinde de post-check head `0088` bildirdi.
@@ -72,7 +81,7 @@
 - **Faz/WP:** Faz F5 · **WP-373 (kod tamam, staging uygulandı)** → birikmiş
   düzeltme turu **WP-374 · WP-375 · WP-376** (sahip emri 2026-07-27: "sürüm
   çıkarmadan önce birikmiş WP'leri de yap")
-- **Aşama:** Geliştiriliyor
+- **Aşama:** Kod tamam; `0089` üç ortamda uygulandı — **sürüm sahip onayı bekliyor**
 - **SAHİP yollar:** `app/android/app/src/main/kotlin/**/timer/**`,
   `app/lib/core/background/timer_v2_command_outbox.dart`,
   `app/lib/data/providers/global_timer_providers.dart`,
