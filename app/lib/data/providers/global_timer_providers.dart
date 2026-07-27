@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/background/timer_foreground_service.dart';
 import '../../core/background/timer_v2_command_outbox.dart';
+import '../../core/config/rollout_config.dart';
 import '../../core/config/supabase_config.dart';
 import '../../core/prefs/app_prefs.dart';
 import '../models/global_timer.dart';
@@ -18,8 +19,10 @@ const globalTimerDeviceIdKey = 'global_timer_v2_device_id';
 
 enum GlobalTimerMode { disabled, shadow, foregroundMirror }
 
+/// WP-365: kademe artık sabit kod değil, tek rollout yapılandırma noktasından
+/// gelir. Presence kademesinden **bağımsızdır**: biri kapatılsa diğeri çalışır.
 final globalTimerModeProvider = Provider<GlobalTimerMode>(
-  (_) => GlobalTimerMode.disabled,
+  (_) => RolloutConfig.globalTimerMode,
 );
 final globalTimerRepositoryProvider = Provider<GlobalTimerRepository>(
   (_) => SupabaseConfig.isConfigured

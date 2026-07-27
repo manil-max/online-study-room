@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide Presence;
 
+import '../../core/config/rollout_config.dart';
 import '../../core/config/supabase_config.dart';
 import '../models/presence.dart';
 import '../repositories/offline/offline_first_presence_repository.dart';
@@ -12,13 +13,13 @@ import '../repositories/supabase/supabase_presence_repository.dart';
 import 'offline_providers.dart';
 import 'group_providers.dart';
 
-/// Staging/cihaz kabulü tamamlanana kadar legacy fallback varsayılandır.
-///
-/// [PresenceProjectionMode.shadow] iki kaynaktan okuyup server-derived yazımı
-/// gözlemler; [projection] rollout'ta açık read switch'tir. Provider override
-/// edilebildiği için kill switch uygulamayı veya timer sıcak yolunu değiştirmez.
+/// Presence kademesi artık **sabit kod değil**, tek bir rollout yapılandırma
+/// noktasından gelir (WP-365). [PresenceProjectionMode.shadow] iki kaynaktan
+/// okuyup server-derived yazımı da yapar; [PresenceProjectionMode.projection]
+/// tam geçiştir. Provider override edilebildiği için testler ve kill switch
+/// uygulamayı veya timer sıcak yolunu değiştirmeden kademe değiştirebilir.
 final presenceProjectionModeProvider = Provider<PresenceProjectionMode>(
-  (ref) => PresenceProjectionMode.legacy,
+  (ref) => RolloutConfig.presenceMode,
 );
 
 SupabaseClient? _supabaseClientOrNull() {
