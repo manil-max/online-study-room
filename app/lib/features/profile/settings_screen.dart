@@ -13,6 +13,7 @@ import '../../data/providers/notification_providers.dart';
 import '../admin/admin_screen.dart';
 import '../desktop/desktop_surface.dart';
 import '../notifications/announcements_screen.dart';
+import 'widgets/unread_announcement_dot.dart';
 import '../notifications/notification_permissions_screen.dart';
 import '../safety/blocked_users_screen.dart';
 import '../updater/release_notes_screen.dart';
@@ -175,7 +176,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           if (unreadAnnouncements > 0) ...[
-                            _UnreadDot(
+                            UnreadAnnouncementDot(
                               key: const Key('announcements-unread-dot'),
                               count: unreadAnnouncements,
                             ),
@@ -341,29 +342,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     return Scaffold(
       appBar: AppBar(title: Text(l10n.profileAyarlar)),
       body: list,
-    );
-  }
-}
-
-class _UnreadDot extends StatelessWidget {
-  const _UnreadDot({super.key, required this.count});
-
-  final int count;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Semantics(
-      label: AppLocalizations.of(context).notificationsDuyurular,
-      value: '$count',
-      child: Container(
-        width: 10,
-        height: 10,
-        decoration: BoxDecoration(
-          color: scheme.primary,
-          shape: BoxShape.circle,
-        ),
-      ),
     );
   }
 }

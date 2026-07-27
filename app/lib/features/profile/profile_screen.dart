@@ -16,6 +16,8 @@ import '../tours/app_tours.dart';
 import 'session_history_screen.dart';
 import 'settings_screen.dart';
 import 'widgets/gamification_card.dart';
+import '../../data/providers/notification_providers.dart';
+import 'widgets/unread_announcement_dot.dart';
 
 /// Profil sekmesi: foto, görünen ad, ayarlar. Grup yönetimi → Gruplar sekmesi.
 /// Bkz. project.md §3.2.
@@ -54,6 +56,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     });
     final theme = Theme.of(context);
     final profile = ref.watch(authStateProvider).value;
+    final unreadAnnouncements = ref.watch(unreadAnnouncementCountProvider);
 
     // Windows: içerik okuma genişliğinde ortalanır (full-bleed mobil liste değil).
     final page = Scaffold(
@@ -171,7 +174,22 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             context,
                           ).profileGorunumAnaSayfaSayac,
                         ),
-                        trailing: Icon(Icons.chevron_right),
+                        // WP-378: duyuru zincirinin orta halkası. Nokta
+                        // yalnız Ayarlar'ın **içinde** durduğu sürece kullanıcı
+                        // yeni duyuruyu ancak oraya girince fark ediyordu.
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (unreadAnnouncements > 0) ...[
+                              UnreadAnnouncementDot(
+                                key: const Key('settings-row-unread-dot'),
+                                count: unreadAnnouncements,
+                              ),
+                              const SizedBox(width: 8),
+                            ],
+                            const Icon(Icons.chevron_right),
+                          ],
+                        ),
                         onTap: () => showDesktopPanel<void>(
                           context: context,
                           builder: (_) => SettingsScreen(),

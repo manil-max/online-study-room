@@ -40,16 +40,27 @@ class HomeShell extends ConsumerWidget {
     ProfileScreen(),
   ];
 
-  /// Bekleyen ödül sayısı varsa sayı rozeti korunur; yoksa eksik birincil grup
-  /// için sayısız nokta gösterilir. İki sinyal aynı sekmede yarışmaz.
+  /// Bekleyen ödül sayısı varsa sayı rozeti korunur; yoksa sayısız nokta
+  /// gösterilir. İki sinyal aynı sekmede yarışmaz.
+  ///
+  /// WP-378: noktayı besleyen ikinci kaynak okunmamış duyurulardır. Öncesinde
+  /// duyuru işareti yalnız **Ayarlar'ın içindeki** satırda duruyordu; kullanıcı
+  /// oraya girmeden yeni duyuruyu fark etmiyordu.
   static Widget _profileTabIcon({
     required IconData icon,
     required int pendingRewardCount,
     required bool missingPrimaryGroup,
+    required int unreadAnnouncements,
     required Color warningColor,
+    required Color announcementColor,
   }) {
     if (pendingRewardCount > 0) {
       return Badge.count(count: pendingRewardCount, child: Icon(icon));
+    }
+    // Eksik birincil grup bir **kayıptır** (uyarı rengi); okunmamış duyuru
+    // yeni içeriktir. Kayıp önceliklidir, ikisi aynı anda çizilmez.
+    if (!missingPrimaryGroup && unreadAnnouncements > 0) {
+      return Badge(backgroundColor: announcementColor, child: Icon(icon));
     }
     // WP-358: nokta varsayılan olarak `colorScheme.error`den besleniyordu ve
     // kırmızı ağırlıklı temada sekme zeminine gömülüyordu (V49-2). Renk artık
@@ -77,6 +88,10 @@ class HomeShell extends ConsumerWidget {
     // Profil→Başarımlar altındaki kartta olduğu için sekmede nokta gösterilir;
     // yoksa kullanıcı kartı hiç açmadan kaybı fark etmez.
     final missingPrimaryGroup = ref.watch(primaryGroupSelectionMissingProvider);
+    final unreadAnnouncements = ref.watch(unreadAnnouncementCountProvider);
+    // Duyuru bir uyarı değil, yeni içerik — rengi uyarı token'ından değil
+    // temanın birincil renginden gelir (WP-378).
+    final announcementDotColor = Theme.of(context).colorScheme.primary;
     // WP-358: uyarı noktası tema paletinden değil, sekme zemininden türetilir.
     final warningDotColor = warningColorsOn(
       Theme.of(context).colorScheme.surface,
@@ -183,13 +198,17 @@ class HomeShell extends ConsumerWidget {
                 icon: Icons.person_outline,
                 pendingRewardCount: pendingRewardCount,
                 missingPrimaryGroup: missingPrimaryGroup,
+                unreadAnnouncements: unreadAnnouncements,
                 warningColor: warningDotColor,
+                announcementColor: announcementDotColor,
               ),
               selectedIcon: _profileTabIcon(
                 icon: Icons.person,
                 pendingRewardCount: pendingRewardCount,
                 missingPrimaryGroup: missingPrimaryGroup,
+                unreadAnnouncements: unreadAnnouncements,
                 warningColor: warningDotColor,
+                announcementColor: announcementDotColor,
               ),
               label: AppLocalizations.of(context).profileProfil,
             ),
