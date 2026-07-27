@@ -4,6 +4,27 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [v50 / 1.0.50+50] - 2026-07-27
+
+> **v49 saha düzeltmeleri.** Sahibin cihazda bildirdiği üç maddeden ikisi
+> uygulama tarafında, biri sunucu yapılandırmasında kapatıldı. Migration yok:
+> production şeması `0085`te kalır. V3 rollout flag'leri yine kapalıdır.
+
+### Düzeltmeler
+- Şifre sıfırlama e-postasındaki bağlantı artık uygulamayı açıyor. Bağlantı production projesinin ayarı yüzünden `localhost:3000`'e düşüyordu; sunucu tarafında düzeltildi ve **uygulama güncellemesi gerekmeden** herkes için geçerli oldu.
+- Kamp ateşi sahnesinde ateşin altındaki koyu/gri zemin lekesi kaldırıldı; ateş doğrudan çimenin üstünde duruyor.
+- Uyarı rozetleri artık tema paletinden bağımsız: kırmızı ağırlıklı bir tema seçildiğinde "birincil grup seçilmedi" uyarısı ve Profil sekmesindeki nokta kaybolmuyor.
+
+### Güvenlik ve güvenilirlik
+- Auth redirect allowlist'ine yalnız uygulamanın kendi scheme'leri eklendi; joker veya üçüncü taraf adres yok (open-redirect koruması).
+- Uyarı rengi zemine göre türetilir ve WCAG AA kontrastı 15 hazır temanın hepsinde testle kilitlenmiştir.
+- Sayaç, bildirim ve widget sıcak yolu bu sürümde değiştirilmedi.
+
+### Bilinen açıklar
+- Masaüstü/Windows'taki 6 haneli kod ile şifre sıfırlama, Supabase ücretsiz planı e-posta şablonunu kilitlediği için hâlâ çalışmıyor. Android bağlantı yolu çalışır.
+- Sayaç çalışırken kullanıcının grupta "aktif" listesinden düşmesi bu sürümde **düzeltilmedi**; önce ölçüm yapılacak (WP-354).
+- Çoklu cihaz sayaç senkronu bu sürümde de kapalıdır.
+
 ## [v49 / 1.0.49+49] - 2026-07-27
 
 > **Kararlı aday.** Birincil grup sözleşmesi, Forest Cabin tema kapağı ve

@@ -25,7 +25,7 @@
   [`docs/recovery/PRODUCTION-BASELINE.md`](docs/recovery/PRODUCTION-BASELINE.md).
   Deploy contract aynı üç head'i taşır ve production `deploy_enabled` terfi
   bitince **yeniden `false` kilitlendi**.
-- **Stable/production:** **v49** yayında (`2e19cfb`), etkin şema `0085`.
+- **Stable/production:** **v50** yayında (Faz F3 dalga 1 düzeltmeleri), etkin şema `0085` (v50 migration getirmez).
   Yedek/PITR **yok** — sahip kararıyla `backup_requirement: "waived"`; bu bir
   muafiyet kaydıdır, duran bir apply izni değildir. Yeni production migration,
   Edge deploy veya stable tag/release yalnız ayrı ve somut sahip GO'su ile yapılır.
@@ -47,8 +47,23 @@
 
 ### Claude Lane
 - **Durum:** [x] Boşta
-- **Faz/WP:** —
+- **Faz/WP:** — (WP-353 · WP-356 · WP-358 kapandı, v50 çıkarıldı)
 - **SAHİP yollar:** —
+- **Son not (2026-07-27, Faz F3 dalga 1):** Sahibin seçtiği üç kart yapıldı ve
+  **v50 stable** çıkarıldı.
+  - **WP-353** production auth: dry-run teşhisi doğruladı (`site_url =
+    localhost:3000`, allowlist **boş**), apply PASS. Düzeltme sunucu tarafında,
+    **v49 istemcisinde de geçerli** — güncelleme beklemeden çalışır. Masaüstü
+    6 haneli kod yolu free-tier şablon kilidi yüzünden açık borç kaldı.
+  - **WP-356** kamp ateşi: ilk teşhis eksikti (`ground.png` tek suçlu sanıldı);
+    asıl kaynak `ClearingPainter` çıktı, ikisi de kaldırıldı, ölü sınıf silindi.
+  - **WP-358** uyarı token'ı: renk artık zeminden türetiliyor; 15 preset ×
+    kontrast testiyle kilitli. Sekme noktası da aynı hastalıktaydı, o da düzeldi.
+  - **Açık:** WP-354 presence ölçümü sahibin iki cihazını gerektiriyor; WP-357
+    (çoklu cihaz senkronu) ajan tarafından tek başına kanıtlanamaz — anahtar
+    mekanizması yazılabilir ama iki fiziksel cihaz kanıtı sahipte. Sahip
+    isterse V3 flag'leri **açık bir beta** çıkarılır (beta ayrı applicationId,
+    stable'ı riske atmaz).
 - **Son not (2026-07-27 02:20):** WP-351 production 0085 apply + v49 stable release tamamlandı, lane bırakıldı. Kalan iş sahipte: cihaz kabulü.
   - **Kök neden:** production'ın Supabase CLI migration geçmişi boştu (tarihsel migration'lar SQL Editor'den uygulanmış), bu yüzden `db push` 0001'den başlayıp 0010'da düşürülen `study_sessions.group_id` üzerinde patlıyordu. Şema sağlamdı, yalnız geçmiş tablosu boştu.
   - **Çözüm:** dar `repair-baseline-0070` yolu — 0001-0070'i yalnız `applied` işaretler, şemaya DDL göndermez. `migration repair` repo genelinde yasak kalır; sadece bu yol `AllowBaselineRepair` + production + CI + allowlist'li sürüm kapılarından geçer.
@@ -92,7 +107,7 @@
 
 | Konu | Durum |
 | --- | --- |
-| Sürüm | **`v49` yayında (Latest, `2e19cfb`).** Android APK + Windows MSIX/ZIP GitHub Releases'ta; APK SHA-256 `0628cff9…de65c935` |
+| Sürüm | **`v50` yayında.** WP-353/356/358 düzeltmeleri; migration yok, production `0085`te kalır |
 | Cihaz kabulü | 🔴 **Açık.** Sahip v49'u denedi, iki turda **sekiz bulgu** bildirdi → `backlog.md` V49-1…V49-8. Hepsi planlandı: **Faz F3 · WP-353…WP-362** |
 | Sürüm politikası | 🔴 Sahip onayı olmadan yeni sürüm çıkmaz |
 | Otomatik doğrulama | `2e19cfb` release koşumu (`30222542841`) preflight/android/windows/finalize tümü PASS |
@@ -837,7 +852,20 @@ WP-348 (migration + Başarımlar primary IA)
 
 #### WP-353: Production auth yapılandırması — şifre sıfırlama linkini localhost'tan kurtar 🔑
 - **Program/Faz:** Faz F3 · Ops/release · Kaynak: **V49-8**
-- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** Yok
+- **Ajan:** Claude · **Durum:** [x] **KAPANDI 2026-07-27** — cihaz doğrulaması sahipte
+- **Kanıt:** Dry-run [30267073437](https://github.com/manil-max/online-study-room/actions/runs/30267073437)
+  teşhisi birebir doğruladı: production `site_url = "http://localhost:3000"`,
+  `uri_allow_list = ""` (**tamamen boş**), `recovery_template_has_token = false`.
+  Apply [30267162778](https://github.com/manil-max/online-study-room/actions/runs/30267162778)
+  başarılı; doğrulama adımı PASS. Sonra: `site_url =
+  com.manilmax.onlinestudyroom://login-callback`, allowlist üç scheme'i taşıyor,
+  joker yok. **Kodda ve sunucuda doğrulandı; cihazda doğrulanmalı.**
+- **Açık borç (kapanmadı):** şablon adımı beklendiği gibi free-tier uyarısıyla
+  geçti — `{{ .Token }}` eklenemiyor, yani **masaüstü/Windows 6 haneli kod yolu
+  hâlâ çalışmıyor.** Android derin bağlantı yolu çalışır. Bu, özel SMTP veya
+  ücretli plan gelene kadar açık kalır.
+- **Not:** Düzeltme sunucu tarafındadır; kullanıcıların uygulamayı güncellemesi
+  **gerekmez**, v49 istemcisinde de geçerlidir.
 - **Problem:** Sahip stable v49'da "şifremi unuttum" akışını denedi; e-postadaki
   bağlantı hâlâ `localhost:3000`'e gidiyor. **Kod tarafı doğru:** Android'de
   `resetPasswordForEmail` flavor'a uygun derin bağlantıyı `redirectTo` olarak
@@ -1063,14 +1091,25 @@ WP-348 (migration + Başarımlar primary IA)
 
 #### WP-356: Kamp ateşinin altındaki gri zemin lekesini kaldır 🔥
 - **Program/Faz:** Faz F3 · Kamp ateşi görsel · Kaynak: **V49-7**
-- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** Yok
-- **Problem:** Sahip: "kamp ateşinin altındaki gri efekt kalkmalı." **Kodda
-  doğrulandı:** PNG katman yığınının en altında `ground.png` **tam opaklıkla**
-  çiziliyor ([`layered_campfire_fire.dart:154`](app/lib/features/classroom/widgets/campfire/layered_campfire_fire.dart:154));
-  asset büyük, bulanık, koyu kahve-gri bir elips
-  ([`app/assets/campfire/ground.png`](app/assets/campfire/ground.png)) ve sahnenin
-  yeşil zemininin üstünde kir lekesi gibi duruyor. WP-350 yalnız sıcak glow
-  yarıçapını/opaklığını küçültmüştü; bu katmana hiç dokunmamıştı.
+- **Ajan:** Claude · **Durum:** [x] Kod/test tamam (`72ccb20`) — cihaz kabulü bekliyor
+- **Problem:** Sahip: "kamp ateşinin altındaki gri efekt kalkmalı."
+- 🔴 **İlk teşhis eksikti — düzeltildi.** Kart `ground.png`i tek suçlu sayıyordu;
+  uygulayınca golden'da leke **durdu**. Asıl kaynak `ClearingPainter`'dı
+  (camp_critter.dart): yeşil zeminin üstüne koyu kahve radyal elips + patika
+  halkası çizen vektör painter ("Toprak zemin"). `ground.png` yalnız katkı
+  veriyordu. **İki kaynak da kaldırıldı.**
+- **Yapılan:** PNG yığınından `ground` katmanı ve `stackOrder` kaydı çıkarıldı ·
+  sahneden "Toprak açıklık" katmanı kaldırıldı · artık hiçbir yerden
+  çağrılmayan `ClearingPainter` sınıfı silindi (54 satır ölü kod bırakılmadı) ·
+  `wp295_preview` aynı hizaya çekildi (önizleme uygulamayı yansıtsın) ·
+  6 golden yenilendi.
+- **Görsel doğrulama:** üretilen golden'lara bakıldı — leke gitti, ateş havada
+  kalmadı, taşlar çimenin üstünde oturuyor, sıcak glow korundu. Vektör
+  fallback'te (`StoneFirePainter`) karşılık gelen gri leke yok, dokunulmadı.
+- **Kanıt:** `flutter analyze` temiz · tam pakette tek hata `kamp telefonu
+  golden · 8 kişi` ve **aynı hata temiz HEAD'de de tam pakette çıkıyor**
+  (ikisinde de izole koşumda geçiyor) → bu WP'den bağımsız test izolasyon
+  sorunu, toplu golden yenilemesiyle örtülmedi.
 - **Kapsam dışı:** V49-3 kamp ateşi 2. revizyonu (mesafe, gökyüzü kırpma, yeşil
   yükseklik, 8 kişi yerleşimi) — **ayrı ve henüz planlanmamış iş** · yeni asset
   üretmek · alev/duman/köz davranışı · masaüstü kompozisyonunu yeniden tasarlamak ·
@@ -1192,7 +1231,19 @@ WP-348 (migration + Başarımlar primary IA)
 
 #### WP-358: Tema-bağımsız uyarı token'ı 🎨⚠️
 - **Program/Faz:** Faz F3 · Tema · Kaynak: **V49-2 açık tasarım sorusu**
-- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** Yok
+- **Ajan:** Claude · **Durum:** [x] Kod/test tamam (`636e645`) — cihaz kabulü bekliyor
+- **Yapılan:** Yeni `app/lib/core/theme/warning_tokens.dart` — saf ve
+  deterministik `resolveWarningColors(background)`; kehribar tabandan başlar ve
+  zemine karşı AA sınırını tutturana kadar açıklığı zeminin **ters** yönünde
+  iter. Sabit renk yazılmadı. Uyarı bloğu ve Profil sekmesi noktası bu token'ı
+  kullanıyor; bekleyen ödül sayısı rozeti kendi rengini koruyor.
+- **Kapsanan ikinci yüzey:** Sekme noktası `Badge`in varsayılanı olan
+  `colorScheme.error`den besleniyordu — kartla aynı hastalık, kart yazılırken
+  fark edilmemişti.
+- **Kanıt:** `flutter analyze` temiz · 7 yeni test yeşil: 15 preset'in hepsinde
+  dolgu/zemin ≥ 3.0 ve metin/dolgu ≥ 4.5, scaffold zemininde de aynı, ayrıca
+  beş kırmızı tonunda (bulgunun kendisi) sınır tutuyor. Test preset sayısını da
+  kilitliyor ki yeni tema eklenince sessizce atlanmasın.
 - **Problem:** Sahibin açık sorusu: dikkat çekmesi gereken kırmızı rozet, kırmızı
   ağırlıklı tema seçen kullanıcıda arka planda kaybolur. Bugün uyarı yüzeyleri
   doğrudan tema paletinden besleniyor (ör. WP-352 uyarı bloğu `errorContainer`
@@ -1607,6 +1658,12 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 - **Yedeksiz production.** PITR ve günlük yedek **yok** (Free plan). Sahip bunu kalıcı olarak kabul etti; `deploy-contract.json` içinde `backup_requirement: "waived"` olarak kayıtlı. Sonucu: production'da geri alma yolu yoktur, yalnız ileri migration ile düzeltilir. Repo **PUBLIC** olduğu için CI'da `db dump` alıp artifact'a koymak asla seçenek değildir.
 - **Geri kilitleme kuralı.** Terfi biten her production apply'dan sonra `deploy_enabled` yeniden `false` yapılır. Sözleşmede `true` bulmak, açık bir GO'nun sürdüğü anlamına gelir — bulursan doğrula.
 - **V3 rollout flag'leri kapalı.** WP-328…WP-346 zinciri kodda ve `0085`te var ama varsayılan kapalı. v49'daki çoklu cihaz senkron bulgusu (V49-1) önce buna karşı ayrılmalı: flag kapalı olduğu için mi çalışmıyor, yoksa açıkken de mi bozuk.
+- 🔬 **Bilinen test kusuru: `kamp telefonu golden · 8 kişi`.** İzole koşumda
+  geçer, **tam pakette patlar**; bu davranış hem temiz HEAD'de hem WP-356
+  sonrasında birebir aynıdır (2026-07-27'de iki yönlü ölçüldü). Yani ürün
+  hatası değil, test izolasyon/ortam sorunudur. **Golden'ları toplu yenileyerek
+  susturma** — gerçek nedeni bulunmalı. Kamp ateşine dokunan her WP bu tek
+  hatayı tabanda bulur; yeni hata sayısı bunun **üstüne** bakılarak ölçülür.
 - **Presence canlılığı istemciye bağlıdır (V49-6).** "Çalışıyor" bilgisi
   sunucudaki oturumdan değil, istemcinin son 70 sn içinde yazdığı satırdan
   türetiliyor. Flutter izolatı durursa native sayaç yaşasa bile kullanıcı grupta
@@ -1773,10 +1830,10 @@ sahip bulgusunun tamamı).
 
 **Dalga 1 — şimdi, dört worker'a aynı anda verilebilir:**
 
-1. **WP-353** — Production auth yapılandırması; şifre sıfırlama linkini localhost'tan kurtar. *(en ucuz kazanç: kod yok, tek workflow)*
-2. **WP-354** — Sayaç sürerken grupta "aktif" kalmama: kök neden ayrımı, salt-okunur.
-3. **WP-356** — Kamp ateşinin altındaki gri zemin lekesini kaldır.
-4. **WP-358** — Tema-bağımsız uyarı token'ı (kırmızı rozet ↔ kırmızı tema sorusunu kapatır).
+1. ✅ **WP-353** — KAPANDI (production auth yamalandı; cihaz doğrulaması sahipte).
+2. **WP-354** — Sayaç sürerken grupta "aktif" kalmama: kök neden ayrımı, salt-okunur. **Sahibin iki cihazını gerektirir.**
+3. ✅ **WP-356** — Kod/test tamam (`72ccb20`), v50'de çıktı.
+4. ✅ **WP-358** — Kod/test tamam (`636e645`), v50'de çıktı.
 
 **Dalga 2 — dalga 1 kapandıkça, aynı anda en fazla iki hat:**
 

@@ -3,6 +3,46 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.50",
+      "buildNumber": 50,
+      "channel": "stable",
+      "date": "2026-07-27",
+      "title": "v50: şifre sıfırlama, kamp ateşi ve uyarı rengi",
+      "highlights": [
+        "Şifre sıfırlama e-postasındaki bağlantı artık uygulamayı açıyor; düzeltme sunucu tarafında yapıldı ve güncelleme beklemeden geçerli oldu.",
+        "Kamp ateşinin altındaki koyu gri zemin lekesi kaldırıldı; ateş doğrudan çimenin üstünde duruyor.",
+        "Uyarı rozetleri tema paletinden bağımsız hale geldi; kırmızı ağırlıklı temada da görünür kalıyor."
+      ],
+      "fixes": [
+        "Auth yönlendirme listesine yalnız uygulamanın kendi scheme'leri eklendi; joker veya üçüncü taraf adres yok.",
+        "Uyarı rengi zemine göre türetilir ve 15 hazır temanın hepsinde WCAG AA kontrastı testle kilitlenmiştir.",
+        "Sayaç, bildirim ve widget sıcak yolu bu sürümde değiştirilmedi."
+      ],
+      "notes": [
+        "Bu sürümde migration yoktur; production şeması 0085'te kalır.",
+        "Masaüstündeki 6 haneli kod ile sıfırlama, ücretsiz plan e-posta şablonunu kilitlediği için hâlâ çalışmaz; Android bağlantı yolu çalışır.",
+        "Sayaç çalışırken grupta aktif listesinden düşme sorunu bu sürümde düzeltilmedi; önce ölçüm yapılacak.",
+        "V3 global timer, presence projection ve timer-sync rollout flag'leri kapalı kalır."
+      ],
+      "titleEn": "v50: password reset, campfire and warning colour",
+      "highlightsEn": [
+        "The password reset email link now opens the app; the fix was applied server-side and took effect without an app update.",
+        "The dark grey ground patch under the campfire is gone; the fire now sits directly on the grass.",
+        "Warning badges no longer depend on the theme palette and stay visible on red-heavy themes."
+      ],
+      "fixesEn": [
+        "Only the app's own callback schemes were added to the auth redirect allowlist; no wildcard or third-party address.",
+        "The warning colour is derived from its background and WCAG AA contrast is locked by a test across all 15 presets.",
+        "The timer, notification and widget hot path is unchanged in this release."
+      ],
+      "notesEn": [
+        "This release ships no migration; the production schema stays at 0085.",
+        "Desktop reset via the 6-digit code still does not work because the free plan locks the email template; the Android link path works.",
+        "Dropping out of the group's active list while the timer runs is not fixed in this release; it will be measured first.",
+        "V3 global timer, presence projection and timer-sync rollout flags remain off."
+      ]
+    },
+    {
       "versionName": "1.0.49",
       "buildNumber": 49,
       "channel": "stable",
