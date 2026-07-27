@@ -166,6 +166,7 @@ void main() {
                 ),
                 onNext: _noop,
                 onSkip: _noop,
+                onAnchorLost: _noop,
               ),
             ),
           ),

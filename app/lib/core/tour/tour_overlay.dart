@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -25,7 +26,12 @@ class TourOverlayStrings {
 ///
 /// Balon, dar ekranda dahi ekran sınırları içinde tutulur. Hareketli bir geçiş
 /// kullanılmadığı için sistemde "hareketi azalt" açıkken ek bir yol gerekmez.
-class TourOverlay extends StatelessWidget {
+///
+/// WP-375: hedef **canlı** ölçülür. Ölçüm `build`'e değil olaya bağlıdır —
+/// adım değişimi, kaydırma bildirimi ve ekran metrik değişimi. Adım başlarken
+/// hedef görünür alana kaydırılır; ilan edilmiş ama bulunamayan hedefte adım
+/// **sessizce ortalanmaz**, [onAnchorLost] ile atlanır.
+class TourOverlay extends StatefulWidget {
   const TourOverlay({
     super.key,
     required this.step,
@@ -34,6 +40,8 @@ class TourOverlay extends StatelessWidget {
     required this.strings,
     required this.onNext,
     required this.onSkip,
+    required this.onAnchorLost,
+    this.remeasure,
   });
 
   final TourStep step;
@@ -43,29 +51,155 @@ class TourOverlay extends StatelessWidget {
   final VoidCallback onNext;
   final VoidCallback onSkip;
 
-  Rect? _anchorRect(BuildContext context) {
-    final anchorContext = step.anchor?.currentContext;
-    final renderObject = anchorContext?.findRenderObject();
+  /// Hedefi ilan edilmiş ama yerleşimde bulunamayan adım için çağrılır.
+  /// Motorun kararı: **adımı atla** (bkz. [kTourAnchorResolveFrames]).
+  final VoidCallback onAnchorLost;
+
+  /// Ana gövdenin kaydırma/yerleşim olaylarında tetiklenen yeniden ölçüm
+  /// sinyali. [TourHost] verir; testte doğrudan da beslenebilir.
+  final Listenable? remeasure;
+
+  @override
+  State<TourOverlay> createState() => _TourOverlayState();
+}
+
+/// Bir hedefin yerleşime girmesi için tanınan kare sayısı.
+///
+/// Async veriyle gelen bir kart ilk karelerde henüz monte değildir; hemen
+/// "kayıp" demek turu haksız yere kısaltır. Bu sınırdan sonra ısrar etmek de
+/// kullanıcıyı bekletir — hedef gerçekten yok demektir.
+const kTourAnchorResolveFrames = 20;
+
+class _TourOverlayState extends State<TourOverlay> with WidgetsBindingObserver {
+  Rect? _anchor;
+  int _attempts = 0;
+  bool _ensuredVisible = false;
+  bool _reportedLost = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    widget.remeasure?.addListener(_onRemeasure);
+    _scheduleMeasure(ensureVisible: true);
+  }
+
+  @override
+  void didUpdateWidget(TourOverlay oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.remeasure != widget.remeasure) {
+      oldWidget.remeasure?.removeListener(_onRemeasure);
+      widget.remeasure?.addListener(_onRemeasure);
+    }
+    if (oldWidget.step.id != widget.step.id || oldWidget.index != widget.index) {
+      _anchor = null;
+      _attempts = 0;
+      _ensuredVisible = false;
+      _reportedLost = false;
+      _scheduleMeasure(ensureVisible: true);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.remeasure?.removeListener(_onRemeasure);
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  /// Klavye, döndürme, pencere boyutu — hepsi hedefin yerini değiştirir.
+  @override
+  void didChangeMetrics() => _scheduleMeasure(ensureVisible: false);
+
+  void _onRemeasure() => _scheduleMeasure(ensureVisible: false);
+
+  Rect? _rectOf(BuildContext anchorContext) {
+    final renderObject = anchorContext.findRenderObject();
     if (renderObject is! RenderBox || !renderObject.hasSize) return null;
     final overlay = Overlay.maybeOf(context)?.context.findRenderObject();
-    if (overlay is! RenderBox || !overlay.hasSize) return null;
-    final topLeft = renderObject.localToGlobal(Offset.zero, ancestor: overlay);
-    return topLeft & renderObject.size;
+    final ancestor = overlay is RenderBox && overlay.hasSize
+        ? overlay
+        : context.findRenderObject();
+    if (ancestor is! RenderBox || !ancestor.hasSize) return null;
+    return renderObject.localToGlobal(Offset.zero, ancestor: ancestor) &
+        renderObject.size;
+  }
+
+  void _scheduleMeasure({required bool ensureVisible}) {
+    if (!mounted || _reportedLost) return;
+    // Kasıtlı hedefsiz adım (genel karşılama): ölçülecek bir şey yok.
+    if (widget.step.anchor == null) {
+      if (_anchor != null) setState(() => _anchor = null);
+      return;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_measure(ensureVisible: ensureVisible));
+    });
+    // Post-frame geri çağrımı tek başına yeni bir kare istemez; hiçbir şey
+    // çizmiyorken ölçüm zinciri sessizce durur. Kareyi açıkça istiyoruz —
+    // zincir zaten [kTourAnchorResolveFrames] ile sınırlı.
+    WidgetsBinding.instance.scheduleFrame();
+  }
+
+  Future<void> _measure({required bool ensureVisible}) async {
+    if (!mounted || _reportedLost) return;
+    final anchorContext = widget.step.anchor?.currentContext;
+
+    if (anchorContext == null) {
+      _attempts++;
+      if (_attempts >= kTourAnchorResolveFrames) {
+        // 🔴 WP-375'in asıl düzeltmesi: eskiden burada hiçbir şey olmuyor,
+        // balon sessizce ekranın ortasına düşüyordu. Artık davranış tanımlı.
+        _reportedLost = true;
+        widget.onAnchorLost();
+        return;
+      }
+      _scheduleMeasure(ensureVisible: ensureVisible);
+      return;
+    }
+
+    if (ensureVisible && !_ensuredVisible) {
+      _ensuredVisible = true;
+      // Kaydırılabilir bir ata yoksa anında tamamlanır — güvenlidir.
+      await Scrollable.ensureVisible(
+        anchorContext,
+        alignment: 0.5,
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOut,
+      );
+      if (!mounted) return;
+      _scheduleMeasure(ensureVisible: false);
+      return;
+    }
+
+    final rect = _rectOf(anchorContext);
+    if (rect == null) {
+      _attempts++;
+      if (_attempts >= kTourAnchorResolveFrames) {
+        _reportedLost = true;
+        widget.onAnchorLost();
+        return;
+      }
+      _scheduleMeasure(ensureVisible: false);
+      return;
+    }
+    if (rect != _anchor) setState(() => _anchor = rect);
   }
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final anchor = _anchorRect(context);
+    final anchor = _anchor;
     return Semantics(
-      label: '${step.title == null ? '' : '${step.title}. '}${step.text}',
+      label: '${widget.step.title == null ? '' : '${widget.step.title}. '}'
+          '${widget.step.text}',
       child: Stack(
         fit: StackFit.expand,
         children: [
           GestureDetector(
             key: const Key('tour-barrier'),
             behavior: HitTestBehavior.opaque,
-            onTap: onNext,
+            onTap: widget.onNext,
             child: CustomPaint(painter: _SpotlightPainter(anchor)),
           ),
           SafeArea(
@@ -73,11 +207,11 @@ class TourOverlay extends StatelessWidget {
               alignment: Alignment.topRight,
               child: Semantics(
                 button: true,
-                label: strings.skip,
+                label: widget.strings.skip,
                 child: TextButton(
                   key: const Key('tour-skip-button'),
-                  onPressed: onSkip,
-                  child: Text(strings.skip),
+                  onPressed: widget.onSkip,
+                  child: Text(widget.strings.skip),
                 ),
               ),
             ),
@@ -97,27 +231,30 @@ class TourOverlay extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (step.title case final title?) ...[
+                      if (widget.step.title case final title?) ...[
                         Text(
                           title,
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                         const SizedBox(height: 8),
                       ],
-                      Text(step.text),
+                      Text(widget.step.text),
                       const SizedBox(height: 16),
                       Row(
                         children: [
                           Expanded(
                             child: Text(
-                              strings.stepCounter(index + 1, total),
+                              widget.strings.stepCounter(
+                                widget.index + 1,
+                                widget.total,
+                              ),
                               style: Theme.of(context).textTheme.labelMedium,
                             ),
                           ),
                           FilledButton(
                             key: const Key('tour-next-button'),
-                            onPressed: onNext,
-                            child: Text(strings.next),
+                            onPressed: widget.onNext,
+                            child: Text(widget.strings.next),
                           ),
                         ],
                       ),

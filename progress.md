@@ -2096,6 +2096,61 @@ Seri kilitler:
   yazıp kullanıcı hesabında görünmesini doğrula.
 
 
+#### WP-375: Tanıtım turu — hedefleme, konum ve sıra onarımı 🎈
+- **Durum:** [x] Kod/test tamam — cihaz kabulü bekliyor. Kaynak: **V49-5** (eski
+  kart WP-362; bu kart onun yerine geçer, WP-362 tarihsel kalır)
+- **SAHİP:** `app/lib/core/tour/tour_overlay.dart` · `app/lib/core/tour/tour_host.dart` ·
+  `app/test/core/tour/tour_anchor_wp375_test.dart` ·
+  `app/test/features/tours/app_tours_test.dart` (yalnız yeni zorunlu parametre)
+
+- **Sahibin ifadesi:** "mantık doğru, uygulama kötü — hedef/konum/sıra ayarları
+  tutmuyor." Kodda **üç ayrı mekanizma** doğrulandı, üçü de düzeltildi:
+  1. 🔴 **Konum tutmuyordu.** Hedef dikdörtgeni yalnız `build` anında
+     ölçülüyordu (eski `tour_overlay.dart:59`). Kullanıcı kaydırınca ya da
+     yerleşim değişince spot ışığı ve balon eski yerde kalıyordu; yeniden
+     ölçen hiçbir dinleyici yoktu.
+  2. 🔴 **Hedefe götürmüyordu.** `Scrollable.ensureVisible` benzeri bir çağrı
+     repoda hiç yoktu. Ekranın altındaki bir hedef için tur, boş bir alanı
+     işaret ediyordu — hedef monte olduğu için hata da vermiyordu.
+  3. 🔴 **Sıra tutmuyordu.** Hedefi ilan edilmiş ama bulunamayan adım
+     **sessizce ortalanmış** balona dönüşüyordu. Kullanıcı bunu "sıra bozuldu"
+     diye okuyor; log yok, uyarı yok.
+
+- **Yapılan:**
+  - `TourOverlay` `StatelessWidget` → `StatefulWidget`. Ölçüm artık **olaya**
+    bağlı: adım değişimi · gövdeden gelen `ScrollNotification` · `didChangeMetrics`
+    (klavye, döndürme, pencere). Her karede ölçüm **yok** — kartın uyardığı jank
+    tuzağına düşülmedi.
+  - `TourHost` gövdeyi `NotificationListener<ScrollNotification>` ile sarar ve
+    bir `ValueNotifier` üzerinden yeniden ölçüm sinyali verir. Tur çalışmıyorken
+    sinyal üretilmez.
+  - Adım başlarken hedef `Scrollable.ensureVisible(alignment: 0.5)` ile görünür
+    alana getirilir; balon **kaydırma bittikten sonra** yerleştirilir.
+    Kaydırılabilir ata yoksa çağrı anında tamamlanır (masaüstü/sabit ekranlar).
+  - **Bulunamayan hedefin davranışı tanımlandı ve testle kilitlendi:**
+    `kTourAnchorResolveFrames = 20` kare boyunca aranır (async veriyle gelen
+    kart ilk karelerde monte değildir), sonra adım **atlanır**. Tek adımlıysa
+    tur biter ve görüldü işaretlenir. `anchor == null` (kasıtlı "genel
+    karşılama") bu yoldan **ayrı** tutulur — atlanmaz, ortada gösterilir.
+  - Ölçüm zinciri `scheduleFrame()` ile açıkça kare ister; aksi hâlde hiçbir şey
+    çizilmiyorken post-frame zinciri sessizce duruyordu (bu, düzeltmeyi ilk
+    yazışta gerçekten ısırdı).
+
+- **Kanıt:** `flutter analyze` **0 uyarı** · 5 yeni test + mevcut tur testleri
+  (14 iddia) yeşil · **regresyon kapanı iki koldan kanıtlandı:**
+  yeniden ölçüm sinyali kesilince "kaydırma sonrası takip" kırmızı;
+  `ensureVisible` + atlama kaldırılınca **dört test birden** kırmızı.
+- **Kapsam dışı (bilinçli):** tur **içerikleri** (WP-324 metinleri korundu) ·
+  `tour_gate.dart` kuyruk kararları · `tour_prefs.dart` anahtar şeması
+  (`storageId` korundu → kimse turu yeniden görmez) · yeni ekrana tur ekleme.
+- **Veri/Migration etkisi:** Yok. **Geri alma:** tek commit.
+- **Kabul:** hedef görünür alana getirilir · kaydırma sonrası spot/balon hedefi
+  takip eder · bulunamayan hedefte davranış tanımlı ve testli, sessizce
+  ortalanan balon **0** · 360 dp'de taşma **0**.
+- **Cihaz kabulü sahipte:** Ayarlar → "Tanıtım turlarını sıfırla" ile altı
+  ekranın turunu boş ve dolu veriyle tekrar aç.
+
+
 ---
 
 ## PLAN 2 — MAĞAZA HAZIRLIĞI

@@ -29,6 +29,10 @@ class _TourHostState extends ConsumerState<TourHost>
   Timer? _retryTimer;
   AppLifecycleState _lifecycle = AppLifecycleState.resumed;
 
+  /// WP-375: gövdedeki her kaydırma bildirimi bir yeniden ölçüm tetikler.
+  /// Ölçümü `build`'e değil olaya bağladığımız için her karede ölçüm yok.
+  final _remeasure = ValueNotifier<int>(0);
+
   @override
   void initState() {
     super.initState();
@@ -39,6 +43,7 @@ class _TourHostState extends ConsumerState<TourHost>
   @override
   void dispose() {
     _retryTimer?.cancel();
+    _remeasure.dispose();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -85,12 +90,22 @@ class _TourHostState extends ConsumerState<TourHost>
     return Stack(
       fit: StackFit.expand,
       children: [
-        widget.child,
+        NotificationListener<ScrollNotification>(
+          onNotification: (_) {
+            // Tur çalışmıyorken boşuna dinleyici uyandirmayalim.
+            if (step != null) _remeasure.value++;
+            return false;
+          },
+          child: widget.child,
+        ),
         if (step != null)
           TourOverlay(
             step: step,
             index: state.index,
             total: state.total,
+            remeasure: _remeasure,
+            onAnchorLost: () =>
+                unawaited(ref.read(tourControllerProvider.notifier).next()),
             strings: TourOverlayStrings(
               skip: l10n.tourAtla,
               next: l10n.tourDevam,
