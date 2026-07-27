@@ -107,7 +107,7 @@
 
 | Konu | Durum |
 | --- | --- |
-| Sürüm | **`v50` yayında.** WP-353/356/358 düzeltmeleri; migration yok, production `0085`te kalır |
+| Sürüm | **`v50` yayında** ([release](https://github.com/manil-max/online-study-room/releases/tag/v50)). WP-353/356/358 düzeltmeleri; migration yok, production `0085`te kalır. ⚠️ **Yalnız Android APK** — Windows MSIX üretilemedi (golden kararsızlığı, `6f285a2` ile düzeltildi, sonraki sürümde gelecek) |
 | Cihaz kabulü | 🔴 **Açık.** Sahip v49'u denedi, iki turda **sekiz bulgu** bildirdi → `backlog.md` V49-1…V49-8. Hepsi planlandı: **Faz F3 · WP-353…WP-362** |
 | Sürüm politikası | 🔴 Sahip onayı olmadan yeni sürüm çıkmaz |
 | Otomatik doğrulama | `2e19cfb` release koşumu (`30222542841`) preflight/android/windows/finalize tümü PASS |
@@ -1106,10 +1106,10 @@ WP-348 (migration + Başarımlar primary IA)
 - **Görsel doğrulama:** üretilen golden'lara bakıldı — leke gitti, ateş havada
   kalmadı, taşlar çimenin üstünde oturuyor, sıcak glow korundu. Vektör
   fallback'te (`StoneFirePainter`) karşılık gelen gri leke yok, dokunulmadı.
-- **Kanıt:** `flutter analyze` temiz · tam pakette tek hata `kamp telefonu
-  golden · 8 kişi` ve **aynı hata temiz HEAD'de de tam pakette çıkıyor**
-  (ikisinde de izole koşumda geçiyor) → bu WP'den bağımsız test izolasyon
-  sorunu, toplu golden yenilemesiyle örtülmedi.
+- **Kanıt:** `flutter analyze` temiz · tam paket **yeşil**. Bu WP sırasında
+  ortaya çıkan `kamp telefonu golden · 8 kişi` kararsızlığı toplu golden
+  yenilemesiyle örtülmedi; kök nedeni bulunup ayrı commit'te (`6f285a2`)
+  düzeltildi (Risk notlarına bakın).
 - **Kapsam dışı:** V49-3 kamp ateşi 2. revizyonu (mesafe, gökyüzü kırpma, yeşil
   yükseklik, 8 kişi yerleşimi) — **ayrı ve henüz planlanmamış iş** · yeni asset
   üretmek · alev/duman/köz davranışı · masaüstü kompozisyonunu yeniden tasarlamak ·
@@ -1658,12 +1658,18 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 - **Yedeksiz production.** PITR ve günlük yedek **yok** (Free plan). Sahip bunu kalıcı olarak kabul etti; `deploy-contract.json` içinde `backup_requirement: "waived"` olarak kayıtlı. Sonucu: production'da geri alma yolu yoktur, yalnız ileri migration ile düzeltilir. Repo **PUBLIC** olduğu için CI'da `db dump` alıp artifact'a koymak asla seçenek değildir.
 - **Geri kilitleme kuralı.** Terfi biten her production apply'dan sonra `deploy_enabled` yeniden `false` yapılır. Sözleşmede `true` bulmak, açık bir GO'nun sürdüğü anlamına gelir — bulursan doğrula.
 - **V3 rollout flag'leri kapalı.** WP-328…WP-346 zinciri kodda ve `0085`te var ama varsayılan kapalı. v49'daki çoklu cihaz senkron bulgusu (V49-1) önce buna karşı ayrılmalı: flag kapalı olduğu için mi çalışmıyor, yoksa açıkken de mi bozuk.
-- 🔬 **Bilinen test kusuru: `kamp telefonu golden · 8 kişi`.** İzole koşumda
-  geçer, **tam pakette patlar**; bu davranış hem temiz HEAD'de hem WP-356
-  sonrasında birebir aynıdır (2026-07-27'de iki yönlü ölçüldü). Yani ürün
-  hatası değil, test izolasyon/ortam sorunudur. **Golden'ları toplu yenileyerek
-  susturma** — gerçek nedeni bulunmalı. Kamp ateşine dokunan her WP bu tek
-  hatayı tabanda bulur; yeni hata sayısı bunun **üstüne** bakılarak ölçülür.
+- ✅ **Çözüldü: `kamp telefonu golden · 8 kişi` kararsızlığı (`6f285a2`).**
+  Kök neden: golden harness reduce-motion kurmuyordu, sahne alev fazını (`t`)
+  canlı tutuyordu ve **3+ çalışan** varken `CampfireActivity.high` köz
+  parçacıklarını da çiziyordu. Parçacık yeri `t`'ye bağlı olduğu için yakalanan
+  kare koşuma göre değişiyordu. Yalnız 8 kişi senaryosu bu eşiği geçiyor (4 kişi
+  çalışıyor); 1 kişi `empty`, 4 kişi ve gökyüzü senaryoları `low` kalıyor. Bu,
+  "izole geçer, tam pakette düşer" davranışını ve Windows CI'daki sınırda
+  (%0.50) farkı birlikte açıklıyor. Düzeltme kareyi sabitledi
+  (`MediaQuery.disableAnimations`); **tolerans değiştirilmedi.** Kırmızı-yeşil
+  kanıt: aynı tam paket koşumu artık `All tests passed!`.
+  🔴 **Ders:** animasyonlu bir sahnenin golden'ı, kare sabitlenmeden çekilirse
+  test sessizce kumar olur. Yeni golden ekleyen WP animasyonu kapatmalıdır.
 - **Presence canlılığı istemciye bağlıdır (V49-6).** "Çalışıyor" bilgisi
   sunucudaki oturumdan değil, istemcinin son 70 sn içinde yazdığı satırdan
   türetiliyor. Flutter izolatı durursa native sayaç yaşasa bile kullanıcı grupta
