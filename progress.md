@@ -34,7 +34,13 @@
 - **Sürüm sırası:** kod/testi biten işler tek QA kuyruğunda birikir; yeni beta/stable yalnız sahip onayıyla çıkar. Eski beta dalga kararları git geçmişindedir.
 - **Yönetim varsayılanı:** Production `deploy_enabled/release_enabled` kapalıdır ve her terfiden sonra yeniden kapatılır. Stable yalnız protected `production` Environment, exact SHA/head/project-ref GO ve reviewer kanıtıyla ilerler.
 - **Kurallar:** Kök `AGENTS.md`, `.agents/AGENTS.md` ve `docs/KALITE-PROGRAMI.md` geçerlidir. Tek çalışma dalı `main`; her WP ayrı commit; production varsayılmaz.
-- **Aktif tur:** **Faz F4 kapandı, v51 çıktı** — sıradaki iş sahibin stable'da yapacağı cihaz kabulü. Öncesi: v49 sonrası saha düzeltmeleri (Faz F3). WP-348 → WP-351 zinciri kapandı (stable v49 çıktı). Sahip iki turda toplam **sekiz** bulgu bildirdi (`backlog.md` V49-1…V49-8) ve **hepsi karta bağlandı: WP-353…WP-362.** Backlog'da plansız kalan v49 bulgusu yok.
+- **Aktif tur:** **Faz F4 kapandı, v51 çıktı ve sahip cihazda denedi.**
+  🟢 Görünürlük düzeldi: bir cihazda başlatılan çalışma artık diğer cihazda ve
+  başka kullanıcılarda görünüyor (WP-363 + WP-365 **cihazda kabul edildi**).
+  🔴 Dört yeni bulgu: `backlog.md` **V51-1…V51-4** (≈80 sn sonra aktiflikten
+  düşme · sayaç değerlerinin eşitlenmemesi · admin yazışmasında ters sıra ·
+  yazışmada karşı tarafın mesajlarının görünmemesi). Sahip listeyi tamamlıyor;
+  **WP'ye bölme sonra yapılacak.** Öncesi: Öncesi: v49 sonrası saha düzeltmeleri (Faz F3). WP-348 → WP-351 zinciri kapandı (stable v49 çıktı). Sahip iki turda toplam **sekiz** bulgu bildirdi (`backlog.md` V49-1…V49-8) ve **hepsi karta bağlandı: WP-353…WP-362.** Backlog'da plansız kalan v49 bulgusu yok.
 - **Son WP numarası:** **WP-366** (Faz F4, 2026-07-27). Faz F4 sahip emriyle açıldı: presence şema hatası + V3 rollout, stable'a çıkacak.
 - ✅ **Ortam gerçeği uzlaştırıldı (WP-351, 2026-07-27):** üç ortam da `0085`; production CLI geçmişi artık gerçek. Deploy kapısı yeniden kilitli.
 
@@ -1637,7 +1643,11 @@ Seri kilitler:
 - **Model önerisi:** 🟣 Pro
 
 #### WP-365: Çoklu cihaz senkronu — V3 rollout'u aç ve stable'a ver 📱↔️📱
-- **Program/Faz:** Faz F4 · V3 rollout · **Durum:** [x] Kod/test tamam (`d7ee339`) — v51'de **açık** çıktı
+- **Program/Faz:** Faz F4 · V3 rollout · **Durum:** [~] **Kısmen kabul edildi (sahip, 2026-07-27).**
+  Presence görünürlüğü çalışıyor. Ancak `foregroundMirror` açık olmasına rağmen
+  **sayaç değeri/durumu aynalanmıyor**: bir cihazda başlatınca diğeri `00.00.00`
+  kalıyor ve ikinci eşzamanlı sayaç başlatılabiliyor (V51-2). Bildirimler de
+  senkron değil. Kademe açık ama beklenen aynalamayı üretmiyor.
 - **Seçilen kademeler:** presence `shadow`, global timer `foregroundMirror`.
   Presence bilerek `projection` değil: doğrudan geçmek, **eski sürümde kalan**
   ekip üyelerini (yalnız legacy tabloyu okurlar) yeni sürümdekilere görünmez

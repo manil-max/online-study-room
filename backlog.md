@@ -9,6 +9,39 @@
 
 ## 🔴 Yüksek Öncelik
 
+- [ ] **v51 stable — sahip cihaz geri bildirimi (2026-07-27, ham not; WP'ye bölünmedi)**
+  - 🟢 **Önce ne DÜZELDİ (sahip cihazda doğruladı):** Bir cihazda sayaç başlatılınca
+    kullanıcı artık **hem kendi cihazında hem diğer cihazında hem de başka
+    kullanıcılarda** "aktif çalışanlar" listesinde ve kamp ateşinde görünüyor.
+    WP-363 (legacy presence payload şema düzeltmesi) ve WP-365 (V3 rollout,
+    presence `shadow`) **cihazda kabul edildi.** Kalan maddeler bu kazanımın
+    üstüne biner, onu geçersiz kılmaz.
+  - **V51-1 · Yaklaşık 80 saniye sonra aktiflikten düşüyor.** Sayaç çalışmaya
+    devam ederken kullanıcı ~80 sn sonra hem **sayacı başlatan cihazda** hem de
+    **diğer kullanıcılarda** aktif çalışanlardan ve kamp ateşinden "çalışmıyor"a
+    düşüyor. Bu, V49-6'nın hayatta kalan kısmıdır: ilk yazım artık başarılı
+    (WP-363), ama satırı diri tutan **heartbeat** tutmuyor. Süre `70 sn`lik
+    bayatlama eşiğiyle (`kPresenceStaleThreshold`) örtüşüyor — yani ilk
+    yazımdan sonra tazeleme gelmiyor. WP-364 artık bu hatayı **kayda geçiriyor**,
+    teşhiste ilk bakılacak yer orası.
+  - **V51-2 · Sayaç değerleri iki cihaz arasında eşitlenmiyor.** İlk ~80 sn
+    boyunca iki cihaz da "çalışıyor" gösteriyor **ama sayaçlar senkron değil**:
+    birinde başlatınca diğeri hâlâ `00.00.00`. Dahası, biri çalışırken diğerinde
+    **yeni bir sayaç başlatılabiliyor** (aynı hesapta ikinci eşzamanlı çalışma
+    engellenmiyor). Bildirimler de senkron değil. Yani V49-1'in *görünürlük*
+    kısmı çözüldü, *durum/süre aynalama* kısmı çözülmedi — `foregroundMirror`
+    kademesi açık olmasına rağmen beklenen aynalamayı üretmiyor.
+  - **V51-3 · Admin ↔ kullanıcı yazışmasında mesaj sırası ters.** Yeni mesajlar
+    listenin **altına** eklenip aşağı kaydırmak yerine **üste** ekleniyor;
+    beklenen davranış WhatsApp benzeri (yeni mesaj altta, görünüm sona kayar).
+  - **V51-4 · Yazışmada karşı tarafın mesajları görünmüyor.** Gelen mesajın
+    bildirimi düşse ve duyurularda görünse bile, yazışma ekranına girince
+    **yalnız kendi gönderdiğin mesajlar** listeleniyor. Bildirim/duyuru yolu
+    mesajı görüyor ama yazışma sorgusu göremiyor → okuma tarafında bir filtre
+    veya RLS farkı olması muhtemel (doğrulanmadı).
+  - **Durum:** Sahip başka sorun olup olmadığına bakıyor; **WP'ye bölme ve plan
+    sahibin listeyi tamamlamasından sonra** yapılacak.
+
 - [~] **v49 stable — sahip cihaz geri bildirimi (2026-07-27) — tamamı planlandı**
   - Sekiz bulgunun **hepsi** `progress.md` **Faz F3 · WP-353…WP-362**'ye bağlandı;
     burada plansız kalan v49 maddesi yoktur. Eşleme: V49-1→WP-357 · V49-2→WP-358+359 ·
