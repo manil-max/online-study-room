@@ -87,6 +87,23 @@
   - **Durum (2026-07-27, sahip emri):** V51-1 ve V51-2 → `progress.md` **Faz F5**
     (WP-367 · WP-368 · WP-369/v52). **V51-3 ve V51-4 sahip kararıyla beklemede**
     ("admin tarafı kalsın"); kök nedenleri yukarıda kayıtlı, karta bağlanmadı.
+  - ✅ **V51-1 düzeltmesi production'da (2026-07-27).** `0086` üç ortamda da
+    uygulandı (apply run `30288908244`, post-check head `0087`). Sunucu taraflı
+    olduğu için **v51 istemcisinde de geçerli** — sahip güncelleme beklemeden
+    deneyebilir.
+  - ✅ **V51-2 düzeltmesi kodda + sunucuda (2026-07-27).** İstemci yayını WP-368
+    ile anlık hale geldi; ayrıca planda olmayan ikinci engel bulundu ve `0087`
+    ile kapatıldı (`v2_enabled` hiçbir ortamda açılmamıştı, sunucu her komutu
+    reddediyordu). Aynalama için **v52 gerekir**, sunucu düzeltmesi tek başına
+    yetmez.
+  - ⚠️ **Bu turda kapatılmayan, bilinen sınır (kart açılmadı, cihaz kabulünden
+    sonra değerlendirilecek):** V2 koşusunun kendi lease'ini (`live_study_runs`,
+    150 sn) tazeleyen bir `heartbeat` komutu istemci tarafında **üretilmiyor** —
+    native yalnız `start`/`stop` zarfı yazıyor (`TimerStateStore.appendV2Command`
+    diğer eylemleri reddeder). Süpürücü de bir cron'a bağlı olmadığından koşu
+    kendiliğinden `abandoned` olmuyor; pratikte uygulama ölse bile koşu sunucuda
+    `running` kalır ve bir sonraki `start` onu devralır. Yani **bu tur için
+    zararsız**, ama "cihaz çöktü, koşu kapanmalı" senaryosu hâlâ eksik.
 
 - [~] **v49 stable — sahip cihaz geri bildirimi (2026-07-27) — tamamı planlandı**
   - Sekiz bulgunun **hepsi** `progress.md` **Faz F3 · WP-353…WP-362**'ye bağlandı;

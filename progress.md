@@ -18,14 +18,21 @@
 
 ## Proje Gerçekleri
 
-- **Migration gerçeği (2026-07-27):** repo/local **`0085`** · staging **`0085`** ·
-  production **`0085`**. Üç ortam ilk kez hizalı. Production'ın Supabase CLI
+- **Migration gerçeği (2026-07-27, Faz F5 sonrası):** repo/local **`0087`** ·
+  staging **`0087`** · production **`0087`**. `0086` (presence heartbeat lease'i
+  projeksiyonda da tazeler) ve `0087` (global timer V2 sunucu anahtarı açık)
+  sırayla staging'e ve production'a uygulandı; production post-check head `0087`
+  bildirdi (run `30288908244`). Önceki hizalama (`0085`) WP-351'de yapılmıştı. Production'ın Supabase CLI
   geçmişi WP-351'de `repair-baseline-0070` ile dolduruldu (yalnız `applied`
   işaretleme, sıfır DDL); ayrıntı
   [`docs/recovery/PRODUCTION-BASELINE.md`](docs/recovery/PRODUCTION-BASELINE.md).
   Deploy contract aynı üç head'i taşır ve production `deploy_enabled` terfi
   bitince **yeniden `false` kilitlendi**.
-- **Stable/production:** **v51** yayında (Faz F4: presence şema düzeltmesi + V3 rollout **açık**), etkin şema `0085` (v51 migration getirmez).
+- **Stable/production:** **v52** (Faz F5: presence lease tazeleme + sayaç komut
+  yayını) çıkarılıyor; etkin şema **`0087`**. Öncesi v51 (Faz F4: presence şema
+  düzeltmesi + V3 rollout açık), etkin şema `0085`.
+  🟢 `0086` sunucu taraflı olduğu için **v51'de kalan cihazlarda da** aktiflikten
+  düşme düzeldi; sayaç eşitlemesi için v52 şart.
   Yedek/PITR **yok** — sahip kararıyla `backup_requirement: "waived"`; bu bir
   muafiyet kaydıdır, duran bir apply izni değildir. Yeni production migration,
   Edge deploy veya stable tag/release yalnız ayrı ve somut sahip GO'su ile yapılır.
