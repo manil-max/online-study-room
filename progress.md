@@ -25,7 +25,7 @@
   [`docs/recovery/PRODUCTION-BASELINE.md`](docs/recovery/PRODUCTION-BASELINE.md).
   Deploy contract aynı üç head'i taşır ve production `deploy_enabled` terfi
   bitince **yeniden `false` kilitlendi**.
-- **Stable/production:** **v50** yayında (Faz F3 dalga 1 düzeltmeleri), etkin şema `0085` (v50 migration getirmez).
+- **Stable/production:** **v51** yayında (Faz F4: presence şema düzeltmesi + V3 rollout **açık**), etkin şema `0085` (v51 migration getirmez).
   Yedek/PITR **yok** — sahip kararıyla `backup_requirement: "waived"`; bu bir
   muafiyet kaydıdır, duran bir apply izni değildir. Yeni production migration,
   Edge deploy veya stable tag/release yalnız ayrı ve somut sahip GO'su ile yapılır.
@@ -34,7 +34,7 @@
 - **Sürüm sırası:** kod/testi biten işler tek QA kuyruğunda birikir; yeni beta/stable yalnız sahip onayıyla çıkar. Eski beta dalga kararları git geçmişindedir.
 - **Yönetim varsayılanı:** Production `deploy_enabled/release_enabled` kapalıdır ve her terfiden sonra yeniden kapatılır. Stable yalnız protected `production` Environment, exact SHA/head/project-ref GO ve reviewer kanıtıyla ilerler.
 - **Kurallar:** Kök `AGENTS.md`, `.agents/AGENTS.md` ve `docs/KALITE-PROGRAMI.md` geçerlidir. Tek çalışma dalı `main`; her WP ayrı commit; production varsayılmaz.
-- **Aktif tur:** **v49 sonrası saha düzeltmeleri (Faz F3).** WP-348 → WP-351 zinciri kapandı (stable v49 çıktı). Sahip iki turda toplam **sekiz** bulgu bildirdi (`backlog.md` V49-1…V49-8) ve **hepsi karta bağlandı: WP-353…WP-362.** Backlog'da plansız kalan v49 bulgusu yok.
+- **Aktif tur:** **Faz F4 kapandı, v51 çıktı** — sıradaki iş sahibin stable'da yapacağı cihaz kabulü. Öncesi: v49 sonrası saha düzeltmeleri (Faz F3). WP-348 → WP-351 zinciri kapandı (stable v49 çıktı). Sahip iki turda toplam **sekiz** bulgu bildirdi (`backlog.md` V49-1…V49-8) ve **hepsi karta bağlandı: WP-353…WP-362.** Backlog'da plansız kalan v49 bulgusu yok.
 - **Son WP numarası:** **WP-366** (Faz F4, 2026-07-27). Faz F4 sahip emriyle açıldı: presence şema hatası + V3 rollout, stable'a çıkacak.
 - ✅ **Ortam gerçeği uzlaştırıldı (WP-351, 2026-07-27):** üç ortam da `0085`; production CLI geçmişi artık gerçek. Deploy kapısı yeniden kilitli.
 
@@ -107,7 +107,7 @@
 
 | Konu | Durum |
 | --- | --- |
-| Sürüm | **`v50` yayında** ([release](https://github.com/manil-max/online-study-room/releases/tag/v50)). WP-353/356/358 düzeltmeleri; migration yok, production `0085`te kalır. ⚠️ **Yalnız Android APK** — Windows MSIX üretilemedi (golden kararsızlığı, `6f285a2` ile düzeltildi, sonraki sürümde gelecek) |
+| Sürüm | **`v51` yayında** ([release](https://github.com/manil-max/online-study-room/releases/tag/v51)); Android APK + Windows MSIX/ZIP. Önceki: **`v50`** ([release](https://github.com/manil-max/online-study-room/releases/tag/v50)). WP-353/356/358 düzeltmeleri; migration yok, production `0085`te kalır. ⚠️ **Yalnız Android APK** — Windows MSIX üretilemedi (golden kararsızlığı, `6f285a2` ile düzeltildi, sonraki sürümde gelecek) |
 | Cihaz kabulü | 🔴 **Açık.** Sahip v49'u denedi, iki turda **sekiz bulgu** bildirdi → `backlog.md` V49-1…V49-8. Hepsi planlandı: **Faz F3 · WP-353…WP-362** |
 | Sürüm politikası | 🔴 Sahip onayı olmadan yeni sürüm çıkmaz |
 | Otomatik doğrulama | `2e19cfb` release koşumu (`30222542841`) preflight/android/windows/finalize tümü PASS |
@@ -1670,7 +1670,9 @@ Seri kilitler:
 - **Model önerisi:** 🔴 Opus
 
 #### WP-366: v51 stable release 🚀
-- **Durum:** [~] Sürüm dosyaları hazır (1.0.51+51, CHANGELOG, release_notes); tag ve release koşumu sırada · **Bağımlılık:** WP-363 + WP-364 + WP-365
+- **Durum:** [x] **KAPANDI 2026-07-27.** `v51` yayında, **Android + Windows ikisi de** üretildi.
+- **Kanıt:** release koşumu [30278738927](https://github.com/manil-max/online-study-room/actions/runs/30278738927) — preflight/android/windows/finalize **tümü success**. Release: https://github.com/manil-max/online-study-room/releases/tag/v51
+- **Not:** v50'de üretilemeyen Windows MSIX bu kez çıktı; engel olan golden kararsızlığı `c18e37d` ile kök nedeninden çözüldü.
 - **Kapsam:** sürüm/build kimliği, CHANGELOG, release_notes, tag `v51`, Android +
   Windows artefaktı. Migration **yok**, production `0085`te kalır.
 - **Kabul:** Preflight/gate PASS · Android APK yayında · Windows MSIX bu kez
