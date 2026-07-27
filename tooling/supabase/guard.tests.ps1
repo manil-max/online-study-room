@@ -22,18 +22,19 @@ $repoRoot = Get-RepoRoot
 $stagingRef = 'aaaaaaaaaaaaaaaaaaaa'
 $productionRef = 'bbbbbbbbbbbbbbbbbbbb'
 
-Assert-Equal (Get-LocalMigrationHead -RepoRoot $repoRoot) '0085' 'local migration head'
-Assert-Equal ((Get-DeployContract -RepoRoot $repoRoot).local_migration_head) '0085' 'contract migration head'
+Assert-Equal (Get-LocalMigrationHead -RepoRoot $repoRoot) '0087' 'local migration head'
+Assert-Equal ((Get-DeployContract -RepoRoot $repoRoot).local_migration_head) '0087' 'contract migration head'
 $contract = Get-DeployContract -RepoRoot $repoRoot
-# WP-351 staging 0085 terfisi tamamlandı; production 0085 apply artık açık
-# (backup kanıtı CI'da Supabase API'sinden fail-closed türetiliyor), fakat
-# public stable release production post-check'e kadar HOLD'da kalır.
-Assert-Equal $contract.staging.migration_head '0085' 'staging migration head'
+# WP-367/368 (Faz F5): 0086 presence heartbeat lease'ini projeksiyonda da
+# tazeler, 0087 global timer v2 sunucu anahtarını açar. İkisi de sahibin açık
+# emriyle production'a uygulanır; apply + v52 release bitince deploy/release
+# yeniden varsayılan HOLD'a kilitlenir ve bu iddialar $false'a döner.
+Assert-Equal $contract.staging.migration_head '0087' 'staging migration head'
 Assert-Equal ([bool]$contract.staging.deploy_enabled) $true 'staging deploy enabled'
 Assert-Equal ([bool]$contract.staging.release_enabled) $true 'staging release enabled'
-Assert-Equal $contract.production.migration_head '0085' 'production head 0085: WP-351 ile uygulandı ve post-check ile doğrulandı'
-Assert-Equal ([bool]$contract.production.deploy_enabled) $false 'production deploy varsayılan HOLD: terfi bitince yeniden kilitlenir'
-Assert-Equal ([bool]$contract.production.release_enabled) $false 'production release defaults to HOLD'
+Assert-Equal $contract.production.migration_head '0087' 'production head 0087: Faz F5 apply hedefi'
+Assert-Equal ([bool]$contract.production.deploy_enabled) $true 'production deploy sahip emriyle AÇIK (Faz F5); apply sonrası yeniden kilitlenir'
+Assert-Equal ([bool]$contract.production.release_enabled) $true 'production release sahip emriyle AÇIK (v52); release sonrası yeniden kilitlenir'
 
 $databaseWorkflow = Get-Content -LiteralPath (Join-Path $repoRoot '.github\workflows\database-gates.yml') -Raw -Encoding UTF8
 $releaseWorkflow = Get-Content -LiteralPath (Join-Path $repoRoot '.github\workflows\release.yml') -Raw -Encoding UTF8
