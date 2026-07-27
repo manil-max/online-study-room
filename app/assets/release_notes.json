@@ -3,6 +3,46 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.53",
+      "buildNumber": 53,
+      "channel": "stable",
+      "date": "2026-07-27",
+      "title": "v53: sayaç eşitlemesinin eksik halkası kuruldu",
+      "highlights": [
+        "Bir cihazda başlattığın veya durdurduğun çalışma diğer cihaza anında haber ediliyor.",
+        "Bildirim gecikse veya kaybolsa bile uygulama açıkken durum sunucudan doğrulanıyor.",
+        "Doğrulama turu yalnız uygulama ekranda açıkken çalışır; arka planda pil harcamaz."
+      ],
+      "fixes": [
+        "v52 komutun cihazdan sunucuya gitmesini düzeltmişti ama sunucudaki değişikliği diğer cihaza haber eden parça hiç devrede değildi; bu yüzden v52'de de eşitleme görmediniz. Eksik halka kuruldu.",
+        "Gelen bildirim hiçbir zaman doğrudan sayaç olarak uygulanmıyor; her zaman sunucudaki güncel kayıt okunuyor, böylece gecikmiş eski bir bildirim sayacını geri saramıyor."
+      ],
+      "notes": [
+        "Bu sürüm migration taşır; production şeması 0087'den 0088'e taşındı.",
+        "Eşitleme için her iki cihazda da v53 ve bildirim kaydının yapılmış olması gerekir.",
+        "Sayaç senkronu şimdilik Android ve kronometre modunu kapsar; Pomodoro, geri sayım ve Windows dahil değildir.",
+        "Admin ile yazışma ekranındaki sorunlar bu sürümde de ele alınmadı.",
+        "Masaüstünde 6 haneli kod ile şifre sıfırlama hâlâ çalışmıyor."
+      ],
+      "titleEn": "v53: the missing link in timer sync is now in place",
+      "highlightsEn": [
+        "Starting or stopping a run on one device is now signalled to the other immediately.",
+        "Even if the push is delayed or lost, an open app re-checks the state against the server.",
+        "That re-check runs only while the app is on screen, so it costs no battery in the background."
+      ],
+      "fixesEn": [
+        "v52 fixed the command reaching the server, but the part that tells the other device about the change was never wired up - which is why v52 still did not sync. That missing link is now in place.",
+        "An incoming push is never applied as timer state directly; the app always reads the current server record, so a delayed old push cannot rewind your timer."
+      ],
+      "notesEn": [
+        "This release ships migrations; the production schema moves from 0087 to 0088.",
+        "Sync requires v53 on both devices and completed push registration.",
+        "Timer sync currently covers Android and stopwatch mode; Pomodoro, countdown and Windows are not included.",
+        "The admin conversation issues are still not addressed in this release.",
+        "Desktop password reset via the 6-digit code still does not work."
+      ]
+    },
+    {
       "versionName": "1.0.52",
       "buildNumber": 52,
       "channel": "stable",

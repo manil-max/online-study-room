@@ -4,6 +4,25 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [v53 / 1.0.53+53] - 2026-07-27
+
+> **Sayaç eşitlemesi tamamlandı.** v52 komutun cihazdan sunucuya gitmesini
+> düzeltmişti, ama sunucudaki değişikliği diğer cihaza haber veren parça hiç
+> devrede değildi — bu yüzden v52'de de eşitleme görmediniz. Eksik halka bu
+> sürümde kuruldu. Production şeması `0088`e taşındı.
+
+### Düzeltmeler
+- **İki cihazın sayacı artık gerçekten eşitleniyor.** Bir cihazda başlattığın veya durdurduğun çalışma, diğer cihaza anında haber ediliyor. v52'de bu haber hiç üretilmiyordu: sunucu kaydı güncelliyor ama ikinci cihaza sinyal göndermiyordu, o yüzden diğer cihaz ancak uygulamayı kapatıp açtığında durumu görebiliyordu.
+- **Bildirim gecikse veya kaybolsa bile eşitleme tutuyor.** Uygulama ekranda açıkken sayaç durumu düzenli olarak sunucudan doğrulanıyor. Gelen bildirim hiçbir zaman doğrudan sayaç olarak uygulanmıyor; her zaman sunucudaki güncel kayıt okunuyor, böylece gecikmiş eski bir bildirim sayacını geri saramıyor.
+- **Bu tur pil harcamıyor.** Doğrulama turu yalnız uygulama ekranda açıkken çalışır; arka plana alındığında durur, öne döndüğünde geri gelir.
+
+### Notlar
+- Bu sürüm migration taşır; production şeması `0087` → `0088`.
+- Eşitleme için **her iki cihazda da v53** ve bildirim kaydının yapılmış olması gerekir; bildirim izni verilmemiş bir cihazda senkron çalışmaz.
+- Sayaç senkronu şimdilik **Android** ve **kronometre** modunu kapsar; Pomodoro, geri sayım ve Windows dahil değildir.
+- Admin ↔ kullanıcı yazışmasındaki iki sorun bu sürümde de ele alınmadı (sahip kararı).
+- Masaüstünde 6 haneli kod ile şifre sıfırlama hâlâ çalışmıyor.
+
 ## [v52 / 1.0.52+52] - 2026-07-27
 
 > **Çalışırken çevrimdışı görünme ve sayaç senkronu.** v51'de aktiflik
