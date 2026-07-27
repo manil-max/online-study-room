@@ -35,7 +35,7 @@
 - **Yönetim varsayılanı:** Production `deploy_enabled/release_enabled` kapalıdır ve her terfiden sonra yeniden kapatılır. Stable yalnız protected `production` Environment, exact SHA/head/project-ref GO ve reviewer kanıtıyla ilerler.
 - **Kurallar:** Kök `AGENTS.md`, `.agents/AGENTS.md` ve `docs/KALITE-PROGRAMI.md` geçerlidir. Tek çalışma dalı `main`; her WP ayrı commit; production varsayılmaz.
 - **Aktif tur:** **v49 sonrası saha düzeltmeleri (Faz F3).** WP-348 → WP-351 zinciri kapandı (stable v49 çıktı). Sahip iki turda toplam **sekiz** bulgu bildirdi (`backlog.md` V49-1…V49-8) ve **hepsi karta bağlandı: WP-353…WP-362.** Backlog'da plansız kalan v49 bulgusu yok.
-- **Son WP numarası:** **WP-362** (Faz F3 planlaması, 2026-07-27). Sıradaki numara WP-363'tür ve ilk sahibi büyük olasılıkla WP-361'in çıktısı olan tablet yerleşim uygulamasıdır.
+- **Son WP numarası:** **WP-366** (Faz F4, 2026-07-27). Faz F4 sahip emriyle açıldı: presence şema hatası + V3 rollout, stable'a çıkacak.
 - ✅ **Ortam gerçeği uzlaştırıldı (WP-351, 2026-07-27):** üç ortam da `0085`; production CLI geçmişi artık gerçek. Deploy kapısı yeniden kilitli.
 
 ## ⚡ Aktif Çalışma Kaydı
@@ -1578,6 +1578,93 @@ Seri kilitler:
 > 🔴 **Üç büyük program kuralı (`.agents/AGENTS.md §1.2`) korunur:** Faz F3'te
 > Tema (WP-358), Başarım (WP-359) ve Saat/sayaç (WP-357/355) kartları vardır;
 > **üçü birden aynı anda açılmaz.** Dalga 2'de en fazla iki çalışma hattı.
+
+---
+
+### Faz F4 — Presence şema hatası ve çoklu cihaz senkronu (sahip emri, 2026-07-27)
+
+> 🔴 **Sahip emri (§0.1):** "sayaç başlayınca grupta aktif görünse bile
+> başkalarında görünmüyor" **ve** "çoklu cihaz senkronu" — ikisi de çözülüp
+> **stable'a** çıkacak, test sahip tarafından stable'da yapılacak. Beta ara adımı
+> ve cihaz ön kabulü sahip tarafından açıkça atlanmıştır.
+>
+> **Kayıt hijyeni:** WP-354 (presence ölçüm kartı) **iptal** — ölçüm yapılmadan
+> kök neden koddan bulundu, cihaz gerekmedi. WP-355 ve WP-357'nin yerini
+> WP-363/364/365 alır; eski kartlar tarihsel kalır, worker'a verilmez.
+
+#### WP-363: Presence sunucuya hiç yazılmıyor — legacy payload şema uyumsuzluğu 🔴
+- **Program/Faz:** Faz F4 · release-blocking bug · **Durum:** [ ] Bekliyor
+- **Kök neden (kodda doğrulandı, ölçüm gerekmedi):** `Presence.toMap()` payload'a
+  **`lease_expires_at`** koyuyor ([`presence.dart:97`](app/lib/data/models/presence.dart:97)),
+  ama legacy `public.presence` tablosunda böyle bir kolon **yok** — tablo 0001'de
+  `user_id, group_id, status, started_at, today_seconds, subject_id, updated_at`
+  ile tanımlı ([`0001:66-74`](supabase/migrations/0001_initial_schema.sql:66)) ve
+  hiçbir migration ona kolon eklememiştir (`alter table public.presence` yalnız
+  RLS için geçer). `lease_expires_at` yalnız 0081'in projeksiyon tablolarında ve
+  0082'de `live_study_runs`'ta vardır. Sonuç: `_writeLegacy` →
+  `from('presence').upsert(toMap())` PostgREST'te **bilinmeyen kolon** hatasıyla
+  reddediliyor ([`supabase_presence_repository.dart:77`](app/lib/data/repositories/supabase/supabase_presence_repository.dart:77)).
+- **Neden kimse fark etmedi:** hata **iki kez** yutuluyor — `PresenceLifecycle.beat()`
+  içinde `.catchError((_) {})` ([`presence_lifecycle.dart:87-90`](app/lib/data/providers/presence_lifecycle.dart:87)),
+  offline katman ise satırı yerel cache'e yazıp **yerel dinleyicilere anında**
+  basıyor ([`offline_first_presence_repository.dart:46-58`](app/lib/data/repositories/offline/offline_first_presence_repository.dart:46)).
+  Bu yüzden kullanıcı **kendini** aktif görüyor, karşı taraf hiç görmüyor.
+- **Ne zaman girdi:** `80f4bf3` "WP-339: cut over presence to server projections".
+  Legacy varsayılan mod olduğu için **v49 ve v50'de presence sunucuya hiç
+  yazılmamıştır.** V49-6'nın ("bir süre sonra düşüyor") da aynı kök nedeni budur.
+- **SAHİP dosyalar:** `app/lib/data/models/presence.dart` · yeni
+  `app/test/data/presence_legacy_payload_test.dart`
+- **DOKUNMA:** projeksiyon RPC yolu (`apply_multi_group_presence_state` zaten açık
+  parametre kullanır, `toMap` kullanmaz) · offline cache serileştirmesi
+  (`_presenceToJson`, ayrı) · migration'lar — **legacy tabloya kolon EKLENMEZ**;
+  doğru olan istemcinin var olmayan kolonu yazmayı bırakmasıdır.
+- **Kabul (ölçülebilir):** Legacy payload anahtarları legacy tablo kolonlarının
+  **alt kümesi** ve bunu kilitleyen test var · iki hesap aynı grupta birbirini
+  `≤ 10 sn` içinde "çalışıyor" görür · `flutter analyze` 0 uyarı.
+- **Tuzak:** `presence` PK `user_id`, yani kullanıcı başına tek satır; bu düzeltme
+  çoklu grup görünürlüğünü çözmez (o WP-365 projeksiyonunun işi).
+- **Model önerisi:** 🔴 Opus
+
+#### WP-364: Presence yazma hatası bir daha sessiz kalmasın 🔇
+- **Program/Faz:** Faz F4 · dayanıklılık · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-363
+- **Problem:** WP-363'ün asıl maliyeti hatanın kendisi değil, **iki katmanda
+  sessizce yutulmuş** olmasıdır. Aynı sınıf hata yarın yine sessizce döner.
+- **SAHİP dosyalar:** `app/lib/data/providers/presence_lifecycle.dart` ·
+  `app/lib/data/providers/presence_providers.dart` · ilgili testler
+- **Kabul:** Uzak presence yazma hatası gözlemlenebilir ve `readSyncStatus`
+  üzerinden okunabilir · koşulsuz `catchError((_) {})` kalmadı · hata timer/UI
+  akışını **bozmuyor** (yangına-at-unut korunur).
+- **Model önerisi:** 🟣 Pro
+
+#### WP-365: Çoklu cihaz senkronu — V3 rollout'u aç ve stable'a ver 📱↔️📱
+- **Program/Faz:** Faz F4 · V3 rollout · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-363
+- **Problem:** V3 zinciri (WP-336…WP-345) kodda ve `0085`te hazır ama anahtarlar
+  **sabit kodlu kapalı**: `presenceProjectionModeProvider → legacy`,
+  `globalTimerModeProvider → disabled`. Çalışma zamanında açılamıyor.
+- **Sahip kararı:** Stable'da **açık** gelecek; test stable'da yapılacak.
+- **SAHİP dosyalar:** yeni `app/lib/core/config/rollout_config.dart` ·
+  `presence_providers.dart` ve `global_timer_providers.dart` (yalnız mode
+  provider'larının kaynağı) · ilgili testler
+- **DOKUNMA:** WP-336…WP-345 feature kodu · native timer/bildirim/widget ·
+  uygulanmış migration'lar.
+- **Adımlar:** üç kademeyi (presence projection · global timer · foreground
+  mirror) **ayrı ayrı** açılabilir yap · tek okuma noktası · testle kilitle.
+- **Kabul (ölçülebilir):** Aynı hesapta iki cihazda başlat/durdur aynası
+  `p95 ≤ 2 sn` · ek session **0**, çift XP **0** · bildirim/widget regresyonu
+  **0** · bir kademe kapatılınca diğerleri çalışır · kapalı konumda davranış
+  bugünküyle birebir aynı.
+- **Geri alma:** Uzaktan kapatma yolu **yok** (sunucu tarafı flag altyapısı
+  kurulmadı). Sorun çıkarsa geri dönüş = anahtarı kapatan yeni stable hotfix.
+  Bu bedel sahip tarafından kabul edilmiştir.
+- **Model önerisi:** 🔴 Opus
+
+#### WP-366: v51 stable release 🚀
+- **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-363 + WP-364 + WP-365
+- **Kapsam:** sürüm/build kimliği, CHANGELOG, release_notes, tag `v51`, Android +
+  Windows artefaktı. Migration **yok**, production `0085`te kalır.
+- **Kabul:** Preflight/gate PASS · Android APK yayında · Windows MSIX bu kez
+  üretilir (golden kararsızlığı `6f285a2` ile düzeldi) · release notlarında V3'ün
+  **açık** geldiği ve geri dönüşün hotfix olduğu yazılı.
 
 ---
 
