@@ -34,8 +34,8 @@
 - **Sürüm sırası:** kod/testi biten işler tek QA kuyruğunda birikir; yeni beta/stable yalnız sahip onayıyla çıkar. Eski beta dalga kararları git geçmişindedir.
 - **Yönetim varsayılanı:** Production `deploy_enabled/release_enabled` kapalıdır ve her terfiden sonra yeniden kapatılır. Stable yalnız protected `production` Environment, exact SHA/head/project-ref GO ve reviewer kanıtıyla ilerler.
 - **Kurallar:** Kök `AGENTS.md`, `.agents/AGENTS.md` ve `docs/KALITE-PROGRAMI.md` geçerlidir. Tek çalışma dalı `main`; her WP ayrı commit; production varsayılmaz.
-- **Aktif tur:** **v49 sonrası cihaz geri bildirimi turu.** WP-348 → WP-351 zinciri kapandı (stable v49 çıktı). Sahip iki turda toplam **sekiz** bulgu bildirdi (`backlog.md` V49-1…V49-8). İkinci tur (V49-6/7/8) **Faz F3 · WP-353…WP-356** olarak planlandı; ilk tur (V49-1…V49-5) hâlâ WP'ye bölünmedi.
-- **Son WP numarası:** **WP-356** (Faz F3 planlaması, 2026-07-27). V49-1…V49-5 için açılacak kartlar WP-357'den devam eder.
+- **Aktif tur:** **v49 sonrası saha düzeltmeleri (Faz F3).** WP-348 → WP-351 zinciri kapandı (stable v49 çıktı). Sahip iki turda toplam **sekiz** bulgu bildirdi (`backlog.md` V49-1…V49-8) ve **hepsi karta bağlandı: WP-353…WP-362.** Backlog'da plansız kalan v49 bulgusu yok.
+- **Son WP numarası:** **WP-362** (Faz F3 planlaması, 2026-07-27). Sıradaki numara WP-363'tür ve ilk sahibi büyük olasılıkla WP-361'in çıktısı olan tablet yerleşim uygulamasıdır.
 - ✅ **Ortam gerçeği uzlaştırıldı (WP-351, 2026-07-27):** üç ortam da `0085`; production CLI geçmişi artık gerçek. Deploy kapısı yeniden kilitli.
 
 ## ⚡ Aktif Çalışma Kaydı
@@ -93,7 +93,7 @@
 | Konu | Durum |
 | --- | --- |
 | Sürüm | **`v49` yayında (Latest, `2e19cfb`).** Android APK + Windows MSIX/ZIP GitHub Releases'ta; APK SHA-256 `0628cff9…de65c935` |
-| Cihaz kabulü | 🔴 **Açık.** Sahip v49'u denedi, iki turda **sekiz bulgu** bildirdi → `backlog.md` V49-1…V49-8. İkinci tur planlandı: **Faz F3 · WP-353…WP-356** |
+| Cihaz kabulü | 🔴 **Açık.** Sahip v49'u denedi, iki turda **sekiz bulgu** bildirdi → `backlog.md` V49-1…V49-8. Hepsi planlandı: **Faz F3 · WP-353…WP-362** |
 | Sürüm politikası | 🔴 Sahip onayı olmadan yeni sürüm çıkmaz |
 | Otomatik doğrulama | `2e19cfb` release koşumu (`30222542841`) preflight/android/windows/finalize tümü PASS |
 | l10n audit | **0 bulgu**: WP-335, WP-295 önizleme metinlerini katalogladı; 7 kullanıcı-dışı invariant mesajı dar ve gerekçeli muafiyetle ayrıldı |
@@ -808,18 +808,32 @@ WP-348 (migration + Başarımlar primary IA)
 
 ### Faz F3 — v49 saha düzeltmeleri (sahip 2. geri bildirim turu)
 
-> **Kaynak:** `backlog.md` 🔴 Yüksek Öncelik → **V49-6, V49-7, V49-8**
-> (sahip, 2026-07-27, uzaktan bildirdi). Bu faz yalnız bu üç maddeyi kapsar;
-> ilk turdaki V49-1…V49-5 **hâlâ WP'ye bölünmedi** ve buraya girmez.
+> **Kaynak:** `backlog.md` 🔴 Yüksek Öncelik → **V49-1 … V49-8** (sahip,
+> 2026-07-27, iki turda bildirdi). **v49 sonrası bütün saha yamaları bu fazdadır**;
+> sekiz bulgunun tamamı karta bağlandı, hiçbiri yalnız backlog notu olarak kalmadı.
+>
+> | Bulgu | Kart |
+> | --- | --- |
+> | V49-1 çoklu cihaz sayaç senkronu | **WP-357** |
+> | V49-2 Başarımlar primary grup bloğu + kırmızı rozet | **WP-358** (token) → **WP-359** (IA) |
+> | V49-3 kamp ateşi 2. revizyon | **WP-360** |
+> | V49-4 tablet yatay düzeni | **WP-361** (envanter; kod ayrı kart) |
+> | V49-5 tanıtım turları | **WP-362** |
+> | V49-6 sayaç sürerken grupta aktif kalmama | **WP-354** (ölçüm) → **WP-355** (düzeltme) |
+> | V49-7 kamp ateşi altındaki gri leke | **WP-356** |
+> | V49-8 şifre sıfırlama localhost | **WP-353** |
 >
 > **Uyumlama notu (planner Adım 0, 2026-07-27):** `git status` temiz, açık dal
 > yok, bütün lane'ler `[x] Boşta`, commit edilmemiş worker çıktısı yok. WP-351
 > `[x] KAPANDI` ve WP-352 `[~]` kayıtları gerçekle uyumlu; taşınacak kart
 > bulunmadı. Zemin doğru olduğu için yeni kartlar doğrudan yazıldı.
 >
-> **Sıra:** WP-353 · WP-354 · WP-356 **paralel güvenli** (ayrık SAHİP, ortak
-> sıcak dosya yok). **WP-355 yalnız WP-354 çıktısından sonra** başlar — ölçüm
-> yapılmadan presence mimarisi değiştirilmez.
+> **İki karar sahibe bağlı, kod başlamadan gerekir:** WP-360'ta kamp ateşi
+> geometri sayıları (önce önizleme) ve WP-361'de tablet yerleşim seçeneği.
+> **Bir kart hiç kod yazmaz:** WP-361 (sahibin açık "önce konuşalım" emri).
+>
+> **Sıra ve çakışma:** aşağıdaki matriste. Özet: dalga 1'de dört kart paralel
+> güvenli; presence yüzeyi ve kamp ateşi yüzeyi **tek kişiliktir**.
 
 #### WP-353: Production auth yapılandırması — şifre sıfırlama linkini localhost'tan kurtar 🔑
 - **Program/Faz:** Faz F3 · Ops/release · Kaynak: **V49-8**
@@ -1105,25 +1119,414 @@ WP-348 (migration + Başarımlar primary IA)
   V49-3 ile aynı dosyalara yakındır: V49-3 için worker açılmışsa **paralel başlama**.
 - **Model önerisi:** 🔵 Sonnet
 
-#### Faz F3 çakışma matrisi
+#### WP-357: Çoklu cihaz sayaç senkronu — rollout anahtarı ve flag'li kabul 📱↔️📱
+- **Program/Faz:** Faz F3 · V3 rollout · Kaynak: **V49-1**
+- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** Yok (WP-355 ile seri — aynı presence yüzeyi)
+- **Problem:** Sahip tablette sayacı başlattı, telefonda başlamadı. **Kodda
+  doğrulandı ve bulgu beklenenden basit çıktı: bu bir hata değil, açılmamış bir
+  özellik.** V3 zincirinin rollout anahtarları çalışma zamanında hiçbir yere
+  bağlı değil — sabit sabitler:
+  `presenceProjectionModeProvider` → `PresenceProjectionMode.legacy`
+  ([`presence_providers.dart:20-21`](app/lib/data/providers/presence_providers.dart:20)),
+  `globalTimerModeProvider` → `GlobalTimerMode.disabled`
+  ([`global_timer_providers.dart:22`](app/lib/data/providers/global_timer_providers.dart:22)).
+  Ne `--dart-define`, ne ortam dosyası, ne sunucu tarafı bir switch var; yalnız
+  testler `overrideWith` ile açabiliyor. Yani **v49'da çoklu cihaz senkronu
+  hiçbir koşulda çalışmaz** ve "flag kapalı olduğu için mi, bozuk olduğu için mi"
+  sorusunun cevabı: *kapalı olduğu için.* Ayrıca bugün flag'i açmanın tek yolu
+  kodu değiştirip yeni bir build çıkarmaktır — bu da açık/kapalı denemeyi
+  sürüm çıkarmaya bağlar.
+- **Kapsam dışı:** V3 davranışının kendisini yeniden tasarlamak · WP-336…WP-345
+  kodunu değiştirmek · production'da flag açmak (**ayrı ve somut sahip GO'su**) ·
+  stable kanala V3 sokmak · sunucu tarafı uzaktan yapılandırma altyapısı kurmak ·
+  yeni migration.
+- **SAHİP dosyalar (yaz):**
+  - `app/lib/core/config/` altında yeni rollout yapılandırması (tek okuma noktası)
+  - `app/lib/data/providers/presence_providers.dart` (yalnız mode provider'ının kaynağı)
+  - `app/lib/data/providers/global_timer_providers.dart` (yalnız mode provider'ının kaynağı)
+  - `docs/recovery/ENVIRONMENT-MATRIX.md` (ortam başına flag durumu)
+  - `docs/qa/DEVICE-QA-MATRIX.md` V3 satırları
+  - ilgili yapılandırma/contract testleri
+- **DOKUNMA (oku, değiştirme):** WP-336…WP-345'in feature kodu · uygulanmış
+  `0081`/`0082`/`0083` · native timer/servis · bildirim/widget · `study_providers.dart`
+  sıcak sayaç yolu · `tooling/release/deploy-contract.json`.
+- **Adımlar:**
+  - [ ] Rollout anahtarını **tek** bir yapılandırma noktasından oku; varsayılan
+    **kapalı** kalsın ve stable/production yolunda kapalı olduğu **testle kilitlensin**.
+  - [ ] Anahtarı ortam/flavor'a bağla: beta+staging'de açılabilir, stable+production
+    varsayılanı kapalı. Yanlış eşleşme fail-closed olsun (beta flag'i stable
+    artefaktına sızmasın).
+  - [ ] Üç kademeyi ayrı ayrı açılabilir yap (presence projection · global timer
+    shadow · foreground mirror); hepsini tek anahtara bağlama — biri bozulursa
+    diğerleri kapanmasın.
+  - [ ] Flag'leri açık bir **beta** artefaktı üret; stable v49'a dokunma.
+  - [ ] WP-346'daki cihaz matrisini bu beta ile gerçekten koş (telefon+tablet,
+    aynı hesap): başlat/durdur aynası, bildirim/widget regresyonu, 8 saat drift,
+    ek session/XP kontrolü.
+  - [ ] Sonucu WP-346 kartına kanıt olarak yaz; hata çıkarsa **ayrı debug WP** aç,
+    bu kartta yamalama yapma.
+- **Veri/Migration etkisi:** Yok — şema `0085`te zaten hazır. **Geri alma:** tek
+  yapılandırma değeri kapatılır, yeniden build gerekmeyecek biçimde ortam
+  ayrımına bağlıdır; şema düşürülmez.
+- **Ortam/Deploy:** Local → **beta/staging**. Production/stable'da açmak bu WP'nin
+  kapsamı **değildir**; ayrı karta ve somut sahip GO'suna bağlıdır.
+- **RLS/Güvenlik:** Flag yalnız istemci okuma/yazma yolunu seçer; yetki sunucuda
+  kalır. Kapalı flag'in açık gibi davranmadığı testle kanıtlanır (ölü anahtar yasağı).
+- **Edge-case'ler:** iki cihazda farklı flag durumu (biri v49 stable, biri beta) ·
+  aynı hesapta eski istemci · flag açıkken ağ yok · hesap değişimi · flag
+  ortasında çalışan sayaç · beta ve stable aynı telefonda kurulu.
+- **Kabul (ölçülebilir):**
+  - Stable/production yapılandırmasında üç mod da **kapalı** ve bu bir testle kilitli.
+  - Beta artefaktında flag'ler açık; tablette başlatılan çalışma telefonda
+    **p95 ≤ 2 sn** içinde görünür, birinden durdurmak diğerini durdurur.
+  - Ek session **0**, çift XP **0**, bildirim/widget regresyonu **0**, 8 saatte
+    sayaç sapması **≤ ±1 sn**.
+  - Bir kademe kapatıldığında diğer ikisi çalışmaya devam eder (bağımsızlık kanıtı).
+  - Flag kapalıyken davranış bugünkü v49 ile **birebir** aynıdır.
+- **Tuzaklar:** Bu kart V49-6 (presence düşmesi) ile **aynı yüzeye** dokunur;
+  WP-355 ile paralel çalıştırılamaz. V3'ü açmak V49-6'yı çözmez (projection yolu
+  da 70 sn'lik istemci lease'i kullanır) — iki iş birbirinin yerine geçmez.
+  "Flag'i açtım, çalıştı" demek için gerçek iki fiziksel cihaz gerekir; tek
+  cihazda iki hesap bu testi kapsamaz.
+- **Model önerisi:** 🔴 Opus
+
+#### WP-358: Tema-bağımsız uyarı token'ı 🎨⚠️
+- **Program/Faz:** Faz F3 · Tema · Kaynak: **V49-2 açık tasarım sorusu**
+- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** Yok
+- **Problem:** Sahibin açık sorusu: dikkat çekmesi gereken kırmızı rozet, kırmızı
+  ağırlıklı tema seçen kullanıcıda arka planda kaybolur. Bugün uyarı yüzeyleri
+  doğrudan tema paletinden besleniyor (ör. WP-352 uyarı bloğu `errorContainer`
+  kullanıyor, [`primary_group_selector_card.dart:203`](app/lib/features/profile/widgets/primary_group_selector_card.dart:203)).
+  Palet kırmızıya kayınca uyarı ile zemin arasındaki kontrast çöküyor.
+- **Kapsam dışı:** Yeni tema eklemek · mevcut preset renklerini değiştirmek ·
+  tema sihirbazı · Başarımlar ekranının bilgi mimarisi (WP-359) · rozet
+  yerleşimlerini eklemek (WP-359).
+- **SAHİP dosyalar (yaz):**
+  - `app/lib/core/theme/app_theme.dart` (yalnız yeni uyarı token'ları)
+  - gerekirse `app/lib/core/theme/theme_presets.dart` (yalnız token türetimi)
+  - yeni ortak uyarı rozeti bileşeni + testleri · golden baseline'ları
+- **DOKUNMA (oku, değiştirme):** `theme_settings.dart` kalıcılık yolu ·
+  `appearance_screen.dart` · l10n · profil/başarım ekranları.
+- **Adımlar:**
+  - [ ] Uyarı rengini paletten **türetme**; seçili tema ne olursa olsun zemine
+    karşı hedef kontrastı tutturan bir uyarı token'ı üret (gerekirse zemine göre
+    otomatik açılıp koyulaşan bir çift renk).
+  - [ ] Token'ı kullanan tek bir rozet/uyarı bileşeni yaz; her ekran kendi
+    kırmızısını icat etmesin.
+  - [ ] 15 preset × açık/koyu üzerinde kontrastı **otomatik testle** ölç; sınırın
+    altına düşen kombinasyon kalırsa test kırmızı olsun.
+  - [ ] Mevcut `errorContainer` kullanan uyarı yüzeyini yeni token'a taşı
+    (davranış aynı, yalnız renk kaynağı değişir).
+- **Veri/Migration etkisi:** Yok. **Geri alma:** tek tema commit'inin geri çevrilmesi.
+- **Ortam/Deploy:** Yalnız local; bir sonraki sürüm kuyruğuna girer.
+- **RLS/Güvenlik:** Yok.
+- **Edge-case'ler:** kırmızı ağırlıklı preset · özel (kullanıcı yapımı) tema ·
+  açık/koyu mod · yüksek kontrast/erişilebilirlik ayarı · renk körlüğü (renk tek
+  sinyal olmamalı — ikon/metin de taşımalı) · 360 dp.
+- **Kabul (ölçülebilir):**
+  - Uyarı rozeti/bloğu ile zemini arasındaki kontrast **15 preset'in hepsinde**
+    ve açık/koyu modda **WCAG AA**'yı sağlar; kırmızı ağırlıklı preset dahil.
+  - Uyarı, rengin yanında **en az bir renk-dışı sinyal** taşır (ikon veya metin).
+  - Tema seçimi/kalıcılığı davranışı değişmez; mevcut tema golden'ları
+    istenmeyen fark üretmez.
+  - `flutter analyze` 0 uyarı; kontrast testi ve rozet widget testleri yeşil.
+- **Tuzaklar:** Sabit `Colors.red` yazmak sorunu koyu temada geri getirir —
+  token zemine göre türetilmelidir. `core/theme/**` **sıcak dosyadır**: başka bir
+  tema WP'si açıkken bu kart başlatılmaz.
+- **Model önerisi:** 🟣 Pro
+
+#### WP-359: Başarımlar bilgi mimarisi — birincil grup bloğunu sağ üste taşı 🏠
+- **Program/Faz:** Faz F3 · Başarım/IA · Kaynak: **V49-2**
+- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** **WP-358 token'ı** (rozet rengi oradan gelir)
+- **Problem:** WP-348'de eklenen birincil grup kartı `My Achievement Journey`
+  başlığının üstünde kocaman bir blok olarak duruyor
+  ([`social_profile_screen.dart:186`](app/lib/features/profile/social_profile_screen.dart:186))
+  ve sahibin ekranında görüntü kirliliği yaratıyor. Seçim nadir yapılan bir
+  ayardır; ekranın ana içeriği başarımlardır.
+- **Ürün/tasarım sözleşmesi (sahip, 2026-07-27):**
+  - Blok kaldırılır; yerine **sağ üst köşede bir ayar/ikon girişi** gelir. Seçim
+    aynı tek-seçimli listeyle, açılan bir yüzeyde yapılır.
+  - Birincil grup seçili **değilse** uyarı rozeti **üç yerde birden** görünür:
+    Profil sekmesi (bugün var, WP-352) · Başarımlar ekranı · ayar ikonunun üstü.
+  - Rozet rengi WP-358 token'ından gelir; ekran kendi kırmızısını tanımlamaz.
+  - Seçim yapıldığında üç rozet de kaybolur.
+- **Kapsam dışı:** 24 saat cooldown kuralını değiştirmek · birincil grubun
+  anlamını/muhasebesini değiştirmek · yeni RPC/migration · masaüstü gezinti
+  rozeti altyapısını kurmak (**bilinçli borç**, aşağıda) · başarım kataloğunun
+  kendisi.
+- **SAHİP dosyalar (yaz):**
+  - `app/lib/features/profile/social_profile_screen.dart`
+  - `app/lib/features/profile/widgets/primary_group_selector_card.dart`
+  - gerekirse yeni bir seçim yüzeyi (sayfa/alt sayfa) dosyası
+  - `app/lib/l10n/app_{en,tr,de,ar}.arb` + üretilen l10n
+  - `app/test/features/profile/**` ilgili testler
+- **DOKUNMA (oku, değiştirme):** `group_providers.dart` · `core/theme/**`
+  (WP-358'in token'ı **kullanılır**, tanımlanmaz) · `home_shell.dart` mevcut
+  Profil sekmesi noktası (WP-352, korunur) · migration/RPC.
+- **Adımlar:**
+  - [ ] Kartı ekran gövdesinden çıkar; sağ üste ayar/ikon girişi koy (dokunma
+    hedefi ≥ 48 dp, erişilebilirlik etiketi yazılı).
+  - [ ] Seçim yüzeyini aç: 1–8 grup, tek seçim, mevcut birincil işaretli,
+    cooldown kilidi ve kalan süre görünür (WP-348 sözleşmesi korunur).
+  - [ ] Seçim yokken rozeti üç yüzeyde göster; WP-358 token'ını kullan.
+  - [ ] Bekleyen ödül sayısı rozetiyle aynı sekmede **yarıştırma** (WP-352
+    kararı korunur: iki sinyal çakışmaz).
+  - [ ] Boş/yükleniyor/hata/çevrimdışı durumlarında **uydurma uyarı gösterme** —
+    olmayan bir kaybı ilan etme (WP-352 provider sözleşmesi).
+- **Bilinçli borç — masaüstü rozeti:** `DesktopNavigationPane` bugün hiç rozet
+  altyapısı taşımıyor (WP-352 notu). Masaüstünde uyarı yüzeyi ayar ikonunun
+  kendisidir; gezinti rozeti istenirse ayrı kart açılır.
+- **Veri/Migration etkisi:** Yok. **Geri alma:** tek UI commit'inin geri çevrilmesi.
+- **Ortam/Deploy:** Yalnız local.
+- **RLS/Güvenlik:** Değişmez; seçim yine server-authoritative RPC üzerinden ve
+  yalnız aktif üyelik için yapılır.
+- **Edge-case'ler:** 0 grup (rozet **gösterilmez** — seçilecek bir şey yok) ·
+  tek grup (otomatik birincil) · 8 grup · cooldown kilitli · seçim sırasında
+  çalışan sayaç · başkasının profiline bakarken (kart hiç görünmemeli) ·
+  360 dp taşma · uzun grup adı.
+- **Kabul (ölçülebilir):**
+  - Başarımlar ekranının gövdesinde birincil grup bloğu **yok**; giriş sağ üstte
+    tek ikon, dokunma hedefi ≥ 48 dp.
+  - Seçim yokken rozet **tam olarak üç** yüzeyde görünür; seçim sonrası **üçü de**
+    kaybolur (aynı testte kanıtlanır).
+  - Grubu olmayan kullanıcıda rozet **0**; yükleme/hata durumunda rozet **0**.
+  - Başkasının profilinde giriş/rozet **0**.
+  - 360 dp'de taşma 0; TR ve EN'de kesilme yok; `flutter analyze` 0 uyarı,
+    ilgili testler yeşil.
+- **Tuzaklar:** Kartı silip yerine hiçbir giriş koymamak seçimi erişilemez yapar
+  (WP-348 grup detayındaki eski CTA'yı zaten kaldırmıştı — ikinci bir yüzey yok).
+  Rozeti "her zaman göster"e bağlamak, grubu olmayan kullanıcıyı boşuna telaşlandırır.
+- **Model önerisi:** 🟣 Pro
+
+#### WP-360: Kamp ateşi 2. revizyon — mesafe, gökyüzü, zemin, 8 kişi 🔥
+- **Program/Faz:** Faz F3 · Kamp ateşi · Kaynak: **V49-3**
+- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** **WP-356** (aynı dosyalar — seri)
+- **Problem:** WP-350 sonrası sahne daha iyi ama bitmedi. Sahibin dört maddesi:
+  (1) telefonda figürler ateşten **birazcık daha** uzaklaşsın (küçük artış,
+  abartılmasın), (2) gökyüzü çok uzun ve boş — üstten kırpılsın, kart da kısalsın,
+  (3) yeşil zemin yüksekliği azıcık artsın, (4) 8 kişide en üstteki sıranın ucu
+  gökyüzünde kalıyor. **Kodda doğrulanan ayar noktaları:** sahne yüksekliği sabit
+  `360` ([`campfire_scene.dart:198`](app/lib/features/classroom/widgets/campfire_scene.dart:198)),
+  ufuk/zemin oranı her kişi sayısı için `groundYFactor: 0.66`
+  ([`campfire_layout.dart`](app/lib/features/classroom/widgets/campfire_layout.dart:160)),
+  halka açıklığı ve 8 kişi yerleşimi `CampfireCountLayout.saved` içindeki
+  `horizontalFactor`/`verticalFactor` çiftleri.
+- **🔴 Önce önizleme, sonra kod:** Bu kozmetik bir iştir; ilk çıktı kod değil,
+  **parametrik önizlemedir**. Dört ayar (sahne yüksekliği · `groundYFactor` ·
+  halka açıklığı · critter ölçeği) kaydırılabilir olarak sunulur, sahip 1/4/8
+  kişide sayıları seçer, **seçilen sayılar koda ve golden testine bağlanır**.
+  Sahip sayı seçmeden kalıcı değer yazılmaz.
+- **Kapsam dışı:** Yeni hayvan/poz/asset üretmek · masaüstü kompozisyonunu
+  yeniden tasarlamak · gökyüzü faz algoritması (`sky_phase.dart` mantığı) ·
+  presence semantiği · kamp ateşinden sayaç başlatmak · bildirim/widget/native.
+- **SAHİP dosyalar (yaz):**
+  - `app/lib/features/classroom/widgets/campfire_scene.dart`
+  - `app/lib/features/classroom/widgets/campfire_layout.dart`
+  - `app/lib/features/classroom/widgets/camp_critter.dart` (yalnız ölçek/etiket)
+  - `app/lib/wp295_preview.dart` (parametrik önizleme — mevcut yüzey genişletilir)
+  - `app/test/features/campfire_scene_test.dart` · `campfire_sky_golden_test.dart` + golden'lar
+- **DOKUNMA (oku, değiştirme):** `campfire/` PNG katman dosyaları (WP-356'nın
+  yüzeyi) · `study_providers.dart` · presence provider'ları · `core/notifications/**` ·
+  `app/android/**` · `app/pubspec.yaml`.
+- **Adımlar:**
+  - [ ] Dört ayarı parametrik önizlemede kaydırılabilir yap; 1/4/8 kişi ve
+    gündüz/geçiş/gece kombinasyonlarını aynı ekranda göster.
+  - [ ] Sahibe önizleme çıktısı sun, **sayıları seçtir** (bu kart o noktada durur).
+  - [ ] Seçilen değerleri telefon profiline yaz; masaüstü profili değişmesin.
+  - [ ] 8 kişi yerleşiminde en üst sıranın **zemin üstünde** kaldığını doğrula —
+    bu, zemin yüksekliğiyle birlikte çözülmesi gereken tek bağlı problemdir.
+  - [ ] Sahne yüksekliğini kırp; kartın toplam yüksekliğinin azaldığını ölç.
+  - [ ] Golden baseline'larını yalnız seçilen değerlerle yenile.
+- **Veri/Migration etkisi:** Yok. **Geri alma:** tek geometri+golden commit'i.
+- **Ortam/Deploy:** Yalnız local; bir sonraki sürüm kuyruğuna girer.
+- **RLS/Güvenlik:** Yok.
+- **Edge-case'ler:** 0/1/4/8 üye · hepsi çalışan / hepsi offline · çok uzun ad ·
+  360×640 telefon · büyük yazı ölçeği · telefon yatay · Android tablet
+  (WP-361 ile kesişir) · dar Windows penceresi · reduce-motion · gündüz/geçiş/gece.
+- **Kabul (ölçülebilir):**
+  - 8 kişi telefon golden'ında **hiçbir** hayvan/etiket ufuk çizgisinin üstünde
+    (gökyüzünde) kalmaz; sahne sınırına en az 8 dp mesafe korunur.
+  - Halka açıklığı sahibin seçtiği değere birebir eşittir ve testte sabitlenmiştir
+    ("biraz" gibi ifade koda girmez).
+  - Kartın toplam yüksekliği ölçülebilir biçimde azalır (önce/sonra dp yazılır).
+  - Masaüstü golden'larında istenmeyen piksel farkı **0**.
+  - Android profile sahnede `p95 ≤ 16.7 ms`, jank `≤ %1`.
+- **Tuzaklar:** `groundYFactor` **her kişi sayısı için ayrı** tanımlı; birini
+  değiştirip diğerlerini unutmak 8 kişide bugünkü hatayı sürdürür. Yalnız
+  `scale` küçültmek etiket/marshmallow çapalarını bozar (WP-350 dersi). Bu kart
+  WP-356 ile aynı dosyalara girer — **ikisi paralel açılmaz**.
+- **Model önerisi:** 🟣 Pro
+
+#### WP-361: Tablet ve geniş ekran envanteri + yerleşim önerisi 📐
+- **Program/Faz:** Faz F3 · Yerleşim · Kaynak: **V49-4**
+- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** Yok
+- **🔴 Sahip kapısı:** Sahip açıkça yazdı — **"sahiple konuşulmadan koda
+  geçilmez."** Bu yüzden bu kart **ürün kodu yazmaz**; envanter + ölçüm + öneri
+  üretir. Uygulama kartı sahip kararından sonra açılır.
+- **Problem:** Tablet kullanıcıları çoğunlukla cihazı yatay tutuyor; yatayda
+  kartlar aşırı genişleyip bozuluyor. **Kodda doğrulandı — sebebi tek satır:**
+  geniş ekran yerleşimi **yalnız platforma** bağlı, genişliğe değil.
+  `isDesktopWindow` yalnız `TargetPlatform.windows` için `true`
+  ([`desktop_window_io.dart:13-15`](app/lib/core/desktop/desktop_window_io.dart:13)),
+  `home_shell.dart:101` bu bayrakla masaüstü kabuğuna geçiyor. Yani 1280 dp
+  genişliğindeki bir Android tablet, 360 dp telefon kabuğunu esnetilmiş olarak
+  alıyor; `DesktopBreakpoints` (640 / 1008 / 1440,
+  [`desktop_layout.dart:5-18`](app/lib/core/desktop/desktop_layout.dart:5))
+  Android'de **hiç devreye girmiyor**. Ayrıca ana ekran ızgarasının sütun sayısı
+  kullanıcı tercihinden geliyor ([`home_screen.dart:131`](app/lib/features/home/home_screen.dart:131)),
+  mevcut genişlikten değil — telefon için seçilmiş sütun sayısı yatay tablette
+  kartları devasa yapıyor. Kamp ateşi de aynı sınıfa düşüyor: telefon profili
+  `shortestSide < 600` istiyor ([`campfire_layout.dart:47`](app/lib/features/classroom/widgets/campfire_layout.dart:47)),
+  tablet bu yüzden masaüstü kompozisyonunu alıyor.
+- **Kapsam dışı:** Ürün kodu yazmak · yeni kabuk/yerleşim uygulamak · sütun
+  tercihini değiştirmek · masaüstü kabuğunu Android'e açmak (bu bir **öneri**
+  olabilir, bu kartta **uygulanmaz**) · yeni ekran tasarlamak.
+- **SAHİP dosyalar (yaz):**
+  - yeni `docs/qa/TABLET-LAYOUT-INVENTORY.md` (envanter + ölçüm + seçenekler + öneri)
+  - gerekiyorsa commit **edilmeyen** geçici ölçüm çıktıları
+- **DOKUNMA (oku, değiştirme):** tüm ürün kodu — bu kart yalnız okur.
+- **Adımlar:**
+  - [ ] Genişliğe duyarlı olan ve olmayan yüzeyleri tek tek listele: ana ekran
+    ızgarası, sayaç, kamp ateşi, gruplar, istatistik, profil, ayarlar, diyaloglar.
+  - [ ] Gerçek tablette dikey ve yatayda ekran görüntüsü al; bozulan her yüzey
+    için **neyin** bozulduğunu yaz (kart genişliği, satır uzunluğu, boş alan,
+    dokunma hedefi, kesilme).
+  - [ ] Okunabilirlik ölçüsü koy: satır başına karakter, kart genişliği dp,
+    içerik/boşluk oranı — "bozuk görünüyor" yerine sayı.
+  - [ ] En az üç seçenek üret ve maliyet/riskini yaz: (A) mevcut masaüstü
+    kabuğunu genişlik tabanlı yapıp Android tablette de kullanmak, (B) yalnız
+    içerik genişliğine üst sınır koyup ortalamak (en ucuz), (C) tablete özel
+    yerleşim. Her biri için hangi dosyaların SAHİP olacağını çıkar.
+  - [ ] Sütun tercihi ile mevcut genişlik arasındaki ilişki için öneri yaz
+    (tercihi ezmeden üst sınır uygulamak mümkün mü).
+  - [ ] Sahibe **önizleme/ekran görüntüsü ile** sun; kararı al ve uygulama
+    kartını (WP-363+) o karara göre yazdır.
+- **Veri/Migration etkisi:** Yok. **Ortam/Deploy:** Yok; salt inceleme.
+- **RLS/Güvenlik:** Yok. Ekran görüntülerinde başka kullanıcı adı/e-postası
+  görünüyorsa maskele.
+- **Edge-case'ler:** 7"/10"/12" tablet · yatay ve dikey · katlanabilir cihaz ·
+  bölünmüş ekran (split-screen) · büyük yazı ölçeği · Android tabletin masaüstü
+  moduna benzer geniş ekranı · dar Windows penceresi (yanlışlıkla mobil
+  kompozisyona düşmemeli — WP-350 tuzağı).
+- **Kabul (ölçülebilir):**
+  - Envanterde her ana ekran için "yatay tablette bozuluyor mu / neresi" satırı
+    doldurulmuş, ekran görüntüsüyle eşleşmiş.
+  - En az üç seçenek, her biri için etkilenen dosya listesi ve tahmini risk
+    yazılmış; bir tanesi **gerekçeli olarak önerilmiş**.
+  - Sahip kararı alınmış ve uygulama kartının kapsamı yazılabilir hâle gelmiş.
+- **Tuzaklar:** Genişlik tabanlı bir kırılma noktasını dikkatsiz eklemek dar
+  Windows penceresini mobil kompozisyona düşürür (WP-350'de yaşandı). "Tablet"
+  bir cihaz sınıfı değil bir **genişlik**tir; katlanabilir ve bölünmüş ekran aynı
+  koddan geçer. Bu kartta koda dokunmak sahip kapısını ihlal eder.
+- **Model önerisi:** 🟣 Pro
+
+#### WP-362: Tanıtım turu — hedefleme, konum ve sıra onarımı 🎈
+- **Program/Faz:** Faz F3 · Yeni kullanıcı deneyimi · Kaynak: **V49-5**
+- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** Yok
+- **Problem:** Sahip: "mantık doğru, uygulama kötü — hedef/konum/sıra ayarları
+  tutmuyor." **Kodda doğrulandı, üç ayrı mekanizma:**
+  - **Hedef tutmuyor:** Balon hedefi `GlobalKey` ile bulunuyor; hedef widget o an
+    monte değilse (koşullu gösterim, kaydırma alanının dışında, henüz yüklenmemiş
+    veri) `currentContext` **null** dönüyor ve `_anchorRect` `null` veriyor
+    ([`tour_overlay.dart:46-54`](app/lib/core/tour/tour_overlay.dart:46)). Sonuç
+    sessizce **ortalanmış, hedefsiz** balon — hata yok, uyarı yok.
+  - **Konum tutmuyor:** Hedefin dikdörtgeni **yalnız build anında** ölçülüyor
+    ([`:59`](app/lib/core/tour/tour_overlay.dart:59)); kullanıcı kaydırınca ya da
+    yerleşim değişince (görsel yüklenmesi, async veri) spot ışığı ve balon eski
+    yerde kalıyor. Yeniden ölçen bir dinleyici yok.
+  - **Hedefe götürmüyor:** Hedefi görünür kılmak için kaydırma
+    (`Scrollable.ensureVisible` benzeri) hiç yok; ekranın altındaki bir hedef
+    için tur, boş bir alanı işaret ediyor.
+  - **Sıra tutmuyor:** Adımlar sabit bir liste ([`tour_models.dart:44`](app/lib/core/tour/tour_models.dart:44));
+    hedefi bulunamayan adım atlanmıyor, ortalanmış balon olarak yine gösteriliyor —
+    kullanıcıya sıra bozulmuş gibi geliyor.
+- **Kapsam dışı:** Tur **içeriklerini** yeniden yazmak (WP-324 metinleri korunur) ·
+  yeni ekranlara tur eklemek · `tour_gate.dart` kuyruk/engel kararları (çalışıyor) ·
+  onboarding açılış ekranı · yeni l10n anahtarı.
+- **SAHİP dosyalar (yaz):**
+  - `app/lib/core/tour/tour_overlay.dart` · `tour_host.dart` · `tour_controller.dart` ·
+    `tour_models.dart`
+  - `app/test/core/tour/**` ilgili testler
+- **DOKUNMA (oku, değiştirme):** `tour_gate.dart` saf karar fonksiyonu ·
+  `tour_prefs.dart` kalıcılık anahtarları (sürüm şeması bozulmaz) · ekranların
+  tur **içerik** tanımları · `core/navigation/**`.
+- **Adımlar:**
+  - [ ] Hedef ölçümünü canlı yap: kaydırma/yerleşim değişiminde dikdörtgen
+    yeniden hesaplansın, spot ışığı ve balon hedefi takip etsin.
+  - [ ] Adım başlarken hedefi görünür alana **kaydır**; kaydırma bitmeden balonu
+    yerleştirme.
+  - [ ] Hedefi gerçekten bulunamayan adım için açık bir davranış seç ve testle
+    kilitle: ya adımı **atla**, ya bilinçli "hedefsiz" olarak işaretlenmişse
+    ortala. **Sessiz düşüş kalmasın** — bugünkü asıl hata bu.
+  - [ ] Hedefsiz olması *kasıtlı* adımları (genel karşılama) modelde açıkça
+    ayır; `anchor == null` ile "anchor vardı ama bulunamadı" aynı şey sayılmasın.
+  - [ ] Balon yerleşimini hedef ekranın kenarına/altına yakınken de taşmayacak
+    biçimde sınırla (üst/alt otomatik seçim).
+  - [ ] Her ekranın turunu boş-veri ve dolu-veri hâlinde ayrı ayrı doğrula.
+- **Veri/Migration etkisi:** Yok. Tur sürüm anahtarları (`storageId`) korunur —
+  şema değişirse kullanıcılar turu yeniden görür. **Geri alma:** tek commit.
+- **Ortam/Deploy:** Yalnız local.
+- **RLS/Güvenlik:** Yok.
+- **Edge-case'ler:** hedef kaydırma alanının dışında · hedef hiç monte değil ·
+  hedef tur sırasında kayboluyor (veri değişti) · klavye açık · büyük yazı
+  ölçeği · 360 dp · telefon yatay · tablet (WP-361 ile kesişir) · Windows ·
+  reduce-motion · tur ortasında ekran değişimi.
+- **Kabul (ölçülebilir):**
+  - Her tur adımı için: hedef **görünür alana getirilmiş** ve spot ışığı gerçek
+    hedefin üstünde — testte hedef dikdörtgeni ile spot dikdörtgeni örtüşür.
+  - Kaydırma sonrası spot/balon hedefi takip eder (kaydır → yeniden ölç testi yeşil).
+  - Bulunamayan hedefte davranış **tanımlı ve testli**; sessizce ortalanan balon **0**.
+  - Balon 360 dp'de ve büyük yazı ölçeğinde ekran dışına **taşmaz**.
+  - Altı ekranın turu boş ve dolu veriyle uçtan uca çalışır; `flutter analyze`
+    0 uyarı, tur testleri yeşil.
+- **Tuzaklar:** Her karede yeniden ölçmek jank üretir — ölçüm kaydırma/yerleşim
+  olayına bağlanmalı, `build`'e değil. Tur sürüm anahtarını gereksiz artırmak
+  bütün kullanıcılara turu yeniden açar. `tour_gate.dart` çalışıyor; onu
+  "iyileştirmek" için açmak kapsam kaymasıdır.
+- **Model önerisi:** 🟣 Pro
+
+#### Faz F3 çakışma matrisi (10 kart)
 
 ```text
-Paralel güvenli dalga:  WP-353 (ops/doc) · WP-354 (kanıt/doc) · WP-356 (kamp ateşi UI)
-Seri kilit:             WP-354 → WP-355
+Dalga 1 (paralel güvenli, 4 worker):
+  WP-353 auth ops/doc · WP-354 presence kanıt/doc · WP-356 kamp ateşi PNG · WP-358 tema token
+
+Dalga 2 (dalga 1 kapandıkça):
+  WP-357 V3 rollout      ← WP-355 ile seri (aynı presence yüzeyi)
+  WP-359 Başarımlar IA   ← WP-358 token'ına bağlı
+  WP-360 kamp ateşi rev2 ← WP-356 ile seri (aynı dosyalar)
+  WP-361 tablet envanteri (bağımsız, salt-okunur — her an açılabilir)
+  WP-362 tanıtım turu    (bağımsız)
+
+Seri kilitler:
+  WP-354 → WP-355 → (veya) WP-357     ikisi aynı anda değil
+  WP-356 → WP-360
+  WP-358 → WP-359
 ```
 
-> ✅ **Çakışma yok:** WP-353 yalnız iki doküman, WP-354 yalnız yeni bir kanıt
-> dosyası, WP-356 yalnız kamp ateşi PNG katmanı + kendi golden'ları yazar.
-> Ortak SAHİP dosyası ve ortak sıcak dosya (`pubspec.yaml`, `main.dart`,
-> `core/theme/**`, `core/navigation/**`, `supabase/migrations/**`) yoktur.
+> ✅ **Dalga 1'de çakışma yok:** WP-353 yalnız iki doküman, WP-354 yalnız yeni bir
+> kanıt dosyası, WP-356 yalnız kamp ateşi PNG katmanı + kendi golden'ları,
+> WP-358 yalnız tema token'ı + rozet bileşeni yazar. Ortak SAHİP dosyası yok.
 >
-> ⚠️ **WP-355 paralel çalışmaz.** Presence yüzeyi V3 programıyla (WP-338/339/346)
-> ortaktır; ayrıca V49-1 (çoklu cihaz senkronu) aynı yüzeye bakar. V49-1 veya
-> V3 flag rollout'u için worker açılırsa WP-355 **beklemeye alınır**.
+> ⚠️ **`core/theme/**` sıcak dosyadır.** WP-358 açıkken başka hiçbir tema işi
+> başlatılmaz. WP-359 token'ı yalnız **okur**, tanımlamaz.
 >
-> ⚠️ **WP-356 ile V49-3** (kamp ateşi 2. revizyon) aynı feature klasöründedir.
-> V49-3 henüz WP değil; WP'ye bölünürken ya WP-356'dan **sonra** sıralanır ya da
-> WP-356 onun içine alınır. İkisi aynı anda açılmaz.
+> ⚠️ **Presence yüzeyi tek kişiliktir.** WP-355 (V49-6 düzeltmesi) ve WP-357
+> (V49-1 rollout) aynı provider/repository yüzeyine dokunur, ayrıca WP-338/339/346
+> ile ortaktır. **Aynı anda en fazla biri açılır.** Sıra önerisi: önce WP-354
+> ölçümü, sonra WP-357 (ucuz, yalnız yapılandırma), sonra WP-355 (mimari).
+>
+> ⚠️ **Kamp ateşi tek kişiliktir.** WP-356 (gri leke) ve WP-360 (2. revizyon)
+> aynı dosyalara ve aynı golden'lara girer; WP-356 kapanmadan WP-360 başlamaz.
+>
+> ⚠️ **WP-361 koda dokunmaz** (sahip kapısı). Çıktısı bir sonraki uygulama
+> kartıdır — WP-363'ten devam eder ve kapsamı sahip kararına göre yazılır.
+> Tablet yerleşimi kamp ateşi ve ana ekran ızgarasıyla kesişeceği için, uygulama
+> kartı WP-360 kapanmadan başlatılmaz.
+>
+> 🔴 **Üç büyük program kuralı (`.agents/AGENTS.md §1.2`) korunur:** Faz F3'te
+> Tema (WP-358), Başarım (WP-359) ve Saat/sayaç (WP-357/355) kartları vardır;
+> **üçü birden aynı anda açılmaz.** Dalga 2'de en fazla iki çalışma hattı.
 
 ---
 
@@ -1365,20 +1768,28 @@ tekrar tutulmaz.
 ## Worker'a Verilecek Kısa Komutlar
 
 Yalnız **Bekleyen Uygulanabilir WP'ler** ve Yol Haritası'nda `[ ] Bekliyor` olan
-kartlar worker'a verilir. Güncel ürün sırası **Faz F3**'tür:
+kartlar worker'a verilir. Güncel ürün sırası **Faz F3**'tür (v49 sonrası sekiz
+sahip bulgusunun tamamı).
 
-1. **WP-353** — Production auth yapılandırması; şifre sıfırlama linkini localhost'tan kurtar. *(paralel güvenli)*
-2. **WP-354** — Sayaç sürerken grupta "aktif" kalmama: kök neden ayrımı, salt-okunur. *(paralel güvenli)*
-3. **WP-356** — Kamp ateşinin altındaki gri zemin lekesini kaldır. *(paralel güvenli)*
-4. **WP-355** — Presence sürekliliği kalıcı düzeltmesi. **Yalnız WP-354 kanıtı geldikten sonra**, kapsamı daraltılarak verilir.
+**Dalga 1 — şimdi, dört worker'a aynı anda verilebilir:**
 
-İlk üçü aynı anda üç worker'a verilebilir (ayrık SAHİP, ortak sıcak dosya yok).
-WP-355 seri kilittedir. WP-348…WP-351 zinciri kapandı; yeniden verilmez.
-WP-346 fiziksel V3 çoklu cihaz/flag rollout kabulü olarak parkta kalır ve
-Faz F3'ün hiçbir kartı V3 flag'lerini açmaz.
+1. **WP-353** — Production auth yapılandırması; şifre sıfırlama linkini localhost'tan kurtar. *(en ucuz kazanç: kod yok, tek workflow)*
+2. **WP-354** — Sayaç sürerken grupta "aktif" kalmama: kök neden ayrımı, salt-okunur.
+3. **WP-356** — Kamp ateşinin altındaki gri zemin lekesini kaldır.
+4. **WP-358** — Tema-bağımsız uyarı token'ı (kırmızı rozet ↔ kırmızı tema sorusunu kapatır).
 
-`backlog.md` V49-1…V49-5 (ilk tur bulguları) henüz **WP değildir** — worker'a
-verilmez; sahiple birlikte WP-357'den itibaren bölünecektir.
+**Dalga 2 — dalga 1 kapandıkça, aynı anda en fazla iki hat:**
+
+5. **WP-357** — V3 rollout anahtarı + flag'li iki cihaz kabulü. *(presence yüzeyi: WP-355 ile aynı anda değil)*
+6. **WP-359** — Başarımlar IA; primary grup bloğunu sağ üste taşı. *(WP-358'e bağlı)*
+7. **WP-360** — Kamp ateşi 2. revizyon. *(WP-356'dan sonra; önce sahibe önizleme)*
+8. **WP-361** — Tablet/geniş ekran envanteri. *(kod yazmaz; her an açılabilir, çıktısı sahip kararı)*
+9. **WP-362** — Tanıtım turu hedefleme/konum/sıra onarımı.
+10. **WP-355** — Presence sürekliliği kalıcı düzeltmesi. *(yalnız WP-354 kanıtından sonra, kapsamı daraltılarak)*
+
+WP-348…WP-351 zinciri kapandı; yeniden verilmez. WP-346 fiziksel V3 kabulü
+olarak parkta kalır — WP-357 onu **besler**, yerine geçmez. Faz F3'ün hiçbir
+kartı production/stable'da V3 flag'i açmaz.
 
 `Test için bekleyenler` tablosundaki hiçbir kayıt yeniden worker'a verilmez.
 

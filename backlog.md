@@ -9,11 +9,12 @@
 
 ## 🔴 Yüksek Öncelik
 
-- [ ] **v49 stable — sahip cihaz geri bildirimi (2026-07-27, ham not)**
-  - İlk tur V49-1…V49-5 henüz WP'ye bölünmedi. İkinci tur **V49-6…V49-8** sahibin
-    ikinci geri bildiriminden gelir ve `progress.md` Faz F3'te **WP-353…WP-356**
-    olarak planlanmıştır.
-  - **V49-1 · Çoklu cihaz sayaç senkronu çalışmıyor.** Tablette sayaç başlatıldı, telefonda başlamadı. Bu, V3 global timer programının (WP-336–346) tam da çözmeyi hedeflediği davranıştır — flag'ler kapalı olduğu için mi böyle, yoksa açık bir hata mı var, **önce bu ayrılacak**. Cihazda tekrar üretilebilir; sahip iki cihaza sahip.
+- [~] **v49 stable — sahip cihaz geri bildirimi (2026-07-27) — tamamı planlandı**
+  - Sekiz bulgunun **hepsi** `progress.md` **Faz F3 · WP-353…WP-362**'ye bağlandı;
+    burada plansız kalan v49 maddesi yoktur. Eşleme: V49-1→WP-357 · V49-2→WP-358+359 ·
+    V49-3→WP-360 · V49-4→WP-361 · V49-5→WP-362 · V49-6→WP-354+355 · V49-7→WP-356 ·
+    V49-8→WP-353. Ham notlar aşağıda kaynak olarak durur.
+  - **V49-1 · Çoklu cihaz sayaç senkronu çalışmıyor.** Tablette sayaç başlatıldı, telefonda başlamadı. **Ayrım yapıldı (kodda doğrulandı, 2026-07-27): bu bir hata değil, açılmamış bir özellik.** `presenceProjectionModeProvider` sabit `legacy` ([`presence_providers.dart:20`](app/lib/data/providers/presence_providers.dart:20)), `globalTimerModeProvider` sabit `disabled` ([`global_timer_providers.dart:22`](app/lib/data/providers/global_timer_providers.dart:22)); `--dart-define`, ortam dosyası veya sunucu tarafı hiçbir anahtara bağlı değil — yalnız testler `overrideWith` ile açabiliyor. Yani v49'da çoklu cihaz senkronu hiçbir koşulda çalışmaz ve bugün denemek için kod değiştirip yeni build çıkarmak gerekiyor. → **WP-357** önce anahtarı ortam bazlı yapar, sonra beta'da iki cihazla kabul alır.
   - **V49-2 · `My Achievement Journey` üstündeki "Primary group" bloğu görüntü kirliliği.** (bkz. ekran görüntüsü 2) Kocaman kart olarak durmayacak; sağ üst köşeye ayar/ikon olarak taşınacak.
     - Grup seçili değilken kullanıcının fark etmesi için **kırmızı rozet** üç yerde birden görünecek: Profil sekmesi (bugün zaten var), Achievement Journey ve ayarların kendisi + ayar ikonunun üstünde.
     - 🔴 **Açık tasarım sorusu:** "kırmızı" kırmızı ağırlıklı temayı seçen kullanıcıda kaybolur. Rozet rengi tema paletinden bağımsız bir uyarı token'ına bağlanmalı; çözüm tema motoruyla birlikte kararlaştırılacak.
@@ -38,7 +39,7 @@
   - Hedef: çalışma bütün aktif gruplarda görünür; görev/hedef/grup progression yalnız başlangıçtaki primary gruba yazılır; aynı hesap telefon/tablette tek global çalışma durumunu görür ve başka cihazdan durdurabilir.
   - Mevcut native kronometre, bildirim, widget ve `ACTION_STOP_SILENT` sıcak yolu korunur. Global katman additive envelope, ayrı V2 DTO, shadow ölçüm, hesap-bağlı idempotency, `run_revision` + kullanıcı-geneli `state_version` ve feature flag'lerle açılır.
   - Migration hattı **WP-329 → WP-336 → WP-338 → WP-341 → WP-344** seridir. Server finalizer, gün sınırı yeniden yazımı, history retro-attribution ve Pomodoro phase ledger bu programın kapsamı değildir.
-  - **Durum 2026-07-27:** migration zinciri üç ortamda da `0085`te; kod yazıldı, **rollout flag'leri kapalı**, cihaz kabulü hiç yapılmadı. Sahip v49'da tam da bu yüzeyde bulgu bildirdi (V49-1) — programın bir sonraki adımı yeni kod değil, flag'li gerçek iki-cihaz testidir.
+  - **Durum 2026-07-27:** migration zinciri üç ortamda da `0085`te; kod yazıldı, **rollout flag'leri kapalı**, cihaz kabulü hiç yapılmadı. Sahip v49'da tam da bu yüzeyde bulgu bildirdi (V49-1). Sonraki adım yeni feature kodu değil, **flag'i önce çalışma zamanında açılabilir hâle getirmek** (bugün sabit kodlanmış) ve beta'da iki cihazla kabul almaktır → **WP-357**.
 
 - [~] **Başarım, görev ve grup ilerlemesi — kod/migration tarihsel, güncel kabul borcu WP-277**
   - Append-only ledger, pending reward/claim, görev, grup avatarı ve süre kaynağı eşitliği için tarihsel implementasyonlar vardır; bunlar yeniden geliştirme kuyruğu değildir.
