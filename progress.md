@@ -1593,7 +1593,7 @@ Seri kilitler:
 > WP-363/364/365 alır; eski kartlar tarihsel kalır, worker'a verilmez.
 
 #### WP-363: Presence sunucuya hiç yazılmıyor — legacy payload şema uyumsuzluğu 🔴
-- **Program/Faz:** Faz F4 · release-blocking bug · **Durum:** [ ] Bekliyor
+- **Program/Faz:** Faz F4 · release-blocking bug · **Durum:** [x] Kod/test tamam (`a70c29f`) — v51'de çıktı, cihaz kabulü sahipte
 - **Kök neden (kodda doğrulandı, ölçüm gerekmedi):** `Presence.toMap()` payload'a
   **`lease_expires_at`** koyuyor ([`presence.dart:97`](app/lib/data/models/presence.dart:97)),
   ama legacy `public.presence` tablosunda böyle bir kolon **yok** — tablo 0001'de
@@ -1626,7 +1626,7 @@ Seri kilitler:
 - **Model önerisi:** 🔴 Opus
 
 #### WP-364: Presence yazma hatası bir daha sessiz kalmasın 🔇
-- **Program/Faz:** Faz F4 · dayanıklılık · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-363
+- **Program/Faz:** Faz F4 · dayanıklılık · **Durum:** [x] Kod/test tamam (`0a640b8`) — 5 test yeşil
 - **Problem:** WP-363'ün asıl maliyeti hatanın kendisi değil, **iki katmanda
   sessizce yutulmuş** olmasıdır. Aynı sınıf hata yarın yine sessizce döner.
 - **SAHİP dosyalar:** `app/lib/data/providers/presence_lifecycle.dart` ·
@@ -1637,7 +1637,18 @@ Seri kilitler:
 - **Model önerisi:** 🟣 Pro
 
 #### WP-365: Çoklu cihaz senkronu — V3 rollout'u aç ve stable'a ver 📱↔️📱
-- **Program/Faz:** Faz F4 · V3 rollout · **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-363
+- **Program/Faz:** Faz F4 · V3 rollout · **Durum:** [x] Kod/test tamam (`d7ee339`) — v51'de **açık** çıktı
+- **Seçilen kademeler:** presence `shadow`, global timer `foregroundMirror`.
+  Presence bilerek `projection` değil: doğrudan geçmek, **eski sürümde kalan**
+  ekip üyelerini (yalnız legacy tabloyu okurlar) yeni sürümdekilere görünmez
+  yapardı. `shadow` ikisine de yazar, ikisinden de okur. Filo tek sürüme
+  geçtiğinde `projection`'a yükseltilebilir.
+- **Yan bulgu (`c18e37d`):** Rollout doğrulanırken kamp ateşi golden'ının hâlâ
+  kararsız olduğu görüldü; `6f285a2` yeterli değilmiş. Gerçek kök neden
+  `MarshmallowPainter.paint()` içinde **duvar saati** okunmasıydı — marşmelov
+  kızarma rengi her çizimde değişiyordu. Marşmelov yalnız çalışan üyelerde
+  çizildiği için fark çalışan sayısıyla büyüyor ve sadece 8 kişi senaryosu
+  toleransı aşıyordu. `now` sahneden aşağı taşındı; izole 3/3 ve tam paket yeşil.
 - **Problem:** V3 zinciri (WP-336…WP-345) kodda ve `0085`te hazır ama anahtarlar
   **sabit kodlu kapalı**: `presenceProjectionModeProvider → legacy`,
   `globalTimerModeProvider → disabled`. Çalışma zamanında açılamıyor.
@@ -1659,7 +1670,7 @@ Seri kilitler:
 - **Model önerisi:** 🔴 Opus
 
 #### WP-366: v51 stable release 🚀
-- **Durum:** [ ] Bekliyor · **Bağımlılık:** WP-363 + WP-364 + WP-365
+- **Durum:** [~] Sürüm dosyaları hazır (1.0.51+51, CHANGELOG, release_notes); tag ve release koşumu sırada · **Bağımlılık:** WP-363 + WP-364 + WP-365
 - **Kapsam:** sürüm/build kimliği, CHANGELOG, release_notes, tag `v51`, Android +
   Windows artefaktı. Migration **yok**, production `0085`te kalır.
 - **Kabul:** Preflight/gate PASS · Android APK yayında · Windows MSIX bu kez

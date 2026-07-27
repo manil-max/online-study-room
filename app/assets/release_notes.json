@@ -3,6 +3,46 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.51",
+      "buildNumber": 51,
+      "channel": "stable",
+      "date": "2026-07-27",
+      "title": "v51: canlı durum düzeltmesi ve çoklu cihaz senkronu",
+      "highlights": [
+        "Sayacı başlatınca artık grup arkadaşların da seni çalışıyor görüyor; canlı durum sunucuya yazılamıyordu.",
+        "Çoklu cihaz sayaç senkronu açıldı: aynı hesapta telefon ve tablette çalışma iki cihazda görünür ve birinden durdurulabilir.",
+        "Canlı durumun artık üyesi olduğun bütün gruplarda görünür, yalnız seçili olanda değil."
+      ],
+      "fixes": [
+        "Canlı durum kaydı, sunucudaki tabloda olmayan bir alan yüzünden sessizce reddediliyordu; v49 ve v50 bu hatayı taşıyor.",
+        "Canlı durum yazımı başarısız olursa artık sessiz kalmıyor, kayda geçiyor.",
+        "Kamp ateşi sahnesi aynı girdiyle her seferinde aynı çiziliyor."
+      ],
+      "notes": [
+        "Bu sürümde migration yoktur; production şeması 0085'te kalır.",
+        "Çoklu cihaz özelliği uzaktan kapatılamaz; sorun çıkarsa kapatan yeni bir sürüm gerekir.",
+        "Ekipteki herkes v51'e geçmeli: eski sürümde kalanlar yeni sürümdekileri eksik görebilir.",
+        "Masaüstünde 6 haneli kod ile şifre sıfırlama hâlâ çalışmıyor."
+      ],
+      "titleEn": "v51: live status fix and multi-device sync",
+      "highlightsEn": [
+        "Starting the timer now makes you visible as studying to your group; live status was never reaching the server.",
+        "Multi-device timer sync is on: a run started on one device appears on the other and can be stopped from either.",
+        "Your live status now shows in every group you belong to, not only the selected one."
+      ],
+      "fixesEn": [
+        "The live status write was silently rejected because it sent a field the table does not have; v49 and v50 carry this bug.",
+        "A failed live-status write is no longer silent and is now recorded.",
+        "The campfire scene renders identically for identical input."
+      ],
+      "notesEn": [
+        "This release ships no migration; the production schema stays at 0085.",
+        "Multi-device sync cannot be turned off remotely; a new release would be needed.",
+        "Everyone on the team should move to v51: older clients may see an incomplete picture.",
+        "Desktop password reset via the 6-digit code still does not work."
+      ]
+    },
+    {
       "versionName": "1.0.50",
       "buildNumber": 50,
       "channel": "stable",

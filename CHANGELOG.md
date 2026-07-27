@@ -4,6 +4,27 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [v51 / 1.0.51+51] - 2026-07-27
+
+> **Canlı durum ve çoklu cihaz turu.** Presence sunucuya hiç yazılamıyordu;
+> bu düzeltildi ve aynı sürümde çoklu cihaz sayaç senkronu **açıldı**.
+> Migration yok: production şeması `0085`te kalır.
+
+### Düzeltmeler
+- **Sayacı başlatınca artık grup arkadaşların da seni "çalışıyor" görüyor.** Uygulama, sunucudaki tabloda olmayan bir alanı yazmaya çalıştığı için canlı durum kaydı sessizce reddediliyordu; kendi ekranında görünüyordun çünkü o bilgi cihazında tutuluyordu. v49 ve v50 bu hatayı taşıyor.
+- Canlı durum yazımı başarısız olursa bu artık sessiz kalmıyor, kayda geçiyor.
+- Kamp ateşi sahnesi aynı girdiyle her seferinde aynı çiziliyor (marşmelov kızarması artık sahnenin saatinden hesaplanıyor).
+
+### Yenilikler
+- **Çoklu cihaz sayaç senkronu açıldı.** Aynı hesapla telefon ve tablette çalışırken sayaç iki cihazda da görünür ve birinden durdurulabilir.
+- Canlı durum artık üyesi olduğun **bütün** gruplarda görünür, yalnız o an seçili olanda değil.
+
+### Notlar
+- Bu sürümde migration yoktur; production şeması `0085`te kalır.
+- Çoklu cihaz özelliği uzaktan kapatılamaz; sorun çıkarsa kapatan yeni bir sürüm gerekir.
+- Ekipteki herkes v51'e geçmeli: eski sürümde kalanlar yeni sürümdekileri eksik görebilir.
+- Masaüstünde 6 haneli kod ile şifre sıfırlama hâlâ çalışmıyor (ücretsiz plan e-posta şablonu kilidi).
+
 ## [v50 / 1.0.50+50] - 2026-07-27
 
 > **v49 saha düzeltmeleri.** Sahibin cihazda bildirdiği üç maddeden ikisi
