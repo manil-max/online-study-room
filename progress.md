@@ -39,9 +39,11 @@
   başka kullanıcılarda görünüyor (WP-363 + WP-365 **cihazda kabul edildi**).
   🔴 Dört yeni bulgu: `backlog.md` **V51-1…V51-4** (≈80 sn sonra aktiflikten
   düşme · sayaç değerlerinin eşitlenmemesi · admin yazışmasında ters sıra ·
-  yazışmada karşı tarafın mesajlarının görünmemesi). Sahip listeyi tamamlıyor;
-  **WP'ye bölme sonra yapılacak.** Öncesi: Öncesi: v49 sonrası saha düzeltmeleri (Faz F3). WP-348 → WP-351 zinciri kapandı (stable v49 çıktı). Sahip iki turda toplam **sekiz** bulgu bildirdi (`backlog.md` V49-1…V49-8) ve **hepsi karta bağlandı: WP-353…WP-362.** Backlog'da plansız kalan v49 bulgusu yok.
-- **Son WP numarası:** **WP-366** (Faz F4, 2026-07-27). Faz F4 sahip emriyle açıldı: presence şema hatası + V3 rollout, stable'a çıkacak.
+  yazışmada karşı tarafın mesajlarının görünmemesi). **Dördünün de kök nedeni
+  koddan bulundu** (bkz. `backlog.md`). Sahip emriyle **Faz F5** açıldı:
+  V51-1 + V51-2 düzeltilip v52 stable çıkacak; V51-3/V51-4 (admin yazışması)
+  sahip kararıyla beklemede. Öncesi: Öncesi: v49 sonrası saha düzeltmeleri (Faz F3). WP-348 → WP-351 zinciri kapandı (stable v49 çıktı). Sahip iki turda toplam **sekiz** bulgu bildirdi (`backlog.md` V49-1…V49-8) ve **hepsi karta bağlandı: WP-353…WP-362.** Backlog'da plansız kalan v49 bulgusu yok.
+- **Son WP numarası:** **WP-369** (Faz F5, 2026-07-27). Faz F5 sahip emriyle açıldı: presence lease tazeleme (V51-1) + sayaç komut yayını (V51-2), stable'a çıkacak. Admin yazışması (V51-3/V51-4) sahip kararıyla dışarıda.
 - ✅ **Ortam gerçeği uzlaştırıldı (WP-351, 2026-07-27):** üç ortam da `0085`; production CLI geçmişi artık gerçek. Deploy kapısı yeniden kilitli.
 
 ## ⚡ Aktif Çalışma Kaydı
@@ -52,10 +54,14 @@
 - **SAHİP yollar:** —
 
 ### Claude Lane
-- **Durum:** [x] Boşta
-- **Faz/WP:** — (WP-353 · WP-356 · WP-358 kapandı, v50 çıkarıldı)
-- **SAHİP yollar:** —
-- **Son not (2026-07-27, Faz F3 dalga 1):** Sahibin seçtiği üç kart yapıldı ve
+- **Durum:** [ ] **ÇALIŞIYOR** — Faz F5 (sahip emri, 2026-07-27)
+- **Faz/WP:** WP-367 → WP-368 → WP-369 (v52 stable)
+- **SAHİP yollar:** `supabase/migrations/0086_*.sql` ·
+  `supabase/tests/*_0086_*.sql` · `app/lib/data/providers/study_providers.dart` ·
+  `app/test/data/global_timer_command_publish_test.dart` ·
+  `docs/recovery/MIGRATION-BASELINE.md` · `progress.md` · `backlog.md` ·
+  `CHANGELOG.md` · `app/assets/release_notes.json` · `app/pubspec.yaml`
+- **Önceki not (2026-07-27, Faz F3 dalga 1):** Sahibin seçtiği üç kart yapıldı ve
   **v50 stable** çıkarıldı.
   - **WP-353** production auth: dry-run teşhisi doğruladı (`site_url =
     localhost:3000`, allowlist **boş**), apply PASS. Düzeltme sunucu tarafında,
@@ -1688,6 +1694,95 @@ Seri kilitler:
 - **Kabul:** Preflight/gate PASS · Android APK yayında · Windows MSIX bu kez
   üretilir (golden kararsızlığı `6f285a2` ile düzeldi) · release notlarında V3'ün
   **açık** geldiği ve geri dönüşün hotfix olduğu yazılı.
+
+---
+
+### Faz F5 — v51 saha düzeltmeleri: lease tazeleme ve sayaç komut yayını (sahip emri, 2026-07-27)
+
+> **Sahip emri (2026-07-27):** "*admin tarafı kalsın, saat senkron ve aktiflikten
+> düşmeyi çözüp stable'a yolla, emirdir bu, yetki veriyorum.*" → `.agents/AGENTS.md §0.1`.
+> Kapsam **V51-1 + V51-2**. V51-3/V51-4 (admin yazışması) bilinçli olarak **dışarıda**.
+>
+> Kök nedenler koddan doğrulandı (bu turdaki analiz, `backlog.md` V51-1/V51-2
+> altında da özetli). İkisi de mimari hata değil, **katmanlar arası bağlantı
+> eksiği**: biri sunucuda (lease iki tabloda ayrı yaşıyor), biri istemcide
+> (komut kuyruğu yalnız resume'da boşalıyor).
+
+#### WP-367: Presence lease'i projeksiyonda da tazele (V51-1) ⏱️
+- **Durum:** [ ] Planlandı
+- **SAHİP:** `supabase/migrations/0086_*.sql` · `supabase/tests/*_0086_*.sql` ·
+  `docs/recovery/MIGRATION-BASELINE.md`
+- **DOKUNMA:** `app/lib/data/providers/presence_*.dart` · `0081`–`0085` (geçmiş migration'lar asla düzenlenmez)
+- **Kök neden (kodda doğrulandı):** `heartbeat_multi_group_presence()`
+  (`0081:219`) lease'i **yalnız** `user_live_presence_state` üzerinde yeniliyor;
+  fonksiyonun kendi yorumu da projeksiyonu bilerek dışarıda bıraktığını yazıyor.
+  Ama okuma tarafı `group_live_presence`'ı okuyor ve canlılığı **o satırın**
+  `lease_expires_at`'inden türetiyor (`presence_providers.dart:85`). Projeksiyon
+  lease'i apply anında +70 sn damgalanıp bir daha hiç tazelenmiyor.
+  Shadow birleştirmede projeksiyon satırı legacy satırı **ezdiği** için
+  (`supabase_presence_repository.dart:142`) taze `updated_at` de kurtaramıyor.
+  70 sn lease + 20 sn okuyucu tik'i = sahibin ölçtüğü **~80 sn**.
+- **Yapılacak:** `0086` ileri migration'ı `heartbeat_multi_group_presence()`'ı
+  `create or replace` ile yeniden tanımlar; kanonik lease yenilendikten sonra
+  aynı işlemde `group_live_presence` satırlarının `lease_expires_at`'ini de
+  yeni değere çeker (mevcut `(user_id, group_id)` indeksi kullanılır).
+  Fan-out/üyelik semantiği **değişmez**: satır eklenmez, silinmez, yalnız
+  süresi uzatılır.
+- **Kabul:**
+  - pgTAP: aktif kullanıcı için heartbeat sonrası **hem** kanonik **hem**
+    projeksiyon satırının `lease_expires_at`'i `clock_timestamp()`'ten büyük.
+  - pgTAP: `status = 'offline'` kullanıcıda heartbeat hâlâ
+    `presence_state_not_active` fırlatır (davranış korunur).
+  - pgTAP: heartbeat projeksiyon satır **sayısını** değiştirmez.
+  - Cihazda: sayaç 3 dakika kesintisiz çalışırken hem başlatan cihazda hem
+    başka kullanıcıda "aktif çalışanlar" ve kamp ateşi görünür kalır.
+- **Risk:** Production migration. `0085` → `0086`, üç ortam sırayla. Yedek yok
+  (sahip muafiyeti); bu yüzden migration **yalnız fonksiyon gövdesi** değiştirir,
+  tablo/kolon/politika dokunmaz — geri dönüşü `0081` gövdesini geri koyan yeni
+  bir migration'dır.
+
+#### WP-368: Sayaç komutunu başlatma anında yayınla (V51-2) 📱↔️📱
+- **Durum:** [ ] Planlandı
+- **SAHİP:** `app/lib/data/providers/study_providers.dart` (yalnız start/stop
+  komut yayını) · `app/test/data/global_timer_command_publish_test.dart`
+- **DOKUNMA:** `supabase/migrations/**` · `app/android/**` · presence yolları
+- **Kök neden (kodda doğrulandı):** Başlatma komutu sunucuya gitmiyor, cihazda
+  `timer_pending_intervals` kuyruğunda bekliyor. Kuyruğu boşaltan `flushShadow()`
+  tek yerden çağrılıyor — `_syncBackgroundTimerState` (`study_providers.dart:704`),
+  yani **soğuk açılış ve uygulama öne gelme**. Başlatmanın ardından çağıran yok.
+  Sonuç: A'da başlatılan koşu sunucuya hiç yazılmıyor → B açıldığında snapshot
+  boş → `00.00.00`, ve B kendi sayacını başlatabiliyor (sunucu A'dan habersiz).
+  İkinci sayaç ayrı bir hata değil, aynı hatanın sonucu.
+- **İkincil yarış (aynı kartta kapanır):** `start()` içinde `bindActiveAccount`
+  ve `TimerForegroundService.start` **ikisi de** `unawaited`. Bind yetişmezse
+  native zarfı boş `account_id` ile yazıyor, adapter onu kalıcı karantinaya
+  alıyor (`flushShadow` `command.accountId != user.id` ile atlıyor) — o komut
+  bir daha asla gönderilmiyor. Kartta bind → native start sırası determinize edilir.
+- **Kapsam dışı (bilinçli):** `device_id` push kaydına bağlıdır ve öyle
+  kalacaktır — `global_timer_commands.device_id` `push_devices(id)`'ye **FK**
+  (`0082:95`), istemci kendi kimliğini uyduramaz. Push kaydı yoksa senkron
+  çalışmaz; bu tasarım gereğidir, ayrı kart konusudur.
+  Native yalnız kronometre + `work` fazı için komut üretir (`StudyTimerService.kt:136`);
+  bu da V1 sözleşmesi olarak korunur (varsayılan mod `stopwatch`).
+- **Kabul:**
+  - Birim test: start sonrası kuyruk boşaltma **tam bir kez** tetiklenir ve
+    native yazımı tamamlandıktan **sonra** çalışır (yarış testi).
+  - Birim test: bind, native start'tan **önce** tamamlanır → zarf hesap bağlı
+    yazılır, karantinaya düşmez.
+  - Birim test: stop sonrası da yayın tetiklenir.
+  - Yayın hatası (ağ/RLS) sayacı durdurmaz, istisna yukarı sızmaz.
+  - Cihazda: A'da başlat → B'yi aç → B aynı geçen süreyi aynalar; B'de ikinci
+    sayaç başlatılamaz (mirrorStart `deferred` yolu).
+- **Risk:** `start()` sıcak yolu. FGS başlatma bir prefs yazımı kadar gecikir;
+  bildirim/widget sırası korunur.
+
+#### WP-369: v52 stable release 🚀
+- **Durum:** [ ] Planlandı
+- **Bağımlılık:** WP-367 + WP-368 yeşil.
+- **Kapsam:** sürüm/build kimliği, CHANGELOG, release_notes, tag `v52`.
+  **Migration taşır (`0086`)** — v51'den farkı budur; production apply GO'su ayrı adımdır.
+- **Kabul:** preflight/gate PASS · üç ortam `0086` · Android artefaktı yayında ·
+  release notunda "aktiflikten düşme" ve "çoklu cihaz sayaç aynalama" maddeleri yazılı.
 
 ---
 

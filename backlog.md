@@ -24,6 +24,16 @@
     bayatlama eşiğiyle (`kPresenceStaleThreshold`) örtüşüyor — yani ilk
     yazımdan sonra tazeleme gelmiyor. WP-364 artık bu hatayı **kayda geçiriyor**,
     teşhiste ilk bakılacak yer orası.
+    - 🔬 **KÖK NEDEN BULUNDU (kodda doğrulandı, 2026-07-27) → WP-367.** Heartbeat
+      *atılıyor* ve *başarılı*; sorun neyi tazelediği. `heartbeat_multi_group_presence()`
+      (`0081:219`) lease'i **yalnız** kanonik `user_live_presence_state` satırında
+      yeniliyor — fonksiyonun kendi yorumu projeksiyonu bilerek dışarıda
+      bıraktığını söylüyor. Ama okuma tarafı `group_live_presence`'ı okuyor ve
+      canlılığı **o satırın** `lease_expires_at`'inden türetiyor
+      (`presence_providers.dart:85`); o alan apply anında `+70 sn` damgalanıp bir
+      daha hiç tazelenmiyor. Shadow birleştirmesinde projeksiyon satırı legacy
+      satırı **ezdiği** için (`supabase_presence_repository.dart:142`) taze
+      `updated_at` de kurtaramıyor. 70 sn lease + 20 sn okuyucu tik'i = **~80 sn**.
   - **V51-2 · Sayaç değerleri iki cihaz arasında eşitlenmiyor.** İlk ~80 sn
     boyunca iki cihaz da "çalışıyor" gösteriyor **ama sayaçlar senkron değil**:
     birinde başlatınca diğeri hâlâ `00.00.00`. Dahası, biri çalışırken diğerinde
@@ -31,16 +41,52 @@
     engellenmiyor). Bildirimler de senkron değil. Yani V49-1'in *görünürlük*
     kısmı çözüldü, *durum/süre aynalama* kısmı çözülmedi — `foregroundMirror`
     kademesi açık olmasına rağmen beklenen aynalamayı üretmiyor.
+    - 🔬 **KÖK NEDEN BULUNDU (kodda doğrulandı, 2026-07-27) → WP-368.** Başlatma
+      komutu **sunucuya hiç gitmiyor**; cihazda `timer_pending_intervals`
+      kuyruğunda bekliyor. Kuyruğu boşaltan `flushShadow()` tek yerden çağrılıyor:
+      `_syncBackgroundTimerState` (`study_providers.dart:704`) — yani soğuk açılış
+      ve uygulama öne gelme. Başlatmanın hemen ardından çağıran **yok**. A'da
+      başlatılan koşu sunucuya yazılmadığı için B açıldığında snapshot boş →
+      `00.00.00`. **İkinci sayaç başlatılabilmesi ayrı bir hata değil**, aynı
+      hatanın sonucu: sunucu A'nın koşusundan haberdar değil.
+      İkincil yarış: `start()` içinde `bindActiveAccount` ile
+      `TimerForegroundService.start` ikisi de `unawaited` — bind yetişmezse zarf
+      boş `account_id` ile yazılıp kalıcı karantinaya düşüyor.
+    - ⚠️ **Kapsam dışı kalan bağımlılık:** `device_id` push kaydından gelir ve
+      öyle kalmalıdır — `global_timer_commands.device_id` `push_devices(id)`'ye
+      **FK** (`0082:95`). Push kaydı olmayan cihazda senkron çalışmaz; bu ayrı
+      bir kart konusudur. Native yalnız kronometre + `work` fazı için komut
+      üretir (`StudyTimerService.kt:136`) — V1 sözleşmesi, korunuyor.
   - **V51-3 · Admin ↔ kullanıcı yazışmasında mesaj sırası ters.** Yeni mesajlar
     listenin **altına** eklenip aşağı kaydırmak yerine **üste** ekleniyor;
     beklenen davranış WhatsApp benzeri (yeni mesaj altta, görünüm sona kayar).
+    - 🔬 **Kısmen teşhis (kodda doğrulandı, 2026-07-27).** Veri sırası **doğru**
+      (`fetchTicketNotes`/`fetchTicketMessages` ikisi de `order('created_at')`
+      artan). Eksik olan sunum: **hiçbir ekranda sohbet düzeni yok** — ne
+      `reverse: true`, ne sona kaydıran `ScrollController`, ne admin
+      (`admin_reports_tab.dart:499`) ne kullanıcı tarafında
+      (`feedback_tickets_screen.dart:195`). Liste büyüdükçe görünen pencere en
+      eskide takılı kalıyor. Sahibin gördüğü "üste ekleniyor" görüntüsünün bu
+      mekanizmayla **birebir** eşleştiği cihazda doğrulanmalı.
   - **V51-4 · Yazışmada karşı tarafın mesajları görünmüyor.** Gelen mesajın
     bildirimi düşse ve duyurularda görünse bile, yazışma ekranına girince
     **yalnız kendi gönderdiğin mesajlar** listeleniyor. Bildirim/duyuru yolu
     mesajı görüyor ama yazışma sorgusu göremiyor → okuma tarafında bir filtre
     veya RLS farkı olması muhtemel (doğrulanmadı).
-  - **Durum:** Sahip başka sorun olup olmadığına bakıyor; **WP'ye bölme ve plan
-    sahibin listeyi tamamlamasından sonra** yapılacak.
+    - 🔬 **KÖK NEDEN BULUNDU (kodda doğrulandı, 2026-07-27) — RLS değil.**
+      **Admin panelinde yazışma ekranı hiç yok.** `fetchTicketMessages` /
+      `sendTicketMessage` (yani `feedback_ticket_messages` tablosu) yalnız
+      **kullanıcı** tarafındaki `feedback_tickets_screen.dart:107` tarafından
+      kullanılıyor. Admin panelindeki diyalog `feedback_ticket_notes`
+      tablosunu okuyup yazıyor (`admin_reports_tab.dart:412`) — o tablo admin'in
+      **iç notları** içindir, sohbet için değil. Admin kendi notlarını görüyor
+      (→ "sadece kendi mesajlarım"), kullanıcının mesajları başka tabloda
+      olduğu için hiç görünmüyor. Bildirim/duyuru yolları doğru tabloyu
+      okuduğundan onlar çalışıyor. Yani bu bir bozulma değil, **hiç yapılmamış
+      bir ekran** — düzeltme değil yapım işi.
+  - **Durum (2026-07-27, sahip emri):** V51-1 ve V51-2 → `progress.md` **Faz F5**
+    (WP-367 · WP-368 · WP-369/v52). **V51-3 ve V51-4 sahip kararıyla beklemede**
+    ("admin tarafı kalsın"); kök nedenleri yukarıda kayıtlı, karta bağlanmadı.
 
 - [~] **v49 stable — sahip cihaz geri bildirimi (2026-07-27) — tamamı planlandı**
   - Sekiz bulgunun **hepsi** `progress.md` **Faz F3 · WP-353…WP-362**'ye bağlandı;
