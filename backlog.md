@@ -132,6 +132,17 @@
     release notunda kullanıcıya açıkça yazıldı.
 
 - [~] **v49 stable — sahip cihaz geri bildirimi (2026-07-27) — tamamı planlandı**
+  - ✅ **Kapanan bulgular (2026-07-28, birikmiş düzeltme turu):**
+    V49-1 → WP-365 + **WP-373** (senkronun komut sözleşmesi) ·
+    V49-2 → WP-358 + **WP-376** (birincil grup bloğu sağ üste) ·
+    V49-5 → **WP-375** (tanıtım turu hedef/konum/sıra) ·
+    V49-6 → WP-363/364/367 · V49-7 → WP-356 · V49-8 → WP-353.
+  - 🟡 **Açık kalan iki bulgu — ikisi de sahibin gözüne bağlı, koda değil:**
+    **V49-3** (kamp ateşi 2. revizyon, eski kart WP-360) sayısal bir iştir —
+    "birazcık daha uzak", "azıcık artacak" gibi ölçüler önce parametrik
+    önizlemeyle sahibe gösterilir, sahip sayıyı seçer, sayı teste bağlanır.
+    **V49-4** (tablet yatay yerleşimi, eski kart WP-361) kartın kendi kuralıyla
+    "sahiple konuşulmadan koda geçilmez". İkisi de v54'ten sonraki tura kaldı.
   - Sekiz bulgunun **hepsi** `progress.md` **Faz F3 · WP-353…WP-362**'ye bağlandı;
     burada plansız kalan v49 maddesi yoktur. Eşleme: V49-1→WP-357 · V49-2→WP-358+359 ·
     V49-3→WP-360 · V49-4→WP-361 · V49-5→WP-362 · V49-6→WP-354+355 · V49-7→WP-356 ·
@@ -193,8 +204,14 @@
 - [ ] **AR/DE dil desteği ve RTL** — WP-278 ürün kararı gerekir
   - EN/TR l10n WP-87/89 ile cihaz/ürün kabulü aldı; AR/DE tabanı vardır ancak insan çevirisi/RTL cihaz kapsamı onaylanmış ürün işi değildir.
 - [ ] **Yeni grafik türleri** — WP-67 brief hazır; kullanıcı türleri/onayı vermeden kod WP'si açılmaz.
-- [ ] **Taç XP çubuğu — mutlak hedef gösterimi** — WP-275
-  - 25k XP / sonraki taç 75k ise etiket ve doluluk mutlak `25k / 75k` olacaktır; ekonomi/server hesabı değişmez.
+- [x] **Taç XP çubuğu — mutlak hedef gösterimi** — WP-275 (**zaten yapılmış**,
+  2026-07-28'de koddan doğrulandı; madde bayattı)
+  - `xpBarMetrics` (`app/lib/core/stats/progression_visuals.dart:143`) tam da
+    istenen davranışı üretiyor: `currentXp`/`nextThreshold` **mutlak** XP'dir,
+    kademe-içi `5.000/55.000` görünümü bilerek üretilmiyor. Hem
+    `achievement_showcase.dart` `_XpBar`'ı hem `gamification_card.dart` bu
+    ölçüyü kullanıyor ve `achievement_showcase_test.dart` kilitliyor.
+    Ekonomi/server hesabı değişmedi.
 
 ## ❓ Açık Sorular / Ürün Kararları
 
