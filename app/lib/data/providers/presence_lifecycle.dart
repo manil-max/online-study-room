@@ -3,10 +3,12 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/observability/observability_service.dart';
 import '../models/presence.dart';
 import '../models/study_group.dart';
 import '../repositories/presence_repository.dart';
 import 'auth_providers.dart';
+import 'presence_failure_reporter.dart';
 import 'group_providers.dart';
 import 'presence_providers.dart';
 import 'study_providers.dart';
@@ -29,6 +31,7 @@ class PresenceLifecycle with WidgetsBindingObserver {
   final Ref _ref;
   Timer? _heartbeat;
   bool _started = false;
+  final _failureReporter = PresenceWriteFailureReporter();
 
   ProviderSubscription<AsyncValue<StudyGroup?>>? _groupSub;
 
@@ -84,10 +87,23 @@ class PresenceLifecycle with WidgetsBindingObserver {
       startedAt: timer.startedAt,
       todaySeconds: _ref.read(todayRecordedSecondsProvider),
     );
+    // WP-364: hata artık **koşulsuz yutulmuyor**. Yazım yine "yangına-at-unut"
+    // (timer/UI akışı beklemez, hata yukarı sızmaz), ama arıza gözlemlenebilir
+    // oluyor. WP-363 tam da bu görünmezlik yüzünden aylarca fark edilmedi.
     _ref
         .read(presenceRepositoryProvider)
         .heartbeatPresence(presence)
-        .catchError((_) {});
+        .then((_) => _failureReporter.onSuccess())
+        .catchError((Object error) {
+          final report = _failureReporter.onFailure(error);
+          if (report != null) {
+            ObservabilityService.instance.presenceWriteFailed(
+              errorType: report.errorType,
+              hasGroup: presence.groupId != null,
+              consecutiveFailures: report.consecutiveFailures,
+            );
+          }
+        });
   }
 }
 

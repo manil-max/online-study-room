@@ -175,6 +175,24 @@ class ObservabilityService {
     _record('realtime_fallback', {'had_cached_rows': hadCachedRows});
   }
 
+  /// WP-364: uzak presence yazımı başarısız oldu.
+  ///
+  /// Bu olay olmadığı için WP-363 aylarca görünmedi: yazma hatası koşulsuz
+  /// yutuluyor, kullanıcı ise yerel cache sayesinde kendini aktif görmeye devam
+  /// ediyordu. Yalnız hata **türü** ve grup bilgisinin var olup olmadığı
+  /// gönderilir; kullanıcı/grup kimliği gibi veriler asla.
+  void presenceWriteFailed({
+    required String errorType,
+    required bool hasGroup,
+    required int consecutiveFailures,
+  }) {
+    _record('presence_write_failed', {
+      'error_type': errorType,
+      'has_group': hasGroup,
+      'consecutive_failures': consecutiveFailures,
+    });
+  }
+
   Future<void> captureSanitizedError(
     Object error,
     StackTrace stackTrace,
