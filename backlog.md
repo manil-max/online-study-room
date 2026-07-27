@@ -9,7 +9,10 @@
 
 ## 🔴 Yüksek Öncelik
 
-- [ ] **v49 stable — sahip cihaz geri bildirimi (2026-07-27, ham not; WP'ye bölünmedi)**
+- [ ] **v49 stable — sahip cihaz geri bildirimi (2026-07-27, ham not)**
+  - İlk tur V49-1…V49-5 henüz WP'ye bölünmedi. İkinci tur **V49-6…V49-8** sahibin
+    ikinci geri bildiriminden gelir ve `progress.md` Faz F3'te **WP-353…WP-356**
+    olarak planlanmıştır.
   - **V49-1 · Çoklu cihaz sayaç senkronu çalışmıyor.** Tablette sayaç başlatıldı, telefonda başlamadı. Bu, V3 global timer programının (WP-336–346) tam da çözmeyi hedeflediği davranıştır — flag'ler kapalı olduğu için mi böyle, yoksa açık bir hata mı var, **önce bu ayrılacak**. Cihazda tekrar üretilebilir; sahip iki cihaza sahip.
   - **V49-2 · `My Achievement Journey` üstündeki "Primary group" bloğu görüntü kirliliği.** (bkz. ekran görüntüsü 2) Kocaman kart olarak durmayacak; sağ üst köşeye ayar/ikon olarak taşınacak.
     - Grup seçili değilken kullanıcının fark etmesi için **kırmızı rozet** üç yerde birden görünecek: Profil sekmesi (bugün zaten var), Achievement Journey ve ayarların kendisi + ayar ikonunun üstünde.
@@ -20,6 +23,9 @@
     - Yeşil zemin yüksekliği azıcık artacak. 4 kişide sorun yok ama **8 kişide** en üstteki sıranın ucu gökyüzünde kalıyor; kalabalık düzeni bu yükseklikle birlikte kontrol edilecek.
   - **V49-4 · Tablet yatay düzeni.** Tablet kullanıcıları çoğunlukla yatay tutuyor; yatayda kartlar aşırı genişleyip bozuluyor. Tablet/geniş ekran algısı var mı önce tespit edilecek, sonra tablete özel yerleşim konuşulacak. **Sahiple konuşulmadan koda geçilmez.**
   - **V49-5 · Tanıtım turları (onboarding/coach marks) revizyonu.** Mantık doğru, uygulama kötü — hedef/konum/sıra ayarları tutmuyor. Baştan gözden geçirilecek.
+  - **V49-6 · Sayaç çalışırken kullanıcı grupta "aktif çalışma"dan düşüyor.** Sayaç başlatılıyor, bir süre sonra grup ekranındaki aktif/çalışıyor listesinden kayboluyor; kronometre kendi tarafında dönmeye devam ediyor. Kodda doğrulanan zemin: presence satırını yalnız Flutter tarafındaki `PresenceLifecycle` 20 sn'de bir tazeliyor ve okuma tarafı 70 sn'den eski satırı çevrimdışı sayıyor ([`presence_lifecycle.dart:39`](app/lib/data/providers/presence_lifecycle.dart:39), [`presence_providers.dart:35-40`](app/lib/data/providers/presence_providers.dart:35)). Native foreground service sayacı yaşamaya devam etse de Flutter izolatı durursa/öldürülürse heartbeat biter. **V3 flag'lerini açmak bu maddeyi tek başına çözmez:** projection yolu da aynı 70 sn'lik istemci lease'ini yeniliyor ([`0081_multi_group_presence_projection.sql:220`](supabase/migrations/0081_multi_group_presence_projection.sql:220)). Önce ölçüm, sonra tasarım kararı.
+  - **V49-7 · Kamp ateşinin altındaki gri/kahve leke kalkacak.** PNG katman yığınının en altındaki `ground.png` tam opaklıkla çiziliyor ([`layered_campfire_fire.dart:154`](app/lib/features/classroom/widgets/campfire/layered_campfire_fire.dart:154)); asset büyük, bulanık, koyu kahve-gri bir elips ve yeşil zeminin üstünde kir lekesi gibi duruyor. WP-350 yalnız sıcak glow yarıçapını küçültmüştü, bu katmana dokunmamıştı.
+  - **V49-8 · Şifre sıfırlama e-postası hâlâ `localhost:3000`'e atıyor.** Kod tarafı doğru: Android'de `resetPasswordForEmail` flavor'a uygun `redirectTo` geçiyor ([`supabase_auth_repository.dart:197-202`](app/lib/data/repositories/supabase/supabase_auth_repository.dart:197)). Eksik olan **production Supabase projesinin auth yapılandırması**: `Supabase Auth Config` workflow'u bugüne kadar yalnız bir kez başarıyla koştu (run `30164160511`, hedef **staging**). Production'ın `uri_allow_list`i redirect scheme'ini tanımadığı için Supabase linki projenin Site URL'ine (`localhost:3000`) düşürüyor. v49 stable = production backend olduğu için sahip bunu stable'da görüyor. Free tier e-posta şablonu kilitli olduğundan masaüstündeki 6 haneli kod yolu ayrı ve açık bir sorundur.
 
 - [x] **Post-v43 kurtarma: release sadeleştirme + bildirim güveni + sayaç kontratı — WP-269–285 (KAPANDI 2026-07-24)**
   - Sahip 2026-07-24'te (o günkü stable v45 üzerinde) bildirim/sayaç davranışını cihazda kabul etti; bekleyen cihaz kabulleri kapandı. **Güncel ortam durumu bu maddede değil, `progress.md` Proje Gerçekleri'ndedir.**
