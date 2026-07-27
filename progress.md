@@ -1709,7 +1709,15 @@ Seri kilitler:
 > (komut kuyruğu yalnız resume'da boşalıyor).
 
 #### WP-367: Presence lease'i projeksiyonda da tazele (V51-1) ⏱️
-- **Durum:** [ ] Planlandı
+- **Durum:** [x] **KOD TAMAM + PRODUCTION'A UYGULANDI 2026-07-27.** `0086` üç ortamda da yaşıyor.
+  🟢 **Bu düzeltme sunucu taraflıdır: v51 istemcisinde de geçerlidir, güncelleme beklemez.**
+  Cihaz kabulü sahipte.
+- **Kanıt:** local replay + pgTAP [30287757738](https://github.com/manil-max/online-study-room/actions/runs/30287757738) PASS (yeni `015` yeşil) ·
+  staging apply [30287989909](https://github.com/manil-max/online-study-room/actions/runs/30287989909) ·
+  production dry-run [30288269106](https://github.com/manil-max/online-study-room/actions/runs/30288269106)
+  (bekleyen tam olarak `0086`+`0087`) · production apply
+  [30288908244](https://github.com/manil-max/online-study-room/actions/runs/30288908244), post-check head **`0087`**.
+  İlk apply denemesi (`30288596263`) push'tan **önce** `migration-list` adımında bağlantı zaman aşımına düştü; hiçbir DDL çalışmadı.
 - **SAHİP:** `supabase/migrations/0086_*.sql` · `supabase/tests/*_0086_*.sql` ·
   `docs/recovery/MIGRATION-BASELINE.md`
 - **DOKUNMA:** `app/lib/data/providers/presence_*.dart` · `0081`–`0085` (geçmiş migration'lar asla düzenlenmez)
@@ -1742,7 +1750,18 @@ Seri kilitler:
   bir migration'dır.
 
 #### WP-368: Sayaç komutunu başlatma anında yayınla (V51-2) 📱↔️📱
-- **Durum:** [ ] Planlandı
+- **Durum:** [x] **KOD TAMAM 2026-07-27.** Cihaz kabulü sahipte (v52 gerekir).
+- 🔴 **Planlarken bilinmeyen ikinci engel çıktı ve aynı dalgada kapatıldı:**
+  `global_timer_v2_runtime_config.v2_enabled` `0082`'de **`false` tohumlanmış** ve
+  hiçbir ortamda açılmamıştı. `apply_global_timer_command` ilk işi olarak bu
+  bayrağa bakıp `global_timer_v2_disabled` fırlatıyor (`0082:217`), istemci de
+  hatayı yutuyordu. Yani istemci düzeltmesi **tek başına hiçbir şey
+  değiştirmezdi.** `0087` bayrağı açar; kill switch tek `UPDATE` ile geri alınır,
+  sürüm gerektirmez.
+- **Kanıt:** `flutter analyze` temiz · `flutter test` **953/953** ·
+  yeni `app/test/data/global_timer_command_publish_test.dart` 4/4 yeşil ve
+  düzeltme geri alındığında **4'ün 3'ü kırmızı** (git stash ile doğrulandı) ·
+  pgTAP `016` yeşil.
 - **SAHİP:** `app/lib/data/providers/study_providers.dart` (yalnız start/stop
   komut yayını) · `app/test/data/global_timer_command_publish_test.dart`
 - **DOKUNMA:** `supabase/migrations/**` · `app/android/**` · presence yolları
@@ -1777,8 +1796,8 @@ Seri kilitler:
   bildirim/widget sırası korunur.
 
 #### WP-369: v52 stable release 🚀
-- **Durum:** [ ] Planlandı
-- **Bağımlılık:** WP-367 + WP-368 yeşil.
+- **Durum:** [~] Sürüm dosyaları hazır, release tetiklenecek.
+- **Bağımlılık:** WP-367 + WP-368 yeşil. ✅
 - **Kapsam:** sürüm/build kimliği, CHANGELOG, release_notes, tag `v52`.
   **Migration taşır (`0086`)** — v51'den farkı budur; production apply GO'su ayrı adımdır.
 - **Kabul:** preflight/gate PASS · üç ortam `0086` · Android artefaktı yayında ·
