@@ -9,8 +9,8 @@
   },
   "production": {
     "migration_head": "0087",
-    "deploy_enabled": true,
-    "release_enabled": true,
+    "deploy_enabled": false,
+    "release_enabled": false,
     "backup_requirement": "waived",
     "backup_waiver": {
       "decided_by": "owner",
@@ -18,6 +18,6 @@
       "reason": "Free plan project has no daily backup and no PITR; owner accepted production apply with no rollback path.",
       "rollback_path": "none"
     },
-    "hold_reason": "OPEN by explicit owner order 2026-07-27: 'saat senkron ve aktiflikten dusmeyi cozup stable'ye yolla, emirdir bu, yetki veriyorum'. The owner-reported ~80s presence drop cannot be fixed client-side - it needs 0086 - and the timer sync stays server-disabled without 0087, so the order necessarily covers this apply. Both migrations touch function bodies and one singleton config row only: no table, column, index, policy or grant changes, and no row is inserted or deleted. Rollback for 0087 is a single UPDATE with no release; rollback for 0086 is a forward migration restoring the 0081 body. Re-lock to HOLD immediately after the apply and the v52 release."
+    "hold_reason": "Faz F5 closed 2026-07-27: 0086 and 0087 applied under the owner's explicit order, production post-check reported head 0087 (run 30288908244), and v52 stable shipped with all jobs green (run 30289549858). Deploy and release are re-locked to the default HOLD; the next production migration or stable release needs its own explicit owner GO. The backup waiver stays recorded because the project still has no PITR or daily backup - it is not a standing approval to apply. Known open limit carried into the next round: nothing renews the live_study_runs 150s lease and no cron drives the sweeper, so a crashed device leaves its run 'running' until the next start adopts it."
   }
 }

@@ -28,8 +28,8 @@
   [`docs/recovery/PRODUCTION-BASELINE.md`](docs/recovery/PRODUCTION-BASELINE.md).
   Deploy contract aynı üç head'i taşır ve production `deploy_enabled` terfi
   bitince **yeniden `false` kilitlendi**.
-- **Stable/production:** **v52** (Faz F5: presence lease tazeleme + sayaç komut
-  yayını) çıkarılıyor; etkin şema **`0087`**. Öncesi v51 (Faz F4: presence şema
+- **Stable/production:** **v52** yayında (Faz F5: presence lease tazeleme + sayaç
+  komut yayını); etkin şema **`0087`**. Öncesi v51 (Faz F4: presence şema
   düzeltmesi + V3 rollout açık), etkin şema `0085`.
   🟢 `0086` sunucu taraflı olduğu için **v51'de kalan cihazlarda da** aktiflikten
   düşme düzeldi; sayaç eşitlemesi için v52 şart.
@@ -61,13 +61,21 @@
 - **SAHİP yollar:** —
 
 ### Claude Lane
-- **Durum:** [ ] **ÇALIŞIYOR** — Faz F5 (sahip emri, 2026-07-27)
-- **Faz/WP:** WP-367 → WP-368 → WP-369 (v52 stable)
-- **SAHİP yollar:** `supabase/migrations/0086_*.sql` ·
-  `supabase/tests/*_0086_*.sql` · `app/lib/data/providers/study_providers.dart` ·
-  `app/test/data/global_timer_command_publish_test.dart` ·
-  `docs/recovery/MIGRATION-BASELINE.md` · `progress.md` · `backlog.md` ·
-  `CHANGELOG.md` · `app/assets/release_notes.json` · `app/pubspec.yaml`
+- **Durum:** [x] Boşta — Faz F5 kapandı (WP-367 · WP-368 · WP-369, v52 çıkarıldı)
+- **Faz/WP:** —
+- **SAHİP yollar:** —
+- **Son not (2026-07-27, Faz F5):** Sahip emriyle V51-1 + V51-2 düzeltildi ve
+  v52 stable çıktı. Admin yazışması (V51-3/V51-4) sahip kararıyla dışarıda kaldı.
+  - **WP-367** ~80 sn düşme: heartbeat lease'i yalnız kanonik satırda
+    yeniliyordu, okuyucular projeksiyon satırının lease'ine bakıyordu. `0086`
+    ikisini aynı işlemde eşitliyor. **Sunucu taraflı → v51 istemcisinde de geçerli.**
+  - **WP-368** sayaç eşitlemesi: komut yalnız resume'da yayınlanıyordu; artık
+    başlat/durdur anında yayınlanıyor ve bind→native→yayın zinciri sıralı.
+    🔴 Planda olmayan ikinci engel: `v2_enabled` hiçbir ortamda açılmamıştı,
+    sunucu her komutu reddediyordu — `0087` ile açıldı. İstemci düzeltmesi tek
+    başına hiçbir şey değiştirmezdi.
+  - **Cihaz kabulü sahipte.** Aktiflikten düşme v51'de de test edilebilir;
+    sayaç eşitlemesi v52 ister.
 - **Önceki not (2026-07-27, Faz F3 dalga 1):** Sahibin seçtiği üç kart yapıldı ve
   **v50 stable** çıkarıldı.
   - **WP-353** production auth: dry-run teşhisi doğruladı (`site_url =
@@ -1803,7 +1811,14 @@ Seri kilitler:
   bildirim/widget sırası korunur.
 
 #### WP-369: v52 stable release 🚀
-- **Durum:** [~] Sürüm dosyaları hazır, release tetiklenecek.
+- **Durum:** [x] **KAPANDI 2026-07-27.** `v52` yayında, **Android + Windows ikisi de** üretildi.
+- **Kanıt:** release koşumu [30289549858](https://github.com/manil-max/online-study-room/actions/runs/30289549858) —
+  preflight/android/windows/finalize **tümü success**.
+  Release: https://github.com/manil-max/online-study-room/releases/tag/v52
+  Artefaktlar: `app-release.apk` · `odak-kampi-windows-stable.msix` ·
+  `odak-kampi-windows-stable.zip` (+ sha dosyaları, `release-manifest.json`).
+- **Kapı durumu:** production `deploy_enabled`/`release_enabled` apply ve release
+  bitince **yeniden `false`'a kilitlendi**; guard testleri bu durumu doğruluyor.
 - **Bağımlılık:** WP-367 + WP-368 yeşil. ✅
 - **Kapsam:** sürüm/build kimliği, CHANGELOG, release_notes, tag `v52`.
   **Migration taşır (`0086`)** — v51'den farkı budur; production apply GO'su ayrı adımdır.
