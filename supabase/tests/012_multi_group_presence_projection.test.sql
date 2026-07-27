@@ -106,7 +106,9 @@ select is(
   (select max(state_version) from public.group_live_presence
     where user_id = '10000000-0000-0000-0000-000000000001'),
   1::bigint,
-  'heartbeat does not rewrite fan-out projection rows'
+  -- WP-367: heartbeat artık fan-out lease'ini tazeler (bkz. 015), ama hâlâ bir
+  -- durum geçişi değildir: state_version'ı bump etmez.
+  'heartbeat does not bump the fan-out projection state_version'
 );
 
 update public.group_members
