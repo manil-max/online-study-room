@@ -675,6 +675,80 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
 
   Future<void> _onAppResumed() => _syncBackgroundTimerState();
 
+  /// WP-368 (V51-2): başlatma zincirini **sırayla** yürütür ve komut kuyruğunu
+  /// beklemeden sunucuya boşaltır.
+  ///
+  /// İki ayrı arıza buradan kapanır:
+  ///
+  /// 1. **Yayın hiç olmuyordu.** Kuyruğu boşaltan tek çağrı
+  ///    [_syncBackgroundTimerState] idi (soğuk açılış + öne gelme). Yani A
+  ///    cihazında başlatılan koşu, uygulama bir kez arka plana atılıp geri
+  ///    gelene kadar sunucuya hiç yazılmıyordu. B cihazı açıldığında snapshot
+  ///    boş dönüyor → sayaç `00.00.00` kalıyor ve B kendi sayacını
+  ///    başlatabiliyordu. İkinci eşzamanlı sayaç ayrı bir hata değil, bunun
+  ///    sonucuydu.
+  /// 2. **Hesap bağı yarışı.** `bindActiveAccount` ile
+  ///    [TimerForegroundService.start] ikisi de `unawaited`'dı. Bind yetişmezse
+  ///    native zarfı boş `account_id` ile yazıyor, adapter onu karantinaya
+  ///    alıyor ve `flushShadow` (`command.accountId != user.id`) o komutu bir
+  ///    daha **asla** göndermiyordu.
+  ///
+  /// Sunucu tarafında ikinci bir `start` zarfı risk değildir: koşan bir run
+  /// varsa `apply_global_timer_command` `adopt_existing` döner, çift run açmaz.
+  Future<void> _bindStartAndPublishGlobalTimerCommand({
+    required DateTime startedAt,
+    required String mode,
+    required String phase,
+    required int cycle,
+    String? subjectId,
+  }) async {
+    try {
+      await _timerV2CommandFlushAdapter.bindActiveAccount(
+        ref.read(sharedPreferencesProvider),
+        ref.read(authStateProvider).value?.id,
+      );
+    } catch (_) {
+      // Bind edilemedi: zarf karantinada kalır ama sayaç yine de başlamalı.
+    }
+    try {
+      await TimerForegroundService.start(
+        startedAt: startedAt,
+        mode: mode,
+        phase: phase,
+        cycle: cycle,
+        subjectId: subjectId,
+        startOrigin: 'dart_app',
+      );
+    } catch (_) {
+      // Native yazım olmadıysa yayınlanacak zarf da yoktur.
+      return;
+    }
+    await _publishGlobalTimerCommands();
+  }
+
+  /// WP-368: durdurma zarfını da beklemeden yayınlar. Aksi halde diğer cihaz
+  /// koşuyu durmuş göremiyor ve aynalanmış sayaç orada çalışmaya devam ediyor.
+  Future<void> _stopForegroundAndPublishGlobalTimerCommand() async {
+    try {
+      await TimerForegroundService.stop();
+    } catch (_) {
+      return;
+    }
+    await _publishGlobalTimerCommands();
+  }
+
+  /// Kuyruktaki V2 zarflarını sunucuya yayınlar. Yayın "yangına-at-unut"tur:
+  /// ağ/RLS/flag hatası sayaç akışını kesmez, zarf kuyrukta kalır ve sonraki
+  /// resume turunda yeniden denenir.
+  Future<void> _publishGlobalTimerCommands() async {
+    if (_disposed) return;
+    try {
+      await ref.read(globalTimerCoordinatorProvider).flushShadow();
+    } catch (_) {
+      // Bilinçli yutma: yayın sayacın çalışmasının ön koşulu değildir.
+    }
+  }
+
   /// WP-245 (D1): boş/whitespace token'ı `null` sayar. Native FGS, verified
   /// koşusu OLMAYAN her başlatmayı prefs'e `""` ile yazar (`StudyTimerService`
   /// handleStart `.orEmpty()` + `TimerStateStore.writeRunning`). Dart bu `""`'ı
@@ -1238,28 +1312,20 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       clearSettling: true,
     );
     _persistActiveTimer();
-    // Native V2 writer credential taşımaz; yalnız auth kapsamını yazar. Bu
-    // yazım FGS start'ına yetişmezse native kayıt unbound kalır ve adapter onu
-    // karantinaya alır; yanlış hesabın command'ı olamaz.
-    unawaited(
-      _timerV2CommandFlushAdapter.bindActiveAccount(
-        ref.read(sharedPreferencesProvider),
-        ref.read(authStateProvider).value?.id,
-      ),
-    );
     // Native broadcast / apply yarışında reconcile'ın idle sanmaması için
     // fg_mode'u Dart tarafında da hemen running yaz.
     ref
         .read(sharedPreferencesProvider)
         .setString(TimerForegroundService.fgModeKey, 'running');
+    // WP-368: hesap bağı → native yazım → sunucuya yayın artık tek sıralı
+    // zincir. Ayrıntı [_bindStartAndPublishGlobalTimerCommand].
     unawaited(
-      TimerForegroundService.start(
+      _bindStartAndPublishGlobalTimerCommand(
         startedAt: now,
         mode: state.mode.name,
         phase: state.phase.name,
         cycle: state.cycle,
         subjectId: state.subjectId,
-        startOrigin: 'dart_app',
       ),
     );
     _publishPresence(status: PresenceStatus.studying, startedAt: now);
@@ -1636,7 +1702,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     ref
         .read(sharedPreferencesProvider)
         .setString(TimerForegroundService.fgModeKey, 'idle');
-    unawaited(TimerForegroundService.stop());
+    unawaited(_stopForegroundAndPublishGlobalTimerCommand());
     _publishPresence(status: PresenceStatus.offline, startedAt: null);
     unawaited(ref.read(timerNotificationServiceProvider).cancel());
     unawaited(_syncTimerWidget());
