@@ -68,10 +68,43 @@
 - **SAHİP yollar:** —
 
 ### Claude Lane
-- **Durum:** [x] Boşta — WP-370 + WP-371 teslim edildi, v53 çıktı, kapılar kilitli
-- **Faz/WP:** —
-- **SAHİP yollar:** —
-- **Son not (2026-07-27, WP-371 + teslim):** Sahip emriyle Codex'in `0838f8e` teslim
+- **Durum:** [~] Aktif
+- **Faz/WP:** Faz F5 · **WP-372** — çoklu cihaz sayaç senkronu: istemci↔sunucu komut sözleşmesi
+- **Aşama:** Geliştiriliyor
+- **SAHİP yollar:** `app/android/app/src/main/kotlin/**/timer/**`,
+  `app/lib/core/background/timer_v2_command_outbox.dart`,
+  `app/lib/data/providers/global_timer_providers.dart`,
+  `app/lib/data/providers/study_providers.dart`,
+  `supabase/migrations/0089_*.sql`, `supabase/tests/018_*.test.sql`,
+  `app/test/data/global_timer_*`, `app/test/core/timer_v2_*`
+- **Ortak/riskli yüzey:** `supabase/migrations/**` (numara sırası — 0089 alındı)
+- **Dal:** main (tek dal — §1.5)
+- **Başlangıç:** 2026-07-27 20:15 (Europe/Istanbul)
+- **Son güncelleme:** 2026-07-27 20:15
+- **Teşhis (2026-07-27, sahip production sorgusuyla mühürlendi):** V2 sayaç
+  senkronu **hiç çalışmadı** — WP-341'den beri tek bir komut bile sunucuya
+  ulaşmadı. `select ... from global_timer_commands` → 0 satır;
+  `notification_outbox where notification_type='timer_sync'` → 0 satır.
+  🔴 **Kök neden 1 — `origin` sözlüğü uyuşmuyor.** Sunucu
+  `('app','widget','notification','recovery')` bekliyor (`0082:277-280`), istemci
+  `dart_app` / `native_widget` / `native_notification` gönderiyor
+  (`StudyTimerService.kt:136`, `study_providers.dart:755`). Aradaki çeviri
+  repoda **yok**; `global_timer_providers.dart:72` ham değeri payload'a koyuyor.
+  Her `start` RPC'si `invalid_global_timer_origin` fırlatıyor, exception
+  `global_timer_providers.dart:75` içinde yutuluyor. Transaction geri sardığı
+  için audit satırı bile yazılmıyor — bu yüzden yıllardır görünmez kaldı.
+  🔴 **Kök neden 2 — stop hiç yayınlanmıyor.** Uygulama içi Durdur
+  `ACTION_STOP_SILENT` → `handleStop(recordInterval=false)` → V2 zarfı hiç
+  üretilmiyor (`StudyTimerService.kt:232`). Bildirim/widget Durdur zarf üretiyor
+  ama `expected_run_revision` **hep null** (`StudyTimerService.kt:257-262`) →
+  sunucu `stop_run_revision_required` atıyor, zarf kuyrukta kalıcı zehir oluyor.
+  🔴 **Neden testler yeşildi:** pgTAP kendi uydurduğu `'app'` değerini kullanıyor
+  (`013:55`, `017:37`), Dart testleri `flushShadow()`'u komple stub'lıyor
+  (`global_timer_command_publish_test.dart:41`), InMemory repo payload'ı hiç
+  doğrulamıyor. Sözleşmeyi iki uçtan tutan **tek bir test yoktu**.
+  ➡️ WP-370/WP-371 (FCM teslimat + yaşam döngüsü) doğru yazılmış ama
+  **tetikleyeni olmayan** zincirdi; v52/v53 bu duvarın arkasında kaldı.
+- **Önceki not (2026-07-27, WP-371 + teslim):** Sahip emriyle Codex'in `0838f8e` teslim
   zinciri incelendi. SQL tarafı sağlam: helper `authenticated`'a kapalı,
   `auth.uid()` doğruluyor, origin cihaz teslimden çıkarılıyor, yalnız `applied`
   start/stop sinyal üretiyor, planlayıcı origin cihazı `deferred` bırakıyor.
