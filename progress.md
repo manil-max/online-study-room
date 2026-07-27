@@ -50,7 +50,7 @@
   koddan bulundu** (bkz. `backlog.md`). Sahip emriyle **Faz F5** açıldı:
   V51-1 + V51-2 düzeltilip v52 stable çıkacak; V51-3/V51-4 (admin yazışması)
   sahip kararıyla beklemede. Öncesi: Öncesi: v49 sonrası saha düzeltmeleri (Faz F3). WP-348 → WP-351 zinciri kapandı (stable v49 çıktı). Sahip iki turda toplam **sekiz** bulgu bildirdi (`backlog.md` V49-1…V49-8) ve **hepsi karta bağlandı: WP-353…WP-362.** Backlog'da plansız kalan v49 bulgusu yok.
-- **Son WP numarası:** **WP-369** (Faz F5, 2026-07-27). Faz F5 sahip emriyle açıldı: presence lease tazeleme (V51-1) + sayaç komut yayını (V51-2), stable'a çıkacak. Admin yazışması (V51-3/V51-4) sahip kararıyla dışarıda.
+- **Son WP numarası:** **WP-370** (Faz F5 devamı, 2026-07-27). V52'de komutun A→server yolu kapanmıştı; server→B timer-sync teslim zinciri için 0088 kod/test tamam, staging ve cihaz kabulü bekliyor.
 - ✅ **Ortam gerçeği uzlaştırıldı (WP-351, 2026-07-27):** üç ortam da `0085`; production CLI geçmişi artık gerçek. Deploy kapısı yeniden kilitli.
 
 ## ⚡ Aktif Çalışma Kaydı
@@ -102,10 +102,13 @@
 - **Doküman temizliği (2026-07-27, sahip emri):** `docs/archive/` dizini, üç senior review turu, v46 sahip geri bildirimi ve kapanmış iki recovery kabul notu repodan kaldırıldı (13 dosya, ~11k satır). Evrensel saat işinde **yalnız nihai plan + C0 uyumluluk kanıtı** kaldı. Hepsi git geçmişinde; kalan md'lerde kırık iç bağlantı yok.
 
 ### Codex Lane
-- **Durum:** [x] Boşta
+- **Durum:** [x] Boşta — WP-370 kod/test tamam, staging + cihaz kabulü bekliyor
 - **Faz/WP:** —
 - **SAHİP yollar:** —
-- **Son not:** `stable-candidate.yml` (imzalı stable APK aday derlemesi) eklendi ve `3bf7714` ile düzeltilip yeşile geçti. WP-351 sonrasında lane kapatıldı — v49 zaten normal release hattından çıktı.
+- **Son not (2026-07-27):** `0088` V2 start/stop'tan internal, origin-excluding
+  timer-sync outbox üretir ve rollout'u açar; açık cihazlar FCM kaybına karşı 5 sn
+  snapshot reconcile yapar. Local reset + 270 pgTAP, Flutter analyze ve 11 hedefli
+  Flutter test yeşil. Remote mutasyon yapılmadı.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
@@ -1824,6 +1827,32 @@ Seri kilitler:
   **Migration taşır (`0086`)** — v51'den farkı budur; production apply GO'su ayrı adımdır.
 - **Kabul:** preflight/gate PASS · üç ortam `0086` · Android artefaktı yayında ·
   release notunda "aktiflikten düşme" ve "çoklu cihaz sayaç aynalama" maddeleri yazılı.
+
+#### WP-370: Timer-sync teslim zinciri ve foreground reconcile 📱↔️📱
+- **Durum:** [~] Kod/test tamamlandı; staging + iki Android cihaz kabulü bekliyor. Production/stable mutasyonu yok.
+- **Kök neden:** `0083` timer-sync outbox/FCM policy'sini kurmuştu fakat
+  `enqueue_timer_sync_push` hiçbir gerçek V2 start/stop yolundan çağrılmıyordu;
+  runtime flag de kapalıydı. Böylece A'daki state değişimi B'ye sinyal üretmiyor,
+  B ancak açılış/resume'da snapshot okuyabiliyordu.
+- **Yapılan:** `0088`, yalnız çağıran kullanıcının kendi hesabına yazabilen ve
+  `authenticated` execute izni olmayan internal helper ekler. `apply_global_timer_command`
+  başarılı start/stop sonrası bu helper ile origin cihaz hariç timer-sync outbox
+  oluşturur; adopt/stale/duplicate/heartbeat sinyal üretmez. Timer-sync runtime
+  flag'i aynı migration ile açılır. İstemci foreground'dayken 5 sn auth'lu snapshot
+  reconcile çalıştırır; FCM gecikse/kaybolsa bile iki açık cihaz birleşir. Payload
+  hiçbir zaman state olarak uygulanmaz; yalnız güncel snapshot'ı tetikler.
+- **Güvenlik:** Helper `auth.uid() == recipient_id`, run ownership ve aktif origin
+  device doğrular; `PUBLIC`, `anon` ve `authenticated` için execute revoke edilir.
+  Uygulama tarafından service-role kullanımı veya geniş yeni RPC izni yoktur.
+- **Kanıt:** `flutter analyze` temiz · hedefli Flutter testleri 11/11 yeşil ·
+  local reset + pgTAP 18 dosya / 270 test PASS (evidence
+  `20260727T184216581Z-local-baseline`). Yeni `017` start/stop outbox, origin
+  exclusion, revision/state-version ve gecikmiş stop'un yeni sinyal üretmemesini
+  doğrular.
+- **Kabul:** staging apply sonrası outbox/delivery/dispatch kaydı · iki kayıtlı
+  Android cihazda A start/stop → B p95 ≤10 sn mirror start/stop · FCM kapalı/kaçmış
+  foreground senaryosunda B ≤5 sn içinde snapshot reconcile · eski FCM sinyali
+  güncel snapshot dışında state uygulamaz.
 
 ---
 

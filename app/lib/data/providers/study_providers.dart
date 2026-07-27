@@ -52,6 +52,11 @@ SupabaseClient? _supabaseClientOrNull() {
 
 const _timerV2CommandFlushAdapter = TimerV2CommandFlushAdapter();
 
+/// FCM anlık sinyaldir, teslim garantisi değildir. Uygulama foreground'dayken
+/// bu düşük frekanslı snapshot turu iki açık cihazın FCM kaçırması durumunda da
+/// server-authoritative timer state'inde birleşmesini sağlar.
+const kGlobalTimerForegroundReconcileInterval = Duration(seconds: 5);
+
 /// Aktif StudyRepository. Remote katman Supabase veya bellek-içi olabilir;
 /// ikisinin üstüne offline-first cache sarılır.
 final studyRepositoryProvider = Provider<StudyRepository>((ref) {
@@ -465,6 +470,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   /// WP-167: soğuk açılış auth-retry gecikmesi; dispose'ta iptal edilmezse
   /// widget testlerinde FakeTimer sızıntısı oluşur.
   Timer? _authRetryTimer;
+  Timer? _globalTimerForegroundRefresh;
   Completer<void>? _authRetryCompleter;
   StreamSubscription<TimerNotificationAction>? _notificationCommands;
   StreamSubscription<TimerSyncSignal>? _timerSyncSignals;
@@ -497,6 +503,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   /// (son durumu asla düşürme).
   Future<void>? _reconcileInFlight;
   bool _reconcileAgainRequested = false;
+  Future<void>? _globalTimerReconcileInFlight;
 
   // Süre kaynağı ürün açısından fark yaratmaz: manuel giriş, uygulama içi
   // sayaç ve native sayaç aynı XP/başarım yolunu kullanır. Eski live-run
@@ -555,6 +562,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       _disposed = true;
       _tick?.cancel();
       _widgetRefreshDebounce?.cancel();
+      _globalTimerForegroundRefresh?.cancel();
       _cancelAuthRetryWindow();
       _notificationCommands?.cancel();
       _timerSyncSignals?.cancel();
@@ -597,6 +605,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     _timerSyncSignals = TimerSyncSignal.stream.listen((_) {
       if (!_disposed) unawaited(_syncBackgroundTimerState());
     });
+    _startGlobalTimerForegroundRefresh();
     final prefs = ref.read(sharedPreferencesProvider);
     final modeName = prefs.getString(_kMode);
     final mode = TimerMode.values.firstWhere(
@@ -674,6 +683,17 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   }
 
   Future<void> _onAppResumed() => _syncBackgroundTimerState();
+
+  void _startGlobalTimerForegroundRefresh() {
+    if (ref.read(globalTimerModeProvider) != GlobalTimerMode.foregroundMirror) {
+      return;
+    }
+    _globalTimerForegroundRefresh?.cancel();
+    _globalTimerForegroundRefresh = Timer.periodic(
+      kGlobalTimerForegroundReconcileInterval,
+      (_) => unawaited(_reconcileGlobalTimerForeground()),
+    );
+  }
 
   /// WP-368 (V51-2): başlatma zincirini **sırayla** yürütür ve komut kuyruğunu
   /// beklemeden sunucuya boşaltır.
@@ -777,6 +797,23 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     // Bu çağrı legacy timer durumunu veya native action akışını değiştirmez.
     await ref.read(globalTimerCoordinatorProvider).flushShadow();
     if (_disposed) return;
+    await _reconcileGlobalTimerForeground();
+    await TimerSyncSignal.clear();
+  }
+
+  /// Tek bir auth'lu snapshot sonucunu uygular. FCM, lifecycle ve foreground
+  /// poll aynı anda gelirse yalnız bir tur çalışır; gecikmiş bir FCM payload'ı
+  /// uygulanmaz, her zaman sunucunun güncel snapshot'ı okunur.
+  Future<void> _reconcileGlobalTimerForeground() {
+    if (_disposed) return Future<void>.value();
+    final current = _globalTimerReconcileInFlight;
+    if (current != null) return current;
+    final future = _reconcileGlobalTimerForegroundImpl();
+    _globalTimerReconcileInFlight = future;
+    return future.whenComplete(() => _globalTimerReconcileInFlight = null);
+  }
+
+  Future<void> _reconcileGlobalTimerForegroundImpl() async {
     final coordinator = ref.read(globalTimerCoordinatorProvider);
     final directive = await coordinator.reconcileForeground(
       localRunning: state.isRunning,
@@ -785,7 +822,6 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     );
     if (_disposed || directive == null) return;
     await _applyGlobalTimerForegroundDirective(directive);
-    await TimerSyncSignal.clear();
   }
 
   Future<void> _applyGlobalTimerForegroundDirective(

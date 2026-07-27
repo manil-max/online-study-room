@@ -24,6 +24,9 @@ values ('50000000-0000-0000-0000-000000000031','10000000-0000-0000-0000-00000000
 
 set local role service_role;
 select set_config('request.jwt.claim.role', 'service_role', true);
+-- 0088 enables delivery after wiring a real producer. This test still proves
+-- the kill switch by establishing its closed precondition explicitly.
+update public.timer_sync_push_runtime_config set enabled = false where singleton;
 select throws_ok(
   $$select public.enqueue_timer_sync_push('closed', '10000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-000000000031', 1, 1, '30000000-0000-0000-0000-000000000031')$$,
   'P0001', 'timer_sync_push_disabled', 'timer sync enqueue is fail-closed before rollout enablement'

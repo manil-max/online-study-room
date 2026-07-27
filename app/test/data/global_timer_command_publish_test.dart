@@ -34,6 +34,7 @@ class _RecordingCoordinator extends GlobalTimerCoordinator {
 
   /// Her yayında, yayın **anındaki** hesap bağı. `null` = bind yetişmemiş.
   final List<String?> boundAccountAtFlush = <String?>[];
+  int foregroundReconcileCount = 0;
 
   @override
   Future<void> flushShadow() async {
@@ -47,7 +48,10 @@ class _RecordingCoordinator extends GlobalTimerCoordinator {
     required bool localRunning,
     required bool localIsMirror,
     required String? localMirrorRunId,
-  }) async => null;
+  }) async {
+    foregroundReconcileCount++;
+    return null;
+  }
 }
 
 class _ThrowingCoordinator extends GlobalTimerCoordinator {
@@ -120,7 +124,8 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   Future<ProviderContainer> buildContainer(
-    GlobalTimerCoordinator Function(Ref ref, SharedPreferences prefs) coordinator,
+    GlobalTimerCoordinator Function(Ref ref, SharedPreferences prefs)
+    coordinator,
   ) async {
     SharedPreferences.setMockInitialValues(<String, Object>{});
     final prefs = await SharedPreferences.getInstance();
@@ -232,6 +237,24 @@ void main() {
       await _quietWindow();
 
       expect(container.read(studyTimerProvider).isRunning, isTrue);
+    });
+
+    test('açık cihaz snapshot reconcile için yalnız FCM beklemez', () async {
+      final harness = await buildRecordingHarness();
+      final before = harness.coordinator.foregroundReconcileCount;
+
+      await Future<void>.delayed(
+        kGlobalTimerForegroundReconcileInterval +
+            const Duration(milliseconds: 750),
+      );
+
+      expect(
+        harness.coordinator.foregroundReconcileCount,
+        greaterThan(before),
+        reason:
+            'FCM kaybolsa bile açık cihaz, düşük frekanslı auth snapshot turuyla '
+            'uzak timer state\'ini yeniden kontrol etmeli',
+      );
     });
   });
 }
