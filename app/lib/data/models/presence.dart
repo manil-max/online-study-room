@@ -3,6 +3,22 @@ import 'package:flutter/foundation.dart';
 /// Canlı çalışma durumu (bkz. project.md §3.5).
 enum PresenceStatus { studying, onBreak, offline }
 
+/// Legacy `public.presence` tablosunun **gerçek** kolonları
+/// (`supabase/migrations/0001_initial_schema.sql:66-74`).
+///
+/// 🔴 Bu liste şemanın aynasıdır, dilek listesi değildir. Yeni bir alan ancak
+/// tabloya kolon ekleyen bir ileri migration yazıldıktan **sonra** buraya girer.
+/// Sırası tablo tanımıyla aynıdır. Bkz. [Presence.toMap] ve WP-363.
+const List<String> kLegacyPresenceColumns = [
+  'user_id',
+  'group_id',
+  'status',
+  'started_at',
+  'today_seconds',
+  'subject_id',
+  'updated_at',
+];
+
 /// Bir kullanıcının canlı sınıftaki anlık durumu. Supabase `presence` tablosuna
 /// karşılık gelir; Realtime ile yayılır.
 @immutable
@@ -83,6 +99,21 @@ class Presence {
     );
   }
 
+  /// Legacy `public.presence` tablosunun **satır eşlemesi**.
+  ///
+  /// 🔴 WP-363: Buraya tabloda **olmayan** bir alan eklemek, yazmayı sessizce
+  /// öldürür. `from('presence').upsert(...)` bilinmeyen bir kolon görünce
+  /// PostgREST'te hata döner; çağrı zinciri bu hatayı yuttuğu için kullanıcı
+  /// kendini yerel cache'ten aktif görmeye devam eder, **karşı taraf hiçbir şey
+  /// görmez.** Tam olarak bu oldu: WP-339 modele `leaseExpiresAt` ekleyince
+  /// payload'a `lease_expires_at` da girdi, ama o kolon yalnız V3 projeksiyon
+  /// tablolarında (`0081`) ve `live_study_runs`ta (`0082`) var — legacy
+  /// `presence` tablosunda **yok**. Sonuç: v49 ve v50'de presence sunucuya hiç
+  /// yazılamadı.
+  ///
+  /// Anahtarlar [kLegacyPresenceColumns] ile sınırlıdır ve bu bir testle
+  /// kilitlenmiştir. Projeksiyon yolu bu eşlemeyi kullanmaz; o taraf
+  /// `apply_multi_group_presence_state` RPC'sine açık parametre geçer.
   Map<String, dynamic> toMap() {
     return {
       'user_id': userId,
@@ -94,7 +125,6 @@ class Presence {
       'today_seconds': todaySeconds,
       'subject_id': subjectId,
       'updated_at': DateTime.now().toUtc().toIso8601String(),
-      'lease_expires_at': leaseExpiresAt?.toUtc().toIso8601String(),
     };
   }
 
