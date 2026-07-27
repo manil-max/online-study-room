@@ -34,8 +34,8 @@
 - **Sürüm sırası:** kod/testi biten işler tek QA kuyruğunda birikir; yeni beta/stable yalnız sahip onayıyla çıkar. Eski beta dalga kararları git geçmişindedir.
 - **Yönetim varsayılanı:** Production `deploy_enabled/release_enabled` kapalıdır ve her terfiden sonra yeniden kapatılır. Stable yalnız protected `production` Environment, exact SHA/head/project-ref GO ve reviewer kanıtıyla ilerler.
 - **Kurallar:** Kök `AGENTS.md`, `.agents/AGENTS.md` ve `docs/KALITE-PROGRAMI.md` geçerlidir. Tek çalışma dalı `main`; her WP ayrı commit; production varsayılmaz.
-- **Aktif tur:** **v49 sonrası cihaz geri bildirimi turu.** WP-348 → WP-351 zinciri kapandı (stable v49 çıktı). Sıradaki iş sahibin cihazda bulduğu beş madde: `backlog.md` V49-1…V49-5. Henüz WP'ye bölünmedi.
-- **Son WP numarası:** **WP-352** (v49 öncesi son hotfix). V49-* maddeleri WP-353'ten devam edecek.
+- **Aktif tur:** **v49 sonrası cihaz geri bildirimi turu.** WP-348 → WP-351 zinciri kapandı (stable v49 çıktı). Sahip iki turda toplam **sekiz** bulgu bildirdi (`backlog.md` V49-1…V49-8). İkinci tur (V49-6/7/8) **Faz F3 · WP-353…WP-356** olarak planlandı; ilk tur (V49-1…V49-5) hâlâ WP'ye bölünmedi.
+- **Son WP numarası:** **WP-356** (Faz F3 planlaması, 2026-07-27). V49-1…V49-5 için açılacak kartlar WP-357'den devam eder.
 - ✅ **Ortam gerçeği uzlaştırıldı (WP-351, 2026-07-27):** üç ortam da `0085`; production CLI geçmişi artık gerçek. Deploy kapısı yeniden kilitli.
 
 ## ⚡ Aktif Çalışma Kaydı
@@ -93,7 +93,7 @@
 | Konu | Durum |
 | --- | --- |
 | Sürüm | **`v49` yayında (Latest, `2e19cfb`).** Android APK + Windows MSIX/ZIP GitHub Releases'ta; APK SHA-256 `0628cff9…de65c935` |
-| Cihaz kabulü | 🔴 **Açık.** Sahip v49'u denedi, **beş bulgu** bildirdi → `backlog.md` V49-1…V49-5 |
+| Cihaz kabulü | 🔴 **Açık.** Sahip v49'u denedi, iki turda **sekiz bulgu** bildirdi → `backlog.md` V49-1…V49-8. İkinci tur planlandı: **Faz F3 · WP-353…WP-356** |
 | Sürüm politikası | 🔴 Sahip onayı olmadan yeni sürüm çıkmaz |
 | Otomatik doğrulama | `2e19cfb` release koşumu (`30222542841`) preflight/android/windows/finalize tümü PASS |
 | l10n audit | **0 bulgu**: WP-335, WP-295 önizleme metinlerini katalogladı; 7 kullanıcı-dışı invariant mesajı dar ve gerekçeli muafiyetle ayrıldı |
@@ -806,6 +806,327 @@ WP-348 (migration + Başarımlar primary IA)
 
 ---
 
+### Faz F3 — v49 saha düzeltmeleri (sahip 2. geri bildirim turu)
+
+> **Kaynak:** `backlog.md` 🔴 Yüksek Öncelik → **V49-6, V49-7, V49-8**
+> (sahip, 2026-07-27, uzaktan bildirdi). Bu faz yalnız bu üç maddeyi kapsar;
+> ilk turdaki V49-1…V49-5 **hâlâ WP'ye bölünmedi** ve buraya girmez.
+>
+> **Uyumlama notu (planner Adım 0, 2026-07-27):** `git status` temiz, açık dal
+> yok, bütün lane'ler `[x] Boşta`, commit edilmemiş worker çıktısı yok. WP-351
+> `[x] KAPANDI` ve WP-352 `[~]` kayıtları gerçekle uyumlu; taşınacak kart
+> bulunmadı. Zemin doğru olduğu için yeni kartlar doğrudan yazıldı.
+>
+> **Sıra:** WP-353 · WP-354 · WP-356 **paralel güvenli** (ayrık SAHİP, ortak
+> sıcak dosya yok). **WP-355 yalnız WP-354 çıktısından sonra** başlar — ölçüm
+> yapılmadan presence mimarisi değiştirilmez.
+
+#### WP-353: Production auth yapılandırması — şifre sıfırlama linkini localhost'tan kurtar 🔑
+- **Program/Faz:** Faz F3 · Ops/release · Kaynak: **V49-8**
+- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** Yok
+- **Problem:** Sahip stable v49'da "şifremi unuttum" akışını denedi; e-postadaki
+  bağlantı hâlâ `localhost:3000`'e gidiyor. **Kod tarafı doğru:** Android'de
+  `resetPasswordForEmail` flavor'a uygun derin bağlantıyı `redirectTo` olarak
+  geçiyor ([`supabase_auth_repository.dart:197-202`](app/lib/data/repositories/supabase/supabase_auth_repository.dart:197),
+  [`auth_redirect_config.dart:32-38`](app/lib/core/config/auth_redirect_config.dart:32)).
+  Eksik olan **production Supabase projesinin auth ayarı**: `Supabase Auth Config`
+  workflow'u bugüne kadar yalnız bir kez başarıyla koştu — run
+  [30164160511](https://github.com/manil-max/online-study-room/actions/runs/30164160511),
+  hedef **staging**. Production `uri_allow_list` redirect scheme'ini tanımadığı
+  için Supabase `redirectTo`yu reddedip Site URL'e (`localhost:3000`) düşürüyor.
+  WP-287 runbook'u bunu zaten "ayrı ops kapısı" olarak bırakmıştı
+  ([`docs/SIFRE-SIFIRLAMA-PANEL-RUNBOOK.md:69-73`](docs/SIFRE-SIFIRLAMA-PANEL-RUNBOOK.md:69)) —
+  o kapı hiç açılmadı, bu WP onu kapatır.
+- **Kapsam dışı:** Uygulama kodu değişikliği · yeni migration · `supabase config
+  push` (repodaki `config.toml` yerel; uzağa basılırsa Site URL'i localhost'a
+  çevirir) · başka auth ayarına dokunmak (OTP uzunluğu, JWT, provider) ·
+  özel SMTP satın almak/kurmak · staging'i yeniden yamalamak.
+- **SAHİP dosyalar (yaz):**
+  - `docs/SIFRE-SIFIRLAMA-PANEL-RUNBOOK.md` (production bölümünü "yapıldı" gerçeğine çek)
+  - `docs/recovery/ENVIRONMENT-MATRIX.md` (auth config satırı — ortam başına durum)
+  - bu WP kartı
+- **DOKUNMA (oku, değiştirme):** `.github/workflows/supabase-auth-config.yml`
+  (olduğu gibi çalıştırılır, düzenlenmez) · `app/lib/core/config/auth_redirect_config.dart` ·
+  `supabase/config.toml` · `tooling/release/deploy-contract.json`.
+- **Adımlar:**
+  - [ ] `Supabase Auth Config` workflow'unu **`target=production`, `dry_run=true`**
+    ile koş; mevcut `site_url` / `uri_allow_list` / `recovery_template_has_token`
+    değerlerini kayda al. Bu, kök nedenin gerçekten yapılandırma olduğunun kanıtıdır.
+  - [ ] Dry-run `site_url`i localhost/127.0.0.1 gösteriyorsa aynı workflow'u
+    **`target=production`, `confirm_production=PRODUCTION`, `dry_run=false`** ile
+    koş. Göstermiyorsa **DUR** — teşhis yanlıştır, bulguyu sahibe rapor et ve
+    kod yoluna dön (kart yeniden yazılır).
+  - [ ] Workflow'un `Verify applied auth config` adımının sert kapısının PASS
+    ettiğini doğrula: `site_url` localhost içermiyor · `uri_allow_list` üç
+    scheme'i de taşıyor · joker (`*`) yok.
+  - [ ] Şablon adımı free-tier uyarısıyla geçtiyse bunu **açık borç** olarak yaz:
+    masaüstü/Windows 6 haneli kod yolu özel SMTP gelene kadar çalışmaz. Uyarı
+    yerine hata döndüyse gerçek hatayı raporla.
+  - [ ] Runbook'taki "Production (AYRI KAPI — bu WP'de yapılmaz)" bölümünü
+    gerçek duruma çek; run numarasını ve tarihi kanıt olarak yaz.
+- **Veri/Migration etkisi:** Yok — şema veya veri değişmez. **Geri alma:** aynı
+  workflow ile eski `site_url`/`uri_allow_list` değerleri geri yazılır; dry-run
+  çıktısı bu yüzden apply'dan **önce** alınır ve saklanır.
+- **Ortam/Deploy:** **Production auth yapılandırması.** Migration/Edge/secret
+  değil; `deploy-contract.json` kapısına girmez ama yine de production
+  mutasyonudur — sahibin bu karttaki açık emri somut GO kaydıdır
+  (`.agents/AGENTS.md §0.1`). Staging'e yeniden dokunulmaz.
+- **RLS/Güvenlik:** Allowlist'e **yalnız** üç uygulama scheme'i girer; joker veya
+  üçüncü taraf domain **asla** (open-redirect). `SUPABASE_ACCESS_TOKEN`, project
+  ref ve API gövdeleri kullanıcıya/loga yazılmaz. Kullanıcı numaralandırma
+  koruması (kayıtlı olmayan e-postada da aynı nötr mesaj) korunur.
+- **Edge-case'ler:** beta ile stable aynı telefonda kurulu (scheme suffix'i
+  ayırır) · e-posta istemcisi linki önizleme için tüketiyor (tek kullanımlık
+  token) · kullanıcı linki masaüstünde açıyor (Android şeması açılmaz → kod
+  yolu gerekir, o da free tier'da kapalı) · eski v48 istemcisi.
+- **Kabul (ölçülebilir):**
+  - Production `config/auth` okumasında `site_url` localhost/127.0.0.1 **içermez**;
+    `uri_allow_list` üç scheme'i de içerir ve `*` içermez.
+  - Gerçek Android cihazda stable v49: "Şifremi unuttum" → e-posta → linke dokun →
+    **uygulama açılır** (tarayıcıda `localhost` hatası **0**) → yeni şifre → yeni
+    şifreyle giriş başarılı.
+  - Kayıtlı olmayan e-postada da aynı nötr "gönderildi" mesajı görünür.
+  - Masaüstü kod yolunun durumu (çalışıyor / free-tier nedeniyle kapalı) yazılı
+    olarak raporlanır; "çalışıyor" yalnız gerçek 6 haneli kod alındıysa yazılır.
+- **Tuzaklar:** `supabase config push` bu işi **düzeltmez, kırar**. Panelden elle
+  düzenlemek kayıt bırakmaz — workflow kullanılır. Free tier şablon reddi bir
+  hata değil bilinen sınırdır; onu "başarısız" diye raporlamak da, sessizce
+  "tamam" saymak da yanlıştır. Bir de: bu WP staging'i düzeltmez çünkü staging
+  zaten düzgün — beta'da çalışıyor olması production'ın çalıştığı anlamına gelmez.
+- **Model önerisi:** 🟣 Pro
+
+#### WP-354: Sayaç sürerken grupta "aktif" kalmama — kök neden ayrımı 🔬
+- **Program/Faz:** Faz F3 · Teşhis (salt-okunur) · Kaynak: **V49-6**
+- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** Yok
+- **Problem:** Sayaç başlatıldıktan bir süre sonra kullanıcı grup ekranındaki
+  aktif/çalışıyor listesinden düşüyor; kronometre kendi cihazında dönmeye devam
+  ediyor. **Kodda doğrulanan zemin:** presence satırını yalnız Flutter
+  izolatındaki `PresenceLifecycle` 20 sn'de bir tazeliyor
+  ([`presence_lifecycle.dart:39`](app/lib/data/providers/presence_lifecycle.dart:39))
+  ve okuma tarafı 70 sn'den eski satırı çevrimdışı sayıyor
+  ([`presence_providers.dart:35-40`](app/lib/data/providers/presence_providers.dart:35),
+  [`:75-96`](app/lib/data/providers/presence_providers.dart:75)). Native foreground
+  service sayacı yaşasa bile Flutter izolatı durur/öldürülürse heartbeat biter.
+  **Kritik not:** V3 projection yolu da aynı 70 sn'lik istemci lease'ini yeniliyor
+  ([`0081:220`](supabase/migrations/0081_multi_group_presence_projection.sql:220)) —
+  yani **V3 flag'lerini açmak bu bulguyu tek başına çözmez**; sweeper aynı eşikte
+  offline'a çeker ([`0081:253-274`](supabase/migrations/0081_multi_group_presence_projection.sql:253)).
+- **Neden ayrı bir teşhis WP'si:** en az dört farklı mekanizma aynı belirtiyi
+  üretir ve düzeltmeleri birbirine benzemez. Ölçmeden yazılan kod yanlış katmanı
+  onarır. Ayrılacak hipotezler:
+  - **H1 — Yazar tarafı ölü:** Activity/Flutter engine yok edilmiş (FGS yaşıyor),
+    Dart heartbeat hiç atmıyor → DB `updated_at` donuyor.
+  - **H2 — Yazar tarafı kısılmış:** İzolat yaşıyor ama arka planda `Timer.periodic`
+    Doze/App Standby ile geciktiriliyor → `updated_at` 70 sn'yi aşan aralıklarla tazeleniyor.
+  - **H3 — Yazım reddediliyor:** `beat()` erken dönüyor (auth `null`, `timer.isRunning`
+    false, legacy modda `userGroupProvider` null → `legacy_presence_requires_group`
+    [`supabase_presence_repository.dart:72-78`](app/lib/data/repositories/supabase/supabase_presence_repository.dart:72))
+    ve hata `catchError((_) {})` ile sessizce yutuluyor
+    ([`presence_lifecycle.dart:87-90`](app/lib/data/providers/presence_lifecycle.dart:87)).
+  - **H4 — Okuyucu tarafı ölü:** DB satırı tazeleniyor ama izleyen cihazın
+    Realtime aboneliği düşmüş; yerel bayatlatma tikeri son satırları 70 sn sonra
+    offline gösteriyor ([`presence_providers.dart:106-126`](app/lib/data/providers/presence_providers.dart:106)).
+- **Kapsam dışı:** Düzeltme kodu yazmak · presence eşiklerini "denemek için"
+  değiştirmek · V3 rollout flag'lerini açmak · migration · native servis
+  değişikliği · production'a herhangi bir yazma.
+- **SAHİP dosyalar (yaz):**
+  - yeni `docs/qa/PRESENCE-LIVENESS-EVIDENCE.md` (ölçüm + hipotez sonuçları + GO/NO-GO)
+  - gerekiyorsa yalnız geçici, commit **edilmeyen** enstrümantasyon (kartta belirtilir)
+- **DOKUNMA (oku, değiştirme):** `presence_lifecycle.dart` · `presence_providers.dart` ·
+  `supabase_presence_repository.dart` · `study_providers.dart` · Android native
+  timer/servis · `supabase/migrations/**`.
+- **Adımlar:**
+  - [ ] Ölçüm düzeneği: A cihazı sayacı başlatır, B cihazı grup ekranını açık
+    tutar. Aynı anda **salt-okunur** DB gözlemi: `presence` satırının
+    `updated_at`/`status` değeri dakikalık örneklenir (production'da yalnız
+    `Database Gates` salt-okunur yolu; ham UUID/e-posta kanıta yazılmaz).
+  - [ ] Senaryo matrisi, her biri en az 15 dk: (a) uygulama önde açık ·
+    (b) uygulama arkada, ekran açık · (c) ekran kapalı · (d) uygulama görev
+    listesinden kapatıldı, FGS bildirimi duruyor · (e) uçak modu 2 dk sonra geri.
+  - [ ] Her senaryoda **iki bağımsız gerçeği** ayrı ayrı yaz: (1) DB `updated_at`
+    tazeleniyor mu, (2) B cihazı kullanıcıyı aktif görüyor mu. İkisinin ayrışması
+    doğrudan H1/H2/H3'ü H4'ten ayırır.
+  - [ ] `beat()` erken dönüş nedenlerini ve yutulan yazma hatasını geçici olarak
+    gözlemlenebilir yap (log/Sentry breadcrumb); H3'ü kanıtla veya ele.
+  - [ ] Kullanıcının düştüğü **ilk an** ile son başarılı `updated_at` arasındaki
+    farkı ölç: ~70 sn ise eşik/heartbeat sorunu, çok daha uzunsa okuyucu/Realtime sorunu.
+  - [ ] Çıktı: tek kazanan hipotez (veya ölçülmüş kombinasyon) + WP-355 için
+    **GO/NO-GO ve önerilen çözüm seçeneği**.
+- **Veri/Migration etkisi:** Yok. Salt-okunur; hiçbir ortama yazma yapılmaz.
+- **Ortam/Deploy:** Cihaz + salt-okunur staging/production gözlemi. Deploy yok,
+  flag açma yok.
+- **RLS/Güvenlik:** Yalnız kendi hesaplarının satırları okunur; kanıt dosyasında
+  UUID, e-posta, token, service-role **bulunmaz** (redacted).
+- **Edge-case'ler:** OEM pil optimizasyonu (Samsung agresif) · Doze · force-stop ·
+  iki cihazın saatleri arasında kayma · ağ dalgalanması · aynı hesabın iki cihazı ·
+  kullanıcının birden çok grubu (legacy modda yalnız seçili grup satırı yazılır).
+- **Kabul (ölçülebilir):**
+  - Beş senaryonun her biri için "DB tazeleniyor mu / UI aktif görüyor mu"
+    tablosu doldurulmuş, en az iki tekrarla.
+  - Belirtiyi üreten mekanizma **tek** hipoteze indirgenmiş ve kanıtla
+    gerekçelendirilmiş; indirgenemiyorsa hangi ölçümün eksik kaldığı yazılmış.
+  - "Düşme" anı ile son `updated_at` arasındaki gecikme sn cinsinden raporlanmış.
+  - WP-355 için önerilen çözüm seçeneği + reddedilen seçenekler gerekçeli yazılmış.
+- **Tuzaklar:** Eşiği 70 sn'den büyütmek belirtiyi geciktirir, sorunu çözmez —
+  ve gerçekten kapanmış uygulamaları "hâlâ çalışıyor" göstererek yeni bir yalan
+  üretir. Emülatörde ölçüm geçersizdir; Doze/OEM pil davranışı gerçek cihazda
+  ölçülür. Bir senaryoda çalışıyor olması diğerini kapsamaz.
+- **Model önerisi:** 🔴 Opus
+
+#### WP-355: Çalışma sürerken presence sürekliliği — kalıcı düzeltme 🔗
+- **Program/Faz:** Faz F3 · Presence çekirdeği · Kaynak: **V49-6**
+- **Ajan:** — · **Durum:** [ ] Bekliyor — **WP-354 GO'suna kilitli**
+- **Bağımlılık:** **WP-354 kanıtı zorunlu.** Teşhis yazılmadan bu WP worker'a
+  verilmez; kart kapsamı kazanan hipoteze göre daraltılarak yeniden yazılır.
+- **Problem:** Kullanıcı gerçekten çalışırken grup onu çalışmıyor görüyor.
+  Bugünkü canlılık tanımı "istemci son 70 sn içinde yazdı mı" — oysa doğru tanım
+  "sunucuda açık bir çalışma oturumu var mı". İstemcinin uyanık kalmasına bağlı
+  her tasarım Android arka plan kısıtları altında er ya da geç yanlış cevap verir.
+- **Çözüm seçenekleri (WP-354 sonucuna göre biri seçilir, hepsi yapılmaz):**
+  - **S1 — Sunucu türevli canlılık (H1/H2 kazanırsa; tercih edilen).** Canlılık
+    presence heartbeat'inden değil, açık `live_study_runs` satırından türetilir;
+    heartbeat yalnız hızlandırıcıdır. İstemci uyumadığı sürece davranış aynı
+    kalır, uyuyunca kullanıcı "çalışıyor" kalmaya devam eder. Bedeli: ileri
+    migration + terk edilmiş oturum (abandoned) kuralının netleşmesi.
+  - **S2 — Native uplink heartbeat (H1 kazanır ve S1 yetmezse).** FGS kendi
+    tarafından periyodik olarak sunucuya dokunur. Bedeli yüksek: native'e
+    kimlik/ağ katmanı girer, WP-337/340'ın "native uplink yok" sözleşmesini
+    değiştirir. **Varsayılan olarak önerilmez.**
+  - **S3 — Yazma yolu onarımı (H3 kazanırsa).** Sessiz yutulan hata görünür
+    kılınır, `beat()` erken dönüşleri (özellikle legacy `groupId == null`) gerçek
+    bir yeniden deneme kuyruğuna bağlanır. Migration gerekmez — en ucuz düzeltme.
+  - **S4 — Okuyucu tarafı dayanıklılığı (H4 kazanırsa).** Realtime aboneliği
+    kopunca yeniden bağlanma + görünür "bağlantı koptu" durumu; kopuk abonelikle
+    beslenen liste kullanıcıları sessizce offline göstermez. Migration gerekmez.
+- **Kapsam dışı:** V3 rollout flag'lerini açmak (ayrı kapı, WP-346) · sunucu
+  session/XP finalizer yazmak · Pomodoro/countdown semantiği · bildirim/widget
+  yüzeyi · gün sınırı · presence eşiğini tek başına büyütüp "çözüldü" demek.
+- **SAHİP dosyalar (yaz):** *(seçilen seçeneğe göre daraltılır — bugünkü azami sınır)*
+  - `app/lib/data/providers/presence_lifecycle.dart`
+  - `app/lib/data/providers/presence_providers.dart`
+  - presence repository arayüzü + `supabase/` · `in_memory/` · `offline/` **üç** çifti
+  - S1 seçilirse yeni `supabase/migrations/0086_*.sql` + pgTAP testleri
+  - ilgili Dart/widget testleri
+- **DOKUNMA (oku, değiştirme):** `app/lib/data/providers/study_providers.dart`
+  sıcak sayaç yolu · Android native timer/servis/bildirim/widget ·
+  `ACTION_STOP_SILENT` · uygulanmış `0081`/`0082` · push dispatcher ·
+  `home_shell.dart` gezinti sözleşmesi.
+- **Adımlar (S1 seçilirse; diğer seçenekte kart yeniden yazılır):**
+  - [ ] Canlılığı açık çalışma oturumundan türeten ileri migration; `0081`
+    değiştirilmez, additive okuma modeli eklenir.
+  - [ ] "Terk edilmiş oturum" kuralını açıkça tanımla: sunucu bir çalışmayı ne
+    zaman kendiliğinden bitmiş sayar (aksi hâlde kullanıcı sonsuza dek çalışıyor görünür).
+  - [ ] İstemci okuma yolunu yeni modele bağla; legacy `presence` tablosu
+    geri dönüş için korunur, flag ile kapatılabilir olur.
+  - [ ] InMemory ve offline repository çiftlerini aynı davranışa taşı (demo/çevrimdışı kırılmaz).
+  - [ ] Sessiz yutulan presence yazma hatasını gözlemlenebilir yap (S3'ün ucuz kısmı her hâlükârda alınır).
+- **Veri/Migration etkisi:** S1'de additive ileri migration; silme yok. **Geri
+  alma:** flag kapatma + legacy okuma yoluna dönüş; production'da yedek olmadığı
+  için şema düşürme **yok**, yalnız ileri düzeltme.
+- **Ortam/Deploy:** Local replay/pgTAP → staging → **production ayrı ve somut
+  sahip GO'su** (`deploy_enabled` varsayılan kapalı; her apply sonrası geri kilitlenir).
+- **RLS/Güvenlik:** Canlılık başkasının oturumundan türetilemez; yalnız ortak
+  aktif grup üyeleri birbirini görür; istemci canlılık/lease süresi yazamaz.
+- **Edge-case'ler:** uygulama öldürüldü ama FGS sürüyor · FGS de öldü · force-stop ·
+  uçak modu · aynı hesabın iki cihazı aynı anda · kullanıcı gerçekten durdurdu
+  (anında offline olmalı) · saat manipülasyonu · birden çok grup üyeliği · eski istemci.
+- **Kabul (ölçülebilir):**
+  - Sayaç çalışırken uygulama arkaya alınıp **30 dk** beklendiğinde kullanıcı
+    grup ekranında kesintisiz "çalışıyor" görünür; ekran kapalı senaryosunda da aynı.
+  - Kullanıcı sayacı **durdurduğunda** karşı cihaz ≤ 30 sn içinde offline görür —
+    yani düzeltme "herkesi sonsuza dek aktif göstermek" değildir.
+  - Uygulama force-stop edildiğinde tanımlı terk kuralı içinde offline'a düşer;
+    "sonsuz çalışıyor" satırı **0**.
+  - Kişisel süre/XP/oturum kayıtları değişmez; ek session **0**, çift sayım **0**.
+  - `flutter analyze` 0 uyarı; presence birim/contract testleri yeşil; migration
+    varsa local replay + pgTAP yeşil.
+  - Sayaç, bildirim ve ana ekran widget'ında regresyon **0** (8 saat drift tabanı korunur).
+- **Tuzaklar:** Bu yüzey V3 programıyla (WP-338/339/346) **aynı dosyalara**
+  dokunur; V49-1 (çoklu cihaz senkronu) için ayrı bir worker aynı anda açılırsa
+  çakışır. Eşiği büyütmek düzeltme değildir. Native'e ağ/kimlik sokmak (S2)
+  WP-337/340 sözleşmesini değiştirir; ancak ölçüm zorunlu kılarsa seçilir.
+- **Model önerisi:** 🔴 Opus
+
+#### WP-356: Kamp ateşinin altındaki gri zemin lekesini kaldır 🔥
+- **Program/Faz:** Faz F3 · Kamp ateşi görsel · Kaynak: **V49-7**
+- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** Yok
+- **Problem:** Sahip: "kamp ateşinin altındaki gri efekt kalkmalı." **Kodda
+  doğrulandı:** PNG katman yığınının en altında `ground.png` **tam opaklıkla**
+  çiziliyor ([`layered_campfire_fire.dart:154`](app/lib/features/classroom/widgets/campfire/layered_campfire_fire.dart:154));
+  asset büyük, bulanık, koyu kahve-gri bir elips
+  ([`app/assets/campfire/ground.png`](app/assets/campfire/ground.png)) ve sahnenin
+  yeşil zemininin üstünde kir lekesi gibi duruyor. WP-350 yalnız sıcak glow
+  yarıçapını/opaklığını küçültmüştü; bu katmana hiç dokunmamıştı.
+- **Kapsam dışı:** V49-3 kamp ateşi 2. revizyonu (mesafe, gökyüzü kırpma, yeşil
+  yükseklik, 8 kişi yerleşimi) — **ayrı ve henüz planlanmamış iş** · yeni asset
+  üretmek · alev/duman/köz davranışı · masaüstü kompozisyonunu yeniden tasarlamak ·
+  presence semantiği · native timer/bildirim/widget.
+- **SAHİP dosyalar (yaz):**
+  - `app/lib/features/classroom/widgets/campfire/layered_campfire_fire.dart`
+  - gerekirse `app/lib/features/classroom/widgets/campfire/campfire_assets.dart`
+    (yalnız `stackOrder`; asset sabitleri silinmez, vektör fallback'i bozmaz)
+  - `app/test/features/campfire_scene_test.dart`
+  - `app/test/features/campfire_sky_golden_test.dart` + ilgili golden baseline'ları
+- **DOKUNMA (oku, değiştirme):** `campfire_scene.dart` · `campfire_layout.dart` ·
+  `camp_critter.dart` (vektör `StoneFirePainter` fallback'i) · PNG asset
+  dosyalarının kendisi · `app/pubspec.yaml`.
+- **Adımlar:**
+  - [ ] `ground` katmanını kaldır **veya** opaklığını sahnenin kendi zemini
+    baskın kalacak kadar düşür. Önce iki varyantın ekran görüntüsünü üret —
+    **sahip seçer, sonra sayı koda ve teste bağlanır** (kozmetik işte önce önizleme).
+  - [ ] Vektör fallback yolunda (`StoneFirePainter`) karşılık gelen bir gri leke
+    olup olmadığını kontrol et; varsa aynı kararı oraya da uygula, yoksa dokunma.
+  - [ ] Gündüz / geçiş / gece üç fazında ve 0/1/4/8 kişide taşın/odunun zeminle
+    birleşim yerinin "havada duruyor" görünmediğini doğrula — leke bir gölge
+    işlevi görüyor olabilir; kaldırınca ortaya çıkan boşluk kabul kriteridir.
+  - [ ] Golden baseline'larını yalnız bu değişikliğin gerektirdiği kadar yenile.
+  - [ ] ⚠️ **Önce şunu ayır:** `campfire_sky_golden_test.dart` "kamp telefonu
+    golden · 8 kişi" testi **temiz HEAD'de de patlıyor** (WP-352 kanıt notu).
+    Bu WP'nin hatası değildir; toplu golden yenilemesiyle **üstü örtülmez** —
+    ya gerçek nedeni düzeltilir ya ayrı kart açılıp gerekçesiyle karantinaya alınır.
+- **Veri/Migration etkisi:** Yok. **Geri alma:** tek widget + golden commit'inin geri çevrilmesi.
+- **Ortam/Deploy:** Yalnız local. Tag/release yok; bir sonraki sürüm kuyruğuna girer.
+- **RLS/Güvenlik:** Yok.
+- **Edge-case'ler:** PNG yüklenemeyip vektör fallback'e düşme · reduce-motion ·
+  gündüz/geçiş/gece · 0 kişi (sönük köz) ve 8 kişi · 360×640 telefon · dar
+  Windows penceresi · büyük yazı ölçeği · koyu/açık tema.
+- **Kabul (ölçülebilir):**
+  - Telefon 360×640 golden'larında ateşin altında sahnenin zemin renginden
+    ayrışan koyu/gri elips **yok**; ateş taşları zeminle temas ediyor görünür.
+  - Gündüz, geçiş ve gece golden'larının üçünde de aynı sonuç; masaüstü
+    kompozisyonunda istenmeyen piksel farkı **0**.
+  - Asset yükleme hatası simüle edildiğinde vektör fallback'e düşüş çalışmaya devam eder.
+  - `flutter analyze` 0 uyarı · kamp ateşi testleri yeşil · Android profile
+    sahnede `p95 ≤ 16.7 ms`, jank `≤ %1` tabanı korunur.
+- **Tuzaklar:** Leke aynı zamanda ateşin zemine oturmasını sağlayan gölge olabilir;
+  körlemesine silmek ateşi havada bırakır — bu yüzden kaldırma **ve** yumuşatma
+  varyantı birlikte önizlenir. `stackOrder` bir doğrulama sözleşmesidir; katmanı
+  koddan çıkarıp listede bırakmak (veya tersi) envanter testini kırar. Bu WP
+  V49-3 ile aynı dosyalara yakındır: V49-3 için worker açılmışsa **paralel başlama**.
+- **Model önerisi:** 🔵 Sonnet
+
+#### Faz F3 çakışma matrisi
+
+```text
+Paralel güvenli dalga:  WP-353 (ops/doc) · WP-354 (kanıt/doc) · WP-356 (kamp ateşi UI)
+Seri kilit:             WP-354 → WP-355
+```
+
+> ✅ **Çakışma yok:** WP-353 yalnız iki doküman, WP-354 yalnız yeni bir kanıt
+> dosyası, WP-356 yalnız kamp ateşi PNG katmanı + kendi golden'ları yazar.
+> Ortak SAHİP dosyası ve ortak sıcak dosya (`pubspec.yaml`, `main.dart`,
+> `core/theme/**`, `core/navigation/**`, `supabase/migrations/**`) yoktur.
+>
+> ⚠️ **WP-355 paralel çalışmaz.** Presence yüzeyi V3 programıyla (WP-338/339/346)
+> ortaktır; ayrıca V49-1 (çoklu cihaz senkronu) aynı yüzeye bakar. V49-1 veya
+> V3 flag rollout'u için worker açılırsa WP-355 **beklemeye alınır**.
+>
+> ⚠️ **WP-356 ile V49-3** (kamp ateşi 2. revizyon) aynı feature klasöründedir.
+> V49-3 henüz WP değil; WP'ye bölünürken ya WP-356'dan **sonra** sıralanır ya da
+> WP-356 onun içine alınır. İkisi aynı anda açılmaz.
+
+---
+
 ## PLAN 2 — MAĞAZA HAZIRLIĞI
 
 > 🧾 **WP kartları bu fazlar başlarken açılır** (güncel son numara WP-351;
@@ -883,6 +1204,11 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 - **Yedeksiz production.** PITR ve günlük yedek **yok** (Free plan). Sahip bunu kalıcı olarak kabul etti; `deploy-contract.json` içinde `backup_requirement: "waived"` olarak kayıtlı. Sonucu: production'da geri alma yolu yoktur, yalnız ileri migration ile düzeltilir. Repo **PUBLIC** olduğu için CI'da `db dump` alıp artifact'a koymak asla seçenek değildir.
 - **Geri kilitleme kuralı.** Terfi biten her production apply'dan sonra `deploy_enabled` yeniden `false` yapılır. Sözleşmede `true` bulmak, açık bir GO'nun sürdüğü anlamına gelir — bulursan doğrula.
 - **V3 rollout flag'leri kapalı.** WP-328…WP-346 zinciri kodda ve `0085`te var ama varsayılan kapalı. v49'daki çoklu cihaz senkron bulgusu (V49-1) önce buna karşı ayrılmalı: flag kapalı olduğu için mi çalışmıyor, yoksa açıkken de mi bozuk.
+- **Presence canlılığı istemciye bağlıdır (V49-6).** "Çalışıyor" bilgisi
+  sunucudaki oturumdan değil, istemcinin son 70 sn içinde yazdığı satırdan
+  türetiliyor. Flutter izolatı durursa native sayaç yaşasa bile kullanıcı grupta
+  offline görünür. **V3 flag'lerini açmak bunu çözmez** — projection yolu da aynı
+  70 sn'lik istemci lease'ini yeniliyor (`0081`). Ölçüm WP-354, düzeltme WP-355.
 - **Sayaç sıcak yolu donuktur.** WP-340–345 normal local start/stop sırasını, notification ID/channel/layout/PendingIntent'leri, widget görünümünü ve `ACTION_STOP_SILENT` davranışını yeniden tasarlamaz. Global senkron additive envelope + shadow + feature flag ile gelir; WP-346 gerçek cihaz regresyon kapısı geçmeden varsayılan açılmaz.
 - **l10n kapısı temiz.** WP-335, 24 gerçek WP-295 kullanıcı metnini kataloğa taşıdı; 7 kullanıcı-dışı invariant mesajını dar ve gerekçeli muafiyetle ayırdı. Yeni UI metni ekleyen WP'ler audit sıfır-bulgu kuralını korumalıdır.
 - **Geri alınamaz işler.** Hesap silme purge'ü bu sınıfta — yedek + staging provası + rollback betiği olmadan production'a dokunulmaz. *Gün sınırı artık bu sınıfta değil* (toplamlar saklanmıyor).
@@ -1039,16 +1365,20 @@ tekrar tutulmaz.
 ## Worker'a Verilecek Kısa Komutlar
 
 Yalnız **Bekleyen Uygulanabilir WP'ler** ve Yol Haritası'nda `[ ] Bekliyor` olan
-kartlar worker'a verilir. Güncel ürün sırası:
+kartlar worker'a verilir. Güncel ürün sırası **Faz F3**'tür:
 
-1. **WP-348** — Başarımlar içinde tek primary + server-authoritative kayan 24 saat.
-2. **WP-349** — Forest Cabin tema kapağı gerçek palet önizlemesi.
-3. **WP-350** — Telefon kamp ateşi kompozisyonu.
-4. **WP-351** — production `0070→0085` + doğrudan stable release.
+1. **WP-353** — Production auth yapılandırması; şifre sıfırlama linkini localhost'tan kurtar. *(paralel güvenli)*
+2. **WP-354** — Sayaç sürerken grupta "aktif" kalmama: kök neden ayrımı, salt-okunur. *(paralel güvenli)*
+3. **WP-356** — Kamp ateşinin altındaki gri zemin lekesini kaldır. *(paralel güvenli)*
+4. **WP-355** — Presence sürekliliği kalıcı düzeltmesi. **Yalnız WP-354 kanıtı geldikten sonra**, kapsamı daraltılarak verilir.
 
-Bu dört WP **yalnız seri** verilir; bir worker commit/test/lanesini kapatmadan
-sonraki başlamaz. WP-346 fiziksel V3 çoklu cihaz/flag rollout kabulü olarak parkta
-kalır; stable WP-351 V3 flag'lerini açmaz.
+İlk üçü aynı anda üç worker'a verilebilir (ayrık SAHİP, ortak sıcak dosya yok).
+WP-355 seri kilittedir. WP-348…WP-351 zinciri kapandı; yeniden verilmez.
+WP-346 fiziksel V3 çoklu cihaz/flag rollout kabulü olarak parkta kalır ve
+Faz F3'ün hiçbir kartı V3 flag'lerini açmaz.
+
+`backlog.md` V49-1…V49-5 (ilk tur bulguları) henüz **WP değildir** — worker'a
+verilmez; sahiple birlikte WP-357'den itibaren bölünecektir.
 
 `Test için bekleyenler` tablosundaki hiçbir kayıt yeniden worker'a verilmez.
 
