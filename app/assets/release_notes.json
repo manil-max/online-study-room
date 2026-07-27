@@ -3,6 +3,50 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.52",
+      "buildNumber": 52,
+      "channel": "stable",
+      "date": "2026-07-27",
+      "title": "v52: aktiflikten düşme ve sayaç eşitlemesi düzeltildi",
+      "highlights": [
+        "Sayaç çalışırken artık yaklaşık 80 saniye sonra çevrimdışı görünmüyorsun.",
+        "Bir cihazda başlattığın çalışma diğer cihazda anında görünüyor; sayaçlar eşitleniyor.",
+        "İkinci bir sayaç başlatılamıyor: aynı hesabın koşusu tek."
+      ],
+      "fixes": [
+        "Canlı durumun süresi tazeleniyordu ama başkalarının okuduğu kopyaya işlenmiyordu; bu yüzden çalışırken düşüyordun. Düzeltme sunucu tarafındadır, v51'de de geçerlidir.",
+        "Başlatma komutu sunucuya ancak uygulama kapatılıp açıldığında gidiyordu; artık anında gidiyor. Durdurma da öyle.",
+        "Çoklu cihaz senkronu sunucu tarafında da açıldı; v51'de sunucu her komutu reddediyordu."
+      ],
+      "notes": [
+        "Bu sürüm migration taşır; production şeması 0085'ten 0087'ye taşındı.",
+        "Aktiflikten düşme düzeltmesi sunucu tarafındadır; sayaç eşitlemesi için v52 gerekir.",
+        "Sayaç senkronu, cihazın bildirim kaydının yapılmış olmasını gerektirir.",
+        "Sayaç senkronu şimdilik kronometre modunu kapsar.",
+        "Admin ile yazışma ekranındaki sorunlar bu sürümde ele alınmadı.",
+        "Masaüstünde 6 haneli kod ile şifre sıfırlama hâlâ çalışmıyor."
+      ],
+      "titleEn": "v52: presence drop and timer sync fixed",
+      "highlightsEn": [
+        "You no longer drop to offline about 80 seconds into a running timer.",
+        "A run started on one device now appears on the other immediately; the timers match.",
+        "A second concurrent timer can no longer be started on the same account."
+      ],
+      "fixesEn": [
+        "Your live status lease was renewed, but only on one copy of the record - not the copy other people read. This fix is server-side and also applies to v51.",
+        "The start command only reached the server after the app was closed and reopened; it is now sent immediately, and so is stop.",
+        "Multi-device sync is now enabled server-side too; in v51 the server rejected every command."
+      ],
+      "notesEn": [
+        "This release ships migrations; the production schema moves from 0085 to 0087.",
+        "The presence-drop fix is server-side; timer sync itself requires v52.",
+        "Timer sync requires the device to have completed push registration.",
+        "Timer sync currently covers stopwatch mode.",
+        "The admin conversation issues are not addressed in this release.",
+        "Desktop password reset via the 6-digit code still does not work."
+      ]
+    },
+    {
       "versionName": "1.0.51",
       "buildNumber": 51,
       "channel": "stable",

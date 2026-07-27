@@ -4,6 +4,26 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [v52 / 1.0.52+52] - 2026-07-27
+
+> **Çalışırken çevrimdışı görünme ve sayaç senkronu.** v51'de aktiflik
+> yaklaşık 80 saniye sonra düşüyordu ve iki cihazın sayacı eşitlenmiyordu;
+> ikisinin de kök nedeni bulundu ve düzeltildi. Production şeması `0087`ye
+> taşındı.
+
+### Düzeltmeler
+- **Sayaç çalışırken artık aktiflikten düşmüyorsun.** Canlı durumun süresi düzenli olarak tazeleniyordu, ama tazeleme yalnız kaydın bir kopyasına işleniyor, başkalarının okuduğu kopyaya işlenmiyordu. Bu yüzden yaklaşık 80 saniye sonra hem kendi cihazında hem başkalarında "çalışmıyor" görünüyordun. **Bu düzeltme sunucu tarafındadır: v51'de de geçerlidir, güncelleme beklemeden çalışır.**
+- **İki cihazın sayacı artık eşitleniyor.** Bir cihazda başlattığın çalışma sunucuya ancak uygulamayı kapatıp yeniden açtığında bildiriliyordu. O ana kadar diğer cihaz koşuyu göremiyor (`00:00:00`), üstelik ikinci bir sayaç başlatabiliyordun. Başlatma ve durdurma artık anında bildiriliyor.
+- Çoklu cihaz sayaç senkronu sunucu tarafında da açıldı; v51'de istemci açıktı ama sunucu her komutu reddediyordu.
+
+### Notlar
+- Bu sürüm migration taşır; production şeması `0085` → `0087`.
+- Aktiflikten düşme düzeltmesi sunucu tarafındadır; v51 kullanıcıları da faydalanır. Sayaç eşitlemesi için v52 gerekir.
+- Sayaç senkronu için cihazın bildirim kaydının yapılmış olması gerekir; bildirim izni verilmemiş bir cihazda senkron çalışmaz.
+- Sayaç senkronu şimdilik kronometre modunu kapsar.
+- Admin ↔ kullanıcı yazışmasındaki iki sorun bu sürümde ele alınmadı (sahip kararı).
+- Masaüstünde 6 haneli kod ile şifre sıfırlama hâlâ çalışmıyor.
+
 ## [v51 / 1.0.51+51] - 2026-07-27
 
 > **Canlı durum ve çoklu cihaz turu.** Presence sunucuya hiç yazılamıyordu;
