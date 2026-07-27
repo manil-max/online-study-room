@@ -542,8 +542,17 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
             unawaited(stop());
           }
         });
+    // WP-371: snapshot turu **yalnız uygulama görünürken** atar. Sayaç
+    // çalışırken native foreground servis süreci canlı tuttuğu için, iptal
+    // edilmezse ekran kapalıyken de saatlerce 5 sn'de bir ağ turu döner.
+    // O pencerede senkronu zaten timer-sync FCM taşır.
     _lifecycleListener = AppLifecycleListener(
-      onResume: () => unawaited(_onAppResumed()),
+      onResume: () {
+        _startGlobalTimerForegroundRefresh();
+        unawaited(_onAppResumed());
+      },
+      onHide: _stopGlobalTimerForegroundRefresh,
+      onPause: _stopGlobalTimerForegroundRefresh,
     );
     // Native foreground servis (widget/bildirim Başlat-Durdur) uygulama AÇIKKEN de
     // anında yansısın diye native taraf `reconcile` çağırır; biz bu method channel
@@ -685,6 +694,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   Future<void> _onAppResumed() => _syncBackgroundTimerState();
 
   void _startGlobalTimerForegroundRefresh() {
+    if (_disposed) return;
     if (ref.read(globalTimerModeProvider) != GlobalTimerMode.foregroundMirror) {
       return;
     }
@@ -693,6 +703,11 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       kGlobalTimerForegroundReconcileInterval,
       (_) => unawaited(_reconcileGlobalTimerForeground()),
     );
+  }
+
+  void _stopGlobalTimerForegroundRefresh() {
+    _globalTimerForegroundRefresh?.cancel();
+    _globalTimerForegroundRefresh = null;
   }
 
   /// WP-368 (V51-2): başlatma zincirini **sırayla** yürütür ve komut kuyruğunu

@@ -50,7 +50,7 @@
   koddan bulundu** (bkz. `backlog.md`). Sahip emriyle **Faz F5** açıldı:
   V51-1 + V51-2 düzeltilip v52 stable çıkacak; V51-3/V51-4 (admin yazışması)
   sahip kararıyla beklemede. Öncesi: Öncesi: v49 sonrası saha düzeltmeleri (Faz F3). WP-348 → WP-351 zinciri kapandı (stable v49 çıktı). Sahip iki turda toplam **sekiz** bulgu bildirdi (`backlog.md` V49-1…V49-8) ve **hepsi karta bağlandı: WP-353…WP-362.** Backlog'da plansız kalan v49 bulgusu yok.
-- **Son WP numarası:** **WP-370** (Faz F5 devamı, 2026-07-27). V52'de komutun A→server yolu kapanmıştı; server→B timer-sync teslim zinciri için 0088 kod/test tamam, staging ve cihaz kabulü bekliyor.
+- **Son WP numarası:** **WP-371** (Faz F5 devamı, 2026-07-27). V52'de komutun A→server yolu kapanmıştı; server→B timer-sync teslim zinciri WP-370 (`0088`) ile kuruldu, WP-371 turu yaşam döngüsüne bağladı.
 - ✅ **Ortam gerçeği uzlaştırıldı (WP-351, 2026-07-27):** üç ortam da `0085`; production CLI geçmişi artık gerçek. Deploy kapısı yeniden kilitli.
 
 ## ⚡ Aktif Çalışma Kaydı
@@ -61,10 +61,20 @@
 - **SAHİP yollar:** —
 
 ### Claude Lane
-- **Durum:** [x] Boşta — Faz F5 kapandı (WP-367 · WP-368 · WP-369, v52 çıkarıldı)
-- **Faz/WP:** —
-- **SAHİP yollar:** —
-- **Son not (2026-07-27, Faz F5):** Sahip emriyle V51-1 + V51-2 düzeltildi ve
+- **Durum:** [ ] Aktif — WP-371 + WP-370 teslim dalgası (staging → production → v53)
+- **Faz/WP:** Faz F5 devamı / WP-371
+- **SAHİP yollar:** `app/lib/data/providers/study_providers.dart` ·
+  `app/test/data/global_timer_command_publish_test.dart` · `tooling/release/**` ·
+  `CHANGELOG.md` · `app/pubspec.yaml` · `app/assets/release_notes.json`
+- **Son not (2026-07-27, WP-371):** Sahip emriyle Codex'in `0838f8e` teslim
+  zinciri incelendi. SQL tarafı sağlam: helper `authenticated`'a kapalı,
+  `auth.uid()` doğruluyor, origin cihaz teslimden çıkarılıyor, yalnız `applied`
+  start/stop sinyal üretiyor, planlayıcı origin cihazı `deferred` bırakıyor.
+  🔴 Tek kusur: 5 sn'lik tur "foreground" diye yazılmış ama yaşam döngüsüne
+  bağlı değildi — sayaç çalışırken native servis süreci canlı tuttuğu için ekran
+  kapalıyken de dönerdi. WP-371 turu `onHide`/`onPause`'da durdurup `onResume`'da
+  yeniden başlatır; regresyon testi düzeltme geri alınınca kırmızıya döndü.
+- **Önceki not (2026-07-27, Faz F5):** Sahip emriyle V51-1 + V51-2 düzeltildi ve
   v52 stable çıktı. Admin yazışması (V51-3/V51-4) sahip kararıyla dışarıda kaldı.
   - **WP-367** ~80 sn düşme: heartbeat lease'i yalnız kanonik satırda
     yeniliyordu, okuyucular projeksiyon satırının lease'ine bakıyordu. `0086`
@@ -1853,6 +1863,28 @@ Seri kilitler:
   Android cihazda A start/stop → B p95 ≤10 sn mirror start/stop · FCM kapalı/kaçmış
   foreground senaryosunda B ≤5 sn içinde snapshot reconcile · eski FCM sinyali
   güncel snapshot dışında state uygulamaz.
+
+#### WP-371: Snapshot turunu yaşam döngüsüne bağla 🔋
+- **Durum:** [x] Kapandı (2026-07-27). WP-370 incelemesinde bulundu.
+- **SAHİP:** `app/lib/data/providers/study_providers.dart` ·
+  `app/test/data/global_timer_command_publish_test.dart`
+- **Kök neden:** WP-370'in 5 sn'lik snapshot turu `build()` içinde
+  `Timer.periodic` ile kurulup hiçbir yaşam döngüsü olayına bağlanmamıştı. Kod
+  yorumu "uygulama foreground'dayken" diyor, davranış bunu uygulamıyordu: sayaç
+  çalışırken native foreground servis süreci canlı tuttuğu için ekran kapalıyken
+  de saatlerce 5 sn'de bir auth'lu snapshot RPC'si dönerdi (~720 istek/saat/cihaz,
+  pil + kota). Arka planda turun ürün değeri yok — ayna arayüzü görünmüyor ve o
+  pencerede senkronu zaten timer-sync FCM taşıyor.
+- **Yapılan:** `AppLifecycleListener`'a `onHide`/`onPause` eklendi; ikisi de turu
+  iptal eder. `onResume` hem turu yeniden kurar hem mevcut tek seferlik
+  `_syncBackgroundTimerState()` uzlaştırmasını çalıştırır.
+  `_startGlobalTimerForegroundRefresh` artık dispose sonrası tur kurmaz.
+- **Kanıt:** `flutter analyze` temiz · **955/955** Flutter testi yeşil · yeni
+  regresyon testi `onHide`/`onPause` kaldırılınca **kırmızıya döndü**
+  (`Expected: <1> Actual: <2>`), yani gerçekten kapan. Test hem arka planda
+  turun durduğunu hem de öne dönünce **resume'un tek seferlik uzlaştırmasının
+  ötesinde** periyodik turun geri geldiğini ölçer.
+- **Kabul:** analyze temiz · tam süit yeşil · düzeltme geri alınınca test kırmızı.
 
 ---
 

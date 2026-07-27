@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/core/background/timer_v2_command_outbox.dart';
@@ -254,6 +255,51 @@ void main() {
         reason:
             'FCM kaybolsa bile açık cihaz, düşük frekanslı auth snapshot turuyla '
             'uzak timer state\'ini yeniden kontrol etmeli',
+      );
+    });
+
+    /// WP-371: tur "foreground" turudur. Sayaç çalışırken native foreground
+    /// servis süreci canlı tuttuğu için, arka planda durmazsa ekran kapalıyken
+    /// de 5 sn'de bir ağ turu döner (pil + kota). O pencerede senkronu FCM taşır.
+    test('arka plana düşen uygulama snapshot turunu durdurur', () async {
+      final harness = await buildRecordingHarness();
+      final binding = TestWidgetsFlutterBinding.ensureInitialized();
+
+      binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+      binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      await _quietWindow();
+      final afterPause = harness.coordinator.foregroundReconcileCount;
+
+      await Future<void>.delayed(
+        kGlobalTimerForegroundReconcileInterval +
+            const Duration(milliseconds: 750),
+      );
+      expect(
+        harness.coordinator.foregroundReconcileCount,
+        afterPause,
+        reason: 'arka plandayken hiçbir snapshot turu atmamalı',
+      );
+
+      binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+      binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      // Resume'un kendi tek seferlik uzlaştırması sayılmasın; ölçüm ondan
+      // sonra başlar ki iddia gerçekten periyodik turun döndüğünü kanıtlasın.
+      await _waitUntil(
+        () => harness.coordinator.foregroundReconcileCount > afterPause,
+      );
+      await _quietWindow();
+      final afterResume = harness.coordinator.foregroundReconcileCount;
+
+      await Future<void>.delayed(
+        kGlobalTimerForegroundReconcileInterval +
+            const Duration(milliseconds: 750),
+      );
+      expect(
+        harness.coordinator.foregroundReconcileCount,
+        greaterThan(afterResume),
+        reason: 'öne dönen uygulamada periyodik tur yeniden başlamalı',
       );
     });
   });
