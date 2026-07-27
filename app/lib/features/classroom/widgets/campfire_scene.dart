@@ -121,6 +121,7 @@ class _CampfireSceneState extends ConsumerState<CampfireScene> {
             campers: campers,
             studyingCount: studyingCount,
             sky: sky,
+            now: now,
           ),
         );
       },
@@ -220,11 +221,16 @@ class _SceneLayout extends StatefulWidget {
     required this.campers,
     required this.studyingCount,
     required this.sky,
+    required this.now,
   });
 
   final List<_Camper> campers;
   final int studyingCount;
   final SkyPhaseResult sky;
+
+  /// Sahnenin tek zaman kaynağı. Testlerde `CampfireScene.clock` ile sabitlenir;
+  /// alt painter'lar `DateTime.now()` okumaz.
+  final DateTime now;
 
   @override
   State<_SceneLayout> createState() => _SceneLayoutState();
@@ -422,6 +428,9 @@ class _SceneLayoutState extends State<_SceneLayout>
                       builder: (context, _) => CustomPaint(
                         painter: MarshmallowPainter(
                           t: _controller.value,
+                          // Sahnenin enjekte edilebilir anı; painter duvar
+                          // saatini okumaz (WP-365 determinizm düzeltmesi).
+                          now: widget.now,
                           fireX: cx,
                           fireY: fireY,
                           reachFactor: layout.stickReachFactor,

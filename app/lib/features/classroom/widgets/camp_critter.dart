@@ -650,6 +650,7 @@ class MarshmallowPainter extends CustomPainter {
     required this.reachFactor,
     required this.cycleMinutes,
     required this.sticks,
+    required this.now,
   }) : assert(reachFactor > 0 && reachFactor < 1),
        assert(cycleMinutes > 0);
 
@@ -659,6 +660,13 @@ class MarshmallowPainter extends CustomPainter {
   final double reachFactor;
   final int cycleMinutes;
   final List<MarshStick> sticks;
+
+  /// 🔴 WP-365: kızarmışlık **enjekte edilen** andan hesaplanır, duvar saatinden
+  /// değil. Painter içinde `DateTime.now()` okumak sahneyi deterministik
+  /// olmaktan çıkarıyordu: her çalışan üyenin marşmelovu her çizimde başka bir
+  /// renkte geliyordu. Sahnenin zaten bir `clock`'u vardı, bu yol onu atlıyordu.
+  /// Golden farkı bu yüzden çalışan üye sayısıyla büyüyordu (8 kişi = 4 marşmelov).
+  final DateTime now;
 
   /// Oturum saniyesi → mevcut pişirme döngüsündeki oran (0..1).
   static double doneness(int seconds, {required int cycleMinutes}) {
@@ -679,7 +687,6 @@ class MarshmallowPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final now = DateTime.now();
     final fireTip = Offset(fireX, fireY - 16);
 
     for (final s in sticks) {
@@ -819,6 +826,7 @@ class MarshmallowPainter extends CustomPainter {
   @override
   bool shouldRepaint(MarshmallowPainter old) =>
       old.t != t ||
+      old.now != now ||
       old.reachFactor != reachFactor ||
       old.cycleMinutes != cycleMinutes ||
       old.sticks.length != sticks.length;
