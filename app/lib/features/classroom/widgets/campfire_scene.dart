@@ -8,6 +8,7 @@ import 'package:online_study_room/l10n/app_localizations.dart';
 import '../../../core/animals/camp_animal.dart';
 import '../../../core/theme/subject_colors.dart';
 import '../../../core/time_engine/sky_phase.dart';
+import '../../../core/time_engine/solar_anchors.dart';
 import '../../../core/utils/duration_format.dart';
 import '../../../core/widgets/second_ticker.dart';
 import '../../../data/models/presence.dart';
@@ -32,12 +33,25 @@ double _lerp(double a, double b, double t) => a + (b - a) * t;
 class CampfireScene extends ConsumerStatefulWidget {
   const CampfireScene({
     super.key,
-    this.anchors = kDefaultSkyAnchors,
+    this.anchors,
     this.clock,
+    this.sceneHeight,
+    this.groundYFactor,
+    this.ringWidthScale,
   });
 
-  final SkyAnchors anchors;
+  /// `null` ise çıpalar **mevsime göre** hesaplanır (WP-377). Testler ve
+  /// golden'lar sabit bir set vererek kareyi deterministik tutabilir.
+  final SkyAnchors? anchors;
   final DateTime Function()? clock;
+
+  /// WP-377 önizleme seam'i. `null` ise kanonik sabitler kullanılır
+  /// (`kCampfireSceneHeight` · `kCampfireGroundYFactor` ·
+  /// `kCampfirePhoneRingWidthMultiplier`). Yalnız parametrik önizleme ve golden
+  /// varyantları bu alanları doldurur; üretimde hiçbir çağıran vermez.
+  final double? sceneHeight;
+  final double? groundYFactor;
+  final double? ringWidthScale;
 
   @override
   ConsumerState<CampfireScene> createState() => _CampfireSceneState();
@@ -65,7 +79,9 @@ class _CampfireSceneState extends ConsumerState<CampfireScene> {
   @override
   Widget build(BuildContext context) {
     final now = widget.clock?.call() ?? DateTime.now();
-    final sky = skyPhase(now, widget.anchors);
+    // WP-377: sabit çıpalar yıl boyu aynıydı ve gerçek güneşten ±2,5 saat
+    // sapıyordu; artık gün gün kayıyor.
+    final sky = skyPhase(now, widget.anchors ?? solarSkyAnchors(now));
     final membersAsync = ref.watch(groupMembersProvider);
     final presenceList = ref.watch(groupPresenceProvider).value ?? const [];
     final todayByUser = ref.watch(groupTodaySecondsProvider);
@@ -75,10 +91,12 @@ class _CampfireSceneState extends ConsumerState<CampfireScene> {
     return membersAsync.when(
       loading: () => _SceneFrame(
         sky: sky,
+        height: widget.sceneHeight ?? kCampfireSceneHeight,
         child: const Center(child: CircularProgressIndicator()),
       ),
       error: (_, _) => _SceneFrame(
         sky: sky,
+        height: widget.sceneHeight ?? kCampfireSceneHeight,
         child: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -117,11 +135,14 @@ class _CampfireSceneState extends ConsumerState<CampfireScene> {
 
         return _SceneFrame(
           sky: sky,
+          height: widget.sceneHeight ?? kCampfireSceneHeight,
           child: _SceneLayout(
             campers: campers,
             studyingCount: studyingCount,
             sky: sky,
             now: now,
+            groundYFactor: widget.groundYFactor ?? kCampfireGroundYFactor,
+            ringWidthScale: widget.ringWidthScale,
           ),
         );
       },
@@ -166,10 +187,15 @@ class _Camper {
 
 /// Sahnenin sivil gökyüzü fazına göre renklenen dış çerçevesi.
 class _SceneFrame extends StatelessWidget {
-  const _SceneFrame({required this.sky, required this.child});
+  const _SceneFrame({
+    required this.sky,
+    required this.child,
+    this.height = kCampfireSceneHeight,
+  });
 
   final SkyPhaseResult sky;
   final Widget child;
+  final double height;
 
   @override
   Widget build(BuildContext context) {
@@ -196,7 +222,7 @@ class _SceneFrame extends StatelessWidget {
         // yükseklik küçülünce kompozisyon orantılı sıkışır ve üst/alttaki boş
         // gökyüzü/zemin bandı birlikte azalır. 480 çok uzundu (cihaz geri
         // bildirimi) → gereksiz boşluk kırpıldı.
-        height: 360,
+        height: height,
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
@@ -222,11 +248,20 @@ class _SceneLayout extends StatefulWidget {
     required this.studyingCount,
     required this.sky,
     required this.now,
+    required this.groundYFactor,
+    this.ringWidthScale,
   });
 
   final List<_Camper> campers;
   final int studyingCount;
   final SkyPhaseResult sky;
+
+  /// Zeminin (ve ateşin) sahne yüksekliğine oranı. Gökyüzünü üstten kırparken
+  /// yükseklikle birlikte yükselir ki ateş piksel olarak yerinde kalsın.
+  final double groundYFactor;
+
+  /// `null` ise profilin kendi çarpanı kullanılır (WP-377 önizleme seam'i).
+  final double? ringWidthScale;
 
   /// Sahnenin tek zaman kaynağı. Testlerde `CampfireScene.clock` ile sabitlenir;
   /// alt painter'lar `DateTime.now()` okumaz.
@@ -307,10 +342,17 @@ class _SceneLayoutState extends State<_SceneLayout>
           platform: Theme.of(context).platform,
         );
         final layout = CampfireCountLayout.saved(n.clamp(1, 8));
-        final fireY = h * (layout.groundYFactor + profile.fireYOffset);
+        final fireY = h * (widget.groundYFactor + profile.fireYOffset);
         final ringCy = fireY + 18; // hayvanların oturduğu halka merkezi
 
-        final rx = w * layout.ringWidthFactor * profile.ringWidthMultiplier;
+        final ringScale =
+            widget.ringWidthScale ?? profile.ringWidthMultiplier;
+        final rx = w * layout.ringWidthFactor * ringScale;
+        // Halka genişledikçe marşmelov ateşten uzaklaşmasın (WP-377).
+        final stickReach = campfireStickReach(
+          layout.stickReachFactor,
+          ringScale,
+        );
         final ry = h * 0.15;
         final seats = n == 0 ? const <CampfireSeat>[] : campfireSeats(layout);
 
@@ -433,7 +475,7 @@ class _SceneLayoutState extends State<_SceneLayout>
                           now: widget.now,
                           fireX: cx,
                           fireY: fireY,
-                          reachFactor: layout.stickReachFactor,
+                          reachFactor: stickReach,
                           cycleMinutes: layout.roastCycleMinutes.round(),
                           sticks: [
                             for (final p

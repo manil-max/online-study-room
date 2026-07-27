@@ -10,13 +10,16 @@ import 'package:online_study_room/data/providers/group_providers.dart';
 import 'package:online_study_room/data/providers/presence_providers.dart';
 import 'package:online_study_room/data/providers/study_providers.dart';
 import 'package:online_study_room/features/classroom/widgets/campfire/campfire_assets.dart';
+import 'package:online_study_room/features/classroom/widgets/campfire_layout.dart';
 import 'package:online_study_room/features/classroom/widgets/campfire_scene.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
 void main() {
   for (final scenario in <({String name, DateTime time})>[
     (name: 'day', time: DateTime(2026, 7, 26, 12, 30)),
-    (name: 'transition', time: DateTime(2026, 7, 26, 19)),
+    // WP-377: çıpalar artık mevsime göre kayıyor. 26 Temmuz'da gerçek
+    // günbatımı ~20:16, sivil karanlık ~20:46 — eski 19:00 artık tam gündüz.
+    (name: 'transition', time: DateTime(2026, 7, 26, 20, 30)),
     (name: 'night', time: DateTime(2026, 7, 26, 23)),
   ]) {
     testWidgets('kamp gökyüzü golden · ${scenario.name}', (tester) async {
@@ -155,7 +158,9 @@ Widget _goldenHarness(
             key: const ValueKey('campfire-golden-boundary'),
             child: SizedBox(
               width: sceneWidth,
-              height: 360,
+              // WP-377: kart yüksekliği artık tek sabitten gelir; golden kutusu
+              // sahneden büyük kalırsa kare boş bant taşır.
+              height: kCampfireSceneHeight,
               child: MediaQuery(
                 data: const MediaQueryData(disableAnimations: true),
                 child: CampfireScene(clock: () => localNow),

@@ -137,12 +137,15 @@
     V49-2 → WP-358 + **WP-376** (birincil grup bloğu sağ üste) ·
     V49-5 → **WP-375** (tanıtım turu hedef/konum/sıra) ·
     V49-6 → WP-363/364/367 · V49-7 → WP-356 · V49-8 → WP-353.
-  - 🟡 **Açık kalan iki bulgu — ikisi de sahibin gözüne bağlı, koda değil:**
-    **V49-3** (kamp ateşi 2. revizyon, eski kart WP-360) sayısal bir iştir —
-    "birazcık daha uzak", "azıcık artacak" gibi ölçüler önce parametrik
-    önizlemeyle sahibe gösterilir, sahip sayıyı seçer, sayı teste bağlanır.
-    **V49-4** (tablet yatay yerleşimi, eski kart WP-361) kartın kendi kuralıyla
-    "sahiple konuşulmadan koda geçilmez". İkisi de v54'ten sonraki tura kaldı.
+  - ✅ **V49-3 kapandı → WP-377** (2026-07-28). Parametrik önizleme
+    (`campfire_wp377_preview.png`) sahibe sunuldu; sahip halka `1.50` ve gökyüzü
+    `85 px` kırpma seçti, marşmelov çubuğunun da uzamasını istedi. Üçü de
+    uygulandı ve sabitlere/testlere bağlandı. Aynı turda sahibin "gece gündüz
+    saatlerini kontrol et" notu gerçek bir hataya çıktı: sabit çıpalar gerçek
+    güneşten ±2,5 saat sapıyordu, mevsimsel model ±13 dakikaya indirdi.
+  - 🟡 **Açık kalan tek bulgu:** **V49-4** (tablet yatay yerleşimi, eski
+    kart WP-361). Kartın kendi kuralı "sahiple konuşulmadan koda geçilmez" ve
+    sahip 2026-07-28'de "tableti boşver" dedi. Bilinçli park.
   - Sekiz bulgunun **hepsi** `progress.md` **Faz F3 · WP-353…WP-362**'ye bağlandı;
     burada plansız kalan v49 maddesi yoktur. Eşleme: V49-1→WP-357 · V49-2→WP-358+359 ·
     V49-3→WP-360 · V49-4→WP-361 · V49-5→WP-362 · V49-6→WP-354+355 · V49-7→WP-356 ·

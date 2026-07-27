@@ -2207,6 +2207,84 @@ Seri kilitler:
   olmayan kullanıcıda rozet **0** · başkasının profilinde giriş/şerit **0**.
 
 
+#### WP-377: Kamp ateşi — gece/gündüz saatleri, gökyüzü kırpması ve halka 🔥
+- **Durum:** [x] Kod/test tamam — cihaz kabulü bekliyor. Kaynak: **sahip notu
+  2026-07-28** (eski kart WP-360; bu kart onun yerine geçer)
+- **SAHİP:** yeni `app/lib/core/time_engine/solar_anchors.dart` ·
+  `app/lib/features/classroom/widgets/campfire_layout.dart` ·
+  `app/lib/features/classroom/widgets/campfire_scene.dart` ·
+  `app/test/core/time_engine/solar_anchors_test.dart` ·
+  `app/test/features/campfire/campfire_wp377_{layout,preview}_test.dart` ·
+  `app/test/features/campfire_{sky_golden,scene,layout}_test.dart` · goldens
+
+- 🔴 **Gece/gündüz gerçekten bozuktu (sahip "kontrol et" dedi, kanıtlandı).**
+  `kDefaultSkyAnchors` yıl boyu **sabitti**: 05:30 · 06:30 · 18:30 · 19:30.
+  NOAA gündoğumu denklemiyle İstanbul'a karşı ölçüldü — sapma **±2,5 saat**:
+  | tarih | sahne | gerçek | fark |
+  |---|---|---|---|
+  | 21 Haz | 19:30'da gece | güneş 20:40'ta batıyor | **1s50d erken** |
+  | 15 Oca | 06:30'da gündüz | güneş 08:27'de doğuyor | **1s57d erken** |
+  | 21 Ara | 18:30'a kadar gündüz | güneş 17:39'da battı | **51d geç** |
+- **Çözüm:** `solarSkyAnchors()` — gün sayısından güneş deklinasyonu (Cooper),
+  oradan gündoğumu (zenit 90.833°) ve sivil alacakaranlık (96°) yay yarıları.
+  Aynı günlerde sapma **±13 dakikaya** düşüyor.
+  **Konum izni yok:** eski WP-300 (enlem/boylam) sahip kararıyla iptal edilmişti;
+  enlem (39°) ve güneş öğleni (13:05) birer sabittir. Boylamı saat diliminden
+  türetmek İstanbul'da ~1 saat hata verirdi (UTC+3 merkezi 45°D, İstanbul 29°D) —
+  bilinçle yapılmadı. Kutup enlemlerinde sıra fail-closed korunur.
+
+- **Sahip seçimi (parametrik önizleme üzerinden, `campfire_wp377_preview.png`):**
+  - Gökyüzü **üstten 85 px** kırpıldı: yükseklik `360 → 275`. Zemin bandı
+    (122.4 px) korunarak `groundYFactor` `0.66 → 0.5549` oldu — yani kısalan tek
+    şey gökyüzü; hayvanlar aşağıdan kırpılmıyor.
+  - Telefon halkası `1.20 → 1.50`. 8 kişide isimler üst üste biniyordu.
+  - **"Ona göre marşmelov çubuğu uzasın" (sahip):** `stickReachFactor` bir
+    **orandır**; halka genişleyince hayvan–ateş mesafesi büyür ve sabit oran
+    çubuğu ateşten uzaklaştırır. Yeni `campfireStickReach()` oranı halka
+    ölçeğine bölerek **mutlak boşluğu** sabitler; `ringScale == 1` (masaüstü)
+    hiçbir şeyi değiştirmez.
+- **Önizleme neden golden değil:** sahnedeki canlı süre etiketleri `SecondTicker`
+  üzerinden duvar saatini okur; 9 hücrelik karede koşumlar arası fark %0.5'lik
+  toleransı aşıp önizlemeyi kararsız bir "test" yapıyordu. Dosya artık
+  karşılaştırmaz, yalnız **yazar** — bir iddia değil, sahibin bakacağı çıktı.
+  Üç ardışık koşumda kararlı.
+- **Kanıt:** `flutter analyze` **0 uyarı** · tam süit **1002/1002** yeşil ·
+  13 yeni test · `solar_anchors_test.dart` modeli **gerçek güneş saatlerine**
+  karşı ölçer ve sabit çıpaların aynı testi geçemediğini ayrıca kayda geçirir ·
+  kamp ateşi golden'ları yeni kompozisyonla tazelendi.
+- **Kayıt hijyeni:** kompozisyon sayıları artık üç yerde dağınık değil,
+  `campfire_layout.dart`teki üç sabitte; testler o sabitleri okur.
+
+#### WP-378: Duyuru sinyalini profil ve ayarlara taşı 🔔
+- **Durum:** [x] Kod/test tamam — cihaz kabulü bekliyor. Kaynak: **sahip notu
+  2026-07-28**
+- **SAHİP:** yeni `app/lib/features/profile/widgets/unread_announcement_dot.dart` ·
+  `app/lib/core/navigation/home_shell.dart` ·
+  `app/lib/features/profile/profile_screen.dart` ·
+  `app/lib/features/profile/settings_screen.dart` ·
+  `app/test/features/profile/announcement_signal_wp378_test.dart`
+
+- **Sahip:** "duyurular kısmına bir şey gelirse profil ve ayarlarda da bildirim
+  yönlendirmesi olsun, sanırım şu an yok."
+- **Kodda doğrulandı — kısmen vardı.** Nokta `settings_screen.dart`teki
+  **Duyurular satırında** duruyordu (WP-304). Ama zincirin üstteki iki halkası
+  yoktu: Profil sekmesi ve Profil'deki **Ayarlar satırı** hiçbir şey
+  göstermiyordu. Yani kullanıcı Ayarlar'ı açmadan yeni duyuruyu fark etmiyordu —
+  sahibin tarifi birebir bu.
+- **Yapılan:** `_UnreadDot` ortak `UnreadAnnouncementDot`e çıkarıldı ve üç yüzey
+  de aynı kaynağı (`unreadAnnouncementCountProvider`) okuyacak biçimde bağlandı.
+  Renk `colorScheme.primary` — duyuru bir **uyarı değil**, yeni içerik; uyarı
+  token'ıyla karıştırılmadı.
+- **Öncelik kuralı korundu (WP-352):** aynı sekmede iki sinyal yarışmaz. Sıra:
+  bekleyen ödül **sayısı** > eksik birincil grup **uyarısı** (kayıp) >
+  okunmamış duyuru **noktası** (içerik).
+- **Kanıt:** `flutter analyze` **0 uyarı** · 8 yeni test · tam süit yeşil ·
+  **regresyon kapanı kanıtlandı:** sekmedeki nokta koşulu etkisizleştirilince
+  test kırmızıya döndü. Testler ayrıca üç yüzeyin **tek kaynağı** okuduğunu
+  kaynak düzeyinde kilitler — biri kendi sayacını türetirse "okundu" yüzeyler
+  arasında ayrışır ve nokta hiç sönmez.
+
+
 ---
 
 ## PLAN 2 — MAĞAZA HAZIRLIĞI

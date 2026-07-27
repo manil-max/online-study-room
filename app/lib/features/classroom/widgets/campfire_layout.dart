@@ -2,6 +2,44 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+/// WP-377: kamp ateşi kompozisyonunun sahip tarafından seçilen iki sayısı.
+///
+/// Bu iki sabit **tek** yerde durur ki önizleme, üretim ve golden testleri aynı
+/// değeri görsün. Sahip önizlemeden bir varyant seçtiğinde değişen yalnız
+/// burasıdır.
+///
+/// [kCampfireSceneHeight] kartın toplam yüksekliğidir. Sahnedeki her painter
+/// yükseklik oranlı olduğu için yükseklik tek başına kısaltılırsa kompozisyon
+/// da küçülür; gökyüzünü **üstten kırpmak** için yükseklik düşerken
+/// [kCampfireGroundYFactor] aynı oranda yükselir ve ateş piksel olarak yerinde
+/// kalır.
+/// 🔴 Sahip seçimi (2026-07-28, `campfire_wp377_preview.png` üzerinden):
+/// gökyüzü üstten **85 px** kırpıldı (360 → 275) ve zemin bandı korundu.
+const double kCampfireSceneHeight = 275;
+
+/// `1 − 360 × (1 − 0.66) / 275` — kırpma öncesindeki **zemin bandı** (122.4 px)
+/// aynen korunur, yani kısalan tek şey gökyüzüdür.
+const double kCampfireGroundYFactor = 0.5549;
+
+/// Telefonda halkanın yatay yarıçap çarpanı (masaüstünde 1.0).
+///
+/// 🔴 Sahip seçimi (2026-07-28): 1.20 → **1.50**. 8 kişide isimler üst üste
+/// biniyordu; halka genişleyince oturma yayı da açıldı.
+const double kCampfirePhoneRingWidthMultiplier = 1.5;
+
+/// Marşmelov çubuğunun ucunun ateşe olan **mutlak** boşluğunu halka
+/// genişliğinden bağımsız tutar.
+///
+/// `stickReachFactor` hayvan→ateş mesafesinin bir **oranıdır**; halka
+/// genişleyince mesafe büyür ve sabit oran çubuğu ateşten uzaklaştırır — sahibin
+/// "ona göre marşmelov çubuğu uzasın" dediği durum tam olarak budur. Oranı
+/// halka ölçeğine bölmek boşluğu sabitler: `ringScale == 1` (masaüstü) hiçbir
+/// şeyi değiştirmez.
+double campfireStickReach(double baseReachFactor, double ringScale) {
+  if (ringScale <= 0) return baseReachFactor;
+  return (1 - (1 - baseReachFactor) / ringScale).clamp(0.05, 0.98).toDouble();
+}
+
 /// Sahnenin masaüstü ve telefon kompozisyonlarını ayıran test edilebilir profil.
 ///
 /// Sadece Android/iOS ve telefon kısa kenarı birlikte sağlanırsa telefon düzeni
@@ -30,7 +68,7 @@ class CampfireViewportProfile {
   const CampfireViewportProfile.phone()
     : this._(
         isPhone: true,
-        ringWidthMultiplier: 1.2,
+        ringWidthMultiplier: kCampfirePhoneRingWidthMultiplier,
         critterScaleMultiplier: 0.76,
         fireYOffset: 0.09,
         fireVisualScale: 0.78,
@@ -157,7 +195,7 @@ class CampfireCountLayout {
         singles: [
           CampfireSinglePlacement(horizontalFactor: 1.00, verticalFactor: 0.00),
         ],
-        groundYFactor: 0.66,
+        groundYFactor: kCampfireGroundYFactor,
         fireScale: 0.80,
         stickReachFactor: 0.78,
         roastCycleMinutes: 12,
@@ -168,7 +206,7 @@ class CampfireCountLayout {
         pairs: [
           CampfirePairPlacement(horizontalFactor: 0.67, verticalFactor: 0.02),
         ],
-        groundYFactor: 0.66,
+        groundYFactor: kCampfireGroundYFactor,
         fireScale: 0.98,
         stickReachFactor: 0.71,
         roastCycleMinutes: 12,
@@ -188,7 +226,7 @@ class CampfireCountLayout {
             verticalFactor: 0.86,
           ),
         ],
-        groundYFactor: 0.66,
+        groundYFactor: kCampfireGroundYFactor,
         fireScale: 0.80,
         stickReachFactor: 0.73,
         roastCycleMinutes: 12,
@@ -200,7 +238,7 @@ class CampfireCountLayout {
           CampfirePairPlacement(horizontalFactor: 0.58, verticalFactor: -0.40),
           CampfirePairPlacement(horizontalFactor: 0.64, verticalFactor: 0.66),
         ],
-        groundYFactor: 0.66,
+        groundYFactor: kCampfireGroundYFactor,
         fireScale: 0.80,
         stickReachFactor: 0.73,
         roastCycleMinutes: 12,
@@ -225,7 +263,7 @@ class CampfireCountLayout {
           ),
           CampfireSinglePlacement(horizontalFactor: 0.47, verticalFactor: 0.95),
         ],
-        groundYFactor: 0.66,
+        groundYFactor: kCampfireGroundYFactor,
         fireScale: 0.80,
         stickReachFactor: 0.76,
         roastCycleMinutes: 12,
@@ -238,7 +276,7 @@ class CampfireCountLayout {
           CampfirePairPlacement(horizontalFactor: 0.63, verticalFactor: 0.09),
           CampfirePairPlacement(horizontalFactor: 0.44, verticalFactor: 0.87),
         ],
-        groundYFactor: 0.66,
+        groundYFactor: kCampfireGroundYFactor,
         fireScale: 0.80,
         stickReachFactor: 0.76,
         roastCycleMinutes: 12,
@@ -274,7 +312,7 @@ class CampfireCountLayout {
             verticalFactor: 0.98,
           ),
         ],
-        groundYFactor: 0.66,
+        groundYFactor: kCampfireGroundYFactor,
         fireScale: 0.80,
         stickReachFactor: 0.76,
         roastCycleMinutes: 12,
@@ -288,7 +326,7 @@ class CampfireCountLayout {
           CampfirePairPlacement(horizontalFactor: 0.61, verticalFactor: 0.45),
           CampfirePairPlacement(horizontalFactor: 0.31, verticalFactor: 0.92),
         ],
-        groundYFactor: 0.66,
+        groundYFactor: kCampfireGroundYFactor,
         fireScale: 0.80,
         stickReachFactor: 0.76,
         roastCycleMinutes: 12,

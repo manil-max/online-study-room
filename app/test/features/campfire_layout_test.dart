@@ -162,7 +162,7 @@ void main() {
       ]);
 
       for (final layout in [two, four, six, eight]) {
-        expect(layout.groundYFactor, 0.66);
+        expect(layout.groundYFactor, kCampfireGroundYFactor);
         expect(layout.roastCycleMinutes, 12);
       }
       for (final layout in [four, six, eight]) {
@@ -233,7 +233,7 @@ void main() {
       ]);
 
       for (final layout in [one, three, five, seven]) {
-        expect(layout.groundYFactor, 0.66);
+        expect(layout.groundYFactor, kCampfireGroundYFactor);
         expect(layout.fireScale, 0.80);
         expect(layout.roastCycleMinutes, 12);
       }
@@ -247,7 +247,7 @@ void main() {
         memberCount: 4,
         ringWidthFactor: 0.34,
         pairs: [CampfireCountLayout.regular(2).pairs.single],
-        groundYFactor: 0.66,
+        groundYFactor: kCampfireGroundYFactor,
         fireScale: 0.80,
         stickReachFactor: 0.76,
         roastCycleMinutes: 12,

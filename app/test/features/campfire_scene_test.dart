@@ -11,6 +11,7 @@ import 'package:online_study_room/data/providers/study_providers.dart';
 import 'package:online_study_room/features/classroom/widgets/campfire/layered_campfire_fire.dart';
 import 'package:online_study_room/features/classroom/widgets/camp_critter.dart';
 import 'package:online_study_room/features/classroom/widgets/campfire_layout.dart';
+import 'package:online_study_room/core/time_engine/sky_phase.dart';
 import 'package:online_study_room/features/classroom/widgets/campfire_scene.dart';
 
 Profile _profile(String id, String name) =>
@@ -24,12 +25,15 @@ Widget _harness({
   DateTime? localNow,
   double width = 400,
   TargetPlatform platform = TargetPlatform.windows,
+  SkyAnchors? anchors,
 }) {
   final fixedNow = localNow ?? DateTime(2026, 7, 26, 12);
   final scene = Scaffold(
     body: SizedBox(
       width: width,
-      child: CampfireScene(clock: () => fixedNow),
+      // WP-377: çıpalar üretimde mevsime göre kayar. Faz geçişinin **matematiğini**
+      // ölçen testler takvime bağlanmasın diye sabit bir set verebilir.
+      child: CampfireScene(clock: () => fixedNow, anchors: anchors),
     ),
   );
   return ProviderScope(
@@ -231,7 +235,7 @@ void main() {
       );
 
       expect(phone.isPhone, isTrue);
-      expect(phone.ringWidthMultiplier, 1.2);
+      expect(phone.ringWidthMultiplier, kCampfirePhoneRingWidthMultiplier);
       expect(phone.critterScaleMultiplier, 0.76);
       expect(phone.fireYOffset, 0.09);
       expect(phone.showTrees, isFalse);
@@ -316,7 +320,9 @@ void main() {
           ),
         ],
         today: {'u1': 0},
+        // Şafağın tam ortası: smoothstep'in 0.5 vermesi gereken an.
         localNow: DateTime(2026, 7, 26, 6),
+        anchors: kDefaultSkyAnchors,
       ),
     );
     await tester.pump();
