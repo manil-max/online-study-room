@@ -33,7 +33,7 @@ $contract = Get-DeployContract -RepoRoot $repoRoot
 Assert-Equal $contract.staging.migration_head '0089' 'staging migration head: WP-373 sirada'
 Assert-Equal ([bool]$contract.staging.deploy_enabled) $true 'staging deploy enabled'
 Assert-Equal ([bool]$contract.staging.release_enabled) $true 'staging release enabled'
-Assert-Equal $contract.production.migration_head '0088' 'production head 0088: 0089 henüz uygulanmadı'
+Assert-Equal $contract.production.migration_head '0089' 'production hedef head 0089 (WP-373 lease sweeper)'
 Assert-Equal ([bool]$contract.production.deploy_enabled) $true 'production deploy penceresi WP-373/0089 apply icin acik'
 Assert-Equal ([bool]$contract.production.release_enabled) $false 'production release defaults to HOLD'
 

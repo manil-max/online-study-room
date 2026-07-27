@@ -8,7 +8,7 @@
     "hold_reason": "WP-373 adds 0089: it schedules the lease sweeper that 0082 defined but never wired up. Paired with the client's new 60s heartbeat, a live run keeps its lease while it runs and a crashed device's run is closed within a minute instead of staying 'running' forever. Schema is unchanged - the migration only creates one pg_cron job. Staging applies first so production repeats a proven step."
   },
   "production": {
-    "migration_head": "0088",
+    "migration_head": "0089",
     "deploy_enabled": true,
     "release_enabled": false,
     "backup_requirement": "waived",
