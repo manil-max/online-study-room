@@ -1,16 +1,16 @@
 {
   "schema_version": 1,
-  "local_migration_head": "0085",
+  "local_migration_head": "0087",
   "staging": {
-    "migration_head": "0085",
+    "migration_head": "0087",
     "deploy_enabled": true,
     "release_enabled": true,
-    "hold_reason": "Staging is at 0085 (WP-348 apply and post-check passed). Beta device acceptance for the V3 chain is still open; rollout flags stay off."
+    "hold_reason": "Faz F5 (WP-367/WP-368) adds 0086 (presence heartbeat renews the projection lease) and 0087 (global timer v2 server switch on). Staging applies first so production repeats a proven step."
   },
   "production": {
-    "migration_head": "0085",
-    "deploy_enabled": false,
-    "release_enabled": false,
+    "migration_head": "0087",
+    "deploy_enabled": true,
+    "release_enabled": true,
     "backup_requirement": "waived",
     "backup_waiver": {
       "decided_by": "owner",
@@ -18,6 +18,6 @@
       "reason": "Free plan project has no daily backup and no PITR; owner accepted production apply with no rollback path.",
       "rollback_path": "none"
     },
-    "hold_reason": "WP-351 closed 2026-07-27: baseline repaired to 0070, 0071-0085 applied, post-check reported head 0085 and v49 stable shipped. Deploy is re-locked to the default HOLD; the next production migration needs its own explicit owner GO. The backup waiver stays recorded because the project has no PITR or daily backup - it is not a standing approval to apply."
+    "hold_reason": "OPEN by explicit owner order 2026-07-27: 'saat senkron ve aktiflikten dusmeyi cozup stable'ye yolla, emirdir bu, yetki veriyorum'. The owner-reported ~80s presence drop cannot be fixed client-side - it needs 0086 - and the timer sync stays server-disabled without 0087, so the order necessarily covers this apply. Both migrations touch function bodies and one singleton config row only: no table, column, index, policy or grant changes, and no row is inserted or deleted. Rollback for 0087 is a single UPDATE with no release; rollback for 0086 is a forward migration restoring the 0081 body. Re-lock to HOLD immediately after the apply and the v52 release."
   }
 }
