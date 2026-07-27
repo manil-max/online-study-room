@@ -8,10 +8,34 @@ import '../../../data/repositories/group_repository.dart';
 import '../../../core/theme/warning_tokens.dart';
 import '../../../l10n/app_localizations.dart';
 
+/// WP-376: Başarımlar ekranının sağ üstündeki girişten açılan seçim yüzeyi.
+///
+/// Seçim nadir yapılan bir ayardır; ekranın ana içeriği başarımlardır. Kart
+/// gövdeden çıkarıldı ama **giriş kaldırılmadı** — WP-348 grup detayındaki eski
+/// CTA'yı zaten kaldırmıştı, ikinci bir yüzey yok.
+Future<void> showPrimaryGroupSelector(BuildContext context) {
+  return showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    showDragHandle: true,
+    builder: (_) => const SafeArea(
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: EdgeInsets.only(bottom: 8),
+          child: PrimaryGroupSelectorCard(embedded: true),
+        ),
+      ),
+    ),
+  );
+}
+
 /// The only mutation surface for the account-wide primary group preference.
 /// The server owns both the cooldown and the compare-and-swap revision.
 class PrimaryGroupSelectorCard extends ConsumerStatefulWidget {
-  const PrimaryGroupSelectorCard({super.key});
+  const PrimaryGroupSelectorCard({super.key, this.embedded = false});
+
+  /// `true` ise dıştaki [Card] kabuğu çizilmez — alt sayfa zaten bir yüzeydir.
+  final bool embedded;
 
   @override
   ConsumerState<PrimaryGroupSelectorCard> createState() =>
@@ -29,30 +53,37 @@ class _PrimaryGroupSelectorCardState
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
 
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                l10n.primaryGroupTitle,
-                style: theme.textTheme.titleMedium,
-              ),
+    final body = Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Text(
+              l10n.primaryGroupTitle,
+              style: theme.textTheme.titleMedium,
             ),
-            const SizedBox(height: 4),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                l10n.primaryGroupHelp,
-                style: theme.textTheme.bodyMedium,
-              ),
+          ),
+          const SizedBox(height: 4),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Text(
+              l10n.primaryGroupHelp,
+              style: theme.textTheme.bodyMedium,
             ),
-            const SizedBox(height: 8),
-            groups.when(
+          ),
+          const SizedBox(height: 8),
+          groups.when(
+            loading: () => const Padding(
+              padding: EdgeInsets.all(24),
+              child: Center(child: CircularProgressIndicator()),
+            ),
+            error: (_, _) => _RetryState(
+              message: l10n.primaryGroupLoadFailed,
+              onRetry: _retry,
+            ),
+            data: (items) => preference.when(
               loading: () => const Padding(
                 padding: EdgeInsets.all(24),
                 child: Center(child: CircularProgressIndicator()),
@@ -61,22 +92,14 @@ class _PrimaryGroupSelectorCardState
                 message: l10n.primaryGroupLoadFailed,
                 onRetry: _retry,
               ),
-              data: (items) => preference.when(
-                loading: () => const Padding(
-                  padding: EdgeInsets.all(24),
-                  child: Center(child: CircularProgressIndicator()),
-                ),
-                error: (_, _) => _RetryState(
-                  message: l10n.primaryGroupLoadFailed,
-                  onRetry: _retry,
-                ),
-                data: (value) => _buildGroups(context, items, value),
-              ),
+              data: (value) => _buildGroups(context, items, value),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
+    if (widget.embedded) return body;
+    return Card(clipBehavior: Clip.antiAlias, child: body);
   }
 
   Widget _buildGroups(
@@ -101,7 +124,7 @@ class _PrimaryGroupSelectorCardState
     final missing = preference.primaryGroupId == null;
     return Column(
       children: [
-        if (missing) const _MissingPrimaryGroupWarning(),
+        if (missing) const PrimaryGroupMissingWarning(),
         if (locked)
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
@@ -191,8 +214,8 @@ class _PrimaryGroupSelectorCardState
 
 /// WP-352: seçim yapılmadığı sürece grup başarımı/görevi/gün-hafta ilerlemesi
 /// birikmez. Metin WP-348 ile eklenen `primaryGroupNotSelected` anahtarındandır.
-class _MissingPrimaryGroupWarning extends StatelessWidget {
-  const _MissingPrimaryGroupWarning();
+class PrimaryGroupMissingWarning extends StatelessWidget {
+  const PrimaryGroupMissingWarning({super.key});
 
   @override
   Widget build(BuildContext context) {

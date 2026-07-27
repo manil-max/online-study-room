@@ -1026,7 +1026,8 @@ WP-348 (migration + Başarımlar primary IA)
 
 #### WP-354: Sayaç sürerken grupta "aktif" kalmama — kök neden ayrımı 🔬
 - **Program/Faz:** Faz F3 · Teşhis (salt-okunur) · Kaynak: **V49-6**
-- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** Yok
+- **Ajan:** — · **Durum:** [x] **İPTAL** (Faz F4 başlığı, 2026-07-27). Kök neden
+  ölçüm yapılmadan koddan bulundu → WP-363/364/367.
 - **Problem:** Sayaç başlatıldıktan bir süre sonra kullanıcı grup ekranındaki
   aktif/çalışıyor listesinden düşüyor; kronometre kendi cihazında dönmeye devam
   ediyor. **Kodda doğrulanan zemin:** presence satırını yalnız Flutter
@@ -1104,7 +1105,7 @@ WP-348 (migration + Başarımlar primary IA)
 
 #### WP-355: Çalışma sürerken presence sürekliliği — kalıcı düzeltme 🔗
 - **Program/Faz:** Faz F3 · Presence çekirdeği · Kaynak: **V49-6**
-- **Ajan:** — · **Durum:** [ ] Bekliyor — **WP-354 GO'suna kilitli**
+- **Ajan:** — · **Durum:** [x] **YERİNE GEÇİLDİ → WP-363/364/367** (Faz F4).
 - **Bağımlılık:** **WP-354 kanıtı zorunlu.** Teşhis yazılmadan bu WP worker'a
   verilmez; kart kapsamı kazanan hipoteze göre daraltılarak yeniden yazılır.
 - **Problem:** Kullanıcı gerçekten çalışırken grup onu çalışmıyor görüyor.
@@ -1247,7 +1248,7 @@ WP-348 (migration + Başarımlar primary IA)
 
 #### WP-357: Çoklu cihaz sayaç senkronu — rollout anahtarı ve flag'li kabul 📱↔️📱
 - **Program/Faz:** Faz F3 · V3 rollout · Kaynak: **V49-1**
-- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** Yok (WP-355 ile seri — aynı presence yüzeyi)
+- **Ajan:** — · **Durum:** [x] **YERİNE GEÇİLDİ → WP-365** (Faz F4; V3 rollout açıldı).
 - **Problem:** Sahip tablette sayacı başlattı, telefonda başlamadı. **Kodda
   doğrulandı ve bulgu beklenenden basit çıktı: bu bir hata değil, açılmamış bir
   özellik.** V3 zincirinin rollout anahtarları çalışma zamanında hiçbir yere
@@ -1375,7 +1376,9 @@ WP-348 (migration + Başarımlar primary IA)
 
 #### WP-359: Başarımlar bilgi mimarisi — birincil grup bloğunu sağ üste taşı 🏠
 - **Program/Faz:** Faz F3 · Başarım/IA · Kaynak: **V49-2**
-- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** **WP-358 token'ı** (rozet rengi oradan gelir)
+- **Ajan:** — · **Durum:** [x] **YERİNE GEÇİLDİ → WP-376** (2026-07-28). Ürün
+  sözleşmesi aynen uygulandı; kart tarihsel referans olarak duruyor, worker'a
+  verilmez.
 - **Problem:** WP-348'de eklenen birincil grup kartı `My Achievement Journey`
   başlığının üstünde kocaman bir blok olarak duruyor
   ([`social_profile_screen.dart:186`](app/lib/features/profile/social_profile_screen.dart:186))
@@ -1560,7 +1563,8 @@ WP-348 (migration + Başarımlar primary IA)
 
 #### WP-362: Tanıtım turu — hedefleme, konum ve sıra onarımı 🎈
 - **Program/Faz:** Faz F3 · Yeni kullanıcı deneyimi · Kaynak: **V49-5**
-- **Ajan:** — · **Durum:** [ ] Bekliyor · **Bağımlılık:** Yok
+- **Ajan:** — · **Durum:** [x] **YERİNE GEÇİLDİ → WP-375** (2026-07-28). Teşhisi
+  doğru çıktı ve aynen uygulandı; kart tarihsel referans olarak duruyor.
 - **Problem:** Sahip: "mantık doğru, uygulama kötü — hedef/konum/sıra ayarları
   tutmuyor." **Kodda doğrulandı, üç ayrı mekanizma:**
   - **Hedef tutmuyor:** Balon hedefi `GlobalKey` ile bulunuyor; hedef widget o an
@@ -2149,6 +2153,49 @@ Seri kilitler:
   ortalanan balon **0** · 360 dp'de taşma **0**.
 - **Cihaz kabulü sahipte:** Ayarlar → "Tanıtım turlarını sıfırla" ile altı
   ekranın turunu boş ve dolu veriyle tekrar aç.
+
+
+#### WP-376: Başarımlar bilgi mimarisi — birincil grup bloğunu sağ üste taşı 🏠
+- **Durum:** [x] Kod/test tamam — cihaz kabulü bekliyor. Kaynak: **V49-2**
+  (eski kart WP-359; bu kart onun yerine geçer, WP-359 tarihsel kalır)
+- **SAHİP:** `app/lib/features/profile/social_profile_screen.dart` ·
+  `app/lib/features/profile/widgets/primary_group_selector_card.dart` ·
+  yeni `app/lib/features/profile/widgets/primary_group_entry.dart` ·
+  `app/test/features/profile/primary_group_entry_wp376_test.dart`
+
+- **Problem:** WP-348'de eklenen birincil grup kartı `Başarım Yolculuğum`
+  başlığının hemen altında kocaman bir blok olarak duruyordu
+  (`social_profile_screen.dart:186`). Seçim nadir yapılan bir ayardır; ekranın
+  ana içeriği başarımlardır.
+- **Yapılan:**
+  - Kart gövdeden çıkarıldı. Yerine **sağ üstte** `PrimaryGroupAppBarAction`
+    (`IconButton`, dokunma hedefi ≥ 48 dp, `primaryGroupTitle` tooltip'i).
+  - Seçim artık `showPrimaryGroupSelector()` ile açılan alt sayfada yapılıyor;
+    aynı tek-seçimli liste, aynı cooldown kilidi ve aynı sunucu-otoriter RPC —
+    WP-348 sözleşmesi hiç değişmedi. `PrimaryGroupSelectorCard` bir `embedded`
+    bayrağı aldı, alt sayfada dış `Card` kabuğu çizilmiyor.
+  - Seçim yokken uyarı **üç yüzeyde**: Profil sekmesi (WP-352, `home_shell.dart`
+    — dokunulmadı) · Başarımlar ekranındaki tıklanabilir şerit
+    (`PrimaryGroupMissingBanner`) · ayar ikonunun üstündeki rozet. Üçü de tek
+    kaynaktan beslenir: `primaryGroupSelectionMissingProvider`.
+  - Rozet rengi **WP-358 token'ından** (`warningColorsOn`) gelir; ekran kendi
+    kırmızısını tanımlamaz. Kırmızı ağırlıklı temada kaybolma sorunu tekrarlamaz.
+  - Şerit ve rozet seçim yapılınca **birlikte** kaybolur; grubu olmayan
+    kullanıcıda ve yükleme/hata sırasında **hiç** görünmez (olmayan bir kaybı
+    ilan etmeyiz — WP-352 provider sözleşmesi korundu).
+- **Neden ayrı dosya:** `SocialProfileScreen` çok sayıda oyunlaştırma/ödül
+  provider'ına bağlı; giriş bileşenlerini `primary_group_entry.dart`e almak
+  onları yalnız grup provider'larıyla test edilebilir kıldı. Ekranın yapısı
+  ayrıca **kaynak düzeyinde** kilitlendi (kart gövdeye geri konursa test düşer).
+- **Kanıt:** `flutter analyze` **0 uyarı** · 7 yeni test · `test/features/profile`
+  süitinin tamamı (105 iddia) yeşil · **regresyon kapanı kanıtlandı:** rozet
+  koşulu etkisizleştirilince test kırmızıya döndü.
+- **Bilinçli borç (WP-359'dan devralındı):** `DesktopNavigationPane` rozet
+  altyapısı taşımıyor; masaüstünde uyarı yüzeyi ayar ikonunun kendisidir.
+- **Veri/Migration etkisi:** Yok. **Geri alma:** tek UI commit'i.
+- **Kabul:** gövdede birincil grup bloğu **yok** · giriş sağ üstte tek ikon ·
+  seçim yokken rozet + şerit görünür, seçimle **ikisi de** kaybolur · grubu
+  olmayan kullanıcıda rozet **0** · başkasının profilinde giriş/şerit **0**.
 
 
 ---

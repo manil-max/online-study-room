@@ -19,7 +19,7 @@ import '../../data/repositories/achievement_reward_repository.dart';
 import '../safety/block_user_action.dart';
 import '../safety/report_sheet.dart';
 import 'widgets/achievement_showcase.dart';
-import 'widgets/primary_group_selector_card.dart';
+import 'widgets/primary_group_entry.dart';
 
 /// Sosyal profil vitrini (Başarım 3.0 R2 / WP-57).
 ///
@@ -108,6 +108,10 @@ class _SocialProfileScreenState extends ConsumerState<SocialProfileScreen> {
               : AppLocalizations.of(context).profileSosyalProfil,
         ),
         actions: [
+          // WP-376: seçim gövdeden çıktı, giriş sağ üstte. Rozet yalnız
+          // gerçekten kayıp varken (üyelik var + seçim yok) görünür;
+          // yükleme/hata durumunda olmayan bir kayıp ilan edilmez.
+          if (isSelf) const PrimaryGroupAppBarAction(),
           if (!isSelf)
             PopupMenuButton<String>(
               tooltip: l10n.safetyReport,
@@ -182,10 +186,7 @@ class _SocialProfileScreenState extends ConsumerState<SocialProfileScreen> {
                         showAura: true,
                       ),
                       SizedBox(height: 16),
-                      if (isSelf) ...[
-                        const PrimaryGroupSelectorCard(),
-                        const SizedBox(height: 16),
-                      ],
+                      if (isSelf) const PrimaryGroupMissingBanner(),
                       AchievementShowcase(
                         gamification: gamification,
                         userAchievements: achs,
