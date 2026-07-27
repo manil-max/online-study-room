@@ -130,6 +130,24 @@ Widget _goldenHarness(
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       theme: ThemeData.dark(useMaterial3: true).copyWith(platform: platform),
+      // 🔴 Golden kareler deterministik olmak ZORUNDA. Reduce-motion olmadan
+      // sahne alev fazını (`t`) canlı tutar ve **3+ çalışan** olduğunda
+      // `CampfireActivity.high` köz parçacıklarını da çizer
+      // (`layered_campfire_fire.dart` `_EmberSpritePainter`). Parçacıkların yeri
+      // `t`'ye bağlıdır; yakalanan kare koşuma göre değişir.
+      //
+      // Bu yüzden yalnız 8 kişi golden'ı kararsızdı: 1 kişi `empty`, 4 kişi ve
+      // gökyüzü senaryoları `low` kalıyor, hiçbiri köz üretmiyor. 8 kişide 4
+      // kişi çalışıyor → tek `high` senaryo. Sonuç: aynı makinede izole koşumda
+      // geçen, tam pakette düşen bir golden ve CI'da sınırda (%0.50) bir fark.
+      //
+      // Çözüm toleransı yükseltmek DEĞİL (o gerçek regresyonu gizler,
+      // `flutter_test_config.dart` bunu açıkça yasaklar) — kareyi sabitlemek.
+      // Reduce-motion `t`'yi 0.55'e sabitler ve köz parçacıklarını kapatır.
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(context).copyWith(disableAnimations: true),
+        child: child!,
+      ),
       home: Scaffold(
         backgroundColor: const Color(0xFF100D14),
         body: Center(
