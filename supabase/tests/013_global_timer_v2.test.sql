@@ -30,6 +30,11 @@ insert into public.push_devices (
    'global-timer-device-beta-00001', 'global-timer-beta-token-0000000000000000000002',
    'beta', '1.0.0', 1, 'tr', 'Europe/Istanbul', true, true, true, false, 1320, 420);
 
+-- WP-368 (0087): bayrak artık açık geliyor. Kill switch iddiası değerini
+-- koruyor ama ön koşulunu kendisi kurmalı: önce kapat, sonra kapalıyken
+-- mutator'ın gerçekten reddettiğini kanıtla.
+update public.global_timer_v2_runtime_config set v2_enabled = false where singleton;
+
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000001', true);
 select throws_ok(
