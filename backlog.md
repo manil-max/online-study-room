@@ -91,11 +91,19 @@
     uygulandı (apply run `30288908244`, post-check head `0087`). Sunucu taraflı
     olduğu için **v51 istemcisinde de geçerli** — sahip güncelleme beklemeden
     deneyebilir.
-  - ✅ **V51-2 düzeltmesi kodda + sunucuda (2026-07-27).** İstemci yayını WP-368
-    ile anlık hale geldi; ayrıca planda olmayan ikinci engel bulundu ve `0087`
-    ile kapatıldı (`v2_enabled` hiçbir ortamda açılmamıştı, sunucu her komutu
-    reddediyordu). Aynalama için **v52 gerekir**, sunucu düzeltmesi tek başına
-    yetmez.
+  - ✅ **V51-2 düzeltmesi tamamlandı — ama üç turda (2026-07-27).** Sorunun
+    **üç ayrı engeli** vardı ve her tur yalnız bir tanesini kapattı:
+    1. İstemci komutu yalnız resume'da yayınlıyordu → WP-368 (v52).
+    2. `v2_enabled` hiçbir ortamda açılmamıştı, sunucu her komutu reddediyordu
+       → `0087` (v52).
+    3. 🔴 **Sunucu→B sinyalini üreten parça hiç devrede değildi:**
+       `enqueue_timer_sync_push` yalnız kendi tanımında ve testinde geçiyordu,
+       `apply_global_timer_command` onu hiç çağırmıyordu; `timer_sync_push_runtime_config.enabled`
+       da kapalıydı → WP-370 / `0088` (v53). **v52 release notu eşitlemeyi vaat
+       etti ama tutmadı;** v53 notu bunu açıkça düzeltiyor.
+    Aynalama için **iki cihazda da v53** ve push kaydı şart.
+    **Ders:** "komut sunucuya gitti" testi, "diğer cihaz haberdar oldu" demek
+    değildir. v52'nin testi yalnız birinci ayağı ölçüyordu ve yeşildi.
   - ⚠️ **Bu turda kapatılmayan, bilinen sınır (kart açılmadı, cihaz kabulünden
     sonra değerlendirilecek):** V2 koşusunun kendi lease'ini (`live_study_runs`,
     150 sn) tazeleyen bir `heartbeat` komutu istemci tarafında **üretilmiyor** —
@@ -104,6 +112,11 @@
     kendiliğinden `abandoned` olmuyor; pratikte uygulama ölse bile koşu sunucuda
     `running` kalır ve bir sonraki `start` onu devralır. Yani **bu tur için
     zararsız**, ama "cihaz çöktü, koşu kapanmalı" senaryosu hâlâ eksik.
+  - ⚠️ **İkinci bilinen sınır (kart açılmadı):** V2 komut üreticisi yalnız
+    **Android** ve yalnız `stopwatch` + `work` için çalışıyor
+    (`StudyTimerService.kt:136`). Pomodoro, geri sayım ve Windows hiç komut
+    üretmiyor, dolayısıyla o modlarda eşitleme **tasarım gereği yok**. v53
+    release notunda kullanıcıya açıkça yazıldı.
 
 - [~] **v49 stable — sahip cihaz geri bildirimi (2026-07-27) — tamamı planlandı**
   - Sekiz bulgunun **hepsi** `progress.md` **Faz F3 · WP-353…WP-362**'ye bağlandı;

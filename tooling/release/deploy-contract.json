@@ -9,8 +9,8 @@
   },
   "production": {
     "migration_head": "0088",
-    "deploy_enabled": true,
-    "release_enabled": true,
+    "deploy_enabled": false,
+    "release_enabled": false,
     "backup_requirement": "waived",
     "backup_waiver": {
       "decided_by": "owner",
@@ -18,6 +18,6 @@
       "reason": "Free plan project has no daily backup and no PITR; owner accepted production apply with no rollback path.",
       "rollback_path": "none"
     },
-    "hold_reason": "OPEN by explicit owner order 2026-07-27: 'yapti codex bak bakalim okeyse yolla stable ye'. v52 closed the A-to-server leg of timer sync but nothing produced the server-to-B signal, so the owner's two devices still do not mirror; the order to ship the reviewed fix necessarily covers this apply. 0088 adds one internal helper with execute revoked from public/anon/authenticated, replaces the apply_global_timer_command body to call it after applied start/stop only, and flips the timer_sync_push_runtime_config singleton to enabled. No table, column, index, policy or grant change, and no row is inserted or deleted. Rollback is a single UPDATE setting enabled=false, which stops new signals without a client release. Re-lock to HOLD immediately after the apply and the v53 release. Known open limit carried forward: nothing renews the live_study_runs 150s lease and no cron drives the sweeper, so a crashed device leaves its run 'running' until the next start adopts it."
+    "hold_reason": "WP-370/WP-371 closed 2026-07-27: 0088 applied under the owner's explicit order, production post-check reported head 0088 (run 30297435093), and v53 stable shipped with all jobs green (run 30297781192). Deploy and release are re-locked to the default HOLD; the next production migration or stable release needs its own explicit owner GO. The backup waiver stays recorded because the project still has no PITR or daily backup - it is not a standing approval to apply. Known open limits carried forward: (a) nothing renews the live_study_runs 150s lease and no cron drives the sweeper, so a crashed device leaves its run 'running' until the next start adopts it; (b) timer sync covers Android stopwatch/work only - Pomodoro, countdown and Windows produce no V2 commands. Prior open reason: 'yapti codex bak bakalim okeyse yolla stable ye'. v52 closed the A-to-server leg of timer sync but nothing produced the server-to-B signal, so the owner's two devices still do not mirror; the order to ship the reviewed fix necessarily covers this apply. 0088 adds one internal helper with execute revoked from public/anon/authenticated, replaces the apply_global_timer_command body to call it after applied start/stop only, and flips the timer_sync_push_runtime_config singleton to enabled. No table, column, index, policy or grant change, and no row is inserted or deleted. Rollback is a single UPDATE setting enabled=false, which stops new signals without a client release. Re-lock to HOLD immediately after the apply and the v53 release. Known open limit carried forward: nothing renews the live_study_runs 150s lease and no cron drives the sweeper, so a crashed device leaves its run 'running' until the next start adopts it."
   }
 }

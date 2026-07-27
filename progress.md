@@ -18,21 +18,28 @@
 
 ## Proje Gerçekleri
 
-- **Migration gerçeği (2026-07-27, Faz F5 sonrası):** repo/local **`0087`** ·
-  staging **`0087`** · production **`0087`**. `0086` (presence heartbeat lease'i
-  projeksiyonda da tazeler) ve `0087` (global timer V2 sunucu anahtarı açık)
-  sırayla staging'e ve production'a uygulandı; production post-check head `0087`
-  bildirdi (run `30288908244`). Önceki hizalama (`0085`) WP-351'de yapılmıştı. Production'ın Supabase CLI
+- **Migration gerçeği (2026-07-27, WP-370 sonrası):** repo/local **`0088`** ·
+  staging **`0088`** · production **`0088`**. `0088` (V2 start/stop artık
+  origin cihazı dışlayan timer-sync outbox olayı üretir; timer-sync rollout
+  bayrağı açık) sırayla staging'e (run `30296764464`) ve production'a
+  (run `30297435093`) uygulandı; ikisinde de post-check head `0088` bildirdi.
+  Öncesi `0086`+`0087` Faz F5'te uygulanmıştı (run `30288908244`).
+  Önceki hizalama (`0085`) WP-351'de yapılmıştı. Production'ın Supabase CLI
   geçmişi WP-351'de `repair-baseline-0070` ile dolduruldu (yalnız `applied`
   işaretleme, sıfır DDL); ayrıntı
   [`docs/recovery/PRODUCTION-BASELINE.md`](docs/recovery/PRODUCTION-BASELINE.md).
   Deploy contract aynı üç head'i taşır ve production `deploy_enabled` terfi
   bitince **yeniden `false` kilitlendi**.
-- **Stable/production:** **v52** yayında (Faz F5: presence lease tazeleme + sayaç
-  komut yayını); etkin şema **`0087`**. Öncesi v51 (Faz F4: presence şema
-  düzeltmesi + V3 rollout açık), etkin şema `0085`.
+- **Stable/production:** **v53** yayında (WP-370/371: timer-sync teslim zinciri
+  + turun yaşam döngüsüne bağlanması); etkin şema **`0088`**. Öncesi v52
+  (Faz F5: presence lease tazeleme + sayaç komut yayını), etkin şema `0087`.
   🟢 `0086` sunucu taraflı olduğu için **v51'de kalan cihazlarda da** aktiflikten
-  düşme düzeldi; sayaç eşitlemesi için v52 şart.
+  düşme düzeldi.
+  🔴 **Sayaç eşitlemesi v52'de çalışmıyordu ve release notu bunu yanlış vaat
+  etti.** v52 yalnız komutun A→sunucu ayağını kapatmıştı; sunucu→B sinyalini
+  üreten parça hiç devrede değildi (`enqueue_timer_sync_push` hiçbir gerçek
+  yoldan çağrılmıyordu, runtime bayrağı da kapalıydı). Eksik halka `0088` ile
+  kuruldu; eşitleme için **iki cihazda da v53** ve push kaydı şart.
   Yedek/PITR **yok** — sahip kararıyla `backup_requirement: "waived"`; bu bir
   muafiyet kaydıdır, duran bir apply izni değildir. Yeni production migration,
   Edge deploy veya stable tag/release yalnız ayrı ve somut sahip GO'su ile yapılır.
@@ -50,7 +57,7 @@
   koddan bulundu** (bkz. `backlog.md`). Sahip emriyle **Faz F5** açıldı:
   V51-1 + V51-2 düzeltilip v52 stable çıkacak; V51-3/V51-4 (admin yazışması)
   sahip kararıyla beklemede. Öncesi: Öncesi: v49 sonrası saha düzeltmeleri (Faz F3). WP-348 → WP-351 zinciri kapandı (stable v49 çıktı). Sahip iki turda toplam **sekiz** bulgu bildirdi (`backlog.md` V49-1…V49-8) ve **hepsi karta bağlandı: WP-353…WP-362.** Backlog'da plansız kalan v49 bulgusu yok.
-- **Son WP numarası:** **WP-371** (Faz F5 devamı, 2026-07-27). V52'de komutun A→server yolu kapanmıştı; server→B timer-sync teslim zinciri WP-370 (`0088`) ile kuruldu, WP-371 turu yaşam döngüsüne bağladı.
+- **Son WP numarası:** **WP-372** (Faz F5 devamı, 2026-07-27). V52'de komutun A→server yolu kapanmıştı; server→B timer-sync teslim zinciri WP-370 (`0088`) ile kuruldu, WP-371 turu yaşam döngüsüne bağladı, WP-372 v53 stable'ı çıkardı.
 - ✅ **Ortam gerçeği uzlaştırıldı (WP-351, 2026-07-27):** üç ortam da `0085`; production CLI geçmişi artık gerçek. Deploy kapısı yeniden kilitli.
 
 ## ⚡ Aktif Çalışma Kaydı
@@ -61,12 +68,10 @@
 - **SAHİP yollar:** —
 
 ### Claude Lane
-- **Durum:** [ ] Aktif — WP-371 + WP-370 teslim dalgası (staging → production → v53)
-- **Faz/WP:** Faz F5 devamı / WP-371
-- **SAHİP yollar:** `app/lib/data/providers/study_providers.dart` ·
-  `app/test/data/global_timer_command_publish_test.dart` · `tooling/release/**` ·
-  `CHANGELOG.md` · `app/pubspec.yaml` · `app/assets/release_notes.json`
-- **Son not (2026-07-27, WP-371):** Sahip emriyle Codex'in `0838f8e` teslim
+- **Durum:** [x] Boşta — WP-370 + WP-371 teslim edildi, v53 çıktı, kapılar kilitli
+- **Faz/WP:** —
+- **SAHİP yollar:** —
+- **Son not (2026-07-27, WP-371 + teslim):** Sahip emriyle Codex'in `0838f8e` teslim
   zinciri incelendi. SQL tarafı sağlam: helper `authenticated`'a kapalı,
   `auth.uid()` doğruluyor, origin cihaz teslimden çıkarılıyor, yalnız `applied`
   start/stop sinyal üretiyor, planlayıcı origin cihazı `deferred` bırakıyor.
@@ -74,6 +79,13 @@
   bağlı değildi — sayaç çalışırken native servis süreci canlı tuttuğu için ekran
   kapalıyken de dönerdi. WP-371 turu `onHide`/`onPause`'da durdurup `onResume`'da
   yeniden başlatır; regresyon testi düzeltme geri alınınca kırmızıya döndü.
+  🔴 İkinci bulgu: `local_migration_head` `0088`'e taşınmış ama `guard.tests.ps1`
+  ve `release-preflight.tests.ps1` `0087`'ye sabitli kalmıştı — CI bu haliyle
+  kırmızı düşerdi (geçen turda tam olarak buradan düşmüştü). İkisi de taşındı.
+  **Teslim:** staging apply `30296764464` → production apply `30297435093`
+  (ikisinde de post-check `0088`) → v53 stable `30297781192` (dört iş de yeşil,
+  Android + Windows artefaktları yayında) → production kapısı yeniden HOLD.
+  **Cihaz kabulü sahipte: eşitleme için iki cihazda da v53 şart.**
 - **Önceki not (2026-07-27, Faz F5):** Sahip emriyle V51-1 + V51-2 düzeltildi ve
   v52 stable çıktı. Admin yazışması (V51-3/V51-4) sahip kararıyla dışarıda kaldı.
   - **WP-367** ~80 sn düşme: heartbeat lease'i yalnız kanonik satırda
@@ -1839,7 +1851,10 @@ Seri kilitler:
   release notunda "aktiflikten düşme" ve "çoklu cihaz sayaç aynalama" maddeleri yazılı.
 
 #### WP-370: Timer-sync teslim zinciri ve foreground reconcile 📱↔️📱
-- **Durum:** [~] Kod/test tamamlandı; staging + iki Android cihaz kabulü bekliyor. Production/stable mutasyonu yok.
+- **Durum:** [x] **KAPANDI 2026-07-27.** `0088` staging (`30296764464`) ve
+  production'a (`30297435093`) uygulandı, ikisinde de post-check head `0088`.
+  v53 ile stable'a çıktı. **Cihaz kabulü sahipte.** Kod incelemesinde çıkan
+  yaşam döngüsü kusuru WP-371'de düzeltildi.
 - **Kök neden:** `0083` timer-sync outbox/FCM policy'sini kurmuştu fakat
   `enqueue_timer_sync_push` hiçbir gerçek V2 start/stop yolundan çağrılmıyordu;
   runtime flag de kapalıydı. Böylece A'daki state değişimi B'ye sinyal üretmiyor,
@@ -1885,6 +1900,25 @@ Seri kilitler:
   turun durduğunu hem de öne dönünce **resume'un tek seferlik uzlaştırmasının
   ötesinde** periyodik turun geri geldiğini ölçer.
 - **Kabul:** analyze temiz · tam süit yeşil · düzeltme geri alınınca test kırmızı.
+
+#### WP-372: v53 stable release 🚀
+- **Durum:** [x] **KAPANDI 2026-07-27.** `v53` yayında, **Android + Windows ikisi de** üretildi.
+- **SAHİP:** `app/pubspec.yaml` · `CHANGELOG.md` · `app/assets/release_notes.json` ·
+  `tooling/release/**` · `tooling/supabase/guard.tests.ps1`
+- **Kapsam:** sürüm/build kimliği (`1.0.53+53`), CHANGELOG, release_notes, tag `v53`.
+- **Kanıt:** release run
+  [30297781192](https://github.com/manil-max/online-study-room/actions/runs/30297781192)
+  — preflight · android · windows/build · finalize_android · release_status ·
+  finalize_complete hepsi **success**. Artefaktlar: `app-release.apk`,
+  `odak-kampi-windows-stable.msix`, `odak-kampi-windows-stable.zip`, sha256
+  toplamları ve `release-manifest.json`.
+  Release: https://github.com/manil-max/online-study-room/releases/tag/v53
+- **Dürüstlük notu:** release notu, **v52'nin eşitleme vaadinin tutmadığını**
+  açıkça yazıyor. Kapsam sınırı da yazılı: Android + kronometre, iki cihazda da
+  v53 ve push kaydı şart; Pomodoro/geri sayım/Windows dahil değil.
+- **Kabul:** preflight/gate PASS · üç ortam `0088` · Android + Windows artefaktı
+  yayında · production kapısı apply ve release sonrası yeniden `false`
+  kilitlendi (76 guard testi yeşil).
 
 ---
 
