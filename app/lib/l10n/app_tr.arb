@@ -1713,5 +1713,19 @@
   "adminUgcDeletedUser": "Silinmiş kullanıcı",
   "@adminUgcDeletedUser": {"description": "Profili artık çözülemeyen kişi için yedek etiket."},
   "adminUgcIdCopied": "Kimlik kopyalandı",
-  "@adminUgcIdCopied": {"description": "Yönetici sabit moderasyon kimliğini kopyaladığında gösterilir."}
+  "@adminUgcIdCopied": {"description": "Yönetici sabit moderasyon kimliğini kopyaladığında gösterilir."},
+  "campfirePreviewTitle": "Kamp ateşi ayarı (mobil)",
+  "@campfirePreviewTitle": {"description": "Title of the mobile campfire tuning preview."},
+  "campfirePreviewGreenArea": "Yeşil alan yüksekliği (px)",
+  "@campfirePreviewGreenArea": {"description": "Slider label for the green ground band height in pixels."},
+  "campfirePreviewNameFontSize": "İsim yazı boyutu",
+  "@campfirePreviewNameFontSize": {"description": "Slider label for the camper name font size."},
+  "campfirePreviewRowSpacing": "Satır aralığı",
+  "@campfirePreviewRowSpacing": {"description": "Slider label for the vertical spread of the seating ring."},
+  "campfirePreviewAnimalSize": "Hayvan boyutu",
+  "@campfirePreviewAnimalSize": {"description": "Slider label for the critter scale multiplier."},
+  "campfirePreviewReset": "Varsayılana dön",
+  "@campfirePreviewReset": {"description": "Action that restores the canonical tuning values."},
+  "campfirePreviewHint": "Aşağıdaki satırı kopyalayıp gönder; seçtiğin sayılar testlere sabit değer olarak girer.",
+  "@campfirePreviewHint": {"description": "Explains that the chosen numbers are reported back and pinned in tests."}
 }

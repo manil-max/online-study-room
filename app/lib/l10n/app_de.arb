@@ -5280,5 +5280,19 @@
   "adminUgcDeletedUser": "Gelöschter Nutzer",
   "@adminUgcDeletedUser": {"description": "Fallback identity label when a profile can no longer be resolved."},
   "adminUgcIdCopied": "ID kopiert",
-  "@adminUgcIdCopied": {"description": "Confirmation after an admin copies an immutable moderation identity."}
+  "@adminUgcIdCopied": {"description": "Confirmation after an admin copies an immutable moderation identity."},
+  "campfirePreviewTitle": "Lagerfeuer-Feinabstimmung (mobil)",
+  "@campfirePreviewTitle": {"description": "Title of the mobile campfire tuning preview."},
+  "campfirePreviewGreenArea": "Höhe der Grünfläche (px)",
+  "@campfirePreviewGreenArea": {"description": "Slider label for the green ground band height in pixels."},
+  "campfirePreviewNameFontSize": "Schriftgröße der Namen",
+  "@campfirePreviewNameFontSize": {"description": "Slider label for the camper name font size."},
+  "campfirePreviewRowSpacing": "Zeilenabstand",
+  "@campfirePreviewRowSpacing": {"description": "Slider label for the vertical spread of the seating ring."},
+  "campfirePreviewAnimalSize": "Tiergröße",
+  "@campfirePreviewAnimalSize": {"description": "Slider label for the critter scale multiplier."},
+  "campfirePreviewReset": "Auf Standard zurücksetzen",
+  "@campfirePreviewReset": {"description": "Action that restores the canonical tuning values."},
+  "campfirePreviewHint": "Kopiere die Zeile unten und sende sie zurück; die gewählten Werte werden zu festen Testwerten.",
+  "@campfirePreviewHint": {"description": "Explains that the chosen numbers are reported back and pinned in tests."}
 }

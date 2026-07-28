@@ -231,13 +231,15 @@ Widget _previewHarness({
                                       child: CampfireScene(
                                         clock: () =>
                                             DateTime(2026, 7, 26, 12, 30),
-                                        ringWidthScale: ringOptions[i],
-                                        sceneHeight: crop == 0
-                                            ? kCampfireSceneHeight
-                                            : croppedSky(crop).height,
-                                        groundYFactor: crop == 0
-                                            ? kCampfireGroundYFactor
-                                            : croppedSky(crop).groundY,
+                                        tuning: CampfireTuning(
+                                          ringWidthScale: ringOptions[i],
+                                          sceneHeight: crop == 0
+                                              ? kCampfireSceneHeight
+                                              : croppedSky(crop).height,
+                                          groundYFactor: crop == 0
+                                              ? kCampfireGroundYFactor
+                                              : croppedSky(crop).groundY,
+                                        ),
                                       ),
                                     ),
                                   ),

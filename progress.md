@@ -3230,7 +3230,7 @@ WP-385 (l10n/başarım). Sonraki dalga: WP-381 · WP-383 · WP-382.
 
 #### WP-416: Kamp ateşi düzeni + mobil parametrik önizleme 🔥
 - **Program/Faz:** PLAN 4 · Faz Q (kaynak: sahip cihaz testi)
-- **Ajan:** Lane D · **Durum:** [ ] Başlamadı
+- **Ajan:** Lane D · **Durum:** [x] Kod+test tamam · cihaz kabulü bekliyor
 - **Problem:** Sahip: *"kamp ateşi olmamış, yeşil kısmın yüksekliği çok az, isimler
   üst üste biniyor, şu anki px boyutu 2 katına çıkmalı."* Ayrıca PC'de olduğu gibi
   **mobil için de değer ayarlayabileceği bir önizleme ekranı** istiyor.
@@ -3255,6 +3255,39 @@ WP-385 (l10n/başarım). Sonraki dalga: WP-381 · WP-383 · WP-382.
 - **Tuzaklar:** v55'te dikey kelepçe alt sınırda `box * (1 - anchor)` düşmüyordu ve
   4+ kişide ayaklar kesiliyordu — aynı hesabı bozma. Yatayda `box / 2` iki uçtan düşülür.
 - **Model önerisi:** Sonnet
+- **DoD kanıtı (2026-07-28):**
+  - **Yeşil alan 2×:** telefon bandı `68,5 px → 137 px`. Sahne yüksekliği (275)
+    **değişmedi** — kısalan yalnız gökyüzü; kart telefonda aynı yeri kaplıyor.
+    Türetme tek yerde: `campfireHorizonY` / `campfireGreenAreaHeight` /
+    `campfireGroundYFactorForGreenArea` (`campfire_layout.dart`). Masaüstü bandı
+    `93,3 px` ile **aynen** duruyor (sahip v55'te onaylamıştı) — çıpa artık
+    profil başına ayrı: `kCampfireGroundYFactor` / `kCampfirePhoneGroundYFactor`.
+  - **Dikey kelepçe korundu:** alt sınırda `box * (1 - anchor)`, üst sınırda
+    `box * anchor` düşülüyor; hesap **değiştirilmedi**. Test bir adım ileri
+    gidiyor: 8 kişide gövde alt kenara **dayanmıyor** bile (kelepçe artık
+    devreye girmiyor), yani ayak kesilmesi kaynağında kalktı.
+  - **Parametrik önizleme:** `app/lib/campfire_preview.dart` — **gerçek**
+    `CampfireScene`'i çizer (wp295 önizlemesi sahneyi taklit ediyordu, bu
+    etmiyor). Dört kol: yeşil alan yüksekliği (60–200 px) · isim yazı boyutu
+    (8–18) · satır aralığı (0,60–2,00) · hayvan boyutu (0,60–1,60). Sahip
+    seçtiği kombinasyonu ekrandaki `greenArea=… · labelFont=… · seatSpread=… ·
+    critterScale=…` satırından kopyalayıp gönderir; sayı doğrudan
+    `CampfireTuning` sabitine ve teste girer.
+    Çalıştırma: `flutter run -t lib/campfire_preview.dart --dart-define-from-file=env/local.json`
+  - **Kollar tek sözleşmede:** `CampfireScene`'in beş ayrı `preview*` alanı
+    `CampfireTuning` nesnesinde toplandı; önizleme, üretim ve golden aynı yolu
+    kullanıyor.
+  - **Yan bulgu (düzeltildi):** grup 8'den kalabalıksa (`0071` öncesinden kalma
+    gruplar) sahne `seats[i]` ile `RangeError` atıp çöküyordu; artık fazlalık
+    çizilmiyor, ekran ayakta kalıyor.
+  - **Test:** `test/features/campfire/campfire_wp416_layout_test.dart` (12 test:
+    2× bandı · masaüstü regresyonu · px↔oran çevrimi · 6 ve 8 kişide isim
+    çakışması yok · alt sıra kelepçeye dayanmıyor · dört kolun sahneyi
+    gerçekten sürdüğü · önizleme aracı). Kamp ateşi paketi **47/47 yeşil**;
+    `campfire_phone_1/4/8` golden'ları yeni kompozisyonla yenilendi.
+  - **Kanıt etiketi:** `Cihazda doğrulanmalı` — 2× sahibin verdiği başlangıç
+    değeridir, ince ayar önizleme aracından gelecek.
+- **Commit:** `WP-416`
 
 #### WP-417: Tanıtım turu sadeleştirme 🎯
 - **Program/Faz:** PLAN 4 · Faz Q (kaynak: sahip cihaz testi)

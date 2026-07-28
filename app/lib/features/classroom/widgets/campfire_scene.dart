@@ -24,10 +24,6 @@ import 'campfire_layout.dart';
 
 double _lerp(double a, double b, double t) => a + (b - a) * t;
 
-// WP-382 sahibin onayladığı kalabalık sahne kompozisyonu.
-const double kCampfireFireYOffset = 45;
-const double kCampfireSeatVerticalSpread = 1.25;
-
 /// Kamp ateşi canlı sahnesi (§2G — ormanda taşlı kamp ateşi).
 ///
 /// Yerel saate göre yumuşakça aydınlanan ormanda taş halkalı bir kamp ateşi.
@@ -39,11 +35,7 @@ class CampfireScene extends ConsumerStatefulWidget {
     super.key,
     this.anchors,
     this.clock,
-    this.sceneHeight,
-    this.groundYFactor,
-    this.ringWidthScale,
-    this.previewFireYOffset = kCampfireFireYOffset,
-    this.previewSeatVerticalSpread = kCampfireSeatVerticalSpread,
+    this.tuning = const CampfireTuning(),
   });
 
   /// `null` ise çıpalar **mevsime göre** hesaplanır (WP-377). Testler ve
@@ -51,18 +43,10 @@ class CampfireScene extends ConsumerStatefulWidget {
   final SkyAnchors? anchors;
   final DateTime Function()? clock;
 
-  /// WP-377 önizleme seam'i. `null` ise kanonik sabitler kullanılır
-  /// (`kCampfireSceneHeight` · `kCampfireGroundYFactor` ·
-  /// `kCampfirePhoneRingWidthMultiplier`). Yalnız parametrik önizleme ve golden
-  /// varyantları bu alanları doldurur; üretimde hiçbir çağıran vermez.
-  final double? sceneHeight;
-  final double? groundYFactor;
-  final double? ringWidthScale;
-
-  /// WP-382 kanonik kompozisyonu. Parametrik golden testi gerekirse bu sabitleri
-  /// yerel olarak ezebilir; üretim çağrıları sahibin onayladığı değerleri kullanır.
-  final double previewFireYOffset;
-  final double previewSeatVerticalSpread;
+  /// WP-416 önizleme seam'i: sahnenin ayarlanabilir tüm kolları tek nesnede.
+  /// Üretim çağrıları varsayılanı kullanır (sahibin onayladığı sayılar);
+  /// `lib/campfire_preview.dart` ve golden varyantları kolları tek tek ezer.
+  final CampfireTuning tuning;
 
   @override
   ConsumerState<CampfireScene> createState() => _CampfireSceneState();
@@ -102,12 +86,12 @@ class _CampfireSceneState extends ConsumerState<CampfireScene> {
     return membersAsync.when(
       loading: () => _SceneFrame(
         sky: sky,
-        height: widget.sceneHeight ?? kCampfireSceneHeight,
+        height: widget.tuning.sceneHeight,
         child: const Center(child: CircularProgressIndicator()),
       ),
       error: (_, _) => _SceneFrame(
         sky: sky,
-        height: widget.sceneHeight ?? kCampfireSceneHeight,
+        height: widget.tuning.sceneHeight,
         child: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -153,16 +137,13 @@ class _CampfireSceneState extends ConsumerState<CampfireScene> {
 
         return _SceneFrame(
           sky: sky,
-          height: widget.sceneHeight ?? kCampfireSceneHeight,
+          height: widget.tuning.sceneHeight,
           child: _SceneLayout(
             campers: campers,
             studyingCount: studyingCount,
             sky: sky,
             now: now,
-            groundYFactor: widget.groundYFactor ?? kCampfireGroundYFactor,
-            ringWidthScale: widget.ringWidthScale,
-            previewFireYOffset: widget.previewFireYOffset,
-            previewSeatVerticalSpread: widget.previewSeatVerticalSpread,
+            tuning: widget.tuning,
           ),
         );
       },
@@ -270,24 +251,16 @@ class _SceneLayout extends StatefulWidget {
     required this.studyingCount,
     required this.sky,
     required this.now,
-    required this.groundYFactor,
-    this.ringWidthScale,
-    required this.previewFireYOffset,
-    required this.previewSeatVerticalSpread,
+    required this.tuning,
   });
 
   final List<_Camper> campers;
   final int studyingCount;
   final SkyPhaseResult sky;
 
-  /// Zeminin (ve ateşin) sahne yüksekliğine oranı. Gökyüzünü üstten kırparken
-  /// yükseklikle birlikte yükselir ki ateş piksel olarak yerinde kalsın.
-  final double groundYFactor;
-
-  /// `null` ise profilin kendi çarpanı kullanılır (WP-377 önizleme seam'i).
-  final double? ringWidthScale;
-  final double previewFireYOffset;
-  final double previewSeatVerticalSpread;
+  /// Sahnenin ayarlanabilir kolları; zemin çıpası viewport profiliyle birlikte
+  /// burada çözülür ([CampfireTuning.resolvedGroundYFactor]).
+  final CampfireTuning tuning;
 
   /// Sahnenin tek zaman kaynağı. Testlerde `CampfireScene.clock` ile sabitlenir;
   /// alt painter'lar `DateTime.now()` okumaz.
@@ -367,30 +340,39 @@ class _SceneLayoutState extends State<_SceneLayout>
           constraints: constraints,
           platform: Theme.of(context).platform,
         );
+        final tuning = widget.tuning;
+        final groundYFactor = tuning.resolvedGroundYFactor(profile);
         final layout = CampfireCountLayout.saved(n.clamp(1, 8));
         final fireY =
-            h * (widget.groundYFactor + profile.fireYOffset) +
-            widget.previewFireYOffset;
-        final ringCy = fireY + 18; // hayvanların oturduğu halka merkezi
+            h * (groundYFactor + profile.fireYOffset) + tuning.fireYPixelOffset;
+        // Hayvanların oturduğu halka merkezi. Ufuk çizgisi de bu türetmeden
+        // çıkar (`campfireHorizonY`), ikisi ayrışmasın diye tek sabit kullanılır.
+        final ringCy = fireY + kCampfireRingCenterOffset;
 
-        final ringScale = widget.ringWidthScale ?? profile.ringWidthMultiplier;
+        final ringScale = tuning.ringWidthScale ?? profile.ringWidthMultiplier;
         final rx = w * layout.ringWidthFactor * ringScale;
         // Halka genişledikçe marşmelov ateşten uzaklaşmasın (WP-377).
         final stickReach = campfireStickReach(
           layout.stickReachFactor,
           ringScale,
         );
-        final ry = h * 0.15;
+        final ry = h * kCampfireRingRyFactor;
         final seats = n == 0 ? const <CampfireSeat>[] : campfireSeats(layout);
+        // Sunucu grubu 8 kişiyle sınırlıyor (`0071`), ama 0071 öncesinden kalma
+        // kalabalık bir grup hâlâ daha fazla üye taşıyabilir. O durumda koltuk
+        // dizisinin sonunu aşıp çökmektense fazlalığı çizmeyiz.
+        final drawnCount = math.min(n, seats.length);
 
         final placements = <_Placement>[];
-        for (var i = 0; i < n; i++) {
+        for (var i = 0; i < drawnCount; i++) {
           final seat = seats[i];
           final mx = cx + rx * seat.x;
-          final my = ringCy + ry * seat.y * widget.previewSeatVerticalSpread;
+          final my = ringCy + ry * seat.y * tuning.seatVerticalSpread;
           final depth = seat.depth;
           final scale =
-              _lerp(0.72, 1.06, depth) * profile.critterScaleMultiplier;
+              _lerp(0.72, 1.06, depth) *
+              profile.critterScaleMultiplier *
+              tuning.critterScale;
           final box = _CritterBody.boxFor(scale);
           placements.add(
             _Placement(
@@ -453,7 +435,7 @@ class _SceneLayoutState extends State<_SceneLayout>
                   child: RepaintBoundary(
                     child: CustomPaint(
                       painter: GroundedForestPainter(
-                        horizonY: ringCy - ry * 0.82,
+                        horizonY: ringCy - ry * kCampfireHorizonRyFactor,
                         daylight: widget.sky.value,
                         sunProgress: widget.sky.sunProgress,
                         warmth: widget.sky.warmth,
@@ -556,7 +538,11 @@ class _SceneLayoutState extends State<_SceneLayout>
                           .clamp(8, h - 32)
                           .toDouble(),
                   width: 110,
-                  child: _MemberLabel(camper: p.camper, back: p.back),
+                  child: _MemberLabel(
+                    camper: p.camper,
+                    back: p.back,
+                    fontSize: tuning.labelFontSize,
+                  ),
                 ),
 
               Positioned(
@@ -729,10 +715,18 @@ class _CritterBody extends StatelessWidget {
 /// Bir üyenin adı + (çalışıyorsa) yeşil canlı süresi. Sahnenin en üst katmanında
 /// çizilir; ateşin arkasındaki üyede bile okunur.
 class _MemberLabel extends StatelessWidget {
-  const _MemberLabel({required this.camper, required this.back});
+  const _MemberLabel({
+    required this.camper,
+    required this.back,
+    required this.fontSize,
+  });
 
   final _Camper camper;
   final bool back;
+
+  /// Ön sıra boyu. Arka sıra ve canlı süre bundan türetilir; sahip önizlemede
+  /// tek sayı sürer, üçü birlikte kayar.
+  final double fontSize;
 
   @override
   Widget build(BuildContext context) {
@@ -753,7 +747,7 @@ class _MemberLabel extends StatelessWidget {
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Colors.white.withValues(alpha: studying ? 0.96 : 0.62),
-              fontSize: back ? 10.5 : 12,
+              fontSize: back ? fontSize - 1.5 : fontSize,
               fontWeight: FontWeight.w700,
               shadows: const [Shadow(color: Colors.black, blurRadius: 5)],
             ),
@@ -764,7 +758,7 @@ class _MemberLabel extends StatelessWidget {
                 formatHms(camper.liveExtra(now)),
                 style: TextStyle(
                   color: green,
-                  fontSize: back ? 10 : 11,
+                  fontSize: back ? fontSize - 2 : fontSize - 1,
                   fontWeight: FontWeight.w700,
                   fontFeatures: const [FontFeature.tabularFigures()],
                   shadows: const [Shadow(color: Colors.black, blurRadius: 5)],

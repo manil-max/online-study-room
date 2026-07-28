@@ -18,6 +18,7 @@ import 'package:online_study_room/data/providers/group_providers.dart';
 import 'package:online_study_room/data/providers/presence_providers.dart';
 import 'package:online_study_room/data/providers/study_providers.dart';
 import 'package:online_study_room/features/classroom/widgets/campfire/campfire_assets.dart';
+import 'package:online_study_room/features/classroom/widgets/campfire_layout.dart';
 import 'package:online_study_room/features/classroom/widgets/campfire_scene.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
@@ -170,9 +171,10 @@ Widget _harness(List<_PreviewOption> options, double cellWidth) {
                             padding: const EdgeInsets.only(right: 8),
                             child: CampfireScene(
                               clock: () => DateTime(2026, 7, 28, 12, 30),
-                              previewFireYOffset: option.fireYOffset,
-                              previewSeatVerticalSpread:
-                                  option.seatVerticalSpread,
+                              tuning: CampfireTuning(
+                                fireYPixelOffset: option.fireYOffset,
+                                seatVerticalSpread: option.seatVerticalSpread,
+                              ),
                             ),
                           ),
                         ],

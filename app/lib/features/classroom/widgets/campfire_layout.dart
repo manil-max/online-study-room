@@ -21,6 +21,95 @@ const double kCampfireSceneHeight = 275;
 /// aynen korunur, yani kısalan tek şey gökyüzüdür.
 const double kCampfireGroundYFactor = 0.5549;
 
+/// WP-382 sahibin onayladığı kalabalık sahne kompozisyonu: ateşin **piksel**
+/// cinsinden aşağı kaydırması ve oturma yayının dikey açılması.
+const double kCampfireFireYOffset = 45;
+const double kCampfireSeatVerticalSpread = 1.25;
+
+/// İsim etiketinin (ön sıradaki üye) yazı boyutu. Arka sıra ve canlı süre
+/// bundan türetilir; tek sayı değişince üçü birlikte kayar.
+const double kCampfireLabelFontSize = 12;
+
+/// Halka merkezinin ateşin **altında** kaldığı sabit piksel payı.
+const double kCampfireRingCenterOffset = 18;
+
+/// Oturma elipsinin dikey yarıçapının sahne yüksekliğine oranı.
+const double kCampfireRingRyFactor = 0.15;
+
+/// Ufuk çizgisinin halka merkezinden yukarıda kaldığı, dikey yarıçapa oranlı pay.
+const double kCampfireHorizonRyFactor = 0.82;
+
+/// Ufuk çizgisinin sahne üstünden uzaklığı (px) — yeşil zeminin başladığı yer.
+///
+/// Sahnedeki üç yer (zemin painter'ı, ateş, oturma halkası) aynı türetmeyi
+/// kullanır; sayı üç ayrı yerde tekrarlanırsa biri kayınca ufuk ile ateş
+/// ayrışır. [fireYOffset] profilin **oranı**, [fireYPixelOffset] WP-382'nin
+/// piksel kaydırmasıdır.
+double campfireHorizonY({
+  required double sceneHeight,
+  required double groundYFactor,
+  required double fireYOffset,
+  required double fireYPixelOffset,
+}) {
+  final fireY = sceneHeight * (groundYFactor + fireYOffset) + fireYPixelOffset;
+  return fireY +
+      kCampfireRingCenterOffset -
+      sceneHeight * kCampfireRingRyFactor * kCampfireHorizonRyFactor;
+}
+
+/// Ufuk ile sahnenin alt kenarı arasında kalan **yeşil alan** yüksekliği (px).
+///
+/// Sahibin cihazda ölçtüğü büyüklük tam olarak budur ("yeşil kısmın yüksekliği
+/// çok az"), bu yüzden önizleme kolu da doğrudan bu sayıyı sürer.
+double campfireGreenAreaHeight({
+  required double sceneHeight,
+  required double groundYFactor,
+  required double fireYOffset,
+  required double fireYPixelOffset,
+}) =>
+    sceneHeight -
+    campfireHorizonY(
+      sceneHeight: sceneHeight,
+      groundYFactor: groundYFactor,
+      fireYOffset: fireYOffset,
+      fireYPixelOffset: fireYPixelOffset,
+    );
+
+/// [campfireGreenAreaHeight]'ın tersi: istenen yeşil alanı üreten zemin çıpası.
+///
+/// Önizlemede sahip **px** seçer; sahne ise oran ile çalışır. Çeviriyi tek
+/// fonksiyonda tutmak, iki tarafın ayrışmasını imkânsız kılar.
+double campfireGroundYFactorForGreenArea({
+  required double sceneHeight,
+  required double greenAreaHeight,
+  required double fireYOffset,
+  required double fireYPixelOffset,
+}) {
+  final anchorPixels =
+      sceneHeight -
+      greenAreaHeight -
+      fireYPixelOffset -
+      kCampfireRingCenterOffset +
+      sceneHeight * kCampfireRingRyFactor * kCampfireHorizonRyFactor;
+  return anchorPixels / sceneHeight - fireYOffset;
+}
+
+/// 🔴 WP-416 sahip başlangıç değeri: telefonda yeşil alan **2×**.
+///
+/// v55'te bu bant 68,5 px'ti (275 px sahne · telefon `fireYOffset` 0.09 ·
+/// WP-382'nin +45 px ateş kaydırması) ve sahip cihazda "yeşil kısmın yüksekliği
+/// çok az" dedi. İki katı = 137 px. Sahne yüksekliği **değişmez**; kısalan tek
+/// şey gökyüzüdür, böylece kart telefonda aynı yeri kaplar ve hayvanlara alt
+/// sırada gerçek yer açılır.
+const double kCampfirePhoneGreenAreaHeight = 137;
+
+/// [kCampfirePhoneGreenAreaHeight]'ı üreten telefon zemin çıpası.
+///
+/// `campfireGroundYFactorForGreenArea(275, 137, 0.09, 45)` = 0.30573.
+/// Sabit elle yazılır çünkü profil `const`'tur; testi türetmeyi geri hesaplayıp
+/// bandın gerçekten 137 px olduğunu doğrular.
+const double kCampfirePhoneGroundYFactor = 0.30573;
+
 /// Telefonda halkanın yatay yarıçap çarpanı (masaüstünde 1.0).
 ///
 /// 🔴 Sahip seçimi (2026-07-28): 1.20 → **1.50**. 8 kişide isimler üst üste
@@ -53,6 +142,7 @@ class CampfireViewportProfile {
     required this.fireYOffset,
     required this.fireVisualScale,
     required this.showTrees,
+    required this.groundYFactor,
   });
 
   const CampfireViewportProfile.desktop()
@@ -63,6 +153,7 @@ class CampfireViewportProfile {
         fireYOffset: 0,
         fireVisualScale: 1,
         showTrees: true,
+        groundYFactor: kCampfireGroundYFactor,
       );
 
   const CampfireViewportProfile.phone()
@@ -73,6 +164,9 @@ class CampfireViewportProfile {
         fireYOffset: 0.09,
         fireVisualScale: 0.78,
         showTrees: false,
+        // WP-416: telefonda yeşil alan 2×. Masaüstü kompozisyonu sahibin v55'te
+        // onayladığı hâliyle kalır — bu yüzden çıpa profil başına ayrılır.
+        groundYFactor: kCampfirePhoneGroundYFactor,
       );
 
   factory CampfireViewportProfile.fromConstraints({
@@ -93,6 +187,103 @@ class CampfireViewportProfile {
   final double fireYOffset;
   final double fireVisualScale;
   final bool showTrees;
+
+  /// Zeminin (ve ateşin) sahne yüksekliğine oranı. Yeşil alan yüksekliği bunun
+  /// türevidir; bkz. [campfireGreenAreaHeight].
+  final double groundYFactor;
+}
+
+/// Sahnenin sahip tarafından ayarlanabilen tüm kolları.
+///
+/// Üretim çağrıları hiçbirini vermez — varsayılanlar sahibin onayladığı
+/// kanonik sayılardır. Parametrik önizleme (`lib/campfire_preview.dart`) ve
+/// golden varyantları tek tek ezer. Kollar tek nesnede toplanır ki önizleme
+/// ekranı ile sahne arasında **aynı** sözleşme dursun.
+@immutable
+class CampfireTuning {
+  const CampfireTuning({
+    this.sceneHeight = kCampfireSceneHeight,
+    this.greenAreaHeight,
+    this.groundYFactor,
+    this.ringWidthScale,
+    this.fireYPixelOffset = kCampfireFireYOffset,
+    this.seatVerticalSpread = kCampfireSeatVerticalSpread,
+    this.labelFontSize = kCampfireLabelFontSize,
+    this.critterScale = 1,
+  });
+
+  /// Kartın toplam yüksekliği.
+  final double sceneHeight;
+
+  /// Ufkun altındaki yeşil bandın hedef yüksekliği (px). `null` ise profilin
+  /// kendi çıpası kullanılır.
+  final double? greenAreaHeight;
+
+  /// Zemin çıpası doğrudan verilirse [greenAreaHeight]'tan **önce** gelir
+  /// (WP-377 golden varyantları bu yolu kullanır).
+  final double? groundYFactor;
+
+  /// Halkanın yatay genişlik çarpanı; `null` ise profil çarpanı.
+  final double? ringWidthScale;
+
+  /// Ateşin piksel cinsinden aşağı kaydırması (WP-382).
+  final double fireYPixelOffset;
+
+  /// Oturma yayının dikey açıklığı — sahibin dilinde "satır aralığı".
+  final double seatVerticalSpread;
+
+  /// Ön sıradaki isim etiketinin yazı boyutu.
+  final double labelFontSize;
+
+  /// Hayvan gövdesinin ek ölçek çarpanı (profil çarpanının üstüne biner).
+  final double critterScale;
+
+  /// Sahnenin gerçekten kullanacağı zemin çıpası.
+  double resolvedGroundYFactor(CampfireViewportProfile profile) {
+    final explicit = groundYFactor;
+    if (explicit != null) return explicit;
+    final green = greenAreaHeight;
+    if (green != null) {
+      return campfireGroundYFactorForGreenArea(
+        sceneHeight: sceneHeight,
+        greenAreaHeight: green,
+        fireYOffset: profile.fireYOffset,
+        fireYPixelOffset: fireYPixelOffset,
+      );
+    }
+    return profile.groundYFactor;
+  }
+
+  /// Seçili kolların ürettiği yeşil alan yüksekliği (px) — önizlemenin
+  /// sahibe gösterdiği ve testin sabitlediği sayı.
+  double resolvedGreenAreaHeight(CampfireViewportProfile profile) =>
+      campfireGreenAreaHeight(
+        sceneHeight: sceneHeight,
+        groundYFactor: resolvedGroundYFactor(profile),
+        fireYOffset: profile.fireYOffset,
+        fireYPixelOffset: fireYPixelOffset,
+      );
+
+  CampfireTuning copyWith({
+    double? sceneHeight,
+    double? greenAreaHeight,
+    double? ringWidthScale,
+    double? fireYPixelOffset,
+    double? seatVerticalSpread,
+    double? labelFontSize,
+    double? critterScale,
+  }) {
+    return CampfireTuning(
+      sceneHeight: sceneHeight ?? this.sceneHeight,
+      greenAreaHeight: greenAreaHeight ?? this.greenAreaHeight,
+      groundYFactor: groundYFactor,
+      ringWidthScale: ringWidthScale ?? this.ringWidthScale,
+      fireYPixelOffset: fireYPixelOffset ?? this.fireYPixelOffset,
+      seatVerticalSpread: seatVerticalSpread ?? this.seatVerticalSpread,
+      labelFontSize: labelFontSize ?? this.labelFontSize,
+      critterScale: critterScale ?? this.critterScale,
+    );
+  }
 }
 
 /// Dikey eksene göre aynalanan bir sol-sağ çiftin normalize konumu.

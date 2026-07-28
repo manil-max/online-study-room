@@ -5280,5 +5280,19 @@
   "adminUgcDeletedUser": "مستخدم محذوف",
   "@adminUgcDeletedUser": {"description": "Fallback identity label when a profile can no longer be resolved."},
   "adminUgcIdCopied": "تم نسخ المعرّف",
-  "@adminUgcIdCopied": {"description": "Confirmation after an admin copies an immutable moderation identity."}
+  "@adminUgcIdCopied": {"description": "Confirmation after an admin copies an immutable moderation identity."},
+  "campfirePreviewTitle": "ضبط نار المخيم (الجوال)",
+  "@campfirePreviewTitle": {"description": "Title of the mobile campfire tuning preview."},
+  "campfirePreviewGreenArea": "ارتفاع المساحة الخضراء (بكسل)",
+  "@campfirePreviewGreenArea": {"description": "Slider label for the green ground band height in pixels."},
+  "campfirePreviewNameFontSize": "حجم خط الاسم",
+  "@campfirePreviewNameFontSize": {"description": "Slider label for the camper name font size."},
+  "campfirePreviewRowSpacing": "تباعد الصفوف",
+  "@campfirePreviewRowSpacing": {"description": "Slider label for the vertical spread of the seating ring."},
+  "campfirePreviewAnimalSize": "حجم الحيوان",
+  "@campfirePreviewAnimalSize": {"description": "Slider label for the critter scale multiplier."},
+  "campfirePreviewReset": "إعادة التعيين إلى الافتراضي",
+  "@campfirePreviewReset": {"description": "Action that restores the canonical tuning values."},
+  "campfirePreviewHint": "انسخ السطر أدناه وأرسله؛ ستصبح القيم التي تختارها قيمًا ثابتة في الاختبارات.",
+  "@campfirePreviewHint": {"description": "Explains that the chosen numbers are reported back and pinned in tests."}
 }

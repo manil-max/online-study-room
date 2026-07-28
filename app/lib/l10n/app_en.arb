@@ -5900,5 +5900,19 @@
   "adminUgcDeletedUser": "Deleted user",
   "@adminUgcDeletedUser": {"description": "Fallback identity label when a profile can no longer be resolved."},
   "adminUgcIdCopied": "ID copied",
-  "@adminUgcIdCopied": {"description": "Confirmation after an admin copies an immutable moderation identity."}
+  "@adminUgcIdCopied": {"description": "Confirmation after an admin copies an immutable moderation identity."},
+  "campfirePreviewTitle": "Campfire tuning (mobile)",
+  "@campfirePreviewTitle": {"description": "Title of the mobile campfire tuning preview."},
+  "campfirePreviewGreenArea": "Green area height (px)",
+  "@campfirePreviewGreenArea": {"description": "Slider label for the green ground band height in pixels."},
+  "campfirePreviewNameFontSize": "Name font size",
+  "@campfirePreviewNameFontSize": {"description": "Slider label for the camper name font size."},
+  "campfirePreviewRowSpacing": "Row spacing",
+  "@campfirePreviewRowSpacing": {"description": "Slider label for the vertical spread of the seating ring."},
+  "campfirePreviewAnimalSize": "Animal size",
+  "@campfirePreviewAnimalSize": {"description": "Slider label for the critter scale multiplier."},
+  "campfirePreviewReset": "Reset to defaults",
+  "@campfirePreviewReset": {"description": "Action that restores the canonical tuning values."},
+  "campfirePreviewHint": "Copy the line below and send it back; the numbers you pick become fixed values in the tests.",
+  "@campfirePreviewHint": {"description": "Explains that the chosen numbers are reported back and pinned in tests."}
 }
