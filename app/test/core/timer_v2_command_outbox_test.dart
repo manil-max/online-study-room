@@ -112,9 +112,12 @@ void main() {
         // geçiriyordu ("excludes silent stop"). STOP_SILENT uygulama içi
         // Durdur'dur; senkron sinyali üretmemesi tam olarak karşı cihazın
         // durmamasının sebebiydi. Zarf artık `recordInterval`'dan bağımsızdır.
+        // WP-414 çağrıyı çok satıra yaydı (`commandOrigin` eklendi); iddia
+        // boşluğa duyarlı olduğu için kırmızı düşüyordu. Davranış aynı, o
+        // yüzden metin yerine boşluğu sadeleştirilmiş hâli aranır.
         expect(
-          service,
-          contains('ACTION_STOP_SILENT -> handleStop(recordInterval = false)'),
+          service.replaceAll(RegExp(r'\s+'), ' '),
+          contains('ACTION_STOP_SILENT -> handleStop( recordInterval = false,'),
         );
         expect(service, contains('KEY_V2_RUN_ID'));
       },
