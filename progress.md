@@ -205,10 +205,15 @@
 - **Doküman temizliği (2026-07-27, sahip emri):** `docs/archive/` dizini, üç senior review turu, v46 sahip geri bildirimi ve kapanmış iki recovery kabul notu repodan kaldırıldı (13 dosya, ~11k satır). Evrensel saat işinde **yalnız nihai plan + C0 uyumluluk kanıtı** kaldı. Hepsi git geçmişinde; kalan md'lerde kırık iç bağlantı yok.
 
 ### Codex Lane
-- **Durum:** [x] Boşta
-- **Faz/WP:** —
-- **SAHİP yollar:** —
-- **Son not (2026-07-28):** WP-392 kod/test tamam (`local` head `0094`): güncellenebilir TR/EN terim verisi profil ve grup adını sunucuda denetliyor; istemci anlaşılır hata gösteriyor. 24 Flutter grup repo testi, 328 pgTAP ve hedefli analiz yeşil. Cihaz kabulü bekliyor.
+- **Durum:** [~] Aktif
+- **Faz/WP:** PLAN 4 · Faz S · WP-424 → WP-425 → WP-426 → WP-427 → WP-428
+- **Aşama:** Geliştiriliyor (WP-424 ile başlandı; WP-425, WP-423/`0096` commit'ini bekliyor)
+- **SAHİP yollar:** `app/lib/features/admin/**`, admin+moderation repository'leri, `supabase/migrations/0097..0100`, `supabase/functions/admin-*`, ilgili pgTAP
+- **Ortak/riskli yüzey:** `app/lib/l10n/*.arb` (TR/EN/DE/AR atomik düzenleme), ardışık migration zinciri `0097→0100`; Lane E'nin `0096` commit'inden sonra devam
+- **Dal:** main
+- **Başlangıç:** 2026-07-28 18:01 (Europe/Istanbul)
+- **Son güncelleme:** 2026-07-28 18:01 (Europe/Istanbul)
+- **Not:** WP-424 migration'sız; `features/settings/**`, `features/safety/report_sheet.dart`, `campfire_scene.dart` ve Android timer yollarına yazılmaz.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
