@@ -118,6 +118,17 @@
 - **Son güncelleme:** 2026-07-28 18:01 (Europe/Istanbul)
 - **Not:** LOCAL kalır — migration apply yok, tag/release yok. `features/admin/**`, `features/safety/**`, `features/stats/**`, `campfire_scene.dart`, `android/**` yollarına yazılmaz. WP-421 sunucu tarafı gerektirirse `0101` yalnız Lane B'nin `0100` commit'i göründükten sonra alınır.
 
+### Lane E
+- **Durum:** [~] Aktif
+- **Faz/WP:** PLAN 4 · Faz O · WP-412 → WP-413 → WP-423
+- **Aşama:** Geliştiriliyor
+- **SAHİP yollar:** `app/lib/features/stats/widgets/draggable_date_range_picker.dart`, `app/lib/features/safety/report_sheet.dart`, moderasyon repository'leri (`supabase/` + `in_memory/`), engelleme süzgeci uygulanan sunucu okuma yolları, `supabase/migrations/0095` + `0096`, ilgili pgTAP + Flutter testleri
+- **Ortak/riskli yüzey:** `app/lib/l10n/*.arb` (TR/EN/DE/AR atomik) · migration zinciri `0095`→`0096` (Lane B `0097` için bunları bekliyor)
+- **Dal:** main
+- **Başlangıç:** 2026-07-28 18:02 (Europe/Istanbul)
+- **Son güncelleme:** 2026-07-28 18:02 (Europe/Istanbul)
+- **Not:** ÖNCELİK — `0095` ve `0096` erken commit edilecek ki Lane B bloke kalmasın. LOCAL KALIR: migration apply yok, tag/release yok. `features/admin/**`, `features/settings/**`, `campfire_scene.dart`, `android/**` yollarına yazılmaz.
+
 ### Claude Lane
 - **Durum:** [x] Boşta
 - **Faz/WP:** — · PLAN 3 Faz K + Faz L kapandı, **v55 yayında**
