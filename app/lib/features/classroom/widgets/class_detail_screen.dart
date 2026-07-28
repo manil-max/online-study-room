@@ -235,6 +235,14 @@ class ClassDetailScreen extends ConsumerWidget {
                     ).format(group.createdAt),
                   ),
                 ),
+                if (isAdmin)
+                  ListTile(
+                    leading: const Icon(Icons.block_outlined),
+                    title: Text(
+                      AppLocalizations.of(context).safetyBlockedUsersTitle,
+                    ),
+                    onTap: () => _showBannedMembers(context, repo),
+                  ),
               ],
             ),
           ),
@@ -640,6 +648,88 @@ class ClassDetailScreen extends ConsumerWidget {
       messenger.showSnackBar(SnackBar(content: Text(genericError)));
     }
   }
+
+  Future<void> _showBannedMembers(
+    BuildContext context,
+    GroupRepository repo,
+  ) async {
+    var membersFuture = repo.listBannedMembers(group.id);
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) => AlertDialog(
+          title: Text(
+            AppLocalizations.of(dialogContext).safetyBlockedUsersTitle,
+          ),
+          content: FutureBuilder<List<Profile>>(
+            future: membersFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState != ConnectionState.done) {
+                return const SizedBox(
+                  height: 64,
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              }
+              final members = snapshot.data;
+              if (snapshot.hasError || members == null) {
+                return Text(
+                  AppLocalizations.of(context).authBeklenmeyenBirHataOlustu,
+                );
+              }
+              if (members.isEmpty) {
+                return Text(AppLocalizations.of(context).safetyNoBlockedUsers);
+              }
+              return SizedBox(
+                width: double.maxFinite,
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: members.length,
+                  itemBuilder: (context, index) {
+                    final member = members[index];
+                    return ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(member.displayName),
+                      trailing: TextButton(
+                        onPressed: () async {
+                          try {
+                            await repo.unbanMember(group.id, member.id);
+                            setDialogState(
+                              () => membersFuture = repo.listBannedMembers(
+                                group.id,
+                              ),
+                            );
+                          } on GroupException {
+                            if (dialogContext.mounted) {
+                              ScaffoldMessenger.of(dialogContext).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    AppLocalizations.of(
+                                      dialogContext,
+                                    ).authBeklenmeyenBirHataOlustu,
+                                  ),
+                                ),
+                              );
+                            }
+                          }
+                        },
+                        child: Text(AppLocalizations.of(context).safetyUnblock),
+                      ),
+                    );
+                  },
+                ),
+              );
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(AppLocalizations.of(dialogContext).classroomVazgec),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _TimeZoneSubtitle extends StatelessWidget {
@@ -839,6 +929,14 @@ class _MembersCard extends ConsumerWidget {
                                 onPressed: () =>
                                     _removeMember(context, repo, m),
                               ),
+                            if (isAdmin && m.id != group.createdBy)
+                              IconButton(
+                                tooltip: AppLocalizations.of(
+                                  context,
+                                ).safetyBlock,
+                                icon: const Icon(Icons.block_outlined),
+                                onPressed: () => _banMember(context, repo, m),
+                              ),
                           ],
                         )
                       : null,
@@ -873,6 +971,32 @@ class _MembersCard extends ConsumerWidget {
       await repo.removeMember(group.id, member.id);
     } on GroupException {
       messenger.showSnackBar(SnackBar(content: Text(genericError)));
+    }
+  }
+
+  Future<void> _banMember(
+    BuildContext context,
+    GroupRepository repo,
+    Profile member,
+  ) async {
+    final l10n = AppLocalizations.of(context);
+    final ok = await _confirm(
+      context,
+      title: l10n.safetyBlock,
+      message: l10n.classroomMemberdisplaynameGruptanCikarilsinMi(
+        member.displayName,
+      ),
+      action: l10n.safetyBlock,
+    );
+    if (!ok || !context.mounted) return;
+    try {
+      await repo.banMember(group.id, member.id);
+    } on GroupException {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.authBeklenmeyenBirHataOlustu)),
+        );
+      }
     }
   }
 

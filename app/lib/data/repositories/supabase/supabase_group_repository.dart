@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -13,9 +12,6 @@ class SupabaseGroupRepository implements GroupRepository {
   SupabaseGroupRepository(this._client);
 
   final SupabaseClient _client;
-  final _random = Random.secure();
-
-  static const _codeAlphabet = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
   static const _avatarBucket = 'group-avatars';
   static const _avatarMaxBytes = 2 * 1024 * 1024;
   static const _uuid = Uuid();
@@ -117,11 +113,6 @@ class SupabaseGroupRepository implements GroupRepository {
       return null;
     }
   }
-
-  String _newCode() => List.generate(
-    6,
-    (_) => _codeAlphabet[_random.nextInt(_codeAlphabet.length)],
-  ).join();
 
   @override
   Future<StudyGroup> createGroup({
@@ -397,29 +388,53 @@ class SupabaseGroupRepository implements GroupRepository {
 
   @override
   Future<String> regenerateInviteCode(String groupId) async {
-    for (var attempt = 0; attempt < 5; attempt++) {
-      final code = _newCode();
-      try {
-        // WP-109 B7: 0 satır (RLS) sessiz başarı sayılmasın — select ile doğrula.
-        final rows = await _client
-            .from('groups')
-            .update({'invite_code': code})
-            .eq('id', groupId)
-            .select('invite_code');
-        if (rows.isEmpty) {
-          throw const GroupException(
-            'Kod yenilenemedi: yetki yok veya grup bulunamadı.',
-          );
-        }
-        return (rows.first as Map)['invite_code'] as String;
-      } on GroupException {
-        rethrow;
-      } on PostgrestException catch (e) {
-        if (e.code == '23505' && attempt < 4) continue; // kod çakıştı
-        throw GroupException('Kod yenilenemedi: ${e.message}');
-      }
+    try {
+      return await _client.rpc(
+            'regenerate_group_invite_code',
+            params: {'p_group_id': groupId},
+          )
+          as String;
+    } on PostgrestException catch (e) {
+      throw GroupException('Kod yenilenemedi: ${e.message}');
     }
-    throw const GroupException('Kod yenilenemedi, tekrar deneyin.');
+  }
+
+  @override
+  Future<void> banMember(String groupId, String userId) async {
+    try {
+      await _client.rpc(
+        'ban_group_member',
+        params: {'p_group_id': groupId, 'p_user_id': userId},
+      );
+    } on PostgrestException catch (e) {
+      throw GroupException('Üye engellenemedi: ${e.message}');
+    }
+  }
+
+  @override
+  Future<void> unbanMember(String groupId, String userId) async {
+    try {
+      await _client.rpc(
+        'unban_group_member',
+        params: {'p_group_id': groupId, 'p_user_id': userId},
+      );
+    } on PostgrestException catch (e) {
+      throw GroupException('Üye yasağı kaldırılamadı: ${e.message}');
+    }
+  }
+
+  @override
+  Future<List<Profile>> listBannedMembers(String groupId) async {
+    try {
+      final rows =
+          await _client.rpc('list_group_bans', params: {'p_group_id': groupId})
+              as List<dynamic>;
+      return rows
+          .map((row) => Profile.fromMap(Map<String, dynamic>.from(row as Map)))
+          .toList(growable: false);
+    } on PostgrestException catch (e) {
+      throw GroupException('Yasaklı üyeler yüklenemedi: ${e.message}');
+    }
   }
 
   @override

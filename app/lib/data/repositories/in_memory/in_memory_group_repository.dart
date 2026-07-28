@@ -26,6 +26,7 @@ class InMemoryGroupRepository implements GroupRepository {
   // Çoklu sınıf: bir kullanıcı birden çok sınıfa üye olabilir (katılım sırasıyla).
   final Map<String, List<String>> _userGroups = {}; // userId -> [groupId...]
   final Map<String, List<Profile>> _members = {}; // groupId -> üyeler
+  final Map<String, Map<String, Profile>> _bannedMembers = {};
   final Map<String, PrimaryGroupPreference> _primaryPreferences = {};
   final StreamController<void> _changes = StreamController<void>.broadcast();
 
@@ -248,6 +249,9 @@ class InMemoryGroupRepository implements GroupRepository {
   }
 
   Future<StudyGroup> _join(StudyGroup group, Profile member) async {
+    if (_bannedMembers[group.id]?.containsKey(member.id) ?? false) {
+      throw const GroupException('Bu gruba katılmanız engellendi.');
+    }
     final members = _members.putIfAbsent(group.id, () => []);
     final isAlreadyMember = members.any((profile) => profile.id == member.id);
     if (!isAlreadyMember && members.length >= group.memberLimit) {
@@ -402,6 +406,37 @@ class InMemoryGroupRepository implements GroupRepository {
   }
 
   @override
+  Future<void> banMember(String groupId, String userId) async {
+    final group = _groups[groupId];
+    if (group == null) throw const GroupException('Grup bulunamadı.');
+    if (group.createdBy == userId) {
+      throw const GroupException('Grup yöneticisi engellenemez.');
+    }
+    Profile? member;
+    for (final item in _members[groupId] ?? const <Profile>[]) {
+      if (item.id == userId) {
+        member = item;
+        break;
+      }
+    }
+    if (member == null) {
+      throw const GroupException('Bu kullanıcı grubun aktif üyesi değil.');
+    }
+    _bannedMembers.putIfAbsent(groupId, () => {})[userId] = member;
+    await removeMember(groupId, userId);
+  }
+
+  @override
+  Future<void> unbanMember(String groupId, String userId) async {
+    _bannedMembers[groupId]?.remove(userId);
+    _changes.add(null);
+  }
+
+  @override
+  Future<List<Profile>> listBannedMembers(String groupId) async =>
+      List.unmodifiable(_bannedMembers[groupId]?.values ?? const <Profile>[]);
+
+  @override
   Future<void> removeMember(String groupId, String userId) async {
     _members[groupId]?.removeWhere((m) => m.id == userId);
     _userGroups[userId]?.remove(groupId);
@@ -422,6 +457,7 @@ class InMemoryGroupRepository implements GroupRepository {
     final affectedUserIds =
         _members[groupId]?.map((member) => member.id).toSet() ?? <String>{};
     _members.remove(groupId);
+    _bannedMembers.remove(groupId);
     for (final ids in _userGroups.values) {
       ids.remove(groupId);
     }

@@ -121,6 +121,15 @@ abstract class GroupRepository {
   /// Yeni davet kodu üretir ve döndürür (admin).
   Future<String> regenerateInviteCode(String groupId);
 
+  /// Üyeyi gruptan çıkarır ve yeniden katılmasını sunucuda engeller (admin).
+  Future<void> banMember(String groupId, String userId);
+
+  /// Grup yasağını kaldırır; kullanıcı ancak tekrar katılırsa üye olur (admin).
+  Future<void> unbanMember(String groupId, String userId);
+
+  /// Yalnız yöneticinin görebildiği grup yasak listesini döndürür.
+  Future<List<Profile>> listBannedMembers(String groupId);
+
   /// Bir üyeyi sınıftan çıkarır (admin başkasını; kişi kendini → çık).
   Future<void> removeMember(String groupId, String userId);
 

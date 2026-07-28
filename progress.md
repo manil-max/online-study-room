@@ -164,10 +164,10 @@
 - **Doküman temizliği (2026-07-27, sahip emri):** `docs/archive/` dizini, üç senior review turu, v46 sahip geri bildirimi ve kapanmış iki recovery kabul notu repodan kaldırıldı (13 dosya, ~11k satır). Evrensel saat işinde **yalnız nihai plan + C0 uyumluluk kanıtı** kaldı. Hepsi git geçmişinde; kalan md'lerde kırık iç bağlantı yok.
 
 ### Codex Lane
-- **Durum:** [x] Boşta — WP-389 kod/test tamam, staging + cihaz kabulü bekliyor
+- **Durum:** [x] Boşta
 - **Faz/WP:** —
 - **SAHİP yollar:** —
-- **Son not (2026-07-28):** `0092` dürtmeyi iki yönlü sunucuda engelledi; kamp ateşi ve sıralamada kimlik gizlenip sayı korundu. Local 307 pgTAP, hedefli analyze ve kamp ateşi widget testi yeşil. Remote mutasyon yapılmadı.
+- **Son not (2026-07-28):** WP-391 kod/test tamam (`local` head `0093`): grup yasağı iki katılım RPC'sinde zorlanıyor, aynı işlemde üyelik kapanıyor; yönetici yasak listesinden kaldırabiliyor. 23 Flutter grup repo testi, 320 pgTAP ve hedefli `flutter analyze` yeşil. Cihaz kabulü bekliyor.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
@@ -2781,7 +2781,7 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 
 #### WP-391: Grup yasağı, yasak listesi ve davet kodu sıfırlama 🔒
 - **Program/Faz:** PLAN 3 · Faz L (kaynak: G2, G3, G5-son)
-- **Ajan:** — · **Durum:** [ ] Bekliyor
+- **Ajan:** Codex · **Durum:** [~] Kod/test tamamlandı — cihaz kabulü bekliyor
 - **Problem:** Grup yöneticisi birini çıkarabiliyor ama **geri gelmesini engelleyemiyor**;
   sızan davet kodunun da çaresi yok. Sahip kararı G5-son: **yasak koşulsuzdur**, yalnız
   grup yöneticisi koyar/kaldırır; davet linki veya onay akışı yasağı delmez.
@@ -2793,12 +2793,12 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
   - grup repo/provider'ları
 - **DOKUNMA:** `0090`–`0092`, `features/safety/**`
 - **Adımlar:**
-  - [ ] `group_bans` tablosu + **katılma RPC'sinde sunucu tarafı kontrol** (istemcide
+  - [x] `group_bans` tablosu + **katılma RPC'sinde sunucu tarafı kontrol** (istemcide
         düğme gizlemek yetmez — G2 şartı).
-  - [ ] Üye çıkarma diyaloğunda "gruba bir daha giremesin" seçeneği (kick ≠ ban).
-  - [ ] Grup ayarlarında **yasak listesi + kaldırma** (G2 şartı: öfkeyle verilen yasak
+  - [x] Üye yönetiminde çıkarma ve yasaklama ayrı eylemler (kick ≠ ban).
+  - [x] Grup ayarlarında **yasak listesi + kaldırma** (G2 şartı: öfkeyle verilen yasak
         ertesi gün geri alınmak istenir).
-  - [ ] **Davet kodu sıfırlama** — eski kod geçersizleşir; 🔴 içerideki kimseyi atmaz,
+  - [x] **Davet kodu sıfırlama** — eski kod geçersizleşir; 🔴 içerideki kimseyi atmaz,
         arayüzde bu açıkça yazılır (G3).
 - **Veri/Migration etkisi:** `0093` — yeni tablo + katılma RPC değişikliği.
   **Geri alma:** kontrolü kaldıran ileri migration; tablo veri kaybı olmadan kalır.
@@ -2813,6 +2813,11 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 - **Tuzaklar:** Yasağı yalnız istemcide uygulamak (düğme gizleme) G2'nin açık ihlali.
   Kod sıfırlamayı yasağın alternatifi gibi sunmak sahibin kararına aykırı.
 - **Model önerisi:** 🔴 Opus
+- **Kanıt:** `tooling/supabase/local.ps1 test` → 320 pgTAP PASS
+  (`.artifacts/deploy-evidence/20260728T125452790Z-local-test`) ·
+  `flutter test test/data/group_repository_test.dart --dart-define-from-file=env.json` → 23 PASS ·
+  hedefli `flutter analyze` → 0 sorun. **Cihazda doğrulanmalı:** yasakla/çıkar ayrımı,
+  yasak listesinden kaldırma ve davet kodu yenileme akışı.
 
 #### WP-392: Görünen ad ve grup adı süzgeci 🧼
 - **Program/Faz:** PLAN 3 · Faz L (kaynak: C9 + H2 kararı "eklenir")

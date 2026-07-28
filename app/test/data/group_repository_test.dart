@@ -413,6 +413,32 @@ void main() {
     expect(await repo.watchUserGroups('u2').first, isEmpty);
   });
 
+  test(
+    'grup yasağı üyeyi çıkarır, katılımı reddeder ve kaldırılabilir',
+    () async {
+      final repo = InMemoryGroupRepository();
+      final group = await repo.createGroup(
+        name: 'Yasak Testi',
+        creator: _profile('u1', 'Ali'),
+      );
+      final member = _profile('u2', 'Veli');
+      await repo.joinGroup(inviteCode: group.inviteCode, member: member);
+
+      await repo.banMember(group.id, member.id);
+
+      expect(await repo.watchMembers(group.id).first, hasLength(1));
+      expect(await repo.listBannedMembers(group.id), [member]);
+      await expectLater(
+        repo.joinGroup(inviteCode: group.inviteCode, member: member),
+        throwsA(isA<GroupException>()),
+      );
+
+      await repo.unbanMember(group.id, member.id);
+      await repo.joinGroup(inviteCode: group.inviteCode, member: member);
+      expect(await repo.watchMembers(group.id).first, hasLength(2));
+    },
+  );
+
   test('deleteGroup sınıfı herkesten kaldırır', () async {
     final repo = InMemoryGroupRepository();
     final g = await repo.createGroup(name: 'A', creator: _profile('u1', 'Ali'));
