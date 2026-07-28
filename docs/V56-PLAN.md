@@ -85,9 +85,15 @@ dokunma hedeflerinden kaynaklanıyor olabilir.
 **WP-413 — Engelleme yaptırımının eksik yüzeyleri**
 Engelleme şu an her yüzeyi kapsamıyor. Kapsanacaklar: istatistik/liderlik tabloları,
 sosyal profil erişimi, arama sonuçları, grup üye listeleri.
-Kamp ateşi ayrı ele alınır (aşağıdaki soru 2).
+
+*Kamp ateşi kapsam dışı — cihazda doğrulandı (2026-07-28).* Engellenen kişi orada
+"Engellenen kullanıcı" etiketiyle görünüyor; bu tasarım gereği **doğru davranış**:
+sahneden silinmiyor, anonimleşiyor, katılımcı sayısı bozulmuyor. Hata olan yalnız
+tablolar ve profil erişimi.
+
 **DoD:** her yüzey için iki uçlu test — A→B ve B→A; yeni yüzey eklendiğinde testin
-kırılmasını sağlayan ortak süzgeç noktası.
+kırılmasını sağlayan ortak süzgeç noktası. Kamp ateşinin anonimleştirme davranışı
+regresyon testiyle korunur (yanlışlıkla "gizle"ye çevrilmesin).
 
 ### Blok B — Sayaç senkron güveni
 
@@ -130,9 +136,28 @@ sayılar testte sabit değer olarak durur.
 - Tarama: koşulu ölçülebilir biçimde yazılmamış başka başarım kalmasın
 **DoD:** her başarımın açıklaması eşiği/penceresi içerir; boş veya belirsiz açıklama testte kırılır.
 
-**WP-419 — Sürüm notları listesi**
-Liste çok uzun; beta sürümleri stable kullanıcıya gösterilmemeli (bkz. soru 1).
-**DoD:** stable kanalda yalnız stable sürümler; liste sayfalanır veya son N sürümle sınırlanır.
+**WP-419 — Sürüm notları ekranı**
+Cihazda doğrulandı (ekran görüntüsü 2026-07-28). İki ayrı sorun var:
+
+1. **"Build diagnostics" kartı son kullanıcıya açık.** Channel, Version, Backend
+   project-ref, Commit SHA, Migration head — hepsi normal kullanıcının gördüğü
+   ekranın en üstünde duruyor.
+   *Bu yarım kalmış bir düzeltme:* v55'te sürüm notu **metinleri** teknik ifadelerden
+   temizlendi, ama bu kart kapsam dışında kalmış. v55 test maddesi de yalnız
+   not gövdelerine bakacak şekilde yazıldığı için hatayı yakalamadı.
+   **Çözüm:** kart sürüm notlarından çıkar, **Ayarlar → Hakkında** altına taşınır.
+   Orada varsayılan yalnız `1.0.55`; üstüne dokununca commit / migration head /
+   backend açılır. Böylece destekte "sürümün ne?" sorusu cevaplanabilir kalır,
+   normal kullanıcı teknik gürültü görmez.
+
+2. **Stable kanalda beta sürümler listeleniyor.** `beta-v4402` kartı "Beta" rozetiyle
+   stable kullanıcıya gösteriliyor; liste bu yüzden uzuyor.
+   **Çözüm:** stable kanalda yalnız stable sürümler. Liste son N sürümle sınırlanır,
+   gerisi "daha fazla" ile açılır.
+
+**DoD:** stable kanal ekran testinde beta rozetli kart bulunmaz; sürüm notları
+ekranında `commit`, `migration head`, `backend`, project-ref metni **hiç geçmez** —
+v55'teki metin temizliği testinin kapsamı gövdeden tüm ekrana genişletilir.
 
 ### Blok D — Destek ve geri bildirim
 
@@ -208,13 +233,15 @@ denetim kaydı değişmezliği.
 
 ---
 
-## 4. Başlamadan önce netleşmesi gereken iki şey
+## 4. Cihazda netleşenler (2026-07-28)
 
-**1. Sürüm notları.** "En üstte kimlik var, altında beta 4402" ile tam olarak ne
-görüldüğü net değil. Varsayım: stable kanalda eski beta sürümleri de listeleniyor
-ve liste bu yüzden uzuyor. Doğruysa çözüm: stable kullanıcıya yalnız stable sürümler.
+Planı başlatmadan önce açık kalan iki soru kapandı:
 
-**2. Kamp ateşinde engellenen kullanıcı.** Tasarım gereği engellenen kişi kamp
-ateşinden **silinmemeli, anonimleşmeli** (katılımcı sayısı bozulmasın diye).
-Cihazda adıyla mı görünüyor, yoksa anonim mi? Adıyla görünüyorsa hata,
-anonimse doğru davranış ve WP-413 kapsamı dışında.
+**1. Sürüm notları** — ekran görüntüsüyle doğrulandı. İki sorun birden: son kullanıcıya
+açık Build diagnostics kartı **ve** stable kanalda listelenen beta sürümler.
+İkisi de WP-419 kapsamına alındı.
+
+**2. Kamp ateşi** — engellenen kişi "Engellenen kullanıcı" etiketiyle görünüyor,
+yani **anonimleştirme çalışıyor.** Doğru davranış; WP-413 kapsamı dışında bırakıldı.
+
+Açık soru kalmadı — plan uygulamaya hazır.
