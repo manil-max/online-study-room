@@ -19,6 +19,7 @@ import '../onboarding/onboarding_prefs.dart';
 import '../safety/blocked_users_screen.dart';
 import '../support/faq_screen.dart';
 import '../updater/release_notes_screen.dart';
+import 'about_screen.dart';
 import 'account_settings_screen.dart';
 import 'appearance_screen.dart';
 import 'data_export_screen.dart';
@@ -329,6 +330,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       subtitle: Text(l10n.profileHataVeyaOneriniBize),
                       trailing: const Icon(Icons.chevron_right),
                       onTap: profile == null ? null : _openReportDialog,
+                    ),
+                  ),
+                  _SettingsCard(
+                    child: ListTile(
+                      key: const Key('settings-about'),
+                      leading: const Icon(Icons.info_outline),
+                      title: Text(l10n.aboutTitle),
+                      subtitle: Text(l10n.aboutSubtitle),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const AboutScreen()),
+                      ),
                     ),
                   ),
                   _SettingsCard(

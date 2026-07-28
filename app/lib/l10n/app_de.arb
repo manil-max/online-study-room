@@ -5289,5 +5289,11 @@
   "campfirePreviewReset": "Auf Standard zurücksetzen",
   "@campfirePreviewReset": {"description": "Action that restores the canonical tuning values."},
   "campfirePreviewHint": "Kopiere die Zeile unten und sende sie zurück; die gewählten Werte werden zu festen Testwerten.",
-  "@campfirePreviewHint": {"description": "Explains that the chosen numbers are reported back and pinned in tests."}
+  "@campfirePreviewHint": {"description": "Explains that the chosen numbers are reported back and pinned in tests."},
+  "aboutTitle": "Über",
+  "@aboutTitle": {"description": "Settings entry that opens the app identity screen."},
+  "aboutSubtitle": "App-Version und Support-Details",
+  "@aboutSubtitle": {"description": "Subtitle of the About entry in settings."},
+  "updaterDahaFazlaSurum": "Weitere Versionen anzeigen",
+  "@updaterDahaFazlaSurum": {"description": "Expands the truncated release-notes list."}
 }

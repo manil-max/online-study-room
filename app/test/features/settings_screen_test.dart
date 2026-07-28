@@ -9,6 +9,7 @@ import 'package:online_study_room/data/providers/auth_providers.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_admin_repository.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_auth_repository.dart';
 import 'package:online_study_room/features/notifications/notification_permissions_screen.dart';
+import 'package:online_study_room/features/profile/about_screen.dart';
 import 'package:online_study_room/features/profile/settings_screen.dart';
 import 'package:online_study_room/features/updater/release_notes_screen.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
@@ -83,6 +84,8 @@ void main() {
     expect(find.text('Uygulama Kısayolları (Rutinler)'), findsNothing);
     expect(find.text('Geri bildirim gönder'), findsOneWidget);
     expect(find.text('Yönetim'), findsNothing);
+    // WP-419: derleme kimliği sürüm notlarından buraya taşındı.
+    expect(find.text('Hakkında'), findsOneWidget);
 
     // WP-320: 1080 fiziksel px / 3x DPR = 360dp dar ekranda da bilgi
     // mimarisi sabit kalır; hesap silme ekranına giden giriş ile dışa aktarma
@@ -123,6 +126,12 @@ void main() {
     Navigator.of(
       tester.element(find.byType(NotificationPermissionsScreen)),
     ).pop();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('settings-about')));
+    await tester.pumpAndSettle();
+    expect(find.byType(AboutScreen), findsOneWidget);
+    Navigator.of(tester.element(find.byType(AboutScreen))).pop();
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Sürüm ve güncellemeler'));

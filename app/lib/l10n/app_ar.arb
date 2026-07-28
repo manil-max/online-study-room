@@ -5289,5 +5289,11 @@
   "campfirePreviewReset": "إعادة التعيين إلى الافتراضي",
   "@campfirePreviewReset": {"description": "Action that restores the canonical tuning values."},
   "campfirePreviewHint": "انسخ السطر أدناه وأرسله؛ ستصبح القيم التي تختارها قيمًا ثابتة في الاختبارات.",
-  "@campfirePreviewHint": {"description": "Explains that the chosen numbers are reported back and pinned in tests."}
+  "@campfirePreviewHint": {"description": "Explains that the chosen numbers are reported back and pinned in tests."},
+  "aboutTitle": "حول",
+  "@aboutTitle": {"description": "Settings entry that opens the app identity screen."},
+  "aboutSubtitle": "إصدار التطبيق وتفاصيل الدعم",
+  "@aboutSubtitle": {"description": "Subtitle of the About entry in settings."},
+  "updaterDahaFazlaSurum": "عرض المزيد من الإصدارات",
+  "@updaterDahaFazlaSurum": {"description": "Expands the truncated release-notes list."}
 }

@@ -53,6 +53,20 @@ class ReleaseNotesService {
     return notes;
   }
 
+  /// Ekranda gösterilecek notlar.
+  ///
+  /// WP-419: Stable kullanıcı **stable** sürümleri görür. Beta girdileri
+  /// (`beta-v4402` gibi) stable listesine sızınca hem liste gereksiz uzuyor hem
+  /// de kullanıcı hiç kuramayacağı bir sürümün notunu okuyordu. Beta kanalı
+  /// kendi zincirini takip ettiği için her ikisini de görür.
+  Future<List<ReleaseNote>> loadVisibleNotes({required String channel}) async {
+    final notes = await loadBundledNotes();
+    if (channel.trim().toLowerCase() != 'stable') return notes;
+    return notes
+        .where((note) => note.channel == 'stable')
+        .toList(growable: false);
+  }
+
   Future<ReleaseNote?> noteForBuild(int buildNumber, {String? channel}) async {
     final notes = await loadBundledNotes();
     for (final note in notes) {

@@ -3471,7 +3471,7 @@ WP-385 (l10n/başarım). Sonraki dalga: WP-381 · WP-383 · WP-382.
 
 #### WP-419: Sürüm notları ekranı — teknik kart ve beta sızıntısı 📋
 - **Program/Faz:** PLAN 4 · Faz R (kaynak: sahip ekran görüntüsü)
-- **Ajan:** Lane C · **Durum:** [ ] Başlamadı
+- **Ajan:** Lane C · **Durum:** [x] Kod + otomatik test tamam — `Cihazda doğrulanmalı`
 - **Problem:** İki ayrı sorun, ekran görüntüsüyle doğrulandı:
   1. 🔴 **"Build diagnostics" kartı son kullanıcıya açık** — Channel, Version,
      Backend project-ref, Commit SHA, Migration head normal kullanıcının gördüğü
@@ -3485,17 +3485,43 @@ WP-385 (l10n/başarım). Sonraki dalga: WP-381 · WP-383 · WP-382.
   (Hakkında girişi), ilgili testler
 - **DOKUNMA:** `features/stats/**` · `features/admin/**` · `campfire_scene.dart`
 - **Adımlar:**
-  - [ ] Diagnostics kartı sürüm notlarından **çıkar**, **Ayarlar → Hakkında** altına taşınır.
-  - [ ] Hakkında'da varsayılan yalnız `1.0.55`; üstüne dokununca commit / migration head /
+  - [x] Diagnostics kartı sürüm notlarından **çıkar**, **Ayarlar → Hakkında** altına taşınır.
+  - [x] Hakkında'da varsayılan yalnız `1.0.55`; üstüne dokununca commit / migration head /
         backend açılır. Destekte "sürümün ne?" cevaplanabilir kalır.
-  - [ ] Stable kanalda yalnız stable sürümler listelenir.
-  - [ ] Liste son N sürümle sınırlanır, gerisi "daha fazla" ile açılır.
+  - [x] Stable kanalda yalnız stable sürümler listelenir.
+  - [x] Liste son N sürümle sınırlanır, gerisi "daha fazla" ile açılır.
 - **Migration/Ortam:** Yok · local.
 - **Kabul:** 🔴 Sürüm notları ekranının **tamamında** `commit`, `migration head`,
   `backend`, project-ref metni **geçmez** (v55 testinin kapsamı gövdeden tüm ekrana
   genişletilir) · stable kanal testinde beta rozetli kart bulunmaz.
 - **Tuzaklar:** Kartı silme, **taşı** — destek yazışmasında sürüm bilgisi gerekiyor.
 - **Model önerisi:** Sonnet
+- **DoD kanıtı (2026-07-28, Lane C · `Kodda doğrulandı`):**
+  - **Taşındı, silinmedi.** `BuildIdentityCard` artık katlanır: kapalıyken yalnız
+    sürüm adı (`1.0.55`), dokununca kanal / tam sürüm+build / backend /
+    commit / migration başı açılır. Yeni ev: **Ayarlar → Hakkında ve yasal →
+    Hakkında** (`features/profile/about_screen.dart`).
+  - 🔴 **DoD gövdeyle sınırlanmadı.** Yeni kapı ekranın **tamamını** tarıyor:
+    `visibleTexts()` bütün `Text` + `SelectableText` widget'larını toplar,
+    "daha fazla"yla gizli kartları da açar ve
+    `commit|migration|backend|project-ref|supabase` regex'i arar. Kaynak
+    uydurulmuyor — gerçek `assets/release_notes.json` okunuyor, yani üretim
+    içeriği denetleniyor. v55'in `release-notes-contract.ps1` kapısı yalnız JSON
+    gövdelerine bakıyordu; kart ayrı widget olduğu için altından geçmişti.
+  - **Beta sızıntısı:** `ReleaseNotesService.loadVisibleNotes(channel:)` stable
+    kullanıcıya yalnız stable notları verir; beta kanalı iki zinciri de görür.
+    İki yönlü test var (stable'da `Beta` rozeti bulunmaz, beta'da her ikisi de).
+  - **Liste sınırı:** `kReleaseNotesInitialCount = 5`, gerisi
+    `release-notes-show-more` düğmesiyle açılır; sayım testi tembel liste
+    tuzağına karşı viewport'u 1080×12000'e büyütür.
+  - **l10n:** `aboutTitle`, `aboutSubtitle`, `updaterDahaFazlaSurum` — **dört
+    dilde birden** (TR/EN/DE/AR). `buildTaniBasligi` yeniden kullanıldı, ölü
+    anahtar bırakılmadı.
+  - **Test:** `flutter analyze` 0 uyarı · `release_notes_test.dart` 11/11 ·
+    `about_screen_test.dart` 3/3 · `settings_screen_test.dart` +
+    `wp294_l10n_debt_test.dart` + `wp85_l10n_test.dart` 18/18 yeşil.
+  - **Cihazda doğrulanmalı:** Ayarlar → Hakkında'da sürümün göründüğü ve
+    dokununca teknik satırların açıldığı; sürüm notlarında beta kartı kalmadığı.
 
 #### WP-420: Feedback ekranı yeniden düzeni 💬
 - **Program/Faz:** PLAN 4 · Faz R (kaynak: sahip cihaz testi)

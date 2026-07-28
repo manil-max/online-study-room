@@ -1722,5 +1722,11 @@
   "campfirePreviewReset": "Varsayılana dön",
   "@campfirePreviewReset": {"description": "Action that restores the canonical tuning values."},
   "campfirePreviewHint": "Aşağıdaki satırı kopyalayıp gönder; seçtiğin sayılar testlere sabit değer olarak girer.",
-  "@campfirePreviewHint": {"description": "Explains that the chosen numbers are reported back and pinned in tests."}
+  "@campfirePreviewHint": {"description": "Explains that the chosen numbers are reported back and pinned in tests."},
+  "aboutTitle": "Hakkında",
+  "@aboutTitle": {"description": "Settings entry that opens the app identity screen."},
+  "aboutSubtitle": "Uygulama sürümü ve destek bilgileri",
+  "@aboutSubtitle": {"description": "Subtitle of the About entry in settings."},
+  "updaterDahaFazlaSurum": "Daha fazla sürüm göster",
+  "@updaterDahaFazlaSurum": {"description": "Expands the truncated release-notes list."}
 }

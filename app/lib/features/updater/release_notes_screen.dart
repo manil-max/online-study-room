@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../core/config/app_build_manifest.dart';
-import '../../core/config/build_identity_card.dart';
+import '../../core/config/distribution_channel.dart';
 import '../../l10n/app_localizations.dart';
 import 'release_notes_service.dart';
 
@@ -29,11 +28,16 @@ Future<void> maybeShowWhatsNewDialog(BuildContext context) async {
   );
 }
 
+/// İlk açılışta gösterilen sürüm sayısı; gerisi "daha fazla" ile açılır.
+const int kReleaseNotesInitialCount = 5;
+
 class ReleaseNotesScreen extends StatefulWidget {
-  const ReleaseNotesScreen({super.key, this.service, this.buildManifest});
+  const ReleaseNotesScreen({super.key, this.service, this.channel});
 
   final ReleaseNotesService? service;
-  final AppBuildManifest? buildManifest;
+
+  /// `stable` | `beta`. Verilmezse derlemenin kendi kanalı kullanılır.
+  final String? channel;
 
   @override
   State<ReleaseNotesScreen> createState() => _ReleaseNotesScreenState();
@@ -43,7 +47,11 @@ class _ReleaseNotesScreenState extends State<ReleaseNotesScreen> {
   // Future build() içinde yeniden yaratılırsa CircularProgressIndicator
   // her karede FutureBuilder'ı sıfırlar → pumpAndSettle sonsuza gider.
   late final Future<List<ReleaseNote>> _notesFuture =
-      (widget.service ?? ReleaseNotesService()).loadBundledNotes();
+      (widget.service ?? ReleaseNotesService()).loadVisibleNotes(
+        channel: widget.channel ?? DistributionConfig.releaseNotesChannel,
+      );
+
+  bool _showAll = false;
 
   @override
   Widget build(BuildContext context) {
@@ -55,47 +63,35 @@ class _ReleaseNotesScreenState extends State<ReleaseNotesScreen> {
         future: _notesFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
-            return ListView(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-              children: [
-                BuildIdentityCard(
-                  manifest:
-                      widget.buildManifest ?? AppBuildManifest.currentOrNull,
-                ),
-                const SizedBox(height: 32),
-                const Center(child: CircularProgressIndicator()),
-              ],
-            );
+            return const Center(child: CircularProgressIndicator());
           }
 
           final notes = snapshot.data ?? const [];
           if (notes.isEmpty) {
-            return ListView(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-              children: [
-                BuildIdentityCard(
-                  manifest:
-                      widget.buildManifest ?? AppBuildManifest.currentOrNull,
-                ),
-                const SizedBox(height: 24),
-                Center(child: Text(l10n.updaterHenuzGosterilecekSurumNotu)),
-              ],
-            );
+            return Center(child: Text(l10n.updaterHenuzGosterilecekSurumNotu));
           }
 
           final locale = Localizations.localeOf(context);
+          final hasMore = !_showAll && notes.length > kReleaseNotesInitialCount;
+          final shown = hasMore
+              ? notes.take(kReleaseNotesInitialCount).toList(growable: false)
+              : notes;
+
           return ListView.separated(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-            itemCount: notes.length + 1,
+            itemCount: shown.length + (hasMore ? 1 : 0),
             separatorBuilder: (_, _) => const SizedBox(height: 10),
             itemBuilder: (context, index) {
-              if (index == 0) {
-                return BuildIdentityCard(
-                  manifest:
-                      widget.buildManifest ?? AppBuildManifest.currentOrNull,
+              if (index == shown.length) {
+                return Center(
+                  child: TextButton(
+                    key: const Key('release-notes-show-more'),
+                    onPressed: () => setState(() => _showAll = true),
+                    child: Text(l10n.updaterDahaFazlaSurum),
+                  ),
                 );
               }
-              return ReleaseNoteCard(note: notes[index - 1].forLocale(locale));
+              return ReleaseNoteCard(note: shown[index].forLocale(locale));
             },
           );
         },
