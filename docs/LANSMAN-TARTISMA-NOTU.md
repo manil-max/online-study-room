@@ -527,6 +527,32 @@ Satın alma sahibe ait. İsim adayları belirlenince müsaitlik kontrolü bana.
 Sahip: **Play'in istediği foreground service tanıtım videosu sona kalsın.** Sahip şu an başka
 özellikler için tarama yapıyor.
 
+### H8. Sıralama kararı — 2026-07-28
+Sahip: **"uygulamayı yayınlamadan önce sorunları çözelim."**
+
+Yani A bölümündeki cihaz testi bulguları (A1 ayna-durdurma, A3 kamp ateşi, A4 admin bildirimi,
+A6 tur, A8 sayaç biçimi) mağaza yayınından **önce** kapanır. G6'daki "şart / sonra olur"
+ayrımı bunun üstüne biner; G6'da "sonra olur" denenler (davet linki, onay akışı, masaüstü
+admin yerleşimi) yine yayın sonrasına kalır.
+
+Sahibe ait, bekleyen: **alan adı ismi seçimi** (H6) — sahip düşünüyor, aday belirlenince
+müsaitlik kontrolü bana.
+
+---
+
+## Durum — 2026-07-28 sonu
+
+Tartışma kapandı. Bu belgede karara bağlanmamış madde kalmadı; açık olan tek şey sahibin
+seçeceği alan adı ismi. Planlama sahibin işareti beklenmeden başlamaz
+(`.agents/AGENTS.md §0.1` — sahip emri).
+
+**Sahipte duran işler:** alan adını al (Porkbun / `.com` / WHOIS gizli) · Play Console'da
+uygulamayı oluştururken Google'ın imzalama anahtarını üretmesine izin ver · foreground service
+tanıtım videosu (sona bırakıldı) · tur metinleri.
+
+**Bende duran işler:** SSS taslağı · başarım açıklamaları · dört web sayfası
+(gizlilik, şartlar, hesap silme, destek) · `assetlinks.json` · ve A/B/C bölümlerindeki kod işi.
+
 **İyi haber — kodda doğrulandı:**
 - `play` flavor zaten var ve uygulama içi GitHub güncelleyicisini kapatıyor
   (`android/app/build.gradle.kts:159`, WP-128). Play "kendi dışında güncelleme" yasağını
