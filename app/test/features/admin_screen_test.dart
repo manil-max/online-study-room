@@ -126,9 +126,9 @@ void main() {
               ),
             ),
             adminRepositoryProvider.overrideWithValue(repo),
-            adminFeedbackTicketsProvider.overrideWith(
-              (ref) => Future.value([ticket]),
-            ),
+            adminFeedbackTicketsProvider(
+              null,
+            ).overrideWith((ref) => Future.value([ticket])),
           ],
           child: const MaterialApp(
             locale: Locale('tr'),

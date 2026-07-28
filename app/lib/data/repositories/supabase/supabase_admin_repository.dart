@@ -42,6 +42,7 @@ class SupabaseAdminRepository implements AdminRepository {
   Future<List<FeedbackTicket>> fetchFeedbackTickets(
     String userId, {
     FeedbackTicketStatus? status,
+    FeedbackTicketType? type,
     bool includeArchived = false,
   }) async {
     try {
@@ -50,6 +51,7 @@ class SupabaseAdminRepository implements AdminRepository {
                 'admin_feedback_tickets',
                 params: {
                   'p_status': status?.dbValue,
+                  'p_type': type?.dbValue,
                   'p_include_archived': includeArchived,
                 },
               )

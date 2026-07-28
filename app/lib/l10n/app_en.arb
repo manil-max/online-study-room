@@ -5860,5 +5860,11 @@
   "primaryGroupConfirmAction": "Choose group",
   "@primaryGroupConfirmAction": {"description": "Confirmation action for a primary group change."},
   "primaryGroupChangeFailed": "Your primary group could not be changed. Refresh and try again.",
-  "@primaryGroupChangeFailed": {"description": "Error after a stale or rejected primary group change."}
+  "@primaryGroupChangeFailed": {"description": "Error after a stale or rejected primary group change."},
+  "supportTicketTypeFeedback": "Feedback",
+  "@supportTicketTypeFeedback": {"description": "Support inbox filter and ticket type."},
+  "supportTicketTypeQuestion": "Question",
+  "@supportTicketTypeQuestion": {"description": "Support inbox filter and ticket type."},
+  "supportTicketTypeReport": "Report",
+  "@supportTicketTypeReport": {"description": "Support inbox filter and ticket type."}
 }

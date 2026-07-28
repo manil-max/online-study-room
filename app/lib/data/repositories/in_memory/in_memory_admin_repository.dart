@@ -44,12 +44,14 @@ class InMemoryAdminRepository implements AdminRepository {
   Future<List<FeedbackTicket>> fetchFeedbackTickets(
     String userId, {
     FeedbackTicketStatus? status,
+    FeedbackTicketType? type,
     bool includeArchived = false,
   }) async {
     _requireAdmin(userId);
     final rows =
         _tickets
             .where((ticket) => status == null || ticket.status == status)
+            .where((ticket) => type == null || ticket.type == type)
             .where((ticket) => includeArchived || ticket.archivedAt == null)
             .toList()
           ..sort((a, b) => b.createdAt.compareTo(a.createdAt));

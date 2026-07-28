@@ -18,24 +18,25 @@ class AdminReportsTab extends ConsumerStatefulWidget {
 
 class _AdminReportsTabState extends ConsumerState<AdminReportsTab> {
   var _showArchive = false;
+  FeedbackTicketType? _type;
 
   @override
   Widget build(BuildContext context) {
     final tickets = ref.watch(
       _showArchive
-          ? adminArchivedFeedbackTicketsProvider
-          : adminFeedbackTicketsProvider,
+          ? adminArchivedFeedbackTicketsProvider(_type)
+          : adminFeedbackTicketsProvider(_type),
     );
     final l10n = AppLocalizations.of(context);
 
     return RefreshIndicator(
       onRefresh: () async {
-        ref.invalidate(adminFeedbackTicketsProvider);
-        ref.invalidate(adminArchivedFeedbackTicketsProvider);
+        ref.invalidate(adminFeedbackTicketsProvider(_type));
+        ref.invalidate(adminArchivedFeedbackTicketsProvider(_type));
         await ref.read(
           (_showArchive
-                  ? adminArchivedFeedbackTicketsProvider
-                  : adminFeedbackTicketsProvider)
+                  ? adminArchivedFeedbackTicketsProvider(_type)
+                  : adminFeedbackTicketsProvider(_type))
               .future,
         );
       },
@@ -73,17 +74,28 @@ class _AdminReportsTabState extends ConsumerState<AdminReportsTab> {
             separatorBuilder: (_, _) => const SizedBox(height: 8),
             itemBuilder: (context, index) {
               if (index == 0) {
-                return Align(
-                  alignment: Alignment.centerRight,
-                  child: IconButton.outlined(
-                    icon: Icon(
-                      _showArchive
-                          ? Icons.inventory_2
-                          : Icons.inventory_2_outlined,
+                return Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  alignment: WrapAlignment.end,
+                  children: [
+                    for (final type in FeedbackTicketType.values)
+                      FilterChip(
+                        label: Text(_typeLabel(l10n, type)),
+                        selected: _type == type,
+                        onSelected: (selected) =>
+                            setState(() => _type = selected ? type : null),
+                      ),
+                    IconButton.outlined(
+                      icon: Icon(
+                        _showArchive
+                            ? Icons.inventory_2
+                            : Icons.inventory_2_outlined,
+                      ),
+                      onPressed: () =>
+                          setState(() => _showArchive = !_showArchive),
                     ),
-                    onPressed: () =>
-                        setState(() => _showArchive = !_showArchive),
-                  ),
+                  ],
                 );
               }
               return _TicketCard(
@@ -124,8 +136,10 @@ class _TicketCard extends ConsumerWidget {
             Row(
               children: [
                 Icon(
-                  ticket.kind == FeedbackTicketKind.bug
+                  ticket.type == FeedbackTicketType.report
                       ? Icons.bug_report_outlined
+                      : ticket.type == FeedbackTicketType.question
+                      ? Icons.question_answer_outlined
                       : Icons.lightbulb_outline,
                   color: theme.colorScheme.primary,
                 ),
@@ -151,6 +165,10 @@ class _TicketCard extends ConsumerWidget {
                 Chip(
                   visualDensity: VisualDensity.compact,
                   label: Text(_statusLabel(l10n, ticket.status)),
+                ),
+                Chip(
+                  visualDensity: VisualDensity.compact,
+                  label: Text(_typeLabel(l10n, ticket.type)),
                 ),
                 if (ticket.reporterDisplayName?.isNotEmpty == true)
                   Chip(
@@ -183,7 +201,9 @@ class _TicketCard extends ConsumerWidget {
                   ),
                   label: Text(
                     l10n.feedbackWriteReply,
-                    style: TextStyle(color: theme.colorScheme.onPrimaryContainer),
+                    style: TextStyle(
+                      color: theme.colorScheme.onPrimaryContainer,
+                    ),
                   ),
                   onPressed: () => showFeedbackTicketConversation(
                     context: context,
@@ -216,8 +236,12 @@ class _TicketCard extends ConsumerWidget {
                           ticketId: ticket.id,
                           archived: !showArchived,
                         );
-                    ref.invalidate(adminFeedbackTicketsProvider);
-                    ref.invalidate(adminArchivedFeedbackTicketsProvider);
+                    ref.invalidate(adminFeedbackTicketsProvider(null));
+                    ref.invalidate(adminFeedbackTicketsProvider(ticket.type));
+                    ref.invalidate(adminArchivedFeedbackTicketsProvider(null));
+                    ref.invalidate(
+                      adminArchivedFeedbackTicketsProvider(ticket.type),
+                    );
                   },
                 ),
               ],
@@ -251,7 +275,8 @@ class _StatusMenu extends ConsumerWidget {
                 ticketId: ticket.id,
                 status: status,
               );
-          ref.invalidate(adminFeedbackTicketsProvider);
+          ref.invalidate(adminFeedbackTicketsProvider(null));
+          ref.invalidate(adminFeedbackTicketsProvider(ticket.type));
         } on AdminException {
           if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
@@ -272,6 +297,14 @@ String _statusLabel(AppLocalizations l10n, FeedbackTicketStatus status) {
     FeedbackTicketStatus.open => l10n.adminAcik,
     FeedbackTicketStatus.inProgress => l10n.adminInceleniyor,
     FeedbackTicketStatus.closed => l10n.adminKapali,
+  };
+}
+
+String _typeLabel(AppLocalizations l10n, FeedbackTicketType type) {
+  return switch (type) {
+    FeedbackTicketType.feedback => l10n.supportTicketTypeFeedback,
+    FeedbackTicketType.question => l10n.supportTicketTypeQuestion,
+    FeedbackTicketType.report => l10n.supportTicketTypeReport,
   };
 }
 

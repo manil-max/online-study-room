@@ -16,6 +16,26 @@ enum FeedbackTicketKind {
   }
 }
 
+/// WP-387: Destek kutusundaki ürün anlamı. Eski `kind` alanı geri bildirim
+/// formunun "geri bildirim/hata" seçimini korur; bu alan ise destek akışını
+/// (geri bildirim, soru veya rapor) sunucuda sınıflandırır.
+enum FeedbackTicketType {
+  feedback('feedback'),
+  question('question'),
+  report('report');
+
+  const FeedbackTicketType(this.dbValue);
+
+  final String dbValue;
+
+  static FeedbackTicketType fromDb(String? value) {
+    return FeedbackTicketType.values.firstWhere(
+      (type) => type.dbValue == value,
+      orElse: () => FeedbackTicketType.feedback,
+    );
+  }
+}
+
 enum FeedbackTicketStatus {
   open('open'),
   inProgress('in_progress'),
@@ -44,6 +64,7 @@ class FeedbackTicket {
     required this.status,
     required this.createdAt,
     required this.updatedAt,
+    this.type = FeedbackTicketType.feedback,
     this.reporterDisplayName,
     this.attachmentPath,
     this.archivedAt,
@@ -57,6 +78,7 @@ class FeedbackTicket {
   final FeedbackTicketStatus status;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final FeedbackTicketType type;
   final String? reporterDisplayName;
   final String? attachmentPath;
   final DateTime? archivedAt;
@@ -64,6 +86,7 @@ class FeedbackTicket {
   FeedbackTicket copyWith({
     FeedbackTicketStatus? status,
     DateTime? updatedAt,
+    FeedbackTicketType? type,
     String? reporterDisplayName,
     String? attachmentPath,
     DateTime? archivedAt,
@@ -77,6 +100,7 @@ class FeedbackTicket {
       status: status ?? this.status,
       createdAt: createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      type: type ?? this.type,
       reporterDisplayName: reporterDisplayName ?? this.reporterDisplayName,
       attachmentPath: attachmentPath ?? this.attachmentPath,
       archivedAt: archivedAt ?? this.archivedAt,
@@ -93,6 +117,7 @@ class FeedbackTicket {
       status: FeedbackTicketStatus.fromDb(map['status'] as String),
       createdAt: DateTime.parse(map['created_at'] as String),
       updatedAt: DateTime.parse(map['updated_at'] as String),
+      type: FeedbackTicketType.fromDb(map['ticket_type'] as String?),
       reporterDisplayName: map['reporter_display_name'] as String?,
       attachmentPath: map['attachment_path'] as String?,
       archivedAt: map['archived_at'] == null
@@ -111,6 +136,7 @@ class FeedbackTicket {
       'status': status.dbValue,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
+      'ticket_type': type.dbValue,
       'reporter_display_name': reporterDisplayName,
       if (attachmentPath != null) 'attachment_path': attachmentPath,
       if (archivedAt != null) 'archived_at': archivedAt!.toIso8601String(),

@@ -24,6 +24,23 @@ void main() {
     expect(ownTickets.single.id, ticket.id);
   });
 
+  test('destek bileti türü sunucu satırından güvenle okunur', () {
+    final ticket = FeedbackTicket.fromMap({
+      'id': 'ticket-1',
+      'user_id': 'user-1',
+      'kind': 'feedback',
+      'ticket_type': 'question',
+      'subject': 'Soru',
+      'message': 'Bir sorum var.',
+      'status': 'open',
+      'created_at': '2026-07-28T00:00:00.000Z',
+      'updated_at': '2026-07-28T00:00:00.000Z',
+    });
+
+    expect(ticket.type, FeedbackTicketType.question);
+    expect(ticket.toMap()['ticket_type'], 'question');
+  });
+
   test(
     'normal kullanıcı admin listesini ve durum güncellemesini kullanamaz',
     () async {
@@ -274,6 +291,10 @@ void main() {
         contains('sunucusu henüz hazır değil'),
       );
       expect(feedbackUserMessageForCode('storage'), contains('Görsel'));
+      expect(
+        feedbackUserMessageForCode('support_ticket_rate_limited'),
+        contains('çok fazla'),
+      );
       expect(feedbackUserMessageForCode('session_or_rls'), contains('giriş'));
     });
 

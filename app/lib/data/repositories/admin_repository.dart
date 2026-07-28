@@ -47,6 +47,10 @@ String? classifyFeedbackSubmitError({String? postgrestCode, String? message}) {
     return 'schema_missing';
   }
 
+  if (msg.contains('support_ticket_rate_limited')) {
+    return 'support_ticket_rate_limited';
+  }
+
   if (code == '42501' ||
       msg.contains('row-level security') ||
       msg.contains('violates row-level') ||
@@ -82,6 +86,8 @@ String feedbackUserMessageForCode(String? code, {String? fallback}) {
           '(yönetici: feedback migration/ensure SQL).',
     'storage' =>
       'Görsel yüklenemedi. İnternetini kontrol et veya görselsiz gönder.',
+    'support_ticket_rate_limited' =>
+      'Kısa sürede çok fazla destek bileti oluşturdun. Lütfen biraz sonra tekrar dene.',
     _ => fallback ?? 'Geri bildirim gönderilemedi.',
   };
 }
@@ -117,6 +123,7 @@ abstract class AdminRepository {
   Future<List<FeedbackTicket>> fetchFeedbackTickets(
     String userId, {
     FeedbackTicketStatus? status,
+    FeedbackTicketType? type,
     bool includeArchived = false,
   });
 

@@ -90,7 +90,7 @@ class _ReportIssueDialogState extends ConsumerState<ReportIssueDialog> {
           );
       ref.invalidate(myFeedbackTicketsProvider);
       ref.invalidate(adminDashboardSummaryProvider);
-      ref.invalidate(adminFeedbackTicketsProvider);
+      ref.invalidate(adminFeedbackTicketsProvider(null));
       if (mounted) Navigator.of(context).pop(true);
     } on AdminException catch (e, st) {
       // WP-177/193: net mesaj + ham detay her zaman (release dahil).

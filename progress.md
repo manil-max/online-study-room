@@ -164,25 +164,55 @@
 - **Doküman temizliği (2026-07-27, sahip emri):** `docs/archive/` dizini, üç senior review turu, v46 sahip geri bildirimi ve kapanmış iki recovery kabul notu repodan kaldırıldı (13 dosya, ~11k satır). Evrensel saat işinde **yalnız nihai plan + C0 uyumluluk kanıtı** kaldı. Hepsi git geçmişinde; kalan md'lerde kırık iç bağlantı yok.
 
 ### Codex Lane
-- **Durum:** [x] Boşta — WP-370 kod/test tamam, staging + cihaz kabulü bekliyor
+- **Durum:** [x] Boşta — WP-387 kod/test tamam, staging + cihaz kabulü bekliyor
 - **Faz/WP:** —
 - **SAHİP yollar:** —
-- **Son not (2026-07-27):** `0088` V2 start/stop'tan internal, origin-excluding
-  timer-sync outbox üretir ve rollout'u açar; açık cihazlar FCM kaybına karşı 5 sn
-  snapshot reconcile yapar. Local reset + 270 pgTAP, Flutter analyze ve 11 hedefli
-  Flutter test yeşil. Remote mutasyon yapılmadı.
+- **Son not (2026-07-28):** `0090` destek türü, UGC rapor referansı ve admin push outbox'ını ekledi. Local reset + 291 pgTAP, hedefli Flutter analyze ve 16 hedefli Flutter test yeşil. Remote mutasyon yapılmadı.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
 - **Faz/WP:** —
 - **SAHİP yollar:** —
-- **Son not:** WP-340 commit/test ile tamamlandı; fiziksel cihaz regresyonu ortak QA kuyruğunda.
+- **Son not (2026-07-28):** WP-379 kod/test tamam (`bekleyen commit`); iki Android cihaz kabulü bekliyor. Sonraki WP-380 ayrı claim + ayrı commit olacak.
 
 ### Codex-3 Lane
 - **Durum:** [x] Boşta
 - **Faz/WP:** —
 - **SAHİP yollar:** —
 - **Son not:** WP-344 `0083` local replay, 244 pgTAP ve uygulama kalite kapılarıyla kod/test tamamlandı; timer-sync rollout flag kapalıdır. Staging/cihaz kabulü V3 zincirinin ortak QA turunda yapılacak.
+
+### Codex-4 Lane
+- **Durum:** [~] Aktif
+- **Faz/WP:** PLAN 3 · Faz K · WP-381
+- **Aşama:** Geliştiriliyor
+- **SAHİP yollar:** `app/lib/features/tours/**` · `app/lib/core/tour/**` · `app/lib/features/onboarding/**` · `app/lib/features/home/**` içindeki kart düzenleme ipucu · `app/test/features/tour*` · `app/test/features/onboarding*` · `progress.md` (yalnız bu lane ve WP-381 kartı)
+- **Ortak/riskli yüzey:** `settings_screen.dart`, `features/stats/**` ve `app/lib/l10n/**` salt-okunur; kamp ateşi tur adımı kaldırılacak, kamp ateşi görünümü WP-382'de kalır
+- **Dal:** main
+- **Başlangıç:** 2026-07-28 15:45 (Europe/Istanbul)
+- **Son güncelleme:** 2026-07-28 15:45
+- **Not:** WP-383 commit `54be471` sonrası bağımsız tur/onboarding geliştirmesi; local doğrulama, staging/production mutasyonu yok.
+
+### Codex-6 Lane
+- **Durum:** [!] Bloklu
+- **Faz/WP:** PLAN 3 · Faz K · WP-385
+- **Aşama:** Çakışma bekliyor
+- **SAHİP yollar:** `app/lib/core/stats/achievement_engine.dart` çevresi (kod okunarak netleşecek) · `app/lib/l10n/app_tr.arb` · `app/lib/l10n/app_en.arb` · `app/test/core/stats/achievement_*` · `progress.md` (yalnız bu lane ve WP-385 kartı)
+- **Ortak/riskli yüzey:** l10n/generated yüzeyi bu lane'e ait; `achievement_ledger_engine.dart` ve `supabase/migrations/**` salt-okunur
+- **Dal:** main
+- **Başlangıç:** 2026-07-28 14:53 (Europe/Istanbul)
+- **Son güncelleme:** 2026-07-28 14:53
+- **Not:** WP-386 ayrı commit `7f95601` ile kod/hedef test tamamlandı; tam paket eşzamanlı Flutter derleme kilidinde kaldığı için yeniden uygun boşlukta çalıştırılacak. WP-385, WP-387'nin commit edilmemiş `app/lib/l10n/app_tr.arb` + `app_en.arb` destek türü değişiklikleri nedeniyle bekliyor; bu dosyalar temizlenip WP-387 lane'i bırakılınca yeniden claim edilecek.
+
+### Codex-5 Lane
+- **Durum:** [~] Aktif
+- **Faz/WP:** PLAN 3 · Faz K · WP-382
+- **Aşama:** Geliştiriliyor — önizleme / sahip seçimi
+- **SAHİP yollar:** `app/lib/features/classroom/widgets/campfire_scene.dart` · `app/test/features/classroom/campfire_*` · önizleme artefaktları · `progress.md` (yalnız bu lane ve WP-382 kartı)
+- **Ortak/riskli yüzey:** `campfire_scene.dart` WP-389 için bu WP'nin kabulünden sonra serbest bırakılacak; tema, sayaç ve migration yüzeyleri salt-okunur
+- **Dal:** main
+- **Başlangıç:** 2026-07-28 15:16 (Europe/Istanbul)
+- **Son güncelleme:** 2026-07-28 15:25
+- **Not:** WP-382 → WP-390 zinciri bu lane'de sıralı yürütülecek; her WP ayrı commit. Üç adaylı gerçek widget önizlemesi hazır, fakat Codex-2'nin commit edilmemiş `_finish` imza değişikliği bütün Flutter derlemesini geçici olarak engelliyor; onun commit'inden sonra PNG üretilecek. WP-383 yalnız WP-384/WP-388'in ortak dosya bağımlılığıdır; WP-382 ve WP-390 için beklenmez. WP-390, yalnız WP-387'nin aktif admin destek yüzeyi serbest kalınca başlar.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
@@ -2367,8 +2397,8 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 
 #### WP-379: Ayna cihazda Durdur global koşuyu durdurur 📱↔️📱
 - **Program/Faz:** PLAN 3 · Faz K (kaynak: tartışma notu A1 + sahip kararı F1)
-- **Ajan:** —
-- **Durum:** [ ] Bekliyor
+- **Ajan:** Codex-2
+- **Durum:** [~] Kod tamamlandı — cihaz kabulü bekliyor
 - **Problem:** Telefondan başlatılan koşu tablette aynalanıyor; **tabletten** Durdur
   denince yalnız tablet duruyor, telefon çalışmaya devam ediyor ve tablet ikinci bir
   oturum açabiliyor. Kök neden `study_providers.dart:1548`: ayna durumunda `stop()`
@@ -2437,7 +2467,7 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 
 #### WP-381: Tanıtım turu onarımı ve kart düzenleme ipucu 🎈
 - **Program/Faz:** PLAN 3 · Faz K (kaynak: A6, B1, H2)
-- **Ajan:** — · **Durum:** [ ] Bekliyor
+- **Ajan:** Codex-4 · **Durum:** [~] Geliştiriliyor
 - **Problem:** (a) Ana ekran turunda "kartları düzenle" adımında **Skip yazısı ile edit
   butonu üst üste** geliyor; aynı çakışma gruplar turunda da var. (b) Ekran tanıtan
   çapasız adımlar ekranın ortasına düşüyor, karartılmış üst şerit garip duruyor.
@@ -2475,7 +2505,7 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 
 #### WP-382: Kamp ateşi kompozisyon revizesi 🔥
 - **Program/Faz:** PLAN 3 · Faz K (kaynak: A3 + sahip onayı A3-son)
-- **Ajan:** — · **Durum:** [ ] Bekliyor
+- **Ajan:** Codex-5 · **Durum:** [~] Geliştiriliyor — önizleme / sahip seçimi
 - **Problem:** Kırpma beğenildi, iki düzeltme kaldı: (1) ateşin kendisi **biraz aşağı**
   inecek, (2) aynı taraftaki alt/üst hayvanın **dikey arası açılacak** — şu an alttakinin
   ismi üsttekinin üstüne biniyor.
@@ -2499,7 +2529,7 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 
 #### WP-383: Ayarlar bilgi mimarisi, tanıtım sıfırlama ve istatistik delta düğmesi 🧭
 - **Program/Faz:** PLAN 3 · Faz K (kaynak: B4, B7, F5)
-- **Ajan:** — · **Durum:** [ ] Bekliyor
+- **Ajan:** Codex-4 · **Durum:** [~] Kod/test tamamlandı — cihaz kabulü bekliyor
 - **Problem:** (a) Ayarlar sırası sahibin istediği gibi değil: en üstte **Görünüm**,
   altında **Bildirimler**, hesap işleri **daha aşağıda**, **Hakkında + Legal en altta**.
   (b) "Tanıtım turlarını sıfırla" yalnız ekran turlarını siliyor; ilk açılış tanıtımı
@@ -2515,11 +2545,11 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 - **DOKUNMA:** `app/lib/features/tours/**`, `app/lib/features/onboarding/**`
   (WP-381 sahibi — buradan yalnız `reset()` **çağrılır**, dosyaları değiştirilmez)
 - **Adımlar:**
-  - [ ] Ayarlar bölümleri yeniden sıralanır; sıra **testle kilitlenir** (bir sonraki
+  - [x] Ayarlar bölümleri yeniden sıralanır; sıra **testle kilitlenir** (bir sonraki
         eklemede sessizce bozulmasın).
-  - [ ] Sıfırlama düğmesi `TourController.resetAll()` **ve** `OnboardingNotifier.reset()`
+  - [x] Sıfırlama düğmesi `TourController.resetAll()` **ve** `OnboardingNotifier.reset()`
         çağırır; metni "tanıtımları sıfırla" olarak netleşir.
-  - [ ] Delta düğmesi ve yalnız ona bağlı ölü kod kaldırılır.
+  - [x] Delta düğmesi ve yalnız ona bağlı ölü kod kaldırılır.
 - **Veri/Migration etkisi:** Yok. **Ortam/Deploy:** local.
 - **Kabul:** Ayarlar bölüm sırası testte sabit · sıfırlama sonrası **hem** ekran turları
   **hem** ilk açılış tanıtımı yeniden çıkar (sil-yükle gerekmez, sahip cihazda doğrular) ·
@@ -2552,7 +2582,7 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 
 #### WP-385: Başarım açıklamaları 🏅
 - **Program/Faz:** PLAN 3 · Faz K (kaynak: B3, D9; metinler H1-son.5 gereği bende)
-- **Ajan:** — · **Durum:** [ ] Bekliyor
+- **Ajan:** Codex-6 · **Durum:** [!] WP-387 l10n yüzeyi serbest kalana dek bloklu
 - **Problem:** Bazı başarımlarda nasıl kazanıldığı yazmıyor; kullanıcı ne yapacağını
   bilmiyor. Sahip metni ben yazacağım, sahip düzeltecek.
 - **Kapsam dışı:** Başarım koşullarının **kendisi** değişmez; yalnız açıklama metni ve
@@ -2574,7 +2604,7 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 
 #### WP-386: Sürüm notu ayrımı ve sözleşme testi 📝
 - **Program/Faz:** PLAN 3 · Faz K (kaynak: B6 + H2 kararı)
-- **Ajan:** — · **Durum:** [ ] Bekliyor
+- **Ajan:** Codex-6 · **Durum:** [~] Kod tamamlandı — otomatik test geçiyor
 - **Problem:** Güncelleme bildiriminde kullanıcıya `migration` gibi teknik satırlar
   sızıyor. Kullanıcının gördüğü metin tamamen kullanıcı dilinde olmalı, iç değişiklikler
   ayrı dosyada kalmalı.
@@ -2584,14 +2614,17 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 - **DOKUNMA:** `tooling/release/deploy-contract.json`, `guard.tests.ps1`,
   `release-preflight.tests.ps1` (sürüm kapısı — bu WP'nin işi değil)
 - **Adımlar:**
-  - [ ] Kullanıcıya giden notlar ile teknik günlük iki ayrı kaynağa ayrılır.
-  - [ ] Sözleşme testi: kullanıcı metninde `migration`, `WP-`, `RPC`, `SQL`, `00NN`
+  - [x] Kullanıcıya giden notlar ile teknik günlük iki ayrı kaynağa ayrılır.
+  - [x] Sözleşme testi: kullanıcı metninde `migration`, `WP-`, `RPC`, `SQL`, `00NN`
         gibi kelimeler geçerse **CI kırmızı**.
 - **Veri/Migration etkisi:** Yok. **Ortam/Deploy:** local + CI.
 - **Kabul:** Yasak kelime içeren bir taslak eklendiğinde test kırmızı düşer (negatif test
   zorunlu) · v54 notu yeni biçimde yeniden yazılır ve yeşil geçer.
 - **Tuzaklar:** Testin yalnız yeşil tarafını yazmak işe yaramaz — kırmızıya düştüğü
   kanıtlanmalı.
+- **Kanıt:** Release-notes contract yeşil + yasak kelimeli negatif taslak kırmızı ·
+  `flutter analyze` 0 bulgu · `release_notes_test.dart` 7/7 yeşil · tam paket
+  eşzamanlı Flutter derleme kilidi nedeniyle tamamlanamadı.
 - **Model önerisi:** 🔵 Sonnet
 
 ---
@@ -2604,7 +2637,7 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 
 #### WP-387: Tek destek kutusu — tür alanı ve admin bildirimi 📬
 - **Program/Faz:** PLAN 3 · Faz L (kaynak: A4, F4, C1)
-- **Ajan:** — · **Durum:** [ ] Bekliyor
+- **Ajan:** Codex · **Durum:** [~] Kod/test tamamlandı — staging + cihaz kabulü bekliyor
 - **Problem:** Üç ihtiyaç aynı yere düşüyor: geri bildirim (var), SSS'de olmayan soru
   (gelecek), kullanıcı şikâyeti (var ama ayrı tabloda). Ayrıca **yeni geri bildirim
   gelince admin'e bildirim gitmiyor** — yönetici panele girmeden haberi olmuyor.
@@ -2617,13 +2650,13 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
   - geri bildirim repo/provider'ları
 - **DOKUNMA:** `app/lib/features/safety/**` (WP-389/390), `0091+` migration'ları
 - **Adımlar:**
-  - [ ] `feedback_tickets`'a **tür alanı** (`feedback | question | report`) eklenir;
+  - [x] `feedback_tickets`'a **tür alanı** (`feedback | question | report`) eklenir;
         mevcut satırlar `feedback` olarak backfill edilir.
-  - [ ] Mevcut `ugc_reports` ile ilişki kurulur (rapor bileti kutuda görünür) —
+  - [x] Mevcut `ugc_reports` ile ilişki kurulur (rapor bileti kutuda görünür) —
         tablo **birleştirilmez**, çift kayıt riski yerine referans verilir.
-  - [ ] Yeni bilet düşünce **admin'e push** üreten tetikleyici (mevcut
+  - [x] Yeni bilet düşünce **admin'e push** üreten tetikleyici (mevcut
         `notification_outbox` yolu kullanılır, yeni taşıma yazılmaz).
-  - [ ] Admin panelinde tek liste + tür filtresi.
+  - [x] Admin panelinde tek liste + tür filtresi.
 - **Veri/Migration etkisi:** `0090` — kolon ekleme + backfill + tetikleyici.
   **Geri alma:** tetikleyiciyi düşür, kolon `not null` değilse bırakılabilir; ileri
   migration ile geri alınır.
@@ -2637,6 +2670,9 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
   biletler kayıpsız `feedback` olarak görünür.
 - **Tuzaklar:** Bildirim tetikleyicisi `SECURITY DEFINER` yolundan çıkmalı; RLS altında
   çalışan tetikleyici sessizce hiç bildirim üretmez.
+- **Kanıt:** Local `0090` reset + 20 SQL dosyasında **291 pgTAP PASS** · hedefli
+  `flutter analyze` temiz · 16 Flutter test yeşil. **Kodda doğrulandı;
+  staging/cihazda doğrulanmalı.**
 - **Model önerisi:** 🔴 Opus
 
 #### WP-388: SSS ekranı — sunucudan beslenen, giriş öncesi erişilebilir ❓
@@ -2987,6 +3023,7 @@ WP-385 (l10n/başarım). Sonraki dalga: WP-381 · WP-383 · WP-382.
 | **WP-336** Tek-grup session attribution | Staging `0084` + iki Android cihaz | Yeni session yalnız başlangıçtaki primary gruba yazılır; secondary day/week/achievement katkısı ve cron geri yazımı 0, kişisel süre/XP korunur. **Cihazda doğrulanmalı.** |
 | **WP-343** Foreground mirror + remote stop | Staging + iki Android cihaz | Aynı hesapta foreground start/stop p95≤2 sn; ek session/XP 0; eski stop yeni yerel run'ı kesmez; bildirim/widget regresyonu 0. **Cihazda doğrulanmalı.** |
 | **WP-345** Timer-sync signal + app-open reconcile | Staging FCM + Android lifecycle | Data-only sinyal p95≤10 sn; açılış reconcile p95≤2 sn; terminated/doze/logout/force-stop sonrasında payload state uygulamaz, snapshot doğru state'i getirir. **Cihazda doğrulanmalı.** |
+| **WP-379** Ayna Durdur global koşuyu kapatır | İki Android cihaz + FCM | Aynadan onaylı Durdur → kaynak cihaz ≤5 sn'de durur ve gerekçeyi gösterir; iptal değişiklik yapmaz; revision/ağ reddinde ayna açık kalır; ek session/XP 0. Commit: `bekleyen`. **Cihazda doğrulanmalı.** |
 
 **Ortam sırası:** tamamlandı — local, staging ve production `0085`te (WP-348 →
 WP-351, 2026-07-27). Yukarıdaki kartların hepsinde şema borcu kapandı; kalan

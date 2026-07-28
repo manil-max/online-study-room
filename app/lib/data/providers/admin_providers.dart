@@ -39,25 +39,32 @@ final adminDashboardSummaryProvider = FutureProvider<AdminDashboardSummary?>((
   return ref.watch(adminRepositoryProvider).fetchDashboardSummary(profile.id);
 });
 
-final adminFeedbackTicketsProvider = FutureProvider<List<FeedbackTicket>>((
-  ref,
-) async {
-  final profile = ref.watch(authStateProvider).value;
-  if (profile == null) return const [];
-  final isAdmin = await ref.watch(adminIsSuperAdminProvider.future);
-  if (!isAdmin) return const [];
-  return ref.watch(adminRepositoryProvider).fetchFeedbackTickets(profile.id);
-});
-
-final adminArchivedFeedbackTicketsProvider =
-    FutureProvider<List<FeedbackTicket>>((ref) async {
+final adminFeedbackTicketsProvider =
+    FutureProvider.family<List<FeedbackTicket>, FeedbackTicketType?>((
+      ref,
+      type,
+    ) async {
       final profile = ref.watch(authStateProvider).value;
       if (profile == null) return const [];
       final isAdmin = await ref.watch(adminIsSuperAdminProvider.future);
       if (!isAdmin) return const [];
       return ref
           .watch(adminRepositoryProvider)
-          .fetchFeedbackTickets(profile.id, includeArchived: true);
+          .fetchFeedbackTickets(profile.id, type: type);
+    });
+
+final adminArchivedFeedbackTicketsProvider =
+    FutureProvider.family<List<FeedbackTicket>, FeedbackTicketType?>((
+      ref,
+      type,
+    ) async {
+      final profile = ref.watch(authStateProvider).value;
+      if (profile == null) return const [];
+      final isAdmin = await ref.watch(adminIsSuperAdminProvider.future);
+      if (!isAdmin) return const [];
+      return ref
+          .watch(adminRepositoryProvider)
+          .fetchFeedbackTickets(profile.id, type: type, includeArchived: true);
     });
 
 final myFeedbackTicketsProvider = FutureProvider<List<FeedbackTicket>>((

@@ -1676,5 +1676,11 @@
   "primaryGroupConfirmAction": "Grubu seç",
   "@primaryGroupConfirmAction": {"description": "Birincil grup değişikliği onay eylemi."},
   "primaryGroupChangeFailed": "Birincil grubun değiştirilemedi. Yenileyip tekrar dene.",
-  "@primaryGroupChangeFailed": {"description": "Eski seçim veya ret sonrası gösterilen hata."}
+  "@primaryGroupChangeFailed": {"description": "Eski seçim veya ret sonrası gösterilen hata."},
+  "supportTicketTypeFeedback": "Geri bildirim",
+  "@supportTicketTypeFeedback": {"description": "Destek kutusu filtresi ve bilet türü."},
+  "supportTicketTypeQuestion": "Soru",
+  "@supportTicketTypeQuestion": {"description": "Destek kutusu filtresi ve bilet türü."},
+  "supportTicketTypeReport": "Şikâyet",
+  "@supportTicketTypeReport": {"description": "Destek kutusu filtresi ve bilet türü."}
 }

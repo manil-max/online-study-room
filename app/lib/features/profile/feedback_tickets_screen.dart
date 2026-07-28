@@ -166,7 +166,7 @@ class _FeedbackTicketConversationDialogState
           );
       _controller.clear();
       ref.invalidate(myFeedbackTicketsProvider);
-      ref.invalidate(adminFeedbackTicketsProvider);
+      ref.invalidate(adminFeedbackTicketsProvider(null));
       await _load();
       _scrollToBottom(animated: true);
     } on AdminException {
