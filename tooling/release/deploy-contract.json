@@ -2,10 +2,10 @@
   "schema_version": 1,
   "local_migration_head": "0100",
   "staging": {
-    "migration_head": "0094",
+    "migration_head": "0100",
     "deploy_enabled": true,
     "release_enabled": true,
-    "hold_reason": "PLAN 3 phase L adds 0090-0094: support-inbox ticket typing (0090), server-fed FAQ entries (0091), two-way block enforcement inside send_nudge (0092), group bans plus server-side invite-code regeneration (0093), and a public-name filter for display names and group names (0094). Every step is additive or replaces an existing function with an identical signature (join_group, join_public_group, send_nudge), so v54 clients already in the field keep working across the apply. Staging applies first so production repeats a proven step."
+    "hold_reason": "PLAN 4 (v56) adds 0095-0100: server-side block visibility enforcement (0095), a private report-attachment bucket with server-side size and MIME validation (0096), a super-admin-only moderation report detail RPC (0097), graduated sanctions with 24h/7d/14d/30d/permanent tiers (0098), report-group deduplication (0099), and a deduplicated admin push for new content reports (0100). Every step is additive or replaces a function with an identical signature, so v55 clients in the field keep working across the apply. Local replay of 0001-0100 plus 29 pgTAP files (377 tests) passed. Staging applies first so production repeats a proven step. PLAN 3 phase L adds 0090-0094: support-inbox ticket typing (0090), server-fed FAQ entries (0091), two-way block enforcement inside send_nudge (0092), group bans plus server-side invite-code regeneration (0093), and a public-name filter for display names and group names (0094). Every step is additive or replaces an existing function with an identical signature (join_group, join_public_group, send_nudge), so v54 clients already in the field keep working across the apply. Staging applies first so production repeats a proven step."
   },
   "production": {
     "migration_head": "0094",
