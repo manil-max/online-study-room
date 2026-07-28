@@ -8,53 +8,25 @@ import '../../l10n/app_localizations.dart';
 /// Motor [TourDefinition] dışında ürün bilgisi taşımaz. Böylece metin, boş
 /// durum ve hedef seçimi feature katmanında kalır.
 abstract final class AppTours {
+  /// Ana ekran turu — **tek adım**.
+  ///
+  /// 🔴 WP-417 (sahip cihaz testi): *"sadece edit kısmını gösterelim."* Genel
+  /// bakış adımı ve arkasından zincirlenen sayaç turu kaldırıldı; ana ekranda
+  /// artık yalnız kartları düzenleme düğmesi tanıtılır. Boş panoda metin aynı,
+  /// başlık kullanıcının o an gördüğü duruma göre değişir.
   static TourDefinition home(
     AppLocalizations l10n, {
-    required GlobalKey dashboardAnchor,
     required GlobalKey editAnchor,
     required bool isEmpty,
   }) => TourDefinition(
     id: 'home',
     version: 1,
-    steps: isEmpty
-        ? [
-            TourStep(
-              id: 'empty',
-              title: l10n.homeAnaSayfanBos,
-              text: l10n.tourHomeEdit,
-              anchor: editAnchor,
-            ),
-          ]
-        : [
-            TourStep(
-              id: 'overview',
-              title: l10n.homeAnaSayfa,
-              text: l10n.tourHomeOverview,
-              anchor: dashboardAnchor,
-            ),
-            TourStep(
-              id: 'edit',
-              title: l10n.homeKartlariDuzenle,
-              text: l10n.tourHomeEdit,
-              anchor: editAnchor,
-            ),
-          ],
-  );
-
-  static TourDefinition timer(
-    AppLocalizations l10n, {
-    required GlobalKey dashboardAnchor,
-    required GlobalKey editAnchor,
-    required bool isAvailable,
-  }) => TourDefinition(
-    id: 'timer',
-    version: 1,
     steps: [
       TourStep(
-        id: isAvailable ? 'overview' : 'missing',
-        title: l10n.homeSayac,
-        text: isAvailable ? l10n.tourTimerOverview : l10n.tourTimerMissing,
-        anchor: isAvailable ? dashboardAnchor : editAnchor,
+        id: 'edit',
+        title: isEmpty ? l10n.homeAnaSayfanBos : l10n.homeKartlariDuzenle,
+        text: l10n.tourHomeEdit,
+        anchor: editAnchor,
       ),
     ],
   );
@@ -102,24 +74,10 @@ abstract final class AppTours {
     ],
   );
 
-  static TourDefinition stats(
-    AppLocalizations l10n, {
-    required GlobalKey periodAnchor,
-    required bool hasSessions,
-  }) => TourDefinition(
-    id: 'stats',
-    version: 1,
-    steps: [
-      TourStep(
-        id: hasSessions ? 'overview' : 'empty',
-        title: l10n.statsIstatistik,
-        text: hasSessions ? l10n.tourStatsOverview : l10n.tourStatsEmpty,
-        // Veri yokken dönem çubuğunu işaretlemek yerine neyin eksik olduğunu
-        // ortadaki balonda açıkla.
-        anchor: hasSessions ? periodAnchor : null,
-      ),
-    ],
-  );
+  // 🔴 WP-417: istatistik dönem tanıtımı **tamamen kaldırıldı**. Sahip bunu
+  // v55'te kendisi istemişti, cihazda görünce isteğini geri aldı. Tur tanımı,
+  // ekrandaki çıpası ve dört dildeki metin anahtarları birlikte silindi;
+  // yarısı duran bir tur ölü anahtar bırakır.
 
   static TourDefinition profile(
     AppLocalizations l10n, {

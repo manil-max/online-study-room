@@ -3,12 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/desktop/desktop_window.dart';
-import '../../core/navigation/nav_index.dart';
-import '../../core/tour/tour_host.dart';
 import '../../data/providers/auth_providers.dart';
 import '../../data/providers/group_providers.dart';
 import '../../data/providers/study_providers.dart';
-import '../tours/app_tours.dart';
 import 'widgets/class_stats_view.dart';
 import 'widgets/personal_stats_view.dart';
 import 'widgets/stats_period_bar.dart';
@@ -23,11 +20,8 @@ class StatsScreen extends ConsumerStatefulWidget {
 }
 
 class _StatsScreenState extends ConsumerState<StatsScreen> {
-  final _periodTourAnchor = GlobalKey();
-
   @override
   Widget build(BuildContext context) {
-    final sessionsAsync = ref.watch(userSessionsProvider);
     final page = DefaultTabController(
       length: 2,
       child: Scaffold(
@@ -46,7 +40,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
         body: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            KeyedSubtree(key: _periodTourAnchor, child: const StatsPeriodBar()),
+            const StatsPeriodBar(),
             const Expanded(
               child: TabBarView(children: [_PersonalTab(), _ClassTab()]),
             ),
@@ -55,17 +49,8 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
       ),
     );
 
-    if (ref.watch(navIndexProvider) != AppTab.stats.index ||
-        sessionsAsync.asData == null) {
-      return page;
-    }
-
-    final definition = AppTours.stats(
-      AppLocalizations.of(context),
-      periodAnchor: _periodTourAnchor,
-      hasSessions: sessionsAsync.asData!.value.isNotEmpty,
-    );
-    return TourHost(definition: definition, child: page);
+    // 🔴 WP-417: dönem tanıtım turu kaldırıldı (sahip isteğini geri aldı).
+    return page;
   }
 }
 

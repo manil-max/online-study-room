@@ -3291,7 +3291,7 @@ WP-385 (l10n/başarım). Sonraki dalga: WP-381 · WP-383 · WP-382.
 
 #### WP-417: Tanıtım turu sadeleştirme 🎯
 - **Program/Faz:** PLAN 4 · Faz Q (kaynak: sahip cihaz testi)
-- **Ajan:** Lane D · **Durum:** [ ] Başlamadı
+- **Ajan:** Lane D · **Durum:** [x] Kod+test tamam · cihaz kabulü bekliyor
 - **Problem:** Sahip ana ekran turunu beğenmedi: *"sadece edit kısmını gösterelim."*
   İstatistiklerdeki period tanıtımı için **önceki isteğini geri aldı:** kaldırılacak.
 - **Kapsam dışı:** İpucu (coach mark) sistemi mimarisi · tur sıfırlama düğmesi.
@@ -3308,6 +3308,27 @@ WP-385 (l10n/başarım). Sonraki dalga: WP-381 · WP-383 · WP-382.
 - **Tuzaklar:** 🔴 Anahtar silerken **dört dilden birden** sil; birinde kalırsa
   çevrilmemiş/artık anahtar raporu kırmızı düşer.
 - **Model önerisi:** Sonnet
+- **DoD kanıtı (2026-07-28):**
+  - **Ana ekran:** tur tek adıma indi (`home.v1` → yalnız `edit`). Genel bakış
+    adımı kalktı. 🔴 **Yorum kararı:** ana ekranda Home turu biter bitmez
+    zincirlenen **Sayaç turu** da kaldırıldı (`AppTours.timer` silindi) — sahip
+    *"sadece edit kısmını gösterelim"* dediğinde cihazda gördüğü ikinci balon
+    buydu; biri kalsaydı istek yarım karşılanırdı. Geri istenirse tek kart.
+  - **İstatistikler:** dönem tanıtımı **tamamen** kalktı — `AppTours.stats`,
+    `stats_screen`'deki `TourHost` ve `_periodTourAnchor` birlikte silindi.
+  - **Ölü anahtar yok:** `tourHomeOverview` · `tourTimerOverview` ·
+    `tourTimerMissing` · `tourStatsOverview` · `tourStatsEmpty` **dört dilden
+    birden** silindi (TR/EN/DE/AR); katalog eşliği testi yeşil. Ana ekrandaki
+    ölü `_dashboardTourAnchor` da kaldırıldı.
+  - **Adım sayısı testte sabit:** `app_tours_test.dart` artık dört tur bekliyor
+    (`home.v1 · groups.v1 · campfire.v1 · profile.v1`) ve ana ekran turunun tek
+    adım + `edit` kimliği olduğunu doğruluyor; yeni bir tur sessizce eklenirse
+    ya da silinenler geri gelirse test kırılır. Balon taşma/yerleşim testleri
+    (TR+EN, 360 px) korunuyor.
+  - **Test:** `test/features/tours` + `test/core/tour` + `test/features/home` +
+    `test/features/stats` → **49/49 yeşil**; `test/l10n` 28/28 yeşil.
+  - **Kanıt etiketi:** `Cihazda doğrulanmalı` (tur ilk açılışta görünür).
+- **Commit:** `WP-417`
 
 #### WP-418: Başarım açıklamalarını ölçülebilir yaz 🏅
 - **Program/Faz:** PLAN 4 · Faz Q (kaynak: sahip cihaz testi)

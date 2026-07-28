@@ -5719,21 +5719,9 @@
   "@groupTimeZoneUpdated": {
     "description": "Confirmation after changing a study group's time zone."
   },
-  "tourHomeOverview": "Your cards and summaries are here.",
-  "@tourHomeOverview": {
-    "description": "Home introduction tour overview."
-  },
   "tourHomeEdit": "Add, move, resize, or remove cards.",
   "@tourHomeEdit": {
     "description": "Home introduction tour edit-card guidance."
-  },
-  "tourTimerOverview": "Choose a subject and mode, then start.",
-  "@tourTimerOverview": {
-    "description": "Timer introduction tour overview."
-  },
-  "tourTimerMissing": "Add Timer from Edit cards.",
-  "@tourTimerMissing": {
-    "description": "Timer introduction tour guidance when the card is absent."
   },
   "tourGroupsOverview": "Campfire, goal, and ranking are here.",
   "@tourGroupsOverview": {
@@ -5754,14 +5742,6 @@
   "tourCampfireEmpty": "Join a group around the campfire.",
   "@tourCampfireEmpty": {
     "description": "Campfire introduction tour guidance when the user has no group."
-  },
-  "tourStatsOverview": "Pick a period and compare progress.",
-  "@tourStatsOverview": {
-    "description": "Statistics introduction tour overview."
-  },
-  "tourStatsEmpty": "Data appears after your first session.",
-  "@tourStatsEmpty": {
-    "description": "Statistics introduction tour guidance when there are no sessions."
   },
   "tourProfileOverview": "See your avatar and awards.",
   "@tourProfileOverview": {

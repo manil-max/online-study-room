@@ -15,18 +15,7 @@ void main() {
     final primary = GlobalKey();
     final secondary = GlobalKey();
     return [
-      AppTours.home(
-        l10n,
-        dashboardAnchor: primary,
-        editAnchor: secondary,
-        isEmpty: !hasContent,
-      ),
-      AppTours.timer(
-        l10n,
-        dashboardAnchor: primary,
-        editAnchor: secondary,
-        isAvailable: hasContent,
-      ),
+      AppTours.home(l10n, editAnchor: secondary, isEmpty: !hasContent),
       AppTours.groups(
         l10n,
         contentAnchor: primary,
@@ -34,24 +23,27 @@ void main() {
         hasGroup: hasContent,
       ),
       AppTours.campfire(l10n, campfireAnchor: primary, hasGroup: hasContent),
-      AppTours.stats(l10n, periodAnchor: primary, hasSessions: hasContent),
       AppTours.profile(l10n, identityAnchor: primary, actionsAnchor: secondary),
     ];
   }
 
-  test('six tours have stable versioned ids and short readable steps', () {
+  // 🔴 WP-417: sahip ana ekran turunu tek adıma indirdi ve istatistik dönem
+  // turunu tamamen kaldırdı. Sayı burada sabit; yeni bir tur sessizce eklenirse
+  // ya da geri gelirse bu test kırılır.
+  test('four tours have stable versioned ids and short readable steps', () {
     final overflowingSteps = <String>[];
     for (final l10n in [AppLocalizationsTr(), AppLocalizationsEn()]) {
       for (final hasContent in [true, false]) {
         final tours = definitions(l10n, hasContent: hasContent);
         expect(tours.map((tour) => tour.storageId), [
           'home.v1',
-          'timer.v1',
           'groups.v1',
           'campfire.v1',
-          'stats.v1',
           'profile.v1',
         ]);
+        // Ana ekran turu tek adım: yalnız "kartları düzenle".
+        expect(tours.first.steps, hasLength(1));
+        expect(tours.first.steps.single.id, 'edit');
         expect(tours.map((tour) => tour.id).toSet(), hasLength(tours.length));
 
         for (final tour in tours) {
@@ -87,37 +79,17 @@ void main() {
 
   test('empty states never point at content that does not exist', () {
     final l10n = AppLocalizationsTr();
-    final dashboard = GlobalKey();
     final edit = GlobalKey();
-    final period = GlobalKey();
 
-    final home = AppTours.home(
-      l10n,
-      dashboardAnchor: dashboard,
-      editAnchor: edit,
-      isEmpty: true,
-    );
-    final timer = AppTours.timer(
-      l10n,
-      dashboardAnchor: dashboard,
-      editAnchor: edit,
-      isAvailable: false,
-    );
+    final home = AppTours.home(l10n, editAnchor: edit, isEmpty: true);
     final campfire = AppTours.campfire(
       l10n,
       campfireAnchor: GlobalKey(),
       hasGroup: false,
     );
-    final stats = AppTours.stats(
-      l10n,
-      periodAnchor: period,
-      hasSessions: false,
-    );
 
     expect(home.steps.single.anchor, same(edit));
-    expect(timer.steps.single.anchor, same(edit));
     expect(campfire.steps.single.anchor, isNull);
-    expect(stats.steps.single.anchor, isNull);
   });
 
   test('Turkish and English tour content is independently localized', () {

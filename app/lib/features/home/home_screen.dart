@@ -6,7 +6,6 @@ import '../../core/desktop/desktop_layout.dart';
 import '../../core/desktop/desktop_window.dart';
 import '../../core/navigation/nav_index.dart';
 import '../../core/prefs/app_prefs.dart';
-import '../../core/tour/tour_controller.dart';
 import '../../core/tour/tour_host.dart';
 import '../../core/widgets/safe_screen_padding.dart';
 import '../tours/app_tours.dart';
@@ -27,7 +26,6 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _editing = false;
   bool _showEditHint = false;
-  final _dashboardTourAnchor = GlobalKey();
   final _editTourAnchor = GlobalKey();
 
   /// WP-291: Boyut panelinin bağlı olduğu seçili kart. Grid tıklamayla bildirir,
@@ -106,27 +104,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   ) {
     if (ref.watch(navIndexProvider) != AppTab.home.index) return child;
 
-    // Tur bitince controller state'i değişir; Home → Sayaç sırasını yeniden
-    // hesaplamak için state'i izlemek gerekir.
-    ref.watch(tourControllerProvider);
-    final controller = ref.read(tourControllerProvider.notifier);
-    final l10n = AppLocalizations.of(context);
-    final home = AppTours.home(
-      l10n,
-      dashboardAnchor: _dashboardTourAnchor,
+    // 🔴 WP-417 (sahip): ana ekranda tek bir şey tanıtılır — kartları düzenleme.
+    // Önceden Home turu bitince Sayaç turu zincirleniyordu; sahip *"sadece edit
+    // kısmını gösterelim"* dedi, zincir kaldırıldı.
+    final definition = AppTours.home(
+      AppLocalizations.of(context),
       editAnchor: _editTourAnchor,
       isEmpty: layout.isEmpty,
     );
-    final definition = controller.seen(home)
-        ? AppTours.timer(
-            l10n,
-            dashboardAnchor: _dashboardTourAnchor,
-            editAnchor: _editTourAnchor,
-            isAvailable: layout.any(
-              (card) => card.type == DashboardCardType.timer,
-            ),
-          )
-        : home;
 
     return TourHost(
       key: ValueKey(definition.storageId),
@@ -172,36 +157,33 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                       const SizedBox(height: 10),
                     ],
-                    KeyedSubtree(
-                      key: _dashboardTourAnchor,
-                      child: _MatrixGrid(
-                        layout: layout,
-                        columns: columns,
-                        editing: _editing,
-                        selectedType: _selectedCard,
-                        onSelectCard: (type) =>
-                            setState(() => _selectedCard = type),
-                        onLongPressCard: () => _setEditing(true),
-                        onMoveCard: (type, x, y) => ref
-                            .read(dashboardLayoutProvider.notifier)
-                            .setBounds(type, x: x, y: y),
-                        onResizeCard: (type, x, y, w, h, persist) => ref
-                            .read(dashboardLayoutProvider.notifier)
-                            .setBounds(
-                              type,
-                              x: x,
-                              y: y,
-                              w: w,
-                              h: h,
-                              persist: persist,
-                            ),
-                        onCommit: ref
-                            .read(dashboardLayoutProvider.notifier)
-                            .persist,
-                        onRemove: ref
-                            .read(dashboardLayoutProvider.notifier)
-                            .removeCard,
-                      ),
+                    _MatrixGrid(
+                      layout: layout,
+                      columns: columns,
+                      editing: _editing,
+                      selectedType: _selectedCard,
+                      onSelectCard: (type) =>
+                          setState(() => _selectedCard = type),
+                      onLongPressCard: () => _setEditing(true),
+                      onMoveCard: (type, x, y) => ref
+                          .read(dashboardLayoutProvider.notifier)
+                          .setBounds(type, x: x, y: y),
+                      onResizeCard: (type, x, y, w, h, persist) => ref
+                          .read(dashboardLayoutProvider.notifier)
+                          .setBounds(
+                            type,
+                            x: x,
+                            y: y,
+                            w: w,
+                            h: h,
+                            persist: persist,
+                          ),
+                      onCommit: ref
+                          .read(dashboardLayoutProvider.notifier)
+                          .persist,
+                      onRemove: ref
+                          .read(dashboardLayoutProvider.notifier)
+                          .removeCard,
                     ),
                     if (_editing) ...[
                       const Divider(height: 24),

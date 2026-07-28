@@ -1617,17 +1617,12 @@
       "offset": {}
     }
   },
-  "tourHomeOverview": "Kartların ve özetlerin burada.",
   "tourHomeEdit": "Kart ekle, taşı veya boyutlandır.",
-  "tourTimerOverview": "Dersi ve modu seç; süreyi başlat.",
-  "tourTimerMissing": "Sayacı Kartları düzenle’den ekle.",
   "tourGroupsOverview": "Ateş, hedef ve sıralama burada.",
   "tourGroupsEmpty": "Grup oluştur, katıl veya keşfet.",
   "tourGroupsSwitch": "Başka grubuna buradan geç.",
   "tourCampfireOverview": "Çalışanları ve yerel göğü gör.",
   "tourCampfireEmpty": "Gruba katıl, ateş başında buluş.",
-  "tourStatsOverview": "Dönemi seç; ilerlemeyi gör.",
-  "tourStatsEmpty": "İlk oturumdan sonra veriler görünür.",
   "tourProfileOverview": "Avatarın ve başarımların burada.",
   "tourProfileActions": "Kayıtları veya Ayarlar’ı aç.",
   "wp295PreviewTitle": "WP-295 · Kamp ateşi parametrik önizleme",
