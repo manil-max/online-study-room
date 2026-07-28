@@ -3332,7 +3332,7 @@ WP-385 (l10n/başarım). Sonraki dalga: WP-381 · WP-383 · WP-382.
 
 #### WP-418: Başarım açıklamalarını ölçülebilir yaz 🏅
 - **Program/Faz:** PLAN 4 · Faz Q (kaynak: sahip cihaz testi)
-- **Ajan:** Lane D · **Durum:** [ ] Başlamadı
+- **Ajan:** Lane D · **Durum:** [x] Kod+test tamam · cihaz kabulü bekliyor
 - **Problem:** Sahip iki başarımı **anlamadı**: *Source of Inspiration* (dürttükten
   sonra kaç dakika içinde derse başlaması gerekiyor?) ve *Lokomotif* ("o gün içinde
   ilk çalışmaya başlayan mı? ben de anlamadım"). Açıklamalar koşulu söylemiyor.
@@ -3350,6 +3350,54 @@ WP-385 (l10n/başarım). Sonraki dalga: WP-381 · WP-383 · WP-382.
 - **Tuzaklar:** Açıklamayı plandan değil **koddan** yaz — eşik kodda ne diyorsa o.
   (WP kartı iddialarının koddan doğrulanması kuralı.)
 - **Model önerisi:** Sonnet
+- **DoD kanıtı (2026-07-28) — hepsi koddan okundu, plandan değil:**
+  - 🔴 **Source of Inspiration'ın cevabı: pencere diye bir şey yok.** Metrik
+    `0025_achievements_social_metrics.sql:162` →
+    `select count(*) from nudges where sender_id = p_user_id`. Yani sayılan şey
+    **gönderdiğin dürtme sayısı**; karşı tarafın çalışmaya başlaması koşul
+    değil, dolayısıyla dakika sınırı da yok. Eski metin ("dürtmenin ardından
+    5 üyenin başlamasını sağla") **olmayan bir kuralı vaat ediyordu** — sahibin
+    sorusunun kaynağı buydu. Yeni metin: *"Arkadaşlarına 5 kez dürtme gönder."*
+  - 🔴 **Lokomotif'in koşulu: 15 dakikalık takip penceresi.**
+    `0059_campfire_dynamic_threshold.sql` `loco` CTE →
+    `follower.a between leader.a and least(leader.z, leader.a + interval '15 minutes')`.
+    Bir olay = **sen** başladıktan sonraki 15 dk içinde (ve sen hâlâ çalışırken)
+    başlayan **farklı** bir grup arkadaşı; grup-gün başına farklı kişi sayılır.
+    "Çalışmaya ilk başlayan üye ol" hiç doğru değildi. Yeni metin: *"Sen
+    başladıktan sonraki 15 dakika içinde 5 kez bir grup arkadaşın da çalışmaya
+    başlasın."*
+  - **Tarama iki yanlış metin daha buldu:**
+    - **Kamp Ateşi** "en az 3 grup üyesi aktifken" diyordu; eşik `0059`'dan beri
+      **dinamik**: `greatest(2, ceil(N/2))`. Metin artık "grubunun en az yarısı
+      (en az 2 kişi)" diyor.
+    - **Takım Oyuncusu** "grubunun günlük hedefine katkı sağla" diyordu; metrik
+      (`0025:167`) aslında **aktif grup üyesiyken çalıştığın farklı gün sayısı**
+      — grubun hedefe ulaşması hiç hesaba girmiyor. Hem kademe metni hem kural
+      cümlesi düzeltildi.
+    - **Alfa Kurt** "birinci ol" diyordu; `alpha` CTE **tek başına** birinciliği
+      şart koşuyor (`count(*) over(partition by seconds) = 1`), beraberlikte
+      kimse almıyor. Metne yazıldı.
+  - **Dört dil tam:** sekiz metin (5 kademe koşulu + 2 kısa açıklama + Takım
+    Oyuncusu kuralı) TR/EN/DE/AR **birlikte** güncellendi; placeholder eşliği ve
+    katalog eşliği testleri yeşil.
+  - **Test:** `test/core/stats/achievement_catalog_contract_test.dart` altı yeni
+    testle genişletildi — her kademe metni **dört dilde** kendi eşiğini sayıyla
+    yazıyor (eşik 1 olanlar hariç: diller orada "bir/واحد" diyor) · İlham
+    Kaynağı metni dönüşüm vaadine dönerse kırmızı · Lokomotif metninde `15`
+    yoksa kırmızı · Kamp Ateşi'nde sabit `3` geri gelirse kırmızı · Takım
+    Oyuncusu'nda "hedefe katkı" geri gelirse kırmızı · Alfa Kurt'ta "tek başına"
+    düşerse kırmızı. `test/core/stats` + showcase + `test/l10n` → **45/45 yeşil**.
+  - ⚠️ **Kapsam dışı bırakılan bir kalıntı (Lane C'ye not):** kilitli gizli
+    başarım kartlarının tamamı `profileBuGizliBasariminKosulu` metnini
+    gösteriyor ("bu gizli başarımın koşulu henüz etkin değil"). Bu cümle yalnız
+    **Mola Düşmanı** için doğru (`0052`: "backfill tanımlıdır, çalışmaz"), diğer
+    gizli başarımlar için yanıltıcı. Ayrımı yapmak `achievement_showcase.dart`
+    içinde kod değişikliği ister; o dosya **WP-421 ile Lane C'nin `features/
+    profile/**` kümesinde**, bu yüzden dokunulmadı. Tek satırlık düzeltme:
+    kilitli-gizli yüzeyinde `profileGizliBirBasarimAcmak` kullanmak.
+  - **Kanıt etiketi:** `Kodda doğrulandı` (metin değişikliği; cihazda okunması
+    yeterli).
+- **Commit:** `WP-418`
 
 ### Faz R — Destek, ayarlar ve rozet *(v55 saha bulguları)*
 

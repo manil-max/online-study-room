@@ -62,7 +62,7 @@
       }
     }
   },
-  "profileBasarimGrupBirinciligiKosulu": "Finish first in your group on {count, plural, =1 {1 day} other {{count} days}}.",
+  "profileBasarimGrupBirinciligiKosulu": "Finish as the sole first-place member of your group on {count, plural, =1 {1 day} other {{count} days}} (ties count for nobody).",
   "profileBasarimHaftalikGrupBirinciligiKosulu": "Finish as the sole first-place member of your group in {count, plural, =1 {1 week} other {{count} weeks}}.",
   "@profileBasarimHaftalikGrupBirinciligiKosulu": {
     "description": "Achievement tier condition.",
@@ -80,7 +80,7 @@
       }
     }
   },
-  "profileBasarimGrupHedefKosulu": "Contribute to your group's daily goal on {count, plural, =1 {1 day} other {{count} days}}.",
+  "profileBasarimGrupHedefKosulu": "Study on {count, plural, =1 {1 day} other {{count} days}} while you are an active group member.",
   "@profileBasarimGrupHedefKosulu": {
     "description": "Achievement tier condition.",
     "placeholders": {
@@ -89,7 +89,7 @@
       }
     }
   },
-  "profileBasarimKampAtesiKosulu": "Study while at least 3 group members are active for {count, plural, =1 {1 hour} other {{count} hours}}.",
+  "profileBasarimKampAtesiKosulu": "Study {count, plural, =1 {1 hour} other {{count} hours}} while at least half of your group (minimum 2 members) is studying at the same time.",
   "@profileBasarimKampAtesiKosulu": {
     "description": "Achievement tier condition.",
     "placeholders": {
@@ -98,7 +98,7 @@
       }
     }
   },
-  "profileBasarimDurtmeKosulu": "Have {count, plural, =1 {1 member} other {{count} members}} start studying after your nudge.",
+  "profileBasarimDurtmeKosulu": "Send {count, plural, =1 {1 nudge} other {{count} nudges}} to your friends.",
   "@profileBasarimDurtmeKosulu": {
     "description": "Achievement tier condition.",
     "placeholders": {
@@ -107,7 +107,7 @@
       }
     }
   },
-  "profileBasarimLokomotifKosulu": "Be the first group member to start studying {count, plural, =1 {1 time} other {{count} times}}.",
+  "profileBasarimLokomotifKosulu": "Have a group member start studying within 15 minutes after you start, {count, plural, =1 {1 time} other {{count} times}}.",
   "@profileBasarimLokomotifKosulu": {
     "description": "Achievement tier condition.",
     "placeholders": {
@@ -3926,7 +3926,7 @@
   "@coreLokomotif": {
     "description": "Core user-facing text. Source: Lokomotif"
   },
-  "coreIlkOturanIlham": "First to start studying",
+  "coreIlkOturanIlham": "Friends who start within 15 minutes after you",
   "@coreIlkOturanIlham": {
     "description": "Core user-facing text. Source: İlk oturan ilham"
   },
@@ -3986,7 +3986,7 @@
   "@coreIlhamKaynagi": {
     "description": "Core user-facing text. Source: İlham Kaynağı"
   },
-  "coreDurtmeDonusumu": "Nudge conversion",
+  "coreDurtmeDonusumu": "Number of nudges you send",
   "@coreDurtmeDonusumu": {
     "description": "Core user-facing text. Source: Dürtme dönüşümü"
   },
@@ -4864,7 +4864,7 @@
   "@profileAchievementPerfectMonth30Rule": {
     "description": "Exact 30-day Perfect Month rule"
   },
-  "profileAchievementTeamPlayerRule": "Contribute eligible study time on days your group reaches its goal.",
+  "profileAchievementTeamPlayerRule": "Every distinct day you study as an active group member counts; your group does not need to reach its goal.",
   "@profileAchievementTeamPlayerRule": {
     "description": "Exact Team Player achievement explanation"
   },

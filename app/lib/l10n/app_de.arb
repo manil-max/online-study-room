@@ -62,7 +62,7 @@
       }
     }
   },
-  "profileBasarimGrupBirinciligiKosulu": "Werde in deiner Gruppe an {count, plural, =1 {1 Tag} other {{count} Tagen}} Erster.",
+  "profileBasarimGrupBirinciligiKosulu": "Werde an {count, plural, =1 {1 Tag} other {{count} Tagen}} alleiniger Erster deiner Gruppe (bei Gleichstand zählt es für niemanden).",
   "profileBasarimHaftalikGrupBirinciligiKosulu": "Werde in {count, plural, =1 {1 Woche} other {{count} Wochen}} alleiniger Erster deiner Gruppe.",
   "@profileBasarimGrupBirinciligiKosulu": {
     "description": "Achievement tier condition.",
@@ -72,7 +72,7 @@
       }
     }
   },
-  "profileBasarimGrupHedefKosulu": "Trage an {count, plural, =1 {1 Tag} other {{count} Tagen}} zum Tagesziel deiner Gruppe bei.",
+  "profileBasarimGrupHedefKosulu": "Lerne an {count, plural, =1 {1 Tag} other {{count} Tagen}}, während du aktives Mitglied einer Gruppe bist.",
   "@profileBasarimGrupHedefKosulu": {
     "description": "Achievement tier condition.",
     "placeholders": {
@@ -81,7 +81,7 @@
       }
     }
   },
-  "profileBasarimKampAtesiKosulu": "Lerne, während mindestens 3 Gruppenmitglieder für {count, plural, =1 {1 Stunde} other {{count} Stunden}} aktiv sind.",
+  "profileBasarimKampAtesiKosulu": "Lerne {count, plural, =1 {1 Stunde} other {{count} Stunden}}, während mindestens die Hälfte deiner Gruppe (mindestens 2 Mitglieder) gleichzeitig lernt.",
   "@profileBasarimKampAtesiKosulu": {
     "description": "Achievement tier condition.",
     "placeholders": {
@@ -90,7 +90,7 @@
       }
     }
   },
-  "profileBasarimDurtmeKosulu": "Sorge dafür, dass {count, plural, =1 {1 Mitglied} other {{count} Mitglieder}} nach deinem Anstupser mit dem Lernen beginnen.",
+  "profileBasarimDurtmeKosulu": "Sende {count, plural, =1 {1 Anstupser} other {{count} Anstupser}} an deine Freunde.",
   "@profileBasarimDurtmeKosulu": {
     "description": "Achievement tier condition.",
     "placeholders": {
@@ -99,7 +99,7 @@
       }
     }
   },
-  "profileBasarimLokomotifKosulu": "Sei {count, plural, =1 {1 Mal} other {{count} Mal}} das erste Gruppenmitglied, das mit dem Lernen beginnt.",
+  "profileBasarimLokomotifKosulu": "Lass {count, plural, =1 {1 Mal} other {{count} Mal}} ein Gruppenmitglied innerhalb von 15 Minuten nach deinem Start ebenfalls mit dem Lernen beginnen.",
   "@profileBasarimLokomotifKosulu": {
     "description": "Achievement tier condition.",
     "placeholders": {
@@ -3870,7 +3870,7 @@
   "@coreLokomotif": {
     "description": "Core user-facing text. Source: Lokomotif"
   },
-  "coreIlkOturanIlham": "Erster, der mit dem Studium beginnt",
+  "coreIlkOturanIlham": "Freunde, die innerhalb von 15 Minuten nach dir starten",
   "@coreIlkOturanIlham": {
     "description": "Core user-facing text. Source: İlk oturan ilham"
   },
@@ -3930,7 +3930,7 @@
   "@coreIlhamKaynagi": {
     "description": "Core user-facing text. Source: İlham Kaynağı"
   },
-  "coreDurtmeDonusumu": "Nudge-Conversion",
+  "coreDurtmeDonusumu": "Anzahl der von dir gesendeten Anstupser",
   "@coreDurtmeDonusumu": {
     "description": "Core user-facing text. Source: Dürtme dönüşümü"
   },
@@ -4673,7 +4673,7 @@
   "profileAchievementPersonalBest": "Bestwert {current} · {target} am Stück nötig",
   "profileAchievementProgressUnavailable": "Fortschritt ist noch nicht verfügbar",
   "profileAchievementPerfectMonth30Rule": "Erreiche dein Tagesziel an mindestens 28 Tagen innerhalb eines Kalendermonats (höchstens 2 Fehltage).",
-  "profileAchievementTeamPlayerRule": "Trage an Tagen, an denen deine Gruppe ihr Ziel erreicht, gültige Lernzeit bei.",
+  "profileAchievementTeamPlayerRule": "Jeder einzelne Tag, an dem du als aktives Gruppenmitglied lernst, zählt; deine Gruppe muss ihr Ziel nicht erreichen.",
   "profileStudyXpNote": "Jede volle Lernstunde bringt automatisch 50 XP.",
   "profileRewardReady": "{count} Belohnungen bereit · {xp} XP",
   "profileRewardClaim": "Abholen",

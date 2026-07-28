@@ -62,7 +62,7 @@
       }
     }
   },
-  "profileBasarimGrupBirinciligiKosulu": "كن الأول في مجموعتك لمدة {count, plural, =1 {يوم واحد} other {{count} أيام}}.",
+  "profileBasarimGrupBirinciligiKosulu": "كن الأول منفردًا في مجموعتك في {count, plural, =1 {يوم واحد} other {{count} أيام}} (التعادل لا يُحتسب لأحد).",
   "profileBasarimHaftalikGrupBirinciligiKosulu": "كن الأول منفردًا في مجموعتك لمدة {count, plural, =1 {أسبوع واحد} other {{count} أسابيع}}.",
   "@profileBasarimGrupBirinciligiKosulu": {
     "description": "Achievement tier condition.",
@@ -72,7 +72,7 @@
       }
     }
   },
-  "profileBasarimGrupHedefKosulu": "ساهم في الهدف اليومي لمجموعتك لمدة {count, plural, =1 {يوم واحد} other {{count} أيام}}.",
+  "profileBasarimGrupHedefKosulu": "ادرس في {count, plural, =1 {يوم واحد} other {{count} أيام}} بينما تكون عضوًا نشطًا في مجموعة.",
   "@profileBasarimGrupHedefKosulu": {
     "description": "Achievement tier condition.",
     "placeholders": {
@@ -81,7 +81,7 @@
       }
     }
   },
-  "profileBasarimKampAtesiKosulu": "ادرس بينما يكون 3 أعضاء على الأقل نشطين لمدة {count, plural, =1 {ساعة واحدة} other {{count} ساعات}}.",
+  "profileBasarimKampAtesiKosulu": "ادرس {count, plural, =1 {ساعة واحدة} other {{count} ساعات}} بينما يدرس نصف أعضاء مجموعتك على الأقل (عضوان على الأقل) في الوقت نفسه.",
   "@profileBasarimKampAtesiKosulu": {
     "description": "Achievement tier condition.",
     "placeholders": {
@@ -90,7 +90,7 @@
       }
     }
   },
-  "profileBasarimDurtmeKosulu": "اجعل {count, plural, =1 {عضوًا واحدًا} other {{count} أعضاء}} يبدأون الدراسة بعد تنبيهك.",
+  "profileBasarimDurtmeKosulu": "أرسل {count, plural, =1 {تنبيهًا واحدًا} other {{count} تنبيهات}} إلى أصدقائك.",
   "@profileBasarimDurtmeKosulu": {
     "description": "Achievement tier condition.",
     "placeholders": {
@@ -99,7 +99,7 @@
       }
     }
   },
-  "profileBasarimLokomotifKosulu": "كن أول عضو في المجموعة يبدأ الدراسة {count, plural, =1 {مرة واحدة} other {{count} مرات}}.",
+  "profileBasarimLokomotifKosulu": "اجعل عضوًا في المجموعة يبدأ الدراسة خلال 15 دقيقة بعد بدئك، {count, plural, =1 {مرة واحدة} other {{count} مرات}}.",
   "@profileBasarimLokomotifKosulu": {
     "description": "Achievement tier condition.",
     "placeholders": {
@@ -3870,7 +3870,7 @@
   "@coreLokomotif": {
     "description": "Core user-facing text. Source: Lokomotif"
   },
-  "coreIlkOturanIlham": "أول من يبدأ الدراسة",
+  "coreIlkOturanIlham": "أصدقاء يبدأون خلال 15 دقيقة بعدك",
   "@coreIlkOturanIlham": {
     "description": "Core user-facing text. Source: İlk oturan ilham"
   },
@@ -3930,7 +3930,7 @@
   "@coreIlhamKaynagi": {
     "description": "Core user-facing text. Source: İlham Kaynağı"
   },
-  "coreDurtmeDonusumu": "تحويل التنبيه",
+  "coreDurtmeDonusumu": "عدد التنبيهات التي ترسلها",
   "@coreDurtmeDonusumu": {
     "description": "Core user-facing text. Source: Dürtme dönüşümü"
   },
@@ -4673,7 +4673,7 @@
   "profileAchievementPersonalBest": "الأفضل {current} · تحتاج {target} في جلسة واحدة",
   "profileAchievementProgressUnavailable": "التقدم غير متاح بعد",
   "profileAchievementPerfectMonth30Rule": "حقق هدفك اليومي في 28 يومًا على الأقل ضمن شهر تقويمي واحد (بحد أقصى يومان فائتان).",
-  "profileAchievementTeamPlayerRule": "ساهم بوقت دراسة مؤهل في الأيام التي تحقق فيها مجموعتك هدفها.",
+  "profileAchievementTeamPlayerRule": "يُحتسب كل يوم تدرس فيه كعضو نشط في مجموعة؛ ولا يلزم أن تحقق مجموعتك هدفها.",
   "profileStudyXpNote": "تمنح كل ساعة دراسة كاملة 50 XP تلقائيًا.",
   "profileRewardReady": "{count} مكافآت جاهزة · {xp} XP",
   "profileRewardClaim": "تحصيل",
