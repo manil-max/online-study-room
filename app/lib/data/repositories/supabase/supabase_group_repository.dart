@@ -291,23 +291,20 @@ class SupabaseGroupRepository implements GroupRepository {
         .stream(primaryKey: ['group_id', 'user_id'])
         .eq('group_id', groupId)
         .asyncMap((rows) async {
-          final ids = rows.map((r) => r['user_id'] as String).toList();
-          if (ids.isEmpty) return <Profile>[];
-          final profs = await _client
-              .from('profiles')
-              .select()
-              .inFilter('id', ids);
-          // WP-106: O(n) map; firstWhere StateError riski yok.
-          final byUser = {for (final r in rows) r['user_id'] as String: r};
-          return profs.map<Profile>((pMap) {
-            final profile = Profile.fromMap(pMap);
-            final memberRow = byUser[profile.id];
-            return profile.copyWith(
-              isActive: memberRow == null
-                  ? false
-                  : memberRow['left_at'] == null,
-            );
-          }).toList();
+          if (rows.isEmpty) return <Profile>[];
+          // WP-413: profil satırları artık `profiles`ten okunmaz. `profiles`
+          // RLS'i engellenen çifti reddettiği için doğrudan okuma engellenen
+          // üyeyi listeden **düşürür** ve kamp ateşinde katılımcı sayısını
+          // bozardı. `group_member_directory` satırı korur, yalnız kimliği
+          // (ad/avatar/hayvan) sunucuda boşaltır → üye anonimleşir, kaybolmaz.
+          final directory = await _client.rpc(
+            'group_member_directory',
+            params: {'p_group_id': groupId},
+          );
+          return [
+            for (final raw in directory as List)
+              Profile.fromMap(Map<String, dynamic>.from(raw as Map)),
+          ];
         });
   }
 

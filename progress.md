@@ -3086,7 +3086,7 @@ WP-385 (l10n/başarım). Sonraki dalga: WP-381 · WP-383 · WP-382.
 
 #### WP-413: Engelleme yaptırımının eksik yüzeyleri 🚫
 - **Program/Faz:** PLAN 4 · Faz O (kaynak: sahip cihaz testi)
-- **Ajan:** Lane E · **Durum:** [ ] Başlamadı
+- **Ajan:** Lane E · **Durum:** [x] Kod + otomatik test tamam · `Cihazda doğrulanmalı`
 - **Problem:** `0092` engelleme yaptırımı dürtme ve kamp ateşini kapsıyor ama
   engellenen kişi **istatistik/liderlik tablolarında adıyla görünüyor** ve
   **profili açılabiliyor**. Yaptırım yüzey yüzey eklendiği için kapsam dışı yüzeyler kaldı.
@@ -3114,6 +3114,69 @@ WP-385 (l10n/başarım). Sonraki dalga: WP-381 · WP-383 · WP-382.
 - **Tuzaklar:** Grup istatistikleri sunucu RPC'sinden geliyor (`docs/recovery/`
   MIGRATION-BASELINE) — süzgeci RPC'nin **içine** koy, dışına sarma.
 - **Model önerisi:** 🔴 Opus
+- **DoD kanıtı (2026-07-28, Lane E) — `0095_block_visibility_enforcement.sql`:**
+  - **Süzgeç sunucuda, üç katman.** (1) `is_blocked_pair(a,b)` iki yönlü tek
+    doğruluk kaynağı, null-safe. (2) `can_see_user_sessions` engelli çifti
+    reddediyor — bu **tek** değişiklik `study_sessions` (0010),
+    `gamification_profiles` / `user_achievements` /
+    `achievement_metric_progress` (0024) ve `profiles` (0036) politikalarını
+    birden daraltıyor, yani sosyal profil ekranını besleyen her tablo kapanıyor
+    ve profil **doğrudan id ile bile** açılmıyor. `group_daily_totals` SECURITY
+    INVOKER olduğu için kendiliğinden daraldı. (3) SECURITY DEFINER RPC'ler
+    RLS'i atladığından süzgeç **RPC gövdesinin içine** kondu:
+    `group_contribution_breakdown`, `group_leaderboard_series`,
+    `group_alpha_scores`. Dışına sarma yok, istemci süzgeci yok.
+  - 🔴 **Kamp ateşi korundu — ama düz "profiles hide" bunu kırıyordu.**
+    `watchMembers` üye adlarını `profiles`ten okuyordu; RLS engelleneni
+    reddedince kişi **sahneden tamamen düşüyor** ve katılımcı sayısı bozuluyordu.
+    Bu yüzden `group_member_directory(gid)` eklendi: satırı **döndürür**,
+    yalnız kimliği (ad `''`, avatar `null`, hayvan `null`) boşaltır ve
+    `is_blocked = true` işaretler → kişi sahnede kalır, anonimleşir, sayı
+    bozulmaz. Üye listesi de aynı kaynaktan besleniyor.
+  - **Yan etki kapatıldı:** `profiles` engelleneni reddedince "Engellenen
+    kullanıcılar" yönetim ekranı kimi engellediğini gösteremez hâle geliyordu.
+    `blocked_user_directory()` yalnız **çağıranın kendi** engellediklerini
+    gerçek adıyla döndürür; sosyal yüzey açmaz (pgTAP karşı yönü de doğruluyor).
+  - **İstemci okuma yolları:** `supabase_group_repository.watchMembers` →
+    `group_member_directory` RPC'si; `supabase_moderation_repository.fetchBlockedProfiles`
+    → `blocked_user_directory` RPC'si (RPC'siz sunucuda maskeli-id yedeği duruyor).
+    Repo arayüzü değişmedi → `in_memory` ikizleri olduğu gibi geçerli.
+  - **Kanıt — pgTAP `024_block_visibility_enforcement.test.sql`, 17 iddia, hepsi
+    iki uçlu (A→B ve B→A):** engel yokken üye görünür (taban) · engelleyen
+    görünürlüğü kaybeder · profil id ile okunamaz (iki yön) · katkı tablosu ·
+    liderlik serisi · alpha sıralaması · günlük grup toplamı — engellenen kişi
+    yok · engelleyen **kendi** oturumunu görmeye devam eder · üye dizini hâlâ
+    **2 satır** döndürür (sayı korunur) · engellenenin kimliği `'|NULL|NULL|true'`
+    (anonim, gizli değil) · engellenmeyenin adı bozulmaz · engellenenler dizini
+    yalnız kendi engellerini ve gerçek adı verir.
+  - **Kanıt — Flutter `test/features/safety/block_visibility_wp413_test.dart`:**
+    kamp ateşi regresyon kilidi. Engellenen üye sahneden **silinmiyor**
+    (`b-<id>` gövde anahtarı duruyor), adı "Engellenen kullanıcı" oluyor;
+    ikinci test engel kaldırılınca gerçek adın döndüğünü kanıtlıyor (etiketin
+    gerçekten engelden geldiğini gösterir). İleride biri "tamamen gizle"ye
+    çevirirse bu iki test kırmızı düşer.
+  - **Yerel replay:** `local.ps1 baseline` → `0001→0095` uygulandı, **25 pgTAP
+    dosyası / 345 test PASS**. `guard.tests.ps1` **75/75**.
+    `flutter analyze` (değişen üç Dart dosyası) **No issues found**; ilgili
+    Flutter paketleri (blocked_users, moderation_block_filter, campfire_scene,
+    classroom_screen + yeni dosya) **yeşil**.
+  - **Kapsam notları:** "kullanıcı arama sonuçları" yüzeyi **yok** — uygulamada
+    kullanıcı araması bulunmuyor (gruba davet koduyla / herkese açık grup
+    keşfiyle giriliyor, `discover_groups_by_tz` kullanıcı değil grup döndürür).
+    Muafiyet olarak yalnız mevcut `is_super_admin()` OR'u korundu; yeni muafiyet
+    eklenmedi. Grup yasağı (`0093`) ayrı mekanizma, dokunulmadı.
+  - 🔴 **Tur sonu için not:** `local_migration_head` `0094`→`0095` taşındı ve
+    `001_schema_contract.test.sql` head pini de birlikte güncellendi.
+    `release-preflight.tests.ps1` bu noktada **beklendiği gibi kırmızıdır**:
+    sürüm kapısı yerel head ile staging/production head'inin eşit olmasını
+    şart koşuyor, ortamlar hâlâ `0094`. Tur sonunda apply `0100`e çıkınca yeşile
+    döner. **Sözleşmenin staging/production `migration_head` alanlarına
+    dokunulmadı** — orası apply kanıtı, uydurulmaz.
+  - **Kalan kapı:** iki hesapla cihaz doğrulaması — engelledikten sonra
+    liderlik tablosunda kişi yok, profili açılmıyor, kamp ateşinde "Engellenen
+    kullanıcı" olarak duruyor ve katılımcı sayısı değişmiyor.
+  - **Migration:** `0095` **uygulanmadı** (LOCAL KALIR). Rollback talimatı
+    dosyanın başlığında.
 
 #### WP-423: Şikâyet ve destek sorusuna foto eki 📎
 - **Program/Faz:** PLAN 4 · Faz O (kaynak: sahip isteği — "bildir kısmına foto eklenebilsin")

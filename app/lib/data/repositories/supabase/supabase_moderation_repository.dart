@@ -50,15 +50,13 @@ class SupabaseModerationRepository implements ModerationRepository {
     final ids = await listBlockedUserIds();
     if (ids.isEmpty) return const [];
 
-    // profiles_select RLS okumayı kısıtlayabilir; okunamayanlar maskelenir.
+    // WP-413: `profiles` artık engelli çifti reddediyor, bu ekran oradan
+    // okuyamaz. `blocked_user_directory` yalnız çağıranın KENDİ engellediklerini
+    // gerçek adıyla döndürür — kullanıcı kimi engellediğini görebilsin diye.
+    // Okunamayanlar yine maskeli id ile gösterilir (RPC'siz eski sunucu).
     Map<String, Profile> byId = {};
     try {
-      final rows = await _client
-          .from('profiles')
-          .select(
-            'id, display_name, avatar_url, created_at, daily_goal_minutes, is_active, animal, monthly_report_opt_in',
-          )
-          .inFilter('id', ids);
+      final rows = await _client.rpc('blocked_user_directory');
       for (final raw in rows as List) {
         final map = Map<String, dynamic>.from(raw as Map);
         final p = Profile.fromMap(map);
