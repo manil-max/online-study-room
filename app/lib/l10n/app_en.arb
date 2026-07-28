@@ -5900,5 +5900,9 @@
   "aboutSubtitle": "App version and support details",
   "@aboutSubtitle": {"description": "Subtitle of the About entry in settings."},
   "updaterDahaFazlaSurum": "Show more versions",
-  "@updaterDahaFazlaSurum": {"description": "Expands the truncated release-notes list."}
+  "@updaterDahaFazlaSurum": {"description": "Expands the truncated release-notes list."},
+  "feedbackTitle": "Feedback",
+  "@feedbackTitle": {"description": "Settings entry and title of the feedback screen."},
+  "feedbackTabCompose": "Send",
+  "@feedbackTabCompose": {"description": "Tab that holds the feedback submission form."}
 }

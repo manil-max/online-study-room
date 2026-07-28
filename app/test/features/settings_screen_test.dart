@@ -82,7 +82,9 @@ void main() {
     expect(find.text('Uygulama dili'), findsOneWidget);
     expect(find.text('Sürüm ve güncellemeler'), findsOneWidget);
     expect(find.text('Uygulama Kısayolları (Rutinler)'), findsNothing);
-    expect(find.text('Geri bildirim gönder'), findsOneWidget);
+    // WP-420: ad kısaldı — ekran artık gönderme + geçmiş sekmesi taşıyor.
+    expect(find.text('Geri bildirim gönder'), findsNothing);
+    expect(find.text('Geri bildirim'), findsOneWidget);
     expect(find.text('Yönetim'), findsNothing);
     // WP-419: derleme kimliği sürüm notlarından buraya taşındı.
     expect(find.text('Hakkında'), findsOneWidget);

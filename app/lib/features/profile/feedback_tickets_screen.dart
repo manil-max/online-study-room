@@ -10,53 +10,66 @@ import '../../data/providers/auth_providers.dart';
 import '../../data/repositories/admin_repository.dart';
 import '../../l10n/app_localizations.dart';
 
-class FeedbackTicketsScreen extends ConsumerWidget {
+class FeedbackTicketsScreen extends StatelessWidget {
   const FeedbackTicketsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text(AppLocalizations.of(context).feedbackMyTickets)),
+      body: const MyFeedbackTicketsView(),
+    );
+  }
+}
+
+/// Kullanicinin kendi biletleri, **en yeni en ustte**.
+///
+/// WP-420: Ayni liste hem kendi ekraninda (duyurulardan gelen yol) hem de
+/// Geri bildirim ekraninin ikinci sekmesinde kullanilir; iki kopya tutulmaz.
+class MyFeedbackTicketsView extends ConsumerWidget {
+  const MyFeedbackTicketsView({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final tickets = ref.watch(myFeedbackTicketsProvider);
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.feedbackMyTickets)),
-      body: tickets.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, _) => Center(child: Text(l10n.authBeklenmeyenBirHataOlustu)),
-        data: (items) {
-          if (items.isEmpty) {
-            return Center(child: Text(l10n.feedbackNoTickets));
-          }
-          return ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: items.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 8),
-            itemBuilder: (context, index) {
-              final ticket = items[index];
-              return Card(
-                child: ListTile(
-                  key: Key('feedback-ticket-${ticket.id}'),
-                  leading: Icon(
-                    ticket.kind == FeedbackTicketKind.bug
-                        ? Icons.bug_report_outlined
-                        : Icons.lightbulb_outline,
-                  ),
-                  title: Text(ticket.subject),
-                  subtitle: Text(
-                    ticket.message,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => showFeedbackTicketConversation(
-                    context: context,
-                    ticket: ticket,
-                  ),
+    return tickets.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (_, _) => Center(child: Text(l10n.authBeklenmeyenBirHataOlustu)),
+      data: (items) {
+        if (items.isEmpty) {
+          return Center(child: Text(l10n.feedbackNoTickets));
+        }
+        return ListView.separated(
+          padding: const EdgeInsets.all(16),
+          itemCount: items.length,
+          separatorBuilder: (_, _) => const SizedBox(height: 8),
+          itemBuilder: (context, index) {
+            final ticket = items[index];
+            return Card(
+              child: ListTile(
+                key: Key('feedback-ticket-${ticket.id}'),
+                leading: Icon(
+                  ticket.kind == FeedbackTicketKind.bug
+                      ? Icons.bug_report_outlined
+                      : Icons.lightbulb_outline,
                 ),
-              );
-            },
-          );
-        },
-      ),
+                title: Text(ticket.subject),
+                subtitle: Text(
+                  ticket.message,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => showFeedbackTicketConversation(
+                  context: context,
+                  ticket: ticket,
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

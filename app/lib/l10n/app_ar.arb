@@ -5295,5 +5295,9 @@
   "aboutSubtitle": "إصدار التطبيق وتفاصيل الدعم",
   "@aboutSubtitle": {"description": "Subtitle of the About entry in settings."},
   "updaterDahaFazlaSurum": "عرض المزيد من الإصدارات",
-  "@updaterDahaFazlaSurum": {"description": "Expands the truncated release-notes list."}
+  "@updaterDahaFazlaSurum": {"description": "Expands the truncated release-notes list."},
+  "feedbackTitle": "الملاحظات",
+  "@feedbackTitle": {"description": "Settings entry and title of the feedback screen."},
+  "feedbackTabCompose": "إرسال",
+  "@feedbackTabCompose": {"description": "Tab that holds the feedback submission form."}
 }

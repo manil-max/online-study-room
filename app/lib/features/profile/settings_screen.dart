@@ -23,9 +23,9 @@ import 'about_screen.dart';
 import 'account_settings_screen.dart';
 import 'appearance_screen.dart';
 import 'data_export_screen.dart';
+import 'feedback_screen.dart';
 import 'legal_center_screen.dart';
 import 'widgets/camp_animal_picker.dart';
-import 'widgets/report_issue_dialog.dart';
 
 /// Ayarlar: davranışları değiştirmeden, bulunabilir bilgi mimarisi sunar.
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -54,21 +54,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     await ref.read(authRepositoryProvider).updateAnimal(picked);
     ref.invalidate(groupMembersProvider);
     if (mounted) setState(() => _animalOverride = picked);
-  }
-
-  Future<void> _openReportDialog() async {
-    final sent = await showDialog<bool>(
-      context: context,
-      builder: (_) => ReportIssueDialog(),
-    );
-    if (!mounted || sent != true) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          AppLocalizations.of(context).profileGeriBildiriminGonderildi,
-        ),
-      ),
-    );
   }
 
   Future<void> _resetTours() async {
@@ -325,11 +310,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ),
                   _SettingsCard(
                     child: ListTile(
+                      key: const Key('settings-feedback'),
                       leading: const Icon(Icons.feedback_outlined),
-                      title: Text(l10n.profileGeriBildirimGonder),
+                      // WP-420: "Geri bildirim gönder" değil **"Geri bildirim"**
+                      // — ekran artık hem gönderme hem geçmiş sekmesini taşıyor.
+                      title: Text(l10n.feedbackTitle),
                       subtitle: Text(l10n.profileHataVeyaOneriniBize),
                       trailing: const Icon(Icons.chevron_right),
-                      onTap: profile == null ? null : _openReportDialog,
+                      onTap: profile == null
+                          ? null
+                          : () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const FeedbackScreen(),
+                              ),
+                            ),
                     ),
                   ),
                   _SettingsCard(

@@ -3593,7 +3593,7 @@ WP-385 (l10n/başarım). Sonraki dalga: WP-381 · WP-383 · WP-382.
 
 #### WP-420: Feedback ekranı yeniden düzeni 💬
 - **Program/Faz:** PLAN 4 · Faz R (kaynak: sahip cihaz testi)
-- **Ajan:** Lane C · **Durum:** [ ] Başlamadı · ⏳ WP-419'dan **sonra** (`settings_screen`)
+- **Ajan:** Lane C · **Durum:** [x] Kod + otomatik test tamam — `Cihazda doğrulanmalı`
 - **Problem:** Sahip destek sistemini uçtan uca denedi, **çalışıyor** ✅ ama düzen bozuk:
   mobilde konu + açıklama + **3 buton alt alta** (Geri bildirimlerim, İptal, Gönder) +
   klavye açık → yazdığı metin görünmüyor. Ayrıca mesajlaşmada **yeni mesajlar üste**
@@ -3603,13 +3603,13 @@ WP-385 (l10n/başarım). Sonraki dalga: WP-381 · WP-383 · WP-382.
   `app/lib/features/settings/**`, `app/lib/l10n/*.arb`, ilgili testler
 - **DOKUNMA:** `features/admin/**` (Lane B) · `features/safety/report_sheet.dart` (Lane E)
 - **Adımlar:**
-  - [ ] Ayarlardaki ad: **"Send feedback" → "Feedback"**.
-  - [ ] İçinde **iki sekme**: *Gönder* · *Geri bildirimlerim* (liste, **tarih sıralı,
+  - [x] Ayarlardaki ad: **"Send feedback" → "Feedback"**.
+  - [x] İçinde **iki sekme**: *Gönder* · *Geri bildirimlerim* (liste, **tarih sıralı,
         en yeni en üstte**).
-  - [ ] Gönderme formunda **iki buton, yan yana**: İptal · Gönder. (Üçüncü buton
+  - [x] Gönderme formunda **iki buton, yan yana**: İptal · Gönder. (Üçüncü buton
         sekmeye taşındığı için kalkar.)
-  - [ ] Klavye açıkken yazılan metin görünür kalır.
-  - [ ] Mesajlaşmada **yeni mesaj alta** eklenir.
+  - [x] Klavye açıkken yazılan metin görünür kalır.
+  - [x] Mesajlaşmada **yeni mesaj alta** eklenir.
 - **Migration/Ortam:** Yok · local.
 - **Kabul:** Dar mobil ekranda klavye açıkken metin alanı görünür (widget testi) ·
   mesaj sırası testte sabit (yeni mesaj sonda) · liste tarih sıralı · dört dil tam.
@@ -3617,6 +3617,35 @@ WP-385 (l10n/başarım). Sonraki dalga: WP-381 · WP-383 · WP-382.
   yer ayırmaz. Doğrusu `Column` + `Expanded`. Test üretimdeki kabuk yapısını taklit
   etmezse hatayı kaçırır.
 - **Model önerisi:** Sonnet
+- **DoD kanıtı (2026-07-28, Lane C · `Kodda doğrulandı`):**
+  - **Diyalog gitti, ekran geldi.** `ReportIssueDialog` silindi; yerine
+    `features/profile/feedback_screen.dart` — `DefaultTabController` + iki sekme
+    (*Gönder* · *Geri bildirimlerim*). Ayarlardaki ad **"Geri bildirim"**.
+  - **Tuzağa girilmedi:** alt şerit `Scaffold.bottomSheet` değil,
+    `Column` + `Expanded(ListView)` + `SafeArea` şerit. Klavye testi
+    `viewInsets.bottom = 900px (300dp)` verip **şeridin metin alanının üstüne
+    binmediğini** ve ikisinin de klavye çizgisinin üstünde kaldığını ölçüyor;
+    `bottomSheet`'e dönülürse bu iddia düşer.
+  - **Koşum üretim kabuğunu taklit ediyor:** `FeedbackScreen` kendi
+    `Scaffold`'uyla doğrudan `home:`e konuyor (v55'te WP-374 koşumu bunu
+    yapmadığı için hata kaçmıştı).
+  - 🔴 **Yol boyunca çıkan gerçek kusur:** form `authStateProvider`'ı yalnız
+    `read` ediyordu. Riverpod 3 auto-dispose'ta dinleyicisiz provider her
+    `read`'de yeniden kurulur ve yükleme durumunda döner → gönderim "giriş
+    yapmalısın" ile sessizce reddediliyordu. `build` içinde `watch` eklendi ve
+    profil yokken Gönder devre dışı. Testte önce kırmızı düştü, sonra yeşil.
+  - **Sıralama:** bilet listesi en yeni en üstte (`fetchMyFeedbackTickets` iki
+    repoda da `created_at desc`), yazışmada yeni mesaj altta (WP-374 kazanımı,
+    `feedback_conversation_wp374_test` hâlâ yeşil). Gönderim sonrası ekran
+    ikinci sekmeye geçip yeni kaydı en üstte gösteriyor — testte sabit.
+  - **l10n:** `feedbackTitle`, `feedbackTabCompose` — dört dilde birden.
+    `profileGeriBildirimGonder` katalogda bırakıldı (EN'deki çok satırlı `@`
+    blokları yüzünden silmek dosyayı baştan biçimlendirmeyi gerektiriyor; dört
+    dil eşliği bozulmasın diye dokunulmadı).
+  - **Test:** `flutter analyze` 0 uyarı · `feedback_screen_wp420_test.dart` 4/4 ·
+    biletler + WP-374 yazışma + ayarlar + l10n borç kapısı ile birlikte 21/21.
+  - **Cihazda doğrulanmalı:** Dar telefonda klavye açıkken yazılan metnin
+    görünürlüğü ve iki düğmenin yan yana durduğu.
 
 #### WP-421: Rozet zinciri ve gecikmesi 🔴
 - **Program/Faz:** PLAN 4 · Faz R (kaynak: sahip cihaz testi)

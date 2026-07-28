@@ -1728,5 +1728,9 @@
   "aboutSubtitle": "Uygulama sürümü ve destek bilgileri",
   "@aboutSubtitle": {"description": "Subtitle of the About entry in settings."},
   "updaterDahaFazlaSurum": "Daha fazla sürüm göster",
-  "@updaterDahaFazlaSurum": {"description": "Expands the truncated release-notes list."}
+  "@updaterDahaFazlaSurum": {"description": "Expands the truncated release-notes list."},
+  "feedbackTitle": "Geri bildirim",
+  "@feedbackTitle": {"description": "Settings entry and title of the feedback screen."},
+  "feedbackTabCompose": "Gönder",
+  "@feedbackTabCompose": {"description": "Tab that holds the feedback submission form."}
 }
