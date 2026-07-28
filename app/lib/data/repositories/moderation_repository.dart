@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import '../models/profile.dart';
 
 /// WP-116 / WP-129: UGC rapor / engel soyutlaması.
@@ -14,12 +16,16 @@ abstract class ModerationRepository {
   /// Okunamayan id'ler için minimal [Profile] (maskeli ad) döner.
   Future<List<Profile>> fetchBlockedProfiles();
 
+  /// WP-423: [attachmentBytes] tek ve **opsiyonel** foto ekidir. Yükleme
+  /// başarısız olursa şikâyet yine de gönderilir; ek sessizce düşer.
   Future<void> reportUgc({
     required String targetType,
     required String targetId,
     required String reason,
     String? details,
     String? snapshot,
+    Uint8List? attachmentBytes,
+    String? attachmentExt,
   });
 }
 

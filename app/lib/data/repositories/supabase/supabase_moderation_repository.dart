@@ -1,7 +1,10 @@
+import 'dart:typed_data';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../models/profile.dart';
 import '../moderation_repository.dart';
+import 'report_attachment_upload.dart';
 
 class SupabaseModerationRepository implements ModerationRepository {
   SupabaseModerationRepository(this._client);
@@ -94,7 +97,16 @@ class SupabaseModerationRepository implements ModerationRepository {
     required String reason,
     String? details,
     String? snapshot,
+    Uint8List? attachmentBytes,
+    String? attachmentExt,
   }) async {
+    // WP-423: ek opsiyoneldir. Yükleme başarısızsa `null` döner ve şikâyet
+    // eksiz gider — ek yüzünden bildirim kaybolmaz.
+    final attachmentPath = await uploadReportAttachment(
+      _client,
+      bytes: attachmentBytes,
+      ext: attachmentExt,
+    );
     try {
       await _client.rpc(
         'report_ugc',
@@ -104,6 +116,7 @@ class SupabaseModerationRepository implements ModerationRepository {
           'p_reason': reason,
           'p_details': details,
           'p_snapshot': snapshot,
+          'p_attachment_path': attachmentPath,
         },
       );
     } on PostgrestException catch (e) {

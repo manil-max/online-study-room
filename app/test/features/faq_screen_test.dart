@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -64,5 +66,7 @@ class _FakeSupportRepository implements SupportRepository {
   Future<void> submitQuestion({
     required String question,
     required String userId,
+    Uint8List? attachmentBytes,
+    String? attachmentExt,
   }) async {}
 }

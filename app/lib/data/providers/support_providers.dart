@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -27,14 +29,25 @@ final faqEntriesProvider = FutureProvider<List<FaqEntry>>((ref) async {
   return ref.watch(supportRepositoryProvider).fetchPublishedFaq('en');
 });
 
-final submitFaqQuestionProvider = Provider<Future<void> Function(String)>((
-  ref,
-) {
-  return (question) async {
+/// WP-423: destek sorusuna tek ve opsiyonel foto eki eşlik edebilir.
+typedef SubmitFaqQuestion =
+    Future<void> Function(
+      String question, {
+      Uint8List? attachmentBytes,
+      String? attachmentExt,
+    });
+
+final submitFaqQuestionProvider = Provider<SubmitFaqQuestion>((ref) {
+  return (question, {attachmentBytes, attachmentExt}) async {
     final user = ref.read(authStateProvider).value;
     if (user == null) throw StateError('session_required');
     await ref
         .read(supportRepositoryProvider)
-        .submitQuestion(question: question, userId: user.id);
+        .submitQuestion(
+          question: question,
+          userId: user.id,
+          attachmentBytes: attachmentBytes,
+          attachmentExt: attachmentExt,
+        );
   };
 });

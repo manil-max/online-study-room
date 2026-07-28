@@ -1,5 +1,8 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../core/l10n/app_locale.dart';
 import '../../data/models/faq_entry.dart';
@@ -122,37 +125,132 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
     ).showSnackBar(SnackBar(content: Text(l10n.faqLoginRequired)));
   }
 
+  /// Galeriden tek foto seçer. Asıl boyut/tür kapısı sunucudadır (`0096`);
+  /// buradaki eleme yalnız boşa yükleme yapmamak için.
+  Future<(Uint8List, String)?> _pickSupportImage() async {
+    final l10n = AppLocalizations.of(context);
+    try {
+      final xFile = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 70,
+      );
+      if (xFile == null) return null;
+      final bytes = await xFile.readAsBytes();
+      if (bytes.lengthInBytes > 5 * 1024 * 1024) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l10n.profileDosyaBoyutu5mbdanKucuk)),
+          );
+        }
+        return null;
+      }
+      var ext = xFile.name.split('.').last.toLowerCase();
+      if (!const ['jpg', 'jpeg', 'png', 'webp'].contains(ext)) ext = 'jpg';
+      return (bytes, ext);
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.profileResimSecilemedi)));
+      }
+      return null;
+    }
+  }
+
   Future<void> _askQuestion() async {
     final controller = TextEditingController();
     final l10n = AppLocalizations.of(context);
+    // WP-423: soruya tek ve opsiyonel foto eklenebilir.
+    Uint8List? attachmentBytes;
+    String? attachmentExt;
+
     final question = await showDialog<String>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.faqAskQuestion),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          maxLength: 1200,
-          minLines: 3,
-          maxLines: 6,
-          decoration: InputDecoration(hintText: l10n.faqAskQuestionHint),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: Text(l10n.faqAskQuestion),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              TextField(
+                controller: controller,
+                autofocus: true,
+                maxLength: 1200,
+                minLines: 3,
+                maxLines: 6,
+                decoration: InputDecoration(hintText: l10n.faqAskQuestionHint),
+              ),
+              if (attachmentBytes != null)
+                Stack(
+                  alignment: Alignment.topRight,
+                  children: [
+                    Container(
+                      height: 100,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: Theme.of(context).dividerColor,
+                        ),
+                        image: DecorationImage(
+                          image: MemoryImage(attachmentBytes!),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: l10n.coreKapat,
+                      style: IconButton.styleFrom(
+                        minimumSize: const Size(48, 48),
+                      ),
+                      icon: Icon(
+                        Icons.cancel,
+                        color: Theme.of(context).colorScheme.onInverseSurface,
+                      ),
+                      onPressed: () => setDialogState(() {
+                        attachmentBytes = null;
+                        attachmentExt = null;
+                      }),
+                    ),
+                  ],
+                )
+              else
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    final picked = await _pickSupportImage();
+                    if (picked == null) return;
+                    setDialogState(() {
+                      attachmentBytes = picked.$1;
+                      attachmentExt = picked.$2;
+                    });
+                  },
+                  icon: const Icon(Icons.attach_file),
+                  label: Text(l10n.profileEkranGoruntusuEkleOpsiyonel),
+                ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('İptal'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, controller.text.trim()),
+              child: const Text('Gönder'),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('İptal'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, controller.text.trim()),
-            child: const Text('Gönder'),
-          ),
-        ],
       ),
     );
     controller.dispose();
     if (question == null || question.isEmpty || !mounted) return;
     try {
-      await ref.read(submitFaqQuestionProvider)(question);
+      await ref.read(submitFaqQuestionProvider)(
+        question,
+        attachmentBytes: attachmentBytes,
+        attachmentExt: attachmentExt,
+      );
       if (mounted) {
         ScaffoldMessenger.of(
           context,

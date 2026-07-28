@@ -124,15 +124,22 @@
 - **Not:** LOCAL kalır — migration apply yok, tag/release yok. `features/admin/**`, `features/safety/**`, `features/stats/**`, `campfire_scene.dart`, `android/**` yollarına yazılmaz. WP-421 sunucu tarafı gerektirirse `0101` yalnız Lane B'nin `0100` commit'i göründükten sonra alınır.
 
 ### Lane E
-- **Durum:** [~] Aktif
-- **Faz/WP:** PLAN 4 · Faz O · WP-412 → WP-413 → WP-423
-- **Aşama:** Geliştiriliyor
-- **SAHİP yollar:** `app/lib/features/stats/widgets/draggable_date_range_picker.dart`, `app/lib/features/safety/report_sheet.dart`, moderasyon repository'leri (`supabase/` + `in_memory/`), engelleme süzgeci uygulanan sunucu okuma yolları, `supabase/migrations/0095` + `0096`, ilgili pgTAP + Flutter testleri
-- **Ortak/riskli yüzey:** `app/lib/l10n/*.arb` (TR/EN/DE/AR atomik) · migration zinciri `0095`→`0096` (Lane B `0097` için bunları bekliyor)
+- **Durum:** [x] Boşta
+- **Faz/WP:** — · PLAN 4 Faz O (WP-412 · WP-413 · WP-423) kod+test tamam
+- **Aşama:** Cihaz kabulü bekliyor
+- **SAHİP yollar:** —
 - **Dal:** main
-- **Başlangıç:** 2026-07-28 18:02 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-28 18:02 (Europe/Istanbul)
-- **Not:** ÖNCELİK — `0095` ve `0096` erken commit edilecek ki Lane B bloke kalmasın. LOCAL KALIR: migration apply yok, tag/release yok. `features/admin/**`, `features/settings/**`, `campfire_scene.dart`, `android/**` yollarına yazılmaz.
+- **Son güncelleme:** 2026-07-28 19:35 (Europe/Istanbul)
+- **Son not:** Üç WP de kapandı, kartların altında DoD kanıtı var.
+  ✅ **Lane B serbest:** `0095` (`3bea6a6`) ve `0096` (`4fc0f61`) commit'li,
+  `0097` alınabilir. `local_migration_head` = `0096`.
+  🔴 **Tur sonu için iki not:** (1) `release-preflight.tests.ps1` şu an
+  **beklendiği gibi** kırmızı — sürüm kapısı yerel head ile staging/production
+  head'inin eşit olmasını istiyor, ortamlar `0094`'te; apply `0100`e çıkınca
+  yeşile döner. Sözleşmenin staging/production `migration_head` alanlarına
+  **dokunulmadı**. (2) `deploy_enabled`/`release_enabled` v55 tag'inden sonra
+  HOLD'a alınmamış, hâlâ `true` — bu Lane E'nin işi değil ama tur sonunda
+  kapatılmalı. LOCAL KALDI: hiçbir migration apply edilmedi, tag/release yok.
 
 ### Claude Lane
 - **Durum:** [x] Boşta
@@ -3185,7 +3192,7 @@ WP-385 (l10n/başarım). Sonraki dalga: WP-381 · WP-383 · WP-382.
 
 #### WP-423: Şikâyet ve destek sorusuna foto eki 📎
 - **Program/Faz:** PLAN 4 · Faz O (kaynak: sahip isteği — "bildir kısmına foto eklenebilsin")
-- **Ajan:** Lane E · **Durum:** [ ] Başlamadı · ⏳ **WP-413 (`0095`) commit'lenmeden başlama**
+- **Ajan:** Lane E · **Durum:** [x] Kod + otomatik test tamam · `Cihazda doğrulanmalı`
 - **Problem:** Şikâyet ve SSS/destek sorusu yalnız metin kabul ediyor. Sahip ikisine de
   foto eklemek istiyor.
 - **İyi haber:** Altyapı kısmen var — `submitFeedback` zaten `attachmentBytes` /
@@ -3210,6 +3217,67 @@ WP-385 (l10n/başarım). Sonraki dalga: WP-381 · WP-383 · WP-382.
 - **Tuzaklar:** `avatars` bucket'ını yeniden kullanma — public okuma politikası var,
   şikâyet eki oraya konursa herkese açılır.
 - **Model önerisi:** 🔴 Opus
+- **DoD kanıtı (2026-07-28, Lane E) — `0096_report_attachments.sql`:**
+  - 🔴 **`avatars` yeniden kullanılmadı.** Ayrı ve **public olmayan**
+    `report_attachments` bucket'ı kuruldu. pgTAP iki bucket'ın `public`
+    bayrağının farklı olduğunu ayrıca doğruluyor.
+  - **Boyut ve MIME sunucuda, iki kapıda.** (1) Bucket'ın kendisi
+    `file_size_limit = 5242880` ve
+    `allowed_mime_types = {image/jpeg,image/png,image/webp}` taşıyor → Storage
+    API reddediyor. (2) `assert_report_attachment_allowed(path)` yolu ayrıca
+    doğruluyor: yol `auth.uid()/` ile başlamalı, obje bucket'ta gerçekten var
+    olmalı, `storage.objects.metadata` boyut/MIME yeniden ölçülüyor. Yani
+    bucket ayarı atlansa bile uydurma yol kabul edilmiyor.
+  - **İmzalı URL:** ek okuma politikası **yalnız `is_super_admin()`**. İmzalı
+    URL de bu SELECT politikasından geçtiği için başka kimse (şikâyet eden
+    dahil) üretemiyor. Lane B'nin WP-425'i eki buradan görüntüler; şikâyete
+    bağlı destek bileti aynı `attachment_path`i taşıyor.
+  - **Ek opsiyonel.** `assert_report_attachment_allowed(null)` sessizce geçiyor;
+    istemci yükleme başarısızsa `null` yolluyor ve şikâyet yine gidiyor
+    (`uploadReportAttachment` `StorageException`u yutup `null` döndürüyor).
+  - **0090 sözleşmesi korundu.** İlk taslak `report_ugc`'yi `0038` gövdesi
+    üzerine kurmuştu; `019_support_inbox` pgTAP'i bunu **yakaladı** (şikâyet
+    biletine bağlanmıyordu). Gövde `0090` üzerine taşındı: her şikâyet hâlâ
+    `ticket_type='report'` biletine bağlanıyor, `invalid_type` kontrolü ve
+    `btrim`/snapshot kırpma normalizasyonu duruyor.
+  - **İmza değişikliği:** iki RPC de eski imzasıyla birlikte dursaydı çağrı
+    belirsizleşirdi; eski imzalar `drop` edilip varsayılan parametreli yenileri
+    kuruldu. Eski istemciler (v55) eki hiç göndermediği için varsayılan `null`
+    ile aynen çalışmaya devam eder.
+  - **İstemci:** `report_sheet.dart` ve SSS soru formuna (`faq_screen.dart`)
+    galeri seçici + önizleme + kaldır düğmesi. Ortak yükleyici
+    `data/repositories/supabase/report_attachment_upload.dart`. Repository
+    üçlüleri (abstract + `supabase/` + `in_memory/`) birlikte güncellendi.
+  - **Yeni l10n anahtarı YOK** — mevcut dört dilli anahtarlar yeniden
+    kullanıldı (`profileEkranGoruntusuEkleOpsiyonel`,
+    `profileDosyaBoyutu5mbdanKucuk`, `profileResimSecilemedi`, `coreKapat`;
+    dördü de TR/EN/DE/AR'da doğrulandı). Böylece `*.arb` sıcak dosyasına hiç
+    girilmedi. ⚠️ Lane C WP-420'de `report_issue_dialog.dart`ı siliyor; bu
+    anahtarları "kullanılmıyor" diye budarsa şikâyet/SSS formu kırılır —
+    budamadan önce bu dört anahtarın yeni kullanıcısı olduğu görülmeli.
+  - **Kanıt — pgTAP `025_report_attachments.test.sql`, 16 iddia:** bucket public
+    değil · 5 MB sınırı bucket üstünde · yalnız resim MIME'ları · avatars'tan
+    ayrı · okuma politikası super-admin şartlı · yükleme yalnız kendi klasörüne ·
+    ek opsiyonel · 6 MB `attachment_too_large` · PDF `attachment_type_not_allowed` ·
+    başkasının klasörü `attachment_not_owned` · olmayan yol `attachment_missing` ·
+    eksiz şikâyet gönderilir · geçerli resim kabul edilir ve satıra yazılır ·
+    bağlı destek bileti aynı eki taşır · destek sorusu da aynı kapıdan geçer.
+  - **Kanıt — Flutter `test/features/safety/report_attachment_wp423_test.dart`:**
+    bucket sabiti `avatars` değil · eksiz şikâyet gönderilebiliyor · ek
+    repository katmanına taşınıyor · şikâyet sayfasındaki ek düğmesi görünür,
+    **etkin** (ölü anahtar değil) ve ek seçilmeden gönderim çalışıyor.
+  - **Yerel replay:** `0001→0096` uygulandı, **26 pgTAP dosyası / 361 test PASS**.
+    `flutter analyze` (değişen altı yol) **No issues found**.
+    Tüm Flutter paketi: 1052 test, **tek kırmızı Lane A'nın açık işinden**
+    (`timer_v2_command_outbox_test.dart`, `StudyTimerService.kt` kaynağını okuyor
+    ve Lane A o dosyayı şu an düzenliyor) — bu WP ile ilgisiz.
+  - **Commit notu:** sahip önceliğiyle bu WP **iki commit**: `0096` migration'ı
+    Lane B'nin `0097`'sini bekletmemek için erken ayrıldı (`4fc0f61`), istemci
+    tarafı ikinci commit'te. "WP başına tek commit" kuralından bilinçli sapma.
+  - **Kalan kapı:** cihazda — galeriden foto seç, şikâyeti gönder; 5 MB üstü ve
+    resim olmayan dosyada sunucu reddi; ek olmadan gönderimin çalıştığı; ekin
+    yalnız super-admin hesabında açılabildiği.
+  - **Migration:** `0096` **uygulanmadı** (LOCAL KALIR). Rollback dosya başlığında.
 
 ### Faz P — Sayaç senkron güveni *(v55 saha bulguları)*
 

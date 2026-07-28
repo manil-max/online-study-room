@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import '../../models/profile.dart';
 import '../moderation_repository.dart';
 
@@ -60,6 +62,8 @@ class InMemoryModerationRepository implements ModerationRepository {
     required String reason,
     String? details,
     String? snapshot,
+    Uint8List? attachmentBytes,
+    String? attachmentExt,
   }) async {
     _reports.add({
       'type': targetType,
@@ -67,6 +71,8 @@ class InMemoryModerationRepository implements ModerationRepository {
       'reason': reason,
       'details': details,
       'snapshot': snapshot,
+      // WP-423: demo modda yükleme yok; testler ekin taşındığını buradan görür.
+      'attachment': attachmentBytes == null ? null : (attachmentExt ?? 'jpg'),
     });
   }
 

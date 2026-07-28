@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import '../../models/faq_entry.dart';
 import '../support_repository.dart';
 
@@ -10,6 +12,8 @@ class InMemorySupportRepository implements SupportRepository {
   Future<void> submitQuestion({
     required String question,
     required String userId,
+    Uint8List? attachmentBytes,
+    String? attachmentExt,
   }) async {}
 }
 

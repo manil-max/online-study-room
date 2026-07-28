@@ -1,7 +1,10 @@
+import 'dart:typed_data';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../models/faq_entry.dart';
 import '../support_repository.dart';
+import 'report_attachment_upload.dart';
 
 class SupabaseSupportRepository implements SupportRepository {
   SupabaseSupportRepository(this._client);
@@ -22,7 +25,20 @@ class SupabaseSupportRepository implements SupportRepository {
   Future<void> submitQuestion({
     required String question,
     required String userId,
+    Uint8List? attachmentBytes,
+    String? attachmentExt,
   }) async {
-    await _client.rpc('submit_faq_question', params: {'p_question': question});
+    final attachmentPath = await uploadReportAttachment(
+      _client,
+      bytes: attachmentBytes,
+      ext: attachmentExt,
+    );
+    await _client.rpc(
+      'submit_faq_question',
+      params: {
+        'p_question': question,
+        'p_attachment_path': attachmentPath,
+      },
+    );
   }
 }

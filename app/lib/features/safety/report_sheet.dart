@@ -1,5 +1,8 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
 import '../../data/providers/moderation_providers.dart';
@@ -49,12 +52,57 @@ class _ReportSheetState extends ConsumerState<_ReportSheet> {
   bool _busy = false;
   final _details = TextEditingController();
 
+  // WP-423: tek ve opsiyonel foto eki.
+  final _imagePicker = ImagePicker();
+  Uint8List? _attachmentBytes;
+  String? _attachmentExt;
+
   static const int _maxDetails = 500;
+  static const int _maxAttachmentBytes = 5 * 1024 * 1024;
 
   @override
   void dispose() {
     _details.dispose();
     super.dispose();
+  }
+
+  void _showError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _pickImage() async {
+    final l10n = AppLocalizations.of(context);
+    try {
+      final xFile = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 70,
+      );
+      if (xFile == null) return;
+
+      final bytes = await xFile.readAsBytes();
+      // Asıl sınır sunucuda (bucket 5 MB + `assert_report_attachment_allowed`);
+      // buradaki kontrol yalnız boşa yükleme yapmamak için.
+      if (bytes.lengthInBytes > _maxAttachmentBytes) {
+        _showError(l10n.profileDosyaBoyutu5mbdanKucuk);
+        return;
+      }
+
+      var ext = xFile.name.split('.').last.toLowerCase();
+      if (!const ['jpg', 'jpeg', 'png', 'webp'].contains(ext)) {
+        ext = 'jpg';
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _attachmentBytes = bytes;
+        _attachmentExt = ext;
+      });
+    } catch (_) {
+      _showError(l10n.profileResimSecilemedi);
+    }
   }
 
   Map<String, String> _reasons(AppLocalizations l10n) => {
@@ -84,6 +132,8 @@ class _ReportSheetState extends ConsumerState<_ReportSheet> {
             reason: _reason,
             details: details,
             snapshot: widget.snapshot,
+            attachmentBytes: _attachmentBytes,
+            attachmentExt: _attachmentExt,
           );
       if (mounted) {
         Navigator.pop(context);
@@ -169,6 +219,47 @@ class _ReportSheetState extends ConsumerState<_ReportSheet> {
               ),
             ),
           ),
+          const SizedBox(height: 12),
+          // WP-423: ek opsiyoneldir — seçilmezse veya yüklenemezse şikâyet
+          // yine de gönderilir.
+          if (_attachmentBytes != null)
+            Stack(
+              alignment: Alignment.topRight,
+              children: [
+                Container(
+                  height: 120,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: theme.dividerColor),
+                    image: DecorationImage(
+                      image: MemoryImage(_attachmentBytes!),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  tooltip: l10n.coreKapat,
+                  style: IconButton.styleFrom(minimumSize: const Size(48, 48)),
+                  icon: Icon(
+                    Icons.cancel,
+                    color: theme.colorScheme.onInverseSurface,
+                  ),
+                  onPressed: _busy
+                      ? null
+                      : () => setState(() {
+                          _attachmentBytes = null;
+                          _attachmentExt = null;
+                        }),
+                ),
+              ],
+            )
+          else
+            OutlinedButton.icon(
+              onPressed: _busy ? null : _pickImage,
+              icon: const Icon(Icons.attach_file),
+              label: Text(l10n.profileEkranGoruntusuEkleOpsiyonel),
+            ),
           const SizedBox(height: 12),
           FilledButton(
             onPressed: _busy ? null : _submit,
