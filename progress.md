@@ -86,15 +86,15 @@
 - **SAHİP yollar:** —
 
 ### Lane A
-- **Durum:** [~] Aktif
-- **Faz/WP:** PLAN 4 · Faz P · WP-414 → WP-415
-- **Aşama:** Geliştiriliyor
-- **SAHİP yollar:** `app/android/**/timer/**`, `app/android/**/widgets/**`, `app/lib/data/providers/global_timer_providers.dart`, `app/lib/data/providers/study_providers.dart`, ilgili Kotlin + Dart testleri
-- **Ortak/riskli yüzey:** `progress.md` (yalnız bu lane + WP-414/WP-415 kartları) · timer komutu istemci↔sunucu sözleşmesi
-- **Dal:** main
-- **Başlangıç:** 2026-07-28 18:00 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-28 18:00
-- **Not:** WP-414 ile başlanacak; WP-415 aynı sahip kümesinde ardından uygulanacak. Local kalır; migration/release yok.
+- **Durum:** [x] Boşta
+- **Faz/WP:** — · PLAN 4 Faz P WP-414 kod/test tamam (`b525b80`), WP-415 kod/test tamam
+- **SAHİP yollar:** —
+- **Son not (2026-07-28 18:18):** WP-415'in hayalet koşu kökü istemcide kapandı:
+  kimliksiz çevrimdışı terminal niyeti kaybolmuyor, start kabul edilince revision'lı
+  CAS-stop'a çözülüyor. Hedefli 12/12 Flutter test ve ilgili analiz yeşil. Mevcut
+  `0082` offline başlangıç zamanını RPC'de etkin başlangıca taşımadığı için doğru
+  geçmiş süre kabulü `0101`e kaldı; migration kapsam dışı bırakıldı. Cihaz kabulü
+  ayrıca bekliyor.
 
 ### Lane D
 - **Durum:** [~] Aktif
@@ -3162,7 +3162,7 @@ WP-385 (l10n/başarım). Sonraki dalga: WP-381 · WP-383 · WP-382.
 
 #### WP-415: Çevrimdışı biten koşu ayna cihazda hayalet koşu doğuruyor 👻
 - **Program/Faz:** PLAN 4 · Faz P (kaynak: sahip cihaz testi — en ciddi bulgu)
-- **Ajan:** Lane A · **Durum:** [ ] Başlamadı · ⏳ WP-414'ten **sonra** (aynı dosyalar)
+- **Ajan:** Lane A · **Durum:** [~] Kod/test tamamlandı — `0101` + cihaz kabulü bekliyor
 - **Problem:** İki belirti, muhtemelen tek kök:
   1. Çevrimdışı başlatılan koşu, çevrimiçi olunca ayna cihazda **0'dan** saymaya
      başlıyor (kapatınca düzeliyor, toplam süre doğru).
@@ -3176,9 +3176,12 @@ WP-385 (l10n/başarım). Sonraki dalga: WP-381 · WP-383 · WP-382.
 - **Kapsam dışı:** Çevrimdışı açılış gecikmesi (5 sn) — izlenecek, bu turda WP değil.
 - **SAHİP dosyalar (yaz):** WP-414 ile aynı küme (bu yüzden aynı lane)
 - **Adımlar:**
-  - [ ] Çevrimdışı biriken komutların **sırası ve zaman damgası** ile uygulandığını doğrula.
-  - [ ] Bitmiş koşu yeniden oynatıldığında aktif koşu **doğmamalı** — yalnız toplam süre eşitlenir.
-  - [ ] Bayat komut eşiği: belli bir yaştan eski `start` komutu aktif koşu açmaz.
+  - [x] Çevrimdışı biriken komutlar **sıra + zaman damgası** ile uygulanıyor.
+  - [x] Bitmiş koşu yeniden oynatıldığında aktif koşu **doğmuyor**: native, sunucu
+        kimliği gelmeden `stop` niyetini kaybetmiyor; flush start kabulünden sonra
+        aynı koşuya revision'lı CAS-stop gönderiyor.
+  - [x] Bayat komut eşiği: 24 saati geçen `start` ve ona bağlı terminal niyet
+        oynatılmadan kuyruktan düşüyor.
 - **Migration/Ortam:** Yok (sunucu tarafı gerekirse `0101`, Lane B bitince) · local.
 - **Kabul:**
   - 🔴 Senaryo testi: çevrimdışı başlat → çevrimdışı durdur → çevrimiçi ol →
@@ -3188,6 +3191,16 @@ WP-385 (l10n/başarım). Sonraki dalga: WP-381 · WP-383 · WP-382.
   - Çift `finalize` üretilmez (çift XP yok).
 - **Tuzaklar:** "Kapatınca düzeliyor" belirtisi hatayı küçük gösteriyor — düzelten şey
   yeniden okuma, kök neden duruyor. Belirtiyi değil kökü düzelt.
+- **DoD kanıtı:** ✅ Kodda doğrulandı —
+  `global_timer_deferred_stop_test.dart` 2/2: offline `start → stop` çevrimiçi
+  flush'ta `start`, ardından doğru `run_id/revision` ile `stop` çağrısı yapıyor ve
+  kuyruk boşalıyor; 24 saatlik bayat çift hiç RPC üretmeden atılıyor. Birleşik
+  sözleşme koşumu **12/12 yeşil**; ilgili Dart analizinde **0 sorun**.
+  ⏳ Cihazda doğrulanmalı — iki Android cihazda hayalet koşu yok, çift finalize/XP
+  yok. ⏳ `0101` gerekir — mevcut `0082` RPC'si `p_client_occurred_at` değerini
+  yalnız audit'e yazıyor, `effective_started_at`ı sunucu saatiyle kuruyor; bu yüzden
+  çevrimdışı sürmekte olan koşunun ayna cihazda doğru geçmiş süreden başlaması bu
+  kapsamda (migration yasak) tamamlanamaz.
 - **Model önerisi:** 🔴 Opus
 
 ### Faz Q — Arayüz ve içerik *(v55 saha bulguları)*

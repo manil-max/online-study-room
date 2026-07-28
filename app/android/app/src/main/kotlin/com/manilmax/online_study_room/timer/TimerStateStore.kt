@@ -30,6 +30,8 @@ object TimerStateStore {
     const val KEY_START_ORIGIN = "flutter.timer_active_start_origin"
     const val KEY_V2_ACTIVE_ACCOUNT_ID = "flutter.timer_v2_active_account_id"
     const val KEY_V2_INSTALLATION_ID = "flutter.timer_v2_installation_id"
+    /** Çevrimdışı start→stop çiftini tek niyet olarak bağlar. */
+    const val KEY_V2_RUN_INTENT_ID = "flutter.timer_v2_run_intent_id"
 
     /**
      * WP-373: sunucunun kabul ettiği V2 koşu kimliği. Dart, `apply_global_timer_command`
@@ -115,6 +117,7 @@ object TimerStateStore {
             // ölü bir run'a `stale` stop gönderir. Zarf zaten kuruldu.
             .remove(KEY_V2_RUN_ID)
             .remove(KEY_V2_RUN_REVISION)
+            .remove(KEY_V2_RUN_INTENT_ID)
             .putString(KEY_FG_MODE, "idle")
             .commit()
     }
@@ -191,14 +194,13 @@ object TimerStateStore {
         if (action != "start" && action != "stop") return false
         // WP-373: protokol sözlüğüne çevrilemeyen origin komut üretmez.
         val origin = canonicalV2Origin(startOrigin) ?: return false
-        // WP-373: sunucu `stop` için run kimliği + revision ZORUNLU tutar
-        // (`0082:303-305` → `stop_run_revision_required`). Eksik gönderilen zarf
-        // her turda exception alıp kuyrukta kalıcı zehir oluyordu; artık hiç
-        // yazılmaz. Kimlik yoksa zaten sunucuda durdurulacak bir koşu da yoktur.
+        // WP-415: çevrimdışı başlatılan koşuda sunucu kimliği henüz yoktur.
+        // Durdur niyetini kaybetmek yerine Dart'ın start kabulünden sonra
+        // run_id + revision ile çözebileceği işaretli bir terminal kayıt yazılır.
         if (action == "stop" &&
             (runId.isNullOrBlank() || expectedRunRevision == null || expectedRunRevision <= 0L)
         ) {
-            return false
+            return appendDeferredV2Stop(p, origin)
         }
         val list = try {
             JSONArray(p.getString(KEY_PENDING_INTERVALS, "[]") ?: "[]")
@@ -222,11 +224,62 @@ object TimerStateStore {
             .put("client_occurred_at", Instant.now().toString())
             .put("origin", origin)
             .put("state", "pending")
+        if (action == "start") {
+            val runIntentId = UUID.randomUUID().toString()
+            envelope.put("run_intent_id", runIntentId)
+            return p.edit()
+                .putString(KEY_V2_INSTALLATION_ID, installationId)
+                .putString(KEY_V2_RUN_INTENT_ID, runIntentId)
+                .putString(KEY_PENDING_INTERVALS, list.put(envelope).toString())
+                .commit()
+        }
         if (!runId.isNullOrBlank()) envelope.put("run_id", runId)
         if (expectedRunRevision != null && expectedRunRevision > 0L) {
             envelope.put("expected_run_revision", expectedRunRevision)
         }
         list.put(envelope)
+        return p.edit()
+            .putString(KEY_V2_INSTALLATION_ID, installationId)
+            .putString(KEY_PENDING_INTERVALS, list.toString())
+            .commit()
+    }
+
+    /**
+     * Sunucunun asla doğrudan görmediği yerel terminal niyeti.
+     *
+     * `deferred_until_run_identity` yalnız Flutter tüketicisinin anlaşmasıdır;
+     * flush, aynı [KEY_V2_RUN_INTENT_ID] ile bağlı start kabul edilince bunu
+     * gerçek CAS-stop zarfına çevirir. Böylece kapalı koşu çevrimiçi olunca
+     * tek başına start olarak yeniden oynatılıp ayna cihazda hayalet koşu
+     * doğurmaz.
+     */
+    private fun appendDeferredV2Stop(p: SharedPreferences, origin: String): Boolean {
+        val runIntentId = p.getString(KEY_V2_RUN_INTENT_ID, null)
+            ?.takeIf { it.isNotBlank() }
+            ?: return false
+        val list = try {
+            JSONArray(p.getString(KEY_PENDING_INTERVALS, "[]") ?: "[]")
+        } catch (_: Exception) {
+            JSONArray()
+        }
+        val installationId = p.getString(KEY_V2_INSTALLATION_ID, null)
+            ?.takeIf { it.isNotBlank() }
+            ?: UUID.randomUUID().toString()
+        list.put(
+            JSONObject()
+                .put("id", UUID.randomUUID().toString())
+                .put("kind", "global_timer_command")
+                .put("schema_version", 3)
+                .put("command_id", UUID.randomUUID().toString())
+                .put("account_id", p.getString(KEY_V2_ACTIVE_ACCOUNT_ID, "").orEmpty())
+                .put("installation_id", installationId)
+                .put("action", "stop")
+                .put("client_occurred_at", Instant.now().toString())
+                .put("origin", origin)
+                .put("run_intent_id", runIntentId)
+                .put("deferred_until_run_identity", true)
+                .put("state", "pending"),
+        )
         return p.edit()
             .putString(KEY_V2_INSTALLATION_ID, installationId)
             .putString(KEY_PENDING_INTERVALS, list.toString())

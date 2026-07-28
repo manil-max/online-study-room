@@ -21,6 +21,76 @@ const globalTimerDeviceIdKey = 'global_timer_v2_device_id';
 
 enum GlobalTimerMode { disabled, shadow, foregroundMirror }
 
+/// WP-415: native, çevrimdışı bir start henüz sunucuda koşu kimliği almadan
+/// durursa bu yerel terminal niyetini yazar. Bu nesne hiçbir zaman RPC'ye
+/// doğrudan gönderilmez; eş start kabul edilince gerçek CAS-stop'a çözülür.
+class DeferredGlobalTimerStop {
+  const DeferredGlobalTimerStop({
+    required this.commandId,
+    required this.accountId,
+    required this.installationId,
+    required this.clientOccurredAt,
+    required this.origin,
+    required this.runIntentId,
+  });
+
+  final String commandId;
+  final String accountId;
+  final String installationId;
+  final DateTime clientOccurredAt;
+  final String origin;
+  final String runIntentId;
+
+  static DeferredGlobalTimerStop? tryParse(Map<dynamic, dynamic> raw) {
+    String? value(String key) {
+      final rawValue = raw[key]?.toString().trim();
+      return rawValue == null || rawValue.isEmpty ? null : rawValue;
+    }
+
+    if (raw['kind'] != TimerV2CommandEnvelope.kind ||
+        raw['schema_version'] != TimerV2CommandEnvelope.schemaVersion ||
+        raw['action'] != 'stop' ||
+        raw['deferred_until_run_identity'] != true) {
+      return null;
+    }
+    final commandId = value('command_id');
+    final installationId = value('installation_id');
+    final occurredAt = DateTime.tryParse(value('client_occurred_at') ?? '');
+    final origin = value('origin');
+    final runIntentId = value('run_intent_id');
+    if (commandId == null ||
+        installationId == null ||
+        occurredAt == null ||
+        origin == null ||
+        runIntentId == null ||
+        !TimerV2CommandEnvelope.canonicalOrigins.contains(origin)) {
+      return null;
+    }
+    return DeferredGlobalTimerStop(
+      commandId: commandId,
+      accountId: raw['account_id']?.toString().trim() ?? '',
+      installationId: installationId,
+      clientOccurredAt: occurredAt.toUtc(),
+      origin: origin,
+      runIntentId: runIntentId,
+    );
+  }
+
+  TimerV2CommandEnvelope resolve({
+    required String runId,
+    required int expectedRunRevision,
+  }) => TimerV2CommandEnvelope(
+    commandId: commandId,
+    accountId: accountId,
+    installationId: installationId,
+    action: 'stop',
+    clientOccurredAt: clientOccurredAt,
+    origin: origin,
+    runId: runId,
+    expectedRunRevision: expectedRunRevision,
+  );
+}
+
 /// WP-365: kademe artık sabit kod değil, tek rollout yapılandırma noktasından
 /// gelir. Presence kademesinden **bağımsızdır**: biri kapatılsa diğeri çalışır.
 final globalTimerModeProvider = Provider<GlobalTimerMode>(
@@ -104,15 +174,86 @@ class GlobalTimerCoordinator {
     if (raw == null) return;
     final decoded = jsonDecode(raw);
     if (decoded is! List) return;
-    final completed = <String>{};
-    final repo = _ref.read(globalTimerRepositoryProvider);
+    final queued =
+        <
+          ({TimerV2CommandEnvelope? command, DeferredGlobalTimerStop? deferred})
+        >[];
+    final startIntentIdByCommandId = <String, String>{};
     for (final item in decoded) {
       if (item is! Map) continue;
       final command = TimerV2CommandEnvelope.tryParse(item);
-      if (command == null || command.accountId != user.id) continue;
+      final deferred = command == null
+          ? DeferredGlobalTimerStop.tryParse(item)
+          : null;
+      if (command != null || deferred != null) {
+        queued.add((command: command, deferred: deferred));
+      }
+      if (command?.action == 'start') {
+        final intentId = item['run_intent_id']?.toString().trim();
+        if (intentId != null && intentId.isNotEmpty) {
+          startIntentIdByCommandId[command!.commandId] = intentId;
+        }
+      }
+    }
+    // Native yazımı sırayı zaten korur; zaman sırası ise diskten geri yükleme
+    // veya farklı yazıcı sürümlerinde de start'ın terminal niyetinden önce
+    // çözülmesini açıkça garanti eder.
+    queued.sort(
+      (left, right) =>
+          (left.command?.clientOccurredAt ?? left.deferred!.clientOccurredAt)
+              .compareTo(
+                right.command?.clientOccurredAt ??
+                    right.deferred!.clientOccurredAt,
+              ),
+    );
+    const staleStartLimit = Duration(hours: 24);
+    final now = DateTime.now().toUtc();
+    final staleIntentIds = <String>{};
+    for (final entry in queued) {
+      final command = entry.command;
+      if (command == null || command.action != 'start') continue;
+      final intentId = startIntentIdByCommandId[command.commandId];
+      if (intentId != null &&
+          now.difference(command.clientOccurredAt) > staleStartLimit) {
+        staleIntentIds.add(intentId);
+      }
+    }
+
+    final completed = <String>{};
+    final repo = _ref.read(globalTimerRepositoryProvider);
+    for (final entry in queued) {
+      final deferred = entry.deferred;
+      var command = entry.command;
+      final accountId = command?.accountId ?? deferred!.accountId;
+      if (accountId != user.id) continue;
+      if (command?.action == 'start' &&
+          now.difference(command!.clientOccurredAt) > staleStartLimit) {
+        completed.add(command.commandId);
+        continue;
+      }
+      if (deferred != null) {
+        if (staleIntentIds.contains(deferred.runIntentId)) {
+          completed.add(deferred.commandId);
+          continue;
+        }
+        final runId = prefs.getString(TimerV2CommandEnvelope.runIdKey)?.trim();
+        final runRevision = int.tryParse(
+          prefs.getString(TimerV2CommandEnvelope.runRevisionKey) ?? '',
+        );
+        if (runId == null ||
+            runId.isEmpty ||
+            runRevision == null ||
+            runRevision < 1) {
+          continue;
+        }
+        command = deferred.resolve(
+          runId: runId,
+          expectedRunRevision: runRevision,
+        );
+      }
       try {
         final snapshot = await repo.applyCommand(
-          commandId: command.commandId,
+          commandId: command!.commandId,
           deviceId: deviceId,
           action: command.action,
           runId: command.runId,
@@ -135,10 +276,7 @@ class GlobalTimerCoordinator {
         .where(
           (item) =>
               item is! Map ||
-              TimerV2CommandEnvelope.tryParse(item)?.commandId == null ||
-              !completed.contains(
-                TimerV2CommandEnvelope.tryParse(item)!.commandId,
-              ),
+              !completed.contains(item['command_id']?.toString()),
         )
         .toList();
     await prefs.setString(
