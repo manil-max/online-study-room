@@ -107,6 +107,17 @@
 - **Son guncelleme:** 2026-07-28 18:05 (Europe/Istanbul)
 - **Not:** Sirali ilerler (WP-416 → WP-417 → WP-418). `features/settings/**`, `features/admin/**`, `features/stats/**`, `android/**`, `supabase/**` yazilmaz. Local kalir; migration/tag/release yok.
 
+### Lane C
+- **Durum:** [~] Aktif
+- **Faz/WP:** PLAN 4 · Faz R · WP-419 → WP-420 → WP-421 → WP-422
+- **Aşama:** Geliştiriliyor (WP-419 ile başlanıyor; dört WP aynı sahip kümesinde sıralı ilerler)
+- **SAHİP yollar:** `app/lib/features/settings/**`, sürüm notları ekranı, geri bildirim gönderme/liste ekranları, rozet/okunmamış sayacı sağlayıcıları, `app/lib/features/profile/**` (rozet), giriş/kayıt ekranı (SSS bağlantısı), ilgili testler
+- **Ortak/riskli yüzey:** `app/lib/l10n/*.arb` (TR/EN/DE/AR atomik düzenleme, hemen commit) · başarım ekranı rozet katmanı (Lane D WP-418 metin/tanım tarafına girer, rozet katmanına girmez)
+- **Dal:** main
+- **Başlangıç:** 2026-07-28 18:01 (Europe/Istanbul)
+- **Son güncelleme:** 2026-07-28 18:01 (Europe/Istanbul)
+- **Not:** LOCAL kalır — migration apply yok, tag/release yok. `features/admin/**`, `features/safety/**`, `features/stats/**`, `campfire_scene.dart`, `android/**` yollarına yazılmaz. WP-421 sunucu tarafı gerektirirse `0101` yalnız Lane B'nin `0100` commit'i göründükten sonra alınır.
+
 ### Claude Lane
 - **Durum:** [x] Boşta
 - **Faz/WP:** — · PLAN 3 Faz K + Faz L kapandı, **v55 yayında**
