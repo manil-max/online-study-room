@@ -91,7 +91,8 @@ class _TourOverlayState extends State<TourOverlay> with WidgetsBindingObserver {
       oldWidget.remeasure?.removeListener(_onRemeasure);
       widget.remeasure?.addListener(_onRemeasure);
     }
-    if (oldWidget.step.id != widget.step.id || oldWidget.index != widget.index) {
+    if (oldWidget.step.id != widget.step.id ||
+        oldWidget.index != widget.index) {
       _anchor = null;
       _attempts = 0;
       _ensuredVisible = false;
@@ -191,7 +192,8 @@ class _TourOverlayState extends State<TourOverlay> with WidgetsBindingObserver {
     final scheme = Theme.of(context).colorScheme;
     final anchor = _anchor;
     return Semantics(
-      label: '${widget.step.title == null ? '' : '${widget.step.title}. '}'
+      label:
+          '${widget.step.title == null ? '' : '${widget.step.title}. '}'
           '${widget.step.text}',
       child: Stack(
         fit: StackFit.expand,
@@ -204,7 +206,9 @@ class _TourOverlayState extends State<TourOverlay> with WidgetsBindingObserver {
           ),
           SafeArea(
             child: Align(
-              alignment: Alignment.topRight,
+              // Sağ üstteki hedef denetimlerle (özellikle kart düzenleme ve
+              // grup değiştiriciyle) aynı dokunma alanını paylaşma.
+              alignment: Alignment.topLeft,
               child: Semantics(
                 button: true,
                 label: widget.strings.skip,

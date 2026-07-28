@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/desktop/desktop_layout.dart';
 import '../../core/desktop/desktop_window.dart';
 import '../../core/navigation/nav_index.dart';
+import '../../core/prefs/app_prefs.dart';
 import '../../core/tour/tour_controller.dart';
 import '../../core/tour/tour_host.dart';
 import '../../core/widgets/safe_screen_padding.dart';
@@ -25,6 +26,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _editing = false;
+  bool _showEditHint = false;
   final _dashboardTourAnchor = GlobalKey();
   final _editTourAnchor = GlobalKey();
 
@@ -35,10 +37,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   // Görünüm <-> düzenleme geçişinde kaydırma konumunu korur (§2F).
   final ScrollController _scroll = ScrollController();
 
-  void _setEditing(bool value) => setState(() {
-    _editing = value;
-    if (!value) _selectedCard = null;
-  });
+  void _setEditing(bool value) {
+    final shouldShowHint =
+        value &&
+        !(ref
+                .read(sharedPreferencesProvider)
+                .getBool('home.edit_hint_seen_v1') ??
+            false);
+    setState(() {
+      _editing = value;
+      _showEditHint = shouldShowHint;
+      if (!value) _selectedCard = null;
+    });
+    if (shouldShowHint) {
+      ref
+          .read(sharedPreferencesProvider)
+          .setBool('home.edit_hint_seen_v1', true);
+    }
+  }
 
   Future<void> _confirmResetDashboard() async {
     final ok = await showDialog<bool>(
@@ -147,7 +163,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    if (_editing) ...[
+                    if (_editing && _showEditHint) ...[
                       Text(
                         AppLocalizations.of(context).homeKartiTutupSurukleHedef,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(

@@ -213,13 +213,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
     if (ref.watch(navIndexProvider) != AppTab.profile.index) return page;
 
-    ref.watch(tourControllerProvider);
-    final definition = AppTours.profile(
-      AppLocalizations.of(context),
-      identityAnchor: _identityTourAnchor,
-      actionsAnchor: _actionsTourAnchor,
-    );
-    return TourHost(definition: definition, child: page);
+    return page;
   }
 }
 

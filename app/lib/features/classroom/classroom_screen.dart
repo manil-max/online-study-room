@@ -65,13 +65,7 @@ class _ClassroomScreenState extends ConsumerState<ClassroomScreen> {
       switcherAnchor: _groupSwitcherTourAnchor,
       hasGroup: group != null,
     );
-    final definition = controller.seen(groups)
-        ? AppTours.campfire(
-            l10n,
-            campfireAnchor: group == null ? null : _campfireTourAnchor,
-            hasGroup: group != null,
-          )
-        : groups;
+    final definition = groups;
 
     return TourHost(
       key: ValueKey(definition.storageId),
