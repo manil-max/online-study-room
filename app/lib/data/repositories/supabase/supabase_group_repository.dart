@@ -330,6 +330,9 @@ class SupabaseGroupRepository implements GroupRepository {
     } on GroupException {
       rethrow;
     } on PostgrestException catch (e) {
+      if (e.message.contains('public_name_not_allowed')) {
+        throw const GroupException('public_name_not_allowed');
+      }
       throw GroupException('Grup adı değiştirilemedi: ${e.message}');
     }
   }

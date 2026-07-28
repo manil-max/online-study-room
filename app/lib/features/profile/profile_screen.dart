@@ -250,10 +250,11 @@ Future<void> _editName(
   try {
     await ref.read(authRepositoryProvider).updateDisplayName(name);
     ref.invalidate(authStateProvider);
-  } on AuthException {
-    messenger.showSnackBar(
-      SnackBar(content: Text(l10n.authBeklenmeyenBirHataOlustu)),
-    );
+  } on AuthException catch (error) {
+    final message = error.message == 'public_name_not_allowed'
+        ? l10n.moderationPublicNameRejected
+        : l10n.authBeklenmeyenBirHataOlustu;
+    messenger.showSnackBar(SnackBar(content: Text(message)));
   }
 }
 

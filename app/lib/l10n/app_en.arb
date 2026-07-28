@@ -4398,6 +4398,8 @@
     "description": "Empty state on blocked users screen"
   },
   "safetyBlockedUserFallbackName": "Blocked user",
+  "moderationPublicNameRejected": "This name cannot be used. Try a different name.",
+  "@moderationPublicNameRejected": {},
   "@safetyBlockedUserFallbackName": {
     "description": "Fallback display name when profile cannot be resolved"
   },

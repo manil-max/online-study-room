@@ -123,6 +123,9 @@ class InMemoryGroupRepository implements GroupRepository {
     if (normalizedName.isEmpty || normalizedName.length > 64) {
       throw const GroupException('Grup adı 1 ile 64 karakter arasında olmalı.');
     }
+    if (_isBlockedPublicName(normalizedName)) {
+      throw const GroupException('public_name_not_allowed');
+    }
     if (memberLimit < kMinGroupMemberLimit ||
         memberLimit > kMaxGroupMemberLimit) {
       throw const GroupException('Üye sınırı 2 ile 8 arasında olmalı.');
@@ -346,6 +349,9 @@ class InMemoryGroupRepository implements GroupRepository {
     if (name.trim().isEmpty) {
       throw const GroupException('Grup adı boş olamaz.');
     }
+    if (_isBlockedPublicName(name)) {
+      throw const GroupException('public_name_not_allowed');
+    }
     _groups[groupId] = g.copyWith(name: name.trim());
     _changes.add(null);
   }
@@ -465,6 +471,26 @@ class InMemoryGroupRepository implements GroupRepository {
       _reconcilePrimaryGroup(userId);
     }
     _changes.add(null);
+  }
+
+  static bool _isBlockedPublicName(String value) {
+    final normalized = value
+        .toLowerCase()
+        .replaceAll('ç', 'c')
+        .replaceAll('ğ', 'g')
+        .replaceAll('ı', 'i')
+        .replaceAll('ö', 'o')
+        .replaceAll('ş', 's')
+        .replaceAll('ü', 'u')
+        .replaceAll(RegExp(r'[^a-z0-9]'), '');
+    return const {
+      'amk',
+      'amq',
+      'fuck',
+      'shit',
+      'bitch',
+      'asshole',
+    }.any(normalized.contains);
   }
 
   void dispose() => _changes.close();

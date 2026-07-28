@@ -1039,6 +1039,8 @@
   "safetyUnblocked": "Engel kaldırıldı.",
   "safetyNoBlockedUsers": "Engellenen kullanıcı yok.",
   "safetyBlockedUserFallbackName": "Engellenen kullanıcı",
+  "moderationPublicNameRejected": "Bu ad kullanılamaz. Başka bir ad deneyin.",
+  "@moderationPublicNameRejected": {},
   "safetyReportDetailsLabel": "Açıklama (isteğe bağlı)",
   "safetyReportDetailsHint": "Moderatörler için ek bağlam ekle (en fazla 500 karakter).",
   "adminUgcNoReports": "UGC raporu yok",

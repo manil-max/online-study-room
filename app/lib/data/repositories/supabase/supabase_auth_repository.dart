@@ -346,10 +346,17 @@ class SupabaseAuthRepository implements AuthRepository {
     if (name.isEmpty) {
       throw const AuthException('Görünen ad boş olamaz.');
     }
-    await _client
-        .from('profiles')
-        .update({'display_name': name})
-        .eq('id', cur.id);
+    try {
+      await _client
+          .from('profiles')
+          .update({'display_name': name})
+          .eq('id', cur.id);
+    } on supa.PostgrestException catch (error) {
+      if (error.message.contains('public_name_not_allowed')) {
+        throw const AuthException('public_name_not_allowed');
+      }
+      rethrow;
+    }
     _current = cur.copyWith(displayName: name);
   }
 

@@ -336,6 +336,7 @@ class ClassDetailScreen extends ConsumerWidget {
     final genericError = AppLocalizations.of(
       context,
     ).authBeklenmeyenBirHataOlustu;
+    final l10n = AppLocalizations.of(context);
     final navigator = Navigator.of(context);
     try {
       await ref.read(groupRepositoryProvider).updateGroupName(group.id, name);
@@ -344,8 +345,16 @@ class ClassDetailScreen extends ConsumerWidget {
       // gruplari elle tazele ki liste/ekranlar yeni adi aninda gostersin.
       ref.invalidate(userGroupsProvider);
       navigator.pop();
-    } on GroupException {
-      messenger.showSnackBar(SnackBar(content: Text(genericError)));
+    } on GroupException catch (error) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            error.message == 'public_name_not_allowed'
+                ? l10n.moderationPublicNameRejected
+                : genericError,
+          ),
+        ),
+      );
     }
   }
 

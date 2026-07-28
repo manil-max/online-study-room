@@ -167,7 +167,7 @@
 - **Durum:** [x] Boşta
 - **Faz/WP:** —
 - **SAHİP yollar:** —
-- **Son not (2026-07-28):** WP-391 kod/test tamam (`local` head `0093`): grup yasağı iki katılım RPC'sinde zorlanıyor, aynı işlemde üyelik kapanıyor; yönetici yasak listesinden kaldırabiliyor. 23 Flutter grup repo testi, 320 pgTAP ve hedefli `flutter analyze` yeşil. Cihaz kabulü bekliyor.
+- **Son not (2026-07-28):** WP-392 kod/test tamam (`local` head `0094`): güncellenebilir TR/EN terim verisi profil ve grup adını sunucuda denetliyor; istemci anlaşılır hata gösteriyor. 24 Flutter grup repo testi, 328 pgTAP ve hedefli analiz yeşil. Cihaz kabulü bekliyor.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
@@ -2821,7 +2821,7 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 
 #### WP-392: Görünen ad ve grup adı süzgeci 🧼
 - **Program/Faz:** PLAN 3 · Faz L (kaynak: C9 + H2 kararı "eklenir")
-- **Ajan:** — · **Durum:** [ ] Bekliyor
+- **Ajan:** Codex · **Durum:** [~] Kod/test tamamlandı — cihaz kabulü bekliyor
 - **Problem:** Görünen ad ve grup adı herkese açık; küfür/istismar süzgeci yok. Tek
   ekran görüntüsü mağaza şikâyetine dönebilir.
 - **Kapsam dışı:** Sohbet içeriği taraması, otomatik ceza, yapay zekâ moderasyonu.
@@ -2829,9 +2829,9 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
   `supabase/tests/**`, ilgili istemci hata mesajı + l10n
 - **DOKUNMA:** `0090`–`0093` (bu WP kendi migration numarasını Faz L sonunda alır)
 - **Adımlar:**
-  - [ ] TR + EN yasaklı kelime listesi (sunucuda, veri olarak — kod değişmeden güncellenir).
-  - [ ] Ad değiştirme ve grup kurma/yeniden adlandırma yollarında **sunucuda** reddedilir.
-  - [ ] Kullanıcıya neden reddedildiği anlaşılır biçimde söylenir (listeyi sızdırmadan).
+  - [x] TR + EN yasaklı kelime listesi (sunucuda, veri olarak — kod değişmeden güncellenir).
+  - [x] Ad değiştirme ve grup kurma/yeniden adlandırma yollarında **sunucuda** reddedilir.
+  - [x] Kullanıcıya neden reddedildiği anlaşılır biçimde söylenir (listeyi sızdırmadan).
 - **Veri/Migration etkisi:** Yeni migration (numara Faz L sırasında). **Geri alma:** kontrolü kaldır.
 - **RLS/Güvenlik:** 🔴 Yalnız istemci kontrolü işe yaramaz — API doğrudan çağrılabilir.
 - **Edge-case'ler:** boşluk/harf oyunları (`a_m_k`), Türkçe karakter varyantları,
@@ -2842,6 +2842,11 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 - **Tuzaklar:** Liste çok agresifse gerçek isimler reddedilir; "Çiğdem" gibi meşru
   adlarda yanlış pozitif testi zorunlu.
 - **Model önerisi:** 🟣 Pro
+- **Kanıt:** `tooling/supabase/local.ps1 baseline` → 328 pgTAP PASS
+  (`.artifacts/deploy-evidence/20260728T130124880Z-local-baseline`) ·
+  `flutter test test/data/group_repository_test.dart --dart-define-from-file=env.json` → 24 PASS ·
+  hedefli `flutter analyze` → 0 sorun. **Cihazda doğrulanmalı:** profil ve grup adı
+  düzenlemede reddetme metninin TR/EN görünümü.
 
 ---
 

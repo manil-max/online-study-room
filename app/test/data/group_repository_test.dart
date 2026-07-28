@@ -342,6 +342,22 @@ void main() {
     );
   });
 
+  test('grup adı süzgeci boşluk ve noktalama varyantını reddeder', () async {
+    final repo = InMemoryGroupRepository();
+    await expectLater(
+      repo.createGroup(name: 'a_m-k', creator: _profile('u1', 'Ali')),
+      throwsA(isA<GroupException>()),
+    );
+    final group = await repo.createGroup(
+      name: 'Odak Arkadaşları',
+      creator: _profile('u1', 'Ali'),
+    );
+    await expectLater(
+      repo.updateGroupName(group.id, 'f.u_c-k'),
+      throwsA(isA<GroupException>()),
+    );
+  });
+
   test('boş adla oluşturma GroupException fırlatır', () async {
     final repo = InMemoryGroupRepository();
     expect(

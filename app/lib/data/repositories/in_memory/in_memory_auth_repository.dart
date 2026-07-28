@@ -227,12 +227,35 @@ class InMemoryAuthRepository implements AuthRepository {
     if (name.isEmpty) {
       throw const AuthException('Görünen ad boş olamaz.');
     }
+    if (_isBlockedPublicName(name)) {
+      throw const AuthException('public_name_not_allowed');
+    }
     final updated = cur.copyWith(displayName: name);
     _current = updated;
     for (final acc in _accounts.values) {
       if (acc.profile.id == cur.id) acc.profile = updated;
     }
     _controller.add(updated);
+  }
+
+  static bool _isBlockedPublicName(String value) {
+    final normalized = value
+        .toLowerCase()
+        .replaceAll('ç', 'c')
+        .replaceAll('ğ', 'g')
+        .replaceAll('ı', 'i')
+        .replaceAll('ö', 'o')
+        .replaceAll('ş', 's')
+        .replaceAll('ü', 'u')
+        .replaceAll(RegExp(r'[^a-z0-9]'), '');
+    return const {
+      'amk',
+      'amq',
+      'fuck',
+      'shit',
+      'bitch',
+      'asshole',
+    }.any(normalized.contains);
   }
 
   @override
