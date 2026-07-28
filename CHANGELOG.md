@@ -4,6 +4,38 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [v55 / 1.0.55+55] - 2026-07-28
+
+> Mağaza yayınından önceki son büyük tur. PLAN 3 Faz K (cihaz geri bildirimi ve
+> arayüz borcu) ile Faz L (moderasyon, destek ve güvenlik) bu sürümle kapandı;
+> on dört iş paketi tek turda indi. Şema `0089`dan `0094`e taşındı — beş adımın
+> hepsi eklemeli ya da mevcut fonksiyonu aynı imzayla değiştiriyor, bu yüzden
+> sahadaki v54 istemcileri apply sırasında kırılmaz.
+
+### Yenilikler
+- **Engelleme artık sunucuda zorlanıyor.** Eskiden engelleme yalnız görünümü etkiliyordu; dürtme mutasyonu engeli hiç bilmiyordu. Artık `send_nudge` iki yönü birden kesiyor: engellenen kişi gönderemez, engelleyen de gönderemez. Kamp ateşinde engellenen kişi sahneden silinmiyor — kimliği gizleniyor, katılımcı sayısı bozulmuyor.
+- **Şikâyet akışı tamamlandı.** Şikâyet dört yüzeyden açılabiliyor (sohbet mesajı, sosyal profil, grup, grup adı) ve gönderim sonrası kullanıcıya inceleme bilgisi veriliyor.
+- **SSS ekranı.** Sunucudan beslenen, yayın kontrollü soru-cevap listesi. Giriş yapmadan açılıyor, uçak modunda yedek içerik gösteriyor, TR ve EN.
+- **Tek destek kutusu.** Soru, geri bildirim ve şikâyet aynı listede tür etiketiyle toplanıyor; yeni bilet admin cihazına bildirim düşürüyor.
+- **Grup yasağı ve davet kodu yenileme.** Yönetici bir üyeyi kalıcı yasaklayabiliyor; yasak, davet kodu ve açık grup katılımının ikisinde de sunucuda zorlanıyor. Davet kodu tek dokunuşla yenileniyor.
+- **Herkese açık ad süzgeci.** Görünen ad ve grup adı sunucu tarafında süzülüyor; harf oyunlu varyantlar da yakalanıyor.
+- **Başarım açıklamaları.** Katalogdaki her başarım artık gerçek eşik cümlesiyle nasıl kazanıldığını söylüyor.
+- **Sürüklenebilir tarih aralığı.** İstatistiklerde özel aralık, takvimin iki ucu sürüklenerek seçiliyor; aralık bırakma anında uygulanıyor.
+
+### Düzeltmeler
+- **Ayna cihazda Durdur global durduruyor.** İki cihaz açıkken ikincisinden Durdur'a basmak yalnız o cihazın görüntüsünü durduruyordu; koşu sunucuda açık kalıyordu. Artık koşuyu gerçekten bitiriyor.
+- **Widget ve bildirimde boş sayaç biçimi.** Boştayken statik `00:00:00` yazıyordu, koşarken `Chronometer` `00:00` biçimine geçiyordu; ikisi arasında biçim atlaması görünüyordu. Artık ikisi de tutarlı.
+- **Tanıtım turu.** Ana ekran turunda üst üste binen tıklanabilir öğeler ayrıldı; tur sıfırlama artık hem ekran turlarını hem ipuçlarını birlikte sıfırlıyor.
+- **Ayarlar bilgi mimarisi.** Bölüm sırası sahibin istediği düzene alındı ve testte sabitlendi; istatistik dönem çubuğu sadeleşti.
+- **Kamp ateşi kompozisyonu.** Ateş aşağı indirildi ve dikey ayrım yeniden dengelendi; en kalabalık grupta isimlerin üst üste binmediği testle kilitlendi.
+- **Sürüm notu ayrımı.** Kullanıcıya gösterilen notlarda teknik satır kalmadı; yasak kelime içeren bir taslak eklenirse sözleşme testi kırmızı düşüyor. Teknik geçmiş ayrı dosyada tutuluyor.
+
+### Notlar
+- Sayaç eşitlemesi hâlâ yalnız Android ve kronometre modunu kapsıyor; Pomodoro, geri sayım ve Windows dahil değil.
+- Tablet yatay yerleşimi bu sürümde de ele alınmadı.
+- Masaüstünde 6 haneli kod ile şifre sıfırlama hâlâ çalışmıyor (free tier e-posta şablonu kilidi).
+- Android simge etiketi ve Windows uygulama adı yerelleştirilmiyor; İngilizce cihazda simge altında yine "Odak Kampı" yazar, uygulama içi başlık "Focus Camp" olur.
+
 ## [v54 / 1.0.54+54] - 2026-07-28
 
 > 🔴 **Sayaç eşitlemesi v52 ve v53'te de çalışmıyordu; o sürümlerin notları

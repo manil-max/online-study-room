@@ -38,9 +38,9 @@ Assert-Equal (Get-LocalMigrationHead -RepoRoot $repoRoot) $contract.local_migrat
 Assert-Equal $contract.staging.migration_head '0094' 'staging hedef head 0094 (PLAN 3 Faz L: 0090-0094)'
 Assert-Equal ([bool]$contract.staging.deploy_enabled) $true 'staging deploy enabled'
 Assert-Equal ([bool]$contract.staging.release_enabled) $true 'staging release enabled'
-Assert-Equal $contract.production.migration_head '0089' 'production hedef head 0089 (WP-373 lease sweeper)'
-Assert-Equal ([bool]$contract.production.deploy_enabled) $false 'production deploy varsayilan HOLD'
-Assert-Equal ([bool]$contract.production.release_enabled) $false 'production release varsayilan HOLD (v54 tag alindi, pencere kapatildi)'
+Assert-Equal $contract.production.migration_head '0094' 'production hedef head 0094 (PLAN 3 Faz L, sahip GO)'
+Assert-Equal ([bool]$contract.production.deploy_enabled) $true 'production deploy sahip GO ile acik (0094 apply)'
+Assert-Equal ([bool]$contract.production.release_enabled) $true 'production release sahip GO ile acik (v55 tag)'
 
 $databaseWorkflow = Get-Content -LiteralPath (Join-Path $repoRoot '.github\workflows\database-gates.yml') -Raw -Encoding UTF8
 $releaseWorkflow = Get-Content -LiteralPath (Join-Path $repoRoot '.github\workflows\release.yml') -Raw -Encoding UTF8

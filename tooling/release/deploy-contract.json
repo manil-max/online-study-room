@@ -8,9 +8,9 @@
     "hold_reason": "PLAN 3 phase L adds 0090-0094: support-inbox ticket typing (0090), server-fed FAQ entries (0091), two-way block enforcement inside send_nudge (0092), group bans plus server-side invite-code regeneration (0093), and a public-name filter for display names and group names (0094). Every step is additive or replaces an existing function with an identical signature (join_group, join_public_group, send_nudge), so v54 clients already in the field keep working across the apply. Staging applies first so production repeats a proven step."
   },
   "production": {
-    "migration_head": "0089",
-    "deploy_enabled": false,
-    "release_enabled": false,
+    "migration_head": "0094",
+    "deploy_enabled": true,
+    "release_enabled": true,
     "backup_requirement": "waived",
     "backup_waiver": {
       "decided_by": "owner",
@@ -18,6 +18,6 @@
       "reason": "Free plan project has no daily backup and no PITR; owner accepted production apply with no rollback path.",
       "rollback_path": "none"
     },
-    "hold_reason": "RELEASE WINDOW CLOSED. v54 was tagged and published on 2026-07-28 (commit 8f4448b, Release Orchestrator run 30311872534); the window opened for that tag is reclosed here exactly as the previous hold_reason promised. Both flags are back to their default HOLD state and the next stable needs its own explicit owner GO. deploy_enabled also stays false: 0089 is applied on local, staging and production (post-check head 0089 on both remotes) and any further production migration needs its own GO. The backup waiver stays recorded because the project still has no PITR or daily backup."
+    "hold_reason": "OPEN BY EXPLICIT OWNER GO (2026-07-28): owner approved the whole PLAN 3 launch round for stable in one message. Production moves 0089 -> 0094 (support inbox, FAQ, block enforcement, group bans, public-name filter). Every step is additive or replaces an existing function with an identical signature, so v54 clients in the field keep working across the apply. Local replay of 0001-0094 plus 24 pgTAP files (328 tests) passed, and staging applied first with post-check head 0094. release_enabled is open for the v55 stable tag only; both flags are reclosed immediately after the tag is published. The backup waiver stays recorded because the project still has no PITR or daily backup."
   }
 }

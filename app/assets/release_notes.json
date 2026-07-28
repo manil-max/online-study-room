@@ -3,6 +3,66 @@
     "source":  "Kullanıcıya gösterilen sürüm notları; iç değişiklik geçmişi tooling/release/release_notes_technical.json dosyasındadır.",
     "releases":  [
                      {
+                         "versionName":  "1.0.55",
+                         "buildNumber":  55,
+                         "channel":  "stable",
+                         "date":  "2026-07-28",
+                         "title":  "v55: engelleme, şikâyet ve yardim gerçekten çalışıyor",
+                         "highlights":  [
+                                            "Engellediğin kişi artık seni dürtemez, sen de onu dürtemezsin — engelleme yalnız görüntüde değil, sunucuda da geçerli.",
+                                            "Şikâyet düğmesi dört ayrı yerden açılıyor ve gönderdikten sonra ne olacağını söylüyor.",
+                                            "Uygulamada Sık Sorulan Sorular ekranı var; giriş yapmadan ve uçak modunda bile açılıyor.",
+                                            "Soru, geri bildirim ve şikâyet artık tek bir destek kutusunda toplanıyor.",
+                                            "Grup yöneticisi bir üyeyi kalıcı olarak yasaklayabiliyor; yasaklı kişi geçerli davet koduyla bile geri giremiyor.",
+                                            "Davet kodu tek dokunuşla yenilenebiliyor, eski kod anında geçersiz oluyor.",
+                                            "Görünen ad ve grup adında uygunsuz kelimeler artık kabul edilmiyor.",
+                                            "Başarımların hepsinde nasıl kazanıldığı yazıyor."
+                                        ],
+                         "fixes":  [
+                                            "İki cihazın açıkken ikincisinden Durdur'a basmak koşuyu gerçekten bitiriyor; eskiden yalnız o cihazdaki görüntü duruyordu.",
+                                            "Widget ve bildirimde sayaç boştayken 00:00 yazıyor; başlatınca ilk saniyeden itibaren doğru ilerliyor.",
+                                            "Tanıtım turunda üst üste binen düğmeler ayrıldı; tur sıfırlandığında hem ekran turları hem ipuçları birlikte sıfırlanıyor.",
+                                            "Ayarlar yeniden düzenlendi, en çok kullanılanlar üste alındı.",
+                                            "İstatistiklerde özel tarih aralığını takvimin uçlarını sürükleyerek seçebiliyorsun.",
+                                            "Kamp ateşi biraz aşağı indi, sahnenin dikey dengesi düzeltildi.",
+                                            "Güncelleme notlarında kullanıcıya teknik satırlar görünmüyor."
+                                        ],
+                         "notes":  [
+                                            "Bu sürüm sunucu tarafında da değişiklik taşır; güncelledikten sonra uygulamayı bir kez tamamen kapatıp açman önerilir.",
+                                            "Engellediğin kişi kamp ateşinde sahneden silinmez; kimliği gizlenir, katılımcı sayısı doğru kalır.",
+                                            "Sayaç eşitlemesi hâlâ yalnız Android ve kronometre modunu kapsıyor; Pomodoro, geri sayım ve Windows dahil değil.",
+                                            "Tablet yatay yerleşimi bu sürümde de ele alınmadı.",
+                                            "Masaüstünde 6 haneli kod ile şifre sıfırlama hâlâ çalışmıyor."
+                                        ],
+                         "titleEn":  "v55: blocking, reporting and help that actually work",
+                         "highlightsEn":  [
+                                            "Someone you block can no longer nudge you, and you cannot nudge them either — blocking now holds on the server, not just on screen.",
+                                            "The report button is reachable from four different places and tells you what happens after you send it.",
+                                            "The app now has a Frequently Asked Questions screen; it opens without signing in and even in airplane mode.",
+                                            "Questions, feedback and reports now land in a single support inbox.",
+                                            "A group owner can ban a member for good; a banned person cannot rejoin even with a valid invite code.",
+                                            "The invite code can be regenerated with one tap, and the old code stops working immediately.",
+                                            "Display names and group names no longer accept abusive words.",
+                                            "Every achievement now says how it is earned."
+                                        ],
+                         "fixesEn":  [
+                                            "With two devices open, pressing Stop on the second one now really ends the run; before, only that device's display stopped.",
+                                            "The widget and the notification show 00:00 while the timer is idle, and count correctly from the first second after you start.",
+                                            "Overlapping buttons in the intro tour were separated; resetting the tour now clears both the screen tours and the tips.",
+                                            "Settings were reorganised, with the most used items moved to the top.",
+                                            "In statistics you can now pick a custom range by dragging the ends of the calendar.",
+                                            "The campfire moved down a little and the vertical balance of the scene was corrected.",
+                                            "Update notes no longer show technical lines to users."
+                                        ],
+                         "notesEn":  [
+                                            "This release also changes the server side; after updating, closing and reopening the app once is recommended.",
+                                            "A person you block is not removed from the campfire scene; their identity is hidden and the participant count stays correct.",
+                                            "Timer sync still covers only Android and stopwatch mode; Pomodoro, countdown and Windows are not included.",
+                                            "The tablet landscape layout was not addressed in this release either.",
+                                            "On desktop, resetting the password with a 6-digit code still does not work."
+                                        ]
+                     },
+                     {
                          "versionName":  "1.0.54",
                          "buildNumber":  54,
                          "channel":  "stable",
