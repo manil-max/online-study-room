@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/core/config/app_build_manifest.dart';
 import 'package:online_study_room/features/profile/about_screen.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
+import 'package:online_study_room/core/config/build_identity_card.dart';
 
 /// WP-419: "Build diagnostics" kartı sürüm notlarından **silinmedi**, buraya
 /// taşındı. Destekte "sürümün ne?" cevaplanabilir kalmalı; ama kanal / backend
@@ -73,18 +74,23 @@ void main() {
   });
 
   testWidgets('kimlik çözülemeyen derlemede boş kalmaz', (tester) async {
+    // 🔴 Bu test eskiden `AboutScreen()` kuruyor ve "test derlemesinde
+    // dart-define yoktur" varsayıyordu. Varsayım yerelde doğru, CI'da yanlış:
+    // CI `flutter test --dart-define-from-file=env.json` ile koşar, ekran
+    // `buildManifest ?? AppBuildManifest.currentOrNull` kullandığı için kimlik
+    // çözülür ve yedek metin hiç basılmaz. v56 sürüm derlemesi tam buradan
+    // düştü. Yedek metni üreten sözleşme `BuildIdentityCard`'ın kendisinde
+    // olduğu için doğrudan ona bakılır — ortamdan bağımsız.
     await tester.pumpWidget(
       const MaterialApp(
         locale: Locale('tr'),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        home: AboutScreen(),
+        home: Scaffold(body: BuildIdentityCard(manifest: null)),
       ),
     );
     await tester.pumpAndSettle();
 
-    // Test derlemesinde dart-define yok → manifest null; ekran yine de bir şey
-    // söyler, sessizce boş kalmaz.
     expect(
       find.text('Kanal/backend kimliği bu test derlemesinde tanımlı değil.'),
       findsOneWidget,

@@ -169,14 +169,22 @@
   Ayrıca Lane A ana dalı kırmızı bırakmıştı (`fa68a0b`, Lane D onardı) ve Lane D
   ortak `l10n/` dizininde `git checkout --` ile Lane C'nin commit'lenmemiş üç
   anahtarını sildi — dört dilde geri yazıldı, kalıcı ders alındı.
+  🔴 **Beşinci kusur — `l10n Gate` v55 turu boyunca kırmızıydı ve v55 öyle
+  yayınlandı.** Son beş koşum üst üste `failure`. Katalog eşliği doğruydu (o
+  yüzden anahtar saymak yakalamıyor); kapı **kaynak koddaki** l10n'dan geçmeyen
+  11 Türkçe literal'e bakıyordu — İngilizce/Almanca/Arapça cihazda ayna-durdurma
+  diyaloğu, SSS soru formu ve şikâyet metni Türkçe görünüyordu. Dizeler
+  WP-379/388/390'dan, v56 regresyonu değil. Dördü için dört dilde yeni anahtar
+  yazıldı, ikisi mevcut anahtarları kullandı; rapor snapshot'ındaki
+  `'Grup adı: '` ön eki kaldırıldı (o değer UI değil, sunucuya giden veri —
+  çevrilseydi admin kuyruğunda her şikâyet başka dilde görünürdü).
   **Teslim:** `flutter analyze` temiz · **1075/1075** Flutter testi · l10n dört
-  dilde **1391 anahtar, eksiksiz** (çevrilmemiş raporu `{}`) · deploy guard 75/75 ·
+  dilde **1395 anahtar, eksiksiz** · `l10n_audit.py` OK · deploy guard 75/75 ·
   release preflight 8/8 · yerel replay `0001→0100` + **377 pgTAP PASS** ·
-  staging apply `30380751277`.
-  **Açık:** production `0094`'te bırakıldı, sahip GO'su gelmeden taşınmayacak.
-  🔴 v55'ten kalma: staging **ve production** `deploy_enabled`/`release_enabled`
-  bayrakları hâlâ **açık** — v55 `hold_reason`'ı "tag'den hemen sonra kapatılır"
-  diyordu ama kapatılmamış.
+  CI ve l10n Gate ikisi de yeşil · staging apply `30380751277` (post-check `0100`) ·
+  production apply `30383034112` (post-check `0100`) · **v56 stable** `30383432145`.
+  **Açık:** cihaz kabulü sahipte. Tur bitince dört kapı (staging + production ×
+  `deploy_enabled`/`release_enabled`) geri kapatılacak — v55'te bu adım atlanmıştı.
 - **Önceki not (2026-07-28, v55 teslim turu):** Beş paralel zincir on dört WP'yi
   (WP-379…WP-392) tek turda indirdi. Çakışma **olmadı** — `*.arb`,
   `settings_screen.dart`, `stats_period_bar.dart`, `campfire_scene.dart` ve
