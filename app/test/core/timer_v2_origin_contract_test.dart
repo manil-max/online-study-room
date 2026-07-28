@@ -45,14 +45,11 @@ Map<String, String> _nativeOriginMapping(String store) {
 
 /// Migration'daki `v_origin not in ('app', 'widget', ...)` allowlist'i.
 Set<String> _serverAllowlist(String migration) {
-  final match = RegExp(
-    r"v_origin not in \(([^)]*)\)",
-  ).firstMatch(migration);
+  final match = RegExp(r"v_origin not in \(([^)]*)\)").firstMatch(migration);
   expect(match, isNotNull, reason: 'sunucu origin allowlist\'i bulunamadı');
-  return RegExp("'([a-z_]+)'")
-      .allMatches(match!.group(1)!)
-      .map((m) => m.group(1)!)
-      .toSet();
+  return RegExp(
+    "'([a-z_]+)'",
+  ).allMatches(match!.group(1)!).map((m) => m.group(1)!).toSet();
 }
 
 void main() {
@@ -100,48 +97,51 @@ void main() {
     }
   });
 
-  test('uygulamanın ürettiği her startOrigin ya çevrilir ya bilinçli dışlanır',
-      () {
-    final mapping = _nativeOriginMapping(store);
-    // Uygulamanın gerçekten yazabildiği yerel origin değerleri.
-    const produced = <String>{
-      'dart_app',
-      'native_widget',
-      'native_notification',
-      'global_timer_mirror',
-    };
-    // Ayna, kullanıcının yeni bir niyeti değil uzak gerçeğin gösterimidir;
-    // komut üretmemesi DOĞRUDUR (aksi halde echo start döngüsü olurdu).
-    const deliberatelyExcluded = <String>{'global_timer_mirror'};
+  test(
+    'uygulamanın ürettiği her startOrigin ya çevrilir ya bilinçli dışlanır',
+    () {
+      final mapping = _nativeOriginMapping(store);
+      // Uygulamanın gerçekten yazabildiği yerel origin değerleri.
+      const produced = <String>{
+        'dart_app',
+        'native_widget',
+        'native_notification',
+        'global_timer_mirror',
+      };
+      // Ayna, kullanıcının yeni bir niyeti değil uzak gerçeğin gösterimidir;
+      // komut üretmemesi DOĞRUDUR (aksi halde echo start döngüsü olurdu).
+      const deliberatelyExcluded = <String>{'global_timer_mirror'};
 
-    for (final origin in produced) {
-      if (deliberatelyExcluded.contains(origin)) {
+      for (final origin in produced) {
+        if (deliberatelyExcluded.contains(origin)) {
+          expect(
+            mapping.containsKey(origin),
+            isFalse,
+            reason: '$origin komut üretmemeli — ayna echo start yaratır',
+          );
+          continue;
+        }
         expect(
           mapping.containsKey(origin),
-          isFalse,
-          reason: '$origin komut üretmemeli — ayna echo start yaratır',
+          isTrue,
+          reason:
+              '$origin için protokol çevirisi yok → bu yoldan başlatılan sayaç '
+              'hiçbir zaman diğer cihaza yansımaz.',
         );
-        continue;
       }
-      expect(
-        mapping.containsKey(origin),
-        isTrue,
-        reason:
-            '$origin için protokol çevirisi yok → bu yoldan başlatılan sayaç '
-            'hiçbir zaman diğer cihaza yansımaz.',
-      );
-    }
 
-    // Kaynak dosyalarda gerçekten bu değerlerin geçtiğini de doğrula; biri
-    // yeniden adlandırılırsa yukarıdaki liste sessizce bayatlamasın.
-    expect(service, contains('startOrigin = "native_widget"'));
-    expect(service, contains('"native_notification"'));
-    expect(
-      File('lib/core/background/timer_foreground_service.dart')
-          .readAsStringSync(),
-      contains("String startOrigin = 'dart_app'"),
-    );
-  });
+      // Kaynak dosyalarda gerçekten bu değerlerin geçtiğini de doğrula; biri
+      // yeniden adlandırılırsa yukarıdaki liste sessizce bayatlamasın.
+      expect(service, contains('startOrigin = "native_widget"'));
+      expect(service, contains('"native_notification"'));
+      expect(
+        File(
+          'lib/core/background/timer_foreground_service.dart',
+        ).readAsStringSync(),
+        contains("String startOrigin = 'dart_app'"),
+      );
+    },
+  );
 
   test('şema sürümü Kotlin üretici ile Dart tüketicide aynıdır', () {
     expect(
@@ -175,7 +175,14 @@ void main() {
           'V2 stop zarfı hâlâ recordInterval bloğunun içinde (16 boşluk); '
           'uygulama içi Durdur karşı cihazı durduramaz.',
     );
-    expect(service, contains('ACTION_STOP_SILENT -> handleStop(recordInterval = false)'));
+    expect(
+      service,
+      contains(
+        'ACTION_STOP_SILENT -> handleStop(\n'
+        '                    recordInterval = false,\n'
+        '                    commandOrigin = "dart_app",',
+      ),
+    );
     expect(service, contains('KEY_V2_RUN_ID'));
     expect(service, contains('KEY_V2_RUN_REVISION'));
   });

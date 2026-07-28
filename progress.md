@@ -3124,7 +3124,7 @@ WP-385 (l10n/başarım). Sonraki dalga: WP-381 · WP-383 · WP-382.
 
 #### WP-414: Bildirim ve widget'tan Durdur ayna cihaza gitmiyor ⏱️
 - **Program/Faz:** PLAN 4 · Faz P (kaynak: sahip cihaz testi)
-- **Ajan:** Lane A · **Durum:** [ ] Başlamadı
+- **Ajan:** Lane A · **Durum:** [~] Kod/test tamamlandı — cihaz kabulü bekliyor
 - **Problem:** WP-379 uygulama içi Durdur'u ayna cihaza taşıdı ✅. Ama **bildirimden**
   ve **Android ana ekran widget'ından** Durdur denince diğer cihaz durmuyor.
   Senkron yolu yalnız Dart/UI katmanına bağlanmış; native aksiyon yolları aynı
@@ -3151,6 +3151,13 @@ WP-385 (l10n/başarım). Sonraki dalga: WP-381 · WP-383 · WP-382.
     zarf ile sunucunun beklediği şema tek testte karşılaştırılır. Biri koparsa kırmızı düşer.
 - **Tuzaklar:** WP-373 dersi — tek uçlu testler senkronun yıllarca ölü kalmasını gizledi.
   pgTAP kendi uydurduğu `'app'` değerini kullanmasın, istemcinin gerçekten gönderdiğini kullansın.
+- **DoD kanıtı:** ✅ Kodda doğrulandı — uygulama içi / bildirim / widget Durdur
+  yolları ayrı canonical origin ile aynı native V2 kuyruğuna yazılıyor; üç ayrı
+  iki-uçlu sözleşme testi Kotlin üretici → Dart canonical kümesi → migration
+  allowlist → pgTAP çağrısını ölçüyor. `flutter test …global_timer_deferred_stop…
+  …timer_v2_stop_entry_contract… …timer_v2_origin_contract…`: **12/12 yeşil**.
+  ⏳ Cihazda doğrulanmalı — bildirim ve widget Durdur ile ayna cihazın ≤5 sn'de
+  durması.
 - **Model önerisi:** 🔴 Opus
 
 #### WP-415: Çevrimdışı biten koşu ayna cihazda hayalet koşu doğuruyor 👻

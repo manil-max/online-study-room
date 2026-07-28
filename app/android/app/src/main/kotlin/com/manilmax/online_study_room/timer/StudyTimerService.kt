@@ -71,14 +71,23 @@ class StudyTimerService : Service() {
                         liveRunId, liveRunToken, startOrigin,
                     )
                 }
-                ACTION_STOP -> handleStop(recordInterval = true)
-                ACTION_STOP_SILENT -> handleStop(recordInterval = false)
+                ACTION_STOP -> handleStop(
+                    recordInterval = true,
+                    commandOrigin = "native_notification",
+                )
+                ACTION_STOP_SILENT -> handleStop(
+                    recordInterval = false,
+                    commandOrigin = "dart_app",
+                )
                 ACTION_START_BREAK -> handleStartBreak()
                 ACTION_END_BREAK -> handleEndBreak()
                 ACTION_TOGGLE -> {
                     // WP-135: idle→start; running→stop + 00:00 (writeIdle).
                     if (TimerStateStore.isRunning(prefs())) {
-                        handleStop(recordInterval = true)
+                        handleStop(
+                            recordInterval = true,
+                            commandOrigin = "native_widget",
+                        )
                     } else {
                         handleStart(
                             startedAtMs = System.currentTimeMillis(),
@@ -226,7 +235,10 @@ class StudyTimerService : Service() {
         )
     }
 
-    private fun handleStop(recordInterval: Boolean) {
+    private fun handleStop(
+        recordInterval: Boolean,
+        commandOrigin: String = "native_notification",
+    ) {
         // ÖNEMLİ: 5 sn içinde startForeground (Android 12+ FGS borcu).
         startForegroundCompat(buildIdleNotification())
 
@@ -275,7 +287,7 @@ class StudyTimerService : Service() {
             TimerStateStore.appendV2Command(
                 p,
                 action = "stop",
-                startOrigin = startOrigin,
+                startOrigin = commandOrigin,
                 runId = p.getString(TimerStateStore.KEY_V2_RUN_ID, null),
                 expectedRunRevision = p.getString(TimerStateStore.KEY_V2_RUN_REVISION, null)
                     ?.toLongOrNull(),
