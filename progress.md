@@ -3619,7 +3619,7 @@ WP-385 (l10n/başarım). Sonraki dalga: WP-381 · WP-383 · WP-382.
 - **Model önerisi:** Sonnet
 
 #### WP-425: Şikâyet detay ekranı — tam içerik, bağlam, geçmiş 🔍
-- **Program/Faz:** PLAN 4 · Faz S · **Ajan:** Lane B · **Durum:** [ ] Başlamadı
+- **Program/Faz:** PLAN 4 · Faz S · **Ajan:** Lane B · **Durum:** [~] Kod/test tamamlandı · cihaz kabulü bekliyor
 - ⏳ **WP-424'ten sonra** · **WP-423 (`0096`) commit'lenmeden migration numarası alma**
 - **Problem:** Sahip: *"bildirse bile ben şu an göremiyorum ne yapmış."* Kuyrukta
   içerik kopyası 3 satırda kesiliyor, bağlam yok, kişinin geçmişi yok. Tek mesaj
@@ -3636,6 +3636,12 @@ WP-385 (l10n/başarım). Sonraki dalga: WP-381 · WP-383 · WP-382.
 - **RLS/Güvenlik:** Bağlam sorgusu **yalnız super-admin**; RPC `is_super_admin()` doğrular.
 - **Kabul:** pgTAP: super-admin olmayan bağlam RPC'sini çağıramaz · detayda tam metin
   görünür · geçmişi olmayan hedefte boş durum düzgün.
+- **DoD kanıtı (2026-07-28):** `admin_ugc_report_detail` SECURITY DEFINER RPC'si
+  önce `is_super_admin()` doğrular; tam snapshot, serbest açıklama, mesaj hedefi için
+  en çok ±5 bağlam satırı, hedef rapor sayısı/yaptırım geçmişi ve private ek yolu
+  döner. Kart ayrıntıya açılır, metin kesilmeden seçilebilir. `026` pgTAP güvenlik/
+  bağlam senaryosunu kapsar; kullanıcı emri gereği migration **uygulanmadı**. Hedefli
+  Flutter widget testi 2/2 ve analiz geçti. **Kodda doğrulandı · Cihazda doğrulanmalı.**
 - **Model önerisi:** 🔴 Opus
 
 #### WP-426: Basamaklı yaptırım ⚖️

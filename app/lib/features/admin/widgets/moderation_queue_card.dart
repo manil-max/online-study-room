@@ -9,15 +9,18 @@ class ModerationQueueCard extends StatelessWidget {
     super.key,
     required this.report,
     required this.onStatusSelected,
+    this.onTap,
   });
 
   final ModerationQueueReport report;
   final ValueChanged<String> onStatusSelected;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return ListTile(
+      onTap: onTap,
       title: Text('${report.targetType} · ${report.reason}'),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

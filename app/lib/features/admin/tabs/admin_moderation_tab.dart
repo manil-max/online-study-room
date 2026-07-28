@@ -161,9 +161,79 @@ class _AdminModerationTabState extends ConsumerState<AdminModerationTab> {
                 report: reports[index],
                 onStatusSelected: (status) =>
                     _setStatus(reports[index].id, status),
+                onTap: () => showModalBottomSheet<void>(
+                  context: context,
+                  isScrollControlled: true,
+                  builder: (_) =>
+                      _ModerationDetailSheet(reportId: reports[index].id),
+                ),
               ),
             ),
           );
         },
       );
+}
+
+class _ModerationDetailSheet extends StatelessWidget {
+  const _ModerationDetailSheet({required this.reportId});
+
+  final String reportId;
+
+  Future<Map<String, dynamic>> _load() async {
+    final result = await Supabase.instance.client.rpc(
+      'admin_ugc_report_detail',
+      params: {'p_report_id': reportId},
+    );
+    return Map<String, dynamic>.from(result as Map);
+  }
+
+  @override
+  Widget build(BuildContext context) => SafeArea(
+    child: FractionallySizedBox(
+      heightFactor: .9,
+      child: FutureBuilder<Map<String, dynamic>>(
+        future: _load(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState != ConnectionState.done) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError || snapshot.data == null) {
+            return const Center(child: Icon(Icons.error_outline));
+          }
+          final detail = snapshot.data!;
+          final report = Map<String, dynamic>.from(detail['report'] as Map);
+          final contextRows = (detail['context'] as List? ?? const []).map(
+            (row) => Map<String, dynamic>.from(row as Map),
+          );
+          final history = Map<String, dynamic>.from(detail['history'] as Map);
+          return ListView(
+            padding: const EdgeInsets.all(20),
+            children: [
+              SelectableText(
+                (report['content_snapshot'] as String?) ?? '',
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+              if ((report['details'] as String?)?.isNotEmpty == true) ...[
+                const SizedBox(height: 16),
+                SelectableText(report['details'] as String),
+              ],
+              const Divider(height: 32),
+              for (final row in contextRows)
+                ListTile(
+                  dense: true,
+                  title: Text((row['display_name'] as String?) ?? ''),
+                  subtitle: Text((row['body'] as String?) ?? ''),
+                  selected: row['is_target'] == true,
+                ),
+              const Divider(height: 32),
+              Text('${history['report_count'] ?? 0}'),
+              for (final sanction
+                  in (history['sanctions'] as List? ?? const []))
+                Text((sanction as Map)['reason'] as String? ?? ''),
+            ],
+          );
+        },
+      ),
+    ),
+  );
 }
