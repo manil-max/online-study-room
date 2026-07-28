@@ -5892,5 +5892,13 @@
   "faqLoginRequired": "Sign in to send a question.",
   "@faqLoginRequired": {"description": "Authentication requirement for support questions."},
   "faqLoginLink": "Frequently asked questions"
-  ,"@faqLoginLink": {"description": "FAQ link shown on the authentication screen."}
+  ,"@faqLoginLink": {"description": "FAQ link shown on the authentication screen."},
+  "adminUgcReporter": "Reporter",
+  "@adminUgcReporter": {"description": "Identity label for the person who submitted a UGC report."},
+  "adminUgcTarget": "Reported person",
+  "@adminUgcTarget": {"description": "Identity label for the person whose content was reported."},
+  "adminUgcDeletedUser": "Deleted user",
+  "@adminUgcDeletedUser": {"description": "Fallback identity label when a profile can no longer be resolved."},
+  "adminUgcIdCopied": "ID copied",
+  "@adminUgcIdCopied": {"description": "Confirmation after an admin copies an immutable moderation identity."}
 }

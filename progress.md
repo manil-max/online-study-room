@@ -3355,7 +3355,7 @@ WP-385 (l10n/başarım). Sonraki dalga: WP-381 · WP-383 · WP-382.
 > dokunuyor. Tek lane, sıralı ilerler. Paralelleştirilemez.
 
 #### WP-424: Şikâyet kuyruğunda kimlik okunabilirliği 👤
-- **Program/Faz:** PLAN 4 · Faz S · **Ajan:** Lane B · **Durum:** [ ] Başlamadı
+- **Program/Faz:** PLAN 4 · Faz S · **Ajan:** Lane B · **Durum:** [~] Kod/test tamamlandı · cihaz kabulü bekliyor
 - **Problem:** `admin_moderation_tab.dart:76` ham UUID gösteriyor. Kim şikâyet etti,
   kim şikâyet edildi **okunmuyor**. Sahip: *"admin panelinde direkt ID yazmak zor değil mi?"*
 - **Kural:** **gösterilen ad · işlem yapılan ID · loglanan ikisi birden.** Adlar değişir
@@ -3372,6 +3372,11 @@ WP-385 (l10n/başarım). Sonraki dalga: WP-381 · WP-383 · WP-382.
 - **Migration/Ortam:** Yok (mevcut RLS ile okunuyor) · local.
 - **Kabul:** Kuyruk testinde ham UUID **başlıkta görünmez** · ad çözülemezse
   "Silinmiş kullanıcı" gösterilir, boş kalmaz.
+- **DoD kanıtı (2026-07-28):** `ModerationQueueCard` şikâyet eden ve edilenin
+  adını/avatarını gösterir; işlem kimliği başlıkta değil, küçük kopyalanabilir
+  metindir. Çözülemeyen profil için yerelleştirilmiş "Silinmiş kullanıcı" yedeği
+  vardır. TR/EN/DE/AR anahtarları eklendi; hedefli widget testi (2/2) ve
+  `flutter analyze --no-pub` geçti. **Kodda doğrulandı · Cihazda doğrulanmalı.**
 - **Model önerisi:** Sonnet
 
 #### WP-425: Şikâyet detay ekranı — tam içerik, bağlam, geçmiş 🔍

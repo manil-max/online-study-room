@@ -5272,5 +5272,13 @@
   "supportTicketTypeQuestion": "سؤال",
   "@supportTicketTypeQuestion": {"description": "Support inbox filter and ticket type."},
   "supportTicketTypeReport": "بلاغ",
-  "@supportTicketTypeReport": {"description": "Support inbox filter and ticket type."}
+  "@supportTicketTypeReport": {"description": "Support inbox filter and ticket type."},
+  "adminUgcReporter": "مقدّم البلاغ",
+  "@adminUgcReporter": {"description": "Identity label for the person who submitted a UGC report."},
+  "adminUgcTarget": "الشخص المُبلّغ عنه",
+  "@adminUgcTarget": {"description": "Identity label for the person whose content was reported."},
+  "adminUgcDeletedUser": "مستخدم محذوف",
+  "@adminUgcDeletedUser": {"description": "Fallback identity label when a profile can no longer be resolved."},
+  "adminUgcIdCopied": "تم نسخ المعرّف",
+  "@adminUgcIdCopied": {"description": "Confirmation after an admin copies an immutable moderation identity."}
 }
