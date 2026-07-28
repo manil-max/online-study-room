@@ -86,6 +86,9 @@ class SupabaseNudgeRepository implements NudgeRepository {
     if (message.contains('not_group_member')) {
       return 'Bu grupta dürtme gönderme yetkin yok.';
     }
+    if (message.contains('nudge_blocked')) {
+      return 'Engellenen kullanıcıyla dürtme gönderemezsin.';
+    }
     return 'Dürtme gönderilemedi: $message';
   }
 }

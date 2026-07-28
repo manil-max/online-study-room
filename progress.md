@@ -164,21 +164,16 @@
 - **Doküman temizliği (2026-07-27, sahip emri):** `docs/archive/` dizini, üç senior review turu, v46 sahip geri bildirimi ve kapanmış iki recovery kabul notu repodan kaldırıldı (13 dosya, ~11k satır). Evrensel saat işinde **yalnız nihai plan + C0 uyumluluk kanıtı** kaldı. Hepsi git geçmişinde; kalan md'lerde kırık iç bağlantı yok.
 
 ### Codex Lane
-- **Durum:** [x] Boşta — WP-388 kod/test tamam, staging + cihaz kabulü bekliyor
+- **Durum:** [x] Boşta — WP-389 kod/test tamam, staging + cihaz kabulü bekliyor
 - **Faz/WP:** —
 - **SAHİP yollar:** —
-- **Son not (2026-07-28):** `0091` yayınlı anon SSS, oturumlu soru iletimi ve çevrimdışı yedeği ekledi. Local 297 pgTAP ve hedefli SSS widget testi yeşil. Remote mutasyon yapılmadı.
+- **Son not (2026-07-28):** `0092` dürtmeyi iki yönlü sunucuda engelledi; kamp ateşi ve sıralamada kimlik gizlenip sayı korundu. Local 307 pgTAP, hedefli analyze ve kamp ateşi widget testi yeşil. Remote mutasyon yapılmadı.
 
 ### Codex-2 Lane
-- **Durum:** [~] Aktif
-- **Faz/WP:** PLAN 3 · Faz K · WP-380
-- **Aşama:** Geliştiriliyor
-- **SAHİP yollar:** `app/android/app/src/main/kotlin/**/widgets/StudyWidgetProviders.kt` · `app/android/app/src/main/kotlin/**/timer/StudyTimerService.kt` · ilgili Kotlin testi · `app/android/app/build.gradle.kts` (yalnız JUnit test bağımlılığı) · `progress.md` (yalnız bu lane ve WP-380 kartı)
-- **Ortak/riskli yüzey:** `app/lib/**` ve WP-379 dosyaları salt-okunur; Android timer/widget boş-durum sözleşmesi yalnız bu WP'de değişir.
-- **Dal:** main
-- **Başlangıç:** 2026-07-28 15:01 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-28 15:01
-- **Not:** Widget ve bildirim boş sayacını `00:00` ile hizalama; local, migration yok.
+- **Durum:** [x] Boşta
+- **Faz/WP:** —
+- **SAHİP yollar:** —
+- **Son not (2026-07-28):** WP-380 kod/test tamam; `:app:testLocalDebugUnitTest` yeşil. Android widget/bildirim cihaz kabulü bekliyor.
 
 ### Codex-3 Lane
 - **Durum:** [x] Boşta
@@ -187,37 +182,27 @@
 - **Son not:** WP-344 `0083` local replay, 244 pgTAP ve uygulama kalite kapılarıyla kod/test tamamlandı; timer-sync rollout flag kapalıdır. Staging/cihaz kabulü V3 zincirinin ortak QA turunda yapılacak.
 
 ### Codex-4 Lane
-- **Durum:** [~] Aktif
-- **Faz/WP:** PLAN 3 · Faz K · WP-384
-- **Aşama:** Geliştiriliyor
-- **SAHİP yollar:** `app/lib/features/stats/widgets/**` içindeki aralık seçici · `app/test/features/stats/*` · `progress.md` (yalnız bu lane ve WP-384 kartı)
-- **Ortak/riskli yüzey:** `stats_screen.dart` WP-383 commit `54be471` ile serbest; edit düğmesi korunacak, takvim görsel dili değişmeyecek
-- **Dal:** main
-- **Başlangıç:** 2026-07-28 15:45 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-28 15:45
-- **Not:** WP-381 commit `a6cf709` sonrası özel tarih aralığı uç sürükleme geliştirmesi; local doğrulama, staging/production mutasyonu yok.
+- **Durum:** [x] Boşta
+- **Faz/WP:** —
+- **SAHİP yollar:** —
+- **Son not:** WP-384 `fc9af60` ile tamamlandı: iki uç sürüklenir, canlı önizlenir ve kesişince takas edilir; 7 hedefli Flutter testi ve analiz yeşil.
 
 ### Codex-6 Lane
-- **Durum:** [!] Bloklu
-- **Faz/WP:** PLAN 3 · Faz K · WP-385
-- **Aşama:** Çakışma bekliyor
-- **SAHİP yollar:** `app/lib/core/stats/achievement_engine.dart` çevresi (kod okunarak netleşecek) · `app/lib/l10n/app_tr.arb` · `app/lib/l10n/app_en.arb` · `app/test/core/stats/achievement_*` · `progress.md` (yalnız bu lane ve WP-385 kartı)
-- **Ortak/riskli yüzey:** l10n/generated yüzeyi bu lane'e ait; `achievement_ledger_engine.dart` ve `supabase/migrations/**` salt-okunur
-- **Dal:** main
-- **Başlangıç:** 2026-07-28 14:53 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-28 14:53
-- **Not:** WP-386 ayrı commit `7f95601` ile kod/hedef test tamamlandı; tam paket eşzamanlı Flutter derleme kilidinde kaldığı için yeniden uygun boşlukta çalıştırılacak. WP-385, WP-387'nin commit edilmemiş `app/lib/l10n/app_tr.arb` + `app_en.arb` destek türü değişiklikleri nedeniyle bekliyor; bu dosyalar temizlenip WP-387 lane'i bırakılınca yeniden claim edilecek.
+- **Durum:** [x] Boşta
+- **Faz/WP:** —
+- **SAHİP yollar:** —
+- **Son not:** WP-385 `ce7212f` ile tamamlandı: görünür katalog artık ledger’daki ilk gerçek kademe eşiğini TR/EN tam koşul cümlesiyle gösterir; 12 başarımın eşik–metin sözleşmesi testte kilitli.
 
 ### Codex-5 Lane
 - **Durum:** [~] Aktif
 - **Faz/WP:** PLAN 3 · Faz L · WP-390
 - **Aşama:** Geliştiriliyor
-- **SAHİP yollar:** `app/lib/features/safety/report_sheet.dart` · `app/lib/features/admin/tabs/admin_reports_tab.dart` · şikâyet giriş noktaları · ilgili testler ve UGC smoke kanıtı · `progress.md` (yalnız bu lane ve WP-390 kartı)
-- **Ortak/riskli yüzey:** WP-387 `c97924f` ile tamamlandı; `supabase/migrations/**` salt-okunur · `campfire_scene.dart` WP-382/389 sınırında salt-okunur
+- **SAHİP yollar:** `supabase/migrations/0090_support_inbox.sql` (yalnız yayımlanmamış audit eklemesi) · `supabase/tests/019_support_inbox.test.sql` · `app/lib/features/safety/report_sheet.dart` · `app/lib/features/admin/tabs/admin_reports_tab.dart` · şikâyet giriş noktaları · `app/lib/l10n/app_tr.arb` · `app/lib/l10n/app_en.arb` · ilgili testler ve UGC smoke kanıtı · `progress.md` (yalnız bu lane ve WP-390 kartı)
+- **Ortak/riskli yüzey:** WP-387 `c97924f` ile tamamlandı; repo/local/staging/production head `0089` olduğundan yayımlanmamış `0090` yalnız server-audit eklemesi için bu lane'de yeniden açıldı · `campfire_scene.dart` WP-382/389 sınırında salt-okunur
 - **Dal:** main
 - **Başlangıç:** 2026-07-28 15:16 (Europe/Istanbul)
 - **Son güncelleme:** 2026-07-28 16:09
-- **Not:** WP-382'nin gerçek A/B/C önizlemesi `campfire_wp382_preview.png` olarak üretildi; sahibin sayısal seçimi bekleniyor, kalıcı sahne değişikliği yazılmadı. WP-390 grup ve grup-adı girişleri + widget testleriyle geliştiriliyor. Şikâyet durum değişiminin server audit izi migration gerektiriyor; WP-388 `0091` hattı aktif olduğu için migration yüzeyine girilmedi, bu bölüm seri serbest kalınca ele alınacak.
+- **Not:** WP-382, sahibin seçtiği ateş `+45 px` ve dikey ayrım `%25` ile `49ca29f` commitinde sabitlendi; 8 kişilik PNG + etiket çakışmama testi yeşil. WP-390 grup/grup-adı girişleri, kullanıcıya inceleme bilgisi ve yayımlanmamış `0090` içindeki server-authoritative audit kaydıyla kod/test tamam; staging + cihaz smoke kabulü bekliyor.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
@@ -2450,7 +2435,7 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 
 #### WP-380: Widget ve bildirimde boş sayaç biçimi ⏱️
 - **Program/Faz:** PLAN 3 · Faz K (kaynak: A8)
-- **Ajan:** Codex-2 · **Durum:** [~] Geliştiriliyor
+- **Ajan:** Codex-2 · **Durum:** [~] Kod/test tamamlandı · cihaz kabulü bekliyor
 - **Problem:** Boştayken statik `"00:00:00"` yazılıyor, koşarken Android `Chronometer`
   devreye girip bir saatin altında `MM:SS` basıyor → başlangıçta `00:00:00` → `00:01`
   sıçraması. Sahip: "çirkin, doğrudan `00:00` olsun."
@@ -2460,8 +2445,9 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
   `app/android/app/src/main/kotlin/**/timer/StudyTimerService.kt`, ilgili Kotlin testi
 - **DOKUNMA:** `app/lib/**` (uygulama içi sayaç bu koddan beslenmiyor), `WP-379` dosyaları
 - **Adımlar:**
-  - [ ] `StudyWidgetProviders.kt:95` ve `StudyTimerService.kt:471` boş metni `"00:00"` yap.
-  - [ ] Duraklatılmış/geri yüklenmiş durumlarda da aynı biçim kullanılıyor mu, tara.
+  - [x] `StudyWidgetProviders.kt:95` ve `StudyTimerService.kt:471` boş metni `"00:00"` yap.
+  - [x] Duraklatılmış/geri yüklenmiş durumlarda da aynı biçim kullanılıyor mu, tara.
+- **Otomatik kanıt:** `:app:testLocalDebugUnitTest` — `IdleTimerDisplayFormatTest` 1/1 yeşil (2026-07-28). `flutter analyze` paylaşılan Flutter derleme kuyruğunda bitiş çıktısı alınamadı; bu WP Dart dosyasına dokunmaz.
 - **Veri/Migration etkisi:** Yok. **Ortam/Deploy:** local.
 - **Kabul:** Widget ve bildirim boştayken `00:00` gösterir · başlat → ilk saniyede
   sıçrama yok · 1 saati geçince `1:00:00` · uygulama içi sayaç `00:00:00` olarak kalır
@@ -2510,7 +2496,7 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 
 #### WP-382: Kamp ateşi kompozisyon revizesi 🔥
 - **Program/Faz:** PLAN 3 · Faz K (kaynak: A3 + sahip onayı A3-son)
-- **Ajan:** Codex-5 · **Durum:** [!] Sahip seçimi bekliyor — A/B/C önizlemesi üretildi
+- **Ajan:** Codex-5 · **Durum:** [x] Tamamlandı (`49ca29f`)
 - **Problem:** Kırpma beğenildi, iki düzeltme kaldı: (1) ateşin kendisi **biraz aşağı**
   inecek, (2) aynı taraftaki alt/üst hayvanın **dikey arası açılacak** — şu an alttakinin
   ismi üsttekinin üstüne biniyor.
@@ -2520,9 +2506,9 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
   `app/test/features/classroom/campfire_*`
 - **DOKUNMA:** `app/lib/core/theme/**`, WP-379/381 dosyaları
 - **Adımlar:**
-  - [ ] 🔴 **Önce önizleme** (`gorsel-is-once-onizleme-sonra-kod`): ateş kaydırması ve
+  - [x] 🔴 **Önce önizleme** (`gorsel-is-once-onizleme-sonra-kod`): ateş kaydırması ve
         dikey ayrım için 3–4 aday, etiketli tek PNG ızgarası, `SendUserFile` ile sahibe.
-  - [ ] Sahip sayıyı seçer → sabit olarak koda girer ve **teste bağlanır**.
+  - [x] Sahip `+45 px` ateş ve `%25` dikey ayrım seçti → adlandırılmış sabit olarak koda girildi ve **teste bağlandı**.
 - **Veri/Migration etkisi:** Yok. **Ortam/Deploy:** local.
 - **Kabul:** Sahibin seçtiği sayılar adlandırılmış sabitler olarak kodda · en kalabalık
   senaryoda (dolu grup) aynı taraftaki iki isim etiketi **çakışmaz** (geometrik test) ·
@@ -2565,7 +2551,7 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 
 #### WP-384: Özel tarih aralığında sürüklenebilir takvim uçları 📅
 - **Program/Faz:** PLAN 3 · Faz K (kaynak: B8 + H2 kararı "yapılacak")
-- **Ajan:** Codex-4 · **Durum:** [~] Geliştiriliyor
+- **Ajan:** Codex-4 · **Durum:** [x] Tamamlandı (`fc9af60`)
 - **Problem:** Custom aralık seçilince takvim açılıyor; iki uç kahverengi, aradaki günler
   mavi. Tarih şu an yalnız sağ üstteki edit düğmesinden giriliyor. Sahip **uçtaki işareti
   tutup sürükleyerek** aralığı ayarlamak istiyor.
@@ -2575,9 +2561,9 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 - **DOKUNMA:** `app/lib/features/stats/stats_screen.dart` (WP-383 sahibi) → **WP-383'ten
   sonra başlar**
 - **Adımlar:**
-  - [ ] Uçlara sürükleme hedefi (dokunma alanı ≥ 44 px) eklenir.
-  - [ ] Sürükleme sırasında canlı önizleme; bırakınca aralık uygulanır.
-  - [ ] Uçlar geçilirse (başlangıç > bitiş) uçlar yer değiştirir, hata verilmez.
+  - [x] Uçlara sürükleme hedefi (dokunma alanı ≥ 44 px) eklendi.
+  - [x] Sürükleme sırasında canlı önizleme; bırakınca aralık uygulanır.
+  - [x] Uçlar geçilirse (başlangıç > bitiş) uçlar yer değiştirir, hata verilmez.
 - **Veri/Migration etkisi:** Yok.
 - **Kabul:** Uç sürüklenince aralık **bırakma anında** uygulanır · uçlar takasında çökme yok ·
   gelecek tarih sınırı korunur · klavye/erişilebilirlik yolu (edit düğmesi) çalışmaya devam eder.
@@ -2587,13 +2573,13 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 
 #### WP-385: Başarım açıklamaları 🏅
 - **Program/Faz:** PLAN 3 · Faz K (kaynak: B3, D9; metinler H1-son.5 gereği bende)
-- **Ajan:** Codex-6 · **Durum:** [!] WP-387 l10n yüzeyi serbest kalana dek bloklu
+- **Ajan:** Codex-6 · **Durum:** [x] Kod/test tamamlandı · commit `ce7212f`
 - **Problem:** Bazı başarımlarda nasıl kazanıldığı yazmıyor; kullanıcı ne yapacağını
   bilmiyor. Sahip metni ben yazacağım, sahip düzeltecek.
 - **Kapsam dışı:** Başarım koşullarının **kendisi** değişmez; yalnız açıklama metni ve
   ilerleme ifadesi eklenir.
-- **SAHİP dosyalar:** başarım kataloğu (`app/lib/core/stats/achievement_engine.dart`
-  çevresi, kod okunarak netleşir), `app/lib/l10n/app_tr.arb` + `app_en.arb`,
+- **SAHİP dosyalar:** başarım katalog yüzeyi (`app/lib/features/profile/widgets/achievement_showcase.dart`
+  — kod okunarak netleşti), `app/lib/l10n/app_tr.arb` + `app_en.arb`,
   `app/test/core/stats/achievement_*`
 - **DOKUNMA:** `app/lib/core/stats/achievement_ledger_engine.dart` kazanım mantığı,
   `supabase/migrations/**`
@@ -2604,6 +2590,8 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 - **Veri/Migration etkisi:** Yok (l10n).
 - **Kabul:** Açıklaması olmayan başarım kalmaz (test sayar) · TR/EN eksik anahtar yok ·
   eşik-metin sözleşme testi yeşil.
+- **Kanıt:** `achievement_catalog_contract_test.dart` + `achievement_showcase_test.dart` **16/16** yeşil ·
+  `flutter analyze` 0 bulgu.
 - **Tuzaklar:** l10n generated dosyaları sıcak yüzey — bu WP açıkken başka WP arb'ye girmemeli.
 - **Model önerisi:** 🔵 Sonnet
 
@@ -2722,7 +2710,7 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 
 #### WP-389: Engellemeyi F2 kararına uydur 🚫
 - **Program/Faz:** PLAN 3 · Faz L (kaynak: B5/C1 + sahip kararı F2)
-- **Ajan:** — · **Durum:** [ ] Bekliyor
+- **Ajan:** Codex · **Durum:** [~] Kod/test tamamlandı — cihaz kabulü bekliyor
 - **Problem:** 🔴 **Engelleme yok değil, yanlış davranıyor ve bulunamıyor.** Mevcut:
   `0038_ugc_moderation.sql` (`user_blocks` + `block_user`/`unblock_user`),
   `features/safety/blocked_users_screen.dart`, `block_user_action.dart`; çağrı yerleri
@@ -2745,11 +2733,11 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
   - `app/lib/features/safety/**`
 - **DOKUNMA:** `0090`/`0091`/`0093`
 - **Adımlar:**
-  - [ ] Dürtme RPC'si engellemeyi **sunucuda** kontrol eder (iki yönlü).
-  - [ ] Kamp ateşinde engellenen kişi silinmez; isimsiz siluet, tıklanamaz, dürtülemez.
-  - [ ] Sıralamada "Engellenen kullanıcı" satırı; sayılar değişmez.
-  - [ ] Grup yöneticisi ve admin muafiyeti sunucuda uygulanır.
-  - [ ] Engelleme girişi **keşfedilebilir** olur: üye listesinde ve kamp ateşi detay
+  - [x] Dürtme RPC'si engellemeyi **sunucuda** kontrol eder (iki yönlü).
+  - [x] Kamp ateşinde engellenen kişi silinmez; isimsiz siluet, tıklanamaz, dürtülemez.
+  - [x] Sıralamada "Engellenen kullanıcı" satırı; sayılar değişmez.
+  - [x] Grup yöneticisi ve admin muafiyeti sunucuda uygulanır.
+  - [x] Engelleme girişi **keşfedilebilir** olur: üye listesinde ve kamp ateşi detay
         sayfasında da menü.
 - **Veri/Migration etkisi:** `0092` — dürtme ve ilgili RPC'lere blok kontrolü.
   **Geri alma:** ileri migration ile kontrolü kaldır.
@@ -2762,11 +2750,13 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
   en az üç yüzeyden erişilebilir.
 - **Tuzaklar:** ⚠️ **WP-382 ile aynı dosya** (`campfire_scene.dart`) → **WP-382 kabulünden
   sonra başlar.** Grup toplamlarını istemcide filtrelemek cihazdan cihaza farklı rakam üretir.
+- **Kanıt:** Local `0092` reset + 22 SQL dosyasında **307 pgTAP PASS** · hedefli Flutter
+  analyze temiz · kamp ateşi widget testi yeşil. **Staging/cihazda doğrulanmalı.**
 - **Model önerisi:** 🔴 Opus
 
 #### WP-390: Şikâyet akışını tamamla ve görünür kıl 🚩
 - **Program/Faz:** PLAN 3 · Faz L (kaynak: C1, F2 "eksik yarı")
-- **Ajan:** Codex-5 · **Durum:** [~] Geliştiriliyor
+- **Ajan:** Codex-5 · **Durum:** [~] Kod/test tamamlandı — staging + cihaz smoke kabulü bekliyor
 - **Problem:** Şikâyet altyapısı **var** (`ugc_reports`, `report_ugc` RPC,
   `features/safety/report_sheet.dart`, `admin_reports_tab.dart`) ama yalnız sohbet ve
   sosyal profilden erişiliyor; grup ve grup adı şikâyeti yok, kullanıcı şikâyetinin
@@ -2777,10 +2767,10 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 - **DOKUNMA:** `supabase/migrations/**` (şema değişikliği gerekiyorsa WP-387'nin
   `0090`'ına eklenir, yeni numara alınmaz), `features/classroom/widgets/campfire_scene.dart`
 - **Adımlar:**
-  - [ ] Şikâyet girişi: kullanıcı · grup · grup adı/açıklaması · sohbet mesajı.
-  - [ ] Şikâyet sonrası kullanıcıya **ne olacağı** yazılır ("inceleyeceğiz").
-  - [ ] Admin panelinde durum değişimi `admin_audit_log`'a düşer.
-  - [ ] Play'in istediği kanıt için akış ekran görüntüleriyle belgelenir.
+  - [x] Şikâyet girişi: kullanıcı · grup · grup adı/açıklaması · sohbet mesajı.
+  - [x] Şikâyet sonrası kullanıcıya **ne olacağı** yazılır ("Raporu inceleyeceğiz.").
+  - [x] Admin panelinde durum değişimi `admin_audit_log`'a düşer (server-authoritative RPC).
+  - [ ] Play'in istediği kanıt için akış ekran görüntüleriyle belgelenir (cihaz smoke kabulünde).
 - **Veri/Migration etkisi:** Tercihen yok.
 - **Kabul:** Dört yüzeyden de şikâyet açılabilir · şikâyet admin listesinde ≤ 60 sn
   görünür · durum değişimi denetim kaydına düşer · UGC beyanı için cihaz smoke testi
@@ -3031,6 +3021,7 @@ WP-385 (l10n/başarım). Sonraki dalga: WP-381 · WP-383 · WP-382.
 | **WP-343** Foreground mirror + remote stop | Staging + iki Android cihaz | Aynı hesapta foreground start/stop p95≤2 sn; ek session/XP 0; eski stop yeni yerel run'ı kesmez; bildirim/widget regresyonu 0. **Cihazda doğrulanmalı.** |
 | **WP-345** Timer-sync signal + app-open reconcile | Staging FCM + Android lifecycle | Data-only sinyal p95≤10 sn; açılış reconcile p95≤2 sn; terminated/doze/logout/force-stop sonrasında payload state uygulamaz, snapshot doğru state'i getirir. **Cihazda doğrulanmalı.** |
 | **WP-379** Ayna Durdur global koşuyu kapatır | İki Android cihaz + FCM | Aynadan onaylı Durdur → kaynak cihaz ≤5 sn'de durur ve gerekçeyi gösterir; iptal değişiklik yapmaz; revision/ağ reddinde ayna açık kalır; ek session/XP 0. Commit: `bekleyen`. **Cihazda doğrulanmalı.** |
+| **WP-380** Widget ve bildirimde boş sayaç biçimi | Android widget + bildirim | Boştayken `00:00`; başlatınca ilk saniyede sıçrama yok; bir saati geçince `1:00:00`; uygulama içi sayaç `00:00:00` kalır. Commit: `bekleyen`. **Cihazda doğrulanmalı.** |
 
 **Ortam sırası:** tamamlandı — local, staging ve production `0085`te (WP-348 →
 WP-351, 2026-07-27). Yukarıdaki kartların hepsinde şema borcu kapandı; kalan

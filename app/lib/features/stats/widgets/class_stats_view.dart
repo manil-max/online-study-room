@@ -13,6 +13,7 @@ import '../../../core/widgets/crowned_avatar.dart';
 import '../../../data/models/daily_stat.dart';
 import '../../../data/models/profile.dart';
 import '../../../data/providers/analytics_query_providers.dart';
+import '../../../data/providers/moderation_providers.dart';
 import '../../../data/providers/stats_period_provider.dart';
 import '../../classroom/widgets/class_switcher.dart';
 import '../../classroom/widgets/group_avatar.dart';
@@ -96,6 +97,7 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
     final alphaWins =
         ref.watch(groupAlphaScoresProvider).value ?? const <String, int>{};
     final memberColors = memberChartColors(members.map((member) => member.id));
+    final blocked = ref.watch(blockedUserIdsProvider).value ?? const <String>{};
 
     // Seçili dönem leaderboard'u: userId → saniye (per-user-per-gün toplamdan).
     final totals = userTotalsInRange(stats, from, to);
@@ -250,13 +252,21 @@ class _ClassStatsViewState extends ConsumerState<ClassStatsView> {
           for (var i = 0; i < rows.length; i++)
             _LeaderboardRow(
               rank: i + 1,
-              name: rows[i].member.displayName,
-              avatarUrl: rows[i].member.avatarUrl,
+              name: blocked.contains(rows[i].member.id)
+                  ? AppLocalizations.of(context).safetyBlockedUserFallbackName
+                  : rows[i].member.displayName,
+              avatarUrl: blocked.contains(rows[i].member.id)
+                  ? null
+                  : rows[i].member.avatarUrl,
               seconds: rows[i].seconds,
               maxSeconds: maxSeconds,
               alphaWins: alphaWins[rows[i].member.id] ?? 0,
               isMe: rows[i].member.id == currentUserId,
-              profile: rows[i].member.isActive ? rows[i].member : null,
+              profile:
+                  rows[i].member.isActive &&
+                      !blocked.contains(rows[i].member.id)
+                  ? rows[i].member
+                  : null,
             ),
         const SizedBox(height: 16),
         // WP-204: gauge sola yaslı; sağdaki boşluğu bugüne dair kısa özet doldurur

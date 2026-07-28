@@ -96,7 +96,7 @@ class _CampfireSceneState extends ConsumerState<CampfireScene> {
     final membersAsync = ref.watch(groupMembersProvider);
     final presenceList = ref.watch(groupPresenceProvider).value ?? const [];
     final todayByUser = ref.watch(groupTodaySecondsProvider);
-    // WP-126: engellenen üyeleri kamp ateşinden çıkar.
+    // WP-389/F2: engellenen üye sayıda kalır; kimliği ve etkileşimi gizlenir.
     final blocked = ref.watch(blockedUserIdsProvider).value ?? const {};
 
     return membersAsync.when(
@@ -119,21 +119,28 @@ class _CampfireSceneState extends ConsumerState<CampfireScene> {
         ),
       ),
       data: (members) {
-        final visibleMembers = blocked.isEmpty
-            ? members
-            : members.where((m) => !blocked.contains(m.id)).toList();
         final presenceByUser = {
           for (final p in presenceList)
             if (!blocked.contains(p.userId)) p.userId: p,
         };
 
         final campers = [
-          for (final m in visibleMembers)
+          for (final m in members)
             _Camper(
-              member: m,
+              member: blocked.contains(m.id)
+                  ? m.copyWith(
+                      displayName: AppLocalizations.of(
+                        context,
+                      ).safetyBlockedUserFallbackName,
+                    )
+                  : m,
               presence: presenceByUser[m.id],
               recordedToday: todayByUser[m.id] ?? 0,
-              animal: campAnimalFor(userId: m.id, animalId: m.animal),
+              animal: campAnimalFor(
+                userId: blocked.contains(m.id) ? 'blocked-camper' : m.id,
+                animalId: blocked.contains(m.id) ? null : m.animal,
+              ),
+              isBlocked: blocked.contains(m.id),
             ),
         ];
         campers.sort(
@@ -170,12 +177,14 @@ class _Camper {
     required this.presence,
     required this.recordedToday,
     required this.animal,
+    required this.isBlocked,
   });
 
   final Profile member;
   final Presence? presence;
   final int recordedToday;
   final CampAnimal animal;
+  final bool isBlocked;
 
   PresenceStatus get status => presence?.status ?? PresenceStatus.offline;
   bool get studying => status == PresenceStatus.studying;
@@ -407,7 +416,9 @@ class _SceneLayoutState extends State<_SceneLayout>
           left: p.x - _CritterBody.boxFor(p.scale) / 2,
           top: p.y - _CritterBody.boxFor(p.scale) * _CritterBody.anchor,
           child: GestureDetector(
-            onTap: () => SocialProfileDialog.show(context, p.camper.member),
+            onTap: p.camper.isBlocked
+                ? null
+                : () => SocialProfileDialog.show(context, p.camper.member),
             child: _CritterBody(
               camper: p.camper,
               depth: p.depth,
@@ -652,7 +663,9 @@ class _CritterBody extends StatelessWidget {
       height: box,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: () => _showCamperDetails(context, camper),
+        onTap: camper.isBlocked
+            ? null
+            : () => _showCamperDetails(context, camper),
         child: Stack(
           children: [
             Positioned(
