@@ -88,7 +88,11 @@ class _ReportSheetState extends ConsumerState<_ReportSheet> {
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.safetyReportReceived)),
+          SnackBar(
+            content: Text(
+              '${l10n.safetyReportReceived} ${l10n.safetyReportReviewing}',
+            ),
+          ),
         );
       }
     } on ModerationException catch (e) {

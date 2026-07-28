@@ -1027,6 +1027,7 @@
   "safetyReportTitle": "İçerik bildir",
   "safetyReportSubmit": "Gönder",
   "safetyReportReceived": "Rapor alındı.",
+  "safetyReportReviewing": "Raporu inceleyeceğiz.",
   "safetyReasonHarassment": "Taciz",
   "safetyReasonSpam": "Spam",
   "safetyReasonHate": "Nefret",

@@ -25,7 +25,7 @@ insert into public.feedback_tickets (
   'feedback', 'Eski bilet', 'Önceki sürümden gelen bilet.', 'open'
 );
 
-select plan(12);
+select plan(18);
 
 select is(
   (select ticket_type from public.feedback_tickets
@@ -93,6 +93,58 @@ select throws_ok(
   'P0001',
   'not_super_admin',
   'non-admin cannot read the unified support inbox'
+);
+
+select throws_ok(
+  $$select public.admin_update_feedback_status(
+    '40000000-0000-0000-0000-000000000001', 'closed'
+  )$$,
+  'P0001',
+  'not_super_admin',
+  'non-admin cannot change a support ticket status'
+);
+
+select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000002', true);
+
+select lives_ok(
+  $$select public.admin_update_feedback_status(
+    '40000000-0000-0000-0000-000000000001', 'in_progress'
+  )$$,
+  'super-admin can change a support ticket status'
+);
+
+select is(
+  (select status from public.feedback_tickets
+   where id = '40000000-0000-0000-0000-000000000001'),
+  'in_progress',
+  'admin status RPC updates the ticket'
+);
+
+select is(
+  (select count(*) from public.admin_audit_logs
+   where admin_id = '10000000-0000-0000-0000-000000000002'
+     and target_user_id = '10000000-0000-0000-0000-000000000001'
+     and action = 'support_ticket_status_changed'
+     and reason like '%ticket=40000000-0000-0000-0000-000000000001%'
+     and reason like '%type=feedback%'
+     and reason like '%status=open%'
+     and reason like '%in_progress%'),
+  1::bigint,
+  'status change leaves a server-authoritative admin audit record'
+);
+
+select lives_ok(
+  $$select public.admin_update_feedback_status(
+    '40000000-0000-0000-0000-000000000001', 'in_progress'
+  )$$,
+  'repeating the current status is safe'
+);
+
+select is(
+  (select count(*) from public.admin_audit_logs
+   where action = 'support_ticket_status_changed'),
+  1::bigint,
+  'unchanged status does not add a duplicate audit record'
 );
 
 select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000099', true);

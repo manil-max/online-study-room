@@ -271,3 +271,74 @@ $$;
 
 grant execute on function public.report_ugc(text, text, text, text, text)
   to authenticated;
+
+-- WP-390: Bilet durumu yalnız super-admin RPC'siyle değişir ve gerçek geçiş
+-- append-only denetim kaydına yazılır. 0090 henüz hiçbir remote'a uygulanmadığı
+-- için aynı destek kutusu migration'ında tutulur.
+create or replace function public.admin_update_feedback_status(
+  p_ticket_id uuid,
+  p_status text
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_ticket record;
+begin
+  if not public.is_super_admin() then
+    raise exception 'not_super_admin';
+  end if;
+
+  if p_status not in ('open', 'in_progress', 'closed') then
+    raise exception 'invalid_feedback_status';
+  end if;
+
+  select
+    ticket.user_id,
+    ticket.status,
+    ticket.ticket_type,
+    ticket.ugc_report_id,
+    account.email as reporter_email
+  into v_ticket
+  from public.feedback_tickets ticket
+  left join auth.users account on account.id = ticket.user_id
+  where ticket.id = p_ticket_id
+  for update of ticket;
+
+  if not found then
+    raise exception 'feedback_ticket_not_found';
+  end if;
+
+  -- Aynı durum tekrar seçildiğinde bilet veya audit geçmişi şişmez.
+  if v_ticket.status = p_status then
+    return;
+  end if;
+
+  update public.feedback_tickets
+  set status = p_status,
+      updated_at = now()
+  where id = p_ticket_id;
+
+  insert into public.admin_audit_logs (
+    admin_id, target_user_id, target_user_email, action, reason
+  ) values (
+    auth.uid(),
+    v_ticket.user_id,
+    v_ticket.reporter_email,
+    'support_ticket_status_changed',
+    format(
+      'ticket=%s type=%s report=%s status=%s→%s',
+      p_ticket_id,
+      v_ticket.ticket_type,
+      coalesce(v_ticket.ugc_report_id::text, 'none'),
+      v_ticket.status,
+      p_status
+    )
+  );
+end;
+$$;
+
+grant execute on function public.admin_update_feedback_status(uuid, text)
+  to authenticated;

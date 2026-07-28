@@ -4353,6 +4353,10 @@
   "@safetyReportReceived": {
     "description": "Snackbar after report submitted"
   },
+  "safetyReportReviewing": "We will review the report.",
+  "@safetyReportReviewing": {
+    "description": "Explains what happens after a report is submitted"
+  },
   "safetyReasonHarassment": "Harassment",
   "@safetyReasonHarassment": {
     "description": "Report reason: harassment"

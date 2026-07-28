@@ -18,6 +18,7 @@ import '../../../data/providers/nudge_providers.dart';
 import '../../../data/repositories/group_repository.dart';
 import '../../../data/repositories/nudge_repository.dart';
 import '../../profile/widgets/social_profile_dialog.dart';
+import '../../safety/report_sheet.dart';
 import 'class_chat_card.dart';
 import 'group_avatar.dart';
 
@@ -40,6 +41,18 @@ class ClassDetailScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text(AppLocalizations.of(context).classroomGrup),
         actions: [
+          IconButton(
+            key: const ValueKey('report-group-action'),
+            tooltip: AppLocalizations.of(context).safetyReport,
+            icon: const Icon(Icons.flag_outlined),
+            onPressed: () => showReportSheet(
+              context,
+              ref,
+              targetType: 'group',
+              targetId: group.id,
+              snapshot: 'Grup: ${group.name}',
+            ),
+          ),
           if (isAdmin)
             IconButton(
               tooltip: AppLocalizations.of(context).classroomAdiDegistir,
@@ -58,6 +71,18 @@ class ClassDetailScreen extends ConsumerWidget {
               const SizedBox(width: 16),
               Expanded(
                 child: Text(group.name, style: theme.textTheme.headlineSmall),
+              ),
+              IconButton(
+                key: const ValueKey('report-group-name-action'),
+                tooltip: AppLocalizations.of(context).safetyReport,
+                icon: const Icon(Icons.flag_outlined),
+                onPressed: () => showReportSheet(
+                  context,
+                  ref,
+                  targetType: 'group',
+                  targetId: group.id,
+                  snapshot: 'Grup adı: ${group.name}',
+                ),
               ),
               if (isAdmin)
                 Container(
