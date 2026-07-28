@@ -47,6 +47,10 @@ serve(async (req) => {
     const body = await req.json()
     const { action, targetGroupId, targetUserId, reason } = body
 
+    if (!targetGroupId || !reason?.trim()) {
+      throw new Error('targetGroupId and reason are required')
+    }
+
     let result = null
 
     switch (action) {
@@ -69,6 +73,50 @@ serve(async (req) => {
         result = { success: true }
         break
       }
+      case 'reset_group_name': {
+        const { data: group, error: groupReadError } = await supabaseAdmin
+          .from('groups')
+          .select('name')
+          .eq('id', targetGroupId)
+          .single()
+        if (groupReadError) throw groupReadError
+        const { error: resetError } = await supabaseAdmin
+          .from('moderation_name_resets')
+          .upsert(
+            { target_type: 'group', target_id: targetGroupId, previous_name: group.name, reset_by: user.id },
+            { onConflict: 'target_type,target_id', ignoreDuplicates: true },
+          )
+        if (resetError) throw resetError
+        const { error } = await supabaseAdmin
+          .from('groups')
+          .update({ name: 'Adsız grup' })
+          .eq('id', targetGroupId)
+        if (error) throw error
+        result = { success: true }
+        break
+      }
+      case 'restore_group_name': {
+        const { data: reset, error: resetReadError } = await supabaseAdmin
+          .from('moderation_name_resets')
+          .select('previous_name')
+          .eq('target_type', 'group')
+          .eq('target_id', targetGroupId)
+          .single()
+        if (resetReadError) throw resetReadError
+        const { error } = await supabaseAdmin
+          .from('groups')
+          .update({ name: reset.previous_name })
+          .eq('id', targetGroupId)
+        if (error) throw error
+        const { error: deleteError } = await supabaseAdmin
+          .from('moderation_name_resets')
+          .delete()
+          .eq('target_type', 'group')
+          .eq('target_id', targetGroupId)
+        if (deleteError) throw deleteError
+        result = { success: true }
+        break
+      }
       default:
         throw new Error('Unknown action: ' + action)
     }
@@ -82,7 +130,7 @@ serve(async (req) => {
         action: action,
         reason: reason || 'Gerekçe belirtilmedi',
       })
-    if (auditError) console.error('Audit Log Error:', auditError)
+    if (auditError) throw auditError
 
     return new Response(JSON.stringify({ data: result }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
