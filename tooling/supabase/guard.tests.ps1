@@ -22,9 +22,14 @@ $repoRoot = Get-RepoRoot
 $stagingRef = 'aaaaaaaaaaaaaaaaaaaa'
 $productionRef = 'bbbbbbbbbbbbbbbbbbbb'
 
-Assert-Equal (Get-LocalMigrationHead -RepoRoot $repoRoot) '0089' 'local migration head'
-Assert-Equal ((Get-DeployContract -RepoRoot $repoRoot).local_migration_head) '0089' 'contract migration head'
 $contract = Get-DeployContract -RepoRoot $repoRoot
+# 🔴 Yerel head ARTIK burada sabit sayiyla pinli DEGIL: tek kaynak
+# deploy-contract.json. Uc turda ust uste CI tam bu satirdan kirmizi dustu -
+# migration ekleyen WP kontrati guncelliyor, bu dosyayi unutuyordu.
+# Burada yalniz dizin ile kontratin birbirini tuttugu dogrulanir.
+# Uzak ortam head'leri (staging/production) BILEREK sabit kalir: onlar
+# gercekten uygulanmis semayi koruyan kapilardir, otomatik takip etmemeli.
+Assert-Equal (Get-LocalMigrationHead -RepoRoot $repoRoot) $contract.local_migration_head 'yerel head = kontrat head'
 # WP-373: 0089 (lease sweeper cron'u) üç ortamda da uygulandı — staging run
 # 30303743005, production run 30307084863, ikisinde de post-check head 0089.
 # Production kapısı politika gereği yeniden HOLD'a alındı.

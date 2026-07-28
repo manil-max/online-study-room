@@ -56,7 +56,6 @@ class _ClassroomScreenState extends ConsumerState<ClassroomScreen> {
     }
 
     ref.watch(tourControllerProvider);
-    final controller = ref.read(tourControllerProvider.notifier);
     final group = groupAsync.asData?.value;
     final l10n = AppLocalizations.of(context);
     final groups = AppTours.groups(

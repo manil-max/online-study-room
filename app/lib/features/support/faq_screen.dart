@@ -153,15 +153,17 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
     if (question == null || question.isEmpty || !mounted) return;
     try {
       await ref.read(submitFaqQuestionProvider)(question);
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(l10n.faqQuestionSent)));
+      }
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(l10n.faqQuestionFailed)));
+      }
     }
   }
 }

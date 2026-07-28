@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/core/prefs/app_prefs.dart';
-import 'package:online_study_room/data/providers/stats_period_provider.dart';
 import 'package:online_study_room/features/stats/widgets/stats_period_bar.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';

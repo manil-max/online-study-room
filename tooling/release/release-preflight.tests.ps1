@@ -3,10 +3,13 @@ $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 Import-Module (Join-Path $repoRoot 'tooling\supabase\DeployGuard.psm1') -Force
 $script = Join-Path $repoRoot 'tooling\release\release-preflight.ps1'
 $sha = Get-GitHead -RepoRoot $repoRoot
+# Yerel head sabit sayiyla pinlenmez (bkz. guard.tests.ps1); tek kaynak
+# migration dizini. Asagidaki negatif senaryolar bilerek yanlis head kullanir.
+$head = Get-LocalMigrationHead -RepoRoot $repoRoot
 
-& $script -Channel beta -Tag beta-v4402 -ExpectedGitSha $sha -ExpectedMigrationHead '0089' -ValidateOnly | Out-Null
+& $script -Channel beta -Tag beta-v4402 -ExpectedGitSha $sha -ExpectedMigrationHead $head -ValidateOnly | Out-Null
 $cases = @(
-  @{ Name = 'wrong SHA'; Channel = 'beta'; Tag = 'beta-v4402'; Sha = ('0' * 40); Head = '0089' },
+  @{ Name = 'wrong SHA'; Channel = 'beta'; Tag = 'beta-v4402'; Sha = ('0' * 40); Head = $head },
   @{ Name = 'wrong head'; Channel = 'beta'; Tag = 'beta-v4402'; Sha = $sha; Head = '0068' },
   @{ Name = 'stable contract rejects old production head'; Channel = 'stable'; Tag = 'v45'; Sha = $sha; Head = '0070' },
   @{ Name = 'stable head behind source (v45 loophole)'; Channel = 'stable'; Tag = 'v45'; Sha = $sha; Head = '0065' },

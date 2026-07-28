@@ -5,14 +5,11 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../core/desktop/desktop_window.dart';
 import '../../core/navigation/nav_index.dart';
-import '../../core/tour/tour_controller.dart';
-import '../../core/tour/tour_host.dart';
 import '../../core/widgets/crowned_avatar.dart';
 import '../../core/widgets/safe_screen_padding.dart';
 import '../../data/providers/auth_providers.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../desktop/desktop_surface.dart';
-import '../tours/app_tours.dart';
 import 'session_history_screen.dart';
 import 'settings_screen.dart';
 import 'widgets/gamification_card.dart';
