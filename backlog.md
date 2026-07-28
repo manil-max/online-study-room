@@ -9,6 +9,17 @@
 
 ## 🔴 Yüksek Öncelik
 
+- [~] **v54 lansman turu — PLAN 3'e bölündü (2026-07-28).** Sahip v54'ü cihazda test
+  etti (sekiz başlık) ve üstüne mağaza turunu konuştuk; ayrıca rakip uygulamaların
+  mağaza yorumları analiz edildi. Üçü birden karara bağlandı ve kartlara bölündü:
+  - Karar kaydı: [`docs/LANSMAN-TARTISMA-NOTU.md`](docs/LANSMAN-TARTISMA-NOTU.md)
+  - Rakip analizi + koda karşı doğrulama:
+    [`docs/RAKIPANALIZI-DEGERLENDIRME.md`](docs/RAKIPANALIZI-DEGERLENDIRME.md)
+  - 🔴 **Kartlar: `progress.md` → PLAN 3 — LANSMAN TURU (WP-379…WP-411).**
+    Faz K (cihaz bulguları) + Faz L (moderasyon/destek) yayın **öncesi**;
+    Faz M mağaza; Faz N yayın **sonrası**.
+  - Bu maddeden sonra yeni v54 bulgusu buraya değil, doğrudan PLAN 3'e eklenir.
+
 - [x] **v51 stable — sahip cihaz geri bildirimi (2026-07-27) — DÖRDÜ DE KAPANDI**
   (V51-1 → WP-367 · V51-2 → WP-368/370/371 ve nihayet **WP-373** · V51-3 ve
   V51-4 → **WP-374**. Ham notlar ve kök neden analizleri aşağıda kaynak olarak

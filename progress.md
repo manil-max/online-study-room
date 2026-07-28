@@ -66,7 +66,10 @@
   koddan bulundu** (bkz. `backlog.md`). Sahip emriyle **Faz F5** açıldı:
   V51-1 + V51-2 düzeltilip v52 stable çıkacak; V51-3/V51-4 (admin yazışması)
   sahip kararıyla beklemede. Öncesi: Öncesi: v49 sonrası saha düzeltmeleri (Faz F3). WP-348 → WP-351 zinciri kapandı (stable v49 çıktı). Sahip iki turda toplam **sekiz** bulgu bildirdi (`backlog.md` V49-1…V49-8) ve **hepsi karta bağlandı: WP-353…WP-362.** Backlog'da plansız kalan v49 bulgusu yok.
-- **Son WP numarası:** **WP-372** (Faz F5 devamı, 2026-07-27). V52'de komutun A→server yolu kapanmıştı; server→B timer-sync teslim zinciri WP-370 (`0088`) ile kuruldu, WP-371 turu yaşam döngüsüne bağladı, WP-372 v53 stable'ı çıkardı.
+- **Son WP numarası:** **WP-378** (2026-07-28). WP-373 çoklu cihaz sayaç
+  senkronunu kurdu, WP-374…WP-378 birikmiş düzeltme turuydu, **v54 çıktı**.
+  🔴 **Yeni kartlar WP-379'dan devam eder — bkz. `PLAN 3 — LANSMAN TURU`.**
+- **Önceki not (WP-372, 2026-07-27).** V52'de komutun A→server yolu kapanmıştı; server→B timer-sync teslim zinciri WP-370 (`0088`) ile kuruldu, WP-371 turu yaşam döngüsüne bağladı, WP-372 v53 stable'ı çıkardı.
 - ✅ **Ortam gerçeği uzlaştırıldı (WP-351, 2026-07-27):** üç ortam da `0085`; production CLI geçmişi artık gerçek. Deploy kapısı yeniden kilitli.
 
 ## ⚡ Aktif Çalışma Kaydı
@@ -77,21 +80,14 @@
 - **SAHİP yollar:** —
 
 ### Claude Lane
-- **Durum:** [~] Aktif
-- **Faz/WP:** Faz F5 · **WP-373 (kod tamam, staging uygulandı)** → birikmiş
-  düzeltme turu **WP-374 · WP-375 · WP-376** (sahip emri 2026-07-27: "sürüm
-  çıkarmadan önce birikmiş WP'leri de yap")
-- **Aşama:** Kod tamam; `0089` üç ortamda uygulandı — **sürüm sahip onayı bekliyor**
-- **SAHİP yollar:** `app/android/app/src/main/kotlin/**/timer/**`,
-  `app/lib/core/background/timer_v2_command_outbox.dart`,
-  `app/lib/data/providers/global_timer_providers.dart`,
-  `app/lib/data/providers/study_providers.dart`,
-  `supabase/migrations/0089_*.sql`, `supabase/tests/018_*.test.sql`,
-  `app/test/data/global_timer_*`, `app/test/core/timer_v2_*`
-- **Ortak/riskli yüzey:** `supabase/migrations/**` (numara sırası — 0089 alındı)
-- **Dal:** main (tek dal — §1.5)
-- **Başlangıç:** 2026-07-27 20:15 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-27 20:15
+- **Durum:** [x] Boşta
+- **Faz/WP:** — · WP-373…WP-378 kapandı, **v54 yayında**
+- **SAHİP yollar:** —
+- **Son not (2026-07-28):** Sahip v54'ü iki cihazda test etti; sekiz başlıkta geri
+  bildirim verdi ve üstüne mağaza turunu konuştuk. Tartışma
+  `docs/LANSMAN-TARTISMA-NOTU.md`'de karara bağlandı, rakip yorum analizi
+  `docs/RAKIPANALIZI-DEGERLENDIRME.md`'de koda karşı doğrulandı. İkisi birden
+  **PLAN 3 — LANSMAN TURU** olarak WP'lere bölündü (WP-379…WP-411).
 - **Teşhis (2026-07-27, sahip production sorgusuyla mühürlendi):** V2 sayaç
   senkronu **hiç çalışmadı** — WP-341'den beri tek bir komut bile sunucuya
   ulaşmadı. `select ... from global_timer_commands` → 0 satır;
@@ -203,16 +199,16 @@
 
 | Konu | Durum |
 | --- | --- |
-| Sürüm | **`v51` yayında** ([release](https://github.com/manil-max/online-study-room/releases/tag/v51)); Android APK + Windows MSIX/ZIP. Önceki: **`v50`** ([release](https://github.com/manil-max/online-study-room/releases/tag/v50)). WP-353/356/358 düzeltmeleri; migration yok, production `0085`te kalır. ⚠️ **Yalnız Android APK** — Windows MSIX üretilemedi (golden kararsızlığı, `6f285a2` ile düzeltildi, sonraki sürümde gelecek) |
-| Cihaz kabulü | 🔴 **Açık.** Sahip v49'u denedi, iki turda **sekiz bulgu** bildirdi → `backlog.md` V49-1…V49-8. Hepsi planlandı: **Faz F3 · WP-353…WP-362** |
+| Sürüm | **`v54` yayında** — çoklu cihaz sayaç senkronu ilk kez gerçekten çalışıyor (WP-373). Android APK + Windows MSIX/ZIP; release run `30311872534` bütün işlerde yeşil. Production sürüm penceresi tag alındıktan sonra yeniden **HOLD**'a alındı |
+| Cihaz kabulü | 🟢 v54 sahip tarafından test edildi. Sekiz başlıkta geri bildirim → hepsi **PLAN 3 · Faz K**'ya bağlandı. Açık kalan tek test: kamp ateşi gece/gündüz saatleri (A2 — sahip o saatlere gelmedi) |
 | Sürüm politikası | 🔴 Sahip onayı olmadan yeni sürüm çıkmaz |
 | Otomatik doğrulama | `2e19cfb` release koşumu (`30222542841`) preflight/android/windows/finalize tümü PASS |
 | l10n audit | **0 bulgu**: WP-335, WP-295 önizleme metinlerini katalogladı; 7 kullanıcı-dışı invariant mesajı dar ve gerekçeli muafiyetle ayrıldı |
-| Migration | Repo/local **`0085`** · staging **`0085`** · production **`0085`** — üç ortam hizalı |
+| Migration | Repo/local **`0089`** · staging **`0089`** · production **`0089`** — üç ortam hizalı. Faz L için `0090`–`0093` peşin ayrıldı |
 | Yedek | 🔴 **Yok.** Free plan; PITR ve günlük yedek kapalı. Sahip kararıyla muaf; geri dönüş yolu yok |
 | Beta | **`beta-v4402`** son beta; Android APK + Windows MSIX/ZIP hazır, V3 flag'leri kapalı |
-| Play Console | Hesap açıldı, doğrulama sürüyor. Hiçbir form doldurulmadı |
-| Microsoft Partner Center | Hesap açıldı. Hiçbir hazırlık yapılmadı |
+| Play Console | 🟢 **Doğrulama alındı** (2026-07-28). Form doldurulmadı; hazırlık PLAN 3 · Faz M |
+| Microsoft Partner Center | 🟢 **Doğrulama alındı** (2026-07-28). Ana odak Play; Microsoft PLAN 2 · Faz H'de kalır |
 
 ---
 
@@ -2337,6 +2333,577 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 - Çökme/hata takibi (Sentry var), ilk 72 saat gözlem
 - Mağaza yorumlarına yanıt akışı — Faz B'deki döngüyle birleşir
 - İlk güncelleme turu
+
+---
+
+## PLAN 3 — LANSMAN TURU (Faz K–N) 🚀
+
+> **Kaynak:** `docs/LANSMAN-TARTISMA-NOTU.md` (v54 cihaz bulguları + sahip revizeleri +
+> mağaza engelleri + sahip kararları F1–F5/G1–G6/H1–H8) ve
+> `docs/RAKIPANALIZI-DEGERLENDIRME.md` (rakip yorum analizinden alınacaklar).
+> Sahip emri 2026-07-28: *"bu dediklerin ve bizim konuştuklarımızı planlayalım, hepsini
+> WP'ler halinde yaz."*
+>
+> **Sıra sözleşmesi (sahip kararı H8):** Faz K + L **yayından önce** kapanır.
+> Faz M mağaza işidir. Faz N yayından sonradır ve ilk sürümü **geciktirmez**.
+>
+> **Kart derinliği:** Faz K ve L kartları tam (SAHİP/DOKUNMA/kabul/tuzak).
+> Faz M ve N kartları **kısa** tutuldu — repo geleneği: mağaza/ops kartları o faz
+> başlarken tam açılır (PLAN 2 notu), yoksa hesap ve mağaza gerçeği netleşmeden
+> yazılan kabul kriteri uydurma olur.
+>
+> 🔴 **Tartışma notundaki bir tespit yanlıştı, burada düzeltiliyor.** Not, sahibin
+> gözlemine dayanarak "kullanıcı engelleme diye bir şey yok" (B5) diyordu. Koda
+> bakıldı: **var.** `0038_ugc_moderation.sql` (`user_blocks`, `ugc_reports`,
+> `block_user`/`unblock_user`/`report_ugc` RPC'leri), `features/safety/**` (engelle
+> diyaloğu, engellenenler ekranı, şikâyet sayfası), çağrı yerleri
+> `class_chat_card.dart:217,228` ve `social_profile_screen.dart:120,128`, admin
+> tarafında `admin_reports_tab.dart`. Sahip bunları **bulamadı** — asıl kusur
+> keşfedilebilirlik ve F2 kararına uymayan davranış. WP-389/390 buna göre daraltıldı.
+
+---
+
+### Faz K — v54 cihaz bulguları ve UI borcu *(yayın öncesi, kod)*
+
+#### WP-379: Ayna cihazda Durdur global koşuyu durdurur 📱↔️📱
+- **Program/Faz:** PLAN 3 · Faz K (kaynak: tartışma notu A1 + sahip kararı F1)
+- **Ajan:** —
+- **Durum:** [ ] Bekliyor
+- **Problem:** Telefondan başlatılan koşu tablette aynalanıyor; **tabletten** Durdur
+  denince yalnız tablet duruyor, telefon çalışmaya devam ediyor ve tablet ikinci bir
+  oturum açabiliyor. Kök neden `study_providers.dart:1548`: ayna durumunda `stop()`
+  sunucuya komut göndermeden `_finish()` çağırıyor; `_finish()` ayna bayrağını da
+  temizlediği için cihaz "boşta" sayılıyor. Mimari belge §16.4 doğru davranışı zaten
+  tarif ediyor, o yol hiç bağlanmamış.
+- **Kapsam dışı:** "Bu cihazda gizle" diye ikinci bir düğme **yok** (sahip kararı F1).
+  Presence/lease mimarisi değişmez. Yeni migration yazılmaz.
+- **SAHİP dosyalar (yaz):**
+  - `app/lib/data/providers/study_providers.dart`
+  - `app/lib/data/providers/global_timer_providers.dart`
+  - `app/lib/features/classroom/widgets/study_timer_card.dart` (onay diyaloğu)
+  - `app/test/data/global_timer_*`, `app/test/data/study_providers_*`
+- **DOKUNMA (oku, değiştirme):** `app/android/**/timer/**` (WP-380 sahibi),
+  `supabase/migrations/**`, `app/lib/core/navigation/**`
+- **Adımlar:**
+  - [ ] Ayna durumunda `stop()` → mevcut V2 stop komut yolu (`expected_run_revision`
+        dolu) kullanılır; `_finish()` yalnız sunucu onayından sonra çağrılır.
+  - [ ] Durdur'dan önce onay: *"Bu, diğer cihazdaki sayacı da durduracak."* İptal
+        edilirse hiçbir yerel durum değişmez.
+  - [ ] Origin cihaz durunca gerekçeyi gösterir: *"Diğer cihazda 21:14'te durduruldu."*
+  - [ ] Sunucu reddederse (revision uyuşmazlığı) ayna cihaz **durmuş gibi yapmaz**;
+        hata gösterir ve aynalamaya devam eder.
+  - [ ] İkinci oturum: ayna cihaz stop komutu onaylanmadan yeni koşu başlatamaz.
+- **Veri/Migration etkisi:** Yok. Mevcut `global_timer_commands` stop yolu kullanılır.
+  Geri alma = commit revert.
+- **Ortam/Deploy:** local. Sunucu değişmediği için staging/production kapısı açılmaz.
+- **RLS/Güvenlik:** Yeni yüzey yok; stop komutu zaten `auth.uid()` doğruluyor.
+- **Edge-case'ler:** ağ yokken ayna Durdur (kuyruğa alınır, kullanıcıya "bağlanınca
+  durdurulacak" denir mi yoksa reddedilir mi — uygulayıcı karar verir, kartta gerekçesini
+  yazar) · origin cihaz kapalıyken · her iki cihazda aynı anda Durdur · gün sınırını aşan koşu.
+- **Kabul (ölçülebilir):**
+  - İki cihaz: aynadan Durdur → origin cihaz **≤ 5 sn** içinde durur ve gerekçe metnini gösterir.
+  - Aynadan Durdur sonrası ayna cihaz **yeni oturum açamaz**; sunucuda tek `finalize` üretilir
+    (çift XP yok).
+  - Onay diyaloğunda İptal → hiçbir cihazda durum değişmez.
+  - 🔴 **İki uçlu sözleşme testi zorunlu:** istemcinin gönderdiği stop zarfı ile sunucunun
+    beklediği şema tek testte karşılaştırılır. (WP-373 dersi: tek uçlu testler senkronun
+    yıllarca ölü kalmasını gizledi.)
+- **Tuzaklar:** `_finish()`'in ayna bayrağını temizlemesi bu hatanın ikinci yarısı —
+  yalnız komut göndermek yetmez. `origin` sözlüğü sunucu tarafında
+  `('app','widget','notification','recovery')`; ham `dart_app` göndermek sessiz ret üretir.
+- **Model önerisi:** 🔴 Opus
+
+#### WP-380: Widget ve bildirimde boş sayaç biçimi ⏱️
+- **Program/Faz:** PLAN 3 · Faz K (kaynak: A8)
+- **Ajan:** — · **Durum:** [ ] Bekliyor
+- **Problem:** Boştayken statik `"00:00:00"` yazılıyor, koşarken Android `Chronometer`
+  devreye girip bir saatin altında `MM:SS` basıyor → başlangıçta `00:00:00` → `00:01`
+  sıçraması. Sahip: "çirkin, doğrudan `00:00` olsun."
+- **Kapsam dışı:** **Uygulama içi sayaç `HH:MM:SS` kalır** (sahip açıkça söyledi).
+  Bir saat üstü `H:MM:SS` davranışı da değişmez.
+- **SAHİP dosyalar:** `app/android/app/src/main/kotlin/**/widgets/StudyWidgetProviders.kt`,
+  `app/android/app/src/main/kotlin/**/timer/StudyTimerService.kt`, ilgili Kotlin testi
+- **DOKUNMA:** `app/lib/**` (uygulama içi sayaç bu koddan beslenmiyor), `WP-379` dosyaları
+- **Adımlar:**
+  - [ ] `StudyWidgetProviders.kt:95` ve `StudyTimerService.kt:471` boş metni `"00:00"` yap.
+  - [ ] Duraklatılmış/geri yüklenmiş durumlarda da aynı biçim kullanılıyor mu, tara.
+- **Veri/Migration etkisi:** Yok. **Ortam/Deploy:** local.
+- **Kabul:** Widget ve bildirim boştayken `00:00` gösterir · başlat → ilk saniyede
+  sıçrama yok · 1 saati geçince `1:00:00` · uygulama içi sayaç `00:00:00` olarak kalır
+  (regresyon testi).
+- **Tuzaklar:** İki dosyada iki ayrı literal var; biri unutulursa widget ile bildirim
+  birbirinden farklı davranır.
+- **Model önerisi:** 🔵 Sonnet
+
+#### WP-381: Tanıtım turu onarımı ve kart düzenleme ipucu 🎈
+- **Program/Faz:** PLAN 3 · Faz K (kaynak: A6, B1, H2)
+- **Ajan:** — · **Durum:** [ ] Bekliyor
+- **Problem:** (a) Ana ekran turunda "kartları düzenle" adımında **Skip yazısı ile edit
+  butonu üst üste** geliyor; aynı çakışma gruplar turunda da var. (b) Ekran tanıtan
+  çapasız adımlar ekranın ortasına düşüyor, karartılmış üst şerit garip duruyor.
+  (c) Sayaç yanıltıcı: "1 of 2" → "2 of 2" → kamp ateşinde "1 of 1" diye yeniden başlıyor.
+  (d) Profil turu tamamen gereksiz. (e) İstatistiklerde today/week adımı gereksiz.
+  (f) Kart düzenleme moduna ilk girişte hiçbir yönlendirme yok.
+- **Kapsam dışı:** **Tur metinleri sahibe ait** — WP yalnız yerleri, çapaları ve sırayı
+  hazırlar, metin yer tutucu kalır. `settings_screen.dart`'a **girilmez** (WP-383 sahibi).
+- **SAHİP dosyalar:** `app/lib/features/tours/**`, `app/lib/core/tour/**`,
+  `app/lib/features/onboarding/**` (son adıma SSS yönlendirmesi — F5),
+  `app/lib/features/home/**` içinde yalnız kart düzenleme ipucu balonu,
+  `app/test/features/tour*`, `app/test/features/onboarding*`
+- **DOKUNMA:** `app/lib/features/profile/settings_screen.dart`, `app/lib/features/stats/**`,
+  `app/lib/l10n/**` generated
+- **Adımlar:**
+  - [ ] Skip/edit çakışması: Skip'i çakışmayan bir konuma al veya adım süresince hedef
+        düğmeyi maskeleme kuralını değiştir. Her iki turda da düzelt.
+  - [ ] Çapasız adımlar **o sekmenin alt bar ikonuna** çapalanır (H2 kararı); sahte
+        karartılmış şerit kaldırılır.
+  - [ ] Gruplar bölgesi **tek dizi** olur; kamp ateşi adımı silinir → sayaç "of 2".
+  - [ ] Profil turu silinir. İstatistiklerdeki today/week adımı silinir.
+  - [ ] Onboarding son adımına **SSS'ye git** yönlendirmesi (WP-388'e bağımlı;
+        WP-388 yoksa yer tutulur, bağlantı sonradan bağlanır).
+  - [ ] Kart düzenleme moduna **ilk girişte tek ipucu balonu** (H2: tam tur değil);
+        kalıcı bayrakla bir kez gösterilir.
+- **Veri/Migration etkisi:** Yok (SharedPreferences bayrağı).
+- **Kabul:** Ana ekran turunda hiçbir adımda iki tıklanabilir öğe üst üste gelmez
+  (widget testiyle geometrik çakışma kontrolü) · adım sayacı tek dizide monoton
+  ilerler ve toplam sayı gerçek adım sayısına eşittir · profil turu hiçbir yerden
+  tetiklenmez · kart düzenleme ipucu ikinci girişte çıkmaz.
+- **Tuzaklar:** Tur adımı silmek sayaç toplamını elle güncellemeyi gerektiriyorsa,
+  toplam **türetilmiş** olmalı; sabit sayı bırakılırsa bir sonraki değişiklikte aynı
+  hata döner. Kabul kriteri bunu test eder.
+- **Model önerisi:** 🟣 Pro
+
+#### WP-382: Kamp ateşi kompozisyon revizesi 🔥
+- **Program/Faz:** PLAN 3 · Faz K (kaynak: A3 + sahip onayı A3-son)
+- **Ajan:** — · **Durum:** [ ] Bekliyor
+- **Problem:** Kırpma beğenildi, iki düzeltme kaldı: (1) ateşin kendisi **biraz aşağı**
+  inecek, (2) aynı taraftaki alt/üst hayvanın **dikey arası açılacak** — şu an alttakinin
+  ismi üsttekinin üstüne biniyor.
+- **Kapsam dışı:** Gece/gündüz saatleri (A2, sahip henüz test etmedi), hayvan varlıkları,
+  halka geometrisi.
+- **SAHİP dosyalar:** `app/lib/features/classroom/widgets/campfire_scene.dart`,
+  `app/test/features/classroom/campfire_*`
+- **DOKUNMA:** `app/lib/core/theme/**`, WP-379/381 dosyaları
+- **Adımlar:**
+  - [ ] 🔴 **Önce önizleme** (`gorsel-is-once-onizleme-sonra-kod`): ateş kaydırması ve
+        dikey ayrım için 3–4 aday, etiketli tek PNG ızgarası, `SendUserFile` ile sahibe.
+  - [ ] Sahip sayıyı seçer → sabit olarak koda girer ve **teste bağlanır**.
+- **Veri/Migration etkisi:** Yok. **Ortam/Deploy:** local.
+- **Kabul:** Sahibin seçtiği sayılar adlandırılmış sabitler olarak kodda · en kalabalık
+  senaryoda (dolu grup) aynı taraftaki iki isim etiketi **çakışmaz** (geometrik test) ·
+  golden üretiliyorsa göze bakılır.
+- **Tuzaklar:** Önizleme karesinde gömülü font yüklenmezse etiketler kutu çıkar;
+  `RepaintBoundary` zemini yakalamaz → `ColoredBox` ile sar; canlı süre etiketi varsa
+  `matchesGoldenFile` kullanma, yalnız yaz.
+- **Model önerisi:** 🟣 Pro
+
+#### WP-383: Ayarlar bilgi mimarisi, tanıtım sıfırlama ve istatistik delta düğmesi 🧭
+- **Program/Faz:** PLAN 3 · Faz K (kaynak: B4, B7, F5)
+- **Ajan:** — · **Durum:** [ ] Bekliyor
+- **Problem:** (a) Ayarlar sırası sahibin istediği gibi değil: en üstte **Görünüm**,
+  altında **Bildirimler**, hesap işleri **daha aşağıda**, **Hakkında + Legal en altta**.
+  (b) "Tanıtım turlarını sıfırla" yalnız ekran turlarını siliyor; ilk açılış tanıtımı
+  ayrı bayrakta (`onboarding.completed_v1.<userId>`) olduğu için sahip **sil-yükle**
+  yapmak zorunda kalıyor. `OnboardingNotifier.reset()` zaten yazılmış, çağıran yok.
+  (c) İstatistiklerde tarih aralığı düğmelerinin sağındaki değişim/delta düğmesi
+  neredeyse tek bir şeyi etkiliyor ve varsayılanı kapalı → kaldırılacak.
+- **Kapsam dışı:** Ayarlar içindeki hiçbir ekranın **içeriği** değişmez, yalnız sıra.
+  SSS satırı bu WP'de eklenmez (WP-388 ekler).
+- **SAHİP dosyalar:** `app/lib/features/profile/settings_screen.dart`,
+  `app/lib/features/stats/stats_screen.dart` (+ delta düğmesinin widget'ı),
+  `app/test/features/profile/settings_*`, `app/test/features/stats/*`
+- **DOKUNMA:** `app/lib/features/tours/**`, `app/lib/features/onboarding/**`
+  (WP-381 sahibi — buradan yalnız `reset()` **çağrılır**, dosyaları değiştirilmez)
+- **Adımlar:**
+  - [ ] Ayarlar bölümleri yeniden sıralanır; sıra **testle kilitlenir** (bir sonraki
+        eklemede sessizce bozulmasın).
+  - [ ] Sıfırlama düğmesi `TourController.resetAll()` **ve** `OnboardingNotifier.reset()`
+        çağırır; metni "tanıtımları sıfırla" olarak netleşir.
+  - [ ] Delta düğmesi ve yalnız ona bağlı ölü kod kaldırılır.
+- **Veri/Migration etkisi:** Yok. **Ortam/Deploy:** local.
+- **Kabul:** Ayarlar bölüm sırası testte sabit · sıfırlama sonrası **hem** ekran turları
+  **hem** ilk açılış tanıtımı yeniden çıkar (sil-yükle gerekmez, sahip cihazda doğrular) ·
+  istatistik ekranında delta düğmesi yok, kalan düğmeler aynı hizada.
+- **Tuzaklar:** Delta düğmesine bağlı state başka yerde okunuyorsa ölü provider kalır;
+  `analyze` bunu yakalamaz, elle taranmalı.
+- **Model önerisi:** 🔵 Sonnet
+
+#### WP-384: Özel tarih aralığında sürüklenebilir takvim uçları 📅
+- **Program/Faz:** PLAN 3 · Faz K (kaynak: B8 + H2 kararı "yapılacak")
+- **Ajan:** — · **Durum:** [ ] Bekliyor
+- **Problem:** Custom aralık seçilince takvim açılıyor; iki uç kahverengi, aradaki günler
+  mavi. Tarih şu an yalnız sağ üstteki edit düğmesinden giriliyor. Sahip **uçtaki işareti
+  tutup sürükleyerek** aralığı ayarlamak istiyor.
+- **Kapsam dışı:** Takvimin görsel dili, edit düğmesinin kaldırılması (ikisi bir arada durur).
+- **SAHİP dosyalar:** `app/lib/features/stats/widgets/**` içindeki aralık seçici,
+  `app/test/features/stats/*`
+- **DOKUNMA:** `app/lib/features/stats/stats_screen.dart` (WP-383 sahibi) → **WP-383'ten
+  sonra başlar**
+- **Adımlar:**
+  - [ ] Uçlara sürükleme hedefi (dokunma alanı ≥ 44 px) eklenir.
+  - [ ] Sürükleme sırasında canlı önizleme; bırakınca aralık uygulanır.
+  - [ ] Uçlar geçilirse (başlangıç > bitiş) uçlar yer değiştirir, hata verilmez.
+- **Veri/Migration etkisi:** Yok.
+- **Kabul:** Uç sürüklenince aralık **bırakma anında** uygulanır · uçlar takasında çökme yok ·
+  gelecek tarih sınırı korunur · klavye/erişilebilirlik yolu (edit düğmesi) çalışmaya devam eder.
+- **Tuzaklar:** Takvim kaydırma jesti ile sürükleme jesti çakışır; hangi jestin kazandığı
+  açıkça çözülmeli yoksa takvim kaydırılamaz hale gelir.
+- **Model önerisi:** 🟣 Pro
+
+#### WP-385: Başarım açıklamaları 🏅
+- **Program/Faz:** PLAN 3 · Faz K (kaynak: B3, D9; metinler H1-son.5 gereği bende)
+- **Ajan:** — · **Durum:** [ ] Bekliyor
+- **Problem:** Bazı başarımlarda nasıl kazanıldığı yazmıyor; kullanıcı ne yapacağını
+  bilmiyor. Sahip metni ben yazacağım, sahip düzeltecek.
+- **Kapsam dışı:** Başarım koşullarının **kendisi** değişmez; yalnız açıklama metni ve
+  ilerleme ifadesi eklenir.
+- **SAHİP dosyalar:** başarım kataloğu (`app/lib/core/stats/achievement_engine.dart`
+  çevresi, kod okunarak netleşir), `app/lib/l10n/app_tr.arb` + `app_en.arb`,
+  `app/test/core/stats/achievement_*`
+- **DOKUNMA:** `app/lib/core/stats/achievement_ledger_engine.dart` kazanım mantığı,
+  `supabase/migrations/**`
+- **Adımlar:**
+  - [ ] Her başarım için tek cümlelik koşul metni (TR + EN), sayısal eşik dahil.
+  - [ ] Metin ile **gerçek eşik** arasında sözleşme testi: katalogdaki eşik değişirse
+        metin güncellenmediyse CI kırmızı.
+- **Veri/Migration etkisi:** Yok (l10n).
+- **Kabul:** Açıklaması olmayan başarım kalmaz (test sayar) · TR/EN eksik anahtar yok ·
+  eşik-metin sözleşme testi yeşil.
+- **Tuzaklar:** l10n generated dosyaları sıcak yüzey — bu WP açıkken başka WP arb'ye girmemeli.
+- **Model önerisi:** 🔵 Sonnet
+
+#### WP-386: Sürüm notu ayrımı ve sözleşme testi 📝
+- **Program/Faz:** PLAN 3 · Faz K (kaynak: B6 + H2 kararı)
+- **Ajan:** — · **Durum:** [ ] Bekliyor
+- **Problem:** Güncelleme bildiriminde kullanıcıya `migration` gibi teknik satırlar
+  sızıyor. Kullanıcının gördüğü metin tamamen kullanıcı dilinde olmalı, iç değişiklikler
+  ayrı dosyada kalmalı.
+- **Kapsam dışı:** Sürüm çıkarma hattı, tag politikası, güncelleyici akışı.
+- **SAHİP dosyalar:** sürüm notu kaynağı (`app/lib/features/updater/release_notes_*`
+  ve beslediği veri dosyası), `tooling/release/` içinde yeni sözleşme testi
+- **DOKUNMA:** `tooling/release/deploy-contract.json`, `guard.tests.ps1`,
+  `release-preflight.tests.ps1` (sürüm kapısı — bu WP'nin işi değil)
+- **Adımlar:**
+  - [ ] Kullanıcıya giden notlar ile teknik günlük iki ayrı kaynağa ayrılır.
+  - [ ] Sözleşme testi: kullanıcı metninde `migration`, `WP-`, `RPC`, `SQL`, `00NN`
+        gibi kelimeler geçerse **CI kırmızı**.
+- **Veri/Migration etkisi:** Yok. **Ortam/Deploy:** local + CI.
+- **Kabul:** Yasak kelime içeren bir taslak eklendiğinde test kırmızı düşer (negatif test
+  zorunlu) · v54 notu yeni biçimde yeniden yazılır ve yeşil geçer.
+- **Tuzaklar:** Testin yalnız yeşil tarafını yazmak işe yaramaz — kırmızıya düştüğü
+  kanıtlanmalı.
+- **Model önerisi:** 🔵 Sonnet
+
+---
+
+### Faz L — Moderasyon ve destek *(Play şartı, yayın öncesi)*
+
+> Bu fazın dört kartı `supabase/migrations/**` sıcak yüzeyine giriyor. **Migration
+> numaraları peşin ayrıldı ve kartlar bu sırayla çalışır:** WP-387 → `0090`,
+> WP-388 → `0091`, WP-389 → `0092`, WP-391 → `0093`. Aynı anda iki migration WP'si açılmaz.
+
+#### WP-387: Tek destek kutusu — tür alanı ve admin bildirimi 📬
+- **Program/Faz:** PLAN 3 · Faz L (kaynak: A4, F4, C1)
+- **Ajan:** — · **Durum:** [ ] Bekliyor
+- **Problem:** Üç ihtiyaç aynı yere düşüyor: geri bildirim (var), SSS'de olmayan soru
+  (gelecek), kullanıcı şikâyeti (var ama ayrı tabloda). Ayrıca **yeni geri bildirim
+  gelince admin'e bildirim gitmiyor** — yönetici panele girmeden haberi olmuyor.
+- **Kapsam dışı:** SSS ekranı (WP-388), şikâyet giriş noktaları (WP-390), admin panelin
+  masaüstü yerleşimi (Faz N).
+- **SAHİP dosyalar:**
+  - `supabase/migrations/0090_support_inbox.sql` (yeni)
+  - `supabase/tests/0NN_support_inbox.test.sql` (yeni)
+  - `app/lib/features/admin/tabs/admin_moderation_tab.dart` + destek/rapor listesi
+  - geri bildirim repo/provider'ları
+- **DOKUNMA:** `app/lib/features/safety/**` (WP-389/390), `0091+` migration'ları
+- **Adımlar:**
+  - [ ] `feedback_tickets`'a **tür alanı** (`feedback | question | report`) eklenir;
+        mevcut satırlar `feedback` olarak backfill edilir.
+  - [ ] Mevcut `ugc_reports` ile ilişki kurulur (rapor bileti kutuda görünür) —
+        tablo **birleştirilmez**, çift kayıt riski yerine referans verilir.
+  - [ ] Yeni bilet düşünce **admin'e push** üreten tetikleyici (mevcut
+        `notification_outbox` yolu kullanılır, yeni taşıma yazılmaz).
+  - [ ] Admin panelinde tek liste + tür filtresi.
+- **Veri/Migration etkisi:** `0090` — kolon ekleme + backfill + tetikleyici.
+  **Geri alma:** tetikleyiciyi düşür, kolon `not null` değilse bırakılabilir; ileri
+  migration ile geri alınır.
+- **Ortam/Deploy:** local → staging → **production ayrı GO** (Faz M'de).
+- **RLS/Güvenlik:** Kullanıcı yalnız kendi biletini görür; admin okuması
+  `is_super_admin()` üzerinden. Tür alanı istemciden geliyorsa **sunucuda doğrulanır**.
+- **Edge-case'ler:** aynı kişinin arka arkaya bilet açması (hız sınırı), silinen
+  kullanıcıya ait bilet, admin'in kendi biletini açması.
+- **Kabul:** Yeni bilet → admin cihazına bildirim **≤ 60 sn** · üç tür de tek listede
+  filtreleniyor · pgTAP: yetkisiz kullanıcı başkasının biletini okuyamaz · mevcut
+  biletler kayıpsız `feedback` olarak görünür.
+- **Tuzaklar:** Bildirim tetikleyicisi `SECURITY DEFINER` yolundan çıkmalı; RLS altında
+  çalışan tetikleyici sessizce hiç bildirim üretmez.
+- **Model önerisi:** 🔴 Opus
+
+#### WP-388: SSS ekranı — sunucudan beslenen, giriş öncesi erişilebilir ❓
+- **Program/Faz:** PLAN 3 · Faz L (kaynak: B2, F3, D listesi)
+- **Ajan:** — · **Durum:** [ ] Bekliyor
+- **Problem:** Ayarlar'da yalnız "bize yaz" var. Sahip hazır soru-cevap istiyor;
+  kullanıcı sormadan cevabı bulsun. İçerik **sunucudan** gelmeli ki sürüm çıkarmadan
+  düzeltilebilsin (sahip kararı F3).
+- **Kapsam dışı:** Web sitesi **yok** — ekran uygulamanın içinde. Soru→SSS terfi akışı
+  admin tarafında WP-387'nin listesine yaslanır.
+- **SAHİP dosyalar:**
+  - `supabase/migrations/0091_faq.sql` (yeni) + pgTAP
+  - `app/lib/features/support/**` (yeni dizin)
+  - `app/lib/features/profile/settings_screen.dart` içinde **yalnız** SSS satırı
+    (WP-383 kabulünden sonra)
+  - `app/lib/l10n/app_tr.arb`, `app_en.arb`
+- **DOKUNMA:** `0090`/`0092` migration'ları, `features/safety/**`
+- **Adımlar:**
+  - [ ] `faq_entries` tablosu (soru, cevap, dil, sıra, yayın bayrağı); **anon okuma**
+        açık (giriş yapmadan erişim şartı), yazma yalnız admin.
+  - [ ] SSS ekranı + arama; **gömülü yedek metin** (ağ yoksa uygulamayla gelen kopya).
+  - [ ] Giriş ekranında SSS bağlantısı ("giremiyorum" en çok gereken madde).
+  - [ ] "Sorum burada yok" → soru gönderme; **hız sınırı** (F3 şartı) sunucuda.
+  - [ ] Başlangıç içeriği: tartışma notu **D listesi** (widget nasıl eklenir · bildirimden
+        kontrol · pil optimizasyonu · çoklu cihaz ne yapar/yapmaz · birincil grup · dürtme ·
+        seri kuralları · XP · başarımlar · grup seni ne kadar görüyor) + rakip analizinden
+        üç madde (gün ne zaman biter · internetsiz ne olur · elle eklenen süre sayılır mı).
+- **Veri/Migration etkisi:** `0091` — yeni tablo + RLS + anon select grant.
+  **Geri alma:** tablo düşürülür, istemci gömülü yedeğe düşer.
+- **RLS/Güvenlik:** 🔴 `anon` **yalnız yayınlanmış satırları** okur. Taslak cevaplar
+  sızmamalı. Soru gönderme anon'a **kapalı** (spam kapısı) — giriş isteyecek.
+- **Edge-case'ler:** ağ yok · dil eksik (TR yoksa EN'e düş) · çok uzun cevap · hız
+  sınırına takılan kullanıcıya net mesaj.
+- **Kabul:** Uçak modunda SSS **boş ekran göstermez** · giriş yapmadan açılır · TR+EN
+  dolu · pgTAP: anon yayınlanmamış satırı okuyamaz · aynı kullanıcı N dakikada M'den
+  fazla soru gönderemez (test).
+- **Tuzaklar:** Anon grant'i geniş yazmak tüm tabloyu açar. Gömülü yedek metnin
+  sunucudakiyle **ayrışması** kaçınılmaz — yedek "son çare" olarak işaretlenmeli.
+- **Model önerisi:** 🔴 Opus
+
+#### WP-389: Engellemeyi F2 kararına uydur 🚫
+- **Program/Faz:** PLAN 3 · Faz L (kaynak: B5/C1 + sahip kararı F2)
+- **Ajan:** — · **Durum:** [ ] Bekliyor
+- **Problem:** 🔴 **Engelleme yok değil, yanlış davranıyor ve bulunamıyor.** Mevcut:
+  `0038_ugc_moderation.sql` (`user_blocks` + `block_user`/`unblock_user`),
+  `features/safety/blocked_users_screen.dart`, `block_user_action.dart`; çağrı yerleri
+  yalnız sohbet (`class_chat_card.dart:228`) ve sosyal profil
+  (`social_profile_screen.dart:128`). Sahip hiçbirini bulamadı.
+  F2 kararına göre üç sapma var:
+  1. **Kamp ateşi engellenen kişiyi tamamen siliyor** (`campfire_scene.dart:111-116`
+     `where !blocked.contains`). Karar: *kimlik gizlenir, sayı gizlenmez* → isimsiz nötr
+     siluet kalmalı.
+  2. **Sıralamada** "Engellenen kullanıcı" satırı yok.
+  3. **Dürtme engellemeyi kontrol etmiyor** (`supabase_nudge_repository.dart` içinde
+     blok kontrolü yok) → iki yönlü kesme eksik.
+- **Kapsam dışı:** Şikâyet (WP-390), grup yasağı (WP-391). Engelleme **üyeliği kesmez**
+  (F2 İstisna 2). Grup yöneticisi ve admin **muaf** (F2 İstisna 1).
+- **SAHİP dosyalar:**
+  - `supabase/migrations/0092_block_enforcement.sql` (yeni) + pgTAP
+  - `app/lib/features/classroom/widgets/campfire_scene.dart` — ⚠️ WP-382 ile aynı dosya
+  - sıralama/liderlik yüzeyi (`features/stats/widgets/class_stats_view.dart` çevresi)
+  - `app/lib/data/repositories/supabase/supabase_nudge_repository.dart`
+  - `app/lib/features/safety/**`
+- **DOKUNMA:** `0090`/`0091`/`0093`
+- **Adımlar:**
+  - [ ] Dürtme RPC'si engellemeyi **sunucuda** kontrol eder (iki yönlü).
+  - [ ] Kamp ateşinde engellenen kişi silinmez; isimsiz siluet, tıklanamaz, dürtülemez.
+  - [ ] Sıralamada "Engellenen kullanıcı" satırı; sayılar değişmez.
+  - [ ] Grup yöneticisi ve admin muafiyeti sunucuda uygulanır.
+  - [ ] Engelleme girişi **keşfedilebilir** olur: üye listesinde ve kamp ateşi detay
+        sayfasında da menü.
+- **Veri/Migration etkisi:** `0092` — dürtme ve ilgili RPC'lere blok kontrolü.
+  **Geri alma:** ileri migration ile kontrolü kaldır.
+- **RLS/Güvenlik:** 🔴 İstemcide gizlemek yetmez; dürtme/etkileşim **sunucuda** reddedilmeli.
+- **Edge-case'ler:** karşılıklı engelleme · engellenen kişi grup yöneticisiyse ·
+  engelleyip aynı gruba sonradan katılma · engel kaldırılınca eski durumun geri gelmesi.
+- **Kabul:** Engellenen kişi dürtme gönderemez ve alamaz (pgTAP, iki yön) · kamp ateşinde
+  siluet olarak **görünür**, üye sayısı değişmez · sıralamada satır durur, grup toplamı
+  aynı kalır · yönetici engellenen üyeyi hâlâ görür ve çıkarabilir · engelleme menüsü
+  en az üç yüzeyden erişilebilir.
+- **Tuzaklar:** ⚠️ **WP-382 ile aynı dosya** (`campfire_scene.dart`) → **WP-382 kabulünden
+  sonra başlar.** Grup toplamlarını istemcide filtrelemek cihazdan cihaza farklı rakam üretir.
+- **Model önerisi:** 🔴 Opus
+
+#### WP-390: Şikâyet akışını tamamla ve görünür kıl 🚩
+- **Program/Faz:** PLAN 3 · Faz L (kaynak: C1, F2 "eksik yarı")
+- **Ajan:** — · **Durum:** [ ] Bekliyor
+- **Problem:** Şikâyet altyapısı **var** (`ugc_reports`, `report_ugc` RPC,
+  `features/safety/report_sheet.dart`, `admin_reports_tab.dart`) ama yalnız sohbet ve
+  sosyal profilden erişiliyor; grup ve grup adı şikâyeti yok, kullanıcı şikâyetinin
+  akıbetini görmüyor, admin'e bildirim WP-387'ye kadar gitmiyordu.
+- **Kapsam dışı:** Otomatik moderasyon, içerik tarama (C9 ayrı WP).
+- **SAHİP dosyalar:** `app/lib/features/safety/report_sheet.dart`,
+  `app/lib/features/admin/tabs/admin_reports_tab.dart`, ek giriş noktaları
+- **DOKUNMA:** `supabase/migrations/**` (şema değişikliği gerekiyorsa WP-387'nin
+  `0090`'ına eklenir, yeni numara alınmaz), `features/classroom/widgets/campfire_scene.dart`
+- **Adımlar:**
+  - [ ] Şikâyet girişi: kullanıcı · grup · grup adı/açıklaması · sohbet mesajı.
+  - [ ] Şikâyet sonrası kullanıcıya **ne olacağı** yazılır ("inceleyeceğiz").
+  - [ ] Admin panelinde durum değişimi `admin_audit_log`'a düşer.
+  - [ ] Play'in istediği kanıt için akış ekran görüntüleriyle belgelenir.
+- **Veri/Migration etkisi:** Tercihen yok.
+- **Kabul:** Dört yüzeyden de şikâyet açılabilir · şikâyet admin listesinde ≤ 60 sn
+  görünür · durum değişimi denetim kaydına düşer · UGC beyanı için cihaz smoke testi
+  belgelenir (I6).
+- **Tuzaklar:** Şikâyet kutusunu serbest metne açmak kişisel veri toplar; alan sınırlı
+  ve kategori seçmeli olmalı.
+- **Model önerisi:** 🟣 Pro
+
+#### WP-391: Grup yasağı, yasak listesi ve davet kodu sıfırlama 🔒
+- **Program/Faz:** PLAN 3 · Faz L (kaynak: G2, G3, G5-son)
+- **Ajan:** — · **Durum:** [ ] Bekliyor
+- **Problem:** Grup yöneticisi birini çıkarabiliyor ama **geri gelmesini engelleyemiyor**;
+  sızan davet kodunun da çaresi yok. Sahip kararı G5-son: **yasak koşulsuzdur**, yalnız
+  grup yöneticisi koyar/kaldırır; davet linki veya onay akışı yasağı delmez.
+- **Kapsam dışı:** Davet linki (Faz N) · yeni üye onay akışı (Faz N) · uygulama geneli
+  yasak (bu grup düzeyinde bir yetki).
+- **SAHİP dosyalar:**
+  - `supabase/migrations/0093_group_bans.sql` (yeni) + pgTAP
+  - grup yönetim ekranları (`features/classroom/**` içindeki üye yönetimi)
+  - grup repo/provider'ları
+- **DOKUNMA:** `0090`–`0092`, `features/safety/**`
+- **Adımlar:**
+  - [ ] `group_bans` tablosu + **katılma RPC'sinde sunucu tarafı kontrol** (istemcide
+        düğme gizlemek yetmez — G2 şartı).
+  - [ ] Üye çıkarma diyaloğunda "gruba bir daha giremesin" seçeneği (kick ≠ ban).
+  - [ ] Grup ayarlarında **yasak listesi + kaldırma** (G2 şartı: öfkeyle verilen yasak
+        ertesi gün geri alınmak istenir).
+  - [ ] **Davet kodu sıfırlama** — eski kod geçersizleşir; 🔴 içerideki kimseyi atmaz,
+        arayüzde bu açıkça yazılır (G3).
+- **Veri/Migration etkisi:** `0093` — yeni tablo + katılma RPC değişikliği.
+  **Geri alma:** kontrolü kaldıran ileri migration; tablo veri kaybı olmadan kalır.
+- **RLS/Güvenlik:** Yasak koyma/kaldırma yalnız grup yöneticisi (`SECURITY DEFINER`
+  içinde doğrulanır). Yasaklı kullanıcı yasak listesini göremez.
+- **Edge-case'ler:** yasaklı kişi geçerli davet koduyla dener · yönetici kendini
+  yasaklamaya çalışır · son yönetici yasaklanırsa grup sahipsiz kalır · yasaklı kişi
+  gruptayken yasaklanırsa aynı işlemde çıkarılır.
+- **Kabul:** pgTAP: yasaklı kullanıcı geçerli kodla **katılamaz** · yasak kaldırılınca
+  katılabilir · yönetici olmayan yasak koyamaz · kod sıfırlandığında eski kod reddedilir,
+  mevcut üyeler etkilenmez · yönetici kendini yasaklayamaz.
+- **Tuzaklar:** Yasağı yalnız istemcide uygulamak (düğme gizleme) G2'nin açık ihlali.
+  Kod sıfırlamayı yasağın alternatifi gibi sunmak sahibin kararına aykırı.
+- **Model önerisi:** 🔴 Opus
+
+#### WP-392: Görünen ad ve grup adı süzgeci 🧼
+- **Program/Faz:** PLAN 3 · Faz L (kaynak: C9 + H2 kararı "eklenir")
+- **Ajan:** — · **Durum:** [ ] Bekliyor
+- **Problem:** Görünen ad ve grup adı herkese açık; küfür/istismar süzgeci yok. Tek
+  ekran görüntüsü mağaza şikâyetine dönebilir.
+- **Kapsam dışı:** Sohbet içeriği taraması, otomatik ceza, yapay zekâ moderasyonu.
+- **SAHİP dosyalar:** süzgeç fonksiyonu (mevcut ad güncelleme RPC'sinin içine),
+  `supabase/tests/**`, ilgili istemci hata mesajı + l10n
+- **DOKUNMA:** `0090`–`0093` (bu WP kendi migration numarasını Faz L sonunda alır)
+- **Adımlar:**
+  - [ ] TR + EN yasaklı kelime listesi (sunucuda, veri olarak — kod değişmeden güncellenir).
+  - [ ] Ad değiştirme ve grup kurma/yeniden adlandırma yollarında **sunucuda** reddedilir.
+  - [ ] Kullanıcıya neden reddedildiği anlaşılır biçimde söylenir (listeyi sızdırmadan).
+- **Veri/Migration etkisi:** Yeni migration (numara Faz L sırasında). **Geri alma:** kontrolü kaldır.
+- **RLS/Güvenlik:** 🔴 Yalnız istemci kontrolü işe yaramaz — API doğrudan çağrılabilir.
+- **Edge-case'ler:** boşluk/harf oyunları (`a_m_k`), Türkçe karakter varyantları,
+  meşru kelimenin yanlış eşleşmesi (aşırı agresif liste kullanıcıyı bloke eder).
+- **Kabul:** pgTAP: listedeki kelime reddedilir, varyantı da reddedilir, meşru ad kabul
+  edilir · istemci hata mesajı TR+EN · mevcut adlar **geriye dönük silinmez** (yalnız
+  değişiklikte kontrol).
+- **Tuzaklar:** Liste çok agresifse gerçek isimler reddedilir; "Çiğdem" gibi meşru
+  adlarda yanlış pozitif testi zorunlu.
+- **Model önerisi:** 🟣 Pro
+
+---
+
+### Faz M — Mağaza altyapısı *(ops ağırlıklı; kartlar faz başlarken tam açılır)*
+
+> Bunların çoğu kod değil hesap/ops işi ve **sahibin adımlarına bağlı** (alan adı satın
+> alma, Play Console formları). Kısa kart = başlık + bağımlılık + kabul çekirdeği.
+
+- **WP-393 — Ürün politikaları (yazılı karar metni) 📜.** Rakip analizinden çıkan dört
+  politika `docs/`'a yazılır ve KALITE-PROGRAMI'na bağlanır: (1) **regresyon politikası**
+  — görünen düzen değişirse eski düzen seçenek kalır; (2) **ücret politikası** — sayaç,
+  gruplar, istatistik, bildirimler kalıcı ücretsiz ve reklamsız; (3) **zorlama yok** —
+  uygulama engelleme, mola cezası, kolektif ceza asla eklenmez; (4) **dağıtım** — açılışta
+  yalnız Türkiye (takvim sınırı `Europe/Istanbul` sabit). *Kod yok, WP-401'in metni buna
+  dayanır.* 🔵
+- **WP-394 — Alan adı zemini: dört sayfa + `assetlinks.json` 🌐.** Gizlilik politikası,
+  kullanım şartları, hesap silme, destek sayfaları GitHub Pages'te yayına alınır.
+  **Bağımlılık: sahip alan adını alır ve DNS panelini açar.** 🟣
+- **WP-395 — Özel SMTP 📧.** Supabase yerleşik göndericisi saatte birkaç mesajla sınırlı;
+  ilk kalabalıkta kayıt e-postaları düşer. **Lansman ön koşulu.** Masaüstündeki 6 haneli
+  kod yolu da buna bağlı. **Bağımlılık: WP-394 (DNS kayıtları).** 🔴
+- **WP-396 — Play AAB hattı 📦.** Release hattı yalnız APK üretiyor; Play `.aab` istiyor.
+  `play` flavor zaten güncelleyiciyi kapatıyor (WP-128), o taraf temiz. 🟣
+- **WP-397 — İzin hazırlığı: bildirim + pil optimizasyonu 🔋.** Xiaomi/Samsung'da arka
+  plan sayacının en büyük düşmanı; kullanıcı kendi bulamaz. Onboarding'de anlatılır,
+  SSS'de (WP-388) karşılığı olur. 🟣
+- **WP-398 — Çökme/ANR raporlaması 🛰️.** `sentry_flutter` bağımlılıkta var; gerçekten
+  rapor düşüyor mu, sembolize mi, doğrulanır. Mağazada körlük pahalı (H2 kararı: eklenir). 🔵
+- **WP-399 — Uygulama içi puanlama istemi ⭐.** Play in-app review; birkaç başarılı
+  oturumdan sonra **bir kez**. Erken puan toplamanın en ucuz yolu (H2 kararı). 🔵
+- **WP-400 — Hesap silme uçtan uca kanıt 🗑️.** Kodu var, kanıtı yok: istek → 14 gün →
+  kalıcı silme → yetkisiz çağrı reddi. WP-276'nın devamı, web tarafı WP-394'e bağlı. 🟣
+- **WP-401 — Play listeleme paketi 🏪.** İkon, öne çıkan görsel, ekran görüntüleri
+  (TR+EN), açıklama metni, Data Safety formu, içerik derecelendirme, **13+ yaş beyanı**,
+  **yalnız TR+EN dil beyanı**, "reklam yok / uygulama içi satın alma yok" beyanı.
+  Açıklama metni rakip acısından yazılır: *çevrimdışı çalışır · bilgisayarda da var ·
+  reklamsız ve ücretsiz · elle eklenen süre de sayılır · davetle kurulan sakin gruplar.*
+  🔴 **Açık soru:** tablet ekran görüntüsü isteniyor ama tablet yerleşimi parked.
+  **Bağımlılık:** isim + logo kararı (sahipte), WP-393. 🟣
+- **WP-402 — Kapalı test turu ve kademeli yayın 🚀.** 12 test kullanıcısı / 14 gün
+  (sahip kabul etti) → %10 → %25 → %50 → %100. Foreground service tanıtım videosu
+  (sahip çekecek, sona bırakıldı) bu kartın ön koşulu. 🟣
+
+---
+
+### Faz N — Yayın sonrası ilk dalga *(rakip analizinden; yayını geciktirmez)*
+
+> Kaynak: `docs/RAKIPANALIZI-DEGERLENDIRME.md` §2 (ucuz ve gerçekten alınacaklar) +
+> §4 (orta vadeli boşluklar) + G6'nın "sonra olur" listesi. Kartlar sırası geldiğinde açılır.
+
+- **WP-403 — Tepkiler (emoji) 👏.** Şu an yalnız dürtme var; kodda `reaction` hiç geçmiyor.
+  Rakipte de eksik ve doğrudan isteniyor (§2.1.3 #8).
+- **WP-404 — Kamp ateşinde mola pozu 😴.** `onBreak` şu an yalnız detay sayfasındaki
+  noktada görünüyor (`campfire_scene.dart:745`); sahnedeki hayvan değişmiyor. Altyapı hazır.
+- **WP-405 — Odak sırasında sessizlik 🔕.** "Sayaç açıkken bildirimleri kes" — doğrudan
+  istek (§2.1.2/12), bildirim tercihleri altyapısı var.
+- **WP-406 — Seviye/lig görünümü 🎖️.** Ham sıralama yerine kademe. Aynı taşla iki kuş:
+  hem talep (#5), hem "sıralama yavaş olanı kaçırıyor" baskısının çözümü.
+- **WP-407 — Oturum bazlı kırılım 📊.** "Bugün 6 saat" yerine "3 oturuş: 2s · 1s40 · 2s20" (#19).
+- **WP-408 — Manuel oturum rozeti ✍️.** Kazanım eşit kalır (`0063` doğru karar), ama
+  `source='manual'` oturum grup katkı listesinde ve geçmişte **işaretlenir**. Şu an hiçbir
+  yerde ayırt edilmiyor (`0001:57`) → public grup sıralamasında görünmez avantaj.
+- **WP-409 — Sınav geri sayımı (D-Day) ⏳.** Araç yığınına girmeden tek istisna;
+  TR/YKS bağlamının merkezinde, neredeyse bedava.
+- **WP-410 — Davet linki 🔗.** Alan adı + `assetlinks.json` sonrası yarım günlük iş.
+  Kurulum sonrası grup taşıma için ücretsiz hazır çözüm yok (Firebase Dynamic Links
+  Ağustos 2025'te kapandı) → link bir sayfa açar, grup adı ve kod açıkça yazar.
+- **WP-411 — Masaüstü admin yerleşimi 🖥️.** Panel Windows'ta **zaten açılıyor**
+  (`settings_screen.dart:138`, `features/admin` altında platform kontrolü yok);
+  eksik olan geniş ekran yerleşimi — uyarlama, yeni ürün değil.
+- **Ayrıca sıraya:** yeni üye onay akışı (G5-son: yasaktan bağımsız anahtar) · arkadaş
+  listesi · çalışma dışı kategoriler · ders klasörleri · sohbette görsel + alıntı ·
+  hesap e-postası değiştirme.
+
+---
+
+### PLAN 3 çakışma matrisi
+
+> ✅ **Aktif lane yok** — beş lane de boşta, v54 yayında. Yeni WP'ler serbest başlar.
+
+| Kısıt | Kural |
+|---|---|
+| `campfire_scene.dart` | WP-382 → **sonra** WP-389. Aynı anda açılmaz. |
+| `settings_screen.dart` | WP-383 → **sonra** WP-388 (yalnız SSS satırı ekler). WP-381 hiç girmez. |
+| `stats_screen.dart` / stats widget'ları | WP-383 → **sonra** WP-384. |
+| `supabase/migrations/**` | Sıra sabit: WP-387 `0090` → WP-388 `0091` → WP-389 `0092` → WP-391 `0093` → WP-392. Aynı anda iki migration WP'si yok. |
+| `app/lib/l10n/*.arb` | WP-385 açıkken başka WP arb'ye girmez. |
+| `android/**/timer/**` | WP-380 sahibi; WP-379 yalnız Dart tarafında kalır. |
+
+**Paralel çalışılabilir üçlü (çakışmasız):** WP-379 (Dart sayaç) · WP-380 (Kotlin widget) ·
+WP-385 (l10n/başarım). Sonraki dalga: WP-381 · WP-383 · WP-382.
+
+### PLAN 3 — sahipte duran, plan dışı bağımlılıklar
+
+1. **Uygulama ismi + logo** → WP-401 ve Faz M'nin tamamı buna bağlı (PLAN 2 · Faz G).
+2. **Alan adı satın alma** (Porkbun · `.com` · WHOIS gizli) → WP-394, WP-395, WP-410.
+3. **Play Console:** uygulamayı oluştururken **Google'ın imzalama anahtarını üretmesine
+   izin ver** (sahip kararı H5) + kapalı test şartına bak.
+4. **Tur metinleri** (WP-381 yer tutucuları doldurur).
+5. **Foreground service tanıtım videosu** → WP-402.
 
 ---
 

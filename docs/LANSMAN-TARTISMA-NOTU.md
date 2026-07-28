@@ -122,6 +122,28 @@ Ekran mevcut ama **engelleme fiili yok**. Sahip: "bunu konuşmalıyız — nası
 ekleyince ne olacak? Sanırım mağazaya çıkabilmek için eklemiştik."
 (Doğru tahmin — ayrıntı C1'de.)
 
+🔴 **DÜZELTME (2026-07-28, planlama turunda koda bakıldı): bu madde yanlıştı.**
+Yukarıdaki satırlar sahibin gözlemine dayanarak yazıldı, koda bakılmadan.
+Engelleme **ve şikâyet ikisi de var ve uçtan uca kurulu**:
+
+- `supabase/migrations/0038_ugc_moderation.sql` — `user_blocks`, `ugc_reports`
+  tabloları; `block_user`, `unblock_user`, `report_ugc` RPC'leri.
+- `app/lib/features/safety/` — `block_user_action.dart` (onaylı engelle),
+  `blocked_users_screen.dart`, `report_sheet.dart`.
+- Çağrı yerleri: `class_chat_card.dart:217,228` ve
+  `social_profile_screen.dart:120,128`.
+- Admin tarafı: `admin_reports_tab.dart`.
+
+Sahibin bunları bulamamasının sebebi **keşfedilebilirlik**: engelle/şikâyet yalnız
+sohbet ve sosyal profil menüsünden erişiliyor. Ayrıca mevcut davranış F2 kararına
+**uymuyor** — kamp ateşi engelleneni tamamen siliyor (`campfire_scene.dart:111-116`),
+oysa karar "kimliği gizler, sayıyı gizlemez" diyor; sıralamada "Engellenen kullanıcı"
+satırı yok; dürtme engellemeyi hiç kontrol etmiyor.
+
+➡️ Bu yüzden iş "sıfırdan engelleme yaz" değil, **WP-389 (F2'ye uydur ve görünür kıl)**
+ve **WP-390 (şikâyeti tamamla)** oldu. Ders: sahibin gözlemi bir **belirti**dir,
+teşhis değildir — koda bakmadan nota yazılmamalıydı.
+
 ### B6. Sürüm notları kullanıcıya göre yazılsın
 Güncelleme bildirimiyle içeriye **migration** gibi teknik satırlar sızıyor. Kullanıcının
 gördüğü metin tamamen kullanıcı odaklı olmalı; iç değişiklikler ayrı yerde kalmalı.
@@ -543,8 +565,13 @@ müsaitlik kontrolü bana.
 ## Durum — 2026-07-28 sonu
 
 Tartışma kapandı. Bu belgede karara bağlanmamış madde kalmadı; açık olan tek şey sahibin
-seçeceği alan adı ismi. Planlama sahibin işareti beklenmeden başlamaz
-(`.agents/AGENTS.md §0.1` — sahip emri).
+seçeceği alan adı ismi.
+
+✅ **Planlama başladı (2026-07-28).** Sahip emri: *"bu dediklerin ve bizim
+konuştuklarımızı planlayalım, hepsini WP'ler halinde yaz."* Bu belgedeki A/B/C/D/F/G/H
+maddeleri ve `docs/RAKIPANALIZI-DEGERLENDIRME.md`'den alınacaklar birlikte
+`progress.md` → **PLAN 3 — LANSMAN TURU** altında **WP-379…WP-411** olarak kartlara
+bölündü. Artık tek güncel kaynak o plandır; bu belge **karar kaydı** olarak kalır.
 
 **Sahipte duran işler:** alan adını al (Porkbun / `.com` / WHOIS gizli) · Play Console'da
 uygulamayı oluştururken Google'ın imzalama anahtarını üretmesine izin ver · foreground service
