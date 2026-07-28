@@ -97,15 +97,20 @@
   ayrıca bekliyor.
 
 ### Lane D
-- **Durum:** [~] Aktif
-- **Faz/WP:** PLAN 4 · Faz Q · WP-416 → WP-417 → WP-418
-- **Asama:** Gelistiriliyor
-- **SAHIP yollar:** `app/lib/features/**/campfire_scene.dart` ve kamp atesi widget'lari, mobil parametrik onizleme ekrani, tur tanim dosyalari, basarim tanimlari, ilgili testler
-- **Ortak/riskli yuzey:** `app/lib/l10n/*.arb` (TR/EN/DE/AR atomik duzenleme — Lane B/C ile ayni dosya, dar hunk)
-- **Dal:** main
-- **Baslangic:** 2026-07-28 18:05 (Europe/Istanbul)
-- **Son guncelleme:** 2026-07-28 18:05 (Europe/Istanbul)
-- **Not:** Sirali ilerler (WP-416 → WP-417 → WP-418). `features/settings/**`, `features/admin/**`, `features/stats/**`, `android/**`, `supabase/**` yazilmaz. Local kalir; migration/tag/release yok.
+- **Durum:** [x] Boşta
+- **Faz/WP:** — · PLAN 4 Faz Q (WP-416 · WP-417 · WP-418) kapandı, üçü de QA kuyruğunda
+- **SAHİP yollar:** —
+- **Son not (2026-07-28):** Üç WP üç ayrı commit'le indi (`41544e0` · `d0751a0` ·
+  `b030094`). `flutter analyze` temiz. Kart altlarında DoD kanıtı var.
+  🔴 **Lane C'ye özür + uyarı:** WP-417 sırasında `git checkout -- app/lib/l10n/`
+  çalıştırdım ve **Lane C'nin commit'lenmemiş** üç anahtarını (`aboutTitle`,
+  `aboutSubtitle`, `updaterDahaFazlaSurum`) dört katalogdan sildim. Anahtarları
+  **yeniden yazıp çalışma ağacına geri koydum** (TR/EN/DE/AR, `about_screen.dart`
+  derleniyor) ama **çevirileri ben uydurdum** — Lane C kendi metnini tercih
+  ediyorsa üzerine yazsın; kodları hiç bozulmadı. Ders: paylaşılan çalışma
+  dizininde ortak dosyada asla `git checkout --` yok; index'e yazmak için
+  `git hash-object` + `git update-index` kullanılmalı (bu turda arb'ye ben de
+  öyle yazdım, o yüzden commit'lerimde başka lane'in satırı yok).
 
 ### Lane C
 - **Durum:** [~] Aktif
@@ -3780,6 +3785,9 @@ staging apply → production apply (sahip GO'su ile) → v56 stable.
 | **WP-343** Foreground mirror + remote stop | Staging + iki Android cihaz | Aynı hesapta foreground start/stop p95≤2 sn; ek session/XP 0; eski stop yeni yerel run'ı kesmez; bildirim/widget regresyonu 0. **Cihazda doğrulanmalı.** |
 | **WP-345** Timer-sync signal + app-open reconcile | Staging FCM + Android lifecycle | Data-only sinyal p95≤10 sn; açılış reconcile p95≤2 sn; terminated/doze/logout/force-stop sonrasında payload state uygulamaz, snapshot doğru state'i getirir. **Cihazda doğrulanmalı.** |
 | **WP-379** Ayna Durdur global koşuyu kapatır | İki Android cihaz + FCM | Aynadan onaylı Durdur → kaynak cihaz ≤5 sn'de durur ve gerekçeyi gösterir; iptal değişiklik yapmaz; revision/ağ reddinde ayna açık kalır; ek session/XP 0. Commit: `bekleyen`. **Cihazda doğrulanmalı.** |
+| **WP-416** Kamp ateşi yeşil alanı 2× + mobil önizleme | Android telefon | Yeşil alan iki katı (137 px) görünüyor; 8 kişide isim çakışması ve alt sıra ayak kesilmesi yok; sahip `lib/campfire_preview.dart` aracından dört kolu (yeşil alan · isim boyutu · satır aralığı · hayvan boyutu) ayarlayıp seçtiği satırı gönderir — seçilen sayılar teste sabit değer olarak girer. Commit: `41544e0`. **Cihazda doğrulanmalı.** |
+| **WP-417** Tanıtım turu sadeleştirme | Android + Windows | Ana ekranda yalnız "kartları düzenle" balonu çıkıyor (genel bakış + sayaç turu yok); istatistiklerde hiç tur açılmıyor. Commit: `d0751a0`. **Cihazda doğrulanmalı.** |
+| **WP-418** Başarım açıklamaları | Android + Windows (okuma) | Sahip katalogda İlham Kaynağı ve Lokomotif metinlerini okuyup koşulu anladığını onaylar. Commit: `b030094`. **Kodda doğrulandı.** |
 | **WP-380** Widget ve bildirimde boş sayaç biçimi | Android widget + bildirim | Boştayken `00:00`; başlatınca ilk saniyede sıçrama yok; bir saati geçince `1:00:00`; uygulama içi sayaç `00:00:00` kalır. Commit: `bekleyen`. **Cihazda doğrulanmalı.** |
 
 **Ortam sırası:** tamamlandı — local, staging ve production `0085`te (WP-348 →
