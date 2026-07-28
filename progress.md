@@ -2977,6 +2977,466 @@ WP-385 (l10n/başarım). Sonraki dalga: WP-381 · WP-383 · WP-382.
 
 ---
 
+## PLAN 4 — v56 SAHA TURU 🔧
+
+> **Kaynak:** sahibin v55 cihaz testi (2026-07-28) + `docs/MODERASYON-PLANI.md` Faz A.
+> Ham notlar ve gerekçeler: **`docs/V56-PLAN.md`**. Açık soru yok, plan uygulamaya hazır.
+> **Migration head** tur başında `0094`, tur sonunda `0100`.
+> 🔴 **Turun bir numaralı kuralı (v55 dersi):** yeni l10n anahtarı yazan her WP
+> **dört dili birden** yazar — TR + EN + **DE + AR**. v55'te 13 kırmızı testin
+> birinci nedeni buydu.
+
+### Faz O — v55 saha bulguları: bozuk olanlar *(yayın öncesi, kod)*
+
+#### WP-412: Tarih aralığı seçicide gün hücresi tarihin tamamını yazıyor 📅
+- **Program/Faz:** PLAN 4 · Faz O (kaynak: sahip cihaz testi, ekran görüntüsü)
+- **Ajan:** Lane E · **Durum:** [ ] Başlamadı
+- **Problem:** `draggable_date_range_picker.dart:445` gün hücresine `'$day'` yazıyor.
+  `day` bir `DateTime`; Dart bunu `2026-07-01 00:00:00.000` olarak metne çeviriyor.
+  40×40 dairenin içine sığmayınca taşıyor, hücreler üst üste biniyor, takvim okunmuyor.
+  Sahip "çalışmıyor da" dedi — dokunma hedefleri taşan metnin altında kaldığı için.
+- **Kapsam dışı:** Sürükleme mantığı, aralık takas davranışı, tema. Yalnız hücre metni.
+- **SAHİP dosyalar (yaz):** `app/lib/features/stats/widgets/draggable_date_range_picker.dart`,
+  `app/test/features/stats/**`
+- **DOKUNMA:** `stats_period_bar.dart`, `personal_stats_view.dart` (Lane D/C okuyabilir)
+- **Adımlar:**
+  - [ ] `'$day'` → `'${day.day}'`.
+  - [ ] Aynı hatanın başka hücrede olup olmadığını tara (`_HandleBody` uç etiketi
+        `formatMediumDate` kullanıyor — **o doğru**, uç göstergesi tam tarih göstermeli).
+  - [ ] Düzeltme sonrası sürükleme elle denenir; hâlâ tutmuyorsa ayrı bulgu olarak kartla.
+- **Migration/Ortam:** Yok · local.
+- **Kabul:** Widget testi hücre metninin **yalnız gün sayısı** olduğunu doğrular
+  (`find.text('1')` bulunur, `find.textContaining('2026')` bulunmaz) · aralık sürükleme
+  bırakıldığı anda uygulanır · iki uç birbirini geçince takas eder, çökmez.
+- **Tuzaklar:** Ekran görüntüsüne değil **metin eşitliğine** test yaz. Uç etiketiyle
+  hücre etiketini karıştırma; ikisi farklı biçim kullanmalı.
+- **Model önerisi:** Sonnet
+
+#### WP-413: Engelleme yaptırımının eksik yüzeyleri 🚫
+- **Program/Faz:** PLAN 4 · Faz O (kaynak: sahip cihaz testi)
+- **Ajan:** Lane E · **Durum:** [ ] Başlamadı
+- **Problem:** `0092` engelleme yaptırımı dürtme ve kamp ateşini kapsıyor ama
+  engellenen kişi **istatistik/liderlik tablolarında adıyla görünüyor** ve
+  **profili açılabiliyor**. Yaptırım yüzey yüzey eklendiği için kapsam dışı yüzeyler kaldı.
+- ✅ **Kamp ateşi kapsam dışı — cihazda doğrulandı.** Engellenen kişi orada
+  "Engellenen kullanıcı" etiketiyle görünüyor; bu **doğru davranış**: sahneden
+  silinmiyor, anonimleşiyor, katılımcı sayısı bozulmuyor.
+- **Kapsam dışı:** Kamp ateşi davranışı · engelleme UI'ı · grup yasağı (`0093`, ayrı mekanizma).
+- **SAHİP dosyalar (yaz):** `supabase/migrations/0095_*.sql`, grup/istatistik agregasyon
+  RPC'leri, `app/lib/data/repositories/supabase/**` (ilgili okuma yolları),
+  `supabase/tests/**` pgTAP
+- **DOKUNMA:** `campfire_scene.dart` (Lane D sahibi), `features/admin/**` (Lane B sahibi)
+- **Adımlar:**
+  - [ ] Süzgeç **sunucuda** uygulanır, istemcide değil — istemci süzgeci atlanabilir ve
+        yeni yüzey eklendiğinde sessizce kaçar.
+  - [ ] Kapsanan yüzeyler: istatistik/liderlik tabloları · sosyal profil erişimi ·
+        kullanıcı arama sonuçları · grup üye listeleri.
+  - [ ] Engellenen kişinin profili doğrudan ID ile açılmaya çalışılırsa reddedilir.
+  - [ ] Kamp ateşinin anonimleştirme davranışına **regresyon testi** — ileride
+        yanlışlıkla "tamamen gizle"ye çevrilmesin.
+- **Migration/Ortam:** `0095` · local → staging → production (sahip GO'su ile).
+- **RLS/Güvenlik:** Yeni yüzey açılmıyor; mevcut okuma yolları daraltılıyor.
+- **Kabul:** Her yüzey için **iki uçlu test** (A→B ve B→A) · engellenen kişi tabloda
+  görünmez · profili ID ile bile açılmaz · kamp ateşi anonim etiketi korunur ·
+  328+ pgTAP yeşil.
+- **Tuzaklar:** Grup istatistikleri sunucu RPC'sinden geliyor (`docs/recovery/`
+  MIGRATION-BASELINE) — süzgeci RPC'nin **içine** koy, dışına sarma.
+- **Model önerisi:** 🔴 Opus
+
+#### WP-423: Şikâyet ve destek sorusuna foto eki 📎
+- **Program/Faz:** PLAN 4 · Faz O (kaynak: sahip isteği — "bildir kısmına foto eklenebilsin")
+- **Ajan:** Lane E · **Durum:** [ ] Başlamadı · ⏳ **WP-413 (`0095`) commit'lenmeden başlama**
+- **Problem:** Şikâyet ve SSS/destek sorusu yalnız metin kabul ediyor. Sahip ikisine de
+  foto eklemek istiyor.
+- **İyi haber:** Altyapı kısmen var — `submitFeedback` zaten `attachmentBytes` /
+  `attachmentExt` alıyor (`admin_repository.dart:143`), `avatars` bucket'ı ve storage
+  politikaları mevcut (`0002`). Sıfırdan sistem kurulmuyor, uzatılıyor.
+- **Kapsam dışı:** Video, çoklu dosya, düzenleme. **Tek foto, tek ek.**
+- **SAHİP dosyalar (yaz):** `supabase/migrations/0096_*.sql` (rapor ekleri için bucket +
+  politika), `app/lib/features/safety/report_sheet.dart`,
+  `app/lib/data/repositories/**/moderation_repository*`, destek/SSS soru formu
+- **DOKUNMA:** `features/admin/**` (Lane B eki **okur**, yükleme yolunu yazmaz),
+  `features/settings/**` (Lane C sahibi)
+- **Adımlar:**
+  - [ ] Rapor ekleri için ayrı bucket — `avatars` **public**, rapor eki **public olmamalı**.
+  - [ ] Boyut ve MIME doğrulaması **sunucuda** zorlanır (istemci sınırı yeterli değil).
+  - [ ] Ek yükleme başarısızsa şikâyet yine de gönderilir; ek opsiyoneldir.
+  - [ ] Admin tarafında eke erişim yalnız super-admin (Lane B'nin WP-425'i görüntüler).
+- **Migration/Ortam:** `0096` · local → staging → production.
+- **RLS/Güvenlik:** 🔴 Foto ekinin kendisi kötüye kullanım aracıdır — public bucket'a
+  koyma, imzalı URL kullan, boyut/tür sunucuda sınırla.
+- **Kabul:** 5 MB üstü ve resim olmayan dosya sunucuda reddedilir · ek olmadan şikâyet
+  gönderilebilir · ek yalnız super-admin tarafından açılabilir · pgTAP politika testi.
+- **Tuzaklar:** `avatars` bucket'ını yeniden kullanma — public okuma politikası var,
+  şikâyet eki oraya konursa herkese açılır.
+- **Model önerisi:** 🔴 Opus
+
+### Faz P — Sayaç senkron güveni *(v55 saha bulguları)*
+
+#### WP-414: Bildirim ve widget'tan Durdur ayna cihaza gitmiyor ⏱️
+- **Program/Faz:** PLAN 4 · Faz P (kaynak: sahip cihaz testi)
+- **Ajan:** Lane A · **Durum:** [ ] Başlamadı
+- **Problem:** WP-379 uygulama içi Durdur'u ayna cihaza taşıdı ✅. Ama **bildirimden**
+  ve **Android ana ekran widget'ından** Durdur denince diğer cihaz durmuyor.
+  Senkron yolu yalnız Dart/UI katmanına bağlanmış; native aksiyon yolları aynı
+  SSOT'a yazmıyor. WP-373 teşhisiyle aynı aile: `expected_run_revision` native
+  tarafta doldurulmuyorsa sunucu `stop_run_revision_required` atıyor ve zarf
+  kuyrukta zehir olarak kalıyor.
+- **Kapsam dışı:** Pomodoro/geri sayım · Windows · yeni migration.
+- **SAHİP dosyalar (yaz):** `app/android/app/src/main/kotlin/**/timer/**`,
+  `app/android/app/src/main/kotlin/**/widgets/**`,
+  `app/lib/data/providers/global_timer_providers.dart`,
+  `app/lib/data/providers/study_providers.dart`, ilgili Kotlin + Dart testleri
+- **DOKUNMA:** `supabase/migrations/**` · `features/admin/**` · `features/settings/**`
+- **Adımlar:**
+  - [ ] Üç giriş noktası (uygulama içi · bildirim · widget) **tek ortak yola** bağlanır.
+  - [ ] Native taraf `expected_run_revision`'ı dolduruyor mu, doğrula.
+  - [ ] `origin` sözlüğü sunucuda `('app','widget','notification','recovery')` —
+        ham `native_widget` / `native_notification` göndermek sessiz ret üretir.
+  - [ ] Reddedilen zarf kuyrukta **kalıcı zehir olmamalı**; sınırlı deneme sonrası düşer ve loglanır.
+- **Migration/Ortam:** Yok · local.
+- **Kabul:**
+  - Bildirimden Durdur → ayna cihaz **≤ 5 sn** içinde durur.
+  - Widget'tan Durdur → ayna cihaz **≤ 5 sn** içinde durur.
+  - 🔴 **Üç giriş noktasının her biri için ayrı sözleşme testi** — istemcinin ürettiği
+    zarf ile sunucunun beklediği şema tek testte karşılaştırılır. Biri koparsa kırmızı düşer.
+- **Tuzaklar:** WP-373 dersi — tek uçlu testler senkronun yıllarca ölü kalmasını gizledi.
+  pgTAP kendi uydurduğu `'app'` değerini kullanmasın, istemcinin gerçekten gönderdiğini kullansın.
+- **Model önerisi:** 🔴 Opus
+
+#### WP-415: Çevrimdışı biten koşu ayna cihazda hayalet koşu doğuruyor 👻
+- **Program/Faz:** PLAN 4 · Faz P (kaynak: sahip cihaz testi — en ciddi bulgu)
+- **Ajan:** Lane A · **Durum:** [ ] Başlamadı · ⏳ WP-414'ten **sonra** (aynı dosyalar)
+- **Problem:** İki belirti, muhtemelen tek kök:
+  1. Çevrimdışı başlatılan koşu, çevrimiçi olunca ayna cihazda **0'dan** saymaya
+     başlıyor (kapatınca düzeliyor, toplam süre doğru).
+  2. 🔴 Çevrimdışı **başlatılıp durdurulan** koşu, çevrimiçi olunca ayna cihazda
+     **aktif koşu olarak canlanıyor** (`00:01`'den sayıyor) — kullanıcı ona hiç
+     dokunmadığı hâlde. Dahası origin cihazda Durdur'a basınca *"diğer cihazdaki
+     duracak"* uyarısı çıkıyor; yani sistem ayna cihazı gerçekten koşuyor sanıyor.
+  Muhtemel neden: kuyruk yalnız `start` olayını taşıyor, `stop` ya taşınmıyor ya da
+  zaman damgası karşılaştırılmadan uygulanıyor; bitmiş koşu "en son komut = start"
+  olarak yeniden oynatılıyor.
+- **Kapsam dışı:** Çevrimdışı açılış gecikmesi (5 sn) — izlenecek, bu turda WP değil.
+- **SAHİP dosyalar (yaz):** WP-414 ile aynı küme (bu yüzden aynı lane)
+- **Adımlar:**
+  - [ ] Çevrimdışı biriken komutların **sırası ve zaman damgası** ile uygulandığını doğrula.
+  - [ ] Bitmiş koşu yeniden oynatıldığında aktif koşu **doğmamalı** — yalnız toplam süre eşitlenir.
+  - [ ] Bayat komut eşiği: belli bir yaştan eski `start` komutu aktif koşu açmaz.
+- **Migration/Ortam:** Yok (sunucu tarafı gerekirse `0101`, Lane B bitince) · local.
+- **Kabul:**
+  - 🔴 Senaryo testi: çevrimdışı başlat → çevrimdışı durdur → çevrimiçi ol →
+    ayna cihazda **aktif koşu yok**, toplam süre eşit.
+  - Çevrimdışı başlat → çevrimiçi ol (koşu sürerken) → ayna cihaz **0'dan değil**,
+    doğru geçmiş süreden devam eder.
+  - Çift `finalize` üretilmez (çift XP yok).
+- **Tuzaklar:** "Kapatınca düzeliyor" belirtisi hatayı küçük gösteriyor — düzelten şey
+  yeniden okuma, kök neden duruyor. Belirtiyi değil kökü düzelt.
+- **Model önerisi:** 🔴 Opus
+
+### Faz Q — Arayüz ve içerik *(v55 saha bulguları)*
+
+#### WP-416: Kamp ateşi düzeni + mobil parametrik önizleme 🔥
+- **Program/Faz:** PLAN 4 · Faz Q (kaynak: sahip cihaz testi)
+- **Ajan:** Lane D · **Durum:** [ ] Başlamadı
+- **Problem:** Sahip: *"kamp ateşi olmamış, yeşil kısmın yüksekliği çok az, isimler
+  üst üste biniyor, şu anki px boyutu 2 katına çıkmalı."* Ayrıca PC'de olduğu gibi
+  **mobil için de değer ayarlayabileceği bir önizleme ekranı** istiyor.
+- 🔴 **Sıra kuralı (sahip kalıcı tercihi): önce önizleme, sonra kod.** Ama sahip bu
+  turda dışarıda; **verdiği başlangıç değeri var: yeşil alan yüksekliği 2×.**
+  Ajan 2×'i uygular **ve** önizleme aracını teslim eder; sahip döndüğünde ince ayarı
+  araçtan yapar, seçtiği sayı teste bağlanır.
+- **Kapsam dışı:** Hayvan asset'leri (tasarımcıda) · tablet yatay düzeni.
+- **SAHİP dosyalar (yaz):** `app/lib/features/**/campfire_scene.dart` ve kamp ateşi
+  widget'ları, mobil önizleme ekranı, ilgili düzen testleri
+- **DOKUNMA:** `features/stats/**` (Lane E) · `features/settings/**` (Lane C) ·
+  `supabase/**`
+- **Adımlar:**
+  - [ ] PC'deki ayar ekranının mobil karşılığı: yeşil alan yüksekliği · isim yazı boyutu ·
+        satır aralığı · hayvan boyutu **parametrik**.
+  - [ ] Yeşil alan yüksekliği **2×** uygulanır (sahibin verdiği başlangıç değeri).
+  - [ ] En kalabalık grupta isim çakışması ve alt sıra ayak kesilmesi giderilir.
+- **Migration/Ortam:** Yok · local.
+- **Kabul:** Kalabalık senaryoda (8+ kişi) düzen testi isim çakışması bulmaz ·
+  alt sıradaki hayvan `ClipRRect` ile kesilmez · sahibin seçtiği sayılar testte
+  **sabit değer** olarak durur.
+- **Tuzaklar:** v55'te dikey kelepçe alt sınırda `box * (1 - anchor)` düşmüyordu ve
+  4+ kişide ayaklar kesiliyordu — aynı hesabı bozma. Yatayda `box / 2` iki uçtan düşülür.
+- **Model önerisi:** Sonnet
+
+#### WP-417: Tanıtım turu sadeleştirme 🎯
+- **Program/Faz:** PLAN 4 · Faz Q (kaynak: sahip cihaz testi)
+- **Ajan:** Lane D · **Durum:** [ ] Başlamadı
+- **Problem:** Sahip ana ekran turunu beğenmedi: *"sadece edit kısmını gösterelim."*
+  İstatistiklerdeki period tanıtımı için **önceki isteğini geri aldı:** kaldırılacak.
+- **Kapsam dışı:** İpucu (coach mark) sistemi mimarisi · tur sıfırlama düğmesi.
+- **SAHİP dosyalar (yaz):** tur tanım dosyaları, `app/lib/l10n/*.arb` (tur metinleri),
+  tur testleri
+- **DOKUNMA:** `campfire_scene.dart` (WP-416 açıkken **girme**, aynı lane sıralı ilerler)
+- **Adımlar:**
+  - [ ] Ana ekran turu: yalnız **edit** adımı kalır, diğer adımlar çıkar.
+  - [ ] İstatistikler: period tanıtımı **tamamen kaldırılır**.
+  - [ ] Kaldırılan adımların l10n anahtarları da temizlenir (ölü anahtar bırakma).
+- **Migration/Ortam:** Yok · local.
+- **Kabul:** Tur adım sayısı testte sabitlenir · hiçbir adımda iki tıklanabilir öğe
+  çakışmaz · çevrilmemiş anahtar raporu boş.
+- **Tuzaklar:** 🔴 Anahtar silerken **dört dilden birden** sil; birinde kalırsa
+  çevrilmemiş/artık anahtar raporu kırmızı düşer.
+- **Model önerisi:** Sonnet
+
+#### WP-418: Başarım açıklamalarını ölçülebilir yaz 🏅
+- **Program/Faz:** PLAN 4 · Faz Q (kaynak: sahip cihaz testi)
+- **Ajan:** Lane D · **Durum:** [ ] Başlamadı
+- **Problem:** Sahip iki başarımı **anlamadı**: *Source of Inspiration* (dürttükten
+  sonra kaç dakika içinde derse başlaması gerekiyor?) ve *Lokomotif* ("o gün içinde
+  ilk çalışmaya başlayan mı? ben de anlamadım"). Açıklamalar koşulu söylemiyor.
+- **Kapsam dışı:** Başarım koşullarını **değiştirmek**. Yalnız açıklama metni;
+  koşul koddan okunup düz dille yazılır.
+- **SAHİP dosyalar (yaz):** başarım tanımları, `app/lib/l10n/*.arb`, başarım testleri
+- **DOKUNMA:** tur dosyaları (WP-417 açıkken sıraya gir) · `features/settings/**`
+- **Adımlar:**
+  - [ ] *Source of Inspiration*: dürtme sonrası **pencere kaç dakika** — koddan oku, yaz.
+  - [ ] *Lokomotif*: koşulu düz Türkçe/İngilizce ile yaz.
+  - [ ] Tarama: koşulu ölçülebilir yazılmamış **başka başarım kalmasın**.
+- **Migration/Ortam:** Yok · local.
+- **Kabul:** Her başarımın açıklaması eşiğini/penceresini içerir · boş veya belirsiz
+  açıklama testte kırılır · dört dilde tam.
+- **Tuzaklar:** Açıklamayı plandan değil **koddan** yaz — eşik kodda ne diyorsa o.
+  (WP kartı iddialarının koddan doğrulanması kuralı.)
+- **Model önerisi:** Sonnet
+
+### Faz R — Destek, ayarlar ve rozet *(v55 saha bulguları)*
+
+#### WP-419: Sürüm notları ekranı — teknik kart ve beta sızıntısı 📋
+- **Program/Faz:** PLAN 4 · Faz R (kaynak: sahip ekran görüntüsü)
+- **Ajan:** Lane C · **Durum:** [ ] Başlamadı
+- **Problem:** İki ayrı sorun, ekran görüntüsüyle doğrulandı:
+  1. 🔴 **"Build diagnostics" kartı son kullanıcıya açık** — Channel, Version,
+     Backend project-ref, Commit SHA, Migration head normal kullanıcının gördüğü
+     ekranın en üstünde. **v55'te yarım kalmış düzeltme:** sürüm notu *gövdeleri*
+     temizlendi ama bu kart kapsam dışı kaldı; test maddesi de yalnız gövdeye
+     baktığı için hatayı kaçırdı.
+  2. **Stable kanalda beta sürümler listeleniyor** — `beta-v4402` "Beta" rozetiyle
+     stable kullanıcıya görünüyor, liste bu yüzden uzuyor.
+- **Kapsam dışı:** Sürüm notu **içeriğinin** yeniden yazımı · güncelleme akışı.
+- **SAHİP dosyalar (yaz):** sürüm notları ekranı, `app/lib/features/settings/**`
+  (Hakkında girişi), ilgili testler
+- **DOKUNMA:** `features/stats/**` · `features/admin/**` · `campfire_scene.dart`
+- **Adımlar:**
+  - [ ] Diagnostics kartı sürüm notlarından **çıkar**, **Ayarlar → Hakkında** altına taşınır.
+  - [ ] Hakkında'da varsayılan yalnız `1.0.55`; üstüne dokununca commit / migration head /
+        backend açılır. Destekte "sürümün ne?" cevaplanabilir kalır.
+  - [ ] Stable kanalda yalnız stable sürümler listelenir.
+  - [ ] Liste son N sürümle sınırlanır, gerisi "daha fazla" ile açılır.
+- **Migration/Ortam:** Yok · local.
+- **Kabul:** 🔴 Sürüm notları ekranının **tamamında** `commit`, `migration head`,
+  `backend`, project-ref metni **geçmez** (v55 testinin kapsamı gövdeden tüm ekrana
+  genişletilir) · stable kanal testinde beta rozetli kart bulunmaz.
+- **Tuzaklar:** Kartı silme, **taşı** — destek yazışmasında sürüm bilgisi gerekiyor.
+- **Model önerisi:** Sonnet
+
+#### WP-420: Feedback ekranı yeniden düzeni 💬
+- **Program/Faz:** PLAN 4 · Faz R (kaynak: sahip cihaz testi)
+- **Ajan:** Lane C · **Durum:** [ ] Başlamadı · ⏳ WP-419'dan **sonra** (`settings_screen`)
+- **Problem:** Sahip destek sistemini uçtan uca denedi, **çalışıyor** ✅ ama düzen bozuk:
+  mobilde konu + açıklama + **3 buton alt alta** (Geri bildirimlerim, İptal, Gönder) +
+  klavye açık → yazdığı metin görünmüyor. Ayrıca mesajlaşmada **yeni mesajlar üste**
+  ekleniyor (alışılmışın dışında).
+- **Kapsam dışı:** Bilet durum makinesi · admin tarafı yazışma (Lane B'de değil, zaten çalışıyor).
+- **SAHİP dosyalar (yaz):** geri bildirim gönderme ve liste ekranları,
+  `app/lib/features/settings/**`, `app/lib/l10n/*.arb`, ilgili testler
+- **DOKUNMA:** `features/admin/**` (Lane B) · `features/safety/report_sheet.dart` (Lane E)
+- **Adımlar:**
+  - [ ] Ayarlardaki ad: **"Send feedback" → "Feedback"**.
+  - [ ] İçinde **iki sekme**: *Gönder* · *Geri bildirimlerim* (liste, **tarih sıralı,
+        en yeni en üstte**).
+  - [ ] Gönderme formunda **iki buton, yan yana**: İptal · Gönder. (Üçüncü buton
+        sekmeye taşındığı için kalkar.)
+  - [ ] Klavye açıkken yazılan metin görünür kalır.
+  - [ ] Mesajlaşmada **yeni mesaj alta** eklenir.
+- **Migration/Ortam:** Yok · local.
+- **Kabul:** Dar mobil ekranda klavye açıkken metin alanı görünür (widget testi) ·
+  mesaj sırası testte sabit (yeni mesaj sonda) · liste tarih sıralı · dört dil tam.
+- **Tuzaklar:** Sabit alt şerit için `Scaffold.bottomSheet` **kullanma** — gövdeyi örter,
+  yer ayırmaz. Doğrusu `Column` + `Expanded`. Test üretimdeki kabuk yapısını taklit
+  etmezse hatayı kaçırır.
+- **Model önerisi:** Sonnet
+
+#### WP-421: Rozet zinciri ve gecikmesi 🔴
+- **Program/Faz:** PLAN 4 · Faz R (kaynak: sahip cihaz testi)
+- **Ajan:** Lane C · **Durum:** [ ] Başlamadı · ⏳ WP-420'den **sonra**
+- **Problem:** Sahip: *"profil + ayarlarda kırmızı ya da başka nokta yoktu, kendim
+  girip gördüm, sadece bildirim geliyor."* Başarımlarda da aynı: push düşüyor ama
+  **başarımlar ekranında rozet yok**. Sonradan (~2 dk) rozet düştü → **gecikme** var.
+- **Kapsam dışı:** Push altyapısı · bildirim içeriği.
+- **SAHİP dosyalar (yaz):** rozet/okunmamış sayaç sağlayıcıları,
+  `app/lib/features/profile/**`, `app/lib/features/settings/**`, başarım ekranı, testler
+- **DOKUNMA:** `features/admin/**` · `features/safety/**` · `supabase/migrations/**`
+- **Adımlar:**
+  - [ ] Rozet zinciri: **Profil → Ayarlar → Feedback → Başarımlar**. Her seviye gösterir.
+  - [ ] Push ile rozet **aynı olaydan** beslenir; rozet push'u beklemez.
+  - [ ] Okununca zincir temizlenir (üst seviyeler de).
+  - [ ] Yeni mesajda WhatsApp/Instagram gibi renkli rozet (sahip isteği).
+- **Migration/Ortam:** Muhtemelen yok. Sunucu tarafı gerekirse `0101` — **Lane B'nin
+  `0100`'ü commit'lendikten sonra** numarayı al.
+- **Kabul:** Okunmamış mesaj/başarım varken zincirdeki **her seviye** rozet gösterir ·
+  okununca hepsi temizlenir · rozet push'tan bağımsız görünür (çevrimdışıyken de).
+- **Tuzaklar:** Riverpod 3 auto-dispose — dinleyicisiz provider her `read`'de yeniden
+  build olur ve regresyon testini sessizce etkisizleştirir. Repoda yerleşik kalıp var, kullan.
+- **Model önerisi:** Sonnet
+
+#### WP-422: SSS giriş ekranında yerleşim ve etiket ❓
+- **Program/Faz:** PLAN 4 · Faz R (kaynak: sahip cihaz testi)
+- **Ajan:** Lane C · **Durum:** [ ] Başlamadı · ⏳ WP-421'den **sonra**
+- **Problem:** Giriş ekranında SSS bağlantısı yanlış yerde ve etiketi Türkçe kullanıcı
+  için tanıdık değil.
+- **Kapsam dışı:** SSS içeriği · SSS arama · çevrimdışı yedek içerik (v55'te çalışıyor).
+- **SAHİP dosyalar (yaz):** giriş/kayıt ekranı, `app/lib/l10n/*.arb`, ilgili test
+- **Adımlar:**
+  - [ ] Etiket: "Frequently asked questions **(SSS)**".
+  - [ ] Konum: **Sign up'ın altında, en altta**.
+- **Migration/Ortam:** Yok · local.
+- **Kabul:** Giriş ekranı yerleşim testi · **oturum açmadan** SSS erişimi korunur
+  (v55 kazanımı, regresyon olmasın) · dört dil tam.
+- **Model önerisi:** Sonnet
+
+### Faz S — Moderasyon admin tarafı (Faz A) *(docs/MODERASYON-PLANI.md)*
+
+> Bu beş WP **aynı dosyalara** (`features/admin/**`) ve **ardışık migration'lara**
+> dokunuyor. Tek lane, sıralı ilerler. Paralelleştirilemez.
+
+#### WP-424: Şikâyet kuyruğunda kimlik okunabilirliği 👤
+- **Program/Faz:** PLAN 4 · Faz S · **Ajan:** Lane B · **Durum:** [ ] Başlamadı
+- **Problem:** `admin_moderation_tab.dart:76` ham UUID gösteriyor. Kim şikâyet etti,
+  kim şikâyet edildi **okunmuyor**. Sahip: *"admin panelinde direkt ID yazmak zor değil mi?"*
+- **Kural:** **gösterilen ad · işlem yapılan ID · loglanan ikisi birden.** Adlar değişir
+  ve tekrar eder; ad üzerinden işlem yapmak yanlış kişiyi cezalandırmanın en yaygın yolu.
+  Desen repoda zaten var: `admin_audit_logs` hem `target_user_id` hem `target_user_email`
+  saklıyor (`0020:7`) — kuyruğa uygulanmamış sadece.
+- **SAHİP dosyalar (yaz):** `app/lib/features/admin/**`,
+  `app/lib/data/repositories/**/admin*`, `**/moderation*`, admin testleri
+- **DOKUNMA:** `features/settings/**` (Lane C) · `features/safety/**` (Lane E) ·
+  `campfire_scene.dart` (Lane D)
+- **Adımlar:**
+  - [ ] Ad + avatar göster; hem şikâyet eden hem edilen için.
+  - [ ] ID kartın altında **kopyalanabilir** küçük metin olarak kalır.
+- **Migration/Ortam:** Yok (mevcut RLS ile okunuyor) · local.
+- **Kabul:** Kuyruk testinde ham UUID **başlıkta görünmez** · ad çözülemezse
+  "Silinmiş kullanıcı" gösterilir, boş kalmaz.
+- **Model önerisi:** Sonnet
+
+#### WP-425: Şikâyet detay ekranı — tam içerik, bağlam, geçmiş 🔍
+- **Program/Faz:** PLAN 4 · Faz S · **Ajan:** Lane B · **Durum:** [ ] Başlamadı
+- ⏳ **WP-424'ten sonra** · **WP-423 (`0096`) commit'lenmeden migration numarası alma**
+- **Problem:** Sahip: *"bildirse bile ben şu an göremiyorum ne yapmış."* Kuyrukta
+  içerik kopyası 3 satırda kesiliyor, bağlam yok, kişinin geçmişi yok. Tek mesaj
+  bağlamsız çoğu zaman karar verilemez.
+- **SAHİP dosyalar (yaz):** `supabase/migrations/0097_*.sql`, `features/admin/**`,
+  admin repo + pgTAP
+- **Adımlar:**
+  - [ ] Tam `content_snapshot` (kesme yok).
+  - [ ] **Bağlam:** şikâyet edilen mesajın çevresindeki ±5 mesaj.
+  - [ ] **Geçmiş:** bu hedefe daha önce kaç şikâyet, hangi yaptırımlar.
+  - [ ] Şikâyetçinin serbest açıklaması (`details`).
+  - [ ] WP-423 eki varsa imzalı URL ile gösterilir (yalnız super-admin).
+- **Migration/Ortam:** `0097` · local → staging → production.
+- **RLS/Güvenlik:** Bağlam sorgusu **yalnız super-admin**; RPC `is_super_admin()` doğrular.
+- **Kabul:** pgTAP: super-admin olmayan bağlam RPC'sini çağıramaz · detayda tam metin
+  görünür · geçmişi olmayan hedefte boş durum düzgün.
+- **Model önerisi:** 🔴 Opus
+
+#### WP-426: Basamaklı yaptırım ⚖️
+- **Program/Faz:** PLAN 4 · Faz S · **Ajan:** Lane B · **Durum:** [ ] Başlamadı
+- ⏳ **WP-425'ten sonra**
+- **Problem:** 🔴 Elimizdeki tek yaptırım `ban_duration: '876000h'` — **100 yıl**
+  (`admin-user-actions/index.ts:99`). Uyarı yok, geçici susturma yok, süreli askı yok.
+  Uygunsuz isim koyan birine karşı tek seçenek kalıcı yasak. Pratikte olan: ceza
+  ağır olduğu için hiçbir şey yapılmaz, kuyruk birikir, moderasyon fiilen çalışmaz.
+- **Sahip kararı (2026-07-28):** basamaklar **24 saat · 7 · 14 · 30 gün** + kalıcı.
+- **SAHİP dosyalar (yaz):** `supabase/migrations/0098_*.sql`,
+  `supabase/functions/admin-user-actions/**`, `supabase/functions/admin-operations/**`,
+  `features/admin/**`, pgTAP
+- **Adımlar:**
+  - [ ] Basamaklar: **Uyar** · **Adı sıfırla** · **Sustur 24 saat** ·
+        **Askıya al 7 / 14 / 30 gün** · **Kalıcı**.
+        `ban_duration` saat kabul ediyor: `24h` / `168h` / `336h` / `720h`.
+  - [ ] Hepsi karttan **tek tık**, gerekçe **zorunlu**, `admin_audit_logs`'a yazılır.
+  - [ ] Her yaptırım **tek tıkla geri alınabilir**.
+  - [ ] "Adı sıfırla" uygunsuz kullanıcı adı **ve grup adı** için ortak yol — grubu
+        tamamen silmeye gerek kalmaz.
+- **Migration/Ortam:** `0098` · local → staging → production.
+- **RLS/Güvenlik:** Yaptırım RPC'leri `is_super_admin()` doğrular; `authenticated`'a kapalı.
+- **Kabul:** Her basamak için pgTAP · süre dolunca yasak **kendiliğinden** kalkar ·
+  geri alma denetim kaydına ayrı satır yazar · gerekçesiz işlem reddedilir.
+- **Tuzaklar:** Süreli banı istemcide zamanlayıcıyla çözme — sunucu tarafında süre dolmalı.
+- **Model önerisi:** 🔴 Opus
+
+#### WP-427: Aynı hedefe gelen şikâyetleri tekilleştir 🔢
+- **Program/Faz:** PLAN 4 · Faz S · **Ajan:** Lane B · **Durum:** [ ] Başlamadı
+- ⏳ **WP-426'dan sonra**
+- **Problem:** Aynı kişi 10 kişi tarafından şikâyet edilirse kuyrukta 10 ayrı kart
+  çıkıyor. Spam dalgasında kuyruk kullanılamaz hâle gelir.
+- **SAHİP dosyalar (yaz):** `supabase/migrations/0099_*.sql`, `features/admin/**`, pgTAP
+- **Adımlar:**
+  - [ ] Aynı hedef + aynı içerik → tek kart, **"8 şikâyet"** rozetiyle.
+  - [ ] Karttan tek işlemle hepsi çözülür/reddedilir.
+  - [ ] Farklı sebeplerle gelen şikâyetler kartta ayrı ayrı listelenir.
+- **Migration/Ortam:** `0099` · local → staging → production.
+- **Kabul:** 10 şikâyet → 1 kart + sayaç · tek işlem hepsinin durumunu değiştirir ·
+  pgTAP agregasyon testi.
+- **Model önerisi:** Sonnet
+
+#### WP-428: İçerik şikâyetinde admin'e push 🔔
+- **Program/Faz:** PLAN 4 · Faz S · **Ajan:** Lane B · **Durum:** [ ] Başlamadı
+- ⏳ **WP-427'den sonra**
+- **Problem:** Push tetikleyicisi `feedback_tickets` üzerinde (`0090:196`),
+  `ugc_reports` üzerinde **değil**. Destek kutusundan gelen şikâyet bildirim atıyor,
+  **sohbetten gelen içerik şikâyeti sessizce kuyrukta bekliyor.** Sekme açılmadan haber olmuyor.
+- 🔴 **Bu bir mağaza uyum maddesi, kozmetik değil.** Apple App Store 1.2 kullanıcı
+  içeriği olan uygulamalardan şikâyetlere **24 saat içinde işlem** istiyor; bildirim
+  gelmeden bu garanti edilemez. Google Play UGC politikası da benzer şart koyuyor.
+- **SAHİP dosyalar (yaz):** `supabase/migrations/0100_*.sql`, pgTAP
+- **Adımlar:**
+  - [ ] `_enqueue_support_ticket_admin_push` eşdeğeri `ugc_reports` insert'üne bağlanır.
+  - [ ] `event_key` tekilliği korunur (aynı şikâyet iki kez bildirilmez).
+  - [ ] WP-427 tekilleştirmesiyle uyumlu: 10 şikâyet → 10 push **değil**.
+- **Migration/Ortam:** `0100` · local → staging → production.
+- **Kabul:** Yeni içerik şikâyeti → admin cihazına **≤ 60 sn** bildirim · pgTAP outbox
+  testi · aynı şikâyet tekrar bildirilmez.
+- **Model önerisi:** Sonnet
+
+### PLAN 4 lane dağılımı ve çakışma matrisi
+
+> Beş lane **aynı anda** başlar. Tek dal `main`; her WP **ayrı commit**, yalnız kendi
+> SAHİP yolları stage'lenir. Claim'i hemen commit et, ağacı geri ver.
+
+| Lane | WP zinciri | Migration | Başlangıç |
+|---|---|---|---|
+| **A** — Sayaç senkronu | WP-414 → WP-415 | yok | 🟢 hemen |
+| **B** — Moderasyon admin | WP-424 → 425 → 426 → 427 → 428 | 0097–0100 | 🟢 hemen (424 migration'sız) |
+| **C** — Destek/ayarlar/rozet | WP-419 → 420 → 421 → 422 | yok | 🟢 hemen |
+| **D** — Görsel ve içerik | WP-416 → 417 → 418 | yok | 🟢 hemen |
+| **E** — Bozuk düzeltmeler | WP-412 → WP-413 → WP-423 | 0095, 0096 | 🟢 hemen |
+
+| Kısıt | Kural |
+|---|---|
+| `supabase/migrations/**` | Sıra **sabit**: WP-413 `0095` → WP-423 `0096` → WP-425 `0097` → WP-426 `0098` → WP-427 `0099` → WP-428 `0100`. Aynı anda iki migration WP'si **yok**. |
+| Lane B ↔ Lane E | WP-425 `0097`'yi almadan önce **WP-423'ün `0096` commit'i** görünmeli. Tek cross-lane bekleme budur. |
+| `features/settings/**` | Yalnız **Lane C**. Sırası: WP-419 → 420 → 421. Başka lane girmez. |
+| `features/admin/**` | Yalnız **Lane B**. |
+| `features/safety/report_sheet.dart` | Yalnız **Lane E** (WP-423). Lane B eki **okur**, yükleme yolunu yazmaz. |
+| `campfire_scene.dart` | Yalnız **Lane D** (WP-416). |
+| `android/**/timer/**` + `global_timer_providers.dart` | Yalnız **Lane A**. |
+| `features/stats/**` | Yalnız **Lane E** (WP-412). |
+| `app/lib/l10n/*.arb` | Dört lane de dokunur. Kural: **kısa ve atomik** düzenle, **hemen commit et**, açık bırakma. 🔴 **Her anahtar dört dilde birden** (TR/EN/DE/AR) — v55'te 13 kırmızı testin birinci nedeni buydu. |
+| Migration head pini | `deploy-contract.json`'dan türetiliyor (v55'te kalıcı kapatıldı). Yine de tur sonunda `guard.tests` + `release-preflight.tests` yeşil mi, doğrula. |
+
+**Tur sonu teslim ölçütü:** `flutter analyze` temiz · tüm Flutter testleri yeşil ·
+yerel replay `0001→0100` + pgTAP PASS · çevrilmemiş anahtar raporu `{}` ·
+staging apply → production apply (sahip GO'su ile) → v56 stable.
+
+---
+
 ## ✅ Kapanan Kararlar
 
 | Karar | Sonuç |
