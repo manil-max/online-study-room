@@ -37,20 +37,6 @@ void main() {
       expect(dayOf(f), dayOf(from));
       expect(dayOf(t), dayOf(to));
     });
-
-    test('previous equal-length period abuts current', () {
-      final p = const AnalyticsPeriod(
-        AnalyticsPeriodKind.week,
-        compare: AnalyticsCompare.previousEqualLength,
-      );
-      final now = DateTime(2026, 7, 15, 18);
-      final (from, to) = p.range(now: now);
-      final prev = p.previousRange(now: now)!;
-      expect(prev.$2.isBefore(from) || prev.$2.isAtSameMomentAs(from), isTrue);
-      final curLen = to.difference(from);
-      final prevLen = prev.$2.difference(prev.$1);
-      expect((prevLen - curLen).inSeconds.abs() < 2, isTrue);
-    });
   });
 
   group('real aggregates (no placeholders)', () {
@@ -211,7 +197,7 @@ void main() {
       expect(find.text('Tümü'), findsOneWidget);
       // WP-190: yatay scroll chip'ler (FilterChip değil)
       expect(find.byType(SingleChildScrollView), findsOneWidget);
-      expect(find.byIcon(Icons.compare_arrows), findsOneWidget);
+      expect(find.byIcon(Icons.compare_arrows), findsNothing);
     });
 
     testWidgets('PersonalStatsView still renders empty sessions', (

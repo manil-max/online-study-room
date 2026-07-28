@@ -7,7 +7,7 @@ import 'package:online_study_room/features/stats/widgets/stats_period_bar.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// WP-190: tek yatay satır (scroll, Wrap yok) + kompakt kıyas; textScale 1.3.
+/// WP-190: tek yatay satır (scroll, Wrap yok); textScale 1.3.
 void main() {
   Future<void> pumpBar(
     WidgetTester tester, {
@@ -40,14 +40,15 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('single horizontal row: scroll not Wrap; 6 periods + compare',
-      (tester) async {
+  testWidgets('single horizontal row: scroll not Wrap; 6 periods', (
+    tester,
+  ) async {
     await pumpBar(tester, width: 280);
 
     expect(find.byType(Wrap), findsNothing);
     expect(find.byType(SingleChildScrollView), findsOneWidget);
     expect(find.byType(SwitchListTile), findsNothing);
-    expect(find.byIcon(Icons.compare_arrows), findsOneWidget);
+    expect(find.byIcon(Icons.compare_arrows), findsNothing);
 
     expect(find.text('Today'), findsOneWidget);
     expect(find.text('Week'), findsOneWidget);
@@ -55,36 +56,9 @@ void main() {
     expect(find.text('Year'), findsOneWidget);
     expect(find.text('All'), findsOneWidget);
 
-    // Chip satırı + kıyas aynı yükseklik bandında (~44)
+    // Chip satırı tek yükseklik bandında (~44).
     final bar = tester.getRect(find.byType(StatsPeriodBar));
     expect(bar.height, lessThan(90), reason: 'header stays compact single row');
-  });
-
-  testWidgets('compare icon toggles comparePrevious', (tester) async {
-    SharedPreferences.setMockInitialValues({});
-    final prefs = await SharedPreferences.getInstance();
-    final container = ProviderContainer(
-      overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
-    );
-    addTearDown(container.dispose);
-
-    await tester.pumpWidget(
-      UncontrolledProviderScope(
-        container: container,
-        child: MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          locale: const Locale('en'),
-          home: const Scaffold(body: StatsPeriodBar()),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    expect(container.read(statsPeriodProvider).comparePrevious, isFalse);
-    await tester.tap(find.byIcon(Icons.compare_arrows));
-    await tester.pumpAndSettle();
-    expect(container.read(statsPeriodProvider).comparePrevious, isTrue);
   });
 
   testWidgets('textScale 1.3 does not overflow', (tester) async {

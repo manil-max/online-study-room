@@ -5617,17 +5617,17 @@
       "total": { "type": "int" }
     }
   },
-  "profileTanitimTurlariniSifirla": "Reset introduction tours",
+  "profileTanitimTurlariniSifirla": "Reset introductions",
   "@profileTanitimTurlariniSifirla": {
-    "description": "Settings action that clears only completed introduction tours."
+    "description": "Settings action that clears completed onboarding and introduction tours."
   },
-  "profileTanitimTurlariAciklama": "Show introductions again on each screen",
+  "profileTanitimTurlariAciklama": "Show onboarding and screen introductions again",
   "@profileTanitimTurlariAciklama": {
-    "description": "Settings subtitle for resetting introduction tours."
+    "description": "Settings subtitle for resetting onboarding and introduction tours."
   },
-  "profileTanitimTurlariSifirlandi": "Introduction tours were reset.",
+  "profileTanitimTurlariSifirlandi": "Introductions were reset.",
   "@profileTanitimTurlariSifirlandi": {
-    "description": "Settings confirmation after introduction tours are reset."
+    "description": "Settings confirmation after onboarding and introduction tours are reset."
   },
   "settingsSectionAccount": "Account",
   "settingsSectionNotifications": "Notifications",

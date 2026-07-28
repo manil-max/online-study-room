@@ -25,25 +25,5 @@ void main() {
       expect(from, dayOf(a));
       expect(to, dayOf(b));
     });
-
-    test('previous equal-length period abuts current', () {
-      final sel = StatsPeriodSelection(
-        period: StatsPeriod.custom,
-        customFrom: DateTime(2026, 7, 1),
-        customTo: DateTime(2026, 7, 10),
-        comparePrevious: true,
-      );
-      final (from, to) = sel.range(now: now);
-      final prev = sel.previousRange(now: now);
-      expect(prev, isNotNull);
-      final (pf, pt) = prev!;
-      expect(to.difference(from).inSeconds, pt.difference(pf).inSeconds);
-      expect(pt.isBefore(from), isTrue);
-    });
-
-    test('compare off → previous null', () {
-      const sel = StatsPeriodSelection(period: StatsPeriod.week);
-      expect(sel.previousRange(now: now), isNull);
-    });
   });
 }

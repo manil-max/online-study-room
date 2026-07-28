@@ -252,17 +252,6 @@ class _PersonalStatsViewState extends ConsumerState<PersonalStatsView> {
             ),
           ),
         ),
-        if (sel.comparePrevious) ...[
-          const SizedBox(height: 8),
-          _CompareStrip(
-            currentSeconds: periodTotalSec,
-            previousSeconds: () {
-              final prev = sel.previousRange(now: now);
-              if (prev == null) return 0;
-              return totalSeconds(inRange(sessions, prev.$1, prev.$2));
-            }(),
-          ),
-        ],
         const SizedBox(height: 16),
         Text(
           '${AppLocalizations.of(context).statsOturumDagilimi} · '
@@ -390,35 +379,6 @@ class _PersonalStatsViewState extends ConsumerState<PersonalStatsView> {
         const SizedBox(height: 8),
         _RangeCard(sessions: sessions, totals: dailyTotalsMap),
       ],
-    );
-  }
-}
-
-class _CompareStrip extends StatelessWidget {
-  const _CompareStrip({
-    required this.currentSeconds,
-    required this.previousSeconds,
-  });
-
-  final int currentSeconds;
-  final int previousSeconds;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final l10n = AppLocalizations.of(context);
-    final delta = currentSeconds - previousSeconds;
-    final sign = delta >= 0 ? '+' : '';
-    return Card(
-      color: theme.colorScheme.surfaceContainerHighest,
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Text(
-          '${l10n.analyticsComparePrevious}: $sign${formatHuman(delta.abs())} '
-          '(${formatHuman(previousSeconds)} → ${formatHuman(currentSeconds)})',
-          style: theme.textTheme.bodySmall,
-        ),
-      ),
     );
   }
 }

@@ -10,7 +10,6 @@ import '../stats_l10n.dart';
 /// Üst dönem seçici (WP-190): GERÇEKTEN tek yatay satır.
 ///
 /// Chip'ler Wrap ile kırılmaz — sığmazsa yatay kaydırılır.
-/// Kıyas: satır sonunda kompakt `compare_arrows` toggle (ayrı satır yok).
 class StatsPeriodBar extends ConsumerWidget {
   const StatsPeriodBar({super.key});
 
@@ -30,82 +29,31 @@ class StatsPeriodBar extends ConsumerWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Tek satır: [scroll chips…] | kıyas
+          // Tek satır: yatay kaydırılabilen dönem chip'leri.
           SizedBox(
             height: 44,
-            child: Row(
-              children: [
-                Expanded(
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: Row(
-                      children: [
-                        for (final p in periods) ...[
-                          if (p != periods.first) const SizedBox(width: 6),
-                          _PeriodChip(
-                            label: statsPeriodLabel(l10n, p),
-                            selected: sel.period == p,
-                            onTap: () => ref
-                                .read(statsPeriodProvider.notifier)
-                                .setPeriod(p),
-                          ),
-                        ],
-                        const SizedBox(width: 6),
-                        _PeriodChip(
-                          label: l10n.analyticsCustomRange,
-                          selected: sel.period == StatsPeriod.custom,
-                          onTap: () => _pickCustom(context, ref, sel),
-                        ),
-                      ],
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Row(
+                children: [
+                  for (final p in periods) ...[
+                    if (p != periods.first) const SizedBox(width: 6),
+                    _PeriodChip(
+                      label: statsPeriodLabel(l10n, p),
+                      selected: sel.period == p,
+                      onTap: () =>
+                          ref.read(statsPeriodProvider.notifier).setPeriod(p),
                     ),
+                  ],
+                  const SizedBox(width: 6),
+                  _PeriodChip(
+                    label: l10n.analyticsCustomRange,
+                    selected: sel.period == StatsPeriod.custom,
+                    onTap: () => _pickCustom(context, ref, sel),
                   ),
-                ),
-                Tooltip(
-                  message: l10n.analyticsComparePrevious,
-                  child: Semantics(
-                    button: true,
-                    toggled: sel.comparePrevious,
-                    label: l10n.analyticsComparePrevious,
-                    child: InkWell(
-                      onTap: () => ref
-                          .read(statsPeriodProvider.notifier)
-                          .setComparePrevious(!sel.comparePrevious),
-                      borderRadius: BorderRadius.circular(20),
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(
-                          minWidth: 44,
-                          minHeight: 44,
-                        ),
-                        child: Center(
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 150),
-                            padding: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(
-                              color: sel.comparePrevious
-                                  ? theme.colorScheme.primaryContainer
-                                  : theme.colorScheme.surfaceContainerHighest,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: sel.comparePrevious
-                                    ? theme.colorScheme.primary
-                                    : theme.colorScheme.outlineVariant,
-                              ),
-                            ),
-                            child: Icon(
-                              Icons.compare_arrows,
-                              size: 18,
-                              color: sel.comparePrevious
-                                  ? theme.colorScheme.onPrimaryContainer
-                                  : theme.colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           if (sel.period == StatsPeriod.custom &&
@@ -142,10 +90,9 @@ class StatsPeriodBar extends ConsumerWidget {
       ),
     );
     if (range == null) return;
-    ref.read(statsPeriodProvider.notifier).setCustomRange(
-          range.start,
-          range.end,
-        );
+    ref
+        .read(statsPeriodProvider.notifier)
+        .setCustomRange(range.start, range.end);
   }
 }
 

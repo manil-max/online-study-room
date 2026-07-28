@@ -1,35 +1,31 @@
 import 'study_stats.dart';
 
 /// İstatistik / grup ortak dönem filtresi.
-/// WP-178: +year +custom; kıyas [StatsPeriodSelection.comparePrevious].
+/// WP-178: +year +custom.
 enum StatsPeriod { today, week, month, year, all, custom }
 
-/// Üst bar + özel aralık + kıyas state (WP-178).
+/// Üst bar + özel aralık state (WP-178).
 class StatsPeriodSelection {
   const StatsPeriodSelection({
     this.period = StatsPeriod.week,
     this.customFrom,
     this.customTo,
-    this.comparePrevious = false,
   });
 
   final StatsPeriod period;
   final DateTime? customFrom;
   final DateTime? customTo;
-  final bool comparePrevious;
 
   StatsPeriodSelection copyWith({
     StatsPeriod? period,
     DateTime? customFrom,
     DateTime? customTo,
-    bool? comparePrevious,
     bool clearCustom = false,
   }) {
     return StatsPeriodSelection(
       period: period ?? this.period,
       customFrom: clearCustom ? null : (customFrom ?? this.customFrom),
       customTo: clearCustom ? null : (customTo ?? this.customTo),
-      comparePrevious: comparePrevious ?? this.comparePrevious,
     );
   }
 
@@ -42,22 +38,11 @@ class StatsPeriodSelection {
       StatsPeriod.year => (startOfYear(n), n),
       StatsPeriod.all => (DateTime(2000), n),
       StatsPeriod.custom => () {
-          final a = dayOf(customFrom ?? n);
-          final b = dayOf(customTo ?? n);
-          return a.isBefore(b) || a.isAtSameMomentAs(b) ? (a, b) : (b, a);
-        }(),
+        final a = dayOf(customFrom ?? n);
+        final b = dayOf(customTo ?? n);
+        return a.isBefore(b) || a.isAtSameMomentAs(b) ? (a, b) : (b, a);
+      }(),
     };
-  }
-
-  /// Önceki eşit uzunlukta dönem (kıyas açıkken).
-  (DateTime from, DateTime to)? previousRange({DateTime? now}) {
-    if (!comparePrevious) return null;
-    final (from, to) = range(now: now);
-    final len = to.difference(from);
-    if (len.inSeconds <= 0) return null;
-    final prevTo = from.subtract(const Duration(seconds: 1));
-    final prevFrom = prevTo.subtract(len);
-    return (prevFrom, prevTo);
   }
 }
 

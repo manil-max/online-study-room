@@ -18,7 +18,9 @@ void main() {
   testWidgets('SettingsScreen ayarlari tek katmanda ve dogrudan acar', (
     tester,
   ) async {
-    SharedPreferences.setMockInitialValues({});
+    SharedPreferences.setMockInitialValues({
+      'onboarding.completed_v1.u1': true,
+    });
     final prefs = await SharedPreferences.getInstance();
     final adminRepo = InMemoryAdminRepository();
     addTearDown(adminRepo.dispose);
@@ -86,9 +88,9 @@ void main() {
     // mimarisi sabit kalır; hesap silme ekranına giden giriş ile dışa aktarma
     // aynı "Hesap" bölümündedir, yasal merkez en son bölümdedir.
     final sections = [
-      find.text('Hesap'),
-      find.text('Bildirimler'),
       find.text('Görünüm'),
+      find.text('Bildirimler'),
+      find.text('Hesap'),
       find.text('Çalışma tercihleri'),
       find.text('Gizlilik ve güvenlik'),
       find.text('Hakkında ve yasal'),
@@ -108,8 +110,12 @@ void main() {
     );
     expect(
       tester.getTopLeft(find.text('Verilerimi dışa aktar')).dy,
-      lessThan(tester.getTopLeft(find.text('Bildirimler')).dy),
+      greaterThan(tester.getTopLeft(find.text('Hesap')).dy),
     );
+
+    await tester.tap(find.byKey(const Key('reset-introduction-tours')));
+    await tester.pumpAndSettle();
+    expect(prefs.getBool('onboarding.completed_v1.u1'), isFalse);
 
     await tester.tap(find.text('Bildirim Merkezi'));
     await tester.pumpAndSettle();

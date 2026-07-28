@@ -15,6 +15,7 @@ import '../desktop/desktop_surface.dart';
 import '../notifications/announcements_screen.dart';
 import 'widgets/unread_announcement_dot.dart';
 import '../notifications/notification_permissions_screen.dart';
+import '../onboarding/onboarding_prefs.dart';
 import '../safety/blocked_users_screen.dart';
 import '../updater/release_notes_screen.dart';
 import 'account_settings_screen.dart';
@@ -70,6 +71,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   Future<void> _resetTours() async {
     await ref.read(tourControllerProvider.notifier).resetAll();
+    await ref.read(onboardingCompletedProvider.notifier).reset();
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -106,94 +108,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _SettingsSection(
-                title: l10n.settingsSectionAccount,
-                children: [
-                  _SettingsCard(
-                    child: ListTile(
-                      leading: const Icon(Icons.manage_accounts),
-                      title: Text(l10n.profileHesabimiYonet),
-                      subtitle: Text(l10n.profileEpostaSifreVeGuvenli),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => AccountSettingsScreen(),
-                        ),
-                      ),
-                    ),
-                  ),
-                  _SettingsCard(
-                    child: ListTile(
-                      leading: const Icon(Icons.download_outlined),
-                      title: Text(l10n.exportMyData),
-                      subtitle: Text(l10n.exportMyDataSubtitle),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const DataExportScreen(),
-                        ),
-                      ),
-                    ),
-                  ),
-                  if (isAdmin)
-                    _SettingsCard(
-                      child: ListTile(
-                        leading: const Icon(
-                          Icons.admin_panel_settings_outlined,
-                        ),
-                        title: Text(l10n.profileYonetim),
-                        subtitle: Text(l10n.profileOzetlerVeKullaniciRaporlari),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => AdminScreen()),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-              _SettingsSection(
-                title: l10n.settingsSectionNotifications,
-                children: [
-                  _SettingsCard(
-                    child: ListTile(
-                      leading: const Icon(Icons.notifications_outlined),
-                      title: Text(l10n.profileBildirimMerkezi),
-                      subtitle: Text(l10n.profileDurtmeHatirlaticiDuyuruVe),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const NotificationPermissionsScreen(),
-                        ),
-                      ),
-                    ),
-                  ),
-                  _SettingsCard(
-                    child: ListTile(
-                      leading: const Icon(Icons.campaign_outlined),
-                      title: Text(l10n.notificationsDuyurular),
-                      subtitle: Text(l10n.notificationsUygulamaVeGrubunaOzel),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (unreadAnnouncements > 0) ...[
-                            UnreadAnnouncementDot(
-                              key: const Key('announcements-unread-dot'),
-                              count: unreadAnnouncements,
-                            ),
-                            const SizedBox(width: 8),
-                          ],
-                          const Icon(Icons.chevron_right),
-                        ],
-                      ),
-                      onTap: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const AnnouncementsScreen(),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
               _SettingsSection(
                 title: l10n.settingsSectionAppearance,
                 children: [
@@ -245,6 +159,94 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       ),
                     ),
                   ),
+                ],
+              ),
+              _SettingsSection(
+                title: l10n.settingsSectionNotifications,
+                children: [
+                  _SettingsCard(
+                    child: ListTile(
+                      leading: const Icon(Icons.notifications_outlined),
+                      title: Text(l10n.profileBildirimMerkezi),
+                      subtitle: Text(l10n.profileDurtmeHatirlaticiDuyuruVe),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const NotificationPermissionsScreen(),
+                        ),
+                      ),
+                    ),
+                  ),
+                  _SettingsCard(
+                    child: ListTile(
+                      leading: const Icon(Icons.campaign_outlined),
+                      title: Text(l10n.notificationsDuyurular),
+                      subtitle: Text(l10n.notificationsUygulamaVeGrubunaOzel),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (unreadAnnouncements > 0) ...[
+                            UnreadAnnouncementDot(
+                              key: const Key('announcements-unread-dot'),
+                              count: unreadAnnouncements,
+                            ),
+                            const SizedBox(width: 8),
+                          ],
+                          const Icon(Icons.chevron_right),
+                        ],
+                      ),
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const AnnouncementsScreen(),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              _SettingsSection(
+                title: l10n.settingsSectionAccount,
+                children: [
+                  _SettingsCard(
+                    child: ListTile(
+                      leading: const Icon(Icons.manage_accounts),
+                      title: Text(l10n.profileHesabimiYonet),
+                      subtitle: Text(l10n.profileEpostaSifreVeGuvenli),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => AccountSettingsScreen(),
+                        ),
+                      ),
+                    ),
+                  ),
+                  _SettingsCard(
+                    child: ListTile(
+                      leading: const Icon(Icons.download_outlined),
+                      title: Text(l10n.exportMyData),
+                      subtitle: Text(l10n.exportMyDataSubtitle),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const DataExportScreen(),
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (isAdmin)
+                    _SettingsCard(
+                      child: ListTile(
+                        leading: const Icon(
+                          Icons.admin_panel_settings_outlined,
+                        ),
+                        title: Text(l10n.profileYonetim),
+                        subtitle: Text(l10n.profileOzetlerVeKullaniciRaporlari),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => AdminScreen()),
+                        ),
+                      ),
+                    ),
                 ],
               ),
               _SettingsSection(

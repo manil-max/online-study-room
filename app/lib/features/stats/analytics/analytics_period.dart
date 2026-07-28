@@ -6,17 +6,11 @@ import '../../../core/stats/study_stats.dart';
 enum AnalyticsPeriodKind { today, week, month, year, all, custom }
 
 class AnalyticsPeriod {
-  const AnalyticsPeriod(
-    this.kind, {
-    this.customFrom,
-    this.customTo,
-    this.compare = AnalyticsCompare.none,
-  });
+  const AnalyticsPeriod(this.kind, {this.customFrom, this.customTo});
 
   final AnalyticsPeriodKind kind;
   final DateTime? customFrom;
   final DateTime? customTo;
-  final AnalyticsCompare compare;
 
   static const week = AnalyticsPeriod(AnalyticsPeriodKind.week);
 
@@ -24,12 +18,11 @@ class AnalyticsPeriod {
   bool operator ==(Object other) =>
       other is AnalyticsPeriod &&
       other.kind == kind &&
-      other.compare == compare &&
       other.customFrom == customFrom &&
       other.customTo == customTo;
 
   @override
-  int get hashCode => Object.hash(kind, compare, customFrom, customTo);
+  int get hashCode => Object.hash(kind, customFrom, customTo);
 
   (DateTime from, DateTime to) range({DateTime? now}) {
     final n = now ?? DateTime.now();
@@ -40,24 +33,12 @@ class AnalyticsPeriod {
       AnalyticsPeriodKind.year => (startOfYear(n), n),
       AnalyticsPeriodKind.all => StatsPeriod.all.range(now: n),
       AnalyticsPeriodKind.custom => (
-          customFrom ?? istanbulDay(n),
-          customTo ?? n,
-        ),
+        customFrom ?? istanbulDay(n),
+        customTo ?? n,
+      ),
     };
   }
-
-  /// Önceki eşit uzunlukta dönem (kıyas).
-  (DateTime from, DateTime to)? previousRange({DateTime? now}) {
-    if (compare == AnalyticsCompare.none) return null;
-    final (from, to) = range(now: now);
-    final len = to.difference(from);
-    final prevTo = from.subtract(const Duration(seconds: 1));
-    final prevFrom = prevTo.subtract(len);
-    return (prevFrom, prevTo);
-  }
 }
-
-enum AnalyticsCompare { none, previousEqualLength }
 
 /// StatsPeriod → AnalyticsPeriod köprüsü.
 AnalyticsPeriod analyticsPeriodFromStats(StatsPeriod p) {
@@ -77,10 +58,5 @@ AnalyticsPeriod analyticsPeriodFromSelection(StatsPeriodSelection s) {
     analyticsPeriodFromStats(s.period).kind,
     customFrom: s.customFrom,
     customTo: s.customTo,
-    compare: s.comparePrevious
-        ? AnalyticsCompare.previousEqualLength
-        : AnalyticsCompare.none,
   );
 }
-
-

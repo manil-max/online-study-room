@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../features/stats/analytics/analytics_period.dart';
 
-/// WP-164: flag açıkken genişletilmiş dönem + kıyas.
+/// WP-164: flag açıkken genişletilmiş dönem.
 class AnalyticsPeriodNotifier extends Notifier<AnalyticsPeriod> {
   @override
   AnalyticsPeriod build() => const AnalyticsPeriod(AnalyticsPeriodKind.week);
@@ -14,16 +14,6 @@ class AnalyticsPeriodNotifier extends Notifier<AnalyticsPeriod> {
       kind,
       customFrom: state.customFrom,
       customTo: state.customTo,
-      compare: state.compare,
-    );
-  }
-
-  void setCompare(AnalyticsCompare compare) {
-    state = AnalyticsPeriod(
-      state.kind,
-      customFrom: state.customFrom,
-      customTo: state.customTo,
-      compare: compare,
     );
   }
 
@@ -32,12 +22,11 @@ class AnalyticsPeriodNotifier extends Notifier<AnalyticsPeriod> {
       AnalyticsPeriodKind.custom,
       customFrom: from,
       customTo: to,
-      compare: state.compare,
     );
   }
 }
 
 final analyticsPeriodProvider =
     NotifierProvider<AnalyticsPeriodNotifier, AnalyticsPeriod>(
-  AnalyticsPeriodNotifier.new,
-);
+      AnalyticsPeriodNotifier.new,
+    );
