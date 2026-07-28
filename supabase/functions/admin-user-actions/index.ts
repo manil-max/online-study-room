@@ -51,6 +51,10 @@ serve(async (req) => {
     const body = await req.json()
     const { action, targetUserId, reason, options } = body
 
+    if (action !== 'list_users' && (!targetUserId || !reason?.trim())) {
+      throw new Error('targetUserId and reason are required')
+    }
+
     let result = null
     let targetUserEmail = null
 
@@ -95,16 +99,80 @@ serve(async (req) => {
         break
       }
 
-      case 'suspend_user': {
+      case 'warn_user': {
+        result = { success: true }
+        break
+      }
+
+      case 'reset_user_name': {
+        const { data: profile, error: profileReadError } = await supabaseAdmin
+          .from('profiles')
+          .select('display_name')
+          .eq('id', targetUserId)
+          .single()
+        if (profileReadError) throw profileReadError
+        const { error: resetError } = await supabaseAdmin
+          .from('moderation_name_resets')
+          .upsert(
+            { target_type: 'user', target_id: targetUserId, previous_name: profile.display_name, reset_by: user.id },
+            { onConflict: 'target_type,target_id', ignoreDuplicates: true },
+          )
+        if (resetError) throw resetError
+        const { error } = await supabaseAdmin
+          .from('profiles')
+          .update({ display_name: 'İsimsiz kullanıcı' })
+          .eq('id', targetUserId)
+        if (error) throw error
+        result = { success: true }
+        break
+      }
+
+      case 'restore_user_name': {
+        const { data: reset, error: resetReadError } = await supabaseAdmin
+          .from('moderation_name_resets')
+          .select('previous_name')
+          .eq('target_type', 'user')
+          .eq('target_id', targetUserId)
+          .single()
+        if (resetReadError) throw resetReadError
+        const { error } = await supabaseAdmin
+          .from('profiles')
+          .update({ display_name: reset.previous_name })
+          .eq('id', targetUserId)
+        if (error) throw error
+        const { error: deleteError } = await supabaseAdmin.from('moderation_name_resets').delete()
+          .eq('target_type', 'user').eq('target_id', targetUserId)
+        if (deleteError) throw deleteError
+        result = { success: true }
+        break
+      }
+
+      case 'mute_24h':
+      case 'suspend_24h':
+      case 'suspend_7d':
+      case 'suspend_14d':
+      case 'suspend_30d':
+      case 'suspend_user':
+      case 'suspend_permanent': {
+        const durations: Record<string, string> = {
+          mute_24h: '24h',
+          suspend_24h: '24h',
+          suspend_7d: '168h',
+          suspend_14d: '336h',
+          suspend_30d: '720h',
+          suspend_user: '876000h',
+          suspend_permanent: '876000h',
+        }
         const { error } = await supabaseAdmin.auth.admin.updateUserById(targetUserId, {
-          ban_duration: '876000h' // 100 yıl ban (kalıcı askıya alma)
+          ban_duration: durations[action],
         })
         if (error) throw error
         result = { success: true }
         break
       }
       
-      case 'unsuspend_user': {
+      case 'unsuspend_user':
+      case 'revoke_sanction': {
         const { error } = await supabaseAdmin.auth.admin.updateUserById(targetUserId, {
           ban_duration: 'none'
         })
@@ -148,7 +216,7 @@ serve(async (req) => {
           action: action,
           reason: reason || 'Gerekçe belirtilmedi',
         })
-      if (auditError) console.error('Audit Log Hatası:', auditError)
+      if (auditError) throw auditError
     }
 
     return new Response(JSON.stringify({ data: result }), {
