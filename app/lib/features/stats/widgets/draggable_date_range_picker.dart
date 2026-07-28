@@ -442,7 +442,9 @@ class _DayTarget extends StatelessWidget {
             alignment: Alignment.center,
             decoration: BoxDecoration(color: fill, shape: BoxShape.circle),
             child: Text(
-              '$day',
+              // Yalnız gün sayısı: DateTime'ın kendisi basılırsa metin 40px
+              // daireden taşar ve dokunma hedeflerini örter (WP-412).
+              '${day.day}',
               style: Theme.of(
                 context,
               ).textTheme.labelLarge?.copyWith(color: textColor),

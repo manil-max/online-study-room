@@ -3039,7 +3039,7 @@ WP-385 (l10n/başarım). Sonraki dalga: WP-381 · WP-383 · WP-382.
 
 #### WP-412: Tarih aralığı seçicide gün hücresi tarihin tamamını yazıyor 📅
 - **Program/Faz:** PLAN 4 · Faz O (kaynak: sahip cihaz testi, ekran görüntüsü)
-- **Ajan:** Lane E · **Durum:** [ ] Başlamadı
+- **Ajan:** Lane E · **Durum:** [x] Kod + otomatik test tamam · `Cihazda doğrulanmalı`
 - **Problem:** `draggable_date_range_picker.dart:445` gün hücresine `'$day'` yazıyor.
   `day` bir `DateTime`; Dart bunu `2026-07-01 00:00:00.000` olarak metne çeviriyor.
   40×40 dairenin içine sığmayınca taşıyor, hücreler üst üste biniyor, takvim okunmuyor.
@@ -3060,6 +3060,29 @@ WP-385 (l10n/başarım). Sonraki dalga: WP-381 · WP-383 · WP-382.
 - **Tuzaklar:** Ekran görüntüsüne değil **metin eşitliğine** test yaz. Uç etiketiyle
   hücre etiketini karıştırma; ikisi farklı biçim kullanmalı.
 - **Model önerisi:** Sonnet
+- **DoD kanıtı (2026-07-28, Lane E):**
+  - Düzeltme: `draggable_date_range_picker.dart:447` artık `'${day.day}'`; tek satır,
+    yanına neden yorumu yazıldı. Taranan diğer metin üreten yerler: hücre anahtarı
+    `toIso8601String` (metin değil, `ValueKey`), `_CalendarGrid` haftagünü etiketleri
+    (`narrowWeekdays`), başlık (`formatMonthYear`) — hepsi doğru. `_HandleBody`
+    `formatMediumDate` kullanmaya **devam ediyor**, bilerek dokunulmadı.
+  - Test (metin eşitliği, ekran görüntüsü değil):
+    `gün hücresi yalnız gün sayısını yazar` — `cellText('2026-07-01') == '1'`,
+    `'2026-07-09' == '9'`, `'2026-07-31' == '31'`; `GridView` içinde
+    `find.text('1')` **findsOneWidget**, `find.textContaining('2026')` ve
+    `find.textContaining(':')` **findsNothing**.
+    `uç göstergeleri tam tarihi yazmaya devam eder` — uç etiketi `Jul` + gün içerir ve
+    çıplak `'5'`e indirgenmemiştir (uç göstergesinin kısalmasına karşı kilit).
+  - Regresyon kanıtı: düzeltme geçici olarak `'$day'`e geri alındığında paket
+    **kırmızı** düştü (4 +1 -1 → hücre testi), geri konunca **5/5 yeşil**.
+  - Mevcut üç test (44px hedef, uç takası, gelecek sınırı) değişmeden yeşil — sürükleme
+    ve takas davranışına dokunulmadı.
+  - `flutter analyze lib/.../draggable_date_range_picker.dart test/.../draggable_date_range_picker_test.dart`
+    → **No issues found**. (Repo genelinde o an 7 hata vardı; hepsi Lane D'nin
+    `lib/campfire_preview.dart` dosyasında, bu WP ile ilgisiz.)
+  - Kalan kapı: sahibin cihazında takvimin okunur olduğu ve **sürüklemenin gerçekten
+    tuttuğu** — sahip "çalışmıyor da" demişti; taşan metin kalkınca dokunma hedefleri
+    açıldı, ama fiziksel doğrulama sahipte. Hâlâ tutmuyorsa ayrı bulgu kartı açılır.
 
 #### WP-413: Engelleme yaptırımının eksik yüzeyleri 🚫
 - **Program/Faz:** PLAN 4 · Faz O (kaynak: sahip cihaz testi)
