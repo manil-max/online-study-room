@@ -5,6 +5,7 @@ import 'package:online_study_room/l10n/app_localizations.dart';
 import '../../../core/stats/stats_period.dart';
 import '../../../core/stats/study_stats.dart';
 import '../../../data/providers/stats_period_provider.dart';
+import 'draggable_date_range_picker.dart';
 import '../stats_l10n.dart';
 
 /// Üst dönem seçici (WP-190): GERÇEKTEN tek yatay satır.
@@ -80,13 +81,15 @@ class StatsPeriodBar extends ConsumerWidget {
     StatsPeriodSelection sel,
   ) async {
     final now = DateTime.now();
-    final range = await showDateRangePicker(
+    final range = await showDialog<DateTimeRange>(
       context: context,
-      firstDate: DateTime(now.year - 5),
-      lastDate: dayOf(now),
-      initialDateRange: DateTimeRange(
-        start: sel.customFrom ?? startOfMonth(now),
-        end: sel.customTo ?? dayOf(now),
+      builder: (_) => DraggableDateRangePickerDialog(
+        firstDate: DateTime(now.year - 5),
+        lastDate: dayOf(now),
+        initialRange: DateTimeRange(
+          start: sel.customFrom ?? startOfMonth(now),
+          end: sel.customTo ?? dayOf(now),
+        ),
       ),
     );
     if (range == null) return;
