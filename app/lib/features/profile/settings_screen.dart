@@ -17,6 +17,7 @@ import 'widgets/unread_announcement_dot.dart';
 import '../notifications/notification_permissions_screen.dart';
 import '../onboarding/onboarding_prefs.dart';
 import '../safety/blocked_users_screen.dart';
+import '../support/faq_screen.dart';
 import '../updater/release_notes_screen.dart';
 import 'account_settings_screen.dart';
 import 'appearance_screen.dart';
@@ -299,6 +300,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               _SettingsSection(
                 title: l10n.settingsSectionAboutLegal,
                 children: [
+                  _SettingsCard(
+                    child: ListTile(
+                      key: const Key('settings-faq'),
+                      leading: const Icon(Icons.help_outline),
+                      title: Text(l10n.faqTitle),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const FaqScreen()),
+                      ),
+                    ),
+                  ),
                   _SettingsCard(
                     child: ListTile(
                       leading: const Icon(Icons.new_releases_outlined),

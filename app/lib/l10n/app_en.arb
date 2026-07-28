@@ -5866,5 +5866,25 @@
   "supportTicketTypeQuestion": "Question",
   "@supportTicketTypeQuestion": {"description": "Support inbox filter and ticket type."},
   "supportTicketTypeReport": "Report",
-  "@supportTicketTypeReport": {"description": "Support inbox filter and ticket type."}
+  "@supportTicketTypeReport": {"description": "Support inbox filter and ticket type."},
+  "faqTitle": "Frequently asked questions",
+  "@faqTitle": {"description": "FAQ screen title."},
+  "faqSearch": "Search questions",
+  "@faqSearch": {"description": "FAQ search field label."},
+  "faqOfflineFallback": "We could not connect; showing the essential answers included with the app.",
+  "@faqOfflineFallback": {"description": "FAQ fallback notice when the server cannot be reached."},
+  "faqNoResults": "No question matches your search.",
+  "@faqNoResults": {"description": "Empty state after FAQ search."},
+  "faqAskQuestion": "My question is not here",
+  "@faqAskQuestion": {"description": "Action to submit a support question."},
+  "faqAskQuestionHint": "Write your question",
+  "@faqAskQuestionHint": {"description": "Question composer hint."},
+  "faqQuestionSent": "Your question has been sent to support.",
+  "@faqQuestionSent": {"description": "Success after submitting a FAQ question."},
+  "faqQuestionFailed": "Your question could not be sent. Please try again.",
+  "@faqQuestionFailed": {"description": "Failure after submitting a FAQ question."},
+  "faqLoginRequired": "Sign in to send a question.",
+  "@faqLoginRequired": {"description": "Authentication requirement for support questions."},
+  "faqLoginLink": "Frequently asked questions"
+  ,"@faqLoginLink": {"description": "FAQ link shown on the authentication screen."}
 }

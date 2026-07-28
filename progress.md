@@ -164,16 +164,21 @@
 - **Doküman temizliği (2026-07-27, sahip emri):** `docs/archive/` dizini, üç senior review turu, v46 sahip geri bildirimi ve kapanmış iki recovery kabul notu repodan kaldırıldı (13 dosya, ~11k satır). Evrensel saat işinde **yalnız nihai plan + C0 uyumluluk kanıtı** kaldı. Hepsi git geçmişinde; kalan md'lerde kırık iç bağlantı yok.
 
 ### Codex Lane
-- **Durum:** [x] Boşta — WP-387 kod/test tamam, staging + cihaz kabulü bekliyor
+- **Durum:** [x] Boşta — WP-388 kod/test tamam, staging + cihaz kabulü bekliyor
 - **Faz/WP:** —
 - **SAHİP yollar:** —
-- **Son not (2026-07-28):** `0090` destek türü, UGC rapor referansı ve admin push outbox'ını ekledi. Local reset + 291 pgTAP, hedefli Flutter analyze ve 16 hedefli Flutter test yeşil. Remote mutasyon yapılmadı.
+- **Son not (2026-07-28):** `0091` yayınlı anon SSS, oturumlu soru iletimi ve çevrimdışı yedeği ekledi. Local 297 pgTAP ve hedefli SSS widget testi yeşil. Remote mutasyon yapılmadı.
 
 ### Codex-2 Lane
-- **Durum:** [x] Boşta
-- **Faz/WP:** —
-- **SAHİP yollar:** —
-- **Son not (2026-07-28):** WP-379 kod/test tamam (`bekleyen commit`); iki Android cihaz kabulü bekliyor. Sonraki WP-380 ayrı claim + ayrı commit olacak.
+- **Durum:** [~] Aktif
+- **Faz/WP:** PLAN 3 · Faz K · WP-380
+- **Aşama:** Geliştiriliyor
+- **SAHİP yollar:** `app/android/app/src/main/kotlin/**/widgets/StudyWidgetProviders.kt` · `app/android/app/src/main/kotlin/**/timer/StudyTimerService.kt` · ilgili Kotlin testi · `app/android/app/build.gradle.kts` (yalnız JUnit test bağımlılığı) · `progress.md` (yalnız bu lane ve WP-380 kartı)
+- **Ortak/riskli yüzey:** `app/lib/**` ve WP-379 dosyaları salt-okunur; Android timer/widget boş-durum sözleşmesi yalnız bu WP'de değişir.
+- **Dal:** main
+- **Başlangıç:** 2026-07-28 15:01 (Europe/Istanbul)
+- **Son güncelleme:** 2026-07-28 15:01
+- **Not:** Widget ve bildirim boş sayacını `00:00` ile hizalama; local, migration yok.
 
 ### Codex-3 Lane
 - **Durum:** [x] Boşta
@@ -183,14 +188,14 @@
 
 ### Codex-4 Lane
 - **Durum:** [~] Aktif
-- **Faz/WP:** PLAN 3 · Faz K · WP-381
+- **Faz/WP:** PLAN 3 · Faz K · WP-384
 - **Aşama:** Geliştiriliyor
-- **SAHİP yollar:** `app/lib/features/tours/**` · `app/lib/core/tour/**` · `app/lib/features/onboarding/**` · `app/lib/features/home/**` içindeki kart düzenleme ipucu · `app/test/features/tour*` · `app/test/features/onboarding*` · `progress.md` (yalnız bu lane ve WP-381 kartı)
-- **Ortak/riskli yüzey:** `settings_screen.dart`, `features/stats/**` ve `app/lib/l10n/**` salt-okunur; kamp ateşi tur adımı kaldırılacak, kamp ateşi görünümü WP-382'de kalır
+- **SAHİP yollar:** `app/lib/features/stats/widgets/**` içindeki aralık seçici · `app/test/features/stats/*` · `progress.md` (yalnız bu lane ve WP-384 kartı)
+- **Ortak/riskli yüzey:** `stats_screen.dart` WP-383 commit `54be471` ile serbest; edit düğmesi korunacak, takvim görsel dili değişmeyecek
 - **Dal:** main
 - **Başlangıç:** 2026-07-28 15:45 (Europe/Istanbul)
 - **Son güncelleme:** 2026-07-28 15:45
-- **Not:** WP-383 commit `54be471` sonrası bağımsız tur/onboarding geliştirmesi; local doğrulama, staging/production mutasyonu yok.
+- **Not:** WP-381 commit `a6cf709` sonrası özel tarih aralığı uç sürükleme geliştirmesi; local doğrulama, staging/production mutasyonu yok.
 
 ### Codex-6 Lane
 - **Durum:** [!] Bloklu
@@ -205,14 +210,14 @@
 
 ### Codex-5 Lane
 - **Durum:** [~] Aktif
-- **Faz/WP:** PLAN 3 · Faz K · WP-382
-- **Aşama:** Geliştiriliyor — önizleme / sahip seçimi
-- **SAHİP yollar:** `app/lib/features/classroom/widgets/campfire_scene.dart` · `app/test/features/classroom/campfire_*` · önizleme artefaktları · `progress.md` (yalnız bu lane ve WP-382 kartı)
-- **Ortak/riskli yüzey:** `campfire_scene.dart` WP-389 için bu WP'nin kabulünden sonra serbest bırakılacak; tema, sayaç ve migration yüzeyleri salt-okunur
+- **Faz/WP:** PLAN 3 · Faz L · WP-390
+- **Aşama:** Geliştiriliyor
+- **SAHİP yollar:** `app/lib/features/safety/report_sheet.dart` · `app/lib/features/admin/tabs/admin_reports_tab.dart` · şikâyet giriş noktaları · ilgili testler ve UGC smoke kanıtı · `progress.md` (yalnız bu lane ve WP-390 kartı)
+- **Ortak/riskli yüzey:** WP-387 `c97924f` ile tamamlandı; `supabase/migrations/**` salt-okunur · `campfire_scene.dart` WP-382/389 sınırında salt-okunur
 - **Dal:** main
 - **Başlangıç:** 2026-07-28 15:16 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-28 15:25
-- **Not:** WP-382 → WP-390 zinciri bu lane'de sıralı yürütülecek; her WP ayrı commit. Üç adaylı gerçek widget önizlemesi hazır, fakat Codex-2'nin commit edilmemiş `_finish` imza değişikliği bütün Flutter derlemesini geçici olarak engelliyor; onun commit'inden sonra PNG üretilecek. WP-383 yalnız WP-384/WP-388'in ortak dosya bağımlılığıdır; WP-382 ve WP-390 için beklenmez. WP-390, yalnız WP-387'nin aktif admin destek yüzeyi serbest kalınca başlar.
+- **Son güncelleme:** 2026-07-28 16:09
+- **Not:** WP-382'nin gerçek A/B/C önizlemesi `campfire_wp382_preview.png` olarak üretildi; sahibin sayısal seçimi bekleniyor, kalıcı sahne değişikliği yazılmadı. WP-390 grup ve grup-adı girişleri + widget testleriyle geliştiriliyor. Şikâyet durum değişiminin server audit izi migration gerektiriyor; WP-388 `0091` hattı aktif olduğu için migration yüzeyine girilmedi, bu bölüm seri serbest kalınca ele alınacak.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
@@ -2445,7 +2450,7 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 
 #### WP-380: Widget ve bildirimde boş sayaç biçimi ⏱️
 - **Program/Faz:** PLAN 3 · Faz K (kaynak: A8)
-- **Ajan:** — · **Durum:** [ ] Bekliyor
+- **Ajan:** Codex-2 · **Durum:** [~] Geliştiriliyor
 - **Problem:** Boştayken statik `"00:00:00"` yazılıyor, koşarken Android `Chronometer`
   devreye girip bir saatin altında `MM:SS` basıyor → başlangıçta `00:00:00` → `00:01`
   sıçraması. Sahip: "çirkin, doğrudan `00:00` olsun."
@@ -2505,7 +2510,7 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 
 #### WP-382: Kamp ateşi kompozisyon revizesi 🔥
 - **Program/Faz:** PLAN 3 · Faz K (kaynak: A3 + sahip onayı A3-son)
-- **Ajan:** Codex-5 · **Durum:** [~] Geliştiriliyor — önizleme / sahip seçimi
+- **Ajan:** Codex-5 · **Durum:** [!] Sahip seçimi bekliyor — A/B/C önizlemesi üretildi
 - **Problem:** Kırpma beğenildi, iki düzeltme kaldı: (1) ateşin kendisi **biraz aşağı**
   inecek, (2) aynı taraftaki alt/üst hayvanın **dikey arası açılacak** — şu an alttakinin
   ismi üsttekinin üstüne biniyor.
@@ -2560,7 +2565,7 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 
 #### WP-384: Özel tarih aralığında sürüklenebilir takvim uçları 📅
 - **Program/Faz:** PLAN 3 · Faz K (kaynak: B8 + H2 kararı "yapılacak")
-- **Ajan:** — · **Durum:** [ ] Bekliyor
+- **Ajan:** Codex-4 · **Durum:** [~] Geliştiriliyor
 - **Problem:** Custom aralık seçilince takvim açılıyor; iki uç kahverengi, aradaki günler
   mavi. Tarih şu an yalnız sağ üstteki edit düğmesinden giriliyor. Sahip **uçtaki işareti
   tutup sürükleyerek** aralığı ayarlamak istiyor.
@@ -2677,7 +2682,7 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 
 #### WP-388: SSS ekranı — sunucudan beslenen, giriş öncesi erişilebilir ❓
 - **Program/Faz:** PLAN 3 · Faz L (kaynak: B2, F3, D listesi)
-- **Ajan:** — · **Durum:** [ ] Bekliyor
+- **Ajan:** Codex · **Durum:** [~] Kod/test tamamlandı — cihaz kabulü bekliyor
 - **Problem:** Ayarlar'da yalnız "bize yaz" var. Sahip hazır soru-cevap istiyor;
   kullanıcı sormadan cevabı bulsun. İçerik **sunucudan** gelmeli ki sürüm çıkarmadan
   düzeltilebilsin (sahip kararı F3).
@@ -2691,12 +2696,12 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
   - `app/lib/l10n/app_tr.arb`, `app_en.arb`
 - **DOKUNMA:** `0090`/`0092` migration'ları, `features/safety/**`
 - **Adımlar:**
-  - [ ] `faq_entries` tablosu (soru, cevap, dil, sıra, yayın bayrağı); **anon okuma**
+  - [x] `faq_entries` tablosu (soru, cevap, dil, sıra, yayın bayrağı); **anon okuma**
         açık (giriş yapmadan erişim şartı), yazma yalnız admin.
-  - [ ] SSS ekranı + arama; **gömülü yedek metin** (ağ yoksa uygulamayla gelen kopya).
-  - [ ] Giriş ekranında SSS bağlantısı ("giremiyorum" en çok gereken madde).
-  - [ ] "Sorum burada yok" → soru gönderme; **hız sınırı** (F3 şartı) sunucuda.
-  - [ ] Başlangıç içeriği: tartışma notu **D listesi** (widget nasıl eklenir · bildirimden
+  - [x] SSS ekranı + arama; **gömülü yedek metin** (ağ yoksa uygulamayla gelen kopya).
+  - [x] Giriş ekranında SSS bağlantısı ("giremiyorum" en çok gereken madde).
+  - [x] "Sorum burada yok" → soru gönderme; **hız sınırı** (F3 şartı) sunucuda.
+  - [x] Başlangıç içeriği: tartışma notu **D listesi** (widget nasıl eklenir · bildirimden
         kontrol · pil optimizasyonu · çoklu cihaz ne yapar/yapmaz · birincil grup · dürtme ·
         seri kuralları · XP · başarımlar · grup seni ne kadar görüyor) + rakip analizinden
         üç madde (gün ne zaman biter · internetsiz ne olur · elle eklenen süre sayılır mı).
@@ -2711,6 +2716,8 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
   fazla soru gönderemez (test).
 - **Tuzaklar:** Anon grant'i geniş yazmak tüm tabloyu açar. Gömülü yedek metnin
   sunucudakiyle **ayrışması** kaçınılmaz — yedek "son çare" olarak işaretlenmeli.
+- **Kanıt:** Local `0091` ile 21 SQL dosyasında **297 pgTAP PASS** · hedefli SSS widget
+  testi yeşil. **Staging/cihazda doğrulanmalı.**
 - **Model önerisi:** 🔴 Opus
 
 #### WP-389: Engellemeyi F2 kararına uydur 🚫
@@ -2759,7 +2766,7 @@ Kapı listesi: [`docs/play-store/PLAY-RELEASE-GATE.md`](docs/play-store/PLAY-REL
 
 #### WP-390: Şikâyet akışını tamamla ve görünür kıl 🚩
 - **Program/Faz:** PLAN 3 · Faz L (kaynak: C1, F2 "eksik yarı")
-- **Ajan:** — · **Durum:** [ ] Bekliyor
+- **Ajan:** Codex-5 · **Durum:** [~] Geliştiriliyor
 - **Problem:** Şikâyet altyapısı **var** (`ugc_reports`, `report_ugc` RPC,
   `features/safety/report_sheet.dart`, `admin_reports_tab.dart`) ama yalnız sohbet ve
   sosyal profilden erişiliyor; grup ve grup adı şikâyeti yok, kullanıcı şikâyetinin
