@@ -96,6 +96,17 @@
 - **Son güncelleme:** 2026-07-28 18:00
 - **Not:** WP-414 ile başlanacak; WP-415 aynı sahip kümesinde ardından uygulanacak. Local kalır; migration/release yok.
 
+### Lane D
+- **Durum:** [~] Aktif
+- **Faz/WP:** PLAN 4 · Faz Q · WP-416 → WP-417 → WP-418
+- **Asama:** Gelistiriliyor
+- **SAHIP yollar:** `app/lib/features/**/campfire_scene.dart` ve kamp atesi widget'lari, mobil parametrik onizleme ekrani, tur tanim dosyalari, basarim tanimlari, ilgili testler
+- **Ortak/riskli yuzey:** `app/lib/l10n/*.arb` (TR/EN/DE/AR atomik duzenleme — Lane B/C ile ayni dosya, dar hunk)
+- **Dal:** main
+- **Baslangic:** 2026-07-28 18:05 (Europe/Istanbul)
+- **Son guncelleme:** 2026-07-28 18:05 (Europe/Istanbul)
+- **Not:** Sirali ilerler (WP-416 → WP-417 → WP-418). `features/settings/**`, `features/admin/**`, `features/stats/**`, `android/**`, `supabase/**` yazilmaz. Local kalir; migration/tag/release yok.
+
 ### Claude Lane
 - **Durum:** [x] Boşta
 - **Faz/WP:** — · PLAN 3 Faz K + Faz L kapandı, **v55 yayında**
