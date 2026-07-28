@@ -10,6 +10,8 @@ import android.widget.RemoteViews
 import com.manilmax.online_study_room.R
 import es.antonborri.home_widget.HomeWidgetProvider
 
+internal const val WIDGET_IDLE_TIMER_TEXT = "00:00"
+
 private object StudyWidgetKeys {
     const val TimerTitle = "timer_title"
     const val TimerElapsed = "timer_elapsed"
@@ -85,14 +87,14 @@ class TimerWidgetProvider : HomeWidgetProvider() {
                     val base = SystemClock.elapsedRealtime() - (System.currentTimeMillis() - startMillis!!)
                     setChronometer(R.id.timer_widget_elapsed, base, null, true)
                 } else {
-                    // Idle / sıfır: 00:00:00 (WP-135 semantiği ile hizalı).
+                    // Idle / sıfır: native Chronometer'ın MM:SS biçimiyle hizalı.
                     setChronometer(
                         R.id.timer_widget_elapsed,
                         SystemClock.elapsedRealtime(),
-                        "00:00:00",
+                        WIDGET_IDLE_TIMER_TEXT,
                         false,
                     )
-                    setTextViewText(R.id.timer_widget_elapsed, "00:00:00")
+                    setTextViewText(R.id.timer_widget_elapsed, WIDGET_IDLE_TIMER_TEXT)
                 }
                 // Tek düğme: çalışıyorsa Durdur, duruyorsa Başlat (native servis).
                 setTextViewText(

@@ -19,6 +19,8 @@ import com.manilmax.online_study_room.MainActivity
 import com.manilmax.online_study_room.R
 import com.manilmax.online_study_room.widgets.TimerWidgets
 
+internal const val IDLE_NOTIFICATION_TIMER_TEXT = "00:00"
+
 /**
  * Çalışma sayacının **native** foreground servisi (V8-A · WP-42/51 birleşik).
  *
@@ -74,7 +76,7 @@ class StudyTimerService : Service() {
                 ACTION_START_BREAK -> handleStartBreak()
                 ACTION_END_BREAK -> handleEndBreak()
                 ACTION_TOGGLE -> {
-                    // WP-135: idle→start; running→stop + 00:00:00 (writeIdle).
+                    // WP-135: idle→start; running→stop + 00:00 (writeIdle).
                     if (TimerStateStore.isRunning(prefs())) {
                         handleStop(recordInterval = true)
                     } else {
@@ -411,7 +413,7 @@ class StudyTimerService : Service() {
             builder
                 .setUsesChronometer(false)
                 .setShowWhen(false)
-                .setContentTitle("00:00:00")
+                .setContentTitle(IDLE_NOTIFICATION_TIMER_TEXT)
                 .setContentText(getString(R.string.timer_ready))
                 .addAction(0, getString(R.string.action_start), startActionPending())
             PRESENTATION_STANDARD_FALLBACK
@@ -465,10 +467,10 @@ class StudyTimerService : Service() {
         views.setChronometer(
             R.id.notif_timer_elapsed,
             SystemClock.elapsedRealtime(),
-            "00:00:00",
+            IDLE_NOTIFICATION_TIMER_TEXT,
             false,
         )
-        views.setTextViewText(R.id.notif_timer_elapsed, "00:00:00")
+        views.setTextViewText(R.id.notif_timer_elapsed, IDLE_NOTIFICATION_TIMER_TEXT)
         views.setTextViewText(R.id.notif_timer_action, getString(R.string.action_start))
         views.setOnClickPendingIntent(R.id.notif_timer_action, startActionPending())
         return views
