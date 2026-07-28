@@ -47,6 +47,47 @@ class GlobalTimerCoordinator {
     return future.whenComplete(() => _inFlight = null);
   }
 
+  /// WP-379: Ayna cihaz, uzak koşuyu ancak sunucunun güncel run kimliği ve
+  /// revizyonuyla durdurabilir. Native ayna başlatması bilerek V2 zarfı
+  /// üretmediği için bu, normal native outbox'ı değil aynı V2 RPC sözleşmesini
+  /// doğrudan kullanan onaylı kullanıcı niyetidir.
+  Future<GlobalTimerSnapshot> stopMirroredRun({
+    required String runId,
+    required int expectedRunRevision,
+  }) async {
+    if (_ref.read(globalTimerModeProvider) !=
+        GlobalTimerMode.foregroundMirror) {
+      throw StateError('global_timer_mirror_disabled');
+    }
+    if (runId.trim().isEmpty || expectedRunRevision < 1) {
+      throw StateError('global_timer_mirror_identity_required');
+    }
+    final user = _ref.read(authStateProvider).value;
+    final prefs = _ref.read(sharedPreferencesProvider);
+    await prefs.reload();
+    final deviceId = prefs.getString(globalTimerDeviceIdKey)?.trim();
+    if (user == null || deviceId == null || deviceId.isEmpty) {
+      throw StateError('global_timer_mirror_device_required');
+    }
+    final snapshot = await _ref
+        .read(globalTimerRepositoryProvider)
+        .applyCommand(
+          commandId: const Uuid().v4(),
+          deviceId: deviceId,
+          action: 'stop',
+          runId: runId,
+          expectedRunRevision: expectedRunRevision,
+          clientOccurredAt: DateTime.now(),
+          payload: const {'origin': 'app'},
+        );
+    // `stale`, başka bir cihazın daha yeni bir gerçeği olduğunu söyler. Ayna
+    // yerel olarak boş görünemez; yeni snapshot turu gerçek durumu uygular.
+    if (snapshot.resultCode == 'stale') {
+      throw StateError('global_timer_mirror_stop_stale');
+    }
+    return snapshot;
+  }
+
   Future<void> _flush() async {
     if (_ref.read(globalTimerModeProvider) == GlobalTimerMode.disabled) return;
     final user = _ref.read(authStateProvider).value;

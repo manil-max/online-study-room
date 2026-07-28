@@ -106,6 +106,49 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
     }
   }
 
+  Future<void> _stopTimer(
+    BuildContext context,
+    StudyTimerState timer,
+    StudyTimerNotifier notifier,
+  ) async {
+    if (!timer.isGlobalTimerMirror) {
+      await notifier.stop();
+      return;
+    }
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Sayacı durdur?'),
+        content: const Text('Bu, diğer cihazdaki sayacı da durduracak.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(
+              MaterialLocalizations.of(dialogContext).cancelButtonLabel,
+            ),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(AppLocalizations.of(dialogContext).classroomDurdur),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+    try {
+      await notifier.stopMirroredRun();
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Sayaç diğer cihazlarda durdurulamadı. Bağlantını kontrol edip tekrar dene.',
+          ),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -124,6 +167,15 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
       if (prev == null) return;
       if (next.eventSeq != prev.eventSeq && next.lastEvent != null) {
         _onTimerEvent(next.lastEvent!);
+      }
+      final stoppedAt = next.globalTimerStoppedRemotelyAt;
+      if (stoppedAt != null && stoppedAt != prev.globalTimerStoppedRemotelyAt) {
+        final time = MaterialLocalizations.of(
+          context,
+        ).formatTimeOfDay(TimeOfDay.fromDateTime(stoppedAt));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Diğer cihazda $time\'te durduruldu.')),
+        );
       }
     });
 
@@ -287,7 +339,10 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
                                 style: FilledButton.styleFrom(
                                   backgroundColor: theme.colorScheme.error,
                                 ),
-                                onPressed: notifier.stop,
+                                onPressed: timer.isStopping
+                                    ? null
+                                    : () =>
+                                          _stopTimer(context, timer, notifier),
                                 icon: const Icon(Icons.stop),
                                 label: Text(
                                   AppLocalizations.of(context).classroomDurdur,

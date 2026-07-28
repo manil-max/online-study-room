@@ -292,6 +292,7 @@ class StudyTimerState {
     this.isGlobalTimerMirror = false,
     this.globalTimerRunId,
     this.globalTimerRunRevision,
+    this.globalTimerStoppedRemotelyAt,
     this.verification = TimerVerification.idle,
     this.settlingSeconds = 0,
     this.settlingBaseline = 0,
@@ -342,6 +343,9 @@ class StudyTimerState {
   final bool isGlobalTimerMirror;
   final String? globalTimerRunId;
   final int? globalTimerRunRevision;
+
+  /// WP-379: Kaynak cihaz, başka cihazdan onaylı durdurmayı bu zamanla açıklar.
+  final DateTime? globalTimerStoppedRemotelyAt;
   final TimerVerification verification;
 
   /// WP-250 — "yerleşmeyi bekleyen" kayıt bilgisi. `study_sessions`'a yazılmış
@@ -392,6 +396,8 @@ class StudyTimerState {
     String? globalTimerRunId,
     int? globalTimerRunRevision,
     bool clearGlobalTimerMirror = false,
+    DateTime? globalTimerStoppedRemotelyAt,
+    bool clearGlobalTimerStoppedRemotelyAt = false,
     TimerVerification? verification,
     int? settlingSeconds,
     int? settlingBaseline,
@@ -426,6 +432,9 @@ class StudyTimerState {
       globalTimerRunRevision: clearGlobalTimerMirror
           ? null
           : (globalTimerRunRevision ?? this.globalTimerRunRevision),
+      globalTimerStoppedRemotelyAt: clearGlobalTimerStoppedRemotelyAt
+          ? null
+          : (globalTimerStoppedRemotelyAt ?? this.globalTimerStoppedRemotelyAt),
       verification: verification ?? this.verification,
       // clearSettling her zaman kazanır (null geçilemeyen alanları sıfırlamanın
       // tek yolu budur; `settlingDay: null` "değiştirme" anlamına gelir).
@@ -622,8 +631,8 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     ref.listen(authStateProvider, (_, next) {
       if (next.value == null) unawaited(TimerSyncSignal.clear());
     });
-    _timerSyncSignals = TimerSyncSignal.stream.listen((_) {
-      if (!_disposed) unawaited(_syncBackgroundTimerState());
+    _timerSyncSignals = TimerSyncSignal.stream.listen((signal) {
+      if (!_disposed) unawaited(_syncBackgroundTimerState(signal: signal));
     });
     _startGlobalTimerForegroundRefresh();
     _startGlobalTimerHeartbeat();
@@ -827,7 +836,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   /// Durdur/Başlat toggle'ının etkilerini ([_reconcileBackgroundTimer]), sonra
   /// widget'ın tek-atımlık başlat/durdur komutunu ([_processPendingExternalCommand])
   /// işler. Hem soğuk açılışta hem onResume/onTaskData'da çağrılır.
-  Future<void> _syncBackgroundTimerState() async {
+  Future<void> _syncBackgroundTimerState({TimerSyncSignal? signal}) async {
     if (_disposed) return;
     // WP-243: zaman-penceresi bastırması KALDIRILDI. Echo'lar artık içerik
     // temelli kapanır: Dart-origin başlatmanın echo'su startedAt eşleştiği için
@@ -842,23 +851,25 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     // Bu çağrı legacy timer durumunu veya native action akışını değiştirmez.
     await ref.read(globalTimerCoordinatorProvider).flushShadow();
     if (_disposed) return;
-    await _reconcileGlobalTimerForeground();
+    await _reconcileGlobalTimerForeground(signal: signal);
     await TimerSyncSignal.clear();
   }
 
   /// Tek bir auth'lu snapshot sonucunu uygular. FCM, lifecycle ve foreground
   /// poll aynı anda gelirse yalnız bir tur çalışır; gecikmiş bir FCM payload'ı
   /// uygulanmaz, her zaman sunucunun güncel snapshot'ı okunur.
-  Future<void> _reconcileGlobalTimerForeground() {
+  Future<void> _reconcileGlobalTimerForeground({TimerSyncSignal? signal}) {
     if (_disposed) return Future<void>.value();
     final current = _globalTimerReconcileInFlight;
     if (current != null) return current;
-    final future = _reconcileGlobalTimerForegroundImpl();
+    final future = _reconcileGlobalTimerForegroundImpl(signal: signal);
     _globalTimerReconcileInFlight = future;
     return future.whenComplete(() => _globalTimerReconcileInFlight = null);
   }
 
-  Future<void> _reconcileGlobalTimerForegroundImpl() async {
+  Future<void> _reconcileGlobalTimerForegroundImpl({
+    TimerSyncSignal? signal,
+  }) async {
     final coordinator = ref.read(globalTimerCoordinatorProvider);
     final directive = await coordinator.reconcileForeground(
       localRunning: state.isRunning,
@@ -866,7 +877,46 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       localMirrorRunId: state.globalTimerRunId,
     );
     if (_disposed || directive == null) return;
+    if (signal != null && await _applyRemoteMirrorStop(signal, directive)) {
+      return;
+    }
     await _applyGlobalTimerForegroundDirective(directive);
+  }
+
+  /// WP-379: FCM yalnız snapshot tetikleyicisidir; durdurma kararını snapshot
+  /// doğrular. Sinyalin run kimliği, yeni/yerel bir koşuyu yanlışlıkla kapatmamak
+  /// için bu cihazın sunucudan onay almış V2 kimliğiyle eşleşmelidir.
+  Future<bool> _applyRemoteMirrorStop(
+    TimerSyncSignal signal,
+    GlobalTimerForegroundDirective directive,
+  ) async {
+    if (directive.snapshot.run != null ||
+        !state.isRunning ||
+        state.isGlobalTimerMirror) {
+      return false;
+    }
+    final prefs = ref.read(sharedPreferencesProvider);
+    await prefs.reload();
+    if (prefs.getString(TimerV2CommandEnvelope.runIdKey) != signal.runId) {
+      return false;
+    }
+    // `_finish()` native stop'a da gider. Bu koşu sunucuda zaten durduğu için
+    // kimliği önce kaldırırız; aksi halde ikinci, zehirli bir stop zarfı doğar.
+    await prefs.remove(TimerV2CommandEnvelope.runIdKey);
+    await prefs.remove(TimerV2CommandEnvelope.runRevisionKey);
+    if (_disposed || !state.isRunning || state.isGlobalTimerMirror) return true;
+    _finish(
+      globalTimerStoppedRemotelyAt: directive.snapshot.serverTime.toLocal(),
+    );
+    await ref
+        .read(globalTimerCoordinatorProvider)
+        .acknowledgeForeground(
+          directive,
+          status: 'native_applied',
+          runId: signal.runId,
+          runRevision: signal.runRevision,
+        );
+    return true;
   }
 
   Future<void> _applyGlobalTimerForegroundDirective(
@@ -1388,6 +1438,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       lastUpdatedAt: now,
       clearLiveRun: true,
       clearGlobalTimerMirror: true,
+      clearGlobalTimerStoppedRemotelyAt: true,
       verification: TimerVerification.idle,
       // WP-250: yeni çalışma başladı, ekranda tutulan "eski settling" temizlenir.
       clearSettling: true,
@@ -1532,6 +1583,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     // WP-246 (D2): devam eden bir durdurma varken ikinci giriş, aynı aralığı
     // tekrar kaydedip toplamı şişiriyordu → reddet.
     if (_stopInFlight) return;
+    if (state.isGlobalTimerMirror) return stopMirroredRun();
     _stopInFlight = true;
     try {
       if (!state.isRunning) {
@@ -1542,12 +1594,6 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
         // Pes etmeden önce native durumla bir kez uzlaş.
         await _reconcileBackgroundTimer();
         if (_disposed || !state.isRunning) return;
-      }
-      // WP-343 mirror yalnız başka cihazın sunucu-gerçeğini gösterir. Bu
-      // cihazda session/finalize üretmek ek XP ve çift oturum demektir.
-      if (state.isGlobalTimerMirror) {
-        _finish();
-        return;
       }
       final startedAt = state.startedAt;
       final subjectId = state.subjectId;
@@ -1621,6 +1667,35 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       }
     } finally {
       _stopInFlight = false;
+    }
+  }
+
+  /// WP-379: Aynadaki Durdur, yerel kapatma değil global koşu komutudur.
+  /// Sunucu stop'u kabul etmeden `_finish()` çağrılmaz; böylece revision
+  /// uyuşmazlığı/ağ hatası ayna cihazını yanlışlıkla boşta gösteremez.
+  Future<void> stopMirroredRun() async {
+    if (!state.isGlobalTimerMirror) return;
+    if (_stopInFlight) return;
+    _stopInFlight = true;
+    try {
+      final runId = state.globalTimerRunId;
+      final revision = state.globalTimerRunRevision;
+      if (runId == null || runId.isEmpty || revision == null || revision < 1) {
+        throw StateError('global_timer_mirror_identity_required');
+      }
+      state = state.copyWith(isStopping: true, clearSettling: true);
+      await ref
+          .read(globalTimerCoordinatorProvider)
+          .stopMirroredRun(runId: runId, expectedRunRevision: revision);
+      if (_disposed || !state.isGlobalTimerMirror) return;
+      _finish();
+    } finally {
+      _stopInFlight = false;
+      // Başarılı `_finish()` aynayı kaldırır. Hata/revision reddinde ise ayna
+      // görünür kalır ve kullanıcı tekrar deneyebilir.
+      if (!_disposed && state.isGlobalTimerMirror && state.isStopping) {
+        state = state.copyWith(isStopping: false, clearSettling: true);
+      }
     }
   }
 
@@ -1756,6 +1831,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     int settlingSeconds = 0,
     int settlingBaseline = 0,
     DateTime? settlingDay,
+    DateTime? globalTimerStoppedRemotelyAt,
   }) {
     _tick?.cancel();
     _tick = null;
@@ -1774,6 +1850,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       lastEvent: lastEvent,
       clearLiveRun: true,
       clearGlobalTimerMirror: true,
+      globalTimerStoppedRemotelyAt: globalTimerStoppedRemotelyAt,
       verification: TimerVerification.idle,
       settlingSeconds: settlingSeconds > 0 ? settlingSeconds : null,
       settlingBaseline: settlingSeconds > 0 ? settlingBaseline : null,

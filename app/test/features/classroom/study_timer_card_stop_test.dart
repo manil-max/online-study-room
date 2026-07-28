@@ -34,6 +34,22 @@ class _FakeTimerNotifier extends StudyTimerNotifier {
   void push(StudyTimerState next) => state = next;
 }
 
+class _MirrorTimerNotifier extends StudyTimerNotifier {
+  _MirrorTimerNotifier(this._initial);
+
+  final StudyTimerState _initial;
+  var mirrorStopCalls = 0;
+
+  @override
+  StudyTimerState build() => _initial;
+
+  @override
+  Future<void> stopMirroredRun() async {
+    mirrorStopCalls++;
+    state = const StudyTimerState();
+  }
+}
+
 /// Testin kurulumu ile kartın ilk çizimi arasında geçen gerçek zaman payı.
 ///
 /// Yakalanmak istenen hata `liveSeconds` (≈1 saat) kadarlık bir zıplama, yani
@@ -92,151 +108,215 @@ Future<int> waitForTodayTotal(
 }
 
 void main() {
-  testWidgets(
-    'WP-250: Durdur sırasında "Bugün" toplamı zıplamaz',
-    (tester) async {
-      SharedPreferences.setMockInitialValues(<String, Object>{});
-      final prefs = await SharedPreferences.getInstance();
-
-      final now = DateTime.now();
-      // WP-296 bu testi bir kez saatten kurtarmaya çalıştı ama gün başlangıcını
-      // **yerel** takvimle aldı; ürünün gün sınırı ise `Europe/Istanbul`. UTC
-      // koşucuda 21:00 = İstanbul 00:00 olduğu için kayıt düne düşüyor,
-      // `dailyTotals` bugüne 0 yazıyor ve toplam 2 saat yerine 1 saat çıkıyordu
-      // — v49 sürümünü kıran hata buydu. Artık geriye gidiş **İstanbul günü**
-      // içinde tutuluyor: gün başından beri 1 saat geçmemişse pencere kısalır,
-      // beklenen toplam da ona göre hesaplanır.
-      final liveWindow = backWithinIstanbulToday(const Duration(hours: 1));
-      final liveSeconds = liveWindow.inSeconds;
-      final startedAt = now.subtract(liveWindow);
-      const recordedSeconds = 3600;
-      final expectedTotal = recordedSeconds + liveSeconds;
-
-      // Bugün zaten kayıtlı bir saat.
-      final recordedSession = StudySession(
-        id: 'rec-1',
-        userId: 'u1',
-        start: startedAt,
-        end: startedAt.add(const Duration(seconds: recordedSeconds)),
-        durationSeconds: recordedSeconds,
-        source: StudySource.live,
-      );
-      // Durdurulan oturum DB'ye düştüğünde eklenecek satır.
-      final stoppedSession = StudySession(
-        id: 'rec-2',
-        userId: 'u1',
-        start: startedAt,
-        end: now,
-        durationSeconds: liveSeconds,
-        source: StudySource.live,
-      );
-
-      final sessions = StreamController<List<StudySession>>.broadcast();
-      addTearDown(sessions.close);
-
-      final running = StudyTimerState(
+  testWidgets('WP-379: ayna Durdur onaysız global koşuya dokunmaz', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    final prefs = await SharedPreferences.getInstance();
+    final mirror = _MirrorTimerNotifier(
+      StudyTimerState(
         isRunning: true,
-        startedAt: startedAt,
-        phase: TimerPhase.work,
-      );
-      final fake = _FakeTimerNotifier(running);
+        startedAt: DateTime.now().subtract(const Duration(minutes: 3)),
+        isGlobalTimerMirror: true,
+        globalTimerRunId: 'run-379',
+        globalTimerRunRevision: 1,
+      ),
+    );
 
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            sharedPreferencesProvider.overrideWithValue(prefs),
-            userSessionsProvider.overrideWith((ref) => sessions.stream),
-            userSubjectsProvider.overrideWith(
-              (ref) => Stream.value(const <Subject>[]),
-            ),
-            dailyGoalMinutesProvider.overrideWithValue(240),
-            userGroupProvider.overrideWithValue(
-              const AsyncData<StudyGroup?>(null),
-            ),
-            studyTimerProvider.overrideWith(() => fake),
-          ],
-          child: MaterialApp(
-            locale: const Locale('tr'),
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            home: const Scaffold(
-              body: SizedBox(width: 380, height: 900, child: StudyTimerCard()),
-            ),
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          userSessionsProvider.overrideWith(
+            (_) => Stream.value(const <StudySession>[]),
+          ),
+          userSubjectsProvider.overrideWith(
+            (_) => Stream.value(const <Subject>[]),
+          ),
+          dailyGoalMinutesProvider.overrideWithValue(240),
+          userGroupProvider.overrideWithValue(
+            const AsyncData<StudyGroup?>(null),
+          ),
+          studyTimerProvider.overrideWith(() => mirror),
+        ],
+        child: MaterialApp(
+          locale: const Locale('tr'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const Scaffold(
+            body: SizedBox(width: 380, height: 900, child: StudyTimerCard()),
           ),
         ),
-      );
+      ),
+    );
 
-      sessions.add([recordedSession]);
-      // Akış olayı + yeniden çizim iki ayrı tura düşebilir; tek `pump()`
-      // hızlı makinede yetiyor ama CI koşucusunda yetmiyordu (v49 kırılması).
-      //
-      // 🔴 WP-322 — kalan kararsızlığın KÖK NEDENİ buradaydı.
-      // Kart canlı süreyi HER karede gerçek saatten hesaplar
-      // (`study_timer_card.dart:130-132` → `DateTime.now().difference(startedAt)`).
-      // Yukarıdaki `now` yakalandıktan sonra `pumpWidget` + prefs kurulumu
-      // **1 saniyeden uzun sürerse** ekrandaki toplam `expectedTotal + 1` olur
-      // ve saat ileri aktığı için bir daha ASLA `expectedTotal`e dönmez →
-      // tam eşleşme bekleyen `pumpUntilFound` 10 sn dönüp düşerdi. Geliştirici
-      // makinesinde kurulum < 1 sn olduğu için geçiyor, tam suit yükü altında
-      // düşüyordu: "bir koşumda düştü, ikincide geçti" tam olarak buydu.
-      //
-      // Çözüm süreyi dondurmak değil — testin **iddiası** zaten mutlak sayı
-      // değil: yakalamak istediği hata `liveSeconds` (≈3600 sn) kadarlık bir
-      // ZIPLAMA. Birkaç saniyelik koşum sapmasına tolerans vermek bu
-      // hassasiyeti azaltmaz; aşağıdaki olumsuz iddia payın 30 katı uzakta.
-      final observedTotal = await waitForTodayTotal(
-        tester,
-        atLeast: expectedTotal,
-        atMost: expectedTotal + _driftSlackSeconds,
-        reason: 'kayıtlı + canlı toplamı ekranda görünmeli',
-      );
-      expect(
-        observedTotal,
-        lessThan(expectedTotal + liveSeconds),
-        reason: 'canlı süre daha ilk çizimde iki kez sayılmamalı',
-      );
+    await tester.tap(find.text('Durdur'));
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Bu, diğer cihazdaki sayacı da durduracak.'),
+      findsOneWidget,
+    );
 
-      // --- Durdur'a basıldı: notifier ilk await'ten önce bunu yayınlar. ---
-      fake.push(
-        running.copyWith(
-          isStopping: true,
-          settlingSeconds: liveSeconds,
-          settlingBaseline: recordedSeconds,
-          settlingDay: istanbulDay(now),
+    await tester.tap(find.text('İptal'));
+    await tester.pumpAndSettle();
+    expect(mirror.mirrorStopCalls, 0);
+    expect(mirror.state.isRunning, isTrue);
+
+    await tester.tap(find.text('Durdur'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Durdur').last);
+    await tester.pumpAndSettle();
+    expect(mirror.mirrorStopCalls, 1);
+    expect(mirror.state.isRunning, isFalse);
+  });
+
+  testWidgets('WP-250: Durdur sırasında "Bugün" toplamı zıplamaz', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    final prefs = await SharedPreferences.getInstance();
+
+    final now = DateTime.now();
+    // WP-296 bu testi bir kez saatten kurtarmaya çalıştı ama gün başlangıcını
+    // **yerel** takvimle aldı; ürünün gün sınırı ise `Europe/Istanbul`. UTC
+    // koşucuda 21:00 = İstanbul 00:00 olduğu için kayıt düne düşüyor,
+    // `dailyTotals` bugüne 0 yazıyor ve toplam 2 saat yerine 1 saat çıkıyordu
+    // — v49 sürümünü kıran hata buydu. Artık geriye gidiş **İstanbul günü**
+    // içinde tutuluyor: gün başından beri 1 saat geçmemişse pencere kısalır,
+    // beklenen toplam da ona göre hesaplanır.
+    final liveWindow = backWithinIstanbulToday(const Duration(hours: 1));
+    final liveSeconds = liveWindow.inSeconds;
+    final startedAt = now.subtract(liveWindow);
+    const recordedSeconds = 3600;
+    final expectedTotal = recordedSeconds + liveSeconds;
+
+    // Bugün zaten kayıtlı bir saat.
+    final recordedSession = StudySession(
+      id: 'rec-1',
+      userId: 'u1',
+      start: startedAt,
+      end: startedAt.add(const Duration(seconds: recordedSeconds)),
+      durationSeconds: recordedSeconds,
+      source: StudySource.live,
+    );
+    // Durdurulan oturum DB'ye düştüğünde eklenecek satır.
+    final stoppedSession = StudySession(
+      id: 'rec-2',
+      userId: 'u1',
+      start: startedAt,
+      end: now,
+      durationSeconds: liveSeconds,
+      source: StudySource.live,
+    );
+
+    final sessions = StreamController<List<StudySession>>.broadcast();
+    addTearDown(sessions.close);
+
+    final running = StudyTimerState(
+      isRunning: true,
+      startedAt: startedAt,
+      phase: TimerPhase.work,
+    );
+    final fake = _FakeTimerNotifier(running);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          userSessionsProvider.overrideWith((ref) => sessions.stream),
+          userSubjectsProvider.overrideWith(
+            (ref) => Stream.value(const <Subject>[]),
+          ),
+          dailyGoalMinutesProvider.overrideWithValue(240),
+          userGroupProvider.overrideWithValue(
+            const AsyncData<StudyGroup?>(null),
+          ),
+          studyTimerProvider.overrideWith(() => fake),
+        ],
+        child: MaterialApp(
+          locale: const Locale('tr'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const Scaffold(
+            body: SizedBox(width: 380, height: 900, child: StudyTimerCard()),
+          ),
         ),
-      );
-      await tester.pump();
-      expect(
-        find.text(formatHumanSeconds(expectedTotal)),
-        findsWidgets,
-        // Not: settling* alanlarını test verdiği için buradan sonrası
-        // gerçek saatten bağımsız ve **tam belirlenimli**dir.
-        reason: 'durdurma anında toplam değişmemeli',
-      );
+      ),
+    );
 
-      // --- RTT penceresi: kayıt yerel cache'e düştü, stream emit etti,
-      //     ama `_finish()` HENÜZ çalışmadı (isRunning hâlâ true). ---
-      sessions.add([recordedSession, stoppedSession]);
-      // Olumsuz iddia: sayı **değişmemeli**. Tek `pump()` ile yetinilseydi
-      // olay henüz işlenmemiş olabilir ve test hatayı kaçırıp boş yere geçerdi.
-      await pumpFrames(tester);
-      expect(
-        find.text(formatHumanSeconds(expectedTotal)),
-        findsWidgets,
-        reason: 'ASIL BUG: burada canlı süre iki kez sayılıyordu',
-      );
-      expect(find.text(formatHumanSeconds(expectedTotal + liveSeconds)), findsNothing);
+    sessions.add([recordedSession]);
+    // Akış olayı + yeniden çizim iki ayrı tura düşebilir; tek `pump()`
+    // hızlı makinede yetiyor ama CI koşucusunda yetmiyordu (v49 kırılması).
+    //
+    // 🔴 WP-322 — kalan kararsızlığın KÖK NEDENİ buradaydı.
+    // Kart canlı süreyi HER karede gerçek saatten hesaplar
+    // (`study_timer_card.dart:130-132` → `DateTime.now().difference(startedAt)`).
+    // Yukarıdaki `now` yakalandıktan sonra `pumpWidget` + prefs kurulumu
+    // **1 saniyeden uzun sürerse** ekrandaki toplam `expectedTotal + 1` olur
+    // ve saat ileri aktığı için bir daha ASLA `expectedTotal`e dönmez →
+    // tam eşleşme bekleyen `pumpUntilFound` 10 sn dönüp düşerdi. Geliştirici
+    // makinesinde kurulum < 1 sn olduğu için geçiyor, tam suit yükü altında
+    // düşüyordu: "bir koşumda düştü, ikincide geçti" tam olarak buydu.
+    //
+    // Çözüm süreyi dondurmak değil — testin **iddiası** zaten mutlak sayı
+    // değil: yakalamak istediği hata `liveSeconds` (≈3600 sn) kadarlık bir
+    // ZIPLAMA. Birkaç saniyelik koşum sapmasına tolerans vermek bu
+    // hassasiyeti azaltmaz; aşağıdaki olumsuz iddia payın 30 katı uzakta.
+    final observedTotal = await waitForTodayTotal(
+      tester,
+      atLeast: expectedTotal,
+      atMost: expectedTotal + _driftSlackSeconds,
+      reason: 'kayıtlı + canlı toplamı ekranda görünmeli',
+    );
+    expect(
+      observedTotal,
+      lessThan(expectedTotal + liveSeconds),
+      reason: 'canlı süre daha ilk çizimde iki kez sayılmamalı',
+    );
 
-      // --- `_finish()` çalıştı. ---
-      fake.push(
-        const StudyTimerState().copyWith(
-          settlingSeconds: liveSeconds,
-          settlingBaseline: recordedSeconds,
-          settlingDay: istanbulDay(now),
-        ),
-      );
-      await tester.pump();
-      expect(find.text(formatHumanSeconds(expectedTotal)), findsWidgets);
-    },
-  );
+    // --- Durdur'a basıldı: notifier ilk await'ten önce bunu yayınlar. ---
+    fake.push(
+      running.copyWith(
+        isStopping: true,
+        settlingSeconds: liveSeconds,
+        settlingBaseline: recordedSeconds,
+        settlingDay: istanbulDay(now),
+      ),
+    );
+    await tester.pump();
+    expect(
+      find.text(formatHumanSeconds(expectedTotal)),
+      findsWidgets,
+      // Not: settling* alanlarını test verdiği için buradan sonrası
+      // gerçek saatten bağımsız ve **tam belirlenimli**dir.
+      reason: 'durdurma anında toplam değişmemeli',
+    );
+
+    // --- RTT penceresi: kayıt yerel cache'e düştü, stream emit etti,
+    //     ama `_finish()` HENÜZ çalışmadı (isRunning hâlâ true). ---
+    sessions.add([recordedSession, stoppedSession]);
+    // Olumsuz iddia: sayı **değişmemeli**. Tek `pump()` ile yetinilseydi
+    // olay henüz işlenmemiş olabilir ve test hatayı kaçırıp boş yere geçerdi.
+    await pumpFrames(tester);
+    expect(
+      find.text(formatHumanSeconds(expectedTotal)),
+      findsWidgets,
+      reason: 'ASIL BUG: burada canlı süre iki kez sayılıyordu',
+    );
+    expect(
+      find.text(formatHumanSeconds(expectedTotal + liveSeconds)),
+      findsNothing,
+    );
+
+    // --- `_finish()` çalıştı. ---
+    fake.push(
+      const StudyTimerState().copyWith(
+        settlingSeconds: liveSeconds,
+        settlingBaseline: recordedSeconds,
+        settlingDay: istanbulDay(now),
+      ),
+    );
+    await tester.pump();
+    expect(find.text(formatHumanSeconds(expectedTotal)), findsWidgets);
+  });
 }
