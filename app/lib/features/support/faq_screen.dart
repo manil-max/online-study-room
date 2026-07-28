@@ -233,11 +233,11 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('İptal'),
+              child: Text(l10n.profileIptal),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(context, controller.text.trim()),
-              child: const Text('Gönder'),
+              child: Text(l10n.profileGonder),
             ),
           ],
         ),

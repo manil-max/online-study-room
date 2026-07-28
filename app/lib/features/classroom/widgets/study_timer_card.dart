@@ -118,8 +118,10 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Sayacı durdur?'),
-        content: const Text('Bu, diğer cihazdaki sayacı da durduracak.'),
+        title: Text(AppLocalizations.of(dialogContext).classroomStopTimerTitle),
+        content: Text(
+          AppLocalizations.of(dialogContext).classroomStopTimerMirrorBody,
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
@@ -140,9 +142,9 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
     } catch (_) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            'Sayaç diğer cihazlarda durdurulamadı. Bağlantını kontrol edip tekrar dene.',
+            AppLocalizations.of(context).classroomStopTimerMirrorFailed,
           ),
         ),
       );
@@ -174,7 +176,13 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
           context,
         ).formatTimeOfDay(TimeOfDay.fromDateTime(stoppedAt));
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Diğer cihazda $time\'te durduruldu.')),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(
+                context,
+              ).classroomStoppedOnOtherDevice(time),
+            ),
+          ),
         );
       }
     });

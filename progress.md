@@ -142,10 +142,42 @@
   kapatılmalı. LOCAL KALDI: hiçbir migration apply edilmedi, tag/release yok.
 
 ### Claude Lane
-- **Durum:** [x] Boşta
-- **Faz/WP:** — · PLAN 3 Faz K + Faz L kapandı, **v55 yayında**
-- **SAHİP yollar:** —
-- **Son not (2026-07-28, v55 teslim turu):** Beş paralel zincir on dört WP'yi
+- **Durum:** [~] v56 entegrasyonu — staging uygulandı, **production sahip GO'su bekliyor**
+- **Faz/WP:** PLAN 4 (WP-412…428) birleştirme
+- **SAHİP yollar:** `tooling/release/deploy-contract.json`, `tooling/supabase/guard.tests.ps1`,
+  `supabase/tests/001_schema_contract.test.sql`, `supabase/tests/027_*`,
+  `supabase/migrations/0100_*`
+- **Son not (2026-07-28, v56 entegrasyon turu):** Beş lane on yedi WP'yi
+  (WP-412…WP-428) indirdi; on yedi kartın **hepsi koddan doğrulandı** (plandan
+  değil). Paket kırmızı teslim edildi, dört kusur kapatıldı (`7dab4e7`):
+  (1) `local_migration_head` `0096`'da kalmıştı — Lane E kendi migration'ından
+  sonra taşıdı, Lane B (`0097`–`0100`) taşımadı, replay "contract drift" ile hiç
+  başlamıyordu;
+  (2) `001_schema_contract` migration **sayısını** ve head'ini elle pinliyor —
+  yerel head'in ikinci pin yeri burası, guard/preflight artık türetiyor ama bu
+  pgTAP dosyası hâlâ elle yazılıyor;
+  (3) Lane B iki pgTAP çağrısını **uydurmuştu**: `hasnt_table_privilege` diye bir
+  fonksiyon ne pgTAP'ta ne PostgreSQL'de var, `throws_like` de SQLSTATE argümanı
+  almaz (o `throws_ok`'a ait). İkisi de "planned 6, ran 1" ile sessizce düşüyordu;
+  (4) 🔴 **gerçek ürün kusuru** — WP-428 push tetikleyicisi **hiç bildirim
+  üretmiyordu**. Tekilleştirme koşulu `count(*) = 1` idi; `AFTER ROW` tetikleyicisi
+  deyim sonunda çalıştığı için çok satırlı tek `INSERT`'te bütün satırlar görünür
+  olur ve koşul hiçbir satırda tutmaz. Üretimde şikâyetler tek tek geldiği için
+  çalışırdı, ama "toplu ekleme = sıfır bildirim" sessiz bir hataydı ve bu madde
+  Apple 1.2'nin **24 saat içinde işlem** şartına bağlı. Koşul artık "en eski açık
+  şikâyet ben miyim" — deyim gruplamasından bağımsız.
+  Ayrıca Lane A ana dalı kırmızı bırakmıştı (`fa68a0b`, Lane D onardı) ve Lane D
+  ortak `l10n/` dizininde `git checkout --` ile Lane C'nin commit'lenmemiş üç
+  anahtarını sildi — dört dilde geri yazıldı, kalıcı ders alındı.
+  **Teslim:** `flutter analyze` temiz · **1075/1075** Flutter testi · l10n dört
+  dilde **1391 anahtar, eksiksiz** (çevrilmemiş raporu `{}`) · deploy guard 75/75 ·
+  release preflight 8/8 · yerel replay `0001→0100` + **377 pgTAP PASS** ·
+  staging apply `30380751277`.
+  **Açık:** production `0094`'te bırakıldı, sahip GO'su gelmeden taşınmayacak.
+  🔴 v55'ten kalma: staging **ve production** `deploy_enabled`/`release_enabled`
+  bayrakları hâlâ **açık** — v55 `hold_reason`'ı "tag'den hemen sonra kapatılır"
+  diyordu ama kapatılmamış.
+- **Önceki not (2026-07-28, v55 teslim turu):** Beş paralel zincir on dört WP'yi
   (WP-379…WP-392) tek turda indirdi. Çakışma **olmadı** — `*.arb`,
   `settings_screen.dart`, `stats_period_bar.dart`, `campfire_scene.dart` ve
   migration numaraları sırayla ilerledi. 🔴 Ama paket **kırmızı teslim edildi**:
@@ -3925,6 +3957,26 @@ staging apply → production apply (sahip GO'su ile) → v56 stable.
 
 ## ⚠️ Risk ve Tuzak Notları
 
+- 🔴 **`l10n Gate` v55 boyunca kırmızıydı ve kimse bakmadı.** v56 entegrasyonunda
+  fark edildi: son beş koşum üst üste `failure`, dizeler WP-379/388/390'dan geliyor,
+  yani **v55 bu kapı kırmızıyken yayınlandı**. Katalog eşliği doğruydu — sorun
+  kaynak koddaki l10n'dan geçmeyen 11 Türkçe literal'di; İngilizce/Almanca/Arapça
+  cihazda Türkçe metin görünüyordu. Ders: yeşil sanılan bir kapının gerçekten yeşil
+  olduğu `gh run list --workflow=...` ile **doğrulanmadan** sürüm çıkarılmaz.
+  Yerel karşılığı: `python scripts/l10n_audit.py` (katalog eşliği + hardcoded tarama).
+  Katalog anahtarlarını saymak yetmez — audit ayrı bir şeye bakar.
+- 🔴 **`AFTER ROW` tetikleyicisinde `count(*)` ile tekilleştirme yapma.** AFTER
+  tetikleyicileri **deyim sonunda** çalışır; çok satırlı tek `INSERT`'te her
+  tetikleme anında bütün satırlar zaten görünürdür. WP-428'in `count(*) = 1`
+  koşulu bu yüzden hiçbir satırda tutmadı ve push **hiç** üretilmedi. Tek satırlık
+  insert'lerde çalıştığı için üretimde fark edilmezdi. Doğru biçim: "en eski açık
+  kayıt ben miyim" (`order by created_at, id limit 1`) — deyim gruplamasından bağımsız.
+- 🔴 **pgTAP'ta olmayan fonksiyon uydurmak sessizce geçer.** `hasnt_table_privilege`
+  diye bir fonksiyon **yok** (yerleşik `has_table_privilege` 3 argüman alır, `ok()`
+  içine sarılır); `throws_like` SQLSTATE argümanı **almaz**, o `throws_ok`'a aittir.
+  Yanlış imza "function ... does not exist" ile düşer ama dosya `plan(6)` dediği
+  için hata **"Bad plan: planned 6 but ran 1"** olarak görünür — asıl sebep
+  ekranın yukarısında kalır. pgTAP çıktısında önce `ERROR:` satırını ara.
 - **Sürüm disiplini.** Sürüm sahibin onayıyla çıkar; düzeltmeler birikir, tek sürümde çıkar.
 - **Migration drift kapandı.** Repo/local, staging ve production `0085`te hizalı (WP-351, 2026-07-27). Drift'in gerçek sebebi head farkı değil, production'ın **boş CLI migration geçmişiydi** — şema doğruyken `db push` 0001'den başlıyordu. Yeni bir ortam eklenirse ilk iş `migration list`in Remote sütununu okumaktır; boşsa push denenmez.
 - **Yedeksiz production.** PITR ve günlük yedek **yok** (Free plan). Sahip bunu kalıcı olarak kabul etti; `deploy-contract.json` içinde `backup_requirement: "waived"` olarak kayıtlı. Sonucu: production'da geri alma yolu yoktur, yalnız ileri migration ile düzeltilir. Repo **PUBLIC** olduğu için CI'da `db dump` alıp artifact'a koymak asla seçenek değildir.

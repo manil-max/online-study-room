@@ -5301,5 +5301,13 @@
   "feedbackTitle": "Feedback",
   "@feedbackTitle": {"description": "Settings entry and title of the feedback screen."},
   "feedbackTabCompose": "Senden",
-  "@feedbackTabCompose": {"description": "Tab that holds the feedback submission form."}
+  "@feedbackTabCompose": {"description": "Tab that holds the feedback submission form."},
+  "classroomStopTimerTitle": "Timer stoppen?",
+  "@classroomStopTimerTitle": {"description": "Title of the confirmation dialog shown before stopping a run that is mirrored on another device."},
+  "classroomStopTimerMirrorBody": "Dadurch wird auch der Timer auf deinem anderen Gerät gestoppt.",
+  "@classroomStopTimerMirrorBody": {"description": "Body of the mirrored-stop confirmation dialog."},
+  "classroomStopTimerMirrorFailed": "Der Timer konnte auf deinen anderen Geräten nicht gestoppt werden. Prüfe deine Verbindung und versuche es erneut.",
+  "@classroomStopTimerMirrorFailed": {"description": "Snackbar shown when the mirrored stop command fails."},
+  "classroomStoppedOnOtherDevice": "Um {time} auf deinem anderen Gerät gestoppt.",
+  "@classroomStoppedOnOtherDevice": {"description": "Snackbar telling the user their run was stopped remotely.", "placeholders": {"time": {"type": "String"}}}
 }

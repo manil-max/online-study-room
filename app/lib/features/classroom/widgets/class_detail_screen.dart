@@ -81,7 +81,7 @@ class ClassDetailScreen extends ConsumerWidget {
                   ref,
                   targetType: 'group',
                   targetId: group.id,
-                  snapshot: 'Grup adı: ${group.name}',
+                  snapshot: group.name,
                 ),
               ),
               if (isAdmin)

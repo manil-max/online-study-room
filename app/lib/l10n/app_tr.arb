@@ -1734,5 +1734,13 @@
   "feedbackTitle": "Geri bildirim",
   "@feedbackTitle": {"description": "Settings entry and title of the feedback screen."},
   "feedbackTabCompose": "Gönder",
-  "@feedbackTabCompose": {"description": "Tab that holds the feedback submission form."}
+  "@feedbackTabCompose": {"description": "Tab that holds the feedback submission form."},
+  "classroomStopTimerTitle": "Sayacı durdur?",
+  "@classroomStopTimerTitle": {"description": "Title of the confirmation dialog shown before stopping a run that is mirrored on another device."},
+  "classroomStopTimerMirrorBody": "Bu, diğer cihazdaki sayacı da durduracak.",
+  "@classroomStopTimerMirrorBody": {"description": "Body of the mirrored-stop confirmation dialog."},
+  "classroomStopTimerMirrorFailed": "Sayaç diğer cihazlarda durdurulamadı. Bağlantını kontrol edip tekrar dene.",
+  "@classroomStopTimerMirrorFailed": {"description": "Snackbar shown when the mirrored stop command fails."},
+  "classroomStoppedOnOtherDevice": "Diğer cihazda {time}'te durduruldu.",
+  "@classroomStoppedOnOtherDevice": {"description": "Snackbar telling the user their run was stopped remotely.", "placeholders": {"time": {"type": "String"}}}
 }

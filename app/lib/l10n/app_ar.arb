@@ -5301,5 +5301,13 @@
   "feedbackTitle": "الملاحظات",
   "@feedbackTitle": {"description": "Settings entry and title of the feedback screen."},
   "feedbackTabCompose": "إرسال",
-  "@feedbackTabCompose": {"description": "Tab that holds the feedback submission form."}
+  "@feedbackTabCompose": {"description": "Tab that holds the feedback submission form."},
+  "classroomStopTimerTitle": "إيقاف المؤقّت؟",
+  "@classroomStopTimerTitle": {"description": "Title of the confirmation dialog shown before stopping a run that is mirrored on another device."},
+  "classroomStopTimerMirrorBody": "سيؤدي هذا إلى إيقاف المؤقّت على جهازك الآخر أيضًا.",
+  "@classroomStopTimerMirrorBody": {"description": "Body of the mirrored-stop confirmation dialog."},
+  "classroomStopTimerMirrorFailed": "تعذّر إيقاف المؤقّت على أجهزتك الأخرى. تحقّق من اتصالك وحاول مرة أخرى.",
+  "@classroomStopTimerMirrorFailed": {"description": "Snackbar shown when the mirrored stop command fails."},
+  "classroomStoppedOnOtherDevice": "تم الإيقاف على جهازك الآخر في {time}.",
+  "@classroomStoppedOnOtherDevice": {"description": "Snackbar telling the user their run was stopped remotely.", "placeholders": {"time": {"type": "String"}}}
 }
