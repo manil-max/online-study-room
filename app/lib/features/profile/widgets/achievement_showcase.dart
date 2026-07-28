@@ -199,11 +199,14 @@ String achievementCatalogDescription(
   AppLocalizations l10n,
   AchievementDictEntry achievement,
 ) {
-  return switch (achievement.id) {
-    'perfect_month' => l10n.profileAchievementPerfectMonth30Rule,
-    'team_player' => l10n.profileAchievementTeamPlayerRule,
-    _ => achievement.description,
-  };
+  if (achievement.isSecret) {
+    return achievementDetailDescription(l10n, achievement, true);
+  }
+  if (achievement.tiers.isEmpty) return achievement.description;
+
+  // Katalogdaki ilk kademe, kazanımın net ve sayısal başlangıç hedefidir.
+  // Eşik ledger sözlüğünden geldiği için koşul metni katalogdan ayrılamaz.
+  return achievementTierConditionTr(l10n, achievement, achievement.tiers.first);
 }
 
 /// Oyunlaştırılmış vitrin: XP barı, taç, vitrin rozetleri, katalog + confetti.
