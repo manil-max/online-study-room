@@ -9,9 +9,11 @@ import '../../../core/widgets/crowned_avatar.dart';
 import '../../../data/models/achievement.dart';
 import '../../../data/models/gamification_profile.dart';
 import '../../../data/providers/auth_providers.dart';
+import '../../../data/providers/achievement_reward_provider.dart';
 import '../../../data/providers/gamification_providers.dart';
 import '../social_profile_screen.dart';
 import 'achievement_showcase.dart';
+import 'unread_message_badge.dart';
 
 /// Profil özeti: taç + taç XP barı + başarım rozetleri (WP-187/192).
 ///
@@ -27,6 +29,11 @@ class GamificationCard extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final authProfile = ref.watch(authStateProvider).value;
     final summaryAsync = ref.watch(gamificationSummaryProvider);
+    // WP-421: zincirin son halkasi. Bekleyen odul varsa Profil'de de gorunur;
+    // kullanici Basarimlar'i acmadan yeni basarimi fark eder.
+    final pendingRewards =
+        ref.watch(pendingAchievementRewardSummaryProvider).value?.pendingCount ??
+        0;
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -48,11 +55,25 @@ class GamificationCard extends ConsumerWidget {
                 userAchievementsProvider(authProfile.id),
               );
               return achsAsync.when(
-                data: (achs) => _BadgeSummary(
-                  displayName: authProfile.displayName,
-                  avatarUrl: authProfile.avatarUrl,
-                  profile: summary.profile,
-                  achievements: achs,
+                data: (achs) => Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    _BadgeSummary(
+                      displayName: authProfile.displayName,
+                      avatarUrl: authProfile.avatarUrl,
+                      profile: summary.profile,
+                      achievements: achs,
+                    ),
+                    if (pendingRewards > 0)
+                      Positioned(
+                        top: 0,
+                        right: 0,
+                        child: UnreadMessageBadge(
+                          key: const Key('achievements-pending-badge'),
+                          count: pendingRewards,
+                        ),
+                      ),
+                  ],
                 ),
                 loading: () => const Center(
                   child: SizedBox(

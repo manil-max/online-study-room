@@ -285,6 +285,22 @@ class InMemoryAdminRepository implements AdminRepository {
   }
 
   @override
+  Future<int> fetchUnreadTicketReplyCount(String userId) async {
+    final ownTicketIds = _tickets
+        .where((ticket) => ticket.userId == userId)
+        .map((ticket) => ticket.id)
+        .toSet();
+    return _ticketMessages
+        .where(
+          (message) =>
+              ownTicketIds.contains(message.ticketId) &&
+              message.senderRole == FeedbackTicketSenderRole.admin &&
+              message.readAt == null,
+        )
+        .length;
+  }
+
+  @override
   Future<void> markTicketMessagesRead({
     required String userId,
     required String ticketId,

@@ -477,6 +477,31 @@ class SupabaseAdminRepository implements AdminRepository {
   }
 
   @override
+  Future<int> fetchUnreadTicketReplyCount(String userId) async {
+    try {
+      // Once kendi biletlerim: RLS super-admin'e butun mesajlari acar, bu
+      // yuzden "gorunen her sey benimdir" varsayimi yanlis sayi uretirdi.
+      final tickets = await _client
+          .from('feedback_tickets')
+          .select('id')
+          .eq('user_id', userId);
+      final ids = tickets
+          .map((row) => row['id'] as String)
+          .toList(growable: false);
+      if (ids.isEmpty) return 0;
+      final rows = await _client
+          .from('feedback_ticket_messages')
+          .select('id')
+          .inFilter('ticket_id', ids)
+          .eq('sender_role', FeedbackTicketSenderRole.admin.dbValue)
+          .isFilter('read_at', null);
+      return rows.length;
+    } on PostgrestException catch (e) {
+      throw AdminException(_friendlyMessage(e.message));
+    }
+  }
+
+  @override
   Future<void> markTicketMessagesRead({
     required String userId,
     required String ticketId,

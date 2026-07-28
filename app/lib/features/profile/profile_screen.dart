@@ -15,6 +15,8 @@ import 'settings_screen.dart';
 import 'widgets/gamification_card.dart';
 import '../../data/providers/notification_providers.dart';
 import 'widgets/unread_announcement_dot.dart';
+import 'widgets/unread_message_badge.dart';
+import '../../data/providers/admin_providers.dart';
 
 /// Profil sekmesi: foto, görünen ad, ayarlar. Grup yönetimi → Gruplar sekmesi.
 /// Bkz. project.md §3.2.
@@ -54,6 +56,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final theme = Theme.of(context);
     final profile = ref.watch(authStateProvider).value;
     final unreadAnnouncements = ref.watch(unreadAnnouncementCountProvider);
+    // WP-421: zincirin en ust halkasi. Ayarlar satirinda hem duyuru hem
+    // okunmamis yonetici yaniti gorunur; alt seviyede olan sey ust seviyede
+    // de gorunmek zorunda.
+    final unreadReplies =
+        ref.watch(unreadFeedbackReplyCountProvider).value ?? 0;
 
     // Windows: içerik okuma genişliğinde ortalanır (full-bleed mobil liste değil).
     final page = Scaffold(
@@ -177,6 +184,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
+                            if (unreadReplies > 0) ...[
+                              UnreadMessageBadge(
+                                key: const Key('settings-row-reply-badge'),
+                                count: unreadReplies,
+                              ),
+                              const SizedBox(width: 8),
+                            ],
                             if (unreadAnnouncements > 0) ...[
                               UnreadAnnouncementDot(
                                 key: const Key('settings-row-unread-dot'),

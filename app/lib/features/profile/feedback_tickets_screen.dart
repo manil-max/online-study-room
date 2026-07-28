@@ -152,6 +152,9 @@ class _FeedbackTicketConversationDialogState
         userId: user.id,
         ticketId: widget.ticket.id,
       );
+      // WP-421: okununca zincirin **tamami** temizlenir; ust seviyelerde
+      // (Ayarlar satiri, Profil satiri) rozet asili kalmaz.
+      ref.invalidate(unreadFeedbackReplyCountProvider);
       if (!mounted) return;
       setState(() {
         _messages = messages;
@@ -179,6 +182,7 @@ class _FeedbackTicketConversationDialogState
           );
       _controller.clear();
       ref.invalidate(myFeedbackTicketsProvider);
+      ref.invalidate(unreadFeedbackReplyCountProvider);
       ref.invalidate(adminFeedbackTicketsProvider(null));
       await _load();
       _scrollToBottom(animated: true);

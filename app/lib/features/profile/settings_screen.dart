@@ -26,6 +26,7 @@ import 'data_export_screen.dart';
 import 'feedback_screen.dart';
 import 'legal_center_screen.dart';
 import 'widgets/camp_animal_picker.dart';
+import 'widgets/unread_message_badge.dart';
 
 /// Ayarlar: davranışları değiştirmeden, bulunabilir bilgi mimarisi sunar.
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -76,6 +77,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final profile = ref.watch(authStateProvider).value;
     final isAdmin = ref.watch(adminIsSuperAdminProvider).value ?? false;
     final unreadAnnouncements = ref.watch(unreadAnnouncementCountProvider);
+    // WP-421: zincirin ikinci halkasi.
+    final unreadReplies =
+        ref.watch(unreadFeedbackReplyCountProvider).value ?? 0;
     final animal = profile == null
         ? null
         : campAnimalFor(
@@ -316,7 +320,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       // — ekran artık hem gönderme hem geçmiş sekmesini taşıyor.
                       title: Text(l10n.feedbackTitle),
                       subtitle: Text(l10n.profileHataVeyaOneriniBize),
-                      trailing: const Icon(Icons.chevron_right),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (unreadReplies > 0) ...[
+                            UnreadMessageBadge(
+                              key: const Key('feedback-row-reply-badge'),
+                              count: unreadReplies,
+                            ),
+                            const SizedBox(width: 8),
+                          ],
+                          const Icon(Icons.chevron_right),
+                        ],
+                      ),
                       onTap: profile == null
                           ? null
                           : () => Navigator.of(context).push(

@@ -21,12 +21,15 @@ import 'feedback_tickets_screen.dart';
 /// ayirmaz, ustune biner. Dogrusu `Column` + `Expanded` -- kaydirilabilir govde
 /// yeri paylasir, serit her zaman altta kalir ve klavye acildiginda
 /// `resizeToAvoidBottomInset` govdeyi kisaltir.
-class FeedbackScreen extends StatelessWidget {
+class FeedbackScreen extends ConsumerWidget {
   const FeedbackScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    // WP-421: zincirin ucuncu halkasi -- sekmenin uzerinde renkli sayi rozeti.
+    final unreadReplies =
+        ref.watch(unreadFeedbackReplyCountProvider).value ?? 0;
     return DefaultTabController(
       length: 2,
       child: Scaffold(
@@ -40,7 +43,19 @@ class FeedbackScreen extends StatelessWidget {
               ),
               Tab(
                 key: const Key('feedback-tab-tickets'),
-                text: l10n.feedbackMyTickets,
+                // Rozet sekme metninin **ustune** biner: yan yana dizilirse dar
+                // telefonda sekme genisligi yetmiyor ve Row tasiyor.
+                child: unreadReplies > 0
+                    ? Badge(
+                        key: const Key('feedback-tab-reply-badge'),
+                        backgroundColor: Theme.of(context).colorScheme.primary,
+                        textColor: Theme.of(context).colorScheme.onPrimary,
+                        label: Text(
+                          unreadReplies > 99 ? '99+' : '$unreadReplies',
+                        ),
+                        child: Text(l10n.feedbackMyTickets),
+                      )
+                    : Text(l10n.feedbackMyTickets),
               ),
             ],
           ),

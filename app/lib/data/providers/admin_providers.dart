@@ -11,6 +11,7 @@ import '../repositories/admin_repository.dart';
 import '../repositories/in_memory/in_memory_admin_repository.dart';
 import '../repositories/supabase/supabase_admin_repository.dart';
 import 'auth_providers.dart';
+import 'notification_providers.dart';
 
 final adminRepositoryProvider = Provider<AdminRepository>((ref) {
   final client = _supabaseClientOrNull();
@@ -73,6 +74,31 @@ final myFeedbackTicketsProvider = FutureProvider<List<FeedbackTicket>>((
   final profile = ref.watch(authStateProvider).value;
   if (profile == null) return const [];
   return ref.watch(adminRepositoryProvider).fetchMyFeedbackTickets(profile.id);
+});
+
+/// Okunmamis yonetici yaniti sayisi — rozet zincirinin tek kaynagi.
+///
+/// WP-421: Sahip "bildirim geliyor ama profilde/ayarlarda nokta yok" dedi.
+/// Rozet artik pushtan degil sunucudaki mesaj satirlarindan turuyor; zincirin
+/// her halkasi (Profil → Ayarlar → Geri bildirim → bilet) ayni sayiyi okur.
+/// `autoDispose` **degil**: dinleyicisiz kalip her okumada yeniden kurulmasi
+/// rozetin yanip sonmesine ve regresyon testinin sessizce etkisizlesmesine yol
+/// acar (Riverpod 3 tuzagi).
+final unreadFeedbackReplyCountProvider = FutureProvider<int>((ref) async {
+  final profile = ref.watch(authStateProvider).value;
+  if (profile == null) return 0;
+  return ref
+      .watch(adminRepositoryProvider)
+      .fetchUnreadTicketReplyCount(profile.id);
+});
+
+/// Profil sekmesindeki "Ayarlar" satirinin toplam rozet sayisi.
+///
+/// Zincir kurali: alt seviyede gorunen her sinyal ust seviyede de gorunur.
+final settingsBadgeCountProvider = Provider<int>((ref) {
+  final announcements = ref.watch(unreadAnnouncementCountProvider);
+  final replies = ref.watch(unreadFeedbackReplyCountProvider).value ?? 0;
+  return announcements + replies;
 });
 
 final adminUsersProvider = FutureProvider.autoDispose<List<AdminUserDto>>((

@@ -200,6 +200,13 @@ abstract class AdminRepository {
     required String message,
   });
 
+  /// Kullanicinin kendi biletlerinde **okunmamis yonetici yaniti** sayisi.
+  ///
+  /// WP-421: Rozet zinciri bu tek sayidan beslenir. Push ile ayni olaydan
+  /// (yonetici yaniti) turer ama pushu **beklemez** — cevrimdisi acilista da
+  /// sunucudan okunur.
+  Future<int> fetchUnreadTicketReplyCount(String userId);
+
   Future<void> markTicketMessagesRead({
     required String userId,
     required String ticketId,

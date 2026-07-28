@@ -60,6 +60,23 @@ class _SocialProfileScreenState extends ConsumerState<SocialProfileScreen> {
   var _capabilityRecorded = false;
 
   @override
+  void initState() {
+    super.initState();
+    // 🔴 WP-421: Sahip "push düştü ama başarımlar ekranında rozet yok, ~2 dk
+    // sonra geldi" dedi. Gecikmenin kaynağı push değil **önbellekti**: bu
+    // sağlayıcılar yalnız oturum bitişi/ödül toplama gibi olaylarda
+    // tazeleniyordu. Ekran her açıldığında sunucudan yeniden okunur; rozet
+    // artık push'u beklemez.
+    Future.microtask(() {
+      if (!mounted) return;
+      ref.invalidate(userAchievementsProvider(widget.profile.id));
+      ref.invalidate(gamificationProfileProvider(widget.profile.id));
+      ref.invalidate(pendingAchievementRewardSummaryProvider);
+      ref.invalidate(pendingAchievementRewardsProvider);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final selfId = ref.watch(authStateProvider).value?.id;
     final isSelf = selfId != null && selfId == widget.profile.id;
