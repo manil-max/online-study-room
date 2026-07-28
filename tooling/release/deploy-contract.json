@@ -2,10 +2,10 @@
   "schema_version": 1,
   "local_migration_head": "0094",
   "staging": {
-    "migration_head": "0089",
+    "migration_head": "0094",
     "deploy_enabled": true,
     "release_enabled": true,
-    "hold_reason": "WP-373 adds 0089: it schedules the lease sweeper that 0082 defined but never wired up. Paired with the client's new 60s heartbeat, a live run keeps its lease while it runs and a crashed device's run is closed within a minute instead of staying 'running' forever. Schema is unchanged - the migration only creates one pg_cron job. Staging applies first so production repeats a proven step."
+    "hold_reason": "PLAN 3 phase L adds 0090-0094: support-inbox ticket typing (0090), server-fed FAQ entries (0091), two-way block enforcement inside send_nudge (0092), group bans plus server-side invite-code regeneration (0093), and a public-name filter for display names and group names (0094). Every step is additive or replaces an existing function with an identical signature (join_group, join_public_group, send_nudge), so v54 clients already in the field keep working across the apply. Staging applies first so production repeats a proven step."
   },
   "production": {
     "migration_head": "0089",

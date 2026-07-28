@@ -85,6 +85,10 @@ void main() {
       ],
     );
     addTearDown(container.dispose);
+    // Riverpod 3'te saglayicilar varsayilan olarak auto-dispose. Dinleyici
+    // olmadan `authStateProvider` her okumada yeniden kurulur ve yukleme
+    // durumundayken dispose edilir; koordinator kullaniciyi hic goremez.
+    container.listen(authStateProvider, (_, _) {});
     await container.read(authStateProvider.future);
     return container;
   }

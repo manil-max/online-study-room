@@ -396,7 +396,18 @@ class _SceneLayoutState extends State<_SceneLayout>
             _Placement(
               camper: widget.campers[i],
               x: mx.clamp(8 + box / 2, w - 8 - box / 2).toDouble(),
-              y: my.clamp(8 + box * _CritterBody.anchor, h - 8).toDouble(),
+              // Kelepçenin üstü ile altı aynı sözleşmeyi tutmalı: `y` gövdenin
+              // ÇIPASI, üst kenarı değil. Üst sınırda `box * anchor` düşülüyordu
+              // ama alt sınırda kutunun çıpa altında kalan `box * (1 - anchor)`
+              // parçası hiç düşülmemişti; bu yüzden en öndeki hayvanın ayakları
+              // sahnenin dışına taşıp `ClipRRect` tarafından kesilebiliyordu.
+              // WP-382 ateşi aşağı aldığında (telefon, 4+ kişi) tam bu oldu.
+              y: my
+                  .clamp(
+                    8 + box * _CritterBody.anchor,
+                    h - 8 - box * (1 - _CritterBody.anchor),
+                  )
+                  .toDouble(),
               depth: depth,
               scale: scale,
               back: seat.y < 0,

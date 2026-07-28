@@ -34,7 +34,9 @@ Widget _wrap(InMemoryAdminRepository repo, String userId, Widget home) {
       locale: const Locale('tr'),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: home,
+      // Sekme uretimde Scaffold'un body'sinde duruyor (admin_screen.dart);
+      // kosum bunu taklit etmezse Material isteyen widget'lar patlar.
+      home: Scaffold(body: home),
     ),
   );
 }
