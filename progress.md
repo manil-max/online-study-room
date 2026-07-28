@@ -3424,6 +3424,29 @@ WP-385 (l10n/başarım). Sonraki dalga: WP-381 · WP-383 · WP-382.
   - **Kanıt etiketi:** `Cihazda doğrulanmalı` — 2× sahibin verdiği başlangıç
     değeridir, ince ayar önizleme aracından gelecek.
 - **Commit:** `WP-416`
+- 🔴 **v56 sahip düzeltmesi (2026-07-28, merdiven karesi üzerinden):** *"yeşili
+  **üste** uzat, sen alta yeşil koyup hepsini yukarı çıkarıyorsun; ateşi ve
+  hayvanları biraz aşağı indir, yeşil 150 px olsun."*
+  - **Kök neden:** ufuk, ateşin **türeviydi** (`horizon = fireY + 18 − ry·0.82`).
+    Bu bağ yüzünden yeşili büyütmenin tek yolu tüm kompozisyonu yukarı
+    kaydırmaktı — sahibin şikâyeti tam olarak buydu, ayar hatası değil **model**
+    hatasıydı.
+  - **Düzeltme:** ufuk artık yalnız zemin çıpasından türüyor; yeni
+    `ringDropPixels` kolu ateşi + oturma halkasını ufka göre **aşağı** itiyor ve
+    yeşil alanı hiç oynatmıyor (`campfireFireY`). İki kol birbirinden bağımsız.
+  - **Seçilen sayılar:** yeşil alan **150 px**, düşürme **40 px**
+    (`kCampfirePhoneGreenAreaHeight` / `kCampfirePhoneRingDropPixels`).
+    Masaüstü profilinde düşürme `0` — v55 kompozisyonu aynen duruyor.
+  - **Test:** `campfire_wp416_layout_test.dart` içinde `v56 · yeşil yukarı,
+    kompozisyon aşağı` grubu (3 test): düşürme ufku **hiç** oynatmıyor · ateşi
+    tam verilen kadar itiyor · sahnede 8 kişide ufuk sabitken gövdeler tam 40 px
+    aşağı iniyor. Kelepçe testi 40 px'te de yeşil (ayak kesilmesi yok). Kamp
+    ateşi paketi **29/29**, `flutter analyze` temiz, telefon golden'ları
+    yenilendi.
+  - **Önizleme:** araca beşinci kol eklendi (`ring-drop`, 0–70 px); kopyalanan
+    satır artık `ringDrop=…` da taşıyor.
+  - **Kanıt etiketi:** `Cihazda doğrulanmalı`.
+- **Commit (v56):** `WP-416 v56`
 
 #### WP-417: Tanıtım turu sadeleştirme 🎯
 - **Program/Faz:** PLAN 4 · Faz Q (kaynak: sahip cihaz testi)
@@ -3649,7 +3672,7 @@ WP-385 (l10n/başarım). Sonraki dalga: WP-381 · WP-383 · WP-382.
 
 #### WP-421: Rozet zinciri ve gecikmesi 🔴
 - **Program/Faz:** PLAN 4 · Faz R (kaynak: sahip cihaz testi)
-- **Ajan:** Lane C · **Durum:** [ ] Başlamadı · ⏳ WP-420'den **sonra**
+- **Ajan:** Lane C · **Durum:** [x] Kod + otomatik test tamam — `Cihazda doğrulanmalı`
 - **Problem:** Sahip: *"profil + ayarlarda kırmızı ya da başka nokta yoktu, kendim
   girip gördüm, sadece bildirim geliyor."* Başarımlarda da aynı: push düşüyor ama
   **başarımlar ekranında rozet yok**. Sonradan (~2 dk) rozet düştü → **gecikme** var.
@@ -3658,10 +3681,10 @@ WP-385 (l10n/başarım). Sonraki dalga: WP-381 · WP-383 · WP-382.
   `app/lib/features/profile/**`, `app/lib/features/settings/**`, başarım ekranı, testler
 - **DOKUNMA:** `features/admin/**` · `features/safety/**` · `supabase/migrations/**`
 - **Adımlar:**
-  - [ ] Rozet zinciri: **Profil → Ayarlar → Feedback → Başarımlar**. Her seviye gösterir.
-  - [ ] Push ile rozet **aynı olaydan** beslenir; rozet push'u beklemez.
-  - [ ] Okununca zincir temizlenir (üst seviyeler de).
-  - [ ] Yeni mesajda WhatsApp/Instagram gibi renkli rozet (sahip isteği).
+  - [x] Rozet zinciri: **Profil → Ayarlar → Feedback → Başarımlar**. Her seviye gösterir.
+  - [x] Push ile rozet **aynı olaydan** beslenir; rozet push'u beklemez.
+  - [x] Okununca zincir temizlenir (üst seviyeler de).
+  - [x] Yeni mesajda WhatsApp/Instagram gibi renkli rozet (sahip isteği).
 - **Migration/Ortam:** Muhtemelen yok. Sunucu tarafı gerekirse `0101` — **Lane B'nin
   `0100`'ü commit'lendikten sonra** numarayı al.
 - **Kabul:** Okunmamış mesaj/başarım varken zincirdeki **her seviye** rozet gösterir ·
@@ -3669,6 +3692,38 @@ WP-385 (l10n/başarım). Sonraki dalga: WP-381 · WP-383 · WP-382.
 - **Tuzaklar:** Riverpod 3 auto-dispose — dinleyicisiz provider her `read`'de yeniden
   build olur ve regresyon testini sessizce etkisizleştirir. Repoda yerleşik kalıp var, kullan.
 - **Model önerisi:** Sonnet
+- **DoD kanıtı (2026-07-28, Lane C · `Kodda doğrulandı`):**
+  - **Rozet hiç yoktu — eklendi.** Okunmamış yönetici yanıtı için yeni sayaç:
+    `AdminRepository.fetchUnreadTicketReplyCount` **çift repo** (supabase +
+    in_memory) ve `unreadFeedbackReplyCountProvider`. Migration gerekmedi:
+    `0074` RLS'i kullanıcıya kendi biletinin mesajlarını zaten açıyor.
+    Supabase yolu önce kendi bilet id'lerini alıyor — RLS super-admin'e her şeyi
+    açtığı için "gördüğüm her şey benimdir" varsayımı yanlış sayı üretirdi.
+  - **Zincirin dört halkası:** Profil → Ayarlar satırı (`settings-row-reply-badge`) ·
+    Ayarlar → Geri bildirim satırı (`feedback-row-reply-badge`) · Geri bildirim →
+    "Geri bildirimlerim" sekmesi (`feedback-tab-reply-badge`) · Profil →
+    Başarımlar kartı bekleyen ödül rozeti (`achievements-pending-badge`).
+    Hepsi **tek kaynaktan** okuyor; kaynak sözleşmesi testte kilitli.
+  - **Renkli rozet:** `UnreadMessageBadge` — sayı taşıyan dolu rozet, rengi
+    `colorScheme.primary` (yeni içerik, uyarı değil; `warning_tokens` ayrı yüzey).
+    Sekmede metnin **üstüne** binen `Badge` kullanıldı: yan yana Row dar
+    telefonda 106 px taşıyordu (testte yakalandı).
+  - 🔴 **Gecikmenin kök nedeni push değil önbellekti.** Başarım/ödül
+    sağlayıcıları yalnız oturum bitişi ve ödül toplamada tazeleniyordu; bu
+    yüzden rozet ~2 dk sonra düşüyordu. `SocialProfileScreen.initState` artık
+    açılışta dördünü de invalidate ediyor.
+  - **Okununca temizlenir:** `markTicketMessagesRead` sonrası
+    `unreadFeedbackReplyCountProvider` invalidate edilir → üst seviyelerdeki
+    rozetler de söner (testte açıp kapatınca sıfırlandığı doğrulanıyor).
+  - 🔴 **Auto-dispose tuzağına karşı açık kapı:** sağlayıcı bilinçli olarak
+    `autoDispose` **değil** ve sayan bir sahte repo ile "dinleyicisiz iki okuma =
+    tek sunucu çağrısı" testte sabitlendi. `autoDispose`'a çevrilirse kırmızı düşer.
+  - **Push bağımsızlığı:** rozet yüzeyleri ve sağlayıcı push servisine hiç
+    referans vermiyor (kaynak sözleşmesi testi bunu da tutuyor).
+  - **Test:** `flutter analyze` 0 uyarı · `badge_chain_wp421_test.dart` 10/10 ·
+    profil + ayarlar + geri bildirim + başarım vitrini paketleri 150/150 yeşil.
+  - **Cihazda doğrulanmalı:** Yönetici yanıt yazdığında rozetin dört seviyede de
+    belirmesi, okununca sönmesi ve başarım rozetinin gecikmeden düşmesi.
 
 #### WP-422: SSS giriş ekranında yerleşim ve etiket ❓
 - **Program/Faz:** PLAN 4 · Faz R (kaynak: sahip cihaz testi)

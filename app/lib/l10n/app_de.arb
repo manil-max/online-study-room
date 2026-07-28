@@ -5280,6 +5280,8 @@
   "@campfirePreviewTitle": {"description": "Title of the mobile campfire tuning preview."},
   "campfirePreviewGreenArea": "Höhe der Grünfläche (px)",
   "@campfirePreviewGreenArea": {"description": "Slider label for the green ground band height in pixels."},
+  "campfirePreviewRingDrop": "Absenkung von Feuer und Tieren (px)",
+  "@campfirePreviewRingDrop": {"description": "Slider label for how far the fire and campers drop below the horizon, in pixels."},
   "campfirePreviewNameFontSize": "Schriftgröße der Namen",
   "@campfirePreviewNameFontSize": {"description": "Slider label for the camper name font size."},
   "campfirePreviewRowSpacing": "Zeilenabstand",

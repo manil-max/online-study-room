@@ -74,7 +74,7 @@ Widget _harness({
 
 void main() {
   group('WP-416 yeşil alan', () {
-    test('telefon profili sahibin istediği 2× bandı üretir', () {
+    test('telefon profili sahibin seçtiği 150 px bandı üretir', () {
       const profile = CampfireViewportProfile.phone();
       final green = campfireGreenAreaHeight(
         sceneHeight: kCampfireSceneHeight,
@@ -83,12 +83,11 @@ void main() {
         fireYPixelOffset: kCampfireFireYOffset,
       );
 
+      expect(green, closeTo(150, 0.05));
       expect(green, closeTo(kCampfirePhoneGreenAreaHeight, 0.05));
-      expect(
-        green,
-        closeTo(_v55PhoneGreenArea * 2, 0.1),
-        reason: 'sahip "şu anki px boyutu 2 katına çıkmalı" dedi',
-      );
+      // Sahibin başlangıç değeri 2× (137) idi, merdiveni gördükten sonra 150'ye
+      // çıkardı — v55'e göre ~2.19×.
+      expect(green, greaterThan(_v55PhoneGreenArea * 2));
     });
 
     test('masaüstü kompozisyonu değişmedi (sahip v55\'te onayladı)', () {
@@ -106,7 +105,7 @@ void main() {
     });
 
     test('px ↔ oran çevrimi her iki yönde de aynı sayıyı verir', () {
-      for (final target in const [80.0, 137.0, 180.0]) {
+      for (final target in const [80.0, 137.0, 150.0, 180.0]) {
         final groundY = campfireGroundYFactorForGreenArea(
           sceneHeight: kCampfireSceneHeight,
           greenAreaHeight: target,
@@ -132,6 +131,87 @@ void main() {
       // Açık çıpa verilirse px'ten önce gelir (WP-377 golden varyantları).
       const pinned = CampfireTuning(greenAreaHeight: 160, groundYFactor: 0.5);
       expect(pinned.resolvedGroundYFactor(phone), 0.5);
+    });
+  });
+
+  group('v56 · yeşil yukarı, kompozisyon aşağı', () {
+    test('düşürme kolu ufku (yani yeşil alanı) hiç oynatmaz', () {
+      const phone = CampfireViewportProfile.phone();
+      for (final drop in const [0.0, 24.0, 40.0, 90.0]) {
+        expect(
+          campfireHorizonY(
+            sceneHeight: kCampfireSceneHeight,
+            groundYFactor: phone.groundYFactor,
+            fireYOffset: phone.fireYOffset,
+            fireYPixelOffset: kCampfireFireYOffset,
+          ),
+          closeTo(kCampfireSceneHeight - 150, 0.05),
+          reason: 'düşürme $drop ufku kaydırıyor — sahip tam bunu istemiyordu',
+        );
+      }
+    });
+
+    test('düşürme kolu ateşi tam verilen kadar aşağı iter', () {
+      const phone = CampfireViewportProfile.phone();
+      double fireFor(double drop) => campfireFireY(
+        sceneHeight: kCampfireSceneHeight,
+        groundYFactor: phone.groundYFactor,
+        fireYOffset: phone.fireYOffset,
+        fireYPixelOffset: kCampfireFireYOffset,
+        ringDropPixels: drop,
+      );
+      expect(fireFor(40) - fireFor(0), closeTo(40, 0.001));
+      expect(
+        const CampfireTuning().resolvedRingDropPixels(phone),
+        kCampfirePhoneRingDropPixels,
+      );
+      // Açık kol profilinkini ezer (önizleme aracı bu yolu kullanır).
+      expect(
+        const CampfireTuning(ringDropPixels: 12).resolvedRingDropPixels(phone),
+        12,
+      );
+    });
+
+    testWidgets('sahne ufku sabit tutup hayvanları aşağı indirir', (
+      tester,
+    ) async {
+      Future<(double horizon, double frontBottom)> measure(
+        CampfireTuning tuning,
+      ) async {
+        await tester.pumpWidget(_harness(memberCount: 8, tuning: tuning));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 50));
+        final forestFinder = find.byWidgetPredicate(
+          (widget) =>
+              widget is CustomPaint && widget.painter is GroundedForestPainter,
+        );
+        final forest =
+            tester.widget<CustomPaint>(forestFinder).painter!
+                as GroundedForestPainter;
+        final bottoms = [
+          for (var index = 0; index < 8; index++)
+            tester.getRect(find.byKey(ValueKey('b-u$index'))).bottom,
+        ]..sort();
+        return (forest.horizonY, bottoms.last);
+      }
+
+      final high = await measure(const CampfireTuning(ringDropPixels: 0));
+      final low = await measure(
+        CampfireTuning(ringDropPixels: kCampfirePhoneRingDropPixels),
+      );
+
+      expect(
+        low.$1,
+        closeTo(high.$1, 0.01),
+        reason: 'yeşil alan düşürmeyle değişmemeli',
+      );
+      expect(
+        low.$2 - high.$2,
+        closeTo(kCampfirePhoneRingDropPixels, 0.5),
+        reason: 'kompozisyon tam düşürme payı kadar aşağı inmeli',
+      );
+
+      await tester.pumpWidget(const SizedBox());
     });
   });
 
@@ -275,7 +355,7 @@ void main() {
   });
 
   group('WP-416 mobil önizleme aracı', () {
-    testWidgets('dört kol da ekranda ve gerçek sahneyi sürüyor', (
+    testWidgets('beş kol da ekranda ve gerçek sahneyi sürüyor', (
       tester,
     ) async {
       tester.view.physicalSize = const Size(420, 1400);
@@ -289,6 +369,8 @@ void main() {
       expect(find.byType(CampfireScene), findsOneWidget);
       for (final key in const [
         'green-area',
+        // v56: sahibin "yeşili büyüt ama kompozisyonu aşağıda tut" kolu.
+        'ring-drop',
         'label-font',
         'seat-spread',
         'critter-scale',
@@ -303,6 +385,7 @@ void main() {
       // Araç açılışta sahibin başlangıç değerini gösterir.
       final scene = tester.widget<CampfireScene>(find.byType(CampfireScene));
       expect(scene.tuning.greenAreaHeight, kCampfirePhoneGreenAreaHeight);
+      expect(scene.tuning.ringDropPixels, kCampfirePhoneRingDropPixels);
 
       // Kol sürüklenince sahne gerçekten yeni değeri alır.
       await tester.drag(find.byKey(const ValueKey('label-font')), const Offset(60, 0));

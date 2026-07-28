@@ -343,10 +343,24 @@ class _SceneLayoutState extends State<_SceneLayout>
         final tuning = widget.tuning;
         final groundYFactor = tuning.resolvedGroundYFactor(profile);
         final layout = CampfireCountLayout.saved(n.clamp(1, 8));
-        final fireY =
-            h * (groundYFactor + profile.fireYOffset) + tuning.fireYPixelOffset;
-        // Hayvanların oturduğu halka merkezi. Ufuk çizgisi de bu türetmeden
-        // çıkar (`campfireHorizonY`), ikisi ayrışmasın diye tek sabit kullanılır.
+        // 🔴 v56: ufuk artık ateşin türevi DEĞİL. Yeşil alanı büyütmek ufku
+        // yukarı taşır; `ringDropPixels` ise ateşi ve halkayı ufka göre aşağı
+        // iter. Sahibin isteği tam bu ayrımdı: "yeşili üste uzat, hayvanları
+        // yukarı kaldırma".
+        final horizonY = campfireHorizonY(
+          sceneHeight: h,
+          groundYFactor: groundYFactor,
+          fireYOffset: profile.fireYOffset,
+          fireYPixelOffset: tuning.fireYPixelOffset,
+        );
+        final fireY = campfireFireY(
+          sceneHeight: h,
+          groundYFactor: groundYFactor,
+          fireYOffset: profile.fireYOffset,
+          fireYPixelOffset: tuning.fireYPixelOffset,
+          ringDropPixels: tuning.resolvedRingDropPixels(profile),
+        );
+        // Hayvanların oturduğu halka merkezi ateşle birlikte iner.
         final ringCy = fireY + kCampfireRingCenterOffset;
 
         final ringScale = tuning.ringWidthScale ?? profile.ringWidthMultiplier;
@@ -435,7 +449,7 @@ class _SceneLayoutState extends State<_SceneLayout>
                   child: RepaintBoundary(
                     child: CustomPaint(
                       painter: GroundedForestPainter(
-                        horizonY: ringCy - ry * kCampfireHorizonRyFactor,
+                        horizonY: horizonY,
                         daylight: widget.sky.value,
                         sunProgress: widget.sky.sunProgress,
                         warmth: widget.sky.warmth,

@@ -39,6 +39,25 @@ const double kCampfireRingRyFactor = 0.15;
 /// Ufuk çizgisinin halka merkezinden yukarıda kaldığı, dikey yarıçapa oranlı pay.
 const double kCampfireHorizonRyFactor = 0.82;
 
+/// 🔴 WP-429 sahip kararı: ateş + oturma halkası ufuktan **bağımsız** olarak
+/// aşağı iner.
+///
+/// v56'ya kadar ufuk ateşin türeviydi (`horizon = fireY + 18 − ...`), yani
+/// yeşili büyütmenin tek yolu tüm kompozisyonu yukarı kaydırmaktı. Sahibin
+/// istediği bu değil: "yeşili **üste** uzat, hayvanları yukarı kaldırma".
+/// Bu pay ateşi ve halkayı ufka göre aşağı iter; ufuk (dolayısıyla yeşil alan
+/// yüksekliği) sabit kalır.
+double campfireFireY({
+  required double sceneHeight,
+  required double groundYFactor,
+  required double fireYOffset,
+  required double fireYPixelOffset,
+  double ringDropPixels = 0,
+}) =>
+    sceneHeight * (groundYFactor + fireYOffset) +
+    fireYPixelOffset +
+    ringDropPixels;
+
 /// Ufuk çizgisinin sahne üstünden uzaklığı (px) — yeşil zeminin başladığı yer.
 ///
 /// Sahnedeki üç yer (zemin painter'ı, ateş, oturma halkası) aynı türetmeyi
@@ -101,14 +120,24 @@ double campfireGroundYFactorForGreenArea({
 /// çok az" dedi. İki katı = 137 px. Sahne yüksekliği **değişmez**; kısalan tek
 /// şey gökyüzüdür, böylece kart telefonda aynı yeri kaplar ve hayvanlara alt
 /// sırada gerçek yer açılır.
-const double kCampfirePhoneGreenAreaHeight = 137;
+/// 🔴 v56 sahip düzeltmesi (`wp416_green_ladder_8.png` üzerinden, 2026-07-28):
+/// 137 px yerine **150 px**, ama kompozisyon yukarı kaymayacak — bkz.
+/// [kCampfirePhoneRingDropPixels].
+const double kCampfirePhoneGreenAreaHeight = 150;
+
+/// Telefonda ateş + halkanın ufka göre aşağı inme payı (px).
+///
+/// 137 → 150 yeşil, kompozisyonu 13 px yukarı iterdi; sahip ise onu **aşağıda**
+/// istiyor. 13 px geri alınır, üstüne sahibin "biraz aşağı indir" dediği pay
+/// eklenir. Sayı önizleme merdiveninden seçilir ve düzen testi kilitler.
+const double kCampfirePhoneRingDropPixels = 40;
 
 /// [kCampfirePhoneGreenAreaHeight]'ı üreten telefon zemin çıpası.
 ///
-/// `campfireGroundYFactorForGreenArea(275, 137, 0.09, 45)` = 0.30573.
+/// `campfireGroundYFactorForGreenArea(275, 150, 0.09, 45)` = 0.25845.
 /// Sabit elle yazılır çünkü profil `const`'tur; testi türetmeyi geri hesaplayıp
-/// bandın gerçekten 137 px olduğunu doğrular.
-const double kCampfirePhoneGroundYFactor = 0.30573;
+/// bandın gerçekten 150 px olduğunu doğrular.
+const double kCampfirePhoneGroundYFactor = 0.25845;
 
 /// Telefonda halkanın yatay yarıçap çarpanı (masaüstünde 1.0).
 ///
@@ -143,6 +172,7 @@ class CampfireViewportProfile {
     required this.fireVisualScale,
     required this.showTrees,
     required this.groundYFactor,
+    required this.ringDropPixels,
   });
 
   const CampfireViewportProfile.desktop()
@@ -154,6 +184,8 @@ class CampfireViewportProfile {
         fireVisualScale: 1,
         showTrees: true,
         groundYFactor: kCampfireGroundYFactor,
+        // Masaüstü kompozisyonu sahibin v55'te onayladığı hâlinde kalır.
+        ringDropPixels: 0,
       );
 
   const CampfireViewportProfile.phone()
@@ -167,6 +199,7 @@ class CampfireViewportProfile {
         // WP-416: telefonda yeşil alan 2×. Masaüstü kompozisyonu sahibin v55'te
         // onayladığı hâliyle kalır — bu yüzden çıpa profil başına ayrılır.
         groundYFactor: kCampfirePhoneGroundYFactor,
+        ringDropPixels: kCampfirePhoneRingDropPixels,
       );
 
   factory CampfireViewportProfile.fromConstraints({
@@ -191,6 +224,9 @@ class CampfireViewportProfile {
   /// Zeminin (ve ateşin) sahne yüksekliğine oranı. Yeşil alan yüksekliği bunun
   /// türevidir; bkz. [campfireGreenAreaHeight].
   final double groundYFactor;
+
+  /// Ateş + oturma halkasının ufka göre aşağı inme payı (px); ufku **etkilemez**.
+  final double ringDropPixels;
 }
 
 /// Sahnenin sahip tarafından ayarlanabilen tüm kolları.
@@ -210,6 +246,7 @@ class CampfireTuning {
     this.seatVerticalSpread = kCampfireSeatVerticalSpread,
     this.labelFontSize = kCampfireLabelFontSize,
     this.critterScale = 1,
+    this.ringDropPixels,
   });
 
   /// Kartın toplam yüksekliği.
@@ -237,6 +274,17 @@ class CampfireTuning {
 
   /// Hayvan gövdesinin ek ölçek çarpanı (profil çarpanının üstüne biner).
   final double critterScale;
+
+  /// Ateş + halkanın ufka göre aşağı inme payı (px); `null` ise profil payı.
+  ///
+  /// Sahibin dilinde "yeşili üste uzat, hayvanları aşağıda bırak": yeşil alan
+  /// kolu ufku **yukarı**, bu kol kompozisyonu **aşağı** taşır ve ikisi
+  /// birbirini etkilemez.
+  final double? ringDropPixels;
+
+  /// Sahnenin gerçekten kullanacağı halka düşürme payı.
+  double resolvedRingDropPixels(CampfireViewportProfile profile) =>
+      ringDropPixels ?? profile.ringDropPixels;
 
   /// Sahnenin gerçekten kullanacağı zemin çıpası.
   double resolvedGroundYFactor(CampfireViewportProfile profile) {
@@ -272,6 +320,7 @@ class CampfireTuning {
     double? seatVerticalSpread,
     double? labelFontSize,
     double? critterScale,
+    double? ringDropPixels,
   }) {
     return CampfireTuning(
       sceneHeight: sceneHeight ?? this.sceneHeight,
@@ -282,6 +331,7 @@ class CampfireTuning {
       seatVerticalSpread: seatVerticalSpread ?? this.seatVerticalSpread,
       labelFontSize: labelFontSize ?? this.labelFontSize,
       critterScale: critterScale ?? this.critterScale,
+      ringDropPixels: ringDropPixels ?? this.ringDropPixels,
     );
   }
 }

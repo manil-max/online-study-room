@@ -5280,6 +5280,8 @@
   "@campfirePreviewTitle": {"description": "Title of the mobile campfire tuning preview."},
   "campfirePreviewGreenArea": "ارتفاع المساحة الخضراء (بكسل)",
   "@campfirePreviewGreenArea": {"description": "Slider label for the green ground band height in pixels."},
+  "campfirePreviewRingDrop": "مقدار نزول النار والحيوانات (بالبكسل)",
+  "@campfirePreviewRingDrop": {"description": "Slider label for how far the fire and campers drop below the horizon, in pixels."},
   "campfirePreviewNameFontSize": "حجم خط الاسم",
   "@campfirePreviewNameFontSize": {"description": "Slider label for the camper name font size."},
   "campfirePreviewRowSpacing": "تباعد الصفوف",

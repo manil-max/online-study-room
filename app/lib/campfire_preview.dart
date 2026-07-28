@@ -80,6 +80,7 @@ class _PreviewScreen extends StatefulWidget {
 class _PreviewScreenState extends State<_PreviewScreen> {
   static const _canonical = CampfireTuning(
     greenAreaHeight: kCampfirePhoneGreenAreaHeight,
+    ringDropPixels: kCampfirePhoneRingDropPixels,
   );
 
   var _memberCount = 8;
@@ -184,6 +185,16 @@ class _PreviewScreenState extends State<_PreviewScreen> {
           ),
         ),
         _slider(
+          key: 'ring-drop',
+          label: l10n.campfirePreviewRingDrop,
+          value: _tuning.ringDropPixels ?? kCampfirePhoneRingDropPixels,
+          min: 0,
+          max: 70,
+          fractionDigits: 0,
+          onChanged: (value) =>
+              setState(() => _tuning = _tuning.copyWith(ringDropPixels: value)),
+        ),
+        _slider(
           key: 'label-font',
           label: l10n.campfirePreviewNameFontSize,
           value: _tuning.labelFontSize,
@@ -221,6 +232,7 @@ class _PreviewScreenState extends State<_PreviewScreen> {
         // buradan sabit değer olarak geçer.
         SelectableText(
           'greenArea=${_greenArea.toStringAsFixed(0)} · '
+          'ringDrop=${(_tuning.ringDropPixels ?? kCampfirePhoneRingDropPixels).toStringAsFixed(0)} · '
           'labelFont=${_tuning.labelFontSize.toStringAsFixed(1)} · '
           'seatSpread=${_tuning.seatVerticalSpread.toStringAsFixed(2)} · '
           'critterScale=${_tuning.critterScale.toStringAsFixed(2)}',
