@@ -18,8 +18,14 @@
 
 ## Proje Gerçekleri
 
-- **Migration gerçeği (2026-07-28, WP-373 sonrası):** repo/local **`0089`** ·
-  staging **`0089`** · production **`0089`**. `0089` yalnız `0082`'de tanımlanıp
+- **Migration gerçeği (2026-07-28, v55 sonrası):** repo/local **`0094`** ·
+  staging **`0094`** · production **`0094`** — üç ortam hizalı. PLAN 3 Faz L
+  beş adım getirdi: `0090` destek kutusu bilet türü, `0091` sunucudan beslenen
+  SSS, `0092` `send_nudge` içinde iki yönlü engelleme, `0093` grup yasağı +
+  sunucu tarafı davet kodu yenileme, `0094` herkese açık ad süzgeci. Beşi de
+  eklemeli ya da mevcut fonksiyonu **aynı imzayla** değiştiriyor
+  (`join_group`, `join_public_group`, `send_nudge`), bu yüzden sahadaki v54
+  istemcileri apply sırasında kırılmadı. Tarihsel not (`0089`): `0089` yalnız `0082`'de tanımlanıp
   hiçbir cron'a bağlanmamış olan `expire_global_timer_v2_leases(200)` süpürücüsünü
   dakikalık pg_cron job'ına bağlar; tablo/kolon/indeks/politika/grant değişmez,
   satır eklenmez, geri alma tek `cron.unschedule`'dır. Sırayla staging'e
@@ -81,9 +87,33 @@
 
 ### Claude Lane
 - **Durum:** [x] Boşta
-- **Faz/WP:** — · WP-373…WP-378 kapandı, **v54 yayında**
+- **Faz/WP:** — · PLAN 3 Faz K + Faz L kapandı, **v55 yayında**
 - **SAHİP yollar:** —
-- **Son not (2026-07-28):** Sahip v54'ü iki cihazda test etti; sekiz başlıkta geri
+- **Son not (2026-07-28, v55 teslim turu):** Beş paralel zincir on dört WP'yi
+  (WP-379…WP-392) tek turda indirdi. Çakışma **olmadı** — `*.arb`,
+  `settings_screen.dart`, `stats_period_bar.dart`, `campfire_scene.dart` ve
+  migration numaraları sırayla ilerledi. 🔴 Ama paket **kırmızı teslim edildi**:
+  1000 test geçerken 13 düşüyordu. Dört kök neden ve hepsi kapatıldı:
+  (1) DE/AR katalog eşliği — WP-387/388/390/392 TR+EN yazıp DE/AR'ı atlamıştı,
+  on beş anahtarın Almanca/Arapça çevirisi yazıldı;
+  (2) WP-379'un **kendi** testleri — Riverpod 3 auto-dispose tuzağı, dinleyicisiz
+  `authStateProvider` yükleme durumundayken dispose oluyordu (repoda yerleşik
+  kalıp zaten vardı, ajan kullanmamıştı);
+  (3) WP-374 koşumu — sekme üretimde `Scaffold` body'sinde ama koşum doğrudan
+  `home:`e koyuyordu; WP-387'nin eklediği `FilterChip` Material bulamayınca
+  bütün liste patlıyordu (üretim sağlamdı);
+  (4) 🔴 **gerçek ürün kusuru** — kamp ateşinde dikey kelepçe gövdenin çıpasını
+  sınırlıyor, alt sınırda `box * (1 - anchor)` düşülmüyordu (yatayda `box / 2`
+  iki uçtan da düşülmüş). WP-382 ateşi 45 px aşağı alınca telefonda 4+ kişide en
+  öndeki hayvanın ayakları `ClipRRect` ile kesiliyordu. Sahibin seçtiği
+  kompozisyon değerleri değişmedi.
+  Ayrıca turun başında `flutter analyze` 7 uyarı veriyordu ve migration head
+  pini üst üste **dördüncü** kez unutulmuştu; yerel head artık sabit sayı değil,
+  `deploy-contract.json`'dan türetiliyor — tuzak kalıcı olarak kapandı.
+  **Teslim:** yerel replay 0001→0094 + 328 pgTAP PASS · analyze temiz ·
+  1013/1013 test yeşil · staging apply `30363917376` · production apply
+  `30364331158` (ikisinde de post-check `0094`) · v55 stable.
+- **Önceki not (2026-07-28, PLAN 3 planlaması):** Sahip v54'ü iki cihazda test etti; sekiz başlıkta geri
   bildirim verdi ve üstüne mağaza turunu konuştuk. Tartışma
   `docs/LANSMAN-TARTISMA-NOTU.md`'de karara bağlandı, rakip yorum analizi
   `docs/RAKIPANALIZI-DEGERLENDIRME.md`'de koda karşı doğrulandı. İkisi birden
@@ -194,15 +224,12 @@
 - **Son not:** WP-385 `ce7212f` ile tamamlandı: görünür katalog artık ledger’daki ilk gerçek kademe eşiğini TR/EN tam koşul cümlesiyle gösterir; 12 başarımın eşik–metin sözleşmesi testte kilitli.
 
 ### Codex-5 Lane
-- **Durum:** [~] Aktif
-- **Faz/WP:** PLAN 3 · Faz L · WP-390
-- **Aşama:** Geliştiriliyor
-- **SAHİP yollar:** `supabase/migrations/0090_support_inbox.sql` (yalnız yayımlanmamış audit eklemesi) · `supabase/tests/019_support_inbox.test.sql` · `app/lib/features/safety/report_sheet.dart` · `app/lib/features/admin/tabs/admin_reports_tab.dart` · şikâyet giriş noktaları · `app/lib/l10n/app_tr.arb` · `app/lib/l10n/app_en.arb` · ilgili testler ve UGC smoke kanıtı · `progress.md` (yalnız bu lane ve WP-390 kartı)
-- **Ortak/riskli yüzey:** WP-387 `c97924f` ile tamamlandı; repo/local/staging/production head `0089` olduğundan yayımlanmamış `0090` yalnız server-audit eklemesi için bu lane'de yeniden açıldı · `campfire_scene.dart` WP-382/389 sınırında salt-okunur
-- **Dal:** main
-- **Başlangıç:** 2026-07-28 15:16 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-28 16:09
-- **Not:** WP-382, sahibin seçtiği ateş `+45 px` ve dikey ayrım `%25` ile `49ca29f` commitinde sabitlendi; 8 kişilik PNG + etiket çakışmama testi yeşil. WP-390 grup/grup-adı girişleri, kullanıcıya inceleme bilgisi ve yayımlanmamış `0090` içindeki server-authoritative audit kaydıyla kod/test tamam; staging + cihaz smoke kabulü bekliyor.
+- **Durum:** [x] Boşta
+- **Faz/WP:** —
+- **SAHİP yollar:** —
+- **Son not (2026-07-28):** WP-382 `49ca29f`, WP-387 `c97924f`, WP-390 `2757450`
+  ile kapandı. 🔴 Lane aktif bırakılmıştı (worker sözleşmesi ihlali); v55
+  turunda kapatıldı.
 
 ### Grok Lane
 - **Durum:** [x] Boşta
@@ -219,12 +246,12 @@
 
 | Konu | Durum |
 | --- | --- |
-| Sürüm | **`v54` yayında** — çoklu cihaz sayaç senkronu ilk kez gerçekten çalışıyor (WP-373). Android APK + Windows MSIX/ZIP; release run `30311872534` bütün işlerde yeşil. Production sürüm penceresi tag alındıktan sonra yeniden **HOLD**'a alındı |
-| Cihaz kabulü | 🟢 v54 sahip tarafından test edildi. Sekiz başlıkta geri bildirim → hepsi **PLAN 3 · Faz K**'ya bağlandı. Açık kalan tek test: kamp ateşi gece/gündüz saatleri (A2 — sahip o saatlere gelmedi) |
+| Sürüm | **`v55` yayında** — PLAN 3 lansman turu (Faz K + Faz L, WP-379…WP-392, on dört iş paketi tek sürümde). Sahip 2026-07-28'de tümünü tek mesajla onayladı. Production şeması `0089`→`0094`. Sürüm penceresi tag alındıktan sonra yeniden **HOLD**'a alınır |
+| Cihaz kabulü | 🟡 **v55 sahipte** — on dört maddelik test listesi verildi (sayaç 2, arayüz 6, destek 2, moderasyon 4). Dört madde ikinci hesap/cihaz ister. v54'ten devreden tek açık test: kamp ateşi gece/gündüz saatleri (A2) |
 | Sürüm politikası | 🔴 Sahip onayı olmadan yeni sürüm çıkmaz |
 | Otomatik doğrulama | `2e19cfb` release koşumu (`30222542841`) preflight/android/windows/finalize tümü PASS |
 | l10n audit | **0 bulgu**: WP-335, WP-295 önizleme metinlerini katalogladı; 7 kullanıcı-dışı invariant mesajı dar ve gerekçeli muafiyetle ayrıldı |
-| Migration | Repo/local **`0089`** · staging **`0089`** · production **`0089`** — üç ortam hizalı. Faz L için `0090`–`0093` peşin ayrıldı |
+| Migration | Repo/local **`0094`** · staging **`0094`** · production **`0094`** — üç ortam hizalı. Staging apply run `30363917376`, production apply run `30364331158`, ikisinde de post-check `0094` |
 | Yedek | 🔴 **Yok.** Free plan; PITR ve günlük yedek kapalı. Sahip kararıyla muaf; geri dönüş yolu yok |
 | Beta | **`beta-v4402`** son beta; Android APK + Windows MSIX/ZIP hazır, V3 flag'leri kapalı |
 | Play Console | 🟢 **Doğrulama alındı** (2026-07-28). Form doldurulmadı; hazırlık PLAN 3 · Faz M |
