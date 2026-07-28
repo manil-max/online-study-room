@@ -560,6 +560,30 @@ admin yerleşimi) yine yayın sonrasına kalır.
 Sahibe ait, bekleyen: **alan adı ismi seçimi** (H6) — sahip düşünüyor, aday belirlenince
 müsaitlik kontrolü bana.
 
+### H9. Uygulama adı — sahip kararı, 2026-07-28
+Sahip: **isim "Odak Kampı" olarak kalıyor, İngilizcesi "Focus Camp".** Logoyu sahibin
+kardeşi tasarlayacak; sahip "şu anlık bu işler değil" dedi, bu tur logoya girilmez.
+
+Koda karşı doğrulandı — **değiştirilecek hiçbir şey yok**, isim zaten her yüzeyde bu:
+
+| Yüzey | Değer |
+| --- | --- |
+| `app_tr.arb` → `appTitle` | Odak Kampı |
+| `app_en.arb` → `appTitle` | Focus Camp |
+| `app_de.arb` → `appTitle` | Focus Camp |
+| `app_ar.arb` → `appTitle` | مخيم التركيز |
+| Android launcher (`build.gradle.kts`, stable + play) | Odak Kampı |
+| Windows `Runner.rc` + pencere başlığı | Odak Kampı |
+
+🔴 **Tek açık nokta:** Android launcher etiketi ve Windows kaynak dosyası
+yerelleştirilmiyor — ikisi de derleme sabiti. İngilizce dildeki bir telefonda simgenin
+altında yine "Odak Kampı" yazar, uygulama içi başlık "Focus Camp" olur. TR öncelikli
+dağıtımda sorun değil; dünya geneline açılırken `res/values-en/strings.xml` ile çözülür.
+Faz M mağaza listeleme işine bağlanır, ayrı iş değil.
+
+H6 alan adı araması bu karardan bağımsız değil: adaylar artık `odakkampi` / `focuscamp`
+ekseninde aranmalı.
+
 ---
 
 ## Durum — 2026-07-28 sonu
