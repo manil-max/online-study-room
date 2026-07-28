@@ -38,7 +38,7 @@ Assert-Equal (Get-LocalMigrationHead -RepoRoot $repoRoot) $contract.local_migrat
 Assert-Equal $contract.staging.migration_head '0100' 'staging hedef head 0100 (PLAN 4 v56: 0095-0100)'
 Assert-Equal ([bool]$contract.staging.deploy_enabled) $true 'staging deploy enabled'
 Assert-Equal ([bool]$contract.staging.release_enabled) $true 'staging release enabled'
-Assert-Equal $contract.production.migration_head '0094' 'production hedef head 0094 (PLAN 3 Faz L, sahip GO)'
+Assert-Equal $contract.production.migration_head '0100' 'production hedef head 0100 (PLAN 4 v56, sahip GO)'
 Assert-Equal ([bool]$contract.production.deploy_enabled) $true 'production deploy sahip GO ile acik (0094 apply)'
 Assert-Equal ([bool]$contract.production.release_enabled) $true 'production release sahip GO ile acik (v55 tag)'
 

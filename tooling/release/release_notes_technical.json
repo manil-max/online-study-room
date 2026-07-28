@@ -3,6 +3,66 @@
   "source": "CHANGELOG.md + locale fields (titleEn/highlightsEn/…)",
   "releases": [
     {
+      "versionName": "1.0.56",
+      "buildNumber": 56,
+      "channel": "stable",
+      "date": "2026-07-28",
+      "title": "v56 (PLAN 4): WP-412–WP-428, şema 0095-0100",
+      "highlights": [
+        "WP-414: uygulama içi, bildirim ve widget Durdur yolları tek sözleşmeye bağlandı; her giriş noktası için ayrı iki uçlu test.",
+        "WP-415: çevrimdışı terminal niyeti korunuyor; 24 saatten bayat start komutu yeniden oynatılmıyor.",
+        "WP-413 (0095): engelleme görünürlüğü sunucuya taşındı (is_blocked_pair, tablolar, profil erişimi). Kamp ateşi anonimleştirmesi korundu.",
+        "WP-423 (0096): rapor ekleri için ayrı private bucket, sunucu tarafı boyut ve MIME doğrulaması.",
+        "WP-425 (0097): super-admin dışına kapalı şikâyet detay RPC'si (tam snapshot, bağlam, hedef geçmişi).",
+        "WP-426 (0098): basamaklı yaptırım — uyar, ad sıfırla, 24h sustur, 168h/336h/720h askı, kalıcı.",
+        "WP-427 (0099): admin_ugc_report_groups ile hedef bazlı tekilleştirme.",
+        "WP-428 (0100): ugc_reports insert'ünde tekilleştirilmiş admin push."
+      ],
+      "fixes": [
+        "WP-412: draggable_date_range_picker gün hücresi DateTime nesnesini doğrudan basıyordu; gün sayısına çevrildi.",
+        "0100 tekilleştirme koşulu count(*) = 1 idi; AFTER ROW tetikleyicisi deyim sonunda çalıştığı için çok satırlı INSERT'te hiç push üretmiyordu. 'En eski açık şikâyet' koşuluna çevrildi.",
+        "027 pgTAP iki uydurma çağrı içeriyordu: hasnt_table_privilege (yok) ve throws_like'a SQLSTATE argümanı (throws_ok'a ait).",
+        "deploy-contract local_migration_head 0096'da kalmıştı; 001_schema_contract da 96/0096'ya pinliydi.",
+        "l10n Gate v55 turu boyunca kırmızıydı: 11 hardcoded Türkçe literal (WP-379/388/390 kaynaklı) l10n'a taşındı.",
+        "WP-419: derleme tanısı kartı sürüm notlarından Hakkında ekranına taşındı; stable kanalda beta sürümler listelenmiyor.",
+        "WP-421: rozet zinciri profil → ayarlar → geri bildirim → başarımlar; push'tan bağımsız."
+      ],
+      "notes": [
+        "Yerel replay 0001→0100 + 29 pgTAP dosyası (377 test) PASS.",
+        "flutter analyze temiz, 1075/1075 Flutter testi yeşil, l10n dört dilde 1395 anahtar.",
+        "Deploy guard 75/75, release preflight 8/8.",
+        "Staging apply run 30380751277, post-check head 0100.",
+        "Sayaç eşitlemesi için iki cihazda da v56 şart; cihaz kabulü sahipte."
+      ],
+      "titleEn": "v56 (PLAN 4): WP-412-WP-428, schema 0095-0100",
+      "highlightsEn": [
+        "WP-414: uygulama içi, bildirim ve widget Durdur yolları tek sözleşmeye bağlandı; her giriş noktası için ayrı iki uçlu test.",
+        "WP-415: çevrimdışı terminal niyeti korunuyor; 24 saatten bayat start komutu yeniden oynatılmıyor.",
+        "WP-413 (0095): engelleme görünürlüğü sunucuya taşındı (is_blocked_pair, tablolar, profil erişimi). Kamp ateşi anonimleştirmesi korundu.",
+        "WP-423 (0096): rapor ekleri için ayrı private bucket, sunucu tarafı boyut ve MIME doğrulaması.",
+        "WP-425 (0097): super-admin dışına kapalı şikâyet detay RPC'si (tam snapshot, bağlam, hedef geçmişi).",
+        "WP-426 (0098): basamaklı yaptırım — uyar, ad sıfırla, 24h sustur, 168h/336h/720h askı, kalıcı.",
+        "WP-427 (0099): admin_ugc_report_groups ile hedef bazlı tekilleştirme.",
+        "WP-428 (0100): ugc_reports insert'ünde tekilleştirilmiş admin push."
+      ],
+      "fixesEn": [
+        "WP-412: draggable_date_range_picker gün hücresi DateTime nesnesini doğrudan basıyordu; gün sayısına çevrildi.",
+        "0100 tekilleştirme koşulu count(*) = 1 idi; AFTER ROW tetikleyicisi deyim sonunda çalıştığı için çok satırlı INSERT'te hiç push üretmiyordu. 'En eski açık şikâyet' koşuluna çevrildi.",
+        "027 pgTAP iki uydurma çağrı içeriyordu: hasnt_table_privilege (yok) ve throws_like'a SQLSTATE argümanı (throws_ok'a ait).",
+        "deploy-contract local_migration_head 0096'da kalmıştı; 001_schema_contract da 96/0096'ya pinliydi.",
+        "l10n Gate v55 turu boyunca kırmızıydı: 11 hardcoded Türkçe literal (WP-379/388/390 kaynaklı) l10n'a taşındı.",
+        "WP-419: derleme tanısı kartı sürüm notlarından Hakkında ekranına taşındı; stable kanalda beta sürümler listelenmiyor.",
+        "WP-421: rozet zinciri profil → ayarlar → geri bildirim → başarımlar; push'tan bağımsız."
+      ],
+      "notesEn": [
+        "Yerel replay 0001→0100 + 29 pgTAP dosyası (377 test) PASS.",
+        "flutter analyze temiz, 1075/1075 Flutter testi yeşil, l10n dört dilde 1395 anahtar.",
+        "Deploy guard 75/75, release preflight 8/8.",
+        "Staging apply run 30380751277, post-check head 0100.",
+        "Sayaç eşitlemesi için iki cihazda da v56 şart; cihaz kabulü sahipte."
+      ]
+    },
+    {
       "versionName": "1.0.55",
       "buildNumber": 55,
       "channel": "stable",

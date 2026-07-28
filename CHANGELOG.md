@@ -4,6 +4,37 @@ Sürüm notlarının kullanıcıya görünen ana kaynağı burasıdır. Uygulama
 `app/assets/release_notes.json`, GitHub Release body ve Ayarlar > Güncelleme
 notları ekranı bu metinle aynı kararları yansıtmalıdır.
 
+## [v56 / 1.0.56+56] - 2026-07-28
+
+> Sahibin v55 saha testinden çıkan bulgular ve moderasyon yönetici tarafının
+> ilk fazı. PLAN 4 Faz O–S beş paralel lane ile indi; on yedi iş paketi
+> (WP-412…WP-428) tek turda kapandı. Şema `0094`ten `0100`e taşındı — altı
+> adımın hepsi eklemeli ya da mevcut fonksiyonu aynı imzayla değiştiriyor,
+> bu yüzden sahadaki v55 istemcileri apply sırasında kırılmaz.
+
+### Yenilikler
+- **Sayaç eşitlemesi üç giriş noktasını da kapsıyor.** Eskiden yalnız uygulama içi Durdur karşı cihaza gidiyordu; bildirim ve ana ekran widget'ından durdurmak yerel kalıyordu. Üçü de tek sözleşmeye bağlandı ve her biri ayrı iki uçlu testle korunuyor.
+- **Şikâyet kuyruğu okunabilir hâle geldi.** Yönetici artık ham kimlik yerine ad ve avatar görüyor; şikâyetin tam içeriği, çevresindeki konuşma ve hedefin geçmişi tek ekranda. Aynı kişi hakkındaki şikâyetler tek satırda toplanıyor ve yeni vaka bildirim düşürüyor.
+- **Basamaklı yaptırım.** Tek seçenek olan kalıcı yasağın yerine altı basamak geldi: uyar, adı sıfırla, 24 saat sustur, 7/14/30 gün askıya al, kalıcı. Hepsi gerekçe zorunlu, denetim kaydına yazılıyor ve tek tıkla geri alınabiliyor.
+- **Şikâyet ve destek sorusuna fotoğraf eki.** Ekler public olmayan ayrı bir alanda tutuluyor; boyut ve tür sunucuda doğrulanıyor, yalnız yönetici açabiliyor.
+- **Geri bildirim ekranı ikiye ayrıldı.** Gönder ve Geri bildirimlerim sekmeleri; okunmamış yanıt profil, ayarlar ve geri bildirim adımlarının hepsinde işaret gösteriyor.
+- **Kamp ateşi yeniden dengelendi.** Yeşil alan iki katına çıktı ve mobil için parametrik önizleme aracı eklendi; kalabalık sahnede isimler üst üste binmiyor, alt sıradaki hayvanlar kesilmiyor.
+
+### Düzeltmeler
+- **Özel tarih aralığı takvimi.** Gün hücreleri gün sayısı yerine `DateTime` nesnesinin tamamını basıyordu; hücreler taşıyor, takvim okunmuyordu.
+- **Çevrimdışı biten koşu hayalet koşu doğuruyordu.** İnternet yokken başlatılıp durdurulan çalışma, bağlantı gelince karşı cihazda kendiliğinden aktif hâle geliyordu. Terminal niyet artık korunuyor ve 24 saatten bayat komut yeniden oynatılmıyor.
+- **Engelleme yalnız bazı yüzeyleri kapsıyordu.** Engellenen kişi tablolarda adıyla görünüyor ve profili açılabiliyordu; süzgeç sunucuya taşındı. Kamp ateşindeki anonimleştirme davranışı bilerek korundu.
+- **Sürüm notlarındaki derleme kartı.** Kanal, commit ve şema bilgisi son kullanıcının gördüğü ilk ekranda duruyordu; Ayarlar > Hakkında altına taşındı ve stable kanalda beta sürümler listelenmiyor.
+- **Dört dilde eksik çeviri.** İngilizce, Almanca ve Arapça cihazlarda ayna durdurma diyaloğu, SSS soru formu ve şikâyet metni Türkçe kalıyordu. Bu kusur v55 ile birlikte yayınlanmıştı.
+- **Yönetici bildirimi hiç üretilmiyordu.** Yeni şikâyet için kurulan tekilleştirme koşulu, satır tetikleyicisinin deyim sonunda çalışması yüzünden hiçbir durumda tutmuyordu. Koşul yeniden yazıldı.
+- **Tanıtım turu ve başarım açıklamaları.** Tur kısaltıldı (ana ekranda tek adım, istatistik turu kaldırıldı); başarım açıklamaları koşulu ve süresini açıkça yazıyor.
+
+### Bu sürümde olmayanlar
+- Sayaç eşitlemesi yalnız Android ve kronometre içindir; Pomodoro, geri sayım ve Windows dahil değildir. Eşitlemeyi denemek için iki cihazda da v56 gerekir.
+- Tablet yatay yerleşimi ele alınmadı.
+- Masaüstünde altı haneli kodla şifre sıfırlama hâlâ çalışmıyor.
+- Moderasyonun ikinci fazı (otomatik karantina, kötü niyetli şikâyetçi ölçümü, rol katmanı, itiraz akışı) v57'ye bırakıldı; plan `docs/MODERASYON-PLANI.md`.
+
 ## [v55 / 1.0.55+55] - 2026-07-28
 
 > Mağaza yayınından önceki son büyük tur. PLAN 3 Faz K (cihaz geri bildirimi ve

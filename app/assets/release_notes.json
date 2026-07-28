@@ -3,6 +3,66 @@
     "source":  "Kullanıcıya gösterilen sürüm notları; iç değişiklik geçmişi tooling/release/release_notes_technical.json dosyasındadır.",
     "releases":  [
                      {
+                         "versionName":  "1.0.56",
+                         "buildNumber":  56,
+                         "channel":  "stable",
+                         "date":  "2026-07-28",
+                         "title":  "v56: sayaç eşitlemesi, engelleme ve destek kutusu elden geçti",
+                         "highlights":  [
+                                            "Bildirimden ya da ana ekran widget'ından durdurduğunda diğer cihazdaki sayaç da duruyor.",
+                                            "Kamp ateşinin yeşil alanı iki katına çıktı; kalabalık gruplarda isimler artık üst üste binmiyor.",
+                                            "Geri bildirim ekranı ikiye ayrıldı: Gönder ve Geri bildirimlerim. Gönderdiklerini ve gelen yanıtları tek yerden izliyorsun.",
+                                            "Okunmamış bir yanıtın varsa profil, ayarlar ve geri bildirim adımlarının hepsinde işaret çıkıyor.",
+                                            "Şikâyet ve destek sorusuna fotoğraf ekleyebiliyorsun.",
+                                            "Sık Sorulan Sorular giriş ekranının en altına taşındı, adının yanında (SSS) yazıyor.",
+                                            "Başarım açıklamaları artık koşulu açıkça söylüyor: ne yapman ve ne kadar sürede yapman gerektiği yazıyor.",
+                                            "Sürüm notları sadeleşti; derleme bilgisi Ayarlar içindeki Hakkında ekranına taşındı."
+                         ],
+                         "fixes":  [
+                                            "İstatistiklerde özel tarih aralığı takvimi düzeldi: hücrelerde tam tarih yerine gün sayısı yazıyor ve günler üst üste binmiyor.",
+                                            "İnternet yokken başlatıp durdurduğun çalışma, bağlanınca diğer cihazda kendiliğinden yeniden başlamıyor.",
+                                            "Engellediğin kişi artık tablolarda görünmüyor ve profili açılmıyor.",
+                                            "Tanıtım turu kısaldı: ana ekranda yalnız düzenleme adımı kaldı, istatistik turu kalktı.",
+                                            "Sürüm notlarında artık yalnız yayınlanmış sürümler listeleniyor.",
+                                            "İngilizce, Almanca ve Arapça cihazlarda Türkçe kalan metinler çevrildi.",
+                                            "Aynı kişi hakkında gelen şikâyetler yönetici tarafında tek satırda toplanıyor ve bildirim olarak da düşüyor."
+                         ],
+                         "notes":  [
+                                            "Sayaç eşitlemesi yalnız Android ve kronometre için geçerli; Pomodoro, geri sayım ve Windows dahil değil.",
+                                            "Eşitlemeyi denemek için iki cihazda da v56 gerekir.",
+                                            "Tablet yatay yerleşimi bu sürümde ele alınmadı.",
+                                            "Masaüstünde 6 haneli kodla şifre sıfırlama hâlâ çalışmıyor.",
+                                            "İngilizce cihazda simge altındaki ad yine Odak Kampı görünür; uygulama içinde Focus Camp yazar."
+                         ],
+                         "titleEn":  "v56: timer sync, blocking and the support box overhauled",
+                         "highlightsEn":  [
+                                            "Stopping from the notification or the home-screen widget now stops the timer on your other device too.",
+                                            "The campfire clearing is twice as tall, so names no longer overlap in crowded groups.",
+                                            "The feedback screen is split into two tabs: Send and My feedback. You can follow what you sent and the replies in one place.",
+                                            "An unread reply now shows a marker on your profile, settings and feedback entries.",
+                                            "You can attach a photo to a report or a support question.",
+                                            "Frequently asked questions moved to the bottom of the sign-in screen.",
+                                            "Achievement descriptions now state the condition plainly: what to do and within how long.",
+                                            "Release notes are simpler; build details moved to the About screen inside Settings."
+                         ],
+                         "fixesEn":  [
+                                            "The custom date-range calendar in Statistics is fixed: cells show the day number instead of a full date, and days no longer overlap.",
+                                            "A session you start and stop while offline no longer restarts by itself on your other device once you reconnect.",
+                                            "Someone you blocked no longer appears in tables and their profile cannot be opened.",
+                                            "The intro tour is shorter: only the editing step remains on the home screen and the statistics tour is gone.",
+                                            "Release notes now list published versions only.",
+                                            "Text that stayed Turkish on English, German and Arabic devices is now translated.",
+                                            "Reports about the same person are grouped into a single row for admins and now raise a notification."
+                         ],
+                         "notesEn":  [
+                                            "Timer sync covers Android and the stopwatch only; Pomodoro, countdown and Windows are not included.",
+                                            "Both devices need v56 to try the sync.",
+                                            "Tablet landscape layout is not addressed in this release.",
+                                            "Resetting the password with a six-digit code still does not work on desktop.",
+                                            "On English devices the launcher label still reads Odak Kampı; inside the app it reads Focus Camp."
+                         ]
+                     },
+                     {
                          "versionName":  "1.0.55",
                          "buildNumber":  55,
                          "channel":  "stable",
