@@ -5871,7 +5871,7 @@
   "@faqQuestionFailed": {"description": "Failure after submitting a FAQ question."},
   "faqLoginRequired": "Sign in to send a question.",
   "@faqLoginRequired": {"description": "Authentication requirement for support questions."},
-  "faqLoginLink": "Frequently asked questions"
+  "faqLoginLink": "Frequently asked questions (FAQ)"
   ,"@faqLoginLink": {"description": "FAQ link shown on the authentication screen."},
   "adminUgcReporter": "Reporter",
   "@adminUgcReporter": {"description": "Identity label for the person who submitted a UGC report."},

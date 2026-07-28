@@ -209,17 +209,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                     const SizedBox(height: 8),
                     if (!_isRegister) ...[
                       TextButton.icon(
-                        onPressed: _loading
-                            ? null
-                            : () => Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => const FaqScreen(),
-                                ),
-                              ),
-                        icon: const Icon(Icons.help_outline),
-                        label: Text(l10n.faqLoginLink),
-                      ),
-                      TextButton.icon(
                         onPressed: _loading ? null : _sendPasswordReset,
                         icon: const Icon(Icons.mark_email_read_outlined),
                         label: Text(l10n.authSifremiUnuttum),
@@ -251,6 +240,23 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                             ? l10n.authZatenHesabinVarMi
                             : l10n.authHesabinYokMuKayit,
                       ),
+                    ),
+                    // WP-422: SSS bağlantısı kayıt geçişinin **altında, en
+                    // sonda** durur. Eskiden üç yardımcı bağlantının başındaydı
+                    // ve yalnız giriş modunda çıkıyordu; kayıt olmaya çalışan
+                    // kullanıcı yardıma hiç ulaşamıyordu. Oturum açmadan SSS
+                    // erişimi v55 kazanımıdır, iki modda da korunur.
+                    TextButton.icon(
+                      key: const Key('auth-faq-link'),
+                      onPressed: _loading
+                          ? null
+                          : () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const FaqScreen(),
+                              ),
+                            ),
+                      icon: const Icon(Icons.help_outline),
+                      label: Text(l10n.faqLoginLink),
                     ),
                   ],
                 ),

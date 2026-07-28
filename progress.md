@@ -113,15 +113,15 @@
   öyle yazdım, o yüzden commit'lerimde başka lane'in satırı yok).
 
 ### Lane C
-- **Durum:** [~] Aktif
-- **Faz/WP:** PLAN 4 · Faz R · WP-419 → WP-420 → WP-421 → WP-422
-- **Aşama:** Geliştiriliyor (WP-419 ile başlanıyor; dört WP aynı sahip kümesinde sıralı ilerler)
+- **Durum:** [x] Boşta
+- **Faz/WP:** — · PLAN 4 Faz R (WP-419 → 422) kod + otomatik test tamam
+- **Aşama:** Cihaz kabulü bekliyor (`Test için bekleyenler`)
 - **SAHİP yollar:** `app/lib/features/settings/**`, sürüm notları ekranı, geri bildirim gönderme/liste ekranları, rozet/okunmamış sayacı sağlayıcıları, `app/lib/features/profile/**` (rozet), giriş/kayıt ekranı (SSS bağlantısı), ilgili testler
 - **Ortak/riskli yüzey:** `app/lib/l10n/*.arb` (TR/EN/DE/AR atomik düzenleme, hemen commit) · başarım ekranı rozet katmanı (Lane D WP-418 metin/tanım tarafına girer, rozet katmanına girmez)
 - **Dal:** main
 - **Başlangıç:** 2026-07-28 18:01 (Europe/Istanbul)
 - **Son güncelleme:** 2026-07-28 18:01 (Europe/Istanbul)
-- **Not:** LOCAL kalır — migration apply yok, tag/release yok. `features/admin/**`, `features/safety/**`, `features/stats/**`, `campfire_scene.dart`, `android/**` yollarına yazılmaz. WP-421 sunucu tarafı gerektirirse `0101` yalnız Lane B'nin `0100` commit'i göründükten sonra alınır.
+- **Not (teslim):** Dört WP dört ayrı commit; hepsi LOCAL kaldı — migration yok, tag/release yok, `0101` gerekmedi (WP-421 mevcut `0074` RLS'iyle çözüldü). Turda çıkan iki **planda olmayan** kusur: (1) geri bildirim formu `authStateProvider`'ı yalnız `read` ettiği için Riverpod 3 auto-dispose'ta gönderim sessizce reddediliyordu; (2) giriş ekranındaki SSS bağlantısı kayıt modunda hiç görünmüyordu. İkisi de düzeltildi ve teste bağlandı. `features/admin/**`, `features/safety/**`, `features/stats/**`, `campfire_scene.dart`, `android/**`, `core/navigation/**` yollarına yazılmadı.
 
 ### Lane E
 - **Durum:** [x] Boşta
@@ -3727,18 +3727,34 @@ WP-385 (l10n/başarım). Sonraki dalga: WP-381 · WP-383 · WP-382.
 
 #### WP-422: SSS giriş ekranında yerleşim ve etiket ❓
 - **Program/Faz:** PLAN 4 · Faz R (kaynak: sahip cihaz testi)
-- **Ajan:** Lane C · **Durum:** [ ] Başlamadı · ⏳ WP-421'den **sonra**
+- **Ajan:** Lane C · **Durum:** [x] Kod + otomatik test tamam — `Cihazda doğrulanmalı`
 - **Problem:** Giriş ekranında SSS bağlantısı yanlış yerde ve etiketi Türkçe kullanıcı
   için tanıdık değil.
 - **Kapsam dışı:** SSS içeriği · SSS arama · çevrimdışı yedek içerik (v55'te çalışıyor).
 - **SAHİP dosyalar (yaz):** giriş/kayıt ekranı, `app/lib/l10n/*.arb`, ilgili test
 - **Adımlar:**
-  - [ ] Etiket: "Frequently asked questions **(SSS)**".
-  - [ ] Konum: **Sign up'ın altında, en altta**.
+  - [x] Etiket: "Frequently asked questions **(SSS)**".
+  - [x] Konum: **Sign up'ın altında, en altta**.
 - **Migration/Ortam:** Yok · local.
 - **Kabul:** Giriş ekranı yerleşim testi · **oturum açmadan** SSS erişimi korunur
   (v55 kazanımı, regresyon olmasın) · dört dil tam.
 - **Model önerisi:** Sonnet
+- **DoD kanıtı (2026-07-28, Lane C · `Kodda doğrulandı`):**
+  - **Konum:** SSS bağlantısı kayıt geçişinin **altına, en sona** taşındı
+    (`auth-faq-link`). Yerleşim testi hem "Kayıt ol"un hem "Şifremi
+    unuttum"un altında olduğunu ölçüyor.
+  - 🔴 **Yol boyunca çıkan ikinci kusur:** bağlantı `if (!_isRegister)` bloğunun
+    içindeydi — **kayıt modunda hiç görünmüyordu**. Yani hesap açmaya çalışıp
+    takılan kullanıcı yardıma ulaşamıyordu. Artık iki modda da duruyor, testte
+    sabit.
+  - **Etiket:** kısaltma eklendi — TR "Sıkça sorulan sorular (SSS)",
+    EN "Frequently asked questions (FAQ)", DE "Häufig gestellte Fragen (FAQ)",
+    AR "الأسئلة الشائعة (FAQ)". Dört dil de testte tek tek doğrulanıyor.
+  - **Regresyon koruması:** oturum açmadan SSS ekranının açıldığı (v55 kazanımı)
+    ayrı testte tutuluyor.
+  - **Test:** `flutter analyze` 0 uyarı · `auth_faq_link_wp422_test.dart` 5/5 ·
+    SSS ekranı + auth katalog + l10n borç kapısı ile birlikte 21/21 yeşil.
+  - **Cihazda doğrulanmalı:** Giriş ekranında bağlantının en altta görünmesi.
 
 ### Faz S — Moderasyon admin tarafı (Faz A) *(docs/MODERASYON-PLANI.md)*
 
@@ -3970,6 +3986,10 @@ staging apply → production apply (sahip GO'su ile) → v56 stable.
 | **WP-345** Timer-sync signal + app-open reconcile | Staging FCM + Android lifecycle | Data-only sinyal p95≤10 sn; açılış reconcile p95≤2 sn; terminated/doze/logout/force-stop sonrasında payload state uygulamaz, snapshot doğru state'i getirir. **Cihazda doğrulanmalı.** |
 | **WP-379** Ayna Durdur global koşuyu kapatır | İki Android cihaz + FCM | Aynadan onaylı Durdur → kaynak cihaz ≤5 sn'de durur ve gerekçeyi gösterir; iptal değişiklik yapmaz; revision/ağ reddinde ayna açık kalır; ek session/XP 0. Commit: `bekleyen`. **Cihazda doğrulanmalı.** |
 | **WP-416** Kamp ateşi yeşil alanı 2× + mobil önizleme | Android telefon | Yeşil alan iki katı (137 px) görünüyor; 8 kişide isim çakışması ve alt sıra ayak kesilmesi yok; sahip `lib/campfire_preview.dart` aracından dört kolu (yeşil alan · isim boyutu · satır aralığı · hayvan boyutu) ayarlayıp seçtiği satırı gönderir — seçilen sayılar teste sabit değer olarak girer. Commit: `41544e0`. **Cihazda doğrulanmalı.** |
+| **WP-419** Derleme tanısı Hakkında'ya taşındı | Android | Ayarlar → Hakkında'da varsayılan yalnız sürüm görünüyor, dokununca kanal/backend/commit/migration başı açılıyor; sürüm notları ekranının hiçbir yerinde teknik kimlik ve beta rozetli kart yok. **Cihazda doğrulanmalı.**
+| **WP-420** Geri bildirim ekranı yeniden düzeni | Android telefon | Dar telefonda klavye açıkken yazılan metin görünür kalıyor; İptal/Gönder yan yana; *Gönder* ve *Geri bildirimlerim* sekmeleri; yeni mesaj altta. **Cihazda doğrulanmalı.**
+| **WP-421** Rozet zinciri + başarım gecikmesi | İki Android cihaz + FCM | Yönetici yanıt yazınca rozet Profil → Ayarlar → Geri bildirim sekmesinde beliriyor, okununca hepsi sönüyor; başarım rozeti push'u beklemeden düşüyor. **Cihazda doğrulanmalı.**
+| **WP-422** Giriş ekranı SSS bağlantısı | Android | Bağlantı kayıt geçişinin altında en altta, etiket "(SSS)" taşıyor, kayıt modunda da görünüyor ve oturum açmadan açılıyor. **Cihazda doğrulanmalı.**
 | **WP-417** Tanıtım turu sadeleştirme | Android + Windows | Ana ekranda yalnız "kartları düzenle" balonu çıkıyor (genel bakış + sayaç turu yok); istatistiklerde hiç tur açılmıyor. Commit: `d0751a0`. **Cihazda doğrulanmalı.** |
 | **WP-418** Başarım açıklamaları | Android + Windows (okuma) | Sahip katalogda İlham Kaynağı ve Lokomotif metinlerini okuyup koşulu anladığını onaylar. Commit: `b030094`. **Kodda doğrulandı.** |
 | **WP-380** Widget ve bildirimde boş sayaç biçimi | Android widget + bildirim | Boştayken `00:00`; başlatınca ilk saniyede sıçrama yok; bir saati geçince `1:00:00`; uygulama içi sayaç `00:00:00` kalır. Commit: `bekleyen`. **Cihazda doğrulanmalı.** |

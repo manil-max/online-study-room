@@ -1699,7 +1699,7 @@
   "@faqQuestionFailed": {"description": "SSS sorusu gönderilemediğinde hata metni."},
   "faqLoginRequired": "Soru göndermek için giriş yapmalısın.",
   "@faqLoginRequired": {"description": "Soru gönderiminde oturum gereksinimi."},
-  "faqLoginLink": "Sık sorulan sorular"
+  "faqLoginLink": "Sıkça sorulan sorular (SSS)"
   ,"@faqLoginLink": {"description": "Giriş ekranındaki SSS bağlantısı."},
   "adminUgcReporter": "Şikâyet eden",
   "@adminUgcReporter": {"description": "UGC şikâyetini gönderen kişi etiketi."},

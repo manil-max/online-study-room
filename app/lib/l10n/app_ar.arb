@@ -5242,7 +5242,7 @@
   "@faqAskQuestion": {"description": "Action to submit a support question."},
   "faqAskQuestionHint": "اكتب سؤالك",
   "@faqAskQuestionHint": {"description": "Question composer hint."},
-  "faqLoginLink": "الأسئلة الشائعة",
+  "faqLoginLink": "الأسئلة الشائعة (FAQ)",
   "@faqLoginLink": {"description": "FAQ link shown on the authentication screen."},
   "faqLoginRequired": "سجّل الدخول لإرسال سؤال.",
   "@faqLoginRequired": {"description": "Authentication requirement for support questions."},
