@@ -6,9 +6,17 @@ create or replace function public._enqueue_ugc_report_admin_push()
 returns trigger language plpgsql security definer set search_path = public as $$
 begin
   -- Aynı hedef için açık vaka varken sonraki şikâyetler yeni push üretmez.
-  if (select count(*) from public.ugc_reports
-      where target_type = new.target_type and target_id = new.target_id
-        and status = 'open') <> 1 then return new; end if;
+  -- 🔴 Sayım yerine "en eski açık şikâyet ben miyim" sorulur: AFTER ROW tetikleyicisi
+  -- deyim sonunda çalıştığı için çok satırlı tek INSERT'te bütün satırlar görünür
+  -- olur; `count(*) = 1` koşulu o durumda hiçbir satırda tutmaz ve push HİÇ
+  -- üretilmezdi. Bu biçim satır sayısından ve deyim gruplamasından bağımsızdır.
+  if new.id <> (
+       select r.id from public.ugc_reports r
+       where r.target_type = new.target_type and r.target_id = new.target_id
+         and r.status = 'open'
+       order by r.created_at, r.id
+       limit 1
+     ) then return new; end if;
   insert into public.notification_outbox (event_key, recipient_id, notification_type, payload)
   select 'ugc-report:' || new.id::text || ':' || admin.user_id::text,
     admin.user_id, 'announcement', jsonb_build_object(

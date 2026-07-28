@@ -10,11 +10,13 @@ select plan(6);
 
 select has_table('public', 'moderation_name_resets',
   'isim sıfırlamalarının geri alma kaydı vardır');
-select hasnt_table_privilege('authenticated', 'public.moderation_name_resets', 'select',
+-- pgTAP'ta `hasnt_table_privilege` yok; yerleşik `has_table_privilege` (3 arg)
+-- pgTAP'ın ok()'ine sarılır.
+select ok(not has_table_privilege('authenticated', 'public.moderation_name_resets', 'select'),
   'authenticated geri alma kayıtlarını okuyamaz');
-select hasnt_table_privilege('authenticated', 'public.admin_audit_logs', 'update',
+select ok(not has_table_privilege('authenticated', 'public.admin_audit_logs', 'update'),
   'authenticated denetim kaydını değiştiremez');
-select hasnt_table_privilege('authenticated', 'public.admin_audit_logs', 'delete',
+select ok(not has_table_privilege('authenticated', 'public.admin_audit_logs', 'delete'),
   'authenticated denetim kaydını silemez');
 
 insert into public.moderation_name_resets (
@@ -34,9 +36,11 @@ select is(
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', :'beta', true);
+-- pgTAP `throws_like(sql, pattern, description)` alır; SQLSTATE argümanı
+-- `throws_ok`'a aittir, dördüncü argümanlı sürüm yoktur.
 select throws_like(
   $$select * from public.moderation_name_resets$$,
-  '42501', '%permission denied%',
+  '%permission denied%',
   'sıradan kullanıcı isim geri alma geçmişini okuyamaz'
 );
 reset role;
