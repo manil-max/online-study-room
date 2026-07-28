@@ -35,7 +35,7 @@ Assert-Equal ([bool]$contract.staging.deploy_enabled) $true 'staging deploy enab
 Assert-Equal ([bool]$contract.staging.release_enabled) $true 'staging release enabled'
 Assert-Equal $contract.production.migration_head '0089' 'production hedef head 0089 (WP-373 lease sweeper)'
 Assert-Equal ([bool]$contract.production.deploy_enabled) $false 'production deploy varsayilan HOLD'
-Assert-Equal ([bool]$contract.production.release_enabled) $true 'v54 surum penceresi acik (tag sonrasi yeniden kapatilir)'
+Assert-Equal ([bool]$contract.production.release_enabled) $false 'production release varsayilan HOLD (v54 tag alindi, pencere kapatildi)'
 
 $databaseWorkflow = Get-Content -LiteralPath (Join-Path $repoRoot '.github\workflows\database-gates.yml') -Raw -Encoding UTF8
 $releaseWorkflow = Get-Content -LiteralPath (Join-Path $repoRoot '.github\workflows\release.yml') -Raw -Encoding UTF8

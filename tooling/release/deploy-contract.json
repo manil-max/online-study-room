@@ -10,7 +10,7 @@
   "production": {
     "migration_head": "0089",
     "deploy_enabled": false,
-    "release_enabled": true,
+    "release_enabled": false,
     "backup_requirement": "waived",
     "backup_waiver": {
       "decided_by": "owner",
@@ -18,6 +18,6 @@
       "reason": "Free plan project has no daily backup and no PITR; owner accepted production apply with no rollback path.",
       "rollback_path": "none"
     },
-    "hold_reason": "RELEASE WINDOW OPEN for v54 (owner GO on 2026-07-28, after confirming nothing but the parked tablet layout is left in the md files). deploy_enabled stays false: 0089 is already applied on all three environments (production run 30307084863, staging run 30303743005, post-check head 0089 on both) and any further production migration needs its own explicit GO. This window is reclosed immediately after the tag is cut. v54 carries the client half of WP-373, which is what actually fixes multi-device timer sync - both devices need this build; 0089 was only the crash-safety net. It also ships WP-374 (feedback conversation), WP-375 (intro tour), WP-376 (achievements IA), WP-377 (campfire day/night plus the owner-selected composition) and WP-378 (announcement signal). The backup waiver stays recorded because the project still has no PITR or daily backup."
+    "hold_reason": "RELEASE WINDOW CLOSED. v54 was tagged and published on 2026-07-28 (commit 8f4448b, Release Orchestrator run 30311872534); the window opened for that tag is reclosed here exactly as the previous hold_reason promised. Both flags are back to their default HOLD state and the next stable needs its own explicit owner GO. deploy_enabled also stays false: 0089 is applied on local, staging and production (post-check head 0089 on both remotes) and any further production migration needs its own GO. The backup waiver stays recorded because the project still has no PITR or daily backup."
   }
 }
