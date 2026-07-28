@@ -85,6 +85,17 @@
 - **Faz/WP:** —
 - **SAHİP yollar:** —
 
+### Lane A
+- **Durum:** [~] Aktif
+- **Faz/WP:** PLAN 4 · Faz P · WP-414 → WP-415
+- **Aşama:** Geliştiriliyor
+- **SAHİP yollar:** `app/android/**/timer/**`, `app/android/**/widgets/**`, `app/lib/data/providers/global_timer_providers.dart`, `app/lib/data/providers/study_providers.dart`, ilgili Kotlin + Dart testleri
+- **Ortak/riskli yüzey:** `progress.md` (yalnız bu lane + WP-414/WP-415 kartları) · timer komutu istemci↔sunucu sözleşmesi
+- **Dal:** main
+- **Başlangıç:** 2026-07-28 18:00 (Europe/Istanbul)
+- **Son güncelleme:** 2026-07-28 18:00
+- **Not:** WP-414 ile başlanacak; WP-415 aynı sahip kümesinde ardından uygulanacak. Local kalır; migration/release yok.
+
 ### Claude Lane
 - **Durum:** [x] Boşta
 - **Faz/WP:** — · PLAN 3 Faz K + Faz L kapandı, **v55 yayında**
