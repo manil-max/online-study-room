@@ -483,9 +483,49 @@ Play'e ilk yüklemede iki yol var ve **karar o anda veriliyor**:
   hiçbiri güncelleyemez, **silip yeniden kurmaları gerekir**. Oturum verisi sunucuda olduğu
   için kaybolmaz ama pratikte kullanıcıların çoğu kaybedilir.
 - **Mevcut keystore Play'e app signing key olarak yüklenirse** → aynı imza korunur, GitHub'dan
-  kurmuş kullanıcılar Play üzerinden sorunsuz güncellenir. **Önerilen yol budur.**
+  kurmuş kullanıcılar Play üzerinden sorunsuz güncellenir.
 
-İlgili hatırlatma: release keystore kalıcıdır, asla yeniden üretilmez.
+**SAHİP KARARI (2026-07-28) — Google anahtarı üretsin.** İlk öneri (kendi keystore'unu yükle)
+geri alındı. Gerekçe:
+- Mevcut stable kullanıcıları yalnız birkaç arkadaş; yeniden kurma maliyeti sıfıra yakın.
+- Play'den indirmek zaten daha iyi: otomatik güncelleme, "bilinmeyen kaynak" izni yok,
+  kullanıcı güveni.
+- 🔴 Asıl kazanç: Play App Signing'de imzalama anahtarını **Google saklar**, geliştirici yalnız
+  upload key kullanır ve onu kaybederse sıfırlatabilir. Kendi anahtarını kullanan biri
+  keystore'u kaybederse uygulamayı **bir daha asla güncelleyemez**. Tek kişilik ekip için bu
+  sigorta, yerinde güncelleme kolaylığından değerli.
+
+İki pratik sonuç:
+- Arkadaşlar Play'den kurmadan önce **mevcut uygulamayı silmeli** (imza farklı, üstüne
+  kurulmaz). Oturum ve XP sunucuda, kaybolmaz; yalnız cihazdaki yerel bayraklar sıfırlanır.
+- Bundan sonra **Play = stable, GitHub = yalnız beta**. Beta ayrı paket kimliğiyle
+  (`.beta` suffix) kurulduğu için Play sürümüyle yan yana durabilir. Stable'ı iki kanaldan
+  dağıtmak kullanıcıyı sürekli imza duvarına tosllatır.
+
+İlgili hatırlatma: release keystore yine de kalıcıdır (beta kanalı onu kullanmaya devam eder),
+asla yeniden üretilmez.
+
+### H6. Alan adı — nereden alınacak (2026-07-28 araştırması)
+Bilinmesi gereken tek numara: **reklam edilen fiyat ilk yıl, önemli olan yenileme fiyatı.**
+
+- **Porkbun — önerilen.** `.com` kayıt ve yenileme aynı, ~11 USD/yıl, sürpriz yok.
+- **Cloudflare Registrar** en ucuzu (~9.77 USD, maliyetine satıyor) **ama sıfırdan kayıt
+  yapmıyor**; başka yerden alıp transfer etmek gerekir. Yılda 1–2 USD için uğraşmaya değmez.
+- **Namecheap**: ilk yıl ~9.58, yenileme ~13.98 — klasik tuzak.
+
+Uyarılar:
+- 🔴 **`.com` alınacak.** Ucuz uzantılar (`.xyz`, `.online`) spam filtrelerinde ve e-posta
+  sağlayıcılarında daha şüpheli muamele görür; ana kullanımımız **e-posta göndermek** (C6)
+  olduğu için bu doğrudan kayıt postalarını spam'e düşürür.
+- `.com.tr` alınmayacak — evrak/şart gerektiriyor.
+- **WHOIS gizliliği açılacak** (genelde ücretsiz). Yanında satılan hosting/e-posta paketleri
+  alınmayacak, gerekmiyor.
+
+Satın alma sahibe ait. İsim adayları belirlenince müsaitlik kontrolü bana.
+
+### H7. Sıra notu
+Sahip: **Play'in istediği foreground service tanıtım videosu sona kalsın.** Sahip şu an başka
+özellikler için tarama yapıyor.
 
 **İyi haber — kodda doğrulandı:**
 - `play` flavor zaten var ve uygulama içi GitHub güncelleyicisini kapatıyor
