@@ -24,6 +24,10 @@ import 'campfire_layout.dart';
 
 double _lerp(double a, double b, double t) => a + (b - a) * t;
 
+// WP-382 sahibin onayladığı kalabalık sahne kompozisyonu.
+const double kCampfireFireYOffset = 45;
+const double kCampfireSeatVerticalSpread = 1.25;
+
 /// Kamp ateşi canlı sahnesi (§2G — ormanda taşlı kamp ateşi).
 ///
 /// Yerel saate göre yumuşakça aydınlanan ormanda taş halkalı bir kamp ateşi.
@@ -38,6 +42,8 @@ class CampfireScene extends ConsumerStatefulWidget {
     this.sceneHeight,
     this.groundYFactor,
     this.ringWidthScale,
+    this.previewFireYOffset = kCampfireFireYOffset,
+    this.previewSeatVerticalSpread = kCampfireSeatVerticalSpread,
   });
 
   /// `null` ise çıpalar **mevsime göre** hesaplanır (WP-377). Testler ve
@@ -52,6 +58,11 @@ class CampfireScene extends ConsumerStatefulWidget {
   final double? sceneHeight;
   final double? groundYFactor;
   final double? ringWidthScale;
+
+  /// WP-382 kanonik kompozisyonu. Parametrik golden testi gerekirse bu sabitleri
+  /// yerel olarak ezebilir; üretim çağrıları sahibin onayladığı değerleri kullanır.
+  final double previewFireYOffset;
+  final double previewSeatVerticalSpread;
 
   @override
   ConsumerState<CampfireScene> createState() => _CampfireSceneState();
@@ -143,6 +154,8 @@ class _CampfireSceneState extends ConsumerState<CampfireScene> {
             now: now,
             groundYFactor: widget.groundYFactor ?? kCampfireGroundYFactor,
             ringWidthScale: widget.ringWidthScale,
+            previewFireYOffset: widget.previewFireYOffset,
+            previewSeatVerticalSpread: widget.previewSeatVerticalSpread,
           ),
         );
       },
@@ -250,6 +263,8 @@ class _SceneLayout extends StatefulWidget {
     required this.now,
     required this.groundYFactor,
     this.ringWidthScale,
+    required this.previewFireYOffset,
+    required this.previewSeatVerticalSpread,
   });
 
   final List<_Camper> campers;
@@ -262,6 +277,8 @@ class _SceneLayout extends StatefulWidget {
 
   /// `null` ise profilin kendi çarpanı kullanılır (WP-377 önizleme seam'i).
   final double? ringWidthScale;
+  final double previewFireYOffset;
+  final double previewSeatVerticalSpread;
 
   /// Sahnenin tek zaman kaynağı. Testlerde `CampfireScene.clock` ile sabitlenir;
   /// alt painter'lar `DateTime.now()` okumaz.
@@ -342,11 +359,12 @@ class _SceneLayoutState extends State<_SceneLayout>
           platform: Theme.of(context).platform,
         );
         final layout = CampfireCountLayout.saved(n.clamp(1, 8));
-        final fireY = h * (widget.groundYFactor + profile.fireYOffset);
+        final fireY =
+            h * (widget.groundYFactor + profile.fireYOffset) +
+            widget.previewFireYOffset;
         final ringCy = fireY + 18; // hayvanların oturduğu halka merkezi
 
-        final ringScale =
-            widget.ringWidthScale ?? profile.ringWidthMultiplier;
+        final ringScale = widget.ringWidthScale ?? profile.ringWidthMultiplier;
         final rx = w * layout.ringWidthFactor * ringScale;
         // Halka genişledikçe marşmelov ateşten uzaklaşmasın (WP-377).
         final stickReach = campfireStickReach(
@@ -360,7 +378,7 @@ class _SceneLayoutState extends State<_SceneLayout>
         for (var i = 0; i < n; i++) {
           final seat = seats[i];
           final mx = cx + rx * seat.x;
-          final my = ringCy + ry * seat.y;
+          final my = ringCy + ry * seat.y * widget.previewSeatVerticalSpread;
           final depth = seat.depth;
           final scale =
               _lerp(0.72, 1.06, depth) * profile.critterScaleMultiplier;
