@@ -175,9 +175,17 @@
 
 ### Ajan B — Feedback konuşmaları ve okunmamış gerçeği
 
-- **Durum:** [ ] HAZIR
-- **Zincir:** `WP-434 → WP-435 → WP-436 → WP-437 → WP-438`
-- **İlk iş:** WP-434; hemen claim edilebilir.
+- **Durum:** [!] BEKLİYOR: WP-435 / WP-431 commit'i + migration kilidi
+- **Aktif WP:** — (WP-434 kod + otomatik test tamam)
+- **Zincir:** `WP-434 ✅ → WP-435 → WP-436 → WP-437 → WP-438`
+- **Son teslim:** WP-434 denetimi · `docs/qa/V57-FEEDBACK-EVIDENCE.md` +
+  `app/test/features/feedback_flow_wp434_test.dart` (10/10 yeşil,
+  analyze 0 uyarı). Ürün kodu/migration değişmedi.
+- **Neden bekliyor:** WP-435 sunucu tek gerçeği `0103` migration'ı yazar; kart
+  bunu WP-431 commit'i **ve** boş migration kilidine bağlıyor. İkisi de hazır
+  olunca aynı kutuda WP-435'e geçilir.
+- **Dal:** `main`
+- **Son güncelleme:** 2026-07-30 02:45 (Europe/Istanbul)
 - **SAHİP ana yüzey:** feedback ticket/message modelleri, admin repository
   arayüzü + Supabase/InMemory çiftleri,
   admin/notification providers, `features/profile/feedback_*`,
@@ -4095,7 +4103,7 @@ alır; boş/uydurma migration yazılmaz.
 
 #### WP-434 — Feedback uçtan uca veri akışı ve konuşma kimliği denetimi
 
-- **Durum / bağımlılık:** [ ] HAZIR · Ajan B.
+- **Durum / bağımlılık:** [x] Kod + otomatik test tamam · Ajan B · 2026-07-30.
 - **Problem:** Mesaj yanlış bilete düşüyor, kayboluyor veya iki yüzeyde farklı
   okunmuş görünüyor olabilir; önce tekil olay akışı kanıtlanmalı.
 - **SAHİP:** `docs/qa/V57-FEEDBACK-EVIDENCE.md` (yeni), feedback model/repository/
@@ -4111,6 +4119,26 @@ alır; boş/uydurma migration yazılmaz.
 - **Kabul:** tek mesajın tek kalıcı `message_id` ve tek `ticket_id`si var;
   optimistic geçici kimlik server kimliğiyle tekilleşir; refresh/relogin sonrası
   aynı sıra görülür.
+- **Sonuç (denetim):** olay zinciri tek çizelgede yazıldı; dört sözleşme bagı
+  (tek `message_id`/`ticket_id`, çapraz-bilet sızıntısı yok, katılımcı sınırı,
+  yeniden fetch aynı sıra) regresyon testine bağlandı. Dokuz bulgu
+  `B1…B9` olarak sahiplendirildi:
+  **B1** biletin ilk mesajı kanonik dizide yok → yazışmada "henüz yanıt yok";
+  **B2** gönderim idempotent değil (istemci komut kimliği yok);
+  **B3** sıra imleci yok, sıra yalnız `created_at`;
+  **B4** tek admin yanıtı iki kanal ürettiği için rozeti **2** artırıyor;
+  **B5** okundu yalnız mesaj kanalını kapatıyor, rozet **1**'de asılı kalıyor;
+  **B6** yazışma açıkken canlılık yok; **B7** okundu = "fetch edildi";
+  **B8** Supabase/InMemory yan etki sapması kusuru testlerde görünmez yapıyordu;
+  **B9** push'un `feedback_ticket` yolu ölü (tap payload'ı yönlenmiyor → WP-437
+  değerlendirmesi).
+- **⚠️ Kart düzeltmesi:** WP-435 karttaki `mark_support_thread_read` RPC'si
+  **repoda yok** (supabase/app taramasında sıfır eşleşme); gerçek yol
+  `mark_feedback_ticket_messages_read` + duyuru okuma kaydıdır.
+- **Kanıt:** `docs/qa/V57-FEEDBACK-EVIDENCE.md` (yeni) ·
+  `app/test/features/feedback_flow_wp434_test.dart` (yeni, 10 test).
+  `flutter analyze` 0 uyarı; feedback/rozet/admin test kümesi 42/42 yeşil.
+  Ürün kodu ve migration **değişmedi**. Etiket: `Kodda doğrulandi`.
 - **Model:** Opus.
 
 #### WP-435 — Feedback konuşması için server-authoritative tek gerçek
