@@ -16,15 +16,21 @@ description: >
 
 Kullanıcı (kısa): **"worker'ı oku ve V8-A'yı / WP-N'yi yap"** (Faz veya WP olabilir).
 
+PLAN 5 / v57 için ikinci kanonik kısa tetik:
+**"`progress.md`'yi oku, sen Ajan X'sin."** Buradaki `X`, A–H'den biridir.
+Bu tetikte kullanıcı ayrıca WP numarası vermek zorunda değildir; worker
+`progress.md` içindeki hazır Ajan X zincirinden sıradaki uygun WP'yi kendisi
+bulur.
+
 ---
 
 ## Akış (özet)
 
 ```
-1. progress.md oku            → kendi lane + verilen Faz/WP kartı
+1. progress.md oku            → kendi önceden tanımlı Ajan X kaydı + sıradaki WP
 2. AGENTS.md + KALITE-PROGRAMI → kural + kabul kriterleri + DoD
 3. ÇAKIŞMA ÖN-KONTROLÜ (Adım 0) → gerekiyorsa DUR ve UYAR
-4. CLAIM et                   → Aktif Çalışma Kaydı'na kendi lane'ini yaz (iki-aşamalı)
+4. CLAIM et                   → mevcut Ajan X kaydını doldur (iki-aşamalı)
 5. Tasarım/teknik tasarımı netleştir → belirsizlik varsa sor
 6. ORTAM ÖN-KONTROLÜ          → local/staging/production hedefini doğrula; varsayılan local
 7. Adımları sırayla uygula    → yalnız SAHİP dosyalara yaz, DoD'yi izle
@@ -54,7 +60,12 @@ Kullanıcı (kısa): **"worker'ı oku ve V8-A'yı / WP-N'yi yap"** (Faz veya WP 
 
 > **Dal YOK.** Herkes doğrudan `main`'de çalışır; çakışma ayrık SAHİP dosyalar + Aktif Çalışma Kaydı ile önlenir (AGENTS.md §1.5). `git switch -c` / branch / merge / push yapma.
 
-1. `progress.md` Aktif Çalışma Kaydı'nda kendi lane'ini doldur (format `AGENTS.md §1.1`): Durum `[~] Aktif`, Faz/WP, Aşama `Geliştiriliyor`, **SAHİP yollar**, **ortak/riskli yüzey**, **Dal: `main`**, başlangıç + son güncelleme (Europe/Istanbul), not. Güncel sürüm/faz etiketini koru; eski plan metnini geri getirme.
+1. PLAN 5'te yalnız kullanıcı tarafından verilen **mevcut `### Ajan X` kaydını**
+   doldur: Durum `[~] Aktif`, güncel WP, aşama `Geliştiriliyor`, **SAHİP
+   yollar**, **ortak/riskli yüzey**, **Dal: `main`**, başlangıç + son güncelleme
+   (Europe/Istanbul), not. `Claude/Gemini/Codex/Worker/Lane X` adıyla yeni kayıt
+   oluşturma; eski lane adlarını geri getirme. PLAN 5 dışındaki işte format
+   `AGENTS.md §1.1`'dir.
 2. Claim'i yaz → kaydı **yeniden oku** (iki-aşamalı); bu sırada başkası aynı kapsamı aldıysa geri çekil ve uyar.
 
 ---
@@ -97,9 +108,18 @@ Backend, migration, Edge Function, secret veya release işi varsa `docs/ORTAM-MI
 
 `progress.md` plan listesi değil, **canlı durum kaynağıdır.** Her durum değişiminden hemen önce dosyayı yeniden oku; yalnız **kendi lane + kendi WP kartına dar patch** uygula. Tüm dosyayı stale kopyadan yeniden yazma; başka ajanların kartlarını ve güncel faz etiketlerini koru.
 
-- Üç+ canlı lane: `Gemini`, `Claude`, `Codex` (+ gerekirse ek). Yalnız kendi lane.
+- PLAN 5'te canlı kayıtlar yalnız `Ajan A`…`Ajan H`dir. Model/ürün adı
+  (`Gemini`, `Claude`, `Codex`, `Grok`), `Worker` veya yeni `Lane X` başlığı
+  oluşturulmaz. Worker yalnız kendisine verilen Ajan X kutusunu ve kendi WP
+  kartını düzenler.
 - Anlamlı her geçişte (başlat / blokla / devret / **test için parka al** / tamamlandı) `progress.md` anında güncellenir.
-- **Aktif Çalışma Kaydı yalnız GERÇEKTEN yazılan işi tutar.** Kod bitip cihaz/demo bekleyen kart aktifte kalmaz → `## Test için bekleyenler`e taşınır, lane boşalır. Aktif lane = o an dosya yazan ajan demektir; başkası ona göre çakışma hesaplar.
+- **Aktif Çalışma Kaydı yalnız GERÇEKTEN yazılan işi tutar.** PLAN 5 worker'ı bir
+  WP commit'inden sonra zincirindeki sonraki WP hazırsa aynı Ajan X kutusunda
+  ona geçer; bağımlılık hazır değilse kutuyu `[!] BEKLİYOR: WP-N / commit`
+  yapar; zincir bittiyse `[x] ZİNCİR TAMAMLANDI` yapar. Cihaz kabulü bekleyen
+  kanıtı kartta ve Ajan H join kapısında gösterir. PLAN 5 dışındaki tekil işte
+  kod bitip cihaz/demo bekleyen kart `## Test için bekleyenler`e taşınır ve lane
+  boşalır.
 - Handoff: WP başka ajana geçiyorsa tek editte yeni lane'e taşınır + kısa handoff notu.
 
 ---

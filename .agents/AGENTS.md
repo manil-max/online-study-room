@@ -58,6 +58,11 @@ görmez; koordinasyon yalnız bu dosya üzerindendir.
 
 Bir ajan bir Faz/WP almaya başlar başlamaz, **kod yazmadan önce** `progress.md`'deki Aktif Çalışma Kaydı'na kendi lane'ini işler:
 
+**PLAN 5 istisnası:** Kullanıcı “`progress.md`'yi oku, sen Ajan X'sin” dediyse
+worker yalnız önceden oluşturulmuş `Ajan A`…`Ajan H` kaydından kendisine
+atananı doldurur. `Claude`, `Gemini`, `Codex`, `Grok`, `Worker` veya yeni
+`Lane X` başlığı açmaz; eski lane adlarını geri getirmez.
+
 ```
 ### <Ajan> Lane
 - Durum: [~] Aktif
