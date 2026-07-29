@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/stats/istanbul_calendar.dart';
 import '../../../core/widgets/crowned_avatar.dart';
 import '../../../data/models/chat_message.dart';
+import '../../../data/models/report_target.dart';
 import '../../../data/models/study_group.dart';
 import '../../../data/providers/auth_providers.dart';
 import '../../../data/providers/chat_providers.dart';
@@ -217,9 +218,13 @@ class _MessageBubble extends ConsumerWidget {
       await showReportSheet(
         context,
         ref,
-        targetType: 'message',
-        targetId: message.id,
-        snapshot: message.body,
+        // WP-439: mesaj hedefi grup bağlamıyla birlikte gider; sunucu ortak
+        // aktif üyelik ve görünürlüğü bu grupla doğrular.
+        target: ReportTarget.message(
+          messageId: message.id,
+          groupId: message.groupId,
+          hint: message.body,
+        ),
       );
       return;
     }

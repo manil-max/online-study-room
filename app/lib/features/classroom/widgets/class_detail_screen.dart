@@ -11,6 +11,7 @@ import '../../../core/time_engine/world_clock_math.dart';
 import '../../../core/widgets/number_stepper.dart';
 import '../../../core/widgets/crowned_avatar.dart';
 import '../../../data/models/profile.dart';
+import '../../../data/models/report_target.dart';
 import '../../../data/models/study_group.dart';
 import '../../../data/providers/auth_providers.dart';
 import '../../../data/providers/group_providers.dart';
@@ -48,9 +49,10 @@ class ClassDetailScreen extends ConsumerWidget {
             onPressed: () => showReportSheet(
               context,
               ref,
-              targetType: 'group',
-              targetId: group.id,
-              snapshot: 'Grup: ${group.name}',
+              target: ReportTarget.group(
+                groupId: group.id,
+                hint: 'Grup: ${group.name}',
+              ),
             ),
           ),
           if (isAdmin)
@@ -76,12 +78,17 @@ class ClassDetailScreen extends ConsumerWidget {
                 key: const ValueKey('report-group-name-action'),
                 tooltip: AppLocalizations.of(context).safetyReport,
                 icon: const Icon(Icons.flag_outlined),
+                // WP-439: grup adı ayrı bir hedef türüdür
+                // (`ReportTarget.groupName`). Sunucu `group_name` türünü
+                // migration `0104` ile tanıyacak; o güne kadar rapor mevcut
+                // `group` vakasına düşer ve ipucu adı taşır — kaybolmaz.
                 onPressed: () => showReportSheet(
                   context,
                   ref,
-                  targetType: 'group',
-                  targetId: group.id,
-                  snapshot: group.name,
+                  target: ReportTarget.group(
+                    groupId: group.id,
+                    hint: 'Grup adı: ${group.name}',
+                  ),
                 ),
               ),
               if (isAdmin)

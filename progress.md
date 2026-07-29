@@ -191,7 +191,12 @@
 
 ### Ajan C — Moderasyon ve UGC güvenliği
 
-- **Durum:** [ ] HAZIR
+- **Durum:** [~] Aktif · **Aktif WP:** WP-439 · **Aşama:** Geliştiriliyor
+- **Dal:** `main` · **Başlangıç:** 2026-07-30 02:05 (Europe/Istanbul) · **Son güncelleme:** 2026-07-30 02:05
+- **Not:** WP-439 sözleşme dilimi kod + otomatik test tamam (commit altında).
+  `0104` migration dilimi `[!] BEKLİYOR: WP-435 commit'i + migration kilidi`.
+  Ajan D'nin WP-446 mesaj-rapor UI'ı artık `ReportTarget.message(messageId:, groupId:)`
+  sözleşmesine bağlanabilir. Sıradaki: WP-440 (bağımlılığı karşılandı).
 - **Zincir:** `WP-439 → WP-440 → WP-441 → WP-442 → WP-443`
 - **İlk iş:** WP-439 sözleşme/test dilimi; hemen claim edilebilir.
 - **SAHİP ana yüzey:** moderation model/repository/provider çiftleri,
@@ -4148,7 +4153,37 @@ alır; boş/uydurma migration yazılmaz.
 
 #### WP-439 — Mesaj/profil/grup/grup-adı rapor hedef sözleşmesi
 
-- **Durum / bağımlılık:** [ ] HAZIR audit/test; migration için WP-435 beklenir.
+- **Durum / bağımlılık:** [~] **Sözleşme dilimi kod + otomatik test tamam** (Ajan C).
+  Migration dilimi (`0104`) `[!] BEKLİYOR: WP-435 commit'i + migration kilidi`.
+- **Koşulan denetim (Kodda doğrulandı):** Grup detay ekranındaki iki ayrı bayrak
+  düğmesi (`report-group-action` ve `report-group-name-action`) aynı
+  `('group', group.id)` çiftini gönderiyordu; `0038`'in
+  `unique (reporter_id, target_type, target_id, reason)` kısıtı ikisini tek satıra
+  çöktürüyordu — grup adı şikâyeti görünmez oluyordu. Mesaj raporu ise grup
+  bağlamı taşımıyordu, sunucu ortak üyelik/görünürlük doğrulayamıyordu.
+  Profil raporu tarihsel `user` türünü yazıyordu.
+- **Bu commit'te yapılan:** `ReportTarget` / `ReportTargetType` değer nesnesi
+  (`message|profile|group|group_name`, değişmez kimlik, `caseKey = tür:kimlik`,
+  mesajda zorunlu `contextGroupId`, ipucu 200 karaktere kırpılır);
+  `ModerationRepository.reportUgc` artık serbest metin çifti değil hedef alıyor;
+  Supabase + InMemory çiftleri ve dört çağrı yeri taşındı; `p_snapshot` artık
+  “kanıt” değil doğrulanmamış istemci ipucu olarak adlandırıldı.
+- **Migration dilimine kalan:** `0104` hedef doğrulama RPC'si, sunucu-üretimli
+  kanonik snapshot, `moderation_cases` açık-vaka tekilliği, retention ve RLS;
+  `group_name` türünün sunucuda açılması + grup-adı düğmesinin ona çevrilmesi;
+  `p_context_group_id` parametresinin eklenmesi. O güne kadar Supabase deposu
+  `group_name`'i fail-closed reddeder (sessizce `group` vakasına düşmez) ve
+  grup-adı düğmesi mevcut davranışını korur — regresyon yok.
+- **Sınır açıklaması (Ajan D'ye):** `showReportSheet` imzası değiştiği için mevcut
+  dört çağrı yeri **mekanik olarak** taşındı:
+  `class_chat_card.dart`, `class_detail_screen.dart` (x2),
+  `social_profile_screen.dart`. Yeni UI girişi eklenmedi, davranış
+  değiştirilmedi; mesaj-rapor girişi tasarımı WP-446'da Ajan D'dedir.
+- **WP-440'a not:** admin kuyruğu eski `user` satırlarını `profile` olarak
+  göstermeli (`ReportTargetType.fromWire` alias'ı hazır).
+- **Kanıt:** `flutter analyze` 11 dosya 0 uyarı · hedefli `flutter test` 34/34
+  yeşil (`test/data/report_target_contract_test.dart` + moderasyon/güvenlik
+  regresyonları). Etiket: **Kodda doğrulandı** · cihaz kabulü WP-443/WP-466.
 - **Problem:** Kullanıcı grup sohbetindeki tek mesajı seçip raporlayamıyor;
   adminin gördüğü bağlam hedef türüne göre tutarlı değil.
 - **SAHİP:** moderation models/repository/provider, `features/safety/**`,

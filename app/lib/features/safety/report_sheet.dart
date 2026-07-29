@@ -5,17 +5,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
+import '../../data/models/report_target.dart';
 import '../../data/providers/moderation_providers.dart';
 import '../../data/repositories/moderation_repository.dart';
 import '../profile/legal_documents.dart';
 
 /// WP-116 / WP-125 / WP-130: UGC rapor bottom sheet.
+///
+/// WP-439: hedef serbest metin çifti değil, doğrulanmış [ReportTarget]'tır.
 Future<void> showReportSheet(
   BuildContext context,
   WidgetRef ref, {
-  required String targetType,
-  required String targetId,
-  String? snapshot,
+  required ReportTarget target,
 }) {
   return showModalBottomSheet<void>(
     context: context,
@@ -23,25 +24,15 @@ Future<void> showReportSheet(
     isScrollControlled: true,
     builder: (ctx) => Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(ctx).bottom),
-      child: _ReportSheet(
-        targetType: targetType,
-        targetId: targetId,
-        snapshot: snapshot,
-      ),
+      child: _ReportSheet(target: target),
     ),
   );
 }
 
 class _ReportSheet extends ConsumerStatefulWidget {
-  const _ReportSheet({
-    required this.targetType,
-    required this.targetId,
-    this.snapshot,
-  });
+  const _ReportSheet({required this.target});
 
-  final String targetType;
-  final String targetId;
-  final String? snapshot;
+  final ReportTarget target;
 
   @override
   ConsumerState<_ReportSheet> createState() => _ReportSheetState();
@@ -127,11 +118,9 @@ class _ReportSheetState extends ConsumerState<_ReportSheet> {
             LegalDocuments.communityVersion,
           );
       await ref.read(moderationRepositoryProvider).reportUgc(
-            targetType: widget.targetType,
-            targetId: widget.targetId,
+            target: widget.target,
             reason: _reason,
             details: details,
-            snapshot: widget.snapshot,
             attachmentBytes: _attachmentBytes,
             attachmentExt: _attachmentExt,
           );

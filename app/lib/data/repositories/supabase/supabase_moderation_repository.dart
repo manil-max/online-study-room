@@ -3,8 +3,35 @@ import 'dart:typed_data';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../models/profile.dart';
+import '../../models/report_target.dart';
 import '../moderation_repository.dart';
 import 'report_attachment_upload.dart';
+
+/// WP-439: `report_ugc` RPC'sinin **dağıtılmış** parametre sözleşmesi.
+///
+/// Migration `0104` hedef doğrulama, bağlam grubu ve sunucu-üretimli snapshot
+/// eklenene kadar istemci bu altı anahtarın dışına çıkamaz; PostgREST bilinmeyen
+/// parametreyi "function not found" ile reddeder ve şikâyet sessizce kaybolur.
+const Set<String> kReportUgcRpcParams = {
+  'p_target_type',
+  'p_target_id',
+  'p_reason',
+  'p_details',
+  'p_snapshot',
+  'p_attachment_path',
+};
+
+/// WP-439: sunucunun `0104` öncesinde kabul ettiği hedef türleri.
+///
+/// [ReportTargetType.groupName] burada **yok**: `group_name` türü `0104` ile
+/// açılır. O zamana kadar `group`'a düşürmek grubun kendisiyle aynı vakaya
+/// bağlanmak demek olurdu — WP-439'un düzelttiği hatanın ta kendisi. Bu yüzden
+/// sessiz düşüş yerine fail-closed hata veriyoruz.
+const Set<ReportTargetType> kReportTargetTypesLiveOnServer = {
+  ReportTargetType.message,
+  ReportTargetType.profile,
+  ReportTargetType.group,
+};
 
 class SupabaseModerationRepository implements ModerationRepository {
   SupabaseModerationRepository(this._client);
@@ -92,14 +119,17 @@ class SupabaseModerationRepository implements ModerationRepository {
 
   @override
   Future<void> reportUgc({
-    required String targetType,
-    required String targetId,
+    required ReportTarget target,
     required String reason,
     String? details,
-    String? snapshot,
     Uint8List? attachmentBytes,
     String? attachmentExt,
   }) async {
+    if (!kReportTargetTypesLiveOnServer.contains(target.type)) {
+      throw const ModerationException(
+        'Bu şikâyet türü henüz sunucuda açık değil.',
+      );
+    }
     // WP-423: ek opsiyoneldir. Yükleme başarısızsa `null` döner ve şikâyet
     // eksiz gider — ek yüzünden bildirim kaybolmaz.
     final attachmentPath = await uploadReportAttachment(
@@ -110,17 +140,36 @@ class SupabaseModerationRepository implements ModerationRepository {
     try {
       await _client.rpc(
         'report_ugc',
-        params: {
-          'p_target_type': targetType,
-          'p_target_id': targetId,
-          'p_reason': reason,
-          'p_details': details,
-          'p_snapshot': snapshot,
-          'p_attachment_path': attachmentPath,
-        },
+        params: reportUgcRpcParams(
+          target: target,
+          reason: reason,
+          details: details,
+          attachmentPath: attachmentPath,
+        ),
       );
     } on PostgrestException catch (e) {
       throw ModerationException(e.message);
     }
   }
+}
+
+/// WP-439: [ReportTarget] → `report_ugc` parametreleri.
+///
+/// Ayrı fonksiyon, sözleşmenin Supabase istemcisi olmadan test edilebilmesi
+/// içindir. `context_group_id` bilerek gönderilmez: RPC onu `0104`te tanıyacak.
+Map<String, dynamic> reportUgcRpcParams({
+  required ReportTarget target,
+  required String reason,
+  String? details,
+  String? attachmentPath,
+}) {
+  return {
+    'p_target_type': target.type.wire,
+    'p_target_id': target.id,
+    'p_reason': reason,
+    'p_details': details,
+    // Doğrulanmamış istemci ipucu; `0104` sonrası kanıt yerine yalnız bağlam.
+    'p_snapshot': target.clientHint,
+    'p_attachment_path': attachmentPath,
+  };
 }

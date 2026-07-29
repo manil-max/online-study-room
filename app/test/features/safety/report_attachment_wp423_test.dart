@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:online_study_room/data/models/report_target.dart';
 import 'package:online_study_room/data/providers/moderation_providers.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_moderation_repository.dart';
 import 'package:online_study_room/data/repositories/supabase/report_attachment_upload.dart';
@@ -21,8 +22,7 @@ void main() {
   test('ek olmadan şikâyet gönderilebilir', () async {
     final repo = InMemoryModerationRepository();
     await repo.reportUgc(
-      targetType: 'user',
-      targetId: 'u1',
+      target: ReportTarget.profile(userId: 'u1'),
       reason: 'spam',
     );
     expect(repo.reports, hasLength(1));
@@ -32,8 +32,7 @@ void main() {
   test('ek verildiğinde repository katmanına taşınır', () async {
     final repo = InMemoryModerationRepository();
     await repo.reportUgc(
-      targetType: 'message',
-      targetId: 'm1',
+      target: ReportTarget.message(messageId: 'm1', groupId: 'g1'),
       reason: 'hate',
       attachmentBytes: Uint8List.fromList([1, 2, 3]),
       attachmentExt: 'png',
@@ -57,8 +56,7 @@ void main() {
                   onPressed: () => showReportSheet(
                     context,
                     ref,
-                    targetType: 'user',
-                    targetId: 'u1',
+                    target: ReportTarget.profile(userId: 'u1'),
                   ),
                   child: const Text('ac'),
                 ),

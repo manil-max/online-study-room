@@ -11,6 +11,7 @@ import '../../data/models/achievement_metric_progress.dart';
 import '../../data/models/achievement_reward.dart';
 import '../../data/models/gamification_profile.dart';
 import '../../data/models/profile.dart';
+import '../../data/models/report_target.dart';
 import '../../data/providers/auth_providers.dart';
 import '../../data/providers/achievement_provider.dart';
 import '../../data/providers/achievement_reward_provider.dart';
@@ -137,9 +138,11 @@ class _SocialProfileScreenState extends ConsumerState<SocialProfileScreen> {
                   await showReportSheet(
                     context,
                     ref,
-                    targetType: 'user',
-                    targetId: widget.profile.id,
-                    snapshot: widget.profile.displayName,
+                    // WP-439: tarihsel `user` türü yerine kanonik `profile`.
+                    target: ReportTarget.profile(
+                      userId: widget.profile.id,
+                      hint: widget.profile.displayName,
+                    ),
                   );
                 } else if (value == 'block') {
                   await confirmAndBlockUser(

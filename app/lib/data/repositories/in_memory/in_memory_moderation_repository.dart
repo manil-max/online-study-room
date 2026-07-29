@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import '../../models/profile.dart';
+import '../../models/report_target.dart';
 import '../moderation_repository.dart';
 
 class InMemoryModerationRepository implements ModerationRepository {
@@ -57,20 +58,22 @@ class InMemoryModerationRepository implements ModerationRepository {
 
   @override
   Future<void> reportUgc({
-    required String targetType,
-    required String targetId,
+    required ReportTarget target,
     required String reason,
     String? details,
-    String? snapshot,
     Uint8List? attachmentBytes,
     String? attachmentExt,
   }) async {
     _reports.add({
-      'type': targetType,
-      'id': targetId,
+      'type': target.type.wire,
+      'id': target.id,
+      // WP-439: açık vaka tekilliği tür+kimlik ile; grup ile grup adı ayrı vaka.
+      'case_key': target.caseKey,
+      'context_group_id': target.contextGroupId,
       'reason': reason,
       'details': details,
-      'snapshot': snapshot,
+      // WP-439: istemci ipucu kanıt değildir; kanonik snapshot sunucuda üretilir.
+      'client_hint': target.clientHint,
       // WP-423: demo modda yükleme yok; testler ekin taşındığını buradan görür.
       'attachment': attachmentBytes == null ? null : (attachmentExt ?? 'jpg'),
     });
@@ -79,4 +82,9 @@ class InMemoryModerationRepository implements ModerationRepository {
   /// Test helper.
   List<Map<String, String?>> get reports =>
       List<Map<String, String?>>.unmodifiable(_reports);
+
+  /// WP-439 test helper: bu depoda açılmış ayrık vaka anahtarları.
+  Set<String> get caseKeys => {
+        for (final r in _reports) r['case_key']!,
+      };
 }
