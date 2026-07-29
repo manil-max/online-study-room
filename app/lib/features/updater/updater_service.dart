@@ -42,14 +42,28 @@ class UpdaterService {
   /// Yeni sürüm varsa bilgisini, yoksa `null` döndürür.
   /// Ağ/parse hatalarında sessizce `null` döner (uygulama açılışını bloklamaz).
   Future<UpdateInfo?> checkForUpdate() async {
+    final result = await checkForUpdateDetailed();
+    return result.info;
+  }
+
+  /// Manuel güncelleme denetimi için kaybı olmayan sonuç.
+  ///
+  /// Açılıştaki sessiz akış [checkForUpdate] ile geriye uyumlu kalır. Ayarlar
+  /// ekranı ise "güncel", mağaza-yönetimli ve ağ/yanıt hatasını birbirine
+  /// karıştırmadan kullanıcıya gösterebilir.
+  Future<UpdateCheckResult> checkForUpdateDetailed() async {
     // WP-110: Play Store build — GitHub APK yolu unreachable (yalnız UI gizle değil).
-    if (!DistributionConfig.allowsSideloadUpdates) return null;
+    if (!DistributionConfig.allowsSideloadUpdates) {
+      return const UpdateCheckResult.managedByStore();
+    }
 
     // kIsWeb derleme-zamanı; web'de `Platform`'a hiç dokunulmaz.
-    if (kIsWeb) return null;
+    if (kIsWeb) return const UpdateCheckResult.unsupported();
     final isAndroid = Platform.isAndroid;
     final isWindows = Platform.isWindows;
-    if (!isAndroid && !isWindows) return null;
+    if (!isAndroid && !isWindows) {
+      return const UpdateCheckResult.unsupported();
+    }
 
     try {
       final info = await PackageInfo.fromPlatform();
@@ -77,27 +91,34 @@ class UpdaterService {
         );
         data = res.data;
       }
-      if (data == null) return null;
+      if (data == null) return const UpdateCheckResult.upToDate();
 
       final latestCode = _parseVersionCode(data['tag_name'] as String?);
-      if (latestCode == null || latestCode <= currentCode) return null;
+      if (latestCode == null) return const UpdateCheckResult.failed();
+      if (latestCode <= currentCode) {
+        return const UpdateCheckResult.upToDate();
+      }
 
       final assets = data['assets'];
       final packageUrl = _findAssetUrl(assets, assetName);
-      if (packageUrl == null) return null;
+      if (packageUrl == null) return const UpdateCheckResult.failed();
 
-      return UpdateInfo(
-        versionCode: latestCode,
-        versionName: (data['name'] as String?)?.trim().isNotEmpty == true
-            ? (data['name'] as String).trim()
-            : (data['tag_name'] as String? ?? 'v$latestCode'),
-        releaseNotes: (data['body'] as String?)?.trim() ?? '',
-        downloadUrl: packageUrl,
-        sha256Url: _findAssetUrl(assets, '$assetName.sha256'),
-        packageKind: isWindows ? UpdatePackageKind.msix : UpdatePackageKind.apk,
+      return UpdateCheckResult.updateAvailable(
+        UpdateInfo(
+          versionCode: latestCode,
+          versionName: (data['name'] as String?)?.trim().isNotEmpty == true
+              ? (data['name'] as String).trim()
+              : (data['tag_name'] as String? ?? 'v$latestCode'),
+          releaseNotes: (data['body'] as String?)?.trim() ?? '',
+          downloadUrl: packageUrl,
+          sha256Url: _findAssetUrl(assets, '$assetName.sha256'),
+          packageKind: isWindows
+              ? UpdatePackageKind.msix
+              : UpdatePackageKind.apk,
+        ),
       );
     } catch (_) {
-      return null;
+      return const UpdateCheckResult.failed();
     }
   }
 
@@ -158,6 +179,35 @@ class UpdaterService {
     }
     return null;
   }
+}
+
+enum UpdateCheckOutcome {
+  updateAvailable,
+  upToDate,
+  managedByStore,
+  unsupported,
+  failed,
+}
+
+class UpdateCheckResult {
+  const UpdateCheckResult._(this.outcome, this.info);
+
+  const UpdateCheckResult.updateAvailable(UpdateInfo info)
+    : this._(UpdateCheckOutcome.updateAvailable, info);
+
+  const UpdateCheckResult.upToDate()
+    : this._(UpdateCheckOutcome.upToDate, null);
+
+  const UpdateCheckResult.managedByStore()
+    : this._(UpdateCheckOutcome.managedByStore, null);
+
+  const UpdateCheckResult.unsupported()
+    : this._(UpdateCheckOutcome.unsupported, null);
+
+  const UpdateCheckResult.failed() : this._(UpdateCheckOutcome.failed, null);
+
+  final UpdateCheckOutcome outcome;
+  final UpdateInfo? info;
 }
 
 /// İndirilecek paket türü (kurulum yolu platforma göre değişir).

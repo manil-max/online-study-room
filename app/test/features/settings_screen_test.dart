@@ -11,7 +11,6 @@ import 'package:online_study_room/data/repositories/in_memory/in_memory_auth_rep
 import 'package:online_study_room/features/notifications/notification_permissions_screen.dart';
 import 'package:online_study_room/features/profile/about_screen.dart';
 import 'package:online_study_room/features/profile/settings_screen.dart';
-import 'package:online_study_room/features/updater/release_notes_screen.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -40,7 +39,7 @@ void main() {
     ];
 
     // Ayarlar gövdesi lazy bir ListView; ekran dışı gruplar kurulmaz. Tüm grupların
-    // (WP-30 "Sürüm ve güncellemeler" eklendikten sonra dahil) tek karede build
+    // (WP-456 "Hakkında ve güncellemeler" dahil) tek karede build
     // edilip find.text ile bulunabilmesi için viewport'u bolca yüksek tut.
     tester.view.physicalSize = const Size(1080, 12000);
     tester.view.devicePixelRatio = 3.0;
@@ -80,14 +79,15 @@ void main() {
     expect(find.text('Widget ve alarm izinleri'), findsNothing);
     expect(find.text('Görünüm ve atmosfer temaları'), findsOneWidget);
     expect(find.text('Uygulama dili'), findsOneWidget);
-    expect(find.text('Sürüm ve güncellemeler'), findsOneWidget);
+    expect(find.text('Hakkında ve güncellemeler'), findsOneWidget);
+    expect(find.text('Sürüm ve güncellemeler'), findsNothing);
     expect(find.text('Uygulama Kısayolları (Rutinler)'), findsNothing);
     // WP-420: ad kısaldı — ekran artık gönderme + geçmiş sekmesi taşıyor.
     expect(find.text('Geri bildirim gönder'), findsNothing);
     expect(find.text('Geri bildirim'), findsOneWidget);
     expect(find.text('Yönetim'), findsNothing);
-    // WP-419: derleme kimliği sürüm notlarından buraya taşındı.
-    expect(find.text('Hakkında'), findsOneWidget);
+    // WP-456: ayrı Hakkında ve Sürüm satırları tek girişte birleşti.
+    expect(find.text('Hakkında'), findsNothing);
 
     // WP-320: 1080 fiziksel px / 3x DPR = 360dp dar ekranda da bilgi
     // mimarisi sabit kalır; hesap silme ekranına giden giriş ile dışa aktarma
@@ -130,19 +130,9 @@ void main() {
     ).pop();
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const Key('settings-about')));
+    await tester.tap(find.byKey(const Key('settings-about-updates')));
     await tester.pumpAndSettle();
     expect(find.byType(AboutScreen), findsOneWidget);
-    Navigator.of(tester.element(find.byType(AboutScreen))).pop();
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Sürüm ve güncellemeler'));
-    // FutureBuilder + indeterminate progress: pumpAndSettle sonsuz animasyonda
-    // kilitlenebilir; route + asset yüklemesini sabit adımlarla bekle.
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 50));
-    await tester.pump(const Duration(seconds: 1));
-    expect(find.byType(ReleaseNotesScreen), findsOneWidget);
 
     tester.view.resetPhysicalSize();
     tester.view.resetDevicePixelRatio();

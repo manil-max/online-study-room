@@ -3264,7 +3264,7 @@
   "@profileManuelSureEkle": {
     "description": "Profile user-facing text. Source: Manuel süre ekle"
   },
-  "profileSurumVeGuncellemeler": "الإصدار والتحديثات",
+  "profileSurumVeGuncellemeler": "حول التطبيق والتحديثات",
   "@profileSurumVeGuncellemeler": {
     "description": "Profile user-facing text. Source: Sürüm ve güncellemeler"
   },
@@ -3783,6 +3783,34 @@
         "type": "String"
       }
     }
+  },
+  "updaterCheckForUpdates": "التحقق من التحديثات",
+  "@updaterCheckForUpdates": {
+    "description": "Action on the About and updates screen that checks for a newer app version."
+  },
+  "updaterCheckDescription": "تحقق مما إذا كان هناك إصدار أحدث",
+  "@updaterCheckDescription": {
+    "description": "Default helper text shown before a manual update check."
+  },
+  "updaterCheckingForUpdates": "جارٍ التحقق من التحديثات…",
+  "@updaterCheckingForUpdates": {
+    "description": "Progress text shown while a manual update check is running."
+  },
+  "updaterAppUpToDate": "تطبيقك محدّث.",
+  "@updaterAppUpToDate": {
+    "description": "Result of a successful manual update check when no newer version exists."
+  },
+  "updaterUpdateAvailableOpenDialog": "تم العثور على إصدار جديد. نافذة التحديث مفتوحة.",
+  "@updaterUpdateAvailableOpenDialog": {
+    "description": "Result text after a manual update check finds a newer version."
+  },
+  "updaterUnavailableOnDevice": "التحديث داخل التطبيق غير مدعوم على هذا الجهاز.",
+  "@updaterUnavailableOnDevice": {
+    "description": "Result shown on platforms where the in-app updater is unavailable."
+  },
+  "updaterCheckFailed": "تعذر التحقق من التحديثات. تحقق من اتصالك بالإنترنت ثم حاول مرة أخرى.",
+  "@updaterCheckFailed": {
+    "description": "Actionable error shown when a manual update check fails."
   },
   "commonHourCount": "{count, plural, =0 {0 ساعات} =1 {ساعة واحدة} other {{count} ساعات}}",
   "@commonHourCount": {
@@ -5292,8 +5320,6 @@
   "@campfirePreviewReset": {"description": "Action that restores the canonical tuning values."},
   "campfirePreviewHint": "انسخ السطر أدناه وأرسله؛ ستصبح القيم التي تختارها قيمًا ثابتة في الاختبارات.",
   "@campfirePreviewHint": {"description": "Explains that the chosen numbers are reported back and pinned in tests."},
-  "aboutTitle": "حول",
-  "@aboutTitle": {"description": "Settings entry that opens the app identity screen."},
   "aboutSubtitle": "إصدار التطبيق وتفاصيل الدعم",
   "@aboutSubtitle": {"description": "Subtitle of the About entry in settings."},
   "updaterDahaFazlaSurum": "عرض المزيد من الإصدارات",

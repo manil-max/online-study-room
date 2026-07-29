@@ -41,7 +41,11 @@ void main() {
         ),
       );
 
-    final info = await UpdaterService(dio: dio).checkForUpdate();
+    final service = UpdaterService(dio: dio);
+    final result = await service.checkForUpdateDetailed();
+    final info = await service.checkForUpdate();
+    expect(result.outcome, UpdateCheckOutcome.managedByStore);
+    expect(result.info, isNull);
     expect(info, isNull);
     expect(networkHits, 0, reason: 'Play build GitHub Releases cagirmamali');
   });

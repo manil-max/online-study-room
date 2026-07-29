@@ -3296,7 +3296,7 @@
   "@profileManuelSureEkle": {
     "description": "Profile user-facing text. Source: Manuel süre ekle"
   },
-  "profileSurumVeGuncellemeler": "Version and updates",
+  "profileSurumVeGuncellemeler": "About and updates",
   "@profileSurumVeGuncellemeler": {
     "description": "Profile user-facing text. Source: Sürüm ve güncellemeler"
   },
@@ -3833,6 +3833,34 @@
         "type": "String"
       }
     }
+  },
+  "updaterCheckForUpdates": "Check for updates",
+  "@updaterCheckForUpdates": {
+    "description": "Action on the About and updates screen that checks for a newer app version."
+  },
+  "updaterCheckDescription": "Check whether a newer version is available",
+  "@updaterCheckDescription": {
+    "description": "Default helper text shown before a manual update check."
+  },
+  "updaterCheckingForUpdates": "Checking for updates…",
+  "@updaterCheckingForUpdates": {
+    "description": "Progress text shown while a manual update check is running."
+  },
+  "updaterAppUpToDate": "Your app is up to date.",
+  "@updaterAppUpToDate": {
+    "description": "Result of a successful manual update check when no newer version exists."
+  },
+  "updaterUpdateAvailableOpenDialog": "A new version was found. The update dialog is open.",
+  "@updaterUpdateAvailableOpenDialog": {
+    "description": "Result text after a manual update check finds a newer version."
+  },
+  "updaterUnavailableOnDevice": "In-app updates are not supported on this device.",
+  "@updaterUnavailableOnDevice": {
+    "description": "Result shown on platforms where the in-app updater is unavailable."
+  },
+  "updaterCheckFailed": "Could not check for updates. Check your internet connection and try again.",
+  "@updaterCheckFailed": {
+    "description": "Actionable error shown when a manual update check fails."
   },
   "commonHourCount": "{count, plural, =0 {0 hours} =1 {1 hour} other {{count} hours}}",
   "@commonHourCount": {
@@ -5897,8 +5925,6 @@
   "@campfirePreviewReset": {"description": "Action that restores the canonical tuning values."},
   "campfirePreviewHint": "Copy the line below and send it back; the numbers you pick become fixed values in the tests.",
   "@campfirePreviewHint": {"description": "Explains that the chosen numbers are reported back and pinned in tests."},
-  "aboutTitle": "About",
-  "@aboutTitle": {"description": "Settings entry that opens the app identity screen."},
   "aboutSubtitle": "App version and support details",
   "@aboutSubtitle": {"description": "Subtitle of the About entry in settings."},
   "updaterDahaFazlaSurum": "Show more versions",

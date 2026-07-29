@@ -17,14 +17,11 @@ import 'widgets/unread_announcement_dot.dart';
 import '../notifications/notification_permissions_screen.dart';
 import '../onboarding/onboarding_prefs.dart';
 import '../safety/blocked_users_screen.dart';
-import '../support/faq_screen.dart';
-import '../updater/release_notes_screen.dart';
 import 'about_screen.dart';
 import 'account_settings_screen.dart';
 import 'appearance_screen.dart';
 import 'data_export_screen.dart';
 import 'feedback_screen.dart';
-import 'legal_center_screen.dart';
 import 'widgets/camp_animal_picker.dart';
 import 'widgets/unread_message_badge.dart';
 
@@ -292,23 +289,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 children: [
                   _SettingsCard(
                     child: ListTile(
-                      key: const Key('settings-faq'),
-                      leading: const Icon(Icons.help_outline),
-                      title: Text(l10n.faqTitle),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () => Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => const FaqScreen()),
-                      ),
-                    ),
-                  ),
-                  _SettingsCard(
-                    child: ListTile(
-                      leading: const Icon(Icons.new_releases_outlined),
+                      key: const Key('settings-about-updates'),
+                      leading: const Icon(Icons.info_outline),
                       title: Text(l10n.profileSurumVeGuncellemeler),
-                      subtitle: Text(l10n.profileYenilikleriVeGecmisSurum),
+                      subtitle: Text(l10n.aboutSubtitle),
                       trailing: const Icon(Icons.chevron_right),
                       onTap: () => Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => ReleaseNotesScreen()),
+                        MaterialPageRoute(builder: (_) => const AboutScreen()),
                       ),
                     ),
                   ),
@@ -340,31 +327,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                 builder: (_) => const FeedbackScreen(),
                               ),
                             ),
-                    ),
-                  ),
-                  _SettingsCard(
-                    child: ListTile(
-                      key: const Key('settings-about'),
-                      leading: const Icon(Icons.info_outline),
-                      title: Text(l10n.aboutTitle),
-                      subtitle: Text(l10n.aboutSubtitle),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () => Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => const AboutScreen()),
-                      ),
-                    ),
-                  ),
-                  _SettingsCard(
-                    child: ListTile(
-                      leading: const Icon(Icons.policy_outlined),
-                      title: Text(l10n.legalCenterTitle),
-                      subtitle: Text(l10n.legalPrivacyPolicy),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const LegalCenterScreen(),
-                        ),
-                      ),
                     ),
                   ),
                 ],

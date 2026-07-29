@@ -3264,7 +3264,7 @@
   "@profileManuelSureEkle": {
     "description": "Profile user-facing text. Source: Manuel süre ekle"
   },
-  "profileSurumVeGuncellemeler": "Version und Updates",
+  "profileSurumVeGuncellemeler": "Info und Updates",
   "@profileSurumVeGuncellemeler": {
     "description": "Profile user-facing text. Source: Sürüm ve güncellemeler"
   },
@@ -3783,6 +3783,34 @@
         "type": "String"
       }
     }
+  },
+  "updaterCheckForUpdates": "Nach Updates suchen",
+  "@updaterCheckForUpdates": {
+    "description": "Action on the About and updates screen that checks for a newer app version."
+  },
+  "updaterCheckDescription": "Prüfen, ob eine neuere Version verfügbar ist",
+  "@updaterCheckDescription": {
+    "description": "Default helper text shown before a manual update check."
+  },
+  "updaterCheckingForUpdates": "Updates werden gesucht…",
+  "@updaterCheckingForUpdates": {
+    "description": "Progress text shown while a manual update check is running."
+  },
+  "updaterAppUpToDate": "Deine App ist auf dem neuesten Stand.",
+  "@updaterAppUpToDate": {
+    "description": "Result of a successful manual update check when no newer version exists."
+  },
+  "updaterUpdateAvailableOpenDialog": "Eine neue Version wurde gefunden. Der Update-Dialog ist geöffnet.",
+  "@updaterUpdateAvailableOpenDialog": {
+    "description": "Result text after a manual update check finds a newer version."
+  },
+  "updaterUnavailableOnDevice": "In-App-Updates werden auf diesem Gerät nicht unterstützt.",
+  "@updaterUnavailableOnDevice": {
+    "description": "Result shown on platforms where the in-app updater is unavailable."
+  },
+  "updaterCheckFailed": "Updates konnten nicht geprüft werden. Überprüfe deine Internetverbindung und versuche es erneut.",
+  "@updaterCheckFailed": {
+    "description": "Actionable error shown when a manual update check fails."
   },
   "commonHourCount": "{count, plural, =0 {0 Stunden} =1 {1 Stunde} other {{count} Stunden}}",
   "@commonHourCount": {
@@ -5292,8 +5320,6 @@
   "@campfirePreviewReset": {"description": "Action that restores the canonical tuning values."},
   "campfirePreviewHint": "Kopiere die Zeile unten und sende sie zurück; die gewählten Werte werden zu festen Testwerten.",
   "@campfirePreviewHint": {"description": "Explains that the chosen numbers are reported back and pinned in tests."},
-  "aboutTitle": "Über",
-  "@aboutTitle": {"description": "Settings entry that opens the app identity screen."},
   "aboutSubtitle": "App-Version und Support-Details",
   "@aboutSubtitle": {"description": "Subtitle of the About entry in settings."},
   "updaterDahaFazlaSurum": "Weitere Versionen anzeigen",

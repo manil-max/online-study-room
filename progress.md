@@ -273,7 +273,22 @@
 
 ### Ajan G — Ayarlar, hesap, dil, navigasyon ve widget yayın yüzeyi
 
-- **Durum:** [ ] HAZIR
+- **Durum:** [~] Aktif · Ajan G
+- **Aktif WP:** WP-456 — Hakkında ile Versiyon ve Güncellemeleri birleştir
+- **Aşama:** Kod + hedefli otomatik test tamam · commit hazırlanıyor
+- **Dal:** `main`
+- **Başlangıç:** 2026-07-30 02:05 (Europe/Istanbul) · **Son güncelleme:** 2026-07-30 02:20
+- **WP-456 SAHİP yollar (claim):** settings menü bağlantıları,
+  `app/lib/features/profile/about_screen.dart`,
+  `app/lib/features/updater/release_notes_screen.dart`, updater/release notes
+  testleri ve gerekli l10n dosyaları.
+- **WP-456 ortak/riskli yüzey:** l10n sıcak kilidi Ajan G tarafından alındı;
+  navigation, manifest, pubspec ve migration kilitleri açılmadı.
+- **WP-456 kanıt:** `env.json` tanımlı About/Settings/Release Notes 22/22;
+  tanımsız About/Release Notes 19/19; Play fail-closed 1/1; updater/dağıtım
+  regresyonu 18/18. Ajan G'nin 6 Dart dosyasında hedefli analyze temiz.
+  Tam analyze A/B/F'nin 9 aktif bulgusu; l10n audit C/D'nin 5 aktif bulgusu
+  nedeniyle ortak ağaçta bekliyor; Ajan G dosyalarında bulgu yok.
 - **Zincir:** `WP-456 → WP-457 → WP-458 → WP-459 → WP-460 → WP-461`
 - **İlk iş:** WP-456; hemen claim edilebilir.
 - **SAHİP ana yüzey:** settings/profile account/about, updater ekranları,
@@ -4498,7 +4513,8 @@ alır; boş/uydurma migration yazılmaz.
 
 #### WP-456 — Hakkında ile Versiyon ve Güncellemeleri birleştir
 
-- **Durum / bağımlılık:** [ ] HAZIR · Ajan G.
+- **Durum / bağımlılık:** [~] KOD + HEDEFLİ OTOMATİK TEST TAMAM · Ajan G ·
+  bağımsız · commit hazırlanıyor.
 - **SAHİP:** settings menü bağlantıları, `features/profile/about_screen.dart`,
   `features/updater/release_notes_screen.dart`, updater/release notes testleri,
   l10n sıcak kilidi.
@@ -4508,6 +4524,11 @@ alır; boş/uydurma migration yazılmaz.
 - **Kabul:** iki yinelenen ayar yok; mevcut updater işlevi kaybolmaz; Play
   kanalında yasak self-update yolu görünmez. About/release-notes testleri CI
   tuzağına karşı hem `env.json` define'lı hem define'sız hedefli koşar.
+- **Kanıt:** `env.json` tanımlı About/Settings/Release Notes 22/22; tanımsız
+  About/Release Notes 19/19; Play ağ çağrısı/self-update 0 ve test 1/1;
+  updater/dağıtım regresyonu 18/18; değişen Dart/test dosyalarında hedefli
+  analyze 0 bulgu. Ortak tam analyze ve l10n audit, diğer aktif lane'lerin
+  sahip dosyaları nedeniyle kırmızı; bu WP dosyalarında raporlanan bulgu 0.
 - **Model:** Sonnet.
 
 #### WP-457 — İlk mağaza runtime'ını yalnız Türkçe ve İngilizceye sınırla
