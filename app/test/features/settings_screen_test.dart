@@ -184,7 +184,7 @@ void main() {
   });
 
   testWidgets(
-    'WP-320 bölüm başlıkları 360dp ve tüm desteklenen dillerde taşmaz',
+    'WP-457 bölüm başlıkları 360dp ve EN/TR runtime dillerinde taşmaz',
     (tester) async {
       SharedPreferences.setMockInitialValues({});
       final prefs = await SharedPreferences.getInstance();
@@ -197,12 +197,7 @@ void main() {
         tester.view.resetDevicePixelRatio();
       });
 
-      for (final locale in const [
-        Locale('tr'),
-        Locale('en'),
-        Locale('de'),
-        Locale('ar'),
-      ]) {
+      for (final locale in const [Locale('tr'), Locale('en')]) {
         final details = <FlutterErrorDetails>[];
         final previousOnError = FlutterError.onError;
         FlutterError.onError = details.add;

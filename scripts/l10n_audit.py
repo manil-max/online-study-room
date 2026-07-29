@@ -1,16 +1,15 @@
 #!/usr/bin/env python3
-"""WP-294: l10n kapısı — dört katalog + gömülü EN/TR metin + native yüzeyler.
+"""WP-457: l10n kapısı — release EN/TR katalogları + gömülü metin + native yüzeyler.
 
 Usage (repo root):
   python scripts/l10n_audit.py
 
-Tarih: WP-89'da **yalnız EN/TR** katalog denetimi olarak doğdu. O hâliyle sahte
-güven üretiyordu: DE/AR katalogları hiç yüklenmiyordu ve **gömülü İngilizce**
-kullanıcı metni yakalanmıyordu (yalnız Türkçe karakter arıyordu). WP-294 üç şeyi
-düzeltti:
+Tarih: WP-89'da katalog denetimi olarak doğdu. WP-294 gömülü kullanıcı metni
+ve native yüzey denetimini ekledi. WP-457 release runtime'ını yeniden EN/TR ile
+sınırladı; DE/AR kaynakları generator dışındaki dormant arşivde korunuyor.
 
-1. **Dört katalog** (`en`, `tr`, `de`, `ar`) — anahtar eşliği + placeholder eşliği
-   **her dil için** denetlenir. Şablon `en`.
+1. **Release katalogları** (`en`, `tr`) — anahtar + placeholder eşliği iki dilde
+   denetlenir. Şablon `en`.
 2. **Gömülü prose metin** — Türkçe karakter içermeyen Türkçe cümleler (`Boyut …
    dokun ve ayarla`) ve gömülü İngilizce cümleler de yakalanır. Tarama
    **kullanıcıya görünen widget yuvalarıyla** sınırlı (`Text(`, `title:`,
@@ -102,6 +101,10 @@ LITERAL_EXEMPTIONS: dict[str, str] = {
     "app/lib/core/observability/observability_service.dart": (
         "Sentry etiketleri ve breadcrumb metinleri — telemetri alanı, kullanıcıya "
         "gösterilmez."
+    ),
+    "app/lib/data/models/report_target.dart": (
+        "ReportTarget invariant ve wire ayrıştırma ArgumentError mesajlarıdır; "
+        "kullanıcı arayüzünde gösterilmez."
     ),
     "app/lib/core/prefs/app_prefs.dart": (
         "SharedPreferences anahtarları — kalıcı depolama sözleşmesi, çevrilirse "
@@ -223,7 +226,7 @@ def ui_prose_violations(sources: list[tuple[str, str]]) -> list[str]:
 
 
 def catalog_errors() -> tuple[list[str], int]:
-    """Dört katalogda anahtar + placeholder eşliği. (hatalar, şablon anahtar sayısı)"""
+    """Release kataloglarında anahtar + placeholder eşliği."""
     errors: list[str] = []
     catalogs = {locale: catalog(arb_path(locale)) for locale in LOCALES}
     keys = {locale: source_keys(data) for locale, data in catalogs.items()}

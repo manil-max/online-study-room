@@ -5,11 +5,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../prefs/app_prefs.dart';
 
-/// WP-321: sistem + EN/TR. Eski DE/AR tercihi güvenli biçimde EN'e düşer.
+/// WP-457 release contract: system + EN/TR.
+///
+/// Legacy DE/AR preferences remain readable and safely fall back to EN.
 enum AppLanguage { system, english, turkish }
 
 const _appLanguagePreferenceKey = 'app_language_preference';
 
+/// Must stay aligned with the generated `AppLocalizations.supportedLocales`.
 const kSupportedLanguageCodes = {'en', 'tr'};
 
 AppLanguage appLanguageFromPreferences(SharedPreferences prefs) {

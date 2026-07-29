@@ -283,20 +283,21 @@ void main() {
     semantics.dispose();
   });
 
-  testWidgets('RTL ve text scale 1.3 taşmadan doğru uç sırasını korur', (
-    tester,
-  ) async {
-    await pumpPicker(
-      tester,
-      locale: const Locale('ar'),
-      textScale: 1.3,
-      width: 320,
-    );
+  testWidgets(
+    'desteklenmeyen Arapça EN/LTR fallback ve text scale 1.3 kullanır',
+    (tester) async {
+      await pumpPicker(
+        tester,
+        locale: const Locale('ar'),
+        textScale: 1.3,
+        width: 320,
+      );
 
-    expect(tester.takeException(), isNull);
-    expect(
-      tester.getCenter(find.byKey(startHandle)).dx,
-      greaterThan(tester.getCenter(find.byKey(endHandle)).dx),
-    );
-  });
+      expect(tester.takeException(), isNull);
+      expect(
+        tester.getCenter(find.byKey(startHandle)).dx,
+        lessThan(tester.getCenter(find.byKey(endHandle)).dx),
+      );
+    },
+  );
 }

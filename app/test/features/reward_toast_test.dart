@@ -33,13 +33,7 @@ void main() {
     tester,
   ) async {
     var opened = 0;
-    await tester.pumpWidget(
-      app(
-        count: 3,
-        xp: 900,
-        onOpen: () => opened++,
-      ),
-    );
+    await tester.pumpWidget(app(count: 3, xp: 900, onOpen: () => opened++));
 
     expect(find.text('3 ödül hazır · 900 XP'), findsOneWidget);
     await tester.tap(find.text('Topla'));
@@ -95,29 +89,32 @@ void main() {
     },
   );
 
-  testWidgets('uzun Almanca metin 360 px genişlikte taşmaz', (tester) async {
-    tester.view.physicalSize = const Size(360, 800);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(() {
-      tester.view.resetPhysicalSize();
-      tester.view.resetDevicePixelRatio();
-    });
+  testWidgets(
+    'desteklenmeyen Almanca EN fallback ile 360 px genişlikte taşmaz',
+    (tester) async {
+      tester.view.physicalSize = const Size(360, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
 
-    await tester.pumpWidget(
-      MaterialApp(
-        locale: const Locale('de'),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        home: Scaffold(
-          body: RewardToast(
-            pendingCount: 101,
-            pendingXp: 123456,
-            onOpenProfile: () {},
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: const Locale('de'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: RewardToast(
+              pendingCount: 101,
+              pendingXp: 123456,
+              onOpenProfile: () {},
+            ),
           ),
         ),
-      ),
-    );
-    await tester.pump();
-    expect(tester.takeException(), isNull);
-  });
+      );
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+    },
+  );
 }

@@ -22,4 +22,10 @@ void main() {
     expect(l10n.localeName, 'en');
     expect(l10n.commonCalismaHazir, 'Ready to study');
   });
+
+  test('Arabic system locale falls back to English', () async {
+    final l10n = await loadSystemLocalizations(const Locale('ar', 'SA'));
+    expect(l10n.localeName, 'en');
+    expect(l10n.commonCalismaHazir, 'Ready to study');
+  });
 }

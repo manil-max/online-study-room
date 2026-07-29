@@ -108,7 +108,7 @@
 | Kilit / sıra | Sahip | Durum | Sonraki |
 |---|---|---|---|
 | **Migration yazma kilidi** | — | BOŞ · repo/local/staging/production head `0100` | İlk hak WP-431; sonra `431 → 432 → 435 → 439 → 441 → 442 → 444 → 445 → 449 → 453 → 464` |
-| **Sıcak dosya kilidi** (`main.dart`, navigation, pubspec, manifest, l10n generated) | — | BOŞ | WP kartında izin verilen ajan claim eder |
+| **Sıcak dosya kilidi** (`main.dart`, navigation, pubspec, manifest, l10n generated) | Ajan G | WP-457 · l10n/generator | WP-457 commit'inden sonra BOŞ |
 | **Tam Flutter kalite koşumu** | — | BOŞ | WP başında hedefli test; tüm `flutter test` yalnız kilitle |
 | **Yerel Supabase replay** | — | BOŞ | Migration yazarı kendi WP'sinde; final tekrar Ajan H |
 | **Production / stable kapısı** | — | **KAPALI** (`b6b47a9`) | Yalnız yeni somut sahip GO'su |
@@ -308,21 +308,26 @@
 ### Ajan G — Ayarlar, hesap, dil, navigasyon ve widget yayın yüzeyi
 
 - **Durum:** [~] Aktif · Ajan G
-- **Aktif WP:** WP-456 — Hakkında ile Versiyon ve Güncellemeleri birleştir
+- **Aktif WP:** WP-457 — İlk mağaza runtime'ını yalnız Türkçe ve İngilizceye sınırla
 - **Aşama:** Kod + hedefli otomatik test tamam · commit hazırlanıyor
 - **Dal:** `main`
-- **Başlangıç:** 2026-07-30 02:05 (Europe/Istanbul) · **Son güncelleme:** 2026-07-30 02:20
-- **WP-456 SAHİP yollar (claim):** settings menü bağlantıları,
-  `app/lib/features/profile/about_screen.dart`,
-  `app/lib/features/updater/release_notes_screen.dart`, updater/release notes
-  testleri ve gerekli l10n dosyaları.
-- **WP-456 ortak/riskli yüzey:** l10n sıcak kilidi Ajan G tarafından alındı;
+- **Başlangıç:** 2026-07-30 02:05 (Europe/Istanbul) · **Son güncelleme:** 2026-07-30 02:35
+- **WP-457 SAHİP yollar (claim):** `app/l10n.yaml`,
+  `app/lib/core/l10n/app_locale.dart`, system localization, dil seçimi UI,
+  generated l10n ve testleri; DE/AR dormant arşivi.
+- **WP-457 ortak/riskli yüzey:** l10n sıcak kilidi Ajan G tarafından alındı;
   navigation, manifest, pubspec ve migration kilitleri açılmadı.
-- **WP-456 kanıt:** `env.json` tanımlı About/Settings/Release Notes 22/22;
+- **WP-456 tamamlandı:** `cfb9536` · `env.json` tanımlı About/Settings/Release Notes 22/22;
   tanımsız About/Release Notes 19/19; Play fail-closed 1/1; updater/dağıtım
   regresyonu 18/18. Ajan G'nin 6 Dart dosyasında hedefli analyze temiz.
   Tam analyze A/B/F'nin 9 aktif bulgusu; l10n audit C/D'nin 5 aktif bulgusu
   nedeniyle ortak ağaçta bekliyor; Ajan G dosyalarında bulgu yok.
+- **WP-457 kanıt:** temiz generator `supportedLocales == [en,tr]`; define'lı
+  locale/settings/fallback regresyonu 58/58, define'sız core locale 12/12;
+  tam `flutter analyze` temiz; Android native audit 66 anahtar + EN fallback
+  temiz. Genel l10n audit'te yalnız Ajan D sahipli
+  `class_detail_screen.dart:90` kaldı; Ajan G dosyalarında bulgu 0, kilit
+  bırakılınca D'ye devredilecek.
 - **Zincir:** `WP-456 → WP-457 → WP-458 → WP-459 → WP-460 → WP-461`
 - **İlk iş:** WP-456; hemen claim edilebilir.
 - **SAHİP ana yüzey:** settings/profile account/about, updater ekranları,
@@ -4596,8 +4601,7 @@ alır; boş/uydurma migration yazılmaz.
 
 #### WP-456 — Hakkında ile Versiyon ve Güncellemeleri birleştir
 
-- **Durum / bağımlılık:** [~] KOD + HEDEFLİ OTOMATİK TEST TAMAM · Ajan G ·
-  bağımsız · commit hazırlanıyor.
+- **Durum / bağımlılık:** [x] TAMAMLANDI · `cfb9536` · Ajan G.
 - **SAHİP:** settings menü bağlantıları, `features/profile/about_screen.dart`,
   `features/updater/release_notes_screen.dart`, updater/release notes testleri,
   l10n sıcak kilidi.
@@ -4616,7 +4620,8 @@ alır; boş/uydurma migration yazılmaz.
 
 #### WP-457 — İlk mağaza runtime'ını yalnız Türkçe ve İngilizceye sınırla
 
-- **Durum / bağımlılık:** [ ] WP-456.
+- **Durum / bağımlılık:** [~] KOD + HEDEFLİ OTOMATİK TEST TAMAM · Ajan G ·
+  WP-456 `cfb9536` · commit hazırlanıyor.
 - **SAHİP:** `app/l10n.yaml`, `core/l10n/app_locale.dart`, system localization,
   dil seçimi UI, generated l10n ve testleri; DE/AR kaynaklarını repo içinde
   generator dışı dormant konuma taşıma.
@@ -4628,7 +4633,13 @@ alır; boş/uydurma migration yazılmaz.
   `supportedLocales == [en,tr]`; TR/EN eksiksiz; l10n audit yeşil; hardcoded
   Türkçe 0.
 - **Tuzak:** resolver bugün zaten TR/EN diye işi bitmiş sanma; generated liste
-  şu anda dört dili içeriyor.
+  iş öncesinde dört dili içeriyordu.
+- **Kanıt:** DE/AR `.arb` kaynakları generator dışı dormant arşivde; temiz
+  generator listesi tam `[en,tr]`; eski `german`/`arabic` tercihleri ve sistem
+  locale'leri EN'e düşüyor. Define'lı hedefli test 58/58, define'sız 12/12;
+  tam analyze temiz; native audit 66 EN/TR anahtar + varsayılan EN temiz.
+  Genel l10n audit'in tek kalan bulgusu Ajan D'nin sahip olduğu
+  `class_detail_screen.dart:90`; Ajan G dosyalarında hardcoded kullanıcı metni 0.
 - **Model:** Sonnet.
 
 #### WP-458 — Güvenli e-posta değiştirme ve yeniden doğrulama

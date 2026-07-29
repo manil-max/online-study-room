@@ -136,9 +136,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [
-          userTasksProvider.overrideWith(_ErrorTasksNotifier.new),
-        ],
+        overrides: [userTasksProvider.overrideWith(_ErrorTasksNotifier.new)],
         child: MaterialApp(
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
@@ -155,40 +153,41 @@ void main() {
     expect(find.text('Tekrar dene'), findsOneWidget);
   });
 
-  testWidgets('günlük görev editörü Almanca 360 px genişlikte taşmaz', (
-    tester,
-  ) async {
-    tester.view.physicalSize = const Size(360, 800);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(() {
-      tester.view.resetPhysicalSize();
-      tester.view.resetDevicePixelRatio();
-    });
-    SharedPreferences.setMockInitialValues({});
-    final prefs = await SharedPreferences.getInstance();
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          sharedPreferencesProvider.overrideWithValue(prefs),
-          authStateProvider.overrideWith((ref) => Stream.value(null)),
-          userTaskRepositoryProvider.overrideWithValue(
-            InMemoryUserTaskRepository(),
+  testWidgets(
+    'desteklenmeyen Almanca EN fallback ile 360 px genişlikte taşmaz',
+    (tester) async {
+      tester.view.physicalSize = const Size(360, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            sharedPreferencesProvider.overrideWithValue(prefs),
+            authStateProvider.overrideWith((ref) => Stream.value(null)),
+            userTaskRepositoryProvider.overrideWithValue(
+              InMemoryUserTaskRepository(),
+            ),
+          ],
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: const Locale('de'),
+            home: const TasksScreen(embedded: true),
           ),
-        ],
-        child: MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          locale: const Locale('de'),
-          home: const TasksScreen(embedded: true),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.byType(FloatingActionButton));
-    await tester.pumpAndSettle();
-    expect(tester.takeException(), isNull);
-    expect(find.text('Täglich erneuern'), findsOneWidget);
-  });
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(find.text('Refresh every day'), findsOneWidget);
+    },
+  );
 }
 
 /// build() her çağrıldığında sayaç artıran sahte notifier (resume reload testi).

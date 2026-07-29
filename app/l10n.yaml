@@ -3,6 +3,8 @@ template-arb-file: app_en.arb
 output-localization-file: app_localizations.dart
 output-class: AppLocalizations
 preferred-supported-locales:
+  # WP-457 release contract: generator/runtime order is exactly EN, then TR.
+  # DE/AR sources live in lib/l10n_dormant and are not release inputs.
   - en
   - tr
 nullable-getter: false

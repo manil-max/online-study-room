@@ -2,18 +2,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/core/stats/achievement_ledger_engine.dart';
 import 'package:online_study_room/features/profile/widgets/achievement_showcase.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
-import 'package:online_study_room/l10n/app_localizations_ar.dart';
-import 'package:online_study_room/l10n/app_localizations_de.dart';
 import 'package:online_study_room/l10n/app_localizations_en.dart';
 import 'package:online_study_room/l10n/app_localizations_tr.dart';
 
-/// Dört dilin tamamı: WP-418'de TR+EN düzeltilip DE/AR unutulursa katalogda iki
-/// farklı gerçek olur.
-List<AppLocalizations> _allLocales() => [
+/// WP-457 mağaza runtime'ının ürettiği iki dilde katalog sözleşmesini korur.
+List<AppLocalizations> _releaseLocales() => [
   AppLocalizationsTr(),
   AppLocalizationsEn(),
-  AppLocalizationsDe(),
-  AppLocalizationsAr(),
 ];
 
 void main() {
@@ -61,12 +56,12 @@ void main() {
   });
 
   group('WP-418 · koşul metni ölçülebilir ve koddan türetilmiş', () {
-    test('her kademe metni kendi eşiğini sayıyla yazar (dört dil)', () {
+    test('her kademe metni kendi eşiğini sayıyla yazar (TR/EN)', () {
       for (final achievement in kAchievementDictV3().where(
         (achievement) => !achievement.isSecret,
       )) {
         for (final tier in achievement.tiers) {
-          for (final l10n in _allLocales()) {
+          for (final l10n in _releaseLocales()) {
             final condition = achievementTierConditionTr(
               l10n,
               achievement,
@@ -135,13 +130,9 @@ void main() {
       );
       expect(locomotive.tiers.first.unit, 'locomotive_events');
 
-      for (final l10n in _allLocales()) {
+      for (final l10n in _releaseLocales()) {
         expect(
-          achievementTierConditionTr(
-            l10n,
-            locomotive,
-            locomotive.tiers.first,
-          ),
+          achievementTierConditionTr(l10n, locomotive, locomotive.tiers.first),
           contains('15'),
           reason:
               '${l10n.localeName}: takip penceresi yazılmamış — sahip koşulu '

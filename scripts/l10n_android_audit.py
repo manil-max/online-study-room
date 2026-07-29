@@ -23,6 +23,7 @@ VALUES_EN = ANDROID_MAIN / "res/values/strings.xml"
 VALUES_TR = ANDROID_MAIN / "res/values-tr/strings.xml"
 
 KEY_RE = re.compile(r'<string\s+name="([^"]+)"')
+VALUE_RE = re.compile(r'<string\s+name="([^"]+)">(.*?)</string>', re.S)
 # User-facing Turkish hardcodes outside string resources (comments ignored loosely).
 TR_LITERAL = re.compile(
     r'(?:setText|setContentTitle|setContentText|setSubText|hint\s*=|Toast\.makeText|'
@@ -43,6 +44,10 @@ def keys(path: Path) -> set[str]:
     return set(KEY_RE.findall(path.read_text(encoding="utf-8")))
 
 
+def values(path: Path) -> dict[str, str]:
+    return dict(VALUE_RE.findall(path.read_text(encoding="utf-8")))
+
+
 def main() -> int:
     errors: list[str] = []
     if not VALUES_EN.is_file() or not VALUES_TR.is_file():
@@ -56,6 +61,28 @@ def main() -> int:
         errors.append(f"keys only in EN: {only_en}")
     if only_tr:
         errors.append(f"keys only in TR: {only_tr}")
+
+    locale_dirs = sorted(
+        path.parent.name
+        for path in (ANDROID_MAIN / "res").glob("values-*/strings.xml")
+    )
+    if locale_dirs != ["values-tr"]:
+        errors.append(
+            "native locale resource dirs must be exactly ['values-tr']; "
+            f"found {locale_dirs}"
+        )
+
+    en_values = values(VALUES_EN)
+    expected_en_fallbacks = {
+        "timer_ready": "Ready to focus",
+        "timer_channel_name": "Study timer",
+        "widget_daily_goal": "Daily goal",
+    }
+    for key, expected in expected_en_fallbacks.items():
+        if en_values.get(key) != expected:
+            errors.append(
+                f"default native fallback {key!r} must be English {expected!r}"
+            )
 
     skip_parts = {"values", "values-tr", "values-night", "values-v31"}
     for path in list(ANDROID_MAIN.rglob("*.kt")) + list(ANDROID_MAIN.rglob("*.xml")):
@@ -79,7 +106,10 @@ def main() -> int:
             print(f"  - {e}")
         return 1
 
-    print(f"OK: {len(en)} string keys EN=TR parity; no hardcoded TR user strings in kt/layout.")
+    print(
+        f"OK: {len(en)} string keys EN=TR parity; default native fallback is "
+        "English; no hardcoded TR user strings in kt/layout."
+    )
     return 0
 
 

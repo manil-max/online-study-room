@@ -3,10 +3,41 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/core/l10n/app_locale.dart';
 import 'package:online_study_room/core/prefs/app_prefs.dart';
+import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   tearDown(() => setActiveAppLocale(const Locale('en')));
+
+  test('release runtime advertises only English and Turkish', () {
+    expect(AppLocalizations.supportedLocales, const [
+      Locale('en'),
+      Locale('tr'),
+    ]);
+    expect(AppLanguage.values, const [
+      AppLanguage.system,
+      AppLanguage.english,
+      AppLanguage.turkish,
+    ]);
+    expect(kSupportedLanguageCodes, const {'en', 'tr'});
+  });
+
+  test(
+    'legacy German and Arabic preferences safely migrate to English',
+    () async {
+      for (final legacyPreference in const ['german', 'arabic']) {
+        SharedPreferences.setMockInitialValues({
+          'app_language_preference': legacyPreference,
+        });
+        final prefs = await SharedPreferences.getInstance();
+        expect(
+          appLanguageFromPreferences(prefs),
+          AppLanguage.english,
+          reason: legacyPreference,
+        );
+      }
+    },
+  );
 
   test('manual language choice overrides the system locale', () {
     expect(
