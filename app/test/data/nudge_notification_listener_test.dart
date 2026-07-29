@@ -21,10 +21,15 @@ class _FakeNudgeService implements NudgeNotificationGateway {
   Future<void> showNudge(Nudge nudge) async => shown.add(nudge);
 }
 
-Nudge _nudge(String id, {DateTime? readAt, DateTime? createdAt}) => Nudge(
+Nudge _nudge(
+  String id, {
+  DateTime? readAt,
+  DateTime? createdAt,
+  String senderId = 's1',
+}) => Nudge(
   id: id,
   groupId: 'g1',
-  senderId: 's1',
+  senderId: senderId,
   recipientId: 'u1',
   createdAt: createdAt ?? DateTime(2026),
   readAt: readAt,
@@ -38,8 +43,9 @@ void main() {
 
   Future<(ProviderContainer, _FakeNudgeService)> boot(
     SharedPreferences prefs,
-    Stream<List<Nudge>> nudges,
-  ) async {
+    Stream<List<Nudge>> nudges, {
+    Set<String> mutedSenderIds = const <String>{},
+  }) async {
     final fake = _FakeNudgeService();
     final container = ProviderContainer(
       overrides: [
@@ -51,10 +57,14 @@ void main() {
         ),
         nudgeNotificationServiceProvider.overrideWithValue(fake),
         receivedNudgesProvider(userId).overrideWith((ref) => nudges),
+        mutedNudgeSenderIdsProvider.overrideWith((ref) async => mutedSenderIds),
       ],
     );
     container.listen(nudgeNotificationListenerProvider, (prev, next) {});
     await container.read(authStateProvider.future);
+    // WP-444: susturma listesi yüklenmeden dinleyici ikinci katmanı uygulayamaz;
+    // testler gerçek sırayı taklit eder.
+    await container.read(mutedNudgeSenderIdsProvider.future);
     await _tick();
     return (container, fake);
   }
@@ -158,6 +168,33 @@ void main() {
       await _tick();
 
       expect(fake2.shown, isEmpty);
+    },
+  );
+
+  test(
+    'WP-444: susturulan gönderen bildirim üretmez, diğerleri üretir',
+    () async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      final controller = StreamController<List<Nudge>>();
+      final (container, fake) = await boot(
+        prefs,
+        controller.stream,
+        mutedSenderIds: {'sessiz'},
+      );
+      addTearDown(container.dispose);
+      addTearDown(controller.close);
+
+      controller.add([_nudge('a')]); // seed
+      await _tick();
+      controller.add([
+        _nudge('a'),
+        _nudge('m', senderId: 'sessiz', createdAt: DateTime.now()),
+        _nudge('n', senderId: 'baska', createdAt: DateTime.now()),
+      ]);
+      await _tick();
+
+      expect(fake.shown.map((n) => n.id), ['n']);
     },
   );
 }

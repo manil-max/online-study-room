@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../models/nudge.dart';
+import '../../models/nudge_mute.dart';
 import '../../models/profile.dart';
 import '../nudge_repository.dart';
 
@@ -26,6 +27,9 @@ class SupabaseNudgeRepository implements NudgeRepository {
     String? message,
   }) async {
     try {
+      // WP-444: susturma kararı **sunucudadır**. RPC susturulmuş alıcı için
+      // satır/realtime/outbox üretmez ama gönderene normal bir dürtme satırı
+      // döndürür; istemci farkı göremez ve süzgeci atlayamaz.
       final row = await _client.rpc(
         'send_nudge',
         params: {
@@ -49,6 +53,52 @@ class SupabaseNudgeRepository implements NudgeRepository {
       await _client.rpc('mark_nudge_read', params: {'p_nudge_id': nudgeId});
     } on PostgrestException catch (e) {
       throw NudgeException('Dürtme okundu işaretlenemedi: ${e.message}');
+    }
+  }
+
+  @override
+  Future<List<String>> listMutedNudgeSenderIds() async {
+    try {
+      final rows = await _client
+          .from('nudge_mutes')
+          .select('muted_sender_id')
+          .eq('user_id', _client.auth.currentUser?.id ?? '');
+      return [for (final row in rows) row['muted_sender_id'] as String];
+    } on PostgrestException catch (e) {
+      throw NudgeException('Dürtme ayarları okunamadı: ${e.message}');
+    }
+  }
+
+  @override
+  Future<List<NudgeMute>> fetchNudgeMutes() async {
+    try {
+      // Yalnız çağıranın kendi listesi; RPC ad/avatarı susturulan kişi grubu
+      // terk etse bile döndürür (`blocked_user_directory` ile aynı desen).
+      final rows = await _client.rpc('nudge_mute_directory');
+      return [
+        for (final row in (rows as List))
+          NudgeMute.fromMap(Map<String, dynamic>.from(row as Map)),
+      ];
+    } on PostgrestException catch (e) {
+      throw NudgeException('Dürtme ayarları okunamadı: ${e.message}');
+    }
+  }
+
+  @override
+  Future<void> muteNudgesFrom(String userId) async {
+    try {
+      await _client.rpc('mute_nudges_from', params: {'p_user_id': userId});
+    } on PostgrestException catch (e) {
+      throw NudgeException(_friendlyMuteMessage(e.message));
+    }
+  }
+
+  @override
+  Future<void> unmuteNudgesFrom(String userId) async {
+    try {
+      await _client.rpc('unmute_nudges_from', params: {'p_user_id': userId});
+    } on PostgrestException catch (e) {
+      throw NudgeException(_friendlyMuteMessage(e.message));
     }
   }
 
@@ -90,5 +140,12 @@ class SupabaseNudgeRepository implements NudgeRepository {
       return 'Engellenen kullanıcıyla dürtme gönderemezsin.';
     }
     return 'Dürtme gönderilemedi: $message';
+  }
+
+  String _friendlyMuteMessage(String message) {
+    if (message.contains('cannot_mute_self')) {
+      return 'Kendini susturamazsın.';
+    }
+    return 'Dürtme ayarı kaydedilemedi: $message';
   }
 }

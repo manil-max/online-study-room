@@ -211,7 +211,22 @@
 
 ### Ajan D — Grup işlemleri, dürtme ve sohbet güvenliği
 
-- **Durum:** [ ] HAZIR
+- **Durum:** [~] Aktif · Ajan D
+- **Aktif WP:** WP-444 — Kişi bazında yalnız dürtme sessize alma (istemci/model dilimi)
+- **Aşama:** [!] BEKLİYOR: WP-442 / commit (migration `0107` sırası) + l10n kilidi (mute UI'si)
+- **Dal:** `main`
+- **Başlangıç:** 2026-07-30 02:08 (Europe/Istanbul) · **Son güncelleme:** 2026-07-30 02:35
+- **WP-444 SAHİP yollar (claim):** `app/lib/data/models/nudge_mute.dart` (yeni),
+  `app/lib/data/models/nudge.dart`, `app/lib/data/repositories/nudge_repository.dart`,
+  `app/lib/data/repositories/{supabase,in_memory}/*nudge*`,
+  `app/lib/data/providers/nudge_providers.dart`,
+  `app/lib/data/providers/nudge_notification_listener.dart`,
+  `app/test/data/nudge_*`, yeni dürtme-susturma testleri.
+- **WP-444 ortak/riskli yüzey:** yok. Migration kilidi **alınmadı**; `0107`
+  WP-442 commit'inden sonra yazılacak. `features/safety/**` (Ajan C),
+  l10n/`.arb` ve navigation (Ajan G) bu dilimde açılmaz; mute UI'si l10n kilidi
+  boşalana kadar beklet.
+- **Hedef ortam:** `local` · remote işlem yok.
 - **Zincir:** `WP-444 → WP-445 → WP-446 → WP-447`
 - **İlk iş:** WP-444 istemci/model keşfi hemen; migration yazımı sıra gelince.
 - **SAHİP ana yüzey:** nudge model/repository/provider/service çiftleri, group
@@ -4274,7 +4289,9 @@ alır; boş/uydurma migration yazılmaz.
 
 #### WP-444 — Kişi bazlı yalnız dürtme sessize alma
 
-- **Durum / bağımlılık:** [ ] HAZIR istemci/model; migration için WP-442.
+- **Durum / bağımlılık:** [~] Faz 1 (istemci/model sözleşmesi) **kod + otomatik test tamam** · commit mesajı `WP-444: dürtme susturma sözleşmesi` · Faz 2 (migration `0107` + susturma yönetim UI'si) WP-442 commit'ini ve migration/l10n kilitlerini bekliyor.
+- **Faz 1 kanıtı (Ajan D, 2026-07-30):** `NudgeRepository` susturma sözleşmesi + `NudgeMute` modeli + iki repository implementasyonu + `mutedNudgeSenderIdsProvider` / `nudgeMutesProvider` + bildirim dinleyicisinde ikinci katman süzgeç. Yan kanal kapalı: susturulmuş alıcıya gönderimde dönen satır ve cooldown davranışı normal durumla aynı. Test: `nudge_mute_test.dart` (6) + `nudge_repository_test.dart` (3) + `nudge_notification_listener_test.dart` (5) = 14/14 yeşil; analyze nudge yüzeyinde 0 uyarı. Kanıt etiketi: **Kodda doğrulandı**.
+- **Faz 2 tasarım kararı (sabit):** `nudge_mutes(user_id, muted_sender_id, created_at)` + `mute_nudges_from` / `unmute_nudges_from` / `nudge_mute_directory` RPC'leri; `send_nudge` susturulmuş alıcı için **satır/realtime/outbox üretmez**, fakat gönderene normal bir satır döndürür ve cooldown penceresini yine işler (bastırılmış deneme kaydı) — aksi hâlde "ikinci dürtme hemen kabul edildi" farkı tercihi ifşa ederdi.
 - **SAHİP:** nudge model/repository/provider/notification service,
   kişi/grup etkileşim ayarı UI'si, `supabase/migrations/0107_*`,
   `supabase/tests/*nudge*`, ilgili testler.

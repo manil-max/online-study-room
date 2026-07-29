@@ -12,6 +12,15 @@ import 'nudge_providers.dart';
 /// Bildirimi gösterilmiş dürtme id'lerinin kalıcı anahtarı.
 const _kNotifiedNudgeIdsKey = 'notified_nudge_ids';
 
+/// Dinleyicinin kurulduğu an.
+///
+/// Ayrı bir provider'da tutulur: dinleyici (ör. susturma listesi yüklenince)
+/// yeniden kurulduğunda bu an **sıfırlanmaz**, yoksa o sırada gelen gerçek bir
+/// dürtme "geçmiş" sayılıp sessizce bildirilmiş işaretlenirdi.
+final _nudgeListeningStartedAtProvider = Provider<DateTime>(
+  (ref) => DateTime.now().toUtc(),
+);
+
 /// Gelen dürtmeler için yerel bildirim gösterir.
 ///
 /// Her dürtme **yalnızca bir kez** bildirilir. Daha önce bu iş geçici stream
@@ -36,7 +45,14 @@ final nudgeNotificationListenerProvider = Provider<void>((ref) {
   // temel al; yalnız bu dinleyici kurulduktan sonra canlı gelen dürtmeleri göster.
   // Stream yeniden bağlansa veya listener sonradan kurulduğunda bile bu an,
   // geçmiş bildirimler ile gerçek zamanlı yeni dürtmeleri ayırır.
-  final listeningStartedAt = DateTime.now().toUtc();
+  final listeningStartedAt = ref.watch(_nudgeListeningStartedAtProvider);
+
+  // WP-444: susturma yaptırımı sunucudadır (satır hiç oluşmaz). Bu set ikinci
+  // katmandır: susturmadan hemen önce yazılmış ya da çevrimdışı kuyrukta bekleyip
+  // sonra düşen bir satır bildirime dönüşmesin. Liste henüz yükleniyorsa hiçbir
+  // dürtme düşürülmez — filtre yalnız daraltır, uydurmaz.
+  final mutedSenderIds =
+      ref.watch(mutedNudgeSenderIdsProvider).value ?? const <String>{};
 
   ref.listen(receivedNudgesProvider(user.id), (previous, next) {
     if (!next.hasValue) return;
@@ -58,6 +74,9 @@ final nudgeNotificationListenerProvider = Provider<void>((ref) {
       if (!notified.add(nudge.id)) continue; // zaten bildirildi
       changed = true;
       if (quiet) continue;
+      // WP-444: susturulan kişinin dürtmesi bildirim üretmez. Sohbet, profil ve
+      // grup erişimi etkilenmez — bu yalnız dürtme kanalıdır.
+      if (mutedSenderIds.contains(nudge.senderId)) continue;
       unawaited(ref.read(nudgeNotificationServiceProvider).showNudge(nudge));
     }
     if (changed) {
