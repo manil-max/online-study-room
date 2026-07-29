@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/features/stats/widgets/draggable_date_range_picker.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
@@ -7,19 +8,35 @@ void main() {
   const startHandle = ValueKey('range-handle-start');
   const endHandle = ValueKey('range-handle-end');
 
-  Future<void> pumpPicker(WidgetTester tester, {DateTime? lastDate}) async {
+  Future<void> pumpPicker(
+    WidgetTester tester, {
+    DateTime? firstDate,
+    DateTime? lastDate,
+    DateTimeRange? initialRange,
+    Locale locale = const Locale('en'),
+    double textScale = 1,
+    double width = 440,
+  }) async {
     await tester.pumpWidget(
       MaterialApp(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        locale: const Locale('en'),
+        locale: locale,
         home: Scaffold(
-          body: DraggableDateRangePickerDialog(
-            firstDate: DateTime(2026),
-            lastDate: lastDate ?? DateTime(2026, 7, 31),
-            initialRange: DateTimeRange(
-              start: DateTime(2026, 7, 5),
-              end: DateTime(2026, 7, 10),
+          body: MediaQuery(
+            data: MediaQueryData(textScaler: TextScaler.linear(textScale)),
+            child: SizedBox(
+              width: width,
+              child: DraggableDateRangePickerDialog(
+                firstDate: firstDate ?? DateTime(2026),
+                lastDate: lastDate ?? DateTime(2026, 7, 31),
+                initialRange:
+                    initialRange ??
+                    DateTimeRange(
+                      start: DateTime(2026, 7, 5),
+                      end: DateTime(2026, 7, 10),
+                    ),
+              ),
             ),
           ),
         ),
@@ -79,10 +96,34 @@ void main() {
     expect(handleText(tester, startHandle), isNot('5'));
   });
 
-  testWidgets('uçlar 44px hedeflerdir ve dokunarak düzenlenebilir', (
+  testWidgets('sıradan gün dokunuşu uç seçilmeden aralığı değiştirmez', (
     tester,
   ) async {
-    await pumpPicker(tester);
+    await pumpPicker(
+      tester,
+      initialRange: DateTimeRange(
+        start: DateTime(2026, 7, 14),
+        end: DateTime(2026, 7, 30),
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('date-2026-07-21')));
+    await tester.pumpAndSettle();
+
+    expect(handleText(tester, startHandle), contains('14'));
+    expect(handleText(tester, endHandle), contains('30'));
+  });
+
+  testWidgets('uçlar 44px hedeflerdir ve açıkça seçilen bitiş düzenlenir', (
+    tester,
+  ) async {
+    await pumpPicker(
+      tester,
+      initialRange: DateTimeRange(
+        start: DateTime(2026, 7, 14),
+        end: DateTime(2026, 7, 30),
+      ),
+    );
 
     expect(
       tester.getSize(find.byKey(startHandle)).height,
@@ -94,10 +135,34 @@ void main() {
     );
 
     await tester.tap(find.byKey(endHandle));
-    await tester.tap(find.byKey(const ValueKey('date-2026-07-12')));
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('date-2026-07-21')));
     await tester.pumpAndSettle();
 
-    expect(handleText(tester, endHandle), contains('12'));
+    expect(handleText(tester, startHandle), contains('14'));
+    expect(handleText(tester, endHandle), contains('21'));
+  });
+
+  testWidgets('14–30 bitiş tutamacını 21’e sürüklemek 14–21 üretir', (
+    tester,
+  ) async {
+    await pumpPicker(
+      tester,
+      initialRange: DateTimeRange(
+        start: DateTime(2026, 7, 14),
+        end: DateTime(2026, 7, 30),
+      ),
+    );
+
+    await tester.drag(
+      find.byKey(endHandle),
+      tester.getCenter(find.byKey(const ValueKey('date-2026-07-21'))) -
+          tester.getCenter(find.byKey(endHandle)),
+    );
+    await tester.pumpAndSettle();
+
+    expect(handleText(tester, startHandle), contains('14'));
+    expect(handleText(tester, endHandle), contains('21'));
   });
 
   testWidgets('başlangıcı bitişin ötesine bırakmak uçları değiştirir', (
@@ -114,6 +179,13 @@ void main() {
 
     expect(handleText(tester, startHandle), contains('10'));
     expect(handleText(tester, endHandle), contains('15'));
+
+    // Sürüklenen başlangıç ucu karşıya geçtiğinde artık mantıksal bitiş
+    // ucudur. Sonraki açık erişilebilirlik/dokunma eylemi doğru ucu izler.
+    await tester.tap(find.byKey(const ValueKey('date-2026-07-18')));
+    await tester.pumpAndSettle();
+    expect(handleText(tester, startHandle), contains('10'));
+    expect(handleText(tester, endHandle), contains('18'));
     expect(tester.takeException(), isNull);
   });
 
@@ -135,6 +207,96 @@ void main() {
           )
           .onPressed,
       isNull,
+    );
+  });
+
+  testWidgets('ilk aralık min ve max sınırlara deterministik kırpılır', (
+    tester,
+  ) async {
+    await pumpPicker(
+      tester,
+      firstDate: DateTime(2026, 7, 10),
+      lastDate: DateTime(2026, 7, 20),
+      initialRange: DateTimeRange(
+        start: DateTime(2026, 7, 5),
+        end: DateTime(2026, 7, 25),
+      ),
+    );
+
+    expect(handleText(tester, startHandle), contains('10'));
+    expect(handleText(tester, endHandle), contains('20'));
+  });
+
+  testWidgets('tek günlük aralık iki görünür ucu korur', (tester) async {
+    await pumpPicker(
+      tester,
+      initialRange: DateTimeRange(
+        start: DateTime(2026, 7, 14),
+        end: DateTime(2026, 7, 14),
+      ),
+    );
+
+    expect(handleText(tester, startHandle), contains('14'));
+    expect(handleText(tester, endHandle), contains('14'));
+
+    await tester.drag(
+      find.byKey(endHandle),
+      tester.getCenter(find.byKey(const ValueKey('date-2026-07-21'))) -
+          tester.getCenter(find.byKey(endHandle)),
+    );
+    await tester.pumpAndSettle();
+
+    expect(handleText(tester, startHandle), contains('14'));
+    expect(handleText(tester, endHandle), contains('21'));
+  });
+
+  testWidgets('ekran okuyucu başlangıç ve bitiş için ayrı eylem sunar', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    await pumpPicker(
+      tester,
+      initialRange: DateTimeRange(
+        start: DateTime(2026, 7, 14),
+        end: DateTime(2026, 7, 30),
+      ),
+    );
+
+    final day = find.byKey(const ValueKey('date-2026-07-21'));
+    final localizations = MaterialLocalizations.of(tester.element(day));
+    final formatted = localizations.formatMediumDate(DateTime(2026, 7, 21));
+    final startAction = CustomSemanticsAction(
+      label: localizations.dateRangeStartDateSemanticLabel(formatted),
+    );
+    final endAction = CustomSemanticsAction(
+      label: localizations.dateRangeEndDateSemanticLabel(formatted),
+    );
+    final startActionId = CustomSemanticsAction.getIdentifier(startAction);
+    final endActionId = CustomSemanticsAction.getIdentifier(endAction);
+    final node = tester.getSemantics(day);
+
+    expect(
+      node.getSemanticsData().customSemanticsActionIds,
+      containsAll(<int>[startActionId, endActionId]),
+    );
+
+    semantics.dispose();
+  });
+
+  testWidgets('RTL ve text scale 1.3 taşmadan doğru uç sırasını korur', (
+    tester,
+  ) async {
+    await pumpPicker(
+      tester,
+      locale: const Locale('ar'),
+      textScale: 1.3,
+      width: 320,
+    );
+
+    expect(tester.takeException(), isNull);
+    expect(
+      tester.getCenter(find.byKey(startHandle)).dx,
+      greaterThan(tester.getCenter(find.byKey(endHandle)).dx),
     );
   });
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 
 /// Takvimdeki iki uç noktayı sürükleyerek düzenleten özel tarih aralığı seçici.
 ///
@@ -29,57 +30,83 @@ class _DraggableDateRangePickerDialogState
   late DateTime _start;
   late DateTime _end;
   late DateTime _displayedMonth;
-  _RangeEndpoint _activeEndpoint = _RangeEndpoint.start;
+  _RangeEndpoint? _activeEndpoint;
   DateTime? _previewStart;
   DateTime? _previewEnd;
+  _RangeEndpoint? _previewActiveEndpoint;
 
   @override
   void initState() {
     super.initState();
-    _start = _day(widget.initialRange.start);
-    _end = _day(widget.initialRange.end);
+    final first = _day(widget.firstDate);
+    final last = _day(widget.lastDate);
+    assert(!last.isBefore(first), 'lastDate must be on or after firstDate');
+    final initialStart = _clampDay(widget.initialRange.start, first, last);
+    final initialEnd = _clampDay(widget.initialRange.end, first, last);
+    _start = initialStart.isBefore(initialEnd) ? initialStart : initialEnd;
+    _end = initialStart.isBefore(initialEnd) ? initialEnd : initialStart;
     _displayedMonth = DateTime(_start.year, _start.month);
   }
 
   DateTime get _visibleStart => _previewStart ?? _start;
   DateTime get _visibleEnd => _previewEnd ?? _end;
+  _RangeEndpoint? get _visibleActiveEndpoint =>
+      _previewActiveEndpoint ?? _activeEndpoint;
 
   DateTime _day(DateTime value) => DateTime(value.year, value.month, value.day);
+
+  DateTime _clampDay(DateTime value, DateTime first, DateTime last) {
+    final day = _day(value);
+    if (day.isBefore(first)) return first;
+    if (day.isAfter(last)) return last;
+    return day;
+  }
 
   bool _isSelectable(DateTime day) =>
       !day.isBefore(_day(widget.firstDate)) &&
       !day.isAfter(_day(widget.lastDate));
 
-  (DateTime, DateTime) _withEndpoint(_RangeEndpoint endpoint, DateTime day) {
+  ({DateTime start, DateTime end, _RangeEndpoint activeEndpoint}) _withEndpoint(
+    _RangeEndpoint endpoint,
+    DateTime day,
+  ) {
     final normalized = _day(day);
     // Önizleme birden fazla hedefe girip çıkarken yeni bir kaynak aralık gibi
     // kullanılmamalı. Bırakma, her zaman son onaylanan aralığa göre hesaplanır.
     final start = _start;
     final end = _end;
     if (endpoint == _RangeEndpoint.start) {
-      return normalized.isAfter(end) ? (end, normalized) : (normalized, end);
+      return normalized.isAfter(end)
+          ? (start: end, end: normalized, activeEndpoint: _RangeEndpoint.end)
+          : (start: normalized, end: end, activeEndpoint: _RangeEndpoint.start);
     }
     return normalized.isBefore(start)
-        ? (normalized, start)
-        : (start, normalized);
+        ? (start: normalized, end: start, activeEndpoint: _RangeEndpoint.start)
+        : (start: start, end: normalized, activeEndpoint: _RangeEndpoint.end);
+  }
+
+  void _selectEndpoint(_RangeEndpoint endpoint) {
+    setState(() => _activeEndpoint = endpoint);
   }
 
   void _previewEndpoint(_RangeEndpoint endpoint, DateTime day) {
-    final (start, end) = _withEndpoint(endpoint, day);
+    final next = _withEndpoint(endpoint, day);
     setState(() {
-      _previewStart = start;
-      _previewEnd = end;
+      _previewStart = next.start;
+      _previewEnd = next.end;
+      _previewActiveEndpoint = next.activeEndpoint;
     });
   }
 
   void _applyEndpoint(_RangeEndpoint endpoint, DateTime day) {
-    final (start, end) = _withEndpoint(endpoint, day);
+    final next = _withEndpoint(endpoint, day);
     setState(() {
-      _start = start;
-      _end = end;
+      _start = next.start;
+      _end = next.end;
       _previewStart = null;
       _previewEnd = null;
-      _activeEndpoint = endpoint;
+      _previewActiveEndpoint = null;
+      _activeEndpoint = next.activeEndpoint;
     });
   }
 
@@ -88,6 +115,7 @@ class _DraggableDateRangePickerDialogState
     setState(() {
       _previewStart = null;
       _previewEnd = null;
+      _previewActiveEndpoint = null;
     });
   }
 
@@ -124,14 +152,12 @@ class _DraggableDateRangePickerDialogState
                       key: const ValueKey('range-handle-start'),
                       endpoint: _RangeEndpoint.start,
                       date: _visibleStart,
-                      selected: _activeEndpoint == _RangeEndpoint.start,
+                      selected: _visibleActiveEndpoint == _RangeEndpoint.start,
                       semanticLabel: localizations
                           .dateRangeStartDateSemanticLabel(
                             localizations.formatMediumDate(_visibleStart),
                           ),
-                      onTap: () => setState(
-                        () => _activeEndpoint = _RangeEndpoint.start,
-                      ),
+                      onSelect: () => _selectEndpoint(_RangeEndpoint.start),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -140,13 +166,12 @@ class _DraggableDateRangePickerDialogState
                       key: const ValueKey('range-handle-end'),
                       endpoint: _RangeEndpoint.end,
                       date: _visibleEnd,
-                      selected: _activeEndpoint == _RangeEndpoint.end,
+                      selected: _visibleActiveEndpoint == _RangeEndpoint.end,
                       semanticLabel: localizations
                           .dateRangeEndDateSemanticLabel(
                             localizations.formatMediumDate(_visibleEnd),
                           ),
-                      onTap: () =>
-                          setState(() => _activeEndpoint = _RangeEndpoint.end),
+                      onSelect: () => _selectEndpoint(_RangeEndpoint.end),
                     ),
                   ),
                 ],
@@ -199,8 +224,10 @@ class _DraggableDateRangePickerDialogState
                 onAccept: _applyEndpoint,
               ),
               const SizedBox(height: 4),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+              OverflowBar(
+                spacing: 8,
+                alignment: MainAxisAlignment.end,
+                overflowAlignment: OverflowBarAlignment.end,
                 children: [
                   TextButton(
                     onPressed: () => Navigator.of(context).pop(),
@@ -229,14 +256,14 @@ class _EndpointHandle extends StatelessWidget {
     required this.date,
     required this.selected,
     required this.semanticLabel,
-    required this.onTap,
+    required this.onSelect,
   });
 
   final _RangeEndpoint endpoint;
   final DateTime date;
   final bool selected;
   final String semanticLabel;
-  final VoidCallback onTap;
+  final VoidCallback onSelect;
 
   @override
   Widget build(BuildContext context) {
@@ -247,10 +274,12 @@ class _EndpointHandle extends StatelessWidget {
 
     return Semantics(
       button: true,
+      selected: selected,
       label: semanticLabel,
       child: Draggable<_RangeEndpoint>(
         data: endpoint,
         maxSimultaneousDrags: 1,
+        onDragStarted: onSelect,
         feedback: Material(
           color: Colors.transparent,
           child: _HandleBody(
@@ -268,7 +297,7 @@ class _EndpointHandle extends StatelessWidget {
           ),
         ),
         child: InkWell(
-          onTap: onTap,
+          onTap: onSelect,
           borderRadius: BorderRadius.circular(10),
           child: _HandleBody(
             date: date,
@@ -327,7 +356,7 @@ class _CalendarGrid extends StatelessWidget {
   final bool Function(DateTime) inRange;
   final bool Function(DateTime) isStart;
   final bool Function(DateTime) isEnd;
-  final _RangeEndpoint activeEndpoint;
+  final _RangeEndpoint? activeEndpoint;
   final void Function(_RangeEndpoint, DateTime) onPreview;
   final VoidCallback onLeave;
   final void Function(_RangeEndpoint, DateTime) onAccept;
@@ -403,7 +432,7 @@ class _DayTarget extends StatelessWidget {
   final bool selectable;
   final bool selected;
   final bool inRange;
-  final _RangeEndpoint activeEndpoint;
+  final _RangeEndpoint? activeEndpoint;
   final void Function(_RangeEndpoint, DateTime) onPreview;
   final VoidCallback onLeave;
   final void Function(_RangeEndpoint, DateTime) onAccept;
@@ -411,6 +440,7 @@ class _DayTarget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final localizations = MaterialLocalizations.of(context);
     final fill = selected
         ? theme.colorScheme.primary
         : inRange
@@ -424,30 +454,56 @@ class _DayTarget extends StatelessWidget {
         ? theme.colorScheme.onPrimaryContainer
         : theme.colorScheme.onSurface;
 
-    return DragTarget<_RangeEndpoint>(
-      onWillAcceptWithDetails: (details) {
-        if (!selectable) return false;
-        onPreview(details.data, day);
-        return true;
-      },
-      onLeave: (_) => onLeave(),
-      onAcceptWithDetails: (details) => onAccept(details.data, day),
-      builder: (context, _, _) => InkWell(
-        onTap: selectable ? () => onAccept(activeEndpoint, day) : null,
-        customBorder: const CircleBorder(),
-        child: Center(
-          child: Container(
-            width: 40,
-            height: 40,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(color: fill, shape: BoxShape.circle),
-            child: Text(
-              // Yalnız gün sayısı: DateTime'ın kendisi basılırsa metin 40px
-              // daireden taşar ve dokunma hedeflerini örter (WP-412).
-              '${day.day}',
-              style: Theme.of(
-                context,
-              ).textTheme.labelLarge?.copyWith(color: textColor),
+    final formattedDay = localizations.formatMediumDate(day);
+    final startAction = CustomSemanticsAction(
+      label: localizations.dateRangeStartDateSemanticLabel(formattedDay),
+    );
+    final endAction = CustomSemanticsAction(
+      label: localizations.dateRangeEndDateSemanticLabel(formattedDay),
+    );
+
+    return Semantics(
+      label: localizations.formatFullDate(day),
+      selected: selected,
+      enabled: selectable,
+      customSemanticsActions: selectable
+          ? {
+              startAction: () => onAccept(_RangeEndpoint.start, day),
+              endAction: () => onAccept(_RangeEndpoint.end, day),
+            }
+          : null,
+      child: DragTarget<_RangeEndpoint>(
+        onWillAcceptWithDetails: (details) {
+          if (!selectable) return false;
+          onPreview(details.data, day);
+          return true;
+        },
+        onLeave: (_) => onLeave(),
+        onAcceptWithDetails: (details) => onAccept(details.data, day),
+        builder: (context, _, _) => InkWell(
+          // Gün hücresi, ancak kullanıcı bir ucu görünür biçimde seçtikten
+          // sonra klavye/erişilebilirlik ikincil yolu olarak etkinleşir.
+          // Sıradan pointer dokunuşu aralığı sessizce yeniden bağlamaz.
+          onTap: selectable && activeEndpoint != null
+              ? () => onAccept(activeEndpoint!, day)
+              : null,
+          customBorder: const CircleBorder(),
+          child: Center(
+            child: Container(
+              width: 40,
+              height: 40,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(color: fill, shape: BoxShape.circle),
+              child: ExcludeSemantics(
+                child: Text(
+                  // Yalnız gün sayısı: DateTime'ın kendisi basılırsa metin 40px
+                  // daireden taşar ve dokunma hedeflerini örter (WP-412).
+                  '${day.day}',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelLarge?.copyWith(color: textColor),
+                ),
+              ),
             ),
           ),
         ),

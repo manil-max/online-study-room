@@ -20,6 +20,7 @@ import '../../../data/providers/subject_providers.dart';
 import '../analytics/analytics_period.dart';
 import '../charts/area_line_chart.dart';
 import '../charts/radar_stat_chart.dart';
+import 'draggable_date_range_picker.dart';
 import 'daily_bar_chart.dart';
 import 'hour_activity_chart.dart';
 import 'session_scatter_chart.dart';
@@ -581,11 +582,13 @@ class _RangeCardState extends State<_RangeCard> {
 
   Future<void> _pickRange() async {
     final now = DateTime.now();
-    final picked = await showDateRangePicker(
+    final picked = await showDialog<DateTimeRange>(
       context: context,
-      firstDate: DateTime(now.year - 2),
-      lastDate: now,
-      initialDateRange: _range,
+      builder: (_) => DraggableDateRangePickerDialog(
+        firstDate: DateTime(now.year - 2),
+        lastDate: dayOf(now),
+        initialRange: _range,
+      ),
     );
     if (picked != null) {
       setState(

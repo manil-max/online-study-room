@@ -7,6 +7,7 @@ import 'package:online_study_room/data/models/analytics_query_models.dart';
 import 'package:online_study_room/data/models/study_session.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_analytics_query_repository.dart';
 import 'package:online_study_room/features/stats/analytics/analytics_period.dart';
+import 'package:online_study_room/features/stats/widgets/draggable_date_range_picker.dart';
 import 'package:online_study_room/features/stats/widgets/personal_stats_view.dart';
 import 'package:online_study_room/features/stats/widgets/stats_period_bar.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
@@ -218,6 +219,46 @@ void main() {
       );
       await tester.pump();
       expect(find.byType(PersonalStatsView), findsOneWidget);
+    });
+
+    testWidgets('PersonalStatsView uses the single draggable range picker', (
+      tester,
+    ) async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      final now = DateTime.now();
+      final session = StudySession(
+        id: 'range-picker-session',
+        userId: 'u1',
+        start: now.subtract(const Duration(hours: 1)),
+        end: now,
+        durationSeconds: 3600,
+        source: StudySource.live,
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: const Locale('tr'),
+            home: Scaffold(body: PersonalStatsView(sessions: [session])),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      await tester.scrollUntilVisible(
+        find.text('Seç'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Seç'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(DraggableDateRangePickerDialog), findsOneWidget);
+      expect(find.byType(DateRangePickerDialog), findsNothing);
     });
   });
 }

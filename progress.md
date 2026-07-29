@@ -261,9 +261,24 @@
 
 ### Ajan F — İstatistik tarih aralığı ve hedef-seri motoru
 
-- **Durum:** [ ] HAZIR
+- **Durum:** [!] BEKLİYOR: WP-449 / commit · Ajan F
+- **Aktif WP:** WP-453 — Hedef tamamlamasına dayalı server-authoritative seri motoru
+- **Aşama:** WP-452 kod + otomatik test tamam; WP-449 migration commit'i bekleniyor
+- **Dal:** `main`
+- **Başlangıç:** 2026-07-30 02:06 (Europe/Istanbul) · **Son güncelleme:** 2026-07-30 02:25
+- **WP-452 SAHİP yollar (claim):**
+  `app/lib/features/stats/widgets/draggable_date_range_picker.dart`,
+  `app/lib/features/stats/widgets/stats_period_bar.dart`,
+  `app/lib/features/stats/widgets/personal_stats_view.dart`,
+  `app/lib/data/providers/stats_period_provider.dart`,
+  ilgili stats period/date-range testleri.
+- **WP-452 ortak/riskli yüzey:** yok — migration, navigation, pubspec, l10n,
+  manifest ve diğer sıcak dosya kilitleri alınmadı.
 - **Zincir:** `WP-452 → WP-453 → WP-454 → WP-455`
-- **İlk iş:** WP-452; hemen claim edilebilir.
+- **WP-452 kanıtı:** özel picker iki giriş yüzeyinde ortaklaştırıldı; sıradan gün
+  tap'i pasif, açık uç seçimi/sürükleme ve çaprazlama deterministik. Picker 11/11,
+  stats paketi 33/33 yeşil; hedefli analyze temiz. Tam koşumda WP-452 dışı
+  observability/timer testleri kırmızı; cihaz kabulü yapılmadı.
 - **SAHİP ana yüzey:** `features/stats/**`, `core/stats/**`,
   goal/streak modelleri-sağlayıcıları, kişisel/grup hedef kartları ve testleri.
 - **DOKUNMA:** görev recurrence (Ajan E), core navigation (Ajan G), campfire.
@@ -4450,7 +4465,7 @@ alır; boş/uydurma migration yazılmaz.
 
 #### WP-452 — Sürüklenebilir iki uçlu tarih aralığı
 
-- **Durum / bağımlılık:** [ ] HAZIR · Ajan F.
+- **Durum / bağımlılık:** [~] KOD + OTOMATİK TEST TAMAM · Ajan F · cihaz kabulü bekliyor.
 - **SAHİP:** `features/stats/widgets/draggable_date_range_picker.dart`,
   `stats_period_bar.dart`, stats period provider ve ilgili testler.
 - **Uygulama:** iki görünür handle ve yalnız handle sürükleme; sıradan gün/track
@@ -4462,6 +4477,10 @@ alır; boş/uydurma migration yazılmaz.
   istemeden 21 yapmaz; minimum/maksimum/tek gün/RTL/text scale davranır.
 - **Tuzak:** kullanıcı yalnız eski noktaya tıklama semantiğini istemiyor; sırf
   açıklama tooltip'i ekleyip bırakma.
+- **Kanıt (2026-07-30):** picker testleri 11/11, `test/features/stats` 33/33 ve
+  hedefli analyze temiz. Tam `flutter test` WP-452 dışındaki
+  `timer_diagnostic_journal_test` ile `timer_background_reconcile_test` yüzünden
+  1146 testte 2 hata verdi; cihazda sürükleme doğrulanmalı.
 - **Model:** Sonnet.
 
 #### WP-453 — Hedef tamamlamasına dayalı server-authoritative seri motoru
