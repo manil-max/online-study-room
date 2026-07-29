@@ -18,7 +18,18 @@
 
 ## Proje Gerçekleri
 
-- **Migration gerçeği (2026-07-28, v55 sonrası):** repo/local **`0094`** ·
+- **Migration gerçeği (2026-07-28, v56):** repo/local **`0100`** · staging
+  **`0100`** · production **`0100`**. Yerel replay `0001→0100` ve 377 pgTAP
+  geçti; staging post-check `0100` (run `30380751277`), production post-check
+  `0100` (run `30383034112`). Stable v56'nın başarılı son release koşumu
+  `30384688718`dir.
+- 🔴 **Açık release-kapısı drift'i (2026-07-30, salt-okunur kontrolde bulundu):**
+  `tooling/release/deploy-contract.json` staging ve production için
+  `deploy_enabled: true` / `release_enabled: true` taşımaya devam ediyor; metni
+  yalnız v56 apply/tag'i için açıldığını ve ardından kapanması gerektiğini
+  söylüyor. Bu kayıt gerçek kapı durumuyla çelişiyor. Yeni production/release
+  işlemi yapılmamalı; ayrı, hedefli kapatma ve guard doğrulaması gerekir.
+- **Önceki migration gerçeği (2026-07-28, v55 sonrası):** repo/local **`0094`** ·
   staging **`0094`** · production **`0094`** — üç ortam hizalı. PLAN 3 Faz L
   beş adım getirdi: `0090` destek kutusu bilet türü, `0091` sunucudan beslenen
   SSS, `0092` `send_nudge` içinde iki yönlü engelleme, `0093` grup yasağı +
@@ -45,7 +56,7 @@
   [`docs/recovery/PRODUCTION-BASELINE.md`](docs/recovery/PRODUCTION-BASELINE.md).
   Deploy contract aynı üç head'i taşır ve production `deploy_enabled` terfi
   bitince **yeniden `false` kilitlendi**.
-- **Stable/production:** **v53** yayında (WP-370/371: timer-sync teslim zinciri
+- **Önceki stable/production:** **v53** yayında (WP-370/371: timer-sync teslim zinciri
   + turun yaşam döngüsüne bağlanması); etkin şema **`0088`**. Öncesi v52
   (Faz F5: presence lease tazeleme + sayaç komut yayını), etkin şema `0087`.
   🟢 `0086` sunucu taraflı olduğu için **v51'de kalan cihazlarda da** aktiflikten
@@ -58,25 +69,29 @@
   Yedek/PITR **yok** — sahip kararıyla `backup_requirement: "waived"`; bu bir
   muafiyet kaydıdır, duran bir apply izni değildir. Yeni production migration,
   Edge deploy veya stable tag/release yalnız ayrı ve somut sahip GO'su ile yapılır.
-- **Beta/staging:** **`beta-v4402`** son beta; Android APK + Windows MSIX/ZIP mevcut, release run `30212796092` bütünüyle PASS. Staging veritabanı `0085`te. Fiziksel cihaz bağlı olmadığı için beta cihaz kabulü yapılmadı; **V3 rollout flag'leri kapalıdır** — v49'da bildirilen çoklu cihaz senkron bulgusu (V49-1) önce bu flag durumuna karşı ayrılmalı.
+- **Beta/staging:** **`beta-v4402`** son beta artefaktıdır; Android APK + Windows
+  MSIX/ZIP mevcut, release run `30212796092` bütünüyle PASS. Staging veritabanı
+  v56 terfisiyle `0100`dedir. Fiziksel cihaz bağlı olmadığı için bu eski beta
+  adayıyla yeni v56 davranışı kabul edilmiş sayılmaz.
 - **Release ilkesi:** Android beta/stable artefaktı Android işi başarılı olunca yayımlanır. Windows bağımsız sürer ve başarılı olursa aynı release'e eklenir; Windows hatası Android güncellemesini geri çekmez.
 - **Sürüm sırası:** kod/testi biten işler tek QA kuyruğunda birikir; yeni beta/stable yalnız sahip onayıyla çıkar. Eski beta dalga kararları git geçmişindedir.
-- **Yönetim varsayılanı:** Production `deploy_enabled/release_enabled` kapalıdır ve her terfiden sonra yeniden kapatılır. Stable yalnız protected `production` Environment, exact SHA/head/project-ref GO ve reviewer kanıtıyla ilerler.
+- **Yönetim kuralı:** Production `deploy_enabled/release_enabled` kapalı olmalı ve
+  her terfiden sonra yeniden kapatılmalıdır. Stable yalnız protected `production`
+  Environment, exact SHA/head/project-ref GO ve reviewer kanıtıyla ilerler.
+  **Mevcut dosya bu kurala uymuyor; yukarıdaki drift kapatılmadan yeni terfi yoktur.**
 - **Kurallar:** Kök `AGENTS.md`, `.agents/AGENTS.md` ve `docs/KALITE-PROGRAMI.md` geçerlidir. Tek çalışma dalı `main`; her WP ayrı commit; production varsayılmaz.
-- **Aktif tur:** **Faz F4 kapandı, v51 çıktı ve sahip cihazda denedi.**
-  🟢 Görünürlük düzeldi: bir cihazda başlatılan çalışma artık diğer cihazda ve
-  başka kullanıcılarda görünüyor (WP-363 + WP-365 **cihazda kabul edildi**).
-  🔴 Dört yeni bulgu: `backlog.md` **V51-1…V51-4** (≈80 sn sonra aktiflikten
-  düşme · sayaç değerlerinin eşitlenmemesi · admin yazışmasında ters sıra ·
-  yazışmada karşı tarafın mesajlarının görünmemesi). **Dördünün de kök nedeni
-  koddan bulundu** (bkz. `backlog.md`). Sahip emriyle **Faz F5** açıldı:
-  V51-1 + V51-2 düzeltilip v52 stable çıkacak; V51-3/V51-4 (admin yazışması)
-  sahip kararıyla beklemede. Öncesi: Öncesi: v49 sonrası saha düzeltmeleri (Faz F3). WP-348 → WP-351 zinciri kapandı (stable v49 çıktı). Sahip iki turda toplam **sekiz** bulgu bildirdi (`backlog.md` V49-1…V49-8) ve **hepsi karta bağlandı: WP-353…WP-362.** Backlog'da plansız kalan v49 bulgusu yok.
-- **Son WP numarası:** **WP-378** (2026-07-28). WP-373 çoklu cihaz sayaç
-  senkronunu kurdu, WP-374…WP-378 birikmiş düzeltme turuydu, **v54 çıktı**.
-  🔴 **Yeni kartlar WP-379'dan devam eder — bkz. `PLAN 3 — LANSMAN TURU`.**
+- **Aktif tur:** **v56 stable yayımlandı; ürün sahibi saha geri bildirimi v57
+  ürün brief'ine dönüştürüldü.** Ham/profesyonelleştirilmiş gözlem kaydı:
+  `docs/V56-SAHIP-GERI-BILDIRIM-RAPORU.md`. Rakip analizi ve açık ürün borçlarıyla
+  birleştirilmiş kapsam: `docs/V57-YAPILACAKLAR.md`. Bu aşamada teknik WP açılmadı;
+  sonraki adım brief'i ölçülebilir, çakışmasız WP'lere bölmektir.
+- **Son WP numarası:** **WP-428** (2026-07-28). PLAN 4 WP-412…WP-428 kodlandı,
+  migration zinciri `0100`e terfi etti ve v56 stable yayımlandı. Yeni teknik
+  kartlar **WP-429'dan** devam eder.
 - **Önceki not (WP-372, 2026-07-27).** V52'de komutun A→server yolu kapanmıştı; server→B timer-sync teslim zinciri WP-370 (`0088`) ile kuruldu, WP-371 turu yaşam döngüsüne bağladı, WP-372 v53 stable'ı çıkardı.
-- ✅ **Ortam gerçeği uzlaştırıldı (WP-351, 2026-07-27):** üç ortam da `0085`; production CLI geçmişi artık gerçek. Deploy kapısı yeniden kilitli.
+- ✅ **Tarihsel ortam uzlaşması (WP-351, 2026-07-27):** üç ortam `0085`te
+  hizalanmış ve production CLI geçmişi onarılmıştı. Güncel head yukarıdaki
+  v56 kaydında `0100`dür.
 
 ## ⚡ Aktif Çalışma Kaydı
 
@@ -142,11 +157,9 @@
   kapatılmalı. LOCAL KALDI: hiçbir migration apply edilmedi, tag/release yok.
 
 ### Claude Lane
-- **Durum:** [~] v56 entegrasyonu — staging uygulandı, **production sahip GO'su bekliyor**
-- **Faz/WP:** PLAN 4 (WP-412…428) birleştirme
-- **SAHİP yollar:** `tooling/release/deploy-contract.json`, `tooling/supabase/guard.tests.ps1`,
-  `supabase/tests/001_schema_contract.test.sql`, `supabase/tests/027_*`,
-  `supabase/migrations/0100_*`
+- **Durum:** [x] Boşta
+- **Faz/WP:** — · PLAN 4 v56 entegrasyonu ve stable yayın tamamlandı
+- **SAHİP yollar:** —
 - **Son not (2026-07-28, v56 entegrasyon turu):** Beş lane on yedi WP'yi
   (WP-412…WP-428) indirdi; on yedi kartın **hepsi koddan doğrulandı** (plandan
   değil). Paket kırmızı teslim edildi, dört kusur kapatıldı (`7dab4e7`):
@@ -290,15 +303,12 @@
 - **Doküman temizliği (2026-07-27, sahip emri):** `docs/archive/` dizini, üç senior review turu, v46 sahip geri bildirimi ve kapanmış iki recovery kabul notu repodan kaldırıldı (13 dosya, ~11k satır). Evrensel saat işinde **yalnız nihai plan + C0 uyumluluk kanıtı** kaldı. Hepsi git geçmişinde; kalan md'lerde kırık iç bağlantı yok.
 
 ### Codex Lane
-- **Durum:** [~] Aktif
-- **Faz/WP:** PLAN 4 · Faz S · WP-424 → WP-425 → WP-426 → WP-427 → WP-428
-- **Aşama:** Geliştiriliyor (WP-424 ile başlandı; WP-425, WP-423/`0096` commit'ini bekliyor)
-- **SAHİP yollar:** `app/lib/features/admin/**`, admin+moderation repository'leri, `supabase/migrations/0097..0100`, `supabase/functions/admin-*`, ilgili pgTAP
-- **Ortak/riskli yüzey:** `app/lib/l10n/*.arb` (TR/EN/DE/AR atomik düzenleme), ardışık migration zinciri `0097→0100`; Lane E'nin `0096` commit'inden sonra devam
-- **Dal:** main
-- **Başlangıç:** 2026-07-28 18:01 (Europe/Istanbul)
-- **Son güncelleme:** 2026-07-28 18:01 (Europe/Istanbul)
-- **Not:** WP-424 migration'sız; `features/settings/**`, `features/safety/report_sheet.dart`, `campfire_scene.dart` ve Android timer yollarına yazılmaz.
+- **Durum:** [x] Boşta
+- **Faz/WP:** — · PLAN 4 Faz S WP-424…WP-428 kod/test ve v56 teslimi tamamlandı
+- **SAHİP yollar:** —
+- **Son not:** Şikâyet kuyruğu kimlik, ayrıntı, basamaklı yaptırım,
+  tekilleştirme ve admin push temeliyle v56'ya girdi. Yeni cihaz geri bildirimi
+  `docs/V56-SAHIP-GERI-BILDIRIM-RAPORU.md` altında ayrı kapsam olarak kaydedildi.
 
 ### Codex-2 Lane
 - **Durum:** [x] Boşta
@@ -3944,6 +3954,23 @@ staging apply → production apply (sahip GO'su ile) → v56 stable.
 
 ---
 
+## PLAN 5 — v57 ÜRÜN GÜVENİ VE MAĞAZA ÖNCESİ SON BÜYÜK TUR
+
+> **Durum:** Ürün kapsamı hazır; teknik WP planı henüz açılmadı.
+> **Saha kaydı:** `docs/V56-SAHIP-GERI-BILDIRIM-RAPORU.md`
+> **Birleşik yapılacaklar:** `docs/V57-YAPILACAKLAR.md`
+
+v57'nin sırası: çoklu cihaz sayaç gerçeği → feedback/mesaj/okunmamış zinciri →
+moderasyon ve grup güveni → görev/seri/istatistik → ayarlar/dil/widget/görsel
+sadelik → mağaza öncesi uygulama QA. Ürün sahibi mağaza tarafını ayrıca yürütür.
+
+🔴 **Planlama kapısı:** Yeni kartlar WP-429'dan başlar. Teknik planner, bu brief'i
+tek seferde dev bir WP'ye çevirmeyecek; P0 sayaç, feedback ve moderasyon
+yüzeylerini ayrı kanıt/uygulama dilimlerine bölecek. Aynı anda en fazla iki
+çalışma hattı kuralı korunur.
+
+---
+
 ## ✅ Kapanan Kararlar
 
 | Karar | Sonuç |
@@ -4054,9 +4081,9 @@ staging apply → production apply (sahip GO'su ile) → v56 stable.
 | **WP-418** Başarım açıklamaları | Android + Windows (okuma) | Sahip katalogda İlham Kaynağı ve Lokomotif metinlerini okuyup koşulu anladığını onaylar. Commit: `b030094`. **Kodda doğrulandı.** |
 | **WP-380** Widget ve bildirimde boş sayaç biçimi | Android widget + bildirim | Boştayken `00:00`; başlatınca ilk saniyede sıçrama yok; bir saati geçince `1:00:00`; uygulama içi sayaç `00:00:00` kalır. Commit: `bekleyen`. **Cihazda doğrulanmalı.** |
 
-**Ortam sırası:** tamamlandı — local, staging ve production `0085`te (WP-348 →
-WP-351, 2026-07-27). Yukarıdaki kartların hepsinde şema borcu kapandı; kalan
-tek borç **gerçek cihaz kabulü**. V3 rollout flag'leri hâlâ kapalıdır.
+**Ortam sırası:** v56 terfisiyle local, staging ve production `0100`de
+(2026-07-28). Yukarıdaki tarihsel kartlarda şema borcu yoktur; kalan borç
+**gerçek cihaz kabulü** ve v57 saha bulgularıdır.
 
 ## 🗄️ Tarihsel kayıt
 

@@ -9,6 +9,17 @@
 
 ## 🔴 Yüksek Öncelik
 
+- [~] **v57 ürün güveni ve mağaza öncesi son büyük tur (2026-07-30).**
+  v56 stable saha gözlemleri profesyonel geri bildirim kaydına dönüştürüldü;
+  rakip analizi, moderasyon planı ve açık ürün borçlarıyla birleştirildi.
+  - Gözlem/karar kaydı:
+    [`docs/V56-SAHIP-GERI-BILDIRIM-RAPORU.md`](docs/V56-SAHIP-GERI-BILDIRIM-RAPORU.md)
+  - Teknik olmayan nihai kapsam ve kabul brief'i:
+    [`docs/V57-YAPILACAKLAR.md`](docs/V57-YAPILACAKLAR.md)
+  - P0 sırası: çoklu cihaz sayaç gerçeği → feedback/mesaj/okunmamış →
+    moderasyon/şikâyet/grup çıkışı.
+  - Teknik WP'ler henüz açılmadı; sonraki planner turunda WP-429'dan başlanır.
+
 - [~] **v54 lansman turu — PLAN 3'e bölündü (2026-07-28).** Sahip v54'ü cihazda test
   etti (sekiz başlık) ve üstüne mağaza turunu konuştuk; ayrıca rakip uygulamaların
   mağaza yorumları analiz edildi. Üçü birden karara bağlandı ve kartlara bölündü:
@@ -221,8 +232,9 @@
   - WP-259 yerel smoke kanıtı aldı ama temiz VM/ikinci PC kabulü açık; WP-260–262 Partner Center/Private Audience ve kullanıcı GO bekler.
   - Kabul kapıları: `docs/WINDOWS-RELEASE-GATE.md`, `docs/QA-WINDOWS.md` ve `docs/WINDOWS-VM-QA.md`; Windows release flake'i önce WP-273 ile kapanır.
 
-- [ ] **AR/DE dil desteği ve RTL** — WP-278 ürün kararı gerekir
-  - EN/TR l10n WP-87/89 ile cihaz/ürün kabulü aldı; AR/DE tabanı vardır ancak insan çevirisi/RTL cihaz kapsamı onaylanmış ürün işi değildir.
+- [x] **AR/DE dil desteği ve RTL — ilk mağaza sürümünden çıkarıldı.**
+  Ürün sahibi kararı (2026-07-30): yalnız TR + EN yayımlanır; AR/DE `.arb`
+  dosyaları silinmez, çalışma zamanı ve mağaza destek listesinden pasiflenir.
 - [ ] **Yeni grafik türleri** — WP-67 brief hazır; kullanıcı türleri/onayı vermeden kod WP'si açılmaz.
 - [x] **Taç XP çubuğu — mutlak hedef gösterimi** — WP-275 (**zaten yapılmış**,
   2026-07-28'de koddan doğrulandı; madde bayattı)

@@ -196,7 +196,14 @@ Tek kaynak kod ve tek `supabase/migrations/` zinciri kullanılır. Beta/stable f
 | 0035 | `cron_report_url_fix.sql` | Rapor cron URL/secret sözleşmesi |
 | 0036 | `security_hardening.sql` | Edge/RPC/profil erişimi güvenlik sertleştirmesi |
 
-> **Deploy gerçeği (2026-07-26):** Repo/local migration head `0077`, staging `0072`, production **etkin şeması `0070`**. Production CLI migration history hâlâ uzlaştırılmamıştır (`docs/recovery/PRODUCTION-BASELINE.md` §3). Deploy contract production `deploy_enabled: false` kilidindedir; yeni stable/production mutasyonu backup+dry-run+somut GO ister. Yeni migration mevcut en yüksek yerel numaradan (`0077`) devam eder; remote'a uygulanmış dosya geriye dönük değiştirilmez. Tam durum modeli: `progress.md` Proje Gerçekleri.
+> **Deploy gerçeği (2026-07-30):** Repo/local, staging ve production migration
+> head `0100`dür; production CLI geçmişi WP-351'de uzlaştırılmıştır. v56 apply ve
+> stable release tamamlanmıştır. Ancak salt-okunur kontrolde deploy contract'ın
+> staging/production `deploy_enabled` ve `release_enabled` değerleri hâlâ `true`
+> bulundu; geçici v56 GO'su sonrasında beklenen yeniden kilitleme yapılmamış
+> görünüyor. Bu drift kapanıp guard testleri geçmeden yeni stable/production
+> mutasyonu yapılmaz. Yeni migration `0101`den devam eder; remote'a uygulanmış
+> dosya geriye dönük değiştirilmez. Tam durum modeli: `progress.md` Proje Gerçekleri.
 
 ---
 
@@ -204,6 +211,7 @@ Tek kaynak kod ve tek `supabase/migrations/` zinciri kullanılır. Beta/stable f
 
 | Tarih | Karar |
 |---|---|
+| **Tem 30** | **v57 ürün güveni ve ilk mağaza kapsamı.** Öncelik yeni özellik sayısı değil; çoklu cihaz sayaç gerçeği, feedback/mesaj/okunmamış zinciri ve uçtan uca moderasyondur. Ayna cihazdaki onaylı Durdur global koşuyu bitirir; kişi bazlı dürtme susturma engellemeden ayrıdır; grup sohbetinde mesaj bazlı şikâyet gerekir. Son seçilen ders korunur, görevler başlangıç tarihine sabit `N günde bir` döngüsü alır, seri yalnız hedef tamamlamayla ilerler ve iki ardışık kaçırmada sıfırlanan bir günlük tekrar kullanılabilir koruma taşır. İlk mağaza sürümü yalnız TR+EN ve yalnız 1×1 Başlat/Durdur widget’ını sunar; AR/DE dosyaları ve diğer widget kodları silinmeden pasif kalır. Teknik olmayan kanonik kapsam: `docs/V57-YAPILACAKLAR.md`; saha kaydı: `docs/V56-SAHIP-GERI-BILDIRIM-RAPORU.md`. Teknik WP planı ayrıca hazırlanacaktır. |
 | **Tem 26** | **Global Timer/Presence/Multi-device V3 planı kesinleşti (WP-336–346).** Presence bütün aktif grup üyeliklerine server-derived fan-out edilir; primary grup yalnız görev/hedef/grup progression attribution'ını belirler, direct grup bildirimlerini veya timer-sync sinyalini filtrelemez. Global timer, legacy `live_study_runs` yüzeyini yıkmadan additive protocol-v2 ile evrilir; legacy ve V2 aynı kullanıcı advisory lock'unu ve birleşik tek-aktif-study-run invariant'ını paylaşır. Sıralama iki ayrı sayaçtır: run-başına `run_revision`, kullanıcı-geneli `state_version`. Native kronometre/bildirim/widget sıcak yolu donuktur; rollout shadow + feature flag + gerçek telefon/tablet QA ile ilerler. Server finalizer, gün sınırı yeniden yazımı, tarihsel retro-attribution ve Pomodoro phase ledger kapsam dışıdır. Kanonik plan: `docs/GLOBAL-TIMER-PRESENCE-MULTI-DEVICE-ARCHITECTURE-PLAN.md`. |
 | **Tem 24** | **Ortam durum modeli uzlaştırıldı ve production kapısı yeniden kilitlendi (WP-293).** Deploy gerçeği artık altı ayrı gerçek olarak tutulur (repo/staging/production-etkin/production-CLI-history/contract/v45-manifest) ve tek sayıya indirilmez. `0066–0070` production terfisi tamamlandı (Database Gates + Production Push Activation, Tem 23); tek seferlik `deploy_enabled` kapısı `false`'a kilitlendi ki kazara production apply olmasın. Production etkin şeması `0070`, ama CLI history uzlaştırılmamış olarak kalır. Stable v45 yayında; sahip Tem 24'te cihaz kabulünü verdi. Bu kayıt önceki Tem 23 girdisindeki `0065/0068` sayılarını **güncellemez, üzerine yeni gerçek olarak eklenir** (tarihsel kayıt korunur). |
 | **Tem 23** | **Post-v43 kurtarma ve ürün kontratı.** Stable taban `v43/fa771ce` + production `0065`; beta deney tabanı `beta-v4303/3bdf8bb` + staging `0068`dir. WP-266/267/268'in yapılan kod/staging/yayın işi korunur fakat retry worker ve cihaz kabulü olmadan tamamlandı sayılmaz. Database Gates DB işiyle sınırlandırılacak, production varsayılanı kapatılacak ve Android/Windows release bütünlüğü tek manifestte gösterilecektir. Kullanıcının kabul ettiği v43 custom timer paneli ana ürün kontratıdır; promoted/Now Bar ayrı best-effort deneydir ve stable paneli değiştiremez. Canlı sıra `progress.md` WP-269–274; adli kanıt git geçmişindedir. |
