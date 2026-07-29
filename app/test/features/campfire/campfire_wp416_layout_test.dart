@@ -215,6 +215,49 @@ void main() {
     });
   });
 
+  group('WP-462 · ateş varlığı bağımsız hareket eder', () {
+    testWidgets('yalnız ateş aşağı iner; hayvan halkası sabit kalır', (
+      tester,
+    ) async {
+      Future<(Rect fire, List<Rect> bodies)> measure(
+        CampfireTuning tuning,
+      ) async {
+        await tester.pumpWidget(_harness(memberCount: 4, tuning: tuning));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 50));
+        return (
+          tester.getRect(find.byKey(const ValueKey('campfire-fire-bounds'))),
+          [
+            for (var index = 0; index < 4; index++)
+              tester.getRect(find.byKey(ValueKey('b-u$index'))),
+          ],
+        );
+      }
+
+      final baseline = await measure(const CampfireTuning(fireOnlyYOffset: 0));
+      final shifted = await measure(
+        const CampfireTuning(fireOnlyYOffset: kCampfireFireOnlyYOffset),
+      );
+
+      expect(
+        shifted.$1.top - baseline.$1.top,
+        closeTo(kCampfireFireOnlyYOffset, 0.5),
+      );
+      for (var index = 0; index < baseline.$2.length; index++) {
+        expect(
+          shifted.$2[index].center.dx,
+          closeTo(baseline.$2[index].center.dx, 0.5),
+        );
+        expect(
+          shifted.$2[index].center.dy,
+          closeTo(baseline.$2[index].center.dy, 0.5),
+        );
+      }
+
+      await tester.pumpWidget(const SizedBox());
+    });
+  });
+
   group('WP-416 kalabalık sahne', () {
     for (final memberCount in const [8, 6]) {
       testWidgets('$memberCount kişide isim etiketleri örtüşmez', (
@@ -322,7 +365,10 @@ void main() {
       final baseline = tester.getRect(find.byKey(const ValueKey('b-u0'))).width;
 
       await tester.pumpWidget(
-        _harness(memberCount: 2, tuning: const CampfireTuning(critterScale: 1.4)),
+        _harness(
+          memberCount: 2,
+          tuning: const CampfireTuning(critterScale: 1.4),
+        ),
       );
       await tester.pump();
       final tuned = tester.getRect(find.byKey(const ValueKey('b-u0'))).width;
@@ -355,14 +401,14 @@ void main() {
   });
 
   group('WP-416 mobil önizleme aracı', () {
-    testWidgets('beş kol da ekranda ve gerçek sahneyi sürüyor', (
-      tester,
-    ) async {
+    testWidgets('beş kol da ekranda ve gerçek sahneyi sürüyor', (tester) async {
       tester.view.physicalSize = const Size(420, 1400);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
 
-      await tester.pumpWidget(buildCampfirePreviewApp(locale: const Locale('tr')));
+      await tester.pumpWidget(
+        buildCampfirePreviewApp(locale: const Locale('tr')),
+      );
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
 
@@ -388,7 +434,10 @@ void main() {
       expect(scene.tuning.ringDropPixels, kCampfirePhoneRingDropPixels);
 
       // Kol sürüklenince sahne gerçekten yeni değeri alır.
-      await tester.drag(find.byKey(const ValueKey('label-font')), const Offset(60, 0));
+      await tester.drag(
+        find.byKey(const ValueKey('label-font')),
+        const Offset(60, 0),
+      );
       await tester.pump();
       final tuned = tester.widget<CampfireScene>(find.byType(CampfireScene));
       expect(tuned.tuning.labelFontSize, greaterThan(kCampfireLabelFontSize));

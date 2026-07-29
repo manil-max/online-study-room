@@ -265,7 +265,16 @@
 
 ### Ajan H — Kamp ateşi, gözlemlenebilirlik ve entegrasyon/cihaz kapısı
 
-- **Durum:** [ ] HAZIR
+- **Durum:** [~] Aktif · Ajan H
+- **Aktif WP:** WP-462 — Kamp ateşi 4/8 kişi kompozisyon düzeltmesi
+- **Aşama:** Kod + otomatik test tamamlandı · commit hazırlanıyor
+- **Dal:** `main`
+- **Başlangıç:** 2026-07-30 02:05 (Europe/Istanbul) · **Son güncelleme:** 2026-07-30 02:28
+- **WP-462 SAHİP yollar (claim):** `app/lib/features/classroom/widgets/campfire_scene.dart`,
+  `app/lib/features/classroom/widgets/campfire_layout.dart`, `app/lib/features/classroom/widgets/campfire/**`,
+  campfire test/golden/assets.
+- **WP-462 ortak/riskli yüzey:** yok — migration, `main.dart`, navigation, pubspec,
+  l10n ve AndroidManifest sıcak kilitleri açılmadı.
 - **Zincir:** `WP-462 → WP-463 → [WP-442 bekle] → WP-464 → [A–G bekle] → WP-465 → WP-466 → WP-467`
 - **İlk iş:** WP-462; hemen claim edilebilir.
 - **SAHİP ana yüzey:** campfire sahnesi/layout/assets/golden testleri,
@@ -4536,7 +4545,7 @@ alır; boş/uydurma migration yazılmaz.
 
 #### WP-462 — Kamp ateşi 4/8 kişi kompozisyon düzeltmesi
 
-- **Durum / bağımlılık:** [ ] HAZIR · Ajan H.
+- **Durum / bağımlılık:** [~] Kod + otomatik test tamamlandı · Ajan H · cihaz kabulü bekliyor.
 - **SAHİP:** `features/classroom/widgets/campfire_scene.dart`,
   `campfire_layout.dart`, `widgets/campfire/**`, campfire test/golden/assets.
 - **Uygulama:** dört kişide isim-hayvan çakışmasını kaldır; üst sırayı gerektiği
@@ -4546,6 +4555,8 @@ alır; boş/uydurma migration yazılmaz.
   çift masa” görünümünden çıkar; sekiz kişiyi ayrı değerlerle tune/test et.
 - **Kabul:** isim bounding-box ile hayvan/fire overlap 0; hayvan clipping 0;
   320/360/412/600 dp, text scale, 1/4/8 kişi; animasyon golden'ında kare sabit.
+- **Otomatik kanıt:** hedefli kamp ateşi paketi **44/44 yeşil**; ilgili dosyalarda
+  `flutter analyze` 0 sorun. Golden'lar yeni kompozisyon için güncellendi.
 - **Tuzak:** eski dikey clamp hatasını geri getirme; ateşi indirirken hayvanı
   birlikte kaydırma.
 - **Model:** Sonnet.

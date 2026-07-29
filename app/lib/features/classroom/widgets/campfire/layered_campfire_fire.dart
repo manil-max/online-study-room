@@ -55,20 +55,23 @@ class LayeredCampfireFire extends StatelessWidget {
               top: top,
               width: side,
               height: side,
-              child: _LayerStack(
-                t: t,
-                activity: activity,
-                intensity: intensity,
-                reduceMotion: reduceMotion,
-                embers: embers,
-                fallback: CustomPaint(
-                  size: Size(side, side),
-                  painter: StoneFirePainter(
-                    t: t,
-                    intensity: intensity,
-                    embers: embers,
-                    cx: side / 2,
-                    fireY: side * 0.52,
+              child: SizedBox(
+                key: const ValueKey('campfire-fire-bounds'),
+                child: _LayerStack(
+                  t: t,
+                  activity: activity,
+                  intensity: intensity,
+                  reduceMotion: reduceMotion,
+                  embers: embers,
+                  fallback: CustomPaint(
+                    size: Size(side, side),
+                    painter: StoneFirePainter(
+                      t: t,
+                      intensity: intensity,
+                      embers: embers,
+                      cx: side / 2,
+                      fireY: side * 0.52,
+                    ),
                   ),
                 ),
               ),

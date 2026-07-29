@@ -134,8 +134,19 @@ void main() {
 
       final four = CampfireCountLayout.saved(4);
       expect(four.ringWidthFactor, 0.31);
-      expect(four.pairs.map((pair) => pair.horizontalFactor), [0.58, 0.64]);
-      expect(four.pairs.map((pair) => pair.verticalFactor), [-0.40, 0.66]);
+      expect(four.pairs, isEmpty);
+      expect(four.singles.map((seat) => seat.horizontalFactor), [
+        -0.72,
+        0.72,
+        0.74,
+        -0.72,
+      ]);
+      expect(four.singles.map((seat) => seat.verticalFactor), [
+        -0.80,
+        -0.84,
+        0.70,
+        0.74,
+      ]);
       expect(four.stickReachFactor, 0.73);
 
       final six = CampfireCountLayout.saved(6);
@@ -148,17 +159,26 @@ void main() {
       expect(six.pairs.map((pair) => pair.verticalFactor), [-0.68, 0.09, 0.87]);
 
       final eight = CampfireCountLayout.saved(8);
-      expect(eight.pairs.map((pair) => pair.horizontalFactor), [
+      expect(eight.pairs, isEmpty);
+      expect(eight.singles.map((seat) => seat.horizontalFactor), [
+        -0.34,
         0.34,
-        0.62,
-        0.61,
-        0.31,
+        -0.72,
+        0.72,
+        -0.76,
+        0.76,
+        -0.56,
+        0.56,
       ]);
-      expect(eight.pairs.map((pair) => pair.verticalFactor), [
-        -0.85,
-        -0.33,
-        0.45,
-        0.92,
+      expect(eight.singles.map((seat) => seat.verticalFactor), [
+        -0.94,
+        -0.92,
+        -0.32,
+        -0.26,
+        0.20,
+        0.22,
+        0.78,
+        0.82,
       ]);
 
       for (final layout in [two, four, six, eight]) {

@@ -26,6 +26,13 @@ const double kCampfireGroundYFactor = 0.5549;
 const double kCampfireFireYOffset = 45;
 const double kCampfireSeatVerticalSpread = 1.25;
 
+/// WP-462: yalnız ateş varlığının halka ve hayvanlardan bağımsız ince ayarı.
+///
+/// Bu pay, `ringDropPixels` gibi bütün kompozisyonu değil yalnız görünür ateş
+/// paketini indirir. Dört kişi düzenindeki üst isimlere alan açarken hayvanları
+/// yeniden aşağı taşımamak için ayrı tutulur.
+const double kCampfireFireOnlyYOffset = 10;
+
 /// İsim etiketinin (ön sıradaki üye) yazı boyutu. Arka sıra ve canlı süre
 /// bundan türetilir; tek sayı değişince üçü birlikte kayar.
 const double kCampfireLabelFontSize = 12;
@@ -243,6 +250,7 @@ class CampfireTuning {
     this.groundYFactor,
     this.ringWidthScale,
     this.fireYPixelOffset = kCampfireFireYOffset,
+    this.fireOnlyYOffset = kCampfireFireOnlyYOffset,
     this.seatVerticalSpread = kCampfireSeatVerticalSpread,
     this.labelFontSize = kCampfireLabelFontSize,
     this.critterScale = 1,
@@ -268,6 +276,10 @@ class CampfireTuning {
 
   /// Oturma yayının dikey açıklığı — sahibin dilinde "satır aralığı".
   final double seatVerticalSpread;
+
+  /// Yalnız görünür ateş paketinin halka merkezine göre piksel kaydırması.
+  /// Hayvanlar, etiketler ve ufuk bu koldan etkilenmez.
+  final double fireOnlyYOffset;
 
   /// Ön sıradaki isim etiketinin yazı boyutu.
   final double labelFontSize;
@@ -317,6 +329,7 @@ class CampfireTuning {
     double? greenAreaHeight,
     double? ringWidthScale,
     double? fireYPixelOffset,
+    double? fireOnlyYOffset,
     double? seatVerticalSpread,
     double? labelFontSize,
     double? critterScale,
@@ -328,6 +341,7 @@ class CampfireTuning {
       groundYFactor: groundYFactor,
       ringWidthScale: ringWidthScale ?? this.ringWidthScale,
       fireYPixelOffset: fireYPixelOffset ?? this.fireYPixelOffset,
+      fireOnlyYOffset: fireOnlyYOffset ?? this.fireOnlyYOffset,
       seatVerticalSpread: seatVerticalSpread ?? this.seatVerticalSpread,
       labelFontSize: labelFontSize ?? this.labelFontSize,
       critterScale: critterScale ?? this.critterScale,
@@ -475,9 +489,23 @@ class CampfireCountLayout {
       4 => const CampfireCountLayout(
         memberCount: 4,
         ringWidthFactor: 0.31,
-        pairs: [
-          CampfirePairPlacement(horizontalFactor: 0.58, verticalFactor: -0.40),
-          CampfirePairPlacement(horizontalFactor: 0.64, verticalFactor: 0.66),
+        pairs: [],
+        // WP-462: iki aynalı "masa çifti" yerine dört bağımsız, dairesel koltuk.
+        // Üst sıra ayrıca ismi gövdeden ayırmak için yukarı alındı.
+        singles: [
+          CampfireSinglePlacement(
+            horizontalFactor: -0.72,
+            verticalFactor: -0.80,
+          ),
+          CampfireSinglePlacement(
+            horizontalFactor: 0.72,
+            verticalFactor: -0.84,
+          ),
+          CampfireSinglePlacement(horizontalFactor: 0.74, verticalFactor: 0.70),
+          CampfireSinglePlacement(
+            horizontalFactor: -0.72,
+            verticalFactor: 0.74,
+          ),
         ],
         groundYFactor: kCampfireGroundYFactor,
         fireScale: 0.80,
@@ -561,11 +589,37 @@ class CampfireCountLayout {
       8 => const CampfireCountLayout(
         memberCount: 8,
         ringWidthFactor: 0.34,
-        pairs: [
-          CampfirePairPlacement(horizontalFactor: 0.34, verticalFactor: -0.85),
-          CampfirePairPlacement(horizontalFactor: 0.62, verticalFactor: -0.33),
-          CampfirePairPlacement(horizontalFactor: 0.61, verticalFactor: 0.45),
-          CampfirePairPlacement(horizontalFactor: 0.31, verticalFactor: 0.92),
+        pairs: [],
+        // Sekiz kişilik kompozisyon dört kişi profilinin kopyası değildir:
+        // üst, orta ve ön yayların her biri telefon kenarı/etiket payına göre
+        // ayrı ayarlanır.
+        singles: [
+          CampfireSinglePlacement(
+            horizontalFactor: -0.34,
+            verticalFactor: -0.94,
+          ),
+          CampfireSinglePlacement(
+            horizontalFactor: 0.34,
+            verticalFactor: -0.92,
+          ),
+          CampfireSinglePlacement(
+            horizontalFactor: -0.72,
+            verticalFactor: -0.32,
+          ),
+          CampfireSinglePlacement(
+            horizontalFactor: 0.72,
+            verticalFactor: -0.26,
+          ),
+          CampfireSinglePlacement(
+            horizontalFactor: -0.76,
+            verticalFactor: 0.20,
+          ),
+          CampfireSinglePlacement(horizontalFactor: 0.76, verticalFactor: 0.22),
+          CampfireSinglePlacement(
+            horizontalFactor: -0.56,
+            verticalFactor: 0.78,
+          ),
+          CampfireSinglePlacement(horizontalFactor: 0.56, verticalFactor: 0.82),
         ],
         groundYFactor: kCampfireGroundYFactor,
         fireScale: 0.80,

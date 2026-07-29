@@ -353,15 +353,18 @@ class _SceneLayoutState extends State<_SceneLayout>
           fireYOffset: profile.fireYOffset,
           fireYPixelOffset: tuning.fireYPixelOffset,
         );
-        final fireY = campfireFireY(
+        final ringFireY = campfireFireY(
           sceneHeight: h,
           groundYFactor: groundYFactor,
           fireYOffset: profile.fireYOffset,
           fireYPixelOffset: tuning.fireYPixelOffset,
           ringDropPixels: tuning.resolvedRingDropPixels(profile),
         );
-        // Hayvanların oturduğu halka merkezi ateşle birlikte iner.
-        final ringCy = fireY + kCampfireRingCenterOffset;
+        // WP-462: ateş varlığı ayrı iner; hayvan halkası bu ince ayardan
+        // etkilenmez. Böylece dört kişilik üst sıra yukarı alınırken bütün
+        // kompozisyonu aşağı sürüklemeyiz.
+        final fireY = ringFireY + tuning.fireOnlyYOffset;
+        final ringCy = ringFireY + kCampfireRingCenterOffset;
 
         final ringScale = tuning.ringWidthScale ?? profile.ringWidthMultiplier;
         final rx = w * layout.ringWidthFactor * ringScale;
@@ -548,7 +551,10 @@ class _SceneLayoutState extends State<_SceneLayout>
                       (p.y -
                               _CritterBody.boxFor(p.scale) *
                                   _CritterBody.anchor -
-                              (p.camper.studying ? 34 : 18))
+                              // Büyük erişilebilirlik metninde de isim gövdeye
+                              // değmesin; önceki 18 px pay uzun isimlerde
+                              // sınırdaydı.
+                              (p.camper.studying ? 40 : 24))
                           .clamp(8, h - 32)
                           .toDouble(),
                   width: 110,

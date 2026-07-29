@@ -25,6 +25,7 @@ Widget _harness({
   DateTime? localNow,
   double width = 400,
   TargetPlatform platform = TargetPlatform.windows,
+  double textScale = 1,
   SkyAnchors? anchors,
 }) {
   final fixedNow = localNow ?? DateTime(2026, 7, 26, 12);
@@ -49,14 +50,15 @@ Widget _harness({
       supportedLocales: AppLocalizations.supportedLocales,
       // reduce-motion'ı MaterialApp'in ALTINDA override et (aksi halde MaterialApp
       // kendi MediaQuery'siyle üzerine yazar).
-      home: reduceMotion
-          ? Builder(
-              builder: (context) => MediaQuery(
-                data: MediaQuery.of(context).copyWith(disableAnimations: true),
-                child: scene,
-              ),
-            )
-          : scene,
+      home: Builder(
+        builder: (context) => MediaQuery(
+          data: MediaQuery.of(context).copyWith(
+            disableAnimations: reduceMotion,
+            textScaler: TextScaler.linear(textScale),
+          ),
+          child: scene,
+        ),
+      ),
     ),
   );
 }
@@ -305,6 +307,77 @@ void main() {
       },
     );
   }
+
+  testWidgets(
+    'WP-462: 1/4/8 kişi her telefon genişliği ve büyük metinde çakışmaz',
+    (tester) async {
+      for (final memberCount in [1, 4, 8]) {
+        for (final width in [320.0, 360.0, 412.0, 600.0]) {
+          await tester.pumpWidget(
+            _harness(
+              width: width,
+              textScale: 1.3,
+              platform: TargetPlatform.android,
+              members: [
+                for (var index = 0; index < memberCount; index++)
+                  _profile('u$index', 'Uzun isimli üye $index'),
+              ],
+              presence: [
+                for (var index = 0; index < memberCount; index++)
+                  Presence(
+                    userId: 'u$index',
+                    status: PresenceStatus.offline,
+                    todaySeconds: 0,
+                  ),
+              ],
+              today: {
+                for (var index = 0; index < memberCount; index++) 'u$index': 0,
+              },
+            ),
+          );
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 50));
+
+          final sceneRect = tester.getRect(find.byType(CampfireScene));
+          final labels = <Rect>[];
+          final bodies = <Rect>[];
+          for (var index = 0; index < memberCount; index++) {
+            final body = tester.getRect(find.byKey(ValueKey('b-u$index')));
+            final label = tester.getRect(find.byKey(ValueKey('l-u$index')));
+            expect(sceneRect.contains(body.topLeft), isTrue);
+            expect(sceneRect.contains(body.bottomRight), isTrue);
+            expect(sceneRect.contains(label.topLeft), isTrue);
+            expect(sceneRect.contains(label.bottomRight), isTrue);
+            labels.add(label);
+            bodies.add(body);
+          }
+          for (var first = 0; first < labels.length; first++) {
+            for (var second = first + 1; second < labels.length; second++) {
+              expect(
+                labels[first].overlaps(labels[second]),
+                isFalse,
+                reason:
+                    '$memberCount kişi, $width dp: etiket $first (${labels[first]}) '
+                    'etiket $second (${labels[second]}) ile çakışıyor',
+              );
+            }
+            // İsim kendi figürünün üstüne düşmez. Derinlik katmanları farklı
+            // üyelerin ekran dikdörtgenlerini kasıtlı olarak kesiştirebilir;
+            // onların görünür sırası sahne painter'ı tarafından belirlenir.
+            expect(
+              labels[first].overlaps(bodies[first]),
+              isFalse,
+              reason:
+                  '$memberCount kişi, $width dp: etiket $first (${labels[first]}) '
+                  'kendi gövdesi (${bodies[first]}) ile çakışıyor',
+            );
+          }
+
+          await tester.pumpWidget(const SizedBox());
+        }
+      }
+    },
+  );
 
   testWidgets('şafakta gökyüzü kademeli aydınlanır ve hayvan uyanıktır', (
     tester,
