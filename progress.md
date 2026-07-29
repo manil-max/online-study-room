@@ -1,6 +1,6 @@
 # progress.md — Canlı Durum
 
-> Son güncelleme: **2026-07-26** · Saat dilimi: **Europe/Istanbul**
+> Son güncelleme: **2026-07-30** · Saat dilimi: **Europe/Istanbul**
 >
 > 🧭 **BU DOSYA TEK GÜNCEL KAYNAKTIR** (sahip kararı, 2026-07-26). Yol haritası,
 > açık kararlar, QA kuyruğu ve aktif iş — hepsi burada. `docs/PLAN.md` artık
@@ -23,12 +23,14 @@
   geçti; staging post-check `0100` (run `30380751277`), production post-check
   `0100` (run `30383034112`). Stable v56'nın başarılı son release koşumu
   `30384688718`dir.
-- 🔴 **Açık release-kapısı drift'i (2026-07-30, salt-okunur kontrolde bulundu):**
-  `tooling/release/deploy-contract.json` staging ve production için
-  `deploy_enabled: true` / `release_enabled: true` taşımaya devam ediyor; metni
-  yalnız v56 apply/tag'i için açıldığını ve ardından kapanması gerektiğini
-  söylüyor. Bu kayıt gerçek kapı durumuyla çelişiyor. Yeni production/release
-  işlemi yapılmamalı; ayrı, hedefli kapatma ve guard doğrulaması gerekir.
+- ✅ **Release kapısı yeniden kilitlendi (2026-07-30 · WP-429):**
+  `tooling/release/deploy-contract.json` içindeki staging ve production
+  `deploy_enabled` / `release_enabled` değerlerinin dördü de `false`.
+  `guard.tests.ps1` **75/75**, `release-preflight.tests.ps1` **8/8** geçti;
+  commit `b6b47a9`. Bu işlem veritabanına, tag'e veya mevcut v56 yayınına
+  dokunmadı; yalnız gelecekteki yanlış apply/release tetiklemesini fail-closed
+  yaptı. Yeni staging/production terfisi ve stable release, kendi güncel kanıtı
+  ve yeni somut sahip GO'su olmadan açılamaz.
 - **Önceki migration gerçeği (2026-07-28, v55 sonrası):** repo/local **`0094`** ·
   staging **`0094`** · production **`0094`** — üç ortam hizalı. PLAN 3 Faz L
   beş adım getirdi: `0090` destek kutusu bilet türü, `0091` sunucudan beslenen
@@ -78,22 +80,204 @@
 - **Yönetim kuralı:** Production `deploy_enabled/release_enabled` kapalı olmalı ve
   her terfiden sonra yeniden kapatılmalıdır. Stable yalnız protected `production`
   Environment, exact SHA/head/project-ref GO ve reviewer kanıtıyla ilerler.
-  **Mevcut dosya bu kurala uymuyor; yukarıdaki drift kapatılmadan yeni terfi yoktur.**
+  **Mevcut sözleşme bu kurala uygundur; kapılar WP-429 ile fail-closed'dur.**
 - **Kurallar:** Kök `AGENTS.md`, `.agents/AGENTS.md` ve `docs/KALITE-PROGRAMI.md` geçerlidir. Tek çalışma dalı `main`; her WP ayrı commit; production varsayılmaz.
-- **Aktif tur:** **v56 stable yayımlandı; ürün sahibi saha geri bildirimi v57
-  ürün brief'ine dönüştürüldü.** Ham/profesyonelleştirilmiş gözlem kaydı:
+- **Aktif tur:** **PLAN 5 / v57 teknik uygulama planı açıldı.** v56 saha
+  geri bildirimi ve rakip uygulama analizi ayrıntılı, bağımlı WP zincirlerine
+  dönüştürüldü. Ham/profesyonelleştirilmiş gözlem kaydı:
   `docs/V56-SAHIP-GERI-BILDIRIM-RAPORU.md`. Rakip analizi ve açık ürün borçlarıyla
-  birleştirilmiş kapsam: `docs/V57-YAPILACAKLAR.md`. Bu aşamada teknik WP açılmadı;
-  sonraki adım brief'i ölçülebilir, çakışmasız WP'lere bölmektir.
-- **Son WP numarası:** **WP-428** (2026-07-28). PLAN 4 WP-412…WP-428 kodlandı,
-  migration zinciri `0100`e terfi etti ve v56 stable yayımlandı. Yeni teknik
-  kartlar **WP-429'dan** devam eder.
+  birleştirilmiş kapsam: `docs/V57-YAPILACAKLAR.md`. Yürütme gerçeği aşağıdaki
+  Ajan A–H kayıtları ve PLAN 5 WP kartlarıdır.
+- **Son WP numarası:** **WP-467** (2026-07-30). WP-429 release kilidi tamamlandı;
+  WP-430…WP-467 PLAN 5 uygulama, kabul ve teslim zinciridir.
 - **Önceki not (WP-372, 2026-07-27).** V52'de komutun A→server yolu kapanmıştı; server→B timer-sync teslim zinciri WP-370 (`0088`) ile kuruldu, WP-371 turu yaşam döngüsüne bağladı, WP-372 v53 stable'ı çıkardı.
 - ✅ **Tarihsel ortam uzlaşması (WP-351, 2026-07-27):** üç ortam `0085`te
   hizalanmış ve production CLI geçmişi onarılmıştı. Güncel head yukarıdaki
   v56 kaydında `0100`dür.
 
 ## ⚡ Aktif Çalışma Kaydı
+
+> **PLAN 5 sahibi talimatı (2026-07-30):** Bu turda sekiz ajan hattı açılabilir.
+> Kullanıcının yeni sohbette yazacağı tek komut yeterlidir:
+> **“`progress.md`'yi oku, sen Ajan X'sin.”** Ajan ek prompt beklemez; aşağıdaki
+> zinciri, PLAN 5 WP kartlarını ve kök `AGENTS.md` yönlendirmelerini okuyup ilk
+> hazır WP'yi claim eder.
+
+### Ortak koordinasyon panosu
+
+| Kilit / sıra | Sahip | Durum | Sonraki |
+|---|---|---|---|
+| **Migration yazma kilidi** | — | BOŞ · repo/local/staging/production head `0100` | İlk hak WP-431; sonra `431 → 432 → 435 → 439 → 441 → 442 → 444 → 445 → 449 → 453 → 464` |
+| **Sıcak dosya kilidi** (`main.dart`, navigation, pubspec, manifest, l10n generated) | — | BOŞ | WP kartında izin verilen ajan claim eder |
+| **Tam Flutter kalite koşumu** | — | BOŞ | WP başında hedefli test; tüm `flutter test` yalnız kilitle |
+| **Yerel Supabase replay** | — | BOŞ | Migration yazarı kendi WP'sinde; final tekrar Ajan H |
+| **Production / stable kapısı** | — | **KAPALI** (`b6b47a9`) | Yalnız yeni somut sahip GO'su |
+
+### PLAN 5 çalışma protokolü — bütün A–H ajanları için zorunlu
+
+1. **Başlangıç:** Kök `AGENTS.md` → `.agents/AGENTS.md` →
+   `.agents/skills/worker/SKILL.md` → bu bölüm → kendi zincirindeki ilk WP kartı
+   okunur. `git status --short` ve son commitler görülmeden dosya yazılmaz.
+2. **Claim:** Yalnız kendi Ajan X kaydını `[~] Aktif` yap; WP, SAHİP yollar,
+   başlangıç ve son güncelleme zamanını yaz. Kaydı tekrar okuyup başka aktif
+   ajanla fiziksel dosya kesişimi olmadığını doğrula.
+3. **Zincir:** Soldan sağa ilerle. Bir WP'nin bağımlılığı tamamlanmadıysa sonraki
+   WP'ye atlama ve başka ajanın işini alma. Durumu `[!] BEKLİYOR:
+   WP-N / commit` olarak yaz; bağımlılık commit'i görünür olunca ağacı yeniden
+   okuyup devam et. Kullanıcıdan yeni prompt isteme.
+4. **Migration sırası:** Uygulanmış `0001…0100` dosyaları immutable'dır.
+   Migration kilidini almadan yeni SQL dosyası oluşturma. Önce sıradaki WP'nin
+   tamamlanmış commit'ini doğrula, en yüksek numarayı tekrar ölç, kilit sahibini
+   kendi ajan adına çevir. Migration + pgTAP + repository çiftleri tek WP
+   commit'inde olmalı. Committen sonra kilidi boşalt.
+5. **Sıcak dosya sırası:** `app/lib/main.dart`, `app/pubspec.yaml`,
+   `app/lib/core/navigation/**`, `app/lib/l10n/**`, üretilen l10n,
+   `AndroidManifest.xml` ve widget XML/receiver listesi aynı anda tek yazarlıdır.
+   Kilit doluysa bekle; “ufak değişiklik” diye üzerine yazma.
+6. **Paylaşılan ağaç:** Başka ajanın değişikliğini stash, checkout, reset, clean,
+   format veya toplu düzeltmeyle silme. Dizin çapında `git checkout --`,
+   `git restore`, `git add -A`, `git commit -a` yasaktır. Yalnız açık SAHİP
+   yollarını stage et. `index.lock` başka commit demektir; bekleyip tekrar dene.
+7. **Test bütçesi:** WP sırasında ilgili birim/widget/contract testlerini CI ile
+   aynı çevrede çalıştır: `app/` içinde `flutter test
+   --dart-define-from-file=env.json <hedef>`. `flutter analyze` define almaz.
+   Tam Flutter paketi için panodaki kilidi claim et; eşzamanlı iki tam koşum yok.
+8. **Her WP ayrı commit:** Karttaki kabul maddelerini kanıtla, yalnız kendi
+   dosyalarını açıkça stage et, tek WP commit'i at, kartın altına commit + test
+   kanıtı yaz, sonra ajan zincirindeki bir sonraki hazır karta geç.
+9. **Cihaz gerçeği:** Ajan otomatik test sonunda en fazla “kod + otomatik test
+   tamam” diyebilir. Samsung/ikinci cihaz kanıtı isteyen kartı tamamlandı diye
+   işaretlemez; Ajan H'nin cihaz matrisine devreder.
+10. **Remote sınırı:** Local replay serbest ve zorunludur. Staging apply/beta,
+    PLAN 5 entegrasyon kapısında Ajan H'ye aittir. Production migration, stable
+    tag/release, push veya kapı açma bu planın otomatik yetkisi değildir.
+11. **Kapsam freni:** Kart dışı iyi fikir bulunursa kodlama; kart notuna
+    “keşif/backlog” yaz. Özellikle beş gizli widget'ı yeniden tasarlama, DE/AR'ı
+    silme, mağaza listeleme işi yapma ve timer'a kısa semptom yaması ekleme.
+12. **Model:** Kart `Model: Opus` diyorsa güçlü muhakeme modeli kullanılmalıdır;
+    kart `Sonnet` diyorsa uygulanabilir ama mimari belirsizlikte Opus'a yükseltilir.
+
+### Ajan A — Sayaç ve çoklu cihaz doğruluğu
+
+- **Durum:** [ ] HAZIR
+- **Zincir:** `WP-430 → WP-431 → WP-432 → WP-433 → WP-448`
+- **İlk iş:** WP-430; başka ajana bağlı değil, hemen claim edilebilir.
+- **SAHİP ana yüzey:** `app/lib/data/**global_timer**`,
+  `app/lib/data/providers/global_timer_providers.dart`,
+  `app/lib/core/background/timer_v2_command_outbox.dart`,
+  `app/android/**/timer/**`, ilgili timer testleri.
+- **Ortak/riskli:** migration yalnız WP-431 ve sıra kilidiyle; notification
+  yönlendirme dosyaları WP-432 boyunca yalnız Ajan A.
+- **Bekleme:** WP-431 migration kilidinin ilk sahibidir. WP-433 kod kapısı
+  bittikten sonra gerçek iki-cihaz kabulünü Ajan H WP-466 yürütür.
+- **Bittiğinde:** WP-433 sonrası WP-448 son-seçilen-ders entegrasyonunu bitir;
+  kanıtı yazıp Ajan H kaydına “timer + subject matrisi hazır” notu bırak.
+
+### Ajan B — Feedback konuşmaları ve okunmamış gerçeği
+
+- **Durum:** [ ] HAZIR
+- **Zincir:** `WP-434 → WP-435 → WP-436 → WP-437 → WP-438`
+- **İlk iş:** WP-434; hemen claim edilebilir.
+- **SAHİP ana yüzey:** feedback ticket/message modelleri, admin repository
+  arayüzü + Supabase/InMemory çiftleri,
+  admin/notification providers, `features/profile/feedback_*`,
+  `features/admin/tabs/admin_reports_tab.dart` ve ilgili testler.
+- **DOKUNMA:** genel moderasyon repository/queue (Ajan C), global settings
+  menüsü (Ajan G), grup sohbeti (Ajan D).
+- **Bekleme:** WP-435 migration, WP-431 commit'i ve migration kilidi boşalmadan
+  başlamaz. WP-437 admin feedback görünümü Ajan C'nin genel moderation kuyruğuna
+  yazmaz; ortak bağlantı WP-438 kabulünde okunur.
+- **Bittiğinde:** WP-438 E2E kanıtını Ajan H WP-465'e devret.
+
+### Ajan C — Moderasyon ve UGC güvenliği
+
+- **Durum:** [ ] HAZIR
+- **Zincir:** `WP-439 → WP-440 → WP-441 → WP-442 → WP-443`
+- **İlk iş:** WP-439 sözleşme/test dilimi; hemen claim edilebilir.
+- **SAHİP ana yüzey:** moderation model/repository/provider çiftleri,
+  `features/safety/**`, `features/admin/**moderation**`,
+  moderation pgTAP ve migration'ları.
+- **DOKUNMA:** feedback mesajlaşma (Ajan B), grup üyelik/leave (Ajan D),
+  navigation/l10n sıcak dosyaları kilitsiz.
+- **Bekleme:** WP-439 migration tarafı WP-435 commit'inden sonra; WP-441 ve
+  WP-442 aynı ajan içinde seri. Ajan D, mesaj raporu UI'sini WP-439 sözleşme
+  commit'inden sonra bağlar.
+- **Bittiğinde:** WP-443 abuse/RLS kanıtını Ajan H WP-465'e devret.
+
+### Ajan D — Grup işlemleri, dürtme ve sohbet güvenliği
+
+- **Durum:** [ ] HAZIR
+- **Zincir:** `WP-444 → WP-445 → WP-446 → WP-447`
+- **İlk iş:** WP-444 istemci/model keşfi hemen; migration yazımı sıra gelince.
+- **SAHİP ana yüzey:** nudge model/repository/provider/service çiftleri, group
+  repository/provider, grup detay/sohbet/üyelik ekranları ve ilgili testler.
+- **DOKUNMA:** moderation backend sözleşmesi (Ajan C), campfire sahnesi
+  (Ajan H), feedback ticket konuşmaları (Ajan B).
+- **Bekleme:** WP-444 migration, WP-442 migration commit'inden sonra; WP-445
+  onun ardından. WP-446'nın “mesajı raporla” bağlantısı WP-439 commit'ini bekler.
+- **Bittiğinde:** WP-447 çoklu-tap/çevrimdışı/blocked-user kabulünü Ajan H'ye yaz.
+
+### Ajan E — Ders seçimi ve görev sistemi
+
+- **Durum:** [ ] HAZIR
+- **Zincir:** `WP-449 → WP-450 → WP-451`
+- **İlk iş:** WP-449'un migration-dışı contract/fixture hazırlığı; hemen claim
+  edilebilir, SQL yazımı migration sırasını bekler.
+- **SAHİP ana yüzey:** user-task model/repository çiftleri,
+  `features/clock/tasks_screen.dart`, görev kartları ve ilgili testler.
+- **DOKUNMA:** streak/goal motoru (Ajan F), navigation (Ajan G), genel tema.
+- **Bekleme:** WP-449 migration, WP-445 commit'inden ve migration kilidinden
+  sonra. WP-450, WP-449 contract'ı commitlenmeden başlamaz. Son seçilen ders
+  WP-448 Ajan A'dadır; E o sırada `study_providers.dart`a yazmaz.
+- **Bittiğinde:** WP-451 kabul matrisini Ajan H WP-465'e devret.
+
+### Ajan F — İstatistik tarih aralığı ve hedef-seri motoru
+
+- **Durum:** [ ] HAZIR
+- **Zincir:** `WP-452 → WP-453 → WP-454 → WP-455`
+- **İlk iş:** WP-452; hemen claim edilebilir.
+- **SAHİP ana yüzey:** `features/stats/**`, `core/stats/**`,
+  goal/streak modelleri-sağlayıcıları, kişisel/grup hedef kartları ve testleri.
+- **DOKUNMA:** görev recurrence (Ajan E), core navigation (Ajan G), campfire.
+- **Bekleme:** WP-453 migration, WP-449 commit'inden sonra. WP-455 tam ilerleme
+  matrisinde WP-451 çıktısını okur; ona yazmaz.
+- **Bittiğinde:** WP-455 bireysel/grup seri kanıtını Ajan H WP-465'e devret.
+
+### Ajan G — Ayarlar, hesap, dil, navigasyon ve widget yayın yüzeyi
+
+- **Durum:** [ ] HAZIR
+- **Zincir:** `WP-456 → WP-457 → WP-458 → WP-459 → WP-460 → WP-461`
+- **İlk iş:** WP-456; hemen claim edilebilir.
+- **SAHİP ana yüzey:** settings/profile account/about, updater ekranları,
+  locale seçimi, auth repository email-change çiftleri, `core/navigation/**`,
+  Android widget katalog/manifest kaynakları ve ilgili testler.
+- **Ortak/riskli:** Bu zincir l10n, navigation ve AndroidManifest sıcak dosya
+  kilitlerinin tek sahibidir; her WP arasında kilidi bırakır. DE/AR `.arb`
+  dosyalarını silmez; yalnız runtime seçeneğini TR/EN ile sınırlar.
+- **Bekleme:** WP-459 feedback rozet gerçeği için WP-436 commit'ini bekler.
+  WP-460/461 diğer sıcak dosya sahipleri boşken yapılır.
+- **Bittiğinde:** WP-461 Play/widget seçim kanıtını Ajan H WP-465'e devret.
+
+### Ajan H — Kamp ateşi, gözlemlenebilirlik ve entegrasyon/cihaz kapısı
+
+- **Durum:** [ ] HAZIR
+- **Zincir:** `WP-462 → WP-463 → [WP-442 bekle] → WP-464 → [A–G bekle] → WP-465 → WP-466 → WP-467`
+- **İlk iş:** WP-462; hemen claim edilebilir.
+- **SAHİP ana yüzey:** campfire sahnesi/layout/assets/golden testleri,
+  gözlemlenebilirlik bootstrap'i (yalnız WP-463 sıcak dosya kilidiyle),
+  purge-accounts hardening + hesap-silme QA kanıtı, entegrasyon ve cihaz QA
+  belgeleri.
+- **DOKUNMA:** A–G'nin ürün kodunu “entegrasyon” adıyla yeniden yazma; kırık
+  bulursa ilgili ajanın WP'sini yeniden açıp sahip ajanı beklet.
+- **Bekleme:** WP-464 moderation retention şeması için WP-442'yi bekler.
+  WP-465 başlamadan WP-448, 438, 443, 447, 451, 455 ve 461
+  “kod + otomatik test tamam” olmalı. WP-466 için WP-465 yeşil, local replay
+  yeşil ve staging kapısı plan kanıtıyla açılabilir olmalı.
+- **Yetki sınırı:** WP-466 staging/beta kabul adayını hazırlayabilir. WP-467
+  release-ready raporu ve kapıların kapalı olduğunu kanıtlar; production apply,
+  stable tag/release ve Store submission yapmaz.
+
+## 🗄️ PLAN 4 ve önceki aktif-lane teslim geçmişi
 
 ### Gemini Lane
 - **Durum:** [x] Boşta
@@ -349,22 +533,24 @@
 
 ## 🗺️ Yol Haritası — sırada ne var
 
-> **İki plan, sırayla: PLAN 1 (Ürün & Kod, Faz A–F) → PLAN 2 (Mağaza, Faz G–J).**
-> Tek istisna: **isim + logo kararı** Plan 2'ye ait ama Plan 1 bitmeden verilmeli —
-> mağaza görselleri, MSIX kimliği ve uygulama içi marka ona bağlı.
+> **Aktif yürütme PLAN 5 / v57'dir.** PLAN 1–4 aşağıda tarihsel ürün ve teslim
+> kayıtları olarak korunur; yeni ajanlar iş seçmek için onları değil, en üstteki
+> Ajan A–H zincirlerini ve PLAN 5 WP-429…467 kartlarını kullanır.
 
 ### Şu anki gerçek durum
 
 | Konu | Durum |
 | --- | --- |
-| Sürüm | **`v55` yayında** — PLAN 3 lansman turu (Faz K + Faz L, WP-379…WP-392, on dört iş paketi tek sürümde). Sahip 2026-07-28'de tümünü tek mesajla onayladı. Production şeması `0089`→`0094`. Sürüm penceresi tag alındıktan sonra yeniden **HOLD**'a alınır |
-| Cihaz kabulü | 🟡 **v55 sahipte** — on dört maddelik test listesi verildi (sayaç 2, arayüz 6, destek 2, moderasyon 4). Dört madde ikinci hesap/cihaz ister. v54'ten devreden tek açık test: kamp ateşi gece/gündüz saatleri (A2) |
+| Sürüm | **`v56` stable yayında** · release run `30384688718` · production şeması `0100` |
+| Aktif plan | **PLAN 5 / v57** · sekiz ajan zinciri · WP-429…467 |
+| Cihaz kabulü | 🟡 v56 saha bulguları raporlandı; v57 iki-cihaz/staging kapanış matrisi WP-466 |
 | Sürüm politikası | 🔴 Sahip onayı olmadan yeni sürüm çıkmaz |
-| Otomatik doğrulama | `2e19cfb` release koşumu (`30222542841`) preflight/android/windows/finalize tümü PASS |
-| l10n audit | **0 bulgu**: WP-335, WP-295 önizleme metinlerini katalogladı; 7 kullanıcı-dışı invariant mesajı dar ve gerekçeli muafiyetle ayrıldı |
-| Migration | Repo/local **`0094`** · staging **`0094`** · production **`0094`** — üç ortam hizalı. Staging apply run `30363917376`, production apply run `30364331158`, ikisinde de post-check `0094` |
+| Otomatik doğrulama | v56 tesliminde analyze + 1053/1053 CI-bayraklı test + l10n + local replay/377 pgTAP yeşil |
+| l10n | İlk mağaza runtime hedefi yalnız TR+EN; generated paket daraltması WP-457 |
+| Migration | Repo/local/staging/production **`0100`**; PLAN 5 ileri migration'ları localden başlar |
 | Yedek | 🔴 **Yok.** Free plan; PITR ve günlük yedek kapalı. Sahip kararıyla muaf; geri dönüş yolu yok |
 | Beta | **`beta-v4402`** son beta; Android APK + Windows MSIX/ZIP hazır, V3 flag'leri kapalı |
+| Remote kapıları | staging + production deploy/release dört bayrak **kapalı** (`b6b47a9`) |
 | Play Console | 🟢 **Doğrulama alındı** (2026-07-28). Form doldurulmadı; hazırlık PLAN 3 · Faz M |
 | Microsoft Partner Center | 🟢 **Doğrulama alındı** (2026-07-28). Ana odak Play; Microsoft PLAN 2 · Faz H'de kalır |
 
@@ -3956,18 +4142,741 @@ staging apply → production apply (sahip GO'su ile) → v56 stable.
 
 ## PLAN 5 — v57 ÜRÜN GÜVENİ VE MAĞAZA ÖNCESİ SON BÜYÜK TUR
 
-> **Durum:** Ürün kapsamı hazır; teknik WP planı henüz açılmadı.
-> **Saha kaydı:** `docs/V56-SAHIP-GERI-BILDIRIM-RAPORU.md`
-> **Birleşik yapılacaklar:** `docs/V57-YAPILACAKLAR.md`
+> **Durum:** 🟢 Uygulamaya hazır · sekiz ajan zinciri A–H.
+> **Ürün kaydı:** `docs/V56-SAHIP-GERI-BILDIRIM-RAPORU.md`
+> **Birleşik brief:** `docs/V57-YAPILACAKLAR.md`
+> **Rakip doğrulaması:** `docs/RAKIPANALIZI-DEGERLENDIRME.md`
+> **Ürün sahibi kapsam kararı:** Sayaç/feedback/güvenlik kök sorunları kısa
+> yamayla değil mimari incelemeyle çözülür. İlk mağaza runtime'ı TR+EN ve yalnız
+> 1×1 Başlat/Durdur widget'ıdır. Store listeleme/submission ürün sahibindedir.
 
-v57'nin sırası: çoklu cihaz sayaç gerçeği → feedback/mesaj/okunmamış zinciri →
-moderasyon ve grup güveni → görev/seri/istatistik → ayarlar/dil/widget/görsel
-sadelik → mağaza öncesi uygulama QA. Ürün sahibi mağaza tarafını ayrıca yürütür.
+### 5.0 Faz ve bağımlılık haritası
 
-🔴 **Planlama kapısı:** Yeni kartlar WP-429'dan başlar. Teknik planner, bu brief'i
-tek seferde dev bir WP'ye çevirmeyecek; P0 sayaç, feedback ve moderasyon
-yüzeylerini ayrı kanıt/uygulama dilimlerine bölecek. Aynı anda en fazla iki
-çalışma hattı kuralı korunur.
+| Faz | Ajan / zincir | Başlama | Sert bekleme |
+|---|---|---|---|
+| 0 — güvenli kapı | WP-429 | ✅ tamam | — |
+| A — timer + seçili ders | A · WP-430→433→448 | hemen | WP-431 migration sırasının başı |
+| B — feedback | B · WP-434→438 | hemen | WP-435, WP-431'i bekler |
+| C — moderasyon | C · WP-439→443 | hemen | migration sırası + D mesaj UI sözleşmesi |
+| D — grup | D · WP-444→447 | hemen | WP-444, WP-442 migration'ını; WP-446, WP-439'u bekler |
+| E — görev | E · WP-449→451 | hemen | WP-449 SQL'i WP-445'i bekler |
+| F — stats/seri | F · WP-452→455 | hemen | WP-453, WP-449'u; WP-455, WP-451'i okur |
+| G — ayarlar/yüzey | G · WP-456→461 | hemen | WP-459, WP-436'yı bekler |
+| H — kamp/entegrasyon | H · WP-462→467 | hemen | WP-465 öncesi A–G çıkış kapıları |
+
+**Kanonik migration rezervasyonu:** `0101` WP-431 · `0102` WP-432 · `0103`
+WP-435 · `0104` WP-439 · `0105` WP-441 · `0106` WP-442 · `0107` WP-444 ·
+`0108` WP-445 · `0109` WP-449 · `0110` WP-453 · `0111` WP-464. Her kart uygulama anında en yüksek migration'ı
+yeniden ölçer. Önceki rezervasyon gerçekten gereksiz çıkarsa kart bunu testle
+kanıtlar, migration oluşturmaz ve sıradaki kart mevcut en yüksek numara + 1'i
+alır; boş/uydurma migration yazılmaz.
+
+**Çakışma matrisi:**
+
+| Yüzey | Tek sahibi / sıra |
+|---|---|
+| Timer Dart + Android native + `study_providers.dart` | yalnız A |
+| Feedback tickets/messages | yalnız B |
+| Moderation/admin safety | yalnız C |
+| Group/nudge/chat membership | yalnız D |
+| Task recurrence ve görev UI | yalnız E |
+| Stats/streak/goal | yalnız F |
+| Settings/auth/l10n/navigation/widget katalog | yalnız G |
+| Campfire + final QA belgeleri | yalnız H |
+| `supabase/migrations/**` | ortak kilit; yukarıdaki sıra |
+| `app/lib/main.dart`, `pubspec.yaml`, navigation, l10n generated, manifest | ortak sıcak-dosya kilidi |
+| Tam `flutter test`, local replay, beta cihaz matrisi | tek koşucu; finalde H |
+
+### Faz 0 — Emniyet
+
+#### WP-429 — v56 sonrası deploy/release kapılarını fail-closed kilitle
+
+- **Durum:** [x] Kod + otomatik test tamam · commit `b6b47a9`.
+- **Problem:** v56 apply/release sonrası staging ve production kapıları açık
+  kalmıştı; yeni bir workflow yanlışlıkla remote mutation veya release
+  başlatabilirdi.
+- **SAHİP:** `tooling/release/deploy-contract.json`,
+  `tooling/supabase/guard.tests.ps1`.
+- **Sonuç:** Dört bayrak `false`; hold gerekçeleri güncel. DB/tag/release yok.
+- **Kanıt:** deploy guard 75/75; release preflight 8/8.
+- **Kural:** Gelecekte kapı ancak hedef SHA/head/project-ref, güncel test/QA ve
+  somut sahip GO'suyla açılır; iş bitince aynı turda yeniden kapanır.
+
+### Faz A — Sayaç tek gerçeği ve çoklu cihaz
+
+#### WP-430 — Sayaç olay kaydı, durum makinesi ve yeniden üretim kanıtı
+
+- **Durum / bağımlılık:** [ ] HAZIR · Ajan A · bağımsız.
+- **Problem:** Bildirimden ayna durdurma, aralıklı sync, olası kendiliğinden
+  başlama ve “8 saat görünüp session yazmama” aynı kökten mi bilinmiyor.
+- **SAHİP:** `docs/qa/V57-TIMER-EVIDENCE.md` (yeni),
+  `app/lib/core/observability/timer_diagnostic_journal.dart` (yeni),
+  `app/lib/core/observability/observability_service.dart`,
+  `app/lib/data/providers/global_timer_providers.dart`,
+  `app/lib/data/providers/study_providers.dart`,
+  `app/android/**/timer/TimerStateStore.kt`,
+  `app/android/**/timer/StudyTimerService.kt`,
+  `app/test/data/global_timer_*`, `app/test/core/timer_v2_*`,
+  salt-okunur inceleme için timer Dart/native/SQL.
+- **Uygulama:** start/stop/reconcile/lease/notification/widget/cold-start
+  olaylarını tek zaman çizelgesinde tanımla; `account_id`, `run_id`,
+  `run_revision`, `state_version`, `origin_device_id`, `command_id`, terminal
+  neden ve session sonucu için dönen/TTL sınırlandırılmış, PII'siz yerel
+  flight-recorder kur; telemetry kapalıyken cihaz dışına çıkarma; dört hata için
+  önce kırmızı test/tekrar üretim senaryosu yaz.
+- **Kabul:** “hangi olay otorite, hangi kopya projection” tek diyagramda; hiçbir
+  local görünüm server kabulü olmadan yeni aktif run yaratamıyor; görünür ghost
+  ile kaydedilmiş session ayrımı kanıtlanıyor; her transition
+  `reason + outcome + state_version/queue_age` bırakıyor, ham hesap/run/subject
+  kimliği ve mesaj içeriği bırakmıyor.
+- **Tuzak:** “bazen oluyor” bulgusunu yok sayma; log eklemek çözüm değildir.
+- **Model:** Opus.
+
+#### WP-431 — Kanonik timer komut protokolü, offline niyet ve hayalet-run onarımı
+
+- **Durum / bağımlılık:** [ ] WP-430 kabulü · migration kilidinin ilk sahibi.
+- **Problem:** Kaynak cihaz stop olduktan sonra ayna cihaz çalışıyor kalabiliyor;
+  offline terminal niyet/geçmiş başlangıç süresi ve lease uzlaşması yanlış
+  görsel run üretebiliyor.
+- **SAHİP:** `app/lib/data/models/global_timer.dart`,
+  `app/lib/data/repositories/global_timer_repository.dart`,
+  `app/lib/data/repositories/supabase/supabase_global_timer_repository.dart`,
+  `app/lib/data/repositories/in_memory/in_memory_global_timer_repository.dart`,
+  `app/lib/data/providers/global_timer_providers.dart`,
+  `app/lib/core/background/timer_v2_command_outbox.dart`,
+  `app/lib/core/background/timer_foreground_service.dart`,
+  `app/lib/data/providers/study_providers.dart`,
+  `app/android/**/MainActivity.kt`, `app/android/**/widgets/TimerActionReceiver.kt`,
+  `app/android/**/widgets/TimerWidgets.kt`,
+  `app/android/app/src/main/kotlin/com/manilmax/online_study_room/timer/**`,
+  `supabase/migrations/0101_*`, `supabase/tests/*global_timer*`, ilgili testler.
+- **DOKUNMA:** notification hedef politikası WP-432'dir; eski `0082/0087/0088/
+  0089` değiştirilmez.
+- **Uygulama:** native state'te açık `controller_role=source|mirror`; mirror için
+  `run_id/revision/state_version` atomik saklama; app/bildirim/widget stop'un tek
+  karar fonksiyonundan CAS komutu üretmesi; mirror stop'un yerel interval/session
+  üretmemesi; source stop'un mevcut finalize semantiğini koruması. Hesap-geneli
+  tek aktif run invariant'ı; stale komut reddi; offline start zamanının server
+  kabulünde en fazla 24 saat ve gelecek-zaman sınırıyla korunması; `0088`deki
+  timer-sync enqueue gövdesinin yeni RPC'de kaybolmaması; terminal stop'un bütün
+  projection'larda üstün gelmesi; lease expiry'nin session uydurmaması.
+- **Yaşam döngüsü:** logout/hesap değişimi eski hesabın prefs/queue/mirror
+  durumunu yeni hesaba taşımaz; boot yalnız doğrulanabilir source local run'ı
+  restore eder, stale mirror'ı server doğrulaması olmadan diriltmez; auth/network/
+  stale/invalid-schema hataları retry/quarantine/terminal olarak ayrılır.
+- **RLS/rollback:** RPC yalnız auth.uid hesabını değiştirir; duplicate command
+  tek sonuç; ileri rollback/degrade yolu ve flag kapatma kanıtı.
+- **Kabul:** aynı komut 20 kez teslimde tek terminal sonuç; mirror notification/
+  widget stop tek server CAS ve **0 ek session/XP** üretir; stop sonrası hiçbir
+  restart/cold-start/realtime olayı eski run'ı canlandıramaz; kaydedilen süre ile
+  iki cihaz görünümü ±1 sn sözleşmesinde; A hesabından çıkıp B'ye girince A
+  timer'ı restore olmaz; bozuk queue diğer sağlam komutları silmez.
+- **Test:** hedefli Flutter + native contract + local replay/pgTAP.
+- **Model:** Opus.
+
+#### WP-432 — Bildirim aksiyon hedefleme ve cihaz-kapsamlı test bildirimi
+
+- **Durum / bağımlılık:** [ ] WP-431 commit'i.
+- **Problem:** Bir cihazdaki notification STOP'un kaynağa gitmemesi ve
+  “bildirim testi”nin hesabın bütün cihazlarına ulaşması aynı target sözlüğünün
+  belirsizliğini gösteriyor.
+- **SAHİP:** timer notification listener/service/receiver yolları,
+  `app/lib/core/notifications/**timer**`,
+  `app/android/**/timer/**`, timer-sync payload/Edge tetikleyiciyle ilgili
+  mevcut dosyalar, `app/lib/data/models/push_notification.dart`, push repository
+  arayüzü + Supabase/InMemory, push providers,
+  `supabase/migrations/0102_*` ve pgTAP/testler.
+- **DOKUNMA:** announcement/update genel hesap politikası; feedback/moderation
+  payload'larını bu WP'ye göre tek-cihaza indirme.
+- **Uygulama:** timer komutu hesap-geneli olup origin hariç gerekli cihazlara
+  yönelir; cihaz self-test bildirimi yalnız isteği başlatan cihaz token'ına
+  gider; `request_push_self_test(p_device_id)` cihaz sahipliği/aktifliği
+  doğrular; outbox/delivery açık `target_device_id` veya eşdeğer güvenli hedef
+  taşır; payload türü/şema sürümü/target açık; duplicate FCM idempotent.
+- **Kabul:** A cihazında start → B notification STOP → A+B en geç 10 sn terminal;
+  self-test A'dan → yalnız A; token yok/eskimiş/çift teslim fallback'leri görünür.
+- **Tuzak:** `origin_device_id` ile “komutu başlatan cihaz” ve “bildirimi görmek
+  isteyen cihaz” rollerini karıştırma.
+- **Model:** Opus.
+
+#### WP-433 — Timer iki-cihaz otomatik matrisi ve cihaz kabul paketini hazırla
+
+- **Durum / bağımlılık:** [ ] WP-432.
+- **SAHİP:** timer integration testleri, `docs/qa/V57-TIMER-EVIDENCE.md`,
+  `docs/qa/DEVICE-QA-MATRIX.md` içindeki yalnız timer satırları.
+- **Senaryolar:** A start/B stop; B start/A stop; app açık/arka plan/terminated;
+  notification/widget/app aksiyonu; internet kes-yeniden bağlan; duplicate ve
+  sıra dışı komut; force-stop; reboot; 23:59–00:01; iki cihazda farklı uygulama
+  yaşam döngüsü.
+- **Kabul:** ghost aktif görünüm 0; duplicate session 0; terminalden sonra
+  yeniden canlanma 0; kayıp stop niyeti 0; hedefleme hatası 0. Donanım gerektiren
+  satırlar “Cihazda doğrulanmalı” olarak WP-466'ya açık teslim edilir.
+- **Tuzak:** yalnız tek emülatör veya yalnız happy-path ile kapatma.
+- **Model:** Opus.
+
+### Faz B — Feedback konuşması ve okunmamış gerçeği
+
+#### WP-434 — Feedback uçtan uca veri akışı ve konuşma kimliği denetimi
+
+- **Durum / bağımlılık:** [ ] HAZIR · Ajan B.
+- **Problem:** Mesaj yanlış bilete düşüyor, kayboluyor veya iki yüzeyde farklı
+  okunmuş görünüyor olabilir; önce tekil olay akışı kanıtlanmalı.
+- **SAHİP:** `docs/qa/V57-FEEDBACK-EVIDENCE.md` (yeni), feedback model/repository/
+  provider ve ekran testleri.
+- **DOKUNMA:** production code/migration yok.
+- **Kodda doğrulanan başlangıç:** ilk mesaj `feedback_tickets.message`,
+  devamı `feedback_ticket_messages`, admin yanıt sinyali ayrıca
+  `announcements` içinde; rozet bu iki kanalı ayrı sayabiliyor ve konuşma açıkken
+  yeni mesajı canlı izlemiyor.
+- **Uygulama:** create ticket → user message → admin reply → user reply →
+  read/archive/reopen akışında ticket/message/user bağlarını ve realtime
+  abonelik yaşam döngüsünü izle; yanlış-thread ve drop için kırmızı test kur.
+- **Kabul:** tek mesajın tek kalıcı `message_id` ve tek `ticket_id`si var;
+  optimistic geçici kimlik server kimliğiyle tekilleşir; refresh/relogin sonrası
+  aynı sıra görülür.
+- **Model:** Opus.
+
+#### WP-435 — Feedback konuşması için server-authoritative tek gerçek
+
+- **Durum / bağımlılık:** [ ] WP-434 + WP-431 migration commit'i.
+- **SAHİP:** `feedback_ticket*.dart`, `admin_repository.dart`,
+  Supabase/InMemory admin repository, admin providers,
+  `supabase/migrations/0103_*`, `supabase/tests/*feedback*`.
+- **Uygulama:** ilk mesajı tek sefer kanonik mesaj dizisine backfill; istemci
+  `client_message_id` ile idempotent insert; ticket-membership/RLS; server
+  ordering cursor; kişi bazlı latest-message/read-watermark projection;
+  archive/reopen durumlarının mesaj geçmişini taşımaması; realtime + refresh aynı
+  reducer. `mark_support_thread_read` ilişkili eski feedback-announcement
+  işaretini de kapatır; yeni admin yanıtı rozet için iki olay üretmez.
+- **Kabul:** iki cihaz aynı mesajı eşzamanlı gönderse bile istemci command-id
+  başına tek satır; kullanıcı yalnız kendi ticket'ını, admin yetkili kapsamı
+  görür; başka ticket'a payload enjekte etme RLS ile reddedilir.
+- **Rollback:** eklemeli şema; eski istemci uyumluluğu; flag/degrade planı.
+- **Model:** Opus.
+
+#### WP-436 — Okunmamış watermark ve rozet zinciri
+
+- **Durum / bağımlılık:** [ ] WP-435.
+- **SAHİP:** support providers, unread/badge provider'ları, feedback/profile
+  rozet widget'ları ve testleri.
+- **DOKUNMA:** `settings_screen` bağlantısı WP-459; core navigation G kilidinde.
+- **Uygulama:** unread = karşı tarafın `message_seq > last_read_seq` gerçeği;
+  ekranı gerçekten görünür/açık görmek read ack üretir; fetch etmek tek başına
+  okundu saymaz; profile/settings rozetleri aynı provider'dan.
+- **Canlılık:** Konuşma açıkken Supabase stream/realtime yeni mesajı aynı thread'e
+  ekler; yeniden fetch başka ticket'ın listesini mevcut konuşmaya yazamaz.
+- **Kabul:** bütün mesajlar görülünce iki rozet ≤1 sn'de 0; yeni karşı taraf
+  mesajında ikisi de 1 artar; kullanıcının kendi mesajı unread üretmez; restart,
+  ikinci cihaz ve archive sonrası geri gelmez.
+- **Tuzak:** iki ayrı local boolean/cache oluşturma.
+- **Model:** Opus.
+
+#### WP-437 — Kullanıcı ve admin feedback deneyimini yeniden düzenle
+
+- **Durum / bağımlılık:** [ ] WP-436.
+- **SAHİP:** `app/lib/features/profile/feedback_screen.dart`,
+  `feedback_tickets_screen.dart`, feedback konuşma ekranı, feedback'e özel admin
+  görünümü olarak `features/admin/tabs/admin_reports_tab.dart` ve testleri.
+- **Uygulama:** bilet listesinde son mesaj/tarih/durum/unread; konuşmada sabit
+  thread bağlamı, gönderiliyor/başarısız/yeniden dene; adminde kullanıcı,
+  kategori, zaman çizgisi, ek ve yanıt bağlamı okunur.
+- **Kabul:** yanlış bilet başlığı altında mesaj çizilemez; başarısız mesaj
+  kaybolmaz veya sahte gönderildi görünmez; uzun metin/küçük ekran/text scale
+  taşmaz; yükleme/boş/hata/offline durumları vardır.
+- **Model:** Sonnet.
+
+#### WP-438 — Feedback E2E ve rozet kapanış kapısı
+
+- **Durum / bağımlılık:** [ ] WP-437.
+- **SAHİP:** feedback integration/widget/contract testleri ve evidence belgesi.
+- **Kabul matrisi:** kullanıcı→admin→kullanıcı 20 tur; iki ticket eşzamanlı;
+  iki cihaz; reconnect/relogin; duplicate retry; archive/reopen; attachment;
+  unread profile/settings. Yanlış thread 0, kayıp mesaj 0, sahte gönderildi 0,
+  okunduktan sonra kalan rozet 0.
+- **Teslim:** otomatik kanıt + cihazda doğrulanacak satırlar Ajan H WP-465/466'ya.
+- **Model:** Opus.
+
+### Faz C — Moderasyon ve UGC güvenliği
+
+#### WP-439 — Mesaj/profil/grup/grup-adı rapor hedef sözleşmesi
+
+- **Durum / bağımlılık:** [ ] HAZIR audit/test; migration için WP-435 beklenir.
+- **Problem:** Kullanıcı grup sohbetindeki tek mesajı seçip raporlayamıyor;
+  adminin gördüğü bağlam hedef türüne göre tutarlı değil.
+- **SAHİP:** moderation models/repository/provider, `features/safety/**`,
+  `supabase/migrations/0104_*`, moderation/report pgTAP, ilgili testler.
+- **Uygulama:** hedef türleri `message|profile|group|group_name`; immutable hedef
+  kimliği + güvenli snapshot + report reason/detail. İstemci snapshot'ı kanıt
+  sayılmaz; RPC hedefi, ortak aktif grup üyeliğini ve görünürlüğü doğrulayıp
+  kanonik snapshot'ı server'da üretir. `moderation_cases` ile açık vaka başına
+  hedef tekilliği; kapanan vakadan sonraki rapor yeni vaka; tekrar politikası,
+  RLS ve admin-only ayrıntı.
+- **Kabul:** rapor hedefi yanlış tür/ID ile başka içeriğe bağlanamaz; raporlayan
+  kişi karşı tarafın gizli/e-posta verisini göremez; mesaj silinse bile gerekli
+  kanıt retention politikasınca korunur.
+- **DOKUNMA:** grup sohbetindeki UI entry Ajan D WP-446.
+- **Model:** Opus.
+
+#### WP-440 — Admin kuyruğu kartı, durum çipi ve sabit yerleşim
+
+- **Durum / bağımlılık:** [ ] WP-439 sözleşme commit'i.
+- **SAHİP:** `features/admin/tabs/admin_moderation_tab.dart`,
+  yeni ayrı admin-moderation repository arayüzü + Supabase/InMemory/provider,
+  `features/admin/widgets/moderation_queue_card.dart` ve testleri.
+- **Kod borcu:** Mevcut ekranın doğrudan
+  `Supabase.instance.client.from(...)` okuma/yazmaları kaldırılır; mevcut
+  `admin_ugc_report_groups()` ve `admin_set_ugc_report_group_status()` vaka
+  sözleşmesi üzerinden kullanılır/geliştirilir. Feedback'in
+  `admin_repository.dart` dosyası paylaşılmaz.
+- **Uygulama:** kartta hedef, raporlayan, kategori, risk, zaman, atanan admin,
+  SLA ve mevcut durum; `Open / Under review / Closed` seçimi doğrudan durum
+  çipinden; üç nokta yalnız ikincil eylemler; detail timeline.
+- **Kabul:** durum seçenekleri arasında kart yüksekliği/tipografisi sıçramaz;
+  320–600 dp, text scale 1.3 ve uzun isimde taşma yok; klavye/ekran okuyucu
+  label'ları var; yanlışlıkla close geri alınabilir.
+- **Model:** Sonnet.
+
+#### WP-441 — Basamaklı yaptırım, karantina, önem ve kötü niyetli rapor
+
+- **Durum / bağımlılık:** [ ] WP-440 + migration kilidi.
+- **SAHİP:** moderation repository/provider, admin action UI,
+  `supabase/migrations/0105_*`, `supabase/tests/*moderation*`.
+- **Uygulama:** no-action; kullanıcıya gerçekten iletilen warn; adı sıfırla;
+  24 saat yalnız-yazma mute (okuma açık, auth ban değil); 24 saat/7/14/30 gün
+  suspend; kalıcı ban; her birinin geri alma yolu. Her aksiyon vaka kimliği,
+  actor, reason ve idempotency key taşır; auth işlemi başarılı/audit başarısız
+  yarım durumunu uzlaştıran action-state kurulur. Yüksek riskli içeriği review
+  bitene kadar geri alınabilir karantina; severity/SLA; kötü niyetli rapor sayacı.
+- **RLS:** istemci yaptırım yazamaz; yalnız yetkili admin RPC; audit append-only;
+  hedef kullanıcı başka raporların kimliğini göremez.
+- **Kabul:** yaptırım iki kez uygulanınca tek aktif sonuç; süre dolunca doğru
+  geri açılma; karantina görünürlüğü server policy ile; “rapor geldi = otomatik
+  suçlu” yok.
+- **Model:** Opus.
+
+#### WP-442 — İtiraz, kanıt saklama ve denetim zinciri
+
+- **Durum / bağımlılık:** [ ] WP-441 + migration kilidi.
+- **SAHİP:** moderation appeal/evidence/audit model-repository ekranları,
+  `supabase/migrations/0106_*`, pgTAP ve testler.
+- **Uygulama:** kullanıcıya yaptırım nedeni/süresi ve itiraz yolu; itirazı aynı
+  kararı veren admin dışında inceleyebilme; evidence hash/snapshot retention;
+  her durum/yaptırım değişikliği actor/time/old/new/reason ile append-only.
+- **Kabul:** geçmiş audit değiştirilemez/silinemez; itiraz sonucu yaptırımı
+  idempotent kaldırır veya onar; yetkisiz kullanıcı evidence okuyamaz.
+- **Model:** Opus.
+
+#### WP-443 — Moderasyon abuse, RLS ve uçtan uca kabul kapısı
+
+- **Durum / bağımlılık:** [ ] WP-442.
+- **SAHİP:** moderation contract/integration testleri ve
+  `docs/qa/V57-MODERATION-EVIDENCE.md`.
+- **Matris:** mesaj/profil/grup/ad raporu; duplicate; blocked users; silinmiş
+  içerik; yüksek risk; karantina; yaptırım/expiry; itiraz; malicious reporter;
+  iki admin race; normal kullanıcı admin RPC denemesi.
+- **Kabul:** RLS kaçışı 0; kayıp audit 0; aynı eylemde çift yaptırım 0; yüksek
+  risk açık kuyruğa SLA ile düşer; kapatılan kart filtrelerde tutarlı.
+- **Model:** Opus.
+
+### Faz D — Grup işlemleri ve dürtme
+
+#### WP-444 — Kişi bazlı yalnız dürtme sessize alma
+
+- **Durum / bağımlılık:** [ ] HAZIR istemci/model; migration için WP-442.
+- **SAHİP:** nudge model/repository/provider/notification service,
+  kişi/grup etkileşim ayarı UI'si, `supabase/migrations/0107_*`,
+  `supabase/tests/*nudge*`, ilgili testler.
+- **Uygulama:** `muted_sender_id` hesap-kapsamlı tercih; engellemeden bağımsız;
+  kullanıcı geri açabilir; server `send_nudge` muted alıcıya nudge satırı,
+  realtime olayı **ve** outbox üretmez. Gönderen bu tercihi okuyamaz.
+- **Kabul:** susturulan kişi mesaj/profil/grup açısından engellenmez, yalnız
+  dürtmesi gelmez; diğer kişiler gelir; ikinci cihazda tercih eşit; saldırgan
+  istemci RPC ile bypass edemez.
+- **Model:** Opus.
+
+#### WP-445 — Gruptan çıkış için idempotent, anlık ve geri bildirimli işlem
+
+- **Durum / bağımlılık:** [ ] WP-444 + migration kilidi.
+- **SAHİP:** group repository/provider,
+  `features/classroom/widgets/class_detail_screen.dart` içindeki üyelik/çıkış UI,
+  `supabase/migrations/0108_*`, group pgTAP ve testleri.
+- **Uygulama:** `leave_group(group_id, command_id)` RPC'si `auth.uid()` ve server
+  zamanı kullanır; idempotency key; ilk tapta buton busy/disabled;
+  optimistic list removal + server doğrulaması; timeoutta açık retry; primary
+  group uzlaşması, presence ve son-admin/owner kuralları atomik. Grup sahibi
+  sahipsiz grup bırakamaz; devretme/silme yolu açık.
+- **Kabul:** 20 hızlı tap tek leave; ≤1 sn görünür geri bildirim; başarı sonrası
+  app restart beklemeden grup kaybolur; başarısızlıkta sahte çıkmış görünmez;
+  ikinci cihaz üyeliği tutarlı.
+- **Tuzak:** yalnız `Future` bekletip butonu aktif bırakma; membership delete ile
+  block/ban kavramlarını karıştırma.
+- **Model:** Opus.
+
+#### WP-446 — Grup bilgi sadeleştirmesi, kavram ayrımı ve mesajı raporla UI'si
+
+- **Durum / bağımlılık:** [ ] WP-445; rapor UI bağı için WP-439.
+- **SAHİP:** `features/classroom/widgets/class_chat_card.dart`,
+  `features/classroom/widgets/class_detail_screen.dart`,
+  `features/classroom/classroom_screen.dart`, grup sohbet/üyelik testleri.
+- **Uygulama:** alt “Grup bilgileri → davet kodu” tekrarını kaldır; davet kodu
+  tek kanonik yerde kalsın; başka kullanıcının mesajında 48 dp görünür eylem
+  menüsüne Raporla ekle (uzun basma tek keşif yolu olmasın); sessize
+  alma/kişiyi engelleme/gruptan çıkarma/grup yasağı/guruptan çıkma metin ve
+  davranış olarak ayrı.
+- **Kabul:** davet kodu yinelenmez; her eylem doğru kapsamı açıklar; message
+  report WP-439 target kimliğiyle açılır; admin yetkisi olmayan kick/ban göremez.
+- **Model:** Sonnet.
+
+#### WP-447 — Grup yarış koşulu ve güvenlik kabul matrisi
+
+- **Durum / bağımlılık:** [ ] WP-446.
+- **SAHİP:** group/nudge/chat integration testleri ve QA belgesi.
+- **Matris:** 20× leave tap, offline leave/retry, iki cihaz, primary group,
+  last-admin, ban/block/mute, muted nudge, message report, restart.
+- **Kabul:** duplicate mutation 0; gecikmiş “sonradan çıkmış” görünüm 0; muted
+  nudge bypass 0; kavramlar arası istenmeyen yan etki 0.
+- **Model:** Opus.
+
+### Faz E — Ders seçimi ve görevler
+
+#### WP-448 — Son seçilen dersin hesap/cihaz yaşam döngüsünde korunması
+
+- **Durum / bağımlılık:** [ ] Ajan A · WP-433 sonrası. Ajan E bu karta yazmaz.
+- **SAHİP:** `app/lib/data/providers/study_providers.dart`, timer/task subject
+  seçim UI'si, yeni selected-subject persistence testleri.
+- **Uygulama:** kullanıcı özel ders seçince değiştirilene/silinene kadar,
+  hesap-kapsamlı cihaz-yerel `selected_study_subject.<userId>` tercihiyle koru;
+  “Genel” seçimi de kalıcı; silinen/erişilemeyen derste tek sefer açıklamalı
+  fallback; logout/hesap değişiminde sızıntı yok. `_kActiveSubject` yalnız aktif
+  koşu snapshot'ıdır, kalıcı tercih olarak yeniden kullanılmaz; global mirror
+  koşusunun server subject'i yerel tercihle ezilmez.
+- **Kabul:** restart ve ekranlar arası geçişte ders kalır; aynı hesapta beklenen
+  sync politikası belgeli; başka hesap önceki seçimi görmez.
+- **Model:** Sonnet.
+
+#### WP-449 — Her N günde sabit fazlı tekrarlanan görev motoru
+
+- **Durum / bağımlılık:** [ ] WP-448 + WP-445 migration commit'i.
+- **SAHİP:** `user_task.dart`, task repository arayüzü + Supabase/InMemory,
+  providers, `core/tasks/**`, `supabase/migrations/0109_*`,
+  `supabase/tests/*task*`, ilgili testler.
+- **Uygulama:** `interval_days >= 1`, sabit `anchor_date`, Europe/Istanbul gün
+  sınırı; tamamlama yalnız o occurrence'ı kapatır; sonraki tarih
+  `anchor + k*N`, tamamlanma zamanından kaymaz. Fizik→kimya→biyoloji gibi üç
+  ayrı 3-günlük görev farklı anchorlarla dönüşebilir.
+- **Kabul:** 1-gün mevcut davranış korunur; 3-gün görev bugün tamamlanınca yarın
+  gelmez, sabit üçüncü günde gelir; offline/clock change/23:59/00:01/undo ve
+  duplicate completion deterministik.
+- **RLS:** kullanıcı yalnız kendi görevini/occurrence'ını değiştirir.
+- **Model:** Opus.
+
+#### WP-450 — Görev bilgi mimarisi, satırdan tamamlama ve geri alma
+
+- **Durum / bağımlılık:** [ ] WP-449.
+- **SAHİP:** `features/clock/tasks_screen.dart`,
+  `features/home/widgets/tasks_card.dart`, göreve özel widget/model view
+  dosyaları ve testleri.
+- **Uygulama:** “Bugün”, “Tekrarlanan”, “Diğer” anlaşılır bölümleri; tüm satır
+  tap tamamlar, ikincil düzenle/sil kontrolü tap ile çakışmaz; snackbar/inline
+  undo aynı occurrence'ı geri getirir; loading double-tap koruması.
+- **Kabul:** 48 dp; screen reader state; yanlış tap undo; uzun başlık/text scale
+  taşmaz; completed bölümünden geri alma; offline pending görünür.
+- **Model:** Sonnet.
+
+#### WP-451 — Görev/başarım/grup ilerlemesi görev tarafı kabul matrisi
+
+- **Durum / bağımlılık:** [ ] WP-450.
+- **SAHİP:** task/subject integration tests ve QA belgesi.
+- **Matris:** 1/2/3/7 gün cadence, DST bağımsız İstanbul günü, offline, undo,
+  silinen ders, iki cihaz, duplicate tap, task completion'ın achievement/group
+  projection etkisi.
+- **Kabul:** occurrence kaybı/çifti 0; cadence drift 0; undo sonrası ilerleme
+  uzlaşması doğru; Ajan F WP-455'in okuyacağı fixture açık.
+- **Model:** Opus.
+
+### Faz F — İstatistik ve seri
+
+#### WP-452 — Sürüklenebilir iki uçlu tarih aralığı
+
+- **Durum / bağımlılık:** [ ] HAZIR · Ajan F.
+- **SAHİP:** `features/stats/widgets/draggable_date_range_picker.dart`,
+  `stats_period_bar.dart`, stats period provider ve ilgili testler.
+- **Uygulama:** iki görünür handle ve yalnız handle sürükleme; sıradan gün/track
+  tap'i başlangıç veya bitişi sessizce değiştirmez. Başlangıç/bitiş
+  çaprazlanma politikası deterministik; klavye/ekran okuyucu için açıkça seçilen
+  endpoint'e ait ayrı erişilebilir eylem bulunur. `PersonalStatsView` içindeki
+  ikinci stock `showDateRangePicker` kaldırılır/aynı tek seçiciye bağlanır.
+- **Kabul:** 14–30 aralığında 21'e basmak/sürüklemek 14–21 üretir; başlangıcı
+  istemeden 21 yapmaz; minimum/maksimum/tek gün/RTL/text scale davranır.
+- **Tuzak:** kullanıcı yalnız eski noktaya tıklama semantiğini istemiyor; sırf
+  açıklama tooltip'i ekleyip bırakma.
+- **Model:** Sonnet.
+
+#### WP-453 — Hedef tamamlamasına dayalı server-authoritative seri motoru
+
+- **Durum / bağımlılık:** [ ] WP-452 + WP-449 migration commit'i.
+- **Problem:** Seri uygulamayı açmakla veya kısmi çalışmayla ilerlememeli.
+- **SAHİP:** goal/streak model/repository/provider, `core/stats/**streak/goal**`,
+  kişisel/grup progression RPC'leri, `supabase/migrations/0110_*`, pgTAP/testler.
+- **Semantik:** Gün N hedef tamamlandı → streak artar. Gün N+1 tamamlanmadı →
+  streak korunur/grace. Gün N+2 tamamlanmadan önce tamamlanırsa eski seriden
+  devam eder; iki ardışık hedef günü kaçarsa sıfırlanır. Bu tek seferlik joker
+  değil, her tek kaçırmada tekrar uygulanır. Gün hesabı Europe/Istanbul/grup
+  bölgesi kanonuna uyar.
+- **Parity:** Önce saf Dart durum makinesi/fixture; sonra aynı fixture SQL
+  projection'a. `tamamla-boş-tamamla-boş-tamamla = streak 3`. Mevcut tüketilen
+  bakiye modeli `streak_freezes` ile otomatik tek-gün grace karıştırılmaz.
+  Geçmiş manuel session seri sonucunu değiştiriyorsa kullanıcı etkisini görür;
+  sessiz geriye dönük değişim yapılmaz.
+- **Kabul:** sadece app open, timer start veya kısmi süre artış üretmez; duplicate
+  goal event çift artış üretmez; kişisel ve grup serisi ayrı ledger/key kullanır.
+- **Model:** Opus.
+
+#### WP-454 — Üç alev durumu ve kişisel/grup ayrımı
+
+- **Durum / bağımlılık:** [ ] WP-453.
+- **SAHİP:** streak/goal UI, kişisel ve grup hedef kartları,
+  `core/stats/progression_visuals.dart`, ilgili widget/golden testleri.
+- **Durumlar:** (1) bugün hedef tamamlandı: canlı alev; (2) bugün henüz süre var:
+  sönük/gri alev; (3) dün kaçtı, bugün tamamlanmazsa seri bitecek: alev üzerinde
+  okunabilir grace işareti (`=` yalnız erişilebilirlikte de anlaşılırsa).
+- **Kabul:** durum yalnız server projection'dan; kişisel ve grup renk/çerçeve/
+  label ile ayırt edilir, yalnız renge dayanmaz; küçük kartta işaret okunur;
+  dark/light ve text scale golden'ları.
+- **Model:** Sonnet.
+
+#### WP-455 — Seri ve bütün ilerleme kabul matrisi
+
+- **Durum / bağımlılık:** [ ] WP-454 + WP-451 fixture.
+- **SAHİP:** stats/streak/goal/achievement/group progression testleri ve
+  `docs/qa/V57-PROGRESSION-EVIDENCE.md`.
+- **Matris:** tamamlandı/kısmi/açıldı; tek kaçırma/iki kaçırma; tekrar grace;
+  kişisel/grup farklı hedef; iki cihaz; 23:59/00:01; manual/native/pomodoro/
+  countdown session; task completion/undo.
+- **Kabul:** yanlış artış 0, çift XP/reward 0, kişisel-grup sızıntısı 0,
+  UI/server state farkı 0.
+- **Model:** Opus.
+
+### Faz G — Ayarlar, hesap, dil ve yayın yüzeyleri
+
+#### WP-456 — Hakkında ile Versiyon ve Güncellemeleri birleştir
+
+- **Durum / bağımlılık:** [ ] HAZIR · Ajan G.
+- **SAHİP:** settings menü bağlantıları, `features/profile/about_screen.dart`,
+  `features/updater/release_notes_screen.dart`, updater/release notes testleri,
+  l10n sıcak kilidi.
+- **Uygulama:** tek “Hakkında ve Güncellemeler” girişi; sürüm/build, güncelleme
+  kontrolü, release notes, yasal/destek bağlantıları hiyerarşik tek sayfa;
+  dağıtım kanalına göre sideload güncelleme güvenliği korunur.
+- **Kabul:** iki yinelenen ayar yok; mevcut updater işlevi kaybolmaz; Play
+  kanalında yasak self-update yolu görünmez. About/release-notes testleri CI
+  tuzağına karşı hem `env.json` define'lı hem define'sız hedefli koşar.
+- **Model:** Sonnet.
+
+#### WP-457 — İlk mağaza runtime'ını yalnız Türkçe ve İngilizceye sınırla
+
+- **Durum / bağımlılık:** [ ] WP-456.
+- **SAHİP:** `app/l10n.yaml`, `core/l10n/app_locale.dart`, system localization,
+  dil seçimi UI, generated l10n ve testleri; DE/AR kaynaklarını repo içinde
+  generator dışı dormant konuma taşıma.
+- **Uygulama:** yalnız resolver değil, `AppLocalizations.supportedLocales` ve
+  release generator girdisi de tam `[en,tr]`; mevcut DE/AR `.arb` içerikleri
+  silinmez, dormant arşivde korunur; eski tercihi de/ar olan kullanıcı EN
+  fallback alır; native widget/notification fallback EN.
+- **Kabul:** yeni/upgrade kurulumda runtime DE/AR'a geçemez;
+  `supportedLocales == [en,tr]`; TR/EN eksiksiz; l10n audit yeşil; hardcoded
+  Türkçe 0.
+- **Tuzak:** resolver bugün zaten TR/EN diye işi bitmiş sanma; generated liste
+  şu anda dört dili içeriyor.
+- **Model:** Sonnet.
+
+#### WP-458 — Güvenli e-posta değiştirme ve yeniden doğrulama
+
+- **Durum / bağımlılık:** [ ] WP-457.
+- **SAHİP:** `data/repositories/auth_repository.dart`,
+  Supabase/InMemory auth repository, `features/profile/account_settings_screen.dart`,
+  auth/account testleri, gerekirse deep-link mevcut auth yüzeyi.
+- **Uygulama:** repository'de güvenli `changeEmail(currentPassword, newEmail)`
+  benzeri tek sözleşme; eski doğrulamasız `updateEmail` UI yolu bırakılmaz.
+  Hassas işlem öncesi recent-login/şifre ile yeniden doğrulama;
+  yeni e-postaya Supabase doğrulama; pending/confirmed/expired/cancelled açık;
+  eski e-posta doğrulanmadan aniden kaybolmaz; provider kullanıcı bilgisini
+  refresh eder. Projenin auth sağlayıcısı desteklemiyorsa özel “kod uydurma”
+  yapılmaz; platformun güvenli doğrulama akışı kullanılır.
+- **Kabul:** yanlış şifre/expired session/reused link reddedilir; başarı
+  relogin/restart sonrası kalır; başka hesap verisi sızmaz; hata Türkçe ve
+  eyleme dönük.
+- **Model:** Opus.
+
+#### WP-459 — Ayarlar ve profil rozetlerini tek feedback gerçeğine bağla
+
+- **Durum / bağımlılık:** [ ] WP-436 commit'i + WP-458.
+- **SAHİP:** settings/profile feedback menü tile'ları, navigation rozet bağlantısı
+  ve testleri; l10n/navigation sıcak kilidi.
+- **Uygulama:** ayrı cache/boolean kaldır; iki yüzey WP-436 provider'ını izler;
+  screen visibility/read ack dışında rozet sıfırlanmaz.
+- **Kabul:** feedback WP-438'in bütün rozet senaryoları profile/settings ve tab
+  seviyesinde aynı sayıyı gösterir.
+- **Model:** Sonnet.
+
+#### WP-460 — Alt sekmelerde gereksiz üst başlık/boşluğu kaldır
+
+- **Durum / bağımlılık:** [ ] WP-459; navigation sıcak kilidi.
+- **SAHİP:** `core/navigation/home_shell.dart` ve ilgili ev/araçlar/gruplar/
+  stats/profile ekranları (`home_screen.dart`, `clock_screen.dart`,
+  `classroom_screen.dart`, `stats_screen.dart`, `profile_screen.dart`) +
+  test/golden.
+- **Uygulama:** yalnız başlık tekrar eden 100px sınıfı alanları kaldır; grup
+  değiştir ve kart düzenle gibi gerçek eylemleri kompakt içerik toolbar/
+  floating/inline yere taşı; safe area korunur.
+- **Kabul:** her sekmede ilk anlamlı içerik belirgin biçimde yukarı gelir; eylem
+  kaybolmaz; back/scroll/navigation state kırılmaz; 320–600 dp ve desktop
+  davranışı testli.
+- **Model:** Sonnet.
+
+#### WP-461 — Yayında yalnız 1×1 Başlat/Durdur widget'ını göster
+
+- **Durum / bağımlılık:** [ ] WP-460; manifest/widget katalog sıcak kilidi.
+- **SAHİP:** Android widget receiver/provider config, `res/xml/*widget_info.xml`,
+  manifest entries, `features/android_widgets/**`,
+  `features/clock/clock_widgets_screen.dart` ve testler.
+- **Uygulama:** Flutter katalog allowlist'i ve Android manifest receiver listesi
+  yalnız kabul edilen 1×1 `TimerWidgetProvider`ı yayınlar;
+  diğer beş widget kod/asset'i revizyon için repoda dormant tut; kurulu eski
+  instance/upgrade davranışı güvenli; yanlış receiver export/permission yok.
+- **Kabul:** temiz kurulum picker'ında tek Odak widget'ı; start/stop cold-start
+  çalışır; diğer beş yeni eklenemez; mevcut kullanıcıda crash/boot loop yok.
+- **Tuzak:** beş widget'ı silme veya yeniden tasarlama.
+- **Model:** Opus.
+
+### Faz H — Kamp ateşi, gözlemlenebilirlik ve final kapı
+
+#### WP-462 — Kamp ateşi 4/8 kişi kompozisyon düzeltmesi
+
+- **Durum / bağımlılık:** [ ] HAZIR · Ajan H.
+- **SAHİP:** `features/classroom/widgets/campfire_scene.dart`,
+  `campfire_layout.dart`, `widgets/campfire/**`, campfire test/golden/assets.
+- **Uygulama:** dört kişide isim-hayvan çakışmasını kaldır; üst sırayı gerektiği
+  kadar yukarı; mevcut `ringDropPixels` gibi ateş ve bedenleri birlikte taşıyan
+  kola güvenmeden ayrı `fireOnlyYOffset` ile **yalnız ateşi** biraz aşağı;
+  mevcut iki `pair` yerine dört bağımsız dairesel seat; öndeki hayvanları “iki
+  çift masa” görünümünden çıkar; sekiz kişiyi ayrı değerlerle tune/test et.
+- **Kabul:** isim bounding-box ile hayvan/fire overlap 0; hayvan clipping 0;
+  320/360/412/600 dp, text scale, 1/4/8 kişi; animasyon golden'ında kare sabit.
+- **Tuzak:** eski dikey clamp hatasını geri getirme; ateşi indirirken hayvanı
+  birlikte kaydırma.
+- **Model:** Sonnet.
+
+#### WP-463 — Çökme, donma ve sessiz hata gözlemlenebilirliği
+
+- **Durum / bağımlılık:** [ ] WP-462; `main.dart/pubspec` sıcak kilidi.
+- **SAHİP:** mevcut logging/error boundary/bootstrap yüzeyleri, gerekiyorsa
+  `main.dart`/`pubspec.yaml`, privacy/redaction testleri,
+  `docs/qa/V57-OBSERVABILITY.md`.
+- **Uygulama:** Flutter async/platform/native kritik error capture; timer,
+  feedback, leave ve moderation için correlation ID + sonuç sınıfı; PII, token,
+  message body ve secret redaction; offline buffer/limit ve opt-out/privacy
+  politikası. Sağlayıcı eklemek için credential commit edilmez.
+- **Kabul:** kontrollü hata testte yakalanır; kullanıcı eylemi başarısızsa sessiz
+  başarı görünmez; redaction testi sır/PII bulmaz; crash sağlayıcısı hazır değilse
+  local structured log + entegrasyon kapısı açıkça belgeli.
+- **Model:** Opus.
+
+#### WP-464 — Hesap silme hardening, scheduler ve veri yaşam döngüsü kabulü
+
+- **Durum / bağımlılık:** [ ] WP-463 + WP-442 moderation retention sözleşmesi.
+- **SAHİP:** `supabase/functions/purge-accounts/**`,
+  `supabase/migrations/0111_*` (atomik claim/scheduler/audit gerekiyorsa),
+  Deno/integration testleri, hesap-silme retention ve Play gate belgeleri.
+- **Kodda doğrulanan açıklar:** purge scheduler repoda yok; worker claim'i
+  atomik değil; update sonucunu doğrulamadan purge'a devam edebiliyor; storage
+  yalnız ilk 100 nesneyi tarıyor; ara hata yollarının bir bölümü sessiz.
+- **Uygulama:** `FOR UPDATE SKIP LOCKED`/eşdeğer atomik claim RPC; claim
+  kazanamayan worker durur; storage pagination; her ara yazım/storage hatası
+  kontrolü; idempotent retry/terminal state; privacy-safe immutable audit;
+  moderation kanıtını retention kararına göre pseudonymize ederek koru; staging
+  scheduler/workflow çağrısı ve gerçek run kanıtı.
+- **Matris:** app içi talep, web yolu, recent reauth, idempotent tekrar,
+  aktif grup/timer/task/feedback/report/audit/attachment, anonimleştirme-retention,
+  yeniden kayıt, concurrent iki worker, transient failure→retry, >100 avatar/
+  storage nesnesi ve iki cihaz token iptali.
+- **Kabul:** kullanıcı hesabı erişilemez; silinmesi gereken veri kalmaz;
+  tutulması yasal/güvenlik gereği olan audit açık politikayla anonim/korumalı;
+  duplicate talep/worker zarar vermez; staging scheduler kanıtı olmadan kapanmaz.
+  Bu kart ürün sahibi retention kararını uydurmaz ve production kullanıcı silmez.
+- **Model:** Opus.
+
+#### WP-465 — PLAN 5 entegrasyon, tam regresyon ve eski veri güveni
+
+- **Durum / bağımlılık:** [ ] WP-448, 438, 443, 447, 451, 455, 461 ve WP-464.
+- **SAHİP:** entegrasyon hataları için yalnız koordinasyon; ilgili ürün dosyası
+  ilgili ajan tarafından düzeltilir. H tam kalite/test/QA kayıtlarını yazar.
+- **Kapılar:** `flutter analyze`; CI ile aynı
+  `flutter test --dart-define-from-file=env.json`; l10n audit; Android build;
+  guard/preflight; migration `0001→HEAD` local replay + bütün pgTAP; gizli dosya
+  taraması; upgrade fixtures.
+- **Regresyon:** eski hesap/session/task/group/feedback/moderation verisi;
+  notification/widget cold-start; logout/login; offline; dark/light; a11y;
+  Windows temel smoke. Testlerin toplam sayısını önceden pinleyip sessiz atlanan
+  test kabul etme.
+- **Kabul:** kritik/ağır açık 0; bütün kapılar gerçek çıktıyla yeşil; kırmızı
+  bulgu sahip ajanın kartını yeniden açar.
+- **Model:** Opus.
+
+#### WP-466 — Staging beta ve gerçek cihaz matrisi
+
+- **Durum / bağımlılık:** [ ] WP-465 yeşil; remote hedef kanıtı.
+- **SAHİP:** staging apply/beta artefakt hazırlığı ve `docs/qa/DEVICE-QA-MATRIX.md`
+  kanıtları. Production yok.
+- **Uygulama:** exact SHA/head/project-ref doğrula; staging dry-run/apply; beta
+  kanalının staging'e bağlı olduğunu fail-closed doğrula; benzersiz beta APK;
+  Samsung + mümkünse Pixel/ikinci cihaz; iki hesap/iki cihaz senaryoları.
+- **Matris:** timer WP-433; feedback WP-438; moderation/group; tasks/streak;
+  date picker; settings/email; widget cold-start; update eski veriyi koruyor;
+  force-stop/reboot/internet kaybı/23:59–00:01.
+- **Kabul:** kritik/ağır 0; cihaz, OS, beta tag/SHA, migration head, APK SHA-256
+  ve sonuç redacted kayda yazılı; en az 3 gün beta soak production önkoşulu.
+- **Yetki:** beta kabul adayı mevcut repo politikası kapsamında; production yok.
+- **Model:** Opus.
+
+#### WP-467 — v57 release-ready raporu, açıkların tekilleştirilmesi ve kapı kilidi
+
+- **Durum / bağımlılık:** [ ] WP-466 + soak/kabul kanıtı.
+- **SAHİP:** progress proje gerçekleri, v57 QA/release-ready belgesi,
+  deploy contract'ın kapalı olduğunun salt-okunur/guard kanıtı.
+- **Uygulama:** bütün WP commitleri ve kabul durumları; kalan P2/P3 backlog;
+  release notes taslağı; rollback/degrade; production apply sırası; açık sahip
+  GO'sunda tam olarak istenecek SHA/head/project-ref metni.
+- **Kabul:** `deploy_enabled=false` ve `release_enabled=false` staging/production;
+  guard/preflight yeşil; “release-ready” ile “yayınlandı” ayrımı açık.
+- **Yapma:** production migration, stable tag/release, Store submission veya
+  kapı açma. Bunlar ürün sahibinin yeni somut emrini bekler.
+- **Model:** Opus.
+
+### 5.Z — Çekirdek yeşil olduktan sonra, v57 release blocker olmayan park alanı
+
+Bu fikirler rakip analizinde değerlidir ancak yukarıdaki P0/P1 zincirini
+geciktirmeyecek ve ajanlar WP-467 sonrası kendiliğinden başlamayacaktır:
+
+- sıralamayı gizleme / yalnız kişisel mod;
+- manuel girilmiş süre rozeti;
+- sohbet yanıtla ve resim paylaşımı;
+- grup davet linki ve üye onayı;
+- ders klasörleri ve ders bazlı oturum dökümü;
+- D-Day kartı;
+- masaüstü admin iş akışını büyütme;
+- gerçek AMOLED siyah tema;
+- ders dışı odak kategorileri.
+
+### 5.X — Bilinçli kapsam dışı
+
+- Store listing, ekran görüntüsü, açıklama ve submission ürün sahibinde.
+- DE/AR dosyaları silinmez ama ilk mağaza runtime'ında sunulmaz.
+- Kabul edilmeyen beş widget yeniden tasarlanmaz; yalnız picker'dan çekilir.
+- Büyük tablet/desktop yeniden tasarımı, voice/video room ve aylık e-posta
+  sağlayıcısı bu turda yok.
+- Sayaç, feedback ve güvenlikte “şimdilik if ekle” sınıfı semptom yaması yok;
+  karttaki invariant ve kanıt kurulmadan iş tamamlanmaz.
 
 ---
 

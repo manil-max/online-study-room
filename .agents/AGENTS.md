@@ -45,7 +45,14 @@ Bir şey söylerken şu üç etiketten biri kullanılır (kullanıcı varsayıml
 
 ## 1. Çok-Ajanlı Çalışma ve Çakışma Protokolü (KRİTİK)
 
-Bu projede aynı anda **3–4 ajan paralel** çalışır (Gemini / Claude / Codex + gerek/ek). Tek paylaşılan gerçek `progress.md`'deki **Aktif Çalışma Kaydı**dır. Ajanlar birbirinin belleğini görmez; koordinasyon yalnız bu dosya üzerindendir.
+Bu projede varsayılan olarak aynı anda **3–4 ajan paralel** çalışır (Gemini /
+Claude / Codex + gerek/ek). Ürün sahibinin 2026-07-30 tarihli açık kararıyla
+**PLAN 5 / v57 için sekiz adlandırılmış ajan hattı (A–H)** çalıştırılabilir.
+Bu izin genel bir “her işe sekiz ajan” kuralı değildir: yalnız `progress.md`
+PLAN 5 kartlarındaki ayrık SAHİP yolları, bağımlılık zincirleri ve ortak
+migration/sıcak-dosya/test kilitleri geçerliyken kullanılabilir. Tek paylaşılan
+gerçek `progress.md`'deki **Aktif Çalışma Kaydı**dır. Ajanlar birbirinin belleğini
+görmez; koordinasyon yalnız bu dosya üzerindendir.
 
 ### 1.1 Kural A — Görevi alır almaz "claim" et
 
