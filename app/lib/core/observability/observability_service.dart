@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 
 import 'observability_config.dart';
+import 'timer_diagnostic_journal.dart';
 
 /// Derleme ortamı açık olsa bile kullanıcı bu yerel tercih ile telemetriyi
 /// kapatabilir. Ayar ekranı eklendiğinde aynı anahtar tüketilir.
@@ -143,6 +144,28 @@ class ObservabilityService {
 
   void timerRestore({required bool hadActiveTimer}) {
     _record('timer_restore', {'had_active_timer': hadActiveTimer});
+  }
+
+  /// WP-430: sayac gecisinin **sayisal** ozeti. Tanisal zaman cizelgesi
+  /// cihazda kalir ([TimerDiagnosticJournal]); buraya yalniz kapali sozlukten
+  /// gelen slug'lar ve tamsayilar cikar. Ham hesap/kosu/ders kimligi ve mesaj
+  /// icerigi bu yoldan gecemez.
+  void timerTransition({
+    required String event,
+    required String reason,
+    required String outcome,
+    String origin = TimerJournalOrigins.unknown,
+    int? stateVersion,
+    int? queueAgeMs,
+  }) {
+    _record('timer_transition', {
+      'event': TimerJournalSlug.normalize(event),
+      'reason': TimerJournalSlug.normalize(reason),
+      'outcome': TimerJournalSlug.normalize(outcome),
+      'origin': TimerJournalSlug.normalize(origin),
+      'state_version': ?stateVersion,
+      'queue_age_ms': ?queueAgeMs,
+    });
   }
 
   void outboxFlush({

@@ -159,9 +159,28 @@
 
 ### Ajan A — Sayaç ve çoklu cihaz doğruluğu
 
-- **Durum:** [ ] HAZIR
+- **Durum:** [!] BEKLİYOR: WP-430 kabulü (WP-431 kartının yazılı ön koşulu)
+- **Aktif WP:** — (WP-430 kod + otomatik test tamam)
+- **Aşama:** WP-430 teslim edildi; sıradaki WP-431 migration kilidinin ilk sahibi
+- **Dal:** `main`
+- **Başlangıç:** 2026-07-30 02:04 (Europe/Istanbul) · **Son güncelleme:** 2026-07-30 03:12
+- **Not:** WP-431 kartı bağımlılığını "WP-430 **kabulü**" olarak yazıyor ve aynı
+  anda migration yazma kilidini alıyor. Kabul gelince kilit Ajan A adına
+  çevrilir ve zincir WP-431 ile sürer. WP-430 çıktısı dört bulgunun kök nedenini
+  kanıtladığı için WP-431'in kapsamı artık K1–K3 kararlarıyla nettir
+  (`docs/qa/V57-TIMER-EVIDENCE.md` §5).
 - **Zincir:** `WP-430 → WP-431 → WP-432 → WP-433 → WP-448`
 - **İlk iş:** WP-430; başka ajana bağlı değil, hemen claim edilebilir.
+- **WP-430 SAHIP yollar (claim):** `docs/qa/V57-TIMER-EVIDENCE.md` (yeni),
+  `app/lib/core/observability/timer_diagnostic_journal.dart` (yeni),
+  `app/lib/core/observability/observability_service.dart`,
+  `app/lib/data/providers/global_timer_providers.dart`,
+  `app/lib/data/providers/study_providers.dart`,
+  `app/android/**/timer/TimerStateStore.kt`,
+  `app/android/**/timer/StudyTimerService.kt`, `app/test/data/global_timer_*`,
+  `app/test/core/timer_v2_*` + yeni timer journal testleri.
+- **WP-430 ortak/riskli yüzey:** yok — migration kilidi alınmadı, sıcak dosya
+  (`main.dart`/navigation/pubspec/l10n/manifest) açılmadı.
 - **SAHİP ana yüzey:** `app/lib/data/**global_timer**`,
   `app/lib/data/providers/global_timer_providers.dart`,
   `app/lib/core/background/timer_v2_command_outbox.dart`,
@@ -4021,7 +4040,8 @@ alır; boş/uydurma migration yazılmaz.
 
 #### WP-430 — Sayaç olay kaydı, durum makinesi ve yeniden üretim kanıtı
 
-- **Durum / bağımlılık:** [ ] HAZIR · Ajan A · bağımsız.
+- **Durum / bağımlılık:** [~] **Kod + otomatik test tamam** · Ajan A · commit
+  `WP-430` · uçuş kaydının saha çıktısı `Cihazda doğrulanmalı` (Ajan H WP-466).
 - **Problem:** Bildirimden ayna durdurma, aralıklı sync, olası kendiliğinden
   başlama ve “8 saat görünüp session yazmama” aynı kökten mi bilinmiyor.
 - **SAHİP:** `docs/qa/V57-TIMER-EVIDENCE.md` (yeni),
@@ -4046,6 +4066,50 @@ alır; boş/uydurma migration yazılmaz.
   kimliği ve mesaj içeriği bırakmıyor.
 - **Tuzak:** “bazen oluyor” bulgusunu yok sayma; log eklemek çözüm değildir.
 - **Model:** Opus.
+- **Sonuç (2026-07-30):** Dört semptomun **tek kökü** kanıtlandı: *kanonik koşu
+  kimliğini (`timer_v2_run_id`) yalnız koşuyu başlatan cihaz öğrenir; ayna cihaz
+  koşuyu gösterir ama kimliğini edinmez.* Kimliksiz cihazın hiçbir yüzeyi koşuya
+  dokunamaz ve **hata da vermez** → S01 (ayna Durdur sessizce düşer), S03 (uzak
+  durdurma öğrenilmez), S04 (gece boyu büyüyen, oturumsuz hayalet süre) aynı
+  kusurun üç görünümü. S02 komşu kusur: dış komutların ve aynalanan koşuların
+  **yaşı** hiçbir yerde ölçülmüyordu.
+- **Yeni bulgular (kaynak düzeyinde, daha önce kayıtlı değil):**
+  1. `TimerExternalCommand.at` alanı var ama **hiçbir üretici onu yazmıyor** →
+     WP-233'ün "app-kapalı Durdur ölü zamanı kesmesin" koruması fiilen ölü;
+     oturum sonu uygulamanın açıldığı ana kayıyor (hayalet sürenin 2. kaynağı).
+  2. `timer_sync_pending_v1` **yaz-ve-unut**: FCM arka plan isolate'i yazıyor,
+     `_stream` isolate'e özel olduğu için ana isolate görmüyor ve diskteki
+     değeri okuyan **hiçbir tüketici yok**.
+  3. Ayna benimseme koşunun **yaşını/kirasını hiç sorgulamıyor**;
+     `GlobalTimerRun` modelinde `lease_expires_at` alanı yok ve
+     `_global_timer_v2_snapshot` kirayı süzmüyor (yalnız raporluyor).
+  4. Ayna kapanışı (`_finish`) hiçbir oturum yazmıyor ve yazan başka yol da yok.
+- **Ne yapıldı:** Otorite/projeksiyon haritası tek diyagramda
+  (`docs/qa/V57-TIMER-EVIDENCE.md`); PII'siz, 240 kayıtlık halka tamponlu, 72 sa
+  TTL'li **yerel uçuş kaydı** `TimerDiagnosticJournal` (kimlikler tuzlanmış
+  12-hex özet, metin kapalı slug sözlüğü, ağ yok); on iki geçiş noktasına
+  `reason + outcome + state_version/queue_age` enstrümantasyonu; telemetri açıksa
+  yalnız slug+tamsayı çıkaran `ObservabilityService.timerTransition`.
+- **Hayalet/oturum ayrımı:** `run_terminal.outcome` artık üç değerli —
+  `applied` · `ghost_no_session` · `local_only`; `elapsed_seconds` (görünen) ile
+  `session_recorded.elapsed_seconds` (yazılan) farkı hayaletin büyüklüğü.
+- **Değişen dosyalar:** `docs/qa/V57-TIMER-EVIDENCE.md` (yeni),
+  `app/lib/core/observability/timer_diagnostic_journal.dart` (yeni),
+  `app/lib/core/observability/observability_service.dart`,
+  `app/lib/data/providers/global_timer_providers.dart`,
+  `app/lib/data/providers/study_providers.dart`,
+  `app/test/core/observability/timer_diagnostic_journal_test.dart` (yeni),
+  `app/test/data/global_timer_v57_repro_test.dart` (yeni).
+- **Kanıt:** `flutter analyze` 0 uyarı · journal sözleşmesi 11/11 · tekrar üretim
+  paketi 11/11 · mevcut timer/observability regresyonu 51/51 · notifier widget
+  testleri 31/31. Native/SQL kaynak dosyasına **dokunulmadı** (salt-okunur
+  inceleme); migration yazılmadı, kilit alınmadı.
+- **🔴 Tekrar üretim testleri bilerek bugünün KUSURLU davranışını sabitler.**
+  Her testin başında `KIRMIZI HEDEF (WP-4NN)` satırı hangi iddianın ters
+  çevrilmesi gerektiğini yazar. WP-431/432 bu dosyayı **silmez**, iddiaları
+  düzeltilmiş sözleşmeyle değiştirir.
+- **Devredilen kararlar:** K1–K8 → `docs/qa/V57-TIMER-EVIDENCE.md` §5
+  (K1/K2/K3 → WP-431 · K4/K5/K6 → WP-432 · K7 → WP-431/433 · K8 → WP-433+WP-466).
 
 #### WP-431 — Kanonik timer komut protokolü, offline niyet ve hayalet-run onarımı
 

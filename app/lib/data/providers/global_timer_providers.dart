@@ -10,6 +10,7 @@ import '../../core/background/timer_foreground_service.dart';
 import '../../core/background/timer_v2_command_outbox.dart';
 import '../../core/config/rollout_config.dart';
 import '../../core/config/supabase_config.dart';
+import '../../core/observability/timer_diagnostic_journal.dart';
 import '../../core/prefs/app_prefs.dart';
 import '../models/global_timer.dart';
 import '../repositories/global_timer_repository.dart';
@@ -109,6 +110,10 @@ class GlobalTimerCoordinator {
   final Ref _ref;
   Future<void>? _inFlight;
 
+  /// WP-430: her sunucu turu tanı kaydına neden + sonuç bırakır.
+  TimerDiagnosticJournal get _journal =>
+      _ref.read(timerDiagnosticJournalProvider);
+
   Future<void> flushShadow() {
     final current = _inFlight;
     if (current != null) return current;
@@ -153,8 +158,30 @@ class GlobalTimerCoordinator {
     // `stale`, başka bir cihazın daha yeni bir gerçeği olduğunu söyler. Ayna
     // yerel olarak boş görünemez; yeni snapshot turu gerçek durumu uygular.
     if (snapshot.resultCode == 'stale') {
+      await _journal.record(
+        event: TimerJournalEvents.mirrorStopRequested,
+        reason: TimerJournalReasons.userAction,
+        outcome: TimerJournalOutcomes.stale,
+        origin: TimerJournalOrigins.app,
+        accountId: user.id,
+        runId: runId,
+        deviceId: deviceId,
+        runRevision: expectedRunRevision,
+        stateVersion: snapshot.stateVersion,
+      );
       throw StateError('global_timer_mirror_stop_stale');
     }
+    await _journal.record(
+      event: TimerJournalEvents.mirrorStopRequested,
+      reason: TimerJournalReasons.userAction,
+      outcome: TimerJournalOutcomes.applied,
+      origin: TimerJournalOrigins.app,
+      accountId: user.id,
+      runId: snapshot.run?.id ?? runId,
+      deviceId: deviceId,
+      runRevision: snapshot.run?.revision ?? expectedRunRevision,
+      stateVersion: snapshot.stateVersion,
+    );
     return snapshot;
   }
 
@@ -229,6 +256,18 @@ class GlobalTimerCoordinator {
       if (command?.action == 'start' &&
           now.difference(command!.clientOccurredAt) > staleStartLimit) {
         completed.add(command.commandId);
+        // WP-430 / V56-S02: bayat bir başlatma niyeti düşürüldü. Bu satır
+        // olmadan "sayaç kendiliğinden başladı" iddiası ölçülemez.
+        await _journal.record(
+          event: TimerJournalEvents.startRequested,
+          reason: TimerJournalReasons.queueReplay,
+          outcome: TimerJournalOutcomes.dropped,
+          origin: command.origin,
+          accountId: command.accountId,
+          deviceId: deviceId,
+          commandId: command.commandId,
+          queueAgeMs: now.difference(command.clientOccurredAt).inMilliseconds,
+        );
         continue;
       }
       if (deferred != null) {
@@ -262,6 +301,25 @@ class GlobalTimerCoordinator {
           payload: {'origin': command.origin},
         );
         completed.add(command.commandId);
+        await _journal.record(
+          event: TimerJournalEvents.commandFlushed,
+          reason: deferred == null
+              ? TimerJournalReasons.queueReplay
+              : TimerJournalReasons.externalCommandQueue,
+          outcome: switch (snapshot.resultCode) {
+            'duplicate' => TimerJournalOutcomes.duplicate,
+            'stale' => TimerJournalOutcomes.stale,
+            _ => TimerJournalOutcomes.applied,
+          },
+          origin: command.origin,
+          accountId: command.accountId,
+          runId: snapshot.run?.id ?? command.runId,
+          deviceId: deviceId,
+          commandId: command.commandId,
+          runRevision: snapshot.run?.revision ?? command.expectedRunRevision,
+          stateVersion: snapshot.stateVersion,
+          queueAgeMs: now.difference(command.clientOccurredAt).inMilliseconds,
+        );
         // WP-373: sunucunun kabul ettiği koşu kimliğini native'e geri yaz.
         // Durdurma zarfını native kurar ve `run_id` + `expected_run_revision`
         // olmadan sunucu `stop_run_revision_required` atar; bu köprü olmadan
@@ -269,6 +327,22 @@ class GlobalTimerCoordinator {
         await _persistRunIdentity(prefs, snapshot);
       } catch (_) {
         // Runtime flag/RLS/ağ hatası legacy timer'ı veya kuyruktaki diğer kaydı bozmaz.
+        // WP-430: sessiz yutma artık iz bırakır — "senkron bazen çalışmıyor"
+        // iddiası ancak başarısız turun kaydıyla kanıtlanabilir.
+        final failed = command;
+        if (failed != null) {
+          await _journal.record(
+            event: TimerJournalEvents.commandFlushed,
+            reason: TimerJournalReasons.queueReplay,
+            outcome: TimerJournalOutcomes.failed,
+            origin: failed.origin,
+            accountId: failed.accountId,
+            runId: failed.runId,
+            deviceId: deviceId,
+            commandId: failed.commandId,
+            queueAgeMs: now.difference(failed.clientOccurredAt).inMilliseconds,
+          );
+        }
       }
     }
     if (completed.isEmpty) return;
@@ -329,14 +403,59 @@ class GlobalTimerCoordinator {
       if (snapshot.userId != null && snapshot.userId != user.id) return null;
       final seenKey = 'global_timer_v2_seen_${user.id}_$deviceId';
       final seen = prefs.getInt(seenKey) ?? 0;
-      if (snapshot.stateVersion <= seen) return null;
-      return planGlobalTimerForegroundApply(
+      if (snapshot.stateVersion <= seen) {
+        await _journal.record(
+          event: TimerJournalEvents.snapshotReconciled,
+          reason: TimerJournalReasons.remoteSnapshot,
+          outcome: TimerJournalOutcomes.duplicate,
+          accountId: user.id,
+          runId: snapshot.run?.id,
+          deviceId: deviceId,
+          runRevision: snapshot.run?.revision,
+          stateVersion: snapshot.stateVersion,
+        );
+        return null;
+      }
+      final directive = planGlobalTimerForegroundApply(
         snapshot: snapshot,
         localRunning: localRunning,
         localIsMirror: localIsMirror,
         localMirrorRunId: localMirrorRunId,
       );
+      final run = snapshot.run;
+      await _journal.record(
+        event: TimerJournalEvents.snapshotReconciled,
+        reason: TimerJournalReasons.remoteSnapshot,
+        outcome: switch (directive.kind) {
+          GlobalTimerForegroundDirectiveKind.deferred =>
+            TimerJournalOutcomes.deferred,
+          _ => TimerJournalOutcomes.applied,
+        },
+        origin: directive.kind == GlobalTimerForegroundDirectiveKind.mirrorStart
+            ? TimerJournalOrigins.mirror
+            : TimerJournalOrigins.unknown,
+        accountId: user.id,
+        runId: run?.id,
+        deviceId: deviceId,
+        runRevision: run?.revision,
+        stateVersion: snapshot.stateVersion,
+        // Uzak koşu bu cihaza kaç ms gecikmeyle ulaştı: "aralıklı senkron"
+        // (V56-S03) yalnız bu gecikme dağılımıyla ölçülebilir.
+        queueAgeMs: run?.effectiveStartedAt == null
+            ? null
+            : snapshot.serverTime
+                  .difference(run!.effectiveStartedAt!.toUtc())
+                  .inMilliseconds,
+      );
+      return directive;
     } catch (_) {
+      await _journal.record(
+        event: TimerJournalEvents.snapshotReconciled,
+        reason: TimerJournalReasons.remoteSnapshot,
+        outcome: TimerJournalOutcomes.failed,
+        accountId: user.id,
+        deviceId: deviceId,
+      );
       return null;
     }
   }
@@ -378,7 +497,27 @@ class GlobalTimerCoordinator {
             clientOccurredAt: DateTime.now().toUtc(),
           );
       await _persistRunIdentity(prefs, snapshot);
+      await _journal.record(
+        event: TimerJournalEvents.leaseHeartbeat,
+        reason: TimerJournalReasons.periodicPoll,
+        outcome: snapshot.run == null
+            ? TimerJournalOutcomes.dropped
+            : TimerJournalOutcomes.applied,
+        accountId: user.id,
+        runId: runId,
+        deviceId: deviceId,
+        runRevision: snapshot.run?.revision,
+        stateVersion: snapshot.stateVersion,
+      );
     } catch (_) {
+      await _journal.record(
+        event: TimerJournalEvents.leaseHeartbeat,
+        reason: TimerJournalReasons.periodicPoll,
+        outcome: TimerJournalOutcomes.failed,
+        accountId: user.id,
+        runId: runId,
+        deviceId: deviceId,
+      );
       // Koşu sunucuda kapanmışsa `global_timer_run_not_active` gelir; kira
       // yenilemek zaten anlamsızdır ve sıradaki reconcile durumu düzeltir.
     }

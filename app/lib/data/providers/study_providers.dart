@@ -19,6 +19,7 @@ import '../../core/notifications/timer_external_command_store.dart';
 import '../../core/notifications/timer_notification_service.dart';
 import '../../core/notifications/timer_sync_signal.dart';
 import '../../core/observability/observability_service.dart';
+import '../../core/observability/timer_diagnostic_journal.dart';
 import '../../core/prefs/app_prefs.dart';
 import '../../core/stats/canonical_stats_projection.dart';
 import '../../core/stats/study_stats.dart';
@@ -530,6 +531,62 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   // artık ona başvurmaz.
   bool get _verifiedServerAvailable => false;
 
+  /// WP-430: bir sayaç geçişini tek çağrıda hem yerel uçuş kaydına hem
+  /// (telemetri açıksa) sayısal breadcrumb'a yazar.
+  ///
+  /// Kimlikler yalnız journal tarafında ve **özetlenerek** durur; breadcrumb'a
+  /// slug + tamsayıdan başka bir şey çıkmaz. Çağrı hiçbir zaman ürün akışını
+  /// bekletmez ya da kesmez: tanı aracı, sayacın çalışmasının ön koşulu değildir.
+  void _journalTransition({
+    required String event,
+    required String reason,
+    required String outcome,
+    String origin = TimerJournalOrigins.unknown,
+    String? runId,
+    int? runRevision,
+    int? stateVersion,
+    int? queueAgeMs,
+    int? elapsedSeconds,
+  }) {
+    ObservabilityService.instance.timerTransition(
+      event: event,
+      reason: reason,
+      outcome: outcome,
+      origin: origin,
+      stateVersion: stateVersion,
+      queueAgeMs: queueAgeMs,
+    );
+    try {
+      final prefs = ref.read(sharedPreferencesProvider);
+      unawaited(
+        ref.read(timerDiagnosticJournalProvider).record(
+          event: event,
+          reason: reason,
+          outcome: outcome,
+          origin: origin,
+          accountId: ref.read(authStateProvider).value?.id,
+          runId: runId,
+          deviceId: prefs.getString(globalTimerDeviceIdKey),
+          runRevision: runRevision,
+          stateVersion: stateVersion,
+          queueAgeMs: queueAgeMs,
+          elapsedSeconds: elapsedSeconds,
+        ),
+      );
+    } catch (_) {
+      // Tanı kaydı ürün akışını asla kesmez (prefs/provider hazır değilse sus).
+    }
+  }
+
+  /// Yüzeyde o an GÖRÜNEN saniye — kaydedilen oturumla karşılaştırılacak sayı.
+  /// Hayalet koşu iddiası ancak bu iki sayının birlikte kaydıyla kanıtlanır.
+  int? get _visibleElapsedSeconds {
+    final started = state.startedAt;
+    if (!state.isRunning || started == null) return null;
+    final elapsed = DateTime.now().difference(started).inSeconds;
+    return elapsed < 0 ? 0 : elapsed;
+  }
+
   /// Auth henüz yoksa 400ms bekler; dispose olursa Timer iptal + await serbest.
   Future<void> _awaitAuthRetryWindow() {
     _cancelAuthRetryWindow();
@@ -688,6 +745,24 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     );
     ObservabilityService.instance.timerRestore(
       hadActiveTimer: activeStartedAt != null,
+    );
+    // WP-430: soğuk açılışta neyi geri yükledik? Sahibin "sabah kalktım sekiz
+    // saat görünüyordu" vakasında zaman çizelgesinin ilk satırı budur; ayna mı
+    // yoksa bu cihazın kendi koşusu mu geri geldiğini burada ayırıyoruz.
+    _journalTransition(
+      event: TimerJournalEvents.coldStartRestore,
+      reason: TimerJournalReasons.coldStart,
+      outcome: activeStartedAt == null
+          ? TimerJournalOutcomes.dropped
+          : TimerJournalOutcomes.applied,
+      origin: initial.isGlobalTimerMirror
+          ? TimerJournalOrigins.mirror
+          : TimerJournalOrigins.app,
+      runId: initial.globalTimerRunId,
+      runRevision: initial.globalTimerRunRevision,
+      elapsedSeconds: activeStartedAt == null
+          ? null
+          : DateTime.now().difference(activeStartedAt).inSeconds,
     );
     Future.microtask(() async {
       // WP-136: soğuk açılışta store'dan türet (resume bekleme).
@@ -893,13 +968,50 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     if (directive.snapshot.run != null ||
         !state.isRunning ||
         state.isGlobalTimerMirror) {
+      // WP-430 / V56-S03: hızlı sinyal yolu burada AYNA cihazı bilerek dışarıda
+      // bırakır (`state.isGlobalTimerMirror`). Ayna, uzak durdurmayı yalnız
+      // yaşam döngüsüne bağlı snapshot turundan öğrenebilir; cihaz uyurken o tur
+      // ölüdür. Bu satır o boşluğun ölçülebilir izidir.
+      _journalTransition(
+        event: TimerJournalEvents.syncSignal,
+        reason: TimerJournalReasons.remoteSignal,
+        outcome: TimerJournalOutcomes.deferred,
+        origin: state.isGlobalTimerMirror
+            ? TimerJournalOrigins.mirror
+            : TimerJournalOrigins.app,
+        runId: signal.runId,
+        runRevision: signal.runRevision,
+        stateVersion: signal.stateVersion,
+        elapsedSeconds: _visibleElapsedSeconds,
+      );
       return false;
     }
     final prefs = ref.read(sharedPreferencesProvider);
     await prefs.reload();
     if (prefs.getString(TimerV2CommandEnvelope.runIdKey) != signal.runId) {
+      // Sinyalin koşu kimliği bu cihazın onaylı kimliğiyle eşleşmiyor: sinyal
+      // uygulanmaz. Ayna cihazda bu anahtar HİÇ yazılmadığı için burası her
+      // zaman `dropped` döner (V56-S01'in ikinci yüzü).
+      _journalTransition(
+        event: TimerJournalEvents.syncSignal,
+        reason: TimerJournalReasons.remoteSignal,
+        outcome: TimerJournalOutcomes.dropped,
+        runId: signal.runId,
+        runRevision: signal.runRevision,
+        stateVersion: signal.stateVersion,
+        elapsedSeconds: _visibleElapsedSeconds,
+      );
       return false;
     }
+    _journalTransition(
+      event: TimerJournalEvents.syncSignal,
+      reason: TimerJournalReasons.remoteSignal,
+      outcome: TimerJournalOutcomes.applied,
+      runId: signal.runId,
+      runRevision: signal.runRevision,
+      stateVersion: signal.stateVersion,
+      elapsedSeconds: _visibleElapsedSeconds,
+    );
     // `_finish()` native stop'a da gider. Bu koşu sunucuda zaten durduğu için
     // kimliği önce kaldırırız; aksi halde ikinci, zehirli bir stop zarfı doğar.
     await prefs.remove(TimerV2CommandEnvelope.runIdKey);
@@ -960,6 +1072,22 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
           );
           _startTick();
           unawaited(_syncTimerSurfaces());
+          // WP-430 / V56-S02+S04: bu cihazda **kullanıcı** başlatmadı; uzak koşu
+          // projeksiyon olarak açıldı. `queue_age_ms`, uzak başlangıcın kaç ms
+          // önce olduğunu verir: bayat bir koşunun aynalanması hayalet sürenin
+          // doğduğu andır.
+          _journalTransition(
+            event: TimerJournalEvents.mirrorAdopted,
+            reason: TimerJournalReasons.remoteSnapshot,
+            outcome: TimerJournalOutcomes.applied,
+            origin: TimerJournalOrigins.mirror,
+            runId: run.id,
+            runRevision: run.revision,
+            stateVersion: directive.snapshot.stateVersion,
+            queueAgeMs: DateTime.now()
+                .difference(remoteStartedAt)
+                .inMilliseconds,
+          );
           await coordinator.acknowledgeForeground(
             directive,
             status: 'native_applied',
@@ -988,6 +1116,14 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
           );
       }
     } catch (_) {
+      _journalTransition(
+        event: TimerJournalEvents.snapshotReconciled,
+        reason: TimerJournalReasons.remoteSnapshot,
+        outcome: TimerJournalOutcomes.failed,
+        runId: run?.id,
+        runRevision: run?.revision,
+        stateVersion: directive.snapshot.stateVersion,
+      );
       await coordinator
           .acknowledgeForeground(
             directive,
@@ -1202,6 +1338,16 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     if (fgMode == 'idle' || !hasActiveStart) {
       if (state.isRunning && !hasActiveStart) {
         // Gerçek app-kapalı Durdur: native started_at sildi, Dart hâlâ running.
+        _journalTransition(
+          event: TimerJournalEvents.nativeReconciled,
+          reason: TimerJournalReasons.nativeStoreIdle,
+          outcome: TimerJournalOutcomes.applied,
+          origin: state.isGlobalTimerMirror
+              ? TimerJournalOrigins.mirror
+              : TimerJournalOrigins.notification,
+          runId: state.globalTimerRunId,
+          elapsedSeconds: _visibleElapsedSeconds,
+        );
         _finish();
       } else if (state.isRunning && hasActiveStart && fgMode == 'idle') {
         // Nadir tutarsızlık: start keys var ama fg idle — native'i yeniden it.
@@ -1292,6 +1438,17 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
             : TimerVerification.verified,
       );
       _persistActiveTimer();
+      // WP-430 / V56-S02: Dart, native SSOT'tan çalışan bir koşuyu BENİMSEDİ.
+      // Kullanıcı bu cihazda başlatmayı hatırlamıyorsa fail burada görünür:
+      // `queue_age_ms`, benimsenen başlangıcın kaç ms geçmişte olduğunu verir.
+      _journalTransition(
+        event: TimerJournalEvents.nativeReconciled,
+        reason: TimerJournalReasons.nativeStoreRunning,
+        outcome: TimerJournalOutcomes.applied,
+        origin: TimerJournalOrigins.unknown,
+        queueAgeMs: DateTime.now().difference(fgStart).inMilliseconds,
+        elapsedSeconds: DateTime.now().difference(fgStart).inSeconds,
+      );
       _publishPresence(
         status: fgPhase == TimerPhase.work
             ? PresenceStatus.studying
@@ -1366,6 +1523,30 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     await store.clearCommand();
 
     state = state.copyWith(commandSeq: pending.sequence);
+    // WP-430: dış komutun **yaşı** ve sonucu kaydedilir.
+    //
+    // 🔴 Tanı bulgusu (V56-S02): `pending.at` bugün HİÇBİR üretici tarafından
+    // yazılmıyor (`timerNotificationBackgroundHandler` ve
+    // `TimerExternalCommandStore.setCommand` yalnız `command` + `sequence`
+    // yazar). Yani komutun yaşı bilinmiyor: aylar önce kuyruğa düşmüş bir
+    // `start` bile soğuk açılışta yeni bir koşu doğurabilir. Yaş alanı
+    // `queue_age_ms` olarak kaydedilir; `unknown` çıkması kusurun kanıtıdır.
+    final commandAge = pending.at == null
+        ? null
+        : DateTime.now().difference(pending.at!).inMilliseconds;
+    final willApply =
+        (pending.command == 'start' && !state.isRunning) ||
+        (pending.command == 'stop' && state.isRunning);
+    _journalTransition(
+      event: TimerJournalEvents.externalCommand,
+      reason: TimerJournalReasons.externalCommandQueue,
+      outcome: willApply
+          ? TimerJournalOutcomes.applied
+          : TimerJournalOutcomes.dropped,
+      origin: TimerJournalOrigins.notification,
+      queueAgeMs: commandAge,
+      elapsedSeconds: _visibleElapsedSeconds,
+    );
     if (pending.command == 'start' && !state.isRunning) {
       start();
     } else if (pending.command == 'stop' && state.isRunning) {
@@ -1444,6 +1625,16 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       clearSettling: true,
     );
     _persistActiveTimer();
+    // WP-430 / V56-S02: her başlatmanın görülebilir bir kaynağı olmalı.
+    // Uygulama içi başlatma burada `app` origin'iyle iz bırakır; kaynağı
+    // olmayan bir `mirror_adopted` ya da `external_command` satırı, kullanıcının
+    // hatırlamadığı başlatmanın gerçek failini gösterir.
+    _journalTransition(
+      event: TimerJournalEvents.startRequested,
+      reason: TimerJournalReasons.userAction,
+      outcome: TimerJournalOutcomes.applied,
+      origin: TimerJournalOrigins.app,
+    );
     // Native broadcast / apply yarışında reconcile'ın idle sanmaması için
     // fg_mode'u Dart tarafında da hemen running yaz.
     ref
@@ -1583,6 +1774,21 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     // WP-246 (D2): devam eden bir durdurma varken ikinci giriş, aynı aralığı
     // tekrar kaydedip toplamı şişiriyordu → reddet.
     if (_stopInFlight) return;
+    _journalTransition(
+      event: TimerJournalEvents.stopRequested,
+      reason: at == null
+          ? TimerJournalReasons.userAction
+          : TimerJournalReasons.externalCommandQueue,
+      outcome: state.isRunning
+          ? TimerJournalOutcomes.applied
+          : TimerJournalOutcomes.deferred,
+      origin: state.isGlobalTimerMirror
+          ? TimerJournalOrigins.mirror
+          : TimerJournalOrigins.app,
+      runId: state.globalTimerRunId,
+      runRevision: state.globalTimerRunRevision,
+      elapsedSeconds: _visibleElapsedSeconds,
+    );
     if (state.isGlobalTimerMirror) return stopMirroredRun();
     _stopInFlight = true;
     try {
@@ -1833,6 +2039,35 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     DateTime? settlingDay,
     DateTime? globalTimerStoppedRemotelyAt,
   }) {
+    // WP-430 / V56-S04: terminal geçişin **tek** kayıt noktası. Görünen süre ile
+    // yazılacak oturum süresi burada birlikte ölçülür:
+    //   * `applied`         → görünen süreye karşılık bir oturum yazılıyor
+    //   * `ghost_no_session`→ süre görünüyordu, karşılığında oturum YOK (hayalet)
+    //   * `local_only`      → yalnız yerel yüzey kapandı (ayna projeksiyonu)
+    // Bu ayrım olmadan "sekiz saat göründü, kayıt oluşmadı" iddiası kanıtlanamaz.
+    final visibleSeconds = _visibleElapsedSeconds ?? 0;
+    final recordingSeconds = settlingSeconds > 0
+        ? settlingSeconds
+        : state.settlingSeconds;
+    _journalTransition(
+      event: TimerJournalEvents.runTerminal,
+      reason: globalTimerStoppedRemotelyAt != null
+          ? TimerJournalReasons.remoteSignal
+          : TimerJournalReasons.userAction,
+      outcome: recordingSeconds > 0
+          ? TimerJournalOutcomes.applied
+          : state.isGlobalTimerMirror
+          ? TimerJournalOutcomes.localOnly
+          : visibleSeconds > 0
+          ? TimerJournalOutcomes.ghostNoSession
+          : TimerJournalOutcomes.dropped,
+      origin: state.isGlobalTimerMirror
+          ? TimerJournalOrigins.mirror
+          : TimerJournalOrigins.app,
+      runId: state.globalTimerRunId,
+      runRevision: state.globalTimerRunRevision,
+      elapsedSeconds: visibleSeconds,
+    );
     _tick?.cancel();
     _tick = null;
     // WP-243: durdurulan çalışmanın startedAt-ms'ini hatırla. Native STOP diske
@@ -1883,7 +2118,25 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     if (user == null) return;
 
     final duration = end.difference(start).inSeconds;
-    if (duration <= 0) return;
+    if (duration <= 0) {
+      _journalTransition(
+        event: TimerJournalEvents.sessionRecorded,
+        reason: TimerJournalReasons.userAction,
+        outcome: TimerJournalOutcomes.dropped,
+        elapsedSeconds: duration,
+      );
+      return;
+    }
+    // WP-430: yazılan oturumun süresi. Terminal satırındaki `elapsed_seconds`
+    // ile bu sayı arasındaki fark hayalet sürenin büyüklüğüdür.
+    _journalTransition(
+      event: TimerJournalEvents.sessionRecorded,
+      reason: sessionId == null
+          ? TimerJournalReasons.userAction
+          : TimerJournalReasons.queueReplay,
+      outcome: TimerJournalOutcomes.applied,
+      elapsedSeconds: duration,
+    );
 
     await ref
         .read(studyRepositoryProvider)
