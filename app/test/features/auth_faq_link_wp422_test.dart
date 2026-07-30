@@ -94,12 +94,13 @@ void main() {
     expect(find.byType(FaqScreen), findsOneWidget);
   });
 
-  testWidgets('etiket dört dilde de çevrilidir', (tester) async {
+  testWidgets('etiket her release dilinde çevrilidir', (tester) async {
+    // WP-457 runtime'ı EN/TR ile sınırladı; DE/AR katalogları dormant
+    // arşivde ve generator girdisi değil. Etiketi orada aramak, dilin
+    // yayımlanmadığını çeviri eksiği gibi gösterirdi.
     const expected = {
       'tr': 'Sıkça sorulan sorular (SSS)',
       'en': 'Frequently asked questions (FAQ)',
-      'de': 'Häufig gestellte Fragen (FAQ)',
-      'ar': 'الأسئلة الشائعة (FAQ)',
     };
     for (final entry in expected.entries) {
       await pumpAuth(tester, Locale(entry.key));
@@ -109,5 +110,17 @@ void main() {
         reason: '${entry.key} kataloğunda SSS etiketi eksik',
       );
     }
+  });
+
+  testWidgets('yayımlanmayan dil İngilizceye düşer, bağlantı kaybolmaz', (
+    tester,
+  ) async {
+    // Regresyon kapısı: SSS bağlantısı v55'te oturum açmadan yardıma erişim
+    // için eklendi. Desteklenmeyen bir sistem yereli (örn. Almanca cihaz)
+    // bağlantıyı boş etiketli bırakmamalı ya da hiç çizmemeli.
+    await pumpAuth(tester, const Locale('de'));
+
+    expect(find.byKey(const Key('auth-faq-link')), findsOneWidget);
+    expect(find.text('Frequently asked questions (FAQ)'), findsOneWidget);
   });
 }
