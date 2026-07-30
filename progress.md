@@ -232,8 +232,11 @@
 
 ### Ajan C — Moderasyon ve UGC güvenliği
 
-- **Durum:** [~] Aktif · **Aktif WP:** WP-439 · **Aşama:** Geliştiriliyor
-- **Dal:** `main` · **Başlangıç:** 2026-07-30 02:05 (Europe/Istanbul) · **Son güncelleme:** 2026-07-30 02:05
+- **Durum:** [!] BEKLİYOR: WP-435 commit'i + migration kilidi — WP-439 `0104`
+  ve WP-441 `0105` dilimleri migration sırasına bağlı. Bu kutu boşta değildir.
+- **Dal:** `main` · **Başlangıç:** 2026-07-30 02:05 (Europe/Istanbul) · **Son güncelleme:** 2026-07-30 03:40
+- **Biten:** WP-439 sözleşme dilimi `e240e91` · WP-440 kuyruk/repository dilimi
+  (bu commit) kod + otomatik test tamam.
 - **Not:** WP-439 sözleşme dilimi kod + otomatik test tamam (commit altında).
   `0104` migration dilimi `[!] BEKLİYOR: WP-435 commit'i + migration kilidi`.
   Ajan D'nin WP-446 mesaj-rapor UI'ı artık `ReportTarget.message(messageId:, groupId:)`
@@ -4370,7 +4373,34 @@ alır; boş/uydurma migration yazılmaz.
 
 #### WP-440 — Admin kuyruğu kartı, durum çipi ve sabit yerleşim
 
-- **Durum / bağımlılık:** [ ] WP-439 sözleşme commit'i.
+- **Durum / bağımlılık:** [x] **Kod + otomatik test tamam** (Ajan C) · WP-439 `e240e91`.
+- **Koşulan denetim (Kodda doğrulandı):** Ekran `Supabase.instance.client` ile
+  doğrudan konuşuyordu: `ugc_reports` select, `class_messages` + `profiles`
+  okumaları ve **doğrudan tablo UPDATE'i** ile durum yazımı. Vaka sözleşmesi
+  (`admin_ugc_report_groups` / `admin_set_ugc_report_group_status`) hiç
+  kullanılmıyordu; kuyruk vaka başına değil rapor başına satır gösteriyordu.
+- **Bu commit'te yapılan:** `AdminModerationRepository` (yeni, Ajan B'nin
+  `admin_repository.dart`ından ayrı) + Supabase/InMemory çiftleri +
+  `admin_moderation_providers.dart`; ekran `ConsumerWidget`e döndü ve artık
+  hiçbir tabloya dokunmuyor. `ModerationCase` + `ModerationCaseStatus` modeli
+  WP-439'un `caseKey` sözleşmesini sürdürüyor; eski
+  `moderation_queue_report.dart` kaldırıldı.
+- **Kabul kanıtı:** kart yüksekliği dört durumda birebir aynı (ölçüldü, tek
+  değer); 320 dp ve 600 dp × metin ölçeği 1.3'te taşma yok; çip
+  `Semantics(button)` etiketli; üç nokta yalnız kimlik kopyalama taşıyor;
+  sunucu hatası şeride düşüyor ve kuyruk çökmüyor.
+- **Geri alma kararı:** “yanlışlıkla close geri alınabilir” geçici şeride değil
+  **kalıcı duruma** bağlandı: kapatılan vaka kuyruktan düşmüyor, çipi etkin
+  kalıyor ve tek dokunuşla `İnceleniyor`a dönüyor (test edildi). Sunucu RPC'si
+  `open` yazamıyor; `open` menüde ölü seçenek olarak durmuyor ve istemci
+  fail-closed reddediyor. Tam `open` restorasyonu WP-441 `0105` dilimine yazıldı.
+- **Kartın karşılanmayan maddesi:** `risk`, `atanan admin` ve `SLA` şemada
+  **yok** (WP-441 severity/SLA migration'ı getirecek). Sahte rozet basmak yerine
+  meta satırı gerçek olan iki değeri gösteriyor: bekleme süresi + rapor sayısı.
+- **l10n:** yeni `.arb` anahtarı eklenmedi, sıcak kilit alınmadı.
+- **Kanıt:** hedefli `flutter analyze` 0 uyarı · `flutter test` 47/47 yeşil
+  (admin + moderasyon + güvenlik). Etiket: **Kodda doğrulandı** · cihaz kabulü
+  WP-443/WP-466.
 - **SAHİP:** `features/admin/tabs/admin_moderation_tab.dart`,
   yeni ayrı admin-moderation repository arayüzü + Supabase/InMemory/provider,
   `features/admin/widgets/moderation_queue_card.dart` ve testleri.
