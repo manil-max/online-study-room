@@ -19,18 +19,15 @@ const Set<String> kReportUgcRpcParams = {
   'p_details',
   'p_snapshot',
   'p_attachment_path',
+  'p_context_group_id',
 };
 
-/// WP-439: sunucunun `0104` öncesinde kabul ettiği hedef türleri.
-///
-/// [ReportTargetType.groupName] burada **yok**: `group_name` türü `0104` ile
-/// açılır. O zamana kadar `group`'a düşürmek grubun kendisiyle aynı vakaya
-/// bağlanmak demek olurdu — WP-439'un düzelttiği hatanın ta kendisi. Bu yüzden
-/// sessiz düşüş yerine fail-closed hata veriyoruz.
+/// WP-439 / 0104: bütün hedef türleri tek server-authoritative RPC'de açıktır.
 const Set<ReportTargetType> kReportTargetTypesLiveOnServer = {
   ReportTargetType.message,
   ReportTargetType.profile,
   ReportTargetType.group,
+  ReportTargetType.groupName,
 };
 
 class SupabaseModerationRepository implements ModerationRepository {
@@ -70,9 +67,7 @@ class SupabaseModerationRepository implements ModerationRepository {
   @override
   Future<List<String>> listBlockedUserIds() async {
     final rows = await _client.from('user_blocks').select('blocked_id');
-    return [
-      for (final r in rows as List) r['blocked_id'] as String,
-    ];
+    return [for (final r in rows as List) r['blocked_id'] as String];
   }
 
   @override
@@ -112,7 +107,8 @@ class SupabaseModerationRepository implements ModerationRepository {
       }
     }
     out.sort(
-      (a, b) => a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase()),
+      (a, b) =>
+          a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase()),
     );
     return out;
   }
@@ -156,7 +152,8 @@ class SupabaseModerationRepository implements ModerationRepository {
 /// WP-439: [ReportTarget] → `report_ugc` parametreleri.
 ///
 /// Ayrı fonksiyon, sözleşmenin Supabase istemcisi olmadan test edilebilmesi
-/// içindir. `context_group_id` bilerek gönderilmez: RPC onu `0104`te tanıyacak.
+/// içindir. Mesajda bağlam grubu RPC'ye gider; sunucu mesajın gerçek grubu ve
+/// raporlayanın aktif üyeliği ile bu değeri birebir doğrular.
 Map<String, dynamic> reportUgcRpcParams({
   required ReportTarget target,
   required String reason,
@@ -168,8 +165,10 @@ Map<String, dynamic> reportUgcRpcParams({
     'p_target_id': target.id,
     'p_reason': reason,
     'p_details': details,
-    // Doğrulanmamış istemci ipucu; `0104` sonrası kanıt yerine yalnız bağlam.
+    // Doğrulanmamış istemci ipucu; sunucu bunu kanıt olarak kullanmaz.
     'p_snapshot': target.clientHint,
     'p_attachment_path': attachmentPath,
+    if (target.contextGroupId != null)
+      'p_context_group_id': target.contextGroupId,
   };
 }

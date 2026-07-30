@@ -179,20 +179,29 @@
 
 ### Ajan C — Moderasyon, kamp/observability devralması ve final QA
 
-- **Durum:** [!] BEKLİYOR: B/WP-435 migration commit'i.
+- **Durum:** [~] Aktif — WP-439 migration dilimi (`0104`) teslim edildi; sırada WP-441 (`0105`).
+- **Son kontrol:** 2026-07-30 11:20 (Europe/Istanbul) · B/WP-435 `355f1dd` geldi, C `0104`’ü aldı ve kapattı; migration yazma kilidi C’de kalıyor.
 - **Zincir:** `WP-439(migration) → WP-441 → WP-442 → WP-443 → WP-464 → WP-465 → WP-466 → WP-467`.
-- **Hazır kanıt:** WP-439 sözleşme `e240e91`, WP-440 `30559d7`, WP-462
+- **Hazır kanıt:** WP-439 sözleşme `e240e91` + migration bu commit, WP-440 `30559d7`, WP-462
   `78e15cb`/golden koruması ve WP-463 `ad30631` kod+otomatik test tamam.
-- **Devralınan dirty iş:** Yalnız iki `campfire_wp*_preview.png` dosyası C'ye
+- **Devralınan dirty iş:** Yalnız iki `campfire_wp*_preview.png` dosyası C’ye
   aittir; önce farklılığı inceler, ilgili WP dışında stage etmez.
-- **Başlatma kapısı:** B/WP-435 sonrası WP-439 migration tamamlanır; ardından
-  WP-441 ve WP-442 seri ilerler. WP-464 WP-442 retention sözleşmesini bekler.
+- **Başlatma kapısı:** WP-441 ve WP-442 seri ilerler; migration sırası C’de
+  olduğu için dış kapı yok. WP-464 WP-442 retention sözleşmesini bekler.
   WP-465 yalnız A/B/D çıkış kanıtları tamamlanınca başlar.
 - **SAHİP:** moderation model/repository/provider/UI/pgTAP, account-purge
   hardening, observability/campfire QA belgeleri, entegrasyon/staging-cihaz kanıtı.
 - **Sınır:** C entegrasyon adına başka ajan ürün kodunu yeniden yazmaz; hata
-  bulursa ilgili WP'yi sahibine döndürür. WP-466 staging adayını hazırlar ama
+  bulursa ilgili WP’yi sahibine döndürür. WP-466 staging adayını hazırlar ama
   production/stable/tag/push yapmaz.
+- **Aktif WP / sahip yollar:** WP-441 · moderation repository/provider, admin
+  action UI, `supabase/migrations/0105_*`, `supabase/tests/*moderation*` ve
+  yalnız Ajan C lane kaydı.
+- **Ortak/riskli yüzey:** Migration yazma kilidi C’de — `0104` alındı, sıradaki
+  `0105`. Repo/local head `0104`; bu hostta Docker kalkmadığı için gerçek local
+  replay/pgTAP koşamadı, `0104` **Replay bekliyor** etiketiyle teslim edildi ve
+  ortak `deploy-contract.json` (`0101`) C’nin SAHİP yüzeyi olmadığı için
+  ilerletilmedi. Production/stable kapalı.
 
 ### Ajan D — Grup/dürtme, tarih seçici ve seri devralması
 
@@ -4223,8 +4232,9 @@ alır; boş/uydurma migration yazılmaz.
 
 #### WP-439 — Mesaj/profil/grup/grup-adı rapor hedef sözleşmesi
 
-- **Durum / bağımlılık:** [~] **Sözleşme dilimi kod + otomatik test tamam** (Ajan C).
-  Migration dilimi (`0104`) `[!] BEKLİYOR: WP-435 commit'i + migration kilidi`.
+- **Durum / bağımlılık:** [x] **Sözleşme + migration dilimi kod ve otomatik test
+  tamam** (Ajan C) · B/WP-435 `355f1dd` sonrası migration sırası alındı.
+  `0104` bu hostta gerçek replay koşulamadığı için **Replay bekliyor**.
 - **Koşulan denetim (Kodda doğrulandı):** Grup detay ekranındaki iki ayrı bayrak
   düğmesi (`report-group-action` ve `report-group-name-action`) aynı
   `('group', group.id)` çiftini gönderiyordu; `0038`'in
@@ -4238,12 +4248,20 @@ alır; boş/uydurma migration yazılmaz.
   `ModerationRepository.reportUgc` artık serbest metin çifti değil hedef alıyor;
   Supabase + InMemory çiftleri ve dört çağrı yeri taşındı; `p_snapshot` artık
   “kanıt” değil doğrulanmamış istemci ipucu olarak adlandırıldı.
-- **Migration dilimine kalan:** `0104` hedef doğrulama RPC'si, sunucu-üretimli
-  kanonik snapshot, `moderation_cases` açık-vaka tekilliği, retention ve RLS;
-  `group_name` türünün sunucuda açılması + grup-adı düğmesinin ona çevrilmesi;
-  `p_context_group_id` parametresinin eklenmesi. O güne kadar Supabase deposu
-  `group_name`'i fail-closed reddeder (sessizce `group` vakasına düşmez) ve
-  grup-adı düğmesi mevcut davranışını korur — regresyon yok.
+- **Migration diliminde yapılan (`0104`):** `report_ugc` artık hedefi sunucuda
+  yeniden okur — mesajda `p_context_group_id` mesajın gerçek grubuyla ve
+  raporlayanın aktif üyeliğiyle doğrulanır, kanonik snapshot server'da üretilir,
+  istemci metni yalnız `client_hint` olarak ayrı saklanır. `moderation_cases`
+  tablosu + kısmi tekil indeks ile hedef başına tek açık vaka; `group_name`
+  sunucuda ayrı tür olarak açıldı ve grup-adı düğmesi `ReportTarget.groupName`e
+  çevrildi; Supabase deposundaki fail-closed kapı kaldırıldı. Kanıt alanları
+  update trigger'ı ile değişmez; 365 günlük `evidence_retention_until` yazılır.
+  Vaka kapandıktan sonra **aynı** raporlayan aynı sebeple tekrar rapor ederse
+  satır yeni açık vakaya taşınır ve `open`'a döner — aksi hâlde tekil kısıt
+  yüzünden şikâyet kuyrukta hiç görünmezdi.
+- **Migration durumu:** `0104` **Replay bekliyor** — bu hostta Docker motoru
+  kalkmadığı için local `supabase db reset`/pgTAP koşulamadı. `deploy-contract.json`
+  ilerletilmedi (`0101`), staging/production kapalı.
 - **Sınır açıklaması (Ajan D'ye):** `showReportSheet` imzası değiştiği için mevcut
   dört çağrı yeri **mekanik olarak** taşındı:
   `class_chat_card.dart`, `class_detail_screen.dart` (x2),
@@ -4251,9 +4269,11 @@ alır; boş/uydurma migration yazılmaz.
   değiştirilmedi; mesaj-rapor girişi tasarımı WP-446'da Ajan D'dedir.
 - **WP-440'a not:** admin kuyruğu eski `user` satırlarını `profile` olarak
   göstermeli (`ReportTargetType.fromWire` alias'ı hazır).
-- **Kanıt:** `flutter analyze` 11 dosya 0 uyarı · hedefli `flutter test` 34/34
-  yeşil (`test/data/report_target_contract_test.dart` + moderasyon/güvenlik
-  regresyonları). Etiket: **Kodda doğrulandı** · cihaz kabulü WP-443/WP-466.
+- **Kanıt:** `flutter analyze` 4 dosya 0 uyarı · hedefli `flutter test` 30/30
+  yeşil (`test/data/report_target_contract_test.dart`, `report_sheet_details`,
+  `moderation_block_filter`, `test/features/safety/**`) · pgTAP
+  `supabase/tests/029_moderation_report_target_contract.test.sql` 15 iddia
+  (replay bekliyor). Etiket: **Kodda doğrulandı** · cihaz kabulü WP-443/WP-466.
 - **Problem:** Kullanıcı grup sohbetindeki tek mesajı seçip raporlayamıyor;
   adminin gördüğü bağlam hedef türüne göre tutarlı değil.
 - **SAHİP:** moderation models/repository/provider, `features/safety/**`,

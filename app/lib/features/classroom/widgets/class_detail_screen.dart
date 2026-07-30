@@ -78,15 +78,13 @@ class ClassDetailScreen extends ConsumerWidget {
                 key: const ValueKey('report-group-name-action'),
                 tooltip: AppLocalizations.of(context).safetyReport,
                 icon: const Icon(Icons.flag_outlined),
-                // WP-439: grup adı ayrı bir hedef türüdür
-                // (`ReportTarget.groupName`). Sunucu `group_name` türünü
-                // migration `0104` ile tanıyacak; o güne kadar rapor mevcut
-                // `group` vakasına düşer ve ipucu adı taşır — kaybolmaz. İpucu
-                // makine etiketidir, kullanıcıya gösterilmez: çevrilmez.
+                // WP-439 / 0104: grup adı ayrı hedef türüdür ve sunucuda
+                // grubun kendisinden ayrı bir vaka açar. İpucu makine
+                // etiketidir, kullanıcıya gösterilmez: çevrilmez.
                 onPressed: () => showReportSheet(
                   context,
                   ref,
-                  target: ReportTarget.group(
+                  target: ReportTarget.groupName(
                     groupId: group.id,
                     hint: 'group_name:${group.name}',
                   ),

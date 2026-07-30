@@ -53,10 +53,7 @@ void main() {
 
     test('boşluk içeren veya aşırı uzun kimlik reddedilir', () {
       expect(() => ReportTarget.group(groupId: 'a b'), throwsArgumentError);
-      expect(
-        () => ReportTarget.profile(userId: 'u' * 65),
-        throwsArgumentError,
-      );
+      expect(() => ReportTarget.profile(userId: 'u' * 65), throwsArgumentError);
     });
 
     test('kimlik kırpılır ama içeriği değişmez', () {
@@ -125,7 +122,10 @@ void main() {
     test('ipucu 200 karaktere kırpılır, boş ipucu null olur', () {
       final long = ReportTarget.profile(userId: 'u1', hint: 'x' * 500);
       expect(long.clientHint, hasLength(ReportTarget.maxHintLength));
-      expect(ReportTarget.profile(userId: 'u1', hint: '   ').clientHint, isNull);
+      expect(
+        ReportTarget.profile(userId: 'u1', hint: '   ').clientHint,
+        isNull,
+      );
       expect(ReportTarget.profile(userId: 'u1').clientHint, isNull);
     });
 
@@ -137,8 +137,8 @@ void main() {
     });
   });
 
-  group('RPC parametre sözleşmesi (0104 öncesi)', () {
-    test('yalnız sunucuda var olan altı parametre gönderilir', () {
+  group('RPC parametre sözleşmesi (0104)', () {
+    test('mesaj bağlamı server doğrulaması için gönderilir', () {
       final params = reportUgcRpcParams(
         target: ReportTarget.message(
           messageId: 'm1',
@@ -153,15 +153,13 @@ void main() {
       expect(params['p_target_type'], 'message');
       expect(params['p_target_id'], 'm1');
       expect(params['p_snapshot'], 'metin');
-      // Bağlam grubu `0104` ile açılır; şimdi gönderilirse PostgREST
-      // "function not found" der ve şikâyet sessizce kaybolur.
-      expect(params.containsKey('p_context_group_id'), isFalse);
+      expect(params['p_context_group_id'], 'g1');
     });
 
-    test('group_name sunucuda açılana kadar fail-closed', () {
+    test('group_name 0104 ile sunucuda açıktır', () {
       expect(
         kReportTargetTypesLiveOnServer,
-        isNot(contains(ReportTargetType.groupName)),
+        contains(ReportTargetType.groupName),
       );
       expect(
         kReportTargetTypesLiveOnServer,
