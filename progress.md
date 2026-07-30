@@ -170,30 +170,36 @@
 
 ### Ajan B — Feedback, rozetler, ayarlar ve yayın yüzeyi
 
-- **Durum:** [~] Kod/test tamam — WP-459 commit hazırlanıyor.
+- **Durum:** [~] Kod/test tamam — WP-460 commit hazırlanıyor.
 - **Zincir:** `WP-435 → WP-436 → WP-437 → WP-438 → WP-459 → WP-460 → WP-461`.
 - **Hazır kanıt:** WP-434 `c3999f3`; WP-435 `355f1dd`; WP-436 `7d191b6`;
-  WP-437 `dc03317`; WP-438 `2673898`; WP-456 `cfb9536`, WP-457 `c671011`,
-  WP-458 `5776055` kod+otomatik test tamam.
-- **Diğer lane'lere l10n servisi:** A/WP-450'nin yedi `taskList*` anahtarı
-  `4e6995b`; D/WP-444 Faz 2'nin sekiz `safety*` anahtarı `a9e2a7e` ile açıldı.
-  D'nin istediği Ayarlar → Güvenlik girişi (`settings-muted-nudges`) bu
-  commit'te bağlandı; ekran D'de (`a84a799`), giriş B'de.
-- **Başlatma kapısı:** WP-438 `2673898` ile tamamlandı; WP-459 bu commit'tedir.
-  Sırada WP-460 (navigation sıcak kilidi) ve WP-461.
+  WP-437 `dc03317`; WP-438 `2673898`; WP-459 `59fde3e`; WP-456 `cfb9536`,
+  WP-457 `c671011`, WP-458 `5776055` kod+otomatik test tamam.
+- **Diğer lane'lere l10n servisi:** A/WP-450 yedi `taskList*` anahtarı `4e6995b`;
+  D/WP-444 Faz 2 sekiz `safety*` anahtarı `a9e2a7e`; D/WP-445'in iki
+  `classroom*` anahtarı WP-460 commit'inin hemen ardından ayrı commit'te.
+  D'nin Ayarlar → Güvenlik girişi WP-459 `59fde3e` ile bağlandı.
+- **Başlatma kapısı:** WP-459 `59fde3e` tamam; WP-460 bu commit'te. Sırada
+  WP-461 (yayında yalnız 1×1 widget).
 - **SAHİP:** feedback ticket/message/repository çiftleri, unread/badge sağlayıcıları,
   feedback/admin ekranları; settings/profile/navigation/l10n/widget katalog yüzeyleri.
 - **DOKUNMA:** moderation backend, grup/nudge, timer/subject, task/streak çekirdeği.
 - **Teslim:** WP-438 kanıtı `docs/qa/V57-FEEDBACK-EVIDENCE.md §5`; cihaz satırları
-  C/WP-465-466'ya devredildi. WP-461 widget/yüzey kanıtı C/WP-465'e gidecek.
-- **Aktif WP / sahip yollar:** WP-459 · `home_shell.dart` rozet bağlantısı,
-  `notification_providers.dart` / `admin_providers.dart` sayaçları,
-  `settings_screen.dart`, `badge_chain_wp459_test.dart` ve WP-378 sözleşmesi.
-- **Ortak/riskli yüzey:** Migration yok. `home_shell.dart`'ta yalnız profil
-  sekmesi rozet satırları değişti (WP-460 sıcak kilidi henüz alınmadı).
-  `flutter analyze` temiz; profil/feedback/ayarlar/admin hedefli testleri
-  176/176 yeşil; production/stable kapalı.
-- **Başlangıç / son güncelleme:** 2026-07-30 11:05 / 18:45 (Europe/Istanbul).
+  C/WP-465-466'ya devredildi. WP-460/461 yüzey kanıtı C/WP-465'e gidecek.
+- **Sahip kararı bekleyen tek sayı (WP-460):** kompakt eylem şeridi yüksekliği
+  `kTabActionBarHeight = 48` dp seçildi (dokunma hedefi minimumu). Değer tek
+  yerde ve teste bağlı; sahip başka bir sayı isterse tek satır değişir.
+- **Aktif WP / sahip yollar:** WP-460 · `core/navigation/tab_action_bar.dart`
+  (yeni), home/clock/classroom/stats/profile sekme kabukları,
+  `tab_top_space_wp460_test.dart` ve `clock_screen_test.dart`.
+- **Ortak/riskli yüzey:** Migration yok. Navigation sıcak kilidi WP-460 için
+  B'de; yalnız sekme kabuğu üst şeridi değişti, içerik ve eylemler korundu.
+  `flutter analyze` (B yüzeyi) temiz; hedefli testler yeşil.
+- **C'ye devredilen bulgu:** `test/features/campfire_sky_golden_test.dart`
+  bu hostta beş golden'da pixel farkıyla kırmızı (ör. `campfire_sky_day`
+  %1.67 / 1841 px). B'nin diff'i campfire kaynaklarına dokunmuyor; geniş
+  koşumda 1022/1027 yeşil, kırmızıların hepsi bu dosya. Sahibi C.
+- **Başlangıç / son güncelleme:** 2026-07-30 11:05 / 19:30 (Europe/Istanbul).
 
 ### Ajan C — Moderasyon, kamp/observability devralması ve final QA
 
@@ -4769,7 +4775,8 @@ alır; boş/uydurma migration yazılmaz.
 
 #### WP-460 — Alt sekmelerde gereksiz üst başlık/boşluğu kaldır
 
-- **Durum / bağımlılık:** [ ] WP-459; navigation sıcak kilidi.
+- **Durum / bağımlılık:** [x] Kod + otomatik test tamam · Ajan B · 2026-07-30. Kompakt şerit `kTabActionBarHeight = 48` dp; sahip başka sayı isterse tek satır.
+
 - **SAHİP:** `core/navigation/home_shell.dart` ve ilgili ev/araçlar/gruplar/
   stats/profile ekranları (`home_screen.dart`, `clock_screen.dart`,
   `classroom_screen.dart`, `stats_screen.dart`, `profile_screen.dart`) +

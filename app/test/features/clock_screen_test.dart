@@ -72,7 +72,9 @@ void main() {
     await tester.pumpWidget(buildApp());
     await tester.pump();
 
-    expect(find.text('Araçlar'), findsOneWidget);
+    // WP-460: "Araçlar" başlığı kaldırıldı — ad alt menüde zaten yazılı ve
+    // ikon şeridi bu sekmenin gerçek araç çubuğudur.
+    expect(find.text('Araçlar'), findsNothing);
     expect(find.byKey(const Key('clock_tab_alarm')), findsOneWidget);
     expect(find.byKey(const Key('clock_tab_timer')), findsOneWidget);
     expect(find.byKey(const Key('clock_tab_tasks')), findsOneWidget);
@@ -96,7 +98,7 @@ void main() {
     await tester.pumpWidget(buildApp());
     await tester.pump();
 
-    expect(find.text('Araçlar'), findsOneWidget);
+    expect(find.text('Araçlar'), findsNothing);
     expect(find.byKey(const Key('clock_tab_alarm')), findsOneWidget);
     expect(find.byKey(const Key('clock_tab_timer')), findsOneWidget);
     expect(find.byKey(const Key('clock_tab_tasks')), findsOneWidget);

@@ -2,7 +2,8 @@ import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/desktop/desktop_window.dart';
+import '../../core/navigation/tab_action_bar.dart';
+
 import '../../data/providers/auth_providers.dart';
 import '../../data/providers/group_providers.dart';
 import '../../data/providers/study_providers.dart';
@@ -25,11 +26,9 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
     final page = DefaultTabController(
       length: 2,
       child: Scaffold(
-        appBar: AppBar(
-          title: isDesktopWindow
-              ? null
-              : Text(AppLocalizations.of(context).statsIstatistik),
-          toolbarHeight: isDesktopWindow ? 0 : kToolbarHeight,
+        // WP-460: "İstatistik" başlığı alt menüde zaten yazılı; sekmenin
+        // gerçek üst öğesi kişisel/grup TabBar'ıdır.
+        appBar: buildTabActionBar(
           bottom: TabBar(
             tabs: [
               Tab(text: AppLocalizations.of(context).statsKisisel),

@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/desktop/desktop_window.dart';
 import '../../core/navigation/nav_index.dart';
+import '../../core/navigation/tab_action_bar.dart';
 import '../../core/tour/tour_controller.dart';
 import '../../core/tour/tour_host.dart';
 import '../../core/widgets/safe_screen_padding.dart';
@@ -105,9 +105,8 @@ class _ClassroomScreenState extends ConsumerState<ClassroomScreen> {
 
     // Windows: sol rail yeter; büyük başlık/sağ panel yok.
     final page = Scaffold(
-      appBar: AppBar(
-        toolbarHeight: isDesktopWindow ? 48 : kToolbarHeight,
-        title: isDesktopWindow ? null : null,
+      // WP-460: başlık yok, yalnız gerçek eylem (grup değiştir) kalır.
+      appBar: buildTabActionBar(
         actions: [
           Builder(
             builder: (iconContext) => IconButton(

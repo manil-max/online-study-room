@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/desktop/desktop_layout.dart';
 import '../../core/desktop/desktop_window.dart';
 import '../../core/navigation/nav_index.dart';
+import '../../core/navigation/tab_action_bar.dart';
 import '../../core/prefs/app_prefs.dart';
 import '../../core/tour/tour_host.dart';
 import '../../core/widgets/safe_screen_padding.dart';
@@ -294,12 +295,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       context,
       layout,
       Scaffold(
-        appBar: AppBar(
-          title: Text(
-            _editing
-                ? AppLocalizations.of(context).homeKartlariDuzenle
-                : AppLocalizations.of(context).homeAnaSayfa,
-          ),
+        // WP-460: "Ana Sayfa" başlığı alt menüde zaten yazılı; şerit yalnız
+        // gerçek eylemleri taşır.
+        appBar: buildTabActionBar(
           leading: _editing
               ? IconButton(
                   tooltip: AppLocalizations.of(context).homeBitti,

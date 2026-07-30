@@ -1,7 +1,6 @@
 import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 
-import '../../core/desktop/desktop_window.dart';
 import 'alarms_screen.dart';
 import 'tasks_screen.dart';
 import 'timers_screen.dart';
@@ -83,21 +82,20 @@ class _ClockScreenState extends State<ClockScreen> {
     final content = _buildTabBody();
 
     // Windows: AppBar/sağ panel yok — sol rail + şerit + içerik.
+    // WP-460: "Araçlar" başlığı alt menüde zaten yazılı; ikon şeridi bu
+    // sekmenin gerçek araç çubuğudur. Üst güvenli alan SafeArea ile korunur.
     return Scaffold(
-      appBar: isDesktopWindow
-          ? null
-          : AppBar(
-              title: Text(AppLocalizations.of(context).navTools),
-              centerTitle: true,
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
+              child: _buildIconStrip(),
             ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
-            child: _buildIconStrip(),
-          ),
-          Expanded(child: content),
-        ],
+            Expanded(child: content),
+          ],
+        ),
       ),
     );
   }

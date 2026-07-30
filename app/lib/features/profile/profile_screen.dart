@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../../core/desktop/desktop_window.dart';
 import '../../core/navigation/nav_index.dart';
 import '../../core/widgets/crowned_avatar.dart';
 import '../../core/widgets/safe_screen_padding.dart';
@@ -64,12 +63,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
     // Windows: içerik okuma genişliğinde ortalanır (full-bleed mobil liste değil).
     final page = Scaffold(
-      appBar: isDesktopWindow
-          ? null
-          : AppBar(title: Text(AppLocalizations.of(context).profileProfil)),
+      // WP-460: "Profil" başlığı alt menüde zaten yazılı; ekranın ilk anlamlı
+      // içeriği (avatar kartı) doğrudan yukarı gelir, üst güvenli alan korunur.
+      appBar: null,
       body: ListView(
         controller: _scrollController,
-        padding: getSafeVerticalPadding(context, horizontal: 24, vertical: 24),
+        padding: _topSafeListPadding(context),
         children: [
           DesktopReadingBody(
             maxWidth: DesktopSurface.readingWidth,
@@ -301,4 +300,11 @@ Future<void> _pickAvatar(BuildContext context, WidgetRef ref) async {
       SnackBar(content: Text(l10n.authBeklenmeyenBirHataOlustu)),
     );
   }
+}
+
+/// WP-460: Sekmenin AppBar'i kaldirildigi icin durum cubugu payini liste
+/// kendisi tasir; guvenli alan kaybolmaz, yalniz tekrar eden baslik gider.
+EdgeInsets _topSafeListPadding(BuildContext context) {
+  final base = getSafeVerticalPadding(context, horizontal: 24, vertical: 24);
+  return base.copyWith(top: base.top + MediaQuery.paddingOf(context).top);
 }
