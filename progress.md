@@ -138,16 +138,21 @@
 
 ### Ajan A — Timer, seçili ders ve görev devralması
 
-- **Durum:** [ ] HAZIR — ilk iş WP-432.
+- **Durum:** [~] Aktif — WP-433 geliştiriliyor.
 - **Zincir:** `WP-432 → WP-433 → WP-448 → [D/WP-445] → WP-449 → WP-450 → WP-451`.
-- **Şimdi:** A'nın WP-431'i `b78ed1f` ile kod+otomatik test tamam. WP-432
-  migration sırasının ilk hazır yazarıdır; notification action hedeflemesi ve
-  cihaz-kapsamlı test bildirimini uygular.
+- **Şimdi:** WP-432 kod/test paketi commitleniyor; ardından WP-433 timer iki-cihaz
+  matrisi ve WP-466'ya açık cihaz kabul paketi hazırlanır.
 - **Devralınan dirty iş:** Eski E'nin recurrence dosyaları A'ya aittir:
   `user_task*`, `task_deadline.dart`, `task_recurrence.dart` ve ilgili
   testler. Bunlar korunur; WP-448 ve D/WP-445 gelmeden yarım commit atılmaz.
 - **SAHİP:** timer/notification yönlendirmesi, `study_providers.dart`, subject
   persistence; sonra user-task/core-task/repository çiftleri ve görev UI/testleri.
+- **Aktif WP / sahip yollar:** WP-433 · timer integration testleri,
+  `docs/qa/V57-TIMER-EVIDENCE.md` ve `docs/qa/DEVICE-QA-MATRIX.md` içindeki yalnız
+  timer satırları.
+- **Ortak/riskli yüzey:** WP-432 sonrası migration yazma kilidi bırakılacak;
+  repository/local head `0102`, production/stable kapalı.
+- **Başlangıç / son güncelleme:** 2026-07-30 10:50 / 11:00 (Europe/Istanbul).
 - **DOKUNMA:** moderation, feedback, grup sohbeti, streak motoru, B'nin navigation/l10n yüzeyi.
 - **Teslim:** Her aşamada commit/test kanıtı; WP-451 fixture'ı D/WP-455'e açık bırakılır.
 
@@ -4047,7 +4052,7 @@ alır; boş/uydurma migration yazılmaz.
 
 #### WP-432 — Bildirim aksiyon hedefleme ve cihaz-kapsamlı test bildirimi
 
-- **Durum / bağımlılık:** [ ] WP-431 commit'i.
+- **Durum / bağımlılık:** [~] Kod tamamlandı · WP-431 `b78ed1f` sonrası.
 - **Problem:** Bir cihazdaki notification STOP'un kaynağa gitmemesi ve
   “bildirim testi”nin hesabın bütün cihazlarına ulaşması aynı target sözlüğünün
   belirsizliğini gösteriyor.
@@ -4066,6 +4071,18 @@ alır; boş/uydurma migration yazılmaz.
   taşır; payload türü/şema sürümü/target açık; duplicate FCM idempotent.
 - **Kabul:** A cihazında start → B notification STOP → A+B en geç 10 sn terminal;
   self-test A'dan → yalnız A; token yok/eskimiş/çift teslim fallback'leri görünür.
+- **Yapılan:** `0102_push_device_targeting.sql`, outbox'a isteğe bağlı
+  `target_device_id` ekler. Delivery tetikleyicisi hedef varsa yalnız o etkin cihazı
+  seçer; hedef yoksa timer-sync için mevcut origin-hariç davranış korunur.
+  `request_push_self_test(p_device_id)` yalnız `auth.uid()` sahibi ve etkin cihazı
+  kabul eder. Flutter repository/provider çağrısı bu server kimliğini taşır;
+  Supabase ve InMemory sözleşmeleri birlikte güncellendi.
+- **Kanıt:** `flutter analyze` 0 sorun · hedefli push testleri 11/11 yeşil ·
+  yeni `020_push_device_targeting.test.sql` iki cihaz, yabancı/eskimiş hedef ve
+  timer-sync origin ayrımını kapsar. Local replay/pgTAP wrapper'ı çalıştırılamadı:
+  deploy contract local head `0101`, repo head `0102`; ortak release sözleşmesine
+  bu WP'nin SAHİP kapsamı dışında olduğu için dokunulmadı. Etiket:
+  **Kodda doğrulandı**; cihazda A→B stop ve A-yalnız self-test **Cihazda doğrulanmalı**.
 - **Tuzak:** `origin_device_id` ile “komutu başlatan cihaz” ve “bildirimi görmek
   isteyen cihaz” rollerini karıştırma.
 - **Model:** Opus.

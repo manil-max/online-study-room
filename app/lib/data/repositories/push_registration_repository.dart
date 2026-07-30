@@ -15,7 +15,8 @@ abstract interface class PushRegistrationRepository {
 
   Future<void> unregisterDevice(String installationId);
 
-  Future<PushSelfTestRequest> requestSelfTest();
+  /// Self-test yalnız bu cihazın doğrulanmış sunucu kimliğine yönelir.
+  Future<PushSelfTestRequest> requestSelfTest(String deviceId);
 
   Future<PushSelfTestStatus?> fetchSelfTestStatus(String outboxId);
 }

@@ -261,6 +261,14 @@ class PushHealthController extends Notifier<PushHealthState> {
       state = state.copyWith(errorCode: 'device_not_registered');
       return;
     }
+    final deviceId = ref
+        .read(sharedPreferencesProvider)
+        .getString(globalTimerDeviceIdKey)
+        ?.trim();
+    if (deviceId == null || deviceId.isEmpty) {
+      state = state.copyWith(errorCode: 'device_not_registered');
+      return;
+    }
     state = state.copyWith(
       syncing: true,
       clearSelfTest: true,
@@ -269,7 +277,7 @@ class PushHealthController extends Notifier<PushHealthState> {
     final watch = Stopwatch()..start();
     try {
       final repository = ref.read(pushRegistrationRepositoryProvider);
-      final request = await repository.requestSelfTest();
+      final request = await repository.requestSelfTest(deviceId);
       PushSelfTestStatus? status;
       var received = false;
       // DB tetikleyicisi + Edge cold-start + FCM için 10 saniye güvenilir değildi.

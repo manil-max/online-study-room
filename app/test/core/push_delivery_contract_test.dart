@@ -30,6 +30,33 @@ void main() {
     expect(sql, isNot(contains('BEGIN PRIVATE KEY')));
   });
 
+  test('WP-432 scopes self-test to its registered device', () {
+    final migration = File(
+      '../supabase/migrations/0102_push_device_targeting.sql',
+    ).readAsStringSync();
+    final repository = File(
+      'lib/data/repositories/supabase/supabase_push_registration_repository.dart',
+    ).readAsStringSync();
+    final provider = File(
+      'lib/data/providers/push_notification_providers.dart',
+    ).readAsStringSync();
+
+    expect(migration, contains('target_device_id uuid'));
+    expect(
+      migration,
+      contains('new.target_device_id is null or d.id = new.target_device_id'),
+    );
+    expect(migration, contains('request_push_self_test(p_device_id uuid)'));
+    expect(migration, contains('push_test_target_device_required'));
+    expect(
+      migration,
+      contains('new.origin_device_id is null or d.id <> new.origin_device_id'),
+    );
+    expect(migration, isNot(contains('BEGIN PRIVATE KEY')));
+    expect(repository, contains("params: {'p_device_id': deviceId}"));
+    expect(provider, contains('repository.requestSelfTest(deviceId)'));
+  });
+
   test(
     'Edge dispatcher uses OAuth HTTP v1, bounded claims and redacted errors',
     () {

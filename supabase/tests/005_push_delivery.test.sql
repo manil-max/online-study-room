@@ -103,10 +103,15 @@ select is(
   'token refresh keeps one row and updates device metadata'
 );
 
+select id as alpha_test_device
+from public.push_devices
+where user_id = '10000000-0000-0000-0000-000000000001'
+  and installation_id = 'installation-alpha-0001'
+\gset
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000001', true);
 select outbox_id as alpha_test_outbox
-from public.request_push_self_test()
+from public.request_push_self_test(:'alpha_test_device'::uuid)
 \gset
 select pass('authenticated user can request a bounded self-test');
 

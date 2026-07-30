@@ -115,9 +115,10 @@ void main() {
 
     await repository.registerDevice(registration);
     expect(repository.lastRegistration, same(registration));
-    final request = await repository.requestSelfTest();
+    final request = await repository.requestSelfTest('device-123');
     final status = await repository.fetchSelfTestStatus(request.outboxId);
     expect(status?.state, PushSelfTestDeliveryState.noDevices);
+    expect(repository.lastSelfTestDeviceId, 'device-123');
     await repository.unregisterDevice(registration.installationId);
     expect(repository.lastRegistration, isNull);
     expect(

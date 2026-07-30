@@ -37,15 +37,21 @@ class SupabasePushRegistrationRepository implements PushRegistrationRepository {
   }
 
   @override
-  Future<PushSelfTestRequest> requestSelfTest() async {
+  Future<PushSelfTestRequest> requestSelfTest(String deviceId) async {
     try {
-      final response = await _client.rpc('request_push_self_test');
+      final response = await _client.rpc(
+        'request_push_self_test',
+        params: {'p_device_id': deviceId},
+      );
       final rows = (response as List).cast<Map<String, dynamic>>();
       if (rows.isEmpty) throw const FormatException('missing_self_test');
       return PushSelfTestRequest.fromMap(rows.single);
     } on PostgrestException catch (error) {
       if (error.message.contains('push_test_cooldown')) {
         throw const PushRegistrationException('push_test_cooldown');
+      }
+      if (error.message.contains('push_test_target_device_required')) {
+        throw const PushRegistrationException('device_not_registered');
       }
       throw const PushRegistrationException('push_test_request_failed');
     } catch (_) {

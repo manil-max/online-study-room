@@ -9,6 +9,7 @@ import '../push_registration_repository.dart';
 class InMemoryPushRegistrationRepository implements PushRegistrationRepository {
   PushDeviceRegistration? lastRegistration;
   String? lastUnregisteredInstallationId;
+  String? lastSelfTestDeviceId;
   final Map<String, PushSelfTestStatus> _tests = {};
 
   @override
@@ -24,7 +25,11 @@ class InMemoryPushRegistrationRepository implements PushRegistrationRepository {
   }
 
   @override
-  Future<PushSelfTestRequest> requestSelfTest() async {
+  Future<PushSelfTestRequest> requestSelfTest(String deviceId) async {
+    if (deviceId.trim().isEmpty) {
+      throw const PushRegistrationException('device_not_registered');
+    }
+    lastSelfTestDeviceId = deviceId;
     final now = DateTime.now().toUtc();
     final id = const Uuid().v4();
     _tests[id] = PushSelfTestStatus(
