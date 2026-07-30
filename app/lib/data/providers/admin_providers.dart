@@ -96,7 +96,7 @@ final unreadFeedbackReplyCountProvider = FutureProvider<int>((ref) async {
 ///
 /// Zincir kurali: alt seviyede gorunen her sinyal ust seviyede de gorunur.
 final settingsBadgeCountProvider = Provider<int>((ref) {
-  final announcements = ref.watch(unreadAnnouncementCountProvider);
+  final announcements = ref.watch(unreadNonFeedbackAnnouncementCountProvider);
   final replies = ref.watch(unreadFeedbackReplyCountProvider).value ?? 0;
   return announcements + replies;
 });

@@ -20,6 +20,7 @@ class InMemoryAdminRepository implements AdminRepository {
   final Set<String> _superAdminUserIds;
   final List<FeedbackTicket> _tickets = [];
   final List<FeedbackTicketMessage> _ticketMessages = [];
+  final Map<(String, String), int> _readWatermarks = {};
   final StreamController<void> _changes = StreamController<void>.broadcast();
 
   @override
@@ -269,6 +270,17 @@ class InMemoryAdminRepository implements AdminRepository {
   }
 
   @override
+  Stream<List<FeedbackTicketMessage>> watchTicketMessages({
+    required String userId,
+    required String ticketId,
+  }) async* {
+    yield await fetchTicketMessages(userId: userId, ticketId: ticketId);
+    await for (final _ in _changes.stream) {
+      yield await fetchTicketMessages(userId: userId, ticketId: ticketId);
+    }
+  }
+
+  @override
   Future<FeedbackTicketMessage> sendTicketMessage({
     required String userId,
     required String ticketId,
@@ -323,7 +335,8 @@ class InMemoryAdminRepository implements AdminRepository {
           (message) =>
               ownTicketIds.contains(message.ticketId) &&
               message.senderRole == FeedbackTicketSenderRole.admin &&
-              message.readAt == null,
+              message.messageSeq >
+                  (_readWatermarks[(message.ticketId, userId)] ?? 0),
         )
         .length;
   }
@@ -337,6 +350,17 @@ class InMemoryAdminRepository implements AdminRepository {
     final readerRole = _superAdminUserIds.contains(userId)
         ? FeedbackTicketSenderRole.admin
         : FeedbackTicketSenderRole.user;
+    final latestSequence = _ticketMessages
+        .where((item) => item.ticketId == ticketId)
+        .fold<int>(
+          0,
+          (maxSeq, item) => item.messageSeq > maxSeq ? item.messageSeq : maxSeq,
+        );
+    final watermarkKey = (ticketId, userId);
+    _readWatermarks[watermarkKey] =
+        latestSequence > (_readWatermarks[watermarkKey] ?? 0)
+        ? latestSequence
+        : _readWatermarks[watermarkKey]!;
     final now = DateTime.now();
     for (var index = 0; index < _ticketMessages.length; index++) {
       final item = _ticketMessages[index];

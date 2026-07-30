@@ -194,6 +194,11 @@ abstract class AdminRepository {
     required String ticketId,
   });
 
+  Stream<List<FeedbackTicketMessage>> watchTicketMessages({
+    required String userId,
+    required String ticketId,
+  });
+
   Future<FeedbackTicketMessage> sendTicketMessage({
     required String userId,
     required String ticketId,

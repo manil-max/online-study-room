@@ -345,11 +345,11 @@ void main() {
     });
   });
 
-  group('🔴 kilitli kusur — WP-436 çevirecek', () {
+  group('WP-436 — watermark ve canlı konuşma', () {
     setUp(() => SharedPreferences.setMockInitialValues({}));
 
     test(
-      'tek admin yanıtı rozeti iki kez artırır ve okununca sönmez',
+      'tek admin yanıtı tek rozet artırır ve konuşma görülünce söner',
       () async {
         final prefs = await SharedPreferences.getInstance();
         final repo = InMemoryAdminRepository(superAdminUserIds: {'admin'});
@@ -390,25 +390,24 @@ void main() {
 
         expect(
           container.read(settingsBadgeCountProvider),
-          2,
-          reason:
-              'tek yanıt iki kanal üretiyor; WP-436 sonrası bu sayı 1 olmalı',
+          1,
+          reason: 'feedback duyurusu konuşma rozetiyle çift sayılmamalı',
         );
 
-        // Yazışma okundu: mesaj kanalı temizlenir, duyuru kanalı asılı kalır.
+        // Yazışma görüldü: watermark tek kaynaktır, iki yüzey birlikte söner.
         await repo.markTicketMessagesRead(userId: 'u1', ticketId: ticket.id);
         container.invalidate(unreadFeedbackReplyCountProvider);
         await container.read(unreadFeedbackReplyCountProvider.future);
 
         expect(
           container.read(settingsBadgeCountProvider),
-          1,
-          reason: 'WP-436 sonrası her şey okunduğunda rozet 0 olmalı',
+          0,
+          reason: 'görülen konuşma sonrası rozet asılı kalmamalı',
         );
       },
     );
 
-    testWidgets('yazışma açıkken gelen yeni yanıt ekrana düşmez', (
+    testWidgets('yazışma açıkken gelen yeni yanıt ekrana düşer', (
       tester,
     ) async {
       final repo = InMemoryAdminRepository(superAdminUserIds: {'admin'});
@@ -437,12 +436,11 @@ void main() {
 
       expect(
         find.text('Canlı yanıt.'),
-        findsNothing,
-        reason:
-            'WP-436 realtime aboneliği gelince yanıt aynı thread\'e düşmeli',
+        findsOneWidget,
+        reason: 'realtime akışı yeni yanıtı açık konuşmaya eklemeli',
       );
 
-      // Pencere kapanıp açılınca görünür — veri kaybı yok, canlılık yok.
+      // Akış yenilense de doğru ticket dizisi korunur.
       await tester.tap(find.text('Kapat'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Canlılık bileti'));

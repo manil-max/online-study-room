@@ -455,6 +455,27 @@ class SupabaseAdminRepository implements AdminRepository {
   }
 
   @override
+  Stream<List<FeedbackTicketMessage>> watchTicketMessages({
+    required String userId,
+    required String ticketId,
+  }) {
+    return _client
+        .from('feedback_ticket_messages')
+        .stream(primaryKey: ['id'])
+        .eq('ticket_id', ticketId)
+        .order('message_seq')
+        .map(
+          (rows) => rows
+              .map(
+                (row) => FeedbackTicketMessage.fromMap(
+                  Map<String, dynamic>.from(row),
+                ),
+              )
+              .toList(growable: false),
+        );
+  }
+
+  @override
   Future<FeedbackTicketMessage> sendTicketMessage({
     required String userId,
     required String ticketId,
@@ -481,23 +502,34 @@ class SupabaseAdminRepository implements AdminRepository {
   @override
   Future<int> fetchUnreadTicketReplyCount(String userId) async {
     try {
-      // Once kendi biletlerim: RLS super-admin'e butun mesajlari acar, bu
-      // yuzden "gorunen her sey benimdir" varsayimi yanlis sayi uretirdi.
       final tickets = await _client
           .from('feedback_tickets')
-          .select('id')
+          .select('id, latest_message_seq')
           .eq('user_id', userId);
       final ids = tickets
           .map((row) => row['id'] as String)
           .toList(growable: false);
       if (ids.isEmpty) return 0;
+      final watermarks = await _client
+          .from('feedback_ticket_read_watermarks')
+          .select('ticket_id, last_read_message_seq')
+          .eq('user_id', userId)
+          .inFilter('ticket_id', ids);
+      final watermarkByTicket = {
+        for (final row in watermarks)
+          row['ticket_id'] as String: (row['last_read_message_seq'] as num)
+              .toInt(),
+      };
       final rows = await _client
           .from('feedback_ticket_messages')
-          .select('id')
+          .select('ticket_id, message_seq')
           .inFilter('ticket_id', ids)
-          .eq('sender_role', FeedbackTicketSenderRole.admin.dbValue)
-          .isFilter('read_at', null);
-      return rows.length;
+          .eq('sender_role', FeedbackTicketSenderRole.admin.dbValue);
+      return rows.where((row) {
+        final ticketId = row['ticket_id'] as String;
+        final sequence = (row['message_seq'] as num).toInt();
+        return sequence > (watermarkByTicket[ticketId] ?? 0);
+      }).length;
     } on PostgrestException catch (e) {
       throw AdminException(_friendlyMessage(e.message));
     }

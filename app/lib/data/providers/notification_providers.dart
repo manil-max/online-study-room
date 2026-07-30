@@ -26,7 +26,9 @@ final myAnnouncementsProvider = FutureProvider<List<Announcement>>((ref) async {
   if (user == null) return const [];
   final prefs = ref.watch(notificationPreferencesProvider);
   if (!prefs.announcementsEnabled) return const [];
-  return ref.watch(notificationRepositoryProvider).fetchMyAnnouncements(user.id);
+  return ref
+      .watch(notificationRepositoryProvider)
+      .fetchMyAnnouncements(user.id);
 });
 
 final readAnnouncementIdsProvider = FutureProvider<Set<String>>((ref) async {
@@ -42,6 +44,21 @@ final unreadAnnouncementCountProvider = Provider<int>((ref) {
   final announcements = ref.watch(myAnnouncementsProvider).value ?? const [];
   final read = ref.watch(readAnnouncementIdsProvider).value ?? const {};
   return announcements.where((a) => !read.contains(a.id)).length;
+});
+
+/// Feedback konuşmasıyla ilişkili eski duyurular ayrı bir okunmamış gerçek
+/// değildir; WP-435/436 bunları konuşma watermark'ına indirger. Bildirim
+/// Merkezi dışındaki rozetler bu filtreden beslenerek çift sayımı önler.
+final unreadNonFeedbackAnnouncementCountProvider = Provider<int>((ref) {
+  final announcements = ref.watch(myAnnouncementsProvider).value ?? const [];
+  final read = ref.watch(readAnnouncementIdsProvider).value ?? const {};
+  return announcements
+      .where(
+        (announcement) =>
+            announcement.relatedFeedbackTicketId == null &&
+            !read.contains(announcement.id),
+      )
+      .length;
 });
 
 /// Bildirim tercihleri değiştikçe akıllı hatırlatmaları (seri + haftalık özet)

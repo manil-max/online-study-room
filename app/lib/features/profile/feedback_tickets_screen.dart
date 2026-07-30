@@ -16,7 +16,9 @@ class FeedbackTicketsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(AppLocalizations.of(context).feedbackMyTickets)),
+      appBar: AppBar(
+        title: Text(AppLocalizations.of(context).feedbackMyTickets),
+      ),
       body: const MyFeedbackTicketsView(),
     );
   }
@@ -102,17 +104,19 @@ class _FeedbackTicketConversationDialogState
   // gorunen pencerenin en eskide takili kalmasiydi.
   final _scrollController = ScrollController();
   List<FeedbackTicketMessage>? _messages;
+  StreamSubscription<List<FeedbackTicketMessage>>? _messageSubscription;
   bool _loading = true;
   bool _sending = false;
 
   @override
   void initState() {
     super.initState();
-    _load();
+    _subscribeToMessages();
   }
 
   @override
   void dispose() {
+    _messageSubscription?.cancel();
     _controller.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -138,33 +142,55 @@ class _FeedbackTicketConversationDialogState
     });
   }
 
-  Future<void> _load() async {
+  Future<void> _subscribeToMessages() async {
     final user = ref.read(authStateProvider).value;
     if (user == null) return;
     setState(() => _loading = true);
-    try {
-      final repository = ref.read(adminRepositoryProvider);
-      final messages = await repository.fetchTicketMessages(
-        userId: user.id,
-        ticketId: widget.ticket.id,
-      );
-      await repository.markTicketMessagesRead(
-        userId: user.id,
-        ticketId: widget.ticket.id,
-      );
-      // WP-421: okununca zincirin **tamami** temizlenir; ust seviyelerde
-      // (Ayarlar satiri, Profil satiri) rozet asili kalmaz.
-      ref.invalidate(unreadFeedbackReplyCountProvider);
-      if (!mounted) return;
-      setState(() {
-        _messages = messages;
-        _loading = false;
-      });
-      _scrollToBottom(animated: false);
-    } on AdminException {
-      if (!mounted) return;
-      setState(() => _loading = false);
-    }
+    final repository = ref.read(adminRepositoryProvider);
+    await _messageSubscription?.cancel();
+    _messageSubscription = repository
+        .watchTicketMessages(userId: user.id, ticketId: widget.ticket.id)
+        .listen(
+          (messages) => _replaceMessages(messages, animated: _messages != null),
+          onError: (_) {
+            if (mounted) setState(() => _loading = false);
+          },
+        );
+  }
+
+  void _replaceMessages(
+    List<FeedbackTicketMessage> messages, {
+    required bool animated,
+  }) {
+    final ordered = [...messages]
+      ..sort((a, b) => a.messageSeq.compareTo(b.messageSeq));
+    if (!mounted) return;
+    setState(() {
+      _messages = ordered;
+      _loading = false;
+    });
+    _scrollToBottom(animated: animated);
+    _acknowledgeVisibleThread();
+  }
+
+  void _acknowledgeVisibleThread() {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted || _messages == null) return;
+      final user = ref.read(authStateProvider).value;
+      if (user == null) return;
+      try {
+        await ref
+            .read(adminRepositoryProvider)
+            .markTicketMessagesRead(
+              userId: user.id,
+              ticketId: widget.ticket.id,
+            );
+        ref.invalidate(unreadFeedbackReplyCountProvider);
+      } on AdminException {
+        // Görüntülenen mesajı yeniden denemek için akışı açık tutarız; hata
+        // kullanıcıyı konuşmadan çıkarmamalı.
+      }
+    });
   }
 
   Future<void> _send() async {
@@ -184,8 +210,6 @@ class _FeedbackTicketConversationDialogState
       ref.invalidate(myFeedbackTicketsProvider);
       ref.invalidate(unreadFeedbackReplyCountProvider);
       ref.invalidate(adminFeedbackTicketsProvider(null));
-      await _load();
-      _scrollToBottom(animated: true);
     } on AdminException {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
