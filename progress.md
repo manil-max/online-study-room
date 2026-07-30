@@ -140,10 +140,18 @@
 
 - **Durum:** [!] BEKLİYOR: D/WP-445 migration commit'i. WP-448 `2e0f23d` kapandı.
 - **Zincir:** `WP-432 → WP-433 → WP-448 → [D/WP-445] → WP-449 → WP-450 → WP-451`.
-- **Şimdi:** WP-449'un Dart katmanı (sabit fazlı recurrence motoru, model,
-  repository çiftleri, provider) hazır ve 15 hedefli test yeşil; migration +
-  pgTAP taslakları yazıldı, dosya numarası kilit açılınca ölçülecek. Bu arada
-  WP-450 görev UI'ı çalışma ağacında hazırlanıyor; sıra 449 → 450 commit'idir.
+- **Şimdi:** WP-449'un Dart katmanı ve kabul testleri (undo, cihaz saati geri
+  alma, çevrimdışı rollback dahil 19 hedefli test) yeşil; migration + pgTAP
+  taslakları hazır, dosya numarası kilit açılınca ölçülecek. WP-450'nin bölüm
+  modeli `core/tasks/task_sections.dart` + 6 test hazır; UI adımı yalnız l10n
+  anahtarlarını bekliyor. Sıra: 449 → 450 → 451.
+- **B'den l10n talebi (WP-450, l10n kilidi B'de olduğu için A arb'ye yazmaz):**
+  `taskListSectionToday` "Bugün"/"Today" · `taskListSectionRecurring`
+  "Tekrarlanan"/"Recurring" · `taskListSectionOther` "Diğer"/"Other" ·
+  `taskListUndo` "Geri al"/"Undo" · `taskListRepeatEvery` "Her {days} günde bir"/
+  "Every {days} days" · `taskListRepeatIntervalLabel` "Tekrar aralığı (gün)"/
+  "Repeat interval (days)" · `taskListNextOccurrence` "Sıradaki: {date}"/
+  "Next: {date}".
 - **Devralınan dirty iş:** Eski E'nin recurrence dosyaları A'ya aittir:
   `user_task*`, `task_deadline.dart`, `task_recurrence.dart` ve ilgili
   testler. Bunlar korunur; WP-448 ve D/WP-445 gelmeden yarım commit atılmaz.
@@ -154,7 +162,7 @@
   ardından WP-450 için `tasks_screen.dart` / `tasks_card.dart`.
 - **Ortak/riskli yüzey:** Migration yok; B/WP-435 migration yazımını yürütüyor,
   production/stable kapalı.
-- **Başlangıç / son güncelleme:** 2026-07-30 10:50 / 17:10 (Europe/Istanbul).
+- **Başlangıç / son güncelleme:** 2026-07-30 10:50 / 17:35 (Europe/Istanbul).
 - **DOKUNMA:** moderation, feedback, grup sohbeti, streak motoru, B'nin navigation/l10n yüzeyi.
 - **Teslim:** Her aşamada commit/test kanıtı; WP-451 fixture'ı D/WP-455'e açık bırakılır.
 
