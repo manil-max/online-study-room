@@ -198,6 +198,7 @@ abstract class AdminRepository {
     required String userId,
     required String ticketId,
     required String message,
+    String? clientMessageId,
   });
 
   /// Kullanicinin kendi biletlerinde **okunmamis yonetici yaniti** sayisi.

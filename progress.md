@@ -157,16 +157,24 @@
 
 ### Ajan B — Feedback, rozetler, ayarlar ve yayın yüzeyi
 
-- **Durum:** [!] BEKLİYOR: A/WP-432 migration commit'i.
+- **Durum:** [~] Kod/test tamam — WP-435 commit hazırlanıyor.
 - **Zincir:** `WP-435 → WP-436 → WP-437 → WP-438 → WP-459 → WP-460 → WP-461`.
 - **Hazır kanıt:** WP-434 `c3999f3`; WP-456 `cfb9536`, WP-457 `c671011`,
   WP-458 `5776055` kod+otomatik test tamam.
-- **Başlatma kapısı:** A/WP-432 commit'i görülünce migration kilidini alıp
-  WP-435'i uygular. WP-459, WP-436'dan sonra; WP-460/461 aynı B zincirindedir.
+- **Başlatma kapısı:** A/WP-432 `398d002` ile tamamlandı; WP-435 migration
+  sırasının hazır yazarıdır. WP-459, WP-436'dan sonra; WP-460/461 aynı B zincirindedir.
 - **SAHİP:** feedback ticket/message/repository çiftleri, unread/badge sağlayıcıları,
   feedback/admin ekranları; settings/profile/navigation/l10n/widget katalog yüzeyleri.
 - **DOKUNMA:** moderation backend, grup/nudge, timer/subject, task/streak çekirdeği.
 - **Teslim:** WP-438 rozet/messaging E2E kanıtı ve WP-461 widget/yüzey kanıtı C/WP-465'e devredilir.
+- **Aktif WP / sahip yollar:** WP-435 · `feedback_ticket*.dart`,
+  `admin_repository.dart`, Supabase/InMemory admin repository, admin providers,
+  `supabase/migrations/0103_*`, `supabase/tests/*feedback*` ve ilgili testler.
+- **Ortak/riskli yüzey:** Migration sırası B/WP-435'te; repo/local head `0103`.
+  `flutter analyze` temiz ve hedefli 10 test yeşil; gerçek local replay/pgTAP,
+  ortak `deploy-contract.json` hâlâ `0101` dediği için guard tarafından reddedildi.
+  Contract B'nin SAHİP yüzeyi değildir; production/stable kapalı.
+- **Başlangıç / son güncelleme:** 2026-07-30 10:58 / 11:04 (Europe/Istanbul).
 
 ### Ajan C — Moderasyon, kamp/observability devralması ve final QA
 

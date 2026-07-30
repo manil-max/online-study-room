@@ -25,6 +25,8 @@ class FeedbackTicketMessage {
     required this.senderRole,
     required this.message,
     required this.createdAt,
+    required this.messageSeq,
+    this.clientMessageId,
     this.readAt,
   });
 
@@ -34,6 +36,8 @@ class FeedbackTicketMessage {
   final FeedbackTicketSenderRole senderRole;
   final String message;
   final DateTime createdAt;
+  final int messageSeq;
+  final String? clientMessageId;
   final DateTime? readAt;
 
   factory FeedbackTicketMessage.fromMap(Map<String, dynamic> map) {
@@ -44,6 +48,8 @@ class FeedbackTicketMessage {
       senderRole: FeedbackTicketSenderRole.fromDb(map['sender_role'] as String),
       message: map['message'] as String,
       createdAt: DateTime.parse(map['created_at'] as String),
+      messageSeq: (map['message_seq'] as num?)?.toInt() ?? 0,
+      clientMessageId: map['client_message_id'] as String?,
       readAt: map['read_at'] == null
           ? null
           : DateTime.parse(map['read_at'] as String),

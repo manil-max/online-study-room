@@ -113,45 +113,57 @@ String _readSource(String path) =>
 
 void main() {
   group('sözleşme — mesajın kimliği ve bileti tektir', () {
-    test('bilet → kullanıcı → admin → kullanıcı akışında bağlar sapmaz', () async {
-      final repo = InMemoryAdminRepository(superAdminUserIds: {'admin'});
-      addTearDown(repo.dispose);
-      final ticket = await _openTicket(repo);
+    test(
+      'bilet → kullanıcı → admin → kullanıcı akışında bağlar sapmaz',
+      () async {
+        final repo = InMemoryAdminRepository(superAdminUserIds: {'admin'});
+        addTearDown(repo.dispose);
+        final ticket = await _openTicket(repo);
 
-      final first = await repo.sendTicketMessage(
-        userId: 'u1',
-        ticketId: ticket.id,
-        message: 'Ek bilgi: bildirimden durdurdum.',
-      );
-      final reply = await repo.sendTicketMessage(
-        userId: 'admin',
-        ticketId: ticket.id,
-        message: 'Bakıyoruz.',
-      );
-      final second = await repo.sendTicketMessage(
-        userId: 'u1',
-        ticketId: ticket.id,
-        message: 'Teşekkürler.',
-      );
+        final first = await repo.sendTicketMessage(
+          userId: 'u1',
+          ticketId: ticket.id,
+          message: 'Ek bilgi: bildirimden durdurdum.',
+        );
+        final reply = await repo.sendTicketMessage(
+          userId: 'admin',
+          ticketId: ticket.id,
+          message: 'Bakıyoruz.',
+        );
+        final second = await repo.sendTicketMessage(
+          userId: 'u1',
+          ticketId: ticket.id,
+          message: 'Teşekkürler.',
+        );
 
-      final messages = await repo.fetchTicketMessages(
-        userId: 'u1',
-        ticketId: ticket.id,
-      );
-      expect(messages.map((m) => m.id).toSet().length, 3);
-      expect(messages.map((m) => m.ticketId).toSet(), {ticket.id});
-      expect(messages.map((m) => m.senderRole).toList(), [
-        FeedbackTicketSenderRole.user,
-        FeedbackTicketSenderRole.admin,
-        FeedbackTicketSenderRole.user,
-      ]);
-      expect(messages.map((m) => m.id).toList(), [
-        first.id,
-        reply.id,
-        second.id,
-      ]);
-      expect(messages.map((m) => m.senderId).toList(), ['u1', 'admin', 'u1']);
-    });
+        final messages = await repo.fetchTicketMessages(
+          userId: 'u1',
+          ticketId: ticket.id,
+        );
+        expect(messages.map((m) => m.id).toSet().length, 4);
+        expect(messages.map((m) => m.ticketId).toSet(), {ticket.id});
+        expect(messages.map((m) => m.senderRole).toList(), [
+          FeedbackTicketSenderRole.user,
+          FeedbackTicketSenderRole.user,
+          FeedbackTicketSenderRole.admin,
+          FeedbackTicketSenderRole.user,
+        ]);
+        expect(messages.map((m) => m.id).toList(), [
+          isNotEmpty,
+          first.id,
+          reply.id,
+          second.id,
+        ]);
+        expect(messages.map((m) => m.senderId).toList(), [
+          'u1',
+          'u1',
+          'admin',
+          'u1',
+        ]);
+        expect(messages.map((m) => m.message).first, ticket.message);
+        expect(messages.map((m) => m.messageSeq).toList(), [1, 2, 3, 4]);
+      },
+    );
 
     test('iki bilet eşzamanlı yazışırken mesaj karşı bilete düşmez', () async {
       final repo = InMemoryAdminRepository(superAdminUserIds: {'admin'});
@@ -178,8 +190,8 @@ void main() {
         userId: 'u1',
         ticketId: b.id,
       );
-      expect(aMessages.map((m) => m.message).toList(), ['A mesajı']);
-      expect(bMessages.map((m) => m.message).toList(), ['B yanıtı']);
+      expect(aMessages.map((m) => m.message).toList(), [a.message, 'A mesajı']);
+      expect(bMessages.map((m) => m.message).toList(), [b.message, 'B yanıtı']);
     });
 
     test('yeniden fetch aynı kimlikleri ve aynı sırayı verir', () async {
@@ -206,10 +218,14 @@ void main() {
         secondRead.map((m) => m.id).toList(),
         firstRead.map((m) => m.id).toList(),
       );
-      expect(
-        secondRead.map((m) => m.message).toList(),
-        const ['Mesaj 1', 'Mesaj 2', 'Mesaj 3', 'Mesaj 4', 'Mesaj 5'],
-      );
+      expect(secondRead.map((m) => m.message).toList(), const [
+        'Bildirimden durdurunca sayaç devam ediyor.',
+        'Mesaj 1',
+        'Mesaj 2',
+        'Mesaj 3',
+        'Mesaj 4',
+        'Mesaj 5',
+      ]);
     });
 
     test('katılımcı olmayan kullanıcı yazışmayı ne okur ne yazar', () async {
@@ -236,29 +252,23 @@ void main() {
     });
   });
 
-  group('🔴 kilitli kusur — WP-435 çevirecek', () {
-    test('biletin ilk mesajı kanonik mesaj dizisinde yok', () async {
-      // Kullanıcının yazdığı ilk metin `feedback_tickets.message` içinde kalır;
-      // `feedback_ticket_messages` boştur. Yazışma penceresi bu yüzden
-      // "henüz yanıt yok" der ve ilk mesajın kalıcı bir `message_id`si olmaz.
-      //
-      // WP-435 backfill'i geldiğinde bu iddia tersine döner: dizi ilk mesajla
-      // başlamalı ve `messages.first.message == ticket.message` olmalıdır.
+  group('WP-435 — sunucu tek gerçeği', () {
+    test('biletin ilk mesajı kanonik mesaj dizisinde yer alır', () async {
       final repo = InMemoryAdminRepository(superAdminUserIds: {'admin'});
       addTearDown(repo.dispose);
       final ticket = await _openTicket(repo, message: 'İlk kayıt.');
 
       expect(ticket.message, 'İlk kayıt.');
-      expect(
-        await repo.fetchTicketMessages(userId: 'u1', ticketId: ticket.id),
-        isEmpty,
-        reason: 'WP-435 sonrası ilk mesaj kanonik diziye taşınmış olmalı',
+      final messages = await repo.fetchTicketMessages(
+        userId: 'u1',
+        ticketId: ticket.id,
       );
+      expect(messages, hasLength(1));
+      expect(messages.single.message, ticket.message);
+      expect(messages.single.messageSeq, 1);
     });
 
-    test('aynı mesaj iki kez gönderilince iki satır oluşur (idempotent değil)', () async {
-      // Ağ zaman aşımından sonra yeniden denemenin tek satıra düşmesi için
-      // istemci kaynaklı `client_message_id` gerekir; bugün yok.
+    test('aynı istemci komutu yeniden denendiğinde tek satır kalır', () async {
       final repo = InMemoryAdminRepository(superAdminUserIds: {'admin'});
       addTearDown(repo.dispose);
       final ticket = await _openTicket(repo);
@@ -267,14 +277,16 @@ void main() {
         userId: 'u1',
         ticketId: ticket.id,
         message: 'Aynı metin',
+        clientMessageId: '00000000-0000-0000-0000-000000000435',
       );
       final b = await repo.sendTicketMessage(
         userId: 'u1',
         ticketId: ticket.id,
         message: 'Aynı metin',
+        clientMessageId: '00000000-0000-0000-0000-000000000435',
       );
 
-      expect(a.id, isNot(b.id));
+      expect(a.id, b.id);
       final messages = await repo.fetchTicketMessages(
         userId: 'u1',
         ticketId: ticket.id,
@@ -282,14 +294,11 @@ void main() {
       expect(
         messages.length,
         2,
-        reason: 'WP-435 istemci komut kimliği ekleyince tek satır kalmalı',
+        reason: 'ilk mesaj + idempotent devam mesajı kalmalı',
       );
     });
 
-    test('mesaj modelinde istemci kimliği ve sıra imleci yok', () {
-      // `fromMap` sunucudan gelen fazladan alanları okumaz: bugün ne
-      // `client_message_id` ne `message_seq` taşınır. Sıra tek başına
-      // `created_at`e bağlıdır; eşit damgada kanonik sıra kaynağı yoktur.
+    test('mesaj modeli istemci kimliği ve sıra imlecini taşır', () {
       final message = FeedbackTicketMessage.fromMap({
         'id': 'm1',
         'ticket_id': 't1',
@@ -301,37 +310,22 @@ void main() {
         'message_seq': 7,
       });
       expect(message.id, 'm1');
-      expect(
-        (message as Object).toString().contains('c1'),
-        isFalse,
-        reason: 'model istemci kimliğini taşımıyor',
-      );
+      expect(message.clientMessageId, 'c1');
+      expect(message.messageSeq, 7);
 
       final supabaseSource = _readSource(
         'lib/data/repositories/supabase/supabase_admin_repository.dart',
       );
-      expect(supabaseSource, contains(".order('created_at')"));
-      expect(
-        supabaseSource.contains('message_seq'),
-        isFalse,
-        reason: 'WP-435 sunucu sıra imlecini ekleyince bu iddia çevrilmeli',
-      );
-      expect(
-        supabaseSource.contains('client_message_id'),
-        isFalse,
-        reason: 'WP-435 idempotent insert eklenince bu iddia çevrilmeli',
-      );
+      expect(supabaseSource, contains(".order('message_seq')"));
+      expect(supabaseSource, contains('message_seq'));
+      expect(supabaseSource, contains('client_message_id'));
     });
 
-    test('sunucu admin yanıtında ikinci kanal üretir, InMemory üretmez', () async {
-      // Çift kanal (mesaj + duyuru) yalnız SQL tarafında var. Repository
-      // çiftinin bu sapması, rozet çift sayımının Dart testlerinde neden
-      // görünmediğini açıklar.
+    test('admin yanıtı ikinci bir duyuru olayı üretmez', () async {
       final sql = _readSource(
-        '../supabase/migrations/0074_feedback_ticket_conversations.sql',
+        '../supabase/migrations/0103_feedback_thread_single_truth.sql',
       );
-      expect(sql, contains("if v_sender_role = 'admin' then"));
-      expect(sql, contains('insert into public.announcements'));
+      expect(sql, isNot(contains('insert into public.announcements')));
 
       final repo = InMemoryAdminRepository(superAdminUserIds: {'admin'});
       addTearDown(repo.dispose);
@@ -346,7 +340,7 @@ void main() {
       expect(
         (await repo.fetchAnnouncements()).length,
         before,
-        reason: 'WP-435 çift kanalı tekleştirince bu sapma da kapanmalı',
+        reason: 'tek konuşma olayı tek okunmamış gerçeğine bırakılır',
       );
     });
   });
@@ -354,58 +348,65 @@ void main() {
   group('🔴 kilitli kusur — WP-436 çevirecek', () {
     setUp(() => SharedPreferences.setMockInitialValues({}));
 
-    test('tek admin yanıtı rozeti iki kez artırır ve okununca sönmez', () async {
-      final prefs = await SharedPreferences.getInstance();
-      final repo = InMemoryAdminRepository(superAdminUserIds: {'admin'});
-      addTearDown(repo.dispose);
-      final ticket = await _openTicket(repo);
-      await repo.sendTicketMessage(
-        userId: 'admin',
-        ticketId: ticket.id,
-        message: 'Bakıyoruz.',
-      );
+    test(
+      'tek admin yanıtı rozeti iki kez artırır ve okununca sönmez',
+      () async {
+        final prefs = await SharedPreferences.getInstance();
+        final repo = InMemoryAdminRepository(superAdminUserIds: {'admin'});
+        addTearDown(repo.dispose);
+        final ticket = await _openTicket(repo);
+        await repo.sendTicketMessage(
+          userId: 'admin',
+          ticketId: ticket.id,
+          message: 'Bakıyoruz.',
+        );
 
-      final container = ProviderContainer(
-        overrides: [
-          sharedPreferencesProvider.overrideWithValue(prefs),
-          authStateProvider.overrideWith(
-            (ref) => Stream.value(
-              Profile(id: 'u1', displayName: 'Ben', createdAt: DateTime(2026)),
+        final container = ProviderContainer(
+          overrides: [
+            sharedPreferencesProvider.overrideWithValue(prefs),
+            authStateProvider.overrideWith(
+              (ref) => Stream.value(
+                Profile(
+                  id: 'u1',
+                  displayName: 'Ben',
+                  createdAt: DateTime(2026),
+                ),
+              ),
             ),
-          ),
-          adminRepositoryProvider.overrideWithValue(repo),
-          notificationRepositoryProvider.overrideWithValue(
-            _FakeNotificationRepository([
-              _adminReplyAnnouncement(ticket.id, 'u1'),
-            ]),
-          ),
-        ],
-      );
-      addTearDown(container.dispose);
-      container.listen(authStateProvider, (_, _) {});
-      await container.read(authStateProvider.future);
-      await container.read(myAnnouncementsProvider.future);
-      await container.read(readAnnouncementIdsProvider.future);
-      await container.read(unreadFeedbackReplyCountProvider.future);
+            adminRepositoryProvider.overrideWithValue(repo),
+            notificationRepositoryProvider.overrideWithValue(
+              _FakeNotificationRepository([
+                _adminReplyAnnouncement(ticket.id, 'u1'),
+              ]),
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
+        container.listen(authStateProvider, (_, _) {});
+        await container.read(authStateProvider.future);
+        await container.read(myAnnouncementsProvider.future);
+        await container.read(readAnnouncementIdsProvider.future);
+        await container.read(unreadFeedbackReplyCountProvider.future);
 
-      expect(
-        container.read(settingsBadgeCountProvider),
-        2,
-        reason:
-            'tek yanıt iki kanal üretiyor; WP-436 sonrası bu sayı 1 olmalı',
-      );
+        expect(
+          container.read(settingsBadgeCountProvider),
+          2,
+          reason:
+              'tek yanıt iki kanal üretiyor; WP-436 sonrası bu sayı 1 olmalı',
+        );
 
-      // Yazışma okundu: mesaj kanalı temizlenir, duyuru kanalı asılı kalır.
-      await repo.markTicketMessagesRead(userId: 'u1', ticketId: ticket.id);
-      container.invalidate(unreadFeedbackReplyCountProvider);
-      await container.read(unreadFeedbackReplyCountProvider.future);
+        // Yazışma okundu: mesaj kanalı temizlenir, duyuru kanalı asılı kalır.
+        await repo.markTicketMessagesRead(userId: 'u1', ticketId: ticket.id);
+        container.invalidate(unreadFeedbackReplyCountProvider);
+        await container.read(unreadFeedbackReplyCountProvider.future);
 
-      expect(
-        container.read(settingsBadgeCountProvider),
-        1,
-        reason: 'WP-436 sonrası her şey okunduğunda rozet 0 olmalı',
-      );
-    });
+        expect(
+          container.read(settingsBadgeCountProvider),
+          1,
+          reason: 'WP-436 sonrası her şey okunduğunda rozet 0 olmalı',
+        );
+      },
+    );
 
     testWidgets('yazışma açıkken gelen yeni yanıt ekrana düşmez', (
       tester,
@@ -437,7 +438,8 @@ void main() {
       expect(
         find.text('Canlı yanıt.'),
         findsNothing,
-        reason: 'WP-436 realtime aboneliği gelince yanıt aynı thread\'e düşmeli',
+        reason:
+            'WP-436 realtime aboneliği gelince yanıt aynı thread\'e düşmeli',
       );
 
       // Pencere kapanıp açılınca görünür — veri kaybı yok, canlılık yok.

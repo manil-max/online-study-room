@@ -115,6 +115,18 @@ class InMemoryAdminRepository implements AdminRepository {
           : null,
     );
     _tickets.add(ticket);
+    _ticketMessages.add(
+      FeedbackTicketMessage(
+        id: _uuid.v4(),
+        ticketId: ticket.id,
+        senderId: userId,
+        senderRole: FeedbackTicketSenderRole.user,
+        message: ticket.message,
+        createdAt: now,
+        messageSeq: 1,
+        clientMessageId: _uuid.v4(),
+      ),
+    );
     _changes.add(null);
     return ticket;
   }
@@ -261,8 +273,14 @@ class InMemoryAdminRepository implements AdminRepository {
     required String userId,
     required String ticketId,
     required String message,
+    String? clientMessageId,
   }) async {
     final ticketIndex = _requireTicketParticipant(userId, ticketId);
+    final commandId = clientMessageId ?? _uuid.v4();
+    final previous = _ticketMessages.where(
+      (item) => item.ticketId == ticketId && item.clientMessageId == commandId,
+    );
+    if (previous.isNotEmpty) return previous.single;
     final senderRole = _superAdminUserIds.contains(userId)
         ? FeedbackTicketSenderRole.admin
         : FeedbackTicketSenderRole.user;
@@ -274,6 +292,16 @@ class InMemoryAdminRepository implements AdminRepository {
       senderRole: senderRole,
       message: normalizeFeedbackTicketReply(message),
       createdAt: now,
+      messageSeq:
+          _ticketMessages
+              .where((item) => item.ticketId == ticketId)
+              .fold<int>(
+                0,
+                (maxSeq, item) =>
+                    item.messageSeq > maxSeq ? item.messageSeq : maxSeq,
+              ) +
+          1,
+      clientMessageId: commandId,
     );
     _ticketMessages.add(item);
     _tickets[ticketIndex] = _tickets[ticketIndex].copyWith(
@@ -322,6 +350,8 @@ class InMemoryAdminRepository implements AdminRepository {
           senderRole: item.senderRole,
           message: item.message,
           createdAt: item.createdAt,
+          messageSeq: item.messageSeq,
+          clientMessageId: item.clientMessageId,
           readAt: now,
         );
       }

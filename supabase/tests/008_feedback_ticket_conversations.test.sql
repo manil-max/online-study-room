@@ -119,8 +119,8 @@ select ok(
 select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000001', true);
 select is(
   (select count(*) from public.feedback_ticket_messages),
-  2::bigint,
-  'ticket owner can read both sides of the conversation'
+  3::bigint,
+  'ticket owner can read the canonical initial message and both conversation sides'
 );
 select public.mark_feedback_ticket_messages_read(
   '40000000-0000-0000-0000-000000000001'

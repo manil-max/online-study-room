@@ -442,7 +442,7 @@ class SupabaseAdminRepository implements AdminRepository {
           .from('feedback_ticket_messages')
           .select()
           .eq('ticket_id', ticketId)
-          .order('created_at');
+          .order('message_seq');
       return rows
           .map(
             (row) =>
@@ -459,6 +459,7 @@ class SupabaseAdminRepository implements AdminRepository {
     required String userId,
     required String ticketId,
     required String message,
+    String? clientMessageId,
   }) async {
     try {
       final row = await _client.rpc(
@@ -466,6 +467,7 @@ class SupabaseAdminRepository implements AdminRepository {
         params: {
           'p_ticket_id': ticketId,
           'p_message': normalizeFeedbackTicketReply(message),
+          'p_client_message_id': clientMessageId ?? const Uuid().v4(),
         },
       );
       return FeedbackTicketMessage.fromMap(
