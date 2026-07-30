@@ -138,20 +138,23 @@
 
 ### Ajan A — Timer, seçili ders ve görev devralması
 
-- **Durum:** [!] BEKLİYOR — WP-448 tamam; D/WP-445 migration commit'i bekleniyor.
+- **Durum:** [!] BEKLİYOR: D/WP-445 migration commit'i. WP-448 `2e0f23d` kapandı.
 - **Zincir:** `WP-432 → WP-433 → WP-448 → [D/WP-445] → WP-449 → WP-450 → WP-451`.
-- **Şimdi:** WP-448 hesap-kapsamlı seçilen ders tercihi tamamlandı; WP-449
-  için D/WP-445 migration commit'i izleniyor.
+- **Şimdi:** WP-449'un Dart katmanı (sabit fazlı recurrence motoru, model,
+  repository çiftleri, provider) hazır ve 15 hedefli test yeşil; migration +
+  pgTAP taslakları yazıldı, dosya numarası kilit açılınca ölçülecek. Bu arada
+  WP-450 görev UI'ı çalışma ağacında hazırlanıyor; sıra 449 → 450 commit'idir.
 - **Devralınan dirty iş:** Eski E'nin recurrence dosyaları A'ya aittir:
   `user_task*`, `task_deadline.dart`, `task_recurrence.dart` ve ilgili
   testler. Bunlar korunur; WP-448 ve D/WP-445 gelmeden yarım commit atılmaz.
 - **SAHİP:** timer/notification yönlendirmesi, `study_providers.dart`, subject
   persistence; sonra user-task/core-task/repository çiftleri ve görev UI/testleri.
-- **Aktif WP / sahip yollar:** WP-448 · `app/lib/data/providers/study_providers.dart`,
-  timer/task subject seçim UI'sı ve selected-subject persistence testleri.
+- **Aktif WP / sahip yollar:** WP-449 (migration kilidi bekliyor) · `core/tasks/**`,
+  `user_task*`, task repository çiftleri, task provider'ları ve ilgili testler;
+  ardından WP-450 için `tasks_screen.dart` / `tasks_card.dart`.
 - **Ortak/riskli yüzey:** Migration yok; B/WP-435 migration yazımını yürütüyor,
   production/stable kapalı.
-- **Başlangıç / son güncelleme:** 2026-07-30 10:50 / 11:31 (Europe/Istanbul).
+- **Başlangıç / son güncelleme:** 2026-07-30 10:50 / 17:10 (Europe/Istanbul).
 - **DOKUNMA:** moderation, feedback, grup sohbeti, streak motoru, B'nin navigation/l10n yüzeyi.
 - **Teslim:** Her aşamada commit/test kanıtı; WP-451 fixture'ı D/WP-455'e açık bırakılır.
 
