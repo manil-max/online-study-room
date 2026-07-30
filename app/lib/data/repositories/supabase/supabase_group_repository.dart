@@ -459,8 +459,30 @@ class SupabaseGroupRepository implements GroupRepository {
   }
 
   @override
-  Future<void> leaveGroup(String groupId, String userId) =>
-      removeMember(groupId, userId);
+  Future<GroupLeaveOutcome> leaveGroup(
+    String groupId,
+    String userId, {
+    required String commandId,
+  }) async {
+    try {
+      // `userId` sunucuya gönderilmez: kimlik `auth.uid()`ten okunur.
+      final outcome = await _client.rpc(
+        'leave_group',
+        params: {'p_group_id': groupId, 'p_command_id': commandId},
+      );
+      return outcome == 'already_left'
+          ? GroupLeaveOutcome.alreadyLeft
+          : GroupLeaveOutcome.left;
+    } on PostgrestException catch (e) {
+      if (e.message.contains('owner_must_transfer_or_delete') ||
+          e.message.contains('last_admin_must_transfer')) {
+        throw GroupOwnerCannotLeaveException(
+          'Grup sahibi gruptan çıkamaz: önce devret ya da grubu sil.',
+        );
+      }
+      throw GroupException('Gruptan çıkılamadı: ${e.message}');
+    }
+  }
 
   @override
   Future<void> deleteGroup(String groupId) async {

@@ -38,6 +38,25 @@ class PrimaryGroupPreference {
       );
 }
 
+/// WP-445: gruptan çıkış komutunun sunucu tarafından bildirilen sonucu.
+enum GroupLeaveOutcome {
+  /// Bu çağrı üyeliği sonlandırdı.
+  left,
+
+  /// Kullanıcı zaten üye değildi ya da aynı komut daha önce işlendi.
+  /// Hata değildir: çevrimdışı retry sahte hata göstermesin diye ayrılmıştır.
+  alreadyLeft,
+}
+
+/// Grup sahibi kendi grubundan çıkamaz; devretme veya silme yolu kullanılmalıdır.
+///
+/// Ayrı tip, çağıranın bu durumu genel hatadan ayırıp sahibe doğru yolu
+/// gösterebilmesi içindir (`GroupException` alt tipidir, eski `catch` blokları
+/// çalışmaya devam eder).
+class GroupOwnerCannotLeaveException extends GroupException {
+  const GroupOwnerCannotLeaveException(super.message);
+}
+
 /// Sınıf/grup soyutlaması. Şimdilik bellek-içi; ileride Supabase ile değiştirilecek.
 abstract class GroupRepository {
   /// Admin-only private avatar upload. DB'ye yalnız versioned object path yazılır.
@@ -133,8 +152,22 @@ abstract class GroupRepository {
   /// Bir üyeyi sınıftan çıkarır (admin başkasını; kişi kendini → çık).
   Future<void> removeMember(String groupId, String userId);
 
-  /// Kullanıcı sınıftan ayrılır (kendi üyeliğini siler).
-  Future<void> leaveGroup(String groupId, String userId);
+  /// WP-445: Kullanıcı sınıftan ayrılır.
+  ///
+  /// [commandId] idempotency anahtarıdır: tek kullanıcı hareketi için tek
+  /// anahtar üretilir ve retry'da **aynısı** gönderilir. Aynı anahtarla tekrar
+  /// çağırmak işi tekrar yapmaz, ilk sonucu döndürür — bu yüzden hızlı çift tap
+  /// ve zaman aşımı sonrası retry tek çıkışa indirgenir.
+  ///
+  /// [userId] yalnız bellek-içi/demo yol içindir; sunucu kimliği istemciden
+  /// almaz, `auth.uid()` kullanır.
+  ///
+  /// Grup sahibi için [GroupOwnerCannotLeaveException] fırlatır.
+  Future<GroupLeaveOutcome> leaveGroup(
+    String groupId,
+    String userId, {
+    required String commandId,
+  });
 
   /// Sınıfı tamamen siler (admin). İlişkili veriler DB'de cascade ile gider.
   Future<void> deleteGroup(String groupId);

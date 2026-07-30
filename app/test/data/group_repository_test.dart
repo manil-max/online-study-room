@@ -165,7 +165,13 @@ void main() {
       final repo = InMemoryGroupRepository();
       final user = _profile('u1', 'Ali');
       final first = await repo.createGroup(name: 'İlk', creator: user);
-      final second = await repo.createGroup(name: 'İkinci', creator: user);
+      // WP-445: grup sahibi kendi grubundan cikamaz (sahipsiz grup kalirdi).
+      // Uzlasma senaryosu bu yuzden kullanicinin UYE oldugu bir grupla kurulur.
+      final second = await repo.createGroup(
+        name: 'Ikinci',
+        creator: _profile('u9', 'Sahip'),
+      );
+      await repo.joinGroup(inviteCode: second.inviteCode, member: user);
 
       final initial = await repo.watchPrimaryGroupPreference(user.id).first;
       expect(initial.primaryGroupId, first.id);
@@ -187,7 +193,7 @@ void main() {
         throwsA(isA<GroupException>()),
       );
 
-      await repo.leaveGroup(second.id, user.id);
+      await repo.leaveGroup(second.id, user.id, commandId: 'leave-second');
       final reconciled = await repo.watchPrimaryGroupPreference(user.id).first;
       expect(reconciled.primaryGroupId, first.id);
       expect(reconciled.selectionRevision, 3);

@@ -239,15 +239,15 @@
 
 ### Ajan D — Grup/dürtme, tarih seçici ve seri devralması
 
-- **Durum:** [~] Aktif — WP-444 `a84a799` kapandı; WP-445 yürüyüor: `0108` +
-  repository sözleşmesi yazıldı, UI adımı iki l10n anahtarını bekliyor.
+- **Durum:** [~] Aktif — WP-444 `a84a799` ve WP-445 (bu commit) kapandı;
+  sırada WP-446 (grup bilgi sadeleştirmesi + mesajı raporla UI'si).
 - **Zincir:** `WP-444(Faz 2) → WP-445 → WP-446 → WP-447 → [A/WP-449] → WP-453 → WP-454 → WP-455`.
 - **Hazır kanıt:** WP-444 Faz 1 `b61038e` + Faz 2 `a84a799`; WP-452 `51b5478`; WP-453 Faz 1 `a309c2d` — kod+hedefli test tamam.
-- **B'den l10n talebi (WP-445, l10n kilidi B'de olduğu için D arb'ye yazmaz):**
-  `classroomGruptanCikilamadi` "Gruptan çıkılamadı."/"Couldn't leave the group." ·
-  `classroomRetry` "Tekrar dene"/"Try again". Mevcut `groupDiscoveryRetry`
-  yeniden kullanılmadı: keşif yüzeyine isimlenmiş anahtarı grup detayında
-  kullanmak sonraki okuyucuyu yanıltır.
+- **B'den bekleyen l10n takası (WP-445):** `classroomGruptanCikilamadi` ve
+  `classroomRetry` talep edildi (`3dbe619`) ama henüz açılmadı. Repo'yu derlenmez
+  bırakmamak için çıkış SnackBar'ı geçici olarak mevcut
+  `authBeklenmeyenBirHataOlustu` + `groupDiscoveryRetry` anahtarlarını kullanıyor;
+  anahtarlar gelince iki satırlık takas yapılacak (kodda not düşüldü).
 - **B'den l10n talebi (WP-444 Faz 2, l10n kilidi B'de olduğu için D arb'ye yazmaz):**
   `safetyMutedNudgesTitle` "Dürtmesi susturulanlar"/"Muted nudges" ·
   `safetyMutedNudgesEmpty` "Dürtmesi susturulan kimse yok."/"No one is muted." ·
@@ -274,7 +274,7 @@
 - **DOKUNMA:** moderation backend, feedback/navigation/l10n, task recurrence
   ve campfire/observability kaynakları.
 - **Teslim:** WP-447 grup matrisi ve WP-455 progression matrisi C/WP-465'e devredilir.
-- **Son kontrol:** 2026-07-30 19:05 (Europe/Istanbul) · WP-445 için migration sırası D'de: `0108_leave_group_command.sql` yazıldı (idempotency komut tablosu + advisory lock + sahiplik değişmezi + presence temizliği). Repository sözleşmesi `GroupLeaveOutcome` ile güncellendi. Bekleyen tek şey UI'nin iki l10n anahtarı; bu arada pgTAP ve repository testleri yazılıyor.
+- **Son kontrol:** 2026-07-30 20:10 (Europe/Istanbul) · WP-445 teslim edildi; migration sırası D'de `0108`'e ilerledi. Mevcut bir test (`group_repository_test` birincil grup uzlaşması) yeni sahiplik değişmezine takıldı: senaryo kullanıcının SAHİP olduğu grubu terk etmesine dayanıyordu, üye olduğu bir gruba çevrildi — testin niyeti (üyelik değişiminde uzlaşma) korundu.
 
 
 ## 🗺️ Yol Haritası — sırada ne var
@@ -4521,7 +4521,8 @@ alır; boş/uydurma migration yazılmaz.
 
 #### WP-445 — Gruptan çıkış için idempotent, anlık ve geri bildirimli işlem
 
-- **Durum / bağımlılık:** [ ] WP-444 + migration kilidi.
+- **Durum / bağımlılık:** [x] TAMAMLANDI · bu commit · WP-444 `a84a799` + migration kilidi C/WP-442 `f93859d` ile açıldı; `0108` alındı.
+- **Kanıt (Ajan D, 2026-07-30):** `0108_leave_group_command.sql` — `leave_group(p_group_id, p_command_id)` yalnız `auth.uid()` ile çalışır; `group_leave_commands` idempotency tablosu ve kullanıcı+grup bazlı `pg_advisory_xact_lock` sayesinde aynı anahtar işi tekrar yapmaz. Çıkış soft-delete'tir (`0008`), böylece `0079`'daki `group_members_primary_group_reconcile` trigger'ı `left_at` UPDATE'inde ateşlenir ve birincil grup uzlaşması aynı işlemde olur; `group_live_presence` satırı da aynı işlemde silinir (ayrılan kişi kamp ateşinde asılı kalmaz). Sahiplik değişmezi: `groups.created_by` gruptan çıkamaz (`owner_must_transfer_or_delete`), son yönetici için ayrı güvenlik ağı var; UI zaten sahibe düz çıkış yerine silme yolunu gösteriyor. İstemci: `GroupLeaveOutcome` (`left`/`alreadyLeft`) — çevrimdışı retry sahte hata göstermez; `_LeaveGroupTile` meşgul koruması, 10 sn timeout ve **aynı anahtarla** retry sunar. Kart iyimser liste silmeyi öneriyordu; kabul kriteri "başarısızlıkta sahte çıkmış görünmez" ağır bastığı için satır ancak sunucu onayından sonra kaldırılıyor, görünür geri bildirim meşgul göstergesiyle veriliyor. Test: repository 6 + widget 2 + grup yüzeyi regresyonu = **67/67 yeşil**, hedefli analyze temiz. pgTAP `033_leave_group_command.test.sql` (11 assert) yazıldı; bu hostta Docker kalkmadığı için **Replay bekliyor**.
 - **SAHİP:** group repository/provider,
   `features/classroom/widgets/class_detail_screen.dart` içindeki üyelik/çıkış UI,
   `supabase/migrations/0108_*`, group pgTAP ve testleri.

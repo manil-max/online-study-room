@@ -450,9 +450,56 @@ class InMemoryGroupRepository implements GroupRepository {
     _changes.add(null);
   }
 
+  /// WP-445: işlenmiş çıkış komutları — `0108`'deki `group_leave_commands`
+  /// tablosunun bellek-içi karşılığı.
+  final Map<String, ({String userId, String groupId, GroupLeaveOutcome outcome})>
+  _leaveCommands = {};
+
   @override
-  Future<void> leaveGroup(String groupId, String userId) =>
-      removeMember(groupId, userId);
+  Future<GroupLeaveOutcome> leaveGroup(
+    String groupId,
+    String userId, {
+    required String commandId,
+  }) async {
+    // 1) Tekrar (replay): iş yeniden yapılmaz, ilk sonuç aynen döner.
+    final existing = _leaveCommands[commandId];
+    if (existing != null) {
+      if (existing.userId != userId || existing.groupId != groupId) {
+        throw const GroupException('Çıkış komutu bu gruba ait değil.');
+      }
+      return existing.outcome;
+    }
+
+    GroupLeaveOutcome record(GroupLeaveOutcome outcome) {
+      _leaveCommands[commandId] = (
+        userId: userId,
+        groupId: groupId,
+        outcome: outcome,
+      );
+      return outcome;
+    }
+
+    final group = _groups[groupId];
+    if (group == null) {
+      throw const GroupException('Grup bulunamadı.');
+    }
+
+    final isActiveMember = _members[groupId]?.any((m) => m.id == userId) ?? false;
+    // 2) Zaten üye değil: hata değil, idempotent sonuç.
+    if (!isActiveMember) {
+      return record(GroupLeaveOutcome.alreadyLeft);
+    }
+
+    // 3) Sahiplik değişmezi: sahip çıkarsa grup sahipsiz kalır.
+    if (group.createdBy == userId) {
+      throw const GroupOwnerCannotLeaveException(
+        'Grup sahibi gruptan çıkamaz: önce devret ya da grubu sil.',
+      );
+    }
+
+    await removeMember(groupId, userId);
+    return record(GroupLeaveOutcome.left);
+  }
 
   @override
   Future<void> deleteGroup(String groupId) async {

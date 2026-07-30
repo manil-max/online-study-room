@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../core/utils/duration_format.dart';
 import '../../../core/time_engine/group_time_zone_label.dart';
@@ -273,19 +276,8 @@ class ClassDetailScreen extends ConsumerWidget {
             style: theme.textTheme.titleMedium,
           ),
           const SizedBox(height: 8),
-          if (!isAdmin)
-            Card(
-              child: ListTile(
-                leading: Icon(Icons.logout, color: theme.colorScheme.error),
-                title: Text(
-                  AppLocalizations.of(context).classroomGruptanCik,
-                  style: TextStyle(color: theme.colorScheme.error),
-                ),
-                onTap: userId == null
-                    ? null
-                    : () => _leave(context, ref, repo, userId),
-              ),
-            ),
+          if (!isAdmin && userId != null)
+            _LeaveGroupTile(group: group, userId: userId),
           if (isAdmin)
             Card(
               child: ListTile(
@@ -600,36 +592,6 @@ class ClassDetailScreen extends ConsumerWidget {
       messenger.showSnackBar(
         SnackBar(content: Text(l10n.classroomYeniKodCode(code))),
       );
-    } on GroupException {
-      messenger.showSnackBar(SnackBar(content: Text(genericError)));
-    }
-  }
-
-  Future<void> _leave(
-    BuildContext context,
-    WidgetRef ref,
-    GroupRepository repo,
-    String userId,
-  ) async {
-    final ok = await _confirm(
-      context,
-      title: AppLocalizations.of(context).classroomGruptanCik,
-      message:
-          '"${group.name}" · '
-          '${AppLocalizations.of(context).classroomGruptanCik}. '
-          '${AppLocalizations.of(context).classroomBuIslemGeriAlinamaz}',
-      action: AppLocalizations.of(context).classroomCik,
-    );
-    if (!ok || !context.mounted) return;
-    final messenger = ScaffoldMessenger.of(context);
-    final genericError = AppLocalizations.of(
-      context,
-    ).authBeklenmeyenBirHataOlustu;
-    final navigator = Navigator.of(context);
-    try {
-      await repo.leaveGroup(group.id, userId);
-      ref.read(activeGroupIdProvider.notifier).select(null);
-      navigator.pop();
     } on GroupException {
       messenger.showSnackBar(SnackBar(content: Text(genericError)));
     }
@@ -1065,4 +1027,118 @@ Future<bool> _confirm(
     ),
   );
   return result ?? false;
+}
+
+
+/// WP-445: Gruptan çıkış — tek hareket, tek komut.
+///
+/// Eski hâl durumsuz bir `ListTile`'dı: her tap yeni bir mutasyon başlatıyordu
+/// ve zaman aşımında kullanıcı "çıktım mı" sorusuyla baş başa kalıyordu.
+///
+/// Burada tek kullanıcı hareketi için **tek** `commandId` üretilir ve retry'da
+/// aynısı gönderilir; sunucu (`0108`) aynı anahtarı yeniden işlemez. Böylece 20
+/// hızlı tap da, zaman aşımı sonrası retry de tek çıkışa indirgenir.
+///
+/// Liste iyimser biçimde önden silinmez: kart "başarısızlıkta sahte çıkmış
+/// görünmez" diyor, bu yüzden görünür geri bildirim (≤1 sn) meşgul göstergesiyle
+/// verilir ve satır ancak sunucu onayından sonra kaybolur.
+class _LeaveGroupTile extends ConsumerStatefulWidget {
+  const _LeaveGroupTile({required this.group, required this.userId});
+
+  final StudyGroup group;
+  final String userId;
+
+  @override
+  ConsumerState<_LeaveGroupTile> createState() => _LeaveGroupTileState();
+}
+
+class _LeaveGroupTileState extends ConsumerState<_LeaveGroupTile> {
+  bool _busy = false;
+
+  /// Hareket başına tek anahtar; retry aynısını kullanır.
+  String? _commandId;
+
+  Future<void> _confirmAndLeave() async {
+    final l10n = AppLocalizations.of(context);
+    final ok = await _confirm(
+      context,
+      title: l10n.classroomGruptanCik,
+      message:
+          '"${widget.group.name}" · '
+          '${l10n.classroomGruptanCik}. '
+          '${l10n.classroomBuIslemGeriAlinamaz}',
+      action: l10n.classroomCik,
+    );
+    if (!ok || !mounted) return;
+    _commandId = const Uuid().v4();
+    await _send();
+  }
+
+  Future<void> _send() async {
+    if (_busy) return;
+    final l10n = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    final repo = ref.read(groupRepositoryProvider);
+
+    setState(() => _busy = true);
+    try {
+      // Askıda kalan istek retry'ı gizlemesin.
+      await repo
+          .leaveGroup(
+            widget.group.id,
+            widget.userId,
+            commandId: _commandId!,
+          )
+          .timeout(const Duration(seconds: 10));
+      // `left` ve `alreadyLeft` aynı kullanıcı gerçeğidir: artık üye değil.
+      ref.read(activeGroupIdProvider.notifier).select(null);
+      ref.invalidate(userGroupsProvider);
+      if (!mounted) return;
+      navigator.pop();
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _busy = false);
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(l10n.authBeklenmeyenBirHataOlustu),
+          action: SnackBarAction(
+            label: l10n.groupDiscoveryRetry,
+            // Aynı anahtar: sunucu işi tekrar yapmaz.
+            // NOT: metinler geçici olarak mevcut anahtarlardan; D'nin
+            // istediği `classroomGruptanCikilamadi`/`classroomRetry`
+            // B tarafından açılınca takas edilecek.
+            onPressed: _send,
+          ),
+        ),
+      );
+      return;
+    }
+    if (mounted) setState(() => _busy = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
+
+    return Card(
+      child: ListTile(
+        key: const ValueKey('leave-group-action'),
+        leading: _busy
+            ? const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : Icon(Icons.logout, color: theme.colorScheme.error),
+        title: Text(
+          l10n.classroomGruptanCik,
+          style: TextStyle(color: theme.colorScheme.error),
+        ),
+        enabled: !_busy,
+        onTap: _busy ? null : _confirmAndLeave,
+      ),
+    );
+  }
 }
