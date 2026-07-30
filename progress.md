@@ -138,10 +138,10 @@
 
 ### Ajan A — Timer, seçili ders ve görev devralması
 
-- **Durum:** [~] Aktif — WP-448 geliştiriliyor.
+- **Durum:** [!] BEKLİYOR — WP-448 tamam; D/WP-445 migration commit'i bekleniyor.
 - **Zincir:** `WP-432 → WP-433 → WP-448 → [D/WP-445] → WP-449 → WP-450 → WP-451`.
-- **Şimdi:** WP-433 otomatik matris ve cihaz kabul paketi tamamlandı; WP-448
-  seçilen ders tercihini hesap/cihaz yaşam döngüsünde kalıcılaştırır.
+- **Şimdi:** WP-448 hesap-kapsamlı seçilen ders tercihi tamamlandı; WP-449
+  için D/WP-445 migration commit'i izleniyor.
 - **Devralınan dirty iş:** Eski E'nin recurrence dosyaları A'ya aittir:
   `user_task*`, `task_deadline.dart`, `task_recurrence.dart` ve ilgili
   testler. Bunlar korunur; WP-448 ve D/WP-445 gelmeden yarım commit atılmaz.
@@ -151,7 +151,7 @@
   timer/task subject seçim UI'sı ve selected-subject persistence testleri.
 - **Ortak/riskli yüzey:** Migration yok; B/WP-435 migration yazımını yürütüyor,
   production/stable kapalı.
-- **Başlangıç / son güncelleme:** 2026-07-30 10:50 / 11:05 (Europe/Istanbul).
+- **Başlangıç / son güncelleme:** 2026-07-30 10:50 / 11:31 (Europe/Istanbul).
 - **DOKUNMA:** moderation, feedback, grup sohbeti, streak motoru, B'nin navigation/l10n yüzeyi.
 - **Teslim:** Her aşamada commit/test kanıtı; WP-451 fixture'ı D/WP-455'e açık bırakılır.
 
@@ -4420,7 +4420,7 @@ alır; boş/uydurma migration yazılmaz.
 
 #### WP-448 — Son seçilen dersin hesap/cihaz yaşam döngüsünde korunması
 
-- **Durum / bağımlılık:** [ ] Ajan A · WP-433 sonrası. Ajan E bu karta yazmaz.
+- **Durum / bağımlılık:** [x] Ajan A · `WP-448` · WP-433 tamam. Ajan E bu karta yazmaz.
 - **SAHİP:** `app/lib/data/providers/study_providers.dart`, timer/task subject
   seçim UI'si, yeni selected-subject persistence testleri.
 - **Uygulama:** kullanıcı özel ders seçince değiştirilene/silinene kadar,

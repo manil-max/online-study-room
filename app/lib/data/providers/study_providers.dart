@@ -30,6 +30,7 @@ import '../models/global_timer.dart';
 import '../models/presence.dart';
 import '../models/profile.dart';
 import '../models/study_session.dart';
+import '../models/subject.dart';
 import '../models/user_study_summary.dart';
 import '../repositories/study_repository.dart';
 import '../repositories/presence_repository.dart';
@@ -41,6 +42,7 @@ import 'auth_providers.dart';
 import 'group_providers.dart';
 import 'presence_providers.dart';
 import 'global_timer_providers.dart';
+import 'subject_providers.dart';
 
 SupabaseClient? _supabaseClientOrNull() {
   if (!SupabaseConfig.isConfigured) return null;
@@ -52,6 +54,23 @@ SupabaseClient? _supabaseClientOrNull() {
 }
 
 const _timerV2CommandFlushAdapter = TimerV2CommandFlushAdapter();
+
+/// WP-448: silinen ya da artık erişilemeyen ders tercihi için UI'nın bir kez
+/// göstereceği açıklama. Tercih aynı anda "Genel"e çevrildiğinden, uygulama
+/// yeniden açıldığında veya ders listesi yeniden aktığında tekrar üretilmez.
+final selectedStudySubjectFallbackNoticeProvider =
+    NotifierProvider<SelectedStudySubjectFallbackNoticeNotifier, String?>(
+      SelectedStudySubjectFallbackNoticeNotifier.new,
+    );
+
+class SelectedStudySubjectFallbackNoticeNotifier extends Notifier<String?> {
+  @override
+  String? build() => null;
+
+  void show(String message) => state = message;
+
+  void clear() => state = null;
+}
 
 /// FCM anlık sinyaldir, teslim garantisi değildir. Uygulama foreground'dayken
 /// bu düşük frekanslı snapshot turu iki açık cihazın FCM kaçırması durumunda da
@@ -476,6 +495,8 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   static const _kActiveStartOrigin = 'timer_active_start_origin';
   static const _kGlobalMirrorRunId = 'timer_global_mirror_run_id';
   static const _kGlobalMirrorRunRevision = 'timer_global_mirror_run_revision';
+  static const _kSelectedStudySubjectPrefix = 'selected_study_subject.';
+  static const _kGeneralStudySubject = '__general__';
 
   /// Native `StudyTimerService` ile çift yönlü method channel: Dart→native
   /// (start/stop), native→Dart (`reconcile`).
@@ -524,6 +545,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
   Future<void>? _reconcileInFlight;
   bool _reconcileAgainRequested = false;
   Future<void>? _globalTimerReconcileInFlight;
+  String? _subjectFallbackInFlightForUserId;
 
   // Süre kaynağı ürün açısından fark yaratmaz: manuel giriş, uygulama içi
   // sayaç ve native sayaç aynı XP/başarım yolunu kullanır. Eski live-run
@@ -722,6 +744,15 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
         unawaited(TimerSyncSignal.clear());
         // WP-431: A hesabından çıkıp B'ye girince A'nın sayacı restore olmaz.
         unawaited(_clearAccountScopedTimerState());
+        if (state.subjectId != null) {
+          state = state.copyWith(clearSubject: true);
+        }
+      }
+    });
+    ref.listen(userSubjectsProvider, (_, next) {
+      final subjects = next.value;
+      if (subjects != null) {
+        unawaited(_restoreSelectedStudySubject(subjects));
       }
     });
     _timerSyncSignals = TimerSyncSignal.stream.listen((signal) {
@@ -1655,6 +1686,68 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       subjectId: subjectId,
       clearSubject: subjectId == null,
     );
+    final userId = ref.read(authStateProvider).value?.id;
+    if (userId == null) return;
+    unawaited(
+      ref
+          .read(sharedPreferencesProvider)
+          .setString(
+            _selectedStudySubjectKey(userId),
+            subjectId ?? _kGeneralStudySubject,
+          ),
+    );
+  }
+
+  static String _selectedStudySubjectKey(String userId) =>
+      '$_kSelectedStudySubjectPrefix$userId';
+
+  /// Yerel tercih yalnız aynı hesabın ders listesinden doğrulanarak uygulanır.
+  /// `_kActiveSubject` aktif koşunun snapshot'ıdır; burada okunmaz ya da
+  /// yazılmaz. Böylece başka cihazın global ayna koşusu da yerel seçimle
+  /// değiştirilemez.
+  Future<void> _restoreSelectedStudySubject(List<Subject> subjects) async {
+    if (_disposed || state.isRunning) return;
+    final userId = ref.read(authStateProvider).value?.id;
+    if (userId == null) return;
+    final prefs = ref.read(sharedPreferencesProvider);
+    final preference = prefs.getString(_selectedStudySubjectKey(userId));
+    if (_disposed || ref.read(authStateProvider).value?.id != userId) return;
+
+    if (preference == null || preference == _kGeneralStudySubject) {
+      if (state.subjectId != null) {
+        state = state.copyWith(clearSubject: true);
+      }
+      return;
+    }
+    if (subjects.any((subject) => subject.id == preference)) {
+      if (state.subjectId != preference) {
+        state = state.copyWith(subjectId: preference);
+      }
+      return;
+    }
+
+    // Silinmiş/erişilemeyen tercih: anahtarı kalıcı "Genel" işaretine çevir.
+    // Bu yazım, sonraki liste olaylarında veya restart'ta ikinci fallback
+    // açıklamasını engeller.
+    if (_subjectFallbackInFlightForUserId == userId) return;
+    _subjectFallbackInFlightForUserId = userId;
+    try {
+      await prefs.setString(
+        _selectedStudySubjectKey(userId),
+        _kGeneralStudySubject,
+      );
+    } finally {
+      if (_subjectFallbackInFlightForUserId == userId) {
+        _subjectFallbackInFlightForUserId = null;
+      }
+    }
+    if (_disposed || ref.read(authStateProvider).value?.id != userId) return;
+    if (state.subjectId != null) {
+      state = state.copyWith(clearSubject: true);
+    }
+    ref
+        .read(selectedStudySubjectFallbackNoticeProvider.notifier)
+        .show('Seçili ders artık erişilebilir değil; Genel seçildi.');
   }
 
   /// Modu değiştirir (yalnız dururken). Faz/döngü sıfırlanır, seçim kalıcılaşır.

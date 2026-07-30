@@ -186,6 +186,16 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
         );
       }
     });
+    ref.listen<String?>(selectedStudySubjectFallbackNoticeProvider, (
+      previous,
+      message,
+    ) {
+      if (message == null || message == previous) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+      ref.read(selectedStudySubjectFallbackNoticeProvider.notifier).clear();
+    });
 
     final now = DateTime.now();
     final elapsed = (timer.isRunning && timer.startedAt != null)
