@@ -140,13 +140,11 @@
 
 - **Durum:** [!] BEKLİYOR: D/WP-445 migration commit'i. WP-448 `2e0f23d` kapandı.
 - **Zincir:** `WP-432 → WP-433 → WP-448 → [D/WP-445] → WP-449 → WP-450 → WP-451`.
-- **Şimdi:** WP-449 **ve** WP-450 kod + otomatik test tamam; ikisi de migration
-  kilidine bakan iki ayrı commit olarak sırada bekliyor. WP-450 B'nin açtığı
-  yedi l10n anahtarını (`4e6995b`) kullanır; A arb'ye yazmadı. Görev yüzeyinde
-  54 test yeşil, `flutter analyze` temiz. Sıra: 449 → 450 → 451.
-- **Olay notu (17:55):** İki lane'in kayıt betiği `progress.md`'yi aynı dakikada
-  sıfırladı; `d4da922` boş dosyayla girdi ve bu commit içerikle geri alıyor.
-  HEAD'e girmemiş kart düzenlemesi olan lane kendi satırını tekrar yazsın.
+- **Şimdi:** WP-449'un Dart katmanı ve kabul testleri (undo, cihaz saati geri
+  alma, çevrimdışı rollback dahil 19 hedefli test) yeşil; migration + pgTAP
+  taslakları hazır, dosya numarası kilit açılınca ölçülecek. WP-450'nin bölüm
+  modeli `core/tasks/task_sections.dart` + 6 test hazır; UI adımı yalnız l10n
+  anahtarlarını bekliyor. Sıra: 449 → 450 → 451.
 - **B'den l10n talebi (WP-450, l10n kilidi B'de olduğu için A arb'ye yazmaz):**
   `taskListSectionToday` "Bugün"/"Today" · `taskListSectionRecurring`
   "Tekrarlanan"/"Recurring" · `taskListSectionOther` "Diğer"/"Other" ·
@@ -164,62 +162,70 @@
   ardından WP-450 için `tasks_screen.dart` / `tasks_card.dart`.
 - **Ortak/riskli yüzey:** Migration yok; B/WP-435 migration yazımını yürütüyor,
   production/stable kapalı.
-- **Başlangıç / son güncelleme:** 2026-07-30 10:50 / 17:56 (Europe/Istanbul).
+- **Başlangıç / son güncelleme:** 2026-07-30 10:50 / 17:35 (Europe/Istanbul).
 - **DOKUNMA:** moderation, feedback, grup sohbeti, streak motoru, B'nin navigation/l10n yüzeyi.
 - **Teslim:** Her aşamada commit/test kanıtı; WP-451 fixture'ı D/WP-455'e açık bırakılır.
 
 ### Ajan B — Feedback, rozetler, ayarlar ve yayın yüzeyi
 
-- **Durum:** [~] Aktif — WP-459 ayarlar/profil rozet birleştirmesi yazılıyor.
+- **Durum:** [~] Kod/test tamam — WP-438 commit hazırlanıyor.
 - **Zincir:** `WP-435 → WP-436 → WP-437 → WP-438 → WP-459 → WP-460 → WP-461`.
 - **Hazır kanıt:** WP-434 `c3999f3`; WP-435 `355f1dd`; WP-436 `7d191b6`;
-  WP-437 `dc03317`; WP-438 `2673898`; WP-456 `cfb9536`, WP-457 `c671011`,
-  WP-458 `5776055` kod+otomatik test tamam.
-- **Diğer lane'lere l10n servisi:** A/WP-450'nin yedi `taskList*` anahtarı
-  `4e6995b`; D/WP-444 Faz 2'nin sekiz `safety*` anahtarı `a9e2a7e` ile açıldı.
-  D'nin Ayarlar → Güvenlik girişi talebi WP-459 kapsamındadır; giriş, D'nin
-  `features/safety/muted_nudges_screen.dart` commit'i gelince bağlanır.
-- **Başlatma kapısı:** WP-438 `2673898` ile tamamlandı; WP-459 hazırdır.
-  WP-460/461 aynı B zincirindedir.
+  WP-437 `dc03317`; WP-456 `cfb9536`, WP-457 `c671011`, WP-458 `5776055`
+  kod+otomatik test tamam.
+- **Diğer lane'lere l10n servisi:** A/WP-450'nin istediği yedi `taskList*`
+  anahtarı `4e6995b` ile açıldı; D/WP-444 Faz 2'nin istediği sekiz `safety*`
+  anahtarı sırada (WP-438 commit'inden hemen sonra, ayrı commit). D'nin
+  Ayarlar → Güvenlik girişi talebi B/WP-459 kapsamına yazıldı.
+- **Başlatma kapısı:** WP-437 `dc03317` ile tamamlandı; WP-438 kapanış kapısı
+  bu commit'tedir. WP-459 sırada; WP-460/461 aynı B zincirindedir.
 - **SAHİP:** feedback ticket/message/repository çiftleri, unread/badge sağlayıcıları,
   feedback/admin ekranları; settings/profile/navigation/l10n/widget katalog yüzeyleri.
 - **DOKUNMA:** moderation backend, grup/nudge, timer/subject, task/streak çekirdeği.
-- **Teslim:** WP-438 kanıtı `docs/qa/V57-FEEDBACK-EVIDENCE.md §5`; cihaz satırları
-  C/WP-465-466'ya devredildi. WP-461 widget/yüzey kanıtı C/WP-465'e gidecek.
-- **Aktif WP / sahip yollar:** WP-459 · `settings_screen.dart`, profil feedback
-  satırları, navigation rozet bağlantısı ve ilgili testler.
-- **Ortak/riskli yüzey:** Migration yok; `settings_screen` ve l10n kilidi B'de,
-  core navigation WP-460'a kadar diğer lane'lerle paylaşımlı. WP-438 sonrası
-  analyze temiz, hedefli testler 57/57 yeşil; production/stable kapalı.
-- **Başlangıç / son güncelleme:** 2026-07-30 11:05 / 18:15 (Europe/Istanbul).
+- **Teslim:** WP-438 rozet/messaging kanıtı `docs/qa/V57-FEEDBACK-EVIDENCE.md §5`
+  içindedir; cihazda doğrulanacak beş satır C/WP-465-466'ya devredildi.
+- **Aktif WP / sahip yollar:** WP-438 · `app/test/features/feedback_e2e_wp438_test.dart`,
+  InMemory admin repository sıra düzeltmesi ve feedback evidence belgesi.
+- **Ortak/riskli yüzey:** Migration yok; `settings_screen` WP-459'a, core navigation
+  diğer lane'lere aittir. `flutter analyze` temiz; feedback/admin/ayarlar/l10n
+  hedefli testleri 57/57 yeşil; production/stable kapalı.
+- **Başlangıç / son güncelleme:** 2026-07-30 11:05 / 18:05 (Europe/Istanbul).
 
 ### Ajan C — Moderasyon, kamp/observability devralması ve final QA
 
-- **Durum:** [~] Aktif — WP-441 (`0105`) teslim edildi; sırada WP-442 (`0106`).
-- **Son kontrol:** 2026-07-30 12:10 (Europe/Istanbul) · migration yazma kilidi C’de; `0104` ve `0105` alındı.
+- **Durum:** [~] Aktif — WP-442 (`0106`) teslim edildi; sırada WP-443 (moderasyon kabul kapısı).
+- **Son kontrol:** 2026-07-30 13:05 (Europe/Istanbul) · migration yazma kilidi C’de; `0104`, `0105` ve `0106` alındı.
 - **Zincir:** `WP-439(migration) → WP-441 → WP-442 → WP-443 → WP-464 → WP-465 → WP-466 → WP-467`.
-- **Hazır kanıt:** WP-439 sözleşme `e240e91` + migration `7726627`, WP-440 `30559d7`,
-  WP-441 bu commit, WP-462 `78e15cb`/golden koruması ve WP-463 `ad30631` tamam.
+- **Hazır kanıt:** WP-439 `e240e91` + `7726627`, WP-440 `30559d7`, WP-441 `27609c6`,
+  WP-442 bu commit, WP-462 `78e15cb` ve WP-463 `ad30631` tamam.
 - **Devralınan dirty iş:** Yalnız iki `campfire_wp*_preview.png` dosyası C’ye
   aittir; önce farklılığı inceler, ilgili WP dışında stage etmez.
-- **Başlatma kapısı:** WP-442 doğrudan başlar; migration sırası C’de olduğu
-  için dış kapı yok. WP-464 WP-442 retention sözleşmesini bekler. WP-465 yalnız
-  A/B/D çıkış kanıtları tamamlanınca başlar.
+- **Başlatma kapısı:** WP-443 doğrudan başlar. WP-464 WP-442 retention
+  sözleşmesini artık hazır bulur. WP-465 yalnız A/B/D çıkış kanıtları
+  tamamlanınca başlar.
 - **SAHİP:** moderation model/repository/provider/UI/pgTAP, account-purge
   hardening, observability/campfire QA belgeleri, entegrasyon/staging-cihaz kanıtı.
 - **Sınır:** C entegrasyon adına başka ajan ürün kodunu yeniden yazmaz; hata
   bulursa ilgili WP’yi sahibine döndürür. WP-466 staging adayını hazırlar ama
   production/stable/tag/push yapmaz.
-- **Aktif WP / sahip yollar:** WP-442 · moderation appeal/evidence/audit
-  model-repository ekranları, `supabase/migrations/0106_*`,
-  `supabase/tests/*moderation*` ve yalnız Ajan C lane kaydı.
-- **Ortak/riskli yüzey:** Migration yazma kilidi C’de — `0104`/`0105` alındı,
-  sıradaki `0106`. Repo/local head `0105`; bu hostta Docker kalkmadığı için
-  gerçek local replay/pgTAP koşamadı, iki migration da **Replay bekliyor**
+- **Aktif WP / sahip yollar:** WP-443 · moderation contract/integration testleri
+  ve `docs/qa/V57-MODERATION-EVIDENCE.md`; yalnız Ajan C lane kaydı.
+- **Ortak/riskli yüzey:** Migration yazma kilidi C’de — `0104`/`0105`/`0106`
+  alındı, sıradaki `0107`. Repo/local head `0106`; bu hostta Docker kalkmadığı
+  için gerçek local replay/pgTAP koşamadı, üç migration da **Replay bekliyor**
   etiketiyle teslim edildi ve ortak `deploy-contract.json` (`0101`) C’nin SAHİP
-  yüzeyi olmadığı için ilerletilmedi. WP-441 paylaşılan `app_*.arb`’a 19 admin
-  moderasyon anahtarı ekledi; yalnız bu anahtarlar stage edildi. Production/stable
-  kapalı.
+  yüzeyi olmadığı için ilerletilmedi. Paylaşılan `app_*.arb`’a WP-441’de 19,
+  WP-442’de 17 anahtar eklendi; her turda yalnız kendi anahtarları stage edildi.
+  Production/stable kapalı.
+- **KIRMIZI — paylaşılan dosya kazası (2026-07-30 13:0x):** C’nin progress.md
+  yazıcısı dosyayı açar açmaz sıfırladı ve encode hatası yüzünden boş bıraktı;
+  ardından `d4da922` bu boş dosyayı commit’ledi. Bu commit içerik olarak
+  `a9e2a7e` sürümünü geri getiriyor. **Ajan A’nın `d4da922` ile yazmak
+  istediği WP-449/450 lane notu kurtarılamadı; A o kaydı yeniden yazmalı.**
+- **🔴 Paylaşılan index uyarısı:** Ortak git index’i eski bir HEAD’e göre
+  duruyor; B’nin dosyaları orada geri alma olarak staged görünüyor. C kendi
+  yollarını her commit sonrası hizalıyor; diğerleri düz `git commit` atmadan önce
+  `git update-index --add` ile kendi yollarını hizalamalı.
 
 ### Ajan D — Grup/dürtme, tarih seçici ve seri devralması
 
@@ -4426,7 +4432,37 @@ alır; boş/uydurma migration yazılmaz.
 
 #### WP-442 — İtiraz, kanıt saklama ve denetim zinciri
 
-- **Durum / bağımlılık:** [ ] WP-441 + migration kilidi.
+- **Durum / bağımlılık:** [x] **Kod + otomatik test tamam** (Ajan C) · WP-441
+  `27609c6`. `0106` bu hostta gerçek replay koşulamadığı için **Replay bekliyor**.
+- **Koşulan denetim (Kodda doğrulandı):** WP-441 sonrası yaptırım uygulanıyordu
+  ama kullanıcı tarafında **hiçbir yüzey yoktu**: kişi kararın nedenini,
+  süresini ya da itiraz yolunu göremiyordu. `admin_audit_logs` yalnız
+  `action`+`reason` tutuyordu — eski/yeni değer yoktu, vaka ve itiraz hiç
+  kaydedilmiyordu. Kanıt (`canonical_snapshot`) süresiz duruyordu ve raporlayan
+  kendi satırında sunucunun ürettiği kanıt gövdesini okuyabiliyordu; `0104`
+  kanıtı tamamen dondurduğu için saklama süresi dolsa bile imha edilemiyordu.
+- **Bu commit'te yapılan:** `0106` ile `moderation_audit_events` append-only
+  zinciri (actor/zaman/eski/yeni/gerekçe; `update`, `delete` **ve** `truncate`
+  tetikleyiciyle kapalı) ve vaka/yaptırım/itiraz tetikleyicileri.
+  `moderation_appeals`: yaptırım başına **tek** itiraz, `submit_moderation_appeal`
+  yalnız hedefin kendisine açık (başkasının yaptırımının varlığı sızmaz),
+  `admin_decide_moderation_appeal` yaptırımı uygulayan yöneticiyi
+  `appeal_conflict_of_interest` ile reddediyor ve karar idempotent (`overturned`
+  yaptırımı yalnız bir kez kaldırır). Kanıt tarafında `evidence_hash` (sha256) +
+  `evidence_redacted_at`, açık itirazda saklama süresinin ileri atılması,
+  `moderation_purge_expired_evidence` ile içerik imhası (imza kalır) ve
+  `ugc_reports` üzerinde sütun bazlı okuma kısıtı — kanıt gövdesi hiçbir normal
+  kullanıcıya açık değil. İstemcide `ModerationAppeal` sözleşmesi, kullanıcı
+  tarafında "Hesabındaki kısıtlar" bölümü + itiraz sayfası, yönetici tarafında
+  itiraz kuyruğu ve çıkar çatışması notu eklendi.
+- **Sınır:** Kullanıcı girişi güvenlik ekranının (Ayarlar → Engellenen
+  kullanıcılar) üstündedir; ayarlarda ayrı bir "Güvenlik" girişi B/WP-459'un
+  yüzeyidir, C oraya dokunmadı — WP-465'e devredilir.
+- **Kanıt:** `flutter analyze` 0 uyarı · hedefli `flutter test` 93/93 yeşil
+  (`test/features/admin/**`, `test/features/safety/**`,
+  `report_target_contract`, `moderation_block_filter`, `report_sheet_details`) ·
+  `python scripts/l10n_audit.py` C yüzeyinde temiz · pgTAP `031_*` 18 iddia
+  (replay bekliyor). Etiket: **Kodda doğrulandı** · cihaz kabulü WP-443/WP-466.
 - **SAHİP:** moderation appeal/evidence/audit model-repository ekranları,
   `supabase/migrations/0106_*`, pgTAP ve testler.
 - **Uygulama:** kullanıcıya yaptırım nedeni/süresi ve itiraz yolu; itirazı aynı
@@ -4710,7 +4746,7 @@ alır; boş/uydurma migration yazılmaz.
 
 #### WP-459 — Ayarlar ve profil rozetlerini tek feedback gerçeğine bağla
 
-- **Durum / bağımlılık:** [~] Ajan B aktif · WP-436 `7d191b6` + WP-458 `5776055` tamam.
+- **Durum / bağımlılık:** [ ] WP-436 commit'i + WP-458.
 - **SAHİP:** settings/profile feedback menü tile'ları, navigation rozet bağlantısı
   ve testleri; l10n/navigation sıcak kilidi.
 - **Uygulama:** ayrı cache/boolean kaldır; iki yüzey WP-436 provider'ını izler;
