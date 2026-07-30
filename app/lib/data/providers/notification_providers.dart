@@ -39,17 +39,14 @@ final readAnnouncementIdsProvider = FutureProvider<Set<String>>((ref) async {
       .fetchReadAnnouncementIds(user.id);
 });
 
-/// Okunmamış duyuru sayısı — Bildirim Merkezi rozetinde kullanılır.
+/// Okunmamış duyuru sayısı — rozet zincirinin duyuru ayağı.
+///
+/// WP-436/459: Feedback konuşmasıyla ilişkili duyurular **ayrı bir okunmamış
+/// gerçek değildir**; onların gerçeği konuşma watermark'ıdır
+/// (`unreadFeedbackReplyCountProvider`). Bu sayaç bu yüzden feedback
+/// duyurularını dışarıda bırakır; aksi hâlde tek admin yanıtı her yüzeyde iki
+/// kez sayılırdı. İkinci bir "filtreli" sayaç tutulmaz — tek ad, tek gerçek.
 final unreadAnnouncementCountProvider = Provider<int>((ref) {
-  final announcements = ref.watch(myAnnouncementsProvider).value ?? const [];
-  final read = ref.watch(readAnnouncementIdsProvider).value ?? const {};
-  return announcements.where((a) => !read.contains(a.id)).length;
-});
-
-/// Feedback konuşmasıyla ilişkili eski duyurular ayrı bir okunmamış gerçek
-/// değildir; WP-435/436 bunları konuşma watermark'ına indirger. Bildirim
-/// Merkezi dışındaki rozetler bu filtreden beslenerek çift sayımı önler.
-final unreadNonFeedbackAnnouncementCountProvider = Provider<int>((ref) {
   final announcements = ref.watch(myAnnouncementsProvider).value ?? const [];
   final read = ref.watch(readAnnouncementIdsProvider).value ?? const {};
   return announcements

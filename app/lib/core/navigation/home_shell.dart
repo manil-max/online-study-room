@@ -6,6 +6,7 @@ import '../../data/providers/group_providers.dart';
 import '../../data/providers/gamification_providers.dart';
 import '../../data/providers/auth_providers.dart';
 import '../../data/providers/achievement_reward_provider.dart';
+import '../../data/providers/admin_providers.dart';
 import '../../data/providers/study_providers.dart';
 import '../../data/providers/subject_providers.dart';
 import '../../data/providers/device_integration_listener.dart';
@@ -50,7 +51,7 @@ class HomeShell extends ConsumerWidget {
     required IconData icon,
     required int pendingRewardCount,
     required bool missingPrimaryGroup,
-    required int unreadAnnouncements,
+    required int unreadProfileSignals,
     required Color warningColor,
     required Color announcementColor,
   }) {
@@ -59,7 +60,7 @@ class HomeShell extends ConsumerWidget {
     }
     // Eksik birincil grup bir **kayıptır** (uyarı rengi); okunmamış duyuru
     // yeni içeriktir. Kayıp önceliklidir, ikisi aynı anda çizilmez.
-    if (!missingPrimaryGroup && unreadAnnouncements > 0) {
+    if (!missingPrimaryGroup && unreadProfileSignals > 0) {
       return Badge(backgroundColor: announcementColor, child: Icon(icon));
     }
     // WP-358: nokta varsayılan olarak `colorScheme.error`den besleniyordu ve
@@ -88,7 +89,10 @@ class HomeShell extends ConsumerWidget {
     // Profil→Başarımlar altındaki kartta olduğu için sekmede nokta gösterilir;
     // yoksa kullanıcı kartı hiç açmadan kaybı fark etmez.
     final missingPrimaryGroup = ref.watch(primaryGroupSelectionMissingProvider);
-    final unreadAnnouncements = ref.watch(unreadAnnouncementCountProvider);
+    // WP-459: Zincir kurali — alt seviyede gorunen her sinyal ust seviyede de
+    // gorunur. Sekme noktasi yalnizca duyuruyu degil okunmamis yonetici
+    // yanitini da tasir; ikisi de `settingsBadgeCountProvider`in ayaklaridir.
+    final unreadProfileSignals = ref.watch(settingsBadgeCountProvider);
     // Duyuru bir uyarı değil, yeni içerik — rengi uyarı token'ından değil
     // temanın birincil renginden gelir (WP-378).
     final announcementDotColor = Theme.of(context).colorScheme.primary;
@@ -198,7 +202,7 @@ class HomeShell extends ConsumerWidget {
                 icon: Icons.person_outline,
                 pendingRewardCount: pendingRewardCount,
                 missingPrimaryGroup: missingPrimaryGroup,
-                unreadAnnouncements: unreadAnnouncements,
+                unreadProfileSignals: unreadProfileSignals,
                 warningColor: warningDotColor,
                 announcementColor: announcementDotColor,
               ),
@@ -206,7 +210,7 @@ class HomeShell extends ConsumerWidget {
                 icon: Icons.person,
                 pendingRewardCount: pendingRewardCount,
                 missingPrimaryGroup: missingPrimaryGroup,
-                unreadAnnouncements: unreadAnnouncements,
+                unreadProfileSignals: unreadProfileSignals,
                 warningColor: warningDotColor,
                 announcementColor: announcementDotColor,
               ),

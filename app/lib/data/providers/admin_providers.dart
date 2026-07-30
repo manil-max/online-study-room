@@ -109,8 +109,10 @@ final unreadFeedbackReplyCountProvider = FutureProvider<int>((ref) async {
 /// Profil sekmesindeki "Ayarlar" satirinin toplam rozet sayisi.
 ///
 /// Zincir kurali: alt seviyede gorunen her sinyal ust seviyede de gorunur.
+/// WP-459: Profil sekmesi, Profil→Ayarlar satiri ve Ayarlar ekrani ayni iki
+/// kaynaktan (duyuru + feedback watermark) beslenir; yuzeye ozel sayac yok.
 final settingsBadgeCountProvider = Provider<int>((ref) {
-  final announcements = ref.watch(unreadNonFeedbackAnnouncementCountProvider);
+  final announcements = ref.watch(unreadAnnouncementCountProvider);
   final replies = ref.watch(unreadFeedbackReplyCountProvider).value ?? 0;
   return announcements + replies;
 });

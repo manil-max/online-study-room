@@ -125,19 +125,31 @@ void main() {
   });
 
   group('sinyal zinciri kaynak sözleşmesi', () {
-    // 🔴 Üç yüzey de aynı provider'ı okumalı. Biri kendi sayacını türetirse
+    // 🔴 Üç yüzey de aynı zincirden beslenmeli. Biri kendi sayacını türetirse
     // "okundu" işaretlemesi yüzeyler arasında ayrışır ve nokta asla sönmez.
-    test('üç yüzey de unreadAnnouncementCountProvider okur', () {
+    //
+    // WP-459: Profil sekmesi artık duyuruyu **ve** okunmamış yönetici yanıtını
+    // birlikte taşıyan `settingsBadgeCountProvider`ı okur; o da bu iki ayağın
+    // toplamıdır. Alt iki yüzey duyuru ayağını doğrudan okumayı sürdürür.
+    test('üç yüzey de aynı okunmamış zincirini okur', () {
       final surfaces = {
-        'Profil sekmesi': 'lib/core/navigation/home_shell.dart',
-        'Profil → Ayarlar satırı': 'lib/features/profile/profile_screen.dart',
-        'Ayarlar → Duyurular satırı':
-            'lib/features/profile/settings_screen.dart',
+        'Profil sekmesi': (
+          'lib/core/navigation/home_shell.dart',
+          'settingsBadgeCountProvider',
+        ),
+        'Profil → Ayarlar satırı': (
+          'lib/features/profile/profile_screen.dart',
+          'unreadAnnouncementCountProvider',
+        ),
+        'Ayarlar → Duyurular satırı': (
+          'lib/features/profile/settings_screen.dart',
+          'unreadAnnouncementCountProvider',
+        ),
       };
-      surfaces.forEach((name, path) {
-        final source = _read(path);
+      surfaces.forEach((name, entry) {
+        final (path, provider) = entry;
         expect(
-          source.contains('unreadAnnouncementCountProvider'),
+          _read(path).contains(provider),
           isTrue,
           reason: '$name artık tek kaynağı okumuyor ($path)',
         );
@@ -147,9 +159,9 @@ void main() {
     test('üst iki yüzey noktayı gerçekten çiziyor', () {
       expect(
         _read('lib/core/navigation/home_shell.dart')
-            .contains('unreadAnnouncements > 0'),
+            .contains('unreadProfileSignals > 0'),
         isTrue,
-        reason: 'Profil sekmesinde duyuru noktası çizilmiyor',
+        reason: 'Profil sekmesinde okunmamış noktası çizilmiyor',
       );
       expect(
         _read('lib/features/profile/profile_screen.dart')
@@ -164,7 +176,7 @@ void main() {
       // bir kayıptır, duyuru yalnız yeni içerik — kayıp önceliklidir.
       expect(
         _read('lib/core/navigation/home_shell.dart')
-            .contains('!missingPrimaryGroup && unreadAnnouncements > 0'),
+            .contains('!missingPrimaryGroup && unreadProfileSignals > 0'),
         isTrue,
       );
     });

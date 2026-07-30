@@ -88,6 +88,12 @@ void main() {
     expect(find.text('Yönetim'), findsNothing);
     // WP-456: ayrı Hakkında ve Sürüm satırları tek girişte birleşti.
     expect(find.text('Hakkında'), findsNothing);
+    // WP-459: D/WP-444 Faz 2'nin susturma ekranı Güvenlik bölümünden açılır.
+    expect(find.byKey(const Key('settings-muted-nudges')), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.text('Dürtmesi susturulanlar')).dy,
+      greaterThan(tester.getTopLeft(find.text('Gizlilik ve güvenlik')).dy),
+    );
 
     // WP-320: 1080 fiziksel px / 3x DPR = 360dp dar ekranda da bilgi
     // mimarisi sabit kalır; hesap silme ekranına giden giriş ile dışa aktarma

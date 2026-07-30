@@ -170,28 +170,30 @@
 
 ### Ajan B — Feedback, rozetler, ayarlar ve yayın yüzeyi
 
-- **Durum:** [~] Aktif — WP-459 ayarlar/profil rozet birleştirmesi yazılıyor.
+- **Durum:** [~] Kod/test tamam — WP-459 commit hazırlanıyor.
 - **Zincir:** `WP-435 → WP-436 → WP-437 → WP-438 → WP-459 → WP-460 → WP-461`.
 - **Hazır kanıt:** WP-434 `c3999f3`; WP-435 `355f1dd`; WP-436 `7d191b6`;
   WP-437 `dc03317`; WP-438 `2673898`; WP-456 `cfb9536`, WP-457 `c671011`,
   WP-458 `5776055` kod+otomatik test tamam.
 - **Diğer lane'lere l10n servisi:** A/WP-450'nin yedi `taskList*` anahtarı
   `4e6995b`; D/WP-444 Faz 2'nin sekiz `safety*` anahtarı `a9e2a7e` ile açıldı.
-  D'nin Ayarlar → Güvenlik girişi talebi WP-459 kapsamındadır; giriş, D'nin
-  `features/safety/muted_nudges_screen.dart` commit'i gelince bağlanır.
-- **Başlatma kapısı:** WP-438 `2673898` ile tamamlandı; WP-459 hazırdır.
-  WP-460/461 aynı B zincirindedir.
+  D'nin istediği Ayarlar → Güvenlik girişi (`settings-muted-nudges`) bu
+  commit'te bağlandı; ekran D'de (`a84a799`), giriş B'de.
+- **Başlatma kapısı:** WP-438 `2673898` ile tamamlandı; WP-459 bu commit'tedir.
+  Sırada WP-460 (navigation sıcak kilidi) ve WP-461.
 - **SAHİP:** feedback ticket/message/repository çiftleri, unread/badge sağlayıcıları,
   feedback/admin ekranları; settings/profile/navigation/l10n/widget katalog yüzeyleri.
 - **DOKUNMA:** moderation backend, grup/nudge, timer/subject, task/streak çekirdeği.
 - **Teslim:** WP-438 kanıtı `docs/qa/V57-FEEDBACK-EVIDENCE.md §5`; cihaz satırları
   C/WP-465-466'ya devredildi. WP-461 widget/yüzey kanıtı C/WP-465'e gidecek.
-- **Aktif WP / sahip yollar:** WP-459 · `settings_screen.dart`, profil feedback
-  satırları, navigation rozet bağlantısı ve ilgili testler.
-- **Ortak/riskli yüzey:** Migration yok; `settings_screen` ve l10n kilidi B'de,
-  core navigation WP-460'a kadar diğer lane'lerle paylaşımlı. WP-438 sonrası
-  analyze temiz, hedefli testler 57/57 yeşil; production/stable kapalı.
-- **Başlangıç / son güncelleme:** 2026-07-30 11:05 / 18:15 (Europe/Istanbul).
+- **Aktif WP / sahip yollar:** WP-459 · `home_shell.dart` rozet bağlantısı,
+  `notification_providers.dart` / `admin_providers.dart` sayaçları,
+  `settings_screen.dart`, `badge_chain_wp459_test.dart` ve WP-378 sözleşmesi.
+- **Ortak/riskli yüzey:** Migration yok. `home_shell.dart`'ta yalnız profil
+  sekmesi rozet satırları değişti (WP-460 sıcak kilidi henüz alınmadı).
+  `flutter analyze` temiz; profil/feedback/ayarlar/admin hedefli testleri
+  176/176 yeşil; production/stable kapalı.
+- **Başlangıç / son güncelleme:** 2026-07-30 11:05 / 18:45 (Europe/Istanbul).
 
 ### Ajan C — Moderasyon, kamp/observability devralması ve final QA
 
@@ -4750,7 +4752,8 @@ alır; boş/uydurma migration yazılmaz.
 
 #### WP-459 — Ayarlar ve profil rozetlerini tek feedback gerçeğine bağla
 
-- **Durum / bağımlılık:** [ ] WP-436 commit'i + WP-458.
+- **Durum / bağımlılık:** [x] Kod + otomatik test tamam · Ajan B · 2026-07-30.
+
 - **SAHİP:** settings/profile feedback menü tile'ları, navigation rozet bağlantısı
   ve testleri; l10n/navigation sıcak kilidi.
 - **Uygulama:** ayrı cache/boolean kaldır; iki yüzey WP-436 provider'ını izler;

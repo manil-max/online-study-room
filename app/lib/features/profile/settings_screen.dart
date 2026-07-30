@@ -17,6 +17,7 @@ import 'widgets/unread_announcement_dot.dart';
 import '../notifications/notification_permissions_screen.dart';
 import '../onboarding/onboarding_prefs.dart';
 import '../safety/blocked_users_screen.dart';
+import '../safety/muted_nudges_screen.dart';
 import 'about_screen.dart';
 import 'account_settings_screen.dart';
 import 'appearance_screen.dart';
@@ -278,6 +279,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       onTap: () => Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (_) => const BlockedUsersScreen(),
+                        ),
+                      ),
+                    ),
+                  ),
+                  // WP-459: D/WP-444 Faz 2'nin susturma ekrani ayarlarin
+                  // Guvenlik bolumune baglanir; ekran D'de, giris B'de.
+                  _SettingsCard(
+                    child: ListTile(
+                      key: const Key('settings-muted-nudges'),
+                      leading: const Icon(Icons.notifications_off_outlined),
+                      title: Text(l10n.safetyMutedNudgesTitle),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const MutedNudgesScreen(),
                         ),
                       ),
                     ),
