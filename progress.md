@@ -217,9 +217,24 @@
 
 ### Ajan D — Grup/dürtme, tarih seçici ve seri devralması
 
-- **Durum:** [!] BEKLİYOR — WP-453 Faz 1 `a309c2d` teslim edildi; sıradaki her D karti migration kilidine bağlı: WP-444 Faz 2 / WP-445 için C/WP-442, WP-453 Faz 2 için A/WP-449.
+- **Durum:** [~] Aktif — WP-453 Faz 1 `a309c2d` teslim edildi. WP-444 Faz 2'nin migration (`0107`) ayağı C/WP-442'yi bekliyor; bekletilmesi gerekmeyen susturma yönetim UI'si hazırlanıyor ve yalnız l10n anahtarlarına bağlı.
 - **Zincir:** `WP-444(Faz 2) → WP-445 → WP-446 → WP-447 → [A/WP-449] → WP-453 → WP-454 → WP-455`.
 - **Hazır kanıt:** WP-444 Faz 1 `b61038e`; WP-452 `51b5478`; WP-453 Faz 1 `a309c2d` — kod+hedefli test tamam.
+- **B'den l10n talebi (WP-444 Faz 2, l10n kilidi B'de olduğu için D arb'ye yazmaz):**
+  `safetyMutedNudgesTitle` "Dürtmesi susturulanlar"/"Muted nudges" ·
+  `safetyMutedNudgesEmpty` "Dürtmesi susturulan kimse yok."/"No one is muted." ·
+  `safetyMutedNudgesExplainer` "Susturulan kişi engellenmez: mesajları, profili ve
+  gruptaki varlığı normaldir; yalnız dürtmesi sana ulaşmaz."/"Muting is not blocking:
+  their messages, profile and group presence stay normal — only their nudges stop
+  reaching you." · `safetyMuteNudges` "Dürtmesini sustur"/"Mute nudges" ·
+  `safetyUnmuteNudges` "Susturmayı kaldır"/"Unmute nudges" · `safetyNudgesMuted`
+  "Dürtmesi susturuldu."/"Nudges muted." · `safetyNudgesUnmuted` "Susturma
+  kaldırıldı."/"Nudges unmuted." · `safetyMutedUserFallbackName` "Susturulan
+  kullanıcı"/"Muted user".
+- **B'den ikinci talep (WP-459 ayarlar bilgi mimarisi):** Ayarlar → Güvenlik
+  altında "Engellenen kullanıcılar" girişinin yanına `safetyMutedNudgesTitle`
+  girişi. `settings_screen.dart` B'nin yüzeyidir, D dokunmaz; ekranın kendisi
+  (`features/safety/muted_nudges_screen.dart`) D'de kalır.
 - **Devralınan dirty iş:** Eski F'nin goal/streak Faz 1 kaynak ve fixture dosyaları
   D'ye aitti; hedefli test 22/22 ve hedefli analyze doğrulandıktan sonra WP-453 Faz 1
   olarak commit edildi. Kalan dirty dosyalar başka lane'lere aittir, D dokunmaz.
@@ -231,7 +246,7 @@
 - **DOKUNMA:** moderation backend, feedback/navigation/l10n, task recurrence
   ve campfire/observability kaynakları.
 - **Teslim:** WP-447 grup matrisi ve WP-455 progression matrisi C/WP-465'e devredilir.
-- **Son kontrol:** 2026-07-30 17:12 (Europe/Istanbul) · WP-453 Faz 1 `a309c2d` teslim edildi (hedefli test 22/22, hedefli analyze temiz). A/WP-448 `2e0f23d` geldi; C/WP-439 `0104` henüz commit edilmedi — C kendi sözleşmesi için `class_detail_screen` rapor çağrısını düzenliyor, D dokunmuyor. D beklemede: WP-444 Faz 2 / WP-445 için C/WP-442, WP-453 Faz 2 için A/WP-449 migration commit'i.
+- **Son kontrol:** 2026-07-30 17:48 (Europe/Istanbul) · Migration head `0105` (C/WP-441 `27609c6`); C/WP-442 `0106` henüz gelmedi, D'nin `0107`'si onun arkasında. Migration gerektirmeyen iş öne alındı: WP-444 Faz 2 susturma yönetim ekranı InMemory repository üzerinden kurulabilir; `0107` + pgTAP taslakları hazır, numara kilit açılınca verilecek. Bu hostta Docker kapalı → pgTAP `Replay bekliyor` etiketiyle teslim edilecek.
 
 
 ## 🗺️ Yol Haritası — sırada ne var
