@@ -107,7 +107,7 @@
 
 | Kilit / sıra | Sahip | Durum | Sonraki |
 |---|---|---|---|
-| **Migration yazma kilidi** | — | BOŞ · repo/local/staging/production head `0100` | İlk hak WP-431; sonra `431 → 432 → 435 → 439 → 441 → 442 → 444 → 445 → 449 → 453 → 464` |
+| **Migration yazma kilidi** | **Ajan A** | 🔒 **DOLU** · WP-431 · `0101` yazılıyor · repo/local head `0100` | Bittiğinde boşalır; sıra `432 → 435 → 439 → 441 → 442 → 444 → 445 → 449 → 453 → 464` |
 | **Sıcak dosya kilidi** (`main.dart`, navigation, pubspec, manifest, l10n generated) | Ajan G | WP-457 · l10n/generator | WP-457 commit'inden sonra BOŞ |
 | **Tam Flutter kalite koşumu** | — | BOŞ | WP başında hedefli test; tüm `flutter test` yalnız kilitle |
 | **Yerel Supabase replay** | — | BOŞ | Migration yazarı kendi WP'sinde; final tekrar Ajan H |
@@ -159,16 +159,26 @@
 
 ### Ajan A — Sayaç ve çoklu cihaz doğruluğu
 
-- **Durum:** [!] BEKLİYOR: WP-430 kabulü (WP-431 kartının yazılı ön koşulu)
-- **Aktif WP:** — (WP-430 kod + otomatik test tamam)
-- **Aşama:** WP-430 teslim edildi; sıradaki WP-431 migration kilidinin ilk sahibi
+- **Durum:** [~] Aktif · Ajan A
+- **Aktif WP:** WP-431 — Kanonik timer komut protokolü, offline niyet ve
+  hayalet-run onarımı
+- **Aşama:** Geliştiriliyor · 🔒 **migration yazma kilidi Ajan A'da** (`0101`)
 - **Dal:** `main`
-- **Başlangıç:** 2026-07-30 02:04 (Europe/Istanbul) · **Son güncelleme:** 2026-07-30 03:12
-- **Not:** WP-431 kartı bağımlılığını "WP-430 **kabulü**" olarak yazıyor ve aynı
-  anda migration yazma kilidini alıyor. Kabul gelince kilit Ajan A adına
-  çevrilir ve zincir WP-431 ile sürer. WP-430 çıktısı dört bulgunun kök nedenini
-  kanıtladığı için WP-431'in kapsamı artık K1–K3 kararlarıyla nettir
-  (`docs/qa/V57-TIMER-EVIDENCE.md` §5).
+- **Başlangıç:** 2026-07-30 02:04 (Europe/Istanbul) · **Son güncelleme:** 2026-07-30 03:40
+- **Tamamlanan:** WP-430 `8de8aeb` (kod + otomatik test). Sahip düzeltmesi
+  (2026-07-30): K1–K3 ürün kararı değil **WP-431'in uygulama kararlarıdır**;
+  cihaz kabulü Ajan H WP-466'dadır. Bayat "WP-430 kabulü" beklemesi kaldırıldı.
+- **WP-431 SAHİP yollar (claim):** `app/lib/data/models/global_timer.dart`,
+  `app/lib/data/repositories/global_timer_repository.dart` + supabase/in_memory
+  çiftleri, `app/lib/data/providers/global_timer_providers.dart`,
+  `app/lib/core/background/timer_v2_command_outbox.dart`,
+  `app/lib/core/background/timer_foreground_service.dart`,
+  `app/lib/data/providers/study_providers.dart`,
+  `app/android/**/timer/**`, `app/android/**/widgets/Timer*`,
+  `supabase/migrations/0101_*`, `supabase/tests/*global_timer*`, ilgili testler.
+- **WP-431 ortak/riskli yüzey:** yalnız migration kilidi (alındı). Sıcak dosya
+  kilidi (`main.dart`/navigation/pubspec/l10n/manifest) **alınmadı**; bu WP
+  onlara dokunmaz.
 - **Zincir:** `WP-430 → WP-431 → WP-432 → WP-433 → WP-448`
 - **İlk iş:** WP-430; başka ajana bağlı değil, hemen claim edilebilir.
 - **WP-430 SAHIP yollar (claim):** `docs/qa/V57-TIMER-EVIDENCE.md` (yeni),
