@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:ui' show PlatformDispatcher;
 
 import 'package:flutter/foundation.dart'
-    show kIsWeb, defaultTargetPlatform, TargetPlatform, FlutterError;
+    show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -82,10 +82,6 @@ Future<void> main() async {
         ),
       );
     };
-    FlutterError.onError = (details) {
-      FlutterError.presentError(details);
-      debugPrint('FlutterError: ${details.exceptionAsString()}');
-    };
   }
 
   // Android'e özgü servisler (kalıcı bildirim + ana ekran widget'ı) yalnız
@@ -113,6 +109,7 @@ Future<void> main() async {
   // Yerel kalıcı ayarlar (Ana Sayfa yerleşimi, saat stili vb. için).
   final prefs = await SharedPreferences.getInstance();
   await ObservabilityService.instance.initialize(prefs);
+  ObservabilityService.instance.installErrorHandlers();
   // WP-266: Yalnız Android + eksiksiz Firebase config'te FCM'i başlatır.
   // Config yok/yarımsa uygulama açılır; Bildirim Sağlığı açık nedeni gösterir.
   await AppPushNotificationService.instance.bootstrap(prefs);

@@ -356,16 +356,19 @@
 
 ### Ajan H — Kamp ateşi, gözlemlenebilirlik ve entegrasyon/cihaz kapısı
 
-- **Durum:** [~] Aktif · Ajan H
-- **Aktif WP:** WP-462 — Kamp ateşi 4/8 kişi kompozisyon düzeltmesi
-- **Aşama:** Kod + otomatik test tamamlandı · commit hazırlanıyor
+- **Durum:** [~] Beklemede · Ajan H
+- **Aktif WP:** WP-464 için WP-442 moderation retention sözleşmesi bekleniyor
+- **Aşama:** WP-462 ve WP-463 kod + hedefli otomatik test tamamlandı
 - **Dal:** `main`
-- **Başlangıç:** 2026-07-30 02:05 (Europe/Istanbul) · **Son güncelleme:** 2026-07-30 02:28
-- **WP-462 SAHİP yollar (claim):** `app/lib/features/classroom/widgets/campfire_scene.dart`,
-  `app/lib/features/classroom/widgets/campfire_layout.dart`, `app/lib/features/classroom/widgets/campfire/**`,
-  campfire test/golden/assets.
-- **WP-462 ortak/riskli yüzey:** yok — migration, `main.dart`, navigation, pubspec,
-  l10n ve AndroidManifest sıcak kilitleri açılmadı.
+- **Başlangıç:** 2026-07-30 02:05 (Europe/Istanbul) · **Son güncelleme:** 2026-07-30 10:04
+- **Tamamlanan WP-462:** `78e15cb`; çalışma ağacında kalan yalnız Ajan H preview
+  goldenları incelenip `5fc8249` ile korundu. Hedefli preview testleri yeşil.
+- **Tamamlanan WP-463:** Flutter/framework + async platform hata kapısı,
+  PII redaction, opt-out ile silinen 64 olaylık bellek tamponu, operasyon
+  correlation/result API'si ve QA belgesi. Sahip yollar: observability,
+  `main.dart`, privacy/redaction testleri, `docs/qa/V57-OBSERVABILITY.md`.
+- **WP-463 ortak/riskli yüzey:** `main.dart` sıcak kilidi tamamlandı; migration,
+  navigation, l10n, manifest ve diğer ajanların ürün dosyaları alınmadı.
 - **Zincir:** `WP-462 → WP-463 → [WP-442 bekle] → WP-464 → [A–G bekle] → WP-465 → WP-466 → WP-467`
 - **İlk iş:** WP-462; hemen claim edilebilir.
 - **SAHİP ana yüzey:** campfire sahnesi/layout/assets/golden testleri,
@@ -4737,7 +4740,7 @@ alır; boş/uydurma migration yazılmaz.
 
 #### WP-463 — Çökme, donma ve sessiz hata gözlemlenebilirliği
 
-- **Durum / bağımlılık:** [ ] WP-462; `main.dart/pubspec` sıcak kilidi.
+- **Durum / bağımlılık:** [x] WP-462; `main.dart` sıcak kilidi alındı ve bırakıldı.
 - **SAHİP:** mevcut logging/error boundary/bootstrap yüzeyleri, gerekiyorsa
   `main.dart`/`pubspec.yaml`, privacy/redaction testleri,
   `docs/qa/V57-OBSERVABILITY.md`.
@@ -4748,6 +4751,9 @@ alır; boş/uydurma migration yazılmaz.
 - **Kabul:** kontrollü hata testte yakalanır; kullanıcı eylemi başarısızsa sessiz
   başarı görünmez; redaction testi sır/PII bulmaz; crash sağlayıcısı hazır değilse
   local structured log + entegrasyon kapısı açıkça belgeli.
+- **Kanıt:** hedefli observability testi (6 test) ve analiz yeşil; QA/sağlayıcı
+  kapısı `docs/qa/V57-OBSERVABILITY.md` içinde. Cihazda gerçek sağlayıcı kabulü
+  credential ve cihaz oturumu gerektirdiğinden bu WP'de çalıştırılmadı.
 - **Model:** Opus.
 
 #### WP-464 — Hesap silme hardening, scheduler ve veri yaşam döngüsü kabulü
