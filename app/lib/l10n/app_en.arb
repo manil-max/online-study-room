@@ -4275,6 +4275,14 @@
   "@groupDiscoveryRetry": {
     "description": "Retry action after public group discovery fails"
   },
+  "classroomGruptanCikilamadi": "Couldn't leave the group.",
+  "@classroomGruptanCikilamadi": {
+    "description": "Error shown when leaving a study group fails."
+  },
+  "classroomRetry": "Try again",
+  "@classroomRetry": {
+    "description": "Retry action inside the study group detail screen."
+  },
   "groupDiscoveryLoadMore": "Load more",
   "@groupDiscoveryLoadMore": {
     "description": "Pagination action for public group discovery"

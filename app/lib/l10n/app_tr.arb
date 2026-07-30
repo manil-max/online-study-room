@@ -996,6 +996,14 @@
   "groupDiscoveryFull": "Dolu",
   "groupDiscoveryEmpty": "Açık grup bulunamadı",
   "groupDiscoveryRetry": "Tekrar dene",
+  "classroomGruptanCikilamadi": "Gruptan çıkılamadı.",
+  "@classroomGruptanCikilamadi": {
+    "description": "Gruptan çıkma başarısız olduğunda gösterilen hata."
+  },
+  "classroomRetry": "Tekrar dene",
+  "@classroomRetry": {
+    "description": "Grup detay ekranındaki yeniden dene eylemi."
+  },
   "groupDiscoveryLoadMore": "Daha fazla yükle",
   "groupDiscoveryPrivacyUpdated": "Grup gizliliği güncellendi",
   "profileUygulamaDili": "Uygulama dili",
