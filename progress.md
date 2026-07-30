@@ -233,10 +233,15 @@
 
 ### Ajan D — Grup/dürtme, tarih seçici ve seri devralması
 
-- **Durum:** [~] Aktif — WP-444 **Faz 2 tamamlandı** (`0107` + susturma yönetim
-  ekranı); sırada WP-445 (`0108`). WP-453 Faz 2 hâlâ A/WP-449 şemasını bekliyor.
+- **Durum:** [~] Aktif — WP-444 `a84a799` kapandı; WP-445 yürüyüor: `0108` +
+  repository sözleşmesi yazıldı, UI adımı iki l10n anahtarını bekliyor.
 - **Zincir:** `WP-444(Faz 2) → WP-445 → WP-446 → WP-447 → [A/WP-449] → WP-453 → WP-454 → WP-455`.
-- **Hazır kanıt:** WP-444 Faz 1 `b61038e` + Faz 2 bu commit; WP-452 `51b5478`; WP-453 Faz 1 `a309c2d` — kod+hedefli test tamam.
+- **Hazır kanıt:** WP-444 Faz 1 `b61038e` + Faz 2 `a84a799`; WP-452 `51b5478`; WP-453 Faz 1 `a309c2d` — kod+hedefli test tamam.
+- **B'den l10n talebi (WP-445, l10n kilidi B'de olduğu için D arb'ye yazmaz):**
+  `classroomGruptanCikilamadi` "Gruptan çıkılamadı."/"Couldn't leave the group." ·
+  `classroomRetry` "Tekrar dene"/"Try again". Mevcut `groupDiscoveryRetry`
+  yeniden kullanılmadı: keşif yüzeyine isimlenmiş anahtarı grup detayında
+  kullanmak sonraki okuyucuyu yanıltır.
 - **B'den l10n talebi (WP-444 Faz 2, l10n kilidi B'de olduğu için D arb'ye yazmaz):**
   `safetyMutedNudgesTitle` "Dürtmesi susturulanlar"/"Muted nudges" ·
   `safetyMutedNudgesEmpty` "Dürtmesi susturulan kimse yok."/"No one is muted." ·
@@ -263,7 +268,7 @@
 - **DOKUNMA:** moderation backend, feedback/navigation/l10n, task recurrence
   ve campfire/observability kaynakları.
 - **Teslim:** WP-447 grup matrisi ve WP-455 progression matrisi C/WP-465'e devredilir.
-- **Son kontrol:** 2026-07-30 18:40 (Europe/Istanbul) · C/WP-442 `f93859d` (`0106`) geldi, D'nin migration kilidi açıldı ve `0107` alındı. **Öz eleştiri:** `0fd8004` restore'um bayat bir anlık görüntüydü; `2e3296b`'deki A ve B lane satırlarını geri aldı. Bu commit o iki bölümü `2e3296b`'den geri koyuyor, C bölümü HEAD'deki daha yeni sürüm olarak kalıyor. Paylaşılan `progress.md`'ye bundan sonra yalnız bölüm bazlı birleştirmeyle yazıyorum, tam dosya anlık görüntüsüyle değil.
+- **Son kontrol:** 2026-07-30 19:05 (Europe/Istanbul) · WP-445 için migration sırası D'de: `0108_leave_group_command.sql` yazıldı (idempotency komut tablosu + advisory lock + sahiplik değişmezi + presence temizliği). Repository sözleşmesi `GroupLeaveOutcome` ile güncellendi. Bekleyen tek şey UI'nin iki l10n anahtarı; bu arada pgTAP ve repository testleri yazılıyor.
 
 
 ## 🗺️ Yol Haritası — sırada ne var
