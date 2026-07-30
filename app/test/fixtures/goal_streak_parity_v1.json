@@ -1,0 +1,55 @@
+{
+  "version": "goal_completion_v1",
+  "cases": [
+    {
+      "name": "tamamla-bos-tamamla-bos-tamamla",
+      "scopeType": "personal",
+      "scopeId": "user-a",
+      "timeZone": "Europe/Istanbul",
+      "asOfDay": "2026-07-05",
+      "events": [
+        {"key": "p-a-01", "kind": "goal_completed", "day": "2026-07-01"},
+        {"key": "p-a-03", "kind": "goal_completed", "day": "2026-07-03"},
+        {"key": "p-a-05", "kind": "goal_completed", "day": "2026-07-05"}
+      ],
+      "expected": {"streak": 3, "count": 3, "state": "completed_today"}
+    },
+    {
+      "name": "iki-ardisik-bos-gun-seriyi-sifirlar",
+      "scopeType": "personal",
+      "scopeId": "user-a",
+      "timeZone": "Europe/Istanbul",
+      "asOfDay": "2026-07-04",
+      "events": [
+        {"key": "p-a-01", "kind": "goal_completed", "day": "2026-07-01"}
+      ],
+      "expected": {"streak": 0, "count": 1, "state": "expired"}
+    },
+    {
+      "name": "uygulama-sayac-ve-kismi-ilerleme-seri-degildir",
+      "scopeType": "personal",
+      "scopeId": "user-a",
+      "timeZone": "Europe/Istanbul",
+      "asOfDay": "2026-07-03",
+      "events": [
+        {"key": "open", "kind": "app_opened", "day": "2026-07-03"},
+        {"key": "timer", "kind": "timer_started", "day": "2026-07-03"},
+        {"key": "partial", "kind": "partial_progress", "day": "2026-07-03"}
+      ],
+      "expected": {"streak": 0, "count": 0, "state": "empty"}
+    },
+    {
+      "name": "kisisel-ve-grup-ledger-ayridir",
+      "scopeType": "group",
+      "scopeId": "group-a",
+      "timeZone": "America/New_York",
+      "asOfDay": "2026-07-02",
+      "events": [
+        {"key": "personal-01", "kind": "goal_completed", "day": "2026-07-01", "scopeType": "personal", "scopeId": "group-a", "timeZone": "Europe/Istanbul"},
+        {"key": "group-01", "kind": "goal_completed", "day": "2026-07-01"},
+        {"key": "group-02", "kind": "goal_completed", "day": "2026-07-02"}
+      ],
+      "expected": {"streak": 2, "count": 2, "state": "completed_today"}
+    }
+  ]
+}

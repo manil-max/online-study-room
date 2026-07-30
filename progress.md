@@ -195,11 +195,12 @@
 
 ### Ajan D — Grup/dürtme, tarih seçici ve seri devralması
 
-- **Durum:** [!] BEKLİYOR: C/WP-442 migration commit'i.
+- **Durum:** [~] Aktif — WP-453 Faz 1 (goal/streak parity motoru) commit edildi; WP-444 Faz 2 için C/WP-442, WP-453 Faz 2 için A/WP-449 migration commit'i bekleniyor.
 - **Zincir:** `WP-444(Faz 2) → WP-445 → WP-446 → WP-447 → [A/WP-449] → WP-453 → WP-454 → WP-455`.
-- **Hazır kanıt:** WP-444 Faz 1 `b61038e`; WP-452 `51b5478` kod+hedefli test tamam.
+- **Hazır kanıt:** WP-444 Faz 1 `b61038e`; WP-452 `51b5478`; WP-453 Faz 1 bu commit — kod+hedefli test tamam.
 - **Devralınan dirty iş:** Eski F'nin goal/streak Faz 1 kaynak ve fixture dosyaları
-  D'ye aittir. Korunur, temizlenmez ve A/WP-449 gelmeden yarım commit atılmaz.
+  D'ye aitti; hedefli test 22/22 ve hedefli analyze doğrulandıktan sonra WP-453 Faz 1
+  olarak commit edildi. Kalan dirty dosyalar başka lane'lere aittir, D dokunmaz.
 - **Başlatma kapısı:** C/WP-442 sonrası migration sırasıyla WP-444 Faz 2 ve
   WP-445 uygulanır. WP-453, A/WP-449'ın şema/contract commit'inden sonra
   Supabase/provider/pgTAP ile tamamlanır.
@@ -208,6 +209,7 @@
 - **DOKUNMA:** moderation backend, feedback/navigation/l10n, task recurrence
   ve campfire/observability kaynakları.
 - **Teslim:** WP-447 grup matrisi ve WP-455 progression matrisi C/WP-465'e devredilir.
+- **Son kontrol:** 2026-07-30 17:05 (Europe/Istanbul) · A/B/C lane dosyaları 11:11'den beri değişmedi; C/WP-439 `0104` kaynağı ve A'nın `0102` kaynakları hâlâ commit edilmedi. D bu yüzden migration gerektirmeyen tek işi — WP-453 Faz 1 — teslim etti; WP-444 Faz 2 / WP-445 migration kilidi ve WP-453 Faz 2 şema bağı açılınca zincir kaldığı yerden sürer.
 
 
 ## 🗺️ Yol Haritası — sırada ne var
