@@ -4,6 +4,8 @@ import 'package:online_study_room/l10n/app_localizations.dart';
 
 import '../../core/widgets/crowned_avatar.dart';
 import '../../core/widgets/safe_screen_padding.dart';
+import '../../data/models/moderation_appeal.dart';
+import '../../data/models/moderation_sanction.dart';
 import '../../data/models/profile.dart';
 import '../../data/providers/moderation_providers.dart';
 import '../../data/repositories/moderation_repository.dart';
@@ -19,41 +21,47 @@ class BlockedUsersScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.safetyBlockedUsersTitle)),
-      body: async.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, _) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Text(l10n.safetyActionFailed),
+      // WP-442: Hesabındaki kısıtlar ve itiraz yolu burada; kullanıcı
+      // cezasının nedenini ve süresini görmeden itiraz edemez.
+      body: ListView(
+        padding: getSafeVerticalPadding(context, horizontal: 12, vertical: 12),
+        children: [
+          const MyRestrictionsSection(),
+          const Divider(height: 32),
+          Text(
+            l10n.safetyBlockedUsersTitle,
+            style: Theme.of(context).textTheme.titleMedium,
           ),
-        ),
-        data: (profiles) {
-          if (profiles.isEmpty) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text(
-                  l10n.safetyNoBlockedUsers,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-              ),
-            );
-          }
-          return ListView.separated(
-            padding: getSafeVerticalPadding(
-              context,
-              horizontal: 12,
-              vertical: 12,
+          const SizedBox(height: 8),
+          async.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (_, _) => Padding(
+              padding: const EdgeInsets.all(24),
+              child: Text(l10n.safetyActionFailed),
             ),
-            itemCount: profiles.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 6),
-            itemBuilder: (context, index) {
-              final p = profiles[index];
-              return _BlockedUserTile(profile: p);
+            data: (profiles) {
+              if (profiles.isEmpty) {
+                return Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Text(
+                    l10n.safetyNoBlockedUsers,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
+                );
+              }
+              return Column(
+                children: [
+                  for (final p in profiles)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: _BlockedUserTile(profile: p),
+                    ),
+                ],
+              );
             },
-          );
-        },
+          ),
+        ],
       ),
     );
   }
@@ -124,6 +132,215 @@ class _BlockedUserTileState extends ConsumerState<_BlockedUserTile> {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
               : Text(l10n.safetyUnblock, overflow: TextOverflow.ellipsis),
+        ),
+      ),
+    );
+  }
+}
+
+
+/// WP-442: Kullanıcının kendi hakkındaki yaptırımları ve itiraz yolu.
+///
+/// Kim şikâyet etti bilgisi burada **hiç** yoktur; kullanıcı yalnız kararı,
+/// gerekçesini ve süresini görür.
+class MyRestrictionsSection extends ConsumerWidget {
+  const MyRestrictionsSection({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final sanctions = ref.watch(mySanctionsProvider);
+    final appeals = ref.watch(myAppealsProvider);
+
+    return Column(
+      key: const Key('my-restrictions-section'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(l10n.safetyMyRestrictions, style: theme.textTheme.titleMedium),
+        const SizedBox(height: 8),
+        sanctions.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (_, _) => Text(l10n.safetyActionFailed),
+          data: (items) {
+            final visible = [
+              for (final sanction in items)
+                if (sanction.state == ModerationSanctionState.applied) sanction,
+            ];
+            if (visible.isEmpty) {
+              return Text(
+                l10n.safetyRestrictionNone,
+                style: theme.textTheme.bodyMedium,
+              );
+            }
+            return Column(
+              children: [
+                for (final sanction in visible)
+                  _RestrictionTile(
+                    sanction: sanction,
+                    appeal: appeals.value
+                        ?.where((a) => a.sanctionId == sanction.id)
+                        .firstOrNull,
+                  ),
+              ],
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
+class _RestrictionTile extends ConsumerWidget {
+  const _RestrictionTile({required this.sanction, this.appeal});
+
+  final ModerationSanction sanction;
+  final ModerationAppeal? appeal;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final expiresAt = sanction.expiresAt;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              _actionLabel(l10n, sanction.action),
+              style: theme.textTheme.titleSmall,
+            ),
+            const SizedBox(height: 4),
+            Text(sanction.reason, style: theme.textTheme.bodyMedium),
+            const SizedBox(height: 4),
+            Text(
+              expiresAt == null
+                  ? l10n.safetyRestrictionPermanent
+                  : l10n.safetyRestrictionUntil(
+                      expiresAt.toLocal().toString().substring(0, 16),
+                    ),
+              style: theme.textTheme.bodySmall,
+            ),
+            const SizedBox(height: 8),
+            if (appeal != null)
+              Text(
+                switch (appeal!.status) {
+                  ModerationAppealStatus.open => l10n.safetyAppealPending,
+                  ModerationAppealStatus.upheld => l10n.safetyAppealUpheld,
+                  ModerationAppealStatus.overturned =>
+                    l10n.safetyAppealOverturned,
+                },
+                style: theme.textTheme.bodySmall,
+              )
+            else
+              Align(
+                alignment: AlignmentDirectional.centerEnd,
+                child: TextButton(
+                  key: Key('appeal-action-${sanction.id}'),
+                  onPressed: () => _openAppealSheet(context, ref),
+                  child: Text(l10n.safetyAppealAction),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openAppealSheet(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final statement = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => const _AppealSheet(),
+    );
+    if (statement == null) return;
+    try {
+      await ref
+          .read(moderationRepositoryProvider)
+          .submitAppeal(sanctionId: sanction.id, statement: statement);
+    } on ModerationException catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+      return;
+    }
+    ref.invalidate(myAppealsProvider);
+    messenger.showSnackBar(SnackBar(content: Text(l10n.safetyAppealSubmitted)));
+  }
+
+  static String _actionLabel(AppLocalizations l10n, ModerationAction action) =>
+      switch (action) {
+        ModerationAction.noAction => l10n.adminModerationSanctionNoAction,
+        ModerationAction.warn => l10n.adminModerationSanctionWarn,
+        ModerationAction.nameReset => l10n.adminModerationSanctionNameReset,
+        ModerationAction.mute24h => l10n.adminModerationSanctionMute24h,
+        ModerationAction.suspend24h => l10n.adminModerationSanctionSuspend24h,
+        ModerationAction.suspend7d => l10n.adminModerationSanctionSuspend7d,
+        ModerationAction.suspend14d => l10n.adminModerationSanctionSuspend14d,
+        ModerationAction.suspend30d => l10n.adminModerationSanctionSuspend30d,
+        ModerationAction.banPermanent => l10n.adminModerationSanctionBan,
+      };
+}
+
+/// İtiraz metni sayfası. Sunucudaki 10 karakter alt sınırı burada da geçerli:
+/// kullanıcı boş gönderip ham SQL hatası görmez.
+class _AppealSheet extends StatefulWidget {
+  const _AppealSheet();
+
+  @override
+  State<_AppealSheet> createState() => _AppealSheetState();
+}
+
+class _AppealSheetState extends State<_AppealSheet> {
+  final TextEditingController _statement = TextEditingController();
+
+  @override
+  void dispose() {
+    _statement.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final tooShort = _statement.text.trim().length < kAppealMinLength;
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.only(
+          left: 20,
+          right: 20,
+          top: 20,
+          bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            TextField(
+              key: const Key('appeal-statement-field'),
+              controller: _statement,
+              maxLines: 4,
+              maxLength: kAppealMaxLength,
+              onChanged: (_) => setState(() {}),
+              decoration: InputDecoration(
+                labelText: l10n.safetyAppealStatement,
+                errorText: tooShort && _statement.text.isNotEmpty
+                    ? l10n.safetyAppealTooShort
+                    : null,
+                border: const OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            FilledButton(
+              key: const Key('appeal-submit'),
+              onPressed: tooShort
+                  ? null
+                  : () => Navigator.of(context).pop(_statement.text.trim()),
+              child: Text(l10n.safetyAppealAction),
+            ),
+          ],
         ),
       ),
     );

@@ -1,3 +1,4 @@
+import '../models/moderation_appeal.dart';
 import '../models/moderation_case.dart';
 import '../models/moderation_sanction.dart';
 // `ModerationException` tek tanımdır; kuyruk da aynı hatayı fırlatır.
@@ -52,6 +53,20 @@ abstract class AdminModerationRepository {
     required ModerationCase moderationCase,
     required bool quarantined,
     required String reason,
+  });
+
+  /// WP-442: İtiraz kuyruğu — açık itirazlar başta.
+  ///
+  /// [ModerationAppeal.decidable] sunucuda hesaplanır: yaptırımı uygulayan
+  /// yönetici kendi kararını denetleyemez.
+  Future<List<ModerationAppeal>> fetchAppeals();
+
+  /// İtirazı karara bağlar. Karar **idempotenttir**: kararı verilmiş itiraz
+  /// yeniden yazılmaz, `overturned` yaptırımı yalnız bir kez kaldırır.
+  Future<ModerationAppeal> decideAppeal({
+    required ModerationAppeal appeal,
+    required bool overturn,
+    required String note,
   });
 }
 

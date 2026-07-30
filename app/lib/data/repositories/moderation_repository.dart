@@ -1,5 +1,7 @@
 import 'dart:typed_data';
 
+import '../models/moderation_appeal.dart';
+import '../models/moderation_sanction.dart';
 import '../models/profile.dart';
 import '../models/report_target.dart';
 
@@ -29,7 +31,29 @@ abstract class ModerationRepository {
     Uint8List? attachmentBytes,
     String? attachmentExt,
   });
+
+  /// WP-442: Kullanıcının kendisi hakkındaki yaptırımlar — nedeni ve süresi.
+  ///
+  /// Kullanıcı yalnız kendi satırlarını görür; kimin şikâyet ettiği bu yolda
+  /// hiç dönmez.
+  Future<List<ModerationSanction>> fetchMySanctions();
+
+  /// Yaptırıma itiraz eder. Aynı yaptırıma ikinci itiraz açılmaz; tekrar
+  /// gönderim mevcut itirazı döner.
+  Future<ModerationAppeal> submitAppeal({
+    required String sanctionId,
+    required String statement,
+  });
+
+  /// Kullanıcının kendi itirazları.
+  Future<List<ModerationAppeal>> fetchMyAppeals();
 }
+
+/// İtiraz metni sunucuda 10–2000 karakter arası olmak zorunda; istemci aynı
+/// sınırı uygular ki kullanıcı boş bir gönderimin ardından ham SQL hatası
+/// görmesin.
+const int kAppealMinLength = 10;
+const int kAppealMaxLength = 2000;
 
 class ModerationException implements Exception {
   const ModerationException(this.message);

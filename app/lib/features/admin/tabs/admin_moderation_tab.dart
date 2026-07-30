@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
+import '../../../data/models/moderation_appeal.dart';
 import '../../../data/models/moderation_case.dart';
 import '../../../data/models/moderation_sanction.dart';
 import '../../../data/providers/admin_moderation_providers.dart';
@@ -41,9 +42,13 @@ class AdminModerationTab extends ConsumerWidget {
       data: (cases) {
         if (cases.isEmpty) {
           return RefreshIndicator(
-            onRefresh: () async => ref.invalidate(moderationQueueProvider),
+            onRefresh: () async {
+              ref.invalidate(moderationQueueProvider);
+              ref.invalidate(moderationAppealsProvider);
+            },
             child: ListView(
               children: [
+                const _AppealQueue(),
                 const SizedBox(height: 120),
                 Center(child: Text(l10n.adminUgcNoReports)),
               ],
@@ -51,10 +56,17 @@ class AdminModerationTab extends ConsumerWidget {
           );
         }
         return RefreshIndicator(
-          onRefresh: () async => ref.invalidate(moderationQueueProvider),
+          onRefresh: () async {
+            ref.invalidate(moderationQueueProvider);
+            ref.invalidate(moderationAppealsProvider);
+          },
           child: ListView.builder(
-            itemCount: cases.length,
-            itemBuilder: (context, index) {
+            // WP-442: itiraz kuyruğu kartların üstünde ilk sırada durur;
+            // bekleyen itiraz vaka kartlarının arasında kaybolmasın.
+            itemCount: cases.length + 1,
+            itemBuilder: (context, rawIndex) {
+              if (rawIndex == 0) return const _AppealQueue();
+              final index = rawIndex - 1;
               final moderationCase = cases[index];
               return ModerationQueueCard(
                 key: ValueKey(moderationCase.caseKey),
@@ -168,7 +180,7 @@ class AdminModerationTab extends ConsumerWidget {
   }) async {
     final l10n = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
-    final reason = await _askReason(context, l10n.adminModerationQuarantine);
+    final reason = await askReason(context, l10n.adminModerationQuarantine);
     if (reason == null) return;
     try {
       await ref
@@ -196,7 +208,8 @@ class AdminModerationTab extends ConsumerWidget {
 
   /// Gerekçe zorunludur; boş gerekçe sessizce "gerekçe belirtilmedi"ye
   /// çevrilmez, işlem hiç yapılmaz.
-  static Future<String?> _askReason(BuildContext context, String title) async {
+  @visibleForTesting
+  static Future<String?> askReason(BuildContext context, String title) async {
     final reason = await showDialog<String>(
       context: context,
       builder: (_) => _ReasonDialog(title: title),
@@ -425,6 +438,141 @@ class _ReasonDialogState extends State<_ReasonDialog> {
           child: Text(l10n.adminOnayla),
         ),
       ],
+    );
+  }
+}
+
+
+/// WP-442: İtiraz kuyruğu.
+///
+/// Yaptırımı uygulayan yönetici kendi kararının itirazını karara bağlayamaz;
+/// sunucu reddeder, kart da eylemleri hiç göstermez ve nedenini yazar.
+class _AppealQueue extends ConsumerWidget {
+  const _AppealQueue();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final appeals = ref.watch(moderationAppealsProvider);
+
+    return Padding(
+      key: const Key('moderation-appeal-queue'),
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(l10n.adminModerationAppeals, style: theme.textTheme.titleMedium),
+          const SizedBox(height: 6),
+          appeals.when(
+            loading: () => const LinearProgressIndicator(),
+            error: (_, _) => Text(l10n.profileBeklenmeyenBirHataOlustu),
+            data: (items) {
+              final open = [
+                for (final appeal in items)
+                  if (!appeal.status.isDecided) appeal,
+              ];
+              if (open.isEmpty) {
+                return Text(
+                  l10n.adminModerationAppealEmpty,
+                  style: theme.textTheme.bodySmall,
+                );
+              }
+              return Column(
+                children: [for (final appeal in open) _AppealCard(appeal: appeal)],
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AppealCard extends ConsumerWidget {
+  const _AppealCard({required this.appeal});
+
+  final ModerationAppeal appeal;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              appeal.sanctionReason ?? '',
+              style: theme.textTheme.titleSmall,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              appeal.statement,
+              style: theme.textTheme.bodyMedium,
+              maxLines: 4,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 8),
+            if (!appeal.canBeDecidedNow)
+              Text(
+                l10n.adminModerationAppealOwnSanction,
+                key: const Key('appeal-conflict-note'),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.error,
+                ),
+              )
+            else
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    key: Key('appeal-uphold-${appeal.id}'),
+                    onPressed: () => _decide(context, ref, overturn: false),
+                    child: Text(l10n.adminModerationAppealUphold),
+                  ),
+                  const SizedBox(width: 8),
+                  FilledButton(
+                    key: Key('appeal-overturn-${appeal.id}'),
+                    onPressed: () => _decide(context, ref, overturn: true),
+                    child: Text(l10n.adminModerationAppealOverturn),
+                  ),
+                ],
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _decide(
+    BuildContext context,
+    WidgetRef ref, {
+    required bool overturn,
+  }) async {
+    final l10n = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final note = await AdminModerationTab.askReason(
+      context,
+      l10n.adminModerationAppeals,
+    );
+    if (note == null) return;
+    try {
+      await ref
+          .read(adminModerationRepositoryProvider)
+          .decideAppeal(appeal: appeal, overturn: overturn, note: note);
+    } on ModerationException catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+      return;
+    }
+    ref.invalidate(moderationAppealsProvider);
+    ref.invalidate(moderationQueueProvider);
+    messenger.showSnackBar(
+      SnackBar(content: Text(l10n.adminModerationAppealDecided)),
     );
   }
 }

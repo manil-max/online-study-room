@@ -1,5 +1,7 @@
 import 'dart:typed_data';
 
+import '../../models/moderation_appeal.dart';
+import '../../models/moderation_sanction.dart';
 import '../../models/profile.dart';
 import '../../models/report_target.dart';
 import '../moderation_repository.dart';
@@ -28,6 +30,51 @@ class InMemoryModerationRepository implements ModerationRepository {
   @override
   Future<void> unblockUser(String userId) async {
     _blocked.remove(userId);
+  }
+
+  /// Testler kendi hakkındaki yaptırımı buradan besler.
+  final List<ModerationSanction> sanctions = [];
+  final List<ModerationAppeal> appeals = [];
+
+  @override
+  Future<List<ModerationSanction>> fetchMySanctions() async =>
+      List<ModerationSanction>.unmodifiable(sanctions);
+
+  @override
+  Future<List<ModerationAppeal>> fetchMyAppeals() async =>
+      List<ModerationAppeal>.unmodifiable(appeals);
+
+  @override
+  Future<ModerationAppeal> submitAppeal({
+    required String sanctionId,
+    required String statement,
+  }) async {
+    final trimmed = statement.trim();
+    if (trimmed.length < kAppealMinLength) {
+      throw const ModerationException('İtiraz metni çok kısa.');
+    }
+    // Sunucudaki tekillik: bir yaptırıma tek itiraz.
+    final existing = appeals.where((a) => a.sanctionId == sanctionId).firstOrNull;
+    if (existing != null) return existing;
+
+    final sanction = sanctions.where((s) => s.id == sanctionId).firstOrNull;
+    if (sanction == null) {
+      throw const ModerationException('Yaptırım bulunamadı.');
+    }
+    if (sanction.state != ModerationSanctionState.applied) {
+      throw const ModerationException('Bu yaptırıma itiraz edilemez.');
+    }
+    final appeal = ModerationAppeal(
+      id: 'appeal-${appeals.length + 1}',
+      sanctionId: sanctionId,
+      statement: trimmed,
+      status: ModerationAppealStatus.open,
+      createdAt: DateTime.now(),
+      sanctionAction: sanction.action,
+      sanctionReason: sanction.reason,
+    );
+    appeals.add(appeal);
+    return appeal;
   }
 
   @override

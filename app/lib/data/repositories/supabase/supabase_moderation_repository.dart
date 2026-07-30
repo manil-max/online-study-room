@@ -2,6 +2,8 @@ import 'dart:typed_data';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../models/moderation_appeal.dart';
+import '../../models/moderation_sanction.dart';
 import '../../models/profile.dart';
 import '../../models/report_target.dart';
 import '../moderation_repository.dart';
@@ -59,6 +61,73 @@ class SupabaseModerationRepository implements ModerationRepository {
   Future<void> unblockUser(String userId) async {
     try {
       await _client.rpc('unblock_user', params: {'p_blocked_id': userId});
+    } on PostgrestException catch (e) {
+      throw ModerationException(e.message);
+    }
+  }
+
+  @override
+  Future<List<ModerationSanction>> fetchMySanctions() async {
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null) return const [];
+    try {
+      final rows =
+          await _client
+                  .from('moderation_sanctions')
+                  .select()
+                  .eq('target_user_id', userId)
+                  .order('created_at', ascending: false)
+              as List;
+      return [
+        for (final raw in rows)
+          ModerationSanction.fromWire(Map<String, dynamic>.from(raw as Map)),
+      ];
+    } on PostgrestException catch (e) {
+      throw ModerationException(e.message);
+    }
+  }
+
+  @override
+  Future<ModerationAppeal> submitAppeal({
+    required String sanctionId,
+    required String statement,
+  }) async {
+    final trimmed = statement.trim();
+    if (trimmed.length < kAppealMinLength) {
+      throw const ModerationException('İtiraz metni çok kısa.');
+    }
+    try {
+      final row = await _client.rpc(
+        'submit_moderation_appeal',
+        params: {
+          'p_sanction_id': sanctionId,
+          'p_statement': trimmed.length > kAppealMaxLength
+              ? trimmed.substring(0, kAppealMaxLength)
+              : trimmed,
+        },
+      );
+      return ModerationAppeal.fromWire(Map<String, dynamic>.from(row as Map));
+    } on PostgrestException catch (e) {
+      throw ModerationException(e.message);
+    }
+  }
+
+  @override
+  Future<List<ModerationAppeal>> fetchMyAppeals() async {
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null) return const [];
+    try {
+      final rows =
+          await _client
+                  .from('moderation_appeals')
+                  .select()
+                  .eq('appellant_id', userId)
+                  .order('created_at', ascending: false)
+              as List;
+      return [
+        for (final raw in rows)
+          ModerationAppeal.fromWire(Map<String, dynamic>.from(raw as Map)),
+      ];
     } on PostgrestException catch (e) {
       throw ModerationException(e.message);
     }

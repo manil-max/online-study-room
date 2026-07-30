@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../models/moderation_appeal.dart';
 import '../../models/moderation_case.dart';
 import '../../models/moderation_sanction.dart';
 import '../../models/report_target.dart';
@@ -261,6 +262,49 @@ class SupabaseAdminModerationRepository implements AdminModerationRepository {
           'p_reason': reason.trim(),
         },
       );
+    } on PostgrestException catch (e) {
+      throw ModerationException(e.message);
+    }
+  }
+
+  @override
+  Future<List<ModerationAppeal>> fetchAppeals() async {
+    try {
+      final rows = await _client.rpc('admin_moderation_appeals') as List;
+      return [
+        for (final raw in rows)
+          ModerationAppeal.fromWire(Map<String, dynamic>.from(raw as Map)),
+      ];
+    } on PostgrestException catch (e) {
+      throw ModerationException(e.message);
+    }
+  }
+
+  @override
+  Future<ModerationAppeal> decideAppeal({
+    required ModerationAppeal appeal,
+    required bool overturn,
+    required String note,
+  }) async {
+    if (note.trim().isEmpty) {
+      throw const ModerationException('Gerekçe zorunludur.');
+    }
+    if (!appeal.decidable) {
+      // Sunucu da reddeder; buradaki kapı yöneticiye neden olduğunu söyler.
+      throw const ModerationException(
+        'Kendi verdiğin yaptırımın itirazını karara bağlayamazsın.',
+      );
+    }
+    try {
+      final row = await _client.rpc(
+        'admin_decide_moderation_appeal',
+        params: {
+          'p_appeal_id': appeal.id,
+          'p_outcome': overturn ? 'overturned' : 'upheld',
+          'p_note': note.trim(),
+        },
+      );
+      return ModerationAppeal.fromWire(Map<String, dynamic>.from(row as Map));
     } on PostgrestException catch (e) {
       throw ModerationException(e.message);
     }

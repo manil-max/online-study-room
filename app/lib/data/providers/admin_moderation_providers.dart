@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/config/supabase_config.dart';
+import '../models/moderation_appeal.dart';
 import '../models/moderation_case.dart';
 import '../models/moderation_sanction.dart';
 import '../repositories/admin_moderation_repository.dart';
@@ -45,4 +46,11 @@ final moderationSanctionsProvider =
   return ref
       .watch(adminModerationRepositoryProvider)
       .fetchSanctions(targetUserId);
+});
+
+/// WP-442: İtiraz kuyruğu. Açık itirazlar başta gelir.
+final moderationAppealsProvider = FutureProvider<List<ModerationAppeal>>((
+  ref,
+) async {
+  return ref.watch(adminModerationRepositoryProvider).fetchAppeals();
 });

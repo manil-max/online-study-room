@@ -1,3 +1,4 @@
+import '../../models/moderation_appeal.dart';
 import '../../models/moderation_case.dart';
 import '../../models/moderation_sanction.dart';
 import '../admin_moderation_repository.dart';
@@ -132,6 +133,74 @@ class InMemoryAdminModerationRepository implements AdminModerationRepository {
     for (final sanction in _sanctions.reversed)
       if (sanction.targetUserId == targetUserId) sanction,
   ];
+
+  /// Testler itiraz kuyruğunu buradan besler.
+  final List<ModerationAppeal> appeals = [];
+  final List<String> appealDecisions = [];
+
+  @override
+  Future<List<ModerationAppeal>> fetchAppeals() async =>
+      List<ModerationAppeal>.unmodifiable(appeals);
+
+  @override
+  Future<ModerationAppeal> decideAppeal({
+    required ModerationAppeal appeal,
+    required bool overturn,
+    required String note,
+  }) async {
+    if (note.trim().isEmpty) {
+      throw const ModerationException('Gerekçe zorunludur.');
+    }
+    if (!appeal.decidable) {
+      throw const ModerationException(
+        'Kendi verdiğin yaptırımın itirazını karara bağlayamazsın.',
+      );
+    }
+    final index = appeals.indexWhere((a) => a.id == appeal.id);
+    if (index < 0) throw const ModerationException('İtiraz bulunamadı.');
+    final current = appeals[index];
+    // Karar idempotenttir: kararı verilmiş itiraz yeniden yazılmaz.
+    if (current.status.isDecided) return current;
+
+    final decided = ModerationAppeal(
+      id: current.id,
+      sanctionId: current.sanctionId,
+      statement: current.statement,
+      status: overturn
+          ? ModerationAppealStatus.overturned
+          : ModerationAppealStatus.upheld,
+      createdAt: current.createdAt,
+      appellantId: current.appellantId,
+      sanctionAction: current.sanctionAction,
+      sanctionReason: current.sanctionReason,
+      decisionNote: note.trim(),
+      decidable: current.decidable,
+    );
+    appeals[index] = decided;
+    appealDecisions.add('${current.id}=${decided.status.wire}');
+
+    if (overturn) {
+      final sanctionIndex = _sanctions.indexWhere(
+        (s) => s.id == current.sanctionId,
+      );
+      if (sanctionIndex >= 0 &&
+          _sanctions[sanctionIndex].state == ModerationSanctionState.applied) {
+        final sanction = _sanctions[sanctionIndex];
+        _sanctions[sanctionIndex] = ModerationSanction(
+          id: sanction.id,
+          targetUserId: sanction.targetUserId,
+          action: sanction.action,
+          reason: sanction.reason,
+          state: ModerationSanctionState.revoked,
+          caseId: sanction.caseId,
+          appliedAt: sanction.appliedAt,
+          expiresAt: sanction.expiresAt,
+          revokedAt: clock(),
+        );
+      }
+    }
+    return decided;
+  }
 
   @override
   Future<void> setQuarantine({
