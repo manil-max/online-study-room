@@ -140,11 +140,13 @@
 
 - **Durum:** [!] BEKLİYOR: D/WP-445 migration commit'i. WP-448 `2e0f23d` kapandı.
 - **Zincir:** `WP-432 → WP-433 → WP-448 → [D/WP-445] → WP-449 → WP-450 → WP-451`.
-- **Şimdi:** WP-449'un Dart katmanı ve kabul testleri (undo, cihaz saati geri
-  alma, çevrimdışı rollback dahil 19 hedefli test) yeşil; migration + pgTAP
-  taslakları hazır, dosya numarası kilit açılınca ölçülecek. WP-450'nin bölüm
-  modeli `core/tasks/task_sections.dart` + 6 test hazır; UI adımı yalnız l10n
-  anahtarlarını bekliyor. Sıra: 449 → 450 → 451.
+- **Şimdi:** WP-449 **ve** WP-450 kod + otomatik test tamam; ikisi de migration
+  kilidine bakan iki ayrı commit olarak sırada bekliyor. WP-450 B'nin açtığı
+  yedi l10n anahtarını (`4e6995b`) kullanır; A arb'ye yazmadı. Görev yüzeyinde
+  54 test yeşil, `flutter analyze` temiz. Sıra: 449 → 450 → 451.
+- **Olay notu (17:55):** İki lane'in kayıt betiği `progress.md`'yi aynı dakikada
+  sıfırladı; `d4da922` boş dosyayla girdi ve bu commit içerikle geri alıyor.
+  HEAD'e girmemiş kart düzenlemesi olan lane kendi satırını tekrar yazsın.
 - **B'den l10n talebi (WP-450, l10n kilidi B'de olduğu için A arb'ye yazmaz):**
   `taskListSectionToday` "Bugün"/"Today" · `taskListSectionRecurring`
   "Tekrarlanan"/"Recurring" · `taskListSectionOther` "Diğer"/"Other" ·
@@ -162,34 +164,34 @@
   ardından WP-450 için `tasks_screen.dart` / `tasks_card.dart`.
 - **Ortak/riskli yüzey:** Migration yok; B/WP-435 migration yazımını yürütüyor,
   production/stable kapalı.
-- **Başlangıç / son güncelleme:** 2026-07-30 10:50 / 17:35 (Europe/Istanbul).
+- **Başlangıç / son güncelleme:** 2026-07-30 10:50 / 17:56 (Europe/Istanbul).
 - **DOKUNMA:** moderation, feedback, grup sohbeti, streak motoru, B'nin navigation/l10n yüzeyi.
 - **Teslim:** Her aşamada commit/test kanıtı; WP-451 fixture'ı D/WP-455'e açık bırakılır.
 
 ### Ajan B — Feedback, rozetler, ayarlar ve yayın yüzeyi
 
-- **Durum:** [~] Kod/test tamam — WP-438 commit hazırlanıyor.
+- **Durum:** [~] Aktif — WP-459 ayarlar/profil rozet birleştirmesi yazılıyor.
 - **Zincir:** `WP-435 → WP-436 → WP-437 → WP-438 → WP-459 → WP-460 → WP-461`.
 - **Hazır kanıt:** WP-434 `c3999f3`; WP-435 `355f1dd`; WP-436 `7d191b6`;
-  WP-437 `dc03317`; WP-456 `cfb9536`, WP-457 `c671011`, WP-458 `5776055`
-  kod+otomatik test tamam.
-- **Diğer lane'lere l10n servisi:** A/WP-450'nin istediği yedi `taskList*`
-  anahtarı `4e6995b` ile açıldı; D/WP-444 Faz 2'nin istediği sekiz `safety*`
-  anahtarı sırada (WP-438 commit'inden hemen sonra, ayrı commit). D'nin
-  Ayarlar → Güvenlik girişi talebi B/WP-459 kapsamına yazıldı.
-- **Başlatma kapısı:** WP-437 `dc03317` ile tamamlandı; WP-438 kapanış kapısı
-  bu commit'tedir. WP-459 sırada; WP-460/461 aynı B zincirindedir.
+  WP-437 `dc03317`; WP-438 `2673898`; WP-456 `cfb9536`, WP-457 `c671011`,
+  WP-458 `5776055` kod+otomatik test tamam.
+- **Diğer lane'lere l10n servisi:** A/WP-450'nin yedi `taskList*` anahtarı
+  `4e6995b`; D/WP-444 Faz 2'nin sekiz `safety*` anahtarı `a9e2a7e` ile açıldı.
+  D'nin Ayarlar → Güvenlik girişi talebi WP-459 kapsamındadır; giriş, D'nin
+  `features/safety/muted_nudges_screen.dart` commit'i gelince bağlanır.
+- **Başlatma kapısı:** WP-438 `2673898` ile tamamlandı; WP-459 hazırdır.
+  WP-460/461 aynı B zincirindedir.
 - **SAHİP:** feedback ticket/message/repository çiftleri, unread/badge sağlayıcıları,
   feedback/admin ekranları; settings/profile/navigation/l10n/widget katalog yüzeyleri.
 - **DOKUNMA:** moderation backend, grup/nudge, timer/subject, task/streak çekirdeği.
-- **Teslim:** WP-438 rozet/messaging kanıtı `docs/qa/V57-FEEDBACK-EVIDENCE.md §5`
-  içindedir; cihazda doğrulanacak beş satır C/WP-465-466'ya devredildi.
-- **Aktif WP / sahip yollar:** WP-438 · `app/test/features/feedback_e2e_wp438_test.dart`,
-  InMemory admin repository sıra düzeltmesi ve feedback evidence belgesi.
-- **Ortak/riskli yüzey:** Migration yok; `settings_screen` WP-459'a, core navigation
-  diğer lane'lere aittir. `flutter analyze` temiz; feedback/admin/ayarlar/l10n
-  hedefli testleri 57/57 yeşil; production/stable kapalı.
-- **Başlangıç / son güncelleme:** 2026-07-30 11:05 / 18:05 (Europe/Istanbul).
+- **Teslim:** WP-438 kanıtı `docs/qa/V57-FEEDBACK-EVIDENCE.md §5`; cihaz satırları
+  C/WP-465-466'ya devredildi. WP-461 widget/yüzey kanıtı C/WP-465'e gidecek.
+- **Aktif WP / sahip yollar:** WP-459 · `settings_screen.dart`, profil feedback
+  satırları, navigation rozet bağlantısı ve ilgili testler.
+- **Ortak/riskli yüzey:** Migration yok; `settings_screen` ve l10n kilidi B'de,
+  core navigation WP-460'a kadar diğer lane'lerle paylaşımlı. WP-438 sonrası
+  analyze temiz, hedefli testler 57/57 yeşil; production/stable kapalı.
+- **Başlangıç / son güncelleme:** 2026-07-30 11:05 / 18:15 (Europe/Istanbul).
 
 ### Ajan C — Moderasyon, kamp/observability devralması ve final QA
 
@@ -229,9 +231,10 @@
 
 ### Ajan D — Grup/dürtme, tarih seçici ve seri devralması
 
-- **Durum:** [~] Aktif — WP-453 Faz 1 `a309c2d` teslim edildi. WP-444 Faz 2'nin migration (`0107`) ayağı C/WP-442'yi bekliyor; bekletilmesi gerekmeyen susturma yönetim UI'si hazırlanıyor ve yalnız l10n anahtarlarına bağlı.
+- **Durum:** [~] Aktif — WP-444 **Faz 2 tamamlandı** (`0107` + susturma yönetim
+  ekranı); sırada WP-445 (`0108`). WP-453 Faz 2 hâlâ A/WP-449 şemasını bekliyor.
 - **Zincir:** `WP-444(Faz 2) → WP-445 → WP-446 → WP-447 → [A/WP-449] → WP-453 → WP-454 → WP-455`.
-- **Hazır kanıt:** WP-444 Faz 1 `b61038e`; WP-452 `51b5478`; WP-453 Faz 1 `a309c2d` — kod+hedefli test tamam.
+- **Hazır kanıt:** WP-444 Faz 1 `b61038e` + Faz 2 bu commit; WP-452 `51b5478`; WP-453 Faz 1 `a309c2d` — kod+hedefli test tamam.
 - **B'den l10n talebi (WP-444 Faz 2, l10n kilidi B'de olduğu için D arb'ye yazmaz):**
   `safetyMutedNudgesTitle` "Dürtmesi susturulanlar"/"Muted nudges" ·
   `safetyMutedNudgesEmpty` "Dürtmesi susturulan kimse yok."/"No one is muted." ·
@@ -258,7 +261,7 @@
 - **DOKUNMA:** moderation backend, feedback/navigation/l10n, task recurrence
   ve campfire/observability kaynakları.
 - **Teslim:** WP-447 grup matrisi ve WP-455 progression matrisi C/WP-465'e devredilir.
-- **Son kontrol:** 2026-07-30 17:48 (Europe/Istanbul) · Migration head `0105` (C/WP-441 `27609c6`); C/WP-442 `0106` henüz gelmedi, D'nin `0107`'si onun arkasında. Migration gerektirmeyen iş öne alındı: WP-444 Faz 2 susturma yönetim ekranı InMemory repository üzerinden kurulabilir; `0107` + pgTAP taslakları hazır, numara kilit açılınca verilecek. Bu hostta Docker kapalı → pgTAP `Replay bekliyor` etiketiyle teslim edilecek.
+- **Son kontrol:** 2026-07-30 18:40 (Europe/Istanbul) · C/WP-442 `f93859d` (`0106`) geldi, D'nin migration kilidi açıldı ve `0107` alındı. **Öz eleştiri:** `0fd8004` restore'um bayat bir anlık görüntüydü; `2e3296b`'deki A ve B lane satırlarını geri aldı. Bu commit o iki bölümü `2e3296b`'den geri koyuyor, C bölümü HEAD'deki daha yeni sürüm olarak kalıyor. Paylaşılan `progress.md`'ye bundan sonra yalnız bölüm bazlı birleştirmeyle yazıyorum, tam dosya anlık görüntüsüyle değil.
 
 
 ## 🗺️ Yol Haritası — sırada ne var
@@ -4488,7 +4491,8 @@ alır; boş/uydurma migration yazılmaz.
 
 #### WP-444 — Kişi bazlı yalnız dürtme sessize alma
 
-- **Durum / bağımlılık:** [~] Faz 1 (istemci/model sözleşmesi) **kod + otomatik test tamam** · commit mesajı `WP-444: dürtme susturma sözleşmesi` · Faz 2 (migration `0107` + susturma yönetim UI'si) WP-442 commit'ini ve migration/l10n kilitlerini bekliyor.
+- **Durum / bağımlılık:** [x] TAMAMLANDI · Faz 1 `b61038e` · Faz 2 bu commit (migration `0107` + pgTAP `032` + susturma yönetim ekranı). Kapılar açıldı: C/WP-442 `f93859d` migration sırasını bıraktı, B `a9e2a7e` ile sekiz l10n anahtarını açtı.
+- **Faz 2 kanıtı (Ajan D, 2026-07-30):** `0107_nudge_mutes.sql` — `nudge_mutes` tablosu (yalnız kendi tercihini okuyan RLS), okunamaz `nudge_suppressed_attempts` (policy yok = deny all), `mute_nudges_from`/`unmute_nudges_from`/`nudge_mute_directory` RPC'leri ve `send_nudge`'ın susturma dalı. Yan kanal kapalı: satır yazılmadığı için `0066`'daki `nudges_enqueue_push` AFTER INSERT trigger'ı tetiklenmez (realtime + outbox susar), cooldown penceresi bastırılmış denemeleri de saydığı için ikinci deneme aynı `nudge_cooldown` hatasını alır. Blok muafiyeti (grup sahibi/süper admin) susturmaya bilinçli olarak uygulanmaz. UI: `features/safety/muted_nudges_screen.dart` — engelleme listesinden ayrı ekran, kapsam açıklaması boş listede de görünür. Test: nudge yüzeyi 14 + ekran 3 = **17/17 yeşil**, hedefli analyze temiz. pgTAP `032_nudge_mute_contract.test.sql` (14 assert) yazıldı; bu hostta Docker kalkmadığı için **Replay bekliyor**. Ayarlar → Güvenlik girişi B/WP-459 kapsamında bağlanacak.
 - **Faz 1 kanıtı (Ajan D, 2026-07-30):** `NudgeRepository` susturma sözleşmesi + `NudgeMute` modeli + iki repository implementasyonu + `mutedNudgeSenderIdsProvider` / `nudgeMutesProvider` + bildirim dinleyicisinde ikinci katman süzgeç. Yan kanal kapalı: susturulmuş alıcıya gönderimde dönen satır ve cooldown davranışı normal durumla aynı. Test: `nudge_mute_test.dart` (6) + `nudge_repository_test.dart` (3) + `nudge_notification_listener_test.dart` (5) = 14/14 yeşil; analyze nudge yüzeyinde 0 uyarı. Kanıt etiketi: **Kodda doğrulandı**.
 - **Faz 2 tasarım kararı (sabit):** `nudge_mutes(user_id, muted_sender_id, created_at)` + `mute_nudges_from` / `unmute_nudges_from` / `nudge_mute_directory` RPC'leri; `send_nudge` susturulmuş alıcı için **satır/realtime/outbox üretmez**, fakat gönderene normal bir satır döndürür ve cooldown penceresini yine işler (bastırılmış deneme kaydı) — aksi hâlde "ikinci dürtme hemen kabul edildi" farkı tercihi ifşa ederdi.
 - **SAHİP:** nudge model/repository/provider/notification service,
