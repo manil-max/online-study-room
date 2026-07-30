@@ -6,6 +6,7 @@ import '../models/admin_audit_log.dart';
 import '../models/admin_user_dto.dart';
 import '../models/announcement.dart';
 import '../models/feedback_ticket.dart';
+import '../models/feedback_ticket_thread_summary.dart';
 import '../models/study_group.dart';
 import '../repositories/admin_repository.dart';
 import '../repositories/in_memory/in_memory_admin_repository.dart';
@@ -75,6 +76,19 @@ final myFeedbackTicketsProvider = FutureProvider<List<FeedbackTicket>>((
   if (profile == null) return const [];
   return ref.watch(adminRepositoryProvider).fetchMyFeedbackTickets(profile.id);
 });
+
+/// Kullanicinin bilet listesi + konusma ozeti (son mesaj, tarih, okunmamis).
+///
+/// WP-437: Liste satiri artik biletin ilk mesajinda donmaz; ozet WP-435/436'nin
+/// kanonik mesaj dizisi ve okundu watermark'i uzerinden turer.
+final myFeedbackTicketSummariesProvider =
+    FutureProvider<List<FeedbackTicketThreadSummary>>((ref) async {
+      final profile = ref.watch(authStateProvider).value;
+      if (profile == null) return const [];
+      return ref
+          .watch(adminRepositoryProvider)
+          .fetchMyTicketThreadSummaries(profile.id);
+    });
 
 /// Okunmamis yonetici yaniti sayisi — rozet zincirinin tek kaynagi.
 ///

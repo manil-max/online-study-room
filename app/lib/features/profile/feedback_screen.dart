@@ -147,6 +147,8 @@ class _FeedbackComposeViewState extends ConsumerState<FeedbackComposeView> {
             attachmentExt: _attachmentExt,
           );
       ref.invalidate(myFeedbackTicketsProvider);
+      // WP-437: liste satiri ozet saglayicidan cizilir; yeni bilet gorunsun.
+      ref.invalidate(myFeedbackTicketSummariesProvider);
       ref.invalidate(adminDashboardSummaryProvider);
       ref.invalidate(adminFeedbackTicketsProvider(null));
       if (!mounted) return;

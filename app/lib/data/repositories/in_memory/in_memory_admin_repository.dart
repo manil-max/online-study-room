@@ -9,6 +9,7 @@ import '../../models/announcement.dart';
 import '../../models/feedback_ticket.dart';
 import '../../models/feedback_ticket_note.dart';
 import '../../models/feedback_ticket_message.dart';
+import '../../models/feedback_ticket_thread_summary.dart';
 import '../../models/study_group.dart';
 import '../admin_repository.dart';
 
@@ -278,6 +279,23 @@ class InMemoryAdminRepository implements AdminRepository {
     await for (final _ in _changes.stream) {
       yield await fetchTicketMessages(userId: userId, ticketId: ticketId);
     }
+  }
+
+  @override
+  Future<List<FeedbackTicketThreadSummary>> fetchMyTicketThreadSummaries(
+    String userId,
+  ) async {
+    final tickets = await fetchMyFeedbackTickets(userId);
+    return List.unmodifiable([
+      for (final ticket in tickets)
+        FeedbackTicketThreadSummary.fromMessages(
+          ticket: ticket,
+          messages: _ticketMessages
+              .where((message) => message.ticketId == ticket.id)
+              .toList(growable: false),
+          lastReadMessageSeq: _readWatermarks[(ticket.id, userId)] ?? 0,
+        ),
+    ]);
   }
 
   @override

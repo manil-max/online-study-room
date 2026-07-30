@@ -157,6 +157,18 @@ class _TicketCard extends ConsumerWidget {
             ),
             const SizedBox(height: 6),
             Text(ticket.message, maxLines: 4, overflow: TextOverflow.ellipsis),
+            const SizedBox(height: 6),
+            // WP-437: Yonetici karti zaman cizgisini de okur; "ne zaman
+            // acildi, en son ne zaman hareket etti" karti terk etmeden gorunur.
+            Text(
+              l10n.feedbackTicketTimeline(
+                feedbackTicketTimestampLabel(l10n, ticket.createdAt),
+                feedbackTicketTimestampLabel(l10n, ticket.updatedAt),
+              ),
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
             const SizedBox(height: 10),
             Wrap(
               spacing: 8,

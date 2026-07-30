@@ -5698,6 +5698,38 @@
   "feedbackYou": "You",
   "feedbackUser": "User",
   "feedbackNoReplies": "There are no replies yet.",
+  "feedbackThreadPreview": "{sender}: {message}",
+  "@feedbackThreadPreview": {
+    "description": "Last message preview on a feedback ticket row.",
+    "placeholders": {
+      "sender": {},
+      "message": {}
+    }
+  },
+  "feedbackThreadUnreadCount": "Unread replies: {count}",
+  "@feedbackThreadUnreadCount": {
+    "description": "Unread admin reply count for a single feedback ticket.",
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "feedbackThreadMessageCount": "Messages: {count}",
+  "@feedbackThreadMessageCount": {
+    "description": "Total message count of a feedback conversation.",
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "feedbackTicketTimeline": "Opened: {created} · Last activity: {updated}",
+  "@feedbackTicketTimeline": {
+    "description": "Created and last-activity timeline of a feedback ticket.",
+    "placeholders": {
+      "created": {},
+      "updated": {}
+    }
+  },
+  "feedbackMessageSending": "Sending…",
+  "feedbackMessageFailed": "Not sent. Tap to try again.",
   "groupTimeZone": "Group time zone",
   "groupTimeZoneDescription": "Daily goals and group statistics reset at midnight in this time zone.",
   "groupTimeZoneChoose": "Choose time zone",
@@ -5754,6 +5786,12 @@
   },
   "@feedbackNoReplies": {
     "description": "Empty state for a feedback conversation without messages."
+  },
+  "@feedbackMessageSending": {
+    "description": "Status shown on a feedback reply that is still being sent."
+  },
+  "@feedbackMessageFailed": {
+    "description": "Status shown on a feedback reply whose delivery failed."
   },
   "@groupTimeZone": {
     "description": "Label for the IANA time zone used by a study group."

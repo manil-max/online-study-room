@@ -6,6 +6,7 @@ import '../models/announcement.dart';
 import '../models/feedback_ticket.dart';
 import '../models/feedback_ticket_note.dart';
 import '../models/feedback_ticket_message.dart';
+import '../models/feedback_ticket_thread_summary.dart';
 import '../models/study_group.dart';
 
 const int kMaxFeedbackSubjectLength = 80;
@@ -198,6 +199,12 @@ abstract class AdminRepository {
     required String userId,
     required String ticketId,
   });
+
+  /// Kullanicinin kendi biletleri + konusmanin son hali (son mesaj, tarih,
+  /// okunmamis sayisi). WP-437: liste satiri ilk mesajda donmaz.
+  Future<List<FeedbackTicketThreadSummary>> fetchMyTicketThreadSummaries(
+    String userId,
+  );
 
   Future<FeedbackTicketMessage> sendTicketMessage({
     required String userId,

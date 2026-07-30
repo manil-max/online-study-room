@@ -1617,6 +1617,44 @@
   "feedbackYou": "Sen",
   "feedbackUser": "Kullanıcı",
   "feedbackNoReplies": "Henüz yanıt yok.",
+  "feedbackThreadPreview": "{sender}: {message}",
+  "@feedbackThreadPreview": {
+    "description": "Bilet satırındaki son mesaj önizlemesi.",
+    "placeholders": {
+      "sender": {},
+      "message": {}
+    }
+  },
+  "feedbackThreadUnreadCount": "Okunmamış yanıt: {count}",
+  "@feedbackThreadUnreadCount": {
+    "description": "Tek bir bilette okunmamış yönetim yanıtı sayısı.",
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "feedbackThreadMessageCount": "Mesaj: {count}",
+  "@feedbackThreadMessageCount": {
+    "description": "Yazışmadaki toplam mesaj sayısı.",
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "feedbackTicketTimeline": "Açıldı: {created} · Son hareket: {updated}",
+  "@feedbackTicketTimeline": {
+    "description": "Biletin açılış ve son hareket zaman çizgisi.",
+    "placeholders": {
+      "created": {},
+      "updated": {}
+    }
+  },
+  "feedbackMessageSending": "Gönderiliyor…",
+  "@feedbackMessageSending": {
+    "description": "Henüz gönderilmekte olan yanıtın durumu."
+  },
+  "feedbackMessageFailed": "Gönderilemedi. Yeniden denemek için dokun.",
+  "@feedbackMessageFailed": {
+    "description": "Gönderimi başarısız olan yanıtın durumu."
+  },
   "groupTimeZone": "Grup zaman dilimi",
   "groupTimeZoneDescription": "Günlük hedefler ve grup istatistikleri bu zaman diliminde gece yarısında yenilenir.",
   "groupTimeZoneChoose": "Zaman dilimi seç",

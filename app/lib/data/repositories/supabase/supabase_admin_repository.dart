@@ -8,6 +8,7 @@ import '../../models/announcement.dart';
 import '../../models/feedback_ticket.dart';
 import '../../models/feedback_ticket_note.dart';
 import '../../models/feedback_ticket_message.dart';
+import '../../models/feedback_ticket_thread_summary.dart';
 import '../../models/study_group.dart';
 import '../admin_repository.dart';
 
@@ -473,6 +474,49 @@ class SupabaseAdminRepository implements AdminRepository {
               )
               .toList(growable: false),
         );
+  }
+
+  @override
+  Future<List<FeedbackTicketThreadSummary>> fetchMyTicketThreadSummaries(
+    String userId,
+  ) async {
+    try {
+      final tickets = await fetchMyFeedbackTickets(userId);
+      if (tickets.isEmpty) return const [];
+      final ids = tickets.map((ticket) => ticket.id).toList(growable: false);
+      final messageRows = await _client
+          .from('feedback_ticket_messages')
+          .select()
+          .inFilter('ticket_id', ids)
+          .order('message_seq');
+      final watermarkRows = await _client
+          .from('feedback_ticket_read_watermarks')
+          .select('ticket_id, last_read_message_seq')
+          .eq('user_id', userId)
+          .inFilter('ticket_id', ids);
+      final watermarkByTicket = {
+        for (final row in watermarkRows)
+          row['ticket_id'] as String: (row['last_read_message_seq'] as num)
+              .toInt(),
+      };
+      final messagesByTicket = <String, List<FeedbackTicketMessage>>{};
+      for (final row in messageRows) {
+        final message = FeedbackTicketMessage.fromMap(
+          Map<String, dynamic>.from(row),
+        );
+        messagesByTicket.putIfAbsent(message.ticketId, () => []).add(message);
+      }
+      return [
+        for (final ticket in tickets)
+          FeedbackTicketThreadSummary.fromMessages(
+            ticket: ticket,
+            messages: messagesByTicket[ticket.id] ?? const [],
+            lastReadMessageSeq: watermarkByTicket[ticket.id] ?? 0,
+          ),
+      ];
+    } on PostgrestException catch (e) {
+      throw AdminException(_friendlyMessage(e.message));
+    }
   }
 
   @override
