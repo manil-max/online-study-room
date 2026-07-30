@@ -9,9 +9,9 @@ import '../../models/account_deletion_status.dart';
 import '../../models/profile.dart';
 import '../auth_repository.dart';
 
-/// WP-287: Şifre sıfırlama e-postasının derin bağlantı hedefini üretir.
-/// Test edilebilirlik için enjekte edilebilir; varsayılan gerçek platform
-/// implementasyonu `auth_recovery_redirect.dart`'tadır.
+/// Kimlik e-postalarının (şifre sıfırlama ve e-posta değişikliği) mevcut auth
+/// derin bağlantı hedefini üretir. Eski public parametre adı geriye uyumluluk
+/// için `recoveryRedirect` olarak korunur.
 typedef RecoveryRedirectResolver = Future<String?> Function();
 
 /// Supabase tabanlı kimlik doğrulama. UI hiç değişmeden bellek-içi yerine geçer.
@@ -23,8 +23,7 @@ class SupabaseAuthRepository implements AuthRepository {
 
   final supa.SupabaseClient _client;
 
-  /// Şifre sıfırlama bağlantısının döneceği derin bağlantı (Android) veya null
-  /// (Windows/masaüstü → kullanıcı OTP kodu yolunu kullanır).
+  /// Auth bağlantılarının döneceği derin bağlantı (Android) veya null.
   final RecoveryRedirectResolver _recoveryRedirect;
   Profile? _current;
   final _recoveryController = StreamController<void>.broadcast();
@@ -325,16 +324,67 @@ class SupabaseAuthRepository implements AuthRepository {
     }
   }
 
+  /// WP-458: e-posta değişikliği, mevcut şifreyle yeniden doğrulanmadan
+  /// `updateUser` aşamasına geçemez. Supabase güvenli e-posta değişikliği
+  /// açıksa cevapta `newEmail` pending kalır ve mevcut e-posta oturumda
+  /// korunur; bağlantıların doğrulanmasını SDK/Supabase tamamlar.
   @override
-  Future<void> updateEmail(String newEmail) async {
+  Future<EmailChangeOutcome> changeEmail({
+    required String currentPassword,
+    required String newEmail,
+  }) async {
+    final currentEmail = _client.auth.currentUser?.email?.trim().toLowerCase();
+    if (currentEmail == null ||
+        currentEmail.isEmpty ||
+        _client.auth.currentSession == null) {
+      throw const AuthException(
+        'Oturum bulunamadı. Yeniden giriş yap.',
+        code: AuthErrorCode.noSession,
+      );
+    }
     final key = newEmail.trim().toLowerCase();
     if (key.isEmpty || !key.contains('@')) {
-      throw const AuthException('Geçerli bir e-posta girin.');
+      throw const AuthException(
+        'Geçerli bir e-posta girin.',
+        code: AuthErrorCode.invalidEmail,
+      );
     }
+    if (key == currentEmail) {
+      throw const AuthException(
+        'Yeni e-posta mevcut e-postayla aynı olamaz.',
+        code: AuthErrorCode.sameEmail,
+      );
+    }
+
     try {
-      await _client.auth.updateUser(supa.UserAttributes(email: key));
+      await _client.auth.signInWithPassword(
+        email: currentEmail,
+        password: currentPassword,
+      );
     } on supa.AuthException catch (e) {
-      throw AuthException(_translate(e.message));
+      throw AuthException(
+        _reauthMessage(e.message),
+        code: _isRateLimit(e.message)
+            ? AuthErrorCode.rateLimited
+            : AuthErrorCode.invalidCurrentPassword,
+      );
+    }
+
+    try {
+      final redirectTo = await _recoveryRedirect();
+      final response = await _client.auth.updateUser(
+        supa.UserAttributes(email: key),
+        emailRedirectTo: redirectTo,
+      );
+      final pendingEmail = response.user?.newEmail?.trim();
+      return pendingEmail != null && pendingEmail.isNotEmpty
+          ? EmailChangeOutcome.verificationPending
+          : EmailChangeOutcome.confirmed;
+    } on supa.AuthException catch (e) {
+      throw AuthException(
+        _translate(e.message),
+        code: _emailChangeCode(e.message),
+      );
     }
   }
 
@@ -518,6 +568,24 @@ class SupabaseAuthRepository implements AuthRepository {
       return 'Çok sık denedin. Biraz bekleyip tekrar dene.';
     }
     return 'Mevcut şifre hatalı.';
+  }
+
+  String? _emailChangeCode(String message) {
+    final m = message.toLowerCase();
+    if (_isRateLimit(message)) return AuthErrorCode.rateLimited;
+    if (m.contains('already registered') ||
+        m.contains('already exists') ||
+        m.contains('already been registered')) {
+      return AuthErrorCode.emailAlreadyInUse;
+    }
+    if (m.contains('invalid') && m.contains('email')) {
+      return AuthErrorCode.invalidEmail;
+    }
+    if (m.contains('session') &&
+        (m.contains('missing') || m.contains('expired'))) {
+      return AuthErrorCode.noSession;
+    }
+    return null;
   }
 
   /// Recovery/OTP akışına özel hata çevirisi (kod süresi + hız sınırı).

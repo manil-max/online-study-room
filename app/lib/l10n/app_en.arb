@@ -3039,6 +3039,26 @@
   "@profileEpostaBasariylaGuncellendiYeni": {
     "description": "Profile user-facing text. Source: E-posta başarıyla güncellendi. Yeni e-postanıza bir doğrulama maili gönderilmiş olabilir."
   },
+  "profileEpostaDogrulamaAciklama": "For your security, verify your current password. Your current email remains active until the change is confirmed.",
+  "@profileEpostaDogrulamaAciklama": {
+    "description": "Explains secure email-change reauthentication and that the current address remains active."
+  },
+  "profileEpostaDogrulamaBekliyor": "Verification is pending. Confirm the links sent to your current and new email before they expire. An expired, cancelled, or previously used link makes no change; your current email remains active until confirmation.",
+  "@profileEpostaDogrulamaBekliyor": {
+    "description": "Explains the provider-managed pending email-change state and rejected links."
+  },
+  "profileEpostaDegistirildi": "Your email address has been changed.",
+  "@profileEpostaDegistirildi": {
+    "description": "Shown when the backend changes the email immediately."
+  },
+  "profileEpostaAyniOlamaz": "The new email cannot be the same as your current email.",
+  "@profileEpostaAyniOlamaz": {
+    "description": "Validation error when the requested email matches the current address."
+  },
+  "profileEpostaKullanilamiyor": "This email cannot be used. Try a different address.",
+  "@profileEpostaKullanilamiyor": {
+    "description": "Non-enumerating email-change error when the provider rejects an address."
+  },
   "profileEpostaSifreVeGuvenli": "Email, password and secure logout",
   "@profileEpostaSifreVeGuvenli": {
     "description": "Profile user-facing text. Source: E-posta, şifre ve güvenli çıkış"

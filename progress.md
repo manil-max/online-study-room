@@ -108,7 +108,7 @@
 | Kilit / sıra | Sahip | Durum | Sonraki |
 |---|---|---|---|
 | **Migration yazma kilidi** | **Ajan A** | 🔒 **DOLU** · WP-431 · `0101` yazılıyor · repo/local head `0100` | Bittiğinde boşalır; sıra `432 → 435 → 439 → 441 → 442 → 444 → 445 → 449 → 453 → 464` |
-| **Sıcak dosya kilidi** (`main.dart`, navigation, pubspec, manifest, l10n generated) | Ajan G | WP-457 · l10n/generator | WP-457 commit'inden sonra BOŞ |
+| **Sıcak dosya kilidi** (`main.dart`, navigation, pubspec, manifest, l10n generated) | — | BOŞ · WP-458 kod + otomatik test tamam | Ajan D l10n bulgusunu devralabilir |
 | **Tam Flutter kalite koşumu** | — | BOŞ | WP başında hedefli test; tüm `flutter test` yalnız kilitle |
 | **Yerel Supabase replay** | — | BOŞ | Migration yazarı kendi WP'sinde; final tekrar Ajan H |
 | **Production / stable kapısı** | — | **KAPALI** (`b6b47a9`) | Yalnız yeni somut sahip GO'su |
@@ -324,16 +324,11 @@
 
 ### Ajan G — Ayarlar, hesap, dil, navigasyon ve widget yayın yüzeyi
 
-- **Durum:** [~] Aktif · Ajan G
-- **Aktif WP:** WP-457 — İlk mağaza runtime'ını yalnız Türkçe ve İngilizceye sınırla
-- **Aşama:** Kod + hedefli otomatik test tamam · commit hazırlanıyor
+- **Durum:** [!] BEKLİYOR: WP-459 / WP-436 commit'i · Ajan G
+- **Aktif WP:** — (WP-458 kod + otomatik test tamam)
+- **Aşama:** WP-459 feedback rozet gerçeği için Ajan B zinciri bekleniyor
 - **Dal:** `main`
-- **Başlangıç:** 2026-07-30 02:05 (Europe/Istanbul) · **Son güncelleme:** 2026-07-30 02:35
-- **WP-457 SAHİP yollar (claim):** `app/l10n.yaml`,
-  `app/lib/core/l10n/app_locale.dart`, system localization, dil seçimi UI,
-  generated l10n ve testleri; DE/AR dormant arşivi.
-- **WP-457 ortak/riskli yüzey:** l10n sıcak kilidi Ajan G tarafından alındı;
-  navigation, manifest, pubspec ve migration kilitleri açılmadı.
+- **Başlangıç:** 2026-07-30 02:05 (Europe/Istanbul) · **Son güncelleme:** 2026-07-30 10:07
 - **WP-456 tamamlandı:** `cfb9536` · `env.json` tanımlı About/Settings/Release Notes 22/22;
   tanımsız About/Release Notes 19/19; Play fail-closed 1/1; updater/dağıtım
   regresyonu 18/18. Ajan G'nin 6 Dart dosyasında hedefli analyze temiz.
@@ -345,6 +340,18 @@
   temiz. Genel l10n audit'te yalnız Ajan D sahipli
   `class_detail_screen.dart:90` kaldı; Ajan G dosyalarında bulgu 0, kilit
   bırakılınca D'ye devredilecek.
+- **WP-457 tamamlandı:** `c671011`.
+- **WP-458 kanıt:** doğrulamasız `updateEmail` kaldırıldı; repository
+  `changeEmail(currentPassword:, newEmail:)` ile önce aynı hesabı yeniden
+  doğruluyor. Supabase mevcut auth callback'iyle sağlayıcı doğrulamasını başlatıp
+  `verificationPending`/`confirmed` sonucunu ayırıyor; pending iken eski adres
+  korunuyor. Bellek-içi çift atomik re-key, yanlış şifre, aynı/başka hesaba ait
+  adres, oturumsuzluk ve relogin izolasyonuyla eşdeğer.
+- **WP-458 otomatik kanıt:** auth/e-posta UI/sözleşme/şifre/deep-link
+  regresyonları **45/45** yeşil; Ajan G'nin 7 Dart/test dosyasında hedefli
+  analyze temiz. Tam `flutter analyze` yalnız Ajan A/C'nin 3 sahipli bulgusunda;
+  l10n audit yalnız Ajan D'nin `class_detail_screen.dart:90` bulgusunda kırmızı.
+  Ajan G dosyalarında bulgu yok; l10n sıcak kilidi serbest.
 - **Zincir:** `WP-456 → WP-457 → WP-458 → WP-459 → WP-460 → WP-461`
 - **İlk iş:** WP-456; hemen claim edilebilir.
 - **SAHİP ana yüzey:** settings/profile account/about, updater ekranları,
@@ -4691,7 +4698,8 @@ alır; boş/uydurma migration yazılmaz.
 
 #### WP-458 — Güvenli e-posta değiştirme ve yeniden doğrulama
 
-- **Durum / bağımlılık:** [ ] WP-457.
+- **Durum / bağımlılık:** [x] KOD + OTOMATİK TEST TAMAM · Ajan G · bu commit ·
+  WP-457 `c671011`.
 - **SAHİP:** `data/repositories/auth_repository.dart`,
   Supabase/InMemory auth repository, `features/profile/account_settings_screen.dart`,
   auth/account testleri, gerekirse deep-link mevcut auth yüzeyi.
@@ -4705,6 +4713,12 @@ alır; boş/uydurma migration yazılmaz.
 - **Kabul:** yanlış şifre/expired session/reused link reddedilir; başarı
   relogin/restart sonrası kalır; başka hesap verisi sızmaz; hata Türkçe ve
   eyleme dönük.
+- **Kanıt:** eski `updateEmail` yolu yok; Supabase şifre reauth → `updateUser`
+  sırası, `emailRedirectTo`, provider `newEmail` pending alanı ve uygulama içinde
+  özel OTP üretmeme kaynak sözleşmesiyle kilitli. Pending/confirmed ayrı sonuç;
+  expired/cancelled/reused link sağlayıcı tarafından reddedilir ve UI eski
+  adresin doğrulamaya kadar geçerli kaldığını açıklar. 45/45 hedefli test yeşil;
+  hedefli analyze 0 bulgu.
 - **Model:** Opus.
 
 #### WP-459 — Ayarlar ve profil rozetlerini tek feedback gerçeğine bağla

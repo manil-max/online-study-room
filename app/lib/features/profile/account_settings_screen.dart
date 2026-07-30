@@ -18,96 +18,28 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
   bool _isLoading = false;
 
   Future<void> _changeEmail() async {
-    final currentEmail = ref.read(authRepositoryProvider).currentUserEmail;
-    final controller = TextEditingController(text: currentEmail);
-    final formKey = GlobalKey<FormState>();
-
-    final newEmail = await showDialog<String>(
+    final outcome = await showDialog<EmailChangeOutcome>(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text(AppLocalizations.of(context).profileEpostaDegistir),
-          content: Form(
-            key: formKey,
-            child: TextFormField(
-              controller: controller,
-              decoration: InputDecoration(
-                labelText: AppLocalizations.of(context).profileYeniEposta,
-                border: OutlineInputBorder(),
-              ),
-              keyboardType: TextInputType.emailAddress,
-              validator: (val) {
-                final text = val?.trim();
-                if (text == null || text.isEmpty || !text.contains('@')) {
-                  return AppLocalizations.of(
-                    context,
-                  ).profileGecerliBirEpostaGirin;
-                }
-                return null;
-              },
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(AppLocalizations.of(context).profileIptal),
-            ),
-            FilledButton(
-              onPressed: () {
-                if (formKey.currentState?.validate() == true) {
-                  Navigator.pop(context, controller.text.trim());
-                }
-              },
-              child: Text(AppLocalizations.of(context).profileKaydet),
-            ),
-          ],
-        );
-      },
+      builder: (_) => const _ChangeEmailDialog(),
     );
-
-    if (newEmail == null || newEmail.isEmpty || newEmail == currentEmail) {
-      return;
+    if (!mounted || outcome == null) return;
+    if (outcome == EmailChangeOutcome.confirmed) {
+      setState(() {});
     }
 
-    setState(() => _isLoading = true);
-    try {
-      await ref.read(authRepositoryProvider).updateEmail(newEmail);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              AppLocalizations.of(
-                context,
-              ).profileEpostaBasariylaGuncellendiYeni,
-            ),
-          ),
-        );
-      }
-    } on AuthException {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              AppLocalizations.of(context).profileBeklenmeyenBirHataOlustu,
-            ),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              AppLocalizations.of(context).profileBeklenmeyenBirHataOlustu,
-            ),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
+    final l10n = AppLocalizations.of(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          outcome == EmailChangeOutcome.verificationPending
+              ? l10n.profileEpostaDogrulamaBekliyor
+              : l10n.profileEpostaDegistirildi,
+        ),
+        duration: outcome == EmailChangeOutcome.verificationPending
+            ? const Duration(seconds: 10)
+            : const Duration(seconds: 4),
+      ),
+    );
   }
 
   /// WP-319: şifre değiştirme.
@@ -143,7 +75,9 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
               ? l10n.profileDigerCihazlarKapatilamadi
               : l10n.profileDigerCihazlarKapatildi,
         ),
-        duration: kept ? const Duration(seconds: 8) : const Duration(seconds: 4),
+        duration: kept
+            ? const Duration(seconds: 8)
+            : const Duration(seconds: 4),
         backgroundColor: kept ? Theme.of(context).colorScheme.error : null,
       ),
     );
@@ -336,9 +270,7 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              AppLocalizations.of(context).accountSilmeIptalEdildi,
-            ),
+            content: Text(AppLocalizations.of(context).accountSilmeIptalEdildi),
           ),
         );
         setState(() {});
@@ -362,6 +294,10 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // E-posta doğrulama bağlantısı uygulamaya döndüğünde Supabase
+    // `userUpdated` yayar. Repository nesnesi değişmez; auth akışını izlemek,
+    // confirmed durumda görünen adresin restart beklemeden yenilenmesini sağlar.
+    ref.watch(authStateProvider);
     final email = ref.watch(authRepositoryProvider).currentUserEmail;
 
     return Scaffold(
@@ -492,6 +428,167 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
                 ),
               ],
             ),
+    );
+  }
+}
+
+/// WP-458: e-posta değişikliği mevcut şifreyi aynı güvenlik sınırında doğrular.
+///
+/// Hata diyaloğun içinde kalır; yanlış şifrede yeni adres silinmez. Supabase
+/// doğrulama bekletiyorsa diyalog kapanır ve üst ekran pending durumunu açıkça
+/// anlatır. Bağlantı/OTP mantığı burada taklit edilmez.
+class _ChangeEmailDialog extends ConsumerStatefulWidget {
+  const _ChangeEmailDialog();
+
+  @override
+  ConsumerState<_ChangeEmailDialog> createState() => _ChangeEmailDialogState();
+}
+
+class _ChangeEmailDialogState extends ConsumerState<_ChangeEmailDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final _currentPasswordController = TextEditingController();
+  final _newEmailController = TextEditingController();
+  bool _busy = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _currentPasswordController.dispose();
+    _newEmailController.dispose();
+    super.dispose();
+  }
+
+  String _messageFor(AppLocalizations l10n, Object error) {
+    if (error is! AuthException) return l10n.profileBeklenmeyenBirHataOlustu;
+    return switch (error.code) {
+      AuthErrorCode.invalidCurrentPassword => l10n.profileMevcutSifreHatali,
+      AuthErrorCode.invalidEmail => l10n.profileGecerliBirEpostaGirin,
+      AuthErrorCode.sameEmail => l10n.profileEpostaAyniOlamaz,
+      AuthErrorCode.emailAlreadyInUse => l10n.profileEpostaKullanilamiyor,
+      AuthErrorCode.rateLimited => l10n.profileCokFazlaDeneme,
+      AuthErrorCode.noSession => l10n.profileOturumBulunamadiGirisYap,
+      _ => l10n.profileBeklenmeyenBirHataOlustu,
+    };
+  }
+
+  Future<void> _submit() async {
+    if (_busy || _formKey.currentState?.validate() != true) return;
+    final l10n = AppLocalizations.of(context);
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      final outcome = await ref
+          .read(authRepositoryProvider)
+          .changeEmail(
+            currentPassword: _currentPasswordController.text,
+            newEmail: _newEmailController.text,
+          );
+      if (mounted) Navigator.pop(context, outcome);
+    } catch (error) {
+      if (mounted) {
+        setState(() {
+          _busy = false;
+          _error = _messageFor(l10n, error);
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
+    final currentEmail = ref.read(authRepositoryProvider).currentUserEmail;
+
+    return AlertDialog(
+      title: Text(l10n.profileEpostaDegistir),
+      content: SingleChildScrollView(
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(l10n.profileEpostaDogrulamaAciklama),
+              if (currentEmail != null && currentEmail.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(
+                  currentEmail,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+              if (_error != null) ...[
+                const SizedBox(height: 12),
+                Text(
+                  _error!,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.error,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 16),
+              TextFormField(
+                key: const Key('changeEmailCurrentPassword'),
+                controller: _currentPasswordController,
+                obscureText: true,
+                autofillHints: const [AutofillHints.password],
+                decoration: InputDecoration(
+                  labelText: l10n.profileMevcutSifre,
+                  border: const OutlineInputBorder(),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return l10n.profileMevcutSifreniGir;
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                key: const Key('changeEmailNewEmail'),
+                controller: _newEmailController,
+                keyboardType: TextInputType.emailAddress,
+                autofillHints: const [AutofillHints.newUsername],
+                decoration: InputDecoration(
+                  labelText: l10n.profileYeniEposta,
+                  border: const OutlineInputBorder(),
+                ),
+                validator: (value) {
+                  final email = value?.trim();
+                  if (email == null || email.isEmpty || !email.contains('@')) {
+                    return l10n.profileGecerliBirEpostaGirin;
+                  }
+                  if (email.toLowerCase() == currentEmail?.toLowerCase()) {
+                    return l10n.profileEpostaAyniOlamaz;
+                  }
+                  return null;
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _busy ? null : () => Navigator.pop(context),
+          child: Text(l10n.profileIptal),
+        ),
+        FilledButton(
+          key: const Key('changeEmailSubmit'),
+          onPressed: _busy ? null : _submit,
+          child: _busy
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Text(l10n.profileKaydet),
+        ),
+      ],
     );
   }
 }
@@ -667,8 +764,10 @@ class _ChangePasswordDialogState extends ConsumerState<_ChangePasswordDialog> {
                   key: const Key('changePasswordForgot'),
                   onPressed: _busy
                       ? null
-                      : () =>
-                            Navigator.pop(context, _PasswordDialogOutcome.forgot),
+                      : () => Navigator.pop(
+                          context,
+                          _PasswordDialogOutcome.forgot,
+                        ),
                   child: Text(l10n.profileSifremiUnuttum),
                 ),
               ),

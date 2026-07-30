@@ -194,16 +194,27 @@ class InMemoryAuthRepository implements AuthRepository {
     return PasswordChangeOutcome.done;
   }
 
+  /// WP-458: Supabase ile aynı güvenlik sınırı. Önce mevcut hesabı ve şifreyi
+  /// doğrular; herhangi bir hata olursa map'e dokunmaz. Bellek-içi backend'in
+  /// e-posta sağlayıcısı olmadığı için başarılı değişiklik atomik ve anlıktır.
   @override
-  Future<void> updateEmail(String newEmail) async {
+  Future<EmailChangeOutcome> changeEmail({
+    required String currentPassword,
+    required String newEmail,
+  }) async {
     final cur = _current;
-    if (cur == null) return;
+    if (cur == null) {
+      throw const AuthException(
+        'Oturum bulunamadı. Yeniden giriş yap.',
+        code: AuthErrorCode.noSession,
+      );
+    }
     final key = newEmail.trim().toLowerCase();
     if (key.isEmpty || !key.contains('@')) {
-      throw const AuthException('Geçerli bir e-posta girin.');
-    }
-    if (_accounts.containsKey(key)) {
-      throw const AuthException('Bu e-posta zaten kayıtlı.');
+      throw const AuthException(
+        'Geçerli bir e-posta girin.',
+        code: AuthErrorCode.invalidEmail,
+      );
     }
 
     String? oldKey;
@@ -213,10 +224,30 @@ class InMemoryAuthRepository implements AuthRepository {
         break;
       }
     }
-    if (oldKey != null) {
-      final acc = _accounts.remove(oldKey)!;
-      _accounts[key] = acc;
+    final account = oldKey == null ? null : _accounts[oldKey];
+    if (account == null || account.password != currentPassword) {
+      throw const AuthException(
+        'Mevcut şifre hatalı.',
+        code: AuthErrorCode.invalidCurrentPassword,
+      );
     }
+    if (key == oldKey) {
+      throw const AuthException(
+        'Yeni e-posta mevcut e-postayla aynı olamaz.',
+        code: AuthErrorCode.sameEmail,
+      );
+    }
+    if (_accounts.containsKey(key)) {
+      throw const AuthException(
+        'Bu e-posta zaten kayıtlı.',
+        code: AuthErrorCode.emailAlreadyInUse,
+      );
+    }
+
+    _accounts.remove(oldKey);
+    _accounts[key] = account;
+    _controller.add(_current);
+    return EmailChangeOutcome.confirmed;
   }
 
   @override

@@ -27,6 +27,15 @@ class AuthErrorCode {
 
   /// Oturum yok/süresi dolmuş.
   static const String noSession = 'no_session';
+
+  /// Yeni e-posta biçimi geçersiz.
+  static const String invalidEmail = 'invalid_email';
+
+  /// Yeni e-posta mevcut e-postayla aynı.
+  static const String sameEmail = 'same_email';
+
+  /// Yeni e-posta başka bir hesaba bağlı.
+  static const String emailAlreadyInUse = 'email_already_in_use';
 }
 
 /// WP-319-G: [AuthRepository.changePassword] sonucu.
@@ -44,6 +53,15 @@ enum PasswordChangeOutcome {
   /// Kullanıcıya açıkça söylenir; sessizce başarı sayılmaz.
   otherSessionsKept,
 }
+
+/// WP-458: [AuthRepository.changeEmail] isteğinin güvenli son durumu.
+///
+/// Supabase'in güvenli e-posta değişikliği açıksa yazma anında kullanıcı e-postası
+/// değiştirilmez; sağlayıcının mevcut ve yeni adrese gönderdiği doğrulama
+/// bağlantıları tamamlanana kadar [verificationPending] döner. Sağlayıcı
+/// doğrulamayı kapatmışsa veya doğrulama e-postası olmayan bellek-içi backend
+/// kullanılıyorsa değişiklik aynı çağrıda [confirmed] olur.
+enum EmailChangeOutcome { verificationPending, confirmed }
 
 /// Kimlik doğrulama hatası (kullanıcıya gösterilebilir Türkçe mesaj taşır).
 class AuthException implements Exception {
@@ -121,8 +139,19 @@ abstract class AuthRepository {
     required String newPassword,
   });
 
-  /// Giriş yapan kullanıcının e-postasını günceller.
-  Future<void> updateEmail(String newEmail);
+  /// WP-458: Giriş yapan kullanıcının e-postasını mevcut şifreyle yeniden
+  /// doğrulayarak değiştirmeyi başlatır.
+  ///
+  /// Ekran bu doğrulamayı atlayamaz: repository önce [currentPassword] ile aynı
+  /// hesabı yeniden doğrular, sonra sağlayıcının güvenli e-posta doğrulama akışını
+  /// başlatır. [EmailChangeOutcome.verificationPending] dönerse eski e-posta,
+  /// sağlayıcı bağlantıları başarıyla doğrulanana kadar geçerli kalır. Süresi
+  /// dolmuş, iptal edilmiş veya daha önce kullanılmış bağlantılar sağlayıcı
+  /// tarafından reddedilir; uygulama özel doğrulama kodu üretmez.
+  Future<EmailChangeOutcome> changeEmail({
+    required String currentPassword,
+    required String newEmail,
+  });
 
   /// Yalnızca şifre sıfırlama (recovery) oturumu başladığında tetiklenir.
   Stream<void> get passwordRecoveryEvents;
