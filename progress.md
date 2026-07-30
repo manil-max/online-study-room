@@ -138,21 +138,20 @@
 
 ### Ajan A — Timer, seçili ders ve görev devralması
 
-- **Durum:** [~] Aktif — WP-433 geliştiriliyor.
+- **Durum:** [~] Aktif — WP-448 geliştiriliyor.
 - **Zincir:** `WP-432 → WP-433 → WP-448 → [D/WP-445] → WP-449 → WP-450 → WP-451`.
-- **Şimdi:** WP-432 kod/test paketi commitleniyor; ardından WP-433 timer iki-cihaz
-  matrisi ve WP-466'ya açık cihaz kabul paketi hazırlanır.
+- **Şimdi:** WP-433 otomatik matris ve cihaz kabul paketi tamamlandı; WP-448
+  seçilen ders tercihini hesap/cihaz yaşam döngüsünde kalıcılaştırır.
 - **Devralınan dirty iş:** Eski E'nin recurrence dosyaları A'ya aittir:
   `user_task*`, `task_deadline.dart`, `task_recurrence.dart` ve ilgili
   testler. Bunlar korunur; WP-448 ve D/WP-445 gelmeden yarım commit atılmaz.
 - **SAHİP:** timer/notification yönlendirmesi, `study_providers.dart`, subject
   persistence; sonra user-task/core-task/repository çiftleri ve görev UI/testleri.
-- **Aktif WP / sahip yollar:** WP-433 · timer integration testleri,
-  `docs/qa/V57-TIMER-EVIDENCE.md` ve `docs/qa/DEVICE-QA-MATRIX.md` içindeki yalnız
-  timer satırları.
-- **Ortak/riskli yüzey:** WP-432 sonrası migration yazma kilidi bırakılacak;
-  repository/local head `0102`, production/stable kapalı.
-- **Başlangıç / son güncelleme:** 2026-07-30 10:50 / 11:00 (Europe/Istanbul).
+- **Aktif WP / sahip yollar:** WP-448 · `app/lib/data/providers/study_providers.dart`,
+  timer/task subject seçim UI'sı ve selected-subject persistence testleri.
+- **Ortak/riskli yüzey:** Migration yok; B/WP-435 migration yazımını yürütüyor,
+  production/stable kapalı.
+- **Başlangıç / son güncelleme:** 2026-07-30 10:50 / 11:05 (Europe/Istanbul).
 - **DOKUNMA:** moderation, feedback, grup sohbeti, streak motoru, B'nin navigation/l10n yüzeyi.
 - **Teslim:** Her aşamada commit/test kanıtı; WP-451 fixture'ı D/WP-455'e açık bırakılır.
 
@@ -4089,7 +4088,7 @@ alır; boş/uydurma migration yazılmaz.
 
 #### WP-433 — Timer iki-cihaz otomatik matrisi ve cihaz kabul paketini hazırla
 
-- **Durum / bağımlılık:** [ ] WP-432.
+- **Durum / bağımlılık:** [~] Kod + otomatik test tamam · WP-432 `398d002`.
 - **SAHİP:** timer integration testleri, `docs/qa/V57-TIMER-EVIDENCE.md`,
   `docs/qa/DEVICE-QA-MATRIX.md` içindeki yalnız timer satırları.
 - **Senaryolar:** A start/B stop; B start/A stop; app açık/arka plan/terminated;
@@ -4099,6 +4098,11 @@ alır; boş/uydurma migration yazılmaz.
 - **Kabul:** ghost aktif görünüm 0; duplicate session 0; terminalden sonra
   yeniden canlanma 0; kayıp stop niyeti 0; hedefleme hatası 0. Donanım gerektiren
   satırlar “Cihazda doğrulanmalı” olarak WP-466'ya açık teslim edilir.
+- **Kanıt:** 29/29 hedefli Flutter testi yeşil · `flutter analyze` 0 sorun.
+  `V57-TIMER-EVIDENCE.md` otomatik sözleşme→fiziksel kabul eşlemesini; cihaz QA
+  matrisi A/B yönleri, app/bildirim/widget, yaşam döngüsü, ağ, reboot, gün sınırı
+  ve A-yalnız self-test satırlarını içerir. Etiket: **Kodda doğrulandı**;
+  iki fiziksel cihaz kanıtı **Cihazda doğrulanmalı** (WP-466).
 - **Tuzak:** yalnız tek emülatör veya yalnız happy-path ile kapatma.
 - **Model:** Opus.
 

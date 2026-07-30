@@ -340,3 +340,27 @@ kayıtları **karantinada kalır** (silinmez — sahibi geri dönebilir).
 > 🔴 **Açık risk:** `0101` gerçek bir PostgreSQL'de hiç çalıştırılmadı. Staging'e
 > gitmeden önce `tooling/supabase/local.ps1 baseline` yeşil olmalıdır. Bu, WP-431
 > kapanış kanıtının eksik ayağıdır ve Ajan H WP-466'ya devredilmiştir.
+
+## 7. WP-433 — iki-cihaz otomatik matris ve cihaz teslimi
+
+Bu tablo gerçek iki cihazın yerine geçmez; her satırın otomatik sözleşmesini ve
+WP-466'da fiziksel olarak yeniden denenmesi gereken yüzeyi ayırır. "A" koşuyu
+başlatan cihazı, "B" aynı hesaptaki ikinci cihazı ifade eder.
+
+| Otomatik senaryo | Kod kapısı | Beklenen değişmez | Fiziksel kabul |
+|---|---|---|---|
+| A başlatır → B uygulama içinden Durdur | `global_timer_mirror_stop_test.dart` | B, `run_id` + revizyonlu tek CAS-stop gönderir; stale ret yerelde başarı sayılmaz | A ve B en geç 10 sn içinde terminal; ek session/XP 0 |
+| Bildirim/widget kaynaklı terminal niyeti | `global_timer_v57_repro_test.dart`, `timer_v2_stop_entry_contract_test.dart` | Kaynak ile ayna rolü tek karar noktasında ayrılır; ayna yerel interval/session yazmaz | Her iki cihazda bildirim ve widget Durdur ayrı denenir |
+| Çevrimdışı start → terminal niyeti | `global_timer_deferred_stop_test.dart` | Start kabul edilirse bağlı stop aynı kimlik/revizyonla gider; 24 saati aşan niyet oynatılmaz | Ağ kes/aç, uygulama arka planda ve kapalıyken denenir |
+| FCM kayıp/gecikmeli → foreground reconcile | `global_timer_command_publish_test.dart`, `timer_sync_signal_test.dart` | Sinyal yalnız tetikleyicidir; açık uygulama auth snapshot ile uzlaşır, arka planda poll dönmez | A/B farklı yaşam döngülerinde start/stop sonrası görünüm ölçülür |
+| Eski/ölü koşu ve cold-start | `global_timer_v57_repro_test.dart` | Kira/yaş sınırını aşan run aynalanmaz; ayna server doğrulaması olmadan dirilmez | Force-stop, reboot ve 23:59–00:01 sınırında tekrar denenir |
+
+Çalıştırılacak otomatik paket:
+
+```text
+flutter test test/data/global_timer_v57_repro_test.dart test/data/global_timer_mirror_stop_test.dart test/data/global_timer_deferred_stop_test.dart test/data/global_timer_command_publish_test.dart test/core/timer_sync_signal_test.dart test/core/timer_v2_stop_entry_contract_test.dart --dart-define-from-file=env.json
+```
+
+SQL replay bu paketten bağımsızdır: `0102` için local deploy contract head'i
+güncellenmeden wrapper güvenli olarak replay başlatmaz. Bu sözleşme sorunu çözülse
+bile fiziksel A/B kabulü WP-466'da kalır.

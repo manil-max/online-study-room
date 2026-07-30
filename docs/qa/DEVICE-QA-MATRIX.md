@@ -71,3 +71,23 @@ Ayrıntı: `docs/play-store/DATA-SAFETY.md` ve `docs/play-store/PLAY-RELEASE-GAT
 | C1 | Remote self-test'i ikinci kez 20 sn dolmadan başlat | Teslim timeout'u değil, 20 sn bekleme bilgisi; yeni outbox isteği yok | ⬜ | |
 | C2 | Aynı kişiye ikinci dürtmeyi 10 dk dolmadan gönder | Genel hata değil, 10 dakikalık kural görünür; ikinci dürtme oluşmaz | ⬜ | |
 | C3 | Cooldown bittikten sonra remote self-test/dürtme | Normal başarılı yol değişmeden çalışır | ⬜ | |
+
+## F. v57 iki-cihaz timer kabulü (WP-433 → WP-466)
+
+> Aday kimliği, APK SHA-256, Git SHA ve staging migration head'i cihazdan önce
+> yazılır. A koşuyu başlatan, B aynı hesabın ikinci cihazıdır. Her satırda A ve B
+> tarafındaki süre, terminal nedeni ve `session/XP` sonucu kaydedilir.
+
+| # | Senaryo | Beklenen | Sonuç | Kanıt |
+|---|---|---|---|---|
+| V57-T1 | A başlat → B uygulama içinden Durdur | A+B ≤10 sn terminal; tek CAS, ek session/XP 0 | ⬜ | |
+| V57-T2 | B başlat → A uygulama içinden Durdur | T1'in yön tersi aynı değişmezi korur | ⬜ | |
+| V57-T3 | A başlat → B bildirim Durdur | A+B terminal; ayna yerel interval/session yazmaz | ⬜ | |
+| V57-T4 | A başlat → B widget Durdur | T3 ile aynı sonuç; widget yüzeyi ayrı kanıttır | ⬜ | |
+| V57-T5 | Her iki yönde stale/revision reddi | Ayna açık kalır; kullanıcıya başarı gösterilmez | ⬜ | |
+| V57-T6 | A/B foreground-background-terminated kombinasyonları | Ghost görünüm ve kayıp stop niyeti 0 | ⬜ | |
+| V57-T7 | Ağ kes → start/stop niyeti → ağ aç | İdempotent uzlaşma; çift run/session 0 | ⬜ | |
+| V57-T8 | Force-stop ve reboot sonrası açılış | Doğrulanmamış ayna dirilmez; snapshot gerçek durumu verir | ⬜ | |
+| V57-T9 | 23:59–00:01 Europe/Istanbul | Terminal tek kez; gün sınırı/session tutarlı | ⬜ | |
+| V57-T10 | A'dan remote self-test | Bildirim yalnız A'ya gider; B'de 0 teslim | ⬜ | |
+| V57-T11 | Token yok/eskimiş ve çift FCM teslimi | Görünür hata/fallback; duplicate uygulama etkisi 0 | ⬜ | |
