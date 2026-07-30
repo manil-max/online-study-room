@@ -22,6 +22,50 @@ const globalTimerDeviceIdKey = 'global_timer_v2_device_id';
 
 enum GlobalTimerMode { disabled, shadow, foregroundMirror }
 
+/// WP-431: bir komut hatasının **ne yapılması gerektiğini** söyleyen sınıf.
+///
+/// 🔴 Eskiden `catch (_)` üç farklı dünyayı tek torbaya atıyordu: geçici ağ
+/// hatası, hesabı uymayan zarf ve sunucunun ASLA kabul etmeyeceği bozuk kayıt.
+/// Sonuç iki yönlü kayıptı — bozuk kayıt kuyruğu sonsuza kadar tıkıyor, geçici
+/// hata ise bazen kaydın düşmesine yol açıyordu.
+enum GlobalTimerCommandFailure {
+  /// Geçici: kuyrukta kalır, sonraki turda yeniden denenir.
+  retry,
+
+  /// Hesap/cihaz bağı yok: saklanır ama bu hesap adına gönderilmez.
+  quarantine,
+
+  /// Sunucu bu zarfı hiçbir zaman kabul etmeyecek: kuyruktan düşer.
+  terminal,
+}
+
+/// Sunucu hata kodlarının kanonik sınıflandırması.
+///
+/// `0082`/`0101` `raise exception '<kod>'` ile konuşur; PostgREST bu kodu hata
+/// mesajının içinde taşır. Tanınmayan hata **retry**'dir: veri kaybetmemek,
+/// kuyruğu bir tur fazla denemekten daha önemlidir.
+GlobalTimerCommandFailure classifyGlobalTimerFailure(Object error) {
+  final message = error.toString().toLowerCase();
+  const terminal = <String>[
+    'invalid_global_timer_command',
+    'invalid_global_timer_origin',
+    'command_id_payload_mismatch',
+    'stop_run_revision_required',
+    'global_timer_v2_run_required',
+    'global_timer_run_not_found',
+    'subject_ownership_required',
+    'client_clock_skew_rejected',
+  ];
+  const quarantine = <String>['authentication_required', 'active_device_required'];
+  for (final code in terminal) {
+    if (message.contains(code)) return GlobalTimerCommandFailure.terminal;
+  }
+  for (final code in quarantine) {
+    if (message.contains(code)) return GlobalTimerCommandFailure.quarantine;
+  }
+  return GlobalTimerCommandFailure.retry;
+}
+
 /// WP-415: native, çevrimdışı bir start henüz sunucuda koşu kimliği almadan
 /// durursa bu yerel terminal niyetini yazar. Bu nesne hiçbir zaman RPC'ye
 /// doğrudan gönderilmez; eş start kabul edilince gerçek CAS-stop'a çözülür.
@@ -155,8 +199,9 @@ class GlobalTimerCoordinator {
           clientOccurredAt: DateTime.now(),
           payload: const {'origin': 'app'},
         );
-    // `stale`, başka bir cihazın daha yeni bir gerçeği olduğunu söyler. Ayna
-    // yerel olarak boş görünemez; yeni snapshot turu gerçek durumu uygular.
+    // WP-431: koşu zaten kapanmışsa bu bir hata değil, istenen sonuçtur —
+    // terminal durum her zaman üstün gelir. Yalnız `stale` (başka cihazın daha
+    // yeni gerçeği) aynayı yerel olarak kapatmayı engeller.
     if (snapshot.resultCode == 'stale') {
       await _journal.record(
         event: TimerJournalEvents.mirrorStopRequested,
@@ -171,6 +216,10 @@ class GlobalTimerCoordinator {
       );
       throw StateError('global_timer_mirror_stop_stale');
     }
+    // WP-431: kimlik bileti bu koşuyla birlikte tükendi. Bırakılırsa `_finish()`
+    // yolundaki native STOP_SILENT ölü koşuya ikinci, zehirli bir stop zarfı
+    // üretirdi.
+    await _persistRunIdentity(prefs, snapshot);
     await _journal.record(
       event: TimerJournalEvents.mirrorStopRequested,
       reason: TimerJournalReasons.userAction,
@@ -325,8 +374,16 @@ class GlobalTimerCoordinator {
         // olmadan sunucu `stop_run_revision_required` atar; bu köprü olmadan
         // durdurma sinyali hiçbir zaman üretilemez.
         await _persistRunIdentity(prefs, snapshot);
-      } catch (_) {
-        // Runtime flag/RLS/ağ hatası legacy timer'ı veya kuyruktaki diğer kaydı bozmaz.
+      } catch (error) {
+        // WP-431: hata sınıfı ne yapacağımızı belirler. Runtime flag/RLS/ağ
+        // hatası legacy timer'ı veya kuyruktaki diğer kaydı bozmaz.
+        final failure = classifyGlobalTimerFailure(error);
+        if (failure == GlobalTimerCommandFailure.terminal) {
+          // Sunucu bu zarfı hiçbir zaman kabul etmeyecek: kuyrukta kalıcı zehir
+          // olmasındansa düşsün. Kaybolan şey bir kullanıcı çalışması değil,
+          // uygulanamaz bir komuttur.
+          completed.add(command!.commandId);
+        }
         // WP-430: sessiz yutma artık iz bırakır — "senkron bazen çalışmıyor"
         // iddiası ancak başarısız turun kaydıyla kanıtlanabilir.
         final failed = command;
@@ -334,7 +391,12 @@ class GlobalTimerCoordinator {
           await _journal.record(
             event: TimerJournalEvents.commandFlushed,
             reason: TimerJournalReasons.queueReplay,
-            outcome: TimerJournalOutcomes.failed,
+            outcome: switch (failure) {
+              GlobalTimerCommandFailure.terminal => TimerJournalOutcomes.dropped,
+              GlobalTimerCommandFailure.quarantine =>
+                TimerJournalOutcomes.deferred,
+              GlobalTimerCommandFailure.retry => TimerJournalOutcomes.failed,
+            },
             origin: failed.origin,
             accountId: failed.accountId,
             runId: failed.runId,
@@ -429,6 +491,10 @@ class GlobalTimerCoordinator {
         outcome: switch (directive.kind) {
           GlobalTimerForegroundDirectiveKind.deferred =>
             TimerJournalOutcomes.deferred,
+          // WP-431 (K2): sunucu `running` diyor ama koşu gösterilebilir değil.
+          // Bu, hayalet koşunun artık ekrana çıkmadan yakalandığı noktadır.
+          GlobalTimerForegroundDirectiveKind.needsReconcile =>
+            TimerJournalOutcomes.stale,
           _ => TimerJournalOutcomes.applied,
         },
         origin: directive.kind == GlobalTimerForegroundDirectiveKind.mirrorStart

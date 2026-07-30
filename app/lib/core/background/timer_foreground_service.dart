@@ -70,6 +70,21 @@ class TimerForegroundService {
     }
   }
 
+  /// WP-431: sunucu doğrulanmamış **ayna projeksiyonunu** yerelde düşürür.
+  ///
+  /// [stop] ile karıştırılmamalıdır: bu bir durdurma DEĞİLDİR. Koşunun sahibi
+  /// başka cihazdır ve orada çalışmaya devam ediyor olabilir; bu yüzden native
+  /// taraf ne V2 stop zarfı ne de bekleyen aralık yazar. Soğuk açılışta ayna
+  /// durumu server onayı olmadan diriltilmesin diye vardır (V56-S04).
+  static Future<void> discardProjection() async {
+    if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) return;
+    try {
+      await _channel.invokeMethod<void>('discardProjection');
+    } catch (_) {
+      // Platform kanalı olmayan test hostu.
+    }
+  }
+
   /// Son native running notification'Ä±n Live Update uygunluk teÅŸhisini okur.
   /// SayaÃ§ henÃ¼z baÅŸlatÄ±lmadÄ±ysa Ã¶lÃ§Ã¼m alanlarÄ± null kalÄ±r.
 }

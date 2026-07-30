@@ -107,7 +107,7 @@
 
 | Kilit / sıra | Sahip | Durum | Sonraki |
 |---|---|---|---|
-| **Migration yazma kilidi** | **Ajan A** | 🔒 **DOLU** · WP-431 · `0101` yazılıyor · repo/local head `0100` | Bittiğinde boşalır; sıra `432 → 435 → 439 → 441 → 442 → 444 → 445 → 449 → 453 → 464` |
+| **Migration yazma kilidi** | — | BOŞ · repo/local head **`0101`** (WP-431) · ⏳ `0101` yerel replay ile DOĞRULANMADI | Sıra: `432 → 435 → 439 → 441 → 442 → 444 → 445 → 449 → 453 → 464`. Sıradaki yazar `0102`yi alır |
 | **Sıcak dosya kilidi** (`main.dart`, navigation, pubspec, manifest, l10n generated) | — | BOŞ · WP-458 kod + otomatik test tamam | Ajan D l10n bulgusunu devralabilir |
 | **Tam Flutter kalite koşumu** | — | BOŞ | WP başında hedefli test; tüm `flutter test` yalnız kilitle |
 | **Yerel Supabase replay** | — | BOŞ | Migration yazarı kendi WP'sinde; final tekrar Ajan H |
@@ -160,25 +160,20 @@
 ### Ajan A — Sayaç ve çoklu cihaz doğruluğu
 
 - **Durum:** [~] Aktif · Ajan A
-- **Aktif WP:** WP-431 — Kanonik timer komut protokolü, offline niyet ve
-  hayalet-run onarımı
-- **Aşama:** Geliştiriliyor · 🔒 **migration yazma kilidi Ajan A'da** (`0101`)
+- **Aktif WP:** WP-432 (sıradaki) — bildirim aksiyon hedefleme ve cihaz-kapsamlı
+  test bildirimi
+- **Aşama:** WP-431 teslim edildi; migration kilidi **bırakıldı**
 - **Dal:** `main`
-- **Başlangıç:** 2026-07-30 02:04 (Europe/Istanbul) · **Son güncelleme:** 2026-07-30 03:40
-- **Tamamlanan:** WP-430 `8de8aeb` (kod + otomatik test). Sahip düzeltmesi
-  (2026-07-30): K1–K3 ürün kararı değil **WP-431'in uygulama kararlarıdır**;
-  cihaz kabulü Ajan H WP-466'dadır. Bayat "WP-430 kabulü" beklemesi kaldırıldı.
-- **WP-431 SAHİP yollar (claim):** `app/lib/data/models/global_timer.dart`,
-  `app/lib/data/repositories/global_timer_repository.dart` + supabase/in_memory
-  çiftleri, `app/lib/data/providers/global_timer_providers.dart`,
-  `app/lib/core/background/timer_v2_command_outbox.dart`,
-  `app/lib/core/background/timer_foreground_service.dart`,
-  `app/lib/data/providers/study_providers.dart`,
-  `app/android/**/timer/**`, `app/android/**/widgets/Timer*`,
-  `supabase/migrations/0101_*`, `supabase/tests/*global_timer*`, ilgili testler.
-- **WP-431 ortak/riskli yüzey:** yalnız migration kilidi (alındı). Sıcak dosya
-  kilidi (`main.dart`/navigation/pubspec/l10n/manifest) **alınmadı**; bu WP
-  onlara dokunmaz.
+- **Başlangıç:** 2026-07-30 02:04 (Europe/Istanbul) · **Son güncelleme:** 2026-07-30 07:35
+- **Tamamlanan:** WP-430 `8de8aeb` · WP-431 (bu tur, kod + otomatik test).
+- **⏳ Devredilen açık kanıt:** `0101` ve `019_*.test.sql` **yerel replay ile
+  doğrulanmadı** — bu hostta Docker motoru ayağa kalkmıyor (`docker info` yanıt
+  vermiyor; `local.ps1` soğuk Docker'da kendi `2>$null` satırında da patlıyor).
+  Staging'e gitmeden önce `tooling/supabase/local.ps1 baseline` yeşil olmalı;
+  Ajan H WP-466'nın kapanış kanıtına eklendi.
+- **⚠️ Başka lane'in kırmızısı (bilgi):** `app/test/features/auth_faq_link_wp422_test.dart`
+  → "etiket dört dilde de çevrilidir" DE/AR yerelini istiyor, Ajan G WP-457
+  runtime dillerini TR/EN ile sınırladı. Ajan A dokunmadı (Ajan G yüzeyi).
 - **Zincir:** `WP-430 → WP-431 → WP-432 → WP-433 → WP-448`
 - **İlk iş:** WP-430; başka ajana bağlı değil, hemen claim edilebilir.
 - **WP-430 SAHIP yollar (claim):** `docs/qa/V57-TIMER-EVIDENCE.md` (yeni),
@@ -4145,7 +4140,9 @@ alır; boş/uydurma migration yazılmaz.
 
 #### WP-431 — Kanonik timer komut protokolü, offline niyet ve hayalet-run onarımı
 
-- **Durum / bağımlılık:** [ ] WP-430 kabulü · migration kilidinin ilk sahibi.
+- **Durum / bağımlılık:** [~] **Kod + otomatik test tamam** · Ajan A ·
+  `0101` yazıldı, migration kilidi bırakıldı · ⏳ **yerel replay bekliyor**
+  (Docker motoru bu hostta kalkmadı) · cihaz kabulü Ajan H WP-466.
 - **Problem:** Kaynak cihaz stop olduktan sonra ayna cihaz çalışıyor kalabiliyor;
   offline terminal niyet/geçmiş başlangıç süresi ve lease uzlaşması yanlış
   görsel run üretebiliyor.
@@ -4184,6 +4181,61 @@ alır; boş/uydurma migration yazılmaz.
   timer'ı restore olmaz; bozuk queue diğer sağlam komutları silmez.
 - **Test:** hedefli Flutter + native contract + local replay/pgTAP.
 - **Model:** Opus.
+- **Kök neden (WP-430'dan):** *Kimliği olmayan cihazın hiçbir yüzeyi koşuya
+  dokunamıyor ve hata da vermiyordu.* Ayna cihaz koşuyu gösteriyor ama sunucunun
+  kimlik biletini (`timer_v2_run_id`) hiç edinmiyordu.
+- **Onarım — dört ayak:**
+  1. **Rol native tarafta görünür oldu.** `TimerStateStore.KEY_CONTROLLER_ROLE`
+     (`source`|`mirror`). Rol eskiden yalnız Dart `state.isGlobalTimerMirror`
+     alanındaydı; bildirim/widget Durdur'u native'de çalıştığı için onu
+     göremiyordu. Karar artık **girişten değil rolden** türer: `planTimerStop()`
+     uygulama içi + bildirim + widget için tek karar noktası.
+  2. **Kimlik bileti aynaya da verilir.** `mirrorStart` artık
+     `timer_v2_run_id` + `revision` + rol yazar; başarılı ayna Durdur'unda bilet
+     **tüketilir** (yoksa `_finish()` ölü koşuya ikinci, zehirli stop üretirdi).
+  3. **Hayalet koşu doğmadan kesilir.** Kira farkındalığı (`lease_expired`,
+     `0101`de sunucu hesaplar), 12 saatlik yaş sınırı, yeni `needsReconcile`
+     direktifi, ekranda duran ölü aynanın kapatılması ve **soğuk açılışta ayna
+     diriltmeme** (native `ACTION_DISCARD_PROJECTION` — sunucuya komut GİTMEZ,
+     koşunun sahibi başka cihaz olabilir).
+  4. **Sessiz yutma bitti.** `classifyGlobalTimerFailure` →
+     `retry` | `quarantine` | `terminal`; zehirli zarf kuyruktan düşer, geçici
+     hata kaydı korur.
+- **Bulunan ek kusurlar (kartta yazılı değildi):**
+  * Ayna cihazda bildirim Durdur'u `appendPendingInterval` çağırıyor ve Dart
+    açılışta bunu **uydurma bir oturum** olarak yazıyordu.
+  * Yerel modu `countdown` olan ayna cihazda `mode == "stopwatch"` kapısı
+    durdurma komutunu sessizce düşürüyordu.
+  * `effective_started_at` HER ZAMAN `clock_timestamp()` idi: çevrimdışı
+    başlatılıp saatler sonra flush edilen koşu başlangıcını flush anına
+    kaydırıyordu.
+- **`0101` içeriği:** hesap-geneli tek aktif v2 koşusu (kısmi unique index +
+  ön temizlik), snapshot'ta `lease_expired`, çevrimdışı başlangıcın kabulü ve
+  ≤24 saat/gelecek-yok kırpması, `client_clock_skew_rejected`. `0088`in
+  timer-sync enqueue gövdesi birebir korundu; `0082/0087/0088/0089`'a
+  dokunulmadı. Head pinleri: `deploy-contract.local_migration_head` → `0101`,
+  `001_schema_contract` → 101/`0101`. **staging/production head `0100`'de
+  bırakıldı — kapılar kapalı.**
+- **Değişen dosyalar:** `supabase/migrations/0101_global_timer_controller_contract.sql`
+  (yeni), `supabase/tests/019_global_timer_controller_contract.test.sql` (yeni),
+  `supabase/tests/001_schema_contract.test.sql`,
+  `tooling/release/deploy-contract.json` (yalnız local head),
+  `app/lib/data/models/global_timer.dart`,
+  `app/lib/data/providers/global_timer_providers.dart`,
+  `app/lib/data/providers/study_providers.dart`,
+  `app/lib/core/background/timer_foreground_service.dart`,
+  `app/android/**/timer/TimerStateStore.kt`,
+  `app/android/**/timer/StudyTimerService.kt`, `app/android/**/MainActivity.kt`,
+  `app/test/data/global_timer_controller_contract_test.dart` (yeni),
+  `app/test/data/global_timer_v57_repro_test.dart`,
+  `docs/qa/V57-TIMER-EVIDENCE.md`.
+- **Kanıt:** `flutter analyze` 0 uyarı · WP-431 sözleşmesi 14/14 · tekrar üretim
+  paketi 14/14 (kırmızı hedefler ters çevrildi, **silinmedi**) · tam
+  `flutter test` 1212'den 1211 yeşil (tek kırmızı Ajan G WP-457 l10n yüzeyi).
+  ⏳ **Yerel replay/pgTAP çalıştırılamadı** — Docker motoru bu hostta kalkmadı.
+- **Kalan kabul maddeleri:** "aynı komut 20 kez → tek terminal sonuç",
+  "0 ek session/XP", RLS ve rollback kanıtı `019_*.test.sql` içinde YAZILI ama
+  replay yeşili olmadan **kanıtlanmış sayılmaz**. Cihaz matrisi Ajan H WP-466.
 
 #### WP-432 — Bildirim aksiyon hedefleme ve cihaz-kapsamlı test bildirimi
 

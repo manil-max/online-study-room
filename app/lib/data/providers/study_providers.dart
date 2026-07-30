@@ -587,6 +587,38 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     return elapsed < 0 ? 0 : elapsed;
   }
 
+  /// WP-431 (K1): ayna koşusunun sunucu kimliğini **kanonik** anahtara yazar.
+  ///
+  /// `timer_global_mirror_run_id` yalnız Dart'ın okuduğu bir alandır; native
+  /// durdurma zarfı `timer_v2_run_id` + `timer_v2_run_revision` ister. Rol de
+  /// açıkça yazılır: native `handleStop` yerel oturum yazıp yazmayacağına
+  /// buradan bakar.
+  Future<void> _persistMirrorRunIdentity(GlobalTimerRun run) async {
+    final prefs = ref.read(sharedPreferencesProvider);
+    await prefs.setString(TimerV2CommandEnvelope.runIdKey, run.id);
+    await prefs.setString(
+      TimerV2CommandEnvelope.runRevisionKey,
+      run.revision.toString(),
+    );
+    await prefs.setString(
+      TimerControllerRole.prefsKey,
+      TimerControllerRole.mirror.name,
+    );
+  }
+
+  /// WP-431 yaşam döngüsü: hesap değişiminde eski hesabın sayaç gerçeği yeni
+  /// hesaba **taşınmaz**. Kimlik bileti, rol ve ayna durumu hesaba özeldir;
+  /// kuyruk kayıtları ise karantinada kalır (silinmez — sahibi geri dönebilir).
+  Future<void> _clearAccountScopedTimerState() async {
+    final prefs = ref.read(sharedPreferencesProvider);
+    await prefs.remove(TimerV2CommandEnvelope.runIdKey);
+    await prefs.remove(TimerV2CommandEnvelope.runRevisionKey);
+    await prefs.remove(TimerControllerRole.prefsKey);
+    await prefs.remove(_kGlobalMirrorRunId);
+    await prefs.remove(_kGlobalMirrorRunRevision);
+    await _timerV2CommandFlushAdapter.bindActiveAccount(prefs, null);
+  }
+
   /// Auth henüz yoksa 400ms bekler; dispose olursa Timer iptal + await serbest.
   Future<void> _awaitAuthRetryWindow() {
     _cancelAuthRetryWindow();
@@ -686,7 +718,11 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       }
     });
     ref.listen(authStateProvider, (_, next) {
-      if (next.value == null) unawaited(TimerSyncSignal.clear());
+      if (next.value == null) {
+        unawaited(TimerSyncSignal.clear());
+        // WP-431: A hesabından çıkıp B'ye girince A'nın sayacı restore olmaz.
+        unawaited(_clearAccountScopedTimerState());
+      }
     });
     _timerSyncSignals = TimerSyncSignal.stream.listen((signal) {
       if (!_disposed) unawaited(_syncBackgroundTimerState(signal: signal));
@@ -711,10 +747,20 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       prefs.getString(_kActiveStartedAt) ?? '',
     );
     final activeSubject = prefs.getString(_kActiveSubject);
+    // 🔴 WP-431 (K2 · V56-S04) — soğuk açılışta AYNA DİRİLTİLMEZ.
+    //
+    // Eskiden `isGlobalTimerMirror` prefs'ten okunuyor ve ayna koşusu
+    // `isRunning: true` ile geri geliyordu. Telefon gece boyu kapalı kalıp
+    // sabah açıldığında, koşu sunucuda saatler önce bitmiş olsa bile ekranda
+    // canlı bir sayaç beliriyordu. Ayna bir PROJEKSİYONDUR: kaynağı doğrulanana
+    // kadar gösterilemez. Aşağıdaki microtask yerel izi de temizler, ardından
+    // ilk snapshot turu koşu hâlâ canlıysa onu yeniden benimser.
+    final restoredMirrorRunId = prefs.getString(_kGlobalMirrorRunId);
+    final restoringMirror = restoredMirrorRunId != null && activeStartedAt != null;
     final initial = StudyTimerState(
       mode: activeStartedAt == null ? mode : activeMode,
-      isRunning: activeStartedAt != null,
-      startedAt: activeStartedAt,
+      isRunning: activeStartedAt != null && !restoringMirror,
+      startedAt: restoringMirror ? null : activeStartedAt,
       subjectId: activeSubject == '' ? null : activeSubject,
       phase: activeStartedAt == null ? TimerPhase.work : activePhase,
       cycle: activeStartedAt == null
@@ -733,9 +779,9 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       ),
       liveRunId: _normalizeRunToken(prefs.getString(_kActiveLiveRunId)),
       liveRunToken: _normalizeRunToken(prefs.getString(_kActiveLiveRunToken)),
-      isGlobalTimerMirror: prefs.getString(_kGlobalMirrorRunId) != null,
-      globalTimerRunId: prefs.getString(_kGlobalMirrorRunId),
-      globalTimerRunRevision: prefs.getInt(_kGlobalMirrorRunRevision),
+      isGlobalTimerMirror: false,
+      globalTimerRunId: null,
+      globalTimerRunRevision: null,
       verification:
           _normalizeRunToken(prefs.getString(_kActiveLiveRunToken)) == null
           ? (activeStartedAt == null
@@ -755,16 +801,33 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
       outcome: activeStartedAt == null
           ? TimerJournalOutcomes.dropped
           : TimerJournalOutcomes.applied,
-      origin: initial.isGlobalTimerMirror
+      origin: restoringMirror
           ? TimerJournalOrigins.mirror
           : TimerJournalOrigins.app,
-      runId: initial.globalTimerRunId,
-      runRevision: initial.globalTimerRunRevision,
+      runId: restoredMirrorRunId,
+      runRevision: prefs.getInt(_kGlobalMirrorRunRevision),
       elapsedSeconds: activeStartedAt == null
           ? null
           : DateTime.now().difference(activeStartedAt).inSeconds,
     );
     Future.microtask(() async {
+      if (restoringMirror) {
+        // Yerel izi düşür — ama sunucuya DOKUNMA. Koşunun sahibi başka cihaz
+        // olabilir ve orada çalışmaya devam ediyordur; buradan bir stop komutu
+        // göndermek onun sayacını haksızca kapatırdı.
+        _clearActiveTimer();
+        await prefs.setString(TimerForegroundService.fgModeKey, 'idle');
+        await TimerForegroundService.discardProjection();
+        _journalTransition(
+          event: TimerJournalEvents.coldStartRestore,
+          reason: TimerJournalReasons.coldStart,
+          outcome: TimerJournalOutcomes.stale,
+          origin: TimerJournalOrigins.mirror,
+          runId: restoredMirrorRunId,
+          elapsedSeconds: DateTime.now().difference(activeStartedAt).inSeconds,
+        );
+        if (_disposed) return;
+      }
       // WP-136: soğuk açılışta store'dan türet (resume bekleme).
       await _syncBackgroundTimerState();
       if (_disposed) return;
@@ -1051,6 +1114,10 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
             isRunning: true,
             isStopping: false,
             startedAt: remoteStartedAt,
+            // WP-431: ayna koşusu tanımı gereği global bir STOPWATCH koşusudur.
+            // Yerel mod (ör. countdown) korunursa native `handleStop`'un eski
+            // `mode == "stopwatch"` kapısı durdurma zarfını sessizce düşürürdü.
+            mode: TimerMode.stopwatch,
             phase: TimerPhase.work,
             cycle: 1,
             accumulatedSeconds: 0,
@@ -1063,6 +1130,12 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
             clearSettling: true,
           );
           _persistActiveTimer();
+          // 🔴 WP-431 (K1) — V56-S01'in kök nedeni buydu. Ayna cihaz koşuyu
+          // GÖSTERİYOR ama sunucunun verdiği kimlik biletini hiç almıyordu;
+          // native durdurma zarfı `timer_v2_run_id` olmadan kurulamıyor ve
+          // bildirim/widget Durdur'u sessizce düşüyordu. Kimlik artık ayna
+          // cihazda da kanonik anahtara yazılır.
+          await _persistMirrorRunIdentity(run);
           await TimerForegroundService.start(
             startedAt: remoteStartedAt,
             mode: state.mode.name,
@@ -1106,6 +1179,26 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
           await coordinator.acknowledgeForeground(
             directive,
             status: 'native_applied',
+          );
+        case GlobalTimerForegroundDirectiveKind.needsReconcile:
+          // WP-431 (K2 · V56-S04): sunucu `running` diyor ama koşu güvenle
+          // gösterilemiyor (kira dolmuş ya da yaş sınırı aşılmış). Bu cihaz
+          // canlı sayaç AÇMAZ — hayalet süre tam olarak burada doğuyordu.
+          _journalTransition(
+            event: TimerJournalEvents.mirrorAdopted,
+            reason: TimerJournalReasons.remoteSnapshot,
+            outcome: TimerJournalOutcomes.stale,
+            origin: TimerJournalOrigins.mirror,
+            runId: run?.id,
+            runRevision: run?.revision,
+            stateVersion: directive.snapshot.stateVersion,
+          );
+          await coordinator.acknowledgeForeground(
+            directive,
+            status: 'deferred',
+            runId: run?.id,
+            runRevision: run?.revision,
+            errorCode: 'needs_reconcile',
           );
         case GlobalTimerForegroundDirectiveKind.deferred:
           await coordinator.acknowledgeForeground(

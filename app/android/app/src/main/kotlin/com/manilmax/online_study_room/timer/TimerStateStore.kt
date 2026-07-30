@@ -34,6 +34,34 @@ object TimerStateStore {
     const val KEY_V2_RUN_INTENT_ID = "flutter.timer_v2_run_intent_id"
 
     /**
+     * WP-431: bu cihazın koşu üzerindeki rolü — `source` | `mirror`.
+     *
+     * 🔴 WP-430 kök nedeni: rol yalnız Dart `state.isGlobalTimerMirror` alanında
+     * yaşıyordu. Native taraf (bildirim/widget Durdur'u) onu göremediği için
+     * ayna cihazda İKİ ayrı hata üretiyordu:
+     *   1. `appendPendingInterval` ile UYDURMA bir yerel oturum yazıyordu —
+     *      projeksiyonun asla üretmemesi gereken bir kayıt;
+     *   2. koşu kimliği olmadığı için sunucuya durdurma komutu ÜRETEMİYORDU,
+     *      dolayısıyla kaynak cihaz çalışmaya devam ediyordu (V56-S01).
+     *
+     * Rol artık store'da açıktır ve `handleStop` kararını buradan verir.
+     */
+    const val KEY_CONTROLLER_ROLE = "flutter.timer_v2_controller_role"
+    const val ROLE_SOURCE = "source"
+    const val ROLE_MIRROR = "mirror"
+
+    /** Store'daki rol; tanınmayan/boş değer güvenli tarafa (`source`) düşer. */
+    fun controllerRole(p: SharedPreferences): String =
+        if (p.getString(KEY_CONTROLLER_ROLE, ROLE_SOURCE) == ROLE_MIRROR) ROLE_MIRROR
+        else ROLE_SOURCE
+
+    fun isMirror(p: SharedPreferences): Boolean = controllerRole(p) == ROLE_MIRROR
+
+    /** Dart'ın `startOrigin`'inden rolü türetir (tek çeviri noktası). */
+    fun roleForStartOrigin(startOrigin: String): String =
+        if (startOrigin == "global_timer_mirror") ROLE_MIRROR else ROLE_SOURCE
+
+    /**
      * WP-373: sunucunun kabul ettiği V2 koşu kimliği. Dart, `apply_global_timer_command`
      * BAŞARILI döndüğünde yazar; native `stop` zarfını kurarken buradan okur.
      *
@@ -87,8 +115,10 @@ object TimerStateStore {
         liveRunId: String = "",
         liveRunToken: String = "",
         startOrigin: String = "dart_app",
+        controllerRole: String = ROLE_SOURCE,
     ): Boolean {
         return p.edit()
+            .putString(KEY_CONTROLLER_ROLE, controllerRole)
             .putString(KEY_STARTED_AT, Instant.ofEpochMilli(startedAtMs).toString())
             .putLong(KEY_STARTED_AT_MS, startedAtMs)
             .putString(KEY_MODE, mode)
@@ -118,6 +148,9 @@ object TimerStateStore {
             .remove(KEY_V2_RUN_ID)
             .remove(KEY_V2_RUN_REVISION)
             .remove(KEY_V2_RUN_INTENT_ID)
+            // WP-431: rol koşuya aittir. Kalırsa bir sonraki YEREL başlatma
+            // kendini ayna sanar ve oturumunu hiç yazmaz.
+            .remove(KEY_CONTROLLER_ROLE)
             .putString(KEY_FG_MODE, "idle")
             .commit()
     }

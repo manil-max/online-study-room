@@ -17,10 +17,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 /// WP-430 — v56 saha bulgularının (V56-S01…S04) **tekrar üretim** paketi.
 ///
-/// 🔴 Bu dosya bugünün DOĞRU davranışını değil, ölçülmüş KUSURLU davranışını
-/// sabitler. Her testin başında `KIRMIZI HEDEF` satırı, WP-431…433'ün hangi
-/// iddiayı ters çevirmesi gerektiğini yazar. Onarım geldiğinde bu testler
-/// kırmızıya döner ve düzeltilmiş sözleşmeyle değiştirilir — silinmez.
+/// Dosya iki tür iddia taşır ve ikisi de bilerek burada durur:
+///
+/// * `KIRMIZI HEDEF (WP-4NN)` — hâlâ ölçülmüş **kusurlu** davranış. Sahip WP
+///   onu ters çevirmek zorundadır. (Bugün: V56-S02 ve S03 → WP-432.)
+/// * `WP-431 onarimi:` — WP-431'in kapattığı kusurun düzeltilmiş sözleşmesi.
+///   Eski kırmızı iddia silinmedi, **ters çevrildi**; böylece regresyon aynı
+///   dosyadan yakalanır.
+///
+/// Kural: bir onarım geldiğinde test SİLİNMEZ, iddiası değiştirilir.
 ///
 /// Kanıt anlatısı: `docs/qa/V57-TIMER-EVIDENCE.md`.
 const _storePath =
@@ -31,7 +36,8 @@ const _notifierPath = 'lib/data/providers/study_providers.dart';
 const _syncSignalPath = 'lib/core/notifications/timer_sync_signal.dart';
 const _notificationServicePath =
     'lib/core/notifications/timer_notification_service.dart';
-const _migrationPath = '../supabase/migrations/0082_global_timer_v2.sql';
+const _controllerMigrationPath =
+    '../supabase/migrations/0101_global_timer_controller_contract.sql';
 
 String _source(String path) =>
     File(path).readAsStringSync().replaceAll('\r\n', '\n');
@@ -143,22 +149,37 @@ void main() {
       },
     );
 
-    test('Dart, ayna koşusunun sunucu kimliğini kanonik anahtara yazmıyor', () {
-      // KIRMIZI HEDEF (WP-431): mirrorStart uygulanırken
-      // `TimerV2CommandEnvelope.runIdKey` + revision da yazılmalı; aksi halde
-      // native durdurma zarfı kurulamaz ve FCM hızlı yolu da eşleşemez.
+    test('WP-431 onarimi: ayna kosusu kanonik kimlik biletini ve rolunu edinir', () {
+      // WP-430'da bu iddia TERSTI: kanonik anahtari yalniz sunucuya komut
+      // gondermis SAHIP cihaz yaziyordu, ayna hic edinmiyordu. Kimlik olmadan
+      // native durdurma zarfi kurulamiyor ve Durdur sessizce dusuyordu.
       final notifier = _source(_notifierPath);
       expect(
         notifier,
-        isNot(contains('setString(TimerV2CommandEnvelope.runIdKey')),
-        reason:
-            'kanonik koşu kimliğini yalnız sunucu apply yolu yazıyor; ayna '
-            'cihaz onu asla edinmiyor',
+        contains('await prefs.setString(TimerV2CommandEnvelope.runIdKey, run.id)'),
+        reason: 'ayna da sunucunun verdigi kosu kimligini kanonik anahtara yazmali',
       );
       expect(
         notifier,
-        contains('await prefs.remove(TimerV2CommandEnvelope.runIdKey)'),
-        reason: 'anahtar yalnız okunup silinen bir yüzey olarak kullanılıyor',
+        contains('TimerControllerRole.mirror.name'),
+        reason: 'rol, native tarafin gorebilecegi bicimde store icinde olmali',
+      );
+    });
+
+    test('WP-431 onarimi: native Durdur kararini giristen degil ROLDEN verir', () {
+      final service = _source(_servicePath);
+      expect(service, contains('val isMirror = TimerStateStore.isMirror(p)'));
+      expect(
+        service,
+        contains('if (recordInterval && !isMirror) {'),
+        reason: 'ayna projeksiyonu asla yerel oturum araligi yazmamali',
+      );
+      expect(
+        service,
+        contains('if (isMirror || (mode == "stopwatch" && phase == "work")) {'),
+        reason:
+            'ayna cihazda yerel mod/faz durdurma komutunu dusurmemeli - kosu '
+            'tanimi geregi global stopwatch kosusudur',
       );
     });
 
@@ -323,75 +344,127 @@ void main() {
   });
 
   group('V56-S04 — sekiz saatlik hayalet ayna koşusu', () {
-    test('sekiz saat önce başlamış uzak koşu sorgusuz aynalanıyor', () {
-      // KIRMIZI HEDEF (WP-431): ayna benimseme yaş/kira sınırına takılmalı;
-      // sınır aşılırsa koşu "uzlaştırma gerekli" olarak görünmeli.
-      final startedEightHoursAgo = DateTime.now().subtract(
-        const Duration(hours: 8),
-      );
+    test('WP-431 onarimi: kirasi taze, makul yasli kosu HALA aynalanir', () {
+      // Sinirlar hayalet kosuyu kesmeli ama GERCEK uzun calismayi degil.
+      final serverTime = DateTime.now().toUtc();
       final directive = planGlobalTimerForegroundApply(
         snapshot: GlobalTimerSnapshot(
           stateVersion: 12,
-          serverTime: DateTime.now().toUtc(),
+          serverTime: serverTime,
           run: GlobalTimerRun(
-            id: 'run-ghost',
+            id: 'run-live',
             status: 'running',
-            revision: 1,
-            effectiveStartedAt: startedEightHoursAgo,
+            revision: 3,
+            effectiveStartedAt: serverTime.subtract(const Duration(hours: 2)),
+            leaseExpiresAt: serverTime.add(const Duration(seconds: 150)),
           ),
         ),
         localRunning: false,
         localIsMirror: false,
         localMirrorRunId: null,
       );
-
-      expect(
-        directive.kind,
-        GlobalTimerForegroundDirectiveKind.mirrorStart,
-        reason:
-            'koşunun yaşı hiç sorgulanmıyor: telefon sabah sekiz saatlik bir '
-            'koşuyu canlıymış gibi açıyor',
-      );
+      expect(directive.kind, GlobalTimerForegroundDirectiveKind.mirrorStart);
     });
 
-    test('istemci modeli kira bilgisini tamamen düşürüyor', () {
-      // KIRMIZI HEDEF (WP-431): `GlobalTimerRun` kira son tarihini taşımalı ve
-      // kirası dolmuş koşu aynalanmamalı.
-      final run = GlobalTimerRun.fromMap({
+    test('WP-431 onarimi: istemci modeli kirayi tasir ve olu kosuyu aynalamaz', () {
+      // WP-430'da bu iddia TERSTI: `GlobalTimerRun` kira alanini hic
+      // tasimiyordu, sunucu gondermis olsa bile `fromMap` dusuruyordu.
+      final serverTime = DateTime.now().toUtc();
+      final expiredLeaseRun = GlobalTimerRun.fromMap({
         'id': 'run-ghost',
         'status': 'running',
         'run_revision': 1,
-        'effective_started_at': DateTime.now()
+        'effective_started_at': serverTime
             .subtract(const Duration(hours: 8))
             .toIso8601String(),
-        // Kira sekiz saat önce doldu; sunucu henüz süpürmediyse istemci bunu
-        // göremez çünkü model alanı yok.
-        'lease_expires_at': DateTime.now()
+        'lease_expires_at': serverTime
             .subtract(const Duration(hours: 8))
             .toIso8601String(),
+        'lease_expired': true,
       });
 
-      expect(run.status, 'running');
+      expect(expiredLeaseRun.leaseExpired, isTrue);
+      expect(expiredLeaseRun.leaseExpiresAt, isNotNull);
       expect(
-        GlobalTimerRun.fromMap({
-          'id': 'x',
-          'status': 'running',
-          'run_revision': 1,
-        }).effectiveStartedAt,
-        isNull,
+        expiredLeaseRun.isDisplayableAt(serverTime),
+        isFalse,
+        reason: 'kirasi dolmus kosu canli sayac olarak gosterilemez',
       );
-      final modelSource = _source('lib/data/models/global_timer.dart');
+
+      final directive = planGlobalTimerForegroundApply(
+        snapshot: GlobalTimerSnapshot(
+          stateVersion: 12,
+          serverTime: serverTime,
+          run: expiredLeaseRun,
+        ),
+        localRunning: false,
+        localIsMirror: false,
+        localMirrorRunId: null,
+      );
       expect(
-        modelSource,
-        isNot(contains('lease_expires_at')),
-        reason: 'kira alanı istemci sözleşmesinde hiç yok',
+        directive.kind,
+        GlobalTimerForegroundDirectiveKind.needsReconcile,
+        reason: 'olu kosu artik canli sayac acmaz; uzlastirma gerektigi isaretlenir',
       );
     });
 
-    test('sunucu okuma yolu da kira süzmüyor', () {
-      // KIRMIZI HEDEF (WP-431/464): snapshot fonksiyonu kirası dolmuş koşuyu
-      // `running` diye döndürmemeli (ya da açıkça `stale` işaretlemeli).
-      final migration = _source(_migrationPath);
+    test('WP-431 onarimi: ekranda duran olu ayna kosusu kapatilir', () {
+      final serverTime = DateTime.now().toUtc();
+      final directive = planGlobalTimerForegroundApply(
+        snapshot: GlobalTimerSnapshot(
+          stateVersion: 13,
+          serverTime: serverTime,
+          run: GlobalTimerRun(
+            id: 'run-ghost',
+            status: 'running',
+            revision: 1,
+            effectiveStartedAt: serverTime.subtract(const Duration(hours: 8)),
+            leaseExpired: true,
+          ),
+        ),
+        localRunning: true,
+        localIsMirror: true,
+        localMirrorRunId: 'run-ghost',
+      );
+      expect(
+        directive.kind,
+        GlobalTimerForegroundDirectiveKind.mirrorStop,
+        reason: 'hayalet sayac ekranda kalmamali',
+      );
+    });
+
+    test('WP-431 onarimi: yas sinirini asan kosu kira taze olsa da aynalanmaz', () {
+      final serverTime = DateTime.now().toUtc();
+      final directive = planGlobalTimerForegroundApply(
+        snapshot: GlobalTimerSnapshot(
+          stateVersion: 14,
+          serverTime: serverTime,
+          run: GlobalTimerRun(
+            id: 'run-endless',
+            status: 'running',
+            revision: 9,
+            effectiveStartedAt: serverTime.subtract(
+              kGlobalTimerMaxMirrorRunAge + const Duration(minutes: 1),
+            ),
+            leaseExpiresAt: serverTime.add(const Duration(seconds: 150)),
+          ),
+        ),
+        localRunning: false,
+        localIsMirror: false,
+        localMirrorRunId: null,
+      );
+      expect(
+        directive.kind,
+        GlobalTimerForegroundDirectiveKind.needsReconcile,
+        reason: 'kira alanini tasimayan eski sunucuya karsi ikinci set: yas siniri',
+      );
+    });
+
+    test('WP-431 onarimi: sunucu okuma yolu kirayi DEGERLENDIRIYOR', () {
+      // WP-430'da `_global_timer_v2_snapshot` kirayi yalniz raporluyordu.
+      // `0101` onu `lease_expired` olarak hesaplar; `status` bilerek
+      // degistirilmez (veri durust kalir, karari istemci verir).
+      final migration = _source(_controllerMigrationPath);
       final start = migration.indexOf(
         'create or replace function public._global_timer_v2_snapshot',
       );
@@ -400,13 +473,26 @@ void main() {
         start,
         migration.indexOf('\n\$\$;', start),
       );
-      expect(body, contains("'lease_expires_at', r.lease_expires_at"));
+      expect(body, contains("'lease_expired'"));
       expect(
         body,
-        isNot(contains('lease_expires_at <=')),
-        reason:
-            'okuma yolu kirayı yalnız RAPORLUYOR, süzmüyor: süpürücü gecikirse '
-            'ölü koşu canlı görünür',
+        contains('r.lease_expires_at <= clock_timestamp()'),
+        reason: 'kira gercegi istemci saatine degil sunucu saatine gore olculur',
+      );
+      expect(
+        migration,
+        contains('live_study_runs_v2_single_active_idx'),
+        reason: 'hesap-geneli tek aktif kosu artik sema invarianti',
+      );
+      expect(
+        migration,
+        contains('client_clock_skew_rejected'),
+        reason: 'gelecekten gelen komut reddedilmeli',
+      );
+      expect(
+        migration,
+        contains('public._enqueue_global_timer_v2_sync('),
+        reason: '0088 timer-sync enqueue govdesi yeni RPC de kaybolmamali',
       );
     });
 

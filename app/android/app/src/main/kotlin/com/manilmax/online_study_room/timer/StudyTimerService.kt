@@ -79,6 +79,7 @@ class StudyTimerService : Service() {
                     recordInterval = false,
                     commandOrigin = "dart_app",
                 )
+                ACTION_DISCARD_PROJECTION -> handleDiscardProjection()
                 ACTION_START_BREAK -> handleStartBreak()
                 ACTION_END_BREAK -> handleEndBreak()
                 ACTION_TOGGLE -> {
@@ -137,6 +138,8 @@ class StudyTimerService : Service() {
             liveRunId = liveRunId,
             liveRunToken = liveRunToken,
             startOrigin = startOrigin,
+            // WP-431: rol store'da acik tutulur; handleStop kararini buradan verir.
+            controllerRole = TimerStateStore.roleForStartOrigin(startOrigin),
         )
         // V1 global coordination yalnız stopwatch work start/stop'u kapsar.
         // Countdown/Pomodoro için global phase komutu üretmeyiz; mevcut local
@@ -178,7 +181,9 @@ class StudyTimerService : Service() {
             TimerStateStore.appendPendingVerifiedCommand(
                 p, "pause", liveRunToken, startOrigin,
             )
-        } else if (p.getString(TimerStateStore.KEY_PHASE, "work") == "work" && currentStart < nowMs) {
+        } else if (!TimerStateStore.isMirror(p) &&
+            p.getString(TimerStateStore.KEY_PHASE, "work") == "work" && currentStart < nowMs
+        ) {
             TimerStateStore.appendPendingInterval(
                 p,
                 startMs = currentStart,
@@ -250,7 +255,13 @@ class StudyTimerService : Service() {
             "native_notification",
         ).orEmpty()
 
-        if (recordInterval) {
+        // WP-431 (V56-S01, ikinci yuz): AYNA cihaz projeksiyondur — asla yerel
+        // oturum uretmez. Eskiden bildirim/widget Durdur'u `recordInterval=true`
+        // ile geliyordu ve ayna cihazda UYDURMA bir calisma araligi yaziliyordu;
+        // Dart onu acilista gercek oturum olarak kaydediyordu.
+        val isMirror = TimerStateStore.isMirror(p)
+
+        if (recordInterval && !isMirror) {
             val startedAtMs = TimerStateStore.startedAtMs(p)
             val nowMs = System.currentTimeMillis()
             val liveRunToken = p.getString(TimerStateStore.KEY_LIVE_RUN_TOKEN, "").orEmpty()
@@ -283,7 +294,11 @@ class StudyTimerService : Service() {
         //
         // Ayna cihazında zarf üretilmez: `startOrigin == "global_timer_mirror"`
         // için `canonicalV2Origin` null döner (koşunun sahibi karşı cihazdır).
-        if (mode == "stopwatch" && phase == "work") {
+        // WP-431: AYNA cihazda yerel mod/faz onemsizdir — koşu tanimi geregi
+        // global bir stopwatch kosusudur. Eski `mode == "stopwatch"` kosulu,
+        // yerel modu countdown olan bir ayna cihazda durdurma komutunu sessizce
+        // dusuruyordu (V56-S01'in ucuncu yuzu).
+        if (isMirror || (mode == "stopwatch" && phase == "work")) {
             TimerStateStore.appendV2Command(
                 p,
                 action = "stop",
@@ -298,6 +313,25 @@ class StudyTimerService : Service() {
         TimerStateStore.writeIdle(p)
 
         detachForegroundKeepNotification()
+        TimerWidgets.updateAll(this)
+        notifyStateChanged()
+        stopSelf()
+    }
+
+    /**
+     * WP-431: yalnız YEREL projeksiyonu düşürür — sunucuya hiçbir sey gitmez.
+     *
+     * Sogumus acilista ayna durumu server dogrulanmadan diriltilmemelidir
+     * (V56-S04: sabah gorunen sekiz saatlik hayalet). Ama bu bir DURDURMA
+     * degildir: kosunun sahibi baska cihazdir ve orada calismaya devam
+     * ediyor olabilir. Bu yuzden `handleStop`tan farkli olarak ne V2 stop
+     * zarfi ne de bekleyen aralik yazilir.
+     */
+    private fun handleDiscardProjection() {
+        startForegroundCompat(buildIdleNotification())
+        TimerStateStore.writeIdle(prefs())
+        detachForegroundKeepNotification()
+        notificationManager().cancel(NOTIFICATION_ID)
         TimerWidgets.updateAll(this)
         notifyStateChanged()
         stopSelf()
@@ -565,6 +599,8 @@ class StudyTimerService : Service() {
         const val ACTION_STOP = "com.manilmax.online_study_room.timer.STOP"
         const val ACTION_STOP_SILENT = "com.manilmax.online_study_room.timer.STOP_SILENT"
         const val ACTION_TOGGLE = "com.manilmax.online_study_room.timer.TOGGLE"
+        const val ACTION_DISCARD_PROJECTION =
+            "com.manilmax.online_study_room.timer.DISCARD_PROJECTION"
         const val ACTION_START_BREAK = "com.manilmax.online_study_room.timer.START_BREAK"
         const val ACTION_END_BREAK = "com.manilmax.online_study_room.timer.END_BREAK"
 

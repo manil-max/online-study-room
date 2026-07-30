@@ -76,6 +76,16 @@ class MainActivity : FlutterActivity() {
                         StudyTimerService.sendCommand(this, StudyTimerService.ACTION_STOP_SILENT)
                         result.success(null)
                     }
+                    // WP-431: sogumus acilista SERVER DOGRULANMAMIS ayna
+                    // projeksiyonunu dusurur. Durdurma DEGILDIR: kosunun sahibi
+                    // baska cihazdir, sunucuya hicbir komut gitmez.
+                    "discardProjection" -> {
+                        StudyTimerService.sendCommand(
+                            this,
+                            StudyTimerService.ACTION_DISCARD_PROJECTION,
+                        )
+                        result.success(null)
+                    }
                     else -> result.notImplemented()
                 }
             }
