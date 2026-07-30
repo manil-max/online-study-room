@@ -4817,6 +4817,40 @@
   "@taskListOverdue": {
     "description": "taskListOverdue"
   },
+  "taskListSectionToday": "Today",
+  "@taskListSectionToday": {
+    "description": "Task list section heading for items due today."
+  },
+  "taskListSectionRecurring": "Recurring",
+  "@taskListSectionRecurring": {
+    "description": "Task list section heading for repeating tasks."
+  },
+  "taskListSectionOther": "Other",
+  "@taskListSectionOther": {
+    "description": "Task list section heading for the remaining tasks."
+  },
+  "taskListUndo": "Undo",
+  "@taskListUndo": {
+    "description": "Action that reverts the last task change."
+  },
+  "taskListRepeatEvery": "Every {days} days",
+  "@taskListRepeatEvery": {
+    "description": "Repeat interval summary of a recurring task.",
+    "placeholders": {
+      "days": {}
+    }
+  },
+  "taskListRepeatIntervalLabel": "Repeat interval (days)",
+  "@taskListRepeatIntervalLabel": {
+    "description": "Form label for choosing a recurring task's interval in days."
+  },
+  "taskListNextOccurrence": "Next: {date}",
+  "@taskListNextOccurrence": {
+    "description": "Next scheduled date of a recurring task.",
+    "placeholders": {
+      "date": {}
+    }
+  },
   "taskListNoDue": "No deadline",
   "@taskListNoDue": {
     "description": "taskListNoDue"
@@ -5998,5 +6032,43 @@
   "classroomStopTimerMirrorFailed": "The timer could not be stopped on your other devices. Check your connection and try again.",
   "@classroomStopTimerMirrorFailed": {"description": "Snackbar shown when the mirrored stop command fails."},
   "classroomStoppedOnOtherDevice": "Stopped on your other device at {time}.",
-  "@classroomStoppedOnOtherDevice": {"description": "Snackbar telling the user their run was stopped remotely.", "placeholders": {"time": {"type": "String"}}}
+  "@classroomStoppedOnOtherDevice": {"description": "Snackbar telling the user their run was stopped remotely.", "placeholders": {"time": {"type": "String"}}},
+  "adminModerationSanctionTitle": "Apply sanction",
+  "@adminModerationSanctionTitle": {"description": "Title of the moderation enforcement sheet."},
+  "adminModerationSanctionNoAction": "No action",
+  "@adminModerationSanctionNoAction": {"description": "Enforcement step that closes the case without touching the user."},
+  "adminModerationSanctionWarn": "Warn",
+  "@adminModerationSanctionWarn": {"description": "Enforcement step that sends the user a real warning."},
+  "adminModerationSanctionNameReset": "Reset display name",
+  "@adminModerationSanctionNameReset": {"description": "Enforcement step that clears an abusive display name."},
+  "adminModerationSanctionMute24h": "24-hour write restriction",
+  "@adminModerationSanctionMute24h": {"description": "Enforcement step that blocks writing but keeps reading open."},
+  "adminModerationSanctionSuspend24h": "Suspend for 24 hours",
+  "@adminModerationSanctionSuspend24h": {"description": "Enforcement step that suspends the account for a day."},
+  "adminModerationSanctionSuspend7d": "Suspend for 7 days",
+  "@adminModerationSanctionSuspend7d": {"description": "Enforcement step that suspends the account for a week."},
+  "adminModerationSanctionSuspend14d": "Suspend for 14 days",
+  "@adminModerationSanctionSuspend14d": {"description": "Enforcement step that suspends the account for two weeks."},
+  "adminModerationSanctionSuspend30d": "Suspend for 30 days",
+  "@adminModerationSanctionSuspend30d": {"description": "Enforcement step that suspends the account for a month."},
+  "adminModerationSanctionBan": "Permanent ban",
+  "@adminModerationSanctionBan": {"description": "Enforcement step that bans the account permanently."},
+  "adminModerationSanctionApplied": "Sanction applied",
+  "@adminModerationSanctionApplied": {"description": "Confirmation shown after an enforcement step succeeds."},
+  "adminModerationSanctionRevoke": "Undo sanction",
+  "@adminModerationSanctionRevoke": {"description": "Action that lifts an active sanction."},
+  "adminModerationSanctionRevoked": "Sanction undone",
+  "@adminModerationSanctionRevoked": {"description": "Confirmation shown after a sanction is lifted."},
+  "adminModerationSanctionActive": "Active restriction: {label}",
+  "@adminModerationSanctionActive": {"description": "Banner naming the restriction currently in force on the target.", "placeholders": {"label": {"type": "String"}}},
+  "adminModerationQuarantine": "Quarantine content",
+  "@adminModerationQuarantine": {"description": "Action that hides reported content until the review ends."},
+  "adminModerationQuarantineRelease": "Release from quarantine",
+  "@adminModerationQuarantineRelease": {"description": "Action that makes quarantined content visible again."},
+  "adminModerationQuarantined": "Quarantined",
+  "@adminModerationQuarantined": {"description": "Badge shown on a case whose content is hidden pending review."},
+  "adminModerationSeverityHigh": "High risk",
+  "@adminModerationSeverityHigh": {"description": "Badge shown on a case the server marked high severity."},
+  "adminModerationOverdue": "Overdue",
+  "@adminModerationOverdue": {"description": "Badge shown when a case passed its review deadline."}
 }

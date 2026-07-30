@@ -1142,6 +1142,40 @@
   "navTools": "Araçlar",
   "taskListMore": "+{count} daha",
   "taskListOverdue": "Gecikti",
+  "taskListSectionToday": "Bugün",
+  "@taskListSectionToday": {
+    "description": "Bugün bitmesi gereken görevlerin bölüm başlığı."
+  },
+  "taskListSectionRecurring": "Tekrarlanan",
+  "@taskListSectionRecurring": {
+    "description": "Tekrarlanan görevlerin bölüm başlığı."
+  },
+  "taskListSectionOther": "Diğer",
+  "@taskListSectionOther": {
+    "description": "Kalan görevlerin bölüm başlığı."
+  },
+  "taskListUndo": "Geri al",
+  "@taskListUndo": {
+    "description": "Son görev değişikliğini geri alan eylem."
+  },
+  "taskListRepeatEvery": "Her {days} günde bir",
+  "@taskListRepeatEvery": {
+    "description": "Tekrarlanan görevin aralık özeti.",
+    "placeholders": {
+      "days": {}
+    }
+  },
+  "taskListRepeatIntervalLabel": "Tekrar aralığı (gün)",
+  "@taskListRepeatIntervalLabel": {
+    "description": "Tekrar aralığını gün olarak seçtiren form etiketi."
+  },
+  "taskListNextOccurrence": "Sıradaki: {date}",
+  "@taskListNextOccurrence": {
+    "description": "Tekrarlanan görevin sıradaki tarihi.",
+    "placeholders": {
+      "date": {}
+    }
+  },
   "taskListNoDue": "Süresiz",
   "taskListDueDate": "Bitiş tarihi",
   "taskListRemaining": "Kalan süre",
@@ -1790,5 +1824,24 @@
   "classroomStopTimerMirrorFailed": "Sayaç diğer cihazlarda durdurulamadı. Bağlantını kontrol edip tekrar dene.",
   "@classroomStopTimerMirrorFailed": {"description": "Snackbar shown when the mirrored stop command fails."},
   "classroomStoppedOnOtherDevice": "Diğer cihazda {time}'te durduruldu.",
-  "@classroomStoppedOnOtherDevice": {"description": "Snackbar telling the user their run was stopped remotely.", "placeholders": {"time": {"type": "String"}}}
+  "@classroomStoppedOnOtherDevice": {"description": "Snackbar telling the user their run was stopped remotely.", "placeholders": {"time": {"type": "String"}}},
+  "adminModerationSanctionTitle": "Yaptırım uygula",
+  "adminModerationSanctionNoAction": "Aksiyon yok",
+  "adminModerationSanctionWarn": "Uyar",
+  "adminModerationSanctionNameReset": "Görünen adı sıfırla",
+  "adminModerationSanctionMute24h": "24 saat yazma kısıtı",
+  "adminModerationSanctionSuspend24h": "24 saat askıya al",
+  "adminModerationSanctionSuspend7d": "7 gün askıya al",
+  "adminModerationSanctionSuspend14d": "14 gün askıya al",
+  "adminModerationSanctionSuspend30d": "30 gün askıya al",
+  "adminModerationSanctionBan": "Kalıcı yasak",
+  "adminModerationSanctionApplied": "Yaptırım uygulandı",
+  "adminModerationSanctionRevoke": "Yaptırımı geri al",
+  "adminModerationSanctionRevoked": "Yaptırım geri alındı",
+  "adminModerationSanctionActive": "Aktif kısıt: {label}",
+  "adminModerationQuarantine": "İçeriği karantinaya al",
+  "adminModerationQuarantineRelease": "Karantinadan çıkar",
+  "adminModerationQuarantined": "Karantinada",
+  "adminModerationSeverityHigh": "Yüksek risk",
+  "adminModerationOverdue": "Süresi aştı"
 }
