@@ -17,7 +17,7 @@ description: >
 Kullanıcı (kısa): **"worker'ı oku ve V8-A'yı / WP-N'yi yap"** (Faz veya WP olabilir).
 
 PLAN 5 / v57 için ikinci kanonik kısa tetik:
-**"`progress.md`'yi oku, sen Ajan X'sin."** Buradaki `X`, A–H'den biridir.
+**"`progress.md`'yi oku, sen Ajan X'sin."** Buradaki `X`, A–D'den biridir.
 Bu tetikte kullanıcı ayrıca WP numarası vermek zorunda değildir; worker
 `progress.md` içindeki hazır Ajan X zincirinden sıradaki uygun WP'yi kendisi
 bulur.
@@ -108,16 +108,16 @@ Backend, migration, Edge Function, secret veya release işi varsa `docs/ORTAM-MI
 
 `progress.md` plan listesi değil, **canlı durum kaynağıdır.** Her durum değişiminden hemen önce dosyayı yeniden oku; yalnız **kendi lane + kendi WP kartına dar patch** uygula. Tüm dosyayı stale kopyadan yeniden yazma; başka ajanların kartlarını ve güncel faz etiketlerini koru.
 
-- PLAN 5'te canlı kayıtlar yalnız `Ajan A`…`Ajan H`dir. Model/ürün adı
-  (`Gemini`, `Claude`, `Codex`, `Grok`), `Worker` veya yeni `Lane X` başlığı
-  oluşturulmaz. Worker yalnız kendisine verilen Ajan X kutusunu ve kendi WP
-  kartını düzenler.
+- PLAN 5'te canlı kayıtlar yalnız `Ajan A`…`Ajan D`dir. Model/ürün adı
+  (`Gemini`, `Claude`, `Codex`, `Grok`), `Worker`, eski `Ajan E`…`Ajan H`
+  veya yeni `Lane X` başlığı oluşturulmaz. Worker yalnız kendisine verilen Ajan X
+  kutusunu ve kendi WP kartını düzenler.
 - Anlamlı her geçişte (başlat / blokla / devret / **test için parka al** / tamamlandı) `progress.md` anında güncellenir.
 - **Aktif Çalışma Kaydı yalnız GERÇEKTEN yazılan işi tutar.** PLAN 5 worker'ı bir
   WP commit'inden sonra zincirindeki sonraki WP hazırsa aynı Ajan X kutusunda
   ona geçer; bağımlılık hazır değilse kutuyu `[!] BEKLİYOR: WP-N / commit`
   yapar; zincir bittiyse `[x] ZİNCİR TAMAMLANDI` yapar. Cihaz kabulü bekleyen
-  kanıtı kartta ve Ajan H join kapısında gösterir. PLAN 5 dışındaki tekil işte
+  kanıtı kartta ve Ajan C join kapısında gösterir. PLAN 5 dışındaki tekil işte
   kod bitip cihaz/demo bekleyen kart `## Test için bekleyenler`e taşınır ve lane
   boşalır.
 - **PLAN 5'te bekleme terminal durum değildir.** Bağımlılık bekleyen worker final

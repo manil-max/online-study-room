@@ -45,13 +45,12 @@ Bir şey söylerken şu üç etiketten biri kullanılır (kullanıcı varsayıml
 
 ## 1. Çok-Ajanlı Çalışma ve Çakışma Protokolü (KRİTİK)
 
-Bu projede varsayılan olarak aynı anda **3–4 ajan paralel** çalışır (Gemini /
-Claude / Codex + gerek/ek). Ürün sahibinin 2026-07-30 tarihli açık kararıyla
-**PLAN 5 / v57 için sekiz adlandırılmış ajan hattı (A–H)** çalıştırılabilir.
-Bu izin genel bir “her işe sekiz ajan” kuralı değildir: yalnız `progress.md`
-PLAN 5 kartlarındaki ayrık SAHİP yolları, bağımlılık zincirleri ve ortak
-migration/sıcak-dosya/test kilitleri geçerliyken kullanılabilir. Tek paylaşılan
-gerçek `progress.md`'deki **Aktif Çalışma Kaydı**dır. Ajanlar birbirinin belleğini
+Bu projede varsayılan olarak aynı anda **3–4 ajan paralel** çalışır. Ürün sahibinin
+2026-07-30 tarihli açık kararıyla **PLAN 5 / v57 yalnız dört adlandırılmış Codex
+ajanı (A–D)** ile yürütülür. Eski sekizli A–H düzeni iptal edilmiştir; PLAN 5
+`progress.md` içindeki dört zincir, ayrık SAHİP yolları ve ortak
+migration/sıcak-dosya/test kilitleriyle yürür. Tek paylaşılan gerçek
+`progress.md`'deki **Aktif Çalışma Kaydı**dır. Ajanlar birbirinin belleğini
 görmez; koordinasyon yalnız bu dosya üzerindendir.
 
 ### 1.1 Kural A — Görevi alır almaz "claim" et
@@ -59,9 +58,9 @@ görmez; koordinasyon yalnız bu dosya üzerindendir.
 Bir ajan bir Faz/WP almaya başlar başlamaz, **kod yazmadan önce** `progress.md`'deki Aktif Çalışma Kaydı'na kendi lane'ini işler:
 
 **PLAN 5 istisnası:** Kullanıcı “`progress.md`'yi oku, sen Ajan X'sin” dediyse
-worker yalnız önceden oluşturulmuş `Ajan A`…`Ajan H` kaydından kendisine
-atananı doldurur. `Claude`, `Gemini`, `Codex`, `Grok`, `Worker` veya yeni
-`Lane X` başlığı açmaz; eski lane adlarını geri getirmez.
+worker yalnız önceden oluşturulmuş `Ajan A`…`Ajan D` kaydından kendisine
+atananı doldurur. `Claude`, `Gemini`, `Codex`, `Grok`, `Worker`, eski
+`Ajan E`…`Ajan H` veya yeni `Lane X` başlığı açmaz.
 
 **PLAN 5 zincir devamlılığı:** Bir WP commitlenir commitlenmez aynı Ajan X,
 zincirindeki sonraki hazır WP'yi alır. Bağımlılık gerçekse `[!] BEKLİYOR` kaydı

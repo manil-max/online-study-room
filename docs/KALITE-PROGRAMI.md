@@ -91,8 +91,8 @@ Aşağıdakilerden biri sağlanmıyorsa **stable release çıkmaz:** kritik/ağ�
 
 **Eşzamanlılık kuralı:** Varsayılan programlarda aynı anda **en fazla iki çalışma
 hattı**. Ürün sahibinin 2026-07-30 tarihli açık kararıyla **PLAN 5 / v57**, yalnız
-`progress.md` içindeki A–H zincirleri, ayrık SAHİP yolları ve migration /
-sıcak-dosya / tam-test kilitleri korunarak **sekiz hatta kadar** açılabilir.
+`progress.md` içindeki A–D zincirleri, ayrık SAHİP yolları ve migration /
+sıcak-dosya / tam-test kilitleri korunarak **dört Codex ajanı** ile yürütülür.
 Bu istisna başka programa taşınmaz. Aynı fiziksel dosyada iki aktif yazar, aynı
 anda iki migration yazarı veya aynı anda iki tam Flutter kalite koşumu yine
 yasaktır. **Saat, Tema ve Başarım aynı anda açılamaz** — üçü de ortak
@@ -114,7 +114,7 @@ theme/navigation/profile/provider yüzeylerine dokunur, büyük çakışma yarat
 | **Kurtarma ve ortam izolasyonu (WP-225–232)** | 🟢 Baseline/izolasyon teslim edildi; `0066–0070` production'a terfi etti (etkin şema `0070`). **Production CLI migration-history zincir onarımı hâlâ açık** (etkin şema doğru ama history uzlaştırılmamış — `docs/recovery/PRODUCTION-BASELINE.md`) |
 | **Post-v43 release + bildirim kurtarması (WP-269–285)** | ✅ **Kapandı (2026-07-24).** Stable **v45** yayında (etkin şema `0070`), beta-v4308 staging'de; sahip cihaz kabulünü verdi. Production deploy kapısı yeniden kilitli. Açık ops kabulü: WP-276 (hesap silme), WP-277 (matris). Ortam durum modeli: `progress.md` Proje Gerçekleri |
 | **Global Timer + çoklu grup presence V3 (WP-336–346)** | 🟡 **Planlandı.** Delivery A/B mimari kararı kesin; Delivery C, WP-337 compatibility evidence gate sonrası uygulanır. İlk paralel dalga WP-328 + WP-337; migration hattı WP-329 → 336 → 338 → 341 → 344 seridir |
-| **PLAN 5 / v57 ürün güveni (WP-429–467)** | 🟢 **Uygulamaya hazır.** Sekiz ayrık A–H zinciri, tek migration/sıcak-dosya/tam-test kilidi ve final staging-cihaz join kapısı `progress.md` içindedir. Production/stable ayrıca yeni somut sahip GO'su ister |
+| **PLAN 5 / v57 ürün güveni (WP-429–467)** | 🟢 **Uygulamaya hazır.** Dört ayrık A–D zinciri, tek migration/sıcak-dosya/tam-test kilidi ve final staging-cihaz join kapısı `progress.md` içindedir. Production/stable ayrıca yeni somut sahip GO'su ister |
 
 > Tamamlanmış programların ayrıntısı Git geçmişindedir; güncel iş talimatı değildir.
 

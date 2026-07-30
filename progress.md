@@ -87,7 +87,7 @@
   dönüştürüldü. Ham/profesyonelleştirilmiş gözlem kaydı:
   `docs/V56-SAHIP-GERI-BILDIRIM-RAPORU.md`. Rakip analizi ve açık ürün borçlarıyla
   birleştirilmiş kapsam: `docs/V57-YAPILACAKLAR.md`. Yürütme gerçeği aşağıdaki
-  Ajan A–H kayıtları ve PLAN 5 WP kartlarıdır.
+  Ajan A–D kayıtları ve PLAN 5 WP kartlarıdır.
 - **Son WP numarası:** **WP-467** (2026-07-30). WP-429 release kilidi tamamlandı;
   WP-430…WP-467 PLAN 5 uygulama, kabul ve teslim zinciridir.
 - **Önceki not (WP-372, 2026-07-27).** V52'de komutun A→server yolu kapanmıştı; server→B timer-sync teslim zinciri WP-370 (`0088`) ile kuruldu, WP-371 turu yaşam döngüsüne bağladı, WP-372 v53 stable'ı çıkardı.
@@ -97,311 +97,119 @@
 
 ## ⚡ Aktif Çalışma Kaydı
 
-> **PLAN 5 sahibi talimatı (2026-07-30):** Bu turda sekiz ajan hattı açılabilir.
-> Kullanıcının yeni sohbette yazacağı tek komut yeterlidir:
-> **“`progress.md`'yi oku, sen Ajan X'sin.”** Ajan ek prompt beklemez; aşağıdaki
-> zinciri, PLAN 5 WP kartlarını ve kök `AGENTS.md` yönlendirmelerini okuyup ilk
-> hazır WP'yi claim eder.
+> **PLAN 5 / v57 — dört Codex ajanı (A–D):** Bu bölüm eski sekizli hattın yerine
+> geçer. Yeni sohbette yalnız şu komut yeterlidir: **“progress.md'yi oku, sen
+> Ajan X'sin.”** X yalnız A, B, C veya D olabilir. Ajan kartını, bağlı WP
+> kartlarını ve ortak kilitleri okuyarak ilk hazır işi claim eder.
+>
+> **Devralma haritası:** A = eski A + E · B = eski B + G · C = eski C + H ·
+> D = eski D + F. Eski Ajan E–H adları artık canlı lane değildir.
 
 ### Ortak koordinasyon panosu
 
 | Kilit / sıra | Sahip | Durum | Sonraki |
 |---|---|---|---|
-| **Migration yazma kilidi** | — | BOŞ · repo/local head **`0101`** (WP-431) · ⏳ `0101` yerel replay ile DOĞRULANMADI | Sıra: `432 → 435 → 439 → 441 → 442 → 444 → 445 → 449 → 453 → 464`. Sıradaki yazar `0102`yi alır |
-| **Sıcak dosya kilidi** (`main.dart`, navigation, pubspec, manifest, l10n generated) | — | BOŞ · WP-458 kod + otomatik test tamam | Ajan D l10n bulgusunu devralabilir |
-| **Tam Flutter kalite koşumu** | — | BOŞ | WP başında hedefli test; tüm `flutter test` yalnız kilitle |
-| **Yerel Supabase replay** | — | BOŞ | Migration yazarı kendi WP'sinde; final tekrar Ajan H |
-| **Production / stable kapısı** | — | **KAPALI** (`b6b47a9`) | Yalnız yeni somut sahip GO'su |
+| **Migration yazma kilidi** | — | BOŞ · repo/local head `0101` (WP-431) · local replay Docker nedeniyle kanıtsız | Sıra: A/432 → B/435 → C/439→441→442 → D/444→445 → A/449 → D/453 → C/464 |
+| **Sıcak dosya kilidi** | — | BOŞ | Navigation/l10n/manifest yalnız B; `main.dart` gerekirse C |
+| **Tam Flutter kalite koşumu** | — | BOŞ | Yalnız tek ajan, hedefli testler paralel olabilir |
+| **Devralınan dirty çalışma** | A, C, D | KORUNACAK · commit edilmemiş kaynak var | A: recurrence · D: streak Faz 1 · C: iki campfire golden |
+| **Production / stable** | — | **KAPALI** | Yeni somut sahip GO'su olmadan hiçbir ajan açmaz |
 
-### PLAN 5 çalışma protokolü — bütün A–H ajanları için zorunlu
+### Dört ajan için zorunlu çalışma protokolü
 
-1. **Başlangıç:** Kök `AGENTS.md` → `.agents/AGENTS.md` →
-   `.agents/skills/worker/SKILL.md` → bu bölüm → kendi zincirindeki ilk WP kartı
-   okunur. `git status --short` ve son commitler görülmeden dosya yazılmaz.
-2. **Claim:** Yalnız kendi Ajan X kaydını `[~] Aktif` yap; WP, SAHİP yollar,
-   başlangıç ve son güncelleme zamanını yaz. Kaydı tekrar okuyup başka aktif
-   ajanla fiziksel dosya kesişimi olmadığını doğrula.
-3. **Zincir:** Soldan sağa ilerle. Bir WP'nin bağımlılığı tamamlanmadıysa sonraki
-   WP'ye atlama ve başka ajanın işini alma. Durumu `[!] BEKLİYOR:
-   WP-N / commit` olarak yaz; bağımlılık commit'i görünür olunca ağacı yeniden
-   okuyup devam et. Kullanıcıdan yeni prompt isteme.
-4. **Migration sırası:** Uygulanmış `0001…0100` dosyaları immutable'dır.
-   Migration kilidini almadan yeni SQL dosyası oluşturma. Önce sıradaki WP'nin
-   tamamlanmış commit'ini doğrula, en yüksek numarayı tekrar ölç, kilit sahibini
-   kendi ajan adına çevir. Migration + pgTAP + repository çiftleri tek WP
-   commit'inde olmalı. Committen sonra kilidi boşalt.
-5. **Sıcak dosya sırası:** `app/lib/main.dart`, `app/pubspec.yaml`,
-   `app/lib/core/navigation/**`, `app/lib/l10n/**`, üretilen l10n,
-   `AndroidManifest.xml` ve widget XML/receiver listesi aynı anda tek yazarlıdır.
-   Kilit doluysa bekle; “ufak değişiklik” diye üzerine yazma.
-6. **Paylaşılan ağaç:** Başka ajanın değişikliğini stash, checkout, reset, clean,
-   format veya toplu düzeltmeyle silme. Dizin çapında `git checkout --`,
-   `git restore`, `git add -A`, `git commit -a` yasaktır. Yalnız açık SAHİP
-   yollarını stage et. `index.lock` başka commit demektir; bekleyip tekrar dene.
-7. **Test bütçesi:** WP sırasında ilgili birim/widget/contract testlerini CI ile
-   aynı çevrede çalıştır: `app/` içinde `flutter test
-   --dart-define-from-file=env.json <hedef>`. `flutter analyze` define almaz.
-   Tam Flutter paketi için panodaki kilidi claim et; eşzamanlı iki tam koşum yok.
-8. **Her WP ayrı commit:** Karttaki kabul maddelerini kanıtla, yalnız kendi
-   dosyalarını açıkça stage et, tek WP commit'i at, kartın altına commit + test
-   kanıtı yaz, sonra ajan zincirindeki bir sonraki hazır karta geç.
-9. **Cihaz gerçeği:** Ajan otomatik test sonunda en fazla “kod + otomatik test
-   tamam” diyebilir. Samsung/ikinci cihaz kanıtı isteyen kartı tamamlandı diye
-   işaretlemez; Ajan H'nin cihaz matrisine devreder.
-10. **Remote sınırı:** Local replay serbest ve zorunludur. Staging apply/beta,
-    PLAN 5 entegrasyon kapısında Ajan H'ye aittir. Production migration, stable
-    tag/release, push veya kapı açma bu planın otomatik yetkisi değildir.
-11. **Kapsam freni:** Kart dışı iyi fikir bulunursa kodlama; kart notuna
-    “keşif/backlog” yaz. Özellikle beş gizli widget'ı yeniden tasarlama, DE/AR'ı
-    silme, mağaza listeleme işi yapma ve timer'a kısa semptom yaması ekleme.
-12. **Model:** Kart `Model: Opus` diyorsa güçlü muhakeme modeli kullanılmalıdır;
-    kart `Sonnet` diyorsa uygulanabilir ama mimari belirsizlikte Opus'a yükseltilir.
+1. Başta kök `AGENTS.md`, `.agents/AGENTS.md`, worker rehberi, bu dört
+   kayıt, kendi WP kartı, `git status --short` ve son commitler okunur.
+2. Ajan yalnız kendi `### Ajan A/B/C/D` kaydını günceller. Yeni lane, model
+   adı veya eski E–H lane'i açılmaz.
+3. Her WP ayrı commit'tir. Yalnız kendi açık SAHİP yolları stage edilir:
+   `git add -A`, `commit -a`, `restore`, `checkout`, `reset`,
+   `clean` ve başkasının dosyasını stash etmek yasaktır.
+4. Bağımlılık varsa `[!] BEKLİYOR: WP-N / commit` yazılır; sohbet kapatılmaz.
+   Ajan `progress.md`, `git log` ve kilitleri kısa aralıklarla izler;
+   commit görünür görünmez otomatik claim edip devam eder. Kullanıcıdan yeni
+   “devam et” promptu istemez.
+5. Migration yalnız yukarıdaki sırayla, kilit alındıktan sonra yazılır. Dosya
+   numarası uygulama anında tekrar ölçülür. Local replay/RLS/pgTAP kanıtı yoksa
+   remote'a geçilmez.
+6. Flutter testleri `app/` içinde `--dart-define-from-file=env.json` ile;
+   `flutter analyze` bayraksız çalışır. Tam test tek kilitle çalışır.
+7. Cihaz, staging, release veya production işi otomatik yetki değildir. Cihaz
+   kanıtını C'nin final QA zinciri toplar; production/stable kapıları kapalı kalır.
 
-### Ajan A — Sayaç ve çoklu cihaz doğruluğu
+### Ajan A — Timer, seçili ders ve görev devralması
 
-- **Durum:** [~] Aktif · Ajan A
-- **Aktif WP:** WP-432 (sıradaki) — bildirim aksiyon hedefleme ve cihaz-kapsamlı
-  test bildirimi
-- **Aşama:** WP-431 teslim edildi; migration kilidi **bırakıldı**
-- **Dal:** `main`
-- **Başlangıç:** 2026-07-30 02:04 (Europe/Istanbul) · **Son güncelleme:** 2026-07-30 07:35
-- **Tamamlanan:** WP-430 `8de8aeb` · WP-431 (bu tur, kod + otomatik test).
-- **⏳ Devredilen açık kanıt:** `0101` ve `019_*.test.sql` **yerel replay ile
-  doğrulanmadı** — bu hostta Docker motoru ayağa kalkmıyor (`docker info` yanıt
-  vermiyor; `local.ps1` soğuk Docker'da kendi `2>$null` satırında da patlıyor).
-  Staging'e gitmeden önce `tooling/supabase/local.ps1 baseline` yeşil olmalı;
-  Ajan H WP-466'nın kapanış kanıtına eklendi.
-- **⚠️ Başka lane'in kırmızısı (bilgi):** `app/test/features/auth_faq_link_wp422_test.dart`
-  → "etiket dört dilde de çevrilidir" DE/AR yerelini istiyor, Ajan G WP-457
-  runtime dillerini TR/EN ile sınırladı. Ajan A dokunmadı (Ajan G yüzeyi).
-- **Zincir:** `WP-430 → WP-431 → WP-432 → WP-433 → WP-448`
-- **İlk iş:** WP-430; başka ajana bağlı değil, hemen claim edilebilir.
-- **WP-430 SAHIP yollar (claim):** `docs/qa/V57-TIMER-EVIDENCE.md` (yeni),
-  `app/lib/core/observability/timer_diagnostic_journal.dart` (yeni),
-  `app/lib/core/observability/observability_service.dart`,
-  `app/lib/data/providers/global_timer_providers.dart`,
-  `app/lib/data/providers/study_providers.dart`,
-  `app/android/**/timer/TimerStateStore.kt`,
-  `app/android/**/timer/StudyTimerService.kt`, `app/test/data/global_timer_*`,
-  `app/test/core/timer_v2_*` + yeni timer journal testleri.
-- **WP-430 ortak/riskli yüzey:** yok — migration kilidi alınmadı, sıcak dosya
-  (`main.dart`/navigation/pubspec/l10n/manifest) açılmadı.
-- **SAHİP ana yüzey:** `app/lib/data/**global_timer**`,
-  `app/lib/data/providers/global_timer_providers.dart`,
-  `app/lib/core/background/timer_v2_command_outbox.dart`,
-  `app/android/**/timer/**`, ilgili timer testleri.
-- **Ortak/riskli:** migration yalnız WP-431 ve sıra kilidiyle; notification
-  yönlendirme dosyaları WP-432 boyunca yalnız Ajan A.
-- **Bekleme:** WP-431 migration kilidinin ilk sahibidir. WP-433 kod kapısı
-  bittikten sonra gerçek iki-cihaz kabulünü Ajan H WP-466 yürütür.
-- **Bittiğinde:** WP-433 sonrası WP-448 son-seçilen-ders entegrasyonunu bitir;
-  kanıtı yazıp Ajan H kaydına “timer + subject matrisi hazır” notu bırak.
+- **Durum:** [ ] HAZIR — ilk iş WP-432.
+- **Zincir:** `WP-432 → WP-433 → WP-448 → [D/WP-445] → WP-449 → WP-450 → WP-451`.
+- **Şimdi:** A'nın WP-431'i `b78ed1f` ile kod+otomatik test tamam. WP-432
+  migration sırasının ilk hazır yazarıdır; notification action hedeflemesi ve
+  cihaz-kapsamlı test bildirimini uygular.
+- **Devralınan dirty iş:** Eski E'nin recurrence dosyaları A'ya aittir:
+  `user_task*`, `task_deadline.dart`, `task_recurrence.dart` ve ilgili
+  testler. Bunlar korunur; WP-448 ve D/WP-445 gelmeden yarım commit atılmaz.
+- **SAHİP:** timer/notification yönlendirmesi, `study_providers.dart`, subject
+  persistence; sonra user-task/core-task/repository çiftleri ve görev UI/testleri.
+- **DOKUNMA:** moderation, feedback, grup sohbeti, streak motoru, B'nin navigation/l10n yüzeyi.
+- **Teslim:** Her aşamada commit/test kanıtı; WP-451 fixture'ı D/WP-455'e açık bırakılır.
 
-### Ajan B — Feedback konuşmaları ve okunmamış gerçeği
+### Ajan B — Feedback, rozetler, ayarlar ve yayın yüzeyi
 
-- **Durum:** [!] BEKLİYOR: WP-435 / **WP-432 commit'i** + migration kilidi
-- **Aktif WP:** — (WP-434 kod + otomatik test tamam · `c3999f3`)
-- **Zincir:** `WP-434 ✅ → WP-435 → WP-436 → WP-437 → WP-438`
-- **Son teslim:** WP-434 denetimi · `docs/qa/V57-FEEDBACK-EVIDENCE.md` +
-  `app/test/features/feedback_flow_wp434_test.dart` (10/10 yeşil,
-  analyze 0 uyarı). Ürün kodu/migration değişmedi.
-- **Neden bekliyor (sahip talimatı 2026-07-30):** migration sırası
-  **Ajan A WP-431 (`0101`) → Ajan A WP-432 (`0102`) → Ajan B WP-435**.
-  `0102` Ajan A'ya aittir, Ajan B **almaz**; WP-435 numarasını WP-432 commit'i
-  göründükten sonra dizindeki en yüksek + 1 olarak yeniden ölçer.
-- **İzleme:** `git log`, `progress.md` ve migration kilidi kısa aralıklarla
-  izleniyor; WP-432 commit'i görünür görünmez WP-435 claim edilip uygulanır.
-  Bu kutu idle değildir.
-- **Dal:** `main`
-- **Son güncelleme:** 2026-07-30 03:25 (Europe/Istanbul)
-- **SAHİP ana yüzey:** feedback ticket/message modelleri, admin repository
-  arayüzü + Supabase/InMemory çiftleri,
-  admin/notification providers, `features/profile/feedback_*`,
-  `features/admin/tabs/admin_reports_tab.dart` ve ilgili testler.
-- **DOKUNMA:** genel moderasyon repository/queue (Ajan C), global settings
-  menüsü (Ajan G), grup sohbeti (Ajan D).
-- **Bekleme:** WP-435 migration, WP-431 commit'i ve migration kilidi boşalmadan
-  başlamaz. WP-437 admin feedback görünümü Ajan C'nin genel moderation kuyruğuna
-  yazmaz; ortak bağlantı WP-438 kabulünde okunur.
-- **Bittiğinde:** WP-438 E2E kanıtını Ajan H WP-465'e devret.
+- **Durum:** [!] BEKLİYOR: A/WP-432 migration commit'i.
+- **Zincir:** `WP-435 → WP-436 → WP-437 → WP-438 → WP-459 → WP-460 → WP-461`.
+- **Hazır kanıt:** WP-434 `c3999f3`; WP-456 `cfb9536`, WP-457 `c671011`,
+  WP-458 `5776055` kod+otomatik test tamam.
+- **Başlatma kapısı:** A/WP-432 commit'i görülünce migration kilidini alıp
+  WP-435'i uygular. WP-459, WP-436'dan sonra; WP-460/461 aynı B zincirindedir.
+- **SAHİP:** feedback ticket/message/repository çiftleri, unread/badge sağlayıcıları,
+  feedback/admin ekranları; settings/profile/navigation/l10n/widget katalog yüzeyleri.
+- **DOKUNMA:** moderation backend, grup/nudge, timer/subject, task/streak çekirdeği.
+- **Teslim:** WP-438 rozet/messaging E2E kanıtı ve WP-461 widget/yüzey kanıtı C/WP-465'e devredilir.
 
-### Ajan C — Moderasyon ve UGC güvenliği
+### Ajan C — Moderasyon, kamp/observability devralması ve final QA
 
-- **Durum:** [!] BEKLİYOR: WP-435 commit'i + migration kilidi — WP-439 `0104`
-  ve WP-441 `0105` dilimleri migration sırasına bağlı. Bu kutu boşta değildir.
-- **Dal:** `main` · **Başlangıç:** 2026-07-30 02:05 (Europe/Istanbul) · **Son güncelleme:** 2026-07-30 03:40
-- **Biten:** WP-439 sözleşme dilimi `e240e91` · WP-440 kuyruk/repository dilimi
-  (bu commit) kod + otomatik test tamam.
-- **Not:** WP-439 sözleşme dilimi kod + otomatik test tamam (commit altında).
-  `0104` migration dilimi `[!] BEKLİYOR: WP-435 commit'i + migration kilidi`.
-  Ajan D'nin WP-446 mesaj-rapor UI'ı artık `ReportTarget.message(messageId:, groupId:)`
-  sözleşmesine bağlanabilir. Sıradaki: WP-440 (bağımlılığı karşılandı).
-- **Zincir:** `WP-439 → WP-440 → WP-441 → WP-442 → WP-443`
-- **İlk iş:** WP-439 sözleşme/test dilimi; hemen claim edilebilir.
-- **SAHİP ana yüzey:** moderation model/repository/provider çiftleri,
-  `features/safety/**`, `features/admin/**moderation**`,
-  moderation pgTAP ve migration'ları.
-- **DOKUNMA:** feedback mesajlaşma (Ajan B), grup üyelik/leave (Ajan D),
-  navigation/l10n sıcak dosyaları kilitsiz.
-- **Bekleme:** WP-439 migration tarafı WP-435 commit'inden sonra; WP-441 ve
-  WP-442 aynı ajan içinde seri. Ajan D, mesaj raporu UI'sini WP-439 sözleşme
-  commit'inden sonra bağlar.
-- **Bittiğinde:** WP-443 abuse/RLS kanıtını Ajan H WP-465'e devret.
+- **Durum:** [!] BEKLİYOR: B/WP-435 migration commit'i.
+- **Zincir:** `WP-439(migration) → WP-441 → WP-442 → WP-443 → WP-464 → WP-465 → WP-466 → WP-467`.
+- **Hazır kanıt:** WP-439 sözleşme `e240e91`, WP-440 `30559d7`, WP-462
+  `78e15cb`/golden koruması ve WP-463 `ad30631` kod+otomatik test tamam.
+- **Devralınan dirty iş:** Yalnız iki `campfire_wp*_preview.png` dosyası C'ye
+  aittir; önce farklılığı inceler, ilgili WP dışında stage etmez.
+- **Başlatma kapısı:** B/WP-435 sonrası WP-439 migration tamamlanır; ardından
+  WP-441 ve WP-442 seri ilerler. WP-464 WP-442 retention sözleşmesini bekler.
+  WP-465 yalnız A/B/D çıkış kanıtları tamamlanınca başlar.
+- **SAHİP:** moderation model/repository/provider/UI/pgTAP, account-purge
+  hardening, observability/campfire QA belgeleri, entegrasyon/staging-cihaz kanıtı.
+- **Sınır:** C entegrasyon adına başka ajan ürün kodunu yeniden yazmaz; hata
+  bulursa ilgili WP'yi sahibine döndürür. WP-466 staging adayını hazırlar ama
+  production/stable/tag/push yapmaz.
 
-### Ajan D — Grup işlemleri, dürtme ve sohbet güvenliği
+### Ajan D — Grup/dürtme, tarih seçici ve seri devralması
 
-- **Durum:** [~] Aktif · Ajan D
-- **Aktif WP:** WP-444 — Kişi bazında yalnız dürtme sessize alma (istemci/model dilimi)
-- **Aşama:** [!] BEKLİYOR: WP-442 / commit (migration `0107` sırası) + l10n kilidi (mute UI'si)
-- **Dal:** `main`
-- **Başlangıç:** 2026-07-30 02:08 (Europe/Istanbul) · **Son güncelleme:** 2026-07-30 02:35
-- **WP-444 SAHİP yollar (claim):** `app/lib/data/models/nudge_mute.dart` (yeni),
-  `app/lib/data/models/nudge.dart`, `app/lib/data/repositories/nudge_repository.dart`,
-  `app/lib/data/repositories/{supabase,in_memory}/*nudge*`,
-  `app/lib/data/providers/nudge_providers.dart`,
-  `app/lib/data/providers/nudge_notification_listener.dart`,
-  `app/test/data/nudge_*`, yeni dürtme-susturma testleri.
-- **WP-444 ortak/riskli yüzey:** yok. Migration kilidi **alınmadı**; `0107`
-  WP-442 commit'inden sonra yazılacak. `features/safety/**` (Ajan C),
-  l10n/`.arb` ve navigation (Ajan G) bu dilimde açılmaz; mute UI'si l10n kilidi
-  boşalana kadar beklet.
-- **Hedef ortam:** `local` · remote işlem yok.
-- **Zincir:** `WP-444 → WP-445 → WP-446 → WP-447`
-- **İlk iş:** WP-444 istemci/model keşfi hemen; migration yazımı sıra gelince.
-- **SAHİP ana yüzey:** nudge model/repository/provider/service çiftleri, group
-  repository/provider, grup detay/sohbet/üyelik ekranları ve ilgili testler.
-- **DOKUNMA:** moderation backend sözleşmesi (Ajan C), campfire sahnesi
-  (Ajan H), feedback ticket konuşmaları (Ajan B).
-- **Bekleme:** WP-444 migration, WP-442 migration commit'inden sonra; WP-445
-  onun ardından. WP-446'nın “mesajı raporla” bağlantısı WP-439 commit'ini bekler.
-- **Bittiğinde:** WP-447 çoklu-tap/çevrimdışı/blocked-user kabulünü Ajan H'ye yaz.
+- **Durum:** [!] BEKLİYOR: C/WP-442 migration commit'i.
+- **Zincir:** `WP-444(Faz 2) → WP-445 → WP-446 → WP-447 → [A/WP-449] → WP-453 → WP-454 → WP-455`.
+- **Hazır kanıt:** WP-444 Faz 1 `b61038e`; WP-452 `51b5478` kod+hedefli test tamam.
+- **Devralınan dirty iş:** Eski F'nin goal/streak Faz 1 kaynak ve fixture dosyaları
+  D'ye aittir. Korunur, temizlenmez ve A/WP-449 gelmeden yarım commit atılmaz.
+- **Başlatma kapısı:** C/WP-442 sonrası migration sırasıyla WP-444 Faz 2 ve
+  WP-445 uygulanır. WP-453, A/WP-449'ın şema/contract commit'inden sonra
+  Supabase/provider/pgTAP ile tamamlanır.
+- **SAHİP:** nudge/group/chat repository ve ekranları, grup güvenlik testleri,
+  stats/goal/streak modeli-provider-UI-testleri.
+- **DOKUNMA:** moderation backend, feedback/navigation/l10n, task recurrence
+  ve campfire/observability kaynakları.
+- **Teslim:** WP-447 grup matrisi ve WP-455 progression matrisi C/WP-465'e devredilir.
 
-### Ajan E — Ders seçimi ve görev sistemi
-
-- **Durum:** [ ] HAZIR
-- **Zincir:** `WP-449 → WP-450 → WP-451`
-- **İlk iş:** WP-449'un migration-dışı contract/fixture hazırlığı; hemen claim
-  edilebilir, SQL yazımı migration sırasını bekler.
-- **SAHİP ana yüzey:** user-task model/repository çiftleri,
-  `features/clock/tasks_screen.dart`, görev kartları ve ilgili testler.
-- **DOKUNMA:** streak/goal motoru (Ajan F), navigation (Ajan G), genel tema.
-- **Bekleme:** WP-449 migration, WP-445 commit'inden ve migration kilidinden
-  sonra. WP-450, WP-449 contract'ı commitlenmeden başlamaz. Son seçilen ders
-  WP-448 Ajan A'dadır; E o sırada `study_providers.dart`a yazmaz.
-- **Bittiğinde:** WP-451 kabul matrisini Ajan H WP-465'e devret.
-
-### Ajan F — İstatistik tarih aralığı ve hedef-seri motoru
-
-- **Durum:** [!] BEKLİYOR: WP-449 / commit · Ajan F
-- **Aktif WP:** WP-453 — Hedef tamamlamasına dayalı server-authoritative seri motoru
-- **Aşama:** WP-452 kod + otomatik test tamam; WP-449 migration commit'i bekleniyor
-- **Dal:** `main`
-- **Başlangıç:** 2026-07-30 02:06 (Europe/Istanbul) · **Son güncelleme:** 2026-07-30 02:25
-- **WP-452 SAHİP yollar (claim):**
-  `app/lib/features/stats/widgets/draggable_date_range_picker.dart`,
-  `app/lib/features/stats/widgets/stats_period_bar.dart`,
-  `app/lib/features/stats/widgets/personal_stats_view.dart`,
-  `app/lib/data/providers/stats_period_provider.dart`,
-  ilgili stats period/date-range testleri.
-- **WP-452 ortak/riskli yüzey:** yok — migration, navigation, pubspec, l10n,
-  manifest ve diğer sıcak dosya kilitleri alınmadı.
-- **Zincir:** `WP-452 → WP-453 → WP-454 → WP-455`
-- **WP-452 kanıtı:** özel picker iki giriş yüzeyinde ortaklaştırıldı; sıradan gün
-  tap'i pasif, açık uç seçimi/sürükleme ve çaprazlama deterministik. Picker 11/11,
-  stats paketi 33/33 yeşil; hedefli analyze temiz. Tam koşumda WP-452 dışı
-  observability/timer testleri kırmızı; cihaz kabulü yapılmadı.
-- **SAHİP ana yüzey:** `features/stats/**`, `core/stats/**`,
-  goal/streak modelleri-sağlayıcıları, kişisel/grup hedef kartları ve testleri.
-- **DOKUNMA:** görev recurrence (Ajan E), core navigation (Ajan G), campfire.
-- **Bekleme:** WP-453 migration, WP-449 commit'inden sonra. WP-455 tam ilerleme
-  matrisinde WP-451 çıktısını okur; ona yazmaz.
-- **Bittiğinde:** WP-455 bireysel/grup seri kanıtını Ajan H WP-465'e devret.
-
-### Ajan G — Ayarlar, hesap, dil, navigasyon ve widget yayın yüzeyi
-
-- **Durum:** [!] BEKLİYOR: WP-459 / WP-436 commit'i · Ajan G
-- **Aktif WP:** — (WP-458 kod + otomatik test tamam)
-- **Aşama:** WP-459 feedback rozet gerçeği için Ajan B zinciri bekleniyor
-- **Dal:** `main`
-- **Başlangıç:** 2026-07-30 02:05 (Europe/Istanbul) · **Son güncelleme:** 2026-07-30 10:07
-- **WP-456 tamamlandı:** `cfb9536` · `env.json` tanımlı About/Settings/Release Notes 22/22;
-  tanımsız About/Release Notes 19/19; Play fail-closed 1/1; updater/dağıtım
-  regresyonu 18/18. Ajan G'nin 6 Dart dosyasında hedefli analyze temiz.
-  Tam analyze A/B/F'nin 9 aktif bulgusu; l10n audit C/D'nin 5 aktif bulgusu
-  nedeniyle ortak ağaçta bekliyor; Ajan G dosyalarında bulgu yok.
-- **WP-457 kanıt:** temiz generator `supportedLocales == [en,tr]`; define'lı
-  locale/settings/fallback regresyonu 58/58, define'sız core locale 12/12;
-  tam `flutter analyze` temiz; Android native audit 66 anahtar + EN fallback
-  temiz. Genel l10n audit'te yalnız Ajan D sahipli
-  `class_detail_screen.dart:90` kaldı; Ajan G dosyalarında bulgu 0, kilit
-  bırakılınca D'ye devredilecek.
-- **WP-457 tamamlandı:** `c671011`.
-- **WP-458 kanıt:** doğrulamasız `updateEmail` kaldırıldı; repository
-  `changeEmail(currentPassword:, newEmail:)` ile önce aynı hesabı yeniden
-  doğruluyor. Supabase mevcut auth callback'iyle sağlayıcı doğrulamasını başlatıp
-  `verificationPending`/`confirmed` sonucunu ayırıyor; pending iken eski adres
-  korunuyor. Bellek-içi çift atomik re-key, yanlış şifre, aynı/başka hesaba ait
-  adres, oturumsuzluk ve relogin izolasyonuyla eşdeğer.
-- **WP-458 otomatik kanıt:** auth/e-posta UI/sözleşme/şifre/deep-link
-  regresyonları **45/45** yeşil; Ajan G'nin 7 Dart/test dosyasında hedefli
-  analyze temiz. Tam `flutter analyze` yalnız Ajan A/C'nin 3 sahipli bulgusunda;
-  l10n audit yalnız Ajan D'nin `class_detail_screen.dart:90` bulgusunda kırmızı.
-  Ajan G dosyalarında bulgu yok; l10n sıcak kilidi serbest.
-- **Zincir:** `WP-456 → WP-457 → WP-458 → WP-459 → WP-460 → WP-461`
-- **İlk iş:** WP-456; hemen claim edilebilir.
-- **SAHİP ana yüzey:** settings/profile account/about, updater ekranları,
-  locale seçimi, auth repository email-change çiftleri, `core/navigation/**`,
-  Android widget katalog/manifest kaynakları ve ilgili testler.
-- **Ortak/riskli:** Bu zincir l10n, navigation ve AndroidManifest sıcak dosya
-  kilitlerinin tek sahibidir; her WP arasında kilidi bırakır. DE/AR `.arb`
-  dosyalarını silmez; yalnız runtime seçeneğini TR/EN ile sınırlar.
-- **Bekleme:** WP-459 feedback rozet gerçeği için WP-436 commit'ini bekler.
-  WP-460/461 diğer sıcak dosya sahipleri boşken yapılır.
-- **Bittiğinde:** WP-461 Play/widget seçim kanıtını Ajan H WP-465'e devret.
-
-### Ajan H — Kamp ateşi, gözlemlenebilirlik ve entegrasyon/cihaz kapısı
-
-- **Durum:** [~] Beklemede · Ajan H
-- **Aktif WP:** WP-464 için WP-442 moderation retention sözleşmesi bekleniyor
-- **Aşama:** WP-462 ve WP-463 kod + hedefli otomatik test tamamlandı
-- **Dal:** `main`
-- **Başlangıç:** 2026-07-30 02:05 (Europe/Istanbul) · **Son güncelleme:** 2026-07-30 10:04
-- **Tamamlanan WP-462:** `78e15cb`; çalışma ağacında kalan yalnız Ajan H preview
-  goldenları incelenip `5fc8249` ile korundu. Hedefli preview testleri yeşil.
-- **Tamamlanan WP-463:** Flutter/framework + async platform hata kapısı,
-  PII redaction, opt-out ile silinen 64 olaylık bellek tamponu, operasyon
-  correlation/result API'si ve QA belgesi. Sahip yollar: observability,
-  `main.dart`, privacy/redaction testleri, `docs/qa/V57-OBSERVABILITY.md`.
-- **WP-463 ortak/riskli yüzey:** `main.dart` sıcak kilidi tamamlandı; migration,
-  navigation, l10n, manifest ve diğer ajanların ürün dosyaları alınmadı.
-- **Zincir:** `WP-462 → WP-463 → [WP-442 bekle] → WP-464 → [A–G bekle] → WP-465 → WP-466 → WP-467`
-- **İlk iş:** WP-462; hemen claim edilebilir.
-- **SAHİP ana yüzey:** campfire sahnesi/layout/assets/golden testleri,
-  gözlemlenebilirlik bootstrap'i (yalnız WP-463 sıcak dosya kilidiyle),
-  purge-accounts hardening + hesap-silme QA kanıtı, entegrasyon ve cihaz QA
-  belgeleri.
-- **DOKUNMA:** A–G'nin ürün kodunu “entegrasyon” adıyla yeniden yazma; kırık
-  bulursa ilgili ajanın WP'sini yeniden açıp sahip ajanı beklet.
-- **Bekleme:** WP-464 moderation retention şeması için WP-442'yi bekler.
-  WP-465 başlamadan WP-448, 438, 443, 447, 451, 455 ve 461
-  “kod + otomatik test tamam” olmalı. WP-466 için WP-465 yeşil, local replay
-  yeşil ve staging kapısı plan kanıtıyla açılabilir olmalı.
-- **Yetki sınırı:** WP-466 staging/beta kabul adayını hazırlayabilir. WP-467
-  release-ready raporu ve kapıların kapalı olduğunu kanıtlar; production apply,
-  stable tag/release ve Store submission yapmaz.
 
 ## 🗺️ Yol Haritası — sırada ne var
 
 > **Aktif yürütme PLAN 5 / v57'dir.** PLAN 1–4 aşağıda tarihsel ürün ve teslim
 > kayıtları olarak korunur; yeni ajanlar iş seçmek için onları değil, en üstteki
-> Ajan A–H zincirlerini ve PLAN 5 WP-429…467 kartlarını kullanır.
+> Ajan A–D zincirlerini ve PLAN 5 WP-429…467 kartlarını kullanır.
 
 ### Şu anki gerçek durum
 
 | Konu | Durum |
 | --- | --- |
 | Sürüm | **`v56` stable yayında** · release run `30384688718` · production şeması `0100` |
-| Aktif plan | **PLAN 5 / v57** · sekiz ajan zinciri · WP-429…467 |
+| Aktif plan | **PLAN 5 / v57** · dört Codex ajan zinciri · WP-429…467 |
 | Cihaz kabulü | 🟡 v56 saha bulguları raporlandı; v57 iki-cihaz/staging kapanış matrisi WP-466 |
 | Sürüm politikası | 🔴 Sahip onayı olmadan yeni sürüm çıkmaz |
 | Otomatik doğrulama | v56 tesliminde analyze + 1053/1053 CI-bayraklı test + l10n + local replay/377 pgTAP yeşil |
@@ -4003,27 +3811,27 @@ staging apply → production apply (sahip GO'su ile) → v56 stable.
 
 ## PLAN 5 — v57 ÜRÜN GÜVENİ VE MAĞAZA ÖNCESİ SON BÜYÜK TUR
 
-> **Durum:** 🟢 Uygulamaya hazır · sekiz ajan zinciri A–H.
+> **Durum:** 🟢 Uygulamaya hazır · dört Codex ajan zinciri A–D.
 > **Ürün kaydı:** `docs/V56-SAHIP-GERI-BILDIRIM-RAPORU.md`
 > **Birleşik brief:** `docs/V57-YAPILACAKLAR.md`
 > **Rakip doğrulaması:** `docs/RAKIPANALIZI-DEGERLENDIRME.md`
 > **Ürün sahibi kapsam kararı:** Sayaç/feedback/güvenlik kök sorunları kısa
 > yamayla değil mimari incelemeyle çözülür. İlk mağaza runtime'ı TR+EN ve yalnız
 > 1×1 Başlat/Durdur widget'ıdır. Store listeleme/submission ürün sahibindedir.
+>
+> **Lane devralma notu:** Kartlardaki tarihsel Ajan E/F/G/H adları sırasıyla yeni
+> A/D/B/C'ye devredilmiştir. Worker yalnız Aktif Çalışma Kaydı'ndaki dört canlı
+> A–D zincirini izler; tarihsel lane başlığı açmaz.
 
 ### 5.0 Faz ve bağımlılık haritası
 
 | Faz | Ajan / zincir | Başlama | Sert bekleme |
 |---|---|---|---|
 | 0 — güvenli kapı | WP-429 | ✅ tamam | — |
-| A — timer + seçili ders | A · WP-430→433→448 | hemen | WP-431 migration sırasının başı |
-| B — feedback | B · WP-434→438 | hemen | WP-435, WP-431'i bekler |
-| C — moderasyon | C · WP-439→443 | hemen | migration sırası + D mesaj UI sözleşmesi |
-| D — grup | D · WP-444→447 | hemen | WP-444, WP-442 migration'ını; WP-446, WP-439'u bekler |
-| E — görev | E · WP-449→451 | hemen | WP-449 SQL'i WP-445'i bekler |
-| F — stats/seri | F · WP-452→455 | hemen | WP-453, WP-449'u; WP-455, WP-451'i okur |
-| G — ayarlar/yüzey | G · WP-456→461 | hemen | WP-459, WP-436'yı bekler |
-| H — kamp/entegrasyon | H · WP-462→467 | hemen | WP-465 öncesi A–G çıkış kapıları |
+| A — timer + ders + görev | A · WP-432→433→448→449→451 | WP-432 hemen | WP-449, D/WP-445'i bekler |
+| B — feedback + ayarlar/yüzey | B · WP-435→438→459→461 | A/WP-432 sonrası | WP-459, WP-436'yı bekler |
+| C — moderasyon + final QA | C · WP-439→443→464→467 | B/WP-435 sonrası | WP-465 öncesi A/B/D çıkış kapıları |
+| D — grup + stats/seri | D · WP-444→447→453→455 | C/WP-442 sonrası | WP-453, A/WP-449'u; WP-455, WP-451'i okur |
 
 **Kanonik migration rezervasyonu:** `0101` WP-431 · `0102` WP-432 · `0103`
 WP-435 · `0104` WP-439 · `0105` WP-441 · `0106` WP-442 · `0107` WP-444 ·
@@ -4660,7 +4468,8 @@ alır; boş/uydurma migration yazılmaz.
 
 #### WP-453 — Hedef tamamlamasına dayalı server-authoritative seri motoru
 
-- **Durum / bağımlılık:** [ ] WP-452 + WP-449 migration commit'i.
+- **Durum / bağımlılık:** [~] FAZ 1 KOD + HEDEFLİ TEST TAMAM · `0110` +
+  provider/Supabase RPC/pgTAP için WP-449 migration commit'i bekleniyor.
 - **Problem:** Seri uygulamayı açmakla veya kısmi çalışmayla ilerlememeli.
 - **SAHİP:** goal/streak model/repository/provider, `core/stats/**streak/goal**`,
   kişisel/grup progression RPC'leri, `supabase/migrations/0110_*`, pgTAP/testler.
@@ -4676,6 +4485,10 @@ alır; boş/uydurma migration yazılmaz.
   sessiz geriye dönük değişim yapılmaz.
 - **Kabul:** sadece app open, timer start veya kısmi süre artış üretmez; duplicate
   goal event çift artış üretmez; kişisel ve grup serisi ayrı ledger/key kullanır.
+- **Faz 1 kanıtı (2026-07-30):** `goal_completion_v1` JSON parity fixture +
+  saf Dart projection + salt-okunur repository + InMemory adapter. Hedefli
+  test 11/11, hedefli analyze temiz. `0110`, Supabase adapter/provider ve pgTAP
+  yazılmadı; WP-449 şeması sonrası aynı fixture SQL'e uygulanacak.
 - **Model:** Opus.
 
 #### WP-454 — Üç alev durumu ve kişisel/grup ayrımı
