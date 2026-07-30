@@ -35,8 +35,8 @@ bulur.
 6. ORTAM ÖN-KONTROLÜ          → local/staging/production hedefini doğrula; varsayılan local
 7. Adımları sırayla uygula    → yalnız SAHİP dosyalara yaz, DoD'yi izle
 8. Doğrula                    → analyze 0 uyarı + test + (mümkünse) cihaz kanıtı
-9. Kapat + LANE'İ BIRAK       → cihaz/demo gerekiyorsa kartı "Test için bekleyenler"e taşı
-                                ve lane'i boşalt; tam bittiyse Tamamlanan'a; her hâlde commit
+9. PLAN 5 zincirini sürdür     → committen sonra sıradaki hazır WP'ye geç; bağımlılıkta izle
+                                ve commit görünür görünmez otomatik devam et
 ```
 
 ---
@@ -120,6 +120,14 @@ Backend, migration, Edge Function, secret veya release işi varsa `docs/ORTAM-MI
   kanıtı kartta ve Ajan H join kapısında gösterir. PLAN 5 dışındaki tekil işte
   kod bitip cihaz/demo bekleyen kart `## Test için bekleyenler`e taşınır ve lane
   boşalır.
+- **PLAN 5'te bekleme terminal durum değildir.** Bağımlılık bekleyen worker final
+  yanıt verip sohbeti idle bırakmaz. Kendi Ajan X kaydını bekleme koşuluyla
+  güncelledikten sonra, en fazla 60 saniyelik bounded kontrollerle `progress.md`,
+  `git log` ve migration/sıcak-dosya kilidini yeniden okur; bağımlılık commit'i
+  görünür görünmez aynı sohbet/ajan WP'yi claim edip uygular. Ortam heartbeat
+  desteği veriyorsa, bu kontrol için **kendi sohbetine** kısa aralıklı heartbeat
+  kurar ve bağımlılık çözülünce onu durdurur. Kullanıcıdan “devam et” promptu
+  istemez; kullanıcı açıkça durdurmadıkça zinciri bittiğinde ancak final verir.
 - Handoff: WP başka ajana geçiyorsa tek editte yeni lane'e taşınır + kısa handoff notu.
 
 ---

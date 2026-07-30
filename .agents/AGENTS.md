@@ -63,6 +63,13 @@ worker yalnız önceden oluşturulmuş `Ajan A`…`Ajan H` kaydından kendisine
 atananı doldurur. `Claude`, `Gemini`, `Codex`, `Grok`, `Worker` veya yeni
 `Lane X` başlığı açmaz; eski lane adlarını geri getirmez.
 
+**PLAN 5 zincir devamlılığı:** Bir WP commitlenir commitlenmez aynı Ajan X,
+zincirindeki sonraki hazır WP'yi alır. Bağımlılık gerçekse `[!] BEKLİYOR` kaydı
+yazar fakat sohbeti/final cevabı kapatmaz; `progress.md` ve git geçmişini bounded
+aralıklarla izler, bağımlılık commit'i görünür görünmez otomatik devam eder.
+Bu, kullanıcıdan yeni prompt isteme sebebi değildir. Yalnız kullanıcı açıkça
+durdurursa veya zincir tamamen biterse ajan kapanır.
+
 ```
 ### <Ajan> Lane
 - Durum: [~] Aktif
