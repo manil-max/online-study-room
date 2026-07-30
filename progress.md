@@ -168,24 +168,28 @@
 
 ### Ajan B — Feedback, rozetler, ayarlar ve yayın yüzeyi
 
-- **Durum:** [~] Kod/test tamam — WP-437 commit hazırlanıyor.
+- **Durum:** [~] Kod/test tamam — WP-438 commit hazırlanıyor.
 - **Zincir:** `WP-435 → WP-436 → WP-437 → WP-438 → WP-459 → WP-460 → WP-461`.
 - **Hazır kanıt:** WP-434 `c3999f3`; WP-435 `355f1dd`; WP-436 `7d191b6`;
-  WP-456 `cfb9536`, WP-457 `c671011`, WP-458 `5776055` kod+otomatik test tamam.
-- **Başlatma kapısı:** WP-436 `7d191b6` ile tamamlandı; WP-438 kapanış
-  kapısı sırada. WP-459, WP-436'dan sonra; WP-460/461 aynı B zincirindedir.
+  WP-437 `dc03317`; WP-456 `cfb9536`, WP-457 `c671011`, WP-458 `5776055`
+  kod+otomatik test tamam.
+- **Diğer lane'lere l10n servisi:** A/WP-450'nin istediği yedi `taskList*`
+  anahtarı `4e6995b` ile açıldı; D/WP-444 Faz 2'nin istediği sekiz `safety*`
+  anahtarı sırada (WP-438 commit'inden hemen sonra, ayrı commit). D'nin
+  Ayarlar → Güvenlik girişi talebi B/WP-459 kapsamına yazıldı.
+- **Başlatma kapısı:** WP-437 `dc03317` ile tamamlandı; WP-438 kapanış kapısı
+  bu commit'tedir. WP-459 sırada; WP-460/461 aynı B zincirindedir.
 - **SAHİP:** feedback ticket/message/repository çiftleri, unread/badge sağlayıcıları,
   feedback/admin ekranları; settings/profile/navigation/l10n/widget katalog yüzeyleri.
 - **DOKUNMA:** moderation backend, grup/nudge, timer/subject, task/streak çekirdeği.
-- **Teslim:** WP-438 rozet/messaging E2E kanıtı ve WP-461 widget/yüzey kanıtı C/WP-465'e devredilir.
-- **Aktif WP / sahip yollar:** WP-437 · `features/profile/feedback_screen.dart`,
-  `feedback_tickets_screen.dart` (konuşma ekranı dahil),
-  `features/admin/tabs/admin_reports_tab.dart`, feedback özet modeli/repository
-  çiftleri, TR+EN arb ve feedback testleri.
+- **Teslim:** WP-438 rozet/messaging kanıtı `docs/qa/V57-FEEDBACK-EVIDENCE.md §5`
+  içindedir; cihazda doğrulanacak beş satır C/WP-465-466'ya devredildi.
+- **Aktif WP / sahip yollar:** WP-438 · `app/test/features/feedback_e2e_wp438_test.dart`,
+  InMemory admin repository sıra düzeltmesi ve feedback evidence belgesi.
 - **Ortak/riskli yüzey:** Migration yok; `settings_screen` WP-459'a, core navigation
   diğer lane'lere aittir. `flutter analyze` temiz; feedback/admin/ayarlar/l10n
-  hedefli testleri 48/48 yeşil; production/stable kapalı.
-- **Başlangıç / son güncelleme:** 2026-07-30 11:05 / 17:40 (Europe/Istanbul).
+  hedefli testleri 57/57 yeşil; production/stable kapalı.
+- **Başlangıç / son güncelleme:** 2026-07-30 11:05 / 18:05 (Europe/Istanbul).
 
 ### Ajan C — Moderasyon, kamp/observability devralması ve final QA
 
@@ -4246,7 +4250,8 @@ alır; boş/uydurma migration yazılmaz.
 
 #### WP-438 — Feedback E2E ve rozet kapanış kapısı
 
-- **Durum / bağımlılık:** [ ] WP-437.
+- **Durum / bağımlılık:** [x] Kod + otomatik test tamam · Ajan B · 2026-07-30. Kanıt: `docs/qa/V57-FEEDBACK-EVIDENCE.md §5`; cihaz satırları C/WP-465-466'da.
+
 - **SAHİP:** feedback integration/widget/contract testleri ve evidence belgesi.
 - **Kabul matrisi:** kullanıcı→admin→kullanıcı 20 tur; iki ticket eşzamanlı;
   iki cihaz; reconnect/relogin; duplicate retry; archive/reopen; attachment;

@@ -179,3 +179,56 @@ flutter test --dart-define-from-file=env.json test/features/feedback_flow_wp434_
 
 Sonuç (2026-07-30): `analyze` 0 uyarı · 10/10 test yeşil. Cihaz kanıtı bu
 kartta gerekmiyor; cihazda doğrulanacak satırlar WP-438 → Ajan H WP-465/466.
+
+---
+
+## 5. WP-435 → WP-438 kapanış kaydı (Ajan B)
+
+| Bulgu | Karta göre sahip | Kapatan commit | Bugünkü gerçek |
+|---|---|---|---|
+| B1 — ilk mesaj kanonik dizide yok | WP-435 | `355f1dd` | Bilet açılış metni `feedback_ticket_messages`'a `message_seq = 1` olarak yazılır |
+| B2 — gönderim idempotent değil | WP-435 | `355f1dd` | `client_message_id` ile aynı komut tek satır bırakır |
+| B3 — sıra imleci yok | WP-435 · sıra düzeltmesi WP-438 | `355f1dd` + `WP-438` | Kanonik sıra `message_seq`; InMemory ucu da `created_at` yerine bu imleci sıralar |
+| B4 — tek yanıt iki rozet | WP-436 | `7d191b6` | Ayarlar rozeti feedback duyurularını saymaz; tek olay tek rozet |
+| B5 — okundu rozeti söndürmüyor | WP-436 | `7d191b6` | `last_read_message_seq` watermark'ı iki yüzeyi birlikte söndürür |
+| B6 — yazışma açıkken canlılık yok | WP-436 | `7d191b6` | `watchTicketMessages` akışı yeni yanıtı aynı thread'e ekler |
+| B7 — okundu "fetch edildi" demek | WP-436 | `7d191b6` | Ack ilk kare çizildikten sonra (`addPostFrameCallback`) gider |
+| B8 — repository çifti sapması | WP-435/438 | `355f1dd` + `WP-438` | Duyuru yan etkisi ve mesaj sırası iki uçta aynı |
+| B9 — push `feedback_ticket` yolu ölü | WP-437 kapsam freni | — | **Açık.** Bildirim yönlendirmesi B'nin bu zincirinde değil; WP-465/466 entegrasyon kapısına devredildi |
+
+### Kabul matrisi (otomatik)
+
+`app/test/features/feedback_e2e_wp438_test.dart` — dört sıfır tek dosyada
+kilitlenir: **yanlış thread 0, kayıp mesaj 0, sahte gönderildi 0, okunduktan
+sonra kalan rozet 0.**
+
+| Satır | Nasıl ölçülür | Durum |
+|---|---|---|
+| kullanıcı→admin→kullanıcı 20 tur | 41 mesaj, boşluksuz artan `message_seq`, tek `id`, tek `ticket_id` | Otomatik ✅ |
+| iki bilet eşzamanlı | karşılıklı 5 tur; her bilet kendi dizisini korur | Otomatik ✅ |
+| duplicate retry | aynı `client_message_id` → aynı satır kimliği | Otomatik ✅ |
+| iki cihaz | iki `ProviderContainer`, tek depo; birinde okununca ikisinde de 0 | Otomatik ✅ |
+| reconnect/relogin | yeni konteyner; sıra, kimlikler ve okundu durumu aynı | Otomatik ✅ |
+| kendi mesajı unread üretmez | `fetchUnreadTicketReplyCount == 0`, özet `unreadCount == 0` | Otomatik ✅ |
+| archive/reopen | arşiv turu sonrası mesaj sayısı ve rozet değişmez | Otomatik ✅ |
+| attachment | ekli bilet özeti ve konuşması bozulmaz | Otomatik ✅ |
+| profil/ayarlar rozeti | yazışma görülünce satır rozeti ve sunucu sayacı 0 | Otomatik ✅ |
+| başarısız gönderim | `WP-437` testi: mesaj kaybolmaz, sahte gönderildi görünmez, yeniden deneme tek satır | Otomatik ✅ |
+
+### Cihazda doğrulanacak satırlar (WP-465/466'ya devir)
+
+1. Gerçek Supabase realtime ile yazışma açıkken gelen admin yanıtı (in-memory
+   akışı yerine `postgres_changes`).
+2. İki fiziksel cihazda okundu watermark'ının yayılma süresi (kabul: ≤1 sn).
+3. Uçak modu → çevrimiçi geçişinde başarısız mesajın yeniden denenmesi.
+4. Push bildirimine dokunma yolu (**B9 açık bulgusu**): `route=feedback_ticket`
+   payload'ının ilgili bilete yönlenmesi.
+5. RLS altında `feedback_ticket_read_watermarks` yazımı (yalnız kendi satırı).
+
+### Doğrulama komutu
+
+```bash
+cd app
+flutter analyze
+flutter test --dart-define-from-file=env.json test/features/feedback_flow_wp434_test.dart test/features/feedback_experience_wp437_test.dart test/features/feedback_e2e_wp438_test.dart test/features/feedback_tickets_screen_test.dart test/features/feedback_conversation_wp374_test.dart test/features/feedback_screen_wp420_test.dart
+```

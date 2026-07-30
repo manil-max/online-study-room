@@ -262,11 +262,14 @@ class InMemoryAdminRepository implements AdminRepository {
     required String ticketId,
   }) async {
     _requireTicketParticipant(userId, ticketId);
+    // WP-438: Kanonik sira `message_seq`'tir. `created_at` ile siralamak ayni
+    // milisaniyeye dusen mesajlarda sirayi kaydiriyordu; Supabase ucu zaten
+    // `.order('message_seq')` diyor, repository cifti ayni gerceği verir.
     final rows =
         _ticketMessages
             .where((message) => message.ticketId == ticketId)
             .toList()
-          ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+          ..sort((a, b) => a.messageSeq.compareTo(b.messageSeq));
     return List.unmodifiable(rows);
   }
 
