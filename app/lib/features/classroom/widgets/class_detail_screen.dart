@@ -1101,13 +1101,10 @@ class _LeaveGroupTileState extends ConsumerState<_LeaveGroupTile> {
       setState(() => _busy = false);
       messenger.showSnackBar(
         SnackBar(
-          content: Text(l10n.authBeklenmeyenBirHataOlustu),
+          content: Text(l10n.classroomGruptanCikilamadi),
           action: SnackBarAction(
-            label: l10n.groupDiscoveryRetry,
+            label: l10n.classroomRetry,
             // Aynı anahtar: sunucu işi tekrar yapmaz.
-            // NOT: metinler geçici olarak mevcut anahtarlardan; D'nin
-            // istediği `classroomGruptanCikilamadi`/`classroomRetry`
-            // B tarafından açılınca takas edilecek.
             onPressed: _send,
           ),
         ),

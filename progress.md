@@ -243,11 +243,8 @@
   sırada WP-446 (grup bilgi sadeleştirmesi + mesajı raporla UI'si).
 - **Zincir:** `WP-444(Faz 2) → WP-445 → WP-446 → WP-447 → [A/WP-449] → WP-453 → WP-454 → WP-455`.
 - **Hazır kanıt:** WP-444 Faz 1 `b61038e` + Faz 2 `a84a799`; WP-452 `51b5478`; WP-453 Faz 1 `a309c2d` — kod+hedefli test tamam.
-- **B'den bekleyen l10n takası (WP-445):** `classroomGruptanCikilamadi` ve
-  `classroomRetry` talep edildi (`3dbe619`) ama henüz açılmadı. Repo'yu derlenmez
-  bırakmamak için çıkış SnackBar'ı geçici olarak mevcut
-  `authBeklenmeyenBirHataOlustu` + `groupDiscoveryRetry` anahtarlarını kullanıyor;
-  anahtarlar gelince iki satırlık takas yapılacak (kodda not düşüldü).
+- **WP-445 l10n takası tamam:** `classroomGruptanCikilamadi` / `classroomRetry`
+  B tarafından `4f1bbb1` ile açıldı ve geçici anahtarlar takas edildi.
 - **B'den l10n talebi (WP-444 Faz 2, l10n kilidi B'de olduğu için D arb'ye yazmaz):**
   `safetyMutedNudgesTitle` "Dürtmesi susturulanlar"/"Muted nudges" ·
   `safetyMutedNudgesEmpty` "Dürtmesi susturulan kimse yok."/"No one is muted." ·
