@@ -1047,6 +1047,38 @@
   "safetyReasonOther": "Diğer",
   "safetyActionFailed": "İşlem başarısız. Tekrar dene.",
   "safetyBlockedUsersTitle": "Engellenen kullanıcılar",
+  "safetyMutedNudgesTitle": "Dürtmesi susturulanlar",
+  "@safetyMutedNudgesTitle": {
+    "description": "Susturulan dürtmeler listesinin ayarlar girişi ve ekran başlığı."
+  },
+  "safetyMutedNudgesEmpty": "Dürtmesi susturulan kimse yok.",
+  "@safetyMutedNudgesEmpty": {
+    "description": "Susturulan dürtmeler listesinin boş durumu."
+  },
+  "safetyMutedNudgesExplainer": "Susturulan kişi engellenmez: mesajları, profili ve gruptaki varlığı normaldir; yalnız dürtmesi sana ulaşmaz.",
+  "@safetyMutedNudgesExplainer": {
+    "description": "Dürtme susturmanın engellemeden farkını anlatır."
+  },
+  "safetyMuteNudges": "Dürtmesini sustur",
+  "@safetyMuteNudges": {
+    "description": "Başka bir üyenin dürtmelerini durduran eylem."
+  },
+  "safetyUnmuteNudges": "Susturmayı kaldır",
+  "@safetyUnmuteNudges": {
+    "description": "Başka bir üyenin dürtmelerini yeniden açan eylem."
+  },
+  "safetyNudgesMuted": "Dürtmesi susturuldu.",
+  "@safetyNudgesMuted": {
+    "description": "Dürtme susturulduktan sonraki onay."
+  },
+  "safetyNudgesUnmuted": "Susturma kaldırıldı.",
+  "@safetyNudgesUnmuted": {
+    "description": "Susturma kaldırıldıktan sonraki onay."
+  },
+  "safetyMutedUserFallbackName": "Susturulan kullanıcı",
+  "@safetyMutedUserFallbackName": {
+    "description": "Profil adı olmayan susturulmuş üye için yedek ad."
+  },
   "safetyUnblock": "Engeli kaldır",
   "safetyUnblocked": "Engel kaldırıldı.",
   "safetyNoBlockedUsers": "Engellenen kullanıcı yok.",
@@ -1843,5 +1875,22 @@
   "adminModerationQuarantineRelease": "Karantinadan çıkar",
   "adminModerationQuarantined": "Karantinada",
   "adminModerationSeverityHigh": "Yüksek risk",
-  "adminModerationOverdue": "Süresi aştı"
+  "adminModerationOverdue": "Süresi aştı",
+  "adminModerationAppeals": "İtirazlar",
+  "adminModerationAppealEmpty": "İtiraz yok",
+  "adminModerationAppealUphold": "Yaptırımı koru",
+  "adminModerationAppealOverturn": "Yaptırımı kaldır",
+  "adminModerationAppealDecided": "İtiraz karara bağlandı",
+  "adminModerationAppealOwnSanction": "Kendi verdiğin yaptırımın itirazını karara bağlayamazsın.",
+  "safetyMyRestrictions": "Hesabındaki kısıtlar",
+  "safetyRestrictionNone": "Hesabında kısıt yok.",
+  "safetyRestrictionUntil": "{date} tarihine kadar",
+  "safetyRestrictionPermanent": "Süresiz",
+  "safetyAppealAction": "İtiraz et",
+  "safetyAppealStatement": "Bu kararın neden yanlış olduğunu anlat",
+  "safetyAppealTooShort": "En az 10 karakter yaz.",
+  "safetyAppealSubmitted": "İtirazın alındı.",
+  "safetyAppealPending": "İtiraz inceleniyor",
+  "safetyAppealUpheld": "İtiraz reddedildi; kısıt sürüyor.",
+  "safetyAppealOverturned": "İtiraz kabul edildi; kısıt kaldırıldı."
 }

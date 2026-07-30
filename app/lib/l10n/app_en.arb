@@ -4433,6 +4433,38 @@
   "@safetyBlockedUsersTitle": {
     "description": "Settings entry and screen title for blocked users list"
   },
+  "safetyMutedNudgesTitle": "Muted nudges",
+  "@safetyMutedNudgesTitle": {
+    "description": "Settings entry and screen title for the muted-nudges list."
+  },
+  "safetyMutedNudgesEmpty": "No one is muted.",
+  "@safetyMutedNudgesEmpty": {
+    "description": "Empty state of the muted-nudges list."
+  },
+  "safetyMutedNudgesExplainer": "Muting is not blocking: their messages, profile and group presence stay normal — only their nudges stop reaching you.",
+  "@safetyMutedNudgesExplainer": {
+    "description": "Explains how muting nudges differs from blocking a user."
+  },
+  "safetyMuteNudges": "Mute nudges",
+  "@safetyMuteNudges": {
+    "description": "Action that stops another member's nudges."
+  },
+  "safetyUnmuteNudges": "Unmute nudges",
+  "@safetyUnmuteNudges": {
+    "description": "Action that lets another member's nudges through again."
+  },
+  "safetyNudgesMuted": "Nudges muted.",
+  "@safetyNudgesMuted": {
+    "description": "Confirmation after muting a member's nudges."
+  },
+  "safetyNudgesUnmuted": "Nudges unmuted.",
+  "@safetyNudgesUnmuted": {
+    "description": "Confirmation after unmuting a member's nudges."
+  },
+  "safetyMutedUserFallbackName": "Muted user",
+  "@safetyMutedUserFallbackName": {
+    "description": "Fallback name for a muted member whose profile name is missing."
+  },
   "safetyUnblock": "Unblock",
   "@safetyUnblock": {
     "description": "Action to remove a user block"
@@ -6070,5 +6102,39 @@
   "adminModerationSeverityHigh": "High risk",
   "@adminModerationSeverityHigh": {"description": "Badge shown on a case the server marked high severity."},
   "adminModerationOverdue": "Overdue",
-  "@adminModerationOverdue": {"description": "Badge shown when a case passed its review deadline."}
+  "@adminModerationOverdue": {"description": "Badge shown when a case passed its review deadline."},
+  "adminModerationAppeals": "Appeals",
+  "@adminModerationAppeals": {"description": "Section title of the appeal queue in the admin moderation tab."},
+  "adminModerationAppealEmpty": "No appeals",
+  "@adminModerationAppealEmpty": {"description": "Empty state of the admin appeal queue."},
+  "adminModerationAppealUphold": "Uphold sanction",
+  "@adminModerationAppealUphold": {"description": "Action that keeps the sanction after reviewing an appeal."},
+  "adminModerationAppealOverturn": "Overturn sanction",
+  "@adminModerationAppealOverturn": {"description": "Action that lifts the sanction after accepting an appeal."},
+  "adminModerationAppealDecided": "Appeal decided",
+  "@adminModerationAppealDecided": {"description": "Confirmation shown after an appeal decision is recorded."},
+  "adminModerationAppealOwnSanction": "You cannot review an appeal against your own sanction.",
+  "@adminModerationAppealOwnSanction": {"description": "Explains why the appeal decision actions are unavailable to this admin."},
+  "safetyMyRestrictions": "Restrictions on your account",
+  "@safetyMyRestrictions": {"description": "Section title listing the sanctions currently applied to the user."},
+  "safetyRestrictionNone": "You have no restrictions.",
+  "@safetyRestrictionNone": {"description": "Empty state shown when the user has no moderation sanctions."},
+  "safetyRestrictionUntil": "Until {date}",
+  "@safetyRestrictionUntil": {"description": "Expiry line of a restriction.", "placeholders": {"date": {"type": "String"}}},
+  "safetyRestrictionPermanent": "No end date",
+  "@safetyRestrictionPermanent": {"description": "Shown for restrictions that do not expire on their own."},
+  "safetyAppealAction": "Appeal",
+  "@safetyAppealAction": {"description": "Button that opens the appeal form for a restriction."},
+  "safetyAppealStatement": "Explain why this decision is wrong",
+  "@safetyAppealStatement": {"description": "Label of the appeal statement field."},
+  "safetyAppealTooShort": "Write at least 10 characters.",
+  "@safetyAppealTooShort": {"description": "Validation message when the appeal statement is too short."},
+  "safetyAppealSubmitted": "Your appeal was received.",
+  "@safetyAppealSubmitted": {"description": "Confirmation shown after an appeal is submitted."},
+  "safetyAppealPending": "Appeal under review",
+  "@safetyAppealPending": {"description": "Status shown while an appeal is waiting for a decision."},
+  "safetyAppealUpheld": "Appeal rejected; the restriction stands.",
+  "@safetyAppealUpheld": {"description": "Status shown when an appeal was rejected."},
+  "safetyAppealOverturned": "Appeal accepted; the restriction was lifted.",
+  "@safetyAppealOverturned": {"description": "Status shown when an appeal was accepted."}
 }
