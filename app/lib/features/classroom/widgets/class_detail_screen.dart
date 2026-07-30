@@ -51,7 +51,7 @@ class ClassDetailScreen extends ConsumerWidget {
               ref,
               target: ReportTarget.group(
                 groupId: group.id,
-                hint: 'Grup: ${group.name}',
+                hint: 'group:${group.name}',
               ),
             ),
           ),
@@ -81,13 +81,14 @@ class ClassDetailScreen extends ConsumerWidget {
                 // WP-439: grup adı ayrı bir hedef türüdür
                 // (`ReportTarget.groupName`). Sunucu `group_name` türünü
                 // migration `0104` ile tanıyacak; o güne kadar rapor mevcut
-                // `group` vakasına düşer ve ipucu adı taşır — kaybolmaz.
+                // `group` vakasına düşer ve ipucu adı taşır — kaybolmaz. İpucu
+                // makine etiketidir, kullanıcıya gösterilmez: çevrilmez.
                 onPressed: () => showReportSheet(
                   context,
                   ref,
                   target: ReportTarget.group(
                     groupId: group.id,
-                    hint: 'Grup adı: ${group.name}',
+                    hint: 'group_name:${group.name}',
                   ),
                 ),
               ),

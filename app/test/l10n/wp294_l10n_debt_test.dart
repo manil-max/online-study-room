@@ -13,7 +13,16 @@ import 'package:online_study_room/l10n/app_localizations.dart';
 /// `scripts/l10n_audit.py` aynı kısıtları CI'da denetler; buradaki testler aynı
 /// sözleşmeyi `flutter test` içine de bağlar, çünkü CI kapısı atlanabilir ama
 /// paket testi her turda koşuyor.
-const _locales = <String>['en', 'tr', 'de', 'ar'];
+///
+/// WP-457 sonrası: release runtime **yalnız EN/TR** üretir, DE/AR kaynakları
+/// `lib/l10n_dormant/` altında generator girdisinin dışında arşivlenir. Eşlik
+/// denetimi bu yüzden release kataloglarına bakar (denetim betiğindeki
+/// `LOCALES` ile aynı küme): dormant kataloğu şablona zorlamak, WP-457'nin
+/// bilerek dondurduğu çeviriyi her yeni anahtarda kırmızıya çevirirdi. Dormant
+/// tarafın sözleşmesi ayrı ve aşağıda: dosyalar yerinde kalmalı, `arb-dir`e
+/// geri sızmamalı.
+const _locales = <String>['en', 'tr'];
+const _dormantLocales = <String>['de', 'ar'];
 
 Map<String, Object?> _catalog(String locale) =>
     jsonDecode(File('lib/l10n/app_$locale.arb').readAsStringSync())
@@ -23,8 +32,8 @@ Set<String> _keys(Map<String, Object?> catalog) =>
     catalog.keys.where((key) => !key.startsWith('@')).toSet();
 
 void main() {
-  group('katalog eşliği — dört dil', () {
-    test('anahtar kümesi dört katalogda birebir aynı', () {
+  group('katalog eşliği — release dilleri', () {
+    test('anahtar kümesi release kataloglarında birebir aynı', () {
       final catalogs = {
         for (final locale in _locales) locale: _catalog(locale),
       };
@@ -35,13 +44,13 @@ void main() {
           _keys(catalogs[locale]!),
           template,
           reason:
-              '$locale kataloğu şablondan (en) ayrıştı — WP-294 öncesinde '
-              'denetim yalnız EN/TR bakıyordu, DE/AR sessizce kayabiliyordu',
+              '$locale kataloğu şablondan (en) ayrıştı — eksik anahtar release '
+              'yapısında boş/İngilizce metin olarak kullanıcıya düşer',
         );
       }
     });
 
-    test('placeholder\'lar dört dilde de referanslanıyor', () {
+    test('placeholder\'lar her release dilinde referanslanıyor', () {
       final catalogs = {
         for (final locale in _locales) locale: _catalog(locale),
       };
@@ -73,8 +82,8 @@ void main() {
       final catalogs = {
         for (final locale in _locales) locale: _catalog(locale),
       };
-      // Kopyala-yapıştır İngilizce, "çeviri yapıldı" görüntüsü verip DE/AR
-      // kullanıcısını İngilizceye mahkûm ediyordu; sayısal olarak yakalanır.
+      // Kopyala-yapıştır İngilizce, "çeviri yapıldı" görüntüsü verip çevrilmemiş
+      // dil kullanıcısını İngilizceye mahkûm ediyordu; sayısal olarak yakalanır.
       for (final key in const <String>[
         'accountHesabiSil',
         'accountSilmeOnayGovdesi',
@@ -91,6 +100,35 @@ void main() {
           reason: '$key dillerde aynı metni taşıyor: $values',
         );
       }
+    });
+
+    test('dormant DE/AR kataloğu generator girdisine geri sızmadı', () {
+      // WP-457 dilleri silmedi, **dondurdu**. İki yönlü kapı: arşiv kaybolursa
+      // çeviri emei çöpe gider, `arb-dir`e geri düşerse generator dili
+      // yeniden yayımlar ve runtime/picker/native yüzeyler onu taşımadığı için
+      // kullanıcı yarım çevrilmiş bir uygulama görür.
+      for (final locale in _dormantLocales) {
+        expect(
+          File('lib/l10n_dormant/app_$locale.arb').existsSync(),
+          isTrue,
+          reason: '$locale arşivi silinmiş',
+        );
+        expect(
+          File('lib/l10n/app_$locale.arb').existsSync(),
+          isFalse,
+          reason: '$locale kataloğu release arb-dir altına geri kondu',
+        );
+      }
+      // `l10n.yaml` arb-dir'i tarar: oraya düşen her `.arb` yeni bir release
+      // dili demektir, dosya adını tek tek saymak yetmez.
+      final released = Directory('lib/l10n')
+          .listSync()
+          .map((entity) => entity.uri.pathSegments.last)
+          .where((name) => name.endsWith('.arb'))
+          .toSet();
+      expect(released, {
+        for (final locale in _locales) 'app_$locale.arb',
+      });
     });
   });
 
