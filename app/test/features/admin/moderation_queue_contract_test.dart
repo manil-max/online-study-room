@@ -6,15 +6,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:online_study_room/data/models/moderation_case.dart';
 import 'package:online_study_room/data/models/report_target.dart';
 import 'package:online_study_room/data/providers/admin_moderation_providers.dart';
-import 'package:online_study_room/data/repositories/admin_moderation_repository.dart';
 import 'package:online_study_room/data/repositories/in_memory/in_memory_admin_moderation_repository.dart';
 import 'package:online_study_room/features/admin/tabs/admin_moderation_tab.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
 /// WP-440: Kuyruğun kod borcu kapanışı.
 ///
-/// Ekran artık Supabase istemcisiyle konuşmuyor, vaka sözleşmesi RPC'lerden
-/// geçiyor ve `open` durumu yazılabilir görünmüyor.
+/// Ekran artık Supabase istemcisiyle konuşmuyor ve vaka sözleşmesi
+/// RPC'lerden geçiyor. WP-441 (`0105`) ile `open` da yazılabilir oldu:
+/// yanlışlıkla kapatılan vaka `in_review`e sapmadan geri açılır.
 ModerationCase _case({
   ModerationCaseStatus status = ModerationCaseStatus.open,
   String id = '22222222-2222-4222-8222-222222222222',
@@ -89,25 +89,27 @@ void main() {
   });
 
   group('vaka sözleşmesi', () {
-    test('open sunucuya yazılamaz — çağrı fail-closed reddedilir', () async {
-      final repo = InMemoryAdminModerationRepository(seed: [_case()]);
-      await expectLater(
-        repo.setCaseStatus(
-          moderationCase: _case(),
-          status: ModerationCaseStatus.open,
-        ),
-        throwsA(isA<ModerationException>()),
+    test('WP-441: kapatılan vaka gerçekten yeniden açılır', () async {
+      final repo = InMemoryAdminModerationRepository(
+        seed: [_case(status: ModerationCaseStatus.resolved)],
       );
-      expect(repo.statusWrites, isEmpty);
+      await repo.setCaseStatus(
+        moderationCase: _case(),
+        status: ModerationCaseStatus.open,
+      );
+      expect(repo.statusWrites.single, endsWith('=open'));
+      final queue = await repo.fetchQueue();
+      expect(queue.single.status, ModerationCaseStatus.open);
     });
 
-    test('yazılabilir durumlar yalnız üçü', () {
+    test('0105 sonrası dört durum da yazılabilir', () {
       expect(ModerationCaseStatus.writableValues, [
+        ModerationCaseStatus.open,
         ModerationCaseStatus.inReview,
         ModerationCaseStatus.resolved,
         ModerationCaseStatus.rejected,
       ]);
-      expect(ModerationCaseStatus.open.writable, isFalse);
+      expect(ModerationCaseStatus.open.writable, isTrue);
       expect(ModerationCaseStatus.resolved.isClosed, isTrue);
       expect(ModerationCaseStatus.rejected.isClosed, isTrue);
       expect(ModerationCaseStatus.inReview.isClosed, isFalse);

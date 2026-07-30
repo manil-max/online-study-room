@@ -182,17 +182,18 @@ void main() {
       expect(selected, [ModerationCaseStatus.inReview]);
     });
 
-    testWidgets('menü yalnız sunucuya yazılabilir durumları sunar', (
+    testWidgets('menü dört durumu da sunar', (
       tester,
     ) async {
       await tester.pumpWidget(_host(_case()));
       await tester.tap(find.byKey(const Key('moderation-status-chip')));
       await tester.pumpAndSettle();
 
-      // `open` sunucuda yazılamaz — ölü seçenek olarak menüde durmaz.
+      // WP-441 (`0105`): `open` da yazılabilir; yanlışlıkla kapatılan vaka
+      // gerçekten geri açılsın diye menüde durur.
       expect(
         find.widgetWithText(PopupMenuItem<ModerationCaseStatus>, 'Açık'),
-        findsNothing,
+        findsOneWidget,
       );
       expect(find.text('İnceleniyor'), findsOneWidget);
       expect(find.text('Çözüldü'), findsOneWidget);

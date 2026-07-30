@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
 import '../../../data/models/moderation_case.dart';
+import '../../../data/models/moderation_sanction.dart';
 import '../../../data/providers/admin_moderation_providers.dart';
 import '../../../data/repositories/admin_moderation_repository.dart';
 import '../widgets/moderation_queue_card.dart';
@@ -67,6 +68,17 @@ class AdminModerationTab extends ConsumerWidget {
                 onOpenDetail: moderationCase.reportIds.isEmpty
                     ? null
                     : () => _openDetail(context, moderationCase.reportIds.first),
+                onSanction: moderationCase.targetIdentity == null
+                    // Grup hedefinde yaptırım uygulanacak kişi yok; menüde ölü
+                    // seçenek bırakmıyoruz.
+                    ? null
+                    : () => _openSanctionSheet(context, ref, moderationCase),
+                onQuarantineToggle: (quarantined) => _applyQuarantine(
+                  context,
+                  ref,
+                  moderationCase: moderationCase,
+                  quarantined: quarantined,
+                ),
               );
             },
           ),
@@ -107,6 +119,90 @@ class AdminModerationTab extends ConsumerWidget {
     messenger.showSnackBar(
       SnackBar(content: Text(_StatusText.of(l10n, status))),
     );
+  }
+
+  /// WP-441: Basamaklı yaptırım.
+  ///
+  /// Gerekçe zorunludur ve idempotency anahtarı **sayfa açılışında bir kez**
+  /// üretilir: aynı sayfadan yapılan yeniden deneme sunucuda ikinci yaptırım
+  /// açmaz.
+  Future<void> _openSanctionSheet(
+    BuildContext context,
+    WidgetRef ref,
+    ModerationCase moderationCase,
+  ) async {
+    final targetId = moderationCase.targetIdentity?.id;
+    if (targetId == null) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = AppLocalizations.of(context);
+    final request = await showModalBottomSheet<ModerationSanctionRequest>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => _SanctionSheet(
+        targetUserId: targetId,
+        caseId: moderationCase.caseId,
+      ),
+    );
+    if (request == null) return;
+
+    final repository = ref.read(adminModerationRepositoryProvider);
+    try {
+      await repository.applySanction(request);
+    } on ModerationException catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+      return;
+    }
+    ref.invalidate(moderationQueueProvider);
+    ref.invalidate(moderationSanctionsProvider(targetId));
+    messenger.showSnackBar(
+      SnackBar(content: Text(l10n.adminModerationSanctionApplied)),
+    );
+  }
+
+  /// Karantina geri alınabilir olduğu için tek düğmede toggle edilir.
+  Future<void> _applyQuarantine(
+    BuildContext context,
+    WidgetRef ref, {
+    required ModerationCase moderationCase,
+    required bool quarantined,
+  }) async {
+    final l10n = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final reason = await _askReason(context, l10n.adminModerationQuarantine);
+    if (reason == null) return;
+    try {
+      await ref
+          .read(adminModerationRepositoryProvider)
+          .setQuarantine(
+            moderationCase: moderationCase,
+            quarantined: quarantined,
+            reason: reason,
+          );
+    } on ModerationException catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+      return;
+    }
+    ref.invalidate(moderationQueueProvider);
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          quarantined
+              ? l10n.adminModerationQuarantined
+              : l10n.adminModerationQuarantineRelease,
+        ),
+      ),
+    );
+  }
+
+  /// Gerekçe zorunludur; boş gerekçe sessizce "gerekçe belirtilmedi"ye
+  /// çevrilmez, işlem hiç yapılmaz.
+  static Future<String?> _askReason(BuildContext context, String title) async {
+    final reason = await showDialog<String>(
+      context: context,
+      builder: (_) => _ReasonDialog(title: title),
+    );
+    if (reason == null || reason.trim().isEmpty) return null;
+    return reason.trim();
   }
 
   void _openDetail(BuildContext context, String reportId) {
@@ -169,6 +265,166 @@ class _ModerationDetailSheet extends ConsumerWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+
+/// Basamaklı yaptırım sayfası.
+///
+/// Basamaklar **sunucudaki sırayla** listelenir; gerekçe boşken uygula düğmesi
+/// çalışmaz. Idempotency anahtarı sayfa açılışında bir kez üretilir, böylece
+/// aynı sayfadan yapılan yeniden deneme ikinci yaptırım açmaz.
+class _SanctionSheet extends StatefulWidget {
+  const _SanctionSheet({required this.targetUserId, this.caseId});
+
+  final String targetUserId;
+  final String? caseId;
+
+  @override
+  State<_SanctionSheet> createState() => _SanctionSheetState();
+}
+
+class _SanctionSheetState extends State<_SanctionSheet> {
+  final TextEditingController _reason = TextEditingController();
+  late final String _idempotencyKey =
+      'sanction-${widget.targetUserId}-${DateTime.now().microsecondsSinceEpoch}';
+  ModerationAction _action = ModerationAction.warn;
+
+  @override
+  void dispose() {
+    _reason.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.only(
+          left: 20,
+          right: 20,
+          top: 20,
+          bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              l10n.adminModerationSanctionTitle,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<ModerationAction>(
+              key: const Key('moderation-sanction-action'),
+              initialValue: _action,
+              items: [
+                for (final action in ModerationAction.values)
+                  DropdownMenuItem(
+                    value: action,
+                    child: Text(_actionLabel(l10n, action)),
+                  ),
+              ],
+              onChanged: (value) {
+                if (value != null) setState(() => _action = value);
+              },
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              key: const Key('moderation-sanction-reason'),
+              controller: _reason,
+              onChanged: (_) => setState(() {}),
+              decoration: InputDecoration(
+                labelText: l10n.adminGerekceZorunlu,
+                border: const OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 16),
+            FilledButton(
+              key: const Key('moderation-sanction-submit'),
+              onPressed: _reason.text.trim().isEmpty
+                  ? null
+                  : () => Navigator.of(context).pop(
+                      ModerationSanctionRequest(
+                        targetUserId: widget.targetUserId,
+                        action: _action,
+                        reason: _reason.text.trim(),
+                        idempotencyKey: _idempotencyKey,
+                        caseId: widget.caseId,
+                      ),
+                    ),
+              child: Text(l10n.adminOnayla),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  static String _actionLabel(AppLocalizations l10n, ModerationAction action) =>
+      switch (action) {
+        ModerationAction.noAction => l10n.adminModerationSanctionNoAction,
+        ModerationAction.warn => l10n.adminModerationSanctionWarn,
+        ModerationAction.nameReset => l10n.adminModerationSanctionNameReset,
+        ModerationAction.mute24h => l10n.adminModerationSanctionMute24h,
+        ModerationAction.suspend24h => l10n.adminModerationSanctionSuspend24h,
+        ModerationAction.suspend7d => l10n.adminModerationSanctionSuspend7d,
+        ModerationAction.suspend14d => l10n.adminModerationSanctionSuspend14d,
+        ModerationAction.suspend30d => l10n.adminModerationSanctionSuspend30d,
+        ModerationAction.banPermanent => l10n.adminModerationSanctionBan,
+      };
+}
+
+
+/// Gerekçe soran diyalog.
+///
+/// Controller'ı diyalogun kendisi tutar: çağıran tarafta `dispose` etmek,
+/// diyalog kapanış animasyonu sürerken denetleyiciyi öldürüp çerçeveyi
+/// düşürüyordu.
+class _ReasonDialog extends StatefulWidget {
+  const _ReasonDialog({required this.title});
+
+  final String title;
+
+  @override
+  State<_ReasonDialog> createState() => _ReasonDialogState();
+}
+
+class _ReasonDialogState extends State<_ReasonDialog> {
+  final TextEditingController _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return AlertDialog(
+      title: Text(widget.title),
+      content: TextField(
+        key: const Key('moderation-reason-field'),
+        controller: _controller,
+        decoration: InputDecoration(
+          labelText: l10n.adminGerekceZorunlu,
+          border: const OutlineInputBorder(),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(l10n.adminIptal),
+        ),
+        FilledButton(
+          key: const Key('moderation-reason-confirm'),
+          onPressed: () => Navigator.of(context).pop(_controller.text),
+          child: Text(l10n.adminOnayla),
+        ),
+      ],
     );
   }
 }

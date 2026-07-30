@@ -1,4 +1,5 @@
 import '../models/moderation_case.dart';
+import '../models/moderation_sanction.dart';
 // `ModerationException` tek tanımdır; kuyruk da aynı hatayı fırlatır.
 export 'moderation_repository.dart' show ModerationException;
 
@@ -16,8 +17,9 @@ abstract class AdminModerationRepository {
 
   /// Vakanın tüm raporlarının durumunu tek işlemde değiştirir.
   ///
-  /// Etkilenen rapor sayısını döner. [ModerationCaseStatus.open] sunucuda
-  /// yazılabilir değildir; çağrı [ModerationException] ile reddedilir.
+  /// Etkilenen rapor sayısını döner. WP-441 (`0105`) ile
+  /// [ModerationCaseStatus.open] da yazılabilir: yanlışlıkla kapatılan vaka
+  /// gerçekten açık duruma döner, `in_review`e sapmaz.
   Future<int> setCaseStatus({
     required ModerationCase moderationCase,
     required ModerationCaseStatus status,
@@ -25,6 +27,32 @@ abstract class AdminModerationRepository {
 
   /// Tek raporun detay/timeline verisi (`admin_ugc_report_detail`).
   Future<ModerationCaseDetail> fetchDetail(String reportId);
+
+  /// WP-441: Basamaklı yaptırımı uygular.
+  ///
+  /// Çağrı **idempotenttir**: aynı [ModerationSanctionRequest.idempotencyKey]
+  /// ile yeniden gönderim ikinci yaptırım açmaz, mevcut kaydı geri verir.
+  /// Hedefte zaten aktif bir kısıt varsa çağrı [ModerationException] ile
+  /// reddedilir — iki basamak üst üste binmez.
+  Future<ModerationSanction> applySanction(ModerationSanctionRequest request);
+
+  /// Yaptırımı geri alır; kısıt aynı anda auth tarafında da kalkar.
+  Future<ModerationSanction> revokeSanction({
+    required String sanctionId,
+    required String reason,
+  });
+
+  /// Hedefin yaptırım geçmişi, en yenisi başta.
+  Future<List<ModerationSanction>> fetchSanctions(String targetUserId);
+
+  /// Vakayı geri alınabilir karantinaya alır ya da karantinadan çıkarır.
+  ///
+  /// Karantina içeriği silmez; inceleme bitene kadar üçüncü kişilere kapatır.
+  Future<void> setQuarantine({
+    required ModerationCase moderationCase,
+    required bool quarantined,
+    required String reason,
+  });
 }
 
 /// Detay sayfasının okuduğu ham kayıt.

@@ -19,11 +19,19 @@ class ModerationQueueCard extends StatelessWidget {
     required this.moderationCase,
     required this.onStatusSelected,
     this.onOpenDetail,
+    this.onSanction,
+    this.onQuarantineToggle,
   });
 
   final ModerationCase moderationCase;
   final ValueChanged<ModerationCaseStatus> onStatusSelected;
   final VoidCallback? onOpenDetail;
+
+  /// WP-441: Basamaklı yaptırım sayfasını açar.
+  final VoidCallback? onSanction;
+
+  /// WP-441: Karantinayı açar/kapatır — geri alınabilir olduğu için tek düğme.
+  final ValueChanged<bool>? onQuarantineToggle;
 
   @override
   Widget build(BuildContext context) {
@@ -58,7 +66,11 @@ class ModerationQueueCard extends StatelessWidget {
                     status: moderationCase.status,
                     onSelected: onStatusSelected,
                   ),
-                  _SecondaryActions(moderationCase: moderationCase),
+                  _SecondaryActions(
+                    moderationCase: moderationCase,
+                    onSanction: onSanction,
+                    onQuarantineToggle: onQuarantineToggle,
+                  ),
                 ],
               ),
               const SizedBox(height: 6),
@@ -83,6 +95,7 @@ class ModerationQueueCard extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
+              _CaseBadges(moderationCase: moderationCase),
             ],
           ),
         ),
@@ -115,9 +128,8 @@ class ModerationQueueCard extends StatelessWidget {
         _ => reason,
       };
 
-  /// Bekleme süresi + rapor sayısı. Risk/SLA/atanan admin alanları şemada
-  /// **yok**; uydurma rozet basmak yerine WP-441 severity/SLA migration'ı
-  /// geldiğinde bu satıra eklenecek.
+  /// Bekleme süresi + rapor sayısı. Önem/SLA rozetleri artık `0105` ile
+  /// sunucudan geliyor ve ayrı satırda gösteriliyor.
   String _metaLine(BuildContext context, AppLocalizations l10n) {
     final waited = moderationCase.waitingFor(DateTime.now());
     final languageCode = Localizations.localeOf(context).languageCode;
@@ -196,27 +208,114 @@ class _StatusChip extends StatelessWidget {
       };
 }
 
-/// Üç nokta yalnız ikincil eylemleri taşır — durum değişimi çipte.
-class _SecondaryActions extends StatelessWidget {
-  const _SecondaryActions({required this.moderationCase});
+/// Sunucudan gelen önem/SLA/karantina rozetleri.
+///
+/// Rozetler yalnız **sunucunun bildiği** alanlardan çizilir; istemci risk
+/// uydurmaz. Hiçbiri tek başına yaptırım anlamına gelmez.
+class _CaseBadges extends StatelessWidget {
+  const _CaseBadges({required this.moderationCase});
 
   final ModerationCase moderationCase;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final overdue = moderationCase.isOverdue(DateTime.now());
+    final labels = <(String, Color, Color)>[
+      if (moderationCase.severity == ModerationSeverity.high)
+        (l10n.adminModerationSeverityHigh, scheme.errorContainer, scheme.onErrorContainer),
+      if (overdue)
+        (l10n.adminModerationOverdue, scheme.tertiaryContainer, scheme.onTertiaryContainer),
+      if (moderationCase.quarantined)
+        (
+          l10n.adminModerationQuarantined,
+          scheme.surfaceContainerHighest,
+          scheme.onSurfaceVariant,
+        ),
+    ];
+    if (labels.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      key: const Key('moderation-case-badges'),
+      padding: const EdgeInsets.only(top: 6),
+      child: Wrap(
+        spacing: 6,
+        runSpacing: 4,
+        children: [
+          for (final (label, background, foreground) in labels)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: background,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                label,
+                style: theme.textTheme.labelSmall?.copyWith(color: foreground),
+                maxLines: 1,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Üç nokta yalnız ikincil eylemleri taşır — durum değişimi çipte.
+class _SecondaryActions extends StatelessWidget {
+  const _SecondaryActions({
+    required this.moderationCase,
+    this.onSanction,
+    this.onQuarantineToggle,
+  });
+
+  final ModerationCase moderationCase;
+  final VoidCallback? onSanction;
+  final ValueChanged<bool>? onQuarantineToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    // Karantina vaka kimliği ister; `0104` öncesi tarihsel satırlarda seçenek
+    // hiç gösterilmez — ölü menü girdisi bırakmıyoruz.
+    final canQuarantine =
+        onQuarantineToggle != null && moderationCase.supportsCaseActions;
     return PopupMenuButton<String>(
       key: const Key('moderation-secondary-actions'),
       onSelected: (value) async {
-        if (value != 'copy') return;
-        // Değişmez hedef kimliği: destek yazışmasında vakayı bu id tekilleştirir.
-        await Clipboard.setData(ClipboardData(text: moderationCase.targetId));
-        if (!context.mounted) return;
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(l10n.adminUgcIdCopied)));
+        switch (value) {
+          case 'sanction':
+            onSanction?.call();
+          case 'quarantine':
+            onQuarantineToggle?.call(!moderationCase.quarantined);
+          case 'copy':
+            // Değişmez hedef kimliği: destek yazışmasında vakayı bu id
+            // tekilleştirir.
+            await Clipboard.setData(
+              ClipboardData(text: moderationCase.targetId),
+            );
+            if (!context.mounted) return;
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(l10n.adminUgcIdCopied)));
+        }
       },
       itemBuilder: (_) => [
+        if (onSanction != null)
+          PopupMenuItem(
+            value: 'sanction',
+            child: Text(l10n.adminModerationSanctionTitle),
+          ),
+        if (canQuarantine)
+          PopupMenuItem(
+            value: 'quarantine',
+            child: Text(
+              moderationCase.quarantined
+                  ? l10n.adminModerationQuarantineRelease
+                  : l10n.adminModerationQuarantine,
+            ),
+          ),
         PopupMenuItem(value: 'copy', child: Text(l10n.classroomKopyala)),
       ],
     );

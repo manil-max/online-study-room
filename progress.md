@@ -189,29 +189,31 @@
 
 ### Ajan C — Moderasyon, kamp/observability devralması ve final QA
 
-- **Durum:** [~] Aktif — WP-439 migration dilimi (`0104`) teslim edildi; sırada WP-441 (`0105`).
-- **Son kontrol:** 2026-07-30 11:20 (Europe/Istanbul) · B/WP-435 `355f1dd` geldi, C `0104`’ü aldı ve kapattı; migration yazma kilidi C’de kalıyor.
+- **Durum:** [~] Aktif — WP-441 (`0105`) teslim edildi; sırada WP-442 (`0106`).
+- **Son kontrol:** 2026-07-30 12:10 (Europe/Istanbul) · migration yazma kilidi C’de; `0104` ve `0105` alındı.
 - **Zincir:** `WP-439(migration) → WP-441 → WP-442 → WP-443 → WP-464 → WP-465 → WP-466 → WP-467`.
-- **Hazır kanıt:** WP-439 sözleşme `e240e91` + migration bu commit, WP-440 `30559d7`, WP-462
-  `78e15cb`/golden koruması ve WP-463 `ad30631` kod+otomatik test tamam.
+- **Hazır kanıt:** WP-439 sözleşme `e240e91` + migration `7726627`, WP-440 `30559d7`,
+  WP-441 bu commit, WP-462 `78e15cb`/golden koruması ve WP-463 `ad30631` tamam.
 - **Devralınan dirty iş:** Yalnız iki `campfire_wp*_preview.png` dosyası C’ye
   aittir; önce farklılığı inceler, ilgili WP dışında stage etmez.
-- **Başlatma kapısı:** WP-441 ve WP-442 seri ilerler; migration sırası C’de
-  olduğu için dış kapı yok. WP-464 WP-442 retention sözleşmesini bekler.
-  WP-465 yalnız A/B/D çıkış kanıtları tamamlanınca başlar.
+- **Başlatma kapısı:** WP-442 doğrudan başlar; migration sırası C’de olduğu
+  için dış kapı yok. WP-464 WP-442 retention sözleşmesini bekler. WP-465 yalnız
+  A/B/D çıkış kanıtları tamamlanınca başlar.
 - **SAHİP:** moderation model/repository/provider/UI/pgTAP, account-purge
   hardening, observability/campfire QA belgeleri, entegrasyon/staging-cihaz kanıtı.
 - **Sınır:** C entegrasyon adına başka ajan ürün kodunu yeniden yazmaz; hata
   bulursa ilgili WP’yi sahibine döndürür. WP-466 staging adayını hazırlar ama
   production/stable/tag/push yapmaz.
-- **Aktif WP / sahip yollar:** WP-441 · moderation repository/provider, admin
-  action UI, `supabase/migrations/0105_*`, `supabase/tests/*moderation*` ve
-  yalnız Ajan C lane kaydı.
-- **Ortak/riskli yüzey:** Migration yazma kilidi C’de — `0104` alındı, sıradaki
-  `0105`. Repo/local head `0104`; bu hostta Docker kalkmadığı için gerçek local
-  replay/pgTAP koşamadı, `0104` **Replay bekliyor** etiketiyle teslim edildi ve
-  ortak `deploy-contract.json` (`0101`) C’nin SAHİP yüzeyi olmadığı için
-  ilerletilmedi. Production/stable kapalı.
+- **Aktif WP / sahip yollar:** WP-442 · moderation appeal/evidence/audit
+  model-repository ekranları, `supabase/migrations/0106_*`,
+  `supabase/tests/*moderation*` ve yalnız Ajan C lane kaydı.
+- **Ortak/riskli yüzey:** Migration yazma kilidi C’de — `0104`/`0105` alındı,
+  sıradaki `0106`. Repo/local head `0105`; bu hostta Docker kalkmadığı için
+  gerçek local replay/pgTAP koşamadı, iki migration da **Replay bekliyor**
+  etiketiyle teslim edildi ve ortak `deploy-contract.json` (`0101`) C’nin SAHİP
+  yüzeyi olmadığı için ilerletilmedi. WP-441 paylaşılan `app_*.arb`’a 19 admin
+  moderasyon anahtarı ekledi; yalnız bu anahtarlar stage edildi. Production/stable
+  kapalı.
 
 ### Ajan D — Grup/dürtme, tarih seçici ve seri devralması
 
@@ -4348,7 +4350,43 @@ alır; boş/uydurma migration yazılmaz.
 
 #### WP-441 — Basamaklı yaptırım, karantina, önem ve kötü niyetli rapor
 
-- **Durum / bağımlılık:** [ ] WP-440 + migration kilidi.
+- **Durum / bağımlılık:** [x] **Kod + otomatik test tamam** (Ajan C) · WP-440
+  `30559d7`, WP-439 migration `7726627`. `0105` bu hostta gerçek replay
+  koşulamadığı için **Replay bekliyor**.
+- **Koşulan denetim (Kodda doğrulandı):** `admin-user-actions` Edge Function'ında
+  `warn_user` **hiçbir şey yapmıyordu** — yönetici uyardığını sanıyor, kullanıcıya
+  hiçbir kayıt ya da bildirim gitmiyordu. `mute_24h` ise 24 saatlik **auth ban**
+  kuruyordu: "yalnız yazma kısıtı" diye sunulan basamak kullanıcıyı uygulamadan
+  tamamen atıyordu. Aksiyonlar vaka kimliği, idempotency anahtarı ve durum
+  taşımıyordu; auth çağrısı başarılı olup audit insert'i düşerse kayıt kaybolur,
+  yönetici tekrar denediğinde ikinci ceza uygulanırdı. `revoke_sanction` hangi
+  yaptırımı kaldırdığını bilmeden ban'ı topluca siliyordu. Karantina, severity,
+  SLA ve kötü niyetli rapor sayacı hiç yoktu.
+- **Bu commit'te yapılan:** `0105` ile `moderation_sanctions` defteri (iki fazlı
+  `pending → applied|failed`, tekil `idempotency_key`, hedef başına **tek aktif
+  kısıt** kısmi indeksi), `admin_begin/finish/revoke_moderation_sanction` ve
+  `admin_reconcile_moderation_sanctions`; audit satırı kapanışla **aynı
+  transaction'da** yazılır. Susturma artık auth ban değil: `class_messages`
+  insert politikasına `moderation_is_muted` eklendi, okuma açık kaldı. Uyarı
+  gerçekten iletiliyor (kalıcı satır + `notification_outbox`). Vakaya
+  `severity`/`sla_due_at` ve geri alınabilir karantina alanları eklendi;
+  `class_messages` select politikası karantinayı sunucuda uyguluyor (yazar ve
+  admin görmeye devam eder). `admin_ugc_report_groups` artık `moderation_cases`
+  üzerinden okuyor ve `case_id`/`severity`/`sla_due_at`/`quarantined` döndürüyor;
+  vakaya bağlanmamış tarihsel satırlar ikinci kolda korunuyor.
+  `admin_set_ugc_report_group_status` `open`'ı da yazıyor (WP-440 kod borcu).
+  İstemci tarafında `ModerationAction`/`ModerationSanction` sözleşmesi, depo
+  çiftleri, yaptırım sayfası, karantina menüsü ve önem/SLA rozetleri eklendi.
+- **Sınır:** Otomatik yaptırım yok — severity yalnız sıralama/SLA içindir,
+  hiçbir rapor kendiliğinden ceza doğurmaz. Ajan B'nin `admin_repository.dart`
+  ve kullanıcı sekmesi değiştirilmedi; ortak `app_*.arb`'a yalnız 19 admin
+  moderasyon anahtarı eklendi.
+- **Kanıt:** `flutter analyze` 8 hedef 0 uyarı · hedefli `flutter test` 73/73
+  yeşil (`test/features/admin/**`, `report_target_contract`, `safety/**`,
+  `moderation_block_filter`, `report_sheet_details`) · `python
+  scripts/l10n_audit.py` C yüzeyinde temiz (kalan tek bulgu A'nın
+  `study_providers.dart` satırı) · pgTAP `030_*` 19 iddia (replay bekliyor).
+  Etiket: **Kodda doğrulandı** · cihaz kabulü WP-443/WP-466.
 - **SAHİP:** moderation repository/provider, admin action UI,
   `supabase/migrations/0105_*`, `supabase/tests/*moderation*`.
 - **Uygulama:** no-action; kullanıcıya gerçekten iletilen warn; adı sıfırla;

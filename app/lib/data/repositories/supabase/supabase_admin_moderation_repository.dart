@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../models/moderation_case.dart';
+import '../../models/moderation_sanction.dart';
 import '../../models/report_target.dart';
 import '../admin_moderation_repository.dart';
 
@@ -83,6 +84,12 @@ class SupabaseAdminModerationRepository implements AdminModerationRepository {
 
       cases.add(
         ModerationCase(
+          caseId: row['case_id'] as String?,
+          severity: ModerationSeverity.fromWire(row['severity'] as String?),
+          slaDueAt: DateTime.tryParse(
+            row['sla_due_at'] as String? ?? '',
+          )?.toLocal(),
+          quarantined: row['quarantined'] == true,
           targetType: type,
           targetId: targetId,
           targetIdentity:
@@ -109,13 +116,6 @@ class SupabaseAdminModerationRepository implements AdminModerationRepository {
     required ModerationCase moderationCase,
     required ModerationCaseStatus status,
   }) async {
-    if (!status.writable) {
-      // `admin_set_ugc_report_group_status` `open` kabul etmiyor; sessizce
-      // başka duruma çevirmek yöneticiye yalan söylemek olurdu.
-      throw const ModerationException(
-        'Vakayı yeniden açma sunucuda henüz tanımlı değil.',
-      );
-    }
     try {
       final affected = await _client.rpc(
         'admin_set_ugc_report_group_status',
@@ -165,6 +165,113 @@ class SupabaseAdminModerationRepository implements AdminModerationRepository {
           if (raw is Map && raw['reason'] is String) raw['reason'] as String,
       ],
     );
+  }
+
+  @override
+  Future<ModerationSanction> applySanction(
+    ModerationSanctionRequest request,
+  ) async {
+    if (!request.isValid) {
+      throw const ModerationException('Gerekçe ve hedef zorunludur.');
+    }
+    // Üç adım (aç → auth → kapat) sunucuda, tek Edge Function çağrısında
+    // koşar. İstemci arada ölürse satır `pending` kalır ve uzlaştırma onu
+    // temizler; kullanıcı yarım durumda cezalı kalmaz.
+    try {
+      final response = await _client.functions.invoke(
+        'admin-user-actions',
+        body: {
+          ...request.toFunctionBody(),
+          'action': 'moderation_sanction',
+          'sanctionAction': request.action.wire,
+        },
+      );
+      if (response.status != 200) {
+        throw ModerationException('Yaptırım uygulanamadı: ${response.data}');
+      }
+      return _sanctionFrom(response.data);
+    } on FunctionException catch (e) {
+      throw ModerationException('Servis hatası: ${e.details}');
+    }
+  }
+
+  @override
+  Future<ModerationSanction> revokeSanction({
+    required String sanctionId,
+    required String reason,
+  }) async {
+    if (reason.trim().isEmpty) {
+      throw const ModerationException('Gerekçe zorunludur.');
+    }
+    try {
+      final response = await _client.functions.invoke(
+        'admin-user-actions',
+        body: {
+          'action': 'moderation_revoke',
+          'sanctionId': sanctionId,
+          'reason': reason.trim(),
+        },
+      );
+      if (response.status != 200) {
+        throw ModerationException('Yaptırım geri alınamadı: ${response.data}');
+      }
+      return _sanctionFrom(response.data);
+    } on FunctionException catch (e) {
+      throw ModerationException('Servis hatası: ${e.details}');
+    }
+  }
+
+  @override
+  Future<List<ModerationSanction>> fetchSanctions(String targetUserId) async {
+    try {
+      final rows = await _client
+          .from('moderation_sanctions')
+          .select()
+          .eq('target_user_id', targetUserId)
+          .order('created_at', ascending: false) as List;
+      return [
+        for (final raw in rows)
+          ModerationSanction.fromWire(Map<String, dynamic>.from(raw as Map)),
+      ];
+    } on PostgrestException catch (e) {
+      throw ModerationException(e.message);
+    }
+  }
+
+  @override
+  Future<void> setQuarantine({
+    required ModerationCase moderationCase,
+    required bool quarantined,
+    required String reason,
+  }) async {
+    final caseId = moderationCase.caseId;
+    if (caseId == null) {
+      // Vakaya bağlanmamış tarihsel rapor: sessizce hiçbir şey yapmak yerine
+      // yöneticiye neden yapılamadığını söylüyoruz.
+      throw const ModerationException(
+        'Bu tarihsel kayıt vakaya bağlı değil; karantina uygulanamaz.',
+      );
+    }
+    try {
+      await _client.rpc(
+        'admin_set_case_quarantine',
+        params: {
+          'p_case_id': caseId,
+          'p_quarantined': quarantined,
+          'p_reason': reason.trim(),
+        },
+      );
+    } on PostgrestException catch (e) {
+      throw ModerationException(e.message);
+    }
+  }
+
+  ModerationSanction _sanctionFrom(dynamic payload) {
+    final data = payload is Map ? payload['data'] : null;
+    if (data is! Map) {
+      throw const ModerationException('Sunucu yanıtı okunamadı.');
+    }
+    return ModerationSanction.fromWire(Map<String, dynamic>.from(data));
   }
 
   Future<Map<String, _ReportRow>> _fetchReportRows(List<String> ids) async {

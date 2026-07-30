@@ -43,12 +43,10 @@ class ModerationIdentity {
 
 /// Vaka durumu.
 ///
-/// `open` sunucuda satırın **varsayılan** durumudur ama
-/// `admin_set_ugc_report_group_status` yalnız `in_review|resolved|rejected`
-/// yazabilir. Bu yüzden `open` gösterilebilir, seçilemez: kuyrukta ölü bir
-/// seçenek bırakmamak için [writable] ayrımı var. Yeniden açma
-/// (`open`'a dönüş) `0105` yaptırım diliminde RPC'ye eklenecek; o güne kadar
-/// kapatılan vaka [ModerationCaseStatus.inReview] ile geri alınır.
+/// WP-441 (`0105`) ile `admin_set_ugc_report_group_status` dört durumu da
+/// yazar: yanlışlıkla kapatılan vaka gerçekten `open`'a döner, `in_review`e
+/// sapmaz. [writable] bu yüzden artık her durum için doğrudur ve yalnız
+/// sözleşmenin adı olarak duruyor.
 enum ModerationCaseStatus {
   open('open'),
   inReview('in_review'),
@@ -59,8 +57,8 @@ enum ModerationCaseStatus {
 
   final String wire;
 
-  /// Sunucuya yazılabilir mi? `open` yalnız okunur.
-  bool get writable => this != ModerationCaseStatus.open;
+  /// Sunucuya yazılabilir mi? `0105` sonrası dört durum da yazılabilir.
+  bool get writable => true;
 
   /// Kart "Kapalı" mı gösteriyor?
   bool get isClosed =>
@@ -68,6 +66,7 @@ enum ModerationCaseStatus {
       this == ModerationCaseStatus.rejected;
 
   static const List<ModerationCaseStatus> writableValues = [
+    ModerationCaseStatus.open,
     ModerationCaseStatus.inReview,
     ModerationCaseStatus.resolved,
     ModerationCaseStatus.rejected,
@@ -93,6 +92,10 @@ class ModerationCase {
     required this.latestAt,
     required this.reporters,
     required this.reportIds,
+    this.caseId,
+    this.severity = ModerationSeverity.normal,
+    this.slaDueAt,
+    this.quarantined = false,
   });
 
   /// WP-439 sözleşmesi: tür + değişmez kimlik birlikte vakayı tekilleştirir.
@@ -124,13 +127,37 @@ class ModerationCase {
   /// Vakayı oluşturan rapor kimlikleri (detay/timeline girişi).
   final List<String> reportIds;
 
+  /// `moderation_cases` satır kimliği. `0104` öncesinden kalan, vakaya
+  /// bağlanmamış tarihsel raporlarda `null`'dır — o satırlar karantina gibi
+  /// vaka bazlı aksiyonları desteklemez.
+  final String? caseId;
+
+  /// Sunucunun hesapladığı önem. Yalnız sıralama/SLA içindir; hiçbir yaptırımı
+  /// otomatik açmaz — "rapor geldi = suçlu" yoktur.
+  final ModerationSeverity severity;
+
+  /// İncelemenin bitmesi gereken an; geçtiyse kart gecikmiş sayılır.
+  final DateTime? slaDueAt;
+
+  /// İçerik inceleme bitene kadar üçüncü kişilere kapatıldı mı?
+  final bool quarantined;
+
   String get caseKey => '${targetType.wire}:$targetId';
 
-  /// Vaka açıldığından beri geçen süre. SLA rozeti WP-441'de bu değeri
-  /// sunucudan gelen severity ile birleştirecek; şimdilik yalnız bekleme.
+  /// Vaka açıldığından beri geçen süre.
   Duration waitingFor(DateTime now) => now.difference(latestAt);
 
-  ModerationCase copyWith({ModerationCaseStatus? status}) => ModerationCase(
+  /// SLA aşıldı mı? Süre yoksa gecikme de yoktur.
+  bool isOverdue(DateTime now) =>
+      slaDueAt != null && !status.isClosed && now.isAfter(slaDueAt!);
+
+  /// Karantina/yaptırım aksiyonları vaka kimliği ister.
+  bool get supportsCaseActions => caseId != null;
+
+  ModerationCase copyWith({
+    ModerationCaseStatus? status,
+    bool? quarantined,
+  }) => ModerationCase(
         targetType: targetType,
         targetId: targetId,
         targetIdentity: targetIdentity,
@@ -140,5 +167,22 @@ class ModerationCase {
         latestAt: latestAt,
         reporters: reporters,
         reportIds: reportIds,
+        caseId: caseId,
+        severity: severity,
+        slaDueAt: slaDueAt,
+        quarantined: quarantined ?? this.quarantined,
       );
+}
+
+/// Sunucunun hesapladığı vaka önemi.
+enum ModerationSeverity {
+  normal('normal'),
+  high('high');
+
+  const ModerationSeverity(this.wire);
+
+  final String wire;
+
+  static ModerationSeverity fromWire(String? wire) =>
+      wire == 'high' ? ModerationSeverity.high : ModerationSeverity.normal;
 }
