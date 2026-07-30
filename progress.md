@@ -204,17 +204,21 @@
 
 ### Ajan B — Feedback konuşmaları ve okunmamış gerçeği
 
-- **Durum:** [!] BEKLİYOR: WP-435 / WP-431 commit'i + migration kilidi
-- **Aktif WP:** — (WP-434 kod + otomatik test tamam)
+- **Durum:** [!] BEKLİYOR: WP-435 / **WP-432 commit'i** + migration kilidi
+- **Aktif WP:** — (WP-434 kod + otomatik test tamam · `c3999f3`)
 - **Zincir:** `WP-434 ✅ → WP-435 → WP-436 → WP-437 → WP-438`
 - **Son teslim:** WP-434 denetimi · `docs/qa/V57-FEEDBACK-EVIDENCE.md` +
   `app/test/features/feedback_flow_wp434_test.dart` (10/10 yeşil,
   analyze 0 uyarı). Ürün kodu/migration değişmedi.
-- **Neden bekliyor:** WP-435 sunucu tek gerçeği `0103` migration'ı yazar; kart
-  bunu WP-431 commit'i **ve** boş migration kilidine bağlıyor. İkisi de hazır
-  olunca aynı kutuda WP-435'e geçilir.
+- **Neden bekliyor (sahip talimatı 2026-07-30):** migration sırası
+  **Ajan A WP-431 (`0101`) → Ajan A WP-432 (`0102`) → Ajan B WP-435**.
+  `0102` Ajan A'ya aittir, Ajan B **almaz**; WP-435 numarasını WP-432 commit'i
+  göründükten sonra dizindeki en yüksek + 1 olarak yeniden ölçer.
+- **İzleme:** `git log`, `progress.md` ve migration kilidi kısa aralıklarla
+  izleniyor; WP-432 commit'i görünür görünmez WP-435 claim edilip uygulanır.
+  Bu kutu idle değildir.
 - **Dal:** `main`
-- **Son güncelleme:** 2026-07-30 02:45 (Europe/Istanbul)
+- **Son güncelleme:** 2026-07-30 03:25 (Europe/Istanbul)
 - **SAHİP ana yüzey:** feedback ticket/message modelleri, admin repository
   arayüzü + Supabase/InMemory çiftleri,
   admin/notification providers, `features/profile/feedback_*`,
