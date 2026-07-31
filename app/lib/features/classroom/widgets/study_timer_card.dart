@@ -186,14 +186,18 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
         );
       }
     });
-    ref.listen<String?>(selectedStudySubjectFallbackNoticeProvider, (
+    ref.listen<bool>(selectedStudySubjectFallbackNoticeProvider, (
       previous,
-      message,
+      pending,
     ) {
-      if (message == null || message == previous) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(message)));
+      if (!pending) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context).studySelectedSubjectUnavailable,
+          ),
+        ),
+      );
       ref.read(selectedStudySubjectFallbackNoticeProvider.notifier).clear();
     });
 

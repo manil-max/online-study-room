@@ -58,18 +58,26 @@ const _timerV2CommandFlushAdapter = TimerV2CommandFlushAdapter();
 /// WP-448: silinen ya da artık erişilemeyen ders tercihi için UI'nın bir kez
 /// göstereceği açıklama. Tercih aynı anda "Genel"e çevrildiğinden, uygulama
 /// yeniden açıldığında veya ders listesi yeniden aktığında tekrar üretilmez.
+///
+/// WP-468: burada **metin taşınmaz, sinyal taşınır.** Provider katmanının
+/// `BuildContext`i yoktur; hazır çevrilmiş bir cümle üretmeye kalkışmak dilin
+/// veri katmanına sızması demektir ve l10n kapısı bunu gömülü metin olarak
+/// reddeder. Cümleyi gösteren yüzey (`study_timer_card`) kendi
+/// `AppLocalizations`ından okur.
 final selectedStudySubjectFallbackNoticeProvider =
-    NotifierProvider<SelectedStudySubjectFallbackNoticeNotifier, String?>(
+    NotifierProvider<SelectedStudySubjectFallbackNoticeNotifier, bool>(
       SelectedStudySubjectFallbackNoticeNotifier.new,
     );
 
-class SelectedStudySubjectFallbackNoticeNotifier extends Notifier<String?> {
+class SelectedStudySubjectFallbackNoticeNotifier extends Notifier<bool> {
   @override
-  String? build() => null;
+  bool build() => false;
 
-  void show(String message) => state = message;
+  /// Bekleyen bir açıklama olduğunu işaretler; gösterildikten sonra [clear]
+  /// çağrılır ki aynı düşüş ikinci kez anlatılmasın.
+  void show() => state = true;
 
-  void clear() => state = null;
+  void clear() => state = false;
 }
 
 /// FCM anlık sinyaldir, teslim garantisi değildir. Uygulama foreground'dayken
@@ -1745,9 +1753,7 @@ class StudyTimerNotifier extends Notifier<StudyTimerState> {
     if (state.subjectId != null) {
       state = state.copyWith(clearSubject: true);
     }
-    ref
-        .read(selectedStudySubjectFallbackNoticeProvider.notifier)
-        .show('Seçili ders artık erişilebilir değil; Genel seçildi.');
+    ref.read(selectedStudySubjectFallbackNoticeProvider.notifier).show();
   }
 
   /// Modu değiştirir (yalnız dururken). Faz/döngü sıfırlanır, seçim kalıcılaşır.

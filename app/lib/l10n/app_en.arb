@@ -6144,5 +6144,7 @@
   "safetyAppealUpheld": "Appeal rejected; the restriction stands.",
   "@safetyAppealUpheld": {"description": "Status shown when an appeal was rejected."},
   "safetyAppealOverturned": "Appeal accepted; the restriction was lifted.",
-  "@safetyAppealOverturned": {"description": "Status shown when an appeal was accepted."}
+  "@safetyAppealOverturned": {"description": "Status shown when an appeal was accepted."},
+  "studySelectedSubjectUnavailable": "That subject is no longer available; General was selected.",
+  "@studySelectedSubjectUnavailable": {"description": "Shown once when the saved study subject was deleted or became inaccessible and the selection fell back to General."}
 }

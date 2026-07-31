@@ -1900,5 +1900,6 @@
   "safetyAppealSubmitted": "İtirazın alındı.",
   "safetyAppealPending": "İtiraz inceleniyor",
   "safetyAppealUpheld": "İtiraz reddedildi; kısıt sürüyor.",
-  "safetyAppealOverturned": "İtiraz kabul edildi; kısıt kaldırıldı."
+  "safetyAppealOverturned": "İtiraz kabul edildi; kısıt kaldırıldı.",
+  "studySelectedSubjectUnavailable": "Seçili ders artık erişilebilir değil; Genel seçildi."
 }

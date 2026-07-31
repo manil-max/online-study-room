@@ -186,10 +186,9 @@ void main() {
         () => prefs.getString('selected_study_subject.u-a') == '__general__',
       );
       expect(container.read(studyTimerProvider).subjectId, isNull);
-      expect(
-        container.read(selectedStudySubjectFallbackNoticeProvider),
-        'Seçili ders artık erişilebilir değil; Genel seçildi.',
-      );
+      // WP-468: provider metin değil sinyal taşır; cümleyi gösteren yüzey
+      // kendi AppLocalizations'ından okur.
+      expect(container.read(selectedStudySubjectFallbackNoticeProvider), isTrue);
 
       container
           .read(selectedStudySubjectFallbackNoticeProvider.notifier)
@@ -198,7 +197,8 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 30));
       expect(
         container.read(selectedStudySubjectFallbackNoticeProvider),
-        isNull,
+        isFalse,
+        reason: 'aynı düşüş ikinci kez anlatılmamalı',
       );
     });
   });
