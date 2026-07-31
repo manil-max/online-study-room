@@ -4982,7 +4982,40 @@ alır; boş/uydurma migration yazılmaz.
 
 #### WP-465 — PLAN 5 entegrasyon, tam regresyon ve eski veri güveni
 
-- **Durum / bağımlılık:** [ ] WP-448, 438, 443, 447, 451, 455, 461 ve WP-464.
+- **Durum / bağımlılık:** [~] Otomatik kapı ayağı bitti (2026-07-31, HEAD
+  `f39f6c8`, head `0114`, v56 sonrası 80 commit). Bağımlılıkların yedisi de
+  `[x]` ve gösterdikleri `docs/qa/*` kanıtları dosya olarak doğrulandı.
+  **Cihaz satırları bu karta ait değil** — WP-438 kartının kendisi
+  "cihaz satırları C/WP-465-466'da" diyor; gerçek donanım matrisi WP-466.
+- **Kanıt:** `docs/qa/V57-FULL-REGRESSION.md`.
+- **Kapılar (gerçek çıktı):** analyze temiz · `flutter test` 1433/1433 ·
+  CI ubuntu ayağı (golden hariç) 1399/1399 · CI windows ayağı (yalnız golden)
+  34/34 · pgTAP `Files=44, Tests=647 PASS` (0001→0114 sıfırdan replay) ·
+  guard 75/75 · preflight 8/8 · l10n 1480 + native 66 · Android APK
+  (`--flavor local`) · Windows Release exe · gizli dosya taraması temiz.
+- **🔴 Sayı korunumu (kartın asıl istediği):** 1399 + 34 = **1433**, yani
+  golden tag ayrımı hiçbir testi dışarıda bırakmıyor ve
+  `--dart-define-from-file` hiçbir testi sessizce atlatmıyor. pgTAP tarafında
+  yereldeki `plan()` toplamı 647, CI'ın koştuğu 647 — hiçbir dosya erken
+  kesilmemiş. `@Skip`/`solo:` yok; tek `skip:` eşleşmesi bir UI etiketi.
+- **Bulgular:** kritik/ağır **0**; hiçbir sahip kartı yeniden açılmadı. İki
+  **P2 kapı kusuru** (ürün kusuru değil, bu yüzden burada düzeltilmedi →
+  WP-467 backlog + kapı kilidi):
+  1. `app/integration_test/v8_critical_flows_test.dart` **hiçbir CI kapısında
+     koşmuyor** (`flutter test` yalnız `test/` koşar; yalnız elle çalıştırılan
+     `windows_local_dev.ps1` çağırıyor). Testin kendisi sağlam — bu turda
+     cihazda koşturuldu, 1/1 geçti. `flutter analyze` dosyayı kapsadığı için
+     derleme çürümesi sessiz kalmaz; kaçan yalnız davranışsal regresyon.
+  2. `scripts/windows_fast_smoke.ps1` **hard-fail etmiş uygulamaya da PASS
+     diyor** — ampirik gösterildi: "Secure configuration could not be verified
+     / `invalid_version_build`" ekranındaki uygulama için de PASS bastı.
+     Yalnız "görünür pencere oluştu mu" ölçüyor; ekran görüntüsü üretiyor ama
+     karar ona bakmıyor.
+  P3'ler: dört `env.*.example.json` şablonunda bayat `MIGRATION_HEAD`
+  (yayın bundan etkilenmiyor, `release.yml` değeri sözleşmeden üretir);
+  flavor'sız `flutter build apk` beta'ya düşüp yanıltıcı hata veriyor;
+  a11y için ayrılmış test yok. Ayrıca `app/analyze_out.txt` (izlenen, eski
+  UTF-16 analyze hata dökümü, hiçbir referansı yok) **kaldırıldı**.
 - **SAHİP:** entegrasyon hataları için yalnız koordinasyon; ilgili ürün dosyası
   ilgili ajan tarafından düzeltilir. H tam kalite/test/QA kayıtlarını yazar.
 - **Kapılar:** `flutter analyze`; CI ile aynı
