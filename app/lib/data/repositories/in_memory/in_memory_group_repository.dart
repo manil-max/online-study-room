@@ -268,31 +268,43 @@ class InMemoryGroupRepository implements GroupRepository {
     return group;
   }
 
-  @override
-  Stream<List<StudyGroup>> watchUserGroups(String userId) async* {
-    yield _groupsForUser(userId);
-    await for (final _ in _changes.stream) {
-      yield _groupsForUser(userId);
-    }
+  /// WP-447: "ilk değer + her değişimde yeniden oku" akışı.
+  ///
+  /// 🔴 Eskiden bu üç akış `async*` + `await for (_ in _changes.stream)` idi.
+  /// `_changes` hiç kapanmadığı için üretici sonsuza dek askıda kalıyor ve
+  /// `subscription.cancel()` **hiç tamamlanmıyordu**: aboneliği iptal eden her
+  /// test 30 sn'de zaman aşımına düşüyordu. İki cihazlı senaryonun bugüne dek
+  /// yazılmamış olmasının sebebi de buydu — yazan herkes asılıp vazgeçti.
+  Stream<T> _watch<T>(T Function() read) {
+    late final StreamController<T> controller;
+    StreamSubscription<void>? subscription;
+    controller = StreamController<T>(
+      onListen: () {
+        controller.add(read());
+        subscription = _changes.stream.listen((_) => controller.add(read()));
+      },
+      onCancel: () async {
+        await subscription?.cancel();
+        subscription = null;
+      },
+    );
+    return controller.stream;
   }
 
   @override
-  Stream<PrimaryGroupPreference> watchPrimaryGroupPreference(
-    String userId,
-  ) async* {
-    yield _primaryPreferences[userId] ??
-        const PrimaryGroupPreference(
-          primaryGroupId: null,
-          selectionRevision: 0,
-        );
-    await for (final _ in _changes.stream) {
-      yield _primaryPreferences[userId] ??
-          const PrimaryGroupPreference(
-            primaryGroupId: null,
-            selectionRevision: 0,
-          );
-    }
-  }
+  Stream<List<StudyGroup>> watchUserGroups(String userId) =>
+      _watch(() => _groupsForUser(userId));
+
+  @override
+  Stream<PrimaryGroupPreference> watchPrimaryGroupPreference(String userId) =>
+      _watch(
+        () =>
+            _primaryPreferences[userId] ??
+            const PrimaryGroupPreference(
+              primaryGroupId: null,
+              selectionRevision: 0,
+            ),
+      );
 
   @override
   Future<PrimaryGroupPreference> setPrimaryGroup({
@@ -335,12 +347,8 @@ class InMemoryGroupRepository implements GroupRepository {
   }
 
   @override
-  Stream<List<Profile>> watchMembers(String groupId) async* {
-    yield List.unmodifiable(_members[groupId] ?? const []);
-    await for (final _ in _changes.stream) {
-      yield List.unmodifiable(_members[groupId] ?? const []);
-    }
-  }
+  Stream<List<Profile>> watchMembers(String groupId) =>
+      _watch(() => List<Profile>.unmodifiable(_members[groupId] ?? const []));
 
   @override
   Future<void> updateGroupName(String groupId, String name) async {
@@ -442,8 +450,20 @@ class InMemoryGroupRepository implements GroupRepository {
   Future<List<Profile>> listBannedMembers(String groupId) async =>
       List.unmodifiable(_bannedMembers[groupId]?.values ?? const <Profile>[]);
 
+  /// WP-447: sahiplik değişmezi ÇIKIŞ YOLUNDAN bağımsızdır.
+  ///
+  /// `leaveGroup` sahibi reddediyordu ama kick yolu (`removeMember`) hiçbir şey
+  /// sormuyordu; aynı boşluk sunucuda da vardı — `0108` RPC'yi kapatmış,
+  /// `group_members` üzerindeki doğrudan UPDATE kapısını açık bırakmıştı.
+  /// Sahipsiz grupta davet kodu yenilenemez, üye çıkarılamaz, grup silinemez.
+  /// Sunucu karşılığı: `0111` içindeki `group_members_departure_guard`.
   @override
   Future<void> removeMember(String groupId, String userId) async {
+    if (_groups[groupId]?.createdBy == userId) {
+      throw const GroupOwnerCannotLeaveException(
+        'Grup sahibi gruptan çıkarılamaz: önce devret ya da grubu sil.',
+      );
+    }
     _members[groupId]?.removeWhere((m) => m.id == userId);
     _userGroups[userId]?.remove(groupId);
     _reconcilePrimaryGroup(userId);
@@ -497,8 +517,17 @@ class InMemoryGroupRepository implements GroupRepository {
       );
     }
 
+    // 4) WP-447: anahtar İŞTEN ÖNCE, hiçbir `await`e uğramadan ayrılır.
+    //
+    // Sunucuda 20 eşzamanlı tap `pg_advisory_xact_lock` ile sıraya girer ve
+    // 19'u replay dalından `left` alır. Bellek-içi modelde kilit yok: kayıt
+    // `await`ten sonra yapılırsa çağrılar aynı boş komut tablosunu görür,
+    // ilki dışındakiler "artık üye değil" deyip `alreadyLeft` döner. Sonuç
+    // kullanıcıya zarar vermez ama MODEL SUNUCUDAN AYRIŞIR; bu ayrışma tam
+    // olarak WP-373'te özelliğin sessizce ölmesine yol açan sınıftandır.
+    final outcome = record(GroupLeaveOutcome.left);
     await removeMember(groupId, userId);
-    return record(GroupLeaveOutcome.left);
+    return outcome;
   }
 
   @override

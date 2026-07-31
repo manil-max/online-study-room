@@ -4512,13 +4512,43 @@ alır; boş/uydurma migration yazılmaz.
 
 #### WP-447 — Grup yarış koşulu ve güvenlik kabul matrisi
 
-- **Durum / bağımlılık:** [ ] WP-446.
+- **Durum / bağımlılık:** [x] 2026-07-31 — WP-446.
 - **SAHİP:** group/nudge/chat integration testleri ve QA belgesi.
 - **Matris:** 20× leave tap, offline leave/retry, iki cihaz, primary group,
   last-admin, ban/block/mute, muted nudge, message report, restart.
 - **Kabul:** duplicate mutation 0; gecikmiş “sonradan çıkmış” görünüm 0; muted
   nudge bypass 0; kavramlar arası istenmeyen yan etki 0.
 - **Model:** Opus.
+- **Sonuç (2026-07-31):** matris iki uçtan kuruldu —
+  `app/test/data/group_race_matrix_wp447_test.dart` (17 senaryo) ve
+  `supabase/tests/036_group_departure_matrix.test.sql` (26 iddia); kanıt belgesi
+  `docs/qa/V57-GROUP-RACE-MATRIX.md`. pgTAP 536 → 562.
+  **Bulunan hata 1 (ciddi):** WP-445 çıkışı RPC'ye taşıdı ama ESKİ KAPIYI
+  kapatmadı. `members_update_self` politikası (`0008`) authenticated her
+  istemcinin `group_members` satırına doğrudan `left_at` yazmasına izin
+  veriyordu; bu yol advisory lock'u, komut anahtarını, presence temizliğini ve
+  **sahiplik kontrolünü** atlıyor. Grup sahibi kendini çıkarabiliyordu → sahipsiz
+  grupta davet kodu yenilenemez, üye çıkarılamaz, grup silinemez. Aynı boşluk
+  istemcide de vardı (`removeMember` hiçbir şey sormuyordu).
+  `0111_group_membership_departure_guard.sql`: `before update of left_at`
+  trigger'ı iki değişmezi yazma yolundan bağımsız kılar — sahip çıkışı her
+  yoldan reddedilir, kendi çıkışı yalnız `leave_group` RPC'sinden geçer
+  (transaction-local bayrak). Yöneticinin başkasını çıkarması, ban ve yeniden
+  katılım bozulmadı; üçü de testte ölçülüyor.
+  **Bulunan hata 2:** bellek-içi `watchUserGroups`/`watchMembers`/
+  `watchPrimaryGroupPreference` hiç kapanmayan bir controller üzerinde
+  `async*` + `await for` kullanıyordu; `subscription.cancel()` hiç
+  tamamlanmıyor, iptal eden test 30 sn'de zaman aşımına düşüyordu. İki cihazlı
+  senaryonun bugüne dek yazılmamış olmasının sebebi muhtemelen buydu.
+  **Bulunan hata 3:** model eşzamanlılıkta sunucudan ayrışıyordu — komut anahtarı
+  `await`ten sonra kaydediliyordu, 20 eşzamanlı tapte 19'u `already_left`
+  dönüyordu (sunucuda advisory lock hepsine `left` verir). Anahtar artık senkron
+  ayrılıyor.
+  İki mutasyonla doğrulandı (sahip muhafızı kaldır, anahtar kaydını geri al ⇒
+  2 kırmızı). Kapılar: `flutter test` 1364/1364, `flutter analyze lib test`
+  temiz, guard.tests 75/75, release-preflight 8/8.
+  **Dağıtım:** `0111` *replay bekliyor* — yerel head 0111, staging/production
+  head **0100** (değişmedi), dağıtım kapıları kapalı.
 
 ### Faz E — Ders seçimi ve görevler
 
