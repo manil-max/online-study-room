@@ -216,6 +216,13 @@ select throws_ok(
        '40000000-0000-0000-0000-0000000000a2', 'running', 2, 'study',
        clock_timestamp(), 1, 1, clock_timestamp() + interval '150 seconds')$$,
   '23505',
+  -- pgTAP'in uc argumanli `throws_ok(sql, errcode, errmsg)` bicimi ucuncu
+  -- argumani ACIKLAMA degil BEKLENEN MESAJ sayar; iddia dogru sebeple
+  -- (`live_study_runs_one_active_study_user`) patladigi halde metin
+  -- karsilastirmasindan dusuyordu. Dort argumanli bicimde mesaj `null`
+  -- birakilir; boylece indeks adi degisse bile iddia errcode uzerinden ayakta
+  -- kalir ve son argumani gercek aciklama olur (WP-473).
+  null,
   'two simultaneously running v2 runs for one account are impossible at the schema level'
 );
 
