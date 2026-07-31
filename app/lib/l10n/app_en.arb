@@ -2223,6 +2223,30 @@
   "@coreSeriAtesi": {
     "description": "Core user-facing text. Source: Seri ateşi"
   },
+  "streakFlameCompleted": "Goal completed today",
+  "@streakFlameCompleted": {
+    "description": "Streak flame state. Source: Bugun hedef tamamlandi"
+  },
+  "streakFlamePending": "Still time today",
+  "@streakFlamePending": {
+    "description": "Streak flame state. Source: Bugun icin hala sure var"
+  },
+  "streakFlameAtRisk": "Streak ends unless you finish today",
+  "@streakFlameAtRisk": {
+    "description": "Streak flame state. Source: Bugun tamamlanmazsa seri bitecek"
+  },
+  "streakFlameNone": "No streak yet",
+  "@streakFlameNone": {
+    "description": "Streak flame state. Source: Henuz seri yok"
+  },
+  "streakScopePersonal": "Personal",
+  "@streakScopePersonal": {
+    "description": "Streak scope label. Source: Kisisel"
+  },
+  "streakScopeGroup": "Group",
+  "@streakScopeGroup": {
+    "description": "Streak scope label. Source: Grup"
+  },
   "coreSeul": "Seoul",
   "@coreSeul": {
     "description": "Core user-facing text. Source: Seul"

@@ -4701,7 +4701,7 @@ alır; boş/uydurma migration yazılmaz.
 
 #### WP-454 — Üç alev durumu ve kişisel/grup ayrımı
 
-- **Durum / bağımlılık:** [ ] WP-453.
+- **Durum / bağımlılık:** [x] 2026-07-31 — WP-453 (Faz 2 `0112` ile kapandı).
 - **SAHİP:** streak/goal UI, kişisel ve grup hedef kartları,
   `core/stats/progression_visuals.dart`, ilgili widget/golden testleri.
 - **Durumlar:** (1) bugün hedef tamamlandı: canlı alev; (2) bugün henüz süre var:
@@ -4711,6 +4711,22 @@ alır; boş/uydurma migration yazılmaz.
   label ile ayırt edilir, yalnız renge dayanmaz; küçük kartta işaret okunur;
   dark/light ve text scale golden'ları.
 - **Model:** Sonnet.
+- **Sonuç (2026-07-31):** `features/stats/widgets/goal_streak_flame.dart` +
+  `app/test/features/stats/goal_streak_flame_wp454_test.dart` (12 test, 3
+  golden). Durum yalnız `GoalStreakProjection.state`ten okunur; widget tarih/saat
+  bilmiyor. Kapsam ayrımı üç katmanlı: renk + çerçeve biçimi (kişisel yuvarlak,
+  grup köşeli 2px) + rozet metni; ekran okuyucu "Grup · 5 · Bugün tamamlanmazsa
+  seri bitecek" gibi tek cümle duyar. Grace rengi bilerek kırmızı DEĞİL (v49
+  sahip notu: kırmızı rozet kırmızı temada kayboluyor). 6 yeni l10n anahtarı.
+- **🔴 Golden'ların sınırı (mutasyonla ölçüldü, tahmin değil):** renk/boşluk/tema
+  değişikliğinde üç golden de kırmızıya döner, ama **İKON değişikliğini hiçbiri
+  görmez** — `flutter test` gerçek MaterialIcons fontunu yüklemez, glifler boş
+  kutu çizilir, yani `warning_amber_rounded` ile `local_fire_department`
+  golden'da birebir aynıdır. Kartın "yalnız renge dayanmaz" kabulünü bu yüzden
+  golden değil, `Icon.icon` alanını doğrudan okuyan `her durum ayrı ikon taşır`
+  testi taşıyor. Bu uyarı test dosyasının başına da yazıldı; ikisini karıştırıp
+  golden'a güvenen biri ayrımı sessizce kaybeder.
+  Kapılar: `flutter test` 1399/1399, analyze temiz, l10n OK 1480.
 
 #### WP-455 — Seri ve bütün ilerleme kabul matrisi
 
