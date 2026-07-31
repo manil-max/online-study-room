@@ -7,7 +7,30 @@ $sha = Get-GitHead -RepoRoot $repoRoot
 # migration dizini. Asagidaki negatif senaryolar bilerek yanlis head kullanir.
 $head = Get-LocalMigrationHead -RepoRoot $repoRoot
 
-& $script -Channel beta -Tag beta-v4402 -ExpectedGitSha $sha -ExpectedMigrationHead $head -ValidateOnly | Out-Null
+# WP-469: preflight iki sarti birden arar — yerel head beklenen head'e esit
+# OLMALI **ve** hedef ortamin kontrat head'i de ayni olmali. Yani beta ancak
+# yerel semanin staging'e gercekten uygulanmis olmasi halinde gecebilir.
+#
+# Bu iki durum da mesrudur ve test ikisini de anlamli tutar:
+#   * yerel head == staging head  -> pozitif senaryo gecmeli,
+#   * yerel head staging'in onunde -> preflight **fail-closed** dusmeli.
+# v57 turu `0101`-`0108`i yazdi ama hicbirini uygulamadi; su an ikinci
+# durumdayiz ve pozitif senaryoyu zorlamak "uygulanmamis semayla beta cikar"
+# demek olurdu. Kontrati staging'i 0108 yazacak sekilde "duzeltmek" ayni
+# yalanin baska turudur; staging head'i yalniz gercek apply sonrasi ilerler.
+$stagingHead = (Get-DeployContract -RepoRoot $repoRoot).staging.migration_head
+if ($head -eq $stagingHead) {
+  & $script -Channel beta -Tag beta-v4402 -ExpectedGitSha $sha -ExpectedMigrationHead $head -ValidateOnly | Out-Null
+} else {
+  $failed = $false
+  try {
+    & $script -Channel beta -Tag beta-v4402 -ExpectedGitSha $sha -ExpectedMigrationHead $head -ValidateOnly | Out-Null
+  } catch { $failed = $true }
+  if (-not $failed) {
+    throw "Preflight must fail closed while local head $head is ahead of staging $stagingHead."
+  }
+  Write-Host "Local head $head is ahead of staging $stagingHead; beta preflight correctly fails closed."
+}
 $cases = @(
   @{ Name = 'wrong SHA'; Channel = 'beta'; Tag = 'beta-v4402'; Sha = ('0' * 40); Head = $head },
   @{ Name = 'wrong head'; Channel = 'beta'; Tag = 'beta-v4402'; Sha = $sha; Head = '0068' },
