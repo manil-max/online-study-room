@@ -4730,7 +4730,7 @@ alır; boş/uydurma migration yazılmaz.
 
 #### WP-455 — Seri ve bütün ilerleme kabul matrisi
 
-- **Durum / bağımlılık:** [ ] WP-454 + WP-451 fixture.
+- **Durum / bağımlılık:** [x] 2026-07-31 — WP-454 + WP-451 fixture.
 - **SAHİP:** stats/streak/goal/achievement/group progression testleri ve
   `docs/qa/V57-PROGRESSION-EVIDENCE.md`.
 - **Matris:** tamamlandı/kısmi/açıldı; tek kaçırma/iki kaçırma; tekrar grace;
@@ -4739,6 +4739,31 @@ alır; boş/uydurma migration yazılmaz.
 - **Kabul:** yanlış artış 0, çift XP/reward 0, kişisel-grup sızıntısı 0,
   UI/server state farkı 0.
 - **Model:** Opus.
+- **Sonuç (2026-07-31):** `app/test/data/progression_matrix_wp455_test.dart`
+  (34 test) + `supabase/tests/038_progression_matrix.test.sql` (20 iddia,
+  pgTAP 587 → 607) + `docs/qa/V57-PROGRESSION-EVIDENCE.md` (27 satırlık
+  matris). Yeni migration YOK; head `0112`de kalır.
+  **Yalnız sunucuda kanıtlanabilen satırlar** `038`e düştü: kişisel ve grup
+  FARKLI hedeflerle aynı günde farklı sonuç verir (alpha 5400 sn ile 180 dk
+  kişisel hedefi geçemez, grup 9000 sn ile 120 dk hedefini geçer), grup hedefi
+  üye toplamıdır, gün sınırı kapsamın saat dilimine göre kesilir (23:59/00:01),
+  `live`/`manual` eşit sayılır ve hedefe TAM eşitlik kabul edilir.
+  Mutasyonla sınandı: grace kaldırma ⇒ 7 kırmızı, kapsam türünü düşürme ⇒
+  1 kırmızı (bkz. evidence §3 — o mutasyonu neden tek testin yakaladığı).
+- **🔴 Kapanmayan kabul — sahip kararı bekliyor:** `UI/server state farkı 0`
+  SAĞLANMIYOR. Repo'da üç ayrı `seri` tanımı var ve aynı geçmişte farklı sayı
+  veriyorlar: `goal_streak_projection` (`0112`) **3**,
+  `_achievement_metrics.streak_days` (`0025` gövdesi) **1**,
+  `currentStreakWithFreezes` (`gamification.dart`) bakiyeye göre **1 veya 3**
+  — üstelik tüketilebilir `streak_freezes` bakiyesinden düşerek, ki WP-453
+  kartı bu karışımı açıkça yasaklıyordu. Bugün sahada çelişki görünmüyor çünkü
+  `GoalStreakFlame`in `lib/` içinde çağrı yeri yok; alev bir ekrana
+  yerleştirilmeden önce kapatılmalı. **Kapatmadım** çünkü tek anlamlı yön
+  `streak_days`i grace'li yapmaktır ve `fire_streak` XP kademeleri
+  (7/30/150/365/730/1000) o metrikten beslendiği için değişiklik mevcut
+  kullanıcıların kademesini geriye dönük yükseltir — ekonomi kararı.
+  İki uçta da ayrışmayı pinleyen birer test var; hizalandığında kasten
+  kırmızıya dönerler. Ayrıntı: `docs/qa/V57-PROGRESSION-EVIDENCE.md` §4.
 
 ### Faz G — Ayarlar, hesap, dil ve yayın yüzeyleri
 
