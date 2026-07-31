@@ -181,30 +181,12 @@ begin
     v_ticket.latest_message_seq
   ) returning * into v_message;
 
-  -- 🔴 WP-473 onarımı: bu blok `0074`'te vardı ve WP-435 fonksiyonu
-  -- `create or replace` ile yeniden yazarken **sessizce düştü**. Sonuç, destek
-  -- bir bilete yanıt verdiğinde kullanıcının bunu hiç öğrenememesiydi; okundu
-  -- imleci/rozet zinciri yalnız uygulama açıkken çalışır, duyuru+push hattının
-  -- yerini tutmaz. Idempotency yukarıdaki `client_message_id` kapısındadır,
-  -- yani tekrar gönderim ikinci duyuru üretmez.
-  if v_sender_role = 'admin' then
-    insert into public.announcements (
-      title,
-      message,
-      target_type,
-      target_id,
-      related_feedback_ticket_id,
-      created_by
-    ) values (
-      'Geri bildiriminize yanıt verildi',
-      v_normalized_message,
-      'user',
-      v_ticket.user_id::text,
-      v_ticket.id,
-      auth.uid()
-    );
-  end if;
-
+  -- ℹ️ `0074`'teki admin-yanıtı duyurusu burada **bilerek yoktur.** Duyuru
+  -- satırı aynı mesajın ikinci bir gerçeğiydi; WP-435 tek gerçek olarak konuşma
+  -- dizisini seçti, okunmamış sinyali `feedback_ticket_read_watermarks` +
+  -- WP-436 rozet zinciri üzerinden yürüyor. `021_feedback_thread_single_truth`
+  -- bunu açıkça kilitliyor ("admin replies no longer create a second
+  -- announcement truth"), o yüzden blok geri getirilmemelidir.
   return v_message;
 end;
 $$;

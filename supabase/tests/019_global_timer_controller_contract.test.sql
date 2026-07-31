@@ -181,25 +181,39 @@ select ok(
 );
 
 -- ------------------------------- 8. kira süpürücüsü oturum UYDURMAZ
+--
+-- 🔴 İddia süpürücünün **kendi** ürettiği oturumu ölçmelidir. Eski hâl
+-- kullanıcının bütün `study_sessions` satırlarını sayıp 0 bekliyordu; oysa bu
+-- dosyadaki normal `stop` komutları meşru oturumlar yazar, yani test süpürücü
+-- kusursuz olsa bile düşerdi (WP-473; dosya hiç koşmadığı için görülmemişti).
+-- Doğru ölçüm: süpürücüden hemen önceki sayıyı al, sonra değişmediğini göster.
 reset role;
+select count(*)::int as sessions_before
+from public.study_sessions
+where user_id = '10000000-0000-0000-0000-000000000001' \gset
+
 select public.expire_global_timer_v2_leases(200);
 
 select is(
   (select count(*)::int from public.study_sessions
    where user_id = '10000000-0000-0000-0000-000000000001'),
-  0,
+  :'sessions_before'::int,
   'expiring a lease abandons the run without fabricating a study session'
 );
 
 -- ------------------------------- 9. hesap-geneli tek aktif koşu invariant'ı
+-- `client_request_id` `0051`'den beri NOT NULL'dır; kolonu vermeyen eski hâl
+-- kısmi tekil indeksi hiç sınayamadan `23502` ile düşüyordu (WP-473).
 select throws_ok(
   $$insert into public.live_study_runs(
-      user_id, status, protocol_version, run_kind, effective_started_at,
-      run_revision, user_state_version, lease_expires_at)
+      user_id, client_request_id, status, protocol_version, run_kind,
+      effective_started_at, run_revision, user_state_version, lease_expires_at)
     values
-      ('10000000-0000-0000-0000-000000000001', 'running', 2, 'study',
+      ('10000000-0000-0000-0000-000000000001',
+       '40000000-0000-0000-0000-0000000000a1', 'running', 2, 'study',
        clock_timestamp(), 1, 1, clock_timestamp() + interval '150 seconds'),
-      ('10000000-0000-0000-0000-000000000001', 'running', 2, 'study',
+      ('10000000-0000-0000-0000-000000000001',
+       '40000000-0000-0000-0000-0000000000a2', 'running', 2, 'study',
        clock_timestamp(), 1, 1, clock_timestamp() + interval '150 seconds')$$,
   '23505',
   'two simultaneously running v2 runs for one account are impossible at the schema level'

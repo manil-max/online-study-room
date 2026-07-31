@@ -25,7 +25,8 @@ insert into public.feedback_tickets (
   'feedback', 'Yazışma testi', 'İlk geri bildirim', 'open'
 );
 
-select plan(12);
+-- 11: WP-473'te iki bayat duyuru iddiası tek "duyuru üretilmez" iddiasına indi.
+select plan(11);
 
 select ok(
   exists(
@@ -90,20 +91,19 @@ select is(
   'super-admin reply receives the server-derived admin role'
 );
 
+-- 🔴 WP-473: bu iki iddia `0074` (WP-317) dünyasına aitti; admin yanıtı o
+-- zaman kullanıcıya ayrı bir duyuru satırı yazıyordu. `0103` (WP-435) tek
+-- gerçek olarak konuşma dizisini seçti ve duyuru satırını **bilerek** kaldırdı:
+-- aynı mesajın ikinci bir gerçeği olmayacak, okunmamış sinyali okundu imleci ve
+-- WP-436 rozet zinciri taşıyacak. Kanonik kaynak
+-- `021_feedback_thread_single_truth`'tur ("admin replies no longer create a
+-- second announcement truth"). Bu dosya hiç koşmadığı için iki sözleşme üç tur
+-- boyunca yan yana durabildi; eski iddia yenisiyle değiştiriliyor.
 select is(
-  (select target_id from public.announcements
-    where related_feedback_ticket_id = '40000000-0000-0000-0000-000000000001'
-    order by created_at desc limit 1),
-  '10000000-0000-0000-0000-000000000001',
-  'admin reply creates a user-targeted announcement for the ticket owner'
-);
-
-select is(
-  (select created_by::text from public.announcements
-    where related_feedback_ticket_id = '40000000-0000-0000-0000-000000000001'
-    order by created_at desc limit 1),
-  '10000000-0000-0000-0000-000000000002',
-  'announcement author is the authenticated admin, not a client-supplied id'
+  (select count(*) from public.announcements
+    where related_feedback_ticket_id = '40000000-0000-0000-0000-000000000001'),
+  0::bigint,
+  'admin reply does not fork a second announcement truth for the same message'
 );
 
 select public.mark_feedback_ticket_messages_read(

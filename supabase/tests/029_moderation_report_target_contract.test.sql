@@ -102,13 +102,23 @@ select is(
 );
 set local role authenticated;
 select set_config('request.jwt.claim.sub', :'alpha', true);
+-- 🔴 WP-473: bu iddia `authenticated`/alpha altında **hiçbir şey kanıtlamıyordu.**
+-- `ugc_reports_update_admin` politikası `using (is_super_admin())` der ve alpha
+-- bu noktada henüz `app_admins`'e eklenmemiştir (ekleme birkaç satır aşağıda);
+-- yani UPDATE sıfır satır eşleşiyor, tetikleyici hiç çalışmıyor ve pgTAP
+-- "no exception thrown" diyordu. Ayrıcalıklı rolde RLS devre dışıdır, satırlar
+-- gerçekten eşleşir ve iddia asıl güçlü hâlini alır: kanıt alanlarını **tablo
+-- sahibi bile** değiştiremez.
+reset role;
 select throws_like(
   $$update public.ugc_reports
     set canonical_snapshot = '{}'::jsonb
     where target_type = 'message' and target_id = '40000000-0000-0000-0000-000000000010'$$,
   '%ugc_report_evidence_immutable%',
-  'kanıt ve hedef alanları update ile değiştirilemez'
+  'kanıt ve hedef alanları sahibi tarafından bile update ile değiştirilemez'
 );
+set local role authenticated;
+select set_config('request.jwt.claim.sub', :'alpha', true);
 
 reset role;
 insert into public.app_admins (user_id) values (:'alpha'::uuid) on conflict do nothing;
