@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
 import '../../../core/tasks/task_deadline.dart';
-import '../../../data/models/user_task.dart';
+import '../../../core/tasks/task_sections.dart';
 import '../../../data/providers/user_task_providers.dart';
 import '../dashboard_card.dart';
 
@@ -31,8 +31,16 @@ class TasksCard extends ConsumerWidget {
           final ultraCompact = h < 100 || w < 180;
           final compact = h < 160;
 
+          // Rozet yalnız bugün işlem bekleyen görevleri sayar; sırası gelmemiş
+          // tekrarlanan görev kullanıcıya bugünün borcu gibi görünmemeli.
           final activeCount = tasksAsync.maybeWhen(
-            data: (all) => all.where((t) => !t.completed).length,
+            data: (all) => tasksInSection(
+              groupTasksBySection([
+                for (final t in all)
+                  if (t.isRecurring || !t.completed) t,
+              ], now),
+              TaskSection.today,
+            ).where((entry) => !entry.task.completed).length,
             orElse: () => 0,
           );
 
@@ -106,10 +114,18 @@ class TasksCard extends ConsumerWidget {
                       onRetry: () => ref.invalidate(userTasksProvider),
                     ),
                     data: (all) {
-                      final active = sortUserTasksByDue([
+                      // Kart önce "bugün ne var" sorusunu yanıtlar: Bugün
+                      // bölümü üstte, ileri tarihliler ve sırası gelmemiş
+                      // tekrarlananlar altında kalır (WP-450).
+                      final entries = groupTasksBySection([
                         for (final t in all)
-                          if (!t.completed || t.isDaily) t,
-                      ]);
+                          if (t.isRecurring || !t.completed) t,
+                      ], now);
+                      final active = [
+                        ...tasksInSection(entries, TaskSection.today),
+                        ...tasksInSection(entries, TaskSection.other),
+                        ...tasksInSection(entries, TaskSection.recurring),
+                      ];
                       if (active.isEmpty) {
                         return _EmptyTasks(label: l10n.taskListEmpty);
                       }
@@ -138,13 +154,18 @@ class TasksCard extends ConsumerWidget {
                               ),
                             );
                           }
+                          final entry = show[i];
                           return _HomeTaskTile(
-                            task: show[i],
+                            entry: entry,
                             now: now,
                             dense: compact,
-                            onToggle: () => ref
-                                .read(userTaskActionsProvider)
-                                .toggle(show[i].id),
+                            // Sırası gelmemiş occurrence tamamlanamaz; tap
+                            // kapalıdır ki kullanıcı hataya koşmasın.
+                            onToggle: entry.nextOccurrenceDay != null
+                                ? null
+                                : () => ref
+                                      .read(userTaskActionsProvider)
+                                      .toggle(entry.task.id),
                           );
                         },
                       );
@@ -203,26 +224,32 @@ class _EmptyTasks extends StatelessWidget {
 
 class _HomeTaskTile extends StatelessWidget {
   const _HomeTaskTile({
-    required this.task,
+    required this.entry,
     required this.now,
     required this.onToggle,
     this.dense = false,
   });
 
-  final UserTask task;
+  final TaskSectionEntry entry;
   final DateTime now;
-  final VoidCallback onToggle;
+  final VoidCallback? onToggle;
   final bool dense;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
-    final color = taskUrgencyColor(now, task.dueAt, theme.colorScheme);
+    final task = entry.task;
+    final nextDay = entry.nextOccurrenceDay;
+    final color = nextDay != null
+        ? theme.colorScheme.onSurfaceVariant
+        : taskUrgencyColor(now, task.dueAt, theme.colorScheme);
     final kind = taskUrgencyKind(now, task.dueAt);
-    final overdue = kind == TaskUrgencyKind.overdue;
-    final hasDue = task.dueAt != null;
-    final remaining = taskRemainingShort(l10n, now, task.dueAt);
+    final overdue = nextDay == null && kind == TaskUrgencyKind.overdue;
+    final hasDue = nextDay == null && task.dueAt != null;
+    final remaining = nextDay != null
+        ? taskDueDateLabel(now, nextDay, l10n.localeName)
+        : taskRemainingShort(l10n, now, task.dueAt);
 
     return Semantics(
       button: true,
@@ -259,19 +286,21 @@ class _HomeTaskTile extends StatelessWidget {
                   ),
                 ),
               ),
-              if (task.isDaily) ...[
+              if (task.isRecurring) ...[
                 const SizedBox(width: 6),
                 Tooltip(
-                  message: task.completed
-                      ? l10n.taskListDailyStreakStep
-                      : l10n.taskListDailyRefresh,
+                  message: task.intervalDays > 1
+                      ? l10n.taskListRepeatEvery(task.intervalDays)
+                      : (task.completed
+                            ? l10n.taskListDailyStreakStep
+                            : l10n.taskListDailyRefresh),
                   child: Icon(
                     Icons.repeat,
                     size: 17,
                     color: theme.colorScheme.primary,
                   ),
                 ),
-                if (task.completed)
+                if (task.completed && task.intervalDays == 1)
                   Text(
                     '+1',
                     style: theme.textTheme.labelSmall?.copyWith(

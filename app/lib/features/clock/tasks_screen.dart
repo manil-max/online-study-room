@@ -3,10 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
 import '../../core/tasks/task_deadline.dart';
+import '../../core/tasks/task_sections.dart';
 import '../../data/models/user_task.dart';
 import '../../data/providers/user_task_providers.dart';
 
-/// Araçlar → Görevler: tam CRUD (WP-198).
+/// Araçlar → Görevler: tam CRUD (WP-198), bölümlü bilgi mimarisi (WP-450).
 class TasksScreen extends ConsumerStatefulWidget {
   const TasksScreen({super.key, this.embedded = false});
 
@@ -19,6 +20,10 @@ class TasksScreen extends ConsumerStatefulWidget {
 class _TasksScreenState extends ConsumerState<TasksScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tabs;
+
+  /// Yazma sürerken aynı satırın ikinci kez tetiklenmesini engeller; çift tap
+  /// aksi hâlde aynı occurrence'ı açıp kapatarak kullanıcıyı yanıltır.
+  final Set<String> _pendingToggles = {};
 
   @override
   void initState() {
@@ -46,6 +51,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen>
         rawTitle: result.title,
         dueAt: result.dueAt,
         recurrence: result.recurrence,
+        intervalDays: result.intervalDays,
       );
     } else {
       await actions.update(
@@ -53,10 +59,48 @@ class _TasksScreenState extends ConsumerState<TasksScreen>
           title: result.title,
           dueAt: result.dueAt,
           recurrence: result.recurrence,
+          intervalDays: result.intervalDays,
           clearDueAt: result.dueAt == null,
+          clearAnchorDate: result.recurrence != UserTaskRecurrence.daily,
         ),
       );
     }
+  }
+
+  /// Satır tamamlama + geri alma tek yoldan geçer: optimistic durum değiştiyse
+  /// aynı occurrence'ı geri açan bir undo aksiyonu sunulur.
+  Future<void> _toggle(UserTask task) async {
+    if (_pendingToggles.contains(task.id)) return;
+    setState(() => _pendingToggles.add(task.id));
+    final wasCompleted = task.completed;
+    try {
+      await ref.read(userTaskActionsProvider).toggle(task.id);
+    } finally {
+      if (mounted) setState(() => _pendingToggles.remove(task.id));
+    }
+    if (!mounted) return;
+    final current = ref
+        .read(userTasksProvider)
+        .value
+        ?.where((item) => item.id == task.id)
+        .firstOrNull;
+    if (current == null || current.completed == wasCompleted) return;
+
+    final l10n = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    messenger
+      ?..clearSnackBars()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            '${task.title} · ${current.completed ? l10n.taskListCompletedSemantic : l10n.taskListIncompleteSemantic}',
+          ),
+          action: SnackBarAction(
+            label: l10n.taskListUndo,
+            onPressed: () => _toggle(current),
+          ),
+        ),
+      );
   }
 
   @override
@@ -91,14 +135,14 @@ class _TasksScreenState extends ConsumerState<TasksScreen>
               onRetry: () => ref.invalidate(userTasksProvider),
             ),
             data: (all) {
-              final active = sortUserTasksByDue([
+              final entries = groupTasksBySection([
                 for (final t in all)
-                  if (!t.completed || t.isDaily) t,
-              ]);
+                  if (t.isRecurring || !t.completed) t,
+              ], now);
               final done =
                   [
                     for (final t in all)
-                      if (t.completed && !t.isDaily) t,
+                      if (t.completed && !t.isRecurring) t,
                   ]..sort((a, b) {
                     final ac = a.completedAt ?? a.createdAt;
                     final bc = b.completedAt ?? b.createdAt;
@@ -107,23 +151,28 @@ class _TasksScreenState extends ConsumerState<TasksScreen>
               return TabBarView(
                 controller: _tabs,
                 children: [
-                  _TaskListPane(
-                    tasks: active,
+                  _TaskSectionedPane(
+                    entries: entries,
                     now: now,
-                    emptyLabel: l10n.taskListEmpty,
-                    onToggle: (id) =>
-                        ref.read(userTaskActionsProvider).toggle(id),
+                    pending: _pendingToggles,
+                    onToggle: _toggle,
                     onEdit: (t) => _openEditor(existing: t),
                     onDelete: (id) =>
                         ref.read(userTaskActionsProvider).remove(id),
                   ),
                   _TaskListPane(
-                    tasks: done,
+                    entries: [
+                      for (final task in done)
+                        TaskSectionEntry(
+                          task: task,
+                          section: TaskSection.other,
+                        ),
+                    ],
                     now: now,
                     emptyLabel: l10n.taskListEmpty,
+                    pending: _pendingToggles,
                     completedStyle: true,
-                    onToggle: (id) =>
-                        ref.read(userTaskActionsProvider).toggle(id),
+                    onToggle: _toggle,
                     onEdit: (t) => _openEditor(existing: t),
                     onDelete: (id) =>
                         ref.read(userTaskActionsProvider).remove(id),
@@ -159,21 +208,129 @@ class _TasksScreenState extends ConsumerState<TasksScreen>
   }
 }
 
+/// Aktif sekme: Bugün · Tekrarlanan · Diğer başlıklarıyla tek kaydırma yüzeyi.
+class _TaskSectionedPane extends StatelessWidget {
+  const _TaskSectionedPane({
+    required this.entries,
+    required this.now,
+    required this.pending,
+    required this.onToggle,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  final List<TaskSectionEntry> entries;
+  final DateTime now;
+  final Set<String> pending;
+  final ValueChanged<UserTask> onToggle;
+  final ValueChanged<UserTask> onEdit;
+  final ValueChanged<String> onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
+    if (entries.isEmpty) {
+      return Center(
+        child: Text(
+          l10n.taskListEmpty,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+      );
+    }
+
+    final sections = <(TaskSection, String)>[
+      (TaskSection.today, l10n.taskListSectionToday),
+      (TaskSection.recurring, l10n.taskListSectionRecurring),
+      (TaskSection.other, l10n.taskListSectionOther),
+    ];
+
+    final children = <Widget>[];
+    for (final (section, label) in sections) {
+      final items = tasksInSection(entries, section);
+      if (items.isEmpty) continue;
+      children.add(_TaskSectionHeader(label: label, count: items.length));
+      for (final entry in items) {
+        children.add(
+          _TaskRow(
+            entry: entry,
+            now: now,
+            busy: pending.contains(entry.task.id),
+            onToggle: onToggle,
+            onEdit: onEdit,
+            onDelete: onDelete,
+          ),
+        );
+      }
+    }
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(8, 8, 8, 88),
+      children: children,
+    );
+  }
+}
+
+class _TaskSectionHeader extends StatelessWidget {
+  const _TaskSectionHeader({required this.label, required this.count});
+
+  final String label;
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 16, 8, 6),
+      child: Semantics(
+        header: true,
+        child: Row(
+          children: [
+            Flexible(
+              child: Text(
+                label,
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: theme.colorScheme.primary,
+                  fontWeight: FontWeight.w700,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              '$count',
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Tamamlananlar sekmesi: bölümsüz düz liste, satır tap'i geri alır.
 class _TaskListPane extends StatelessWidget {
   const _TaskListPane({
-    required this.tasks,
+    required this.entries,
     required this.now,
     required this.emptyLabel,
+    required this.pending,
     required this.onToggle,
     required this.onEdit,
     required this.onDelete,
     this.completedStyle = false,
   });
 
-  final List<UserTask> tasks;
+  final List<TaskSectionEntry> entries;
   final DateTime now;
   final String emptyLabel;
-  final ValueChanged<String> onToggle;
+  final Set<String> pending;
+  final ValueChanged<UserTask> onToggle;
   final ValueChanged<UserTask> onEdit;
   final ValueChanged<String> onDelete;
   final bool completedStyle;
@@ -181,8 +338,7 @@ class _TaskListPane extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final l10n = AppLocalizations.of(context);
-    if (tasks.isEmpty) {
+    if (entries.isEmpty) {
       return Center(
         child: Text(
           emptyLabel,
@@ -194,111 +350,118 @@ class _TaskListPane extends StatelessWidget {
     }
     return ListView.separated(
       padding: const EdgeInsets.fromLTRB(8, 8, 8, 88),
-      itemCount: tasks.length,
+      itemCount: entries.length,
       separatorBuilder: (_, _) => const Divider(height: 1),
-      itemBuilder: (context, i) {
-        final task = tasks[i];
-        final color = taskUrgencyColor(now, task.dueAt, theme.colorScheme);
-        final kind = taskUrgencyKind(now, task.dueAt);
-        final overdue = !task.completed && kind == TaskUrgencyKind.overdue;
-        return ListTile(
-          leading: IconButton(
-            constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
-            tooltip: task.completed
-                ? l10n.taskListIncompleteSemantic
-                : l10n.taskListCompletedSemantic,
-            onPressed: () => onToggle(task.id),
-            icon: Icon(
-              task.completed
-                  ? Icons.check_circle
-                  : Icons.radio_button_unchecked,
-              color: task.completed ? theme.colorScheme.primary : color,
+      itemBuilder: (context, i) => _TaskRow(
+        entry: entries[i],
+        now: now,
+        busy: pending.contains(entries[i].task.id),
+        completedStyle: completedStyle,
+        onToggle: onToggle,
+        onEdit: onEdit,
+        onDelete: onDelete,
+      ),
+    );
+  }
+}
+
+/// Tek görev satırı.
+///
+/// Tüm satır tamamlama hedefidir; düzenle/sil ikincil kontrollerdir ve kendi
+/// 48 dp dokunma alanlarıyla satır tap'ini yutmadan çalışır.
+class _TaskRow extends StatelessWidget {
+  const _TaskRow({
+    required this.entry,
+    required this.now,
+    required this.busy,
+    required this.onToggle,
+    required this.onEdit,
+    required this.onDelete,
+    this.completedStyle = false,
+  });
+
+  final TaskSectionEntry entry;
+  final DateTime now;
+  final bool busy;
+  final ValueChanged<UserTask> onToggle;
+  final ValueChanged<UserTask> onEdit;
+  final ValueChanged<String> onDelete;
+  final bool completedStyle;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
+    final task = entry.task;
+    final color = taskUrgencyColor(now, task.dueAt, theme.colorScheme);
+    final kind = taskUrgencyKind(now, task.dueAt);
+    final overdue = !task.completed && kind == TaskUrgencyKind.overdue;
+    final stateLabel = task.completed
+        ? l10n.taskListCompletedSemantic
+        : l10n.taskListIncompleteSemantic;
+    // Sırası gelmemiş occurrence bugün kapatılamaz; satır tap'i kapalıdır ki
+    // kullanıcı sessiz bir senkron hatasına koşmasın.
+    final tappable = !busy && entry.nextOccurrenceDay == null;
+
+    return MergeSemantics(
+      child: Semantics(
+        checked: task.completed,
+        label: '${task.title}, $stateLabel',
+        child: ListTile(
+          minLeadingWidth: 40,
+          onTap: tappable ? () => onToggle(task) : null,
+          leading: SizedBox(
+            width: 48,
+            height: 48,
+            child: Center(
+              child: busy
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : ExcludeSemantics(
+                      child: Icon(
+                        task.completed
+                            ? Icons.check_circle
+                            : Icons.radio_button_unchecked,
+                        color: task.completed
+                            ? theme.colorScheme.primary
+                            : color,
+                      ),
+                    ),
             ),
           ),
-          title: Row(
+          title: Text(
+            task.title,
+            style: theme.textTheme.bodyLarge?.copyWith(
+              decoration: task.completed ? TextDecoration.lineThrough : null,
+              color: task.completed
+                  ? theme.colorScheme.onSurfaceVariant
+                  : theme.colorScheme.onSurface,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          // Rozet ve süre bilgisi başlıkla aynı satırı paylaşmaz: büyük metin
+          // ölçeğinde tek satır zorlaması satırı taşırıyordu.
+          subtitle: Wrap(
+            spacing: 10,
+            runSpacing: 2,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              Expanded(
-                child: Text(
-                  task.title,
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    decoration: task.completed
-                        ? TextDecoration.lineThrough
-                        : null,
-                    color: task.completed
-                        ? theme.colorScheme.onSurfaceVariant
-                        : theme.colorScheme.onSurface,
-                  ),
-                ),
+              if (task.isRecurring) _RecurrenceBadge(task: task),
+              _TaskRowSubtitle(
+                entry: entry,
+                now: now,
+                overdue: overdue,
+                color: completedStyle
+                    ? theme.colorScheme.onSurfaceVariant
+                    : color,
+                completedStyle: completedStyle,
               ),
-              if (task.isDaily) ...[
-                const SizedBox(width: 6),
-                Tooltip(
-                  message: task.completed
-                      ? l10n.taskListDailyStreakStep
-                      : l10n.taskListDailyRefresh,
-                  child: Semantics(
-                    label: task.completed
-                        ? l10n.taskListDailyStreakStep
-                        : l10n.taskListDailyRefresh,
-                    child: Icon(
-                      Icons.repeat,
-                      size: 17,
-                      color: theme.colorScheme.primary,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 3),
-                Text(
-                  task.completed ? '+1' : l10n.taskListDailyBadge,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.primary,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
             ],
           ),
-          subtitle: task.dueAt == null
-              ? Text(
-                  l10n.taskListNoDue,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                )
-              : Builder(
-                  builder: (context) {
-                    final subColor = completedStyle
-                        ? theme.colorScheme.onSurfaceVariant
-                        : color;
-                    return Row(
-                      children: [
-                        Icon(
-                          overdue
-                              ? Icons.warning_amber_rounded
-                              : Icons.schedule_rounded,
-                          size: 14,
-                          color: subColor,
-                        ),
-                        const SizedBox(width: 4),
-                        Flexible(
-                          child: Text(
-                            completedStyle
-                                ? taskDueDateLabel(now, task.dueAt!, l10n.localeName)
-                                : '${taskRemainingShort(l10n, now, task.dueAt)} · ${taskDueDateLabel(now, task.dueAt!, l10n.localeName)}',
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              color: subColor,
-                              fontWeight: overdue
-                                  ? FontWeight.w700
-                                  : FontWeight.w500,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    );
-                  },
-                ),
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -316,8 +479,124 @@ class _TaskListPane extends StatelessWidget {
               ),
             ],
           ),
-        );
-      },
+        ),
+      ),
+    );
+  }
+}
+
+class _RecurrenceBadge extends StatelessWidget {
+  const _RecurrenceBadge({required this.task});
+
+  final UserTask task;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
+    final label = task.intervalDays > 1
+        ? l10n.taskListRepeatEvery(task.intervalDays)
+        : (task.completed ? '+1' : l10n.taskListDailyBadge);
+    return Tooltip(
+      message: label,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.repeat, size: 17, color: theme.colorScheme.primary),
+          const SizedBox(width: 3),
+          Flexible(
+            child: Text(
+              label,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.primary,
+                fontWeight: FontWeight.w700,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TaskRowSubtitle extends StatelessWidget {
+  const _TaskRowSubtitle({
+    required this.entry,
+    required this.now,
+    required this.overdue,
+    required this.color,
+    required this.completedStyle,
+  });
+
+  final TaskSectionEntry entry;
+  final DateTime now;
+  final bool overdue;
+  final Color color;
+  final bool completedStyle;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
+    final task = entry.task;
+    final nextDay = entry.nextOccurrenceDay;
+
+    if (nextDay != null) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.event_repeat_outlined, size: 14, color: color),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(
+              l10n.taskListNextOccurrence(
+                taskDueDateLabel(now, nextDay, l10n.localeName),
+              ),
+              style: theme.textTheme.labelSmall?.copyWith(color: color),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      );
+    }
+
+    if (task.dueAt == null) {
+      return Text(
+        task.isRecurring ? l10n.taskListDailyRefresh : l10n.taskListNoDue,
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      );
+    }
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          overdue ? Icons.warning_amber_rounded : Icons.schedule_rounded,
+          size: 14,
+          color: color,
+        ),
+        const SizedBox(width: 4),
+        Flexible(
+          child: Text(
+            completedStyle
+                ? taskDueDateLabel(now, task.dueAt!, l10n.localeName)
+                : '${taskRemainingShort(l10n, now, task.dueAt)} · ${taskDueDateLabel(now, task.dueAt!, l10n.localeName)}',
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: color,
+              fontWeight: overdue ? FontWeight.w700 : FontWeight.w500,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -349,10 +628,16 @@ class _TaskSyncError extends StatelessWidget {
 }
 
 class _TaskDraft {
-  const _TaskDraft({required this.title, required this.recurrence, this.dueAt});
+  const _TaskDraft({
+    required this.title,
+    required this.recurrence,
+    required this.intervalDays,
+    this.dueAt,
+  });
   final String title;
   final DateTime? dueAt;
   final UserTaskRecurrence recurrence;
+  final int intervalDays;
 }
 
 class _TaskEditorSheet extends StatefulWidget {
@@ -366,6 +651,7 @@ class _TaskEditorSheet extends StatefulWidget {
 class _TaskEditorSheetState extends State<_TaskEditorSheet> {
   late final TextEditingController _title;
   late final TextEditingController _hours;
+  late final TextEditingController _interval;
   DateTime? _pickedDate;
   late UserTaskRecurrence _recurrence;
   var _mode = 0; // 0 none, 1 date, 2 remaining
@@ -376,6 +662,7 @@ class _TaskEditorSheetState extends State<_TaskEditorSheet> {
     final e = widget.existing;
     _title = TextEditingController(text: e?.title ?? '');
     _hours = TextEditingController(text: '24');
+    _interval = TextEditingController(text: '${e?.intervalDays ?? 1}');
     _recurrence = e?.recurrence ?? UserTaskRecurrence.once;
     if (e?.dueAt != null) {
       _mode = 1;
@@ -387,6 +674,7 @@ class _TaskEditorSheetState extends State<_TaskEditorSheet> {
   void dispose() {
     _title.dispose();
     _hours.dispose();
+    _interval.dispose();
     super.dispose();
   }
 
@@ -415,9 +703,16 @@ class _TaskEditorSheetState extends State<_TaskEditorSheet> {
       final h = int.tryParse(_hours.text.trim()) ?? 0;
       if (h > 0) due = dueAtFromRemaining(Duration(hours: h));
     }
+    final recurring = _recurrence == UserTaskRecurrence.daily;
+    final parsedInterval = int.tryParse(_interval.text.trim()) ?? 1;
     Navigator.pop(
       context,
-      _TaskDraft(title: title, dueAt: due, recurrence: _recurrence),
+      _TaskDraft(
+        title: title,
+        dueAt: due,
+        recurrence: _recurrence,
+        intervalDays: recurring ? parsedInterval.clamp(1, 365) : 1,
+      ),
     );
   }
 
@@ -457,6 +752,17 @@ class _TaskEditorSheetState extends State<_TaskEditorSheet> {
                     : UserTaskRecurrence.once;
               }),
             ),
+            if (_recurrence == UserTaskRecurrence.daily) ...[
+              const SizedBox(height: 8),
+              TextField(
+                controller: _interval,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: l10n.taskListRepeatIntervalLabel,
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+            ],
             const SizedBox(height: 8),
             SegmentedButton<int>(
               segments: [
