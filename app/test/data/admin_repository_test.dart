@@ -160,12 +160,21 @@ void main() {
         message: 'İnceliyoruz.',
       );
       expect(adminMessage.senderRole.dbValue, 'admin');
+      // WP-435/0103: biletin ilk metni ayrı bir alanda saklanmaz, konuşmanın
+      // **kanonik ilk mesajı**dır. Bu yüzden yazışma üç mesajdır: bilet gövdesi,
+      // kullanıcının eki, adminin yanıtı.
+      final thread = await repo.fetchTicketMessages(
+        userId: 'u1',
+        ticketId: ticket.id,
+      );
       expect(
-        (await repo.fetchTicketMessages(
-          userId: 'u1',
-          ticketId: ticket.id,
-        )).map((message) => message.senderRole.dbValue),
-        ['user', 'admin'],
+        thread.map((message) => message.senderRole.dbValue),
+        ['user', 'user', 'admin'],
+      );
+      expect(
+        thread.first.message,
+        'İlk mesaj',
+        reason: 'bilet gövdesi konuşmanın ilk mesajı olarak görünmeli',
       );
 
       await repo.markTicketMessagesRead(userId: 'u1', ticketId: ticket.id);
