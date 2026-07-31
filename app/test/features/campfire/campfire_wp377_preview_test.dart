@@ -90,11 +90,18 @@ void main() {
     });
     await tester.pumpAndSettle();
 
-    // 🔴 Bilerek `matchesGoldenFile` DEĞİL. Sahnedeki canlı süre etiketleri
-    // `SecondTicker` üzerinden duvar saatini okur; 9 hücrelik bu karede
-    // koşumlar arası fark %0.5'lik golden toleransını aşıyor ve önizleme
-    // CI'da kararsız bir "test" hâline geliyordu. Burası bir iddia değil,
-    // sahibin bakacağı bir **çıktıdır** — o yüzden yalnız yazılır.
+    // Bilerek `matchesGoldenFile` DEĞİL: burası bir iddia değil, sahibin
+    // bakacağı bir **çıktıdır** — o yüzden yalnız yazılır.
+    //
+    // Tarihsel not (WP-471, 2026-07-31): bu yorum eskiden "canlı süre etiketleri
+    // `SecondTicker` üzerinden duvar saatini okuduğu için koşumlar arası fark
+    // toleransı aşıyor" diyordu. Teşhis doğruydu ama düzeltilen yer yanlıştı —
+    // çare önizlemeyi iddiasız bırakmak değil, sahneyi deterministik yapmaktı.
+    // `_MemberLabel` artık enjekte edilen saati kullanıyor; bu harness saat
+    // enjekte ettiği için çıktı koşumdan koşuma **bit bit aynı**. Dosyanın her
+    // koşumda kirlenmesi de bu yüzden durdu. İstenirse gerçek bir golden
+    // iddiasına çevrilebilir; bu WP kapı onarımı olduğu için CI'a yeni risk
+    // eklenmedi.
     await tester.runAsync(() async {
       final boundary = tester.renderObject<RenderRepaintBoundary>(
         find.byKey(const ValueKey('campfire-preview-boundary')),

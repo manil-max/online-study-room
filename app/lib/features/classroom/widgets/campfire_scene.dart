@@ -144,6 +144,7 @@ class _CampfireSceneState extends ConsumerState<CampfireScene> {
             sky: sky,
             now: now,
             tuning: widget.tuning,
+            clock: widget.clock,
           ),
         );
       },
@@ -252,11 +253,17 @@ class _SceneLayout extends StatefulWidget {
     required this.sky,
     required this.now,
     required this.tuning,
+    this.clock,
   });
 
   final List<_Camper> campers;
   final int studyingCount;
   final SkyPhaseResult sky;
+
+  /// `CampfireScene.clock` olduğu gibi aktarılır. [now] "şu an hangi an"
+  /// sorusunu cevaplar; bu alan "bu an dışarıdan sabitlendi mi" sorusunu.
+  /// Canlı akan süre metni ikincisine bakar (bkz. [_MemberLabel.clock]).
+  final DateTime Function()? clock;
 
   /// Sahnenin ayarlanabilir kolları; zemin çıpası viewport profiliyle birlikte
   /// burada çözülür ([CampfireTuning.resolvedGroundYFactor]).
@@ -562,6 +569,7 @@ class _SceneLayoutState extends State<_SceneLayout>
                     camper: p.camper,
                     back: p.back,
                     fontSize: tuning.labelFontSize,
+                    clock: widget.clock,
                   ),
                 ),
 
@@ -739,10 +747,24 @@ class _MemberLabel extends StatelessWidget {
     required this.camper,
     required this.back,
     required this.fontSize,
+    this.clock,
   });
 
   final _Camper camper;
   final bool back;
+
+  /// Sahnenin enjekte edilebilir saati (`CampfireScene.clock`).
+  ///
+  /// 🔴 WP-471 determinizm düzeltmesi: canlı süre metni [SecondTicker] üzerinden
+  /// **duvar saatini** okuyordu. Sahne çıpaları ve alev painter'ı WP-365/WP-377
+  /// ile enjekte edilebilir ana bağlanmıştı, bu yaprak atlanmıştı. Sonuç: golden
+  /// kareleri her gün biraz daha kayıyordu (fixture `startedAt` sabit, `now`
+  /// gerçek), kimse kompozisyonu değiştirmese bile golden'lar kırmızıya
+  /// dönüyordu. Sahne zaten `clock != null` durumunda gökyüzü tikini de
+  /// kapatıyor — yani "saat enjekte edildi" demek "sahne durağan" demektir;
+  /// etiket artık aynı sözleşmeye uyuyor. Üretimde (`clock == null`) süre
+  /// eskisi gibi saniyede bir canlı akar.
+  final DateTime Function()? clock;
 
   /// Ön sıra boyu. Arka sıra ve canlı süre bundan türetilir; sahip önizlemede
   /// tek sayı sürer, üçü birlikte kayar.
@@ -773,17 +795,22 @@ class _MemberLabel extends StatelessWidget {
             ),
           ),
           if (studying)
-            SecondTicker(
-              builder: (_, now) => Text(
-                formatHms(camper.liveExtra(now)),
-                style: TextStyle(
-                  color: green,
-                  fontSize: back ? fontSize - 2 : fontSize - 1,
-                  fontWeight: FontWeight.w700,
-                  fontFeatures: const [FontFeature.tabularFigures()],
-                  shadows: const [Shadow(color: Colors.black, blurRadius: 5)],
-                ),
-              ),
+            Builder(
+              builder: (context) {
+                Widget elapsed(DateTime now) => Text(
+                  formatHms(camper.liveExtra(now)),
+                  style: TextStyle(
+                    color: green,
+                    fontSize: back ? fontSize - 2 : fontSize - 1,
+                    fontWeight: FontWeight.w700,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                    shadows: const [Shadow(color: Colors.black, blurRadius: 5)],
+                  ),
+                );
+                final injected = clock;
+                if (injected != null) return elapsed(injected());
+                return SecondTicker(builder: (_, now) => elapsed(now));
+              },
             ),
         ],
       ),
