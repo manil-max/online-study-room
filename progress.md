@@ -5008,7 +5008,7 @@ alır; boş/uydurma migration yazılmaz.
 
 #### WP-468 — l10n kapısını yeşile al
 
-- **Durum / bağımlılık:** [ ] Yok — hemen başlar.
+- **Durum / bağımlılık:** [x] 2026-07-31 · `5ee1ab2` — l10n Gate yeşil (audit 1480 anahtar).
 - **SAHİP:** `app/lib/data/providers/study_providers.dart`, `app_en.arb`, `app_tr.arb`.
 - **Uygulama:** `study_providers.dart:1750` içindeki gömülü TR metin
   (`'Seçili ders artık erişilebilir değil; Genel seçildi.'`) l10n anahtarına taşınır.
@@ -5021,7 +5021,7 @@ alır; boş/uydurma migration yazılmaz.
 
 #### WP-469 — Migration head pinini üç yerde birden hizala
 
-- **Durum / bağımlılık:** [ ] Yok — hemen başlar.
+- **Durum / bağımlılık:** [x] 2026-07-31 · `16c7cc3` — guard.tests 75/75, preflight yerel head `0112` bildiriyor.
 - **SAHİP:** `tooling/release/deploy-contract.json`,
   `supabase/tests/001_schema_contract.test.sql`, `tooling/supabase/guard.tests.ps1`.
 - **Uygulama:** repo/local head `0108`e ilerledi (`0102`…`0108` v57 turunda yazıldı)
@@ -5036,7 +5036,7 @@ alır; boş/uydurma migration yazılmaz.
 
 #### WP-470 — `admin_repository_test`'i yeni feedback konuşma sözleşmesine hizala
 
-- **Durum / bağımlılık:** [ ] Yok.
+- **Durum / bağımlılık:** [x] 2026-07-31 · `1da65f0` — tam süit 1433/1433.
 - **SAHİP:** `app/test/data/admin_repository_test.dart` ve gerekirse
   `in_memory_admin_repository.dart`.
 - **Uygulama:** WP-435 biletin gövdesini konuşmanın ilk mesajı yaptı; test hâlâ
