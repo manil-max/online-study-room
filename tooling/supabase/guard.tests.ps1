@@ -34,8 +34,11 @@ Assert-Equal (Get-LocalMigrationHead -RepoRoot $repoRoot) $contract.local_migrat
 # tüketildi; staging ve production kapıları politika gereği yeniden HOLD'dadır.
 # 🔴 Head ve kapı durumu ÜÇ yerde pinli: kontrat, bu dosya ve
 # release-preflight.tests.ps1. Biri unutulursa CI tam buradan kırmızı düşer.
-Assert-Equal $contract.staging.migration_head '0100' 'staging hedef head 0100 (PLAN 4 v56: 0095-0100)'
-Assert-Equal ([bool]$contract.staging.deploy_enabled) $false 'staging deploy v56 sonrasi HOLD'
+# 2026-07-31: staging icin KAPSAMLI ve TEK SEFERLIK apply yetkisi acildi
+# (hedef head 0114). Apply biter bitmez deploy_enabled tekrar $false yapilir
+# ve bu iki satir da geri cevrilir. Production HOLD'da kalir.
+Assert-Equal $contract.staging.migration_head '0114' 'staging hedef head 0114 (v57: 0101-0114)'
+Assert-Equal ([bool]$contract.staging.deploy_enabled) $true 'staging apply icin tek seferlik GO acik'
 Assert-Equal ([bool]$contract.staging.release_enabled) $false 'staging release v56 sonrasi HOLD'
 Assert-Equal $contract.production.migration_head '0100' 'production hedef head 0100 (PLAN 4 v56 tamamlandi)'
 Assert-Equal ([bool]$contract.production.deploy_enabled) $false 'production deploy v56 sonrasi HOLD'
