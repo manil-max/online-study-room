@@ -4931,10 +4931,14 @@ alır; boş/uydurma migration yazılmaz.
 
 #### WP-464 — Hesap silme hardening, scheduler ve veri yaşam döngüsü kabulü
 
-- **Durum / bağımlılık:** [~] Faz 1 (`0113`) + Faz 2 (`0114`) indi
-  (2026-07-31); WP-463 ve WP-442 kapalı. **Tek açık kalem:** staging scheduler
-  gerçek koşu kanıtı (staging `0100`, `deploy_enabled=false` — sahip GO'su ve
-  apply gerekir). Kod/sözleşme tarafı bitti.
+- **Durum / bağımlılık:** [x] 2026-07-31 — Faz 1 (`0113`), Faz 2 (`0114`) ve
+  staging aktivasyonu tamam. WP-463/WP-442 kapalı.
+- **Staging koşu kanıtı (kartın kapanma şartı):** apply run `30660596728`
+  (post-check `local|remote|file = 0114`), aktivasyon run `30661167492`.
+  Sağlık: `configuration_status: "configured"`, uçtan uca
+  `{"processed":0,"dry_run":true,"message":"no due jobs"}`. `0114`'ün
+  backfill'i ilk kez gerçek veriyle koştu ve geçti. Tek seferlik GO tüketildi,
+  `deploy_enabled` tekrar `false` (`ec77347`); production HOLD'da (`0100`).
 - **SAHİP:** `supabase/functions/purge-accounts/**`,
   `supabase/migrations/0113_*` (rezervasyon `0111`'di; uygulama anında en
   yüksek migration `0112` olduğu için kartın kendi kuralıyla +1 alındı),
@@ -5032,7 +5036,13 @@ alır; boş/uydurma migration yazılmaz.
 
 #### WP-466 — Staging beta ve gerçek cihaz matrisi
 
-- **Durum / bağımlılık:** [ ] WP-465 yeşil; remote hedef kanıtı.
+- **Durum / bağımlılık:** [~] 2026-07-31 — **staging apply ayağı bitti**:
+  dry-run `30660392697` (tam 14 migration `0101`-`0114` listeledi), apply
+  `30660596728`, post-check `local|remote|file = 0114`. Tek seferlik GO
+  tüketildi ve kapı yeniden kilitlendi (`ec77347`). Purge aktivasyonu da
+  yapıldı (`30661167492`, sağlık `configured`).
+  **Kalan:** beta artefaktı + gerçek cihaz matrisi — donanım gerektirir,
+  `release_enabled` bilerek `false` (beta çıkarmak ayrı bir karar).
 - **SAHİP:** staging apply/beta artefakt hazırlığı ve `docs/qa/DEVICE-QA-MATRIX.md`
   kanıtları. Production yok.
 - **Uygulama:** exact SHA/head/project-ref doğrula; staging dry-run/apply; beta

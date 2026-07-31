@@ -214,7 +214,54 @@ Sütunlar nullable olunca 4 Dart modeli çökerdi (`map['...'] as String`):
 
 ---
 
-## 6. Kapanmayan ikinci kalem — staging koşu kanıtı
+## 6. Staging koşu kanıtı — ✅ ALINDI (2026-07-31)
+
+Zincir staging'de uçtan uca bağlandı ve **ölçülerek** doğrulandı.
+
+| Adım | Kanıt |
+| --- | --- |
+| Migration apply (`0101`–`0114`) | Database Gates run `30660596728`; post-check `local \| remote \| file = 0114` |
+| `0114` backfill gerçek veriyle | aynı run — local replay boş tablolarda koştuğu için ilk kez burada sınandı, geçti |
+| Edge deploy + runtime config | Staging Purge Activation run `30661167492` |
+| Sağlık | `configuration_status: "configured"` |
+| Uçtan uca | `{"processed":0,"dry_run":true,"message":"no due jobs"}` |
+
+Tam sağlık çıktısı:
+
+```json
+{"configuration_status":"configured","due_count":0,"processing_count":0,
+ "stale_lease_count":0,"terminal_failed_count":0,"oldest_due_age_seconds":0,
+ "purged_last_30d":0}
+```
+
+Sıfırlar doğru: staging'de bekleyen silme isteği yok. **Asıl iddia
+`configured`** — yapılandırılmamış bir kuyruk da sıfır hata üretip "sağlıklı"
+görünürdü; ikisini ayıran tek alan bu.
+
+### 6.1 Aktivasyondaki secret kararı
+
+`purge-accounts` `CRON_SECRET` okuyordu, ama o değişkeni `collect-reports` ve
+`send-report` de paylaşıyor **ve** `0035`teki aylık rapor cron'u onu
+`app.settings.cron_secret` DB ayarından gönderiyor. Aktivasyon `CRON_SECRET`'i
+döndürseydi rapor cron'u sessizce 401 almaya başlardı — geri alması da zor,
+çünkü mevcut değer okunabilir değil.
+
+Bu yüzden purge kendi `PURGE_CRON_SECRET`'ini kullanıyor (`CRON_SECRET` yalnız
+geriye dönük yedek olarak okunuyor). Secret koşum sırasında üretilip **iki
+yere birden atomik** yazılıyor (Edge ortamı + `0113` runtime config); başka
+hiçbir yerde saklanmıyor, yeniden aktivasyon ikisini birden tazeliyor.
+
+### 6.2 Sözleşme kapısı yeniden kilitlendi
+
+Staging apply için açılan tek seferlik GO **tüketildi**: `deploy_enabled`
+tekrar `false`, guard iddiası da geri çevrildi (`ec77347`).
+`staging.migration_head` `0114`'te bırakıldı çünkü artık gerçekten uygulanmış
+şemayı temsil ediyor. `release_enabled` `false` — beta çıkarmak ayrı bir
+karar. **Production'a dokunulmadı** (head `0100`, HOLD).
+
+---
+
+## 7. Tarihsel — kapanmadan önceki durum
 
 Kart: *"staging scheduler kanıtı olmadan kapanmaz"*. Staging `0100`'de ve
 `deploy_enabled=false` (WP-429 fail-closed); release preflight bunu bu turda
