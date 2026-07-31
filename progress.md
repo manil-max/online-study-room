@@ -4657,8 +4657,7 @@ alır; boş/uydurma migration yazılmaz.
 
 #### WP-453 — Hedef tamamlamasına dayalı server-authoritative seri motoru
 
-- **Durum / bağımlılık:** [~] FAZ 1 KOD + HEDEFLİ TEST TAMAM · `0110` +
-  provider/Supabase RPC/pgTAP için WP-449 migration commit'i bekleniyor.
+- **Durum / bağımlılık:** [x] 2026-07-31 — FAZ 1 + FAZ 2 tamam. (Kart `0110` diyordu; o numarayı WP-443 aldı, sunucu ayağı **`0112`**.)
 - **Problem:** Seri uygulamayı açmakla veya kısmi çalışmayla ilerlememeli.
 - **SAHİP:** goal/streak model/repository/provider, `core/stats/**streak/goal**`,
   kişisel/grup progression RPC'leri, `supabase/migrations/0110_*`, pgTAP/testler.
@@ -4678,6 +4677,26 @@ alır; boş/uydurma migration yazılmaz.
   saf Dart projection + salt-okunur repository + InMemory adapter. Hedefli
   test 11/11, hedefli analyze temiz. `0110`, Supabase adapter/provider ve pgTAP
   yazılmadı; WP-449 şeması sonrası aynı fixture SQL'e uygulanacak.
+- **Faz 2 sonucu (2026-07-31):** `0112_goal_streak_projection.sql`
+  (`goal_progress_events` + `record_goal_completion` + `goal_streak_projection`),
+  `supabase/tests/037_goal_streak_projection.test.sql` (25 iddia, pgTAP 562 →
+  587), `SupabaseGoalStreakRepository`, `goal_streak_providers.dart` ve
+  `app/test/data/goal_streak_parity_wp453_test.dart` (8 test).
+  **Sunucu-otoritesi nerede:** `record_goal_completion` istemcinin "tamamladım"
+  iddiasını kabul etmez; `study_sessions`'tan günün toplamını okuyup hedefle
+  karşılaştırır ve altındaysa `false` döner, satır yazmaz. Gelecek güne yazma
+  `goal_day_in_future` ile reddedilir (cihaz saatini ileri almak işe yaramaz).
+  Çift artış uygulama katmanında değil ŞEMADA engelli:
+  `unique (scope_type, scope_id, event_kind, goal_day)`.
+  `app_opened` / `timer_started` / `partial_progress` kayıtta durur ama
+  projeksiyona girmez — kartın birincil şikâyeti buydu.
+  **İki uç bağlandı:** parity testi fixture'daki her vaka adının `037` içinde
+  geçtiğini ve Dart RPC parametre adlarının `0112` imzasıyla birebir olduğunu
+  doğrular; iki mutasyonla sınandı (SQL parametre adını değiştir, pgTAP'ten vaka
+  adını sil ⇒ 2 kırmızı).
+  Kapılar: `flutter test` 1387/1387, `flutter analyze lib test` temiz,
+  guard.tests 75/75, release-preflight 8/8. **`0112` replay bekliyor**; yerel
+  head 0112, staging/production **0100** (değişmedi).
 - **Model:** Opus.
 
 #### WP-454 — Üç alev durumu ve kişisel/grup ayrımı
