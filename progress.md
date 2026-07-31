@@ -5010,7 +5010,7 @@ alır; boş/uydurma migration yazılmaz.
 
 #### WP-471 — Kamp ateşi golden'larını gerçek görüntüye bakarak kapat
 
-- **Durum / bağımlılık:** [ ] Yok.
+- **Durum / bağımlılık:** [x] `00fd27a` ile tamamlandı (kart denetimde güncellendi, 2026-07-31).
 - **SAHİP:** `app/test/features/goldens/campfire_*`, `campfire_sky_golden_test.dart`,
   gerekirse `campfire_layout.dart`.
 - **Uygulama:** beş golden kırmızı (`sky_day/transition/night`, `phone_4`, `phone_8`),
@@ -5023,6 +5023,13 @@ alır; boş/uydurma migration yazılmaz.
   tamamında golden kaynaklı kırmızı 0.
 - **Tuzak:** 🔴 `_kMaxPlatformRasterDiff` (%0.5) **yükseltilemez** — sınır platform
   rasterı payı içindir, ürün değişikliğini gizlemek için değil.
+- **Doğrulama (2026-07-31):** kart "beş golden kırmızı" diyordu; koda bakıldı,
+  `00fd27a` bunu zaten kapatmış. `campfire_sky_golden_test` yerelde 6/6 yeşil ve
+  ubuntu CI'da da geçiyor (tolerans yükseltilmeden, `_kMaxPlatformRasterDiff`
+  hâlâ %0.5). İki preview PNG commit'li ve o testler bilinçli olarak
+  `matchesGoldenFile` **kullanmıyor** — iddia değil, sahibe bakış karesi
+  üretiyorlar; dolayısıyla kırmızıya düşemezler. `failures/` klasörü
+  gitignore'da, commit'li artık yok.
 - **Model:** Opus.
 
 #### WP-472 — Görev tekrarı için sunucu sözleşmesi (`0109`) ve iki uçlu test

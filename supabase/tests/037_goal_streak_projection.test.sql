@@ -145,10 +145,15 @@ select is(
   2,
   'ayni kimlikte kisisel olay grup sayimina karismaz'
 );
+-- Ayrimin OTEKI yonu. Ilk yazdigim iddia burada `0` bekliyordu ve CI'da
+-- kirmizi dustu: bu kimligin KENDI kisisel olayi var (`personal-01`), yani
+-- seri 1 olmali. Dogru soru "kisisel ledger bos mu" degil, "grup olaylari
+-- kisisel sayima karisiyor mu". Grup 2 gorur, kisisel 1 gorur; hicbiri 3
+-- gormez.
 select is(
-  (select current_streak from public.goal_streak_projection('personal', :'grp', '2026-07-02')),
-  0,
-  'ayni kimligin kisisel serisi grup olaylarindan beslenmez'
+  (select completion_count from public.goal_streak_projection('personal', :'grp', '2026-07-02')),
+  1,
+  'ayni kimligin kisisel ledgeri yalniz kendi olayini gorur: grup olaylari sizmaz'
 );
 
 -- ===========================================================================
