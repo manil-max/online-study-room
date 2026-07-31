@@ -31,21 +31,35 @@ select is(
   'a single active membership is deterministically backfilled as primary'
 );
 
+-- WP-447: ikinci grubun sahibi BETA. Alpha burada duz uyedir.
+--
+-- Onceden alpha hem sahip hem tek uyeydi ve asagida dogrudan UPDATE ile
+-- gruptan cikariliyordu. `0111` bunu artik reddediyor: sahip hicbir yoldan
+-- ayrilamaz, yoksa grup sahipsiz kalir. Testin olctugu sey zaten sahiplik
+-- degil, "birincil gruptan ayrilinca tercih uzlasir" davranisi; fixture
+-- gercekci hale getirildi.
 insert into public.groups (id, name, invite_code, created_by, created_at)
 values (
   '20000000-0000-0000-0000-000000000009',
   'Second Fixture Group',
   'PRIMARY9',
-  '10000000-0000-0000-0000-000000000001',
+  '10000000-0000-0000-0000-000000000002',
   now()
 );
 insert into public.group_members (group_id, user_id, role, joined_at)
-values (
-  '20000000-0000-0000-0000-000000000009',
-  '10000000-0000-0000-0000-000000000001',
-  'admin',
-  now()
-);
+values
+  (
+    '20000000-0000-0000-0000-000000000009',
+    '10000000-0000-0000-0000-000000000002',
+    'admin',
+    now()
+  ),
+  (
+    '20000000-0000-0000-0000-000000000009',
+    '10000000-0000-0000-0000-000000000001',
+    'member',
+    now()
+  );
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000001', true);
@@ -139,12 +153,15 @@ select throws_ok(
   'a user cannot select a group without an active membership'
 );
 
+-- WP-447: cikis artik ham UPDATE ile degil, TEK mesru yoldan yapiliyor.
+-- `0111` kendi `left_at` satirini dogrudan yazmayi reddediyor; testin olctugu
+-- sey de zaten "gruptan ayrilinca birincil tercih uzlasir" davranisi, yani
+-- gercek yoldan gecmesi daha dogru.
+select public.leave_group(
+  '20000000-0000-0000-0000-000000000009'::uuid,
+  '70000000-0000-0000-0000-000000000001'::uuid
+);
 reset role;
-
-update public.group_members
-set left_at = now()
-where group_id = '20000000-0000-0000-0000-000000000009'
-  and user_id = '10000000-0000-0000-0000-000000000001';
 
 select is(
   (

@@ -148,3 +148,31 @@ migration yalnız CI'daki Database Gates iş akışında uygulanıp doğrulanıy
   bir apply sonrası ilerler.
 * Dağıtım kapıları (`deploy_enabled`, `release_enabled`) kapalı kalır; sahibin
   açık GO'su olmadan production apply yapılmaz.
+
+### 🔴 Uygulama sırası uyarısı
+
+`0111`'in ikinci kuralı (**kendi çıkışı yalnız `leave_group` RPC'sinden geçer**)
+eski istemciler için **kırıcıdır**. WP-445 öncesi build'ler gruptan çıkmak için
+`group_members` satırını doğrudan UPDATE ediyordu; `0111` uygulandığı anda o
+build'lerde "gruptan çık" `23514` ile patlar.
+
+Şu an risk yok — production head `0100`, yani `0108` (leave RPC) bile canlıda
+değil. Ama apply sırası şudur ve bozulamaz:
+
+1. `0108`'i içeren istemci sürümü **yayında ve yaygın** olmalı,
+2. sonra `0111` uygulanmalı.
+
+Tersi sırada uygulanırsa alanda "gruptan çıkamıyorum" hatası çıkar.
+
+### Fixture düzeltmesi (aynı commit)
+
+`010_primary_group_preference` ve `012_multi_group_presence_projection`, grup
+**sahibini** ham UPDATE ile gruptan çıkararak fixture kuruyordu — yani ikisi de
+kapatılan boşluğa yaslanıyordu. Düzeltme:
+
+* İki testte de ikinci grubun sahibi beta yapıldı; alpha düz üye.
+* `010` çıkışı artık gerçek `leave_group` RPC'sinden geçiyor (ölçtüğü şey zaten
+  ayrılma davranışı).
+* `012` ham UPDATE'i koruyor ama önce JWT talebini boşaltıyor: o iddia `0081`
+  projeksiyon trigger'ını ölçüyor, `leave_group` kullanılsaydı presence satırını
+  RPC'nin kendisi sileceği için trigger hiç sınanmazdı.

@@ -16,12 +16,18 @@ select ok(
   'authenticated clients cannot directly write state or group projections'
 );
 
+-- WP-447: ikinci grubun sahibi BETA; alpha duz uye. Asagida alpha bu gruptan
+-- cikarilip projeksiyonun dustugu olculuyor ve `0111` sahibin ayrilmasina
+-- artik hicbir yoldan izin vermiyor (sahipsiz grup birakilmaz).
 insert into public.groups (id, name, invite_code, created_by, created_at)
 values ('20000000-0000-0000-0000-000000000020', 'Presence Secondary', 'PRESENCE20',
-  '10000000-0000-0000-0000-000000000001', clock_timestamp());
+  '10000000-0000-0000-0000-000000000002', clock_timestamp());
 insert into public.group_members (group_id, user_id, role, joined_at)
-values ('20000000-0000-0000-0000-000000000020',
-  '10000000-0000-0000-0000-000000000001', 'admin', clock_timestamp());
+values
+  ('20000000-0000-0000-0000-000000000020',
+   '10000000-0000-0000-0000-000000000002', 'admin', clock_timestamp()),
+  ('20000000-0000-0000-0000-000000000020',
+   '10000000-0000-0000-0000-000000000001', 'member', clock_timestamp());
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000001', true);
@@ -111,6 +117,12 @@ select is(
   'heartbeat does not bump the fan-out projection state_version'
 );
 
+-- WP-447: bu iddia `0081` projeksiyon trigger'ini olcuyor, cikis RPC'sini
+-- degil — bu yuzden ham UPDATE korunur. `0111` muhafizi yalniz istemci
+-- baglaminda (`auth.uid()` dolu) kendi cikisini reddeder; sunucu tarafi
+-- yazma once JWT talebini bosaltarak yapilir. `leave_group` kullanilsaydi
+-- projeksiyon satirini RPC'nin kendisi silecegi icin trigger hic sinanmazdi.
+select set_config('request.jwt.claim.sub', '', true);
 update public.group_members
 set left_at = clock_timestamp()
 where group_id = '20000000-0000-0000-0000-000000000020'
