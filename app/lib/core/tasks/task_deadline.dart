@@ -37,7 +37,7 @@ DateTime dueAtFromRemaining(Duration remaining, {DateTime? now}) {
 List<UserTask> sortUserTasksByDue(List<UserTask> tasks) {
   final copy = [...tasks];
   copy.sort((a, b) {
-    if (a.isDaily != b.isDaily) return a.isDaily ? -1 : 1;
+    if (a.isRecurring != b.isRecurring) return a.isRecurring ? -1 : 1;
     if (a.completed != b.completed) return a.completed ? 1 : -1;
     final ad = a.dueAt;
     final bd = b.dueAt;
@@ -70,11 +70,7 @@ bool isTaskOverdue(DateTime now, DateTime? dueAt) {
 /// - >7g: sakin primary
 /// - ~1–7g: sarı→turuncu lerp
 /// - <24s: turuncu→kırmızı
-Color taskUrgencyColor(
-  DateTime now,
-  DateTime? dueAt,
-  ColorScheme scheme,
-) {
+Color taskUrgencyColor(DateTime now, DateTime? dueAt, ColorScheme scheme) {
   if (dueAt == null) {
     return scheme.onSurfaceVariant;
   }
@@ -90,28 +86,16 @@ Color taskUrgencyColor(
   if (hours >= 24) {
     // 7g → 1g: sakin → turuncu
     final t = 1.0 - ((hours - 24) / (6 * 24)).clamp(0.0, 1.0);
-    return Color.lerp(
-      scheme.primary,
-      const Color(0xFFF59E0B),
-      t,
-    )!;
+    return Color.lerp(scheme.primary, const Color(0xFFF59E0B), t)!;
   }
   if (hours >= 6) {
     // 24s → 6s: turuncu
     final t = 1.0 - ((hours - 6) / 18).clamp(0.0, 1.0);
-    return Color.lerp(
-      const Color(0xFFF59E0B),
-      const Color(0xFFEA580C),
-      t,
-    )!;
+    return Color.lerp(const Color(0xFFF59E0B), const Color(0xFFEA580C), t)!;
   }
   // <6s: turuncu → kırmızı
   final t = 1.0 - (hours / 6).clamp(0.0, 1.0);
-  return Color.lerp(
-    const Color(0xFFEA580C),
-    const Color(0xFFDC2626),
-    t,
-  )!;
+  return Color.lerp(const Color(0xFFEA580C), const Color(0xFFDC2626), t)!;
 }
 
 /// a11y: yalnız renge güvenme — etiket anahtarı.

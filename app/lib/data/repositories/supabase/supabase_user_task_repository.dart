@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/tasks/task_recurrence.dart';
 import '../../models/user_task.dart';
 import '../user_task_repository.dart';
 
@@ -40,6 +41,12 @@ class SupabaseUserTaskRepository implements UserTaskRepository {
         taskId: task.id,
         completed: task.completed,
         occurredAt: task.completedAt ?? task.createdAt,
+        occurrenceDay:
+            taskOccurrenceDayForCompletion(
+              task,
+              task.completedAt ?? task.createdAt,
+            ) ??
+            taskRecurrenceAnchorDay(task),
         operationId: task.id,
       );
     }
@@ -62,6 +69,10 @@ class SupabaseUserTaskRepository implements UserTaskRepository {
         'p_sort_order': task.sortOrder,
         'p_archived': archived,
         'p_client_operation_id': operationId,
+        'p_interval_days': task.intervalDays,
+        'p_anchor_date': _dayParam(
+          task.isRecurring ? taskRecurrenceAnchorDay(task) : null,
+        ),
       },
     );
     return UserTask.fromMap(Map<String, dynamic>.from(raw as Map));
@@ -73,8 +84,11 @@ class SupabaseUserTaskRepository implements UserTaskRepository {
     required String taskId,
     required bool completed,
     required DateTime occurredAt,
+    required DateTime occurrenceDay,
     required String operationId,
   }) async {
+    // Occurrence günü sunucuya açık gönderilir; server bunu olayın
+    // İstanbul günüyle ve görevin sabit fazıyla doğrular.
     await _client.rpc(
       'set_user_task_completion',
       params: {
@@ -82,6 +96,7 @@ class SupabaseUserTaskRepository implements UserTaskRepository {
         'p_is_completed': completed,
         'p_occurred_at': occurredAt.toUtc().toIso8601String(),
         'p_client_operation_id': operationId,
+        'p_occurrence_day': _dayParam(occurrenceDay),
       },
     );
   }
@@ -125,6 +140,14 @@ class SupabaseUserTaskRepository implements UserTaskRepository {
       }
     }
     return tasks.take(UserTask.maxTasks).toList(growable: false);
+  }
+
+  static String? _dayParam(DateTime? day) {
+    if (day == null) return null;
+    final year = day.year.toString().padLeft(4, '0');
+    final month = day.month.toString().padLeft(2, '0');
+    final dayOfMonth = day.day.toString().padLeft(2, '0');
+    return '$year-$month-$dayOfMonth';
   }
 
   // UUID v5 paketi yok; migration RPC'si bir kez işaretlendiği için stabil bir

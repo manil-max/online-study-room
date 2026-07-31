@@ -10,6 +10,7 @@ import '../../core/config/supabase_config.dart';
 import '../../core/prefs/app_prefs.dart';
 import '../../core/stats/istanbul_calendar.dart';
 import '../../core/tasks/task_deadline.dart';
+import '../../core/tasks/task_recurrence.dart';
 import '../models/user_task.dart';
 import '../repositories/supabase/supabase_user_task_repository.dart';
 import '../repositories/in_memory/in_memory_user_task_repository.dart';
@@ -23,6 +24,11 @@ final userTaskRepositoryProvider = Provider<UserTaskRepository>((ref) {
   }
   return InMemoryUserTaskRepository();
 });
+
+/// Recurrence ve completion komutlarının test edilebilir tek saat kaynağı.
+final userTaskClockProvider = Provider<DateTime Function()>(
+  (ref) => DateTime.now,
+);
 
 String userTaskUserKey(Ref ref) {
   final id = ref.watch(authStateProvider).value?.id;
@@ -72,6 +78,8 @@ class UserTasksNotifier extends AsyncNotifier<List<UserTask>> {
 
   List<UserTask> get _current => state.value ?? const [];
 
+  DateTime get _now => ref.read(userTaskClockProvider)().toUtc();
+
   void _apply(List<UserTask> list) {
     state = AsyncData(sortUserTasksByDue(list));
   }
@@ -92,12 +100,19 @@ class UserTasksNotifier extends AsyncNotifier<List<UserTask>> {
     required String rawTitle,
     DateTime? dueAt,
     UserTaskRecurrence recurrence = UserTaskRecurrence.once,
+    int intervalDays = 1,
+    DateTime? anchorDate,
   }) async {
     final title = UserTask.normalizeTitle(rawTitle);
     if (title == null) return null;
+    if (intervalDays < 1) return null;
     final current = _current;
     if (current.length >= UserTask.maxTasks) return null;
-    final now = DateTime.now().toUtc();
+    final now = _now;
+    final recurring = recurrence == UserTaskRecurrence.daily;
+    final recurrenceAnchor = recurring
+        ? _dateOnly(anchorDate ?? istanbulDay(dueAt ?? now))
+        : null;
     final task = UserTask(
       id: _uuid.v4(),
       title: title,
@@ -106,6 +121,8 @@ class UserTasksNotifier extends AsyncNotifier<List<UserTask>> {
       createdAt: now,
       sortOrder: current.length,
       recurrence: recurrence,
+      intervalDays: recurring ? intervalDays : 1,
+      anchorDate: recurrenceAnchor,
     );
     _apply([...current, task]); // optimistic
     try {
@@ -151,12 +168,18 @@ class UserTasksNotifier extends AsyncNotifier<List<UserTask>> {
     final current = _current;
     final task = current.where((item) => item.id == id).firstOrNull;
     if (task == null) return;
-    final now = DateTime.now().toUtc();
+    final now = _now;
     final target = !task.completed;
+    final occurrenceDay = taskOccurrenceDayForCompletion(task, now);
+    if (occurrenceDay == null) {
+      _signalError();
+      return;
+    }
     final optimistic = task.copyWith(
       completed: target,
       completedAt: target ? now : null,
       clearCompletedAt: !target,
+      completionDay: _completionDayInstant(occurrenceDay),
     );
     _apply([
       for (final t in current)
@@ -168,6 +191,7 @@ class UserTasksNotifier extends AsyncNotifier<List<UserTask>> {
         taskId: id,
         completed: target,
         occurredAt: now,
+        occurrenceDay: occurrenceDay,
         operationId: _uuid.v4(),
       );
     } catch (_) {
@@ -274,7 +298,15 @@ class UserTaskActions {
     required String rawTitle,
     DateTime? dueAt,
     UserTaskRecurrence recurrence = UserTaskRecurrence.once,
-  }) => _notifier.add(rawTitle: rawTitle, dueAt: dueAt, recurrence: recurrence);
+    int intervalDays = 1,
+    DateTime? anchorDate,
+  }) => _notifier.add(
+    rawTitle: rawTitle,
+    dueAt: dueAt,
+    recurrence: recurrence,
+    intervalDays: intervalDays,
+    anchorDate: anchorDate,
+  );
 
   Future<void> update(UserTask task) => _notifier.updateTask(task);
 
@@ -282,3 +314,9 @@ class UserTaskActions {
 
   Future<void> remove(String id) => _notifier.remove(id);
 }
+
+DateTime _dateOnly(DateTime value) =>
+    DateTime(value.year, value.month, value.day);
+
+DateTime _completionDayInstant(DateTime day) =>
+    DateTime.utc(day.year, day.month, day.day, 12);

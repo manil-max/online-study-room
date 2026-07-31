@@ -16,10 +16,12 @@ class UserTask {
     required this.sortOrder,
     this.userId,
     this.recurrence = UserTaskRecurrence.once,
+    this.intervalDays = 1,
+    this.anchorDate,
     this.archivedAt,
     this.updatedAt,
     this.completionDay,
-  });
+  }) : assert(intervalDays >= 1);
 
   final String id;
   final String title;
@@ -32,11 +34,26 @@ class UserTask {
   final int sortOrder;
   final String? userId;
   final UserTaskRecurrence recurrence;
+
+  /// Tekrarlanan görevler için sabit takvim aralığı.
+  ///
+  /// `1`, mevcut günlük davranıştır. Daha büyük değerlerde occurrence günleri
+  /// [anchorDate] + k * [intervalDays] olarak hesaplanır; completion zamanı
+  /// döngünün fazını değiştirmez.
+  final int intervalDays;
+
+  /// Europe/Istanbul takviminde tarih-only sabit faz başlangıcı.
+  ///
+  /// Eski günlük kayıtlarda null olabilir; recurrence motoru bu durumda
+  /// `dueAt ?? createdAt` gününü geriye uyumlu anchor olarak kullanır.
+  final DateTime? anchorDate;
+
   final DateTime? archivedAt;
   final DateTime? updatedAt;
   final DateTime? completionDay;
 
-  bool get isDaily => recurrence == UserTaskRecurrence.daily;
+  bool get isRecurring => recurrence == UserTaskRecurrence.daily;
+  bool get isDaily => isRecurring && intervalDays == 1;
   bool get isArchived => archivedAt != null;
 
   UserTask copyWith({
@@ -46,11 +63,14 @@ class UserTask {
     DateTime? completedAt,
     int? sortOrder,
     UserTaskRecurrence? recurrence,
+    int? intervalDays,
+    DateTime? anchorDate,
     DateTime? archivedAt,
     DateTime? updatedAt,
     DateTime? completionDay,
     bool clearDueAt = false,
     bool clearCompletedAt = false,
+    bool clearAnchorDate = false,
   }) {
     return UserTask(
       id: id,
@@ -62,6 +82,8 @@ class UserTask {
       sortOrder: sortOrder ?? this.sortOrder,
       userId: userId,
       recurrence: recurrence ?? this.recurrence,
+      intervalDays: intervalDays ?? this.intervalDays,
+      anchorDate: clearAnchorDate ? null : (anchorDate ?? this.anchorDate),
       archivedAt: archivedAt ?? this.archivedAt,
       updatedAt: updatedAt ?? this.updatedAt,
       completionDay: completionDay ?? this.completionDay,
@@ -78,6 +100,8 @@ class UserTask {
     'sortOrder': sortOrder,
     'userId': userId,
     'recurrence': recurrence.name,
+    'intervalDays': intervalDays,
+    'anchorDate': _dateOnly(anchorDate),
     'archivedAt': archivedAt?.toUtc().toIso8601String(),
     'updatedAt': updatedAt?.toUtc().toIso8601String(),
     'completionDay': completionDay?.toUtc().toIso8601String(),
@@ -96,6 +120,8 @@ class UserTask {
       sortOrder: map['sortOrder'] as int? ?? map['sort_order'] as int? ?? 0,
       userId: map['userId'] as String? ?? map['user_id'] as String?,
       recurrence: _recurrence(map['recurrence'] as String?),
+      intervalDays: _intervalDays(map['intervalDays'] ?? map['interval_days']),
+      anchorDate: _calendarDate(map['anchorDate'] ?? map['anchor_date']),
       archivedAt: _date(map['archivedAt'] ?? map['archived_at']),
       updatedAt: _date(map['updatedAt'] ?? map['updated_at']),
       completionDay: _date(map['completionDay'] ?? map['completion_day']),
@@ -103,8 +129,36 @@ class UserTask {
   }
 
   static DateTime? _date(Object? value) {
+    if (value is DateTime) return value;
     if (value is! String) return null;
     return DateTime.tryParse(value);
+  }
+
+  static DateTime? _calendarDate(Object? value) {
+    final parsed = _date(value);
+    if (parsed == null) return null;
+    return DateTime(parsed.year, parsed.month, parsed.day);
+  }
+
+  static int _intervalDays(Object? value) {
+    if (value == null) return 1;
+    final parsed = switch (value) {
+      int number => number,
+      String text => int.tryParse(text),
+      _ => null,
+    };
+    if (parsed == null || parsed < 1) {
+      throw const FormatException('invalid_task_interval_days');
+    }
+    return parsed;
+  }
+
+  static String? _dateOnly(DateTime? value) {
+    if (value == null) return null;
+    final year = value.year.toString().padLeft(4, '0');
+    final month = value.month.toString().padLeft(2, '0');
+    final day = value.day.toString().padLeft(2, '0');
+    return '$year-$month-$day';
   }
 
   static UserTaskRecurrence _recurrence(String? value) {
@@ -119,6 +173,8 @@ class UserTask {
     'due_at': dueAt?.toUtc().toIso8601String(),
     'sort_order': sortOrder,
     'recurrence': recurrence.name,
+    'interval_days': intervalDays,
+    'anchor_date': _dateOnly(anchorDate),
     'archived_at': archivedAt?.toUtc().toIso8601String(),
   };
 

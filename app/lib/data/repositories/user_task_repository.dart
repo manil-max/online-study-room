@@ -23,6 +23,7 @@ abstract class UserTaskRepository {
     required String taskId,
     required bool completed,
     required DateTime occurredAt,
+    required DateTime occurrenceDay,
     required String operationId,
   });
 
