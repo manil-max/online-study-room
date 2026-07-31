@@ -4609,7 +4609,7 @@ alır; boş/uydurma migration yazılmaz.
 
 #### WP-451 — Görev/başarım/grup ilerlemesi görev tarafı kabul matrisi
 
-- **Durum / bağımlılık:** [ ] WP-450.
+- **Durum / bağımlılık:** [x] 2026-07-31 — WP-450 (WP-449'un sunucu eksiği WP-472/`0109` ile kapandı).
 - **SAHİP:** task/subject integration tests ve QA belgesi.
 - **Matris:** 1/2/3/7 gün cadence, DST bağımsız İstanbul günü, offline, undo,
   silinen ders, iki cihaz, duplicate tap, task completion'ın achievement/group
@@ -4617,6 +4617,21 @@ alır; boş/uydurma migration yazılmaz.
 - **Kabul:** occurrence kaybı/çifti 0; cadence drift 0; undo sonrası ilerleme
   uzlaşması doğru; Ajan F WP-455'in okuyacağı fixture açık.
 - **Model:** Opus.
+- **Sonuç (2026-07-31):** `app/test/data/task_progress_matrix_wp451_test.dart`
+  (15 senaryo) + `docs/qa/V57-TASK-PROGRESS-MATRIX.md`. Sunucu eşi WP-472'de
+  açılan `034` (21 iddia). Matris: 1/2/3/7 gün cadence, faz izolasyonu, İstanbul
+  gün sınırı (23:59 / 00:01), eski DST geçiş tarihleri, çevrimdışı yazma hatası,
+  hızlı çift tap, undo→redo, `operationId` replay ve çelişki, iki cihaz, silinen
+  ders, çalışma süresi izolasyonu.
+  **Bulunan hata testte çıktı (kodda değil):** ilk yazdığım "geç tamamlama fazı
+  kaydırmaz" testi, fazı `completionDay`e kaydıran mutasyonu YAKALAMADI. Sebep
+  yapısal — tamamlama yalnız döngü günlerinde mümkün olduğu için
+  "anchor = tamamlama günü" ile "anchor + k*N" ileriye doğru **aynı kafesi**
+  üretiyor; iki farklı uygulama gözlemlenebilir aynı sonucu veriyordu. Yani
+  kartın *cadence drift 0* kriteri hiç bağlanmamıştı. Fark ancak kafes dışı bir
+  `completionDay` varken (eski/bozuk kayıt, saat oynaması) görünür; yeni test o
+  durumu kuruyor ve mutasyon tekrar uygulandığında kırmızıya döndü.
+  Kapılar: `flutter test` 1379/1379, `flutter analyze lib test` temiz.
 
 ### Faz F — İstatistik ve seri
 
