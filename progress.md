@@ -136,7 +136,11 @@ ve Ajan A'nın WP-449/450 lane notu kalıcı olarak kayboldu.
 `upsert_user_task(p_interval_days, p_anchor_date)` ve
 `set_user_task_completion(p_occurrence_day)` çağırıyor; bu parametreler hiçbir
 migration'da tanımlı değil (`0048` tek tanım). Testler yalnız InMemory
-repository'yi sürdüğü için boşluk otomatik kanıtla görünmedi. Kapanışı **WP-472**.
+repository'yi sürdüğü için boşluk otomatik kanıtla görünmedi.
+✅ **Kapandı — WP-472 (2026-07-31):** `0109` iki RPC'yi de varsayılanlı yeni
+parametrelerle yeniden tanımladı, eski imzaları düşürdü (aksi hâlde PostgREST
+`42725` alırdı) ve faz doğrulamasını sunucuya taşıdı. Boşluğun bir daha
+görünmez olmaması için iki uçlu sözleşme testi eklendi.
 
 ### Tek ajan çalışma protokolü
 
@@ -183,8 +187,8 @@ repository'yi sürdüğü için boşluk otomatik kanıtla görünmedi. Kapanış
   önünde olduğu için artık **fail-closed düşüyor** ve test bunu doğruluyor —
   uygulanmamış şemayla beta çıkarılamaz.
 - **Sırada:** push → CI'ın üç günde ilk kez koşması. Yeni ürün WP'si yok.
-- **Sonra Faz 2 — sessiz borç:** WP-472 (`0109` + iki uçlu sözleşme testi),
-  WP-473 (pgTAP `032`/`033`/`0109` replay).
+- ✅ **Faz 2 — sessiz borç bitti:** WP-473 (Database Gates ilk kez yeşil: 37
+  dosya / 486 pgTAP testi) ve WP-472 (`0109` + iki uçlu sözleşme testi).
 - **Sonra Faz 3 — kalan ürün zinciri, tek sıra:**
   `443 → 446 → 447 → 451 → 454 → 455 → 464 → 465 → 466 → 467`.
 - **Devralınan açık dirty iş:** iki campfire preview golden (`campfire_wp377_preview.png`,
@@ -4504,7 +4508,8 @@ alır; boş/uydurma migration yazılmaz.
   migration'da tanımlı değil (`0048` tek tanım). Gerçek Supabase oturumunda görev
   oluşturma bu hâliyle çalışmaz, `intervalDays`/`anchorDate` sunucuya gidip gelmez.
   Testler yalnız `InMemoryUserTaskRepository`'yi sürdüğü için boşluk otomatik
-  kanıtla görünmüyor. Kapanışı **WP-472** (`0109` + iki uçlu sözleşme testi).
+  kanıtla görünmüyor. ✅ **WP-472 ile kapandı (2026-07-31):** `0109` +
+  `034_user_task_recurrence_contract` + `user_task_rpc_contract_wp472_test`.
 - **SAHİP:** `user_task.dart`, task repository arayüzü + Supabase/InMemory,
   providers, `core/tasks/**`, `supabase/migrations/0109_*`,
   `supabase/tests/*task*`, ilgili testler.
@@ -4920,7 +4925,7 @@ alır; boş/uydurma migration yazılmaz.
 
 #### WP-472 — Görev tekrarı için sunucu sözleşmesi (`0109`) ve iki uçlu test
 
-- **Durum / bağımlılık:** [ ] WP-469 (head pini) · WP-449/450 kodu indi.
+- **Durum / bağımlılık:** [x] 2026-07-31 · WP-469 (head pini) · WP-449/450 kodu indi.
 - **SAHİP:** `supabase/migrations/0109_*`, `supabase/tests/034_*`,
   `supabase_user_task_repository.dart`, ilgili sözleşme testi.
 - **Uygulama:** `user_tasks` tablosuna `interval_days` + `anchor_date`;
@@ -4933,11 +4938,23 @@ alır; boş/uydurma migration yazılmaz.
   parametre adları ile migration'daki imza tek kaynaktan karşılaştırılır.
   Bu test olmadan WP kapanmaz; aynı sessiz kopukluk timer-sync'te bir kez
   sahaya çıktı. pgTAP: fixed-phase occurrence, off-cycle red, idempotency.
+- **Sonuç (2026-07-31):** `0109_user_task_recurrence_interval` indi. Eski
+  `upsert_user_task`/`set_user_task_completion` imzaları **düşürüldü** — yeni
+  varsayılanlı sürümün yanında durmaları PostgREST'in adlandırılmış çağrıyı
+  çözememesi (`42725 function is not unique`) demekti. Faz tutarlılığı iki
+  tablo kısıtıyla da kilitlendi. `034_user_task_recurrence_contract` 21 iddia
+  ekliyor (dongü günü kabul, döngü dışı red, occurrence/olay günü uyumsuzluğu,
+  tekrar teslim idempotansı, komut kimliği çakışması, `p_occurrence_day`
+  göndermeyen v56 istemcisi). İki uçlu test `user_task_rpc_contract_wp472_test`
+  — Dart'ın gönderdiği parametre kümesini `SupabaseUserTaskRepository`nin kendi
+  `upsertParams`/`completionParams` fonksiyonundan, SQL imzasını ise migration
+  dizininden okur. Mutasyonla doğrulandı: imzadan `p_anchor_date` çıkarıldığında
+  3 test kırmızıya döndü.
 - **Model:** Opus.
 
 #### WP-473 — Bekleyen migration'ları gerçekten replay et
 
-- **Durum / bağımlılık:** [ ] WP-472.
+- **Durum / bağımlılık:** [x] 2026-07-31.
 - **SAHİP:** `.github/workflows/database-gates.yml` koşumu ve kanıt kaydı.
 - **Uygulama:** `0102`…`0109` ve pgTAP `029`…`034` bu hostta hiç koşmadı — Docker
   motoru kalkmıyor, hepsi **"Replay bekliyor"** etiketiyle teslim edildi.

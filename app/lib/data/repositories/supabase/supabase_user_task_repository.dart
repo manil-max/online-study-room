@@ -52,6 +52,46 @@ class SupabaseUserTaskRepository implements UserTaskRepository {
     }
   }
 
+  /// `upsert_user_task` çağrısının gövdesi.
+  ///
+  /// 🔴 WP-472: RPC parametreleri buradan **tek kaynaktan** üretilir; çağrı ile
+  /// `supabase_user_task_repository_contract_test` aynı fonksiyonu okur ve
+  /// sonucu `0109`daki SQL imzasıyla karşılaştırır. Map'i çağrı yerinde satır
+  /// içi kurmak bu iki ucu tekrar ayırır — `p_interval_days`/`p_anchor_date`
+  /// sunucuda yokken aylarca fark edilmemesinin sebebi tam olarak buydu.
+  static Map<String, dynamic> upsertParams({
+    required UserTask task,
+    required String operationId,
+    required bool archived,
+  }) => {
+    'p_task_id': task.id,
+    'p_title': task.title,
+    'p_due_at': task.dueAt?.toUtc().toIso8601String(),
+    'p_recurrence': task.recurrence.name,
+    'p_sort_order': task.sortOrder,
+    'p_archived': archived,
+    'p_client_operation_id': operationId,
+    'p_interval_days': task.intervalDays,
+    'p_anchor_date': _dayParam(
+      task.isRecurring ? taskRecurrenceAnchorDay(task) : null,
+    ),
+  };
+
+  /// `set_user_task_completion` çağrısının gövdesi (bkz. [upsertParams]).
+  static Map<String, dynamic> completionParams({
+    required String taskId,
+    required bool completed,
+    required DateTime occurredAt,
+    required DateTime occurrenceDay,
+    required String operationId,
+  }) => {
+    'p_task_id': taskId,
+    'p_is_completed': completed,
+    'p_occurred_at': occurredAt.toUtc().toIso8601String(),
+    'p_client_operation_id': operationId,
+    'p_occurrence_day': _dayParam(occurrenceDay),
+  };
+
   @override
   Future<UserTask> upsert({
     required String userKey,
@@ -61,19 +101,11 @@ class SupabaseUserTaskRepository implements UserTaskRepository {
   }) async {
     final raw = await _client.rpc(
       'upsert_user_task',
-      params: {
-        'p_task_id': task.id,
-        'p_title': task.title,
-        'p_due_at': task.dueAt?.toUtc().toIso8601String(),
-        'p_recurrence': task.recurrence.name,
-        'p_sort_order': task.sortOrder,
-        'p_archived': archived,
-        'p_client_operation_id': operationId,
-        'p_interval_days': task.intervalDays,
-        'p_anchor_date': _dayParam(
-          task.isRecurring ? taskRecurrenceAnchorDay(task) : null,
-        ),
-      },
+      params: upsertParams(
+        task: task,
+        operationId: operationId,
+        archived: archived,
+      ),
     );
     return UserTask.fromMap(Map<String, dynamic>.from(raw as Map));
   }
@@ -91,13 +123,13 @@ class SupabaseUserTaskRepository implements UserTaskRepository {
     // İstanbul günüyle ve görevin sabit fazıyla doğrular.
     await _client.rpc(
       'set_user_task_completion',
-      params: {
-        'p_task_id': taskId,
-        'p_is_completed': completed,
-        'p_occurred_at': occurredAt.toUtc().toIso8601String(),
-        'p_client_operation_id': operationId,
-        'p_occurrence_day': _dayParam(occurrenceDay),
-      },
+      params: completionParams(
+        taskId: taskId,
+        completed: completed,
+        occurredAt: occurredAt,
+        occurrenceDay: occurrenceDay,
+        operationId: operationId,
+      ),
     );
   }
 
