@@ -4569,7 +4569,7 @@ alır; boş/uydurma migration yazılmaz.
 
 #### WP-449 — Her N günde sabit fazlı tekrarlanan görev motoru
 
-- **Durum / bağımlılık:** [~] Dart katmanı `3f97e8b` ile indi · 🔴 **sunucu ayağı yok, saha kabulüne giremez.**
+- **Durum / bağımlılık:** [~] Dart katmanı `3f97e8b`; sunucu ayağı **WP-472 ile kapandı** (`0109` + `034` + `user_task_rpc_contract_wp472_test`, 2026-07-31 denetimiyle doğrulandı). Kalan tek şey cihaz kabulü → WP-466.
 - **🔴 Açık eksik (denetim, 2026-07-31):** `supabase_user_task_repository`
   `upsert_user_task(p_interval_days, p_anchor_date)` ve
   `set_user_task_completion(p_occurrence_day)` çağırıyor; bu parametreler hiçbir
@@ -4593,7 +4593,7 @@ alır; boş/uydurma migration yazılmaz.
 
 #### WP-450 — Görev bilgi mimarisi, satırdan tamamlama ve geri alma
 
-- **Durum / bağımlılık:** [~] `42e0ac7` ile indi · WP-449'un açık sunucu eksiği burada da geçerli.
+- **Durum / bağımlılık:** [~] `42e0ac7` ile indi · WP-449'un sunucu eksiği WP-472/`0109` ile kapandı (doğrulandı). Kalan tek şey cihaz kabulü → WP-466.
 - **Kanıt (2026-07-31):** bölüm modeli + görev IA testleri dahil hedefli koşum
   44/44 yeşil, `flutter analyze` temiz. B'nin `4e6995b` ile açtığı yedi
   `taskList*` anahtarı kullanılıyor; bu commit arb'ye yazmadı.
