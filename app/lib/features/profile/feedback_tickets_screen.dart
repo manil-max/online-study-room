@@ -589,7 +589,13 @@ class _FeedbackTicketConversationDialogState
                         final message = messages[index];
                         return _bubble(
                           context: context,
-                          own: message.senderId == user?.id,
+                          // 🔴 `senderId != null` sarti sart: WP-464/`0114`
+                          // sonrasi silinen gonderici NULL gelir ve oturum
+                          // acilmamissa `user?.id` de NULL'dir -- cipla
+                          // karsilastirmada `null == null` dogru cikar ve
+                          // baskasinin mesaji "benim" gibi hizalanirdi.
+                          own: message.senderId != null &&
+                              message.senderId == user?.id,
                           senderLabel: _senderLabel(l10n, message, isAdmin),
                           body: message.message,
                           maxWidth: bubbleWidth,

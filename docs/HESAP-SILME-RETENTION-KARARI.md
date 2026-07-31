@@ -162,6 +162,33 @@ Demo / ürün sahibi işaretler. Boş = taslak varsayılan (§0) geçerli sayıl
 - [ ] Soft’ta tüm e-posta gönderimi durur (**önerilen**)
 - [ ] Yalnız pazarlama durur; sistem maili devam (ayrı liste gerekir)
 
+### 5.6 Aktör kanıtı (destek/moderasyon/admin) — **KARAR VERİLDİ 2026-07-31**
+
+Silinen hesabın *başkasına ait* kayıtlarda bıraktığı **aktör izi**: destek
+bileti yanıtı, admin notu, duyuru, grup banı, moderasyon yaptırımı, isim
+sıfırlama, admin audit satırı.
+
+- [x] **Takma kimlikle korunur** — FK `on delete set null`, satırda kalıcı
+      `*_hash` (sha256(uid)) sütunu (**sahip kararı**)
+- [ ] Hesapla birlikte silinir (`cascade`)
+- [ ] Ham kimlikle olduğu gibi bırakılır (PII riski — önerilmez)
+
+**Neden karar gerekti:** bu 7 FK `not null` + `on delete restrict` idi ve
+`auth.admin.deleteUser`'ı FK ihlaliyle düşürüyordu — yani hesap **hiç
+silinemiyordu**. En genişi `feedback_ticket_messages.sender_id`: `sender_role`
+'user' de olabildiği için destek biletine tek mesaj yazmış sıradan kullanıcı
+da silinemiyordu (WP-464 Faz 1 bulgusu).
+
+**Uygulama:** `0114_account_purge_pseudonymous_actors.sql`. Hash, `0113`
+`account_purge_audit.user_hash` ile **aynı inşadır**, böylece "bu hesap
+silindi mi" ile "bu yaptırımı kim verdi" PII olmadan eşleşir. Sözleşme:
+`supabase/tests/040_pseudonymous_actor_retention.test.sql`.
+
+> **Kapsam notu:** bu karar yalnız *başkasının kaydındaki aktör izini*
+> kapsar. Kullanıcının **kendi** içeriği (kendi destek bileti ve o biletteki
+> mesajları, kendi itirazı, kendi raporu) `on delete cascade` ile silinmeye
+> devam eder — §4.1 ile tutarlıdır ve bilinçli olarak değiştirilmemiştir.
+
 ---
 
 ## 6. Güvenlik ve RLS ilkeleri (implementasyon WP’sine taşınır)

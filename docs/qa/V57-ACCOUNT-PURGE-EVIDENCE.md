@@ -8,10 +8,12 @@ Kanıt dosyaları:
 
 | Uç | Dosya | Kapsam |
 | --- | --- | --- |
-| Sunucu | `supabase/migrations/0113_account_purge_scheduler.sql` | scheduler + claim + audit + health |
+| Sunucu (Faz 1) | `supabase/migrations/0113_account_purge_scheduler.sql` | scheduler + claim + audit + health |
+| Sunucu (Faz 2) | `supabase/migrations/0114_account_purge_pseudonymous_actors.sql` | 7 FK `set null` + takma kimlik |
 | Worker | `supabase/functions/purge-accounts/index.ts` | sertleştirilmiş Edge function |
 | Sözleşme | `supabase/tests/039_account_purge_scheduler.test.sql` | 28 iddia |
-| Politika | `docs/HESAP-SILME-RETENTION-KARARI.md` | §4.1 sınıf tablosu (§5 **boş**) |
+| Sözleşme | `supabase/tests/040_pseudonymous_actor_retention.test.sql` | 12 iddia |
+| Politika | `docs/HESAP-SILME-RETENTION-KARARI.md` | §4.1 sınıf tablosu + §5.6 **sahip kararı** |
 
 Kapılar: guard 75/75, release preflight 8/8 (head `0113`, staging `0100`
 karşısında fail-closed doğrulandı), Database Gates yeşil — `039` gerçek
@@ -133,10 +135,10 @@ ve commit öncesi saydırılarak yakalandı.
 
 ---
 
-## 5. 🔴 Kapanmayan blokaj — sahip kararı bekliyor
+## 5. Faz 2 — blokaj çözüldü (`0114`, sahip kararı uygulandı)
 
 `public` şemasından `auth.users`'a giden **7** adet `not null` +
-`on delete restrict` FK, `auth.admin.deleteUser`'ı FK ihlaliyle düşürür:
+`on delete restrict` FK, `auth.admin.deleteUser`'ı FK ihlaliyle düşürüyordu:
 
 | Tablo · sütun | Migration | Kimi kapsar |
 | --- | --- | --- |
@@ -149,20 +151,58 @@ ve commit öncesi saydırılarak yakalandı.
 | `feedback_ticket_notes.admin_id` | `0021` | not yazmış admin |
 
 En ağırı ilk satır: destek biletine **tek mesaj** yazmış sıradan bir kullanıcı
-silinemez. Bu bir admin uçnoktası değil, geniş bir kitle.
+silinemiyordu. Admin uçnoktası değil, geniş bir kitle.
 
-`0113` sonrası bu işler sessizce hiç koşmamak yerine **görünür** biçimde
-başarısız olur — denetim izine `failed` düşer ve
-`get_account_purge_health().terminal_failed_count` sayar. Kullanıcı açısından
-sonuç yine de "hesap silinmedi".
+**Sahip kararı (2026-07-31):** *"takma kimlikle korunsun, set null + hash."*
+`HESAP-SILME-RETENTION-KARARI.md` §5.6'da kayıtlı. `0114` bunu uygular; her
+tablo için aynı desen:
 
-**Neden bu turda kapatılmadı:** kanıtın korunup korunmayacağı bir politika
-kararıdır, kod hatası değil. Korunacaksa FK'ler `set null` + takma kimlik
-(hash) olmalı; korunmayacaksa `cascade`. `HESAP-SILME-RETENTION-KARARI.md`
-§5 onay kutuları **boş** ve §4.1 sınıf tablosunda bu sınıfların çoğu hiç yok
-— yani karar verilmemiş. WP-464 kartı açıkça *"ürün sahibi retention kararını
-uydurmaz"* dediği için blokaj yalnız **sabitlendi** (`039` §7). Karar uygulanıp
-FK'ler düzeltilince o iki iddia kasten kırmızıya döner.
+1. `<sütun>_hash` takma kimlik sütunu eklenir, mevcut satırlar doldurulur
+2. hash **not null** yapılır → kanıt her zaman atfedilebilir kalır
+3. kimlik sütunu nullable yapılır
+4. FK `on delete set null` olarak yeniden kurulur (adıyla değil **yapısıyla**
+   bulunur; isimler üretilmiş olabilir)
+5. tetikleyici hash'i canlı tutar
+
+Hash, `0113` `account_purge_audit.user_hash` ile **aynı inşadır** — operasyon
+"bu hesap silindi mi" ile "bu yaptırımı kim verdi" sorularını PII olmadan
+eşleştirebilsin diye. `040` bunu ayrı bir iddiayla sabitler.
+
+### 5.1 Tetikleyicideki ince tuzak
+
+`on delete set null` kimlik sütununu NULL'larken satırı **UPDATE eder** ve
+hash tetikleyicisini ateşler. Tetikleyici koşulsuz hesaplasaydı hash'i tam da
+korunması gereken anda ezerdi. Bu yüzden yalnız kimlik **doluyken** yeniden
+hesaplar; NULL'a düşerken mevcut hash'e dokunmaz. `040`'ta bu ayrı bir
+iddiadır (`takma kimlik silme sonrası DEĞİŞMEDEN durur`).
+
+### 5.2 Uçtan uca kanıt ve kapsam ayrımı
+
+`040` gerçek bir silme yapar: aktör `auth.users`'tan **silinir**, kanıt satırı
+**kalır**, `sender_id` NULL olur, `sender_hash` değişmez.
+
+Senaryo bilerek "başkasının biletine yanıt vermiş kullanıcı" üzerine kurulu.
+Çünkü bilet **sahibi** silindiğinde `feedback_tickets.user_id` zaten
+`on delete cascade` olduğu için bilet ve tüm mesajları komple gider — bu
+doğrudur, kendi içeriğidir. Takma kimliğin korunması yalnız aktör ile içerik
+sahibi **farklı** olduğunda gözlenebilir. Aynı ayrım `DATA-SAFETY.md`'ye de
+yazıldı: *kendi içeriği silinir, başkasının kaydındaki aktör izi takma
+kimlikle kalır.*
+
+### 5.3 İstemci tarafı (null güvenliği)
+
+Sütunlar nullable olunca 4 Dart modeli çökerdi (`map['...'] as String`):
+`FeedbackTicketMessage.senderId`, `FeedbackTicketNote.adminId`,
+`AdminAuditLog.adminId`, `Announcement.createdBy` → hepsi `String?` yapıldı.
+
+İki çağrı yeri düzeltildi:
+
+- `feedback_tickets_screen.dart` → `own: message.senderId == user?.id` idi.
+  Silinen gönderici NULL, oturum açılmamışsa `user?.id` de NULL → `null ==
+  null` **doğru** çıkar ve başkasının mesajı "benim" gibi hizalanırdı. Artık
+  açık `!= null` şartı var.
+- `admin_reports_tab.dart` → silinen admin için mevcut `adminUgcDeletedUser`
+  ("Silinmiş kullanıcı") etiketi gösteriliyor; yeni l10n anahtarı eklenmedi.
 
 ---
 

@@ -568,7 +568,9 @@ class _TicketNotesDialogState extends ConsumerState<_TicketNotesDialog> {
                       title: Text(note.note),
                       subtitle: Text(
                         l10n.adminAdminIdNoteadminidNotecreatedattostringsubstring0(
-                          note.adminId,
+                          // WP-464: silinen admin icin `0114` bu alani
+                          // NULL'lar; kanit `admin_hash` ile durur.
+                          note.adminId ?? l10n.adminUgcDeletedUser,
                           note.createdAt.toString().substring(0, 16),
                         ),
                       ),

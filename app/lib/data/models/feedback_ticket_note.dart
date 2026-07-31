@@ -5,14 +5,16 @@ class FeedbackTicketNote {
   const FeedbackTicketNote({
     required this.id,
     required this.ticketId,
-    required this.adminId,
+    // WP-464: `0114` sonrasi silinen admin icin NULL gelir; kanit
+    // `admin_hash` ile durur.
+    this.adminId,
     required this.note,
     required this.createdAt,
   });
 
   final String id;
   final String ticketId;
-  final String adminId;
+  final String? adminId;
   final String note;
   final DateTime createdAt;
 
@@ -20,7 +22,7 @@ class FeedbackTicketNote {
     return FeedbackTicketNote(
       id: map['id'] as String,
       ticketId: map['ticket_id'] as String,
-      adminId: map['admin_id'] as String,
+      adminId: map['admin_id'] as String?,
       note: map['note'] as String,
       createdAt: DateTime.parse(map['created_at'] as String),
     );

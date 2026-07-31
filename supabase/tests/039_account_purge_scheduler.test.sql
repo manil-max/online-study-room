@@ -265,10 +265,18 @@ select is(
 );
 
 -- ===========================================================================
--- 7. BILINEN BLOKAJ — sahip retention karari bekliyor (WP-464 kapanmadi)
+-- 7. BLOKAJ COZULDU — sahip karari uygulandi (`0114`)
 -- ===========================================================================
+-- Bu bolum WP-464 Faz 1'de "bilinen blokaj" olarak SABITLENMISTI: kart o
+-- turda kapanmamis, karar sahibe birakilmisti. Sahip 2026-07-31'de
+-- "takma kimlikle korunsun, set null + hash" dedi ve `0114` bunu uyguladi;
+-- iddialar da soz verildigi gibi cevrildi. Derinlemesine sozlesme
+-- `040_pseudonymous_actor_retention.test.sql` dosyasinda.
+--
+-- Tarihsel kayit (bir daha ayni tuzaga dusulmesin diye) -- asagisi `0114`
+-- ONCESI durumu anlatir, guncel durum degildir:
 -- 🔴 `public` semasindan auth.users'a giden YEDI adet `not null` +
--- `on delete restrict` FK var:
+-- `on delete restrict` FK VARDI:
 --   admin_audit_logs.admin_id (0020) · announcements.created_by (0021) ·
 --   feedback_ticket_notes.admin_id (0021) ·
 --   feedback_ticket_messages.sender_id (0074) · group_bans.banned_by (0093) ·
@@ -283,17 +291,13 @@ select is(
 -- olabiliyor, yani destek biletine tek mesaj yazmis SIRADAN bir kullanici da
 -- silinemez. Bu bir admin ucnoktasi degil, genis bir kitle.
 --
--- `0113` zamanlayiciyi bagladigi icin bu isler artik SESSIZCE hic kosmuyor
--- olmaktan cikip GORUNUR sekilde basarisiz olacak (audit + health). Kullanici
--- acisindan sonuc hala "hesap silinmedi" -- Play veri guvenligi beyaniyla
--- celisir ve WP-464 bu yuzden KAPANMIYOR.
+-- `0113` zamanlayiciyi baglayinca bu isler SESSIZCE hic kosmuyor olmaktan
+-- cikip GORUNUR sekilde basarisiz olmaya basladi (audit + health) -- blokaj
+-- boylece olculebilir hale geldi ve `0114` ile kapatildi.
 --
--- Bu bir politika sorusudur, kod hatasi degil: kanit korunacaksa FK'ler
--- `set null` + takma kimlik (hash) olmali, korunmayacaksa `cascade`.
--- `docs/HESAP-SILME-RETENTION-KARARI.md` §5 onay kutulari BOS ve §4.1 sinif
--- tablosunda bu siniflarin cogu hic yok -> karar verilmemis. Kart "urun
--- sahibi retention kararini uydurmaz" dedigi icin burada yalniz SABITLENIYOR;
--- karar uygulaninca bu iddialar kasten kirilir.
+-- Karar: kanit korunacaksa FK'ler `set null` + takma kimlik (hash), aksi
+-- halde `cascade`. Sahip KORUMAYI secti; `0114` yedi tabloya `_hash` sutunu
+-- ekledi, FK'leri `set null` yapti ve tetikleyicilerle hash'i canli tutuyor.
 select ok(
   exists (
     select 1
@@ -301,26 +305,27 @@ select ok(
     join pg_class t on t.oid = c.conrelid
     join pg_namespace n on n.oid = t.relnamespace
     where c.contype = 'f'
-      and c.confdeltype = 'r'
+      and c.confdeltype = 'n'
       and c.confrelid = 'auth.users'::regclass
       and n.nspname = 'public'
       and t.relname = 'feedback_ticket_messages'
   ),
-  '🔴 destek bileti mesaji yazmis SIRADAN kullanici hala silinemez (0074 restrict FK)'
+  'destek bileti mesaji yazmis siradan kullanici artik silinebilir (0114 set null)'
 );
 
--- Alt sinir olarak yazildi: yeni bir restrict FK eklenirse test yesil kalir
--- ama BIRI bile duzeltilirse kirmiziya doner -- istenen davranis bu.
-select ok(
-  (select count(*)
+-- Purge zinciri acisindan tek onemli olcu: silmeyi bloklayabilecek TEK BIR
+-- restrict FK bile kalmamali. Biri geri eklenirse bu iddia kirmiziya doner.
+select is(
+  (select count(*)::int
    from pg_constraint c
    join pg_class t on t.oid = c.conrelid
    join pg_namespace n on n.oid = t.relnamespace
    where c.contype = 'f'
      and c.confdeltype = 'r'
      and c.confrelid = 'auth.users'::regclass
-     and n.nspname = 'public') >= 7,
-  '🔴 hesap silmeyi blokleyen restrict FK sinifi duruyor (>= 7, sahip karari bekliyor)'
+     and n.nspname = 'public'),
+  0,
+  'purge`u bloklayabilecek restrict FK kalmadi'
 );
 
 select * from finish();

@@ -82,23 +82,28 @@ Kaynak: `0037_account_deletion_core.sql`, `purge-accounts` Edge (WP-113/127), UI
 > cron ne workflow vardı, yani 14 gün dolan istek hiçbir şeye dönüşmüyordu.
 > `0113` o halkayı bağladı.
 >
-> Zincirde **kapanmamış ikinci bir kusur** duruyor: `public` şemasından
-> `auth.users`'a giden 7 adet `not null` + `on delete restrict` FK,
-> `auth.admin.deleteUser`'ı FK ihlaliyle düşürüyor. En genişi
+> Zincirde ikinci bir kusur daha vardı ve **`0114` ile kapatıldı**: `public`
+> şemasından `auth.users`'a giden 7 adet `not null` + `on delete restrict` FK
+> `auth.admin.deleteUser`'ı FK ihlaliyle düşürüyordu. En genişi
 > `feedback_ticket_messages.sender_id` (`0074`) — `sender_role` 'user' de
-> olabildiği için **destek biletine tek mesaj yazmış sıradan kullanıcı da
-> silinemiyor**. Diğerleri: `admin_audit_logs.admin_id`,
+> olabildiği için **destek biletine tek mesaj yazmış sıradan kullanıcı bile
+> silinemiyordu**. Diğerleri: `admin_audit_logs.admin_id`,
 > `announcements.created_by`, `feedback_ticket_notes.admin_id`,
 > `group_bans.banned_by`, `moderation_name_resets.reset_by`,
 > `moderation_sanctions.actor_id`.
 >
-> `0113` sonrası bu işler sessizce hiç koşmamak yerine **görünür şekilde**
-> başarısız olur (denetim izi + `get_account_purge_health()`), ama kullanıcı
-> açısından sonuç hâlâ "hesap silinmedi". Kanıtın korunup korunmayacağı ürün
-> sahibi retention kararıdır (`docs/HESAP-SILME-RETENTION-KARARI.md` §5 onay
-> kutuları **boş**); karar verilmeden bu satır "tam çalışıyor" diye beyan
-> edilmemeli. Sözleşme `supabase/tests/039_account_purge_scheduler.test.sql`
-> §7'de sabitlendi.
+> Ürün sahibi kararı (2026-07-31, `HESAP-SILME-RETENTION-KARARI.md` §5.6):
+> **kanıt takma kimlikle korunur** — FK'ler `on delete set null`, satırda
+> kalıcı `*_hash` (sha256(uid)) sütunu. Hesap silinince ham kimlik gider,
+> kanıt satırı atfedilebilir biçimde kalır. Sözleşme:
+> `supabase/tests/040_pseudonymous_actor_retention.test.sql`.
+
+**Silme kapsamı (forma yazılacak ayrım):** kullanıcının **kendi** içeriği
+(profil, oturumlar, kendi destek biletleri ve o biletlerdeki mesajları, kendi
+itiraz/raporları, avatar nesneleri) `cascade` ile **silinir**. Kullanıcının
+*başkasına ait* kayıtlarda bıraktığı **aktör izi** (ör. bir admin olarak
+başkasının biletine yazdığı yanıt, verdiği ban/yaptırım) satır olarak kalır
+ama ham kimlik silinir; geriye yalnız takma kimlik (sha256) kalır.
 
 **Public silme bilgisi:** Legal / hesap ayarları metinleri + store “Data deletion” URL’si (LEGAL_BASE_URL canlı olmalı — ürün ops).
 

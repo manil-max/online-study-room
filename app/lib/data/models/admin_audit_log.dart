@@ -4,7 +4,9 @@ import 'package:flutter/foundation.dart';
 class AdminAuditLog {
   const AdminAuditLog({
     required this.id,
-    required this.adminId,
+    // WP-464: `0114` sonrasi silinen admin icin NULL gelir; kanit
+    // `admin_hash` ile durur.
+    this.adminId,
     this.targetUserId,
     this.targetUserEmail,
     required this.action,
@@ -13,7 +15,7 @@ class AdminAuditLog {
   });
 
   final String id;
-  final String adminId;
+  final String? adminId;
   final String? targetUserId;
   final String? targetUserEmail;
   final String action;
@@ -23,7 +25,7 @@ class AdminAuditLog {
   factory AdminAuditLog.fromMap(Map<String, dynamic> map) {
     return AdminAuditLog(
       id: map['id'] as String,
-      adminId: map['admin_id'] as String,
+      adminId: map['admin_id'] as String?,
       targetUserId: map['target_user_id'] as String?,
       targetUserEmail: map['target_user_email'] as String?,
       action: map['action'] as String,

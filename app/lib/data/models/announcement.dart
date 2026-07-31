@@ -10,7 +10,9 @@ class Announcement {
     this.targetId,
     this.relatedFeedbackTicketId,
     required this.createdAt,
-    required this.createdBy,
+    // WP-464: `0114` sonrasi silinen admin icin NULL gelir; kanit
+    // `created_by_hash` ile durur.
+    this.createdBy,
   });
 
   final String id;
@@ -20,7 +22,7 @@ class Announcement {
   final String? targetId;
   final String? relatedFeedbackTicketId;
   final DateTime createdAt;
-  final String createdBy;
+  final String? createdBy;
 
   factory Announcement.fromMap(Map<String, dynamic> map) {
     return Announcement(
@@ -31,7 +33,7 @@ class Announcement {
       targetId: map['target_id'] as String?,
       relatedFeedbackTicketId: map['related_feedback_ticket_id'] as String?,
       createdAt: DateTime.parse(map['created_at'] as String),
-      createdBy: map['created_by'] as String,
+      createdBy: map['created_by'] as String?,
     );
   }
 
