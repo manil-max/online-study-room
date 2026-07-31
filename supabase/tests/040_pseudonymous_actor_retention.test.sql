@@ -72,19 +72,28 @@ select is(
   0,
   'auth.users silmeyi blokleyen restrict FK KALMADI'
 );
+-- 🔴 Tablo adina gore saymak YANLIS olur: `moderation_sanctions.revoked_by`
+-- (`0105`) zaten `set null` idi, yani tablo bazli sayim 8 verir. Olculecek sey
+-- tam olarak `0114`un dokundugu YEDI (tablo, sutun) ciftidir.
 select is(
   (select count(*)::int
    from pg_constraint c
    join pg_class t on t.oid = c.conrelid
    join pg_namespace n on n.oid = t.relnamespace
+   join pg_attribute a on a.attrelid = t.oid and a.attnum = c.conkey[1]
    where c.contype = 'f' and c.confdeltype = 'n'
      and c.confrelid = 'auth.users'::regclass and n.nspname = 'public'
-     and t.relname in (
-       'admin_audit_logs', 'announcements', 'feedback_ticket_notes',
-       'feedback_ticket_messages', 'group_bans', 'moderation_name_resets',
-       'moderation_sanctions')),
+     and array_length(c.conkey, 1) = 1
+     and (t.relname, a.attname) in (
+       ('admin_audit_logs', 'admin_id'),
+       ('announcements', 'created_by'),
+       ('feedback_ticket_notes', 'admin_id'),
+       ('feedback_ticket_messages', 'sender_id'),
+       ('group_bans', 'banned_by'),
+       ('moderation_name_resets', 'reset_by'),
+       ('moderation_sanctions', 'actor_id'))),
   7,
-  'yedi tablonun tamami artik on delete set null'
+  'yedi kimlik sutununun tamami artik on delete set null'
 );
 
 -- ===========================================================================
@@ -116,11 +125,15 @@ values ('50000000-0000-0000-0000-000000000001', :'alpha', 'feedback',
         'fixture konu', 'fixture govde');
 
 -- Mesaji BILET SAHIBI DEGIL epsilon yaziyor (admin yaniti).
+-- 🔴 `message_seq` 2'den baslar: `0103`teki
+-- `seed_feedback_ticket_initial_message` tetikleyicisi bilet acilirken
+-- 1 numarali mesaji ZATEN yaratir (`latest_message_seq = 1`). 1 yazmak
+-- `uq_feedback_ticket_messages_ticket_seq` benzersizligini ihlal eder.
 insert into public.feedback_ticket_messages
   (id, ticket_id, sender_id, sender_role, message, client_message_id, message_seq)
 values ('51000000-0000-0000-0000-000000000001',
         '50000000-0000-0000-0000-000000000001', :'epsilon', 'admin',
-        'fixture yanit', '52000000-0000-0000-0000-000000000001', 1);
+        'fixture yanit', '52000000-0000-0000-0000-000000000001', 2);
 
 select is(
   (select sender_hash from public.feedback_ticket_messages
