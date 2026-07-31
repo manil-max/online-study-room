@@ -3,9 +3,9 @@
   "local_migration_head": "0114",
   "staging": {
     "migration_head": "0114",
-    "deploy_enabled": true,
+    "deploy_enabled": false,
     "release_enabled": false,
-    "hold_reason": "SCOPED STAGING APPLY AUTHORIZATION (2026-07-31, owner GO 'devam et ne gerekiyorsa yap'): target head 0114 (0101-0114), staging only. Evidence: clean local replay 0001->0114 with 44 pgTAP files / 647 assertions PASS (Database Gates), flutter analyze clean, full suite 1433/1433 with CI-parity split 1399+34, guard 75/75, l10n 1480+66, docs/qa/V57-FULL-REGRESSION.md and docs/qa/V57-ACCOUNT-PURGE-EVIDENCE.md. This authorization covers exactly one staging apply and is consumed by it; deploy_enabled MUST return to false immediately afterwards. release_enabled stays false - beta release is WP-466 and needs its own scoped GO. Production remains untouched and on HOLD."
+    "hold_reason": "CONSUMED AND RE-LOCKED (2026-07-31): the scoped one-shot staging apply GO was used by Database Gates run 30660596728 and staging is now genuinely at migration head 0114 (0101-0114 pushed, post-check reports local|remote|file = 0114). The authorization is spent. Any further staging apply or beta release requires a new scoped contract update with its own replay, tests, target SHA/head and QA evidence. release_enabled stays false: beta release is a separate WP-466 decision. Production untouched and on HOLD."
   },
   "production": {
     "migration_head": "0100",
