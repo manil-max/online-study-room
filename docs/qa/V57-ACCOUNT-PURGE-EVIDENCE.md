@@ -14,8 +14,22 @@ Kanıt dosyaları:
 | Politika | `docs/HESAP-SILME-RETENTION-KARARI.md` | §4.1 sınıf tablosu (§5 **boş**) |
 
 Kapılar: guard 75/75, release preflight 8/8 (head `0113`, staging `0100`
-karşısında fail-closed doğrulandı). pgTAP **CI'da** koşar — bu hostta Docker
-motoru kalkmadığı için yerel replay yapılamadı.
+karşısında fail-closed doğrulandı), Database Gates yeşil — `039` gerçek
+Postgres'te 28/28. pgTAP **CI'da** koşar; bu hostta Docker motoru kalkmadığı
+için yerel replay yapılamadı.
+
+> **Migration head DÖRT yerde pinli**, üç değil. İlk push'ta Database Gates
+> tam bu yüzden kırmızı düştü (`have: 113, want: 112`):
+>
+> | # | Yer | Ne |
+> | --- | --- | --- |
+> | 1 | `tooling/release/deploy-contract.json` | `local_migration_head` |
+> | 2 | `supabase/tests/001_schema_contract.test.sql:15` | head **string**'i |
+> | 3 | `supabase/tests/001_schema_contract.test.sql:10` | migration **sayısı** ← atlanan |
+> | 4 | `tooling/supabase/guard.tests.ps1` | diskten türetir (elle güncellenmez) |
+>
+> 2 ve 3 **aynı dosyada ama ayrı iddialar**; head'i güncelleyip sayıyı
+> unutmak sessizce geçmez, doğrudan kırmızı düşer.
 
 ---
 
