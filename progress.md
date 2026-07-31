@@ -4931,10 +4931,28 @@ alır; boş/uydurma migration yazılmaz.
 
 #### WP-464 — Hesap silme hardening, scheduler ve veri yaşam döngüsü kabulü
 
-- **Durum / bağımlılık:** [ ] WP-463 + WP-442 moderation retention sözleşmesi.
+- **Durum / bağımlılık:** [~] Faz 1 indi (`0113`, 2026-07-31); WP-463 ve WP-442
+  kapalı. **Kapanmadı** — iki kalem sahibe bağlı: (a) staging scheduler koşu
+  kanıtı (staging `0100`, `deploy_enabled=false`), (b) `auth.users`'a giden 7
+  `restrict` FK için retention kararı (aşağıda).
 - **SAHİP:** `supabase/functions/purge-accounts/**`,
-  `supabase/migrations/0111_*` (atomik claim/scheduler/audit gerekiyorsa),
+  `supabase/migrations/0113_*` (rezervasyon `0111`'di; uygulama anında en
+  yüksek migration `0112` olduğu için kartın kendi kuralıyla +1 alındı),
   Deno/integration testleri, hesap-silme retention ve Play gate belgeleri.
+- **Faz 1 kanıtı:** `docs/qa/V57-ACCOUNT-PURGE-EVIDENCE.md`;
+  `supabase/tests/039_account_purge_scheduler.test.sql` (28 iddia).
+- **🔴 Kök bulgu (kodda doğrulandı):** purge zamanlayıcısı **hiç yoktu** —
+  `purge-accounts` yazılmıştı ama onu çağıran ne cron ne workflow vardı, yani
+  14 günü dolan istek hiçbir şeye dönüşmüyordu (regresyon değil, WP-113'ten
+  beri ölü). `0113` `0069` deseniyle bağladı.
+- **🔴 Kapanmayan blokaj:** `public` → `auth.users` arasında 7 adet `not null`
+  + `on delete restrict` FK `deleteUser`'ı düşürüyor. En genişi
+  `feedback_ticket_messages.sender_id` (`0074`): `sender_role` 'user' de
+  olabildiği için **destek biletine tek mesaj yazmış sıradan kullanıcı da
+  silinemiyor**. Kanıt korunacaksa `set null` + hash, korunmayacaksa `cascade`
+  — `HESAP-SILME-RETENTION-KARARI.md` §5 onay kutuları **boş**, karar
+  verilmemiş. Kart "retention kararını uydurmaz" dediği için `039` §7'de
+  yalnız sabitlendi; karar uygulanınca o iddialar kasten kırılır.
 - **Kodda doğrulanan açıklar:** purge scheduler repoda yok; worker claim'i
   atomik değil; update sonucunu doğrulamadan purge'a devam edebiliyor; storage
   yalnız ilk 100 nesneyi tarıyor; ara hata yollarının bir bölümü sessiz.

@@ -12,8 +12,8 @@ select is(
 );
 select is(
   (select max(version) from supabase_migrations.schema_migrations),
-  '0112',
-  '0112 is the migration head'
+  '0113',
+  '0113 is the migration head'
 );
 select ok(
   exists(

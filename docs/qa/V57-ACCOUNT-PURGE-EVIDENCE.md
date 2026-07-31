@@ -1,0 +1,169 @@
+# V57 — Hesap silme purge zinciri (WP-464)
+
+Kapsam: hesap silme isteğinin 14 günlük grace sonrası gerçekten veriye
+dönüşüp dönüşmediği — zamanlayıcı, atomik claim, çökme kurtarması, storage
+sayfalama, ara hata yolları ve PII'siz denetim izi.
+
+Kanıt dosyaları:
+
+| Uç | Dosya | Kapsam |
+| --- | --- | --- |
+| Sunucu | `supabase/migrations/0113_account_purge_scheduler.sql` | scheduler + claim + audit + health |
+| Worker | `supabase/functions/purge-accounts/index.ts` | sertleştirilmiş Edge function |
+| Sözleşme | `supabase/tests/039_account_purge_scheduler.test.sql` | 28 iddia |
+| Politika | `docs/HESAP-SILME-RETENTION-KARARI.md` | §4.1 sınıf tablosu (§5 **boş**) |
+
+Kapılar: guard 75/75, release preflight 8/8 (head `0113`, staging `0100`
+karşısında fail-closed doğrulandı). pgTAP **CI'da** koşar — bu hostta Docker
+motoru kalkmadığı için yerel replay yapılamadı.
+
+---
+
+## 1. Kök bulgu — zamanlayıcı hiç yoktu
+
+`purge-accounts` Edge function'ı WP-113'ten beri repoda duruyordu ve doğru
+yazılmıştı, ama **onu çağıran hiçbir şey yoktu**. Tüm repo tarandı:
+`purge-accounts` yalnızca belgelerde geçiyordu (`progress.md`, `backlog.md`,
+`DATA-SAFETY.md`, `PLAY-RELEASE-GATE.md`). Ne `cron.schedule`, ne workflow, ne
+başka bir çağrı.
+
+Kullanıcı akışının gerçek hâli:
+
+| Adım | Beklenen | Gerçek (0113 öncesi) |
+| --- | --- | --- |
+| 1. İstek | `request_account_deletion()` satır yazar | ✅ çalışıyordu |
+| 2. Grace | `purge_after = now() + 14 gün` | ✅ çalışıyordu |
+| 3. Purge | worker satırı işler | 🔴 **hiç çalışmadı** |
+| 4. Sonuç | hesap silinir | 🔴 satır sonsuza dek `scheduled` |
+
+Karşılaştırma: `dispatch-push` aynı ihtiyacı `0069`'da
+`cron.schedule('push-dispatch-retry-worker', ...)` ile çözmüştü. Silme için o
+adım hiç atılmamıştı. Bu bir regresyon değil — WP-113'ten beri ölüydü.
+
+`0113` zamanlayıcıyı `0069` deseniyle bağlar: saatlik (`15 * * * *`), runtime
+config'ten okunan secret, yapılandırma yoksa sessiz çıkış.
+
+---
+
+## 2. Kapatılan yapısal açıklar
+
+| # | Açık | Eski davranış | 0113 / worker |
+| --- | --- | --- | --- |
+| 1 | Zamanlayıcı yok | işler hiç başlamıyordu | `account-purge-worker` cron |
+| 2 | Claim atomik değil | `select` + `update`, sonuç okunmuyordu → iki worker aynı kullanıcıyı silebilirdi | tek ifadede `for update skip locked` |
+| 3 | Çökmüş worker | satır `processing`de asılı, **bir daha hiç** seçilmiyordu | lease dolunca yeniden claim |
+| 4 | Sınırsız retry | (3'ün sonucu) sonsuz döngü riski | kurtarma `attempt_count`'u artırır |
+| 5 | Storage 100 sınırı | `list(uid, {limit:100})`, gerisi sessizce kalıyordu | sayfalı `purgeAvatars` |
+| 6 | Sessiz ara hatalar | e-posta kuyruğu / storage / grup devri / sohbet scrub hiç kontrol edilmiyordu | `must()` her adımda |
+| 7 | Tamamlanma izi yok | cascade istek satırını siliyordu, kanıt kalmıyordu | `account_purge_audit` (sha256 uid) |
+
+### 2.1 Sonsuz döngü neden ayrı bir açık
+
+Lease kurtarmasını eklemek tek başına yeni bir hata sınıfı açıyordu: sert
+çökme (timeout/OOM) Edge function'ın `catch` bloğunu **hiç çalıştıramaz**,
+yani normal hata yolu `attempt_count`'u artıramaz. Kurtarma da artırmasaydı
+aynı iş saatte bir, ebediyen yeniden claim edilir ve `p_max_attempts`
+güvenliği hiç devreye girmezdi. Bu yüzden claim, **yalnız bayat satırı
+kurtarırken** sayacı artırır; normal yola dokunmaz.
+
+---
+
+## 3. Gizlilik — denetim izi
+
+`docs/HESAP-SILME-RETENTION-KARARI.md` §4.1 satır F: *"Admin audit: ≥ 1 yıl
+meta (uid hash), PII yok"*. `account_purge_audit` bunu birebir uygular:
+
+- `user_hash` = `encode(sha256(convert_to(uid::text,'UTF8')),'hex')` — ham
+  uid, e-posta veya ad **hiçbir sütunda yok**.
+- Aynı uid aynı hash → "bu hesap silindi mi" sorusu hukuki talepte
+  cevaplanabilir kalır.
+- Append-only: `update`/`delete` satır tetiği + `truncate` statement tetiği
+  (`0106` desenindeki gibi), `42501` ile reddeder.
+- İstemciye tamamen kapalı; okuma bile yok.
+
+> Not: `text::bytea` cast'i PostgreSQL'de **yoktur**. İlk taslak
+> `p_user_id::text::bytea` yazıyordu; bu migration'ı apply anında
+> "cannot cast type text to bytea" ile düşürürdü. `0106`'daki
+> `convert_to(..., 'UTF8')` deyimine çevrildi.
+
+---
+
+## 4. Sözleşme (`039`, 28 iddia)
+
+| Bölüm | İddia | Ne ölçüyor |
+| --- | --- | --- |
+| 1 | 3 | cron job kayıtlı, doğru fonksiyonu çağırıyor, fonksiyon var |
+| 2 | 3 | claim RPC / audit / secret taşıyan config istemciye kapalı |
+| 3 | 7 | yalnız vakti gelen claim edilir, ikinci worker alamaz, `skip locked` gerçekten var, vakti gelmemiş ve terminal işler atlanır |
+| 4 | 3 | lease dolan iş kurtarılır, kurtarma açıkça bildirilir, sayaç artar |
+| 5 | 7 | denetim izi yazılır, PII taşımaz, deterministik hash, geçersiz sonuç reddedilir, append-only |
+| 6 | 3 | `not_configured` / `configured` ayrımı, tamamlanan silme sayılır |
+| 7 | 2 | 🔴 **kapanmamış blokaj** (§5) |
+
+`plan(28)` dosyadaki iddia sayısıyla eşitlendi — bu turda `plan(26)` yazılmıştı
+ve commit öncesi saydırılarak yakalandı.
+
+### 4.1 pgTAP'ta zaman ve görünürlük tuzakları
+
+İki iddia ilk yazımda **sessizce yanlış** olurdu:
+
+1. **`now()` transaction boyunca sabittir.** Claim her seferinde
+   `claimed_at = now()` yazdığı için "lease doldu" durumu kısa lease ile
+   kurulamaz (`now() < now()` yanlıştır). Her kurtarma denemesinden önce satır
+   geriye tarihleniyor.
+2. **Aynı ifadede yazıp okuma.** `record_account_purge_outcome` VOLATILE; aynı
+   `select`in `where`inden çağrılırsa eklediği satır o ifadenin anlık
+   görüntüsünde görünmez — dahası tablo boş olduğu için qual hiç
+   değerlendirilmez ve fonksiyon **çalışmaz bile**. Yazma `lives_ok` ile ayrı
+   ifadeye alındı.
+
+---
+
+## 5. 🔴 Kapanmayan blokaj — sahip kararı bekliyor
+
+`public` şemasından `auth.users`'a giden **7** adet `not null` +
+`on delete restrict` FK, `auth.admin.deleteUser`'ı FK ihlaliyle düşürür:
+
+| Tablo · sütun | Migration | Kimi kapsar |
+| --- | --- | --- |
+| `feedback_ticket_messages.sender_id` | `0074` | 🔴 **sıradan kullanıcı** (`sender_role` 'user' olabilir) |
+| `group_bans.banned_by` | `0093` | ban atmış grup admini |
+| `moderation_sanctions.actor_id` | `0105` | yaptırım uygulamış moderatör |
+| `moderation_name_resets.reset_by` | `0098` | isim sıfırlamış moderatör |
+| `admin_audit_logs.admin_id` | `0020` | admin |
+| `announcements.created_by` | `0021` | duyuru yazmış admin |
+| `feedback_ticket_notes.admin_id` | `0021` | not yazmış admin |
+
+En ağırı ilk satır: destek biletine **tek mesaj** yazmış sıradan bir kullanıcı
+silinemez. Bu bir admin uçnoktası değil, geniş bir kitle.
+
+`0113` sonrası bu işler sessizce hiç koşmamak yerine **görünür** biçimde
+başarısız olur — denetim izine `failed` düşer ve
+`get_account_purge_health().terminal_failed_count` sayar. Kullanıcı açısından
+sonuç yine de "hesap silinmedi".
+
+**Neden bu turda kapatılmadı:** kanıtın korunup korunmayacağı bir politika
+kararıdır, kod hatası değil. Korunacaksa FK'ler `set null` + takma kimlik
+(hash) olmalı; korunmayacaksa `cascade`. `HESAP-SILME-RETENTION-KARARI.md`
+§5 onay kutuları **boş** ve §4.1 sınıf tablosunda bu sınıfların çoğu hiç yok
+— yani karar verilmemiş. WP-464 kartı açıkça *"ürün sahibi retention kararını
+uydurmaz"* dediği için blokaj yalnız **sabitlendi** (`039` §7). Karar uygulanıp
+FK'ler düzeltilince o iki iddia kasten kırmızıya döner.
+
+---
+
+## 6. Kapanmayan ikinci kalem — staging koşu kanıtı
+
+Kart: *"staging scheduler kanıtı olmadan kapanmaz"*. Staging `0100`'de ve
+`deploy_enabled=false` (WP-429 fail-closed); release preflight bunu bu turda
+da doğruladı. Gerçek koşu kanıtı sahibin GO'sunu ve migration apply'ını
+gerektirir. Apply sonrası doğrulama tek çağrı:
+
+```sql
+select * from public.get_account_purge_health();
+```
+
+`configuration_status` **`not_configured`** dönerse cron kurulu olsa bile
+worker hiçbir şey yapmıyordur — `account_purge_runtime_config` satırı
+service-role ile yazılmalıdır. Yapılandırılmamış kuyruk sıfır hata üretir ve
+"sağlıklı" görünür; bu ayrım staging turunda tek uyarıdır.

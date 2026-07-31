@@ -73,9 +73,32 @@ Kaynak: `0037_account_deletion_core.sql`, `purge-accounts` Edge (WP-113/127), UI
 | 1. İstek | Kullanıcı uygulamadan `request_account_deletion()` | RPC `0037` |
 | 2. Grace | `purge_after = now() + interval '14 days'` | `0037` satır ~104 |
 | 3. İptal | `purge_after` öncesi `cancel_account_deletion()` | `0037` |
-| 4. Planlı purge | Cron + `purge-accounts`: avatar storage, grup ownership, sohbet scrub, `auth.admin.deleteUser` | `supabase/functions/purge-accounts/index.ts` |
+| 4. Planlı purge | `account-purge-worker` cron (saatlik) → `purge-accounts`: avatar storage (sayfalı), grup ownership, sohbet scrub, `auth.admin.deleteUser`, PII'siz denetim izi | `0113_account_purge_scheduler.sql` + `supabase/functions/purge-accounts/index.ts` |
 | 5. Retry | `attempt_count < 5` seçilir; ≥5 terminal `failed` (WP-127) | aynı Edge |
 | 6. Cascade | Auth user silinince FK `on delete cascade` ile çoğu satır gider | `0037`/`0038` FK |
+
+> 🔴 **Beyandan önce okunacak (WP-464, 2026-07-31).** Adım 4'ün zamanlayıcısı
+> `0113`e kadar **hiç yoktu**: `purge-accounts` yazılmıştı ama onu çağıran ne
+> cron ne workflow vardı, yani 14 gün dolan istek hiçbir şeye dönüşmüyordu.
+> `0113` o halkayı bağladı.
+>
+> Zincirde **kapanmamış ikinci bir kusur** duruyor: `public` şemasından
+> `auth.users`'a giden 7 adet `not null` + `on delete restrict` FK,
+> `auth.admin.deleteUser`'ı FK ihlaliyle düşürüyor. En genişi
+> `feedback_ticket_messages.sender_id` (`0074`) — `sender_role` 'user' de
+> olabildiği için **destek biletine tek mesaj yazmış sıradan kullanıcı da
+> silinemiyor**. Diğerleri: `admin_audit_logs.admin_id`,
+> `announcements.created_by`, `feedback_ticket_notes.admin_id`,
+> `group_bans.banned_by`, `moderation_name_resets.reset_by`,
+> `moderation_sanctions.actor_id`.
+>
+> `0113` sonrası bu işler sessizce hiç koşmamak yerine **görünür şekilde**
+> başarısız olur (denetim izi + `get_account_purge_health()`), ama kullanıcı
+> açısından sonuç hâlâ "hesap silinmedi". Kanıtın korunup korunmayacağı ürün
+> sahibi retention kararıdır (`docs/HESAP-SILME-RETENTION-KARARI.md` §5 onay
+> kutuları **boş**); karar verilmeden bu satır "tam çalışıyor" diye beyan
+> edilmemeli. Sözleşme `supabase/tests/039_account_purge_scheduler.test.sql`
+> §7'de sabitlendi.
 
 **Public silme bilgisi:** Legal / hesap ayarları metinleri + store “Data deletion” URL’si (LEGAL_BASE_URL canlı olmalı — ürün ops).
 
