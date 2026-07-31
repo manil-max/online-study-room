@@ -165,8 +165,24 @@ repository'yi sürdüğü için boşluk otomatik kanıtla görünmedi. Kapanış
   WP-461 manifest değişikliği HEAD baytları üzerine yeniden kuruldu: disk sürümünde
   14 satır LF'ten CRLF'e çevrilmişti ve düz commit gerçek 9 satırlık değişikliği
   37 satırlık satır-sonu gürültüsünün içinde gizliyordu.
-- **Sırada Faz 1 — kapıları yeşile al.** WP-468 → WP-469 → WP-470 → WP-471,
-  ardından **push** ve CI'ın üç günde ilk kez yeşil görülmesi. Yeni ürün WP'si yok.
+- **Faz 1 — kapılar: ✅ TAMAM (2026-07-31).** WP-468 `5ee1ab2` · WP-469 `16c7cc3` ·
+  WP-470 `1da65f0` · WP-471 `00fd27a`.
+
+  | Kapı | Önce | Sonra |
+  |---|---|---|
+  | `flutter test` | 1326 / **6 kırmızı** | **1332 / 0** |
+  | `flutter analyze` | temiz | temiz |
+  | `scripts/l10n_audit.py` | **FAIL 1** | OK (1466 anahtar) |
+  | `guard.tests.ps1` | **ilk assert'te düştü** | 75/75 |
+  | `release-preflight.tests.ps1` | **düştü** | 8/8 |
+
+  İki bulgu kayda değer: (1) golden'lar baştan doğruydu, kararsız olan widget'tı —
+  `_MemberLabel` enjekte edilen saati yok sayıp duvar saatini okuyordu, bu yüzden
+  goldenlar her gün kayıyordu; hiçbir golden dosyası değiştirilmedi ve tolerans
+  yükseltilmedi. (2) `release-preflight` beta senaryosu, yerel head staging'in
+  önünde olduğu için artık **fail-closed düşüyor** ve test bunu doğruluyor —
+  uygulanmamış şemayla beta çıkarılamaz.
+- **Sırada:** push → CI'ın üç günde ilk kez koşması. Yeni ürün WP'si yok.
 - **Sonra Faz 2 — sessiz borç:** WP-472 (`0109` + iki uçlu sözleşme testi),
   WP-473 (pgTAP `032`/`033`/`0109` replay).
 - **Sonra Faz 3 — kalan ürün zinciri, tek sıra:**
