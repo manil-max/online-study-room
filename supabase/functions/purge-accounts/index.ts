@@ -7,8 +7,21 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-cron-secret",
 }
 
+/**
+ * Purge'ün kendi secret'ı.
+ *
+ * 🔴 `CRON_SECRET` bilerek KULLANILMIYOR (yalnız geriye dönük uyumluluk için
+ * yedek olarak okunuyor): o değişkeni `collect-reports` ve `send-report` de
+ * paylaşıyor ve `0035`teki rapor cron'u onu `app.settings.cron_secret` DB
+ * ayarından gönderiyor. Purge aktivasyonu `CRON_SECRET`'i döndürseydi aylık
+ * rapor cron'u sessizce 401 almaya başlardı. Ayrı değişken = sıfır çakışma.
+ */
+function purgeSecret(): string {
+  return (Deno.env.get("PURGE_CRON_SECRET") ?? Deno.env.get("CRON_SECRET") ?? "").trim()
+}
+
 function authorizeCron(req: Request): Response | null {
-  const cronSecret = Deno.env.get("CRON_SECRET") ?? ""
+  const cronSecret = purgeSecret()
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
   const headerSecret = req.headers.get("x-cron-secret") ?? ""
   const authHeader = req.headers.get("Authorization") ?? ""
@@ -129,6 +142,59 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
     )
+
+    // Aktivasyon: zamanlayıcının çalışması için `0113`teki runtime config
+    // satırı yazılmalı. `dispatch-push`taki `configure_dispatch` deseninin
+    // aynısı — secret istek gövdesinde TAŞINMAZ, fonksiyon kendi ortamından
+    // okur. Yapılandırma yazılmadıkça `_request_scheduled_account_purge()`
+    // sessizce çıkar ve sağlık `not_configured` der.
+    if (body.action === "configure_purge") {
+      const secret = purgeSecret()
+      if (!secret) {
+        return new Response(
+          JSON.stringify({ error: "purge_secret_missing" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        )
+      }
+      const { error } = await admin
+        .from("account_purge_runtime_config")
+        .upsert({
+          singleton: true,
+          functions_base_url: Deno.env.get("SUPABASE_URL") ?? "",
+          cron_secret: secret,
+          updated_at: new Date().toISOString(),
+        })
+      if (error) {
+        // Secret hiçbir hata mesajına yazılmaz.
+        console.error("configure_purge failed", error.message)
+        return new Response(
+          JSON.stringify({ error: "configure_purge_failed" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        )
+      }
+      return new Response(
+        JSON.stringify({ configured: true }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      )
+    }
+
+    // Salt-okunur sağlık. Hiçbir iş claim etmez, hiçbir hesap silmez.
+    // `configuration_status` burada kritik: yapılandırılmamış bir kuyruk sıfır
+    // hata üretir ve "sağlıklı" görünür.
+    if (body.action === "purge_health") {
+      const { data, error } = await admin.rpc("get_account_purge_health")
+      if (error) {
+        console.error("purge_health failed", error.message)
+        return new Response(
+          JSON.stringify({ error: "purge_health_failed" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        )
+      }
+      return new Response(
+        JSON.stringify({ health: Array.isArray(data) ? data[0] : data }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      )
+    }
 
     type Job = {
       id: string

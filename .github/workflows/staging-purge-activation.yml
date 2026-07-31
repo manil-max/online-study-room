@@ -1,0 +1,177 @@
+name: Staging Purge Activation
+
+# 🔴 Bu iş akışının varlık sebebi (WP-464): `purge-accounts` Edge function'ı
+# WP-113'ten beri repoda duruyordu ama onu ÇAĞIRAN hiçbir şey yoktu — ne cron,
+# ne workflow. Kullanıcının hesap silme isteği 14 gün sonra hiçbir şeye
+# dönüşmüyordu. `0113` zamanlayıcıyı kurdu; bu iş akışı da zincirin kalan iki
+# halkasını bağlar: Edge function'ı staging'e deploy eder ve `0113`teki
+# runtime config satırını yazar.
+#
+# Yapılandırma yazılmadıkça `_request_scheduled_account_purge()` SESSİZCE
+# çıkar — yani cron kurulu olsa bile worker hiçbir şey yapmaz ve kuyruk sıfır
+# hata üretip "sağlıklı" görünür. Son adım tam olarak bu ayrımı doğrular.
+#
+# ⚠️ Bu iş akışı HİÇBİR HESABI SİLMEZ. Doğrulama çağrısı `dry_run` ile yapılır.
+
+on:
+  workflow_dispatch:
+    inputs:
+      expected_git_sha:
+        description: Aktive edilecek tam main commit SHA'sı.
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  activate:
+    name: Deploy staging account purge worker
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: staging
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      STAGING_SUPABASE_URL: ${{ secrets.STAGING_SUPABASE_URL }}
+      STAGING_SUPABASE_ANON_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
+      STAGING_SUPABASE_PROJECT_REF: ${{ vars.STAGING_SUPABASE_PROJECT_REF }}
+      EXPECTED_GIT_SHA: ${{ inputs.expected_git_sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify exact staging activation contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$EXPECTED_GIT_SHA" =~ ^[0-9a-f]{40}$ ]] || {
+            echo "expected_git_sha must be a full SHA"
+            exit 1
+          }
+          [[ "$GITHUB_SHA" = "$EXPECTED_GIT_SHA" ]] || {
+            echo "The checked-out commit does not match expected_git_sha"
+            exit 1
+          }
+          for value in \
+            SUPABASE_ACCESS_TOKEN STAGING_SUPABASE_URL \
+            STAGING_SUPABASE_ANON_KEY STAGING_SUPABASE_PROJECT_REF; do
+            [[ -n "${!value}" ]] || {
+              echo "Missing required staging configuration: $value"
+              exit 1
+            }
+          done
+          [[ "$STAGING_SUPABASE_PROJECT_REF" =~ ^[a-z0-9]{20}$ ]] || {
+            echo "Invalid staging project ref"
+            exit 1
+          }
+          [[ "$STAGING_SUPABASE_URL" = "https://$STAGING_SUPABASE_PROJECT_REF.supabase.co" ]] || {
+            echo "Staging URL/project ref mismatch"
+            exit 1
+          }
+          # Purge zinciri 0113 + 0114 gerektirir; sözleşme staging'in gerçekten
+          # o head'te olduğunu söylemiyorsa aktivasyon anlamsızdır.
+          head="$(python3 -c "import json;print(json.load(open('tooling/release/deploy-contract.json'))['staging']['migration_head'])")"
+          [[ "$head" > "0112" ]] || {
+            echo "Staging migration head $head predates the purge chain (0113/0114)."
+            exit 1
+          }
+          echo "Staging purge activation contract verified (staging head $head)."
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      # 🔴 `CRON_SECRET` KULLANILMIYOR. O değişkeni `collect-reports` ve
+      # `send-report` paylaşıyor ve `0035`teki aylık rapor cron'u onu
+      # `app.settings.cron_secret` DB ayarından gönderiyor. Üstüne yazsaydık
+      # rapor cron'u sessizce 401 almaya başlardı. Purge kendi değişkenini
+      # kullanır ve secret bu koşumda üretilip iki yere birden (Edge ortamı ve
+      # `0113` runtime config) atomik yazılır; başka hiçbir yerde saklanmaz.
+      - name: Generate and set the purge-only Edge secret
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          secret="$(openssl rand -base64 48 | tr -d '\n=+/' | cut -c1-56)"
+          echo "::add-mask::$secret"
+          secret_file="$RUNNER_TEMP/odak-kampi-staging-purge.env"
+          printf 'PURGE_CRON_SECRET=%s\n' "$secret" > "$secret_file"
+          trap 'rm -f "$secret_file"' EXIT
+          supabase secrets set \
+            --project-ref "$STAGING_SUPABASE_PROJECT_REF" \
+            --env-file "$secret_file"
+          printf 'PURGE_CRON_SECRET=%s\n' "$secret" >> "$GITHUB_ENV"
+
+      - name: Deploy staging purge worker
+        shell: bash
+        run: |
+          set -euo pipefail
+          supabase functions deploy purge-accounts \
+            --project-ref "$STAGING_SUPABASE_PROJECT_REF" \
+            --use-api \
+            --no-verify-jwt
+
+      - name: Configure private purge runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Taze Edge deploy'ları rota ısınırken kısa süre 503 dönebiliyor.
+          # Yalnız bu idempotent yapılandırma çağrısı yeniden denenir; hiçbir
+          # hesap silinmez.
+          configured=false
+          for attempt in {1..12}; do
+            if response="$(curl --fail-with-body --silent --show-error \
+              -X POST "$STAGING_SUPABASE_URL/functions/v1/purge-accounts" \
+              -H "Authorization: Bearer $STAGING_SUPABASE_ANON_KEY" \
+              -H 'Content-Type: application/json' \
+              -H "x-cron-secret: $PURGE_CRON_SECRET" \
+              --data '{"action":"configure_purge"}')" \
+              && printf '%s' "$response" | jq -e '.configured == true' >/dev/null; then
+              configured=true
+              break
+            fi
+            echo "Purge route is not ready yet (attempt $attempt/12); retrying."
+            sleep 5
+          done
+          [[ "$configured" = true ]] || {
+            echo "Purge configuration did not succeed after its readiness window."
+            exit 1
+          }
+
+      - name: Verify scheduler health is configured (no account is deleted)
+        shell: bash
+        run: |
+          set -euo pipefail
+          response="$(curl --fail-with-body --silent --show-error \
+            -X POST "$STAGING_SUPABASE_URL/functions/v1/purge-accounts" \
+            -H "Authorization: Bearer $STAGING_SUPABASE_ANON_KEY" \
+            -H 'Content-Type: application/json' \
+            -H "x-cron-secret: $PURGE_CRON_SECRET" \
+            --data '{"action":"purge_health"}')"
+          # 🔴 Asıl iddia: `not_configured` DEĞİL. Yapılandırılmamış bir kuyruk
+          # sıfır hata üretir ve sağlıklı görünür; ayrımı yapan tek alan bu.
+          printf '%s' "$response" | jq -e '.health.configuration_status == "configured"' >/dev/null
+          printf '%s' "$response" | jq -e '
+            (.health.due_count | type == "number") and
+            (.health.processing_count | type == "number") and
+            (.health.stale_lease_count | type == "number") and
+            (.health.terminal_failed_count | type == "number") and
+            (.health.purged_last_30d | type == "number")' >/dev/null
+          echo "Staging purge scheduler health:"
+          printf '%s' "$response" | jq -c '.health'
+
+      - name: Dry-run the worker end to end (still deletes nothing)
+        shell: bash
+        run: |
+          set -euo pipefail
+          response="$(curl --fail-with-body --silent --show-error \
+            -X POST "$STAGING_SUPABASE_URL/functions/v1/purge-accounts" \
+            -H "Authorization: Bearer $STAGING_SUPABASE_ANON_KEY" \
+            -H 'Content-Type: application/json' \
+            -H "x-cron-secret: $PURGE_CRON_SECRET" \
+            --data '{"dry_run":true,"limit":5}')"
+          printf '%s' "$response" | jq -e '.dry_run == true and (.processed | type == "number")' >/dev/null
+          echo "Staging purge dry-run:"
+          printf '%s' "$response" | jq -c '{processed, dry_run, message}'
+          echo "Staging purge activation verified."
