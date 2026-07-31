@@ -897,11 +897,19 @@ class _MembersCard extends ConsumerWidget {
                                       m,
                                     ),
                             ),
+                            // 🔴 WP-446: bu iki eylem aynı görünüyordu ama
+                            // sonuçları farklı. Çıkarma geri dönülebilir
+                            // (üye davet koduyla tekrar katılır), yasak
+                            // değil. Yasak düğmesi üstelik `safetyBlock`
+                            // ("Kişiyi engelle") metnini kullanıyordu — o ise
+                            // hesap-kapsamlı KİŞİSEL bir tercihtir, yönetici
+                            // işlemi değil. Yönetici "engelliyorum" sanıp
+                            // kalıcı grup yasağı koyabiliyordu.
                             if (isAdmin && m.id != group.createdBy)
                               IconButton(
                                 tooltip: AppLocalizations.of(
                                   context,
-                                ).classroomCikar,
+                                ).classroomUyeyiCikar,
                                 icon: const Icon(Icons.person_remove_outlined),
                                 onPressed: () =>
                                     _removeMember(context, repo, m),
@@ -910,8 +918,8 @@ class _MembersCard extends ConsumerWidget {
                               IconButton(
                                 tooltip: AppLocalizations.of(
                                   context,
-                                ).safetyBlock,
-                                icon: const Icon(Icons.block_outlined),
+                                ).classroomUyeyiYasakla,
+                                icon: const Icon(Icons.gavel_outlined),
                                 onPressed: () => _banMember(context, repo, m),
                               ),
                           ],
@@ -930,13 +938,16 @@ class _MembersCard extends ConsumerWidget {
     GroupRepository repo,
     Profile member,
   ) async {
+    final l10n = AppLocalizations.of(context);
     final ok = await _confirm(
       context,
-      title: AppLocalizations.of(context).classroomUyeyiCikar,
-      message: AppLocalizations.of(
-        context,
-      ).classroomMemberdisplaynameGruptanCikarilsinMi(member.displayName),
-      action: AppLocalizations.of(context).classroomCikar,
+      title: l10n.classroomUyeyiCikar,
+      // WP-446: onay metni artık eylemin KAPSAMINI da söylüyor. Eskiden
+      // çıkarma ve yasak birebir aynı cümleyi gösteriyordu.
+      message:
+          '${l10n.classroomMemberdisplaynameGruptanCikarilsinMi(member.displayName)}'
+          '\n\n${l10n.classroomUyeyiCikarKapsam}',
+      action: l10n.classroomCikar,
     );
     if (!ok) return;
     if (!context.mounted) return;
@@ -959,11 +970,11 @@ class _MembersCard extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final ok = await _confirm(
       context,
-      title: l10n.safetyBlock,
-      message: l10n.classroomMemberdisplaynameGruptanCikarilsinMi(
-        member.displayName,
-      ),
-      action: l10n.safetyBlock,
+      title: l10n.classroomUyeyiYasakla,
+      message:
+          '${l10n.classroomMemberdisplaynameGruptanYasaklansinMi(member.displayName)}'
+          '\n\n${l10n.classroomUyeyiYasaklaKapsam}',
+      action: l10n.classroomYasakla,
     );
     if (!ok || !context.mounted) return;
     try {

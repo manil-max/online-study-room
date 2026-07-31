@@ -4477,7 +4477,7 @@ alır; boş/uydurma migration yazılmaz.
 
 #### WP-446 — Grup bilgi sadeleştirmesi, kavram ayrımı ve mesajı raporla UI'si
 
-- **Durum / bağımlılık:** [ ] WP-445; rapor UI bağı için WP-439.
+- **Durum / bağımlılık:** [x] 2026-07-31 — WP-445; rapor UI bağı için WP-439.
 - **SAHİP:** `features/classroom/widgets/class_chat_card.dart`,
   `features/classroom/widgets/class_detail_screen.dart`,
   `features/classroom/classroom_screen.dart`, grup sohbet/üyelik testleri.
@@ -4489,6 +4489,26 @@ alır; boş/uydurma migration yazılmaz.
 - **Kabul:** davet kodu yinelenmez; her eylem doğru kapsamı açıklar; message
   report WP-439 target kimliğiyle açılır; admin yetkisi olmayan kick/ban göremez.
 - **Model:** Sonnet.
+- **Sonuç (2026-07-31):** `classroom_screen.dart` içindeki `_GroupManagementTile`
+  paneli (63 satır) tamamen kaldırıldı; davet kodunun tek kanonik yeri artık
+  `ClassDetailScreen` → Bilgiler kartı. İki kopya **eşdeğer değildi**: alttaki
+  yalnız kopyalıyordu, detaydaki ayrıca *kodu yenileyebiliyordu* — yani
+  "tekrar" değil, eksik bir ikinci kopyaydı.
+  Sohbette başkasının mesajına görünür 48 dp `more_vert` düğmesi eklendi; uzun
+  basma ikinci yol olarak korundu. Eylem sayfasındaki Bildir/Engelle satırları
+  artık kapsam alt metni taşıyor (`safetyReportKapsam`, `safetyBlockKapsam`).
+  **Bulunan hata:** grup yasağı düğmesi `safetyBlock` ("Engelle") metnini
+  kullanıyordu ve onay diyaloğu çıkarmayla birebir aynı cümleyi gösteriyordu;
+  yönetici "kişiyi engelliyorum" sanıp geri dönüşü olmayan bir grup yasağı
+  koyabilirdi. Yasak artık `classroomUyeyiYasakla` + `Icons.gavel_outlined`,
+  ayrı başlık/mesaj ve kapsam cümlesiyle geliyor.
+  8 yeni l10n anahtarı (EN+TR). Test:
+  `test/features/classroom/group_action_scope_wp446_test.dart` (6 test) —
+  **gerçek** in-memory grup + iki ek üye ile kurulur; boş üye listesi ya da
+  yalnız-kurucu satırı yüzünden iddiaların boşa düşmesi engellendi.
+  Mutasyonla doğrulandı (`classroomUyeyiYasakla` → `safetyBlock` ⇒ kırmızı).
+  Kapılar: `flutter test` 1346/1346, `flutter analyze lib test` temiz,
+  `l10n_audit.py` OK 1474.
 
 #### WP-447 — Grup yarış koşulu ve güvenlik kabul matrisi
 

@@ -1023,6 +1023,43 @@
   "@classroomUyeyiCikar": {
     "description": "Classroom user-facing text. Source: Üyeyi çıkar"
   },
+  "classroomUyeyiYasakla": "Ban member",
+  "@classroomUyeyiYasakla": {
+    "description": "Classroom user-facing text. Source: Uyeyi yasakla"
+  },
+  "classroomYasakla": "Ban",
+  "@classroomYasakla": {
+    "description": "Classroom user-facing text. Source: Yasakla"
+  },
+  "classroomMemberdisplaynameGruptanYasaklansinMi": "Ban {displayname} from the group?",
+  "@classroomMemberdisplaynameGruptanYasaklansinMi": {
+    "description": "Classroom user-facing text. Source: {displayname} gruptan yasaklansin mi?",
+    "placeholders": {
+      "displayname": {
+        "type": "String"
+      }
+    }
+  },
+  "classroomUyeyiCikarKapsam": "They leave the group but can rejoin with the invite code.",
+  "@classroomUyeyiCikarKapsam": {
+    "description": "Classroom user-facing text. Source: Gruptan cikar; davet koduyla tekrar katilabilir."
+  },
+  "classroomUyeyiYasaklaKapsam": "They leave the group and cannot rejoin, not even with the invite code.",
+  "@classroomUyeyiYasaklaKapsam": {
+    "description": "Classroom user-facing text. Source: Gruptan cikar ve davet koduyla bile tekrar katilamaz."
+  },
+  "classroomMesajSecenekleri": "Message options",
+  "@classroomMesajSecenekleri": {
+    "description": "Classroom user-facing text. Source: Mesaj secenekleri"
+  },
+  "safetyReportKapsam": "Goes to moderators for review. The other person is not told.",
+  "@safetyReportKapsam": {
+    "description": "Safety user-facing text. Source: Incelenmek uzere yoneticilere gider; karsi taraf bilgilendirilmez."
+  },
+  "safetyBlockKapsam": "Applies only to you. The other person is not told.",
+  "@safetyBlockKapsam": {
+    "description": "Safety user-facing text. Source: Yalniz sizin icin gecerlidir; karsi taraf bilgilendirilmez."
+  },
   "classroomIlkMesajiSenGonder": "Send the first message.",
   "@classroomIlkMesajiSenGonder": {
     "description": "Classroom user-facing text. Source: İlk mesajı sen gönder."

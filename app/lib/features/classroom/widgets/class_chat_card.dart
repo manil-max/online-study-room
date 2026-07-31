@@ -197,14 +197,21 @@ class _MessageBubble extends ConsumerWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              // WP-446: iki eylem birbirine benziyor ama kapsamları taban
+              // tabana zıt — biri yöneticiye gider, diğeri yalnız bu hesabın
+              // görünümünü değiştirir. Alt satır bu ayrımı ekranda söyler.
               ListTile(
                 leading: const Icon(Icons.flag_outlined),
                 title: Text(l10n.safetyReport),
+                subtitle: Text(l10n.safetyReportKapsam),
+                isThreeLine: false,
                 onTap: () => Navigator.pop(ctx, 'report'),
               ),
               ListTile(
                 leading: const Icon(Icons.block),
                 title: Text(l10n.safetyBlock),
+                subtitle: Text(l10n.safetyBlockKapsam),
+                isThreeLine: false,
                 onTap: () => Navigator.pop(ctx, 'block'),
               ),
             ],
@@ -323,6 +330,23 @@ class _MessageBubble extends ConsumerWidget {
                     ),
             ),
           ),
+          // 🔴 WP-446: uzun basma TEK keşif yolu olamaz. Raporlama yalnız
+          // gizli bir jestin arkasındayken, ihtiyacı olan kullanıcının onu
+          // bulacağını varsaymış oluruz. Görünür 48 dp'lik hedef eklendi;
+          // uzun basma ikinci yol olarak duruyor (kas hafızası bozulmasın).
+          if (!mine)
+            IconButton(
+              tooltip: AppLocalizations.of(context).classroomMesajSecenekleri,
+              icon: const Icon(Icons.more_vert, size: 18),
+              // Material'in varsayılan 48 dp dokunma hedefi korunur; yalnız
+              // ikon küçültülür ki baloncuk hizası bozulmasın.
+              constraints: const BoxConstraints(
+                minWidth: 48,
+                minHeight: 48,
+              ),
+              padding: EdgeInsets.zero,
+              onPressed: () => _showPeerActions(context, ref),
+            ),
         ],
       ),
     );

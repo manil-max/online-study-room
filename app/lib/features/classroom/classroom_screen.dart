@@ -1,6 +1,5 @@
 import 'package:online_study_room/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/navigation/nav_index.dart';
@@ -214,8 +213,6 @@ class _GroupView extends ConsumerWidget {
         const LeaderboardCard(),
         const SizedBox(height: 16),
         const GroupTrendCard(),
-        const SizedBox(height: 16),
-        _GroupManagementTile(group: group),
         // Alt menü için nefes payı
         const SizedBox(height: 24),
       ],
@@ -224,8 +221,12 @@ class _GroupView extends ConsumerWidget {
 }
 
 /// Kamp ateşinin üstünde yalnız tek satır kaplayan kompakt başlık: grup adı +
-/// sohbet/ayarlar kısayolları. Davet kodu buraya değil, alttaki açılır panele
-/// (`_GroupManagementTile`) taşındı ki ateş sahnesi üstte kalsın (§8.3).
+/// sohbet/ayarlar kısayolları. Davet kodu bu ekranda hiç görünmez.
+///
+/// WP-446: kod eskiden hem burada (`_GroupManagementTile`) hem de
+/// `ClassDetailScreen` → Bilgiler kartında duruyordu. İki kopya aynı değildi:
+/// alttaki yalnız kopyalayabiliyor, detaydaki ayrıca **kodu yenileyebiliyordu**.
+/// Tek kanonik yer artık detay ekranı; ayarlar simgesi zaten oraya götürüyor.
 class _CompactGroupHeader extends StatelessWidget {
   const _CompactGroupHeader({required this.group});
 
@@ -268,70 +269,6 @@ class _CompactGroupHeader extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-/// Alttaki açılır grup bilgileri paneli: davet kodu + kopyala. Varsayılan
-/// kapalıdır; operasyonel bilgi kamp ateşi sahnesinin üstünden alınıp buraya
-/// taşındı (§8.3 — davet kodu büyük alan kaplamamalı).
-class _GroupManagementTile extends StatelessWidget {
-  const _GroupManagementTile({required this.group});
-
-  final StudyGroup group;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: ExpansionTile(
-        leading: const Icon(Icons.info_outline),
-        title: Text(AppLocalizations.of(context).classroomGrupBilgileri),
-        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 8, 12),
-        children: [
-          Row(
-            children: [
-              Text(
-                AppLocalizations.of(context).classroomDavetKodu,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-              Flexible(
-                child: SelectableText(
-                  group.inviteCode,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: 2,
-                  ),
-                ),
-              ),
-              IconButton(
-                tooltip: AppLocalizations.of(context).classroomKopyala,
-                icon: const Icon(Icons.copy, size: 18),
-                visualDensity: VisualDensity.compact,
-                onPressed: () async {
-                  await Clipboard.setData(
-                    ClipboardData(text: group.inviteCode),
-                  );
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          AppLocalizations.of(
-                            context,
-                          ).classroomDavetKoduKopyalandi,
-                        ),
-                      ),
-                    );
-                  }
-                },
-              ),
-            ],
-          ),
-        ],
-      ),
     );
   }
 }

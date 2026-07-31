@@ -81,9 +81,12 @@ void main() {
     expect(find.byTooltip('Sohbet'), findsOneWidget);
     expect(find.byTooltip('Ayarlar'), findsOneWidget);
 
-    // Davet kodu artık kamp ateşinin üstünde değil; alttaki açılır "Grup bilgileri"
-    // panelinde. Kapalıyken kod/kopyala görünmez.
-    expect(find.text('Grup bilgileri'), findsOneWidget);
+    // WP-446: davet kodunun tek kanonik yeri ClassDetailScreen → Bilgiler.
+    // Bu ekranda ne kodun kendisi, ne kopyala düğmesi, ne de onları taşıyan
+    // "Grup bilgileri" paneli bulunur; kullanıcı oraya Ayarlar'dan gider.
+    // İkinci kopya yalnız fazlalık değildi: kodu YENİLEME eylemi yalnız detay
+    // ekranındaydı, yani iki yüzey aynı şeyi yapmıyordu.
+    expect(find.text('Grup bilgileri'), findsNothing);
     expect(find.text('TEST12'), findsNothing);
     expect(find.byTooltip('Kopyala'), findsNothing);
 
@@ -103,18 +106,11 @@ void main() {
       reason: 'grup hedefi trendin üstünde olmalı',
     );
 
-    // Yönetim paneli en altta (trendin altında).
-    final mgmtY = tester.getTopLeft(find.text('Grup bilgileri')).dy;
-    expect(trendY < mgmtY, isTrue, reason: 'yönetim paneli en altta olmalı');
-
-    // Açılır panel gerçekten çalışır: dokununca davet kodu + kopyala görünür.
-    // (CampfireScene sonsuz alev animasyonu barındırdığı için pumpAndSettle
-    // yerine ExpansionTile'ın 200 ms açılışını sınırlı pump ile bekle.)
-    await tester.tap(find.text('Grup bilgileri'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
-    expect(find.text('TEST12'), findsOneWidget);
-    expect(find.byTooltip('Kopyala'), findsOneWidget);
+    // WP-446: trend artık listenin son kartı. Altındaki "Grup bilgileri"
+    // paneli kaldırıldı, çünkü içindeki tek şey davet kodunun ikinci
+    // kopyasıydı. Kodun kanonik yeri ve tek yenileme eylemi detay ekranında;
+    // oradaki sözleşme `group_action_scope_wp446_test` ile bağlı.
+    expect(find.byType(ExpansionTile), findsNothing);
 
     // Sonsuz animasyon timer'ını temizle.
     await tester.pumpWidget(const SizedBox());
