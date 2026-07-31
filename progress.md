@@ -4409,7 +4409,7 @@ alır; boş/uydurma migration yazılmaz.
 
 #### WP-443 — Moderasyon abuse, RLS ve uçtan uca kabul kapısı
 
-- **Durum / bağımlılık:** [ ] WP-442.
+- **Durum / bağımlılık:** [x] 2026-07-31 · WP-442.
 - **SAHİP:** moderation contract/integration testleri ve
   `docs/qa/V57-MODERATION-EVIDENCE.md`.
 - **Matris:** mesaj/profil/grup/ad raporu; duplicate; blocked users; silinmiş
@@ -4417,6 +4417,24 @@ alır; boş/uydurma migration yazılmaz.
   iki admin race; normal kullanıcı admin RPC denemesi.
 - **Kabul:** RLS kaçışı 0; kayıp audit 0; aynı eylemde çift yaptırım 0; yüksek
   risk açık kuyruğa SLA ile düşer; kapatılan kart filtrelerde tutarlı.
+- **Sonuç (2026-07-31):** `supabase/tests/035_moderation_abuse_matrix.test.sql`
+  (29 iddia) + `docs/qa/V57-MODERATION-EVIDENCE.md`. Matrisin sekiz senaryosu
+  `026`–`031`'de zaten kilitliydi; `035` eksik dördünü (profil raporu, silinmiş
+  içerik, çok-raporlayan yüksek risk, yaptırım süresi) ve iki yeni invaryantı
+  (iki admin yarışı, kötü niyetli raporlayan sayacı) ekledi.
+- **🔴 Matrisin bulduğu gerçek açık:** `report_ugc`'nin profil dalı görünürlüğü
+  `can_see_user_sessions` ile ölçüyordu; o yardımcı `0095`'ten beri
+  `is_blocked_pair` içerir ve engel **simetriktir**. Yani taciz eden kişi
+  kurbanını engellediği anda kendi profilini/adını **raporlanamaz** yapıyordu —
+  ve mesaj dalı etkilenmediği için delik tam olarak uygunsuz ad/avatar
+  şikâyetlerini yutuyordu. `0110_moderation_report_block_immunity.sql` rapor
+  yoluna `moderation_can_report_profile` kapısını koydu: ortak grup şartı aynen
+  duruyor, engel kontrolü rapor yolundan çıktı. Kapsam dar tutuldu —
+  `can_see_user_sessions` değişmedi ve `035` bunu ayrıca iddia ediyor.
+- **RLS kaçışı 0 nasıl ölçüldü:** tek tek `throws_ok` yerine `pg_proc`
+  süpürmesi — her `public.admin_*` fonksiyonu `is_super_admin` taşımak
+  zorunda. Yeni bir admin RPC'de kapı unutulursa iddia düşer; yanına "küme boş
+  değil" koruması (≥ 15) kondu.
 - **Model:** Opus.
 
 ### Faz D — Grup işlemleri ve dürtme
