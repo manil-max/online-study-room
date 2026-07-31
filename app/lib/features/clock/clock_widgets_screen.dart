@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/time_engine/clock_permissions.dart';
 import '../../data/providers/alarm_providers.dart';
+import '../android_widgets/published_home_widgets.dart';
 
 /// En sol sekme: ana ekran widget'ları + alarm izin durumu.
 class ClockWidgetsScreen extends ConsumerStatefulWidget {
@@ -69,31 +70,39 @@ class _ClockWidgetsScreenState extends ConsumerState<ClockWidgetsScreen>
           ),
         ),
         const SizedBox(height: 16),
-        _WidgetCard(
-          icon: Icons.timer,
-          title: AppLocalizations.of(context).clockCalismaSayaci,
-          subtitle: AppLocalizations.of(context).clockAkanSureBaslatdurdurApp,
-        ),
-        _WidgetCard(
-          icon: Icons.schedule,
-          title: AppLocalizations.of(context).clockDijitalSaat,
-          subtitle: AppLocalizations.of(context).clockCanliSaatTextclockPil,
-        ),
-        _WidgetCard(
-          icon: Icons.alarm,
-          title: AppLocalizations.of(context).clockSiradakiAlarm,
-          subtitle: AppLocalizations.of(context).clockBirSonrakiAlarmSaati,
-        ),
-        _WidgetCard(
-          icon: Icons.bar_chart,
-          title: AppLocalizations.of(context).statsIstatistik,
-          subtitle: AppLocalizations.of(context).clockBugunHaftaSeriOzeti,
-        ),
-        _WidgetCard(
-          icon: Icons.emoji_events_outlined,
-          title: AppLocalizations.of(context).homeGrupSiralamasi,
-          subtitle: AppLocalizations.of(context).clockKampLeaderboardOzeti,
-        ),
+        // WP-461: Katalog yalnız **yayındaki** widget'ı gösterir. Dormant
+        // olanların kartı çizilmez; aksi hâlde kullanıcıya picker'da
+        // bulunmayan bir widget vaat edilirdi.
+        if (isHomeWidgetPublished(HomeWidgetProvider.timer))
+          _WidgetCard(
+            icon: Icons.timer,
+            title: AppLocalizations.of(context).clockCalismaSayaci,
+            subtitle: AppLocalizations.of(context).clockAkanSureBaslatdurdurApp,
+          ),
+        if (isHomeWidgetPublished(HomeWidgetProvider.clock))
+          _WidgetCard(
+            icon: Icons.schedule,
+            title: AppLocalizations.of(context).clockDijitalSaat,
+            subtitle: AppLocalizations.of(context).clockCanliSaatTextclockPil,
+          ),
+        if (isHomeWidgetPublished(HomeWidgetProvider.alarm))
+          _WidgetCard(
+            icon: Icons.alarm,
+            title: AppLocalizations.of(context).clockSiradakiAlarm,
+            subtitle: AppLocalizations.of(context).clockBirSonrakiAlarmSaati,
+          ),
+        if (isHomeWidgetPublished(HomeWidgetProvider.studyStats))
+          _WidgetCard(
+            icon: Icons.bar_chart,
+            title: AppLocalizations.of(context).statsIstatistik,
+            subtitle: AppLocalizations.of(context).clockBugunHaftaSeriOzeti,
+          ),
+        if (isHomeWidgetPublished(HomeWidgetProvider.groupLeaderboard))
+          _WidgetCard(
+            icon: Icons.emoji_events_outlined,
+            title: AppLocalizations.of(context).homeGrupSiralamasi,
+            subtitle: AppLocalizations.of(context).clockKampLeaderboardOzeti,
+          ),
         const SizedBox(height: 20),
         Text(
           AppLocalizations.of(context).clockAlarmIcinGerekliIzinler,
