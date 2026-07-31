@@ -62,6 +62,16 @@ select lives_ok(
                              '10000000-0000-0000-0000-000000000001', 'hadi')$$,
   'susturulmuş gönderen için çağrı normal görünür (yan kanal yok)'
 );
+-- 🔴 WP-473: bu üç iddia yan kanalın **gerçekten** kapalı olduğunu iddia ediyor,
+-- o yüzden ayrıcalıklı rolde okunmalıdır. `authenticated` altında:
+--   * `notification_outbox` `0066`'dan beri tamamen kapalı → sert hata,
+--   * `nudge_suppressed_attempts` politikasız (deny all) → 0 döner, iddia 1
+--     beklediği için yanlış nedenle kırmızı,
+--   * `nudges` RLS ile süzülür → 0 "satır yok"u değil "göremiyorum"u ölçer,
+--     yani susturma bozulsa bile test yeşil kalırdı.
+-- Rol geri yüklenirken kimlik **beta**'dır; sıradaki `send_nudge` cooldown
+-- iddiası gönderenin kimliğine bağlıdır.
+reset role;
 select is(
   (select count(*)::int from public.nudges
    where sender_id = :'beta' and recipient_id = :'alpha'),
@@ -80,6 +90,8 @@ select is(
   1,
   'bastırılmış deneme cooldown paritesi için kaydedilir'
 );
+set local role authenticated;
+select set_config('request.jwt.claim.sub', :'beta', true);
 select throws_ok(
   $$select public.send_nudge('20000000-0000-0000-0000-000000000001',
                              '10000000-0000-0000-0000-000000000001', 'tekrar')$$,
@@ -99,12 +111,16 @@ select lives_ok(
                              '10000000-0000-0000-0000-000000000001', 'selam')$$,
   'susturulmamış kişinin dürtmesi normal düşer'
 );
+-- Bu iddia satırın **yazıldığını** ölçüyor, gönderenin onu görebildiğini değil;
+-- o yüzden RLS'in arkasından okunur (bkz. yukarıdaki WP-473 notu).
+reset role;
 select is(
   (select count(*)::int from public.nudges
    where sender_id = :'gamma' and recipient_id = :'alpha'),
   1,
   'susturma yalnız hedef göndereni etkiler'
 );
+set local role authenticated;
 
 -- geri alma
 select set_config('request.jwt.claim.sub', :'alpha', true);

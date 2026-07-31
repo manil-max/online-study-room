@@ -188,7 +188,6 @@ create or replace function public.admin_begin_moderation_sanction(
 language plpgsql security definer set search_path = public as $$
 declare
   v_row public.moderation_sanctions%rowtype;
-  v_active public.moderation_sanctions%rowtype;
 begin
   if not public.is_super_admin() then
     raise exception 'not_super_admin' using errcode = '42501';
@@ -217,8 +216,19 @@ begin
       and expires_at is not null
       and expires_at <= now();
 
-    select * into v_active from public.moderation_active_sanction(p_target_user_id);
-    if v_active.id is not null then
+    -- 🔴 Kapı, `moderation_sanctions_one_active_idx` yüklemiyle **aynı kümeye**
+    -- bakmak zorundadır. Index `pending` durumunu da kapsıyor; koruma yalnız
+    -- `applied`'a bakınca (eski hâl) bekleyen bir kısıt varken ikinci istek
+    -- anlaşılır `sanction_already_active` yerine ham `23505 unique_violation`
+    -- ile düşüyordu — iki fazlı tasarımın tam da normal akışında.
+    -- `moderation_active_sanction` bilerek değiştirilmedi: kullanıcı yüzeyinde
+    -- "aktif kısıt" **uygulanmış** kısıt demektir, açılmayı bekleyen değil.
+    if exists (
+      select 1 from public.moderation_sanctions
+      where target_user_id = p_target_user_id
+        and state in ('pending', 'applied')
+        and public.moderation_is_restrictive(action)
+    ) then
       raise exception 'sanction_already_active';
     end if;
   end if;

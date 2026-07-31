@@ -81,12 +81,21 @@ select is(
   1::bigint,
   'tekrar gönderim ikinci itiraz açmaz'
 );
+-- 🔴 WP-473: bu iddia sunucu durumunu ölçüyor, itiraz edenin görüş alanını
+-- değil. Aktif kimlik beta (yaptırım gören); `ugc_reports` RLS'i raporu yalnız
+-- raporlayana açtığı için sorgu beta altında **sıfır satır** görüyordu ve
+-- `bool_and` boş kümede NULL dönüyordu — yani saklama süresi hiç uzatılmasa
+-- bile test aynı şekilde düşerdi. Ayrıcalıklı rolde okununca iddia gerçekten
+-- saklama süresini ölçer.
+reset role;
 select ok(
   (select bool_and(r.evidence_retention_until > now() + interval '100 days')
    from public.ugc_reports r
    where r.target_type = 'message' and r.target_id = :'msg'),
   'açık itiraz kanıt saklama süresini ileri atar'
 );
+set local role authenticated;
+select set_config('request.jwt.claim.sub', :'beta', true);
 
 -- Kanıt gövdesi normal kullanıcıya kapalıdır.
 select throws_ok(
@@ -145,15 +154,22 @@ select ok(
    where entity_type = 'sanction' and action = 'state_changed') >= 1,
   'yaptırım durum değişimi denetim zincirine düşer'
 );
+-- 🔴 WP-473: append-only iddiası **ayrıcalıklı rolde** kurulmalıdır.
+-- `authenticated` altında `update`/`delete` zaten grant kapısında düşüyor
+-- ("permission denied for table"), yani tetikleyici hiç çalışmıyordu ve test
+-- kanıtlamak istediği şeyi kanıtlamıyordu. `0106`'nın kendi notu da bunu
+-- söylüyor: tetikleyici tablo sahibinde de çalışsın diye var, "yalnız `revoke`
+-- yeterli olmazdı". Aşağısı tam o iddiayı sınar.
+reset role;
 select throws_ok(
   $$update public.moderation_audit_events set reason = 'degistirildi'$$,
   '42501', 'moderation_audit_append_only',
-  'geçmiş denetim satırı değiştirilemez'
+  'geçmiş denetim satırı sahibi tarafından bile değiştirilemez'
 );
 select throws_ok(
   $$delete from public.moderation_audit_events$$,
   '42501', 'moderation_audit_append_only',
-  'geçmiş denetim satırı silinemez'
+  'geçmiş denetim satırı sahibi tarafından bile silinemez'
 );
 reset role;
 

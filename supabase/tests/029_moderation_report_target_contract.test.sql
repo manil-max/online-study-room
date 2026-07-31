@@ -8,7 +8,8 @@ set local search_path = public, extensions;
 \set grp   '20000000-0000-0000-0000-000000000001'
 \set msg   '40000000-0000-0000-0000-000000000010'
 
-select plan(15);
+-- 16: WP-473'te kanıt gövdesinin kullanıcıya kapalı olduğunu doğrulayan iddia eklendi.
+select plan(16);
 
 insert into public.class_messages (id, group_id, user_id, body)
 values (:'msg'::uuid, :'grp'::uuid, :'beta'::uuid, 'Sunucunun kanonik metni')
@@ -24,11 +25,31 @@ select lives_ok(
   )$$,
   'aktif üye gerçek grup bağlamındaki mesajı raporlayabilir'
 );
+-- 🔴 WP-473: `canonical_snapshot` `0106` (WP-442) ile **bilerek** normal
+-- kullanıcıdan alındı — raporlayan kendi satırını okusa bile sunucunun ürettiği
+-- kanıt gövdesini göremez (tablo grantı kaldırılıp izin verilen sütunlar tek tek
+-- verildi). Bu dosya `0104` zamanında yazıldı, hiç koşmadı ve sonraki kararı
+-- göremedi. İddianın niyeti — "istemci ipucu değil server metni saklanır" —
+-- korunuyor, yalnız ayrıcalıklı rolde doğrulanıyor; hemen ardından sütunun
+-- kullanıcıya gerçekten kapalı olduğu da ayrıca iddia ediliyor.
+reset role;
+reset role;
 select is(
   (select canonical_snapshot->>'body' from public.ugc_reports
    where target_type = 'message' and target_id = :'msg'),
   'Sunucunun kanonik metni',
   'istemci ipucu yerine server kanonik metni saklanır'
+);
+set local role authenticated;
+select set_config('request.jwt.claim.sub', :'alpha', true);
+set local role authenticated;
+select set_config('request.jwt.claim.sub', :'alpha', true);
+
+select throws_ok(
+  $$select canonical_snapshot from public.ugc_reports$$,
+  '42501',
+  'permission denied for table ugc_reports',
+  'kanıt gövdesi raporlayana bile kapalıdır (0106 sütun grantı)'
 );
 select is(
   (select client_hint from public.ugc_reports
@@ -63,18 +84,24 @@ select lives_ok(
   )$$,
   'grup adı aynı kimlikte ayrı vaka açar'
 );
+reset role;
 select is(
   (select count(*) from public.moderation_cases
    where target_id = :'grp' and status in ('open', 'in_review')),
   2::bigint,
   'grup ve grup adı ayrı açık vakadır'
 );
+set local role authenticated;
+select set_config('request.jwt.claim.sub', :'alpha', true);
+reset role;
 select is(
   (select count(*) from public.moderation_cases
    where target_type = 'message' and target_id = :'msg' and status = 'open'),
   1::bigint,
   'aynı hedef tek açık vakada toplanır'
 );
+set local role authenticated;
+select set_config('request.jwt.claim.sub', :'alpha', true);
 select throws_like(
   $$update public.ugc_reports
     set canonical_snapshot = '{}'::jsonb

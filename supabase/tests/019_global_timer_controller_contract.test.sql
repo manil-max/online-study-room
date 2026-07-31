@@ -2,7 +2,9 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 \ir _fixtures/base_seed.psql
-select plan(11);
+-- 12 iddia var; dosya ilk yazıldığında `plan(11)` sayılmıştı. Test hiç
+-- koşmadığı için bu sapma da görünmemişti (WP-473).
+select plan(12);
 
 -- WP-431 sunucu sözleşmesi.
 --
@@ -23,6 +25,14 @@ insert into public.push_devices (
    'wp431-mirror-installation-062', 'wp431-mirror-token-00000000000000000062',
    'beta', '1.0.0', 1, 'tr', 'Europe/Istanbul', false, false, false, true, 0, 0);
 
+-- 🔴 Rol disiplini (WP-473): `live_study_runs`, `user_timer_state` ve
+-- `global_timer_commands` `0051`/`0082`'den beri `authenticated`'a **kapalıdır**
+-- (`revoke all`). RPC çağrıları `auth.uid()` gerektirdiği için `authenticated`
+-- rolünde yapılır, fakat iç tabloların doğrulaması `reset role` ile ayrıcalıklı
+-- rolde okunur. Bu dosya ilk yazıldığında hiç koşmadığı için doğrulamalar da
+-- `authenticated` altında duruyordu ve replay'de 11/11 "permission denied"
+-- veriyordu. Aşağıdaki `reset role` / `set local role authenticated` çiftleri
+-- `018_global_timer_command_contract` dosyasındaki yerleşik kalıbı izler.
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000001', true);
 
@@ -33,11 +43,14 @@ select (public.apply_global_timer_command(
   jsonb_build_object('origin', 'app'), 2
 )->'run'->>'id')::uuid as offline_run \gset
 
+reset role;
 select ok(
   (select effective_started_at < clock_timestamp() - interval '2 hours 50 minutes'
    from public.live_study_runs where id = :'offline_run'),
   'an offline start keeps its real start time instead of collapsing onto the flush moment'
 );
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000001', true);
 
 -- ------------------------------------ 2. çevrimdışı başlangıç 24 saatle sınırlı
 select public.apply_global_timer_command(
@@ -50,11 +63,14 @@ select (public.apply_global_timer_command(
   jsonb_build_object('origin', 'app'), 2
 )->'run'->>'id')::uuid as ancient_run \gset
 
+reset role;
 select ok(
   (select effective_started_at >= clock_timestamp() - interval '24 hours 1 minute'
    from public.live_study_runs where id = :'ancient_run'),
   'a start older than 24 hours is clamped instead of creating an unbounded ghost run'
 );
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000001', true);
 
 -- ------------------------------------------- 3. gelecekten gelen komut reddedilir
 select public.apply_global_timer_command(
@@ -86,10 +102,13 @@ select is(
   'the mirror device can terminate the run the source device started (V56-S01)'
 );
 
+reset role;
 select ok(
   (select status = 'stopped' from public.live_study_runs where id = :'shared_run'),
   'the run really terminates for every device, not only for the mirror surface'
 );
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000001', true);
 
 -- ------------------------------------- 5. terminal durum her zaman üstün gelir
 select is(
@@ -107,18 +126,20 @@ select (public.apply_global_timer_command(
   'start', null, null, clock_timestamp(), jsonb_build_object('origin', 'app'), 2
 )->'run'->>'id')::uuid as repeat_run \gset
 
-do $repeat$
-begin
-  for i in 1..20 loop
-    perform public.apply_global_timer_command(
-      '40000000-0000-0000-0000-000000000070', '30000000-0000-0000-0000-000000000062',
-      'stop', (select current_run_id from public.user_timer_state
-               where user_id = '10000000-0000-0000-0000-000000000001'),
-      1, clock_timestamp(), '{}'::jsonb, 2);
-  end loop;
-end
-$repeat$;
+-- Koşu kimliği doğrudan `:'repeat_run'`den gelir ve döngü `generate_series`
+-- ile kurulur. Önceki hâli `do $$ … $$` bloğu içinde her turda
+-- `user_timer_state`i okuyordu; o tablo `authenticated`'a kapalı olduğu için
+-- döngü hiç çalışamıyordu. psql, dollar-quote edilmiş gövdenin içinde değişken
+-- enterpolasyonu yapmadığı için kimliği bloğa sokmanın yolu da yoktu; düz SQL
+-- biçimi hem bu kısıtı kaldırıyor hem de testin niyetini — **aynı komut
+-- kimliğinin** 20 kez teslimi — daha doğrudan ifade ediyor.
+-- `apply_global_timer_command` VOLATILE olduğu için satır başına bir kez çalışır.
+select count(public.apply_global_timer_command(
+  '40000000-0000-0000-0000-000000000070', '30000000-0000-0000-0000-000000000062',
+  'stop', :'repeat_run'::uuid, 1, clock_timestamp(), '{}'::jsonb, 2))
+from generate_series(1, 20);
 
+reset role;
 select is(
   (select count(*)::int from public.global_timer_commands
    where command_id = '40000000-0000-0000-0000-000000000070'),
@@ -131,6 +152,8 @@ select is(
   2,
   'the repeated deliveries advance the revision exactly once'
 );
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000001', true);
 
 -- --------------------------------- 7. kirası dolmuş koşu snapshot'ta işaretli
 select (public.apply_global_timer_command(

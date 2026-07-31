@@ -34,12 +34,21 @@ select is(
   'left',
   'aktif üye gruptan çıkabilir'
 );
+-- 🔴 WP-473: bu iddia satırın **durduğunu** ölçüyor, çıkanın onu görebildiğini
+-- değil. `members_select` politikası `is_group_member(group_id)` ister, o da
+-- `left_at is null` şartına bağlıdır (`0008`) — yani çıkıştan sonra beta artık
+-- hiçbir üyelik satırını göremez ve sorgu NULL döner. Eski hâl bu yüzden
+-- kırmızıydı; üstelik satır gerçekten SİLİNMİŞ olsa da aynı NULL'ı görürdü,
+-- yani soft-delete değişmezini hiç sınamıyordu.
+reset role;
 select isnt(
   (select left_at from public.group_members
    where group_id = :'grp' and user_id = :'beta'),
   null,
   'çıkış soft-delete: satır silinmez, left_at yazılır'
 );
+set local role authenticated;
+select set_config('request.jwt.claim.sub', :'beta', true);
 select is(
   (select count(*)::int from public.group_live_presence
    where group_id = :'grp' and user_id = :'beta'),

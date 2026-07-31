@@ -64,15 +64,19 @@ select is(
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000001', true);
 
+-- WP-473: hedef kimligi `0104` (WP-439) ile gercek ve gorunur bir varlik
+-- olmak zorunda; uydurma 'target-1' dizgesi artik `invalid_target_id` ile
+-- reddediliyor. Rapor hedefi ayni gruptaki beta profiline cevrildi; testin
+-- niyeti (rapor kaynak satiri korunur, bilet ona baglanir) degismedi.
 select lives_ok(
-  $$select public.report_ugc('user', 'target-1', 'spam', 'Ayrıntı', null)$$,
+  $$select public.report_ugc('user', '10000000-0000-0000-0000-000000000002', 'spam', 'Ayrıntı', null)$$,
   'report RPC preserves the UGC report as the authoritative source row'
 );
 
 reset role;
 
 select is(
-  (select id::text from public.ugc_reports where target_id = 'target-1'),
+  (select id::text from public.ugc_reports where target_id = '10000000-0000-0000-0000-000000000002'),
   (select ugc_report_id::text from public.feedback_tickets
    where ticket_type = 'report' order by created_at desc limit 1),
   'report ticket retains the authoritative UGC report reference'
@@ -83,7 +87,7 @@ select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000001
 
 select is(
   (select ticket_type from public.feedback_tickets
-   where ugc_report_id = (select id from public.ugc_reports where target_id = 'target-1')),
+   where ugc_report_id = (select id from public.ugc_reports where target_id = '10000000-0000-0000-0000-000000000002')),
   'report',
   'report has a linked support ticket without merging source tables'
 );

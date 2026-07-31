@@ -83,6 +83,9 @@ select is(
   1::bigint,
   'denetim satırı yaptırımla aynı transaction''da yazılır'
 );
+-- `notification_outbox` `0066`'dan beri `authenticated`'a kapalıdır; teslimatın
+-- gerçekten kuyruğa düştüğü ayrıcalıklı rolde doğrulanır (WP-473).
+reset role;
 select is(
   (select count(*) from public.notification_outbox
    where recipient_id = :'beta' and notification_type = 'announcement'
@@ -90,6 +93,8 @@ select is(
   1::bigint,
   'kısıt kullanıcıya gerçekten iletilir'
 );
+set local role authenticated;
+select set_config('request.jwt.claim.sub', :'alpha', true);
 select ok(
   public.moderation_is_muted(:'beta'::uuid),
   'susturma sunucu tarafında etkindir'

@@ -109,11 +109,15 @@ select is(
 select public.mark_feedback_ticket_messages_read(
   '40000000-0000-0000-0000-000000000001'
 );
+-- WP-473: `0103` bilet gövdesini konuşmanın kanonik ilk mesajı yaptı, yani
+-- `sender_role = 'user'` artık **iki** satır döndürüyor ve skaler alt sorgu
+-- "more than one row" ile patlıyordu. `bool_and` hem hatayı kaldırır hem de
+-- iddiayı güçlendirir: kullanıcı mesajlarının **hepsi** okundu işaretlenmeli.
 select ok(
-  (select read_at is not null from public.feedback_ticket_messages
+  (select bool_and(read_at is not null) from public.feedback_ticket_messages
     where ticket_id = '40000000-0000-0000-0000-000000000001'
       and sender_role = 'user'),
-  'admin opening the conversation marks user messages read'
+  'admin opening the conversation marks every user message read'
 );
 
 select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000001', true);
@@ -126,7 +130,7 @@ select public.mark_feedback_ticket_messages_read(
   '40000000-0000-0000-0000-000000000001'
 );
 select ok(
-  (select read_at is not null from public.feedback_ticket_messages
+  (select bool_and(read_at is not null) from public.feedback_ticket_messages
     where ticket_id = '40000000-0000-0000-0000-000000000001'
       and sender_role = 'admin'),
   'ticket owner opening the conversation marks the admin reply read'
