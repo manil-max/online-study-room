@@ -142,13 +142,37 @@ try {
     $bitmap.Dispose()
   }
 
+  # 🔴 WP-465 bulgusu: bu betik eskiden yalnız "görünür bir pencere oluştu mu"
+  # ölçüyordu ve ölümcül yapılandırma hatası ekranındaki uygulamaya da PASS
+  # diyordu (kanıt: docs/qa/V57-FULL-REGRESSION.md §5.3). Ekran görüntüsü
+  # üretiliyordu ama kimse bakmazsa kapı yeşil raporluyordu.
+  #
+  # Ayırt edici sinyal, ürün tarafına hiç dokunmadan mevcut: pencere başlığı.
+  #   * `windows/runner/main.cpp` pencereyi SABİT `Odak Kampi` (ASCII i) ile açar
+  #   * Dart başlığı ancak `desktop_window_io.dart` içindeki `WindowOptions`
+  #     ile, yani yapılandırma doğrulaması GEÇTİKTEN sonra yerelleştirilmiş
+  #     ada çevirir: TR `Odak Kampı` (noktalı ı), EN `Focus Camp`.
+  # Başlık hâlâ bootstrap değeriyse Dart o noktaya hiç ulaşmamıştır.
+  $process.Refresh()
+  $observedTitle = $process.MainWindowTitle
+  $bootstrapTitle = 'Odak Kampi'
+  if ($observedTitle -ceq $bootstrapTitle) {
+    throw ("Uygulama acildi ama Dart masaustu kurulumuna hic ulasmadi: pencere " +
+      "basligi hala native bootstrap degeri ('$bootstrapTitle'). En olasi sebep " +
+      "yapilandirma hata ekrani (ornegin invalid_version_build). Ekran " +
+      "goruntusu kanit olarak alindi: $OutputPath")
+  }
+  if ([string]::IsNullOrWhiteSpace($observedTitle)) {
+    throw "Pencere basligi bos; uygulama acilisi tamamlanmamis. Ekran goruntusu: $OutputPath"
+  }
+
   $elapsedMs = [Math]::Round($stopwatch.Elapsed.TotalMilliseconds)
   $result = [ordered]@{
     passed = $true
     checkedAtUtc = [DateTime]::UtcNow.ToString('o')
     launchMode = if ($startedBySmoke) { 'launched_release' } else { 'attached_to_running_app' }
     processId = $process.Id
-    windowTitle = $process.MainWindowTitle
+    windowTitle = $observedTitle
     visibleWindowWithinMs = $elapsedMs
     timeoutSeconds = $TimeoutSeconds
     dismissInitialDialogRequested = [bool]$DismissInitialDialog
@@ -158,7 +182,7 @@ try {
   $result | ConvertTo-Json | Set-Content -LiteralPath $manifestPath -Encoding utf8
 
   Write-Output 'WINDOWS_FAST_SMOKE PASS'
-  Write-Output ("mode={0}; pid={1}; visible_ms={2}; window={3}" -f $result.launchMode, $result.processId, $result.visibleWindowWithinMs, $result.window)
+  Write-Output ("mode={0}; pid={1}; visible_ms={2}; window={3}; title={4}" -f $result.launchMode, $result.processId, $result.visibleWindowWithinMs, $result.window, $result.windowTitle)
   Write-Output ("screenshot={0}" -f $OutputPath)
   Write-Output ("manifest={0}" -f $manifestPath)
 }

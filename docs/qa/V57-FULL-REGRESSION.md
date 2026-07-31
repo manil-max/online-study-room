@@ -190,13 +190,47 @@ Kritik/ağır: **0**.
 | --- | --- | --- |
 | 1 | P3 (DX) | Dört `app/env.*.example.json` şablonunda `MIGRATION_HEAD` bayat: `0070` / `0063` / `0062` / `0062`, gerçek head `0114`. **Yayın hatası değil** — `release.yml` bu değeri sözleşmeden (`preflight.outputs.migration_head`) üretir, şablondan değil. Etki yalnız şablonu kopyalayan geliştiricinin build manifest'i. Manifest kapısı yalnız `^\d{4}$` biçimini doğruladığı için sessiz kalır. |
 | 2 | P3 (DX) | `flutter build apk` **flavor'sız** çağrıldığında `beta` flavor'ına düşüyor ve `validateBetaEnvironment` "CHANNEL zorunlu" ile kırılıyor. Muhafız **doğru** çalışıyor (kanal/backend karışmasını engelliyor) ama hata mesajı yanlış flavor'a işaret ettiği için tuzak. Doğrusu `--flavor local` + `CHANNEL/APP_ENVIRONMENT/GIT_COMMIT_SHA/MIGRATION_HEAD` içeren env dosyası. |
-| 3 | **P2** | `app/integration_test/v8_critical_flows_test.dart` **hiçbir CI kapısında koşmuyor.** Git'te izleniyor, adı "kritik akışlar", ama yalnız elle çalıştırılan `scripts/windows_local_dev.ps1 -IntegrationTest` çağırıyor. `flutter test` varsayılan olarak sadece `test/` dizinini koşar; `ci.yml` de öyle. Hafifletici: `flutter analyze` bu dosyayı **kapsıyor** (analyzer exclude'u yok), yani derleme çürümesi sessiz kalmaz — gözden kaçan yalnız davranışsal regresyondur. Sonuç için §5.3. |
+| 3 | **P2 — ✅ DÜZELTİLDİ** | `app/integration_test/v8_critical_flows_test.dart` **hiçbir CI kapısında koşmuyordu.** Git'te izleniyor, adı "kritik akışlar", ama yalnız elle çalıştırılan `scripts/windows_local_dev.ps1 -IntegrationTest` çağırıyor. `flutter test` varsayılan olarak sadece `test/` dizinini koşar; `ci.yml` de öyle. Hafifletici: `flutter analyze` bu dosyayı **kapsıyor** (analyzer exclude'u yok), yani derleme çürümesi sessiz kalmaz — gözden kaçan yalnız davranışsal regresyondur. Sonuç için §5.3. |
 | 4 | P3 (temizlik) | `app/analyze_out.txt` **git'te izleniyordu**: UTF-16 kodlu, eski bir `flutter analyze` hata dökümü, `e351741` (WP-25) ile kazara eklenmiş, hiçbir yerden referans yok. İçeriği "error - Target of URI doesn't exist..." satırları olduğu için depoyu okuyanı analyze kırıkmış gibi yanıltıyordu (analyze **temiz**). Hiçbir kartın sahipliğinde olmayan build artığı olduğu için bu turda **kaldırıldı**. |
 | 5 | P3 (kapsam) | Kartın regresyon listesindeki **a11y** için ayrılmış test yok: `a11y`/`accessib` geçen test dosyası 0, yalnız 4 dosyada dolaylı `Semantics` kullanımı var. Karşılaştırma: `offline` 11, `dark` 13, `logout` 2 dosya. Bu bir kusur değil, **kapsam boşluğu** — cihaz a11y satırları WP-466'ya, otomatik a11y testi bir sonraki tura. |
 
-| 6 | **P2** | `scripts/windows_fast_smoke.ps1` **çalışan uygulama ile hard-fail etmiş uygulamayı ayırt edemiyor.** Bu turda ampirik olarak gösterildi: aynı betik, ölümcül "Secure configuration could not be verified / `invalid_version_build`" ekranındaki uygulama için de `WINDOWS_FAST_SMOKE PASS` bastı (§5.3). Ölçtüğü tek şey "görünür pencere oluştu mu". Ekran görüntüsü üretiyor ama karar ona bakmıyor. Öneri: betiğe basit bir içerik kontrolü (ör. beklenen bir metnin/pikselin varlığı) ya da uygulamadan okunabilen bir sağlık sinyali eklenmeli; aksi halde "Windows smoke yeşil" cümlesi kanıt değildir. |
+| 6 | **P2 — ✅ DÜZELTİLDİ** | `scripts/windows_fast_smoke.ps1` **çalışan uygulama ile hard-fail etmiş uygulamayı ayırt edemiyordu.** Bu turda ampirik olarak gösterildi: aynı betik, ölümcül "Secure configuration could not be verified / `invalid_version_build`" ekranındaki uygulama için de `WINDOWS_FAST_SMOKE PASS` bastı (§5.3). Ölçtüğü tek şey "görünür pencere oluştu mu". Ekran görüntüsü üretiyor ama karar ona bakmıyor. Öneri: betiğe basit bir içerik kontrolü (ör. beklenen bir metnin/pikselin varlığı) ya da uygulamadan okunabilen bir sağlık sinyali eklenmeli; aksi halde "Windows smoke yeşil" cümlesi kanıt değildir. |
 
-Bulgu 3 ve 6 **P2**; ikisi de **ürün kusuru değil kapı kusurudur** —
+### 6.1 İki P2 kapı kusuru kapatıldı (2026-07-31)
+
+**Bulgu 3 — entegrasyon testi artık CI'da.** `ci.yml`'e ayrı bir
+`integration-tests` işi eklendi (windows-latest, `-d windows`). Ayrı iş
+olmasının sebebi: `-d windows` gerçek bir Debug Windows derlemesi yapar;
+golden işine eklenseydi hem o işin süresini riske atardı hem de kırmızı
+düştüğünde hangisinin bozulduğu belirsiz kalırdı.
+
+**Bulgu 6 — smoke artık hard-fail'i yakalıyor.** Ayırt edici sinyal ürün
+tarafına hiç dokunmadan bulundu: **pencere başlığı**.
+
+| Durum | Başlık |
+| --- | --- |
+| Native bootstrap (`windows/runner/main.cpp:32`) | `Odak Kampi` (ASCII `i`) |
+| Başarılı açılış, TR (`desktop_window_io.dart:123`) | `Odak Kampı` (noktalı `ı`) |
+| Başarılı açılış, EN | `Focus Camp` |
+
+Dart başlığı ancak yapılandırma doğrulaması **geçtikten sonra** yerelleştirilmiş
+ada çevirir. Başlık hâlâ bootstrap değeriyse Dart oraya hiç ulaşmamıştır —
+dile bağlı olmayan, ürün değişikliği gerektirmeyen bir sinyal.
+
+🔴 **Mutasyonla sınandı** (hafızadaki ders: bir kapıya güvenmeden önce kasten
+kırık girdiyle koştur):
+
+| Girdi | Eski davranış | Yeni davranış |
+| --- | --- | --- |
+| Sağlam build (`0.0.0-local`) | PASS | ✅ PASS, `title=Focus Camp` |
+| Bozuk build (`0.0.0-MUTASYON` → `invalid_version_build`) | 🔴 **PASS** | ✅ **FAIL**, sebebi adıyla söylüyor |
+
+Yani kapı artık ölçmesi gereken şeyi ölçüyor. Ekran görüntüsü başarısızlıkta
+da kanıt olarak saklanıyor ve hata mesajı yolunu veriyor.
+
+---
+
+Bulgu 3 ve 6 **P2 idi**; ikisi de **ürün kusuru değil kapı kusuruydu** —
 `ci.yml` ve `windows_fast_smoke.ps1`'i ilgilendirir, hiçbir ürün kartını
 değil. WP-465 "ilgili ürün dosyasını ilgili ajan düzeltir" dediği ve bunlar
 CI/altyapı kalemi olduğu için **kayda geçirildi, düzeltilmedi**; WP-467'nin

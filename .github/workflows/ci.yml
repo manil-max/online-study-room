@@ -64,6 +64,35 @@ jobs:
       # karşılaştırmak platform farkını ürün regresyonu diye raporlar.
       - run: flutter test --exclude-tags=golden --dart-define-from-file=env.json
 
+  # 🔴 WP-465 bulgusu: `app/integration_test/v8_critical_flows_test.dart` HİÇBİR
+  # kapıda koşmuyordu. `flutter test` varsayılan olarak yalnız `test/` dizinini
+  # koşar, yukarıdaki iki iş de öyle; dosyayı sadece elle çalıştırılan
+  # `scripts/windows_local_dev.ps1 -IntegrationTest` çağırıyordu. Adı "kritik
+  # akışlar" olan bir test yıllardır hiçbir şeyi korumuyordu.
+  #
+  # Ayrı iş olmasının sebebi: `-d windows` gerçek bir Debug Windows derlemesi
+  # yapar (dakikalar sürer). Golden işine eklenseydi hem o işin süresini
+  # riske atardı hem de kırmızı düştüğünde hangisinin bozulduğu belirsiz olurdu.
+  integration-tests:
+    name: Windows integration (critical flows)
+    runs-on: windows-latest
+    timeout-minutes: 30
+    defaults: { run: { working-directory: app } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter pub get
+      - name: Sahte env.json (secret gerekmez)
+        shell: pwsh
+        run: |
+          @{
+            SUPABASE_URL = 'http://127.0.0.1:54321'
+            SUPABASE_ANON_KEY = 'ci-placeholder-anon-key'
+          } | ConvertTo-Json | Set-Content -LiteralPath env.json -Encoding utf8
+      - run: flutter test -d windows integration_test/v8_critical_flows_test.dart --dart-define-from-file=env.json
+
   golden-tests:
     name: Windows golden baselines
     runs-on: windows-latest
