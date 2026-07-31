@@ -15,10 +15,18 @@ Kanıt dosyaları:
 | Sözleşme | `supabase/tests/040_pseudonymous_actor_retention.test.sql` | 12 iddia |
 | Politika | `docs/HESAP-SILME-RETENTION-KARARI.md` | §4.1 sınıf tablosu + §5.6 **sahip kararı** |
 
-Kapılar: guard 75/75, release preflight 8/8 (head `0113`, staging `0100`
-karşısında fail-closed doğrulandı), Database Gates yeşil — `039` gerçek
-Postgres'te 28/28. pgTAP **CI'da** koşar; bu hostta Docker motoru kalkmadığı
-için yerel replay yapılamadı.
+Kapılar: `flutter analyze` temiz, `flutter test` 1433/1433, guard 75/75,
+release preflight 8/8 (head `0114`, staging `0100` karşısında fail-closed
+doğrulandı), l10n 1480 + native 66, **Database Gates yeşil** — pgTAP
+`Files=44, Tests=647, Result: PASS` (`039` 28/28, `040` 12/12, gerçek
+Postgres'te migration apply dahil). pgTAP yalnız **CI'da** koşar; bu hostta
+Docker motoru kalkmadığı için yerel replay yapılamadı.
+
+> Database Gates bu turda üç kez kırmızı düştü ve üçü de gerçek kusurdu —
+> hiçbiri yerel PowerShell kapılarınca yakalanamazdı:
+> `have: 113, want: 112` (migration sayısı pini), `message_seq = 1` çakışması
+> (`0103`'ün otomatik ilk mesajı) ve `set null` FK'lerini tablo başına sayma
+> hatası (`moderation_sanctions.revoked_by` zaten `set null`'dı).
 
 > **Migration head DÖRT yerde pinli**, üç değil. İlk push'ta Database Gates
 > tam bu yüzden kırmızı düştü (`have: 113, want: 112`):
