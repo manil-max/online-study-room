@@ -6076,9 +6076,17 @@ tekrar tutulmaz.
   koşulamadı. Kanıt Database Gates workflow'unun local replay job'ından alınır.
 - **Test dosyası adı kartla farklı:** kart `039_feedback_message_push.test.sql`
   diyordu ama 039–042 aradan geçen WP'lerle dolmuş; dosya
-  `supabase/tests/043_feedback_message_push.test.sql` olarak açıldı (**9 pgTAP
+  `supabase/tests/043_feedback_message_push.test.sql` olarak açıldı (**10 pgTAP
   iddiası**: publication üyeliği, tip kısıtı, `_push_type_enabled`, iki yönde
   alıcı doğruluğu, gönderene gitmeme ve yük alanları).
+- **🔴 CI iki gerçek kusur yakaladı — "Replay bekliyor" boşuna değildi:**
+  (1) test mesaj satırını **doğrudan** insert ediyordu ve `client_message_id`
+  NOT NULL kısıtına takıldı; o kolon `0074`te değil `0103`te eklenmiş. Ham
+  insert `message_seq` sözleşmesini de atlıyordu, yani test üretimdeki yazma
+  yolunu hiç sınamıyordu. Test artık bilet açılışında `0103` seed
+  tetikleyicisini, yanıtta `send_feedback_ticket_message` RPC'sini sürüyor.
+  (2) `plan(9)` ile 10 iddia koşuluyordu (`lives_ok` sayılmamıştı). **Migration
+  `0117` her iki turda da değişmedi; kusur yalnızca testteydi.**
 - **İstemci değişmedi:** `watchTicketMessages` zaten `.stream()` kullanıyor
   ([supabase_admin_repository.dart:463](app/lib/data/repositories/supabase/supabase_admin_repository.dart:463));
   akış tablo yayına girer girmez çalışacak. Gönderim sonrası elle `refetch`

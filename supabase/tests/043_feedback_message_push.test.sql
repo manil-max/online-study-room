@@ -27,7 +27,7 @@ set local search_path = public, extensions;
 \set beta  '10000000-0000-0000-0000-000000000002'
 \set ticket '40000000-0000-0000-0000-000000000001'
 
-select plan(9);
+select plan(10);
 
 -- ===========================================================================
 -- 1. Realtime yayını
