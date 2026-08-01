@@ -9,6 +9,7 @@ import '../../../core/stats/study_stats.dart';
 import '../../../core/theme/subject_colors.dart';
 import '../../../core/utils/duration_format.dart';
 import '../../../core/widgets/anchored_menu.dart';
+import '../../../data/models/goal_streak.dart';
 import '../../../data/models/subject.dart';
 import '../../../data/providers/auth_providers.dart';
 import '../../../data/providers/study_providers.dart';
@@ -19,6 +20,7 @@ import '../../profile/session_history_screen.dart';
 import '../../profile/subjects_screen.dart';
 import '../../profile/widgets/goal_editor_dialog.dart';
 import '../../profile/widgets/manual_session_dialog.dart';
+import '../../stats/widgets/goal_streak_flame.dart';
 import 'clock_style.dart';
 import 'focus_timer_screen.dart';
 import 'timer_mode_controls.dart';
@@ -231,7 +233,12 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
 
     final goalMinutes = ref.watch(dailyGoalMinutesProvider);
     final goalSeconds = goalMinutes * 60;
-    final streak = ref.watch(currentStreakProvider);
+    // WP-481: kişisel seri kapsamı. `currentStreakProvider` bu yüzeyden
+    // çıkarıldı; iki seri motoru aynı ekranda yaşamamalı.
+    final userId = ref.watch(authStateProvider).value?.id;
+    final personalStreakScope = userId == null
+        ? null
+        : GoalStreakScope.personal(userId);
     final pct = goalSeconds > 0
         ? (todayTotal / goalSeconds).clamp(0.0, 1.0)
         : 0.0;
@@ -286,13 +293,19 @@ class _StudyTimerCardState extends ConsumerState<StudyTimerCard> {
                   ],
                 ),
               ),
-              // Seri (streak) — yalnız varsa (§3.7).
-              if (streak > 0)
-                Positioned(
-                  top: 14,
-                  left: 14,
-                  child: _StreakChip(streak: streak, compact: small),
+              // WP-481: seri rozeti **daima** görünür (sahip kararı) ve
+              // kanonik projeksiyondan okunur. Eski `if (streak > 0)` kapısı
+              // ile grace'siz `currentStreakProvider` birlikte kalktı.
+              Positioned(
+                top: 14,
+                left: 14,
+                child: GoalStreakBadge(
+                  scope: personalStreakScope,
+                  size: small
+                      ? GoalStreakFlameSize.compact
+                      : GoalStreakFlameSize.regular,
                 ),
+              ),
               Padding(
                 // Üstteki ikon/seri rozetiyle çakışmasın diye üst boşluk biraz fazla.
                 padding: const EdgeInsets.fromLTRB(16, 48, 16, 20),
@@ -640,48 +653,3 @@ class _GoalProgress extends StatelessWidget {
 
 /// Hedef serisi rozeti: ateş ikonu + üst üste günlük hedef tutturulan gün sayısı.
 /// [compact] (dar kart) modunda yalnız ikon + sayı gösterir.
-class _StreakChip extends StatelessWidget {
-  const _StreakChip({required this.streak, this.compact = false});
-
-  final int streak;
-  final bool compact;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: compact ? 8 : 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: subjectColor('chart-5').withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.local_fire_department,
-            size: compact ? 18 : 22,
-            color: subjectColor('chart-5'),
-          ),
-          const SizedBox(width: 6),
-          Text(
-            '$streak',
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: subjectColor('chart-5'),
-            ),
-          ),
-          if (!compact) ...[
-            const SizedBox(width: 3),
-            Text(
-              'hedef serisi',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}

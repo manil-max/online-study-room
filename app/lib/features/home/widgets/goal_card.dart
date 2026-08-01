@@ -4,7 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/subject_colors.dart';
 import '../../../core/utils/duration_format.dart';
+import '../../../data/models/goal_streak.dart';
+import '../../../data/providers/auth_providers.dart';
 import '../../../data/providers/study_providers.dart';
+import '../../stats/widgets/goal_streak_flame.dart';
 import '../dashboard_card.dart';
 
 /// Günlük hedef ilerlemesi + güncel seri (§3.11 kart). Hedefe ulaşılan oran bir
@@ -20,12 +23,17 @@ class GoalCard extends ConsumerWidget {
     final recorded = ref.watch(todayRecordedSecondsProvider);
     final goalMinutes = ref.watch(dailyGoalMinutesProvider);
     final goalSeconds = goalMinutes * 60;
-    final streak = ref.watch(currentStreakProvider);
+    // WP-481: kişisel seri kanonik projeksiyondan okunur.
+    // `currentStreakProvider` grace'siz eski motordu ve aynı geçmişte
+    // projeksiyondan farklı sayı veriyordu.
+    final userId = ref.watch(authStateProvider).value?.id;
+    final streakScope = userId == null
+        ? null
+        : GoalStreakScope.personal(userId);
     final pct = goalSeconds <= 0
         ? 0.0
         : (recorded / goalSeconds).clamp(0.0, 1.0);
     final reached = recorded >= goalSeconds && goalSeconds > 0;
-    final fire = subjectColor('chart-5');
     final ringColor = reached
         ? subjectColor('chart-2')
         : theme.colorScheme.primary;
@@ -99,37 +107,13 @@ class GoalCard extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Tooltip(
-                      message:
-                          '${AppLocalizations.of(context).homeGunlukHedef}: '
-                          '${AppLocalizations.of(context).homeOGun(streak.toString())}',
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: fire.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.local_fire_department,
-                              color: fire,
-                              size: 16,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '$streak',
-                              style: theme.textTheme.titleSmall?.copyWith(
-                                color: fire,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ],
-                        ),
+                    // Minik kartta rozet tam sığmıyor; içerik kırpılmak yerine
+                    // ölçekleniyor (kapsam etiketi erişilebilirlik için kalmalı).
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: GoalStreakBadge(
+                        scope: streakScope,
+                        size: GoalStreakFlameSize.compact,
                       ),
                     ),
                   ],
@@ -191,40 +175,7 @@ class GoalCard extends ConsumerWidget {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: fire.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.local_fire_department,
-                          color: fire,
-                          size: 28,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '$streak',
-                          style: theme.textTheme.headlineSmall?.copyWith(
-                            color: fire,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          'hedef serisi',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  GoalStreakBadge(scope: streakScope),
                 ],
               ),
             ),

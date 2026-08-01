@@ -7,11 +7,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/stats/study_stats.dart';
 import '../../../core/theme/subject_colors.dart';
 import '../../../core/utils/duration_format.dart';
+import '../../../data/models/goal_streak.dart';
 import '../../../data/models/presence.dart';
 import '../../../data/providers/group_providers.dart';
 import '../../../data/providers/presence_providers.dart';
 import '../../../data/providers/study_providers.dart';
 import '../../classroom/widgets/class_switcher.dart';
+import '../../stats/widgets/goal_streak_flame.dart';
 import '../dashboard_card.dart';
 import 'group_card_shell.dart';
 
@@ -83,8 +85,12 @@ class _GroupGoalCardState extends ConsumerState<GroupGoalCard> {
         ? 0.0
         : (todayTotal / goalSeconds).clamp(0.0, 1.0);
     final reached = goalSeconds > 0 && todayTotal >= goalSeconds;
-    final streak = currentStreak(const [], goalSeconds, totals: dayTotals);
-    final fire = subjectColor('chart-5');
+    // WP-481: grup serisi de kanonik projeksiyondan. `currentStreak()`
+    // grace'siz eski motordu; sahibin istediği duraklatma orada yok.
+    final streakScope = GoalStreakScope.group(
+      groupId: group.id,
+      timeZone: group.timeZone,
+    );
     final ringColor = reached
         ? subjectColor('chart-2')
         : theme.colorScheme.primary;
@@ -175,32 +181,13 @@ class _GroupGoalCardState extends ConsumerState<GroupGoalCard> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: fire.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.local_fire_department,
-                            color: fire,
-                            size: 16,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '$streak',
-                            style: theme.textTheme.titleSmall?.copyWith(
-                              color: fire,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ],
+                    // Minik kartta rozet tam sığmıyor; içerik kırpılmak yerine
+                    // ölçekleniyor (kapsam etiketi erişilebilirlik için kalmalı).
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: GoalStreakBadge(
+                        scope: streakScope,
+                        size: GoalStreakFlameSize.compact,
                       ),
                     ),
                   ],
@@ -260,30 +247,7 @@ class _GroupGoalCardState extends ConsumerState<GroupGoalCard> {
                               ),
                             ),
                             const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.local_fire_department,
-                                  size: 18,
-                                  color: fire,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  '$streak',
-                                  style: theme.textTheme.titleSmall?.copyWith(
-                                    color: fire,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  'grup serisi',
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: theme.colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-                              ],
-                            ),
+                            GoalStreakBadge(scope: streakScope),
                           ],
                         ),
                       ),

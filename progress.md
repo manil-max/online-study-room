@@ -5724,8 +5724,8 @@ tekrar tutulmaz.
 
 #### WP-481 — Seri göstergesi: chess.com modeli, daima görünür, kişisel + grup
 
-- **Durum / bağımlılık:** [ ] Bekliyor · Bağımsız başlar; **WP-455'in açık
-  kabulünü kapatır**.
+- **Durum / bağımlılık:** [x] Kod + otomatik test tamam (`Cihazda doğrulanmalı`).
+  **WP-455'in açık kabulünü kapatır** (yalnız görsel kanonikleşme; ekonomi ayrı).
 - **🔴 Sahip kararı (bağlayıcı, V57-N04 + V57-N05):**
   1. Rozet **her zaman görünür**, seri 0 iken bile.
   2. Üç durum: (a) sıfırlanmış → **gri soluk alev + "0"**; (b) duraklatma →
@@ -5788,6 +5788,39 @@ tekrar tutulmaz.
   ⚠️ golden'lar **ikon değişimini göremez** (WP-454 notu: `flutter test` gerçek
   MaterialIcons fontunu yüklemez), bu yüzden durum→ikon ayrımı `Icon.icon`
   alanını doğrudan okuyan testle taşınır.
+- **Sonuç (2026-08-01):** Yeni `GoalStreakBadge` (provider'a bağlı sarmalayıcı,
+  `goal_streak_flame.dart`) **üç yüzeye** kondu: `study_timer_card` sol üst
+  rozeti, `goal_card` (iki yerleşim) ve `group_goal_card` (iki yerleşim).
+  `if (streak > 0)` kapısı kalktı, rozet artık daima görünüyor; kapsam/akış
+  hazır değilken bile boş projeksiyonla gri alev + "0" çiziliyor.
+- **İki motor ayrımı kapandı:** `currentStreakProvider` bu üç yüzeyin
+  hiçbirinden okunmuyor (kaynak dosyaları tarayan test bunu sabitliyor).
+  `study_timer_card`taki `_StreakChip` (45 satır) öksüz kaldığı için silindi.
+- **Sahip kararının görsel karşılığı:** `empty`/`expired` → gri soluk alev
+  (eskiden gece ikonuydu, "seri yok" demiyordu) · `atRisk` → **pause** işareti
+  (eskiden uyarı üçgeni) · `completedToday` → renkli ateş · `pendingToday` →
+  **canlı** turuncu alev (eskiden griydi ve "sıfırlanmış" ile karışıyordu);
+  kartın kararı gereği pause yalnız dün kaçırılınca gösteriliyor.
+- **Sahibin sayısal örneği testte:** gün atlayarak 100 günde 50 kez hedef
+  tutturan senaryo `projectGoalStreak` üzerinden **50** veriyor (koruma
+  sınırsız). Aynı üç durum grup kapsamında da doğrulanıyor.
+- **🔴 Ekonomiye DOKUNULMADI (kapsam dışı, bilerek):** `_achievement_metrics.streak_days`,
+  `fire_streak` XP kademeleri ve `currentStreakWithFreezes` **değişmedi**; hiçbir
+  migration yazılmadı. Grace'li metriğe geçmek mevcut kullanıcıların kademesini
+  geriye dönük yükseltirdi; bu ayrı bir ekonomi WP'sidir. `git diff` bu turda
+  gamification/migration dosyası içermiyor.
+- **WP-477 borcu kapandı:** `'hedef serisi'` / `'grup serisi'` gömülü metinleri
+  rozetle birlikte kalktı; `l10n_audit.py`deki üç geçici muafiyet **silindi**.
+- **Golden notu:** `goal_streak_flame_light/dark.png` yeniden üretildi (renk
+  değişimi görünüyor); ikon değişimi goldende görünmez, o yüzden `Icon.icon`
+  testi kanıt. `compact_scale` goldeni değişmedi çünkü taşıdığı iki durumun
+  rengi aynı kaldı.
+- **Dar kart taşması:** `dashboard_cards_render_test` minik boyutta 39 px taşma
+  gösterdi (rozet eski çipten geniş); kapsam etiketi erişilebilirlik için
+  kaldırılmadı, bunun yerine minik yerleşimde `FittedBox(scaleDown)` kullanıldı.
+- **Ölçüm:** yeni `app/test/features/stats/goal_streak_surface_wp481_test.dart`
+  **9 test** · tam paket **1590/1590 yeşil** (öncesi 1581) · `flutter analyze`
+  0 uyarı · l10n OK.
 
 #### WP-482 — Ana ekran widget'ı çoklu cihaz senkronunu almıyor (tanı, salt-okunur)
 

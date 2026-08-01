@@ -292,22 +292,10 @@ UI_PROSE_EXEMPTIONS: dict[str, str] = {
         "Klavye kısayolu ipucu (`Ctrl+1…5`): tuş adları platform sabiti, "
         "çevrilebilir kısım zaten `AppLocalizations` üzerinden geliyor."
     ),
-    # WP-477: aşağıdaki üçü PROSE_RE'nin büyük harf şartı kalkınca **ilk kez**
-    # görünen gerçek ihlallerdir (`Text('hedef serisi')`). Metinler seri
-    # rozetinin yanındadır ve rozet WP-481'de kanonik projeksiyona bağlanırken
-    # yeniden yazılıyor; oraya kadar muaf, WP-481 bitince bu üç satır silinir.
-    "app/lib/features/classroom/widgets/study_timer_card.dart": (
-        "WP-481 bekliyor: `'hedef serisi'` etiketi seri rozetiyle birlikte "
-        "yeniden yazılacak."
-    ),
-    "app/lib/features/home/widgets/goal_card.dart": (
-        "WP-481 bekliyor: `'hedef serisi'` etiketi seri rozetiyle birlikte "
-        "yeniden yazılacak."
-    ),
-    "app/lib/features/home/widgets/group_goal_card.dart": (
-        "WP-481 bekliyor: `'grup serisi'` etiketi grup seri rozetiyle birlikte "
-        "yeniden yazılacak."
-    ),
+    # WP-477 üç geçici muafiyet açmıştı (`Text('hedef serisi')` /
+    # `Text('grup serisi')`, PROSE_RE gevşetilince ilk kez görünmüştü).
+    # WP-481 o üç rozeti `GoalStreakBadge`e çevirip metinleri kataloğa taşıdı;
+    # muafiyetler bu yüzden **silindi**, geri eklenmesi regresyondur.
     "app/lib/wp295_preview.dart": (
         "Geliştirici önizleme koşumu (`wp295_preview`), üründe yönlendirilen "
         "bir rota değil; ölçüm etiketleri çevrilmez."

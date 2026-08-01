@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:online_study_room/l10n/app_localizations.dart';
 
 import '../../../data/models/goal_streak.dart';
+import '../../../data/providers/goal_streak_providers.dart';
 
 /// WP-454: seri alevinin üç durumu ve kişisel/grup ayrımı.
 ///
@@ -166,24 +168,29 @@ GoalStreakFlameVisual goalStreakFlameVisual(
         background: const Color(0xFFEA580C).withValues(alpha: 0.14),
       );
     case GoalStreakState.pendingToday:
-      // Sönük/gri alev: bugün için hâlâ süre var.
+      // WP-481 sahip kararı: seri **yaşıyor** ve risk yok, o yüzden alev
+      // canlı renkte. Ayrım içi boş çizim: bugünün hedefi henüz tamamlanmadı.
+      // (Eskiden gri idi ve "sıfırlanmış" durumla karışıyordu.)
       return GoalStreakFlameVisual(
         icon: Icons.local_fire_department_outlined,
-        foreground: scheme.onSurfaceVariant,
-        background: scheme.surfaceContainerHighest,
+        foreground: const Color(0xFFEA580C),
+        background: const Color(0xFFEA580C).withValues(alpha: 0.10),
       );
     case GoalStreakState.atRisk:
-      // Grace işareti: alev + uyarı. Kırmızı DEĞİL — seri hâlâ ayakta ve
-      // kırmızı rozet kırmızı temada kaybolabiliyor (v49 sahip notu).
+      // WP-481 sahip kararı: duraklatma işareti **pause**. Kırmızı DEĞİL —
+      // seri hâlâ ayakta ve kırmızı rozet kırmızı temada kaybolabiliyor
+      // (v49 sahip notu).
       return GoalStreakFlameVisual(
-        icon: Icons.warning_amber_rounded,
+        icon: Icons.pause_circle_outline,
         foreground: const Color(0xFFB45309),
         background: const Color(0xFFF59E0B).withValues(alpha: 0.18),
       );
     case GoalStreakState.expired:
     case GoalStreakState.empty:
+      // WP-481 sahip kararı: sıfırlanmış seride **gri soluk alev + "0"**.
+      // Rozet gizlenmez; gece ikonu "seri yok" demiyordu.
       return GoalStreakFlameVisual(
-        icon: Icons.mode_night_outlined,
+        icon: Icons.local_fire_department,
         foreground: scheme.onSurfaceVariant,
         background: scheme.surfaceContainerHigh,
       );
@@ -203,3 +210,56 @@ String goalStreakFlameLabel(GoalStreakState state, AppLocalizations l10n) {
       return l10n.streakFlameNone;
   }
 }
+
+/// WP-481: ekranlara konan **kanonik** seri rozeti.
+///
+/// 🔴 Kök neden buydu: [GoalStreakFlame] ve `goalStreakProjectionProvider`
+/// WP-453/454'te yazıldı ama `app/lib` içinde tek bir çağrı yeri yoktu. Ekranlar
+/// bunun yerine grace'siz eski motoru (`currentStreak()`) okuyordu; sahibin
+/// istediği duraklatma o motorda **yok**. Bu sarmalayıcı iki motorun aynı
+/// ekranda yaşamasını engeller.
+///
+/// Rozet **her zaman** görünür (sahip kararı): kapsam hazır değilken, akış
+/// yüklenirken veya hata verdiğinde de boş projeksiyonla gri alev + "0" çizer.
+/// Eskiden `if (streak > 0)` kapısı vardı ve seri sıfırken rozet kayboluyordu.
+class GoalStreakBadge extends ConsumerWidget {
+  const GoalStreakBadge({
+    super.key,
+    required this.scope,
+    this.size = GoalStreakFlameSize.regular,
+  });
+
+  /// Kapsam henüz bilinmiyorsa (oturum/grup yüklenmedi) `null` geçilir.
+  final GoalStreakScope? scope;
+  final GoalStreakFlameSize size;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final scope = this.scope;
+    final projection = scope == null
+        ? null
+        : ref.watch(goalStreakProjectionProvider(scope)).value;
+    return GoalStreakFlame(
+      projection:
+          projection ??
+          emptyGoalStreakProjection(
+            scope ?? const GoalStreakScope.personal('unknown'),
+          ),
+      size: size,
+    );
+  }
+}
+
+/// Veri yokken gösterilecek projeksiyon: seri 0, durum `empty`.
+///
+/// `sourceVersion` bilinçli olarak `local-empty`: bu satırın sunucudan
+/// gelmediği, günlükte ve testte ayırt edilebilsin.
+GoalStreakProjection emptyGoalStreakProjection(GoalStreakScope scope) =>
+    GoalStreakProjection(
+      scope: scope,
+      asOfDay: DateTime.utc(1970),
+      currentStreak: 0,
+      completionCount: 0,
+      state: GoalStreakState.empty,
+      sourceVersion: 'local-empty',
+    );
