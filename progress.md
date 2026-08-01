@@ -6116,8 +6116,8 @@ tekrar tutulmaz.
 
 #### WP-486 — Yönetici yüzeyi: arayüz ve akış revizyonu
 
-- **Durum / bağımlılık:** [~] Yedi sekme envanteri tamam · ilk uygulama sırası
-  ürün sahibi seçimi bekliyor. WP-485 kodu tamam; remote replay/cihaz kanıtı ayrı.
+- **Durum / bağımlılık:** [x] Yedi sekme envanteri + seçilen ilk güvenlik kartı
+  **WP-486A tamamlandı.** WP-485 kodu tamam; remote terfi/release kanıtı ayrı.
 - **Sahip talebi (V57-N09 ikinci yarısı, aynen):** "Admin tarafında iyileştirmeler
   var ama hâlâ sorunlar var; arayüzden tut sisteme kadar bunlarda daha iyi
   profesyonelleşmemiz lazım, detaylı titiz bir çalışma lazım."
@@ -6148,8 +6148,11 @@ tekrar tutulmaz.
   kalabiliyor; boş alanlar sessiz no-op; dialog controller'ları dispose edilmiyor.
   Ortak P1'ler: standart scrollable retry/empty bileşeni, arama/filtre/sayfalama,
   audit tarih/kimlik okunabilirliği. Önerilen ilk kart **WP-486A duyuru güvenlik
-  kapısı** ve kabul ölçütleri envanterde hazır. Kozmetik/navigation tercihi,
-  sahibi müsait olmadığından kodlanmadı.
+  kapısı** uygulandı: silme onayı, alan-bazlı doğrulama, seçilebilir kullanıcı
+  hedefi, çift işlem kilidi, görünür sonuç, controller dispose ve 320 px/1.6×
+  text-scale regresyonları tamam. Kalan P1/P2 ölçek/navigation maddeleri yeni
+  API ve ürün tercihi gerektiren profesyonelleştirme backlog'udur; stable güvenlik
+  kapısı değildir.
 
 #### WP-487 — Grup üye satırı: ünvan satırı şişirmesin
 
@@ -6296,12 +6299,11 @@ tekrar tutulmaz.
 ### Faz F4 sırası
 
 **Kod/otomatik kapıları tamam:** WP-477 · WP-478 · WP-479 · WP-480 · WP-481 ·
-WP-483 · WP-484 · WP-485 · WP-487 · WP-488. WP-482 cihazsız düzeltmeleri
-tamam, fiziksel kabul bekliyor; WP-486 envanteri tamam, ürün sırası bekliyor.
+WP-483 · WP-484 · WP-485 · WP-486A · WP-487 · WP-488. WP-482 cihazsız
+düzeltmeleri tamam, stable-sonrası fiziksel kabul bekliyor.
 
-**Beklemeli:** WP-482 remote terfi + stable-sonrası fiziksel iki-cihaz/OEM kabulü ·
-WP-486 seçilen ilk profesyonelleştirme kartı. Remote `0117–0119` staging replay
-olmadan hiçbir release kapısı açılmaz.
+**Beklemeli:** WP-482 remote terfi + stable-sonrası fiziksel iki-cihaz/OEM kabulü.
+Remote `0117–0119` staging replay olmadan hiçbir release kapısı açılmaz.
 
 🔴 **Sıcak dosya:** `class_detail_screen.dart` bu fazda **üç** kart tarafından
 sahiplenilir (WP-483 · WP-484 · WP-487). Tek ajan modelinde lane kilidi yok, ama

@@ -245,6 +245,15 @@
   "@adminDuyuruBulunamadi": {
     "description": "Admin user-facing text. Source: Duyuru bulunamadı."
   },
+  "adminDuyuruSilmeBasligi": "Delete announcement?",
+  "@adminDuyuruSilmeBasligi": {
+    "description": "Confirmation title before permanently deleting an announcement."
+  },
+  "adminDuyuruSilmeAciklamasi": "“{title}” will be permanently deleted. This cannot be undone.",
+  "@adminDuyuruSilmeAciklamasi": {
+    "description": "Confirmation body before permanently deleting an announcement.",
+    "placeholders": {"title": {}}
+  },
   "adminDuyurular": "Announcements",
   "@adminDuyurular": {
     "description": "Admin user-facing text. Source: Duyurular"
@@ -362,6 +371,10 @@
   "adminKullaniciId": "User ID",
   "@adminKullaniciId": {
     "description": "Admin user-facing text. Source: Kullanıcı ID"
+  },
+  "adminKullaniciSecin": "Select user",
+  "@adminKullaniciSecin": {
+    "description": "Announcement target selector label."
   },
   "adminKullaniciBulunamadi": "User not found.",
   "@adminKullaniciBulunamadi": {

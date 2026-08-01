@@ -52,48 +52,92 @@ class AdminAnnouncementsTab extends ConsumerWidget {
   }
 }
 
-class _AnnouncementCard extends ConsumerWidget {
+class _AnnouncementCard extends ConsumerStatefulWidget {
   const _AnnouncementCard({required this.announcement});
 
   final Announcement announcement;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_AnnouncementCard> createState() => _AnnouncementCardState();
+}
+
+class _AnnouncementCardState extends ConsumerState<_AnnouncementCard> {
+  bool _isDeleting = false;
+
+  Future<void> _delete() async {
+    final l10n = AppLocalizations.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.adminDuyuruSilmeBasligi),
+        content: Text(
+          l10n.adminDuyuruSilmeAciklamasi(widget.announcement.title),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(l10n.adminIptal),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(l10n.adminSil),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted || _isDeleting) return;
+
+    setState(() => _isDeleting = true);
+    try {
+      await ref
+          .read(adminRepositoryProvider)
+          .deleteAnnouncement(widget.announcement.id);
+      ref.invalidate(adminAnnouncementsProvider);
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.adminIslemBasarili)));
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.authBeklenmeyenBirHataOlustu)),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isDeleting = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
-    final targetType = switch (announcement.targetType) {
+    final targetType = switch (widget.announcement.targetType) {
       'group' => l10n.adminGrubaOzel,
       'user' => l10n.adminKullaniciyaOzel,
       _ => l10n.adminHerkese,
     };
     return Card(
       child: ListTile(
-        title: Text(announcement.title),
+        title: Text(widget.announcement.title),
         subtitle: Text(
           l10n.adminAnnouncementmessagenhedefAnnouncementtargettypeAnnouncementtargetid(
-            announcement.targetId ?? l10n.adminYok,
-            announcement.message,
+            widget.announcement.targetId ?? l10n.adminYok,
+            widget.announcement.message,
             targetType,
           ),
         ),
         trailing: IconButton(
           tooltip: l10n.adminSil,
           style: IconButton.styleFrom(minimumSize: const Size(48, 48)),
-          icon: Icon(Icons.delete, color: theme.colorScheme.error),
-          onPressed: () async {
-            try {
-              await ref
-                  .read(adminRepositoryProvider)
-                  .deleteAnnouncement(announcement.id);
-              ref.invalidate(adminAnnouncementsProvider);
-            } catch (_) {
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(l10n.authBeklenmeyenBirHataOlustu)),
-                );
-              }
-            }
-          },
+          icon: _isDeleting
+              ? const SizedBox.square(
+                  dimension: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Icon(Icons.delete, color: theme.colorScheme.error),
+          onPressed: _isDeleting ? null : _delete,
         ),
         isThreeLine: true,
       ),
@@ -111,6 +155,7 @@ class _CreateAnnouncementDialog extends ConsumerStatefulWidget {
 
 class _CreateAnnouncementDialogState
     extends ConsumerState<_CreateAnnouncementDialog> {
+  final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _messageController = TextEditingController();
   final _targetIdController = TextEditingController();
@@ -119,11 +164,11 @@ class _CreateAnnouncementDialogState
 
   Future<void> _submit() async {
     final l10n = AppLocalizations.of(context);
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
     final title = _titleController.text.trim();
     final message = _messageController.text.trim();
     final targetId = _targetIdController.text.trim();
-
-    if (title.isEmpty || message.isEmpty) return;
 
     setState(() => _isLoading = true);
     try {
@@ -140,7 +185,12 @@ class _CreateAnnouncementDialogState
             adminId: adminId,
           );
       ref.invalidate(adminAnnouncementsProvider);
-      if (mounted) Navigator.of(context).pop();
+      if (mounted) {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.adminIslemBasarili)));
+      }
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -152,79 +202,142 @@ class _CreateAnnouncementDialogState
     }
   }
 
+  String? _required(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return AppLocalizations.of(context).adminGerekliAlanlarDoldurulmalidir;
+    }
+    return null;
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _messageController.dispose();
+    _targetIdController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return AlertDialog(
       title: Text(l10n.adminYeniDuyuru),
       content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: _titleController,
-              decoration: InputDecoration(labelText: l10n.adminBaslik),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _messageController,
-              decoration: InputDecoration(labelText: l10n.adminMesaj),
-              maxLines: 3,
-            ),
-            const SizedBox(height: 8),
-            DropdownButtonFormField<String>(
-              initialValue: _targetType,
-              items: [
-                DropdownMenuItem(value: 'all', child: Text(l10n.adminHerkese)),
-                DropdownMenuItem(
-                  value: 'group',
-                  child: Text(l10n.adminGrubaOzel),
-                ),
-                DropdownMenuItem(
-                  value: 'user',
-                  child: Text(l10n.adminKullaniciyaOzel),
-                ),
-              ],
-              onChanged: (val) {
-                if (val != null) setState(() => _targetType = val);
-              },
-              decoration: InputDecoration(labelText: l10n.adminHedef),
-            ),
-            if (_targetType == 'group') ...[
-              const SizedBox(height: 8),
-              ref
-                  .watch(adminGroupsProvider)
-                  .when(
-                    data: (groups) {
-                      if (groups.isEmpty) return Text(l10n.adminHicGrupYok);
-                      return DropdownButtonFormField<String>(
-                        items: groups
-                            .map(
-                              (g) => DropdownMenuItem(
-                                value: g.id,
-                                child: Text(g.name),
-                              ),
-                            )
-                            .toList(),
-                        onChanged: (val) {
-                          if (val != null) _targetIdController.text = val;
-                        },
-                        decoration: InputDecoration(
-                          labelText: l10n.adminGrupSecin,
-                        ),
-                      );
-                    },
-                    loading: () => const CircularProgressIndicator(),
-                    error: (e, _) => Text(l10n.adminGruplarYuklenemedi),
-                  ),
-            ] else if (_targetType == 'user') ...[
-              const SizedBox(height: 8),
-              TextField(
-                controller: _targetIdController,
-                decoration: InputDecoration(labelText: l10n.adminKullaniciId),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: _titleController,
+                decoration: InputDecoration(labelText: l10n.adminBaslik),
+                validator: _required,
               ),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _messageController,
+                decoration: InputDecoration(labelText: l10n.adminMesaj),
+                maxLines: 3,
+                validator: _required,
+              ),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                initialValue: _targetType,
+                isExpanded: true,
+                items: [
+                  DropdownMenuItem(
+                    value: 'all',
+                    child: Text(l10n.adminHerkese),
+                  ),
+                  DropdownMenuItem(
+                    value: 'group',
+                    child: Text(l10n.adminGrubaOzel),
+                  ),
+                  DropdownMenuItem(
+                    value: 'user',
+                    child: Text(l10n.adminKullaniciyaOzel),
+                  ),
+                ],
+                onChanged: _isLoading
+                    ? null
+                    : (val) {
+                        if (val == null) return;
+                        _targetIdController.clear();
+                        setState(() => _targetType = val);
+                      },
+                decoration: InputDecoration(labelText: l10n.adminHedef),
+              ),
+              if (_targetType == 'group') ...[
+                const SizedBox(height: 8),
+                ref
+                    .watch(adminGroupsProvider)
+                    .when(
+                      data: (groups) {
+                        if (groups.isEmpty) return Text(l10n.adminHicGrupYok);
+                        return DropdownButtonFormField<String>(
+                          key: const ValueKey('announcement-group-target'),
+                          isExpanded: true,
+                          items: groups
+                              .map(
+                                (g) => DropdownMenuItem(
+                                  value: g.id,
+                                  child: Text(
+                                    g.name,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: _isLoading
+                              ? null
+                              : (val) => _targetIdController.text = val ?? '',
+                          validator: _required,
+                          decoration: InputDecoration(
+                            labelText: l10n.adminGrupSecin,
+                          ),
+                        );
+                      },
+                      loading: () => const CircularProgressIndicator(),
+                      error: (e, _) => Text(l10n.adminGruplarYuklenemedi),
+                    ),
+              ] else if (_targetType == 'user') ...[
+                const SizedBox(height: 8),
+                ref
+                    .watch(adminUsersProvider)
+                    .when(
+                      data: (users) {
+                        if (users.isEmpty) {
+                          return Text(l10n.adminKullaniciBulunamadi);
+                        }
+                        return DropdownButtonFormField<String>(
+                          key: const ValueKey('announcement-user-target'),
+                          isExpanded: true,
+                          items: users
+                              .map(
+                                (user) => DropdownMenuItem(
+                                  value: user.id,
+                                  child: Text(
+                                    user.email,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: _isLoading
+                              ? null
+                              : (val) => _targetIdController.text = val ?? '',
+                          validator: _required,
+                          decoration: InputDecoration(
+                            labelText: l10n.adminKullaniciSecin,
+                          ),
+                        );
+                      },
+                      loading: () => const CircularProgressIndicator(),
+                      error: (e, _) => Text(l10n.authBeklenmeyenBirHataOlustu),
+                    ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
       actions: [

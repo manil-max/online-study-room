@@ -58,12 +58,15 @@ taşmıyor fakat sekme keşfi yatay kaydırmaya bağlı. Sekmeler ortak bir list
 6. **P2 — l10n/hata sözleşmesi:** repository iç mesajlarını makine kodlarına,
    kullanıcı metnini UI l10n katmanına taşıma.
 
-## İlk uygulama kartı önerisi
+## İlk uygulama kartı sonucu
 
-**WP-486A — Duyuru oluşturma/silme güvenlik kapısı.** Kabul: silme açık onay
-olmadan çalışmaz; group/user hedefi boşken gönderilemez; başlık/mesaj hatası alanın
-yanında görünür; başarı/hata görünürdür; aynı işlem çift gönderilemez; dialog
-controller'ları dispose edilir; 320 px ve 1.6× text scale widget testleri geçer.
+**WP-486A — Duyuru oluşturma/silme güvenlik kapısı tamamlandı.** Silme açık onay
+olmadan çalışmıyor; group/user hedefi boşken gönderilemiyor; başlık/mesaj hatası
+alanın yanında görünüyor; başarı/hata görünür; aynı işlem çift gönderilemiyor;
+dialog controller'ları dispose ediliyor. Kullanıcı hedefi ham UUID girişi yerine
+e-posta listesiyle seçiliyor. 320 px ve 1.6× text scale dahil iki widget regresyonu
+geçti.
 
-Bu sıra güvenlik ve operasyon riskine göre öneridir. Kozmetik/navigation tercihi
-kodlanmadan önce ürün sahibi seçimi hâlâ gereklidir.
+Kalan P1/P2 maddeler ölçek ve profesyonelleştirme backlog'udur; veri kaybı veya
+v58 stable güvenlik kapısı değildir. Yeni sunucu arama/sayfalama sözleşmesi ve
+navigation tercihi ayrı ürün fazında ele alınacaktır.
